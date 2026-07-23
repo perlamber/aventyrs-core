@@ -5,7 +5,7 @@ import lombok.Getter;
 
 @Builder @Getter
 public class SkillGraduation {
-    public static final SkillGraduation.SkillGraduationBuilder INITIAL_BUILDER = SkillGraduation.builder().graduationValue(1);
+    public static final SkillGraduation.SkillGraduationBuilder INITIAL_BUILDER = SkillGraduation.builder();
     @Builder.Default
     private int graduationValue = 0;
 

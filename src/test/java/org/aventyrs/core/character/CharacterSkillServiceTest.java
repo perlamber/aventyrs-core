@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class CharacterSkillTest {
+class CharacterSkillServiceTest {
 
     @BeforeEach
     public void setup() {
@@ -19,8 +19,8 @@ class CharacterSkillTest {
         CharacterSkill skill = CharacterSkillFixture.blank(CharacterSkillFixture.ATTENTION_1).graduation(SkillGraduation.INITIAL_BUILDER.build()).build();
         skill.increaseGraduation(1);
         CharacterAttributes constitution = CharacterAttributes.builder().instinct(2).build();
-        Race race = new Human();
-        assertEquals(4, skill.getValueForRoll(constitution, race));
+        Race character = new Human();
+        assertEquals(3, skill.getValueForRoll(constitution, character));
     }
 
     @Test
