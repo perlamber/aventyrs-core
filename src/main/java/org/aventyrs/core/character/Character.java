@@ -4,6 +4,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Singular;
+import org.aventyrs.core.ability.AttributeAbility;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.Interactable;
 import org.aventyrs.core.sheet.Interaction;
@@ -30,6 +31,10 @@ public class Character implements Interactable {
     @NonNull
     @Singular
     protected List<CharacterSkill> skills;
+
+    @NonNull
+    @Singular
+    protected List<AttributeAbility> attributeAbilities;
 
     @Builder.Default
     protected SizeCategory sizeCategory = SizeCategory.ZERO;
