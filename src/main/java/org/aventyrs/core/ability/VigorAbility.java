@@ -3,12 +3,19 @@ package org.aventyrs.core.ability;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.aventyrs.core.character.AttributeDomain;
+import org.aventyrs.core.modifier.Modifier;
+import org.aventyrs.core.modifier.ModifierType;
 
 @Getter
 @AllArgsConstructor
 public enum VigorAbility implements AttributeAbility {
 
-    SOBRE_HUMANO("Seu Multiplicador de Pontos de Vida é aumentado em +1."),
+    SOBRE_HUMANO("Seu Multiplicador de Pontos de Vida é aumentado em +1.") {
+        @Modifier(ModifierType.LIFE_MULTIPLIER)
+        public int lifeMultiplierBonus() {
+            return 1;
+        }
+    },
 
     SANGUE_DE_GIGANTE("Sua Categoria de Tamanho é aumentada em +1."),
 

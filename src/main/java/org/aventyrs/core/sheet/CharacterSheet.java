@@ -21,6 +21,10 @@ public class CharacterSheet {
 
     private BigDecimal unUsedExperience = BigDecimal.ZERO;
 
+    private int damageTaken = 0;
+
+    private int shieldPoints = 0;
+
     /**
      * Consumes the available experience
      * @param expToUse experience to be used
@@ -39,5 +43,48 @@ public class CharacterSheet {
     {
         unUsedExperience = unUsedExperience.add(experience);
         return totalExperience = totalExperience.add(experience);
+    }
+
+    /**
+     * Applies damage, consuming any Shield points first.
+     * @return int total damage accumulated so far
+     */
+    public int applyDamage(int amount)
+    {
+        int remaining = amount;
+        if (shieldPoints > 0)
+        {
+            int absorbed = Math.min(shieldPoints, remaining);
+            shieldPoints -= absorbed;
+            remaining -= absorbed;
+        }
+        return damageTaken += remaining;
+    }
+
+    /**
+     * Applies curse damage, which drains life directly and bypasses Shield points.
+     * @return int total damage accumulated so far
+     */
+    public int applyCurseDamage(int amount)
+    {
+        return damageTaken += amount;
+    }
+
+    /**
+     * Heals accumulated damage.
+     * @return int remaining damage accumulated
+     */
+    public int heal(int amount)
+    {
+        return damageTaken = Math.max(0, damageTaken - amount);
+    }
+
+    /**
+     * Grants Shield points, absorbed before damage reaches the character's Hit Points.
+     * @return int total Shield points available
+     */
+    public int addShield(int amount)
+    {
+        return shieldPoints += amount;
     }
 }
