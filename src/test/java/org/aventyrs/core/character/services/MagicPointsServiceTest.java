@@ -5,6 +5,7 @@ import org.aventyrs.core.character.AttributeValue;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterAttributes;
 import org.aventyrs.core.character.Human;
+import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.Player;
 import org.junit.jupiter.api.Test;
 
@@ -45,5 +46,21 @@ class MagicPointsServiceTest {
         Character character = characterWithFocus(3, FocusAbility.CONEXAO_COM_O_MANA);
         assertEquals(4, magicPointsService.getManaMultiplier(character));
         assertEquals(12, magicPointsService.getMaxMagicPoints(character));
+    }
+
+    @Test
+    void currentMagicPointsReflectsSpending() {
+        Character character = characterWithFocus(3);
+        CharacterSheet sheet = CharacterSheet.of(character, new Player());
+        sheet.spendMagicPoints(4);
+        assertEquals(5, magicPointsService.getCurrentMagicPoints(character, sheet));
+    }
+
+    @Test
+    void currentMagicPointsNeverGoesBelowZero() {
+        Character character = characterWithFocus(3);
+        CharacterSheet sheet = CharacterSheet.of(character, new Player());
+        sheet.spendMagicPoints(1000);
+        assertEquals(0, magicPointsService.getCurrentMagicPoints(character, sheet));
     }
 }

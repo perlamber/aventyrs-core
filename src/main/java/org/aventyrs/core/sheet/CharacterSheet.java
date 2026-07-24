@@ -4,6 +4,7 @@ import org.aventyrs.core.character.Character;
 
 import java.math.BigDecimal;
 
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +22,14 @@ public class CharacterSheet {
 
     private BigDecimal unUsedExperience = BigDecimal.ZERO;
 
-    private int damageTaken = 0;
+    @Getter(AccessLevel.NONE)
+    private final ResourcePool hitPoints = new ResourcePool();
+
+    @Getter(AccessLevel.NONE)
+    private final ResourcePool magicPoints = new ResourcePool();
+
+    @Getter(AccessLevel.NONE)
+    private final ResourcePool determinationPoints = new ResourcePool();
 
     private int shieldPoints = 0;
 
@@ -45,6 +53,21 @@ public class CharacterSheet {
         return totalExperience = totalExperience.add(experience);
     }
 
+    public int getDamageTaken()
+    {
+        return hitPoints.getSpent();
+    }
+
+    public int getManaSpent()
+    {
+        return magicPoints.getSpent();
+    }
+
+    public int getDeterminationSpent()
+    {
+        return determinationPoints.getSpent();
+    }
+
     /**
      * Applies damage, consuming any Shield points first.
      * @return int total damage accumulated so far
@@ -58,7 +81,7 @@ public class CharacterSheet {
             shieldPoints -= absorbed;
             remaining -= absorbed;
         }
-        return damageTaken += remaining;
+        return hitPoints.spend(remaining);
     }
 
     /**
@@ -67,16 +90,16 @@ public class CharacterSheet {
      */
     public int applyCurseDamage(int amount)
     {
-        return damageTaken += amount;
+        return hitPoints.spend(amount);
     }
 
     /**
-     * Heals accumulated damage.
+     * Heals accumulated damage — the same recovery a Rest applies to PV.
      * @return int remaining damage accumulated
      */
     public int heal(int amount)
     {
-        return damageTaken = Math.max(0, damageTaken - amount);
+        return hitPoints.recover(amount);
     }
 
     /**
@@ -86,5 +109,41 @@ public class CharacterSheet {
     public int addShield(int amount)
     {
         return shieldPoints += amount;
+    }
+
+    /**
+     * Spends Magic Points, e.g. to cast a spell.
+     * @return int total Magic Points spent so far
+     */
+    public int spendMagicPoints(int amount)
+    {
+        return magicPoints.spend(amount);
+    }
+
+    /**
+     * Recovers spent Magic Points — the same recovery a Rest applies to PM.
+     * @return int remaining Magic Points spent
+     */
+    public int recoverMagicPoints(int amount)
+    {
+        return magicPoints.recover(amount);
+    }
+
+    /**
+     * Spends Determination Points, e.g. to activate an ability.
+     * @return int total Determination Points spent so far
+     */
+    public int spendDeterminationPoints(int amount)
+    {
+        return determinationPoints.spend(amount);
+    }
+
+    /**
+     * Recovers spent Determination Points — the same recovery a Rest applies to PD.
+     * @return int remaining Determination Points spent
+     */
+    public int recoverDeterminationPoints(int amount)
+    {
+        return determinationPoints.recover(amount);
     }
 }

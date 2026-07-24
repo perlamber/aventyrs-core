@@ -4,6 +4,7 @@ import org.aventyrs.core.character.Character;
 import org.aventyrs.core.modifier.ModifierResolver;
 import org.aventyrs.core.modifier.ModifierResolverImpl;
 import org.aventyrs.core.modifier.ModifierType;
+import org.aventyrs.core.sheet.CharacterSheet;
 
 public class DeterminationPointsServiceImpl implements DeterminationPointsService {
 
@@ -26,5 +27,10 @@ public class DeterminationPointsServiceImpl implements DeterminationPointsServic
     @Override
     public int getMaxDeterminationPoints(final Character character) {
         return character.getAttributes().getInstinct().getTotal() * getDeterminationMultiplier(character);
+    }
+
+    @Override
+    public int getCurrentDeterminationPoints(final Character character, final CharacterSheet characterSheet) {
+        return Math.max(0, getMaxDeterminationPoints(character) - characterSheet.getDeterminationSpent());
     }
 }

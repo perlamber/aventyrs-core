@@ -54,4 +54,36 @@ class CharacterSheetTest {
         sheet.addShield(3);
         assertEquals(5, sheet.addShield(2));
     }
+
+    @Test
+    void magicPointsSpentAreTrackedIndependentlyFromHitPoints() {
+        CharacterSheet sheet = newSheet();
+        sheet.applyDamage(5);
+        assertEquals(3, sheet.spendMagicPoints(3));
+        assertEquals(5, sheet.getDamageTaken());
+    }
+
+    @Test
+    void recoverMagicPointsReducesSpentNotBelowZero() {
+        CharacterSheet sheet = newSheet();
+        sheet.spendMagicPoints(3);
+        assertEquals(0, sheet.recoverMagicPoints(10));
+    }
+
+    @Test
+    void determinationPointsSpentAreTrackedIndependentlyFromOtherPools() {
+        CharacterSheet sheet = newSheet();
+        sheet.applyDamage(5);
+        sheet.spendMagicPoints(3);
+        assertEquals(2, sheet.spendDeterminationPoints(2));
+        assertEquals(5, sheet.getDamageTaken());
+        assertEquals(3, sheet.getManaSpent());
+    }
+
+    @Test
+    void recoverDeterminationPointsReducesSpentNotBelowZero() {
+        CharacterSheet sheet = newSheet();
+        sheet.spendDeterminationPoints(2);
+        assertEquals(0, sheet.recoverDeterminationPoints(10));
+    }
 }
