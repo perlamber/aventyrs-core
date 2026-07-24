@@ -23,31 +23,31 @@ class CharacterSkillServiceTest {
     void getValueForRoll() throws RollErrorException {
         CharacterSkill skill = CharacterSkillFixture.blank(CharacterSkillFixture.ATTENTION_1).graduation(SkillGraduation.INITIAL_BUILDER.build()).build();
         skill.increaseGraduation(1);
-        CharacterAttributes attributes = CharacterAttributes.builder().instinct(2).build();
+        CharacterAttributes attributes = CharacterAttributes.builder().instinct(AttributeValue.builder().base(2).build()).build();
         Race race = new Human();
-        assertEquals(4, characterSkillService.getValueForRoll(skill, attributes, race));
+        assertEquals(3, characterSkillService.getValueForRoll(skill, attributes, race));
     }
 
     @Test
     public void getValueForRollTestWithSkillGraduation() throws RollErrorException {
         CharacterSkill skill = CharacterSkillFixture.blank(CharacterSkillFixture.ATTENTION_1).build();
         skill.increaseGraduation(1);
-        CharacterAttributes attributes = CharacterAttributes.builder().instinct(2).build();
+        CharacterAttributes attributes = CharacterAttributes.builder().instinct(AttributeValue.builder().base(2).build()).build();
         Race race = new Human();
-        assertEquals(4, characterSkillService.getValueForRoll(skill, attributes, race));
+        assertEquals(3, characterSkillService.getValueForRoll(skill, attributes, race));
         skill.increaseGraduation(3);
-        assertEquals(7, characterSkillService.getValueForRoll(skill, attributes, race));
+        assertEquals(6, characterSkillService.getValueForRoll(skill, attributes, race));
     }
 
     @Test
     public void getValueForRollTestWithNewConstitution() throws RollErrorException {
         CharacterSkill skill = CharacterSkillFixture.blank(CharacterSkillFixture.ATTENTION_1).build();
         skill.increaseGraduation(1);
-        CharacterAttributes attributes = CharacterAttributes.builder().instinct(2).build();
+        CharacterAttributes attributes = CharacterAttributes.builder().instinct(AttributeValue.builder().base(2).build()).build();
         Race race = new Human();
-        assertEquals(4, characterSkillService.getValueForRoll(skill, attributes, race));
-        CharacterAttributes newAttributes = attributes.toBuilder().instinct(4).build();
-        assertEquals(6, characterSkillService.getValueForRoll(skill, newAttributes, race));
+        assertEquals(3, characterSkillService.getValueForRoll(skill, attributes, race));
+        CharacterAttributes newAttributes = attributes.toBuilder().instinct(AttributeValue.builder().base(4).build()).build();
+        assertEquals(5, characterSkillService.getValueForRoll(skill, newAttributes, race));
     }
 
 }

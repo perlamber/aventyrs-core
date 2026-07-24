@@ -25,6 +25,9 @@ public class Character implements Interactable {
     protected Race race;
 
     @NonNull
+    protected CharacterAttributes attributes;
+
+    @NonNull
     @Singular
     protected List<CharacterSkill> skills;
 
@@ -32,7 +35,7 @@ public class Character implements Interactable {
     protected SizeCategory sizeCategory = SizeCategory.ZERO;
 
     @Builder.Default
-    CharacterStatus status = CharacterStatus.ALIVE;
+    CharacterStatus status = CharacterStatus.CLEAN;
 
     //TODO implement
     @Override

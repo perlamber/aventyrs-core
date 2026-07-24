@@ -1,6 +1,7 @@
 package org.aventyrs.core.character.services;
 
 import org.aventyrs.core.character.AttributeDomain;
+import org.aventyrs.core.character.AttributeValue;
 import org.aventyrs.core.character.CharacterAttributes;
 import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.character.Race;
@@ -11,21 +12,18 @@ import java.lang.reflect.InvocationTargetException;
 public class CharacterSkillServiceImpl implements CharacterSkillService{
 
     /**
-     * Fetch the final value for a Skill roll,
-     * reaches out to the CharacterConstitution and get the KeyAttribute current value, then fetches the race modifier
-     * returns CharacterConstitution value + Race Modifier + Skill.graduation
+     * Fetch the final value for a Skill roll: the attribute's total (base + racial
+     * bonus + variable, already resolved on the character's CharacterAttributes)
+     * plus the Skill's graduation.
      */
     public int getValueForRoll(final CharacterSkill characterSkill, final CharacterAttributes characterAttributes, final Race race) throws RollErrorException
     {
-        Integer totalValue = 0;
-        totalValue +=  characterSkill.getGraduation().getGraduationValue();
+        int totalValue = characterSkill.getGraduation().getGraduationValue();
         try {
             final AttributeDomain skillDomain = characterSkill.getSkill().getAttributeDomain();
-            Integer baseParameterValue = (Integer) skillDomain.getKeyAttributeMethod().invoke(characterAttributes);
-            totalValue += baseParameterValue;
-            int raceModifier = (int)Race.class.getMethod(skillDomain.getKeyAttributeMethod().getName()+"Modifier").invoke(race);
-            totalValue += raceModifier;
-        }catch (RuntimeException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e)
+            AttributeValue attributeValue = (AttributeValue) skillDomain.getKeyAttributeMethod().invoke(characterAttributes);
+            totalValue += attributeValue.getTotal();
+        }catch (RuntimeException | IllegalAccessException | InvocationTargetException e)
         {
             throw new RollErrorException();
         }
