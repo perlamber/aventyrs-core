@@ -27,6 +27,10 @@ public class Character implements Interactable {
     @NonNull
     @Singular
     protected List<CharacterSkill> skills;
+
+    @Builder.Default
+    protected SizeCategory sizeCategory = SizeCategory.ZERO;
+
     @Builder.Default
     protected int totalExperience = 0;
 
