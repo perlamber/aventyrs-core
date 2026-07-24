@@ -35,6 +35,16 @@ public enum SizeCategory {
     }
 
     /**
+     * Shifts this category by the given number of steps, clamped to the -4/+4 range —
+     * used to apply bonuses such as the Sangue de Gigante Vigor ability.
+     */
+    public SizeCategory shift(int steps) {
+        SizeCategory[] categories = values();
+        int newIndex = Math.max(0, Math.min(ordinal() + steps, categories.length - 1));
+        return categories[newIndex];
+    }
+
+    /**
      * Half of the size category, rounded away from zero, as laid out in the size table.
      * Applies to attack rolls, damage rolls and combat maneuvers.
      */

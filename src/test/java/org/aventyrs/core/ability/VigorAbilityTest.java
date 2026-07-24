@@ -39,4 +39,12 @@ class VigorAbilityTest {
             assertEquals(expected, modifierResolver.sumModifiers(ability, ModifierType.LIFE_MULTIPLIER));
         }
     }
+
+    @Test
+    void onlySangueDeGiganteGrantsASizeCategoryBonus() {
+        for (VigorAbility ability : VigorAbility.values()) {
+            int expected = ability == VigorAbility.SANGUE_DE_GIGANTE ? 1 : 0;
+            assertEquals(expected, modifierResolver.sumModifiers(ability, ModifierType.SIZE_CATEGORY));
+        }
+    }
 }

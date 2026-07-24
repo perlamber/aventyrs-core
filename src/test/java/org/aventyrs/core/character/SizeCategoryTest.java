@@ -48,4 +48,20 @@ class SizeCategoryTest {
     void rangedWeaponRangeIsNotClampedToMinimumOneUD() {
         assertEquals(-1, SizeCategory.MINUS_FOUR.getRange(1, false));
     }
+
+    @Test
+    void shiftMovesByTheGivenNumberOfSteps() {
+        assertEquals(SizeCategory.PLUS_ONE, SizeCategory.ZERO.shift(1));
+        assertEquals(SizeCategory.MINUS_ONE, SizeCategory.ZERO.shift(-1));
+    }
+
+    @Test
+    void shiftClampsAtThePlusFourCeiling() {
+        assertEquals(SizeCategory.PLUS_FOUR, SizeCategory.PLUS_FOUR.shift(1));
+    }
+
+    @Test
+    void shiftClampsAtTheMinusFourFloor() {
+        assertEquals(SizeCategory.MINUS_FOUR, SizeCategory.MINUS_FOUR.shift(-1));
+    }
 }

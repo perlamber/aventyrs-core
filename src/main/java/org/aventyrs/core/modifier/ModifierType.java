@@ -6,5 +6,8 @@ package org.aventyrs.core.modifier;
  * that resolves or consumes modifiers needs to change.
  */
 public enum ModifierType {
-    LIFE_MULTIPLIER
+    LIFE_MULTIPLIER,
+    SIZE_CATEGORY,
+    MANA_MULTIPLIER,
+    DETERMINATION_MULTIPLIER
 }
