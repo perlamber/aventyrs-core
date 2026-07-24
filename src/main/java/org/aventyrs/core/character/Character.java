@@ -32,12 +32,6 @@ public class Character implements Interactable {
     protected SizeCategory sizeCategory = SizeCategory.ZERO;
 
     @Builder.Default
-    protected int totalExperience = 0;
-
-    @Builder.Default
-    protected int unUsedExperience = 0;
-
-    @Builder.Default
     CharacterStatus status = CharacterStatus.ALIVE;
 
     //TODO implement
@@ -52,24 +46,6 @@ public class Character implements Interactable {
         return null;
     }
 
-    public int accumulateExperience(int experience)
-    {
-        unUsedExperience += experience;
-        return totalExperience  += experience;
-    }
 
-    /**
-     * Consumes the available experience
-     * @param experience experience to be used
-     * @return int remaining experience
-     * @throws IllegalOperationException in case unUsed experience is lower than consumed
-     */
-    public int useExperience(int experience) throws IllegalOperationException
-    {
-        int remainingExperience = unUsedExperience -= experience;
-        if(remainingExperience < 0)
-            throw new IllegalOperationException(NOT_ENOUGH_EXPERIENCE);
-        return remainingExperience;
-    }
 
 }

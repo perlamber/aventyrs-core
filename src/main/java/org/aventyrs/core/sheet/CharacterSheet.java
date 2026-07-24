@@ -1,14 +1,13 @@
 package org.aventyrs.core.sheet;
 
 import org.aventyrs.core.character.Character;
-import org.aventyrs.core.util.NoValueException;
 
-import java.util.Optional;
-import java.util.function.IntPredicate;
+import java.math.BigDecimal;
 
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import static org.aventyrs.core.util.TranslatableMessages.NOT_ENOUGH_EXPERIENCE;
 
 @RequiredArgsConstructor(staticName="of")
 @Getter
@@ -17,24 +16,28 @@ public class CharacterSheet {
     private Character character;
     @NonNull
     private Player player;
-    private Integer availableExperience = 0;
 
-    public Integer getTotalExperience()
+    private BigDecimal totalExperience = BigDecimal.ZERO;
+
+    private BigDecimal unUsedExperience = BigDecimal.ZERO;
+
+    /**
+     * Consumes the available experience
+     * @param expToUse experience to be used
+     * @return BigDecimal remaining experience
+     * @throws IllegalOperationException in case unUsed experience is lower than consumed
+     */
+    public BigDecimal useExperience(BigDecimal expToUse) throws IllegalOperationException
     {
-        return availableExperience + character.getUsedExperience();
+        BigDecimal remainingExperience = unUsedExperience = unUsedExperience.subtract(expToUse);
+        if(remainingExperience.compareTo(BigDecimal.ZERO) < 0)
+            throw new IllegalOperationException(NOT_ENOUGH_EXPERIENCE);
+        return remainingExperience;
     }
 
-    public Integer useExperience(Integer expToUse) throws IllegalOperationException
+    public BigDecimal accumulateExperience(BigDecimal experience)
     {
-        if(Optional.ofNullable(expToUse).orElseThrow(NoValueException::new).compareTo(availableExperience) > 0)
-        {
-            throw new IllegalOperationException("Illegal value introduced for experience");
-        }
-        else
-        {
-            character.accumulateExperience(expToUse);
-            availableExperience -= expToUse;
-        }
-        return availableExperience;
+        unUsedExperience = unUsedExperience.add(experience);
+        return totalExperience = totalExperience.add(experience);
     }
 }

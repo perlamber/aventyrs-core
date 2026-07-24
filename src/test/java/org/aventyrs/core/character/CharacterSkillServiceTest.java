@@ -1,7 +1,10 @@
 package org.aventyrs.core.character;
 
 import org.aventyrs.core.character.fixture.CharacterSkillFixture;
+import org.aventyrs.core.character.services.CharacterSkillService;
+import org.aventyrs.core.character.services.CharacterSkillServiceImpl;
 import org.aventyrs.core.skill.SkillGraduation;
+import org.aventyrs.core.util.RollErrorException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -9,40 +12,42 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class CharacterSkillServiceTest {
 
+    private final CharacterSkillService characterSkillService = new CharacterSkillServiceImpl();
+
     @BeforeEach
     public void setup() {
         CharacterSkillFixture.loadTemplates();
     }
 
     @Test
-    void getValueForRoll() {
+    void getValueForRoll() throws RollErrorException {
         CharacterSkill skill = CharacterSkillFixture.blank(CharacterSkillFixture.ATTENTION_1).graduation(SkillGraduation.INITIAL_BUILDER.build()).build();
         skill.increaseGraduation(1);
-        CharacterAttributes constitution = CharacterAttributes.builder().instinct(2).build();
-        Race character = new Human();
-        assertEquals(3, skill.getValueForRoll(constitution, character));
+        CharacterAttributes attributes = CharacterAttributes.builder().instinct(2).build();
+        Race race = new Human();
+        assertEquals(4, characterSkillService.getValueForRoll(skill, attributes, race));
     }
 
     @Test
-    public void getValueForRollTestWithSkillGraduation() {
+    public void getValueForRollTestWithSkillGraduation() throws RollErrorException {
         CharacterSkill skill = CharacterSkillFixture.blank(CharacterSkillFixture.ATTENTION_1).build();
         skill.increaseGraduation(1);
-        CharacterAttributes constitution = CharacterAttributes.builder().instinct(2).build();
+        CharacterAttributes attributes = CharacterAttributes.builder().instinct(2).build();
         Race race = new Human();
-        assertEquals(4, skill.getValueForRoll(constitution, race));
+        assertEquals(4, characterSkillService.getValueForRoll(skill, attributes, race));
         skill.increaseGraduation(3);
-        assertEquals(7, skill.getValueForRoll(constitution, race));
+        assertEquals(7, characterSkillService.getValueForRoll(skill, attributes, race));
     }
 
     @Test
-    public void getValueForRollTestWithNewConstitution() {
+    public void getValueForRollTestWithNewConstitution() throws RollErrorException {
         CharacterSkill skill = CharacterSkillFixture.blank(CharacterSkillFixture.ATTENTION_1).build();
         skill.increaseGraduation(1);
-        CharacterAttributes constitution = CharacterAttributes.builder().instinct(2).build();
+        CharacterAttributes attributes = CharacterAttributes.builder().instinct(2).build();
         Race race = new Human();
-        assertEquals(4, skill.getValueForRoll(constitution, race));
-        CharacterAttributes newConstitution = constitution.toBuilder().instinct(4).build();
-        assertEquals(6, skill.getValueForRoll(newConstitution, race));
+        assertEquals(4, characterSkillService.getValueForRoll(skill, attributes, race));
+        CharacterAttributes newAttributes = attributes.toBuilder().instinct(4).build();
+        assertEquals(6, characterSkillService.getValueForRoll(skill, newAttributes, race));
     }
 
 }

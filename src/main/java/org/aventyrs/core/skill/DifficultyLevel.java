@@ -21,7 +21,7 @@ public enum DifficultyLevel {
 
     public DifficultyLevel shift(int steps) {
         DifficultyLevel[] levels = values();
-        int newIndex = Math.clamp(ordinal() + steps, 0, levels.length - 1);
+        int newIndex = Math.max(0, Math.min(ordinal() + steps, levels.length - 1));
         return levels[newIndex];
     }
 
