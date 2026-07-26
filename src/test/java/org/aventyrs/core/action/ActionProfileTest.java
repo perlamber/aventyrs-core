@@ -28,4 +28,13 @@ class ActionProfileTest {
             }
         }
     }
+
+    @Test
+    void noProfileChangesSkillRollCostByDefault() {
+        for (ActionProfile profile : ActionProfile.values()) {
+            for (int turn = 0; turn < 5; turn++) {
+                assertEquals(2, profile.adjustSkillRollCost(2, turn));
+            }
+        }
+    }
 }

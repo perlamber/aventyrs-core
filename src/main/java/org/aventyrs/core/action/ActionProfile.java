@@ -68,4 +68,13 @@ public enum ActionProfile {
     public int adjustActionPoints(final int actionPoints, final int turnNumber) {
         return actionPoints;
     }
+
+    /**
+     * Applies this profile's Turn-dependent adjustment on top of the already
+     * modifier-resolved cost of a Perícia roll. The default is a no-op; none of the
+     * current profiles vary a roll's cost by Turn, but the hook exists for one that does.
+     */
+    public int adjustSkillRollCost(final int skillRollCost, final int turnNumber) {
+        return skillRollCost;
+    }
 }

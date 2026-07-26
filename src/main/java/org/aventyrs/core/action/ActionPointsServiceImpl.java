@@ -25,7 +25,15 @@ public class ActionPointsServiceImpl implements ActionPointsService {
     }
 
     @Override
+    public int getSkillRollCost(final Character character, final int turnNumber) {
+        int adjustment = modifierResolver.sumModifiers(character.getAttributeAbilities(), ModifierType.SKILL_ROLL_COST);
+        int adjusted = character.getActionProfile()
+                .adjustSkillRollCost(DEFAULT_SKILL_ROLL_COST + adjustment, turnNumber);
+        return Math.max(0, adjusted);
+    }
+
+    @Override
     public boolean canAffordSkillRoll(final Character character, final int turnNumber) {
-        return getMaxActionPoints(character, turnNumber) >= SKILL_ROLL_COST;
+        return getMaxActionPoints(character, turnNumber) >= getSkillRollCost(character, turnNumber);
     }
 }

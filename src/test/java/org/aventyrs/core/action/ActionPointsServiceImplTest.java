@@ -52,6 +52,57 @@ class ActionPointsServiceImplTest {
         }
     }
 
+    private static class SkillRollDiscountAbility implements AttributeAbility {
+        @Override
+        public AttributeDomain getAttributeDomain() {
+            return AttributeDomain.INSTINCT;
+        }
+
+        @Override
+        public String getDescription() {
+            return "Test-only -1 skill roll cost discount source.";
+        }
+
+        @Modifier(ModifierType.SKILL_ROLL_COST)
+        public int discount() {
+            return -1;
+        }
+    }
+
+    private static class SmallActionPointsMalusAbility implements AttributeAbility {
+        @Override
+        public AttributeDomain getAttributeDomain() {
+            return AttributeDomain.INSTINCT;
+        }
+
+        @Override
+        public String getDescription() {
+            return "Test-only -2 Action Points malus source.";
+        }
+
+        @Modifier(ModifierType.ACTION_POINTS)
+        public int malus() {
+            return -2;
+        }
+    }
+
+    private static class LargeSkillRollDiscountAbility implements AttributeAbility {
+        @Override
+        public AttributeDomain getAttributeDomain() {
+            return AttributeDomain.INSTINCT;
+        }
+
+        @Override
+        public String getDescription() {
+            return "Test-only -10 skill roll cost discount source.";
+        }
+
+        @Modifier(ModifierType.SKILL_ROLL_COST)
+        public int discount() {
+            return -10;
+        }
+    }
+
     private Character characterWithProfile(ActionProfile profile, AttributeAbility... abilities) {
         Character.CharacterBuilder builder = Character.builder()
                 .player(new Player())
@@ -108,5 +159,37 @@ class ActionPointsServiceImplTest {
         Character character = characterWithProfile(ActionProfile.CALCULISTA);
         assertFalse(actionPointsService.canAffordSkillRoll(character, 0));
         assertTrue(actionPointsService.canAffordSkillRoll(character, 1));
+    }
+
+    @Test
+    void defaultSkillRollCostIsTwoOnAnyTurnForANeutralProfile() {
+        Character character = characterWithProfile(ActionProfile.REFLEXOS_RAPIDOS);
+        assertEquals(2, actionPointsService.getSkillRollCost(character, 0));
+        assertEquals(2, actionPointsService.getSkillRollCost(character, 5));
+    }
+
+    @Test
+    void skillRollCostModifierFromAbilitiesOrFeatsIsApplied() {
+        Character character = characterWithProfile(ActionProfile.REFLEXOS_RAPIDOS, new SkillRollDiscountAbility());
+        assertEquals(1, actionPointsService.getSkillRollCost(character, 0));
+    }
+
+    @Test
+    void skillRollCostNeverGoesBelowZero() {
+        Character character = characterWithProfile(ActionProfile.REFLEXOS_RAPIDOS, new LargeSkillRollDiscountAbility());
+        assertEquals(0, actionPointsService.getSkillRollCost(character, 0));
+    }
+
+    @Test
+    void canAffordSkillRollIsFalseWhenCostExceedsAvailablePA() {
+        Character character = characterWithProfile(ActionProfile.REFLEXOS_RAPIDOS, new SmallActionPointsMalusAbility());
+        assertFalse(actionPointsService.canAffordSkillRoll(character, 0));
+    }
+
+    @Test
+    void canAffordSkillRollReflectsADiscountedCost() {
+        Character character = characterWithProfile(ActionProfile.REFLEXOS_RAPIDOS,
+                new SmallActionPointsMalusAbility(), new SkillRollDiscountAbility());
+        assertTrue(actionPointsService.canAffordSkillRoll(character, 0));
     }
 }
