@@ -1,6 +1,7 @@
 package org.aventyrs.core.character.services;
 
 import org.aventyrs.core.ability.VigorAbility;
+import org.aventyrs.core.action.ActionProfile;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterAttributes;
 import org.aventyrs.core.character.Human;
@@ -19,6 +20,7 @@ class CharacterSizeServiceTest {
                 .player(new Player())
                 .name("Test")
                 .race(new Human())
+                .actionProfile(ActionProfile.REFLEXOS_RAPIDOS)
                 .attributes(CharacterAttributes.builder().build())
                 .sizeCategory(sizeCategory);
         for (VigorAbility ability : abilities) {

@@ -1,5 +1,6 @@
 package org.aventyrs.core.sheet;
 
+import org.aventyrs.core.action.ActionProfile;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterAttributes;
 import org.aventyrs.core.character.Human;
@@ -14,6 +15,7 @@ class CharacterSheetTest {
                 .player(new Player())
                 .name("Test")
                 .race(new Human())
+                .actionProfile(ActionProfile.REFLEXOS_RAPIDOS)
                 .attributes(CharacterAttributes.builder().build())
                 .build();
         return CharacterSheet.of(character, new Player());

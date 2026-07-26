@@ -1,6 +1,7 @@
 package org.aventyrs.core.character.services;
 
 import org.aventyrs.core.ability.VigorAbility;
+import org.aventyrs.core.action.ActionProfile;
 import org.aventyrs.core.character.AttributeValue;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterAttributes;
@@ -20,6 +21,7 @@ class HitPointsServiceTest {
                 .player(new Player())
                 .name("Test")
                 .race(new Human())
+                .actionProfile(ActionProfile.REFLEXOS_RAPIDOS)
                 .attributes(CharacterAttributes.builder()
                         .vigor(AttributeValue.builder().base(vigorBase).build())
                         .build());

@@ -1,5 +1,6 @@
 package org.aventyrs.core.rest;
 
+import org.aventyrs.core.action.ActionProfile;
 import org.aventyrs.core.character.AttributeValue;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterAttributes;
@@ -19,6 +20,7 @@ class RestServiceTest {
                 .player(new Player())
                 .name("Test")
                 .race(new Human())
+                .actionProfile(ActionProfile.REFLEXOS_RAPIDOS)
                 .attributes(CharacterAttributes.builder()
                         .vigor(AttributeValue.builder().base(3).build())
                         .instinct(AttributeValue.builder().base(4).build())
