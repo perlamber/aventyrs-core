@@ -20,7 +20,8 @@ public class ActionPointsServiceImpl implements ActionPointsService {
     @Override
     public int getMaxActionPoints(final Character character, final int turnNumber) {
         int bonus = modifierResolver.sumModifiers(character.getAttributeAbilities(), ModifierType.ACTION_POINTS);
-        int adjusted = character.getActionProfile().adjustActionPoints(character.getActionPoints() + bonus, turnNumber);
+        int baseline = character.getActionPoints() + bonus + character.getTemporaryActionPointsBonus();
+        int adjusted = character.getActionProfile().adjustActionPoints(baseline, turnNumber);
         return Math.max(0, adjusted);
     }
 

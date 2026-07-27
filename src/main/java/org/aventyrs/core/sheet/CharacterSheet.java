@@ -1,8 +1,11 @@
 package org.aventyrs.core.sheet;
 
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.character.EgoDomain;
 
 import java.math.BigDecimal;
+import java.util.EnumMap;
+import java.util.Map;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -31,7 +34,18 @@ public class CharacterSheet {
     @Getter(AccessLevel.NONE)
     private final ResourcePool determinationPoints = new ResourcePool();
 
+    @Getter(AccessLevel.NONE)
+    private final Map<EgoDomain, TemporaryPointPool> temporaryEgoPoints = newTemporaryEgoPointsPools();
+
     private int shieldPoints = 0;
+
+    private static Map<EgoDomain, TemporaryPointPool> newTemporaryEgoPointsPools() {
+        Map<EgoDomain, TemporaryPointPool> pools = new EnumMap<>(EgoDomain.class);
+        for (EgoDomain domain : EgoDomain.values()) {
+            pools.put(domain, new TemporaryPointPool());
+        }
+        return pools;
+    }
 
     /**
      * Consumes the available experience
@@ -145,5 +159,33 @@ public class CharacterSheet {
     public int recoverDeterminationPoints(int amount)
     {
         return determinationPoints.recover(amount);
+    }
+
+    /**
+     * Current temporary points held in the given Ego — gained piecemeal (e.g. Narrador
+     * rewards) and spent for small, temporary advantages. See {@link TemporaryPointPool}.
+     */
+    public int getTemporaryEgoPoints(EgoDomain domain)
+    {
+        return temporaryEgoPoints.get(domain).getAmount();
+    }
+
+    /**
+     * Gains temporary points in the given Ego.
+     * @return int total temporary points held in that Ego after the gain
+     */
+    public int gainTemporaryEgoPoints(EgoDomain domain, int amount)
+    {
+        return temporaryEgoPoints.get(domain).gain(amount);
+    }
+
+    /**
+     * Spends temporary points from the given Ego for a small, temporary advantage. Never
+     * goes below zero.
+     * @return int remaining temporary points held in that Ego after the spend
+     */
+    public int spendTemporaryEgoPoints(EgoDomain domain, int amount)
+    {
+        return temporaryEgoPoints.get(domain).spend(amount);
     }
 }

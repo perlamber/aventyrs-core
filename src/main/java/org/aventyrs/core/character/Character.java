@@ -68,6 +68,16 @@ public class Character implements Interactable {
     @Builder.Default
     protected int actionPoints = ActionPointsService.DEFAULT_ACTION_POINTS;
 
+    /**
+     * A temporary PA bonus (or malus), gained and spent much like temporary Ego points —
+     * on top of the fixed {@link #actionPoints} counter and any
+     * {@link org.aventyrs.core.modifier.ModifierType#ACTION_POINTS} ability/feat bonus.
+     * Changing it produces a new {@code Character} via {@link #toBuilder()}, same as every
+     * other field here; this project doesn't track session-based recovery for it.
+     */
+    @Builder.Default
+    protected int temporaryActionPointsBonus = 0;
+
     @Builder.Default
     protected SizeCategory sizeCategory = SizeCategory.ZERO;
 

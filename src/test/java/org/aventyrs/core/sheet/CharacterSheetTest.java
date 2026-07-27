@@ -1,6 +1,7 @@
 package org.aventyrs.core.sheet;
 
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -85,5 +86,37 @@ class CharacterSheetTest {
         CharacterSheet sheet = newSheet();
         sheet.spendDeterminationPoints(2);
         assertEquals(0, sheet.recoverDeterminationPoints(10));
+    }
+
+    @Test
+    void temporaryEgoPointsStartAtZeroForEveryDomain() {
+        CharacterSheet sheet = newSheet();
+        for (EgoDomain domain : EgoDomain.values()) {
+            assertEquals(0, sheet.getTemporaryEgoPoints(domain));
+        }
+    }
+
+    @Test
+    void gainTemporaryEgoPointsAccumulates() {
+        CharacterSheet sheet = newSheet();
+        sheet.gainTemporaryEgoPoints(EgoDomain.SORTE, 1);
+        assertEquals(3, sheet.gainTemporaryEgoPoints(EgoDomain.SORTE, 2));
+    }
+
+    @Test
+    void spendTemporaryEgoPointsReducesOnlyThatDomain() {
+        CharacterSheet sheet = newSheet();
+        sheet.gainTemporaryEgoPoints(EgoDomain.AUTOCONTROLE, 3);
+        sheet.gainTemporaryEgoPoints(EgoDomain.SORTE, 3);
+
+        assertEquals(1, sheet.spendTemporaryEgoPoints(EgoDomain.AUTOCONTROLE, 2));
+        assertEquals(3, sheet.getTemporaryEgoPoints(EgoDomain.SORTE));
+    }
+
+    @Test
+    void spendTemporaryEgoPointsNeverGoesBelowZero() {
+        CharacterSheet sheet = newSheet();
+        sheet.gainTemporaryEgoPoints(EgoDomain.RECURSOS, 1);
+        assertEquals(0, sheet.spendTemporaryEgoPoints(EgoDomain.RECURSOS, 10));
     }
 }

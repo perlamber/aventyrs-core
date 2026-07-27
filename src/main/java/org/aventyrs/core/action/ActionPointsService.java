@@ -11,8 +11,9 @@ public interface ActionPointsService {
 
     /**
      * Total PA available on the given Turn: the character's own fixed
-     * {@link Character#getActionPoints()} counter plus any
-     * {@link org.aventyrs.core.modifier.ModifierType#ACTION_POINTS} bonus, adjusted by the
+     * {@link Character#getActionPoints()} counter, plus any
+     * {@link org.aventyrs.core.modifier.ModifierType#ACTION_POINTS} bonus, plus the
+     * character's {@link Character#getTemporaryActionPointsBonus()}, adjusted by the
      * character's {@link ActionProfile} for that Turn. turnNumber is 0-based (0 is the
      * character's first Turn/Round). Never negative.
      */

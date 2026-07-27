@@ -144,6 +144,34 @@ class ActionPointsServiceImplTest {
     }
 
     @Test
+    void temporaryActionPointsBonusIsAddedOnTopOfTheFixedCounter() {
+        Character character = Character.builder()
+                .player(new Player())
+                .name("Test")
+                .race(new Human())
+                .actionProfile(ActionProfile.REFLEXOS_RAPIDOS)
+                .egos(CharacterEgos.builder().build())
+                .attributes(CharacterAttributes.builder().build())
+                .temporaryActionPointsBonus(2)
+                .build();
+        assertEquals(5, actionPointsService.getMaxActionPoints(character, 0));
+    }
+
+    @Test
+    void temporaryActionPointsMalusReducesTheAvailablePA() {
+        Character character = Character.builder()
+                .player(new Player())
+                .name("Test")
+                .race(new Human())
+                .actionProfile(ActionProfile.REFLEXOS_RAPIDOS)
+                .egos(CharacterEgos.builder().build())
+                .attributes(CharacterAttributes.builder().build())
+                .temporaryActionPointsBonus(-2)
+                .build();
+        assertEquals(1, actionPointsService.getMaxActionPoints(character, 0));
+    }
+
+    @Test
     void actionPointsModifierBonusIsAdded() {
         Character character = characterWithProfile(ActionProfile.REFLEXOS_RAPIDOS, new ActionPointsBonusAbility());
         assertEquals(4, actionPointsService.getMaxActionPoints(character, 0));
