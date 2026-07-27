@@ -2,6 +2,8 @@ package org.aventyrs.core.character.services;
 
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.CharacterAttributes;
+import org.aventyrs.core.character.CharacterEgos;
+import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.character.Human;
 import org.aventyrs.core.character.Race;
 import org.aventyrs.core.sheet.DlcRuleset;
@@ -14,7 +16,9 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CharacterCreationServiceTest {
 
@@ -133,5 +137,37 @@ class CharacterCreationServiceTest {
 
         assertThrows(IllegalOperationException.class, () -> creationService.allocateAttributes(
                 choosableBonusRace, allocation, Map.of()));
+    }
+
+    @Test
+    void allEgosStartAtTwoAndTheExtraPointRaisesTheChosenOneToThree() throws IllegalOperationException {
+        CharacterEgos egos = creationService.allocateEgos(Map.of(EgoDomain.AUTOCONTROLE, 1));
+
+        assertEquals(3, egos.getAutocontrole().getBase());
+        assertEquals(2, egos.getRecursos().getBase());
+        assertEquals(2, egos.getSorte().getBase());
+        assertEquals(2, egos.getIniciativa().getBase());
+    }
+
+    @Test
+    void rejectsEgoAllocationThatDoesNotSpendExactlyTheExtraPoint() {
+        assertThrows(IllegalOperationException.class, () -> creationService.allocateEgos(Map.of()));
+        assertThrows(IllegalOperationException.class,
+                () -> creationService.allocateEgos(Map.of(EgoDomain.SORTE, 2)));
+    }
+
+    @Test
+    void rejectsNegativeEgoPointAllocation() {
+        assertThrows(IllegalOperationException.class,
+                () -> creationService.allocateEgos(Map.of(EgoDomain.SORTE, 2, EgoDomain.RECURSOS, -1)));
+    }
+
+    @Test
+    void autocontroleAdvantageIsAvailableOnlyWhenTheExtraPointWentToAutocontrole() throws IllegalOperationException {
+        CharacterEgos withAutocontroleBonus = creationService.allocateEgos(Map.of(EgoDomain.AUTOCONTROLE, 1));
+        CharacterEgos withoutAutocontroleBonus = creationService.allocateEgos(Map.of(EgoDomain.SORTE, 1));
+
+        assertTrue(creationService.isAutocontroleAdvantageAvailable(withAutocontroleBonus));
+        assertFalse(creationService.isAutocontroleAdvantageAvailable(withoutAutocontroleBonus));
     }
 }

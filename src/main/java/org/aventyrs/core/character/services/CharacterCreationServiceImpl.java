@@ -3,12 +3,16 @@ package org.aventyrs.core.character.services;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.AttributeValue;
 import org.aventyrs.core.character.CharacterAttributes;
+import org.aventyrs.core.character.CharacterEgos;
+import org.aventyrs.core.character.EgoDomain;
+import org.aventyrs.core.character.EgoValue;
 import org.aventyrs.core.character.Race;
 import org.aventyrs.core.sheet.IllegalOperationException;
 
 import java.util.Map;
 
 import static org.aventyrs.core.util.TranslatableMessages.INVALID_ATTRIBUTE_POINT_ALLOCATION;
+import static org.aventyrs.core.util.TranslatableMessages.INVALID_EGO_POINT_ALLOCATION;
 import static org.aventyrs.core.util.TranslatableMessages.INVALID_RACIAL_BONUS_ALLOCATION;
 
 public class CharacterCreationServiceImpl implements CharacterCreationService {
@@ -66,6 +70,46 @@ public class CharacterCreationServiceImpl implements CharacterCreationService {
             case INSTINCT -> builder.instinct(value);
             case GNOSE -> builder.gnose(value);
             case CHARISMA -> builder.charisma(value);
+        }
+    }
+
+    @Override
+    public CharacterEgos allocateEgos(final Map<EgoDomain, Integer> extraPointAllocation) throws IllegalOperationException {
+        validateEgoPointAllocation(extraPointAllocation);
+
+        final CharacterEgos.CharacterEgosBuilder builder = CharacterEgos.builder();
+        for (EgoDomain domain : EgoDomain.values()) {
+            int base = STARTING_EGO_POINTS + extraPointAllocation.getOrDefault(domain, 0);
+            assignEgo(builder, domain, EgoValue.builder().base(base).build());
+        }
+        return builder.build();
+    }
+
+    @Override
+    public boolean isAutocontroleAdvantageAvailable(final CharacterEgos egos) {
+        return egos.getAutocontrole().getBase() >= AUTOCONTROLE_ADVANTAGE_MIN_BASE;
+    }
+
+    private void validateEgoPointAllocation(final Map<EgoDomain, Integer> extraPointAllocation) throws IllegalOperationException {
+        int totalAssigned = 0;
+        for (EgoDomain domain : EgoDomain.values()) {
+            int assigned = extraPointAllocation.getOrDefault(domain, 0);
+            if (assigned < 0) {
+                throw new IllegalOperationException(INVALID_EGO_POINT_ALLOCATION);
+            }
+            totalAssigned += assigned;
+        }
+        if (totalAssigned != EXTRA_EGO_POINTS) {
+            throw new IllegalOperationException(INVALID_EGO_POINT_ALLOCATION);
+        }
+    }
+
+    private void assignEgo(final CharacterEgos.CharacterEgosBuilder builder, final EgoDomain domain, final EgoValue value) {
+        switch (domain) {
+            case AUTOCONTROLE -> builder.autocontrole(value);
+            case RECURSOS -> builder.recursos(value);
+            case SORTE -> builder.sorte(value);
+            case INICIATIVA -> builder.iniciativa(value);
         }
     }
 }

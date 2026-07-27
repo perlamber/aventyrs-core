@@ -7,4 +7,5 @@ public class TranslatableMessages {
     public static final String ATTRIBUTE_BASE_AT_MAXIMUM = "ATTRIBUTE_BASE_AT_MAXIMUM";
     public static final String ATTRIBUTE_ABILITY_ALREADY_CHOSEN = "ATTRIBUTE_ABILITY_ALREADY_CHOSEN";
     public static final String NO_ATTRIBUTE_ABILITY_SLOT_AVAILABLE = "NO_ATTRIBUTE_ABILITY_SLOT_AVAILABLE";
+    public static final String INVALID_EGO_POINT_ALLOCATION = "INVALID_EGO_POINT_ALLOCATION";
 }

@@ -4,6 +4,7 @@ import org.aventyrs.core.ability.AttributeAbility;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterAttributes;
+import org.aventyrs.core.character.CharacterEgos;
 import org.aventyrs.core.character.Human;
 import org.aventyrs.core.modifier.Modifier;
 import org.aventyrs.core.modifier.ModifierType;
@@ -109,6 +110,7 @@ class ActionPointsServiceImplTest {
                 .name("Test")
                 .race(new Human())
                 .actionProfile(profile)
+                .egos(CharacterEgos.builder().build())
                 .attributes(CharacterAttributes.builder().build());
         for (AttributeAbility ability : abilities) {
             builder.attributeAbility(ability);
@@ -116,11 +118,29 @@ class ActionPointsServiceImplTest {
         return builder.build();
     }
 
+    private Character characterWithFixedActionPoints(int actionPoints, ActionProfile profile) {
+        return Character.builder()
+                .player(new Player())
+                .name("Test")
+                .race(new Human())
+                .actionProfile(profile)
+                .actionPoints(actionPoints)
+                .egos(CharacterEgos.builder().build())
+                .attributes(CharacterAttributes.builder().build())
+                .build();
+    }
+
     @Test
     void defaultMaxActionPointsIsThreeOnAnyTurnForANeutralProfile() {
         Character character = characterWithProfile(ActionProfile.REFLEXOS_RAPIDOS);
         assertEquals(3, actionPointsService.getMaxActionPoints(character, 0));
         assertEquals(3, actionPointsService.getMaxActionPoints(character, 5));
+    }
+
+    @Test
+    void maxActionPointsUsesTheCharactersOwnFixedCounterAsBaseline() {
+        Character character = characterWithFixedActionPoints(5, ActionProfile.REFLEXOS_RAPIDOS);
+        assertEquals(5, actionPointsService.getMaxActionPoints(character, 0));
     }
 
     @Test

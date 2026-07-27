@@ -1,23 +1,21 @@
 package org.aventyrs.core.sheet;
 
-import org.aventyrs.core.action.ActionProfile;
 import org.aventyrs.core.character.Character;
-import org.aventyrs.core.character.CharacterAttributes;
-import org.aventyrs.core.character.Human;
+import org.aventyrs.core.character.fixture.CharacterFixture;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class CharacterSheetTest {
 
+    @BeforeEach
+    public void setup() {
+        CharacterFixture.loadTemplates();
+    }
+
     private CharacterSheet newSheet() {
-        Character character = Character.builder()
-                .player(new Player())
-                .name("Test")
-                .race(new Human())
-                .actionProfile(ActionProfile.REFLEXOS_RAPIDOS)
-                .attributes(CharacterAttributes.builder().build())
-                .build();
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK).build();
         return CharacterSheet.of(character, new Player());
     }
 
