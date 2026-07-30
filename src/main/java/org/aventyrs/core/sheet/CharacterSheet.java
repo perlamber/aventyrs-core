@@ -1,6 +1,7 @@
 package org.aventyrs.core.sheet;
 
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.character.CharacterStatus;
 import org.aventyrs.core.character.EgoDomain;
 
 import java.math.BigDecimal;
@@ -15,7 +16,7 @@ import static org.aventyrs.core.util.TranslatableMessages.NOT_ENOUGH_EXPERIENCE;
 
 @RequiredArgsConstructor(staticName="of")
 @Getter
-public class CharacterSheet {
+public class CharacterSheet implements Interactable<CharacterSheet> {
     @NonNull
     private Character character;
     @NonNull
@@ -188,4 +189,11 @@ public class CharacterSheet {
     {
         return temporaryEgoPoints.get(domain).spend(amount);
     }
+
+    @Override
+    public InteractionResult receiveInteraction(Interaction<CharacterSheet> interaction)
+    {
+        return interaction.applyTo(this);
+    }
+
 }

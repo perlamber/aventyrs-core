@@ -1,6 +1,9 @@
 package org.aventyrs.core.sheet;
 
+import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterStatus;
+import org.aventyrs.core.character.fixture.CharacterFixture;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -8,19 +11,16 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 
 class InteractionResultTest {
 
+    @BeforeEach
+    void setup() {
+        CharacterFixture.loadTemplates();
+    }
+
     @Test
     void builderAssignsTheNextInteractableAndResultStatus() {
-        Interactable next = new Interactable() {
-            @Override
-            public CharacterStatus receiveInteraction(Interaction interaction) {
-                return CharacterStatus.CLEAN;
-            }
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK).build();
+        CharacterSheet next = CharacterSheet.of(character, new Player());
 
-            @Override
-            public CharacterStatus receiveInteraction() {
-                return CharacterStatus.CLEAN;
-            }
-        };
         InteractionResult result = InteractionResult.builder()
                 .nextInteractable(next)
                 .resultStatus(CharacterStatus.HIGH_LIFE)

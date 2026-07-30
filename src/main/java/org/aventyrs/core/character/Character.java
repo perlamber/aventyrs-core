@@ -12,18 +12,18 @@ import org.aventyrs.core.action.ActionPointsService;
 import org.aventyrs.core.action.ActionProfile;
 import org.aventyrs.core.ego.AutocontroleAdvantage;
 import org.aventyrs.core.sheet.IllegalOperationException;
-import org.aventyrs.core.sheet.Interactable;
-import org.aventyrs.core.sheet.Interaction;
 import org.aventyrs.core.sheet.Player;
+import org.aventyrs.core.skill.SkillType;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.aventyrs.core.util.TranslatableMessages.NOT_ENOUGH_EXPERIENCE;
 
 @Builder(toBuilder = true) @Getter
 @AllArgsConstructor(access = AccessLevel.PACKAGE)
 @NoArgsConstructor(access = AccessLevel.PACKAGE)
-public class Character implements Interactable {
+public class Character {
     @NonNull
     protected Player player;
 
@@ -47,9 +47,10 @@ public class Character implements Interactable {
      */
     protected AutocontroleAdvantage autocontroleAdvantage;
 
+    /** Trained Perícias, keyed by {@link SkillType} for O(1) lookup instead of filtering a list. */
     @NonNull
     @Singular
-    protected List<CharacterSkill> skills;
+    protected Map<SkillType, CharacterSkill> skills;
 
     @NonNull
     @Singular
@@ -83,19 +84,4 @@ public class Character implements Interactable {
 
     @Builder.Default
     CharacterStatus status = CharacterStatus.CLEAN;
-
-    //TODO implement
-    @Override
-    public CharacterStatus receiveInteraction(Interaction interaction) {
-        return null;
-    }
-
-    //TODO implement
-    @Override
-    public CharacterStatus receiveInteraction() {
-        return null;
-    }
-
-
-
 }

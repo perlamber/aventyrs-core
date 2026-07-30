@@ -14,6 +14,7 @@ import org.aventyrs.core.sheet.Player;
 import org.aventyrs.core.util.SimpleFixture;
 
 import java.util.List;
+import java.util.Map;
 
 public class CharacterFixture extends SimpleFixture {
 
@@ -38,7 +39,7 @@ public class CharacterFixture extends SimpleFixture {
                 this.add("attributes", CharacterAttributes.builder().build());
                 this.add("egos", CharacterEgos.builder().build());
                 this.add("autocontroleAdvantage", null);
-                this.add("skills", List.of());
+                this.add("skills", Map.of());
                 this.add("attributeAbilities", List.of());
                 this.add("actionProfile", ActionProfile.REFLEXOS_RAPIDOS);
                 this.add("actionPoints", ActionPointsService.DEFAULT_ACTION_POINTS);
