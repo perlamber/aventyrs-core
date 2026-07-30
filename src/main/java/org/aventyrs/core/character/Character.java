@@ -13,6 +13,7 @@ import org.aventyrs.core.action.ActionProfile;
 import org.aventyrs.core.ego.AutocontroleAdvantage;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.Player;
+import org.aventyrs.core.skill.SkillCompetencyAbility;
 import org.aventyrs.core.skill.SkillType;
 
 import java.util.List;
@@ -55,6 +56,11 @@ public class Character {
     @NonNull
     @Singular
     protected List<AttributeAbility> attributeAbilities;
+
+    /** Habilidades de Competência acquired from trained Perícias (e.g. ArtesCompetencyAbility). */
+    @NonNull
+    @Singular
+    protected List<SkillCompetencyAbility> skillCompetencyAbilities;
 
     @NonNull
     protected ActionProfile actionProfile;

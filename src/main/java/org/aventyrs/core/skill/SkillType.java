@@ -5,5 +5,6 @@ package org.aventyrs.core.skill;
  * of filtering a list. One constant per concrete {@link Skill} implementation.
  */
 public enum SkillType {
-    ATTENTION
+    ATTENTION,
+    ARTES
 }
