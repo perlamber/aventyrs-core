@@ -5,6 +5,7 @@ import br.com.six2six.fixturefactory.Rule;
 import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.skill.Artes;
 import org.aventyrs.core.skill.AtaqueADistancia;
+import org.aventyrs.core.skill.AtaqueCorpoACorpo;
 import org.aventyrs.core.skill.Atletismo;
 import org.aventyrs.core.skill.Attention;
 import org.aventyrs.core.skill.DirigirECavalgar;
@@ -20,6 +21,7 @@ public class CharacterSkillFixture extends SimpleFixture {
     public static final String DIRIGIR_E_CAVALGAR_1 = "DirigirECavalgar1";
     public static final String DOMINIO_DO_MANA_1 = "DominioDoMana1";
     public static final String ATAQUE_A_DISTANCIA_1 = "AtaqueADistancia1";
+    public static final String ATAQUE_CORPO_A_CORPO_1 = "AtaqueCorpoACorpo1";
 
     public static void loadTemplates() {
         loadBasicSkillTemplates();
@@ -54,6 +56,11 @@ public class CharacterSkillFixture extends SimpleFixture {
         Fixture.of(CharacterSkill.class).addTemplate(ATAQUE_A_DISTANCIA_1, new Rule() {
             {
                 this.add("skill", new AtaqueADistancia());
+            }
+        });
+        Fixture.of(CharacterSkill.class).addTemplate(ATAQUE_CORPO_A_CORPO_1, new Rule() {
+            {
+                this.add("skill", new AtaqueCorpoACorpo());
             }
         });
     }

@@ -5,8 +5,8 @@ import org.aventyrs.core.sheet.Interaction;
 
 /**
  * Orchestrates casting a Magia, which per the rules always involves two separate rolls: the
- * Perícia that actually delivers the spell (e.g. Ataque à Distância for a ranged spell, a
- * melee Perícia for a touch spell) compared against the target's own GD, followed by a
+ * Perícia that actually delivers the spell (e.g. Ataque à Distância for a ranged spell,
+ * Ataque Corpo-a-Corpo for a Toque spell) compared against the target's own GD, followed by a
  * Domínio do Mana roll compared against the Magia's own GD.
  *
  * <p>TODO: no {@code Magia} entity/list exists yet, so {@code castSpell} only computes both

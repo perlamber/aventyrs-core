@@ -19,7 +19,8 @@ public enum SkillType {
     ATLETISMO(AtletismoExcellency.class),
     DIRIGIR_E_CAVALGAR(DirigirECavalgarExcellency.class),
     DOMINIO_DO_MANA(DominioDoManaExcellency.class),
-    ATAQUE_A_DISTANCIA(AtaqueADistanciaExcellency.class);
+    ATAQUE_A_DISTANCIA(AtaqueADistanciaExcellency.class),
+    ATAQUE_CORPO_A_CORPO(AtaqueCorpoACorpoExcellency.class);
 
     private final Class<? extends SkillExcellency> excellencyClass;
 }

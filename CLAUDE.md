@@ -146,9 +146,9 @@ concrete ability/excellency should affect it (e.g. `AttentionExcellency.FOCADO` 
 ## Casting a Magia is two separate rolls — `org.aventyrs.core.magic.SpellCastingService`
 
 Casting a Magia with a rolled effect always involves **two** rolls, not one: whichever
-Perícia actually delivers the spell (e.g. `AtaqueADistanciaInteraction` for a ranged spell, a
-melee Perícia's Interaction for a touch spell) rolled against the **target's** GD, followed by
-a `DominioDoManaInteraction` roll against the **Magia's own** GD. `SpellCastingService
+Perícia actually delivers the spell (e.g. `AtaqueADistanciaInteraction` for a ranged spell,
+`AtaqueCorpoACorpoInteraction` for a Toque spell) rolled against the **target's** GD, followed
+by a `DominioDoManaInteraction` roll against the **Magia's own** GD. `SpellCastingService
 .castSpell(CharacterSheet, Interaction<CharacterSheet> deliveryInteraction)` orchestrates
 this: it rolls the given delivery Interaction, then rolls Domínio do Mana, and returns both
 `InteractionResult`s in a `SpellCastingResult` — it never picks the delivery Interaction
