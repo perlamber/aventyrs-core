@@ -35,9 +35,9 @@ public enum PersuasaoCompetencyAbility implements SkillCompetencyAbility {
     // TODO: Vantagem scoped to the *target's* gender/attraction toward the character — this
     // depends on a property of the specific other character being rolled against, not
     // something the acting character's own abilities can resolve in isolation (same kind of
-    // gap as the NPC-disposition systems ArtesCompetencyAbility.ANIMADOR_DE_TAVERNAS/
-    // ESPALHAR_REPUTACAO and EmpatiaSelvagemExcellency.LENDA need); no such
-    // cross-character-disposition system exists yet.
+    // gap as the NPC-disposition systems ArtesCompetencyAbility.ESPALHAR_REPUTACAO and
+    // EmpatiaSelvagemExcellency.LENDA need); no such cross-character-disposition system
+    // exists yet.
     SEDUTOR("Vantagens em rolagens desta Perícia roladas contra personagens do sexo " +
             "oposto, ou contra quaisquer personagens que possam se sentir atraídos por " +
             "você."),

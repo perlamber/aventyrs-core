@@ -23,11 +23,10 @@ public enum ProfissaoExcellency implements SkillExcellency {
         }
     },
 
-    // TODO: replaces (not adds to) FOCADO's -1PE with -3PE, still floored at 1PE — the rules
-    // text reads as a new total ("muda para -3PE"), not an additional -3PE on top of
-    // Focado's -1PE, unlike the additive Excellency tiers seen elsewhere (e.g.
-    // ArtesExcellency.LENDA) — blocked on the same missing Item/Equipamento/PE-cost system
-    // as FOCADO.
+    // TODO: -2PE more on top of Focado's -1PE (totaling -3PE), still floored at 1PE — per
+    // this codebase's convention, "muda para -3PE" is the cumulative total across tiers, not
+    // a standalone override (see ArtesExcellency.LENDA, whose old/new rules text confirms
+    // this reading) — blocked on the same missing Item/Equipamento/PE-cost system as FOCADO.
     LENDA(ExcellencyTier.LENDA, "Redução dos Custos de criação e Compras de Equipamentos " +
             "muda para -3PE, mas ainda não reduzem os custos para menos que 1PE.");
 

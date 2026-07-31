@@ -34,8 +34,7 @@ public enum EmpatiaSelvagemExcellency implements SkillExcellency {
 
     // TODO: irrational creatures always treat the character as neutral or favorable — this
     // is an NPC-disposition override, not a roll bonus, and no NPC-disposition/reputation
-    // system exists yet (same gap as ArtesCompetencyAbility.ANIMADOR_DE_TAVERNAS /
-    // ESPALHAR_REPUTACAO).
+    // system exists yet (same gap as ArtesCompetencyAbility.ESPALHAR_REPUTACAO).
     LENDA(ExcellencyTier.LENDA, "As criaturas irracionais não te veem como ameaças e são " +
             "sempre neutros ou favoráveis a sua presença.");
 

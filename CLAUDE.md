@@ -45,10 +45,12 @@ pieces — don't stop at just the `Skill` class:
 
    `ArtesCompetencyAbility` is the reference example for this — e.g.:
    ```java
-   // TODO: activated ability (Artes roll vs GD Médio) granting nearby allies (Distância
-   // Média), but not the user, +1 on Perícia rolls for 1 Round, scaling +1 per 5 points
-   // over GD Médio — no roll-resolution-vs-DifficultyLevel engine or ally-range system
-   // exists yet.
+   // TODO: motivates allies, granting them (not the user) a Perícia-roll bonus for 1
+   // Rodada, extending to 2/3 Rodadas at 5/10 Graduações — but the bonus itself is a
+   // lookup by which GD tier the Artes roll hit (Fácil +1 ... Milagre +5), not a flat
+   // value. Needs a roll-resolution-vs-DifficultyLevel engine (to know which GD tier was
+   // reached, then look up its bonus), ally-targeting, and Rodada-scoped duration
+   // tracking, none of which exist yet.
    DOM_BARDICO("..."),
    ```
    Don't invent the missing system just to make the TODO go away — this codebase's
@@ -81,9 +83,12 @@ pieces — don't stop at just the `Skill` class:
    `getDescription()`). **Every** skill uses the same three universal
    `ExcellencyTier`s — `FOCADO` (graduation 3), `PRODIGIO` (7), `LENDA` (10) — only the
    bonus content per tier differs per skill. Bonuses at different tiers are additive, never
-   overriding — if a later tier's rules text reads like "changes to +N", model it as the
-   *delta* over the earlier tier's value, not the new total (see `ArtesExcellency.LENDA`,
-   which is worth +3 on top of `FOCADO`'s +2, totaling +5, rather than being worth +5 itself).
+   overriding — if a later tier's rules text reads like "changes to +N" or "muda para +N"
+   (regardless of the exact wording — this phrasing recurs across skills and always means the
+   same thing), model it as the *delta* over the earlier tier's value, not the new total (see
+   `ArtesExcellency.LENDA`, which is worth +3 on top of `FOCADO`'s +2, totaling +5, rather than
+   being worth +5 itself — confirmed by Artes' own rules text changing from an explicit "+3
+   adicional, totalizando +5" to "muda para +5" with the *same* numbers, across a revision).
 
    Same TODO discipline as Habilidades de Competência applies: if a tier's bonus needs a
    system that doesn't exist yet (e.g. Fama Positiva/Negativa now exist on `CharacterSheet`,
