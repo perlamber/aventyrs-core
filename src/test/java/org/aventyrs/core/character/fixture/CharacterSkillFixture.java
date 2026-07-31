@@ -13,6 +13,7 @@ import org.aventyrs.core.skill.DominioDoMana;
 import org.aventyrs.core.skill.EmpatiaSelvagem;
 import org.aventyrs.core.skill.EsquivaEAparar;
 import org.aventyrs.core.skill.Furtividade;
+import org.aventyrs.core.skill.MedicinaECura;
 import org.aventyrs.core.skill.SkillGraduation;
 import org.aventyrs.core.util.SimpleFixture;
 
@@ -28,6 +29,7 @@ public class CharacterSkillFixture extends SimpleFixture {
     public static final String ESQUIVA_E_APARAR_1 = "EsquivaEAparar1";
     public static final String EMPATIA_SELVAGEM_1 = "EmpatiaSelvagem1";
     public static final String FURTIVIDADE_1 = "Furtividade1";
+    public static final String MEDICINA_E_CURA_1 = "MedicinaECura1";
 
     public static void loadTemplates() {
         loadBasicSkillTemplates();
@@ -82,6 +84,11 @@ public class CharacterSkillFixture extends SimpleFixture {
         Fixture.of(CharacterSkill.class).addTemplate(FURTIVIDADE_1, new Rule() {
             {
                 this.add("skill", new Furtividade());
+            }
+        });
+        Fixture.of(CharacterSkill.class).addTemplate(MEDICINA_E_CURA_1, new Rule() {
+            {
+                this.add("skill", new MedicinaECura());
             }
         });
     }

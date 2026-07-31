@@ -23,7 +23,8 @@ public enum SkillType {
     ATAQUE_CORPO_A_CORPO(AtaqueCorpoACorpoExcellency.class),
     ESQUIVA_E_APARAR(EsquivaEApararExcellency.class),
     EMPATIA_SELVAGEM(EmpatiaSelvagemExcellency.class),
-    FURTIVIDADE(FurtividadeExcellency.class);
+    FURTIVIDADE(FurtividadeExcellency.class),
+    MEDICINA_E_CURA(MedicinaECuraExcellency.class);
 
     private final Class<? extends SkillExcellency> excellencyClass;
 }
