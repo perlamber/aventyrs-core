@@ -6,6 +6,7 @@ import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.skill.Artes;
 import org.aventyrs.core.skill.Atletismo;
 import org.aventyrs.core.skill.Attention;
+import org.aventyrs.core.skill.DirigirECavalgar;
 import org.aventyrs.core.skill.SkillGraduation;
 import org.aventyrs.core.util.SimpleFixture;
 
@@ -14,6 +15,7 @@ public class CharacterSkillFixture extends SimpleFixture {
     public static final String ATTENTION_1 = "Attention1";
     public static final String ARTES_1 = "Artes1";
     public static final String ATLETISMO_1 = "Atletismo1";
+    public static final String DIRIGIR_E_CAVALGAR_1 = "DirigirECavalgar1";
 
     public static void loadTemplates() {
         loadBasicSkillTemplates();
@@ -33,6 +35,11 @@ public class CharacterSkillFixture extends SimpleFixture {
         Fixture.of(CharacterSkill.class).addTemplate(ATLETISMO_1, new Rule() {
             {
                 this.add("skill", new Atletismo());
+            }
+        });
+        Fixture.of(CharacterSkill.class).addTemplate(DIRIGIR_E_CAVALGAR_1, new Rule() {
+            {
+                this.add("skill", new DirigirECavalgar());
             }
         });
     }

@@ -16,7 +16,8 @@ import lombok.Getter;
 public enum SkillType {
     ATTENTION(AttentionExcellency.class),
     ARTES(ArtesExcellency.class),
-    ATLETISMO(AtletismoExcellency.class);
+    ATLETISMO(AtletismoExcellency.class),
+    DIRIGIR_E_CAVALGAR(DirigirECavalgarExcellency.class);
 
     private final Class<? extends SkillExcellency> excellencyClass;
 }
