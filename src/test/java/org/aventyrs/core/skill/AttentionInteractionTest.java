@@ -46,6 +46,7 @@ class AttentionInteractionTest {
 
         assertEquals(3, result.getSkillRollBonus());
         assertEquals(CharacterStatus.CLEAN, result.getResultStatus());
+        assertEquals(0, result.getDifficultyReduction());
     }
 
     @Test
@@ -55,6 +56,18 @@ class AttentionInteractionTest {
         InteractionResult result = attentionInteraction.applyTo(sheet);
 
         assertEquals(1, result.getSkillRollBonus());
+        assertEquals(0, result.getDifficultyReduction());
+    }
+
+    @Test
+    void applyToReflectsProdigioDifficultyReductionOnceUnlocked() {
+        CharacterSkill attentionSkill = CharacterSkillFixture.blank(CharacterSkillFixture.ATTENTION_1).build();
+        attentionSkill.increaseGraduation(7);
+        CharacterSheet sheet = sheetWithInstinctAndSkill(2, attentionSkill);
+
+        InteractionResult result = attentionInteraction.applyTo(sheet);
+
+        assertEquals(1, result.getDifficultyReduction());
     }
 
     @Test

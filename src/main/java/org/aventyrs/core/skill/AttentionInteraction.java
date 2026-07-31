@@ -5,7 +5,6 @@ import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.character.services.CharacterSkillService;
 import org.aventyrs.core.character.services.CharacterSkillServiceImpl;
 import org.aventyrs.core.sheet.CharacterSheet;
-import org.aventyrs.core.sheet.Interactable;
 import org.aventyrs.core.sheet.Interaction;
 import org.aventyrs.core.sheet.InteractionResult;
 
@@ -31,13 +30,15 @@ public class AttentionInteraction implements Interaction<CharacterSheet> {
 
     @Override
     public InteractionResult applyTo(final CharacterSheet target) {
-        
         Character character = target.getCharacter();
         CharacterSkill attentionSkill = findCharacterSkill(character);
         int bonus = characterSkillService.getValueForRoll(attentionSkill, character.getAttributes(), character.getRace());
+        int graduationValue = attentionSkill.getGraduation().getGraduationValue();
+        int difficultyReduction = SkillExcellency.totalDifficultyReduction(AttentionExcellency.class, graduationValue);
         return InteractionResult.builder()
                 .resultStatus(character.getStatus())
                 .skillRollBonus(bonus)
+                .difficultyReduction(difficultyReduction)
                 .build();
     }
 
