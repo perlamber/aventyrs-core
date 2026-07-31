@@ -10,13 +10,15 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum MedicinaECuraCompetencyAbility implements SkillCompetencyAbility {
 
-    // TODO: -1PA for this Perícia's own uses specifically, conditioned on holding a kit de
-    // primeiros socorros — two gaps block this: (1) no Equipamento/inventory tracking exists
-    // on Character to know what's currently in hand, and (2) ActionPointsServiceImpl
-    // .getSkillRollCost is a single character-wide PA cost, not scoped per-Perícia, so even
-    // with an item system there's no hook for a Medicina-e-Cura-only discount today.
-    BOM_DOUTOR("Se tiver um kit de primeiros socorros em mãos, usos desta perícia exigem " +
-            "1PA a menos."),
+    // TODO: once per Rodada, -1PA for this Perícia's own uses specifically, conditioned on
+    // holding a kit de primeiros socorros — three gaps block this: (1) no
+    // Equipamento/inventory tracking exists on Character to know what's currently in hand,
+    // (2) ActionPointsServiceImpl.getSkillRollCost is a single character-wide PA cost, not
+    // scoped per-Perícia, so even with an item system there's no hook for a
+    // Medicina-e-Cura-only discount today, and (3) no once-per-Rodada usage-limiting
+    // mechanism exists either.
+    BOM_DOUTOR("Se tiver um kit de primeiros socorros em mãos, uma vez por Rodada os usos " +
+            "desta Perícia têm o Tempo de Ação reduzido em -1PA."),
 
     // TODO: an activated ability rolled against GD Média during another creature's Descanso;
     // on success the target recovers 1d6 additional PV/PM/PD at the end of that Descanso —
@@ -45,26 +47,23 @@ public enum MedicinaECuraCompetencyAbility implements SkillCompetencyAbility {
             "tenha falhado. Esta Habilidade possui a Corrente de Efeitos – Milagre Maior: O " +
             "personagem alvo também recupera PD e PM."),
 
-    // TODO: -1PA for this Perícia's own uses, limited to once per day and renewed after a
-    // Descanso Longo, with more uses unlocked at the 4th, 7th and 10th graduation — blocked
-    // on the same per-Perícia PA-cost-scoping gap as BOM_DOUTOR, plus a
-    // once-per-day/renews-on-Descanso-Longo usage-limiting mechanism (same shape as
-    // FurtividadeExcellency.FOCADO/LENDA's once/three-times-per-Cena limiter, just scoped to
-    // a Descanso instead of a Cena) that doesn't exist yet.
-    SOCORRO_IMEDIATO("A cada dia você efetuar rolagens desta Perícia com Tempo de Ação " +
-            "reduzido em -1PA, este benefício é renovado após passar por um Descanso Longo. " +
-            "Você ganhar usos adicionais deste benefício na 4ª, 7ª e 10ª Graduação."),
+    // TODO: once per day (renewed after a Descanso Longo, with more uses unlocked at the
+    // 5th and 10th graduation), lets this Perícia's roll be made as an Ação Livre instead of
+    // costing its normal PA — a different mechanic than a PA discount: there's no way to
+    // mark a specific skill use as consuming an Ação Livre instead of going through
+    // ActionPointsServiceImpl.getSkillRollCost at all, nor a per-day/renews-on-Descanso-Longo
+    // usage-limiting mechanism (same shape as FurtividadeExcellency.FOCADO/LENDA's
+    // once/three-times-per-Cena limiter, just scoped to a Descanso instead of a Cena),
+    // neither of which exist yet.
+    SOCORRO_IMEDIATO("A cada dia você efetuar rolagens desta Perícia como Ação Livre, este " +
+            "benefício é renovado após passar por um Descanso Longo. Você ganhar usos " +
+            "adicionais deste benefício na 5ª e 10ª Graduação."),
 
-    // TODO: +1 Rodada to potions'/antidotes' Duração, then +1 more at the 7th and 10th
+    // TODO: +1 Rodada to potions'/antidotes' Duração, then +1 more at the 5th and 10th
     // graduation — no potion/antidote entity or duration-tracking system exists yet (same
-    // gap as DominioDoManaCompetencyAbility.CONJURACAO_DURADOURA). Requires the Alquimia
-    // Especialização *and* 4 Graduações to acquire — both unenforced (this is the reference
-    // example for that convention), since no eligibility-validation service exists for
-    // SkillCompetencyAbility (and Especialização is a plain String on CharacterSkill, not
-    // independently validatable either).
+    // gap as DominioDoManaCompetencyAbility.CONJURACAO_DURADOURA).
     ALQUIMIA_MAIOR("Suas poções e antídotos tem a Duração de efeito aumentada em +1 " +
-            "Rodada, então em +1 Rodada na 7ª e 10ª Graduação. Esta Habilidade requer a " +
-            "Especialização Alquimia e 4 Graduações nesta Perícia.");
+            "Rodada, então em +1 Rodada na 5ª e 10ª Graduação.");
 
     private final String description;
 

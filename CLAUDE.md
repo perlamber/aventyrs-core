@@ -38,12 +38,15 @@ pieces — don't stop at just the `Skill` class:
    If an ability's acquisition is rules-gated on something like "Requer N Graduações", don't
    build a validation/eligibility service for it — none exists yet for
    `SkillCompetencyAbility` (unlike `AttributeAbilityService` for `AttributeAbility`). Just
-   document the unenforced prerequisite in a comment on the constant (see
-   `MedicinaECuraCompetencyAbility.ALQUIMIA_MAIOR` for a current example — note that
-   `EsquivaEApararCompetencyAbility.RECUO_RAPIDO` used to be this section's example, but a
-   rules revision dropped its "Requer N Graduações" clause entirely, so check this citation
-   again if `ALQUIMIA_MAIOR` is ever revised too), implementing its actual numeric effect for
-   real whenever one is expressible today.
+   document the unenforced prerequisite in a comment on the constant, implementing its actual
+   numeric effect for real whenever one is expressible today. No ability currently has an
+   explicit "Requer N Graduações"-style clause in its own rules text to point to as a live
+   example — `AtletismoCompetencyAbility.ATLETA_VERSATIL`,
+   `EsquivaEApararCompetencyAbility.RECUO_RAPIDO`, and
+   `MedicinaECuraCompetencyAbility.ALQUIMIA_MAIOR` each held that role in turn, and each lost
+   the clause (or was removed outright) in its own later revision. Don't take this as license
+   to skip documenting the next one that shows up — just don't expect to find a working
+   example in the codebase to copy from right now.
 
    **For every ability whose mechanic depends on a system that doesn't exist yet**
    (a roll-vs-`DifficultyLevel` resolution engine, Vantagem/Desvantagem, ally-range effects,

@@ -10,8 +10,9 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum MedicinaECuraSpecialization {
-    ALQUIMIA("Criação de Venenos, Antídotos e Porções."),
-    HERBANARIO("Você é especialista em lidar doenças e venenos mundanos."),
+    ALQUIMIA("Criação de Venenos e Poções."),
+    HERBANARIO("Você é especialista em lidar doenças e venenos mundanos e capaz de criar " +
+            "Antídotos e Remédios."),
     XAMANISMO("Você sabe como identificar e interromper doenças mágicas e maldições."),
     HOSPITALARIO("Primeiros-socorros e curas de ferimentos, comuns e de batalha."),
     EXORCISTA("Habilidade de identificar e interromper possessões.");
