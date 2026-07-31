@@ -24,8 +24,9 @@ public enum ArtesCompetencyAbility implements SkillCompetencyAbility {
             "Fácil - Bônus de +1; GD Médio - Bônus de +2; GD Muito Difícil - Bônus de +3; " +
             "GD Improvável - Bônus de +4; GD Milagre - Bônus de +5."),
 
-    // TODO: lets Artes substitute for Conhecimentos, with shallower results — no
-    // Conhecimentos Perícia or Perícia-substitution mechanism exists yet.
+    // TODO: lets Artes substitute for the now-real Conhecimentos Perícia, with shallower
+    // results — no Perícia-substitution mechanism exists yet (same gap as
+    // GnoseAbility.PERITO_TEORICO).
     DOMINIO_CULTURAL("É possível utilizar rolagens de Artes ao invés de Conhecimentos, mas " +
             "informações obtidas destas formas são superficiais."),
 

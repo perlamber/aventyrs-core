@@ -26,7 +26,8 @@ public enum SkillType {
     FURTIVIDADE(FurtividadeExcellency.class),
     MEDICINA_E_CURA(MedicinaECuraExcellency.class),
     PERSUASAO(PersuasaoExcellency.class),
-    PROFISSAO(ProfissaoExcellency.class);
+    PROFISSAO(ProfissaoExcellency.class),
+    CONHECIMENTOS(ConhecimentosExcellency.class);
 
     private final Class<? extends SkillExcellency> excellencyClass;
 }

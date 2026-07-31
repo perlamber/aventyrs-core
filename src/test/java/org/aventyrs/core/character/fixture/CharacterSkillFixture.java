@@ -8,6 +8,7 @@ import org.aventyrs.core.skill.AtaqueADistancia;
 import org.aventyrs.core.skill.AtaqueCorpoACorpo;
 import org.aventyrs.core.skill.Atletismo;
 import org.aventyrs.core.skill.Attention;
+import org.aventyrs.core.skill.Conhecimentos;
 import org.aventyrs.core.skill.DirigirECavalgar;
 import org.aventyrs.core.skill.DominioDoMana;
 import org.aventyrs.core.skill.EmpatiaSelvagem;
@@ -34,6 +35,7 @@ public class CharacterSkillFixture extends SimpleFixture {
     public static final String MEDICINA_E_CURA_1 = "MedicinaECura1";
     public static final String PERSUASAO_1 = "Persuasao1";
     public static final String PROFISSAO_1 = "Profissao1";
+    public static final String CONHECIMENTOS_1 = "Conhecimentos1";
 
     public static void loadTemplates() {
         loadBasicSkillTemplates();
@@ -103,6 +105,11 @@ public class CharacterSkillFixture extends SimpleFixture {
         Fixture.of(CharacterSkill.class).addTemplate(PROFISSAO_1, new Rule() {
             {
                 this.add("skill", new Profissao());
+            }
+        });
+        Fixture.of(CharacterSkill.class).addTemplate(CONHECIMENTOS_1, new Rule() {
+            {
+                this.add("skill", new Conhecimentos());
             }
         });
     }
