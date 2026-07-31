@@ -143,6 +143,35 @@ remember to give the new `ModifierType` constant a `@Modifier`-annotated method 
 concrete ability/excellency should affect it (e.g. `AttentionExcellency.FOCADO` for
 `REACTIONS`).
 
+## Casting a Magia is two separate rolls — `org.aventyrs.core.magic.SpellCastingService`
+
+Casting a Magia with a rolled effect always involves **two** rolls, not one: whichever
+Perícia actually delivers the spell (e.g. `AtaqueADistanciaInteraction` for a ranged spell, a
+melee Perícia's Interaction for a touch spell) rolled against the **target's** GD, followed by
+a `DominioDoManaInteraction` roll against the **Magia's own** GD. `SpellCastingService
+.castSpell(CharacterSheet, Interaction<CharacterSheet> deliveryInteraction)` orchestrates
+this: it rolls the given delivery Interaction, then rolls Domínio do Mana, and returns both
+`InteractionResult`s in a `SpellCastingResult` — it never picks the delivery Interaction
+itself (the caller does, since only the caller knows which Magia/weapon is being used).
+
+No `Magia` entity/list exists yet, so `SpellCastingService` only computes both rolls' bonuses
+— it doesn't know either roll's target GD, so it can't resolve success/failure for either
+roll yet. This is deliberately left as a TODO on the service itself rather than guessed at.
+
+This is also where two abilities whose effect targets the *delivery* roll, not Domínio do
+Mana's own, are meant to eventually plug in — don't try to force them onto
+`SkillCompetencyAbility.getDifficultyReduction()`/`SkillExcellency` the way single-skill
+effects like `AtletismoCompetencyAbility.ATLETA_VERSATIL` are, since that hook only ever
+feeds back into that *same* skill's own Interaction:
+
+- `DominioDoManaCompetencyAbility.FEITICEIRO` — reduces the delivery roll's GD by 1 (not
+  Domínio do Mana's own GD).
+- `AtaqueADistanciaExcellency.LENDA` — lets the delivery roll use a not-yet-existing "bônus de
+  conjuração de Habilidades e de Itens" when that roll is casting a Magia.
+
+Both are TODO'd pending the Magia list (so their GD/bonus values exist to wire in) — see their
+comments for the full reasoning.
+
 ## Vantagem is a flat +2 bonus, not a reroll mechanic
 
 "Grants Vantagem on X rolls" is one of the most common TODO reasons across every ability
