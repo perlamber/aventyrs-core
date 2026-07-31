@@ -25,7 +25,8 @@ public enum SkillType {
     EMPATIA_SELVAGEM(EmpatiaSelvagemExcellency.class),
     FURTIVIDADE(FurtividadeExcellency.class),
     MEDICINA_E_CURA(MedicinaECuraExcellency.class),
-    PERSUASAO(PersuasaoExcellency.class);
+    PERSUASAO(PersuasaoExcellency.class),
+    PROFISSAO(ProfissaoExcellency.class);
 
     private final Class<? extends SkillExcellency> excellencyClass;
 }
