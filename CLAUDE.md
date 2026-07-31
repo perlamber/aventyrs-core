@@ -26,15 +26,21 @@ pieces — don't stop at just the `Skill` class:
 4. **A `<Skill>CompetencyAbility` enum for its Habilidades de Competência, if any**,
    implementing `SkillCompetencyAbility` (`getSkillType()` + `getDescription()`, plus the
    default `getDifficultyReduction()` — override it only on constants that really grant a GD
-   reduction, e.g. `AtletismoCompetencyAbility.ATLETA_VERSATIL`) — the Perícia-level
-   counterpart to `AttributeAbility`/`EgoAdvantage`. Store instances a character has acquired
-   in `Character.skillCompetencyAbilities`.
+   reduction to that *same* skill's own roll) — the Perícia-level counterpart to
+   `AttributeAbility`/`EgoAdvantage`. Store instances a character has acquired in
+   `Character.skillCompetencyAbilities`. (`AtletismoCompetencyAbility.ATLETA_VERSATIL` used to
+   be the reference example for this override — a rules revision replaced it with `Passo
+   Largo`, which needs a movement system instead, so no ability currently exercises this
+   override; the mechanism itself is still real and tested generically — see the
+   `noAbilityReducesDifficulty`-style test in most `<Skill>CompetencyAbilityTest` files —
+   it's just waiting for the next ability that actually qualifies.)
 
    If an ability's acquisition is rules-gated on something like "Requer N Graduações", don't
    build a validation/eligibility service for it — none exists yet for
    `SkillCompetencyAbility` (unlike `AttributeAbilityService` for `AttributeAbility`). Just
-   document the unenforced prerequisite in a comment on the constant while still implementing
-   its actual numeric effect for real (see `ATLETA_VERSATIL`).
+   document the unenforced prerequisite in a comment on the constant (see
+   `EsquivaEApararCompetencyAbility.RECUO_RAPIDO` for a current example), implementing its
+   actual numeric effect for real whenever one is expressible today.
 
    **For every ability whose mechanic depends on a system that doesn't exist yet**
    (a roll-vs-`DifficultyLevel` resolution engine, Vantagem/Desvantagem, ally-range effects,
@@ -165,9 +171,8 @@ roll yet. This is deliberately left as a TODO on the service itself rather than 
 
 This is also where an ability whose effect targets the *delivery* roll, not Domínio do Mana's
 own, is meant to eventually plug in — don't try to force it onto
-`SkillCompetencyAbility.getDifficultyReduction()`/`SkillExcellency` the way single-skill
-effects like `AtletismoCompetencyAbility.ATLETA_VERSATIL` are, since that hook only ever feeds
-back into that *same* skill's own Interaction:
+`SkillCompetencyAbility.getDifficultyReduction()`/`SkillExcellency`, since that hook only ever
+feeds back into that *same* skill's own Interaction, never another skill's:
 
 - `DominioDoManaCompetencyAbility.FEITICEIRO` — reduces the delivery roll's GD by 1 (not
   Domínio do Mana's own GD).

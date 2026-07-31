@@ -56,8 +56,8 @@ public enum EsquivaEApararCompetencyAbility implements SkillCompetencyAbility {
     // TODO: Requer 7 Graduações – after taking damage from an attack, spend a Reação to move
     // to an adjacent free space — needs a damage-triggers-a-Reação-opportunity mechanic and
     // a movement/positioning system, neither of which exist yet. Requires 7 Graduações to
-    // acquire — also unenforced, same as AtletismoCompetencyAbility.ATLETA_VERSATIL, since no
-    // eligibility-validation service exists for SkillCompetencyAbility.
+    // acquire — also unenforced, since no eligibility-validation service exists for
+    // SkillCompetencyAbility (this is the reference example for that convention).
     RECUO_RAPIDO("Requer 7 Graduações - Após sofrer danos de um ataque, como uma Reação, " +
             "você pode se mover para um espaço livre adjacente.");
 

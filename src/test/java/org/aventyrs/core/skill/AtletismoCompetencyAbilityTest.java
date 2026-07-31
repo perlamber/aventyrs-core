@@ -27,10 +27,9 @@ class AtletismoCompetencyAbilityTest {
     }
 
     @Test
-    void onlyAtletaVersatilReducesDifficulty() {
+    void noAbilityReducesDifficulty() {
         for (AtletismoCompetencyAbility ability : AtletismoCompetencyAbility.values()) {
-            int expected = ability == AtletismoCompetencyAbility.ATLETA_VERSATIL ? 1 : 0;
-            assertEquals(expected, ability.getDifficultyReduction());
+            assertEquals(0, ability.getDifficultyReduction());
         }
     }
 }

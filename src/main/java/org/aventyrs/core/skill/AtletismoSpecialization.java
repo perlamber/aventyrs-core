@@ -14,8 +14,7 @@ public enum AtletismoSpecialization {
     ACROBATA("Você tem grande afinidade com Saltos e Acrobacias."),
     LEVANTAMENTO_DE_PESO("Combinando força e técnica você pode levantar grandes pesos."),
     PULMAO_DE_ACO("Você tem grande resistência e capacidade para atividades duradouras."),
-    ACADEMICO_ESPORTIVO("Conhecimentos acadêmicos sobre esportes no geral e a capacidade de " +
-            "treinar outros.");
+    ESPORTISTA("Conhecimentos sobre os esportes diversos de Tellus, suas práticas e regras.");
 
     private final String description;
 }

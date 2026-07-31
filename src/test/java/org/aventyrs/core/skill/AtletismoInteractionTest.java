@@ -71,19 +71,6 @@ class AtletismoInteractionTest {
     }
 
     @Test
-    void applyToAddsDifficultyReductionFromAtletaVersatil() {
-        CharacterSheet sheet = sheetWithStrengthAndSkill(2, null);
-        Character character = sheet.getCharacter().toBuilder()
-                .skillCompetencyAbility(AtletismoCompetencyAbility.ATLETA_VERSATIL)
-                .build();
-        CharacterSheet sheetWithAbility = CharacterSheet.of(character, new Player());
-
-        InteractionResult result = atletismoInteraction.applyTo(sheetWithAbility);
-
-        assertEquals(1, result.getDifficultyReduction());
-    }
-
-    @Test
     void characterSheetReceiveInteractionDelegatesToApplyTo() {
         CharacterSheet sheet = sheetWithStrengthAndSkill(2, null);
 

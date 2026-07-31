@@ -10,39 +10,27 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum AtletismoCompetencyAbility implements SkillCompetencyAbility {
 
-    // TODO: grants Movimento Base Vertical (except on perfectly smooth surfaces) — no
-    // movement/terrain system exists yet.
-    ALPINISTA_VELOZ("Você recebe Movimento Base Vertical, exceto em superfícies " +
-            "perfeitamente lisas."),
+    // TODO: grants Movimento Base Vertical — no movement/terrain system exists yet.
+    ALPINISTA_VELOZ("Você recebe Movimento Base Vertical."),
 
-    // TODO: adds the character's Força value as bonus UD to jump distance — no
-    // movement/distance system exists yet.
-    SALTO_PODEROSO("Você pode saltar grandes distâncias, acrescentando seu valor de Força " +
-            "como UD adicional à distância percorrida."),
+    // TODO: once per Cena, ignore Terreno Difícil, gaining an additional use at the 5th and
+    // 10th Graduação — needs a Terreno Difícil/terrain system, a Cena-scoped usage-limiting
+    // mechanism, and a graduation-crossing-a-threshold trigger for the extra uses (same gap
+    // as ArtesExcellency.FOCADO/LENDA's Fama trigger), none of which exist yet.
+    SALTO_PODEROSO("Uma vez por Cena você pode ignorar Terreno Difícil, novos usos desta " +
+            "Habilidade são adquiridos ao alcançar a 5ª e 10ª Graduação."),
 
     // TODO: grants Movimento Base de Natação — no movement/terrain system exists yet.
     ANFIBIO("Você recebe Movimento Base de Natação."),
 
     // TODO: lets this Perícia use Destreza instead of its normal base Attribute (Força),
-    // except in Armadura/Escudo Pesado or over carrying capacity — no Perícia
-    // base-Attribute substitution mechanism or armor/carrying-capacity system exists yet
-    // (same substitution gap as GnoseAbility.PERITO_TEORICO / AttentionCompetencyAbility.ALMA_DE_SHERLOCK).
-    ACROBATA("Você pode substituir o Atributo Base desta perícia por Destreza. Não é " +
-            "possível realizar rolagens desta forma utilizando Armaduras e Escudos " +
-            "Pesados, ou quando o personagem estiver acima de sua capacidade de carga."),
+    // unconditionally — no Perícia base-Attribute substitution mechanism exists yet (same
+    // gap as GnoseAbility.PERITO_TEORICO / AttentionCompetencyAbility.ALMA_DE_SHERLOCK).
+    ACROBATA("Você pode substituir o Atributo Base desta perícia por Destreza."),
 
-    // Note: requires 7 graduations to acquire — this codebase doesn't validate
-    // SkillCompetencyAbility acquisition prerequisites yet (unlike AttributeAbilityService
-    // for AttributeAbility), so nothing currently enforces this; treat it as a rules note
-    // until such a service exists. The -1 GD effect itself is real, though — see
-    // getDifficultyReduction().
-    ATLETA_VERSATIL("Requer 7 Graduações - O GD de suas rolagens com esta Perícia é " +
-            "reduzido em 1 nível.") {
-        @Override
-        public int getDifficultyReduction() {
-            return 1;
-        }
-    };
+    // TODO: +2UD to Movimento Base — no movement/distance system exists yet (same gap as
+    // AtaqueCorpoACorpoExcellency.FOCADO, which grants the identical bonus).
+    PASSO_LARGO("Movimento Base aumenta em +2UD.");
 
     private final String description;
 

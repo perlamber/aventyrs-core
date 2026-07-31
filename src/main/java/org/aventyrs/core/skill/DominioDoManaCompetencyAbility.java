@@ -22,13 +22,13 @@ public enum DominioDoManaCompetencyAbility implements SkillCompetencyAbility {
     // TODO: -1 GD, but not for Domínio do Mana's own roll — casting a Magia is two rolls
     // (see org.aventyrs.core.magic.SpellCastingService): the *delivery* Perícia (e.g. Ataque
     // à Distância) rolled against the target's GD, then Domínio do Mana rolled against the
-    // Magia's own GD. Feiticeiro reduces the delivery roll's GD, so it can't be modeled via
-    // SkillCompetencyAbility.getDifficultyReduction() the way AtletismoCompetencyAbility
-    // .ATLETA_VERSATIL is (that one reduces its own skill's roll GD, not another skill's).
-    // Awaiting the Magia list (and their GDs) to exist before this can be wired into
-    // SpellCastingService. Requires 7 Graduações to acquire — also unenforced, same as
-    // ATLETA_VERSATIL, since no eligibility-validation service exists for
-    // SkillCompetencyAbility.
+    // Magia's own GD. Feiticeiro reduces the delivery roll's GD, which
+    // SkillCompetencyAbility.getDifficultyReduction() can't model — that hook only ever
+    // feeds back into this *same* skill's own Interaction, never another skill's. Awaiting
+    // the Magia list (and their GDs) to exist before this can be wired into
+    // SpellCastingService. Requires 7 Graduações to acquire — also unenforced (see
+    // EsquivaEApararCompetencyAbility.RECUO_RAPIDO for the same convention), since no
+    // eligibility-validation service exists for SkillCompetencyAbility.
     FEITICEIRO("Requer 7 Graduações – O GD para Conjuração de suas Magias é reduzido em -1 " +
             "Nível."),
 
