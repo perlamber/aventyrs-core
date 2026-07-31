@@ -24,10 +24,9 @@ public enum FurtividadeCompetencyAbility implements SkillCompetencyAbility {
             "ação aumenta em +1 Nível."),
 
     // TODO: Vantagem on every Perícia roll (not just Furtividade's own) while "Furtivo" —
-    // same structural gap as AtletismoExcellency.LENDA/DirigirECavalgarExcellency.LENDA: it
-    // would need to apply across every <Skill>Interaction, not just
-    // FurtividadeInteraction, and there's no "is the character currently Furtivo" state
-    // tracked anywhere to gate it on.
+    // same structural gap as AtletismoExcellency.LENDA: it would need to apply across every
+    // <Skill>Interaction, not just FurtividadeInteraction, and there's no "is the character
+    // currently Furtivo" state tracked anywhere to gate it on.
     ACAO_SURPRESA("Você recebe Vantagem em suas Rolagens de Perícia enquanto estiver " +
             "Furtivo."),
 

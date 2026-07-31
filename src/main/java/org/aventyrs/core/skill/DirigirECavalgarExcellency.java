@@ -23,12 +23,10 @@ public enum DirigirECavalgarExcellency implements SkillExcellency {
         }
     },
 
-    // TODO: Vantagem on Perícia rolls in general (not just Dirigir e Cavalgar's own) while
-    // riding/driving — this would need to apply across every <Skill>Interaction, not just
-    // DirigirECavalgarInteraction, and there's no "is the character currently
-    // riding/driving" context tracked anywhere to gate it on.
-    LENDA(ExcellencyTier.LENDA, "Vantagem em rolagens de Perícias enquanto cavalgando ou " +
-            "dirigindo.");
+    // TODO: +3UD more to Movimento Base de Montarias e Veículos, on top of Focado's +1UD
+    // (totaling +4UD once both are unlocked) — same missing movement/distance system as
+    // Focado.
+    LENDA(ExcellencyTier.LENDA, "Movimento Base de Montarias e Veículos +3UD.");
 
     private final ExcellencyTier tier;
     private final String description;

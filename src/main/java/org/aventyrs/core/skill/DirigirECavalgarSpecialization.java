@@ -10,11 +10,17 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum DirigirECavalgarSpecialization {
-    AQUATICOS("Animais e Veículos (não-tecnológicos) Aquáticos."),
-    TERRESTRES("Animais e Veículos (não-tecnológicos) Terrestres."),
-    VOADORES("Animais e Veículos (não-tecnológicos) Voadores."),
-    MONTARIAS_MONSTRUOSAS("Montarias Monstruosas."),
-    VEICULOS_TECNOLOGICOS("Veículos Tecnológicos.");
+    AQUATICOS("Você recebeu treinamento para guiar animais marinhos e embarcações."),
+    TERRESTRES("Você sabe cavalgar animais terrestres e guiar veículos tracionados por " +
+            "estes animais."),
+    VOADORES("Você recebeu treinamento de cavalaria aérea e sabe como montar Dragonetes, " +
+            "Grifos, Pégasus, pássaros atrozes e outros animais alados."),
+    MONTARIAS_MONSTRUOSAS("Você sabe como montar Dragões, criaturas Sauróides e " +
+            "primitivas, monstros ou monstruosas, sejam eles aladas, terrestres ou " +
+            "marinhas."),
+    VEICULOS_TECNOLOGICOS("Você foi treinado para dirigir ou pilotar veículos " +
+            "tecnológicos, como carros, monociclos, dirigíveis, bancos à vapor, dentre " +
+            "outros.");
 
     private final String description;
 }

@@ -31,9 +31,9 @@ public enum AttentionCompetencyAbility implements SkillCompetencyAbility {
 
     // TODO: Vantagem on every Perícia roll (not just Atenção's own) made outside Cenas de
     // Combate and on Rodada 0 — same structural cross-skill-Vantagem gap as
-    // AtletismoExcellency.LENDA/DirigirECavalgarExcellency.LENDA/FurtividadeCompetencyAbility
-    // .ACAO_SURPRESA (would need to apply across every <Skill>Interaction, not just
-    // AttentionInteraction), plus no Cena-de-Combate-state or Rodada-0-detection exists yet.
+    // AtletismoExcellency.LENDA/FurtividadeCompetencyAbility.ACAO_SURPRESA (would need to
+    // apply across every <Skill>Interaction, not just AttentionInteraction), plus no
+    // Cena-de-Combate-state or Rodada-0-detection exists yet.
     ARDIL_DE_MARPLE("Você recebe Vantagem em rolagens de Perícias efetuadas fora de Cenas " +
             "de Combate e em Rodadas 0 (zero)."),
 

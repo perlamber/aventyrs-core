@@ -25,15 +25,11 @@ public enum DirigirECavalgarCompetencyAbility implements SkillCompetencyAbility 
         }
     },
 
-    // Note: same scoping caveat as CONTROLAR_ANIMAIS, but for Veículos Tecnológicos rolls
-    // instead — implemented as an unconditional flat bonus for the same reason.
-    VEICULOS_TECNOLOGICOS("Você recebe Vantagem em suas rolagens ao dirigir ou pilotar " +
-            "veículos tecnológicos.") {
-        @Modifier(ModifierType.SKILL_ROLL_BONUS)
-        public int advantageBonus() {
-            return Skill.ADVANTAGE_BONUS;
-        }
-    },
+    // TODO: lets this Perícia substitute for Profissão: Mecânica for simple vehicle
+    // maintenance — no Perícia-to-Perícia substitution mechanism exists yet (same gap as
+    // ArtesCompetencyAbility.DOMINIO_CULTURAL, which substitutes Artes for Conhecimentos).
+    MANUTENCAO_VEICULAR("Em substituição à Profissão: Mecânica, você pode usar esta " +
+            "perícia para fazer manutenções simples em veículos."),
 
     // TODO: removes the "can't use other Perícias while riding/driving" restriction, but
     // applies Desvantagem to Força/Destreza-based Perícia rolls made under those conditions

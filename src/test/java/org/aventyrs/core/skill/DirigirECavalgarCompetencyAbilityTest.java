@@ -37,12 +37,10 @@ class DirigirECavalgarCompetencyAbilityTest {
     }
 
     @Test
-    void onlyControlarAnimaisAndVeiculosTecnologicosGrantASkillRollBonus() {
+    void onlyControlarAnimaisGrantsASkillRollBonus() {
         ModifierResolver modifierResolver = new ModifierResolverImpl();
         for (DirigirECavalgarCompetencyAbility ability : DirigirECavalgarCompetencyAbility.values()) {
-            boolean grantsBonus = ability == DirigirECavalgarCompetencyAbility.CONTROLAR_ANIMAIS
-                    || ability == DirigirECavalgarCompetencyAbility.VEICULOS_TECNOLOGICOS;
-            int expected = grantsBonus ? Skill.ADVANTAGE_BONUS : 0;
+            int expected = ability == DirigirECavalgarCompetencyAbility.CONTROLAR_ANIMAIS ? Skill.ADVANTAGE_BONUS : 0;
             assertEquals(expected, modifierResolver.sumModifiers(ability, ModifierType.SKILL_ROLL_BONUS));
         }
     }
