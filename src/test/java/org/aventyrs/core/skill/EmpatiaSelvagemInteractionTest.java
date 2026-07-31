@@ -89,19 +89,4 @@ class EmpatiaSelvagemInteractionTest {
 
         assertEquals(0, result.getSkillRollBonus());
     }
-
-    @Test
-    void applyToAddsTheAdvantageBonusWhenCharacterHasAmainarASelvageria() {
-        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
-                .attributes(CharacterAttributes.builder()
-                        .charisma(AttributeValue.builder().base(2).build())
-                        .build())
-                .skillCompetencyAbility(EmpatiaSelvagemCompetencyAbility.AMAINAR_A_SELVAGERIA)
-                .build();
-        CharacterSheet sheet = CharacterSheet.of(character, new Player());
-
-        InteractionResult result = empatiaSelvagemInteraction.applyTo(sheet);
-
-        assertEquals(2, result.getSkillRollBonus());
-    }
 }

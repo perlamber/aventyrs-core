@@ -15,7 +15,7 @@ public enum EmpatiaSelvagemExcellency implements SkillExcellency {
 
     // Note: scoped to rolls made against neutral or favorable creatures specifically, but
     // this codebase doesn't track a roll's target disposition (same simplification as
-    // EmpatiaSelvagemCompetencyAbility.AMAINAR_A_SELVAGERIA), so it's implemented as an
+    // DirigirECavalgarCompetencyAbility.CONTROLAR_ANIMAIS), so it's implemented as an
     // unconditional flat bonus rather than silently narrowed.
     FOCADO(ExcellencyTier.FOCADO, "Vantagem em rolagens para lidar com criaturas neutras ou " +
             "favoráveis.") {

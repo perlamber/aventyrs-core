@@ -14,8 +14,9 @@ public enum EmpatiaSelvagemSpecialization {
             "comuns."),
     MENTALIDADE_ARTROPODE("Você compreende a cultura dos insetos, aracnídeos, crustáceos, " +
             "quilópodes, dentre outros."),
-    DRACO_SAUROIDES("Você é especialista em criaturas pré-históricas ou aparentadas aos " +
-            "dragões (apenas irracionais)."),
+    DRACO_SAUROIDES("Você é especialista em criaturas selvagens pré-históricas ou " +
+            "aparentadas aos dragões (não aplicável às criaturas inteligentes e " +
+            "civilizadas)."),
     EMPATIA_MONSTRUOSA("Comunicação com monstros irracionais."),
     CONEXAO_EXTRAPLANAR("Comunicação com criaturas selvagens de naturezas Abissais, " +
             "Celestiais, Elementais ou Umbrais.");

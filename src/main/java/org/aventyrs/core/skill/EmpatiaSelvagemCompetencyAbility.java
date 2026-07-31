@@ -2,8 +2,6 @@ package org.aventyrs.core.skill;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import org.aventyrs.core.modifier.Modifier;
-import org.aventyrs.core.modifier.ModifierType;
 
 /**
  * The Habilidades de Competência available to characters trained in Empatia Selvagem.
@@ -19,16 +17,14 @@ public enum EmpatiaSelvagemCompetencyAbility implements SkillCompetencyAbility {
     // .PERITO_TEORICO / AttentionCompetencyAbility.ALMA_DE_SHERLOCK).
     ACADEMICO_SELVAGEM("Você pode substituir o Atributo Base desta perícia por Gnose."),
 
-    // Note: scoped to calming hostile creatures specifically, but this codebase doesn't
-    // track what a roll is *for* (same simplification as DirigirECavalgarCompetencyAbility
-    // .CONTROLAR_ANIMAIS), so it's implemented as an unconditional flat bonus to every
-    // Empatia Selvagem roll rather than silently narrowed.
-    AMAINAR_A_SELVAGERIA("Vantagem para acalmar criaturas hostis.") {
-        @Modifier(ModifierType.SKILL_ROLL_BONUS)
-        public int advantageBonus() {
-            return Skill.ADVANTAGE_BONUS;
-        }
-    },
+    // TODO: makes the character never a wild creature's primary target unless acting
+    // offensively (with an exception for being hunted as food as the sole target) — this is
+    // an NPC-targeting-priority/threat-perception override, not a roll bonus, and no such
+    // system exists yet (same gap as EmpatiaSelvagemExcellency.LENDA's own creature-
+    // disposition override).
+    AMAINAR_A_SELVAGERIA("Você não é visto como uma ameaça imediata por criaturas " +
+            "selvagens, a menos que tome ações ofensivas você nunca será seus alvos " +
+            "primários (exceto se estiver sendo caçado como alimento e for o único alvo)."),
 
     // TODO: spend 2PD as an Ação Livre to reroll a failed Empatia Selvagem roll, once per
     // creature — needs a roll-resolution-vs-DifficultyLevel engine (to know "failed") and a

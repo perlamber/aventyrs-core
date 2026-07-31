@@ -37,11 +37,10 @@ class EmpatiaSelvagemCompetencyAbilityTest {
     }
 
     @Test
-    void onlyAmainarASelvageriaGrantsASkillRollBonus() {
+    void noAbilityGrantsASkillRollBonusYet() {
         ModifierResolver modifierResolver = new ModifierResolverImpl();
         for (EmpatiaSelvagemCompetencyAbility ability : EmpatiaSelvagemCompetencyAbility.values()) {
-            int expected = ability == EmpatiaSelvagemCompetencyAbility.AMAINAR_A_SELVAGERIA ? Skill.ADVANTAGE_BONUS : 0;
-            assertEquals(expected, modifierResolver.sumModifiers(ability, ModifierType.SKILL_ROLL_BONUS));
+            assertEquals(0, modifierResolver.sumModifiers(ability, ModifierType.SKILL_ROLL_BONUS));
         }
     }
 }
