@@ -138,3 +138,28 @@ If the ability's Vantagem is scoped to a specific *purpose* within the skill (e.
 only for perceiving movement, not every Atenção roll), that narrowing can't be modeled yet —
 this codebase doesn't track what a roll is *for*. Document that simplification in a comment on
 the enum constant rather than silently narrowing or silently over-granting.
+
+## Consumer-facing documentation lives in `package-info.java`, and must stay current
+
+This is a library other Java code (an API layer, or a game UI) imports directly — so
+"how do I use this" docs go in `package-info.java` files next to the relevant package, not a
+separate markdown guide that can silently drift out of sync. Two exist so far:
+
+- `org.aventyrs.core.skill` — how to perform a Skill Roll via `Interaction`/`CharacterSheet`.
+- `org.aventyrs.core.character.services` — the full ordered list of character-creation
+  choices (Race → Attributes → Egos → conditional Vantagem de Autocontrole → ActionProfile →
+  assemble via `Character.builder()`).
+
+**Whenever a change adds a new creation-time choice** (a new Ego/Attribute-like allocation,
+another permanent "pick one" enum like `ActionProfile`, a new conditional Vantagem like
+Autocontrole's) **update the `character.services` package-info's numbered list and code
+example in the same change** — don't leave it for later. The same applies to the `skill`
+package-info if the Skill Roll protocol itself changes (new `InteractionResult` fields, a
+different dispatch shape, etc.). A consumer coding against a stale list will silently miss
+required or newly-available choices.
+
+Before publishing a version other people can `javadoc`, note that `./gradlew javadoc`
+currently fails on ~5 pre-existing errors — Lombok's generated `Builder` inner classes aren't
+visible to the standalone javadoc tool without a delombok step. This is unrelated to the
+package-info content itself (verified by running `javadoc` directly against just the relevant
+sources); fixing it would need a delombok task (e.g. the `io.freefair.lombok` plugin).
