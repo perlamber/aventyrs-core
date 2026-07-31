@@ -40,6 +40,10 @@ public class CharacterSheet implements Interactable<CharacterSheet> {
 
     private int shieldPoints = 0;
 
+    private int famaPositiva = 0;
+
+    private int famaNegativa = 0;
+
     private static Map<EgoDomain, TemporaryPointPool> newTemporaryEgoPointsPools() {
         Map<EgoDomain, TemporaryPointPool> pools = new EnumMap<>(EgoDomain.class);
         for (EgoDomain domain : EgoDomain.values()) {
@@ -196,4 +200,23 @@ public class CharacterSheet implements Interactable<CharacterSheet> {
         return interaction.applyTo(this);
     }
 
+    /**
+     * Increases Fama Positiva — e.g. an Excelência bonus or a Narrador reward. Randomly
+     * triggered increases and direct calls both go through this method.
+     * @return int total Fama Positiva after the increase
+     */
+    public int increaseFamaPositiva(int amount)
+    {
+        return famaPositiva += amount;
+    }
+
+    /**
+     * Increases Fama Negativa — e.g. an Excelência bonus or a Narrador reward. Randomly
+     * triggered increases and direct calls both go through this method.
+     * @return int total Fama Negativa after the increase
+     */
+    public int increaseFamaNegativa(int amount)
+    {
+        return famaNegativa += amount;
+    }
 }

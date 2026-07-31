@@ -18,4 +18,13 @@ public class InteractionResult {
 
     /** The Perícia roll bonus computed by a skill-test Interaction (e.g. AttentionInteraction). */
     Integer skillRollBonus;
+
+    /**
+     * Total GD (DifficultyLevel) steps reduced for this Perícia test, aggregated from
+     * whatever's currently known on the CharacterSheet — for now, only the trained Skill's
+     * unlocked {@link org.aventyrs.core.skill.SkillExcellency} tiers (e.g.
+     * {@link org.aventyrs.core.skill.ArtesExcellency#PRODIGIO}). More sources (Talentos,
+     * temporary buffs, etc.) would add to this same total as they're built.
+     */
+    Integer difficultyReduction;
 }

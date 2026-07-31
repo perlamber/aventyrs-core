@@ -119,4 +119,27 @@ class CharacterSheetTest {
         sheet.gainTemporaryEgoPoints(EgoDomain.RECURSOS, 1);
         assertEquals(0, sheet.spendTemporaryEgoPoints(EgoDomain.RECURSOS, 10));
     }
+
+    @Test
+    void famaStartsAtZero() {
+        CharacterSheet sheet = newSheet();
+        assertEquals(0, sheet.getFamaPositiva());
+        assertEquals(0, sheet.getFamaNegativa());
+    }
+
+    @Test
+    void increaseFamaPositivaAccumulatesIndependentlyFromFamaNegativa() {
+        CharacterSheet sheet = newSheet();
+        sheet.increaseFamaNegativa(1);
+
+        assertEquals(2, sheet.increaseFamaPositiva(2));
+        assertEquals(1, sheet.getFamaNegativa());
+    }
+
+    @Test
+    void increaseFamaNegativaAccumulates() {
+        CharacterSheet sheet = newSheet();
+        sheet.increaseFamaNegativa(1);
+        assertEquals(4, sheet.increaseFamaNegativa(3));
+    }
 }
