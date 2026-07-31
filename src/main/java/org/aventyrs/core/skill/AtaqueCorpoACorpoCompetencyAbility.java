@@ -5,8 +5,8 @@ import lombok.Getter;
 
 /**
  * The Habilidades de Competência available to characters trained in Ataque Corpo-a-Corpo.
- * Every one of these needs a system this core doesn't have yet (attribute substitution, a
- * graduation cap tied to another attribute, weapon damage, critical margin, or
+ * Every one of these needs a system this core doesn't have yet (attribute substitution,
+ * damage rolls, weapon damage, graduation-threshold triggers, critical margin, or
  * Malefício/status-effect tracking) so none are expressible for real today; see each
  * constant's TODO.
  */
@@ -14,28 +14,32 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum AtaqueCorpoACorpoCompetencyAbility implements SkillCompetencyAbility {
 
-    // TODO: lets this Perícia use Destreza instead of its normal base Attribute (Força), but
-    // only for attacks with weapons whose Categoria Natural is Leve or Média — no Perícia
-    // base-Attribute substitution mechanism exists yet (same gap as
-    // AtaqueADistanciaCompetencyAbility.ARREMESSO_PODEROSO / AtletismoCompetencyAbility
+    // TODO: lets this Perícia use Destreza instead of its normal base Attribute (Força),
+    // unconditionally, but inflicts Desvantagem on Damage rolls when wielding a Categoria
+    // Pesada weapon — no Perícia base-Attribute substitution mechanism exists yet (same gap
+    // as AtaqueADistanciaCompetencyAbility.ARREMESSO_PODEROSO / AtletismoCompetencyAbility
     // .ACROBATA / GnoseAbility.PERITO_TEORICO / AttentionCompetencyAbility
-    // .ALMA_DE_SHERLOCK), and this codebase also doesn't track a weapon's category on a
-    // specific roll.
-    ACUIDADE("Você pode substituir o Atributo Base desta perícia por Destreza, mas apenas " +
-            "para rolagens de ataques com armas cuja Categoria Natural seja Leve ou Média."),
+    // .ALMA_DE_SHERLOCK), and this codebase also doesn't have a damage-roll concept to apply
+    // Desvantagem to (same gap as AtaqueADistanciaCompetencyAbility.FRIEZA) or track a
+    // weapon's category on a specific roll.
+    ACUIDADE("Você pode substituir o Atributo Base desta perícia por Destreza, se arma for " +
+            "de Categoria Pesada você sofre Desvantagem nas rolagens de Danos."),
 
-    // TODO: +1 to the wielded melee weapon's Dano Base — no weapon-damage system exists yet
-    // (same gap as AtaqueADistanciaExcellency.FOCADO).
-    BRUTALIDADE("Dano Base das armas Corpo-a-Corpo que você utilizar aumentam em +1."),
+    // TODO: starts as a +1 Damage-roll bonus (same missing damage-roll concept as FRIEZA),
+    // then at 5 Graduações converts into a Dano Base increase instead (a qualitative shift,
+    // not just a bigger number — no weapon-damage system exists yet either, same gap as
+    // AtaqueADistanciaExcellency.FOCADO), then at 10 Graduações that Dano Base increase
+    // becomes +2. Also needs a graduation-crossing-a-threshold trigger to switch mechanics
+    // automatically (same gap as ArtesExcellency.FOCADO/LENDA's Fama trigger).
+    BRUTALIDADE("Você recebe Bônus de +1 em rolagens de Danos de Ataques Corpo-a-Corpo, com " +
+            "5 Graduações este Bônus é convertido em Dano Base, com 10 Graduações o " +
+            "aumento no Dano Base muda para +2."),
 
-    // TODO: caps this Perícia's graduation at the character's Foco attribute value instead
-    // of whatever normally caps graduation, without changing its base Attribute (still
-    // Força) — no graduation-cap-by-another-attribute mechanism exists yet. (Ataque à
-    // Distância's DISPARO_ARCANO used to share this exact gap, but its rules text was
-    // revised into a plain attribute substitution instead — this is now the only ability
-    // with this specific graduation-cap shape.)
-    SAGACIDADE_ARCANA("Seu limite de graduações nesta perícia passa a ser limitada pelo " +
-            "atributo Foco, esta Habilidade não altera o Atributo Base da Perícia."),
+    // TODO: lets this Perícia use Foco instead of its normal base Attribute (Força),
+    // unconditionally — no Perícia base-Attribute substitution mechanism exists yet (same
+    // gap as AtaqueADistanciaCompetencyAbility.DISPARO_ARCANO, EmpatiaSelvagemCompetencyAbility
+    // .ACADEMICO_SELVAGEM/INSTINTO_ANIMAL, FurtividadeCompetencyAbility.LADINO_TEORICO).
+    SAGACIDADE_ARCANA("Você pode substituir o Atributo Base desta perícia por Foco."),
 
     // TODO: +1 to this Perícia's Margem Crítica Menor — no Margem Crítica (critical-margin)
     // concept exists yet (same gap as DominioDoManaCompetencyAbility.LETALIDADE_ARCANA).
