@@ -163,19 +163,19 @@ No `Magia` entity/list exists yet, so `SpellCastingService` only computes both r
 — it doesn't know either roll's target GD, so it can't resolve success/failure for either
 roll yet. This is deliberately left as a TODO on the service itself rather than guessed at.
 
-This is also where two abilities whose effect targets the *delivery* roll, not Domínio do
-Mana's own, are meant to eventually plug in — don't try to force them onto
+This is also where an ability whose effect targets the *delivery* roll, not Domínio do Mana's
+own, is meant to eventually plug in — don't try to force it onto
 `SkillCompetencyAbility.getDifficultyReduction()`/`SkillExcellency` the way single-skill
-effects like `AtletismoCompetencyAbility.ATLETA_VERSATIL` are, since that hook only ever
-feeds back into that *same* skill's own Interaction:
+effects like `AtletismoCompetencyAbility.ATLETA_VERSATIL` are, since that hook only ever feeds
+back into that *same* skill's own Interaction:
 
 - `DominioDoManaCompetencyAbility.FEITICEIRO` — reduces the delivery roll's GD by 1 (not
   Domínio do Mana's own GD).
-- `AtaqueADistanciaExcellency.LENDA` — lets the delivery roll use a not-yet-existing "bônus de
-  conjuração de Habilidades e de Itens" when that roll is casting a Magia.
 
-Both are TODO'd pending the Magia list (so their GD/bonus values exist to wire in) — see their
-comments for the full reasoning.
+TODO'd pending the Magia list (so its GD value exists to wire in) — see its comment for the
+full reasoning. (`AtaqueADistanciaExcellency.LENDA` used to have a similar "bônus de
+conjuração" clause, but the rules text was revised to drop it — a reminder that these
+cross-references need re-checking whenever a cited skill gets revised.)
 
 ## Vantagem is a flat +2 bonus, not a reroll mechanic
 

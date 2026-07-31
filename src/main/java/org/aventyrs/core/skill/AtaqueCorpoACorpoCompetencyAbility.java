@@ -30,8 +30,10 @@ public enum AtaqueCorpoACorpoCompetencyAbility implements SkillCompetencyAbility
 
     // TODO: caps this Perícia's graduation at the character's Foco attribute value instead
     // of whatever normally caps graduation, without changing its base Attribute (still
-    // Força) — no graduation-cap-by-another-attribute mechanism exists yet (same gap as
-    // AtaqueADistanciaCompetencyAbility.DISPARO_ARCANO).
+    // Força) — no graduation-cap-by-another-attribute mechanism exists yet. (Ataque à
+    // Distância's DISPARO_ARCANO used to share this exact gap, but its rules text was
+    // revised into a plain attribute substitution instead — this is now the only ability
+    // with this specific graduation-cap shape.)
     SAGACIDADE_ARCANA("Seu limite de graduações nesta perícia passa a ser limitada pelo " +
             "atributo Foco, esta Habilidade não altera o Atributo Base da Perícia."),
 
