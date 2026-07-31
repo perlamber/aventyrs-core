@@ -10,6 +10,7 @@ import lombok.Singular;
 import org.aventyrs.core.ability.AttributeAbility;
 import org.aventyrs.core.action.ActionPointsService;
 import org.aventyrs.core.action.ActionProfile;
+import org.aventyrs.core.character.services.ReactionsService;
 import org.aventyrs.core.ego.AutocontroleAdvantage;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.Player;
@@ -90,4 +91,14 @@ public class Character {
 
     @Builder.Default
     CharacterStatus status = CharacterStatus.CLEAN;
+
+    /**
+     * The character's own fixed Reação counter — what they have when no external influence
+     * (abilities'/competencies'/excellencies' {@link org.aventyrs.core.modifier.ModifierType#REACTIONS}
+     * bonus) applies. {@value ReactionsService#DEFAULT_REACTIONS} by default, lowered to 0 or
+     * raised to 2 by some Talentos/Habilidades. See {@link ReactionsService#getTotalReactions}
+     * for the fully-modified total.
+     */
+    @Builder.Default
+    protected int reactions = ReactionsService.DEFAULT_REACTIONS;
 }

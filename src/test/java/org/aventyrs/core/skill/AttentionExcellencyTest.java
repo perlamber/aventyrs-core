@@ -1,5 +1,8 @@
 package org.aventyrs.core.skill;
 
+import org.aventyrs.core.modifier.ModifierResolver;
+import org.aventyrs.core.modifier.ModifierResolverImpl;
+import org.aventyrs.core.modifier.ModifierType;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -48,5 +51,14 @@ class AttentionExcellencyTest {
     void totalDifficultyReductionCountsProdigioOnceUnlocked() {
         assertEquals(0, SkillExcellency.totalDifficultyReduction(AttentionExcellency.class, 5));
         assertEquals(1, SkillExcellency.totalDifficultyReduction(AttentionExcellency.class, 7));
+    }
+
+    @Test
+    void onlyFocadoGrantsAReactionsModifier() {
+        ModifierResolver modifierResolver = new ModifierResolverImpl();
+        for (AttentionExcellency excellency : AttentionExcellency.values()) {
+            int expected = excellency == AttentionExcellency.FOCADO ? 1 : 0;
+            assertEquals(expected, modifierResolver.sumModifiers(excellency, ModifierType.REACTIONS));
+        }
     }
 }

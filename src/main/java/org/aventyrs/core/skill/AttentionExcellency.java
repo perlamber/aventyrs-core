@@ -2,6 +2,8 @@ package org.aventyrs.core.skill;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.aventyrs.core.modifier.Modifier;
+import org.aventyrs.core.modifier.ModifierType;
 
 /**
  * Atenção's automatic Excelência bonuses, granted once a character's Atenção graduation
@@ -11,8 +13,12 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum AttentionExcellency implements SkillExcellency {
 
-    // TODO: grants an extra Reação — no Reação system exists yet.
-    FOCADO(ExcellencyTier.FOCADO, "Reação adicional."),
+    FOCADO(ExcellencyTier.FOCADO, "Reação adicional.") {
+        @Modifier(ModifierType.REACTIONS)
+        public int reactionBonus() {
+            return 1;
+        }
+    },
 
     PRODIGIO(ExcellencyTier.PRODIGIO, "GD reduzido em -1 nível.") {
         @Override

@@ -10,6 +10,7 @@ import org.aventyrs.core.character.CharacterEgos;
 import org.aventyrs.core.character.CharacterStatus;
 import org.aventyrs.core.character.Human;
 import org.aventyrs.core.character.SizeCategory;
+import org.aventyrs.core.character.services.ReactionsService;
 import org.aventyrs.core.sheet.Player;
 import org.aventyrs.core.util.SimpleFixture;
 
@@ -45,6 +46,7 @@ public class CharacterFixture extends SimpleFixture {
                 this.add("actionProfile", ActionProfile.REFLEXOS_RAPIDOS);
                 this.add("actionPoints", ActionPointsService.DEFAULT_ACTION_POINTS);
                 this.add("temporaryActionPointsBonus", 0);
+                this.add("reactions", ReactionsService.DEFAULT_REACTIONS);
                 this.add("sizeCategory", SizeCategory.ZERO);
                 this.add("status", CharacterStatus.CLEAN);
             }

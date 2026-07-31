@@ -1,6 +1,6 @@
 package org.aventyrs.core.skill;
 
-import java.util.EnumSet;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -30,9 +30,15 @@ public interface SkillExcellency {
         return level.easier(getDifficultyReduction());
     }
 
-    /** Every constant of the given Excelência enum whose tier is reached by graduationValue. */
-    static <E extends Enum<E> & SkillExcellency> List<E> unlockedBy(Class<E> excellencyClass, int graduationValue) {
-        return EnumSet.allOf(excellencyClass).stream()
+    /**
+     * Every constant of the given Excelência enum whose tier is reached by graduationValue.
+     * Takes a plain {@code Class<? extends SkillExcellency>} (resolved via reflection through
+     * {@link Class#getEnumConstants()}) rather than a generic {@code Enum} bound, so it also
+     * works from a {@link SkillType}-resolved class whose concrete enum type isn't known at
+     * compile time — see {@link org.aventyrs.core.character.Character#getReactions()}.
+     */
+    static List<SkillExcellency> unlockedBy(Class<? extends SkillExcellency> excellencyClass, int graduationValue) {
+        return Arrays.stream(excellencyClass.getEnumConstants())
                 .filter(excellency -> excellency.getTier().isUnlockedBy(graduationValue))
                 .collect(Collectors.toList());
     }
@@ -41,7 +47,7 @@ public interface SkillExcellency {
      * Total GD reduction from every Excelência tier the given graduationValue has reached —
      * the sum of {@link #getDifficultyReduction()} across {@link #unlockedBy}.
      */
-    static <E extends Enum<E> & SkillExcellency> int totalDifficultyReduction(Class<E> excellencyClass, int graduationValue) {
+    static int totalDifficultyReduction(Class<? extends SkillExcellency> excellencyClass, int graduationValue) {
         return unlockedBy(excellencyClass, graduationValue).stream()
                 .mapToInt(SkillExcellency::getDifficultyReduction)
                 .sum();

@@ -90,3 +90,29 @@ pieces — don't stop at just the `Skill` class:
    `<Skill>InteractionTest` covering: trained bonus = attribute total + graduation, untrained
    = attribute total + `UNTRAINED_PENALTY`, and `CharacterSheet.receiveInteraction(interaction)`
    delegates correctly.
+
+## Character-level stats aggregated from abilities (e.g. Reações)
+
+Some Character-level counters need a fixed base value *and* a fully-modified total summed
+from abilities — same shape as `actionPoints`/`ActionPointsService`. Don't compute the
+modified total inside `Character` itself (it would need to instantiate `ModifierResolverImpl`
+directly, which doesn't belong on a data class):
+
+- `Character` holds only the plain fixed counter (e.g. `reactions`, a normal
+  `@Builder.Default` field with Lombok's regular getter — no suppression, no manual method),
+  defaulting to a constant declared on the **service** interface
+  (`ReactionsService.DEFAULT_REACTIONS`, mirroring `ActionPointsService.DEFAULT_ACTION_POINTS`).
+- A dedicated `<Stat>Service`/`<Stat>ServiceImpl` in `org.aventyrs.core.character.services`
+  (e.g. `ReactionsService.getTotalReactions(Character)`) takes a constructor-injected
+  `ModifierResolver` (default `new ModifierResolverImpl()`, same DI convention as every other
+  service) and sums `@Modifier`/`ModifierType` bonuses across **three** sources:
+  `character.getAttributeAbilities()`, `character.getSkillCompetencyAbilities()`, and — per
+  trained Perícia in `character.getSkills()` — whichever `SkillExcellency` tiers that Perícia's
+  graduation has unlocked (resolved generically via `SkillType.getExcellencyClass()` +
+  `SkillExcellency.unlockedBy`, since the concrete `<Skill>Excellency` enum type isn't known at
+  compile time from a bare `SkillType`). Clamp the total at 0.
+
+Mirror this shape for any new stat abilities/competencies/excellencies can modify, and
+remember to give the new `ModifierType` constant a `@Modifier`-annotated method on whichever
+concrete ability/excellency should affect it (e.g. `AttentionExcellency.FOCADO` for
+`REACTIONS`).
