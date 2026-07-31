@@ -10,13 +10,14 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum FurtividadeSpecialization {
-    MAESTRIA_DA_OCULTACAO("Capacidade de se esconder e ocultar rastros."),
+    MAESTRIA_DA_OCULTACAO("Capacidade de se esconder, ocultar rastros ou procurar " +
+            "abrigos."),
     TECNICAS_DE_LADINICE("Habilidade de furtar e técnicas de manipular objetos rapidamente " +
             "para ludibriar espectadores."),
     GOLPISTA("Capacidade de criar falsificações de objetos."),
-    INFILTRADOR("Habilidades de disfarce e de se passar por outras pessoas."),
-    ARMADILHEIRO("Habilidade de colocar Armadilhas Móveis e Estacionárias ocultas na cena " +
-            "ou cenário.");
+    INFILTRADOR("Habilidades de abrir e arrombar cofres e fechaduras."),
+    ARMADILHEIRO("Habilidade de colocar e remover Armadilhas Móveis e Estacionárias " +
+            "ocultas na cena ou cenário.");
 
     private final String description;
 }
