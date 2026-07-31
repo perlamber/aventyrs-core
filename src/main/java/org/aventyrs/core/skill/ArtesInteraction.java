@@ -50,6 +50,10 @@ public class ArtesInteraction implements Interaction<CharacterSheet> {
         bonus += modifierResolver.sumModifiers(unlockedExcellencies, ModifierType.SKILL_ROLL_BONUS);
 
         int difficultyReduction = SkillExcellency.totalDifficultyReduction(ArtesExcellency.class, graduationValue);
+        difficultyReduction += character.getSkillCompetencyAbilities().stream()
+                .mapToInt(SkillCompetencyAbility::getDifficultyReduction)
+                .sum();
+
         return InteractionResult.builder()
                 .resultStatus(character.getStatus())
                 .skillRollBonus(bonus)

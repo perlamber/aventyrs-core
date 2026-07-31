@@ -24,9 +24,17 @@ pieces — don't stop at just the `Skill` class:
    stays a generic field; the enum is just the well-typed reference for that one skill.
 
 4. **A `<Skill>CompetencyAbility` enum for its Habilidades de Competência, if any**,
-   implementing `SkillCompetencyAbility` (`getSkillType()` + `getDescription()`) — the
-   Perícia-level counterpart to `AttributeAbility`/`EgoAdvantage`. Store instances a
-   character has acquired in `Character.skillCompetencyAbilities`.
+   implementing `SkillCompetencyAbility` (`getSkillType()` + `getDescription()`, plus the
+   default `getDifficultyReduction()` — override it only on constants that really grant a GD
+   reduction, e.g. `AtletismoCompetencyAbility.ATLETA_VERSATIL`) — the Perícia-level
+   counterpart to `AttributeAbility`/`EgoAdvantage`. Store instances a character has acquired
+   in `Character.skillCompetencyAbilities`.
+
+   If an ability's acquisition is rules-gated on something like "Requer N Graduações", don't
+   build a validation/eligibility service for it — none exists yet for
+   `SkillCompetencyAbility` (unlike `AttributeAbilityService` for `AttributeAbility`). Just
+   document the unenforced prerequisite in a comment on the constant while still implementing
+   its actual numeric effect for real (see `ATLETA_VERSATIL`).
 
    **For every ability whose mechanic depends on a system that doesn't exist yet**
    (a roll-vs-`DifficultyLevel` resolution engine, Vantagem/Desvantagem, ally-range effects,
@@ -58,8 +66,13 @@ pieces — don't stop at just the `Skill` class:
    - delegate the actual bonus computation to `CharacterSkillService.getValueForRoll` — never
      recompute attribute totals or graduation math inline;
    - if the skill has a `<Skill>Excellency` enum (see below), also compute
-     `SkillExcellency.totalDifficultyReduction(<Skill>Excellency.class, graduationValue)` and
-     set it on `InteractionResult.difficultyReduction`;
+     `SkillExcellency.totalDifficultyReduction(<Skill>Excellency.class, graduationValue)`;
+   - **also** sum `character.getSkillCompetencyAbilities().stream()
+     .mapToInt(SkillCompetencyAbility::getDifficultyReduction).sum()` into the same total —
+     every `<Skill>Interaction` must honor both sources, even before any ability for that
+     specific skill grants one (see `ArtesInteraction`/`AttentionInteraction`/
+     `AtletismoInteraction`), then set the combined value on
+     `InteractionResult.difficultyReduction`;
    - return an `InteractionResult` with `resultStatus` (the target's current status),
      `skillRollBonus` (the computed bonus), and `difficultyReduction` set.
 
@@ -91,17 +104,20 @@ pieces — don't stop at just the `Skill` class:
    = attribute total + `UNTRAINED_PENALTY`, and `CharacterSheet.receiveInteraction(interaction)`
    delegates correctly.
 
-## Character-level stats aggregated from abilities (e.g. Reações)
+## Character-level stats aggregated from abilities (e.g. Reações, Ações Livres, Pontos de Ação)
 
 Some Character-level counters need a fixed base value *and* a fully-modified total summed
-from abilities — same shape as `actionPoints`/`ActionPointsService`. Don't compute the
-modified total inside `Character` itself (it would need to instantiate `ModifierResolverImpl`
-directly, which doesn't belong on a data class):
+from abilities — this is what `ReactionsService`, `FreeActionsService`, and
+`ActionPointsServiceImpl.getMaxActionPoints` all do (the latter scans the same three sources
+to support things like `AtletismoExcellency.LENDA`'s +1PA). Don't compute the modified total
+inside `Character` itself (it would need to instantiate `ModifierResolverImpl` directly, which
+doesn't belong on a data class):
 
-- `Character` holds only the plain fixed counter (e.g. `reactions`, a normal
+- `Character` holds only the plain fixed counter (e.g. `reactions`/`freeActions`, a normal
   `@Builder.Default` field with Lombok's regular getter — no suppression, no manual method),
   defaulting to a constant declared on the **service** interface
-  (`ReactionsService.DEFAULT_REACTIONS`, mirroring `ActionPointsService.DEFAULT_ACTION_POINTS`).
+  (`ReactionsService.DEFAULT_REACTIONS`, mirroring `ActionPointsService.DEFAULT_ACTION_POINTS`
+  and `FreeActionsService.DEFAULT_FREE_ACTIONS`).
 - A dedicated `<Stat>Service`/`<Stat>ServiceImpl` in `org.aventyrs.core.character.services`
   (e.g. `ReactionsService.getTotalReactions(Character)`) takes a constructor-injected
   `ModifierResolver` (default `new ModifierResolverImpl()`, same DI convention as every other
@@ -111,6 +127,16 @@ directly, which doesn't belong on a data class):
   graduation has unlocked (resolved generically via `SkillType.getExcellencyClass()` +
   `SkillExcellency.unlockedBy`, since the concrete `<Skill>Excellency` enum type isn't known at
   compile time from a bare `SkillType`). Clamp the total at 0.
+- Ações Livres are mechanically identical to Reações (same 3-source aggregation, same
+  `DEFAULT_*` shape) — the only difference between the two is *when* they may be spent (a
+  Reação only in response to someone else's action; an Ação Livre also on the character's own
+  Turn), which is a game-flow/Scene-timing concern this library doesn't enforce, not a
+  computation difference. Don't build a distinct aggregation shape for a new counter just
+  because it's spent under different narrative conditions — reuse this same pattern.
+- Whenever a new fixed counter field is added to `Character` here, it must also be added to
+  `CharacterFixture`'s `BLANK` template `Rule` (see the comment on `loadCharacterTemplates` —
+  Fixture Factory never goes through the Lombok builder, so `@Builder.Default` values don't
+  apply automatically).
 
 Mirror this shape for any new stat abilities/competencies/excellencies can modify, and
 remember to give the new `ModifierType` constant a `@Modifier`-annotated method on whichever

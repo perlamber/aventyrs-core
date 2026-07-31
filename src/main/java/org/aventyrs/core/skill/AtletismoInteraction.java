@@ -16,21 +16,23 @@ import java.util.List;
 import static org.aventyrs.core.skill.Skill.UNTRAINED_PENALTY;
 
 /**
- * Requests an Attention Perícia test. Only meaningful for a {@link CharacterSheet} target,
- * since only a Character carries attributes and skills — this Interaction computes the
- * roll bonus itself, looking up the target's own trained Attention CharacterSkill (or
- * defaulting to untrained, which carries {@link Skill#UNTRAINED_PENALTY}).
+ * Requests an Atletismo Perícia test. Only meaningful for a {@link CharacterSheet} target,
+ * since only a Character carries attributes and skills — this Interaction computes the roll
+ * bonus itself, looking up the target's own trained Atletismo CharacterSkill (or defaulting
+ * to untrained, which carries {@link Skill#UNTRAINED_PENALTY}). Which of Atletismo's
+ * specializations the roll is for doesn't change the bonus — see
+ * {@link AtletismoSpecialization} — so it isn't tracked here.
  */
-public class AttentionInteraction implements Interaction<CharacterSheet> {
+public class AtletismoInteraction implements Interaction<CharacterSheet> {
 
     private final CharacterSkillService characterSkillService;
     private final ModifierResolver modifierResolver;
 
-    public AttentionInteraction() {
+    public AtletismoInteraction() {
         this(new CharacterSkillServiceImpl(), new ModifierResolverImpl());
     }
 
-    public AttentionInteraction(final CharacterSkillService characterSkillService, final ModifierResolver modifierResolver) {
+    public AtletismoInteraction(final CharacterSkillService characterSkillService, final ModifierResolver modifierResolver) {
         this.characterSkillService = characterSkillService;
         this.modifierResolver = modifierResolver;
     }
@@ -38,16 +40,16 @@ public class AttentionInteraction implements Interaction<CharacterSheet> {
     @Override
     public InteractionResult applyTo(final CharacterSheet target) {
         Character character = target.getCharacter();
-        CharacterSkill attentionSkill = findCharacterSkill(character);
-        int graduationValue = attentionSkill.getGraduation().getGraduationValue();
+        CharacterSkill atletismoSkill = findCharacterSkill(character);
+        int graduationValue = atletismoSkill.getGraduation().getGraduationValue();
 
-        int bonus = characterSkillService.getValueForRoll(attentionSkill, character.getAttributes(), character.getRace());
+        int bonus = characterSkillService.getValueForRoll(atletismoSkill, character.getAttributes(), character.getRace());
         bonus += modifierResolver.sumModifiers(character.getAttributeAbilities(), ModifierType.SKILL_ROLL_BONUS);
         bonus += modifierResolver.sumModifiers(character.getSkillCompetencyAbilities(), ModifierType.SKILL_ROLL_BONUS);
-        List<SkillExcellency> unlockedExcellencies = SkillExcellency.unlockedBy(AttentionExcellency.class, graduationValue);
+        List<SkillExcellency> unlockedExcellencies = SkillExcellency.unlockedBy(AtletismoExcellency.class, graduationValue);
         bonus += modifierResolver.sumModifiers(unlockedExcellencies, ModifierType.SKILL_ROLL_BONUS);
 
-        int difficultyReduction = SkillExcellency.totalDifficultyReduction(AttentionExcellency.class, graduationValue);
+        int difficultyReduction = SkillExcellency.totalDifficultyReduction(AtletismoExcellency.class, graduationValue);
         difficultyReduction += character.getSkillCompetencyAbilities().stream()
                 .mapToInt(SkillCompetencyAbility::getDifficultyReduction)
                 .sum();
@@ -60,16 +62,16 @@ public class AttentionInteraction implements Interaction<CharacterSheet> {
     }
 
     /**
-     * The Character's own CharacterSkill for Attention, or a fresh one carrying
+     * The Character's own CharacterSkill for Atletismo, or a fresh one carrying
      * {@link Skill#UNTRAINED_PENALTY} as its graduation if they never trained it.
      */
     private CharacterSkill findCharacterSkill(final Character character) {
-        CharacterSkill trained = character.getSkills().get(SkillType.ATTENTION);
+        CharacterSkill trained = character.getSkills().get(SkillType.ATLETISMO);
         if (trained != null) {
             return trained;
         }
         return CharacterSkill.builder()
-                .skill(new Attention())
+                .skill(new Atletismo())
                 .graduation(SkillGraduation.builder().graduationValue(UNTRAINED_PENALTY).build())
                 .build();
     }

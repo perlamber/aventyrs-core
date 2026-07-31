@@ -13,5 +13,6 @@ public enum ModifierType {
     ACTION_POINTS,
     SKILL_ROLL_COST,
     SKILL_ROLL_BONUS,
-    REACTIONS
+    REACTIONS,
+    FREE_ACTIONS
 }

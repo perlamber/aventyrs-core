@@ -12,10 +12,13 @@ public interface ActionPointsService {
     /**
      * Total PA available on the given Turn: the character's own fixed
      * {@link Character#getActionPoints()} counter, plus any
-     * {@link org.aventyrs.core.modifier.ModifierType#ACTION_POINTS} bonus, plus the
-     * character's {@link Character#getTemporaryActionPointsBonus()}, adjusted by the
-     * character's {@link ActionProfile} for that Turn. turnNumber is 0-based (0 is the
-     * character's first Turn/Round). Never negative.
+     * {@link org.aventyrs.core.modifier.ModifierType#ACTION_POINTS} bonus found on
+     * attributeAbilities, skillCompetencyAbilities, or the unlocked
+     * {@link org.aventyrs.core.skill.SkillExcellency} tiers of every trained Perícia (e.g.
+     * {@link org.aventyrs.core.skill.AtletismoExcellency#LENDA}), plus the character's
+     * {@link Character#getTemporaryActionPointsBonus()}, adjusted by the character's
+     * {@link ActionProfile} for that Turn. turnNumber is 0-based (0 is the character's first
+     * Turn/Round). Never negative.
      */
     int getMaxActionPoints(Character character, int turnNumber);
 

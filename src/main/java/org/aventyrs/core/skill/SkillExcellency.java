@@ -35,7 +35,8 @@ public interface SkillExcellency {
      * Takes a plain {@code Class<? extends SkillExcellency>} (resolved via reflection through
      * {@link Class#getEnumConstants()}) rather than a generic {@code Enum} bound, so it also
      * works from a {@link SkillType}-resolved class whose concrete enum type isn't known at
-     * compile time — see {@link org.aventyrs.core.character.Character#getReactions()}.
+     * compile time — see
+     * {@code org.aventyrs.core.character.services.ReactionsServiceImpl#getTotalReactions}.
      */
     static List<SkillExcellency> unlockedBy(Class<? extends SkillExcellency> excellencyClass, int graduationValue) {
         return Arrays.stream(excellencyClass.getEnumConstants())

@@ -8,13 +8,15 @@ import lombok.Getter;
  * of filtering a list. One constant per concrete {@link Skill} implementation, carrying a
  * reference to that skill's {@link SkillExcellency} enum so code holding just a
  * {@code CharacterSkill} (and thus a {@code SkillType}) can resolve its unlocked Excelência
- * tiers generically — see {@link org.aventyrs.core.character.Character#getReactions()}.
+ * tiers generically — see
+ * {@code org.aventyrs.core.character.services.ReactionsServiceImpl#getTotalReactions}.
  */
 @Getter
 @AllArgsConstructor
 public enum SkillType {
     ATTENTION(AttentionExcellency.class),
-    ARTES(ArtesExcellency.class);
+    ARTES(ArtesExcellency.class),
+    ATLETISMO(AtletismoExcellency.class);
 
     private final Class<? extends SkillExcellency> excellencyClass;
 }

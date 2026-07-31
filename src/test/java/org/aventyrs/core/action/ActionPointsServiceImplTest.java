@@ -5,10 +5,15 @@ import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterAttributes;
 import org.aventyrs.core.character.CharacterEgos;
+import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.character.Human;
+import org.aventyrs.core.character.fixture.CharacterSkillFixture;
 import org.aventyrs.core.modifier.Modifier;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.sheet.Player;
+import org.aventyrs.core.skill.SkillCompetencyAbility;
+import org.aventyrs.core.skill.SkillType;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -18,6 +23,28 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class ActionPointsServiceImplTest {
 
     private final ActionPointsService actionPointsService = new ActionPointsServiceImpl();
+
+    private static class SkillCompetencyActionPointsBonusAbility implements SkillCompetencyAbility {
+        @Override
+        public SkillType getSkillType() {
+            return SkillType.ATLETISMO;
+        }
+
+        @Override
+        public String getDescription() {
+            return "Test-only +1 Action Points bonus source.";
+        }
+
+        @Modifier(ModifierType.ACTION_POINTS)
+        public int bonus() {
+            return 1;
+        }
+    }
+
+    @BeforeEach
+    void setup() {
+        CharacterSkillFixture.loadTemplates();
+    }
 
     private static class ActionPointsBonusAbility implements AttributeAbility {
         @Override
@@ -174,6 +201,36 @@ class ActionPointsServiceImplTest {
     @Test
     void actionPointsModifierBonusIsAdded() {
         Character character = characterWithProfile(ActionProfile.REFLEXOS_RAPIDOS, new ActionPointsBonusAbility());
+        assertEquals(4, actionPointsService.getMaxActionPoints(character, 0));
+    }
+
+    @Test
+    void skillCompetencyAbilityActionPointsModifierIsAdded() {
+        Character character = Character.builder()
+                .player(new Player())
+                .name("Test")
+                .race(new Human())
+                .actionProfile(ActionProfile.REFLEXOS_RAPIDOS)
+                .egos(CharacterEgos.builder().build())
+                .attributes(CharacterAttributes.builder().build())
+                .skillCompetencyAbility(new SkillCompetencyActionPointsBonusAbility())
+                .build();
+        assertEquals(4, actionPointsService.getMaxActionPoints(character, 0));
+    }
+
+    @Test
+    void unlockedExcellencyActionPointsModifierIsAddedForATrainedSkill() {
+        CharacterSkill atletismoSkill = CharacterSkillFixture.blank(CharacterSkillFixture.ATLETISMO_1).build();
+        atletismoSkill.increaseGraduation(10);
+        Character character = Character.builder()
+                .player(new Player())
+                .name("Test")
+                .race(new Human())
+                .actionProfile(ActionProfile.REFLEXOS_RAPIDOS)
+                .egos(CharacterEgos.builder().build())
+                .attributes(CharacterAttributes.builder().build())
+                .skill(SkillType.ATLETISMO, atletismoSkill)
+                .build();
         assertEquals(4, actionPointsService.getMaxActionPoints(character, 0));
     }
 

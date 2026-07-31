@@ -10,6 +10,7 @@ import lombok.Singular;
 import org.aventyrs.core.ability.AttributeAbility;
 import org.aventyrs.core.action.ActionPointsService;
 import org.aventyrs.core.action.ActionProfile;
+import org.aventyrs.core.character.services.FreeActionsService;
 import org.aventyrs.core.character.services.ReactionsService;
 import org.aventyrs.core.ego.AutocontroleAdvantage;
 import org.aventyrs.core.sheet.IllegalOperationException;
@@ -101,4 +102,15 @@ public class Character {
      */
     @Builder.Default
     protected int reactions = ReactionsService.DEFAULT_REACTIONS;
+
+    /**
+     * The character's own fixed Ação Livre counter — what they have when no external
+     * influence (abilities'/competencies'/excellencies'
+     * {@link org.aventyrs.core.modifier.ModifierType#FREE_ACTIONS} bonus) applies.
+     * {@value FreeActionsService#DEFAULT_FREE_ACTIONS} by default. Unlike {@link #reactions},
+     * an Ação Livre may be spent on the character's own Turn. See
+     * {@link FreeActionsService#getTotalFreeActions} for the fully-modified total.
+     */
+    @Builder.Default
+    protected int freeActions = FreeActionsService.DEFAULT_FREE_ACTIONS;
 }
