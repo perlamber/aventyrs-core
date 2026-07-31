@@ -14,7 +14,7 @@ public enum ProfissaoExcellency implements SkillExcellency {
     // TODO: -1PE to Equipamento creation/purchase costs, never below 1PE — no
     // Item/Equipamento entity, "PE" currency, or cost system exists yet.
     FOCADO(ExcellencyTier.FOCADO, "Custos de criação e compras de Equipamentos reduzido em " +
-            "-1PE, estes efeitos não reduzem custos para menos de 1PE."),
+            "-1PE (mínimo 1PE)."),
 
     PRODIGIO(ExcellencyTier.PRODIGIO, "GD reduzido em -1 nível.") {
         @Override
@@ -28,7 +28,7 @@ public enum ProfissaoExcellency implements SkillExcellency {
     // a standalone override (see ArtesExcellency.LENDA, whose old/new rules text confirms
     // this reading) — blocked on the same missing Item/Equipamento/PE-cost system as FOCADO.
     LENDA(ExcellencyTier.LENDA, "Redução dos Custos de criação e Compras de Equipamentos " +
-            "muda para -3PE, mas ainda não reduzem os custos para menos que 1PE.");
+            "muda para -3PE (mínimo 1PE).");
 
     private final ExcellencyTier tier;
     private final String description;

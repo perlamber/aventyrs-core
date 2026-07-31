@@ -6,7 +6,8 @@ import lombok.Getter;
 /**
  * The Habilidades de Competência available to characters trained in Profissão. Every one of
  * these needs an Item/Equipamento entity this core doesn't have yet — production time,
- * Dureza, Carga and combat-produced-equipment bonuses are all properties of equipment that
+ * Dureza, Carga, and per-item combat properties (critical resistance/margin, damage
+ * reduction, Defesas, Dano Base, Conjuração bonuses) are all properties of equipment that
  * isn't modeled anywhere (see {@code org.aventyrs.core.item.ItemInteraction}, an unrelated
  * pre-existing stub predating this Perícia) — so none are expressible for real today; see
  * each constant's TODO.
@@ -19,24 +20,32 @@ public enum ProfissaoCompetencyAbility implements SkillCompetencyAbility {
     // production-time system exists yet.
     CONSTRUTOR_EFICIENTE("Tempo de Produção de itens e equipamentos reduzido em 20%."),
 
-    // TODO: Equipamentos Defensivos the character produced reduce the first damage taken
-    // each Cena de Combate by -3, Equipamentos Ofensivos grant Vantagem on the first Ataque
-    // Perícia roll each Cena, non-stacking and only for the producing character — needs an
-    // Item/Equipamento entity tracking who produced it, plus Cena-de-Combate-scoped
-    // "first damage taken"/"first attack roll" state, neither of which exist yet.
-    FORJA_VULCANA("Equipamentos Defensivos que você produz reduzem o primeiro dano sofrido " +
-            "em cada Cena de Combate em -3, Equipamento Ofensivos que você produz " +
-            "concedem Vantagem em sua primeira rolagem de Perícia de Ataque de cada Cena. " +
-            "Apenas você recebe estes benefícios, os efeitos não são cumulativos."),
+    // TODO: produced Equipamentos Defensivos permanently grant Resistência a Críticos (a
+    // new critical-hit-resistance concept, distinct from anything modeled today) plus a
+    // choice — baked in at item creation — between Redução de Danos Sofridos 1 (the same
+    // RDS gap introduced by ArtesCompetencyAbility.APRIMORAR_COM_ARTE) or +1 Defesas;
+    // produced Equipamentos Ofensivos grant Margem Crítica Maior +1 (a *different* axis from
+    // every other skill's "Margem Crítica Menor" — no critical-margin concept of either kind
+    // exists yet) plus a choice between +1 Dano Base or +1 Conjuração (a Magia-effect bonus,
+    // same gap as DominioDoManaCompetencyAbility.ARCANISMO_EXPLOSIVA). Needs an
+    // Item/Equipamento entity carrying who produced it and which choice was made at
+    // creation, none of which exist yet.
+    FORJA_VULCANA("Equipamentos que você produz tem benefícios adicionais: Equipamentos " +
+            "Defensivos concedem Resistência à Críticos, além disso concedem Redução de " +
+            "Danos Sofridos 1 ou Bônus de +1 em Defesas (definido na criação do item). " +
+            "Equipamentos Ofensivos: Margem Crítica Maior +1, além disso possuem Dano Base " +
+            "+1 ou Conjuração +1."),
 
-    // TODO: +1d6 to Dureza recovered when repairing an item/equipment, extendable to Magias
-    // and Habilidades at 5+ Graduações — needs an Item/Equipamento entity with a Dureza
-    // stat and a repair mechanic (neither exists), a Dureza-equivalent concept on
-    // Magias/Habilidades (doesn't exist either), and this core deliberately never rolls
-    // dice (1d6) — see the skill package-info.
+    // TODO: +2 to Dureza recovered when repairing an item/equipment (no longer a dice roll,
+    // so that particular blocker is gone), extendable to Magias/Habilidades at 5 Graduações,
+    // then the bonus itself becomes +5 total at 10 Graduações — still needs an
+    // Item/Equipamento entity with a Dureza stat and a repair mechanic (neither exists), a
+    // Dureza-equivalent concept on Magias/Habilidades (doesn't exist either), and a
+    // graduation-crossing-a-threshold trigger for the 10th-Graduação bump (same gap as
+    // ArtesExcellency.FOCADO/LENDA's Fama trigger).
     REPARO_MELHORADO("Sempre que você reparar um item ou equipamento a Dureza recuperada " +
-            "aumenta em +1d6, se você possuir 5 ou mais Graduações nesta Perícia pode " +
-            "estender este efeito às suas Magias e Habilidades."),
+            "aumenta em +2, com 5 Graduações você pode estender este efeito às suas Magias " +
+            "e Habilidades, com 10 Graduações este benefício muda para +5."),
 
     // TODO: +50% to produced equipment's Dureza — no Item/Equipamento entity or Dureza stat
     // exists yet.
