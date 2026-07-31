@@ -1,5 +1,8 @@
 package org.aventyrs.core.skill;
 
+import org.aventyrs.core.modifier.ModifierResolver;
+import org.aventyrs.core.modifier.ModifierResolverImpl;
+import org.aventyrs.core.modifier.ModifierType;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -24,5 +27,14 @@ class AttentionCompetencyAbilityTest {
     @Test
     void listHasTheFiveDescribedAbilities() {
         assertEquals(5, AttentionCompetencyAbility.values().length);
+    }
+
+    @Test
+    void onlyPercepcaoDeFoxmGrantsASkillRollBonus() {
+        ModifierResolver modifierResolver = new ModifierResolverImpl();
+        for (AttentionCompetencyAbility ability : AttentionCompetencyAbility.values()) {
+            int expected = ability == AttentionCompetencyAbility.PERCEPCAO_DE_FOXM ? Skill.ADVANTAGE_BONUS : 0;
+            assertEquals(expected, modifierResolver.sumModifiers(ability, ModifierType.SKILL_ROLL_BONUS));
+        }
     }
 }

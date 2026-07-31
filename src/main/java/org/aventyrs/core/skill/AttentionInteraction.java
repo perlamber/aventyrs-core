@@ -4,9 +4,14 @@ import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.character.services.CharacterSkillService;
 import org.aventyrs.core.character.services.CharacterSkillServiceImpl;
+import org.aventyrs.core.modifier.ModifierResolver;
+import org.aventyrs.core.modifier.ModifierResolverImpl;
+import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.Interaction;
 import org.aventyrs.core.sheet.InteractionResult;
+
+import java.util.List;
 
 import static org.aventyrs.core.skill.Skill.UNTRAINED_PENALTY;
 
@@ -19,21 +24,29 @@ import static org.aventyrs.core.skill.Skill.UNTRAINED_PENALTY;
 public class AttentionInteraction implements Interaction<CharacterSheet> {
 
     private final CharacterSkillService characterSkillService;
+    private final ModifierResolver modifierResolver;
 
     public AttentionInteraction() {
-        this(new CharacterSkillServiceImpl());
+        this(new CharacterSkillServiceImpl(), new ModifierResolverImpl());
     }
 
-    public AttentionInteraction(final CharacterSkillService characterSkillService) {
+    public AttentionInteraction(final CharacterSkillService characterSkillService, final ModifierResolver modifierResolver) {
         this.characterSkillService = characterSkillService;
+        this.modifierResolver = modifierResolver;
     }
 
     @Override
     public InteractionResult applyTo(final CharacterSheet target) {
         Character character = target.getCharacter();
         CharacterSkill attentionSkill = findCharacterSkill(character);
-        int bonus = characterSkillService.getValueForRoll(attentionSkill, character.getAttributes(), character.getRace());
         int graduationValue = attentionSkill.getGraduation().getGraduationValue();
+
+        int bonus = characterSkillService.getValueForRoll(attentionSkill, character.getAttributes(), character.getRace());
+        bonus += modifierResolver.sumModifiers(character.getAttributeAbilities(), ModifierType.SKILL_ROLL_BONUS);
+        bonus += modifierResolver.sumModifiers(character.getSkillCompetencyAbilities(), ModifierType.SKILL_ROLL_BONUS);
+        List<SkillExcellency> unlockedExcellencies = SkillExcellency.unlockedBy(AttentionExcellency.class, graduationValue);
+        bonus += modifierResolver.sumModifiers(unlockedExcellencies, ModifierType.SKILL_ROLL_BONUS);
+
         int difficultyReduction = SkillExcellency.totalDifficultyReduction(AttentionExcellency.class, graduationValue);
         return InteractionResult.builder()
                 .resultStatus(character.getStatus())

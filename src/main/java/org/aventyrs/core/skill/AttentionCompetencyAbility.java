@@ -2,6 +2,8 @@ package org.aventyrs.core.skill;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.aventyrs.core.modifier.Modifier;
+import org.aventyrs.core.modifier.ModifierType;
 
 /**
  * The Habilidades de Competência available to characters trained in Atenção.
@@ -10,10 +12,17 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum AttentionCompetencyAbility implements SkillCompetencyAbility {
 
-    // TODO: grants Vantagem on Atenção rolls to perceive movement through sight, hearing or
-    // smell — no Vantagem/Desvantagem roll system exists yet.
+    // Grants Vantagem (Skill.ADVANTAGE_BONUS, a flat +2) on Atenção rolls — see
+    // AttentionInteraction.applyTo. Simplification: this codebase doesn't yet model what a
+    // specific Atenção roll is FOR, so having this ability grants the bonus on Atenção
+    // checks generally rather than narrowly on perceiving movement via sight/hearing/smell.
     PERCEPCAO_DE_FOXM("Vantagem em rolagens de Atenção para perceber movimentações pelo " +
-            "cenário através da visão, audição e olfato."),
+            "cenário através da visão, audição e olfato.") {
+        @Modifier(ModifierType.SKILL_ROLL_BONUS)
+        public int visionHearingSmellBonus() {
+            return Skill.ADVANTAGE_BONUS;
+        }
+    },
 
     // TODO: lets this Perícia use Gnose instead of its normal base Attribute (Instinto),
     // and grants perfect maze/labyrinth backtracking — no Perícia base-Attribute

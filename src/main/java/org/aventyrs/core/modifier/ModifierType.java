@@ -12,5 +12,6 @@ public enum ModifierType {
     DETERMINATION_MULTIPLIER,
     ACTION_POINTS,
     SKILL_ROLL_COST,
+    SKILL_ROLL_BONUS,
     REACTIONS
 }

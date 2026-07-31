@@ -116,3 +116,25 @@ Mirror this shape for any new stat abilities/competencies/excellencies can modif
 remember to give the new `ModifierType` constant a `@Modifier`-annotated method on whichever
 concrete ability/excellency should affect it (e.g. `AttentionExcellency.FOCADO` for
 `REACTIONS`).
+
+## Vantagem is a flat +2 bonus, not a reroll mechanic
+
+"Grants Vantagem on X rolls" is one of the most common TODO reasons across every ability
+enum, but it isn't a d20-style "roll twice, take the higher" mechanic — in this game
+**Vantagem is just a flat +2 bonus to that specific roll** (`Skill.ADVANTAGE_BONUS`). So an
+ability that grants Vantagem on a Perícia roll is implemented exactly like any other roll
+bonus: a `@Modifier(ModifierType.SKILL_ROLL_BONUS)` method on the concrete ability/excellency
+returning `Skill.ADVANTAGE_BONUS`, summed into `skillRollBonus` inside the skill's
+`<Skill>Interaction.applyTo` — see `AttentionCompetencyAbility.PERCEPCAO_DE_FOXM` /
+`AttentionInteraction`. No separate flag or dice-rolling engine needed.
+
+Every `<Skill>Interaction.applyTo` should sum `ModifierType.SKILL_ROLL_BONUS` across the same
+three sources `ReactionsService` uses for Reações — `attributeAbilities`,
+`skillCompetencyAbilities`, and the trained skill's own unlocked `SkillExcellency` tiers —
+even before any ability actually grants it for that specific skill, so future abilities work
+without touching the Interaction again.
+
+If the ability's Vantagem is scoped to a specific *purpose* within the skill (e.g. Fox'm's is
+only for perceiving movement, not every Atenção roll), that narrowing can't be modeled yet —
+this codebase doesn't track what a roll is *for*. Document that simplification in a comment on
+the enum constant rather than silently narrowing or silently over-granting.
