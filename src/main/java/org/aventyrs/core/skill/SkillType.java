@@ -20,7 +20,8 @@ public enum SkillType {
     DIRIGIR_E_CAVALGAR(DirigirECavalgarExcellency.class),
     DOMINIO_DO_MANA(DominioDoManaExcellency.class),
     ATAQUE_A_DISTANCIA(AtaqueADistanciaExcellency.class),
-    ATAQUE_CORPO_A_CORPO(AtaqueCorpoACorpoExcellency.class);
+    ATAQUE_CORPO_A_CORPO(AtaqueCorpoACorpoExcellency.class),
+    ESQUIVA_E_APARAR(EsquivaEApararExcellency.class);
 
     private final Class<? extends SkillExcellency> excellencyClass;
 }
