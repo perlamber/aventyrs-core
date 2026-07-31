@@ -2,8 +2,6 @@ package org.aventyrs.core.skill;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import org.aventyrs.core.modifier.Modifier;
-import org.aventyrs.core.modifier.ModifierType;
 
 /**
  * The Habilidades de Competência available to characters trained in Persuasão.
@@ -12,16 +10,11 @@ import org.aventyrs.core.modifier.ModifierType;
 @AllArgsConstructor
 public enum PersuasaoCompetencyAbility implements SkillCompetencyAbility {
 
-    // TODO: adds half the character's own Força total to this roll, but only for Obter
-    // Informações/Intimidação purposes — two separate blockers: (1) the bonus is a
-    // per-character variable (half of *that* character's Força), not a fixed constant, and
-    // the @Modifier/ModifierResolver mechanism only supports parameterless methods returning
-    // a fixed value with no access to the character's own attributes — this would need a
-    // new kind of modifier-resolution entirely, not just a missing system; (2) even with
-    // that, this codebase doesn't track what a roll is *for*, so scoping to just those two
-    // specializations still couldn't be expressed.
-    FORCA_INTIMIDADORA("Você pode somar metade de seu valor de Força as rolagens desta " +
-            "Perícia para fins de Obter Informações ou Intimidação."),
+    // TODO: lets this Perícia use Força instead of its normal base Attribute (Carisma),
+    // unconditionally — no Perícia base-Attribute substitution mechanism exists yet (same
+    // gap as EmpatiaSelvagemCompetencyAbility.ACADEMICO_SELVAGEM/INSTINTO_ANIMAL /
+    // FurtividadeCompetencyAbility.LADINO_TEORICO).
+    FORCA_OPRESSORA("Você pode substituir o Atributo Base desta Perícia por Força."),
 
     // TODO: after succeeding at a Comunicação/Mentir ou Omitir/Intimidação roll, grants
     // Vantagem on similar rolls against other nearby (Distância Curta) characters — needs a
@@ -42,16 +35,10 @@ public enum PersuasaoCompetencyAbility implements SkillCompetencyAbility {
             "oposto, ou contra quaisquer personagens que possam se sentir atraídos por " +
             "você."),
 
-    // Note: scoped to Negociação/Mentir ou Omitir purposes specifically, but this codebase
-    // doesn't track what a roll is *for* (same simplification as
-    // DirigirECavalgarCompetencyAbility.CONTROLAR_ANIMAIS), so it's implemented as an
-    // unconditional flat bonus to every Persuasão roll rather than silently narrowed.
-    POKERFACE("Vantagem em rolagens para fins de Negociação e Mentir ou Omitir.") {
-        @Modifier(ModifierType.SKILL_ROLL_BONUS)
-        public int advantageBonus() {
-            return Skill.ADVANTAGE_BONUS;
-        }
-    },
+    // TODO: -1PE to Equipamento purchase/production costs — no Item/Equipamento entity,
+    // "PE" currency, or cost system exists yet (same gap as
+    // ProfissaoExcellency.FOCADO/LENDA).
+    CAMBALACHO("O custo de compra e produção de Equipamentos é reduzido em -1PE."),
 
     // TODO: on success, the next Ataque Perícia roll this Rodada gets Vantagem and costs
     // -1PA — needs a roll-resolution-vs-DifficultyLevel engine, a cross-skill

@@ -78,19 +78,4 @@ class PersuasaoInteractionTest {
 
         assertEquals(0, result.getSkillRollBonus());
     }
-
-    @Test
-    void applyToAddsTheAdvantageBonusWhenCharacterHasPokerface() {
-        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
-                .attributes(CharacterAttributes.builder()
-                        .charisma(AttributeValue.builder().base(2).build())
-                        .build())
-                .skillCompetencyAbility(PersuasaoCompetencyAbility.POKERFACE)
-                .build();
-        CharacterSheet sheet = CharacterSheet.of(character, new Player());
-
-        InteractionResult result = persuasaoInteraction.applyTo(sheet);
-
-        assertEquals(2, result.getSkillRollBonus());
-    }
 }

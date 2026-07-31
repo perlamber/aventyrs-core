@@ -37,11 +37,10 @@ class PersuasaoCompetencyAbilityTest {
     }
 
     @Test
-    void onlyPokerfaceGrantsASkillRollBonus() {
+    void noAbilityGrantsASkillRollBonusYet() {
         ModifierResolver modifierResolver = new ModifierResolverImpl();
         for (PersuasaoCompetencyAbility ability : PersuasaoCompetencyAbility.values()) {
-            int expected = ability == PersuasaoCompetencyAbility.POKERFACE ? Skill.ADVANTAGE_BONUS : 0;
-            assertEquals(expected, modifierResolver.sumModifiers(ability, ModifierType.SKILL_ROLL_BONUS));
+            assertEquals(0, modifierResolver.sumModifiers(ability, ModifierType.SKILL_ROLL_BONUS));
         }
     }
 }
