@@ -10,6 +10,7 @@ import org.aventyrs.core.skill.Atletismo;
 import org.aventyrs.core.skill.Attention;
 import org.aventyrs.core.skill.DirigirECavalgar;
 import org.aventyrs.core.skill.DominioDoMana;
+import org.aventyrs.core.skill.EmpatiaSelvagem;
 import org.aventyrs.core.skill.EsquivaEAparar;
 import org.aventyrs.core.skill.SkillGraduation;
 import org.aventyrs.core.util.SimpleFixture;
@@ -24,6 +25,7 @@ public class CharacterSkillFixture extends SimpleFixture {
     public static final String ATAQUE_A_DISTANCIA_1 = "AtaqueADistancia1";
     public static final String ATAQUE_CORPO_A_CORPO_1 = "AtaqueCorpoACorpo1";
     public static final String ESQUIVA_E_APARAR_1 = "EsquivaEAparar1";
+    public static final String EMPATIA_SELVAGEM_1 = "EmpatiaSelvagem1";
 
     public static void loadTemplates() {
         loadBasicSkillTemplates();
@@ -68,6 +70,11 @@ public class CharacterSkillFixture extends SimpleFixture {
         Fixture.of(CharacterSkill.class).addTemplate(ESQUIVA_E_APARAR_1, new Rule() {
             {
                 this.add("skill", new EsquivaEAparar());
+            }
+        });
+        Fixture.of(CharacterSkill.class).addTemplate(EMPATIA_SELVAGEM_1, new Rule() {
+            {
+                this.add("skill", new EmpatiaSelvagem());
             }
         });
     }

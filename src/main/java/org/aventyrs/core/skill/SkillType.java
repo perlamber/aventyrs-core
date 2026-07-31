@@ -21,7 +21,8 @@ public enum SkillType {
     DOMINIO_DO_MANA(DominioDoManaExcellency.class),
     ATAQUE_A_DISTANCIA(AtaqueADistanciaExcellency.class),
     ATAQUE_CORPO_A_CORPO(AtaqueCorpoACorpoExcellency.class),
-    ESQUIVA_E_APARAR(EsquivaEApararExcellency.class);
+    ESQUIVA_E_APARAR(EsquivaEApararExcellency.class),
+    EMPATIA_SELVAGEM(EmpatiaSelvagemExcellency.class);
 
     private final Class<? extends SkillExcellency> excellencyClass;
 }
