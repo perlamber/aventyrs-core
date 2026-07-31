@@ -170,17 +170,18 @@ No `Magia` entity/list exists yet, so `SpellCastingService` only computes both r
 roll yet. This is deliberately left as a TODO on the service itself rather than guessed at.
 
 This is also where an ability whose effect targets the *delivery* roll, not Domínio do Mana's
-own, is meant to eventually plug in — don't try to force it onto
+own, would eventually plug in — don't try to force it onto
 `SkillCompetencyAbility.getDifficultyReduction()`/`SkillExcellency`, since that hook only ever
-feeds back into that *same* skill's own Interaction, never another skill's:
-
-- `DominioDoManaCompetencyAbility.FEITICEIRO` — reduces the delivery roll's GD by 1 (not
-  Domínio do Mana's own GD).
-
-TODO'd pending the Magia list (so its GD value exists to wire in) — see its comment for the
-full reasoning. (`AtaqueADistanciaExcellency.LENDA` used to have a similar "bônus de
-conjuração" clause, but the rules text was revised to drop it — a reminder that these
-cross-references need re-checking whenever a cited skill gets revised.)
+feeds back into that *same* skill's own Interaction, never another skill's. No current ability
+needs this: `DominioDoManaCompetencyAbility.FEITICEIRO` used to be the reference example (a -1
+GD on the delivery roll), but a rules revision replaced it with `Magia Selvagem` (an attribute
+substitution) — and `AtaqueADistanciaExcellency.LENDA`'s "bônus de conjuração" clause, the
+other ability this service was built to eventually host, was *also* dropped in its own
+revision. `SpellCastingService` itself is still correct (Domínio do Mana's own rules text still
+describes casting as two separate rolls), it just currently has no concrete ability wired
+toward this specific extension point — a reminder that these cross-references need
+re-checking whenever a cited skill gets revised, and that a piece of infrastructure can outlive
+the example that originally justified building it.
 
 ## Vantagem is a flat +2 bonus, not a reroll mechanic
 

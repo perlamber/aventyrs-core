@@ -11,11 +11,13 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum DominioDoManaSpecialization {
     INVOCADOR("Você se especializou em Magias do tipo Invocação."),
-    ENCANTADOR("Sua especialidade é o uso de Magias do tipo Encantamento."),
+    ENCANTADOR("Sua especialidade é o uso de Magias do tipo Encantamento ou Divinas."),
     FEITICARIA_OFENSIVA("Seu estilo de combate é baseado em Magias que afetem alvos " +
-            "inimigos."),
-    MEDICINA_ARCANA("Você domina a arte das Magias Divinas e Magias Naturais."),
-    ARCANISMO_HEREDITARIO("Você se especializou em suas Habilidades Mágicas Raciais.");
+            "inimigos ou Profanas."),
+    UTILIDADE_ARCANA("Você utiliza magias que não afetam personagens, apenas terrenos ou " +
+            "objetos."),
+    ARCANISMO_HEREDITARIO("Você se especializou em Mimetizar Magias ou suas Habilidades " +
+            "Mágicas Raciais.");
 
     private final String description;
 }
