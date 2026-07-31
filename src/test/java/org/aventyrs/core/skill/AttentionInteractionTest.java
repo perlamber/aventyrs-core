@@ -78,19 +78,4 @@ class AttentionInteractionTest {
 
         assertEquals(0, result.getSkillRollBonus());
     }
-
-    @Test
-    void applyToAddsTheAdvantageBonusWhenCharacterHasPercepcaoDeFoxm() {
-        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
-                .attributes(CharacterAttributes.builder()
-                        .instinct(AttributeValue.builder().base(2).build())
-                        .build())
-                .skillCompetencyAbility(AttentionCompetencyAbility.PERCEPCAO_DE_FOXM)
-                .build();
-        CharacterSheet sheet = CharacterSheet.of(character, new Player());
-
-        InteractionResult result = attentionInteraction.applyTo(sheet);
-
-        assertEquals(2, result.getSkillRollBonus());
-    }
 }

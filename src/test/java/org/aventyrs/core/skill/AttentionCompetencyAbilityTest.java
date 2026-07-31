@@ -30,11 +30,11 @@ class AttentionCompetencyAbilityTest {
     }
 
     @Test
-    void onlyPercepcaoDeFoxmGrantsASkillRollBonus() {
+    void noAbilityReducesDifficultyOrGrantsASkillRollBonusYet() {
         ModifierResolver modifierResolver = new ModifierResolverImpl();
         for (AttentionCompetencyAbility ability : AttentionCompetencyAbility.values()) {
-            int expected = ability == AttentionCompetencyAbility.PERCEPCAO_DE_FOXM ? Skill.ADVANTAGE_BONUS : 0;
-            assertEquals(expected, modifierResolver.sumModifiers(ability, ModifierType.SKILL_ROLL_BONUS));
+            assertEquals(0, ability.getDifficultyReduction());
+            assertEquals(0, modifierResolver.sumModifiers(ability, ModifierType.SKILL_ROLL_BONUS));
         }
     }
 }

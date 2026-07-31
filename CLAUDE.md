@@ -185,8 +185,8 @@ enum, but it isn't a d20-style "roll twice, take the higher" mechanic — in thi
 ability that grants Vantagem on a Perícia roll is implemented exactly like any other roll
 bonus: a `@Modifier(ModifierType.SKILL_ROLL_BONUS)` method on the concrete ability/excellency
 returning `Skill.ADVANTAGE_BONUS`, summed into `skillRollBonus` inside the skill's
-`<Skill>Interaction.applyTo` — see `AttentionCompetencyAbility.PERCEPCAO_DE_FOXM` /
-`AttentionInteraction`. No separate flag or dice-rolling engine needed.
+`<Skill>Interaction.applyTo` — see `DirigirECavalgarCompetencyAbility.CONTROLAR_ANIMAIS` /
+`DirigirECavalgarInteraction`. No separate flag or dice-rolling engine needed.
 
 Every `<Skill>Interaction.applyTo` should sum `ModifierType.SKILL_ROLL_BONUS` across the same
 three sources `ReactionsService` uses for Reações — `attributeAbilities`,
@@ -194,10 +194,18 @@ three sources `ReactionsService` uses for Reações — `attributeAbilities`,
 even before any ability actually grants it for that specific skill, so future abilities work
 without touching the Interaction again.
 
-If the ability's Vantagem is scoped to a specific *purpose* within the skill (e.g. Fox'm's is
-only for perceiving movement, not every Atenção roll), that narrowing can't be modeled yet —
-this codebase doesn't track what a roll is *for*. Document that simplification in a comment on
-the enum constant rather than silently narrowing or silently over-granting.
+If the ability's Vantagem is scoped to a specific *purpose* within the skill (e.g.
+`CONTROLAR_ANIMAIS`'s is only for animal/animal-drawn-vehicle rolls, not every Dirigir e
+Cavalgar roll), that narrowing can't be modeled yet — this codebase doesn't track what a roll
+is *for*. Document that simplification in a comment on the enum constant rather than silently
+narrowing or silently over-granting.
+
+Don't treat a citation of one of these examples as permanent, either — `AttentionCompetencyAbility
+.PERCEPCAO_DE_FOXM` used to be this section's reference example (a scoped Vantagem bonus), but
+a rules revision turned it into an auto-success effect instead, which no longer fits this
+pattern at all. When revising a skill, check whether anything elsewhere cites it as a
+precedent and fix those citations in the same change (see the `ATAQUE_A_DISTANCIA` and
+`ATENÇÃO` revisions for two examples of this).
 
 ## Consumer-facing documentation lives in `package-info.java`, and must stay current
 

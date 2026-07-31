@@ -44,8 +44,8 @@ public enum PersuasaoCompetencyAbility implements SkillCompetencyAbility {
 
     // Note: scoped to Negociação/Mentir ou Omitir purposes specifically, but this codebase
     // doesn't track what a roll is *for* (same simplification as
-    // AttentionCompetencyAbility.PERCEPCAO_DE_FOXM), so it's implemented as an unconditional
-    // flat bonus to every Persuasão roll rather than silently narrowed.
+    // DirigirECavalgarCompetencyAbility.CONTROLAR_ANIMAIS), so it's implemented as an
+    // unconditional flat bonus to every Persuasão roll rather than silently narrowed.
     POKERFACE("Vantagem em rolagens para fins de Negociação e Mentir ou Omitir.") {
         @Modifier(ModifierType.SKILL_ROLL_BONUS)
         public int advantageBonus() {

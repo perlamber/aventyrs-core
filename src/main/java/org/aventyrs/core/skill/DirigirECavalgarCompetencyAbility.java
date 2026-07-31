@@ -14,9 +14,9 @@ public enum DirigirECavalgarCompetencyAbility implements SkillCompetencyAbility 
 
     // Note: Vantagem here is only meant for animal/animal-drawn-vehicle rolls, not every
     // Dirigir e Cavalgar roll (e.g. it shouldn't apply to Veículos Tecnológicos) — this
-    // codebase doesn't track what a roll is *for* (same simplification as
-    // AttentionCompetencyAbility.PERCEPCAO_DE_FOXM), so it's implemented as an unconditional
-    // flat bonus rather than silently narrowed.
+    // codebase doesn't track what a roll is *for*, so it's implemented as an unconditional
+    // flat bonus rather than silently narrowed (see CLAUDE.md's Vantagem section for this
+    // pattern in general).
     CONTROLAR_ANIMAIS("Você se especializou em controlar animais e veículos de tração " +
             "animal e recebe Vantagem em suas rolagens.") {
         @Modifier(ModifierType.SKILL_ROLL_BONUS)

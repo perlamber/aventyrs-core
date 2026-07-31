@@ -20,8 +20,8 @@ public enum EmpatiaSelvagemCompetencyAbility implements SkillCompetencyAbility {
     ACADEMICO_SELVAGEM("Você pode substituir o Atributo Base desta perícia por Gnose."),
 
     // Note: scoped to calming hostile creatures specifically, but this codebase doesn't
-    // track what a roll is *for* (same simplification as AttentionCompetencyAbility
-    // .PERCEPCAO_DE_FOXM), so it's implemented as an unconditional flat bonus to every
+    // track what a roll is *for* (same simplification as DirigirECavalgarCompetencyAbility
+    // .CONTROLAR_ANIMAIS), so it's implemented as an unconditional flat bonus to every
     // Empatia Selvagem roll rather than silently narrowed.
     AMAINAR_A_SELVAGERIA("Vantagem para acalmar criaturas hostis.") {
         @Modifier(ModifierType.SKILL_ROLL_BONUS)

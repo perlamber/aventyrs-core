@@ -31,8 +31,8 @@ public enum EsquivaEApararCompetencyAbility implements SkillCompetencyAbility {
 
     // Note: scoped to rolls made specifically in response to a Reação-triggering effect, but
     // this codebase doesn't track what a roll is *for* (same simplification as
-    // AttentionCompetencyAbility.PERCEPCAO_DE_FOXM), so it's implemented as an unconditional
-    // flat bonus to every Esquiva e Aparar roll rather than silently narrowed.
+    // DirigirECavalgarCompetencyAbility.CONTROLAR_ANIMAIS), so it's implemented as an
+    // unconditional flat bonus to every Esquiva e Aparar roll rather than silently narrowed.
     MOVIMENTO_DEFENSIVO("Contra efeitos de Reações você recebe bônus de +3 em suas " +
             "Defesas.") {
         @Modifier(ModifierType.SKILL_ROLL_BONUS)
