@@ -39,8 +39,11 @@ pieces — don't stop at just the `Skill` class:
    build a validation/eligibility service for it — none exists yet for
    `SkillCompetencyAbility` (unlike `AttributeAbilityService` for `AttributeAbility`). Just
    document the unenforced prerequisite in a comment on the constant (see
-   `EsquivaEApararCompetencyAbility.RECUO_RAPIDO` for a current example), implementing its
-   actual numeric effect for real whenever one is expressible today.
+   `MedicinaECuraCompetencyAbility.ALQUIMIA_MAIOR` for a current example — note that
+   `EsquivaEApararCompetencyAbility.RECUO_RAPIDO` used to be this section's example, but a
+   rules revision dropped its "Requer N Graduações" clause entirely, so check this citation
+   again if `ALQUIMIA_MAIOR` is ever revised too), implementing its actual numeric effect for
+   real whenever one is expressible today.
 
    **For every ability whose mechanic depends on a system that doesn't exist yet**
    (a roll-vs-`DifficultyLevel` resolution engine, Vantagem/Desvantagem, ally-range effects,

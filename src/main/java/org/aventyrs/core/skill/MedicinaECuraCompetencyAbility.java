@@ -58,10 +58,10 @@ public enum MedicinaECuraCompetencyAbility implements SkillCompetencyAbility {
     // TODO: +1 Rodada to potions'/antidotes' Duração, then +1 more at the 7th and 10th
     // graduation — no potion/antidote entity or duration-tracking system exists yet (same
     // gap as DominioDoManaCompetencyAbility.CONJURACAO_DURADOURA). Requires the Alquimia
-    // Especialização *and* 4 Graduações to acquire — both unenforced (see
-    // EsquivaEApararCompetencyAbility.RECUO_RAPIDO for the same convention), since no
-    // eligibility-validation service exists for SkillCompetencyAbility (and Especialização
-    // is a plain String on CharacterSkill, not independently validatable either).
+    // Especialização *and* 4 Graduações to acquire — both unenforced (this is the reference
+    // example for that convention), since no eligibility-validation service exists for
+    // SkillCompetencyAbility (and Especialização is a plain String on CharacterSkill, not
+    // independently validatable either).
     ALQUIMIA_MAIOR("Suas poções e antídotos tem a Duração de efeito aumentada em +1 " +
             "Rodada, então em +1 Rodada na 7ª e 10ª Graduação. Esta Habilidade requer a " +
             "Especialização Alquimia e 4 Graduações nesta Perícia.");

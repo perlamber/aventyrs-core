@@ -53,13 +53,13 @@ public enum EsquivaEApararCompetencyAbility implements SkillCompetencyAbility {
             "movimentos, brechas na armadura etc. Se for bem-sucedido você reduz em o GD " +
             "para efetuar ataques contra o alvo em -1 Nível por 2 Rodadas."),
 
-    // TODO: Requer 7 Graduações – after taking damage from an attack, spend a Reação to move
-    // to an adjacent free space — needs a damage-triggers-a-Reação-opportunity mechanic and
-    // a movement/positioning system, neither of which exist yet. Requires 7 Graduações to
-    // acquire — also unenforced, since no eligibility-validation service exists for
-    // SkillCompetencyAbility (this is the reference example for that convention).
-    RECUO_RAPIDO("Requer 7 Graduações - Após sofrer danos de um ataque, como uma Reação, " +
-            "você pode se mover para um espaço livre adjacente.");
+    // TODO: once per Rodada, after taking damage from an enemy attack, spend a Reação to
+    // perform a "Reposicionar" action — needs a damage-triggers-a-Reação-opportunity
+    // mechanic, a once-per-Rodada usage-limiting mechanism, and a defined "Reposicionar"
+    // action type (this codebase only tracks generic PA/Ação Livre/Reação counters, not a
+    // catalog of distinct named actions), none of which exist yet.
+    RECUO_RAPIDO("Apenas uma vez por Rodada e após sofrer danos de um ataque inimigo, como " +
+            "Reação você pode usar uma ação de Reposicionar.");
 
     private final String description;
 
