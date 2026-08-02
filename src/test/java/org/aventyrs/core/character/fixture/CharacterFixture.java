@@ -44,6 +44,7 @@ public class CharacterFixture extends SimpleFixture {
                 this.add("skills", Map.of());
                 this.add("attributeAbilities", List.of());
                 this.add("skillCompetencyAbilities", List.of());
+                this.add("abilityChoices", List.of());
                 this.add("actionProfile", ActionProfile.REFLEXOS_RAPIDOS);
                 this.add("actionPoints", ActionPointsService.DEFAULT_ACTION_POINTS);
                 this.add("temporaryActionPointsBonus", 0);

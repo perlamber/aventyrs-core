@@ -22,7 +22,12 @@ public enum GnoseAbility implements AttributeAbility {
             "de jogo que seu Autocontrole for reduzido a zero você receberá 1 ponto temporário neste Ego na " +
             "Rodada seguinte."),
 
-    // TODO: lets you permanently replace a chosen Perícia's base Atributo with Gnose — no Perícia system exists yet.
+    // TODO: lets you permanently replace a chosen Perícia's base Atributo with Gnose —
+    // persisting *which* Perícia was chosen is no longer the blocker (see
+    // org.aventyrs.core.ability.AcquiredChoice / Character#getAbilityChoices /
+    // org.aventyrs.core.character.services.AbilityChoiceService#getChoiceFor); what's still
+    // missing is the actual Perícia base-Attribute substitution mechanism itself — no
+    // <Skill>Interaction reads a per-character override for which Attribute feeds its roll.
     PERITO_TEORICO("Escolha uma Perícia conhecida, você pode substituir o Atributo Base da Perícia escolhida por " +
             "Gnose, esta escolha não pode ser revertida."),
 

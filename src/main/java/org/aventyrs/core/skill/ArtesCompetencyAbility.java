@@ -32,12 +32,17 @@ public enum ArtesCompetencyAbility implements SkillCompetencyAbility {
 
     // TODO: choose a Perícia once (permanent choice) and gain a bonus depending on that
     // Perícia's category: Perícias de Ataque get +1 Dano Base, Esquiva e Aparar gets +1 RDS
-    // (Redução de Danos Sofridos — a damage-reduction stat that doesn't exist anywhere on
-    // Character/CharacterSheet yet, unlike Shield points), any other Perícia gets +1 Margem
-    // Crítica Menor (same gap as DominioDoManaCompetencyAbility.LETALIDADE_ARCANA). Also
-    // needs a way to persist which specific Perícia was chosen at acquisition — same
-    // "permanent choice" gap as GnoseAbility.PERITO_TEORICO, which this codebase doesn't
-    // track for any ability yet.
+    // (RD is now mechanically real — see DamageService.getTotalDamageReduction — so this
+    // specific branch's numeric effect isn't the blocker anymore), any other Perícia gets +1
+    // Margem Crítica Menor (same gap as DominioDoManaCompetencyAbility.LETALIDADE_ARCANA).
+    // Persisting *which* Perícia was chosen is no longer the blocker either — see
+    // org.aventyrs.core.ability.AcquiredChoice / Character#getAbilityChoices /
+    // org.aventyrs.core.character.services.AbilityChoiceService#getChoiceFor. What's still
+    // missing is wiring: no <Skill>Interaction/DamageService call site yet checks "does this
+    // character have APRIMORAR_COM_ARTE, and does its recorded choice match the skill being
+    // rolled right now" to actually apply the right one of the three branches.
+    // GnoseAbility.PERITO_TEORICO is in the same spot — choice now persistable, substitution
+    // mechanism itself still missing.
     APRIMORAR_COM_ARTE("Escolha uma Perícia, você criou uma forma única, exótica e ou " +
             "artística, de utilizar a Perícia escolhida, o que lhe concede um dos " +
             "benefícios a seguir: Perícias de Ataque - Dano Base +1. Esquiva e Aparar - " +

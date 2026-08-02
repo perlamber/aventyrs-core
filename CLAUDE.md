@@ -189,6 +189,65 @@ toward this specific extension point — a reminder that these cross-references 
 re-checking whenever a cited skill gets revised, and that a piece of infrastructure can outlive
 the example that originally justified building it.
 
+## Damage mitigation — `org.aventyrs.core.character.services.DamageService`
+
+Damage isn't just "subtract from PV" — there are three layers of mitigation, applied in a
+fixed order:
+
+1. **RD (Redução de Dano)** and **RA (Redução Absoluta)** — two independent flat reductions,
+   both summed via the standard three-source scan (`attributeAbilities`,
+   `skillCompetencyAbilities`, unlocked `SkillExcellency` tiers) through
+   `DamageService.getTotalDamageReduction`/`getTotalAbsoluteDamageReduction`. The only
+   difference between them is whether an attack/effect can choose to bypass it: RD can be
+   ignored (`calculateFinalDamage`'s `ignoreDamageReduction` flag skips it, but RA is always
+   applied regardless). Floored at 0 individually, same as `ReactionsService`/
+   `FreeActionsService`.
+2. **Half damage** — applied *last*, after RD/RA have already reduced the raw amount, via the
+   `halfDamage` flag on `calculateFinalDamage`. Rounds down (integer division), matching
+   `RestServiceImpl`'s existing floor-on-half convention.
+3. **Shield points** — unrelated to RD/RA/half-damage and unchanged by this: still absorbed
+   inside `CharacterSheet#applyDamage` itself, *after* `DamageService` has already computed the
+   post-mitigation amount. `DamageService.applyDamage(Character, CharacterSheet, int rawDamage,
+   boolean ignoreDamageReduction, boolean halfDamage)` bridges the two, mirroring
+   `RestService.applyRest`'s Character+CharacterSheet split — compute from the Character's
+   abilities, then apply the result to the CharacterSheet's resource pools.
+
+If an ability grants RD without spelling out a number in its own rules text, its value is
+`DamageService.DEFAULT_DAMAGE_REDUCTION` (+2) — only deviate from that when the text gives an
+explicit number (e.g. `ArtesCompetencyAbility.APRIMORAR_COM_ARTE`'s "+1 RDS" is real data, not
+the default, because the text says "+1").
+
+Note that RD becoming mechanically real doesn't automatically make every RD-granting ability
+real: `APRIMORAR_COM_ARTE` grants RD as *one branch of a choice* (which Perícia was picked —
+now persistable, see the next section, but nothing yet reads that choice back when a specific
+`<Skill>Interaction` rolls), and `ProfissaoCompetencyAbility.FORJA_VULCANA` grants RD as one
+branch of a *different* per-item choice (made at item creation, not ability acquisition) that's
+still blocked on the missing Item/Equipamento entity entirely. Check what's *actually* stopping
+an ability before assuming a newly-built mechanism resolves it completely.
+
+## Acquisition-time ability choices — `org.aventyrs.core.ability.AcquiredChoice`
+
+Some abilities require the player to pick a value when they're acquired — a Perícia
+(`GnoseAbility.PERITO_TEORICO`, `ArtesCompetencyAbility.APRIMORAR_COM_ARTE`), or, for a future
+ability, one of several fixed effects. This is a *generic* concern across
+`AttributeAbility`/`SkillCompetencyAbility`/anything else ability-shaped, so it isn't modeled
+per-ability — `AcquiredChoice<C>` pairs the specific ability instance with the value chosen
+(`C` is that value's type, e.g. `SkillType`), and `Character.abilityChoices` holds them
+alongside (not instead of) the normal `attributeAbilities`/`skillCompetencyAbilities` lists —
+the ability itself is still granted the normal way; this is purely the extra "what did they
+pick" data. Look a choice back up via
+`AbilityChoiceService.getChoiceFor(character, ability)`.
+
+This only solves *persisting* the choice — it doesn't make the underlying ability real by
+itself. `APRIMORAR_COM_ARTE` and `PERITO_TEORICO` both still need a consuming mechanism (a
+`<Skill>Interaction`/`DamageService` call site that checks "does this character have ability
+X, and does its recorded choice match what's happening right now") that doesn't exist yet —
+don't confuse "the choice can now be recorded" with "the ability now works."
+
+Don't build a validation service to check whether a choice is legal (e.g. that a chosen
+Perícia is actually trained) — same restraint as the unenforced "Requer N Graduações"
+prerequisites elsewhere in this codebase; just record what was picked.
+
 ## Vantagem is a flat +2 bonus, not a reroll mechanic
 
 "Grants Vantagem on X rolls" is one of the most common TODO reasons across every ability
