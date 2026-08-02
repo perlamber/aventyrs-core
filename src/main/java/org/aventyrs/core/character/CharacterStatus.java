@@ -1,5 +1,5 @@
 package org.aventyrs.core.character;
 
 public enum CharacterStatus {
-    ALIVE,DEAD,FALLEN;
+    CLEAN,HIGH_LIFE,MEDIUM_LIFE,LOW_LIFE,FALLEN,COMMA,DEAD;
 }

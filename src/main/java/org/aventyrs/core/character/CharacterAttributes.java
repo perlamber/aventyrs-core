@@ -8,17 +8,17 @@ import lombok.NonNull;
 @Getter
 public class CharacterAttributes {
     @Builder.Default
-    protected int vigor = 1;
+    protected AttributeValue vigor = AttributeValue.builder().build();
     @Builder.Default
-    protected int strength = 1;
+    protected AttributeValue strength = AttributeValue.builder().build();
     @Builder.Default
-    protected int dexterity = 1;
+    protected AttributeValue dexterity = AttributeValue.builder().build();
     @Builder.Default
-    protected int focus = 1;
+    protected AttributeValue focus = AttributeValue.builder().build();
     @Builder.Default
-    protected int instinct = 1;
+    protected AttributeValue instinct = AttributeValue.builder().build();
     @Builder.Default
-    protected int gnose = 1;
+    protected AttributeValue gnose = AttributeValue.builder().build();
     @Builder.Default
-    protected int charisma = 1;
+    protected AttributeValue charisma = AttributeValue.builder().build();
 }

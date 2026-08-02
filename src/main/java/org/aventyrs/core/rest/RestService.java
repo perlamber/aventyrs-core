@@ -1,0 +1,18 @@
+package org.aventyrs.core.rest;
+
+import org.aventyrs.core.character.Character;
+import org.aventyrs.core.sheet.CharacterSheet;
+
+public interface RestService {
+    /** PV recovered: Vigor's total value times the Rest's Attribute multiplier. */
+    int getRecoveredHitPoints(Character character, RestType restType);
+
+    /** PM recovered: Foco's total value times the Rest's Attribute multiplier. */
+    int getRecoveredMagicPoints(Character character, RestType restType);
+
+    /** PD recovered: Instinto's total value times the Rest's Attribute multiplier. */
+    int getRecoveredDeterminationPoints(Character character, RestType restType);
+
+    /** Applies a Rest's PV, PM and PD recovery to the character's sheet in one step. */
+    void applyRest(Character character, CharacterSheet characterSheet, RestType restType);
+}

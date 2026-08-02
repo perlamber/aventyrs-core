@@ -2,4 +2,11 @@ package org.aventyrs.core.util;
 
 public class TranslatableMessages {
     public static final String NOT_ENOUGH_EXPERIENCE = "NOT_ENOUGH_EXPERIENCE";
+    public static final String INVALID_ATTRIBUTE_POINT_ALLOCATION = "INVALID_ATTRIBUTE_POINT_ALLOCATION";
+    public static final String INVALID_RACIAL_BONUS_ALLOCATION = "INVALID_RACIAL_BONUS_ALLOCATION";
+    public static final String ATTRIBUTE_BASE_AT_MAXIMUM = "ATTRIBUTE_BASE_AT_MAXIMUM";
+    public static final String ATTRIBUTE_ABILITY_ALREADY_CHOSEN = "ATTRIBUTE_ABILITY_ALREADY_CHOSEN";
+    public static final String NO_ATTRIBUTE_ABILITY_SLOT_AVAILABLE = "NO_ATTRIBUTE_ABILITY_SLOT_AVAILABLE";
+    public static final String INVALID_EGO_POINT_ALLOCATION = "INVALID_EGO_POINT_ALLOCATION";
+    public static final String NO_PARTICIPANTS_IN_SCENE = "NO_PARTICIPANTS_IN_SCENE";
 }

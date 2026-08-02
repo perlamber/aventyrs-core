@@ -2,7 +2,6 @@ package org.aventyrs.core.sheet;
 
 import org.aventyrs.core.character.CharacterStatus;
 
-public interface Interactable {
-    public CharacterStatus receiveInteraction(Interaction interaction);
-    public CharacterStatus receiveInteraction();
+public interface Interactable<R extends Interactable<R>> {
+    public InteractionResult receiveInteraction(Interaction<R> interaction);
 }
