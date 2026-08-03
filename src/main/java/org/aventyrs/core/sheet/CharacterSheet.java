@@ -60,10 +60,10 @@ public class CharacterSheet implements Interactable<CharacterSheet> {
      */
     public BigDecimal useExperience(BigDecimal expToUse) throws IllegalOperationException
     {
-        BigDecimal remainingExperience = unUsedExperience = unUsedExperience.subtract(expToUse);
+        BigDecimal remainingExperience = unUsedExperience.subtract(expToUse);
         if(remainingExperience.compareTo(BigDecimal.ZERO) < 0)
             throw new IllegalOperationException(NOT_ENOUGH_EXPERIENCE);
-        return remainingExperience;
+        return unUsedExperience = remainingExperience;
     }
 
     public BigDecimal accumulateExperience(BigDecimal experience)

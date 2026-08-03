@@ -13,7 +13,6 @@ import org.aventyrs.core.sheet.Interaction;
 import org.aventyrs.core.sheet.InteractionResult;
 
 import java.util.List;
-import java.util.Optional;
 
 import static org.aventyrs.core.skill.Skill.UNTRAINED_PENALTY;
 
@@ -52,14 +51,11 @@ public class AtaqueADistanciaInteraction implements Interaction<CharacterSheet> 
         CharacterSkill ataqueADistanciaSkill = findCharacterSkill(character);
         int graduationValue = ataqueADistanciaSkill.getGraduation().getGraduationValue();
 
-        AttributeDomain substituteAttributeDomain = character.getSkillCompetencyAbilities().stream()
-                .filter(ability -> ability.getSkillType() == SkillType.ATAQUE_A_DISTANCIA)
-                .map(SkillCompetencyAbility::getSubstituteAttributeDomain)
-                .flatMap(Optional::stream)
-                .findFirst()
-                .orElse(null);
+        AttributeDomain attributeDomain = SkillCompetencyAbility.resolveAttributeDomain(
+                character.getSkillCompetencyAbilities(), SkillType.ATAQUE_A_DISTANCIA,
+                ataqueADistanciaSkill.getSkill().getAttributeDomain());
 
-        int bonus = characterSkillService.getValueForRoll(ataqueADistanciaSkill, character.getAttributes(), character.getRace(), substituteAttributeDomain);
+        int bonus = characterSkillService.getValueForRoll(ataqueADistanciaSkill, character.getAttributes(), character.getRace(), attributeDomain);
         bonus += modifierResolver.sumModifiers(character.getAttributeAbilities(), ModifierType.SKILL_ROLL_BONUS);
         bonus += modifierResolver.sumModifiers(character.getSkillCompetencyAbilities(), ModifierType.SKILL_ROLL_BONUS);
         List<SkillExcellency> unlockedExcellencies = SkillExcellency.unlockedBy(AtaqueADistanciaExcellency.class, graduationValue);

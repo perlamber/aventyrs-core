@@ -4,20 +4,77 @@ Rules-engine core for the Aventyrs tabletop game. Pure Java library (Lombok + JU
 no framework dependencies — see `org.aventyrs.core.skill.Attention`/`Artes` and their
 `Interaction`s for the reference implementation of everything below.
 
-## An Attribute's `base` is capped at 5 — the rest comes from `racialBonus`/`variable`
+## Attribute `base`/Perícia Graduação: hard caps, and both upgrades cost XP
 
-`AttributeValue.getTotal()` sums three independent components (`base`, `racialBonus`,
-`variable`), but only `base` is what a character invests in directly, and it's capped at
-`CharacterAttributeService.MAX_ATTRIBUTE_BASE` (5) — `CharacterAttributeServiceImpl
-.upgradeBase` already enforces this on the character-progression path. Nothing stops
-`AttributeValue.builder().base(...)` from being called directly with a higher number though
-(Lombok's builder has no such validation, and Fixture Factory/test code builds
-`CharacterAttributes` straight from the builder, bypassing `upgradeBase` entirely) — so when
-writing a fixture or test that needs an Attribute total above 5, put the excess in
-`variable` (representing spells/feats/equipment; `racialBonus` should stay small, matching
-`CharacterCreationServiceImpl`'s actual fixed-plus-chosen racial allocations), not `base`.
-`CharacterFixture.ATTRIBUTE_SUBSTITUTIONS` follows this (e.g. `base(5).variable(3)` for a
-total of 8) — don't regress it back to a raw `base(8)`.
+An Attribute's `base` is capped at 5; a Perícia's Graduação is capped at twice the `base` of
+whichever Attribute currently governs it. Raising either one point costs XP, at a different
+formula per case, and can only happen with a `CharacterSheet` in hand (that's where
+`unUsedExperience` lives) — this is a Character-*progression* action, not a pure computation
+on a bare value.
+
+- `AttributeValue.getTotal()` sums three independent components (`base`, `racialBonus`,
+  `variable`), but only `base` is what a character invests in directly, and it's capped at
+  `CharacterAttributeService.MAX_ATTRIBUTE_BASE` (5). `CharacterAttributeServiceImpl
+  .upgradeBase(AttributeValue currentValue, CharacterSheet characterSheet)` raises it by
+  exactly one point: checks the cap, spends `getUpgradeCost(currentValue)` XP from
+  `characterSheet` (throwing `IllegalOperationException` on either failure), then returns the
+  upgraded `AttributeValue`. Cost is the target base + 1 (e.g. 4→5 costs 6).
+- A Perícia's Graduação is capped at `SkillGraduationService
+  .GRADUATION_TO_ATTRIBUTE_BASE_MULTIPLIER` (2) times the `base` — not the full total,
+  `racialBonus`/`variable` don't widen this — of whichever Attribute currently *governs* that
+  Perícia for this character. "Governs" isn't always the Perícia's own fixed
+  `AttributeDomain`: if the character holds a `SkillCompetencyAbility` for that same skill
+  granting an unconditional substitution (see the "Unconditional Perícia base-Attribute
+  substitution" section below), the substituted Attribute's `base` is what the cap uses
+  instead — `SkillGraduationServiceImpl.getMaxGraduation` resolves this via the same
+  `SkillCompetencyAbility.resolveAttributeDomain` every substitution-aware
+  `<Skill>Interaction` already calls for its roll, so the two never disagree on which
+  Attribute is "in charge" of a given Perícia right now.
+  `SkillGraduationServiceImpl.upgradeGraduation(Character character, CharacterSheet
+  characterSheet, SkillType skillType)` raises it by exactly one point, same
+  check-cap-then-spend-XP-then-mutate order as `upgradeBase`. Cost is **half** the target
+  Graduação (e.g. 6→7 costs 3.5 — a `BigDecimal`, genuinely fractional, not rounded) — a
+  different formula from Attributes, so don't share `getUpgradeCost` logic between the two
+  services or assume one mirrors the other's numbers.
+- Both `upgradeBase`/`upgradeGraduation` take the Character's data (`AttributeValue`/
+  `CharacterSkill` in one, `Character` in the other) *and* a separate `CharacterSheet`
+  parameter, mirroring `RestService.applyRest(Character, CharacterSheet, ...)` and
+  `DamageService.applyDamage(Character, CharacterSheet, ...)`'s existing split: compute from
+  the Character-side data, but only the `CharacterSheet` carries `unUsedExperience` to spend
+  from (and, for Graduação, the `CharacterSkill` instance being mutated is looked up from
+  `character.getSkills()`, not `characterSheet` — `Character` remains the single source of
+  truth for skills/attributes/abilities).
+- `CharacterSheet.useExperience` had a latent bug fixed alongside this: it used to subtract
+  `expToUse` from `unUsedExperience` *before* checking whether the result was negative, so a
+  rejected spend still silently corrupted the balance. Nothing called it before these two
+  upgrade paths existed, so the bug was inert; it isn't anymore now that real callers exist —
+  a rejected `upgradeBase`/`upgradeGraduation` call must leave `unUsedExperience` untouched
+  (see `CharacterSheetTest#useExperienceLeavesUnusedExperienceUntouchedWhenRejected`).
+
+Nothing stops `AttributeValue.builder().base(...)` or `CharacterSkill#increaseGraduation`
+from being called directly with a value past either cap (or with no XP spent at all) though
+(Lombok's builder has no such validation, `increaseGraduation` is a plain mutator, and
+Fixture Factory/test code routinely builds `CharacterAttributes`/`CharacterSkill` straight
+from the builder or fixture templates, bypassing both services entirely) — so when writing a
+fixture or test:
+- that needs an Attribute total above 5, put the excess in `variable` (representing
+  spells/feats/equipment; `racialBonus` should stay small, matching
+  `CharacterCreationServiceImpl`'s actual fixed-plus-chosen racial allocations), not `base`.
+  `CharacterFixture.ATTRIBUTE_SUBSTITUTIONS` follows this (e.g. `base(5).variable(3)` for a
+  total of 8) — don't regress it back to a raw `base(8)`.
+- is specifically exercising `CharacterAttributeService`/`SkillGraduationService` (like
+  `CharacterAttributeServiceTest`/`SkillGraduationServiceImplTest`), keep the Attribute
+  `base`/Graduação and the `CharacterSheet`'s `unUsedExperience` consistent with both the cap
+  and the real cost formula, the same way those test files do.
+
+The many pre-existing `<Skill>InteractionTest` files that jump a skill straight to Graduação
+7 or 10 (to unlock `PRODIGIO`/`LENDA`) alongside a low Attribute `base`, with no XP spent at
+all, are **not** violating either the cap or the cost rule — they call `CharacterSkill
+#increaseGraduation` directly, the same service-bypassing test convenience
+`AttributeValue.builder().base(...)` already is for Attributes, and `SkillGraduationService`
+doesn't gate that method. Both the cap and the cost only apply going forward through
+`CharacterAttributeService.upgradeBase`/`SkillGraduationService.upgradeGraduation`
+themselves; don't retrofit those existing Excelência-tier tests to comply with either.
 
 ## Adding a new Perícia (Skill)
 
@@ -326,15 +383,22 @@ attack/delivery method) — it's now mechanically real, following `ACUIDADE` as 
   `getAttributeDomain()`, as before" (the original 3-arg overload just delegates to this one
   with `null`), non-null overrides it. The service itself never scans abilities — it only
   ever receives a resolved value.
-- Resolving *which* Attribute (if any) applies is the calling `<Skill>Interaction`'s job, not
-  the service's — mirroring how each Interaction already inlines its own
-  `difficultyReduction` sum rather than delegating it. Filter
-  `character.getSkillCompetencyAbilities()` for entries whose `getSkillType()` matches this
-  same Interaction's own `SkillType` constant and whose `getSubstituteAttributeDomain()` is
-  present, take the first match, and pass its value (or `null` if none) into the 4-arg
-  overload — see `AtaqueCorpoACorpoInteraction`. Filtering by `getSkillType()` first is
-  required: a bare "first ability in the whole list that returns a substitution" would wrongly
-  pick up another trained Perícia's unrelated substitution ability.
+- Resolving *which* Attribute (if any) applies is `SkillCompetencyAbility
+  .resolveAttributeDomain(skillCompetencyAbilities, skillType, defaultDomain)`'s job — a
+  static method on the interface, mirroring `SkillExcellency.unlockedBy`'s existing
+  static-method-on-interface shape. It filters for entries whose `getSkillType()` matches
+  `skillType` and whose `getSubstituteAttributeDomain()` is present, returning the first
+  match's Attribute or `defaultDomain` if none. This one *is* factored into a single shared
+  method rather than inlined per `<Skill>Interaction` — unlike the `difficultyReduction`/
+  `SKILL_ROLL_BONUS` sums (which have real per-site variation: different `ModifierType`
+  constants, extra unlocked-Excellency lists), this resolution is byte-for-byte identical at
+  every call site, and it now has a second, non-`Interaction` consumer too
+  (`SkillGraduationService`'s max-Graduação cap, see the cap section above) — a second
+  category of caller is exactly the point where this codebase's usual "duplicate over
+  centralize" preference stops applying. Each substitution-aware `<Skill>Interaction` (e.g.
+  `AtaqueCorpoACorpoInteraction`) calls it with its own `CharacterSkill.getSkill()
+  .getAttributeDomain()` as `defaultDomain`, then passes the (always non-null) result into
+  `getValueForRoll`'s 4-arg overload.
 - This only covers the *unconditional* case. A substitution scoped to a specific circumstance
   (e.g. `AtaqueADistanciaCompetencyAbility.ARREMESSO_PODEROSO`, only for thrown-weapon/spell
   attacks) can't be modeled this way — same "this codebase doesn't track what a roll is *for*"

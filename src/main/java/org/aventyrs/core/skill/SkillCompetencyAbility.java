@@ -2,6 +2,7 @@ package org.aventyrs.core.skill;
 
 import org.aventyrs.core.character.AttributeDomain;
 
+import java.util.Collection;
 import java.util.Optional;
 
 public interface SkillCompetencyAbility {
@@ -32,5 +33,23 @@ public interface SkillCompetencyAbility {
      */
     default Optional<AttributeDomain> getSubstituteAttributeDomain() {
         return Optional.empty();
+    }
+
+    /**
+     * The Attribute that currently governs skillType's roll/graduation-cap for a character
+     * holding skillCompetencyAbilities — defaultDomain, unless one of those abilities
+     * targets this same skillType and {@link #getSubstituteAttributeDomain()} isn't empty,
+     * in which case the substituted Attribute wins. Shared by every {@code <Skill>Interaction}
+     * that supports substitution (see {@code AtaqueCorpoACorpoInteraction}) and by
+     * {@code SkillGraduationService}'s max-graduation cap — both need the exact same
+     * resolution, so it lives here once rather than duplicated at each call site.
+     */
+    static AttributeDomain resolveAttributeDomain(final Collection<SkillCompetencyAbility> skillCompetencyAbilities, final SkillType skillType, final AttributeDomain defaultDomain) {
+        return skillCompetencyAbilities.stream()
+                .filter(ability -> ability.getSkillType() == skillType)
+                .map(SkillCompetencyAbility::getSubstituteAttributeDomain)
+                .flatMap(Optional::stream)
+                .findFirst()
+                .orElse(defaultDomain);
     }
 }

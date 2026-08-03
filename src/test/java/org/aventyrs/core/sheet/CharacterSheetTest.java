@@ -6,7 +6,10 @@ import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.math.BigDecimal;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class CharacterSheetTest {
 
@@ -141,5 +144,33 @@ class CharacterSheetTest {
         CharacterSheet sheet = newSheet();
         sheet.increaseFamaNegativa(1);
         assertEquals(4, sheet.increaseFamaNegativa(3));
+    }
+
+    @Test
+    void useExperienceSubtractsFromUnusedExperience() throws IllegalOperationException {
+        CharacterSheet sheet = newSheet();
+        sheet.accumulateExperience(BigDecimal.TEN);
+
+        assertEquals(BigDecimal.valueOf(4), sheet.useExperience(BigDecimal.valueOf(6)));
+        assertEquals(BigDecimal.valueOf(4), sheet.getUnUsedExperience());
+    }
+
+    @Test
+    void useExperienceLeavesUnusedExperienceUntouchedWhenRejected() {
+        CharacterSheet sheet = newSheet();
+        sheet.accumulateExperience(BigDecimal.valueOf(3));
+
+        assertThrows(IllegalOperationException.class, () -> sheet.useExperience(BigDecimal.valueOf(6)));
+        assertEquals(BigDecimal.valueOf(3), sheet.getUnUsedExperience());
+    }
+
+    @Test
+    void accumulateExperienceIncreasesBothTotalAndUnusedExperience() {
+        CharacterSheet sheet = newSheet();
+        sheet.accumulateExperience(BigDecimal.valueOf(5));
+
+        assertEquals(BigDecimal.valueOf(7), sheet.accumulateExperience(BigDecimal.valueOf(2)));
+        assertEquals(BigDecimal.valueOf(7), sheet.getTotalExperience());
+        assertEquals(BigDecimal.valueOf(7), sheet.getUnUsedExperience());
     }
 }
