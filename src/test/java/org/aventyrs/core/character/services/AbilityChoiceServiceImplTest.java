@@ -4,7 +4,6 @@ import org.aventyrs.core.ability.AcquiredChoice;
 import org.aventyrs.core.ability.GnoseAbility;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.fixture.CharacterFixture;
-import org.aventyrs.core.skill.ArtesCompetencyAbility;
 import org.aventyrs.core.skill.SkillType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -47,14 +46,14 @@ class AbilityChoiceServiceImplTest {
     void distinguishesChoicesBetweenDifferentAbilities() {
         Character character = CharacterFixture.blank(CharacterFixture.BLANK)
                 .abilityChoice(AcquiredChoice.of(GnoseAbility.PERITO_TEORICO, SkillType.ATLETISMO))
-                .abilityChoice(AcquiredChoice.of(ArtesCompetencyAbility.APRIMORAR_COM_ARTE, SkillType.ESQUIVA_E_APARAR))
+                .abilityChoice(AcquiredChoice.of(GnoseAbility.DOMINIO_DO_CONHECIMENTO, SkillType.ESQUIVA_E_APARAR))
                 .build();
 
         Optional<SkillType> peritoTeoricoChoice = abilityChoiceService.getChoiceFor(character, GnoseAbility.PERITO_TEORICO);
-        Optional<SkillType> aprimorarComArteChoice = abilityChoiceService.getChoiceFor(character, ArtesCompetencyAbility.APRIMORAR_COM_ARTE);
+        Optional<SkillType> dominioDoConhecimentoChoice = abilityChoiceService.getChoiceFor(character, GnoseAbility.DOMINIO_DO_CONHECIMENTO);
 
         assertEquals(Optional.of(SkillType.ATLETISMO), peritoTeoricoChoice);
-        assertEquals(Optional.of(SkillType.ESQUIVA_E_APARAR), aprimorarComArteChoice);
+        assertEquals(Optional.of(SkillType.ESQUIVA_E_APARAR), dominioDoConhecimentoChoice);
     }
 
     @Test
@@ -63,7 +62,7 @@ class AbilityChoiceServiceImplTest {
                 .abilityChoice(AcquiredChoice.of(GnoseAbility.PERITO_TEORICO, SkillType.ATLETISMO))
                 .build();
 
-        Optional<SkillType> choice = abilityChoiceService.getChoiceFor(character, ArtesCompetencyAbility.APRIMORAR_COM_ARTE);
+        Optional<SkillType> choice = abilityChoiceService.getChoiceFor(character, GnoseAbility.DOMINIO_DO_CONHECIMENTO);
 
         assertTrue(choice.isEmpty());
     }

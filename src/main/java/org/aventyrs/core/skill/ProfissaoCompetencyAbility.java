@@ -23,8 +23,9 @@ public enum ProfissaoCompetencyAbility implements SkillCompetencyAbility {
     // TODO: produced Equipamentos Defensivos permanently grant Resistência a Críticos (a
     // new critical-hit-resistance concept, distinct from anything modeled today) plus a
     // choice — baked in at item creation — between Redução de Danos Sofridos 1 (RD is now
-    // mechanically real — see DamageService.getTotalDamageReduction — same gap
-    // ArtesCompetencyAbility.APRIMORAR_COM_ARTE has) or +1 Defesas; produced Equipamentos
+    // mechanically real — see DamageService.getTotalDamageReduction — but unlike
+    // ArtesAprimorarComArteAbility's now-working RDS branch, this choice lives on the
+    // produced item, not the character) or +1 Defesas; produced Equipamentos
     // Ofensivos grant Margem Crítica Maior +1 (a *different* axis from every other skill's
     // "Margem Crítica Menor" — no critical-margin concept of either kind exists yet) plus a
     // choice between +1 Dano Base or +1 Conjuração (a Magia-effect bonus, same gap as

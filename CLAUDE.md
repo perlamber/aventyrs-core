@@ -219,30 +219,45 @@ the default, because the text says "+1").
 
 Note that RD becoming mechanically real doesn't automatically make every RD-granting ability
 real: `APRIMORAR_COM_ARTE` grants RD as *one branch of a choice* (which Perícia was picked —
-now persistable, see the next section, but nothing yet reads that choice back when a specific
-`<Skill>Interaction` rolls), and `ProfissaoCompetencyAbility.FORJA_VULCANA` grants RD as one
-branch of a *different* per-item choice (made at item creation, not ability acquisition) that's
-still blocked on the missing Item/Equipamento entity entirely. Check what's *actually* stopping
-an ability before assuming a newly-built mechanism resolves it completely.
+solved by the instance-based ability pattern, see the next section: its RDS branch now works
+for real, while its Dano Base and Margem Crítica Menor branches stay TODO'd on
+`ArtesAprimorarComArteAbility` blocked on their own missing systems), and
+`ProfissaoCompetencyAbility.FORJA_VULCANA` grants RD as one branch of a *different* per-item
+choice (made at item creation, not ability acquisition) that's still blocked on the missing
+Item/Equipamento entity entirely. Check what's *actually* stopping an ability before assuming
+a newly-built mechanism resolves it completely.
 
 ## Acquisition-time ability choices — `org.aventyrs.core.ability.AcquiredChoice`
 
 Some abilities require the player to pick a value when they're acquired — a Perícia
-(`GnoseAbility.PERITO_TEORICO`, `ArtesCompetencyAbility.APRIMORAR_COM_ARTE`), or, for a future
-ability, one of several fixed effects. This is a *generic* concern across
-`AttributeAbility`/`SkillCompetencyAbility`/anything else ability-shaped, so it isn't modeled
-per-ability — `AcquiredChoice<C>` pairs the specific ability instance with the value chosen
-(`C` is that value's type, e.g. `SkillType`), and `Character.abilityChoices` holds them
-alongside (not instead of) the normal `attributeAbilities`/`skillCompetencyAbilities` lists —
-the ability itself is still granted the normal way; this is purely the extra "what did they
-pick" data. Look a choice back up via
-`AbilityChoiceService.getChoiceFor(character, ability)`.
+(`GnoseAbility.PERITO_TEORICO`), or, for a future ability, one of several fixed effects.
+There are **two** patterns for storing that choice, and which one applies depends on what
+consumes it:
 
-This only solves *persisting* the choice — it doesn't make the underlying ability real by
-itself. `APRIMORAR_COM_ARTE` and `PERITO_TEORICO` both still need a consuming mechanism (a
-`<Skill>Interaction`/`DamageService` call site that checks "does this character have ability
-X, and does its recorded choice match what's happening right now") that doesn't exist yet —
-don't confuse "the choice can now be recorded" with "the ability now works."
+- **When the choice feeds the ability's own `@Modifier` methods** (i.e. the ability's numeric
+  effect differs per character depending on what they picked), don't use `AcquiredChoice` —
+  make the ability an *instance-based class* implementing the usual ability interface, with
+  the chosen value as a constructor-injected final field, and grant that instance in the
+  normal `Character` list. `ArtesCompetencyAbility.APRIMORAR_COM_ARTE` is the reference:
+  the enum constant stays as the catalog/rules-text entry, but characters are granted an
+  `ArtesAprimorarComArteAbility(chosenSkill)` in `skillCompetencyAbilities` instead. Because
+  `ModifierResolver` invokes `@Modifier` methods *on the source instance* (and caches
+  reflection per class, not per instance), a modifier method can branch on the instance's own
+  choice field — the existing three-source scans (`DamageService`, `ReactionsService`, every
+  `<Skill>Interaction`, …) then pick the right value up with **zero** changes to any scanning
+  service. Use `SkillType.isAttackSkill()` when a branch keys on "Perícias de Ataque" (Ataque
+  à Distância + Ataque Corpo-a-Corpo) as a category.
+
+- **When the choice is consumed by some *other* mechanism** (not a modifier on the ability
+  itself — e.g. `PERITO_TEORICO`'s attribute substitution, which a future
+  `<Skill>Interaction` lookup would read), use `AcquiredChoice<C>`: it pairs the specific
+  ability instance with the value chosen (`C` is that value's type, e.g. `SkillType`), and
+  `Character.abilityChoices` holds them alongside (not instead of) the normal
+  `attributeAbilities`/`skillCompetencyAbilities` lists — the ability itself is still granted
+  the normal way; this is purely the extra "what did they pick" data. Look a choice back up
+  via `AbilityChoiceService.getChoiceFor(character, ability)`. This only solves *persisting*
+  the choice — `PERITO_TEORICO` still needs its substitution mechanism; don't confuse "the
+  choice can now be recorded" with "the ability now works."
 
 Don't build a validation service to check whether a choice is legal (e.g. that a chosen
 Perícia is actually trained) — same restraint as the unenforced "Requer N Graduações"

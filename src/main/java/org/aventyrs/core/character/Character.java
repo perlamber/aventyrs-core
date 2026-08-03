@@ -67,8 +67,7 @@ public class Character {
 
     /**
      * Values chosen when acquiring an ability whose rules require picking one — e.g. which
-     * Perícia {@code ArtesCompetencyAbility.APRIMORAR_COM_ARTE} or
-     * {@code GnoseAbility.PERITO_TEORICO} applies to. The ability instance itself still lives
+     * Perícia {@code GnoseAbility.PERITO_TEORICO} applies to. The ability instance itself still lives
      * in {@link #attributeAbilities}/{@link #skillCompetencyAbilities} as normal — this is
      * purely the extra "what did they pick" data, looked up via
      * {@link org.aventyrs.core.character.services.AbilityChoiceService#getChoiceFor}.

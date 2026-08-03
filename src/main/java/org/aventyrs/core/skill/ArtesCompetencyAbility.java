@@ -30,19 +30,11 @@ public enum ArtesCompetencyAbility implements SkillCompetencyAbility {
     DOMINIO_CULTURAL("É possível utilizar rolagens de Artes ao invés de Conhecimentos, mas " +
             "informações obtidas destas formas são superficiais."),
 
-    // TODO: choose a Perícia once (permanent choice) and gain a bonus depending on that
-    // Perícia's category: Perícias de Ataque get +1 Dano Base, Esquiva e Aparar gets +1 RDS
-    // (RD is now mechanically real — see DamageService.getTotalDamageReduction — so this
-    // specific branch's numeric effect isn't the blocker anymore), any other Perícia gets +1
-    // Margem Crítica Menor (same gap as DominioDoManaCompetencyAbility.LETALIDADE_ARCANA).
-    // Persisting *which* Perícia was chosen is no longer the blocker either — see
-    // org.aventyrs.core.ability.AcquiredChoice / Character#getAbilityChoices /
-    // org.aventyrs.core.character.services.AbilityChoiceService#getChoiceFor. What's still
-    // missing is wiring: no <Skill>Interaction/DamageService call site yet checks "does this
-    // character have APRIMORAR_COM_ARTE, and does its recorded choice match the skill being
-    // rolled right now" to actually apply the right one of the three branches.
-    // GnoseAbility.PERITO_TEORICO is in the same spot — choice now persistable, substitution
-    // mechanism itself still missing.
+    // Requires choosing a Perícia when acquired, with the benefit branching on that
+    // Perícia's category — so this constant is the catalog/rules-text entry only. To grant
+    // the ability to a character, store an ArtesAprimorarComArteAbility (which carries the
+    // chosen SkillType) in Character.skillCompetencyAbilities instead of this constant; its
+    // RDS branch is already real, the other two branches are TODO'd on that class.
     APRIMORAR_COM_ARTE("Escolha uma Perícia, você criou uma forma única, exótica e ou " +
             "artística, de utilizar a Perícia escolhida, o que lhe concede um dos " +
             "benefícios a seguir: Perícias de Ataque - Dano Base +1. Esquiva e Aparar - " +

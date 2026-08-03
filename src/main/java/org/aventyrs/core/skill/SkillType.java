@@ -30,4 +30,14 @@ public enum SkillType {
     CONHECIMENTOS(ConhecimentosExcellency.class);
 
     private final Class<? extends SkillExcellency> excellencyClass;
+
+    /**
+     * Whether this Perícia is one of the Perícias de Ataque the rules text refers to as a
+     * group — Ataque à Distância and Ataque Corpo-a-Corpo. The well-typed reference for
+     * abilities whose effect branches on that category (e.g.
+     * {@link ArtesAprimorarComArteAbility}'s Dano Base branch).
+     */
+    public boolean isAttackSkill() {
+        return this == ATAQUE_A_DISTANCIA || this == ATAQUE_CORPO_A_CORPO;
+    }
 }

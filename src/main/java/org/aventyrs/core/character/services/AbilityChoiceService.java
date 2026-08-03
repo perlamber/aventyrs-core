@@ -12,7 +12,7 @@ public interface AbilityChoiceService {
     /**
      * The value chosen for the given ability instance, if the character has one recorded —
      * e.g. which {@code SkillType} they picked for
-     * {@code ArtesCompetencyAbility.APRIMORAR_COM_ARTE}. {@code ability} is matched by
+     * {@code GnoseAbility.PERITO_TEORICO}. {@code ability} is matched by
      * identity/equality against {@code AcquiredChoice.getAbility()}, so pass the same enum
      * constant the character was granted (enum constants are singletons, so this is exact
      * reference equality in practice).
