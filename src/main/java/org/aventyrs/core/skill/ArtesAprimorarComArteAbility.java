@@ -40,20 +40,45 @@ public class ArtesAprimorarComArteAbility implements SkillCompetencyAbility {
 
     /**
      * The "Esquiva e Aparar - Redução de Danos Sofridos (RDS) +1" branch — picked up by
-     * {@code DamageService.getTotalDamageReduction}'s normal competency scan.
+     * {@code DamageService.getTotalDamageReduction}'s normal competency scan. Unlike the
+     * other two branches below, this one is unconditionally active once chosen (RD/RA apply
+     * regardless of which Perícia a hit came from), so it fits the existing
+     * {@code @Modifier}/{@code ModifierResolver} machinery directly.
      */
     @Modifier(ModifierType.DAMAGE_REDUCTION)
     int damageReduction() {
         return chosenSkill == SkillType.ESQUIVA_E_APARAR ? BENEFIT_BONUS : 0;
     }
 
-    // TODO: "Perícias de Ataque - Dano Base +1" branch (when chosenSkill.isAttackSkill()):
-    // needs a dealt-damage/Dano Base computation — DamageService only models damage
-    // *received* (RD/RA/half-damage/shields), and no weapon/attack-damage entity exists to
-    // add a base-damage bonus to. When one does, the bonus must apply only to attacks made
-    // *with* the chosen Perícia, which this instance can already answer via getChosenSkill().
+    /**
+     * The "Perícias de Ataque - Dano Base +1" branch: how much this ability adds to Dano
+     * Base for an attack made <em>with</em> attackingSkillType. Unlike {@link #damageReduction()},
+     * this branch only applies while attacking with the specific Perícia chosen — not
+     * unconditionally — so it can't be a no-arg {@code @Modifier} method (those can't tell
+     * which Perícia a given roll is for); it takes attackingSkillType explicitly instead.
+     * This library has no weapon/attack-damage entity or attack-resolution engine to call
+     * this automatically (it also deliberately never rolls dice — see the {@code skill}
+     * package-info's "What this library computes" section), so a future combat layer must
+     * call this directly, passing whichever Perícia the attack is being made with.
+     */
+    public int getBaseDamageBonus(final SkillType attackingSkillType) {
+        return chosenSkill.isAttackSkill() && chosenSkill == attackingSkillType ? BENEFIT_BONUS : 0;
+    }
 
-    // TODO: "Outras Perícias – Margem Crítica Menor +1" branch (any other chosenSkill):
-    // needs a critical-margin system (same gap as
-    // DominioDoManaCompetencyAbility.LETALIDADE_ARCANA).
+    /**
+     * The "Outras Perícias – Margem Crítica Menor +1" branch: how much this ability reduces
+     * rolledSkillType's critical margin by — only when the chosen Perícia is neither a
+     * Perícia de Ataque nor Esquiva e Aparar (those have their own branches above) and
+     * matches rolledSkillType. Same context-parameter reasoning as
+     * {@link #getBaseDamageBonus}: this is scoped to one specific, dynamically-chosen
+     * Perícia, so it can't be a no-arg {@code @Modifier} method either. This is a narrower
+     * critical-margin concept than {@code DominioDoManaCompetencyAbility.LETALIDADE_ARCANA}
+     * needs (that one is scoped to a Magia, which still doesn't exist as an entity) — no
+     * roll-resolution engine exists to consult this automatically, so a future one must call
+     * it directly, passing whichever Perícia was rolled.
+     */
+    public int getCriticalMarginReduction(final SkillType rolledSkillType) {
+        boolean isOtherPericia = chosenSkill != SkillType.ESQUIVA_E_APARAR && !chosenSkill.isAttackSkill();
+        return isOtherPericia && chosenSkill == rolledSkillType ? BENEFIT_BONUS : 0;
+    }
 }

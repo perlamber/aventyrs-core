@@ -46,8 +46,12 @@ public enum AtaqueCorpoACorpoCompetencyAbility implements SkillCompetencyAbility
     // .ACADEMICO_SELVAGEM/INSTINTO_ANIMAL, FurtividadeCompetencyAbility.LADINO_TEORICO).
     SAGACIDADE_ARCANA("Você pode substituir o Atributo Base desta perícia por Foco."),
 
-    // TODO: +1 to this Perícia's Margem Crítica Menor — no Margem Crítica (critical-margin)
-    // concept exists yet (same gap as DominioDoManaCompetencyAbility.LETALIDADE_ARCANA).
+    // TODO: +1 to this Perícia's own Margem Crítica Menor, unconditionally — a
+    // Perícia-scoped critical-margin concept now exists (see ArtesAprimorarComArteAbility
+    // #getCriticalMarginReduction), but that one is parameterized by a dynamically-chosen
+    // Perícia; this constant would need its own always-on equivalent (mirroring how
+    // #damageReduction() is unconditional there), which isn't wired anywhere yet since
+    // nothing calls either version in an actual roll.
     ATAQUE_PRECISO("A margem crítica menor de seus Ataques Corpo-a-Corpo é aumentada em +1 " +
             "número."),
 

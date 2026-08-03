@@ -33,8 +33,13 @@ public enum ArtesCompetencyAbility implements SkillCompetencyAbility {
     // Requires choosing a Perícia when acquired, with the benefit branching on that
     // Perícia's category — so this constant is the catalog/rules-text entry only. To grant
     // the ability to a character, store an ArtesAprimorarComArteAbility (which carries the
-    // chosen SkillType) in Character.skillCompetencyAbilities instead of this constant; its
-    // RDS branch is already real, the other two branches are TODO'd on that class.
+    // chosen SkillType) in Character.skillCompetencyAbilities instead of this constant. All
+    // three branches are real: the RDS branch is unconditional and already picked up by
+    // DamageService's normal scan; the Dano Base and Margem Crítica Menor branches are
+    // scoped to whichever Perícia was chosen, so they're plain parameterized methods
+    // (getBaseDamageBonus/getCriticalMarginReduction) a future combat/roll-resolution layer
+    // must call explicitly — see ArtesAprimorarComArteAbility for why those two can't be
+    // @Modifier methods like the RDS branch is.
     APRIMORAR_COM_ARTE("Escolha uma Perícia, você criou uma forma única, exótica e ou " +
             "artística, de utilizar a Perícia escolhida, o que lhe concede um dos " +
             "benefícios a seguir: Perícias de Ataque - Dano Base +1. Esquiva e Aparar - " +

@@ -19,8 +19,10 @@ import java.util.Optional;
 public enum DominioDoManaCompetencyAbility implements SkillCompetencyAbility {
 
     // TODO: +1 to a Magia's Margem Crítica Menor, then +1 more at the 5th and 10th
-    // graduation (a graduation-tiered scaling bonus, not a flat one) — no Magia entity or
-    // Margem Crítica (critical-margin) concept exists yet.
+    // graduation (a graduation-tiered scaling bonus, not a flat one) — no Magia entity
+    // exists yet to attach a critical-margin value to. A Perícia-scoped critical-margin
+    // concept now exists (see ArtesAprimorarComArteAbility#getCriticalMarginReduction), but
+    // this ability's is Magia-scoped, a different axis that concept doesn't cover.
     LETALIDADE_ARCANA("A Margem Crítica Menor de suas Magias é aumentada em +1 número, " +
             "então em +1 ao alcançar a 5ª e 10ª graduação."),
 

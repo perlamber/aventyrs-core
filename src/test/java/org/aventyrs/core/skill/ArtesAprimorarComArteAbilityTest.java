@@ -51,4 +51,49 @@ class ArtesAprimorarComArteAbilityTest {
 
         assertEquals(0, damageService.getTotalDamageReduction(character));
     }
+
+    @Test
+    void choosingAnAttackSkillGrantsItsBaseDamageBonus() {
+        ArtesAprimorarComArteAbility ability = new ArtesAprimorarComArteAbility(SkillType.ATAQUE_CORPO_A_CORPO);
+
+        assertEquals(ArtesAprimorarComArteAbility.BENEFIT_BONUS, ability.getBaseDamageBonus(SkillType.ATAQUE_CORPO_A_CORPO));
+    }
+
+    @Test
+    void baseDamageBonusDoesNotApplyToTheOtherAttackSkill() {
+        ArtesAprimorarComArteAbility ability = new ArtesAprimorarComArteAbility(SkillType.ATAQUE_CORPO_A_CORPO);
+
+        assertEquals(0, ability.getBaseDamageBonus(SkillType.ATAQUE_A_DISTANCIA));
+    }
+
+    @Test
+    void choosingANonAttackSkillGrantsNoBaseDamageBonus() {
+        ArtesAprimorarComArteAbility ability = new ArtesAprimorarComArteAbility(SkillType.ESQUIVA_E_APARAR);
+
+        assertEquals(0, ability.getBaseDamageBonus(SkillType.ESQUIVA_E_APARAR));
+        assertEquals(0, ability.getBaseDamageBonus(SkillType.ATAQUE_CORPO_A_CORPO));
+    }
+
+    @Test
+    void choosingAnOtherPericiaGrantsItsCriticalMarginReduction() {
+        ArtesAprimorarComArteAbility ability = new ArtesAprimorarComArteAbility(SkillType.ATLETISMO);
+
+        assertEquals(ArtesAprimorarComArteAbility.BENEFIT_BONUS, ability.getCriticalMarginReduction(SkillType.ATLETISMO));
+    }
+
+    @Test
+    void criticalMarginReductionDoesNotApplyToADifferentSkillThanChosen() {
+        ArtesAprimorarComArteAbility ability = new ArtesAprimorarComArteAbility(SkillType.ATLETISMO);
+
+        assertEquals(0, ability.getCriticalMarginReduction(SkillType.PERSUASAO));
+    }
+
+    @Test
+    void choosingAnAttackSkillOrEsquivaEApararGrantsNoCriticalMarginReduction() {
+        ArtesAprimorarComArteAbility attackAbility = new ArtesAprimorarComArteAbility(SkillType.ATAQUE_A_DISTANCIA);
+        ArtesAprimorarComArteAbility esquivaAbility = new ArtesAprimorarComArteAbility(SkillType.ESQUIVA_E_APARAR);
+
+        assertEquals(0, attackAbility.getCriticalMarginReduction(SkillType.ATAQUE_A_DISTANCIA));
+        assertEquals(0, esquivaAbility.getCriticalMarginReduction(SkillType.ESQUIVA_E_APARAR));
+    }
 }

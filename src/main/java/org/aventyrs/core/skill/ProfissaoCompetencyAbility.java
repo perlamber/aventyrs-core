@@ -27,8 +27,11 @@ public enum ProfissaoCompetencyAbility implements SkillCompetencyAbility {
     // ArtesAprimorarComArteAbility's now-working RDS branch, this choice lives on the
     // produced item, not the character) or +1 Defesas; produced Equipamentos
     // Ofensivos grant Margem Crítica Maior +1 (a *different* axis from every other skill's
-    // "Margem Crítica Menor" — no critical-margin concept of either kind exists yet) plus a
-    // choice between +1 Dano Base or +1 Conjuração (a Magia-effect bonus, same gap as
+    // "Margem Crítica Menor" — a Menor-axis, Perícia-scoped concept now exists, see
+    // ArtesAprimorarComArteAbility#getCriticalMarginReduction, but nothing models the Maior
+    // axis or an item-scoped value of either) plus a choice between +1 Dano Base (a
+    // Perícia-scoped Dano Base concept now exists too, same file, but again nothing models
+    // an item-granted value of it) or +1 Conjuração (a Magia-effect bonus, same gap as
     // DominioDoManaCompetencyAbility.ARCANISMO_EXPLOSIVA). Needs an
     // Item/Equipamento entity carrying who produced it and which choice was made at
     // creation, none of which exist yet.

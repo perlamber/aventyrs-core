@@ -345,6 +345,28 @@ consumes it:
   missing systems on the *class*, next to where their modifier methods would go — not on
   the enum constant.
 
+  **Not every branch of one of these abilities fits `@Modifier`**, though —
+  `ArtesAprimorarComArteAbility`'s three branches split exactly on this line.
+  `damageReduction()` (RDS for Esquiva e Aparar) is *unconditionally* active once chosen
+  (RD/RA apply no matter which Perícia's roll is happening), so a no-arg `@Modifier` method
+  works. `getBaseDamageBonus(SkillType attackingSkillType)` (Dano Base for a Perícia de
+  Ataque) and `getCriticalMarginReduction(SkillType rolledSkillType)` (Margem Crítica Menor
+  for any other Perícia) are each scoped to *one specific, dynamically-chosen* Perícia — the
+  bonus should apply only when that particular Perícia is the one being rolled/attacked
+  with, and a no-arg `@Modifier` method has no way to know which Perícia a given roll is for
+  (`ModifierResolverImpl.invoke` calls `method.invoke(source)` with zero arguments,
+  always). Model those as plain public instance methods taking the relevant `SkillType`
+  explicitly instead, returning 0 when it doesn't match the stored choice — real, tested
+  logic, just with no automatic caller yet, since no weapon/attack-damage entity or
+  roll-resolution engine exists in this library to invoke them (and this library
+  deliberately never rolls dice — see the `skill` package-info's "What this library
+  computes" section). A future combat/roll-resolution layer calls these directly, passing
+  whichever Perícia is actually being used. Don't force a branch shaped like this into
+  `@Modifier`/`ModifierResolver` just for consistency with the first branch — the
+  architecture genuinely doesn't support scoping to a dynamically-chosen skill, and an
+  unconditional `@Modifier` version would incorrectly grant the bonus to every Perícia's
+  roll, not just the chosen one.
+
 - **When the choice is consumed by some *other* mechanism** (not a modifier on the ability
   itself — e.g. `PERITO_TEORICO`'s attribute substitution, which a future
   `<Skill>Interaction` lookup would read), use `AcquiredChoice<C>`: it pairs the specific
