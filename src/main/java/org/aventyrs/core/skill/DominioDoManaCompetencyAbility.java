@@ -7,8 +7,9 @@ import lombok.Getter;
  * The Habilidades de Competência available to characters trained in Domínio do Mana. Most of
  * these modify some aspect of Magias (critical margin, duration, damage/healing,
  * concentration) that no {@code Magia}/spellcasting entity or resolution engine can express
- * yet, plus one Perícia base-Attribute substitution — none of them are expressible for real
- * today; see each constant's TODO.
+ * yet, plus one Perícia base-Attribute substitution that's real as a mechanism but not yet
+ * wired to this constant — none of them are expressible for real today; see each constant's
+ * TODO.
  */
 @Getter
 @AllArgsConstructor
@@ -21,8 +22,12 @@ public enum DominioDoManaCompetencyAbility implements SkillCompetencyAbility {
             "então em +1 ao alcançar a 5ª e 10ª graduação."),
 
     // TODO: lets this Perícia use Instinto instead of its normal base Attribute (Foco),
-    // unconditionally — no Perícia base-Attribute substitution mechanism exists yet (same
-    // gap as EmpatiaSelvagemCompetencyAbility.ACADEMICO_SELVAGEM/INSTINTO_ANIMAL /
+    // unconditionally — the substitution mechanism itself now exists (see
+    // SkillCompetencyAbility.getSubstituteAttributeDomain() / AtaqueCorpoACorpoCompetencyAbility
+    // .ACUIDADE), this constant just doesn't override it yet, and DominioDoManaInteraction
+    // doesn't yet resolve/pass it into CharacterSkillService.getValueForRoll's
+    // substituteAttributeDomain overload (same remaining wiring gap as
+    // EmpatiaSelvagemCompetencyAbility.ACADEMICO_SELVAGEM/INSTINTO_ANIMAL /
     // FurtividadeCompetencyAbility.LADINO_TEORICO).
     MAGIA_SELVAGEM("Você pode alterar o Atributo Base desta Perícia para Instinto."),
 

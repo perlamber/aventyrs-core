@@ -10,11 +10,16 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum EmpatiaSelvagemCompetencyAbility implements SkillCompetencyAbility {
 
-    // TODO: lets this Perícia use Gnose instead of its normal base Attribute (Carisma) — no
-    // Perícia base-Attribute substitution mechanism exists yet (same gap as
-    // AtaqueCorpoACorpoCompetencyAbility.ACUIDADE / AtaqueADistanciaCompetencyAbility
-    // .ARREMESSO_PODEROSO / AtletismoCompetencyAbility.ACROBATA / GnoseAbility
-    // .PERITO_TEORICO / AttentionCompetencyAbility.ALMA_DE_SHERLOCK).
+    // TODO: lets this Perícia use Gnose instead of its normal base Attribute (Carisma) — the
+    // substitution mechanism itself now exists (see SkillCompetencyAbility
+    // .getSubstituteAttributeDomain() / AtaqueCorpoACorpoCompetencyAbility.ACUIDADE), this
+    // constant just doesn't override it yet, and EmpatiaSelvagemInteraction doesn't yet
+    // resolve/pass it into CharacterSkillService.getValueForRoll's substituteAttributeDomain
+    // overload (same remaining wiring gap as AtletismoCompetencyAbility.ACROBATA). Unlike
+    // AtaqueADistanciaCompetencyAbility.ARREMESSO_PODEROSO (scoped to a specific
+    // attack/delivery method) this is unconditional, so it fits the mechanism directly;
+    // GnoseAbility.PERITO_TEORICO is a different shape entirely (an acquisition-time choice
+    // of *which* Perícia, not a fixed one) and needs its own AcquiredChoice-driven mechanism.
     ACADEMICO_SELVAGEM("Você pode substituir o Atributo Base desta perícia por Gnose."),
 
     // TODO: makes the character never a wild creature's primary target unless acting

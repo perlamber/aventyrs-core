@@ -11,8 +11,12 @@ import lombok.Getter;
 public enum PersuasaoCompetencyAbility implements SkillCompetencyAbility {
 
     // TODO: lets this Perícia use Força instead of its normal base Attribute (Carisma),
-    // unconditionally — no Perícia base-Attribute substitution mechanism exists yet (same
-    // gap as EmpatiaSelvagemCompetencyAbility.ACADEMICO_SELVAGEM/INSTINTO_ANIMAL /
+    // unconditionally — the substitution mechanism itself now exists (see
+    // SkillCompetencyAbility.getSubstituteAttributeDomain() / AtaqueCorpoACorpoCompetencyAbility
+    // .ACUIDADE), this constant just doesn't override it yet, and PersuasaoInteraction
+    // doesn't yet resolve/pass it into CharacterSkillService.getValueForRoll's
+    // substituteAttributeDomain overload (same remaining wiring gap as
+    // EmpatiaSelvagemCompetencyAbility.ACADEMICO_SELVAGEM/INSTINTO_ANIMAL /
     // FurtividadeCompetencyAbility.LADINO_TEORICO).
     FORCA_OPRESSORA("Você pode substituir o Atributo Base desta Perícia por Força."),
 

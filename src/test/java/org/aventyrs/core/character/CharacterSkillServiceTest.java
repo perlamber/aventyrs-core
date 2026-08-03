@@ -50,4 +50,27 @@ class CharacterSkillServiceTest {
         assertEquals(5, characterSkillService.getValueForRoll(skill, newAttributes, race));
     }
 
+    @Test
+    void aNullSubstituteAttributeDomainUsesTheSkillsOwnAttribute() throws RollErrorException {
+        CharacterSkill skill = CharacterSkillFixture.blank(CharacterSkillFixture.ATTENTION_1).build();
+        skill.increaseGraduation(1);
+        CharacterAttributes attributes = CharacterAttributes.builder().instinct(AttributeValue.builder().base(2).build()).build();
+        Race race = new Human();
+
+        assertEquals(3, characterSkillService.getValueForRoll(skill, attributes, race, null));
+    }
+
+    @Test
+    void aNonNullSubstituteAttributeDomainOverridesTheSkillsOwnAttribute() throws RollErrorException {
+        CharacterSkill skill = CharacterSkillFixture.blank(CharacterSkillFixture.ATTENTION_1).build();
+        skill.increaseGraduation(1);
+        CharacterAttributes attributes = CharacterAttributes.builder()
+                .instinct(AttributeValue.builder().base(2).build())
+                .dexterity(AttributeValue.builder().base(5).build())
+                .build();
+        Race race = new Human();
+
+        assertEquals(6, characterSkillService.getValueForRoll(skill, attributes, race, AttributeDomain.DEXTERITY));
+    }
+
 }

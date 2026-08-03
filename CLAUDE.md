@@ -288,6 +288,53 @@ Don't build a validation service to check whether a choice is legal (e.g. that a
 Perícia is actually trained) — same restraint as the unenforced "Requer N Graduações"
 prerequisites elsewhere in this codebase; just record what was picked.
 
+## Unconditional Perícia base-Attribute substitution — `SkillCompetencyAbility.getSubstituteAttributeDomain()`
+
+"Lets this Perícia use Attribute X instead of its normal base Attribute" is another common
+TODO reason across ability enums (`AtaqueCorpoACorpoCompetencyAbility.ACUIDADE`,
+`AtaqueADistanciaCompetencyAbility.DISPARO_ARCANO`, `AtletismoCompetencyAbility.ACROBATA`,
+`AttentionCompetencyAbility.ALMA_DE_SHERLOCK`'s substitution half, `DominioDoManaCompetencyAbility
+.MAGIA_SELVAGEM`, `EmpatiaSelvagemCompetencyAbility.ACADEMICO_SELVAGEM`/`INSTINTO_ANIMAL`,
+`FurtividadeCompetencyAbility.LADINO_TEORICO`, `PersuasaoCompetencyAbility.FORCA_OPRESSORA`),
+and — for the *unconditional* case (always substitutes, no scoping to a specific
+attack/delivery method) — it's now mechanically real, following `ACUIDADE` as the reference:
+
+- `SkillCompetencyAbility` carries a `default Optional<AttributeDomain>
+  getSubstituteAttributeDomain()` returning `Optional.empty()`, mirroring
+  `getDifficultyReduction()`'s existing default-method-plus-override shape. Only override it
+  on a constant whose rules text grants the substitution unconditionally, per-constant (an
+  enum-constant body, exactly like `AtaqueCorpoACorpoExcellency.PRODIGIO`'s
+  `getDifficultyReduction()` override) — never at the enum type level, which would force
+  every other constant in that same enum to implement it too.
+- `CharacterSkillService.getValueForRoll` has a second overload taking an extra
+  `AttributeDomain substituteAttributeDomain` parameter — `null` means "use the Skill's own
+  `getAttributeDomain()`, as before" (the original 3-arg overload just delegates to this one
+  with `null`), non-null overrides it. The service itself never scans abilities — it only
+  ever receives a resolved value.
+- Resolving *which* Attribute (if any) applies is the calling `<Skill>Interaction`'s job, not
+  the service's — mirroring how each Interaction already inlines its own
+  `difficultyReduction` sum rather than delegating it. Filter
+  `character.getSkillCompetencyAbilities()` for entries whose `getSkillType()` matches this
+  same Interaction's own `SkillType` constant and whose `getSubstituteAttributeDomain()` is
+  present, take the first match, and pass its value (or `null` if none) into the 4-arg
+  overload — see `AtaqueCorpoACorpoInteraction`. Filtering by `getSkillType()` first is
+  required: a bare "first ability in the whole list that returns a substitution" would wrongly
+  pick up another trained Perícia's unrelated substitution ability.
+- This only covers the *unconditional* case. A substitution scoped to a specific circumstance
+  (e.g. `AtaqueADistanciaCompetencyAbility.ARREMESSO_PODEROSO`, only for thrown-weapon/spell
+  attacks) can't be modeled this way — same "this codebase doesn't track what a roll is *for*"
+  simplification already documented for scoped Vantagem bonuses below; document that gap in a
+  TODO on the constant instead. `GnoseAbility.PERITO_TEORICO` is also a different shape
+  entirely: which Attribute to substitute is fixed (Gnose), but *which Perícia* it applies to
+  is an acquisition-time choice (see the previous section's `AcquiredChoice`), not a fixed
+  enum-constant-to-enum-constant mapping like `ACUIDADE`'s — so it needs its own
+  `AbilityChoiceService`-driven mechanism, not this one.
+- Building this mechanism doesn't retroactively finish every ability that cites it — check
+  each constant's own TODO. `ACUIDADE` is fully wired (enum override + `Interaction` filter +
+  service overload); the others listed above still need the same three-piece wiring applied to
+  their own constant and `<Skill>Interaction` before they're real, even though the mechanism
+  they were blocked on no longer needs to be invented.
+
 ## Vantagem is a flat +2 bonus, not a reroll mechanic
 
 "Grants Vantagem on X rolls" is one of the most common TODO reasons across every ability

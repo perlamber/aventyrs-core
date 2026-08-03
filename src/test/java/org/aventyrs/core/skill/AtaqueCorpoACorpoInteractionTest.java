@@ -78,4 +78,42 @@ class AtaqueCorpoACorpoInteractionTest {
 
         assertEquals(0, result.getSkillRollBonus());
     }
+
+    @Test
+    void acuidadeSubstitutesDestrezaForForca() {
+        CharacterSkill ataqueCorpoACorpoSkill = CharacterSkillFixture.blank(CharacterSkillFixture.ATAQUE_CORPO_A_CORPO_1).build();
+        ataqueCorpoACorpoSkill.increaseGraduation(1);
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .attributes(CharacterAttributes.builder()
+                        .strength(AttributeValue.builder().base(9).build())
+                        .dexterity(AttributeValue.builder().base(2).build())
+                        .build())
+                .skill(SkillType.ATAQUE_CORPO_A_CORPO, ataqueCorpoACorpoSkill)
+                .skillCompetencyAbility(AtaqueCorpoACorpoCompetencyAbility.ACUIDADE)
+                .build();
+        CharacterSheet sheet = CharacterSheet.of(character, new Player());
+
+        InteractionResult result = ataqueCorpoACorpoInteraction.applyTo(sheet);
+
+        assertEquals(3, result.getSkillRollBonus());
+    }
+
+    @Test
+    void unrelatedCompetencyAbilitiesDoNotSubstituteTheAttribute() {
+        CharacterSkill ataqueCorpoACorpoSkill = CharacterSkillFixture.blank(CharacterSkillFixture.ATAQUE_CORPO_A_CORPO_1).build();
+        ataqueCorpoACorpoSkill.increaseGraduation(1);
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .attributes(CharacterAttributes.builder()
+                        .strength(AttributeValue.builder().base(2).build())
+                        .dexterity(AttributeValue.builder().base(9).build())
+                        .build())
+                .skill(SkillType.ATAQUE_CORPO_A_CORPO, ataqueCorpoACorpoSkill)
+                .skillCompetencyAbility(AtaqueCorpoACorpoCompetencyAbility.ATAQUE_PRECISO)
+                .build();
+        CharacterSheet sheet = CharacterSheet.of(character, new Player());
+
+        InteractionResult result = ataqueCorpoACorpoInteraction.applyTo(sheet);
+
+        assertEquals(3, result.getSkillRollBonus());
+    }
 }

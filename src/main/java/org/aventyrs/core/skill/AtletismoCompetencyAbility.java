@@ -24,8 +24,14 @@ public enum AtletismoCompetencyAbility implements SkillCompetencyAbility {
     ANFIBIO("Você recebe Movimento Base de Natação."),
 
     // TODO: lets this Perícia use Destreza instead of its normal base Attribute (Força),
-    // unconditionally — no Perícia base-Attribute substitution mechanism exists yet (same
-    // gap as GnoseAbility.PERITO_TEORICO / AttentionCompetencyAbility.ALMA_DE_SHERLOCK).
+    // unconditionally — the substitution mechanism itself now exists (see
+    // SkillCompetencyAbility.getSubstituteAttributeDomain() / AtaqueCorpoACorpoCompetencyAbility
+    // .ACUIDADE), this constant just doesn't override it yet, and AtletismoInteraction
+    // doesn't yet resolve/pass it into CharacterSkillService.getValueForRoll's
+    // substituteAttributeDomain overload (same remaining wiring gap as
+    // AttentionCompetencyAbility.ALMA_DE_SHERLOCK). GnoseAbility.PERITO_TEORICO is a
+    // different shape entirely (an acquisition-time choice of *which* Perícia, not a fixed
+    // one) and needs its own AcquiredChoice-driven mechanism.
     ACROBATA("Você pode substituir o Atributo Base desta perícia por Destreza."),
 
     // TODO: +2UD to Movimento Base — no movement/distance system exists yet (same gap as

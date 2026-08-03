@@ -46,9 +46,13 @@ public enum FurtividadeCompetencyAbility implements SkillCompetencyAbility {
     MORTE_OCULTA("Suas armadilhas e seu ataques enquanto escondido causam +2 pontos de " +
             "danos adicionais, este benefício aumenta em +1 na 5ª e 10ª graduação."),
 
-    // TODO: lets this Perícia use Gnose instead of its normal base Attribute (Destreza) — no
-    // Perícia base-Attribute substitution mechanism exists yet (same gap as
-    // EmpatiaSelvagemCompetencyAbility.ACADEMICO_SELVAGEM/INSTINTO_ANIMAL).
+    // TODO: lets this Perícia use Gnose instead of its normal base Attribute (Destreza) — the
+    // substitution mechanism itself now exists (see SkillCompetencyAbility
+    // .getSubstituteAttributeDomain() / AtaqueCorpoACorpoCompetencyAbility.ACUIDADE), this
+    // constant just doesn't override it yet, and FurtividadeInteraction doesn't yet
+    // resolve/pass it into CharacterSkillService.getValueForRoll's substituteAttributeDomain
+    // overload (same remaining wiring gap as EmpatiaSelvagemCompetencyAbility
+    // .ACADEMICO_SELVAGEM/INSTINTO_ANIMAL).
     LADINO_TEORICO("Você pode substituir o Atributo Base desta perícia por Gnose.");
 
     private final String description;

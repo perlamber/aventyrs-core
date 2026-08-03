@@ -15,17 +15,23 @@ import lombok.Getter;
 public enum AtaqueADistanciaCompetencyAbility implements SkillCompetencyAbility {
 
     // TODO: lets this Perícia use Força instead of its normal base Attribute (Destreza), but
-    // only for attacks made with arremesso (throwing) weapons or Magias — no Perícia
-    // base-Attribute substitution mechanism exists yet (same gap as
-    // AtletismoCompetencyAbility.ACROBATA / GnoseAbility.PERITO_TEORICO /
-    // AttentionCompetencyAbility.ALMA_DE_SHERLOCK), and this codebase also doesn't track
-    // what weapon/delivery-method a specific roll is being made with.
+    // only for attacks made with arremesso (throwing) weapons or Magias. Unlike
+    // AtaqueCorpoACorpoCompetencyAbility.ACUIDADE/this same enum's DISPARO_ARCANO, this
+    // substitution is *scoped* to a specific delivery method, not unconditional — the generic
+    // mechanism (SkillCompetencyAbility.getSubstituteAttributeDomain()) doesn't cover that
+    // narrowing, same simplification already documented for scoped Vantagem bonuses (see
+    // CLAUDE.md's "Vantagem is a flat +2 bonus" section) — this codebase doesn't track what
+    // weapon/delivery-method a specific roll is being made with.
     ARREMESSO_PODEROSO("Você pode substituir o Atributo Base desta perícia por Força, mas " +
             "apenas para rolagens de ataques com armas de arremessos e magias."),
 
     // TODO: lets this Perícia use Foco instead of its normal base Attribute (Destreza),
-    // unconditionally — no Perícia base-Attribute substitution mechanism exists yet (same
-    // gap as EmpatiaSelvagemCompetencyAbility.ACADEMICO_SELVAGEM/INSTINTO_ANIMAL /
+    // unconditionally — the substitution mechanism itself now exists (see
+    // SkillCompetencyAbility.getSubstituteAttributeDomain() / AtaqueCorpoACorpoCompetencyAbility
+    // .ACUIDADE), this constant just doesn't override it yet, and AtaqueADistanciaInteraction
+    // doesn't yet resolve/pass it into CharacterSkillService.getValueForRoll's
+    // substituteAttributeDomain overload (same remaining wiring gap as
+    // EmpatiaSelvagemCompetencyAbility.ACADEMICO_SELVAGEM/INSTINTO_ANIMAL /
     // FurtividadeCompetencyAbility.LADINO_TEORICO).
     DISPARO_ARCANO("Você pode substituir o Atributo Base desta perícia por Foco."),
 

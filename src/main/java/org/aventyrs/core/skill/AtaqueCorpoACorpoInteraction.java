@@ -1,5 +1,6 @@
 package org.aventyrs.core.skill;
 
+import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.character.services.CharacterSkillService;
@@ -12,6 +13,7 @@ import org.aventyrs.core.sheet.Interaction;
 import org.aventyrs.core.sheet.InteractionResult;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.aventyrs.core.skill.Skill.UNTRAINED_PENALTY;
 
@@ -25,7 +27,11 @@ import static org.aventyrs.core.skill.Skill.UNTRAINED_PENALTY;
  * a layer above this core — this Interaction still only computes {@code skillRollBonus}/
  * {@code difficultyReduction} exactly like every other {@code <Skill>Interaction}. This is
  * also the delivery Perícia for Magias with a Toque range descriptor — see
- * {@link org.aventyrs.core.magic.SpellCastingService}.
+ * {@link org.aventyrs.core.magic.SpellCastingService}. If the character has a
+ * {@code SkillCompetencyAbility} for this same skill whose
+ * {@link SkillCompetencyAbility#getSubstituteAttributeDomain()} isn't empty (e.g.
+ * {@code AtaqueCorpoACorpoCompetencyAbility.ACUIDADE}), that Attribute is used in place of
+ * Ataque Corpo-a-Corpo's normal Força for {@link CharacterSkillService#getValueForRoll}.
  */
 public class AtaqueCorpoACorpoInteraction implements Interaction<CharacterSheet> {
 
@@ -47,7 +53,14 @@ public class AtaqueCorpoACorpoInteraction implements Interaction<CharacterSheet>
         CharacterSkill ataqueCorpoACorpoSkill = findCharacterSkill(character);
         int graduationValue = ataqueCorpoACorpoSkill.getGraduation().getGraduationValue();
 
-        int bonus = characterSkillService.getValueForRoll(ataqueCorpoACorpoSkill, character.getAttributes(), character.getRace());
+        AttributeDomain substituteAttributeDomain = character.getSkillCompetencyAbilities().stream()
+                .filter(ability -> ability.getSkillType() == SkillType.ATAQUE_CORPO_A_CORPO)
+                .map(SkillCompetencyAbility::getSubstituteAttributeDomain)
+                .flatMap(Optional::stream)
+                .findFirst()
+                .orElse(null);
+
+        int bonus = characterSkillService.getValueForRoll(ataqueCorpoACorpoSkill, character.getAttributes(), character.getRace(), substituteAttributeDomain);
         bonus += modifierResolver.sumModifiers(character.getAttributeAbilities(), ModifierType.SKILL_ROLL_BONUS);
         bonus += modifierResolver.sumModifiers(character.getSkillCompetencyAbilities(), ModifierType.SKILL_ROLL_BONUS);
         List<SkillExcellency> unlockedExcellencies = SkillExcellency.unlockedBy(AtaqueCorpoACorpoExcellency.class, graduationValue);

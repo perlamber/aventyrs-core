@@ -1,9 +1,12 @@
 package org.aventyrs.core.skill;
 
+import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.modifier.ModifierResolver;
 import org.aventyrs.core.modifier.ModifierResolverImpl;
 import org.aventyrs.core.modifier.ModifierType;
 import org.junit.jupiter.api.Test;
+
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -35,6 +38,17 @@ class AtaqueCorpoACorpoCompetencyAbilityTest {
         for (AtaqueCorpoACorpoCompetencyAbility ability : AtaqueCorpoACorpoCompetencyAbility.values()) {
             assertEquals(0, ability.getDifficultyReduction());
             assertEquals(0, modifierResolver.sumModifiers(ability, ModifierType.SKILL_ROLL_BONUS));
+        }
+    }
+
+    @Test
+    void onlyAcuidadeSubstitutesTheBaseAttribute() {
+        for (AtaqueCorpoACorpoCompetencyAbility ability : AtaqueCorpoACorpoCompetencyAbility.values()) {
+            if (ability == AtaqueCorpoACorpoCompetencyAbility.ACUIDADE) {
+                assertEquals(Optional.of(AttributeDomain.DEXTERITY), ability.getSubstituteAttributeDomain());
+            } else {
+                assertEquals(Optional.empty(), ability.getSubstituteAttributeDomain());
+            }
         }
     }
 }
