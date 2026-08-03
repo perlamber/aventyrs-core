@@ -23,8 +23,8 @@ public enum AttentionCompetencyAbility implements SkillCompetencyAbility {
     // AtaqueCorpoACorpoCompetencyAbility.ACUIDADE), this constant just doesn't override it
     // yet, and AttentionInteraction doesn't yet resolve/pass it into
     // CharacterSkillService.getValueForRoll's substituteAttributeDomain overload (same
-    // remaining wiring gap as AtletismoCompetencyAbility.ACROBATA); the maze/navigation half
-    // still needs its own system, unrelated to attribute substitution.
+    // remaining wiring gap as FurtividadeCompetencyAbility.LADINO_TEORICO); the
+    // maze/navigation half still needs its own system, unrelated to attribute substitution.
     ALMA_DE_SHERLOCK("Você pode substituir o Atributo Base desta perícia por Gnose e nunca " +
             "se perde em labirintos (não-mágicos), sempre sabendo como retornar ao início."),
 

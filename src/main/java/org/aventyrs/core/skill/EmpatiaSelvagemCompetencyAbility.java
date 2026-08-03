@@ -15,7 +15,7 @@ public enum EmpatiaSelvagemCompetencyAbility implements SkillCompetencyAbility {
     // .getSubstituteAttributeDomain() / AtaqueCorpoACorpoCompetencyAbility.ACUIDADE), this
     // constant just doesn't override it yet, and EmpatiaSelvagemInteraction doesn't yet
     // resolve/pass it into CharacterSkillService.getValueForRoll's substituteAttributeDomain
-    // overload (same remaining wiring gap as AtletismoCompetencyAbility.ACROBATA). Unlike
+    // overload (same remaining wiring gap as FurtividadeCompetencyAbility.LADINO_TEORICO). Unlike
     // AtaqueADistanciaCompetencyAbility.ARREMESSO_PODEROSO (scoped to a specific
     // attack/delivery method) this is unconditional, so it fits the mechanism directly;
     // GnoseAbility.PERITO_TEORICO is a different shape entirely (an acquisition-time choice

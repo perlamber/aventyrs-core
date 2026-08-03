@@ -1,5 +1,6 @@
 package org.aventyrs.core.skill;
 
+import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.character.services.CharacterSkillService;
@@ -12,6 +13,7 @@ import org.aventyrs.core.sheet.Interaction;
 import org.aventyrs.core.sheet.InteractionResult;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.aventyrs.core.skill.Skill.UNTRAINED_PENALTY;
 
@@ -24,7 +26,11 @@ import static org.aventyrs.core.skill.Skill.UNTRAINED_PENALTY;
  * fixed GD, but that target-side lookup/conversion is left to a layer above this core — this
  * Interaction still only computes {@code skillRollBonus}/{@code difficultyReduction} exactly
  * like every other {@code <Skill>Interaction}. When the roll delivers a Magia rather than a
- * mundane attack, see {@link org.aventyrs.core.magic.SpellCastingService}.
+ * mundane attack, see {@link org.aventyrs.core.magic.SpellCastingService}. If the character
+ * has a {@code SkillCompetencyAbility} for this same skill whose
+ * {@link SkillCompetencyAbility#getSubstituteAttributeDomain()} isn't empty (e.g.
+ * {@code AtaqueADistanciaCompetencyAbility.DISPARO_ARCANO}), that Attribute is used in place
+ * of Ataque à Distância's normal Destreza for {@link CharacterSkillService#getValueForRoll}.
  */
 public class AtaqueADistanciaInteraction implements Interaction<CharacterSheet> {
 
@@ -46,7 +52,14 @@ public class AtaqueADistanciaInteraction implements Interaction<CharacterSheet> 
         CharacterSkill ataqueADistanciaSkill = findCharacterSkill(character);
         int graduationValue = ataqueADistanciaSkill.getGraduation().getGraduationValue();
 
-        int bonus = characterSkillService.getValueForRoll(ataqueADistanciaSkill, character.getAttributes(), character.getRace());
+        AttributeDomain substituteAttributeDomain = character.getSkillCompetencyAbilities().stream()
+                .filter(ability -> ability.getSkillType() == SkillType.ATAQUE_A_DISTANCIA)
+                .map(SkillCompetencyAbility::getSubstituteAttributeDomain)
+                .flatMap(Optional::stream)
+                .findFirst()
+                .orElse(null);
+
+        int bonus = characterSkillService.getValueForRoll(ataqueADistanciaSkill, character.getAttributes(), character.getRace(), substituteAttributeDomain);
         bonus += modifierResolver.sumModifiers(character.getAttributeAbilities(), ModifierType.SKILL_ROLL_BONUS);
         bonus += modifierResolver.sumModifiers(character.getSkillCompetencyAbilities(), ModifierType.SKILL_ROLL_BONUS);
         List<SkillExcellency> unlockedExcellencies = SkillExcellency.unlockedBy(AtaqueADistanciaExcellency.class, graduationValue);

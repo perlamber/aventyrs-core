@@ -4,6 +4,21 @@ Rules-engine core for the Aventyrs tabletop game. Pure Java library (Lombok + JU
 no framework dependencies — see `org.aventyrs.core.skill.Attention`/`Artes` and their
 `Interaction`s for the reference implementation of everything below.
 
+## An Attribute's `base` is capped at 5 — the rest comes from `racialBonus`/`variable`
+
+`AttributeValue.getTotal()` sums three independent components (`base`, `racialBonus`,
+`variable`), but only `base` is what a character invests in directly, and it's capped at
+`CharacterAttributeService.MAX_ATTRIBUTE_BASE` (5) — `CharacterAttributeServiceImpl
+.upgradeBase` already enforces this on the character-progression path. Nothing stops
+`AttributeValue.builder().base(...)` from being called directly with a higher number though
+(Lombok's builder has no such validation, and Fixture Factory/test code builds
+`CharacterAttributes` straight from the builder, bypassing `upgradeBase` entirely) — so when
+writing a fixture or test that needs an Attribute total above 5, put the excess in
+`variable` (representing spells/feats/equipment; `racialBonus` should stay small, matching
+`CharacterCreationServiceImpl`'s actual fixed-plus-chosen racial allocations), not `base`.
+`CharacterFixture.ATTRIBUTE_SUBSTITUTIONS` follows this (e.g. `base(5).variable(3)` for a
+total of 8) — don't regress it back to a raw `base(8)`.
+
 ## Adding a new Perícia (Skill)
 
 Every new Skill (e.g. `Artes`, `Attention`) must be created with **all** of the following
@@ -330,10 +345,16 @@ attack/delivery method) — it's now mechanically real, following `ACUIDADE` as 
   enum-constant-to-enum-constant mapping like `ACUIDADE`'s — so it needs its own
   `AbilityChoiceService`-driven mechanism, not this one.
 - Building this mechanism doesn't retroactively finish every ability that cites it — check
-  each constant's own TODO. `ACUIDADE` is fully wired (enum override + `Interaction` filter +
-  service overload); the others listed above still need the same three-piece wiring applied to
-  their own constant and `<Skill>Interaction` before they're real, even though the mechanism
-  they were blocked on no longer needs to be invented.
+  each constant's own TODO. `ACUIDADE`, `ACROBATA`, `DISPARO_ARCANO`, and `MAGIA_SELVAGEM` are
+  fully wired (enum override + `Interaction` filter + service overload) — see
+  `AttributeSubstitutionFeatureTest` for an end-to-end test exercising all four on one
+  Character at once, including a control Perícia (Persuasão) proving none of them leaks into
+  an unrelated roll. `AttentionCompetencyAbility.ALMA_DE_SHERLOCK`'s substitution half,
+  `EmpatiaSelvagemCompetencyAbility.ACADEMICO_SELVAGEM`/`INSTINTO_ANIMAL`,
+  `FurtividadeCompetencyAbility.LADINO_TEORICO`, and `PersuasaoCompetencyAbility
+  .FORCA_OPRESSORA` still need the same three-piece wiring applied to their own constant and
+  `<Skill>Interaction` before they're real, even though the mechanism they were blocked on no
+  longer needs to be invented.
 
 ## Vantagem is a flat +2 bonus, not a reroll mechanic
 

@@ -2,14 +2,17 @@ package org.aventyrs.core.skill;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.aventyrs.core.character.AttributeDomain;
+
+import java.util.Optional;
 
 /**
  * The Habilidades de Competência available to characters trained in Domínio do Mana. Most of
  * these modify some aspect of Magias (critical margin, duration, damage/healing,
  * concentration) that no {@code Magia}/spellcasting entity or resolution engine can express
- * yet, plus one Perícia base-Attribute substitution that's real as a mechanism but not yet
- * wired to this constant — none of them are expressible for real today; see each constant's
- * TODO.
+ * yet — none of them are expressible for real today; see each constant's TODO. MAGIA_SELVAGEM's
+ * unconditional Attribute substitution is the exception — see {@link SkillCompetencyAbility
+ * #getSubstituteAttributeDomain()}.
  */
 @Getter
 @AllArgsConstructor
@@ -21,15 +24,13 @@ public enum DominioDoManaCompetencyAbility implements SkillCompetencyAbility {
     LETALIDADE_ARCANA("A Margem Crítica Menor de suas Magias é aumentada em +1 número, " +
             "então em +1 ao alcançar a 5ª e 10ª graduação."),
 
-    // TODO: lets this Perícia use Instinto instead of its normal base Attribute (Foco),
-    // unconditionally — the substitution mechanism itself now exists (see
-    // SkillCompetencyAbility.getSubstituteAttributeDomain() / AtaqueCorpoACorpoCompetencyAbility
-    // .ACUIDADE), this constant just doesn't override it yet, and DominioDoManaInteraction
-    // doesn't yet resolve/pass it into CharacterSkillService.getValueForRoll's
-    // substituteAttributeDomain overload (same remaining wiring gap as
-    // EmpatiaSelvagemCompetencyAbility.ACADEMICO_SELVAGEM/INSTINTO_ANIMAL /
-    // FurtividadeCompetencyAbility.LADINO_TEORICO).
-    MAGIA_SELVAGEM("Você pode alterar o Atributo Base desta Perícia para Instinto."),
+    // Substitutes Foco for Instinto — see SkillCompetencyAbility.getSubstituteAttributeDomain().
+    MAGIA_SELVAGEM("Você pode alterar o Atributo Base desta Perícia para Instinto.") {
+        @Override
+        public Optional<AttributeDomain> getSubstituteAttributeDomain() {
+            return Optional.of(AttributeDomain.INSTINCT);
+        }
+    },
 
     // TODO: +1 Rodada to a Magia's Duração, then +1 more at the 5th and 10th graduation —
     // no Magia/spell-duration-tracking system exists yet.

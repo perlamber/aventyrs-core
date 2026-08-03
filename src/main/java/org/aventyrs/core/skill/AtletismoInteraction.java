@@ -1,5 +1,6 @@
 package org.aventyrs.core.skill;
 
+import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.character.services.CharacterSkillService;
@@ -12,6 +13,7 @@ import org.aventyrs.core.sheet.Interaction;
 import org.aventyrs.core.sheet.InteractionResult;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.aventyrs.core.skill.Skill.UNTRAINED_PENALTY;
 
@@ -21,7 +23,11 @@ import static org.aventyrs.core.skill.Skill.UNTRAINED_PENALTY;
  * bonus itself, looking up the target's own trained Atletismo CharacterSkill (or defaulting
  * to untrained, which carries {@link Skill#UNTRAINED_PENALTY}). Which of Atletismo's
  * specializations the roll is for doesn't change the bonus — see
- * {@link AtletismoSpecialization} — so it isn't tracked here.
+ * {@link AtletismoSpecialization} — so it isn't tracked here. If the character has a
+ * {@code SkillCompetencyAbility} for this same skill whose
+ * {@link SkillCompetencyAbility#getSubstituteAttributeDomain()} isn't empty (e.g.
+ * {@code AtletismoCompetencyAbility.ACROBATA}), that Attribute is used in place of
+ * Atletismo's normal Força for {@link CharacterSkillService#getValueForRoll}.
  */
 public class AtletismoInteraction implements Interaction<CharacterSheet> {
 
@@ -43,7 +49,14 @@ public class AtletismoInteraction implements Interaction<CharacterSheet> {
         CharacterSkill atletismoSkill = findCharacterSkill(character);
         int graduationValue = atletismoSkill.getGraduation().getGraduationValue();
 
-        int bonus = characterSkillService.getValueForRoll(atletismoSkill, character.getAttributes(), character.getRace());
+        AttributeDomain substituteAttributeDomain = character.getSkillCompetencyAbilities().stream()
+                .filter(ability -> ability.getSkillType() == SkillType.ATLETISMO)
+                .map(SkillCompetencyAbility::getSubstituteAttributeDomain)
+                .flatMap(Optional::stream)
+                .findFirst()
+                .orElse(null);
+
+        int bonus = characterSkillService.getValueForRoll(atletismoSkill, character.getAttributes(), character.getRace(), substituteAttributeDomain);
         bonus += modifierResolver.sumModifiers(character.getAttributeAbilities(), ModifierType.SKILL_ROLL_BONUS);
         bonus += modifierResolver.sumModifiers(character.getSkillCompetencyAbilities(), ModifierType.SKILL_ROLL_BONUS);
         List<SkillExcellency> unlockedExcellencies = SkillExcellency.unlockedBy(AtletismoExcellency.class, graduationValue);

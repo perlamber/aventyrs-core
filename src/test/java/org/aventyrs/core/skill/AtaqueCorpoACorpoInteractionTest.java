@@ -85,7 +85,7 @@ class AtaqueCorpoACorpoInteractionTest {
         ataqueCorpoACorpoSkill.increaseGraduation(1);
         Character character = CharacterFixture.blank(CharacterFixture.BLANK)
                 .attributes(CharacterAttributes.builder()
-                        .strength(AttributeValue.builder().base(9).build())
+                        .strength(AttributeValue.builder().base(5).variable(4).build())
                         .dexterity(AttributeValue.builder().base(2).build())
                         .build())
                 .skill(SkillType.ATAQUE_CORPO_A_CORPO, ataqueCorpoACorpoSkill)
@@ -105,7 +105,7 @@ class AtaqueCorpoACorpoInteractionTest {
         Character character = CharacterFixture.blank(CharacterFixture.BLANK)
                 .attributes(CharacterAttributes.builder()
                         .strength(AttributeValue.builder().base(2).build())
-                        .dexterity(AttributeValue.builder().base(9).build())
+                        .dexterity(AttributeValue.builder().base(5).variable(4).build())
                         .build())
                 .skill(SkillType.ATAQUE_CORPO_A_CORPO, ataqueCorpoACorpoSkill)
                 .skillCompetencyAbility(AtaqueCorpoACorpoCompetencyAbility.ATAQUE_PRECISO)

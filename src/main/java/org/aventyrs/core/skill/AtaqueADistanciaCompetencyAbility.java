@@ -2,13 +2,17 @@ package org.aventyrs.core.skill;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.aventyrs.core.character.AttributeDomain;
+
+import java.util.Optional;
 
 /**
- * The Habilidades de Competência available to characters trained in Ataque à Distância. Every
- * one of these needs a system this core doesn't have yet (attribute substitution,
- * damage/critical-damage rolls, range/targeting, or dice rolling this core deliberately never
- * does — see the {@code skill} package-info's "What this library computes" section) so none
- * are expressible for real today; see each constant's TODO.
+ * The Habilidades de Competência available to characters trained in Ataque à Distância. Most
+ * of these need a system this core doesn't have yet (damage/critical-damage rolls,
+ * range/targeting, or dice rolling this core deliberately never does — see the {@code skill}
+ * package-info's "What this library computes" section) so they aren't expressible for real
+ * today; see each constant's TODO. DISPARO_ARCANO's unconditional Attribute substitution is
+ * the exception — see {@link SkillCompetencyAbility#getSubstituteAttributeDomain()}.
  */
 @Getter
 @AllArgsConstructor
@@ -25,15 +29,13 @@ public enum AtaqueADistanciaCompetencyAbility implements SkillCompetencyAbility 
     ARREMESSO_PODEROSO("Você pode substituir o Atributo Base desta perícia por Força, mas " +
             "apenas para rolagens de ataques com armas de arremessos e magias."),
 
-    // TODO: lets this Perícia use Foco instead of its normal base Attribute (Destreza),
-    // unconditionally — the substitution mechanism itself now exists (see
-    // SkillCompetencyAbility.getSubstituteAttributeDomain() / AtaqueCorpoACorpoCompetencyAbility
-    // .ACUIDADE), this constant just doesn't override it yet, and AtaqueADistanciaInteraction
-    // doesn't yet resolve/pass it into CharacterSkillService.getValueForRoll's
-    // substituteAttributeDomain overload (same remaining wiring gap as
-    // EmpatiaSelvagemCompetencyAbility.ACADEMICO_SELVAGEM/INSTINTO_ANIMAL /
-    // FurtividadeCompetencyAbility.LADINO_TEORICO).
-    DISPARO_ARCANO("Você pode substituir o Atributo Base desta perícia por Foco."),
+    // Substitutes Destreza for Foco — see SkillCompetencyAbility.getSubstituteAttributeDomain().
+    DISPARO_ARCANO("Você pode substituir o Atributo Base desta perícia por Foco.") {
+        @Override
+        public Optional<AttributeDomain> getSubstituteAttributeDomain() {
+            return Optional.of(AttributeDomain.FOCUS);
+        }
+    },
 
     // TODO: Vantagem on damage rolls (not the Perícia roll itself) against targets at
     // Distância Curta or closer — no damage-roll concept or target-range/distance system
