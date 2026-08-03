@@ -61,4 +61,16 @@ jacocoTestCoverageVerification {
     }
 }
 
+tasks.register('countClasses') {
+    doLast {
+        def classCount = 0
+        tasks.withType(JavaCompile).each { compileTask ->
+            def tree = fileTree(compileTask.destinationDirectory)
+            tree.include '**/*.class'
+            classCount += tree.files.size()
+        }
+        println "Total compiled classes: ${classCount}"
+    }
+}
+
 check.dependsOn jacocoTestCoverageVerification
