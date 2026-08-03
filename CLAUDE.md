@@ -48,6 +48,13 @@ pieces — don't stop at just the `Skill` class:
    to skip documenting the next one that shows up — just don't expect to find a working
    example in the codebase to copy from right now.
 
+   **If a constant's rules text requires the player to pick a value when acquiring it**
+   ("Escolha uma Perícia…", or a pick-one-of-several-effects choice), don't TODO the whole
+   ability as "no way to persist the choice" — there is one; see "Acquisition-time ability
+   choices" below for the two patterns (an instance-based companion class when the choice
+   feeds the ability's own `@Modifier` methods, `AcquiredChoice` otherwise) and which one
+   applies.
+
    **For every ability whose mechanic depends on a system that doesn't exist yet**
    (a roll-vs-`DifficultyLevel` resolution engine, Vantagem/Desvantagem, ally-range effects,
    NPC-disposition/reputation, Cena/Combate-scoped state, etc.), add a `// TODO:` comment
@@ -120,6 +127,14 @@ pieces — don't stop at just the `Skill` class:
    `<Skill>InteractionTest` covering: trained bonus = attribute total + graduation, untrained
    = attribute total + `UNTRAINED_PENALTY`, and `CharacterSheet.receiveInteraction(interaction)`
    delegates correctly.
+
+   An instance-based choice-carrying ability class (see "Acquisition-time ability choices")
+   gets its own test file too, shaped like `ArtesAprimorarComArteAbilityTest`: exercise each
+   implemented branch through the *real* scanning service that consumes it (e.g.
+   `DamageService.getTotalDamageReduction` on a `CharacterFixture` character granted the
+   instance), not by calling the modifier method directly; a non-matching choice contributes
+   0; a null choice is rejected at construction; and the instance reports the catalog
+   constant's `SkillType` and description.
 
 ## Character-level stats aggregated from abilities (e.g. Reações, Ações Livres, Pontos de Ação)
 
@@ -247,6 +262,16 @@ consumes it:
   `<Skill>Interaction`, …) then pick the right value up with **zero** changes to any scanning
   service. Use `SkillType.isAttackSkill()` when a branch keys on "Perícias de Ataque" (Ataque
   à Distância + Ataque Corpo-a-Corpo) as a category.
+
+  Mirror `ArtesAprimorarComArteAbility`'s shape when writing one: name it
+  `<Skill><AbilityName>Ability` in the same package as the `<Skill>CompetencyAbility` enum;
+  mark the choice field `@NonNull` (reject a null choice at construction); delegate
+  `getSkillType()`/`getDescription()` to the catalog constant so the rules text keeps a
+  single source of truth; have each `@Modifier` method return 0 when the choice doesn't
+  select its branch; keep the enum constant in the catalog (its count test is unchanged)
+  with a comment redirecting to the class; and put the TODOs for branches blocked on
+  missing systems on the *class*, next to where their modifier methods would go — not on
+  the enum constant.
 
 - **When the choice is consumed by some *other* mechanism** (not a modifier on the ability
   itself — e.g. `PERITO_TEORICO`'s attribute substitution, which a future
