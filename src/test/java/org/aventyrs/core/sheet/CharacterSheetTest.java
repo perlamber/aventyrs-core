@@ -7,8 +7,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class CharacterSheetTest {
@@ -172,5 +175,32 @@ class CharacterSheetTest {
         assertEquals(BigDecimal.valueOf(7), sheet.accumulateExperience(BigDecimal.valueOf(2)));
         assertEquals(BigDecimal.valueOf(7), sheet.getTotalExperience());
         assertEquals(BigDecimal.valueOf(7), sheet.getUnUsedExperience());
+    }
+
+    @Test
+    void eachCharacterSheetGetsItsOwnDistinctId() {
+        CharacterSheet first = newSheet();
+        CharacterSheet second = newSheet();
+
+        assertNotNull(first.getId());
+        assertNotNull(second.getId());
+        assertNotEquals(first.getId(), second.getId());
+    }
+
+    @Test
+    void ofWithAnExplicitIdReconstructsTheGivenIdentityInsteadOfMintingANewOne() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK).build();
+        UUID persistedId = UUID.randomUUID();
+
+        CharacterSheet sheet = CharacterSheet.of(character, new Player(), persistedId);
+
+        assertEquals(persistedId, sheet.getId());
+    }
+
+    @Test
+    void ofRejectsANullExplicitId() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK).build();
+
+        assertThrows(NullPointerException.class, () -> CharacterSheet.of(character, new Player(), null));
     }
 }

@@ -21,6 +21,7 @@ import org.aventyrs.core.skill.SkillType;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import static org.aventyrs.core.util.TranslatableMessages.NOT_ENOUGH_EXPERIENCE;
 
@@ -28,6 +29,15 @@ import static org.aventyrs.core.util.TranslatableMessages.NOT_ENOUGH_EXPERIENCE;
 @AllArgsConstructor(access = AccessLevel.PACKAGE)
 @NoArgsConstructor(access = AccessLevel.PACKAGE)
 public class Character {
+    /**
+     * A unique, stable identifier for this Character — independent of any specific
+     * {@link org.aventyrs.core.sheet.CharacterSheet} wrapping it (see that class's own
+     * {@code id}), e.g. so {@link org.aventyrs.core.scene.Scene} can tell participants apart
+     * without relying on object-reference equality.
+     */
+    @Builder.Default
+    protected UUID id = UUID.randomUUID();
+
     @NonNull
     protected Player player;
 

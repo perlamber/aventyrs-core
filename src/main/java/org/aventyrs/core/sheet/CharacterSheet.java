@@ -7,6 +7,7 @@ import org.aventyrs.core.character.EgoDomain;
 import java.math.BigDecimal;
 import java.util.EnumMap;
 import java.util.Map;
+import java.util.UUID;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -17,6 +18,20 @@ import static org.aventyrs.core.util.TranslatableMessages.NOT_ENOUGH_EXPERIENCE;
 @RequiredArgsConstructor(staticName="of")
 @Getter
 public class CharacterSheet implements Interactable<CharacterSheet> {
+    /**
+     * A unique, stable identifier for this specific CharacterSheet instance — distinct from
+     * {@link Character#getId()}, since the same Character could in principle back more than
+     * one CharacterSheet. {@link org.aventyrs.core.scene.Scene} keys its participants by this,
+     * not by object-reference equality. Auto-generated for a newly created CharacterSheet via
+     * {@link #of(Character, Player)}; pass an already-known one via
+     * {@link #of(Character, Player, UUID)} instead when reconstructing a CharacterSheet from
+     * persisted state (e.g. a DTO loaded from storage), where the identity already exists and
+     * must be preserved rather than re-minted. Not {@code final} for exactly that reason, but
+     * there's still no public setter — the only way to set it is at construction, through one
+     * of those two factories.
+     */
+    private UUID id = UUID.randomUUID();
+
     @NonNull
     private Character character;
     @NonNull
@@ -50,6 +65,17 @@ public class CharacterSheet implements Interactable<CharacterSheet> {
             pools.put(domain, new TemporaryPointPool());
         }
         return pools;
+    }
+
+    /**
+     * Same as {@link #of(Character, Player)}, but with a known id instead of a freshly
+     * minted one — for reconstructing a CharacterSheet from persisted state (e.g. a DTO)
+     * whose identity already exists.
+     */
+    public static CharacterSheet of(final Character character, final Player player, @NonNull final UUID id) {
+        CharacterSheet sheet = of(character, player);
+        sheet.id = id;
+        return sheet;
     }
 
     /**

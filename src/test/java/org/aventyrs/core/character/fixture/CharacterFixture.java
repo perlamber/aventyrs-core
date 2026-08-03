@@ -32,6 +32,7 @@ import org.aventyrs.core.util.SimpleFixture;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 public class CharacterFixture extends SimpleFixture {
 
@@ -56,10 +57,19 @@ public class CharacterFixture extends SimpleFixture {
      * then sets every Rule property via reflection — it never goes through the Lombok
      * builder, so none of Character's {@code @Builder.Default} values apply automatically.
      * Every field must be listed here, including the ones that just mirror those defaults.
+     *
+     * <p>{@code id} is the one field where that matters beyond just "don't forget it": this
+     * Rule's {@code UUID.randomUUID()} call runs once, when {@link #loadTemplates()} is
+     * called — not once per {@link #blank}/{@code gimme} — so every Character built from
+     * {@link #BLANK} within the same test shares that one {@code id}. Fine for tests that
+     * don't care about identity; a test that needs several distinct Characters (e.g. for
+     * {@code Scene}'s allies) must override {@code .id(UUID.randomUUID())} on each one via
+     * {@link #blank}'s returned builder.
      */
     private static void loadCharacterTemplates() {
         Fixture.of(Character.class).addTemplate(BLANK, new Rule() {
             {
+                this.add("id", UUID.randomUUID());
                 this.add("player", new Player());
                 this.add("name", "Test");
                 this.add("race", new Human());
@@ -93,6 +103,7 @@ public class CharacterFixture extends SimpleFixture {
     private static void loadAttributeSubstitutionsTemplate() {
         Fixture.of(Character.class).addTemplate(ATTRIBUTE_SUBSTITUTIONS, new Rule() {
             {
+                this.add("id", UUID.randomUUID());
                 this.add("player", new Player());
                 this.add("name", "Test");
                 this.add("race", new Human());

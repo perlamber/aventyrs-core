@@ -9,6 +9,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -139,5 +141,78 @@ class SceneTest {
         assertEquals(lateArrival, scene.next());
         assertEquals(1, scene.getCurrentRound());
         assertEquals(List.of(lateArrival, a, b), scene.getParticipantsInInitiativeOrder());
+    }
+
+    @Test
+    void participantsAddedWithoutAnExplicitGroupHaveNoAllies() {
+        Scene scene = new Scene();
+        CharacterSheet a = newSheet();
+        CharacterSheet b = newSheet();
+        scene.addParticipant(a, 10);
+        scene.addParticipant(b, 5);
+
+        assertTrue(scene.getAllies(a).isEmpty());
+        assertTrue(scene.getAllies(b).isEmpty());
+    }
+
+    @Test
+    void participantsSharingAGroupAreEachOthersAllies() {
+        Scene scene = new Scene();
+        UUID party = UUID.randomUUID();
+        CharacterSheet a = newSheet();
+        CharacterSheet b = newSheet();
+        CharacterSheet c = newSheet();
+        scene.addParticipant(a, 10, party);
+        scene.addParticipant(b, 5, party);
+        scene.addParticipant(c, 8, party);
+
+        // getAllies makes no ordering guarantee, only membership.
+        assertEquals(Set.of(b, c), Set.copyOf(scene.getAllies(a)));
+    }
+
+    @Test
+    void alliesExcludesTheActorItself() {
+        Scene scene = new Scene();
+        UUID party = UUID.randomUUID();
+        CharacterSheet a = newSheet();
+        scene.addParticipant(a, 10, party);
+
+        assertTrue(scene.getAllies(a).isEmpty());
+    }
+
+    @Test
+    void participantsInDifferentGroupsAreNotAllies() {
+        Scene scene = new Scene();
+        UUID heroes = UUID.randomUUID();
+        UUID villains = UUID.randomUUID();
+        CharacterSheet hero = newSheet();
+        CharacterSheet villain = newSheet();
+        scene.addParticipant(hero, 10, heroes);
+        scene.addParticipant(villain, 5, villains);
+
+        assertTrue(scene.getAllies(hero).isEmpty());
+        assertTrue(scene.getAllies(villain).isEmpty());
+    }
+
+    @Test
+    void alliesIncludesAPartyMemberAddedMidRound() {
+        Scene scene = new Scene();
+        UUID party = UUID.randomUUID();
+        CharacterSheet a = newSheet();
+        CharacterSheet lateArrival = newSheet();
+        scene.addParticipant(a, 10, party);
+
+        scene.next();
+        scene.addParticipant(lateArrival, 20, party);
+
+        assertEquals(List.of(lateArrival), scene.getAllies(a));
+    }
+
+    @Test
+    void getAlliesThrowsForACharacterSheetNeverAddedToTheScene() {
+        Scene scene = new Scene();
+        CharacterSheet stranger = newSheet();
+
+        assertThrows(IllegalOperationException.class, () -> scene.getAllies(stranger));
     }
 }
