@@ -1,0 +1,100 @@
+package org.aventyrs.core.skill;
+
+import org.aventyrs.core.character.AttributeDomain;
+import org.aventyrs.core.character.Character;
+import org.aventyrs.core.character.CharacterSkill;
+import org.aventyrs.core.character.services.CharacterSkillService;
+import org.aventyrs.core.character.services.CharacterSkillServiceImpl;
+import org.aventyrs.core.modifier.ModifierResolver;
+import org.aventyrs.core.modifier.ModifierResolverImpl;
+import org.aventyrs.core.modifier.ModifierType;
+import org.aventyrs.core.sheet.CharacterSheet;
+import org.aventyrs.core.sheet.Interaction;
+import org.aventyrs.core.sheet.InteractionResult;
+
+import java.util.List;
+
+import static org.aventyrs.core.skill.Skill.UNTRAINED_PENALTY;
+
+/**
+ * The {@code applyTo}/{@code findCharacterSkill} machinery every {@code <Skill>Interaction}
+ * needs, factored out into one place — see CLAUDE.md's "Adding a new Perícia" checklist item
+ * 5. Every concrete subclass (e.g. {@link ArtesInteraction}) was, before this class existed,
+ * an almost byte-for-byte copy of every other one, varying only by which {@link SkillType} it
+ * targeted; that's now the *only* thing a subclass supplies, via its constructor.
+ *
+ * <p>Computes {@code skillRollBonus} from {@link CharacterSkillService#getValueForRoll} (using
+ * whichever Attribute currently governs this Perícia — its own, or a substituted one, see
+ * {@link SkillCompetencyAbility#resolveAttributeDomain}; this resolution is safe to run
+ * unconditionally, since it's a no-op — falls back to the Perícia's own Attribute — for every
+ * skillType with no substituting ability) plus four {@code ModifierType#SKILL_ROLL_BONUS}
+ * sources: {@code attributeAbilities}, {@code skillCompetencyAbilities}, unlocked {@link
+ * SkillExcellency} tiers, and the target {@link CharacterSheet}'s own {@code TemporaryBonus}
+ * pool (see CLAUDE.md's "Temporary bonuses from other Characters" section). Computes {@code
+ * difficultyReduction} from unlocked {@code SkillExcellency} tiers plus every {@code
+ * skillCompetencyAbility}'s own {@link SkillCompetencyAbility#getDifficultyReduction()}.
+ *
+ * <p>A subclass with something genuinely skill-specific to add (e.g. {@link
+ * DominioDoManaInteraction}'s "this is always the second of two rolls" note is documentation,
+ * not behavior, so it needed nothing extra) would override {@link #applyTo} and call {@code
+ * super.applyTo(target)} first — no current skill needs this.
+ */
+public abstract class AbstractSkillInteraction implements Interaction<CharacterSheet> {
+
+    private final SkillType skillType;
+    private final CharacterSkillService characterSkillService;
+    private final ModifierResolver modifierResolver;
+
+    protected AbstractSkillInteraction(final SkillType skillType) {
+        this(skillType, new CharacterSkillServiceImpl(), new ModifierResolverImpl());
+    }
+
+    protected AbstractSkillInteraction(final SkillType skillType, final CharacterSkillService characterSkillService, final ModifierResolver modifierResolver) {
+        this.skillType = skillType;
+        this.characterSkillService = characterSkillService;
+        this.modifierResolver = modifierResolver;
+    }
+
+    @Override
+    public InteractionResult applyTo(final CharacterSheet target) {
+        Character character = target.getCharacter();
+        CharacterSkill characterSkill = findCharacterSkill(character);
+        int graduationValue = characterSkill.getGraduation().getGraduationValue();
+
+        AttributeDomain attributeDomain = SkillCompetencyAbility.resolveAttributeDomain(
+                character.getSkillCompetencyAbilities(), skillType, characterSkill.getSkill().getAttributeDomain());
+
+        int bonus = characterSkillService.getValueForRoll(characterSkill, character.getAttributes(), character.getRace(), attributeDomain);
+        bonus += modifierResolver.sumModifiers(character.getAttributeAbilities(), ModifierType.SKILL_ROLL_BONUS);
+        bonus += modifierResolver.sumModifiers(character.getSkillCompetencyAbilities(), ModifierType.SKILL_ROLL_BONUS);
+        List<SkillExcellency> unlockedExcellencies = SkillExcellency.unlockedBy(skillType.getExcellencyClass(), graduationValue);
+        bonus += modifierResolver.sumModifiers(unlockedExcellencies, ModifierType.SKILL_ROLL_BONUS);
+        bonus += target.getTemporaryBonus(ModifierType.SKILL_ROLL_BONUS);
+
+        int difficultyReduction = SkillExcellency.totalDifficultyReduction(skillType.getExcellencyClass(), graduationValue);
+        difficultyReduction += character.getSkillCompetencyAbilities().stream()
+                .mapToInt(SkillCompetencyAbility::getDifficultyReduction)
+                .sum();
+
+        return InteractionResult.builder()
+                .resultStatus(character.getStatus())
+                .skillRollBonus(bonus)
+                .difficultyReduction(difficultyReduction)
+                .build();
+    }
+
+    /**
+     * The Character's own CharacterSkill for this Interaction's Perícia, or a fresh one
+     * carrying {@link Skill#UNTRAINED_PENALTY} as its graduation if they never trained it.
+     */
+    private CharacterSkill findCharacterSkill(final Character character) {
+        CharacterSkill trained = character.getSkills().get(skillType);
+        if (trained != null) {
+            return trained;
+        }
+        return CharacterSkill.builder()
+                .skill(skillType.newSkillInstance())
+                .graduation(SkillGraduation.builder().graduationValue(UNTRAINED_PENALTY).build())
+                .build();
+    }
+}

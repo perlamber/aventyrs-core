@@ -150,24 +150,31 @@ pieces — don't stop at just the `Skill` class:
    prerequisite system is actually built.
 
 5. **Always implement a concrete `Interaction<CharacterSheet>` for the skill** (e.g.
-   `AttentionInteraction`, `ArtesInteraction`) — never leave a Skill without one. It must:
-   - take an optional injected `CharacterSkillService` (default `new CharacterSkillServiceImpl()`),
-     matching this codebase's constructor-injection convention;
-   - look up the target's own `CharacterSkill` via `character.getSkills().get(SkillType.X)`,
-     falling back to a fresh untrained `CharacterSkill` whose `SkillGraduation` carries
-     `Skill.UNTRAINED_PENALTY` when the character never trained it;
-   - delegate the actual bonus computation to `CharacterSkillService.getValueForRoll` — never
-     recompute attribute totals or graduation math inline;
-   - if the skill has a `<Skill>Excellency` enum (see below), also compute
-     `SkillExcellency.totalDifficultyReduction(<Skill>Excellency.class, graduationValue)`;
-   - **also** sum `character.getSkillCompetencyAbilities().stream()
-     .mapToInt(SkillCompetencyAbility::getDifficultyReduction).sum()` into the same total —
-     every `<Skill>Interaction` must honor both sources, even before any ability for that
-     specific skill grants one (see `ArtesInteraction`/`AttentionInteraction`/
-     `AtletismoInteraction`), then set the combined value on
-     `InteractionResult.difficultyReduction`;
-   - return an `InteractionResult` with `resultStatus` (the target's current status),
-     `skillRollBonus` (the computed bonus), and `difficultyReduction` set.
+   `AttentionInteraction`, `ArtesInteraction`) — never leave a Skill without one. Every
+   `<Skill>Interaction` needs the exact same `applyTo`/`findCharacterSkill` machinery —
+   compute the roll bonus via `CharacterSkillService.getValueForRoll`, resolve which Attribute
+   currently governs the roll, sum every `SKILL_ROLL_BONUS` source, look up the trained
+   `CharacterSkill` or fall back to an untrained one, sum `difficultyReduction` — so this is
+   **not** something to hand-write per skill anymore: extend `AbstractSkillInteraction`
+   (`org.aventyrs.core.skill`) and give it the new skill's `SkillType` constant. A concrete
+   subclass needs nothing but two constructors delegating to `super(SkillType.X)`/
+   `super(SkillType.X, characterSkillService, modifierResolver)` — see `ArtesInteraction` or
+   `AttentionInteraction` for the ~15-line shape every skill without something genuinely
+   unusual to say should match. Move any skill-specific rules-text nuance (an unenforced
+   TODO, a note about a related mechanic) into the subclass's own class-level javadoc, same as
+   before — it's still a real class per skill, just without the duplicated body.
+
+   This only works because `SkillType` itself now carries everything `AbstractSkillInteraction`
+   needs per skill: `excellencyClass` (already existed) and a `Supplier<Skill> skillFactory`
+   (`newSkillInstance()`) for the untrained-fallback `CharacterSkill`, e.g. `ARTES
+   (ArtesExcellency.class, Artes::new)`. **Whenever you add a new Skill, add its constant to
+   `SkillType` with both pieces** — `AbstractSkillInteraction` has no other way to know which
+   `Skill`/`SkillExcellency` a given `SkillType` maps to.
+
+   If a skill's Interaction genuinely needs to do something no other skill does (none does
+   today), override `applyTo` in the subclass and call `super.applyTo(target)` first, rather
+   than duplicating `AbstractSkillInteraction`'s logic or forking it back out to a
+   hand-written `applyTo`.
 
 6. **A `<Skill>Excellency` enum for its automatic Excelência bonuses** (e.g.
    `ArtesExcellency`), implementing `SkillExcellency` (`getSkillType()` + `getTier()` +
@@ -499,17 +506,12 @@ attack/delivery method) — it's now mechanically real, following `ACUIDADE` as 
   static method on the interface, mirroring `SkillExcellency.unlockedBy`'s existing
   static-method-on-interface shape. It filters for entries whose `getSkillType()` matches
   `skillType` and whose `getSubstituteAttributeDomain()` is present, returning the first
-  match's Attribute or `defaultDomain` if none. This one *is* factored into a single shared
-  method rather than inlined per `<Skill>Interaction` — unlike the `difficultyReduction`/
-  `SKILL_ROLL_BONUS` sums (which have real per-site variation: different `ModifierType`
-  constants, extra unlocked-Excellency lists), this resolution is byte-for-byte identical at
-  every call site, and it now has a second, non-`Interaction` consumer too
-  (`SkillGraduationService`'s max-Graduação cap, see the cap section above) — a second
-  category of caller is exactly the point where this codebase's usual "duplicate over
-  centralize" preference stops applying. Each substitution-aware `<Skill>Interaction` (e.g.
-  `AtaqueCorpoACorpoInteraction`) calls it with its own `CharacterSkill.getSkill()
-  .getAttributeDomain()` as `defaultDomain`, then passes the (always non-null) result into
-  `getValueForRoll`'s 4-arg overload.
+  match's Attribute or `defaultDomain` if none — byte-for-byte identical at every call site
+  (only `skillType`/`defaultDomain` vary), so it's a single shared method rather than
+  duplicated. It's called unconditionally by `AbstractSkillInteraction.applyTo` for every
+  skill now (see the next section) — safe even for skills with no substituting ability, since
+  it just falls through to `defaultDomain` — and by `SkillGraduationService`'s max-Graduação
+  cap for the same reason.
 - This only covers the *unconditional* case. A substitution scoped to a specific circumstance
   (e.g. `AtaqueADistanciaCompetencyAbility.ARREMESSO_PODEROSO`, only for thrown-weapon/spell
   attacks) can't be modeled this way — same "this codebase doesn't track what a roll is *for*"
@@ -542,13 +544,14 @@ returning `Skill.ADVANTAGE_BONUS`, summed into `skillRollBonus` inside the skill
 `<Skill>Interaction.applyTo` — see `DirigirECavalgarCompetencyAbility.CONTROLAR_ANIMAIS` /
 `DirigirECavalgarInteraction`. No separate flag or dice-rolling engine needed.
 
-Every `<Skill>Interaction.applyTo` should sum `ModifierType.SKILL_ROLL_BONUS` across the same
-three sources `ReactionsService` uses for Reações — `attributeAbilities`,
+`AbstractSkillInteraction.applyTo` (see "Adding a new Perícia" above — every `<Skill>Interaction`
+extends it, so this is no longer duplicated per skill) sums `ModifierType.SKILL_ROLL_BONUS`
+across the same three sources `ReactionsService` uses for Reações — `attributeAbilities`,
 `skillCompetencyAbilities`, and the trained skill's own unlocked `SkillExcellency` tiers — plus
 a fourth, `CharacterSheet`-level one: `target.getTemporaryBonus(ModifierType.SKILL_ROLL_BONUS)`
 (see "Temporary bonuses from other Characters" below) — even before any ability actually
-grants it for that specific skill, so future abilities work without touching the Interaction
-again.
+grants it for that specific skill, so future abilities work without touching any Interaction
+at all.
 
 If the ability's Vantagem is scoped to a specific *purpose* within the skill (e.g.
 `CONTROLAR_ANIMAIS`'s is only for animal/animal-drawn-vehicle rolls, not every Dirigir e
