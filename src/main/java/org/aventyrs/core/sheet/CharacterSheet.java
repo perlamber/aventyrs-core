@@ -3,9 +3,12 @@ package org.aventyrs.core.sheet;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterStatus;
 import org.aventyrs.core.character.EgoDomain;
+import org.aventyrs.core.modifier.ModifierType;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -58,6 +61,9 @@ public class CharacterSheet implements Interactable<CharacterSheet> {
     private int famaPositiva = 0;
 
     private int famaNegativa = 0;
+
+    @Getter(AccessLevel.NONE)
+    private final List<TemporaryBonus> temporaryBonuses = new ArrayList<>();
 
     private static Map<EgoDomain, TemporaryPointPool> newTemporaryEgoPointsPools() {
         Map<EgoDomain, TemporaryPointPool> pools = new EnumMap<>(EgoDomain.class);
@@ -244,5 +250,47 @@ public class CharacterSheet implements Interactable<CharacterSheet> {
     public int increaseFamaNegativa(int amount)
     {
         return famaNegativa += amount;
+    }
+
+    /**
+     * Grants a {@link TemporaryBonus} of type — e.g. {@code ArtesCompetencyAbility
+     * #DOM_BARDICO} motivating an ally, granting them (not the caster) a
+     * {@link ModifierType#SKILL_ROLL_BONUS} for a few Rodadas. The granting Character isn't
+     * tracked here (nothing about this mechanism needs to know who granted it); locate
+     * targets via {@link org.aventyrs.core.scene.Scene#getAllies}.
+     * @return int the total of type's active temporary bonuses after granting this one
+     */
+    public int grantTemporaryBonus(final ModifierType type, final int value, final int rounds)
+    {
+        temporaryBonuses.add(new TemporaryBonus(type, value, rounds));
+        return getTemporaryBonus(type);
+    }
+
+    /**
+     * The sum of every currently-active (non-expired) {@link TemporaryBonus} of type this
+     * CharacterSheet is holding — e.g. what a {@code <Skill>Interaction} should add into its
+     * own {@link ModifierType#SKILL_ROLL_BONUS} total alongside the Character's permanent
+     * abilities/excellencies.
+     */
+    public int getTemporaryBonus(final ModifierType type)
+    {
+        return temporaryBonuses.stream()
+                .filter(bonus -> !bonus.isExpired())
+                .filter(bonus -> bonus.getType() == type)
+                .mapToInt(TemporaryBonus::getValue)
+                .sum();
+    }
+
+    /**
+     * Counts every held {@link TemporaryBonus} down by one Rodada and discards any that
+     * expire as a result. Not called automatically by anything yet — {@link
+     * org.aventyrs.core.scene.Scene} doesn't have a "turn shifter" that advances every
+     * participant's CharacterSheet on a Round completing; once it does, this is the method
+     * it's expected to call on each one.
+     */
+    public void tickTemporaryBonuses()
+    {
+        temporaryBonuses.forEach(TemporaryBonus::tick);
+        temporaryBonuses.removeIf(TemporaryBonus::isExpired);
     }
 }

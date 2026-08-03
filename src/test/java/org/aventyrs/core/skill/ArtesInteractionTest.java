@@ -7,6 +7,7 @@ import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.character.CharacterStatus;
 import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.character.fixture.CharacterSkillFixture;
+import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.InteractionResult;
 import org.aventyrs.core.sheet.Player;
@@ -77,5 +78,32 @@ class ArtesInteractionTest {
         InteractionResult result = sheet.receiveInteraction(artesInteraction);
 
         assertEquals(0, result.getSkillRollBonus());
+    }
+
+    @Test
+    void applyToIncludesAnActiveTemporarySkillRollBonus() {
+        CharacterSkill artesSkill = CharacterSkillFixture.blank(CharacterSkillFixture.ARTES_1).build();
+        artesSkill.increaseGraduation(1);
+        CharacterSheet sheet = sheetWithCharismaAndSkill(2, artesSkill);
+
+        // e.g. an ally motivated by another character's DOM_BARDICO.
+        sheet.grantTemporaryBonus(ModifierType.SKILL_ROLL_BONUS, 3, 1);
+
+        InteractionResult result = artesInteraction.applyTo(sheet);
+
+        assertEquals(6, result.getSkillRollBonus());
+    }
+
+    @Test
+    void applyToIgnoresAnExpiredTemporarySkillRollBonus() {
+        CharacterSkill artesSkill = CharacterSkillFixture.blank(CharacterSkillFixture.ARTES_1).build();
+        artesSkill.increaseGraduation(1);
+        CharacterSheet sheet = sheetWithCharismaAndSkill(2, artesSkill);
+        sheet.grantTemporaryBonus(ModifierType.SKILL_ROLL_BONUS, 3, 1);
+
+        sheet.tickTemporaryBonuses();
+        InteractionResult result = artesInteraction.applyTo(sheet);
+
+        assertEquals(3, result.getSkillRollBonus());
     }
 }

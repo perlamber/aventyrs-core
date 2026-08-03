@@ -3,6 +3,7 @@ package org.aventyrs.core.sheet;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.character.fixture.CharacterFixture;
+import org.aventyrs.core.modifier.ModifierType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -202,5 +203,62 @@ class CharacterSheetTest {
         Character character = CharacterFixture.blank(CharacterFixture.BLANK).build();
 
         assertThrows(NullPointerException.class, () -> CharacterSheet.of(character, new Player(), null));
+    }
+
+    @Test
+    void newlyCreatedCharacterSheetHasNoTemporaryBonuses() {
+        CharacterSheet sheet = newSheet();
+
+        assertEquals(0, sheet.getTemporaryBonus(ModifierType.SKILL_ROLL_BONUS));
+    }
+
+    @Test
+    void grantTemporaryBonusReturnsTheNewTotalForThatType() {
+        CharacterSheet sheet = newSheet();
+        sheet.grantTemporaryBonus(ModifierType.SKILL_ROLL_BONUS, 2, 1);
+
+        assertEquals(5, sheet.grantTemporaryBonus(ModifierType.SKILL_ROLL_BONUS, 3, 1));
+    }
+
+    @Test
+    void getTemporaryBonusOnlySumsMatchingModifierType() {
+        CharacterSheet sheet = newSheet();
+        sheet.grantTemporaryBonus(ModifierType.SKILL_ROLL_BONUS, 3, 1);
+        sheet.grantTemporaryBonus(ModifierType.DAMAGE_REDUCTION, 5, 1);
+
+        assertEquals(3, sheet.getTemporaryBonus(ModifierType.SKILL_ROLL_BONUS));
+        assertEquals(5, sheet.getTemporaryBonus(ModifierType.DAMAGE_REDUCTION));
+    }
+
+    @Test
+    void tickTemporaryBonusesCountsDownWithoutExpiringBeforeItsLastRound() {
+        CharacterSheet sheet = newSheet();
+        sheet.grantTemporaryBonus(ModifierType.SKILL_ROLL_BONUS, 3, 2);
+
+        sheet.tickTemporaryBonuses();
+
+        assertEquals(3, sheet.getTemporaryBonus(ModifierType.SKILL_ROLL_BONUS));
+    }
+
+    @Test
+    void tickTemporaryBonusesRemovesABonusOnceItsRoundsRunOut() {
+        CharacterSheet sheet = newSheet();
+        sheet.grantTemporaryBonus(ModifierType.SKILL_ROLL_BONUS, 3, 2);
+
+        sheet.tickTemporaryBonuses();
+        sheet.tickTemporaryBonuses();
+
+        assertEquals(0, sheet.getTemporaryBonus(ModifierType.SKILL_ROLL_BONUS));
+    }
+
+    @Test
+    void tickTemporaryBonusesOnlyExpiresBonusesWhoseRoundsAreUp() {
+        CharacterSheet sheet = newSheet();
+        sheet.grantTemporaryBonus(ModifierType.SKILL_ROLL_BONUS, 1, 1);
+        sheet.grantTemporaryBonus(ModifierType.SKILL_ROLL_BONUS, 2, 3);
+
+        sheet.tickTemporaryBonuses();
+
+        assertEquals(2, sheet.getTemporaryBonus(ModifierType.SKILL_ROLL_BONUS));
     }
 }

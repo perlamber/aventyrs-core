@@ -50,6 +50,7 @@ public class FurtividadeInteraction implements Interaction<CharacterSheet> {
         bonus += modifierResolver.sumModifiers(character.getSkillCompetencyAbilities(), ModifierType.SKILL_ROLL_BONUS);
         List<SkillExcellency> unlockedExcellencies = SkillExcellency.unlockedBy(FurtividadeExcellency.class, graduationValue);
         bonus += modifierResolver.sumModifiers(unlockedExcellencies, ModifierType.SKILL_ROLL_BONUS);
+        bonus += target.getTemporaryBonus(ModifierType.SKILL_ROLL_BONUS);
 
         int difficultyReduction = SkillExcellency.totalDifficultyReduction(FurtividadeExcellency.class, graduationValue);
         difficultyReduction += character.getSkillCompetencyAbilities().stream()

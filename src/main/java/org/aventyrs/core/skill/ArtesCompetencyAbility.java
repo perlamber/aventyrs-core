@@ -11,12 +11,14 @@ import lombok.Getter;
 public enum ArtesCompetencyAbility implements SkillCompetencyAbility {
 
     // TODO: motivates allies, granting them (not the user) a Perícia-roll bonus for 1
-    // Rodada, extending to 2 Rodadas at 5 Graduações and 3 Rodadas at 10 — but the bonus
-    // itself is a lookup by which GD tier the Artes roll hit (Fácil +1, Médio +2, Muito
-    // Difícil +3, Improvável +4, Milagre +5), not a flat value. Needs a
-    // roll-resolution-vs-DifficultyLevel engine (to know which GD tier was reached, then
-    // look up its bonus), ally-targeting, and Rodada-scoped duration tracking, none of
-    // which exist yet.
+    // Rodada, extending to 2 Rodadas at 5 Graduações and 3 Rodadas at 10. Ally-targeting
+    // (Scene#getAllies) and Rodada-scoped duration tracking (CharacterSheet
+    // #grantTemporaryBonus/#getTemporaryBonus/#tickTemporaryBonuses) both exist now — see
+    // CLAUDE.md's "Temporary bonuses from other Characters" section. What's still missing:
+    // the bonus itself is a lookup by which GD tier the Artes roll hit (Fácil +1, Médio +2,
+    // Muito Difícil +3, Improvável +4, Milagre +5), not a flat value, and no
+    // roll-resolution-vs-DifficultyLevel engine exists yet to know which GD tier a roll
+    // reached in the first place.
     DOM_BARDICO("Você pode utilizar sua arte para motivar seus aliados, concedendo Bônus " +
             "em rolagens de Perícias a eles (mas não a você) por 1 Rodada, este benefício " +
             "aumenta 2 Rodadas ao alcançar 5 Graduações, então para 3 Rodadas com 10 " +

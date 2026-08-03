@@ -48,6 +48,7 @@ public class ProfissaoInteraction implements Interaction<CharacterSheet> {
         bonus += modifierResolver.sumModifiers(character.getSkillCompetencyAbilities(), ModifierType.SKILL_ROLL_BONUS);
         List<SkillExcellency> unlockedExcellencies = SkillExcellency.unlockedBy(ProfissaoExcellency.class, graduationValue);
         bonus += modifierResolver.sumModifiers(unlockedExcellencies, ModifierType.SKILL_ROLL_BONUS);
+        bonus += target.getTemporaryBonus(ModifierType.SKILL_ROLL_BONUS);
 
         int difficultyReduction = SkillExcellency.totalDifficultyReduction(ProfissaoExcellency.class, graduationValue);
         difficultyReduction += character.getSkillCompetencyAbilities().stream()

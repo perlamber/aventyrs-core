@@ -332,6 +332,39 @@ fresh `id` every time, never templated), but a test that specifically needs seve
 `Character`s with distinct `id`s must override `.id(UUID.randomUUID())` on each one via
 `CharacterFixture.blank(...)`'s returned builder.
 
+## Temporary bonuses from other Characters — `CharacterSheet#grantTemporaryBonus`
+
+A `CharacterSheet` can hold bonuses/maluses that didn't come from its own `Character`'s
+abilities — granted by *another* Character's action instead, lasting a few Rodadas. The
+motivating example is `ArtesCompetencyAbility.DOM_BARDICO`: motivating allies (not the
+caster) with a Perícia-roll bonus for 1-3 Rodadas depending on the caster's own Graduação.
+
+- `TemporaryBonus` (`org.aventyrs.core.sheet`) pairs a `ModifierType`, an `int value`, and a
+  `remainingRounds` countdown — reusing the existing `ModifierType` taxonomy rather than
+  inventing a parallel one, and deliberately generic (not scoped to `SKILL_ROLL_BONUS`
+  specifically), since nothing about "a temporary effect from another Character" is
+  inherently about rolls. It counts down in *rounds remaining*, not an absolute expiry Round
+  number, matching how DOM_BARDICO's own rules text describes duration ("por 1 Rodada", "por
+  2 Rodadas") rather than coupling `CharacterSheet` to `Scene`'s specific round-numbering.
+- `CharacterSheet.grantTemporaryBonus(ModifierType, int value, int rounds)` adds one;
+  `getTemporaryBonus(ModifierType)` sums every currently-active (non-expired) one of that
+  type — every `<Skill>Interaction` now includes this in its `SKILL_ROLL_BONUS` sum (a fourth
+  source alongside the three `ReactionsService`-style ones, see the Vantagem section above).
+  `CharacterSheet` doesn't track *who* granted a bonus — nothing about this mechanism needs
+  that; find targets via `Scene.getAllies` at grant time instead.
+- `CharacterSheet.tickTemporaryBonuses()` counts every held bonus down by one Rodada and
+  discards any that expire as a result. **Nothing calls this automatically yet** — per this
+  feature's own instructions, `Scene` doesn't have a "turn shifter" that advances every
+  participant's `CharacterSheet` when a Round completes; `next()` only cycles whose turn it
+  is and increments `getCurrentRound()`. Once that turn-shifter exists, it's expected to call
+  `tickTemporaryBonuses()` on every participant's `CharacterSheet` — the mechanism here is
+  real and tested (`CharacterSheetTest`, `ArtesInteractionTest
+  #applyToIncludesAnActiveTemporarySkillRollBonus`/`#applyToIgnoresAnExpiredTemporarySkillRollBonus`),
+  it's specifically the automatic *trigger* that's deferred.
+- This still doesn't finish `DOM_BARDICO` — see its own TODO. Ally-targeting and duration
+  tracking are both solved now; what's left is the GD-tier-to-bonus lookup (needs a
+  roll-resolution-vs-`DifficultyLevel` engine this codebase still doesn't have).
+
 ## Damage mitigation — `org.aventyrs.core.character.services.DamageService`
 
 Damage isn't just "subtract from PV" — there are three layers of mitigation, applied in a
@@ -511,9 +544,11 @@ returning `Skill.ADVANTAGE_BONUS`, summed into `skillRollBonus` inside the skill
 
 Every `<Skill>Interaction.applyTo` should sum `ModifierType.SKILL_ROLL_BONUS` across the same
 three sources `ReactionsService` uses for Reações — `attributeAbilities`,
-`skillCompetencyAbilities`, and the trained skill's own unlocked `SkillExcellency` tiers —
-even before any ability actually grants it for that specific skill, so future abilities work
-without touching the Interaction again.
+`skillCompetencyAbilities`, and the trained skill's own unlocked `SkillExcellency` tiers — plus
+a fourth, `CharacterSheet`-level one: `target.getTemporaryBonus(ModifierType.SKILL_ROLL_BONUS)`
+(see "Temporary bonuses from other Characters" below) — even before any ability actually
+grants it for that specific skill, so future abilities work without touching the Interaction
+again.
 
 If the ability's Vantagem is scoped to a specific *purpose* within the skill (e.g.
 `CONTROLAR_ANIMAIS`'s is only for animal/animal-drawn-vehicle rolls, not every Dirigir e
