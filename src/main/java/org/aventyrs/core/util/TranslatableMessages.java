@@ -11,4 +11,5 @@ public class TranslatableMessages {
     public static final String INVALID_EGO_POINT_ALLOCATION = "INVALID_EGO_POINT_ALLOCATION";
     public static final String NO_PARTICIPANTS_IN_SCENE = "NO_PARTICIPANTS_IN_SCENE";
     public static final String CHARACTER_SHEET_NOT_IN_SCENE = "CHARACTER_SHEET_NOT_IN_SCENE";
+    public static final String INVALID_SKILL_ROLL = "INVALID_SKILL_ROLL";
 }

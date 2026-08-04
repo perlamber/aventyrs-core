@@ -38,14 +38,21 @@ import static org.aventyrs.core.skill.Skill.UNTRAINED_PENALTY;
  * Computes {@code difficultyReduction} from unlocked {@code SkillExcellency} tiers plus every
  * {@code skillCompetencyAbility}'s own {@link SkillCompetencyAbility#getDifficultyReduction()}.
  *
- * <p>A subclass with something genuinely skill-specific to add overrides {@link
- * #applyTo(CharacterSheet, SceneContext)} (not the 1-arg overload, which just delegates to it
- * with {@code null}) and calls {@code super.applyTo(target, sceneContext)} first, then layers
- * its own addition on top of the result — most skills need nothing extra (e.g. {@link
- * DominioDoManaInteraction}'s "this is always the second of two rolls" note is documentation,
- * not behavior). {@link ArtesInteraction} is the one that currently does: a character holding
- * {@code ArtesCompetencyAbility#DOM_BARDICO} gets {@code temporaryBonusModifierType}/{@code
- * temporaryBonusRounds}/{@code temporaryBonusScope} set on the result — see that class.
+ * <p>{@code applyTo} has three overloads, each just delegating down to the next one with
+ * {@code null} for the newly-added parameter — {@code applyTo(target)} → {@code
+ * applyTo(target, sceneContext)} → {@code applyTo(target, sceneContext, skillRoll)}, the last
+ * one holding all the real logic. A subclass with something genuinely skill-specific to add
+ * overrides the **longest** overload it needs data from (not a shorter one — {@link
+ * ArtesInteraction} overrides the 3-arg one even though it doesn't touch {@code skillRoll}
+ * itself, simply because that's where {@code applyTo}'s real logic lives) and calls {@code
+ * super.applyTo(...)} first, then layers its own addition on top of the result — most skills
+ * need nothing extra (e.g. {@link DominioDoManaInteraction}'s "this is always the second of
+ * two rolls" note is documentation, not behavior). Every shorter overload still reaches a
+ * subclass's override correctly through ordinary virtual dispatch, so callers using
+ * {@code applyTo(target)} keep working unchanged no matter which overload a subclass defines
+ * its logic on. {@link ArtesInteraction} is the one that currently overrides: a character
+ * holding {@code ArtesCompetencyAbility#DOM_BARDICO} gets {@code temporaryBonusModifierType}/
+ * {@code temporaryBonusRounds}/{@code temporaryBonusScope} set on the result — see that class.
  */
 public abstract class AbstractSkillInteraction implements Interaction<CharacterSheet> {
 
@@ -72,15 +79,33 @@ public abstract class AbstractSkillInteraction implements Interaction<CharacterS
      * Same as {@link #applyTo(CharacterSheet)}, but also given sceneContext — nearby allies/
      * enemies and their {@code Range} — for a subclass whose bonus is conditioned on
      * proximity (e.g. {@code MedicinaECuraExcellency#FOCADO}'s "se não tiver inimigos
-     * próximos") to consult by overriding this method instead of the 1-arg one. sceneContext
-     * may be {@code null} (the 1-arg {@link #applyTo(CharacterSheet)} always passes {@code
-     * null}) when the caller doesn't have one — e.g. no active {@code Scene}, or this roll
-     * isn't happening in an encounter. Every current skill computes the exact same result
-     * whether sceneContext is {@code null} or not, since none has a proximity-conditioned
-     * bonus wired yet — this base implementation doesn't consult it at all; it's here purely
-     * so subclasses have somewhere to receive it.
+     * próximos") to consult by overriding this method (or the 3-arg one below) instead of the
+     * 1-arg one. sceneContext may be {@code null} (the 1-arg {@link #applyTo(CharacterSheet)}
+     * always passes {@code null}) when the caller doesn't have one — e.g. no active {@code
+     * Scene}, or this roll isn't happening in an encounter.
      */
     public InteractionResult applyTo(final CharacterSheet target, final SceneContext sceneContext) {
+        return applyTo(target, sceneContext, null);
+    }
+
+    /**
+     * Same as {@link #applyTo(CharacterSheet, SceneContext)}, but also given skillRoll — the
+     * already-rolled dice behind this Perícia test (this core never rolls dice itself, see
+     * the {@code skill} package-info). When non-{@code null}, sets {@link InteractionResult
+     * #reachedDifficultyLevel} (via {@link DifficultyLevel#reachedBy} against {@code
+     * skillRollBonus + skillRoll.getTotal()}) and {@link InteractionResult#criticalResult}
+     * (from {@link SkillRoll#getCriticalResult()}); both stay {@code null} when skillRoll is
+     * {@code null} (the 1-/2-arg overloads always pass {@code null}), same as every other
+     * not-applicable {@code InteractionResult} field. A subclass whose bonus is conditioned on
+     * proximity *and* needs the roll's own result (none currently does) overrides this
+     * 3-arg method and calls {@code super.applyTo(target, sceneContext, skillRoll)} first —
+     * the same cascading-delegation shape as the 1-/2-arg overloads above, so a subclass only
+     * ever needs to override the *one* method with everything it needs; the shorter overloads
+     * still reach it correctly through ordinary virtual dispatch (see {@link ArtesInteraction},
+     * which overrides this method, not the 2-arg one, even though it doesn't touch skillRoll
+     * itself yet).
+     */
+    public InteractionResult applyTo(final CharacterSheet target, final SceneContext sceneContext, final SkillRoll skillRoll) {
         Character character = target.getCharacter();
         CharacterSkill characterSkill = findCharacterSkill(character);
         int graduationValue = characterSkill.getGraduation().getGraduationValue();
@@ -101,11 +126,17 @@ public abstract class AbstractSkillInteraction implements Interaction<CharacterS
                 .mapToInt(SkillCompetencyAbility::getDifficultyReduction)
                 .sum();
 
-        return InteractionResult.builder()
+        InteractionResult.InteractionResultBuilder result = InteractionResult.builder()
                 .resultStatus(character.getStatus())
                 .skillRollBonus(bonus)
-                .difficultyReduction(difficultyReduction)
-                .build();
+                .difficultyReduction(difficultyReduction);
+
+        if (skillRoll != null) {
+            result.reachedDifficultyLevel(DifficultyLevel.reachedBy(bonus + skillRoll.getTotal()).orElse(null))
+                    .criticalResult(skillRoll.getCriticalResult());
+        }
+
+        return result.build();
     }
 
     /**

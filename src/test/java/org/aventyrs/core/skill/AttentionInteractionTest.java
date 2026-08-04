@@ -13,7 +13,10 @@ import org.aventyrs.core.sheet.Player;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 class AttentionInteractionTest {
 
@@ -92,5 +95,39 @@ class AttentionInteractionTest {
 
         assertEquals(withoutContext.getSkillRollBonus(), withNullContext.getSkillRollBonus());
         assertEquals(withoutContext.getDifficultyReduction(), withNullContext.getDifficultyReduction());
+    }
+
+    @Test
+    void applyToWithoutASkillRollLeavesRollResolutionFieldsNull() {
+        CharacterSheet sheet = sheetWithInstinctAndSkill(2, null);
+
+        InteractionResult result = attentionInteraction.applyTo(sheet, null, null);
+
+        assertNull(result.getReachedDifficultyLevel());
+        assertNull(result.getCriticalResult());
+    }
+
+    @Test
+    void applyToWithASkillRollResolvesTheReachedDifficultyLevel() {
+        CharacterSkill attentionSkill = CharacterSkillFixture.blank(CharacterSkillFixture.ATTENTION_1).build();
+        attentionSkill.increaseGraduation(1);
+        CharacterSheet sheet = sheetWithInstinctAndSkill(2, attentionSkill);
+        // skillRollBonus is 3 (2 instinct + 1 graduação); dice total 10 -> grand total 13.
+        SkillRoll skillRoll = new SkillRoll(List.of(2, 3, 5));
+
+        InteractionResult result = attentionInteraction.applyTo(sheet, null, skillRoll);
+
+        // 13 clears EASY's 14? No: 13 < 14, so only VERY_EASY's 12 is cleared.
+        assertEquals(DifficultyLevel.VERY_EASY, result.getReachedDifficultyLevel());
+    }
+
+    @Test
+    void applyToWithASkillRollResolvesTheCriticalResult() {
+        CharacterSheet sheet = sheetWithInstinctAndSkill(2, null);
+        SkillRoll skillRoll = new SkillRoll(List.of(6, 6, 6));
+
+        InteractionResult result = attentionInteraction.applyTo(sheet, null, skillRoll);
+
+        assertEquals(CriticalResult.ACERTO_CRITICO_MAIOR, result.getCriticalResult());
     }
 }

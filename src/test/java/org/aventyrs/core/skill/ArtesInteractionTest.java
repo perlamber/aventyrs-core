@@ -17,6 +17,7 @@ import org.aventyrs.core.sheet.TargetScope;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -234,5 +235,109 @@ class ArtesInteractionTest {
 
         assertEquals(viaTwoArgWithNullContext.getTemporaryBonusRounds(), viaOneArg.getTemporaryBonusRounds());
         assertEquals(TargetScope.ALLIES, viaOneArg.getTemporaryBonusScope());
+    }
+
+    @Test
+    void applyToWithASkillRollBelowMedioLeavesTemporaryBonusValueNull() {
+        // graduationValue=0 -> bonus 1 (1 carisma + 0 graduação); dice [2,3,4]=9 -> total 10,
+        // short of even VERY_EASY's 12 -> reachedDifficultyLevel is null -> no bonus granted.
+        CharacterSheet sheet = sheetWithDomBardicoAndArtesGraduation(0);
+        SkillRoll skillRoll = new SkillRoll(List.of(2, 3, 4));
+
+        InteractionResult result = artesInteraction.applyTo(sheet, null, skillRoll);
+
+        assertNull(result.getTemporaryBonusValue());
+        // The roll-resolution fields themselves are still set independently.
+        assertEquals(TargetScope.ALLIES, result.getTemporaryBonusScope());
+    }
+
+    @Test
+    void applyToGrantsPlusOneAtGdMedio() {
+        // bonus 1 (1 carisma + 0 graduação); dice [6,6,6]=18 -> total 19, reaches MEDIUM
+        // (18) but not HARD (23).
+        CharacterSheet sheet = sheetWithDomBardicoAndArtesGraduation(0);
+        SkillRoll skillRoll = new SkillRoll(List.of(6, 6, 6));
+
+        InteractionResult result = artesInteraction.applyTo(sheet, null, skillRoll);
+
+        assertEquals(DifficultyLevel.MEDIUM, result.getReachedDifficultyLevel());
+        assertEquals(1, result.getTemporaryBonusValue());
+    }
+
+    @Test
+    void applyToGrantsPlusTwoAtGdDificil() {
+        // bonus 5 (1 carisma + 4 graduação); dice [6,6,6]=18 -> total 23, reaches HARD exactly.
+        CharacterSheet sheet = sheetWithDomBardicoAndArtesGraduation(4);
+        SkillRoll skillRoll = new SkillRoll(List.of(6, 6, 6));
+
+        InteractionResult result = artesInteraction.applyTo(sheet, null, skillRoll);
+
+        assertEquals(DifficultyLevel.HARD, result.getReachedDifficultyLevel());
+        assertEquals(2, result.getTemporaryBonusValue());
+    }
+
+    @Test
+    void applyToGrantsPlusThreeAtGdMuitoDificil() {
+        // bonus 10 (1 carisma + 9 graduação); dice [6,6,6]=18 -> total 28, reaches VERY_HARD exactly.
+        CharacterSheet sheet = sheetWithDomBardicoAndArtesGraduation(9);
+        SkillRoll skillRoll = new SkillRoll(List.of(6, 6, 6));
+
+        InteractionResult result = artesInteraction.applyTo(sheet, null, skillRoll);
+
+        assertEquals(DifficultyLevel.VERY_HARD, result.getReachedDifficultyLevel());
+        assertEquals(3, result.getTemporaryBonusValue());
+    }
+
+    @Test
+    void applyToGrantsPlusFourAtGdImprovavel() {
+        // bonus 18 (1 carisma + 17 graduação); dice [6,6,6]=18 -> total 36, reaches UNLIKELY exactly.
+        CharacterSheet sheet = sheetWithDomBardicoAndArtesGraduation(17);
+        SkillRoll skillRoll = new SkillRoll(List.of(6, 6, 6));
+
+        InteractionResult result = artesInteraction.applyTo(sheet, null, skillRoll);
+
+        assertEquals(DifficultyLevel.UNLIKELY, result.getReachedDifficultyLevel());
+        assertEquals(4, result.getTemporaryBonusValue());
+    }
+
+    @Test
+    void applyToGrantsPlusFourAtGdUnimaginableByInferenceFromImprovavel() {
+        // UNIMAGINABLE isn't named in DOM_BARDICO's own rules text (it falls between
+        // Improvável and Milagre); this inherits Improvável's +4 until Milagre is actually
+        // reached — see the ability's own comment for why this is an inference, not text.
+        // bonus 27 (1 carisma + 26 graduação); dice [6,6,6]=18 -> total 45, reaches UNIMAGINABLE exactly.
+        CharacterSheet sheet = sheetWithDomBardicoAndArtesGraduation(26);
+        SkillRoll skillRoll = new SkillRoll(List.of(6, 6, 6));
+
+        InteractionResult result = artesInteraction.applyTo(sheet, null, skillRoll);
+
+        assertEquals(DifficultyLevel.UNIMAGINABLE, result.getReachedDifficultyLevel());
+        assertEquals(4, result.getTemporaryBonusValue());
+    }
+
+    @Test
+    void applyToGrantsPlusFiveAtGdMilagre() {
+        // bonus 42 (1 carisma + 41 graduação); dice [6,6,6]=18 -> total 60, reaches MIRACLE exactly.
+        CharacterSheet sheet = sheetWithDomBardicoAndArtesGraduation(41);
+        SkillRoll skillRoll = new SkillRoll(List.of(6, 6, 6));
+
+        InteractionResult result = artesInteraction.applyTo(sheet, null, skillRoll);
+
+        assertEquals(DifficultyLevel.MIRACLE, result.getReachedDifficultyLevel());
+        assertEquals(5, result.getTemporaryBonusValue());
+    }
+
+    @Test
+    void applyToWithASkillRollStillResolvesReachedDifficultyLevelAndCriticalResult() {
+        CharacterSkill artesSkill = CharacterSkillFixture.blank(CharacterSkillFixture.ARTES_1).build();
+        artesSkill.increaseGraduation(1);
+        CharacterSheet sheet = sheetWithCharismaAndSkill(2, artesSkill);
+        SkillRoll skillRoll = new SkillRoll(List.of(6, 6, 6));
+
+        InteractionResult result = artesInteraction.applyTo(sheet, null, skillRoll);
+
+        // skillRollBonus 3 (2 charisma + 1 graduação) + dice total 18 = 21 -> reaches MEDIUM (18), not HARD (23).
+        assertEquals(DifficultyLevel.MEDIUM, result.getReachedDifficultyLevel());
+        assertEquals(CriticalResult.ACERTO_CRITICO_MAIOR, result.getCriticalResult());
     }
 }

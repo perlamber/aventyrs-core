@@ -3,6 +3,8 @@ package org.aventyrs.core.skill;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.util.Optional;
+
 @Getter
 @AllArgsConstructor
 public enum DifficultyLevel {
@@ -31,5 +33,26 @@ public enum DifficultyLevel {
 
     public DifficultyLevel harder(int steps) {
         return shift(steps);
+    }
+
+    /**
+     * The highest tier a roll totaling total reaches, judged against {@link #getBaseValue()}
+     * — or empty if total falls short of even {@link #VERY_EASY}. Deliberately doesn't
+     * consider {@link #getExpertValue()} (the easier threshold a matching Especialização
+     * grants): resolving "does this roll's Especialização match what it's being used for" is
+     * a separate, still-unbuilt concern (this core doesn't track what a roll is *for* — same
+     * gap documented for scoped Vantagem/substitution elsewhere) — a caller who *has* already
+     * resolved that externally can still compare against {@code getExpertValue()} directly
+     * instead of calling this method.
+     */
+    public static Optional<DifficultyLevel> reachedBy(final int total) {
+        DifficultyLevel reached = null;
+        for (DifficultyLevel level : values()) {
+            if (total < level.baseValue) {
+                break;
+            }
+            reached = level;
+        }
+        return Optional.ofNullable(reached);
     }
 }

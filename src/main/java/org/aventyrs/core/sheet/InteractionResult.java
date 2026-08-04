@@ -2,6 +2,8 @@ package org.aventyrs.core.sheet;
 
 import org.aventyrs.core.character.CharacterStatus;
 import org.aventyrs.core.modifier.ModifierType;
+import org.aventyrs.core.skill.CriticalResult;
+import org.aventyrs.core.skill.DifficultyLevel;
 
 import lombok.Builder;
 import lombok.Getter;
@@ -67,4 +69,23 @@ public class InteractionResult {
      * never *who receives it*.
      */
     TargetScope temporaryBonusScope;
+
+    /**
+     * The highest GD this roll reached — {@code null} unless the Interaction was given a
+     * {@code org.aventyrs.core.skill.SkillRoll} to compute it from (see {@code
+     * AbstractSkillInteraction#applyTo(CharacterSheet, org.aventyrs.core.scene.SceneContext,
+     * org.aventyrs.core.skill.SkillRoll)}) — this core never rolls dice itself, so without an
+     * already-rolled {@code SkillRoll} handed in, there's nothing to resolve a tier from.
+     * Computed from {@code skillRollBonus + skillRoll.getTotal()} against {@link
+     * DifficultyLevel#reachedBy}, e.g. what {@code ArtesCompetencyAbility#DOM_BARDICO} needs
+     * to look up its own bonus value.
+     */
+    DifficultyLevel reachedDifficultyLevel;
+
+    /**
+     * The critical outcome of the {@code SkillRoll} this Interaction was given, or {@code
+     * null} for the same reason {@link #reachedDifficultyLevel} is — see {@link
+     * CriticalResult}.
+     */
+    CriticalResult criticalResult;
 }

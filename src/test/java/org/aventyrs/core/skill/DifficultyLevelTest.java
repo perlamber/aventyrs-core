@@ -2,7 +2,10 @@ package org.aventyrs.core.skill;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.Optional;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class DifficultyLevelTest {
 
@@ -36,5 +39,35 @@ class DifficultyLevelTest {
     void easierClampsAtTheEasiestLevel() {
         assertEquals(DifficultyLevel.VERY_EASY, DifficultyLevel.VERY_EASY.easier(1));
         assertEquals(DifficultyLevel.VERY_EASY, DifficultyLevel.HARD.easier(10));
+    }
+
+    @Test
+    void reachedByReturnsEmptyBelowVeryEasy() {
+        assertEquals(Optional.empty(), DifficultyLevel.reachedBy(11));
+    }
+
+    @Test
+    void reachedByReturnsTheExactTierAtItsOwnBaseValue() {
+        assertEquals(Optional.of(DifficultyLevel.VERY_EASY), DifficultyLevel.reachedBy(12));
+        assertEquals(Optional.of(DifficultyLevel.MEDIUM), DifficultyLevel.reachedBy(18));
+        assertEquals(Optional.of(DifficultyLevel.MIRACLE), DifficultyLevel.reachedBy(60));
+    }
+
+    @Test
+    void reachedByReturnsTheHighestTierNotExceededByTotal() {
+        // 20 clears MEDIUM's 18 but not HARD's 23.
+        assertEquals(Optional.of(DifficultyLevel.MEDIUM), DifficultyLevel.reachedBy(20));
+    }
+
+    @Test
+    void reachedByReturnsTheHardestTierForAnArbitrarilyHighTotal() {
+        assertEquals(Optional.of(DifficultyLevel.MIRACLE), DifficultyLevel.reachedBy(1000));
+    }
+
+    @Test
+    void reachedByIsMonotonicWithIncreasingTotals() {
+        Optional<DifficultyLevel> lower = DifficultyLevel.reachedBy(14);
+        Optional<DifficultyLevel> higher = DifficultyLevel.reachedBy(28);
+        assertTrue(higher.get().ordinal() > lower.get().ordinal());
     }
 }

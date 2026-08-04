@@ -416,18 +416,21 @@ caster) with a Perícia-roll bonus for 1-3 Rodadas depending on the caster's own
   needed `@Builder(toBuilder = true)` added for this — a subclass overriding `applyTo` (see
   below) extends the base result via `.toBuilder()` rather than reassembling every field by
   hand.
-- `ArtesInteraction` overrides `applyTo` to actually set three of these four fields for a
-  character holding `ArtesCompetencyAbility#DOM_BARDICO`: `temporaryBonusModifierType`
-  (always `SKILL_ROLL_BONUS`, since this ability's own rules text is unrestricted — "rolagens
-  de Perícias", not one specific Perícia), `temporaryBonusScope` (always `ALLIES` — "concedendo
-  ... a eles, mas não a você"), and `temporaryBonusRounds` (1 Rodada normally, 2 once Artes
-  reaches 5 Graduações, 3 at 10 — a small graduation-threshold lookup specific to this one
-  ability, not worth generalizing into `ExcellencyTier`'s fixed 3/7/10 shape since DOM_BARDICO's
-  thresholds/values don't match it). `temporaryBonusValue` stays `null` — that's the
-  GD-tier-to-bonus lookup, which still needs a roll-resolution-vs-`DifficultyLevel` engine this
-  codebase doesn't have, so it's the one field of the four `ArtesInteraction` can't set yet. A
-  caller must still gate on `temporaryBonusValue != null` before granting anything — the other
-  three being set doesn't by itself mean there's something to grant.
+- `ArtesInteraction` overrides `applyTo` to set all four of these fields for a character
+  holding `ArtesCompetencyAbility#DOM_BARDICO`: `temporaryBonusModifierType` (always
+  `SKILL_ROLL_BONUS`, since this ability's own rules text is unrestricted — "rolagens de
+  Perícias", not one specific Perícia), `temporaryBonusScope` (always `ALLIES` — "concedendo
+  ... a eles, mas não a você"), `temporaryBonusRounds` (1 Rodada normally, 2 once Artes reaches
+  5 Graduações, 3 at 10 — a small graduation-threshold lookup specific to this one ability, not
+  worth generalizing into `ExcellencyTier`'s fixed 3/7/10 shape since DOM_BARDICO's
+  thresholds/values don't match it), and — once a `SkillRoll` is supplied —
+  `temporaryBonusValue`, via a GD-tier-to-bonus lookup (`ArtesInteraction
+  .domBardicoBonusValue`): GD Médio +1, Difícil +2, Muito Difícil +3, Improvável +4, Milagre
+  +5, mapping onto `DifficultyLevel.MEDIUM/HARD/VERY_HARD/UNLIKELY/MIRACLE`. `UNIMAGINABLE`
+  isn't named in the rules text (it falls between Improvável and Milagre); it's treated as
+  inheriting Improvável's +4 until Milagre is actually reached — an inference, not confirmed
+  text. Below Médio, or when no roll was supplied at all, `temporaryBonusValue` stays `null`. A
+  caller must still gate on `temporaryBonusValue != null` before granting anything.
 - **`AbstractSkillInteraction.applyTo` actually has two overloads now**:
   `applyTo(CharacterSheet)` (the `Interaction` interface's own method) just delegates to
   `applyTo(CharacterSheet, SceneContext)` with a `null` context; the 2-arg one holds all the
@@ -436,11 +439,63 @@ caster) with a Perícia-roll bonus for 1-3 Rodadas depending on the caster's own
   reaches the override correctly through ordinary virtual dispatch (`this.applyTo(target,
   null)` inside the base class's 1-arg method resolves to the subclass's override at
   runtime), so a subclass never needs to *also* override the 1-arg method. See "Range and
-  SceneContext" below for what `SceneContext` is and why this exists — no ability consumes it
-  for a real numeric effect yet, so passing `null` (or any `SceneContext`) currently produces
-  identical results for every skill; this is deliberately built ahead of a concrete consumer,
-  same as the four `TemporaryBonus`-related fields above were before `ArtesInteraction`
-  started setting them.
+  SceneContext" below for what `SceneContext` is and why this exists, and "Rolling the dice"
+  below for `SkillRoll` (the third parameter, added after `SceneContext`) — no ability
+  consumes `SceneContext` for a real numeric effect yet, so passing `null` (or any actual
+  `SceneContext`) currently produces identical results for every skill; this is deliberately
+  built ahead of a concrete consumer, same as the four `TemporaryBonus`-related fields above
+  were before `ArtesInteraction` started setting them.
+
+## Rolling the dice — `SkillRoll`, `DifficultyLevel#reachedBy`
+
+This core deliberately never rolls dice itself (see the `skill` package-info's "What this
+library computes" section) — but plenty of abilities' effects depend on which GD tier a roll
+*reached*, or whether it was a critical, so an API layer needs a way to hand an
+already-physically-rolled result in, and this core needs a way to turn that into something
+useful. Every Perícia roll in this ruleset is 3d6 — always exactly 3 six-sided dice.
+
+- `SkillRoll` (`org.aventyrs.core.skill`) wraps the 3 individual die faces as a
+  `List<Integer>`, not just their sum — a compact "111-666, sum the digits" packed-int
+  encoding was considered and rejected: it buys "one int instead of a 3-element list" at the
+  cost of no compile-time safety (an invalid value like `289` or `700` only fails at
+  runtime, deep in parsing) and an unusual decode step every time someone reads a value like
+  `435`. The individual faces matter, not just the total, because `getCriticalResult()`
+  depends on *matching* dice at the extremes: three 1s is `FALHA_CRITICA_MAIOR`, two 1s is
+  `FALHA_CRITICA_MENOR`, three/two 6s are the `ACERTO_CRITICO_MAIOR`/`_MENOR` equivalents (see
+  `CriticalResult`) — the sum alone can't distinguish "rolled 1-1-4" from "rolled 2-2-2", but
+  the first is a critical failure and the second isn't. The two/six-case "Acerto Crítico"
+  pairing is inferred by symmetry with the confirmed "Falha Crítica" one, not itself
+  independently confirmed against rules text — flagged in `CriticalResult`'s own javadoc.
+  `SkillRoll`'s constructor validates exactly 3 dice, each 1-6 — a genuine system boundary
+  (input from outside this core), unlike internal invariants this codebase otherwise trusts.
+- `DifficultyLevel.reachedBy(int total)` resolves the highest tier a total clears, judged
+  against each tier's `baseValue` — mirroring `SkillExcellency.unlockedBy`'s
+  threshold-lookup shape, returning `Optional.empty()` if total falls short of even
+  `VERY_EASY`. It deliberately ignores `expertValue` (the easier threshold a matching
+  Especialização grants) — resolving "does this roll's Especialização match what it's being
+  used for" is a separate, still-unbuilt concern (this core doesn't track what a roll is
+  *for* — same gap as scoped Vantagem/substitution elsewhere); a caller who's already
+  resolved that externally can compare against `getExpertValue()` directly instead.
+- `AbstractSkillInteraction` gained a third `applyTo` overload —
+  `applyTo(CharacterSheet, SceneContext, SkillRoll)` — following the exact same
+  cascading-delegation shape as the `SceneContext` overload before it: each shorter overload
+  just delegates down with `null` for the new parameter, and the longest one holds all the
+  real logic. When `skillRoll` is non-`null`, it sets `InteractionResult
+  .reachedDifficultyLevel` (from `DifficultyLevel.reachedBy(skillRollBonus +
+  skillRoll.getTotal())`) and `.criticalResult` (from `skillRoll.getCriticalResult()`); both
+  stay `null` otherwise, same as every other not-applicable `InteractionResult` field.
+  `ArtesInteraction` now overrides this 3-arg overload (it used to override the 2-arg one) —
+  a subclass always overrides the *longest* overload whose real logic it needs to build on
+  top of, not a shorter one, even if it doesn't touch that overload's own newest parameter
+  itself; every shorter overload still reaches its override correctly through virtual
+  dispatch, so this changes nothing for callers using `applyTo(target)`.
+- The engine to know *which* tier a roll reached now exists; each ability's own consumption
+  of that is still separate, per-ability wiring — `ArtesCompetencyAbility.DOM_BARDICO` is done
+  (its 5-tier bonus table now maps onto 5 consecutive `DifficultyLevel` constants, with only
+  `UNIMAGINABLE` handled by inference rather than named text — see `ArtesInteraction`'s own
+  javadoc), but e.g. `MedicinaECuraExcellency.FOCADO`'s auto-success is still unbuilt.
+  Deliberately don't guess at a mapping where the rules text leaves genuine ambiguity — DOM_
+  BARDICO's own `UNIMAGINABLE` inference is flagged as exactly that, an inference, not text.
 
 ## Range and SceneContext — `org.aventyrs.core.scene.SceneContext`
 

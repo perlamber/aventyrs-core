@@ -4,6 +4,8 @@ import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterStatus;
 import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.modifier.ModifierType;
+import org.aventyrs.core.skill.CriticalResult;
+import org.aventyrs.core.skill.DifficultyLevel;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -42,6 +44,27 @@ class InteractionResultTest {
         assertNull(result.getTemporaryBonusModifierType());
         assertNull(result.getTemporaryBonusRounds());
         assertNull(result.getTemporaryBonusScope());
+    }
+
+    @Test
+    void rollResolutionFieldsStayNullWhenNotSet() {
+        InteractionResult result = InteractionResult.builder()
+                .skillRollBonus(3)
+                .build();
+
+        assertNull(result.getReachedDifficultyLevel());
+        assertNull(result.getCriticalResult());
+    }
+
+    @Test
+    void builderAssignsTheReachedDifficultyLevelAndCriticalResult() {
+        InteractionResult result = InteractionResult.builder()
+                .reachedDifficultyLevel(DifficultyLevel.MEDIUM)
+                .criticalResult(CriticalResult.ACERTO_CRITICO_MENOR)
+                .build();
+
+        assertEquals(DifficultyLevel.MEDIUM, result.getReachedDifficultyLevel());
+        assertEquals(CriticalResult.ACERTO_CRITICO_MENOR, result.getCriticalResult());
     }
 
     @Test

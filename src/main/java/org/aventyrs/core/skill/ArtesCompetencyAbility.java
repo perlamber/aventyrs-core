@@ -10,25 +10,20 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum ArtesCompetencyAbility implements SkillCompetencyAbility {
 
-    // TODO: motivates allies, granting them (not the user) a Perícia-roll bonus for 1
-    // Rodada, extending to 2 Rodadas at 5 Graduações and 3 Rodadas at 10. Ally-targeting
-    // (Scene#getAllies), Rodada-scoped duration tracking (CharacterSheet
-    // #grantTemporaryBonus/#getTemporaryBonus/#tickTemporaryBonuses), and this ability's own
-    // duration (1/2/3 Rodadas by Artes Graduação) are all real now, and ArtesInteraction
-    // already sets InteractionResult#temporaryBonusModifierType (the generic
-    // ModifierType#SKILL_ROLL_BONUS, since this ability's own rules text says "rolagens de
-    // Perícias", unrestricted — not one specific skill's) and #temporaryBonusRounds for any
-    // character holding this ability. See CLAUDE.md's "Temporary bonuses from other
-    // Characters" section. What's still missing: InteractionResult#temporaryBonusValue stays
-    // null — the bonus amount is a lookup by which GD tier the Artes roll hit (Fácil +1,
-    // Médio +2, Muito Difícil +3, Improvável +4, Milagre +5), not a flat value, and no
-    // roll-resolution-vs-DifficultyLevel engine exists yet to know which GD tier a roll
-    // reached in the first place — that's the one remaining piece.
+    // Fully real now — see ArtesInteraction#domBardicoBonusValue for the GD-to-bonus lookup.
+    // Its 5 named tiers (Médio +1, Difícil +2, Muito Difícil +3, Improvável +4, Milagre +5)
+    // map onto 5 *consecutive* DifficultyLevel constants (MEDIUM/HARD/VERY_HARD/UNLIKELY/
+    // MIRACLE), leaving only one gap: UNIMAGINABLE, between Improvável and Milagre, isn't
+    // named at all. ArtesInteraction treats reaching it the same as Improvável (+4) until
+    // Milagre is actually reached — an inference (the consecutive-tiers-each-+1 pattern
+    // suggests it), not confirmed rules text; revisit if that's wrong. Below Médio (VERY_EASY/
+    // EASY), no bonus is granted at all — InteractionResult#temporaryBonusValue stays null,
+    // same as when no SkillRoll was supplied in the first place.
     DOM_BARDICO("Você pode utilizar sua arte para motivar seus aliados, concedendo Bônus " +
             "em rolagens de Perícias a eles (mas não a você) por 1 Rodada, este benefício " +
             "aumenta 2 Rodadas ao alcançar 5 Graduações, então para 3 Rodadas com 10 " +
             "Graduações. O Bônus concedido varia conforme o GD alcançado na rolagem: GD " +
-            "Fácil - Bônus de +1; GD Médio - Bônus de +2; GD Muito Difícil - Bônus de +3; " +
+            "Médio - Bônus de +1; GD Difícil - Bônus de +2; GD Muito Difícil - Bônus de +3; " +
             "GD Improvável - Bônus de +4; GD Milagre - Bônus de +5."),
 
     // TODO: lets Artes substitute for the now-real Conhecimentos Perícia, with shallower

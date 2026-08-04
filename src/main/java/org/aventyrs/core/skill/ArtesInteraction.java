@@ -19,10 +19,14 @@ import org.aventyrs.core.sheet.TargetScope;
  * roll set {@code temporaryBonusModifierType} ({@link ModifierType#SKILL_ROLL_BONUS}, since
  * this ability's own rules text is unrestricted — "rolagens de Perícias", not one specific
  * Perícia), {@code temporaryBonusScope} ({@link TargetScope#ALLIES} — "concedendo... a eles
- * (mas não a você)"), and {@code temporaryBonusRounds} (1 Rodada normally, 2 at 5 Graduações
- * in Artes, 3 at 10) on the result. {@code temporaryBonusValue} stays {@code null} — that's a
- * lookup by which GD tier this roll reaches, which needs a roll-resolution-vs-{@link
- * DifficultyLevel} engine this core still doesn't have — see the ability's own TODO.
+ * (mas não a você)"), {@code temporaryBonusRounds} (1 Rodada normally, 2 at 5 Graduações in
+ * Artes, 3 at 10), and — once a {@link SkillRoll} is supplied — {@code temporaryBonusValue}
+ * via {@link #domBardicoBonusValue(DifficultyLevel)}, looked up from the
+ * {@code reachedDifficultyLevel} {@code AbstractSkillInteraction} already resolves: MEDIUM→1,
+ * HARD→2, VERY_HARD→3, UNLIKELY/UNIMAGINABLE→4 (UNIMAGINABLE isn't named in the rules text;
+ * treated as inheriting UNLIKELY's value until MIRACLE is reached — an inference, not
+ * confirmed text), MIRACLE→5. Below MEDIUM (VERY_EASY/EASY) or when no roll was supplied at
+ * all, {@code temporaryBonusValue} stays {@code null}.
  */
 public class ArtesInteraction extends AbstractSkillInteraction {
 
@@ -35,8 +39,8 @@ public class ArtesInteraction extends AbstractSkillInteraction {
     }
 
     @Override
-    public InteractionResult applyTo(final CharacterSheet target, final SceneContext sceneContext) {
-        InteractionResult result = super.applyTo(target, sceneContext);
+    public InteractionResult applyTo(final CharacterSheet target, final SceneContext sceneContext, final SkillRoll skillRoll) {
+        InteractionResult result = super.applyTo(target, sceneContext, skillRoll);
         Character character = target.getCharacter();
         if (!character.getSkillCompetencyAbilities().contains(ArtesCompetencyAbility.DOM_BARDICO)) {
             return result;
@@ -45,6 +49,7 @@ public class ArtesInteraction extends AbstractSkillInteraction {
                 .temporaryBonusModifierType(ModifierType.SKILL_ROLL_BONUS)
                 .temporaryBonusScope(TargetScope.ALLIES)
                 .temporaryBonusRounds(domBardicoRounds(character))
+                .temporaryBonusValue(domBardicoBonusValue(result.getReachedDifficultyLevel()))
                 .build();
     }
 
@@ -64,5 +69,27 @@ public class ArtesInteraction extends AbstractSkillInteraction {
             return 2;
         }
         return 1;
+    }
+
+    /**
+     * DOM_BARDICO's own bonus table: GD Médio +1, Difícil +2, Muito Difícil +3, Improvável
+     * +4, Milagre +5. UNIMAGINABLE isn't named in the rules text (it falls between Improvável
+     * and Milagre); treated here as inheriting UNLIKELY's +4 until MIRACLE is actually
+     * reached — an inference, not confirmed rules text. Below MEDIUM, or when no
+     * {@link SkillRoll} was supplied at all ({@code reachedDifficultyLevel} is {@code null}),
+     * no bonus applies.
+     */
+    private static Integer domBardicoBonusValue(final DifficultyLevel reachedDifficultyLevel) {
+        if (reachedDifficultyLevel == null) {
+            return null;
+        }
+        return switch (reachedDifficultyLevel) {
+            case MEDIUM -> 1;
+            case HARD -> 2;
+            case VERY_HARD -> 3;
+            case UNLIKELY, UNIMAGINABLE -> 4;
+            case MIRACLE -> 5;
+            default -> null;
+        };
     }
 }
