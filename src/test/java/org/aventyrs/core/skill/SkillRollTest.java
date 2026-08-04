@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class SkillRollTest {
@@ -76,5 +77,25 @@ class SkillRollTest {
     void aSingleOneOrSixIsNotCritical() {
         assertEquals(CriticalResult.NONE, new SkillRoll(List.of(1, 3, 4)).getCriticalResult());
         assertEquals(CriticalResult.NONE, new SkillRoll(List.of(6, 3, 4)).getCriticalResult());
+    }
+
+    @Test
+    void requestedAbilityDefaultsToNullWithTheSingleArgConstructor() {
+        SkillRoll roll = new SkillRoll(List.of(2, 3, 5));
+
+        assertNull(roll.getRequestedAbility());
+    }
+
+    @Test
+    void requestedAbilityIsStoredWhenSupplied() {
+        SkillRoll roll = new SkillRoll(List.of(2, 3, 5), ArtesCompetencyAbility.DOM_BARDICO);
+
+        assertEquals(ArtesCompetencyAbility.DOM_BARDICO, roll.getRequestedAbility());
+    }
+
+    @Test
+    void theTwoArgConstructorStillValidatesDice() {
+        assertThrows(IllegalOperationException.class,
+                () -> new SkillRoll(List.of(1, 2), ArtesCompetencyAbility.DOM_BARDICO));
     }
 }

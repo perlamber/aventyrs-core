@@ -19,6 +19,30 @@
  * CharacterStatus status   = result.getResultStatus();        // the character's current status
  * }</pre>
  *
+ * <p>A caller that only has a {@link org.aventyrs.core.skill.SkillType} in hand (e.g. an API
+ * layer deserializing an incoming roll request) doesn't need to know which concrete
+ * {@code <Skill>Interaction} class that maps to — {@link org.aventyrs.core.skill.SkillRollRequest}
+ * bundles skillType/target (and optionally an already-rolled
+ * {@link org.aventyrs.core.skill.SkillRoll}/{@link org.aventyrs.core.scene.SceneContext}), and
+ * {@link org.aventyrs.core.skill.SkillInteractionFactory#resolve} dispatches it:
+ *
+ * <pre>{@code
+ * SkillRollRequest request = SkillRollRequest.builder()
+ *         .skillType(SkillType.ARTES)
+ *         .target(sheet)
+ *         .skillRoll(new SkillRoll(List.of(4, 5, 6))) // the caller's own already-rolled dice
+ *         .build();
+ *
+ * InteractionResult result = SkillInteractionFactory.resolve(request);
+ * }</pre>
+ *
+ * <p>A {@link org.aventyrs.core.skill.SkillRoll} may also name a {@code requestedAbility} — one
+ * of the character's {@link org.aventyrs.core.skill.SkillCompetencyAbility} maneuvers being
+ * specifically invoked by this roll, as opposed to a plain Perícia test. If the character
+ * doesn't actually hold that ability, the roll is rejected with an
+ * {@link org.aventyrs.core.sheet.IllegalOperationException} rather than silently computing a
+ * bonus for a maneuver they never acquired.
+ *
  * <h2>What this library computes — and what it leaves to the caller</h2>
  *
  * {@code skillRollBonus} already folds in everything this core knows about: the trained

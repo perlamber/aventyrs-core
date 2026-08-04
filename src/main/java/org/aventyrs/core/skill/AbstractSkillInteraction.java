@@ -10,6 +10,7 @@ import org.aventyrs.core.modifier.ModifierResolverImpl;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.CharacterSheet;
+import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.Interaction;
 import org.aventyrs.core.sheet.InteractionResult;
 
@@ -17,6 +18,7 @@ import java.util.Collection;
 import java.util.List;
 
 import static org.aventyrs.core.skill.Skill.UNTRAINED_PENALTY;
+import static org.aventyrs.core.util.TranslatableMessages.REQUIRED_COMPETENCY_ABILITY_NOT_HELD;
 
 /**
  * The {@code applyTo}/{@code findCharacterSkill} machinery every {@code <Skill>Interaction}
@@ -53,6 +55,13 @@ import static org.aventyrs.core.skill.Skill.UNTRAINED_PENALTY;
  * its logic on. {@link ArtesInteraction} is the one that currently overrides: a character
  * holding {@code ArtesCompetencyAbility#DOM_BARDICO} gets {@code temporaryBonusModifierType}/
  * {@code temporaryBonusRounds}/{@code temporaryBonusScope} set on the result — see that class.
+ *
+ * <p>When {@code skillRoll} names a {@link SkillRoll#getRequestedAbility()}, the 3-arg
+ * {@code applyTo} validates the target's Character actually holds it (and that it belongs to
+ * this same {@code skillType}) before doing anything else, throwing {@link
+ * IllegalOperationException} otherwise — this stops a caller from requesting a maneuver-style
+ * {@link SkillCompetencyAbility} the character never acquired. A {@code null} requestedAbility
+ * (a plain roll, the common case) skips this check entirely.
  */
 public abstract class AbstractSkillInteraction implements Interaction<CharacterSheet> {
 
@@ -107,6 +116,9 @@ public abstract class AbstractSkillInteraction implements Interaction<CharacterS
      */
     public InteractionResult applyTo(final CharacterSheet target, final SceneContext sceneContext, final SkillRoll skillRoll) {
         Character character = target.getCharacter();
+        if (skillRoll != null) {
+            validateRequestedAbility(character, skillRoll.getRequestedAbility());
+        }
         CharacterSkill characterSkill = findCharacterSkill(character);
         int graduationValue = characterSkill.getGraduation().getGraduationValue();
 
@@ -137,6 +149,20 @@ public abstract class AbstractSkillInteraction implements Interaction<CharacterS
         }
 
         return result.build();
+    }
+
+    /**
+     * A {@code null} requestedAbility (a plain roll) is always fine. A non-{@code null} one
+     * must belong to this same {@code skillType} and actually be held by the character —
+     * otherwise this roll is trying to invoke a maneuver the character never acquired.
+     */
+    private void validateRequestedAbility(final Character character, final SkillCompetencyAbility requestedAbility) {
+        if (requestedAbility == null) {
+            return;
+        }
+        if (requestedAbility.getSkillType() != skillType || !character.getSkillCompetencyAbilities().contains(requestedAbility)) {
+            throw new IllegalOperationException(REQUIRED_COMPETENCY_ABILITY_NOT_HELD);
+        }
     }
 
     /**

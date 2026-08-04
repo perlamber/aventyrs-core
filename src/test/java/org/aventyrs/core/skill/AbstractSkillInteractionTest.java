@@ -9,6 +9,7 @@ import org.aventyrs.core.character.fixture.CharacterSkillFixture;
 import org.aventyrs.core.scene.Range;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.CharacterSheet;
+import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.InteractionResult;
 import org.aventyrs.core.sheet.Player;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,6 +19,8 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * Demonstrates the extension point {@code AbstractSkillInteraction#applyTo(CharacterSheet,
@@ -137,5 +140,60 @@ class AbstractSkillInteractionTest {
         InteractionResult result = interaction.applyTo(sheet, sceneContext);
 
         assertEquals(2, result.getSkillRollBonus());
+    }
+
+    /**
+     * {@link SkillRoll#getRequestedAbility()} validation applies to every skill generically
+     * (it's implemented once, in {@code AbstractSkillInteraction} itself) — exercised here via
+     * plain {@link AttentionInteraction} rather than the ATLETISMO-flavored {@code
+     * GangUpBonusInteraction} above, since it's unrelated to the SceneContext extension point
+     * this file otherwise demonstrates.
+     */
+    private CharacterSheet attentionSheetHolding(final SkillCompetencyAbility... abilities) {
+        Character.CharacterBuilder builder = CharacterFixture.blank(CharacterFixture.BLANK);
+        for (SkillCompetencyAbility ability : abilities) {
+            builder.skillCompetencyAbility(ability);
+        }
+        return CharacterSheet.of(builder.build(), new Player());
+    }
+
+    @Test
+    void applyToWithNoRequestedAbilitySkipsValidationEntirely() {
+        CharacterSheet sheet = attentionSheetHolding();
+        SkillRoll skillRoll = new SkillRoll(List.of(2, 3, 4));
+
+        InteractionResult result = new AttentionInteraction().applyTo(sheet, null, skillRoll);
+
+        assertNotNull(result);
+    }
+
+    @Test
+    void applyToWithARequestedAbilityTheCharacterHoldsSucceeds() {
+        CharacterSheet sheet = attentionSheetHolding(AttentionCompetencyAbility.PERCEPCAO_DE_FOXM);
+        SkillRoll skillRoll = new SkillRoll(List.of(2, 3, 4), AttentionCompetencyAbility.PERCEPCAO_DE_FOXM);
+
+        InteractionResult result = new AttentionInteraction().applyTo(sheet, null, skillRoll);
+
+        assertNotNull(result);
+    }
+
+    @Test
+    void applyToWithARequestedAbilityTheCharacterLacksThrows() {
+        CharacterSheet sheet = attentionSheetHolding();
+        SkillRoll skillRoll = new SkillRoll(List.of(2, 3, 4), AttentionCompetencyAbility.PERCEPCAO_DE_FOXM);
+        AttentionInteraction attentionInteraction = new AttentionInteraction();
+
+        assertThrows(IllegalOperationException.class, () -> attentionInteraction.applyTo(sheet, null, skillRoll));
+    }
+
+    @Test
+    void applyToWithARequestedAbilityFromADifferentSkillTypeThrowsEvenWhenHeld() {
+        // DOM_BARDICO belongs to ARTES, not ATTENTION — holding it doesn't make it a valid
+        // request on an AttentionInteraction roll.
+        CharacterSheet sheet = attentionSheetHolding(ArtesCompetencyAbility.DOM_BARDICO);
+        SkillRoll skillRoll = new SkillRoll(List.of(2, 3, 4), ArtesCompetencyAbility.DOM_BARDICO);
+        AttentionInteraction attentionInteraction = new AttentionInteraction();
+
+        assertThrows(IllegalOperationException.class, () -> attentionInteraction.applyTo(sheet, null, skillRoll));
     }
 }

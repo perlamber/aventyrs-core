@@ -166,12 +166,14 @@ pieces — don't stop at just the `Skill` class:
 
    This only works because `SkillType` itself now carries everything `AbstractSkillInteraction`
    needs per skill: `excellencyClass` (already existed), a `Supplier<Skill> skillFactory`
-   (`newSkillInstance()`) for the untrained-fallback `CharacterSkill`, and a `ModifierType
-   rollBonusType` (see "A ModifierType per skill" below) — e.g. `ARTES(ArtesExcellency.class,
-   Artes::new, ModifierType.ARTES_ROLL_BONUS)`. **Whenever you add a new Skill, add its
-   constant to `SkillType` with all three pieces, and a matching `<SKILL>_ROLL_BONUS` constant
-   to `ModifierType`** — `AbstractSkillInteraction` has no other way to know which
-   `Skill`/`SkillExcellency`/`ModifierType` a given `SkillType` maps to.
+   (`newSkillInstance()`) for the untrained-fallback `CharacterSkill`, a `ModifierType
+   rollBonusType` (see "A ModifierType per skill" below), and a `Supplier<AbstractSkillInteraction>
+   interactionFactory` (`newInteraction()` — see "Dispatching a roll by SkillType" below) — e.g.
+   `ARTES(ArtesExcellency.class, Artes::new, ModifierType.ARTES_ROLL_BONUS,
+   ArtesInteraction::new)`. **Whenever you add a new Skill, add its constant to `SkillType` with
+   all four pieces, and a matching `<SKILL>_ROLL_BONUS` constant to `ModifierType`** —
+   `AbstractSkillInteraction` has no other way to know which
+   `Skill`/`SkillExcellency`/`ModifierType`/`<Skill>Interaction` a given `SkillType` maps to.
 
    If a skill's Interaction genuinely needs to do something no other skill does, override
    `applyTo` in the subclass and call `super.applyTo(target)` first, then layer the addition
@@ -218,6 +220,56 @@ pieces — don't stop at just the `Skill` class:
    instance), not by calling the modifier method directly; a non-matching choice contributes
    0; a null choice is rejected at construction; and the instance reports the catalog
    constant's `SkillType` and description.
+
+## Requesting a specific Habilidade de Competência on a roll — `SkillRoll#getRequestedAbility`
+
+Some rolls aren't a plain Perícia test — the caller is specifically invoking one of the
+character's `SkillCompetencyAbility` maneuvers (e.g. "roll Furtividade using Disparo
+Ricochete"), and this core should refuse the roll outright if the character never actually
+acquired that ability, rather than silently computing a bonus for a maneuver they can't use.
+
+- `SkillRoll` carries an optional `requestedAbility` (a `SkillCompetencyAbility`), set via its
+  second constructor overload — `SkillRoll(dice)` still delegates to `SkillRoll(dice, null)`,
+  so every existing call site (a plain roll) is unaffected. `null` means "just a plain roll,"
+  and skips validation entirely — this is the common case.
+- `AbstractSkillInteraction`'s 3-arg `applyTo` validates a non-null `requestedAbility` before
+  doing anything else: it must both belong to this same `skillType` (`requestedAbility
+  .getSkillType() == skillType`) and actually be present in `character
+  .getSkillCompetencyAbilities()` — either failure throws `IllegalOperationException`
+  (`REQUIRED_COMPETENCY_ABILITY_NOT_HELD`). This applies generically to every skill, in one
+  place, the same way every other `applyTo` computation already does.
+- This only validates *possession* of the ability, the same restraint CLAUDE.md already
+  documents elsewhere (no "Requer N Graduações" enforcement, no acquisition-legality checks)
+  — it doesn't validate that the ability's own mechanic is actually implemented, or gate on
+  anything about the roll's circumstances (range, targets, etc.). A caller can still request
+  an ability whose effect is entirely TODO'd; the roll proceeds (computing the ordinary
+  `skillRollBonus`/`difficultyReduction` as normal), it's just no longer possible to request
+  an ability the character was never granted in the first place.
+
+## Dispatching a roll by SkillType — `SkillInteractionFactory`, `SkillRollRequest`
+
+A caller that only has a `SkillType` in hand (e.g. an API layer deserializing an incoming roll
+request) previously had no way to reach the right concrete `<Skill>Interaction` without its
+own hand-written switch over all of them. `SkillType` already carries every other per-skill
+mapping this core needs (see "Adding a new Perícia" above), so this reuses it rather than
+introducing a second, parallel "which skill is this" enum that could drift out of sync with
+`SkillType` itself:
+
+- `SkillType.newInteraction()` returns a fresh `<Skill>Interaction` via a stored
+  `Supplier<AbstractSkillInteraction>` per constant, built through that Interaction's default
+  (no-arg) constructor — the same one every concrete subclass already exposes.
+- `SkillInteractionFactory` (`org.aventyrs.core.skill`) is the single call site for this:
+  `create(SkillType)` just delegates to `newInteraction()`, and `resolve(SkillRollRequest)`
+  looks up the right Interaction *and* calls its 3-arg `applyTo` in one step.
+- `SkillRollRequest` (`@Builder`) is the wrapper bundling everything one roll needs:
+  `skillType`/`target` (`@NonNull`, required) plus `sceneContext`/`skillRoll` (both optional,
+  `null` same as every `applyTo` overload already accepts). A caller builds one of these once
+  instead of separately resolving which `<Skill>Interaction` class to instantiate and calling
+  its `applyTo` overload directly.
+- This is purely a dispatch/ergonomics convenience — it doesn't change what any `applyTo`
+  computes, and a caller that already knows which concrete `<Skill>Interaction` to use (most
+  of this core's own tests) can keep constructing and calling it directly; nothing requires
+  going through `SkillRollRequest`.
 
 ## Character-level stats aggregated from abilities (e.g. Reações, Ações Livres, Pontos de Ação)
 

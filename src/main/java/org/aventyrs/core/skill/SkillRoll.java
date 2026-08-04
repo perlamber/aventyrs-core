@@ -17,6 +17,12 @@ import static org.aventyrs.core.util.TranslatableMessages.INVALID_SKILL_ROLL;
  * <p>{@code dice} is validated at construction — exactly 3 values, each 1-6 — since this is a
  * true system boundary (input from outside this core), unlike internal invariants this
  * codebase otherwise trusts without checking.
+ *
+ * <p>{@code requestedAbility} is optional: a caller performing this roll specifically *as* one
+ * of the character's {@link SkillCompetencyAbility} maneuvers (as opposed to a plain Perícia
+ * test) names which one here. {@link AbstractSkillInteraction} then validates the character
+ * actually holds it before proceeding — see its own javadoc. {@code null} means "just a plain
+ * roll, no specific ability being invoked," and skips that check entirely.
  */
 public class SkillRoll {
     private static final int EXPECTED_DICE_COUNT = 3;
@@ -24,8 +30,13 @@ public class SkillRoll {
     private static final int MAX_FACE_VALUE = 6;
 
     private final List<Integer> dice;
+    private final SkillCompetencyAbility requestedAbility;
 
     public SkillRoll(final List<Integer> dice) {
+        this(dice, null);
+    }
+
+    public SkillRoll(final List<Integer> dice, final SkillCompetencyAbility requestedAbility) {
         if (dice.size() != EXPECTED_DICE_COUNT) {
             throw new IllegalOperationException(INVALID_SKILL_ROLL);
         }
@@ -35,6 +46,12 @@ public class SkillRoll {
             }
         }
         this.dice = dice;
+        this.requestedAbility = requestedAbility;
+    }
+
+    /** The {@link SkillCompetencyAbility} this roll is being made to invoke, or {@code null} for a plain roll. */
+    public SkillCompetencyAbility getRequestedAbility() {
+        return requestedAbility;
     }
 
     /** The sum of all 3 dice — what gets added to the Perícia's own bonus and compared against a GD. */
