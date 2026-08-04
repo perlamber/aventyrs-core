@@ -451,10 +451,20 @@ This core has no grid/positioning system (it never will — same "this core does
 philosophy applies to "this core doesn't do geometry"), so distances are always supplied
 already-resolved by a caller, same as `InitiativeEntry`'s own `initiativeValue` already is.
 
-- `Range` (`org.aventyrs.core.scene`) is the five distance bands rules text uses — `ADJACENTE`,
-  `DISTANCIA_CURTA`, `DISTANCIA_MEDIA`, `DISTANCIA_LONGA`, `DISTANCIA_MUITO_LONGA` — ordered
-  nearest-to-farthest so `isWithin(Range maxRange)` can express "Distância Curta ou inferior"
-  directly via ordinal comparison.
+- `Range` (`org.aventyrs.core.scene`) is "Calculando Unidades de Distância (UD)"'s seven bands
+  — `ADJACENTE` (1 UD), `DISTANCIA_MUITO_CURTA` (2), `DISTANCIA_CURTA` (4), `DISTANCIA_MEDIA`
+  (8), `DISTANCIA_LONGA` (16), `DISTANCIA_MUITO_LONGA` (24), and `AO_ALCANCE_DOS_OLHOS` (no
+  fixed UD — "a distância máxima é limitada à capacidade visual do personagem" per the rules
+  text, so its `maxUnidadesDeDistancia` is `null`, the one constant where that field doesn't
+  apply). Ordered nearest-to-farthest so `isWithin(Range maxRange)` can express "Distância
+  Curta ou inferior" directly via ordinal comparison. **The first version of this enum shipped
+  without `DISTANCIA_MUITO_CURTA`** — built from memory instead of the actual rules text —
+  even though `AttentionCompetencyAbility.PERCEPCAO_DE_FOXM` and `AtaqueADistanciaCompetencyAbility
+  .DISPARO_RICOCHETE` already referenced that exact band; a reminder to get the source rules
+  text for a new domain enum like this before modeling it, not just the handful of usages
+  already seen in this codebase's own TODOs. `fromUnidadesDeDistancia(int)` resolves a raw UD
+  count to its band (anything past 24 UD resolves to `AO_ALCANCE_DOS_OLHOS`) for a caller that
+  tracks distance as a number rather than resolving the band itself.
 - `Scene.getEnemies(CharacterSheet)` is the complement of the existing `getAllies` — every
   participant *not* sharing that Character's sub-group. This is a simplification worth
   remembering: with more than two sub-groups in one `Scene` (e.g. two feuding NPC factions
