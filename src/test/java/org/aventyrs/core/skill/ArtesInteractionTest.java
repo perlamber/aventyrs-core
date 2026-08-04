@@ -15,6 +15,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 class ArtesInteractionTest {
 
@@ -35,6 +36,16 @@ class ArtesInteractionTest {
             builder.skill(SkillType.ARTES, characterSkill);
         }
         return CharacterSheet.of(builder.build(), new Player());
+    }
+
+    private CharacterSheet sheetWithDomBardicoAndArtesGraduation(final int graduationValue) {
+        CharacterSkill artesSkill = CharacterSkillFixture.blank(CharacterSkillFixture.ARTES_1).build();
+        artesSkill.increaseGraduation(graduationValue);
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .skill(SkillType.ARTES, artesSkill)
+                .skillCompetencyAbility(ArtesCompetencyAbility.DOM_BARDICO)
+                .build();
+        return CharacterSheet.of(character, new Player());
     }
 
     @Test
@@ -105,5 +116,88 @@ class ArtesInteractionTest {
         InteractionResult result = artesInteraction.applyTo(sheet);
 
         assertEquals(3, result.getSkillRollBonus());
+    }
+
+    @Test
+    void applyToIncludesATemporaryBonusScopedSpecificallyToArtes() {
+        CharacterSkill artesSkill = CharacterSkillFixture.blank(CharacterSkillFixture.ARTES_1).build();
+        artesSkill.increaseGraduation(1);
+        CharacterSheet sheet = sheetWithCharismaAndSkill(2, artesSkill);
+
+        sheet.grantTemporaryBonus(ModifierType.ARTES_ROLL_BONUS, 4, 1);
+
+        InteractionResult result = artesInteraction.applyTo(sheet);
+
+        assertEquals(7, result.getSkillRollBonus());
+    }
+
+    @Test
+    void applyToDoesNotLeakATemporaryBonusScopedToADifferentSkill() {
+        CharacterSkill artesSkill = CharacterSkillFixture.blank(CharacterSkillFixture.ARTES_1).build();
+        artesSkill.increaseGraduation(1);
+        CharacterSheet sheet = sheetWithCharismaAndSkill(2, artesSkill);
+
+        // A bonus granted for Atletismo specifically must not affect an Artes roll.
+        sheet.grantTemporaryBonus(ModifierType.ATLETISMO_ROLL_BONUS, 10, 1);
+
+        InteractionResult result = artesInteraction.applyTo(sheet);
+
+        assertEquals(3, result.getSkillRollBonus());
+    }
+
+    @Test
+    void applyToCombinesTheGenericAndArtesSpecificTemporaryBonusesAdditively() {
+        CharacterSkill artesSkill = CharacterSkillFixture.blank(CharacterSkillFixture.ARTES_1).build();
+        artesSkill.increaseGraduation(1);
+        CharacterSheet sheet = sheetWithCharismaAndSkill(2, artesSkill);
+
+        sheet.grantTemporaryBonus(ModifierType.SKILL_ROLL_BONUS, 3, 1);
+        sheet.grantTemporaryBonus(ModifierType.ARTES_ROLL_BONUS, 4, 1);
+        sheet.grantTemporaryBonus(ModifierType.ATLETISMO_ROLL_BONUS, 10, 1);
+
+        InteractionResult result = artesInteraction.applyTo(sheet);
+
+        assertEquals(10, result.getSkillRollBonus());
+    }
+
+    @Test
+    void applyToLeavesTemporaryBonusFieldsNullWithoutDomBardico() {
+        CharacterSkill artesSkill = CharacterSkillFixture.blank(CharacterSkillFixture.ARTES_1).build();
+        CharacterSheet sheet = sheetWithCharismaAndSkill(2, artesSkill);
+
+        InteractionResult result = artesInteraction.applyTo(sheet);
+
+        assertNull(result.getTemporaryBonusModifierType());
+        assertNull(result.getTemporaryBonusRounds());
+        assertNull(result.getTemporaryBonusValue());
+    }
+
+    @Test
+    void applyToSetsOneRodadaForDomBardicoBelowFiveGraduacoes() {
+        CharacterSheet sheet = sheetWithDomBardicoAndArtesGraduation(4);
+
+        InteractionResult result = artesInteraction.applyTo(sheet);
+
+        assertEquals(ModifierType.SKILL_ROLL_BONUS, result.getTemporaryBonusModifierType());
+        assertEquals(1, result.getTemporaryBonusRounds());
+        assertNull(result.getTemporaryBonusValue());
+    }
+
+    @Test
+    void applyToSetsTwoRodadasForDomBardicoAtFiveGraduacoes() {
+        CharacterSheet sheet = sheetWithDomBardicoAndArtesGraduation(5);
+
+        InteractionResult result = artesInteraction.applyTo(sheet);
+
+        assertEquals(2, result.getTemporaryBonusRounds());
+    }
+
+    @Test
+    void applyToSetsThreeRodadasForDomBardicoAtTenGraduacoes() {
+        CharacterSheet sheet = sheetWithDomBardicoAndArtesGraduation(10);
+
+        InteractionResult result = artesInteraction.applyTo(sheet);
+
+        assertEquals(3, result.getTemporaryBonusRounds());
     }
 }

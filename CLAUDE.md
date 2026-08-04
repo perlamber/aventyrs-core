@@ -165,16 +165,20 @@ pieces — don't stop at just the `Skill` class:
    before — it's still a real class per skill, just without the duplicated body.
 
    This only works because `SkillType` itself now carries everything `AbstractSkillInteraction`
-   needs per skill: `excellencyClass` (already existed) and a `Supplier<Skill> skillFactory`
-   (`newSkillInstance()`) for the untrained-fallback `CharacterSkill`, e.g. `ARTES
-   (ArtesExcellency.class, Artes::new)`. **Whenever you add a new Skill, add its constant to
-   `SkillType` with both pieces** — `AbstractSkillInteraction` has no other way to know which
-   `Skill`/`SkillExcellency` a given `SkillType` maps to.
+   needs per skill: `excellencyClass` (already existed), a `Supplier<Skill> skillFactory`
+   (`newSkillInstance()`) for the untrained-fallback `CharacterSkill`, and a `ModifierType
+   rollBonusType` (see "A ModifierType per skill" below) — e.g. `ARTES(ArtesExcellency.class,
+   Artes::new, ModifierType.ARTES_ROLL_BONUS)`. **Whenever you add a new Skill, add its
+   constant to `SkillType` with all three pieces, and a matching `<SKILL>_ROLL_BONUS` constant
+   to `ModifierType`** — `AbstractSkillInteraction` has no other way to know which
+   `Skill`/`SkillExcellency`/`ModifierType` a given `SkillType` maps to.
 
-   If a skill's Interaction genuinely needs to do something no other skill does (none does
-   today), override `applyTo` in the subclass and call `super.applyTo(target)` first, rather
-   than duplicating `AbstractSkillInteraction`'s logic or forking it back out to a
-   hand-written `applyTo`.
+   If a skill's Interaction genuinely needs to do something no other skill does, override
+   `applyTo` in the subclass and call `super.applyTo(target)` first, then layer the addition
+   on top of the returned result — see `ArtesInteraction`, which sets
+   `temporaryBonusModifierType`/`temporaryBonusRounds` for a character holding `DOM_BARDICO`
+   (below "Temporary bonuses from other Characters") — rather than duplicating
+   `AbstractSkillInteraction`'s logic or forking it back out to a hand-written `applyTo`.
 
 6. **A `<Skill>Excellency` enum for its automatic Excelência bonuses** (e.g.
    `ArtesExcellency`), implementing `SkillExcellency` (`getSkillType()` + `getTier()` +
@@ -339,6 +343,33 @@ fresh `id` every time, never templated), but a test that specifically needs seve
 `Character`s with distinct `id`s must override `.id(UUID.randomUUID())` on each one via
 `CharacterFixture.blank(...)`'s returned builder.
 
+## A ModifierType per skill — fixing cross-skill bonus leakage
+
+`ModifierType.SKILL_ROLL_BONUS` applies broadly, to *every* Perícia's roll — that's correct
+for abilities like `DirigirECavalgarCompetencyAbility.CONTROLAR_ANIMAIS` (see the Vantagem
+section below), but it was, until this was fixed, the *only* option `AbstractSkillInteraction`
+summed — meaning a bonus meant for one specific Perícia (e.g. a temporary buff an ally
+received "for Atletismo") had no way to avoid leaking into every other Perícia's roll too,
+since `sumSkillRollBonusModifiers`/`getTemporaryBonus` had no per-skill filter to apply.
+
+- Every `SkillType` now also carries its own `ModifierType` — `rollBonusType` — e.g.
+  `ATLETISMO`'s is `ModifierType.ATLETISMO_ROLL_BONUS`. This can't be a runtime-computed
+  mapping, since `@Modifier(ModifierType.X)` is a compile-time-fixed annotation value;
+  `ModifierResolver` has no way to scan "give me whatever modifiers apply to skillType Y" — it
+  can only scan for one fixed `ModifierType` at a time. One real enum constant per skill is
+  the only way an ability's `@Modifier` method (or a granted `TemporaryBonus`) can target one
+  specific Perícia through this reflection-based mechanism.
+- `AbstractSkillInteraction.sumSkillRollBonusModifiers` sums **both** `SKILL_ROLL_BONUS` and
+  `skillType.getRollBonusType()` for every source (`attributeAbilities`,
+  `skillCompetencyAbilities`, unlocked `SkillExcellency` tiers), and `applyTo` does the same
+  for `target.getTemporaryBonus(...)` — additively, not either/or, so an ability or a granted
+  `TemporaryBonus` can choose either the broad generic type or one specific skill's, and both
+  still combine correctly on a roll that has some of each (see `ArtesInteractionTest
+  #applyToCombinesTheGenericAndArtesSpecificTemporaryBonusesAdditively`).
+- **Whenever a new `SkillType` constant is added, add a matching `<SKILL>_ROLL_BONUS`
+  constant to `ModifierType` too** (see "Adding a new Perícia" above) — there's no default;
+  omitting it would make `SkillType.rollBonusType` uninitializable.
+
 ## Temporary bonuses from other Characters — `CharacterSheet#grantTemporaryBonus`
 
 A `CharacterSheet` can hold bonuses/maluses that didn't come from its own `Character`'s
@@ -348,17 +379,18 @@ caster) with a Perícia-roll bonus for 1-3 Rodadas depending on the caster's own
 
 - `TemporaryBonus` (`org.aventyrs.core.sheet`) pairs a `ModifierType`, an `int value`, and a
   `remainingRounds` countdown — reusing the existing `ModifierType` taxonomy rather than
-  inventing a parallel one, and deliberately generic (not scoped to `SKILL_ROLL_BONUS`
-  specifically), since nothing about "a temporary effect from another Character" is
-  inherently about rolls. It counts down in *rounds remaining*, not an absolute expiry Round
-  number, matching how DOM_BARDICO's own rules text describes duration ("por 1 Rodada", "por
-  2 Rodadas") rather than coupling `CharacterSheet` to `Scene`'s specific round-numbering.
+  inventing a parallel one. Pass either the broad `ModifierType.SKILL_ROLL_BONUS` or one
+  specific skill's own type (see "A ModifierType per skill" above) depending on whether the
+  granting ability's rules text names one Perícia or, like `DOM_BARDICO`'s, is unrestricted.
+  It counts down in *rounds remaining*, not an absolute expiry Round number, matching how
+  DOM_BARDICO's own rules text describes duration ("por 1 Rodada", "por 2 Rodadas") rather
+  than coupling `CharacterSheet` to `Scene`'s specific round-numbering.
 - `CharacterSheet.grantTemporaryBonus(ModifierType, int value, int rounds)` adds one;
   `getTemporaryBonus(ModifierType)` sums every currently-active (non-expired) one of that
-  type — every `<Skill>Interaction` now includes this in its `SKILL_ROLL_BONUS` sum (a fourth
-  source alongside the three `ReactionsService`-style ones, see the Vantagem section above).
-  `CharacterSheet` doesn't track *who* granted a bonus — nothing about this mechanism needs
-  that; find targets via `Scene.getAllies` at grant time instead.
+  type — every `<Skill>Interaction` now includes both the generic and its own skill-specific
+  type in its `SKILL_ROLL_BONUS` sum. `CharacterSheet` doesn't track *who* granted a bonus —
+  nothing about this mechanism needs that; find targets via `Scene.getAllies` at grant time
+  instead.
 - `CharacterSheet.tickTemporaryBonuses()` counts every held bonus down by one Rodada and
   discards any that expire as a result. **Nothing calls this automatically yet** — per this
   feature's own instructions, `Scene` doesn't have a "turn shifter" that advances every
@@ -368,9 +400,30 @@ caster) with a Perícia-roll bonus for 1-3 Rodadas depending on the caster's own
   real and tested (`CharacterSheetTest`, `ArtesInteractionTest
   #applyToIncludesAnActiveTemporarySkillRollBonus`/`#applyToIgnoresAnExpiredTemporarySkillRollBonus`),
   it's specifically the automatic *trigger* that's deferred.
-- This still doesn't finish `DOM_BARDICO` — see its own TODO. Ally-targeting and duration
-  tracking are both solved now; what's left is the GD-tier-to-bonus lookup (needs a
-  roll-resolution-vs-`DifficultyLevel` engine this codebase still doesn't have).
+- `InteractionResult.temporaryBonusValue`/`temporaryBonusModifierType`/`temporaryBonusRounds`
+  are where a roll that *grants* one of these (as opposed to merely being affected by an
+  already-granted one) is expected to report it. `temporaryBonusModifierType` is a
+  `ModifierType`, not a `SkillType` — deliberately matching `TemporaryBonus`'s own field, so
+  it's exactly what a caller passes straight into `CharacterSheet#grantTemporaryBonus` with no
+  extra `SkillType`→`ModifierType` mapping step (the broad `SKILL_ROLL_BONUS`, or one specific
+  skill's own `rollBonusType`). Who actually *receives* the bonus is still deliberately not
+  this core's concern — these three fields are the computed "what" (value, type, duration), a
+  caller resolves the "who" via `Scene.getAllies` and calls `grantTemporaryBonus` on each
+  recipient itself. `InteractionResult` needed `@Builder(toBuilder = true)` added for this —
+  a subclass overriding `applyTo` (see below) extends the base result via `.toBuilder()`
+  rather than reassembling every field by hand.
+- `ArtesInteraction` overrides `applyTo` to actually set two of these three fields for a
+  character holding `ArtesCompetencyAbility#DOM_BARDICO`: `temporaryBonusModifierType`
+  (always `SKILL_ROLL_BONUS`, since this ability's own rules text is unrestricted — "rolagens
+  de Perícias", not one specific Perícia) and `temporaryBonusRounds` (1 Rodada normally, 2
+  once Artes reaches 5 Graduações, 3 at 10 — a small graduation-threshold lookup specific to
+  this one ability, not worth generalizing into `ExcellencyTier`'s fixed 3/7/10 shape since
+  DOM_BARDICO's thresholds/values don't match it). `temporaryBonusValue` stays `null` — that's
+  the GD-tier-to-bonus lookup, which still needs a roll-resolution-vs-`DifficultyLevel` engine
+  this codebase doesn't have, so it's the one field of the three `ArtesInteraction` can't set
+  yet. A caller must still gate on `temporaryBonusValue != null` before granting anything —
+  `temporaryBonusModifierType`/`temporaryBonusRounds` being set doesn't by itself mean there's
+  something to grant.
 
 ## Damage mitigation — `org.aventyrs.core.character.services.DamageService`
 

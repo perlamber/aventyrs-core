@@ -12,6 +12,7 @@ import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.Interaction;
 import org.aventyrs.core.sheet.InteractionResult;
 
+import java.util.Collection;
 import java.util.List;
 
 import static org.aventyrs.core.skill.Skill.UNTRAINED_PENALTY;
@@ -27,17 +28,22 @@ import static org.aventyrs.core.skill.Skill.UNTRAINED_PENALTY;
  * whichever Attribute currently governs this Perícia — its own, or a substituted one, see
  * {@link SkillCompetencyAbility#resolveAttributeDomain}; this resolution is safe to run
  * unconditionally, since it's a no-op — falls back to the Perícia's own Attribute — for every
- * skillType with no substituting ability) plus four {@code ModifierType#SKILL_ROLL_BONUS}
- * sources: {@code attributeAbilities}, {@code skillCompetencyAbilities}, unlocked {@link
- * SkillExcellency} tiers, and the target {@link CharacterSheet}'s own {@code TemporaryBonus}
- * pool (see CLAUDE.md's "Temporary bonuses from other Characters" section). Computes {@code
- * difficultyReduction} from unlocked {@code SkillExcellency} tiers plus every {@code
- * skillCompetencyAbility}'s own {@link SkillCompetencyAbility#getDifficultyReduction()}.
+ * skillType with no substituting ability) plus four sources, each summed for *both* {@code
+ * ModifierType#SKILL_ROLL_BONUS} (applies to every Perícia's roll) and {@code
+ * skillType.getRollBonusType()} (applies only to this one) — see {@link
+ * #sumSkillRollBonusModifiers}: {@code attributeAbilities}, {@code skillCompetencyAbilities},
+ * unlocked {@link SkillExcellency} tiers, and the target {@link CharacterSheet}'s own {@code
+ * TemporaryBonus} pool (see CLAUDE.md's "Temporary bonuses from other Characters" section).
+ * Computes {@code difficultyReduction} from unlocked {@code SkillExcellency} tiers plus every
+ * {@code skillCompetencyAbility}'s own {@link SkillCompetencyAbility#getDifficultyReduction()}.
  *
- * <p>A subclass with something genuinely skill-specific to add (e.g. {@link
- * DominioDoManaInteraction}'s "this is always the second of two rolls" note is documentation,
- * not behavior, so it needed nothing extra) would override {@link #applyTo} and call {@code
- * super.applyTo(target)} first — no current skill needs this.
+ * <p>A subclass with something genuinely skill-specific to add overrides {@link #applyTo} and
+ * calls {@code super.applyTo(target)} first, then layers its own addition on top of the
+ * result — most skills need nothing extra (e.g. {@link DominioDoManaInteraction}'s "this is
+ * always the second of two rolls" note is documentation, not behavior). {@link
+ * ArtesInteraction} is the one that currently does: a character holding {@code
+ * ArtesCompetencyAbility#DOM_BARDICO} gets {@code temporaryBonusModifierType}/{@code
+ * temporaryBonusRounds} set on the result — see that class.
  */
 public abstract class AbstractSkillInteraction implements Interaction<CharacterSheet> {
 
@@ -65,11 +71,12 @@ public abstract class AbstractSkillInteraction implements Interaction<CharacterS
                 character.getSkillCompetencyAbilities(), skillType, characterSkill.getSkill().getAttributeDomain());
 
         int bonus = characterSkillService.getValueForRoll(characterSkill, character.getAttributes(), character.getRace(), attributeDomain);
-        bonus += modifierResolver.sumModifiers(character.getAttributeAbilities(), ModifierType.SKILL_ROLL_BONUS);
-        bonus += modifierResolver.sumModifiers(character.getSkillCompetencyAbilities(), ModifierType.SKILL_ROLL_BONUS);
+        bonus += sumSkillRollBonusModifiers(character.getAttributeAbilities());
+        bonus += sumSkillRollBonusModifiers(character.getSkillCompetencyAbilities());
         List<SkillExcellency> unlockedExcellencies = SkillExcellency.unlockedBy(skillType.getExcellencyClass(), graduationValue);
-        bonus += modifierResolver.sumModifiers(unlockedExcellencies, ModifierType.SKILL_ROLL_BONUS);
+        bonus += sumSkillRollBonusModifiers(unlockedExcellencies);
         bonus += target.getTemporaryBonus(ModifierType.SKILL_ROLL_BONUS);
+        bonus += target.getTemporaryBonus(skillType.getRollBonusType());
 
         int difficultyReduction = SkillExcellency.totalDifficultyReduction(skillType.getExcellencyClass(), graduationValue);
         difficultyReduction += character.getSkillCompetencyAbilities().stream()
@@ -81,6 +88,18 @@ public abstract class AbstractSkillInteraction implements Interaction<CharacterS
                 .skillRollBonus(bonus)
                 .difficultyReduction(difficultyReduction)
                 .build();
+    }
+
+    /**
+     * Sums {@code ModifierType#SKILL_ROLL_BONUS} (every Perícia's roll) *and* {@code
+     * skillType.getRollBonusType()} (only this Perícia's) across sources — the fix for a
+     * previous bug where {@code AbstractSkillInteraction} only ever summed the generic type,
+     * so a bonus meant for one specific Perícia had no way to avoid leaking into every other
+     * Perícia's roll too.
+     */
+    private int sumSkillRollBonusModifiers(final Collection<?> sources) {
+        return modifierResolver.sumModifiers(sources, ModifierType.SKILL_ROLL_BONUS)
+                + modifierResolver.sumModifiers(sources, skillType.getRollBonusType());
     }
 
     /**
