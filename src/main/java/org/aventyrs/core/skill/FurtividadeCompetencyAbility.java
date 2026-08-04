@@ -5,20 +5,21 @@ import lombok.Getter;
 
 /**
  * The Habilidades de Competência available to characters trained in Furtividade. Every one
- * of these needs a system this core doesn't have yet (ally-adjacency/range, a
- * stealth/observation-state flag, cross-skill Vantagem, weapon/trap damage, or attribute
- * substitution) so none are expressible for real today; see each constant's TODO.
+ * of these needs a system this core doesn't have yet (a specialization-scoped action gate, a
+ * GD-*increase* expression, a stealth/observation-state flag, cross-skill Vantagem,
+ * weapon/trap damage, or attribute substitution) so none are expressible for real today; see
+ * each constant's TODO.
  */
 @Getter
 @AllArgsConstructor
 public enum FurtividadeCompetencyAbility implements SkillCompetencyAbility {
 
     // TODO: lets the character roll Furtividade (Maestria da Ocultação/Infiltrador
-    // specializations only) to hide an adjacent ally, at +1 GD — needs an
-    // ally-adjacency/range system and a specialization-scoped action gate, neither of which
-    // exist yet. Also note this is a GD *increase*, which
-    // SkillCompetencyAbility.getDifficultyReduction() has no way to express (it only ever
-    // subtracts).
+    // specializations only) to hide an adjacent ally, at +1 GD — "an adjacent ally" is now
+    // checkable for real (org.aventyrs.core.scene.SceneContext#hasAllyWithin(Range.ADJACENTE)),
+    // but this still needs a specialization-scoped action gate, and this is a GD *increase*,
+    // which SkillCompetencyAbility.getDifficultyReduction() has no way to express (it only
+    // ever subtracts) — neither of which exist yet.
     ESCONDER_OUTROS("Você pode efetuar uma rolagem de Furtividade, nas Especializações " +
             "Maestria da Ocultação e Infiltrador, em um aliado adjacente, a GD para esta " +
             "ação aumenta em +1 Nível."),

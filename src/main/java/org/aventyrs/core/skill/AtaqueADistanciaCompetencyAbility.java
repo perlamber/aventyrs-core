@@ -38,17 +38,20 @@ public enum AtaqueADistanciaCompetencyAbility implements SkillCompetencyAbility 
     },
 
     // TODO: Vantagem on damage rolls (not the Perícia roll itself) against targets at
-    // Distância Curta or closer — no damage-roll concept or target-range/distance system
-    // exists yet.
+    // Distância Curta or closer — the target's distance is now checkable for real (see
+    // org.aventyrs.core.scene.SceneContext#getDistanceTo/Range#isWithin), but there's still
+    // no damage-roll concept to grant Vantagem on in the first place.
     FRIEZA("Vantagem nas rolagens de dano de Ataques à Distância realizados contra alvos " +
             "em Distância Curta ou inferior."),
 
     // TODO: a successful hit on a damaging attack lets the character pick a new target at
     // Distância Muito Curta from the original and roll this Perícia again, dealing 1d6
-    // damage (or the Magia/Efeito's own described damage if lower) on success — no
-    // "Corrente de Efeitos" (chain-effect), targeting/range system, or Magia/Efeito entity
-    // exists yet, and this core deliberately never rolls dice (1d6) — see the skill
-    // package-info.
+    // damage (or the Magia/Efeito's own described damage if lower) on success — the Distância
+    // vocabulary exists now (org.aventyrs.core.scene.Range), but SceneContext only answers
+    // "how far is CharacterSheet X", not "which targets are within Y of this other target",
+    // so picking a *new* target this way still isn't expressible; also no "Corrente de
+    // Efeitos" (chain-effect) or Magia/Efeito entity exists yet, and this core deliberately
+    // never rolls dice (1d6) — see the skill package-info.
     DISPARO_RICOCHETE("Seus Ataques à Distância capazes de infligir danos recebem a " +
             "Corrente de Efeitos – Ricochete - Você pode escolher um novo alvo em " +
             "Distância Muito Curta de seu alvo inicial e efetuar uma nova rolagem nesta " +

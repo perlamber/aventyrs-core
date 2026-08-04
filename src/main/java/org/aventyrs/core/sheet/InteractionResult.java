@@ -58,4 +58,13 @@ public class InteractionResult {
      * own 1/2/3 Rodadas depending on the caster's Artes Graduação.
      */
     Integer temporaryBonusRounds;
+
+    /**
+     * Who {@link #temporaryBonusValue} applies to — {@code ALLIES} for DOM_BARDICO. A caller
+     * resolves the actual recipient list from this (via {@code Scene#getAllies}/
+     * {@code #getEnemies}, or its own single-target lookup) — this core only says *who kind*,
+     * never the concrete list, same as {@link #temporaryBonusValue} itself only says *what*,
+     * never *who receives it*.
+     */
+    TargetScope temporaryBonusScope;
 }

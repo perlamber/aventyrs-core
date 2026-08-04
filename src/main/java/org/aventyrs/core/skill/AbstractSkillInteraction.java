@@ -8,6 +8,7 @@ import org.aventyrs.core.character.services.CharacterSkillServiceImpl;
 import org.aventyrs.core.modifier.ModifierResolver;
 import org.aventyrs.core.modifier.ModifierResolverImpl;
 import org.aventyrs.core.modifier.ModifierType;
+import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.Interaction;
 import org.aventyrs.core.sheet.InteractionResult;
@@ -37,13 +38,14 @@ import static org.aventyrs.core.skill.Skill.UNTRAINED_PENALTY;
  * Computes {@code difficultyReduction} from unlocked {@code SkillExcellency} tiers plus every
  * {@code skillCompetencyAbility}'s own {@link SkillCompetencyAbility#getDifficultyReduction()}.
  *
- * <p>A subclass with something genuinely skill-specific to add overrides {@link #applyTo} and
- * calls {@code super.applyTo(target)} first, then layers its own addition on top of the
- * result — most skills need nothing extra (e.g. {@link DominioDoManaInteraction}'s "this is
- * always the second of two rolls" note is documentation, not behavior). {@link
- * ArtesInteraction} is the one that currently does: a character holding {@code
- * ArtesCompetencyAbility#DOM_BARDICO} gets {@code temporaryBonusModifierType}/{@code
- * temporaryBonusRounds} set on the result — see that class.
+ * <p>A subclass with something genuinely skill-specific to add overrides {@link
+ * #applyTo(CharacterSheet, SceneContext)} (not the 1-arg overload, which just delegates to it
+ * with {@code null}) and calls {@code super.applyTo(target, sceneContext)} first, then layers
+ * its own addition on top of the result — most skills need nothing extra (e.g. {@link
+ * DominioDoManaInteraction}'s "this is always the second of two rolls" note is documentation,
+ * not behavior). {@link ArtesInteraction} is the one that currently does: a character holding
+ * {@code ArtesCompetencyAbility#DOM_BARDICO} gets {@code temporaryBonusModifierType}/{@code
+ * temporaryBonusRounds}/{@code temporaryBonusScope} set on the result — see that class.
  */
 public abstract class AbstractSkillInteraction implements Interaction<CharacterSheet> {
 
@@ -63,6 +65,22 @@ public abstract class AbstractSkillInteraction implements Interaction<CharacterS
 
     @Override
     public InteractionResult applyTo(final CharacterSheet target) {
+        return applyTo(target, null);
+    }
+
+    /**
+     * Same as {@link #applyTo(CharacterSheet)}, but also given sceneContext — nearby allies/
+     * enemies and their {@code Range} — for a subclass whose bonus is conditioned on
+     * proximity (e.g. {@code MedicinaECuraExcellency#FOCADO}'s "se não tiver inimigos
+     * próximos") to consult by overriding this method instead of the 1-arg one. sceneContext
+     * may be {@code null} (the 1-arg {@link #applyTo(CharacterSheet)} always passes {@code
+     * null}) when the caller doesn't have one — e.g. no active {@code Scene}, or this roll
+     * isn't happening in an encounter. Every current skill computes the exact same result
+     * whether sceneContext is {@code null} or not, since none has a proximity-conditioned
+     * bonus wired yet — this base implementation doesn't consult it at all; it's here purely
+     * so subclasses have somewhere to receive it.
+     */
+    public InteractionResult applyTo(final CharacterSheet target, final SceneContext sceneContext) {
         Character character = target.getCharacter();
         CharacterSkill characterSkill = findCharacterSkill(character);
         int graduationValue = characterSkill.getGraduation().getGraduationValue();

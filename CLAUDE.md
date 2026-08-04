@@ -400,30 +400,106 @@ caster) with a Perícia-roll bonus for 1-3 Rodadas depending on the caster's own
   real and tested (`CharacterSheetTest`, `ArtesInteractionTest
   #applyToIncludesAnActiveTemporarySkillRollBonus`/`#applyToIgnoresAnExpiredTemporarySkillRollBonus`),
   it's specifically the automatic *trigger* that's deferred.
-- `InteractionResult.temporaryBonusValue`/`temporaryBonusModifierType`/`temporaryBonusRounds`
-  are where a roll that *grants* one of these (as opposed to merely being affected by an
-  already-granted one) is expected to report it. `temporaryBonusModifierType` is a
-  `ModifierType`, not a `SkillType` — deliberately matching `TemporaryBonus`'s own field, so
-  it's exactly what a caller passes straight into `CharacterSheet#grantTemporaryBonus` with no
-  extra `SkillType`→`ModifierType` mapping step (the broad `SKILL_ROLL_BONUS`, or one specific
-  skill's own `rollBonusType`). Who actually *receives* the bonus is still deliberately not
-  this core's concern — these three fields are the computed "what" (value, type, duration), a
-  caller resolves the "who" via `Scene.getAllies` and calls `grantTemporaryBonus` on each
-  recipient itself. `InteractionResult` needed `@Builder(toBuilder = true)` added for this —
-  a subclass overriding `applyTo` (see below) extends the base result via `.toBuilder()`
-  rather than reassembling every field by hand.
-- `ArtesInteraction` overrides `applyTo` to actually set two of these three fields for a
+- `InteractionResult.temporaryBonusValue`/`temporaryBonusModifierType`/`temporaryBonusRounds`/
+  `temporaryBonusScope` are where a roll that *grants* one of these (as opposed to merely
+  being affected by an already-granted one) is expected to report it.
+  `temporaryBonusModifierType` is a `ModifierType`, not a `SkillType` — deliberately matching
+  `TemporaryBonus`'s own field, so it's exactly what a caller passes straight into
+  `CharacterSheet#grantTemporaryBonus` with no extra `SkillType`→`ModifierType` mapping step
+  (the broad `SKILL_ROLL_BONUS`, or one specific skill's own `rollBonusType`).
+  `temporaryBonusScope` is a `TargetScope` (`SINGLE_TARGET`/`ALLIES`/`ENEMIES`) — *who kind*
+  of recipient, e.g. `ALLIES` for DOM_BARDICO. Who actually *receives* the bonus is still
+  deliberately not this core's concern — these four fields are the computed "what" (value,
+  type, duration) and "who kind" (scope), a caller resolves the concrete recipient list via
+  `Scene.getAllies`/`getEnemies` (for `ALLIES`/`ENEMIES`) or its own target lookup (for
+  `SINGLE_TARGET`) and calls `grantTemporaryBonus` on each recipient itself. `InteractionResult`
+  needed `@Builder(toBuilder = true)` added for this — a subclass overriding `applyTo` (see
+  below) extends the base result via `.toBuilder()` rather than reassembling every field by
+  hand.
+- `ArtesInteraction` overrides `applyTo` to actually set three of these four fields for a
   character holding `ArtesCompetencyAbility#DOM_BARDICO`: `temporaryBonusModifierType`
   (always `SKILL_ROLL_BONUS`, since this ability's own rules text is unrestricted — "rolagens
-  de Perícias", not one specific Perícia) and `temporaryBonusRounds` (1 Rodada normally, 2
-  once Artes reaches 5 Graduações, 3 at 10 — a small graduation-threshold lookup specific to
-  this one ability, not worth generalizing into `ExcellencyTier`'s fixed 3/7/10 shape since
-  DOM_BARDICO's thresholds/values don't match it). `temporaryBonusValue` stays `null` — that's
-  the GD-tier-to-bonus lookup, which still needs a roll-resolution-vs-`DifficultyLevel` engine
-  this codebase doesn't have, so it's the one field of the three `ArtesInteraction` can't set
-  yet. A caller must still gate on `temporaryBonusValue != null` before granting anything —
-  `temporaryBonusModifierType`/`temporaryBonusRounds` being set doesn't by itself mean there's
-  something to grant.
+  de Perícias", not one specific Perícia), `temporaryBonusScope` (always `ALLIES` — "concedendo
+  ... a eles, mas não a você"), and `temporaryBonusRounds` (1 Rodada normally, 2 once Artes
+  reaches 5 Graduações, 3 at 10 — a small graduation-threshold lookup specific to this one
+  ability, not worth generalizing into `ExcellencyTier`'s fixed 3/7/10 shape since DOM_BARDICO's
+  thresholds/values don't match it). `temporaryBonusValue` stays `null` — that's the
+  GD-tier-to-bonus lookup, which still needs a roll-resolution-vs-`DifficultyLevel` engine this
+  codebase doesn't have, so it's the one field of the four `ArtesInteraction` can't set yet. A
+  caller must still gate on `temporaryBonusValue != null` before granting anything — the other
+  three being set doesn't by itself mean there's something to grant.
+- **`AbstractSkillInteraction.applyTo` actually has two overloads now**:
+  `applyTo(CharacterSheet)` (the `Interaction` interface's own method) just delegates to
+  `applyTo(CharacterSheet, SceneContext)` with a `null` context; the 2-arg one holds all the
+  real logic. A subclass overrides the **2-arg** one (not the 1-arg one) — `ArtesInteraction`
+  does — and calls `super.applyTo(target, sceneContext)` first; the 1-arg delegation still
+  reaches the override correctly through ordinary virtual dispatch (`this.applyTo(target,
+  null)` inside the base class's 1-arg method resolves to the subclass's override at
+  runtime), so a subclass never needs to *also* override the 1-arg method. See "Range and
+  SceneContext" below for what `SceneContext` is and why this exists — no ability consumes it
+  for a real numeric effect yet, so passing `null` (or any `SceneContext`) currently produces
+  identical results for every skill; this is deliberately built ahead of a concrete consumer,
+  same as the four `TemporaryBonus`-related fields above were before `ArtesInteraction`
+  started setting them.
+
+## Range and SceneContext — `org.aventyrs.core.scene.SceneContext`
+
+Some ability bonuses are conditioned on how close an ally or enemy currently is — e.g.
+`MedicinaECuraExcellency.FOCADO`'s "se não tiver inimigos próximos (Distância Curta)" or
+`AtaqueADistanciaCompetencyAbility.FRIEZA`'s "contra alvos em Distância Curta ou inferior".
+This core has no grid/positioning system (it never will — same "this core doesn't roll dice"
+philosophy applies to "this core doesn't do geometry"), so distances are always supplied
+already-resolved by a caller, same as `InitiativeEntry`'s own `initiativeValue` already is.
+
+- `Range` (`org.aventyrs.core.scene`) is the five distance bands rules text uses — `ADJACENTE`,
+  `DISTANCIA_CURTA`, `DISTANCIA_MEDIA`, `DISTANCIA_LONGA`, `DISTANCIA_MUITO_LONGA` — ordered
+  nearest-to-farthest so `isWithin(Range maxRange)` can express "Distância Curta ou inferior"
+  directly via ordinal comparison.
+- `Scene.getEnemies(CharacterSheet)` is the complement of the existing `getAllies` — every
+  participant *not* sharing that Character's sub-group. This is a simplification worth
+  remembering: with more than two sub-groups in one `Scene` (e.g. two feuding NPC factions
+  plus the PCs), "not my group" and "actually hostile to me" aren't necessarily the same
+  thing, but this core has no faction-relationship/allegiance concept beyond the binary "same
+  group or not" — document that gap rather than silently over-scoping if it ever matters.
+- `SceneContext` is a **plain, resolved snapshot** — `List<CharacterSheet> allies`,
+  `List<CharacterSheet> enemies`, and a `Map<CharacterSheet, Range>` of known distances (only
+  needs entries for whoever's actually close enough to matter — anyone missing from the map
+  reads as out of range) — with **no `Scene` reference of its own**. It deliberately doesn't
+  hold or query a `Scene`: an earlier version did (`allies`/`enemies` delegated live to
+  `scene.getAllies(actor)`/`getEnemies(actor)` on every call), but that coupled a supposedly
+  lightweight context to the whole `Scene` class, made it awkward to construct in isolation
+  (a test needing one had to first build a real `Scene` with participants added), and gave it
+  implicit "live" semantics — the ally/enemy lists could change between two calls if `Scene`
+  mutated in between — that nothing about "a snapshot passed into one roll" actually wants.
+  `Scene.buildContext(CharacterSheet, Map<CharacterSheet, Range>)` is the convenience for the
+  common case of already having a live `Scene`: it resolves `getAllies`/`getEnemies` **once**
+  and hands the result to `SceneContext`'s plain constructor. A test, or any caller without a
+  `Scene`, builds one directly from two lists instead.
+- Exposes `getDistanceTo(CharacterSheet)`, `hasAllyWithin(Range)`/`hasEnemyWithin(Range)` (the
+  latter is exactly `MedicinaECuraExcellency.FOCADO`'s own condition,
+  `hasEnemyWithin(Range.DISTANCIA_CURTA)`), and `countAlliesWithin(Range)`/
+  `countEnemiesWithin(Range)` — for a bonus that scales with *how many* allies/enemies are
+  nearby (a "gang up" bonus, a "surrounded" malus), not just whether any are. `hasAllyWithin`/
+  `hasEnemyWithin` are themselves just `countXWithin(range) > 0` now — one counting primitive
+  underneath both the boolean and the scaling query, instead of two separate implementations
+  that could drift.
+- This is real, tested infrastructure with **no current consumer** — every proximity-gated
+  ability found so far (`FOCADO`, `FRIEZA`, `AttentionCompetencyAbility.PERCEPCAO_DE_FOXM`,
+  `PersuasaoCompetencyAbility.ESPALHAR_EMOCOES`, `FurtividadeCompetencyAbility
+  .ESCONDER_OUTROS`, `AtaqueADistanciaCompetencyAbility.DISPARO_RICOCHETE`) still needs at
+  least one *other* missing system too (a roll-resolution-vs-`DifficultyLevel` engine, a
+  damage-roll concept, a trigger/temporary-buff-after-success mechanism, a GD-*increase*
+  expression, or arbitrary-point targeting `SceneContext` doesn't do), so none was fully
+  unblocked by this alone — but each one's TODO now cites precisely which piece of its own
+  gap this closed, and which piece(s) remain. Check each constant's own TODO before assuming
+  proximity is the only thing standing between it and being real. `AbstractSkillInteractionTest
+  .GangUpBonusInteraction` demonstrates the count-scaled shape a real ability of this kind
+  would take (a private test-only subclass, same pattern `DamageServiceImplTest` uses for
+  test-only ability classes) — `min(countAlliesWithin(range) * perAllyBonus, max)`, computed
+  inside a subclass's `applyTo(CharacterSheet, SceneContext)` override — without inventing a
+  named ability or a new abstraction for "count-scaled bonuses" to back it, since no real
+  ability needing this shape has turned up in the ruleset yet; when one does, follow that
+  test's shape rather than the boolean `hasAllyWithin`/`hasEnemyWithin` one.
 
 ## Damage mitigation — `org.aventyrs.core.character.services.DamageService`
 

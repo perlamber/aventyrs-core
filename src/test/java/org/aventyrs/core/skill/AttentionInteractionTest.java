@@ -78,4 +78,19 @@ class AttentionInteractionTest {
 
         assertEquals(0, result.getSkillRollBonus());
     }
+
+    @Test
+    void applyToWithASceneContextProducesTheSameResultAsWithout() {
+        // AbstractSkillInteraction's SceneContext-accepting overload isn't consumed by any
+        // ability yet, so passing one (or null) must be a no-op for a skill with no override.
+        CharacterSkill attentionSkill = CharacterSkillFixture.blank(CharacterSkillFixture.ATTENTION_1).build();
+        attentionSkill.increaseGraduation(1);
+        CharacterSheet sheet = sheetWithInstinctAndSkill(2, attentionSkill);
+
+        InteractionResult withoutContext = attentionInteraction.applyTo(sheet);
+        InteractionResult withNullContext = attentionInteraction.applyTo(sheet, null);
+
+        assertEquals(withoutContext.getSkillRollBonus(), withNullContext.getSkillRollBonus());
+        assertEquals(withoutContext.getDifficultyReduction(), withNullContext.getDifficultyReduction());
+    }
 }

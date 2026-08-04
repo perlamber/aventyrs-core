@@ -5,8 +5,10 @@ import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.character.services.CharacterSkillService;
 import org.aventyrs.core.modifier.ModifierResolver;
 import org.aventyrs.core.modifier.ModifierType;
+import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.InteractionResult;
+import org.aventyrs.core.sheet.TargetScope;
 
 /**
  * Requests an Artes Perícia test. Which of Artes' specializations the roll is for doesn't
@@ -16,10 +18,11 @@ import org.aventyrs.core.sheet.InteractionResult;
  * <p>A character holding {@link ArtesCompetencyAbility#DOM_BARDICO} additionally has this
  * roll set {@code temporaryBonusModifierType} ({@link ModifierType#SKILL_ROLL_BONUS}, since
  * this ability's own rules text is unrestricted — "rolagens de Perícias", not one specific
- * Perícia) and {@code temporaryBonusRounds} (1 Rodada normally, 2 at 5 Graduações in Artes, 3
- * at 10) on the result. {@code temporaryBonusValue} stays {@code null} — that's a lookup by
- * which GD tier this roll reaches, which needs a roll-resolution-vs-{@link DifficultyLevel}
- * engine this core still doesn't have — see the ability's own TODO.
+ * Perícia), {@code temporaryBonusScope} ({@link TargetScope#ALLIES} — "concedendo... a eles
+ * (mas não a você)"), and {@code temporaryBonusRounds} (1 Rodada normally, 2 at 5 Graduações
+ * in Artes, 3 at 10) on the result. {@code temporaryBonusValue} stays {@code null} — that's a
+ * lookup by which GD tier this roll reaches, which needs a roll-resolution-vs-{@link
+ * DifficultyLevel} engine this core still doesn't have — see the ability's own TODO.
  */
 public class ArtesInteraction extends AbstractSkillInteraction {
 
@@ -32,14 +35,15 @@ public class ArtesInteraction extends AbstractSkillInteraction {
     }
 
     @Override
-    public InteractionResult applyTo(final CharacterSheet target) {
-        InteractionResult result = super.applyTo(target);
+    public InteractionResult applyTo(final CharacterSheet target, final SceneContext sceneContext) {
+        InteractionResult result = super.applyTo(target, sceneContext);
         Character character = target.getCharacter();
         if (!character.getSkillCompetencyAbilities().contains(ArtesCompetencyAbility.DOM_BARDICO)) {
             return result;
         }
         return result.toBuilder()
                 .temporaryBonusModifierType(ModifierType.SKILL_ROLL_BONUS)
+                .temporaryBonusScope(TargetScope.ALLIES)
                 .temporaryBonusRounds(domBardicoRounds(character))
                 .build();
     }

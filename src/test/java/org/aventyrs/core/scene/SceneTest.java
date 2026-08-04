@@ -215,4 +215,51 @@ class SceneTest {
 
         assertThrows(IllegalOperationException.class, () -> scene.getAllies(stranger));
     }
+
+    @Test
+    void getEnemiesReturnsParticipantsInADifferentGroup() {
+        Scene scene = new Scene();
+        UUID heroes = UUID.randomUUID();
+        UUID villains = UUID.randomUUID();
+        CharacterSheet hero = newSheet();
+        CharacterSheet villainOne = newSheet();
+        CharacterSheet villainTwo = newSheet();
+        scene.addParticipant(hero, 10, heroes);
+        scene.addParticipant(villainOne, 5, villains);
+        scene.addParticipant(villainTwo, 8, villains);
+
+        assertEquals(Set.of(villainOne, villainTwo), Set.copyOf(scene.getEnemies(hero)));
+    }
+
+    @Test
+    void getEnemiesExcludesAllies() {
+        Scene scene = new Scene();
+        UUID heroes = UUID.randomUUID();
+        CharacterSheet a = newSheet();
+        CharacterSheet b = newSheet();
+        scene.addParticipant(a, 10, heroes);
+        scene.addParticipant(b, 5, heroes);
+
+        assertTrue(scene.getEnemies(a).isEmpty());
+    }
+
+    @Test
+    void participantsAddedWithoutAnExplicitGroupAreEnemiesOfEveryoneElse() {
+        Scene scene = new Scene();
+        CharacterSheet a = newSheet();
+        CharacterSheet b = newSheet();
+        scene.addParticipant(a, 10);
+        scene.addParticipant(b, 5);
+
+        assertEquals(List.of(b), scene.getEnemies(a));
+        assertEquals(List.of(a), scene.getEnemies(b));
+    }
+
+    @Test
+    void getEnemiesThrowsForACharacterSheetNeverAddedToTheScene() {
+        Scene scene = new Scene();
+        CharacterSheet stranger = newSheet();
+
+        assertThrows(IllegalOperationException.class, () -> scene.getEnemies(stranger));
+    }
 }

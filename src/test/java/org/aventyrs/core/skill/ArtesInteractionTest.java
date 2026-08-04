@@ -8,11 +8,17 @@ import org.aventyrs.core.character.CharacterStatus;
 import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.character.fixture.CharacterSkillFixture;
 import org.aventyrs.core.modifier.ModifierType;
+import org.aventyrs.core.scene.Scene;
+import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.InteractionResult;
 import org.aventyrs.core.sheet.Player;
+import org.aventyrs.core.sheet.TargetScope;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.util.Map;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -180,6 +186,7 @@ class ArtesInteractionTest {
 
         assertEquals(ModifierType.SKILL_ROLL_BONUS, result.getTemporaryBonusModifierType());
         assertEquals(1, result.getTemporaryBonusRounds());
+        assertEquals(TargetScope.ALLIES, result.getTemporaryBonusScope());
         assertNull(result.getTemporaryBonusValue());
     }
 
@@ -199,5 +206,33 @@ class ArtesInteractionTest {
         InteractionResult result = artesInteraction.applyTo(sheet);
 
         assertEquals(3, result.getTemporaryBonusRounds());
+    }
+
+    @Test
+    void applyToWithASceneContextStillSetsDomBardicoFields() {
+        CharacterSheet sheet = sheetWithDomBardicoAndArtesGraduation(5);
+        Scene scene = new Scene();
+        UUID party = UUID.randomUUID();
+        scene.addParticipant(sheet, 10, party);
+        SceneContext sceneContext = scene.buildContext(sheet, Map.of());
+
+        InteractionResult result = artesInteraction.applyTo(sheet, sceneContext);
+
+        assertEquals(ModifierType.SKILL_ROLL_BONUS, result.getTemporaryBonusModifierType());
+        assertEquals(TargetScope.ALLIES, result.getTemporaryBonusScope());
+        assertEquals(2, result.getTemporaryBonusRounds());
+    }
+
+    @Test
+    void oneArgApplyToDelegatesThroughToTheOverriddenTwoArgVersion() {
+        // Proves AbstractSkillInteraction's applyTo(target) -> applyTo(target, null) delegation
+        // still dispatches virtually to ArtesInteraction's own override, not the base class's.
+        CharacterSheet sheet = sheetWithDomBardicoAndArtesGraduation(10);
+
+        InteractionResult viaOneArg = artesInteraction.applyTo(sheet);
+        InteractionResult viaTwoArgWithNullContext = artesInteraction.applyTo(sheet, null);
+
+        assertEquals(viaTwoArgWithNullContext.getTemporaryBonusRounds(), viaOneArg.getTemporaryBonusRounds());
+        assertEquals(TargetScope.ALLIES, viaOneArg.getTemporaryBonusScope());
     }
 }

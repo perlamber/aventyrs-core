@@ -11,9 +11,11 @@ import lombok.Getter;
 public enum AttentionCompetencyAbility implements SkillCompetencyAbility {
 
     // TODO: automatic success, skipping the roll entirely, to perceive occurrences at
-    // Distância Muito Curta whose GD is Média or lower — needs a
-    // roll-resolution-vs-DifficultyLevel engine (to know an occurrence's GD and compare it
-    // against Média) and a range/distance system, neither of which exist yet.
+    // Distância Muito Curta whose GD is Média or lower — the Distância vocabulary itself now
+    // exists (org.aventyrs.core.scene.Range), but that only tracks distance *between
+    // CharacterSheets* (see SceneContext), not to an arbitrary in-fiction occurrence, so it
+    // doesn't directly cover this case; still needs a roll-resolution-vs-DifficultyLevel
+    // engine too (to know an occurrence's GD and compare it against Média).
     PERCEPCAO_DE_FOXM("Você é sempre bem-sucedido, dispensando rolagens, para perceber " +
             "ocorrências em Distância Muito Curta cuja GD seja igual ou inferior à Média."),
 

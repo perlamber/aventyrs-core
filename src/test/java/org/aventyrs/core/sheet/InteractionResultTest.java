@@ -41,6 +41,7 @@ class InteractionResultTest {
         assertNull(result.getTemporaryBonusValue());
         assertNull(result.getTemporaryBonusModifierType());
         assertNull(result.getTemporaryBonusRounds());
+        assertNull(result.getTemporaryBonusScope());
     }
 
     @Test
@@ -49,24 +50,28 @@ class InteractionResultTest {
                 .temporaryBonusValue(2)
                 .temporaryBonusModifierType(ModifierType.ATLETISMO_ROLL_BONUS)
                 .temporaryBonusRounds(1)
+                .temporaryBonusScope(TargetScope.SINGLE_TARGET)
                 .build();
 
         assertEquals(2, result.getTemporaryBonusValue());
         assertEquals(ModifierType.ATLETISMO_ROLL_BONUS, result.getTemporaryBonusModifierType());
         assertEquals(1, result.getTemporaryBonusRounds());
+        assertEquals(TargetScope.SINGLE_TARGET, result.getTemporaryBonusScope());
     }
 
     @Test
-    void builderAssignsATemporaryBonusThatAppliesBroadly() {
+    void builderAssignsATemporaryBonusThatAppliesBroadlyToAllies() {
         InteractionResult result = InteractionResult.builder()
                 .temporaryBonusValue(1)
                 .temporaryBonusModifierType(ModifierType.SKILL_ROLL_BONUS)
                 .temporaryBonusRounds(2)
+                .temporaryBonusScope(TargetScope.ALLIES)
                 .build();
 
         assertEquals(1, result.getTemporaryBonusValue());
         assertEquals(ModifierType.SKILL_ROLL_BONUS, result.getTemporaryBonusModifierType());
         assertEquals(2, result.getTemporaryBonusRounds());
+        assertEquals(TargetScope.ALLIES, result.getTemporaryBonusScope());
     }
 
     @Test

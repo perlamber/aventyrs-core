@@ -12,10 +12,12 @@ import lombok.Getter;
 public enum MedicinaECuraExcellency implements SkillExcellency {
 
     // TODO: automatic success on rolls to stanch bleeding while no enemies are within
-    // Distância Curta — needs a roll-resolution-vs-DifficultyLevel engine (to define
-    // "success", same gap as AtaqueADistanciaCompetencyAbility.DIRECAO_SEGURA-style
-    // auto-success effects) and a nearby-enemy/range-detection system, neither of which
-    // exist yet.
+    // Distância Curta. The enemy-proximity condition itself is now checkable for real —
+    // see org.aventyrs.core.scene.SceneContext#hasEnemyWithin(Range.DISTANCIA_CURTA) — but
+    // this still needs a roll-resolution-vs-DifficultyLevel engine to define "success" in
+    // the first place (same gap as AtaqueADistanciaCompetencyAbility.DIRECAO_SEGURA-style
+    // auto-success effects), which doesn't exist yet; nothing currently calls
+    // AbstractSkillInteraction's SceneContext-accepting applyTo overload for this ability.
     FOCADO(ExcellencyTier.FOCADO, "Se não tiver inimigos próximos (Distância Curta) você é " +
             "sempre considerado bem-sucedido em rolagens para estancar sangramentos."),
 

@@ -5,6 +5,7 @@ import org.aventyrs.core.sheet.IllegalOperationException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -79,6 +80,34 @@ public class Scene {
                 .map(InitiativeEntry::getCharacterSheet)
                 .filter(sheet -> !sheet.getId().equals(characterSheet.getId()))
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Every participant in this Scene *not* sharing characterSheet's sub-group — the
+     * complement of {@link #getAllies}. This is a simplification: with more than two
+     * sub-groups in the same Scene (e.g. two feuding NPC factions plus the PCs), "not my
+     * group" and "hostile to me" aren't necessarily the same thing, but this core has no
+     * faction-relationship/allegiance concept beyond the binary "same group or not" — see
+     * {@link SceneContext}, the consumer this method and {@link #getAllies} exist for.
+     * @throws IllegalOperationException if characterSheet was never added to this Scene
+     */
+    public List<CharacterSheet> getEnemies(final CharacterSheet characterSheet) {
+        UUID group = groupOf(characterSheet);
+        return allEntries()
+                .filter(entry -> !entry.getGroup().equals(group))
+                .map(InitiativeEntry::getCharacterSheet)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Builds a {@link SceneContext} snapshotting characterSheet's current allies/enemies in
+     * this Scene (via {@link #getAllies}/{@link #getEnemies}), paired with distances —
+     * {@code SceneContext} itself doesn't hold a {@code Scene} reference (see its own
+     * javadoc for why), so this is the convenience for the common case of already having one.
+     * @throws IllegalOperationException if characterSheet was never added to this Scene
+     */
+    public SceneContext buildContext(final CharacterSheet characterSheet, final Map<CharacterSheet, Range> distances) {
+        return new SceneContext(getAllies(characterSheet), getEnemies(characterSheet), distances);
     }
 
     private UUID groupOf(final CharacterSheet characterSheet) {

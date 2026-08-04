@@ -21,10 +21,11 @@ public enum PersuasaoCompetencyAbility implements SkillCompetencyAbility {
     FORCA_OPRESSORA("Você pode substituir o Atributo Base desta Perícia por Força."),
 
     // TODO: after succeeding at a Comunicação/Mentir ou Omitir/Intimidação roll, grants
-    // Vantagem on similar rolls against other nearby (Distância Curta) characters — needs a
-    // roll-resolution-vs-DifficultyLevel engine (to know "success"), a
-    // trigger/temporary-buff-after-success mechanism, and a range/proximity system, none of
-    // which exist yet.
+    // Vantagem on similar rolls against other nearby (Distância Curta) characters. A
+    // range/proximity system now exists — org.aventyrs.core.scene.SceneContext/Range — so
+    // "nearby" itself is checkable; what's still missing is a
+    // roll-resolution-vs-DifficultyLevel engine (to know "success") and a
+    // trigger/temporary-buff-after-success mechanism, neither of which exist yet.
     ESPALHAR_EMOCOES("Após ser bem-sucedido em rolagens de Comunicação, Mentir ou Omitir " +
             "ou Intimidação, você recebe Vantagem em rolagens semelhantes contra outros " +
             "personagens próximos (Distância Curta)."),

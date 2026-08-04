@@ -1,0 +1,141 @@
+package org.aventyrs.core.skill;
+
+import org.aventyrs.core.character.AttributeValue;
+import org.aventyrs.core.character.Character;
+import org.aventyrs.core.character.CharacterAttributes;
+import org.aventyrs.core.character.CharacterSkill;
+import org.aventyrs.core.character.fixture.CharacterFixture;
+import org.aventyrs.core.character.fixture.CharacterSkillFixture;
+import org.aventyrs.core.scene.Range;
+import org.aventyrs.core.scene.SceneContext;
+import org.aventyrs.core.sheet.CharacterSheet;
+import org.aventyrs.core.sheet.InteractionResult;
+import org.aventyrs.core.sheet.Player;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+/**
+ * Demonstrates the extension point {@code AbstractSkillInteraction#applyTo(CharacterSheet,
+ * SceneContext)} exists for: a "gang up" style ability whose bonus scales with how many
+ * allies are within a given {@link Range}, clamped to a maximum — the shape a real ability
+ * like that would take, using a private test-only subclass (no such ability currently exists
+ * in the ruleset) the same way {@code DamageServiceImplTest} uses test-only ability classes to
+ * exercise a generic mechanism without needing a real named consumer yet. Which skill this
+ * hypothetical ability is attached to is arbitrary — Atletismo here — nothing about it is
+ * Atletismo-specific.
+ */
+class AbstractSkillInteractionTest {
+
+    private static final int PER_ALLY_BONUS = 1;
+    private static final int MAX_BONUS = 3;
+
+    private static class GangUpBonusInteraction extends AbstractSkillInteraction {
+        GangUpBonusInteraction() {
+            super(SkillType.ATLETISMO);
+        }
+
+        @Override
+        public InteractionResult applyTo(final CharacterSheet target, final SceneContext sceneContext) {
+            InteractionResult result = super.applyTo(target, sceneContext);
+            if (sceneContext == null) {
+                return result;
+            }
+            int gangUpBonus = Math.min(sceneContext.countAlliesWithin(Range.DISTANCIA_CURTA) * PER_ALLY_BONUS, MAX_BONUS);
+            return result.toBuilder()
+                    .skillRollBonus(result.getSkillRollBonus() + gangUpBonus)
+                    .build();
+        }
+    }
+
+    private final GangUpBonusInteraction interaction = new GangUpBonusInteraction();
+
+    @BeforeEach
+    void setup() {
+        CharacterFixture.loadTemplates();
+        CharacterSkillFixture.loadTemplates();
+    }
+
+    private CharacterSheet actingSheet(final int strengthBase) {
+        CharacterSkill atletismoSkill = CharacterSkillFixture.blank(CharacterSkillFixture.ATLETISMO_1).build();
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .attributes(CharacterAttributes.builder()
+                        .strength(AttributeValue.builder().base(strengthBase).build())
+                        .build())
+                .skill(SkillType.ATLETISMO, atletismoSkill)
+                .build();
+        return CharacterSheet.of(character, new Player());
+    }
+
+    private CharacterSheet newSheet() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK).build();
+        return CharacterSheet.of(character, new Player());
+    }
+
+    @Test
+    void applyToWithNoSceneContextOmitsTheCountScaledBonus() {
+        CharacterSheet sheet = actingSheet(2);
+
+        InteractionResult result = interaction.applyTo(sheet);
+
+        assertEquals(2, result.getSkillRollBonus());
+    }
+
+    @Test
+    void applyToScalesTheBonusByHowManyAlliesAreWithinRange() {
+        CharacterSheet sheet = actingSheet(2);
+        CharacterSheet adjacentAlly = newSheet();
+        CharacterSheet curtaAlly = newSheet();
+        SceneContext sceneContext = new SceneContext(
+                List.of(adjacentAlly, curtaAlly), List.of(),
+                Map.of(adjacentAlly, Range.ADJACENTE, curtaAlly, Range.DISTANCIA_CURTA));
+
+        InteractionResult result = interaction.applyTo(sheet, sceneContext);
+
+        assertEquals(4, result.getSkillRollBonus()); // 2 (base) + 2 allies * 1
+    }
+
+    @Test
+    void applyToClampsTheCountScaledBonusAtItsMaximum() {
+        CharacterSheet sheet = actingSheet(2);
+        CharacterSheet a = newSheet();
+        CharacterSheet b = newSheet();
+        CharacterSheet c = newSheet();
+        CharacterSheet d = newSheet();
+        SceneContext sceneContext = new SceneContext(
+                List.of(a, b, c, d), List.of(),
+                Map.of(a, Range.ADJACENTE, b, Range.ADJACENTE, c, Range.ADJACENTE, d, Range.ADJACENTE));
+
+        InteractionResult result = interaction.applyTo(sheet, sceneContext);
+
+        assertEquals(5, result.getSkillRollBonus()); // 2 (base) + clamp(4, 3)
+    }
+
+    @Test
+    void applyToIgnoresAlliesOutsideTheRelevantRange() {
+        CharacterSheet sheet = actingSheet(2);
+        CharacterSheet farAlly = newSheet();
+        SceneContext sceneContext = new SceneContext(
+                List.of(farAlly), List.of(), Map.of(farAlly, Range.DISTANCIA_MUITO_LONGA));
+
+        InteractionResult result = interaction.applyTo(sheet, sceneContext);
+
+        assertEquals(2, result.getSkillRollBonus());
+    }
+
+    @Test
+    void applyToIgnoresEnemyCountForThisAllyScopedBonus() {
+        CharacterSheet sheet = actingSheet(2);
+        CharacterSheet adjacentEnemy = newSheet();
+        SceneContext sceneContext = new SceneContext(
+                List.of(), List.of(adjacentEnemy), Map.of(adjacentEnemy, Range.ADJACENTE));
+
+        InteractionResult result = interaction.applyTo(sheet, sceneContext);
+
+        assertEquals(2, result.getSkillRollBonus());
+    }
+}
