@@ -13,6 +13,8 @@ import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.Interaction;
 import org.aventyrs.core.sheet.InteractionResult;
+import org.aventyrs.core.skill.artes.ArtesInteraction;
+import org.aventyrs.core.skill.dominiodomana.DominioDoManaInteraction;
 
 import java.util.Collection;
 import java.util.List;

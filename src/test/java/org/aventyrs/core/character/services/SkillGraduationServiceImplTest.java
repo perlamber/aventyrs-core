@@ -9,8 +9,9 @@ import org.aventyrs.core.character.fixture.CharacterSkillFixture;
 import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.Player;
-import org.aventyrs.core.skill.AtaqueCorpoACorpoCompetencyAbility;
+import org.aventyrs.core.skill.ataquecorpoacorpo.AtaqueCorpoACorpoCompetencyAbility;
 import org.aventyrs.core.skill.SkillType;
+import org.aventyrs.core.skill.ataquecorpoacorpo.AtaqueCorpoACorpoCompetencyAbility;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

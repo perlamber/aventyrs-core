@@ -8,7 +8,7 @@ import lombok.Getter;
  * ability that lets the player pick one of several fixed effects instead. Only use this for
  * abilities that are plain enum constants; when the choice needs to feed the ability's own
  * {@code @Modifier} methods, prefer a dedicated instance-based ability class carrying the
- * choice as a field (see {@code org.aventyrs.core.skill.ArtesAprimorarComArteAbility}) so the
+ * choice as a field (see {@code org.aventyrs.core.skill.artes.ArtesAprimorarComArteAbility}) so the
  * normal modifier scan picks it up without extra wiring. {@code C} is the type of the chosen
  * value (a {@code SkillType} for a Perícia choice, an ability-specific enum for an
  * effect choice, etc.); {@code ability} is the specific enum constant the choice belongs to

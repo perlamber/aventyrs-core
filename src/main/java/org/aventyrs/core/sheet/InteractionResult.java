@@ -4,6 +4,8 @@ import org.aventyrs.core.character.CharacterStatus;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.skill.CriticalResult;
 import org.aventyrs.core.skill.DifficultyLevel;
+import org.aventyrs.core.skill.SkillExcellency;
+import org.aventyrs.core.skill.artes.ArtesExcellency;
 
 import lombok.Builder;
 import lombok.Getter;
@@ -26,7 +28,7 @@ public class InteractionResult {
      * Total GD (DifficultyLevel) steps reduced for this Perícia test, aggregated from
      * whatever's currently known on the CharacterSheet — for now, only the trained Skill's
      * unlocked {@link org.aventyrs.core.skill.SkillExcellency} tiers (e.g.
-     * {@link org.aventyrs.core.skill.ArtesExcellency#PRODIGIO}). More sources (Talentos,
+     * {@link org.aventyrs.core.skill.artes.ArtesExcellency#PRODIGIO}). More sources (Talentos,
      * temporary buffs, etc.) would add to this same total as they're built.
      */
     Integer difficultyReduction;

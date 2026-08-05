@@ -5,8 +5,8 @@
  *
  * A Skill Roll is requested by constructing the concrete
  * {@link org.aventyrs.core.sheet.Interaction} for that Perícia — one class per Perícia, named
- * {@code <Skill>Interaction} (e.g. {@link org.aventyrs.core.skill.AttentionInteraction},
- * {@link org.aventyrs.core.skill.ArtesInteraction}) — and handing it to the target's
+ * {@code <Skill>Interaction} (e.g. {@link org.aventyrs.core.skill.attention.AttentionInteraction},
+ * {@link org.aventyrs.core.skill.artes.ArtesInteraction}) — and handing it to the target's
  * {@link org.aventyrs.core.sheet.CharacterSheet#receiveInteraction}:
  *
  * <pre>{@code

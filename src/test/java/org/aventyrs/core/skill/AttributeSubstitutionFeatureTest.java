@@ -5,6 +5,11 @@ import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.InteractionResult;
 import org.aventyrs.core.sheet.Player;
+import org.aventyrs.core.skill.ataqueadistancia.AtaqueADistanciaInteraction;
+import org.aventyrs.core.skill.ataquecorpoacorpo.AtaqueCorpoACorpoInteraction;
+import org.aventyrs.core.skill.atletismo.AtletismoInteraction;
+import org.aventyrs.core.skill.dominiodomana.DominioDoManaInteraction;
+import org.aventyrs.core.skill.persuasao.PersuasaoInteraction;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

@@ -1,0 +1,17 @@
+package org.aventyrs.core.skill.conhecimentos;
+
+import org.aventyrs.core.character.AttributeDomain;
+import org.aventyrs.core.skill.BasicSkill;
+import org.aventyrs.core.skill.Skill;
+
+public class Conhecimentos extends BasicSkill implements Skill {
+    public Conhecimentos()
+    {
+        super(AttributeDomain.GNOSE);
+    }
+
+    @Override
+    public AttributeDomain getAttributeDomain() {
+        return attributreUsed;
+    }
+}

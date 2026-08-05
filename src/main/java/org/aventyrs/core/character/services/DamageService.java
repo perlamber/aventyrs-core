@@ -2,6 +2,7 @@ package org.aventyrs.core.character.services;
 
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.sheet.CharacterSheet;
+import org.aventyrs.core.skill.SkillExcellency;
 
 /**
  * Computes and applies damage mitigation. Two independent flat reductions exist — RD

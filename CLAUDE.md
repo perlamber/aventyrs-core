@@ -1,8 +1,13 @@
 # Aventyrs Core — Project Conventions
 
 Rules-engine core for the Aventyrs tabletop game. Pure Java library (Lombok + JUnit 5 + Gradle),
-no framework dependencies — see `org.aventyrs.core.skill.Attention`/`Artes` and their
-`Interaction`s for the reference implementation of everything below.
+no framework dependencies — see `org.aventyrs.core.skill.attention.Attention`/
+`org.aventyrs.core.skill.artes.Artes` and their `Interaction`s for the reference
+implementation of everything below. Every Perícia's classes live together under their own
+subpackage of `org.aventyrs.core.skill` (e.g. `org.aventyrs.core.skill.artes` holds every
+`Artes*` class) — only the shared, cross-skill machinery (`AbstractSkillInteraction`,
+`Skill`, `SkillType`, `SkillCompetencyAbility`, `SkillExcellency`, `SkillRoll`,
+`DifficultyLevel`, etc.) stays directly in `org.aventyrs.core.skill` itself.
 
 ## Attribute `base`/Perícia Graduação: hard caps, and both upgrades cost XP
 
@@ -81,9 +86,13 @@ themselves; don't retrofit those existing Excelência-tier tests to comply with 
 Every new Skill (e.g. `Artes`, `Attention`) must be created with **all** of the following
 pieces — don't stop at just the `Skill` class:
 
-1. **The `Skill` itself** (`org.aventyrs.core.skill`): a class extending `BasicSkill`
-   implementing `Skill`, setting its `AttributeDomain` in the constructor. Mirror
-   `Attention`/`Artes` — no extra fields needed on the class itself.
+1. **The `Skill` itself** (in its own `org.aventyrs.core.skill.<skillname>` subpackage —
+   e.g. `org.aventyrs.core.skill.artes` for `Artes`, `org.aventyrs.core.skill.atletismo` for
+   `Atletismo` — lowercase, no separators): a class extending `BasicSkill` implementing
+   `Skill`, setting its `AttributeDomain` in the constructor. Mirror `Attention`/`Artes` — no
+   extra fields needed on the class itself. Every other piece below for this same Perícia
+   (its `SkillType` constant aside, which stays in the shared base package — see step 2) goes
+   in this same subpackage too, alongside its tests.
 
 2. **A `SkillType` constant** (`org.aventyrs.core.skill.SkillType`): one enum value per
    concrete `Skill`, used to key `Character.skills` (a `Map<SkillType, CharacterSkill>`) for

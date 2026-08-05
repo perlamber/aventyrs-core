@@ -1,6 +1,7 @@
 package org.aventyrs.core.character.services;
 
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.skill.SkillExcellency;
 
 public interface FreeActionsService {
     /** Every character starts with 1 Ação Livre before any Talento/Habilidade modifier applies. */

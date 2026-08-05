@@ -2,6 +2,7 @@ package org.aventyrs.core.skill;
 
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.sheet.IllegalOperationException;
+import org.aventyrs.core.skill.artes.ArtesInteraction;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;

@@ -1,0 +1,41 @@
+package org.aventyrs.core.skill.attention;
+
+import org.aventyrs.core.modifier.ModifierResolver;
+import org.aventyrs.core.modifier.ModifierResolverImpl;
+import org.aventyrs.core.modifier.ModifierType;
+import org.aventyrs.core.skill.SkillType;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+
+class AttentionCompetencyAbilityTest {
+
+    @Test
+    void everyAbilityBelongsToAttention() {
+        for (AttentionCompetencyAbility ability : AttentionCompetencyAbility.values()) {
+            assertEquals(SkillType.ATTENTION, ability.getSkillType());
+        }
+    }
+
+    @Test
+    void everyAbilityHasADescription() {
+        for (AttentionCompetencyAbility ability : AttentionCompetencyAbility.values()) {
+            assertFalse(ability.getDescription().isBlank());
+        }
+    }
+
+    @Test
+    void listHasTheFiveDescribedAbilities() {
+        assertEquals(5, AttentionCompetencyAbility.values().length);
+    }
+
+    @Test
+    void noAbilityReducesDifficultyOrGrantsASkillRollBonusYet() {
+        ModifierResolver modifierResolver = new ModifierResolverImpl();
+        for (AttentionCompetencyAbility ability : AttentionCompetencyAbility.values()) {
+            assertEquals(0, ability.getDifficultyReduction());
+            assertEquals(0, modifierResolver.sumModifiers(ability, ModifierType.SKILL_ROLL_BONUS));
+        }
+    }
+}

@@ -1,6 +1,8 @@
 package org.aventyrs.core.skill;
 
 import org.aventyrs.core.character.AttributeDomain;
+import org.aventyrs.core.skill.ataquecorpoacorpo.AtaqueCorpoACorpoCompetencyAbility;
+import org.aventyrs.core.skill.atletismo.AtletismoCompetencyAbility;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
