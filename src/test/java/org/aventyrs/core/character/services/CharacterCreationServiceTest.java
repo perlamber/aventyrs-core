@@ -1,14 +1,14 @@
 package org.aventyrs.core.character.services;
 
 import org.aventyrs.core.character.AttributeDomain;
+import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterAttributes;
 import org.aventyrs.core.character.CharacterEgos;
 import org.aventyrs.core.character.EgoDomain;
-import org.aventyrs.core.character.Human;
-import org.aventyrs.core.character.Race;
+import org.aventyrs.core.race.Human;
+import org.aventyrs.core.race.Race;
 import org.aventyrs.core.sheet.DlcRuleset;
 import org.aventyrs.core.sheet.IllegalOperationException;
-import org.aventyrs.core.character.Character;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;

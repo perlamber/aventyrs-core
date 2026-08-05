@@ -4,7 +4,7 @@ import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.AttributeValue;
 import org.aventyrs.core.character.CharacterAttributes;
 import org.aventyrs.core.character.CharacterSkill;
-import org.aventyrs.core.character.Race;
+import org.aventyrs.core.race.Race;
 import org.aventyrs.core.util.RollErrorException;
 
 import java.lang.reflect.InvocationTargetException;

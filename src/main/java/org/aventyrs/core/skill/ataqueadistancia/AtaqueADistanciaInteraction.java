@@ -40,7 +40,7 @@ import java.util.stream.Stream;
  * CharacterSheet)} — this Interaction just scans every {@code SkillCompetencyAbility} the
  * character holds, from both {@link Character#getSkillCompetencyAbilities()} (acquired) and
  * {@code character.getRace().getRacialAbilities()} (racial, see {@code
- * org.aventyrs.core.character.Race#getRacialAbilities()}) identically — it doesn't know or care
+ * org.aventyrs.core.race.Race#getRacialAbilities()}) identically — it doesn't know or care
  * which source or which specific constant answers.
  */
 public class AtaqueADistanciaInteraction extends AbstractSkillInteraction {

@@ -1,4 +1,4 @@
-package org.aventyrs.core.character;
+package org.aventyrs.core.race;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

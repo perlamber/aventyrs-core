@@ -648,6 +648,35 @@ already-resolved by a caller, same as `InitiativeEntry`'s own `initiativeValue` 
   ability needing this shape has turned up in the ruleset yet; when one does, follow that
   test's shape rather than the boolean `hasAllyWithin`/`hasEnemyWithin` one.
 
+## Races live in `org.aventyrs.core.race`, not `org.aventyrs.core.character`
+
+`Race` and every implementation (`Human`, `Anoes`, `Elfos`, `Gigantes`, `Pequenino`, and any
+`*RacialAbility` enums) live in their own top-level package, `org.aventyrs.core.race` — a
+sibling of `org.aventyrs.core.character`, not a subpackage of it, mirroring how
+`org.aventyrs.core.ability`/`org.aventyrs.core.feat` already sit alongside `character` rather
+than inside it. `Character` still holds a `Race race` field (and imports `org.aventyrs.core
+.race.Race` for it) — the two packages reference each other (`Race#generateEmptyCharacter`
+returns a `Character.CharacterBuilder`), which is an ordinary mutual class dependency Java has
+no trouble with, not a layering violation. If a future race needs its own subpackage
+(mirroring `org.aventyrs.core.skill.<skillname>`'s one-subpackage-per-Perícia convention),
+nothing here rules that out — there just wasn't a need for it yet.
+
+Not every race needs a `*RacialAbility` catalog: `Gigantes`/`Pequenino` (and the newly
+fleshed-out `Human` javadoc) leave `getRacialAbilities()` at `Race`'s own empty default,
+because none of their racial traits actually fit `SkillCompetencyAbility`'s shape — some
+aren't roll-conditioned at all (a Defesa modifier, a conditional RD), one needs a target
+classification this core can't make, one spans multiple `SkillType`s by `AttributeDomain`
+rather than naming one, and several are really "grant an acquisition slot" traits (matching
+`Elfos`' Origem Mística / `Anoes`' Pequenos Gigantes' already-documented gap), not roll
+bonuses. Don't force a `*RacialAbility` enum into existence just for symmetry with `Anoes`/
+`Elfos` — only build one once a trait's shape genuinely fits.
+
+`Gigantes` is also the first race to override `getNewFeatCost(FeatCategory)` for real
+(Talentos de Sobrevivência cost 2 XP instead of `Race.BASE_NEW_FEAT_COST`'s 3) — unlike the
+2.5-XP-style discounts every other race's own "Talentos custam menos" trait wants (`Elfos`'
+Conexão com o Mana, `Human`'s/`Pequenino`'s own Adaptação), 2 is a whole number `int` can
+represent exactly, so this one didn't hit the int-vs-fractional mismatch those did.
+
 ## Racial Abilities reuse `SkillCompetencyAbility` — `Race#getRacialAbilities()`
 
 A trait every member of a Race is automatically granted (e.g. Anões' Abatedores de Gigantes,
@@ -672,17 +701,31 @@ callers take the first non-empty result), `resolveAttackRollBonus` returns a pla
 <Integer>` meant to be *summed* across every ability that grants one — the same additive
 convention every other `skillRollBonus` source already follows.
 
-`AtaqueADistanciaInteraction#applyTo(CharacterSheet, SceneContext, SkillRoll, CharacterSheet)`
-(the same overload FRIEZA needed, for the same "needs to know the real attack target" reason)
-is the one place both of these are wired together today: it concatenates `character
-.getSkillCompetencyAbilities()` and `character.getRace().getRacialAbilities()` into a single
-list, then resolves both `resolveDamageBonus` and `resolveAttackRollBonus` against it
-identically — it never checks *which* constant or *which* source answered. `AnoesRacialAbility
-.ABATEDORES_DE_GIGANTES` only overrides `getSkillType()` to `ATAQUE_A_DISTANCIA` and is only
-wired into this one Interaction so far — the rules text actually covers every "Perícia de
-Ataque" (`SkillType#isAttackSkill()`), but `AtaqueCorpoACorpoInteraction` doesn't yet take an
-`attackTarget` parameter, so the melee side isn't wired; a future change extending it should
-follow this exact same shape rather than inventing a new one.
+Two consumers wire this in, at two different levels:
+
+- **Generically, for every skill**: `AbstractSkillInteraction` itself now has a private
+  `allSkillCompetencyAbilities(Character)` helper — `character.getSkillCompetencyAbilities()`
+  concatenated with `character.getRace().getRacialAbilities()` — and every place its `applyTo`
+  used to scan only the acquired list (the `@Modifier`-based `skillRollBonus` sum, the
+  `getDifficultyReduction()` sum, and `SkillCompetencyAbility.resolveAttributeDomain`) now
+  scans this combined one instead, with zero special-casing. `validateRequestedAbility` checks
+  both lists too, so a `SkillRoll` can name a racial ability as its `requestedAbility` the same
+  as an acquired one. This is what makes `ElfosRacialAbility.SENTIDOS_ABSOLUTOS` (unconditional
+  Vantagem on every Atenção roll — an ordinary `@Modifier(ModifierType.ATTENTION_ROLL_BONUS)`
+  method, granted the same flat-Vantagem way as any acquired ability, see "Vantagem is a flat
+  +2 bonus" above) work automatically for every `Elfos` character, with no
+  `AttentionInteraction`-specific code at all.
+- **Explicitly, where an ability needs the real attack target**: `resolveDamageBonus`/
+  `resolveAttackRollBonus` aren't part of that generic scan (they need `attackTarget`, which
+  `AbstractSkillInteraction`'s shared `applyTo` has no parameter for) — `AtaqueADistanciaInteraction
+  #applyTo(CharacterSheet, SceneContext, SkillRoll, CharacterSheet)` (the same overload FRIEZA
+  needed) does its own concatenation and resolves both against it identically, never checking
+  *which* constant or *which* source answered. `AnoesRacialAbility.ABATEDORES_DE_GIGANTES` only
+  overrides `getSkillType()` to `ATAQUE_A_DISTANCIA` and is only wired into this one Interaction
+  so far — the rules text actually covers every "Perícia de Ataque" (`SkillType#isAttackSkill()`),
+  but `AtaqueCorpoACorpoInteraction` doesn't yet take an `attackTarget` parameter, so the melee
+  side isn't wired; a future change extending it should follow this exact same shape rather
+  than inventing a new one.
 
 ## Damage mitigation — `org.aventyrs.core.character.services.DamageService`
 

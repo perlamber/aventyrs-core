@@ -1,5 +1,7 @@
-package org.aventyrs.core.character;
+package org.aventyrs.core.race;
 
+import org.aventyrs.core.character.AttributeDomain;
+import org.aventyrs.core.character.Character;
 import org.aventyrs.core.feat.FeatCategory;
 import org.aventyrs.core.sheet.DlcRuleset;
 import org.aventyrs.core.skill.SkillCompetencyAbility;

@@ -3,7 +3,7 @@ package org.aventyrs.core.character.services;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.CharacterAttributes;
 import org.aventyrs.core.character.CharacterSkill;
-import org.aventyrs.core.character.Race;
+import org.aventyrs.core.race.Race;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
 import org.aventyrs.core.util.RollErrorException;
 

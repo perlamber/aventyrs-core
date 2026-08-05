@@ -14,6 +14,7 @@ import org.aventyrs.core.action.ActionProfile;
 import org.aventyrs.core.character.services.FreeActionsService;
 import org.aventyrs.core.character.services.ReactionsService;
 import org.aventyrs.core.ego.AutocontroleAdvantage;
+import org.aventyrs.core.race.Race;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.Player;
 import org.aventyrs.core.skill.SkillCompetencyAbility;

@@ -11,8 +11,8 @@
  * builder. As of this writing, the steps are:
  *
  * <ol>
- *   <li><b>Pick a {@link org.aventyrs.core.character.Race}</b> (e.g.
- *       {@link org.aventyrs.core.character.Human}) — it drives step 2's racial bonuses and
+ *   <li><b>Pick a {@link org.aventyrs.core.race.Race}</b> (e.g.
+ *       {@link org.aventyrs.core.race.Human}) — it drives step 2's racial bonuses and
  *       the XP costs {@code Race} exposes for later advancement.</li>
  *   <li><b>Allocate Attributes</b> — {@link org.aventyrs.core.character.services.CharacterCreationService#allocateAttributes}
  *       spends the {@value org.aventyrs.core.character.services.CharacterCreationService#STARTING_ATTRIBUTE_POINTS}

@@ -6,6 +6,8 @@ import org.aventyrs.core.character.CharacterAttributes;
 import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.character.fixture.CharacterSkillFixture;
+import org.aventyrs.core.race.Elfos;
+import org.aventyrs.core.race.ElfosRacialAbility;
 import org.aventyrs.core.scene.Range;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.CharacterSheet;
@@ -198,5 +200,24 @@ class AbstractSkillInteractionTest {
         AttentionInteraction attentionInteraction = new AttentionInteraction();
 
         assertThrows(IllegalOperationException.class, () -> attentionInteraction.applyTo(sheet, null, skillRoll));
+    }
+
+    /**
+     * A racial ability (see CLAUDE.md's "Racial Abilities reuse SkillCompetencyAbility"
+     * section) is held via {@code character.getRace().getRacialAbilities()}, not {@code
+     * skillCompetencyAbilities} — {@code validateRequestedAbility} must check both, the same
+     * "held" test a {@code SkillCompetencyAbility} would need to pass.
+     */
+    @Test
+    void applyToWithARequestedRacialAbilityTheCharacterHoldsSucceeds() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .race(new Elfos())
+                .build();
+        CharacterSheet sheet = CharacterSheet.of(character, new Player());
+        SkillRoll skillRoll = new SkillRoll(List.of(2, 3, 4), ElfosRacialAbility.SENTIDOS_ABSOLUTOS);
+
+        InteractionResult result = new AttentionInteraction().applyTo(sheet, null, skillRoll);
+
+        assertNotNull(result);
     }
 }

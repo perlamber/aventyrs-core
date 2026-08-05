@@ -3,6 +3,8 @@ package org.aventyrs.core.character;
 import org.aventyrs.core.character.fixture.CharacterSkillFixture;
 import org.aventyrs.core.character.services.CharacterSkillService;
 import org.aventyrs.core.character.services.CharacterSkillServiceImpl;
+import org.aventyrs.core.race.Human;
+import org.aventyrs.core.race.Race;
 import org.aventyrs.core.skill.SkillGraduation;
 import org.aventyrs.core.util.RollErrorException;
 import org.junit.jupiter.api.BeforeEach;

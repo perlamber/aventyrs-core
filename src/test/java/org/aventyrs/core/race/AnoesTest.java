@@ -1,6 +1,11 @@
-package org.aventyrs.core.character;
+package org.aventyrs.core.race;
 
 import org.aventyrs.core.action.ActionProfile;
+import org.aventyrs.core.character.AttributeDomain;
+import org.aventyrs.core.character.Character;
+import org.aventyrs.core.character.CharacterAttributes;
+import org.aventyrs.core.character.CharacterEgos;
+import org.aventyrs.core.character.SizeCategory;
 import org.aventyrs.core.feat.FeatCategory;
 import org.aventyrs.core.sheet.Player;
 import org.junit.jupiter.api.Test;

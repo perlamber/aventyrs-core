@@ -18,6 +18,7 @@ import org.aventyrs.core.skill.dominiodomana.DominioDoManaInteraction;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static org.aventyrs.core.skill.Skill.UNTRAINED_PENALTY;
 import static org.aventyrs.core.util.TranslatableMessages.REQUIRED_COMPETENCY_ABILITY_NOT_HELD;
@@ -36,11 +37,16 @@ import static org.aventyrs.core.util.TranslatableMessages.REQUIRED_COMPETENCY_AB
  * skillType with no substituting ability) plus four sources, each summed for *both* {@code
  * ModifierType#SKILL_ROLL_BONUS} (applies to every Perícia's roll) and {@code
  * skillType.getRollBonusType()} (applies only to this one) — see {@link
- * #sumSkillRollBonusModifiers}: {@code attributeAbilities}, {@code skillCompetencyAbilities},
- * unlocked {@link SkillExcellency} tiers, and the target {@link CharacterSheet}'s own {@code
- * TemporaryBonus} pool (see CLAUDE.md's "Temporary bonuses from other Characters" section).
- * Computes {@code difficultyReduction} from unlocked {@code SkillExcellency} tiers plus every
- * {@code skillCompetencyAbility}'s own {@link SkillCompetencyAbility#getDifficultyReduction()}.
+ * #sumSkillRollBonusModifiers}: {@code attributeAbilities}, {@code skillCompetencyAbilities}
+ * *plus* {@code character.getRace().getRacialAbilities()} (see {@link #allSkillCompetencyAbilities}
+ * and CLAUDE.md's "Racial Abilities reuse SkillCompetencyAbility" section — a racial ability
+ * like {@code ElfosRacialAbility#SENTIDOS_ABSOLUTOS} contributes here identically to an
+ * acquired one), unlocked {@link SkillExcellency} tiers, and the target {@link CharacterSheet}'s
+ * own {@code TemporaryBonus} pool (see CLAUDE.md's "Temporary bonuses from other Characters"
+ * section). Computes {@code difficultyReduction} from unlocked {@code SkillExcellency} tiers
+ * plus every entry of that same combined acquired-plus-racial list's own {@link
+ * SkillCompetencyAbility#getDifficultyReduction()}. {@link SkillCompetencyAbility
+ * #resolveAttributeDomain} is resolved against the combined list too, for the same reason.
  *
  * <p>{@code applyTo} has three overloads, each just delegating down to the next one with
  * {@code null} for the newly-added parameter — {@code applyTo(target)} → {@code
@@ -123,20 +129,21 @@ public abstract class AbstractSkillInteraction implements Interaction<CharacterS
         }
         CharacterSkill characterSkill = findCharacterSkill(character);
         int graduationValue = characterSkill.getGraduation().getGraduationValue();
+        List<SkillCompetencyAbility> skillCompetencyAbilities = allSkillCompetencyAbilities(character);
 
         AttributeDomain attributeDomain = SkillCompetencyAbility.resolveAttributeDomain(
-                character.getSkillCompetencyAbilities(), skillType, characterSkill.getSkill().getAttributeDomain());
+                skillCompetencyAbilities, skillType, characterSkill.getSkill().getAttributeDomain());
 
         int bonus = characterSkillService.getValueForRoll(characterSkill, character.getAttributes(), character.getRace(), attributeDomain);
         bonus += sumSkillRollBonusModifiers(character.getAttributeAbilities());
-        bonus += sumSkillRollBonusModifiers(character.getSkillCompetencyAbilities());
+        bonus += sumSkillRollBonusModifiers(skillCompetencyAbilities);
         List<SkillExcellency> unlockedExcellencies = SkillExcellency.unlockedBy(skillType.getExcellencyClass(), graduationValue);
         bonus += sumSkillRollBonusModifiers(unlockedExcellencies);
         bonus += target.getTemporaryBonus(ModifierType.SKILL_ROLL_BONUS);
         bonus += target.getTemporaryBonus(skillType.getRollBonusType());
 
         int difficultyReduction = SkillExcellency.totalDifficultyReduction(skillType.getExcellencyClass(), graduationValue);
-        difficultyReduction += character.getSkillCompetencyAbilities().stream()
+        difficultyReduction += skillCompetencyAbilities.stream()
                 .mapToInt(SkillCompetencyAbility::getDifficultyReduction)
                 .sum();
 
@@ -162,9 +169,26 @@ public abstract class AbstractSkillInteraction implements Interaction<CharacterS
         if (requestedAbility == null) {
             return;
         }
-        if (requestedAbility.getSkillType() != skillType || !character.getSkillCompetencyAbilities().contains(requestedAbility)) {
+        boolean held = character.getSkillCompetencyAbilities().contains(requestedAbility)
+                || character.getRace().getRacialAbilities().contains(requestedAbility);
+        if (requestedAbility.getSkillType() != skillType || !held) {
             throw new IllegalOperationException(REQUIRED_COMPETENCY_ABILITY_NOT_HELD);
         }
+    }
+
+    /**
+     * {@code character.getSkillCompetencyAbilities()} (acquired) plus {@code
+     * character.getRace().getRacialAbilities()} (fixed per race) — see CLAUDE.md's "Racial
+     * Abilities reuse SkillCompetencyAbility" section. Every place in this class that used to
+     * scan only the acquired list now scans this combined one instead, so a racial ability
+     * contributes to {@code skillRollBonus}/{@code difficultyReduction}/attribute substitution
+     * exactly like an acquired one would, with no special-casing at any call site.
+     */
+    private List<SkillCompetencyAbility> allSkillCompetencyAbilities(final Character character) {
+        return Stream.concat(
+                        character.getSkillCompetencyAbilities().stream(),
+                        character.getRace().getRacialAbilities().stream())
+                .toList();
     }
 
     /**

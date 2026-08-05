@@ -7,11 +7,13 @@ import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.character.CharacterStatus;
 import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.character.fixture.CharacterSkillFixture;
+import org.aventyrs.core.race.Elfos;
 import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.InteractionResult;
 import org.aventyrs.core.sheet.Player;
 import org.aventyrs.core.skill.CriticalResult;
 import org.aventyrs.core.skill.DifficultyLevel;
+import org.aventyrs.core.skill.Skill;
 import org.aventyrs.core.skill.SkillRoll;
 import org.aventyrs.core.skill.SkillType;
 import org.junit.jupiter.api.BeforeEach;
@@ -133,5 +135,32 @@ class AttentionInteractionTest {
         InteractionResult result = attentionInteraction.applyTo(sheet, null, skillRoll);
 
         assertEquals(CriticalResult.ACERTO_CRITICO_MAIOR, result.getCriticalResult());
+    }
+
+    @Test
+    void applyToIncludesTheElfosSentidosAbsolutosRacialBonus() {
+        CharacterSkill attentionSkill = CharacterSkillFixture.blank(CharacterSkillFixture.ATTENTION_1).build();
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .attributes(CharacterAttributes.builder()
+                        .instinct(AttributeValue.builder().base(2).build())
+                        .build())
+                .skill(SkillType.ATTENTION, attentionSkill)
+                .race(new Elfos())
+                .build();
+        CharacterSheet sheet = CharacterSheet.of(character, new Player());
+
+        InteractionResult result = attentionInteraction.applyTo(sheet);
+
+        // 2 instinct + 0 graduação (untrained-of-extra), plus Elfos' racial Vantagem.
+        assertEquals(2 + Skill.ADVANTAGE_BONUS, result.getSkillRollBonus());
+    }
+
+    @Test
+    void applyToOmitsTheRacialBonusForANonElfoCharacter() {
+        CharacterSheet sheet = sheetWithInstinctAndSkill(2, null);
+
+        InteractionResult result = attentionInteraction.applyTo(sheet);
+
+        assertEquals(0, result.getSkillRollBonus());
     }
 }

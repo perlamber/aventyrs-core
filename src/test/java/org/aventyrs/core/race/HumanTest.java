@@ -1,4 +1,4 @@
-package org.aventyrs.core.character;
+package org.aventyrs.core.race;
 
 import org.aventyrs.core.feat.FeatCategory;
 import org.junit.jupiter.api.Test;

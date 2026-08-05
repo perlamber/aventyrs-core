@@ -1,17 +1,17 @@
 package org.aventyrs.core.skill.ataqueadistancia;
 
-import org.aventyrs.core.character.Anoes;
 import org.aventyrs.core.character.AttributeValue;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterAttributes;
 import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.character.CharacterStatus;
 import org.aventyrs.core.character.DamageType;
-import org.aventyrs.core.character.Human;
-import org.aventyrs.core.character.Race;
 import org.aventyrs.core.character.SizeCategory;
 import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.character.fixture.CharacterSkillFixture;
+import org.aventyrs.core.race.Anoes;
+import org.aventyrs.core.race.Human;
+import org.aventyrs.core.race.Race;
 import org.aventyrs.core.scene.Range;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.CharacterSheet;

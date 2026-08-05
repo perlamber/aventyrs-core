@@ -5,7 +5,7 @@ import org.aventyrs.core.character.AttributeValue;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterAttributes;
 import org.aventyrs.core.character.CharacterEgos;
-import org.aventyrs.core.character.Human;
+import org.aventyrs.core.race.Human;
 import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.Player;
 import org.junit.jupiter.api.Test;

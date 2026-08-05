@@ -1,5 +1,7 @@
-package org.aventyrs.core.character;
+package org.aventyrs.core.race;
 
+import org.aventyrs.core.character.Character;
+import org.aventyrs.core.character.SizeCategory;
 import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.Player;
