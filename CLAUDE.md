@@ -650,8 +650,8 @@ already-resolved by a caller, same as `InitiativeEntry`'s own `initiativeValue` 
 
 ## Races live in `org.aventyrs.core.race`, not `org.aventyrs.core.character`
 
-`Race` and every implementation (`Human`, `Anoes`, `Elfos`, `Gigantes`, `Pequenino`, and any
-`*RacialAbility` enums) live in their own top-level package, `org.aventyrs.core.race` — a
+`Race` and every implementation (`Human`, `Anoes`, `Elfos`, `Gigantes`, `Pequenino`, `Gnomos`,
+and any `*RacialAbility` enums) live in their own top-level package, `org.aventyrs.core.race` — a
 sibling of `org.aventyrs.core.character`, not a subpackage of it, mirroring how
 `org.aventyrs.core.ability`/`org.aventyrs.core.feat` already sit alongside `character` rather
 than inside it. `Character` still holds a `Race race` field (and imports `org.aventyrs.core
