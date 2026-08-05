@@ -1,11 +1,15 @@
 package org.aventyrs.core.skill.ataqueadistancia;
 
+import org.aventyrs.core.character.Anoes;
 import org.aventyrs.core.character.AttributeValue;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterAttributes;
 import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.character.CharacterStatus;
 import org.aventyrs.core.character.DamageType;
+import org.aventyrs.core.character.Human;
+import org.aventyrs.core.character.Race;
+import org.aventyrs.core.character.SizeCategory;
 import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.character.fixture.CharacterSkillFixture;
 import org.aventyrs.core.scene.Range;
@@ -163,5 +167,62 @@ class AtaqueADistanciaInteractionTest {
         InteractionResult result = ataqueADistanciaInteraction.applyTo(sheet, sceneContext, null, null);
 
         assertNull(result.getDamageBonus());
+    }
+
+    private CharacterSheet sheetWithRace(Race race) {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .race(race)
+                .build();
+        return CharacterSheet.of(character, new Player());
+    }
+
+    private CharacterSheet enemySheetWithSizeCategory(SizeCategory sizeCategory) {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .sizeCategory(sizeCategory)
+                .build();
+        return CharacterSheet.of(character, new Player());
+    }
+
+    @Test
+    void applyToGrantsAbatedoresDeGigantesBonusAgainstATargetTwoOrMoreSizeCategoriesLarger() {
+        CharacterSheet sheet = sheetWithRace(new Anoes());
+        CharacterSheet attackTarget = enemySheetWithSizeCategory(SizeCategory.PLUS_TWO);
+        int baseline = ataqueADistanciaInteraction.applyTo(sheet).getSkillRollBonus();
+
+        InteractionResult result = ataqueADistanciaInteraction.applyTo(sheet, null, null, attackTarget);
+
+        assertEquals(baseline + Skill.ADVANTAGE_BONUS, result.getSkillRollBonus());
+    }
+
+    @Test
+    void applyToGrantsNoAbatedoresDeGigantesBonusWhenTheSizeDifferenceIsOnlyOne() {
+        CharacterSheet sheet = sheetWithRace(new Anoes());
+        CharacterSheet attackTarget = enemySheetWithSizeCategory(SizeCategory.PLUS_ONE);
+        int baseline = ataqueADistanciaInteraction.applyTo(sheet).getSkillRollBonus();
+
+        InteractionResult result = ataqueADistanciaInteraction.applyTo(sheet, null, null, attackTarget);
+
+        assertEquals(baseline, result.getSkillRollBonus());
+    }
+
+    @Test
+    void applyToGrantsNoAbatedoresDeGigantesBonusForANonAnaoRace() {
+        CharacterSheet sheet = sheetWithRace(new Human());
+        CharacterSheet attackTarget = enemySheetWithSizeCategory(SizeCategory.PLUS_TWO);
+        int baseline = ataqueADistanciaInteraction.applyTo(sheet).getSkillRollBonus();
+
+        InteractionResult result = ataqueADistanciaInteraction.applyTo(sheet, null, null, attackTarget);
+
+        assertEquals(baseline, result.getSkillRollBonus());
+    }
+
+    @Test
+    void applyToGrantsNoAbatedoresDeGigantesBonusWithoutAnAttackTarget() {
+        CharacterSheet sheet = sheetWithRace(new Anoes());
+        int baseline = ataqueADistanciaInteraction.applyTo(sheet).getSkillRollBonus();
+
+        InteractionResult result = ataqueADistanciaInteraction.applyTo(sheet, null, null, null);
+
+        assertEquals(baseline, result.getSkillRollBonus());
     }
 }

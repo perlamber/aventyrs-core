@@ -648,6 +648,42 @@ already-resolved by a caller, same as `InitiativeEntry`'s own `initiativeValue` 
   ability needing this shape has turned up in the ruleset yet; when one does, follow that
   test's shape rather than the boolean `hasAllyWithin`/`hasEnemyWithin` one.
 
+## Racial Abilities reuse `SkillCompetencyAbility` — `Race#getRacialAbilities()`
+
+A trait every member of a Race is automatically granted (e.g. Anões' Abatedores de Gigantes,
+Vantagem on Ataque rolls against a target 2+ Categorias de Tamanho larger) contributes to a
+roll the *exact* same way a player-acquired `SkillCompetencyAbility` does — so it's modeled as
+one, rather than a parallel duplicate type: `Race.getRacialAbilities()` (default `List.of()`,
+overridden e.g. by `Anoes` returning `List.of(AnoesRacialAbility.ABATEDORES_DE_GIGANTES)`) is
+just another `List<SkillCompetencyAbility>`, differing from `Character
+.getSkillCompetencyAbilities()` only in *where* it's sourced from — fixed per Race, not a
+player's per-Character acquisition choice — never in how a consumer treats its entries. A
+consumer that wants "every ability of this kind, acquired or racial" concatenates both lists
+(see `AtaqueADistanciaInteraction`, below) rather than adding a second parallel scan.
+
+This is also what motivated `SkillCompetencyAbility#resolveAttackRollBonus(CharacterSheet
+actor, CharacterSheet attackTarget)`, a fourth `resolve*`/`get*` default method alongside
+`getDifficultyReduction()`/`getSubstituteAttributeDomain()`/`resolveDamageBonus()` — Abatedores
+de Gigantes' bonus targets `skillRollBonus` itself (the Perícia roll, not a dano roll), and,
+like `FRIEZA`'s `resolveDamageBonus`, is conditioned on the real attack target (its
+`SizeCategory` here, not its distance), which a reflection-invoked no-arg `@Modifier` method
+still can't see. Unlike `resolveDamageBonus` (only one bonus expected to apply per roll, so
+callers take the first non-empty result), `resolveAttackRollBonus` returns a plain `Optional
+<Integer>` meant to be *summed* across every ability that grants one — the same additive
+convention every other `skillRollBonus` source already follows.
+
+`AtaqueADistanciaInteraction#applyTo(CharacterSheet, SceneContext, SkillRoll, CharacterSheet)`
+(the same overload FRIEZA needed, for the same "needs to know the real attack target" reason)
+is the one place both of these are wired together today: it concatenates `character
+.getSkillCompetencyAbilities()` and `character.getRace().getRacialAbilities()` into a single
+list, then resolves both `resolveDamageBonus` and `resolveAttackRollBonus` against it
+identically — it never checks *which* constant or *which* source answered. `AnoesRacialAbility
+.ABATEDORES_DE_GIGANTES` only overrides `getSkillType()` to `ATAQUE_A_DISTANCIA` and is only
+wired into this one Interaction so far — the rules text actually covers every "Perícia de
+Ataque" (`SkillType#isAttackSkill()`), but `AtaqueCorpoACorpoInteraction` doesn't yet take an
+`attackTarget` parameter, so the melee side isn't wired; a future change extending it should
+follow this exact same shape rather than inventing a new one.
+
 ## Damage mitigation — `org.aventyrs.core.character.services.DamageService`
 
 Damage isn't just "subtract from PV" — there are three layers of mitigation, applied in a

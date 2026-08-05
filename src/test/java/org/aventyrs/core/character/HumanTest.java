@@ -26,6 +26,11 @@ class HumanTest {
     }
 
     @Test
+    void hasNoRacialAbilitiesByDefault() {
+        assertTrue(human.getRacialAbilities().isEmpty());
+    }
+
+    @Test
     void usesTheBaseCostsForFeatsAndSkills() {
         assertEquals(Race.BASE_NEW_FEAT_COST, human.getNewFeatCost(FeatCategory.DUELISTA));
         assertEquals(Race.BASE_NEW_SKILL_COST, human.getNewSkillCost());

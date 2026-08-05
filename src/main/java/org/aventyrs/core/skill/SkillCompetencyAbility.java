@@ -56,6 +56,21 @@ public interface SkillCompetencyAbility {
     }
 
     /**
+     * A bonus toward this Perícia's own roll ({@code skillRollBonus}) — not a dano roll, see
+     * {@link #resolveDamageBonus} for that — conditioned on data about the specific target
+     * being attacked, e.g. {@code AnoesRacialAbility#ABATEDORES_DE_GIGANTES}'s Vantagem
+     * against a target 2+ Categorias de Tamanho larger than {@code actor}. Empty by default;
+     * only override on a constant whose rules text grants a bonus scoped to this kind of
+     * per-roll target data. Multiple abilities granting this at once are meant to be summed
+     * by the caller, the same additive convention every other {@code skillRollBonus} source
+     * already uses — unlike {@link #resolveDamageBonus}, which only ever expects one bonus to
+     * apply per roll.
+     */
+    default Optional<Integer> resolveAttackRollBonus(final CharacterSheet actor, final CharacterSheet attackTarget) {
+        return Optional.empty();
+    }
+
+    /**
      * The Attribute that currently governs skillType's roll/graduation-cap for a character
      * holding skillCompetencyAbilities — defaultDomain, unless one of those abilities
      * targets this same skillType and {@link #getSubstituteAttributeDomain()} isn't empty,
