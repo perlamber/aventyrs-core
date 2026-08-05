@@ -1,6 +1,9 @@
 package org.aventyrs.core.skill;
 
 import org.aventyrs.core.character.AttributeDomain;
+import org.aventyrs.core.character.DamageBonus;
+import org.aventyrs.core.scene.SceneContext;
+import org.aventyrs.core.sheet.CharacterSheet;
 
 import java.util.Collection;
 import java.util.Optional;
@@ -32,6 +35,23 @@ public interface SkillCompetencyAbility {
      * constant instead of over- or under-granting here.
      */
     default Optional<AttributeDomain> getSubstituteAttributeDomain() {
+        return Optional.empty();
+    }
+
+    /**
+     * A bonus toward a dano roll this ability grants right now — e.g. {@code
+     * AtaqueADistanciaCompetencyAbility#FRIEZA}'s Vantagem against a target at Distância
+     * Curta or closer. Empty by default; only override on a constant whose rules text grants
+     * a dano bonus. Unlike {@link #getDifficultyReduction()}/{@link
+     * #getSubstituteAttributeDomain()} (both unconditional once the ability is held), this
+     * kind of bonus is typically conditioned on per-roll data — proximity, in FRIEZA's case —
+     * that a reflection-based {@code @Modifier} no-arg method has no way to see (same
+     * limitation documented in CLAUDE.md's "Acquisition-time ability choices" section for
+     * {@code ArtesAprimorarComArteAbility#getBaseDamageBonus(SkillType)}-style branches), so
+     * this takes {@code sceneContext}/{@code attackTarget} explicitly instead of relying on
+     * {@code ModifierResolver} to discover it.
+     */
+    default Optional<DamageBonus> resolveDamageBonus(final SceneContext sceneContext, final CharacterSheet attackTarget) {
         return Optional.empty();
     }
 

@@ -609,16 +609,37 @@ already-resolved by a caller, same as `InitiativeEntry`'s own `initiativeValue` 
   `hasEnemyWithin` are themselves just `countXWithin(range) > 0` now — one counting primitive
   underneath both the boolean and the scaling query, instead of two separate implementations
   that could drift.
-- This is real, tested infrastructure with **no current consumer** — every proximity-gated
-  ability found so far (`FOCADO`, `FRIEZA`, `AttentionCompetencyAbility.PERCEPCAO_DE_FOXM`,
+- Most proximity-gated abilities found so far still need at least one *other* missing system
+  too (a roll-resolution-vs-`DifficultyLevel` engine, a trigger/temporary-buff-after-success
+  mechanism, a GD-*increase* expression, or arbitrary-point targeting `SceneContext` doesn't
+  do) — `FOCADO`, `AttentionCompetencyAbility.PERCEPCAO_DE_FOXM`,
   `PersuasaoCompetencyAbility.ESPALHAR_EMOCOES`, `FurtividadeCompetencyAbility
-  .ESCONDER_OUTROS`, `AtaqueADistanciaCompetencyAbility.DISPARO_RICOCHETE`) still needs at
-  least one *other* missing system too (a roll-resolution-vs-`DifficultyLevel` engine, a
-  damage-roll concept, a trigger/temporary-buff-after-success mechanism, a GD-*increase*
-  expression, or arbitrary-point targeting `SceneContext` doesn't do), so none was fully
-  unblocked by this alone — but each one's TODO now cites precisely which piece of its own
-  gap this closed, and which piece(s) remain. Check each constant's own TODO before assuming
-  proximity is the only thing standing between it and being real. `AbstractSkillInteractionTest
+  .ESCONDER_OUTROS`, and `AtaqueADistanciaCompetencyAbility.DISPARO_RICOCHETE` are still
+  blocked this way — but each one's TODO cites precisely which piece of its own gap
+  `SceneContext` closed, and which piece(s) remain. `FRIEZA` is the first to be fully wired:
+  its Vantagem-on-damage bonus needed a `DamageBonus` value class (`value`/`DamageType`,
+  `org.aventyrs.core.character`) and an `InteractionResult#damageBonus` field to carry it. A
+  first pass tried granting the flat amount the ordinary way — a `@Modifier
+  (ModifierType.DAMAGE_BONUS)` method summed via `ModifierResolver`, like every other flat
+  Vantagem in this codebase — but that only works for the *amount*; `ModifierResolver.invoke`
+  always calls the annotated method with zero args, so it has no way to also gate on the real
+  attack target's distance (same limit already documented in "Acquisition-time ability
+  choices" for `getBaseDamageBonus(SkillType)`-style branches). That was reworked into a third
+  `default` method on `SkillCompetencyAbility` itself — `resolveDamageBonus(SceneContext,
+  CharacterSheet attackTarget)`, `Optional.empty()` by default, mirroring the existing
+  `getSubstituteAttributeDomain()` default-method-plus-override shape — so both the amount
+  *and* the condition live together on the constant that grants it (`FRIEZA` overrides it,
+  checking `sceneContext.getDistanceTo(attackTarget).isWithin(Range.DISTANCIA_CURTA)` and
+  returning `DamageBonus(Skill.ADVANTAGE_BONUS, DamageType.FISICO)` only when that holds).
+  `ModifierType.DAMAGE_BONUS` was removed again since nothing uses it anymore.
+  `AtaqueADistanciaInteraction` gained a new `applyTo(CharacterSheet, SceneContext, SkillRoll,
+  CharacterSheet)` overload taking the actual attack target explicitly (the plain 1-/2-/3-arg
+  overloads have no notion of which `CharacterSheet` a given attack is against) and just scans
+  `character.getSkillCompetencyAbilities()` for the first non-empty `resolveDamageBonus` —
+  it doesn't know or care that `FRIEZA` is the only constant that currently ever returns one.
+  Check each constant's own TODO before assuming proximity is the only thing standing between
+  it and being real.
+  `AbstractSkillInteractionTest
   .GangUpBonusInteraction` demonstrates the count-scaled shape a real ability of this kind
   would take (a private test-only subclass, same pattern `DamageServiceImplTest` uses for
   test-only ability classes) — `min(countAlliesWithin(range) * perAllyBonus, max)`, computed

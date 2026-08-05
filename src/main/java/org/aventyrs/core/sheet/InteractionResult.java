@@ -1,6 +1,7 @@
 package org.aventyrs.core.sheet;
 
 import org.aventyrs.core.character.CharacterStatus;
+import org.aventyrs.core.character.DamageBonus;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.skill.CriticalResult;
 import org.aventyrs.core.skill.DifficultyLevel;
@@ -90,4 +91,14 @@ public class InteractionResult {
      * CriticalResult}.
      */
     CriticalResult criticalResult;
+
+    /**
+     * A bonus this roll grants toward a dano roll it's about to deliver — e.g. {@code
+     * org.aventyrs.core.skill.ataqueadistancia.AtaqueADistanciaCompetencyAbility#FRIEZA}'s
+     * Vantagem against a nearby target. {@code null} when this Interaction didn't grant one,
+     * same stays-{@code null}-when-not-applicable convention as every other field here — a
+     * caller adds {@link DamageBonus#getValue()} to its own already-rolled dano total when
+     * present.
+     */
+    DamageBonus damageBonus;
 }

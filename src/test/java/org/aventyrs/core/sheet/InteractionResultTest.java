@@ -2,6 +2,8 @@ package org.aventyrs.core.sheet;
 
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterStatus;
+import org.aventyrs.core.character.DamageBonus;
+import org.aventyrs.core.character.DamageType;
 import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.skill.CriticalResult;
@@ -95,6 +97,26 @@ class InteractionResultTest {
         assertEquals(ModifierType.SKILL_ROLL_BONUS, result.getTemporaryBonusModifierType());
         assertEquals(2, result.getTemporaryBonusRounds());
         assertEquals(TargetScope.ALLIES, result.getTemporaryBonusScope());
+    }
+
+    @Test
+    void damageBonusStaysNullWhenNotSet() {
+        InteractionResult result = InteractionResult.builder()
+                .skillRollBonus(3)
+                .build();
+
+        assertNull(result.getDamageBonus());
+    }
+
+    @Test
+    void builderAssignsTheDamageBonus() {
+        DamageBonus damageBonus = new DamageBonus(2, DamageType.FISICO);
+
+        InteractionResult result = InteractionResult.builder()
+                .damageBonus(damageBonus)
+                .build();
+
+        assertSame(damageBonus, result.getDamageBonus());
     }
 
     @Test

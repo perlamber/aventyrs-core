@@ -3,6 +3,12 @@ package org.aventyrs.core.skill.ataqueadistancia;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.aventyrs.core.character.AttributeDomain;
+import org.aventyrs.core.character.DamageBonus;
+import org.aventyrs.core.character.DamageType;
+import org.aventyrs.core.scene.Range;
+import org.aventyrs.core.scene.SceneContext;
+import org.aventyrs.core.sheet.CharacterSheet;
+import org.aventyrs.core.skill.Skill;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
 import org.aventyrs.core.skill.SkillType;
 
@@ -13,8 +19,10 @@ import java.util.Optional;
  * of these need a system this core doesn't have yet (damage/critical-damage rolls,
  * range/targeting, or dice rolling this core deliberately never does — see the {@code skill}
  * package-info's "What this library computes" section) so they aren't expressible for real
- * today; see each constant's TODO. DISPARO_ARCANO's unconditional Attribute substitution is
- * the exception — see {@link SkillCompetencyAbility#getSubstituteAttributeDomain()}.
+ * today; see each constant's TODO. DISPARO_ARCANO's unconditional Attribute substitution
+ * (see {@link SkillCompetencyAbility#getSubstituteAttributeDomain()}) and FRIEZA's Vantagem
+ * on nearby-target damage rolls (see {@link SkillCompetencyAbility#resolveDamageBonus}) are
+ * the exceptions.
  */
 @Getter
 @AllArgsConstructor
@@ -39,12 +47,25 @@ public enum AtaqueADistanciaCompetencyAbility implements SkillCompetencyAbility 
         }
     },
 
-    // TODO: Vantagem on damage rolls (not the Perícia roll itself) against targets at
-    // Distância Curta or closer — the target's distance is now checkable for real (see
-    // org.aventyrs.core.scene.SceneContext#getDistanceTo/Range#isWithin), but there's still
-    // no damage-roll concept to grant Vantagem on in the first place.
+    // Vantagem on damage rolls, against a target at Distância Curta or closer. Both the
+    // amount and the condition live here, via SkillCompetencyAbility#resolveDamageBonus —
+    // unlike a plain @Modifier(ModifierType) method (reflection-invoked with zero args, see
+    // ModifierResolver), this ability's bonus depends on per-roll data (the real attack
+    // target's distance), so it needs sceneContext/attackTarget handed in explicitly instead.
     FRIEZA("Vantagem nas rolagens de dano de Ataques à Distância realizados contra alvos " +
-            "em Distância Curta ou inferior."),
+            "em Distância Curta ou inferior.") {
+        @Override
+        public Optional<DamageBonus> resolveDamageBonus(final SceneContext sceneContext, final CharacterSheet attackTarget) {
+            if (sceneContext == null || attackTarget == null) {
+                return Optional.empty();
+            }
+            Range distanceToTarget = sceneContext.getDistanceTo(attackTarget);
+            if (distanceToTarget == null || !distanceToTarget.isWithin(Range.DISTANCIA_CURTA)) {
+                return Optional.empty();
+            }
+            return Optional.of(new DamageBonus(Skill.ADVANTAGE_BONUS, DamageType.FISICO));
+        }
+    },
 
     // TODO: a successful hit on a damaging attack lets the character pick a new target at
     // Distância Muito Curta from the original and roll this Perícia again, dealing 1d6
