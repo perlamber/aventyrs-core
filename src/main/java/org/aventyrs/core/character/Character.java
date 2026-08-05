@@ -47,6 +47,24 @@ public class Character {
     @NonNull
     protected Race race;
 
+    /**
+     * The character's sex — e.g. {@code PersuasaoCompetencyAbility#SEDUTOR}'s "personagens do
+     * sexo oposto". No default and not {@code @NonNull}: unlike {@link #race}/{@link #name},
+     * nothing in this core currently requires every {@code Character} to name one, so it
+     * stays {@code null} unless set, same as {@link #autocontroleAdvantage}.
+     */
+    protected Sexo sexo;
+
+    /**
+     * Tendência — a 1-10 scale (per this ruleset's character sheet). Defaults to 1 (the
+     * floor of that range, not a meaningful "neutral" value — chosen only so an unset
+     * {@code Character} doesn't silently read as an out-of-range 0). Nothing in this core
+     * currently validates a value actually stays within 1-10, same restraint already applied
+     * to {@code AttributeValue#base}/{@code CharacterSkill}'s Graduação elsewhere.
+     */
+    @Builder.Default
+    protected int tendencia = 1;
+
     @NonNull
     protected CharacterAttributes attributes;
 
@@ -135,4 +153,9 @@ public class Character {
      */
     @Builder.Default
     protected int freeActions = FreeActionsService.DEFAULT_FREE_ACTIONS;
+
+    public enum Sexo {
+        MASCULINO,
+        FEMININO
+    }
 }
