@@ -19,15 +19,15 @@ import java.util.Set;
  * already validates against, unlike Anões' bonus, which is entirely
  * fixed), and {@link #getRacialAbilities()} granting {@link
  * ElfosRacialAbility#SENTIDOS_ABSOLUTOS} — everything else needs a system this core doesn't
- * have yet, same discipline as {@link Anoes}:
+ * have yet, same discipline as {@code Anao}:
  *
  * <ul>
  *   <li><b>Categoria de Tamanho 0</b> — no override needed, {@link SizeCategory#ZERO} is
  *   already {@link Character}'s own default.</li>
  *   <li><b>Idiomas</b> (Élfico + reino natal ou Continental) — same "no Language/Idioma
- *   concept exists" gap as {@link Anoes}.</li>
+ *   concept exists" gap as {@code Anao}.</li>
  *   <li><b>Longevidade</b> (500+ anos, slow physical/social maturing) — same "no age/lifespan
- *   concept" gap as {@link Anoes}; purely narrative today.</li>
+ *   concept" gap as {@code Anao}; purely narrative today.</li>
  *   <li><b>1 Talento Racial Élfico + 1 Talento</b> (chosen among Élfico, Arqueirismo — this
  *   rules text's own naming doesn't match any existing {@code
  *   org.aventyrs.core.feat.FeatCategory} constant; the race's own earlier flavor text says
@@ -71,7 +71,7 @@ import java.util.Set;
  * <p>Tendência is deliberately left unconstrained, same treatment as Anões: "normalmente"
  * bondosos ou neutros is advisory, not a hard rule.
  */
-public class Elfos implements Race {
+public class Elfo implements Race {
 
     @Override
     public Map<AttributeDomain, Integer> getFixedAttributeBonuses() {

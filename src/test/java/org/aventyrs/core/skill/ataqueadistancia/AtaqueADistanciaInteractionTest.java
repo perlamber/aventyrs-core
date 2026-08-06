@@ -9,7 +9,7 @@ import org.aventyrs.core.character.DamageType;
 import org.aventyrs.core.character.SizeCategory;
 import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.character.fixture.CharacterSkillFixture;
-import org.aventyrs.core.race.Anoes;
+import org.aventyrs.core.race.Anao;
 import org.aventyrs.core.race.Human;
 import org.aventyrs.core.race.Race;
 import org.aventyrs.core.scene.Range;
@@ -185,7 +185,7 @@ class AtaqueADistanciaInteractionTest {
 
     @Test
     void applyToGrantsAbatedoresDeGigantesBonusAgainstATargetTwoOrMoreSizeCategoriesLarger() {
-        CharacterSheet sheet = sheetWithRace(new Anoes());
+        CharacterSheet sheet = sheetWithRace(new Anao());
         CharacterSheet attackTarget = enemySheetWithSizeCategory(SizeCategory.PLUS_TWO);
         int baseline = ataqueADistanciaInteraction.applyTo(sheet).getSkillRollBonus();
 
@@ -196,7 +196,7 @@ class AtaqueADistanciaInteractionTest {
 
     @Test
     void applyToGrantsNoAbatedoresDeGigantesBonusWhenTheSizeDifferenceIsOnlyOne() {
-        CharacterSheet sheet = sheetWithRace(new Anoes());
+        CharacterSheet sheet = sheetWithRace(new Anao());
         CharacterSheet attackTarget = enemySheetWithSizeCategory(SizeCategory.PLUS_ONE);
         int baseline = ataqueADistanciaInteraction.applyTo(sheet).getSkillRollBonus();
 
@@ -218,7 +218,7 @@ class AtaqueADistanciaInteractionTest {
 
     @Test
     void applyToGrantsNoAbatedoresDeGigantesBonusWithoutAnAttackTarget() {
-        CharacterSheet sheet = sheetWithRace(new Anoes());
+        CharacterSheet sheet = sheetWithRace(new Anao());
         int baseline = ataqueADistanciaInteraction.applyTo(sheet).getSkillRollBonus();
 
         InteractionResult result = ataqueADistanciaInteraction.applyTo(sheet, null, null, null);

@@ -58,7 +58,7 @@ import java.util.Map;
  * Character#getTendencia()} stays a plain, unvalidated 1-10 value for this race like any
  * other.
  */
-public class Anoes implements Race {
+public class Anao implements Race {
 
     @Override
     public Map<AttributeDomain, Integer> getFixedAttributeBonuses() {

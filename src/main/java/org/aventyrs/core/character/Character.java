@@ -64,7 +64,7 @@ public class Character {
      * to {@code AttributeValue#base}/{@code CharacterSkill}'s Graduação elsewhere.
      */
     @Builder.Default
-    protected int tendencia = 1;
+    protected int tendencia = 6;
 
     @NonNull
     protected CharacterAttributes attributes;

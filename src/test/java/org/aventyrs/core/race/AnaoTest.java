@@ -16,16 +16,16 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class AnoesTest {
+class AnaoTest {
 
-    private final Anoes anoes = new Anoes();
+    private final Anao anao = new Anao();
 
     @Test
     void generateEmptyCharacterSeedsMinusOneSizeCategory() {
-        Character character = anoes.generateEmptyCharacter(List.of())
+        Character character = anao.generateEmptyCharacter(List.of())
                 .player(new Player())
                 .name("Test")
-                .race(anoes)
+                .race(anao)
                 .attributes(CharacterAttributes.builder().build())
                 .egos(CharacterEgos.builder().build())
                 .actionProfile(ActionProfile.REFLEXOS_RAPIDOS)
@@ -36,23 +36,23 @@ class AnoesTest {
 
     @Test
     void hasFixedVigorAndGnoseRacialBonuses() {
-        assertEquals(Map.of(AttributeDomain.VIGOR, 1, AttributeDomain.GNOSE, 1), anoes.getFixedAttributeBonuses());
+        assertEquals(Map.of(AttributeDomain.VIGOR, 1, AttributeDomain.GNOSE, 1), anao.getFixedAttributeBonuses());
     }
 
     @Test
     void hasNoChoosableRacialBonuses() {
-        assertEquals(0, anoes.getChoosableAttributeBonusPoints());
-        assertTrue(anoes.getChoosableAttributes().isEmpty());
+        assertEquals(0, anao.getChoosableAttributeBonusPoints());
+        assertTrue(anao.getChoosableAttributes().isEmpty());
     }
 
     @Test
     void usesTheBaseCostsForFeatsAndSkills() {
-        assertEquals(Race.BASE_NEW_FEAT_COST, anoes.getNewFeatCost(FeatCategory.SOBREVIVENCIA));
-        assertEquals(Race.BASE_NEW_SKILL_COST, anoes.getNewSkillCost());
+        assertEquals(Race.BASE_NEW_FEAT_COST, anao.getNewFeatCost(FeatCategory.SOBREVIVENCIA));
+        assertEquals(Race.BASE_NEW_SKILL_COST, anao.getNewSkillCost());
     }
 
     @Test
     void grantsAbatedoresDeGigantesAsARacialAbility() {
-        assertEquals(List.of(AnoesRacialAbility.ABATEDORES_DE_GIGANTES), anoes.getRacialAbilities());
+        assertEquals(List.of(AnoesRacialAbility.ABATEDORES_DE_GIGANTES), anao.getRacialAbilities());
     }
 }

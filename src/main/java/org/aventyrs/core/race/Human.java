@@ -38,7 +38,7 @@ import java.util.List;
  *   has no hook for granting starting Perícia training/abilities" gap, plus needs a persisted
  *   record of which Perícias were chosen as starting ones at all.</li>
  *   <li><b>Prodígios</b> (a Habilidade de Competência from one of the Perícias chosen at
- *   creation) — same shape and same gap as {@code Elfos}' Origem Mística/{@code Anoes}'
+ *   creation) — same shape and same gap as {@code Elfos}' Origem Mística/{@code Anao}'
  *   Pequenos Gigantes (a race-granted *extra* Habilidade de Competência acquisition slot),
  *   here scoped to "any creation-time-chosen Perícia" rather than a fixed pair — no notion of
  *   a race-granted extra slot exists yet, restricted or not.</li>

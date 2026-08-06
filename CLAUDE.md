@@ -650,9 +650,9 @@ already-resolved by a caller, same as `InitiativeEntry`'s own `initiativeValue` 
 
 ## Races live in `org.aventyrs.core.race`, not `org.aventyrs.core.character`
 
-`Race` and every implementation (`Human`, `Anoes`, `Elfos`, `Gigantes`, `Pequenino`, `Gnomos`,
-and any `*RacialAbility` enums) live in their own top-level package, `org.aventyrs.core.race` — a
-sibling of `org.aventyrs.core.character`, not a subpackage of it, mirroring how
+`Race` and every implementation (`Human`, `Anao`, `Elfos`, `Gigantes`, `Pequenino`, `Gnomos`,
+`Orcs`, and any `*RacialAbility` enums) live in their own top-level package, `org.aventyrs.core
+.race` — a sibling of `org.aventyrs.core.character`, not a subpackage of it, mirroring how
 `org.aventyrs.core.ability`/`org.aventyrs.core.feat` already sit alongside `character` rather
 than inside it. `Character` still holds a `Race race` field (and imports `org.aventyrs.core
 .race.Race` for it) — the two packages reference each other (`Race#generateEmptyCharacter`
@@ -667,8 +667,8 @@ because none of their racial traits actually fit `SkillCompetencyAbility`'s shap
 aren't roll-conditioned at all (a Defesa modifier, a conditional RD), one needs a target
 classification this core can't make, one spans multiple `SkillType`s by `AttributeDomain`
 rather than naming one, and several are really "grant an acquisition slot" traits (matching
-`Elfos`' Origem Mística / `Anoes`' Pequenos Gigantes' already-documented gap), not roll
-bonuses. Don't force a `*RacialAbility` enum into existence just for symmetry with `Anoes`/
+`Elfos`' Origem Mística / `Anao`' Pequenos Gigantes' already-documented gap), not roll
+bonuses. Don't force a `*RacialAbility` enum into existence just for symmetry with `Anao`/
 `Elfos` — only build one once a trait's shape genuinely fits.
 
 `Gigantes` is also the first race to override `getNewFeatCost(FeatCategory)` for real
@@ -683,7 +683,7 @@ A trait every member of a Race is automatically granted (e.g. Anões' Abatedores
 Vantagem on Ataque rolls against a target 2+ Categorias de Tamanho larger) contributes to a
 roll the *exact* same way a player-acquired `SkillCompetencyAbility` does — so it's modeled as
 one, rather than a parallel duplicate type: `Race.getRacialAbilities()` (default `List.of()`,
-overridden e.g. by `Anoes` returning `List.of(AnoesRacialAbility.ABATEDORES_DE_GIGANTES)`) is
+overridden e.g. by `Anao` returning `List.of(AnoesRacialAbility.ABATEDORES_DE_GIGANTES)`) is
 just another `List<SkillCompetencyAbility>`, differing from `Character
 .getSkillCompetencyAbilities()` only in *where* it's sourced from — fixed per Race, not a
 player's per-Character acquisition choice — never in how a consumer treats its entries. A

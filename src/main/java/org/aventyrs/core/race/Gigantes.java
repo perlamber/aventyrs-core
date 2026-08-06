@@ -60,7 +60,7 @@ import java.util.Map;
  * </ul>
  *
  * <p>None of the four racial traits above fit {@code SkillCompetencyAbility}'s shape well
- * enough today to catalog in a {@code GigantesRacialAbility} enum (unlike {@code Anoes}/
+ * enough today to catalog in a {@code GigantesRacialAbility} enum (unlike {@code Anao}/
  * {@code Elfos}) — two aren't roll-conditioned at all (Tamanho é Documento, Rigidez Ymiriana),
  * one needs a target classification this core can't make (Tudo é Frágil), and one spans
  * multiple {@code SkillType}s by {@link AttributeDomain} rather than naming one (Cuidado para

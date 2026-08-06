@@ -27,7 +27,7 @@ import java.util.Set;
  *   Especializações.</li>
  *   <li><b>Domínio de Conhecimento</b> (a Habilidade de Competência from each of the 3
  *   Perícias trained via the racial benefit above) — same shape and gap as {@code Elfos}'
- *   Origem Mística/{@code Anoes}' Pequenos Gigantes/Humanos' Prodígios (a race-granted *extra*
+ *   Origem Mística/{@code Anao}' Pequenos Gigantes/Humanos' Prodígios (a race-granted *extra*
  *   acquisition slot), here three slots at once, tied to whichever 3 Perícias were chosen for
  *   the Especialização benefit — compounding the "no persisted record of creation-time Perícia
  *   choices" gap those already cite.</li>
@@ -69,7 +69,7 @@ import java.util.Set;
  * <p>Tendência is deliberately left unconstrained, same treatment as every other race —
  * "normalmente são Neutros" is advisory, not a hard rule.
  */
-public class Gnomos implements Race {
+public class Gnomo implements Race {
 
     @Override
     public Map<AttributeDomain, Integer> getFixedAttributeBonuses() {
