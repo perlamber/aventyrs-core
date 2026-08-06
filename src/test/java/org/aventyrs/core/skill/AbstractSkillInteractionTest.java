@@ -6,7 +6,7 @@ import org.aventyrs.core.character.CharacterAttributes;
 import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.character.fixture.CharacterSkillFixture;
-import org.aventyrs.core.race.Elfos;
+import org.aventyrs.core.race.Elfo;
 import org.aventyrs.core.race.ElfosRacialAbility;
 import org.aventyrs.core.scene.Range;
 import org.aventyrs.core.scene.SceneContext;
@@ -211,7 +211,7 @@ class AbstractSkillInteractionTest {
     @Test
     void applyToWithARequestedRacialAbilityTheCharacterHoldsSucceeds() {
         Character character = CharacterFixture.blank(CharacterFixture.BLANK)
-                .race(new Elfos())
+                .race(new Elfo())
                 .build();
         CharacterSheet sheet = CharacterSheet.of(character, new Player());
         SkillRoll skillRoll = new SkillRoll(List.of(2, 3, 4), ElfosRacialAbility.SENTIDOS_ABSOLUTOS);

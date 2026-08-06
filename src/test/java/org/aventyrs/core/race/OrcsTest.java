@@ -13,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class OrcsTest {
 
-    private final Orcs orcs = new Orcs();
+    private final Orc orcs = new Orc();
 
     @Test
     void generateEmptyCharacterReturnsAUsableBuilder() {

@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class GnomosTest {
 
-    private final Gnomos gnomos = new Gnomos();
+    private final Gnomo gnomos = new Gnomo();
 
     @Test
     void generateEmptyCharacterReturnsAUsableBuilder() {

@@ -7,7 +7,7 @@ import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.character.CharacterStatus;
 import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.character.fixture.CharacterSkillFixture;
-import org.aventyrs.core.race.Elfos;
+import org.aventyrs.core.race.Elfo;
 import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.InteractionResult;
 import org.aventyrs.core.sheet.Player;
@@ -145,7 +145,7 @@ class AttentionInteractionTest {
                         .instinct(AttributeValue.builder().base(2).build())
                         .build())
                 .skill(SkillType.ATTENTION, attentionSkill)
-                .race(new Elfos())
+                .race(new Elfo())
                 .build();
         CharacterSheet sheet = CharacterSheet.of(character, new Player());
 

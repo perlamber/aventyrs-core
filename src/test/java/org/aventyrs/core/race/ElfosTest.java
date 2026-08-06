@@ -13,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class ElfosTest {
 
-    private final Elfos elfos = new Elfos();
+    private final Elfo elfos = new Elfo();
 
     @Test
     void generateEmptyCharacterReturnsAUsableBuilder() {
