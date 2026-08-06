@@ -12,6 +12,7 @@ import org.aventyrs.core.ability.AttributeAbility;
 import org.aventyrs.core.action.ActionPointsService;
 import org.aventyrs.core.action.ActionProfile;
 import org.aventyrs.core.character.services.FreeActionsService;
+import org.aventyrs.core.character.services.MagicPointsService;
 import org.aventyrs.core.character.services.ReactionsService;
 import org.aventyrs.core.ego.AutocontroleAdvantage;
 import org.aventyrs.core.race.Race;
@@ -154,6 +155,17 @@ public class Character {
      */
     @Builder.Default
     protected int freeActions = FreeActionsService.DEFAULT_FREE_ACTIONS;
+
+    /**
+     * The character's own fixed Multiplicador de Mana — what it is when no external influence
+     * (abilities'/competencies' {@link org.aventyrs.core.modifier.ModifierType#MANA_MULTIPLIER}
+     * bonus, e.g. Conexão com o Mana) applies. {@value MagicPointsService#DEFAULT_MANA_MULTIPLIER}
+     * by default, but editable per character (a GM house rule, a future racial/campaign
+     * adjustment) via {@link #toBuilder()}, same as every other field here. See
+     * {@link MagicPointsService#getManaMultiplier} for the fully-modified total.
+     */
+    @Builder.Default
+    protected int manaMultiplier = MagicPointsService.DEFAULT_MANA_MULTIPLIER;
 
     public enum Sexo {
         MASCULINO,

@@ -18,12 +18,17 @@ class MagicPointsServiceTest {
     private final MagicPointsService magicPointsService = new MagicPointsServiceImpl();
 
     private Character characterWithFocus(int focusBase, FocusAbility... abilities) {
+        return characterWithFocus(focusBase, MagicPointsService.DEFAULT_MANA_MULTIPLIER, abilities);
+    }
+
+    private Character characterWithFocus(int focusBase, int manaMultiplier, FocusAbility... abilities) {
         Character.CharacterBuilder builder = Character.builder()
                 .player(new Player())
                 .name("Test")
                 .race(new Human())
                 .actionProfile(ActionProfile.REFLEXOS_RAPIDOS)
                 .egos(CharacterEgos.builder().build())
+                .manaMultiplier(manaMultiplier)
                 .attributes(CharacterAttributes.builder()
                         .focus(AttributeValue.builder().base(focusBase).build())
                         .build());
@@ -40,16 +45,29 @@ class MagicPointsServiceTest {
     }
 
     @Test
-    void maxMagicPointsIsFocusTimesManaMultiplier() {
+    void maxMagicPointsIsBasePointsPlusFocusTimesManaMultiplier() {
         Character character = characterWithFocus(3);
-        assertEquals(9, magicPointsService.getMaxMagicPoints(character));
+        assertEquals(19, magicPointsService.getMaxMagicPoints(character));
+    }
+
+    @Test
+    void maxMagicPointsWithOneFocusIsThirteen() {
+        Character character = characterWithFocus(1);
+        assertEquals(13, magicPointsService.getMaxMagicPoints(character));
+    }
+
+    @Test
+    void manaMultiplierIsEditablePerCharacter() {
+        Character character = characterWithFocus(3, 5);
+        assertEquals(5, magicPointsService.getManaMultiplier(character));
+        assertEquals(25, magicPointsService.getMaxMagicPoints(character));
     }
 
     @Test
     void conexaoComOManaIncreasesManaMultiplierByOne() {
-        Character character = characterWithFocus(3, FocusAbility.CONEXAO_COM_O_MANA);
+        Character character = characterWithFocus(3, MagicPointsService.DEFAULT_MANA_MULTIPLIER, FocusAbility.CONEXAO_COM_O_MANA);
         assertEquals(4, magicPointsService.getManaMultiplier(character));
-        assertEquals(12, magicPointsService.getMaxMagicPoints(character));
+        assertEquals(22, magicPointsService.getMaxMagicPoints(character));
     }
 
     @Test
@@ -57,7 +75,7 @@ class MagicPointsServiceTest {
         Character character = characterWithFocus(3);
         CharacterSheet sheet = CharacterSheet.of(character, new Player());
         sheet.spendMagicPoints(4);
-        assertEquals(5, magicPointsService.getCurrentMagicPoints(character, sheet));
+        assertEquals(15, magicPointsService.getCurrentMagicPoints(character, sheet));
     }
 
     @Test

@@ -13,6 +13,7 @@ import org.aventyrs.core.character.CharacterStatus;
 import org.aventyrs.core.character.SizeCategory;
 import org.aventyrs.core.character.services.CharacterAttributeService;
 import org.aventyrs.core.character.services.FreeActionsService;
+import org.aventyrs.core.character.services.MagicPointsService;
 import org.aventyrs.core.character.services.ReactionsService;
 import org.aventyrs.core.race.Human;
 import org.aventyrs.core.sheet.Player;
@@ -96,6 +97,7 @@ public class CharacterFixture extends SimpleFixture {
                 this.add("temporaryActionPointsBonus", 0);
                 this.add("reactions", ReactionsService.DEFAULT_REACTIONS);
                 this.add("freeActions", FreeActionsService.DEFAULT_FREE_ACTIONS);
+                this.add("manaMultiplier", MagicPointsService.DEFAULT_MANA_MULTIPLIER);
                 this.add("sizeCategory", SizeCategory.ZERO);
                 this.add("status", CharacterStatus.CLEAN);
             }
@@ -146,6 +148,7 @@ public class CharacterFixture extends SimpleFixture {
                 this.add("temporaryActionPointsBonus", 0);
                 this.add("reactions", ReactionsService.DEFAULT_REACTIONS);
                 this.add("freeActions", FreeActionsService.DEFAULT_FREE_ACTIONS);
+                this.add("manaMultiplier", MagicPointsService.DEFAULT_MANA_MULTIPLIER);
                 this.add("sizeCategory", SizeCategory.ZERO);
                 this.add("status", CharacterStatus.CLEAN);
             }
