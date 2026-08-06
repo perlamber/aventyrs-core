@@ -21,6 +21,11 @@ class GorgonaTest {
     }
 
     @Test
+    void hasFeericoCreatureType() {
+        assertEquals(CreatureType.FEERICO, gorgona.getCreatureType());
+    }
+
+    @Test
     void hasFixedStrengthAndCharismaRacialBonuses() {
         assertEquals(Map.of(AttributeDomain.STRENGTH, 1, AttributeDomain.CHARISMA, 1), gorgona.getFixedAttributeBonuses());
     }

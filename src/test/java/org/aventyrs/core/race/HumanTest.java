@@ -19,6 +19,11 @@ class HumanTest {
     }
 
     @Test
+    void hasHumanoideCreatureType() {
+        assertEquals(CreatureType.HUMANOIDE, human.getCreatureType());
+    }
+
+    @Test
     void hasNoFixedOrChoosableRacialBonusesByDefault() {
         assertTrue(human.getFixedAttributeBonuses().isEmpty());
         assertEquals(0, human.getChoosableAttributeBonusPoints());

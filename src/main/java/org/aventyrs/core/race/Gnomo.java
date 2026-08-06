@@ -72,6 +72,11 @@ import java.util.Set;
 public class Gnomo implements Race {
 
     @Override
+    public CreatureType getCreatureType() {
+        return CreatureType.HUMANOIDE;
+    }
+
+    @Override
     public Map<AttributeDomain, Integer> getFixedAttributeBonuses() {
         return Map.of(AttributeDomain.CHARISMA, 1);
     }
@@ -87,7 +92,12 @@ public class Gnomo implements Race {
     }
 
     @Override
+    public SizeCategory getBaseSizeCategory() {
+        return SizeCategory.MINUS_ONE;
+    }
+
+    @Override
     public Character.CharacterBuilder generateEmptyCharacter(final List<DlcRuleset> dlcRulesetList) {
-        return Character.builder().sizeCategory(SizeCategory.MINUS_ONE);
+        return Character.builder().sizeCategory(getBaseSizeCategory());
     }
 }

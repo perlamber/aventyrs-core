@@ -40,6 +40,12 @@ class AnaoTest {
     }
 
     @Test
+    void hasHumanoideCreatureTypeAndMinusOneBaseSizeCategory() {
+        assertEquals(CreatureType.HUMANOIDE, anao.getCreatureType());
+        assertEquals(SizeCategory.MINUS_ONE, anao.getBaseSizeCategory());
+    }
+
+    @Test
     void hasNoChoosableRacialBonuses() {
         assertEquals(0, anao.getChoosableAttributeBonusPoints());
         assertTrue(anao.getChoosableAttributes().isEmpty());

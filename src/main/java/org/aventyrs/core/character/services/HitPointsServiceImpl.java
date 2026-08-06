@@ -26,7 +26,7 @@ public class HitPointsServiceImpl implements HitPointsService {
 
     @Override
     public int getMaxHitPoints(final Character character) {
-        return character.getAttributes().getVigor().getTotal() * getLifeMultiplier(character);
+        return BASE_HIT_POINTS + character.getAttributes().getVigor().getTotal() * getLifeMultiplier(character);
     }
 
     @Override

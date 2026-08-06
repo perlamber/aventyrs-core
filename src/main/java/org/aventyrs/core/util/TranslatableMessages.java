@@ -14,4 +14,7 @@ public class TranslatableMessages {
     public static final String INVALID_SKILL_ROLL = "INVALID_SKILL_ROLL";
     public static final String REQUIRED_COMPETENCY_ABILITY_NOT_HELD = "REQUIRED_COMPETENCY_ABILITY_NOT_HELD";
     public static final String UNKNOWN_SKILL_TYPE = "UNKNOWN_SKILL_TYPE";
+    public static final String INVALID_PARENT_RACE = "INVALID_PARENT_RACE";
+    public static final String INVALID_INHERITED_RACIAL_ABILITIES = "INVALID_INHERITED_RACIAL_ABILITIES";
+    public static final String INVALID_INHERITED_ATTRIBUTE_ABILITIES = "INVALID_INHERITED_ATTRIBUTE_ABILITIES";
 }

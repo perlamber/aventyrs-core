@@ -19,6 +19,11 @@ class BestialTest {
     }
 
     @Test
+    void hasFeericoCreatureType() {
+        assertEquals(CreatureType.FEERICO, bestial.getCreatureType());
+    }
+
+    @Test
     void hasNoFixedOrChoosableRacialBonusesByDefault() {
         assertTrue(bestial.getFixedAttributeBonuses().isEmpty());
         assertEquals(0, bestial.getChoosableAttributeBonusPoints());

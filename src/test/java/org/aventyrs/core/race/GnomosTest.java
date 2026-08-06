@@ -42,6 +42,12 @@ class GnomosTest {
     }
 
     @Test
+    void hasHumanoideCreatureTypeAndMinusOneBaseSizeCategory() {
+        assertEquals(CreatureType.HUMANOIDE, gnomos.getCreatureType());
+        assertEquals(SizeCategory.MINUS_ONE, gnomos.getBaseSizeCategory());
+    }
+
+    @Test
     void hasAFixedCharismaRacialBonus() {
         assertEquals(Map.of(AttributeDomain.CHARISMA, 1), gnomos.getFixedAttributeBonuses());
     }

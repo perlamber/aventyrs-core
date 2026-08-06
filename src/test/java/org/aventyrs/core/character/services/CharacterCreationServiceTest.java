@@ -5,6 +5,7 @@ import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterAttributes;
 import org.aventyrs.core.character.CharacterEgos;
 import org.aventyrs.core.character.EgoDomain;
+import org.aventyrs.core.race.CreatureType;
 import org.aventyrs.core.race.Human;
 import org.aventyrs.core.race.Race;
 import org.aventyrs.core.sheet.DlcRuleset;
@@ -30,6 +31,11 @@ class CharacterCreationServiceTest {
     /** A race with a fixed bonus, e.g. mountain-dwellers hardened by their environment. */
     private final Race fixedBonusRace = new Race() {
         @Override
+        public CreatureType getCreatureType() {
+            return CreatureType.HUMANOIDE;
+        }
+
+        @Override
         public Map<AttributeDomain, Integer> getFixedAttributeBonuses() {
             return Map.of(AttributeDomain.VIGOR, 1);
         }
@@ -42,6 +48,11 @@ class CharacterCreationServiceTest {
 
     /** A race that lets the player choose 1 point of bonus between two attributes. */
     private final Race choosableBonusRace = new Race() {
+        @Override
+        public CreatureType getCreatureType() {
+            return CreatureType.HUMANOIDE;
+        }
+
         @Override
         public int getChoosableAttributeBonusPoints() {
             return 1;

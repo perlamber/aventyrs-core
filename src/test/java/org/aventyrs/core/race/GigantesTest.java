@@ -41,6 +41,12 @@ class GigantesTest {
     }
 
     @Test
+    void hasHumanoideCreatureTypeAndPlusTwoBaseSizeCategory() {
+        assertEquals(CreatureType.HUMANOIDE, gigantes.getCreatureType());
+        assertEquals(SizeCategory.PLUS_TWO, gigantes.getBaseSizeCategory());
+    }
+
+    @Test
     void hasFixedStrengthAndVigorRacialBonuses() {
         assertEquals(Map.of(AttributeDomain.STRENGTH, 2, AttributeDomain.VIGOR, 2), gigantes.getFixedAttributeBonuses());
     }

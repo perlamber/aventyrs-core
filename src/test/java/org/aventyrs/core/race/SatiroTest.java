@@ -41,6 +41,12 @@ class SatiroTest {
     }
 
     @Test
+    void hasFeericoCreatureTypeAndMinusOneBaseSizeCategory() {
+        assertEquals(CreatureType.FEERICO, satiro.getCreatureType());
+        assertEquals(SizeCategory.MINUS_ONE, satiro.getBaseSizeCategory());
+    }
+
+    @Test
     void hasFixedInstinctAndCharismaRacialBonuses() {
         assertEquals(Map.of(AttributeDomain.INSTINCT, 1, AttributeDomain.CHARISMA, 1), satiro.getFixedAttributeBonuses());
     }

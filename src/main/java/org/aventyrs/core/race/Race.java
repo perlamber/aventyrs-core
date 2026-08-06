@@ -2,6 +2,7 @@ package org.aventyrs.core.race;
 
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.character.SizeCategory;
 import org.aventyrs.core.feat.FeatCategory;
 import org.aventyrs.core.sheet.DlcRuleset;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
@@ -13,6 +14,33 @@ import java.util.Set;
 public interface Race {
     int BASE_NEW_FEAT_COST = 3;
     int BASE_NEW_SKILL_COST = 2;
+
+    /**
+     * The broad creature classification this race belongs to — every implementor must declare
+     * one (no default), since this is what a Mestiço race's constructor validates a chosen
+     * parent {@link Race} against (see {@code AbstractMesticoRace}/{@code MeioElfo}).
+     */
+    CreatureType getCreatureType();
+
+    /**
+     * Whether this race is itself a Mestiço (mixed-blood) race — e.g. {@code MeioElfo} or any
+     * of the 6 Elemental Mestiços. {@code false} by default so none of the pre-existing races
+     * need to change; only a Mestiço race overrides this to {@code true}, which its own
+     * constructor validation then uses to reject chaining one Mestiço as another's parent race
+     * ("que não seja mestiça").
+     */
+    default boolean isMestico() { return false; }
+
+    /**
+     * The {@link SizeCategory} this race normally assigns at creation — {@link
+     * SizeCategory#ZERO} by default (the baseline every race without an override already
+     * produces via {@link #generateEmptyCharacter}). Races that set a different fixed size
+     * (e.g. {@code Anao}'s {@code MINUS_ONE}) override this instead of hardcoding the literal
+     * inside {@link #generateEmptyCharacter} a second time; a Mestiço race also uses this to
+     * read its chosen parent race's own base size (`parentRace.getBaseSizeCategory()`) without
+     * needing to fully assemble a {@link Character} just to read one field back.
+     */
+    default SizeCategory getBaseSizeCategory() { return SizeCategory.ZERO; }
 
     /**
      * Racial attribute bonuses every individual of this race is automatically granted,

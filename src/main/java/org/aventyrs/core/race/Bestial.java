@@ -95,6 +95,11 @@ import java.util.List;
 public class Bestial implements Race {
 
     @Override
+    public CreatureType getCreatureType() {
+        return CreatureType.FEERICO;
+    }
+
+    @Override
     public Character.CharacterBuilder generateEmptyCharacter(final List<DlcRuleset> dlcRulesetList) {
         return Character.builder();
     }

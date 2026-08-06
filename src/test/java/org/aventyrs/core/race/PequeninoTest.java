@@ -41,6 +41,12 @@ class PequeninoTest {
     }
 
     @Test
+    void hasHumanoideCreatureTypeAndMinusOneBaseSizeCategory() {
+        assertEquals(CreatureType.HUMANOIDE, pequenino.getCreatureType());
+        assertEquals(SizeCategory.MINUS_ONE, pequenino.getBaseSizeCategory());
+    }
+
+    @Test
     void hasAFixedDexterityRacialBonus() {
         assertEquals(Map.of(AttributeDomain.DEXTERITY, 1), pequenino.getFixedAttributeBonuses());
     }

@@ -74,6 +74,11 @@ import java.util.Map;
 public class Furia implements Race {
 
     @Override
+    public CreatureType getCreatureType() {
+        return CreatureType.FEERICO;
+    }
+
+    @Override
     public Map<AttributeDomain, Integer> getFixedAttributeBonuses() {
         return Map.of(AttributeDomain.CHARISMA, 1, AttributeDomain.FOCUS, 1);
     }

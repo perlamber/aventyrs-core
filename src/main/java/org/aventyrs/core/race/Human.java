@@ -6,12 +6,13 @@ import org.aventyrs.core.sheet.DlcRuleset;
 import java.util.List;
 
 /**
- * Defines what the Human race can do under each rule-set. Unlike every other race so far,
- * *nothing* here is currently overridden — but that's a deliberate match to the rules text,
- * not an oversight: Humanos are explicitly the size/attribute baseline ("são consideradas
- * referência do que é fisicamente comum... não recebem pontos de atributos adicionais",
- * "Categoria de Tamanho 0"), so {@link Race}'s own defaults (empty fixed/choosable attribute
- * bonuses, no override on {@link #generateEmptyCharacter}) already express that correctly.
+ * Defines what the Human race can do under each rule-set. Other than {@link #getCreatureType()}
+ * ({@link CreatureType#HUMANOIDE}, no default exists for this one — see {@link Race}), nothing
+ * here is currently overridden — but that's a deliberate match to the rules text, not an
+ * oversight: Humanos are explicitly the size/attribute baseline ("são consideradas referência
+ * do que é fisicamente comum... não recebem pontos de atributos adicionais", "Categoria de
+ * Tamanho 0"), so {@link Race}'s own defaults (empty fixed/choosable attribute bonuses, no
+ * override on {@link #generateEmptyCharacter}) already express that correctly.
  *
  * <ul>
  *   <li><b>Idiomas</b> (Continental + um adicional per Antecedente) — same "no Language/
@@ -52,6 +53,11 @@ import java.util.List;
  * <p>Tendência is deliberately left unconstrained, same treatment as every other race.
  */
 public class Human implements Race {
+
+    @Override
+    public CreatureType getCreatureType() {
+        return CreatureType.HUMANOIDE;
+    }
 
     @Override
     public Character.CharacterBuilder generateEmptyCharacter(List<DlcRuleset> dlcRulesetList) {

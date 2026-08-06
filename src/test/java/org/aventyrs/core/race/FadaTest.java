@@ -21,6 +21,11 @@ class FadaTest {
     }
 
     @Test
+    void hasFeericoCreatureType() {
+        assertEquals(CreatureType.FEERICO, fada.getCreatureType());
+    }
+
+    @Test
     void hasFixedCharismaAndFocusRacialBonuses() {
         assertEquals(Map.of(AttributeDomain.CHARISMA, 1, AttributeDomain.FOCUS, 1), fada.getFixedAttributeBonuses());
     }

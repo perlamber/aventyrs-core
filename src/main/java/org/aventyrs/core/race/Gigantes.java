@@ -75,13 +75,23 @@ public class Gigantes implements Race {
     private static final int SOBREVIVENCIA_FEAT_COST = 2;
 
     @Override
+    public CreatureType getCreatureType() {
+        return CreatureType.HUMANOIDE;
+    }
+
+    @Override
     public Map<AttributeDomain, Integer> getFixedAttributeBonuses() {
         return Map.of(AttributeDomain.STRENGTH, 2, AttributeDomain.VIGOR, 2);
     }
 
     @Override
+    public SizeCategory getBaseSizeCategory() {
+        return SizeCategory.PLUS_TWO;
+    }
+
+    @Override
     public Character.CharacterBuilder generateEmptyCharacter(final List<DlcRuleset> dlcRulesetList) {
-        return Character.builder().sizeCategory(SizeCategory.PLUS_TWO);
+        return Character.builder().sizeCategory(getBaseSizeCategory());
     }
 
     @Override

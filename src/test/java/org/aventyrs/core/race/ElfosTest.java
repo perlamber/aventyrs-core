@@ -21,6 +21,11 @@ class ElfosTest {
     }
 
     @Test
+    void hasHumanoideCreatureType() {
+        assertEquals(CreatureType.HUMANOIDE, elfos.getCreatureType());
+    }
+
+    @Test
     void hasAFixedDexterityRacialBonus() {
         assertEquals(Map.of(AttributeDomain.DEXTERITY, 1), elfos.getFixedAttributeBonuses());
     }

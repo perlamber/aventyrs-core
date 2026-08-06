@@ -21,6 +21,11 @@ class OrcsTest {
     }
 
     @Test
+    void hasHumanoideCreatureType() {
+        assertEquals(CreatureType.HUMANOIDE, orcs.getCreatureType());
+    }
+
+    @Test
     void hasAFixedVigorRacialBonus() {
         assertEquals(Map.of(AttributeDomain.VIGOR, 2), orcs.getFixedAttributeBonuses());
     }

@@ -81,6 +81,11 @@ import java.util.Map;
 public class Orc implements Race {
 
     @Override
+    public CreatureType getCreatureType() {
+        return CreatureType.HUMANOIDE;
+    }
+
+    @Override
     public Map<AttributeDomain, Integer> getFixedAttributeBonuses() {
         return Map.of(AttributeDomain.VIGOR, 2);
     }

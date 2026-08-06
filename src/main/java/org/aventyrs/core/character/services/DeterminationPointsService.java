@@ -5,6 +5,7 @@ import org.aventyrs.core.sheet.CharacterSheet;
 
 public interface DeterminationPointsService {
     int DEFAULT_DETERMINATION_MULTIPLIER = 3;
+    int BASE_DETERMINATION_POINTS = 10;
 
     /**
      * The Determination Multiplier, base {@value #DEFAULT_DETERMINATION_MULTIPLIER},

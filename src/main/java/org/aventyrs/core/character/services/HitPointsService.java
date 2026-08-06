@@ -5,6 +5,7 @@ import org.aventyrs.core.sheet.CharacterSheet;
 
 public interface HitPointsService {
     int DEFAULT_LIFE_MULTIPLIER = 4;
+    int BASE_HIT_POINTS = 10;
 
     /**
      * The Life Multiplier, base {@value #DEFAULT_LIFE_MULTIPLIER}, increased by sources such

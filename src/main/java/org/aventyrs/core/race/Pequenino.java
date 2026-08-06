@@ -69,12 +69,22 @@ import java.util.Map;
 public class Pequenino implements Race {
 
     @Override
+    public CreatureType getCreatureType() {
+        return CreatureType.HUMANOIDE;
+    }
+
+    @Override
     public Map<AttributeDomain, Integer> getFixedAttributeBonuses() {
         return Map.of(AttributeDomain.DEXTERITY, 1);
     }
 
     @Override
+    public SizeCategory getBaseSizeCategory() {
+        return SizeCategory.MINUS_ONE;
+    }
+
+    @Override
     public Character.CharacterBuilder generateEmptyCharacter(final List<DlcRuleset> dlcRulesetList) {
-        return Character.builder().sizeCategory(SizeCategory.MINUS_ONE);
+        return Character.builder().sizeCategory(getBaseSizeCategory());
     }
 }

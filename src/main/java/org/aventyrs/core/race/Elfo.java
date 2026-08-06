@@ -74,6 +74,11 @@ import java.util.Set;
 public class Elfo implements Race {
 
     @Override
+    public CreatureType getCreatureType() {
+        return CreatureType.HUMANOIDE;
+    }
+
+    @Override
     public Map<AttributeDomain, Integer> getFixedAttributeBonuses() {
         return Map.of(AttributeDomain.DEXTERITY, 1);
     }

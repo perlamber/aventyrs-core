@@ -96,6 +96,19 @@ import java.util.Map;
  */
 public class Gorgona implements Race {
 
+    /**
+     * A judgment call, not a confirmed classification: Górgonas were originally Fadas, are
+     * described as having "recuperando... graça feérica" recently, and the race's own "1
+     * Talento adicional" trait offers Monstruoso *or* Talento Racial as alternatives (implying
+     * her own Talento Racial category isn't itself Monstruoso) — so {@link CreatureType#FEERICO}
+     * fits the text better than {@link CreatureType#MONSTRUOSO} despite her cursed,
+     * monster-like physical traits. Flagged for confirmation rather than silently assumed.
+     */
+    @Override
+    public CreatureType getCreatureType() {
+        return CreatureType.FEERICO;
+    }
+
     @Override
     public Map<AttributeDomain, Integer> getFixedAttributeBonuses() {
         return Map.of(AttributeDomain.STRENGTH, 1, AttributeDomain.CHARISMA, 1);
