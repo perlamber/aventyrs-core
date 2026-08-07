@@ -58,6 +58,13 @@ public class Character {
     protected Sexo sexo;
 
     /**
+     * The deity (if any) this character is devoted to. No default and not {@code @NonNull},
+     * same as {@link #sexo}/{@link #autocontroleAdvantage} — nothing in this core currently
+     * requires every {@code Character} to name one.
+     */
+    protected Deity deity;
+
+    /**
      * Tendência — a 1-10 scale (per this ruleset's character sheet). Defaults to 1 (the
      * floor of that range, not a meaningful "neutral" value — chosen only so an unset
      * {@code Character} doesn't silently read as an out-of-range 0). Nothing in this core

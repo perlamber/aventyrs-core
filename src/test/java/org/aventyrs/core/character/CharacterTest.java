@@ -38,4 +38,20 @@ class CharacterTest {
         assertEquals(Character.Sexo.FEMININO, character.getSexo());
         assertEquals(8, character.getTendencia());
     }
+
+    @Test
+    void deityIsNullByDefault() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK).build();
+
+        assertNull(character.getDeity());
+    }
+
+    @Test
+    void builderAssignsDeity() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .deity(Deity.LUZ_PRIMORDIAL)
+                .build();
+
+        assertEquals(Deity.LUZ_PRIMORDIAL, character.getDeity());
+    }
 }
