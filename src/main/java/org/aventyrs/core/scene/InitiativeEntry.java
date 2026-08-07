@@ -8,9 +8,11 @@ import java.util.UUID;
 
 /**
  * A CharacterSheet paired with the Iniciativa value it rolled for a Scene — Iniciativa's Ego
- * total plus whatever dice roll the caller applied; this project doesn't compute that roll
- * itself, it's supplied already-resolved — plus the sub-group it belongs to within the
- * Scene, used to resolve who counts as an ally (see {@link Scene#getAllies}).
+ * total plus modifiers (see {@link org.aventyrs.core.character.services.InitiativeService
+ * #getTotalInitiative}) plus whatever dice roll the caller applied; this project doesn't
+ * compute that roll itself, so the combined total is supplied already-resolved — plus the
+ * sub-group it belongs to within the Scene, used to resolve who counts as an ally (see
+ * {@link Scene#getAllies}).
  */
 @Getter
 @AllArgsConstructor

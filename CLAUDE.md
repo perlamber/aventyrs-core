@@ -280,14 +280,14 @@ introducing a second, parallel "which skill is this" enum that could drift out o
   of this core's own tests) can keep constructing and calling it directly; nothing requires
   going through `SkillRollRequest`.
 
-## Character-level stats aggregated from abilities (e.g. Reações, Ações Livres, Pontos de Ação)
+## Character-level stats aggregated from abilities (e.g. Reações, Ações Livres, Pontos de Ação, Iniciativa)
 
 Some Character-level counters need a fixed base value *and* a fully-modified total summed
-from abilities — this is what `ReactionsService`, `FreeActionsService`, and
-`ActionPointsServiceImpl.getMaxActionPoints` all do (the latter scans the same three sources
-to support things like `AtletismoExcellency.LENDA`'s +1PA). Don't compute the modified total
-inside `Character` itself (it would need to instantiate `ModifierResolverImpl` directly, which
-doesn't belong on a data class):
+from abilities — this is what `ReactionsService`, `FreeActionsService`,
+`ActionPointsServiceImpl.getMaxActionPoints` (the latter scans the same three sources to
+support things like `AtletismoExcellency.LENDA`'s +1PA), and `InitiativeService` all do. Don't
+compute the modified total inside `Character` itself (it would need to instantiate
+`ModifierResolverImpl` directly, which doesn't belong on a data class):
 
 - `Character` holds only the plain fixed counter (e.g. `reactions`/`freeActions`, a normal
   `@Builder.Default` field with Lombok's regular getter — no suppression, no manual method),
@@ -313,11 +313,31 @@ doesn't belong on a data class):
   `CharacterFixture`'s `BLANK` template `Rule` (see the comment on `loadCharacterTemplates` —
   Fixture Factory never goes through the Lombok builder, so `@Builder.Default` values don't
   apply automatically).
+- `InitiativeService.getTotalInitiative` is a variant of this same shape, not a byte-for-byte
+  copy: its base isn't a plain `Character` counter defaulting to a `<Stat>Service` constant —
+  Iniciativa already existed as one of the four `EgoDomain`s (`character.getEgos()
+  .getIniciativa().getTotal()`, itself `base + variable`, see `EgoValue`), so that's the base
+  the `ModifierType.INITIATIVE` sum from the usual three sources is added on top of, with no
+  new `Character` field and nothing to add to `CharacterFixture`'s `BLANK` template. It also
+  deliberately does **not** clamp at 0 like Reações/Ações Livres/RD/RA do — those are spendable
+  resources where negative is meaningless, but Iniciativa is a turn-order value, so a large
+  enough malus leaving it negative is still a valid (if late) position, not an error state.
+  `InitiativeEntry`'s own javadoc documents how this fits into a `Scene`'s actual turn order:
+  this service only computes the fixed Ego-plus-modifiers component, a caller still adds
+  whichever dice roll they applied on top before handing the total to
+  `Scene#addParticipant`, since this library never rolls dice itself.
 
 Mirror this shape for any new stat abilities/competencies/excellencies can modify, and
 remember to give the new `ModifierType` constant a `@Modifier`-annotated method on whichever
 concrete ability/excellency should affect it (e.g. `AttentionExcellency.FOCADO` for
-`REACTIONS`).
+`REACTIONS`). No concrete ability grants `ModifierType.INITIATIVE` yet — `InitiativeService`
+was built ahead of a first consumer, same as `ReactionsService` once was, not because building
+it just unblocked one. The two existing rules-text mentions of a flat +2 Iniciativa
+(`AttentionExcellency.LENDA`, `MeioElfo`'s Provar Seu Valor) are each still TODO'd on their
+*own* missing system first — a graduation-threshold-crossing trigger for the former, a "game
+session" concept for the latter's "1x por sessão" — so a plain `@Modifier(ModifierType
+.INITIATIVE)` method on either wouldn't actually match its rules text yet; don't wire one in
+just because the scanning now exists.
 
 ## Casting a Magia is two separate rolls — `org.aventyrs.core.magic.SpellCastingService`
 

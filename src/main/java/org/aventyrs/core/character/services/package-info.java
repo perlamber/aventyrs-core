@@ -1,6 +1,6 @@
 /**
  * Character-level services: creation, and the derived-stat calculators
- * (Hit/Magic/Determination Points, Reações, etc.) built on top of a finished
+ * (Hit/Magic/Determination Points, Reações, Iniciativa, etc.) built on top of a finished
  * {@link org.aventyrs.core.character.Character}.
  *
  * <h2>Creating a Character</h2>
