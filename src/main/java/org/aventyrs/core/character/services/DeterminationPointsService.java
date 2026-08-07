@@ -14,7 +14,8 @@ public interface DeterminationPointsService {
     int getDeterminationMultiplier(Character character);
 
     /**
-     * Total (maximum) Determination Points: Instinto's total value times the Determination Multiplier.
+     * Total (maximum) Determination Points: {@value #BASE_DETERMINATION_POINTS} plus Instinto's
+     * total value times the Determination Multiplier.
      */
     int getMaxDeterminationPoints(Character character);
 

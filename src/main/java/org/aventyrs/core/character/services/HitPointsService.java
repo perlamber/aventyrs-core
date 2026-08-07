@@ -14,7 +14,8 @@ public interface HitPointsService {
     int getLifeMultiplier(Character character);
 
     /**
-     * Total (maximum) Hit Points: Vigor's total value times the Life Multiplier.
+     * Total (maximum) Hit Points: {@value #BASE_HIT_POINTS} plus Vigor's total value times the
+     * Life Multiplier.
      */
     int getMaxHitPoints(Character character);
 

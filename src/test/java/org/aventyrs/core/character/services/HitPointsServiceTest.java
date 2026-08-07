@@ -40,23 +40,23 @@ class HitPointsServiceTest {
     }
 
     @Test
-    void maxHitPointsIsVigorTimesLifeMultiplier() {
+    void maxHitPointsIsBasePointsPlusVigorTimesLifeMultiplier() {
         Character character = characterWithVigor(3);
-        assertEquals(12, hitPointsService.getMaxHitPoints(character));
+        assertEquals(22, hitPointsService.getMaxHitPoints(character));
     }
 
     @Test
     void sobreHumanoIncreasesLifeMultiplierByOne() {
         Character character = characterWithVigor(3, VigorAbility.SOBRE_HUMANO);
         assertEquals(5, hitPointsService.getLifeMultiplier(character));
-        assertEquals(15, hitPointsService.getMaxHitPoints(character));
+        assertEquals(25, hitPointsService.getMaxHitPoints(character));
     }
 
     @Test
     void currentHitPointsStartsAtMax() {
         Character character = characterWithVigor(3);
         CharacterSheet sheet = CharacterSheet.of(character, new Player());
-        assertEquals(12, hitPointsService.getCurrentHitPoints(character, sheet));
+        assertEquals(22, hitPointsService.getCurrentHitPoints(character, sheet));
     }
 
     @Test
@@ -64,7 +64,7 @@ class HitPointsServiceTest {
         Character character = characterWithVigor(3);
         CharacterSheet sheet = CharacterSheet.of(character, new Player());
         sheet.applyDamage(5);
-        assertEquals(7, hitPointsService.getCurrentHitPoints(character, sheet));
+        assertEquals(17, hitPointsService.getCurrentHitPoints(character, sheet));
     }
 
     @Test

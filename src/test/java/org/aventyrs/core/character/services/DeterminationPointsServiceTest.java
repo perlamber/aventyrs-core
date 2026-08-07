@@ -40,16 +40,16 @@ class DeterminationPointsServiceTest {
     }
 
     @Test
-    void maxDeterminationPointsIsInstinctTimesDeterminationMultiplier() {
+    void maxDeterminationPointsIsBasePointsPlusInstinctTimesDeterminationMultiplier() {
         Character character = characterWithInstinct(3);
-        assertEquals(9, determinationPointsService.getMaxDeterminationPoints(character));
+        assertEquals(19, determinationPointsService.getMaxDeterminationPoints(character));
     }
 
     @Test
     void obstinadoIncreasesDeterminationMultiplierByOne() {
         Character character = characterWithInstinct(3, InstinctAbility.OBSTINADO);
         assertEquals(4, determinationPointsService.getDeterminationMultiplier(character));
-        assertEquals(12, determinationPointsService.getMaxDeterminationPoints(character));
+        assertEquals(22, determinationPointsService.getMaxDeterminationPoints(character));
     }
 
     @Test
@@ -57,7 +57,7 @@ class DeterminationPointsServiceTest {
         Character character = characterWithInstinct(3);
         CharacterSheet sheet = CharacterSheet.of(character, new Player());
         sheet.spendDeterminationPoints(4);
-        assertEquals(5, determinationPointsService.getCurrentDeterminationPoints(character, sheet));
+        assertEquals(15, determinationPointsService.getCurrentDeterminationPoints(character, sheet));
     }
 
     @Test
