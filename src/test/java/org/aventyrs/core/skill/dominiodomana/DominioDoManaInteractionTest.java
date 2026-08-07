@@ -1,5 +1,6 @@
 package org.aventyrs.core.skill.dominiodomana;
 
+import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.AttributeValue;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterAttributes;
@@ -29,7 +30,7 @@ class DominioDoManaInteractionTest {
     private CharacterSheet sheetWithFocusAndSkill(int focusBase, CharacterSkill characterSkill) {
         Character.CharacterBuilder builder = CharacterFixture.blank(CharacterFixture.BLANK)
                 .attributes(CharacterAttributes.builder()
-                        .focus(AttributeValue.builder().base(focusBase).build())
+                        .focus(AttributeValue.builder().domain(AttributeDomain.FOCUS).base(focusBase).build())
                         .build());
         if (characterSkill != null) {
             builder.skill(SkillType.DOMINIO_DO_MANA, characterSkill);

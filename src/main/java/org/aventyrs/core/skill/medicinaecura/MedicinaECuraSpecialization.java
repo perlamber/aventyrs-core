@@ -2,6 +2,8 @@ package org.aventyrs.core.skill.medicinaecura;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.aventyrs.core.skill.SkillSpecialization;
+import org.aventyrs.core.skill.SkillType;
 
 /**
  * The specialization a player must choose when a character trains Medicina e Cura — it
@@ -9,7 +11,7 @@ import lombok.Getter;
  */
 @Getter
 @AllArgsConstructor
-public enum MedicinaECuraSpecialization {
+public enum MedicinaECuraSpecialization implements SkillSpecialization {
     ALQUIMIA("Criação de Venenos e Poções."),
     HERBANARIO("Você é especialista em lidar doenças e venenos mundanos e capaz de criar " +
             "Antídotos e Remédios."),
@@ -18,4 +20,9 @@ public enum MedicinaECuraSpecialization {
     EXORCISTA("Habilidade de identificar e interromper possessões.");
 
     private final String description;
+
+    @Override
+    public SkillType getSkillType() {
+        return SkillType.MEDICINA_E_CURA;
+    }
 }

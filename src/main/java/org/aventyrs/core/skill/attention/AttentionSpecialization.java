@@ -2,6 +2,8 @@ package org.aventyrs.core.skill.attention;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.aventyrs.core.skill.SkillSpecialization;
+import org.aventyrs.core.skill.SkillType;
 
 /**
  * The specialization a player must choose when a character trains Atenção — it defines
@@ -9,7 +11,7 @@ import lombok.Getter;
  */
 @Getter
 @AllArgsConstructor
-public enum AttentionSpecialization {
+public enum AttentionSpecialization implements SkillSpecialization {
     SENTIDOS_APURADOS("Sua visão, audição e olfato são acima da média, te permitindo uma " +
             "percepção mais ampla do ambiente."),
     INVESTIGAR("Você sabe como procurar objetos escondidos, pistas, evidências e " +
@@ -22,4 +24,9 @@ public enum AttentionSpecialization {
             "identificar Armadilhas Estacionárias.");
 
     private final String description;
+
+    @Override
+    public SkillType getSkillType() {
+        return SkillType.ATTENTION;
+    }
 }

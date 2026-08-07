@@ -2,6 +2,7 @@ package org.aventyrs.core.character.services;
 
 import org.aventyrs.core.ability.InstinctAbility;
 import org.aventyrs.core.action.ActionProfile;
+import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.AttributeValue;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterAttributes;
@@ -25,7 +26,7 @@ class DeterminationPointsServiceTest {
                 .actionProfile(ActionProfile.REFLEXOS_RAPIDOS)
                 .egos(CharacterEgos.builder().build())
                 .attributes(CharacterAttributes.builder()
-                        .instinct(AttributeValue.builder().base(instinctBase).build())
+                        .instinct(AttributeValue.builder().domain(AttributeDomain.INSTINCT).base(instinctBase).build())
                         .build());
         for (InstinctAbility ability : abilities) {
             builder.attributeAbility(ability);

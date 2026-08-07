@@ -98,11 +98,17 @@ pieces — don't stop at just the `Skill` class:
    concrete `Skill`, used to key `Character.skills` (a `Map<SkillType, CharacterSkill>`) for
    O(1) lookup instead of filtering a list.
 
-3. **A `<Skill>Specialization` enum, if the Perícia's rules text calls for one** (e.g.
-   `ArtesSpecialization`): one constant per named specialization, each with a `description`.
-   Don't retype `CharacterSkill.specialization` (a plain `String`) to this enum — different
-   skills have different specialization sets (some, like Attention, have none at all), so it
-   stays a generic field; the enum is just the well-typed reference for that one skill.
+3. **A `<Skill>Specialization` enum** (e.g. `ArtesSpecialization`): every Perícia gets one, no
+   exceptions — one constant per named specialization, each with a `description`, implementing
+   `SkillSpecialization` (`getSkillType()` + the inherited `getDescription()`, see
+   `SkillTrait`/`SkillSpecialization` below). `CharacterSkill.specializations` is a
+   `List<SkillSpecialization>` (`@Builder.Default` empty), not a per-skill-typed field — the
+   enum is the well-typed *catalog* for that one skill, and any instance a character actually
+   holds just needs to satisfy the shared `SkillSpecialization` interface, the same way
+   `Character.skillCompetencyAbilities` holds any `SkillCompetencyAbility` regardless of which
+   skill it targets. `CharacterSkill` itself never validates that a listed specialization's
+   `getSkillType()` actually matches its own `skill` — same restraint as every other
+   builder-bypassable invariant in this codebase (see the Attribute/Graduação section above).
 
 4. **A `<Skill>CompetencyAbility` enum for its Habilidades de Competência, if any**,
    implementing `SkillCompetencyAbility` (`getSkillType()` + `getDescription()`, plus the
@@ -230,30 +236,51 @@ pieces — don't stop at just the `Skill` class:
    0; a null choice is rejected at construction; and the instance reports the catalog
    constant's `SkillType` and description.
 
-## Requesting a specific Habilidade de Competência on a roll — `SkillRoll#getRequestedAbility`
+## Requesting a specific Habilidade de Competência or Especialização on a roll — `SkillRoll#getRequestedAbility`
 
 Some rolls aren't a plain Perícia test — the caller is specifically invoking one of the
 character's `SkillCompetencyAbility` maneuvers (e.g. "roll Furtividade using Disparo
-Ricochete"), and this core should refuse the roll outright if the character never actually
-acquired that ability, rather than silently computing a bonus for a maneuver they can't use.
+Ricochete") or a held Especialização (e.g. "roll Atenção as an Investigar check"), and this
+core should refuse the roll outright if the character never actually acquired that trait,
+rather than silently computing a result for one they can't use.
 
-- `SkillRoll` carries an optional `requestedAbility` (a `SkillCompetencyAbility`), set via its
-  second constructor overload — `SkillRoll(dice)` still delegates to `SkillRoll(dice, null)`,
-  so every existing call site (a plain roll) is unaffected. `null` means "just a plain roll,"
-  and skips validation entirely — this is the common case.
-- `AbstractSkillInteraction`'s 3-arg `applyTo` validates a non-null `requestedAbility` before
-  doing anything else: it must both belong to this same `skillType` (`requestedAbility
-  .getSkillType() == skillType`) and actually be present in `character
-  .getSkillCompetencyAbilities()` — either failure throws `IllegalOperationException`
-  (`REQUIRED_COMPETENCY_ABILITY_NOT_HELD`). This applies generically to every skill, in one
-  place, the same way every other `applyTo` computation already does.
-- This only validates *possession* of the ability, the same restraint CLAUDE.md already
-  documents elsewhere (no "Requer N Graduações" enforcement, no acquisition-legality checks)
-  — it doesn't validate that the ability's own mechanic is actually implemented, or gate on
-  anything about the roll's circumstances (range, targets, etc.). A caller can still request
-  an ability whose effect is entirely TODO'd; the roll proceeds (computing the ordinary
-  `skillRollBonus`/`difficultyReduction` as normal), it's just no longer possible to request
-  an ability the character was never granted in the first place.
+- `SkillTrait` (`org.aventyrs.core.skill`) is the shared interface behind both:
+  `SkillType getSkillType(); String getDescription();`. `SkillCompetencyAbility extends
+  SkillTrait` (plus its own ability-specific default methods —
+  `getDifficultyReduction()`/`getSubstituteAttributeDomain()`/etc., unaffected by this).
+  `SkillSpecialization extends SkillTrait` too, with nothing added on top — every
+  `<Skill>Specialization` enum constant implements it. Neither interface is sealed; only these
+  two implementations exist today, but nothing requires that going forward.
+- `SkillRoll` carries an optional `requestedAbility` (a `SkillTrait` — either a
+  `SkillCompetencyAbility` or a `SkillSpecialization`), set via its second constructor overload
+  — `SkillRoll(dice)` still delegates to `SkillRoll(dice, null)`, so every existing call site (a
+  plain roll) is unaffected. `null` means "just a plain roll," and skips validation entirely —
+  this is the common case.
+- `AbstractSkillInteraction`'s 3-arg `applyTo` validates a non-null `requestedAbility` via
+  `validateRequestedTrait` before doing anything else: it must belong to this same `skillType`
+  (`requestedTrait.getSkillType() == skillType`) *and* actually be held — for a
+  `SkillCompetencyAbility` that means present in `character.getSkillCompetencyAbilities()` or
+  `character.getRace().getRacialAbilities()` (unchanged from before); for a
+  `SkillSpecialization` that means present in `characterSkill.getSpecializations()` instead
+  (`characterSkill` is resolved via `findCharacterSkill` before this check runs, so an untrained
+  skill's fallback `CharacterSkill` — with no specializations — correctly fails this check).
+  Either failure throws `IllegalOperationException` (`REQUIRED_SKILL_TRAIT_NOT_HELD`). This
+  applies generically to every skill, in one place, the same way every other `applyTo`
+  computation already does.
+- When the validated `requestedAbility` is a `SkillSpecialization`, `applyTo` resolves
+  `InteractionResult#reachedDifficultyLevel` via `DifficultyLevel#reachedByAsExpert` instead of
+  `DifficultyLevel#reachedBy` — thresholding against each tier's easier `expertValue` instead of
+  its `baseValue`. This is the first real consumer of `expertValue`, which used to be dead data
+  (see "Rolling the dice" below).
+- This only validates *possession* of the trait, the same restraint CLAUDE.md already
+  documents elsewhere (no "Requer N Graduações" enforcement, no acquisition-legality checks) —
+  it doesn't validate that a `SkillCompetencyAbility`'s own mechanic is actually implemented, or
+  gate on anything about the roll's circumstances (range, targets, etc.), and it doesn't
+  validate that a requested `SkillSpecialization` is actually the right fit for whatever the
+  roll is being used for narratively — this core still doesn't track what a roll is *for*. A
+  caller can still request a trait whose effect is entirely TODO'd (an ability) or narratively
+  mismatched (a specialization); the roll proceeds, it's just no longer possible to request a
+  trait the character was never granted in the first place.
 
 ## Dispatching a roll by SkillType — `SkillInteractionFactory`, `SkillRollRequest`
 
@@ -552,19 +579,22 @@ useful. Every Perícia roll in this ruleset is 3d6 — always exactly 3 six-side
 - `DifficultyLevel.reachedBy(int total)` resolves the highest tier a total clears, judged
   against each tier's `baseValue` — mirroring `SkillExcellency.unlockedBy`'s
   threshold-lookup shape, returning `Optional.empty()` if total falls short of even
-  `VERY_EASY`. It deliberately ignores `expertValue` (the easier threshold a matching
-  Especialização grants) — resolving "does this roll's Especialização match what it's being
-  used for" is a separate, still-unbuilt concern (this core doesn't track what a roll is
-  *for* — same gap as scoped Vantagem/substitution elsewhere); a caller who's already
-  resolved that externally can compare against `getExpertValue()` directly instead.
+  `VERY_EASY`. Its sibling `DifficultyLevel.reachedByAsExpert(int total)` does the identical
+  lookup against `expertValue` instead — see "Requesting a specific Habilidade de Competência
+  or Especialização on a roll" above for how `AbstractSkillInteraction` picks between the two
+  (a held, matching `SkillSpecialization` named as the roll's `requestedAbility` switches to
+  `reachedByAsExpert`). Neither method validates *why* a caller picked one over the other —
+  resolving "does this roll's Especialização match what it's being used for" beyond mere
+  possession is still a separate, unbuilt concern (this core doesn't track what a roll is *for*
+  — same gap as scoped Vantagem/substitution elsewhere).
 - `AbstractSkillInteraction` gained a third `applyTo` overload —
   `applyTo(CharacterSheet, SceneContext, SkillRoll)` — following the exact same
   cascading-delegation shape as the `SceneContext` overload before it: each shorter overload
   just delegates down with `null` for the new parameter, and the longest one holds all the
-  real logic. When `skillRoll` is non-`null`, it sets `InteractionResult
-  .reachedDifficultyLevel` (from `DifficultyLevel.reachedBy(skillRollBonus +
-  skillRoll.getTotal())`) and `.criticalResult` (from `skillRoll.getCriticalResult()`); both
-  stay `null` otherwise, same as every other not-applicable `InteractionResult` field.
+  real logic. When `skillRoll` is non-`null`, it sets `InteractionResult.reachedDifficultyLevel`
+  (from `DifficultyLevel.reachedBy`/`reachedByAsExpert(skillRollBonus + skillRoll.getTotal())`,
+  picked per the previous bullet) and `.criticalResult` (from `skillRoll.getCriticalResult()`);
+  both stay `null` otherwise, same as every other not-applicable `InteractionResult` field.
   `ArtesInteraction` now overrides this 3-arg overload (it used to override the 2-arg one) —
   a subclass always overrides the *longest* overload whose real logic it needs to build on
   top of, not a shorter one, even if it doesn't touch that overload's own newest parameter

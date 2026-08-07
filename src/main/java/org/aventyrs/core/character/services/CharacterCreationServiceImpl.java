@@ -29,7 +29,7 @@ public class CharacterCreationServiceImpl implements CharacterCreationService {
         for (AttributeDomain domain : AttributeDomain.values()) {
             int base = 1 + basePointAllocation.getOrDefault(domain, 0);
             int racialBonus = fixedBonuses.getOrDefault(domain, 0) + chosenRacialBonusAllocation.getOrDefault(domain, 0);
-            assignAttribute(builder, domain, AttributeValue.builder().base(base).racialBonus(racialBonus).build());
+            assignAttribute(builder, domain, AttributeValue.builder().domain(domain).base(base).racialBonus(racialBonus).build());
         }
         return builder.build();
     }

@@ -2,6 +2,7 @@ package org.aventyrs.core.skill;
 
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.skill.artes.ArtesCompetencyAbility;
+import org.aventyrs.core.skill.attention.AttentionSpecialization;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -127,5 +128,12 @@ class SkillRollTest {
     void theTwoArgConstructorStillValidatesDice() {
         assertThrows(IllegalOperationException.class,
                 () -> new SkillRoll(List.of(1, 2), ArtesCompetencyAbility.DOM_BARDICO));
+    }
+
+    @Test
+    void requestedAbilityAcceptsASkillSpecializationToo() {
+        SkillRoll roll = new SkillRoll(List.of(2, 3, 5), AttentionSpecialization.INVESTIGAR);
+
+        assertEquals(AttentionSpecialization.INVESTIGAR, roll.getRequestedAbility());
     }
 }

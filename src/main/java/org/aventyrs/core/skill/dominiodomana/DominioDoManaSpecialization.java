@@ -2,6 +2,8 @@ package org.aventyrs.core.skill.dominiodomana;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.aventyrs.core.skill.SkillSpecialization;
+import org.aventyrs.core.skill.SkillType;
 
 /**
  * The specialization a player must choose when a character trains Domínio do Mana — it
@@ -9,7 +11,7 @@ import lombok.Getter;
  */
 @Getter
 @AllArgsConstructor
-public enum DominioDoManaSpecialization {
+public enum DominioDoManaSpecialization implements SkillSpecialization {
     INVOCADOR("Você se especializou em Magias do tipo Invocação."),
     ENCANTADOR("Sua especialidade é o uso de Magias do tipo Encantamento ou Divinas."),
     FEITICARIA_OFENSIVA("Seu estilo de combate é baseado em Magias que afetem alvos " +
@@ -20,4 +22,9 @@ public enum DominioDoManaSpecialization {
             "Mágicas Raciais.");
 
     private final String description;
+
+    @Override
+    public SkillType getSkillType() {
+        return SkillType.DOMINIO_DO_MANA;
+    }
 }

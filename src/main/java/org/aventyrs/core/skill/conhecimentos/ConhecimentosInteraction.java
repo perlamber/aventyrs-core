@@ -6,10 +6,12 @@ import org.aventyrs.core.skill.AbstractSkillInteraction;
 import org.aventyrs.core.skill.SkillType;
 
 /**
- * Requests a Conhecimentos Perícia test. Which of Conhecimentos' specializations the roll is
- * for doesn't change the bonus — see {@link ConhecimentosSpecialization} — so it isn't tracked
- * here. See {@link AbstractSkillInteraction} for how the roll bonus/difficultyReduction are
- * actually computed.
+ * Requests a Conhecimentos Perícia test. Which of Conhecimentos' specializations ({@link
+ * ConhecimentosSpecialization}) the roll is for doesn't change {@code skillRollBonus}/{@code
+ * difficultyReduction} — a held one can still be requested via {@code
+ * SkillRoll#getRequestedAbility()}, switching {@code reachedDifficultyLevel} to expert
+ * thresholds; see {@link AbstractSkillInteraction} for how that and the roll
+ * bonus/difficultyReduction are actually computed.
  */
 public class ConhecimentosInteraction extends AbstractSkillInteraction {
 

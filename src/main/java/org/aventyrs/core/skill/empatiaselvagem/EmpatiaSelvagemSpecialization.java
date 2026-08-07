@@ -2,6 +2,8 @@ package org.aventyrs.core.skill.empatiaselvagem;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.aventyrs.core.skill.SkillSpecialization;
+import org.aventyrs.core.skill.SkillType;
 
 /**
  * The specialization a player must choose when a character trains Empatia Selvagem — it
@@ -9,7 +11,7 @@ import lombok.Getter;
  */
 @Getter
 @AllArgsConstructor
-public enum EmpatiaSelvagemSpecialization {
+public enum EmpatiaSelvagemSpecialization implements SkillSpecialization {
     ANIMAIS_MUNDANOS("Interação com mamíferos, répteis, anfíbios, aves e peixes modernos e " +
             "comuns."),
     MENTALIDADE_ARTROPODE("Você compreende a cultura dos insetos, aracnídeos, crustáceos, " +
@@ -22,4 +24,9 @@ public enum EmpatiaSelvagemSpecialization {
             "Celestiais, Elementais ou Umbrais.");
 
     private final String description;
+
+    @Override
+    public SkillType getSkillType() {
+        return SkillType.EMPATIA_SELVAGEM;
+    }
 }

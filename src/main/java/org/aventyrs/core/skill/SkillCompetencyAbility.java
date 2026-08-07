@@ -8,9 +8,7 @@ import org.aventyrs.core.sheet.CharacterSheet;
 import java.util.Collection;
 import java.util.Optional;
 
-public interface SkillCompetencyAbility {
-    SkillType getSkillType();
-    String getDescription();
+public interface SkillCompetencyAbility extends SkillTrait {
 
     /**
      * How many GD (DifficultyLevel) steps this Habilidade de Competência reduces a Perícia

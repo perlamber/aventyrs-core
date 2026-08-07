@@ -1,5 +1,6 @@
 package org.aventyrs.core.skill.profissao;
 
+import org.aventyrs.core.skill.SkillType;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -17,5 +18,12 @@ class ProfissaoSpecializationTest {
     @Test
     void listHasTheFiveDescribedSpecializations() {
         assertEquals(5, ProfissaoSpecialization.values().length);
+    }
+
+    @Test
+    void everySpecializationReportsTheProfissaoSkillType() {
+        for (ProfissaoSpecialization specialization : ProfissaoSpecialization.values()) {
+            assertEquals(SkillType.PROFISSAO, specialization.getSkillType());
+        }
     }
 }

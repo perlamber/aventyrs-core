@@ -1,5 +1,6 @@
 package org.aventyrs.core.skill;
 
+import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.AttributeValue;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterAttributes;
@@ -29,7 +30,7 @@ class SkillInteractionFactoryTest {
     private CharacterSheet sheetWithCharisma(final int charismaBase) {
         Character character = CharacterFixture.blank(CharacterFixture.BLANK)
                 .attributes(CharacterAttributes.builder()
-                        .charisma(AttributeValue.builder().base(charismaBase).build())
+                        .charisma(AttributeValue.builder().domain(AttributeDomain.CHARISMA).base(charismaBase).build())
                         .build())
                 .build();
         return CharacterSheet.of(character, new Player());

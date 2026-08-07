@@ -18,10 +18,11 @@ import org.aventyrs.core.skill.dominiodomana.DominioDoManaInteraction;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import static org.aventyrs.core.skill.Skill.UNTRAINED_PENALTY;
-import static org.aventyrs.core.util.TranslatableMessages.REQUIRED_COMPETENCY_ABILITY_NOT_HELD;
+import static org.aventyrs.core.util.TranslatableMessages.REQUIRED_SKILL_TRAIT_NOT_HELD;
 
 /**
  * The {@code applyTo}/{@code findCharacterSkill} machinery every {@code <Skill>Interaction}
@@ -68,8 +69,14 @@ import static org.aventyrs.core.util.TranslatableMessages.REQUIRED_COMPETENCY_AB
  * {@code applyTo} validates the target's Character actually holds it (and that it belongs to
  * this same {@code skillType}) before doing anything else, throwing {@link
  * IllegalOperationException} otherwise — this stops a caller from requesting a maneuver-style
- * {@link SkillCompetencyAbility} the character never acquired. A {@code null} requestedAbility
- * (a plain roll, the common case) skips this check entirely.
+ * {@link SkillCompetencyAbility} (checked against {@code character.getSkillCompetencyAbilities()}/
+ * {@code character.getRace().getRacialAbilities()}) or a held {@link SkillSpecialization}
+ * (checked against {@code characterSkill.getSpecializations()}) the character doesn't actually
+ * have — see {@link #validateRequestedTrait}. A {@code null} requestedAbility (a plain roll, the
+ * common case) skips this check entirely. When the validated trait is a {@link
+ * SkillSpecialization}, the roll's reached {@link DifficultyLevel} is resolved via {@link
+ * DifficultyLevel#reachedByAsExpert} instead of {@link DifficultyLevel#reachedBy} — the
+ * Especialização's easier threshold finally has a real consumer.
  */
 public abstract class AbstractSkillInteraction implements Interaction<CharacterSheet> {
 
@@ -124,10 +131,10 @@ public abstract class AbstractSkillInteraction implements Interaction<CharacterS
      */
     public InteractionResult applyTo(final CharacterSheet target, final SceneContext sceneContext, final SkillRoll skillRoll) {
         Character character = target.getCharacter();
-        if (skillRoll != null) {
-            validateRequestedAbility(character, skillRoll.getRequestedAbility());
-        }
         CharacterSkill characterSkill = findCharacterSkill(character);
+        if (skillRoll != null) {
+            validateRequestedTrait(character, characterSkill, skillRoll.getRequestedAbility());
+        }
         int graduationValue = characterSkill.getGraduation().getGraduationValue();
         List<SkillCompetencyAbility> skillCompetencyAbilities = allSkillCompetencyAbilities(character);
 
@@ -153,7 +160,11 @@ public abstract class AbstractSkillInteraction implements Interaction<CharacterS
                 .difficultyReduction(difficultyReduction);
 
         if (skillRoll != null) {
-            result.reachedDifficultyLevel(DifficultyLevel.reachedBy(bonus + skillRoll.getTotal()).orElse(null))
+            boolean expert = skillRoll.getRequestedAbility() instanceof SkillSpecialization;
+            Optional<DifficultyLevel> reached = expert
+                    ? DifficultyLevel.reachedByAsExpert(bonus + skillRoll.getTotal())
+                    : DifficultyLevel.reachedBy(bonus + skillRoll.getTotal());
+            result.reachedDifficultyLevel(reached.orElse(null))
                     .criticalResult(skillRoll.getCriticalResult());
         }
 
@@ -161,18 +172,33 @@ public abstract class AbstractSkillInteraction implements Interaction<CharacterS
     }
 
     /**
-     * A {@code null} requestedAbility (a plain roll) is always fine. A non-{@code null} one
-     * must belong to this same {@code skillType} and actually be held by the character —
-     * otherwise this roll is trying to invoke a maneuver the character never acquired.
+     * A {@code null} requestedTrait (a plain roll) is always fine. A non-{@code null} one must
+     * belong to this same {@code skillType} and actually be held by the character — otherwise
+     * this roll is trying to invoke a maneuver or Especialização the character never acquired.
+     * Branches on the concrete {@link SkillTrait} kind: a {@link SkillCompetencyAbility} is
+     * checked against the Character's own acquired/racial ability lists (it doesn't need
+     * {@code characterSkill}); a {@link SkillSpecialization} is checked against {@code
+     * characterSkill.getSpecializations()} instead. This only validates the character actually
+     * holds the named trait — it doesn't validate that an Especialização is actually the right
+     * fit for whatever the roll is being used for narratively; that judgment stays with the
+     * caller, the same restraint this codebase already applies everywhere it doesn't track what
+     * a roll is *for*.
      */
-    private void validateRequestedAbility(final Character character, final SkillCompetencyAbility requestedAbility) {
-        if (requestedAbility == null) {
+    private void validateRequestedTrait(final Character character, final CharacterSkill characterSkill, final SkillTrait requestedTrait) {
+        if (requestedTrait == null) {
             return;
         }
-        boolean held = character.getSkillCompetencyAbilities().contains(requestedAbility)
-                || character.getRace().getRacialAbilities().contains(requestedAbility);
-        if (requestedAbility.getSkillType() != skillType || !held) {
-            throw new IllegalOperationException(REQUIRED_COMPETENCY_ABILITY_NOT_HELD);
+        boolean held;
+        if (requestedTrait instanceof SkillCompetencyAbility ability) {
+            held = character.getSkillCompetencyAbilities().contains(ability)
+                    || character.getRace().getRacialAbilities().contains(ability);
+        } else if (requestedTrait instanceof SkillSpecialization specialization) {
+            held = characterSkill.getSpecializations().contains(specialization);
+        } else {
+            held = false;
+        }
+        if (requestedTrait.getSkillType() != skillType || !held) {
+            throw new IllegalOperationException(REQUIRED_SKILL_TRAIT_NOT_HELD);
         }
     }
 

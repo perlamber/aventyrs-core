@@ -2,6 +2,8 @@ package org.aventyrs.core.skill.atletismo;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.aventyrs.core.skill.SkillSpecialization;
+import org.aventyrs.core.skill.SkillType;
 import org.aventyrs.core.skill.conhecimentos.Conhecimentos;
 
 /**
@@ -10,7 +12,7 @@ import org.aventyrs.core.skill.conhecimentos.Conhecimentos;
  */
 @Getter
 @AllArgsConstructor
-public enum AtletismoSpecialization {
+public enum AtletismoSpecialization implements SkillSpecialization {
     TRI_ATLETA("Especialista em Natação, Escalada e Corrida."),
     ACROBATA("Você tem grande afinidade com Saltos e Acrobacias."),
     LEVANTAMENTO_DE_PESO("Combinando força e técnica você pode levantar grandes pesos."),
@@ -18,4 +20,9 @@ public enum AtletismoSpecialization {
     ESPORTISTA("Conhecimentos sobre os esportes diversos de Tellus, suas práticas e regras.");
 
     private final String description;
+
+    @Override
+    public SkillType getSkillType() {
+        return SkillType.ATLETISMO;
+    }
 }

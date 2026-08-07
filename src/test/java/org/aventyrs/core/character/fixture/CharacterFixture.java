@@ -4,6 +4,7 @@ import br.com.six2six.fixturefactory.Fixture;
 import br.com.six2six.fixturefactory.Rule;
 import org.aventyrs.core.action.ActionPointsService;
 import org.aventyrs.core.action.ActionProfile;
+import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.AttributeValue;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterAttributes;
@@ -125,10 +126,10 @@ public class CharacterFixture extends SimpleFixture {
                 this.add("deity", null);
                 this.add("tendencia", 1);
                 this.add("attributes", CharacterAttributes.builder()
-                        .strength(AttributeValue.builder().base(2).build())
-                        .dexterity(AttributeValue.builder().base(5).build())
-                        .focus(AttributeValue.builder().base(5).variable(3).build())
-                        .instinct(AttributeValue.builder().base(5).variable(6).build())
+                        .strength(AttributeValue.builder().domain(AttributeDomain.STRENGTH).base(2).build())
+                        .dexterity(AttributeValue.builder().domain(AttributeDomain.DEXTERITY).base(5).build())
+                        .focus(AttributeValue.builder().domain(AttributeDomain.FOCUS).base(5).variable(3).build())
+                        .instinct(AttributeValue.builder().domain(AttributeDomain.INSTINCT).base(5).variable(6).build())
                         .build());
                 this.add("egos", CharacterEgos.builder().build());
                 this.add("autocontroleAdvantage", null);

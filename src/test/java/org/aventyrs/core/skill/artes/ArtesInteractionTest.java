@@ -1,5 +1,6 @@
 package org.aventyrs.core.skill.artes;
 
+import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.AttributeValue;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterAttributes;
@@ -41,7 +42,7 @@ class ArtesInteractionTest {
     private CharacterSheet sheetWithCharismaAndSkill(int charismaBase, CharacterSkill characterSkill) {
         Character.CharacterBuilder builder = CharacterFixture.blank(CharacterFixture.BLANK)
                 .attributes(CharacterAttributes.builder()
-                        .charisma(AttributeValue.builder().base(charismaBase).build())
+                        .charisma(AttributeValue.builder().domain(AttributeDomain.CHARISMA).base(charismaBase).build())
                         .build());
         if (characterSkill != null) {
             builder.skill(SkillType.ARTES, characterSkill);

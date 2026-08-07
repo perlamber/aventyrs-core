@@ -1,5 +1,6 @@
 package org.aventyrs.core.skill.profissao;
 
+import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.AttributeValue;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterAttributes;
@@ -29,7 +30,7 @@ class ProfissaoInteractionTest {
     private CharacterSheet sheetWithGnoseAndSkill(int gnoseBase, CharacterSkill characterSkill) {
         Character.CharacterBuilder builder = CharacterFixture.blank(CharacterFixture.BLANK)
                 .attributes(CharacterAttributes.builder()
-                        .gnose(AttributeValue.builder().base(gnoseBase).build())
+                        .gnose(AttributeValue.builder().domain(AttributeDomain.GNOSE).base(gnoseBase).build())
                         .build());
         if (characterSkill != null) {
             builder.skill(SkillType.PROFISSAO, characterSkill);

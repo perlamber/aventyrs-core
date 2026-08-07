@@ -13,4 +13,6 @@ public interface Skill {
     int ADVANTAGE_BONUS = 2;
 
     public AttributeDomain getAttributeDomain();
+
+    SkillType getSkillType();
 }

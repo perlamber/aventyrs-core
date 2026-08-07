@@ -2,6 +2,8 @@ package org.aventyrs.core.skill.ataquecorpoacorpo;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.aventyrs.core.skill.SkillSpecialization;
+import org.aventyrs.core.skill.SkillType;
 
 /**
  * The specialization a player must choose when a character trains Ataque Corpo-a-Corpo — it
@@ -9,7 +11,7 @@ import lombok.Getter;
  */
 @Getter
 @AllArgsConstructor
-public enum AtaqueCorpoACorpoSpecialization {
+public enum AtaqueCorpoACorpoSpecialization implements SkillSpecialization {
     INFANTARIA_LEVE("Especialista em combates com armas cuja Categoria Base seja Leve ou " +
             "Média."),
     INFANTARIA_PESADA("Especialista em combates com armas cuja Categoria Base é Pesada."),
@@ -20,4 +22,9 @@ public enum AtaqueCorpoACorpoSpecialization {
             "tecnologias.");
 
     private final String description;
+
+    @Override
+    public SkillType getSkillType() {
+        return SkillType.ATAQUE_CORPO_A_CORPO;
+    }
 }

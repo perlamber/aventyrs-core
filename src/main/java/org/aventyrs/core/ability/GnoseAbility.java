@@ -8,7 +8,11 @@ import org.aventyrs.core.character.AttributeDomain;
 @AllArgsConstructor
 public enum GnoseAbility implements AttributeAbility {
 
-    // TODO: grants a new Especialização for up to 3 known Perícias — no Perícia/Especialização system exists yet.
+    // TODO: grants a new Especialização for up to 3 known Perícias — typed, held
+    // SkillSpecializations now exist (org.aventyrs.core.skill.SkillSpecialization,
+    // CharacterSkill#getSpecializations()), but there's still no hook for an ability's own
+    // acquisition to grant one onto a chosen Perícia's CharacterSkill; same gap
+    // ConhecimentosCompetencyAbility.GENERALISTA's own TODO cites.
     DOMINIO_DO_CONHECIMENTO("Você recebe uma nova Especialização de até 3 Perícias conhecidas."),
 
     // TODO: grants a new Habilidade de Competência for up to 2 known Perícias, still subject to its
@@ -40,7 +44,10 @@ public enum GnoseAbility implements AttributeAbility {
             "Gnose, esta escolha não pode ser revertida."),
 
     // TODO: grants training in all untrained Perícias without initial Especializações — no
-    // Perícia/Especialização system exists yet.
+    // hook for granting Perícia training itself at acquisition time exists yet (same "Race has
+    // no hook for granting starting Perícia training" gap CLAUDE.md documents for Elfo's Origem
+    // Mística); the "without initial Especializações" half is trivially satisfiable once that
+    // exists (CharacterSkill.specializations already defaults to an empty list).
     RATO_DE_BIBLIOTECA("Você recebe treinamento em todas as Perícias que não for treinado, mas as Perícias " +
             "treinadas desta forma não recebem Especializações iniciais.");
 

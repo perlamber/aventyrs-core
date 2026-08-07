@@ -1,5 +1,6 @@
 package org.aventyrs.core.skill.atletismo;
 
+import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.AttributeValue;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterAttributes;
@@ -29,7 +30,7 @@ class AtletismoInteractionTest {
     private CharacterSheet sheetWithStrengthAndSkill(int strengthBase, CharacterSkill characterSkill) {
         Character.CharacterBuilder builder = CharacterFixture.blank(CharacterFixture.BLANK)
                 .attributes(CharacterAttributes.builder()
-                        .strength(AttributeValue.builder().base(strengthBase).build())
+                        .strength(AttributeValue.builder().domain(AttributeDomain.STRENGTH).base(strengthBase).build())
                         .build());
         if (characterSkill != null) {
             builder.skill(SkillType.ATLETISMO, characterSkill);

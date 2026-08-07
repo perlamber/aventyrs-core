@@ -1,5 +1,6 @@
 package org.aventyrs.core.character.services;
 
+import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.AttributeValue;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterAttributes;
@@ -35,7 +36,7 @@ class SkillGraduationServiceImplTest {
         ataqueCorpoACorpoSkill.increaseGraduation(graduationValue);
         return CharacterFixture.blank(CharacterFixture.BLANK)
                 .attributes(CharacterAttributes.builder()
-                        .strength(AttributeValue.builder().base(forcaBase).build())
+                        .strength(AttributeValue.builder().domain(AttributeDomain.STRENGTH).base(forcaBase).build())
                         .build())
                 .skill(SkillType.ATAQUE_CORPO_A_CORPO, ataqueCorpoACorpoSkill)
                 .build();
@@ -59,7 +60,7 @@ class SkillGraduationServiceImplTest {
         CharacterSkill ataqueCorpoACorpoSkill = CharacterSkillFixture.blank(CharacterSkillFixture.ATAQUE_CORPO_A_CORPO_1).build();
         Character character = CharacterFixture.blank(CharacterFixture.BLANK)
                 .attributes(CharacterAttributes.builder()
-                        .strength(AttributeValue.builder().base(2).racialBonus(10).variable(10).build())
+                        .strength(AttributeValue.builder().domain(AttributeDomain.STRENGTH).base(2).racialBonus(10).variable(10).build())
                         .build())
                 .skill(SkillType.ATAQUE_CORPO_A_CORPO, ataqueCorpoACorpoSkill)
                 .build();
@@ -72,8 +73,8 @@ class SkillGraduationServiceImplTest {
         CharacterSkill ataqueCorpoACorpoSkill = CharacterSkillFixture.blank(CharacterSkillFixture.ATAQUE_CORPO_A_CORPO_1).build();
         Character character = CharacterFixture.blank(CharacterFixture.BLANK)
                 .attributes(CharacterAttributes.builder()
-                        .strength(AttributeValue.builder().base(3).build())
-                        .dexterity(AttributeValue.builder().base(5).build())
+                        .strength(AttributeValue.builder().domain(AttributeDomain.STRENGTH).base(3).build())
+                        .dexterity(AttributeValue.builder().domain(AttributeDomain.DEXTERITY).base(5).build())
                         .build())
                 .skill(SkillType.ATAQUE_CORPO_A_CORPO, ataqueCorpoACorpoSkill)
                 .skillCompetencyAbility(AtaqueCorpoACorpoCompetencyAbility.ACUIDADE)

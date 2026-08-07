@@ -2,6 +2,8 @@ package org.aventyrs.core.skill.furtividade;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.aventyrs.core.skill.SkillSpecialization;
+import org.aventyrs.core.skill.SkillType;
 
 /**
  * The specialization a player must choose when a character trains Furtividade — it defines
@@ -9,7 +11,7 @@ import lombok.Getter;
  */
 @Getter
 @AllArgsConstructor
-public enum FurtividadeSpecialization {
+public enum FurtividadeSpecialization implements SkillSpecialization {
     MAESTRIA_DA_OCULTACAO("Capacidade de se esconder, ocultar rastros ou procurar " +
             "abrigos."),
     TECNICAS_DE_LADINICE("Habilidade de furtar e técnicas de manipular objetos rapidamente " +
@@ -20,4 +22,9 @@ public enum FurtividadeSpecialization {
             "ocultas na cena ou cenário.");
 
     private final String description;
+
+    @Override
+    public SkillType getSkillType() {
+        return SkillType.FURTIVIDADE;
+    }
 }

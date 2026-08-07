@@ -1,5 +1,6 @@
 package org.aventyrs.core.skill.empatiaselvagem;
 
+import org.aventyrs.core.skill.SkillType;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -17,5 +18,12 @@ class EmpatiaSelvagemSpecializationTest {
     @Test
     void listHasTheFiveDescribedSpecializations() {
         assertEquals(5, EmpatiaSelvagemSpecialization.values().length);
+    }
+
+    @Test
+    void everySpecializationReportsTheEmpatiaSelvagemSkillType() {
+        for (EmpatiaSelvagemSpecialization specialization : EmpatiaSelvagemSpecialization.values()) {
+            assertEquals(SkillType.EMPATIA_SELVAGEM, specialization.getSkillType());
+        }
     }
 }

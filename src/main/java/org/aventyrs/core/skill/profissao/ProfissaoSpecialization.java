@@ -2,6 +2,8 @@ package org.aventyrs.core.skill.profissao;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.aventyrs.core.skill.SkillSpecialization;
+import org.aventyrs.core.skill.SkillType;
 
 /**
  * The specialization a player must choose when a character trains Profissão — it defines
@@ -9,7 +11,7 @@ import lombok.Getter;
  */
 @Getter
 @AllArgsConstructor
-public enum ProfissaoSpecialization {
+public enum ProfissaoSpecialization implements SkillSpecialization {
     MECANICA("Habilidade de construir e efetuar a manutenção de peças e artefatos " +
             "mecânicos ou tecnológicos."),
     ALFAIATARIA_E_CURTUME("Técnicas de confecção e costura de itens e equipamentos de " +
@@ -21,4 +23,9 @@ public enum ProfissaoSpecialization {
             "madeira, como casas, pontes, e cavernas não naturais.");
 
     private final String description;
+
+    @Override
+    public SkillType getSkillType() {
+        return SkillType.PROFISSAO;
+    }
 }

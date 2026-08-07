@@ -32,10 +32,14 @@ public enum ConhecimentosCompetencyAbility implements SkillCompetencyAbility {
     MEMORIA_EIDETICA("Você nunca se esquece de algo que já tenha visto ou lido."),
 
     // TODO: grants 2 additional Especializações split across up to 2 Perícias of the
-    // player's choice — CharacterSkill.specialization is a single String field, not a list,
-    // so a character can't hold more than one specialization per trained skill yet, and
-    // there's no mechanism for one skill's ability to grant a specialization onto a
-    // *different* skill's CharacterSkill either.
+    // player's choice — CharacterSkill.specializations is now a List<SkillSpecialization>, so
+    // holding more than one specialization per trained skill is no longer the blocker. What's
+    // still missing is the *acquisition-time* mechanism: nothing lets one ability's own
+    // acquisition grant a chosen SkillSpecialization onto a (possibly different) skill's
+    // CharacterSkill — the same "no hook for granting starting Perícia training/specialization
+    // slots at acquisition time" gap documented for Elfo's Origem Mística and others, not an
+    // AcquiredChoice-style single-value choice either, since this needs two independent
+    // (SkillType, SkillSpecialization) picks.
     GENERALISTA("Você adquire 2 Especializações divididas entre até 2 Perícias à sua " +
             "escolha."),
 

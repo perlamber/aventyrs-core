@@ -1,5 +1,6 @@
 package org.aventyrs.core.skill.conhecimentos;
 
+import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.AttributeValue;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterAttributes;
@@ -29,7 +30,7 @@ class ConhecimentosInteractionTest {
     private CharacterSheet sheetWithGnoseAndSkill(int gnoseBase, CharacterSkill characterSkill) {
         Character.CharacterBuilder builder = CharacterFixture.blank(CharacterFixture.BLANK)
                 .attributes(CharacterAttributes.builder()
-                        .gnose(AttributeValue.builder().base(gnoseBase).build())
+                        .gnose(AttributeValue.builder().domain(AttributeDomain.GNOSE).base(gnoseBase).build())
                         .build());
         if (characterSkill != null) {
             builder.skill(SkillType.CONHECIMENTOS, characterSkill);
@@ -84,7 +85,7 @@ class ConhecimentosInteractionTest {
     void applyToAddsTheAdvantageBonusWhenCharacterHasOProfessor() {
         Character character = CharacterFixture.blank(CharacterFixture.BLANK)
                 .attributes(CharacterAttributes.builder()
-                        .gnose(AttributeValue.builder().base(2).build())
+                        .gnose(AttributeValue.builder().domain(AttributeDomain.GNOSE).base(2).build())
                         .build())
                 .skillCompetencyAbility(ConhecimentosCompetencyAbility.O_PROFESSOR)
                 .build();

@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 import java.util.Optional;
+import java.util.function.ToIntFunction;
 
 @Getter
 @AllArgsConstructor
@@ -39,16 +40,30 @@ public enum DifficultyLevel {
      * The highest tier a roll totaling total reaches, judged against {@link #getBaseValue()}
      * — or empty if total falls short of even {@link #VERY_EASY}. Deliberately doesn't
      * consider {@link #getExpertValue()} (the easier threshold a matching Especialização
-     * grants): resolving "does this roll's Especialização match what it's being used for" is
-     * a separate, still-unbuilt concern (this core doesn't track what a roll is *for* — same
-     * gap documented for scoped Vantagem/substitution elsewhere) — a caller who *has* already
-     * resolved that externally can still compare against {@code getExpertValue()} directly
-     * instead of calling this method.
+     * grants) — see {@link #reachedByAsExpert(int)} for the roll that's requesting a held
+     * {@code SkillSpecialization} (resolved by {@code AbstractSkillInteraction} via {@code
+     * SkillRoll#getRequestedAbility()}).
      */
     public static Optional<DifficultyLevel> reachedBy(final int total) {
+        return reachedBy(total, DifficultyLevel::getBaseValue);
+    }
+
+    /**
+     * Same as {@link #reachedBy(int)}, but judged against {@link #getExpertValue()} instead of
+     * {@link #getBaseValue()} — the easier threshold a matching, held Especialização grants.
+     * {@code org.aventyrs.core.skill.AbstractSkillInteraction} calls this instead of {@link
+     * #reachedBy(int)} once it has confirmed the character actually holds the {@code
+     * SkillSpecialization} named by {@code SkillRoll#getRequestedAbility()} — this method
+     * itself doesn't re-check that; it's purely the threshold-lookup half.
+     */
+    public static Optional<DifficultyLevel> reachedByAsExpert(final int total) {
+        return reachedBy(total, DifficultyLevel::getExpertValue);
+    }
+
+    private static Optional<DifficultyLevel> reachedBy(final int total, final ToIntFunction<DifficultyLevel> threshold) {
         DifficultyLevel reached = null;
         for (DifficultyLevel level : values()) {
-            if (total < level.baseValue) {
+            if (total < threshold.applyAsInt(level)) {
                 break;
             }
             reached = level;

@@ -1,5 +1,6 @@
 package org.aventyrs.core.skill.attention;
 
+import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.AttributeValue;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterAttributes;
@@ -37,7 +38,7 @@ class AttentionInteractionTest {
     private CharacterSheet sheetWithInstinctAndSkill(int instinctBase, CharacterSkill characterSkill) {
         Character.CharacterBuilder builder = CharacterFixture.blank(CharacterFixture.BLANK)
                 .attributes(CharacterAttributes.builder()
-                        .instinct(AttributeValue.builder().base(instinctBase).build())
+                        .instinct(AttributeValue.builder().domain(AttributeDomain.INSTINCT).base(instinctBase).build())
                         .build());
         if (characterSkill != null) {
             builder.skill(SkillType.ATTENTION, characterSkill);
@@ -142,7 +143,7 @@ class AttentionInteractionTest {
         CharacterSkill attentionSkill = CharacterSkillFixture.blank(CharacterSkillFixture.ATTENTION_1).build();
         Character character = CharacterFixture.blank(CharacterFixture.BLANK)
                 .attributes(CharacterAttributes.builder()
-                        .instinct(AttributeValue.builder().base(2).build())
+                        .instinct(AttributeValue.builder().domain(AttributeDomain.INSTINCT).base(2).build())
                         .build())
                 .skill(SkillType.ATTENTION, attentionSkill)
                 .race(new Elfo())

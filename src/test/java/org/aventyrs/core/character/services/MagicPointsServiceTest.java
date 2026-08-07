@@ -2,6 +2,7 @@ package org.aventyrs.core.character.services;
 
 import org.aventyrs.core.ability.FocusAbility;
 import org.aventyrs.core.action.ActionProfile;
+import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.AttributeValue;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterAttributes;
@@ -30,7 +31,7 @@ class MagicPointsServiceTest {
                 .egos(CharacterEgos.builder().build())
                 .manaMultiplier(manaMultiplier)
                 .attributes(CharacterAttributes.builder()
-                        .focus(AttributeValue.builder().base(focusBase).build())
+                        .focus(AttributeValue.builder().domain(AttributeDomain.FOCUS).base(focusBase).build())
                         .build());
         for (FocusAbility ability : abilities) {
             builder.attributeAbility(ability);

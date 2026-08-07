@@ -36,12 +36,18 @@
  * InteractionResult result = SkillInteractionFactory.resolve(request);
  * }</pre>
  *
- * <p>A {@link org.aventyrs.core.skill.SkillRoll} may also name a {@code requestedAbility} — one
- * of the character's {@link org.aventyrs.core.skill.SkillCompetencyAbility} maneuvers being
- * specifically invoked by this roll, as opposed to a plain Perícia test. If the character
- * doesn't actually hold that ability, the roll is rejected with an
+ * <p>A {@link org.aventyrs.core.skill.SkillRoll} may also name a {@code requestedAbility} — a
+ * {@link org.aventyrs.core.skill.SkillTrait} the character is specifically invoking with this
+ * roll, as opposed to a plain Perícia test. This can be either one of the character's
+ * {@link org.aventyrs.core.skill.SkillCompetencyAbility} maneuvers, or one of their held
+ * {@link org.aventyrs.core.skill.SkillSpecialization}s (see
+ * {@link org.aventyrs.core.character.CharacterSkill#getSpecializations()}). If the character
+ * doesn't actually hold that trait, the roll is rejected with an
  * {@link org.aventyrs.core.sheet.IllegalOperationException} rather than silently computing a
- * bonus for a maneuver they never acquired.
+ * result for a maneuver/Especialização they never acquired. When the requested trait is a
+ * {@code SkillSpecialization}, the roll's reached {@link org.aventyrs.core.skill.DifficultyLevel}
+ * is resolved against that tier's easier {@link org.aventyrs.core.skill.DifficultyLevel#getExpertValue()}
+ * threshold instead of its {@link org.aventyrs.core.skill.DifficultyLevel#getBaseValue()}.
  *
  * <h2>What this library computes — and what it leaves to the caller</h2>
  *

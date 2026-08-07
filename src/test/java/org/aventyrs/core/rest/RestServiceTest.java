@@ -1,6 +1,7 @@
 package org.aventyrs.core.rest;
 
 import org.aventyrs.core.action.ActionProfile;
+import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.AttributeValue;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterAttributes;
@@ -24,9 +25,9 @@ class RestServiceTest {
                 .actionProfile(ActionProfile.REFLEXOS_RAPIDOS)
                 .egos(CharacterEgos.builder().build())
                 .attributes(CharacterAttributes.builder()
-                        .vigor(AttributeValue.builder().base(3).build())
-                        .instinct(AttributeValue.builder().base(4).build())
-                        .focus(AttributeValue.builder().base(1).build())
+                        .vigor(AttributeValue.builder().domain(AttributeDomain.VIGOR).base(3).build())
+                        .instinct(AttributeValue.builder().domain(AttributeDomain.INSTINCT).base(4).build())
+                        .focus(AttributeValue.builder().domain(AttributeDomain.FOCUS).base(1).build())
                         .build())
                 .build();
     }

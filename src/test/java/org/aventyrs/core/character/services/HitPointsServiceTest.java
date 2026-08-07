@@ -2,6 +2,7 @@ package org.aventyrs.core.character.services;
 
 import org.aventyrs.core.ability.VigorAbility;
 import org.aventyrs.core.action.ActionProfile;
+import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.AttributeValue;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterAttributes;
@@ -25,7 +26,7 @@ class HitPointsServiceTest {
                 .actionProfile(ActionProfile.REFLEXOS_RAPIDOS)
                 .egos(CharacterEgos.builder().build())
                 .attributes(CharacterAttributes.builder()
-                        .vigor(AttributeValue.builder().base(vigorBase).build())
+                        .vigor(AttributeValue.builder().domain(AttributeDomain.VIGOR).base(vigorBase).build())
                         .build());
         for (VigorAbility ability : abilities) {
             builder.attributeAbility(ability);

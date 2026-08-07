@@ -1,5 +1,6 @@
 package org.aventyrs.core.skill.medicinaecura;
 
+import org.aventyrs.core.skill.SkillType;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -17,5 +18,12 @@ class MedicinaECuraSpecializationTest {
     @Test
     void listHasTheFiveDescribedSpecializations() {
         assertEquals(5, MedicinaECuraSpecialization.values().length);
+    }
+
+    @Test
+    void everySpecializationReportsTheMedicinaECuraSkillType() {
+        for (MedicinaECuraSpecialization specialization : MedicinaECuraSpecialization.values()) {
+            assertEquals(SkillType.MEDICINA_E_CURA, specialization.getSkillType());
+        }
     }
 }

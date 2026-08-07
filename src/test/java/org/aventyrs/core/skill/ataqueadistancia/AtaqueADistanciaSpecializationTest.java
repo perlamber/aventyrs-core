@@ -1,5 +1,6 @@
 package org.aventyrs.core.skill.ataqueadistancia;
 
+import org.aventyrs.core.skill.SkillType;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -17,5 +18,12 @@ class AtaqueADistanciaSpecializationTest {
     @Test
     void listHasTheFiveDescribedSpecializations() {
         assertEquals(5, AtaqueADistanciaSpecialization.values().length);
+    }
+
+    @Test
+    void everySpecializationReportsTheAtaqueADistanciaSkillType() {
+        for (AtaqueADistanciaSpecialization specialization : AtaqueADistanciaSpecialization.values()) {
+            assertEquals(SkillType.ATAQUE_A_DISTANCIA, specialization.getSkillType());
+        }
     }
 }

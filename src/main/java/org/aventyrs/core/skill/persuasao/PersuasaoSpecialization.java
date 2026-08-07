@@ -2,6 +2,8 @@ package org.aventyrs.core.skill.persuasao;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.aventyrs.core.skill.SkillSpecialization;
+import org.aventyrs.core.skill.SkillType;
 
 /**
  * The specialization a player must choose when a character trains Persuasão — it defines
@@ -9,7 +11,7 @@ import lombok.Getter;
  */
 @Getter
 @AllArgsConstructor
-public enum PersuasaoSpecialization {
+public enum PersuasaoSpecialization implements SkillSpecialization {
     OBTER_INFORMACOES("Técnicas de comunicação e interrogatórios para conseguir " +
             "informações especificas."),
     INTIMIDACAO("Você sabe ser assustador quando precisa, impondo sua vontade através do " +
@@ -21,4 +23,9 @@ public enum PersuasaoSpecialization {
             "tribais.");
 
     private final String description;
+
+    @Override
+    public SkillType getSkillType() {
+        return SkillType.PERSUASAO;
+    }
 }

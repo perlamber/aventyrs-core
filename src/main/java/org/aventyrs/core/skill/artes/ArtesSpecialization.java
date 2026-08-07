@@ -2,6 +2,8 @@ package org.aventyrs.core.skill.artes;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.aventyrs.core.skill.SkillSpecialization;
+import org.aventyrs.core.skill.SkillType;
 
 /**
  * The specialization a player must choose when a character trains Artes — it defines which
@@ -9,7 +11,7 @@ import lombok.Getter;
  */
 @Getter
 @AllArgsConstructor
-public enum ArtesSpecialization {
+public enum ArtesSpecialization implements SkillSpecialization {
     ATUACAO("Interpretação de papéis, se passar por outras pessoas e atos diversos."),
     MUSICA("Técnicas de canto e vocalização rítmica, estilos de dança, interpretações " +
             "corporais rítmicas e uso de instrumentos musicais."),
@@ -20,4 +22,9 @@ public enum ArtesSpecialization {
             "registro escrito de ideias e do imaginário.");
 
     private final String description;
+
+    @Override
+    public SkillType getSkillType() {
+        return SkillType.ARTES;
+    }
 }

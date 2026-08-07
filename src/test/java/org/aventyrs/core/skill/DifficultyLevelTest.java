@@ -70,4 +70,32 @@ class DifficultyLevelTest {
         Optional<DifficultyLevel> higher = DifficultyLevel.reachedBy(28);
         assertTrue(higher.get().ordinal() > lower.get().ordinal());
     }
+
+    @Test
+    void reachedByAsExpertReturnsEmptyBelowVeryEasysExpertValue() {
+        assertEquals(Optional.empty(), DifficultyLevel.reachedByAsExpert(10));
+    }
+
+    @Test
+    void reachedByAsExpertReturnsTheExactTierAtItsOwnExpertValue() {
+        assertEquals(Optional.of(DifficultyLevel.VERY_EASY), DifficultyLevel.reachedByAsExpert(11));
+        assertEquals(Optional.of(DifficultyLevel.MEDIUM), DifficultyLevel.reachedByAsExpert(16));
+        assertEquals(Optional.of(DifficultyLevel.MIRACLE), DifficultyLevel.reachedByAsExpert(49));
+    }
+
+    @Test
+    void reachedByAsExpertReturnsTheHardestTierForAnArbitrarilyHighTotal() {
+        assertEquals(Optional.of(DifficultyLevel.MIRACLE), DifficultyLevel.reachedByAsExpert(1000));
+    }
+
+    /**
+     * The same total (17) clears MEDIUM's easier expertValue (16) but not its baseValue (18) —
+     * this is the whole point of a matching Especialização: the same roll reaches a higher tier
+     * as an expert than it would as a plain roll.
+     */
+    @Test
+    void reachedByAsExpertReachesAHigherTierThanReachedByForTheSameTotal() {
+        assertEquals(Optional.of(DifficultyLevel.EASY), DifficultyLevel.reachedBy(17));
+        assertEquals(Optional.of(DifficultyLevel.MEDIUM), DifficultyLevel.reachedByAsExpert(17));
+    }
 }

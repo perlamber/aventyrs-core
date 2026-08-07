@@ -34,6 +34,8 @@ import org.aventyrs.core.skill.persuasao.Persuasao;
 import org.aventyrs.core.skill.profissao.Profissao;
 import org.aventyrs.core.util.SimpleFixture;
 
+import java.util.List;
+
 public class CharacterSkillFixture extends SimpleFixture {
 
     public static final String ATTENTION_1 = "Attention1";
@@ -129,6 +131,8 @@ public class CharacterSkillFixture extends SimpleFixture {
     }
 
     public static CharacterSkill.CharacterSkillBuilder blank(final String templateName) {
-        return ((CharacterSkill)Fixture.from(CharacterSkill.class).gimme(templateName)).toBuilder().graduation(SkillGraduation.INITIAL_BUILDER.build());
+        return ((CharacterSkill)Fixture.from(CharacterSkill.class).gimme(templateName)).toBuilder()
+                .graduation(SkillGraduation.INITIAL_BUILDER.build())
+                .specializations(List.of());
     }
 }

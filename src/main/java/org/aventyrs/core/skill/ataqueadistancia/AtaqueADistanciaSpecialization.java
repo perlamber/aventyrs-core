@@ -2,6 +2,8 @@ package org.aventyrs.core.skill.ataqueadistancia;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.aventyrs.core.skill.SkillSpecialization;
+import org.aventyrs.core.skill.SkillType;
 
 /**
  * The specialization a player must choose when a character trains Ataque à Distância — it
@@ -9,7 +11,7 @@ import lombok.Getter;
  */
 @Getter
 @AllArgsConstructor
-public enum AtaqueADistanciaSpecialization {
+public enum AtaqueADistanciaSpecialization implements SkillSpecialization {
     TECNICAS_DE_ARREMESSO("Conhecimento de técnicas de arremessos de armas diversas."),
     ARMAS_TECNOLOGICAS("Disparos com armas de Xajah, Tesla, Vapor Elduriano e outras " +
             "tecnologias."),
@@ -21,4 +23,9 @@ public enum AtaqueADistanciaSpecialization {
             "longo alcance.");
 
     private final String description;
+
+    @Override
+    public SkillType getSkillType() {
+        return SkillType.ATAQUE_A_DISTANCIA;
+    }
 }

@@ -1,5 +1,6 @@
 package org.aventyrs.core.skill.conhecimentos;
 
+import org.aventyrs.core.skill.SkillType;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -17,5 +18,12 @@ class ConhecimentosSpecializationTest {
     @Test
     void listHasTheFiveDescribedSpecializations() {
         assertEquals(5, ConhecimentosSpecialization.values().length);
+    }
+
+    @Test
+    void everySpecializationReportsTheConhecimentosSkillType() {
+        for (ConhecimentosSpecialization specialization : ConhecimentosSpecialization.values()) {
+            assertEquals(SkillType.CONHECIMENTOS, specialization.getSkillType());
+        }
     }
 }

@@ -1,5 +1,6 @@
 package org.aventyrs.core.skill;
 
+import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.AttributeValue;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterAttributes;
@@ -15,8 +16,10 @@ import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.InteractionResult;
 import org.aventyrs.core.sheet.Player;
 import org.aventyrs.core.skill.artes.ArtesCompetencyAbility;
+import org.aventyrs.core.skill.artes.ArtesSpecialization;
 import org.aventyrs.core.skill.attention.AttentionCompetencyAbility;
 import org.aventyrs.core.skill.attention.AttentionInteraction;
+import org.aventyrs.core.skill.attention.AttentionSpecialization;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -72,7 +75,7 @@ class AbstractSkillInteractionTest {
         CharacterSkill atletismoSkill = CharacterSkillFixture.blank(CharacterSkillFixture.ATLETISMO_1).build();
         Character character = CharacterFixture.blank(CharacterFixture.BLANK)
                 .attributes(CharacterAttributes.builder()
-                        .strength(AttributeValue.builder().base(strengthBase).build())
+                        .strength(AttributeValue.builder().domain(AttributeDomain.STRENGTH).base(strengthBase).build())
                         .build())
                 .skill(SkillType.ATLETISMO, atletismoSkill)
                 .build();
@@ -219,5 +222,79 @@ class AbstractSkillInteractionTest {
         InteractionResult result = new AttentionInteraction().applyTo(sheet, null, skillRoll);
 
         assertNotNull(result);
+    }
+
+    /**
+     * Unlike a {@code SkillCompetencyAbility} (held on {@code Character
+     * .skillCompetencyAbilities}, a single list for the whole character), a {@code
+     * SkillSpecialization} is held on the specific {@code CharacterSkill.getSpecializations()}
+     * for that Perícia — so exercising it needs an actually-trained ATTENTION {@code
+     * CharacterSkill}, not just {@code attentionSheetHolding}'s untrained fallback.
+     */
+    private CharacterSheet attentionSheetHoldingSpecializations(final SkillSpecialization... specializations) {
+        CharacterSkill attentionSkill = CharacterSkillFixture.blank(CharacterSkillFixture.ATTENTION_1)
+                .specializations(List.of(specializations))
+                .build();
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .skill(SkillType.ATTENTION, attentionSkill)
+                .build();
+        return CharacterSheet.of(character, new Player());
+    }
+
+    @Test
+    void applyToWithARequestedSpecializationTheCharacterHoldsSucceeds() {
+        CharacterSheet sheet = attentionSheetHoldingSpecializations(AttentionSpecialization.INVESTIGAR);
+        SkillRoll skillRoll = new SkillRoll(List.of(2, 3, 4), AttentionSpecialization.INVESTIGAR);
+
+        InteractionResult result = new AttentionInteraction().applyTo(sheet, null, skillRoll);
+
+        assertNotNull(result);
+    }
+
+    @Test
+    void applyToWithARequestedSpecializationTheCharacterLacksThrows() {
+        CharacterSheet sheet = attentionSheetHoldingSpecializations();
+        SkillRoll skillRoll = new SkillRoll(List.of(2, 3, 4), AttentionSpecialization.INVESTIGAR);
+        AttentionInteraction attentionInteraction = new AttentionInteraction();
+
+        assertThrows(IllegalOperationException.class, () -> attentionInteraction.applyTo(sheet, null, skillRoll));
+    }
+
+    /**
+     * {@code CharacterSkill} never validates that a listed specialization actually belongs to
+     * its own skill (see CLAUDE.md), so this ATTENTION {@code CharacterSkill} can hold an
+     * {@code ArtesSpecialization} it has no business holding — {@code validateRequestedTrait}'s
+     * own {@code getSkillType() != skillType} check still rejects requesting it on an
+     * {@code AttentionInteraction} roll regardless.
+     */
+    @Test
+    void applyToWithARequestedSpecializationFromADifferentSkillTypeThrowsEvenWhenHeld() {
+        CharacterSheet sheet = attentionSheetHoldingSpecializations(ArtesSpecialization.MUSICA);
+        SkillRoll skillRoll = new SkillRoll(List.of(2, 3, 4), ArtesSpecialization.MUSICA);
+        AttentionInteraction attentionInteraction = new AttentionInteraction();
+
+        assertThrows(IllegalOperationException.class, () -> attentionInteraction.applyTo(sheet, null, skillRoll));
+    }
+
+    /**
+     * INSTINCT total 1 ({@code AttributeValue}'s own untouched default: {@code base} defaults
+     * to 1, {@code racialBonus}/{@code variable} to 0) + graduation 0 (reset by {@code
+     * CharacterSkillFixture#blank}) gives a fixed {@code skillRollBonus} of 1; dice (6, 5, 5)
+     * sum to 16, for a combined total of 17. 17 clears {@code DifficultyLevel.EASY}'s baseValue
+     * (14) but not {@code MEDIUM}'s (18) — reached as a plain roll. As an expert (requesting a
+     * held Especialização), 17 also clears {@code MEDIUM}'s easier expertValue (16), reaching a
+     * whole tier higher for the identical dice and bonus.
+     */
+    @Test
+    void applyToWithAHeldSpecializationRequestedUsesExpertThresholds() {
+        CharacterSheet sheet = attentionSheetHoldingSpecializations(AttentionSpecialization.INVESTIGAR);
+        SkillRoll plainRoll = new SkillRoll(List.of(6, 5, 5));
+        SkillRoll expertRoll = new SkillRoll(List.of(6, 5, 5), AttentionSpecialization.INVESTIGAR);
+
+        InteractionResult plainResult = new AttentionInteraction().applyTo(sheet, null, plainRoll);
+        InteractionResult expertResult = new AttentionInteraction().applyTo(sheet, null, expertRoll);
+
+        assertEquals(DifficultyLevel.EASY, plainResult.getReachedDifficultyLevel());
+        assertEquals(DifficultyLevel.MEDIUM, expertResult.getReachedDifficultyLevel());
     }
 }

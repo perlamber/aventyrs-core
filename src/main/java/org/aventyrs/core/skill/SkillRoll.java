@@ -19,10 +19,13 @@ import static org.aventyrs.core.util.TranslatableMessages.INVALID_SKILL_ROLL;
  * codebase otherwise trusts without checking.
  *
  * <p>{@code requestedAbility} is optional: a caller performing this roll specifically *as* one
- * of the character's {@link SkillCompetencyAbility} maneuvers (as opposed to a plain Perícia
- * test) names which one here. {@link AbstractSkillInteraction} then validates the character
- * actually holds it before proceeding — see its own javadoc. {@code null} means "just a plain
- * roll, no specific ability being invoked," and skips that check entirely.
+ * of the character's held {@link SkillTrait}s — either a {@link SkillCompetencyAbility}
+ * maneuver or a {@link SkillSpecialization} — (as opposed to a plain Perícia test) names which
+ * one here. {@link AbstractSkillInteraction} then validates the character actually holds it
+ * before proceeding — see its own javadoc; when it's a held {@link SkillSpecialization}, the
+ * roll's reached {@link DifficultyLevel} is resolved via {@link
+ * DifficultyLevel#reachedByAsExpert} instead of {@link DifficultyLevel#reachedBy}. {@code null}
+ * means "just a plain roll, no specific trait being invoked," and skips that check entirely.
  */
 public class SkillRoll {
     private static final int EXPECTED_DICE_COUNT = 3;
@@ -36,13 +39,13 @@ public class SkillRoll {
     private static final int MINOR_CRITICAL_FAILURE_TOTAL = 4;
 
     private final List<Integer> dice;
-    private final SkillCompetencyAbility requestedAbility;
+    private final SkillTrait requestedAbility;
 
     public SkillRoll(final List<Integer> dice) {
         this(dice, null);
     }
 
-    public SkillRoll(final List<Integer> dice, final SkillCompetencyAbility requestedAbility) {
+    public SkillRoll(final List<Integer> dice, final SkillTrait requestedAbility) {
         if (dice.size() != EXPECTED_DICE_COUNT) {
             throw new IllegalOperationException(INVALID_SKILL_ROLL);
         }
@@ -55,8 +58,11 @@ public class SkillRoll {
         this.requestedAbility = requestedAbility;
     }
 
-    /** The {@link SkillCompetencyAbility} this roll is being made to invoke, or {@code null} for a plain roll. */
-    public SkillCompetencyAbility getRequestedAbility() {
+    /**
+     * The {@link SkillTrait} (a {@link SkillCompetencyAbility} or a {@link SkillSpecialization})
+     * this roll is being made to invoke, or {@code null} for a plain roll.
+     */
+    public SkillTrait getRequestedAbility() {
         return requestedAbility;
     }
 

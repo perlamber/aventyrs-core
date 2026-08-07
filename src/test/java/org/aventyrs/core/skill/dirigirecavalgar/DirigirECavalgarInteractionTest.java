@@ -1,5 +1,6 @@
 package org.aventyrs.core.skill.dirigirecavalgar;
 
+import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.AttributeValue;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterAttributes;
@@ -29,7 +30,7 @@ class DirigirECavalgarInteractionTest {
     private CharacterSheet sheetWithDexterityAndSkill(int dexterityBase, CharacterSkill characterSkill) {
         Character.CharacterBuilder builder = CharacterFixture.blank(CharacterFixture.BLANK)
                 .attributes(CharacterAttributes.builder()
-                        .dexterity(AttributeValue.builder().base(dexterityBase).build())
+                        .dexterity(AttributeValue.builder().domain(AttributeDomain.DEXTERITY).base(dexterityBase).build())
                         .build());
         if (characterSkill != null) {
             builder.skill(SkillType.DIRIGIR_E_CAVALGAR, characterSkill);
@@ -84,7 +85,7 @@ class DirigirECavalgarInteractionTest {
     void applyToAddsTheAdvantageBonusWhenCharacterHasControlarAnimais() {
         Character character = CharacterFixture.blank(CharacterFixture.BLANK)
                 .attributes(CharacterAttributes.builder()
-                        .dexterity(AttributeValue.builder().base(2).build())
+                        .dexterity(AttributeValue.builder().domain(AttributeDomain.DEXTERITY).base(2).build())
                         .build())
                 .skillCompetencyAbility(DirigirECavalgarCompetencyAbility.CONTROLAR_ANIMAIS)
                 .build();

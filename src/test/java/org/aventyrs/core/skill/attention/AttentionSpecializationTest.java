@@ -1,5 +1,6 @@
 package org.aventyrs.core.skill.attention;
 
+import org.aventyrs.core.skill.SkillType;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -17,5 +18,12 @@ class AttentionSpecializationTest {
     @Test
     void listHasTheFiveDescribedSpecializations() {
         assertEquals(5, AttentionSpecialization.values().length);
+    }
+
+    @Test
+    void everySpecializationReportsTheAttentionSkillType() {
+        for (AttentionSpecialization specialization : AttentionSpecialization.values()) {
+            assertEquals(SkillType.ATTENTION, specialization.getSkillType());
+        }
     }
 }

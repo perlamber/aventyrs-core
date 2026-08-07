@@ -1,5 +1,6 @@
 package org.aventyrs.core.skill.esquivaeaparar;
 
+import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.AttributeValue;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterAttributes;
@@ -29,7 +30,7 @@ class EsquivaEApararInteractionTest {
     private CharacterSheet sheetWithDexterityAndSkill(int dexterityBase, CharacterSkill characterSkill) {
         Character.CharacterBuilder builder = CharacterFixture.blank(CharacterFixture.BLANK)
                 .attributes(CharacterAttributes.builder()
-                        .dexterity(AttributeValue.builder().base(dexterityBase).build())
+                        .dexterity(AttributeValue.builder().domain(AttributeDomain.DEXTERITY).base(dexterityBase).build())
                         .build());
         if (characterSkill != null) {
             builder.skill(SkillType.ESQUIVA_E_APARAR, characterSkill);
@@ -106,7 +107,7 @@ class EsquivaEApararInteractionTest {
     void applyToAddsTheMovimentoDefensivoBonus() {
         Character character = CharacterFixture.blank(CharacterFixture.BLANK)
                 .attributes(CharacterAttributes.builder()
-                        .dexterity(AttributeValue.builder().base(2).build())
+                        .dexterity(AttributeValue.builder().domain(AttributeDomain.DEXTERITY).base(2).build())
                         .build())
                 .skillCompetencyAbility(EsquivaEApararCompetencyAbility.MOVIMENTO_DEFENSIVO)
                 .build();

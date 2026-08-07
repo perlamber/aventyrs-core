@@ -16,9 +16,11 @@ import org.aventyrs.core.skill.SkillRoll;
 import org.aventyrs.core.skill.SkillType;
 
 /**
- * Requests an Artes Perícia test. Which of Artes' specializations the roll is for doesn't
- * change the bonus — see {@link ArtesSpecialization} — so it isn't tracked here. See {@link
- * AbstractSkillInteraction} for how the roll bonus/difficultyReduction are actually computed.
+ * Requests an Artes Perícia test. Which of Artes' specializations ({@link ArtesSpecialization})
+ * the roll is for doesn't change {@code skillRollBonus}/{@code difficultyReduction} — a held
+ * one can still be requested via {@code SkillRoll#getRequestedAbility()}, switching
+ * {@code reachedDifficultyLevel} to expert thresholds; see {@link AbstractSkillInteraction} for
+ * how that and the roll bonus/difficultyReduction are actually computed.
  *
  * <p>A character holding {@link ArtesCompetencyAbility#DOM_BARDICO} additionally has this
  * roll set {@code temporaryBonusModifierType} ({@link ModifierType#SKILL_ROLL_BONUS}, since

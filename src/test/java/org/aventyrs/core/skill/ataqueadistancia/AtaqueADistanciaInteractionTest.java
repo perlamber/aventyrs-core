@@ -1,5 +1,6 @@
 package org.aventyrs.core.skill.ataqueadistancia;
 
+import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.AttributeValue;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterAttributes;
@@ -41,7 +42,7 @@ class AtaqueADistanciaInteractionTest {
     private CharacterSheet sheetWithDexterityAndSkill(int dexterityBase, CharacterSkill characterSkill) {
         Character.CharacterBuilder builder = CharacterFixture.blank(CharacterFixture.BLANK)
                 .attributes(CharacterAttributes.builder()
-                        .dexterity(AttributeValue.builder().base(dexterityBase).build())
+                        .dexterity(AttributeValue.builder().domain(AttributeDomain.DEXTERITY).base(dexterityBase).build())
                         .build());
         if (characterSkill != null) {
             builder.skill(SkillType.ATAQUE_A_DISTANCIA, characterSkill);

@@ -2,6 +2,8 @@ package org.aventyrs.core.skill.dirigirecavalgar;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.aventyrs.core.skill.SkillSpecialization;
+import org.aventyrs.core.skill.SkillType;
 
 /**
  * The specialization a player must choose when a character trains Dirigir e Cavalgar — it
@@ -9,7 +11,7 @@ import lombok.Getter;
  */
 @Getter
 @AllArgsConstructor
-public enum DirigirECavalgarSpecialization {
+public enum DirigirECavalgarSpecialization implements SkillSpecialization {
     AQUATICOS("Você recebeu treinamento para guiar animais marinhos e embarcações."),
     TERRESTRES("Você sabe cavalgar animais terrestres e guiar veículos tracionados por " +
             "estes animais."),
@@ -23,4 +25,9 @@ public enum DirigirECavalgarSpecialization {
             "outros.");
 
     private final String description;
+
+    @Override
+    public SkillType getSkillType() {
+        return SkillType.DIRIGIR_E_CAVALGAR;
+    }
 }

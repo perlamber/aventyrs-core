@@ -6,9 +6,11 @@ import org.aventyrs.core.skill.AbstractSkillInteraction;
 import org.aventyrs.core.skill.SkillType;
 
 /**
- * Requests a Medicina e Cura Perícia test. Which of Medicina e Cura's specializations the
- * roll is for doesn't change the bonus — see {@link MedicinaECuraSpecialization} — so it
- * isn't tracked here. See {@link AbstractSkillInteraction} for how the roll
+ * Requests a Medicina e Cura Perícia test. Which of Medicina e Cura's specializations ({@link
+ * MedicinaECuraSpecialization}) the roll is for doesn't change {@code skillRollBonus}/{@code
+ * difficultyReduction} — a held one can still be requested via {@code
+ * SkillRoll#getRequestedAbility()}, switching {@code reachedDifficultyLevel} to expert
+ * thresholds; see {@link AbstractSkillInteraction} for how that and the roll
  * bonus/difficultyReduction are actually computed.
  */
 public class MedicinaECuraInteraction extends AbstractSkillInteraction {
