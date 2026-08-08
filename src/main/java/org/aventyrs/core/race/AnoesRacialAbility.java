@@ -18,12 +18,17 @@ import java.util.Optional;
 @AllArgsConstructor
 public enum AnoesRacialAbility implements SkillCompetencyAbility {
 
-    // Vantagem on Ataque rolls against a target 2+ Categorias de Tamanho larger. Wired into
-    // AtaqueADistanciaInteraction only for now, so getSkillType() is fixed to
-    // ATAQUE_A_DISTANCIA — the rules text actually covers every "Perícia de Ataque" (see
-    // SkillType#isAttackSkill()), but AtaqueCorpoACorpoInteraction doesn't yet take an
-    // attackTarget parameter the way AtaqueADistanciaInteraction does (see that class's own
-    // javadoc for why FRIEZA needed one), so the melee side isn't wired yet.
+    // Vantagem on Ataque rolls against a target 2+ Categorias de Tamanho larger — the rules
+    // text covers every "Perícia de Ataque" (see SkillType#isAttackSkill()), not just one, so
+    // getSkillType() below stays a single representative value (ATAQUE_A_DISTANCIA — resolving
+    // "which one" doesn't otherwise matter: resolveAttackRollBonus is scanned unconditionally
+    // across every held ability, with no per-skillType filter) while matchesSkillType() is
+    // overridden so an explicit SkillRoll#requestedAbility naming this ability validates
+    // against either attack SkillType, not just the representative one. Actually wired into
+    // AtaqueADistanciaInteraction only for now — AtaqueCorpoACorpoInteraction doesn't yet take
+    // an attackTarget parameter the way AtaqueADistanciaInteraction does (see that class's own
+    // javadoc for why FRIEZA needed one), so the melee side's automatic bonus isn't wired yet,
+    // independent of this SkillType-matching fix.
     ABATEDORES_DE_GIGANTES("Você recebe vantagem nas rolagens de Ataque contra criaturas " +
             "que pertençam a 2 ou mais Categorias de Tamanho superiores.") {
         @Override
@@ -37,6 +42,11 @@ public enum AnoesRacialAbility implements SkillCompetencyAbility {
                 return Optional.empty();
             }
             return Optional.of(Skill.ADVANTAGE_BONUS);
+        }
+
+        @Override
+        public boolean matchesSkillType(final SkillType requestedSkillType) {
+            return requestedSkillType != null && requestedSkillType.isAttackSkill();
         }
     };
 

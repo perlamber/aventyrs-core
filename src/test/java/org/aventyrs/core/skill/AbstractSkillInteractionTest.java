@@ -7,6 +7,8 @@ import org.aventyrs.core.character.CharacterAttributes;
 import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.character.fixture.CharacterSkillFixture;
+import org.aventyrs.core.race.Anao;
+import org.aventyrs.core.race.AnoesRacialAbility;
 import org.aventyrs.core.race.Elfo;
 import org.aventyrs.core.race.ElfosRacialAbility;
 import org.aventyrs.core.scene.Range;
@@ -17,6 +19,7 @@ import org.aventyrs.core.sheet.InteractionResult;
 import org.aventyrs.core.sheet.Player;
 import org.aventyrs.core.skill.artes.ArtesCompetencyAbility;
 import org.aventyrs.core.skill.artes.ArtesSpecialization;
+import org.aventyrs.core.skill.ataquecorpoacorpo.AtaqueCorpoACorpoInteraction;
 import org.aventyrs.core.skill.attention.AttentionCompetencyAbility;
 import org.aventyrs.core.skill.attention.AttentionInteraction;
 import org.aventyrs.core.skill.attention.AttentionSpecialization;
@@ -220,6 +223,25 @@ class AbstractSkillInteractionTest {
         SkillRoll skillRoll = new SkillRoll(List.of(2, 3, 4), ElfosRacialAbility.SENTIDOS_ABSOLUTOS);
 
         InteractionResult result = new AttentionInteraction().applyTo(sheet, null, skillRoll);
+
+        assertNotNull(result);
+    }
+
+    /**
+     * {@code ABATEDORES_DE_GIGANTES#getSkillType()} reports ATAQUE_A_DISTANCIA as its
+     * canonical value, but its rules text covers every Perícia de Ataque — {@link
+     * SkillTrait#matchesSkillType} is what lets it validate as a requested ability against
+     * ATAQUE_CORPO_A_CORPO too, not just its own canonical SkillType.
+     */
+    @Test
+    void applyToWithARequestedRacialAbilityMatchesTheOtherAttackSkillTypeToo() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .race(new Anao())
+                .build();
+        CharacterSheet sheet = CharacterSheet.of(character, new Player());
+        SkillRoll skillRoll = new SkillRoll(List.of(2, 3, 4), AnoesRacialAbility.ABATEDORES_DE_GIGANTES);
+
+        InteractionResult result = new AtaqueCorpoACorpoInteraction().applyTo(sheet, null, skillRoll);
 
         assertNotNull(result);
     }

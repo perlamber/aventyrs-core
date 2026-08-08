@@ -19,7 +19,6 @@ import org.aventyrs.core.skill.dominiodomana.DominioDoManaInteraction;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 import static org.aventyrs.core.skill.Skill.UNTRAINED_PENALTY;
 import static org.aventyrs.core.util.TranslatableMessages.REQUIRED_SKILL_TRAIT_NOT_HELD;
@@ -173,8 +172,9 @@ public abstract class AbstractSkillInteraction implements Interaction<CharacterS
 
     /**
      * A {@code null} requestedTrait (a plain roll) is always fine. A non-{@code null} one must
-     * belong to this same {@code skillType} and actually be held by the character — otherwise
-     * this roll is trying to invoke a maneuver or Especialização the character never acquired.
+     * match this {@code skillType} (via {@link SkillTrait#matchesSkillType}, not raw equality —
+     * see that method for why) and actually be held by the character — otherwise this roll is
+     * trying to invoke a maneuver or Especialização the character never acquired.
      * Branches on the concrete {@link SkillTrait} kind: a {@link SkillCompetencyAbility} is
      * checked against the Character's own acquired/racial ability lists (it doesn't need
      * {@code characterSkill}); a {@link SkillSpecialization} is checked against {@code
@@ -197,7 +197,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CharacterS
         } else {
             held = false;
         }
-        if (requestedTrait.getSkillType() != skillType || !held) {
+        if (!requestedTrait.matchesSkillType(skillType) || !held) {
             throw new IllegalOperationException(REQUIRED_SKILL_TRAIT_NOT_HELD);
         }
     }
@@ -211,10 +211,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CharacterS
      * exactly like an acquired one would, with no special-casing at any call site.
      */
     private List<SkillCompetencyAbility> allSkillCompetencyAbilities(final Character character) {
-        return Stream.concat(
-                        character.getSkillCompetencyAbilities().stream(),
-                        character.getRace().getRacialAbilities().stream())
-                .toList();
+        return SkillCompetencyAbility.allFor(character);
     }
 
     /**

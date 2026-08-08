@@ -1,12 +1,15 @@
 package org.aventyrs.core.skill;
 
 import org.aventyrs.core.character.AttributeDomain;
+import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.DamageBonus;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.CharacterSheet;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 public interface SkillCompetencyAbility extends SkillTrait {
 
@@ -84,5 +87,22 @@ public interface SkillCompetencyAbility extends SkillTrait {
                 .flatMap(Optional::stream)
                 .findFirst()
                 .orElse(defaultDomain);
+    }
+
+    /**
+     * {@code character.getSkillCompetencyAbilities()} (acquired) plus {@code
+     * character.getRace().getRacialAbilities()} (fixed per race) — see CLAUDE.md's "Racial
+     * Abilities reuse SkillCompetencyAbility" section. Every caller that needs "every ability
+     * of this kind, acquired or racial" (both {@link AbstractSkillInteraction}'s roll/
+     * difficulty-reduction computation and {@code SkillGraduationService}'s max-graduation
+     * cap, which must resolve {@link #resolveAttributeDomain} against the exact same list —
+     * they previously didn't, see CLAUDE.md's Attribute base/Graduação section) shares this
+     * one method rather than each concatenating the two lists itself and risking drift.
+     */
+    static List<SkillCompetencyAbility> allFor(final Character character) {
+        return Stream.concat(
+                        character.getSkillCompetencyAbilities().stream(),
+                        character.getRace().getRacialAbilities().stream())
+                .toList();
     }
 }

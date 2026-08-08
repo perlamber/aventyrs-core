@@ -22,7 +22,7 @@ public class SkillGraduationServiceImpl implements SkillGraduationService {
         CharacterSkill characterSkill = character.getSkills().get(skillType);
         AttributeDomain defaultDomain = characterSkill.getSkill().getAttributeDomain();
         AttributeDomain governingDomain = SkillCompetencyAbility.resolveAttributeDomain(
-                character.getSkillCompetencyAbilities(), skillType, defaultDomain);
+                SkillCompetencyAbility.allFor(character), skillType, defaultDomain);
 
         try {
             AttributeValue attributeValue = (AttributeValue) governingDomain.getKeyAttributeMethod().invoke(character.getAttributes());

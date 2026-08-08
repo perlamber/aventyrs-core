@@ -14,6 +14,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AnoesRacialAbilityTest {
 
@@ -39,6 +40,18 @@ class AnoesRacialAbilityTest {
     @Test
     void abatedoresDeGigantesBelongsToAtaqueADistancia() {
         assertEquals(SkillType.ATAQUE_A_DISTANCIA, AnoesRacialAbility.ABATEDORES_DE_GIGANTES.getSkillType());
+    }
+
+    @Test
+    void abatedoresDeGigantesMatchesBothAttackSkillTypes() {
+        assertTrue(AnoesRacialAbility.ABATEDORES_DE_GIGANTES.matchesSkillType(SkillType.ATAQUE_A_DISTANCIA));
+        assertTrue(AnoesRacialAbility.ABATEDORES_DE_GIGANTES.matchesSkillType(SkillType.ATAQUE_CORPO_A_CORPO));
+    }
+
+    @Test
+    void abatedoresDeGigantesDoesNotMatchANonAttackSkillType() {
+        assertFalse(AnoesRacialAbility.ABATEDORES_DE_GIGANTES.matchesSkillType(SkillType.ATLETISMO));
+        assertFalse(AnoesRacialAbility.ABATEDORES_DE_GIGANTES.matchesSkillType(null));
     }
 
     @Test

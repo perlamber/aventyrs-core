@@ -7,16 +7,21 @@ import org.aventyrs.core.character.CharacterAttributes;
 import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.character.fixture.CharacterSkillFixture;
+import org.aventyrs.core.race.CreatureType;
+import org.aventyrs.core.race.Race;
 import org.aventyrs.core.sheet.CharacterSheet;
+import org.aventyrs.core.sheet.DlcRuleset;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.Player;
+import org.aventyrs.core.skill.SkillCompetencyAbility;
 import org.aventyrs.core.skill.ataquecorpoacorpo.AtaqueCorpoACorpoCompetencyAbility;
 import org.aventyrs.core.skill.SkillType;
-import org.aventyrs.core.skill.ataquecorpoacorpo.AtaqueCorpoACorpoCompetencyAbility;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
+import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -81,6 +86,56 @@ class SkillGraduationServiceImplTest {
                 .build();
 
         // ACUIDADE substitutes Destreza(5) for Força(3), so the cap is 2*5=10, not 2*3=6.
+        assertEquals(10, skillGraduationService.getMaxGraduation(character, SkillType.ATAQUE_CORPO_A_CORPO));
+    }
+
+    private static class SubstitutingRacialAbility implements SkillCompetencyAbility {
+        @Override
+        public SkillType getSkillType() {
+            return SkillType.ATAQUE_CORPO_A_CORPO;
+        }
+
+        @Override
+        public String getDescription() {
+            return "Test-only racial substitution of Destreza for Força on Ataque Corpo-a-Corpo.";
+        }
+
+        @Override
+        public Optional<AttributeDomain> getSubstituteAttributeDomain() {
+            return Optional.of(AttributeDomain.DEXTERITY);
+        }
+    }
+
+    private static class RaceWithSubstitutingRacialAbility implements Race {
+        @Override
+        public CreatureType getCreatureType() {
+            return CreatureType.HUMANOIDE;
+        }
+
+        @Override
+        public List<SkillCompetencyAbility> getRacialAbilities() {
+            return List.of(new SubstitutingRacialAbility());
+        }
+
+        @Override
+        public Character.CharacterBuilder generateEmptyCharacter(final List<DlcRuleset> dlcRulesetList) {
+            throw new UnsupportedOperationException("not needed by this test");
+        }
+    }
+
+    @Test
+    void getMaxGraduationUsesTheSubstitutedAttributeFromARacialAbilityToo() {
+        CharacterSkill ataqueCorpoACorpoSkill = CharacterSkillFixture.blank(CharacterSkillFixture.ATAQUE_CORPO_A_CORPO_1).build();
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .attributes(CharacterAttributes.builder()
+                        .strength(AttributeValue.builder().domain(AttributeDomain.STRENGTH).base(3).build())
+                        .dexterity(AttributeValue.builder().domain(AttributeDomain.DEXTERITY).base(5).build())
+                        .build())
+                .skill(SkillType.ATAQUE_CORPO_A_CORPO, ataqueCorpoACorpoSkill)
+                .race(new RaceWithSubstitutingRacialAbility())
+                .build();
+
+        // The racial ability substitutes Destreza(5) for Força(3), so the cap is 2*5=10, not 2*3=6.
         assertEquals(10, skillGraduationService.getMaxGraduation(character, SkillType.ATAQUE_CORPO_A_CORPO));
     }
 
