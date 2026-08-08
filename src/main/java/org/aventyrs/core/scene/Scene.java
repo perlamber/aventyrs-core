@@ -24,6 +24,13 @@ import static org.aventyrs.core.util.TranslatableMessages.NO_PARTICIPANTS_IN_SCE
  * itself is instantiated. It's meant to be long-lived across an entire game session (its
  * order is decided once), not recreated per in-fiction scene: new enemies or helpers
  * encountered along the way just join it via {@link #addParticipant}.
+ *
+ * <p>{@link #terrainType} is the first bit of that "more Scene-scoped state" this class's own
+ * javadoc used to only predict — a single value for the whole Scene (see {@link TerrainType}'s
+ * own javadoc for why it isn't per-participant), {@code null} until a caller sets it via
+ * {@link #setTerrainType} once the party's actual surroundings are known. {@link #buildContext}
+ * carries it into the {@link SceneContext} snapshot handed to an {@code Interaction}, e.g. for
+ * {@code AnoesRacialAbility#FILHOS_DA_MONTANHA}.
  */
 public class Scene {
     private final List<InitiativeEntry> activeEntries = new ArrayList<>();
@@ -31,6 +38,7 @@ public class Scene {
 
     private int currentIndex = -1;
     private int currentRound = 0;
+    private TerrainType terrainType;
 
     /**
      * Adds a CharacterSheet with its rolled initiative value, in a sub-group of its own —
@@ -107,7 +115,17 @@ public class Scene {
      * @throws IllegalOperationException if characterSheet was never added to this Scene
      */
     public SceneContext buildContext(final CharacterSheet characterSheet, final Map<CharacterSheet, Range> distances) {
-        return new SceneContext(getAllies(characterSheet), getEnemies(characterSheet), distances);
+        return new SceneContext(getAllies(characterSheet), getEnemies(characterSheet), distances, terrainType);
+    }
+
+    /** The kind of environment this Scene is currently taking place in, or {@code null} if never set. */
+    public TerrainType getTerrainType() {
+        return terrainType;
+    }
+
+    /** Sets this Scene's current terrain — e.g. once the party actually enters a cave. */
+    public void setTerrainType(final TerrainType terrainType) {
+        this.terrainType = terrainType;
     }
 
     private UUID groupOf(final CharacterSheet characterSheet) {

@@ -136,4 +136,33 @@ class SceneContextTest {
         assertEquals(1, context.countEnemiesWithin(Range.ADJACENTE));
         assertEquals(2, context.countEnemiesWithin(Range.DISTANCIA_LONGA));
     }
+
+    @Test
+    void terrainTypeIsNullWhenBuiltFromTheThreeArgConstructor() {
+        SceneContext context = new SceneContext(List.of(), List.of(), Map.of());
+
+        assertNull(context.getTerrainType());
+    }
+
+    @Test
+    void terrainTypeIsCarriedByTheFourArgConstructor() {
+        SceneContext context = new SceneContext(List.of(), List.of(), Map.of(), TerrainType.CAVE);
+
+        assertEquals(TerrainType.CAVE, context.getTerrainType());
+    }
+
+    @Test
+    void isTerrainIsTrueWhenTheCurrentTerrainMatchesOneOfTheGivenValues() {
+        SceneContext context = new SceneContext(List.of(), List.of(), Map.of(), TerrainType.MOUNTAIN);
+
+        assertTrue(context.isTerrain(TerrainType.MOUNTAIN, TerrainType.CAVE));
+        assertFalse(context.isTerrain(TerrainType.URBAN, TerrainType.AQUATIC));
+    }
+
+    @Test
+    void isTerrainIsFalseWhenTerrainTypeWasNeverSet() {
+        SceneContext context = new SceneContext(List.of(), List.of(), Map.of());
+
+        assertFalse(context.isTerrain(TerrainType.MOUNTAIN, TerrainType.CAVE));
+    }
 }

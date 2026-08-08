@@ -58,7 +58,9 @@ class AnaoTest {
     }
 
     @Test
-    void grantsAbatedoresDeGigantesAsARacialAbility() {
-        assertEquals(List.of(AnoesRacialAbility.ABATEDORES_DE_GIGANTES), anao.getRacialAbilities());
+    void grantsAbatedoresDeGigantesAndFilhosDaMontanhaAsRacialAbilities() {
+        assertEquals(
+                List.of(AnoesRacialAbility.ABATEDORES_DE_GIGANTES, AnoesRacialAbility.FILHOS_DA_MONTANHA),
+                anao.getRacialAbilities());
     }
 }

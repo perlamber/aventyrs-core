@@ -43,7 +43,11 @@ import static org.aventyrs.core.util.TranslatableMessages.REQUIRED_SKILL_TRAIT_N
  * like {@code ElfosRacialAbility#SENTIDOS_ABSOLUTOS} contributes here identically to an
  * acquired one), unlocked {@link SkillExcellency} tiers, and the target {@link CharacterSheet}'s
  * own {@code TemporaryBonus} pool (see CLAUDE.md's "Temporary bonuses from other Characters"
- * section). Computes {@code difficultyReduction} from unlocked {@code SkillExcellency} tiers
+ * section) — plus a separate source summed via {@link #sumConditionalRollBonuses}: {@link
+ * SkillCompetencyAbility#resolveConditionalRollBonus}, for a bonus conditioned on {@code
+ * sceneContext}/the roll's own requested trait rather than reflection-discoverable via
+ * {@code @Modifier} (e.g. {@code AnoesRacialAbility#FILHOS_DA_MONTANHA}). Computes {@code
+ * difficultyReduction} from unlocked {@code SkillExcellency} tiers
  * plus every entry of that same combined acquired-plus-racial list's own {@link
  * SkillCompetencyAbility#getDifficultyReduction()}. {@link SkillCompetencyAbility
  * #resolveAttributeDomain} is resolved against the combined list too, for the same reason.
@@ -147,6 +151,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CharacterS
         bonus += sumSkillRollBonusModifiers(unlockedExcellencies);
         bonus += target.getTemporaryBonus(ModifierType.SKILL_ROLL_BONUS);
         bonus += target.getTemporaryBonus(skillType.getRollBonusType());
+        bonus += sumConditionalRollBonuses(skillCompetencyAbilities, sceneContext, skillRoll);
 
         int difficultyReduction = SkillExcellency.totalDifficultyReduction(skillType.getExcellencyClass(), graduationValue);
         difficultyReduction += skillCompetencyAbilities.stream()
@@ -224,6 +229,25 @@ public abstract class AbstractSkillInteraction implements Interaction<CharacterS
     private int sumSkillRollBonusModifiers(final Collection<?> sources) {
         return modifierResolver.sumModifiers(sources, ModifierType.SKILL_ROLL_BONUS)
                 + modifierResolver.sumModifiers(sources, skillType.getRollBonusType());
+    }
+
+    /**
+     * Sums {@link SkillCompetencyAbility#resolveConditionalRollBonus} across every held
+     * ability (acquired plus racial) — the additive counterpart to {@link
+     * #sumSkillRollBonusModifiers} for a bonus conditioned on {@code sceneContext}/the roll's
+     * own requested trait rather than a reflection-discoverable {@code @Modifier} method. Safe
+     * to call unconditionally: {@code sceneContext}/{@code skillRoll} may each be {@code null}
+     * (no active Scene, or a plain {@code applyTo(target)} call) — every ability's own override
+     * is expected to treat that as "condition not met," the same restraint {@code
+     * resolveDamageBonus}/{@code resolveAttackRollBonus} already apply.
+     */
+    private int sumConditionalRollBonuses(final List<SkillCompetencyAbility> skillCompetencyAbilities, final SceneContext sceneContext, final SkillRoll skillRoll) {
+        SkillTrait requestedAbility = skillRoll == null ? null : skillRoll.getRequestedAbility();
+        return skillCompetencyAbilities.stream()
+                .map(ability -> ability.resolveConditionalRollBonus(sceneContext, requestedAbility))
+                .flatMap(Optional::stream)
+                .mapToInt(Integer::intValue)
+                .sum();
     }
 
     /**

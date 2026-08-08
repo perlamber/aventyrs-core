@@ -3,13 +3,18 @@ package org.aventyrs.core.race;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.SizeCategory;
 import org.aventyrs.core.character.fixture.CharacterFixture;
+import org.aventyrs.core.scene.SceneContext;
+import org.aventyrs.core.scene.TerrainType;
 import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.Player;
 import org.aventyrs.core.skill.Skill;
 import org.aventyrs.core.skill.SkillType;
+import org.aventyrs.core.skill.conhecimentos.ConhecimentosSpecialization;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -86,5 +91,60 @@ class AnoesRacialAbilityTest {
 
         assertEquals(Optional.empty(), AnoesRacialAbility.ABATEDORES_DE_GIGANTES.resolveAttackRollBonus(null, sheet));
         assertEquals(Optional.empty(), AnoesRacialAbility.ABATEDORES_DE_GIGANTES.resolveAttackRollBonus(sheet, null));
+    }
+
+    @Test
+    void filhosDaMontanhaBelongsToConhecimentos() {
+        assertEquals(SkillType.CONHECIMENTOS, AnoesRacialAbility.FILHOS_DA_MONTANHA.getSkillType());
+    }
+
+    private static SceneContext contextWithTerrain(TerrainType terrainType) {
+        return new SceneContext(List.of(), List.of(), Map.of(), terrainType);
+    }
+
+    @Test
+    void filhosDaMontanhaGrantsAdvantageForNaturezaInMountainOrCaveTerrain() {
+        Optional<Integer> mountainBonus = AnoesRacialAbility.FILHOS_DA_MONTANHA
+                .resolveConditionalRollBonus(contextWithTerrain(TerrainType.MOUNTAIN), ConhecimentosSpecialization.NATUREZA);
+        Optional<Integer> caveBonus = AnoesRacialAbility.FILHOS_DA_MONTANHA
+                .resolveConditionalRollBonus(contextWithTerrain(TerrainType.CAVE), ConhecimentosSpecialization.NATUREZA);
+
+        assertEquals(Optional.of(Skill.ADVANTAGE_BONUS), mountainBonus);
+        assertEquals(Optional.of(Skill.ADVANTAGE_BONUS), caveBonus);
+    }
+
+    @Test
+    void filhosDaMontanhaGrantsNoBonusOutsideMountainOrCaveTerrain() {
+        Optional<Integer> bonus = AnoesRacialAbility.FILHOS_DA_MONTANHA
+                .resolveConditionalRollBonus(contextWithTerrain(TerrainType.URBAN), ConhecimentosSpecialization.NATUREZA);
+
+        assertEquals(Optional.empty(), bonus);
+    }
+
+    @Test
+    void filhosDaMontanhaGrantsNoBonusWithoutASceneContext() {
+        assertEquals(Optional.empty(),
+                AnoesRacialAbility.FILHOS_DA_MONTANHA.resolveConditionalRollBonus(null, ConhecimentosSpecialization.NATUREZA));
+    }
+
+    @Test
+    void filhosDaMontanhaGrantsNoBonusWhenTheRollDidNotRequestNatureza() {
+        SceneContext mountain = contextWithTerrain(TerrainType.MOUNTAIN);
+
+        assertEquals(Optional.empty(), AnoesRacialAbility.FILHOS_DA_MONTANHA.resolveConditionalRollBonus(mountain, null));
+        assertEquals(Optional.empty(), AnoesRacialAbility.FILHOS_DA_MONTANHA
+                .resolveConditionalRollBonus(mountain, ConhecimentosSpecialization.GEO_HISTORIA));
+    }
+
+    @Test
+    void onlyFilhosDaMontanhaEverResolvesAConditionalRollBonus() {
+        SceneContext mountain = contextWithTerrain(TerrainType.MOUNTAIN);
+
+        for (AnoesRacialAbility ability : AnoesRacialAbility.values()) {
+            if (ability != AnoesRacialAbility.FILHOS_DA_MONTANHA) {
+                assertEquals(Optional.empty(),
+                        ability.resolveConditionalRollBonus(mountain, ConhecimentosSpecialization.NATUREZA));
+            }
+        }
     }
 }

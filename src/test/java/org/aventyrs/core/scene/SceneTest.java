@@ -9,10 +9,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -261,5 +263,31 @@ class SceneTest {
         CharacterSheet stranger = newSheet();
 
         assertThrows(IllegalOperationException.class, () -> scene.getEnemies(stranger));
+    }
+
+    @Test
+    void terrainTypeIsUnsetByDefault() {
+        Scene scene = new Scene();
+        assertNull(scene.getTerrainType());
+    }
+
+    @Test
+    void terrainTypeCanBeSetAndRead() {
+        Scene scene = new Scene();
+        scene.setTerrainType(TerrainType.CAVE);
+
+        assertEquals(TerrainType.CAVE, scene.getTerrainType());
+    }
+
+    @Test
+    void buildContextCarriesTheScenesTerrainTypeIntoTheSnapshot() {
+        Scene scene = new Scene();
+        scene.setTerrainType(TerrainType.MOUNTAIN);
+        CharacterSheet actor = newSheet();
+        scene.addParticipant(actor, 10);
+
+        SceneContext context = scene.buildContext(actor, Map.of());
+
+        assertEquals(TerrainType.MOUNTAIN, context.getTerrainType());
     }
 }

@@ -72,6 +72,25 @@ public interface SkillCompetencyAbility extends SkillTrait {
     }
 
     /**
+     * A bonus toward this Perícia's own roll ({@code skillRollBonus}), conditioned on data no
+     * reflection-based {@code @Modifier} method can see: the current {@link SceneContext} (e.g.
+     * its {@code terrainType}) and/or which {@link SkillTrait} this specific roll requested
+     * (see {@code SkillRoll#getRequestedAbility()}) — e.g. {@code
+     * AnoesRacialAbility#FILHOS_DA_MONTANHA}'s Vantagem on Conhecimentos rolls made under the
+     * Natureza Especialização while the Scene's terrain is Mountain or Cave. Empty by default;
+     * only override on a constant whose rules text conditions a bonus on these per-roll facts.
+     * Unlike {@link #resolveDamageBonus}/{@link #resolveAttackRollBonus} (which need an
+     * explicit {@code attackTarget} the generic {@code applyTo} has no parameter for, so each
+     * is only wired into one skill-specific Interaction), both {@code sceneContext} and the
+     * requested trait are already parameters of {@code AbstractSkillInteraction}'s own {@code
+     * applyTo}, so this one is summed generically, for every skill, the same additive
+     * convention every other {@code skillRollBonus} source already uses.
+     */
+    default Optional<Integer> resolveConditionalRollBonus(final SceneContext sceneContext, final SkillTrait requestedAbility) {
+        return Optional.empty();
+    }
+
+    /**
      * The Attribute that currently governs skillType's roll/graduation-cap for a character
      * holding skillCompetencyAbilities — defaultDomain, unless one of those abilities
      * targets this same skillType and {@link #getSubstituteAttributeDomain()} isn't empty,

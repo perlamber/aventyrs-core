@@ -10,12 +10,13 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Defines what the Anões (Dwarves) race can do under each rule-set. Three of this race's
+ * Defines what the Anões (Dwarves) race can do under each rule-set. Four of this race's
  * traits are mechanically real today — {@link #getFixedAttributeBonuses()} (+1 Vigor, +1
  * Gnose), {@link #generateEmptyCharacter} seeding {@link SizeCategory#MINUS_ONE}, and {@link
- * #getRacialAbilities()} granting {@link AnoesRacialAbility#ABATEDORES_DE_GIGANTES} — everything
- * else the rules text describes needs a system this core doesn't have yet, same "model it as
- * real data, defer the mechanic honestly" discipline as every ability enum in this codebase:
+ * #getRacialAbilities()} granting {@link AnoesRacialAbility#ABATEDORES_DE_GIGANTES} and {@link
+ * AnoesRacialAbility#FILHOS_DA_MONTANHA} — everything else the rules text describes needs a
+ * system this core doesn't have yet, same "model it as real data, defer the mechanic honestly"
+ * discipline as every ability enum in this codebase:
  *
  * <ul>
  *   <li><b>Idiomas</b> (Anão + a second per Antecedente, swappable for Continental) — no
@@ -35,13 +36,6 @@ import java.util.Map;
  *   Attributes/Egos today, not skills.</li>
  *   <li><b>Visão no Escuro</b> (monochromatic darkvision) — no vision/senses concept exists in
  *   this core.</li>
- *   <li><b>Filhos da Montanha</b> (Vantagem on Conhecimentos rolls, Natureza Especialização,
- *   while in mountains/caves) — needs both a terrain/environment concept this core doesn't
- *   track (same "doesn't track what a roll is for" gap documented for scoped Vantagem
- *   elsewhere) and Especialização-scoped bonus resolution, which {@code
- *   org.aventyrs.core.skill.DifficultyLevel#reachedBy}'s own javadoc already flags as a
- *   separate, still-unbuilt concern (it deliberately ignores {@code expertValue}). See {@code
- *   org.aventyrs.core.skill.conhecimentos.ConhecimentosSpecialization#NATUREZA}.</li>
  *   <li><b>Pequenos Gigantes</b> (Vigor Base 3+ grants one extra {@code
  *   org.aventyrs.core.ability.AttributeAbility}, restricted to {@code
  *   org.aventyrs.core.ability.VigorAbility#SANGUE_DE_GIGANTE}/{@code #SOBRE_HUMANO}) — {@code
@@ -82,6 +76,6 @@ public class Anao implements Race {
 
     @Override
     public List<SkillCompetencyAbility> getRacialAbilities() {
-        return List.of(AnoesRacialAbility.ABATEDORES_DE_GIGANTES);
+        return List.of(AnoesRacialAbility.ABATEDORES_DE_GIGANTES, AnoesRacialAbility.FILHOS_DA_MONTANHA);
     }
 }
