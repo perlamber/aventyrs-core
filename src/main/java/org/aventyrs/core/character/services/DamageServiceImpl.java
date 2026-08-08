@@ -35,7 +35,8 @@ public class DamageServiceImpl implements DamageService {
     }
 
     @Override
-    public int calculateFinalDamage(final Character character, final int rawDamage, final boolean ignoreDamageReduction, final boolean halfDamage) {
+    public int calculateFinalDamage(final Character character, final int rawDamage, final boolean ignoreDamageReduction) {
+        final boolean halfDamage = sumAcrossSources(character, ModifierType.HALF_DAMAGE) > 0;
         int reduction = getTotalAbsoluteDamageReduction(character);
         if (!ignoreDamageReduction) {
             reduction += getTotalDamageReduction(character);
@@ -46,8 +47,8 @@ public class DamageServiceImpl implements DamageService {
     }
 
     @Override
-    public int applyDamage(final Character character, final CharacterSheet characterSheet, final int rawDamage, final boolean ignoreDamageReduction, final boolean halfDamage) {
-        int finalDamage = calculateFinalDamage(character, rawDamage, ignoreDamageReduction, halfDamage);
+    public int applyDamage(final Character character, final CharacterSheet characterSheet, final int rawDamage, final boolean ignoreDamageReduction) {
+        int finalDamage = calculateFinalDamage(character, rawDamage, ignoreDamageReduction);
         return characterSheet.applyDamage(finalDamage);
     }
 

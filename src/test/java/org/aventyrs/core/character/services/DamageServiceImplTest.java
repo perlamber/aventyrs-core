@@ -55,6 +55,24 @@ class DamageServiceImplTest {
         }
     }
 
+
+    private static class HalfDamageAbility implements SkillCompetencyAbility {
+        @Override
+        public SkillType getSkillType() {
+            return SkillType.ATLETISMO;
+        }
+
+        @Override
+        public String getDescription() {
+            return "Test-only +2 RA source.";
+        }
+
+        @Modifier(ModifierType.HALF_DAMAGE)
+        public int bonus() {
+            return 2;
+        }
+    }
+
     private static class DamageReductionMalusAbility implements SkillCompetencyAbility {
         @Override
         public SkillType getSkillType() {
@@ -138,7 +156,7 @@ class DamageServiceImplTest {
                 .skillCompetencyAbility(new AbsoluteDamageReductionAbility())
                 .build();
 
-        assertEquals(5, damageService.calculateFinalDamage(character, 10, false, false));
+        assertEquals(5, damageService.calculateFinalDamage(character, 10, false));
     }
 
     @Test
@@ -148,17 +166,17 @@ class DamageServiceImplTest {
                 .skillCompetencyAbility(new AbsoluteDamageReductionAbility())
                 .build();
 
-        assertEquals(8, damageService.calculateFinalDamage(character, 10, true, false));
+        assertEquals(8, damageService.calculateFinalDamage(character, 10, true));
     }
 
     @Test
     void calculateFinalDamageAppliesHalfDamageLastAndRoundsDown() {
         Character character = CharacterFixture.blank(CharacterFixture.BLANK)
                 .attributeAbility(new DamageReductionAbility())
-                .skillCompetencyAbility(new AbsoluteDamageReductionAbility())
+                .skillCompetencyAbility(new HalfDamageAbility())
                 .build();
 
-        assertEquals(3, damageService.calculateFinalDamage(character, 12, false, true));
+        assertEquals(4, damageService.calculateFinalDamage(character, 12, false));
     }
 
     @Test
@@ -168,7 +186,7 @@ class DamageServiceImplTest {
                 .skillCompetencyAbility(new AbsoluteDamageReductionAbility())
                 .build();
 
-        assertEquals(0, damageService.calculateFinalDamage(character, 2, false, false));
+        assertEquals(0, damageService.calculateFinalDamage(character, 2, false));
     }
 
     @Test
@@ -179,7 +197,7 @@ class DamageServiceImplTest {
                 .build();
         CharacterSheet sheet = CharacterSheet.of(character, new Player());
 
-        int totalDamageTaken = damageService.applyDamage(character, sheet, 10, false, false);
+        int totalDamageTaken = damageService.applyDamage(character, sheet, 10, false);
 
         assertEquals(5, totalDamageTaken);
         assertEquals(5, sheet.getDamageTaken());
@@ -193,7 +211,7 @@ class DamageServiceImplTest {
         CharacterSheet sheet = CharacterSheet.of(character, new Player());
         sheet.addShield(4);
 
-        int totalDamageTaken = damageService.applyDamage(character, sheet, 10, false, false);
+        int totalDamageTaken = damageService.applyDamage(character, sheet, 10, false);
 
         assertEquals(3, totalDamageTaken);
         assertEquals(3, sheet.getDamageTaken());
