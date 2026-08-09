@@ -8,7 +8,11 @@ import org.aventyrs.core.character.AttributeDomain;
 @AllArgsConstructor
 public enum GnoseAbility implements AttributeAbility {
 
-    // TODO: grants a new Especialização for up to 3 known Perícias — no Perícia/Especialização system exists yet.
+    // TODO: grants a new Especialização for up to 3 known Perícias — typed, held
+    // SkillSpecializations now exist (org.aventyrs.core.skill.SkillSpecialization,
+    // CharacterSkill#getSpecializations()), but there's still no hook for an ability's own
+    // acquisition to grant one onto a chosen Perícia's CharacterSkill; same gap
+    // ConhecimentosCompetencyAbility.GENERALISTA's own TODO cites.
     DOMINIO_DO_CONHECIMENTO("Você recebe uma nova Especialização de até 3 Perícias conhecidas."),
 
     // TODO: grants a new Habilidade de Competência for up to 2 known Perícias, still subject to its
@@ -25,14 +29,25 @@ public enum GnoseAbility implements AttributeAbility {
     // TODO: lets you permanently replace a chosen Perícia's base Atributo with Gnose —
     // persisting *which* Perícia was chosen is no longer the blocker (see
     // org.aventyrs.core.ability.AcquiredChoice / Character#getAbilityChoices /
-    // org.aventyrs.core.character.services.AbilityChoiceService#getChoiceFor); what's still
-    // missing is the actual Perícia base-Attribute substitution mechanism itself — no
-    // <Skill>Interaction reads a per-character override for which Attribute feeds its roll.
+    // org.aventyrs.core.character.services.AbilityChoiceService#getChoiceFor). A substitution
+    // mechanism now exists for the *unconditional, fixed-Perícia* case (see
+    // org.aventyrs.core.skill.SkillCompetencyAbility#getSubstituteAttributeDomain() /
+    // AtaqueCorpoACorpoCompetencyAbility.ACUIDADE), but this ability's shape is different: the
+    // substituted-into Attribute (Gnose) is fixed, but *which Perícia* it applies to is a
+    // per-character choice, not a fixed one enum-constant-to-enum-constant like ACUIDADE's —
+    // so no single `<Skill>CompetencyAbility` constant can host the override. What's still
+    // missing is a mechanism where a `<Skill>Interaction` checks
+    // AbilityChoiceService.getChoiceFor(character, PERITO_TEORICO) against its own SkillType
+    // before calling CharacterSkillService.getValueForRoll's substituteAttributeDomain
+    // overload.
     PERITO_TEORICO("Escolha uma Perícia conhecida, você pode substituir o Atributo Base da Perícia escolhida por " +
             "Gnose, esta escolha não pode ser revertida."),
 
     // TODO: grants training in all untrained Perícias without initial Especializações — no
-    // Perícia/Especialização system exists yet.
+    // hook for granting Perícia training itself at acquisition time exists yet (same "Race has
+    // no hook for granting starting Perícia training" gap CLAUDE.md documents for Elfo's Origem
+    // Mística); the "without initial Especializações" half is trivially satisfiable once that
+    // exists (CharacterSkill.specializations already defaults to an empty list).
     RATO_DE_BIBLIOTECA("Você recebe treinamento em todas as Perícias que não for treinado, mas as Perícias " +
             "treinadas desta forma não recebem Especializações iniciais.");
 

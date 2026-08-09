@@ -5,8 +5,8 @@
  *
  * A Skill Roll is requested by constructing the concrete
  * {@link org.aventyrs.core.sheet.Interaction} for that Perícia — one class per Perícia, named
- * {@code <Skill>Interaction} (e.g. {@link org.aventyrs.core.skill.AttentionInteraction},
- * {@link org.aventyrs.core.skill.ArtesInteraction}) — and handing it to the target's
+ * {@code <Skill>Interaction} (e.g. {@link org.aventyrs.core.skill.attention.AttentionInteraction},
+ * {@link org.aventyrs.core.skill.artes.ArtesInteraction}) — and handing it to the target's
  * {@link org.aventyrs.core.sheet.CharacterSheet#receiveInteraction}:
  *
  * <pre>{@code
@@ -18,6 +18,36 @@
  * int difficultyReduction  = result.getDifficultyReduction(); // steps to shift the target GD easier
  * CharacterStatus status   = result.getResultStatus();        // the character's current status
  * }</pre>
+ *
+ * <p>A caller that only has a {@link org.aventyrs.core.skill.SkillType} in hand (e.g. an API
+ * layer deserializing an incoming roll request) doesn't need to know which concrete
+ * {@code <Skill>Interaction} class that maps to — {@link org.aventyrs.core.skill.SkillRollRequest}
+ * bundles skillType/target (and optionally an already-rolled
+ * {@link org.aventyrs.core.skill.SkillRoll}/{@link org.aventyrs.core.scene.SceneContext}), and
+ * {@link org.aventyrs.core.skill.SkillInteractionFactory#resolve} dispatches it:
+ *
+ * <pre>{@code
+ * SkillRollRequest request = SkillRollRequest.builder()
+ *         .skillType(SkillType.ARTES)
+ *         .target(sheet)
+ *         .skillRoll(new SkillRoll(List.of(4, 5, 6))) // the caller's own already-rolled dice
+ *         .build();
+ *
+ * InteractionResult result = SkillInteractionFactory.resolve(request);
+ * }</pre>
+ *
+ * <p>A {@link org.aventyrs.core.skill.SkillRoll} may also name a {@code requestedAbility} — a
+ * {@link org.aventyrs.core.skill.SkillTrait} the character is specifically invoking with this
+ * roll, as opposed to a plain Perícia test. This can be either one of the character's
+ * {@link org.aventyrs.core.skill.SkillCompetencyAbility} maneuvers, or one of their held
+ * {@link org.aventyrs.core.skill.SkillSpecialization}s (see
+ * {@link org.aventyrs.core.character.CharacterSkill#getSpecializations()}). If the character
+ * doesn't actually hold that trait, the roll is rejected with an
+ * {@link org.aventyrs.core.sheet.IllegalOperationException} rather than silently computing a
+ * result for a maneuver/Especialização they never acquired. When the requested trait is a
+ * {@code SkillSpecialization}, the roll's reached {@link org.aventyrs.core.skill.DifficultyLevel}
+ * is resolved against that tier's easier {@link org.aventyrs.core.skill.DifficultyLevel#getExpertValue()}
+ * threshold instead of its {@link org.aventyrs.core.skill.DifficultyLevel#getBaseValue()}.
  *
  * <h2>What this library computes — and what it leaves to the caller</h2>
  *

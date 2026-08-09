@@ -3,7 +3,8 @@ package org.aventyrs.core.magic;
 import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.Interaction;
 import org.aventyrs.core.sheet.InteractionResult;
-import org.aventyrs.core.skill.DominioDoManaInteraction;
+import org.aventyrs.core.skill.dominiodomana.DominioDoManaInteraction;
+import org.aventyrs.core.skill.dominiodomana.DominioDoManaInteraction;
 
 public class SpellCastingServiceImpl implements SpellCastingService {
 

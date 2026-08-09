@@ -26,7 +26,7 @@ public class DeterminationPointsServiceImpl implements DeterminationPointsServic
 
     @Override
     public int getMaxDeterminationPoints(final Character character) {
-        return character.getAttributes().getInstinct().getTotal() * getDeterminationMultiplier(character);
+        return BASE_DETERMINATION_POINTS + character.getAttributes().getInstinct().getTotal() * getDeterminationMultiplier(character);
     }
 
     @Override

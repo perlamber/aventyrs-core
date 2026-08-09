@@ -2,11 +2,12 @@ package org.aventyrs.core.character.services;
 
 import org.aventyrs.core.ability.InstinctAbility;
 import org.aventyrs.core.action.ActionProfile;
+import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.AttributeValue;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterAttributes;
 import org.aventyrs.core.character.CharacterEgos;
-import org.aventyrs.core.character.Human;
+import org.aventyrs.core.race.Human;
 import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.Player;
 import org.junit.jupiter.api.Test;
@@ -25,7 +26,7 @@ class DeterminationPointsServiceTest {
                 .actionProfile(ActionProfile.REFLEXOS_RAPIDOS)
                 .egos(CharacterEgos.builder().build())
                 .attributes(CharacterAttributes.builder()
-                        .instinct(AttributeValue.builder().base(instinctBase).build())
+                        .instinct(AttributeValue.builder().domain(AttributeDomain.INSTINCT).base(instinctBase).build())
                         .build());
         for (InstinctAbility ability : abilities) {
             builder.attributeAbility(ability);
@@ -40,16 +41,16 @@ class DeterminationPointsServiceTest {
     }
 
     @Test
-    void maxDeterminationPointsIsInstinctTimesDeterminationMultiplier() {
+    void maxDeterminationPointsIsBasePointsPlusInstinctTimesDeterminationMultiplier() {
         Character character = characterWithInstinct(3);
-        assertEquals(9, determinationPointsService.getMaxDeterminationPoints(character));
+        assertEquals(19, determinationPointsService.getMaxDeterminationPoints(character));
     }
 
     @Test
     void obstinadoIncreasesDeterminationMultiplierByOne() {
         Character character = characterWithInstinct(3, InstinctAbility.OBSTINADO);
         assertEquals(4, determinationPointsService.getDeterminationMultiplier(character));
-        assertEquals(12, determinationPointsService.getMaxDeterminationPoints(character));
+        assertEquals(22, determinationPointsService.getMaxDeterminationPoints(character));
     }
 
     @Test
@@ -57,7 +58,7 @@ class DeterminationPointsServiceTest {
         Character character = characterWithInstinct(3);
         CharacterSheet sheet = CharacterSheet.of(character, new Player());
         sheet.spendDeterminationPoints(4);
-        assertEquals(5, determinationPointsService.getCurrentDeterminationPoints(character, sheet));
+        assertEquals(15, determinationPointsService.getCurrentDeterminationPoints(character, sheet));
     }
 
     @Test

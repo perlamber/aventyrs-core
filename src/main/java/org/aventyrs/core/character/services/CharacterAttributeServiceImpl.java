@@ -1,6 +1,7 @@
 package org.aventyrs.core.character.services;
 
 import org.aventyrs.core.character.AttributeValue;
+import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.IllegalOperationException;
 
 import java.math.BigDecimal;
@@ -16,11 +17,12 @@ public class CharacterAttributeServiceImpl implements CharacterAttributeService 
     }
 
     @Override
-    public AttributeValue upgradeBase(final AttributeValue currentValue) throws IllegalOperationException {
+    public AttributeValue upgradeBase(final AttributeValue currentValue, final CharacterSheet characterSheet) throws IllegalOperationException {
         int targetBase = currentValue.getBase() + 1;
         if (targetBase > MAX_ATTRIBUTE_BASE) {
             throw new IllegalOperationException(ATTRIBUTE_BASE_AT_MAXIMUM);
         }
+        characterSheet.useExperience(getUpgradeCost(currentValue));
         return currentValue.toBuilder().base(targetBase).build();
     }
 }

@@ -11,4 +11,6 @@ import lombok.NonNull;
 public abstract class BasicSkill implements Skill {
     @NonNull
     protected AttributeDomain attributreUsed;
+    @NonNull
+    protected SkillType skillType;
 }

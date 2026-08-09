@@ -1,0 +1,47 @@
+package org.aventyrs.core.skill.empatiaselvagem;
+
+import org.aventyrs.core.modifier.ModifierResolver;
+import org.aventyrs.core.modifier.ModifierResolverImpl;
+import org.aventyrs.core.modifier.ModifierType;
+import org.aventyrs.core.skill.SkillType;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+
+class EmpatiaSelvagemCompetencyAbilityTest {
+
+    @Test
+    void everyAbilityBelongsToEmpatiaSelvagem() {
+        for (EmpatiaSelvagemCompetencyAbility ability : EmpatiaSelvagemCompetencyAbility.values()) {
+            assertEquals(SkillType.EMPATIA_SELVAGEM, ability.getSkillType());
+        }
+    }
+
+    @Test
+    void everyAbilityHasADescription() {
+        for (EmpatiaSelvagemCompetencyAbility ability : EmpatiaSelvagemCompetencyAbility.values()) {
+            assertFalse(ability.getDescription().isBlank());
+        }
+    }
+
+    @Test
+    void listHasTheFiveDescribedAbilities() {
+        assertEquals(5, EmpatiaSelvagemCompetencyAbility.values().length);
+    }
+
+    @Test
+    void noAbilityReducesDifficulty() {
+        for (EmpatiaSelvagemCompetencyAbility ability : EmpatiaSelvagemCompetencyAbility.values()) {
+            assertEquals(0, ability.getDifficultyReduction());
+        }
+    }
+
+    @Test
+    void noAbilityGrantsASkillRollBonusYet() {
+        ModifierResolver modifierResolver = new ModifierResolverImpl();
+        for (EmpatiaSelvagemCompetencyAbility ability : EmpatiaSelvagemCompetencyAbility.values()) {
+            assertEquals(0, modifierResolver.sumModifiers(ability, ModifierType.SKILL_ROLL_BONUS));
+        }
+    }
+}

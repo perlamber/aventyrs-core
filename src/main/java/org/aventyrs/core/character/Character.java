@@ -12,8 +12,10 @@ import org.aventyrs.core.ability.AttributeAbility;
 import org.aventyrs.core.action.ActionPointsService;
 import org.aventyrs.core.action.ActionProfile;
 import org.aventyrs.core.character.services.FreeActionsService;
+import org.aventyrs.core.character.services.MagicPointsService;
 import org.aventyrs.core.character.services.ReactionsService;
 import org.aventyrs.core.ego.AutocontroleAdvantage;
+import org.aventyrs.core.race.Race;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.Player;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
@@ -21,6 +23,7 @@ import org.aventyrs.core.skill.SkillType;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import static org.aventyrs.core.util.TranslatableMessages.NOT_ENOUGH_EXPERIENCE;
 
@@ -28,6 +31,15 @@ import static org.aventyrs.core.util.TranslatableMessages.NOT_ENOUGH_EXPERIENCE;
 @AllArgsConstructor(access = AccessLevel.PACKAGE)
 @NoArgsConstructor(access = AccessLevel.PACKAGE)
 public class Character {
+    /**
+     * A unique, stable identifier for this Character — independent of any specific
+     * {@link org.aventyrs.core.sheet.CharacterSheet} wrapping it (see that class's own
+     * {@code id}), e.g. so {@link org.aventyrs.core.scene.Scene} can tell participants apart
+     * without relying on object-reference equality.
+     */
+    @Builder.Default
+    protected UUID id = UUID.randomUUID();
+
     @NonNull
     protected Player player;
 
@@ -36,6 +48,31 @@ public class Character {
 
     @NonNull
     protected Race race;
+
+    /**
+     * The character's sex — e.g. {@code PersuasaoCompetencyAbility#SEDUTOR}'s "personagens do
+     * sexo oposto". No default and not {@code @NonNull}: unlike {@link #race}/{@link #name},
+     * nothing in this core currently requires every {@code Character} to name one, so it
+     * stays {@code null} unless set, same as {@link #autocontroleAdvantage}.
+     */
+    protected Sexo sexo;
+
+    /**
+     * The deity (if any) this character is devoted to. No default and not {@code @NonNull},
+     * same as {@link #sexo}/{@link #autocontroleAdvantage} — nothing in this core currently
+     * requires every {@code Character} to name one.
+     */
+    protected Deity deity;
+
+    /**
+     * Tendência — a 1-10 scale (per this ruleset's character sheet). Defaults to 1 (the
+     * floor of that range, not a meaningful "neutral" value — chosen only so an unset
+     * {@code Character} doesn't silently read as an out-of-range 0). Nothing in this core
+     * currently validates a value actually stays within 1-10, same restraint already applied
+     * to {@code AttributeValue#base}/{@code CharacterSkill}'s Graduação elsewhere.
+     */
+    @Builder.Default
+    protected int tendencia = 6;
 
     @NonNull
     protected CharacterAttributes attributes;
@@ -67,8 +104,7 @@ public class Character {
 
     /**
      * Values chosen when acquiring an ability whose rules require picking one — e.g. which
-     * Perícia {@code ArtesCompetencyAbility.APRIMORAR_COM_ARTE} or
-     * {@code GnoseAbility.PERITO_TEORICO} applies to. The ability instance itself still lives
+     * Perícia {@code GnoseAbility.PERITO_TEORICO} applies to. The ability instance itself still lives
      * in {@link #attributeAbilities}/{@link #skillCompetencyAbilities} as normal — this is
      * purely the extra "what did they pick" data, looked up via
      * {@link org.aventyrs.core.character.services.AbilityChoiceService#getChoiceFor}.
@@ -126,4 +162,20 @@ public class Character {
      */
     @Builder.Default
     protected int freeActions = FreeActionsService.DEFAULT_FREE_ACTIONS;
+
+    /**
+     * The character's own fixed Multiplicador de Mana — what it is when no external influence
+     * (abilities'/competencies' {@link org.aventyrs.core.modifier.ModifierType#MANA_MULTIPLIER}
+     * bonus, e.g. Conexão com o Mana) applies. {@value MagicPointsService#DEFAULT_MANA_MULTIPLIER}
+     * by default, but editable per character (a GM house rule, a future racial/campaign
+     * adjustment) via {@link #toBuilder()}, same as every other field here. See
+     * {@link MagicPointsService#getManaMultiplier} for the fully-modified total.
+     */
+    @Builder.Default
+    protected int manaMultiplier = MagicPointsService.DEFAULT_MANA_MULTIPLIER;
+
+    public enum Sexo {
+        MASCULINO,
+        FEMININO
+    }
 }

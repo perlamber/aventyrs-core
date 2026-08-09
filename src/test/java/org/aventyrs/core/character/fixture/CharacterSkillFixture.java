@@ -3,22 +3,38 @@ package org.aventyrs.core.character.fixture;
 import br.com.six2six.fixturefactory.Fixture;
 import br.com.six2six.fixturefactory.Rule;
 import org.aventyrs.core.character.CharacterSkill;
-import org.aventyrs.core.skill.Artes;
-import org.aventyrs.core.skill.AtaqueADistancia;
-import org.aventyrs.core.skill.AtaqueCorpoACorpo;
-import org.aventyrs.core.skill.Atletismo;
-import org.aventyrs.core.skill.Attention;
-import org.aventyrs.core.skill.Conhecimentos;
-import org.aventyrs.core.skill.DirigirECavalgar;
-import org.aventyrs.core.skill.DominioDoMana;
-import org.aventyrs.core.skill.EmpatiaSelvagem;
-import org.aventyrs.core.skill.EsquivaEAparar;
-import org.aventyrs.core.skill.Furtividade;
-import org.aventyrs.core.skill.MedicinaECura;
-import org.aventyrs.core.skill.Persuasao;
-import org.aventyrs.core.skill.Profissao;
+import org.aventyrs.core.skill.artes.Artes;
+import org.aventyrs.core.skill.ataqueadistancia.AtaqueADistancia;
+import org.aventyrs.core.skill.ataquecorpoacorpo.AtaqueCorpoACorpo;
+import org.aventyrs.core.skill.atletismo.Atletismo;
+import org.aventyrs.core.skill.attention.Attention;
+import org.aventyrs.core.skill.conhecimentos.Conhecimentos;
+import org.aventyrs.core.skill.dirigirecavalgar.DirigirECavalgar;
+import org.aventyrs.core.skill.dominiodomana.DominioDoMana;
+import org.aventyrs.core.skill.empatiaselvagem.EmpatiaSelvagem;
+import org.aventyrs.core.skill.esquivaeaparar.EsquivaEAparar;
+import org.aventyrs.core.skill.furtividade.Furtividade;
+import org.aventyrs.core.skill.medicinaecura.MedicinaECura;
+import org.aventyrs.core.skill.persuasao.Persuasao;
+import org.aventyrs.core.skill.profissao.Profissao;
 import org.aventyrs.core.skill.SkillGraduation;
+import org.aventyrs.core.skill.artes.Artes;
+import org.aventyrs.core.skill.ataqueadistancia.AtaqueADistancia;
+import org.aventyrs.core.skill.ataquecorpoacorpo.AtaqueCorpoACorpo;
+import org.aventyrs.core.skill.atletismo.Atletismo;
+import org.aventyrs.core.skill.attention.Attention;
+import org.aventyrs.core.skill.conhecimentos.Conhecimentos;
+import org.aventyrs.core.skill.dirigirecavalgar.DirigirECavalgar;
+import org.aventyrs.core.skill.dominiodomana.DominioDoMana;
+import org.aventyrs.core.skill.empatiaselvagem.EmpatiaSelvagem;
+import org.aventyrs.core.skill.esquivaeaparar.EsquivaEAparar;
+import org.aventyrs.core.skill.furtividade.Furtividade;
+import org.aventyrs.core.skill.medicinaecura.MedicinaECura;
+import org.aventyrs.core.skill.persuasao.Persuasao;
+import org.aventyrs.core.skill.profissao.Profissao;
 import org.aventyrs.core.util.SimpleFixture;
+
+import java.util.List;
 
 public class CharacterSkillFixture extends SimpleFixture {
 
@@ -115,6 +131,8 @@ public class CharacterSkillFixture extends SimpleFixture {
     }
 
     public static CharacterSkill.CharacterSkillBuilder blank(final String templateName) {
-        return ((CharacterSkill)Fixture.from(CharacterSkill.class).gimme(templateName)).toBuilder().graduation(SkillGraduation.INITIAL_BUILDER.build());
+        return ((CharacterSkill)Fixture.from(CharacterSkill.class).gimme(templateName)).toBuilder()
+                .graduation(SkillGraduation.INITIAL_BUILDER.build())
+                .specializations(List.of());
     }
 }

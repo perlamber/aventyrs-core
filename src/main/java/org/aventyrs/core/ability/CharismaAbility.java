@@ -12,7 +12,10 @@ public enum CharismaAbility implements AttributeAbility {
             "as fizer imediatamente após realizar uma rolagem de Perícia baseada em Carisma."),
 
     // TODO: grants an Especialização and a Habilidade de Competência for every trained Carisma-based Perícia at
-    // the moment of acquisition — no Perícia/Especialização/Habilidade de Competência system exists yet.
+    // the moment of acquisition — typed, held SkillSpecializations/SkillCompetencyAbilities
+    // both exist now, but there's still no hook for an ability's own acquisition to grant
+    // either onto a character's already-trained Perícias; same "no hook for granting at
+    // acquisition time" gap ConhecimentosCompetencyAbility.GENERALISTA's own TODO cites.
     CHARME("Você adquire uma Especialização e uma Habilidade de Competência de cada Perícia baseada em Carisma " +
             "em que for treinado no momento em que adquirir esta Habilidade."),
 

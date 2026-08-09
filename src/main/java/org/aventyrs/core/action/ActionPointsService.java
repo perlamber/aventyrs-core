@@ -1,6 +1,8 @@
 package org.aventyrs.core.action;
 
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.skill.SkillExcellency;
+import org.aventyrs.core.skill.atletismo.AtletismoExcellency;
 
 public interface ActionPointsService {
     /** Every character starts with 3 Pontos de Ação (PA) before any bonus or profile applies. */
@@ -15,7 +17,7 @@ public interface ActionPointsService {
      * {@link org.aventyrs.core.modifier.ModifierType#ACTION_POINTS} bonus found on
      * attributeAbilities, skillCompetencyAbilities, or the unlocked
      * {@link org.aventyrs.core.skill.SkillExcellency} tiers of every trained Perícia (e.g.
-     * {@link org.aventyrs.core.skill.AtletismoExcellency#LENDA}), plus the character's
+     * {@link org.aventyrs.core.skill.atletismo.AtletismoExcellency#LENDA}), plus the character's
      * {@link Character#getTemporaryActionPointsBonus()}, adjusted by the character's
      * {@link ActionProfile} for that Turn. turnNumber is 0-based (0 is the character's first
      * Turn/Round). Never negative.

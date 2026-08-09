@@ -2,6 +2,7 @@ package org.aventyrs.core.skill;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.aventyrs.core.skill.artes.ArtesExcellency;
 
 import java.util.Arrays;
 import java.util.List;

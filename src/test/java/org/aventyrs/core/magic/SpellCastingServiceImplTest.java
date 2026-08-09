@@ -6,7 +6,8 @@ import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.Interaction;
 import org.aventyrs.core.sheet.InteractionResult;
 import org.aventyrs.core.sheet.Player;
-import org.aventyrs.core.skill.DominioDoManaInteraction;
+import org.aventyrs.core.skill.dominiodomana.DominioDoManaInteraction;
+import org.aventyrs.core.skill.dominiodomana.DominioDoManaInteraction;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

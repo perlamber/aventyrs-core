@@ -3,6 +3,9 @@ package org.aventyrs.core.skill;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.util.Optional;
+import java.util.function.ToIntFunction;
+
 @Getter
 @AllArgsConstructor
 public enum DifficultyLevel {
@@ -31,5 +34,40 @@ public enum DifficultyLevel {
 
     public DifficultyLevel harder(int steps) {
         return shift(steps);
+    }
+
+    /**
+     * The highest tier a roll totaling total reaches, judged against {@link #getBaseValue()}
+     * — or empty if total falls short of even {@link #VERY_EASY}. Deliberately doesn't
+     * consider {@link #getExpertValue()} (the easier threshold a matching Especialização
+     * grants) — see {@link #reachedByAsExpert(int)} for the roll that's requesting a held
+     * {@code SkillSpecialization} (resolved by {@code AbstractSkillInteraction} via {@code
+     * SkillRoll#getRequestedAbility()}).
+     */
+    public static Optional<DifficultyLevel> reachedBy(final int total) {
+        return reachedBy(total, DifficultyLevel::getBaseValue);
+    }
+
+    /**
+     * Same as {@link #reachedBy(int)}, but judged against {@link #getExpertValue()} instead of
+     * {@link #getBaseValue()} — the easier threshold a matching, held Especialização grants.
+     * {@code org.aventyrs.core.skill.AbstractSkillInteraction} calls this instead of {@link
+     * #reachedBy(int)} once it has confirmed the character actually holds the {@code
+     * SkillSpecialization} named by {@code SkillRoll#getRequestedAbility()} — this method
+     * itself doesn't re-check that; it's purely the threshold-lookup half.
+     */
+    public static Optional<DifficultyLevel> reachedByAsExpert(final int total) {
+        return reachedBy(total, DifficultyLevel::getExpertValue);
+    }
+
+    private static Optional<DifficultyLevel> reachedBy(final int total, final ToIntFunction<DifficultyLevel> threshold) {
+        DifficultyLevel reached = null;
+        for (DifficultyLevel level : values()) {
+            if (total < threshold.applyAsInt(level)) {
+                break;
+            }
+            reached = level;
+        }
+        return Optional.ofNullable(reached);
     }
 }

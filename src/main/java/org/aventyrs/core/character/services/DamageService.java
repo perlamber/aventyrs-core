@@ -2,6 +2,7 @@ package org.aventyrs.core.character.services;
 
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.sheet.CharacterSheet;
+import org.aventyrs.core.skill.SkillExcellency;
 
 /**
  * Computes and applies damage mitigation. Two independent flat reductions exist — RD
@@ -32,7 +33,7 @@ public interface DamageService {
      * ignoreDamageReduction}) and RA are subtracted first and floored at 0; then, if
      * {@code halfDamage}, what remains is halved (rounded down). Never negative.
      */
-    int calculateFinalDamage(Character character, int rawDamage, boolean ignoreDamageReduction, boolean halfDamage);
+    int calculateFinalDamage(Character character, int rawDamage, boolean ignoreDamageReduction);
 
     /**
      * Computes the final damage (see {@link #calculateFinalDamage}) and applies it to the
@@ -40,5 +41,5 @@ public interface DamageService {
      * {@link CharacterSheet#applyDamage}.
      * @return int total damage accumulated on the target's Hit Points so far
      */
-    int applyDamage(Character character, CharacterSheet characterSheet, int rawDamage, boolean ignoreDamageReduction, boolean halfDamage);
+    int applyDamage(Character character, CharacterSheet characterSheet, int rawDamage, boolean ignoreDamageReduction);
 }

@@ -6,7 +6,7 @@ import org.aventyrs.core.character.CharacterAttributes;
 import org.aventyrs.core.character.CharacterEgos;
 import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.character.EgoValue;
-import org.aventyrs.core.character.Race;
+import org.aventyrs.core.race.Race;
 import org.aventyrs.core.sheet.IllegalOperationException;
 
 import java.util.Map;
@@ -29,7 +29,7 @@ public class CharacterCreationServiceImpl implements CharacterCreationService {
         for (AttributeDomain domain : AttributeDomain.values()) {
             int base = 1 + basePointAllocation.getOrDefault(domain, 0);
             int racialBonus = fixedBonuses.getOrDefault(domain, 0) + chosenRacialBonusAllocation.getOrDefault(domain, 0);
-            assignAttribute(builder, domain, AttributeValue.builder().base(base).racialBonus(racialBonus).build());
+            assignAttribute(builder, domain, AttributeValue.builder().domain(domain).base(base).racialBonus(racialBonus).build());
         }
         return builder.build();
     }

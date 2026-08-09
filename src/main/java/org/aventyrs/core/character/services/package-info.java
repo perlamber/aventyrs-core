@@ -1,6 +1,6 @@
 /**
  * Character-level services: creation, and the derived-stat calculators
- * (Hit/Magic/Determination Points, Reações, etc.) built on top of a finished
+ * (Hit/Magic/Determination Points, Reações, Iniciativa, etc.) built on top of a finished
  * {@link org.aventyrs.core.character.Character}.
  *
  * <h2>Creating a Character</h2>
@@ -11,8 +11,8 @@
  * builder. As of this writing, the steps are:
  *
  * <ol>
- *   <li><b>Pick a {@link org.aventyrs.core.character.Race}</b> (e.g.
- *       {@link org.aventyrs.core.character.Human}) — it drives step 2's racial bonuses and
+ *   <li><b>Pick a {@link org.aventyrs.core.race.Race}</b> (e.g.
+ *       {@link org.aventyrs.core.race.Human}) — it drives step 2's racial bonuses and
  *       the XP costs {@code Race} exposes for later advancement.</li>
  *   <li><b>Allocate Attributes</b> — {@link org.aventyrs.core.character.services.CharacterCreationService#allocateAttributes}
  *       spends the {@value org.aventyrs.core.character.services.CharacterCreationService#STARTING_ATTRIBUTE_POINTS}
@@ -36,8 +36,11 @@
  *       passing the results of steps 1-5. Everything else (starting {@code skills},
  *       {@code attributeAbilities}, {@code skillCompetencyAbilities}, {@code abilityChoices},
  *       {@code actionPoints}, {@code temporaryActionPointsBonus}, {@code sizeCategory},
- *       {@code status}, {@code reactions}, {@code freeActions}) has a sensible
- *       {@code @Builder.Default} and rarely needs overriding at creation.</li>
+ *       {@code status}, {@code reactions}, {@code freeActions}, {@code tendencia}) has a
+ *       sensible {@code @Builder.Default} and rarely needs overriding at creation. {@code
+ *       sexo} ({@link org.aventyrs.core.character.Character.Sexo}) is the one exception with
+ *       no default at all — {@code null} unless set, since no eligibility/validation logic
+ *       for it exists here (unlike, say, step 4's Autocontrole).</li>
  * </ol>
  *
  * <pre>{@code

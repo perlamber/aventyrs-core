@@ -9,8 +9,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -139,5 +143,151 @@ class SceneTest {
         assertEquals(lateArrival, scene.next());
         assertEquals(1, scene.getCurrentRound());
         assertEquals(List.of(lateArrival, a, b), scene.getParticipantsInInitiativeOrder());
+    }
+
+    @Test
+    void participantsAddedWithoutAnExplicitGroupHaveNoAllies() {
+        Scene scene = new Scene();
+        CharacterSheet a = newSheet();
+        CharacterSheet b = newSheet();
+        scene.addParticipant(a, 10);
+        scene.addParticipant(b, 5);
+
+        assertTrue(scene.getAllies(a).isEmpty());
+        assertTrue(scene.getAllies(b).isEmpty());
+    }
+
+    @Test
+    void participantsSharingAGroupAreEachOthersAllies() {
+        Scene scene = new Scene();
+        UUID party = UUID.randomUUID();
+        CharacterSheet a = newSheet();
+        CharacterSheet b = newSheet();
+        CharacterSheet c = newSheet();
+        scene.addParticipant(a, 10, party);
+        scene.addParticipant(b, 5, party);
+        scene.addParticipant(c, 8, party);
+
+        // getAllies makes no ordering guarantee, only membership.
+        assertEquals(Set.of(b, c), Set.copyOf(scene.getAllies(a)));
+    }
+
+    @Test
+    void alliesExcludesTheActorItself() {
+        Scene scene = new Scene();
+        UUID party = UUID.randomUUID();
+        CharacterSheet a = newSheet();
+        scene.addParticipant(a, 10, party);
+
+        assertTrue(scene.getAllies(a).isEmpty());
+    }
+
+    @Test
+    void participantsInDifferentGroupsAreNotAllies() {
+        Scene scene = new Scene();
+        UUID heroes = UUID.randomUUID();
+        UUID villains = UUID.randomUUID();
+        CharacterSheet hero = newSheet();
+        CharacterSheet villain = newSheet();
+        scene.addParticipant(hero, 10, heroes);
+        scene.addParticipant(villain, 5, villains);
+
+        assertTrue(scene.getAllies(hero).isEmpty());
+        assertTrue(scene.getAllies(villain).isEmpty());
+    }
+
+    @Test
+    void alliesIncludesAPartyMemberAddedMidRound() {
+        Scene scene = new Scene();
+        UUID party = UUID.randomUUID();
+        CharacterSheet a = newSheet();
+        CharacterSheet lateArrival = newSheet();
+        scene.addParticipant(a, 10, party);
+
+        scene.next();
+        scene.addParticipant(lateArrival, 20, party);
+
+        assertEquals(List.of(lateArrival), scene.getAllies(a));
+    }
+
+    @Test
+    void getAlliesThrowsForACharacterSheetNeverAddedToTheScene() {
+        Scene scene = new Scene();
+        CharacterSheet stranger = newSheet();
+
+        assertThrows(IllegalOperationException.class, () -> scene.getAllies(stranger));
+    }
+
+    @Test
+    void getEnemiesReturnsParticipantsInADifferentGroup() {
+        Scene scene = new Scene();
+        UUID heroes = UUID.randomUUID();
+        UUID villains = UUID.randomUUID();
+        CharacterSheet hero = newSheet();
+        CharacterSheet villainOne = newSheet();
+        CharacterSheet villainTwo = newSheet();
+        scene.addParticipant(hero, 10, heroes);
+        scene.addParticipant(villainOne, 5, villains);
+        scene.addParticipant(villainTwo, 8, villains);
+
+        assertEquals(Set.of(villainOne, villainTwo), Set.copyOf(scene.getEnemies(hero)));
+    }
+
+    @Test
+    void getEnemiesExcludesAllies() {
+        Scene scene = new Scene();
+        UUID heroes = UUID.randomUUID();
+        CharacterSheet a = newSheet();
+        CharacterSheet b = newSheet();
+        scene.addParticipant(a, 10, heroes);
+        scene.addParticipant(b, 5, heroes);
+
+        assertTrue(scene.getEnemies(a).isEmpty());
+    }
+
+    @Test
+    void participantsAddedWithoutAnExplicitGroupAreEnemiesOfEveryoneElse() {
+        Scene scene = new Scene();
+        CharacterSheet a = newSheet();
+        CharacterSheet b = newSheet();
+        scene.addParticipant(a, 10);
+        scene.addParticipant(b, 5);
+
+        assertEquals(List.of(b), scene.getEnemies(a));
+        assertEquals(List.of(a), scene.getEnemies(b));
+    }
+
+    @Test
+    void getEnemiesThrowsForACharacterSheetNeverAddedToTheScene() {
+        Scene scene = new Scene();
+        CharacterSheet stranger = newSheet();
+
+        assertThrows(IllegalOperationException.class, () -> scene.getEnemies(stranger));
+    }
+
+    @Test
+    void terrainTypeIsUnsetByDefault() {
+        Scene scene = new Scene();
+        assertNull(scene.getTerrainType());
+    }
+
+    @Test
+    void terrainTypeCanBeSetAndRead() {
+        Scene scene = new Scene();
+        scene.setTerrainType(TerrainType.CAVE);
+
+        assertEquals(TerrainType.CAVE, scene.getTerrainType());
+    }
+
+    @Test
+    void buildContextCarriesTheScenesTerrainTypeIntoTheSnapshot() {
+        Scene scene = new Scene();
+        scene.setTerrainType(TerrainType.MOUNTAIN);
+        CharacterSheet actor = newSheet();
+        scene.addParticipant(actor, 10);
+
+        SceneContext context = scene.buildContext(actor, Map.of());
+
+        assertEquals(TerrainType.MOUNTAIN, context.getTerrainType());
     }
 }

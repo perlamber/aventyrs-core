@@ -4,7 +4,7 @@ import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.AttributeValue;
 import org.aventyrs.core.character.CharacterAttributes;
 import org.aventyrs.core.character.CharacterSkill;
-import org.aventyrs.core.character.Race;
+import org.aventyrs.core.race.Race;
 import org.aventyrs.core.util.RollErrorException;
 
 import java.lang.reflect.InvocationTargetException;
@@ -18,10 +18,15 @@ public class CharacterSkillServiceImpl implements CharacterSkillService{
      */
     public int getValueForRoll(final CharacterSkill characterSkill, final CharacterAttributes characterAttributes, final Race race) throws RollErrorException
     {
+        return getValueForRoll(characterSkill, characterAttributes, race, null);
+    }
+
+    public int getValueForRoll(final CharacterSkill characterSkill, final CharacterAttributes characterAttributes, final Race race, final AttributeDomain substituteAttributeDomain) throws RollErrorException
+    {
         int totalValue = characterSkill.getGraduation().getGraduationValue();
         try {
-            final AttributeDomain skillDomain = characterSkill.getSkill().getAttributeDomain();
-            AttributeValue attributeValue = (AttributeValue) skillDomain.getKeyAttributeMethod().invoke(characterAttributes);
+            final AttributeDomain domain = substituteAttributeDomain != null ? substituteAttributeDomain : characterSkill.getSkill().getAttributeDomain();
+            AttributeValue attributeValue = (AttributeValue) domain.getKeyAttributeMethod().invoke(characterAttributes);
             totalValue += attributeValue.getTotal();
         }catch (RuntimeException | IllegalAccessException | InvocationTargetException e)
         {

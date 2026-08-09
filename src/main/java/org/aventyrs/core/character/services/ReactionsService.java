@@ -1,6 +1,7 @@
 package org.aventyrs.core.character.services;
 
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.skill.SkillExcellency;
 
 public interface ReactionsService {
     /** Every character starts with 1 Reação before any Talento/Habilidade modifier applies. */

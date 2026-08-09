@@ -3,10 +3,14 @@ package org.aventyrs.core.sheet;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterStatus;
 import org.aventyrs.core.character.EgoDomain;
+import org.aventyrs.core.modifier.ModifierType;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -17,6 +21,20 @@ import static org.aventyrs.core.util.TranslatableMessages.NOT_ENOUGH_EXPERIENCE;
 @RequiredArgsConstructor(staticName="of")
 @Getter
 public class CharacterSheet implements Interactable<CharacterSheet> {
+    /**
+     * A unique, stable identifier for this specific CharacterSheet instance — distinct from
+     * {@link Character#getId()}, since the same Character could in principle back more than
+     * one CharacterSheet. {@link org.aventyrs.core.scene.Scene} keys its participants by this,
+     * not by object-reference equality. Auto-generated for a newly created CharacterSheet via
+     * {@link #of(Character, Player)}; pass an already-known one via
+     * {@link #of(Character, Player, UUID)} instead when reconstructing a CharacterSheet from
+     * persisted state (e.g. a DTO loaded from storage), where the identity already exists and
+     * must be preserved rather than re-minted. Not {@code final} for exactly that reason, but
+     * there's still no public setter — the only way to set it is at construction, through one
+     * of those two factories.
+     */
+    private UUID id = UUID.randomUUID();
+
     @NonNull
     private Character character;
     @NonNull
@@ -44,12 +62,26 @@ public class CharacterSheet implements Interactable<CharacterSheet> {
 
     private int famaNegativa = 0;
 
+    @Getter(AccessLevel.NONE)
+    private final List<TemporaryBonus> temporaryBonuses = new ArrayList<>();
+
     private static Map<EgoDomain, TemporaryPointPool> newTemporaryEgoPointsPools() {
         Map<EgoDomain, TemporaryPointPool> pools = new EnumMap<>(EgoDomain.class);
         for (EgoDomain domain : EgoDomain.values()) {
             pools.put(domain, new TemporaryPointPool());
         }
         return pools;
+    }
+
+    /**
+     * Same as {@link #of(Character, Player)}, but with a known id instead of a freshly
+     * minted one — for reconstructing a CharacterSheet from persisted state (e.g. a DTO)
+     * whose identity already exists.
+     */
+    public static CharacterSheet of(final Character character, final Player player, @NonNull final UUID id) {
+        CharacterSheet sheet = of(character, player);
+        sheet.id = id;
+        return sheet;
     }
 
     /**
@@ -60,10 +92,10 @@ public class CharacterSheet implements Interactable<CharacterSheet> {
      */
     public BigDecimal useExperience(BigDecimal expToUse) throws IllegalOperationException
     {
-        BigDecimal remainingExperience = unUsedExperience = unUsedExperience.subtract(expToUse);
+        BigDecimal remainingExperience = unUsedExperience.subtract(expToUse);
         if(remainingExperience.compareTo(BigDecimal.ZERO) < 0)
             throw new IllegalOperationException(NOT_ENOUGH_EXPERIENCE);
-        return remainingExperience;
+        return unUsedExperience = remainingExperience;
     }
 
     public BigDecimal accumulateExperience(BigDecimal experience)
@@ -218,5 +250,47 @@ public class CharacterSheet implements Interactable<CharacterSheet> {
     public int increaseFamaNegativa(int amount)
     {
         return famaNegativa += amount;
+    }
+
+    /**
+     * Grants a {@link TemporaryBonus} of type — e.g. {@code ArtesCompetencyAbility
+     * #DOM_BARDICO} motivating an ally, granting them (not the caster) a
+     * {@link ModifierType#SKILL_ROLL_BONUS} for a few Rodadas. The granting Character isn't
+     * tracked here (nothing about this mechanism needs to know who granted it); locate
+     * targets via {@link org.aventyrs.core.scene.Scene#getAllies}.
+     * @return int the total of type's active temporary bonuses after granting this one
+     */
+    public int grantTemporaryBonus(final ModifierType type, final int value, final int rounds)
+    {
+        temporaryBonuses.add(new TemporaryBonus(type, value, rounds));
+        return getTemporaryBonus(type);
+    }
+
+    /**
+     * The sum of every currently-active (non-expired) {@link TemporaryBonus} of type this
+     * CharacterSheet is holding — e.g. what a {@code <Skill>Interaction} should add into its
+     * own {@link ModifierType#SKILL_ROLL_BONUS} total alongside the Character's permanent
+     * abilities/excellencies.
+     */
+    public int getTemporaryBonus(final ModifierType type)
+    {
+        return temporaryBonuses.stream()
+                .filter(bonus -> !bonus.isExpired())
+                .filter(bonus -> bonus.getType() == type)
+                .mapToInt(TemporaryBonus::getValue)
+                .sum();
+    }
+
+    /**
+     * Counts every held {@link TemporaryBonus} down by one Rodada and discards any that
+     * expire as a result. Not called automatically by anything yet — {@link
+     * org.aventyrs.core.scene.Scene} doesn't have a "turn shifter" that advances every
+     * participant's CharacterSheet on a Round completing; once it does, this is the method
+     * it's expected to call on each one.
+     */
+    public void tickTemporaryBonuses()
+    {
+        temporaryBonuses.forEach(TemporaryBonus::tick);
+        temporaryBonuses.removeIf(TemporaryBonus::isExpired);
     }
 }

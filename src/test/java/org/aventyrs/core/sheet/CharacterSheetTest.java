@@ -3,10 +3,17 @@ package org.aventyrs.core.sheet;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.character.fixture.CharacterFixture;
+import org.aventyrs.core.modifier.ModifierType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.math.BigDecimal;
+import java.util.UUID;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class CharacterSheetTest {
 
@@ -141,5 +148,117 @@ class CharacterSheetTest {
         CharacterSheet sheet = newSheet();
         sheet.increaseFamaNegativa(1);
         assertEquals(4, sheet.increaseFamaNegativa(3));
+    }
+
+    @Test
+    void useExperienceSubtractsFromUnusedExperience() throws IllegalOperationException {
+        CharacterSheet sheet = newSheet();
+        sheet.accumulateExperience(BigDecimal.TEN);
+
+        assertEquals(BigDecimal.valueOf(4), sheet.useExperience(BigDecimal.valueOf(6)));
+        assertEquals(BigDecimal.valueOf(4), sheet.getUnUsedExperience());
+    }
+
+    @Test
+    void useExperienceLeavesUnusedExperienceUntouchedWhenRejected() {
+        CharacterSheet sheet = newSheet();
+        sheet.accumulateExperience(BigDecimal.valueOf(3));
+
+        assertThrows(IllegalOperationException.class, () -> sheet.useExperience(BigDecimal.valueOf(6)));
+        assertEquals(BigDecimal.valueOf(3), sheet.getUnUsedExperience());
+    }
+
+    @Test
+    void accumulateExperienceIncreasesBothTotalAndUnusedExperience() {
+        CharacterSheet sheet = newSheet();
+        sheet.accumulateExperience(BigDecimal.valueOf(5));
+
+        assertEquals(BigDecimal.valueOf(7), sheet.accumulateExperience(BigDecimal.valueOf(2)));
+        assertEquals(BigDecimal.valueOf(7), sheet.getTotalExperience());
+        assertEquals(BigDecimal.valueOf(7), sheet.getUnUsedExperience());
+    }
+
+    @Test
+    void eachCharacterSheetGetsItsOwnDistinctId() {
+        CharacterSheet first = newSheet();
+        CharacterSheet second = newSheet();
+
+        assertNotNull(first.getId());
+        assertNotNull(second.getId());
+        assertNotEquals(first.getId(), second.getId());
+    }
+
+    @Test
+    void ofWithAnExplicitIdReconstructsTheGivenIdentityInsteadOfMintingANewOne() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK).build();
+        UUID persistedId = UUID.randomUUID();
+
+        CharacterSheet sheet = CharacterSheet.of(character, new Player(), persistedId);
+
+        assertEquals(persistedId, sheet.getId());
+    }
+
+    @Test
+    void ofRejectsANullExplicitId() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK).build();
+
+        assertThrows(NullPointerException.class, () -> CharacterSheet.of(character, new Player(), null));
+    }
+
+    @Test
+    void newlyCreatedCharacterSheetHasNoTemporaryBonuses() {
+        CharacterSheet sheet = newSheet();
+
+        assertEquals(0, sheet.getTemporaryBonus(ModifierType.SKILL_ROLL_BONUS));
+    }
+
+    @Test
+    void grantTemporaryBonusReturnsTheNewTotalForThatType() {
+        CharacterSheet sheet = newSheet();
+        sheet.grantTemporaryBonus(ModifierType.SKILL_ROLL_BONUS, 2, 1);
+
+        assertEquals(5, sheet.grantTemporaryBonus(ModifierType.SKILL_ROLL_BONUS, 3, 1));
+    }
+
+    @Test
+    void getTemporaryBonusOnlySumsMatchingModifierType() {
+        CharacterSheet sheet = newSheet();
+        sheet.grantTemporaryBonus(ModifierType.SKILL_ROLL_BONUS, 3, 1);
+        sheet.grantTemporaryBonus(ModifierType.DAMAGE_REDUCTION, 5, 1);
+
+        assertEquals(3, sheet.getTemporaryBonus(ModifierType.SKILL_ROLL_BONUS));
+        assertEquals(5, sheet.getTemporaryBonus(ModifierType.DAMAGE_REDUCTION));
+    }
+
+    @Test
+    void tickTemporaryBonusesCountsDownWithoutExpiringBeforeItsLastRound() {
+        CharacterSheet sheet = newSheet();
+        sheet.grantTemporaryBonus(ModifierType.SKILL_ROLL_BONUS, 3, 2);
+
+        sheet.tickTemporaryBonuses();
+
+        assertEquals(3, sheet.getTemporaryBonus(ModifierType.SKILL_ROLL_BONUS));
+    }
+
+    @Test
+    void tickTemporaryBonusesRemovesABonusOnceItsRoundsRunOut() {
+        CharacterSheet sheet = newSheet();
+        sheet.grantTemporaryBonus(ModifierType.SKILL_ROLL_BONUS, 3, 2);
+
+        sheet.tickTemporaryBonuses();
+        sheet.tickTemporaryBonuses();
+
+        assertEquals(0, sheet.getTemporaryBonus(ModifierType.SKILL_ROLL_BONUS));
+    }
+
+    @Test
+    void tickTemporaryBonusesOnlyExpiresBonusesWhoseRoundsAreUp() {
+        CharacterSheet sheet = newSheet();
+        sheet.grantTemporaryBonus(ModifierType.SKILL_ROLL_BONUS, 1, 1);
+        sheet.grantTemporaryBonus(ModifierType.SKILL_ROLL_BONUS, 2, 3);
+
+        sheet.tickTemporaryBonuses();
+
+        assertEquals(2, sheet.getTemporaryBonus(ModifierType.SKILL_ROLL_BONUS));
     }
 }
