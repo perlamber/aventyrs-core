@@ -6,11 +6,13 @@ import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterAttributes;
 import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.character.CharacterStatus;
+import org.aventyrs.core.character.SizeCategory;
 import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.character.fixture.CharacterSkillFixture;
 import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.InteractionResult;
 import org.aventyrs.core.sheet.Player;
+import org.aventyrs.core.skill.Skill;
 import org.aventyrs.core.skill.SkillType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -116,5 +118,21 @@ class EsquivaEApararInteractionTest {
         InteractionResult result = esquivaEApararInteraction.applyTo(sheet);
 
         assertEquals(3, result.getSkillRollBonus());
+    }
+
+    @Test
+    void applyToAppliesTheDefenseSizeCategoryModifier() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .attributes(CharacterAttributes.builder()
+                        .dexterity(AttributeValue.builder().domain(AttributeDomain.DEXTERITY).base(2).build())
+                        .build())
+                .sizeCategory(SizeCategory.MINUS_TWO)
+                .build();
+        CharacterSheet sheet = CharacterSheet.of(character, new Player());
+
+        InteractionResult result = esquivaEApararInteraction.applyTo(sheet);
+
+        // 2 dexterity + untrained penalty + SizeCategory.MINUS_TWO's defense modifier (+1).
+        assertEquals(2 + Skill.UNTRAINED_PENALTY + SizeCategory.MINUS_TWO.getDefenseModifier(), result.getSkillRollBonus());
     }
 }

@@ -86,8 +86,7 @@ public enum SizeCategory {
      * Effective range in distance units for a weapon with the given base range.
      * Melee attacks never have their range reduced below {@value #MINIMUM_MELEE_RANGE}UD.
      */
-    public int getRange(int baseRange, boolean melee) {
-        int range = baseRange + getRangeModifier();
-        return melee ? Math.max(MINIMUM_MELEE_RANGE, range) : range;
+    public int getRange() {
+        return Math.max(MINIMUM_MELEE_RANGE, MINIMUM_MELEE_RANGE+getRangeModifier());
     }
 }

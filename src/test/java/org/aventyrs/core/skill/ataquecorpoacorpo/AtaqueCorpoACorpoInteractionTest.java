@@ -6,11 +6,13 @@ import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterAttributes;
 import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.character.CharacterStatus;
+import org.aventyrs.core.character.SizeCategory;
 import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.character.fixture.CharacterSkillFixture;
 import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.InteractionResult;
 import org.aventyrs.core.sheet.Player;
+import org.aventyrs.core.skill.Skill;
 import org.aventyrs.core.skill.SkillType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -117,5 +119,21 @@ class AtaqueCorpoACorpoInteractionTest {
         InteractionResult result = ataqueCorpoACorpoInteraction.applyTo(sheet);
 
         assertEquals(3, result.getSkillRollBonus());
+    }
+
+    @Test
+    void applyToAppliesTheAttackAndDamageSizeCategoryModifier() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .attributes(CharacterAttributes.builder()
+                        .strength(AttributeValue.builder().domain(AttributeDomain.STRENGTH).base(2).build())
+                        .build())
+                .sizeCategory(SizeCategory.PLUS_TWO)
+                .build();
+        CharacterSheet sheet = CharacterSheet.of(character, new Player());
+
+        InteractionResult result = ataqueCorpoACorpoInteraction.applyTo(sheet);
+
+        // 2 strength + untrained penalty + SizeCategory.PLUS_TWO's attack/damage modifier (+1).
+        assertEquals(2 + Skill.UNTRAINED_PENALTY + SizeCategory.PLUS_TWO.getAttackAndDamageModifier(), result.getSkillRollBonus());
     }
 }

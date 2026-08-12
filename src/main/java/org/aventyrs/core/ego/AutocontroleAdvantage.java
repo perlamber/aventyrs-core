@@ -24,6 +24,10 @@ public enum AutocontroleAdvantage implements EgoAdvantage {
             "recupera +1d6PV, PM e PD; se o ponto for permanente, o valor recuperado é " +
             "dobrado."),
 
+
+    //TODO Implementar Correntes de efeitos e Efeitos Criticos. Interaction de ambos tambem, sendo
+    // implementado em corrente Skill -> Dano -> Efeito Critico -> Corrente de Efeitos
+
     // TODO: raises the Corrente de Efeitos threshold from 5 to 7 over your Defesas — no
     // Corrente de Efeitos/Defesas system exists yet.
     RESOLUTO("Correntes de Efeitos, para te afetar, precisam superar suas Defesas em 7, ao " +

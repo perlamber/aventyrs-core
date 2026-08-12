@@ -32,7 +32,7 @@ class SizeCategoryTest {
                                    int stealthAndAttentionModifier, int movementPerActionPoint) {
         assertEquals(minHeight, sizeCategory.getMinHeight());
         assertEquals(maxHeight, sizeCategory.getMaxHeight());
-        assertEquals(meleeRange, sizeCategory.getRange(1, true));
+        assertEquals(meleeRange, sizeCategory.getRange());
         assertEquals(attackAndDamageModifier, sizeCategory.getAttackAndDamageModifier());
         assertEquals(defenseModifier, sizeCategory.getDefenseModifier());
         assertEquals(stealthAndAttentionModifier, sizeCategory.getStealthAndAttentionModifier());
@@ -42,11 +42,6 @@ class SizeCategoryTest {
     @Test
     void humanBaselineHasAverageHeightOfOneSeventyFive() {
         assertEquals(1.75, SizeCategory.ZERO.getAverageHeight());
-    }
-
-    @Test
-    void rangedWeaponRangeIsNotClampedToMinimumOneUD() {
-        assertEquals(-1, SizeCategory.MINUS_FOUR.getRange(1, false));
     }
 
     @Test

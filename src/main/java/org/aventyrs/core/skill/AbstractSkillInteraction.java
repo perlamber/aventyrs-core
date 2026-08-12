@@ -3,6 +3,9 @@ package org.aventyrs.core.skill;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterSkill;
+import org.aventyrs.core.character.SizeCategory;
+import org.aventyrs.core.character.services.CharacterSizeService;
+import org.aventyrs.core.character.services.CharacterSizeServiceImpl;
 import org.aventyrs.core.character.services.CharacterSkillService;
 import org.aventyrs.core.character.services.CharacterSkillServiceImpl;
 import org.aventyrs.core.modifier.ModifierResolver;
@@ -46,7 +49,13 @@ import static org.aventyrs.core.util.TranslatableMessages.REQUIRED_SKILL_TRAIT_N
  * section) — plus a separate source summed via {@link #sumConditionalRollBonuses}: {@link
  * SkillCompetencyAbility#resolveConditionalRollBonus}, for a bonus conditioned on {@code
  * sceneContext}/the roll's own requested trait rather than reflection-discoverable via
- * {@code @Modifier} (e.g. {@code AnoesRacialAbility#FILHOS_DA_MONTANHA}). Computes {@code
+ * {@code @Modifier} (e.g. {@code AnoesRacialAbility#FILHOS_DA_MONTANHA}) — plus, via {@link
+ * #sizeCategoryRollBonus}, whichever {@link SizeCategory} modifier this Perícia is affected
+ * by (resolved through {@link CharacterSizeService#getEffectiveSizeCategory}, so a size-shifting
+ * ability like Sangue de Gigante is reflected here too): Ataque à Distância/Ataque Corpo-a-Corpo
+ * use {@link SizeCategory#getAttackAndDamageModifier()}, Atenção/Furtividade use {@link
+ * SizeCategory#getStealthAndAttentionModifier()}, and Esquiva e Aparar uses {@link
+ * SizeCategory#getDefenseModifier()} — every other Perícia gets 0. Computes {@code
  * difficultyReduction} from unlocked {@code SkillExcellency} tiers
  * plus every entry of that same combined acquired-plus-racial list's own {@link
  * SkillCompetencyAbility#getDifficultyReduction()}. {@link SkillCompetencyAbility
@@ -86,6 +95,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CharacterS
     private final SkillType skillType;
     private final CharacterSkillService characterSkillService;
     private final ModifierResolver modifierResolver;
+    private final CharacterSizeService characterSizeService;
 
     protected AbstractSkillInteraction(final SkillType skillType) {
         this(skillType, new CharacterSkillServiceImpl(), new ModifierResolverImpl());
@@ -95,6 +105,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CharacterS
         this.skillType = skillType;
         this.characterSkillService = characterSkillService;
         this.modifierResolver = modifierResolver;
+        this.characterSizeService = new CharacterSizeServiceImpl(modifierResolver);
     }
 
     @Override
@@ -152,6 +163,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CharacterS
         bonus += target.getTemporaryBonus(ModifierType.SKILL_ROLL_BONUS);
         bonus += target.getTemporaryBonus(skillType.getRollBonusType());
         bonus += sumConditionalRollBonuses(skillCompetencyAbilities, sceneContext, skillRoll);
+        bonus += sizeCategoryRollBonus(characterSizeService.getEffectiveSizeCategory(character));
 
         int difficultyReduction = SkillExcellency.totalDifficultyReduction(skillType.getExcellencyClass(), graduationValue);
         difficultyReduction += skillCompetencyAbilities.stream()
@@ -248,6 +260,28 @@ public abstract class AbstractSkillInteraction implements Interaction<CharacterS
                 .flatMap(Optional::stream)
                 .mapToInt(Integer::intValue)
                 .sum();
+    }
+
+    /**
+     * The size-table modifier (see {@link SizeCategory}) this Perícia's roll is affected by,
+     * resolved against the character's {@link CharacterSizeService#getEffectiveSizeCategory}
+     * (its own {@code sizeCategory} plus any shifting ability, e.g. Sangue de Gigante) rather
+     * than the raw {@code Character#getSizeCategory()} — the two Perícias de Ataque use {@link
+     * SizeCategory#getAttackAndDamageModifier()}, Atenção and Furtividade use {@link
+     * SizeCategory#getStealthAndAttentionModifier()}, and Esquiva e Aparar uses {@link
+     * SizeCategory#getDefenseModifier()}; every other Perícia isn't affected by size at all.
+     */
+    private int sizeCategoryRollBonus(final SizeCategory sizeCategory) {
+        if (skillType.isAttackSkill()) {
+            return sizeCategory.getAttackAndDamageModifier();
+        }
+        if (skillType == SkillType.ATTENTION || skillType == SkillType.FURTIVIDADE) {
+            return sizeCategory.getStealthAndAttentionModifier();
+        }
+        if (skillType == SkillType.ESQUIVA_E_APARAR) {
+            return sizeCategory.getDefenseModifier();
+        }
+        return 0;
     }
 
     /**
