@@ -189,6 +189,10 @@ pieces — don't stop at just the `Skill` class:
    all four pieces, and a matching `<SKILL>_ROLL_BONUS` constant to `ModifierType`** —
    `AbstractSkillInteraction` has no other way to know which
    `Skill`/`SkillExcellency`/`ModifierType`/`<Skill>Interaction` a given `SkillType` maps to.
+   Also add a matching constant to `org.aventyrs.core.ability.PeritoTeoricoAbility` (see
+   "Acquisition-time ability choices" below) — it holds one `AttributeAbility` constant per
+   `SkillType` so `GnoseAbility.PERITO_TEORICO` can be chosen for the new skill too; there's no
+   default, so skipping it silently leaves the new skill impossible to pick.
 
    If a skill's Interaction genuinely needs to do something no other skill does, override
    `applyTo` in the subclass and call `super.applyTo(target)` first, then layer the addition
@@ -817,10 +821,10 @@ a newly-built mechanism resolves it completely.
 
 ## Acquisition-time ability choices — `org.aventyrs.core.ability.AcquiredChoice`
 
-Some abilities require the player to pick a value when they're acquired — a Perícia
-(`GnoseAbility.PERITO_TEORICO`), or, for a future ability, one of several fixed effects.
-There are **two** patterns for storing that choice, and which one applies depends on what
-consumes it:
+Some abilities require the player to pick a value when they're acquired — a Perícia, or, for
+a future ability, one of several fixed effects. There are **three** patterns for storing that
+choice, and which one applies depends on what consumes it and whether the choice space is
+open-ended or already fully known at compile time:
 
 - **When the choice feeds the ability's own `@Modifier` methods** (i.e. the ability's numeric
   effect differs per character depending on what they picked), don't use `AcquiredChoice` —
@@ -869,15 +873,35 @@ consumes it:
   roll, not just the chosen one.
 
 - **When the choice is consumed by some *other* mechanism** (not a modifier on the ability
-  itself — e.g. `PERITO_TEORICO`'s attribute substitution, which a future
-  `<Skill>Interaction` lookup would read), use `AcquiredChoice<C>`: it pairs the specific
-  ability instance with the value chosen (`C` is that value's type, e.g. `SkillType`), and
-  `Character.abilityChoices` holds them alongside (not instead of) the normal
-  `attributeAbilities`/`skillCompetencyAbilities` lists — the ability itself is still granted
-  the normal way; this is purely the extra "what did they pick" data. Look a choice back up
-  via `AbilityChoiceService.getChoiceFor(character, ability)`. This only solves *persisting*
-  the choice — `PERITO_TEORICO` still needs its substitution mechanism; don't confuse "the
-  choice can now be recorded" with "the ability now works."
+  itself) **and the choice space is genuinely open-ended** (not already enumerable from an
+  existing fixed set), use `AcquiredChoice<C>`: it pairs the specific ability instance with
+  the value chosen (`C` is that value's type, e.g. `SkillType`), and `Character.abilityChoices`
+  holds them alongside (not instead of) the normal `attributeAbilities`/`skillCompetencyAbilities`
+  lists — the ability itself is still granted the normal way; this is purely the extra "what
+  did they pick" data. Look a choice back up via `AbilityChoiceService.getChoiceFor(character,
+  ability)`. This only solves *persisting* the choice — the consuming mechanism (a
+  `<Skill>Interaction` lookup, say) is still separate work; don't confuse "the choice can now
+  be recorded" with "the ability now works." No ability in this codebase currently uses this
+  pattern for real (see below) — it was built ahead of a first consumer, same as
+  `ReactionsService`/`InitiativeService` once were.
+
+- **When the choice is consumed by some *other* mechanism and the choice space is small and
+  already fully known at compile time** (e.g. "pick a Perícia," and every `SkillType` already
+  exists), skip `AcquiredChoice` entirely and model the choice as **one enum constant per
+  legal option**, each already implementing the ability interface itself —
+  `GnoseAbility.PERITO_TEORICO`'s reference: `org.aventyrs.core.ability.PeritoTeoricoAbility`
+  has one `AttributeAbility` constant per `SkillType` (`PeritoTeoricoAbility.FURTIVIDADE`,
+  etc.); granting a character the matching constant records both "they have Perito Teórico"
+  and "which Perícia they chose" in a single object, with no separate persistence step and no
+  `AbilityChoiceService` lookup at the consuming end at all — see "Unconditional Perícia
+  base-Attribute substitution" below for how its own `resolveAttributeDomain` is consulted.
+  The catalog enum constant (`GnoseAbility.PERITO_TEORICO` itself) stays in place as the
+  rules-text entry, same "keep the constant, redirect via comment" convention as the
+  instance-based pattern above. The tradeoff versus `AcquiredChoice`: more code up front (one
+  constant per legal option, and a new one whenever the underlying set — here, `SkillType` —
+  grows), traded for full compile-time enumerability/type safety and zero runtime
+  choice-bookkeeping. Prefer this over `AcquiredChoice` whenever the choice is "pick one of a
+  small, already-fixed set" rather than a genuinely open-ended value.
 
 Don't build a validation service to check whether a choice is legal (e.g. that a chosen
 Perícia is actually trained) — same restraint as the unenforced "Requer N Graduações"
@@ -923,9 +947,22 @@ attack/delivery method) — it's now mechanically real, following `ACUIDADE` as 
   simplification already documented for scoped Vantagem bonuses below; document that gap in a
   TODO on the constant instead. `GnoseAbility.PERITO_TEORICO` is also a different shape
   entirely: which Attribute to substitute is fixed (Gnose), but *which Perícia* it applies to
-  is an acquisition-time choice (see the previous section's `AcquiredChoice`), not a fixed
-  enum-constant-to-enum-constant mapping like `ACUIDADE`'s — so it needs its own
-  `AbilityChoiceService`-driven mechanism, not this one.
+  is a per-character choice, not a fixed one enum-constant-to-enum-constant mapping like
+  `ACUIDADE`'s — but unlike a truly open-ended choice, every legal option is already known at
+  compile time (every `SkillType`), so it's wired via `org.aventyrs.core.ability
+  .PeritoTeoricoAbility` — one `AttributeAbility` constant *per* `SkillType`, rather than the
+  third pattern the previous section describes for an open-ended choice (`AcquiredChoice`).
+  Granting a character `PeritoTeoricoAbility.FURTIVIDADE` both records that they acquired
+  Perito Teórico *and* which Perícia they chose, in one object. Its own static
+  `resolveAttributeDomain(Collection<AttributeAbility>, SkillType, AttributeDomain)` mirrors
+  this section's own `SkillCompetencyAbility.resolveAttributeDomain` shape, and both
+  `AbstractSkillInteraction.applyTo` and `SkillGraduationServiceImpl.getMaxGraduation` consult
+  it first, feeding its result in as this section's own `resolveAttributeDomain`'s
+  `defaultDomain` parameter — so a `SkillCompetencyAbility` substitution still wins if one
+  somehow also targets the same Perícia, PERITO_TEORICO's Gnose applies otherwise, and the
+  Perícia's own natural Attribute applies if neither does. Both call sites needed no
+  constructor/DI changes for this — it's a pure function over `character.getAttributeAbilities()`,
+  already in hand at both.
 - Building this mechanism doesn't retroactively finish every ability that cites it — check
   each constant's own TODO. `ACUIDADE`, `ACROBATA`, `DISPARO_ARCANO`, and `MAGIA_SELVAGEM` are
   fully wired (enum override + `Interaction` filter + service overload) — see

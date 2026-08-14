@@ -1,5 +1,6 @@
 package org.aventyrs.core.skill;
 
+import org.aventyrs.core.ability.PeritoTeoricoAbility;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterSkill;
@@ -34,10 +35,15 @@ import static org.aventyrs.core.util.TranslatableMessages.REQUIRED_SKILL_TRAIT_N
  * targeted; that's now the *only* thing a subclass supplies, via its constructor.
  *
  * <p>Computes {@code skillRollBonus} from {@link CharacterSkillService#getValueForRoll} (using
- * whichever Attribute currently governs this Perícia — its own, or a substituted one, see
- * {@link SkillCompetencyAbility#resolveAttributeDomain}; this resolution is safe to run
- * unconditionally, since it's a no-op — falls back to the Perícia's own Attribute — for every
- * skillType with no substituting ability) plus four sources, each summed for *both* {@code
+ * whichever Attribute currently governs this Perícia — its own, a fixed-Perícia substitution
+ * (see {@link SkillCompetencyAbility#resolveAttributeDomain}), or the per-{@link SkillType}
+ * fixed-constant substitution granted by {@link org.aventyrs.core.ability.PeritoTeoricoAbility}
+ * (see {@link PeritoTeoricoAbility#resolveAttributeDomain}, consulted first and fed in as the
+ * fixed-Perícia resolution's own default, so a {@code SkillCompetencyAbility} substitution
+ * still wins if one somehow also targets the same Perícia); both resolutions are safe to run
+ * unconditionally, since each is a no-op — falls back to the Perícia's own Attribute — for
+ * every skillType with no substituting ability/constant held) plus four sources, each summed
+ * for *both* {@code
  * ModifierType#SKILL_ROLL_BONUS} (applies to every Perícia's roll) and {@code
  * skillType.getRollBonusType()} (applies only to this one) — see {@link
  * #sumSkillRollBonusModifiers}: {@code attributeAbilities}, {@code skillCompetencyAbilities}
@@ -152,8 +158,10 @@ public abstract class AbstractSkillInteraction implements Interaction<CharacterS
         int graduationValue = characterSkill.getGraduation().getGraduationValue();
         List<SkillCompetencyAbility> skillCompetencyAbilities = allSkillCompetencyAbilities(character);
 
+        AttributeDomain naturalDomain = characterSkill.getSkill().getAttributeDomain();
+        AttributeDomain peritoTeoricoDomain = PeritoTeoricoAbility.resolveAttributeDomain(character.getAttributeAbilities(), skillType, naturalDomain);
         AttributeDomain attributeDomain = SkillCompetencyAbility.resolveAttributeDomain(
-                skillCompetencyAbilities, skillType, characterSkill.getSkill().getAttributeDomain());
+                skillCompetencyAbilities, skillType, peritoTeoricoDomain);
 
         int bonus = characterSkillService.getValueForRoll(characterSkill, character.getAttributes(), character.getRace(), attributeDomain);
         bonus += sumSkillRollBonusModifiers(character.getAttributeAbilities());

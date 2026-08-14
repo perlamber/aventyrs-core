@@ -26,7 +26,7 @@ public enum AutocontroleAdvantage implements EgoAdvantage {
 
 
     //TODO Implementar Correntes de efeitos e Efeitos Criticos. Interaction de ambos tambem, sendo
-    // implementado em corrente Skill -> Dano -> Efeito Critico -> Corrente de Efeitos
+    // implementado em corrente Skill -> Damage -> Critical Effect -> Effect Chain
 
     // TODO: raises the Corrente de Efeitos threshold from 5 to 7 over your Defesas — no
     // Corrente de Efeitos/Defesas system exists yet.

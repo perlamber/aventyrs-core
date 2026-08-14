@@ -1,5 +1,6 @@
 package org.aventyrs.core.character.services;
 
+import org.aventyrs.core.ability.PeritoTeoricoAbility;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.AttributeValue;
 import org.aventyrs.core.character.Character;
@@ -21,8 +22,9 @@ public class SkillGraduationServiceImpl implements SkillGraduationService {
     public int getMaxGraduation(final Character character, final SkillType skillType) {
         CharacterSkill characterSkill = character.getSkills().get(skillType);
         AttributeDomain defaultDomain = characterSkill.getSkill().getAttributeDomain();
+        AttributeDomain peritoTeoricoDomain = PeritoTeoricoAbility.resolveAttributeDomain(character.getAttributeAbilities(), skillType, defaultDomain);
         AttributeDomain governingDomain = SkillCompetencyAbility.resolveAttributeDomain(
-                SkillCompetencyAbility.allFor(character), skillType, defaultDomain);
+                SkillCompetencyAbility.allFor(character), skillType, peritoTeoricoDomain);
 
         try {
             AttributeValue attributeValue = (AttributeValue) governingDomain.getKeyAttributeMethod().invoke(character.getAttributes());
