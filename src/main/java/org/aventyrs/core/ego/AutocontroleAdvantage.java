@@ -25,11 +25,16 @@ public enum AutocontroleAdvantage implements EgoAdvantage {
             "dobrado."),
 
 
-    //TODO Implementar Correntes de efeitos e Efeitos Criticos. Interaction de ambos tambem, sendo
-    // implementado em corrente Skill -> Damage -> Critical Effect -> Effect Chain
+    // The Skill -> Damage -> EffectChain -> CriticalEffect pipeline now has real
+    // interfaces (org.aventyrs.core.effect.Effect/EffectChain/CriticalEffect), a
+    // concrete DamageInteraction, and — for RESOLUTO's own margin math specifically — a
+    // real, tested org.aventyrs.core.effect.EffectChainService#getRequiredMargin, which
+    // reads this exact field (Character#getAutocontroleAdvantage()) to return 7 instead
+    // of 5. See that package's own package-info.
 
-    // TODO: raises the Corrente de Efeitos threshold from 5 to 7 over your Defesas — no
-    // Corrente de Efeitos/Defesas system exists yet.
+    // TODO: RESOLUTO's margin math is real (EffectChainService), but nothing triggers
+    // it yet — no concrete Corrente de Efeitos implementation exists to actually call
+    // EffectChainService#hits(...) when one lands.
     RESOLUTO("Correntes de Efeitos, para te afetar, precisam superar suas Defesas em 7, ao " +
             "invés de 5."),
 

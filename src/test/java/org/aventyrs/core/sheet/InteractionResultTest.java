@@ -120,6 +120,44 @@ class InteractionResultTest {
     }
 
     @Test
+    void finalDamageStaysNullWhenNotSet() {
+        InteractionResult result = InteractionResult.builder()
+                .skillRollBonus(3)
+                .build();
+
+        assertNull(result.getFinalDamage());
+    }
+
+    @Test
+    void builderAssignsTheFinalDamage() {
+        InteractionResult result = InteractionResult.builder()
+                .finalDamage(7)
+                .build();
+
+        assertEquals(7, result.getFinalDamage());
+    }
+
+    @Test
+    void nextInteractionStaysNullWhenNotSet() {
+        InteractionResult result = InteractionResult.builder()
+                .skillRollBonus(3)
+                .build();
+
+        assertNull(result.getNextInteraction());
+    }
+
+    @Test
+    void builderAssignsTheNextInteraction() {
+        Interaction<CharacterSheet> nextInteraction = target -> InteractionResult.builder().build();
+
+        InteractionResult result = InteractionResult.builder()
+                .nextInteraction(nextInteraction)
+                .build();
+
+        assertSame(nextInteraction, result.getNextInteraction());
+    }
+
+    @Test
     void toBuilderPreservesExistingFieldsWhileAddingNewOnes() {
         InteractionResult base = InteractionResult.builder()
                 .skillRollBonus(5)

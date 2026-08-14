@@ -101,4 +101,34 @@ public class InteractionResult {
      * present.
      */
     DamageBonus damageBonus;
+
+    /**
+     * The post-mitigation damage a {@code org.aventyrs.core.effect.DamageInteraction}
+     * actually applied to the target's Hit Points this hit — see {@code
+     * org.aventyrs.core.character.services.DamageService#calculateFinalDamage}. {@code
+     * null} for every Interaction that isn't a damage application, same
+     * stays-{@code null}-when-not-applicable convention as every other field here.
+     */
+    Integer finalDamage;
+
+    /**
+     * The next Interaction in the Skill -&gt; Damage -&gt; EffectChain -&gt;
+     * CriticalEffect pipeline (see {@code org.aventyrs.core.effect} package-info), if
+     * this stage's own outcome means another one should follow — e.g. a {@code
+     * org.aventyrs.core.effect.DamageInteraction} that actually dealt damage handing off
+     * to whatever {@code org.aventyrs.core.effect.EffectChain}/{@code
+     * org.aventyrs.core.effect.CriticalEffect} the caller supplied. Typed as the shared
+     * {@link Interaction}&lt;{@link CharacterSheet}&gt; interface, not any one concrete
+     * stage, so every stage is interchangeable in this slot; a caller drives the whole
+     * pipeline generically via {@code while (result.getNextInteraction() != null) result
+     * = target.receiveInteraction(result.getNextInteraction());} without ever knowing
+     * which concrete stages exist for a given roll. {@code null} means this stage didn't
+     * apply, or had nothing to chain into — same stays-{@code null}-when-not-applicable
+     * convention as every other field here; every stage decides for itself whether to
+     * populate this, no central orchestrator exists to decide it on a stage's behalf.
+     * Distinct from {@link #nextInteractable} (a possible *different target* for a
+     * future hand-off, e.g. a Ricochete-style ability's new target) — this field is
+     * about which *behavior* runs next on the current flow, not who it runs against.
+     */
+    Interaction<CharacterSheet> nextInteraction;
 }
