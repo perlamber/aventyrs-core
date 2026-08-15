@@ -51,11 +51,16 @@
  * at the target's next qualifying Rest via {@code
  * org.aventyrs.core.sheet.PendingEgoRecovery} — resolved for real by {@code
  * RestServiceImpl#applyRest}, since {@code RestService} (unlike Scene's still-nonexistent
- * turn shifter) already is a complete "a Rest happened" trigger. All three share the
- * "reject anything that isn't an Acerto Crítico" constructor validation, living once on
- * {@link org.aventyrs.core.effect.CriticalEffect#validateCriticalHit} rather than
- * duplicated per implementation. {@link org.aventyrs.core.effect.EffectChain} still has
- * no concrete implementation.
+ * turn shifter) already is a complete "a Rest happened" trigger. A fourth, {@link
+ * org.aventyrs.core.effect.Sabotage}, is a deliberate placeholder — it targets equipment,
+ * not a CharacterSheet resource pool, and this core has no Item/Equipamento entity at all
+ * yet (same gap {@code ProfissaoCompetencyAbility}'s own class javadoc documents), so its
+ * {@code applyTo} computes nothing beyond {@code resultStatus}; see its own class javadoc
+ * for the full breakdown. All four share the "reject anything that isn't an Acerto
+ * Crítico" constructor validation, living once on {@link
+ * org.aventyrs.core.effect.CriticalEffect#validateCriticalHit} rather than duplicated
+ * per implementation. {@link org.aventyrs.core.effect.EffectChain} still has no concrete
+ * implementation.
  * Several abilities/races are still blocked on that becoming real: {@code
  * org.aventyrs.core.ego.AutocontroleAdvantage#RESOLUTO} (a Defesas-comparison threshold
  * on a Corrente de Efeitos — the Defesas system itself is also still missing), {@code
@@ -91,8 +96,9 @@
  * never detects a critical on its own — same boundary as {@link org.aventyrs.core.skill}
  * (see that package's own "What this library computes" section). A caller supplies
  * {@code rawDamage} already resolved, and likewise decides when a critical actually
- * landed and constructs the matching {@code Sangramento}/{@code ManaPurge}/{@code Primor}
- * (or a future {@code EffectChain} instance) itself — this core never triggers one on its
- * own, and never rolls Primor's own "definido aleatoriamente" domain choice either.
+ * landed and constructs the matching {@code Sangramento}/{@code ManaPurge}/{@code
+ * Primor}/{@code Sabotage} (or a future {@code EffectChain} instance) itself — this core
+ * never triggers one on its own, and never rolls Primor's own "definido aleatoriamente"
+ * domain choice or Sabotage's eventual 3d6 damage roll either.
  */
 package org.aventyrs.core.effect;
