@@ -5,11 +5,10 @@ import org.aventyrs.core.sheet.Bleeding;
 import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.InteractionResult;
+import org.aventyrs.core.sheet.ResourceType;
 import org.aventyrs.core.skill.CriticalResult;
 
 import java.util.Optional;
-
-import static org.aventyrs.core.util.TranslatableMessages.CRITICAL_EFFECT_REQUIRES_A_CRITICAL_HIT;
 
 /**
  * Sangramento — the first concrete {@link CriticalEffect} (see {@code
@@ -30,11 +29,9 @@ import static org.aventyrs.core.util.TranslatableMessages.CRITICAL_EFFECT_REQUIR
  * org.aventyrs.core.sheet.InteractionResult#getCriticalResult()} (set by {@code
  * AbstractSkillInteraction} whenever a {@code SkillRoll} was supplied). Any other {@code
  * CriticalResult} — a plain roll, or either Falha Crítica — is rejected at construction
- * ({@link IllegalOperationException}): Sangramento is only ever a *consequence* of a
- * critical hit landing, never something a caller applies on its own judgment, the same
- * "validate possession/legitimacy up front rather than compute a result for an
- * illegitimate case" discipline {@code AbstractSkillInteraction#validateRequestedTrait}
- * already applies to a requested Habilidade/Especialização.
+ * ({@link IllegalOperationException}, via {@link CriticalEffect#validateCriticalHit}):
+ * Sangramento is only ever a *consequence* of a critical hit landing, never something a
+ * caller applies on its own judgment.
  *
  * <p>Sangramento Menor's duration (Rodadas equal to the target's own Vigor) is fully
  * computable and implemented for real. Sangramento Maior's own duration — "até o fim da
@@ -51,9 +48,7 @@ public class Sangramento implements CriticalEffect {
     private final CriticalResult criticalResult;
 
     public Sangramento(final CriticalResult criticalResult) {
-        if (criticalResult != CriticalResult.ACERTO_CRITICO_MAIOR && criticalResult != CriticalResult.ACERTO_CRITICO_MENOR) {
-            throw new IllegalOperationException(CRITICAL_EFFECT_REQUIRES_A_CRITICAL_HIT);
-        }
+        CriticalEffect.validateCriticalHit(criticalResult);
         this.criticalResult = criticalResult;
     }
 
@@ -78,7 +73,8 @@ public class Sangramento implements CriticalEffect {
 
         return InteractionResult.builder()
                 .resultStatus(affectedCharacter.getStatus())
-                .finalDamage(IMMEDIATE_DAMAGE)
+                .resourceLossValue(IMMEDIATE_DAMAGE)
+                .resourceLossType(ResourceType.HIT_POINTS)
                 .build();
     }
 }

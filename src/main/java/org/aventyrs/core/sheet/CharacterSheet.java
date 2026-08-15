@@ -4,6 +4,7 @@ import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterStatus;
 import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.modifier.ModifierType;
+import org.aventyrs.core.rest.RestType;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -71,6 +72,14 @@ public class CharacterSheet implements Interactable<CharacterSheet> {
      */
     @Getter(AccessLevel.NONE)
     private final List<TemporaryEffect> temporaryEffects = new ArrayList<>();
+
+    /**
+     * Temporary Ego points owed back to this CharacterSheet at its next qualifying Rest
+     * — see {@link PendingEgoRecovery}, {@link #owePendingEgoRecovery}, and {@link
+     * #applyPendingEgoRecoveries}.
+     */
+    @Getter(AccessLevel.NONE)
+    private final List<PendingEgoRecovery> pendingEgoRecoveries = new ArrayList<>();
 
     private static Map<EgoDomain, TemporaryPointPool> newTemporaryEgoPointsPools() {
         Map<EgoDomain, TemporaryPointPool> pools = new EnumMap<>(EgoDomain.class);
@@ -186,11 +195,18 @@ public class CharacterSheet implements Interactable<CharacterSheet> {
     }
 
     /**
-     * Recovers spent Magic Points — the same recovery a Rest applies to PM.
+     * Recovers spent Magic Points — the same recovery a Rest applies to PM. Also
+     * interrupts every active {@link ManaDrain} (ManaPurge's own rules text: "Efeitos de
+     * cura interrompem a perda de PM por rodada") — the immediate PM ManaPurge already
+     * drained stays lost; only the ongoing per-Rodada loss stops.
      * @return int remaining Magic Points spent
      */
     public int recoverMagicPoints(int amount)
     {
+        if (amount > 0)
+        {
+            temporaryEffects.removeIf(effect -> effect instanceof ManaDrain);
+        }
         return magicPoints.recover(amount);
     }
 
@@ -238,6 +254,33 @@ public class CharacterSheet implements Interactable<CharacterSheet> {
     public int spendTemporaryEgoPoints(EgoDomain domain, int amount)
     {
         return temporaryEgoPoints.get(domain).spend(amount);
+    }
+
+    /**
+     * Registers a {@link PendingEgoRecovery} — e.g. {@code org.aventyrs.core.effect.Primor}'s
+     * own promise that the temporary Ego points it just spent come back at the target's
+     * next qualifying Rest. Doesn't itself spend or gain anything; the caller spends the
+     * points via {@link #spendTemporaryEgoPoints} before calling this to register their
+     * eventual return.
+     */
+    public void owePendingEgoRecovery(final PendingEgoRecovery recovery)
+    {
+        pendingEgoRecoveries.add(recovery);
+    }
+
+    /**
+     * Resolves every {@link PendingEgoRecovery} satisfied by a Rest of restType's tier —
+     * granting each one's owed points back via {@link #gainTemporaryEgoPoints} — and
+     * discards them. Called by {@code RestServiceImpl#applyRest} whenever a Rest is
+     * actually taken; unlike {@link #tickTemporaryEffects()}'s still-nonexistent Round
+     * trigger, {@code RestService} already is the real, complete "a Rest happened" hook.
+     */
+    public void applyPendingEgoRecoveries(final RestType restType)
+    {
+        pendingEgoRecoveries.stream()
+                .filter(recovery -> recovery.isSatisfiedBy(restType))
+                .forEach(recovery -> gainTemporaryEgoPoints(recovery.getDomain(), recovery.getValue()));
+        pendingEgoRecoveries.removeIf(recovery -> recovery.isSatisfiedBy(restType));
     }
 
     @Override
@@ -311,29 +354,21 @@ public class CharacterSheet implements Interactable<CharacterSheet> {
     }
 
     /**
-     * Advances every held {@link TemporaryEffect} by one Rodada: applies each active
-     * {@link Bleeding}'s per-Rodada PV loss (via {@link #applyDamage(int)}), then counts
-     * every effect — Bleeding and {@link TemporaryBonus} alike — down and discards any
-     * that expire as a result. This is a single method over the shared {@link
-     * #temporaryEffects} list rather than one per effect kind, since ticking each kind
-     * separately would decrement the other kind's Rodadas too every time either was
-     * called.
-     * @return int total PV lost to Bleeding this tick
+     * Advances every held {@link TemporaryEffect} by one Rodada: applies each one's own
+     * per-Rodada side effect (e.g. {@link Bleeding}/{@link ManaDrain} draining PV/PM, via
+     * {@link TemporaryEffect#applyRoundEffect}), then counts every effect down and
+     * discards any that expire as a result. This is a single method over the shared
+     * {@link #temporaryEffects} list rather than one per effect kind, since ticking each
+     * kind separately would decrement the other kinds' Rodadas too every time any one was
+     * called — and dispatches through the polymorphic {@code applyRoundEffect} hook
+     * rather than {@code instanceof}-filtering per kind, so a future {@code
+     * TemporaryEffect} subclass needs no change here to be ticked correctly.
      */
-    public int tickTemporaryEffects()
+    public void tickTemporaryEffects()
     {
-        int totalBleedingDamageThisTick = temporaryEffects.stream()
-                .filter(effect -> effect instanceof Bleeding)
-                .map(effect -> (Bleeding) effect)
-                .mapToInt(Bleeding::getValuePerRound)
-                .sum();
-        temporaryEffects.stream()
-                .filter(effect -> effect instanceof Bleeding)
-                .map(effect -> (Bleeding) effect)
-                .forEach(bleeding -> applyDamage(bleeding.getValuePerRound()));
+        temporaryEffects.forEach(effect -> effect.applyRoundEffect(this));
         temporaryEffects.forEach(TemporaryEffect::tick);
         temporaryEffects.removeIf(TemporaryEffect::isExpired);
-        return totalBleedingDamageThisTick;
     }
 
     /**

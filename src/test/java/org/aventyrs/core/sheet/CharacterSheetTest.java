@@ -4,6 +4,7 @@ import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.modifier.ModifierType;
+import org.aventyrs.core.rest.RestType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -61,7 +62,9 @@ class CharacterSheetTest {
     void newlyCreatedCharacterSheetHasNoBleeding() {
         CharacterSheet sheet = newSheet();
 
-        assertEquals(0, sheet.tickTemporaryEffects());
+        sheet.tickTemporaryEffects();
+
+        assertEquals(0, sheet.getDamageTaken());
     }
 
     @Test
@@ -69,7 +72,8 @@ class CharacterSheetTest {
         CharacterSheet sheet = newSheet();
         sheet.applyEffect(new Bleeding(1, Optional.of(3)));
 
-        assertEquals(1, sheet.tickTemporaryEffects());
+        sheet.tickTemporaryEffects();
+
         assertEquals(1, sheet.getDamageTaken());
     }
 
@@ -117,8 +121,80 @@ class CharacterSheetTest {
         sheet.applyEffect(new Bleeding(1, Optional.of(3)));
 
         sheet.heal(0);
+        sheet.tickTemporaryEffects();
 
-        assertEquals(1, sheet.tickTemporaryEffects());
+        assertEquals(1, sheet.getDamageTaken());
+    }
+
+    @Test
+    void tickTemporaryEffectsAppliesThePerRoundManaDrainDamage() {
+        CharacterSheet sheet = newSheet();
+        sheet.applyEffect(new ManaDrain(1, Optional.of(3)));
+
+        sheet.tickTemporaryEffects();
+
+        assertEquals(1, sheet.getManaSpent());
+    }
+
+    @Test
+    void tickTemporaryEffectsRemovesAFiniteManaDrainOnceItsRoundsRunOut() {
+        CharacterSheet sheet = newSheet();
+        sheet.applyEffect(new ManaDrain(1, Optional.of(2)));
+
+        sheet.tickTemporaryEffects();
+        sheet.tickTemporaryEffects();
+        int manaSpentAfterExpiry = sheet.getManaSpent();
+        sheet.tickTemporaryEffects();
+
+        assertEquals(2, manaSpentAfterExpiry);
+        assertEquals(manaSpentAfterExpiry, sheet.getManaSpent());
+    }
+
+    @Test
+    void tickTemporaryEffectsNeverExpiresAnOpenEndedManaDrain() {
+        CharacterSheet sheet = newSheet();
+        sheet.applyEffect(new ManaDrain(1, Optional.empty()));
+
+        for (int round = 0; round < 20; round++) {
+            sheet.tickTemporaryEffects();
+        }
+
+        assertEquals(20, sheet.getManaSpent());
+    }
+
+    @Test
+    void recoveringMagicPointsInterruptsActiveManaDrainButKeepsAlreadyDrainedMana() {
+        CharacterSheet sheet = newSheet();
+        sheet.spendMagicPoints(2);
+        sheet.applyEffect(new ManaDrain(1, Optional.of(3)));
+
+        sheet.recoverMagicPoints(1);
+        sheet.tickTemporaryEffects();
+
+        assertEquals(1, sheet.getManaSpent());
+    }
+
+    @Test
+    void recoveringMagicPointsWithZeroAmountDoesNotInterruptActiveManaDrain() {
+        CharacterSheet sheet = newSheet();
+        sheet.applyEffect(new ManaDrain(1, Optional.of(3)));
+
+        sheet.recoverMagicPoints(0);
+        sheet.tickTemporaryEffects();
+
+        assertEquals(1, sheet.getManaSpent());
+    }
+
+    @Test
+    void tickTemporaryEffectsAdvancesBleedingAndManaDrainIndependently() {
+        CharacterSheet sheet = newSheet();
+        sheet.applyEffect(new Bleeding(1, Optional.of(1)));
+        sheet.applyEffect(new ManaDrain(1, Optional.of(1)));
+
+        sheet.tickTemporaryEffects();
+
+        assertEquals(1, sheet.getDamageTaken());
+        assertEquals(1, sheet.getManaSpent());
     }
 
     @Test
@@ -337,7 +413,7 @@ class CharacterSheetTest {
 
         assertEquals(3, sheet.getTemporaryBonus(ModifierType.SKILL_ROLL_BONUS));
         assertEquals(1, sheet.getDamageTaken());
-        assertEquals(1, sheet.tickTemporaryEffects());
+        sheet.tickTemporaryEffects();
         assertEquals(0, sheet.getTemporaryBonus(ModifierType.SKILL_ROLL_BONUS));
         assertEquals(2, sheet.getDamageTaken());
     }
@@ -350,7 +426,8 @@ class CharacterSheetTest {
         sheet.applyEffect(new Bleeding(1, Optional.of(1)));
 
         assertEquals(3, sheet.getTemporaryBonus(ModifierType.SKILL_ROLL_BONUS));
-        assertEquals(1, sheet.tickTemporaryEffects());
+        sheet.tickTemporaryEffects();
+        assertEquals(1, sheet.getDamageTaken());
     }
 
     @Test
@@ -363,5 +440,36 @@ class CharacterSheetTest {
 
         assertEquals(0, sheet.getTemporaryBonus(ModifierType.SKILL_ROLL_BONUS));
         assertEquals(1, sheet.getDamageTaken());
+    }
+
+    @Test
+    void applyPendingEgoRecoveriesGrantsBackPointsOnceARestOfSufficientTierIsTaken() {
+        CharacterSheet sheet = newSheet();
+        sheet.owePendingEgoRecovery(new PendingEgoRecovery(EgoDomain.SORTE, 2, RestType.LONGO));
+
+        sheet.applyPendingEgoRecoveries(RestType.LONGO);
+
+        assertEquals(2, sheet.getTemporaryEgoPoints(EgoDomain.SORTE));
+    }
+
+    @Test
+    void applyPendingEgoRecoveriesDoesNothingWhenTheRestTierIsTooLow() {
+        CharacterSheet sheet = newSheet();
+        sheet.owePendingEgoRecovery(new PendingEgoRecovery(EgoDomain.SORTE, 2, RestType.LONGO));
+
+        sheet.applyPendingEgoRecoveries(RestType.CURTO);
+
+        assertEquals(0, sheet.getTemporaryEgoPoints(EgoDomain.SORTE));
+    }
+
+    @Test
+    void applyPendingEgoRecoveriesOnlyResolvesEachRecoveryOnce() {
+        CharacterSheet sheet = newSheet();
+        sheet.owePendingEgoRecovery(new PendingEgoRecovery(EgoDomain.SORTE, 2, RestType.MINIMO));
+
+        sheet.applyPendingEgoRecoveries(RestType.MINIMO);
+        sheet.applyPendingEgoRecoveries(RestType.MINIMO);
+
+        assertEquals(2, sheet.getTemporaryEgoPoints(EgoDomain.SORTE));
     }
 }

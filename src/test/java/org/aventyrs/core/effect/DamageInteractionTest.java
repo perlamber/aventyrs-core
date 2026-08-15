@@ -10,6 +10,7 @@ import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.Interaction;
 import org.aventyrs.core.sheet.InteractionResult;
 import org.aventyrs.core.sheet.Player;
+import org.aventyrs.core.sheet.ResourceType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -59,7 +60,8 @@ class DamageInteractionTest {
 
         InteractionResult result = damageInteraction.applyTo(sheet, 10, false);
 
-        assertEquals(7, result.getFinalDamage());
+        assertEquals(7, result.getResourceLossValue());
+        assertEquals(ResourceType.HIT_POINTS, result.getResourceLossType());
         assertEquals(7, sheet.getDamageTaken());
         assertEquals(character.getStatus(), result.getResultStatus());
     }
@@ -73,7 +75,7 @@ class DamageInteractionTest {
 
         InteractionResult result = damageInteraction.applyTo(sheet, 10, true);
 
-        assertEquals(10, result.getFinalDamage());
+        assertEquals(10, result.getResourceLossValue());
         assertEquals(10, sheet.getDamageTaken());
     }
 
@@ -84,7 +86,7 @@ class DamageInteractionTest {
 
         InteractionResult result = damageInteraction.applyTo(sheet);
 
-        assertEquals(0, result.getFinalDamage());
+        assertEquals(0, result.getResourceLossValue());
         assertEquals(0, sheet.getDamageTaken());
         assertNull(result.getNextInteraction());
     }
@@ -96,7 +98,7 @@ class DamageInteractionTest {
 
         InteractionResult result = sheet.receiveInteraction(damageInteraction);
 
-        assertEquals(0, result.getFinalDamage());
+        assertEquals(0, result.getResourceLossValue());
     }
 
     @Test
@@ -107,7 +109,7 @@ class DamageInteractionTest {
 
         InteractionResult result = damageInteraction.applyTo(sheet, 5, false, next);
 
-        assertEquals(5, result.getFinalDamage());
+        assertEquals(5, result.getResourceLossValue());
         assertSame(next, result.getNextInteraction());
     }
 
@@ -121,7 +123,7 @@ class DamageInteractionTest {
 
         InteractionResult result = damageInteraction.applyTo(sheet, 2, false, next);
 
-        assertEquals(0, result.getFinalDamage());
+        assertEquals(0, result.getResourceLossValue());
         assertNull(result.getNextInteraction());
     }
 }

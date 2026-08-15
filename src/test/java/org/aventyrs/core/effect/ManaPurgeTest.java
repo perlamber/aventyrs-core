@@ -15,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-class SangramentoTest {
+class ManaPurgeTest {
 
     @BeforeEach
     void setup() {
@@ -29,74 +29,74 @@ class SangramentoTest {
 
     @Test
     void rejectsAnyCriticalResultThatIsNotAnAcertoCritico() {
-        assertThrows(IllegalOperationException.class, () -> new Sangramento(CriticalResult.NONE));
-        assertThrows(IllegalOperationException.class, () -> new Sangramento(CriticalResult.FALHA_CRITICA_MENOR));
-        assertThrows(IllegalOperationException.class, () -> new Sangramento(CriticalResult.FALHA_CRITICA_MAIOR));
+        assertThrows(IllegalOperationException.class, () -> new ManaPurge(CriticalResult.NONE));
+        assertThrows(IllegalOperationException.class, () -> new ManaPurge(CriticalResult.FALHA_CRITICA_MENOR));
+        assertThrows(IllegalOperationException.class, () -> new ManaPurge(CriticalResult.FALHA_CRITICA_MAIOR));
     }
 
     @Test
-    void applyToDealsTheImmediateTwoPvLoss() {
+    void applyToDealsTheImmediateTwoPmLoss() {
         CharacterSheet sheet = newSheet();
 
-        InteractionResult result = new Sangramento(CriticalResult.ACERTO_CRITICO_MENOR).applyTo(sheet);
+        InteractionResult result = new ManaPurge(CriticalResult.ACERTO_CRITICO_MENOR).applyTo(sheet);
 
         assertEquals(2, result.getResourceLossValue());
-        assertEquals(ResourceType.HIT_POINTS, result.getResourceLossType());
-        assertEquals(2, sheet.getDamageTaken());
+        assertEquals(ResourceType.MAGIC_POINTS, result.getResourceLossType());
+        assertEquals(2, sheet.getManaSpent());
         assertEquals(sheet.getCharacter().getStatus(), result.getResultStatus());
     }
 
     @Test
-    void acertoCriticoMenorBleedsForRoundsEqualToTheTargetsVigor() {
+    void acertoCriticoMenorDrainsForRoundsEqualToTheTargetsFoco() {
         CharacterSheet sheet = newSheet();
-        int vigor = sheet.getCharacter().getAttributes().getVigor().getTotal();
+        int foco = sheet.getCharacter().getAttributes().getFocus().getTotal();
 
-        new Sangramento(CriticalResult.ACERTO_CRITICO_MENOR).applyTo(sheet);
-        for (int round = 0; round < vigor; round++) {
+        new ManaPurge(CriticalResult.ACERTO_CRITICO_MENOR).applyTo(sheet);
+        for (int round = 0; round < foco; round++) {
             sheet.tickTemporaryEffects();
         }
-        int damageAfterVigorRounds = sheet.getDamageTaken();
+        int manaSpentAfterFocoRounds = sheet.getManaSpent();
         sheet.tickTemporaryEffects();
 
-        assertEquals(2 + vigor, damageAfterVigorRounds);
-        assertEquals(damageAfterVigorRounds, sheet.getDamageTaken());
+        assertEquals(2 + foco, manaSpentAfterFocoRounds);
+        assertEquals(manaSpentAfterFocoRounds, sheet.getManaSpent());
     }
 
     @Test
-    void acertoCriticoMaiorBleedingNeverExpiresFromTickingAlone() {
+    void acertoCriticoMaiorDrainNeverExpiresFromTickingAlone() {
         CharacterSheet sheet = newSheet();
 
-        new Sangramento(CriticalResult.ACERTO_CRITICO_MAIOR).applyTo(sheet);
+        new ManaPurge(CriticalResult.ACERTO_CRITICO_MAIOR).applyTo(sheet);
         for (int round = 0; round < 50; round++) {
             sheet.tickTemporaryEffects();
         }
 
-        assertEquals(2 + 50, sheet.getDamageTaken());
+        assertEquals(2 + 50, sheet.getManaSpent());
     }
 
     @Test
-    void healingInterruptsTheOngoingBleedingButNotTheImmediateLoss() {
+    void recoveringManaInterruptsTheOngoingDrainButNotTheImmediateLoss() {
         CharacterSheet sheet = newSheet();
 
-        new Sangramento(CriticalResult.ACERTO_CRITICO_MAIOR).applyTo(sheet);
-        sheet.heal(1);
+        new ManaPurge(CriticalResult.ACERTO_CRITICO_MAIOR).applyTo(sheet);
+        sheet.recoverMagicPoints(1);
         sheet.tickTemporaryEffects();
 
-        assertEquals(1, sheet.getDamageTaken());
+        assertEquals(1, sheet.getManaSpent());
     }
 
     @Test
     void receiveInteractionDelegatesCorrectly() {
         CharacterSheet sheet = newSheet();
 
-        InteractionResult result = sheet.receiveInteraction(new Sangramento(CriticalResult.ACERTO_CRITICO_MENOR));
+        InteractionResult result = sheet.receiveInteraction(new ManaPurge(CriticalResult.ACERTO_CRITICO_MENOR));
 
         assertEquals(2, result.getResourceLossValue());
     }
 
     @Test
     void bothAcertoCriticoTiersHaveANonBlankDescription() {
-        assertFalse(new Sangramento(CriticalResult.ACERTO_CRITICO_MAIOR).getDescription().isBlank());
-        assertFalse(new Sangramento(CriticalResult.ACERTO_CRITICO_MENOR).getDescription().isBlank());
+        assertFalse(new ManaPurge(CriticalResult.ACERTO_CRITICO_MAIOR).getDescription().isBlank());
+        assertFalse(new ManaPurge(CriticalResult.ACERTO_CRITICO_MENOR).getDescription().isBlank());
     }
 }

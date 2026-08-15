@@ -25,6 +25,7 @@ public class RestServiceImpl implements RestService {
         characterSheet.heal(getRecoveredHitPoints(character, restType));
         characterSheet.recoverMagicPoints(getRecoveredMagicPoints(character, restType));
         characterSheet.recoverDeterminationPoints(getRecoveredDeterminationPoints(character, restType));
+        characterSheet.applyPendingEgoRecoveries(restType);
     }
 
     /**

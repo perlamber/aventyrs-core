@@ -2,6 +2,7 @@ package org.aventyrs.core.sheet;
 
 import org.aventyrs.core.character.CharacterStatus;
 import org.aventyrs.core.character.DamageBonus;
+import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.skill.CriticalResult;
 import org.aventyrs.core.skill.DifficultyLevel;
@@ -103,13 +104,35 @@ public class InteractionResult {
     DamageBonus damageBonus;
 
     /**
-     * The post-mitigation damage a {@code org.aventyrs.core.effect.DamageInteraction}
-     * actually applied to the target's Hit Points this hit — see {@code
-     * org.aventyrs.core.character.services.DamageService#calculateFinalDamage}. {@code
-     * null} for every Interaction that isn't a damage application, same
-     * stays-{@code null}-when-not-applicable convention as every other field here.
+     * The amount of {@link #resourceLossType} this Interaction drained — e.g. a {@code
+     * org.aventyrs.core.effect.DamageInteraction}'s post-mitigation Hit Point damage (see
+     * {@code org.aventyrs.core.character.services.DamageService#calculateFinalDamage}),
+     * or {@code org.aventyrs.core.effect.ManaPurge}'s immediate Magic Point drain. {@code
+     * null} for every Interaction that doesn't drain a resource, same stays-{@code
+     * null}-when-not-applicable convention as every other field here — paired with
+     * {@link #resourceLossType} the same way {@link #temporaryBonusValue} pairs with
+     * {@link #temporaryBonusModifierType}, rather than growing a new field per resource
+     * kind as more resource-draining Interactions are added.
      */
-    Integer finalDamage;
+    Integer resourceLossValue;
+
+    /** Which {@link ResourceType} {@link #resourceLossValue} was lost from. */
+    ResourceType resourceLossType;
+
+    /**
+     * How many temporary Ego points this Interaction drained — e.g. {@code
+     * org.aventyrs.core.effect.Primor}'s "perde 2/1 pontos temporários de Sorte ou
+     * Autocontrole". {@code null} for every Interaction that doesn't drain temporary Ego
+     * points, same stays-{@code null}-when-not-applicable convention as every other field
+     * here. A separate pair from {@link #resourceLossValue}/{@link #resourceLossType}
+     * rather than reusing it — temporary Ego points ({@link EgoDomain}: Autocontrole,
+     * Recursos, Sorte, Iniciativa) are a genuinely different pool from PV/PM/PD ({@link
+     * ResourceType}), not just another value for the same enum.
+     */
+    Integer egoLossValue;
+
+    /** Which {@link EgoDomain} {@link #egoLossValue} was lost from. */
+    EgoDomain egoLossDomain;
 
     /**
      * The next Interaction in the Skill -&gt; Damage -&gt; EffectChain -&gt;

@@ -6,6 +6,7 @@ import org.aventyrs.core.character.services.DamageServiceImpl;
 import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.Interaction;
 import org.aventyrs.core.sheet.InteractionResult;
+import org.aventyrs.core.sheet.ResourceType;
 
 /**
  * The Damage stage of the Skill -&gt; Damage -&gt; EffectChain -&gt; CriticalEffect
@@ -57,7 +58,8 @@ public class DamageInteraction implements Interaction<CharacterSheet> {
 
         InteractionResult.InteractionResultBuilder result = InteractionResult.builder()
                 .resultStatus(character.getStatus())
-                .finalDamage(finalDamage);
+                .resourceLossValue(finalDamage)
+                .resourceLossType(ResourceType.HIT_POINTS);
         if (finalDamage > 0) {
             result.nextInteraction(nextInteraction);
         }

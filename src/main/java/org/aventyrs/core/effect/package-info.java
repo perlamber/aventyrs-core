@@ -41,10 +41,21 @@
  * interfaces — each extends {@code Interaction<CharacterSheet>} so a concrete
  * implementation plugs into {@code receiveInteraction} with zero other code touched,
  * the same zero-touch guarantee every concrete {@code <Skill>Interaction} already
- * relies on. {@link org.aventyrs.core.effect.Sangramento} is the first concrete {@code
- * CriticalEffect} — an immediate PV loss (mirroring {@code DamageInteraction}) plus an
- * ongoing per-Rodada {@link org.aventyrs.core.sheet.Bleeding}, interrupted by healing.
- * {@link org.aventyrs.core.effect.EffectChain} still has no concrete implementation.
+ * relies on. Three concrete {@code CriticalEffect}s exist so far. Two drain a resource
+ * immediately plus per-Rodada: {@link org.aventyrs.core.effect.Sangramento} (PV, via
+ * {@link org.aventyrs.core.sheet.Bleeding}) and {@link org.aventyrs.core.effect.ManaPurge}
+ * (PM, via {@link org.aventyrs.core.sheet.ManaDrain}) — each interrupted by the matching
+ * recovery ({@code CharacterSheet#heal}/{@code #recoverMagicPoints}). The third, {@link
+ * org.aventyrs.core.effect.Primor}, is shaped differently: a one-time temporary Ego
+ * point spend (Sorte or Autocontrole) with no ongoing per-Rodada loss, instead owed back
+ * at the target's next qualifying Rest via {@code
+ * org.aventyrs.core.sheet.PendingEgoRecovery} — resolved for real by {@code
+ * RestServiceImpl#applyRest}, since {@code RestService} (unlike Scene's still-nonexistent
+ * turn shifter) already is a complete "a Rest happened" trigger. All three share the
+ * "reject anything that isn't an Acerto Crítico" constructor validation, living once on
+ * {@link org.aventyrs.core.effect.CriticalEffect#validateCriticalHit} rather than
+ * duplicated per implementation. {@link org.aventyrs.core.effect.EffectChain} still has
+ * no concrete implementation.
  * Several abilities/races are still blocked on that becoming real: {@code
  * org.aventyrs.core.ego.AutocontroleAdvantage#RESOLUTO} (a Defesas-comparison threshold
  * on a Corrente de Efeitos — the Defesas system itself is also still missing), {@code
@@ -80,7 +91,8 @@
  * never detects a critical on its own — same boundary as {@link org.aventyrs.core.skill}
  * (see that package's own "What this library computes" section). A caller supplies
  * {@code rawDamage} already resolved, and likewise decides when a critical actually
- * landed and constructs the matching {@code Sangramento} (or a future {@code
- * EffectChain} instance) itself — this core never triggers one on its own.
+ * landed and constructs the matching {@code Sangramento}/{@code ManaPurge}/{@code Primor}
+ * (or a future {@code EffectChain} instance) itself — this core never triggers one on its
+ * own, and never rolls Primor's own "definido aleatoriamente" domain choice either.
  */
 package org.aventyrs.core.effect;

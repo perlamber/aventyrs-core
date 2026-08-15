@@ -4,6 +4,7 @@ import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterStatus;
 import org.aventyrs.core.character.DamageBonus;
 import org.aventyrs.core.character.DamageType;
+import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.skill.CriticalResult;
@@ -120,21 +121,45 @@ class InteractionResultTest {
     }
 
     @Test
-    void finalDamageStaysNullWhenNotSet() {
+    void resourceLossFieldsStayNullWhenNotSet() {
         InteractionResult result = InteractionResult.builder()
                 .skillRollBonus(3)
                 .build();
 
-        assertNull(result.getFinalDamage());
+        assertNull(result.getResourceLossValue());
+        assertNull(result.getResourceLossType());
     }
 
     @Test
-    void builderAssignsTheFinalDamage() {
+    void builderAssignsTheResourceLoss() {
         InteractionResult result = InteractionResult.builder()
-                .finalDamage(7)
+                .resourceLossValue(7)
+                .resourceLossType(ResourceType.HIT_POINTS)
                 .build();
 
-        assertEquals(7, result.getFinalDamage());
+        assertEquals(7, result.getResourceLossValue());
+        assertEquals(ResourceType.HIT_POINTS, result.getResourceLossType());
+    }
+
+    @Test
+    void egoLossFieldsStayNullWhenNotSet() {
+        InteractionResult result = InteractionResult.builder()
+                .skillRollBonus(3)
+                .build();
+
+        assertNull(result.getEgoLossValue());
+        assertNull(result.getEgoLossDomain());
+    }
+
+    @Test
+    void builderAssignsTheEgoLoss() {
+        InteractionResult result = InteractionResult.builder()
+                .egoLossValue(2)
+                .egoLossDomain(EgoDomain.SORTE)
+                .build();
+
+        assertEquals(2, result.getEgoLossValue());
+        assertEquals(EgoDomain.SORTE, result.getEgoLossDomain());
     }
 
     @Test

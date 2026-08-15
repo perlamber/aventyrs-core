@@ -5,12 +5,13 @@ import lombok.Getter;
 /**
  * A CharacterSheet-held effect that counts down in Rodadas and expires once its
  * remaining Rodadas run out — the shared shape behind {@link TemporaryBonus} (a
- * bonus/malus granted by another Character's action) and {@link Bleeding} (Sangramento's
- * own ongoing PV loss). Registered via {@link CharacterSheet#applyEffect(TemporaryEffect)}
- * (or the {@link TemporaryBonus}-specific {@link CharacterSheet#grantTemporaryBonus}
- * convenience); {@link CharacterSheet#tickTemporaryEffects()} — called once per Rodada by
- * {@link CharacterSheet#finishTurn()} — advances every held one by one Rodada and
- * discards any that expire as a result.
+ * bonus/malus granted by another Character's action), {@link Bleeding} (Sangramento's own
+ * ongoing PV loss), and {@link ManaDrain} (Purga-Mana's own ongoing PM loss). Registered
+ * via {@link CharacterSheet#applyEffect(TemporaryEffect)} (or the {@link
+ * TemporaryBonus}-specific {@link CharacterSheet#grantTemporaryBonus} convenience);
+ * {@link CharacterSheet#tickTemporaryEffects()} — called once per Rodada by {@link
+ * CharacterSheet#finishTurn()} — advances every held one by one Rodada and discards any
+ * that expire as a result.
  *
  * <p>{@code remainingRounds} is {@code null} for an open-ended effect — one that never
  * expires from ticking alone (see {@link Bleeding}'s own javadoc for why Sangramento
@@ -34,5 +35,15 @@ public abstract class TemporaryEffect {
         if (remainingRounds != null) {
             remainingRounds--;
         }
+    }
+
+    /**
+     * Applies this effect's own per-Rodada side effect (if any) to {@code sheet} —
+     * {@link Bleeding}/{@link ManaDrain} draining PV/PM. No-op by default, e.g. {@link
+     * TemporaryBonus}, whose only behavior is decrementing toward expiry — this is what
+     * lets {@link CharacterSheet#tickTemporaryEffects()} advance every kind of {@link
+     * TemporaryEffect} uniformly, without needing to know which concrete kinds exist.
+     */
+    void applyRoundEffect(final CharacterSheet sheet) {
     }
 }

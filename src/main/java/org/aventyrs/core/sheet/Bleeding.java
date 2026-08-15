@@ -30,4 +30,9 @@ public class Bleeding extends TemporaryEffect {
         super(remainingRounds.orElse(null));
         this.valuePerRound = valuePerRound;
     }
+
+    @Override
+    void applyRoundEffect(final CharacterSheet sheet) {
+        sheet.applyDamage(valuePerRound);
+    }
 }

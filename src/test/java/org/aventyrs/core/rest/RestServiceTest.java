@@ -6,8 +6,10 @@ import org.aventyrs.core.character.AttributeValue;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterAttributes;
 import org.aventyrs.core.character.CharacterEgos;
+import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.race.Human;
 import org.aventyrs.core.sheet.CharacterSheet;
+import org.aventyrs.core.sheet.PendingEgoRecovery;
 import org.aventyrs.core.sheet.Player;
 import org.junit.jupiter.api.Test;
 
@@ -83,5 +85,27 @@ class RestServiceTest {
         restService.applyRest(character, sheet, RestType.LONGO);
 
         assertEquals(0, sheet.getDamageTaken());
+    }
+
+    @Test
+    void applyRestResolvesAPendingEgoRecoveryOfSufficientTier() {
+        Character character = exampleCharacter();
+        CharacterSheet sheet = CharacterSheet.of(character, new Player());
+        sheet.owePendingEgoRecovery(new PendingEgoRecovery(EgoDomain.SORTE, 2, RestType.LONGO));
+
+        restService.applyRest(character, sheet, RestType.LONGO);
+
+        assertEquals(2, sheet.getTemporaryEgoPoints(EgoDomain.SORTE));
+    }
+
+    @Test
+    void applyRestDoesNotResolveAPendingEgoRecoveryBelowItsRequiredTier() {
+        Character character = exampleCharacter();
+        CharacterSheet sheet = CharacterSheet.of(character, new Player());
+        sheet.owePendingEgoRecovery(new PendingEgoRecovery(EgoDomain.SORTE, 2, RestType.LONGO));
+
+        restService.applyRest(character, sheet, RestType.CURTO);
+
+        assertEquals(0, sheet.getTemporaryEgoPoints(EgoDomain.SORTE));
     }
 }
