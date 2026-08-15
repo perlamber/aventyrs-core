@@ -1,9 +1,11 @@
 package org.aventyrs.core.skill;
 
+import org.aventyrs.core.ability.AttributeAbility;
 import org.aventyrs.core.ability.PeritoTeoricoAbility;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterSkill;
+import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.character.SizeCategory;
 import org.aventyrs.core.character.services.CharacterSizeService;
 import org.aventyrs.core.character.services.CharacterSizeServiceImpl;
@@ -20,6 +22,7 @@ import org.aventyrs.core.sheet.InteractionResult;
 import org.aventyrs.core.skill.artes.ArtesInteraction;
 import org.aventyrs.core.skill.dominiodomana.DominioDoManaInteraction;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -140,7 +143,21 @@ public abstract class AbstractSkillInteraction implements Interaction<CharacterS
      * skillRollBonus + skillRoll.getTotal()}) and {@link InteractionResult#criticalResult}
      * (from {@link SkillRoll#getCriticalResult()}); both stay {@code null} when skillRoll is
      * {@code null} (the 1-/2-arg overloads always pass {@code null}), same as every other
-     * not-applicable {@code InteractionResult} field. A subclass whose bonus is conditioned on
+     * not-applicable {@code InteractionResult} field. When {@link CriticalResult
+     * #isCriticalSuccess()} — the only outcome this can ever apply to, so every other
+     * criticalResult skips the scan below entirely rather than walking every held {@code
+     * AttributeAbility} for nothing — this also grants (directly on target, the same
+     * unambiguous-recipient shape {@code org.aventyrs.core.effect.Primor} uses to mutate its
+     * own target) a non-cumulative temporary Ego point, via {@link
+     * CharacterSheet#gainNonCumulativeTemporaryEgoPoints}, for every domain any held {@code
+     * AttributeAbility}'s {@link org.aventyrs.core.ability.AttributeAbility
+     * #resolveCriticalSuccessEgoGain} returns against this same criticalResult — passing that
+     * ability itself as the grant's source, so one ability's own repeat triggers don't stack
+     * past 1 point while an unrelated source's own gain still adds normally (e.g. {@code
+     * CharismaAbility#DESTINO_FAVORAVEL} on {@link CriticalResult#ACERTO_CRITICO_MAIOR}). The
+     * granted domains are also reported on {@link InteractionResult#egoGainDomains} for
+     * visibility — stays {@code null} when no held ability grants one. A subclass whose bonus
+     * is conditioned on
      * proximity *and* needs the roll's own result (none currently does) overrides this
      * 3-arg method and calls {@code super.applyTo(target, sceneContext, skillRoll)} first —
      * the same cascading-delegation shape as the 1-/2-arg overloads above, so a subclass only
@@ -188,8 +205,24 @@ public abstract class AbstractSkillInteraction implements Interaction<CharacterS
             Optional<DifficultyLevel> reached = expert
                     ? DifficultyLevel.reachedByAsExpert(bonus + skillRoll.getTotal())
                     : DifficultyLevel.reachedBy(bonus + skillRoll.getTotal());
+            CriticalResult criticalResult = skillRoll.getCriticalResult();
             result.reachedDifficultyLevel(reached.orElse(null))
-                    .criticalResult(skillRoll.getCriticalResult());
+                    .criticalResult(criticalResult);
+
+            if (criticalResult.isCriticalSuccess()) {
+                List<EgoDomain> egoGainDomains = new ArrayList<>();
+                for (AttributeAbility ability : character.getAttributeAbilities()) {
+                    for (EgoDomain domain : ability.resolveCriticalSuccessEgoGain(criticalResult)) {
+                        target.gainNonCumulativeTemporaryEgoPoints(domain, ability, 1);
+                        if (!egoGainDomains.contains(domain)) {
+                            egoGainDomains.add(domain);
+                        }
+                    }
+                }
+                if (!egoGainDomains.isEmpty()) {
+                    result.egoGainDomains(List.copyOf(egoGainDomains));
+                }
+            }
         }
 
         return result.build();

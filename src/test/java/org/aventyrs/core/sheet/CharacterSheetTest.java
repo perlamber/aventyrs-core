@@ -317,6 +317,20 @@ class CharacterSheetTest {
     }
 
     @Test
+    void gainNonCumulativeTemporaryEgoPointsDoesNotStackOnTopOfAnAlreadyHeldPointFromTheSameSource() {
+        CharacterSheet sheet = newSheet();
+        sheet.gainNonCumulativeTemporaryEgoPoints(EgoDomain.SORTE, "source", 1);
+        assertEquals(1, sheet.gainNonCumulativeTemporaryEgoPoints(EgoDomain.SORTE, "source", 1));
+    }
+
+    @Test
+    void gainNonCumulativeTemporaryEgoPointsFromADifferentSourceStacksOnTopOfAnother() {
+        CharacterSheet sheet = newSheet();
+        sheet.gainNonCumulativeTemporaryEgoPoints(EgoDomain.SORTE, "source-a", 1);
+        assertEquals(2, sheet.gainNonCumulativeTemporaryEgoPoints(EgoDomain.SORTE, "source-b", 1));
+    }
+
+    @Test
     void famaStartsAtZero() {
         CharacterSheet sheet = newSheet();
         assertEquals(0, sheet.getFamaPositiva());

@@ -9,6 +9,8 @@ import org.aventyrs.core.skill.DifficultyLevel;
 import org.aventyrs.core.skill.SkillExcellency;
 import org.aventyrs.core.skill.artes.ArtesExcellency;
 
+import java.util.List;
+
 import lombok.Builder;
 import lombok.Getter;
 
@@ -133,6 +135,22 @@ public class InteractionResult {
 
     /** Which {@link EgoDomain} {@link #egoLossValue} was lost from. */
     EgoDomain egoLossDomain;
+
+    /**
+     * Which Ego domains this roll already granted a non-cumulative temporary point in — e.g.
+     * {@code org.aventyrs.core.ability.CharismaAbility#DESTINO_FAVORAVEL} granting Sorte and
+     * Autocontrole on the roller's own Sucesso Crítico Maior. Unlike {@link
+     * #temporaryBonusValue} (a grant for *someone else* this core can't resolve the recipient
+     * for), this roll's own target is unambiguous, so the grant is already applied directly
+     * via {@link CharacterSheet#gainNonCumulativeTemporaryEgoPoints} (keyed by the granting
+     * ability as its source — see that method) by the time this result is returned; this field
+     * is purely a report of what happened, same as {@link #egoLossValue}/{@link
+     * #egoLossDomain} already are for {@code org.aventyrs.core.effect.Primor}. Always exactly
+     * 1 point per listed domain (no ability needing a different value exists yet). {@code
+     * null} when this Interaction didn't grant any, same stays-{@code
+     * null}-when-not-applicable convention as every other field here.
+     */
+    List<EgoDomain> egoGainDomains;
 
     /**
      * The next Interaction in the Skill -&gt; Damage -&gt; EffectChain -&gt;

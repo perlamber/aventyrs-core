@@ -247,6 +247,23 @@ public class CharacterSheet implements Interactable<CharacterSheet> {
     }
 
     /**
+     * Gains a non-cumulative temporary point in the given Ego, attributed to source — e.g.
+     * {@code org.aventyrs.core.ability.CharismaAbility#DESTINO_FAVORAVEL} (the source) on the
+     * roller's own Sucesso Crítico Maior. Unlike {@link #gainTemporaryEgoPoints}, repeat gains
+     * from that *same* source don't stack a second point on top of one it already granted —
+     * source's own contribution only ever rises to at least {@code amount}. This only caps
+     * that one source's own repeats: a gain from a different source (via this method with a
+     * different source, or a plain {@link #gainTemporaryEgoPoints}) still adds normally on
+     * top, since "non-cumulative" only ever refers to one source stacking with itself. See
+     * {@link TemporaryPointPool#gainNonCumulative}.
+     * @return int total temporary points held in that Ego after the gain
+     */
+    public int gainNonCumulativeTemporaryEgoPoints(EgoDomain domain, Object source, int amount)
+    {
+        return temporaryEgoPoints.get(domain).gainNonCumulative(source, amount);
+    }
+
+    /**
      * Spends temporary points from the given Ego for a small, temporary advantage. Never
      * goes below zero.
      * @return int remaining temporary points held in that Ego after the spend

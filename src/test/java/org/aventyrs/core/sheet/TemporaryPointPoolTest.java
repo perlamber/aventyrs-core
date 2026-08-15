@@ -30,4 +30,36 @@ class TemporaryPointPoolTest {
         pool.gain(2);
         assertEquals(0, pool.spend(10));
     }
+
+    private static final String SOURCE_A = "source-a";
+    private static final String SOURCE_B = "source-b";
+
+    @Test
+    void gainNonCumulativeRaisesAnEmptyPoolToTheGivenAmount() {
+        assertEquals(1, pool.gainNonCumulative(SOURCE_A, 1));
+    }
+
+    @Test
+    void gainNonCumulativeDoesNotStackOnTopOfAnAlreadyHeldPointFromTheSameSource() {
+        pool.gainNonCumulative(SOURCE_A, 1);
+        assertEquals(1, pool.gainNonCumulative(SOURCE_A, 1));
+    }
+
+    @Test
+    void gainNonCumulativeFromADifferentSourceStacksOnTopOfAnotherSourcesContribution() {
+        pool.gainNonCumulative(SOURCE_A, 1);
+        assertEquals(2, pool.gainNonCumulative(SOURCE_B, 1));
+    }
+
+    @Test
+    void gainNonCumulativeDoesNotReduceThatSourcesOwnAlreadyHigherContribution() {
+        pool.gainNonCumulative(SOURCE_A, 2);
+        assertEquals(2, pool.gainNonCumulative(SOURCE_A, 1));
+    }
+
+    @Test
+    void gainNonCumulativeStacksOnTopOfAnUnrelatedPlainGain() {
+        pool.gain(2);
+        assertEquals(3, pool.gainNonCumulative(SOURCE_A, 1));
+    }
 }

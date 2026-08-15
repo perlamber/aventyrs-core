@@ -25,5 +25,15 @@ public enum CriticalResult {
     FALHA_CRITICA_MENOR,
     FALHA_CRITICA_MAIOR,
     ACERTO_CRITICO_MENOR,
-    ACERTO_CRITICO_MAIOR
+    ACERTO_CRITICO_MAIOR;
+
+    /**
+     * Whether this is a critical success (Menor or Maior) rather than a plain roll or a
+     * critical failure — e.g. what {@link AbstractSkillInteraction} gates its {@code
+     * AttributeAbility#resolveCriticalSuccessEgoGain} scan on, so that scan only runs on the
+     * roll outcome it can ever actually apply to.
+     */
+    public boolean isCriticalSuccess() {
+        return this == ACERTO_CRITICO_MENOR || this == ACERTO_CRITICO_MAIOR;
+    }
 }

@@ -1,10 +1,13 @@
 package org.aventyrs.core.skill;
 
+import org.aventyrs.core.ability.AttributeAbility;
+import org.aventyrs.core.ability.CharismaAbility;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.AttributeValue;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterAttributes;
 import org.aventyrs.core.character.CharacterSkill;
+import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.character.fixture.CharacterSkillFixture;
 import org.aventyrs.core.race.Anao;
@@ -31,6 +34,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
@@ -318,5 +322,83 @@ class AbstractSkillInteractionTest {
 
         assertEquals(DifficultyLevel.EASY, plainResult.getReachedDifficultyLevel());
         assertEquals(DifficultyLevel.MEDIUM, expertResult.getReachedDifficultyLevel());
+    }
+
+    private CharacterSheet attentionSheetHoldingAttributeAbility(final AttributeAbility... abilities) {
+        Character.CharacterBuilder builder = CharacterFixture.blank(CharacterFixture.BLANK);
+        for (AttributeAbility ability : abilities) {
+            builder.attributeAbility(ability);
+        }
+        return CharacterSheet.of(builder.build(), new Player());
+    }
+
+    /**
+     * {@code CharismaAbility#DESTINO_FAVORAVEL}'s reactive half: a Sucesso Crítico Maior
+     * (three 6s) on any Perícia roll directly grants a non-cumulative temporary point in
+     * Sorte and Autocontrole (the roll's own target is unambiguous, unlike DOM_BARDICO's
+     * ally-scoped bonus, so this is applied immediately rather than merely reported) and
+     * reports the granted domains on {@code egoGainDomains} — exercised generically, through
+     * {@link AttentionInteraction}, since this is computed once in {@code
+     * AbstractSkillInteraction} for every skill, not per-Interaction.
+     */
+    @Test
+    void applyToGrantsAndReportsEgoGainDomainsOnDestinoFavoravelMajorCriticalSuccess() {
+        CharacterSheet sheet = attentionSheetHoldingAttributeAbility(CharismaAbility.DESTINO_FAVORAVEL);
+        SkillRoll skillRoll = new SkillRoll(List.of(6, 6, 6));
+
+        InteractionResult result = new AttentionInteraction().applyTo(sheet, null, skillRoll);
+
+        assertEquals(List.of(EgoDomain.SORTE, EgoDomain.AUTOCONTROLE), result.getEgoGainDomains());
+        assertEquals(1, sheet.getTemporaryEgoPoints(EgoDomain.SORTE));
+        assertEquals(1, sheet.getTemporaryEgoPoints(EgoDomain.AUTOCONTROLE));
+    }
+
+    @Test
+    void applyToRepeatedDestinoFavoravelTriggersDoNotStackPastOnePoint() {
+        CharacterSheet sheet = attentionSheetHoldingAttributeAbility(CharismaAbility.DESTINO_FAVORAVEL);
+        SkillRoll skillRoll = new SkillRoll(List.of(6, 6, 6));
+        AttentionInteraction attentionInteraction = new AttentionInteraction();
+
+        attentionInteraction.applyTo(sheet, null, skillRoll);
+        attentionInteraction.applyTo(sheet, null, skillRoll);
+
+        assertEquals(1, sheet.getTemporaryEgoPoints(EgoDomain.SORTE));
+        assertEquals(1, sheet.getTemporaryEgoPoints(EgoDomain.AUTOCONTROLE));
+    }
+
+    /**
+     * DESTINO_FAVORAVEL's own "não cumulativo" grant only caps *its own* repeat triggers —
+     * see {@code TemporaryPointPool#gainNonCumulative}. Sorte points already held from an
+     * unrelated source aren't clamped down by it, and still add on top normally.
+     */
+    @Test
+    void applyToDestinoFavoravelStacksOnTopOfSortePointsFromAnUnrelatedSource() {
+        CharacterSheet sheet = attentionSheetHoldingAttributeAbility(CharismaAbility.DESTINO_FAVORAVEL);
+        sheet.gainTemporaryEgoPoints(EgoDomain.SORTE, 2);
+        SkillRoll skillRoll = new SkillRoll(List.of(6, 6, 6));
+
+        new AttentionInteraction().applyTo(sheet, null, skillRoll);
+
+        assertEquals(3, sheet.getTemporaryEgoPoints(EgoDomain.SORTE));
+    }
+
+    @Test
+    void applyToLeavesEgoGainDomainsNullOnANonCriticalRoll() {
+        CharacterSheet sheet = attentionSheetHoldingAttributeAbility(CharismaAbility.DESTINO_FAVORAVEL);
+        SkillRoll skillRoll = new SkillRoll(List.of(3, 4, 5));
+
+        InteractionResult result = new AttentionInteraction().applyTo(sheet, null, skillRoll);
+
+        assertNull(result.getEgoGainDomains());
+    }
+
+    @Test
+    void applyToLeavesEgoGainDomainsNullWithoutDestinoFavoravelEvenOnMajorCriticalSuccess() {
+        CharacterSheet sheet = attentionSheetHoldingAttributeAbility();
+        SkillRoll skillRoll = new SkillRoll(List.of(6, 6, 6));
+
+        InteractionResult result = new AttentionInteraction().applyTo(sheet, null, skillRoll);
+
+        assertNull(result.getEgoGainDomains());
     }
 }
