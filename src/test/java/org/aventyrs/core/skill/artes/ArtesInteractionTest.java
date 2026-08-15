@@ -124,7 +124,7 @@ class ArtesInteractionTest {
         CharacterSheet sheet = sheetWithCharismaAndSkill(2, artesSkill);
         sheet.grantTemporaryBonus(ModifierType.SKILL_ROLL_BONUS, 3, 1);
 
-        sheet.tickTemporaryBonuses();
+        sheet.tickTemporaryEffects();
         InteractionResult result = artesInteraction.applyTo(sheet);
 
         assertEquals(3, result.getSkillRollBonus());

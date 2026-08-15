@@ -62,8 +62,15 @@ public class CharacterSheet implements Interactable<CharacterSheet> {
 
     private int famaNegativa = 0;
 
+    /**
+     * Every {@link TemporaryEffect} (a {@link TemporaryBonus} or a {@link Bleeding}) this
+     * CharacterSheet is currently holding — one shared list, since both count down in
+     * Rodadas the same way and must be ticked together (see {@link
+     * #tickTemporaryEffects()}) rather than risking a double-decrement from two separate
+     * tick methods walking the same kind of state independently.
+     */
     @Getter(AccessLevel.NONE)
-    private final List<TemporaryBonus> temporaryBonuses = new ArrayList<>();
+    private final List<TemporaryEffect> temporaryEffects = new ArrayList<>();
 
     private static Map<EgoDomain, TemporaryPointPool> newTemporaryEgoPointsPools() {
         Map<EgoDomain, TemporaryPointPool> pools = new EnumMap<>(EgoDomain.class);
@@ -145,11 +152,18 @@ public class CharacterSheet implements Interactable<CharacterSheet> {
     }
 
     /**
-     * Heals accumulated damage — the same recovery a Rest applies to PV.
+     * Heals accumulated damage — the same recovery a Rest applies to PV. Also interrupts
+     * every active {@link Bleeding} (Sangramento's own rules text: "Efeitos de cura
+     * interrompem a perda de PV por rodada") — the immediate PV Sangramento already dealt
+     * stays lost; only the ongoing per-Rodada loss stops.
      * @return int remaining damage accumulated
      */
     public int heal(int amount)
     {
+        if (amount > 0)
+        {
+            temporaryEffects.removeIf(effect -> effect instanceof Bleeding);
+        }
         return hitPoints.recover(amount);
     }
 
@@ -253,6 +267,19 @@ public class CharacterSheet implements Interactable<CharacterSheet> {
     }
 
     /**
+     * Registers a {@link TemporaryEffect} — a {@link TemporaryBonus} (e.g. {@code
+     * ArtesCompetencyAbility#DOM_BARDICO} motivating an ally) or a {@link Bleeding} (e.g.
+     * {@code org.aventyrs.core.effect.Sangramento}), or any future kind alike. Doesn't
+     * apply any immediate effect itself — e.g. Sangramento's own immediate PV loss is
+     * applied directly via {@link #applyDamage(int)} before this is called for its
+     * ongoing half.
+     */
+    public void applyEffect(final TemporaryEffect effect)
+    {
+        temporaryEffects.add(effect);
+    }
+
+    /**
      * Grants a {@link TemporaryBonus} of type — e.g. {@code ArtesCompetencyAbility
      * #DOM_BARDICO} motivating an ally, granting them (not the caster) a
      * {@link ModifierType#SKILL_ROLL_BONUS} for a few Rodadas. The granting Character isn't
@@ -262,7 +289,7 @@ public class CharacterSheet implements Interactable<CharacterSheet> {
      */
     public int grantTemporaryBonus(final ModifierType type, final int value, final int rounds)
     {
-        temporaryBonuses.add(new TemporaryBonus(type, value, rounds));
+        applyEffect(new TemporaryBonus(type, value, rounds));
         return getTemporaryBonus(type);
     }
 
@@ -274,7 +301,9 @@ public class CharacterSheet implements Interactable<CharacterSheet> {
      */
     public int getTemporaryBonus(final ModifierType type)
     {
-        return temporaryBonuses.stream()
+        return temporaryEffects.stream()
+                .filter(effect -> effect instanceof TemporaryBonus)
+                .map(effect -> (TemporaryBonus) effect)
                 .filter(bonus -> !bonus.isExpired())
                 .filter(bonus -> bonus.getType() == type)
                 .mapToInt(TemporaryBonus::getValue)
@@ -282,15 +311,48 @@ public class CharacterSheet implements Interactable<CharacterSheet> {
     }
 
     /**
-     * Counts every held {@link TemporaryBonus} down by one Rodada and discards any that
-     * expire as a result. Not called automatically by anything yet — {@link
-     * org.aventyrs.core.scene.Scene} doesn't have a "turn shifter" that advances every
-     * participant's CharacterSheet on a Round completing; once it does, this is the method
-     * it's expected to call on each one.
+     * Advances every held {@link TemporaryEffect} by one Rodada: applies each active
+     * {@link Bleeding}'s per-Rodada PV loss (via {@link #applyDamage(int)}), then counts
+     * every effect — Bleeding and {@link TemporaryBonus} alike — down and discards any
+     * that expire as a result. This is a single method over the shared {@link
+     * #temporaryEffects} list rather than one per effect kind, since ticking each kind
+     * separately would decrement the other kind's Rodadas too every time either was
+     * called.
+     * @return int total PV lost to Bleeding this tick
      */
-    public void tickTemporaryBonuses()
+    public int tickTemporaryEffects()
     {
-        temporaryBonuses.forEach(TemporaryBonus::tick);
-        temporaryBonuses.removeIf(TemporaryBonus::isExpired);
+        int totalBleedingDamageThisTick = temporaryEffects.stream()
+                .filter(effect -> effect instanceof Bleeding)
+                .map(effect -> (Bleeding) effect)
+                .mapToInt(Bleeding::getValuePerRound)
+                .sum();
+        temporaryEffects.stream()
+                .filter(effect -> effect instanceof Bleeding)
+                .map(effect -> (Bleeding) effect)
+                .forEach(bleeding -> applyDamage(bleeding.getValuePerRound()));
+        temporaryEffects.forEach(TemporaryEffect::tick);
+        temporaryEffects.removeIf(TemporaryEffect::isExpired);
+        return totalBleedingDamageThisTick;
+    }
+
+    /**
+     * Ends this CharacterSheet's own Turn — everything that needs to happen once this
+     * Turn is over. Currently just advances its {@link TemporaryEffect}s by one Rodada
+     * (via {@link #tickTemporaryEffects()}); each participant only has one Turn per
+     * Rodada, so ticking once per that participant's own Turn ending is exactly "once per
+     * Rodada" from this CharacterSheet's perspective. Expected to grow further as more
+     * per-Turn bookkeeping is added (e.g. resetting per-Turn resources) — {@code void}
+     * rather than reporting any one of those pieces (like Bleeding's own PV loss) back to
+     * the caller, since it's meant to be a single catch-all end-of-Turn hook, not a
+     * one-off computation. Not called automatically by anything yet — {@link
+     * org.aventyrs.core.scene.Scene} doesn't have a "turn shifter" that calls this on the
+     * participant whose Turn just ended as it advances to the next one (see {@link
+     * org.aventyrs.core.scene.Scene#next()}); once it does, this is the method it's
+     * expected to call.
+     */
+    public void finishTurn()
+    {
+        tickTemporaryEffects();
     }
 }

@@ -8,6 +8,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -54,6 +55,70 @@ class CharacterSheetTest {
         CharacterSheet sheet = newSheet();
         sheet.applyDamage(5);
         assertEquals(0, sheet.heal(10));
+    }
+
+    @Test
+    void newlyCreatedCharacterSheetHasNoBleeding() {
+        CharacterSheet sheet = newSheet();
+
+        assertEquals(0, sheet.tickTemporaryEffects());
+    }
+
+    @Test
+    void tickTemporaryEffectsAppliesThePerRoundBleedingDamage() {
+        CharacterSheet sheet = newSheet();
+        sheet.applyEffect(new Bleeding(1, Optional.of(3)));
+
+        assertEquals(1, sheet.tickTemporaryEffects());
+        assertEquals(1, sheet.getDamageTaken());
+    }
+
+    @Test
+    void tickTemporaryEffectsRemovesAFiniteBleedingOnceItsRoundsRunOut() {
+        CharacterSheet sheet = newSheet();
+        sheet.applyEffect(new Bleeding(1, Optional.of(2)));
+
+        sheet.tickTemporaryEffects();
+        sheet.tickTemporaryEffects();
+        int damageAfterExpiry = sheet.getDamageTaken();
+        sheet.tickTemporaryEffects();
+
+        assertEquals(2, damageAfterExpiry);
+        assertEquals(damageAfterExpiry, sheet.getDamageTaken());
+    }
+
+    @Test
+    void tickTemporaryEffectsNeverExpiresAnOpenEndedBleeding() {
+        CharacterSheet sheet = newSheet();
+        sheet.applyEffect(new Bleeding(1, Optional.empty()));
+
+        for (int round = 0; round < 20; round++) {
+            sheet.tickTemporaryEffects();
+        }
+
+        assertEquals(20, sheet.getDamageTaken());
+    }
+
+    @Test
+    void healingInterruptsActiveBleedingButKeepsAlreadyDealtDamage() {
+        CharacterSheet sheet = newSheet();
+        sheet.applyDamage(2);
+        sheet.applyEffect(new Bleeding(1, Optional.of(3)));
+
+        sheet.heal(1);
+        sheet.tickTemporaryEffects();
+
+        assertEquals(1, sheet.getDamageTaken());
+    }
+
+    @Test
+    void healingWithZeroAmountDoesNotInterruptActiveBleeding() {
+        CharacterSheet sheet = newSheet();
+        sheet.applyEffect(new Bleeding(1, Optional.of(3)));
+
+        sheet.heal(0);
+
+        assertEquals(1, sheet.tickTemporaryEffects());
     }
 
     @Test
@@ -231,34 +296,72 @@ class CharacterSheetTest {
     }
 
     @Test
-    void tickTemporaryBonusesCountsDownWithoutExpiringBeforeItsLastRound() {
+    void tickTemporaryEffectsCountsDownABonusWithoutExpiringBeforeItsLastRound() {
         CharacterSheet sheet = newSheet();
         sheet.grantTemporaryBonus(ModifierType.SKILL_ROLL_BONUS, 3, 2);
 
-        sheet.tickTemporaryBonuses();
+        sheet.tickTemporaryEffects();
 
         assertEquals(3, sheet.getTemporaryBonus(ModifierType.SKILL_ROLL_BONUS));
     }
 
     @Test
-    void tickTemporaryBonusesRemovesABonusOnceItsRoundsRunOut() {
+    void tickTemporaryEffectsRemovesABonusOnceItsRoundsRunOut() {
         CharacterSheet sheet = newSheet();
         sheet.grantTemporaryBonus(ModifierType.SKILL_ROLL_BONUS, 3, 2);
 
-        sheet.tickTemporaryBonuses();
-        sheet.tickTemporaryBonuses();
+        sheet.tickTemporaryEffects();
+        sheet.tickTemporaryEffects();
 
         assertEquals(0, sheet.getTemporaryBonus(ModifierType.SKILL_ROLL_BONUS));
     }
 
     @Test
-    void tickTemporaryBonusesOnlyExpiresBonusesWhoseRoundsAreUp() {
+    void tickTemporaryEffectsOnlyExpiresBonusesWhoseRoundsAreUp() {
         CharacterSheet sheet = newSheet();
         sheet.grantTemporaryBonus(ModifierType.SKILL_ROLL_BONUS, 1, 1);
         sheet.grantTemporaryBonus(ModifierType.SKILL_ROLL_BONUS, 2, 3);
 
-        sheet.tickTemporaryBonuses();
+        sheet.tickTemporaryEffects();
 
         assertEquals(2, sheet.getTemporaryBonus(ModifierType.SKILL_ROLL_BONUS));
+    }
+
+    @Test
+    void tickTemporaryEffectsAdvancesABonusAndABleedingByExactlyOneRoundEach() {
+        CharacterSheet sheet = newSheet();
+        sheet.grantTemporaryBonus(ModifierType.SKILL_ROLL_BONUS, 3, 2);
+        sheet.applyEffect(new Bleeding(1, Optional.of(2)));
+
+        sheet.tickTemporaryEffects();
+
+        assertEquals(3, sheet.getTemporaryBonus(ModifierType.SKILL_ROLL_BONUS));
+        assertEquals(1, sheet.getDamageTaken());
+        assertEquals(1, sheet.tickTemporaryEffects());
+        assertEquals(0, sheet.getTemporaryBonus(ModifierType.SKILL_ROLL_BONUS));
+        assertEquals(2, sheet.getDamageTaken());
+    }
+
+    @Test
+    void applyEffectAcceptsAnyKindOfTemporaryEffect() {
+        CharacterSheet sheet = newSheet();
+
+        sheet.applyEffect(new TemporaryBonus(ModifierType.SKILL_ROLL_BONUS, 3, 1));
+        sheet.applyEffect(new Bleeding(1, Optional.of(1)));
+
+        assertEquals(3, sheet.getTemporaryBonus(ModifierType.SKILL_ROLL_BONUS));
+        assertEquals(1, sheet.tickTemporaryEffects());
+    }
+
+    @Test
+    void finishTurnAdvancesTemporaryEffectsByOneRodada() {
+        CharacterSheet sheet = newSheet();
+        sheet.grantTemporaryBonus(ModifierType.SKILL_ROLL_BONUS, 3, 1);
+        sheet.applyEffect(new Bleeding(1, Optional.of(1)));
+
+        sheet.finishTurn();
+
+        assertEquals(0, sheet.getTemporaryBonus(ModifierType.SKILL_ROLL_BONUS));
+        assertEquals(1, sheet.getDamageTaken());
     }
 }

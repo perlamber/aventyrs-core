@@ -14,27 +14,17 @@ import org.aventyrs.core.modifier.ModifierType;
  *
  * <p>Counts down in Rodadas rather than storing an absolute expiry Round number, matching how
  * abilities like DOM_BARDICO describe their own duration ("por 1 Rodada", "por 2 Rodadas") —
- * see {@link CharacterSheet#tickTemporaryBonuses()} for how the countdown advances.
+ * see {@link TemporaryEffect}, its shared superclass with {@link Bleeding}, and {@link
+ * CharacterSheet#tickTemporaryEffects()} for how the countdown advances.
  */
 @Getter
-public class TemporaryBonus {
+public class TemporaryBonus extends TemporaryEffect {
     private final ModifierType type;
     private final int value;
-    private int remainingRounds;
 
     public TemporaryBonus(final ModifierType type, final int value, final int remainingRounds) {
+        super(remainingRounds);
         this.type = type;
         this.value = value;
-        this.remainingRounds = remainingRounds;
-    }
-
-    /** True once this bonus has no Rodadas left — it no longer applies and should be discarded. */
-    public boolean isExpired() {
-        return remainingRounds <= 0;
-    }
-
-    /** Counts down one Rodada; see {@link CharacterSheet#tickTemporaryBonuses()}. */
-    void tick() {
-        remainingRounds--;
     }
 }

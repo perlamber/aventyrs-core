@@ -41,8 +41,11 @@
  * interfaces — each extends {@code Interaction<CharacterSheet>} so a concrete
  * implementation plugs into {@code receiveInteraction} with zero other code touched,
  * the same zero-touch guarantee every concrete {@code <Skill>Interaction} already
- * relies on — but have no concrete implementation yet. Several abilities/races are
- * already blocked on this becoming real: {@code
+ * relies on. {@link org.aventyrs.core.effect.Sangramento} is the first concrete {@code
+ * CriticalEffect} — an immediate PV loss (mirroring {@code DamageInteraction}) plus an
+ * ongoing per-Rodada {@link org.aventyrs.core.sheet.Bleeding}, interrupted by healing.
+ * {@link org.aventyrs.core.effect.EffectChain} still has no concrete implementation.
+ * Several abilities/races are still blocked on that becoming real: {@code
  * org.aventyrs.core.ego.AutocontroleAdvantage#RESOLUTO} (a Defesas-comparison threshold
  * on a Corrente de Efeitos — the Defesas system itself is also still missing), {@code
  * org.aventyrs.core.skill.artes.ArtesCompetencyAbility#DISPARO_RICOCHETE}, {@code
@@ -76,7 +79,8 @@
  * <p>This core still never rolls dice, never decides whether an attack landed, and
  * never detects a critical on its own — same boundary as {@link org.aventyrs.core.skill}
  * (see that package's own "What this library computes" section). A caller supplies
- * {@code rawDamage} already resolved, and would likewise supply whichever concrete
- * {@code EffectChain}/{@code CriticalEffect} instance applies once those exist.
+ * {@code rawDamage} already resolved, and likewise decides when a critical actually
+ * landed and constructs the matching {@code Sangramento} (or a future {@code
+ * EffectChain} instance) itself — this core never triggers one on its own.
  */
 package org.aventyrs.core.effect;
