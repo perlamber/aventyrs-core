@@ -198,6 +198,54 @@ class CharacterSheetTest {
     }
 
     @Test
+    void tickTemporaryEffectsAppliesThePerRoundWitheringDamageAsCurseDamage() {
+        CharacterSheet sheet = newSheet();
+        sheet.addShield(10);
+        sheet.applyEffect(new Withering(1, Optional.of(3)));
+
+        sheet.tickTemporaryEffects();
+
+        assertEquals(1, sheet.getDamageTaken());
+        assertEquals(10, sheet.getShieldPoints());
+    }
+
+    @Test
+    void tickTemporaryEffectsRemovesAFiniteWitheringOnceItsRoundsRunOut() {
+        CharacterSheet sheet = newSheet();
+        sheet.applyEffect(new Withering(1, Optional.of(2)));
+
+        sheet.tickTemporaryEffects();
+        sheet.tickTemporaryEffects();
+        int damageAfterExpiry = sheet.getDamageTaken();
+        sheet.tickTemporaryEffects();
+
+        assertEquals(2, damageAfterExpiry);
+        assertEquals(damageAfterExpiry, sheet.getDamageTaken());
+    }
+
+    @Test
+    void applyEffectReplacesAnExistingWitheringInsteadOfStackingIt() {
+        CharacterSheet sheet = newSheet();
+        sheet.applyEffect(new Withering(1, Optional.of(1)));
+        sheet.applyEffect(new Withering(1, Optional.of(5)));
+
+        sheet.tickTemporaryEffects();
+
+        assertEquals(1, sheet.getDamageTaken());
+    }
+
+    @Test
+    void applyEffectStillLetsCumulativeEffectsLikeBleedingStack() {
+        CharacterSheet sheet = newSheet();
+        sheet.applyEffect(new Bleeding(1, Optional.of(1)));
+        sheet.applyEffect(new Bleeding(1, Optional.of(1)));
+
+        sheet.tickTemporaryEffects();
+
+        assertEquals(2, sheet.getDamageTaken());
+    }
+
+    @Test
     void shieldPointsAccumulate() {
         CharacterSheet sheet = newSheet();
         sheet.addShield(3);

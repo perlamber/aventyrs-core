@@ -16,6 +16,12 @@ import lombok.Getter;
  * <p>{@code remainingRounds} is {@code null} for an open-ended effect — one that never
  * expires from ticking alone (see {@link Bleeding}'s own javadoc for why Sangramento
  * Maior needs this). Every {@link TemporaryBonus} always has a concrete count.
+ *
+ * <p>{@link #isCumulative()} governs whether more than one instance of a given concrete
+ * kind can be active on the same {@link CharacterSheet} at once — true by default, since
+ * neither {@link Bleeding} nor {@link ManaDrain}'s own rules text says otherwise (repeated
+ * critical hits are expected to stack). {@link Withering} (Definhar's own ongoing curse
+ * damage) is the first to override it, per its rules text's explicit "não cumulativo".
  */
 @Getter
 public abstract class TemporaryEffect {
@@ -28,6 +34,17 @@ public abstract class TemporaryEffect {
     /** True once a finite effect has no Rodadas left — an open-ended one never expires this way. */
     public boolean isExpired() {
         return remainingRounds != null && remainingRounds <= 0;
+    }
+
+    /**
+     * Whether more than one instance of this concrete kind can be active on the same
+     * CharacterSheet at once. True by default; override to return false for an effect
+     * whose own rules text is explicitly "não cumulativo" — {@link
+     * CharacterSheet#applyEffect} then replaces any existing instance of the same
+     * concrete type instead of adding another.
+     */
+    boolean isCumulative() {
+        return true;
     }
 
     /** Counts down one Rodada; a no-op for an open-ended effect. */

@@ -316,9 +316,18 @@ public class CharacterSheet implements Interactable<CharacterSheet> {
      * apply any immediate effect itself — e.g. Sangramento's own immediate PV loss is
      * applied directly via {@link #applyDamage(int)} before this is called for its
      * ongoing half.
+     *
+     * <p>When {@code effect.isCumulative()} is false (e.g. {@link Withering}, from
+     * {@code org.aventyrs.core.effect.Definhar}), any existing instance of the same
+     * concrete type is removed first — reapplying replaces it (a fresh duration/value)
+     * rather than stacking a second one alongside it.
      */
     public void applyEffect(final TemporaryEffect effect)
     {
+        if (!effect.isCumulative())
+        {
+            temporaryEffects.removeIf(existing -> existing.getClass() == effect.getClass());
+        }
         temporaryEffects.add(effect);
     }
 
