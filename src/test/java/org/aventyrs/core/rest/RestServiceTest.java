@@ -1,5 +1,6 @@
 package org.aventyrs.core.rest;
 
+import org.aventyrs.core.ability.FocusAbility;
 import org.aventyrs.core.action.ActionProfile;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.AttributeValue;
@@ -85,6 +86,26 @@ class RestServiceTest {
         restService.applyRest(character, sheet, RestType.LONGO);
 
         assertEquals(0, sheet.getDamageTaken());
+    }
+
+    @Test
+    void canalizadorDeManaGrantsTwoExtraMagicPointsOnLongoOrBetterRests() {
+        Character character = exampleCharacter().toBuilder()
+                .attributeAbility(FocusAbility.CANALIZADOR_DE_MANA)
+                .build();
+
+        assertEquals(4, restService.getRecoveredMagicPoints(character, RestType.LONGO));
+        assertEquals(5, restService.getRecoveredMagicPoints(character, RestType.TOTAL));
+    }
+
+    @Test
+    void canalizadorDeManaGrantsNoBonusBelowLongoRests() {
+        Character character = exampleCharacter().toBuilder()
+                .attributeAbility(FocusAbility.CANALIZADOR_DE_MANA)
+                .build();
+
+        assertEquals(1, restService.getRecoveredMagicPoints(character, RestType.CURTO));
+        assertEquals(0, restService.getRecoveredMagicPoints(character, RestType.MINIMO));
     }
 
     @Test

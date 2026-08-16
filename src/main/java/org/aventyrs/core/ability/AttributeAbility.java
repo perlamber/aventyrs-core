@@ -1,8 +1,11 @@
 package org.aventyrs.core.ability;
 
 import org.aventyrs.core.character.AttributeDomain;
+import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.EgoDomain;
+import org.aventyrs.core.rest.RestType;
 import org.aventyrs.core.skill.CriticalResult;
+import org.aventyrs.core.skill.SkillType;
 
 import java.util.List;
 import java.util.Optional;
@@ -51,5 +54,44 @@ public interface AttributeAbility {
      */
     default Optional<ActiveAbility> resolveActiveAbility() {
         return Optional.empty();
+    }
+
+    /**
+     * Every {@link SkillType} this ability still owes the holder a {@code
+     * SkillCompetencyAbility} <b>and</b> a {@code SkillSpecialization} choice for, given
+     * character's currently trained Perícias — e.g. {@link CharismaAbility#CHARME}'s own
+     * "pick one of each per trained Carisma Perícia." Empty by default; only override on a
+     * constant whose rules text requires the player to pick a {@code SkillCompetencyAbility}/
+     * {@code SkillSpecialization} pair for one or more Perícias at acquisition time. Unlike
+     * {@link #resolvePermanentEgoGain}/{@link #resolveActiveAbility}, this needs
+     * {@code character} itself — which Perícias are owed a choice depends on which ones are
+     * currently trained, not fixed per constant.
+     *
+     * <p>Reported by {@code
+     * org.aventyrs.core.character.services.AttributeAbilityService#grantAttributeAbility} via
+     * {@code AttributeAbilityGrantResult#getPendingSkillTraitChoices()} — a caller (an API/UI
+     * layer) is expected to resolve each one, once the player picks, via {@code
+     * AttributeAbilityService#grantSkillTraitChoice} separately; this method itself never
+     * mutates anything.
+     */
+    default List<SkillType> resolvePendingSkillTraitChoices(Character character) {
+        return List.of();
+    }
+
+    /**
+     * Extra PM a Rest of restType recovers on top of {@code RestService}'s own Foco-times-
+     * multiplier calculation — e.g. {@link FocusAbility#CANALIZADOR_DE_MANA}'s "Descansos
+     * Verdadeiros Longos ou superiores permitem que você recupere +2PM adicionais." Zero by
+     * default; only override on a constant whose rules text grants a Rest-tier-conditioned PM
+     * bonus like this. Takes restType explicitly (rather than being a reflection-invoked
+     * {@code @Modifier} method) because the bonus is conditioned on *which* Rest tier is being
+     * applied, which a no-arg method has no way to see — same reasoning as {@code
+     * SkillCompetencyAbility#resolveDamageBonus}/{@code #resolveAttackRollBonus} needing their
+     * own explicit parameters instead of {@code @Modifier}. Summed by {@code
+     * org.aventyrs.core.rest.RestService#getRecoveredMagicPoints} across {@code
+     * Character#getAttributeAbilities()}.
+     */
+    default int resolveRestMagicPointsBonus(RestType restType) {
+        return 0;
     }
 }

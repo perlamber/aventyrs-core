@@ -12,7 +12,10 @@ public class RestServiceImpl implements RestService {
 
     @Override
     public int getRecoveredMagicPoints(final Character character, final RestType restType) {
-        return recovered(character.getAttributes().getFocus().getTotal(), restType);
+        int bonus = character.getAttributeAbilities().stream()
+                .mapToInt(ability -> ability.resolveRestMagicPointsBonus(restType))
+                .sum();
+        return recovered(character.getAttributes().getFocus().getTotal(), restType) + bonus;
     }
 
     @Override

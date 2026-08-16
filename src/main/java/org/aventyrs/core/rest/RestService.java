@@ -7,7 +7,12 @@ public interface RestService {
     /** PV recovered: Vigor's total value times the Rest's Attribute multiplier. */
     int getRecoveredHitPoints(Character character, RestType restType);
 
-    /** PM recovered: Foco's total value times the Rest's Attribute multiplier. */
+    /**
+     * PM recovered: Foco's total value times the Rest's Attribute multiplier, plus any
+     * {@link org.aventyrs.core.ability.AttributeAbility#resolveRestMagicPointsBonus} bonus
+     * (e.g. {@code FocusAbility#CANALIZADOR_DE_MANA}'s own +2PM on Longo/Total Rests) across
+     * {@code character.getAttributeAbilities()}.
+     */
     int getRecoveredMagicPoints(Character character, RestType restType);
 
     /** PD recovered: Instinto's total value times the Rest's Attribute multiplier. */

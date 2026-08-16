@@ -16,4 +16,9 @@ public enum RestType {
     TOTAL(3.0);
 
     private final double attributeMultiplier;
+
+    /** Whether this Rest is minimum or stronger — e.g. "Descanso Longo ou superior". */
+    public boolean isAtLeast(final RestType minimum) {
+        return this.ordinal() >= minimum.ordinal();
+    }
 }

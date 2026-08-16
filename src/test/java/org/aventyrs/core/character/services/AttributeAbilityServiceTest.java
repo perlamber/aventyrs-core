@@ -8,13 +8,20 @@ import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.AttributeValue;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterAttributes;
-import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.character.fixture.CharacterFixture;
+import org.aventyrs.core.character.fixture.CharacterSkillFixture;
 import org.aventyrs.core.sheet.IllegalOperationException;
+import org.aventyrs.core.skill.SkillType;
+import org.aventyrs.core.skill.artes.ArtesCompetencyAbility;
+import org.aventyrs.core.skill.artes.ArtesSpecialization;
+import org.aventyrs.core.skill.persuasao.PersuasaoCompetencyAbility;
+import org.aventyrs.core.skill.persuasao.PersuasaoSpecialization;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -28,6 +35,7 @@ class AttributeAbilityServiceTest {
     @BeforeEach
     void setup() {
         CharacterFixture.loadTemplates();
+        CharacterSkillFixture.loadTemplates();
     }
 
     private Character characterWithCharismaBase(final int base) {
@@ -95,7 +103,7 @@ class AttributeAbilityServiceTest {
     void grantAttributeAbilityAddsItToAttributeAbilities() {
         Character character = characterWithCharismaBase(3);
 
-        Character granted = abilityService.grantAttributeAbility(character, CharismaAbility.VOZ_DE_OURO);
+        Character granted = abilityService.grantAttributeAbility(character, CharismaAbility.VOZ_DE_OURO).getCharacter();
 
         assertTrue(granted.getAttributeAbilities().contains(CharismaAbility.VOZ_DE_OURO));
     }
@@ -104,7 +112,7 @@ class AttributeAbilityServiceTest {
     void grantAttributeAbilityAppliesDestinoFavoravelsPermanentSortePoint() {
         Character character = characterWithCharismaBase(3);
 
-        Character granted = abilityService.grantAttributeAbility(character, CharismaAbility.DESTINO_FAVORAVEL);
+        Character granted = abilityService.grantAttributeAbility(character, CharismaAbility.DESTINO_FAVORAVEL).getCharacter();
 
         assertEquals(1, granted.getEgos().getSorte().getVariable());
         assertEquals(0, granted.getEgos().getAutocontrole().getVariable());
@@ -116,7 +124,7 @@ class AttributeAbilityServiceTest {
     void grantAttributeAbilityLeavesEgosUnchangedForAnAbilityWithNoPermanentGain() {
         Character character = characterWithCharismaBase(3);
 
-        Character granted = abilityService.grantAttributeAbility(character, CharismaAbility.VOZ_DE_OURO);
+        Character granted = abilityService.grantAttributeAbility(character, CharismaAbility.VOZ_DE_OURO).getCharacter();
 
         assertEquals(character.getEgos().getSorte().getVariable(), granted.getEgos().getSorte().getVariable());
     }
@@ -143,7 +151,7 @@ class AttributeAbilityServiceTest {
     void grantAttributeAbilityAddsConcentracaoProfundasActiveAbility() {
         Character character = characterWithFocusBase(3);
 
-        Character granted = abilityService.grantAttributeAbility(character, FocusAbility.CONCENTRACAO_PROFUNDA);
+        Character granted = abilityService.grantAttributeAbility(character, FocusAbility.CONCENTRACAO_PROFUNDA).getCharacter();
 
         assertEquals(1, granted.getActiveAbilities().size());
         assertTrue(granted.getActiveAbilities().get(0) instanceof ConcentracaoProfundaActiveAbility);
@@ -153,8 +161,75 @@ class AttributeAbilityServiceTest {
     void grantAttributeAbilityLeavesActiveAbilitiesEmptyForAnAbilityWithNoneToGrant() {
         Character character = characterWithCharismaBase(3);
 
-        Character granted = abilityService.grantAttributeAbility(character, CharismaAbility.VOZ_DE_OURO);
+        Character granted = abilityService.grantAttributeAbility(character, CharismaAbility.VOZ_DE_OURO).getCharacter();
 
         assertTrue(granted.getActiveAbilities().isEmpty());
+    }
+
+    @Test
+    void grantAttributeAbilityForCharmeReturnsPendingChoicesForTrainedCarismaSkillsOnly() {
+        Character character = characterWithCharismaBase(3).toBuilder()
+                .skills(Map.of(
+                        SkillType.ARTES, CharacterSkillFixture.blank(CharacterSkillFixture.ARTES_1).build(),
+                        SkillType.PERSUASAO, CharacterSkillFixture.blank(CharacterSkillFixture.PERSUASAO_1).build(),
+                        SkillType.ATLETISMO, CharacterSkillFixture.blank(CharacterSkillFixture.ATLETISMO_1).build()))
+                .build();
+
+        AttributeAbilityGrantResult result = abilityService.grantAttributeAbility(character, CharismaAbility.CHARME);
+
+        assertEquals(Set.of(SkillType.ARTES, SkillType.PERSUASAO), Set.copyOf(result.getPendingSkillTraitChoices()));
+    }
+
+    @Test
+    void grantAttributeAbilityReturnsEmptyPendingChoicesForAnAbilityThatDoesntNeedThem() {
+        Character character = characterWithCharismaBase(3);
+
+        AttributeAbilityGrantResult result = abilityService.grantAttributeAbility(character, CharismaAbility.VOZ_DE_OURO);
+
+        assertTrue(result.getPendingSkillTraitChoices().isEmpty());
+    }
+
+    @Test
+    void grantSkillTraitChoiceAddsBothTraitsToTheTrainedSkill() {
+        Character character = characterWithCharismaBase(3).toBuilder()
+                .skills(Map.of(SkillType.ARTES, CharacterSkillFixture.blank(CharacterSkillFixture.ARTES_1).build()))
+                .build();
+
+        Character granted = abilityService.grantSkillTraitChoice(character, SkillType.ARTES,
+                ArtesCompetencyAbility.DOM_BARDICO, ArtesSpecialization.MUSICA);
+
+        assertTrue(granted.getSkillCompetencyAbilities().contains(ArtesCompetencyAbility.DOM_BARDICO));
+        assertTrue(granted.getSkills().get(SkillType.ARTES).getSpecializations().contains(ArtesSpecialization.MUSICA));
+    }
+
+    @Test
+    void grantSkillTraitChoiceRejectsAnUntrainedSkillType() {
+        Character character = characterWithCharismaBase(3);
+
+        assertThrows(IllegalOperationException.class,
+                () -> abilityService.grantSkillTraitChoice(character, SkillType.ARTES,
+                        ArtesCompetencyAbility.DOM_BARDICO, ArtesSpecialization.MUSICA));
+    }
+
+    @Test
+    void grantSkillTraitChoiceRejectsACompetencyAbilityFromAnotherSkillType() {
+        Character character = characterWithCharismaBase(3).toBuilder()
+                .skills(Map.of(SkillType.ARTES, CharacterSkillFixture.blank(CharacterSkillFixture.ARTES_1).build()))
+                .build();
+
+        assertThrows(IllegalOperationException.class,
+                () -> abilityService.grantSkillTraitChoice(character, SkillType.ARTES,
+                        PersuasaoCompetencyAbility.SEDUTOR, ArtesSpecialization.MUSICA));
+    }
+
+    @Test
+    void grantSkillTraitChoiceRejectsASpecializationFromAnotherSkillType() {
+        Character character = characterWithCharismaBase(3).toBuilder()
+                .skills(Map.of(SkillType.ARTES, CharacterSkillFixture.blank(CharacterSkillFixture.ARTES_1).build()))
+                .build();
+
+        assertThrows(IllegalOperationException.class,
+                () -> abilityService.grantSkillTraitChoice(character, SkillType.ARTES,
+                        ArtesCompetencyAbility.DOM_BARDICO, PersuasaoSpecialization.NEGOCIACAO));
     }
 }
