@@ -15,7 +15,7 @@ import org.aventyrs.core.action.ActionProfile;
 import org.aventyrs.core.character.services.FreeActionsService;
 import org.aventyrs.core.character.services.MagicPointsService;
 import org.aventyrs.core.character.services.ReactionsService;
-import org.aventyrs.core.ego.AutocontroleAdvantage;
+import org.aventyrs.core.ego.EgoAdvantage;
 import org.aventyrs.core.race.Race;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.Player;
@@ -54,14 +54,14 @@ public class Character {
      * The character's sex — e.g. {@code PersuasaoCompetencyAbility#SEDUTOR}'s "personagens do
      * sexo oposto". No default and not {@code @NonNull}: unlike {@link #race}/{@link #name},
      * nothing in this core currently requires every {@code Character} to name one, so it
-     * stays {@code null} unless set, same as {@link #autocontroleAdvantage}.
+     * stays {@code null} unless set.
      */
     protected Sexo sexo;
 
     /**
      * The deity (if any) this character is devoted to. No default and not {@code @NonNull},
-     * same as {@link #sexo}/{@link #autocontroleAdvantage} — nothing in this core currently
-     * requires every {@code Character} to name one.
+     * same as {@link #sexo} — nothing in this core currently requires every {@code Character}
+     * to name one.
      */
     protected Deity deity;
 
@@ -82,12 +82,18 @@ public class Character {
     protected CharacterEgos egos;
 
     /**
-     * The Vantagem de Autocontrole chosen at creation, or {@code null} if the character
-     * either wasn't eligible (see
-     * {@link org.aventyrs.core.character.services.CharacterCreationService#isAutocontroleAdvantageAvailable})
-     * or chose not to pick one.
+     * The Vantagem de Ego chosen at creation for each {@link EgoDomain} whose eligibility
+     * threshold was reached (see {@link
+     * org.aventyrs.core.character.services.CharacterCreationService#isEgoAdvantageAvailable}),
+     * keyed by domain for O(1) lookup — mirrors {@link #skills}' shape rather than growing one
+     * more nullable field per domain (an earlier version had separate {@code
+     * autocontroleAdvantage}/{@code initiativeAdvantage} fields; a domain with no eligible or
+     * chosen Vantagem is simply absent from this map, not a {@code null} value inside it). Use
+     * {@link #getEgoAdvantage(EgoDomain)} rather than indexing this map directly.
      */
-    protected AutocontroleAdvantage autocontroleAdvantage;
+    @NonNull
+    @Singular
+    protected Map<EgoDomain, EgoAdvantage> egoAdvantages;
 
     /** Trained Perícias, keyed by {@link SkillType} for O(1) lookup instead of filtering a list. */
     @NonNull
@@ -185,6 +191,15 @@ public class Character {
      */
     @Builder.Default
     protected int manaMultiplier = MagicPointsService.DEFAULT_MANA_MULTIPLIER;
+
+    /**
+     * The Vantagem de Ego chosen for domain, or {@code null} if none was chosen (or the
+     * character was never eligible) for that domain — mirrors {@link CharacterEgos#getEgo}'s
+     * shape for the {@link #egoAdvantages} map.
+     */
+    public EgoAdvantage getEgoAdvantage(final EgoDomain domain) {
+        return egoAdvantages.get(domain);
+    }
 
     public enum Sexo {
         MASCULINO,

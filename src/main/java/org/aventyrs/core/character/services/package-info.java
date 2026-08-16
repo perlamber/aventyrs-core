@@ -25,11 +25,16 @@
  *       {@link org.aventyrs.core.character.EgoDomain}s (every Ego starts at
  *       {@value org.aventyrs.core.character.services.CharacterCreationService#STARTING_EGO_POINTS}),
  *       returning a {@link org.aventyrs.core.character.CharacterEgos}.</li>
- *   <li><b>Vantagem de Autocontrole (conditional)</b> — if
- *       {@link org.aventyrs.core.character.services.CharacterCreationService#isAutocontroleAdvantageAvailable}
- *       is {@code true} for the {@code CharacterEgos} from step 3, the player may choose one
- *       {@link org.aventyrs.core.ego.AutocontroleAdvantage}; otherwise this stays {@code null}.
- *       This eligibility can never be reached later — see that method's javadoc.</li>
+ *   <li><b>Vantagens de Ego (conditional, one check per domain with a catalog)</b> — for each
+ *       {@link org.aventyrs.core.character.EgoDomain} that has one (today: {@code AUTOCONTROLE}'s
+ *       {@link org.aventyrs.core.ego.AutocontroleAdvantage}, {@code INICIATIVA}'s {@link
+ *       org.aventyrs.core.ego.InitiativeAdvantage}), if {@link
+ *       org.aventyrs.core.character.services.CharacterCreationService#isEgoAdvantageAvailable}
+ *       is {@code true} for that domain against the {@code CharacterEgos} from step 3, the
+ *       player may choose one constant from that domain's catalog; a domain the player didn't
+ *       reach the threshold for (or that has no catalog yet) simply stays absent from {@link
+ *       org.aventyrs.core.character.Character#getEgoAdvantage}. This eligibility can never be
+ *       reached later — see that method's javadoc.</li>
  *   <li><b>Pick a {@link org.aventyrs.core.action.ActionProfile}</b> — one of the six, chosen
  *       once and permanent.</li>
  *   <li><b>Assemble the {@code Character}</b> via {@link org.aventyrs.core.character.Character#builder()},
@@ -40,7 +45,7 @@
  *       sensible {@code @Builder.Default} and rarely needs overriding at creation. {@code
  *       sexo} ({@link org.aventyrs.core.character.Character.Sexo}) is the one exception with
  *       no default at all — {@code null} unless set, since no eligibility/validation logic
- *       for it exists here (unlike, say, step 4's Autocontrole).</li>
+ *       for it exists here (unlike, say, step 4's Vantagens de Ego).</li>
  * </ol>
  *
  * <pre>{@code
@@ -63,8 +68,11 @@
  *         .egos(egos)
  *         .actionProfile(ActionProfile.REFLEXOS_RAPIDOS);
  *
- * if (creation.isAutocontroleAdvantageAvailable(egos)) {
- *     builder.autocontroleAdvantage(AutocontroleAdvantage.RESOLUTO); // player's choice
+ * if (creation.isEgoAdvantageAvailable(EgoDomain.AUTOCONTROLE, egos)) {
+ *     builder.egoAdvantage(EgoDomain.AUTOCONTROLE, AutocontroleAdvantage.RESOLUTO); // player's choice
+ * }
+ * if (creation.isEgoAdvantageAvailable(EgoDomain.INICIATIVA, egos)) {
+ *     builder.egoAdvantage(EgoDomain.INICIATIVA, InitiativeAdvantage.IMPETO); // player's choice
  * }
  *
  * Character character = builder.build();

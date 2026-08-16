@@ -173,12 +173,22 @@ class CharacterCreationServiceTest {
                 () -> creationService.allocateEgos(Map.of(EgoDomain.SORTE, 2, EgoDomain.RECURSOS, -1)));
     }
 
+    /**
+     * {@code isEgoAdvantageAvailable} is one generic method for every {@link EgoDomain} —
+     * exercised here against every domain in turn (not just AUTOCONTROLE/INICIATIVA, the only
+     * two with a catalog today) to prove the {@value CharacterCreationService#EGO_ADVANTAGE_MIN_BASE}
+     * threshold itself is genuinely shared, not coincidentally equal across two separate
+     * per-domain methods.
+     */
     @Test
-    void autocontroleAdvantageIsAvailableOnlyWhenTheExtraPointWentToAutocontrole() throws IllegalOperationException {
-        CharacterEgos withAutocontroleBonus = creationService.allocateEgos(Map.of(EgoDomain.AUTOCONTROLE, 1));
-        CharacterEgos withoutAutocontroleBonus = creationService.allocateEgos(Map.of(EgoDomain.SORTE, 1));
+    void egoAdvantageIsAvailableOnlyForTheDomainTheExtraPointWentTo() throws IllegalOperationException {
+        for (EgoDomain domainWithTheExtraPoint : EgoDomain.values()) {
+            CharacterEgos egos = creationService.allocateEgos(Map.of(domainWithTheExtraPoint, 1));
 
-        assertTrue(creationService.isAutocontroleAdvantageAvailable(withAutocontroleBonus));
-        assertFalse(creationService.isAutocontroleAdvantageAvailable(withoutAutocontroleBonus));
+            for (EgoDomain checkedDomain : EgoDomain.values()) {
+                assertEquals(checkedDomain == domainWithTheExtraPoint,
+                        creationService.isEgoAdvantageAvailable(checkedDomain, egos));
+            }
+        }
     }
 }

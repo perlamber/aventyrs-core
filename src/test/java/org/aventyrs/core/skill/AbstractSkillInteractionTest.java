@@ -10,6 +10,7 @@ import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.character.fixture.CharacterSkillFixture;
+import org.aventyrs.core.ego.InitiativeAdvantage;
 import org.aventyrs.core.race.Anao;
 import org.aventyrs.core.race.AnoesRacialAbility;
 import org.aventyrs.core.race.Elfo;
@@ -400,5 +401,85 @@ class AbstractSkillInteractionTest {
         InteractionResult result = new AttentionInteraction().applyTo(sheet, null, skillRoll);
 
         assertNull(result.getEgoGainDomains());
+    }
+
+    private CharacterSheet sheetHoldingImpeto() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .egoAdvantage(EgoDomain.INICIATIVA, InitiativeAdvantage.IMPETO)
+                .build();
+        return CharacterSheet.of(character, new Player());
+    }
+
+    private SceneContext combatContext(final int currentRound, final boolean wonInitiative) {
+        return new SceneContext(List.of(), List.of(), Map.of(), null, true, currentRound, wonInitiative);
+    }
+
+    /**
+     * {@code EgoAdvantage#resolveConditionalRollBonus} (e.g. {@code InitiativeAdvantage#IMPETO})
+     * is summed generically for *every* skill via {@code AbstractSkillInteraction
+     * #sumEgoAdvantageRollBonuses} — exercised here through plain {@link AttentionInteraction},
+     * a skill wholly unrelated to Iniciativa, to prove it reaches the real {@code
+     * skillRollBonus} sum rather than just IMPETO's own isolated {@code
+     * resolveConditionalRollBonus} call (see {@code InitiativeAdvantageTest} for that
+     * unit-level coverage).
+     */
+    @Test
+    void applyToAddsImpetosVantagemToAnySkillRollDuringTheFirstTwoRoundsOfACombatScene() {
+        CharacterSheet sheet = sheetHoldingImpeto();
+
+        InteractionResult roundOne = new AttentionInteraction().applyTo(sheet, combatContext(1, false));
+        InteractionResult roundTwo = new AttentionInteraction().applyTo(sheet, combatContext(2, false));
+
+        // Instinto base(1, untouched default) + UNTRAINED_PENALTY(-2) + IMPETO's Vantagem(2) = 1.
+        assertEquals(1, roundOne.getSkillRollBonus());
+        assertEquals(1, roundTwo.getSkillRollBonus());
+    }
+
+    @Test
+    void applyToOmitsImpetosVantagemPastTheFirstTwoRoundsOrOutsideACombatScene() {
+        CharacterSheet sheet = sheetHoldingImpeto();
+        SceneContext nonCombat = new SceneContext(List.of(), List.of(), Map.of(), null, false, 1, false);
+
+        InteractionResult roundThree = new AttentionInteraction().applyTo(sheet, combatContext(3, false));
+        InteractionResult outsideCombat = new AttentionInteraction().applyTo(sheet, nonCombat);
+        InteractionResult noContext = new AttentionInteraction().applyTo(sheet);
+
+        assertEquals(-1, roundThree.getSkillRollBonus());
+        assertEquals(-1, outsideCombat.getSkillRollBonus());
+        assertEquals(-1, noContext.getSkillRollBonus());
+    }
+
+    /**
+     * {@code EgoAdvantage#resolveDamageBonus} is resolved generically for every attack-skill
+     * roll — exercised here through {@link AtaqueCorpoACorpoInteraction} specifically (not
+     * Ataque à Distância) to prove IMPETO's dano bonus reaches Ataque Corpo a Corpo too, unlike
+     * {@code AtaqueADistanciaCompetencyAbility#FRIEZA}'s own dano bonus, which CLAUDE.md notes
+     * is still unwired for melee.
+     */
+    @Test
+    void applyToAddsImpetosDamageBonusOnAnAttackSkillRollWhenInitiativeWasWon() {
+        CharacterSheet sheet = sheetHoldingImpeto();
+
+        InteractionResult result = new AtaqueCorpoACorpoInteraction().applyTo(sheet, combatContext(1, true));
+
+        assertEquals(Skill.ADVANTAGE_BONUS, result.getDamageBonus().getValue());
+    }
+
+    @Test
+    void applyToOmitsImpetosDamageBonusWhenInitiativeWasNotWon() {
+        CharacterSheet sheet = sheetHoldingImpeto();
+
+        InteractionResult result = new AtaqueCorpoACorpoInteraction().applyTo(sheet, combatContext(1, false));
+
+        assertNull(result.getDamageBonus());
+    }
+
+    @Test
+    void applyToOmitsImpetosDamageBonusForANonAttackSkillEvenWhenInitiativeWasWon() {
+        CharacterSheet sheet = sheetHoldingImpeto();
+
+        InteractionResult result = new AttentionInteraction().applyTo(sheet, combatContext(1, true));
+
+        assertNull(result.getDamageBonus());
     }
 }

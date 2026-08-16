@@ -165,4 +165,51 @@ class SceneContextTest {
 
         assertFalse(context.isTerrain(TerrainType.MOUNTAIN, TerrainType.CAVE));
     }
+
+    @Test
+    void combatSceneCurrentRoundAndWonInitiativeDefaultToNonCombatWhenBuiltFromTheShorterConstructors() {
+        SceneContext threeArg = new SceneContext(List.of(), List.of(), Map.of());
+        SceneContext fourArg = new SceneContext(List.of(), List.of(), Map.of(), TerrainType.CAVE);
+
+        assertFalse(threeArg.isCombatScene());
+        assertEquals(0, threeArg.getCurrentRound());
+        assertFalse(threeArg.hasWonInitiative());
+        assertFalse(fourArg.isCombatScene());
+        assertEquals(0, fourArg.getCurrentRound());
+        assertFalse(fourArg.hasWonInitiative());
+    }
+
+    @Test
+    void sevenArgConstructorCarriesCombatSceneCurrentRoundAndWonInitiative() {
+        SceneContext context = new SceneContext(List.of(), List.of(), Map.of(), null, true, 1, true);
+
+        assertTrue(context.isCombatScene());
+        assertEquals(1, context.getCurrentRound());
+        assertTrue(context.hasWonInitiative());
+    }
+
+    @Test
+    void isWithinFirstCombatRoundsIsFalseOutsideACombatScene() {
+        SceneContext context = new SceneContext(List.of(), List.of(), Map.of(), null, false, 1, false);
+
+        assertFalse(context.isWithinFirstCombatRounds(2));
+    }
+
+    @Test
+    void isWithinFirstCombatRoundsExcludesRoundZero() {
+        SceneContext context = new SceneContext(List.of(), List.of(), Map.of(), null, true, 0, false);
+
+        assertFalse(context.isWithinFirstCombatRounds(2));
+    }
+
+    @Test
+    void isWithinFirstCombatRoundsIsTrueForRoundsOneThroughRoundCount() {
+        SceneContext roundOne = new SceneContext(List.of(), List.of(), Map.of(), null, true, 1, false);
+        SceneContext roundTwo = new SceneContext(List.of(), List.of(), Map.of(), null, true, 2, false);
+        SceneContext roundThree = new SceneContext(List.of(), List.of(), Map.of(), null, true, 3, false);
+
+        assertTrue(roundOne.isWithinFirstCombatRounds(2));
+        assertTrue(roundTwo.isWithinFirstCombatRounds(2));
+        assertFalse(roundThree.isWithinFirstCombatRounds(2));
+    }
 }

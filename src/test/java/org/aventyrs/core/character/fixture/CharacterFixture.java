@@ -89,7 +89,7 @@ public class CharacterFixture extends SimpleFixture {
                 this.add("tendencia", 1);
                 this.add("attributes", CharacterAttributes.builder().build());
                 this.add("egos", CharacterEgos.builder().build());
-                this.add("autocontroleAdvantage", null);
+                this.add("egoAdvantages", Map.of());
                 this.add("skills", Map.of());
                 this.add("attributeAbilities", List.of());
                 this.add("activeAbilities", List.of());
@@ -133,7 +133,7 @@ public class CharacterFixture extends SimpleFixture {
                         .instinct(AttributeValue.builder().domain(AttributeDomain.INSTINCT).base(5).variable(6).build())
                         .build());
                 this.add("egos", CharacterEgos.builder().build());
-                this.add("autocontroleAdvantage", null);
+                this.add("egoAdvantages", Map.of());
                 this.add("skills", Map.of(
                         SkillType.ATAQUE_CORPO_A_CORPO, skillWithGraduation(new AtaqueCorpoACorpo(), 1),
                         SkillType.ATLETISMO, skillWithGraduation(new Atletismo(), 2),

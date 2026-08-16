@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -31,6 +32,14 @@ import static org.aventyrs.core.util.TranslatableMessages.NO_PARTICIPANTS_IN_SCE
  * {@link #setTerrainType} once the party's actual surroundings are known. {@link #buildContext}
  * carries it into the {@link SceneContext} snapshot handed to an {@code Interaction}, e.g. for
  * {@code AnoesRacialAbility#FILHOS_DA_MONTANHA}.
+ *
+ * <p>{@link #combatScene} is the other predicted bit of Scene-scoped state, now real: {@code
+ * false} until a caller sets it via {@link #setCombatScene} once combat actually breaks out —
+ * a Cena starts as a plain Cena and only becomes a Cena de Combate at that point, matching how
+ * rules text like {@code InitiativeAdvantage#IMPETO}'s "nas duas primeiras Rodadas de cada Cena
+ * de Combate" only applies once one has begun. Paired with {@link #getCurrentRound()} via
+ * {@link SceneContext#isWithinFirstCombatRounds}, and with {@link #wonInitiative} for whichever
+ * Vantagens further condition themselves on having won initiative.
  */
 public class Scene {
     private final List<InitiativeEntry> activeEntries = new ArrayList<>();
@@ -39,6 +48,7 @@ public class Scene {
     private int currentIndex = -1;
     private int currentRound = 0;
     private TerrainType terrainType;
+    private boolean combatScene;
 
     /**
      * Adds a CharacterSheet with its rolled initiative value, in a sub-group of its own —
@@ -115,7 +125,8 @@ public class Scene {
      * @throws IllegalOperationException if characterSheet was never added to this Scene
      */
     public SceneContext buildContext(final CharacterSheet characterSheet, final Map<CharacterSheet, Range> distances) {
-        return new SceneContext(getAllies(characterSheet), getEnemies(characterSheet), distances, terrainType);
+        return new SceneContext(getAllies(characterSheet), getEnemies(characterSheet), distances, terrainType,
+                combatScene, currentRound, wonInitiative(characterSheet));
     }
 
     /** The kind of environment this Scene is currently taking place in, or {@code null} if never set. */
@@ -126,6 +137,42 @@ public class Scene {
     /** Sets this Scene's current terrain — e.g. once the party actually enters a cave. */
     public void setTerrainType(final TerrainType terrainType) {
         this.terrainType = terrainType;
+    }
+
+    /** Whether this Scene is currently a Cena de Combate. {@code false} until a caller sets it. */
+    public boolean isCombatScene() {
+        return combatScene;
+    }
+
+    /** Sets whether this Scene is currently a Cena de Combate — e.g. once combat actually breaks out. */
+    public void setCombatScene(final boolean combatScene) {
+        this.combatScene = combatScene;
+    }
+
+    /**
+     * Whether characterSheet's sub-group currently holds this Scene's own highest rolled
+     * Iniciativa — "ganhou a iniciativa," the condition several Vantagens de Iniciativa key
+     * off (e.g. {@code InitiativeAdvantage#IMPETO}). A sub-group's own Iniciativa "value" is
+     * the highest individual {@link InitiativeEntry#getInitiativeValue()} among its members —
+     * matching how a party typically acts as a block on whichever single member rolled best —
+     * compared against every other sub-group's own highest value; a tie for the overall
+     * highest is considered a win for every sub-group sharing it, since the rules text this
+     * models names no tie-breaker.
+     * @throws IllegalOperationException if characterSheet was never added to this Scene
+     */
+    public boolean wonInitiative(final CharacterSheet characterSheet) {
+        UUID group = groupOf(characterSheet);
+        int groupBest = bestInitiativeValue(entry -> entry.getGroup().equals(group));
+        int overallBest = bestInitiativeValue(entry -> true);
+        return groupBest >= overallBest;
+    }
+
+    private int bestInitiativeValue(final Predicate<InitiativeEntry> filter) {
+        return allEntries()
+                .filter(filter)
+                .mapToInt(InitiativeEntry::getInitiativeValue)
+                .max()
+                .orElseThrow(() -> new IllegalOperationException(NO_PARTICIPANTS_IN_SCENE));
     }
 
     private UUID groupOf(final CharacterSheet characterSheet) {

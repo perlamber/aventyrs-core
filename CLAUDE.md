@@ -702,6 +702,96 @@ already-resolved by a caller, same as `InitiativeEntry`'s own `initiativeValue` 
   ability needing this shape has turned up in the ruleset yet; when one does, follow that
   test's shape rather than the boolean `hasAllyWithin`/`hasEnemyWithin` one.
 
+## Vantagens de Ego are unified on `Character#egoAdvantages`, and can condition a bonus on `SceneContext`
+
+A Vantagem de Ego (e.g. `AutocontroleAdvantage`, `InitiativeAdvantage`) is chosen once at
+character creation, gated on that `EgoDomain`'s creation-time `base` reaching
+`CharacterCreationService.EGO_ADVANTAGE_MIN_BASE` (3) — the same threshold for every domain,
+checked via the single generic `isEgoAdvantageAvailable(EgoDomain, CharacterEgos)` rather than
+a separate `isXAdvantageAvailable` method per domain (an earlier version had exactly that —
+`isAutocontroleAdvantageAvailable`/`isInitiativeAdvantageAvailable`, and two matching
+`_MIN_BASE` constants — before the threshold was confirmed identical across domains; don't
+reintroduce a per-domain method/constant pair for a future domain's catalog unless its
+threshold is ever confirmed to genuinely differ from 3). `Character` stores every domain's
+choice in a
+single `@Singular Map<EgoDomain, EgoAdvantage> egoAdvantages` — **not** one nullable field per
+domain (an earlier version had separate `autocontroleAdvantage`/`initiativeAdvantage` fields;
+that stopped scaling once a second domain's catalog needed generic scanning, see below). A
+domain with no eligible or chosen Vantagem is simply absent from the map, never a `null` value
+inside it. Read one back via `Character#getEgoAdvantage(EgoDomain)` (mirrors
+`CharacterEgos#getEgo`), and set one on the builder via the `@Singular`-generated
+`.egoAdvantage(EgoDomain, EgoAdvantage)` (mirrors `.skill(SkillType, CharacterSkill)`) — never
+index `egoAdvantages` directly outside those two spots.
+
+`EgoAdvantage` carries two `default` hooks alongside `getEgoDomain()`/`getDescription()`,
+mirroring `SkillCompetencyAbility`'s own `resolveConditionalRollBonus`/`resolveDamageBonus`
+shape (same reason: this data isn't reflection-discoverable via a no-arg `@Modifier` method) —
+but summed generically across **every** skill rather than needing a per-skill `TemporaryBonus`-
+style ModifierType, since a Vantagem de Ego was never tied to one Perícia to begin with:
+
+- `default Optional<Integer> resolveConditionalRollBonus(SceneContext sceneContext)` — a bonus
+  toward *any* Perícia roll, summed by `AbstractSkillInteraction#sumEgoAdvantageRollBonuses`
+  into `skillRollBonus` for every skill's own `applyTo`, the same additive convention every
+  other `skillRollBonus` source already uses.
+- `default Optional<DamageBonus> resolveDamageBonus(SceneContext sceneContext)` — a bonus
+  toward a dano roll, resolved by `AbstractSkillInteraction` itself (not a skill-specific
+  Interaction) whenever `skillType.isAttackSkill()`, via
+  `#resolveEgoAdvantageDamageBonus` — first non-empty wins, same "only one bonus expected to
+  apply per roll" convention as `SkillCompetencyAbility#resolveDamageBonus`. Unlike that
+  method's own wiring (only reachable through `AtaqueADistanciaInteraction`'s special 4-arg
+  `applyTo(..., CharacterSheet attackTarget)`, since `FRIEZA`'s proximity condition needs the
+  real target — melee stays unwired for it, per the "Racial Abilities reuse
+  SkillCompetencyAbility" section above), an `EgoAdvantage`'s own `resolveDamageBonus` needs no
+  `attackTarget`, so it's resolved for both Ataque à Distância *and* Ataque Corpo a Corpo for
+  free, straight off the plain `applyTo(target, sceneContext)` overload.
+
+Both default to `Optional.empty()`; only override on a constant whose rules text actually
+grants a bonus scoped to per-roll `SceneContext` facts. `InitiativeAdvantage.IMPETO` is the
+first (and, as of this writing, only) constant overriding either — see the next section for
+what it needed `SceneContext` itself to grow first.
+
+### Cena de Combate, Rounds, and "ganhou a iniciativa" — `Scene`/`SceneContext`
+
+`IMPETO`'s own rules text ("nas duas primeiras Rodadas de cada Cena de Combate," "se tiver
+ganho a iniciativa") needed three facts `SceneContext` didn't carry before: whether the Scene
+is currently a Cena de Combate, which Round it's on, and whether the acting Character's own
+sub-group won initiative. All three are resolved once, by `Scene`, and carried into the
+snapshot the same already-resolved way `allies`/`enemies`/`distances`/`terrainType` already
+are — this class still never queries a live `Scene` at bonus-resolution time.
+
+- `Scene.combatScene` (`isCombatScene()`/`setCombatScene(boolean)`) is the "whether it's a
+  Cena de Combate" state this class's own javadoc predicted back when `terrainType` was added.
+  `false` until a caller flips it once combat actually breaks out — a Cena starts as a plain
+  Cena, same as `terrainType` starts `null`/unset.
+- `Scene.wonInitiative(CharacterSheet)` resolves "ganhou a iniciativa" at the sub-group level,
+  not per-individual: a sub-group's own Iniciativa "value" is the highest individual
+  `InitiativeEntry#getInitiativeValue()` among its members (matching how a party typically
+  acts as a block on whichever member rolled best), compared against every *other* sub-group's
+  own highest value. A tie for the overall highest is a win for every sub-group sharing it —
+  the rules text this models names no tie-breaker, so don't invent one.
+- `Scene#buildContext` now also resolves `combatScene`/`getCurrentRound()`/`wonInitiative(...)`
+  into the `SceneContext` it builds, alongside the pre-existing allies/enemies/distances/
+  terrain. A caller building a `SceneContext` directly (most tests, or no live `Scene` at all)
+  gets non-combat defaults (`false`/`0`/`false`) from the shorter constructors instead — the
+  same cascading-delegation shape `terrainType` already established.
+- `SceneContext.isWithinFirstCombatRounds(int roundCount)` is the shared round-window
+  primitive every "duas primeiras Rodadas de cada Cena de Combate"-style Vantagem needs (not
+  just `IMPETO` — `InitiativeAdvantage.POSICIONAMENTO_ESTRATEGICO`/`TORRE_EM_MOVIMENTO` use the
+  identical window in their own still-TODO'd rules text), so it lives here once rather than
+  duplicated per ability. **Round 0 never counts as one of these** — it's `Scene`'s own
+  "before anyone has acted yet" starting value (see `Scene#getCurrentRound()`'s own javadoc),
+  not a real first Round of combat, so eligibility starts at Round 1: `roundCount=2` covers
+  Rounds 1 and 2, not 0 and 1. This is a deliberate reading of the rules text's Round
+  numbering, not something the text spells out explicitly — worth rechecking if a future
+  ability's own text seems to assume the window starts at Round 0 instead.
+
+Building this mechanism doesn't retroactively finish `POSICIONAMENTO_ESTRATEGICO`/
+`TORRE_EM_MOVIMENTO` — both still cite a *different* missing system each (no movement/
+Reação-suppression mechanism or Movimento Base stat for the former; `DamageService` taking no
+`SceneContext` at all for the latter, so its RA/`HALF_DAMAGE` summation still can't be scoped
+to specific Rounds). Check each constant's own TODO rather than assuming `SceneContext`'s new
+fields alone unblock it.
+
 ## Races live in `org.aventyrs.core.race`, not `org.aventyrs.core.character`
 
 `Race` and every implementation (`Human`, `Anao`, `Elfos`, `Gigantes`, `Pequenino`, `Gnomos`,

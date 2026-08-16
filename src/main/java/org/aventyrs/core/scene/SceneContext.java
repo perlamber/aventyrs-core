@@ -29,12 +29,22 @@ import java.util.Map;
  * class doesn't infer it, {@link Scene#buildContext} just carries {@link Scene#getTerrainType()}
  * along. {@code null} means "terrain unset/not tracked" — every {@link #isTerrain} check is
  * {@code false} in that case, not an error.
+ *
+ * <p>{@code combatScene}/{@code currentRound}/{@code wonInitiative} are the same kind of
+ * already-resolved snapshot too, carried in by {@link Scene#buildContext} from {@link
+ * Scene#isCombatScene()}/{@link Scene#getCurrentRound()}/{@link Scene#wonInitiative} — the
+ * facts {@code EgoAdvantage#resolveConditionalRollBonus}/{@code #resolveDamageBonus} (e.g.
+ * {@code InitiativeAdvantage#IMPETO}) need to condition a bonus on "the first two Rounds of a
+ * Cena de Combate" and/or "the character won initiative."
  */
 public class SceneContext {
     private final List<CharacterSheet> allies;
     private final List<CharacterSheet> enemies;
     private final Map<CharacterSheet, Range> distances;
     private final TerrainType terrainType;
+    private final boolean combatScene;
+    private final int currentRound;
+    private final boolean wonInitiative;
 
     public SceneContext(final List<CharacterSheet> allies, final List<CharacterSheet> enemies, final Map<CharacterSheet, Range> distances) {
         this(allies, enemies, distances, null);
@@ -42,10 +52,25 @@ public class SceneContext {
 
     /** Same as the 3-arg constructor, but also carrying the Scene's current {@code terrainType}. */
     public SceneContext(final List<CharacterSheet> allies, final List<CharacterSheet> enemies, final Map<CharacterSheet, Range> distances, final TerrainType terrainType) {
+        this(allies, enemies, distances, terrainType, false, 0, false);
+    }
+
+    /**
+     * Same as the 4-arg constructor, but also carrying combatScene/currentRound/wonInitiative
+     * — see {@link Scene#buildContext} for the common case of resolving these from a live
+     * {@link Scene}. A caller building a {@code SceneContext} directly (e.g. a test, or no
+     * active Scene at all) that doesn't care about these gets sensible non-combat defaults
+     * from the shorter constructors instead.
+     */
+    public SceneContext(final List<CharacterSheet> allies, final List<CharacterSheet> enemies, final Map<CharacterSheet, Range> distances,
+                         final TerrainType terrainType, final boolean combatScene, final int currentRound, final boolean wonInitiative) {
         this.allies = allies;
         this.enemies = enemies;
         this.distances = distances;
         this.terrainType = terrainType;
+        this.combatScene = combatScene;
+        this.currentRound = currentRound;
+        this.wonInitiative = wonInitiative;
     }
 
     public List<CharacterSheet> getAllies() {
@@ -103,5 +128,33 @@ public class SceneContext {
      */
     public boolean isTerrain(final TerrainType... anyOf) {
         return terrainType != null && Arrays.asList(anyOf).contains(terrainType);
+    }
+
+    /** Whether this Scene is currently a Cena de Combate. */
+    public boolean isCombatScene() {
+        return combatScene;
+    }
+
+    /** Which Round this Scene is currently on — see {@link Scene#getCurrentRound()}. */
+    public int getCurrentRound() {
+        return currentRound;
+    }
+
+    /** Whether the acting Character's own sub-group won initiative — see {@link Scene#wonInitiative}. */
+    public boolean hasWonInitiative() {
+        return wonInitiative;
+    }
+
+    /**
+     * Whether this is a Cena de Combate currently in one of its first roundCount real
+     * Rounds — e.g. {@code InitiativeAdvantage#IMPETO}'s "nas duas primeiras Rodadas de cada
+     * Cena de Combate" is {@code isWithinFirstCombatRounds(2)}. Round 0 is {@link Scene}'s own
+     * "before anyone has acted yet" starting value (see {@link Scene#getCurrentRound()}'s own
+     * javadoc) and never counts as one of these — eligibility starts at Round 1, so {@code
+     * roundCount=2} covers Rounds 1 and 2, not 0 and 1. Always {@code false} outside a Cena de
+     * Combate, regardless of {@code currentRound}.
+     */
+    public boolean isWithinFirstCombatRounds(final int roundCount) {
+        return combatScene && currentRound >= 1 && currentRound <= roundCount;
     }
 }

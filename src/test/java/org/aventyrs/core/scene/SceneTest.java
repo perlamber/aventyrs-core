@@ -14,6 +14,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -289,5 +290,90 @@ class SceneTest {
         SceneContext context = scene.buildContext(actor, Map.of());
 
         assertEquals(TerrainType.MOUNTAIN, context.getTerrainType());
+    }
+
+    @Test
+    void combatSceneIsFalseByDefault() {
+        Scene scene = new Scene();
+        assertFalse(scene.isCombatScene());
+    }
+
+    @Test
+    void combatSceneCanBeSetAndRead() {
+        Scene scene = new Scene();
+        scene.setCombatScene(true);
+
+        assertTrue(scene.isCombatScene());
+    }
+
+    @Test
+    void buildContextCarriesCombatSceneAndCurrentRoundIntoTheSnapshot() {
+        Scene scene = new Scene();
+        scene.setCombatScene(true);
+        CharacterSheet a = newSheet();
+        CharacterSheet b = newSheet();
+        scene.addParticipant(a, 10);
+        scene.addParticipant(b, 5);
+        scene.next();
+        scene.next();
+        scene.next();
+
+        SceneContext context = scene.buildContext(a, Map.of());
+
+        assertTrue(context.isCombatScene());
+        assertEquals(1, context.getCurrentRound());
+    }
+
+    @Test
+    void wonInitiativeIsTrueForTheGroupHoldingTheHighestValue() {
+        Scene scene = new Scene();
+        UUID heroes = UUID.randomUUID();
+        UUID villains = UUID.randomUUID();
+        CharacterSheet fastHero = newSheet();
+        CharacterSheet slowHero = newSheet();
+        CharacterSheet villain = newSheet();
+        scene.addParticipant(fastHero, 18, heroes);
+        scene.addParticipant(slowHero, 5, heroes);
+        scene.addParticipant(villain, 11, villains);
+
+        assertTrue(scene.wonInitiative(fastHero));
+        assertTrue(scene.wonInitiative(slowHero));
+        assertFalse(scene.wonInitiative(villain));
+    }
+
+    @Test
+    void wonInitiativeIsTrueForEveryGroupTiedForTheHighestValue() {
+        Scene scene = new Scene();
+        UUID heroes = UUID.randomUUID();
+        UUID villains = UUID.randomUUID();
+        CharacterSheet hero = newSheet();
+        CharacterSheet villain = newSheet();
+        scene.addParticipant(hero, 10, heroes);
+        scene.addParticipant(villain, 10, villains);
+
+        assertTrue(scene.wonInitiative(hero));
+        assertTrue(scene.wonInitiative(villain));
+    }
+
+    @Test
+    void wonInitiativeThrowsForACharacterSheetNeverAddedToTheScene() {
+        Scene scene = new Scene();
+        CharacterSheet stranger = newSheet();
+
+        assertThrows(IllegalOperationException.class, () -> scene.wonInitiative(stranger));
+    }
+
+    @Test
+    void buildContextCarriesWonInitiativeIntoTheSnapshot() {
+        Scene scene = new Scene();
+        UUID heroes = UUID.randomUUID();
+        UUID villains = UUID.randomUUID();
+        CharacterSheet hero = newSheet();
+        CharacterSheet villain = newSheet();
+        scene.addParticipant(hero, 18, heroes);
+        scene.addParticipant(villain, 5, villains);
+
+        assertTrue(scene.buildContext(hero, Map.of()).hasWonInitiative());
+        assertFalse(scene.buildContext(villain, Map.of()).hasWonInitiative());
     }
 }

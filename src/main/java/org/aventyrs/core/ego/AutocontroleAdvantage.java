@@ -6,12 +6,12 @@ import org.aventyrs.core.character.EgoDomain;
 
 /**
  * The Vantagem de Autocontrole chosen once at character creation — available only to
- * characters whose Autocontrole base reached 3 through the creation-time point
- * distribution (see
- * {@link org.aventyrs.core.character.services.CharacterCreationService#isAutocontroleAdvantageAvailable}).
- * Reaching base 3 any other way (Talentos, Títulos Aventyrs, other Habilidades) never
- * grants access to this choice, and it is never lost if Autocontrole later drops to 2 or
- * below.
+ * characters whose Autocontrole base reached {@value
+ * org.aventyrs.core.character.services.CharacterCreationService#EGO_ADVANTAGE_MIN_BASE}
+ * through the creation-time point distribution (see {@link
+ * org.aventyrs.core.character.services.CharacterCreationService#isEgoAdvantageAvailable}).
+ * Reaching that base any other way (Talentos, Títulos Aventyrs, other Habilidades) never
+ * grants access to this choice, and it is never lost if Autocontrole later drops below it.
  */
 @Getter
 @AllArgsConstructor

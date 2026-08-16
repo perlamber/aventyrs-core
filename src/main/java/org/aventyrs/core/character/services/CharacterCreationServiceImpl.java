@@ -86,8 +86,8 @@ public class CharacterCreationServiceImpl implements CharacterCreationService {
     }
 
     @Override
-    public boolean isAutocontroleAdvantageAvailable(final CharacterEgos egos) {
-        return egos.getAutocontrole().getBase() >= AUTOCONTROLE_ADVANTAGE_MIN_BASE;
+    public boolean isEgoAdvantageAvailable(final EgoDomain domain, final CharacterEgos egos) {
+        return egos.getEgo(domain).getBase() >= EGO_ADVANTAGE_MIN_BASE;
     }
 
     private void validateEgoPointAllocation(final Map<EgoDomain, Integer> extraPointAllocation) throws IllegalOperationException {

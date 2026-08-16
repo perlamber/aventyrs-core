@@ -5,12 +5,14 @@ import org.aventyrs.core.ability.PeritoTeoricoAbility;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterSkill;
+import org.aventyrs.core.character.DamageBonus;
 import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.character.SizeCategory;
 import org.aventyrs.core.character.services.CharacterSizeService;
 import org.aventyrs.core.character.services.CharacterSizeServiceImpl;
 import org.aventyrs.core.character.services.CharacterSkillService;
 import org.aventyrs.core.character.services.CharacterSkillServiceImpl;
+import org.aventyrs.core.ego.EgoAdvantage;
 import org.aventyrs.core.modifier.ModifierResolver;
 import org.aventyrs.core.modifier.ModifierResolverImpl;
 import org.aventyrs.core.modifier.ModifierType;
@@ -59,16 +61,26 @@ import static org.aventyrs.core.util.TranslatableMessages.REQUIRED_SKILL_TRAIT_N
  * SkillCompetencyAbility#resolveConditionalRollBonus}, for a bonus conditioned on {@code
  * sceneContext}/the roll's own requested trait rather than reflection-discoverable via
  * {@code @Modifier} (e.g. {@code AnoesRacialAbility#FILHOS_DA_MONTANHA}) — plus, via {@link
- * #sizeCategoryRollBonus}, whichever {@link SizeCategory} modifier this Perícia is affected
- * by (resolved through {@link CharacterSizeService#getEffectiveSizeCategory}, so a size-shifting
- * ability like Sangue de Gigante is reflected here too): Ataque à Distância/Ataque Corpo-a-Corpo
- * use {@link SizeCategory#getAttackAndDamageModifier()}, Atenção/Furtividade use {@link
- * SizeCategory#getStealthAndAttentionModifier()}, and Esquiva e Aparar uses {@link
- * SizeCategory#getDefenseModifier()} — every other Perícia gets 0. Computes {@code
+ * #sumEgoAdvantageRollBonuses}, every held {@code character.getEgoAdvantages()}' own {@link
+ * org.aventyrs.core.ego.EgoAdvantage#resolveConditionalRollBonus} (e.g. {@code
+ * InitiativeAdvantage#IMPETO}'s Vantagem during a Cena de Combate's first two Rounds) — plus,
+ * via {@link #sizeCategoryRollBonus}, whichever {@link SizeCategory} modifier this Perícia is
+ * affected by (resolved through {@link CharacterSizeService#getEffectiveSizeCategory}, so a
+ * size-shifting ability like Sangue de Gigante is reflected here too): Ataque à Distância/
+ * Ataque Corpo-a-Corpo use {@link SizeCategory#getAttackAndDamageModifier()}, Atenção/
+ * Furtividade use {@link SizeCategory#getStealthAndAttentionModifier()}, and Esquiva e Aparar
+ * uses {@link SizeCategory#getDefenseModifier()} — every other Perícia gets 0. Computes {@code
  * difficultyReduction} from unlocked {@code SkillExcellency} tiers
  * plus every entry of that same combined acquired-plus-racial list's own {@link
  * SkillCompetencyAbility#getDifficultyReduction()}. {@link SkillCompetencyAbility
  * #resolveAttributeDomain} is resolved against the combined list too, for the same reason.
+ * For an attack-skill roll ({@link SkillType#isAttackSkill()}), also sets {@link
+ * InteractionResult#getDamageBonus()} from the first non-empty {@link
+ * org.aventyrs.core.ego.EgoAdvantage#resolveDamageBonus} across the same held Vantagens de Ego
+ * (see {@link #resolveEgoAdvantageDamageBonus}) — the {@code EgoAdvantage} counterpart to
+ * {@code AtaqueADistanciaInteraction}'s own {@code SkillCompetencyAbility}-based wiring for
+ * {@code AtaqueADistanciaCompetencyAbility#FRIEZA}, resolved here generically instead since no
+ * {@code EgoAdvantage} granting this needs an explicit {@code attackTarget}.
  *
  * <p>{@code applyTo} has three overloads, each just delegating down to the next one with
  * {@code null} for the newly-added parameter — {@code applyTo(target)} → {@code
@@ -188,6 +200,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CharacterS
         bonus += target.getTemporaryBonus(ModifierType.SKILL_ROLL_BONUS);
         bonus += target.getTemporaryBonus(skillType.getRollBonusType());
         bonus += sumConditionalRollBonuses(skillCompetencyAbilities, sceneContext, skillRoll);
+        bonus += sumEgoAdvantageRollBonuses(character.getEgoAdvantages().values(), sceneContext);
         bonus += sizeCategoryRollBonus(characterSizeService.getEffectiveSizeCategory(character));
 
         int difficultyReduction = SkillExcellency.totalDifficultyReduction(skillType.getExcellencyClass(), graduationValue);
@@ -199,6 +212,11 @@ public abstract class AbstractSkillInteraction implements Interaction<CharacterS
                 .resultStatus(character.getStatus())
                 .skillRollBonus(bonus)
                 .difficultyReduction(difficultyReduction);
+
+        if (skillType.isAttackSkill()) {
+            resolveEgoAdvantageDamageBonus(character.getEgoAdvantages().values(), sceneContext)
+                    .ifPresent(result::damageBonus);
+        }
 
         if (skillRoll != null) {
             boolean expert = skillRoll.getRequestedAbility() instanceof SkillSpecialization;
@@ -301,6 +319,40 @@ public abstract class AbstractSkillInteraction implements Interaction<CharacterS
                 .flatMap(Optional::stream)
                 .mapToInt(Integer::intValue)
                 .sum();
+    }
+
+    /**
+     * Sums {@link EgoAdvantage#resolveConditionalRollBonus} across every held Vantagem de Ego
+     * (e.g. {@link org.aventyrs.core.ego.InitiativeAdvantage#IMPETO}) — the {@code EgoAdvantage}
+     * counterpart to {@link #sumConditionalRollBonuses}: a Vantagem de Ego isn't tied to one
+     * Perícia the way a {@code SkillCompetencyAbility} usually is, so this applies identically
+     * for every skill's own {@code applyTo}, the same additive convention every other {@code
+     * skillRollBonus} source already uses. Safe to call unconditionally: {@code sceneContext}
+     * may be {@code null}, same restraint as {@link #sumConditionalRollBonuses}.
+     */
+    private int sumEgoAdvantageRollBonuses(final Collection<EgoAdvantage> egoAdvantages, final SceneContext sceneContext) {
+        return egoAdvantages.stream()
+                .map(advantage -> advantage.resolveConditionalRollBonus(sceneContext))
+                .flatMap(Optional::stream)
+                .mapToInt(Integer::intValue)
+                .sum();
+    }
+
+    /**
+     * The first non-empty {@link EgoAdvantage#resolveDamageBonus} across every held Vantagem
+     * de Ego, only ever consulted for an attack-skill roll (see {@link SkillType#isAttackSkill()})
+     * — the {@code EgoAdvantage} counterpart to {@code SkillCompetencyAbility#resolveDamageBonus},
+     * resolved generically here (covering both Ataque à Distância and Ataque Corpo a Corpo)
+     * rather than needing a skill-specific overload with an explicit {@code attackTarget}, since
+     * no {@code EgoAdvantage} granting this needs one (unlike {@code
+     * AtaqueADistanciaCompetencyAbility#FRIEZA}'s proximity condition). Same "only one bonus
+     * expected to apply per roll" convention as that method.
+     */
+    private Optional<DamageBonus> resolveEgoAdvantageDamageBonus(final Collection<EgoAdvantage> egoAdvantages, final SceneContext sceneContext) {
+        return egoAdvantages.stream()
+                .map(advantage -> advantage.resolveDamageBonus(sceneContext))
+                .flatMap(Optional::stream)
+                .findFirst();
     }
 
     /**

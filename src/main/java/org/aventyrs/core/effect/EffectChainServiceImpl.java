@@ -1,6 +1,7 @@
 package org.aventyrs.core.effect;
 
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.ego.AutocontroleAdvantage;
 import org.aventyrs.core.skill.DifficultyLevel;
 
@@ -10,7 +11,7 @@ public class EffectChainServiceImpl implements EffectChainService {
 
     @Override
     public int getRequiredMargin(final Character target) {
-        return target.getAutocontroleAdvantage() == AutocontroleAdvantage.RESOLUTO
+        return target.getEgoAdvantage(EgoDomain.AUTOCONTROLE) == AutocontroleAdvantage.RESOLUTO
                 ? RESOLUTO_REQUIRED_MARGIN : BASE_REQUIRED_MARGIN;
     }
 

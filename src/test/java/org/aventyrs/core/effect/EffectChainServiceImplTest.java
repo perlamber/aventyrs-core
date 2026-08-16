@@ -1,6 +1,7 @@
 package org.aventyrs.core.effect;
 
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.ego.AutocontroleAdvantage;
 import org.aventyrs.core.skill.DifficultyLevel;
@@ -31,7 +32,7 @@ class EffectChainServiceImplTest {
     @Test
     void requiredMarginIsFiveWithADifferentAutocontroleAdvantage() {
         Character character = CharacterFixture.blank(CharacterFixture.BLANK)
-                .autocontroleAdvantage(AutocontroleAdvantage.DETERMINACAO_HEROICA)
+                .egoAdvantage(EgoDomain.AUTOCONTROLE, AutocontroleAdvantage.DETERMINACAO_HEROICA)
                 .build();
         assertEquals(5, effectChainService.getRequiredMargin(character));
     }
@@ -39,7 +40,7 @@ class EffectChainServiceImplTest {
     @Test
     void requiredMarginIsSevenWithResoluto() {
         Character character = CharacterFixture.blank(CharacterFixture.BLANK)
-                .autocontroleAdvantage(AutocontroleAdvantage.RESOLUTO)
+                .egoAdvantage(EgoDomain.AUTOCONTROLE, AutocontroleAdvantage.RESOLUTO)
                 .build();
         assertEquals(7, effectChainService.getRequiredMargin(character));
     }
@@ -82,7 +83,7 @@ class EffectChainServiceImplTest {
     @Test
     void hitsUsesTheHigherResolutoMarginWhenTheTargetHoldsIt() {
         Character character = CharacterFixture.blank(CharacterFixture.BLANK)
-                .autocontroleAdvantage(AutocontroleAdvantage.RESOLUTO)
+                .egoAdvantage(EgoDomain.AUTOCONTROLE, AutocontroleAdvantage.RESOLUTO)
                 .build();
         int requiredNumber = effectChainService.getRequiredChallengeNumber(Optional.of(DifficultyLevel.MEDIUM), 0, 0);
 
