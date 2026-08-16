@@ -5,6 +5,7 @@ import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.skill.CriticalResult;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface AttributeAbility {
     AttributeDomain getAttributeDomain();
@@ -22,5 +23,19 @@ public interface AttributeAbility {
      */
     default List<EgoDomain> resolveCriticalSuccessEgoGain(CriticalResult criticalResult) {
         return List.of();
+    }
+
+    /**
+     * Which single Ego domain this ability permanently grants +1 to (in {@code
+     * EgoValue#variable}, never {@code #base} — see {@code EgoValue}'s own javadoc) the
+     * moment it's acquired — e.g. {@code CharismaAbility#DESTINO_FAVORAVEL}'s "Você adquire
+     * um ponto de Sorte permanentemente." Empty by default; only override on a constant
+     * whose rules text grants a permanent Ego point this way. Applied by {@code
+     * org.aventyrs.core.character.services.AttributeAbilityService#grantAttributeAbility},
+     * not by this method itself — same "resolve, don't mutate" shape as {@link
+     * #resolveCriticalSuccessEgoGain}.
+     */
+    default Optional<EgoDomain> resolvePermanentEgoGain() {
+        return Optional.empty();
     }
 }

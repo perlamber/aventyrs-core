@@ -6,6 +6,7 @@ import org.aventyrs.core.skill.CriticalResult;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -55,6 +56,21 @@ class CharismaAbilityTest {
                 continue;
             }
             assertTrue(ability.resolveCriticalSuccessEgoGain(CriticalResult.ACERTO_CRITICO_MAIOR).isEmpty());
+        }
+    }
+
+    @Test
+    void destinoFavoravelPermanentlyGrantsSorte() {
+        assertEquals(Optional.of(EgoDomain.SORTE), CharismaAbility.DESTINO_FAVORAVEL.resolvePermanentEgoGain());
+    }
+
+    @Test
+    void noOtherAbilityGrantsAPermanentEgoPoint() {
+        for (CharismaAbility ability : CharismaAbility.values()) {
+            if (ability == CharismaAbility.DESTINO_FAVORAVEL) {
+                continue;
+            }
+            assertTrue(ability.resolvePermanentEgoGain().isEmpty());
         }
     }
 }

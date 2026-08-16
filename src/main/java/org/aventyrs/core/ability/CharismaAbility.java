@@ -7,6 +7,7 @@ import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.skill.CriticalResult;
 
 import java.util.List;
+import java.util.Optional;
 
 @Getter
 @AllArgsConstructor
@@ -23,14 +24,14 @@ public enum CharismaAbility implements AttributeAbility {
     CHARME("Você adquire uma Especialização e uma Habilidade de Competência de cada Perícia baseada em Carisma " +
             "em que for treinado no momento em que adquirir esta Habilidade."),
 
-    // TODO: grants a permanent Sorte point at acquisition — no hook exists yet for an
-    // AttributeAbility's acquisition to mutate CharacterEgos (bump EgoValue#variable); same gap
-    // CharismaAbility#CHARME / GnoseAbility#DOMINIO_DO_CONHECIMENTO / GnoseAbility
-    // #ESTABILIDADE_EMOCIONAL cite. The reactive half (temporary Sorte + Autocontrole on the
-    // roller's own Sucesso Crítico Maior) is real — see #resolveCriticalSuccessEgoGain below.
     DESTINO_FAVORAVEL("Você adquire um ponto de Sorte permanentemente; sempre que tiver um Sucesso Crítico Maior " +
             "em uma rolagem de Perícia você adquire um ponto temporário, não cumulativo, em Sorte e em " +
             "Autocontrole.") {
+        @Override
+        public Optional<EgoDomain> resolvePermanentEgoGain() {
+            return Optional.of(EgoDomain.SORTE);
+        }
+
         @Override
         public List<EgoDomain> resolveCriticalSuccessEgoGain(final CriticalResult criticalResult) {
             return criticalResult == CriticalResult.ACERTO_CRITICO_MAIOR

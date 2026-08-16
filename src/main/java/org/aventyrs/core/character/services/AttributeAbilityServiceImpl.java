@@ -1,6 +1,7 @@
 package org.aventyrs.core.character.services;
 
 import org.aventyrs.core.ability.AttributeAbility;
+import org.aventyrs.core.character.Character;
 import org.aventyrs.core.sheet.IllegalOperationException;
 
 import java.util.List;
@@ -32,5 +33,16 @@ public class AttributeAbilityServiceImpl implements AttributeAbilityService {
         if (chosenOfSameDomain >= getUnlockedAbilitySlots(attributeBase)) {
             throw new IllegalOperationException(NO_ATTRIBUTE_ABILITY_SLOT_AVAILABLE);
         }
+    }
+
+    @Override
+    public Character grantAttributeAbility(final Character character, final AttributeAbility ability) throws IllegalOperationException {
+        int attributeBase = character.getAttributes().getAttribute(ability.getAttributeDomain()).getBase();
+        validateChoice(attributeBase, character.getAttributeAbilities(), ability);
+
+        Character.CharacterBuilder builder = character.toBuilder().attributeAbility(ability);
+        ability.resolvePermanentEgoGain().ifPresent(domain ->
+                builder.egos(character.getEgos().withVariableBonus(domain, 1)));
+        return builder.build();
     }
 }
