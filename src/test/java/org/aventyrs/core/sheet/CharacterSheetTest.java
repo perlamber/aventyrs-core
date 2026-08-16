@@ -493,6 +493,40 @@ class CharacterSheetTest {
     }
 
     @Test
+    void removeEffectDropsExactlyThatInstance() {
+        CharacterSheet sheet = newSheet();
+        TemporaryBonus bonus = new TemporaryBonus(ModifierType.SKILL_ROLL_BONUS, 3, 1);
+        sheet.applyEffect(bonus);
+
+        sheet.removeEffect(bonus);
+
+        assertEquals(0, sheet.getTemporaryBonus(ModifierType.SKILL_ROLL_BONUS));
+    }
+
+    @Test
+    void removeEffectLeavesOtherEffectsOfTheSameModifierTypeUntouched() {
+        CharacterSheet sheet = newSheet();
+        TemporaryBonus removed = new TemporaryBonus(ModifierType.SKILL_ROLL_BONUS, 3, 1);
+        TemporaryBonus kept = new TemporaryBonus(ModifierType.SKILL_ROLL_BONUS, 2, 1);
+        sheet.applyEffect(removed);
+        sheet.applyEffect(kept);
+
+        sheet.removeEffect(removed);
+
+        assertEquals(2, sheet.getTemporaryBonus(ModifierType.SKILL_ROLL_BONUS));
+    }
+
+    @Test
+    void removeEffectIsANoOpWhenTheEffectIsNotCurrentlyHeld() {
+        CharacterSheet sheet = newSheet();
+        TemporaryBonus neverApplied = new TemporaryBonus(ModifierType.SKILL_ROLL_BONUS, 3, 1);
+
+        sheet.removeEffect(neverApplied);
+
+        assertEquals(0, sheet.getTemporaryBonus(ModifierType.SKILL_ROLL_BONUS));
+    }
+
+    @Test
     void finishTurnAdvancesTemporaryEffectsByOneRodada() {
         CharacterSheet sheet = newSheet();
         sheet.grantTemporaryBonus(ModifierType.SKILL_ROLL_BONUS, 3, 1);

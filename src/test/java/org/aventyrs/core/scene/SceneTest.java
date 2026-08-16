@@ -1,9 +1,17 @@
 package org.aventyrs.core.scene;
 
+import org.aventyrs.core.ability.AttributeAbility;
+import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.character.fixture.CharacterFixture;
+import org.aventyrs.core.character.services.InitiativeBlessingService;
+import org.aventyrs.core.character.services.InitiativeBlessingServiceImpl;
+import org.aventyrs.core.ego.InitiativeAdvantage;
+import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.IllegalOperationException;
+import org.aventyrs.core.sheet.InitiativeBlessing;
 import org.aventyrs.core.sheet.Player;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,6 +29,25 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SceneTest {
 
+    private final InitiativeBlessingService blessingService = new InitiativeBlessingServiceImpl();
+
+    private static class SelfOnlyBlessingAbility implements AttributeAbility {
+        @Override
+        public AttributeDomain getAttributeDomain() {
+            return AttributeDomain.INSTINCT;
+        }
+
+        @Override
+        public String getDescription() {
+            return "Test-only self-only initiative blessing source.";
+        }
+
+        @Override
+        public List<InitiativeBlessing> resolveInitiativeBlessings() {
+            return List.of(new InitiativeBlessing(ModifierType.REACTIONS, 1, 1, false));
+        }
+    }
+
     @BeforeEach
     public void setup() {
         CharacterFixture.loadTemplates();
@@ -29,6 +56,24 @@ class SceneTest {
     private CharacterSheet newSheet() {
         Character character = CharacterFixture.blank(CharacterFixture.BLANK).build();
         return CharacterSheet.of(character, new Player());
+    }
+
+    private CharacterSheet sheetWithPosicionamentoEstrategico() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .egoAdvantage(EgoDomain.INICIATIVA, InitiativeAdvantage.POSICIONAMENTO_ESTRATEGICO)
+                .build();
+        return CharacterSheet.of(character, new Player());
+    }
+
+    private CharacterSheet sheetWithSelfOnlyBlessing() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .attributeAbility(new SelfOnlyBlessingAbility())
+                .build();
+        return CharacterSheet.of(character, new Player());
+    }
+
+    private List<InitiativeBlessing> blessingsFor(final CharacterSheet sheet) {
+        return blessingService.resolveBlessings(sheet.getCharacter());
     }
 
     @Test
@@ -375,5 +420,140 @@ class SceneTest {
 
         assertTrue(scene.buildContext(hero, Map.of()).hasWonInitiative());
         assertFalse(scene.buildContext(villain, Map.of()).hasWonInitiative());
+    }
+
+    @Test
+    void applyInitiativeBlessingsThrowsWhenTheCharacterDidNotWinInitiative() {
+        Scene scene = new Scene();
+        UUID heroes = UUID.randomUUID();
+        UUID villains = UUID.randomUUID();
+        CharacterSheet hero = sheetWithPosicionamentoEstrategico();
+        CharacterSheet villain = newSheet();
+        scene.addParticipant(hero, 18, heroes);
+        scene.addParticipant(villain, 5, villains);
+
+        assertThrows(IllegalOperationException.class,
+                () -> scene.applyInitiativeBlessings(villain, blessingsFor(villain)));
+    }
+
+    @Test
+    void applyInitiativeBlessingsThrowsForACharacterSheetNeverAddedToTheScene() {
+        Scene scene = new Scene();
+        CharacterSheet stranger = sheetWithPosicionamentoEstrategico();
+
+        assertThrows(IllegalOperationException.class,
+                () -> scene.applyInitiativeBlessings(stranger, blessingsFor(stranger)));
+    }
+
+    @Test
+    void applyInitiativeBlessingsGrantsAnAllyScopedBlessingToTheWinnerAndItsAllies() {
+        Scene scene = new Scene();
+        UUID heroes = UUID.randomUUID();
+        UUID villains = UUID.randomUUID();
+        CharacterSheet winner = sheetWithPosicionamentoEstrategico();
+        CharacterSheet ally = newSheet();
+        CharacterSheet enemy = newSheet();
+        scene.addParticipant(winner, 18, heroes);
+        scene.addParticipant(ally, 8, heroes);
+        scene.addParticipant(enemy, 5, villains);
+
+        scene.applyInitiativeBlessings(winner, blessingsFor(winner));
+
+        assertEquals(2, winner.getTemporaryBonus(ModifierType.MOVEMENT));
+        assertEquals(2, ally.getTemporaryBonus(ModifierType.MOVEMENT));
+        assertEquals(0, enemy.getTemporaryBonus(ModifierType.MOVEMENT));
+    }
+
+    @Test
+    void applyInitiativeBlessingsGrantsASelfOnlyBlessingOnlyToTheWinner() {
+        Scene scene = new Scene();
+        UUID heroes = UUID.randomUUID();
+        CharacterSheet winner = sheetWithSelfOnlyBlessing();
+        CharacterSheet ally = newSheet();
+        scene.addParticipant(winner, 18, heroes);
+        scene.addParticipant(ally, 8, heroes);
+
+        scene.applyInitiativeBlessings(winner, blessingsFor(winner));
+
+        assertEquals(1, winner.getTemporaryBonus(ModifierType.REACTIONS));
+        assertEquals(0, ally.getTemporaryBonus(ModifierType.REACTIONS));
+    }
+
+    @Test
+    void applyInitiativeBlessingsRevokesThePreviousWinnersGrantWhenANewGroupWins() {
+        Scene scene = new Scene();
+        UUID heroes = UUID.randomUUID();
+        UUID villains = UUID.randomUUID();
+        CharacterSheet hero = sheetWithPosicionamentoEstrategico();
+        CharacterSheet villain = sheetWithPosicionamentoEstrategico();
+        scene.addParticipant(hero, 18, heroes);
+        scene.addParticipant(villain, 5, villains);
+        scene.applyInitiativeBlessings(hero, blessingsFor(hero));
+        assertEquals(2, hero.getTemporaryBonus(ModifierType.MOVEMENT));
+
+        // A new, higher-rolling villain joins, flipping who currently wins initiative.
+        CharacterSheet strongerVillain = newSheet();
+        scene.addParticipant(strongerVillain, 25, villains);
+        scene.applyInitiativeBlessings(strongerVillain, blessingsFor(strongerVillain));
+
+        assertEquals(0, hero.getTemporaryBonus(ModifierType.MOVEMENT));
+        assertEquals(0, villain.getTemporaryBonus(ModifierType.MOVEMENT));
+    }
+
+    @Test
+    void addParticipantAppliesActiveAllyScopedBlessingsToANewcomerJoiningTheBlessedGroup() {
+        Scene scene = new Scene();
+        UUID heroes = UUID.randomUUID();
+        CharacterSheet winner = sheetWithPosicionamentoEstrategico();
+        scene.addParticipant(winner, 18, heroes);
+        scene.applyInitiativeBlessings(winner, blessingsFor(winner));
+
+        CharacterSheet lateAlly = newSheet();
+        scene.addParticipant(lateAlly, 3, heroes);
+
+        assertEquals(2, lateAlly.getTemporaryBonus(ModifierType.MOVEMENT));
+    }
+
+    @Test
+    void addParticipantDoesNotApplyBlessingsToANewcomerJoiningADifferentGroup() {
+        Scene scene = new Scene();
+        UUID heroes = UUID.randomUUID();
+        UUID villains = UUID.randomUUID();
+        CharacterSheet winner = sheetWithPosicionamentoEstrategico();
+        scene.addParticipant(winner, 18, heroes);
+        scene.applyInitiativeBlessings(winner, blessingsFor(winner));
+
+        CharacterSheet lateEnemy = newSheet();
+        scene.addParticipant(lateEnemy, 3, villains);
+
+        assertEquals(0, lateEnemy.getTemporaryBonus(ModifierType.MOVEMENT));
+    }
+
+    @Test
+    void addParticipantWithTheTwoArgOverloadNeverMatchesTheBlessedGroup() {
+        Scene scene = new Scene();
+        UUID heroes = UUID.randomUUID();
+        CharacterSheet winner = sheetWithPosicionamentoEstrategico();
+        scene.addParticipant(winner, 18, heroes);
+        scene.applyInitiativeBlessings(winner, blessingsFor(winner));
+
+        CharacterSheet lone = newSheet();
+        scene.addParticipant(lone, 3);
+
+        assertEquals(0, lone.getTemporaryBonus(ModifierType.MOVEMENT));
+    }
+
+    @Test
+    void addParticipantDoesNotApplyASelfOnlyBlessingToANewcomerJoiningTheBlessedGroup() {
+        Scene scene = new Scene();
+        UUID heroes = UUID.randomUUID();
+        CharacterSheet winner = sheetWithSelfOnlyBlessing();
+        scene.addParticipant(winner, 18, heroes);
+        scene.applyInitiativeBlessings(winner, blessingsFor(winner));
+
+        CharacterSheet lateAlly = newSheet();
+        scene.addParticipant(lateAlly, 3, heroes);
+
+        assertEquals(0, lateAlly.getTemporaryBonus(ModifierType.REACTIONS));
     }
 }

@@ -1,6 +1,9 @@
 package org.aventyrs.core.skill.atletismo;
 
 import org.aventyrs.core.character.AttributeDomain;
+import org.aventyrs.core.modifier.ModifierResolver;
+import org.aventyrs.core.modifier.ModifierResolverImpl;
+import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.skill.SkillType;
 import org.junit.jupiter.api.Test;
 
@@ -45,6 +48,15 @@ class AtletismoCompetencyAbilityTest {
             } else {
                 assertEquals(Optional.empty(), ability.getSubstituteAttributeDomain());
             }
+        }
+    }
+
+    @Test
+    void onlyPassoLargoGrantsAMovementModifier() {
+        ModifierResolver modifierResolver = new ModifierResolverImpl();
+        for (AtletismoCompetencyAbility ability : AtletismoCompetencyAbility.values()) {
+            int expected = ability == AtletismoCompetencyAbility.PASSO_LARGO ? 2 : 0;
+            assertEquals(expected, modifierResolver.sumModifiers(ability, ModifierType.MOVEMENT));
         }
     }
 }

@@ -30,10 +30,11 @@ import java.util.Map;
  *   granting starting Perícia training" gap as every other race; {@code
  *   ConhecimentosSpecialization.COSMOLOGIA} itself already exists.</li>
  *   <li><b>Lentos, Grandes e Pesados</b> (-2UD Movimento Base; nunca podem ser treinados em
- *   Dirigir e Cavalgar) — this core has no aggregated "Movimento Base" stat at all (same gap
- *   {@code Pequenino}'s own Ligeiro/Sempre Veloz cites), and no "cannot train in this Perícia"
- *   concept either — this codebase only ever models unenforced *prerequisites*, never an
- *   outright *ban* on training.</li>
+ *   Dirigir e Cavalgar) — {@code MovementService} now aggregates a real "Movimento Base" stat
+ *   (same fix {@code Pequenino}'s own Ligeiro/Sempre Veloz cites), but Colosso still has no
+ *   {@code *RacialAbility} catalog constant to carry this malus through it, and there's still
+ *   no "cannot train in this Perícia" concept — this codebase only ever models unenforced
+ *   *prerequisites*, never an outright *ban* on training.</li>
  *   <li><b>Placidez de Epona</b> (+1 ponto temporário de Autocontrole por sessão de jogo) — same
  *   "no game session concept, no temporary Ego points" gap {@code Orc}'s own Placitude Térrea
  *   already cites.</li>

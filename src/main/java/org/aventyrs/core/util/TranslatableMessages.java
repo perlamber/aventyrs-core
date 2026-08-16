@@ -24,4 +24,5 @@ public class TranslatableMessages {
     public static final String NOT_ENOUGH_MAGIC_POINTS = "NOT_ENOUGH_MAGIC_POINTS";
     public static final String SKILL_NOT_TRAINED = "SKILL_NOT_TRAINED";
     public static final String SKILL_TRAIT_SKILL_TYPE_MISMATCH = "SKILL_TRAIT_SKILL_TYPE_MISMATCH";
+    public static final String INITIATIVE_NOT_WON = "INITIATIVE_NOT_WON";
 }

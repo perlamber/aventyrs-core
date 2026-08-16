@@ -785,12 +785,120 @@ are — this class still never queries a live `Scene` at bonus-resolution time.
   numbering, not something the text spells out explicitly — worth rechecking if a future
   ability's own text seems to assume the window starts at Round 0 instead.
 
-Building this mechanism doesn't retroactively finish `POSICIONAMENTO_ESTRATEGICO`/
-`TORRE_EM_MOVIMENTO` — both still cite a *different* missing system each (no movement/
-Reação-suppression mechanism or Movimento Base stat for the former; `DamageService` taking no
-`SceneContext` at all for the latter, so its RA/`HALF_DAMAGE` summation still can't be scoped
-to specific Rounds). Check each constant's own TODO rather than assuming `SceneContext`'s new
-fields alone unblock it.
+Building this mechanism didn't retroactively finish `POSICIONAMENTO_ESTRATEGICO`/
+`TORRE_EM_MOVIMENTO` on its own — each still cited a *different* missing system (no Movimento
+Base stat or movement-triggers-Reação mechanism for the former; `DamageService` taking no
+`SceneContext` at all for the latter). Both are now real, through two different mechanisms:
+`POSICIONAMENTO_ESTRATEGICO`'s movement-*amount* half via the initiative-blessing mechanism
+below (a `MovementService` stat plus a grant/revoke pathway, not `SceneContext` itself) — see
+"Movimento Base, and blessings granted on winning initiative" — and `TORRE_EM_MOVIMENTO`'s RA/
+half-damage via `SceneContext` directly, the same shape as `IMPETO` above, not the blessing
+mechanism (see "RA and half-damage conditioned on SceneContext" further below for why: both of
+its clauses are about the holder's own defense, never granted to allies, so there was nothing
+to spread via `Scene#applyInitiativeBlessings`). `POSICIONAMENTO_ESTRATEGICO`'s
+Reação-suppression half is the only piece from this whole family still TODO'd — it has no
+system to attach to at all, movement-triggered or otherwise. Check each constant's own TODO
+rather than assuming one fix unblocks every citation of it.
+
+## Movimento Base, and blessings granted on winning initiative — `MovementService`, `InitiativeBlessingService`, `Scene#applyInitiativeBlessings`
+
+Two more pieces finish out `InitiativeAdvantage.POSICIONAMENTO_ESTRATEGICO`'s movement half:
+a real "Movimento Base" character stat (previously missing everywhere it was cited — see the
+paragraph above), and a way for a Vantagem/Habilidade/Habilidade de Competência to grant a
+Round-scoped buff to a whole group the moment it wins initiative, that's both revoked when a
+different group wins next and extended to a group member who joins *after* the win.
+
+- **`org.aventyrs.core.character.services.MovementService#getTotalMovement(Character,
+  turnNumber)`** is the `InitiativeService` variant of the "Character-level stats aggregated
+  from abilities" shape above, not the Reações/Ações Livres one — no new `Character` field, no
+  `CharacterFixture` template change. Its base is derived: {@code SizeCategory
+  .getMovementPerActionPoint()} (via `CharacterSizeService#getEffectiveSizeCategory`, so
+  Sangue de Gigante-style size-shifting is already reflected) times `ActionPointsService
+  .getMaxActionPoints` for that Turn — how far the character could move if every Ponto de Ação
+  that Turn were spent moving — plus the usual `ModifierType.MOVEMENT` sum across
+  `attributeAbilities`, `skillCompetencyAbilities` (acquired **and** racial, via
+  `SkillCompetencyAbility.allFor` — unlike `ReactionsService`/`InitiativeService`, which
+  predate that fix and still only scan the acquired list; `MovementService`, written after,
+  starts from the corrected combined one), and unlocked `SkillExcellency` tiers. Floored at 0,
+  same as Reações/Ações Livres/RD/RA (a spendable-resource-like budget), not `InitiativeService`'s
+  own no-clamp exception. This one service already finished three pre-existing TODOs purely
+  blocked on "no Movimento Base stat exists" — `AtaqueCorpoACorpoExcellency.FOCADO`,
+  `AtletismoCompetencyAbility.PASSO_LARGO`, and the flat "+1UD" half of `DexterityAbility
+  .PASSOS_LONGOS` (its "primeiro movimento... distância aumentada" half stays TODO'd — that's
+  conditioned on *which* movement in the Rodada this is, which a flat per-Turn total can't
+  express) — each now a plain `@Modifier(ModifierType.MOVEMENT)` method, same shape as
+  `AtletismoExcellency.FOCADO`'s pre-existing `FREE_ACTIONS` one. `AtletismoCompetencyAbility
+  .ALPINISTA_VELOZ`/`ANFIBIO` (vertical/swim movement) and `DirigirECavalgarExcellency`
+  (a mount/vehicle's own movement, not the character's) are a **different** sub-stat this
+  service doesn't track — don't wire those into `ModifierType.MOVEMENT` just because the
+  general stat now exists. Several race docs (`Colosso`, `Pequenino`, `Dolos`, `Aquan`) also
+  cited "no Movimento Base stat" for their own still-unmodeled traits; their TODOs were
+  rewritten to point at the real remaining gap instead (no `*RacialAbility` catalog constant
+  for these races yet — see "Races live in..." below), not left claiming a solved problem.
+  `MovementService` returns the **permanent** total only — a caller wanting what's actually
+  available this Round also adds `CharacterSheet#getTemporaryBonus(ModifierType.MOVEMENT)`,
+  the same combination `AbstractSkillInteraction` already performs for `skillRollBonus`.
+
+- **`org.aventyrs.core.sheet.InitiativeBlessing`** (`ModifierType`, `value`, `rounds`, plus a
+  plain `boolean appliesToAllies`) is what a trait grants the moment its holder wins
+  initiative. `appliesToAllies` is deliberately not `TargetScope`: unlike DOM_BARDICO's
+  `ALLIES` (which *excludes* the caster — "a eles, mas não a você"), this always applies to
+  the holder too, and only *additionally* extends to allies when `true` — reusing `TargetScope`
+  here would silently misrepresent that. A `default List<InitiativeBlessing>
+  resolveInitiativeBlessings()` (empty by default) was added identically to `EgoAdvantage`,
+  `AttributeAbility`, and `SkillCompetencyAbility` — the exact three sources named "Vantagens
+  de Ego, Habilidades, and Habilidades de Competência." Deliberately **not** added to
+  `SkillExcellency` — this is a narrower, three-source scan by design, unlike the four-source
+  flat-`@Modifier` convention (which does include excellencies) used everywhere else in this
+  section. No-arg, unlike `resolveConditionalRollBonus`/`resolveDamageBonus`: this resolves
+  once at grant-time, not per-roll, so the Round-scoping lives in the granted blessing's own
+  `rounds` countdown instead of a `SceneContext` check.
+  `InitiativeAdvantage.POSICIONAMENTO_ESTRATEGICO` is the only current constant overriding it,
+  granting `(MOVEMENT, +2, 2 rounds, appliesToAllies=true)`.
+
+- **`InitiativeBlessingService#resolveBlessings(Character)`** (`org.aventyrs.core.character.services`)
+  is the pure-function scan across all three sources, mirroring every other `<X>Service`'s DI
+  shape. It doesn't grant or mutate anything itself.
+
+- **`Scene#applyInitiativeBlessings(CharacterSheet winner, List<InitiativeBlessing> blessings)`**
+  is the method a caller invokes the moment winner's group actually wins initiative, passing
+  winner's own already-resolved blessings (e.g. from `InitiativeBlessingService
+  .resolveBlessings(winner.getCharacter())`, called by the caller — `Scene` deliberately never
+  reaches into a Service to compute what a Character's abilities grant; the same restraint
+  `buildContext` already applies to every other fact it assembles into a `SceneContext`, and
+  `Scene` had a brief detour from it worth noting: an earlier version of this method resolved
+  `blessings` itself via a constructor-injected `InitiativeBlessingService` field — reworked
+  once it was clear that broke the "Scene never depends on a Service" pattern every other
+  method here already followed). Throws `IllegalOperationException` — `INITIATIVE_NOT_WON` —
+  if `wonInitiative(winner)` isn't already true. It revokes every blessing an earlier call
+  granted first (via the new `CharacterSheet#removeEffect`, the symmetric counterpart to
+  `applyEffect` — reference-based removal, since neither `TemporaryEffect` nor `TemporaryBonus`
+  overrides `equals()`, so a caller can revoke exactly the instance it tracked without
+  disturbing an unrelated `TemporaryBonus` of the same `ModifierType` from some other source),
+  then grants *all* of `blessings` to winner directly, plus every `appliesToAllies` one to
+  each of `getAllies(winner)` too — each grant a fresh `TemporaryBonus`, tracked in a
+  `Scene`-owned `grantedBlessings` map so the next call (a new group winning, or the same one
+  winning again) can revoke precisely these and no more.
+
+  `addParticipant(CharacterSheet, int, UUID group)` extends the same currently-active
+  **ally-scoped** blessings to a CharacterSheet that joins an *already*-blessed group
+  afterwards — it's part of a group that already won, even though it didn't personally roll
+  the highest value. "Blessed" isn't cached in a separate field either (an earlier version had
+  a `blessedGroup UUID` field for this — dropped for the same reason as the Service field:
+  it was just a redundant cache of something `grantedBlessings` already implies, with its own
+  risk of drifting out of sync). Instead, `isGroupBlessed(UUID group)` checks directly against
+  the tracked grants: `grantedBlessings.keySet().stream().anyMatch(sheet ->
+  groupOf(sheet).equals(group))` — a group is blessed exactly when someone already tracked
+  belongs to it, which is always the group the newcomer is being inserted into, checked at the
+  moment of insertion. The actual blessing *values* (`activeBlessings: List<InitiativeBlessing>`)
+  still need to be kept as their own field, though — unlike "is this group blessed" (a yes/no
+  derivable from group membership), `grantedBlessings`' raw `TemporaryBonus`es don't carry the
+  `appliesToAllies` flag, so there'd be no way to tell a self-only blessing apart from an
+  ally-scoped one when deciding what to copy to a newcomer without it. A self-only blessing
+  never propagates to a newcomer, or to allies at grant-time either — it belongs to whichever
+  Character actually holds the granting trait, not the group at large. A lone newcomer added
+  via the 2-arg `addParticipant` overload gets a fresh random group per that overload's own
+  existing behavior, so it never accidentally matches the blessed group.
 
 ## Races live in `org.aventyrs.core.race`, not `org.aventyrs.core.character`
 
@@ -894,10 +1002,13 @@ fixed order:
    `RestService.applyRest`'s Character+CharacterSheet split — compute from the Character's
    abilities, then apply the result to the CharacterSheet's resource pools.
 
-If an ability grants RD without spelling out a number in its own rules text, its value is
-`DamageService.DEFAULT_DAMAGE_REDUCTION` (+2) — only deviate from that when the text gives an
-explicit number (e.g. `ArtesCompetencyAbility.APRIMORAR_COM_ARTE`'s "+1 RDS" is real data, not
-the default, because the text says "+1").
+If an ability grants RD *or RA* without spelling out a number in its own rules text, its value
+is `DamageService.DEFAULT_DAMAGE_REDUCTION` (+2) — RD and RA are independent reductions, but
+nothing in the rules text suggests a different unspecified-amount convention for one versus
+the other, so this one constant covers both (e.g. `InitiativeAdvantage#TORRE_EM_MOVIMENTO`'s
+plain "você recebe RA" — see below). Only deviate from that when the text gives an explicit
+number (e.g. `ArtesCompetencyAbility.APRIMORAR_COM_ARTE`'s "+1 RDS" is real data, not the
+default, because the text says "+1").
 
 Note that RD becoming mechanically real doesn't automatically make every RD-granting ability
 real: `APRIMORAR_COM_ARTE` grants RD as *one branch of a choice* (which Perícia was picked —
@@ -908,6 +1019,31 @@ for real, while its Dano Base and Margem Crítica Menor branches stay TODO'd on
 choice (made at item creation, not ability acquisition) that's still blocked on the missing
 Item/Equipamento entity entirely. Check what's *actually* stopping an ability before assuming
 a newly-built mechanism resolves it completely.
+
+### RA/half-damage conditioned on `SceneContext` — `EgoAdvantage#resolveAbsoluteDamageReduction`/`#resolveHalfDamage`
+
+`DamageService`/`DamageServiceImpl` originally took only a `Character` — no way to condition RA
+or half-damage on Scene facts (which Round, whether a Cena de Combate, whether initiative was
+won), the exact gap that kept `InitiativeAdvantage#TORRE_EM_MOVIMENTO` TODO'd even after
+`SceneContext` grew `isWithinFirstCombatRounds`/`hasWonInitiative` for `IMPETO`. Rather than
+route this through the initiative-blessing mechanism above (built for buffs that spread to
+allies when a group wins initiative — `TORRE_EM_MOVIMENTO`'s "RA" and "dano... reduzido à
+metade" are both about the holder's own defense only, never granted to anyone else, so there
+was nothing to spread), `DamageService` gained the exact same cascading-overload treatment
+`AbstractSkillInteraction` already has: `getTotalAbsoluteDamageReduction`/`calculateFinalDamage`/
+`applyDamage` each gained a `SceneContext`-accepting overload (the existing `Character`-only
+ones now delegate down with `null`), and `EgoAdvantage` gained two more default-empty hooks —
+`resolveAbsoluteDamageReduction(SceneContext)` (summed alongside the existing reflection-based
+`ModifierType#ABSOLUTE_DAMAGE_REDUCTION` scan) and `resolveHalfDamage(SceneContext)` (a plain
+`boolean`, ORed with the existing `ModifierType#HALF_DAMAGE` scan being `> 0`) — mirroring
+`resolveConditionalRollBonus`/`resolveDamageBonus`'s existing shape and reasoning exactly.
+`TORRE_EM_MOVIMENTO` overrides both: `resolveAbsoluteDamageReduction` returns
+`DamageService.DEFAULT_DAMAGE_REDUCTION` while `isWithinFirstCombatRounds` holds,
+`resolveHalfDamage` additionally requires `hasWonInitiative()`. Reached end-to-end via
+`DamageInteraction`, which gained the matching `SceneContext`-accepting overloads (same
+cascading shape, `null` by default) so a caller with an active Scene can pass its context
+straight through from `Scene#buildContext` to a dealt hit's actual mitigation, the same way
+one already flows into a Perícia roll.
 
 ## Acquisition-time ability choices — `org.aventyrs.core.ability.AcquiredChoice`
 

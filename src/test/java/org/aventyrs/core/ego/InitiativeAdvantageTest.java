@@ -3,7 +3,9 @@ package org.aventyrs.core.ego;
 import org.aventyrs.core.character.DamageBonus;
 import org.aventyrs.core.character.DamageType;
 import org.aventyrs.core.character.EgoDomain;
+import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.scene.SceneContext;
+import org.aventyrs.core.sheet.InitiativeBlessing;
 import org.aventyrs.core.skill.Skill;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +15,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class InitiativeAdvantageTest {
 
@@ -92,6 +95,82 @@ class InitiativeAdvantageTest {
             if (advantage != InitiativeAdvantage.IMPETO) {
                 assertEquals(Optional.empty(), advantage.resolveConditionalRollBonus(context));
                 assertEquals(Optional.empty(), advantage.resolveDamageBonus(context));
+            }
+        }
+    }
+
+    @Test
+    void posicionamentoEstrategicoGrantsAMovementBlessingThatAppliesToAllies() {
+        List<InitiativeBlessing> blessings = InitiativeAdvantage.POSICIONAMENTO_ESTRATEGICO.resolveInitiativeBlessings();
+
+        assertEquals(1, blessings.size());
+        InitiativeBlessing blessing = blessings.get(0);
+        assertEquals(ModifierType.MOVEMENT, blessing.getModifierType());
+        assertEquals(2, blessing.getValue());
+        assertEquals(2, blessing.getRounds());
+        assertTrue(blessing.isAppliesToAllies());
+    }
+
+    @Test
+    void onlyPosicionamentoEstrategicoEverResolvesAnInitiativeBlessing() {
+        for (InitiativeAdvantage advantage : InitiativeAdvantage.values()) {
+            if (advantage != InitiativeAdvantage.POSICIONAMENTO_ESTRATEGICO) {
+                assertEquals(List.of(), advantage.resolveInitiativeBlessings());
+            }
+        }
+    }
+
+    @Test
+    void torreEmMovimentoGrantsAbsoluteDamageReductionDuringTheFirstTwoRoundsOfACombatScene() {
+        assertEquals(2, InitiativeAdvantage.TORRE_EM_MOVIMENTO.resolveAbsoluteDamageReduction(combatContext(1, false)));
+        assertEquals(2, InitiativeAdvantage.TORRE_EM_MOVIMENTO.resolveAbsoluteDamageReduction(combatContext(2, false)));
+    }
+
+    @Test
+    void torreEmMovimentoGrantsNoAbsoluteDamageReductionPastTheFirstTwoRounds() {
+        assertEquals(0, InitiativeAdvantage.TORRE_EM_MOVIMENTO.resolveAbsoluteDamageReduction(combatContext(3, true)));
+    }
+
+    @Test
+    void torreEmMovimentoGrantsNoAbsoluteDamageReductionOutsideACombatScene() {
+        SceneContext nonCombat = new SceneContext(List.of(), List.of(), Map.of(), null, false, 1, true);
+        assertEquals(0, InitiativeAdvantage.TORRE_EM_MOVIMENTO.resolveAbsoluteDamageReduction(nonCombat));
+    }
+
+    @Test
+    void torreEmMovimentoGrantsNoAbsoluteDamageReductionWithoutASceneContext() {
+        assertEquals(0, InitiativeAdvantage.TORRE_EM_MOVIMENTO.resolveAbsoluteDamageReduction(null));
+    }
+
+    @Test
+    void torreEmMovimentoHalvesDamageDuringTheFirstTwoRoundsWhenInitiativeWasWon() {
+        assertTrue(InitiativeAdvantage.TORRE_EM_MOVIMENTO.resolveHalfDamage(combatContext(1, true)));
+        assertTrue(InitiativeAdvantage.TORRE_EM_MOVIMENTO.resolveHalfDamage(combatContext(2, true)));
+    }
+
+    @Test
+    void torreEmMovimentoDoesNotHalveDamageWhenInitiativeWasNotWon() {
+        assertFalse(InitiativeAdvantage.TORRE_EM_MOVIMENTO.resolveHalfDamage(combatContext(1, false)));
+    }
+
+    @Test
+    void torreEmMovimentoDoesNotHalveDamagePastTheFirstTwoRoundsEvenWhenInitiativeWasWon() {
+        assertFalse(InitiativeAdvantage.TORRE_EM_MOVIMENTO.resolveHalfDamage(combatContext(3, true)));
+    }
+
+    @Test
+    void torreEmMovimentoDoesNotHalveDamageWithoutASceneContext() {
+        assertFalse(InitiativeAdvantage.TORRE_EM_MOVIMENTO.resolveHalfDamage(null));
+    }
+
+    @Test
+    void onlyTorreEmMovimentoEverResolvesAbsoluteDamageReductionOrHalfDamage() {
+        SceneContext context = combatContext(1, true);
+
+        for (InitiativeAdvantage advantage : InitiativeAdvantage.values()) {
+            if (advantage != InitiativeAdvantage.TORRE_EM_MOVIMENTO) {
+                assertEquals(0, advantage.resolveAbsoluteDamageReduction(context));
+                assertFalse(advantage.resolveHalfDamage(context));
             }
         }
     }

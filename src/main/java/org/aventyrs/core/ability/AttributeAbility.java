@@ -4,6 +4,7 @@ import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.rest.RestType;
+import org.aventyrs.core.sheet.InitiativeBlessing;
 import org.aventyrs.core.skill.CriticalResult;
 import org.aventyrs.core.skill.SkillType;
 
@@ -98,5 +99,18 @@ public interface AttributeAbility {
      */
     default int resolveRestMagicPointsBonus(RestType restType) {
         return 0;
+    }
+
+    /**
+     * Every {@link InitiativeBlessing} this Habilidade grants the moment its holder wins
+     * initiative for their group — mirrors {@code org.aventyrs.core.ego.EgoAdvantage
+     * #resolveInitiativeBlessings}'s own shape (see that method's javadoc for the full
+     * mechanism, and {@code org.aventyrs.core.character.services.InitiativeBlessingService}
+     * for how this is scanned alongside {@code EgoAdvantage}/{@code
+     * org.aventyrs.core.skill.SkillCompetencyAbility}). Empty by default; only override on a
+     * constant whose rules text grants a bonus specifically for winning initiative.
+     */
+    default List<InitiativeBlessing> resolveInitiativeBlessings() {
+        return List.of();
     }
 }

@@ -3,7 +3,9 @@ package org.aventyrs.core.ego;
 import org.aventyrs.core.character.DamageBonus;
 import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.scene.SceneContext;
+import org.aventyrs.core.sheet.InitiativeBlessing;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface EgoAdvantage {
@@ -39,5 +41,54 @@ public interface EgoAdvantage {
      */
     default Optional<DamageBonus> resolveDamageBonus(final SceneContext sceneContext) {
         return Optional.empty();
+    }
+
+    /**
+     * Every {@link InitiativeBlessing} this Vantagem grants the moment its holder wins
+     * initiative for their group — e.g. {@link InitiativeAdvantage#POSICIONAMENTO_ESTRATEGICO}'s
+     * +2UD Movimento Base. Resolved once, at grant-time (not per-roll like {@link
+     * #resolveConditionalRollBonus}/{@link #resolveDamageBonus} above, so no {@code
+     * SceneContext} parameter — the Round-scoping lives in each returned blessing's own {@code
+     * rounds} countdown once granted), by {@code
+     * org.aventyrs.core.character.services.InitiativeBlessingService}, which scans this same
+     * default-empty hook across {@code EgoAdvantage}, {@code
+     * org.aventyrs.core.ability.AttributeAbility}, and {@code
+     * org.aventyrs.core.skill.SkillCompetencyAbility} identically — see that service's own
+     * javadoc for the full mechanism. Empty by default; only override on a constant whose
+     * rules text grants a bonus specifically for winning initiative.
+     */
+    default List<InitiativeBlessing> resolveInitiativeBlessings() {
+        return List.of();
+    }
+
+    /**
+     * RA (Redução Absoluta) this Vantagem grants right now, conditioned on {@link
+     * SceneContext} — e.g. {@link InitiativeAdvantage#TORRE_EM_MOVIMENTO}'s RA during a Cena
+     * de Combate's first two Rounds. Summed by {@code
+     * org.aventyrs.core.character.services.DamageService#getTotalAbsoluteDamageReduction(
+     * Character, SceneContext)} across every held {@code EgoAdvantage}, alongside the
+     * reflection-based {@code @Modifier(ModifierType.ABSOLUTE_DAMAGE_REDUCTION)} sources that
+     * method already scanned — this one exists because a Round/Cena-de-Combate-conditioned
+     * bonus isn't reflection-discoverable via a no-arg {@code @Modifier} method, the same
+     * reason {@link #resolveConditionalRollBonus} exists instead of a plain {@code @Modifier}
+     * for {@code SKILL_ROLL_BONUS}. Zero by default; only override on a constant whose rules
+     * text grants RA scoped to per-roll Scene facts like this.
+     */
+    default int resolveAbsoluteDamageReduction(final SceneContext sceneContext) {
+        return 0;
+    }
+
+    /**
+     * Whether this Vantagem halves damage taken right now, conditioned on {@link
+     * SceneContext} — e.g. {@link InitiativeAdvantage#TORRE_EM_MOVIMENTO}'s "dano causado a
+     * você é reduzido à metade" once its holder has also won initiative. Mirrors {@link
+     * #resolveAbsoluteDamageReduction}'s reasoning, but a plain {@code boolean} rather than a
+     * summed value — same shape {@code DamageServiceImpl} already treats {@code
+     * ModifierType#HALF_DAMAGE} as (any positive sum means "yes"), not a magnitude. {@code
+     * false} by default; only override on a constant whose rules text halves damage taken
+     * scoped to per-roll Scene facts like this.
+     */
+    default boolean resolveHalfDamage(final SceneContext sceneContext) {
+        return false;
     }
 }

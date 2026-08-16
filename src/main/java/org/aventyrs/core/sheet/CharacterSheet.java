@@ -349,6 +349,21 @@ public class CharacterSheet implements Interactable<CharacterSheet> {
     }
 
     /**
+     * Removes exactly this {@link TemporaryEffect} instance — the symmetric counterpart to
+     * {@link #applyEffect}, reference-based (via {@link List#remove(Object)}; neither {@code
+     * TemporaryEffect} nor {@link TemporaryBonus} overrides {@code equals()}) rather than
+     * matching by type/value. Needed by a caller that tracked exactly which instance it
+     * granted and must revoke precisely that one without disturbing an unrelated effect of the
+     * same {@code ModifierType} from a different source — see {@code
+     * org.aventyrs.core.scene.Scene#applyInitiativeBlessings}. A no-op if effect isn't
+     * currently held (already expired and ticked off, or never granted to this CharacterSheet).
+     */
+    public void removeEffect(final TemporaryEffect effect)
+    {
+        temporaryEffects.remove(effect);
+    }
+
+    /**
      * Grants a {@link TemporaryBonus} of type — e.g. {@code ArtesCompetencyAbility
      * #DOM_BARDICO} motivating an ally, granting them (not the caster) a
      * {@link ModifierType#SKILL_ROLL_BONUS} for a few Rodadas. The granting Character isn't

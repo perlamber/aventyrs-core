@@ -4,16 +4,22 @@ import org.aventyrs.core.ability.AttributeAbility;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterSkill;
+import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.character.fixture.CharacterSkillFixture;
+import org.aventyrs.core.ego.InitiativeAdvantage;
 import org.aventyrs.core.modifier.Modifier;
 import org.aventyrs.core.modifier.ModifierType;
+import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.Player;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
 import org.aventyrs.core.skill.SkillType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -215,5 +221,79 @@ class DamageServiceImplTest {
 
         assertEquals(3, totalDamageTaken);
         assertEquals(3, sheet.getDamageTaken());
+    }
+
+    private SceneContext combatContext(final int currentRound, final boolean wonInitiative) {
+        return new SceneContext(List.of(), List.of(), Map.of(), null, true, currentRound, wonInitiative);
+    }
+
+    private Character characterWithTorreEmMovimento() {
+        return CharacterFixture.blank(CharacterFixture.BLANK)
+                .egoAdvantage(EgoDomain.INICIATIVA, InitiativeAdvantage.TORRE_EM_MOVIMENTO)
+                .build();
+    }
+
+    @Test
+    void getTotalAbsoluteDamageReductionWithSceneContextAddsTheEgoAdvantagesOwnContribution() {
+        Character character = characterWithTorreEmMovimento();
+        assertEquals(2, damageService.getTotalAbsoluteDamageReduction(character, combatContext(1, false)));
+    }
+
+    @Test
+    void getTotalAbsoluteDamageReductionWithSceneContextCombinesWithTheReflectionBasedSources() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .egoAdvantage(EgoDomain.INICIATIVA, InitiativeAdvantage.TORRE_EM_MOVIMENTO)
+                .skillCompetencyAbility(new AbsoluteDamageReductionAbility())
+                .build();
+        assertEquals(4, damageService.getTotalAbsoluteDamageReduction(character, combatContext(1, false)));
+    }
+
+    @Test
+    void getTotalAbsoluteDamageReductionWithSceneContextOmitsItOutsideTheFirstTwoRounds() {
+        Character character = characterWithTorreEmMovimento();
+        assertEquals(0, damageService.getTotalAbsoluteDamageReduction(character, combatContext(3, false)));
+    }
+
+    @Test
+    void getTotalAbsoluteDamageReductionWithoutASceneContextOmitsTheEgoAdvantagesOwnContribution() {
+        Character character = characterWithTorreEmMovimento();
+        assertEquals(0, damageService.getTotalAbsoluteDamageReduction(character, null));
+    }
+
+    @Test
+    void calculateFinalDamageWithSceneContextAppliesTheEgoAdvantagesOwnAbsoluteDamageReduction() {
+        Character character = characterWithTorreEmMovimento();
+        assertEquals(8, damageService.calculateFinalDamage(character, combatContext(1, false), 10, false));
+    }
+
+    @Test
+    void calculateFinalDamageWithSceneContextAlsoHalvesDamageWhenInitiativeWasWon() {
+        Character character = characterWithTorreEmMovimento();
+        // RA(2) subtracted from 10 leaves 8, then halved (initiative won) to 4.
+        assertEquals(4, damageService.calculateFinalDamage(character, combatContext(1, true), 10, false));
+    }
+
+    @Test
+    void calculateFinalDamageWithSceneContextDoesNotHalveDamageWhenInitiativeWasNotWon() {
+        Character character = characterWithTorreEmMovimento();
+        assertEquals(8, damageService.calculateFinalDamage(character, combatContext(1, false), 10, false));
+    }
+
+    @Test
+    void calculateFinalDamageWithNullSceneContextMatchesTheNoContextOverload() {
+        Character character = characterWithTorreEmMovimento();
+        assertEquals(damageService.calculateFinalDamage(character, 10, false),
+                damageService.calculateFinalDamage(character, null, 10, false));
+    }
+
+    @Test
+    void applyDamageWithSceneContextAppliesTheCalculatedAmountToTheCharacterSheet() {
+        Character character = characterWithTorreEmMovimento();
+        CharacterSheet sheet = CharacterSheet.of(character, new Player());
+
+        int totalDamageTaken = damageService.applyDamage(character, sheet, combatContext(1, true), 10, false);
+
+        assertEquals(4, totalDamageTaken);
+        assertEquals(4, sheet.getDamageTaken());
     }
 }

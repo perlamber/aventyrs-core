@@ -5,9 +5,13 @@ import lombok.Getter;
 import org.aventyrs.core.character.DamageBonus;
 import org.aventyrs.core.character.DamageType;
 import org.aventyrs.core.character.EgoDomain;
+import org.aventyrs.core.character.services.DamageService;
+import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.scene.SceneContext;
+import org.aventyrs.core.sheet.InitiativeBlessing;
 import org.aventyrs.core.skill.Skill;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -62,33 +66,70 @@ public enum InitiativeAdvantage implements EgoAdvantage {
         }
     },
 
-    // TODO: during the first 2 Rounds of a Cena de Combate, your movement doesn't allow
-    // enemy Reações; if you won initiative, your and your allies' Movimento Base also
-    // increases by +2UD during those same Rounds. The Round/Cena-de-Combate/won-initiative
-    // detection IMPETO needed is now real (SceneContext#isWithinFirstCombatRounds/
-    // #hasWonInitiative), but this ability's own effects still have nothing to attach to:
-    // there's no movement/positioning system to suppress a Reação from (this core doesn't
-    // do geometry — see org.aventyrs.core.scene.Range's own javadoc) and no Movimento Base
-    // stat on Character at all.
+    /**
+     * The "o seu Movimento Base e o de seus aliados aumentam em +2UD" half is fully wired:
+     * {@link #resolveInitiativeBlessings} grants a {@link InitiativeBlessing}
+     * ({@link ModifierType#MOVEMENT}, +{@value #MOVEMENT_BONUS}UD, {@value
+     * #FIRST_ROUNDS_COUNT} Rounds, {@code appliesToAllies=true}) — resolved by {@code
+     * org.aventyrs.core.character.services.InitiativeBlessingService} and applied by {@code
+     * org.aventyrs.core.scene.Scene#applyInitiativeBlessings} as a {@code TemporaryBonus} on
+     * the winner and every Scene ally, consumed by summing {@code
+     * org.aventyrs.core.character.services.MovementService#getTotalMovement} with {@code
+     * CharacterSheet#getTemporaryBonus(ModifierType.MOVEMENT)}.
+     *
+     * <p>TODO: "seus movimentos não permitem Reações de seus inimigos" stays unimplemented —
+     * this core has no movement/positioning system to suppress a Reação from at all (it
+     * doesn't do geometry — see {@code org.aventyrs.core.scene.Range}'s own javadoc), a
+     * different gap than the movement-*amount* half above, which only needed a stat to add UD
+     * to, not a whole Reação-triggering mechanism.
+     */
     POSICIONAMENTO_ESTRATEGICO("Apenas nas duas primeiras Rodadas de cada Cena de " +
             "Combate, seus movimentos não permitem Reações de seus inimigos. " +
             "Adicionalmente, se você tiver ganho a iniciativa, o seu Movimento Base e o " +
-            "de seus aliados aumentam em +2UD nestas Rodadas."),
+            "de seus aliados aumentam em +2UD nestas Rodadas.") {
+        @Override
+        public List<InitiativeBlessing> resolveInitiativeBlessings() {
+            return List.of(new InitiativeBlessing(ModifierType.MOVEMENT, MOVEMENT_BONUS, FIRST_ROUNDS_COUNT, true));
+        }
+    },
 
-    // TODO: grants RA during the first 2 Rounds of a Cena de Combate; if you won
-    // initiative, damage taken during that same window is also halved. Same story as
-    // POSICIONAMENTO_ESTRATEGICO: the Round/Cena-de-Combate/won-initiative detection is now
-    // real, but DamageService's RA/HALF_DAMAGE summation (DamageServiceImpl#sumAcrossSources)
-    // takes only a Character, no SceneContext at all — it's a reflection-based @Modifier scan
-    // with no per-roll/per-Round input, so scoping either reduction to specific Rounds of a
-    // Cena de Combate still isn't wireable without first giving DamageService a SceneContext
-    // parameter, which hasn't been done.
+    /**
+     * Fully wired, the same shape as {@link #IMPETO} (a per-calculation {@link SceneContext}
+     * check, not {@link #POSICIONAMENTO_ESTRATEGICO}'s group-blessing mechanism — both of this
+     * Vantagem's clauses are about the holder's own defense, never granted to allies):
+     * {@link #resolveAbsoluteDamageReduction} grants RA ({@value
+     * org.aventyrs.core.character.services.DamageService#DEFAULT_DAMAGE_REDUCTION}, this rules
+     * text's own number isn't spelled out — see {@code DamageService.DEFAULT_DAMAGE_REDUCTION}'s
+     * own javadoc for why RD's unspecified-bonus default is reused here) while {@link
+     * SceneContext#isWithinFirstCombatRounds} is true, and {@link #resolveHalfDamage} halves
+     * damage taken once {@link SceneContext#hasWonInitiative()} is also true — both summed by
+     * {@code DamageServiceImpl}'s new {@code SceneContext}-accepting overloads across every
+     * held {@code EgoAdvantage}, reached end-to-end via {@code DamageInteraction}'s own new
+     * {@code SceneContext}-accepting overloads.
+     */
     TORRE_EM_MOVIMENTO("Nas duas primeiras Rodadas de cada Cena de Combate você recebe " +
             "RA. Se você tiver ganho a iniciativa, neste período dano causado a você é " +
-            "reduzido à metade.");
+            "reduzido à metade.") {
+        @Override
+        public int resolveAbsoluteDamageReduction(final SceneContext sceneContext) {
+            if (sceneContext != null && sceneContext.isWithinFirstCombatRounds(FIRST_ROUNDS_COUNT)) {
+                return DamageService.DEFAULT_DAMAGE_REDUCTION;
+            }
+            return 0;
+        }
 
-    /** How many of a Cena de Combate's first Rounds IMPETO's Vantagem applies during. */
+        @Override
+        public boolean resolveHalfDamage(final SceneContext sceneContext) {
+            return sceneContext != null && sceneContext.isWithinFirstCombatRounds(FIRST_ROUNDS_COUNT)
+                    && sceneContext.hasWonInitiative();
+        }
+    };
+
+    /** How many of a Cena de Combate's first Rounds IMPETO's Vantagem/POSICIONAMENTO_ESTRATEGICO's blessing apply during. */
     private static final int FIRST_ROUNDS_COUNT = 2;
+
+    /** POSICIONAMENTO_ESTRATEGICO's own Movimento Base bonus — a coincidentally-equal-to-Vantagem number, not Vantagem itself. */
+    private static final int MOVEMENT_BONUS = 2;
 
     private final String description;
 
