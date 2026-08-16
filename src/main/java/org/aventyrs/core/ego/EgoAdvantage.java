@@ -3,7 +3,9 @@ package org.aventyrs.core.ego;
 import org.aventyrs.core.character.DamageBonus;
 import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.scene.SceneContext;
+import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.InitiativeBlessing;
+import org.aventyrs.core.skill.SkillType;
 
 import java.util.List;
 import java.util.Optional;
@@ -90,5 +92,24 @@ public interface EgoAdvantage {
      */
     default boolean resolveHalfDamage(final SceneContext sceneContext) {
         return false;
+    }
+
+    /**
+     * A bonus toward a Perícia roll this Vantagem grants, but only for named skillType(s) —
+     * e.g. {@link ResourcesAdvantage#MORAL_HERDADA}'s "+1 em rolagens de Artes e Persuasão,"
+     * not every Perícia. {@link #resolveConditionalRollBonus} can't express this: it's summed
+     * identically into every skill's own {@code AbstractSkillInteraction#applyTo} with no
+     * {@link SkillType} to condition on at all — using it here would silently over-grant the
+     * bonus to every Perícia instead of just the named ones, the same "don't silently narrow or
+     * over-grant" restraint this codebase already applies to purpose-scoped Vantagem bonuses.
+     * target is the CharacterSheet performing this roll (not a separate attack target — unlike
+     * {@code SkillCompetencyAbility#resolveDamageBonus}'s {@code attackTarget}, this Vantagem's
+     * own bonus depends on the roller's <em>own</em> state, e.g. its current Fama), passed
+     * explicitly for the same reason {@code CharacterSheet} state generally is here: it isn't
+     * reflection-discoverable via a no-arg {@code @Modifier} method. Empty by default; only
+     * override on a constant whose rules text scopes a roll bonus to specific named skills.
+     */
+    default Optional<Integer> resolveSkillSpecificRollBonus(final SkillType skillType, final SceneContext sceneContext, final CharacterSheet target) {
+        return Optional.empty();
     }
 }

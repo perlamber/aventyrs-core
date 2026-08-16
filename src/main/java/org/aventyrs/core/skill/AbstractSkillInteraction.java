@@ -64,6 +64,10 @@ import static org.aventyrs.core.util.TranslatableMessages.REQUIRED_SKILL_TRAIT_N
  * #sumEgoAdvantageRollBonuses}, every held {@code character.getEgoAdvantages()}' own {@link
  * org.aventyrs.core.ego.EgoAdvantage#resolveConditionalRollBonus} (e.g. {@code
  * InitiativeAdvantage#IMPETO}'s Vantagem during a Cena de Combate's first two Rounds) — plus,
+ * via {@link #sumEgoAdvantageSkillSpecificRollBonuses}, every held {@code EgoAdvantage}'s own
+ * {@link org.aventyrs.core.ego.EgoAdvantage#resolveSkillSpecificRollBonus} (e.g. {@code
+ * ResourcesAdvantage#MORAL_HERDADA}'s bonus scoped to just Artes and Persuasão, unlike {@code
+ * resolveConditionalRollBonus}'s every-skill scope) — plus,
  * via {@link #sizeCategoryRollBonus}, whichever {@link SizeCategory} modifier this Perícia is
  * affected by (resolved through {@link CharacterSizeService#getEffectiveSizeCategory}, so a
  * size-shifting ability like Sangue de Gigante is reflected here too): Ataque à Distância/
@@ -201,6 +205,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CharacterS
         bonus += target.getTemporaryBonus(skillType.getRollBonusType());
         bonus += sumConditionalRollBonuses(skillCompetencyAbilities, sceneContext, skillRoll);
         bonus += sumEgoAdvantageRollBonuses(character.getEgoAdvantages().values(), sceneContext);
+        bonus += sumEgoAdvantageSkillSpecificRollBonuses(character.getEgoAdvantages().values(), sceneContext, target);
         bonus += sizeCategoryRollBonus(characterSizeService.getEffectiveSizeCategory(character));
 
         int difficultyReduction = SkillExcellency.totalDifficultyReduction(skillType.getExcellencyClass(), graduationValue);
@@ -333,6 +338,22 @@ public abstract class AbstractSkillInteraction implements Interaction<CharacterS
     private int sumEgoAdvantageRollBonuses(final Collection<EgoAdvantage> egoAdvantages, final SceneContext sceneContext) {
         return egoAdvantages.stream()
                 .map(advantage -> advantage.resolveConditionalRollBonus(sceneContext))
+                .flatMap(Optional::stream)
+                .mapToInt(Integer::intValue)
+                .sum();
+    }
+
+    /**
+     * Sums {@link EgoAdvantage#resolveSkillSpecificRollBonus} across every held Vantagem de Ego
+     * — the skill-scoped counterpart to {@link #sumEgoAdvantageRollBonuses}, for a Vantagem
+     * whose bonus (e.g. {@link org.aventyrs.core.ego.ResourcesAdvantage#MORAL_HERDADA}) only
+     * applies to specific named skills rather than every Perícia. target is this Interaction's
+     * own roller, passed through unconditionally — safe even for a Vantagem with no
+     * skill-specific bonus, since it just falls through to {@code Optional.empty()}.
+     */
+    private int sumEgoAdvantageSkillSpecificRollBonuses(final Collection<EgoAdvantage> egoAdvantages, final SceneContext sceneContext, final CharacterSheet target) {
+        return egoAdvantages.stream()
+                .map(advantage -> advantage.resolveSkillSpecificRollBonus(skillType, sceneContext, target))
                 .flatMap(Optional::stream)
                 .mapToInt(Integer::intValue)
                 .sum();

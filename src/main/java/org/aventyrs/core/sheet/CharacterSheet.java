@@ -431,4 +431,28 @@ public class CharacterSheet implements Interactable<CharacterSheet> {
     {
         tickTemporaryEffects();
     }
+
+    /**
+     * Begins this CharacterSheet's own Turn — everything that needs to happen the moment this
+     * Turn starts, the mirror image of {@link #finishTurn()}. turnNumber is 0-based (0 is the
+     * character's first Turn/Round) — the same convention {@code ActionPointsService}/{@code
+     * ActionProfile}/{@code MovementService} already use, and the same value {@link
+     * org.aventyrs.core.scene.Scene#getCurrentRound()} exposes; a caller wanting this
+     * CharacterSheet's max PA/Movement for the Turn that's now starting passes this same
+     * turnNumber into those services.
+     *
+     * <p>Currently a no-op — no {@link TemporaryEffect} or other mechanic in this codebase yet
+     * triggers "no início do seu turno" specifically ({@link Bleeding}/{@link ManaDrain}/{@link
+     * Withering}'s own ongoing loss all apply via {@link #tickTemporaryEffects()} at
+     * Turn-<em>end</em>, see {@link #finishTurn()}) — but real and wired all the same, the same
+     * "build the hook ahead of its first consumer" shape {@link #finishTurn()} itself started
+     * as, so a future start-of-Turn effect has somewhere to plug in, turnNumber already in hand,
+     * without touching {@link org.aventyrs.core.scene.Scene} again. Called by {@link
+     * org.aventyrs.core.scene.Scene#next()} the moment a participant's Turn begins — unlike
+     * {@link #finishTurn()}, this fires even on the very first {@code next()} call, since that
+     * call does start someone's Turn, just none has ended yet.
+     */
+    public void startTurn(final int turnNumber)
+    {
+    }
 }

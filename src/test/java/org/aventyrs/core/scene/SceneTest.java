@@ -192,6 +192,90 @@ class SceneTest {
     }
 
     @Test
+    void nextCallsFinishTurnOnTheParticipantWhoseTurnJustEnded() {
+        Scene scene = new Scene();
+        CharacterSheet a = newSheet();
+        CharacterSheet b = newSheet();
+        scene.addParticipant(a, 10);
+        scene.addParticipant(b, 5);
+        a.grantTemporaryBonus(ModifierType.INITIATIVE, 3, 1);
+        assertEquals(3, a.getTemporaryBonus(ModifierType.INITIATIVE));
+
+        scene.next();
+        assertEquals(3, a.getTemporaryBonus(ModifierType.INITIATIVE));
+        scene.next();
+
+        assertEquals(0, a.getTemporaryBonus(ModifierType.INITIATIVE));
+    }
+
+    @Test
+    void nextDoesNotCallFinishTurnOnTheVeryFirstCall() {
+        Scene scene = new Scene();
+        CharacterSheet a = newSheet();
+        scene.addParticipant(a, 10);
+        a.grantTemporaryBonus(ModifierType.INITIATIVE, 3, 1);
+
+        scene.next();
+
+        assertEquals(3, a.getTemporaryBonus(ModifierType.INITIATIVE));
+    }
+
+    @Test
+    void wonInitiativeReflectsAGrantedInitiativeBonusImmediately() {
+        Scene scene = new Scene();
+        UUID heroes = UUID.randomUUID();
+        UUID villains = UUID.randomUUID();
+        CharacterSheet hero = newSheet();
+        CharacterSheet villain = newSheet();
+        scene.addParticipant(hero, 5, heroes);
+        scene.addParticipant(villain, 18, villains);
+        assertFalse(scene.wonInitiative(hero));
+
+        // An Ability grants the bonus straight to the CharacterSheet it already holds a
+        // reference to — no call into Scene at all.
+        hero.grantTemporaryBonus(ModifierType.INITIATIVE, 20, 1);
+
+        assertTrue(scene.wonInitiative(hero));
+        assertFalse(scene.wonInitiative(villain));
+    }
+
+    @Test
+    void turnOrderStaysFrozenMidRoundThenReflectsAGrantedInitiativeBonusAtTheNextRoundBoundary() {
+        Scene scene = new Scene();
+        CharacterSheet a = newSheet();
+        CharacterSheet b = newSheet();
+        scene.addParticipant(a, 10);
+        scene.addParticipant(b, 5);
+
+        scene.next();
+        b.grantTemporaryBonus(ModifierType.INITIATIVE, 20, 2);
+        assertEquals(List.of(a, b), scene.getParticipantsInInitiativeOrder());
+
+        scene.next();
+        scene.next();
+
+        assertEquals(List.of(b, a), scene.getParticipantsInInitiativeOrder());
+    }
+
+    @Test
+    void participantAddedMidRoundWithAnActiveInitiativeBonusIsPositionedByItsEffectiveValueOnceMerged() {
+        Scene scene = new Scene();
+        CharacterSheet a = newSheet();
+        CharacterSheet b = newSheet();
+        CharacterSheet lateArrival = newSheet();
+        lateArrival.grantTemporaryBonus(ModifierType.INITIATIVE, 20, 2);
+        scene.addParticipant(a, 10);
+        scene.addParticipant(b, 5);
+
+        scene.next();
+        scene.addParticipant(lateArrival, 1);
+        scene.next();
+        scene.next();
+
+        assertEquals(List.of(lateArrival, a, b), scene.getParticipantsInInitiativeOrder());
+    }
+
+    @Test
     void participantsAddedWithoutAnExplicitGroupHaveNoAllies() {
         Scene scene = new Scene();
         CharacterSheet a = newSheet();

@@ -6,6 +6,7 @@ import org.aventyrs.core.sheet.InitiativeBlessing;
 import org.aventyrs.core.sheet.TemporaryBonus;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -60,6 +61,26 @@ import static org.aventyrs.core.util.TranslatableMessages.NO_PARTICIPANTS_IN_SCE
  * blessed exactly when {@link #grantedBlessings} already tracks a member of it (see {@link
  * #isGroupBlessed}) — applying the same currently-active ally-scoped blessings to it
  * immediately.
+ *
+ * <p>{@link InitiativeEntry#getInitiativeValue()} is fixed once rolled, but a participant's
+ * actual Iniciativa *standing* isn't necessarily fixed for their whole time in this Scene — a
+ * bonus granted by another Character, an activated Ability, or a passive with a Round trigger
+ * can each grant a Round-scoped {@code TemporaryBonus} targeting {@code
+ * ModifierType.INITIATIVE} directly to a {@code CharacterSheet}, the same way any other
+ * temporary bonus already is (see {@code CharacterSheet#grantTemporaryBonus}) — nothing calls
+ * into this class to do that, and nothing needs to: {@link CharacterSheet} has no reference
+ * back to a {@code Scene}. Instead, {@link InitiativeEntry#getEffectiveInitiativeValue()}
+ * resolves the live total straight from the {@code CharacterSheet} each entry already
+ * references, and this class reads *that* wherever current standing matters —
+ * {@link #wonInitiative}/{@link #buildContext} reflect a change the instant it's granted, no
+ * different from how they already recompute fresh on every call. This class's turn *order*
+ * (what {@link #getParticipantsInInitiativeOrder()}/{@link #next()} walk) is the one thing kept
+ * stable mid-Round on purpose — it's only ever re-derived, from every participant's current
+ * {@link InitiativeEntry#getEffectiveInitiativeValue()}, at the same Round-boundary point a
+ * pending newcomer already waits for (see {@link #next()}) — so a granted bonus can flip who's
+ * currently winning immediately without reshuffling turns already in progress this Round.
+ * {@link CharacterSheet#finishTurn()} — called by {@link #next()} on whoever's turn just ended
+ * — is what advances a granted bonus toward expiry in the first place.
  */
 public class Scene {
     private final List<InitiativeEntry> activeEntries = new ArrayList<>();
@@ -197,11 +218,12 @@ public class Scene {
     }
 
     /**
-     * Whether characterSheet's sub-group currently holds this Scene's own highest rolled
-     * Iniciativa — "ganhou a iniciativa," the condition several Vantagens de Iniciativa key
-     * off (e.g. {@code InitiativeAdvantage#IMPETO}). A sub-group's own Iniciativa "value" is
-     * the highest individual {@link InitiativeEntry#getInitiativeValue()} among its members —
-     * matching how a party typically acts as a block on whichever single member rolled best —
+     * Whether characterSheet's sub-group currently holds this Scene's own highest Iniciativa
+     * standing right now — "ganhou a iniciativa," the condition several Vantagens de Iniciativa
+     * key off (e.g. {@code InitiativeAdvantage#IMPETO}). A sub-group's own Iniciativa "value" is
+     * the highest individual {@link InitiativeEntry#getEffectiveInitiativeValue()} among its
+     * members — matching how a party typically acts as a block on whichever single member
+     * rolled best, and reflecting any Round-scoped Iniciativa bonus currently active on them —
      * compared against every other sub-group's own highest value; a tie for the overall
      * highest is considered a win for every sub-group sharing it, since the rules text this
      * models names no tie-breaker.
@@ -217,7 +239,7 @@ public class Scene {
     private int bestInitiativeValue(final Predicate<InitiativeEntry> filter) {
         return allEntries()
                 .filter(filter)
-                .mapToInt(InitiativeEntry::getInitiativeValue)
+                .mapToInt(InitiativeEntry::getEffectiveInitiativeValue)
                 .max()
                 .orElseThrow(() -> new IllegalOperationException(NO_PARTICIPANTS_IN_SCENE));
     }
@@ -283,22 +305,38 @@ public class Scene {
     }
 
     /**
-     * The next CharacterSheet in Iniciativa order, advancing this Scene's turn cursor.
-     * Wraps back to the top once every participant has acted, which also advances
-     * {@link #getCurrentRound()} and merges in any participant added mid-Round.
+     * The next CharacterSheet in Iniciativa order, advancing this Scene's turn cursor. First
+     * calls {@link CharacterSheet#finishTurn()} on whoever's turn is ending (a no-op on the
+     * very first call, before anyone has had a turn yet) — this is what advances any Round-scoped
+     * {@code TemporaryBonus} that participant is holding (including one targeting {@code
+     * ModifierType.INITIATIVE}) toward expiry. Wraps back to the top once every participant has
+     * acted, which also advances {@link #getCurrentRound()} and calls {@link
+     * #startNewRound()} — merging in any participant added mid-Round *and* re-deriving turn
+     * order from everyone's current {@link InitiativeEntry#getEffectiveInitiativeValue()}, so a
+     * granted/expired Iniciativa bonus is reflected in the order from the next Round onward,
+     * never mid-Round. Finally calls {@link CharacterSheet#startTurn(int)} on whoever's turn is
+     * now beginning, passing {@link #getCurrentRound()} as its turnNumber — unlike {@code
+     * finishTurn()}, this fires even on the very first call, since that call does start
+     * someone's Turn, just none has ended yet.
      * @throws IllegalOperationException if no participant has been added yet
      */
     public CharacterSheet next() {
         if (activeEntries.isEmpty()) {
             throw new IllegalOperationException(NO_PARTICIPANTS_IN_SCENE);
         }
+        if (currentIndex >= 0) {
+            activeEntries.get(currentIndex).getCharacterSheet().finishTurn();
+        }
         currentIndex++;
         if (currentIndex >= activeEntries.size()) {
             currentIndex = 0;
             currentRound++;
-            mergePendingEntries();
+            activeEntries.get(currentIndex).getCharacterSheet().startTurn(currentRound);
+            startNewRound();
         }
-        return activeEntries.get(currentIndex).getCharacterSheet();
+        CharacterSheet active = activeEntries.get(currentIndex).getCharacterSheet();
+        active.startTurn(currentRound);
+        return active;
     }
 
     /**
@@ -320,18 +358,27 @@ public class Scene {
                 .collect(Collectors.toList());
     }
 
-    private void mergePendingEntries() {
-        for (InitiativeEntry pending : pendingEntries) {
-            insertSorted(activeEntries, pending);
-        }
+    /**
+     * The Round-boundary bookkeeping {@link #next()} runs every time it wraps back to the top:
+     * merges in any {@link #pendingEntries} added mid-Round, then re-sorts {@link
+     * #activeEntries} by every entry's current {@link InitiativeEntry#getEffectiveInitiativeValue()}
+     * — not just each entry's fixed {@link InitiativeEntry#getInitiativeValue()} — so a
+     * Round-scoped Iniciativa bonus granted or expired since the last Round boundary is
+     * reflected in the turn order from this Round onward. {@code List#sort} is stable, so ties
+     * (including a newly-merged pending entry tying with an existing one) keep whatever
+     * relative order they already had, the same tie behavior {@link #insertSorted} preserves.
+     */
+    private void startNewRound() {
+        activeEntries.addAll(pendingEntries);
         pendingEntries.clear();
+        activeEntries.sort(Comparator.comparingInt(InitiativeEntry::getEffectiveInitiativeValue).reversed());
     }
 
     /** Inserts before the first entry with a strictly lower value, keeping ties in insertion order. */
     private void insertSorted(final List<InitiativeEntry> sortedEntries, final InitiativeEntry entry) {
         int insertionIndex = sortedEntries.size();
         for (int i = 0; i < sortedEntries.size(); i++) {
-            if (sortedEntries.get(i).getInitiativeValue() < entry.getInitiativeValue()) {
+            if (sortedEntries.get(i).getEffectiveInitiativeValue() < entry.getEffectiveInitiativeValue()) {
                 insertionIndex = i;
                 break;
             }

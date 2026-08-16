@@ -800,6 +800,94 @@ Reação-suppression half is the only piece from this whole family still TODO'd 
 system to attach to at all, movement-triggered or otherwise. Check each constant's own TODO
 rather than assuming one fix unblocks every citation of it.
 
+### A skill-scoped roll bonus for `EgoAdvantage` — `resolveSkillSpecificRollBonus`, `ResourcesAdvantage`, `MoralHerdadaAbility`
+
+`EgoAdvantage#resolveConditionalRollBonus` is summed identically into *every* Perícia's own
+`AbstractSkillInteraction#applyTo` — correct for `InitiativeAdvantage#IMPETO` (genuinely
+unscoped, "suas Rolagens de Perícia"), but it has no `SkillType` to condition on at all, so a
+Vantagem de Ego scoped to specific *named* skills (e.g. `ResourcesAdvantage#MORAL_HERDADA`'s
+"+1 em rolagens de Artes e Persuasão") can't use it without silently over-granting into every
+other Perícia too — the same "don't silently narrow or over-grant" restraint already
+established for purpose-scoped `SkillCompetencyAbility` Vantagens. Unlike those (scoped to a
+narrative *purpose* this codebase genuinely can't track), a scope of specific named skills
+*is* trackable — every `AbstractSkillInteraction` already knows its own `skillType`.
+
+- `EgoAdvantage#resolveSkillSpecificRollBonus(SkillType, SceneContext, CharacterSheet target)`
+  is the new default-empty hook this adds, mirroring `resolveConditionalRollBonus`'s shape plus
+  the two extra parameters it actually needs: `skillType` to gate on (return `Optional.empty()`
+  for anything not named), and `target` — the roller's own CharacterSheet, not a separate
+  attack target like `SkillCompetencyAbility#resolveDamageBonus`'s `attackTarget` — passed
+  explicitly because a Vantagem's skill-specific bonus may depend on the roller's own state
+  (here, its current Fama) that isn't reflection-discoverable via a no-arg `@Modifier` method.
+  Summed by `AbstractSkillInteraction#sumEgoAdvantageSkillSpecificRollBonuses`, called
+  unconditionally alongside the existing `sumEgoAdvantageRollBonuses` — safe for every other
+  `EgoAdvantage` constant, since it just falls through to `Optional.empty()`.
+- `ResourcesAdvantage` (`org.aventyrs.core.ego`) is the Vantagem de Recursos catalog, the same
+  shape as `InitiativeAdvantage`/`AutocontroleAdvantage` (`EgoDomain.RECURSOS`, `EGO_ADVANTAGE_MIN_BASE`
+  gate). `BARGANHISTA`/`HERANCA_FAMILIAR` are both fully TODO'd — each needs a PE (Ponto de
+  Equipamento) cost system and an Equipamento/Item entity (Raridade, Obra-Prima tiers,
+  Aprimoramentos) that don't exist anywhere in this codebase yet (`org.aventyrs.core.item
+  .ItemInteraction` is still a bare "TODO implement" stub) — consistent with `ProfissaoCompetencyAbility
+  .FORJA_VULCANA`'s own citation of the same missing entity.
+- `MORAL_HERDADA` needs a choice at acquisition (Fama Positiva vs. Negativa) that feeds its own
+  bonus math, so — same pattern as `ArtesCompetencyAbility#APRIMORAR_COM_ARTE` — the enum
+  constant stays as the catalog/rules-text entry, and a character who actually picks it is
+  granted a `MoralHerdadaAbility` instance in `Character.egoAdvantages` instead.
+  `MoralHerdadaAbility(FamaChoice)` (`FamaChoice` is a nested two-constant enum, `POSITIVA`/
+  `NEGATIVA`) delegates `getEgoDomain()`/`getDescription()` to the catalog constant, and:
+  - overrides `resolveSkillSpecificRollBonus` for real: `+1` (`BASE_ROLL_BONUS`) toward Artes
+    and Persuasão only, `+1` more per 10 points (`FAMA_POINTS_PER_BONUS_STEP`, floor division)
+    of whichever Fama type was chosen — read *live* off `target` every call (`CharacterSheet
+    #getFamaPositiva`/`#getFamaNegativa`), not frozen at acquisition, since Fama keeps growing
+    after creation (Excelência bonuses, Narrador rewards) and this Vantagem's own rules text
+    tracks "a Fama escolhida," not a snapshot of it.
+  - exposes `applyStartingFama(Character, CharacterSheet)` for the "recebe Fama... igual ao seu
+    valor de Recursos" half — a real, tested one-time grant (`character.getEgos().getRecursos()
+    .getTotal()` via `CharacterSheet#increaseFamaPositiva`/`#increaseFamaNegativa`), **not**
+    TODO'd, since it's mechanically expressible today with existing pieces. It has no automatic
+    caller yet, though: `CharacterCreationServiceImpl` only ever assembles a plain `Character`,
+    and Fama only exists on `CharacterSheet` — no `CharacterSheet` exists yet at the point this
+    Vantagem is actually chosen for this to grant onto. The same ordering gap
+    `CharacterAttributeService#upgradeBase`/`SkillGraduationService#upgradeGraduation` already
+    work around by taking both a `Character` and a `CharacterSheet` explicitly, rather than
+    assuming one always has the other in hand.
+
+### `SorteAdvantage` — a per-enum method outside the shared `EgoAdvantage` interface
+
+`SorteAdvantage` (`org.aventyrs.core.ego`) is the Vantagem de Sorte catalog — same shape as
+`InitiativeAdvantage`/`AutocontroleAdvantage`/`ResourcesAdvantage` (`EgoDomain.SORTE`,
+`EGO_ADVANTAGE_MIN_BASE` gate), no acquisition-time choice needed by any of its three
+constants, so no instance-based class like `MoralHerdadaAbility` was needed here.
+
+- `AS_NA_MANGA` and `DILETO_DE_TYKHE` are both fully TODO'd, each blocked on a gap already
+  cited elsewhere in this file rather than a new one: `AS_NA_MANGA`'s "2UD de movimento,
+  ignorando Reações e terreno difícil, imediatamente após usar um Ponto de Sorte" needs three
+  separate missing pieces — no "triggered the moment a resource is spent" hook exists anywhere
+  (`CharacterSheet#spendTemporaryEgoPoints` is a plain mutator, nothing observes it — see the
+  Iniciativa section above for why an observer/event mechanism was deliberately rejected in
+  this codebase, the same reasoning applies here), no movement-triggers-Reação suppression
+  mechanism (`InitiativeAdvantage#POSICIONAMENTO_ESTRATEGICO`'s own Reação-suppression half is
+  still TODO'd on the identical gap), and `TerrainType` models only what kind of place a whole
+  Scene is in, not a per-movement "terreno difícil" concept to ignore. `DILETO_DE_TYKHE`'s "+1
+  ponto de Sorte temporário... por sessão de jogo" is the exact same "no game-session tracking
+  system exists yet" gap `AutocontroleAdvantage#MOTIVACAO_DE_MOSES`'s own "por sessão" clause
+  already cites.
+- `ACE`'s `resolveCriticalMarginIncrease(SkillType, SceneContext)` is real, tested data — `+1`
+  for a Perícia de Ataque during a Cena de Combate, `+3` for a non-Ataque Perícia outside one,
+  `0` otherwise — the same shape as `ArtesAprimorarComArteAbility#getCriticalMarginReduction`,
+  and it carries that method's identical gap too: `SkillRoll#getCriticalResult()` is a fixed
+  dice-matching check (three or two matching faces at the extremes), not a threshold/margin
+  comparison a bonus like this could actually widen, so there's still no roll-resolution engine
+  anywhere in this codebase to consult either method automatically.
+- This method is declared directly on `SorteAdvantage` itself, **not** added to the shared
+  `EgoAdvantage` interface — unlike `resolveSkillSpecificRollBonus` above (added to the shared
+  interface because a second, real consumer already existed in `AbstractSkillInteraction`),
+  nothing else in this codebase has an analogous Margem Crítica concept to share this shape
+  with yet, so widening the interface for a single constant would just be speculative. If a
+  second `EgoDomain`'s own Vantagem ever needs the same shape, promote it to `EgoAdvantage`
+  then — the same "build ahead of a *second* real consumer, not a hypothetical one" restraint
+  this codebase applies everywhere else.
+
 ## Movimento Base, and blessings granted on winning initiative — `MovementService`, `InitiativeBlessingService`, `Scene#applyInitiativeBlessings`
 
 Two more pieces finish out `InitiativeAdvantage.POSICIONAMENTO_ESTRATEGICO`'s movement half:
@@ -899,6 +987,92 @@ different group wins next and extended to a group member who joins *after* the w
   Character actually holds the granting trait, not the group at large. A lone newcomer added
   via the 2-arg `addParticipant` overload gets a fresh random group per that overload's own
   existing behavior, so it never accidentally matches the blessed group.
+
+## Iniciativa can change mid-Scene — `InitiativeEntry#getEffectiveInitiativeValue`
+
+`InitiativeEntry.getInitiativeValue()` is fixed once rolled — but a participant's actual
+Iniciativa *standing* isn't necessarily fixed for their whole time in a `Scene`: a bonus
+granted by another Character, an activated Ability, or a passive with a fixed Round trigger
+can each change it mid-Scene. All three route through the pre-existing
+`ModifierType.INITIATIVE` / `TemporaryBonus` machinery — `ModifierType.INITIATIVE` was already
+fully summed by `InitiativeServiceImpl`, just with no production consumer yet — so this was a
+"the computed total can now drift, and the Scene's turn order needs to reflect that" problem,
+not a new bonus-computation one.
+
+The key constraint: **`CharacterSheet` has no reference back to its `Scene`**, so a granting
+Ability can never call into `Scene` itself — it only ever has the `CharacterSheet` (and maybe
+`Character`) in hand, the same as every other ability effect in this codebase. An Ability
+grants the bonus the *exact* same way `ArtesCompetencyAbility#DOM_BARDICO`/`InitiativeBlessing`
+already do — a plain `characterSheet.grantTemporaryBonus(ModifierType.INITIATIVE, value,
+rounds)` call, nothing Scene-specific about it. `Scene` picks this up itself, on its own
+schedule, rather than needing to be told:
+
+- `InitiativeEntry#getEffectiveInitiativeValue()` is `getInitiativeValue()` plus whatever
+  `ModifierType.INITIATIVE` currently sums to on `characterSheet` (`CharacterSheet
+  #getTemporaryBonus`) — resolved fresh from the `CharacterSheet` the entry already holds a
+  reference to, every time it's called. This is the same "recompute on demand from data
+  already in hand" shape `Scene#wonInitiative`/`#buildContext` already use — no push
+  notification needed, since `Scene` already references every `CharacterSheet` it's tracking
+  and can just ask.
+- `Scene#wonInitiative`/`#buildContext` (via `bestInitiativeValue`) now read
+  `getEffectiveInitiativeValue()` instead of the fixed `getInitiativeValue()` — so a granted
+  bonus flips "who's currently winning" the instant it's granted, same as every other fact
+  these two already recompute fresh per call.
+- Turn *order* (`Scene#getParticipantsInInitiativeOrder`/`#next()`) is the one thing
+  deliberately **not** live — `activeEntries` stays in whatever sequence it was last sorted
+  into until the next Round boundary, so a granted bonus never reshuffles turns already in
+  progress this Round (an unconditional design requirement — same guarantee `addParticipant`
+  already gives a mid-Round newcomer via `pendingEntries`). `Scene#next()`'s existing
+  round-wrap point — previously just `mergePendingEntries()` — is now `startNewRound()`:
+  merges in `pendingEntries` *and* fully re-sorts `activeEntries` by every entry's current
+  `getEffectiveInitiativeValue()` (`List#sort`, stable, so ties keep whatever relative order
+  they already had — same tie behavior `insertSorted` preserves elsewhere). `insertSorted`
+  itself (used by `addParticipant`'s pre-rotation immediate-insert branch) also compares by
+  effective value now, for the same reason.
+- `Scene#next()` also now calls `CharacterSheet#finishTurn()` on whoever's turn is ending
+  (skipped on the very first call, before anyone's had a turn yet) — the "turn shifter"
+  `CharacterSheet#finishTurn()`'s own javadoc had been anticipating (`Scene` didn't call it
+  automatically before this). Without this, `getEffectiveInitiativeValue()` would still work,
+  but a granted `TemporaryBonus` would never actually count down toward expiry as a live Scene
+  progresses. This is a real behavior change to `next()` (previously it never touched
+  `CharacterSheet` state) — safe for every existing caller, since ticking a `CharacterSheet`
+  with no active `TemporaryEffect`s is a no-op. One consequence worth knowing: a bonus granted
+  with only 1 Rodada remaining, to a participant who's also last in this Round's order, expires
+  in the very `next()` call that also triggers the Round-boundary re-sort (their own turn
+  ending both ticks the bonus toward expiry *and* triggers `startNewRound()`) — so it never
+  shows up in the resorted order. This matches the existing Rodada-countdown semantics
+  (`TemporaryEffect#tick`/`finishTurn`) exactly as they already worked before this change; it's
+  not something new this feature introduces.
+- No new public method was added to `Scene` for this — the earlier framing considered one
+  (`Scene#updateInitiative`, a caller-invoked push), but it doesn't fit: it would need whatever
+  triggered the Ability to separately reach into `Scene` and recompute/push a value, which
+  isn't how any other Ability effect in this codebase reaches a `Scene`-tracked value — every
+  other one (`DOM_BARDICO`, `InitiativeBlessing`, RD/RA, damage bonuses) grants straight to the
+  `CharacterSheet`/target it already holds, and whatever reads that state (`DamageService`,
+  every `<Skill>Interaction`, and now `Scene`) resolves it from there on its own. An
+  observable/watcher mechanism was also considered and rejected for the same reason this one
+  was preferred over it: this codebase has no event/observer pattern anywhere, and `Scene`
+  reading `CharacterSheet` state it already references, on its own schedule, needs neither.
+- `CharacterSheet#startTurn(int turnNumber)` is the mirror image of `finishTurn()`, called by
+  `Scene#next()` the moment a participant's Turn begins (right before `next()` returns them,
+  passing `getCurrentRound()`) rather than when one ends — unlike `finishTurn()`, it fires even
+  on the very first `next()` call, since that call does start someone's Turn, just none has
+  ended yet. turnNumber is 0-based, the same convention `ActionPointsService`/`ActionProfile`/
+  `MovementService` already use for their own `turnNumber` parameter, and the same value
+  `Scene#getCurrentRound()` itself exposes — this codebase already documented the two as the
+  same concept (`getCurrentRound()`'s own javadoc: "same convention as the turnNumber used
+  across `ActionPointsService`") before any code actually crossed from `Scene` into that
+  family; this is the first real bridge. It's currently a no-op — no `TemporaryEffect` or other
+  mechanic in this codebase yet triggers "no início do seu turno" specifically
+  (`Bleeding`/`ManaDrain`/`Withering`'s own ongoing loss all apply at Turn-*end*, via
+  `tickTemporaryEffects()`/`finishTurn()`) — but it's real and wired all the same, turnNumber
+  already in hand for whatever plugs in next, the same "build the hook ahead of its first
+  consumer" shape `finishTurn()` itself started as before `Scene` called it automatically.
+  Because it's currently a no-op, its `Scene#next()` wiring has no test of its own yet (there's
+  no observable side effect to assert on without mocking, which nothing else in this codebase
+  uses) — add one alongside whatever future effect first overrides a start-of-Turn hook for
+  real, the same way `finishTurn()`'s own wiring only became
+  testable once a genuine `TemporaryBonus` existed to tick.
 
 ## Races live in `org.aventyrs.core.race`, not `org.aventyrs.core.character`
 
