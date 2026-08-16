@@ -3,17 +3,37 @@ package org.aventyrs.core.ability;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.aventyrs.core.character.AttributeDomain;
+import org.aventyrs.core.character.Character;
+import org.aventyrs.core.character.CharacterSkill;
+import org.aventyrs.core.skill.Skill;
+import org.aventyrs.core.skill.SkillType;
+
+import java.util.List;
 
 @Getter
 @AllArgsConstructor
 public enum GnoseAbility implements AttributeAbility {
 
-    // TODO: grants a new Especialização for up to 3 known Perícias — typed, held
-    // SkillSpecializations now exist (org.aventyrs.core.skill.SkillSpecialization,
-    // CharacterSkill#getSpecializations()), but there's still no hook for an ability's own
-    // acquisition to grant one onto a chosen Perícia's CharacterSkill; same gap
-    // ConhecimentosCompetencyAbility.GENERALISTA's own TODO cites.
-    DOMINIO_DO_CONHECIMENTO("Você recebe uma nova Especialização de até 3 Perícias conhecidas."),
+    // Mirrors CharismaAbility#CHARME's own resolvePendingSkillTraitChoices shape, minus the
+    // Attribute-domain filter — "Perícias conhecidas" here means every currently trained
+    // Perícia, not just Gnose-based ones. Each entry is resolved via
+    // org.aventyrs.core.character.services.AttributeAbilityService#grantSpecializationChoice
+    // (specialization only — unlike CHARME, this ability owes no SkillCompetencyAbility
+    // alongside it), up to 3 times per this ability's own "até 3" text; that cap isn't
+    // enforced here or by grantSpecializationChoice itself, same unenforced-prerequisite
+    // restraint already applied to "Requer N Graduações"-style clauses elsewhere.
+    // ConhecimentosCompetencyAbility.GENERALISTA is the same shape one level down — a
+    // SkillCompetencyAbility rather than an AttributeAbility — and is now wired to the same
+    // grantSpecializationChoice mechanism via its own resolvePendingSpecializationChoices.
+    DOMINIO_DO_CONHECIMENTO("Você recebe uma nova Especialização de até 3 Perícias conhecidas.") {
+        @Override
+        public List<SkillType> resolvePendingSkillTraitChoices(final Character character) {
+            return character.getSkills().values().stream()
+                    .map(CharacterSkill::getSkill)
+                    .map(Skill::getSkillType)
+                    .toList();
+        }
+    },
 
     // TODO: grants a new Habilidade de Competência for up to 2 known Perícias, still subject to its
     // prerequisites — no Perícia/Habilidade de Competência system exists yet.

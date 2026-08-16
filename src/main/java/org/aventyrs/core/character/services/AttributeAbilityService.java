@@ -62,31 +62,62 @@ public interface AttributeAbilityService {
      * The result's {@code pendingSkillTraitChoices} carries whatever {@link
      * AttributeAbility#resolvePendingSkillTraitChoices} reports for the granted ability (e.g.
      * {@code CharismaAbility#CHARME}'s own per-trained-Carisma-Perícia choices) — see {@link
-     * #grantSkillTraitChoice} for resolving each one.
+     * #grantCompetencyAbilityChoice}/{@link #grantSpecializationChoice} for resolving each one
+     * (both, for an ability like CHARME that owes each Perícia one of each).
      *
      * @throws IllegalOperationException if the ability was already chosen or no slot is free — character is left untouched
      */
     AttributeAbilityGrantResult grantAttributeAbility(Character character, AttributeAbility ability) throws IllegalOperationException;
 
     /**
-     * Resolves one {@link AttributeAbilityGrantResult#getPendingSkillTraitChoices()} entry —
-     * e.g. one Carisma Perícia {@code CharismaAbility#CHARME} still owes a choice for — once
-     * the player has picked which {@code SkillCompetencyAbility} and {@code
-     * SkillSpecialization} they want for skillType. Adds competencyAbility to character's
-     * {@code skillCompetencyAbilities} and specialization to the matching trained {@code
-     * CharacterSkill}'s own {@code specializations}, returning a **new** {@code Character}
-     * (the argument is not mutated).
+     * Resolves the {@code SkillCompetencyAbility} half of one {@link
+     * AttributeAbilityGrantResult#getPendingSkillTraitChoices()} entry — e.g. one Carisma
+     * Perícia {@code CharismaAbility#CHARME} still owes a choice for — once the player has
+     * picked which one they want for skillType. Adds competencyAbility to character's own
+     * {@code skillCompetencyAbilities}, returning a **new** {@code Character} (the argument is
+     * not mutated). See {@link #grantSpecializationChoice} for the other half CHARME-style
+     * abilities also owe; a caller resolving one of those entries calls both, once each, for
+     * the same skillType.
      *
      * <p>Doesn't validate that skillType was actually a pending choice from some specific
      * {@link AttributeAbility} — this core doesn't track *why* a choice became available, same
      * restraint already applied to acquisition-legality checks elsewhere (e.g. no "Requer N
      * Graduações" enforcement) — only that skillType is actually trained, and that
-     * competencyAbility/specialization both actually belong to it. Nor does it guard against
-     * calling this twice for the same skillType — that would simply add a second Habilidade/
-     * Especialização, since no cap on either exists for this today.
+     * competencyAbility actually belongs to it. Nor does it guard against calling this twice
+     * for the same skillType — that would simply add a second Habilidade, since no cap on it
+     * exists for this today.
      *
-     * @throws IllegalOperationException if skillType isn't trained, or if either trait belongs
-     *         to a different SkillType — character is left untouched
+     * @throws IllegalOperationException if skillType isn't trained, or if competencyAbility
+     *         belongs to a different SkillType — character is left untouched
      */
-    Character grantSkillTraitChoice(Character character, SkillType skillType, SkillCompetencyAbility competencyAbility, SkillSpecialization specialization) throws IllegalOperationException;
+    Character grantCompetencyAbilityChoice(Character character, SkillType skillType, SkillCompetencyAbility competencyAbility) throws IllegalOperationException;
+
+    /**
+     * Resolves one pending {@code SkillSpecialization} choice — the generic (character,
+     * skillType, specialization) mutation behind both {@code AttributeAbility
+     * #resolvePendingSkillTraitChoices} and {@code SkillCompetencyAbility
+     * #resolvePendingSpecializationChoices} entries, whichever catalog the granting ability
+     * belongs to. For a dual-trait ability like {@code CharismaAbility#CHARME}, this is called
+     * alongside a separate {@link #grantCompetencyAbilityChoice} call for the same skillType;
+     * for a specialization-only ability like {@code GnoseAbility#DOMINIO_DO_CONHECIMENTO} or
+     * {@code ConhecimentosCompetencyAbility#GENERALISTA}, this is the *only* call an entry
+     * needs — no {@code SkillCompetencyAbility} is owed alongside it. Adds specialization to
+     * the matching trained {@code CharacterSkill}'s own {@code specializations}, returning a
+     * **new** {@code Character} (the argument is not mutated).
+     *
+     * <p>For an ability like DOMINIO_DO_CONHECIMENTO/GENERALISTA, whose own {@code
+     * resolvePendingSkillTraitChoices}/{@code resolvePendingSpecializationChoices} reports
+     * every currently trained Perícia as a candidate (mirroring {@code CharismaAbility#CHARME}'s
+     * own shape, minus its Attribute-domain filter), a caller is expected to call this once per
+     * Perícia the player actually picked — up to whatever cap the granting ability's own rules
+     * text states (e.g. DOMINIO_DO_CONHECIMENTO's "até 3", GENERALISTA's 2), not once per
+     * candidate reported. That cap isn't enforced here, same restraint already applied to
+     * unenforced "Requer N Graduações"-style prerequisites elsewhere in this core — this only
+     * records what was picked. Nor does it guard against calling this twice for the same
+     * skillType, same as {@link #grantCompetencyAbilityChoice}.
+     *
+     * @throws IllegalOperationException if skillType isn't trained, or if specialization
+     *         belongs to a different SkillType — character is left untouched
+     */
+    Character grantSpecializationChoice(Character character, SkillType skillType, SkillSpecialization specialization) throws IllegalOperationException;
 }

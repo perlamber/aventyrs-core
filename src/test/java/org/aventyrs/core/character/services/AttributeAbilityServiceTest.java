@@ -3,6 +3,7 @@ package org.aventyrs.core.character.services;
 import org.aventyrs.core.ability.CharismaAbility;
 import org.aventyrs.core.ability.ConcentracaoProfundaActiveAbility;
 import org.aventyrs.core.ability.FocusAbility;
+import org.aventyrs.core.ability.GnoseAbility;
 import org.aventyrs.core.ability.StrengthAbility;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.AttributeValue;
@@ -50,6 +51,14 @@ class AttributeAbilityServiceTest {
         return CharacterFixture.blank(CharacterFixture.BLANK)
                 .attributes(CharacterAttributes.builder()
                         .focus(AttributeValue.builder().domain(AttributeDomain.FOCUS).base(base).build())
+                        .build())
+                .build();
+    }
+
+    private Character characterWithGnoseBase(final int base) {
+        return CharacterFixture.blank(CharacterFixture.BLANK)
+                .attributes(CharacterAttributes.builder()
+                        .gnose(AttributeValue.builder().domain(AttributeDomain.GNOSE).base(base).build())
                         .build())
                 .build();
     }
@@ -181,6 +190,19 @@ class AttributeAbilityServiceTest {
     }
 
     @Test
+    void grantAttributeAbilityForDominioDoConhecimentoReturnsPendingChoicesForEveryKnownSkill() {
+        Character character = characterWithGnoseBase(3).toBuilder()
+                .skills(Map.of(
+                        SkillType.ARTES, CharacterSkillFixture.blank(CharacterSkillFixture.ARTES_1).build(),
+                        SkillType.PERSUASAO, CharacterSkillFixture.blank(CharacterSkillFixture.PERSUASAO_1).build()))
+                .build();
+
+        AttributeAbilityGrantResult result = abilityService.grantAttributeAbility(character, GnoseAbility.DOMINIO_DO_CONHECIMENTO);
+
+        assertEquals(Set.of(SkillType.ARTES, SkillType.PERSUASAO), Set.copyOf(result.getPendingSkillTraitChoices()));
+    }
+
+    @Test
     void grantAttributeAbilityReturnsEmptyPendingChoicesForAnAbilityThatDoesntNeedThem() {
         Character character = characterWithCharismaBase(3);
 
@@ -190,46 +212,90 @@ class AttributeAbilityServiceTest {
     }
 
     @Test
-    void grantSkillTraitChoiceAddsBothTraitsToTheTrainedSkill() {
+    void grantCompetencyAbilityChoiceAndGrantSpecializationChoiceTogetherAddBothTraitsToTheTrainedSkill() {
         Character character = characterWithCharismaBase(3).toBuilder()
                 .skills(Map.of(SkillType.ARTES, CharacterSkillFixture.blank(CharacterSkillFixture.ARTES_1).build()))
                 .build();
 
-        Character granted = abilityService.grantSkillTraitChoice(character, SkillType.ARTES,
-                ArtesCompetencyAbility.DOM_BARDICO, ArtesSpecialization.MUSICA);
+        Character granted = abilityService.grantCompetencyAbilityChoice(character, SkillType.ARTES, ArtesCompetencyAbility.DOM_BARDICO);
+        granted = abilityService.grantSpecializationChoice(granted, SkillType.ARTES, ArtesSpecialization.MUSICA);
 
         assertTrue(granted.getSkillCompetencyAbilities().contains(ArtesCompetencyAbility.DOM_BARDICO));
         assertTrue(granted.getSkills().get(SkillType.ARTES).getSpecializations().contains(ArtesSpecialization.MUSICA));
     }
 
     @Test
-    void grantSkillTraitChoiceRejectsAnUntrainedSkillType() {
+    void grantCompetencyAbilityChoiceAddsTheCompetencyAbility() {
+        Character character = characterWithCharismaBase(3).toBuilder()
+                .skills(Map.of(SkillType.ARTES, CharacterSkillFixture.blank(CharacterSkillFixture.ARTES_1).build()))
+                .build();
+
+        Character granted = abilityService.grantCompetencyAbilityChoice(character, SkillType.ARTES, ArtesCompetencyAbility.DOM_BARDICO);
+
+        assertTrue(granted.getSkillCompetencyAbilities().contains(ArtesCompetencyAbility.DOM_BARDICO));
+        assertTrue(granted.getSkills().get(SkillType.ARTES).getSpecializations().isEmpty());
+    }
+
+    @Test
+    void grantCompetencyAbilityChoiceRejectsAnUntrainedSkillType() {
         Character character = characterWithCharismaBase(3);
 
         assertThrows(IllegalOperationException.class,
-                () -> abilityService.grantSkillTraitChoice(character, SkillType.ARTES,
-                        ArtesCompetencyAbility.DOM_BARDICO, ArtesSpecialization.MUSICA));
+                () -> abilityService.grantCompetencyAbilityChoice(character, SkillType.ARTES, ArtesCompetencyAbility.DOM_BARDICO));
     }
 
     @Test
-    void grantSkillTraitChoiceRejectsACompetencyAbilityFromAnotherSkillType() {
+    void grantCompetencyAbilityChoiceRejectsACompetencyAbilityFromAnotherSkillType() {
         Character character = characterWithCharismaBase(3).toBuilder()
                 .skills(Map.of(SkillType.ARTES, CharacterSkillFixture.blank(CharacterSkillFixture.ARTES_1).build()))
                 .build();
 
         assertThrows(IllegalOperationException.class,
-                () -> abilityService.grantSkillTraitChoice(character, SkillType.ARTES,
-                        PersuasaoCompetencyAbility.SEDUTOR, ArtesSpecialization.MUSICA));
+                () -> abilityService.grantCompetencyAbilityChoice(character, SkillType.ARTES, PersuasaoCompetencyAbility.SEDUTOR));
     }
 
     @Test
-    void grantSkillTraitChoiceRejectsASpecializationFromAnotherSkillType() {
+    void grantSpecializationChoiceAddsTheSpecializationToTheTrainedSkill() {
+        Character character = characterWithCharismaBase(3).toBuilder()
+                .skills(Map.of(SkillType.ARTES, CharacterSkillFixture.blank(CharacterSkillFixture.ARTES_1).build()))
+                .build();
+
+        Character granted = abilityService.grantSpecializationChoice(character, SkillType.ARTES, ArtesSpecialization.MUSICA);
+
+        assertTrue(granted.getSkills().get(SkillType.ARTES).getSpecializations().contains(ArtesSpecialization.MUSICA));
+        assertTrue(granted.getSkillCompetencyAbilities().isEmpty());
+    }
+
+    @Test
+    void grantSpecializationChoiceCanBeCalledOncePerKnownSkillForDominioDoConhecimento() {
+        Character character = characterWithCharismaBase(3).toBuilder()
+                .skills(Map.of(
+                        SkillType.ARTES, CharacterSkillFixture.blank(CharacterSkillFixture.ARTES_1).build(),
+                        SkillType.PERSUASAO, CharacterSkillFixture.blank(CharacterSkillFixture.PERSUASAO_1).build()))
+                .build();
+
+        Character granted = abilityService.grantSpecializationChoice(character, SkillType.ARTES, ArtesSpecialization.MUSICA);
+        granted = abilityService.grantSpecializationChoice(granted, SkillType.PERSUASAO, PersuasaoSpecialization.NEGOCIACAO);
+
+        assertTrue(granted.getSkills().get(SkillType.ARTES).getSpecializations().contains(ArtesSpecialization.MUSICA));
+        assertTrue(granted.getSkills().get(SkillType.PERSUASAO).getSpecializations().contains(PersuasaoSpecialization.NEGOCIACAO));
+    }
+
+    @Test
+    void grantSpecializationChoiceRejectsAnUntrainedSkillType() {
+        Character character = characterWithCharismaBase(3);
+
+        assertThrows(IllegalOperationException.class,
+                () -> abilityService.grantSpecializationChoice(character, SkillType.ARTES, ArtesSpecialization.MUSICA));
+    }
+
+    @Test
+    void grantSpecializationChoiceRejectsASpecializationFromAnotherSkillType() {
         Character character = characterWithCharismaBase(3).toBuilder()
                 .skills(Map.of(SkillType.ARTES, CharacterSkillFixture.blank(CharacterSkillFixture.ARTES_1).build()))
                 .build();
 
         assertThrows(IllegalOperationException.class,
-                () -> abilityService.grantSkillTraitChoice(character, SkillType.ARTES,
-                        ArtesCompetencyAbility.DOM_BARDICO, PersuasaoSpecialization.NEGOCIACAO));
+                () -> abilityService.grantSpecializationChoice(character, SkillType.ARTES, PersuasaoSpecialization.NEGOCIACAO));
     }
 }

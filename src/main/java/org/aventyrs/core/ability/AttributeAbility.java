@@ -57,22 +57,27 @@ public interface AttributeAbility {
     }
 
     /**
-     * Every {@link SkillType} this ability still owes the holder a {@code
-     * SkillCompetencyAbility} <b>and</b> a {@code SkillSpecialization} choice for, given
-     * character's currently trained Perícias — e.g. {@link CharismaAbility#CHARME}'s own
-     * "pick one of each per trained Carisma Perícia." Empty by default; only override on a
-     * constant whose rules text requires the player to pick a {@code SkillCompetencyAbility}/
-     * {@code SkillSpecialization} pair for one or more Perícias at acquisition time. Unlike
-     * {@link #resolvePermanentEgoGain}/{@link #resolveActiveAbility}, this needs
-     * {@code character} itself — which Perícias are owed a choice depends on which ones are
-     * currently trained, not fixed per constant.
+     * Every {@link SkillType} this ability still owes the holder a trait choice for, given
+     * character's currently trained Perícias — e.g. {@link CharismaAbility#CHARME}'s own "pick
+     * a {@code SkillCompetencyAbility} <b>and</b> a {@code SkillSpecialization} for each
+     * trained Carisma Perícia," or {@link GnoseAbility#DOMINIO_DO_CONHECIMENTO}'s own
+     * specialization-<b>only</b> "pick a {@code SkillSpecialization} for each known Perícia" —
+     * which trait(s) an entry actually owes isn't carried by this list itself, only by which of
+     * {@code AttributeAbilityService#grantCompetencyAbilityChoice}/{@code
+     * #grantSpecializationChoice} the granting ability's own rules text calls for; a caller
+     * resolving an entry already knows which from the ability it just granted. Empty by
+     * default; only override on a constant whose rules text requires the player to pick one or
+     * both of these per Perícia at acquisition time. Unlike {@link #resolvePermanentEgoGain}/
+     * {@link #resolveActiveAbility}, this needs {@code character} itself — which Perícias are
+     * owed a choice depends on which ones are currently trained, not fixed per constant.
      *
      * <p>Reported by {@code
      * org.aventyrs.core.character.services.AttributeAbilityService#grantAttributeAbility} via
      * {@code AttributeAbilityGrantResult#getPendingSkillTraitChoices()} — a caller (an API/UI
      * layer) is expected to resolve each one, once the player picks, via {@code
-     * AttributeAbilityService#grantSkillTraitChoice} separately; this method itself never
-     * mutates anything.
+     * AttributeAbilityService#grantCompetencyAbilityChoice} and/or {@code
+     * AttributeAbilityService#grantSpecializationChoice}; this method itself never mutates
+     * anything.
      */
     default List<SkillType> resolvePendingSkillTraitChoices(Character character) {
         return List.of();

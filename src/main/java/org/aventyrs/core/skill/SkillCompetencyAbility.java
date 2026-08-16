@@ -91,6 +91,29 @@ public interface SkillCompetencyAbility extends SkillTrait {
     }
 
     /**
+     * Every {@link SkillType} this ability still owes the holder a {@code SkillSpecialization}
+     * choice for, given character's currently trained Perícias — e.g. {@code
+     * ConhecimentosCompetencyAbility#GENERALISTA}'s own "divididas entre até 2 Perícias à sua
+     * escolha," mirroring {@code AttributeAbility#resolvePendingSkillTraitChoices}' shape (see
+     * that method's own javadoc, and {@code GnoseAbility#DOMINIO_DO_CONHECIMENTO}, for the
+     * identical specialization-only case on the AttributeAbility side). Empty by default; only
+     * override on a constant whose rules text requires the player to pick one or more Perícias
+     * for a new Especialização at acquisition time.
+     *
+     * <p>Unlike {@code AttributeAbility}'s counterpart, there's no {@code
+     * AttributeAbilityService#grantAttributeAbility}-equivalent acquisition service for {@code
+     * SkillCompetencyAbility} to report this through yet (see CLAUDE.md's "Adding a new
+     * Perícia" section on the missing eligibility service) — a caller resolves each entry
+     * directly via {@code AttributeAbilityService#grantSpecializationChoice} once the player
+     * picks, the same generic (character, skillType, specialization) mutation
+     * DOMINIO_DO_CONHECIMENTO's own entries resolve through; this method itself never mutates
+     * anything.
+     */
+    default List<SkillType> resolvePendingSpecializationChoices(Character character) {
+        return List.of();
+    }
+
+    /**
      * The Attribute that currently governs skillType's roll/graduation-cap for a character
      * holding skillCompetencyAbilities — defaultDomain, unless one of those abilities
      * targets this same skillType and {@link #getSubstituteAttributeDomain()} isn't empty,

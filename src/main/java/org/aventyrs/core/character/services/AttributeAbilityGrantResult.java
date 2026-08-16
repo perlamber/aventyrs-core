@@ -13,11 +13,14 @@ import java.util.List;
  * for (see {@code AttributeAbility#resolvePendingSkillTraitChoices}).
  *
  * <p>A non-empty {@link #pendingSkillTraitChoices} means: for each {@link SkillType} listed,
- * both a {@code SkillCompetencyAbility} and a {@code SkillSpecialization} are still owed —
- * this is a caller's (an API/UI layer's) cue to prompt the player once per entry (e.g. open
- * one choice modal per {@link SkillType}), then resolve each pick via {@link
- * AttributeAbilityService#grantSkillTraitChoice}. Empty for every ability that doesn't defer
- * a choice this way — the common case.
+ * at least a {@code SkillSpecialization} is still owed, and — for a dual-trait ability like
+ * {@code CharismaAbility#CHARME} (unlike a specialization-only one like {@code
+ * GnoseAbility#DOMINIO_DO_CONHECIMENTO}) — a {@code SkillCompetencyAbility} too. This is a
+ * caller's (an API/UI layer's) cue to prompt the player once per entry (e.g. open one choice
+ * modal per {@link SkillType}), then resolve each pick via {@link
+ * AttributeAbilityService#grantCompetencyAbilityChoice} and/or {@link
+ * AttributeAbilityService#grantSpecializationChoice}, whichever the granting ability calls
+ * for. Empty for every ability that doesn't defer a choice this way — the common case.
  */
 @Getter
 @Builder

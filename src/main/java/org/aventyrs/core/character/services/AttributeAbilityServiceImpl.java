@@ -60,22 +60,40 @@ public class AttributeAbilityServiceImpl implements AttributeAbilityService {
     }
 
     @Override
-    public Character grantSkillTraitChoice(final Character character, final SkillType skillType, final SkillCompetencyAbility competencyAbility, final SkillSpecialization specialization) throws IllegalOperationException {
+    public Character grantCompetencyAbilityChoice(final Character character, final SkillType skillType, final SkillCompetencyAbility competencyAbility) throws IllegalOperationException {
+        lookupTrainedSkill(character, skillType);
+        if (competencyAbility.getSkillType() != skillType) {
+            throw new IllegalOperationException(SKILL_TRAIT_SKILL_TYPE_MISMATCH);
+        }
+
+        return character.toBuilder()
+                .skillCompetencyAbility(competencyAbility)
+                .build();
+    }
+
+    @Override
+    public Character grantSpecializationChoice(final Character character, final SkillType skillType, final SkillSpecialization specialization) throws IllegalOperationException {
+        CharacterSkill trained = lookupTrainedSkill(character, skillType);
+        if (specialization.getSkillType() != skillType) {
+            throw new IllegalOperationException(SKILL_TRAIT_SKILL_TYPE_MISMATCH);
+        }
+
+        return character.toBuilder()
+                .skill(skillType, withSpecialization(trained, specialization))
+                .build();
+    }
+
+    private CharacterSkill lookupTrainedSkill(final Character character, final SkillType skillType) throws IllegalOperationException {
         CharacterSkill trained = character.getSkills().get(skillType);
         if (trained == null) {
             throw new IllegalOperationException(SKILL_NOT_TRAINED);
         }
-        if (competencyAbility.getSkillType() != skillType || specialization.getSkillType() != skillType) {
-            throw new IllegalOperationException(SKILL_TRAIT_SKILL_TYPE_MISMATCH);
-        }
+        return trained;
+    }
 
-        CharacterSkill updated = trained.toBuilder()
+    private CharacterSkill withSpecialization(final CharacterSkill trained, final SkillSpecialization specialization) {
+        return trained.toBuilder()
                 .specializations(Stream.concat(trained.getSpecializations().stream(), Stream.of(specialization)).toList())
-                .build();
-
-        return character.toBuilder()
-                .skill(skillType, updated)
-                .skillCompetencyAbility(competencyAbility)
                 .build();
     }
 }
