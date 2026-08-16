@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.Singular;
 import org.aventyrs.core.ability.AcquiredChoice;
+import org.aventyrs.core.ability.ActiveAbility;
 import org.aventyrs.core.ability.AttributeAbility;
 import org.aventyrs.core.action.ActionPointsService;
 import org.aventyrs.core.action.ActionProfile;
@@ -96,6 +97,17 @@ public class Character {
     @NonNull
     @Singular
     protected List<AttributeAbility> attributeAbilities;
+
+    /**
+     * Every {@link ActiveAbility} this character has acquired — e.g. {@code
+     * FocusAbility#CONCENTRACAO_PROFUNDA}'s own activatable state, granted here the moment
+     * that ability is acquired via {@link AttributeAbility#resolveActiveAbility()}. Distinct
+     * from {@link #attributeAbilities}/{@link #skillCompetencyAbilities}: those are always-on,
+     * this is something the holder must actively spend resources to trigger.
+     */
+    @NonNull
+    @Singular
+    protected List<ActiveAbility> activeAbilities;
 
     /** Habilidades de Competência acquired from trained Perícias (e.g. ArtesCompetencyAbility). */
     @NonNull

@@ -38,4 +38,18 @@ public interface AttributeAbility {
     default Optional<EgoDomain> resolvePermanentEgoGain() {
         return Optional.empty();
     }
+
+    /**
+     * The {@link ActiveAbility} this ability grants the character the moment it's acquired —
+     * e.g. {@link FocusAbility#CONCENTRACAO_PROFUNDA}'s own activatable state. Empty by
+     * default; only override on a constant whose rules text describes something the holder
+     * must actively spend Pontos de Ação/Magia to trigger, rather than an always-on passive
+     * effect. Applied by {@code
+     * org.aventyrs.core.character.services.AttributeAbilityService#grantAttributeAbility},
+     * not by this method itself — same "resolve, don't mutate" shape as {@link
+     * #resolvePermanentEgoGain}.
+     */
+    default Optional<ActiveAbility> resolveActiveAbility() {
+        return Optional.empty();
+    }
 }

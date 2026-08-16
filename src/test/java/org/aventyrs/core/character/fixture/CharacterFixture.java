@@ -92,6 +92,7 @@ public class CharacterFixture extends SimpleFixture {
                 this.add("autocontroleAdvantage", null);
                 this.add("skills", Map.of());
                 this.add("attributeAbilities", List.of());
+                this.add("activeAbilities", List.of());
                 this.add("skillCompetencyAbilities", List.of());
                 this.add("abilityChoices", List.of());
                 this.add("actionProfile", ActionProfile.REFLEXOS_RAPIDOS);
@@ -140,6 +141,7 @@ public class CharacterFixture extends SimpleFixture {
                         SkillType.DOMINIO_DO_MANA, skillWithGraduation(new DominioDoMana(), 4),
                         SkillType.PERSUASAO, skillWithGraduation(new Persuasao(), 0)));
                 this.add("attributeAbilities", List.of());
+                this.add("activeAbilities", List.of());
                 this.add("skillCompetencyAbilities", List.of(
                         AtaqueCorpoACorpoCompetencyAbility.ACUIDADE,
                         AtletismoCompetencyAbility.ACROBATA,

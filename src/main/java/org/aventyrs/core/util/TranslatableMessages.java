@@ -19,4 +19,7 @@ public class TranslatableMessages {
     public static final String INVALID_INHERITED_ATTRIBUTE_ABILITIES = "INVALID_INHERITED_ATTRIBUTE_ABILITIES";
     public static final String CRITICAL_EFFECT_REQUIRES_A_CRITICAL_HIT = "CRITICAL_EFFECT_REQUIRES_A_CRITICAL_HIT";
     public static final String INVALID_PRIMOR_EGO_DOMAIN = "INVALID_PRIMOR_EGO_DOMAIN";
+    public static final String ACTIVE_ABILITY_NOT_HELD = "ACTIVE_ABILITY_NOT_HELD";
+    public static final String NOT_ENOUGH_ACTION_POINTS = "NOT_ENOUGH_ACTION_POINTS";
+    public static final String NOT_ENOUGH_MAGIC_POINTS = "NOT_ENOUGH_MAGIC_POINTS";
 }

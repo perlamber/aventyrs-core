@@ -6,14 +6,20 @@ import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.modifier.Modifier;
 import org.aventyrs.core.modifier.ModifierType;
 
+import java.util.Optional;
+
 @Getter
 @AllArgsConstructor
 public enum FocusAbility implements AttributeAbility {
 
-    // TODO: activated ability (1PA + 3PM, 2-Round duration) granting half Foco on skill rolls while active.
     CONCENTRACAO_PROFUNDA("Você pode gastar 1PA e 3PM para entrar em estado de Concentração Profunda por 2 " +
             "Rodadas. Enquanto Concentração Profunda estiver ativa você pode adicionar metade do seu valor de " +
-            "Foco às suas rolagens de Perícias."),
+            "Foco às suas rolagens de Perícias.") {
+        @Override
+        public Optional<ActiveAbility> resolveActiveAbility() {
+            return Optional.of(new ConcentracaoProfundaActiveAbility());
+        }
+    },
 
     CONEXAO_COM_O_MANA("Seu multiplicador de Pontos de Magia é aumentado em +1.") {
         @Modifier(ModifierType.MANA_MULTIPLIER)

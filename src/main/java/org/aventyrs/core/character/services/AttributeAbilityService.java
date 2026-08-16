@@ -51,8 +51,11 @@ public interface AttributeAbilityService {
      * value object; the caller must start using the returned instance, the argument is not
      * mutated) with {@code ability} added to {@code attributeAbilities}, and, only when {@link
      * AttributeAbility#resolvePermanentEgoGain} reports one, that permanent Ego point already
-     * applied too (e.g. {@code CharismaAbility#DESTINO_FAVORAVEL}'s permanent Sorte point) —
-     * a caller never needs to check for or apply that separately.
+     * applied too (e.g. {@code CharismaAbility#DESTINO_FAVORAVEL}'s permanent Sorte point), and
+     * only when {@link AttributeAbility#resolveActiveAbility} reports one, that {@code
+     * ActiveAbility} already added to {@code activeAbilities} too (e.g. {@code
+     * FocusAbility#CONCENTRACAO_PROFUNDA}'s own activatable state) — a caller never needs to
+     * check for or apply either separately.
      *
      * @throws IllegalOperationException if the ability was already chosen or no slot is free — character is left untouched
      */

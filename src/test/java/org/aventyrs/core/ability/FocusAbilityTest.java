@@ -39,4 +39,12 @@ class FocusAbilityTest {
             assertEquals(expected, modifierResolver.sumModifiers(ability, ModifierType.MANA_MULTIPLIER));
         }
     }
+
+    @Test
+    void onlyConcentracaoProfundaResolvesAnActiveAbility() {
+        for (FocusAbility ability : FocusAbility.values()) {
+            boolean expected = ability == FocusAbility.CONCENTRACAO_PROFUNDA;
+            assertEquals(expected, ability.resolveActiveAbility().isPresent());
+        }
+    }
 }

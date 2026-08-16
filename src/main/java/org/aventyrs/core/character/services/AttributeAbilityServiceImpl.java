@@ -43,6 +43,7 @@ public class AttributeAbilityServiceImpl implements AttributeAbilityService {
         Character.CharacterBuilder builder = character.toBuilder().attributeAbility(ability);
         ability.resolvePermanentEgoGain().ifPresent(domain ->
                 builder.egos(character.getEgos().withVariableBonus(domain, 1)));
+        ability.resolveActiveAbility().ifPresent(builder::activeAbility);
         return builder.build();
     }
 }

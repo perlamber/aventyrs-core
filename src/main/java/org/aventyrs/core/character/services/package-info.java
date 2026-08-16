@@ -34,8 +34,8 @@
  *       once and permanent.</li>
  *   <li><b>Assemble the {@code Character}</b> via {@link org.aventyrs.core.character.Character#builder()},
  *       passing the results of steps 1-5. Everything else (starting {@code skills},
- *       {@code attributeAbilities}, {@code skillCompetencyAbilities}, {@code abilityChoices},
- *       {@code actionPoints}, {@code temporaryActionPointsBonus}, {@code sizeCategory},
+ *       {@code attributeAbilities}, {@code activeAbilities}, {@code skillCompetencyAbilities},
+ *       {@code abilityChoices}, {@code actionPoints}, {@code temporaryActionPointsBonus}, {@code sizeCategory},
  *       {@code status}, {@code reactions}, {@code freeActions}, {@code tendencia}) has a
  *       sensible {@code @Builder.Default} and rarely needs overriding at creation. {@code
  *       sexo} ({@link org.aventyrs.core.character.Character.Sexo}) is the one exception with

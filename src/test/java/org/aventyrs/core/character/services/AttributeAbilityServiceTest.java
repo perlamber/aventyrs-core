@@ -1,6 +1,8 @@
 package org.aventyrs.core.character.services;
 
 import org.aventyrs.core.ability.CharismaAbility;
+import org.aventyrs.core.ability.ConcentracaoProfundaActiveAbility;
+import org.aventyrs.core.ability.FocusAbility;
 import org.aventyrs.core.ability.StrengthAbility;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.AttributeValue;
@@ -32,6 +34,14 @@ class AttributeAbilityServiceTest {
         return CharacterFixture.blank(CharacterFixture.BLANK)
                 .attributes(CharacterAttributes.builder()
                         .charisma(AttributeValue.builder().domain(AttributeDomain.CHARISMA).base(base).build())
+                        .build())
+                .build();
+    }
+
+    private Character characterWithFocusBase(final int base) {
+        return CharacterFixture.blank(CharacterFixture.BLANK)
+                .attributes(CharacterAttributes.builder()
+                        .focus(AttributeValue.builder().domain(AttributeDomain.FOCUS).base(base).build())
                         .build())
                 .build();
     }
@@ -127,5 +137,24 @@ class AttributeAbilityServiceTest {
 
         assertThrows(IllegalOperationException.class,
                 () -> abilityService.grantAttributeAbility(character, CharismaAbility.VOZ_DE_OURO));
+    }
+
+    @Test
+    void grantAttributeAbilityAddsConcentracaoProfundasActiveAbility() {
+        Character character = characterWithFocusBase(3);
+
+        Character granted = abilityService.grantAttributeAbility(character, FocusAbility.CONCENTRACAO_PROFUNDA);
+
+        assertEquals(1, granted.getActiveAbilities().size());
+        assertTrue(granted.getActiveAbilities().get(0) instanceof ConcentracaoProfundaActiveAbility);
+    }
+
+    @Test
+    void grantAttributeAbilityLeavesActiveAbilitiesEmptyForAnAbilityWithNoneToGrant() {
+        Character character = characterWithCharismaBase(3);
+
+        Character granted = abilityService.grantAttributeAbility(character, CharismaAbility.VOZ_DE_OURO);
+
+        assertTrue(granted.getActiveAbilities().isEmpty());
     }
 }
