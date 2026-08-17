@@ -4,6 +4,7 @@ import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.rest.RestType;
+import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.InitiativeBlessing;
 import org.aventyrs.core.skill.CriticalResult;
 import org.aventyrs.core.skill.SkillTraitKind;
@@ -166,5 +167,20 @@ public interface AttributeAbility {
      */
     default List<InitiativeBlessing> resolveInitiativeBlessings() {
         return List.of();
+    }
+
+    /**
+     * How many extra "números" this Habilidade widens skillType's Margem Crítica Menor by
+     * right now, conditioned on {@link SceneContext} — e.g. {@link
+     * org.aventyrs.core.ability.DexterityAbility#LETALIDADE_PROGRESSIVA}'s Round-scaling bonus
+     * to Ataque à Distância during a Cena de Combate. Mirrors {@code
+     * org.aventyrs.core.ego.EgoAdvantage#resolveCriticalMarginIncrease}/{@code
+     * org.aventyrs.core.skill.SkillCompetencyAbility#resolveCriticalMarginIncrease}'s identical
+     * shape — see {@link org.aventyrs.core.skill.SkillRoll#getCriticalResult(int)} for how the
+     * sum across all three is actually consumed. Zero by default; only override on a constant
+     * whose rules text widens Margem Crítica Menor like this.
+     */
+    default int resolveCriticalMarginIncrease(SkillType skillType, SceneContext sceneContext) {
+        return 0;
     }
 }

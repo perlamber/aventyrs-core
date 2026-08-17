@@ -157,9 +157,11 @@ public abstract class AbstractSkillInteraction implements Interaction<CharacterS
      * the {@code skill} package-info). When non-{@code null}, sets {@link InteractionResult
      * #reachedDifficultyLevel} (via {@link DifficultyLevel#reachedBy} against {@code
      * skillRollBonus + skillRoll.getTotal()}) and {@link InteractionResult#criticalResult}
-     * (from {@link SkillRoll#getCriticalResult()}); both stay {@code null} when skillRoll is
-     * {@code null} (the 1-/2-arg overloads always pass {@code null}), same as every other
-     * not-applicable {@code InteractionResult} field. When {@link CriticalResult
+     * (from {@link SkillRoll#getCriticalResult(int)}, given the combined Margem Crítica Menor
+     * widening summed via {@link #sumCriticalMarginIncrease} — see that method's own javadoc);
+     * both stay {@code null} when skillRoll is {@code null} (the 1-/2-arg overloads always pass
+     * {@code null}), same as every other not-applicable {@code InteractionResult} field. When
+     * {@link CriticalResult
      * #isCriticalSuccess()} — the only outcome this can ever apply to, so every other
      * criticalResult skips the scan below entirely rather than walking every held {@code
      * AttributeAbility} for nothing — this also grants (directly on target, the same
@@ -228,7 +230,8 @@ public abstract class AbstractSkillInteraction implements Interaction<CharacterS
             Optional<DifficultyLevel> reached = expert
                     ? DifficultyLevel.reachedByAsExpert(bonus + skillRoll.getTotal())
                     : DifficultyLevel.reachedBy(bonus + skillRoll.getTotal());
-            CriticalResult criticalResult = skillRoll.getCriticalResult();
+            int criticalMarginIncrease = sumCriticalMarginIncrease(character, skillCompetencyAbilities, sceneContext);
+            CriticalResult criticalResult = skillRoll.getCriticalResult(criticalMarginIncrease);
             result.reachedDifficultyLevel(reached.orElse(null))
                     .criticalResult(criticalResult);
 
@@ -357,6 +360,30 @@ public abstract class AbstractSkillInteraction implements Interaction<CharacterS
                 .flatMap(Optional::stream)
                 .mapToInt(Integer::intValue)
                 .sum();
+    }
+
+    /**
+     * Sums {@code resolveCriticalMarginIncrease} across all three ability sources this class
+     * already scans for everything else — {@code character.getAttributeAbilities()} (e.g.
+     * {@code DexterityAbility#LETALIDADE_PROGRESSIVA}), skillCompetencyAbilities (acquired plus
+     * racial — e.g. {@code ArtesAprimorarComArteAbility}'s "Margem Crítica Menor" branch), and
+     * {@code character.getEgoAdvantages()} (e.g. {@code SorteAdvantage#ACE}) — additively, the
+     * same convention every other {@code skillRollBonus}-adjacent sum here already uses. Fed
+     * into {@link SkillRoll#getCriticalResult(int)} only when skillRoll is non-{@code null}; safe
+     * to call unconditionally otherwise since sceneContext being {@code null} is already handled
+     * by every override the same way {@link #sumEgoAdvantageRollBonuses} already relies on.
+     */
+    private int sumCriticalMarginIncrease(final Character character, final List<SkillCompetencyAbility> skillCompetencyAbilities, final SceneContext sceneContext) {
+        int total = character.getAttributeAbilities().stream()
+                .mapToInt(ability -> ability.resolveCriticalMarginIncrease(skillType, sceneContext))
+                .sum();
+        total += skillCompetencyAbilities.stream()
+                .mapToInt(ability -> ability.resolveCriticalMarginIncrease(skillType, sceneContext))
+                .sum();
+        total += character.getEgoAdvantages().values().stream()
+                .mapToInt(advantage -> advantage.resolveCriticalMarginIncrease(skillType, sceneContext))
+                .sum();
+        return total;
     }
 
     /**

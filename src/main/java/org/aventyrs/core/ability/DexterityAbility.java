@@ -5,6 +5,8 @@ import lombok.Getter;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.modifier.Modifier;
 import org.aventyrs.core.modifier.ModifierType;
+import org.aventyrs.core.scene.SceneContext;
+import org.aventyrs.core.skill.SkillType;
 
 @Getter
 @AllArgsConstructor
@@ -30,14 +32,46 @@ public enum DexterityAbility implements AttributeAbility {
     //TODO bonus em PA
     APRESSADO("Em turnos de Rodadas pares você recebe Bônus Variável de +1PA."),
 
-    //TODO
     LETALIDADE_PROGRESSIVA("A Margem Crítica de seus Ataques à Distância aumenta ao longo do combate: você recebe " +
             "Bônus Variável de +1 em sua Margem Crítica menor na primeira Rodada do combate, então este Bônus " +
             "aumenta para +2 na terceira Rodada e para +3 na quinta Rodada. Estes benefícios são encerrados na " +
-            "sexta Rodada do combate."),
-    //TODO 
+            "sexta Rodada do combate.") {
+        @Override
+        public int resolveCriticalMarginIncrease(final SkillType skillType, final SceneContext sceneContext) {
+            if (sceneContext == null || !sceneContext.isCombatScene() || skillType != SkillType.ATAQUE_A_DISTANCIA) {
+                return 0;
+            }
+            int round = sceneContext.getCurrentRound();
+            if (round < FIRST_TIER_ROUND || round >= BENEFIT_ENDS_ROUND) {
+                return 0;
+            }
+            if (round >= THIRD_TIER_ROUND) {
+                return THIRD_TIER_MARGIN_BONUS;
+            }
+            if (round >= SECOND_TIER_ROUND) {
+                return SECOND_TIER_MARGIN_BONUS;
+            }
+            return FIRST_TIER_MARGIN_BONUS;
+        }
+    },
+    //TODO
     PRECISAO("Você adquire Vantagem na primeira rolagem de Perícias baseada em Destreza realizada em cada um de " +
             "seus Turnos.");
+
+    /** LETALIDADE_PROGRESSIVA's Margem Crítica Menor bonus starting the 1st Round of combate. */
+    private static final int FIRST_TIER_ROUND = 1;
+    private static final int FIRST_TIER_MARGIN_BONUS = 1;
+
+    /** LETALIDADE_PROGRESSIVA's Margem Crítica Menor bonus starting the 3rd Round of combate. */
+    private static final int SECOND_TIER_ROUND = 3;
+    private static final int SECOND_TIER_MARGIN_BONUS = 2;
+
+    /** LETALIDADE_PROGRESSIVA's Margem Crítica Menor bonus starting the 5th Round of combate. */
+    private static final int THIRD_TIER_ROUND = 5;
+    private static final int THIRD_TIER_MARGIN_BONUS = 3;
+
+    /** LETALIDADE_PROGRESSIVA's benefits end once combate reaches its 6th Round. */
+    private static final int BENEFIT_ENDS_ROUND = 6;
 
     private final String description;
 

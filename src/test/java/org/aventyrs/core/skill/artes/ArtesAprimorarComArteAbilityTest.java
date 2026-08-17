@@ -97,4 +97,18 @@ class ArtesAprimorarComArteAbilityTest {
         assertEquals(0, attackAbility.getCriticalMarginReduction(SkillType.ATAQUE_A_DISTANCIA));
         assertEquals(0, esquivaAbility.getCriticalMarginReduction(SkillType.ESQUIVA_E_APARAR));
     }
+
+    /**
+     * {@code SkillCompetencyAbility#resolveCriticalMarginIncrease} — the hook {@code
+     * AbstractSkillInteraction} actually sums into {@code SkillRoll#getCriticalResult(int)} —
+     * just delegates to {@link ArtesAprimorarComArteAbility#getCriticalMarginReduction}; this
+     * confirms the delegation itself, not the branch logic already covered above.
+     */
+    @Test
+    void resolveCriticalMarginIncreaseDelegatesToGetCriticalMarginReduction() {
+        ArtesAprimorarComArteAbility ability = new ArtesAprimorarComArteAbility(SkillType.ATLETISMO);
+
+        assertEquals(ability.getCriticalMarginReduction(SkillType.ATLETISMO),
+                ability.resolveCriticalMarginIncrease(SkillType.ATLETISMO, null));
+    }
 }

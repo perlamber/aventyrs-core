@@ -10,7 +10,9 @@ import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.character.fixture.CharacterSkillFixture;
+import org.aventyrs.core.ability.DexterityAbility;
 import org.aventyrs.core.ego.InitiativeAdvantage;
+import org.aventyrs.core.ego.SorteAdvantage;
 import org.aventyrs.core.race.Anao;
 import org.aventyrs.core.race.AnoesRacialAbility;
 import org.aventyrs.core.race.Elfo;
@@ -21,8 +23,10 @@ import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.InteractionResult;
 import org.aventyrs.core.sheet.Player;
+import org.aventyrs.core.skill.artes.ArtesAprimorarComArteAbility;
 import org.aventyrs.core.skill.artes.ArtesCompetencyAbility;
 import org.aventyrs.core.skill.artes.ArtesSpecialization;
+import org.aventyrs.core.skill.ataqueadistancia.AtaqueADistanciaInteraction;
 import org.aventyrs.core.skill.ataquecorpoacorpo.AtaqueCorpoACorpoInteraction;
 import org.aventyrs.core.skill.attention.AttentionCompetencyAbility;
 import org.aventyrs.core.skill.attention.AttentionInteraction;
@@ -481,5 +485,67 @@ class AbstractSkillInteractionTest {
         InteractionResult result = new AttentionInteraction().applyTo(sheet, combatContext(1, true));
 
         assertNull(result.getDamageBonus());
+    }
+
+    private CharacterSheet sheetHoldingLetalidadeProgressiva() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .attributeAbility(DexterityAbility.LETALIDADE_PROGRESSIVA)
+                .build();
+        return CharacterSheet.of(character, new Player());
+    }
+
+    /**
+     * {@code DexterityAbility#LETALIDADE_PROGRESSIVA} widens Acerto Crítico Menor's margin for
+     * Ataque à Distância during a Cena de Combate's early Rounds — exercised end-to-end through
+     * {@link AtaqueADistanciaInteraction} (this ability's own Perícia) to prove {@code
+     * AbstractSkillInteraction#sumCriticalMarginIncrease} actually reaches {@code
+     * SkillRoll#getCriticalResult(int)}, not just {@code DexterityAbilityTest}'s own
+     * isolated {@code resolveCriticalMarginIncrease} coverage. 6+5+2 has only one 6 — not
+     * Acerto Crítico Menor at margin 0 — but with the +1 margin this ability grants in Round 1,
+     * the 5 now counts alongside the 6 for the qualifying pair.
+     */
+    @Test
+    void applyToWidensAcertoCriticoMenorViaLetalidadeProgressivaDuringCombat() {
+        CharacterSheet sheet = sheetHoldingLetalidadeProgressiva();
+        SkillRoll roll = new SkillRoll(List.of(6, 5, 2));
+        SceneContext combatRoundOne = new SceneContext(List.of(), List.of(), Map.of(), null, true, 1, false);
+
+        InteractionResult withoutContext = new AtaqueADistanciaInteraction().applyTo(sheet, null, roll);
+        InteractionResult duringCombat = new AtaqueADistanciaInteraction().applyTo(sheet, combatRoundOne, roll);
+
+        assertEquals(CriticalResult.NONE, withoutContext.getCriticalResult());
+        assertEquals(CriticalResult.ACERTO_CRITICO_MENOR, duringCombat.getCriticalResult());
+    }
+
+    private CharacterSheet sheetHoldingAceAndArtesMarginSources() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .egoAdvantage(EgoDomain.SORTE, SorteAdvantage.ACE)
+                .skillCompetencyAbility(new ArtesAprimorarComArteAbility(SkillType.ATLETISMO))
+                .build();
+        return CharacterSheet.of(character, new Player());
+    }
+
+    /**
+     * {@code EgoAdvantage#resolveCriticalMarginIncrease} ({@code SorteAdvantage#ACE}) and
+     * {@code SkillCompetencyAbility#resolveCriticalMarginIncrease} ({@code
+     * ArtesAprimorarComArteAbility}'s "Margem Crítica Menor" branch) are meant to be additive —
+     * exercised together, through the ATLETISMO-flavored {@code GangUpBonusInteraction} above,
+     * to prove {@code sumCriticalMarginIncrease} actually sums across sources rather than only
+     * ever picking up one. 3+3+1 needs a margin of at least 4 to read as Acerto Crítico Menor
+     * (widening the qualifying face down to 2, so both 3s count): ACE alone only grants its
+     * +3 outside a Cena de Combate for a non-Ataque skill (ATLETISMO qualifies), and Artes'
+     * branch alone only grants +1 — neither alone reaches 4, but together they do.
+     */
+    @Test
+    void applyToSumsCriticalMarginIncreaseAcrossAllThreeAbilitySources() {
+        CharacterSheet sheet = sheetHoldingAceAndArtesMarginSources();
+        SkillRoll roll = new SkillRoll(List.of(3, 3, 1));
+        SceneContext nonCombatContext = new SceneContext(List.of(), List.of(), Map.of(), null, false, 0, false);
+
+        InteractionResult withoutContext = interaction.applyTo(sheet, null, roll);
+        InteractionResult withNonCombatContext = interaction.applyTo(sheet, nonCombatContext, roll);
+
+        assertEquals(CriticalResult.NONE, withoutContext.getCriticalResult());
+        assertEquals(CriticalResult.ACERTO_CRITICO_MENOR, withNonCombatContext.getCriticalResult());
     }
 }

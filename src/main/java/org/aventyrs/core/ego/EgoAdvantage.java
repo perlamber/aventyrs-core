@@ -112,4 +112,18 @@ public interface EgoAdvantage {
     default Optional<Integer> resolveSkillSpecificRollBonus(final SkillType skillType, final SceneContext sceneContext, final CharacterSheet target) {
         return Optional.empty();
     }
+
+    /**
+     * How many extra "números" this Vantagem widens skillType's Margem Crítica Menor by right
+     * now, conditioned on {@link SceneContext} — e.g. {@link SorteAdvantage#ACE}'s +1/+3 bonus
+     * depending on the roll's attack-skill/combat-scene status. Mirrors {@code
+     * org.aventyrs.core.ability.AttributeAbility#resolveCriticalMarginIncrease}/{@code
+     * org.aventyrs.core.skill.SkillCompetencyAbility#resolveCriticalMarginIncrease}'s identical
+     * shape — see {@code org.aventyrs.core.skill.SkillRoll#getCriticalResult(int)} for how the
+     * sum across all three is actually consumed. Zero by default; only override on a constant
+     * whose rules text widens Margem Crítica Menor like this.
+     */
+    default int resolveCriticalMarginIncrease(final SkillType skillType, final SceneContext sceneContext) {
+        return 0;
+    }
 }

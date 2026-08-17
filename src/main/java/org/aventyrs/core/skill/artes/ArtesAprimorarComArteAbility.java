@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.NonNull;
 import org.aventyrs.core.modifier.Modifier;
 import org.aventyrs.core.modifier.ModifierType;
+import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
 import org.aventyrs.core.skill.SkillType;
 
@@ -82,5 +83,19 @@ public class ArtesAprimorarComArteAbility implements SkillCompetencyAbility {
     public int getCriticalMarginReduction(final SkillType rolledSkillType) {
         boolean isOtherPericia = chosenSkill != SkillType.ESQUIVA_E_APARAR && !chosenSkill.isAttackSkill();
         return isOtherPericia && chosenSkill == rolledSkillType ? BENEFIT_BONUS : 0;
+    }
+
+    /**
+     * {@link SkillCompetencyAbility#resolveCriticalMarginIncrease}'s own hook, now that a real
+     * roll-resolution consumer exists ({@code AbstractSkillInteraction} sums it into {@code
+     * SkillRoll#getCriticalResult(int)}'s margin parameter) — just delegates to {@link
+     * #getCriticalMarginReduction}, which already carries the real branch logic; sceneContext is
+     * unused since this branch isn't conditioned on Scene facts, unlike {@code
+     * org.aventyrs.core.ego.SorteAdvantage#ACE}/{@code
+     * org.aventyrs.core.ability.DexterityAbility#LETALIDADE_PROGRESSIVA}'s own overrides.
+     */
+    @Override
+    public int resolveCriticalMarginIncrease(final SkillType skillType, final SceneContext sceneContext) {
+        return getCriticalMarginReduction(skillType);
     }
 }

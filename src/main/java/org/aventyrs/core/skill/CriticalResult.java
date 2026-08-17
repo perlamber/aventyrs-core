@@ -10,15 +10,19 @@ package org.aventyrs.core.skill;
  * roll's total instead). Symmetrically, three 6s is an Acerto Crítico Maior — but Acerto
  * Crítico Menor is *not* fixed at "6+6+5" the way Falha Crítica Menor is fixed at 1+1+2:
  * abilities like {@code AtaqueCorpoACorpoCompetencyAbility#ATAQUE_PRECISO} widen its margin
- * (e.g. 5s counting alongside 6s), so a fixed-sum check would go stale the moment that
- * widening is wired in — see the {@code TODO} on {@link SkillRoll#getCriticalResult()} itself,
- * which (deliberately, for now) still has the same "two 6s, any third die" bug the Falha
- * Crítica Menor side just had fixed, until a real margin-widening mechanism exists to fix it
- * properly rather than just swapping one fixed threshold for another.
+ * (e.g. 5s counting alongside 6s), so {@link SkillRoll#getCriticalResult(int)} takes the
+ * combined widening as a parameter instead of using a fixed threshold — see that method's own
+ * javadoc for how the two matching dice are found once the required face value is lowered.
+ * {@code ATAQUE_PRECISO} itself is still TODO'd (it needs its own enum/Interaction wiring), but
+ * the margin-widening mechanism it was blocked on now exists — {@link
+ * org.aventyrs.core.ability.DexterityAbility#LETALIDADE_PROGRESSIVA}, {@link
+ * org.aventyrs.core.ego.SorteAdvantage#ACE}, and {@code
+ * org.aventyrs.core.skill.artes.ArtesAprimorarComArteAbility}'s "Margem Crítica Menor" branch
+ * are the first real sources feeding it.
  *
  * <p>Abilities like {@code ATAQUE_PRECISO} above are also expected to eventually widen which
  * face values count toward a Menor result on the *dano* side, not just this roll's own
- * critical detection — nothing consumes either yet.
+ * critical detection — nothing consumes that half yet.
  */
 public enum CriticalResult {
     NONE,

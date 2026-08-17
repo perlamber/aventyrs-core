@@ -20,16 +20,13 @@ import org.aventyrs.core.skill.SkillType;
 public enum SorteAdvantage implements EgoAdvantage {
 
     /**
-     * {@link #resolveCriticalMarginIncrease} is real, tested data — the same shape as {@code
-     * org.aventyrs.core.skill.artes.ArtesAprimorarComArteAbility#getCriticalMarginReduction}
-     * (a Margem Crítica bonus scoped to specific rolls) — but it carries the identical gap
-     * that method's own javadoc already flags: this core's {@link
-     * org.aventyrs.core.skill.SkillRoll#getCriticalResult()} is a fixed dice-matching check
-     * (three or two matching faces at the extremes — see {@code SkillRoll}'s own javadoc), not
-     * a threshold/margin comparison a bonus like this could actually widen, so there's no
-     * roll-resolution engine anywhere in this codebase yet to consult it automatically. A
-     * future one calls this directly, passing whichever Perícia was rolled and the Scene's own
-     * combat/non-combat state.
+     * {@link #resolveCriticalMarginIncrease} is real, tested data, and — since {@link
+     * EgoAdvantage} carries this hook now (summed generically alongside {@code
+     * AttributeAbility}/{@code SkillCompetencyAbility}'s own identical methods) — actually
+     * consulted: {@code AbstractSkillInteraction} sums it into {@code
+     * org.aventyrs.core.skill.SkillRoll#getCriticalResult(int)}'s margin parameter for every
+     * roll. See {@code org.aventyrs.core.ability.DexterityAbility#LETALIDADE_PROGRESSIVA} for
+     * the other real source of this same widening.
      */
     ACE("Em Cenas de Combate Sua Margem Crítica Menor em rolagens de Perícia de Ataque é " +
             "aumentada em +1 número. Em Cenas não combativas sua Margem Crítica Menor é " +
@@ -79,18 +76,5 @@ public enum SorteAdvantage implements EgoAdvantage {
     @Override
     public EgoDomain getEgoDomain() {
         return EgoDomain.SORTE;
-    }
-
-    /**
-     * The Margem Crítica Menor bonus this Vantagem grants toward skillType's roll right now,
-     * conditioned on sceneContext's combat state — {@code 0} for every constant but {@link
-     * #ACE}, and for ACE itself outside either of its two matching conditions. Not part of
-     * {@link EgoAdvantage} — unlike that interface's own hooks, no other {@code EgoDomain}
-     * currently has an analogous Margem Crítica concept to share this shape with, so this
-     * stays scoped to {@code SorteAdvantage} rather than widening the shared interface for a
-     * single constant.
-     */
-    public int resolveCriticalMarginIncrease(final SkillType skillType, final SceneContext sceneContext) {
-        return 0;
     }
 }

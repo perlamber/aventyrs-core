@@ -129,6 +129,23 @@ public interface SkillCompetencyAbility extends SkillTrait {
     }
 
     /**
+     * How many extra "números" this Habilidade de Competência widens skillType's Margem
+     * Crítica Menor by right now, conditioned on {@link SceneContext} — e.g. {@code
+     * org.aventyrs.core.skill.artes.ArtesAprimorarComArteAbility}'s "Outras Perícias – Margem
+     * Crítica Menor +1" branch (see its own {@code getCriticalMarginReduction(SkillType)},
+     * which this delegates to; sceneContext is unused there since that branch isn't
+     * Scene-conditioned). Mirrors {@code
+     * org.aventyrs.core.ability.AttributeAbility#resolveCriticalMarginIncrease}/{@code
+     * org.aventyrs.core.ego.EgoAdvantage#resolveCriticalMarginIncrease}'s identical shape — see
+     * {@code SkillRoll#getCriticalResult(int)} for how the sum across all three is actually
+     * consumed. Zero by default; only override on a constant (or instance, for a choice-carrying
+     * ability) whose rules text widens Margem Crítica Menor like this.
+     */
+    default int resolveCriticalMarginIncrease(final SkillType skillType, final SceneContext sceneContext) {
+        return 0;
+    }
+
+    /**
      * The Attribute that currently governs skillType's roll/graduation-cap for a character
      * holding skillCompetencyAbilities — defaultDomain, unless one of those abilities
      * targets this same skillType and {@link #getSubstituteAttributeDomain()} isn't empty,
