@@ -53,9 +53,14 @@ public class AttributeAbilityServiceImpl implements AttributeAbilityService {
         ability.resolveActiveAbility().ifPresent(builder::activeAbility);
         Character granted = builder.build();
 
+        List<SkillType> pendingChoices = ability.resolvePendingSkillTraitChoices(granted);
         return AttributeAbilityGrantResult.builder()
                 .character(granted)
-                .pendingSkillTraitChoices(ability.resolvePendingSkillTraitChoices(granted))
+                .pendingSkillTraitChoices(pendingChoices)
+                .pendingSkillTraitChoiceLimit(Math.min(
+                        ability.resolvePendingSkillTraitChoiceLimit().orElse(pendingChoices.size()),
+                        pendingChoices.size()))
+                .pendingSkillTraitKinds(ability.resolvePendingSkillTraitKinds())
                 .build();
     }
 

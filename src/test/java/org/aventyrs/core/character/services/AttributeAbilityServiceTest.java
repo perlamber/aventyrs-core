@@ -12,6 +12,7 @@ import org.aventyrs.core.character.CharacterAttributes;
 import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.character.fixture.CharacterSkillFixture;
 import org.aventyrs.core.sheet.IllegalOperationException;
+import org.aventyrs.core.skill.SkillTraitKind;
 import org.aventyrs.core.skill.SkillType;
 import org.aventyrs.core.skill.artes.ArtesCompetencyAbility;
 import org.aventyrs.core.skill.artes.ArtesSpecialization;
@@ -187,6 +188,9 @@ class AttributeAbilityServiceTest {
         AttributeAbilityGrantResult result = abilityService.grantAttributeAbility(character, CharismaAbility.CHARME);
 
         assertEquals(Set.of(SkillType.ARTES, SkillType.PERSUASAO), Set.copyOf(result.getPendingSkillTraitChoices()));
+        assertEquals(2, result.getPendingSkillTraitChoiceLimit());
+        assertEquals(Set.of(SkillTraitKind.SPECIALIZATION, SkillTraitKind.COMPETENCY_ABILITY),
+                result.getPendingSkillTraitKinds());
     }
 
     @Test
@@ -200,6 +204,28 @@ class AttributeAbilityServiceTest {
         AttributeAbilityGrantResult result = abilityService.grantAttributeAbility(character, GnoseAbility.DOMINIO_DO_CONHECIMENTO);
 
         assertEquals(Set.of(SkillType.ARTES, SkillType.PERSUASAO), Set.copyOf(result.getPendingSkillTraitChoices()));
+        assertEquals(Set.of(SkillTraitKind.SPECIALIZATION), result.getPendingSkillTraitKinds());
+    }
+
+    /** "até 3" is a cap on the candidates, so the limit is whichever of the two is smaller — two
+     * known Perícias owe two choices, six owe the ability's own three. */
+    @Test
+    void grantAttributeAbilityForDominioDoConhecimentoLimitsChoicesToTheSmallerOfItsCapAndTheKnownSkills() {
+        Character twoSkills = characterWithGnoseBase(3).toBuilder()
+                .skills(Map.of(
+                        SkillType.ARTES, CharacterSkillFixture.blank(CharacterSkillFixture.ARTES_1).build(),
+                        SkillType.PERSUASAO, CharacterSkillFixture.blank(CharacterSkillFixture.PERSUASAO_1).build()))
+                .build();
+        Character fourSkills = twoSkills.toBuilder()
+                .skill(SkillType.ATLETISMO, CharacterSkillFixture.blank(CharacterSkillFixture.ATLETISMO_1).build())
+                .skill(SkillType.ATTENTION, CharacterSkillFixture.blank(CharacterSkillFixture.ATTENTION_1).build())
+                .build();
+
+        assertEquals(2, abilityService.grantAttributeAbility(twoSkills, GnoseAbility.DOMINIO_DO_CONHECIMENTO)
+                .getPendingSkillTraitChoiceLimit());
+        assertEquals(GnoseAbility.DOMINIO_DO_CONHECIMENTO_CHOICE_LIMIT,
+                abilityService.grantAttributeAbility(fourSkills, GnoseAbility.DOMINIO_DO_CONHECIMENTO)
+                        .getPendingSkillTraitChoiceLimit());
     }
 
     @Test
@@ -209,6 +235,8 @@ class AttributeAbilityServiceTest {
         AttributeAbilityGrantResult result = abilityService.grantAttributeAbility(character, CharismaAbility.VOZ_DE_OURO);
 
         assertTrue(result.getPendingSkillTraitChoices().isEmpty());
+        assertEquals(0, result.getPendingSkillTraitChoiceLimit());
+        assertTrue(result.getPendingSkillTraitKinds().isEmpty());
     }
 
     @Test

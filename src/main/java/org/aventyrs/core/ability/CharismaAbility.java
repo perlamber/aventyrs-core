@@ -3,15 +3,15 @@ package org.aventyrs.core.ability;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.aventyrs.core.character.AttributeDomain;
-import org.aventyrs.core.character.Character;
-import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.skill.CriticalResult;
-import org.aventyrs.core.skill.Skill;
+import org.aventyrs.core.skill.SkillTraitKind;
 import org.aventyrs.core.skill.SkillType;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Getter
 @AllArgsConstructor
@@ -22,13 +22,19 @@ public enum CharismaAbility implements AttributeAbility {
 
     CHARME("Você adquire uma Especialização e uma Habilidade de Competência de cada Perícia baseada em Carisma " +
             "em que for treinado no momento em que adquirir esta Habilidade.") {
+        // "de cada Perícia baseada em Carisma em que for treinado" — one per candidate, so no
+        // resolvePendingSkillTraitChoiceLimit override; the default (empty, meaning "the whole
+        // candidate list") is already this ability's own quota.
         @Override
-        public List<SkillType> resolvePendingSkillTraitChoices(final Character character) {
-            return character.getSkills().values().stream()
-                    .map(CharacterSkill::getSkill)
-                    .filter(skill -> skill.getAttributeDomain() == AttributeDomain.CHARISMA)
-                    .map(Skill::getSkillType)
+        public List<SkillType> resolvePendingSkillTraitChoices(final Collection<SkillType> trainedSkills) {
+            return trainedSkills.stream()
+                    .filter(skillType -> skillType.newSkillInstance().getAttributeDomain() == AttributeDomain.CHARISMA)
                     .toList();
+        }
+
+        @Override
+        public Set<SkillTraitKind> resolvePendingSkillTraitKinds() {
+            return Set.of(SkillTraitKind.SPECIALIZATION, SkillTraitKind.COMPETENCY_ABILITY);
         }
     },
 

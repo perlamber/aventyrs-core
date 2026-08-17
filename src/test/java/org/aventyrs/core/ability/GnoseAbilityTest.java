@@ -9,6 +9,7 @@ import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.race.Human;
 import org.aventyrs.core.sheet.Player;
 import org.aventyrs.core.skill.Skill;
+import org.aventyrs.core.skill.SkillTraitKind;
 import org.aventyrs.core.skill.SkillType;
 import org.aventyrs.core.skill.artes.Artes;
 import org.aventyrs.core.skill.atletismo.Atletismo;
@@ -75,6 +76,26 @@ class GnoseAbilityTest {
     }
 
     @Test
+    void dominioDoConhecimentoResolvesTheSameChoicesFromABareTrainedSkillList() {
+        assertEquals(Set.of(SkillType.ARTES, SkillType.PERSUASAO),
+                Set.copyOf(GnoseAbility.DOMINIO_DO_CONHECIMENTO.resolvePendingSkillTraitChoices(
+                        Set.of(SkillType.ARTES, SkillType.PERSUASAO))));
+    }
+
+    @Test
+    void dominioDoConhecimentoCapsItsChoicesAtThree() {
+        assertEquals(3, GnoseAbility.DOMINIO_DO_CONHECIMENTO_CHOICE_LIMIT);
+        assertEquals(GnoseAbility.DOMINIO_DO_CONHECIMENTO_CHOICE_LIMIT,
+                GnoseAbility.DOMINIO_DO_CONHECIMENTO.resolvePendingSkillTraitChoiceLimit().orElseThrow());
+    }
+
+    @Test
+    void dominioDoConhecimentoOwesASpecializationAndNothingElse() {
+        assertEquals(Set.of(SkillTraitKind.SPECIALIZATION),
+                GnoseAbility.DOMINIO_DO_CONHECIMENTO.resolvePendingSkillTraitKinds());
+    }
+
+    @Test
     void noOtherAbilityResolvesPendingSkillTraitChoices() {
         Character character = characterTrainedIn(new Artes(), new Persuasao(), new Atletismo());
 
@@ -83,6 +104,8 @@ class GnoseAbilityTest {
                 continue;
             }
             assertTrue(ability.resolvePendingSkillTraitChoices(character).isEmpty());
+            assertTrue(ability.resolvePendingSkillTraitChoiceLimit().isEmpty());
+            assertTrue(ability.resolvePendingSkillTraitKinds().isEmpty());
         }
     }
 }

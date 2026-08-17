@@ -3,12 +3,13 @@ package org.aventyrs.core.ability;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.aventyrs.core.character.AttributeDomain;
-import org.aventyrs.core.character.Character;
-import org.aventyrs.core.character.CharacterSkill;
-import org.aventyrs.core.skill.Skill;
+import org.aventyrs.core.skill.SkillTraitKind;
 import org.aventyrs.core.skill.SkillType;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.OptionalInt;
+import java.util.Set;
 
 @Getter
 @AllArgsConstructor
@@ -16,22 +17,32 @@ public enum GnoseAbility implements AttributeAbility {
 
     // Mirrors CharismaAbility#CHARME's own resolvePendingSkillTraitChoices shape, minus the
     // Attribute-domain filter — "Perícias conhecidas" here means every currently trained
-    // Perícia, not just Gnose-based ones. Each entry is resolved via
-    // org.aventyrs.core.character.services.AttributeAbilityService#grantSpecializationChoice
-    // (specialization only — unlike CHARME, this ability owes no SkillCompetencyAbility
-    // alongside it), up to 3 times per this ability's own "até 3" text; that cap isn't
-    // enforced here or by grantSpecializationChoice itself, same unenforced-prerequisite
-    // restraint already applied to "Requer N Graduações"-style clauses elsewhere.
+    // Perícia, not just Gnose-based ones — and capped at DOMINIO_DO_CONHECIMENTO_CHOICE_LIMIT
+    // rather than one per candidate, per this ability's own "até 3" text. Each resolved entry
+    // goes through org.aventyrs.core.character.services.AttributeAbilityService
+    // #grantSpecializationChoice (specialization only — unlike CHARME, this ability owes no
+    // SkillCompetencyAbility alongside it, which is what resolvePendingSkillTraitKinds reports).
+    // The cap is reported, not enforced at resolution time: grantSpecializationChoice records
+    // whatever it's handed, same unenforced-prerequisite restraint already applied to
+    // "Requer N Graduações"-style clauses elsewhere.
     // ConhecimentosCompetencyAbility.GENERALISTA is the same shape one level down — a
     // SkillCompetencyAbility rather than an AttributeAbility — and is now wired to the same
-    // grantSpecializationChoice mechanism via its own resolvePendingSpecializationChoices.
+    // grantSpecializationChoice mechanism via its own resolvePendingSpecializationChoices;
+    // TODO: it carries no limit of its own yet, so its "até 2" is still uncommunicated.
     DOMINIO_DO_CONHECIMENTO("Você recebe uma nova Especialização de até 3 Perícias conhecidas.") {
         @Override
-        public List<SkillType> resolvePendingSkillTraitChoices(final Character character) {
-            return character.getSkills().values().stream()
-                    .map(CharacterSkill::getSkill)
-                    .map(Skill::getSkillType)
-                    .toList();
+        public List<SkillType> resolvePendingSkillTraitChoices(final Collection<SkillType> trainedSkills) {
+            return List.copyOf(trainedSkills);
+        }
+
+        @Override
+        public OptionalInt resolvePendingSkillTraitChoiceLimit() {
+            return OptionalInt.of(DOMINIO_DO_CONHECIMENTO_CHOICE_LIMIT);
+        }
+
+        @Override
+        public Set<SkillTraitKind> resolvePendingSkillTraitKinds() {
+            return Set.of(SkillTraitKind.SPECIALIZATION);
         }
     },
 
@@ -61,6 +72,10 @@ public enum GnoseAbility implements AttributeAbility {
     // exists (CharacterSkill.specializations already defaults to an empty list).
     RATO_DE_BIBLIOTECA("Você recebe treinamento em todas as Perícias que não for treinado, mas as Perícias " +
             "treinadas desta forma não recebem Especializações iniciais.");
+
+    /** The "até 3" in {@link #DOMINIO_DO_CONHECIMENTO}'s rules text: how many of the Perícias it
+     * offers as candidates the player may actually take the new Especialização on. */
+    public static final int DOMINIO_DO_CONHECIMENTO_CHOICE_LIMIT = 3;
 
     private final String description;
 

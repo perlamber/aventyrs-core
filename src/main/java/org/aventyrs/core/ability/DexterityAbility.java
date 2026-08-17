@@ -22,18 +22,20 @@ public enum DexterityAbility implements AttributeAbility {
             return 1;
         }
     },
-
+    //TODO bonus no ataque corpo a corpo e mecanica de investida.
     IMPLACAVEL("Suas investidas não provocam Reações de outros personagens na cena e você pode percorrer até o " +
             "triplo do seu Movimento Base, ao invés do dobro. Adicionalmente você recebe Vantagem em suas jogadas " +
             "de Ataque Corpo-a-Corpo; quando malsucedido, você não recebe o redutor padrão de -2 em suas Defesas."),
 
+    //TODO bonus em PA
     APRESSADO("Em turnos de Rodadas pares você recebe Bônus Variável de +1PA."),
 
+    //TODO
     LETALIDADE_PROGRESSIVA("A Margem Crítica de seus Ataques à Distância aumenta ao longo do combate: você recebe " +
             "Bônus Variável de +1 em sua Margem Crítica menor na primeira Rodada do combate, então este Bônus " +
             "aumenta para +2 na terceira Rodada e para +3 na quinta Rodada. Estes benefícios são encerrados na " +
             "sexta Rodada do combate."),
-
+    //TODO 
     PRECISAO("Você adquire Vantagem na primeira rolagem de Perícias baseada em Destreza realizada em cada um de " +
             "seus Turnos.");
 

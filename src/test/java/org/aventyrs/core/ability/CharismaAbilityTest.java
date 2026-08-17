@@ -11,6 +11,7 @@ import org.aventyrs.core.race.Human;
 import org.aventyrs.core.sheet.Player;
 import org.aventyrs.core.skill.CriticalResult;
 import org.aventyrs.core.skill.Skill;
+import org.aventyrs.core.skill.SkillTraitKind;
 import org.aventyrs.core.skill.SkillType;
 import org.aventyrs.core.skill.artes.Artes;
 import org.aventyrs.core.skill.atletismo.Atletismo;
@@ -129,6 +130,13 @@ class CharismaAbilityTest {
     }
 
     @Test
+    void charmeOwesBothTraitsPerPendingSkillAndNoCapBeyondTheCandidatesThemselves() {
+        assertEquals(Set.of(SkillTraitKind.SPECIALIZATION, SkillTraitKind.COMPETENCY_ABILITY),
+                CharismaAbility.CHARME.resolvePendingSkillTraitKinds());
+        assertTrue(CharismaAbility.CHARME.resolvePendingSkillTraitChoiceLimit().isEmpty());
+    }
+
+    @Test
     void noOtherAbilityResolvesPendingSkillTraitChoices() {
         Character character = characterTrainedIn(new Artes(), new Persuasao(), new EmpatiaSelvagem());
 
@@ -137,6 +145,7 @@ class CharismaAbilityTest {
                 continue;
             }
             assertTrue(ability.resolvePendingSkillTraitChoices(character).isEmpty());
+            assertTrue(ability.resolvePendingSkillTraitKinds().isEmpty());
         }
     }
 }
