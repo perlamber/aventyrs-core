@@ -331,7 +331,6 @@ public class Scene {
         if (currentIndex >= activeEntries.size()) {
             currentIndex = 0;
             currentRound++;
-            activeEntries.get(currentIndex).getCharacterSheet().startTurn(currentRound);
             startNewRound();
         }
         CharacterSheet active = activeEntries.get(currentIndex).getCharacterSheet();
