@@ -1,6 +1,7 @@
 package org.aventyrs.core.character.services;
 
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.character.DamageType;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.skill.SkillExcellency;
@@ -28,6 +29,18 @@ public interface DamageService {
      * Perícia. Never negative.
      */
     int getTotalDamageReduction(Character character);
+
+    /**
+     * Same as {@link #getTotalDamageReduction(Character)}, but also summing every held {@code
+     * AttributeAbility}'s own {@code resolveDamageReduction(DamageType, CharacterSheet source,
+     * CharacterSheet target)} — e.g. {@code VigorAbility#RIGIDEZ_DA_MONTANHA}'s Dano-Físico-only,
+     * attacker-size-conditioned reduction. target is character's own {@link CharacterSheet} —
+     * required whenever an ability needs its own holder's data (e.g. {@code SizeCategory}) to
+     * decide; damageType/source may be {@code null} (unclassified damage / no known attacker),
+     * same restraint every other Scene/roll-conditioned {@code resolve*} hook in this core
+     * already applies. Never negative.
+     */
+    int getTotalDamageReduction(Character character, CharacterSheet target, DamageType damageType, CharacterSheet source);
 
     /** Total RA, same three sources as RD. Never negative. */
     int getTotalAbsoluteDamageReduction(Character character);
@@ -63,6 +76,16 @@ public interface DamageService {
     int calculateFinalDamage(Character character, SceneContext sceneContext, int rawDamage, boolean ignoreDamageReduction);
 
     /**
+     * Same as {@link #calculateFinalDamage(Character, SceneContext, int, boolean)}, but also
+     * folding in {@link #getTotalDamageReduction(Character, CharacterSheet, DamageType,
+     * CharacterSheet)}'s type/source-scoped RD. target/damageType/source carry the same meaning
+     * as that method's own — target is character's own {@link CharacterSheet}, damageType/
+     * source may be {@code null}.
+     */
+    int calculateFinalDamage(Character character, CharacterSheet target, SceneContext sceneContext,
+                              DamageType damageType, CharacterSheet source, int rawDamage, boolean ignoreDamageReduction);
+
+    /**
      * Computes the final damage (see {@link #calculateFinalDamage}) and applies it to the
      * target's CharacterSheet — Shield points are absorbed first, then Hit Points, per
      * {@link CharacterSheet#applyDamage}.
@@ -77,4 +100,15 @@ public interface DamageService {
      * @return int total damage accumulated on the target's Hit Points so far
      */
     int applyDamage(Character character, CharacterSheet characterSheet, SceneContext sceneContext, int rawDamage, boolean ignoreDamageReduction);
+
+    /**
+     * Same as {@link #applyDamage(Character, CharacterSheet, SceneContext, int, boolean)}, but
+     * also folding in damageType/source-scoped RD — see {@link #calculateFinalDamage(Character,
+     * CharacterSheet, SceneContext, DamageType, CharacterSheet, int, boolean)}. characterSheet
+     * doubles as that method's own target parameter, since the sheet being damaged and the
+     * ability holder whose RD is being resolved are the same one here.
+     * @return int total damage accumulated on the target's Hit Points so far
+     */
+    int applyDamage(Character character, CharacterSheet characterSheet, SceneContext sceneContext,
+                     DamageType damageType, CharacterSheet source, int rawDamage, boolean ignoreDamageReduction);
 }

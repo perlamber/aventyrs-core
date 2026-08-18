@@ -1,10 +1,13 @@
 package org.aventyrs.core.character.services;
 
 import org.aventyrs.core.ability.AttributeAbility;
+import org.aventyrs.core.ability.VigorAbility;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterSkill;
+import org.aventyrs.core.character.DamageType;
 import org.aventyrs.core.character.EgoDomain;
+import org.aventyrs.core.character.SizeCategory;
 import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.character.fixture.CharacterSkillFixture;
 import org.aventyrs.core.ego.InitiativeAdvantage;
@@ -295,5 +298,77 @@ class DamageServiceImplTest {
 
         assertEquals(4, totalDamageTaken);
         assertEquals(4, sheet.getDamageTaken());
+    }
+
+    private Character characterWithRigidezDaMontanha(final SizeCategory sizeCategory) {
+        return CharacterFixture.blank(CharacterFixture.BLANK)
+                .attributeAbility(VigorAbility.RIGIDEZ_DA_MONTANHA)
+                .sizeCategory(sizeCategory)
+                .build();
+    }
+
+    @Test
+    void getTotalDamageReductionWithDamageTypeAddsTheAttributeAbilitysOwnContribution() {
+        Character character = characterWithRigidezDaMontanha(SizeCategory.ZERO);
+        CharacterSheet target = CharacterSheet.of(character, new Player());
+
+        assertEquals(1, damageService.getTotalDamageReduction(character, target, DamageType.FISICO, null));
+    }
+
+    @Test
+    void getTotalDamageReductionWithDamageTypeGrantsTheEnhancedReductionAgainstASmallerAttacker() {
+        Character character = characterWithRigidezDaMontanha(SizeCategory.ZERO);
+        CharacterSheet target = CharacterSheet.of(character, new Player());
+        Character attacker = CharacterFixture.blank(CharacterFixture.BLANK).sizeCategory(SizeCategory.MINUS_ONE).build();
+        CharacterSheet source = CharacterSheet.of(attacker, new Player());
+
+        assertEquals(2, damageService.getTotalDamageReduction(character, target, DamageType.FISICO, source));
+    }
+
+    @Test
+    void getTotalDamageReductionWithDamageTypeOmitsItForNonFisicoDamage() {
+        Character character = characterWithRigidezDaMontanha(SizeCategory.ZERO);
+        CharacterSheet target = CharacterSheet.of(character, new Player());
+
+        assertEquals(0, damageService.getTotalDamageReduction(character, target, DamageType.MAGICO, null));
+    }
+
+    @Test
+    void getTotalDamageReductionWithDamageTypeCombinesWithTheReflectionBasedSources() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .attributeAbility(VigorAbility.RIGIDEZ_DA_MONTANHA)
+                .attributeAbility(new DamageReductionAbility())
+                .sizeCategory(SizeCategory.ZERO)
+                .build();
+        CharacterSheet target = CharacterSheet.of(character, new Player());
+
+        assertEquals(4, damageService.getTotalDamageReduction(character, target, DamageType.FISICO, null));
+    }
+
+    @Test
+    void calculateFinalDamageWithDamageTypeAppliesTheAttributeAbilitysOwnReduction() {
+        Character character = characterWithRigidezDaMontanha(SizeCategory.ZERO);
+        CharacterSheet target = CharacterSheet.of(character, new Player());
+
+        assertEquals(9, damageService.calculateFinalDamage(character, target, null, DamageType.FISICO, null, 10, false));
+    }
+
+    @Test
+    void calculateFinalDamageWithNullTargetAndDamageTypeMatchesTheNoContextOverload() {
+        Character character = characterWithRigidezDaMontanha(SizeCategory.ZERO);
+
+        assertEquals(damageService.calculateFinalDamage(character, 10, false),
+                damageService.calculateFinalDamage(character, null, null, null, null, 10, false));
+    }
+
+    @Test
+    void applyDamageWithDamageTypeAppliesTheCalculatedAmountToTheCharacterSheet() {
+        Character character = characterWithRigidezDaMontanha(SizeCategory.ZERO);
+        CharacterSheet sheet = CharacterSheet.of(character, new Player());
+
+        int totalDamageTaken = damageService.applyDamage(character, sheet, null, DamageType.FISICO, null, 10, false);
+
+        assertEquals(9, totalDamageTaken);
+        assertEquals(9, sheet.getDamageTaken());
     }
 }

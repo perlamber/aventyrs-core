@@ -2,9 +2,11 @@ package org.aventyrs.core.ability;
 
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.character.DamageType;
 import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.rest.RestType;
 import org.aventyrs.core.scene.SceneContext;
+import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.InitiativeBlessing;
 import org.aventyrs.core.skill.CriticalResult;
 import org.aventyrs.core.skill.SkillTraitKind;
@@ -157,6 +159,35 @@ public interface AttributeAbility {
     }
 
     /**
+     * Extra PV a Rest of restType recovers on top of {@code RestService}'s own Vigor-times-
+     * multiplier calculation — e.g. {@link VigorAbility#METABOLISMO_RAPIDO}'s "Descansos
+     * Verdadeiros Longos ou superiores permitem que você recupere +3PV adicionais." Mirrors
+     * {@link #resolveRestMagicPointsBonus}'s identical shape/reasoning exactly, on the PV side
+     * instead of PM. Zero by default; only override on a constant whose rules text grants a
+     * Rest-tier-conditioned PV bonus like this. Summed by {@code
+     * org.aventyrs.core.rest.RestService#getRecoveredHitPoints} across {@code
+     * Character#getAttributeAbilities()}.
+     */
+    default int resolveRestHitPointsBonus(RestType restType) {
+        return 0;
+    }
+
+    /**
+     * The flat bonus this Habilidade adds to a character's total Roubo de Vida, summed by
+     * {@code org.aventyrs.core.character.services.LifeStealService#getTotalLifeSteal} —
+     * exactly once, never per active {@link org.aventyrs.core.sheet.LifeSteal} effect, and
+     * only once that total is already positive (a character with no active {@code LifeSteal}
+     * effect of their own gets none of this either — it only ever amplifies an already-active
+     * one, never grants one from nothing) — e.g. {@link VigorAbility#METABOLISMO_RAPIDO}'s
+     * "Personagens sob efeitos de Roubo de Vida têm seu efeito de Roubo de Vida aumentado em
+     * +1 (não cumulativo)." Zero by default; only override on a constant whose rules text
+     * grants a flat, non-stacking Roubo de Vida bonus like this.
+     */
+    default int resolveLifeStealBonus() {
+        return 0;
+    }
+
+    /**
      * Every {@link InitiativeBlessing} this Habilidade grants the moment its holder wins
      * initiative for their group — mirrors {@code org.aventyrs.core.ego.EgoAdvantage
      * #resolveInitiativeBlessings}'s own shape (see that method's javadoc for the full
@@ -181,6 +212,47 @@ public interface AttributeAbility {
      * whose rules text widens Margem Crítica Menor like this.
      */
     default int resolveCriticalMarginIncrease(SkillType skillType, SceneContext sceneContext) {
+        return 0;
+    }
+
+    /**
+     * A bonus toward this Perícia's own roll ({@code skillRollBonus}) granted only on the
+     * first roll governed by rolledDomain each of the holder's own Turns — e.g. {@link
+     * org.aventyrs.core.ability.DexterityAbility#PRECISAO}'s Vantagem on the first
+     * Destreza-based Perícia roll each Turn. Only ever called by {@code
+     * AbstractSkillInteraction} once {@link org.aventyrs.core.sheet.CharacterSheet
+     * #consumeFirstRollThisTurn} has already confirmed this roll is that first one (see that
+     * method's own javadoc for how "first this Turn" is tracked) — so, unlike this interface's
+     * other {@code resolve*} hooks, an override doesn't need to check that condition itself,
+     * only gate on rolledDomain. Empty by default; only override on a constant whose rules
+     * text grants a bonus scoped to the first roll of a Turn like this.
+     */
+    default Optional<Integer> resolveFirstRollOfTurnBonus(AttributeDomain rolledDomain) {
+        return Optional.empty();
+    }
+
+    /**
+     * The flat Redução de Dano this Habilidade grants against an incoming hit, conditioned on
+     * damageType and source (the attacker's own {@link CharacterSheet}) — e.g. {@link
+     * VigorAbility#RIGIDEZ_DA_MONTANHA}'s Dano-Físico-only reduction, -1 normally or -2 once
+     * source's own {@code SizeCategory} is smaller than target's. target is this Habilidade's
+     * own holder — its own {@link CharacterSheet} — mirroring {@code
+     * org.aventyrs.core.ego.EgoAdvantage#resolveSkillSpecificRollBonus}'s identical "target =
+     * the holder's own sheet, passed explicitly because the bonus may depend on the holder's
+     * own state" shape, here extended with a second {@link CharacterSheet} (source) for an
+     * ability that also needs to know who dealt the hit — the reverse of {@code
+     * SkillCompetencyAbility#resolveAttackRollBonus(CharacterSheet actor, CharacterSheet
+     * attackTarget)}'s outgoing-side pair, since this is the defender's own ability reacting to
+     * an incoming hit rather than the attacker's. damageType/source may be {@code null}
+     * (unclassified damage / no attacker identity known) — every override is expected to treat
+     * either as "condition not met" wherever its own rules text depends on it, the same
+     * restraint every other {@code resolve*} hook here already applies; a flat, type-scoped-only
+     * reduction can still apply with a {@code null} source, since it doesn't need one. Summed by
+     * {@code org.aventyrs.core.character.services.DamageService#getTotalDamageReduction} across
+     * {@code Character#getAttributeAbilities()}. Zero by default; only override on a constant
+     * whose rules text grants a reduction scoped to one {@link DamageType} like this.
+     */
+    default int resolveDamageReduction(DamageType damageType, CharacterSheet source, CharacterSheet target) {
         return 0;
     }
 }

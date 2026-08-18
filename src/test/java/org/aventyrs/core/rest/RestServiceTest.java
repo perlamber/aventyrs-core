@@ -1,6 +1,7 @@
 package org.aventyrs.core.rest;
 
 import org.aventyrs.core.ability.FocusAbility;
+import org.aventyrs.core.ability.VigorAbility;
 import org.aventyrs.core.action.ActionProfile;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.AttributeValue;
@@ -106,6 +107,26 @@ class RestServiceTest {
 
         assertEquals(1, restService.getRecoveredMagicPoints(character, RestType.CURTO));
         assertEquals(0, restService.getRecoveredMagicPoints(character, RestType.MINIMO));
+    }
+
+    @Test
+    void metabolismoRapidoGrantsThreeExtraHitPointsOnLongoOrBetterRests() {
+        Character character = exampleCharacter().toBuilder()
+                .attributeAbility(VigorAbility.METABOLISMO_RAPIDO)
+                .build();
+
+        assertEquals(9, restService.getRecoveredHitPoints(character, RestType.LONGO));
+        assertEquals(12, restService.getRecoveredHitPoints(character, RestType.TOTAL));
+    }
+
+    @Test
+    void metabolismoRapidoGrantsNoBonusBelowLongoRests() {
+        Character character = exampleCharacter().toBuilder()
+                .attributeAbility(VigorAbility.METABOLISMO_RAPIDO)
+                .build();
+
+        assertEquals(3, restService.getRecoveredHitPoints(character, RestType.CURTO));
+        assertEquals(1, restService.getRecoveredHitPoints(character, RestType.MINIMO));
     }
 
     @Test

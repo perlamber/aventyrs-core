@@ -548,4 +548,49 @@ class AbstractSkillInteractionTest {
         assertEquals(CriticalResult.NONE, withoutContext.getCriticalResult());
         assertEquals(CriticalResult.ACERTO_CRITICO_MENOR, withNonCombatContext.getCriticalResult());
     }
+
+    private CharacterSheet sheetHoldingPrecisao() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .attributeAbility(DexterityAbility.PRECISAO)
+                .build();
+        return CharacterSheet.of(character, new Player());
+    }
+
+    /**
+     * {@code DexterityAbility#PRECISAO} grants Vantagem only on the first Destreza-based
+     * Perícia roll each of the holder's own Turns — exercised end-to-end through {@link
+     * AtaqueADistanciaInteraction} (a Destreza-based Perícia, see {@code AtaqueADistancia}'s
+     * own {@code AttributeDomain}) to prove {@code AbstractSkillInteraction
+     * #sumFirstRollOfTurnBonuses} actually reaches {@code skillRollBonus}, correctly gated by
+     * {@code CharacterSheet#consumeFirstRollThisTurn}: a second roll on the same, still-active
+     * Turn doesn't repeat the bonus, but {@code startTurn} resets it for the next one.
+     */
+    @Test
+    void applyToGrantsPrecisaosVantagemOnlyOnceUntilTheNextTurnStarts() {
+        CharacterSheet sheet = sheetHoldingPrecisao();
+        SkillRoll roll = new SkillRoll(List.of(2, 3, 4));
+
+        InteractionResult firstRoll = new AtaqueADistanciaInteraction().applyTo(sheet, null, roll);
+        InteractionResult secondRollSameTurn = new AtaqueADistanciaInteraction().applyTo(sheet, null, roll);
+        sheet.startTurn(1);
+        InteractionResult firstRollNextTurn = new AtaqueADistanciaInteraction().applyTo(sheet, null, roll);
+
+        assertEquals(secondRollSameTurn.getSkillRollBonus() + Skill.ADVANTAGE_BONUS, firstRoll.getSkillRollBonus());
+        assertEquals(firstRoll.getSkillRollBonus(), firstRollNextTurn.getSkillRollBonus());
+    }
+
+    /**
+     * {@code AtaqueCorpoACorpo}'s own {@code AttributeDomain} is Força, not Destreza — even as
+     * this same character's genuinely-first roll of the Turn, PRECISAO grants nothing for it.
+     */
+    @Test
+    void applyToOmitsPrecisaosVantagemForANonDestrezaBasedRollEvenAsTheFirstOfTheTurn() {
+        CharacterSheet sheet = sheetHoldingPrecisao();
+        SkillRoll roll = new SkillRoll(List.of(2, 3, 4));
+
+        InteractionResult firstRoll = new AtaqueCorpoACorpoInteraction().applyTo(sheet, null, roll);
+        InteractionResult secondRoll = new AtaqueCorpoACorpoInteraction().applyTo(sheet, null, roll);
+
+        assertEquals(secondRoll.getSkillRollBonus(), firstRoll.getSkillRollBonus());
+    }
 }

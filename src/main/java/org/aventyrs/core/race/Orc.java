@@ -26,21 +26,20 @@ import java.util.Map;
  *   adicional em até 2 Perícias</b> — same "no Feat catalog, no {@code Character.feats} list,
  *   {@link Race} has no hook for granting starting Perícia training" gap as every other
  *   race's free Talentos/Especializações.</li>
- *   <li><b>Vigor de Epona</b> (+1 Multiplicador de PV; -1 todo Dano Físico Sofrido) — two
- *   separate gaps: the PV-multiplier half would otherwise be a plain {@code
- *   @Modifier(ModifierType.LIFE_MULTIPLIER)} method (exactly {@code
- *   VigorAbility#SOBRE_HUMANO}'s own shape), but {@code
- *   org.aventyrs.core.character.services.HitPointsServiceImpl#getLifeMultiplier} only ever
- *   scans {@code character.getAttributeAbilities()} — not {@code skillCompetencyAbilities},
- *   not unlocked {@code SkillExcellency} tiers, and not {@code
- *   character.getRace().getRacialAbilities()} either, so this racial ability has nowhere to
- *   plug into yet (same "generic scan doesn't include racial abilities" gap {@code
- *   AbstractSkillInteraction} used to have before {@code ElfosRacialAbility#SENTIDOS_ABSOLUTOS}
- *   motivated fixing it there — not attempted here without being asked). The RD half is
- *   scoped to *Dano Físico* specifically, but {@code DamageService} mitigates every damage
- *   type identically ({@link org.aventyrs.core.character.DamageType}'s own javadoc already
- *   flags "nothing in this core resolves per-type resistance/mitigation yet"), so a
- *   type-scoped RD can't be granted without over- or under-reducing the wrong damage types.</li>
+ *   <li><b>Vigor de Epona</b> (+1 Multiplicador de PV; -1 todo Dano Físico Sofrido) — both
+ *   halves would otherwise be plain {@code AttributeAbility} methods today (the PV-multiplier
+ *   half a flat {@code @Modifier(ModifierType.LIFE_MULTIPLIER)}, exactly {@code
+ *   VigorAbility#SOBRE_HUMANO}'s own shape; the RD half a {@code
+ *   resolveDamageReduction(DamageType, CharacterSheet, CharacterSheet)} override, exactly
+ *   {@code VigorAbility#RIGIDEZ_DA_MONTANHA}'s own shape now that {@code DamageService}
+ *   actually resolves type-scoped RD) — but {@code
+ *   character.getRace().getRacialAbilities()} only ever holds {@code SkillCompetencyAbility}
+ *   instances (see "Racial Abilities reuse SkillCompetencyAbility" in CLAUDE.md), with no
+ *   equivalent list for a race-granted {@code AttributeAbility}, and neither {@code
+ *   org.aventyrs.core.character.services.HitPointsServiceImpl#getLifeMultiplier} nor {@code
+ *   DamageServiceImpl}'s own {@code AttributeAbility} scan reaches into {@code Race} at all —
+ *   so both halves of this racial ability have nowhere to plug in yet, same "no race-granted
+ *   AttributeAbility concept exists" gap either way.</li>
  *   <li><b>Força Tectônica</b> (an extra, unrestricted {@code
  *   org.aventyrs.core.ability.StrengthAbility} once Força Base reaches 3) — same gap as {@code
  *   Anao}' Pequenos Gigantes: {@code

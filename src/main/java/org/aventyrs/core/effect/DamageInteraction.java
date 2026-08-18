@@ -1,6 +1,7 @@
 package org.aventyrs.core.effect;
 
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.character.DamageType;
 import org.aventyrs.core.character.services.DamageService;
 import org.aventyrs.core.character.services.DamageServiceImpl;
 import org.aventyrs.core.scene.SceneContext;
@@ -17,12 +18,16 @@ import org.aventyrs.core.sheet.ResourceType;
  * <p>Mirrors {@code AbstractSkillInteraction}'s cascading-overload shape: the 1-arg
  * {@link #applyTo(CharacterSheet)} required by {@link Interaction} (and the only one
  * {@link CharacterSheet#receiveInteraction} can call) delegates down with defaults — no
- * damage, no {@code SceneContext}, no next stage — so it's a safe no-op when invoked
- * generically. A caller that actually has damage to deal, optionally a {@code SceneContext}
- * (e.g. for {@code InitiativeAdvantage#TORRE_EM_MOVIMENTO}'s Scene-conditioned RA/half-damage
- * — {@code null} the same as every other not-currently-in-a-Scene case elsewhere), and
- * optionally a next stage to hand off to once it exists, calls the 5-arg
- * {@link #applyTo(CharacterSheet, SceneContext, int, boolean, Interaction)} directly.
+ * damage, no {@code SceneContext}, no {@code DamageType}/source, no next stage — so it's a
+ * safe no-op when invoked generically. A caller that actually has damage to deal, optionally a
+ * {@code SceneContext} (e.g. for {@code InitiativeAdvantage#TORRE_EM_MOVIMENTO}'s
+ * Scene-conditioned RA/half-damage — {@code null} the same as every other
+ * not-currently-in-a-Scene case elsewhere), optionally this hit's {@link DamageType} and its
+ * source (the attacker's own {@link CharacterSheet} — e.g. for {@code
+ * VigorAbility#RIGIDEZ_DA_MONTANHA}'s Dano-Físico-only, attacker-size-conditioned RD), and
+ * optionally a next stage to hand off to once it exists, calls the 7-arg
+ * {@link #applyTo(CharacterSheet, SceneContext, DamageType, CharacterSheet, int, boolean,
+ * Interaction)} directly.
  */
 public class DamageInteraction implements Interaction<CharacterSheet> {
 
@@ -55,18 +60,37 @@ public class DamageInteraction implements Interaction<CharacterSheet> {
         return applyTo(target, null, rawDamage, ignoreDamageReduction, nextInteraction);
     }
 
-    /**
-     * Applies {@code rawDamage} (mitigated per {@link DamageService#calculateFinalDamage(Character,
-     * SceneContext, int, boolean)}) to {@code target}. {@code nextInteraction} is only carried
-     * onto the returned {@link InteractionResult#getNextInteraction()} when this hit actually
-     * dealt damage (final damage &gt; 0) — a hit fully absorbed by RD/RA has nothing for a
-     * downstream {@link EffectChain}/{@link CriticalEffect} to react to, so the chain ends here
-     * instead of forwarding into a stage with nothing to work from.
-     */
     public InteractionResult applyTo(final CharacterSheet target, final SceneContext sceneContext, final int rawDamage, final boolean ignoreDamageReduction,
                                       final Interaction<CharacterSheet> nextInteraction) {
+        return applyTo(target, sceneContext, null, null, rawDamage, ignoreDamageReduction, nextInteraction);
+    }
+
+    /**
+     * Same as {@link #applyTo(CharacterSheet, SceneContext, int, boolean, Interaction)}, but
+     * also given this hit's damageType and source, with no next stage — see this class's own
+     * javadoc.
+     */
+    public InteractionResult applyTo(final CharacterSheet target, final SceneContext sceneContext,
+                                      final DamageType damageType, final CharacterSheet source,
+                                      final int rawDamage, final boolean ignoreDamageReduction) {
+        return applyTo(target, sceneContext, damageType, source, rawDamage, ignoreDamageReduction, null);
+    }
+
+    /**
+     * Applies {@code rawDamage} (mitigated per {@link DamageService#calculateFinalDamage(Character,
+     * CharacterSheet, SceneContext, DamageType, CharacterSheet, int, boolean)}) to {@code
+     * target}. {@code nextInteraction} is only carried onto the returned {@link
+     * InteractionResult#getNextInteraction()} when this hit actually dealt damage (final damage
+     * &gt; 0) — a hit fully absorbed by RD/RA has nothing for a downstream {@link EffectChain}/
+     * {@link CriticalEffect} to react to, so the chain ends here instead of forwarding into a
+     * stage with nothing to work from.
+     */
+    public InteractionResult applyTo(final CharacterSheet target, final SceneContext sceneContext,
+                                      final DamageType damageType, final CharacterSheet source,
+                                      final int rawDamage, final boolean ignoreDamageReduction,
+                                      final Interaction<CharacterSheet> nextInteraction) {
         Character character = target.getCharacter();
-        int finalDamage = damageService.calculateFinalDamage(character, sceneContext, rawDamage, ignoreDamageReduction);
+        int finalDamage = damageService.calculateFinalDamage(character, target, sceneContext, damageType, source, rawDamage, ignoreDamageReduction);
         target.applyDamage(finalDamage);
 
         InteractionResult.InteractionResultBuilder result = InteractionResult.builder()

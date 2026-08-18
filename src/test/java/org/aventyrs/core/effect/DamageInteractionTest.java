@@ -1,9 +1,12 @@
 package org.aventyrs.core.effect;
 
 import org.aventyrs.core.ability.AttributeAbility;
+import org.aventyrs.core.ability.VigorAbility;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.character.DamageType;
 import org.aventyrs.core.character.EgoDomain;
+import org.aventyrs.core.character.SizeCategory;
 import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.ego.InitiativeAdvantage;
 import org.aventyrs.core.modifier.Modifier;
@@ -172,6 +175,63 @@ class DamageInteractionTest {
         StubInteraction next = new StubInteraction();
 
         InteractionResult result = damageInteraction.applyTo(sheet, combatContext(1, false), 5, false, next);
+
+        assertEquals(5, result.getResourceLossValue());
+        assertSame(next, result.getNextInteraction());
+    }
+
+    @Test
+    void applyToWithDamageTypeAppliesTheAttributeAbilitysOwnReduction() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .attributeAbility(VigorAbility.RIGIDEZ_DA_MONTANHA)
+                .sizeCategory(SizeCategory.ZERO)
+                .build();
+        CharacterSheet sheet = CharacterSheet.of(character, new Player());
+
+        InteractionResult result = damageInteraction.applyTo(sheet, null, DamageType.FISICO, null, 10, false);
+
+        assertEquals(9, result.getResourceLossValue());
+        assertEquals(9, sheet.getDamageTaken());
+    }
+
+    @Test
+    void applyToWithDamageTypeGrantsTheEnhancedReductionAgainstASmallerAttacker() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .attributeAbility(VigorAbility.RIGIDEZ_DA_MONTANHA)
+                .sizeCategory(SizeCategory.ZERO)
+                .build();
+        CharacterSheet sheet = CharacterSheet.of(character, new Player());
+        Character attacker = CharacterFixture.blank(CharacterFixture.BLANK).sizeCategory(SizeCategory.MINUS_ONE).build();
+        CharacterSheet source = CharacterSheet.of(attacker, new Player());
+
+        InteractionResult result = damageInteraction.applyTo(sheet, null, DamageType.FISICO, source, 10, false);
+
+        assertEquals(8, result.getResourceLossValue());
+        assertEquals(8, sheet.getDamageTaken());
+    }
+
+    @Test
+    void applyToWithNullDamageTypeMatchesTheNoContextOverload() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .attributeAbility(VigorAbility.RIGIDEZ_DA_MONTANHA)
+                .sizeCategory(SizeCategory.ZERO)
+                .build();
+        CharacterSheet withoutDamageType = CharacterSheet.of(character, new Player());
+        CharacterSheet withNullDamageType = CharacterSheet.of(character, new Player());
+
+        InteractionResult resultWithoutDamageType = damageInteraction.applyTo(withoutDamageType, 10, false);
+        InteractionResult resultWithNullDamageType = damageInteraction.applyTo(withNullDamageType, null, null, null, 10, false);
+
+        assertEquals(resultWithoutDamageType.getResourceLossValue(), resultWithNullDamageType.getResourceLossValue());
+    }
+
+    @Test
+    void sevenArgApplyToForwardsToNextInteractionWhenDamageIsDealt() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK).build();
+        CharacterSheet sheet = CharacterSheet.of(character, new Player());
+        StubInteraction next = new StubInteraction();
+
+        InteractionResult result = damageInteraction.applyTo(sheet, null, null, null, 5, false, next);
 
         assertEquals(5, result.getResourceLossValue());
         assertSame(next, result.getNextInteraction());

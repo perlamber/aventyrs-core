@@ -1,5 +1,6 @@
 package org.aventyrs.core.sheet;
 
+import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterStatus;
 import org.aventyrs.core.character.EgoDomain;
@@ -9,8 +10,10 @@ import org.aventyrs.core.rest.RestType;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import lombok.AccessLevel;
@@ -80,6 +83,14 @@ public class CharacterSheet implements Interactable<CharacterSheet> {
      */
     @Getter(AccessLevel.NONE)
     private final List<PendingEgoRecovery> pendingEgoRecoveries = new ArrayList<>();
+
+    /**
+     * Every {@link AttributeDomain} that has already governed a Perícia roll this
+     * CharacterSheet's own current Turn — see {@link #consumeFirstRollThisTurn} for how this
+     * is queried/mutated, and {@link #startTurn(int)} for how it's reset.
+     */
+    @Getter(AccessLevel.NONE)
+    private final Set<AttributeDomain> attributeDomainsRolledThisTurn = EnumSet.noneOf(AttributeDomain.class);
 
     private static Map<EgoDomain, TemporaryPointPool> newTemporaryEgoPointsPools() {
         Map<EgoDomain, TemporaryPointPool> pools = new EnumMap<>(EgoDomain.class);
@@ -395,6 +406,26 @@ public class CharacterSheet implements Interactable<CharacterSheet> {
     }
 
     /**
+     * The sum of every currently-active (non-expired) {@link LifeSteal} effect's own value
+     * this CharacterSheet is holding — the {@link LifeSteal} counterpart to {@link
+     * #getTemporaryBonus(ModifierType)}, queried directly (not filtered by a {@link
+     * ModifierType}, since {@link LifeSteal} isn't one). {@code temporaryEffects} itself stays
+     * unexposed; {@link
+     * org.aventyrs.core.character.services.LifeStealService#getTotalLifeSteal} is the intended
+     * caller, adding whichever Habilidades' own flat bonus on top (e.g. {@code
+     * VigorAbility#METABOLISMO_RAPIDO}'s +1) once this is already positive.
+     */
+    public int getTotalLifeSteal()
+    {
+        return temporaryEffects.stream()
+                .filter(effect -> effect instanceof LifeSteal)
+                .map(effect -> (LifeSteal) effect)
+                .filter(effect -> !effect.isExpired())
+                .mapToInt(LifeSteal::getValue)
+                .sum();
+    }
+
+    /**
      * Advances every held {@link TemporaryEffect} by one Rodada: applies each one's own
      * per-Rodada side effect (e.g. {@link Bleeding}/{@link ManaDrain} draining PV/PM, via
      * {@link TemporaryEffect#applyRoundEffect}), then counts every effect down and
@@ -441,18 +472,42 @@ public class CharacterSheet implements Interactable<CharacterSheet> {
      * CharacterSheet's max PA/Movement for the Turn that's now starting passes this same
      * turnNumber into those services.
      *
-     * <p>Currently a no-op — no {@link TemporaryEffect} or other mechanic in this codebase yet
-     * triggers "no início do seu turno" specifically ({@link Bleeding}/{@link ManaDrain}/{@link
-     * Withering}'s own ongoing loss all apply via {@link #tickTemporaryEffects()} at
-     * Turn-<em>end</em>, see {@link #finishTurn()}) — but real and wired all the same, the same
-     * "build the hook ahead of its first consumer" shape {@link #finishTurn()} itself started
-     * as, so a future start-of-Turn effect has somewhere to plug in, turnNumber already in hand,
-     * without touching {@link org.aventyrs.core.scene.Scene} again. Called by {@link
+     * <p>Clears {@link #attributeDomainsRolledThisTurn} — see {@link #consumeFirstRollThisTurn}
+     * — its first real consumer, e.g. {@code org.aventyrs.core.ability.DexterityAbility
+     * #PRECISAO}'s "primeira rolagem... em cada um de seus Turnos." No {@link TemporaryEffect}
+     * or other mechanic in this codebase yet triggers "no início do seu turno" itself ({@link
+     * Bleeding}/{@link ManaDrain}/{@link Withering}'s own ongoing loss all apply via {@link
+     * #tickTemporaryEffects()} at Turn-<em>end</em>, see {@link #finishTurn()}) — but this
+     * method itself is no longer a no-op waiting for one; turnNumber stays unused for now,
+     * still in hand for whatever plugs in next. Called by {@link
      * org.aventyrs.core.scene.Scene#next()} the moment a participant's Turn begins — unlike
      * {@link #finishTurn()}, this fires even on the very first {@code next()} call, since that
      * call does start someone's Turn, just none has ended yet.
      */
     public void startTurn(final int turnNumber)
     {
+        attributeDomainsRolledThisTurn.clear();
+    }
+
+    /**
+     * Whether rolledDomain hasn't yet governed a Perícia roll this CharacterSheet's own current
+     * Turn — and, if so, marks it as having happened now, in the same call. {@link Set#add}'s
+     * own return value (true only when the element wasn't already present) makes this an atomic
+     * query-and-consume, exactly what a "first roll of the Turn" check/claim needs. Reset by
+     * {@link #startTurn(int)}; without a live {@link org.aventyrs.core.scene.Scene} ever calling
+     * it (most tests, or a character acting outside a Scene), {@link
+     * #attributeDomainsRolledThisTurn} simply starts empty and stays that way until this is
+     * called, so the very first roll for any domain still correctly reads as "first."
+     *
+     * <p>Called unconditionally by {@code AbstractSkillInteraction} for every actual roll
+     * (whenever a {@code SkillRoll} is supplied, regardless of whether the roller holds any
+     * ability that cares) — this tracks an objective fact about this CharacterSheet's own Turn,
+     * independent of which abilities react to it, the same restraint {@link
+     * #getTemporaryBonus(ModifierType)} already applies by being safe to call even when nothing
+     * granted a bonus of that type.
+     */
+    public boolean consumeFirstRollThisTurn(final AttributeDomain rolledDomain)
+    {
+        return attributeDomainsRolledThisTurn.add(rolledDomain);
     }
 }

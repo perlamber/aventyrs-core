@@ -1,5 +1,6 @@
 package org.aventyrs.core.sheet;
 
+import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.character.fixture.CharacterFixture;
@@ -13,9 +14,11 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CharacterSheetTest {
 
@@ -434,6 +437,53 @@ class CharacterSheetTest {
     }
 
     @Test
+    void newlyCreatedCharacterSheetHasNoLifeSteal() {
+        CharacterSheet sheet = newSheet();
+
+        assertEquals(0, sheet.getTotalLifeSteal());
+    }
+
+    @Test
+    void getTotalLifeStealSumsEveryActiveLifeStealEffect() {
+        CharacterSheet sheet = newSheet();
+        sheet.applyEffect(new LifeSteal(2, Optional.of(3)));
+
+        assertEquals(2, sheet.getTotalLifeSteal());
+    }
+
+    @Test
+    void applyEffectStillLetsLifeStealStackLikeBleedingDoes() {
+        CharacterSheet sheet = newSheet();
+        sheet.applyEffect(new LifeSteal(2, Optional.of(1)));
+        sheet.applyEffect(new LifeSteal(3, Optional.of(1)));
+
+        assertEquals(5, sheet.getTotalLifeSteal());
+    }
+
+    @Test
+    void getTotalLifeStealNeverExpiresAnOpenEndedLifeSteal() {
+        CharacterSheet sheet = newSheet();
+        sheet.applyEffect(new LifeSteal(2, Optional.empty()));
+
+        for (int i = 0; i < 10; i++) {
+            sheet.tickTemporaryEffects();
+        }
+
+        assertEquals(2, sheet.getTotalLifeSteal());
+    }
+
+    @Test
+    void tickTemporaryEffectsRemovesAFiniteLifeStealOnceItsRoundsRunOut() {
+        CharacterSheet sheet = newSheet();
+        sheet.applyEffect(new LifeSteal(2, Optional.of(2)));
+
+        sheet.tickTemporaryEffects();
+        assertEquals(2, sheet.getTotalLifeSteal());
+        sheet.tickTemporaryEffects();
+        assertEquals(0, sheet.getTotalLifeSteal());
+    }
+
+    @Test
     void tickTemporaryEffectsCountsDownABonusWithoutExpiringBeforeItsLastRound() {
         CharacterSheet sheet = newSheet();
         sheet.grantTemporaryBonus(ModifierType.SKILL_ROLL_BONUS, 3, 2);
@@ -536,6 +586,39 @@ class CharacterSheetTest {
 
         assertEquals(0, sheet.getTemporaryBonus(ModifierType.SKILL_ROLL_BONUS));
         assertEquals(1, sheet.getDamageTaken());
+    }
+
+    @Test
+    void consumeFirstRollThisTurnReturnsTrueTheFirstTimeForAGivenDomain() {
+        CharacterSheet sheet = newSheet();
+
+        assertTrue(sheet.consumeFirstRollThisTurn(AttributeDomain.DEXTERITY));
+    }
+
+    @Test
+    void consumeFirstRollThisTurnReturnsFalseOnASubsequentCallForTheSameDomain() {
+        CharacterSheet sheet = newSheet();
+        sheet.consumeFirstRollThisTurn(AttributeDomain.DEXTERITY);
+
+        assertFalse(sheet.consumeFirstRollThisTurn(AttributeDomain.DEXTERITY));
+    }
+
+    @Test
+    void consumeFirstRollThisTurnTracksEachDomainIndependently() {
+        CharacterSheet sheet = newSheet();
+        sheet.consumeFirstRollThisTurn(AttributeDomain.DEXTERITY);
+
+        assertTrue(sheet.consumeFirstRollThisTurn(AttributeDomain.STRENGTH));
+    }
+
+    @Test
+    void startTurnResetsWhichDomainsHaveAlreadyRolled() {
+        CharacterSheet sheet = newSheet();
+        sheet.consumeFirstRollThisTurn(AttributeDomain.DEXTERITY);
+
+        sheet.startTurn(1);
+
+        assertTrue(sheet.consumeFirstRollThisTurn(AttributeDomain.DEXTERITY));
     }
 
     @Test

@@ -6,7 +6,10 @@ import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.modifier.Modifier;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.scene.SceneContext;
+import org.aventyrs.core.skill.Skill;
 import org.aventyrs.core.skill.SkillType;
+
+import java.util.Optional;
 
 @Getter
 @AllArgsConstructor
@@ -54,9 +57,13 @@ public enum DexterityAbility implements AttributeAbility {
             return FIRST_TIER_MARGIN_BONUS;
         }
     },
-    //TODO
     PRECISAO("Você adquire Vantagem na primeira rolagem de Perícias baseada em Destreza realizada em cada um de " +
-            "seus Turnos.");
+            "seus Turnos.") {
+        @Override
+        public Optional<Integer> resolveFirstRollOfTurnBonus(final AttributeDomain rolledDomain) {
+            return rolledDomain == AttributeDomain.DEXTERITY ? Optional.of(Skill.ADVANTAGE_BONUS) : Optional.empty();
+        }
+    };
 
     /** LETALIDADE_PROGRESSIVA's Margem Crítica Menor bonus starting the 1st Round of combate. */
     private static final int FIRST_TIER_ROUND = 1;

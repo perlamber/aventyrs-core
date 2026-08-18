@@ -73,7 +73,12 @@ import static org.aventyrs.core.util.TranslatableMessages.REQUIRED_SKILL_TRAIT_N
  * size-shifting ability like Sangue de Gigante is reflected here too): Ataque à Distância/
  * Ataque Corpo-a-Corpo use {@link SizeCategory#getAttackAndDamageModifier()}, Atenção/
  * Furtividade use {@link SizeCategory#getStealthAndAttentionModifier()}, and Esquiva e Aparar
- * uses {@link SizeCategory#getDefenseModifier()} — every other Perícia gets 0. Computes {@code
+ * uses {@link SizeCategory#getDefenseModifier()} — every other Perícia gets 0 — plus, via
+ * {@link #sumFirstRollOfTurnBonuses}, every held {@code AttributeAbility}'s own {@link
+ * AttributeAbility#resolveFirstRollOfTurnBonus} (e.g. {@code DexterityAbility#PRECISAO}'s
+ * Vantagem), but only once {@link CharacterSheet#consumeFirstRollThisTurn} has confirmed this
+ * actual roll (skillRoll non-{@code null}) is target's first this Turn governed by whichever
+ * Attribute domain is resolved above. Computes {@code
  * difficultyReduction} from unlocked {@code SkillExcellency} tiers
  * plus every entry of that same combined acquired-plus-racial list's own {@link
  * SkillCompetencyAbility#getDifficultyReduction()}. {@link SkillCompetencyAbility
@@ -209,6 +214,9 @@ public abstract class AbstractSkillInteraction implements Interaction<CharacterS
         bonus += sumEgoAdvantageRollBonuses(character.getEgoAdvantages().values(), sceneContext);
         bonus += sumEgoAdvantageSkillSpecificRollBonuses(character.getEgoAdvantages().values(), sceneContext, target);
         bonus += sizeCategoryRollBonus(characterSizeService.getEffectiveSizeCategory(character));
+        if (skillRoll != null && target.consumeFirstRollThisTurn(attributeDomain)) {
+            bonus += sumFirstRollOfTurnBonuses(character.getAttributeAbilities(), attributeDomain);
+        }
 
         int difficultyReduction = SkillExcellency.totalDifficultyReduction(skillType.getExcellencyClass(), graduationValue);
         difficultyReduction += skillCompetencyAbilities.stream()
@@ -357,6 +365,22 @@ public abstract class AbstractSkillInteraction implements Interaction<CharacterS
     private int sumEgoAdvantageSkillSpecificRollBonuses(final Collection<EgoAdvantage> egoAdvantages, final SceneContext sceneContext, final CharacterSheet target) {
         return egoAdvantages.stream()
                 .map(advantage -> advantage.resolveSkillSpecificRollBonus(skillType, sceneContext, target))
+                .flatMap(Optional::stream)
+                .mapToInt(Integer::intValue)
+                .sum();
+    }
+
+    /**
+     * Sums {@link AttributeAbility#resolveFirstRollOfTurnBonus} across every held Habilidade —
+     * e.g. {@code DexterityAbility#PRECISAO}'s Vantagem on the first Destreza-based roll each
+     * Turn. Only ever called once {@link CharacterSheet#consumeFirstRollThisTurn} has already
+     * confirmed this is target's first roll governed by rolledDomain this Turn (see that
+     * method's own javadoc for the Turn-tracking mechanism) — a constant overriding {@code
+     * resolveFirstRollOfTurnBonus} doesn't need to check that condition itself.
+     */
+    private int sumFirstRollOfTurnBonuses(final Collection<AttributeAbility> attributeAbilities, final AttributeDomain rolledDomain) {
+        return attributeAbilities.stream()
+                .map(ability -> ability.resolveFirstRollOfTurnBonus(rolledDomain))
                 .flatMap(Optional::stream)
                 .mapToInt(Integer::intValue)
                 .sum();

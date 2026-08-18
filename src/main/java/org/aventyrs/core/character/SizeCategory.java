@@ -20,7 +20,13 @@ public enum SizeCategory {
     PLUS_ONE(1, 2.2, 3.0),
     PLUS_TWO(2, 3.3, 4.5),
     PLUS_THREE(3, 4.8, 7.2),
-    PLUS_FOUR(4, 7.2, 10.1);
+    PLUS_FOUR(4, 7.2, 10.1),
+    PLUS_FIVE(5, 10.1, 14.0),
+    PLUS_SIX(6, 14.0, 20.0),
+    PLUS_SEVEN(7, 20.0, 28.0),
+    PLUS_EIGHT(8, 28.0, 40.0),
+    PLUS_NINE(9, 40.0, 60.0),
+    PLUS_TEN(10, 60.0, 100.0);
 
     private static final int BASE_MOVEMENT_PER_ACTION_POINT = 4;
     private static final int MINIMUM_MOVEMENT_PER_ACTION_POINT = 1;

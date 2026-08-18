@@ -5,11 +5,13 @@ import org.aventyrs.core.modifier.ModifierResolver;
 import org.aventyrs.core.modifier.ModifierResolverImpl;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.scene.SceneContext;
+import org.aventyrs.core.skill.Skill;
 import org.aventyrs.core.skill.SkillType;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -98,6 +100,25 @@ class DexterityAbilityTest {
         for (DexterityAbility ability : DexterityAbility.values()) {
             if (ability != DexterityAbility.LETALIDADE_PROGRESSIVA) {
                 assertEquals(0, ability.resolveCriticalMarginIncrease(SkillType.ATAQUE_A_DISTANCIA, combatContext(1)));
+            }
+        }
+    }
+
+    @Test
+    void precisaoGrantsVantagemForADestrezaBasedRoll() {
+        assertEquals(Optional.of(Skill.ADVANTAGE_BONUS), DexterityAbility.PRECISAO.resolveFirstRollOfTurnBonus(AttributeDomain.DEXTERITY));
+    }
+
+    @Test
+    void precisaoGrantsNothingForARollBasedOnAnotherAttribute() {
+        assertEquals(Optional.empty(), DexterityAbility.PRECISAO.resolveFirstRollOfTurnBonus(AttributeDomain.STRENGTH));
+    }
+
+    @Test
+    void onlyPrecisaoEverResolvesAFirstRollOfTurnBonus() {
+        for (DexterityAbility ability : DexterityAbility.values()) {
+            if (ability != DexterityAbility.PRECISAO) {
+                assertEquals(Optional.empty(), ability.resolveFirstRollOfTurnBonus(AttributeDomain.DEXTERITY));
             }
         }
     }

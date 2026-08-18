@@ -4,7 +4,12 @@ import org.aventyrs.core.character.Character;
 import org.aventyrs.core.sheet.CharacterSheet;
 
 public interface RestService {
-    /** PV recovered: Vigor's total value times the Rest's Attribute multiplier. */
+    /**
+     * PV recovered: Vigor's total value times the Rest's Attribute multiplier, plus any
+     * {@link org.aventyrs.core.ability.AttributeAbility#resolveRestHitPointsBonus} bonus (e.g.
+     * {@code VigorAbility#METABOLISMO_RAPIDO}'s own +3PV on Longo/Total Rests) across
+     * {@code character.getAttributeAbilities()}.
+     */
     int getRecoveredHitPoints(Character character, RestType restType);
 
     /**

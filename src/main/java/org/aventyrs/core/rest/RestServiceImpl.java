@@ -7,7 +7,10 @@ public class RestServiceImpl implements RestService {
 
     @Override
     public int getRecoveredHitPoints(final Character character, final RestType restType) {
-        return recovered(character.getAttributes().getVigor().getTotal(), restType);
+        int bonus = character.getAttributeAbilities().stream()
+                .mapToInt(ability -> ability.resolveRestHitPointsBonus(restType))
+                .sum();
+        return recovered(character.getAttributes().getVigor().getTotal(), restType) + bonus;
     }
 
     @Override
