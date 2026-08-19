@@ -8,7 +8,8 @@ import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.ego.InitiativeAdvantage;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.race.Human;
-import org.aventyrs.core.sheet.InitiativeBlessing;
+import org.aventyrs.core.sheet.Blessing;
+import org.aventyrs.core.sheet.TargetScope;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
 import org.aventyrs.core.skill.SkillType;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,7 +18,6 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class InitiativeBlessingServiceTest {
 
@@ -35,8 +35,8 @@ class InitiativeBlessingServiceTest {
         }
 
         @Override
-        public List<InitiativeBlessing> resolveInitiativeBlessings() {
-            return List.of(new InitiativeBlessing(ModifierType.REACTIONS, 1, 1, false));
+        public List<Blessing> resolveInitiativeBlessings() {
+            return List.of(new Blessing(ModifierType.REACTIONS, 1, 1, TargetScope.SELF, "TestAttributeAbility"));
         }
     }
 
@@ -52,8 +52,8 @@ class InitiativeBlessingServiceTest {
         }
 
         @Override
-        public List<InitiativeBlessing> resolveInitiativeBlessings() {
-            return List.of(new InitiativeBlessing(ModifierType.FREE_ACTIONS, 1, 1, false));
+        public List<Blessing> resolveInitiativeBlessings() {
+            return List.of(new Blessing(ModifierType.FREE_ACTIONS, 1, 1, TargetScope.SELF, "TestSkillCompetencyAbility"));
         }
     }
 
@@ -81,12 +81,12 @@ class InitiativeBlessingServiceTest {
                 .egoAdvantage(EgoDomain.INICIATIVA, InitiativeAdvantage.POSICIONAMENTO_ESTRATEGICO)
                 .build();
 
-        List<InitiativeBlessing> blessings = blessingService.resolveBlessings(character);
+        List<Blessing> blessings = blessingService.resolveBlessings(character);
 
         assertEquals(1, blessings.size());
         assertEquals(ModifierType.MOVEMENT, blessings.get(0).getModifierType());
         assertEquals(2, blessings.get(0).getValue());
-        assertTrue(blessings.get(0).isAppliesToAllies());
+        assertEquals(TargetScope.SELF_AND_ALLIES, blessings.get(0).getScope());
     }
 
     @Test
@@ -95,7 +95,7 @@ class InitiativeBlessingServiceTest {
                 .attributeAbility(new TestAttributeAbility())
                 .build();
 
-        List<InitiativeBlessing> blessings = blessingService.resolveBlessings(character);
+        List<Blessing> blessings = blessingService.resolveBlessings(character);
 
         assertEquals(1, blessings.size());
         assertEquals(ModifierType.REACTIONS, blessings.get(0).getModifierType());

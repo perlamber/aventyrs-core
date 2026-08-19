@@ -6,8 +6,8 @@ import org.aventyrs.core.character.DamageType;
 import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.rest.RestType;
 import org.aventyrs.core.scene.SceneContext;
+import org.aventyrs.core.sheet.Blessing;
 import org.aventyrs.core.sheet.CharacterSheet;
-import org.aventyrs.core.sheet.InitiativeBlessing;
 import org.aventyrs.core.skill.CriticalResult;
 import org.aventyrs.core.skill.SkillTraitKind;
 import org.aventyrs.core.skill.SkillType;
@@ -188,7 +188,7 @@ public interface AttributeAbility {
     }
 
     /**
-     * Every {@link InitiativeBlessing} this Habilidade grants the moment its holder wins
+     * Every {@link Blessing} this Habilidade grants the moment its holder wins
      * initiative for their group — mirrors {@code org.aventyrs.core.ego.EgoAdvantage
      * #resolveInitiativeBlessings}'s own shape (see that method's javadoc for the full
      * mechanism, and {@code org.aventyrs.core.character.services.InitiativeBlessingService}
@@ -196,7 +196,7 @@ public interface AttributeAbility {
      * org.aventyrs.core.skill.SkillCompetencyAbility}). Empty by default; only override on a
      * constant whose rules text grants a bonus specifically for winning initiative.
      */
-    default List<InitiativeBlessing> resolveInitiativeBlessings() {
+    default List<Blessing> resolveInitiativeBlessings() {
         return List.of();
     }
 

@@ -5,7 +5,8 @@ import org.aventyrs.core.character.DamageType;
 import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.scene.SceneContext;
-import org.aventyrs.core.sheet.InitiativeBlessing;
+import org.aventyrs.core.sheet.Blessing;
+import org.aventyrs.core.sheet.TargetScope;
 import org.aventyrs.core.skill.Skill;
 import org.junit.jupiter.api.Test;
 
@@ -101,14 +102,15 @@ class InitiativeAdvantageTest {
 
     @Test
     void posicionamentoEstrategicoGrantsAMovementBlessingThatAppliesToAllies() {
-        List<InitiativeBlessing> blessings = InitiativeAdvantage.POSICIONAMENTO_ESTRATEGICO.resolveInitiativeBlessings();
+        List<Blessing> blessings = InitiativeAdvantage.POSICIONAMENTO_ESTRATEGICO.resolveInitiativeBlessings();
 
         assertEquals(1, blessings.size());
-        InitiativeBlessing blessing = blessings.get(0);
+        Blessing blessing = blessings.get(0);
         assertEquals(ModifierType.MOVEMENT, blessing.getModifierType());
         assertEquals(2, blessing.getValue());
         assertEquals(2, blessing.getRounds());
-        assertTrue(blessing.isAppliesToAllies());
+        assertEquals(TargetScope.SELF_AND_ALLIES, blessing.getScope());
+        assertEquals("POSICIONAMENTO_ESTRATEGICO", blessing.getSource());
     }
 
     @Test

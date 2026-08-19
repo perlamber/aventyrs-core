@@ -138,6 +138,42 @@ class SceneContextTest {
     }
 
     @Test
+    void getAlliesWithinReturnsOnlyAlliesAtOrCloserThanMaxRange() {
+        CharacterSheet adjacentAlly = newSheet();
+        CharacterSheet curtaAlly = newSheet();
+        CharacterSheet farAlly = newSheet();
+        SceneContext context = new SceneContext(
+                List.of(adjacentAlly, curtaAlly, farAlly),
+                List.of(),
+                Map.of(adjacentAlly, Range.ADJACENTE, curtaAlly, Range.DISTANCIA_CURTA, farAlly, Range.DISTANCIA_MUITO_LONGA));
+
+        assertEquals(List.of(adjacentAlly), context.getAlliesWithin(Range.ADJACENTE));
+        assertEquals(Set.of(adjacentAlly, curtaAlly), Set.copyOf(context.getAlliesWithin(Range.DISTANCIA_CURTA)));
+    }
+
+    @Test
+    void getAlliesWithinExcludesAlliesWithNoKnownDistance() {
+        CharacterSheet trackedAlly = newSheet();
+        CharacterSheet untrackedAlly = newSheet();
+        SceneContext context = new SceneContext(
+                List.of(trackedAlly, untrackedAlly), List.of(), Map.of(trackedAlly, Range.ADJACENTE));
+
+        assertEquals(List.of(trackedAlly), context.getAlliesWithin(Range.DISTANCIA_MUITO_LONGA));
+    }
+
+    @Test
+    void getEnemiesWithinReturnsOnlyEnemiesAtOrCloserThanMaxRange() {
+        CharacterSheet adjacentEnemy = newSheet();
+        CharacterSheet farEnemy = newSheet();
+        SceneContext context = new SceneContext(
+                List.of(), List.of(adjacentEnemy, farEnemy),
+                Map.of(adjacentEnemy, Range.ADJACENTE, farEnemy, Range.DISTANCIA_LONGA));
+
+        assertEquals(List.of(adjacentEnemy), context.getEnemiesWithin(Range.ADJACENTE));
+        assertEquals(Set.of(adjacentEnemy, farEnemy), Set.copyOf(context.getEnemiesWithin(Range.DISTANCIA_LONGA)));
+    }
+
+    @Test
     void terrainTypeIsNullWhenBuiltFromTheThreeArgConstructor() {
         SceneContext context = new SceneContext(List.of(), List.of(), Map.of());
 

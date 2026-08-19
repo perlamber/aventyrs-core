@@ -43,12 +43,14 @@ on a bare value.
   services or assume one mirrors the other's numbers.
 - Both `upgradeBase`/`upgradeGraduation` take the Character's data (`AttributeValue`/
   `CharacterSkill` in one, `Character` in the other) *and* a separate `CharacterSheet`
-  parameter, mirroring `RestService.applyRest(Character, CharacterSheet, ...)` and
-  `DamageService.applyDamage(Character, CharacterSheet, ...)`'s existing split: compute from
-  the Character-side data, but only the `CharacterSheet` carries `unUsedExperience` to spend
-  from (and, for Graduação, the `CharacterSkill` instance being mutated is looked up from
-  `character.getSkills()`, not `characterSheet` — `Character` remains the single source of
-  truth for skills/attributes/abilities).
+  parameter, mirroring `RestService.applyRest(Character, CharacterSheet, ...)`'s existing
+  split: compute from the Character-side data, but only the `CharacterSheet` carries
+  `unUsedExperience` to spend from (and, for Graduação, the `CharacterSkill` instance being
+  mutated is looked up from `character.getSkills()`, not `characterSheet` — `Character`
+  remains the single source of truth for skills/attributes/abilities). This genuinely needs
+  both parameters, unlike `DamageService`'s own methods — see "Damage mitigation" below for
+  why those instead take a `CharacterSheet` alone wherever one is available at all, deriving
+  `Character` from it via `getCharacter()` rather than asking the caller to pass both.
 - `CharacterSheet.useExperience` had a latent bug fixed alongside this: it used to subtract
   `expToUse` from `unUsedExperience` *before* checking whether the result was negative, so a
   rejected spend still silently corrupted the balance. Nothing called it before these two
@@ -196,10 +198,10 @@ pieces — don't stop at just the `Skill` class:
 
    If a skill's Interaction genuinely needs to do something no other skill does, override
    `applyTo` in the subclass and call `super.applyTo(target)` first, then layer the addition
-   on top of the returned result — see `ArtesInteraction`, which sets
-   `temporaryBonusModifierType`/`temporaryBonusRounds` for a character holding `DOM_BARDICO`
-   (below "Temporary bonuses from other Characters") — rather than duplicating
-   `AbstractSkillInteraction`'s logic or forking it back out to a hand-written `applyTo`.
+   on top of the returned result — see `ArtesInteraction`, which reports a `Blessing` on
+   `blessings` for a character holding `DOM_BARDICO` (below "Temporary bonuses from other
+   Characters") — rather than duplicating `AbstractSkillInteraction`'s logic or forking it back
+   out to a hand-written `applyTo`.
 
 6. **A `<Skill>Excellency` enum for its automatic Excelência bonuses** (e.g.
    `ArtesExcellency`), implementing `SkillExcellency` (`getSkillType()` + `getTier()` +
@@ -239,6 +241,348 @@ pieces — don't stop at just the `Skill` class:
    instance), not by calling the modifier method directly; a non-matching choice contributes
    0; a null choice is rejected at construction; and the instance reports the catalog
    constant's `SkillType` and description.
+
+## Adding a new Título Aventyr — `org.aventyrs.core.title`
+
+A Título Aventyr (e.g. `Santo`, the first one modeled) sits alongside `Race`/skills/ego
+advantages as a top-level character concept, but a character holds **exactly three** Título
+slots — `TitleSlot.PRIMARY`/`SECONDARY`/`TERTIARY` — unlike `Race`'s single `race` field, each
+Título with its own catalog of Especializações and Habilidades/Supremas.
+
+**Catalog vs. instance**: `org.aventyrs.core.title.AventyrTitle` is the per-character *held
+instance* (the same "instance carries the acquisition-time choice" shape as
+`org.aventyrs.core.ego.MoralHerdadaAbility`/`ArtesAprimorarComArteAbility`), **not** a
+stateless-per-family class like `Race` — a Título's held specializations/abilities are
+genuinely per-acquisition data, unlike every holder of a given Race getting identical racial
+abilities. "Which Título family this is" is answered by which concrete class implements
+`AventyrTitle` (e.g. `Santo`), deliberately **not** a separate identity enum — defer that
+until a second Título creates real pressure for shared dispatch, mirroring
+`SorteAdvantage`/`ACE`'s own precedent for the same restraint. **Whether a held instance is
+the holder's Título Primário is not a method on `AventyrTitle` at all** — an earlier design had
+a self-reported `isPrimaryTitle()` boolean (unenforced against holding more than one); the
+three-slot shape on `Character` (`TitleSlot`, see below) makes "primary" a fact about *which
+slot* holds the instance, not something the instance reports about itself, so at most one
+Título can ever be primary by construction, not by an unvalidated invariant.
+
+**Subpackage per Título**: a concrete Título's classes live together under
+`org.aventyrs.core.title.<titlename>` (lowercase, no separators — e.g.
+`org.aventyrs.core.title.santo`), mirroring `org.aventyrs.core.skill.<skillname>`'s
+one-subpackage-per-catalog convention — only the shared framework interfaces
+(`AventyrTitle`/`AventyrTitleSpecialization`/`AventyrTitleAbility`) stay directly in
+`org.aventyrs.core.title`.
+
+**Required pieces**, mirroring "Adding a new Perícia" above:
+1. The concrete `<Title>` class implementing `AventyrTitle` — a constructor taking chosen
+   specializations/chosen abilities (no "am I primary" parameter — see below), plus the
+   base-effect (e.g. Santo's "Despertar") description text. **If that base effect's own rules
+   text has a "Se este for seu Título Primário, ..." clause, split it into its own string and
+   override `getPrimaryTitleBonusDescription()`** (default `null` — not every Título's base
+   effect has one) rather than leaving it concatenated onto `getBaseEffectDescription()`:
+   "does the base effect apply at all" (unconditional, just by holding the Título) and "is
+   this held as the Título Primário specifically" (`Character#getPrimaryTitle() == title`,
+   resolved by the caller, not the instance — see below) are two different facts, and a caller
+   rendering just the unconditional text shouldn't have to string-parse out the conditional
+   part. See `Santo`'s own `BASE_EFFECT_DESCRIPTION`/`PRIMARY_TITLE_BONUS_DESCRIPTION` split.
+2. A `<Title>Specialization` enum implementing `AventyrTitleSpecialization` — **every Título
+   has exactly two Especializações**, no more, no less; a character may hold both, one, or
+   neither (player's choice). The enum may still start with **fewer than two constants** if
+   the rules text for one of them wasn't supplied yet — don't invent content; add the second
+   constant once its real rules text exists, with no other file needing to change. Unlike a
+   Perícia's own `SkillSpecialization` (purely descriptive), a Título's Especialização can
+   carry a real activatable effect of its own — `getPDCost()`/`getActionPointCost()` (inherited
+   from `AventyrTitleAbility`, see below) default to 0 for a purely descriptive one, overridden
+   when the rules text gives it a Custo de Ativação (see `SantoSpecialization`, which fully
+   models both of Santo's own — `ABENCOADO_PELA_LUZ` at 1PD/2PA, `ABRACADO_PELA_ESCURIDAO` at
+   genuinely 0PD/0PA, its own cost being the entirely-PV-based Fúria dos Deuses instead — a
+   real "no fixed PD/PA cost at all" case, not merely an unmodeled one).
+
+**A Título trait with a real activation cost is an Active Ability, whether it's cataloged as
+an Especialização or a Habilidade/Suprema**: `AventyrTitleSpecialization extends
+AventyrTitleAbility` — not a sibling sharing a separate parent — so every `<Title>Specialization`
+constant automatically satisfies `AventyrTitleAbility` too (`isSupreme()` defaults to `false`,
+never applicable to an Especialização; every other member — `getDescription()`,
+`getPDCost()`/`getActionPointCost()`, `isReactionActivation()`/`isFreeActionActivation()`,
+`isPassive()`, `resolveAbsoluteDamageReduction()` — is shared as-is). `AventyrTitle
+#getAllAbilities()` combines `getSpecializations()` and `getAbilities()` into one
+`List<AventyrTitleAbility>` for a scanning service that needs every held Título trait
+regardless of which catalog it's in — `DamageServiceImpl`'s own Título-ability RA scan uses
+this (see "Damage mitigation" below), so a future Especialização overriding
+`resolveAbsoluteDamageReduction` is picked up automatically, the same as a Habilidade/Suprema
+already was. This same "gains a cost, becomes an Active Ability" rule extends to a Título's
+own base effect too (`AventyrTitle` itself) if a future Título's base effect ever carries a
+real activation cost — none does yet (Santo's own Despertar is explicitly "no activation cost
+of its own"), so `AventyrTitle` doesn't implement `AventyrTitleAbility` today; don't add that
+implementation speculatively until a real Título's base effect actually needs it.
+
+**`AventyrTitleAbility#getInteractionClass()`** (`Optional<Class<? extends Interaction>>`, one
+per constant, no default — every implementor must answer it explicitly) is the declared bond
+between a constant and whichever `<X>Interaction` actually activates it, so the two can never
+silently drift apart the way a purely-in-comment cross-reference could. `Optional.of(X
+.class)` once a real `<X>Interaction` exists for that constant (e.g. `SantoSpecialization
+.ABENCOADO_PELA_LUZ` → `Optional.of(AbencoadoPelaLuzInteraction.class)`, `AbencoadoPelaLuzAbility
+.GRITO_DE_GUERRA_VULCANO` → `Optional.of(GritoDeGuerraVulcanoInteraction.class)`);
+`Optional.empty()` for every constant still fully TODO'd. Set on every constant, not just the
+ones with a real Interaction — mirrors this codebase's "no default that could silently miss a
+new case" precedent, same as `PeritoTeoricoAbility`'s own per-`SkillType` enumeration. This is
+currently a **declared** bond only — nothing dispatches an activation via reflection off
+`getInteractionClass()` yet; `Santo#activateAbencoadoPelaLuz`/`#activateGritoDeGuerraVulcano`
+still construct their own `<X>Interaction` directly, same as before. Don't build a generic
+reflective-dispatch mechanism off this field speculatively — it exists to make the association
+machine-checkable (a test can assert the right class is named) and legible to a reader, not
+because a caller needs to look it up dynamically yet.
+3. A `<Title>Ability` enum implementing `AventyrTitleAbility`, one constant per Habilidade/
+   Suprema whose prerequisite names the Título generically ("1 Especialização", not naming
+   either one specifically) — `isSupreme()` distinguishes the two tiers (Suprema is limited to
+   one per Título+Especializações combination held, except where a specific ability grants
+   more — unenforced, see below). **A Habilidade/Suprema whose own prerequisite names one
+   specific Especialização** (e.g. "Requer Especialização 'Abençoado pela Luz'") belongs in a
+   **separate** `<Specialization>Ability` enum instead (e.g. `AbencoadoPelaLuzAbility`), living
+   alongside `<Title>Ability` in the same subpackage — keeps which abilities are gated on which
+   specific Especialização legible as more of them accumulate, rather than folding everything
+   into one flat `<Title>Ability` enum regardless of which prerequisite it actually carries.
+   **Because a gated `<Specialization>Ability` constant is held by the same character as the
+   Título itself, the concrete `<Title>` class's own held-abilities field/constructor parameter
+   must be typed `List<AventyrTitleAbility>`, not `List<<Title>Ability>`** — the narrower type
+   compiles, since every `<Title>Ability`/`<Specialization>Ability` enum implements the shared
+   interface, but a `<Specialization>Ability` constant is a genuinely different Java enum than
+   `<Title>Ability`, so `List<<Title>Ability>` can never actually hold one; `Santo`'s own
+   `abilities` field was originally typed `List<SantoAbility>` (a latent gap between this stated
+   intent and the actual code — no test ever constructed a `Santo` holding a gated ability, so
+   nothing caught it) and was widened to `List<AventyrTitleAbility>` once `Santo
+   #activateGritoDeGuerraVulcano` needed to validate one was actually held. Get this right from
+   the start on a new Título's own class rather than repeating the gap.
+
+**Passive vs. active**: `AventyrTitleAbility#isPassive()` is a *derived* default method, not a
+stored field — `getActionPointCost() == 0 && !isReactionActivation() && !isFreeActionActivation()`
+— inherited by `AventyrTitleSpecialization` too, since that interface now extends
+`AventyrTitleAbility`. A Reação or Ação Livre activation still counts as active even though its
+own `actionPointCost` is 0 (both are explicit player triggers, not "always on") — only a
+genuine "Custo de Ativação: Nenhum, habilidade passiva" constant (e.g. `SantoAbility
+.BASTIAO_DOS_NECESSITADOS`/`PROTETOR_DA_VIDA_E_DA_MORTE`) should end up `isPassive() == true`.
+No `PDCost` check is needed in the formula — no constant modeled so far combines a real PD
+cost with zero PA/Reação/Ação Livre, but if one ever does, revisit whether it's actually
+passive before assuming the existing formula still holds. **The derived formula can't
+distinguish "genuinely no cost" from "0 PD/PA but a real cost expressed some other way"** —
+`SantoSpecialization.ABRACADO_PELA_ESCURIDAO` is the reference example: its Custo de Ativação
+is entirely PV-based (Fúria dos Deuses' 3-or-4-PV spend), not PD/PA at all, so the derived
+formula would wrongly call it passive; it overrides `isPassive()` to return `false` explicitly
+instead, with a comment explaining why the derived formula doesn't apply. Follow that pattern
+for any future Título trait whose real cost isn't expressible through PD/PA/Reação/Ação Livre.
+
+`isPassive()` itself still has no scanning-service consumer (the natural future one is passive
+Título abilities joining `AbstractSkillInteraction`'s existing `attributeAbilities`/
+`skillCompetencyAbilities`/unlocked-`SkillExcellency` scan for `SKILL_ROLL_BONUS`-style
+bonuses, mirroring how `SkillCompetencyAbility.allFor` already folds racial abilities into
+that same scan — not built yet, don't guess at it speculatively) — but `AventyrTitle
+#getAllAbilities()` (see above) *is* a real, live consumer of the broader "Especialização is
+also an Active Ability" rule: `DamageServiceImpl`'s Título-ability RA scan reads it today, so
+this isn't purely speculative infrastructure the way `isPassive()`'s own consumer still is.
+
+**Unenforced prerequisites**: "Requer N Especializações/Habilidades" is documented in a
+comment on the constant, never validated — the same "no eligibility validation service"
+restraint `SkillCompetencyAbility`'s own acquisition prerequisites already established (see
+"Adding a new Perícia" above). The Suprema-per-combination cap is likewise unenforced.
+
+**TODO discipline**: same shape as `ArtesCompetencyAbility`'s reference example — what the
+ability is supposed to do, and which specific system is missing. Check this codebase's
+existing gap catalog before assuming a new gap: **Defesas** (no stat/service exists anywhere —
+cite `race/Gigantes.java`'s "DF isn't a concept this core computes at all" / `race/Elfo.java`'s
+matching DM citation), **Item/Equipamento** (`org.aventyrs.core.item.ItemInteraction` is still
+a bare stub), **Encantamento/Maldição/Doença (Malefício) classification** (no such tag exists
+anywhere — see `Withering`'s own citation and `AtaqueCorpoACorpoCompetencyAbility
+.ABRIR_DEFESAS`'s "Malefício Desprevenido" one), **Área de Efeito** (cited but unbuilt — see
+`EsquivaEApararCompetencyAbility.EVASAO`'s own TODO), **a flat Desvantagem constant** (no
+symmetric malus to `Skill.ADVANTAGE_BONUS` exists — confirmed by `race/Bestial.java`'s own
+citation; "this codebase's 'Vantagem is a flat +2' convention has never needed a symmetric
+Desvantagem constant before"), **forced-attack-targeting/attack-interception** (same gap
+`SantoAbility.GUARDA_VIDAS` already cites — this core has no equivalent of "another Character
+becomes the target instead" mid-resolution), and **cross-character continuously-recomputed
+passive grants** (every existing cross-character bonus mechanism is either an explicit
+roll-time/activation `Blessing` grant like `DOM_BARDICO`/`GRITO_DE_GUERRA_VULCANO` or an
+initiative-win-triggered one — nothing supports "my always-on passive continuously grants a
+bonus to a nearby Character with no trigger event").
+
+**"Can't apply it yet" doesn't mean "can't compute it yet"** — a base effect's own scaling
+formula is real, tested data even when the stat it scales is itself entirely TODO'd. `Santo
+#getDefesasBonus(SceneContext)`/`#getPrimaryTitleAllyDefesasBonus(SceneContext)` are the
+reference example: Despertar's Defesas bonus (self, and its Título-Primário half-share to
+adjacent allies) can't be *applied* to anything since Defesas doesn't exist as a stat, but the
+*arithmetic* — base value + adjacent-ally count (via `SceneContext#countAlliesWithin`) +
+`getSpecializationAndSupremaCount()`, then integer-halved for the Primário share — needs no
+missing system to compute, so it's implemented for real, mirroring `getIgnoreCriticalEffectDurationInRounds()`'s
+identical reasoning for Despertar's crit-ignore duration. Don't let "the consumer doesn't
+exist" block "the formula is expressible" — TODO the *application*, not the *arithmetic*, and
+say so explicitly in the TODO (see `Santo`'s own three-part TODO comment for the shape: one
+line per genuinely separate missing piece, not one blanket "unimplemented").
+
+**Activating a Título ability/Especialização with a direct, single-target effect reuses
+`Interaction<CharacterSheet>`, mirroring `<Skill>Interaction` minus anything roll-specific.**
+`SantoSpecialization.ABENCOADO_PELA_LUZ`'s own touch-heal-or-cure effect is the reference
+example: holding the constant (and its real `resolveShortRestHealAmount` formula) gave no way
+for a caller to actually *trigger* it — `AbencoadoPelaLuzInteraction implements
+Interaction<CharacterSheet>` is the fix, with the exact same cascading-overload shape
+`AbstractSkillInteraction` established (a safe-no-op 1-arg `applyTo(CharacterSheet)`, a longer
+overload holding the real logic, `SceneContext` accepted even when this specific ability's own
+rules text doesn't condition on it — for consistency with the established shape and so a
+future ability that *does* need one doesn't need a differently-shaped entry point) but with no
+`SkillRoll`/`skillRollBonus`/dice at all, since this isn't a Perícia test. `InteractionResult`
+gained a `resourceGainValue`/`resourceGainType` pair for this — the exact mirror of the
+existing `resourceLossValue`/`resourceLossType`, since no Interaction had ever reported a
+*restored* resource before (only drained ones, e.g. `DamageInteraction`); reusing
+`resourceLossValue` with a negative number was considered and rejected, since that field is
+documented as what an Interaction "drained," and a negative "drained" amount would misrepresent
+that rather than just adding the missing, symmetric field.
+
+The **validation and dispatch live on `Santo` itself** (`Santo#activateAbencoadoPelaLuz`), not
+on a free-standing call directly against the bare `SantoSpecialization` constant: `Santo`
+mirrors `AbstractSkillInteraction#validateRequestedTrait`'s own "must actually be held" check
+(throwing `IllegalOperationException`/`REQUIRED_TITLE_TRAIT_NOT_HELD` — a new message key,
+mirroring `REQUIRED_SKILL_TRAIT_NOT_HELD`'s shape — rather than reusing that Perícia-specific
+one) before delegating to the Interaction — because the *Título instance* is what actually
+knows which Especializações/Habilidades it holds (the same data `getDefesasBonus`/
+`getIgnoreCriticalEffectDurationInRounds` already need), and is the natural place to resolve
+"is this held at all" before an activation proceeds. This is also where a *future* ability
+needing "is this the holder's Título Primário" would resolve that fact, if one ever needs it —
+Abençoado pela Luz's own effect doesn't, so no such parameter exists on this one method; a
+caller resolves `Character#getPrimaryTitle() == titleInstance` externally and would pass it in
+explicitly on whichever future method actually needs it, the same way `Santo` never stores or
+self-derives that fact today (see "Whether a held instance is the holder's Título Primário"
+in `AventyrTitle`'s own javadoc).
+
+**One `<X>Interaction` per Active Ability, built the moment — and only the moment — at least
+one clause of that ability's own effect is mechanically real and wireable with existing
+classes/methods.** This is now a formalized, general rule, not just `AbencoadoPelaLuzInteraction`'s
+own one-off shape: `GritoDeGuerraVulcanoInteraction` is the second real case, and it
+deliberately does **not** reuse `AbencoadoPelaLuzInteraction`'s single-touched-target-direct-
+mutation shape, exactly per this section's own earlier warning to check whether the target
+shape actually matches before reusing a pattern — Grito's own rules text grants to "você e
+seus aliados adjacentes," so it follows `ArtesCompetencyAbility#DOM_BARDICO`'s own
+report-rather-than-mutate shape instead (see "Temporary bonuses from other Characters"
+below for `Blessing`'s full shape): `applyTo(CharacterSheet actor, SceneContext sceneContext)`
+returns an `InteractionResult` whose `blessings` list holds every bonus this activation grants
+— it never calls `CharacterSheet#grantTemporaryBonus` itself, and never even needs
+`sceneContext` to compute anything (a caller resolves recipients separately, via `SceneContext
+.getAlliesWithin(Range.ADJACENTE)` for each `TargetScope.SELF_AND_ALLIES` entry, once it
+actually applies the reported blessings). **"Mechanically real" is judged per clause, not per
+ability, but "real" now means "expressible as a grantable `Blessing`," not "has an actual
+consumer"** — Grito's "+2 em Defesas" half is reported for real (a `Blessing` typed
+`ModifierType.DEFESAS`) even though nothing reads that `ModifierType` yet, since no Defesas
+stat/service exists in this core; the "can't apply it yet doesn't mean can't compute it yet"
+discipline documented further below now extends to *granting*, not just arithmetic — see
+`GritoDeGuerraVulcanoInteraction`'s own class javadoc, and `ModifierType#ACTION_POINTS`'s
+identical already-grantable-but-inert precedent for the general shape. Don't wait for an
+ability's *entire* rules text to become expressible as a `Blessing` before building its
+`<X>Interaction`/`activate<X>` pair, though — a clause that can't even be expressed as a
+`Blessing` yet (e.g. one needing a mechanism this core has no `ModifierType`/`TemporaryBonus`
+equivalent for at all) still gets a TODO directly on the Interaction class instead. **Passive
+abilities never get one** (`isPassive() == true` — no activation exists to model; they're
+reached via continuous scanning instead, e.g. `DamageServiceImpl`'s Título-ability RA scan).
+The entry point is always a validating method on the concrete `AventyrTitle` class
+(`Santo#activate<X>`), never a static/standalone call against the bare catalog constant,
+mirroring `activateAbencoadoPelaLuz`'s own shape — this method itself doesn't apply anything
+either for a report-only Interaction like Grito's; it just delegates and returns the
+`InteractionResult`, the same "compute what, caller applies who" split every other
+`blessings`-reporting Interaction already follows. Extract a shared base class once a *third*
+real activation needs an identical cascade to one already built — still deferred for now,
+mirroring `AbstractSkillInteraction`'s own extraction history (only two real shapes exist
+today, and they're genuinely different: one touched target with direct mutation, vs. a
+report-only list of `Blessing`s left for the caller to apply).
+
+**Resolving "self + aliados adjacentes/em Distância X" turned out not to need a new
+orchestration mechanism at all — `SceneContext#getAlliesWithin(Range)` already returns the
+real, already-resolved `CharacterSheet` list a caller needs, whenever it actually applies a
+reported `Blessing`.** This is what makes `GritoDeGuerraVulcanoInteraction`'s Vantagem clauses
+real: `Skill.ADVANTAGE_BONUS` and the per-skill `ModifierType
+.ATAQUE_A_DISTANCIA_ROLL_BONUS`/`ATAQUE_CORPO_A_CORPO_ROLL_BONUS` constants were already real
+and already summed by `AbstractSkillInteraction` via `CharacterSheet#getTemporaryBonus` — the
+only missing piece was ever *who* to call `grantTemporaryBonus` on, and that's exactly what
+`SceneContext.getAlliesWithin` resolves for a caller applying a `TargetScope.SELF_AND_ALLIES`
+blessing, the same way `Scene.getAllies` already resolves it for a caller applying one of
+DOM_BARDICO's own `TargetScope.ALLIES` ones. **This doesn't generalize to every Título
+ability's own grant clause, though** — check what a `ModifierType` in question is actually
+*consulted by* before assuming a `Blessing` of that type will do anything once granted:
+confirmed `DamageServiceImpl#getTotalAbsoluteDamageReduction` never reads `CharacterSheet
+#getTemporaryBonus(ModifierType.ABSOLUTE_DAMAGE_REDUCTION)` at all — RA is only ever summed
+from the reflection-based ability scan and `AventyrTitleAbility#resolveAbsoluteDamageReduction`,
+both continuously-scanned passive-style hooks with no "grant a bonus lasting N Rodadas after
+this activation" shape — so `GLORIA_RELAMPEJANTE_DE_TESLA`'s own RA half remains genuinely
+un-grantable-for-real even though its recipient-resolution technique (self + aliados em
+Distância Curta) is now demonstrated and reusable, unlike Grito's own Defesas half (which
+*can* be expressed as a `ModifierType.DEFESAS`-typed `Blessing`, even though nothing consumes
+it yet — the difference is that `ModifierType.DEFESAS` is a real registry entry with no reader
+yet, while RA's own grant path has no `TemporaryBonus`-based entry point at all to grant
+through in the first place).
+
+**`ActionPointsServiceImpl` never reads a temporary PA grant.** A "+1PA for N Rodadas"-style
+clause (e.g. `GLORIA_RELAMPEJANTE_DE_TESLA`) can't be expressed as a real, eventually-consumable
+`Blessing` the way Grito's own Defesas one can, independent of the recipient-resolution
+technique demonstrated above: `ActionPointsServiceImpl#getMaxActionPoints` only ever reads
+`Character#getTemporaryActionPointsBonus()` (a plain, non-Round-scoped int field mutated
+directly via `.toBuilder()`) for its "temporary" component — it never calls `CharacterSheet
+#getTemporaryBonus(ModifierType.ACTION_POINTS)` at all, so a granted `TemporaryBonus` of that
+type would be silently inert. PA's own temporary-bonus pathway and this core's general
+`TemporaryBonus`/`ModifierType` machinery haven't been connected — the same class of gap as
+RA's above (a `ModifierType` whose value nothing actually consults yet), cited separately
+because it's PA-specific, not shared with RA's own reason.
+
+**`AbracadoPelaEscuridaoAbility`'s own gaps** (Santo's second Especialização) surfaced several
+more, worth citing precisely rather than re-deriving next time: **no temporary/Round-scoped
+Attribute bonus mechanism** (unlike every other stat this core tracks, `AttributeValue` only
+has `base`/`racialBonus`/`variable` — all permanent, never summed via `ModifierType`/
+`CharacterSheet#getTemporaryBonus` the way Reações/PA/RD/RA/skill rolls all are); **no
+within-Turn activation-count tracker** (for a "this Habilidade's effect changes if activated
+twice in the same Turn" clause — `CharacterSheet` tracks Round-scoped `TemporaryEffect`s, not
+a same-Turn activation counter); **no reactive/retaliation-damage mechanism** (`DamageService`
+only ever computes damage *to* a target *from* an attacker, never the reverse — "attacking a
+protected Character damages the attacker back" has no equivalent); **no forced-movement/
+positioning mechanism** ("empurrado 1UD... Reposicionar" — this core "never does geometry,"
+per `Range`'s own javadoc, the same restraint that kept it from ever modeling knockback);
+**Roubo de Mana/Roubo de Determinação don't exist** (only Roubo de Vida does, via
+`LifeStealService` — see `FocusAbility`'s own "needs a Roubo de Mana effect to exist in the
+first place" citation); **no "modify this one specific delivered attack" transaction** (a
+bonus scoped to "este ataque," the one delivered as part of activating a *different* ability,
+doesn't fit any existing per-roll `resolve*` hook — those all compute bonuses for *any* roll of
+a skill type, generically, not one specific attack tied to another ability's activation); and
+**"spend a resource for a one-time roll effect" (e.g. a GD reduction)** is the identical gap
+`race/Orc.java`'s own Agnação Ancestral citation already flags — Pontos de Vida (or PM) spent
+to modify a single roll's outcome, as opposed to casting a Magia, has no equivalent transaction
+anywhere in this core.
+
+**`Character` holds exactly three Título slots, not a list**: `primaryTitle`/`secondaryTitle`/
+`tertiaryTitle` are plain nullable `AventyrTitle` fields (same "nullable, no default" shape as
+`sexo`/`deity`) — an earlier design used a single `@Builder.Default List<AventyrTitle> titles`
+field instead, mutated via `grantTitle(AventyrTitle)`, with each held instance self-reporting
+`isPrimaryTitle()`; that's been replaced by the three-slot shape (see "Catalog vs. instance"
+above for why). `TitleSlot` (`org.aventyrs.core.character`, alongside `Character` — mirrors
+`EgoDomain`'s own placement: the key type lives with `Character`, the value type — `AventyrTitle`
+— lives in its own domain package) is the enum naming which slot. Acquiring a Título costs no
+XP and needs no `CharacterSheet`, so — unlike `CharacterAttributeService#upgradeBase`/
+`SkillGraduationService#upgradeGraduation` — there's no reason to route it through a dedicated
+service either: `Character#grantTitle(AventyrTitle, TitleSlot)` sets the named field directly,
+overwriting whatever previously occupied that slot, mirroring `CharacterSkill#increaseGraduation`'s
+own plain-mutator precedent. `Character#getAllTitles()` is the derived list (Primário first,
+empty slots omitted) a scanning service needs to inspect every held Título regardless of slot
+— see `DamageServiceImpl`'s own Título-ability scan below. `CharacterFixture` sets all three
+fields to `null` in its Rule blocks; unlike the old list-based field, there's no cross-`gimme()`-call
+sharing trap to document here — `null` carries nothing to leak between Characters built from
+the same template.
+
+**Extend a scanning service only when an ability's condition needs data no no-arg `@Modifier`
+method can see** — follow `SantoAbility.BASTIAO_DOS_NECESSITADOS`/`DamageServiceImpl`'s
+explicit (non-reflection) scan shape (see "Damage mitigation"'s own
+`RA/half-damage conditioned on SceneContext` subsection) for the reference. Otherwise, a plain
+unconditional bonus should just be an ordinary `@Modifier` method — `Modifier`'s own javadoc
+already anticipates this ("an ability, a feat, a title, an item").
+
+**Tests**: one file per new type (description/count/identity, mirroring the Perícia
+checklist's item 8 above), a `<Title>Test` for the concrete class, an integration test
+granting it to a `CharacterFixture` character, and scanning-service test additions for any
+ability wired for real.
+
+**Keep `org.aventyrs.core.title/package-info.java` current** whenever the granting API
+(`Character#grantTitle`/`#getPrimaryTitle`/`#getAllTitles`) changes shape — same discipline as
+`character.services`' own package-info (see "Consumer-facing documentation" below). The
+`adding-a-title` Claude Code skill packages this same checklist as an invokable walkthrough.
 
 ## Requesting a specific Habilidade de Competência or Especialização on a roll — `SkillRoll#getRequestedAbility`
 
@@ -512,37 +856,85 @@ caster) with a Perícia-roll bonus for 1-3 Rodadas depending on the caster's own
   real and tested (`CharacterSheetTest`, `ArtesInteractionTest
   #applyToIncludesAnActiveTemporarySkillRollBonus`/`#applyToIgnoresAnExpiredTemporarySkillRollBonus`),
   it's specifically the automatic *trigger* that's deferred.
-- `InteractionResult.temporaryBonusValue`/`temporaryBonusModifierType`/`temporaryBonusRounds`/
-  `temporaryBonusScope` are where a roll that *grants* one of these (as opposed to merely
-  being affected by an already-granted one) is expected to report it.
-  `temporaryBonusModifierType` is a `ModifierType`, not a `SkillType` — deliberately matching
+- `InteractionResult.blessings` (a `List<Blessing>`) is where a roll/activation that *grants*
+  one or more of these (as opposed to merely being affected by an already-granted one) is
+  expected to report them. `Blessing` (`org.aventyrs.core.sheet`) is a small value object
+  pairing a `ModifierType`, an `int value`, an `int rounds`, and a `TargetScope scope` —
+  exactly the "what" (value/type/duration) and "who kind" (scope) a caller needs, with nothing
+  else. `modifierType` is a `ModifierType`, not a `SkillType` — deliberately matching
   `TemporaryBonus`'s own field, so it's exactly what a caller passes straight into
   `CharacterSheet#grantTemporaryBonus` with no extra `SkillType`→`ModifierType` mapping step
-  (the broad `SKILL_ROLL_BONUS`, or one specific skill's own `rollBonusType`).
-  `temporaryBonusScope` is a `TargetScope` (`SINGLE_TARGET`/`ALLIES`/`ENEMIES`) — *who kind*
-  of recipient, e.g. `ALLIES` for DOM_BARDICO. Who actually *receives* the bonus is still
-  deliberately not this core's concern — these four fields are the computed "what" (value,
-  type, duration) and "who kind" (scope), a caller resolves the concrete recipient list via
-  `Scene.getAllies`/`getEnemies` (for `ALLIES`/`ENEMIES`) or its own target lookup (for
-  `SINGLE_TARGET`) and calls `grantTemporaryBonus` on each recipient itself. `InteractionResult`
-  needed `@Builder(toBuilder = true)` added for this — a subclass overriding `applyTo` (see
-  below) extends the base result via `.toBuilder()` rather than reassembling every field by
-  hand.
-- `ArtesInteraction` overrides `applyTo` to set all four of these fields for a character
-  holding `ArtesCompetencyAbility#DOM_BARDICO`: `temporaryBonusModifierType` (always
-  `SKILL_ROLL_BONUS`, since this ability's own rules text is unrestricted — "rolagens de
-  Perícias", not one specific Perícia), `temporaryBonusScope` (always `ALLIES` — "concedendo
-  ... a eles, mas não a você"), `temporaryBonusRounds` (1 Rodada normally, 2 once Artes reaches
-  5 Graduações, 3 at 10 — a small graduation-threshold lookup specific to this one ability, not
-  worth generalizing into `ExcellencyTier`'s fixed 3/7/10 shape since DOM_BARDICO's
-  thresholds/values don't match it), and — once a `SkillRoll` is supplied —
-  `temporaryBonusValue`, via a GD-tier-to-bonus lookup (`ArtesInteraction
-  .domBardicoBonusValue`): GD Médio +1, Difícil +2, Muito Difícil +3, Improvável +4, Milagre
-  +5, mapping onto `DifficultyLevel.MEDIUM/HARD/VERY_HARD/UNLIKELY/MIRACLE`. `UNIMAGINABLE`
-  isn't named in the rules text (it falls between Improvável and Milagre); it's treated as
-  inheriting Improvável's +4 until Milagre is actually reached — an inference, not confirmed
-  text. Below Médio, or when no roll was supplied at all, `temporaryBonusValue` stays `null`. A
-  caller must still gate on `temporaryBonusValue != null` before granting anything.
+  (the broad `SKILL_ROLL_BONUS`, or one specific skill's own `rollBonusType`). `scope` is a
+  `TargetScope` (`SINGLE_TARGET`/`ALLIES`/`ENEMIES`/`SELF`/`SELF_AND_ALLIES` — the last two
+  added specifically for `Blessing`, see below) — `ALLIES` for DOM_BARDICO (excludes the
+  caster: "a eles, mas não a você"). Who actually *receives* each blessing is still
+  deliberately not this core's concern — a caller resolves the concrete recipient list via
+  `Scene.getAllies`/`getEnemies` (for `ALLIES`/`ENEMIES`), the actor itself plus `SceneContext
+  .getAlliesWithin` (for `SELF`/`SELF_AND_ALLIES`), or its own target lookup (for
+  `SINGLE_TARGET`), and calls `grantTemporaryBonus` on each recipient itself.
+  `InteractionResult` needed `@Builder(toBuilder = true)` added for this — a subclass
+  overriding `applyTo` (see below) extends the base result via `.toBuilder()` rather than
+  reassembling every field by hand. `blessings` is `null` when an Interaction can't grant one
+  at all (same stays-`null`-when-not-applicable convention as every other field here) — a
+  non-null (possibly single-entry) list means it's actively reporting one or more.
+
+  `Blessing` also carries a `String source`, identifying which trait granted it (e.g.
+  `"DOM_BARDICO"`, `"GRITO_DE_GUERRA_VULCANO"`) — needed once `InitiativeBlessingService
+  .resolveBlessings` started concatenating blessings from up to three different sources
+  (`EgoAdvantage`/`AttributeAbility`/`SkillCompetencyAbility`) into one flat list with no way
+  to tell which one granted which. **Prefer the granting ability's own enum `.name()` over a
+  hand-written string literal** wherever the granting site already has that constant in hand —
+  `ArtesInteraction` passes `ArtesCompetencyAbility.DOM_BARDICO.name()`,
+  `GritoDeGuerraVulcanoInteraction` passes `AbencoadoPelaLuzAbility.GRITO_DE_GUERRA_VULCANO
+  .name()`, and `InitiativeAdvantage.POSICIONAMENTO_ESTRATEGICO`'s own override passes `name()`
+  directly (it's already inside that constant's own anonymous body) — so the two can never
+  drift apart. A hand-written constant is still the right call where no such enum exists to
+  reference (e.g. a test double implementing `AttributeAbility`/`SkillCompetencyAbility`
+  directly). This core still doesn't track *who* (which Character) granted a bonus, only *what
+  trait* did — the same restraint `CharacterSheet#grantTemporaryBonus` itself already applies;
+  `source` doesn't change that.
+
+  **`Blessing` unifies two mechanisms that used to be separate**: it's also what {@code
+  InitiativeBlessingService}/`Scene#applyInitiativeBlessings` resolve and apply for the
+  initiative-win trigger (see "Movimento Base, and blessings granted on winning initiative"
+  below) — an earlier design had a distinct `InitiativeBlessing` class with a plain `boolean
+  appliesToAllies` field instead of `TargetScope`, kept deliberately separate from
+  `InteractionResult`'s own (then-singular) temporary-bonus fields specifically because
+  `TargetScope.ALLIES` excludes the caster while `appliesToAllies` always includes them —
+  reusing `TargetScope` back then would have silently conflated the two. Adding `SELF`/
+  `SELF_AND_ALLIES` as their own distinct constants (rather than overloading `ALLIES`'s
+  existing meaning) resolved that conflict once a second real Interaction-reported mechanism
+  (`GritoDeGuerraVulcanoInteraction`, see below) needed the identical self-plus-allies shape —
+  the same "generalize once a second real consumer needs the identical shape" restraint used
+  throughout this codebase. `InitiativeBlessingService`/`Scene#applyInitiativeBlessings`/
+  `resolveInitiativeBlessings()` keep their own names unchanged — they describe the
+  initiative-win *trigger*, which didn't change, only the value type they operate on did.
+- **A single Interaction can report more than one `Blessing` at once** — `blessings` is a
+  `List`, not a single value, specifically because `GritoDeGuerraVulcanoInteraction` (see
+  "Adding a new Título Aventyr" below) needs to report three simultaneously (two Vantagem
+  bonuses toward different Perícias, plus a Defesas one), which an earlier singular-fields
+  design (`temporaryBonusValue`/`temporaryBonusModifierType`/`temporaryBonusRounds`/
+  `temporaryBonusScope`) had no way to express. `ArtesInteraction` (DOM_BARDICO, still only
+  ever reports one) was migrated onto this same list rather than kept on the old singular
+  shape, so `InteractionResult` has exactly one mechanism for "this Interaction granted a
+  temporary bonus," not two.
+- `ArtesInteraction` overrides `applyTo` to report one `Blessing` for a character holding
+  `ArtesCompetencyAbility#DOM_BARDICO`, once a `SkillRoll` reaching at least GD Médio was
+  supplied: `modifierType` (always `SKILL_ROLL_BONUS`, since this ability's own rules text is
+  unrestricted — "rolagens de Perícias", not one specific Perícia), `scope` (always `ALLIES`),
+  `rounds` (1 Rodada normally, 2 once Artes reaches 5 Graduações, 3 at 10 — a small
+  graduation-threshold lookup specific to this one ability, not worth generalizing into
+  `ExcellencyTier`'s fixed 3/7/10 shape since DOM_BARDICO's thresholds/values don't match it),
+  and `value`, via a GD-tier-to-bonus lookup (`ArtesInteraction.domBardicoBonusValue`): GD
+  Médio +1, Difícil +2, Muito Difícil +3, Improvável +4, Milagre +5, mapping onto
+  `DifficultyLevel.MEDIUM/HARD/VERY_HARD/UNLIKELY/MIRACLE`. `UNIMAGINABLE` isn't named in the
+  rules text (it falls between Improvável and Milagre); it's treated as inheriting
+  Improvável's +4 until Milagre is actually reached — an inference, not confirmed text. Below
+  Médio, or when no roll was supplied at all, there's nothing coherent to report a `value` for
+  — rather than exposing a partially-filled `Blessing` (a real `modifierType`/`scope`/`rounds`
+  but no meaningful `value`), `blessings` simply stays `null` in that case, same as when
+  DOM_BARDICO isn't held at all. A caller gates on `blessings != null` before granting
+  anything, the same restraint the old `temporaryBonusValue != null` check used to express.
 - **`AbstractSkillInteraction.applyTo` actually has two overloads now**:
   `applyTo(CharacterSheet)` (the `Interaction` interface's own method) just delegates to
   `applyTo(CharacterSheet, SceneContext)` with a `null` context; the 2-arg one holds all the
@@ -555,8 +947,14 @@ caster) with a Perícia-roll bonus for 1-3 Rodadas depending on the caster's own
   below for `SkillRoll` (the third parameter, added after `SceneContext`) — no ability
   consumes `SceneContext` for a real numeric effect yet, so passing `null` (or any actual
   `SceneContext`) currently produces identical results for every skill; this is deliberately
-  built ahead of a concrete consumer, same as the four `TemporaryBonus`-related fields above
-  were before `ArtesInteraction` started setting them.
+  built ahead of a concrete consumer, same as `blessings` above was before `ArtesInteraction`
+  started setting it.
+
+The `granting-a-blessing` Claude Code skill packages this whole section (plus "Movimento Base,
+and blessings granted on winning initiative" below) as an invokable walkthrough — including how
+to tell a genuine `Blessing` case apart from the several narrower bonus mechanisms elsewhere in
+this file (a flat `@Modifier`, `resolveConditionalRollBonus`, `resolveDamageBonus`,
+`resolveAbsoluteDamageReduction`/`resolveHalfDamage`) before reaching for this one.
 
 ## Rolling the dice — `SkillRoll`, `DifficultyLevel#reachedBy`
 
@@ -657,12 +1055,15 @@ already-resolved by a caller, same as `InitiativeEntry`'s own `initiativeValue` 
   `Scene`, builds one directly from two lists instead.
 - Exposes `getDistanceTo(CharacterSheet)`, `hasAllyWithin(Range)`/`hasEnemyWithin(Range)` (the
   latter is exactly `MedicinaECuraExcellency.FOCADO`'s own condition,
-  `hasEnemyWithin(Range.DISTANCIA_CURTA)`), and `countAlliesWithin(Range)`/
+  `hasEnemyWithin(Range.DISTANCIA_CURTA)`), `countAlliesWithin(Range)`/
   `countEnemiesWithin(Range)` — for a bonus that scales with *how many* allies/enemies are
-  nearby (a "gang up" bonus, a "surrounded" malus), not just whether any are. `hasAllyWithin`/
-  `hasEnemyWithin` are themselves just `countXWithin(range) > 0` now — one counting primitive
-  underneath both the boolean and the scaling query, instead of two separate implementations
-  that could drift.
+  nearby (a "gang up" bonus, a "surrounded" malus), not just whether any are — and
+  `getAlliesWithin(Range)`/`getEnemiesWithin(Range)`, returning the matching `CharacterSheet`s
+  themselves rather than just a boolean/count, for a caller that needs to inspect each
+  qualifying ally/enemy individually (e.g. `DamageServiceImpl`'s own scan for `SantoAbility
+  .BASTIAO_DOS_NECESSITADOS`, comparing PV against each adjacent ally in turn — see "Damage
+  mitigation" below). All four `*Within` shapes share one private `isWithin` filter underneath,
+  instead of separate implementations that could drift.
 - Most proximity-gated abilities found so far still need at least one *other* missing system
   too (a roll-resolution-vs-`DifficultyLevel` engine, a trigger/temporary-buff-after-success
   mechanism, a GD-*increase* expression, or arbitrary-point targeting `SceneContext` doesn't
@@ -927,28 +1328,37 @@ different group wins next and extended to a group member who joins *after* the w
   available this Round also adds `CharacterSheet#getTemporaryBonus(ModifierType.MOVEMENT)`,
   the same combination `AbstractSkillInteraction` already performs for `skillRollBonus`.
 
-- **`org.aventyrs.core.sheet.InitiativeBlessing`** (`ModifierType`, `value`, `rounds`, plus a
-  plain `boolean appliesToAllies`) is what a trait grants the moment its holder wins
-  initiative. `appliesToAllies` is deliberately not `TargetScope`: unlike DOM_BARDICO's
-  `ALLIES` (which *excludes* the caster — "a eles, mas não a você"), this always applies to
-  the holder too, and only *additionally* extends to allies when `true` — reusing `TargetScope`
-  here would silently misrepresent that. A `default List<InitiativeBlessing>
-  resolveInitiativeBlessings()` (empty by default) was added identically to `EgoAdvantage`,
-  `AttributeAbility`, and `SkillCompetencyAbility` — the exact three sources named "Vantagens
-  de Ego, Habilidades, and Habilidades de Competência." Deliberately **not** added to
-  `SkillExcellency` — this is a narrower, three-source scan by design, unlike the four-source
-  flat-`@Modifier` convention (which does include excellencies) used everywhere else in this
-  section. No-arg, unlike `resolveConditionalRollBonus`/`resolveDamageBonus`: this resolves
-  once at grant-time, not per-roll, so the Round-scoping lives in the granted blessing's own
-  `rounds` countdown instead of a `SceneContext` check.
-  `InitiativeAdvantage.POSICIONAMENTO_ESTRATEGICO` is the only current constant overriding it,
-  granting `(MOVEMENT, +2, 2 rounds, appliesToAllies=true)`.
+- **`org.aventyrs.core.sheet.Blessing`** (`ModifierType`, `value`, `rounds`, plus a
+  `TargetScope scope`) is what a trait grants the moment its holder wins initiative — the same
+  class `InteractionResult#getBlessings()` uses for a directly-activated grant (see "Temporary
+  bonuses from other Characters" above for that second mechanism, and for why this class was
+  generalized from an earlier, initiative-only-scoped `InitiativeBlessing` with a plain
+  `boolean appliesToAllies` field once a second real consumer needed the identical shape).
+  `TargetScope.SELF_AND_ALLIES` is what a Vantagem/Habilidade grants here: unlike DOM_BARDICO's
+  `ALLIES` (which *excludes* the caster — "a eles, mas não a você"), this always applies to the
+  holder too, and only *additionally* extends to allies when scoped that way — `TargetScope
+  .SELF` covers the "holder only, never extends to allies" case (the old `appliesToAllies=false`).
+  A `default List<Blessing> resolveInitiativeBlessings()` (empty by default) was added
+  identically to `EgoAdvantage`, `AttributeAbility`, and `SkillCompetencyAbility` — the exact
+  three sources named "Vantagens de Ego, Habilidades, and Habilidades de Competência" — the
+  method itself keeps its `resolveInitiativeBlessings` name (it still describes the
+  initiative-win trigger specifically) even though the value type it returns is now the shared
+  `Blessing` class. Deliberately **not** added to `SkillExcellency` — this is a narrower,
+  three-source scan by design, unlike the four-source flat-`@Modifier` convention (which does
+  include excellencies) used everywhere else in this section. No-arg, unlike
+  `resolveConditionalRollBonus`/`resolveDamageBonus`: this resolves once at grant-time, not
+  per-roll, so the Round-scoping lives in the granted blessing's own `rounds` countdown instead
+  of a `SceneContext` check. `InitiativeAdvantage.POSICIONAMENTO_ESTRATEGICO` is the only
+  current constant overriding it, granting `(MOVEMENT, +2, 2 rounds, TargetScope
+  .SELF_AND_ALLIES)`.
 
 - **`InitiativeBlessingService#resolveBlessings(Character)`** (`org.aventyrs.core.character.services`)
   is the pure-function scan across all three sources, mirroring every other `<X>Service`'s DI
-  shape. It doesn't grant or mutate anything itself.
+  shape. It doesn't grant or mutate anything itself. The service (and interface/impl class
+  names) kept their own `InitiativeBlessing*` names through the `Blessing` rename above — same
+  reasoning as `resolveInitiativeBlessings()`'s own method name.
 
-- **`Scene#applyInitiativeBlessings(CharacterSheet winner, List<InitiativeBlessing> blessings)`**
+- **`Scene#applyInitiativeBlessings(CharacterSheet winner, List<Blessing> blessings)`**
   is the method a caller invokes the moment winner's group actually wins initiative, passing
   winner's own already-resolved blessings (e.g. from `InitiativeBlessingService
   .resolveBlessings(winner.getCharacter())`, called by the caller — `Scene` deliberately never
@@ -963,10 +1373,10 @@ different group wins next and extended to a group member who joins *after* the w
   `applyEffect` — reference-based removal, since neither `TemporaryEffect` nor `TemporaryBonus`
   overrides `equals()`, so a caller can revoke exactly the instance it tracked without
   disturbing an unrelated `TemporaryBonus` of the same `ModifierType` from some other source),
-  then grants *all* of `blessings` to winner directly, plus every `appliesToAllies` one to
-  each of `getAllies(winner)` too — each grant a fresh `TemporaryBonus`, tracked in a
-  `Scene`-owned `grantedBlessings` map so the next call (a new group winning, or the same one
-  winning again) can revoke precisely these and no more.
+  then grants *all* of `blessings` to winner directly, plus every `TargetScope
+  .SELF_AND_ALLIES`-scoped one to each of `getAllies(winner)` too — each grant a fresh
+  `TemporaryBonus`, tracked in a `Scene`-owned `grantedBlessings` map so the next call (a new
+  group winning, or the same one winning again) can revoke precisely these and no more.
 
   `addParticipant(CharacterSheet, int, UUID group)` extends the same currently-active
   **ally-scoped** blessings to a CharacterSheet that joins an *already*-blessed group
@@ -978,15 +1388,15 @@ different group wins next and extended to a group member who joins *after* the w
   the tracked grants: `grantedBlessings.keySet().stream().anyMatch(sheet ->
   groupOf(sheet).equals(group))` — a group is blessed exactly when someone already tracked
   belongs to it, which is always the group the newcomer is being inserted into, checked at the
-  moment of insertion. The actual blessing *values* (`activeBlessings: List<InitiativeBlessing>`)
+  moment of insertion. The actual blessing *values* (`activeBlessings: List<Blessing>`)
   still need to be kept as their own field, though — unlike "is this group blessed" (a yes/no
   derivable from group membership), `grantedBlessings`' raw `TemporaryBonus`es don't carry the
-  `appliesToAllies` flag, so there'd be no way to tell a self-only blessing apart from an
-  ally-scoped one when deciding what to copy to a newcomer without it. A self-only blessing
-  never propagates to a newcomer, or to allies at grant-time either — it belongs to whichever
-  Character actually holds the granting trait, not the group at large. A lone newcomer added
-  via the 2-arg `addParticipant` overload gets a fresh random group per that overload's own
-  existing behavior, so it never accidentally matches the blessed group.
+  originating `Blessing`'s own `scope`, so there'd be no way to tell a self-only blessing apart
+  from an ally-scoped one when deciding what to copy to a newcomer without it. A `TargetScope
+  .SELF` blessing never propagates to a newcomer, or to allies at grant-time either — it
+  belongs to whichever Character actually holds the granting trait, not the group at large. A
+  lone newcomer added via the 2-arg `addParticipant` overload gets a fresh random group per
+  that overload's own existing behavior, so it never accidentally matches the blessed group.
 
 ## Iniciativa can change mid-Scene — `InitiativeEntry#getEffectiveInitiativeValue`
 
@@ -1002,10 +1412,10 @@ not a new bonus-computation one.
 The key constraint: **`CharacterSheet` has no reference back to its `Scene`**, so a granting
 Ability can never call into `Scene` itself — it only ever has the `CharacterSheet` (and maybe
 `Character`) in hand, the same as every other ability effect in this codebase. An Ability
-grants the bonus the *exact* same way `ArtesCompetencyAbility#DOM_BARDICO`/`InitiativeBlessing`
-already do — a plain `characterSheet.grantTemporaryBonus(ModifierType.INITIATIVE, value,
-rounds)` call, nothing Scene-specific about it. `Scene` picks this up itself, on its own
-schedule, rather than needing to be told:
+grants the bonus the *exact* same way `ArtesCompetencyAbility#DOM_BARDICO`/the
+initiative-win-triggered `Blessing` mechanism already do — a plain `characterSheet
+.grantTemporaryBonus(ModifierType.INITIATIVE, value, rounds)` call, nothing Scene-specific
+about it. `Scene` picks this up itself, on its own schedule, rather than needing to be told:
 
 - `InitiativeEntry#getEffectiveInitiativeValue()` is `getInitiativeValue()` plus whatever
   `ModifierType.INITIATIVE` currently sums to on `characterSheet` (`CharacterSheet
@@ -1047,8 +1457,9 @@ schedule, rather than needing to be told:
   (`Scene#updateInitiative`, a caller-invoked push), but it doesn't fit: it would need whatever
   triggered the Ability to separately reach into `Scene` and recompute/push a value, which
   isn't how any other Ability effect in this codebase reaches a `Scene`-tracked value — every
-  other one (`DOM_BARDICO`, `InitiativeBlessing`, RD/RA, damage bonuses) grants straight to the
-  `CharacterSheet`/target it already holds, and whatever reads that state (`DamageService`,
+  other one (`DOM_BARDICO`, the initiative-win `Blessing` mechanism, RD/RA, damage bonuses)
+  grants straight to the `CharacterSheet`/target it already holds, and whatever reads that
+  state (`DamageService`,
   every `<Skill>Interaction`, and now `Scene`) resolves it from there on its own. An
   observable/watcher mechanism was also considered and rejected for the same reason this one
   was preferred over it: this codebase has no event/observer pattern anywhere, and `Scene`
@@ -1171,10 +1582,14 @@ fixed order:
    `RestServiceImpl`'s existing floor-on-half convention.
 3. **Shield points** — unrelated to RD/RA/half-damage and unchanged by this: still absorbed
    inside `CharacterSheet#applyDamage` itself, *after* `DamageService` has already computed the
-   post-mitigation amount. `DamageService.applyDamage(Character, CharacterSheet, int rawDamage,
-   boolean ignoreDamageReduction, boolean halfDamage)` bridges the two, mirroring
-   `RestService.applyRest`'s Character+CharacterSheet split — compute from the Character's
-   abilities, then apply the result to the CharacterSheet's resource pools.
+   post-mitigation amount. `DamageService.applyDamage(CharacterSheet characterSheet, int
+   rawDamage, boolean ignoreDamageReduction)` bridges the two — compute the mitigated total
+   (`calculateFinalDamage`, using `characterSheet.getCharacter()` for whatever ability data it
+   needs), then apply the result to the sheet's own resource pools. Unlike `RestService
+   .applyRest(Character, CharacterSheet, ...)` (which genuinely needs both — see the Attribute/
+   Graduação section above), `applyDamage` never takes a separate `Character` parameter at
+   all: applying damage always requires a concrete `CharacterSheet` to mutate, so there's
+   never a case where a caller has a `Character` but no sheet to derive it from.
 
 If an ability grants RD *or RA* without spelling out a number in its own rules text, its value
 is `DamageService.DEFAULT_DAMAGE_REDUCTION` (+2) — RD and RA are independent reductions, but
@@ -1218,6 +1633,39 @@ ones now delegate down with `null`), and `EgoAdvantage` gained two more default-
 cascading shape, `null` by default) so a caller with an active Scene can pass its context
 straight through from `Scene#buildContext` to a dealt hit's actual mitigation, the same way
 one already flows into a Perícia roll.
+
+`getTotalAbsoluteDamageReduction(CharacterSheet target, SceneContext)` extends the
+`SceneContext`-conditioned scan further — it takes a `CharacterSheet` **directly** rather than
+a separate `Character` alongside it (a `CharacterSheet` already carries its own `Character`
+via `getCharacter()`, so a caller with a sheet in hand has nothing to gain from also being
+asked to pass the `Character` it already implies — an earlier version of this method took
+both, redundantly, and a still-earlier version additionally kept a now-removed
+`(Character, SceneContext)` public overload for sheet-less callers, dropped once nothing
+genuinely needed it — see below) — to sum a **third** source alongside the reflection scan and
+`EgoAdvantage`'s own hook: every held `AventyrTitleAbility`'s
+`resolveAbsoluteDamageReduction(SceneContext, boolean hasLowerPvAdjacentAlly)` (see
+`org.aventyrs.core.title.santo.SantoAbility#BASTIAO_DOS_NECESSITADOS`). Unlike `EgoAdvantage`'s
+hook, a Título ability's own condition here needed one more fact neither `SceneContext` nor a
+no-arg `@Modifier` method can resolve — a PV comparison between the holder and each adjacent
+ally — so `DamageServiceImpl` (the only caller with a `HitPointsService` in hand) resolves
+that comparison once, via `sceneContext.getAlliesWithin(Range.ADJACENTE)` and
+`HitPointsService#getCurrentHitPoints` per returned ally, and passes the boolean result in
+(`getAlliesWithin` itself lives on `SceneContext` — see "Range and SceneContext" above — since
+range-filtering is that class's own concern, not `DamageServiceImpl`'s).
+
+There is deliberately **no** sheet-less `(Character, SceneContext)` public overload of this
+method (unlike `getTotalDamageReduction(Character)`/`calculateFinalDamage(Character, int,
+boolean)`'s own genuinely-sheet-less forms) — every real caller needing Scene-conditioned RA
+already has a `CharacterSheet` by that point (an attack always has a target), so once
+`calculateFinalDamage(Character, SceneContext, int, boolean)`'s own sheet-less overload
+stopped depending on the public method (it now calls the private
+`computeTotalAbsoluteDamageReduction(Character, CharacterSheet target, SceneContext)` helper
+directly, `target` nullable only internally — `EgoAdvantage`'s own contribution still applies
+sheet-less there, just never the Título-ability one, since that needs `target` to be real) —
+there was no genuine external consumer of a sheet-less overload left to preserve. The 6-arg
+`calculateFinalDamage(CharacterSheet, SceneContext, DamageType, CharacterSheet, int, boolean)`
+picks the sheet-based path automatically (it always has a real `target`), so Bastião's RA
+reaches `applyDamage` for free — no new public `applyDamage` overload was needed.
 
 ## Acquisition-time ability choices — `org.aventyrs.core.ability.AcquiredChoice`
 

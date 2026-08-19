@@ -8,6 +8,7 @@ import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.character.DamageType;
 import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.character.SizeCategory;
+import org.aventyrs.core.character.TitleSlot;
 import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.character.fixture.CharacterSkillFixture;
 import org.aventyrs.core.ego.InitiativeAdvantage;
@@ -18,6 +19,9 @@ import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.Player;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
 import org.aventyrs.core.skill.SkillType;
+import org.aventyrs.core.scene.Range;
+import org.aventyrs.core.title.santo.Santo;
+import org.aventyrs.core.title.santo.SantoAbility;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -206,7 +210,7 @@ class DamageServiceImplTest {
                 .build();
         CharacterSheet sheet = CharacterSheet.of(character, new Player());
 
-        int totalDamageTaken = damageService.applyDamage(character, sheet, 10, false);
+        int totalDamageTaken = damageService.applyDamage(sheet, 10, false);
 
         assertEquals(5, totalDamageTaken);
         assertEquals(5, sheet.getDamageTaken());
@@ -220,7 +224,7 @@ class DamageServiceImplTest {
         CharacterSheet sheet = CharacterSheet.of(character, new Player());
         sheet.addShield(4);
 
-        int totalDamageTaken = damageService.applyDamage(character, sheet, 10, false);
+        int totalDamageTaken = damageService.applyDamage(sheet, 10, false);
 
         assertEquals(3, totalDamageTaken);
         assertEquals(3, sheet.getDamageTaken());
@@ -239,7 +243,8 @@ class DamageServiceImplTest {
     @Test
     void getTotalAbsoluteDamageReductionWithSceneContextAddsTheEgoAdvantagesOwnContribution() {
         Character character = characterWithTorreEmMovimento();
-        assertEquals(2, damageService.getTotalAbsoluteDamageReduction(character, combatContext(1, false)));
+        CharacterSheet sheet = CharacterSheet.of(character, new Player());
+        assertEquals(2, damageService.getTotalAbsoluteDamageReduction(sheet, combatContext(1, false)));
     }
 
     @Test
@@ -248,19 +253,22 @@ class DamageServiceImplTest {
                 .egoAdvantage(EgoDomain.INICIATIVA, InitiativeAdvantage.TORRE_EM_MOVIMENTO)
                 .skillCompetencyAbility(new AbsoluteDamageReductionAbility())
                 .build();
-        assertEquals(4, damageService.getTotalAbsoluteDamageReduction(character, combatContext(1, false)));
+        CharacterSheet sheet = CharacterSheet.of(character, new Player());
+        assertEquals(4, damageService.getTotalAbsoluteDamageReduction(sheet, combatContext(1, false)));
     }
 
     @Test
     void getTotalAbsoluteDamageReductionWithSceneContextOmitsItOutsideTheFirstTwoRounds() {
         Character character = characterWithTorreEmMovimento();
-        assertEquals(0, damageService.getTotalAbsoluteDamageReduction(character, combatContext(3, false)));
+        CharacterSheet sheet = CharacterSheet.of(character, new Player());
+        assertEquals(0, damageService.getTotalAbsoluteDamageReduction(sheet, combatContext(3, false)));
     }
 
     @Test
     void getTotalAbsoluteDamageReductionWithoutASceneContextOmitsTheEgoAdvantagesOwnContribution() {
         Character character = characterWithTorreEmMovimento();
-        assertEquals(0, damageService.getTotalAbsoluteDamageReduction(character, null));
+        CharacterSheet sheet = CharacterSheet.of(character, new Player());
+        assertEquals(0, damageService.getTotalAbsoluteDamageReduction(sheet, null));
     }
 
     @Test
@@ -294,7 +302,7 @@ class DamageServiceImplTest {
         Character character = characterWithTorreEmMovimento();
         CharacterSheet sheet = CharacterSheet.of(character, new Player());
 
-        int totalDamageTaken = damageService.applyDamage(character, sheet, combatContext(1, true), 10, false);
+        int totalDamageTaken = damageService.applyDamage(sheet, combatContext(1, true), 10, false);
 
         assertEquals(4, totalDamageTaken);
         assertEquals(4, sheet.getDamageTaken());
@@ -312,7 +320,7 @@ class DamageServiceImplTest {
         Character character = characterWithRigidezDaMontanha(SizeCategory.ZERO);
         CharacterSheet target = CharacterSheet.of(character, new Player());
 
-        assertEquals(1, damageService.getTotalDamageReduction(character, target, DamageType.FISICO, null));
+        assertEquals(1, damageService.getTotalDamageReduction(target, DamageType.FISICO, null));
     }
 
     @Test
@@ -322,7 +330,7 @@ class DamageServiceImplTest {
         Character attacker = CharacterFixture.blank(CharacterFixture.BLANK).sizeCategory(SizeCategory.MINUS_ONE).build();
         CharacterSheet source = CharacterSheet.of(attacker, new Player());
 
-        assertEquals(2, damageService.getTotalDamageReduction(character, target, DamageType.FISICO, source));
+        assertEquals(2, damageService.getTotalDamageReduction(target, DamageType.FISICO, source));
     }
 
     @Test
@@ -330,7 +338,7 @@ class DamageServiceImplTest {
         Character character = characterWithRigidezDaMontanha(SizeCategory.ZERO);
         CharacterSheet target = CharacterSheet.of(character, new Player());
 
-        assertEquals(0, damageService.getTotalDamageReduction(character, target, DamageType.MAGICO, null));
+        assertEquals(0, damageService.getTotalDamageReduction(target, DamageType.MAGICO, null));
     }
 
     @Test
@@ -342,7 +350,7 @@ class DamageServiceImplTest {
                 .build();
         CharacterSheet target = CharacterSheet.of(character, new Player());
 
-        assertEquals(4, damageService.getTotalDamageReduction(character, target, DamageType.FISICO, null));
+        assertEquals(4, damageService.getTotalDamageReduction(target, DamageType.FISICO, null));
     }
 
     @Test
@@ -350,15 +358,7 @@ class DamageServiceImplTest {
         Character character = characterWithRigidezDaMontanha(SizeCategory.ZERO);
         CharacterSheet target = CharacterSheet.of(character, new Player());
 
-        assertEquals(9, damageService.calculateFinalDamage(character, target, null, DamageType.FISICO, null, 10, false));
-    }
-
-    @Test
-    void calculateFinalDamageWithNullTargetAndDamageTypeMatchesTheNoContextOverload() {
-        Character character = characterWithRigidezDaMontanha(SizeCategory.ZERO);
-
-        assertEquals(damageService.calculateFinalDamage(character, 10, false),
-                damageService.calculateFinalDamage(character, null, null, null, null, 10, false));
+        assertEquals(9, damageService.calculateFinalDamage(target, null, DamageType.FISICO, null, 10, false));
     }
 
     @Test
@@ -366,9 +366,101 @@ class DamageServiceImplTest {
         Character character = characterWithRigidezDaMontanha(SizeCategory.ZERO);
         CharacterSheet sheet = CharacterSheet.of(character, new Player());
 
-        int totalDamageTaken = damageService.applyDamage(character, sheet, null, DamageType.FISICO, null, 10, false);
+        int totalDamageTaken = damageService.applyDamage(sheet, null, DamageType.FISICO, null, 10, false);
 
         assertEquals(9, totalDamageTaken);
         assertEquals(9, sheet.getDamageTaken());
+    }
+
+    private Character characterWithBastiaoDosNecessitados() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK).build();
+        character.grantTitle(new Santo(List.of(), List.of(SantoAbility.BASTIAO_DOS_NECESSITADOS)), TitleSlot.PRIMARY);
+        return character;
+    }
+
+    private CharacterSheet allySheetWithDamageTaken(final int damageTaken) {
+        Character allyCharacter = CharacterFixture.blank(CharacterFixture.BLANK).build();
+        CharacterSheet allySheet = CharacterSheet.of(allyCharacter, new Player());
+        if (damageTaken > 0) {
+            allySheet.applyDamage(damageTaken);
+        }
+        return allySheet;
+    }
+
+    @Test
+    void selfFacingAbsoluteDamageReductionAppliesWhenAnAdjacentAllyHasLowerCurrentHitPoints() {
+        Character holder = characterWithBastiaoDosNecessitados();
+        CharacterSheet holderSheet = CharacterSheet.of(holder, new Player());
+        CharacterSheet allySheet = allySheetWithDamageTaken(5);
+        SceneContext sceneContext = new SceneContext(List.of(allySheet), List.of(), Map.of(allySheet, Range.ADJACENTE));
+
+        assertEquals(DamageService.DEFAULT_DAMAGE_REDUCTION, damageService.getTotalAbsoluteDamageReduction(holderSheet, sceneContext));
+    }
+
+    @Test
+    void selfFacingAbsoluteDamageReductionDoesNotApplyWhenTheAdjacentAllyHasMoreHitPoints() {
+        Character holder = characterWithBastiaoDosNecessitados();
+        CharacterSheet holderSheet = CharacterSheet.of(holder, new Player());
+        holderSheet.applyDamage(3);
+        CharacterSheet allySheet = allySheetWithDamageTaken(0);
+        SceneContext sceneContext = new SceneContext(List.of(allySheet), List.of(), Map.of(allySheet, Range.ADJACENTE));
+
+        assertEquals(0, damageService.getTotalAbsoluteDamageReduction(holderSheet, sceneContext));
+    }
+
+    @Test
+    void selfFacingAbsoluteDamageReductionDoesNotApplyWhenTheLowerPvAllyIsNotAdjacent() {
+        Character holder = characterWithBastiaoDosNecessitados();
+        CharacterSheet holderSheet = CharacterSheet.of(holder, new Player());
+        CharacterSheet allySheet = allySheetWithDamageTaken(5);
+        SceneContext sceneContext = new SceneContext(List.of(allySheet), List.of(), Map.of(allySheet, Range.DISTANCIA_CURTA));
+
+        assertEquals(0, damageService.getTotalAbsoluteDamageReduction(holderSheet, sceneContext));
+    }
+
+    @Test
+    void calculateFinalDamageWithoutATargetDoesNotApplyBastiaoDosNecessitados() {
+        Character holder = characterWithBastiaoDosNecessitados();
+        CharacterSheet allySheet = allySheetWithDamageTaken(5);
+        SceneContext sceneContext = new SceneContext(List.of(allySheet), List.of(), Map.of(allySheet, Range.ADJACENTE));
+
+        // The sheet-less calculateFinalDamage overload has no CharacterSheet in hand — Bastião's
+        // own PV comparison can't be resolved at all, so its RA doesn't reduce the raw damage.
+        assertEquals(10, damageService.calculateFinalDamage(holder, sceneContext, 10, false));
+    }
+
+    @Test
+    void selfFacingAbsoluteDamageReductionDoesNotApplyWithoutASceneContext() {
+        Character holder = characterWithBastiaoDosNecessitados();
+        CharacterSheet holderSheet = CharacterSheet.of(holder, new Player());
+
+        assertEquals(0, damageService.getTotalAbsoluteDamageReduction(holderSheet, null));
+    }
+
+    @Test
+    void calculateFinalDamageAppliesBastiaoDosNecessitadosSelfFacingAbsoluteDamageReduction() {
+        Character holder = characterWithBastiaoDosNecessitados();
+        CharacterSheet holderSheet = CharacterSheet.of(holder, new Player());
+        CharacterSheet allySheet = allySheetWithDamageTaken(5);
+        SceneContext sceneContext = new SceneContext(List.of(allySheet), List.of(), Map.of(allySheet, Range.ADJACENTE));
+
+        int finalDamage = damageService.calculateFinalDamage(holderSheet, sceneContext, null, null, 10, false);
+
+        assertEquals(10 - DamageService.DEFAULT_DAMAGE_REDUCTION, finalDamage);
+    }
+
+    @Test
+    void bastiaoDosNecessitadosCombinesAdditivelyWithTorreEmMovimento() {
+        Character holder = CharacterFixture.blank(CharacterFixture.BLANK)
+                .egoAdvantage(EgoDomain.INICIATIVA, InitiativeAdvantage.TORRE_EM_MOVIMENTO)
+                .build();
+        holder.grantTitle(new Santo(List.of(), List.of(SantoAbility.BASTIAO_DOS_NECESSITADOS)), TitleSlot.PRIMARY);
+        CharacterSheet holderSheet = CharacterSheet.of(holder, new Player());
+        CharacterSheet allySheet = allySheetWithDamageTaken(5);
+        SceneContext sceneContext = new SceneContext(List.of(allySheet), List.of(), Map.of(allySheet, Range.ADJACENTE),
+                null, true, 1, false);
+
+        assertEquals(DamageService.DEFAULT_DAMAGE_REDUCTION * 2,
+                damageService.getTotalAbsoluteDamageReduction(holderSheet, sceneContext));
     }
 }

@@ -26,4 +26,5 @@ public class TranslatableMessages {
     public static final String SKILL_TRAIT_SKILL_TYPE_MISMATCH = "SKILL_TRAIT_SKILL_TYPE_MISMATCH";
     public static final String INITIATIVE_NOT_WON = "INITIATIVE_NOT_WON";
     public static final String INVALID_DAMAGE_TYPE_ELEMENT_PAIRING = "INVALID_DAMAGE_TYPE_ELEMENT_PAIRING";
+    public static final String REQUIRED_TITLE_TRAIT_NOT_HELD = "REQUIRED_TITLE_TRAIT_NOT_HELD";
 }

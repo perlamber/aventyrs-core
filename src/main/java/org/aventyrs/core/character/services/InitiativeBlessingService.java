@@ -1,14 +1,14 @@
 package org.aventyrs.core.character.services;
 
 import org.aventyrs.core.character.Character;
-import org.aventyrs.core.sheet.InitiativeBlessing;
+import org.aventyrs.core.sheet.Blessing;
 
 import java.util.List;
 
 public interface InitiativeBlessingService {
 
     /**
-     * Every {@link InitiativeBlessing} character's own held traits grant the moment it wins
+     * Every {@link Blessing} character's own held traits grant the moment it wins
      * initiative for its group — concatenates {@code character.getEgoAdvantages().values()},
      * {@code character.getAttributeAbilities()}, and {@code
      * org.aventyrs.core.skill.SkillCompetencyAbility#allFor(character)} (acquired <b>and</b>
@@ -23,5 +23,5 @@ public interface InitiativeBlessingService {
      * caller that actually applies what this resolves, as {@code TemporaryBonus}es on the
      * intended recipients' {@code CharacterSheet}s.
      */
-    List<InitiativeBlessing> resolveBlessings(Character character);
+    List<Blessing> resolveBlessings(Character character);
 }

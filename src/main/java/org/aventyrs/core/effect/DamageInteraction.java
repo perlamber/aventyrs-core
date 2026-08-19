@@ -1,6 +1,5 @@
 package org.aventyrs.core.effect;
 
-import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.DamageType;
 import org.aventyrs.core.character.services.DamageService;
 import org.aventyrs.core.character.services.DamageServiceImpl;
@@ -77,8 +76,8 @@ public class DamageInteraction implements Interaction<CharacterSheet> {
     }
 
     /**
-     * Applies {@code rawDamage} (mitigated per {@link DamageService#calculateFinalDamage(Character,
-     * CharacterSheet, SceneContext, DamageType, CharacterSheet, int, boolean)}) to {@code
+     * Applies {@code rawDamage} (mitigated per {@link DamageService#calculateFinalDamage(CharacterSheet,
+     * SceneContext, DamageType, CharacterSheet, int, boolean)}) to {@code
      * target}. {@code nextInteraction} is only carried onto the returned {@link
      * InteractionResult#getNextInteraction()} when this hit actually dealt damage (final damage
      * &gt; 0) — a hit fully absorbed by RD/RA has nothing for a downstream {@link EffectChain}/
@@ -89,12 +88,11 @@ public class DamageInteraction implements Interaction<CharacterSheet> {
                                       final DamageType damageType, final CharacterSheet source,
                                       final int rawDamage, final boolean ignoreDamageReduction,
                                       final Interaction<CharacterSheet> nextInteraction) {
-        Character character = target.getCharacter();
-        int finalDamage = damageService.calculateFinalDamage(character, target, sceneContext, damageType, source, rawDamage, ignoreDamageReduction);
+        int finalDamage = damageService.calculateFinalDamage(target, sceneContext, damageType, source, rawDamage, ignoreDamageReduction);
         target.applyDamage(finalDamage);
 
         InteractionResult.InteractionResultBuilder result = InteractionResult.builder()
-                .resultStatus(character.getStatus())
+                .resultStatus(target.getCharacter().getStatus())
                 .resourceLossValue(finalDamage)
                 .resourceLossType(ResourceType.HIT_POINTS);
         if (finalDamage > 0) {

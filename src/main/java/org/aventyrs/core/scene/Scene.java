@@ -1,8 +1,9 @@
 package org.aventyrs.core.scene;
 
+import org.aventyrs.core.sheet.Blessing;
 import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.IllegalOperationException;
-import org.aventyrs.core.sheet.InitiativeBlessing;
+import org.aventyrs.core.sheet.TargetScope;
 import org.aventyrs.core.sheet.TemporaryBonus;
 
 import java.util.ArrayList;
@@ -48,7 +49,7 @@ import static org.aventyrs.core.util.TranslatableMessages.NO_PARTICIPANTS_IN_SCE
  *
  * <p>{@link #applyInitiativeBlessings} is the caller-invoked hook for the moment a group
  * actually wins initiative: given the winner's own already-resolved {@link
- * org.aventyrs.core.sheet.InitiativeBlessing}s (a caller resolves these itself via {@code
+ * org.aventyrs.core.sheet.Blessing}s (a caller resolves these itself via {@code
  * org.aventyrs.core.character.services.InitiativeBlessingService#resolveBlessings} — this
  * class only tracks/applies them, it never reaches into a Service to compute what a
  * Character's abilities grant, the same restraint {@link #buildContext} already applies to
@@ -91,7 +92,7 @@ public class Scene {
     private int currentRound = 0;
     private TerrainType terrainType;
     private boolean combatScene;
-    private List<InitiativeBlessing> activeBlessings = List.of();
+    private List<Blessing> activeBlessings = List.of();
 
     /**
      * Adds a CharacterSheet with its rolled initiative value, in a sub-group of its own —
@@ -117,10 +118,11 @@ public class Scene {
      * <p>If group is currently blessed (see {@link #isGroupBlessed}) — i.e. {@link
      * #grantedBlessings} already tracks another member of it from an earlier {@link
      * #applyInitiativeBlessings} call — characterSheet immediately receives every currently-
-     * active ally-scoped {@link InitiativeBlessing} too — it's joining a group that already
-     * won initiative, even though it didn't personally roll the highest value itself. A
-     * self-only blessing (not scoped to allies) never propagates this way, since it belongs
-     * to whichever Character actually holds the granting ability, not the group at large.
+     * active {@link TargetScope#SELF_AND_ALLIES}-scoped {@link Blessing} too — it's joining a
+     * group that already won initiative, even though it didn't personally roll the highest
+     * value itself. A {@link TargetScope#SELF}-only blessing never propagates this way, since
+     * it belongs to whichever Character actually holds the granting ability, not the group at
+     * large.
      * @return the CharacterSheets in Iniciativa order after this addition
      */
     public List<CharacterSheet> addParticipant(final CharacterSheet characterSheet, final int initiativeValue, final UUID group) {
@@ -131,8 +133,8 @@ public class Scene {
             pendingEntries.add(entry);
         }
         if (isGroupBlessed(group)) {
-            for (InitiativeBlessing blessing : activeBlessings) {
-                if (blessing.isAppliesToAllies()) {
+            for (Blessing blessing : activeBlessings) {
+                if (blessing.getScope() == TargetScope.SELF_AND_ALLIES) {
                     grantBlessing(characterSheet, blessing);
                 }
             }
@@ -247,7 +249,7 @@ public class Scene {
     /**
      * The method to call the moment winner's group actually wins initiative (see
      * {@link #wonInitiative}) with blessings — winner's own already-resolved {@link
-     * InitiativeBlessing}s, e.g. from {@code
+     * Blessing}s, e.g. from {@code
      * org.aventyrs.core.character.services.InitiativeBlessingService#resolveBlessings(winner
      * .getCharacter())}; this class deliberately doesn't resolve them itself, see this class's
      * own javadoc. Throws {@link IllegalOperationException} ({@code INITIATIVE_NOT_WON}) if
@@ -255,24 +257,24 @@ public class Scene {
      * {@link CharacterSheet#removeEffect}, precisely undoing what was tracked in {@link
      * #grantedBlessings} — never touching an unrelated {@code TemporaryBonus} of the same
      * {@code ModifierType} from some other source), then grants <em>all</em> of blessings to
-     * winner directly, plus every {@code appliesToAllies} one to each of {@link
-     * #getAllies(CharacterSheet)} — each grant a fresh {@link TemporaryBonus}, tracked so a
-     * later call (a new group winning, or the same one winning again) can revoke precisely
-     * these. Also remembers blessings itself so {@link #addParticipant} can extend the
-     * ally-scoped ones to whoever joins winner's group afterwards.
+     * winner directly, plus every {@link TargetScope#SELF_AND_ALLIES}-scoped one to each of
+     * {@link #getAllies(CharacterSheet)} — each grant a fresh {@link TemporaryBonus}, tracked
+     * so a later call (a new group winning, or the same one winning again) can revoke
+     * precisely these. Also remembers blessings itself so {@link #addParticipant} can extend
+     * the ally-scoped ones to whoever joins winner's group afterwards.
      * @throws IllegalOperationException if winner was never added to this Scene, or hasn't
      *                                    actually won initiative for its group
      */
-    public void applyInitiativeBlessings(final CharacterSheet winner, final List<InitiativeBlessing> blessings) {
+    public void applyInitiativeBlessings(final CharacterSheet winner, final List<Blessing> blessings) {
         if (!wonInitiative(winner)) {
             throw new IllegalOperationException(INITIATIVE_NOT_WON);
         }
         revokeActiveBlessings();
         activeBlessings = blessings;
 
-        for (InitiativeBlessing blessing : blessings) {
+        for (Blessing blessing : blessings) {
             grantBlessing(winner, blessing);
-            if (blessing.isAppliesToAllies()) {
+            if (blessing.getScope() == TargetScope.SELF_AND_ALLIES) {
                 for (CharacterSheet ally : getAllies(winner)) {
                     grantBlessing(ally, blessing);
                 }
@@ -286,7 +288,7 @@ public class Scene {
         activeBlessings = List.of();
     }
 
-    private void grantBlessing(final CharacterSheet sheet, final InitiativeBlessing blessing) {
+    private void grantBlessing(final CharacterSheet sheet, final Blessing blessing) {
         TemporaryBonus bonus = new TemporaryBonus(blessing.getModifierType(), blessing.getValue(), blessing.getRounds());
         sheet.applyEffect(bonus);
         grantedBlessings.computeIfAbsent(sheet, key -> new ArrayList<>()).add(bonus);

@@ -5,6 +5,7 @@ import org.aventyrs.core.sheet.CharacterSheet;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * What a Character can currently perceive about nearby allies and enemies — a resolved
@@ -109,6 +110,22 @@ public class SceneContext {
     /** How many enemies are at maxRange or closer — same shape as {@link #countAlliesWithin}, for maluses like "surrounded". */
     public int countEnemiesWithin(final Range maxRange) {
         return (int) enemies.stream().filter(enemy -> isWithin(enemy, maxRange)).count();
+    }
+
+    /**
+     * Every ally at maxRange or closer — e.g. a Título ability whose own condition needs to
+     * inspect each qualifying ally individually (not just count/detect them), such as
+     * {@code SantoAbility#BASTIAO_DOS_NECESSITADOS}'s own PV comparison against each adjacent
+     * ally. Same filter as {@link #countAlliesWithin}, returning the matching sheets themselves
+     * instead of just how many there are.
+     */
+    public List<CharacterSheet> getAlliesWithin(final Range maxRange) {
+        return allies.stream().filter(ally -> isWithin(ally, maxRange)).collect(Collectors.toList());
+    }
+
+    /** Every enemy at maxRange or closer — same shape as {@link #getAlliesWithin}, for the enemy side. */
+    public List<CharacterSheet> getEnemiesWithin(final Range maxRange) {
+        return enemies.stream().filter(enemy -> isWithin(enemy, maxRange)).collect(Collectors.toList());
     }
 
     private boolean isWithin(final CharacterSheet sheet, final Range maxRange) {

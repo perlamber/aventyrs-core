@@ -57,10 +57,12 @@ import java.util.Map;
  *   <li><b>Herança Celeste</b> (Cura/Defesa/Redução-de-Dano effects of Magias Elementais:
  *   Terra ou Sagrada increased +1 per Título Aventyr Desperto) — needs a Magia entity with an
  *   element/school classification (none exists — see {@code
- *   org.aventyrs.core.magic.SpellCastingService}'s own "No Magia entity/list exists yet"), and
- *   a way to count *awakened* Títulos Aventyr — {@link org.aventyrs.core.character.Title} is
- *   currently just an empty marker interface, with no catalog of concrete Títulos and no
- *   "Desperto" state at all.</li>
+ *   org.aventyrs.core.magic.SpellCastingService}'s own "No Magia entity/list exists yet").
+ *   {@link org.aventyrs.core.title.AventyrTitle} now models a real *held* Título (see
+ *   {@code Character#getTitles()}), but this trait's own "Título Aventyr Desperto" language
+ *   isn't confirmed to mean simply "held" — whether a held Título needs some further
+ *   "awakened" state distinct from merely being granted is an open question left for whoever
+ *   wires this trait up for real, not assumed here.</li>
  *   <li><b>Agnação Ancestral</b> (spend 3PM outside combat to reduce a Perícia roll's GD by 1
  *   nível, treated as trained and Especialista even if not) — needs a "spend a resource for a
  *   one-time roll effect" transaction this core has no equivalent of (Pontos de Mana are

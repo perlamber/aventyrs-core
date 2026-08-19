@@ -12,6 +12,8 @@ import org.aventyrs.core.skill.DifficultyLevel;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -38,15 +40,12 @@ class InteractionResultTest {
     }
 
     @Test
-    void temporaryBonusFieldsStayNullWhenNotSet() {
+    void blessingsStayNullWhenNotSet() {
         InteractionResult result = InteractionResult.builder()
                 .skillRollBonus(3)
                 .build();
 
-        assertNull(result.getTemporaryBonusValue());
-        assertNull(result.getTemporaryBonusModifierType());
-        assertNull(result.getTemporaryBonusRounds());
-        assertNull(result.getTemporaryBonusScope());
+        assertNull(result.getBlessings());
     }
 
     @Test
@@ -71,33 +70,34 @@ class InteractionResultTest {
     }
 
     @Test
-    void builderAssignsATemporaryBonusScopedToASpecificSkill() {
+    void builderAssignsABlessingScopedToASpecificSkill() {
+        Blessing blessing = new Blessing(ModifierType.ATLETISMO_ROLL_BONUS, 2, 1, TargetScope.SINGLE_TARGET, "TEST_SOURCE");
+
         InteractionResult result = InteractionResult.builder()
-                .temporaryBonusValue(2)
-                .temporaryBonusModifierType(ModifierType.ATLETISMO_ROLL_BONUS)
-                .temporaryBonusRounds(1)
-                .temporaryBonusScope(TargetScope.SINGLE_TARGET)
+                .blessings(List.of(blessing))
                 .build();
 
-        assertEquals(2, result.getTemporaryBonusValue());
-        assertEquals(ModifierType.ATLETISMO_ROLL_BONUS, result.getTemporaryBonusModifierType());
-        assertEquals(1, result.getTemporaryBonusRounds());
-        assertEquals(TargetScope.SINGLE_TARGET, result.getTemporaryBonusScope());
+        assertEquals(1, result.getBlessings().size());
+        assertSame(blessing, result.getBlessings().get(0));
     }
 
     @Test
-    void builderAssignsATemporaryBonusThatAppliesBroadlyToAllies() {
+    void blessingReportsItsOwnSource() {
+        Blessing blessing = new Blessing(ModifierType.SKILL_ROLL_BONUS, 1, 1, TargetScope.ALLIES, "DOM_BARDICO");
+
+        assertEquals("DOM_BARDICO", blessing.getSource());
+    }
+
+    @Test
+    void builderAssignsMultipleBlessingsAtOnce() {
+        Blessing rangedVantagem = new Blessing(ModifierType.ATAQUE_A_DISTANCIA_ROLL_BONUS, 2, 2, TargetScope.SELF_AND_ALLIES, "GRITO_DE_GUERRA_VULCANO");
+        Blessing meleeVantagem = new Blessing(ModifierType.ATAQUE_CORPO_A_CORPO_ROLL_BONUS, 2, 2, TargetScope.SELF_AND_ALLIES, "GRITO_DE_GUERRA_VULCANO");
+
         InteractionResult result = InteractionResult.builder()
-                .temporaryBonusValue(1)
-                .temporaryBonusModifierType(ModifierType.SKILL_ROLL_BONUS)
-                .temporaryBonusRounds(2)
-                .temporaryBonusScope(TargetScope.ALLIES)
+                .blessings(List.of(rangedVantagem, meleeVantagem))
                 .build();
 
-        assertEquals(1, result.getTemporaryBonusValue());
-        assertEquals(ModifierType.SKILL_ROLL_BONUS, result.getTemporaryBonusModifierType());
-        assertEquals(2, result.getTemporaryBonusRounds());
-        assertEquals(TargetScope.ALLIES, result.getTemporaryBonusScope());
+        assertEquals(List.of(rangedVantagem, meleeVantagem), result.getBlessings());
     }
 
     @Test
@@ -190,13 +190,12 @@ class InteractionResultTest {
                 .build();
 
         InteractionResult extended = base.toBuilder()
-                .temporaryBonusModifierType(ModifierType.SKILL_ROLL_BONUS)
-                .temporaryBonusRounds(1)
+                .blessings(List.of(new Blessing(ModifierType.SKILL_ROLL_BONUS, 1, 1, TargetScope.ALLIES, "DOM_BARDICO")))
                 .build();
 
         assertEquals(5, extended.getSkillRollBonus());
         assertEquals(1, extended.getDifficultyReduction());
-        assertEquals(ModifierType.SKILL_ROLL_BONUS, extended.getTemporaryBonusModifierType());
-        assertEquals(1, extended.getTemporaryBonusRounds());
+        assertEquals(1, extended.getBlessings().size());
+        assertEquals(ModifierType.SKILL_ROLL_BONUS, extended.getBlessings().get(0).getModifierType());
     }
 }

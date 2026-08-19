@@ -8,7 +8,8 @@ import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.character.services.DamageService;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.scene.SceneContext;
-import org.aventyrs.core.sheet.InitiativeBlessing;
+import org.aventyrs.core.sheet.Blessing;
+import org.aventyrs.core.sheet.TargetScope;
 import org.aventyrs.core.skill.Skill;
 
 import java.util.List;
@@ -68,9 +69,9 @@ public enum InitiativeAdvantage implements EgoAdvantage {
 
     /**
      * The "o seu Movimento Base e o de seus aliados aumentam em +2UD" half is fully wired:
-     * {@link #resolveInitiativeBlessings} grants a {@link InitiativeBlessing}
+     * {@link #resolveInitiativeBlessings} grants a {@link Blessing}
      * ({@link ModifierType#MOVEMENT}, +{@value #MOVEMENT_BONUS}UD, {@value
-     * #FIRST_ROUNDS_COUNT} Rounds, {@code appliesToAllies=true}) — resolved by {@code
+     * #FIRST_ROUNDS_COUNT} Rounds, {@link TargetScope#SELF_AND_ALLIES}) — resolved by {@code
      * org.aventyrs.core.character.services.InitiativeBlessingService} and applied by {@code
      * org.aventyrs.core.scene.Scene#applyInitiativeBlessings} as a {@code TemporaryBonus} on
      * the winner and every Scene ally, consumed by summing {@code
@@ -88,8 +89,8 @@ public enum InitiativeAdvantage implements EgoAdvantage {
             "Adicionalmente, se você tiver ganho a iniciativa, o seu Movimento Base e o " +
             "de seus aliados aumentam em +2UD nestas Rodadas.") {
         @Override
-        public List<InitiativeBlessing> resolveInitiativeBlessings() {
-            return List.of(new InitiativeBlessing(ModifierType.MOVEMENT, MOVEMENT_BONUS, FIRST_ROUNDS_COUNT, true));
+        public List<Blessing> resolveInitiativeBlessings() {
+            return List.of(new Blessing(ModifierType.MOVEMENT, MOVEMENT_BONUS, FIRST_ROUNDS_COUNT, TargetScope.SELF_AND_ALLIES, name()));
         }
     },
 

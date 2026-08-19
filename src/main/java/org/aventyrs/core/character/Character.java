@@ -21,10 +21,13 @@ import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.Player;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
 import org.aventyrs.core.skill.SkillType;
+import org.aventyrs.core.title.AventyrTitle;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import static org.aventyrs.core.util.TranslatableMessages.NOT_ENOUGH_EXPERIENCE;
 
@@ -131,6 +134,29 @@ public class Character {
     @Singular
     protected List<AcquiredChoice<?>> abilityChoices;
 
+    /**
+     * The Título Aventyr in this character's Título Primário slot, or {@code null} if none —
+     * same "nullable, no default" shape as {@link #sexo}/{@link #deity}. Unlike an earlier
+     * version of this design (a single {@code List<AventyrTitle> titles} field, with each held
+     * Título self-reporting whether it was "the" primary one), a character holds **exactly
+     * three** Título slots — Primário/Secundário/Terciário, {@link #secondaryTitle}/
+     * {@link #tertiaryTitle} below — and which slot a Título occupies is a fact about the
+     * *Character*, not the Título instance: it's now structurally impossible to have two
+     * "primary" Títulos, rather than an unenforced invariant. Set via {@link
+     * #grantTitle(AventyrTitle, TitleSlot)}, mirroring {@code CharacterSkill#increaseGraduation}'s
+     * own plain-mutator shape (a Título costs no XP and needs no {@code CharacterSheet}, so —
+     * unlike {@code CharacterAttributeService#upgradeBase} — there's no reason to route it
+     * through a dedicated service that returns a new value either). See CLAUDE.md's "Adding a
+     * new Título" section for the full rationale.
+     */
+    protected AventyrTitle primaryTitle;
+
+    /** The Título Aventyr in this character's Título Secundário slot, or {@code null} if none — see {@link #primaryTitle}. */
+    protected AventyrTitle secondaryTitle;
+
+    /** The Título Aventyr in this character's Título Terciário slot, or {@code null} if none — see {@link #primaryTitle}. */
+    protected AventyrTitle tertiaryTitle;
+
     @NonNull
     protected ActionProfile actionProfile;
 
@@ -199,6 +225,30 @@ public class Character {
      */
     public EgoAdvantage getEgoAdvantage(final EgoDomain domain) {
         return egoAdvantages.get(domain);
+    }
+
+    /**
+     * Grants title into slot — see {@link #primaryTitle}'s own javadoc for why this is a real
+     * mutator. Overwrites whatever (if anything) already occupied that slot.
+     */
+    public void grantTitle(@NonNull final AventyrTitle title, @NonNull final TitleSlot slot) {
+        switch (slot) {
+            case PRIMARY -> primaryTitle = title;
+            case SECONDARY -> secondaryTitle = title;
+            case TERTIARY -> tertiaryTitle = title;
+        }
+    }
+
+    /**
+     * Every Título Aventyr slot this character has actually filled, Primário first — e.g. for a
+     * caller that needs to scan every held Título's own abilities regardless of which slot each
+     * occupies (see {@code DamageServiceImpl}'s own Título-ability scan). Empty slots are
+     * simply omitted, never a {@code null} entry.
+     */
+    public List<AventyrTitle> getAllTitles() {
+        return Stream.of(primaryTitle, secondaryTitle, tertiaryTitle)
+                .filter(Objects::nonNull)
+                .toList();
     }
 
     public enum Sexo {

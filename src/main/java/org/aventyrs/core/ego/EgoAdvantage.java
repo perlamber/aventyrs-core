@@ -3,8 +3,8 @@ package org.aventyrs.core.ego;
 import org.aventyrs.core.character.DamageBonus;
 import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.scene.SceneContext;
+import org.aventyrs.core.sheet.Blessing;
 import org.aventyrs.core.sheet.CharacterSheet;
-import org.aventyrs.core.sheet.InitiativeBlessing;
 import org.aventyrs.core.skill.SkillType;
 
 import java.util.List;
@@ -46,7 +46,7 @@ public interface EgoAdvantage {
     }
 
     /**
-     * Every {@link InitiativeBlessing} this Vantagem grants the moment its holder wins
+     * Every {@link Blessing} this Vantagem grants the moment its holder wins
      * initiative for their group — e.g. {@link InitiativeAdvantage#POSICIONAMENTO_ESTRATEGICO}'s
      * +2UD Movimento Base. Resolved once, at grant-time (not per-roll like {@link
      * #resolveConditionalRollBonus}/{@link #resolveDamageBonus} above, so no {@code
@@ -59,7 +59,7 @@ public interface EgoAdvantage {
      * javadoc for the full mechanism. Empty by default; only override on a constant whose
      * rules text grants a bonus specifically for winning initiative.
      */
-    default List<InitiativeBlessing> resolveInitiativeBlessings() {
+    default List<Blessing> resolveInitiativeBlessings() {
         return List.of();
     }
 

@@ -9,10 +9,11 @@ import org.aventyrs.core.character.services.InitiativeBlessingService;
 import org.aventyrs.core.character.services.InitiativeBlessingServiceImpl;
 import org.aventyrs.core.ego.InitiativeAdvantage;
 import org.aventyrs.core.modifier.ModifierType;
+import org.aventyrs.core.sheet.Blessing;
 import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.IllegalOperationException;
-import org.aventyrs.core.sheet.InitiativeBlessing;
 import org.aventyrs.core.sheet.Player;
+import org.aventyrs.core.sheet.TargetScope;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -43,8 +44,8 @@ class SceneTest {
         }
 
         @Override
-        public List<InitiativeBlessing> resolveInitiativeBlessings() {
-            return List.of(new InitiativeBlessing(ModifierType.REACTIONS, 1, 1, false));
+        public List<Blessing> resolveInitiativeBlessings() {
+            return List.of(new Blessing(ModifierType.REACTIONS, 1, 1, TargetScope.SELF, "SelfOnlyBlessingAbility"));
         }
     }
 
@@ -72,7 +73,7 @@ class SceneTest {
         return CharacterSheet.of(character, new Player());
     }
 
-    private List<InitiativeBlessing> blessingsFor(final CharacterSheet sheet) {
+    private List<Blessing> blessingsFor(final CharacterSheet sheet) {
         return blessingService.resolveBlessings(sheet.getCharacter());
     }
 
