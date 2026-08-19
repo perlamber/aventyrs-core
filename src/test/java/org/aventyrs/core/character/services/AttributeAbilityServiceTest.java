@@ -9,6 +9,7 @@ import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.AttributeValue;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterAttributes;
+import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.character.fixture.CharacterSkillFixture;
 import org.aventyrs.core.sheet.IllegalOperationException;
@@ -21,9 +22,11 @@ import org.aventyrs.core.skill.persuasao.PersuasaoSpecialization;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -226,6 +229,48 @@ class AttributeAbilityServiceTest {
         assertEquals(GnoseAbility.DOMINIO_DO_CONHECIMENTO_CHOICE_LIMIT,
                 abilityService.grantAttributeAbility(fourSkills, GnoseAbility.DOMINIO_DO_CONHECIMENTO)
                         .getPendingSkillTraitChoiceLimit());
+    }
+
+    @Test
+    void grantAttributeAbilityAppliesEstabilidadeEmocionalsPermanentAutocontrolePoint() {
+        Character character = characterWithGnoseBase(3);
+
+        Character granted = abilityService.grantAttributeAbility(character, GnoseAbility.ESTABILIDADE_EMOCIONAL).getCharacter();
+
+        assertEquals(1, granted.getEgos().getAutocontrole().getVariable());
+        assertEquals(0, granted.getEgos().getSorte().getVariable());
+        assertEquals(0, granted.getEgos().getRecursos().getVariable());
+        assertEquals(0, granted.getEgos().getIniciativa().getVariable());
+    }
+
+    @Test
+    void grantAttributeAbilityForRatoDeBibliotecaTrainsEveryUntrainedSkillWithNoSpecializations() {
+        Character character = characterWithGnoseBase(3).toBuilder()
+                .skills(Map.of(
+                        SkillType.ARTES, CharacterSkillFixture.blank(CharacterSkillFixture.ARTES_1).build(),
+                        SkillType.PERSUASAO, CharacterSkillFixture.blank(CharacterSkillFixture.PERSUASAO_1).build()))
+                .build();
+
+        Character granted = abilityService.grantAttributeAbility(character, GnoseAbility.RATO_DE_BIBLIOTECA).getCharacter();
+
+        assertEquals(Set.copyOf(List.of(SkillType.values())), granted.getSkills().keySet());
+        assertTrue(granted.getSkills().get(SkillType.ATLETISMO).getSpecializations().isEmpty());
+        // Pre-existing training is untouched, not overwritten with a blank CharacterSkill.
+        assertEquals(CharacterSkillFixture.blank(CharacterSkillFixture.ARTES_1).build().getGraduation().getGraduationValue(),
+                granted.getSkills().get(SkillType.ARTES).getGraduation().getGraduationValue());
+    }
+
+    @Test
+    void grantAttributeAbilityForRatoDeBibliotecaGrantsNothingForAFullyTrainedCharacter() {
+        Character character = characterWithGnoseBase(3).toBuilder()
+                .skills(Arrays.stream(SkillType.values())
+                        .collect(Collectors.toMap(skillType -> skillType,
+                                skillType -> CharacterSkill.builder().skill(skillType.newSkillInstance()).build())))
+                .build();
+
+        Character granted = abilityService.grantAttributeAbility(character, GnoseAbility.RATO_DE_BIBLIOTECA).getCharacter();
+
+        assertEquals(character.getSkills().keySet(), granted.getSkills().keySet());
     }
 
     @Test

@@ -65,6 +65,25 @@ public interface AttributeAbility {
     }
 
     /**
+     * Every {@link SkillType} this ability grants outright training in the moment it's
+     * acquired — e.g. {@link GnoseAbility#RATO_DE_BIBLIOTECA}'s own "treinamento em todas as
+     * Perícias que não for treinado." Applied by {@code
+     * org.aventyrs.core.character.services.AttributeAbilityService#grantAttributeAbility},
+     * which adds a fresh, untrained-graduation {@code CharacterSkill} for each entry (no
+     * {@code specializations} — {@code CharacterSkill#getSpecializations()} already defaults
+     * to an empty list, so RATO_DE_BIBLIOTECA's own "não recebem Especializações iniciais"
+     * needs nothing further) — same "resolve, don't mutate" shape as {@link
+     * #resolvePermanentEgoGain}/{@link #resolveActiveAbility}. Takes the whole {@link
+     * Character} (not just its trained {@link SkillType}s, unlike {@link
+     * #resolvePendingSkillTraitChoices(Collection)}) because this needs the *untrained*
+     * complement of that set, not the trained set itself. Empty by default; only override on
+     * a constant whose rules text grants outright Perícia training like this.
+     */
+    default List<SkillType> resolveGrantedSkillTraining(Character character) {
+        return List.of();
+    }
+
+    /**
      * {@link #resolvePendingSkillTraitChoices(Collection)} against character's own currently
      * trained Perícias — the overload to call when a full {@link Character} is in hand. Never
      * override this one: the rule lives on the {@link Collection} overload, which is all any

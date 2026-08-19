@@ -51,6 +51,8 @@ public class AttributeAbilityServiceImpl implements AttributeAbilityService {
         ability.resolvePermanentEgoGain().ifPresent(domain ->
                 builder.egos(character.getEgos().withVariableBonus(domain, 1)));
         ability.resolveActiveAbility().ifPresent(builder::activeAbility);
+        ability.resolveGrantedSkillTraining(character).forEach(skillType ->
+                builder.skill(skillType, new CharacterSkill(skillType.newSkillInstance())));
         Character granted = builder.build();
 
         List<SkillType> pendingChoices = ability.resolvePendingSkillTraitChoices(granted);

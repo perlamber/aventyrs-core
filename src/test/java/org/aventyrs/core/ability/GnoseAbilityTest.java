@@ -6,6 +6,7 @@ import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterAttributes;
 import org.aventyrs.core.character.CharacterEgos;
 import org.aventyrs.core.character.CharacterSkill;
+import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.race.Human;
 import org.aventyrs.core.sheet.Player;
 import org.aventyrs.core.skill.Skill;
@@ -16,7 +17,10 @@ import org.aventyrs.core.skill.atletismo.Atletismo;
 import org.aventyrs.core.skill.persuasao.Persuasao;
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -96,16 +100,77 @@ class GnoseAbilityTest {
     }
 
     @Test
+    void genialidadeEEsforcoResolvesPendingChoicesForEveryKnownSkillRegardlessOfDomain() {
+        Character character = characterTrainedIn(new Artes(), new Persuasao(), new Atletismo());
+
+        assertEquals(Set.of(SkillType.ARTES, SkillType.PERSUASAO, SkillType.ATLETISMO),
+                Set.copyOf(GnoseAbility.GENIALIDADE_E_ESFORCO.resolvePendingSkillTraitChoices(character)));
+    }
+
+    @Test
+    void genialidadeEEsforcoCapsItsChoicesAtTwo() {
+        assertEquals(2, GnoseAbility.GENIALIDADE_E_ESFORCO_CHOICE_LIMIT);
+        assertEquals(GnoseAbility.GENIALIDADE_E_ESFORCO_CHOICE_LIMIT,
+                GnoseAbility.GENIALIDADE_E_ESFORCO.resolvePendingSkillTraitChoiceLimit().orElseThrow());
+    }
+
+    @Test
+    void genialidadeEEsforcoOwesACompetencyAbilityAndNothingElse() {
+        assertEquals(Set.of(SkillTraitKind.COMPETENCY_ABILITY),
+                GnoseAbility.GENIALIDADE_E_ESFORCO.resolvePendingSkillTraitKinds());
+    }
+
+    @Test
+    void estabilidadeEmocionalGrantsAPermanentAutocontrolePoint() {
+        assertEquals(Optional.of(EgoDomain.AUTOCONTROLE), GnoseAbility.ESTABILIDADE_EMOCIONAL.resolvePermanentEgoGain());
+    }
+
+    @Test
+    void ratoDeBibliotecaGrantsTrainingInEveryUntrainedSkill() {
+        Character character = characterTrainedIn(new Artes(), new Persuasao());
+
+        List<SkillType> untrained = Arrays.stream(SkillType.values())
+                .filter(skillType -> skillType != SkillType.ARTES && skillType != SkillType.PERSUASAO)
+                .toList();
+
+        assertEquals(Set.copyOf(untrained),
+                Set.copyOf(GnoseAbility.RATO_DE_BIBLIOTECA.resolveGrantedSkillTraining(character)));
+    }
+
+    @Test
+    void ratoDeBibliotecaGrantsNothingForAFullyTrainedCharacter() {
+        Character character = characterTrainedIn(Arrays.stream(SkillType.values())
+                .map(SkillType::newSkillInstance)
+                .toArray(Skill[]::new));
+
+        assertTrue(GnoseAbility.RATO_DE_BIBLIOTECA.resolveGrantedSkillTraining(character).isEmpty());
+    }
+
+    @Test
     void noOtherAbilityResolvesPendingSkillTraitChoices() {
         Character character = characterTrainedIn(new Artes(), new Persuasao(), new Atletismo());
 
         for (GnoseAbility ability : GnoseAbility.values()) {
-            if (ability == GnoseAbility.DOMINIO_DO_CONHECIMENTO) {
+            if (ability == GnoseAbility.DOMINIO_DO_CONHECIMENTO || ability == GnoseAbility.GENIALIDADE_E_ESFORCO) {
                 continue;
             }
             assertTrue(ability.resolvePendingSkillTraitChoices(character).isEmpty());
             assertTrue(ability.resolvePendingSkillTraitChoiceLimit().isEmpty());
             assertTrue(ability.resolvePendingSkillTraitKinds().isEmpty());
+        }
+    }
+
+    @Test
+    void noOtherAbilityGrantsAPermanentEgoPointOrSkillTraining() {
+        Character character = characterTrainedIn(new Artes(), new Persuasao(), new Atletismo());
+
+        for (GnoseAbility ability : GnoseAbility.values()) {
+            if (ability != GnoseAbility.ESTABILIDADE_EMOCIONAL) {
+                assertTrue(ability.resolvePermanentEgoGain().isEmpty());
+            }
+            if (ability != GnoseAbility.RATO_DE_BIBLIOTECA) {
+                assertTrue(ability.resolveGrantedSkillTraining(character).isEmpty());
+            }
         }
     }
 }
