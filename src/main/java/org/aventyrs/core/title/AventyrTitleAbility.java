@@ -95,5 +95,102 @@ public interface AventyrTitleAbility {
         return 0;
     }
 
+    /**
+     * How many Especializações of this same Título title must already hold before this
+     * ability can be acquired, <b>not caring which ones</b> — e.g. {@code
+     * SantoAbility#GUARDA_VIDAS}'s own "Requer 1 Especialização e 2 outras Habilidades de
+     * Santo" names 1 here, satisfied by either of Santo's two. {@code 0} by default (no
+     * Especialização prerequisite); only override on a constant whose rules text names a bare
+     * count like this. When a constant's rules text instead names one <i>specific</i>
+     * Especialização by name (e.g. {@code AbencoadoPelaLuzAbility}'s own "Requer Especialização
+     * 'Abençoado pela Luz'"), override {@link #getRequiredSpecialization()} instead — a
+     * constant sets one or the other, never both, since {@link #isEligible} only consults this
+     * bare count when that one is absent. Checked by {@link #isEligible} — the first "Requer
+     * N..." acquisition prerequisite this codebase actually enforces for a Título ability,
+     * unlike every other "Requer N..."-style clause elsewhere in this core, which stays a
+     * documented-but-unenforced comment (see CLAUDE.md's "no eligibility validation service"
+     * restraint).
+     */
+    default int getRequiredSpecializations() {
+        return 0;
+    }
+
+    /**
+     * The one specific Especialização this ability's own rules text names by name, if any —
+     * e.g. every {@code AbencoadoPelaLuzAbility} constant requires {@code
+     * SantoSpecialization#ABENCOADO_PELA_LUZ} specifically (matching that whole catalog's own
+     * class-level javadoc: every ability there is gated on holding that one Especialização),
+     * not merely "any 1 Especialização" the way {@link #getRequiredSpecializations()}' bare
+     * count means. {@code Optional.empty()} by default; {@link #isEligible} falls back to the
+     * bare count only when this is empty.
+     */
+    default Optional<AventyrTitleSpecialization> getRequiredSpecialization() {
+        return Optional.empty();
+    }
+
+    /**
+     * How many <b>other</b> Habilidades/Supremas from this <i>same catalog</i> — the same
+     * concrete {@code AventyrTitleAbility} enum this constant itself belongs to, e.g. {@code
+     * AbencoadoPelaLuzAbility#GLORIA_RELAMPEJANTE_DE_TESLA}'s own "Requer 2 Habilidades de
+     * 'Abençoado pela Luz'" counting only sibling {@code AbencoadoPelaLuzAbility} constants,
+     * never {@code SantoAbility} ones even though both live in the same held {@code
+     * AventyrTitle#getAbilities()} list — must already be held before this ability can be
+     * acquired. "Outras" (the rules text's own wording) excludes this ability itself, so
+     * checking this against title's own current per-catalog count (taken <i>before</i> this
+     * ability is added) already gets that exclusion for free. {@code 0} by default; only
+     * override on a constant whose rules text names one. Doesn't distinguish Habilidade from
+     * Suprema when counting — every "Requer N outras Habilidades" clause modeled so far never
+     * separately counts held Supremas, so a held Suprema from the same catalog counts toward
+     * this too, same as {@code AventyrTitle#getSpecializationAndSupremaCount()} already treats
+     * both uniformly for Despertar's own duration/Defesas formulas.
+     */
+    default int getRequiredOtherAbilities() {
+        return 0;
+    }
+
+    /**
+     * Whether title currently satisfies this ability's own Especialização/other-Habilidades
+     * prerequisite. Every prerequisite modeled so far is entirely self-contained to title's own
+     * held Especializações/Habilidades — no Character-level data is needed — so this compares
+     * directly against title rather than taking a {@code Character}, mirroring {@link
+     * AventyrTitle#getSpecializationAndSupremaCount()}'s own "pure arithmetic over title
+     * itself" shape. The Especialização half prefers {@link #getRequiredSpecialization()}
+     * (containment against title's own {@link AventyrTitle#getSpecializations()}) when present,
+     * falling back to {@link #getRequiredSpecializations()}'s bare count otherwise. The
+     * other-Habilidades half only counts title's held abilities belonging to this same concrete
+     * catalog — matched via {@link Enum#getDeclaringClass()} where the ability is an {@code
+     * Enum} (a constant-specific class body, e.g. {@code SantoAbility#BASTIAO_DOS_NECESSITADOS}'s
+     * own anonymous override, would otherwise report a different {@code Class} per constant
+     * than its sibling constants with no body, which {@code getClass()} alone can't see past),
+     * or plain {@link Object#getClass()} for a non-enum implementor (e.g. a test double) —
+     * see {@link #isSameCatalog}. {@code true} by default (no prerequisite); a constant
+     * overriding any of the three hooks above is automatically checked here without needing its
+     * own {@code isEligible} override too. Checked by {@code
+     * org.aventyrs.core.character.services.TitleAbilityService#grantTitleAbility} before
+     * granting.
+     */
+    default boolean isEligible(AventyrTitle title) {
+        boolean specializationSatisfied = getRequiredSpecialization()
+                .map(required -> title.getSpecializations().contains(required))
+                .orElseGet(() -> title.getSpecializations().size() >= getRequiredSpecializations());
+        long sameCatalogAbilityCount = title.getAbilities().stream()
+                .filter(held -> isSameCatalog(held, this))
+                .count();
+        return specializationSatisfied && sameCatalogAbilityCount >= getRequiredOtherAbilities();
+    }
+
+    /**
+     * Whether one and other belong to the same concrete {@code AventyrTitleAbility} catalog —
+     * see {@link #isEligible}'s own javadoc for why a plain {@code getClass()} comparison isn't
+     * safe here.
+     */
+    private static boolean isSameCatalog(final AventyrTitleAbility one, final AventyrTitleAbility other) {
+        return catalogOf(one) == catalogOf(other);
+    }
+
+    private static Class<?> catalogOf(final AventyrTitleAbility ability) {
+        return ability instanceof Enum<?> enumConstant ? enumConstant.getDeclaringClass() : ability.getClass();
+    }
+
     public Optional<Class <? extends Interaction>> getInteractionClass();
 }

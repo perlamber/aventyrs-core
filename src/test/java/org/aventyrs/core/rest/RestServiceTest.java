@@ -1,6 +1,7 @@
 package org.aventyrs.core.rest;
 
 import org.aventyrs.core.ability.FocusAbility;
+import org.aventyrs.core.ability.InstinctAbility;
 import org.aventyrs.core.ability.VigorAbility;
 import org.aventyrs.core.action.ActionProfile;
 import org.aventyrs.core.character.AttributeDomain;
@@ -127,6 +128,26 @@ class RestServiceTest {
 
         assertEquals(3, restService.getRecoveredHitPoints(character, RestType.CURTO));
         assertEquals(1, restService.getRecoveredHitPoints(character, RestType.MINIMO));
+    }
+
+    @Test
+    void supermotivadoGrantsOneExtraDeterminationPointOnAnyRest() {
+        Character character = exampleCharacter().toBuilder()
+                .attributeAbility(InstinctAbility.SUPERMOTIVADO)
+                .build();
+
+        assertEquals(3, restService.getRecoveredDeterminationPoints(character, RestType.MINIMO));
+        assertEquals(5, restService.getRecoveredDeterminationPoints(character, RestType.CURTO));
+    }
+
+    @Test
+    void supermotivadoGrantsThreeExtraDeterminationPointsOnLongoOrBetterRests() {
+        Character character = exampleCharacter().toBuilder()
+                .attributeAbility(InstinctAbility.SUPERMOTIVADO)
+                .build();
+
+        assertEquals(11, restService.getRecoveredDeterminationPoints(character, RestType.LONGO));
+        assertEquals(15, restService.getRecoveredDeterminationPoints(character, RestType.TOTAL));
     }
 
     @Test

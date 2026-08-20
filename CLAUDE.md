@@ -378,10 +378,30 @@ that same scan — not built yet, don't guess at it speculatively) — but `Aven
 also an Active Ability" rule: `DamageServiceImpl`'s Título-ability RA scan reads it today, so
 this isn't purely speculative infrastructure the way `isPassive()`'s own consumer still is.
 
-**Unenforced prerequisites**: "Requer N Especializações/Habilidades" is documented in a
-comment on the constant, never validated — the same "no eligibility validation service"
-restraint `SkillCompetencyAbility`'s own acquisition prerequisites already established (see
-"Adding a new Perícia" above). The Suprema-per-combination cap is likewise unenforced.
+**"Requer N Especializações/Habilidades" prerequisites are real, enforced data** — the one
+exception, across this whole codebase, to the "no eligibility validation service" restraint
+`SkillCompetencyAbility`'s own acquisition prerequisites still follow (see "Adding a new
+Perícia" above; every other "Requer N Graduações"-style clause elsewhere remains an unenforced
+comment). `AventyrTitleAbility#getRequiredSpecializations()`/`#getRequiredSpecialization()`/
+`#getRequiredOtherAbilities()` carry a constant's own numbers — the first pair for the
+Especialização half (a bare count for "Requer N Especializações" generically, e.g.
+`SantoAbility`'s own "1 Especialização" not caring which of the Título's two; or one specific
+named Especialização, e.g. every `AbencoadoPelaLuzAbility` constant naming
+`SantoSpecialization.ABENCOADO_PELA_LUZ` — a constant sets one or the other, never both), the
+third for "N outras Habilidades," scoped to sibling constants of that same concrete
+catalog only (`Enum#getDeclaringClass()`, not plain `getClass()` — a constant-specific class
+body, e.g. `SantoAbility#BASTIAO_DOS_NECESSITADOS`'s own anonymous override, would otherwise
+report a different runtime `Class` than a body-less sibling constant of the identical enum).
+`#isEligible(AventyrTitle)` combines both halves; `TitleAbilityService#grantTitleAbility`
+checks it before granting any ability to a held Título, throwing
+`TITLE_ABILITY_PREREQUISITE_NOT_MET` if unmet. The Suprema-per-combination cap itself is a
+softer case: `TitleAbilityService#getAvailableSupremaSlots` reports how many more a Título may
+receive right now (the normal 1, plus one more while `InstinctAbility#CENTELHA_SUPERIOR`'s own
+one-time extra grant is unspent) and `grantTitleAbility` enforces it on that one entry point —
+but directly constructing an `AventyrTitle` with more Supremas than that (bypassing the
+service entirely, same as every other builder-bypassable invariant in this codebase) is still
+unchecked, so the cap isn't enforced *everywhere* the way the Especialização/other-Habilidades
+prerequisite now is.
 
 **TODO discipline**: same shape as `ArtesCompetencyAbility`'s reference example — what the
 ability is supposed to do, and which specific system is missing. Check this codebase's

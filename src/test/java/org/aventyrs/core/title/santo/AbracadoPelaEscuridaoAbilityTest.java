@@ -5,9 +5,11 @@ import org.aventyrs.core.character.AttributeValue;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterAttributes;
 import org.aventyrs.core.character.fixture.CharacterFixture;
+import org.aventyrs.core.title.AventyrTitle;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -142,6 +144,57 @@ class AbracadoPelaEscuridaoAbilityTest {
         for (AbracadoPelaEscuridaoAbility ability : AbracadoPelaEscuridaoAbility.values()) {
             assertEquals(0, ability.resolveAbsoluteDamageReduction(null, true));
         }
+    }
+
+    @Test
+    void everyAbilityRequiresTheAbracadoPelaEscuridaoEspecializacao() {
+        for (AbracadoPelaEscuridaoAbility ability : AbracadoPelaEscuridaoAbility.values()) {
+            assertEquals(Optional.of(SantoSpecialization.ABRACADO_PELA_ESCURIDAO), ability.getRequiredSpecialization());
+        }
+    }
+
+    @Test
+    void onlyFurorDeSylphRequiresOtherAbilities() {
+        assertEquals(0, AbracadoPelaEscuridaoAbility.SACRIFICIO_YMIRIANO.getRequiredOtherAbilities());
+        assertEquals(0, AbracadoPelaEscuridaoAbility.ESPINHOS_DE_GAEA.getRequiredOtherAbilities());
+        assertEquals(0, AbracadoPelaEscuridaoAbility.PLACIDEZ_DE_UNDINE_RANCOR_DE_HALOI.getRequiredOtherAbilities());
+        assertEquals(2, AbracadoPelaEscuridaoAbility.FUROR_DE_SYLPH.getRequiredOtherAbilities());
+    }
+
+    @Test
+    void isEligibleRejectsATitleWithoutTheEspecializacao() {
+        AventyrTitle title = new Santo(List.of(SantoSpecialization.ABENCOADO_PELA_LUZ), List.of());
+
+        for (AbracadoPelaEscuridaoAbility ability : AbracadoPelaEscuridaoAbility.values()) {
+            assertFalse(ability.isEligible(title));
+        }
+    }
+
+    @Test
+    void isEligibleAcceptsSacrificioYmirianoOnceTheEspecializacaoIsHeld() {
+        AventyrTitle title = new Santo(List.of(SantoSpecialization.ABRACADO_PELA_ESCURIDAO), List.of());
+
+        assertTrue(AbracadoPelaEscuridaoAbility.SACRIFICIO_YMIRIANO.isEligible(title));
+    }
+
+    @Test
+    void isEligibleForFurorDeSylphIgnoresAbilitiesFromASiblingCatalog() {
+        // 2 SantoAbility Habilidades held, but none from this same AbracadoPelaEscuridaoAbility
+        // catalog — "outras Habilidades de 'Abraçado pela Escuridão'" must not count them.
+        AventyrTitle title = new Santo(
+                List.of(SantoSpecialization.ABRACADO_PELA_ESCURIDAO),
+                List.of(SantoAbility.PROTECAO_UNGIDA, SantoAbility.BASTIAO_DOS_NECESSITADOS));
+
+        assertFalse(AbracadoPelaEscuridaoAbility.FUROR_DE_SYLPH.isEligible(title));
+    }
+
+    @Test
+    void isEligibleAcceptsFurorDeSylphOnceEnoughSiblingAbilitiesAreHeld() {
+        AventyrTitle title = new Santo(
+                List.of(SantoSpecialization.ABRACADO_PELA_ESCURIDAO),
+                List.of(AbracadoPelaEscuridaoAbility.SACRIFICIO_YMIRIANO, AbracadoPelaEscuridaoAbility.ESPINHOS_DE_GAEA));
+
+        assertTrue(AbracadoPelaEscuridaoAbility.FUROR_DE_SYLPH.isEligible(title));
     }
 
     // Every constant here still has its granted effect fully TODO'd (only the PV-cost/duration/

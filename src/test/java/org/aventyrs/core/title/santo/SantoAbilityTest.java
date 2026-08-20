@@ -1,8 +1,10 @@
 package org.aventyrs.core.title.santo;
 
 import org.aventyrs.core.character.services.DamageService;
+import org.aventyrs.core.title.AventyrTitle;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -83,6 +85,53 @@ class SantoAbilityTest {
             assertEquals(0, ability.resolveAbsoluteDamageReduction(null, true));
             assertEquals(0, ability.resolveAbsoluteDamageReduction(null, false));
         }
+    }
+
+    @Test
+    void everyAbilityRequiresOneEspecializacao() {
+        for (SantoAbility ability : SantoAbility.values()) {
+            assertEquals(1, ability.getRequiredSpecializations());
+        }
+    }
+
+    @Test
+    void eachAbilityRequiresItsOwnNumberOfOtherAbilities() {
+        assertEquals(0, SantoAbility.PROTECAO_UNGIDA.getRequiredOtherAbilities());
+        assertEquals(2, SantoAbility.BASTIAO_DOS_NECESSITADOS.getRequiredOtherAbilities());
+        assertEquals(2, SantoAbility.GUARDA_VIDAS.getRequiredOtherAbilities());
+        assertEquals(4, SantoAbility.PROTETOR_DA_VIDA_E_DA_MORTE.getRequiredOtherAbilities());
+    }
+
+    @Test
+    void isEligibleRejectsATitleWithNoEspecializacao() {
+        AventyrTitle title = new Santo(List.of(), List.of());
+
+        for (SantoAbility ability : SantoAbility.values()) {
+            assertFalse(ability.isEligible(title));
+        }
+    }
+
+    @Test
+    void isEligibleAcceptsProtecaoUngidaOnceOneEspecializacaoIsHeld() {
+        AventyrTitle title = new Santo(List.of(SantoSpecialization.ABENCOADO_PELA_LUZ), List.of());
+
+        assertTrue(SantoAbility.PROTECAO_UNGIDA.isEligible(title));
+    }
+
+    @Test
+    void isEligibleRejectsBastiaoDosNecessitadosWithoutEnoughOtherAbilities() {
+        AventyrTitle title = new Santo(List.of(SantoSpecialization.ABENCOADO_PELA_LUZ), List.of(SantoAbility.PROTECAO_UNGIDA));
+
+        assertFalse(SantoAbility.BASTIAO_DOS_NECESSITADOS.isEligible(title));
+    }
+
+    @Test
+    void isEligibleAcceptsBastiaoDosNecessitadosOnceEnoughOtherAbilitiesAreHeld() {
+        AventyrTitle title = new Santo(
+                List.of(SantoSpecialization.ABENCOADO_PELA_LUZ),
+                List.of(SantoAbility.PROTECAO_UNGIDA, SantoAbility.GUARDA_VIDAS));
+
+        assertTrue(SantoAbility.BASTIAO_DOS_NECESSITADOS.isEligible(title));
     }
 
     // No SantoAbility constant has a real, activatable Interaction yet — every Título-level

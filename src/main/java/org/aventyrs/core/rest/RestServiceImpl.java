@@ -23,7 +23,10 @@ public class RestServiceImpl implements RestService {
 
     @Override
     public int getRecoveredDeterminationPoints(final Character character, final RestType restType) {
-        return recovered(character.getAttributes().getInstinct().getTotal(), restType);
+        int bonus = character.getAttributeAbilities().stream()
+                .mapToInt(ability -> ability.resolveRestDeterminationPointsBonus(restType))
+                .sum();
+        return recovered(character.getAttributes().getInstinct().getTotal(), restType) + bonus;
     }
 
     @Override

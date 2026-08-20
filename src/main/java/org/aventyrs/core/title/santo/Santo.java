@@ -10,6 +10,7 @@ import org.aventyrs.core.title.AventyrTitle;
 import org.aventyrs.core.title.AventyrTitleAbility;
 import org.aventyrs.core.title.AventyrTitleSpecialization;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.aventyrs.core.util.TranslatableMessages.REQUIRED_TITLE_TRAIT_NOT_HELD;
@@ -43,12 +44,15 @@ public class Santo implements AventyrTitle {
      * Supremas <b>and</b> a held specialization's gated ability constants (e.g.
      * {@link AbencoadoPelaLuzAbility}/{@link AbracadoPelaEscuridaoAbility}) in the same list —
      * exactly what a specialization's own gated abilities are documented as being granted
-     * through (see CLAUDE.md's "Adding a new Título" section).
+     * through (see CLAUDE.md's "Adding a new Título" section). Stored as a defensive mutable
+     * copy, not the raw reference handed in — {@link #grantAbility} needs to append to it
+     * post-construction (e.g. {@code TitleAbilityService#grantTitleAbility}), which an
+     * immutable {@code List.of(...)}-style argument (the common case in tests) would reject.
      */
     public Santo(@NonNull final List<SantoSpecialization> specializations,
                  @NonNull final List<AventyrTitleAbility> abilities) {
         this.specializations = specializations;
-        this.abilities = abilities;
+        this.abilities = new ArrayList<>(abilities);
     }
 
     @Override
@@ -74,6 +78,11 @@ public class Santo implements AventyrTitle {
     @Override
     public List<AventyrTitleAbility> getAbilities() {
         return abilities;
+    }
+
+    @Override
+    public void grantAbility(final AventyrTitleAbility ability) {
+        abilities.add(ability);
     }
 
     /**

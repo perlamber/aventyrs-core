@@ -100,6 +100,25 @@ class SantoTest {
         assertEquals(List.of(), santo.getAllAbilities());
     }
 
+    @Test
+    void grantAbilityAppendsToTheHeldAbilities() {
+        Santo santo = new Santo(List.of(), List.of(SantoAbility.BASTIAO_DOS_NECESSITADOS));
+
+        santo.grantAbility(SantoAbility.GUARDA_VIDAS);
+
+        assertEquals(List.of(SantoAbility.BASTIAO_DOS_NECESSITADOS, SantoAbility.GUARDA_VIDAS), santo.getAbilities());
+        assertEquals(List.of(SantoAbility.BASTIAO_DOS_NECESSITADOS, SantoAbility.GUARDA_VIDAS), santo.getAllAbilities());
+    }
+
+    @Test
+    void grantAbilityWorksEvenWhenConstructedWithAnImmutableAbilitiesList() {
+        Santo santo = new Santo(List.of(), List.of());
+
+        santo.grantAbility(SantoAbility.GUARDA_VIDAS);
+
+        assertEquals(List.of(SantoAbility.GUARDA_VIDAS), santo.getAbilities());
+    }
+
     private CharacterSheet newAdjacentAllySheet() {
         Character allyCharacter = CharacterFixture.blank(CharacterFixture.BLANK).build();
         return CharacterSheet.of(allyCharacter, new Player());

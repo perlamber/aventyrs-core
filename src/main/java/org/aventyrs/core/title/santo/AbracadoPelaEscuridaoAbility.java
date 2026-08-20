@@ -8,17 +8,24 @@ import java.util.Optional;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.sheet.Interaction;
 import org.aventyrs.core.title.AventyrTitleAbility;
+import org.aventyrs.core.title.AventyrTitleSpecialization;
 
 /**
  * The Habilidades/Suprema gated on holding the {@link SantoSpecialization#ABRACADO_PELA_ESCURIDAO}
  * Especialização specifically — see {@link AbencoadoPelaLuzAbility}'s own javadoc for why
- * these live in their own enum rather than folded into {@link SantoAbility}.
+ * these live in their own enum rather than folded into {@link SantoAbility}, and for why every
+ * constant here overrides {@code AventyrTitleAbility#getRequiredSpecialization()} with {@code
+ * SantoSpecialization#ABRACADO_PELA_ESCURIDAO} (real, enforced data now — see {@code
+ * AventyrTitleAbility#isEligible}). {@code FUROR_DE_SYLPH} additionally overrides {@code
+ * getRequiredOtherAbilities()} for its own "2 Habilidades de 'Abraçado pela Escuridão'"
+ * clause, counted only against sibling constants of this same enum.
  */
 @Getter
 @AllArgsConstructor
 public enum AbracadoPelaEscuridaoAbility implements AventyrTitleAbility {
 
-    // Requer Especialização 'Abraçado pela Escuridão'. "Custo de Ativação: Variável" is the
+    // Requer Especialização 'Abraçado pela Escuridão' — enforced (see class javadoc).
+    // "Custo de Ativação: Variável" is the
     // PV cost below (equal to Vigor), not a PD cost — PDCost is genuinely 0, not merely
     // unmodeled. The "gastar PV igual ao seu Vigor" half is real — see
     // #resolveVigorPvCost below, since Vigor's total is already a plain, real value
@@ -47,9 +54,10 @@ public enum AbracadoPelaEscuridaoAbility implements AventyrTitleAbility {
             "Bônus em Força muda para +3, sua Categoria de Tamanho é aumentada em +1 e a " +
             "Duração do efeito aumenta para 3 Rodadas. Pontos de Vida perdidos desta forma " +
             "só podem ser recuperados com Descansos Verdadeiros ou Roubo de Vida.",
-            false, 0, 1, false, Optional.empty()),
+            false, 0, 1, false, Optional.empty(), Optional.of(SantoSpecialization.ABRACADO_PELA_ESCURIDAO), 0),
 
-    // Requer Especialização 'Abraçado pela Escuridão'. "Custo de Ativação: Variável" is the
+    // Requer Especialização 'Abraçado pela Escuridão' — enforced (see class javadoc).
+    // "Custo de Ativação: Variável" is the
     // "qualquer quantidade de PV (mínimo 1)" spent below, not a PD cost — PDCost is genuinely
     // 0. The Duração formula ("1 + metade dos PV gastos, mínimo 1 Rodada") is real — see
     // #resolveDurationFromPvSpent below, pure arithmetic over the player's own chosen PV
@@ -64,10 +72,11 @@ public enum AbracadoPelaEscuridaoAbility implements AventyrTitleAbility {
             "Rodada). Enquanto protegido pelos Espinhos de Gaea, personagens que te atacarem " +
             "corpo-a-corpo sofrem 2 pontos de Dano Mágico Elemental: Natural, se o ataque " +
             "for bem-sucedido o atacante sofrerá +1d6 pontos de Dano.",
-            false, 0, 2, false, Optional.empty()),
+            false, 0, 2, false, Optional.empty(), Optional.of(SantoSpecialization.ABRACADO_PELA_ESCURIDAO), 0),
 
-    // Requer Especialização 'Abraçado pela Escuridão'. Fixed cost (2PD/3PA — not "Variável"
-    // like its siblings), so that data is real; the effect is fully TODO'd. "Sua Margem
+    // Requer Especialização 'Abraçado pela Escuridão' — enforced (see class javadoc). Fixed
+    // cost (2PD/3PA — not "Variável" like its siblings), so that data is real; the effect is
+    // otherwise fully TODO'd. "Sua Margem
     // Crítica Menor... aumenta em +2" and the Roubo de Vida/Mana/Determinação amounts are all
     // scoped to "este ataque" specifically — the one attack delivered *as part of* this
     // Habilidade's own activation — not a standing bonus to every future roll, so this doesn't
@@ -88,9 +97,13 @@ public enum AbracadoPelaEscuridaoAbility implements AventyrTitleAbility {
             "1 e a Corrente de Efeitos – Rancor de Haloi: Este ataque recebe Oferenda " +
             "Maldita como um Efeito Crítico adicional. Inimigos que tenham sofrido danos " +
             "desta Habilidade se tornam imunes a ela por 2 Rodadas.",
-            false, 2, 3, false, Optional.empty()),
+            false, 2, 3, false, Optional.empty(), Optional.of(SantoSpecialization.ABRACADO_PELA_ESCURIDAO), 0),
 
-    // Requer 2 Habilidades de 'Abraçado pela Escuridão' (unenforced). Same "Custo de Ativação:
+    // Requer 2 Habilidades de 'Abraçado pela Escuridão' — enforced (see class javadoc; same
+    // "its own comment never repeats the base Especialização requirement, but the class-level
+    // javadoc already states every constant here needs it, and 2 sibling Habilidades implies
+    // it anyway" inference AbencoadoPelaLuzAbility#GLORIA_RELAMPEJANTE_DE_TESLA's own comment
+    // documents). Same "Custo de Ativação:
     // Variável" nuance as SACRIFICIO_YMIRIANO — the PV cost equals Vigor's total, real via
     // #resolveVigorPvCost (shared with that constant); PDCost(2) is the separate, fixed PD
     // cost the rules text does state. The "aprimora uma quantidade de ataques igual à 1+
@@ -119,7 +132,7 @@ public enum AbracadoPelaEscuridaoAbility implements AventyrTitleAbility {
             "trás e você pode se Reposicionar. O Furor de Sylph aprimora uma quantidade de " +
             "ataques igual à 1+ metade dos PV gastos com esta Habilidade, PV perdidos desta " +
             "forma só podem ser recuperados com Descansos ou Roubo de Vida.",
-            true, 2, 0, false, Optional.empty()) {
+            true, 2, 0, false, Optional.empty(), Optional.of(SantoSpecialization.ABRACADO_PELA_ESCURIDAO), 2) {
         @Override
         public boolean isFreeActionActivation() {
             return true;
@@ -132,6 +145,8 @@ public enum AbracadoPelaEscuridaoAbility implements AventyrTitleAbility {
     private final int actionPointCost;
     private final boolean reactionActivation;
     private final Optional<Class<? extends Interaction>> interactionClass;
+    private final Optional<AventyrTitleSpecialization> requiredSpecialization;
+    private final int requiredOtherAbilities;
 
     /**
      * The "gastar uma quantidade de pontos de vida igual ao seu Vigor" cost shared by

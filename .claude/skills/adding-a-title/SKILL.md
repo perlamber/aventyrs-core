@@ -21,12 +21,17 @@ rules text. **If the base effect's own text has a "Se este for seu Título Prim�
 clause, split it out** — it goes on `getPrimaryTitleBonusDescription()`, not concatenated
 onto `getBaseEffectDescription()` (see step 2 and `Santo`'s own
 `BASE_EFFECT_DESCRIPTION`/`PRIMARY_TITLE_BONUS_DESCRIPTION` split). Note, for each ability:
-- Its "Requer" prerequisite verbatim (documented in a comment later, never enforced).
+- Its "Requer" prerequisite verbatim — **this is now real, enforced data, not just a comment**
+  (see step 2's own note below for the exact fields/mechanism). Parse it into two numbers: how
+  many Especializações (almost always "1," not caring which of the Título's two), and how many
+  *other* Título-level Habilidades/Supremas ("outras Habilidades de `<Title>`").
 - Its Custo de Ativação — in PD (Pontos de Determinação), PA (Pontos de Ação), "Reação", or
   "Ação Livre".
-- Whether it's a Habilidade or a Suprema (the top tier, limited to one per
-  Título+Especializações combination held, except where a specific ability grants more —
-  also unenforced).
+- Whether it's a Habilidade or a Suprema (the top tier — `TitleAbilityService
+  #getAvailableSupremaSlots`/`#grantTitleAbility` enforce the normal one-per-Título-Aventyr
+  allotment, plus one more while `InstinctAbility#CENTELHA_SUPERIOR`'s own one-time extra grant
+  is unspent, but only through that one service entry point — directly constructing an
+  `AventyrTitle` with more still bypasses it, same as any other builder-bypassable invariant).
 
 Every Título has **exactly two** Especializações — but this skill only covers the Título's own
 base (name, Despertar-equivalent, and any generically-gated Habilidades/Supremas). Don't invent
@@ -66,6 +71,18 @@ Habilidades/Supremas — don't duplicate that work here.
   constant also needs an `interactionClass` field (`Optional<Class<? extends Interaction>>` —
   `AventyrTitleAbility#getInteractionClass()` is abstract, no default) — `Optional.empty()`
   until/unless step 3 below wires a real activation for that specific constant.
+  **Also add `requiredSpecializations` (int) and `requiredOtherAbilities` (int) fields** for
+  the "Requer" prerequisite from step 1 — these override `AventyrTitleAbility
+  #getRequiredSpecializations()`/`#getRequiredOtherAbilities()` for free via Lombok's
+  `@Getter` (matching the interface method names exactly, the same way the existing `PDCost`
+  field already overrides `getPDCost()`); both default to 0 if the rules text names neither.
+  `#getRequiredOtherAbilities()` only ever counts sibling constants of this *same* enum
+  (`<Title>Ability`, never a `<Specialization>Ability` from a different catalog, even though
+  both end up in the same held `AventyrTitle#getAbilities()` list) — see `SantoAbility`'s own
+  four constants (1 Especialização apiece; 0/2/2/4 outras Habilidades) for the worked example.
+  Don't add a `getRequiredSpecialization()` override here — that's for one *specific*, named
+  Especialização, which never applies to this Título-level enum (see the
+  `adding-a-title-specialization` skill's own step 4 instead).
 
 ## 3. Classify each ability's mechanic
 
@@ -146,7 +163,13 @@ One file per new type:
   .class)` for any wired for real, `Optional.empty()` for the rest — see
   `SantoAbilityTest#noAbilityReportsAnInteractionClassYet` for the all-TODO'd baseline case),
   and any wired `resolve*` hook's real branch plus every other constant's default-zero
-  behavior.
+  behavior. **Also test the requirement fields**: `getRequiredSpecializations()`/
+  `getRequiredOtherAbilities()` per constant, plus `isEligible(AventyrTitle)` — a title with no
+  Especializações rejects every constant, one with enough of both accepts, and one with only
+  *sibling-catalog* Habilidades (e.g. a `<Specialization>Ability` instance, if one already
+  exists for this Título) still rejects — see `SantoAbilityTest
+  #isEligibleRejectsBastiaoDosNecessitadosWithoutEnoughOtherAbilities`/
+  `#isEligibleAcceptsBastiaoDosNecessitadosOnceEnoughOtherAbilitiesAreHeld` for the shape.
 - `<Title>Test` — constructor null-rejection, identity methods, round-tripping
   specializations/abilities, any real formula methods.
 - An integration test (see `SantoIntegrationTest`) granting the Título to a
@@ -172,6 +195,14 @@ to two). Don't build Especialização content as part of *this* skill.
   `SantoAbility.java` — the worked example this skill follows for the Título-level pieces
   (`SantoSpecialization.java`/`AbencoadoPelaLuzAbility.java` belong to the
   `adding-a-title-specialization` skill instead).
+- `src/main/java/org/aventyrs/core/title/AventyrTitleAbility.java` —
+  `getRequiredSpecializations()`/`getRequiredSpecialization()`/`getRequiredOtherAbilities()`/
+  `isEligible(AventyrTitle)`, the requirement-check mechanism every new ability's "Requer"
+  clause plugs into (see step 2's own note).
+- `src/main/java/org/aventyrs/core/character/services/TitleAbilityService.java`/
+  `TitleAbilityServiceImpl.java` — the single entry point (`grantTitleAbility`) that actually
+  calls `isEligible` before granting an ability to a held Título, plus
+  `getAvailableSupremaSlots` for the Suprema-cap/CENTELHA_SUPERIOR side of the same check.
 - `src/main/java/org/aventyrs/core/skill/artes/ArtesCompetencyAbility.java`,
   `ArtesAprimorarComArteAbility.java` — the TODO-writing convention and the
   instance-based-acquisition-choice pattern.

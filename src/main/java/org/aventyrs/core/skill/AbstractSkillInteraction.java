@@ -214,6 +214,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CharacterS
         bonus += sumEgoAdvantageRollBonuses(character.getEgoAdvantages().values(), sceneContext);
         bonus += sumEgoAdvantageSkillSpecificRollBonuses(character.getEgoAdvantages().values(), sceneContext, target);
         bonus += sizeCategoryRollBonus(characterSizeService.getEffectiveSizeCategory(character));
+        bonus += sumAttributeDomainRollBonuses(character.getAttributeAbilities(), attributeDomain, character);
         if (skillRoll != null && target.consumeFirstRollThisTurn(attributeDomain)) {
             bonus += sumFirstRollOfTurnBonuses(character.getAttributeAbilities(), attributeDomain);
         }
@@ -222,6 +223,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CharacterS
         difficultyReduction += skillCompetencyAbilities.stream()
                 .mapToInt(SkillCompetencyAbility::getDifficultyReduction)
                 .sum();
+        difficultyReduction += sumAttributeDomainDifficultyReductions(character.getAttributeAbilities(), attributeDomain, character);
 
         InteractionResult.InteractionResultBuilder result = InteractionResult.builder()
                 .resultStatus(character.getStatus())
@@ -383,6 +385,29 @@ public abstract class AbstractSkillInteraction implements Interaction<CharacterS
                 .map(ability -> ability.resolveFirstRollOfTurnBonus(rolledDomain))
                 .flatMap(Optional::stream)
                 .mapToInt(Integer::intValue)
+                .sum();
+    }
+
+    /**
+     * Sums {@link AttributeAbility#resolveAttributeDomainRollBonus} across every held
+     * Habilidade — e.g. {@code InstinctAbility#SENTIR_A_INTENCAO}'s Vantagem on every
+     * Instinto-governed roll. Unlike {@link #sumFirstRollOfTurnBonuses}, called
+     * unconditionally on every roll, not gated behind {@code CharacterSheet
+     * #consumeFirstRollThisTurn}.
+     */
+    private int sumAttributeDomainRollBonuses(final Collection<AttributeAbility> attributeAbilities, final AttributeDomain rolledDomain, final Character character) {
+        return attributeAbilities.stream()
+                .mapToInt(ability -> ability.resolveAttributeDomainRollBonus(rolledDomain, character))
+                .sum();
+    }
+
+    /**
+     * Sums {@link AttributeAbility#resolveAttributeDomainDifficultyReduction} across every
+     * held Habilidade — the GD-reduction counterpart to {@link #sumAttributeDomainRollBonuses}.
+     */
+    private int sumAttributeDomainDifficultyReductions(final Collection<AttributeAbility> attributeAbilities, final AttributeDomain rolledDomain, final Character character) {
+        return attributeAbilities.stream()
+                .mapToInt(ability -> ability.resolveAttributeDomainDifficultyReduction(rolledDomain, character))
                 .sum();
     }
 

@@ -1,7 +1,9 @@
 package org.aventyrs.core.title.santo;
 
+import org.aventyrs.core.title.AventyrTitle;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -76,6 +78,66 @@ class AbencoadoPelaLuzAbilityTest {
         for (AbencoadoPelaLuzAbility ability : AbencoadoPelaLuzAbility.values()) {
             assertEquals(0, ability.resolveAbsoluteDamageReduction(null, true));
         }
+    }
+
+    @Test
+    void everyAbilityRequiresTheAbencoadoPelaLuzEspecializacao() {
+        for (AbencoadoPelaLuzAbility ability : AbencoadoPelaLuzAbility.values()) {
+            assertEquals(Optional.of(SantoSpecialization.ABENCOADO_PELA_LUZ), ability.getRequiredSpecialization());
+        }
+    }
+
+    @Test
+    void onlyGloriaRelampejanteDeTeslaRequiresOtherAbilities() {
+        assertEquals(0, AbencoadoPelaLuzAbility.ORGULHO_ELDURIANO.getRequiredOtherAbilities());
+        assertEquals(0, AbencoadoPelaLuzAbility.GRITO_DE_GUERRA_VULCANO.getRequiredOtherAbilities());
+        assertEquals(0, AbencoadoPelaLuzAbility.PELE_ROCHOSA_DE_EPONA.getRequiredOtherAbilities());
+        assertEquals(2, AbencoadoPelaLuzAbility.GLORIA_RELAMPEJANTE_DE_TESLA.getRequiredOtherAbilities());
+    }
+
+    @Test
+    void isEligibleRejectsATitleWithoutTheEspecializacao() {
+        AventyrTitle title = new Santo(List.of(SantoSpecialization.ABRACADO_PELA_ESCURIDAO), List.of());
+
+        for (AbencoadoPelaLuzAbility ability : AbencoadoPelaLuzAbility.values()) {
+            assertFalse(ability.isEligible(title));
+        }
+    }
+
+    @Test
+    void isEligibleAcceptsOrgulhoEldurianoOnceTheEspecializacaoIsHeld() {
+        AventyrTitle title = new Santo(List.of(SantoSpecialization.ABENCOADO_PELA_LUZ), List.of());
+
+        assertTrue(AbencoadoPelaLuzAbility.ORGULHO_ELDURIANO.isEligible(title));
+    }
+
+    @Test
+    void isEligibleRejectsGloriaRelampejanteDeTeslaWithoutEnoughSiblingAbilities() {
+        AventyrTitle title = new Santo(
+                List.of(SantoSpecialization.ABENCOADO_PELA_LUZ),
+                List.of(AbencoadoPelaLuzAbility.ORGULHO_ELDURIANO));
+
+        assertFalse(AbencoadoPelaLuzAbility.GLORIA_RELAMPEJANTE_DE_TESLA.isEligible(title));
+    }
+
+    @Test
+    void isEligibleForGloriaRelampejanteDeTeslaIgnoresAbilitiesFromASiblingCatalog() {
+        // 2 SantoAbility Habilidades held, but none from this same AbencoadoPelaLuzAbility
+        // catalog — "outras Habilidades de 'Abençoado pela Luz'" must not count them.
+        AventyrTitle title = new Santo(
+                List.of(SantoSpecialization.ABENCOADO_PELA_LUZ),
+                List.of(SantoAbility.PROTECAO_UNGIDA, SantoAbility.BASTIAO_DOS_NECESSITADOS));
+
+        assertFalse(AbencoadoPelaLuzAbility.GLORIA_RELAMPEJANTE_DE_TESLA.isEligible(title));
+    }
+
+    @Test
+    void isEligibleAcceptsGloriaRelampejanteDeTeslaOnceEnoughSiblingAbilitiesAreHeld() {
+        AventyrTitle title = new Santo(
+                List.of(SantoSpecialization.ABENCOADO_PELA_LUZ),
+                List.of(AbencoadoPelaLuzAbility.ORGULHO_ELDURIANO, AbencoadoPelaLuzAbility.PELE_ROCHOSA_DE_EPONA));
+
+        assertTrue(AbencoadoPelaLuzAbility.GLORIA_RELAMPEJANTE_DE_TESLA.isEligible(title));
     }
 
     // Only GRITO_DE_GUERRA_VULCANO has a real, activatable Interaction — its own Vantagem/

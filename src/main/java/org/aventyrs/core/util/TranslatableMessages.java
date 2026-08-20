@@ -27,4 +27,8 @@ public class TranslatableMessages {
     public static final String INITIATIVE_NOT_WON = "INITIATIVE_NOT_WON";
     public static final String INVALID_DAMAGE_TYPE_ELEMENT_PAIRING = "INVALID_DAMAGE_TYPE_ELEMENT_PAIRING";
     public static final String REQUIRED_TITLE_TRAIT_NOT_HELD = "REQUIRED_TITLE_TRAIT_NOT_HELD";
+    public static final String REQUIRED_ATTRIBUTE_ABILITY_NOT_HELD = "REQUIRED_ATTRIBUTE_ABILITY_NOT_HELD";
+    public static final String TITLE_NOT_HELD = "TITLE_NOT_HELD";
+    public static final String EXTRA_SUPREMA_ALREADY_GRANTED = "EXTRA_SUPREMA_ALREADY_GRANTED";
+    public static final String TITLE_ABILITY_PREREQUISITE_NOT_MET = "TITLE_ABILITY_PREREQUISITE_NOT_MET";
 }

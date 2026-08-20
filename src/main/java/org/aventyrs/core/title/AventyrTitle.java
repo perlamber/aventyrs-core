@@ -56,6 +56,16 @@ public interface AventyrTitle {
     List<AventyrTitleAbility> getAbilities();
 
     /**
+     * Adds ability to this Título's own held Habilidades/Supremas — the mutator backing an
+     * XP-gated post-acquisition grant like {@code
+     * org.aventyrs.core.ability.InstinctAbility#CENTELHA_SUPERIOR}'s "uma Suprema adicional"
+     * (see {@code org.aventyrs.core.character.services.TitleAbilityService#grantTitleAbility}),
+     * mirroring {@code Character#grantTitle}'s own plain-mutator shape now that a held
+     * Título's own ability list can grow after acquisition, not just at construction.
+     */
+    void grantAbility(AventyrTitleAbility ability);
+
+    /**
      * Especializações plus Supremas held, combined — pure arithmetic over the two methods
      * above, kept as a shared default so any Título whose own rules text scales off this same
      * count (as Santo's Despertar duration does) doesn't need to re-derive the formula.

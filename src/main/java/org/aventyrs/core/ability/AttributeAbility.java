@@ -192,6 +192,20 @@ public interface AttributeAbility {
     }
 
     /**
+     * Extra PD a Rest of restType recovers on top of {@code RestService}'s own Instinto-times-
+     * multiplier calculation — e.g. {@link InstinctAbility#SUPERMOTIVADO}'s "recupera 1PD
+     * adicional... Descansos longos ou superiores adicionalmente... 2PD adicionais." Mirrors
+     * {@link #resolveRestMagicPointsBonus}/{@link #resolveRestHitPointsBonus}'s identical
+     * shape/reasoning, on the PD side. Zero by default; only override on a constant whose
+     * rules text grants a Rest-tier-conditioned PD bonus like this. Summed by {@code
+     * org.aventyrs.core.rest.RestService#getRecoveredDeterminationPoints} across {@code
+     * Character#getAttributeAbilities()}.
+     */
+    default int resolveRestDeterminationPointsBonus(RestType restType) {
+        return 0;
+    }
+
+    /**
      * The flat bonus this Habilidade adds to a character's total Roubo de Vida, summed by
      * {@code org.aventyrs.core.character.services.LifeStealService#getTotalLifeSteal} —
      * exactly once, never per active {@link org.aventyrs.core.sheet.LifeSteal} effect, and
@@ -248,6 +262,37 @@ public interface AttributeAbility {
      */
     default Optional<Integer> resolveFirstRollOfTurnBonus(AttributeDomain rolledDomain) {
         return Optional.empty();
+    }
+
+    /**
+     * A bonus toward this Perícia's own roll ({@code skillRollBonus}), granted on <b>every</b>
+     * roll currently governed by rolledDomain — unlike {@link #resolveFirstRollOfTurnBonus},
+     * not limited to the first such roll each Turn — e.g. {@link
+     * InstinctAbility#SENTIR_A_INTENCAO}'s Vantagem on Instinto-governed rolls while the
+     * holder has no Título Aventyr yet. Takes character explicitly (rather than being a
+     * reflection-invoked {@code @Modifier} method, or scoped only by rolledDomain like {@link
+     * #resolveFirstRollOfTurnBonus}) because the condition may depend on Character-level state
+     * — here, held Títulos — a no-arg method or the domain alone can't see. Summed by {@code
+     * org.aventyrs.core.skill.AbstractSkillInteraction} across {@code
+     * Character#getAttributeAbilities()}. Zero by default; only override on a constant whose
+     * rules text grants a bonus scoped to every roll governed by one Attribute like this.
+     */
+    default int resolveAttributeDomainRollBonus(AttributeDomain rolledDomain, Character character) {
+        return 0;
+    }
+
+    /**
+     * Same shape as {@link #resolveAttributeDomainRollBonus}, but for a GD reduction (a
+     * difficulty-reduction step count, like {@code SkillCompetencyAbility#getDifficultyReduction}) —
+     * e.g. {@link InstinctAbility#SENTIR_A_INTENCAO}'s own "reduz a GD da rolagem em -1 nível"
+     * once the holder has acquired a Título Aventyr, replacing that same constant's Vantagem
+     * branch above rather than adding to it (the two are mutually exclusive by character
+     * state, never both nonzero for the same character). Zero by default; only override on a
+     * constant whose rules text grants a GD reduction scoped to one Attribute's rolls like
+     * this.
+     */
+    default int resolveAttributeDomainDifficultyReduction(AttributeDomain rolledDomain, Character character) {
+        return 0;
     }
 
     /**

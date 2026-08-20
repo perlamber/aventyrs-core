@@ -25,7 +25,10 @@ Títulos of this type can acquire it" — unenforced), Custo de Ativação (PD/P
 purely descriptive with no activatable effect of its own), and description. Then get every
 Habilidade/Suprema whose own "Requer" clause names **this specific Especialização** (not "1
 Especialização" generically — those belong to the Título's own `<Title>Ability` enum instead,
-built by `adding-a-title`, not this skill).
+built by `adding-a-title`, not this skill) — parse it into two pieces: the named Especialização
+itself (real, enforced data — see step 4), and, if the clause also says something like "N
+outras Habilidades de '<Especialização name>'," that count too (also enforced, scoped to only
+this same `<Specialization>Ability` catalog — see step 4's own note).
 
 ## 2. Model the Especialização itself
 
@@ -176,9 +179,31 @@ subpackage** as `<Title>`/`<Title>Ability` — `@Getter @AllArgsConstructor enum
 <Specialization>Ability implements AventyrTitleAbility`, one constant per Habilidade/Suprema,
 each with its own `interactionClass` field (`Optional.empty()` until/unless step 3 builds a
 real activation for that specific constant — see step 2's own note on this field). Same
-real-vs-TODO discipline as `adding-a-title`'s own step 3, plus two extra things this skill's
+real-vs-TODO discipline as `adding-a-title`'s own step 3, plus three extra things this skill's
 own worked example (`AbencoadoPelaLuzAbility`) surfaces that are easy to miss:
 
+- **Every constant here needs a `requiredSpecialization` field of type
+  `Optional<AventyrTitleSpecialization>`, set to `Optional.of(<Title>Specialization
+  .<THIS_ESPECIALIZAÇÃO>)`** — overriding `AventyrTitleAbility#getRequiredSpecialization()`
+  for free via Lombok's `@Getter`. This is real, enforced data (`AventyrTitleAbility
+  #isEligible`/`TitleAbilityService#grantTitleAbility`), not merely documented in a comment —
+  every constant in this whole catalog names the *same* one Especialização (matching the
+  class-level javadoc you're about to write in step 4's own class doc), so this field is
+  identical across every constant here. If a constant's own per-constant comment doesn't
+  literally repeat "Requer Especialização '<name>'" (e.g. because its own "Requer" clause
+  instead only says "N outras Habilidades de '<name>'" — see the next bullet), set this field
+  anyway and flag it in the comment as an inference from the class-level statement rather than
+  text repeated on that specific constant (see `AbencoadoPelaLuzAbility
+  .GLORIA_RELAMPEJANTE_DE_TESLA`'s own comment for the exact wording to mirror) — don't leave
+  it `Optional.empty()` just because the per-constant text didn't spell it out again.
+- **Add a `requiredOtherAbilities` (int) field for a "Requer N outras Habilidades de
+  '<Especialização name>'" clause** — overrides `AventyrTitleAbility
+  #getRequiredOtherAbilities()`, 0 by default for constants with no such clause. This count is
+  automatically scoped to **only sibling constants of this same `<Specialization>Ability`
+  enum** — `isEligible` never counts the Título's own `<Title>Ability` constants (or a
+  *different* Especialização's own gated catalog) toward it, even though all of them end up in
+  the same held `AventyrTitle#getAbilities()` list — see `GLORIA_RELAMPEJANTE_DE_TESLA`'s own
+  "2" for the worked example.
 - **An ability can be individually close to real even when nothing wires it end-to-end yet —
   and once it is, wire it per step 3 above rather than leaving it TODO'd.** Before writing "no
   system exists for X," check whether the *value* is already fully expressible as a `Blessing`
@@ -226,7 +251,18 @@ own worked example (`AbencoadoPelaLuzAbility`) surfaces that are easy to miss:
   `isFreeActionActivation()` identity per constant, any wired `resolve*` hook's behavior, and
   `getInteractionClass()` per constant — `Optional.of(<X>Interaction.class)` for the one(s)
   step 3 wired for real, `Optional.empty()` for every other, still-TODO'd constant (see
-  `AbencoadoPelaLuzAbilityTest#onlyGritoDeGuerraVulcanoReportsAnInteractionClass`).
+  `AbencoadoPelaLuzAbilityTest#onlyGritoDeGuerraVulcanoReportsAnInteractionClass`). **Also
+  test the requirement fields from step 4**: `getRequiredSpecialization()` equals
+  `Optional.of(<the named Especialização>)` for every constant; `getRequiredOtherAbilities()`
+  matches each constant's own "Requer N outras..." number (0 for the rest);
+  `isEligible(AventyrTitle)` rejects a title without the Especialização for every constant,
+  accepts a no-other-abilities constant once the Especialização alone is held, and — the case
+  most worth a dedicated test — rejects/accepts the "N outras Habilidades" constant based on
+  how many *sibling* constants of this same catalog are held, while a title holding that many
+  Habilidades from the **Título's own `<Title>Ability` catalog instead** (not this one) still
+  rejects it — see `AbencoadoPelaLuzAbilityTest
+  #isEligibleForGloriaRelampejanteDeTeslaIgnoresAbilitiesFromASiblingCatalog`/
+  `#isEligibleAcceptsGloriaRelampejanteDeTeslaOnceEnoughSiblingAbilitiesAreHeld` for the shape.
 - `<Specialization>InteractionTest` (new file, only if step 3 applied) — each real branch's
   actual effect (e.g. heal amount matches the formula it delegates to, not a hardcoded number),
   every TODO'd branch is an inert no-op, and the bare 1-arg `applyTo` also no-ops (see
@@ -263,6 +299,13 @@ own worked example (`AbencoadoPelaLuzAbility`) surfaces that are easy to miss:
 - `src/main/java/org/aventyrs/core/title/AventyrTitle.java` — `getAllAbilities()`, the
   combined-list method a scanning service uses to reach both Especializações and Habilidades/
   Supremas uniformly.
+- `src/main/java/org/aventyrs/core/title/AventyrTitleAbility.java` —
+  `getRequiredSpecialization()`/`getRequiredOtherAbilities()`/`isEligible(AventyrTitle)`, the
+  requirement-check mechanism step 4's two new fields plug into; its own javadoc explains why
+  catalog-scoping uses `Enum#getDeclaringClass()` rather than plain `getClass()`.
+- `src/main/java/org/aventyrs/core/character/services/TitleAbilityService.java`/
+  `TitleAbilityServiceImpl.java` — the single entry point (`grantTitleAbility`) that actually
+  calls `isEligible` before granting a gated Habilidade/Suprema to a held Título.
 - `src/main/java/org/aventyrs/core/rest/RestService.java` — the kind of already-real formula
   worth reusing directly (as `resolveShortRestHealAmount` does) rather than re-deriving.
 - `src/main/java/org/aventyrs/core/title/santo/AbencoadoPelaLuzInteraction.java` and

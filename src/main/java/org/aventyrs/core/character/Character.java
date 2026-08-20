@@ -157,6 +157,23 @@ public class Character {
     /** The Título Aventyr in this character's Título Terciário slot, or {@code null} if none — see {@link #primaryTitle}. */
     protected AventyrTitle tertiaryTitle;
 
+    /**
+     * Whether this character has already spent {@code InstinctAbility#CENTELHA_SUPERIOR}'s own
+     * one-time "uma Suprema adicional" grant — a plain flag, not a reference to which Título
+     * received it (that's already recoverable, if ever needed, by scanning {@link
+     * #getAllTitles()}'s own held abilities). {@code false} by default, same shape as {@link
+     * #reactions}/{@link #freeActions}'s own {@code @Builder.Default} fields. A real stored
+     * flag, not something derived purely by counting each held Título's own Supremas — once a
+     * Título that started with none receives its first Suprema, a plain count can no longer
+     * tell "that was the normal base allotment" apart from "that was CENTELHA_SUPERIOR's own
+     * extra," so {@code
+     * org.aventyrs.core.character.services.TitleAbilityService#getAvailableSupremaSlots}/
+     * {@code #grantTitleAbility} both need this explicit marker instead. Set via {@link
+     * #selectCentelhaSuperior()}.
+     */
+    @Builder.Default
+    protected boolean centelhaSuperiorSelected = false;
+
     @NonNull
     protected ActionProfile actionProfile;
 
@@ -237,6 +254,14 @@ public class Character {
             case SECONDARY -> secondaryTitle = title;
             case TERTIARY -> tertiaryTitle = title;
         }
+    }
+
+    /**
+     * Marks {@code InstinctAbility#CENTELHA_SUPERIOR}'s one-time extra Suprema grant as spent —
+     * see {@link #centelhaSuperiorSelected}'s own javadoc.
+     */
+    public void selectCentelhaSuperior() {
+        this.centelhaSuperiorSelected = true;
     }
 
     /**
