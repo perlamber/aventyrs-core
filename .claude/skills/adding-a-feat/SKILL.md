@@ -86,7 +86,7 @@ Perícia" TODO-writing convention, and the Título skill's own step 3):
 - **TODO'd**: cite the *specific* missing system, checking CLAUDE.md's existing gap catalog
   first (Defesas, Item/Equipamento, Encantamento/Maldição classification, Área de Efeito, a
   flat Desvantagem constant, forced-attack-targeting, cross-character continuously-recomputed
-  passive grants — see CLAUDE.md's "Adding a new Título Aventyr" section for the full list and
+  passive grants — see CLAUDE.md's "Missing systems — the gap catalog" for the full list and
   exact citations to reuse verbatim rather than re-deriving).
 
 Only add the method to the enum type itself (a concrete, non-abstract instance method,

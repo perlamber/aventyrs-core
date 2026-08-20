@@ -14,7 +14,7 @@ run it once per Especialização you have rules text for, normally right after
 between them they cover both a fixed-cost specialization and a fully variable-PV-cost one, so
 compare both before assuming one shape is "the" pattern.
 
-Read `CLAUDE.md`'s "Adding a new Título Aventyr" section first (specifically the parts about
+Read `CLAUDE.md`'s "Títulos Aventyr" section first (specifically the parts about
 `AventyrTitleSpecialization`'s cost fields and the specialization-gated-ability-enum split) —
 this skill is the operational checklist on top of it.
 
@@ -73,8 +73,8 @@ method on `this == <Constant>` so it returns a safe default (0/empty) for siblin
 the same way `resolveShortRestHealAmount` does — future-proofing for the Título's second
 Especialização without needing every existing method rewritten.
 
-If the effect needs a system this core doesn't have, TODO it — check CLAUDE.md's "Adding a new
-Título Aventyr" section's gap catalog before assuming a new one. As of Santo's two
+If the effect needs a system this core doesn't have, TODO it — check CLAUDE.md's
+"Missing systems — the gap catalog" before assuming a new one. As of Santo's two
 Especializações it covers: Defesas, Item/Equipamento, Malefício/Encantamento/Maldição/Doença
 classification, Área de Efeito, a flat Desvantagem constant, forced-attack-targeting/
 interception, cross-character continuously-recomputed passive grants, temporary/Round-scoped
@@ -283,7 +283,7 @@ own worked example (`AbencoadoPelaLuzAbility`) surfaces that are easy to miss:
   `<Title>.java` before assuming step 3's `activate<X>` method has anything to validate
   against — `Santo`'s own field needed exactly this widening (originally `List<SantoAbility>`)
   once `activateGritoDeGuerraVulcano` needed to check whether a gated Habilidade was held.
-- CLAUDE.md's "Adding a new Título Aventyr" section if this skill's own checklist changed.
+- CLAUDE.md's "Títulos Aventyr" section if this skill's own checklist changed.
 
 ## Reference files to read first
 

@@ -1,6 +1,6 @@
 ---
 name: adding-a-title
-description: This skill should be used when the user asks to "add a new Título", "add a new Aventyr Title", "implement a Título Aventyr", "add a new Santo-style title", or references adding a new entry to org.aventyrs.core.title. Walks through the full checklist of files/tests a new AventyrTitle needs, mirroring CLAUDE.md's "Adding a new Título Aventyr" section.
+description: This skill should be used when the user asks to "add a new Título", "add a new Aventyr Title", "implement a Título Aventyr", "add a new Santo-style title", or references adding a new entry to org.aventyrs.core.title. Walks through the full checklist of files/tests a new AventyrTitle needs, mirroring CLAUDE.md's "Títulos Aventyr" section.
 ---
 
 # Adding a new Título Aventyr
@@ -9,7 +9,7 @@ A Título Aventyr (e.g. `Santo`) sits alongside `Race`/skills/ego advantages as 
 character concept in this codebase, but a character can hold several simultaneously — unlike
 `Race`'s single field — one optionally flagged as the holder's Título Primário. This skill
 walks through building a new one from scratch, following the exact conventions `Santo`
-established as the reference implementation. Read `CLAUDE.md`'s "Adding a new Título Aventyr"
+established as the reference implementation. Read `CLAUDE.md`'s "Títulos Aventyr"
 section first — it carries the full architectural rationale; this skill is the operational
 checklist on top of it.
 
@@ -181,7 +181,7 @@ One file per new type:
 ## 7. Update docs
 
 - `org.aventyrs.core.title/package-info.java` if the granting API's shape changed.
-- CLAUDE.md's "Adding a new Título Aventyr" section if the checklist itself changed.
+- CLAUDE.md's "Títulos Aventyr" section if the checklist itself changed.
 
 ## 8. Invoke `adding-a-title-specialization`
 
