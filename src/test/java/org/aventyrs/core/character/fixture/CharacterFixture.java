@@ -76,6 +76,14 @@ public class CharacterFixture extends SimpleFixture {
      * don't care about identity; a test that needs several distinct Characters (e.g. for
      * {@code Scene}'s allies) must override {@code .id(UUID.randomUUID())} on each one via
      * {@link #blank}'s returned builder.
+     *
+     * <p>{@code feats} is set to the same immutable {@code List.of()} every other trait list
+     * here uses — a test that actually grants a Feat (via {@code
+     * org.aventyrs.core.character.services.FeatService#grantFeat} or {@code Character
+     * #grantFeat} directly) must first swap in a fresh mutable list, e.g. {@code
+     * .toBuilder().feats(new ArrayList<>()).build()} — see {@code Character#feats}'s own
+     * javadoc for why a shared mutable instance can't just be defaulted here instead (it would
+     * alias across every Character built from this template).
      */
     private static void loadCharacterTemplates() {
         Fixture.of(Character.class).addTemplate(BLANK, new Rule() {
@@ -95,6 +103,7 @@ public class CharacterFixture extends SimpleFixture {
                 this.add("activeAbilities", List.of());
                 this.add("skillCompetencyAbilities", List.of());
                 this.add("abilityChoices", List.of());
+                this.add("feats", List.of());
                 this.add("primaryTitle", null);
                 this.add("secondaryTitle", null);
                 this.add("tertiaryTitle", null);
@@ -152,6 +161,7 @@ public class CharacterFixture extends SimpleFixture {
                         AtaqueADistanciaCompetencyAbility.DISPARO_ARCANO,
                         DominioDoManaCompetencyAbility.MAGIA_SELVAGEM));
                 this.add("abilityChoices", List.of());
+                this.add("feats", List.of());
                 this.add("primaryTitle", null);
                 this.add("secondaryTitle", null);
                 this.add("tertiaryTitle", null);

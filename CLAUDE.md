@@ -85,162 +85,14 @@ themselves; don't retrofit those existing Excelência-tier tests to comply with 
 
 ## Adding a new Perícia (Skill)
 
-Every new Skill (e.g. `Artes`, `Attention`) must be created with **all** of the following
-pieces — don't stop at just the `Skill` class:
-
-1. **The `Skill` itself** (in its own `org.aventyrs.core.skill.<skillname>` subpackage —
-   e.g. `org.aventyrs.core.skill.artes` for `Artes`, `org.aventyrs.core.skill.atletismo` for
-   `Atletismo` — lowercase, no separators): a class extending `BasicSkill` implementing
-   `Skill`, setting its `AttributeDomain` in the constructor. Mirror `Attention`/`Artes` — no
-   extra fields needed on the class itself. Every other piece below for this same Perícia
-   (its `SkillType` constant aside, which stays in the shared base package — see step 2) goes
-   in this same subpackage too, alongside its tests.
-
-2. **A `SkillType` constant** (`org.aventyrs.core.skill.SkillType`): one enum value per
-   concrete `Skill`, used to key `Character.skills` (a `Map<SkillType, CharacterSkill>`) for
-   O(1) lookup instead of filtering a list.
-
-3. **A `<Skill>Specialization` enum** (e.g. `ArtesSpecialization`): every Perícia gets one, no
-   exceptions — one constant per named specialization, each with a `description`, implementing
-   `SkillSpecialization` (`getSkillType()` + the inherited `getDescription()`, see
-   `SkillTrait`/`SkillSpecialization` below). `CharacterSkill.specializations` is a
-   `List<SkillSpecialization>` (`@Builder.Default` empty), not a per-skill-typed field — the
-   enum is the well-typed *catalog* for that one skill, and any instance a character actually
-   holds just needs to satisfy the shared `SkillSpecialization` interface, the same way
-   `Character.skillCompetencyAbilities` holds any `SkillCompetencyAbility` regardless of which
-   skill it targets. `CharacterSkill` itself never validates that a listed specialization's
-   `getSkillType()` actually matches its own `skill` — same restraint as every other
-   builder-bypassable invariant in this codebase (see the Attribute/Graduação section above).
-
-4. **A `<Skill>CompetencyAbility` enum for its Habilidades de Competência, if any**,
-   implementing `SkillCompetencyAbility` (`getSkillType()` + `getDescription()`, plus the
-   default `getDifficultyReduction()` — override it only on constants that really grant a GD
-   reduction to that *same* skill's own roll) — the Perícia-level counterpart to
-   `AttributeAbility`/`EgoAdvantage`. Store instances a character has acquired in
-   `Character.skillCompetencyAbilities`. (`AtletismoCompetencyAbility.ATLETA_VERSATIL` used to
-   be the reference example for this override — a rules revision replaced it with `Passo
-   Largo`, which needs a movement system instead, so no ability currently exercises this
-   override; the mechanism itself is still real and tested generically — see the
-   `noAbilityReducesDifficulty`-style test in most `<Skill>CompetencyAbilityTest` files —
-   it's just waiting for the next ability that actually qualifies.)
-
-   If an ability's acquisition is rules-gated on something like "Requer N Graduações", don't
-   build a validation/eligibility service for it — none exists yet for
-   `SkillCompetencyAbility` (unlike `AttributeAbilityService` for `AttributeAbility`). Just
-   document the unenforced prerequisite in a comment on the constant, implementing its actual
-   numeric effect for real whenever one is expressible today. No ability currently has an
-   explicit "Requer N Graduações"-style clause in its own rules text to point to as a live
-   example — `AtletismoCompetencyAbility.ATLETA_VERSATIL`,
-   `EsquivaEApararCompetencyAbility.RECUO_RAPIDO`, and
-   `MedicinaECuraCompetencyAbility.ALQUIMIA_MAIOR` each held that role in turn, and each lost
-   the clause (or was removed outright) in its own later revision. Don't take this as license
-   to skip documenting the next one that shows up — just don't expect to find a working
-   example in the codebase to copy from right now.
-
-   **If a constant's rules text requires the player to pick a value when acquiring it**
-   ("Escolha uma Perícia…", or a pick-one-of-several-effects choice), don't TODO the whole
-   ability as "no way to persist the choice" — there is one; see "Acquisition-time ability
-   choices" below for the two patterns (an instance-based companion class when the choice
-   feeds the ability's own `@Modifier` methods, `AcquiredChoice` otherwise) and which one
-   applies.
-
-   **For every ability whose mechanic depends on a system that doesn't exist yet**
-   (a roll-vs-`DifficultyLevel` resolution engine, Vantagem/Desvantagem, ally-range effects,
-   NPC-disposition/reputation, Cena/Combate-scoped state, etc.), add a `// TODO:` comment
-   directly above the enum constant explaining:
-   - *what* the ability is supposed to do mechanically (not just repeating the flavor text), and
-   - *which specific system is missing* that would be needed to implement it for real.
-
-   `ArtesCompetencyAbility` is the reference example for this — e.g.:
-   ```java
-   // TODO: motivates allies, granting them (not the user) a Perícia-roll bonus for 1
-   // Rodada, extending to 2/3 Rodadas at 5/10 Graduações — but the bonus itself is a
-   // lookup by which GD tier the Artes roll hit (Fácil +1 ... Milagre +5), not a flat
-   // value. Needs a roll-resolution-vs-DifficultyLevel engine (to know which GD tier was
-   // reached, then look up its bonus), ally-targeting, and Rodada-scoped duration
-   // tracking, none of which exist yet.
-   DOM_BARDICO("..."),
-   ```
-   Don't invent the missing system just to make the TODO go away — this codebase's
-   established pattern (see `GnoseAbility`, `InstinctAbility`, `CharismaAbility`) is to model
-   the ability as real, tested data now and defer the mechanic honestly until its
-   prerequisite system is actually built.
-
-5. **Always implement a concrete `Interaction<CharacterSheet>` for the skill** (e.g.
-   `AttentionInteraction`, `ArtesInteraction`) — never leave a Skill without one. Every
-   `<Skill>Interaction` needs the exact same `applyTo`/`findCharacterSkill` machinery —
-   compute the roll bonus via `CharacterSkillService.getValueForRoll`, resolve which Attribute
-   currently governs the roll, sum every `SKILL_ROLL_BONUS` source, look up the trained
-   `CharacterSkill` or fall back to an untrained one, sum `difficultyReduction` — so this is
-   **not** something to hand-write per skill anymore: extend `AbstractSkillInteraction`
-   (`org.aventyrs.core.skill`) and give it the new skill's `SkillType` constant. A concrete
-   subclass needs nothing but two constructors delegating to `super(SkillType.X)`/
-   `super(SkillType.X, characterSkillService, modifierResolver)` — see `ArtesInteraction` or
-   `AttentionInteraction` for the ~15-line shape every skill without something genuinely
-   unusual to say should match. Move any skill-specific rules-text nuance (an unenforced
-   TODO, a note about a related mechanic) into the subclass's own class-level javadoc, same as
-   before — it's still a real class per skill, just without the duplicated body.
-
-   This only works because `SkillType` itself now carries everything `AbstractSkillInteraction`
-   needs per skill: `excellencyClass` (already existed), a `Supplier<Skill> skillFactory`
-   (`newSkillInstance()`) for the untrained-fallback `CharacterSkill`, a `ModifierType
-   rollBonusType` (see "A ModifierType per skill" below), and a `Supplier<AbstractSkillInteraction>
-   interactionFactory` (`newInteraction()` — see "Dispatching a roll by SkillType" below) — e.g.
-   `ARTES(ArtesExcellency.class, Artes::new, ModifierType.ARTES_ROLL_BONUS,
-   ArtesInteraction::new)`. **Whenever you add a new Skill, add its constant to `SkillType` with
-   all four pieces, and a matching `<SKILL>_ROLL_BONUS` constant to `ModifierType`** —
-   `AbstractSkillInteraction` has no other way to know which
-   `Skill`/`SkillExcellency`/`ModifierType`/`<Skill>Interaction` a given `SkillType` maps to.
-   Also add a matching constant to `org.aventyrs.core.ability.PeritoTeoricoAbility` (see
-   "Acquisition-time ability choices" below) — it holds one `AttributeAbility` constant per
-   `SkillType` so `GnoseAbility.PERITO_TEORICO` can be chosen for the new skill too; there's no
-   default, so skipping it silently leaves the new skill impossible to pick.
-
-   If a skill's Interaction genuinely needs to do something no other skill does, override
-   `applyTo` in the subclass and call `super.applyTo(target)` first, then layer the addition
-   on top of the returned result — see `ArtesInteraction`, which reports a `Blessing` on
-   `blessings` for a character holding `DOM_BARDICO` (below "Temporary bonuses from other
-   Characters") — rather than duplicating `AbstractSkillInteraction`'s logic or forking it back
-   out to a hand-written `applyTo`.
-
-6. **A `<Skill>Excellency` enum for its automatic Excelência bonuses** (e.g.
-   `ArtesExcellency`), implementing `SkillExcellency` (`getSkillType()` + `getTier()` +
-   `getDescription()`). **Every** skill uses the same three universal
-   `ExcellencyTier`s — `FOCADO` (graduation 3), `PRODIGIO` (7), `LENDA` (10) — only the
-   bonus content per tier differs per skill. Bonuses at different tiers are additive, never
-   overriding — if a later tier's rules text reads like "changes to +N" or "muda para +N"
-   (regardless of the exact wording — this phrasing recurs across skills and always means the
-   same thing), model it as the *delta* over the earlier tier's value, not the new total (see
-   `ArtesExcellency.LENDA`, which is worth +3 on top of `FOCADO`'s +2, totaling +5, rather than
-   being worth +5 itself — confirmed by Artes' own rules text changing from an explicit "+3
-   adicional, totalizando +5" to "muda para +5" with the *same* numbers, across a revision).
-
-   Same TODO discipline as Habilidades de Competência applies: if a tier's bonus needs a
-   system that doesn't exist yet (e.g. Fama Positiva/Negativa now exist on `CharacterSheet`,
-   but nothing detects a graduation crossing a threshold to auto-trigger the bonus), TODO it
-   with what's missing. If the bonus is mechanically expressible today even without a full
-   consumer (e.g. reducing a `DifficultyLevel` — `DifficultyLevel.easier()` already exists),
-   implement it for real by overriding `SkillExcellency.getDifficultyReduction()` on that
-   constant (an int step count — `adjustDifficulty` derives from it automatically), don't TODO
-   it just because nothing calls it yet.
-
-7. **Test fixture support**: add a template for the new skill to `CharacterSkillFixture`
-   (e.g. `ARTES_1`) if any test needs a trained instance of it.
-
-8. **Tests**, one file per new type, following the existing enum-test shape (every
-   ability/specialization/excellency has a non-blank description; the enum has the expected
-   count; entries report the correct `SkillType`/`ExcellencyTier`) plus an
-   `<Skill>InteractionTest` covering: trained bonus = attribute total + graduation, untrained
-   = attribute total + `UNTRAINED_PENALTY`, and `CharacterSheet.receiveInteraction(interaction)`
-   delegates correctly.
-
-   An instance-based choice-carrying ability class (see "Acquisition-time ability choices")
-   gets its own test file too, shaped like `ArtesAprimorarComArteAbilityTest`: exercise each
-   implemented branch through the *real* scanning service that consumes it (e.g.
-   `DamageService.getTotalDamageReduction` on a `CharacterFixture` character granted the
-   instance), not by calling the modifier method directly; a non-matching choice contributes
-   0; a null choice is rejected at construction; and the instance reports the catalog
-   constant's `SkillType` and description.
+See `org.aventyrs.core.skill.attention.Attention`/`org.aventyrs.core.skill.artes.Artes` and
+their `Interaction`s for the reference implementation — every Perícia's classes live together
+under their own subpackage of `org.aventyrs.core.skill` (e.g. `org.aventyrs.core.skill.artes`
+holds every `Artes*` class), and a new one needs a `Skill` class, a `SkillType` constant (plus
+matching `ModifierType`/`PeritoTeoricoAbility` entries), a `<Skill>Specialization` enum, a
+`<Skill>CompetencyAbility` enum, a `<Skill>Interaction` extending `AbstractSkillInteraction`, a
+`<Skill>Excellency` enum, fixture support, and tests. The `adding-a-pericia` Claude Code skill
+packages the full checklist as an invokable walkthrough.
 
 ## Adding a new Título Aventyr — `org.aventyrs.core.title`
 
@@ -271,7 +123,7 @@ one-subpackage-per-catalog convention — only the shared framework interfaces
 (`AventyrTitle`/`AventyrTitleSpecialization`/`AventyrTitleAbility`) stay directly in
 `org.aventyrs.core.title`.
 
-**Required pieces**, mirroring "Adding a new Perícia" above:
+**Required pieces**, mirroring the Perícia checklist (see the `adding-a-pericia` skill):
 1. The concrete `<Title>` class implementing `AventyrTitle` — a constructor taking chosen
    specializations/chosen abilities (no "am I primary" parameter — see below), plus the
    base-effect (e.g. Santo's "Despertar") description text. **If that base effect's own rules
@@ -604,6 +456,73 @@ ability wired for real.
 `character.services`' own package-info (see "Consumer-facing documentation" below). The
 `adding-a-title` Claude Code skill packages this same checklist as an invokable walkthrough.
 
+## Adding a new Talento (Feat) — `org.aventyrs.core.feat`
+
+A Talento (e.g. `ArtesMarciaisFeat.ARTISTA_MARCIAL`) is a flat catalog entry, one enum per
+Talento *tree* named by `FeatCategory` (e.g. `ArtesMarciaisFeat` for `FeatCategory
+.ARTE_MARCIAL`) — mirrors `<Skill>CompetencyAbility`'s one-enum-per-domain shape, not
+`AventyrTitle`'s per-instance-class one, since a Talento (unlike a Título) never carries
+per-acquisition player choices of its own today.
+
+- **`Feat`** (`org.aventyrs.core.feat`) is the shared interface: `getFeatCategory()`/
+  `getDescription()`/`getFeatRequirements()`, plus a default `isEligible(Character)` combining
+  every set prerequisite in `getFeatRequirements()` — an Attribute's base reaching a threshold,
+  a Perícia's Graduação reaching a threshold (an untrained Perícia reads as Graduação 0, same
+  as everywhere else in this core), and/or another specific Feat already being held. Any
+  prerequisite left unset on `FeatRequirements` never blocks eligibility; every one that *is*
+  set must hold at once — mirrors `AventyrTitleAbility#isEligible`'s identical
+  combine-every-set-prerequisite shape, just with Attribute/Perícia/Feat prerequisites instead
+  of Especialização/other-Habilidade ones.
+- **`FeatRequirements`** (`@Builder record`) carries the raw prerequisite data: `attributeDomain`/
+  `requiredAttributeValue`, `requiredSkillType`/`requiredSkillGraduation`, and `requiredFeat` —
+  unlike most "Requer N..." prerequisites elsewhere in this core (left as an unenforced
+  comment, see the Perícia Habilidade de Competência section above), a Talento's own
+  prerequisites are always simple numeric/identity thresholds, so they're modeled as real,
+  structured, enforced data from the start, the same restraint already broken for
+  `AventyrTitleAbility`'s own "Requer N Especializações/Habilidades" clauses.
+- **`AbstractFeat`** (`@Builder`, implements `Feat`) is a plain generic implementation for a
+  Talento that doesn't need any constant-specific override — construct it directly wherever a
+  bare `Feat` value is needed without hand-writing a whole enum body.
+- **`FeatCategory`** already existed (with its `GERAL`/`RACIAL` `Type`); every `<Tree>Feat`
+  enum maps onto exactly one `FeatCategory` constant, returned unconditionally from
+  `getFeatCategory()` (an enum-level override, not per-constant — mirrors `ArtesCompetencyAbility
+  #getSkillType()`'s identical "whole enum belongs to one X" shape).
+- **A Talento's own numeric bonus** (e.g. ARTISTA_MARCIAL's Dano Base formula) follows the
+  same "can't apply it yet doesn't mean can't compute it yet" discipline as
+  `ArtesAprimorarComArteAbility#getBaseDamageBonus` — a plain method (not a no-arg
+  `@Modifier`, when the bonus is conditioned on data a reflection-invoked no-arg method can't
+  see) computing the real formula, left uncalled by any automatic scan until whatever it's
+  scoped to (a weapon/attack-classification concept this core has no Item/Equipamento entity
+  for yet, see the "Item/Equipamento" gap citation) actually exists. Only override such a
+  method on the specific constant whose rules text grants it; every other constant in the same
+  enum falls through to a shared zero-returning default declared once on the enum type itself
+  (not on `Feat`, unless a second Talento tree genuinely needs the identical hook — the usual
+  "generalize once a second real consumer needs the identical shape" restraint).
+- **`FeatService#grantFeat(Character, CharacterSheet, Feat)`** (`org.aventyrs.core.character.services`)
+  is the single entry point that actually validates `Feat#isEligible` before granting — the
+  same "check prerequisite, then spend XP, then mutate, with a `CharacterSheet` in hand" shape
+  as `CharacterAttributeService#upgradeBase`/`SkillGraduationService#upgradeGraduation`/
+  `TitleAbilityService#grantTitleAbility`. Its XP cost is `character.getRace()
+  .getNewFeatCost(feat.getFeatCategory())` — `Race#getNewFeatCost` already existed (`Gigantes`'
+  own Talentos de Sobrevivência discount already exercises it) with no caller until now.
+  Throws `IllegalOperationException` (`FEAT_PREREQUISITE_NOT_MET`) if `isEligible` fails.
+- **`Character#feats`** is a real *mutable* `List<Feat>` — unlike `skillCompetencyAbilities`/
+  `attributeAbilities`'s `@Singular`, fixed-at-creation-only shape, a Feat is acquired well
+  after a character exists, so `Character#grantFeat(Feat)` is a plain mutator (like
+  `#grantTitle`) that `FeatService#grantFeat` calls after spending XP — it does no validation
+  itself, trusting the caller already did (same restraint `AventyrTitle#grantAbility` already
+  applies). Defaults to a fresh `new ArrayList<>()` per `Character.builder().build()` call (no
+  aliasing across separate Characters), but `CharacterFixture` defaults it to the same
+  immutable `List.of()` every other trait list there uses — a test granting a Feat onto a
+  fixture-built Character must first swap in a mutable list via `.toBuilder().feats(new
+  ArrayList<>()).build()`, the same kind of per-test override `CharacterFixture`'s own `id`
+  trap already documents for a different reason.
+- **Tests**: one file per new `<Tree>Feat` enum (non-blank description, expected count, correct
+  `getFeatCategory()` per constant, `getFeatRequirements()` identity, `isEligible` covering
+  each prerequisite independently and combined), plus `FeatServiceImplTest`-style coverage for
+  any newly-wired numeric bonus method. The `adding-a-feat` Claude Code skill packages this
+  checklist as an invokable walkthrough.
+
 ## Requesting a specific Habilidade de Competência or Especialização on a roll — `SkillRoll#getRequestedAbility`
 
 Some rolls aren't a plain Perícia test — the caller is specifically invoking one of the
@@ -655,7 +574,7 @@ rather than silently computing a result for one they can't use.
 A caller that only has a `SkillType` in hand (e.g. an API layer deserializing an incoming roll
 request) previously had no way to reach the right concrete `<Skill>Interaction` without its
 own hand-written switch over all of them. `SkillType` already carries every other per-skill
-mapping this core needs (see "Adding a new Perícia" above), so this reuses it rather than
+mapping this core needs (see the "Adding a new Perícia" section/`adding-a-pericia` skill), so this reuses it rather than
 introducing a second, parallel "which skill is this" enum that could drift out of sync with
 `SkillType` itself:
 
@@ -843,7 +762,8 @@ since `sumSkillRollBonusModifiers`/`getTemporaryBonus` had no per-skill filter t
   still combine correctly on a roll that has some of each (see `ArtesInteractionTest
   #applyToCombinesTheGenericAndArtesSpecificTemporaryBonusesAdditively`).
 - **Whenever a new `SkillType` constant is added, add a matching `<SKILL>_ROLL_BONUS`
-  constant to `ModifierType` too** (see "Adding a new Perícia" above) — there's no default;
+  constant to `ModifierType` too** (see the "Adding a new Perícia" section/`adding-a-pericia`
+  skill) — there's no default;
   omitting it would make `SkillType.rollBonusType` uninitializable.
 
 ## Temporary bonuses from other Characters — `CharacterSheet#grantTemporaryBonus`
@@ -1854,8 +1774,9 @@ returning `Skill.ADVANTAGE_BONUS`, summed into `skillRollBonus` inside the skill
 `<Skill>Interaction.applyTo` — see `DirigirECavalgarCompetencyAbility.CONTROLAR_ANIMAIS` /
 `DirigirECavalgarInteraction`. No separate flag or dice-rolling engine needed.
 
-`AbstractSkillInteraction.applyTo` (see "Adding a new Perícia" above — every `<Skill>Interaction`
-extends it, so this is no longer duplicated per skill) sums `ModifierType.SKILL_ROLL_BONUS`
+`AbstractSkillInteraction.applyTo` (see the "Adding a new Perícia" section/`adding-a-pericia`
+skill — every `<Skill>Interaction` extends it, so this is no longer duplicated per skill) sums
+`ModifierType.SKILL_ROLL_BONUS`
 across the same three sources `ReactionsService` uses for Reações — `attributeAbilities`,
 `skillCompetencyAbilities`, and the trained skill's own unlocked `SkillExcellency` tiers — plus
 a fourth, `CharacterSheet`-level one: `target.getTemporaryBonus(ModifierType.SKILL_ROLL_BONUS)`

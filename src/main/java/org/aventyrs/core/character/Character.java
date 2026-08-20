@@ -16,6 +16,7 @@ import org.aventyrs.core.character.services.FreeActionsService;
 import org.aventyrs.core.character.services.MagicPointsService;
 import org.aventyrs.core.character.services.ReactionsService;
 import org.aventyrs.core.ego.EgoAdvantage;
+import org.aventyrs.core.feat.Feat;
 import org.aventyrs.core.race.Race;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.Player;
@@ -23,6 +24,7 @@ import org.aventyrs.core.skill.SkillCompetencyAbility;
 import org.aventyrs.core.skill.SkillType;
 import org.aventyrs.core.title.AventyrTitle;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -133,6 +135,23 @@ public class Character {
     @NonNull
     @Singular
     protected List<AcquiredChoice<?>> abilityChoices;
+
+    /**
+     * Feats acquired via {@link org.aventyrs.core.character.services.FeatService#grantFeat} —
+     * unlike {@link #skillCompetencyAbilities}/{@link #attributeAbilities}'s {@code @Singular}
+     * shape (fixed at creation, through the builder only), this is a real mutable list: a Feat
+     * is acquired well after a character is created, spending XP, the same
+     * Character-progression shape as {@link #grantTitle}/{@link #selectCentelhaSuperior} — see
+     * {@link #grantFeat(Feat)}. Defaults to a fresh, empty, mutable list when built through the
+     * normal Lombok builder (a new instance per {@code build()} call, so no aliasing across
+     * separate Characters) — but {@code CharacterFixture} bypasses that builder entirely and
+     * defaults this to an immutable {@code List.of()} instead, same as every other trait list
+     * there; a test that needs to grant a Feat onto a fixture-built Character must first swap
+     * in a fresh mutable list via {@code .toBuilder().feats(new ArrayList<>()).build()}.
+     */
+    @NonNull
+    @Builder.Default
+    protected List<Feat> feats = new ArrayList<>();
 
     /**
      * The Título Aventyr in this character's Título Primário slot, or {@code null} if none —
@@ -254,6 +273,20 @@ public class Character {
             case SECONDARY -> secondaryTitle = title;
             case TERTIARY -> tertiaryTitle = title;
         }
+    }
+
+    /**
+     * Appends feat to this character's held Feats — a plain mutator, same as {@link
+     * #grantTitle}: prerequisite validation and XP spending are {@code
+     * org.aventyrs.core.character.services.FeatService#grantFeat}'s job, not this method's; it
+     * trusts the caller already did both, the same restraint {@link
+     * org.aventyrs.core.title.AventyrTitle#grantAbility} applies. Throws {@code
+     * UnsupportedOperationException} if {@link #feats} is currently an immutable list (e.g. a
+     * fixture-built Character that never swapped in a mutable one — see {@link #feats}'s own
+     * javadoc).
+     */
+    public void grantFeat(@NonNull final Feat feat) {
+        feats.add(feat);
     }
 
     /**
