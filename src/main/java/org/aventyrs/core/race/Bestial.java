@@ -59,10 +59,11 @@ import java.util.List;
  *   PersuasaoCompetencyAbility#ESPALHAR_EMOCOES}/{@code #FORCA_OPRESSORA} already cite — a
  *   Persuasão or Atenção roll has no notion of "this one is/isn't an Intimidação"), so none of
  *   this trait's four sub-clauses can be granted without either leaking onto the wrong rolls or
- *   missing the right ones; and Desvantagem itself has no flat-bonus constant to mirror {@link
- *   org.aventyrs.core.skill.Skill#ADVANTAGE_BONUS} (this codebase's "Vantagem is a flat +2"
- *   convention has never needed a symmetric Desvantagem constant before, since no other
- *   ability grants a flat, unconditional Desvantagem today).</li>
+ *   missing the right ones. The flat malus itself is no longer a gap — {@link
+ *   org.aventyrs.core.skill.Skill#DISADVANTAGE_MALUS} mirrors {@link
+ *   org.aventyrs.core.skill.Skill#ADVANTAGE_BONUS} since {@code
+ *   org.aventyrs.core.item.ArmorItem#ARMADURA_COMPLETA}'s Conjuração column needed it — but
+ *   the roll-purpose gap above still blocks every one of these four clauses on its own.</li>
  *   <li><b>Despertar Monstruoso</b> (2+ Talentos Bestiais changes creature type from Feérico to
  *   Monstruoso, unlocking Talentos Monstruosos and locking out further Talentos Feéricos) —
  *   {@link Character} has no creature-type field at all (Feérico/Monstruoso or otherwise), no

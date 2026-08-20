@@ -18,10 +18,10 @@ import org.aventyrs.core.character.EgoDomain;
 public enum ResourcesAdvantage implements EgoAdvantage {
 
     // TODO: -2PE (minimum 1PE) on buying/producing equipment in campaign, and -1PE
-    // (minimum 1PE) on Obra-Prima upgrades/Aprimoramentos/Habilidade de Título usage — no
-    // Ponto de Equipamento (PE) cost system, or Equipamento/Item entity for it to apply
-    // against, exists anywhere in this codebase yet (see {@code
-    // org.aventyrs.core.item.ItemInteraction}'s own bare "TODO implement" stub).
+    // (minimum 1PE) on Obra-Prima upgrades/Aprimoramentos/Habilidade de Título usage — {@code
+    // org.aventyrs.core.item.Item#getPrice()} is now a real PE figure per catalog entry, but
+    // no PE *budget/economy* exists to spend it from, and Obra-Prima tiers/Aprimoramentos are
+    // per-owned-copy upgrades this core still doesn't model at all.
     BARGANHISTA("Comprar ou produzir equipamentos após a criação do Personagem, em " +
             "campanha, custam 2 Pontos de Equipamentos a menos, até o mínimo de 1PE; " +
             "Melhorias de Obras-Primas, Aprimoramentos e uso de Habilidades de Título " +
@@ -29,8 +29,10 @@ public enum ResourcesAdvantage implements EgoAdvantage {
 
     // TODO: grants a chosen Equipamento Comum Ofensivo (any Raridade) at character
     // creation, upgraded to a Comum/Incomum Obra-Prima with no Aprimoramentos, excluding
-    // Equipamentos Tecnológicos/Regalias — blocked on the same missing Equipamento/Item
-    // entity (Raridade, Obra-Prima tiers, Aprimoramentos) as BARGANHISTA above.
+    // Equipamentos Tecnológicos/Regalias — {@code org.aventyrs.core.item.ItemRarity} and
+    // {@code ItemType#OFFENSIVE} are real now, but Obra-Prima tiers/Aprimoramentos (per-owned-
+    // copy upgrades) and Tecnológico/Regalia classifications still aren't modeled, and nothing
+    // on {@code Character}/{@code CharacterSheet} holds an item to grant one onto.
     HERANCA_FAMILIAR("Durante a criação do personagem você pode escolher um Equipamento " +
             "Comum Ofensivo de qualquer Raridade, o item escolhido é uma Obra-Prima Comum " +
             "ou Incomum e não possui Aprimoramentos. Não é possível obter Equipamentos " +

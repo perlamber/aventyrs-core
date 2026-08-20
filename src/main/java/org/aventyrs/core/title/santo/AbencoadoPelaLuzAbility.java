@@ -33,13 +33,11 @@ public enum AbencoadoPelaLuzAbility implements AventyrTitleAbility {
     // the holder is a forced-attack-targeting mechanism this core has no equivalent of (the
     // same "no attack-targeting orchestration"/"nothing models an attack as a stateful
     // transaction another Character can interject into" gap SantoAbility#GUARDA_VIDAS already
-    // cites); the Desvantagem-on-subsequent-attacks clause needs a flat Desvantagem constant,
-    // which doesn't exist anywhere in this core (confirmed: race/Bestial.java's own citation —
-    // "Desvantagem itself has no flat-bonus constant to mirror Skill#ADVANTAGE_BONUS... this
-    // codebase's 'Vantagem is a flat +2' convention has never needed a symmetric Desvantagem
-    // constant before") — even if it did, scoping it to "attacks against the *new* target
-    // specifically" needs the same "doesn't track what a roll is *for*" gap documented
-    // elsewhere; and "Efeito de Encantamento" + "Área de Efeito" are both unmodeled
+    // cites); the Desvantagem-on-subsequent-attacks clause now has a flat constant to use
+    // (Skill#DISADVANTAGE_MALUS, added for item/ArmorItem#ARMADURA_COMPLETA's own Conjuração
+    // column), but that was never this clause's real blocker: scoping it to "attacks against
+    // the *new* target specifically" still needs the same "doesn't track what a roll is *for*"
+    // gap documented elsewhere, plus the forced-targeting mechanism above; and "Efeito de Encantamento" + "Área de Efeito" are both unmodeled
     // classifications (Encantamento — see SantoSpecialization#ABENCOADO_PELA_LUZ's own TODO;
     // Área de Efeito — cited but unbuilt, see EsquivaEApararCompetencyAbility#EVASAO's own
     // TODO). getPDCost() reports the rules text's stated *minimum* (1) — the actual cost is

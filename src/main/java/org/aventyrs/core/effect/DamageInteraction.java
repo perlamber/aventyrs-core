@@ -83,6 +83,13 @@ public class DamageInteraction implements Interaction<CharacterSheet> {
      * &gt; 0) — a hit fully absorbed by RD/RA has nothing for a downstream {@link EffectChain}/
      * {@link CriticalEffect} to react to, so the chain ends here instead of forwarding into a
      * stage with nothing to work from.
+     *
+     * <p>The reported {@link InteractionResult#getResultStatus()} is the target's freshly
+     * recomputed one, via {@link DamageService#refreshStatus(CharacterSheet)} — mitigation and
+     * application happen in two separate steps here (this hit's own final damage is needed for
+     * {@code resourceLossValue} and the next-stage gate, which {@link
+     * DamageService#applyDamage}'s "total accumulated so far" return can't supply), so the
+     * status refresh that overload performs automatically is invoked explicitly instead.
      */
     public InteractionResult applyTo(final CharacterSheet target, final SceneContext sceneContext,
                                       final DamageType damageType, final CharacterSheet source,
@@ -92,7 +99,7 @@ public class DamageInteraction implements Interaction<CharacterSheet> {
         target.applyDamage(finalDamage);
 
         InteractionResult.InteractionResultBuilder result = InteractionResult.builder()
-                .resultStatus(target.getCharacter().getStatus())
+                .resultStatus(damageService.refreshStatus(target))
                 .resourceLossValue(finalDamage)
                 .resourceLossType(ResourceType.HIT_POINTS);
         if (finalDamage > 0) {

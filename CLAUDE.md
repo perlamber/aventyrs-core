@@ -259,14 +259,13 @@ prerequisite now is.
 ability is supposed to do, and which specific system is missing. Check this codebase's
 existing gap catalog before assuming a new gap: **Defesas** (no stat/service exists anywhere —
 cite `race/Gigantes.java`'s "DF isn't a concept this core computes at all" / `race/Elfo.java`'s
-matching DM citation), **Item/Equipamento** (`org.aventyrs.core.item.ItemInteraction` is still
-a bare stub), **Encantamento/Maldição/Doença (Malefício) classification** (no such tag exists
+matching DM citation), **an owned/produced item copy** (the `org.aventyrs.core.item.Item`
+*catalog* entry is real — see "Itens/Equipamento" below — but per-copy state, inventory, a PE
+economy, Obra-Prima/Aprimoramentos and a production/repair mechanic are all still missing, so
+cite the specific one rather than a blanket "no Item entity"), **Encantamento/Maldição/Doença (Malefício) classification** (no such tag exists
 anywhere — see `Withering`'s own citation and `AtaqueCorpoACorpoCompetencyAbility
 .ABRIR_DEFESAS`'s "Malefício Desprevenido" one), **Área de Efeito** (cited but unbuilt — see
-`EsquivaEApararCompetencyAbility.EVASAO`'s own TODO), **a flat Desvantagem constant** (no
-symmetric malus to `Skill.ADVANTAGE_BONUS` exists — confirmed by `race/Bestial.java`'s own
-citation; "this codebase's 'Vantagem is a flat +2' convention has never needed a symmetric
-Desvantagem constant before"), **forced-attack-targeting/attack-interception** (same gap
+`EsquivaEApararCompetencyAbility.EVASAO`'s own TODO), **forced-attack-targeting/attack-interception** (same gap
 `SantoAbility.GUARDA_VIDAS` already cites — this core has no equivalent of "another Character
 becomes the target instead" mid-resolution), and **cross-character continuously-recomputed
 passive grants** (every existing cross-character bonus mechanism is either an explicit
@@ -462,66 +461,110 @@ A Talento (e.g. `ArtesMarciaisFeat.ARTISTA_MARCIAL`) is a flat catalog entry, on
 Talento *tree* named by `FeatCategory` (e.g. `ArtesMarciaisFeat` for `FeatCategory
 .ARTE_MARCIAL`) — mirrors `<Skill>CompetencyAbility`'s one-enum-per-domain shape, not
 `AventyrTitle`'s per-instance-class one, since a Talento (unlike a Título) never carries
-per-acquisition player choices of its own today.
+per-acquisition player choices of its own today. `Feat`/`FeatRequirements`/`AbstractFeat`/
+`FeatCategory` and `FeatService#grantFeat(Character, CharacterSheet, Feat)` (validate
+`Feat#isEligible`, spend `Race#getNewFeatCost` XP, then mutate — the same shape as
+`CharacterAttributeService#upgradeBase`/`TitleAbilityService#grantTitleAbility`) are the whole
+mechanism; the `adding-a-feat` Claude Code skill packages the full checklist as an invokable
+walkthrough.
 
-- **`Feat`** (`org.aventyrs.core.feat`) is the shared interface: `getFeatCategory()`/
-  `getDescription()`/`getFeatRequirements()`, plus a default `isEligible(Character)` combining
-  every set prerequisite in `getFeatRequirements()` — an Attribute's base reaching a threshold,
-  a Perícia's Graduação reaching a threshold (an untrained Perícia reads as Graduação 0, same
-  as everywhere else in this core), and/or another specific Feat already being held. Any
-  prerequisite left unset on `FeatRequirements` never blocks eligibility; every one that *is*
-  set must hold at once — mirrors `AventyrTitleAbility#isEligible`'s identical
-  combine-every-set-prerequisite shape, just with Attribute/Perícia/Feat prerequisites instead
-  of Especialização/other-Habilidade ones.
-- **`FeatRequirements`** (`@Builder record`) carries the raw prerequisite data: `attributeDomain`/
-  `requiredAttributeValue`, `requiredSkillType`/`requiredSkillGraduation`, and `requiredFeat` —
-  unlike most "Requer N..." prerequisites elsewhere in this core (left as an unenforced
-  comment, see the Perícia Habilidade de Competência section above), a Talento's own
-  prerequisites are always simple numeric/identity thresholds, so they're modeled as real,
-  structured, enforced data from the start, the same restraint already broken for
-  `AventyrTitleAbility`'s own "Requer N Especializações/Habilidades" clauses.
-- **`AbstractFeat`** (`@Builder`, implements `Feat`) is a plain generic implementation for a
-  Talento that doesn't need any constant-specific override — construct it directly wherever a
-  bare `Feat` value is needed without hand-writing a whole enum body.
-- **`FeatCategory`** already existed (with its `GERAL`/`RACIAL` `Type`); every `<Tree>Feat`
-  enum maps onto exactly one `FeatCategory` constant, returned unconditionally from
-  `getFeatCategory()` (an enum-level override, not per-constant — mirrors `ArtesCompetencyAbility
-  #getSkillType()`'s identical "whole enum belongs to one X" shape).
-- **A Talento's own numeric bonus** (e.g. ARTISTA_MARCIAL's Dano Base formula) follows the
-  same "can't apply it yet doesn't mean can't compute it yet" discipline as
-  `ArtesAprimorarComArteAbility#getBaseDamageBonus` — a plain method (not a no-arg
-  `@Modifier`, when the bonus is conditioned on data a reflection-invoked no-arg method can't
-  see) computing the real formula, left uncalled by any automatic scan until whatever it's
-  scoped to (a weapon/attack-classification concept this core has no Item/Equipamento entity
-  for yet, see the "Item/Equipamento" gap citation) actually exists. Only override such a
-  method on the specific constant whose rules text grants it; every other constant in the same
-  enum falls through to a shared zero-returning default declared once on the enum type itself
-  (not on `Feat`, unless a second Talento tree genuinely needs the identical hook — the usual
-  "generalize once a second real consumer needs the identical shape" restraint).
-- **`FeatService#grantFeat(Character, CharacterSheet, Feat)`** (`org.aventyrs.core.character.services`)
-  is the single entry point that actually validates `Feat#isEligible` before granting — the
-  same "check prerequisite, then spend XP, then mutate, with a `CharacterSheet` in hand" shape
-  as `CharacterAttributeService#upgradeBase`/`SkillGraduationService#upgradeGraduation`/
-  `TitleAbilityService#grantTitleAbility`. Its XP cost is `character.getRace()
-  .getNewFeatCost(feat.getFeatCategory())` — `Race#getNewFeatCost` already existed (`Gigantes`'
-  own Talentos de Sobrevivência discount already exercises it) with no caller until now.
-  Throws `IllegalOperationException` (`FEAT_PREREQUISITE_NOT_MET`) if `isEligible` fails.
-- **`Character#feats`** is a real *mutable* `List<Feat>` — unlike `skillCompetencyAbilities`/
-  `attributeAbilities`'s `@Singular`, fixed-at-creation-only shape, a Feat is acquired well
-  after a character exists, so `Character#grantFeat(Feat)` is a plain mutator (like
-  `#grantTitle`) that `FeatService#grantFeat` calls after spending XP — it does no validation
-  itself, trusting the caller already did (same restraint `AventyrTitle#grantAbility` already
-  applies). Defaults to a fresh `new ArrayList<>()` per `Character.builder().build()` call (no
-  aliasing across separate Characters), but `CharacterFixture` defaults it to the same
-  immutable `List.of()` every other trait list there uses — a test granting a Feat onto a
-  fixture-built Character must first swap in a mutable list via `.toBuilder().feats(new
-  ArrayList<>()).build()`, the same kind of per-test override `CharacterFixture`'s own `id`
-  trap already documents for a different reason.
-- **Tests**: one file per new `<Tree>Feat` enum (non-blank description, expected count, correct
-  `getFeatCategory()` per constant, `getFeatRequirements()` identity, `isEligible` covering
-  each prerequisite independently and combined), plus `FeatServiceImplTest`-style coverage for
-  any newly-wired numeric bonus method. The `adding-a-feat` Claude Code skill packages this
-  checklist as an invokable walkthrough.
+Two facts worth knowing outside that checklist:
+
+- **A Talento's prerequisites are real, enforced data** — the second exception (alongside
+  `AventyrTitleAbility`'s "Requer N Especializações/Habilidades") to this codebase's usual
+  "leave 'Requer N Graduações' as an unenforced comment" restraint, because a Talento's own
+  Pré-requisito is always a simple numeric/identity threshold `FeatRequirements` can model
+  directly.
+- **`Character#feats` is a real *mutable* `List<Feat>`** — unlike `skillCompetencyAbilities`/
+  `attributeAbilities`'s `@Singular`, fixed-at-creation-only shape, since a Talento is acquired
+  well after a character exists; `Character#grantFeat(Feat)` is a plain mutator (like
+  `#grantTitle`) that `FeatService` calls after spending XP. It defaults to a fresh `new
+  ArrayList<>()` per `Character.builder().build()` call, but `CharacterFixture` defaults it to
+  the same immutable `List.of()` every other trait list there uses — a test granting a Feat
+  onto a fixture-built Character must first swap in a mutable list via `.toBuilder().feats(new
+  ArrayList<>()).build()`.
+
+## Itens/Equipamento — `org.aventyrs.core.item`
+
+An `Item` is the **catalog entry** for a piece of Equipamento — what "an Armadura Completa" is,
+the same way `Feat` describes a Talento — carrying every column an item's rules-text block
+lists: its heading (`ItemWeightClass`/`ItemRarity`, the "(Pesado/Raro)" pair), `description`,
+`price` (in **Pontos de Equipamento**, the PE `ResourcesAdvantage#BARGANHISTA` already cites),
+`physicalDefenseBonus`/`magicDefenseBonus` (DF/DM), `hardness` (Dureza), `castingBonus`
+(Conjuração), and an `ItemFavor`.
+
+- **Catalog, not owned copy** — the same split `AventyrTitle`'s javadoc documents, resolved the
+  *other* way than a Título's: an item's stats are identical for every copy, so the enum
+  constant *is* the item. Per-copy state (Dureza actually remaining, Obra-Prima tier,
+  Aprimoramentos, who produced it) is deliberately unmodeled, and would be a separate
+  held-instance type wrapping a catalog entry. Nothing on `Character`/`CharacterSheet` holds an
+  `Item` yet either — that inventory belongs with the per-copy type, not this one. Don't build
+  it speculatively; several TODOs cite it (`ProfissaoCompetencyAbility`,
+  `ResourcesAdvantage#HERANCA_FAMILIAR`), but none is unblocked by the catalog alone.
+- **One enum per `ItemCategory`** (e.g. `ArmorItem` for `ItemCategory.ARMOR`), mirroring
+  `<Skill>CompetencyAbility`/`ArtesMarciaisFeat`'s one-enum-per-domain shape;
+  `AbstractItem` (`@Builder`) is the `AbstractFeat` equivalent for a one-off or
+  caller-supplied item that doesn't belong in a catalog enum.
+- **`ItemFavor` is the conditional half, and its bonuses are real data, not prose**: a Favor
+  grants a bonus of any sort, exactly like a `SkillCompetencyAbility` does, so it carries a
+  list of `ItemBonus` (a `ModifierType` + value pair) resolved via `ItemFavor#resolveBonus
+  (ModifierType, Character)` / `Item#resolveFavorBonus(...)` — 0 unless the `ItemRequirements`
+  (an `AttributeDomain` + value, e.g. "Força 3") are met. `ARMADURA_COMPLETA`'s "Dano de Corte
+  sofrido é reduzido em -2" is `DAMAGE_REDUCTION` 2, landing on the RD `DamageService
+  #getTotalDamageReduction` already sums for real. The rules text stays on `getDescription()`
+  alongside it, same single-source-of-truth convention every ability enum follows.
+  - It's **data, not `@Modifier` methods**, unlike every ability enum, and that's forced:
+    `@Modifier`'s `ModifierType` is a compile-time-fixed annotation value, so one shared
+    `ItemFavor` class can't vary which type a given item grants — the same limitation "A
+    ModifierType per skill" documents. Don't try to route items through `ModifierResolver`.
+  - `ItemBonus` is deliberately **not** `TemporaryBonus` or `Blessing`: an item's Favor lasts
+    as long as the item is carried (no Rodada countdown) and never reaches anyone but its
+    wielder (no `TargetScope`, no granting `source`), so all three of those fields would be
+    dead weight.
+  - A Favor clause with no `ModifierType` to express it yet contributes no `ItemBonus` and
+    lives on in `getDescription()` until its mechanism exists. `ARMADURA_COMPLETA`'s own
+    "de Corte" scoping is exactly that kind of simplification — no damage-type-scoped
+    mitigation exists (`DamageType` has no Corte/Perfuração/Impacto breakdown, and RD/RA are
+    resolved with no notion of damage type), so it's modeled as plain RD, documented on the
+    constant rather than silently narrowed or over-granted. So is a clause whose *shape*
+    `ItemBonus` can't hold even though a `ModifierType` for the stat exists —
+    `ARMADURA_DE_JUSTA`'s "Movimento Base reduzido à metade" is a halving, and
+    `MovementService` sums `MOVEMENT` additively with no multiplicative stage for one to feed
+    (unlike `DamageService`'s own real `HALF_DAMAGE` stage); don't add a `MOVEMENT_HALVED`
+    constant for it, since the missing piece is the mechanism, not just a reader.
+  - The optional "Efeitos Adicionais" line is granted by the *same* requirement, not
+    independently, so it lives here rather than on `Item`; `null` for an item with none, checked
+    via `hasAdditionalEffects()`. It stays free text — what one does varies too widely per item
+    to have a shared shape yet.
+  - Everything else on `Item` applies to anyone carrying it; everything on `ItemFavor` needs
+    `Item#grantsFavorTo(Character)` to hold first.
+- **`ItemRequirements` checks `getTotal()`, not `getBase()`** — deliberately unlike
+  `FeatRequirements`, which uses `base`: acquiring a Talento is gated on what the character
+  personally invested in, but whether an item's Favor applies is a "can I meet this right now"
+  question, so a Bônus Racial or a variable bonus counts. It's a narrower record than
+  `FeatRequirements` (no `requiredSkillType`/`requiredFeat`) rather than a reuse of it — widen
+  it only if a real item ever names a Perícia/Talento/Título.
+- **`castingBonus` is a plain number, and "Desvantagem" is `Skill.DISADVANTAGE_MALUS` (-2)** —
+  the symmetric counterpart to `Skill.ADVANTAGE_BONUS` this codebase's gap catalog used to
+  list as missing. `ArmorItem.ARMADURA_COMPLETA`'s Conjuração column is the first
+  real, unconditional Desvantagem in the ruleset and what motivated adding it. The *scoped*
+  Desvantagem clauses elsewhere (`race/Bestial.java`'s Inocência Selvagem,
+  `AbencoadoPelaLuzAbility`) are still blocked on their own separate gaps — this core doesn't
+  track what a roll is *for* — not on the constant.
+- **What's missing for a Favor is only the inventory**: no `Character`/`CharacterSheet` holds
+  an `Item`, so no scanning service reaches one on its own — `DamageServiceImpl`'s RD scan
+  covers `attributeAbilities`/`skillCompetencyAbilities`/excellencies and would need equipped
+  items added as a fourth source. Until then a caller holding the item asks it directly. The
+  *bonus* itself is already real; don't re-cite it as unexpressible.
+- **None of the numeric *columns* has a consumer yet** (DF/DM/Dureza/Conjuração/Preço, as
+  opposed to the Favor above), and each is blocked on a *different*
+  missing system — PE has no budget/economy, DF/DM have no Defesas stat (`ModifierType.DEFESAS`
+  is a real registry entry nothing reads), Dureza has no damage/repair mechanic, Conjuração has
+  no item-granted hook on either of `SpellCastingService`'s two rolls. The values are real,
+  exact data all the same, per the "can't apply it yet doesn't mean can't compute it yet"
+  discipline.
+- `ItemInteraction` is untouched by this — still the bare pre-existing "TODO implement" stub,
+  since nothing yet *uses* an item as an `Interaction`.
 
 ## Requesting a specific Habilidade de Competência or Especialização on a roll — `SkillRoll#getRequestedAbility`
 
@@ -1548,6 +1591,40 @@ for real, while its Dano Base and Margem Crítica Menor branches stay TODO'd on
 choice (made at item creation, not ability acquisition) that's still blocked on the missing
 Item/Equipamento entity entirely. Check what's *actually* stopping an ability before assuming
 a newly-built mechanism resolves it completely.
+
+### `DamageService` keeps `Character#status` in sync — `refreshStatus`
+
+`Character.status` (a `CharacterStatus`) is a **stored** field, not one derived on read — a
+`Character` has no `CharacterSheet` of its own to derive it from (damage taken lives on the
+sheet, and one Character could back more than one sheet), the same reason
+`ReactionsService`/`InitiativeService` compute their own totals in a service rather than on the
+data class. It used to be pure dead data — every Effect reporting `InteractionResult
+#resultStatus` just echoed whatever it was built with, and nothing ever wrote to it after
+creation, so a character at 1 PV still read `CLEAN`. `DamageService#refreshStatus(CharacterSheet)`
+is what closes that: it recomputes the tier via `HitPointsService#getStatus` against the
+**unclamped** current Hit Points (`getMaxHitPoints - getDamageTaken`, deliberately *not*
+`getCurrentHitPoints`, which floors at 0 — that negative range is exactly what distinguishes
+`FALLEN`/`COMMA`/`DEAD`) and stores it via `Character#updateStatus`, a plain mutator in the same
+family as `grantTitle`/`grantFeat`.
+
+Every `DamageService#applyDamage` overload calls it automatically, after the sheet has actually
+absorbed the hit (so Shield absorption is already reflected — a fully-shielded hit leaves the
+status untouched). It's **public** for the one caller that mitigates and applies in two separate
+steps rather than through `applyDamage`: `DamageInteraction` needs this hit's own final damage
+for `resourceLossValue`/its next-stage gate, which `applyDamage`'s "total accumulated so far"
+return can't supply, so it calls `calculateFinalDamage` + `CharacterSheet#applyDamage` itself
+and then invokes `refreshStatus` explicitly for the status half — reporting that method's return
+directly as its `resultStatus` instead of echoing `target.getCharacter().getStatus()`.
+
+**Damage that never goes through `DamageService` still leaves the field stale** — `Sangramento`'s
+immediate PV loss, `Bleeding`/`Withering`'s per-Rodada loss, `RealExecution`'s curse damage, and
+`CharacterSheet#heal` all mutate the sheet's `ResourcePool` directly and hold no `DamageService`
+to refresh through. That's why `RealExecution` computes its own `resultStatus` from
+`HitPointsService#getStatus` rather than reading the field (it must be right about whether death
+was just inflicted); the other Effects in `org.aventyrs.core.effect` still echo the stored value.
+Wiring those paths means giving each one a `DamageService` (or moving the refresh down into
+`CharacterSheet` itself, which would need a `HitPointsService` on a data class — the thing this
+codebase deliberately doesn't do); don't assume this change made every damage path status-aware.
 
 ### RA/half-damage conditioned on `SceneContext` — `EgoAdvantage#resolveAbsoluteDamageReduction`/`#resolveHalfDamage`
 

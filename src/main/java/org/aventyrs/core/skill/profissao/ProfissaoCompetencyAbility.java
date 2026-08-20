@@ -7,12 +7,13 @@ import org.aventyrs.core.skill.SkillType;
 
 /**
  * The Habilidades de Competência available to characters trained in Profissão. Every one of
- * these needs an Item/Equipamento entity this core doesn't have yet — production time,
- * Dureza, Carga, and per-item combat properties (critical resistance/margin, damage
- * reduction, Defesas, Dano Base, Conjuração bonuses) are all properties of equipment that
- * isn't modeled anywhere (see {@code org.aventyrs.core.item.ItemInteraction}, an unrelated
- * pre-existing stub predating this Perícia) — so none are expressible for real today; see
- * each constant's TODO.
+ * these is about equipment a character *produces or repairs*, and none is expressible for
+ * real today. {@code org.aventyrs.core.item.Item} now exists as a catalog entry — carrying
+ * Dureza, Defesas (DF/DM) and Conjuração columns among others — so "no Item entity at all" is
+ * no longer the blocker it once was; what's still missing is everything about a produced or
+ * owned *copy*: production time, Carga, a repair mechanic, per-copy state, who produced it,
+ * and the choices baked in at its creation. Critical resistance and the Margem Crítica Maior
+ * axis don't exist anywhere either. See each constant's TODO for its own remaining gap.
  */
 @Getter
 @AllArgsConstructor
@@ -36,7 +37,8 @@ public enum ProfissaoCompetencyAbility implements SkillCompetencyAbility {
     // an item-granted value of it) or +1 Conjuração (a Magia-effect bonus, same gap as
     // DominioDoManaCompetencyAbility.ARCANISMO_EXPLOSIVA). Needs an
     // Item/Equipamento entity carrying who produced it and which choice was made at
-    // creation, none of which exist yet.
+    // creation — {@code Item} is a catalog entry with no per-copy state or producer, so none
+    // of that exists yet.
     FORJA_VULCANA("Equipamentos que você produz tem benefícios adicionais: Equipamentos " +
             "Defensivos concedem Resistência à Críticos, além disso concedem Redução de " +
             "Danos Sofridos 1 ou Bônus de +1 em Defesas (definido na criação do item). " +
@@ -46,7 +48,9 @@ public enum ProfissaoCompetencyAbility implements SkillCompetencyAbility {
     // TODO: +2 to Dureza recovered when repairing an item/equipment (no longer a dice roll,
     // so that particular blocker is gone), extendable to Magias/Habilidades at 5 Graduações,
     // then the bonus itself becomes +5 total at 10 Graduações — still needs an
-    // Item/Equipamento entity with a Dureza stat and a repair mechanic (neither exists), a
+    // item *copy* with mutable, damageable Dureza (the {@code Item} catalog entry's own
+    // {@code getHardness()} is the pristine value, not a per-copy remaining one) and a repair
+    // mechanic (neither exists), a
     // Dureza-equivalent concept on Magias/Habilidades (doesn't exist either), and a
     // graduation-crossing-a-threshold trigger for the 10th-Graduação bump (same gap as
     // ArtesExcellency.FOCADO/LENDA's Fama trigger).
@@ -54,8 +58,9 @@ public enum ProfissaoCompetencyAbility implements SkillCompetencyAbility {
             "aumenta em +2, com 5 Graduações você pode estender este efeito às suas Magias " +
             "e Habilidades, com 10 Graduações este benefício muda para +5."),
 
-    // TODO: +50% to produced equipment's Dureza — no Item/Equipamento entity or Dureza stat
-    // exists yet.
+    // TODO: +50% to produced equipment's Dureza — {@code Item#getHardness()} is now a real
+    // stat, but nothing models a *produced* copy whose value could differ from its catalog
+    // entry's, and no production mechanic exists to apply the increase at.
     AUMENTAR_A_DUREZA("A Dureza dos equipamentos que você produz aumenta em 50%."),
 
     // TODO: +5 to produced equipment's Carga capacity — no Item/Equipamento entity or Carga

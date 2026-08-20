@@ -219,6 +219,24 @@ public class Character {
     @Builder.Default
     protected SizeCategory sizeCategory = SizeCategory.ZERO;
 
+    /**
+     * How badly hurt this character currently is — the {@link CharacterStatus} tier their
+     * current Hit Points fall into (see {@code HitPointsService#getStatus}). Kept in sync with
+     * damage taken by {@code DamageService#applyDamage}/{@code DamageService#refreshStatus},
+     * which recompute it from the damaged {@code CharacterSheet} and store it here via
+     * {@link #updateStatus(CharacterStatus)}. It's a stored field rather than something
+     * derived on read because a {@code Character} has no {@code CharacterSheet} of its own to
+     * derive it from (damage taken lives on the sheet, and one Character could back more than
+     * one sheet) — the same reason {@code ReactionsService}/{@code InitiativeService} compute
+     * their own totals in a service rather than on this data class.
+     *
+     * <p>Damage applied straight to a {@code CharacterSheet} without going through {@code
+     * DamageService} — {@code Sangramento}/{@code Bleeding}/{@code Withering}'s own per-Rodada
+     * loss, {@code RealExecution}'s curse damage, and {@link
+     * org.aventyrs.core.sheet.CharacterSheet#heal} — still leaves this stale; those paths hold
+     * no {@code DamageService} to refresh through, and {@code RealExecution} already computes
+     * its own {@code resultStatus} for real instead of reading this field.
+     */
     @Builder.Default
     CharacterStatus status = CharacterStatus.CLEAN;
 
@@ -287,6 +305,16 @@ public class Character {
      */
     public void grantFeat(@NonNull final Feat feat) {
         feats.add(feat);
+    }
+
+    /**
+     * Sets this character's current {@link CharacterStatus} — a plain mutator, same as {@link
+     * #grantTitle}/{@link #grantFeat}: resolving *which* tier the character is actually in is
+     * {@code DamageService#refreshStatus}'s job (via {@code HitPointsService#getStatus}), not
+     * this method's; it trusts the caller already did.
+     */
+    public void updateStatus(@NonNull final CharacterStatus status) {
+        this.status = status;
     }
 
     /**

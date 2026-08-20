@@ -4,6 +4,7 @@ import org.aventyrs.core.ability.AttributeAbility;
 import org.aventyrs.core.ability.VigorAbility;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.character.CharacterStatus;
 import org.aventyrs.core.character.DamageType;
 import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.character.SizeCategory;
@@ -73,6 +74,32 @@ class DamageInteractionTest {
         assertEquals(ResourceType.HIT_POINTS, result.getResourceLossType());
         assertEquals(7, sheet.getDamageTaken());
         assertEquals(character.getStatus(), result.getResultStatus());
+    }
+
+    @Test
+    void applyToUpdatesTheTargetCharacterStatusAndReportsTheFreshOne() {
+        // A BLANK fixture character has 14 max Hit Points (Vigor 1, no LIFE_MULTIPLIER source),
+        // so 10 damage leaves 4 — LOW_LIFE.
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK).build();
+        CharacterSheet sheet = CharacterSheet.of(character, new Player());
+
+        InteractionResult result = damageInteraction.applyTo(sheet, 10, false);
+
+        assertEquals(CharacterStatus.LOW_LIFE, result.getResultStatus());
+        assertEquals(CharacterStatus.LOW_LIFE, character.getStatus());
+    }
+
+    @Test
+    void applyToFullyAbsorbedByMitigationLeavesTheStatusUntouched() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .attributeAbility(new DamageReductionAbility())
+                .build();
+        CharacterSheet sheet = CharacterSheet.of(character, new Player());
+
+        InteractionResult result = damageInteraction.applyTo(sheet, 3, false);
+
+        assertEquals(CharacterStatus.CLEAN, result.getResultStatus());
+        assertEquals(CharacterStatus.CLEAN, character.getStatus());
     }
 
     @Test

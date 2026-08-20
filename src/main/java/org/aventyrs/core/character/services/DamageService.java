@@ -1,6 +1,7 @@
 package org.aventyrs.core.character.services;
 
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.character.CharacterStatus;
 import org.aventyrs.core.character.DamageType;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.CharacterSheet;
@@ -111,12 +112,32 @@ public interface DamageService {
                               DamageType damageType, CharacterSheet source, int rawDamage, boolean ignoreDamageReduction);
 
     /**
+     * Recomputes characterSheet's owner's {@link CharacterStatus} from the damage currently
+     * accumulated on that sheet — {@code HitPointsService#getStatus} against the
+     * <em>unclamped</em> current Hit Points ({@code getMaxHitPoints - getDamageTaken}, which
+     * may be negative, since that negative range is exactly what distinguishes {@code
+     * FALLEN}/{@code COMMA}/{@code DEAD}) — and stores it on the {@code Character} via
+     * {@code Character#updateStatus}.
+     *
+     * <p>Called automatically by every {@link #applyDamage} overload, so a caller going
+     * through this service never needs to invoke it. It's public for the one caller that
+     * mitigates and applies damage in two separate steps instead — {@code
+     * org.aventyrs.core.effect.DamageInteraction}, which needs this hit's own final damage
+     * (for {@code InteractionResult#getResourceLossValue()} and its next-stage gate), a value
+     * {@code applyDamage}'s "total accumulated so far" return can't give it.
+     *
+     * @return CharacterStatus the freshly resolved status, also now stored on the Character
+     */
+    CharacterStatus refreshStatus(CharacterSheet characterSheet);
+
+    /**
      * Computes the final damage (see {@link #calculateFinalDamage}) and applies it to
      * characterSheet — Shield points are absorbed first, then Hit Points, per
-     * {@link CharacterSheet#applyDamage}. No separate {@code Character} parameter — applying
-     * damage always requires a concrete {@code CharacterSheet} to mutate, so there's never a
-     * sheet-less case to support here, unlike {@code calculateFinalDamage}'s own bare-preview
-     * overloads.
+     * {@link CharacterSheet#applyDamage} — then refreshes the damaged {@code Character}'s own
+     * {@link CharacterStatus} to match, via {@link #refreshStatus(CharacterSheet)}. No
+     * separate {@code Character} parameter — applying damage always requires a concrete
+     * {@code CharacterSheet} to mutate, so there's never a sheet-less case to support here,
+     * unlike {@code calculateFinalDamage}'s own bare-preview overloads.
      * @return int total damage accumulated on the target's Hit Points so far
      */
     int applyDamage(CharacterSheet characterSheet, int rawDamage, boolean ignoreDamageReduction);

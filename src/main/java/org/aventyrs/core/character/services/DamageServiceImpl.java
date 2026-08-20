@@ -2,6 +2,7 @@ package org.aventyrs.core.character.services;
 
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterSkill;
+import org.aventyrs.core.character.CharacterStatus;
 import org.aventyrs.core.character.DamageType;
 import org.aventyrs.core.modifier.ModifierResolver;
 import org.aventyrs.core.modifier.ModifierResolverImpl;
@@ -115,7 +116,19 @@ public class DamageServiceImpl implements DamageService {
                             final DamageType damageType, final CharacterSheet source,
                             final int rawDamage, final boolean ignoreDamageReduction) {
         int finalDamage = calculateFinalDamage(characterSheet, sceneContext, damageType, source, rawDamage, ignoreDamageReduction);
-        return characterSheet.applyDamage(finalDamage);
+        int totalDamageTaken = characterSheet.applyDamage(finalDamage);
+        refreshStatus(characterSheet);
+        return totalDamageTaken;
+    }
+
+    @Override
+    public CharacterStatus refreshStatus(final CharacterSheet characterSheet) {
+        Character character = characterSheet.getCharacter();
+        int maxHitPoints = hitPointsService.getMaxHitPoints(character);
+        int unclampedCurrentHitPoints = maxHitPoints - characterSheet.getDamageTaken();
+        CharacterStatus status = hitPointsService.getStatus(unclampedCurrentHitPoints, maxHitPoints);
+        character.updateStatus(status);
+        return status;
     }
 
     private int sumEgoAdvantageAbsoluteDamageReduction(final Character character, final SceneContext sceneContext) {

@@ -36,13 +36,15 @@ import org.aventyrs.core.skill.CriticalResult;
  * via {@link InteractionResult#getResultStatus()} being {@link
  * org.aventyrs.core.character.CharacterStatus#DEAD} — there's no separate boolean flag
  * for this; {@code resultStatus} already carries the outcome every other Interaction in
- * this package reports through, so a dedicated field would just duplicate it. Unlike
- * every other concrete Effect in this package, which reports {@code resultStatus} as
- * {@code target.getCharacter().getStatus()} (a plain field this core never keeps in sync
- * with damage taken), {@link #applyTo} here computes it for real via {@link
+ * this package reports through, so a dedicated field would just duplicate it. {@link
+ * #applyTo} here computes {@code resultStatus} for real via {@link
  * HitPointsService#getStatus} from the post-{@code applyCurseDamage} unclamped current
- * Hit Points — the one place this core needs {@code resultStatus} to actually reflect
- * whether death was just inflicted, not merely echo a stale field.
+ * Hit Points, rather than echoing {@code target.getCharacter().getStatus()} — this
+ * Interaction applies its damage straight to the {@link CharacterSheet} (bypassing {@code
+ * DamageService}, since an execution ignores mitigation entirely), so it holds no {@code
+ * DamageService} to refresh that stored field through the way {@link DamageInteraction}
+ * does; the remaining Effects in this package do echo it, and it stays stale for whatever
+ * damage reached the sheet outside {@code DamageService}.
  *
  * <p>The other half of its own rules text — "não poderá ser ressuscitado" — has nothing
  * in this core to attach to: there is no resurrection mechanic anywhere in this codebase

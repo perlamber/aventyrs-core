@@ -8,13 +8,24 @@ description: This skill should be used when the user asks to "add a new Talento"
 A Talento sits alongside skills/Títulos as an acquirable character trait, but it's a flat
 catalog — one enum per Talento *tree*, named by `FeatCategory` (e.g. `ArtesMarciaisFeat` for
 `FeatCategory.ARTE_MARCIAL`), mirroring `<Skill>CompetencyAbility`'s one-enum-per-domain shape.
-Read `CLAUDE.md`'s "Adding a new Talento (Feat)" section first — it carries the full
-architectural rationale; this skill is the operational checklist on top of it.
+This skill is the full checklist; `CLAUDE.md`'s own "Adding a new Talento (Feat)" section
+keeps only the two cross-cutting facts (enforced prerequisites, and `Character#feats`'
+mutability) that matter to someone not adding a Talento at all.
 
 ## 1. Read the rules text first
 
-Get the Talento's name, its full Pré-requisito line, and its full Descrição verbatim. Parse
-the Pré-requisito into whichever of these it actually names (a Talento rarely names all
+Get the Talento's name, its full Pré-requisito line, and its full Descrição verbatim.
+
+`Feat` (`org.aventyrs.core.feat`) is the shared interface — `getFeatCategory()`/
+`getDescription()`/`getFeatRequirements()`, plus a default `isEligible(Character)` that combines
+*every* set prerequisite in `getFeatRequirements()` at once (mirrors `AventyrTitleAbility
+#isEligible`'s identical shape, with Attribute/Perícia/Feat prerequisites instead of
+Especialização/other-Habilidade ones). `FeatRequirements` (a `@Builder record`) carries the raw
+data. Unlike most "Requer N..." prerequisites elsewhere in this core (left as an unenforced
+comment), a Talento's prerequisites are always simple numeric/identity thresholds, so they're
+modeled as real, structured, *enforced* data.
+
+Parse the Pré-requisito into whichever of these it actually names (a Talento rarely names all
 three):
 - An Attribute floor (e.g. "Força 2") → `attributeDomain`/`requiredAttributeValue`.
 - A Perícia Graduação floor (e.g. "2 Graduações em Ataque Corpo-a-Corpo") →
@@ -52,6 +63,12 @@ ARTISTA_MARCIAL(
 Leave any prerequisite field unset (not zero-as-a-real-value) when the rules text doesn't name
 it — `Feat#isEligible`'s default method already treats an unset `attributeDomain`/
 `requiredSkillType`/`requiredFeat` as "not a blocking prerequisite," never as "requires zero."
+An untrained Perícia reads as Graduação 0 for the skill floor, same as everywhere else in this
+core.
+
+If a bare `Feat` value is needed somewhere without hand-writing a whole enum body, use
+`AbstractFeat` (`@Builder`, implements `Feat`) — the plain generic implementation for a Talento
+that needs no constant-specific override.
 
 ## 3. Classify the Descrição's mechanic
 
@@ -89,8 +106,16 @@ second real consumer; add it to `Feat` itself at that point, not before).
 Nothing to build here — `FeatService#grantFeat(Character, CharacterSheet, Feat)` already
 validates `Feat#isEligible` (which reads straight off `FeatRequirements`, no per-Talento code
 needed) and spends `character.getRace().getNewFeatCost(feat.getFeatCategory())` XP generically.
+It throws `IllegalOperationException` (`FEAT_PREREQUISITE_NOT_MET`) when `isEligible` fails.
 A new Talento constant works through this service automatically the moment its
 `FeatRequirements` are set correctly in step 2 — don't hand-write a new validation path.
+
+`grantFeat` then calls `Character#grantFeat(Feat)`, a plain mutator (like `#grantTitle`) that
+validates nothing itself, trusting the caller already did — `Character#feats` is a real
+*mutable* `List<Feat>`, unlike `skillCompetencyAbilities`/`attributeAbilities`'s `@Singular`,
+fixed-at-creation-only shape, because a Talento is acquired well after a character exists. It
+defaults to a fresh `new ArrayList<>()` per `Character.builder().build()` call, so there's no
+aliasing across separate Characters.
 
 ## 5. Write tests
 
@@ -117,7 +142,10 @@ ArrayList<>()).build()`.
 
 ## 6. Update docs
 
-- CLAUDE.md's "Adding a new Talento (Feat)" section if the checklist itself changed.
+- This skill, if the checklist itself changed.
+- CLAUDE.md's "Adding a new Talento (Feat)" section only if an *architectural* fact changed
+  (the catalog shape, prerequisite enforcement, `Character#feats`' mutability) — routine
+  checklist changes belong here, not there.
 
 ## Reference files to read first
 
