@@ -4,6 +4,7 @@ import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterStatus;
 import org.aventyrs.core.character.EgoDomain;
+import org.aventyrs.core.item.Item;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.rest.RestType;
 
@@ -65,6 +66,28 @@ public class CharacterSheet implements Interactable<CharacterSheet> {
     private int famaPositiva = 0;
 
     private int famaNegativa = 0;
+
+    /**
+     * The Itens this CharacterSheet's {@link #character} owns but currently isn't
+     * wearing/wielding — where an {@link Item} lands the moment it's bought (or otherwise
+     * acquired), via {@link #addToInventory(Item)}. Lives here rather than on {@link Character}
+     * because it's per-sheet acquired state, not a fixed trait of the Character itself (the
+     * same reason {@link #totalExperience}/{@link #unUsedExperience} live here), and because a
+     * future PE (Pontos de Equipamento) economy funding these purchases belongs alongside it on
+     * this same class, not on {@code Character} — unlike {@code Character#equipment}, which is
+     * a fixed trait of the Character (what they're currently wearing/wielding) regardless of
+     * which sheet is in play.
+     *
+     * <p>Same catalog-entry-not-owned-copy caveat as {@code Character#equipment}: these are
+     * {@link Item} constants, not per-copy instances, so holding the same constant twice
+     * genuinely means owning two of them. Space is unlimited — no Carga/capacity concept exists
+     * in this core, so nothing here ever rejects an addition.
+     *
+     * <p>No PE economy exists yet (see {@link Item}'s own javadoc), so "buying" isn't a
+     * validated transaction here — a caller resolves whatever price-paying happens elsewhere and
+     * calls {@link #addToInventory(Item)} once it has.
+     */
+    private final List<Item> inventory = new ArrayList<>();
 
     /**
      * Every {@link TemporaryEffect} (a {@link TemporaryBonus} or a {@link Bleeding}) this
@@ -335,6 +358,24 @@ public class CharacterSheet implements Interactable<CharacterSheet> {
     public int increaseFamaNegativa(int amount)
     {
         return famaNegativa += amount;
+    }
+
+    /**
+     * Adds item to this CharacterSheet's {@link #inventory} — a plain mutator: it validates
+     * nothing (no Preço/PE spend, no capacity check, since neither exists yet).
+     */
+    public void addToInventory(final Item item)
+    {
+        inventory.add(item);
+    }
+
+    /**
+     * Removes one occurrence of item from {@link #inventory}, returning whether anything was
+     * actually removed. The mirror of {@link #addToInventory(Item)}, and equally unvalidating.
+     */
+    public boolean removeFromInventory(final Item item)
+    {
+        return inventory.remove(item);
     }
 
     /**

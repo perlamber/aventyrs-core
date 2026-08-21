@@ -84,6 +84,12 @@ public class CharacterFixture extends SimpleFixture {
      * .toBuilder().feats(new ArrayList<>()).build()} — see {@code Character#feats}'s own
      * javadoc for why a shared mutable instance can't just be defaulted here instead (it would
      * alias across every Character built from this template).
+     *
+     * <p>{@code equipment} carries the exact same caveat, for the exact same reason — a test
+     * that equips an {@code Item} (via {@code Character#equip}) must first do {@code
+     * .toBuilder().equipment(new ArrayList<>()).build()}, or pass the items straight to the
+     * builder as {@code .equipment(List.of(ArmorItem.ARMADURA_COMPLETA))} when nothing needs to
+     * mutate the list afterwards.
      */
     private static void loadCharacterTemplates() {
         Fixture.of(Character.class).addTemplate(BLANK, new Rule() {
@@ -104,6 +110,7 @@ public class CharacterFixture extends SimpleFixture {
                 this.add("skillCompetencyAbilities", List.of());
                 this.add("abilityChoices", List.of());
                 this.add("feats", List.of());
+                this.add("equipment", List.of());
                 this.add("primaryTitle", null);
                 this.add("secondaryTitle", null);
                 this.add("tertiaryTitle", null);
@@ -162,6 +169,7 @@ public class CharacterFixture extends SimpleFixture {
                         DominioDoManaCompetencyAbility.MAGIA_SELVAGEM));
                 this.add("abilityChoices", List.of());
                 this.add("feats", List.of());
+                this.add("equipment", List.of());
                 this.add("primaryTitle", null);
                 this.add("secondaryTitle", null);
                 this.add("tertiaryTitle", null);

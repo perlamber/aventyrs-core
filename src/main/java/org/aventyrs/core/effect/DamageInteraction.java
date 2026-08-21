@@ -31,6 +31,7 @@ import org.aventyrs.core.sheet.ResourceType;
 public class DamageInteraction implements Interaction<CharacterSheet> {
 
     private final DamageService damageService;
+    private Interaction<CharacterSheet> nextInteraction;
 
     public DamageInteraction() {
         this(new DamageServiceImpl());
@@ -38,6 +39,26 @@ public class DamageInteraction implements Interaction<CharacterSheet> {
 
     public DamageInteraction(final DamageService damageService) {
         this.damageService = damageService;
+    }
+
+    /**
+     * Links nextInteraction as this stage's pre-wired successor — see {@link
+     * Interaction#getNextInteraction()}. It's reported only when this hit actually dealt damage,
+     * exactly like the per-call {@code nextInteraction} parameter the longest {@code applyTo}
+     * overload takes; the two are the same gate, differing only in <i>when</i> the successor is
+     * supplied. A stored successor is what lets a whole chain be assembled up front and handed
+     * over as one object (see {@code org.aventyrs.core.combat.AttackReceiver}); the parameter
+     * form stays for a caller wiring one call at a time. When both are given, the explicit
+     * parameter wins.
+     */
+    public DamageInteraction chainInto(final Interaction<CharacterSheet> nextInteraction) {
+        this.nextInteraction = nextInteraction;
+        return this;
+    }
+
+    @Override
+    public Interaction<CharacterSheet> getNextInteraction() {
+        return nextInteraction;
     }
 
     @Override
@@ -103,7 +124,7 @@ public class DamageInteraction implements Interaction<CharacterSheet> {
                 .resourceLossValue(finalDamage)
                 .resourceLossType(ResourceType.HIT_POINTS);
         if (finalDamage > 0) {
-            result.nextInteraction(nextInteraction);
+            result.nextInteraction(nextInteraction != null ? nextInteraction : this.nextInteraction);
         }
         return result.build();
     }

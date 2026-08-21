@@ -43,7 +43,7 @@ import java.util.Optional;
  * returning false, which {@link CharacterSheet#applyEffect} honors generically by
  * replacing any existing Withering with the new one rather than adding a second.
  */
-public class Definhar implements EffectChain {
+public class Definhar extends AbstractEffect implements EffectChain {
 
     private static final int PER_ROUND_DAMAGE = 1;
 
@@ -60,8 +60,8 @@ public class Definhar implements EffectChain {
 
         target.applyEffect(new Withering(PER_ROUND_DAMAGE, Optional.of(vigorTotal)));
 
-        return InteractionResult.builder()
-                .resultStatus(affectedCharacter.getStatus())
+        return reportChain(InteractionResult.builder()
+                .resultStatus(affectedCharacter.getStatus()))
                 .build();
     }
 }

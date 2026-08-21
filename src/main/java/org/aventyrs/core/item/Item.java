@@ -19,19 +19,22 @@ import org.aventyrs.core.modifier.ModifierType;
  * org.aventyrs.core.skill.profissao.ProfissaoCompetencyAbility}) is deliberately not modeled
  * yet, and would be a separate held-instance type wrapping a catalog entry — the same
  * catalog-versus-instance split {@code org.aventyrs.core.title.AventyrTitle}'s own javadoc
- * documents. Nothing on {@code Character}/{@code CharacterSheet} holds an {@code Item} yet
- * either; that inventory belongs with the per-copy type, not this one.
+ * documents. {@code Character#getEquipment()} now holds these catalog entries directly, so
+ * equipping the same constant twice genuinely means wearing two of them — but the per-copy type
+ * that would carry each one's own remaining Dureza and Aprimoramentos still doesn't exist.
  *
- * <p><b>None of the numeric columns has a consumer yet</b>, and each is blocked on its own
- * separate missing system, not one shared gap:
+ * <p><b>Most of the numeric columns still have no consumer</b>, each blocked on its own separate
+ * missing system rather than one shared gap — DF/DM being the exception that now has one:
  * <ul>
  *   <li>{@link #getPrice()} is in Pontos de Equipamento (PE). No PE budget/economy exists —
  *   the gap {@code ResourcesAdvantage#BARGANHISTA}'s own "-2PE, mínimo 1PE" already cites.</li>
- *   <li>{@link #getPhysicalDefenseBonus()}/{@link #getMagicDefenseBonus()} (DF/DM) have no
- *   stat to add to: Defesas isn't a concept this core computes at all (see {@code
- *   org.aventyrs.core.race.Gigantes}/{@code org.aventyrs.core.race.Elfo}'s own citations, and
- *   {@code org.aventyrs.core.modifier.ModifierType#DEFESAS}, a real registry entry nothing
- *   reads yet).</li>
+ *   <li><b>{@link #getPhysicalDefenseBonus()}/{@link #getMagicDefenseBonus()} (DF/DM) are no
+ *   longer inert</b> — {@code org.aventyrs.core.character.services.DefenseService} sums them for
+ *   every equipped item, and {@code
+ *   org.aventyrs.core.skill.esquivaeaparar.EsquivaEApararInteraction} feeds that into the
+ *   defender's roll. See {@code org.aventyrs.core.character.DefenseType} for why a Defesa is a
+ *   pool of roll bonuses rather than a passive stat, and {@code
+ *   org.aventyrs.core.combat.AttackReceiver} for the entry point that drives it.</li>
  *   <li>{@link #getHardness()} (Dureza) has no damage-to-equipment or repair mechanic —
  *   exactly what {@code ProfissaoCompetencyAbility#REPARO_MELHORADO}/{@code
  *   #AUMENTAR_A_DUREZA} are still TODO'd on.</li>
@@ -41,15 +44,15 @@ import org.aventyrs.core.modifier.ModifierType;
  * </ul>
  * The values themselves are real, exact data all the same — the same "can't apply it yet
  * doesn't mean can't compute it yet" discipline this codebase applies to {@code Santo
- * #getDefesasBonus} and every {@code ModifierType#DEFESAS}-typed {@code Blessing}.
+ * #getDefesasBonus}. DF/DM are what that discipline eventually pays off: they were exact data
+ * with nothing to read them for several revisions before {@code DefenseService} existed.
  *
  * <p>The {@link ItemFavor} is the exception that *does* land on already-real machinery: its
  * bonuses are {@link ModifierType}-typed {@link ItemBonus}es, so a Favor granting RD (e.g.
  * {@link ArmorItem#ARMADURA_COMPLETA}) names the same {@code DAMAGE_REDUCTION} that {@code
- * DamageService#getTotalDamageReduction} already sums. What's missing is only the *inventory*
- * — no {@code Character}/{@code CharacterSheet} holds an item, so no scanning service reaches
- * one on its own yet; a caller with the item in hand calls {@link
- * #resolveFavorBonus(ModifierType, Character)} directly.
+ * DamageService#getTotalDamageReduction} already sums — and now genuinely does, scanning {@code
+ * Character#getEquipment()} as its fourth source. A caller holding an item that isn't equipped
+ * can still ask it directly via {@link #resolveFavorBonus(ModifierType, Character)}.
  */
 public interface Item {
 

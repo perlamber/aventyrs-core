@@ -18,4 +18,14 @@ import org.aventyrs.core.sheet.Interaction;
  */
 public interface Effect extends Interaction<CharacterSheet> {
     String getDescription();
+
+    /**
+     * Links nextInteraction as this Effect's successor, returning {@code this}, so several
+     * Efeitos triggered by one attack can be assembled into a single chain up front rather than
+     * applied one at a time by hand — see {@link Interaction#getNextInteraction()} and {@code
+     * org.aventyrs.core.combat.AttackReceiver}. {@link AbstractEffect} implements this (and the
+     * matching {@code getNextInteraction}) once for every concrete Effect; extend it rather than
+     * implementing this by hand.
+     */
+    Effect chainInto(Interaction<CharacterSheet> nextInteraction);
 }

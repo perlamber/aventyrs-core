@@ -1,6 +1,7 @@
 package org.aventyrs.core.character;
 
 import org.aventyrs.core.character.fixture.CharacterFixture;
+import org.aventyrs.core.item.ArmorItem;
 import org.aventyrs.core.title.santo.Santo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -9,6 +10,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CharacterTest {
@@ -102,5 +104,42 @@ class CharacterTest {
         character.grantTitle(primary, TitleSlot.PRIMARY);
 
         assertEquals(List.of(primary, tertiary), character.getAllTitles());
+    }
+
+    @Test
+    void equipmentDefaultsToAFreshEmptyMutableListPerBuild() {
+        Character first = CharacterFixture.blank(CharacterFixture.BLANK).equipment(new java.util.ArrayList<>()).build();
+        Character second = CharacterFixture.blank(CharacterFixture.BLANK).equipment(new java.util.ArrayList<>()).build();
+
+        first.equip(ArmorItem.ARMADURA_COMPLETA);
+
+        assertEquals(List.of(ArmorItem.ARMADURA_COMPLETA), first.getEquipment());
+        assertTrue(second.getEquipment().isEmpty());
+    }
+
+    @Test
+    void equipAppendsAndUnequipRemovesOneOccurrence() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .equipment(new java.util.ArrayList<>())
+                .build();
+
+        character.equip(ArmorItem.COURACA);
+        character.equip(ArmorItem.COURACA);
+        assertEquals(2, character.getEquipment().size());
+
+        assertTrue(character.unequip(ArmorItem.COURACA));
+        assertEquals(List.of(ArmorItem.COURACA), character.getEquipment());
+
+        assertTrue(character.unequip(ArmorItem.COURACA));
+        assertTrue(character.getEquipment().isEmpty());
+    }
+
+    @Test
+    void unequipReportsFalseForAnItemThatWasNeverEquipped() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .equipment(new java.util.ArrayList<>())
+                .build();
+
+        assertFalse(character.unequip(ArmorItem.COURACA));
     }
 }

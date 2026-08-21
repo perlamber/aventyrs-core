@@ -17,6 +17,7 @@ import org.aventyrs.core.character.services.MagicPointsService;
 import org.aventyrs.core.character.services.ReactionsService;
 import org.aventyrs.core.ego.EgoAdvantage;
 import org.aventyrs.core.feat.Feat;
+import org.aventyrs.core.item.Item;
 import org.aventyrs.core.race.Race;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.Player;
@@ -152,6 +153,34 @@ public class Character {
     @NonNull
     @Builder.Default
     protected List<Feat> feats = new ArrayList<>();
+
+    /**
+     * The Itens this character currently has equipped — the same real-mutable-list shape as
+     * {@link #feats}, and for the same reason: equipment is picked up, worn and dropped long
+     * after a character exists, so it can't be a {@code @Singular} builder-only list. Granted
+     * via {@link #equip(Item)}/{@link #unequip(Item)}.
+     *
+     * <p>These are {@link Item} <b>catalog entries</b>, not owned copies: every copy of an
+     * Armadura Completa has the same DF/DM/Dureza, so the enum constant itself is what's held.
+     * Per-copy state (Dureza actually remaining, Obra-Prima tier, Aprimoramentos, who produced
+     * it) is still deliberately unmodeled and would be a separate held-instance type wrapping a
+     * catalog entry — see {@link Item}'s own javadoc. Equipping the same catalog constant twice
+     * therefore genuinely means "wearing two of them", and both contribute.
+     *
+     * <p>Read by {@code org.aventyrs.core.character.services.DefenseService} (an item's DF/DM
+     * columns plus its Favor's {@code DEFESAS}/{@code PHYSICAL_DEFENSE}/{@code MAGIC_DEFENSE}
+     * bonuses) and by {@code DamageService#getTotalDamageReduction} (a Favor's {@code
+     * DAMAGE_REDUCTION}), which is what finally makes {@code
+     * org.aventyrs.core.item.ArmorItem}'s Favores real rather than data with no consumer.
+     *
+     * <p>Same fixture caveat as {@link #feats}: {@code CharacterFixture} bypasses the Lombok
+     * builder and defaults this to an immutable {@code List.of()}, so a test that equips
+     * something must first swap in a fresh mutable list via {@code .toBuilder().equipment(new
+     * ArrayList<>()).build()}.
+     */
+    @NonNull
+    @Builder.Default
+    protected List<Item> equipment = new ArrayList<>();
 
     /**
      * The Título Aventyr in this character's Título Primário slot, or {@code null} if none —
@@ -305,6 +334,27 @@ public class Character {
      */
     public void grantFeat(@NonNull final Feat feat) {
         feats.add(feat);
+    }
+
+    /**
+     * Adds item to this character's equipped {@link #equipment} — a plain mutator, same as
+     * {@link #grantFeat}: it validates nothing. Whether the character can actually carry or
+     * wield it (Carga doesn't exist in this core), whether they paid its Preço in Pontos de
+     * Equipamento (no PE economy exists either), and whether they meet the {@code ItemFavor}'s
+     * own Requisitos (that's resolved per-read, live, by {@link Item#grantsFavorTo}) are all
+     * outside this method. Throws {@code UnsupportedOperationException} if {@link #equipment} is
+     * currently an immutable list — see that field's own javadoc.
+     */
+    public void equip(@NonNull final Item item) {
+        equipment.add(item);
+    }
+
+    /**
+     * Removes one occurrence of item from {@link #equipment}, returning whether anything was
+     * actually removed. The mirror of {@link #equip(Item)}, and equally unvalidating.
+     */
+    public boolean unequip(@NonNull final Item item) {
+        return equipment.remove(item);
     }
 
     /**

@@ -40,7 +40,7 @@ import java.util.Optional;
  * Bleeding} is left open-ended (never expires from Rodada countdown alone); only healing
  * or a caller explicitly clearing it ends it early.
  */
-public class Sangramento implements CriticalEffect {
+public class Sangramento extends AbstractEffect implements CriticalEffect {
 
     private static final int IMMEDIATE_DAMAGE = 2;
     private static final int PER_ROUND_DAMAGE = 1;
@@ -71,10 +71,10 @@ public class Sangramento implements CriticalEffect {
                 : Optional.empty();
         target.applyEffect(new Bleeding(PER_ROUND_DAMAGE, remainingRounds));
 
-        return InteractionResult.builder()
+        return reportChain(InteractionResult.builder()
                 .resultStatus(affectedCharacter.getStatus())
                 .resourceLossValue(IMMEDIATE_DAMAGE)
-                .resourceLossType(ResourceType.HIT_POINTS)
+                .resourceLossType(ResourceType.HIT_POINTS))
                 .build();
     }
 }

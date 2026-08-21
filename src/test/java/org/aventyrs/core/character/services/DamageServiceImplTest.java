@@ -10,7 +10,10 @@ import org.aventyrs.core.character.DamageType;
 import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.character.SizeCategory;
 import org.aventyrs.core.character.TitleSlot;
+import org.aventyrs.core.character.AttributeValue;
+import org.aventyrs.core.character.CharacterAttributes;
 import org.aventyrs.core.character.fixture.CharacterFixture;
+import org.aventyrs.core.item.ArmorItem;
 import org.aventyrs.core.character.fixture.CharacterSkillFixture;
 import org.aventyrs.core.ego.InitiativeAdvantage;
 import org.aventyrs.core.modifier.Modifier;
@@ -570,5 +573,46 @@ class DamageServiceImplTest {
 
         assertEquals(DamageService.DEFAULT_DAMAGE_REDUCTION * 2,
                 damageService.getTotalAbsoluteDamageReduction(holderSheet, sceneContext));
+    }
+
+    // ---------------------------------------------------------------------------------------
+    // Equipped items as the fourth RD source.
+    // ---------------------------------------------------------------------------------------
+
+    @Test
+    void anEquippedArmorsFavorContributesDamageReductionOnceItsRequisitosAreMet() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .attributes(CharacterAttributes.builder()
+                        .strength(AttributeValue.builder().domain(AttributeDomain.STRENGTH).base(3).build())
+                        .build())
+                .equipment(List.of(ArmorItem.ARMADURA_COMPLETA))
+                .build();
+
+        assertEquals(2, damageService.getTotalDamageReduction(character));
+        assertEquals(10 - 2, damageService.calculateFinalDamage(character, 10, false));
+    }
+
+    @Test
+    void anEquippedArmorsFavorContributesNothingWhenItsRequisitosArentMet() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .attributes(CharacterAttributes.builder()
+                        .strength(AttributeValue.builder().domain(AttributeDomain.STRENGTH).base(1).build())
+                        .build())
+                .equipment(List.of(ArmorItem.ARMADURA_COMPLETA))
+                .build();
+
+        assertEquals(0, damageService.getTotalDamageReduction(character));
+    }
+
+    @Test
+    void anEquippedArmorsDamageReductionIsIgnoredByAnIgnoreDamageReductionAttack() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .attributes(CharacterAttributes.builder()
+                        .strength(AttributeValue.builder().domain(AttributeDomain.STRENGTH).base(3).build())
+                        .build())
+                .equipment(List.of(ArmorItem.ARMADURA_COMPLETA))
+                .build();
+
+        assertEquals(10, damageService.calculateFinalDamage(character, 10, true));
     }
 }

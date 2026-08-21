@@ -40,7 +40,7 @@ import java.util.Optional;
  * so its {@link ManaDrain} is left open-ended (never expires from Rodada countdown
  * alone) the same way; only healing or a caller explicitly clearing it ends it early.
  */
-public class ManaPurge implements CriticalEffect {
+public class ManaPurge extends AbstractEffect implements CriticalEffect {
 
     private static final int IMMEDIATE_DRAIN = 2;
     private static final int PER_ROUND_DRAIN = 1;
@@ -71,10 +71,10 @@ public class ManaPurge implements CriticalEffect {
                 : Optional.empty();
         target.applyEffect(new ManaDrain(PER_ROUND_DRAIN, remainingRounds));
 
-        return InteractionResult.builder()
+        return reportChain(InteractionResult.builder()
                 .resultStatus(affectedCharacter.getStatus())
                 .resourceLossValue(IMMEDIATE_DRAIN)
-                .resourceLossType(ResourceType.MAGIC_POINTS)
+                .resourceLossType(ResourceType.MAGIC_POINTS))
                 .build();
     }
 }

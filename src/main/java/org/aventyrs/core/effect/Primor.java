@@ -45,7 +45,7 @@ import static org.aventyrs.core.util.TranslatableMessages.INVALID_PRIMOR_EGO_DOM
  * CriticalEffect#validateCriticalHit}): Primor is only ever a *consequence* of a critical
  * hit landing, never something a caller applies on its own judgment.
  */
-public class Primor implements CriticalEffect {
+public class Primor extends AbstractEffect implements CriticalEffect {
 
     private static final int MAIOR_VALUE = 2;
     private static final int MENOR_VALUE = 1;
@@ -82,10 +82,10 @@ public class Primor implements CriticalEffect {
         target.spendTemporaryEgoPoints(domain, value);
         target.owePendingEgoRecovery(new PendingEgoRecovery(domain, value, minimumRestType));
 
-        return InteractionResult.builder()
+        return reportChain(InteractionResult.builder()
                 .resultStatus(affectedCharacter.getStatus())
                 .egoLossValue(value)
-                .egoLossDomain(domain)
+                .egoLossDomain(domain))
                 .build();
     }
 }

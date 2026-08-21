@@ -4,12 +4,14 @@ import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.character.fixture.CharacterFixture;
+import org.aventyrs.core.item.ArmorItem;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.rest.RestType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -650,5 +652,34 @@ class CharacterSheetTest {
         sheet.applyPendingEgoRecoveries(RestType.MINIMO);
 
         assertEquals(2, sheet.getTemporaryEgoPoints(EgoDomain.SORTE));
+    }
+
+    @Test
+    void newlyCreatedCharacterSheetHasAnEmptyInventory() {
+        CharacterSheet sheet = newSheet();
+
+        assertTrue(sheet.getInventory().isEmpty());
+    }
+
+    @Test
+    void addToInventoryAppendsAndRemoveFromInventoryRemovesOneOccurrence() {
+        CharacterSheet sheet = newSheet();
+
+        sheet.addToInventory(ArmorItem.COURACA);
+        sheet.addToInventory(ArmorItem.COURACA);
+        assertEquals(2, sheet.getInventory().size());
+
+        assertTrue(sheet.removeFromInventory(ArmorItem.COURACA));
+        assertEquals(List.of(ArmorItem.COURACA), sheet.getInventory());
+
+        assertTrue(sheet.removeFromInventory(ArmorItem.COURACA));
+        assertTrue(sheet.getInventory().isEmpty());
+    }
+
+    @Test
+    void removeFromInventoryReportsFalseForAnItemThatWasNeverInInventory() {
+        CharacterSheet sheet = newSheet();
+
+        assertFalse(sheet.removeFromInventory(ArmorItem.COURACA));
     }
 }

@@ -14,6 +14,13 @@ package org.aventyrs.core.modifier;
  * org.aventyrs.core.skill.SkillType#getRollBonusType()} for the per-{@code SkillType} lookup —
  * summed *alongside*, not instead of, {@code SKILL_ROLL_BONUS} by {@code
  * org.aventyrs.core.skill.AbstractSkillInteraction}.
+ *
+ * <p>{@code DEFESAS} follows that exact same broad-plus-scoped shape one level down: it means
+ * "both Defesas", while {@code PHYSICAL_DEFENSE}/{@code MAGIC_DEFENSE} scope a bonus to DF or DM
+ * alone. All three are summed additively by {@code
+ * org.aventyrs.core.character.services.DefenseService}, so a source can name whichever it needs
+ * and a character holding some of each still totals correctly — see {@code
+ * org.aventyrs.core.character.DefenseType}.
  */
 public enum ModifierType {
     LIFE_MULTIPLIER,
@@ -31,6 +38,8 @@ public enum ModifierType {
     HALF_DAMAGE,
     ABSOLUTE_DAMAGE_REDUCTION,
     DEFESAS,
+    PHYSICAL_DEFENSE,
+    MAGIC_DEFENSE,
     ATTENTION_ROLL_BONUS,
     ARTES_ROLL_BONUS,
     ATLETISMO_ROLL_BONUS,

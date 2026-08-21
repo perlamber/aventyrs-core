@@ -4,6 +4,7 @@ import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.character.CharacterStatus;
 import org.aventyrs.core.character.DamageType;
+import org.aventyrs.core.item.Item;
 import org.aventyrs.core.modifier.ModifierResolver;
 import org.aventyrs.core.modifier.ModifierResolverImpl;
 import org.aventyrs.core.modifier.ModifierType;
@@ -36,15 +37,37 @@ public class DamageServiceImpl implements DamageService {
 
     @Override
     public int getTotalDamageReduction(final Character character) {
-        return sumAcrossSources(character, ModifierType.DAMAGE_REDUCTION);
+        return Math.max(0, sumAcrossSources(character, ModifierType.DAMAGE_REDUCTION)
+                + sumEquipmentDamageReduction(character));
     }
 
     @Override
     public int getTotalDamageReduction(final CharacterSheet target, final DamageType damageType, final CharacterSheet source) {
         Character character = target.getCharacter();
         int total = sumAcrossSources(character, ModifierType.DAMAGE_REDUCTION);
+        total += sumEquipmentDamageReduction(character);
         total += sumAttributeAbilityDamageReduction(character, target, damageType, source);
         return Math.max(0, total);
+    }
+
+    /**
+     * The fourth RD source, alongside the three {@link #sumAcrossSources} scans: every equipped
+     * {@link Item}'s {@code ItemFavor}, for whatever {@code DAMAGE_REDUCTION} it currently
+     * grants this character — 0 for an item with no Favor, or one whose Requisitos aren't met.
+     * This is what makes {@code org.aventyrs.core.item.ArmorItem}'s RD Favores (e.g. {@code
+     * ARMADURA_COMPLETA}'s "Dano de Corte sofrido é reduzido em -2", modeled as plain RD since
+     * no damage-type-scoped mitigation exists) real rather than data with no consumer.
+     *
+     * <p>Deliberately has no {@code ABSOLUTE_DAMAGE_REDUCTION} counterpart: no cataloged item
+     * grants RA, so a symmetric RA scan would be built for a hypothetical consumer rather than a
+     * real one. Add it when an item actually needs it.
+     */
+    private int sumEquipmentDamageReduction(final Character character) {
+        int total = 0;
+        for (Item item : character.getEquipment()) {
+            total += item.resolveFavorBonus(ModifierType.DAMAGE_REDUCTION, character);
+        }
+        return total;
     }
 
     @Override

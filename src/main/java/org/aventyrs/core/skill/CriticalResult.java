@@ -40,4 +40,15 @@ public enum CriticalResult {
     public boolean isCriticalSuccess() {
         return this == ACERTO_CRITICO_MENOR || this == ACERTO_CRITICO_MAIOR;
     }
+
+    /**
+     * Whether this is a critical failure (Menor or Maior) — the symmetric counterpart to {@link
+     * #isCriticalSuccess()}. Its first consumer is {@code
+     * org.aventyrs.core.combat.AttackReceiver}: an incoming attack is resolved as the
+     * <i>defender's</i> roll, so it's a critical <i>failure</i> on that roll that means the
+     * attacker landed a critical hit and this attack's Efeitos Críticos fire.
+     */
+    public boolean isCriticalFailure() {
+        return this == FALHA_CRITICA_MENOR || this == FALHA_CRITICA_MAIOR;
+    }
 }

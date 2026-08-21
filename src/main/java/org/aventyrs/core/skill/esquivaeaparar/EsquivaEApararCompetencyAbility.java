@@ -14,20 +14,22 @@ import org.aventyrs.core.skill.SkillType;
 @AllArgsConstructor
 public enum EsquivaEApararCompetencyAbility implements SkillCompetencyAbility {
 
-    // TODO: lets the character keep adding Destreza in full while wearing Média armor (no
-    // penalty), and half (instead of none) while wearing Pesada armor — this modifies the
-    // armor-category-to-attribute-penalty rule described in EsquivaEApararInteraction's own
-    // TODO, so it's blocked on the same missing piece: no Equipamento/Armadura tracking
-    // exists on Character yet to know what's currently equipped or its Categoria.
+    // Real: shifts the armor-Categoria Destreza penalty one bracket lighter — see
+    // EsquivaEApararInteraction#armorCategoryPenalty, which reads Character#getEquipment() for
+    // the heaviest equipped Defensive item's ItemWeightClass. This constant needs no @Modifier
+    // of its own: the penalty isn't a flat bonus, it's a scaling deduction the Interaction
+    // computes, and it checks for this constant by identity there.
     ENCOURACADO_E_VELOZ("Você pode adicionar seu valor integral de Destreza em suas " +
             "rolagens mesmo enquanto utilizando Equipamentos de Categoria Natural Média, e " +
             "metade quando equipados com Equipamentos Naturalmente Pesados."),
 
-    // TODO: +3 to this Perícia's own roll bonus, scoped to resisting Área de Efeito attacks
-    // specifically, then +5 once 7 Graduações are reached (a graduation-tiered scaling
-    // bonus, not a flat one — same shape as DominioDoManaCompetencyAbility
-    // .LETALIDADE_ARCANA) — the @Modifier mechanism only supports a fixed value per
-    // constant, it can't read the holder's own graduation to pick +3 vs +5.
+    // TODO: +3 Defesas scoped to resisting Área de Efeito attacks specifically, rising to +5
+    // once 7 Graduações are reached. The Defesas half is no longer what blocks this —
+    // ModifierType.PHYSICAL_DEFENSE/MAGIC_DEFENSE and DefenseService are real now, so a flat
+    // Defesa bonus is expressible. Two blockers remain, both unchanged: (1) no Área de Efeito
+    // concept exists to scope it to, and (2) it's a graduation-tiered scaling bonus (same shape
+    // as DominioDoManaCompetencyAbility.LETALIDADE_ARCANA) — @Modifier supports only a fixed
+    // value per constant and can't read the holder's own graduation to pick +3 vs +5.
     EVASAO("Defesas +3 para resistir à ataques e efeitos com Área de Efeito, benefício muda " +
             "para +5 ao alcançar 7 Graduações."),
 
@@ -35,6 +37,12 @@ public enum EsquivaEApararCompetencyAbility implements SkillCompetencyAbility {
     // this codebase doesn't track what a roll is *for* (same simplification as
     // DirigirECavalgarCompetencyAbility.CONTROLAR_ANIMAIS), so it's implemented as an
     // unconditional flat bonus to every Esquiva e Aparar roll rather than silently narrowed.
+    // Deliberately still SKILL_ROLL_BONUS rather than ModifierType.DEFESAS now that the latter
+    // has a reader: its rules text says "em suas Defesas", but in this ruleset an Esquiva e
+    // Aparar roll *is* the Defesa (see DefenseType), and this bonus applies whether the roll is
+    // resisting with DF, with DM, or with neither — retyping it to DEFESAS would narrow it to
+    // the DF/DM-typed rolls alone. Same reasoning keeps EsquivaEApararExcellency's own
+    // "Defesas +1/+3" tiers on SKILL_ROLL_BONUS.
     MOVIMENTO_DEFENSIVO("Contra efeitos de Reações você recebe bônus de +3 em suas " +
             "Defesas.") {
         @Modifier(ModifierType.SKILL_ROLL_BONUS)

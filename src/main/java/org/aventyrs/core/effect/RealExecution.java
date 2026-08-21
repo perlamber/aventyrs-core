@@ -63,7 +63,7 @@ import org.aventyrs.core.skill.CriticalResult;
  * critical hit landing" discipline as every other concrete CriticalEffect in this
  * package.
  */
-public class RealExecution implements CriticalEffect {
+public class RealExecution extends AbstractEffect implements CriticalEffect {
 
     private static final int LETHAL_DAMAGE_MULTIPLIER = 2;
     private static final int MENOR_VIGOR_MULTIPLIER = 2;
@@ -109,8 +109,8 @@ public class RealExecution implements CriticalEffect {
         }
 
         int unclampedCurrentHitPoints = maxHitPoints - target.getDamageTaken();
-        return InteractionResult.builder()
-                .resultStatus(hitPointsService.getStatus(unclampedCurrentHitPoints, maxHitPoints))
+        return reportChain(InteractionResult.builder()
+                .resultStatus(hitPointsService.getStatus(unclampedCurrentHitPoints, maxHitPoints)))
                 .build();
     }
 }

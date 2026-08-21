@@ -28,10 +28,14 @@ import org.aventyrs.core.modifier.ModifierType;
  * </ul>
  *
  * A {@code Blessing} isn't necessarily consumed by anything yet — e.g. one typed {@code
- * ModifierType#DEFESAS} has nothing that reads it, since no Defesas stat/service exists in
- * this core; it's still real, grantable data (see CLAUDE.md's "can't apply it yet doesn't mean
- * can't compute it yet" discipline), same as {@code ModifierType#ACTION_POINTS} being
- * grantable-but-currently-inert for the identical reason.
+ * ModifierType#ACTION_POINTS} is still grantable-but-inert, since {@code ActionPointsServiceImpl}
+ * reads only {@code Character#getTemporaryActionPointsBonus()}. It's real, grantable data all
+ * the same (see CLAUDE.md's "can't apply it yet doesn't mean can't compute it yet" discipline),
+ * and that pays off: a {@code ModifierType#DEFESAS}-typed Blessing — e.g. the one {@code
+ * org.aventyrs.core.title.santo.GritoDeGuerraVulcanoInteraction} grants — was inert for several
+ * revisions and is now summed for real by {@code
+ * org.aventyrs.core.character.services.DefenseService}, with no change needed at the granting
+ * site.
  *
  * <p>{@code source} identifies which trait granted this — e.g. {@code "DOM_BARDICO"}/
  * {@code "GRITO_DE_GUERRA_VULCANO"} — so a caller aggregating several {@code Blessing}s from

@@ -36,7 +36,7 @@ import org.aventyrs.core.skill.CriticalResult;
  * item-related (there's nothing to compute against) and returns only {@code
  * resultStatus}, the one field every Interaction in this core can always report.
  */
-public class Sabotage implements CriticalEffect {
+public class Sabotage extends AbstractEffect implements CriticalEffect {
 
     private final CriticalResult criticalResult;
 
@@ -61,8 +61,8 @@ public class Sabotage implements CriticalEffect {
     @Override
     public InteractionResult applyTo(final CharacterSheet target) {
         Character affectedCharacter = target.getCharacter();
-        return InteractionResult.builder()
-                .resultStatus(affectedCharacter.getStatus())
+        return reportChain(InteractionResult.builder()
+                .resultStatus(affectedCharacter.getStatus()))
                 .build();
     }
 }
