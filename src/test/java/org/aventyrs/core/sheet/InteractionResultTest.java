@@ -173,7 +173,7 @@ class InteractionResultTest {
 
     @Test
     void builderAssignsTheNextInteraction() {
-        Interaction<CharacterSheet> nextInteraction = target -> InteractionResult.builder().build();
+        Interaction<CombatantSheet> nextInteraction = target -> InteractionResult.builder().build();
 
         InteractionResult result = InteractionResult.builder()
                 .nextInteraction(nextInteraction)

@@ -21,7 +21,7 @@ public interface InitiativeBlessingService {
      * <p>A pure function over character's own data — this doesn't grant, revoke, or otherwise
      * mutate anything; {@code org.aventyrs.core.scene.Scene#applyInitiativeBlessings} is the
      * caller that actually applies what this resolves, as {@code TemporaryBonus}es on the
-     * intended recipients' {@code CharacterSheet}s.
+     * intended recipients' {@code CombatantSheet}s.
      */
     List<Blessing> resolveBlessings(Character character);
 }

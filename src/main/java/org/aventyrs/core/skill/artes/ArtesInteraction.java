@@ -7,7 +7,7 @@ import org.aventyrs.core.modifier.ModifierResolver;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.Blessing;
-import org.aventyrs.core.sheet.CharacterSheet;
+import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.InteractionResult;
 import org.aventyrs.core.sheet.TargetScope;
 import org.aventyrs.core.skill.AbstractSkillInteraction;
@@ -51,7 +51,7 @@ public class ArtesInteraction extends AbstractSkillInteraction {
     }
 
     @Override
-    public InteractionResult applyTo(final CharacterSheet target, final SceneContext sceneContext, final SkillRoll skillRoll) {
+    public InteractionResult applyTo(final CombatantSheet target, final SceneContext sceneContext, final SkillRoll skillRoll) {
         InteractionResult result = super.applyTo(target, sceneContext, skillRoll);
         Character character = target.getCharacter();
         if (!character.getSkillCompetencyAbilities().contains(ArtesCompetencyAbility.DOM_BARDICO)) {

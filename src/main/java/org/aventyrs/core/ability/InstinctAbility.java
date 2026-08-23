@@ -36,7 +36,7 @@ public enum InstinctAbility implements AttributeAbility {
 
     // TODO: activated ability (2PD cost, once per Scene) letting you act before Initiative at
     // scene start. The 2PD spend itself is already mechanically possible
-    // (CharacterSheet#spendDeterminationPoints), but two real pieces are still missing: a
+    // (CombatantSheet#spendDeterminationPoints), but two real pieces are still missing: a
     // once-per-Cena usage tracker (this core has none anywhere — FurtividadeExcellency's own
     // "três vezes por Cena" TODO cites the identical gap), and a way to insert an action
     // *before* Initiative at a Scene's start — Scene's turn order (activeEntries/

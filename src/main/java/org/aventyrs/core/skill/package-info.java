@@ -7,10 +7,10 @@
  * {@link org.aventyrs.core.sheet.Interaction} for that Perícia — one class per Perícia, named
  * {@code <Skill>Interaction} (e.g. {@link org.aventyrs.core.skill.attention.AttentionInteraction},
  * {@link org.aventyrs.core.skill.artes.ArtesInteraction}) — and handing it to the target's
- * {@link org.aventyrs.core.sheet.CharacterSheet#receiveInteraction}:
+ * {@link org.aventyrs.core.sheet.CombatantSheet#receiveInteraction}:
  *
  * <pre>{@code
- * CharacterSheet sheet = CharacterSheet.of(character, player);
+ * CombatantSheet sheet = CombatantSheet.of(character, player);
  *
  * InteractionResult result = sheet.receiveInteraction(new AttentionInteraction());
  *
@@ -74,9 +74,9 @@
  * minimum, its own {@link org.aventyrs.core.skill.Skill}, {@link org.aventyrs.core.skill.SkillType}
  * constant, and {@code <Skill>Interaction}. Every concrete
  * {@link org.aventyrs.core.sheet.Interaction} implementation binds its generic parameter to
- * {@link org.aventyrs.core.sheet.CharacterSheet} (the only {@link org.aventyrs.core.sheet.Interactable}
- * today), and {@link org.aventyrs.core.sheet.CharacterSheet#receiveInteraction} always just
+ * {@link org.aventyrs.core.sheet.CombatantSheet} (the only {@link org.aventyrs.core.sheet.Interactable}
+ * today), and {@link org.aventyrs.core.sheet.CombatantSheet#receiveInteraction} always just
  * delegates to it — {@code return interaction.applyTo(this);} — so a new Perícia is added
- * without ever touching {@code CharacterSheet} itself.
+ * without ever touching {@code CombatantSheet} itself.
  */
 package org.aventyrs.core.skill;

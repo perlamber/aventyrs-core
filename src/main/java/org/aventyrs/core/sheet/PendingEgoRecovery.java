@@ -5,13 +5,13 @@ import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.rest.RestType;
 
 /**
- * Temporary Ego points owed back to a CharacterSheet at its next qualifying Rest — e.g.
+ * Temporary Ego points owed back to a CombatantSheet at its next qualifying Rest — e.g.
  * {@code org.aventyrs.core.effect.Primor}'s own "pontos perdidos desta forma são
  * recuperados no próximo Descanso[ Longo] do alvo" clause: unlike an ordinary temporary
  * Ego point spend (which has no automatic restoration), Primor's own rules text
  * specifically promises these points back once the target rests. Registered via {@link
- * CharacterSheet#owePendingEgoRecovery}, resolved by {@link
- * CharacterSheet#applyPendingEgoRecoveries} — called by {@code RestServiceImpl#applyRest}
+ * CombatantSheet#owePendingEgoRecovery}, resolved by {@link
+ * CombatantSheet#applyPendingEgoRecoveries} — called by {@code RestServiceImpl#applyRest}
  * whenever a Rest is actually taken, since (unlike Scene's still-nonexistent turn
  * shifter) {@code RestService} already is the real, complete "a Rest happened" trigger
  * point.

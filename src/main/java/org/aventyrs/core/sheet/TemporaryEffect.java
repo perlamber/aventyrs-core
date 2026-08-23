@@ -3,14 +3,14 @@ package org.aventyrs.core.sheet;
 import lombok.Getter;
 
 /**
- * A CharacterSheet-held effect that counts down in Rodadas and expires once its
+ * A CombatantSheet-held effect that counts down in Rodadas and expires once its
  * remaining Rodadas run out — the shared shape behind {@link TemporaryBonus} (a
  * bonus/malus granted by another Character's action), {@link Bleeding} (Sangramento's own
  * ongoing PV loss), and {@link ManaDrain} (Purga-Mana's own ongoing PM loss). Registered
- * via {@link CharacterSheet#applyEffect(TemporaryEffect)} (or the {@link
- * TemporaryBonus}-specific {@link CharacterSheet#grantTemporaryBonus} convenience);
- * {@link CharacterSheet#tickTemporaryEffects()} — called once per Rodada by {@link
- * CharacterSheet#finishTurn()} — advances every held one by one Rodada and discards any
+ * via {@link CombatantSheet#applyEffect(TemporaryEffect)} (or the {@link
+ * TemporaryBonus}-specific {@link CombatantSheet#grantTemporaryBonus} convenience);
+ * {@link CombatantSheet#tickTemporaryEffects()} — called once per Rodada by {@link
+ * CombatantSheet#finishTurn()} — advances every held one by one Rodada and discards any
  * that expire as a result.
  *
  * <p>{@code remainingRounds} is {@code null} for an open-ended effect — one that never
@@ -18,7 +18,7 @@ import lombok.Getter;
  * Maior needs this). Every {@link TemporaryBonus} always has a concrete count.
  *
  * <p>{@link #isCumulative()} governs whether more than one instance of a given concrete
- * kind can be active on the same {@link CharacterSheet} at once — true by default, since
+ * kind can be active on the same {@link CombatantSheet} at once — true by default, since
  * neither {@link Bleeding} nor {@link ManaDrain}'s own rules text says otherwise (repeated
  * critical hits are expected to stack). {@link Withering} (Definhar's own ongoing curse
  * damage) is the first to override it, per its rules text's explicit "não cumulativo".
@@ -38,9 +38,9 @@ public abstract class TemporaryEffect {
 
     /**
      * Whether more than one instance of this concrete kind can be active on the same
-     * CharacterSheet at once. True by default; override to return false for an effect
+     * CombatantSheet at once. True by default; override to return false for an effect
      * whose own rules text is explicitly "não cumulativo" — {@link
-     * CharacterSheet#applyEffect} then replaces any existing instance of the same
+     * CombatantSheet#applyEffect} then replaces any existing instance of the same
      * concrete type instead of adding another.
      */
     boolean isCumulative() {
@@ -58,9 +58,9 @@ public abstract class TemporaryEffect {
      * Applies this effect's own per-Rodada side effect (if any) to {@code sheet} —
      * {@link Bleeding}/{@link ManaDrain} draining PV/PM. No-op by default, e.g. {@link
      * TemporaryBonus}, whose only behavior is decrementing toward expiry — this is what
-     * lets {@link CharacterSheet#tickTemporaryEffects()} advance every kind of {@link
+     * lets {@link CombatantSheet#tickTemporaryEffects()} advance every kind of {@link
      * TemporaryEffect} uniformly, without needing to know which concrete kinds exist.
      */
-    void applyRoundEffect(final CharacterSheet sheet) {
+    void applyRoundEffect(final CombatantSheet sheet) {
     }
 }

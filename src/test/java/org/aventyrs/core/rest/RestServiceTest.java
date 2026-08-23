@@ -9,6 +9,9 @@ import org.aventyrs.core.character.AttributeValue;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterAttributes;
 import org.aventyrs.core.character.CharacterEgos;
+import org.aventyrs.core.character.CharacterStatus;
+import org.aventyrs.core.character.services.HitPointsService;
+import org.aventyrs.core.character.services.HitPointsServiceImpl;
 import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.race.Human;
 import org.aventyrs.core.sheet.CharacterSheet;
@@ -21,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class RestServiceTest {
 
     private final RestService restService = new RestServiceImpl();
+    private final HitPointsService hitPointsService = new HitPointsServiceImpl();
 
     private Character exampleCharacter() {
         return Character.builder()
@@ -35,6 +39,30 @@ class RestServiceTest {
                         .focus(AttributeValue.builder().domain(AttributeDomain.FOCUS).base(1).build())
                         .build())
                 .build();
+    }
+
+    /**
+     * A Descanso has to move the reported {@link CharacterStatus} tier back <em>up</em>. Nothing
+     * in 0.0.17 could do that: {@code RestServiceImpl#applyRest} heals through {@link
+     * CharacterSheet#heal}, which holds no {@code DamageService}, so the stored tier was left
+     * exactly where the last hit put it — a character could be restored to near-full PV and
+     * still read as {@code LOW_LIFE} indefinitely.
+     *
+     * <p>Vigor 3 gives 22 max PV and a Descanso Longo restoring 6. At 15 damage the character
+     * sits on 7 PV, just under the one-third threshold; the rest carries them to 13, comfortably
+     * inside {@code MEDIUM_LIFE}.
+     */
+    @Test
+    void applyRestMovesTheDerivedStatusBackUpATier() {
+        Character character = exampleCharacter();
+        CharacterSheet sheet = CharacterSheet.of(character, new Player());
+        sheet.applyDamage(15);
+        assertEquals(CharacterStatus.LOW_LIFE, hitPointsService.getStatus(sheet));
+
+        restService.applyRest(character, sheet, RestType.LONGO);
+
+        assertEquals(9, sheet.getDamageTaken());
+        assertEquals(CharacterStatus.MEDIUM_LIFE, hitPointsService.getStatus(sheet));
     }
 
     @Test

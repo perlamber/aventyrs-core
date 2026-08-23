@@ -36,7 +36,7 @@ public enum FocusAbility implements AttributeAbility {
     // but interrupted" Rest concept for a "Verdadeiro" qualifier to distinguish from), an
     // inference, not confirmed rules text, same as ArtesInteraction's own UNIMAGINABLE gap.
     // TODO: the other two branches are still unbuilt. "+1PM on spell/Título Aventyr PV
-    // healing" needs a way to know a given CharacterSheet#heal call came from a spell or
+    // healing" needs a way to know a given CombatantSheet#heal call came from a spell or
     // Título Aventyr ability specifically (no healing-spell-effect representation exists —
     // SpellCastingService only resolves the delivery + Domínio do Mana rolls, not a healing
     // effect; no Título Aventyr concept exists at all). "+1 non-cumulative Roubo de Mana"

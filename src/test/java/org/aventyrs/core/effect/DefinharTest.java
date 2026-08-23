@@ -6,6 +6,7 @@ import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.InteractionResult;
 import org.aventyrs.core.sheet.Player;
 import org.junit.jupiter.api.BeforeEach;
+import org.aventyrs.core.character.CharacterStatus;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -33,7 +34,7 @@ class DefinharTest {
         assertNull(result.getResourceLossValue());
         assertNull(result.getResourceLossType());
         assertEquals(0, sheet.getDamageTaken());
-        assertEquals(sheet.getCharacter().getStatus(), result.getResultStatus());
+        assertEquals(CharacterStatus.CLEAN, result.getResultStatus());
     }
 
     @Test
@@ -83,7 +84,8 @@ class DefinharTest {
         sheet.tickTemporaryEffects();
 
         assertEquals(1, sheet.getDamageTaken());
-        assertEquals(sheet.getCharacter().getStatus(), result.getResultStatus());
+        // Reported before the tick below ever ran, so it is the undamaged tier.
+        assertEquals(CharacterStatus.CLEAN, result.getResultStatus());
     }
 
     @Test

@@ -11,6 +11,7 @@ import org.aventyrs.core.ego.InitiativeAdvantage;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.sheet.Blessing;
 import org.aventyrs.core.sheet.CharacterSheet;
+import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.Player;
 import org.aventyrs.core.sheet.TargetScope;
@@ -104,7 +105,7 @@ class SceneTest {
         CharacterSheet second = newSheet();
 
         scene.addParticipant(first, 10);
-        List<CharacterSheet> updated = scene.addParticipant(second, 15);
+        List<CombatantSheet> updated = scene.addParticipant(second, 15);
 
         assertEquals(List.of(second, first), updated);
     }

@@ -20,6 +20,7 @@ import org.aventyrs.core.race.ElfosRacialAbility;
 import org.aventyrs.core.scene.Range;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.CharacterSheet;
+import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.InteractionResult;
 import org.aventyrs.core.sheet.Player;
@@ -43,7 +44,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
- * Demonstrates the extension point {@code AbstractSkillInteraction#applyTo(CharacterSheet,
+ * Demonstrates the extension point {@code AbstractSkillInteraction#applyTo(CombatantSheet,
  * SceneContext)} exists for: a "gang up" style ability whose bonus scales with how many
  * allies are within a given {@link Range}, clamped to a maximum — the shape a real ability
  * like that would take, using a private test-only subclass (no such ability currently exists
@@ -63,7 +64,7 @@ class AbstractSkillInteractionTest {
         }
 
         @Override
-        public InteractionResult applyTo(final CharacterSheet target, final SceneContext sceneContext) {
+        public InteractionResult applyTo(final CombatantSheet target, final SceneContext sceneContext) {
             InteractionResult result = super.applyTo(target, sceneContext);
             if (sceneContext == null) {
                 return result;

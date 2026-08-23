@@ -3,7 +3,7 @@ package org.aventyrs.core.character.services;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.DefenseType;
 import org.aventyrs.core.modifier.ModifierType;
-import org.aventyrs.core.sheet.CharacterSheet;
+import org.aventyrs.core.sheet.CombatantSheet;
 
 /**
  * Computes a character's total Defesa — DF or DM, per {@link DefenseType} — the first real
@@ -30,7 +30,7 @@ import org.aventyrs.core.sheet.CharacterSheet;
  *   {@link DefenseType#columnOf}, plus whatever that item's {@code ItemFavor} grants of either
  *   type once its Requisitos are met. This is what makes {@code ArmorItem}'s DF/DM columns and
  *   {@code ROUPA_PESADA}'s {@code DEFESAS 2} Favor real.</li>
- *   <li><b>{@link #getTotalDefense(CharacterSheet, DefenseType)} only</b> — the sheet's own
+ *   <li><b>{@link #getTotalDefense(CombatantSheet, DefenseType)} only</b> — the sheet's own
  *   {@code TemporaryBonus} pool, which is what finally makes a {@code DEFESAS}-typed {@code
  *   Blessing} (e.g. {@code GritoDeGuerraVulcanoInteraction}'s) do something.</li>
  * </ol>
@@ -53,7 +53,7 @@ public interface DefenseService {
     /**
      * character's total DF or DM from their abilities and equipped items. Omits the {@code
      * TemporaryBonus} pool, which lives on the sheet rather than the Character — prefer {@link
-     * #getTotalDefense(CharacterSheet, DefenseType)} wherever a sheet is available, the same
+     * #getTotalDefense(CombatantSheet, DefenseType)} wherever a sheet is available, the same
      * Character-versus-sheet split {@code DamageService} uses for RD/RA.
      */
     int getTotalDefense(Character character, DefenseType defenseType);
@@ -62,5 +62,5 @@ public interface DefenseService {
      * Same as {@link #getTotalDefense(Character, DefenseType)}, plus target's currently-active
      * {@code DEFESAS}/scoped {@code TemporaryBonus}es. The overload real callers use.
      */
-    int getTotalDefense(CharacterSheet target, DefenseType defenseType);
+    int getTotalDefense(CombatantSheet target, DefenseType defenseType);
 }

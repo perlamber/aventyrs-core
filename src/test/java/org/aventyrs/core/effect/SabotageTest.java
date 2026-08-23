@@ -8,6 +8,7 @@ import org.aventyrs.core.sheet.InteractionResult;
 import org.aventyrs.core.sheet.Player;
 import org.aventyrs.core.skill.CriticalResult;
 import org.junit.jupiter.api.BeforeEach;
+import org.aventyrs.core.character.CharacterStatus;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -40,7 +41,7 @@ class SabotageTest {
 
         InteractionResult result = new Sabotage(CriticalResult.ACERTO_CRITICO_MENOR).applyTo(sheet);
 
-        assertEquals(sheet.getCharacter().getStatus(), result.getResultStatus());
+        assertEquals(CharacterStatus.CLEAN, result.getResultStatus());
         assertNull(result.getResourceLossValue());
         assertNull(result.getResourceLossType());
         assertNull(result.getEgoLossValue());
@@ -54,7 +55,7 @@ class SabotageTest {
 
         InteractionResult result = sheet.receiveInteraction(new Sabotage(CriticalResult.ACERTO_CRITICO_MAIOR));
 
-        assertEquals(sheet.getCharacter().getStatus(), result.getResultStatus());
+        assertEquals(CharacterStatus.CLEAN, result.getResultStatus());
     }
 
     @Test

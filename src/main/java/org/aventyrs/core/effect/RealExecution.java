@@ -2,8 +2,7 @@ package org.aventyrs.core.effect;
 
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.services.HitPointsService;
-import org.aventyrs.core.character.services.HitPointsServiceImpl;
-import org.aventyrs.core.sheet.CharacterSheet;
+import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.InteractionResult;
 import org.aventyrs.core.skill.CriticalResult;
@@ -27,7 +26,7 @@ import org.aventyrs.core.skill.CriticalResult;
  * #getStatus}'s own threshold — current Hit Points at or below negative max Hit Points)
  * — the closest thing this core computes to "imediatamente destruído" — achieved by
  * dealing twice the target's max Hit Points as curse damage (see {@link
- * CharacterSheet#applyCurseDamage}), which is always enough regardless of however much
+ * CombatantSheet#applyCurseDamage}), which is always enough regardless of however much
  * damage the target had already taken. Curse damage is used deliberately — it bypasses
  * Shield points — since an execution-flavored effect reads as absolute; this is an
  * inference from the rules text's tone, not something the text states explicitly (same
@@ -37,22 +36,20 @@ import org.aventyrs.core.skill.CriticalResult;
  * org.aventyrs.core.character.CharacterStatus#DEAD} — there's no separate boolean flag
  * for this; {@code resultStatus} already carries the outcome every other Interaction in
  * this package reports through, so a dedicated field would just duplicate it. {@link
- * #applyTo} here computes {@code resultStatus} for real via {@link
- * HitPointsService#getStatus} from the post-{@code applyCurseDamage} unclamped current
- * Hit Points, rather than echoing {@code target.getCharacter().getStatus()} — this
- * Interaction applies its damage straight to the {@link CharacterSheet} (bypassing {@code
- * DamageService}, since an execution ignores mitigation entirely), so it holds no {@code
- * DamageService} to refresh that stored field through the way {@link DamageInteraction}
- * does; the remaining Effects in this package do echo it, and it stays stale for whatever
- * damage reached the sheet outside {@code DamageService}.
+ * #applyTo} here reports it through {@link AbstractEffect#resolveStatus}, the same
+ * derivation every Effect in this package uses — which matters more here than most, since
+ * this Interaction applies its damage straight to the {@link CombatantSheet}, bypassing
+ * {@code DamageService} entirely (an execution ignores mitigation), and the tier is
+ * resolved from the sheet's own post-{@code applyCurseDamage} damage rather than from
+ * anything stored.
  *
  * <p>The other half of its own rules text — "não poderá ser ressuscitado" — has nothing
  * in this core to attach to: there is no resurrection mechanic anywhere in this codebase
  * to block (confirmed by search). Unlike {@link Sabotage}'s gap (a whole missing entity
  * to eventually build against), there's no unbuilt system *here* to even cite a TODO
  * against — permanence is simply documented intent for a caller/Narrador to honor, not
- * something {@link #applyTo} can enforce today; a CharacterSheet reported as {@code DEAD}
- * here is still, mechanically, just a CharacterSheet at that status, indistinguishable
+ * something {@link #applyTo} can enforce today; a CombatantSheet reported as {@code DEAD}
+ * here is still, mechanically, just a CombatantSheet at that status, indistinguishable
  * from any other route to {@code DEAD} — the caller/Narrador is expected to know this
  * Interaction is the one that requires honoring the permanence.
  *
@@ -69,16 +66,10 @@ public class RealExecution extends AbstractEffect implements CriticalEffect {
     private static final int MENOR_VIGOR_MULTIPLIER = 2;
 
     private final CriticalResult criticalResult;
-    private final HitPointsService hitPointsService;
 
     public RealExecution(final CriticalResult criticalResult) {
-        this(criticalResult, new HitPointsServiceImpl());
-    }
-
-    public RealExecution(final CriticalResult criticalResult, final HitPointsService hitPointsService) {
         CriticalEffect.validateCriticalHit(criticalResult);
         this.criticalResult = criticalResult;
-        this.hitPointsService = hitPointsService;
     }
 
     @Override
@@ -91,7 +82,7 @@ public class RealExecution extends AbstractEffect implements CriticalEffect {
     }
 
     @Override
-    public InteractionResult applyTo(final CharacterSheet target) {
+    public InteractionResult applyTo(final CombatantSheet target) {
         Character affectedCharacter = target.getCharacter();
         int maxHitPoints = hitPointsService.getMaxHitPoints(affectedCharacter);
 
@@ -108,9 +99,8 @@ public class RealExecution extends AbstractEffect implements CriticalEffect {
             target.applyCurseDamage(LETHAL_DAMAGE_MULTIPLIER * maxHitPoints);
         }
 
-        int unclampedCurrentHitPoints = maxHitPoints - target.getDamageTaken();
         return reportChain(InteractionResult.builder()
-                .resultStatus(hitPointsService.getStatus(unclampedCurrentHitPoints, maxHitPoints)))
+                .resultStatus(resolveStatus(target)))
                 .build();
     }
 }

@@ -9,7 +9,7 @@ import org.aventyrs.core.effect.CriticalEffect;
 import org.aventyrs.core.effect.DamageInteraction;
 import org.aventyrs.core.effect.EffectChain;
 import org.aventyrs.core.scene.SceneContext;
-import org.aventyrs.core.sheet.CharacterSheet;
+import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.skill.DifficultyLevel;
 import org.aventyrs.core.skill.SkillRoll;
 
@@ -37,7 +37,7 @@ public class IncomingAttack {
 
     /** The character being attacked — the one who rolls Esquiva e Aparar. */
     @NonNull
-    private final CharacterSheet defender;
+    private final CombatantSheet defender;
 
     /** The Grau de Dificuldade this attack presents to the defender's roll. */
     @NonNull
@@ -68,7 +68,7 @@ public class IncomingAttack {
      * Who is attacking, or {@code null} when nothing/nobody in particular is (a trap, an
      * environmental effect).
      */
-    private final CharacterSheet attacker;
+    private final CombatantSheet attacker;
 
     /**
      * The Efeitos Críticos this attack inflicts <i>if</i> the defense roll comes up a critical

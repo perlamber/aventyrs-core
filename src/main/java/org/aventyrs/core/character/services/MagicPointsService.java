@@ -1,7 +1,7 @@
 package org.aventyrs.core.character.services;
 
 import org.aventyrs.core.character.Character;
-import org.aventyrs.core.sheet.CharacterSheet;
+import org.aventyrs.core.sheet.CombatantSheet;
 
 public interface MagicPointsService {
     int DEFAULT_MANA_MULTIPLIER = 3;
@@ -24,5 +24,5 @@ public interface MagicPointsService {
      * Current Magic Points: the maximum minus the Magic Points spent on the character's
      * sheet, never below zero.
      */
-    int getCurrentMagicPoints(Character character, CharacterSheet characterSheet);
+    int getCurrentMagicPoints(Character character, CombatantSheet characterSheet);
 }

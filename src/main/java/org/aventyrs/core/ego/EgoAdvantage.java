@@ -4,7 +4,7 @@ import org.aventyrs.core.character.DamageBonus;
 import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.Blessing;
-import org.aventyrs.core.sheet.CharacterSheet;
+import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.skill.SkillType;
 
 import java.util.List;
@@ -102,14 +102,14 @@ public interface EgoAdvantage {
      * {@link SkillType} to condition on at all — using it here would silently over-grant the
      * bonus to every Perícia instead of just the named ones, the same "don't silently narrow or
      * over-grant" restraint this codebase already applies to purpose-scoped Vantagem bonuses.
-     * target is the CharacterSheet performing this roll (not a separate attack target — unlike
+     * target is the CombatantSheet performing this roll (not a separate attack target — unlike
      * {@code SkillCompetencyAbility#resolveDamageBonus}'s {@code attackTarget}, this Vantagem's
      * own bonus depends on the roller's <em>own</em> state, e.g. its current Fama), passed
-     * explicitly for the same reason {@code CharacterSheet} state generally is here: it isn't
+     * explicitly for the same reason {@code CombatantSheet} state generally is here: it isn't
      * reflection-discoverable via a no-arg {@code @Modifier} method. Empty by default; only
      * override on a constant whose rules text scopes a roll bonus to specific named skills.
      */
-    default Optional<Integer> resolveSkillSpecificRollBonus(final SkillType skillType, final SceneContext sceneContext, final CharacterSheet target) {
+    default Optional<Integer> resolveSkillSpecificRollBonus(final SkillType skillType, final SceneContext sceneContext, final CombatantSheet target) {
         return Optional.empty();
     }
 

@@ -1,7 +1,7 @@
 package org.aventyrs.core.scene;
 
 import org.aventyrs.core.sheet.Blessing;
-import org.aventyrs.core.sheet.CharacterSheet;
+import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.TargetScope;
 import org.aventyrs.core.sheet.TemporaryBonus;
@@ -22,11 +22,11 @@ import static org.aventyrs.core.util.TranslatableMessages.NO_PARTICIPANTS_IN_SCE
 
 /**
  * A Cena: the scope many rules key off (e.g. "uma vez a cada Cena", "ao longo da Cena").
- * Ordering its participating CharacterSheets by Iniciativa, and cycling through that order
+ * Ordering its participating CombatantSheets by Iniciativa, and cycling through that order
  * turn by turn, is the first responsibility modeled here — more Scene-scoped state (e.g.
  * whether it's a Cena de Combate) is expected to land here over time.
  *
- * <p>A Scene can be created empty — CharacterSheets and their rolled initiative value are
+ * <p>A Scene can be created empty — CombatantSheets and their rolled initiative value are
  * added afterwards, in any order, as they become known, not necessarily when this entity
  * itself is instantiated. It's meant to be long-lived across an entire game session (its
  * order is decided once), not recreated per in-fiction scene: new enemies or helpers
@@ -54,10 +54,10 @@ import static org.aventyrs.core.util.TranslatableMessages.NO_PARTICIPANTS_IN_SCE
  * class only tracks/applies them, it never reaches into a Service to compute what a
  * Character's abilities grant, the same restraint {@link #buildContext} already applies to
  * every other fact it assembles), it grants all of them to the winner and, for whichever
- * apply to allies too, every current member of {@link #getAllies(CharacterSheet)} — tracked
+ * apply to allies too, every current member of {@link #getAllies(CombatantSheet)} — tracked
  * in {@link #grantedBlessings} so a later call revokes exactly what an earlier one granted
  * before granting the new winner's own set, rather than leaving stale buffs behind on whoever
- * held them before. {@link #addParticipant} mirrors this for a CharacterSheet that joins an
+ * held them before. {@link #addParticipant} mirrors this for a CombatantSheet that joins an
  * *already*-blessed group afterwards — "blessed" isn't cached anywhere separately, a group is
  * blessed exactly when {@link #grantedBlessings} already tracks a member of it (see {@link
  * #isGroupBlessed}) — applying the same currently-active ally-scoped blessings to it
@@ -67,11 +67,11 @@ import static org.aventyrs.core.util.TranslatableMessages.NO_PARTICIPANTS_IN_SCE
  * actual Iniciativa *standing* isn't necessarily fixed for their whole time in this Scene — a
  * bonus granted by another Character, an activated Ability, or a passive with a Round trigger
  * can each grant a Round-scoped {@code TemporaryBonus} targeting {@code
- * ModifierType.INITIATIVE} directly to a {@code CharacterSheet}, the same way any other
- * temporary bonus already is (see {@code CharacterSheet#grantTemporaryBonus}) — nothing calls
- * into this class to do that, and nothing needs to: {@link CharacterSheet} has no reference
+ * ModifierType.INITIATIVE} directly to a {@code CombatantSheet}, the same way any other
+ * temporary bonus already is (see {@code CombatantSheet#grantTemporaryBonus}) — nothing calls
+ * into this class to do that, and nothing needs to: {@link CombatantSheet} has no reference
  * back to a {@code Scene}. Instead, {@link InitiativeEntry#getEffectiveInitiativeValue()}
- * resolves the live total straight from the {@code CharacterSheet} each entry already
+ * resolves the live total straight from the {@code CombatantSheet} each entry already
  * references, and this class reads *that* wherever current standing matters —
  * {@link #wonInitiative}/{@link #buildContext} reflect a change the instant it's granted, no
  * different from how they already recompute fresh on every call. This class's turn *order*
@@ -80,13 +80,13 @@ import static org.aventyrs.core.util.TranslatableMessages.NO_PARTICIPANTS_IN_SCE
  * {@link InitiativeEntry#getEffectiveInitiativeValue()}, at the same Round-boundary point a
  * pending newcomer already waits for (see {@link #next()}) — so a granted bonus can flip who's
  * currently winning immediately without reshuffling turns already in progress this Round.
- * {@link CharacterSheet#finishTurn()} — called by {@link #next()} on whoever's turn just ended
+ * {@link CombatantSheet#finishTurn()} — called by {@link #next()} on whoever's turn just ended
  * — is what advances a granted bonus toward expiry in the first place.
  */
 public class Scene {
     private final List<InitiativeEntry> activeEntries = new ArrayList<>();
     private final List<InitiativeEntry> pendingEntries = new ArrayList<>();
-    private final Map<CharacterSheet, List<TemporaryBonus>> grantedBlessings = new HashMap<>();
+    private final Map<CombatantSheet, List<TemporaryBonus>> grantedBlessings = new HashMap<>();
 
     private int currentIndex = -1;
     private int currentRound = 0;
@@ -95,7 +95,7 @@ public class Scene {
     private List<Blessing> activeBlessings = List.of();
 
     /**
-     * Adds a CharacterSheet with its rolled initiative value, in a sub-group of its own —
+     * Adds a CombatantSheet with its rolled initiative value, in a sub-group of its own —
      * equivalent to {@code addParticipant(characterSheet, initiativeValue, UUID.randomUUID())},
      * so it starts with no allies (see {@link #getAllies}) unless added via the other
      * overload with an explicit shared group. Before {@link #next()} has ever been called,
@@ -103,16 +103,16 @@ public class Scene {
      * this Scene already mid-rotation — it's held back and only joins the rotation, at its
      * sorted position, from the next Round onward; it never interrupts the Round currently
      * in progress.
-     * @return the CharacterSheets in Iniciativa order after this addition
+     * @return the CombatantSheets in Iniciativa order after this addition
      */
-    public List<CharacterSheet> addParticipant(final CharacterSheet characterSheet, final int initiativeValue) {
+    public List<CombatantSheet> addParticipant(final CombatantSheet characterSheet, final int initiativeValue) {
         return addParticipant(characterSheet, initiativeValue, UUID.randomUUID());
     }
 
     /**
-     * Same as {@link #addParticipant(CharacterSheet, int)}, but placing characterSheet in
+     * Same as {@link #addParticipant(CombatantSheet, int)}, but placing characterSheet in
      * group — every other participant sharing that same group is this one's ally, per
-     * {@link #getAllies}. Pass the same {@code UUID} to every CharacterSheet that should
+     * {@link #getAllies}. Pass the same {@code UUID} to every CombatantSheet that should
      * consider each other allies (e.g. a party of PCs, or a pack of enemies).
      *
      * <p>If group is currently blessed (see {@link #isGroupBlessed}) — i.e. {@link
@@ -123,9 +123,9 @@ public class Scene {
      * value itself. A {@link TargetScope#SELF}-only blessing never propagates this way, since
      * it belongs to whichever Character actually holds the granting ability, not the group at
      * large.
-     * @return the CharacterSheets in Iniciativa order after this addition
+     * @return the CombatantSheets in Iniciativa order after this addition
      */
-    public List<CharacterSheet> addParticipant(final CharacterSheet characterSheet, final int initiativeValue, final UUID group) {
+    public List<CombatantSheet> addParticipant(final CombatantSheet characterSheet, final int initiativeValue, final UUID group) {
         InitiativeEntry entry = new InitiativeEntry(characterSheet, initiativeValue, group);
         if (currentIndex == -1) {
             insertSorted(activeEntries, entry);
@@ -153,7 +153,7 @@ public class Scene {
     }
 
     /**
-     * Every other CharacterSheet sharing characterSheet's sub-group in this Scene — the
+     * Every other CombatantSheet sharing characterSheet's sub-group in this Scene — the
      * allies a character acting would consider (e.g. for {@code ArtesCompetencyAbility
      * .DOM_BARDICO}'s "concede... a eles, mas não a você" targeting), excluding
      * characterSheet itself. Searches both {@link #activeEntries} and {@link #pendingEntries},
@@ -161,11 +161,11 @@ public class Scene {
      * still an ally before it joins the rotation.
      * @throws IllegalOperationException if characterSheet was never added to this Scene
      */
-    public List<CharacterSheet> getAllies(final CharacterSheet characterSheet) {
+    public List<CombatantSheet> getAllies(final CombatantSheet characterSheet) {
         UUID group = groupOf(characterSheet);
         return allEntries()
                 .filter(entry -> entry.getGroup().equals(group))
-                .map(InitiativeEntry::getCharacterSheet)
+                .map(InitiativeEntry::getCombatantSheet)
                 .filter(sheet -> !sheet.getId().equals(characterSheet.getId()))
                 .collect(Collectors.toList());
     }
@@ -179,11 +179,11 @@ public class Scene {
      * {@link SceneContext}, the consumer this method and {@link #getAllies} exist for.
      * @throws IllegalOperationException if characterSheet was never added to this Scene
      */
-    public List<CharacterSheet> getEnemies(final CharacterSheet characterSheet) {
+    public List<CombatantSheet> getEnemies(final CombatantSheet characterSheet) {
         UUID group = groupOf(characterSheet);
         return allEntries()
                 .filter(entry -> !entry.getGroup().equals(group))
-                .map(InitiativeEntry::getCharacterSheet)
+                .map(InitiativeEntry::getCombatantSheet)
                 .collect(Collectors.toList());
     }
 
@@ -194,7 +194,7 @@ public class Scene {
      * javadoc for why), so this is the convenience for the common case of already having one.
      * @throws IllegalOperationException if characterSheet was never added to this Scene
      */
-    public SceneContext buildContext(final CharacterSheet characterSheet, final Map<CharacterSheet, Range> distances) {
+    public SceneContext buildContext(final CombatantSheet characterSheet, final Map<CombatantSheet, Range> distances) {
         return new SceneContext(getAllies(characterSheet), getEnemies(characterSheet), distances, terrainType,
                 combatScene, currentRound, wonInitiative(characterSheet));
     }
@@ -231,7 +231,7 @@ public class Scene {
      * models names no tie-breaker.
      * @throws IllegalOperationException if characterSheet was never added to this Scene
      */
-    public boolean wonInitiative(final CharacterSheet characterSheet) {
+    public boolean wonInitiative(final CombatantSheet characterSheet) {
         UUID group = groupOf(characterSheet);
         int groupBest = bestInitiativeValue(entry -> entry.getGroup().equals(group));
         int overallBest = bestInitiativeValue(entry -> true);
@@ -254,18 +254,18 @@ public class Scene {
      * .getCharacter())}; this class deliberately doesn't resolve them itself, see this class's
      * own javadoc. Throws {@link IllegalOperationException} ({@code INITIATIVE_NOT_WON}) if
      * winner hasn't actually won. Revokes every blessing an earlier call granted first (via
-     * {@link CharacterSheet#removeEffect}, precisely undoing what was tracked in {@link
+     * {@link CombatantSheet#removeEffect}, precisely undoing what was tracked in {@link
      * #grantedBlessings} — never touching an unrelated {@code TemporaryBonus} of the same
      * {@code ModifierType} from some other source), then grants <em>all</em> of blessings to
      * winner directly, plus every {@link TargetScope#SELF_AND_ALLIES}-scoped one to each of
-     * {@link #getAllies(CharacterSheet)} — each grant a fresh {@link TemporaryBonus}, tracked
+     * {@link #getAllies(CombatantSheet)} — each grant a fresh {@link TemporaryBonus}, tracked
      * so a later call (a new group winning, or the same one winning again) can revoke
      * precisely these. Also remembers blessings itself so {@link #addParticipant} can extend
      * the ally-scoped ones to whoever joins winner's group afterwards.
      * @throws IllegalOperationException if winner was never added to this Scene, or hasn't
      *                                    actually won initiative for its group
      */
-    public void applyInitiativeBlessings(final CharacterSheet winner, final List<Blessing> blessings) {
+    public void applyInitiativeBlessings(final CombatantSheet winner, final List<Blessing> blessings) {
         if (!wonInitiative(winner)) {
             throw new IllegalOperationException(INITIATIVE_NOT_WON);
         }
@@ -275,7 +275,7 @@ public class Scene {
         for (Blessing blessing : blessings) {
             grantBlessing(winner, blessing);
             if (blessing.getScope() == TargetScope.SELF_AND_ALLIES) {
-                for (CharacterSheet ally : getAllies(winner)) {
+                for (CombatantSheet ally : getAllies(winner)) {
                     grantBlessing(ally, blessing);
                 }
             }
@@ -288,15 +288,15 @@ public class Scene {
         activeBlessings = List.of();
     }
 
-    private void grantBlessing(final CharacterSheet sheet, final Blessing blessing) {
+    private void grantBlessing(final CombatantSheet sheet, final Blessing blessing) {
         TemporaryBonus bonus = new TemporaryBonus(blessing.getModifierType(), blessing.getValue(), blessing.getRounds());
         sheet.applyEffect(bonus);
         grantedBlessings.computeIfAbsent(sheet, key -> new ArrayList<>()).add(bonus);
     }
 
-    private UUID groupOf(final CharacterSheet characterSheet) {
+    private UUID groupOf(final CombatantSheet characterSheet) {
         return allEntries()
-                .filter(entry -> entry.getCharacterSheet().getId().equals(characterSheet.getId()))
+                .filter(entry -> entry.getCombatantSheet().getId().equals(characterSheet.getId()))
                 .map(InitiativeEntry::getGroup)
                 .findFirst()
                 .orElseThrow(() -> new IllegalOperationException(CHARACTER_SHEET_NOT_IN_SCENE));
@@ -307,8 +307,8 @@ public class Scene {
     }
 
     /**
-     * The next CharacterSheet in Iniciativa order, advancing this Scene's turn cursor. First
-     * calls {@link CharacterSheet#finishTurn()} on whoever's turn is ending (a no-op on the
+     * The next CombatantSheet in Iniciativa order, advancing this Scene's turn cursor. First
+     * calls {@link CombatantSheet#finishTurn()} on whoever's turn is ending (a no-op on the
      * very first call, before anyone has had a turn yet) — this is what advances any Round-scoped
      * {@code TemporaryBonus} that participant is holding (including one targeting {@code
      * ModifierType.INITIATIVE}) toward expiry. Wraps back to the top once every participant has
@@ -316,18 +316,18 @@ public class Scene {
      * #startNewRound()} — merging in any participant added mid-Round *and* re-deriving turn
      * order from everyone's current {@link InitiativeEntry#getEffectiveInitiativeValue()}, so a
      * granted/expired Iniciativa bonus is reflected in the order from the next Round onward,
-     * never mid-Round. Finally calls {@link CharacterSheet#startTurn(int)} on whoever's turn is
+     * never mid-Round. Finally calls {@link CombatantSheet#startTurn(int)} on whoever's turn is
      * now beginning, passing {@link #getCurrentRound()} as its turnNumber — unlike {@code
      * finishTurn()}, this fires even on the very first call, since that call does start
      * someone's Turn, just none has ended yet.
      * @throws IllegalOperationException if no participant has been added yet
      */
-    public CharacterSheet next() {
+    public CombatantSheet next() {
         if (activeEntries.isEmpty()) {
             throw new IllegalOperationException(NO_PARTICIPANTS_IN_SCENE);
         }
         if (currentIndex >= 0) {
-            activeEntries.get(currentIndex).getCharacterSheet().finishTurn();
+            activeEntries.get(currentIndex).getCombatantSheet().finishTurn();
         }
         currentIndex++;
         if (currentIndex >= activeEntries.size()) {
@@ -335,7 +335,7 @@ public class Scene {
             currentRound++;
             startNewRound();
         }
-        CharacterSheet active = activeEntries.get(currentIndex).getCharacterSheet();
+        CombatantSheet active = activeEntries.get(currentIndex).getCombatantSheet();
         active.startTurn(currentRound);
         return active;
     }
@@ -349,13 +349,13 @@ public class Scene {
     }
 
     /**
-     * CharacterSheets currently in Iniciativa order — highest initiative value first, ties
+     * CombatantSheets currently in Iniciativa order — highest initiative value first, ties
      * kept in the order they were added. Doesn't include participants added mid-Round that
      * haven't joined the rotation yet; see {@link #addParticipant}.
      */
-    public List<CharacterSheet> getParticipantsInInitiativeOrder() {
+    public List<CombatantSheet> getParticipantsInInitiativeOrder() {
         return activeEntries.stream()
-                .map(InitiativeEntry::getCharacterSheet)
+                .map(InitiativeEntry::getCombatantSheet)
                 .collect(Collectors.toList());
     }
 

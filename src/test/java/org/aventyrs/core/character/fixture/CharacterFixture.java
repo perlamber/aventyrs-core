@@ -10,10 +10,11 @@ import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterAttributes;
 import org.aventyrs.core.character.CharacterEgos;
 import org.aventyrs.core.character.CharacterSkill;
-import org.aventyrs.core.character.CharacterStatus;
 import org.aventyrs.core.character.SizeCategory;
 import org.aventyrs.core.character.services.CharacterAttributeService;
 import org.aventyrs.core.character.services.FreeActionsService;
+import org.aventyrs.core.character.services.DeterminationPointsService;
+import org.aventyrs.core.character.services.HitPointsService;
 import org.aventyrs.core.character.services.MagicPointsService;
 import org.aventyrs.core.character.services.ReactionsService;
 import org.aventyrs.core.race.Human;
@@ -121,8 +122,9 @@ public class CharacterFixture extends SimpleFixture {
                 this.add("reactions", ReactionsService.DEFAULT_REACTIONS);
                 this.add("freeActions", FreeActionsService.DEFAULT_FREE_ACTIONS);
                 this.add("manaMultiplier", MagicPointsService.DEFAULT_MANA_MULTIPLIER);
+                this.add("lifeMultiplier", HitPointsService.DEFAULT_LIFE_MULTIPLIER);
+                this.add("determinationMultiplier", DeterminationPointsService.DEFAULT_DETERMINATION_MULTIPLIER);
                 this.add("sizeCategory", SizeCategory.ZERO);
-                this.add("status", CharacterStatus.CLEAN);
             }
         });
     }
@@ -180,8 +182,9 @@ public class CharacterFixture extends SimpleFixture {
                 this.add("reactions", ReactionsService.DEFAULT_REACTIONS);
                 this.add("freeActions", FreeActionsService.DEFAULT_FREE_ACTIONS);
                 this.add("manaMultiplier", MagicPointsService.DEFAULT_MANA_MULTIPLIER);
+                this.add("lifeMultiplier", HitPointsService.DEFAULT_LIFE_MULTIPLIER);
+                this.add("determinationMultiplier", DeterminationPointsService.DEFAULT_DETERMINATION_MULTIPLIER);
                 this.add("sizeCategory", SizeCategory.ZERO);
-                this.add("status", CharacterStatus.CLEAN);
             }
         });
     }

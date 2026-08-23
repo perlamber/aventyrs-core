@@ -32,4 +32,5 @@ public class TranslatableMessages {
     public static final String EXTRA_SUPREMA_ALREADY_GRANTED = "EXTRA_SUPREMA_ALREADY_GRANTED";
     public static final String TITLE_ABILITY_PREREQUISITE_NOT_MET = "TITLE_ABILITY_PREREQUISITE_NOT_MET";
     public static final String FEAT_PREREQUISITE_NOT_MET = "FEAT_PREREQUISITE_NOT_MET";
+    public static final String NOT_AN_ATTACK_SKILL = "NOT_AN_ATTACK_SKILL";
 }

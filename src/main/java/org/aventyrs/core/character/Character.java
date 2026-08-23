@@ -12,7 +12,9 @@ import org.aventyrs.core.ability.ActiveAbility;
 import org.aventyrs.core.ability.AttributeAbility;
 import org.aventyrs.core.action.ActionPointsService;
 import org.aventyrs.core.action.ActionProfile;
+import org.aventyrs.core.character.services.DeterminationPointsService;
 import org.aventyrs.core.character.services.FreeActionsService;
+import org.aventyrs.core.character.services.HitPointsService;
 import org.aventyrs.core.character.services.MagicPointsService;
 import org.aventyrs.core.character.services.ReactionsService;
 import org.aventyrs.core.ego.EgoAdvantage;
@@ -40,14 +42,20 @@ import static org.aventyrs.core.util.TranslatableMessages.NOT_ENOUGH_EXPERIENCE;
 public class Character {
     /**
      * A unique, stable identifier for this Character — independent of any specific
-     * {@link org.aventyrs.core.sheet.CharacterSheet} wrapping it (see that class's own
+     * {@link org.aventyrs.core.sheet.CombatantSheet} wrapping it (see that class's own
      * {@code id}), e.g. so {@link org.aventyrs.core.scene.Scene} can tell participants apart
      * without relying on object-reference equality.
      */
     @Builder.Default
     protected UUID id = UUID.randomUUID();
 
-    @NonNull
+    /**
+     * The {@link Player} behind this character, or {@code null} for one nobody plays — a monster
+     * (see {@code org.aventyrs.core.monster.MonsterTemplate}), or an NPC. Deliberately not
+     * {@code @NonNull}: nothing in this core reads it, and the {@code player} that actually
+     * matters is {@link org.aventyrs.core.sheet.CharacterSheet}'s own, which stays required
+     * there because a <i>player character's sheet</i> genuinely has one.
+     */
     protected Player player;
 
     @NonNull
@@ -192,7 +200,7 @@ public class Character {
      * *Character*, not the Título instance: it's now structurally impossible to have two
      * "primary" Títulos, rather than an unenforced invariant. Set via {@link
      * #grantTitle(AventyrTitle, TitleSlot)}, mirroring {@code CharacterSkill#increaseGraduation}'s
-     * own plain-mutator shape (a Título costs no XP and needs no {@code CharacterSheet}, so —
+     * own plain-mutator shape (a Título costs no XP and needs no {@code CombatantSheet}, so —
      * unlike {@code CharacterAttributeService#upgradeBase} — there's no reason to route it
      * through a dedicated service that returns a new value either). See CLAUDE.md's "Adding a
      * new Título" section for the full rationale.
@@ -245,29 +253,28 @@ public class Character {
     @Builder.Default
     protected int temporaryActionPointsBonus = 0;
 
-    @Builder.Default
-    protected SizeCategory sizeCategory = SizeCategory.ZERO;
-
     /**
-     * How badly hurt this character currently is — the {@link CharacterStatus} tier their
-     * current Hit Points fall into (see {@code HitPointsService#getStatus}). Kept in sync with
-     * damage taken by {@code DamageService#applyDamage}/{@code DamageService#refreshStatus},
-     * which recompute it from the damaged {@code CharacterSheet} and store it here via
-     * {@link #updateStatus(CharacterStatus)}. It's a stored field rather than something
-     * derived on read because a {@code Character} has no {@code CharacterSheet} of its own to
-     * derive it from (damage taken lives on the sheet, and one Character could back more than
-     * one sheet) — the same reason {@code ReactionsService}/{@code InitiativeService} compute
-     * their own totals in a service rather than on this data class.
-     *
-     * <p>Damage applied straight to a {@code CharacterSheet} without going through {@code
-     * DamageService} — {@code Sangramento}/{@code Bleeding}/{@code Withering}'s own per-Rodada
-     * loss, {@code RealExecution}'s curse damage, and {@link
-     * org.aventyrs.core.sheet.CharacterSheet#heal} — still leaves this stale; those paths hold
-     * no {@code DamageService} to refresh through, and {@code RealExecution} already computes
-     * its own {@code resultStatus} for real instead of reading this field.
+     * The character's own fixed Multiplicador de Vida, feeding {@code
+     * HitPointsService#getMaxHitPoints} (which multiplies it by Vigor's total). Defaults to
+     * {@code HitPointsService.DEFAULT_LIFE_MULTIPLIER}, and is editable per character exactly
+     * like {@link #manaMultiplier} — a GM house rule, a campaign adjustment, or a monster whose
+     * bulk shouldn't be paid for in Vigor. Without this, the only way to make something tanky
+     * was to inflate Vigor, which also inflates every Vigor-governed Perícia roll and its
+     * Determinação pool; a 200-PV ooze with ordinary reflexes had no representation.
      */
     @Builder.Default
-    CharacterStatus status = CharacterStatus.CLEAN;
+    protected int lifeMultiplier = HitPointsService.DEFAULT_LIFE_MULTIPLIER;
+
+    /**
+     * The character's own fixed Multiplicador de Determinação — the {@link #lifeMultiplier}
+     * counterpart for {@code DeterminationPointsService#getMaxDeterminationPoints}, added for
+     * the same reason and defaulting to that service's own constant.
+     */
+    @Builder.Default
+    protected int determinationMultiplier = DeterminationPointsService.DEFAULT_DETERMINATION_MULTIPLIER;
+
+    @Builder.Default
+    protected SizeCategory sizeCategory = SizeCategory.ZERO;
 
     /**
      * The character's own fixed Reação counter — what they have when no external influence
@@ -355,16 +362,6 @@ public class Character {
      */
     public boolean unequip(@NonNull final Item item) {
         return equipment.remove(item);
-    }
-
-    /**
-     * Sets this character's current {@link CharacterStatus} — a plain mutator, same as {@link
-     * #grantTitle}/{@link #grantFeat}: resolving *which* tier the character is actually in is
-     * {@code DamageService#refreshStatus}'s job (via {@code HitPointsService#getStatus}), not
-     * this method's; it trusts the caller already did.
-     */
-    public void updateStatus(@NonNull final CharacterStatus status) {
-        this.status = status;
     }
 
     /**

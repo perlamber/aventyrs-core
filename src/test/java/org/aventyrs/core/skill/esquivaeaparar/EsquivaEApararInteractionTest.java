@@ -152,7 +152,7 @@ class EsquivaEApararInteractionTest {
         CharacterSheet sheet = sheetWithDexterityAndSkill(3, null);
 
         InteractionResult threeArg = esquivaEApararInteraction.applyTo(sheet, null, null);
-        InteractionResult fourArg = esquivaEApararInteraction.applyTo(sheet, null, null, null);
+        InteractionResult fourArg = esquivaEApararInteraction.applyTo(sheet, null, null, (DefenseType) null);
 
         assertEquals(threeArg.getSkillRollBonus(), fourArg.getSkillRollBonus());
         assertEquals(threeArg.getDifficultyReduction(), fourArg.getDifficultyReduction());
@@ -205,7 +205,7 @@ class EsquivaEApararInteractionTest {
         sheet.grantTemporaryBonus(ModifierType.PHYSICAL_DEFENSE, 7, 2);
         SkillRoll roll = new SkillRoll(List.of(3, 3, 3));
 
-        InteractionResult withoutDefense = esquivaEApararInteraction.applyTo(sheet, null, roll, null);
+        InteractionResult withoutDefense = esquivaEApararInteraction.applyTo(sheet, null, roll, (DefenseType) null);
         InteractionResult withDefense = esquivaEApararInteraction.applyTo(sheet, null, roll, DefenseType.PHYSICAL);
 
         // Untrained (-2) + 9 dice = 7, short of even VERY_EASY (12); +7 DF lifts it to 14 (EASY).
@@ -295,7 +295,7 @@ class EsquivaEApararInteractionTest {
     void theArmorPenaltyAppliesEvenWithoutADefenseType() {
         // The penalty is a property of what's worn, not of what's being resisted.
         InteractionResult result = esquivaEApararInteraction.applyTo(
-                sheetWearing(ArmorItem.ARMADURA_COMPLETA, null), null, null, null);
+                sheetWearing(ArmorItem.ARMADURA_COMPLETA, null), null, null, (DefenseType) null);
 
         assertEquals(4 + Skill.UNTRAINED_PENALTY - 4, result.getSkillRollBonus());
     }

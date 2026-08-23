@@ -1,7 +1,7 @@
 package org.aventyrs.core.effect;
 
 import org.aventyrs.core.character.Character;
-import org.aventyrs.core.sheet.CharacterSheet;
+import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.InteractionResult;
 import org.aventyrs.core.sheet.ManaDrain;
@@ -16,11 +16,11 @@ import java.util.Optional;
  * {@link Sangramento}'s own shape but draining Magic Points instead of Hit Points.
  * Applied to the character receiving the attack — {@link #applyTo}'s {@code target},
  * never the attacker — an immediate PM loss, applied directly via {@link
- * CharacterSheet#spendMagicPoints(int)}. ManaPurge also leaves an ongoing {@link
- * ManaDrain} registered on the target (see {@link CharacterSheet#applyEffect}) — the
+ * CombatantSheet#spendMagicPoints(int)}. ManaPurge also leaves an ongoing {@link
+ * ManaDrain} registered on the target (see {@link CombatantSheet#applyEffect}) — the
  * "1PM adicional por Rodada" half of its own rules text, advanced by a caller via
- * {@link CharacterSheet#tickTemporaryEffects()} once per subsequent Rodada, and
- * interrupted by {@link CharacterSheet#recoverMagicPoints(int)} per ManaPurge's own
+ * {@link CombatantSheet#tickTemporaryEffects()} once per subsequent Rodada, and
+ * interrupted by {@link CombatantSheet#recoverMagicPoints(int)} per ManaPurge's own
  * "Efeitos de cura interrompem a perda de PM por rodada" clause.
  *
  * <p>Its severity is determined directly by the {@link CriticalResult} that triggered
@@ -62,7 +62,7 @@ public class ManaPurge extends AbstractEffect implements CriticalEffect {
     }
 
     @Override
-    public InteractionResult applyTo(final CharacterSheet target) {
+    public InteractionResult applyTo(final CombatantSheet target) {
         Character affectedCharacter = target.getCharacter();
         target.spendMagicPoints(IMMEDIATE_DRAIN);
 
@@ -72,7 +72,7 @@ public class ManaPurge extends AbstractEffect implements CriticalEffect {
         target.applyEffect(new ManaDrain(PER_ROUND_DRAIN, remainingRounds));
 
         return reportChain(InteractionResult.builder()
-                .resultStatus(affectedCharacter.getStatus())
+                .resultStatus(resolveStatus(target))
                 .resourceLossValue(IMMEDIATE_DRAIN)
                 .resourceLossType(ResourceType.MAGIC_POINTS))
                 .build();

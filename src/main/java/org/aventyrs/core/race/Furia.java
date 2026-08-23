@@ -21,9 +21,9 @@ import java.util.Map;
  *   <li><b>Feromônio Encantador</b> (spend 1PD as an Ação Livre for Vantagem on Persuasão ou
  *   Artes rolls against targets at Distância Curta, for 1 Rodada; an Encantamento effect) —
  *   three of this trait's four pieces are individually real today: spending PD ({@code
- *   org.aventyrs.core.sheet.CharacterSheet#spendDeterminationPoints}), proximity ({@code
+ *   org.aventyrs.core.sheet.CombatantSheet#spendDeterminationPoints}), proximity ({@code
  *   org.aventyrs.core.scene.SceneContext#getDistanceTo}/{@code Range.DISTANCIA_CURTA}), and a
- *   Rodada-scoped bonus ({@code CharacterSheet#grantTemporaryBonus}'s {@code rounds}
+ *   Rodada-scoped bonus ({@code CombatantSheet#grantTemporaryBonus}'s {@code rounds}
  *   parameter) — but nothing in this core can *combine* them into a self-targeted, opt-in
  *   activation: every existing use of {@code grantTemporaryBonus} is the *result* of a skill
  *   roll ({@code ArtesCompetencyAbility#DOM_BARDICO}, via {@code InteractionResult}'s
@@ -55,9 +55,9 @@ import java.util.Map;
  *   flagged there (and on Humanos'/{@code Pequenino}'s own Adaptação).</li>
  *   <li><b>Imunidade a Encantamentos</b> (+2 Bônus Racial em DM; immune to direct Encantamento
  *   effects, but not indirect ones like damage from an enchanted weapon) — DM (Defesa Mágica)
- *   isn't a concept this core computes at all, same gap {@code Elfo}'s own Linhagem Feérica
- *   already cites ({@code AtaqueADistanciaInteraction}'s own javadoc: a target's DF/DM lookup
- *   is "left to a layer above this core"); the immunity half also needs an Encantamento-effect
+ *   is now computable — {@code ModifierType#MAGIC_DEFENSE} plus {@code DefenseService} — so the
+ *   flat +2 needs only a {@code *RacialAbility} enum to hang it on, the same state {@code
+ *   Elfo}'s own Linhagem Feérica is in; the immunity half also needs an Encantamento-effect
  *   classification (direct vs. indirect) that doesn't exist anywhere in this core, the same
  *   missing piece Feromônio Encantador's own "efeito de Encantamento" tag needs.</li>
  * </ul>

@@ -96,6 +96,34 @@ public interface AventyrTitleAbility {
     }
 
     /**
+     * RA this Habilidade de Título grants right now to an <i>adjacent ally</i> — the outward
+     * half of an ability whose rules text buffs someone else continuously, with no activation
+     * and no trigger (Santo's Bastião dos Necessitados: "Aliados adjacentes, apenas aqueles com
+     * menos PV que você, recebem RA"). {@code allyHasLowerPv} is that clause's comparison,
+     * resolved by {@code DamageServiceImpl} — the only caller with a {@code HitPointsService} in
+     * hand — and passed in, exactly as {@link #resolveAbsoluteDamageReduction}'s own {@code
+     * hasLowerPvAdjacentAlly} is for the self-facing half. The two are duals of the same
+     * comparison in opposite directions, and stay separate methods because an ability can grant
+     * both, at different values.
+     *
+     * <p>This is deliberately <b>not</b> a {@code Blessing}/{@code TemporaryBonus} grant, unlike
+     * every other cross-character bonus in this core. A granted bonus is a snapshot: it would
+     * have to be revoked the moment either character moved out of adjacency, died, or left the
+     * Scene, and something would have to notice each of those to do the revoking. Scanned
+     * instead, at the moment the recipient's damage is actually calculated, the answer is
+     * correct by construction as allies move in and out of range — nothing to grant, nothing to
+     * revoke, nothing to persist. Same "recompute on demand from data already in hand"
+     * discipline as {@code InitiativeEntry#getEffectiveInitiativeValue} (see CLAUDE.md's
+     * "Iniciativa can change mid-Scene").
+     *
+     * <p>Zero by default; only override on a constant whose rules text grants RA to someone
+     * other than its holder.
+     */
+    default int resolveAllyAbsoluteDamageReduction(SceneContext sceneContext, boolean allyHasLowerPv) {
+        return 0;
+    }
+
+    /**
      * How many Especializações of this same Título title must already hold before this
      * ability can be acquired, <b>not caring which ones</b> — e.g. {@code
      * SantoAbility#GUARDA_VIDAS}'s own "Requer 1 Especialização e 2 outras Habilidades de

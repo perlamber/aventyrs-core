@@ -16,13 +16,13 @@ import org.aventyrs.core.modifier.ModifierType;
  *   org.aventyrs.core.ego.InitiativeAdvantage#POSICIONAMENTO_ESTRATEGICO}'s "o seu Movimento
  *   Base e o de seus aliados aumentam em +2UD." {@code org.aventyrs.core.scene.Scene
  *   #applyInitiativeBlessings} is the one that actually applies these, as a {@link
- *   TemporaryBonus} on every intended recipient's {@code CharacterSheet}.
+ *   TemporaryBonus} on every intended recipient's {@code CombatantSheet}.
  *   <li>An {@link Interaction}'s own {@link InteractionResult#getBlessings()} — e.g. {@code
  *   ArtesCompetencyAbility#DOM_BARDICO} or {@code
  *   org.aventyrs.core.title.santo.GritoDeGuerraVulcanoInteraction} — reports one or more of
  *   these as the outcome of a directly-activated roll/ability; a caller resolves the concrete
  *   recipients (via {@code Scene#getAllies}/{@code #getEnemies}, or the actor itself for {@link
- *   TargetScope#SELF}/{@link TargetScope#SELF_AND_ALLIES}) and calls {@code CharacterSheet
+ *   TargetScope#SELF}/{@link TargetScope#SELF_AND_ALLIES}) and calls {@code CombatantSheet
  *   #grantTemporaryBonus} on each. This core doesn't apply these itself — same "compute what,
  *   caller applies who" restraint the initiative-win mechanism above already established.
  * </ul>
@@ -47,7 +47,7 @@ import org.aventyrs.core.modifier.ModifierType;
  * the two can never drift apart — see {@code ArtesInteraction}/{@code
  * GritoDeGuerraVulcanoInteraction} for the pattern. This core still doesn't track *who* (which
  * Character) granted a bonus, only *what trait* did — the same restraint {@code
- * CharacterSheet#grantTemporaryBonus} itself already applies.
+ * CombatantSheet#grantTemporaryBonus} itself already applies.
  */
 @Getter
 public class Blessing {

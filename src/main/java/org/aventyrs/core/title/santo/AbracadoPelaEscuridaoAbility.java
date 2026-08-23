@@ -33,11 +33,11 @@ public enum AbracadoPelaEscuridaoAbility implements AventyrTitleAbility {
     // fully TODO'd, three separate gaps: (1) "+2 em Força" (then +3 if activated twice in the
     // same Turn) is a *temporary*, Round-scoped bonus to an Attribute's own total — unlike
     // every other stat this core tracks (Reações, PA, RD/RA, skill rolls, ...), Attributes are
-    // never summed via ModifierType/CharacterSheet#getTemporaryBonus at all
+    // never summed via ModifierType/CombatantSheet#getTemporaryBonus at all
     // (AttributeValue only has base/racialBonus/variable, all permanent) — no mechanism for a
     // temporary Attribute bonus exists anywhere in this core; (2) "ativada duas vezes no mesmo
     // Turno" needs a per-ability, within-Turn activation-count tracker, which doesn't exist
-    // (CharacterSheet tracks Round-scoped TemporaryEffects, not a same-Turn activation
+    // (CombatantSheet tracks Round-scoped TemporaryEffects, not a same-Turn activation
     // counter); (3) the Categoria de Tamanho +1 half could in principle reuse
     // ModifierType.SIZE_CATEGORY, but still needs (1) and (2) solved first to know *when* to
     // grant it. The "recuperados com Descansos Verdadeiros ou Roubo de Vida" clause needs the
@@ -113,7 +113,7 @@ public enum AbracadoPelaEscuridaoAbility implements AventyrTitleAbility {
     // spent PV/PD actually buys is fully TODO'd: the +1PA half hits the exact same
     // ActionPointsServiceImpl gap SantoAbility's own catalog TODO already cites
     // (ActionPointsServiceImpl#getMaxActionPoints never reads
-    // CharacterSheet#getTemporaryBonus(ModifierType.ACTION_POINTS), only the plain
+    // CombatantSheet#getTemporaryBonus(ModifierType.ACTION_POINTS), only the plain
     // Character#getTemporaryActionPointsBonus() field, so a Round-scoped grant would be
     // silently inert); "Aprimoramento de Obra-Prima Alcance Estendido" needs the still-missing
     // Item/Equipamento entity (Raridade, Obra-Prima tiers, Aprimoramentos — the identical gap

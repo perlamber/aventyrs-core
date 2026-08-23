@@ -7,7 +7,7 @@ import org.aventyrs.core.item.Item;
 import org.aventyrs.core.modifier.ModifierResolver;
 import org.aventyrs.core.modifier.ModifierResolverImpl;
 import org.aventyrs.core.modifier.ModifierType;
-import org.aventyrs.core.sheet.CharacterSheet;
+import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
 import org.aventyrs.core.skill.SkillExcellency;
 import org.aventyrs.core.skill.SkillType;
@@ -33,7 +33,7 @@ public class DefenseServiceImpl implements DefenseService {
     }
 
     @Override
-    public int getTotalDefense(final CharacterSheet target, final DefenseType defenseType) {
+    public int getTotalDefense(final CombatantSheet target, final DefenseType defenseType) {
         return getTotalDefense(target.getCharacter(), defenseType)
                 + target.getTemporaryBonus(ModifierType.DEFESAS)
                 + target.getTemporaryBonus(defenseType.getModifierType());

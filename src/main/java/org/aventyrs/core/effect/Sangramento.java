@@ -2,7 +2,7 @@ package org.aventyrs.core.effect;
 
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.sheet.Bleeding;
-import org.aventyrs.core.sheet.CharacterSheet;
+import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.InteractionResult;
 import org.aventyrs.core.sheet.ResourceType;
@@ -15,11 +15,11 @@ import java.util.Optional;
  * org.aventyrs.core.effect} package-info for the pipeline this fits into). Applied to
  * the character receiving the attack — {@link #applyTo}'s {@code target}, never the
  * attacker — the same shape as {@link DamageInteraction}: an immediate PV loss, applied
- * directly via {@link CharacterSheet#applyDamage(int)}. Unlike DamageInteraction,
+ * directly via {@link CombatantSheet#applyDamage(int)}. Unlike DamageInteraction,
  * Sangramento also leaves an ongoing {@link Bleeding} registered on the target (see
- * {@link CharacterSheet#applyEffect}) — the "1PV adicional por Rodada" half of its own
- * rules text, advanced by a caller via {@link CharacterSheet#tickTemporaryEffects()} once
- * per subsequent Rodada, and interrupted by {@link CharacterSheet#heal(int)} per
+ * {@link CombatantSheet#applyEffect}) — the "1PV adicional por Rodada" half of its own
+ * rules text, advanced by a caller via {@link CombatantSheet#tickTemporaryEffects()} once
+ * per subsequent Rodada, and interrupted by {@link CombatantSheet#heal(int)} per
  * Sangramento's own "Efeitos de cura interrompem a perda de PV por rodada" clause.
  *
  * <p>Its severity is determined directly by the {@link CriticalResult} that triggered
@@ -62,7 +62,7 @@ public class Sangramento extends AbstractEffect implements CriticalEffect {
     }
 
     @Override
-    public InteractionResult applyTo(final CharacterSheet target) {
+    public InteractionResult applyTo(final CombatantSheet target) {
         Character affectedCharacter = target.getCharacter();
         target.applyDamage(IMMEDIATE_DAMAGE);
 
@@ -72,7 +72,7 @@ public class Sangramento extends AbstractEffect implements CriticalEffect {
         target.applyEffect(new Bleeding(PER_ROUND_DAMAGE, remainingRounds));
 
         return reportChain(InteractionResult.builder()
-                .resultStatus(affectedCharacter.getStatus())
+                .resultStatus(resolveStatus(target))
                 .resourceLossValue(IMMEDIATE_DAMAGE)
                 .resourceLossType(ResourceType.HIT_POINTS))
                 .build();

@@ -62,15 +62,7 @@ public class CharacterCreationServiceImpl implements CharacterCreationService {
     }
 
     private void assignAttribute(final CharacterAttributes.CharacterAttributesBuilder builder, final AttributeDomain domain, final AttributeValue value) {
-        switch (domain) {
-            case VIGOR -> builder.vigor(value);
-            case STRENGTH -> builder.strength(value);
-            case DEXTERITY -> builder.dexterity(value);
-            case FOCUS -> builder.focus(value);
-            case INSTINCT -> builder.instinct(value);
-            case GNOSE -> builder.gnose(value);
-            case CHARISMA -> builder.charisma(value);
-        }
+        CharacterAttributes.assign(builder, domain, value);
     }
 
     @Override

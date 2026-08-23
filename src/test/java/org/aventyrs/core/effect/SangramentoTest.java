@@ -9,6 +9,7 @@ import org.aventyrs.core.sheet.Player;
 import org.aventyrs.core.sheet.ResourceType;
 import org.aventyrs.core.skill.CriticalResult;
 import org.junit.jupiter.api.BeforeEach;
+import org.aventyrs.core.character.CharacterStatus;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -43,7 +44,9 @@ class SangramentoTest {
         assertEquals(2, result.getResourceLossValue());
         assertEquals(ResourceType.HIT_POINTS, result.getResourceLossType());
         assertEquals(2, sheet.getDamageTaken());
-        assertEquals(sheet.getCharacter().getStatus(), result.getResultStatus());
+        // 14 max - its own 2 PV = 12, above two thirds. Before status was derived this
+        // reported CLEAN: the tier from before Sangramento dealt its own damage.
+        assertEquals(CharacterStatus.HIGH_LIFE, result.getResultStatus());
     }
 
     @Test

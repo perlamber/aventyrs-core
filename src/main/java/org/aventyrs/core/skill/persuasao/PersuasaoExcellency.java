@@ -15,7 +15,7 @@ import org.aventyrs.core.skill.SkillType;
 public enum PersuasaoExcellency implements SkillExcellency {
 
     // TODO: +1 per 5 points of Fama (Positiva or Negativa, whichever applies) to Persuasão
-    // rolls — org.aventyrs.core.sheet.CharacterSheet already tracks famaPositiva/
+    // rolls — org.aventyrs.core.sheet.CombatantSheet already tracks famaPositiva/
     // famaNegativa directly, but this bonus is a per-character variable scaling with that
     // count, not a fixed constant, so the @Modifier/ModifierResolver mechanism (parameterless
     // methods returning a fixed value) can't express it; "a que for aplicável" also implies

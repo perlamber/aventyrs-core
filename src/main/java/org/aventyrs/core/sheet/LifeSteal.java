@@ -7,7 +7,7 @@ import java.util.Optional;
 /**
  * Roubo de Vida — an ongoing buff letting its holder recover PV by dealing damage, the
  * opposite of {@link Bleeding} (which drains a target's own PV without transferring it to
- * anyone). Registered via {@link CharacterSheet#applyEffect(TemporaryEffect)}, and counts
+ * anyone). Registered via {@link CombatantSheet#applyEffect(TemporaryEffect)}, and counts
  * down in Rodadas via its shared superclass {@link TemporaryEffect} the same way {@link
  * Bleeding}/{@link ManaDrain}/{@link Withering} do.
  *
@@ -17,7 +17,7 @@ import java.util.Optional;
  * (see the {@code skill} package-info's "What this library computes" section) — a caller
  * resolving a dealt hit reads the total via {@link
  * org.aventyrs.core.character.services.LifeStealService#getTotalLifeSteal} and applies the
- * healing itself, via {@link CharacterSheet#heal(int)}.
+ * healing itself, via {@link CombatantSheet#heal(int)}.
  *
  * <p>Multiple instances can stack ({@link #isCumulative()}'s own default) — nothing about
  * Roubo de Vida itself says otherwise; {@code VigorAbility#METABOLISMO_RAPIDO}'s own "não

@@ -3,7 +3,7 @@ package org.aventyrs.core.title.santo;
 import lombok.NonNull;
 import org.aventyrs.core.scene.Range;
 import org.aventyrs.core.scene.SceneContext;
-import org.aventyrs.core.sheet.CharacterSheet;
+import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.InteractionResult;
 import org.aventyrs.core.title.AventyrTitle;
@@ -151,7 +151,7 @@ public class Santo implements AventyrTitle {
      *
      * @throws IllegalOperationException if this Santo instance doesn't hold Abençoado pela Luz
      */
-    public InteractionResult activateAbencoadoPelaLuz(final CharacterSheet target, final SceneContext sceneContext, final boolean chooseHeal) {
+    public InteractionResult activateAbencoadoPelaLuz(final CombatantSheet target, final SceneContext sceneContext, final boolean chooseHeal) {
         if (!specializations.contains(SantoSpecialization.ABENCOADO_PELA_LUZ)) {
             throw new IllegalOperationException(REQUIRED_TITLE_TRAIT_NOT_HELD);
         }
@@ -165,7 +165,7 @@ public class Santo implements AventyrTitle {
      * GritoDeGuerraVulcanoInteraction}'s own class javadoc for why the Defesas one is still
      * inert (no consuming Defesas stat/service exists yet) despite being reported here for real.
      * This method itself doesn't apply anything — resolving actor plus adjacent allies and
-     * calling {@code CharacterSheet#grantTemporaryBonus} on each is the caller's job, the same
+     * calling {@code CombatantSheet#grantTemporaryBonus} on each is the caller's job, the same
      * "compute what, caller applies who" shape {@code ArtesCompetencyAbility#DOM_BARDICO} already
      * established. Validates this Santo instance actually holds {@link
      * AbencoadoPelaLuzAbility#GRITO_DE_GUERRA_VULCANO} first, same "must actually be held" shape
@@ -173,7 +173,7 @@ public class Santo implements AventyrTitle {
      *
      * @throws IllegalOperationException if this Santo instance doesn't hold Grito de Guerra Vulcano
      */
-    public InteractionResult activateGritoDeGuerraVulcano(final CharacterSheet actor, final SceneContext sceneContext) {
+    public InteractionResult activateGritoDeGuerraVulcano(final CombatantSheet actor, final SceneContext sceneContext) {
         if (!abilities.contains(AbencoadoPelaLuzAbility.GRITO_DE_GUERRA_VULCANO)) {
             throw new IllegalOperationException(REQUIRED_TITLE_TRAIT_NOT_HELD);
         }
@@ -185,10 +185,13 @@ public class Santo implements AventyrTitle {
     // (1) "Ignora Efeitos Críticos Menores" itself is unimplemented — this core's
     // CriticalResult/CriticalEffect machinery has no veto/downgrade point at all; every
     // CriticalEffect is constructed only after a caller has already decided a crit landed.
-    // (2) No Defesas stat/service exists anywhere in this core (DF/DM are cited as missing by
-    // race/Gigantes.java and race/Elfo.java; effect/package-info.java makes the same citation)
-    // — don't invent it here — so getDefesasBonus/getPrimaryTitleAllyDefesasBonus have nothing
-    // to apply their result to yet, for either the self bonus or the ally-shared one.
+    // (2) The Defesas stat itself now EXISTS (character.services/DefenseService, reading
+    // ModifierType.DEFESAS/PHYSICAL_DEFENSE/MAGIC_DEFENSE), so this is no longer what blocks the
+    // self bonus — what's missing is narrower: DefenseService scans abilities, equipment and the
+    // sheet's TemporaryBonus pool, but not a Título's own hook, and getDefesasBonus is a method
+    // on this concrete class rather than on AventyrTitleAbility (unlike the RA hook DamageService
+    // does scan). Wiring it means either promoting it to the interface or granting its result as
+    // a DEFESAS-typed TemporaryBonus at the moment Despertar activates.
     // (3) The ally-shared half additionally needs this core's still-missing
     // "continuously-recomputed cross-character passive grant" mechanism (see
     // SantoAbility#BASTIAO_DOS_NECESSITADOS's own TODO for the identical gap) — even once

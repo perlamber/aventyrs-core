@@ -19,7 +19,7 @@ public enum ArtesExcellency implements SkillExcellency {
 
     // TODO: +2 to Fama Positiva or Fama Negativa, whichever the player chooses once when
     // Artes graduation first reaches 3 — Fama is tracked
-    // (CharacterSheet.increaseFamaPositiva/increaseFamaNegativa), and the permanent choice
+    // (CombatantSheet.increaseFamaPositiva/increaseFamaNegativa), and the permanent choice
     // itself could be persisted via org.aventyrs.core.ability.AcquiredChoice — but nothing
     // yet detects a graduation crossing a threshold to trigger this automatically.
     FOCADO(ExcellencyTier.FOCADO, "Fama Positiva ou Negativa (à escolha) +2."),

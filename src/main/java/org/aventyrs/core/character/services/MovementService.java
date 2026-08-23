@@ -2,7 +2,7 @@ package org.aventyrs.core.character.services;
 
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.SizeCategory;
-import org.aventyrs.core.sheet.CharacterSheet;
+import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.skill.SkillExcellency;
 
 public interface MovementService {
@@ -23,11 +23,11 @@ public interface MovementService {
      * like Iniciativa.
      *
      * <p>This is the <em>permanent</em> total only. A caller wanting what's actually available
-     * this Round also adds {@link CharacterSheet#getTemporaryBonus}({@code
+     * this Round also adds {@link CombatantSheet#getTemporaryBonus}({@code
      * ModifierType.MOVEMENT}) on top — the same combination {@code AbstractSkillInteraction}
      * already performs for {@code skillRollBonus} — since a Round-scoped grant (e.g. {@code
      * InitiativeAdvantage#POSICIONAMENTO_ESTRATEGICO}'s +2UD while its holder's group holds
-     * initiative) lives on the {@code CharacterSheet}, not the {@code Character}, the same
+     * initiative) lives on the {@code CombatantSheet}, not the {@code Character}, the same
      * "permanent ability vs. granted-by-someone-else's-action" split every other stat here
      * already draws.
      */

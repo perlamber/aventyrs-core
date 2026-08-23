@@ -5,7 +5,7 @@ import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.DamageBonus;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.Blessing;
-import org.aventyrs.core.sheet.CharacterSheet;
+import org.aventyrs.core.sheet.CombatantSheet;
 
 import java.util.Collection;
 import java.util.List;
@@ -53,7 +53,7 @@ public interface SkillCompetencyAbility extends SkillTrait {
      * this takes {@code sceneContext}/{@code attackTarget} explicitly instead of relying on
      * {@code ModifierResolver} to discover it.
      */
-    default Optional<DamageBonus> resolveDamageBonus(final SceneContext sceneContext, final CharacterSheet attackTarget) {
+    default Optional<DamageBonus> resolveDamageBonus(final SceneContext sceneContext, final CombatantSheet attackTarget) {
         return Optional.empty();
     }
 
@@ -68,7 +68,7 @@ public interface SkillCompetencyAbility extends SkillTrait {
      * already uses — unlike {@link #resolveDamageBonus}, which only ever expects one bonus to
      * apply per roll.
      */
-    default Optional<Integer> resolveAttackRollBonus(final CharacterSheet actor, final CharacterSheet attackTarget) {
+    default Optional<Integer> resolveAttackRollBonus(final CombatantSheet actor, final CombatantSheet attackTarget) {
         return Optional.empty();
     }
 

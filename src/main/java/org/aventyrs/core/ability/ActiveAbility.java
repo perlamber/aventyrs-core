@@ -17,7 +17,7 @@ import org.aventyrs.core.sheet.TemporaryEffect;
  * spend anything or mutate the Character — see {@code
  * org.aventyrs.core.character.services.ActiveAbilityService#activate} for the entry point that
  * validates affordability, spends the cost, and applies the resolved effect to a
- * {@code CharacterSheet} in one step.
+ * {@code CombatantSheet} in one step.
  */
 public interface ActiveAbility {
     String getDescription();
@@ -34,7 +34,7 @@ public interface ActiveAbility {
     /**
      * The {@link TemporaryEffect} this ability grants once activated, computed from
      * character's own current stats (e.g. their total Foco) — not yet applied to any
-     * {@code CharacterSheet}.
+     * {@code CombatantSheet}.
      */
     TemporaryEffect resolveEffect(Character character);
 }

@@ -49,7 +49,7 @@ public enum SorteAdvantage implements EgoAdvantage {
     // TODO: grants 2UD of movement, ignoring Reações and terreno difícil, immediately after
     // spending a Ponto de Sorte — blocked on three separate missing pieces: (1) no
     // "triggered the moment a resource is spent" hook exists anywhere in this codebase,
-    // CharacterSheet#spendTemporaryEgoPoints is a plain mutator with nothing observing it
+    // CombatantSheet#spendTemporaryEgoPoints is a plain mutator with nothing observing it
     // (see CLAUDE.md's Iniciativa section for why an observer/event mechanism was
     // deliberately rejected elsewhere in this codebase — the same reasoning applies here);
     // (2) no movement-triggers-Reação suppression mechanism exists, the identical gap

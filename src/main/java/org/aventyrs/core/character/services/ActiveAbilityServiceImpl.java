@@ -4,7 +4,7 @@ import org.aventyrs.core.ability.ActiveAbility;
 import org.aventyrs.core.action.ActionPointsService;
 import org.aventyrs.core.action.ActionPointsServiceImpl;
 import org.aventyrs.core.character.Character;
-import org.aventyrs.core.sheet.CharacterSheet;
+import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.IllegalOperationException;
 
 import static org.aventyrs.core.util.TranslatableMessages.ACTIVE_ABILITY_NOT_HELD;
@@ -26,7 +26,7 @@ public class ActiveAbilityServiceImpl implements ActiveAbilityService {
     }
 
     @Override
-    public void activate(final Character character, final CharacterSheet characterSheet, final ActiveAbility ability, final int turnNumber) throws IllegalOperationException {
+    public void activate(final Character character, final CombatantSheet characterSheet, final ActiveAbility ability, final int turnNumber) throws IllegalOperationException {
         if (character.getActiveAbilities().stream().noneMatch(held -> held == ability)) {
             throw new IllegalOperationException(ACTIVE_ABILITY_NOT_HELD);
         }

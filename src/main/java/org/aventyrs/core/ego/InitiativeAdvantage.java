@@ -76,7 +76,7 @@ public enum InitiativeAdvantage implements EgoAdvantage {
      * org.aventyrs.core.scene.Scene#applyInitiativeBlessings} as a {@code TemporaryBonus} on
      * the winner and every Scene ally, consumed by summing {@code
      * org.aventyrs.core.character.services.MovementService#getTotalMovement} with {@code
-     * CharacterSheet#getTemporaryBonus(ModifierType.MOVEMENT)}.
+     * CombatantSheet#getTemporaryBonus(ModifierType.MOVEMENT)}.
      *
      * <p>TODO: "seus movimentos não permitem Reações de seus inimigos" stays unimplemented —
      * this core has no movement/positioning system to suppress a Reação from at all (it

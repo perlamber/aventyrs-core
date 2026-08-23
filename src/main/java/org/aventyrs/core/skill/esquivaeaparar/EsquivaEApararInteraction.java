@@ -11,7 +11,7 @@ import org.aventyrs.core.item.ItemType;
 import org.aventyrs.core.item.ItemWeightClass;
 import org.aventyrs.core.modifier.ModifierResolver;
 import org.aventyrs.core.scene.SceneContext;
-import org.aventyrs.core.sheet.CharacterSheet;
+import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.InteractionResult;
 import org.aventyrs.core.skill.AbstractSkillInteraction;
 import org.aventyrs.core.skill.DifficultyLevel;
@@ -25,7 +25,7 @@ import java.util.Optional;
 /**
  * Requests an Esquiva e Aparar Perícia test. See {@link AbstractSkillInteraction} for everything
  * every Perícia's roll has in common; this class holds the two things a <i>defense</i> roll needs
- * on top of that, both reached through its own 4-arg {@link #applyTo(CharacterSheet,
+ * on top of that, both reached through its own 4-arg {@link #applyTo(CombatantSheet,
  * SceneContext, SkillRoll, DefenseType)} overload — the same "this roll needs to see the other
  * side of the exchange" shape {@code AtaqueADistanciaInteraction}'s own 4-arg overload
  * established.
@@ -75,9 +75,9 @@ public class EsquivaEApararInteraction extends AbstractSkillInteraction {
     }
 
     /**
-     * Same as {@link #applyTo(CharacterSheet, SceneContext, SkillRoll)}, but also given
+     * Same as {@link #applyTo(CombatantSheet, SceneContext, SkillRoll)}, but also given
      * defenseType — which Defesa this roll is resisting with. Adds {@link
-     * DefenseService#getTotalDefense(CharacterSheet, DefenseType)} and {@link
+     * DefenseService#getTotalDefense(CombatantSheet, DefenseType)} and {@link
      * #armorCategoryPenalty} onto the inherited {@code skillRollBonus}, then recomputes {@code
      * reachedDifficultyLevel} against the adjusted total (preserving the Especialização branch,
      * so a roll naming a held {@code SkillSpecialization} still thresholds against each tier's
@@ -87,7 +87,7 @@ public class EsquivaEApararInteraction extends AbstractSkillInteraction {
      * applies, since it's a property of what the character is wearing, not of what they're
      * resisting.
      */
-    public InteractionResult applyTo(final CharacterSheet target, final SceneContext sceneContext, final SkillRoll skillRoll, final DefenseType defenseType) {
+    public InteractionResult applyTo(final CombatantSheet target, final SceneContext sceneContext, final SkillRoll skillRoll, final DefenseType defenseType) {
         InteractionResult result = super.applyTo(target, sceneContext, skillRoll);
         Character character = target.getCharacter();
 

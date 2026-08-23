@@ -1,6 +1,6 @@
 package org.aventyrs.core.magic;
 
-import org.aventyrs.core.sheet.CharacterSheet;
+import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.Interaction;
 
 /**
@@ -17,5 +17,5 @@ import org.aventyrs.core.sheet.Interaction;
  * "Casting a Magia" section for the history of the abilities this was originally built for).
  */
 public interface SpellCastingService {
-    SpellCastingResult castSpell(CharacterSheet target, Interaction<CharacterSheet> deliveryInteraction);
+    SpellCastingResult castSpell(CombatantSheet target, Interaction<CombatantSheet> deliveryInteraction);
 }

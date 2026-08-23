@@ -32,7 +32,7 @@ public enum ResourcesAdvantage implements EgoAdvantage {
     // Equipamentos Tecnológicos/Regalias — {@code org.aventyrs.core.item.ItemRarity} and
     // {@code ItemType#OFFENSIVE} are real now, but Obra-Prima tiers/Aprimoramentos (per-owned-
     // copy upgrades) and Tecnológico/Regalia classifications still aren't modeled, and nothing
-    // on {@code Character}/{@code CharacterSheet} holds an item to grant one onto.
+    // on {@code Character}/{@code CombatantSheet} holds an item to grant one onto.
     HERANCA_FAMILIAR("Durante a criação do personagem você pode escolher um Equipamento " +
             "Comum Ofensivo de qualquer Raridade, o item escolhido é uma Obra-Prima Comum " +
             "ou Incomum e não possui Aprimoramentos. Não é possível obter Equipamentos " +
@@ -47,7 +47,7 @@ public enum ResourcesAdvantage implements EgoAdvantage {
      * MoralHerdadaAbility#applyStartingFama}) and the Artes/Persuasão roll bonus (via {@link
      * EgoAdvantage#resolveSkillSpecificRollBonus}) are both real; the grant itself has no
      * automatic caller yet, since {@code CharacterCreationServiceImpl} only ever builds a
-     * plain {@code Character} — no {@code CharacterSheet} (where Fama actually lives) exists
+     * plain {@code Character} — no {@code CombatantSheet} (where Fama actually lives) exists
      * yet at that point for it to grant onto.
      */
     MORAL_HERDADA("Você pertence a uma família notável ou descende de um herói ou vilão " +

@@ -61,10 +61,12 @@ public enum AbencoadoPelaLuzAbility implements AventyrTitleAbility {
     // GritoDeGuerraVulcanoInteraction (Santo#activateGritoDeGuerraVulcano is the entry point):
     // Vantagem is just Skill.ADVANTAGE_BONUS (CLAUDE.md's "Vantagem is a flat +2 bonus"
     // section), ModifierType.ATAQUE_A_DISTANCIA_ROLL_BONUS/ATAQUE_CORPO_A_CORPO_ROLL_BONUS are
-    // already summed by AbstractSkillInteraction via CharacterSheet#getTemporaryBonus, and
+    // already summed by AbstractSkillInteraction via CombatantSheet#getTemporaryBonus, and
     // SceneContext#getAlliesWithin(Range.ADJACENTE) resolves "self + aliados adjacentes" as an
-    // actual List<CharacterSheet> to grant CharacterSheet#grantTemporaryBonus to directly. The
-    // "+2 em Defesas" half stays TODO'd — it still needs the missing Defesas system (see
+    // actual List<CombatantSheet> to grant CombatantSheet#grantTemporaryBonus to directly. The
+    // "+2 em Defesas" half stays TODO'd — the Defesas stat itself now exists, so what's left is
+    // granting it: this is an activated, target-scoped bonus, so it wants a DEFESAS-typed
+    // Blessing at activation rather than a passive @Modifier (see
     // Santo's own TODO) — see GritoDeGuerraVulcanoInteraction's own class javadoc for the
     // current split.
     GRITO_DE_GUERRA_VULCANO(
@@ -99,14 +101,14 @@ public enum AbencoadoPelaLuzAbility implements AventyrTitleAbility {
     // Distância Curta" (the recipient-resolution technique GritoDeGuerraVulcanoInteraction
     // now demonstrates via SceneContext#getAlliesWithin) isn't the blocker for either half
     // here; what each half grants is. The RA half can't reuse
-    // CharacterSheet#grantTemporaryBonus at all — confirmed DamageServiceImpl#
-    // getTotalAbsoluteDamageReduction never reads CharacterSheet#getTemporaryBonus for
+    // CombatantSheet#grantTemporaryBonus at all — confirmed DamageServiceImpl#
+    // getTotalAbsoluteDamageReduction never reads CombatantSheet#getTemporaryBonus for
     // ModifierType.ABSOLUTE_DAMAGE_REDUCTION; RA is only ever summed from the reflection-based
     // ability scan and AventyrTitleAbility#resolveAbsoluteDamageReduction, both continuously-
     // scanned passive-style hooks with no "grant a one-time bonus lasting N Rodadas after this
     // activation" shape at all — a genuinely different gap from GRITO's, not the same one. The
     // +1PA half has its own, unrelated problem: ActionPointsServiceImpl#getMaxActionPoints
-    // never reads CharacterSheet#getTemporaryBonus(ModifierType.ACTION_POINTS) at all — only
+    // never reads CombatantSheet#getTemporaryBonus(ModifierType.ACTION_POINTS) at all — only
     // Character#getTemporaryActionPointsBonus(), a plain non-Round-scoped int field mutated
     // directly, not a TemporaryEffect that ticks down — so even a single-target
     // grantTemporaryBonus(ACTION_POINTS, ...) call would be silently inert today; PA's

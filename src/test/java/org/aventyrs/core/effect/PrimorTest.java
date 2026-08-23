@@ -10,6 +10,7 @@ import org.aventyrs.core.sheet.InteractionResult;
 import org.aventyrs.core.sheet.Player;
 import org.aventyrs.core.skill.CriticalResult;
 import org.junit.jupiter.api.BeforeEach;
+import org.aventyrs.core.character.CharacterStatus;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -53,7 +54,7 @@ class PrimorTest {
         assertEquals(1, result.getEgoLossValue());
         assertEquals(EgoDomain.SORTE, result.getEgoLossDomain());
         assertEquals(2, sheet.getTemporaryEgoPoints(EgoDomain.SORTE));
-        assertEquals(sheet.getCharacter().getStatus(), result.getResultStatus());
+        assertEquals(CharacterStatus.CLEAN, result.getResultStatus());
     }
 
     @Test

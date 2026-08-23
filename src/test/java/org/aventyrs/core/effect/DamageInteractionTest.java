@@ -14,6 +14,7 @@ import org.aventyrs.core.modifier.Modifier;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.CharacterSheet;
+import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.Interaction;
 import org.aventyrs.core.sheet.InteractionResult;
 import org.aventyrs.core.sheet.Player;
@@ -49,9 +50,9 @@ class DamageInteractionTest {
         }
     }
 
-    private static class StubInteraction implements Interaction<CharacterSheet> {
+    private static class StubInteraction implements Interaction<CombatantSheet> {
         @Override
-        public InteractionResult applyTo(final CharacterSheet target) {
+        public InteractionResult applyTo(final CombatantSheet target) {
             return InteractionResult.builder().build();
         }
     }
@@ -73,11 +74,12 @@ class DamageInteractionTest {
         assertEquals(7, result.getResourceLossValue());
         assertEquals(ResourceType.HIT_POINTS, result.getResourceLossType());
         assertEquals(7, sheet.getDamageTaken());
-        assertEquals(character.getStatus(), result.getResultStatus());
+        // 14 max - 7 mitigated = 7 left, above one third.
+        assertEquals(CharacterStatus.MEDIUM_LIFE, result.getResultStatus());
     }
 
     @Test
-    void applyToUpdatesTheTargetCharacterStatusAndReportsTheFreshOne() {
+    void applyToReportsTheStatusItsOwnDamageProduced() {
         // A BLANK fixture character has 14 max Hit Points (Vigor 1, no LIFE_MULTIPLIER source),
         // so 10 damage leaves 4 — LOW_LIFE.
         Character character = CharacterFixture.blank(CharacterFixture.BLANK).build();
@@ -86,7 +88,6 @@ class DamageInteractionTest {
         InteractionResult result = damageInteraction.applyTo(sheet, 10, false);
 
         assertEquals(CharacterStatus.LOW_LIFE, result.getResultStatus());
-        assertEquals(CharacterStatus.LOW_LIFE, character.getStatus());
     }
 
     @Test
@@ -99,7 +100,6 @@ class DamageInteractionTest {
         InteractionResult result = damageInteraction.applyTo(sheet, 3, false);
 
         assertEquals(CharacterStatus.CLEAN, result.getResultStatus());
-        assertEquals(CharacterStatus.CLEAN, character.getStatus());
     }
 
     @Test

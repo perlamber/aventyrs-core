@@ -9,6 +9,7 @@ import org.aventyrs.core.sheet.Player;
 import org.aventyrs.core.sheet.ResourceType;
 import org.aventyrs.core.skill.CriticalResult;
 import org.junit.jupiter.api.BeforeEach;
+import org.aventyrs.core.character.CharacterStatus;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -43,7 +44,7 @@ class ManaPurgeTest {
         assertEquals(2, result.getResourceLossValue());
         assertEquals(ResourceType.MAGIC_POINTS, result.getResourceLossType());
         assertEquals(2, sheet.getManaSpent());
-        assertEquals(sheet.getCharacter().getStatus(), result.getResultStatus());
+        assertEquals(CharacterStatus.CLEAN, result.getResultStatus());
     }
 
     @Test

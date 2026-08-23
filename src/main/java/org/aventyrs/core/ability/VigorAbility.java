@@ -7,7 +7,7 @@ import org.aventyrs.core.character.DamageType;
 import org.aventyrs.core.modifier.Modifier;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.rest.RestType;
-import org.aventyrs.core.sheet.CharacterSheet;
+import org.aventyrs.core.sheet.CombatantSheet;
 
 @Getter
 @AllArgsConstructor
@@ -37,7 +37,7 @@ public enum VigorAbility implements AttributeAbility {
     // active LifeSteal effects there are, and only when that total is already positive (this
     // ability doesn't grant Roubo de Vida on its own, only amplifies an already-active one).
     // TODO: the remaining "+2PV on spell/Título Aventyr PV healing" branch is still unbuilt —
-    // needs a way to know a given CharacterSheet#heal call came from a spell or Título Aventyr
+    // needs a way to know a given CombatantSheet#heal call came from a spell or Título Aventyr
     // ability specifically (no healing-spell-effect representation exists, and no Título
     // Aventyr concept exists at all) — the identical gap FocusAbility#CANALIZADOR_DE_MANA's own
     // matching branch is still blocked on.
@@ -64,7 +64,7 @@ public enum VigorAbility implements AttributeAbility {
     RIGIDEZ_DA_MONTANHA("Todo o Dano Físico causado a você é reduzido em -1; se o dano for causado por " +
             "personagens de Categorias de Tamanho inferiores à sua, ao invés disso o dano é reduzido em -2.") {
         @Override
-        public int resolveDamageReduction(final DamageType damageType, final CharacterSheet source, final CharacterSheet target) {
+        public int resolveDamageReduction(final DamageType damageType, final CombatantSheet source, final CombatantSheet target) {
             if (damageType != DamageType.FISICO) {
                 return 0;
             }

@@ -5,7 +5,6 @@ import org.aventyrs.core.ability.VigorAbility;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterSkill;
-import org.aventyrs.core.character.CharacterStatus;
 import org.aventyrs.core.character.DamageType;
 import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.character.SizeCategory;
@@ -219,114 +218,6 @@ class DamageServiceImplTest {
         assertEquals(5, totalDamageTaken);
         assertEquals(5, sheet.getDamageTaken());
     }
-
-    /**
-     * A {@link CharacterFixture#BLANK} character has Vigor 1 (every {@code AttributeValue}'s
-     * own default base) and no {@code LIFE_MULTIPLIER} source, so its max Hit Points are
-     * {@code 10 + 1 * 4 = 14} — the number every damage amount below is chosen against, to
-     * land squarely inside one {@link CharacterStatus} tier at a time (see {@code
-     * HitPointsService#getStatus} for the thresholds).
-     */
-    private static final int BLANK_MAX_HIT_POINTS = 14;
-
-    @Test
-    void blankFixtureMaxHitPointsAreWhatTheStatusTestsBelowAssume() {
-        Character character = CharacterFixture.blank(CharacterFixture.BLANK).build();
-        assertEquals(BLANK_MAX_HIT_POINTS, new HitPointsServiceImpl().getMaxHitPoints(character));
-    }
-
-    @Test
-    void applyDamageUpdatesTheCharacterStatusAsHitPointsDrop() {
-        Character character = CharacterFixture.blank(CharacterFixture.BLANK).build();
-        CharacterSheet sheet = CharacterSheet.of(character, new Player());
-
-        assertEquals(CharacterStatus.CLEAN, character.getStatus());
-
-        damageService.applyDamage(sheet, 1, false);
-        assertEquals(CharacterStatus.HIGH_LIFE, character.getStatus());
-
-        damageService.applyDamage(sheet, 4, false);
-        assertEquals(CharacterStatus.MEDIUM_LIFE, character.getStatus());
-
-        damageService.applyDamage(sheet, 5, false);
-        assertEquals(CharacterStatus.LOW_LIFE, character.getStatus());
-
-        damageService.applyDamage(sheet, 4, false);
-        assertEquals(CharacterStatus.FALLEN, character.getStatus());
-
-        damageService.applyDamage(sheet, 7, false);
-        assertEquals(CharacterStatus.COMMA, character.getStatus());
-
-        damageService.applyDamage(sheet, 7, false);
-        assertEquals(CharacterStatus.DEAD, character.getStatus());
-    }
-
-    @Test
-    void applyDamageFullyAbsorbedByMitigationLeavesTheStatusUntouched() {
-        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
-                .attributeAbility(new DamageReductionAbility())
-                .build();
-        CharacterSheet sheet = CharacterSheet.of(character, new Player());
-
-        damageService.applyDamage(sheet, 3, false);
-
-        assertEquals(0, sheet.getDamageTaken());
-        assertEquals(CharacterStatus.CLEAN, character.getStatus());
-    }
-
-    @Test
-    void applyDamageResolvesTheStatusFromWhatActuallyReachedHitPointsAfterShieldAbsorption() {
-        Character character = CharacterFixture.blank(CharacterFixture.BLANK).build();
-        CharacterSheet sheet = CharacterSheet.of(character, new Player());
-        sheet.addShield(10);
-
-        damageService.applyDamage(sheet, 10, false);
-
-        assertEquals(CharacterStatus.CLEAN, character.getStatus());
-    }
-
-    @Test
-    void applyDamageWithSceneContextUpdatesTheCharacterStatus() {
-        Character character = CharacterFixture.blank(CharacterFixture.BLANK).build();
-        CharacterSheet sheet = CharacterSheet.of(character, new Player());
-
-        damageService.applyDamage(sheet, combatContext(1, true), 10, false);
-
-        assertEquals(CharacterStatus.LOW_LIFE, character.getStatus());
-    }
-
-    @Test
-    void applyDamageWithDamageTypeUpdatesTheCharacterStatus() {
-        Character character = CharacterFixture.blank(CharacterFixture.BLANK).build();
-        CharacterSheet sheet = CharacterSheet.of(character, new Player());
-
-        damageService.applyDamage(sheet, null, DamageType.FISICO, null, 10, false);
-
-        assertEquals(CharacterStatus.LOW_LIFE, character.getStatus());
-    }
-
-    @Test
-    void refreshStatusRecomputesFromDamageAlreadyAccumulatedOnTheSheet() {
-        Character character = CharacterFixture.blank(CharacterFixture.BLANK).build();
-        CharacterSheet sheet = CharacterSheet.of(character, new Player());
-        // Applied straight to the sheet, bypassing this service entirely — exactly the case
-        // a caller that mitigates and applies in two separate steps (DamageInteraction) has.
-        sheet.applyDamage(10);
-        assertEquals(CharacterStatus.CLEAN, character.getStatus());
-
-        assertEquals(CharacterStatus.LOW_LIFE, damageService.refreshStatus(sheet));
-        assertEquals(CharacterStatus.LOW_LIFE, character.getStatus());
-    }
-
-    @Test
-    void refreshStatusResolvesDeadOnceDamageReachesDoubleTheMaxHitPoints() {
-        Character character = CharacterFixture.blank(CharacterFixture.BLANK).build();
-        CharacterSheet sheet = CharacterSheet.of(character, new Player());
-        sheet.applyDamage(2 * BLANK_MAX_HIT_POINTS);
-
-        assertEquals(CharacterStatus.DEAD, damageService.refreshStatus(sheet));
-    }
-
     @Test
     void applyDamageStillAbsorbsShieldPointsFirst() {
         Character character = CharacterFixture.blank(CharacterFixture.BLANK)

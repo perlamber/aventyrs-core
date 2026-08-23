@@ -30,7 +30,7 @@ import java.util.Map;
  *   halves would otherwise be plain {@code AttributeAbility} methods today (the PV-multiplier
  *   half a flat {@code @Modifier(ModifierType.LIFE_MULTIPLIER)}, exactly {@code
  *   VigorAbility#SOBRE_HUMANO}'s own shape; the RD half a {@code
- *   resolveDamageReduction(DamageType, CharacterSheet, CharacterSheet)} override, exactly
+ *   resolveDamageReduction(DamageType, CombatantSheet, CombatantSheet)} override, exactly
  *   {@code VigorAbility#RIGIDEZ_DA_MONTANHA}'s own shape now that {@code DamageService}
  *   actually resolves type-scoped RD) — but {@code
  *   character.getRace().getRacialAbilities()} only ever holds {@code SkillCompetencyAbility}

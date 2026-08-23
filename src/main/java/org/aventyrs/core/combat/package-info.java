@@ -1,25 +1,37 @@
 /**
  * Resolving an attack against a character — the target side of a combat exchange.
  *
- * <h2>Why this package exists</h2>
+ * <h2>Two directions, one rule</h2>
  *
- * Every other piece of an attack already had a home: {@code AtaqueADistanciaInteraction}/{@code
- * AtaqueCorpoACorpoInteraction} compute an attacker's roll, {@code EsquivaEApararInteraction}
- * computes a defense roll, {@code DefenseService} computes DF/DM, and {@code DamageService}
- * mitigates damage. What was missing was the step that connects them, which both Ataque
- * Interactions' javadocs named explicitly: <i>"the rules text compares this roll against a
- * target's DF or DM rather than a fixed GD, but that target-side lookup/conversion is left to a
- * layer above this core."</i> {@link org.aventyrs.core.combat.AttackReceiver} is that layer.
+ * <b>This game's dice are always rolled by the player.</b> A foe never touches them, so it
+ * contributes a fixed number in whichever direction an exchange runs — and that gives this
+ * package two mirrored entry points, not one:
  *
- * <h2>The resolution model</h2>
+ * <ul>
+ *   <li>{@link org.aventyrs.core.combat.AttackReceiver} — <b>a foe attacks the player.</b> The
+ *   foe presents a Grau de Dificuldade and a flat bonus; the player rolls Esquiva e Aparar
+ *   against it. A <i>Falha</i> Crítica on that roll is the foe landing a critical hit.</li>
+ *   <li>{@link org.aventyrs.core.combat.AttackDelivery} — <b>the player attacks a foe.</b> The
+ *   foe presents a Defesa (its DF or DM); the player rolls an Ataque Perícia against it. An
+ *   <i>Acerto</i> Crítico is the ordinary direction, and the one {@code
+ *   CriticalEffect#validateCriticalHit} was written for.</li>
+ * </ul>
  *
- * <b>This game's dice are always rolled by the player.</b> An attack against a character is
- * therefore not resolved as an attacker's roll at all — it's resolved as <i>the defender's own
- * Esquiva e Aparar roll</i>, against the Grau de Dificuldade the attack presents, resisting with
- * either DF or DM ({@code org.aventyrs.core.character.DefenseType}). A Defesa is consequently a
- * pool of bonuses feeding that roll, not a passive score, which is how this codebase already
- * modeled it before the type existed: {@code EsquivaEApararExcellency#FOCADO}'s "Defesas +1" is a
- * plain {@code SKILL_ROLL_BONUS}.
+ * <p>They are mirrors, not halves: neither ever calls the other, and an exchange runs one of them
+ * per attack. Both fill a hole {@code AtaqueADistanciaInteraction} and {@code
+ * AtaqueCorpoACorpoInteraction} named in their own javadoc — <i>"the rules text compares this
+ * roll against a target's DF or DM rather than a fixed GD, but that target-side lookup/conversion
+ * is left to a layer above this core."</i>
+ *
+ * <h2>Where a foe's numbers come from</h2>
+ *
+ * A foe's Defesa and attack GD are authored on its stat block rather than derived from its
+ * Perícias — see {@code org.aventyrs.core.monster.MonsterTemplate}. Both request types take them
+ * already resolved rather than reaching into the other combatant, with {@code
+ * DeliveredAttack#from(MonsterSheet, DefenseType)} filling them off a foe's sheet when there is
+ * one. A Defesa is therefore a <i>target number</i> when a foe holds it, and a <i>pool of roll
+ * bonuses</i> when a player does (see {@code org.aventyrs.core.character.DefenseType}) — the same
+ * stat, on whichever side of the dice it lands.
  *
  * <h2>Using it</h2>
  *
@@ -36,7 +48,7 @@
  *         .build());
  *
  * // On a hit, the defence result carries a pre-wired chain: Damage -> Correntes -> Críticos.
- * Interaction<CharacterSheet> stage = attack.getDefenseResult().getNextInteraction();
+ * Interaction<CombatantSheet> stage = attack.getDefenseResult().getNextInteraction();
  * if (stage instanceof DamageInteraction damage) {
  *     InteractionResult result = damage.applyTo(defenderSheet, rawDamage, false);
  *     while (result.getNextInteraction() != null) {
@@ -69,7 +81,7 @@
  * {@code resolve} assembles the chain but applies none of it, and touches no resource on the
  * defender — the same restraint {@code GritoDeGuerraVulcanoInteraction} applies to the Blessings
  * it reports. The one thing that does change is the defence roll itself happening ({@code
- * CharacterSheet#consumeFirstRollThisTurn}, and a temporary Ego point on a critical success),
+ * CombatantSheet#consumeFirstRollThisTurn}, and a temporary Ego point on a critical success),
  * which is why {@code resolve} rolls exactly once per attack.
  *
  * <h2>What this package deliberately doesn't do</h2>

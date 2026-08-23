@@ -7,7 +7,7 @@ import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.rest.RestType;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.Blessing;
-import org.aventyrs.core.sheet.CharacterSheet;
+import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.skill.CriticalResult;
 import org.aventyrs.core.skill.SkillTraitKind;
 import org.aventyrs.core.skill.SkillType;
@@ -28,7 +28,7 @@ public interface AttributeAbility {
      * CharismaAbility#DESTINO_FAVORAVEL} granting Sorte and Autocontrole on {@link
      * CriticalResult#ACERTO_CRITICO_MAIOR}. Empty by default; only override on a constant
      * whose rules text reacts to the roller's own critical result this way. "Non-cumulative"
-     * per that kind of ability's own rules text: applied via {@code CharacterSheet
+     * per that kind of ability's own rules text: applied via {@code CombatantSheet
      * #gainNonCumulativeTemporaryEgoPoints}, not a plain additive gain — repeated triggers
      * don't stack a point on top of one already held.
      */
@@ -253,7 +253,7 @@ public interface AttributeAbility {
      * first roll governed by rolledDomain each of the holder's own Turns — e.g. {@link
      * org.aventyrs.core.ability.DexterityAbility#PRECISAO}'s Vantagem on the first
      * Destreza-based Perícia roll each Turn. Only ever called by {@code
-     * AbstractSkillInteraction} once {@link org.aventyrs.core.sheet.CharacterSheet
+     * AbstractSkillInteraction} once {@link org.aventyrs.core.sheet.CombatantSheet
      * #consumeFirstRollThisTurn} has already confirmed this roll is that first one (see that
      * method's own javadoc for how "first this Turn" is tracked) — so, unlike this interface's
      * other {@code resolve*} hooks, an override doesn't need to check that condition itself,
@@ -297,15 +297,15 @@ public interface AttributeAbility {
 
     /**
      * The flat Redução de Dano this Habilidade grants against an incoming hit, conditioned on
-     * damageType and source (the attacker's own {@link CharacterSheet}) — e.g. {@link
+     * damageType and source (the attacker's own {@link CombatantSheet}) — e.g. {@link
      * VigorAbility#RIGIDEZ_DA_MONTANHA}'s Dano-Físico-only reduction, -1 normally or -2 once
      * source's own {@code SizeCategory} is smaller than target's. target is this Habilidade's
-     * own holder — its own {@link CharacterSheet} — mirroring {@code
+     * own holder — its own {@link CombatantSheet} — mirroring {@code
      * org.aventyrs.core.ego.EgoAdvantage#resolveSkillSpecificRollBonus}'s identical "target =
      * the holder's own sheet, passed explicitly because the bonus may depend on the holder's
-     * own state" shape, here extended with a second {@link CharacterSheet} (source) for an
+     * own state" shape, here extended with a second {@link CombatantSheet} (source) for an
      * ability that also needs to know who dealt the hit — the reverse of {@code
-     * SkillCompetencyAbility#resolveAttackRollBonus(CharacterSheet actor, CharacterSheet
+     * SkillCompetencyAbility#resolveAttackRollBonus(CombatantSheet actor, CombatantSheet
      * attackTarget)}'s outgoing-side pair, since this is the defender's own ability reacting to
      * an incoming hit rather than the attacker's. damageType/source may be {@code null}
      * (unclassified damage / no attacker identity known) — every override is expected to treat
@@ -316,7 +316,7 @@ public interface AttributeAbility {
      * {@code Character#getAttributeAbilities()}. Zero by default; only override on a constant
      * whose rules text grants a reduction scoped to one {@link DamageType} like this.
      */
-    default int resolveDamageReduction(DamageType damageType, CharacterSheet source, CharacterSheet target) {
+    default int resolveDamageReduction(DamageType damageType, CombatantSheet source, CombatantSheet target) {
         return 0;
     }
 }

@@ -10,6 +10,7 @@ import org.aventyrs.core.sheet.Player;
 import org.aventyrs.core.sheet.TargetScope;
 import org.aventyrs.core.skill.Skill;
 import org.junit.jupiter.api.BeforeEach;
+import org.aventyrs.core.character.CharacterStatus;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -46,7 +47,7 @@ class GritoDeGuerraVulcanoInteractionTest {
         InteractionResult result = interaction.applyTo(actor);
 
         assertEquals(3, result.getBlessings().size());
-        assertEquals(actor.getCharacter().getStatus(), result.getResultStatus());
+        assertEquals(CharacterStatus.CLEAN, result.getResultStatus());
     }
 
     @Test

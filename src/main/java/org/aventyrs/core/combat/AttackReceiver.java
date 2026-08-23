@@ -9,7 +9,7 @@ import org.aventyrs.core.effect.Effect;
 import org.aventyrs.core.effect.EffectChain;
 import org.aventyrs.core.effect.EffectChainService;
 import org.aventyrs.core.effect.EffectChainServiceImpl;
-import org.aventyrs.core.sheet.CharacterSheet;
+import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.Interaction;
 import org.aventyrs.core.sheet.InteractionResult;
 import org.aventyrs.core.skill.CriticalResult;
@@ -64,7 +64,7 @@ import java.util.List;
  *
  * <pre>{@code
  * IncomingAttackResult attack = attackReceiver.resolve(incoming);
- * Interaction<CharacterSheet> stage = attack.getDefenseResult().getNextInteraction();
+ * Interaction<CombatantSheet> stage = attack.getDefenseResult().getNextInteraction();
  * if (stage instanceof DamageInteraction damage) {
  *     InteractionResult result = damage.applyTo(defender, rawDamage, false);
  *     while (result.getNextInteraction() != null) {
@@ -77,7 +77,7 @@ import java.util.List;
  * and touches no resource on the defender — the same restraint {@code
  * GritoDeGuerraVulcanoInteraction} applies to the Blessings it reports. The one unavoidable
  * exception is the defense roll itself: {@code applyTo} consumes {@code
- * CharacterSheet#consumeFirstRollThisTurn} and may grant a temporary Ego point on a critical
+ * CombatantSheet#consumeFirstRollThisTurn} and may grant a temporary Ego point on a critical
  * success. That's the roll genuinely happening, not an outcome being applied — which is also why
  * {@link #resolve} calls the Interaction <b>exactly once</b>, never twice for one attack.
  */
@@ -121,7 +121,7 @@ public class AttackReceiver {
      * committing to an outcome.
      */
     public IncomingAttackResult resolve(@NonNull final IncomingAttack attack) {
-        CharacterSheet defender = attack.getDefender();
+        CombatantSheet defender = attack.getDefender();
         SkillRoll defenseRoll = attack.getDefenseRoll();
 
         InteractionResult defenseResult = esquivaEApararInteraction.applyTo(
@@ -176,7 +176,7 @@ public class AttackReceiver {
      * actually dealt damage — a hit fully absorbed by RD/RA ends the chain there, which is that
      * class's own long-standing rule, not something added here.
      */
-    private Interaction<CharacterSheet> buildChain(final IncomingAttack attack,
+    private Interaction<CombatantSheet> buildChain(final IncomingAttack attack,
                                                     final boolean criticalEffectTriggered,
                                                     final boolean effectChainTriggered) {
         List<Effect> stages = new ArrayList<>();
@@ -187,7 +187,7 @@ public class AttackReceiver {
             stages.addAll(attack.getCriticalEffects());
         }
 
-        Interaction<CharacterSheet> next = null;
+        Interaction<CombatantSheet> next = null;
         for (int i = stages.size() - 1; i >= 0; i--) {
             next = stages.get(i).chainInto(next);
         }

@@ -1,6 +1,6 @@
 package org.aventyrs.core.scene;
 
-import org.aventyrs.core.sheet.CharacterSheet;
+import org.aventyrs.core.sheet.CombatantSheet;
 
 import java.util.Arrays;
 import java.util.List;
@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
  * by every {@code *Within} method here.
  *
  * <p>Passed downstream into an Interaction (see {@code AbstractSkillInteraction
- * #applyTo(CharacterSheet, SceneContext)}) so a bonus conditioned on proximity — e.g.
+ * #applyTo(CombatantSheet, SceneContext)}) so a bonus conditioned on proximity — e.g.
  * {@code MedicinaECuraExcellency#FOCADO}'s "se não tiver inimigos próximos (Distância
  * Curta)", or a hypothetical bonus scaling with {@link #countAlliesWithin}/{@link
  * #countEnemiesWithin} — can consult it once a consumer needs to.
@@ -39,20 +39,20 @@ import java.util.stream.Collectors;
  * Cena de Combate" and/or "the character won initiative."
  */
 public class SceneContext {
-    private final List<CharacterSheet> allies;
-    private final List<CharacterSheet> enemies;
-    private final Map<CharacterSheet, Range> distances;
+    private final List<CombatantSheet> allies;
+    private final List<CombatantSheet> enemies;
+    private final Map<CombatantSheet, Range> distances;
     private final TerrainType terrainType;
     private final boolean combatScene;
     private final int currentRound;
     private final boolean wonInitiative;
 
-    public SceneContext(final List<CharacterSheet> allies, final List<CharacterSheet> enemies, final Map<CharacterSheet, Range> distances) {
+    public SceneContext(final List<CombatantSheet> allies, final List<CombatantSheet> enemies, final Map<CombatantSheet, Range> distances) {
         this(allies, enemies, distances, null);
     }
 
     /** Same as the 3-arg constructor, but also carrying the Scene's current {@code terrainType}. */
-    public SceneContext(final List<CharacterSheet> allies, final List<CharacterSheet> enemies, final Map<CharacterSheet, Range> distances, final TerrainType terrainType) {
+    public SceneContext(final List<CombatantSheet> allies, final List<CombatantSheet> enemies, final Map<CombatantSheet, Range> distances, final TerrainType terrainType) {
         this(allies, enemies, distances, terrainType, false, 0, false);
     }
 
@@ -63,7 +63,7 @@ public class SceneContext {
      * active Scene at all) that doesn't care about these gets sensible non-combat defaults
      * from the shorter constructors instead.
      */
-    public SceneContext(final List<CharacterSheet> allies, final List<CharacterSheet> enemies, final Map<CharacterSheet, Range> distances,
+    public SceneContext(final List<CombatantSheet> allies, final List<CombatantSheet> enemies, final Map<CombatantSheet, Range> distances,
                          final TerrainType terrainType, final boolean combatScene, final int currentRound, final boolean wonInitiative) {
         this.allies = allies;
         this.enemies = enemies;
@@ -74,16 +74,16 @@ public class SceneContext {
         this.wonInitiative = wonInitiative;
     }
 
-    public List<CharacterSheet> getAllies() {
+    public List<CombatantSheet> getAllies() {
         return allies;
     }
 
-    public List<CharacterSheet> getEnemies() {
+    public List<CombatantSheet> getEnemies() {
         return enemies;
     }
 
     /** How far other is from the acting Character, or {@code null} if that distance wasn't supplied. */
-    public Range getDistanceTo(final CharacterSheet other) {
+    public Range getDistanceTo(final CombatantSheet other) {
         return distances.get(other);
     }
 
@@ -100,7 +100,7 @@ public class SceneContext {
     /**
      * How many allies are at maxRange or closer — e.g. a hypothetical "+1 bonus per adjacent
      * ally" scaling effect, computed by a subclass overriding {@code AbstractSkillInteraction
-     * #applyTo(CharacterSheet, SceneContext)} as {@code countAlliesWithin(Range.ADJACENTE) *
+     * #applyTo(CombatantSheet, SceneContext)} as {@code countAlliesWithin(Range.ADJACENTE) *
      * perAllyBonus}, typically clamped to some maximum the ability's own rules text specifies.
      */
     public int countAlliesWithin(final Range maxRange) {
@@ -119,16 +119,16 @@ public class SceneContext {
      * ally. Same filter as {@link #countAlliesWithin}, returning the matching sheets themselves
      * instead of just how many there are.
      */
-    public List<CharacterSheet> getAlliesWithin(final Range maxRange) {
+    public List<CombatantSheet> getAlliesWithin(final Range maxRange) {
         return allies.stream().filter(ally -> isWithin(ally, maxRange)).collect(Collectors.toList());
     }
 
     /** Every enemy at maxRange or closer — same shape as {@link #getAlliesWithin}, for the enemy side. */
-    public List<CharacterSheet> getEnemiesWithin(final Range maxRange) {
+    public List<CombatantSheet> getEnemiesWithin(final Range maxRange) {
         return enemies.stream().filter(enemy -> isWithin(enemy, maxRange)).collect(Collectors.toList());
     }
 
-    private boolean isWithin(final CharacterSheet sheet, final Range maxRange) {
+    private boolean isWithin(final CombatantSheet sheet, final Range maxRange) {
         Range distance = distances.get(sheet);
         return distance != null && distance.isWithin(maxRange);
     }

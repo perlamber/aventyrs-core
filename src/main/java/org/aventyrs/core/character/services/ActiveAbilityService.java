@@ -2,7 +2,7 @@ package org.aventyrs.core.character.services;
 
 import org.aventyrs.core.ability.ActiveAbility;
 import org.aventyrs.core.character.Character;
-import org.aventyrs.core.sheet.CharacterSheet;
+import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.IllegalOperationException;
 
 public interface ActiveAbilityService {
@@ -26,13 +26,13 @@ public interface ActiveAbilityService {
      * {@link ActiveAbility#getMagicPointCost()}. Throws {@link IllegalOperationException} on
      * any failure, leaving characterSheet untouched.
      *
-     * <p>On success: spends the Magic Point cost (via {@link CharacterSheet#spendMagicPoints})
+     * <p>On success: spends the Magic Point cost (via {@link CombatantSheet#spendMagicPoints})
      * and applies {@code ability.resolveEffect(character)} (via {@link
-     * CharacterSheet#applyEffect}) — a caller never resolves or applies the granted effect
+     * CombatantSheet#applyEffect}) — a caller never resolves or applies the granted effect
      * itself.
      *
      * @throws IllegalOperationException if ability isn't held, or character/characterSheet
      *         can't currently afford its cost — characterSheet is left untouched
      */
-    void activate(Character character, CharacterSheet characterSheet, ActiveAbility ability, int turnNumber) throws IllegalOperationException;
+    void activate(Character character, CombatantSheet characterSheet, ActiveAbility ability, int turnNumber) throws IllegalOperationException;
 }

@@ -40,7 +40,7 @@ public interface AttributeAbilityService {
      *   <li><b>Character progression, after the fact</b> — most commonly, right after {@link
      *       CharacterAttributeService#upgradeBase} raises an Attribute's base past one of
      *       those same thresholds, unlocking a new slot the player then fills. This method
-     *       takes no {@link org.aventyrs.core.sheet.CharacterSheet} and spends no experience
+     *       takes no {@link org.aventyrs.core.sheet.CombatantSheet} and spends no experience
      *       itself, unlike {@code upgradeBase}/{@code SkillGraduationService#upgradeGraduation}
      *       — picking an already-unlocked attribute ability slot has no XP cost in this
      *       ruleset, only {@code upgradeBase} raising the base to unlock the slot does.</li>

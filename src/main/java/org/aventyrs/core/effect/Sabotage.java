@@ -1,7 +1,6 @@
 package org.aventyrs.core.effect;
 
-import org.aventyrs.core.character.Character;
-import org.aventyrs.core.sheet.CharacterSheet;
+import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.InteractionResult;
 import org.aventyrs.core.skill.CriticalResult;
@@ -11,14 +10,14 @@ import org.aventyrs.core.skill.CriticalResult;
  * org.aventyrs.core.effect} package-info for the pipeline this fits into), and
  * deliberately a placeholder: unlike {@link Sangramento}/{@link ManaPurge}/{@link
  * Primor}, its own effect can't be computed for real yet, because it targets
- * *equipment*, not a CharacterSheet resource pool — {@link CriticalResult
+ * *equipment*, not a CombatantSheet resource pool — {@link CriticalResult
  * #ACERTO_CRITICO_MAIOR} destroys every "item tecnológico" the target is carrying;
  * {@link CriticalResult#ACERTO_CRITICO_MENOR} deals 3d6 damage to them instead.
  *
  * <p>None of that is expressible today: this core has no Item/Equipamento entity at all
  * (see {@code org.aventyrs.core.item.ItemInteraction}, an unrelated pre-existing stub —
  * same gap {@code ProfissaoCompetencyAbility}'s own class javadoc already documents), so
- * there's nothing to classify as "tecnológico", no per-CharacterSheet inventory to find
+ * there's nothing to classify as "tecnológico", no per-CombatantSheet inventory to find
  * such items on, and no "destroyed"/damage-taken state for one to mutate. The 3d6 damage
  * roll itself is also out of scope for this core regardless (it never rolls dice — see
  * {@code org.aventyrs.core.skill} package-info's "What this library computes" section),
@@ -55,14 +54,13 @@ public class Sabotage extends AbstractEffect implements CriticalEffect {
     // TODO: destroy (Maior) or deal an already-rolled 3d6 total of damage to (Menor)
     // every "item tecnológico" the target is carrying — blocked on the Item/Equipamento
     // entity itself (no such type, no "tecnológico" classification, and no
-    // per-CharacterSheet inventory to search) not existing anywhere in this core yet; see
+    // per-CombatantSheet inventory to search) not existing anywhere in this core yet; see
     // this class's own javadoc for the full gap. Nothing here should be guessed at ahead
     // of that entity actually being modeled.
     @Override
-    public InteractionResult applyTo(final CharacterSheet target) {
-        Character affectedCharacter = target.getCharacter();
+    public InteractionResult applyTo(final CombatantSheet target) {
         return reportChain(InteractionResult.builder()
-                .resultStatus(affectedCharacter.getStatus()))
+                .resultStatus(resolveStatus(target)))
                 .build();
     }
 }

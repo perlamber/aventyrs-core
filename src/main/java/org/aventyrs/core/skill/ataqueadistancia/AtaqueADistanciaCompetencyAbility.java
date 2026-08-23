@@ -7,7 +7,7 @@ import org.aventyrs.core.character.DamageBonus;
 import org.aventyrs.core.character.DamageType;
 import org.aventyrs.core.scene.Range;
 import org.aventyrs.core.scene.SceneContext;
-import org.aventyrs.core.sheet.CharacterSheet;
+import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.skill.Skill;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
 import org.aventyrs.core.skill.SkillType;
@@ -55,7 +55,7 @@ public enum AtaqueADistanciaCompetencyAbility implements SkillCompetencyAbility 
     FRIEZA("Vantagem nas rolagens de dano de Ataques à Distância realizados contra alvos " +
             "em Distância Curta ou inferior.") {
         @Override
-        public Optional<DamageBonus> resolveDamageBonus(final SceneContext sceneContext, final CharacterSheet attackTarget) {
+        public Optional<DamageBonus> resolveDamageBonus(final SceneContext sceneContext, final CombatantSheet attackTarget) {
             if (sceneContext == null || attackTarget == null) {
                 return Optional.empty();
             }
@@ -71,7 +71,7 @@ public enum AtaqueADistanciaCompetencyAbility implements SkillCompetencyAbility 
     // Distância Muito Curta from the original and roll this Perícia again, dealing 1d6
     // damage (or the Magia/Efeito's own described damage if lower) on success — the Distância
     // vocabulary exists now (org.aventyrs.core.scene.Range), but SceneContext only answers
-    // "how far is CharacterSheet X", not "which targets are within Y of this other target",
+    // "how far is CombatantSheet X", not "which targets are within Y of this other target",
     // so picking a *new* target this way still isn't expressible; also no "Corrente de
     // Efeitos" (chain-effect) or Magia/Efeito entity exists yet, and this core deliberately
     // never rolls dice (1d6) — see the skill package-info.

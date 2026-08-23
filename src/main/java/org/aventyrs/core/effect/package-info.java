@@ -5,8 +5,8 @@
  * <h2>The pipeline, and how it's chained</h2>
  *
  * Each stage is an ordinary {@link org.aventyrs.core.sheet.Interaction}&lt;{@link
- * org.aventyrs.core.sheet.CharacterSheet}&gt;, applied via {@link
- * org.aventyrs.core.sheet.CharacterSheet#receiveInteraction} exactly like a Perícia roll.
+ * org.aventyrs.core.sheet.CombatantSheet}&gt;, applied via {@link
+ * org.aventyrs.core.sheet.CombatantSheet#receiveInteraction} exactly like a Perícia roll.
  * A stage that wants another stage to follow sets {@link
  * org.aventyrs.core.sheet.InteractionResult#getNextInteraction()} on its own result — a
  * caller drives the whole pipeline with one generic loop, never hardcoding which stages
@@ -19,7 +19,7 @@
  * }
  * }</pre>
  *
- * <p>{@code nextInteraction} is typed as the shared {@code Interaction<CharacterSheet>}
+ * <p>{@code nextInteraction} is typed as the shared {@code Interaction<CombatantSheet>}
  * interface, not any one concrete stage — {@link org.aventyrs.core.effect.EffectChain},
  * {@link org.aventyrs.core.effect.CriticalEffect}, {@link
  * org.aventyrs.core.effect.DamageInteraction} itself, or any future stage are all
@@ -38,14 +38,14 @@
  * mitigated damage. {@link org.aventyrs.core.effect.Effect} (the parent of every Efeito),
  * {@link org.aventyrs.core.effect.EffectChain} (Corrente de Efeitos), and {@link
  * org.aventyrs.core.effect.CriticalEffect} (Efeito Crítico) are real, isolated
- * interfaces — each extends {@code Interaction<CharacterSheet>} so a concrete
+ * interfaces — each extends {@code Interaction<CombatantSheet>} so a concrete
  * implementation plugs into {@code receiveInteraction} with zero other code touched,
  * the same zero-touch guarantee every concrete {@code <Skill>Interaction} already
  * relies on. Three concrete {@code CriticalEffect}s exist so far. Two drain a resource
  * immediately plus per-Rodada: {@link org.aventyrs.core.effect.Sangramento} (PV, via
  * {@link org.aventyrs.core.sheet.Bleeding}) and {@link org.aventyrs.core.effect.ManaPurge}
  * (PM, via {@link org.aventyrs.core.sheet.ManaDrain}) — each interrupted by the matching
- * recovery ({@code CharacterSheet#heal}/{@code #recoverMagicPoints}). The third, {@link
+ * recovery ({@code CombatantSheet#heal}/{@code #recoverMagicPoints}). The third, {@link
  * org.aventyrs.core.effect.Primor}, is shaped differently: a one-time temporary Ego
  * point spend (Sorte or Autocontrole) with no ongoing per-Rodada loss, instead owed back
  * at the target's next qualifying Rest via {@code
@@ -53,7 +53,7 @@
  * RestServiceImpl#applyRest}, since {@code RestService} (unlike Scene's still-nonexistent
  * turn shifter) already is a complete "a Rest happened" trigger. A fourth, {@link
  * org.aventyrs.core.effect.Sabotage}, is a deliberate placeholder — it targets equipment,
- * not a CharacterSheet resource pool, and this core has no Item/Equipamento entity at all
+ * not a CombatantSheet resource pool, and this core has no Item/Equipamento entity at all
  * yet (same gap {@code ProfissaoCompetencyAbility}'s own class javadoc documents), so its
  * {@code applyTo} computes nothing beyond {@code resultStatus}; see its own class javadoc
  * for the full breakdown. A fifth, {@link org.aventyrs.core.effect.RealExecution}, is
@@ -71,7 +71,7 @@
  * now has its first concrete implementation, {@link org.aventyrs.core.effect.Definhar}:
  * an ongoing per-Rodada curse-damage drain (via {@link
  * org.aventyrs.core.sheet.Withering}, applied through {@link
- * org.aventyrs.core.sheet.CharacterSheet#applyCurseDamage}) lasting Rodadas equal to the
+ * org.aventyrs.core.sheet.CombatantSheet#applyCurseDamage}) lasting Rodadas equal to the
  * target's own Vigor, non-cumulative per its own rules text — reapplying it replaces the
  * existing drain rather than stacking a second one. Unlike every {@code CriticalEffect}
  * above, it isn't gated on a {@code CriticalResult} at construction: its own rules text
@@ -79,7 +79,8 @@
  * critical-hit-only consequence.
  * Several abilities/races are still blocked on a Corrente de Efeitos of their own — {@code
  * org.aventyrs.core.ego.AutocontroleAdvantage#RESOLUTO} (a Defesas-comparison threshold
- * on a Corrente de Efeitos — the Defesas system itself is also still missing), {@code
+ * on a Corrente de Efeitos — the Defesas system exists now, so what RESOLUTO still lacks is a
+ * concrete Corrente whose text needs that comparison), {@code
  * org.aventyrs.core.skill.artes.ArtesCompetencyAbility#DISPARO_RICOCHETE}, {@code
  * org.aventyrs.core.skill.medicinaecura.MedicinaECuraCompetencyAbility#MILAGREIRO},
  * {@code org.aventyrs.core.ability.VigorAbility#RECUPERACAO_ASSOMBROSA}, and the racial

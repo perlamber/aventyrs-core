@@ -1,6 +1,9 @@
 package org.aventyrs.core.effect;
 
-import org.aventyrs.core.sheet.CharacterSheet;
+import org.aventyrs.core.character.CharacterStatus;
+import org.aventyrs.core.character.services.HitPointsService;
+import org.aventyrs.core.character.services.HitPointsServiceImpl;
+import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.Interaction;
 import org.aventyrs.core.sheet.InteractionResult;
 
@@ -13,7 +16,7 @@ import org.aventyrs.core.sheet.InteractionResult;
  * one of either — and the two conditions are independent (an attack can trigger a Corrente
  * without a critical, and a critical without a Corrente). Rather than a caller applying each by
  * hand in the right order, an assembled chain is one object: {@link #chainInto} links a
- * successor, {@link #reportChain} copies it onto the result, and {@code CharacterSheet
+ * successor, {@link #reportChain} copies it onto the result, and {@code CombatantSheet
  * #receiveInteraction}'s existing drain loop walks the whole thing with no change at all.
  *
  * <pre>{@code
@@ -27,11 +30,39 @@ import org.aventyrs.core.sheet.InteractionResult;
  */
 public abstract class AbstractEffect implements Effect {
 
-    private Interaction<CharacterSheet> nextInteraction;
+    private Interaction<CombatantSheet> nextInteraction;
+
+    /** Backs {@link #resolveStatus} — see it for why every Effect needs one. */
+    protected final HitPointsService hitPointsService;
+
+    protected AbstractEffect() {
+        this(new HitPointsServiceImpl());
+    }
+
+    protected AbstractEffect(final HitPointsService hitPointsService) {
+        this.hitPointsService = hitPointsService;
+    }
 
     @Override
-    public Interaction<CharacterSheet> getNextInteraction() {
+    public Interaction<CombatantSheet> getNextInteraction() {
         return nextInteraction;
+    }
+
+    /**
+     * The tier target is in right now, for this Effect's own {@code resultStatus}. Derived on
+     * the spot via {@link HitPointsService#getStatus(CombatantSheet)} rather than read off the
+     * Character, so an Effect that just changed target's Hit Points reports what it actually
+     * produced — {@code Sangramento}'s immediate PV loss is the case that motivated this, since
+     * it damages the sheet directly without going through {@code DamageService} and so has
+     * nothing to refresh a stored value through.
+     *
+     * <p>Effects that touch no Hit Points at all ({@code Definhar}, {@code ManaPurge}, {@code
+     * Primor}, {@code Sabotage}) still report through here, so a stage late in a chain reports
+     * the tier an earlier stage already drove the target to rather than whatever was true when
+     * the chain started.
+     */
+    protected CharacterStatus resolveStatus(final CombatantSheet target) {
+        return hitPointsService.getStatus(target);
     }
 
     /**
@@ -39,7 +70,7 @@ public abstract class AbstractEffect implements Effect {
      * back-to-front in one expression. A second call replaces the first — an Effect has exactly
      * one successor, since the chain is a line, not a tree.
      */
-    public AbstractEffect chainInto(final Interaction<CharacterSheet> nextInteraction) {
+    public AbstractEffect chainInto(final Interaction<CombatantSheet> nextInteraction) {
         this.nextInteraction = nextInteraction;
         return this;
     }

@@ -1,9 +1,8 @@
 package org.aventyrs.core.effect;
 
-import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.rest.RestType;
-import org.aventyrs.core.sheet.CharacterSheet;
+import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.InteractionResult;
 import org.aventyrs.core.sheet.PendingEgoRecovery;
@@ -17,12 +16,12 @@ import static org.aventyrs.core.util.TranslatableMessages.INVALID_PRIMOR_EGO_DOM
  * that isn't a PV/PM/PD resource drain: it costs the character receiving the attack —
  * {@link #applyTo}'s {@code target}, never the attacker — temporary Ego points from
  * either Sorte or Autocontrole (never Recursos/Iniciativa; rejected at construction, see
- * below), applied directly via {@link CharacterSheet#spendTemporaryEgoPoints}. Unlike
+ * below), applied directly via {@link CombatantSheet#spendTemporaryEgoPoints}. Unlike
  * {@link Sangramento}/{@link ManaPurge}, there's no ongoing per-Rodada loss — this is a
  * one-time spend — but the spent points are specifically promised back at the target's
  * next qualifying Rest ("pontos perdidos desta forma são recuperados no próximo
  * Descanso[ Longo] do alvo"), registered as a {@link PendingEgoRecovery} (see {@link
- * CharacterSheet#owePendingEgoRecovery}) and resolved for real by {@code
+ * CombatantSheet#owePendingEgoRecovery}) and resolved for real by {@code
  * RestServiceImpl#applyRest} — {@code RestService} already is a complete, real "a Rest
  * happened" trigger, unlike Scene's still-nonexistent turn shifter, so this doesn't need
  * to be left as an unconnected scaffold.
@@ -74,8 +73,7 @@ public class Primor extends AbstractEffect implements CriticalEffect {
     }
 
     @Override
-    public InteractionResult applyTo(final CharacterSheet target) {
-        Character affectedCharacter = target.getCharacter();
+    public InteractionResult applyTo(final CombatantSheet target) {
         int value = criticalResult == CriticalResult.ACERTO_CRITICO_MAIOR ? MAIOR_VALUE : MENOR_VALUE;
         RestType minimumRestType = criticalResult == CriticalResult.ACERTO_CRITICO_MAIOR ? RestType.LONGO : RestType.MINIMO;
 
@@ -83,7 +81,7 @@ public class Primor extends AbstractEffect implements CriticalEffect {
         target.owePendingEgoRecovery(new PendingEgoRecovery(domain, value, minimumRestType));
 
         return reportChain(InteractionResult.builder()
-                .resultStatus(affectedCharacter.getStatus())
+                .resultStatus(resolveStatus(target))
                 .egoLossValue(value)
                 .egoLossDomain(domain))
                 .build();

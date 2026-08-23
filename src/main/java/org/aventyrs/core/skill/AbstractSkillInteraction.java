@@ -10,6 +10,8 @@ import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.character.SizeCategory;
 import org.aventyrs.core.character.services.CharacterSizeService;
 import org.aventyrs.core.character.services.CharacterSizeServiceImpl;
+import org.aventyrs.core.character.services.HitPointsService;
+import org.aventyrs.core.character.services.HitPointsServiceImpl;
 import org.aventyrs.core.character.services.CharacterSkillService;
 import org.aventyrs.core.character.services.CharacterSkillServiceImpl;
 import org.aventyrs.core.ego.EgoAdvantage;
@@ -17,7 +19,7 @@ import org.aventyrs.core.modifier.ModifierResolver;
 import org.aventyrs.core.modifier.ModifierResolverImpl;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.scene.SceneContext;
-import org.aventyrs.core.sheet.CharacterSheet;
+import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.Interaction;
 import org.aventyrs.core.sheet.InteractionResult;
@@ -55,7 +57,7 @@ import static org.aventyrs.core.util.TranslatableMessages.REQUIRED_SKILL_TRAIT_N
  * *plus* {@code character.getRace().getRacialAbilities()} (see {@link #allSkillCompetencyAbilities}
  * and CLAUDE.md's "Racial Abilities reuse SkillCompetencyAbility" section — a racial ability
  * like {@code ElfosRacialAbility#SENTIDOS_ABSOLUTOS} contributes here identically to an
- * acquired one), unlocked {@link SkillExcellency} tiers, and the target {@link CharacterSheet}'s
+ * acquired one), unlocked {@link SkillExcellency} tiers, and the target {@link CombatantSheet}'s
  * own {@code TemporaryBonus} pool (see CLAUDE.md's "Temporary bonuses from other Characters"
  * section) — plus a separate source summed via {@link #sumConditionalRollBonuses}: {@link
  * SkillCompetencyAbility#resolveConditionalRollBonus}, for a bonus conditioned on {@code
@@ -76,7 +78,7 @@ import static org.aventyrs.core.util.TranslatableMessages.REQUIRED_SKILL_TRAIT_N
  * uses {@link SizeCategory#getDefenseModifier()} — every other Perícia gets 0 — plus, via
  * {@link #sumFirstRollOfTurnBonuses}, every held {@code AttributeAbility}'s own {@link
  * AttributeAbility#resolveFirstRollOfTurnBonus} (e.g. {@code DexterityAbility#PRECISAO}'s
- * Vantagem), but only once {@link CharacterSheet#consumeFirstRollThisTurn} has confirmed this
+ * Vantagem), but only once {@link CombatantSheet#consumeFirstRollThisTurn} has confirmed this
  * actual roll (skillRoll non-{@code null}) is target's first this Turn governed by whichever
  * Attribute domain is resolved above. Computes {@code
  * difficultyReduction} from unlocked {@code SkillExcellency} tiers
@@ -103,7 +105,7 @@ import static org.aventyrs.core.util.TranslatableMessages.REQUIRED_SKILL_TRAIT_N
  * two rolls" note is documentation, not behavior). Every shorter overload still reaches a
  * subclass's override correctly through ordinary virtual dispatch, so callers using
  * {@code applyTo(target)} keep working unchanged no matter which overload a subclass defines
- * its logic on. {@link ArtesInteraction} is the one that currently overrides: a character
+ * its logic on. Three subclasses currently override: {@link ArtesInteraction} (below), {@code EsquivaEApararInteraction} (its own 4-arg overload adding the DF/DM pool and the armour-Categoria Destreza penalty), and — through this class's own 4-arg {@code attackTarget} overload rather than an override — both Perícias de Ataque. {@link ArtesInteraction}'s own case: a character
  * holding {@code ArtesCompetencyAbility#DOM_BARDICO} gets {@code temporaryBonusModifierType}/
  * {@code temporaryBonusRounds}/{@code temporaryBonusScope} set on the result — see that class.
  *
@@ -120,12 +122,13 @@ import static org.aventyrs.core.util.TranslatableMessages.REQUIRED_SKILL_TRAIT_N
  * DifficultyLevel#reachedByAsExpert} instead of {@link DifficultyLevel#reachedBy} — the
  * Especialização's easier threshold finally has a real consumer.
  */
-public abstract class AbstractSkillInteraction implements Interaction<CharacterSheet> {
+public abstract class AbstractSkillInteraction implements Interaction<CombatantSheet> {
 
     private final SkillType skillType;
     private final CharacterSkillService characterSkillService;
     private final ModifierResolver modifierResolver;
     private final CharacterSizeService characterSizeService;
+    private final HitPointsService hitPointsService;
 
     protected AbstractSkillInteraction(final SkillType skillType) {
         this(skillType, new CharacterSkillServiceImpl(), new ModifierResolverImpl());
@@ -136,28 +139,29 @@ public abstract class AbstractSkillInteraction implements Interaction<CharacterS
         this.characterSkillService = characterSkillService;
         this.modifierResolver = modifierResolver;
         this.characterSizeService = new CharacterSizeServiceImpl(modifierResolver);
+        this.hitPointsService = new HitPointsServiceImpl();
     }
 
     @Override
-    public InteractionResult applyTo(final CharacterSheet target) {
+    public InteractionResult applyTo(final CombatantSheet target) {
         return applyTo(target, null);
     }
 
     /**
-     * Same as {@link #applyTo(CharacterSheet)}, but also given sceneContext — nearby allies/
+     * Same as {@link #applyTo(CombatantSheet)}, but also given sceneContext — nearby allies/
      * enemies and their {@code Range} — for a subclass whose bonus is conditioned on
      * proximity (e.g. {@code MedicinaECuraExcellency#FOCADO}'s "se não tiver inimigos
      * próximos") to consult by overriding this method (or the 3-arg one below) instead of the
-     * 1-arg one. sceneContext may be {@code null} (the 1-arg {@link #applyTo(CharacterSheet)}
+     * 1-arg one. sceneContext may be {@code null} (the 1-arg {@link #applyTo(CombatantSheet)}
      * always passes {@code null}) when the caller doesn't have one — e.g. no active {@code
      * Scene}, or this roll isn't happening in an encounter.
      */
-    public InteractionResult applyTo(final CharacterSheet target, final SceneContext sceneContext) {
+    public InteractionResult applyTo(final CombatantSheet target, final SceneContext sceneContext) {
         return applyTo(target, sceneContext, null);
     }
 
     /**
-     * Same as {@link #applyTo(CharacterSheet, SceneContext)}, but also given skillRoll — the
+     * Same as {@link #applyTo(CombatantSheet, SceneContext)}, but also given skillRoll — the
      * already-rolled dice behind this Perícia test (this core never rolls dice itself, see
      * the {@code skill} package-info). When non-{@code null}, sets {@link InteractionResult
      * #reachedDifficultyLevel} (via {@link DifficultyLevel#reachedBy} against {@code
@@ -172,7 +176,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CharacterS
      * AttributeAbility} for nothing — this also grants (directly on target, the same
      * unambiguous-recipient shape {@code org.aventyrs.core.effect.Primor} uses to mutate its
      * own target) a non-cumulative temporary Ego point, via {@link
-     * CharacterSheet#gainNonCumulativeTemporaryEgoPoints}, for every domain any held {@code
+     * CombatantSheet#gainNonCumulativeTemporaryEgoPoints}, for every domain any held {@code
      * AttributeAbility}'s {@link org.aventyrs.core.ability.AttributeAbility
      * #resolveCriticalSuccessEgoGain} returns against this same criticalResult — passing that
      * ability itself as the grant's source, so one ability's own repeat triggers don't stack
@@ -189,7 +193,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CharacterS
      * which overrides this method, not the 2-arg one, even though it doesn't touch skillRoll
      * itself yet).
      */
-    public InteractionResult applyTo(final CharacterSheet target, final SceneContext sceneContext, final SkillRoll skillRoll) {
+    public InteractionResult applyTo(final CombatantSheet target, final SceneContext sceneContext, final SkillRoll skillRoll) {
         Character character = target.getCharacter();
         CharacterSkill characterSkill = findCharacterSkill(character);
         if (skillRoll != null) {
@@ -226,7 +230,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CharacterS
         difficultyReduction += sumAttributeDomainDifficultyReductions(character.getAttributeAbilities(), attributeDomain, character);
 
         InteractionResult.InteractionResultBuilder result = InteractionResult.builder()
-                .resultStatus(character.getStatus())
+                .resultStatus(hitPointsService.getStatus(target))
                 .skillRollBonus(bonus)
                 .difficultyReduction(difficultyReduction);
 
@@ -262,6 +266,48 @@ public abstract class AbstractSkillInteraction implements Interaction<CharacterS
         }
 
         return result.build();
+    }
+
+    /**
+     * Same as {@link #applyTo(CombatantSheet, SceneContext, SkillRoll)}, but also given
+     * attackTarget — the combatant this attack is actually being made against — so a held ability
+     * like {@code AtaqueADistanciaCompetencyAbility#FRIEZA} (conditioned on the target's
+     * distance) or {@code AnoesRacialAbility#ABATEDORES_DE_GIGANTES} (on its {@code
+     * SizeCategory}) can resolve against the real target rather than a generic fact about the
+     * encounter. Neither is reachable from the shared scan above, because a no-arg {@code
+     * @Modifier} method can't see a target.
+     *
+     * <p>Lives here rather than on one Interaction because the rules text covers every <b>Perícia
+     * de Ataque</b>, not just Ataque à Distância — it was on {@code AtaqueADistanciaInteraction}
+     * only because that was the first one wired, leaving Ataque Corpo a Corpo silently missing
+     * both bonuses. A non-attack skill returns {@code super.applyTo} untouched, so calling this
+     * on one is harmless rather than an error: nothing about a target is meaningful for an
+     * Atletismo roll, and refusing it would only push the check onto callers.
+     */
+    public InteractionResult applyTo(final CombatantSheet target, final SceneContext sceneContext, final SkillRoll skillRoll, final CombatantSheet attackTarget) {
+        InteractionResult result = applyTo(target, sceneContext, skillRoll);
+        if (!skillType.isAttackSkill() || attackTarget == null) {
+            return result;
+        }
+        List<SkillCompetencyAbility> abilities = allSkillCompetencyAbilities(target.getCharacter());
+
+        Optional<DamageBonus> damageBonus = abilities.stream()
+                .map(ability -> ability.resolveDamageBonus(sceneContext, attackTarget))
+                .flatMap(Optional::stream)
+                .findFirst();
+        if (damageBonus.isPresent()) {
+            result = result.toBuilder().damageBonus(damageBonus.get()).build();
+        }
+
+        int attackRollBonus = abilities.stream()
+                .map(ability -> ability.resolveAttackRollBonus(target, attackTarget))
+                .flatMap(Optional::stream)
+                .mapToInt(Integer::intValue)
+                .sum();
+        if (attackRollBonus != 0) {
+            result = result.toBuilder().skillRollBonus(result.getSkillRollBonus() + attackRollBonus).build();
+        }
+        return result;
     }
 
     /**
@@ -364,7 +410,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CharacterS
      * own roller, passed through unconditionally — safe even for a Vantagem with no
      * skill-specific bonus, since it just falls through to {@code Optional.empty()}.
      */
-    private int sumEgoAdvantageSkillSpecificRollBonuses(final Collection<EgoAdvantage> egoAdvantages, final SceneContext sceneContext, final CharacterSheet target) {
+    private int sumEgoAdvantageSkillSpecificRollBonuses(final Collection<EgoAdvantage> egoAdvantages, final SceneContext sceneContext, final CombatantSheet target) {
         return egoAdvantages.stream()
                 .map(advantage -> advantage.resolveSkillSpecificRollBonus(skillType, sceneContext, target))
                 .flatMap(Optional::stream)
@@ -375,7 +421,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CharacterS
     /**
      * Sums {@link AttributeAbility#resolveFirstRollOfTurnBonus} across every held Habilidade —
      * e.g. {@code DexterityAbility#PRECISAO}'s Vantagem on the first Destreza-based roll each
-     * Turn. Only ever called once {@link CharacterSheet#consumeFirstRollThisTurn} has already
+     * Turn. Only ever called once {@link CombatantSheet#consumeFirstRollThisTurn} has already
      * confirmed this is target's first roll governed by rolledDomain this Turn (see that
      * method's own javadoc for the Turn-tracking mechanism) — a constant overriding {@code
      * resolveFirstRollOfTurnBonus} doesn't need to check that condition itself.
@@ -392,7 +438,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CharacterS
      * Sums {@link AttributeAbility#resolveAttributeDomainRollBonus} across every held
      * Habilidade — e.g. {@code InstinctAbility#SENTIR_A_INTENCAO}'s Vantagem on every
      * Instinto-governed roll. Unlike {@link #sumFirstRollOfTurnBonuses}, called
-     * unconditionally on every roll, not gated behind {@code CharacterSheet
+     * unconditionally on every roll, not gated behind {@code CombatantSheet
      * #consumeFirstRollThisTurn}.
      */
     private int sumAttributeDomainRollBonuses(final Collection<AttributeAbility> attributeAbilities, final AttributeDomain rolledDomain, final Character character) {

@@ -5,7 +5,7 @@ import org.aventyrs.core.character.CharacterStatus;
 import org.aventyrs.core.modifier.ModifierResolver;
 import org.aventyrs.core.modifier.ModifierResolverImpl;
 import org.aventyrs.core.modifier.ModifierType;
-import org.aventyrs.core.sheet.CharacterSheet;
+import org.aventyrs.core.sheet.CombatantSheet;
 
 public class HitPointsServiceImpl implements HitPointsService {
 
@@ -22,7 +22,7 @@ public class HitPointsServiceImpl implements HitPointsService {
     @Override
     public int getLifeMultiplier(final Character character) {
         int bonus = modifierResolver.sumModifiers(character.getAttributeAbilities(), ModifierType.LIFE_MULTIPLIER);
-        return DEFAULT_LIFE_MULTIPLIER + bonus;
+        return character.getLifeMultiplier() + bonus;
     }
 
     @Override
@@ -31,7 +31,7 @@ public class HitPointsServiceImpl implements HitPointsService {
     }
 
     @Override
-    public int getCurrentHitPoints(final Character character, final CharacterSheet characterSheet) {
+    public int getCurrentHitPoints(final Character character, final CombatantSheet characterSheet) {
         return Math.max(0, getMaxHitPoints(character) - characterSheet.getDamageTaken());
     }
 
@@ -56,5 +56,11 @@ public class HitPointsServiceImpl implements HitPointsService {
             return CharacterStatus.COMMA;
         }
         return CharacterStatus.DEAD;
+    }
+
+    @Override
+    public CharacterStatus getStatus(final CombatantSheet characterSheet) {
+        int maxHitPoints = getMaxHitPoints(characterSheet.getCharacter());
+        return getStatus(maxHitPoints - characterSheet.getDamageTaken(), maxHitPoints);
     }
 }

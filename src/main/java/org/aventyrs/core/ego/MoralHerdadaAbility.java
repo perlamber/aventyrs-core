@@ -6,6 +6,7 @@ import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.CharacterSheet;
+import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.skill.SkillType;
 
 import java.util.Optional;
@@ -59,11 +60,18 @@ public class MoralHerdadaAbility implements EgoAdvantage {
      * a value frozen at acquisition.
      */
     @Override
-    public Optional<Integer> resolveSkillSpecificRollBonus(final SkillType skillType, final SceneContext sceneContext, final CharacterSheet target) {
+    public Optional<Integer> resolveSkillSpecificRollBonus(final SkillType skillType, final SceneContext sceneContext, final CombatantSheet target) {
         if (skillType != SkillType.ARTES && skillType != SkillType.PERSUASAO) {
             return Optional.empty();
         }
-        int famaValue = famaChoice == FamaChoice.POSITIVA ? target.getFamaPositiva() : target.getFamaNegativa();
+        // Fama is player-only — it lives on CharacterSheet, not on the shared CombatantSheet, so a
+        // combatant without one (a monster) contributes no Fama step. MORAL_HERDADA is a Vantagem
+        // de Ego, which only a player character acquires, so in practice this branch is always
+        // taken; the guard exists because the parameter's type can no longer promise it.
+        if (!(target instanceof CharacterSheet characterSheet)) {
+            return Optional.of(BASE_ROLL_BONUS);
+        }
+        int famaValue = famaChoice == FamaChoice.POSITIVA ? characterSheet.getFamaPositiva() : characterSheet.getFamaNegativa();
         return Optional.of(BASE_ROLL_BONUS + famaValue / FAMA_POINTS_PER_BONUS_STEP);
     }
 
@@ -77,13 +85,13 @@ public class MoralHerdadaAbility implements EgoAdvantage {
      *
      * <p><strong>Not called automatically by anything yet</strong>: {@code
      * CharacterCreationServiceImpl} only ever assembles a plain {@link Character} — Fama lives
-     * on {@link CharacterSheet} (see {@link CharacterSheet#increaseFamaPositiva}/{@link
-     * CharacterSheet#increaseFamaNegativa}), and no {@code CharacterSheet} exists yet at
-     * Character-creation time for this to grant onto (the same Character-then-CharacterSheet
+     * on {@link CombatantSheet} (see {@link CombatantSheet#increaseFamaPositiva}/{@link
+     * CombatantSheet#increaseFamaNegativa}), and no {@code CombatantSheet} exists yet at
+     * Character-creation time for this to grant onto (the same Character-then-CombatantSheet
      * ordering gap {@code CharacterAttributeService#upgradeBase}/{@code
      * SkillGraduationService#upgradeGraduation} already work around by taking both explicitly).
-     * A caller applies this once a {@code CharacterSheet} has actually been assembled, via
-     * {@code CharacterSheet.of(...)}.
+     * A caller applies this once a {@code CombatantSheet} has actually been assembled, via
+     * {@code CombatantSheet.of(...)}.
      * @return the total Fama (of whichever type {@link #famaChoice} names) characterSheet holds
      *         after this grant
      */

@@ -69,8 +69,8 @@ Check here before assuming a TODO needs a new gap named. Nothing below exists in
 
 | Missing system | Notes / where cited |
 | --- | --- |
-| **Defesas (DF/DM)** | No stat or service anywhere. `ModifierType.DEFESAS` is a real registry entry nothing reads, and it's undifferentiated — it can't model a bonus scoped to DF alone or DM alone. Cited by `Gigantes`, `Elfo`, `Santo`'s Despertar. |
-| **Owned/produced item copy** | The `Item` *catalog* is real; per-copy state, inventory, a PE economy, Obra-Prima/Aprimoramentos and production/repair are not. No `Character`/`CharacterSheet` holds an `Item`, so no scanning service reaches one. Cite the specific piece, not a blanket "no Item entity". |
+| **Defesas — *mostly built*** | `DefenseService` + `DefenseType` are real, and `DEFESAS`/`PHYSICAL_DEFENSE`/`MAGIC_DEFENSE` all have readers. What's still missing is narrower: `Santo#getDefesasBonus` has no granting trigger (*when* each adjacent ally receives it), and a foe's Defesa is an authored flat number with no defined conversion from a GD reduction's *níveis*. Don't cite this as "no Defesas stat exists".
+| **Owned/produced item copy** | The `Item` *catalog* is real, and so is inventory now — `Character#equipment` (worn/wielded, scanned by `DefenseService`/`DamageService`) and `AbstractCombatantSheet#inventory` (carried, including a foe's loot). Still missing: **per-copy state** (Dureza remaining, Obra-Prima tier, Aprimoramentos, who produced it), a PE economy, and production/repair. Cite the specific piece, not a blanket "no Item entity" or "no inventory". |
 | **Damage-type-scoped mitigation** | `DamageType` has no Corte/Perfuração/Impacto breakdown; RD/RA are resolved with no notion of damage type. |
 | **Multiplicative stages** | `MovementService` sums `MOVEMENT` additively with no halving stage (unlike `DamageService`'s real `HALF_DAMAGE`). Don't add a `MOVEMENT_HALVED` constant — the mechanism is missing, not just a reader. |
 | **Temporary PA grants** | `ActionPointsServiceImpl` reads only `Character#getTemporaryActionPointsBonus()`, never `getTemporaryBonus(ModifierType.ACTION_POINTS)`, so such a `Blessing` is inert. |
@@ -82,7 +82,7 @@ Check here before assuming a TODO needs a new gap named. Nothing below exists in
 | **Forced attack targeting / interception** | No "another Character becomes the target instead" mid-resolution — see `SantoAbility.GUARDA_VIDAS`. |
 | **Reactive/retaliation damage** | `DamageService` only computes damage *to* a target *from* an attacker, never the reverse. |
 | **Forced movement / positioning** | Knockback, "empurrado 1UD", Reposicionar — this core never does geometry. |
-| **Continuous cross-character passive grants** | Every cross-character bonus is an explicit activation/roll-time grant or initiative-triggered; nothing supports "my always-on passive continuously buffs a nearby Character". |
+| **Continuous cross-character passive grants** | Partly built: `AventyrTitleAbility#resolveAllyAbsoluteDamageReduction` scans a target's adjacent allies for outward RA grants (Santo's Bastião dos Necessitados). Still missing for Defesas (`Santo` Despertar — its bonus is on the concrete class, unreachable by a scan) and for `SkillCompetencyAbility` (`INSTINTO_DE_LUTHER`). See "Ally-facing passive grants are scanned, not granted". |
 | **Movement-triggered Reações** | No movement-triggers-Reação mechanism, and no suppression of one. Cited by `POSICIONAMENTO_ESTRATEGICO`, `AS_NA_MANGA`. |
 | **Resource-spend triggers** | Nothing observes `spendTemporaryEgoPoints` etc. An observer/event mechanism was deliberately rejected — this codebase has none anywhere. |
 | **One-time roll effects bought with a resource** | Spending PV/PM to modify a single roll's outcome (e.g. a GD reduction) has no transaction — see `Orc`'s Agnação Ancestral. |
@@ -143,6 +143,13 @@ on a bare value.
   upgrade paths existed, so the bug was inert; it isn't anymore now that real callers exist —
   a rejected `upgradeBase`/`upgradeGraduation` call must leave `unUsedExperience` untouched
   (see `CharacterSheetTest#useExperienceLeavesUnusedExperienceUntouchedWhenRejected`).
+
+**Foes are exempt from both caps by construction, not by an exception.** A `MonsterSheet` isn't
+a `CharacterSheet`, and both `upgradeBase`/`upgradeGraduation` take the latter (that's where
+`unUsedExperience` lives) — so a monster can't reach either entry point, and its Attribute bases
+and Graduações are simply whatever its stat block authored. Nothing was added to allow that; the
+builder-bypassability below is what makes it work. See "Two kinds of sheet" and
+`org.aventyrs.core.monster`.
 
 Nothing stops `AttributeValue.builder().base(...)` or `CharacterSkill#increaseGraduation`
 from being called directly with a value past either cap (or with no XP spent at all) though
@@ -934,6 +941,89 @@ tracks, so it can just ask.
   Currently a **no-op** — nothing triggers "no início do seu turno" yet (`Bleeding`/`ManaDrain`/
   `Withering` all apply at Turn-*end*) — so its wiring has no test yet; add one alongside
   whatever first overrides a start-of-Turn hook.
+## Two kinds of sheet — `CombatantSheet`, and why monsters can't level up
+
+A combat participant is a `CombatantSheet` (`org.aventyrs.core.sheet`), not a `CharacterSheet`.
+Two implementations exist, both extending `AbstractCombatantSheet`, which holds every shared
+behaviour exactly once:
+
+- **`CharacterSheet`** — a player character. Adds `player`, the experience wallet
+  (`totalExperience`/`unUsedExperience`/`useExperience`/`accumulateExperience`) and Fama.
+- **`MonsterSheet`** (`org.aventyrs.core.monster`) — a foe. Adds the four authored stat-block
+  numbers a foe presents *because it never rolls*: `physicalDefense`/`magicDefense` (what a
+  player's Ataque roll must beat) and `attackDifficulty`/`attackBonus` (what its own attacks
+  present to a player's Esquiva e Aparar roll).
+
+Everything else — damage, shields, Mana/Determinação, temporary Ego points, `TemporaryEffect`s,
+inventory, the Turn lifecycle, `receiveInteraction` — is on the shared half and behaves
+identically for both. **Type combat-facing signatures as `CombatantSheet`**; the only things that
+should still name `CharacterSheet` are the four XP-spending services plus
+`MoralHerdadaAbility#applyStartingFama` and `RestService#applyRest`.
+
+- **That split is the enforcement mechanism, and it's the whole reason to prefer an interface
+  here.** Experience lives on `CharacterSheet`, so `CharacterAttributeService#upgradeBase`,
+  `SkillGraduationService#upgradeGraduation`, `FeatService#grantFeat` and
+  `TitleAbilityService#grantTitleAbility` keep taking that concrete type and a monster cannot be
+  passed to one. There is deliberately **no `isMonster()` flag and no runtime guard** — the
+  compiler refuses it. `MonsterSheetTest` asserts this reflectively, because writing it as
+  `monster instanceof CharacterSheet` doesn't compile, which is the point.
+- **Ego points are on the shared half**, despite reading as player-facing: `Primor` applies to a
+  *target*, so leaving them off `CombatantSheet` would break it against a foe. `EgoDomain`'s own
+  javadoc says "a creature".
+- **`Character` is shared too** — a foe's Attributes, Perícias, abilities and equipment are an
+  ordinary `Character`, with `race` set to the single catch-all `Monstruoso` and `player` left
+  `null` (that field is nullable for exactly this reason, and nothing in main source reads it).
+  Don't build a parallel `Monster extends Character`; the stat-carrying half was never
+  player-specific.
+- **`lifeMultiplier`/`determinationMultiplier` are now `Character` fields**, mirroring the
+  `manaMultiplier` that already was one. This is what lets a foe's PV budget be tuned apart from
+  its Vigor — previously the only way to make something tanky also inflated every Vigor-governed
+  roll. They're not monster-only; a GM house rule uses them the same way.
+
+## Building a foe — `org.aventyrs.core.monster.MonsterTemplate`
+
+Two paths, the same `Item`/`AbstractItem`/`ArmorItem` split this codebase already uses:
+`AbstractMonsterTemplate` (`@Builder`) is *fill in the form* for a designed foe, `GenericMonster`
+is a catalog of stand-ins for *a generic monster on-scene*. `spawn()` returns a fully independent
+`MonsterSheet` each call — and must, since `SkillGraduation` is mutable and
+`CharacterSkill#increaseGraduation` mutates in place, so sharing one across spawns would let one
+foe's growth raise another's.
+
+A foe's four numbers are **authored, not derived** — a stat block says what a Goblin's DF is; it
+isn't recomputed from its Destreza and Graduação the way a player's defence roll is. Nothing
+checks them against the Attributes behind them, deliberately.
+
+## Both directions of an attack — `AttackReceiver` and `AttackDelivery`
+
+The player always rolls, so a foe contributes a fixed number whichever way an exchange runs, and
+`org.aventyrs.core.combat` has **two mirrored entry points** rather than one:
+
+| | Foe attacks the player | Player attacks a foe |
+| --- | --- | --- |
+| Entry point | `AttackReceiver.resolve` | `AttackDelivery.resolve` |
+| Player rolls | Esquiva e Aparar | a Perícia de Ataque |
+| Foe contributes | a GD + flat bonus | a flat Defesa (DF or DM) |
+| Critical trigger | the roll's **Falha** Crítica | the roll's **Acerto** Crítico |
+
+Neither ever calls the other. Both are report-only, both roll exactly once (the roll consumes
+`consumeFirstRollThisTurn` and can grant an Ego point), and both assemble the same pre-wired
+`Damage → Correntes → Críticos` chain onto the result's `nextInteraction`.
+
+- `CriticalEffect#validateCriticalHit` demands an *Acerto* Crítico, which is correct for
+  `AttackDelivery` and **still awkward for `AttackReceiver`**, where the trigger is a Falha
+  Crítica — a caller there has to construct the Efeito with a value describing something that
+  didn't happen, and the Maior/Menor severity it should inherit from the defence roll is picked by
+  hand instead. That translation is still missing; don't assume the offensive direction fixed it.
+- The Corrente margin is inverted for `AttackReceiver` (attack beats defence by 5, or 7 vs
+  `RESOLUTO`) — an inference from `EffectChainService`'s own text, flagged on the class.
+- `AttackDelivery` **reports but does not apply** the attacker's `difficultyReduction`: it's
+  denominated in níveis and a foe's Defesa is a flat integer, with no defined conversion. TODO'd
+  on the class rather than guessed at.
+- **The `attackTarget`-aware 4-arg `applyTo` now lives on `AbstractSkillInteraction`**, gated on
+  `isAttackSkill()`, not on `AtaqueADistanciaInteraction`. That was the fix
+  `AnoesRacialAbility.ABATEDORES_DE_GIGANTES` needed — its rules text always covered every Perícia
+  de Ataque, but melee had no way to see the target.
+
 ## Races live in `org.aventyrs.core.race`, not `org.aventyrs.core.character`
 
 `Race` and every implementation (`Human`, `Anao`, `Elfos`, `Gigantes`, `Pequenino`, `Gnomos`,
@@ -1037,26 +1127,66 @@ RD being real doesn't make every RD-granting ability real — `APRIMORAR_COM_ART
 one branch of a choice, `ProfissaoCompetencyAbility.FORJA_VULCANA` as a per-item choice still
 blocked on the missing owned-item copy. Check what's *actually* blocking an ability.
 
-### `refreshStatus` keeps `Character#status` in sync
+### `CharacterStatus` is derived, never stored
 
-`Character.status` is a **stored** field, not derived on read (a `Character` has no sheet of
-its own to derive from). `DamageService#refreshStatus(CharacterSheet)` recomputes it via
-`HitPointsService#getStatus` against the **unclamped** current HP
-(`getMaxHitPoints - getDamageTaken`, deliberately not `getCurrentHitPoints`, which floors at 0
-— that negative range is what distinguishes `FALLEN`/`COMMA`/`DEAD`) and stores it via
-`Character#updateStatus`.
+There is **no `status` field on `Character`** and no `updateStatus` mutator. A character's tier
+is `HitPointsService#getStatus(CombatantSheet)`, resolved fresh on every call from the damage
+currently on the sheet: `getMaxHitPoints(sheet.getCharacter()) - sheet.getDamageTaken()`, handed
+to the pure `getStatus(int, int)`.
 
-Every `applyDamage` overload calls it automatically, after absorption (so a fully-shielded hit
-leaves status untouched). It's **public** for `DamageInteraction`, which mitigates and applies
-in two steps (it needs this hit's own final damage, which `applyDamage`'s accumulated-total
-return can't supply) and so calls `refreshStatus` explicitly, reporting its return as
-`resultStatus`.
+That subtraction is **unclamped**, deliberately not `getCurrentHitPoints` (which floors at 0) —
+the negative range is exactly what distinguishes `FALLEN`/`COMMA`/`DEAD`, so clamping would make
+those three tiers unreachable. `HitPointsServiceTest` guards this directly.
 
-**Damage bypassing `DamageService` leaves the field stale** — `Sangramento`,
-`Bleeding`/`Withering`, `RealExecution`, and `CharacterSheet#heal` all mutate the
-`ResourcePool` directly. That's why `RealExecution` computes its own `resultStatus` from
-`HitPointsService#getStatus`; the other `org.aventyrs.core.effect` Effects still echo the
-stored value. Don't assume every damage path is status-aware.
+It lives on `HitPointsService` rather than on `CombatantSheet`, which holds both halves of the
+input and would read more naturally, because **`org.aventyrs.core.sheet` must not depend on
+`org.aventyrs.core.character.services`** and resolving a maximum needs `getMaxHitPoints`'s
+Vigor/Life-Multiplier scan. Its shape sibling is `getCurrentHitPoints(Character, CombatantSheet)`
+— not the cascading-overload convention, which delegates the other way.
+
+**Why it isn't stored.** A stored copy needs every path that changes Hit Points to remember to
+refresh it, and most of them have no service in scope to refresh through: `Bleeding`/`Withering`
+tick inside `tickTemporaryEffects`, `Sangramento` damages the sheet directly, `RealExecution`
+applies curse damage, and `CombatantSheet#heal`/`RestService#applyRest` recover it. Before 0.0.18
+the field was stale on six of the eight Hit-Point-mutation paths in `src/main` — a bleeding
+character could cross every tier down to `DEAD` while it sat at whatever the last mitigated hit
+wrote. `applyDamage` no longer mutates the `Character` as a side effect at all.
+
+This is the same recompute-on-demand discipline as "Iniciativa can change mid-Scene" below: ask
+the data you already hold, rather than pushing a value at whoever might care.
+
+A consumer may still **persist** a tier of its own alongside its stored damage (aventyrs-api
+does, so a client can badge a token whose full sheet it hasn't hydrated). That is a boundary
+denormalization of a value the consumer chose to store, with no core field behind it.
+
+### Ally-facing passive grants are scanned, not granted
+
+An ability whose rules text buffs *someone else* continuously — Santo's Bastião dos Necessitados,
+"Aliados adjacentes, apenas aqueles com menos PV que você, recebem RA" — is resolved by
+**scanning**, never by handing the recipient a `TemporaryBonus`.
+
+`AventyrTitleAbility#resolveAllyAbsoluteDamageReduction(SceneContext, boolean allyHasLowerPv)` is
+the hook; `DamageServiceImpl#sumAllyGrantedAbsoluteDamageReduction` is the scan. It runs in the
+opposite direction from every other source in `computeTotalAbsoluteDamageReduction`: those all
+start from the target's own traits, this one walks `sceneContext.getAlliesWithin(ADJACENTE)` and
+asks each neighbour what it grants outward. The `boolean` is the same PV comparison
+`resolveAbsoluteDamageReduction`'s `hasLowerPvAdjacentAlly` carries for the self-facing half,
+in the opposite direction; `DamageServiceImpl` is the only caller with a `HitPointsService` in
+hand, so it resolves both and passes them in.
+
+**Why not a grant.** `TemporaryBonus` is a snapshot. Granting one on "an ally came adjacent"
+creates a revocation obligation — moved away, died, left the Scene, grantor died — and something
+would have to notice each of those to revoke it. It also creates a persistence obligation for a
+value that is pure derivation. Scanned at the moment the recipient's damage is actually
+calculated, the answer is correct by construction as characters move in and out of range:
+nothing to grant, nothing to revoke, nothing to persist.
+`BastiaoDosNecessitadosTest#theGrantIsWithheldOnceTheAllyIsNoLongerAdjacent` pins this — no
+revocation runs anywhere in it; only the `SceneContext` differs between the two assertions.
+
+The second consumer that would justify generalizing this shape is Santo's Despertar (the same
+thing for Defesas), which additionally needs `Santo#getDefesasBonus(SceneContext)` promoted from
+the concrete class to the interface before any scan can reach it. Build it when that lands, not
+before.
 
 ### RA/half-damage conditioned on `SceneContext`
 

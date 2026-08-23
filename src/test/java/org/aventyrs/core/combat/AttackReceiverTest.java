@@ -22,6 +22,7 @@ import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.InteractionResult;
 import org.aventyrs.core.skill.esquivaeaparar.EsquivaEApararInteraction;
 import org.aventyrs.core.sheet.CharacterSheet;
+import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.Player;
 import org.aventyrs.core.skill.DifficultyLevel;
 import org.aventyrs.core.skill.SkillRoll;
@@ -375,7 +376,7 @@ class AttackReceiverTest {
         private int calls;
 
         @Override
-        public InteractionResult applyTo(final CharacterSheet target, final SceneContext sceneContext,
+        public InteractionResult applyTo(final CombatantSheet target, final SceneContext sceneContext,
                                           final SkillRoll skillRoll, final DefenseType defenseType) {
             calls++;
             return super.applyTo(target, sceneContext, skillRoll, defenseType);

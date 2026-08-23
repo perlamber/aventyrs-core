@@ -76,12 +76,34 @@
  * }
  *
  * Character character = builder.build();
- * CharacterSheet sheet = CharacterSheet.of(character, player);
+ * CombatantSheet sheet = CombatantSheet.of(character, player);
  * }</pre>
+ *
+ * <h2>Creating a foe instead</h2>
+ *
+ * None of the above applies to a monster. It has no player, allocates no points, picks no
+ * Vantagens de Ego and no {@code ActionProfile} — its stats are authored whole, on a stat block,
+ * and its Attributes and Perícias are subject to none of the ceilings step 2 enforces. Build one
+ * through {@code org.aventyrs.core.monster.MonsterTemplate} instead:
+ *
+ * <pre>{@code
+ * MonsterSheet thug = GenericMonster.CAPANGA.spawn();          // a generic foe, on-scene
+ * MonsterSheet boss = AbstractMonsterTemplate.builder()...     // a designed one
+ *         .build().spawn();
+ * }</pre>
+ *
+ * <p>A monster also cannot be advanced afterwards: {@link
+ * org.aventyrs.core.character.services.CharacterAttributeService#upgradeBase}, {@link
+ * org.aventyrs.core.character.services.SkillGraduationService#upgradeGraduation}, {@code
+ * FeatService#grantFeat} and {@code TitleAbilityService#grantTitleAbility} all take a {@code
+ * CharacterSheet} because that is where experience lives, and a {@code MonsterSheet} isn't one.
+ * That's a compile-time guarantee, not a runtime check — see {@code
+ * org.aventyrs.core.sheet.CombatantSheet}.
  *
  * <h2>Keeping this current</h2>
  *
- * This list is a living inventory of every creation-time choice, in order — <b>whenever a
+ * Both lists above are living inventories — the player one of every creation-time choice in
+ * order, the foe one of how a monster is built instead. <b>Whenever a
  * new mechanic adds a creation-time choice</b> (a new Ego/Attribute-like allocation, another
  * "pick one permanently" enum like {@code ActionProfile}, a new conditional Vantagem like
  * Autocontrole's), add a numbered step here describing it and update the code example. Don't

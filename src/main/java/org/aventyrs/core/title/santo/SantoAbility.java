@@ -41,13 +41,13 @@ public enum SantoAbility implements AventyrTitleAbility {
             false, 3, 2, false, Optional.empty(), 1, 0),
 
     // Requer 1 Especialização e 2 outras habilidades de Santo — enforced (see class javadoc).
-    // The self-facing RA half ("Você recebe RA...") is real — see
-    // #resolveAbsoluteDamageReduction below, wired into DamageServiceImpl. The ally-facing
-    // half ("Aliados adjacentes ... recebem RA") stays TODO'd: every existing cross-character
-    // bonus mechanism in this core is either an explicit roll-time grant
-    // (ArtesCompetencyAbility.DOM_BARDICO) or an initiative-win-triggered Blessing
-    // (InitiativeBlessingService) — nothing supports "my always-on passive continuously grants
-    // a bonus to a nearby ally's own damage calculation with no trigger event."
+    // Both halves are real. The self-facing one ("Você recebe RA...") resolves through
+    // #resolveAbsoluteDamageReduction; the ally-facing one ("Aliados adjacentes ... recebem
+    // RA") through #resolveAllyAbsoluteDamageReduction, which DamageServiceImpl reaches by
+    // scanning the target's own adjacent allies for holders rather than by granting anything —
+    // see that hook's javadoc for why a continuous proximity buff must not be a TemporaryBonus.
+    // The two booleans are the same PV comparison in opposite directions, both resolved by
+    // DamageServiceImpl.
     BASTIAO_DOS_NECESSITADOS(
             "Você recebe RA enquanto estiver adjacente à um aliado com menos PV que você. " +
             "Aliados adjacentes, apenas aqueles com menos PV que você, recebem RA.",
@@ -55,6 +55,11 @@ public enum SantoAbility implements AventyrTitleAbility {
         @Override
         public int resolveAbsoluteDamageReduction(final SceneContext sceneContext, final boolean hasLowerPvAdjacentAlly) {
             return hasLowerPvAdjacentAlly ? DamageService.DEFAULT_DAMAGE_REDUCTION : 0;
+        }
+
+        @Override
+        public int resolveAllyAbsoluteDamageReduction(final SceneContext sceneContext, final boolean allyHasLowerPv) {
+            return allyHasLowerPv ? DamageService.DEFAULT_DAMAGE_REDUCTION : 0;
         }
     },
 
@@ -65,7 +70,8 @@ public enum SantoAbility implements AventyrTitleAbility {
     // only ever compute a roll/hit once, against data already resolved; nothing models an
     // attack as a stateful transaction another Character can interject into mid-resolution.
     // The "ataque ainda deve superar as suas Defesas" clause additionally needs the
-    // still-missing Defesas system (see Santo's own TODO). Only identity/cost/prerequisite
+    // Defesas-granting wiring a Título still lacks (see Santo's own TODO — the stat exists, the
+    // Título-side hook into it doesn't). Only identity/cost/prerequisite
     // data is real (Suprema, 2PD, Reação, 1 Especialização + 2 outras Habilidades).
     GUARDA_VIDAS(
             "Você pode se teletransportar para a frente de um aliado em Distância Curta, se " +
@@ -76,7 +82,7 @@ public enum SantoAbility implements AventyrTitleAbility {
 
     // Requer 1 Especialização e 4 outras Habilidades de Santo — enforced (see class javadoc).
     // Otherwise fully TODO'd, three distinct gaps: (1) no floor-at-1PV concept exists
-    // (ResourcePool#spend/CharacterSheet#applyDamage have no such clamp), (2) no "redirect an
+    // (ResourcePool#spend/CombatantSheet#applyDamage have no such clamp), (2) no "redirect an
     // ally's damage to yourself" mechanism exists (the inverse of BASTIAO_DOS_NECESSITADOS'
     // own ally-facing gap — damage flowing to the holder instead of a bonus flowing out), and
     // (3) no "locked, Rest/Roubo-de-Vida-only-recoverable" HP-loss subtype exists

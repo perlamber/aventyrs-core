@@ -11,6 +11,7 @@ import org.aventyrs.core.sheet.Player;
 import org.aventyrs.core.title.AventyrTitleAbility;
 import org.aventyrs.core.title.AventyrTitleSpecialization;
 import org.junit.jupiter.api.BeforeEach;
+import org.aventyrs.core.character.CharacterStatus;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -207,6 +208,6 @@ class SantoTest {
         InteractionResult result = santo.activateGritoDeGuerraVulcano(actor, null);
 
         assertEquals(3, result.getBlessings().size());
-        assertEquals(actor.getCharacter().getStatus(), result.getResultStatus());
+        assertEquals(CharacterStatus.CLEAN, result.getResultStatus());
     }
 }

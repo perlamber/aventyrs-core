@@ -4,7 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.scene.TerrainType;
-import org.aventyrs.core.sheet.CharacterSheet;
+import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.skill.Skill;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
 import org.aventyrs.core.skill.SkillTrait;
@@ -28,15 +28,15 @@ public enum AnoesRacialAbility implements SkillCompetencyAbility {
     // "which one" doesn't otherwise matter: resolveAttackRollBonus is scanned unconditionally
     // across every held ability, with no per-skillType filter) while matchesSkillType() is
     // overridden so an explicit SkillRoll#requestedAbility naming this ability validates
-    // against either attack SkillType, not just the representative one. Actually wired into
-    // AtaqueADistanciaInteraction only for now — AtaqueCorpoACorpoInteraction doesn't yet take
-    // an attackTarget parameter the way AtaqueADistanciaInteraction does (see that class's own
-    // javadoc for why FRIEZA needed one), so the melee side's automatic bonus isn't wired yet,
-    // independent of this SkillType-matching fix.
+    // against either attack SkillType, not just the representative one. Now wired for BOTH
+    // attack Perícias, matching that rules text: the attackTarget-aware applyTo overload used to
+    // live on AtaqueADistanciaInteraction alone (added there for FRIEZA), leaving melee silently
+    // without this bonus, and has since been lifted to AbstractSkillInteraction and gated on
+    // SkillType#isAttackSkill().
     ABATEDORES_DE_GIGANTES("Você recebe vantagem nas rolagens de Ataque contra criaturas " +
             "que pertençam a 2 ou mais Categorias de Tamanho superiores.") {
         @Override
-        public Optional<Integer> resolveAttackRollBonus(final CharacterSheet actor, final CharacterSheet attackTarget) {
+        public Optional<Integer> resolveAttackRollBonus(final CombatantSheet actor, final CombatantSheet attackTarget) {
             if (actor == null || attackTarget == null) {
                 return Optional.empty();
             }

@@ -91,7 +91,7 @@ public enum SantoSpecialization implements AventyrTitleSpecialization {
      * exactly this formula (Vigor total × {@link RestType#CURTO}'s attribute multiplier, plus
      * any {@code AttributeAbility#resolveRestHitPointsBonus} bonus), so this needs no missing
      * system of its own — a caller applies the returned amount to the touched target via
-     * {@code CharacterSheet#heal}. Only meaningful for {@code ABENCOADO_PELA_LUZ}; returns 0
+     * {@code CombatantSheet#heal}. Only meaningful for {@code ABENCOADO_PELA_LUZ}; returns 0
      * for {@code ABRACADO_PELA_ESCURIDAO} (which has no equivalent touch-heal clause of its
      * own), rather than throwing, so a caller never needs to guard on which constant it's
      * holding.

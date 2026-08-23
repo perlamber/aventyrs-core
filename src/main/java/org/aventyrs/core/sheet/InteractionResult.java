@@ -29,7 +29,7 @@ public class InteractionResult {
 
     /**
      * Total GD (DifficultyLevel) steps reduced for this Perícia test, aggregated from
-     * whatever's currently known on the CharacterSheet — for now, only the trained Skill's
+     * whatever's currently known on the CombatantSheet — for now, only the trained Skill's
      * unlocked {@link org.aventyrs.core.skill.SkillExcellency} tiers (e.g.
      * {@link org.aventyrs.core.skill.artes.ArtesExcellency#PRODIGIO}). More sources (Talentos,
      * temporary buffs, etc.) would add to this same total as they're built.
@@ -48,7 +48,7 @@ public class InteractionResult {
      * convention as every other field here, same as {@link #egoGainDomains}'s own null-vs-empty
      * distinction: {@code null} means "not applicable," a non-null (possibly empty) list means
      * "this Interaction is the kind that can grant these, here's what it computed this time."
-     * When non-{@code null}, a caller is expected to call {@code CharacterSheet
+     * When non-{@code null}, a caller is expected to call {@code CombatantSheet
      * #grantTemporaryBonus} on each intended recipient with each {@link Blessing}'s own
      * {@code modifierType}/{@code value}/{@code rounds}.
      *
@@ -65,7 +65,7 @@ public class InteractionResult {
     /**
      * The highest GD this roll reached — {@code null} unless the Interaction was given a
      * {@code org.aventyrs.core.skill.SkillRoll} to compute it from (see {@code
-     * AbstractSkillInteraction#applyTo(CharacterSheet, org.aventyrs.core.scene.SceneContext,
+     * AbstractSkillInteraction#applyTo(CombatantSheet, org.aventyrs.core.scene.SceneContext,
      * org.aventyrs.core.skill.SkillRoll)}) — this core never rolls dice itself, so without an
      * already-rolled {@code SkillRoll} handed in, there's nothing to resolve a tier from.
      * Computed from {@code skillRollBonus + skillRoll.getTotal()} against {@link
@@ -142,7 +142,7 @@ public class InteractionResult {
      * Autocontrole on the roller's own Sucesso Crítico Maior. Unlike {@link
      * #temporaryBonusValue} (a grant for *someone else* this core can't resolve the recipient
      * for), this roll's own target is unambiguous, so the grant is already applied directly
-     * via {@link CharacterSheet#gainNonCumulativeTemporaryEgoPoints} (keyed by the granting
+     * via {@link CombatantSheet#gainNonCumulativeTemporaryEgoPoints} (keyed by the granting
      * ability as its source — see that method) by the time this result is returned; this field
      * is purely a report of what happened, same as {@link #egoLossValue}/{@link
      * #egoLossDomain} already are for {@code org.aventyrs.core.effect.Primor}. Always exactly
@@ -159,7 +159,7 @@ public class InteractionResult {
      * org.aventyrs.core.effect.DamageInteraction} that actually dealt damage handing off
      * to whatever {@code org.aventyrs.core.effect.EffectChain}/{@code
      * org.aventyrs.core.effect.CriticalEffect} the caller supplied. Typed as the shared
-     * {@link Interaction}&lt;{@link CharacterSheet}&gt; interface, not any one concrete
+     * {@link Interaction}&lt;{@link CombatantSheet}&gt; interface, not any one concrete
      * stage, so every stage is interchangeable in this slot; a caller drives the whole
      * pipeline generically via {@code while (result.getNextInteraction() != null) result
      * = target.receiveInteraction(result.getNextInteraction());} without ever knowing
@@ -171,5 +171,5 @@ public class InteractionResult {
      * future hand-off, e.g. a Ricochete-style ability's new target) — this field is
      * about which *behavior* runs next on the current flow, not who it runs against.
      */
-    Interaction<CharacterSheet> nextInteraction;
+    Interaction<CombatantSheet> nextInteraction;
 }

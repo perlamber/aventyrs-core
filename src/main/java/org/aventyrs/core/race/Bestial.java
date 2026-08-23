@@ -34,7 +34,7 @@ import java.util.List;
  *   retained for as long as desired — granting Vantagem on Atenção/Furtividade rolls in
  *   ambientes selvagens/não urbanos, and on Conhecimento na especialização Natureza) — spending
  *   PD itself is already supported ({@code
- *   org.aventyrs.core.sheet.CharacterSheet#spendDeterminationPoints}, same as {@code
+ *   org.aventyrs.core.sheet.CombatantSheet#spendDeterminationPoints}, same as {@code
  *   EmpatiaSelvagemCompetencyAbility#CHARME_FEERICO}), but everything else this needs is
  *   missing: a "retain an activated stance/transformation for as long as desired" toggle-state
  *   concept doesn't exist anywhere in this core; an urbano-vs-selvagem environment/terrain
