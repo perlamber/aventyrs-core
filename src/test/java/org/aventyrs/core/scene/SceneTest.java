@@ -642,4 +642,219 @@ class SceneTest {
 
         assertEquals(0, lateAlly.getTemporaryBonus(ModifierType.REACTIONS));
     }
+
+    @Test
+    void currentIndexAndCurrentCombatantStartUnsetAndFollowNext() {
+        Scene scene = new Scene();
+        CharacterSheet fast = newSheet();
+        CharacterSheet slow = newSheet();
+        scene.addParticipant(fast, 18);
+        scene.addParticipant(slow, 5);
+
+        assertEquals(-1, scene.getCurrentIndex());
+        assertNull(scene.getCurrentCombatant());
+
+        scene.next();
+        assertEquals(0, scene.getCurrentIndex());
+        assertEquals(fast, scene.getCurrentCombatant());
+
+        scene.next();
+        assertEquals(1, scene.getCurrentIndex());
+        assertEquals(slow, scene.getCurrentCombatant());
+    }
+
+    @Test
+    void getCurrentCombatantDoesNotAdvanceTheCursor() {
+        Scene scene = new Scene();
+        CharacterSheet only = newSheet();
+        scene.addParticipant(only, 10);
+        scene.next();
+
+        scene.getCurrentCombatant();
+        scene.getCurrentCombatant();
+
+        assertEquals(0, scene.getCurrentIndex());
+        assertEquals(0, scene.getCurrentRound());
+    }
+
+    @Test
+    void getPendingParticipantsHoldsWhoeverJoinedMidRoundUntilTheNextBoundary() {
+        Scene scene = new Scene();
+        CharacterSheet fast = newSheet();
+        CharacterSheet slow = newSheet();
+        scene.addParticipant(fast, 18);
+        scene.addParticipant(slow, 5);
+        scene.next();
+
+        CharacterSheet latecomer = newSheet();
+        scene.addParticipant(latecomer, 12);
+
+        assertEquals(List.of(latecomer), scene.getPendingParticipants());
+        assertFalse(scene.getParticipantsInInitiativeOrder().contains(latecomer));
+
+        scene.next();
+        scene.next();
+
+        assertEquals(List.of(), scene.getPendingParticipants());
+        assertEquals(List.of(fast, latecomer, slow), scene.getParticipantsInInitiativeOrder());
+    }
+
+    @Test
+    void restoreTurnCursorSetsRoundAndIndexWithoutRunningTurnBoundaryBehaviour() {
+        Scene scene = new Scene();
+        CharacterSheet fast = newSheet();
+        CharacterSheet slow = newSheet();
+        scene.addParticipant(fast, 18);
+        scene.addParticipant(slow, 5);
+        fast.grantTemporaryBonus(ModifierType.MOVEMENT, 2, 2);
+
+        scene.restoreTurnCursor(3, 1);
+
+        assertEquals(3, scene.getCurrentRound());
+        assertEquals(1, scene.getCurrentIndex());
+        assertEquals(slow, scene.getCurrentCombatant());
+        // Neither finishTurn() nor startTurn() ran, so the bonus is untouched by the restore.
+        assertEquals(2, fast.getTemporaryBonus(ModifierType.MOVEMENT));
+    }
+
+    @Test
+    void restoreTurnCursorRejectsAnIndexOutsideTheCurrentRotation() {
+        Scene scene = new Scene();
+        scene.addParticipant(newSheet(), 10);
+
+        assertThrows(IllegalOperationException.class, () -> scene.restoreTurnCursor(0, 1));
+        assertThrows(IllegalOperationException.class, () -> scene.restoreTurnCursor(0, -2));
+        assertThrows(IllegalOperationException.class, () -> scene.restoreTurnCursor(-1, 0));
+    }
+
+    @Test
+    void aParticipantAddedAfterRestoreTurnCursorWaitsForTheNextRoundBoundary() {
+        Scene scene = new Scene();
+        CharacterSheet fast = newSheet();
+        CharacterSheet slow = newSheet();
+        scene.addParticipant(fast, 18);
+        scene.addParticipant(slow, 5);
+        scene.restoreTurnCursor(2, 0);
+
+        CharacterSheet latecomer = newSheet();
+        scene.addParticipant(latecomer, 12);
+
+        assertEquals(List.of(latecomer), scene.getPendingParticipants());
+
+        assertEquals(slow, scene.next());
+        assertEquals(fast, scene.next());
+
+        assertEquals(3, scene.getCurrentRound());
+        assertEquals(List.of(fast, latecomer, slow), scene.getParticipantsInInitiativeOrder());
+    }
+
+    @Test
+    void removeParticipantReturnsFalseForSomeoneWhoWasNeverAdded() {
+        Scene scene = new Scene();
+        scene.addParticipant(newSheet(), 10);
+
+        assertFalse(scene.removeParticipant(newSheet()));
+    }
+
+    @Test
+    void removingSomeoneBeforeTheCursorKeepsTheSameCombatantActive() {
+        Scene scene = new Scene();
+        CharacterSheet fast = newSheet();
+        CharacterSheet medium = newSheet();
+        CharacterSheet slow = newSheet();
+        scene.addParticipant(fast, 18);
+        scene.addParticipant(medium, 11);
+        scene.addParticipant(slow, 5);
+        scene.next();
+        scene.next();
+
+        assertTrue(scene.removeParticipant(fast));
+
+        assertEquals(0, scene.getCurrentIndex());
+        assertEquals(medium, scene.getCurrentCombatant());
+        assertEquals(slow, scene.next());
+    }
+
+    @Test
+    void removingWhoeverIsActiveLeavesTheCursorOnWhoeverCameBeforeThem() {
+        Scene scene = new Scene();
+        CharacterSheet fast = newSheet();
+        CharacterSheet medium = newSheet();
+        CharacterSheet slow = newSheet();
+        scene.addParticipant(fast, 18);
+        scene.addParticipant(medium, 11);
+        scene.addParticipant(slow, 5);
+        scene.next();
+        scene.next();
+
+        assertTrue(scene.removeParticipant(medium));
+
+        assertEquals(0, scene.getCurrentIndex());
+        assertEquals(fast, scene.getCurrentCombatant());
+        assertEquals(slow, scene.next());
+    }
+
+    @Test
+    void removingSomeoneAfterTheCursorLeavesItWhereItWas() {
+        Scene scene = new Scene();
+        CharacterSheet fast = newSheet();
+        CharacterSheet medium = newSheet();
+        CharacterSheet slow = newSheet();
+        scene.addParticipant(fast, 18);
+        scene.addParticipant(medium, 11);
+        scene.addParticipant(slow, 5);
+        scene.next();
+
+        assertTrue(scene.removeParticipant(slow));
+
+        assertEquals(0, scene.getCurrentIndex());
+        assertEquals(fast, scene.getCurrentCombatant());
+        assertEquals(medium, scene.next());
+    }
+
+    @Test
+    void removingThePendingParticipantKeepsItOutOfTheNextRound() {
+        Scene scene = new Scene();
+        CharacterSheet only = newSheet();
+        scene.addParticipant(only, 10);
+        scene.next();
+        CharacterSheet latecomer = newSheet();
+        scene.addParticipant(latecomer, 12);
+
+        assertTrue(scene.removeParticipant(latecomer));
+
+        assertEquals(List.of(), scene.getPendingParticipants());
+        assertEquals(only, scene.next());
+        assertEquals(List.of(only), scene.getParticipantsInInitiativeOrder());
+    }
+
+    @Test
+    void removingTheLastParticipantResetsTheCursor() {
+        Scene scene = new Scene();
+        CharacterSheet only = newSheet();
+        scene.addParticipant(only, 10);
+        scene.next();
+
+        assertTrue(scene.removeParticipant(only));
+
+        assertEquals(-1, scene.getCurrentIndex());
+        assertNull(scene.getCurrentCombatant());
+        assertThrows(IllegalOperationException.class, scene::next);
+    }
+
+    @Test
+    void removeParticipantRevokesTheBlessingsThisSceneGrantedThem() {
+        Scene scene = new Scene();
+        UUID heroes = UUID.randomUUID();
+        CharacterSheet winner = sheetWithPosicionamentoEstrategico();
+        CharacterSheet ally = newSheet();
+        scene.addParticipant(winner, 18, heroes);
+        scene.addParticipant(ally, 12, heroes);
+        scene.applyInitiativeBlessings(winner, blessingsFor(winner));
+        assertEquals(2, ally.getTemporaryBonus(ModifierType.MOVEMENT));
+
+        assertTrue(scene.removeParticipant(ally));
+
+        assertEquals(0, ally.getTemporaryBonus(ModifierType.MOVEMENT));
+    }
 }

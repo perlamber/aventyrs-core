@@ -18,6 +18,7 @@ import java.util.stream.Stream;
 
 import static org.aventyrs.core.util.TranslatableMessages.CHARACTER_SHEET_NOT_IN_SCENE;
 import static org.aventyrs.core.util.TranslatableMessages.INITIATIVE_NOT_WON;
+import static org.aventyrs.core.util.TranslatableMessages.INVALID_TURN_CURSOR;
 import static org.aventyrs.core.util.TranslatableMessages.NO_PARTICIPANTS_IN_SCENE;
 
 /**
@@ -82,6 +83,17 @@ import static org.aventyrs.core.util.TranslatableMessages.NO_PARTICIPANTS_IN_SCE
  * currently winning immediately without reshuffling turns already in progress this Round.
  * {@link CombatantSheet#finishTurn()} — called by {@link #next()} on whoever's turn just ended
  * — is what advances a granted bonus toward expiry in the first place.
+ *
+ * <p>A Scene whose turn cursor lives somewhere else — persisted between sessions, or advanced by
+ * a server every client mirrors — is rebuilt here in two passes rather than by replaying {@link
+ * #next()} once per elapsed turn (which would re-fire every {@link CombatantSheet#startTurn(int)}
+ * and {@link CombatantSheet#finishTurn()} along the way, ticking effects that already ticked).
+ * First add everyone already in the rotation, while {@link #getCurrentIndex()} is still {@code -1}
+ * and {@link #addParticipant} therefore inserts straight into the live order; then {@link
+ * #restoreTurnCursor} to the round/index reached elsewhere; then add whoever joined mid-Round.
+ * That last group lands in the pending set on its own, because {@link #addParticipant}'s existing
+ * {@code currentIndex != -1} branch is now the one that applies — the split this class already
+ * maintains is reproduced by the same code that maintains it, not by a second copy of the rule.
  */
 public class Scene {
     private final List<InitiativeEntry> activeEntries = new ArrayList<>();
@@ -357,6 +369,128 @@ public class Scene {
         return activeEntries.stream()
                 .map(InitiativeEntry::getCombatantSheet)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * How far into {@link #getParticipantsInInitiativeOrder()} this Scene's turn cursor currently
+     * sits — {@code -1} before {@link #next()} has ever been called, i.e. before anyone has acted.
+     * Read-only counterpart to {@link #next()}, which is otherwise the only way to learn where the
+     * cursor is and can't be used for the purpose without also moving it.
+     */
+    public int getCurrentIndex() {
+        return currentIndex;
+    }
+
+    /**
+     * Whoever's Turn it currently is, or {@code null} before {@link #next()} has ever been called.
+     * Unlike {@link #next()} this never advances anything, never fires {@link
+     * CombatantSheet#startTurn(int)}/{@link CombatantSheet#finishTurn()}, and can be called as
+     * often as a caller likes — it's what something displaying the current Turn should read.
+     */
+    public CombatantSheet getCurrentCombatant() {
+        if (currentIndex < 0 || currentIndex >= activeEntries.size()) {
+            return null;
+        }
+        return activeEntries.get(currentIndex).getCombatantSheet();
+    }
+
+    /**
+     * The CombatantSheets added mid-Round that haven't joined the rotation yet — the ones {@link
+     * #getParticipantsInInitiativeOrder()} deliberately omits (see {@link #addParticipant}), in
+     * the order they were added. They join, at their sorted positions, at the next Round boundary
+     * {@link #next()} reaches. Empty whenever nothing is waiting.
+     */
+    public List<CombatantSheet> getPendingParticipants() {
+        return pendingEntries.stream()
+                .map(InitiativeEntry::getCombatantSheet)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Points this Scene's turn cursor at round/index without running any of the turn-boundary
+     * behavior {@link #next()} does — no {@link CombatantSheet#startTurn(int)}, no {@link
+     * CombatantSheet#finishTurn()}, no {@link #startNewRound()}. This is deliberate and is the
+     * whole point of the method: it exists for a Scene being rebuilt around a cursor that was
+     * already advanced somewhere else (loaded from persistence, or mirrored from whichever peer
+     * actually called {@link #next()}), where those callbacks have already had their effect on
+     * the participants involved and firing them again would tick every Round-scoped {@link
+     * TemporaryBonus} a second time. Replaying turn lifecycle is explicitly not this method's
+     * job — for actually taking a turn, call {@link #next()}.
+     *
+     * <p>index is bounds-checked against the participants added so far, so the two-pass rebuild
+     * described in this class's own javadoc has to add the rotation before restoring the cursor,
+     * not after.
+     * @throws IllegalOperationException if round is negative, or index is outside
+     *                                    {@code -1..getParticipantsInInitiativeOrder().size() - 1}
+     */
+    public void restoreTurnCursor(final int round, final int index) {
+        if (round < 0 || index < -1 || index >= activeEntries.size()) {
+            throw new IllegalOperationException(INVALID_TURN_CURSOR);
+        }
+        this.currentRound = round;
+        this.currentIndex = index;
+    }
+
+    /**
+     * Removes characterSheet from this Scene entirely — the counterpart to {@link #addParticipant},
+     * for a participant that dies or otherwise leaves partway through. Searches the rotation and
+     * the pending set alike, matching on {@link CombatantSheet#getId()} the same way {@link
+     * #getAllies}/{@link #groupOf} already do rather than on instance identity.
+     *
+     * <p>Removing from the rotation keeps the cursor pointing at the same CombatantSheet it
+     * pointed at before: an entry at or before {@link #getCurrentIndex()} shifts everything after
+     * it down one, so the cursor moves down with it. Removing whoever's Turn it currently *is*
+     * therefore leaves the cursor on the participant just before them, so the next {@link #next()}
+     * call lands on whoever would have followed — the departing participant's Turn simply ends
+     * where it stood, and nobody is skipped. Emptying the rotation resets the cursor to {@code -1}.
+     *
+     * <p>Any {@link Blessing} this Scene granted characterSheet is revoked as part of the removal
+     * (the same {@link CombatantSheet#removeEffect} call {@link #applyInitiativeBlessings} would
+     * have made later), so {@link #grantedBlessings} never keeps tracking a sheet that is no
+     * longer here — which would otherwise leave {@link #isGroupBlessed} answering for a group
+     * whose only tracked member has left.
+     * @return whether characterSheet was actually in this Scene
+     */
+    public boolean removeParticipant(final CombatantSheet characterSheet) {
+        int activeIndex = indexOf(activeEntries, characterSheet);
+        boolean removed = false;
+
+        if (activeIndex >= 0) {
+            activeEntries.remove(activeIndex);
+            if (activeEntries.isEmpty()) {
+                currentIndex = -1;
+            } else if (activeIndex <= currentIndex) {
+                currentIndex--;
+            }
+            removed = true;
+        } else {
+            int pendingIndex = indexOf(pendingEntries, characterSheet);
+            if (pendingIndex >= 0) {
+                pendingEntries.remove(pendingIndex);
+                removed = true;
+            }
+        }
+
+        if (removed) {
+            grantedBlessings.entrySet().removeIf(entry -> {
+                if (!entry.getKey().getId().equals(characterSheet.getId())) {
+                    return false;
+                }
+                entry.getValue().forEach(entry.getKey()::removeEffect);
+                return true;
+            });
+        }
+        return removed;
+    }
+
+    /** Position of characterSheet in entries by {@link CombatantSheet#getId()}, or {@code -1}. */
+    private int indexOf(final List<InitiativeEntry> entries, final CombatantSheet characterSheet) {
+        for (int i = 0; i < entries.size(); i++) {
+            if (entries.get(i).getCombatantSheet().getId().equals(characterSheet.getId())) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     /**
