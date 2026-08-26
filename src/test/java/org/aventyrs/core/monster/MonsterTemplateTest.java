@@ -4,6 +4,8 @@ import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.DefenseType;
 import org.aventyrs.core.character.SizeCategory;
+import org.aventyrs.core.action.ActionPointsService;
+import org.aventyrs.core.effect.CriticalEffectType;
 import org.aventyrs.core.character.services.CharacterAttributeService;
 import org.aventyrs.core.character.services.DefenseService;
 import org.aventyrs.core.character.services.DefenseServiceImpl;
@@ -12,14 +14,19 @@ import org.aventyrs.core.character.services.HitPointsServiceImpl;
 import org.aventyrs.core.item.ArmorItem;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.race.CreatureType;
+import org.aventyrs.core.sheet.Player;
 import org.aventyrs.core.skill.DifficultyLevel;
 import org.aventyrs.core.skill.SkillType;
+import org.aventyrs.core.skill.ataquecorpoacorpo.AtaqueCorpoACorpoSpecialization;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -43,7 +50,7 @@ class MonsterTemplateTest {
 
     @Test
     void spawnCarriesTheStatBlockOntoTheSheet() {
-        MonsterSheet troll = troll().build().spawn();
+        MonsterSheet troll = troll().build().spawn(new Player());
 
         assertEquals(19, troll.getPhysicalDefense());
         assertEquals(13, troll.getMagicDefense());
@@ -55,7 +62,7 @@ class MonsterTemplateTest {
 
     @Test
     void spawnBuildsACharacterWithTheMonsterRaceAndNoPlayer() {
-        Character troll = troll().build().spawn().getCharacter();
+        Character troll = troll().build().spawn(new Player()).getCharacter();
 
         assertEquals(CreatureType.MONSTRUOSO, troll.getRace().getCreatureType());
         assertNull(troll.getPlayer());
@@ -70,7 +77,7 @@ class MonsterTemplateTest {
      */
     @Test
     void aSpawnedMonstersAttributesAndGraduacoesAreUncapped() {
-        Character troll = troll().build().spawn().getCharacter();
+        Character troll = troll().build().spawn(new Player()).getCharacter();
 
         assertTrue(9 > CharacterAttributeService.MAX_ATTRIBUTE_BASE);
         assertEquals(9, troll.getAttributes().getAttribute(AttributeDomain.VIGOR).getBase());
@@ -81,8 +88,8 @@ class MonsterTemplateTest {
     @Test
     void twoSpawnsFromOneTemplateAreFullyIndependent() {
         MonsterTemplate template = troll().build();
-        MonsterSheet first = template.spawn();
-        MonsterSheet second = template.spawn();
+        MonsterSheet first = template.spawn(new Player());
+        MonsterSheet second = template.spawn(new Player());
 
         assertNotSame(first.getId(), second.getId());
 
@@ -105,8 +112,8 @@ class MonsterTemplateTest {
      */
     @Test
     void theLifeMultiplierDecouplesPvFromVigor() {
-        Character ordinary = troll().build().spawn().getCharacter();
-        Character tanky = troll().lifeMultiplier(8).build().spawn().getCharacter();
+        Character ordinary = troll().build().spawn(new Player()).getCharacter();
+        Character tanky = troll().lifeMultiplier(8).build().spawn(new Player()).getCharacter();
 
         assertEquals(HitPointsService.BASE_HIT_POINTS + 9 * HitPointsService.DEFAULT_LIFE_MULTIPLIER,
                 hitPointsService.getMaxHitPoints(ordinary));
@@ -122,7 +129,7 @@ class MonsterTemplateTest {
                 .attributeBase(AttributeDomain.STRENGTH, 8)
                 .equipmentItem(ArmorItem.ARMADURA_COMPLETA)
                 .build()
-                .spawn();
+                .spawn(new Player());
 
         // The armour's Favor needs Força 3; the troll has 8. Same DefenseService a player uses.
         assertEquals(ArmorItem.ARMADURA_COMPLETA.getPhysicalDefenseBonus(),
@@ -133,7 +140,7 @@ class MonsterTemplateTest {
 
     @Test
     void aGenericMonsterSpawnsReadyToUse() {
-        MonsterSheet aberracao = GenericMonster.ABERRACAO.spawn();
+        MonsterSheet aberracao = GenericMonster.ABERRACAO.spawn(new Player());
 
         assertEquals("Aberração", aberracao.getCharacter().getName());
         assertEquals(24, aberracao.getPhysicalDefense());
@@ -147,17 +154,69 @@ class MonsterTemplateTest {
     @Test
     void everyGenericMonsterSpawnsWithoutError() {
         for (GenericMonster monster : GenericMonster.values()) {
-            MonsterSheet sheet = monster.spawn();
+            MonsterSheet sheet = monster.spawn(new Player());
             assertEquals(monster.getName(), sheet.getCharacter().getName());
             assertTrue(sheet.getInventory().isEmpty());
         }
     }
 
     @Test
-    void anAttributeOmittedFromTheTemplateKeepsItsDefault() {
-        Character troll = troll().build().spawn().getCharacter();
+    void aTemplateWithoutTheOptionalHooksKeepsEveryDefault() {
+        MonsterSheet troll = troll().build().spawn(new Player());
 
-        assertEquals(Map.of(), Map.of());
+        // Every hook added for stat blocks that need it leaves every other foe exactly as it was.
+        assertEquals(ActionPointsService.DEFAULT_ACTION_POINTS, troll.getCharacter().getActionPoints());
+        assertEquals(List.of(), troll.getCharacter().getSkills()
+                .get(SkillType.ATAQUE_CORPO_A_CORPO).getSpecializations());
+        assertFalse(troll.isUndead());
+        assertEquals(Set.of(), troll.getCriticalEffectImmunities());
+    }
+
+    @Test
+    void aStatBlockCanAuthorItsOwnActionPoints() {
+        MonsterSheet troll = troll().actionPoints(2).build().spawn(new Player());
+
+        assertEquals(2, troll.getCharacter().getActionPoints());
+    }
+
+    @Test
+    void aStatBlockCanGiveAPericiaAnEspecializacao() {
+        MonsterSheet troll = troll()
+                .skillSpecialization(SkillType.ATAQUE_CORPO_A_CORPO,
+                        List.of(AtaqueCorpoACorpoSpecialization.INFANTARIA_PESADA))
+                .build().spawn(new Player());
+
+        assertEquals(List.of(AtaqueCorpoACorpoSpecialization.INFANTARIA_PESADA),
+                troll.getCharacter().getSkills().get(SkillType.ATAQUE_CORPO_A_CORPO).getSpecializations());
+        // The Graduação it was authored with is untouched by carrying one.
+        assertEquals(12, troll.getCharacter().getSkills()
+                .get(SkillType.ATAQUE_CORPO_A_CORPO).getGraduation().getGraduationValue());
+    }
+
+    @Test
+    void anEspecializacaoNamingAnUntrainedPericiaIsIgnored() {
+        MonsterSheet troll = troll()
+                .skillSpecialization(SkillType.ARTES, List.of(AtaqueCorpoACorpoSpecialization.PRIMAL))
+                .build().spawn(new Player());
+
+        assertNull(troll.getCharacter().getSkills().get(SkillType.ARTES));
+    }
+
+    @Test
+    void aStatBlockCanAuthorItsAnatomy() {
+        MonsterSheet troll = troll()
+                .undead(true)
+                .criticalEffectImmunity(CriticalEffectType.SANGRAMENTO)
+                .build().spawn(new Player());
+
+        assertTrue(troll.isUndead());
+        assertEquals(Set.of(CriticalEffectType.SANGRAMENTO), troll.getCriticalEffectImmunities());
+    }
+
+    @Test
+    void anAttributeOmittedFromTheTemplateKeepsItsDefault() {
+        Character troll = troll().build().spawn(new Player()).getCharacter();
+
         assertEquals(1, troll.getAttributes().getAttribute(AttributeDomain.CHARISMA).getBase());
     }
 }

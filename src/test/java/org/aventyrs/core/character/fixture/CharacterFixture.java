@@ -116,7 +116,9 @@ public class CharacterFixture extends SimpleFixture {
                 this.add("secondaryTitle", null);
                 this.add("tertiaryTitle", null);
                 this.add("centelhaSuperiorSelected", false);
-                this.add("actionProfile", ActionProfile.REFLEXOS_RAPIDOS);
+                // CONSCIENCIA_DEFENSIVA is the one profile that adjusts none of PA/Reações/Ações
+                // Livres, so a fixture-built Character carries no hidden Perfil de Ação bonus.
+                this.add("actionProfile", ActionProfile.CONSCIENCIA_DEFENSIVA);
                 this.add("actionPoints", ActionPointsService.DEFAULT_ACTION_POINTS);
                 this.add("temporaryActionPointsBonus", 0);
                 this.add("reactions", ReactionsService.DEFAULT_REACTIONS);
@@ -176,7 +178,9 @@ public class CharacterFixture extends SimpleFixture {
                 this.add("secondaryTitle", null);
                 this.add("tertiaryTitle", null);
                 this.add("centelhaSuperiorSelected", false);
-                this.add("actionProfile", ActionProfile.REFLEXOS_RAPIDOS);
+                // CONSCIENCIA_DEFENSIVA is the one profile that adjusts none of PA/Reações/Ações
+                // Livres, so a fixture-built Character carries no hidden Perfil de Ação bonus.
+                this.add("actionProfile", ActionProfile.CONSCIENCIA_DEFENSIVA);
                 this.add("actionPoints", ActionPointsService.DEFAULT_ACTION_POINTS);
                 this.add("temporaryActionPointsBonus", 0);
                 this.add("reactions", ReactionsService.DEFAULT_REACTIONS);

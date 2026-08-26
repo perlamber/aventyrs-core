@@ -5,6 +5,8 @@ import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.modifier.ModifierResolver;
 import org.aventyrs.core.modifier.ModifierResolverImpl;
 import org.aventyrs.core.modifier.ModifierType;
+import org.aventyrs.core.scene.SceneContext;
+import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.skill.SkillExcellency;
 import org.aventyrs.core.skill.SkillType;
 
@@ -25,6 +27,27 @@ public class FreeActionsServiceImpl implements FreeActionsService {
 
     @Override
     public int getTotalFreeActions(final Character character) {
+        return Math.max(0, permanentFreeActions(character));
+    }
+
+    @Override
+    public int getTotalFreeActions(final CombatantSheet sheet, final int turnNumber) {
+        return getTotalFreeActions(sheet, turnNumber, null);
+    }
+
+    @Override
+    public int getTotalFreeActions(final CombatantSheet sheet, final int turnNumber, final SceneContext sceneContext) {
+        Character character = sheet.getCharacter();
+        int baseline = permanentFreeActions(character) + sheet.getTemporaryBonus(ModifierType.FREE_ACTIONS);
+        return Math.max(0, character.getActionProfile().adjustFreeActions(baseline, turnNumber, sceneContext));
+    }
+
+    /**
+     * The fixed counter plus the three-source {@code FREE_ACTIONS} scan — unclamped, mirroring
+     * {@code ReactionsServiceImpl}'s own private helper, so the single clamp happens after the
+     * {@link org.aventyrs.core.action.ActionProfile} has had its say.
+     */
+    private int permanentFreeActions(final Character character) {
         int total = character.getFreeActions();
         total += modifierResolver.sumModifiers(character.getAttributeAbilities(), ModifierType.FREE_ACTIONS);
         total += modifierResolver.sumModifiers(character.getSkillCompetencyAbilities(), ModifierType.FREE_ACTIONS);
@@ -34,6 +57,6 @@ public class FreeActionsServiceImpl implements FreeActionsService {
                     entry.getKey().getExcellencyClass(), graduationValue);
             total += modifierResolver.sumModifiers(unlockedExcellencies, ModifierType.FREE_ACTIONS);
         }
-        return Math.max(0, total);
+        return total;
     }
 }

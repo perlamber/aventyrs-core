@@ -21,9 +21,17 @@ package org.aventyrs.core.modifier;
  * org.aventyrs.core.character.services.DefenseService}, so a source can name whichever it needs
  * and a character holding some of each still totals correctly — see {@code
  * org.aventyrs.core.character.DefenseType}.
+ *
+ * <p>{@code LIFE_MULTIPLIER} and {@code HIT_POINTS} are the two ways to grow a creature's PV,
+ * and they are not interchangeable: the first scales with Vigor (so it makes a tough creature
+ * tougher in proportion to what it already is), while the second is the flat "recebe Bônus
+ * Mágico de +NPV" shape, whose amount is stated outright and must not vary with the recipient's
+ * Vigor. Both are read by {@code
+ * org.aventyrs.core.character.services.HitPointsService#getMaxHitPoints}.
  */
 public enum ModifierType {
     LIFE_MULTIPLIER,
+    HIT_POINTS,
     SIZE_CATEGORY,
     MANA_MULTIPLIER,
     DETERMINATION_MULTIPLIER,

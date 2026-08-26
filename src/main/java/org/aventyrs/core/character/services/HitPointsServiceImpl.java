@@ -6,6 +6,7 @@ import org.aventyrs.core.modifier.ModifierResolver;
 import org.aventyrs.core.modifier.ModifierResolverImpl;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.sheet.CombatantSheet;
+import org.aventyrs.core.skill.SkillCompetencyAbility;
 
 public class HitPointsServiceImpl implements HitPointsService {
 
@@ -26,8 +27,17 @@ public class HitPointsServiceImpl implements HitPointsService {
     }
 
     @Override
+    public int getHitPointsBonus(final Character character) {
+        int bonus = modifierResolver.sumModifiers(character.getAttributeAbilities(), ModifierType.HIT_POINTS);
+        return bonus + modifierResolver.sumModifiers(
+                SkillCompetencyAbility.allFor(character), ModifierType.HIT_POINTS);
+    }
+
+    @Override
     public int getMaxHitPoints(final Character character) {
-        return BASE_HIT_POINTS + character.getAttributes().getVigor().getTotal() * getLifeMultiplier(character);
+        return BASE_HIT_POINTS
+                + character.getAttributes().getVigor().getTotal() * getLifeMultiplier(character)
+                + getHitPointsBonus(character);
     }
 
     @Override

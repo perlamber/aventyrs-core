@@ -5,6 +5,8 @@ import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.modifier.ModifierResolver;
 import org.aventyrs.core.modifier.ModifierResolverImpl;
 import org.aventyrs.core.modifier.ModifierType;
+import org.aventyrs.core.scene.SceneContext;
+import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.skill.SkillExcellency;
 import org.aventyrs.core.skill.SkillType;
 
@@ -25,6 +27,27 @@ public class ReactionsServiceImpl implements ReactionsService {
 
     @Override
     public int getTotalReactions(final Character character) {
+        return Math.max(0, permanentReactions(character));
+    }
+
+    @Override
+    public int getTotalReactions(final CombatantSheet sheet, final int turnNumber) {
+        return getTotalReactions(sheet, turnNumber, null);
+    }
+
+    @Override
+    public int getTotalReactions(final CombatantSheet sheet, final int turnNumber, final SceneContext sceneContext) {
+        Character character = sheet.getCharacter();
+        int baseline = permanentReactions(character) + sheet.getTemporaryBonus(ModifierType.REACTIONS);
+        return Math.max(0, character.getActionProfile().adjustReactions(baseline, turnNumber, sceneContext));
+    }
+
+    /**
+     * The fixed counter plus the three-source {@code REACTIONS} scan — unclamped, so the
+     * {@link org.aventyrs.core.action.ActionProfile} adjustment and any sheet-level
+     * {@code TemporaryBonus} still see a genuine deficit rather than a floored 0.
+     */
+    private int permanentReactions(final Character character) {
         int total = character.getReactions();
         total += modifierResolver.sumModifiers(character.getAttributeAbilities(), ModifierType.REACTIONS);
         total += modifierResolver.sumModifiers(character.getSkillCompetencyAbilities(), ModifierType.REACTIONS);
@@ -34,6 +57,6 @@ public class ReactionsServiceImpl implements ReactionsService {
                     entry.getKey().getExcellencyClass(), graduationValue);
             total += modifierResolver.sumModifiers(unlockedExcellencies, ModifierType.REACTIONS);
         }
-        return Math.max(0, total);
+        return total;
     }
 }

@@ -62,6 +62,11 @@ public class Primor extends AbstractEffect implements CriticalEffect {
     }
 
     @Override
+    public CriticalEffectType getType() {
+        return CriticalEffectType.PRIMOR;
+    }
+
+    @Override
     public String getDescription() {
         return criticalResult == CriticalResult.ACERTO_CRITICO_MAIOR
                 ? "Alvo perde 2 pontos temporários de Sorte ou Autocontrole (definido " +

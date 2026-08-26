@@ -1,7 +1,10 @@
 package org.aventyrs.core.effect;
 
+import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.skill.CriticalResult;
+
+import java.util.List;
 
 import static org.aventyrs.core.util.TranslatableMessages.CRITICAL_EFFECT_REQUIRES_A_CRITICAL_HIT;
 
@@ -17,6 +20,44 @@ import static org.aventyrs.core.util.TranslatableMessages.CRITICAL_EFFECT_REQUIR
  * See {@code org.aventyrs.core.effect} package-info for the pipeline this fits into.
  */
 public interface CriticalEffect extends Effect {
+
+    /**
+     * Which Efeito Crítico this is. Needed because a creature's immunities are authored as
+     * {@link CriticalEffectType}s rather than as classes — see that enum's own javadoc for why.
+     */
+    CriticalEffectType getType();
+
+    /**
+     * effects minus every one target is immune to — the single place an Efeito Crítico is
+     * filtered out before it can be applied.
+     *
+     * <h2>Why it lives here and not in either attack entry point</h2>
+     *
+     * {@code org.aventyrs.core.combat.AttackDelivery} and {@code
+     * org.aventyrs.core.combat.AttackReceiver} are mirrored halves of one exchange, and an
+     * immunity is a fact about the <i>victim</i>, identical whichever half is running. Putting
+     * the filter in one of them would leave the other direction wrong, and putting it in both
+     * would be the same rule written twice.
+     *
+     * <p>That symmetry is not hypothetical. A summoned creature (see {@code
+     * org.aventyrs.core.monster.SummonedMonsterTemplate}) attacks on its summoner's roll, so a
+     * player can end up driving <i>either</i> direction of an exchange against a foe whose
+     * anatomy resists part of what lands. Both entry points route their {@code criticalEffects}
+     * through here.
+     *
+     * <p>Filtering, not throwing: a caller assembling an attack has no obligation to know what
+     * its target resists, and an attack that crits against a Zumbi is still a critical hit —
+     * it simply produces a shorter chain. Order is preserved, and an empty result is normal.
+     */
+    static List<CriticalEffect> applicableTo(final CombatantSheet target,
+                                             final List<CriticalEffect> effects) {
+        if (target == null || effects == null || effects.isEmpty()) {
+            return effects == null ? List.of() : effects;
+        }
+        return effects.stream()
+                .filter(effect -> !target.getCriticalEffectImmunities().contains(effect.getType()))
+                .toList();
+    }
 
     /**
      * Every concrete CriticalEffect built so far (e.g. {@code Sangramento}, {@code

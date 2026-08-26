@@ -28,14 +28,22 @@ import org.aventyrs.core.modifier.ModifierType;
  * </ul>
  *
  * A {@code Blessing} isn't necessarily consumed by anything yet — e.g. one typed {@code
- * ModifierType#ACTION_POINTS} is still grantable-but-inert, since {@code ActionPointsServiceImpl}
- * reads only {@code Character#getTemporaryActionPointsBonus()}. It's real, grantable data all
+ * ModifierType#ABSOLUTE_DAMAGE_REDUCTION} is still grantable-but-inert, since {@code
+ * DamageServiceImpl#getTotalAbsoluteDamageReduction} only ever sums continuously-scanned passive
+ * hooks and never reads {@code CombatantSheet#getTemporaryBonus}. It's real, grantable data all
  * the same (see CLAUDE.md's "can't apply it yet doesn't mean can't compute it yet" discipline),
- * and that pays off: a {@code ModifierType#DEFESAS}-typed Blessing — e.g. the one {@code
- * org.aventyrs.core.title.santo.GritoDeGuerraVulcanoInteraction} grants — was inert for several
- * revisions and is now summed for real by {@code
- * org.aventyrs.core.character.services.DefenseService}, with no change needed at the granting
- * site.
+ * and that keeps paying off. Two of these have since gone live with no change at any granting
+ * site: a {@code ModifierType#DEFESAS}-typed Blessing — e.g. the one {@code
+ * org.aventyrs.core.title.santo.GritoDeGuerraVulcanoInteraction} grants — is now summed for real
+ * by {@code org.aventyrs.core.character.services.DefenseService}, and a {@code
+ * ModifierType#ACTION_POINTS}/{@code #REACTIONS}/{@code #FREE_ACTIONS}-typed one is now read by
+ * the {@code CombatantSheet}-taking overloads of {@code
+ * org.aventyrs.core.action.ActionPointsService#getMaxActionPoints}/{@code
+ * org.aventyrs.core.character.services.ReactionsService#getTotalReactions}/{@code
+ * org.aventyrs.core.character.services.FreeActionsService#getTotalFreeActions}. Note the
+ * qualifier on that last one: the {@code Character}-only overloads structurally cannot see a
+ * sheet's {@code TemporaryBonus}, so a caller holding only a {@code Character} still reads the
+ * unblessed total.
  *
  * <p>{@code source} identifies which trait granted this — e.g. {@code "DOM_BARDICO"}/
  * {@code "GRITO_DE_GUERRA_VULCANO"} — so a caller aggregating several {@code Blessing}s from

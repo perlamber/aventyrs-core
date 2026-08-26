@@ -16,10 +16,12 @@ public interface ActiveAbilityService {
      * <p>Validates, in order: that character actually holds ability (present in
      * {@link Character#getActiveAbilities()}, by reference — the same instance granted at
      * acquisition, not just an equal one); that character can afford its
-     * {@link ActiveAbility#getActionPointCost()} on turnNumber (via {@link
-     * org.aventyrs.core.action.ActionPointsService#getMaxActionPoints} — the same Turn-max
-     * comparison {@link org.aventyrs.core.action.ActionPointsService#canAffordSkillRoll}
-     * already uses for a Perícia roll's own PA cost;
+     * {@link ActiveAbility#getActionPointCost()} on turnNumber (via {@code
+     * ActionPointsService#getMaxActionPoints(CombatantSheet, int)} — the {@code CombatantSheet}
+     * overload, so a granted {@code ModifierType.ACTION_POINTS} {@code TemporaryBonus} counts,
+     * mirroring the Turn-max comparison {@link
+     * org.aventyrs.core.action.ActionPointsService#canAffordSkillRoll} already uses for a
+     * Perícia roll's own PA cost;
      * this core still has no persisted "PA already spent this Turn" pool, so this checks the
      * Turn's max, not a running spent total); and that characterSheet currently has enough
      * Magic Points (via {@link MagicPointsService#getCurrentMagicPoints}) to afford its

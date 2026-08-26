@@ -43,11 +43,24 @@
  *         .attackDifficulty(DifficultyLevel.HARD).attackBonus(3)
  *         .lifeMultiplier(7)                            // bulk without inflating Vigor
  *         .build()
- *         .spawn();
+ *         .spawn(gm);
  *
  * // Or grab a generic one on-scene.
- * MonsterSheet thug = GenericMonster.CAPANGA.spawn();
+ * MonsterSheet thug = GenericMonster.CAPANGA.spawn(gm);
  * }</pre>
+ *
+ * <p>A creature whose numbers depend on <b>who summoned it</b> takes a third path:
+ *
+ * <pre>{@code
+ * // An invocação — half its stat block reads "se você possuir N Graduações em Domínio do Mana".
+ * MonsterSheet raised = Zumbi.builder().build().spawn(necromancer, gm);   // a real Conjurador
+ * MonsterSheet fromGm = Zumbi.builder().build().spawn(7, gm);             // a number off a form
+ * MonsterSheet loose  = Zumbi.builder().build().spawn(gm);              // nobody summoned it
+ * }</pre>
+ *
+ * <p>See {@link org.aventyrs.core.monster.SummonedMonsterTemplate} for why the parameter is a
+ * plain {@code int} rather than a summoner entity, and {@link org.aventyrs.core.monster.summon}
+ * for the catalog.
  *
  * <p>{@code spawn()} produces a fully independent foe every call — its own identity, its own
  * resource pools, its own {@code SkillGraduation} instances (which are mutable, so sharing them
@@ -64,6 +77,24 @@
  * <p>They're <b>authored on the stat block, not derived</b> from the foe's Perícias. That keeps a
  * stat block readable and tunable by hand; the cost is that nothing checks the numbers against
  * the Attributes behind them, deliberately.
+ *
+ * <h2>Beyond the four numbers: what else a stat block may author</h2>
+ *
+ * Four further hooks on {@link org.aventyrs.core.monster.MonsterTemplate}, all defaulted, so a
+ * foe that says nothing about them behaves exactly as before:
+ *
+ * <ul>
+ *   <li>{@code getActionPoints()} — "Possuem 2 Pontos de Ação (PA)". Authored for the same reason
+ *   the Defesas are; {@code ActionPointsService} still layers its modifier scan and the {@code
+ *   ActionProfile} adjustment on top.</li>
+ *   <li>{@code getSkillSpecializations()} — the bracketed tag beside a Perícia, e.g. {@code
+ *   Ataque Corpo-a-Corpo [Primal]}.</li>
+ *   <li>{@code isUndead()} — deliberately narrow, and the only vitality classification this core
+ *   has. See its own javadoc for what it does and does not claim.</li>
+ *   <li>{@code getCriticalEffectImmunities()} — an Anatomia clause naming Efeitos Críticos the
+ *   creature shrugs off, enforced by {@code CriticalEffect#applicableTo} in <i>both</i>
+ *   directions of an exchange.</li>
+ * </ul>
  *
  * <h2>Race</h2>
  *

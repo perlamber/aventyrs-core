@@ -53,6 +53,11 @@ public class Sangramento extends AbstractEffect implements CriticalEffect {
     }
 
     @Override
+    public CriticalEffectType getType() {
+        return CriticalEffectType.SANGRAMENTO;
+    }
+
+    @Override
     public String getDescription() {
         return criticalResult == CriticalResult.ACERTO_CRITICO_MAIOR
                 ? "O alvo perde 2PV, e 1PV adicional por Rodada (até o fim da cena ou 1 " +

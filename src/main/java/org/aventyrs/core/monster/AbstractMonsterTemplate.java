@@ -7,16 +7,20 @@ import lombok.Singular;
 import org.aventyrs.core.ability.AttributeAbility;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.SizeCategory;
+import org.aventyrs.core.effect.CriticalEffectType;
 import org.aventyrs.core.character.services.DeterminationPointsService;
 import org.aventyrs.core.character.services.HitPointsService;
 import org.aventyrs.core.character.services.MagicPointsService;
 import org.aventyrs.core.item.Item;
 import org.aventyrs.core.skill.DifficultyLevel;
+import org.aventyrs.core.action.ActionPointsService;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
+import org.aventyrs.core.skill.SkillSpecialization;
 import org.aventyrs.core.skill.SkillType;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * <b>Fill in the form.</b> The {@link MonsterTemplate} for a unique foe — a named boss, a
@@ -36,7 +40,7 @@ import java.util.Map;
  *         .attackBonus(3)
  *         .lifeMultiplier(7)
  *         .build()
- *         .spawn();
+ *         .spawn(gm);
  * }</pre>
  *
  * <p>Note the Vigor of 9 and the Graduação of 12: both are past what a player character could
@@ -68,6 +72,20 @@ public class AbstractMonsterTemplate implements MonsterTemplate {
 
     @Singular("equipmentItem")
     private final List<Item> equipment;
+
+    /** Especializações per Perícia — builder call {@code .skillSpecialization(TYPE, List.of(…))}. */
+    @Singular("skillSpecialization")
+    private final Map<SkillType, List<SkillSpecialization>> skillSpecializations;
+
+    @Builder.Default
+    private final int actionPoints = ActionPointsService.DEFAULT_ACTION_POINTS;
+
+    @Builder.Default
+    private final boolean undead = false;
+
+    /** Builder call {@code .criticalEffectImmunity(CriticalEffectType.SANGRAMENTO)}. */
+    @Singular("criticalEffectImmunity")
+    private final Set<CriticalEffectType> criticalEffectImmunities;
 
     @Builder.Default
     private final SizeCategory sizeCategory = SizeCategory.ZERO;

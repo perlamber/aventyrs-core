@@ -36,7 +36,15 @@
  *       org.aventyrs.core.character.Character#getEgoAdvantage}. This eligibility can never be
  *       reached later — see that method's javadoc.</li>
  *   <li><b>Pick a {@link org.aventyrs.core.action.ActionProfile}</b> — one of the six, chosen
- *       once and permanent.</li>
+ *       once and permanent. It's a real mechanical choice, not flavour: the profile is the
+ *       last stage of every per-Round PA/Reação/Ação Livre total, applied on top of every
+ *       ability, excellency and granted bonus. Read those totals through the {@code
+ *       CombatantSheet}-taking overloads of {@code
+ *       org.aventyrs.core.action.ActionPointsService#getMaxActionPoints}, {@link
+ *       org.aventyrs.core.character.services.ReactionsService#getTotalReactions} and {@link
+ *       org.aventyrs.core.character.services.FreeActionsService#getTotalFreeActions} — the
+ *       {@code Character}-taking ones report the permanent total, with no profile and no
+ *       Round-scoped bonus applied.</li>
  *   <li><b>Assemble the {@code Character}</b> via {@link org.aventyrs.core.character.Character#builder()},
  *       passing the results of steps 1-5. Everything else (starting {@code skills},
  *       {@code attributeAbilities}, {@code activeAbilities}, {@code skillCompetencyAbilities},
@@ -82,14 +90,16 @@
  * <h2>Creating a foe instead</h2>
  *
  * None of the above applies to a monster. It has no player, allocates no points, picks no
- * Vantagens de Ego and no {@code ActionProfile} — its stats are authored whole, on a stat block,
+ * Vantagens de Ego and no {@code ActionProfile} of its own (it carries {@code
+ * MonsterTemplate.DEFAULT_ACTION_PROFILE}, the one profile that adjusts none of the three
+ * counters, unless its stat block says otherwise) — its stats are authored whole, on a stat block,
  * and its Attributes and Perícias are subject to none of the ceilings step 2 enforces. Build one
  * through {@code org.aventyrs.core.monster.MonsterTemplate} instead:
  *
  * <pre>{@code
- * MonsterSheet thug = GenericMonster.CAPANGA.spawn();          // a generic foe, on-scene
+ * MonsterSheet thug = GenericMonster.CAPANGA.spawn(gm);          // a generic foe, on-scene
  * MonsterSheet boss = AbstractMonsterTemplate.builder()...     // a designed one
- *         .build().spawn();
+ *         .build().spawn(gm);
  * }</pre>
  *
  * <p>A monster also cannot be advanced afterwards: {@link

@@ -19,7 +19,7 @@ import java.util.Map;
  * AbstractMonsterTemplate}'s fill-in-the-form path.
  *
  * <pre>{@code
- * MonsterSheet thug = GenericMonster.CAPANGA.spawn();
+ * MonsterSheet thug = GenericMonster.CAPANGA.spawn(gm);
  * scene.addParticipant(thug, 11, enemyGroup);
  * }</pre>
  *

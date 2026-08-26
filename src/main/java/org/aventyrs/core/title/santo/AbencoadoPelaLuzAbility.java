@@ -107,13 +107,13 @@ public enum AbencoadoPelaLuzAbility implements AventyrTitleAbility {
     // ability scan and AventyrTitleAbility#resolveAbsoluteDamageReduction, both continuously-
     // scanned passive-style hooks with no "grant a one-time bonus lasting N Rodadas after this
     // activation" shape at all — a genuinely different gap from GRITO's, not the same one. The
-    // +1PA half has its own, unrelated problem: ActionPointsServiceImpl#getMaxActionPoints
-    // never reads CombatantSheet#getTemporaryBonus(ModifierType.ACTION_POINTS) at all — only
-    // Character#getTemporaryActionPointsBonus(), a plain non-Round-scoped int field mutated
-    // directly, not a TemporaryEffect that ticks down — so even a single-target
-    // grantTemporaryBonus(ACTION_POINTS, ...) call would be silently inert today; PA's
-    // "temporary bonus" pathway and this core's general TemporaryBonus/ModifierType
-    // machinery haven't been connected.
+    // +1PA half is no longer blocked: ActionPointsServiceImpl#getMaxActionPoints's
+    // CombatantSheet-taking overloads now read CombatantSheet#getTemporaryBonus(
+    // ModifierType.ACTION_POINTS) alongside Character#getTemporaryActionPointsBonus(), so a
+    // grantTemporaryBonus(ACTION_POINTS, 1, 1) call would land for real — this constant is now
+    // waiting only on its RA half and on being wired into an Interaction that reports both
+    // Blessings, not on a missing mechanism. (A caller reading PA through the Character-only
+    // overload still won't see it; that overload has no sheet to ask.)
     GLORIA_RELAMPEJANTE_DE_TESLA(
             "Você e seus aliados em Distância Curta recebem Bônus de +1PA e RA por 1 Rodada.",
             true, 2, 0, false, Optional.empty(), Optional.of(SantoSpecialization.ABENCOADO_PELA_LUZ), 2) {

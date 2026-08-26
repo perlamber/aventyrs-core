@@ -30,7 +30,10 @@ public class ActiveAbilityServiceImpl implements ActiveAbilityService {
         if (character.getActiveAbilities().stream().noneMatch(held -> held == ability)) {
             throw new IllegalOperationException(ACTIVE_ABILITY_NOT_HELD);
         }
-        if (actionPointsService.getMaxActionPoints(character, turnNumber) < ability.getActionPointCost()) {
+        // The sheet overload, not the Character one: activating an ability is combat-facing, and
+        // the sheet is what carries a granted ACTION_POINTS TemporaryBonus. No SceneContext is
+        // threaded through this call yet, so ESTRATEGISTA's combat malus reads as out-of-combat.
+        if (actionPointsService.getMaxActionPoints(characterSheet, turnNumber) < ability.getActionPointCost()) {
             throw new IllegalOperationException(NOT_ENOUGH_ACTION_POINTS);
         }
         if (magicPointsService.getCurrentMagicPoints(character, characterSheet) < ability.getMagicPointCost()) {

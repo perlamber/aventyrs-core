@@ -15,8 +15,27 @@ public interface HitPointsService {
     int getLifeMultiplier(Character character);
 
     /**
+     * Every flat {@link org.aventyrs.core.modifier.ModifierType#HIT_POINTS} bonus the character
+     * holds — the "recebe Bônus Mágico de +NPV" shape, whose amount its rules text states
+     * outright rather than deriving from Vigor.
+     *
+     * <p>Scanned over both {@code getAttributeAbilities()} and {@link
+     * org.aventyrs.core.skill.SkillCompetencyAbility#allFor} (so a racial or monster-authored
+     * trait counts), which is deliberately <b>wider</b> than {@link #getLifeMultiplier}'s
+     * Attribute-ability-only scan: that narrower scan is what its one existing consumer needs
+     * and widening it would change a computed total nothing asked to change. Neither scans
+     * {@code SkillExcellency} tiers — no Excelência grants either.
+     *
+     * <p>Not to be confused with the Life Multiplier. A multiplier scales with Vigor, so it
+     * makes an already-tough creature proportionally tougher; this is flat, and must stay flat —
+     * expressing a stated "+10PV" as a multiplier uplift only lands on the right number at one
+     * specific Vigor.
+     */
+    int getHitPointsBonus(Character character);
+
+    /**
      * Total (maximum) Hit Points: {@value #BASE_HIT_POINTS} plus Vigor's total value times the
-     * Life Multiplier.
+     * Life Multiplier, plus {@link #getHitPointsBonus}.
      */
     int getMaxHitPoints(Character character);
 

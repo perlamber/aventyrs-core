@@ -153,6 +153,10 @@ public class AttackDelivery {
      * pipeline: Damage, then every triggered {@link EffectChain}, then every triggered {@link
      * CriticalEffect}. {@code DamageInteraction} still only forwards to its successor when the
      * hit actually dealt damage, so a blow fully absorbed by RD/RA ends the chain there.
+     *
+     * <p>The Efeitos Críticos are filtered through {@link CriticalEffect#applicableTo} first, so
+     * one the defender's anatomy is immune to never reaches the chain — see that method for why
+     * the filter is shared between both directions rather than written here twice.
      */
     private Interaction<CombatantSheet> buildChain(final DeliveredAttack attack,
                                                     final boolean criticalEffectTriggered,
@@ -162,7 +166,7 @@ public class AttackDelivery {
             stages.addAll(attack.getEffectChains());
         }
         if (criticalEffectTriggered) {
-            stages.addAll(attack.getCriticalEffects());
+            stages.addAll(CriticalEffect.applicableTo(attack.getDefender(), attack.getCriticalEffects()));
         }
 
         Interaction<CombatantSheet> next = null;

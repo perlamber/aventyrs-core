@@ -82,7 +82,7 @@ class AttackRoundTest {
     @Test
     void theFoeAttacksThePlayerAndThePlayerAttacksBack() {
         CharacterSheet hero = hero();
-        MonsterSheet brute = GenericMonster.BRUTAMONTES.spawn();
+        MonsterSheet brute = GenericMonster.BRUTAMONTES.spawn(new Player());
         Scene scene = new Scene();
         UUID party = UUID.randomUUID();
         UUID foes = UUID.randomUUID();
@@ -142,8 +142,8 @@ class AttackRoundTest {
         CharacterSheet dwarfSheet = CharacterSheet.of(dwarf, new Player());
 
         // PLUS_THREE vs MINUS_ONE is four categories apart — well past the 2 the ability needs.
-        MonsterSheet giant = GenericMonster.ABERRACAO.spawn();
-        MonsterSheet peer = GenericMonster.CAPANGA.spawn();
+        MonsterSheet giant = GenericMonster.ABERRACAO.spawn(new Player());
+        MonsterSheet peer = GenericMonster.CAPANGA.spawn(new Player());
 
         int againstGiant = attackDelivery.resolve(DeliveredAttack.from(giant, DefenseType.PHYSICAL)
                 .attacker(dwarfSheet).attackSkill(SkillType.ATAQUE_CORPO_A_CORPO).build()).getAttackTotal();

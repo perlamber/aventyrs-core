@@ -65,7 +65,7 @@ class AttackDeliveryTest {
 
     @Test
     void anAttackTotalEqualToTheDefesaCountsAsAHit() {
-        MonsterSheet capanga = GenericMonster.CAPANGA.spawn();  // DF 13
+        MonsterSheet capanga = GenericMonster.CAPANGA.spawn(new Player());  // DF 13
         CharacterSheet hero = attacker(4, 3);                   // 4 + 3 = 7 bonus
 
         DeliveredAttackResult result = attackDelivery.resolve(attackOn(capanga, hero)
@@ -80,7 +80,7 @@ class AttackDeliveryTest {
 
     @Test
     void oneShortOfTheDefesaIsAMiss() {
-        MonsterSheet capanga = GenericMonster.CAPANGA.spawn();
+        MonsterSheet capanga = GenericMonster.CAPANGA.spawn(new Player());
         CharacterSheet hero = attacker(4, 3);
 
         DeliveredAttackResult result = attackDelivery.resolve(attackOn(capanga, hero)
@@ -94,7 +94,7 @@ class AttackDeliveryTest {
 
     @Test
     void dfAndDmAreDifferentTargetNumbers() {
-        MonsterSheet conjurador = GenericMonster.CONJURADOR.spawn();  // DF 13, DM 19
+        MonsterSheet conjurador = GenericMonster.CONJURADOR.spawn(new Player());  // DF 13, DM 19
         CharacterSheet hero = attacker(4, 3);
         SkillRoll roll = new SkillRoll(List.of(3, 3, 3));
 
@@ -113,7 +113,7 @@ class AttackDeliveryTest {
 
     @Test
     void aLandedAttackChainsADamageInteractionEvenWithNoEffects() {
-        MonsterSheet capanga = GenericMonster.CAPANGA.spawn();
+        MonsterSheet capanga = GenericMonster.CAPANGA.spawn(new Player());
 
         DeliveredAttackResult result = attackDelivery.resolve(attackOn(capanga, attacker(6, 6))
                 .attackRoll(new SkillRoll(List.of(2, 2, 2)))
@@ -129,7 +129,7 @@ class AttackDeliveryTest {
      */
     @Test
     void anAcertoCriticoFiresTheAttacksCriticalEffects() {
-        MonsterSheet capanga = GenericMonster.CAPANGA.spawn();
+        MonsterSheet capanga = GenericMonster.CAPANGA.spawn(new Player());
         Sangramento bleed = new Sangramento(CriticalResult.ACERTO_CRITICO_MAIOR);
 
         DeliveredAttackResult result = attackDelivery.resolve(attackOn(capanga, attacker(4, 3))
@@ -147,7 +147,7 @@ class AttackDeliveryTest {
 
     @Test
     void anAttackClearingTheMarginFiresItsEffectChains() {
-        MonsterSheet capanga = GenericMonster.CAPANGA.spawn();  // DF 13
+        MonsterSheet capanga = GenericMonster.CAPANGA.spawn(new Player());  // DF 13
         Definhar definhar = new Definhar();
 
         // 6 Força + 6 Graduação = 12 bonus, +6 dice = 18, a margin of 5 over DF 13.
@@ -167,11 +167,11 @@ class AttackDeliveryTest {
 
     @Test
     void resolutoOnTheDefenderRaisesTheMarginAnEffectChainMustClear() {
-        MonsterSheet plain = GenericMonster.CAPANGA.spawn();
+        MonsterSheet plain = GenericMonster.CAPANGA.spawn(new Player());
         Character resoluteMonster = plain.getCharacter().toBuilder()
                 .egoAdvantage(EgoDomain.AUTOCONTROLE, AutocontroleAdvantage.RESOLUTO)
                 .build();
-        MonsterSheet resolute = MonsterSheet.of(resoluteMonster, plain.getPhysicalDefense(),
+        MonsterSheet resolute = MonsterSheet.of(resoluteMonster, plain.getPlayer(), plain.getPhysicalDefense(),
                 plain.getMagicDefense(), plain.getAttackDifficulty(), plain.getAttackBonus());
         SkillRoll roll = new SkillRoll(List.of(2, 2, 2));
 
@@ -183,7 +183,7 @@ class AttackDeliveryTest {
 
     @Test
     void withNoAttackRollTheOutcomeIsUndeterminedButTheThresholdIsStillReported() {
-        MonsterSheet capanga = GenericMonster.CAPANGA.spawn();
+        MonsterSheet capanga = GenericMonster.CAPANGA.spawn(new Player());
 
         DeliveredAttackResult result = attackDelivery.resolve(attackOn(capanga, attacker(4, 3)).build());
 
@@ -200,7 +200,7 @@ class AttackDeliveryTest {
     /** Report-only: resolve assembles the chain but applies none of it. */
     @Test
     void resolveNeverAppliesAnythingToTheDefender() {
-        MonsterSheet capanga = GenericMonster.CAPANGA.spawn();
+        MonsterSheet capanga = GenericMonster.CAPANGA.spawn(new Player());
 
         DeliveredAttackResult result = attackDelivery.resolve(attackOn(capanga, attacker(6, 6))
                 .attackRoll(new SkillRoll(List.of(6, 6, 6)))
@@ -218,7 +218,7 @@ class AttackDeliveryTest {
      */
     @Test
     void theAttackersDifficultyReductionIsReportedButNotApplied() {
-        MonsterSheet capanga = GenericMonster.CAPANGA.spawn();
+        MonsterSheet capanga = GenericMonster.CAPANGA.spawn(new Player());
         // Graduação 7 unlocks Ataque Corpo a Corpo's PRODIGIO (-1 nível).
         CharacterSheet hero = attacker(1, 7);
 
@@ -232,7 +232,7 @@ class AttackDeliveryTest {
 
     @Test
     void aNonAttackSkillIsRejected() {
-        MonsterSheet capanga = GenericMonster.CAPANGA.spawn();
+        MonsterSheet capanga = GenericMonster.CAPANGA.spawn(new Player());
 
         assertThrows(IllegalOperationException.class, () -> attackDelivery.resolve(
                 DeliveredAttack.from(capanga, DefenseType.PHYSICAL)

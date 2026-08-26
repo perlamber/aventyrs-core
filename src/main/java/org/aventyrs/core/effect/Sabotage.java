@@ -45,6 +45,11 @@ public class Sabotage extends AbstractEffect implements CriticalEffect {
     }
 
     @Override
+    public CriticalEffectType getType() {
+        return CriticalEffectType.SABOTAGEM;
+    }
+
+    @Override
     public String getDescription() {
         return criticalResult == CriticalResult.ACERTO_CRITICO_MAIOR
                 ? "Itens tecnológicos afetados são destruídos"

@@ -8,20 +8,27 @@ import org.aventyrs.core.character.CharacterAttributes;
 import org.aventyrs.core.character.CharacterEgos;
 import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.character.SizeCategory;
+import org.aventyrs.core.action.ActionPointsService;
 import org.aventyrs.core.character.services.DeterminationPointsService;
 import org.aventyrs.core.character.services.HitPointsService;
 import org.aventyrs.core.character.services.MagicPointsService;
+import org.aventyrs.core.effect.CriticalEffectType;
 import org.aventyrs.core.item.Item;
 import org.aventyrs.core.race.Monstruoso;
+import org.aventyrs.core.sheet.Player;
 import org.aventyrs.core.skill.DifficultyLevel;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
 import org.aventyrs.core.skill.SkillGraduation;
+import org.aventyrs.core.skill.SkillSpecialization;
 import org.aventyrs.core.skill.SkillType;
+
+import lombok.NonNull;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * A foe's stat block, and the thing that turns it into a playable {@link MonsterSheet}.
@@ -58,8 +65,15 @@ public interface MonsterTemplate {
     /** The single shared {@code Race} every foe carries — see {@link Monstruoso}. */
     Monstruoso MONSTER_RACE = new Monstruoso();
 
-    /** The {@code ActionProfile} a foe uses unless its stat block says otherwise. */
-    ActionProfile DEFAULT_ACTION_PROFILE = ActionProfile.REFLEXOS_RAPIDOS;
+    /**
+     * The {@code ActionProfile} a foe uses unless its stat block says otherwise — deliberately
+     * the one profile with no numeric effect on any of PA/Reações/Ações Livres, so a foe whose
+     * stat block is silent about its Perfil de Ação gets exactly the counters it authored.
+     * Consciência Defensiva's own clause is about which movements provoke Reações, not how many
+     * a creature has, and this core has no movement-triggers-Reação mechanism at all (see
+     * {@link ActionProfile#CONSCIENCIA_DEFENSIVA}) — so it costs a foe nothing either.
+     */
+    ActionProfile DEFAULT_ACTION_PROFILE = ActionProfile.CONSCIENCIA_DEFENSIVA;
 
     String getName();
 
@@ -90,6 +104,59 @@ public interface MonsterTemplate {
     /** A flat modifier on top of {@link #getAttackDifficulty()}'s threshold. */
     int getAttackBonus();
 
+    /**
+     * Its Pontos de Ação. Authored like the four combat numbers and for the same reason — a stat
+     * block states "Possuem 2 Pontos de Ação" outright rather than deriving it. Defaults to
+     * {@link ActionPointsService#DEFAULT_ACTION_POINTS}, the same 3 every character starts with,
+     * so no existing template changes.
+     *
+     * <p>This is the fixed counter only; {@code ActionPointsService#getMaxActionPoints} still
+     * layers the {@code ACTION_POINTS} modifier scan and the {@code ActionProfile} adjustment on
+     * top, identically to a player's.
+     */
+    default int getActionPoints() {
+        return ActionPointsService.DEFAULT_ACTION_POINTS;
+    }
+
+    /**
+     * Especializações held per Perícia — the bracketed tag a stat block writes beside a Perícia,
+     * e.g. {@code Ataque Corpo-a-Corpo [Primal]}. A Perícia absent from this map simply has none.
+     *
+     * <p>Keyed separately from {@link #getSkillGraduations()} rather than folded into it because
+     * the overwhelming majority of foes have Graduações and no Especializações, and a single map
+     * of pairs would force every one of them to spell out an empty list. An entry here for a
+     * Perícia with no Graduação is silently ignored — {@link #spawn()} iterates the Graduações.
+     *
+     * <p>These are real: a held, matching Especialização named as a roll's {@code
+     * SkillRoll#getRequestedAbility()} thresholds against {@code DifficultyLevel#getExpertValue()}
+     * instead of the base value.
+     */
+    default Map<SkillType, List<SkillSpecialization>> getSkillSpecializations() {
+        return Map.of();
+    }
+
+    /**
+     * Whether this creature is a Morto-Vivo. Narrow on purpose: it exists because clauses like
+     * the Zumbi's "Vantagem em rolagens de Perícias de Ataque efetuadas contra personagens
+     * vivos" need to tell the living from the not, and this core has no such classification —
+     * {@code org.aventyrs.core.race.CreatureType} has only HUMANOIDE/FEERICO/MONSTRUOSO, none of
+     * which is about being alive.
+     *
+     * <p>So "living" is resolved as "not a foe whose stat block said this" — which is exact for
+     * every combatant this core can currently produce (a {@code CharacterSheet} is always
+     * living), and would need revisiting the day a player character can be undead, or a
+     * construct/elemental needs to count as non-living without being a Morto-Vivo. A general
+     * anatomy/vitality tag on {@code Character} is the real fix; this is deliberately not it.
+     */
+    default boolean isUndead() {
+        return false;
+    }
+
+    /** Efeitos Críticos this creature's anatomy shrugs off — see {@link CriticalEffectType}. */
+    default Set<CriticalEffectType> getCriticalEffectImmunities() {
+        return Set.of();
+    }
+
     default int getLifeMultiplier() {
         return HitPointsService.DEFAULT_LIFE_MULTIPLIER;
     }
@@ -112,12 +179,15 @@ public interface MonsterTemplate {
      * {@code CharacterSkill#increaseGraduation} mutates it in place, so each spawn builds its own
      * {@code SkillGraduation} instances rather than sharing the template's. The equipment and
      * ability lists are safe to share — those are catalog constants.
+     *
+     * @param gm the Player running this foe — see {@link MonsterSheet#getPlayer()}.
      */
-    default MonsterSheet spawn() {
+    default MonsterSheet spawn(@NonNull final Player gm) {
         Map<SkillType, CharacterSkill> skills = new EnumMap<>(SkillType.class);
         for (Map.Entry<SkillType, Integer> entry : getSkillGraduations().entrySet()) {
             skills.put(entry.getKey(), CharacterSkill.builder()
                     .skill(entry.getKey().newSkillInstance())
+                    .specializations(getSkillSpecializations().getOrDefault(entry.getKey(), List.of()))
                     .graduation(SkillGraduation.builder().graduationValue(entry.getValue()).build())
                     .build());
         }
@@ -128,6 +198,7 @@ public interface MonsterTemplate {
                 .attributes(CharacterAttributes.of(getAttributeBases()))
                 .egos(CharacterEgos.builder().build())
                 .actionProfile(DEFAULT_ACTION_PROFILE)
+                .actionPoints(getActionPoints())
                 .skills(skills)
                 .attributeAbilities(getAttributeAbilities())
                 .skillCompetencyAbilities(getSkillCompetencyAbilities())
@@ -139,7 +210,6 @@ public interface MonsterTemplate {
                 .determinationMultiplier(getDeterminationMultiplier())
                 .build();
 
-        return MonsterSheet.of(monster, getPhysicalDefense(), getMagicDefense(),
-                getAttackDifficulty(), getAttackBonus());
+        return MonsterSheet.of(monster, gm, this);
     }
 }

@@ -73,6 +73,11 @@ public class RealExecution extends AbstractEffect implements CriticalEffect {
     }
 
     @Override
+    public CriticalEffectType getType() {
+        return CriticalEffectType.EXECUCAO_REAL;
+    }
+
+    @Override
     public String getDescription() {
         return criticalResult == CriticalResult.ACERTO_CRITICO_MAIOR
                 ? "O alvo é imediatamente destruído e não poderá ser ressuscitado."

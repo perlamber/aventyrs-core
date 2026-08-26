@@ -110,12 +110,12 @@ public enum AbracadoPelaEscuridaoAbility implements AventyrTitleAbility {
     // metade dos PV gastos" count is likewise real — see #resolveEnhancedAttackCountFromPvSpent
     // below, sharing its "1 + metade" formula shape with ESPINHOS_DE_GAEA's own Duração
     // (same arithmetic, different meaning — attack count here, not Rodadas). Everything the
-    // spent PV/PD actually buys is fully TODO'd: the +1PA half hits the exact same
-    // ActionPointsServiceImpl gap SantoAbility's own catalog TODO already cites
-    // (ActionPointsServiceImpl#getMaxActionPoints never reads
-    // CombatantSheet#getTemporaryBonus(ModifierType.ACTION_POINTS), only the plain
-    // Character#getTemporaryActionPointsBonus() field, so a Round-scoped grant would be
-    // silently inert); "Aprimoramento de Obra-Prima Alcance Estendido" needs the still-missing
+    // spent PV/PD actually buys is still TODO'd, but no longer all for the same reason: the
+    // +1PA half's mechanism now exists — ActionPointsServiceImpl#getMaxActionPoints's
+    // CombatantSheet-taking overloads read CombatantSheet#getTemporaryBonus(
+    // ModifierType.ACTION_POINTS) for real, so a Round-scoped grant lands (see
+    // AbencoadoPelaLuzAbility#GLORIA_RELAMPEJANTE_DE_TESLA's own comment); what's left there is
+    // wiring an Interaction that reports the Blessing, not a missing system; "Aprimoramento de Obra-Prima Alcance Estendido" needs the still-missing
     // Item/Equipamento entity (Raridade, Obra-Prima tiers, Aprimoramentos — the identical gap
     // ResourcesAdvantage#BARGANHISTA/HERANCA_FAMILIAR already cite); "empurrado 1UD... pode se
     // Reposicionar" needs a forced-movement/positioning mechanism this core has never modeled

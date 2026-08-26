@@ -3,11 +3,13 @@ package org.aventyrs.core.sheet;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.EgoDomain;
+import org.aventyrs.core.effect.CriticalEffectType;
 import org.aventyrs.core.item.Item;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.rest.RestType;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -117,6 +119,20 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
     int getTotalLifeSteal();
 
     void tickTemporaryEffects();
+
+    /**
+     * The Efeitos Críticos this combatant's anatomy simply shrugs off — {@code
+     * org.aventyrs.core.effect.CriticalEffect#applicableTo} drops each of these from an attack's
+     * chain before any of it is applied. Empty for anything without a stat block clause saying
+     * otherwise, which is every player character today.
+     *
+     * <p>On the shared half rather than on {@code MonsterSheet} for the same reason temporary
+     * Ego points are: an immunity is a property of <i>a target</i>, and both kinds of sheet can
+     * be one. A player character resisting an Efeito Crítico is a shape this ruleset already
+     * gestures at (see {@code ProfissaoCompetencyAbility}'s Resistência a Críticos), so the hook
+     * is not monster-only even though only a monster overrides it right now.
+     */
+    Set<CriticalEffectType> getCriticalEffectImmunities();
 
     // --- Turn lifecycle -----------------------------------------------------------------------
 

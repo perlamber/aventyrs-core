@@ -53,6 +53,11 @@ public class ManaPurge extends AbstractEffect implements CriticalEffect {
     }
 
     @Override
+    public CriticalEffectType getType() {
+        return CriticalEffectType.PURGA_DE_MANA;
+    }
+
+    @Override
     public String getDescription() {
         return criticalResult == CriticalResult.ACERTO_CRITICO_MAIOR
                 ? "O alvo perde 2PM, e 1PM adicional por Rodada (até o fim da cena ou 1 " +

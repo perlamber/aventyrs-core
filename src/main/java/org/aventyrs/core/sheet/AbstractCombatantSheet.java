@@ -6,6 +6,7 @@ import lombok.NonNull;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.EgoDomain;
+import org.aventyrs.core.effect.CriticalEffectType;
 import org.aventyrs.core.item.Item;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.rest.RestType;
@@ -361,6 +362,17 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         temporaryEffects.forEach(effect -> effect.applyRoundEffect(this));
         temporaryEffects.forEach(TemporaryEffect::tick);
         temporaryEffects.removeIf(TemporaryEffect::isExpired);
+    }
+
+    /**
+     * None, unless a subclass says otherwise — a combatant is vulnerable to every Efeito Crítico
+     * by default, and only an authored anatomy clause changes that. {@code MonsterSheet}
+     * overrides this; {@code CharacterSheet} deliberately does not (no player-facing trait grants
+     * one yet — see {@code ProfissaoCompetencyAbility}'s still-unbuilt Resistência a Críticos).
+     */
+    @Override
+    public Set<CriticalEffectType> getCriticalEffectImmunities() {
+        return Set.of();
     }
 
     /**

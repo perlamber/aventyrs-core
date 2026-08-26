@@ -175,6 +175,10 @@ public class AttackReceiver {
      * or neither. Note that {@code DamageInteraction} only forwards to its successor when the hit
      * actually dealt damage — a hit fully absorbed by RD/RA ends the chain there, which is that
      * class's own long-standing rule, not something added here.
+     *
+     * <p>The Efeitos Críticos are filtered through {@link CriticalEffect#applicableTo} first, so
+     * one the defender's anatomy is immune to never reaches the chain — see that method for why
+     * the filter is shared between both directions rather than written here twice.
      */
     private Interaction<CombatantSheet> buildChain(final IncomingAttack attack,
                                                     final boolean criticalEffectTriggered,
@@ -184,7 +188,7 @@ public class AttackReceiver {
             stages.addAll(attack.getEffectChains());
         }
         if (criticalEffectTriggered) {
-            stages.addAll(attack.getCriticalEffects());
+            stages.addAll(CriticalEffect.applicableTo(attack.getDefender(), attack.getCriticalEffects()));
         }
 
         Interaction<CombatantSheet> next = null;

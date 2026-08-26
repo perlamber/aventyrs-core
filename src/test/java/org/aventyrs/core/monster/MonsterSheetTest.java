@@ -8,6 +8,7 @@ import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.sheet.Bleeding;
 import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.CombatantSheet;
+import org.aventyrs.core.sheet.Player;
 import org.aventyrs.core.skill.DifficultyLevel;
 import org.junit.jupiter.api.Test;
 
@@ -28,7 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class MonsterSheetTest {
 
     private MonsterSheet capanga() {
-        return GenericMonster.CAPANGA.spawn();
+        return GenericMonster.CAPANGA.spawn(new Player());
     }
 
     @Test
@@ -131,7 +132,7 @@ class MonsterSheetTest {
     @Test
     void aKnownIdCanBeRestoredForReconstructionFromPersistedState() {
         UUID existing = UUID.randomUUID();
-        MonsterSheet reconstructed = MonsterSheet.of(capanga().getCharacter(), 13, 11,
+        MonsterSheet reconstructed = MonsterSheet.of(capanga().getCharacter(), new Player(), 13, 11,
                 DifficultyLevel.EASY, 0, existing);
 
         assertEquals(existing, reconstructed.getId());
@@ -139,7 +140,7 @@ class MonsterSheetTest {
 
     @Test
     void getDefenseSelectsTheRightColumn() {
-        MonsterSheet conjurador = GenericMonster.CONJURADOR.spawn();
+        MonsterSheet conjurador = GenericMonster.CONJURADOR.spawn(new Player());
 
         assertEquals(conjurador.getPhysicalDefense(), conjurador.getDefense(DefenseType.PHYSICAL));
         assertEquals(conjurador.getMagicDefense(), conjurador.getDefense(DefenseType.MAGIC));
