@@ -105,6 +105,30 @@ class DexterityAbilityTest {
     }
 
     @Test
+    void apressadoGrantsOnePointOnEvenRodadas() {
+        // turnNumber is 0-based, so the 2nd/4th/6th Rodadas are Turns 1, 3 and 5.
+        assertEquals(1, DexterityAbility.APRESSADO.resolveActionPointsBonus(1));
+        assertEquals(1, DexterityAbility.APRESSADO.resolveActionPointsBonus(3));
+        assertEquals(1, DexterityAbility.APRESSADO.resolveActionPointsBonus(5));
+    }
+
+    @Test
+    void apressadoGrantsNothingOnOddRodadas() {
+        assertEquals(0, DexterityAbility.APRESSADO.resolveActionPointsBonus(0));
+        assertEquals(0, DexterityAbility.APRESSADO.resolveActionPointsBonus(2));
+        assertEquals(0, DexterityAbility.APRESSADO.resolveActionPointsBonus(4));
+    }
+
+    @Test
+    void onlyApressadoEverResolvesAnActionPointsBonus() {
+        for (DexterityAbility ability : DexterityAbility.values()) {
+            if (ability != DexterityAbility.APRESSADO) {
+                assertEquals(0, ability.resolveActionPointsBonus(1));
+            }
+        }
+    }
+
+    @Test
     void precisaoGrantsVantagemForADestrezaBasedRoll() {
         assertEquals(Optional.of(Skill.ADVANTAGE_BONUS), DexterityAbility.PRECISAO.resolveFirstRollOfTurnBonus(AttributeDomain.DEXTERITY));
     }

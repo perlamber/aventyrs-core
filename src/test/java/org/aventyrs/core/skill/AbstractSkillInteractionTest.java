@@ -346,17 +346,21 @@ class AbstractSkillInteractionTest {
      * reports the granted domains on {@code egoGainDomains} — exercised generically, through
      * {@link AttentionInteraction}, since this is computed once in {@code
      * AbstractSkillInteraction} for every skill, not per-Interaction.
+     *
+     * <p>Asserted as a movement of the temporary <em>ceiling</em> — a fixture Character's Egos
+     * total 2, so the grant takes it 2 → 3 — since that is what the grant actually raises.
      */
     @Test
     void applyToGrantsAndReportsEgoGainDomainsOnDestinoFavoravelMajorCriticalSuccess() {
         CharacterSheet sheet = attentionSheetHoldingAttributeAbility(CharismaAbility.DESTINO_FAVORAVEL);
         SkillRoll skillRoll = new SkillRoll(List.of(6, 6, 6));
+        assertEquals(2, sheet.getMaxTemporaryEgoPoints(EgoDomain.SORTE));
 
         InteractionResult result = new AttentionInteraction().applyTo(sheet, null, skillRoll);
 
         assertEquals(List.of(EgoDomain.SORTE, EgoDomain.AUTOCONTROLE), result.getEgoGainDomains());
-        assertEquals(1, sheet.getTemporaryEgoPoints(EgoDomain.SORTE));
-        assertEquals(1, sheet.getTemporaryEgoPoints(EgoDomain.AUTOCONTROLE));
+        assertEquals(3, sheet.getMaxTemporaryEgoPoints(EgoDomain.SORTE));
+        assertEquals(3, sheet.getMaxTemporaryEgoPoints(EgoDomain.AUTOCONTROLE));
     }
 
     @Test
@@ -368,24 +372,24 @@ class AbstractSkillInteractionTest {
         attentionInteraction.applyTo(sheet, null, skillRoll);
         attentionInteraction.applyTo(sheet, null, skillRoll);
 
-        assertEquals(1, sheet.getTemporaryEgoPoints(EgoDomain.SORTE));
-        assertEquals(1, sheet.getTemporaryEgoPoints(EgoDomain.AUTOCONTROLE));
+        assertEquals(3, sheet.getMaxTemporaryEgoPoints(EgoDomain.SORTE));
+        assertEquals(3, sheet.getMaxTemporaryEgoPoints(EgoDomain.AUTOCONTROLE));
     }
 
     /**
      * DESTINO_FAVORAVEL's own "não cumulativo" grant only caps *its own* repeat triggers —
-     * see {@code TemporaryPointPool#gainNonCumulative}. Sorte points already held from an
-     * unrelated source aren't clamped down by it, and still add on top normally.
+     * see {@code EgoPointPool#grantTemporaryBonus}. A ceiling bonus from an unrelated source
+     * isn't clamped down by it, and still adds on top normally.
      */
     @Test
-    void applyToDestinoFavoravelStacksOnTopOfSortePointsFromAnUnrelatedSource() {
+    void applyToDestinoFavoravelStacksOnTopOfASorteBonusFromAnUnrelatedSource() {
         CharacterSheet sheet = attentionSheetHoldingAttributeAbility(CharismaAbility.DESTINO_FAVORAVEL);
-        sheet.gainTemporaryEgoPoints(EgoDomain.SORTE, 2);
+        sheet.grantTemporaryEgoPointBonus(EgoDomain.SORTE, "unrelated-source", 2);
         SkillRoll skillRoll = new SkillRoll(List.of(6, 6, 6));
 
         new AttentionInteraction().applyTo(sheet, null, skillRoll);
 
-        assertEquals(3, sheet.getTemporaryEgoPoints(EgoDomain.SORTE));
+        assertEquals(5, sheet.getMaxTemporaryEgoPoints(EgoDomain.SORTE));
     }
 
     @Test

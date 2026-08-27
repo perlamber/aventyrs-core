@@ -15,11 +15,12 @@ import java.util.Optional;
 @AllArgsConstructor
 public enum DexterityAbility implements AttributeAbility {
 
-    // The "+1UD Movimento Base" clause is real (movementBonus() below). TODO: "seu primeiro
-    // movimento em cada Rodada tem a distância aumentada em +2UD" stays unimplemented — it's
-    // conditioned on *which* movement in the Rodada this is (the first), which MovementService's
-    // flat per-Turn total has no way to express; needs a per-movement-action tracking concept
-    // this core doesn't have.
+    // The "+1UD Movimento Base" clause is real (movementBonus() below) — Movimento Base being
+    // per Ponto de Ação, this widens every point spent moving, which is what the clause says.
+    // TODO: "seu primeiro movimento em cada Rodada tem a distância aumentada em +2UD" stays
+    // unimplemented — it's conditioned on *which* movement in the Rodada this is (the first),
+    // which MovementService's single per-Ponto-de-Ação figure has no way to express; needs a
+    // per-movement-action tracking concept this core doesn't have.
     PASSOS_LONGOS("Seu Movimento Base aumenta em +1UD. Seu primeiro movimento em cada Rodada tem a distância " +
             "aumentada em +2UD.") {
         @Modifier(ModifierType.MOVEMENT)
@@ -32,8 +33,16 @@ public enum DexterityAbility implements AttributeAbility {
             "triplo do seu Movimento Base, ao invés do dobro. Adicionalmente você recebe Vantagem em suas jogadas " +
             "de Ataque Corpo-a-Corpo; quando malsucedido, você não recebe o redutor padrão de -2 em suas Defesas."),
 
-    //TODO bonus em PA
-    APRESSADO("Em turnos de Rodadas pares você recebe Bônus Variável de +1PA."),
+    APRESSADO("Em turnos de Rodadas pares você recebe Bônus Variável de +1PA.") {
+        /**
+         * turnNumber is 0-based — Turn 0 <em>is</em> the first Rodada — so an even Rodada is an
+         * odd turnNumber: the 2nd Rodada is Turn 1, the 4th is Turn 3, and so on.
+         */
+        @Override
+        public int resolveActionPointsBonus(final int turnNumber) {
+            return turnNumber % 2 == 1 ? EVEN_ROUND_ACTION_POINTS_BONUS : 0;
+        }
+    },
 
     LETALIDADE_PROGRESSIVA("A Margem Crítica de seus Ataques à Distância aumenta ao longo do combate: você recebe " +
             "Bônus Variável de +1 em sua Margem Crítica menor na primeira Rodada do combate, então este Bônus " +
@@ -64,6 +73,9 @@ public enum DexterityAbility implements AttributeAbility {
             return rolledDomain == AttributeDomain.DEXTERITY ? Optional.of(Skill.ADVANTAGE_BONUS) : Optional.empty();
         }
     };
+
+    /** APRESSADO's PA bonus on every even Rodada (turnNumber 1, 3, 5, ...). */
+    private static final int EVEN_ROUND_ACTION_POINTS_BONUS = 1;
 
     /** LETALIDADE_PROGRESSIVA's Margem Crítica Menor bonus starting the 1st Round of combate. */
     private static final int FIRST_TIER_ROUND = 1;

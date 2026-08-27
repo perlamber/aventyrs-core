@@ -46,10 +46,12 @@
  * {@link org.aventyrs.core.sheet.Bleeding}) and {@link org.aventyrs.core.effect.ManaPurge}
  * (PM, via {@link org.aventyrs.core.sheet.ManaDrain}) — each interrupted by the matching
  * recovery ({@code CombatantSheet#heal}/{@code #recoverMagicPoints}). The third, {@link
- * org.aventyrs.core.effect.Primor}, is shaped differently: a one-time temporary Ego
- * point spend (Sorte or Autocontrole) with no ongoing per-Rodada loss, instead owed back
- * at the target's next qualifying Rest via {@code
- * org.aventyrs.core.sheet.PendingEgoRecovery} — resolved for real by {@code
+ * org.aventyrs.core.effect.Primor}, is shaped differently: a one-time spend from the
+ * target's <em>temporary</em> Ego pool (Sorte or Autocontrole), via {@code
+ * CombatantSheet#spendEgoPoints} — never the permanent pool, which nothing in this ruleset
+ * drains automatically — with no ongoing per-Rodada loss, instead owed back at the target's
+ * next qualifying Rest via {@code org.aventyrs.core.sheet.PendingEgoRecovery} for what was
+ * <em>actually</em> spent rather than what was asked for — resolved for real by {@code
  * RestServiceImpl#applyRest}, since {@code RestService} (unlike Scene's still-nonexistent
  * turn shifter) already is a complete "a Rest happened" trigger. A fourth, {@link
  * org.aventyrs.core.effect.Sabotage}, is a deliberate placeholder — it targets equipment,

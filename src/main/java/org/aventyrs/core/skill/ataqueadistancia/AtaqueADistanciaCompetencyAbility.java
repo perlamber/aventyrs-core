@@ -3,6 +3,7 @@ package org.aventyrs.core.skill.ataqueadistancia;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.aventyrs.core.character.AttributeDomain;
+import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.DamageBonus;
 import org.aventyrs.core.character.DamageType;
 import org.aventyrs.core.scene.Range;
@@ -54,8 +55,10 @@ public enum AtaqueADistanciaCompetencyAbility implements SkillCompetencyAbility 
     // target's distance), so it needs sceneContext/attackTarget handed in explicitly instead.
     FRIEZA("Vantagem nas rolagens de dano de Ataques à Distância realizados contra alvos " +
             "em Distância Curta ou inferior.") {
+        // Overrides the 4-arg overload, per the cascading convention, even though neither of
+        // its two extra parameters is read here: only the target's distance matters.
         @Override
-        public Optional<DamageBonus> resolveDamageBonus(final SceneContext sceneContext, final CombatantSheet attackTarget) {
+        public Optional<DamageBonus> resolveDamageBonus(final SkillType attackingSkillType, final SceneContext sceneContext, final CombatantSheet attackTarget, final Character actor) {
             if (sceneContext == null || attackTarget == null) {
                 return Optional.empty();
             }

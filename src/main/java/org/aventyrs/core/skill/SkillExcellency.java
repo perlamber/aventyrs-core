@@ -25,6 +25,21 @@ public interface SkillExcellency {
         return 0;
     }
 
+    /**
+     * How many Dano Base scale-ups this Excelência grants an attack made with its own Perícia —
+     * e.g. {@code org.aventyrs.core.skill.ataqueadistancia.AtaqueADistanciaExcellency#FOCADO}'s
+     * "Danos Base da Arma +1". Summed by {@code
+     * org.aventyrs.core.character.services.DamageBaseService#getDamageBase} across only the
+     * tiers the <em>attacking</em> Perícia's own Graduação has unlocked — unlike this codebase's
+     * usual scan of every trained Perícia's tiers, because an Ataque à Distância Excelência must
+     * not raise the Dano Base of a Corpo-a-Corpo swing. That scoping is why this needs no {@code
+     * SkillType} parameter of its own, where {@code SkillCompetencyAbility#resolveDamageBaseIncrease}
+     * does. Zero by default; only override on a constant whose rules text raises Dano Base.
+     */
+    default int resolveDamageBaseIncrease() {
+        return 0;
+    }
+
     /** Convenience: applies {@link #getDifficultyReduction()} to a concrete DifficultyLevel. */
     default DifficultyLevel adjustDifficulty(DifficultyLevel level) {
         return level.easier(getDifficultyReduction());

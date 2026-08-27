@@ -74,6 +74,7 @@ Check here before assuming a TODO needs a new gap named. Nothing below exists in
 | --- | --- |
 | **Defesas — *mostly built*** | `DefenseService` + `DefenseType` are real, and `DEFESAS`/`PHYSICAL_DEFENSE`/`MAGIC_DEFENSE` all have readers. What's still missing is narrower: `Santo#getDefesasBonus` has no granting trigger (*when* each adjacent ally receives it), and a foe's Defesa is an authored flat number with no defined conversion from a GD reduction's *níveis*. Don't cite this as "no Defesas stat exists".
 | **Owned/produced item copy** | The `Item` *catalog* is real, and so is inventory now — `Character#equipment` (worn/wielded, scanned by `DefenseService`/`DamageService`) and `AbstractCombatantSheet#inventory` (carried, including a foe's loot). Still missing: **per-copy state** (Dureza remaining, Obra-Prima tier, Aprimoramentos, who produced it), a PE economy, and production/repair. Cite the specific piece, not a blanket "no Item entity" or "no inventory". |
+| **Classifying an attack as Desarmado/Arma Natural** | `DamageBaseService` takes the wielded `Item` (`null` = unarmed), but nothing marks an attack as an *Arma Natural* — so `ArtesMarciaisFeat#ARTISTA_MARCIAL`'s Dano Base grant currently applies to every attack its holder makes. Gating on `weapon == null` would silently drop the Armas Naturais half. |
 | **Damage-type-scoped mitigation, and damage-type immunity** | `DamageType` has no Corte/Perfuração/Impacto breakdown (nor Profano/Natural/Esmagamento), and RD/RA are resolved with no notion of damage type — the one exception is `AttributeAbility#resolveDamageReduction`, unreachable from a `SkillCompetencyAbility`. *Nullifying* a damage type outright is a further missing stage: there is no immunity mechanism of any kind. Cited by `Zumbi` (imune a Profanos/Naturais, -3 vs Esmagamento). |
 | **Multiplicative stages** | `MovementService` sums `MOVEMENT` additively with no halving stage (unlike `DamageService`'s real `HALF_DAMAGE`). Don't add a `MOVEMENT_HALVED` constant — the mechanism is missing, not just a reader. |
 | **Temporary PA/Reação/Ação Livre grants — *built*** | Closed. The `CombatantSheet`-taking overloads of `ActionPointsService#getMaxActionPoints`/`ReactionsService#getTotalReactions`/`FreeActionsService#getTotalFreeActions` read `getTemporaryBonus(ACTION_POINTS/REACTIONS/FREE_ACTIONS)` for real. The `Character`-only overloads still can't — no sheet to ask — so cite *that* if a caller only holds a `Character`, not "the mechanism is missing". |
@@ -85,17 +86,17 @@ Check here before assuming a TODO needs a new gap named. Nothing below exists in
 | **Living/undead classification** | No vitality tag on `Character`. `CreatureType` has only HUMANOIDE/FEERICO/MONSTRUOSO, none of which is about being alive. `MonsterTemplate#isUndead()` is a deliberately narrow stand-in — exact for every combatant this core can build, wrong the day a player character can be undead or a construct must count as non-living. |
 | **A summon acting on its summoner's roll** | `SummonedMonsterTemplate` builds a creature a Conjurador raised, but nothing models the player then *rolling for it*. `AttackDelivery` assumes the roller is the attacker and `AttackReceiver` that they're the defender; neither has a notion of rolling on a third combatant's behalf. This is why `CriticalEffect#applicableTo` is shared between them. |
 | **Fadiga/asfixia, and healing inversion** | Nothing tracks sleep or breathing, so "não precisam dormir ou respirar" has no effect to be exempt from; and `CombatantSheet#heal` has no hook to redirect a recovery into damage (`Zumbi`'s Divine-magic clause, which also needs the missing `Magia` entity). |
-| **A foe's own dano roll** | A stat block's "Danos de Ataques 1d6+3" has nowhere to live: this core has no weapon/dano-roll concept and never rolls dice, so `AttackDelivery`/`AttackReceiver` assemble a `DamageInteraction` and the caller supplies the figure. |
+| **A foe's own dano roll — *half-closed*** | `DamageBase` now models exactly a "1d6+3"-shaped figure, so a stat block's "Danos de Ataques" finally has a type to live in — but `MonsterTemplate` has no column for it and `AttackDelivery`/`AttackReceiver` still assemble a `DamageInteraction` with the caller supplying the number. This core still never rolls the dice. Cite the missing *column*, not a missing concept. |
 | **Forced attack targeting / interception** | No "another Character becomes the target instead" mid-resolution — see `SantoAbility.GUARDA_VIDAS`. |
 | **Reactive/retaliation damage** | `DamageService` only computes damage *to* a target *from* an attacker, never the reverse. |
 | **Forced movement / positioning** | Knockback, "empurrado 1UD", Reposicionar — this core never does geometry. |
 | **Continuous cross-character passive grants** | Partly built: `AventyrTitleAbility#resolveAllyAbsoluteDamageReduction` scans a target's adjacent allies for outward RA grants (Santo's Bastião dos Necessitados). Still missing for Defesas (`Santo` Despertar — its bonus is on the concrete class, unreachable by a scan) and for `SkillCompetencyAbility` (`INSTINTO_DE_LUTHER`). See "Ally-facing passive grants are scanned, not granted". |
-| **Movement-triggered Reações** | No movement-triggers-Reação mechanism, and no suppression of one. Cited by `POSICIONAMENTO_ESTRATEGICO`, `AS_NA_MANGA`. |
-| **Resource-spend triggers** | Nothing observes `spendTemporaryEgoPoints` etc. An observer/event mechanism was deliberately rejected — this codebase has none anywhere. |
+| **Movement-triggered Reações** | No movement-triggers-Reação mechanism, and no suppression of one. Cited by `POSICIONAMENTO_ESTRATEGICO` and `AS_NA_MANGA` — but note both of those grant their *movement* half for real. A clause exempting movement from Reações is currently **exempt from nothing**, so it costs nothing to omit; it becomes real the day this lands, and both constants need revisiting then. |
+| **Resource-spend triggers — *built for Ego points*** | Closed for Ego: `EgoPointsService#useEgoPointsForEffect` spends and resolves the holder's `EgoAdvantage` against the completed `EgoPointSpend` in one call, which is how `DETERMINACAO_HEROICA` works for real. **A deliberate *use* and an enemy's *drain* are different call sites, not a flag** — `Primor` calls `CombatantSheet#spendEgoPoints` directly and triggers nothing, which is what stops a critical hit healing its victim. No observer mechanism was added; this codebase still has none anywhere. `AS_NA_MANGA` is real through the same hook (`resolveEgoSpendBlessings`, granting +2UD). Still missing: PV/PM/PD spends have no report or reaction path at all. |
 | **One-time roll effects bought with a resource** | Spending PV/PM to modify a single roll's outcome (e.g. a GD reduction) has no transaction — see `Orc`'s Agnação Ancestral. |
 | **"This one delivered attack" scoping** | A bonus scoped to the single attack delivered by activating another ability fits no per-roll `resolve*` hook, which are all generic per skill type. |
 | **Within-Turn activation counter** | `CharacterSheet` tracks Round-scoped `TemporaryEffect`s, not same-Turn activation counts. |
-| **Game-session tracking** | No "1x por sessão" concept — cited by `MOTIVACAO_DE_MOSES`, `DILETO_DE_TYKHE`, `MeioElfo`. |
+| **Game-session tracking — *the boundary is the consumer's, the state is missing*** | The end-of-session *trigger* is deliberately outside this core: a Narrador presses a button, and the consumer calls `EgoPointsService#applySessionRecovery(Map<CombatantSheet, EgoDomain>)` — one call carrying the table's per-player choices. `MOTIVACAO_DE_MOSES`/`DILETO_DE_TYKHE` are fully real through it. What's still absent is any per-session **state**: no session identity, no counter, nothing recording that a session happened. Hence recovery is deliberately **not idempotent** (double-application is the consumer's to prevent), and a clause that must *count* within a session — `ESTABILIDADE_EMOCIONAL`'s "a primeira vez em cada sessão", `MeioElfo`'s "1x por sessão" — stays unbuildable, because a manual button marks a boundary without telling this core it was crossed. |
 | **Roubo de Mana / de Determinação** | Only Roubo de Vida exists (`LifeStealService`). |
 | **Terreno difícil** | `TerrainType` describes a whole Scene, not a per-movement cost to ignore. |
 | **Item numeric columns** | PE has no economy, Dureza no damage/repair mechanic, Conjuração no item-granted hook on either `SpellCastingService` roll. |
@@ -293,6 +294,18 @@ lists (`ItemWeightClass`/`ItemRarity`, `description`, `price` in PE, `physicalDe
   PE economy, no damage/repair mechanic, no item-granted hook on either `SpellCastingService`
   roll). Their values are real, exact data all the same, per the "can't apply it yet doesn't mean
   can't compute it yet" discipline.
+- **Dano Base is on `Weapon`, not on `Item`** — `Weapon extends Item` adds exactly two abstract
+  columns, `getDamageBase()` and `getSkillType()` (the Perícia it's swung with, which is what
+  `DamageBaseService` scans by), and `AbstractWeapon extends AbstractItem` is its builder-built form
+  (both use `@SuperBuilder` so the subclass inherits the ten `AbstractItem` columns rather than
+  restating them; `AbstractItem.builder()` is unaffected). Every other weapon property — Preço,
+  Dureza, Raridade, `ItemFavor`, even DF/DM — is an ordinary `Item` one and needs no override.
+  **Don't put a weapon-only column on `Item` with a harmless-looking default**: that's what this
+  interface replaced, and a defaulted `UNARMED` made "a helmet" and "a real dagger" answer
+  identically. `DamageBaseService` takes a `Weapon`, so the compiler refuses a pauldron — no
+  `isWeapon()` flag and no runtime guard, the same enforcement-by-type as `CharacterSheet` vs
+  `MonsterSheet`. Nothing checks that a `Weapon`'s `ItemCategory` is actually `OFFENSIVE`, per the
+  usual builders-aren't-gatekeepers restraint.
 - A Favor clause with no `ModifierType` to express it contributes no `ItemBonus` and lives on in
   `getDescription()` until its mechanism exists — either because no reader for the concept
   exists (`ARMADURA_COMPLETA`'s "de Corte" scoping, modeled as plain RD) or because `ItemBonus`
@@ -815,17 +828,141 @@ taking both explicitly.
 TODO'd, on the movement-triggers-Reação gap. Check each constant's own TODO rather than
 assuming one fix unblocks every citation of it.
 
+## Ego points are two pools per domain — `EgoPointPool`, `spendEgoPoints`
+
+An `EgoDomain` isn't only a rating: it's **two spendable point pools** on a `CombatantSheet`,
+permanent and temporary, both real currency. The whole model is four equations, all in
+`org.aventyrs.core.sheet.EgoPointPool`:
+
+```
+permanentMax        = character.getEgos().getEgo(domain).getTotal()   // base + variable
+permanentRemaining  = max(0, permanentMax - permanentSpent)
+temporaryCeiling    = max(0, permanentRemaining + Σ bonus(source) - Σ activeEgoPenalty)
+temporaryRemaining  = max(0, temporaryCeiling - temporarySpent)
+availableEgoPoints  = permanentRemaining + temporaryRemaining
+```
+
+**Both pools start full**, and the temporary ceiling tracks permanent points *remaining* rather
+than the permanent maximum — so **spending a permanent point hurts twice**. Sorte 3 with nothing
+spent is 3 + 3 = 6 spendable; spend the 3 temporary then the 3 permanent and you get all 6, but
+spend the 3 permanent *first* and the ceiling collapses to 0, so you only ever get 3. Nothing
+special-cases that — it falls out of the arithmetic. `EgoPointFeatureTest` pins both directions.
+
+- **Permanent points never recover.** Not on Rest, not per session, not anywhere. They're only
+  *earned*, via `AttributeAbility#resolvePermanentEgoGain` → `CharacterEgos#withVariableBonus`.
+  Nothing reduces them automatically either — only their holder spending one deliberately.
+- **Temporary points recover one per game session** — one *total* across all four domains, not
+  one apiece, with the player choosing which domain receives it. That's
+  `EgoPointsService#applySessionRecovery(sheet, chosenDomain)`, plus whatever extra a held
+  Vantagem grants in its own domain (`EgoAdvantage#resolveExtraSessionEgoRecovery`;
+  `MOTIVACAO_DE_MOSES`/`DILETO_DE_TYKHE` are the two). **No automatic caller, by design** — a
+  session ends when the table says so, so the trigger is a GM action in the consuming app. The
+  bulk overload `applySessionRecovery(Map<CombatantSheet, EgoDomain>)` is what that button calls:
+  the map carries each player's own choice, and being *in* the map is how a consumer excludes a
+  foe or an absent player — no `instanceof CharacterSheet` filter, no "everyone in the Scene"
+  default. Pair it with `Scene#getAllParticipants()` (active ∪ pending, disjoint by construction)
+  to build the roster. It is **deliberately not idempotent**: a second press recovers again,
+  bounded only by each ceiling, and guarding that belongs to the consumer, since this core has no
+  session state to hang a guard on.
+- **Rest does not refill the temporary pool.** `RestService#applyRest` resolves only
+  `PendingEgoRecovery` — points some effect *specifically promised back* (today: `Primor`'s).
+  Don't wire session recovery into it.
+
+**Why a `spent` counter and not a held balance.** Both halves are `ResourcePool`s. With a stored
+balance every ceiling change (a permanent spend, a penalty landing or expiring, a point earned)
+needs a destructive clamp pushed from four call sites, and such a clamp is irreversible — an
+expiring penalty could never give back the point it truncated. With a spent counter the ceiling is
+only ever *read*, so what remains is recomputed fresh and un-clamps by itself. Same
+recompute-on-demand discipline as `HitPointsService#getStatus` and
+`InitiativeEntry#getEffectiveInitiativeValue`. `temporarySpent` is additionally **normalized down
+to the current ceiling** on every temporary-facing call, so a fallen ceiling can't leave a hidden
+debt that swallows the next recovery — deliberately unlike `ResourcePool` for PV, where overspend
+past the max is *kept*, because that negative range is what distinguishes FALLEN/COMMA/DEAD.
+
+**The permanent max is read straight off `Character`, and PV's isn't.** `AbstractCombatantSheet`
+calls `getCharacter().getEgos().getEgo(domain).getTotal()` directly. That looks like the
+`HitPointsService#getStatus` case but isn't: `getStatus` had to leave `sheet` because max PV needs
+a `ModifierResolver` three-source `@Modifier` scan and `org.aventyrs.core.sheet` must not depend
+on `org.aventyrs.core.character.services`. A permanent Ego max needs **no scan at all**.
+
+**Don't confuse the pool with `InitiativeService`.** It reads the same `EgoValue.getTotal()`, then
+adds a `ModifierType.INITIATIVE` three-source sum, because Iniciativa doubles as a turn-order
+stat. A `TemporaryBonus(INITIATIVE, +2, 2)` must never widen how many Iniciativa *points* can be
+spent. This asymmetry is the likeliest future misreading of the two.
+
+**Spending names its pool, and reports back.** `spendEgoPoints(EgoDomain, EgoPointType, int)`
+returns an `EgoPointSpend` (domain, type, and the amount *actually* spent after clamping). There
+is deliberately **no** temporary→permanent fallback (it would silently spend a point that costs
+twice over) and **no** shorter overload defaulting the type — the cascading-overload convention is
+for genuinely *optional* inputs, and the pool is the whole question. It floors at 0 rather than
+throwing; affordability is the caller's own `getAvailableEgoPoints(domain) >= n`. The reported
+`type` is what `DETERMINACAO_HEROICA`'s "se o ponto for permanente" needs, and it's why callers
+promising points back (`Primor` → `PendingEgoRecovery`) must register `spend.getValue()`, never
+what they asked for.
+
+**Two hooks fire off a deliberate spend**, both resolved by `useEgoPointsForEffect` and both
+scoped to the Vantagem held in the spend's *own* domain: `resolveEgoSpendRecovery` returns a flat
+figure applied to PV/PM/PD (`DETERMINACAO_HEROICA`), and `resolveEgoSpendBlessings` returns
+`Blessing`s granted straight to the spender (`AS_NA_MANGA`'s +2UD Movimento). Blessings are
+applied directly rather than handed back, unlike `resolveInitiativeBlessings`, because who spent
+the points is unambiguous — so `TargetScope` other than `SELF` has no meaning there yet.
+
+**Using points is a different call site from being drained of them.**
+`EgoPointsService#useEgoPointsForEffect(sheet, domain, type, amount, rolledValue)` is the holder
+deliberately spending — it spends *and* applies whatever `EgoAdvantage#resolveEgoSpendRecovery`
+that use earns (`DETERMINACAO_HEROICA`'s "+1d6PV, PM e PD", doubled on a permanent point), in one
+call so the recovery can't be forgotten. `CombatantSheet#spendEgoPoints` is the raw drain, and is
+what `Primor` calls — reacting there would mean a critical hit *healing* the character it just
+hit. There is no flag on the spend distinguishing the two, and no observer: the choice of entry
+point is the distinction. The hook is consulted only for the Vantagem held in the spend's **own**
+domain, the same scoping `resolveExtraSessionEgoRecovery` uses. The 1d6 arrives already rolled
+(one roll covers all three pools) and is validated as a legal d6 face — a negative would otherwise
+reach `heal` and silently *damage* the character.
+
+**A temporary Ego reduction is `TemporaryEgoPenalty`, a dedicated `TemporaryEffect`** — not a
+negative `TemporaryBonus`. It lowers the temporary *ceiling* and is never a spend, which is the
+point: a spend is consumption that would outlive the penalty's own Duração, while a ceiling term
+reverses the moment the effect expires. Adding `AUTOCONTROLE`/`RECURSOS`/`SORTE` to `ModifierType`
+would expose them to `ModifierResolver`'s `@Modifier` scan (implying abilities could grant
+spendable Ego points), and `INITIATIVE` already means turn order, so one of the four domains would
+collide semantically with no way out. Same restraint that keeps `LifeSteal` off `ModifierType`. It
+rides the ordinary `applyEffect`/`tickTemporaryEffects`/`finishTurn` lifecycle with no new
+machinery, and is read by a private `sumEgoPenalty` mirroring `getTotalLifeSteal`.
+
+**`grantTemporaryEgoPointBonus(domain, source, amount)` raises the ceiling, non-cumulatively per
+source** — this is what `CharismaAbility.DESTINO_FAVORAVEL`'s "um ponto temporário, não
+cumulativo" actually is. Repeat triggers from that same source don't widen it twice; an unrelated
+source's grant still adds on top.
+
 ## Movimento Base, and blessings granted on winning initiative
 
-**`MovementService#getTotalMovement(Character, turnNumber)`** follows the `InitiativeService`
-variant of the aggregated-stat shape (no new `Character` field, no `CharacterFixture` change).
-Base is derived — `SizeCategory.getMovementPerActionPoint()` (via
-`CharacterSizeService#getEffectiveSizeCategory`, so size-shifting is reflected) times
-`ActionPointsService.getMaxActionPoints` for that Turn — plus the usual `ModifierType.MOVEMENT`
-three-source sum, using `SkillCompetencyAbility.allFor` so racial abilities count (unlike
-`ReactionsService`/`InitiativeService`, which predate that fix). Floored at 0. Returns the
-**permanent** total only; a caller wanting this Round's actual figure adds
+**`MovementService#getMovementBase(Character)`** follows the `InitiativeService` variant of the
+aggregated-stat shape (no new `Character` field, no `CharacterFixture` change). Base is derived
+— `SizeCategory.getMovementPerActionPoint()` (via
+`CharacterSizeService#getEffectiveSizeCategory`, so size-shifting is reflected) — plus the usual
+`ModifierType.MOVEMENT` three-source sum, using `SkillCompetencyAbility.allFor` so racial
+abilities count (unlike `ReactionsService`/`InitiativeService`, which predate that fix). Floored
+at 0. Returns the **permanent** figure only; a caller wanting this Round's actual one adds
 `CharacterSheet#getTemporaryBonus(ModifierType.MOVEMENT)`.
+
+**It is a figure *per Ponto de Ação*, not a whole-Turn allowance**, which is why it takes no
+`turnNumber` and never touches `ActionPointsService`. A character spends their Pontos de Ação
+across moving *and* everything else they do that Turn, and the split is the player's choice at
+the table — so multiplying by `getMaxActionPoints` here would bake in an assumption this core
+has no business making. A caller that wants distance covered multiplies this by however many
+points were actually spent moving. `MovementServiceImpl` used to multiply, and its constructor
+took an `ActionPointsService` for it; both are gone.
+
+That per-point reading is also what a `MOVEMENT` bonus means, and it lands differently
+depending on the rules text granting it. "Seu Movimento Base aumenta em +2UD"
+(`AtaqueCorpoACorpoExcellency.FOCADO`, `AtletismoCompetencyAbility.PASSO_LARGO`,
+`DexterityAbility.PASSOS_LONGOS`, `InitiativeAdvantage.POSICIONAMENTO_ESTRATEGICO`) lands
+exactly — every point spent moving is worth that much more. `SorteAdvantage.AS_NA_MANGA`'s
+"você pode se mover até 2UD" is a **one-shot step**, and as a `MOVEMENT` `TemporaryBonus` it now
+over-grants once its holder spends more than one Ponto de Ação moving; that's flagged on the
+constant and deliberately kept, since a one-shot movement allowance is a mechanism this core
+doesn't have and granting nothing would be further from the clause. Check which of the two
+shapes a new grant is before reaching for `ModifierType.MOVEMENT`.
 
 Vertical/swim movement (`AtletismoCompetencyAbility.ALPINISTA_VELOZ`/`ANFIBIO`) and a
 mount's own movement (`DirigirECavalgarExcellency`) are a **different** sub-stat — don't wire
@@ -918,7 +1055,7 @@ should still name `CharacterSheet` are the four XP-spending services plus
   `monster instanceof CharacterSheet` doesn't compile, which is the point.
 - **Ego points are on the shared half**, despite reading as player-facing: `Primor` applies to a
   *target*, so leaving them off `CombatantSheet` would break it against a foe. `EgoDomain`'s own
-  javadoc says "a creature".
+  javadoc says "a creature". Both pools live there — see "Ego points are two pools per domain".
 - **`Character` is shared too** — a foe's Attributes, Perícias, abilities and equipment are an
   ordinary `Character`, with `race` set to the single catch-all `Monstruoso` and `player` left
   `null` (that field is nullable for exactly this reason, and nothing in main source reads it).
@@ -1089,6 +1226,100 @@ the Mestiço constructor invariants, and the test checklist. The rationale it de
   flag, not a fourth `CreatureType`. "2 Características Raciais **aleatórias**" is honoured the
   same way `SkillRoll` is: the constructor accepts up to 2 already-externally-resolved abilities
   (validated against the parent's own list) rather than rolling them here.
+
+## Dano Base is a position on a scale — `DamageBase`, `DamageBaseService`
+
+**Dano Base and a dano *bonus* are different mechanics and never merge.** A `DamageBase`
+(`org.aventyrs.core.character`) is the raw `<dice>d6+<value>` an attack starts from; a
+`DamageBonus` is a flat number added to an already-rolled total. That's why a character can
+attack at a Dano Base of 1d6+0 and still land for 1d6+20 — the twenty is bonuses, not twenty
+scale-ups. Never sum the two, and never model a "+N Dano Base" clause as a `DamageBonus` (or
+vice versa): a scale-up may be worth a whole extra die.
+
+**The scale is an odometer with an open-ended overflow.** `value` climbs to `MAX_VALUE` (3),
+then rolls over — reset to 0, add a die — until `diceCount` reaches `MAX_DICE` (3). Once *both*
+are capped, every further scale-up adds a flat +2, forever:
+
+```
+0 → 1d6+0   4 → 2d6+0   8 → 3d6+0   12 → 3d6+5
+1 → 1d6+1   5 → 2d6+1   9 → 3d6+1   13 → 3d6+7
+2 → 1d6+2   6 → 2d6+2  10 → 3d6+2   14 → 3d6+9
+3 → 1d6+3   7 → 2d6+3  11 → 3d6+3   (both capped)
+```
+
+**`scale` is the only stored component** — `diceCount()`/`value()` are derived, so an
+unreachable pairing (2d6+7) simply cannot be constructed, and a negative scale clamps to
+`UNARMED` (1d6+0), the bottom rung and literally what an Ataque Desarmado deals. `DamageBase.of
+(dice, value)` is the *authoring* factory and validates the pre-overflow region only (1..3 dice,
+0..3 value, `INVALID_DAMAGE_BASE` otherwise) — rows past 3d6+3 are only ever reached by scaling
+up, never authored. Same "genuine system boundary" validation as `SkillRoll`'s dice.
+
+**`DamageBaseService#getDamageBase`** is the whole calculation, and comes in **two overloads
+taking two different inputs, not a cascading pair**: `getDamageBase(Character, Weapon)` for a
+swing (starting row *and* attacking Perícia both read off the weapon, via
+`Weapon#getSkillType()`) and `getDamageBase(Character, SkillType)` for an Ataque Desarmado
+(starts at `UNARMED`, and needs the Perícia named because there's no weapon to name it).
+Neither delegates to the other — same "two different questions" split as
+`ActionPointsService`'s `Character`/`CombatantSheet` pair, not the optional-input cascade. The
+starting row is then advanced by three summed sources —
+
+| source | hook |
+| --- | --- |
+| `character.getFeats()` | `Feat#resolveDamageBaseIncrease(Character)` |
+| `SkillCompetencyAbility.allFor(character)` | `resolveDamageBaseIncrease(SkillType, Character)` |
+| **only the attacking Perícia's** unlocked tiers | `SkillExcellency#resolveDamageBaseIncrease()` |
+
+Three things about that scan differ from this codebase's usual three-source shape, each
+deliberately:
+
+- **The Excelência source is scoped to the attacking Perícia alone**, not every trained one —
+  `AtaqueADistanciaExcellency.FOCADO` must not raise a Corpo-a-Corpo swing's Dano Base. That
+  scoping is also why its hook needs no `SkillType` parameter, where the competency one does.
+- **The competency source is *not* pre-filtered by the ability's own `getSkillType()`.** An
+  ability may raise a Perícia other than its own — `ArtesAprimorarComArteAbility` is an *Artes*
+  ability raising the Dano Base of whichever Perícia de Ataque its holder chose. Each override
+  checks `attackingSkillType` itself, same shape as `resolveCriticalMarginIncrease`.
+- **`AttributeAbility`/`EgoAdvantage` are not scanned and carry no hook** — no constant on
+  either grants Dano Base today.
+
+**The weapon is passed, never looked up.** A character may carry several; only the caller knows
+which one is swinging. Nothing checks it's equipped — but its *type* is checked, for free: the
+parameter is a `Weapon`, so "what does this shield hit for" is unaskable rather than
+answered with a stand-in. Both `AbstractWeapon#damageBase` and `#skillType` are `@NonNull` for
+the same reason — a weapon that deals bare-fist dano says so with `DamageBase.UNARMED`, it
+doesn't leave the field empty.
+
+**The attacking Perícia is a column of the weapon, not an argument beside it.** There used to be
+a third parameter, and it let a caller pair a machado with Ataque à Distância — expressible and
+meaningless, and it made every call site restate something the catalog entry already knows. A
+weapon usable with *either* Perícia (a lança thrown rather than thrust) can't be expressed by one
+column and would need a per-swing choice; no catalog entry needs one yet, so don't build it. The
+one caller that still names a `SkillType` is the unarmed overload, which genuinely has nothing to
+read it off — an Ataque Desarmado isn't assumed to be Corpo a Corpo, since `ARTISTA_MARCIAL`-style
+grants and Armas Naturais both reach it.
+
+### `BRUTALIDADE` is the reference, and needs no threshold trigger
+
+`AtaqueCorpoACorpoCompetencyAbility.BRUTALIDADE` has all three of its tiers real: a flat +1
+dano bonus below 5 Graduações, converting to +1 Dano Base at 5, becoming +2 at 10. **"Convertido"
+is exclusive** — `resolveDamageBonus` returns empty from 5 on, so the two halves are never held
+at once.
+
+There is deliberately **no** "graduation crossed a threshold" trigger and nothing to migrate,
+because neither half is ever *stored*: the bonus is resolved per dano roll and the increase per
+attack, both reading the holder's Graduação live, so raising it changes the answer on the next
+call by itself. Same recompute-on-demand discipline as `HitPointsService#getStatus` and
+`InitiativeEntry#getEffectiveInitiativeValue`. Don't reach for a trigger mechanism when the
+value can just be asked for.
+
+Its flat-bonus half is what widened **`SkillCompetencyAbility#resolveDamageBonus`** to a
+4-arg overload — `(SkillType attackingSkillType, SceneContext, CombatantSheet attackTarget,
+Character actor)` — with the original 2-arg form delegating down with `null`s, per the usual
+cascading convention. `actor` is the *roller*, passed because the bonus depends on the holder's
+own live state (the same reason `EgoAdvantage#resolveSkillSpecificRollBonus` takes one).
+`FRIEZA` moved its override onto the 4-arg form and reads neither new parameter — note it also
+still doesn't check `attackingSkillType`, so an Ataque à Distância ability's dano bonus applies
+to a Corpo-a-Corpo swing; that's pre-existing, not something the widening introduced.
 
 ## Damage mitigation — `org.aventyrs.core.character.services.DamageService`
 
@@ -1302,8 +1533,12 @@ attack/delivery method) — it's now mechanically real, following `ACUIDADE` as 
   constructor/DI changes for this — it's a pure function over `character.getAttributeAbilities()`,
   already in hand at both.
 - Building this mechanism doesn't retroactively finish every ability that cites it — check
-  each constant's own TODO. `ACUIDADE`, `ACROBATA`, `DISPARO_ARCANO`, and `MAGIA_SELVAGEM` are
-  fully wired (enum override + `Interaction` filter + service overload) — see
+  each constant's own TODO. `ACUIDADE`, `SAGACIDADE_ARCANA`, `ACROBATA`, `DISPARO_ARCANO`, and
+  `MAGIA_SELVAGEM` are fully wired (enum override + `Interaction` filter + service overload;
+  `SAGACIDADE_ARCANA` needed only the enum override, the other two pieces being generic since
+  `ACUIDADE` landed — Ataque Corpo-a-Corpo is now the one Perícia with *two* substituting
+  abilities, and `resolveAttributeDomain`'s first-match wins between them, since the rules name
+  no precedence) — see
   `AttributeSubstitutionFeatureTest` for an end-to-end test exercising all four on one
   Character at once, including a control Perícia (Persuasão) proving none of them leaks into
   an unrelated roll. `AttentionCompetencyAbility.ALMA_DE_SHERLOCK`'s substitution half,

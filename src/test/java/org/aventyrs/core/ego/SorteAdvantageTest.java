@@ -76,4 +76,18 @@ class SorteAdvantageTest {
             }
         }
     }
+
+    @Test
+    void DILETO_DE_TYKHERecoversOneExtraTemporarySortePointPerSession() {
+        assertEquals(1, SorteAdvantage.DILETO_DE_TYKHE.resolveExtraSessionEgoRecovery());
+    }
+
+    @Test
+    void noOtherAdvantageRecoversAnExtraSessionEgoPoint() {
+        for (SorteAdvantage advantage : SorteAdvantage.values()) {
+            if (advantage != SorteAdvantage.DILETO_DE_TYKHE) {
+                assertEquals(0, advantage.resolveExtraSessionEgoRecovery());
+            }
+        }
+    }
 }

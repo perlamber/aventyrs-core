@@ -24,7 +24,14 @@
  *       places the single extra point among the four
  *       {@link org.aventyrs.core.character.EgoDomain}s (every Ego starts at
  *       {@value org.aventyrs.core.character.services.CharacterCreationService#STARTING_EGO_POINTS}),
- *       returning a {@link org.aventyrs.core.character.CharacterEgos}.</li>
+ *       returning a {@link org.aventyrs.core.character.CharacterEgos}. This allocation decides
+ *       more than Vantagem eligibility (step 4) and the Iniciativa base {@link
+ *       org.aventyrs.core.character.services.InitiativeService} reads: each Ego's total is also
+ *       that domain's <b>permanent spendable point pool</b>, and — since the temporary ceiling
+ *       tracks permanent points remaining — the size of its temporary pool too. See {@code
+ *       org.aventyrs.core.sheet.EgoPointPool}, and {@link
+ *       org.aventyrs.core.character.services.EgoPointsService} for the per-session recovery of
+ *       the temporary half.</li>
  *   <li><b>Vantagens de Ego (conditional, one check per domain with a catalog)</b> — for each
  *       {@link org.aventyrs.core.character.EgoDomain} that has one (today: {@code AUTOCONTROLE}'s
  *       {@link org.aventyrs.core.ego.AutocontroleAdvantage}, {@code INICIATIVA}'s {@link

@@ -16,6 +16,16 @@ import org.aventyrs.core.rest.RestType;
  * shifter) {@code RestService} already is the real, complete "a Rest happened" trigger
  * point.
  *
+ * <p>This is <strong>temporary-only by construction</strong> — it carries no {@link
+ * EgoPointType}, because Primor is its only producer and only ever drains the temporary
+ * pool, and because permanent Ego points never recover naturally at all: a promise to
+ * return one would be a differently-shaped promise, not another value of a field here.
+ *
+ * <p>{@code value} should be what a spend <em>actually</em> took (see {@link
+ * EgoPointSpend#getValue()}), never what its caller asked for — registering the requested
+ * figure against a target holding fewer points would hand back, at the Rest, points the
+ * target had spent itself.
+ *
  * <p>{@code minimumRestType} is compared by {@link RestType}'s own ordinal order
  * (MINIMO &lt; CURTO &lt; LONGO &lt; TOTAL) — a Rest satisfies this recovery once its tier
  * is at least {@code minimumRestType}'s. Primor Menor's unqualified "no próximo Descanso"

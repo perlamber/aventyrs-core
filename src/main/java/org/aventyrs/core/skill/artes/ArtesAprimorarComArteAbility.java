@@ -2,6 +2,7 @@ package org.aventyrs.core.skill.artes;
 
 import lombok.Getter;
 import lombok.NonNull;
+import org.aventyrs.core.character.Character;
 import org.aventyrs.core.modifier.Modifier;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.scene.SceneContext;
@@ -59,13 +60,27 @@ public class ArtesAprimorarComArteAbility implements SkillCompetencyAbility {
      * this branch only applies while attacking with the specific Perícia chosen — not
      * unconditionally — so it can't be a no-arg {@code @Modifier} method (those can't tell
      * which Perícia a given roll is for); it takes attackingSkillType explicitly instead.
-     * This library has no weapon/attack-damage entity or attack-resolution engine to call
-     * this automatically (it also deliberately never rolls dice — see the {@code skill}
-     * package-info's "What this library computes" section), so a future combat layer must
-     * call this directly, passing whichever Perícia the attack is being made with.
+     * Now genuinely consumed: {@code
+     * org.aventyrs.core.character.services.DamageBaseService} reaches it through {@link
+     * #resolveDamageBaseIncrease(SkillType, org.aventyrs.core.character.Character)}, the
+     * interface hook this method is the implementation of. It survives as its own named method
+     * because the branch is this ability's, not the interface's — the hook is where the rest of
+     * the codebase asks the question, this is where the answer lives.
      */
     public int getBaseDamageBonus(final SkillType attackingSkillType) {
         return chosenSkill.isAttackSkill() && chosenSkill == attackingSkillType ? BENEFIT_BONUS : 0;
+    }
+
+    /**
+     * {@link SkillCompetencyAbility#resolveDamageBaseIncrease}'s hook, delegating to {@link
+     * #getBaseDamageBonus(SkillType)} above — this ability's chosen Perícia is what scopes it,
+     * never {@link #getSkillType()} (which is always Artes), which is exactly why the service
+     * doesn't pre-filter by that. The holder's own state isn't consulted: the choice was frozen
+     * at acquisition, on this instance.
+     */
+    @Override
+    public int resolveDamageBaseIncrease(final SkillType attackingSkillType, final Character character) {
+        return getBaseDamageBonus(attackingSkillType);
     }
 
     /**

@@ -176,11 +176,12 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
      * AttributeAbility} for nothing — this also grants (directly on target, the same
      * unambiguous-recipient shape {@code org.aventyrs.core.effect.Primor} uses to mutate its
      * own target) a non-cumulative temporary Ego point, via {@link
-     * CombatantSheet#gainNonCumulativeTemporaryEgoPoints}, for every domain any held {@code
-     * AttributeAbility}'s {@link org.aventyrs.core.ability.AttributeAbility
+     * CombatantSheet#grantTemporaryEgoPointBonus} — which raises that domain's temporary
+     * <em>ceiling</em> rather than handing over a free-floating point — for every domain any
+     * held {@code AttributeAbility}'s {@link org.aventyrs.core.ability.AttributeAbility
      * #resolveCriticalSuccessEgoGain} returns against this same criticalResult — passing that
      * ability itself as the grant's source, so one ability's own repeat triggers don't stack
-     * past 1 point while an unrelated source's own gain still adds normally (e.g. {@code
+     * past 1 point while an unrelated source's own grant still adds normally (e.g. {@code
      * CharismaAbility#DESTINO_FAVORAVEL} on {@link CriticalResult#ACERTO_CRITICO_MAIOR}). The
      * granted domains are also reported on {@link InteractionResult#egoGainDomains} for
      * visibility — stays {@code null} when no held ability grants one. A subclass whose bonus
@@ -253,7 +254,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                 List<EgoDomain> egoGainDomains = new ArrayList<>();
                 for (AttributeAbility ability : character.getAttributeAbilities()) {
                     for (EgoDomain domain : ability.resolveCriticalSuccessEgoGain(criticalResult)) {
-                        target.gainNonCumulativeTemporaryEgoPoints(domain, ability, 1);
+                        target.grantTemporaryEgoPointBonus(domain, ability, 1);
                         if (!egoGainDomains.contains(domain)) {
                             egoGainDomains.add(domain);
                         }
@@ -292,7 +293,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
         List<SkillCompetencyAbility> abilities = allSkillCompetencyAbilities(target.getCharacter());
 
         Optional<DamageBonus> damageBonus = abilities.stream()
-                .map(ability -> ability.resolveDamageBonus(sceneContext, attackTarget))
+                .map(ability -> ability.resolveDamageBonus(skillType, sceneContext, attackTarget, target.getCharacter()))
                 .flatMap(Optional::stream)
                 .findFirst();
         if (damageBonus.isPresent()) {

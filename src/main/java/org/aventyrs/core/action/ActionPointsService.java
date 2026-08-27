@@ -21,9 +21,12 @@ public interface ActionPointsService {
      * attributeAbilities, skillCompetencyAbilities, or the unlocked
      * {@link org.aventyrs.core.skill.SkillExcellency} tiers of every trained Perícia (e.g.
      * {@link org.aventyrs.core.skill.atletismo.AtletismoExcellency#LENDA}), plus the character's
-     * {@link Character#getTemporaryActionPointsBonus()}, adjusted by the character's
+     * {@link Character#getTemporaryActionPointsBonus()}, plus every {@link
+     * org.aventyrs.core.ability.AttributeAbility}'s Turn-conditioned {@link
+     * org.aventyrs.core.ability.AttributeAbility#resolveActionPointsBonus(int)} (e.g. {@link
+     * org.aventyrs.core.ability.DexterityAbility#APRESSADO}), adjusted by the character's
      * {@link ActionProfile} for that Turn. turnNumber is 0-based (0 is the character's first
-     * Turn/Round). Never negative.
+     * Turn/Round), so an even Rodada is an odd turnNumber. Never negative.
      *
      * <p>This overload has no sheet, so it can't see a Round-scoped {@code TemporaryBonus} and
      * can't tell a Cena de Combate from any other — see

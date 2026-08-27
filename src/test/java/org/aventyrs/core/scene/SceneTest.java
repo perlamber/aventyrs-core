@@ -857,4 +857,52 @@ class SceneTest {
 
         assertEquals(0, ally.getTemporaryBonus(ModifierType.MOVEMENT));
     }
+
+    // --- getAllParticipants ----------------------------------------------------------------
+
+    @Test
+    void getAllParticipantsReturnsTheRotationFollowedByWhoeverIsStillPending() {
+        Scene scene = new Scene();
+        CharacterSheet fast = newSheet();
+        CharacterSheet slow = newSheet();
+        scene.addParticipant(fast, 18);
+        scene.addParticipant(slow, 5);
+        scene.next();
+
+        CharacterSheet latecomer = newSheet();
+        scene.addParticipant(latecomer, 12);
+
+        assertEquals(List.of(fast, slow, latecomer), scene.getAllParticipants());
+    }
+
+    /** The whole point: a mid-Round joiner that getParticipantsInInitiativeOrder omits. */
+    @Test
+    void getAllParticipantsIncludesAMidRoundJoinerThatTheInitiativeOrderOmits() {
+        Scene scene = new Scene();
+        CharacterSheet fighter = newSheet();
+        scene.addParticipant(fighter, 10);
+        scene.next();
+
+        CharacterSheet latecomer = newSheet();
+        scene.addParticipant(latecomer, 4);
+
+        assertFalse(scene.getParticipantsInInitiativeOrder().contains(latecomer));
+        assertTrue(scene.getAllParticipants().contains(latecomer));
+    }
+
+    @Test
+    void getAllParticipantsIsEmptyForAnEmptyScene() {
+        assertEquals(List.of(), new Scene().getAllParticipants());
+    }
+
+    @Test
+    void getAllParticipantsReturnsADefensiveCopy() {
+        Scene scene = new Scene();
+        CharacterSheet fighter = newSheet();
+        scene.addParticipant(fighter, 10);
+
+        scene.getAllParticipants().clear();
+
+        assertEquals(List.of(fighter), scene.getAllParticipants());
+    }
 }

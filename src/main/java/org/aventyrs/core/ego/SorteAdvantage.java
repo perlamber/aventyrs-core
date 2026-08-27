@@ -3,8 +3,14 @@ package org.aventyrs.core.ego;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.aventyrs.core.character.EgoDomain;
+import org.aventyrs.core.modifier.ModifierType;
+import org.aventyrs.core.sheet.Blessing;
+import org.aventyrs.core.sheet.EgoPointSpend;
+import org.aventyrs.core.sheet.TargetScope;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.skill.SkillType;
+
+import java.util.List;
 
 /**
  * The Vantagem de Sorte chosen once at character creation — available only to characters
@@ -46,30 +52,81 @@ public enum SorteAdvantage implements EgoAdvantage {
         }
     },
 
-    // TODO: grants 2UD of movement, ignoring Reações and terreno difícil, immediately after
-    // spending a Ponto de Sorte — blocked on three separate missing pieces: (1) no
-    // "triggered the moment a resource is spent" hook exists anywhere in this codebase,
-    // CombatantSheet#spendTemporaryEgoPoints is a plain mutator with nothing observing it
-    // (see CLAUDE.md's Iniciativa section for why an observer/event mechanism was
-    // deliberately rejected elsewhere in this codebase — the same reasoning applies here);
-    // (2) no movement-triggers-Reação suppression mechanism exists, the identical gap
-    // InitiativeAdvantage#POSICIONAMENTO_ESTRATEGICO's own Reação-suppression half is still
-    // TODO'd on; (3) TerrainType models only what kind of place a whole Scene is in, not a
-    // per-square/per-movement "terreno difícil" concept to ignore.
+    /**
+     * The 2UD is real: {@link #resolveEgoSpendBlessings} below grants a {@link
+     * ModifierType#MOVEMENT} {@link Blessing} of {@value #MOVEMENT_BONUS}UD, which {@code
+     * EgoPointsService#useEgoPointsForEffect} applies to the spender the moment a Ponto de Sorte
+     * is deliberately used. Either pool counts — "utilizar um Ponto de Sorte" doesn't
+     * distinguish permanent from temporary — so this doesn't inspect {@code
+     * EgoPointSpend#getType()}, unlike {@code AutocontroleAdvantage#DETERMINACAO_HEROICA}.
+     * Exactly the same granting shape as {@link InitiativeAdvantage#POSICIONAMENTO_ESTRATEGICO}'s
+     * own +2UD, off a different trigger.
+     *
+     * <p><strong>Both qualifiers are no-ops in this core today, not omissions.</strong> "Não
+     * provoca Reações" would exempt this movement from a movement-triggers-Reação mechanism that
+     * does not exist (the identical gap POSICIONAMENTO_ESTRATEGICO's own Reação-suppression half
+     * is still TODO'd on), and "ignora terrenos difíceis" would exempt it from a per-movement
+     * terreno difícil cost that does not exist either — {@code TerrainType} describes a whole
+     * Scene, not a square. Being exempt from nothing costs nothing, so a plain +2UD is presently
+     * an exact model of this clause; the two qualifiers become real the day either system lands,
+     * and this constant will need revisiting then.
+     *
+     * <p>The grant lasts {@value #MOVEMENT_ROUNDS} Rodada — the shortest a {@code TemporaryBonus}
+     * can express — where the rules text says "imediatamente". This core has no one-shot movement
+     * allowance and never executes movement at all ({@code MovementService} computes Movimento
+     * Base, it doesn't spend it), so the bonus is added to this Rodada's Movimento Base rather
+     * than to a discrete immediate step.
+     *
+     * <p><strong>That approximation is wider than it looks, and deliberately kept anyway.</strong>
+     * Movimento Base is a <em>per-Ponto-de-Ação</em> figure, so a {@code MOVEMENT}
+     * {@code TemporaryBonus} of 2 is worth 2UD on every Ponto de Ação its holder spends moving
+     * this Rodada, not the single 2UD step the rules text describes — unlike {@link
+     * InitiativeAdvantage#POSICIONAMENTO_ESTRATEGICO}, whose text raises Movimento Base itself
+     * and so lands exactly. Expressing "one extra move of 2UD" needs a one-shot movement
+     * allowance this core doesn't have, and {@code ModifierType} has no shape for a
+     * non-per-point distance grant; a flat 2UD on the only distance stat that exists stays
+     * closer to the clause than granting nothing. Revisit this the day a movement-execution
+     * concept lands.
+     */
     AS_NA_MANGA("Imediatamente após utilizar um Ponto de Sorte você pode se mover até 2UD, " +
-            "este movimento não provoca Reações e ignora terrenos difíceis."),
+            "este movimento não provoca Reações e ignora terrenos difíceis.") {
+        @Override
+        public List<Blessing> resolveEgoSpendBlessings(final EgoPointSpend spend) {
+            if (spend.getValue() <= 0) {
+                return List.of();
+            }
+            return List.of(new Blessing(ModifierType.MOVEMENT, MOVEMENT_BONUS, MOVEMENT_ROUNDS,
+                    TargetScope.SELF, name()));
+        }
+    },
 
-    // TODO: grants +1 additional temporary Sorte point recovered per game session — no
-    // game-session tracking system exists yet, the identical gap
-    // AutocontroleAdvantage#MOTIVACAO_DE_MOSES's own "por sessão de jogo" clause is still
-    // TODO'd on.
-    DILETO_DE_TYKHE("Você recupera 1 ponto de Sorte temporário adicional por sessão de jogo.");
+    // The amount is real, tested data — resolveExtraSessionEgoRecovery below, read by
+    // EgoPointsService#getExtraSessionRecovery and applied by #applySessionRecovery.
+    // The trigger is deliberately outside this core: a Narrador ends a session by pressing a
+    // button, which the consumer routes to EgoPointsService#applySessionRecovery(Map). No core
+    // boundary exists by design. Same shape as AutocontroleAdvantage#MOTIVACAO_DE_MOSES's own
+    // "por sessão de jogo" clause.
+    DILETO_DE_TYKHE("Você recupera 1 ponto de Sorte temporário adicional por sessão de jogo.") {
+        @Override
+        public int resolveExtraSessionEgoRecovery() {
+            return EXTRA_SESSION_EGO_RECOVERY;
+        }
+    };
 
     /** ACE's own Margem Crítica Menor bonus for a Perícia de Ataque during a Cena de Combate. */
     private static final int COMBAT_ATTACK_MARGIN_BONUS = 1;
 
     /** ACE's own Margem Crítica Menor bonus for a non-Ataque Perícia outside a Cena de Combate. */
     private static final int NON_COMBAT_NON_ATTACK_MARGIN_BONUS = 3;
+
+    /** AS_NA_MANGA's own movement grant, in UD, off a deliberate Ponto de Sorte spend. */
+    private static final int MOVEMENT_BONUS = 2;
+
+    /** How many Rodadas AS_NA_MANGA's movement grant lasts — see that constant's own javadoc. */
+    private static final int MOVEMENT_ROUNDS = 1;
+
+    /** DILETO_DE_TYKHE's own extra temporary Sorte point per game session. */
+    private static final int EXTRA_SESSION_EGO_RECOVERY = 1;
 
     private final String description;
 

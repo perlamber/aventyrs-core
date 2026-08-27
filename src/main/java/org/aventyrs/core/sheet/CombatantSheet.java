@@ -92,15 +92,30 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
 
     boolean removeFromInventory(Item item);
 
-    // --- Temporary Ego points ---------------------------------------------------------------
+    // --- Ego points -------------------------------------------------------------------------
+    // Two spendable pools per EgoDomain, permanent and temporary; see EgoPointPool for the model
+    // and for why spending a permanent point costs twice over.
 
+    /** Permanent points not yet spent — the Ego stat itself is their maximum. */
+    int getPermanentEgoPoints(EgoDomain domain);
+
+    /** Temporary points not yet spent, under the live ceiling. */
     int getTemporaryEgoPoints(EgoDomain domain);
 
-    int gainTemporaryEgoPoints(EgoDomain domain, int amount);
+    /** How many temporary points this domain may hold right now. */
+    int getMaxTemporaryEgoPoints(EgoDomain domain);
 
-    int gainNonCumulativeTemporaryEgoPoints(EgoDomain domain, Object source, int amount);
+    /** Everything this domain can still pay with, from either pool. */
+    int getAvailableEgoPoints(EgoDomain domain);
 
-    int spendTemporaryEgoPoints(EgoDomain domain, int amount);
+    /** Spends from the pool the caller names, reporting what actually left it. */
+    EgoPointSpend spendEgoPoints(EgoDomain domain, EgoPointType type, int amount);
+
+    /** Restores previously-spent temporary points, bounded by the ceiling. */
+    int recoverTemporaryEgoPoints(EgoDomain domain, int amount);
+
+    /** Raises this domain's temporary ceiling, non-cumulatively per source. */
+    int grantTemporaryEgoPointBonus(EgoDomain domain, Object source, int amount);
 
     void owePendingEgoRecovery(PendingEgoRecovery recovery);
 

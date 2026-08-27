@@ -26,4 +26,18 @@ class AutocontroleAdvantageTest {
     void listHasTheThreeDescribedAdvantages() {
         assertEquals(3, AutocontroleAdvantage.values().length);
     }
+
+    @Test
+    void MOTIVACAO_DE_MOSESRecoversOneExtraTemporaryAutocontrolePointPerSession() {
+        assertEquals(1, AutocontroleAdvantage.MOTIVACAO_DE_MOSES.resolveExtraSessionEgoRecovery());
+    }
+
+    @Test
+    void noOtherAdvantageRecoversAnExtraSessionEgoPoint() {
+        for (AutocontroleAdvantage advantage : AutocontroleAdvantage.values()) {
+            if (advantage != AutocontroleAdvantage.MOTIVACAO_DE_MOSES) {
+                assertEquals(0, advantage.resolveExtraSessionEgoRecovery());
+            }
+        }
+    }
 }

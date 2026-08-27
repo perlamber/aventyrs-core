@@ -130,6 +130,13 @@ public class InteractionResult {
      * rather than reusing it — temporary Ego points ({@link EgoDomain}: Autocontrole,
      * Recursos, Sorte, Iniciativa) are a genuinely different pool from PV/PM/PD ({@link
      * ResourceType}), not just another value for the same enum.
+     *
+     * <p>This is the amount a spend <em>actually</em> took (see {@link
+     * EgoPointSpend#getValue()}), which against a nearly-empty pool is less than the effect
+     * asked for. It always comes from the <em>temporary</em> half: nothing in this ruleset
+     * drains permanent Ego points automatically. There is deliberately no {@link EgoPointType}
+     * field alongside it — one whose value is always {@code TEMPORARY} would be building for a
+     * consumer that doesn't exist.
      */
     Integer egoLossValue;
 
@@ -142,8 +149,9 @@ public class InteractionResult {
      * Autocontrole on the roller's own Sucesso Crítico Maior. Unlike {@link
      * #temporaryBonusValue} (a grant for *someone else* this core can't resolve the recipient
      * for), this roll's own target is unambiguous, so the grant is already applied directly
-     * via {@link CombatantSheet#gainNonCumulativeTemporaryEgoPoints} (keyed by the granting
-     * ability as its source — see that method) by the time this result is returned; this field
+     * via {@link CombatantSheet#grantTemporaryEgoPointBonus} — which raises that domain's
+     * temporary <em>ceiling</em>, keyed by the granting ability as its source — by the time
+     * this result is returned; this field
      * is purely a report of what happened, same as {@link #egoLossValue}/{@link
      * #egoLossDomain} already are for {@code org.aventyrs.core.effect.Primor}. Always exactly
      * 1 point per listed domain (no ability needing a different value exists yet). {@code

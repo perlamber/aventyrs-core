@@ -81,7 +81,8 @@
  * {@code resolve} assembles the chain but applies none of it, and touches no resource on the
  * defender — the same restraint {@code GritoDeGuerraVulcanoInteraction} applies to the Blessings
  * it reports. The one thing that does change is the defence roll itself happening ({@code
- * CombatantSheet#consumeFirstRollThisTurn}, and a temporary Ego point on a critical success),
+ * CombatantSheet#consumeFirstRollThisTurn}, and, on a critical success, a non-cumulative raise
+ * of the defender's temporary Ego ceiling),
  * which is why {@code resolve} rolls exactly once per attack.
  *
  * <h2>What this package deliberately doesn't do</h2>

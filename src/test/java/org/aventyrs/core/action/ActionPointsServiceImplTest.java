@@ -1,6 +1,7 @@
 package org.aventyrs.core.action;
 
 import org.aventyrs.core.ability.AttributeAbility;
+import org.aventyrs.core.ability.DexterityAbility;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterAttributes;
@@ -383,6 +384,32 @@ class ActionPointsServiceImplTest {
         assertFalse(actionPointsService.canAffordSkillRoll(sheet, 0));
         sheet.grantTemporaryBonus(ModifierType.ACTION_POINTS, 1, 1);
         assertTrue(actionPointsService.canAffordSkillRoll(sheet, 0));
+    }
+
+    /**
+     * APRESSADO is the first ability whose PA grant is conditioned on the Turn, so it can't be
+     * a no-arg {@code @Modifier} — it rides {@code AttributeAbility#resolveActionPointsBonus}
+     * instead, summed into the same baseline both overloads share.
+     */
+    @Test
+    void apressadoAddsOnePAOnEvenRodadasThroughBothOverloads() {
+        Character character = characterWithProfile(ActionProfile.CONSCIENCIA_DEFENSIVA, DexterityAbility.APRESSADO);
+        CharacterSheet sheet = CharacterSheet.of(character, new Player());
+
+        assertEquals(3, actionPointsService.getMaxActionPoints(character, 0));
+        assertEquals(4, actionPointsService.getMaxActionPoints(character, 1));
+        assertEquals(3, actionPointsService.getMaxActionPoints(sheet, 2));
+        assertEquals(4, actionPointsService.getMaxActionPoints(sheet, 3, COMBAT_SCENE));
+    }
+
+    @Test
+    void calculistaStillZeroesTheFirstRodadaDespiteApressado() {
+        // The profile is applied last, so its hard 0 isn't out-summed — and the 2nd Rodada
+        // (turn 1) stacks Calculista's own recovery with Apressado's even-Rodada point.
+        Character character = characterWithProfile(ActionProfile.CALCULISTA, DexterityAbility.APRESSADO);
+
+        assertEquals(0, actionPointsService.getMaxActionPoints(character, 0));
+        assertEquals(4, actionPointsService.getMaxActionPoints(character, 1));
     }
 
     @Test

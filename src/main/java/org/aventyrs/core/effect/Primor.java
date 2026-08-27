@@ -3,6 +3,8 @@ package org.aventyrs.core.effect;
 import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.rest.RestType;
 import org.aventyrs.core.sheet.CombatantSheet;
+import org.aventyrs.core.sheet.EgoPointSpend;
+import org.aventyrs.core.sheet.EgoPointType;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.InteractionResult;
 import org.aventyrs.core.sheet.PendingEgoRecovery;
@@ -16,7 +18,13 @@ import static org.aventyrs.core.util.TranslatableMessages.INVALID_PRIMOR_EGO_DOM
  * that isn't a PV/PM/PD resource drain: it costs the character receiving the attack —
  * {@link #applyTo}'s {@code target}, never the attacker — temporary Ego points from
  * either Sorte or Autocontrole (never Recursos/Iniciativa; rejected at construction, see
- * below), applied directly via {@link CombatantSheet#spendTemporaryEgoPoints}. Unlike
+ * below), drawn from that domain's <em>temporary</em> pool via {@link
+ * CombatantSheet#spendEgoPoints} — never the permanent one: nothing in this ruleset reduces
+ * permanent Ego points automatically, they are only ever spent by their holder's own choice.
+ * The spend floors at 0 rather than throwing, and the {@link PendingEgoRecovery} below is
+ * registered for what was <em>actually</em> spent rather than what was asked for, so a target
+ * holding fewer temporary points than this drains is never handed back points it had spent
+ * itself. Unlike
  * {@link Sangramento}/{@link ManaPurge}, there's no ongoing per-Rodada loss — this is a
  * one-time spend — but the spent points are specifically promised back at the target's
  * next qualifying Rest ("pontos perdidos desta forma são recuperados no próximo
@@ -82,12 +90,12 @@ public class Primor extends AbstractEffect implements CriticalEffect {
         int value = criticalResult == CriticalResult.ACERTO_CRITICO_MAIOR ? MAIOR_VALUE : MENOR_VALUE;
         RestType minimumRestType = criticalResult == CriticalResult.ACERTO_CRITICO_MAIOR ? RestType.LONGO : RestType.MINIMO;
 
-        target.spendTemporaryEgoPoints(domain, value);
-        target.owePendingEgoRecovery(new PendingEgoRecovery(domain, value, minimumRestType));
+        EgoPointSpend spend = target.spendEgoPoints(domain, EgoPointType.TEMPORARY, value);
+        target.owePendingEgoRecovery(new PendingEgoRecovery(domain, spend.getValue(), minimumRestType));
 
         return reportChain(InteractionResult.builder()
                 .resultStatus(resolveStatus(target))
-                .egoLossValue(value)
+                .egoLossValue(spend.getValue())
                 .egoLossDomain(domain))
                 .build();
     }

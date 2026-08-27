@@ -86,7 +86,7 @@ public enum ArmorItem implements Item {
      *   <li>"Movimento Base reduzido à metade" contributes no {@link ItemBonus} at all and
      *   lives on in the Favor's own description text. Halving isn't a shape {@link ItemBonus}
      *   can express — it's a flat {@link ModifierType}-and-value pair, and {@code
-     *   org.aventyrs.core.character.services.MovementService#getTotalMovement} sums {@code
+     *   org.aventyrs.core.character.services.MovementService#getMovementBase} sums {@code
      *   ModifierType#MOVEMENT} additively with no multiplicative step anywhere (unlike {@code
      *   DamageService}, which does have a real halving stage for {@code
      *   ModifierType#HALF_DAMAGE} to feed). Don't add a {@code MOVEMENT_HALVED} constant

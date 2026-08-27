@@ -53,6 +53,10 @@ import org.aventyrs.core.modifier.ModifierType;
  * DamageService#getTotalDamageReduction} already sums — and now genuinely does, scanning {@code
  * Character#getEquipment()} as its fourth source. A caller holding an item that isn't equipped
  * can still ask it directly via {@link #resolveFavorBonus(ModifierType, Character)}.
+ *
+ * <p><b>Dano Base is not here</b>, deliberately — it lives on {@link Weapon}, the sub-interface
+ * for items that can actually be swung, so that nothing can ask a helmet what it hits for. See
+ * that interface's own javadoc.
  */
 public interface Item {
 

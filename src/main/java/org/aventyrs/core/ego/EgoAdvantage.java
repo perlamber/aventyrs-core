@@ -5,6 +5,7 @@ import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.Blessing;
 import org.aventyrs.core.sheet.CombatantSheet;
+import org.aventyrs.core.sheet.EgoPointSpend;
 import org.aventyrs.core.skill.SkillType;
 
 import java.util.List;
@@ -60,6 +61,92 @@ public interface EgoAdvantage {
      * rules text grants a bonus specifically for winning initiative.
      */
     default List<Blessing> resolveInitiativeBlessings() {
+        return List.of();
+    }
+
+    /**
+     * Extra temporary Ego points — beyond {@code
+     * org.aventyrs.core.character.services.EgoPointsService#SESSION_TEMPORARY_RECOVERY}'s single
+     * baseline point — that this Vantagem recovers per game session, e.g. {@link
+     * AutocontroleAdvantage#MOTIVACAO_DE_MOSES}'s "Você recupera 1 ponto de Autocontrole
+     * temporário adicional por sessão de jogo" and {@link SorteAdvantage#DILETO_DE_TYKHE}'s
+     * identical clause for Sorte. Zero by default; only override on a constant whose rules text
+     * grants one.
+     *
+     * <p>No-arg, like {@link #resolveInitiativeBlessings}: the points always land in this
+     * Vantagem's own {@link #getEgoDomain()}, so attributing them there rather than returning a
+     * domain is what keeps the two from ever drifting apart. A Vantagem recovering points in
+     * some <em>other</em> domain would need a domain-returning shape instead — none exists, and
+     * this shouldn't be widened speculatively for one.
+     *
+     * <p>Resolved by {@code EgoPointsService#getExtraSessionRecovery} and applied by {@code
+     * EgoPointsService#applySessionRecovery}. That value is real, tested data even though
+     * nothing calls the service automatically — this core has no game-session boundary to
+     * trigger it from.
+     */
+    default int resolveExtraSessionEgoRecovery() {
+        return 0;
+    }
+
+    /**
+     * How much PV, PM <em>and</em> PD this Vantagem additionally recovers because its holder
+     * just deliberately used Ego points for some effect — e.g. {@link
+     * AutocontroleAdvantage#DETERMINACAO_HEROICA}'s "Usar pontos de Autocontrole para qualquer
+     * efeito adicionalmente recupera +1d6PV, PM e PD; se o ponto for permanente, o valor
+     * recuperado é dobrado." One figure, applied to all three pools alike, per that rules text.
+     * Zero by default; only override on a constant whose rules text reacts to a spend this way.
+     *
+     * <p>{@code rolledValue} is the caller's <strong>already-rolled</strong> die — this core
+     * never rolls dice itself, the same boundary {@code org.aventyrs.core.skill.SkillRoll} and
+     * {@code org.aventyrs.core.combat.IncomingAttack} sit on. An override doubling it for a
+     * permanent point returns {@code rolledValue * 2}; the doubling is arithmetic on a value
+     * that arrived from outside, not a second roll.
+     *
+     * <p>{@code spend} is a <strong>completed</strong> {@link EgoPointSpend}: it reports which
+     * pool was actually drawn from ({@link EgoPointSpend#getType()} — the permanent/temporary
+     * distinction this hook exists for) and how many points actually left it, which may be
+     * fewer than were asked for. An override should return 0 when {@code spend.getValue()} is
+     * 0, since nothing was in fact used.
+     *
+     * <p><strong>Only a deliberate use triggers this, never a drain.</strong> It is resolved by
+     * {@code EgoPointsService#useEgoPointsForEffect}, and deliberately <em>not</em> by {@code
+     * CombatantSheet#spendEgoPoints} itself — which also serves {@code
+     * org.aventyrs.core.effect.Primor} draining a victim's points against their will. Firing
+     * there would mean a critical hit healing the character it just hit. "Usar pontos… para
+     * qualquer efeito" is the holder choosing to spend, and that choice is exactly what the
+     * separate service entry point represents.
+     *
+     * <p>Consulted only for the Vantagem held in the spend's <em>own</em> {@link EgoDomain} —
+     * the same domain-scoping {@link #resolveExtraSessionEgoRecovery} uses, and what keeps
+     * DETERMINACAO_HEROICA (an Autocontrole Vantagem) from reacting to a Sorte spend without
+     * needing to check the domain itself.
+     */
+    default int resolveEgoSpendRecovery(EgoPointSpend spend, int rolledValue) {
+        return 0;
+    }
+
+    /**
+     * Every {@link Blessing} this Vantagem grants because its holder just deliberately used Ego
+     * points for some effect — e.g. {@link SorteAdvantage#AS_NA_MANGA}'s 2UD of extra movement
+     * "imediatamente após utilizar um Ponto de Sorte". Empty by default; only override on a
+     * constant whose rules text grants a temporary bonus off the back of a spend.
+     *
+     * <p>The {@link EgoPointSpend} sibling of {@link #resolveInitiativeBlessings()}, and resolved
+     * the same "resolve, don't mutate" way — {@code EgoPointsService#useEgoPointsForEffect} is
+     * what actually grants what this returns. Unlike the initiative path, though, these are
+     * granted <strong>directly to the spender</strong> rather than handed back for a caller to
+     * route: who used the points is unambiguous, the same reasoning that lets {@code
+     * AbstractSkillInteraction} apply {@code DESTINO_FAVORAVEL}'s Ego point on the spot. A
+     * {@link org.aventyrs.core.sheet.TargetScope} other than {@code SELF} therefore has no
+     * meaning here yet, and nothing routes one; don't return one expecting allies to receive it.
+     *
+     * <p>An override should return nothing when {@code spend.getValue()} is 0 — no points were
+     * in fact used — and, like {@link #resolveEgoSpendRecovery}, it is consulted only for the
+     * Vantagem held in the spend's own {@link EgoDomain}, so a constant needn't check the domain
+     * itself. It fires on a deliberate use only, never on an involuntary drain such as {@code
+     * org.aventyrs.core.effect.Primor}'s.
+     */
+    default List<Blessing> resolveEgoSpendBlessings(EgoPointSpend spend) {
         return List.of();
     }
 

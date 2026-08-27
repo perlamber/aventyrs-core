@@ -5,6 +5,7 @@ import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.rest.RestType;
 import org.aventyrs.core.sheet.CharacterSheet;
+import org.aventyrs.core.sheet.EgoPointType;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.InteractionResult;
 import org.aventyrs.core.sheet.Player;
@@ -47,43 +48,39 @@ class PrimorTest {
     @Test
     void acertoCriticoMenorSpendsOneTemporaryPointFromTheChosenDomain() {
         CharacterSheet sheet = newSheet();
-        sheet.gainTemporaryEgoPoints(EgoDomain.SORTE, 3);
 
         InteractionResult result = new Primor(CriticalResult.ACERTO_CRITICO_MENOR, EgoDomain.SORTE).applyTo(sheet);
 
         assertEquals(1, result.getEgoLossValue());
         assertEquals(EgoDomain.SORTE, result.getEgoLossDomain());
-        assertEquals(2, sheet.getTemporaryEgoPoints(EgoDomain.SORTE));
+        assertEquals(1, sheet.getTemporaryEgoPoints(EgoDomain.SORTE));
         assertEquals(CharacterStatus.CLEAN, result.getResultStatus());
     }
 
     @Test
     void acertoCriticoMaiorSpendsTwoTemporaryPointsFromTheChosenDomain() {
         CharacterSheet sheet = newSheet();
-        sheet.gainTemporaryEgoPoints(EgoDomain.AUTOCONTROLE, 3);
 
         InteractionResult result = new Primor(CriticalResult.ACERTO_CRITICO_MAIOR, EgoDomain.AUTOCONTROLE).applyTo(sheet);
 
         assertEquals(2, result.getEgoLossValue());
         assertEquals(EgoDomain.AUTOCONTROLE, result.getEgoLossDomain());
-        assertEquals(1, sheet.getTemporaryEgoPoints(EgoDomain.AUTOCONTROLE));
+        assertEquals(0, sheet.getTemporaryEgoPoints(EgoDomain.AUTOCONTROLE));
     }
 
     @Test
     void menorLossIsRecoveredByAnyRestTier() {
         CharacterSheet sheet = newSheet();
-        sheet.gainTemporaryEgoPoints(EgoDomain.SORTE, 1);
         new Primor(CriticalResult.ACERTO_CRITICO_MENOR, EgoDomain.SORTE).applyTo(sheet);
 
         sheet.applyPendingEgoRecoveries(RestType.MINIMO);
 
-        assertEquals(1, sheet.getTemporaryEgoPoints(EgoDomain.SORTE));
+        assertEquals(2, sheet.getTemporaryEgoPoints(EgoDomain.SORTE));
     }
 
     @Test
     void maiorLossIsNotRecoveredByAShortOrMinimumRest() {
         CharacterSheet sheet = newSheet();
-        sheet.gainTemporaryEgoPoints(EgoDomain.SORTE, 2);
         new Primor(CriticalResult.ACERTO_CRITICO_MAIOR, EgoDomain.SORTE).applyTo(sheet);
 
         sheet.applyPendingEgoRecoveries(RestType.MINIMO);
@@ -95,12 +92,28 @@ class PrimorTest {
     @Test
     void maiorLossIsRecoveredByALongRest() {
         CharacterSheet sheet = newSheet();
-        sheet.gainTemporaryEgoPoints(EgoDomain.SORTE, 2);
         new Primor(CriticalResult.ACERTO_CRITICO_MAIOR, EgoDomain.SORTE).applyTo(sheet);
 
         sheet.applyPendingEgoRecoveries(RestType.LONGO);
 
         assertEquals(2, sheet.getTemporaryEgoPoints(EgoDomain.SORTE));
+    }
+
+    /**
+     * The refund is registered for what was <em>actually</em> spent, not what Primor asked for —
+     * otherwise a Rest would hand back a point the target had spent itself.
+     */
+    @Test
+    void aTargetWithFewerPointsThanPrimorDrainsIsNotRefundedMoreThanItLost() {
+        CharacterSheet sheet = newSheet();
+        sheet.spendEgoPoints(EgoDomain.SORTE, EgoPointType.TEMPORARY, 1);
+
+        InteractionResult result = new Primor(CriticalResult.ACERTO_CRITICO_MAIOR, EgoDomain.SORTE).applyTo(sheet);
+        assertEquals(1, result.getEgoLossValue());
+
+        sheet.applyPendingEgoRecoveries(RestType.LONGO);
+
+        assertEquals(1, sheet.getTemporaryEgoPoints(EgoDomain.SORTE));
     }
 
     @Test

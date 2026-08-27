@@ -40,6 +40,27 @@ class MovementServiceTest {
         }
     }
 
+    /**
+     * Grants Pontos de Acao, never Movimento — the source under test in {@code
+     * extraActionPointsDoNotWidenMovementBase}.
+     */
+    private static class ActionPointsBonusAbility implements AttributeAbility {
+        @Override
+        public AttributeDomain getAttributeDomain() {
+            return AttributeDomain.DEXTERITY;
+        }
+
+        @Override
+        public String getDescription() {
+            return "Test-only +2 Pontos de Acao bonus source.";
+        }
+
+        @Modifier(ModifierType.ACTION_POINTS)
+        public int bonus() {
+            return 2;
+        }
+    }
+
     private static class MovementMalusAbility implements AttributeAbility {
         @Override
         public AttributeDomain getAttributeDomain() {
@@ -88,10 +109,10 @@ class MovementServiceTest {
     }
 
     @Test
-    void baseMovementIsSizeMovementPerActionPointTimesMaxActionPoints() {
+    void baseMovementIsTheSizeCategoryMovementPerActionPoint() {
         Character character = CharacterFixture.blank(CharacterFixture.BLANK).build();
-        // SizeCategory.ZERO's 4UD/PA * ActionPointsService.DEFAULT_ACTION_POINTS(3) = 12.
-        assertEquals(12, movementService.getTotalMovement(character, 0));
+        // SizeCategory.ZERO's 4UD per Ponto de Acao, not multiplied by how many the character has.
+        assertEquals(4, movementService.getMovementBase(character));
     }
 
     @Test
@@ -99,8 +120,8 @@ class MovementServiceTest {
         Character character = CharacterFixture.blank(CharacterFixture.BLANK)
                 .sizeCategory(SizeCategory.PLUS_ONE)
                 .build();
-        // SizeCategory.PLUS_ONE's 5UD/PA * 3 = 15.
-        assertEquals(15, movementService.getTotalMovement(character, 0));
+        // SizeCategory.PLUS_ONE's 5UD per Ponto de Acao.
+        assertEquals(5, movementService.getMovementBase(character));
     }
 
     @Test
@@ -108,7 +129,7 @@ class MovementServiceTest {
         Character character = CharacterFixture.blank(CharacterFixture.BLANK)
                 .attributeAbility(new MovementBonusAbility())
                 .build();
-        assertEquals(13, movementService.getTotalMovement(character, 0));
+        assertEquals(5, movementService.getMovementBase(character));
     }
 
     @Test
@@ -116,7 +137,7 @@ class MovementServiceTest {
         Character character = CharacterFixture.blank(CharacterFixture.BLANK)
                 .skillCompetencyAbility(new MovementBonusSkillCompetencyAbility())
                 .build();
-        assertEquals(13, movementService.getTotalMovement(character, 0));
+        assertEquals(5, movementService.getMovementBase(character));
     }
 
     @Test
@@ -124,7 +145,7 @@ class MovementServiceTest {
         Character character = CharacterFixture.blank(CharacterFixture.BLANK)
                 .race(new RaceWithMovementBonus())
                 .build();
-        assertEquals(13, movementService.getTotalMovement(character, 0));
+        assertEquals(5, movementService.getMovementBase(character));
     }
 
     @Test
@@ -134,7 +155,20 @@ class MovementServiceTest {
         Character character = CharacterFixture.blank(CharacterFixture.BLANK)
                 .skill(SkillType.ATAQUE_CORPO_A_CORPO, ataqueCorpoACorpoSkill)
                 .build();
-        assertEquals(14, movementService.getTotalMovement(character, 0));
+        assertEquals(6, movementService.getMovementBase(character));
+    }
+
+    /**
+     * Movimento Base is what a single Ponto de Acao buys, so having more of them buys more
+     * total distance without widening the per-point figure — the player decides how many of
+     * their Pontos de Acao that Turn go to moving and how many to everything else.
+     */
+    @Test
+    void extraActionPointsDoNotWidenMovementBase() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .attributeAbility(new ActionPointsBonusAbility())
+                .build();
+        assertEquals(4, movementService.getMovementBase(character));
     }
 
     @Test
@@ -142,6 +176,6 @@ class MovementServiceTest {
         Character character = CharacterFixture.blank(CharacterFixture.BLANK)
                 .attributeAbility(new MovementMalusAbility())
                 .build();
-        assertEquals(0, movementService.getTotalMovement(character, 0));
+        assertEquals(0, movementService.getMovementBase(character));
     }
 }

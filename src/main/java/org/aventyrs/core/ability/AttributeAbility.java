@@ -29,8 +29,10 @@ public interface AttributeAbility {
      * CriticalResult#ACERTO_CRITICO_MAIOR}. Empty by default; only override on a constant
      * whose rules text reacts to the roller's own critical result this way. "Non-cumulative"
      * per that kind of ability's own rules text: applied via {@code CombatantSheet
-     * #gainNonCumulativeTemporaryEgoPoints}, not a plain additive gain — repeated triggers
-     * don't stack a point on top of one already held.
+     * #grantTemporaryEgoPointBonus}, which raises that domain's temporary <em>ceiling</em>
+     * rather than handing over a free-floating point, and records the contribution against this
+     * ability as its source — so this one ability's repeated triggers never widen the ceiling
+     * twice, while an unrelated source's own grant still adds on top.
      */
     default List<EgoDomain> resolveCriticalSuccessEgoGain(CriticalResult criticalResult) {
         return List.of();
@@ -245,6 +247,26 @@ public interface AttributeAbility {
      * whose rules text widens Margem Crítica Menor like this.
      */
     default int resolveCriticalMarginIncrease(SkillType skillType, SceneContext sceneContext) {
+        return 0;
+    }
+
+    /**
+     * Extra Pontos de Ação this Habilidade grants on the given Turn — e.g. {@link
+     * DexterityAbility#APRESSADO}'s "+1PA em turnos de Rodadas pares". turnNumber is 0-based,
+     * the same convention {@code org.aventyrs.core.action.ActionProfile} and every {@code
+     * ActionPointsService} overload already use: Turn 0 <em>is</em> the first Rodada, so an
+     * even Rodada is an odd turnNumber. Takes turnNumber explicitly (rather than being a
+     * reflection-invoked {@code @Modifier(ModifierType.ACTION_POINTS)} method) because the
+     * grant is conditioned on <i>which</i> Rodada this is, which a no-arg method has no way to
+     * see — same reasoning as {@link #resolveRestMagicPointsBonus} needing its own explicit
+     * {@code RestType}. Summed by {@code
+     * org.aventyrs.core.action.ActionPointsService#getMaxActionPoints} across {@code
+     * Character#getAttributeAbilities()}, into the baseline the {@code ActionProfile}
+     * adjustment is then applied on top of — so a profile that zeroes PA outright still zeroes
+     * this too. Zero by default; only override on a constant whose rules text grants
+     * Turn-conditioned PA like this.
+     */
+    default int resolveActionPointsBonus(int turnNumber) {
         return 0;
     }
 

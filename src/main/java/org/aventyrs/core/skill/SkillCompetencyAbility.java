@@ -54,7 +54,51 @@ public interface SkillCompetencyAbility extends SkillTrait {
      * {@code ModifierResolver} to discover it.
      */
     default Optional<DamageBonus> resolveDamageBonus(final SceneContext sceneContext, final CombatantSheet attackTarget) {
+        return resolveDamageBonus(null, sceneContext, attackTarget, null);
+    }
+
+    /**
+     * {@link #resolveDamageBonus(SceneContext, CombatantSheet)} with the two facts a proximity
+     * condition doesn't need but a holder-state condition does: which Perícia de Ataque is being
+     * rolled, and the roller's own {@link Character}. Cascading-overload convention — the
+     * 2-arg form above delegates here with {@code null}s and this one holds the real logic, so
+     * an override always goes on <em>this</em> one even when it ignores the two new parameters
+     * ({@code AtaqueADistanciaCompetencyAbility#FRIEZA} does exactly that).
+     *
+     * <p>{@code actor} is the ability's own holder, mirroring {@code
+     * org.aventyrs.core.ego.EgoAdvantage#resolveSkillSpecificRollBonus}'s "passed explicitly
+     * because the bonus may depend on the holder's own live state" shape — it's what {@code
+     * AtaqueCorpoACorpoCompetencyAbility#BRUTALIDADE} reads its own Graduação from, to tell
+     * whether it's still granting a flat dano bonus or has converted into a Dano Base increase
+     * (see {@link #resolveDamageBaseIncrease}). Both may be {@code null} when a caller reaches
+     * this through the shorter overload; an override conditioned on either treats {@code null}
+     * as "condition not met," the same restraint every other {@code resolve*} hook applies.
+     */
+    default Optional<DamageBonus> resolveDamageBonus(final SkillType attackingSkillType, final SceneContext sceneContext, final CombatantSheet attackTarget, final Character actor) {
         return Optional.empty();
+    }
+
+    /**
+     * How many Dano Base scale-ups this ability grants an attack made with attackingSkillType —
+     * e.g. {@code AtaqueCorpoACorpoCompetencyAbility#BRUTALIDADE}'s +1 (or +2) once its holder
+     * reaches the Graduação that converts its flat dano bonus into a Dano Base increase, or
+     * {@code ArtesAprimorarComArteAbility}'s "Perícias de Ataque - Dano Base +1" branch. Summed
+     * by {@code org.aventyrs.core.character.services.DamageBaseService#getDamageBase} across
+     * {@code SkillCompetencyAbility#allFor} (so racial abilities count), and applied to the
+     * wielded item's own {@link org.aventyrs.core.character.DamageBase}.
+     *
+     * <p>The service deliberately does <b>not</b> pre-filter by {@link #getSkillType()}: an
+     * ability may raise the Dano Base of a Perícia other than its own (that's precisely what
+     * {@code ArtesAprimorarComArteAbility}, an <i>Artes</i> ability, does for the Perícia de
+     * Ataque its holder chose). Each override checks attackingSkillType itself — same shape and
+     * reason as {@link #resolveCriticalMarginIncrease}. character is the holder, for a clause
+     * gated on their own Graduação. Zero by default; only override on a constant whose rules
+     * text raises Dano Base, never for a flat "+N aos Danos" (that's {@link
+     * #resolveDamageBonus} — see {@link org.aventyrs.core.character.DamageBase}'s javadoc for
+     * why the two never merge).
+     */
+    default int resolveDamageBaseIncrease(final SkillType attackingSkillType, final Character character) {
+        return 0;
     }
 
     /**

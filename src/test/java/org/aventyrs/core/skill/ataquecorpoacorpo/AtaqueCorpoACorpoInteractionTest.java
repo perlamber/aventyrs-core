@@ -103,6 +103,26 @@ class AtaqueCorpoACorpoInteractionTest {
     }
 
     @Test
+    void sagacidadeArcanaSubstitutesFocoForForca() {
+        CharacterSkill ataqueCorpoACorpoSkill = CharacterSkillFixture.blank(CharacterSkillFixture.ATAQUE_CORPO_A_CORPO_1).build();
+        ataqueCorpoACorpoSkill.increaseGraduation(1);
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .attributes(CharacterAttributes.builder()
+                        .strength(AttributeValue.builder().domain(AttributeDomain.STRENGTH).base(5).variable(4).build())
+                        .focus(AttributeValue.builder().domain(AttributeDomain.FOCUS).base(2).build())
+                        .build())
+                .skill(SkillType.ATAQUE_CORPO_A_CORPO, ataqueCorpoACorpoSkill)
+                .skillCompetencyAbility(AtaqueCorpoACorpoCompetencyAbility.SAGACIDADE_ARCANA)
+                .build();
+        CharacterSheet sheet = CharacterSheet.of(character, new Player());
+
+        InteractionResult result = ataqueCorpoACorpoInteraction.applyTo(sheet);
+
+        // 2 Foco + 1 Graduação, with the 9-point Força ignored entirely.
+        assertEquals(3, result.getSkillRollBonus());
+    }
+
+    @Test
     void unrelatedCompetencyAbilitiesDoNotSubstituteTheAttribute() {
         CharacterSkill ataqueCorpoACorpoSkill = CharacterSkillFixture.blank(CharacterSkillFixture.ATAQUE_CORPO_A_CORPO_1).build();
         ataqueCorpoACorpoSkill.increaseGraduation(1);

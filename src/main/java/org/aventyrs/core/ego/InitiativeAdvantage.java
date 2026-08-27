@@ -75,8 +75,10 @@ public enum InitiativeAdvantage implements EgoAdvantage {
      * org.aventyrs.core.character.services.InitiativeBlessingService} and applied by {@code
      * org.aventyrs.core.scene.Scene#applyInitiativeBlessings} as a {@code TemporaryBonus} on
      * the winner and every Scene ally, consumed by summing {@code
-     * org.aventyrs.core.character.services.MovementService#getTotalMovement} with {@code
-     * CombatantSheet#getTemporaryBonus(ModifierType.MOVEMENT)}.
+     * org.aventyrs.core.character.services.MovementService#getMovementBase} with {@code
+     * CombatantSheet#getTemporaryBonus(ModifierType.MOVEMENT)}. Movimento Base being a
+     * per-Ponto-de-Ação figure, the +2UD applies to every point its holder spends moving —
+     * which is exactly what "o seu Movimento Base ... aumenta em +2UD" states.
      *
      * <p>TODO: "seus movimentos não permitem Reações de seus inimigos" stays unimplemented —
      * this core has no movement/positioning system to suppress a Reação from at all (it

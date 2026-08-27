@@ -58,8 +58,12 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     @Getter(AccessLevel.NONE)
     private final ResourcePool determinationPoints = new ResourcePool();
 
+    /**
+     * Both spendable Ego point pools, per {@link EgoDomain} — see {@link EgoPointPool} for the
+     * permanent/temporary model and why each is a spent-counter rather than a held balance.
+     */
     @Getter(AccessLevel.NONE)
-    private final Map<EgoDomain, TemporaryPointPool> temporaryEgoPoints = newTemporaryEgoPointsPools();
+    private final Map<EgoDomain, EgoPointPool> egoPoints = newEgoPointPools();
 
     /**
      * Every {@link TemporaryEffect} (a {@link TemporaryBonus}, a {@link Bleeding}, …) this sheet
@@ -106,10 +110,10 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         this.character = character;
     }
 
-    private static Map<EgoDomain, TemporaryPointPool> newTemporaryEgoPointsPools() {
-        Map<EgoDomain, TemporaryPointPool> pools = new EnumMap<>(EgoDomain.class);
+    private static Map<EgoDomain, EgoPointPool> newEgoPointPools() {
+        Map<EgoDomain, EgoPointPool> pools = new EnumMap<>(EgoDomain.class);
         for (EgoDomain domain : EgoDomain.values()) {
-            pools.put(domain, new TemporaryPointPool());
+            pools.put(domain, new EgoPointPool());
         }
         return pools;
     }
@@ -212,29 +216,136 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         return determinationPoints.recover(amount);
     }
 
-    @Override
-    public int getTemporaryEgoPoints(final EgoDomain domain) {
-        return temporaryEgoPoints.get(domain).getAmount();
-    }
-
-    @Override
-    public int gainTemporaryEgoPoints(final EgoDomain domain, final int amount) {
-        return temporaryEgoPoints.get(domain).gain(amount);
+    /**
+     * This domain's permanent maximum — the Ego stat itself, {@code base + variable}.
+     *
+     * <p>Read straight off {@link #getCharacter()} rather than through a service, unlike max Hit
+     * Points: resolving <em>that</em> needs a {@code ModifierResolver} three-source
+     * {@code @Modifier} scan, which is why {@code HitPointsService} owns it and why {@code
+     * org.aventyrs.core.sheet} must not depend on {@code org.aventyrs.core.character.services}.
+     * A permanent Ego maximum needs no scan at all — it is a two-field sum on {@code EgoValue},
+     * over data this sheet already holds, and {@code org.aventyrs.core.character} is a legal
+     * dependency here.
+     *
+     * <p><strong>Not to be confused with {@code InitiativeService#getTotalInitiative}</strong>,
+     * which reads this same {@code EgoValue.getTotal()} but then adds a {@code
+     * ModifierType.INITIATIVE} three-source sum, because Iniciativa doubles as a turn-order stat.
+     * A {@code TemporaryBonus(INITIATIVE, +2, 2)} must never widen how many Iniciativa
+     * <em>points</em> a combatant can spend. This asymmetry is the likeliest future misreading of
+     * the two.
+     */
+    private int getPermanentEgoMax(final EgoDomain domain) {
+        return character.getEgos().getEgo(domain).getTotal();
     }
 
     /**
-     * Gains a non-cumulative temporary point in domain, attributed to source — repeat gains from
-     * that <i>same</i> source don't stack past what it already granted, while a different
-     * source's gain still adds normally on top. See {@link TemporaryPointPool#gainNonCumulative}.
+     * The sum of every currently-active {@link TemporaryEgoPenalty} against domain — the {@link
+     * TemporaryEgoPenalty} counterpart to {@link #getTemporaryBonus}, queried directly since an
+     * Ego penalty deliberately isn't a {@link ModifierType} (see that class's own javadoc).
+     * Private: {@link #getMaxTemporaryEgoPoints} already exposes the net effect, which is what a
+     * consumer actually needs.
      */
-    @Override
-    public int gainNonCumulativeTemporaryEgoPoints(final EgoDomain domain, final Object source, final int amount) {
-        return temporaryEgoPoints.get(domain).gainNonCumulative(source, amount);
+    private int sumEgoPenalty(final EgoDomain domain) {
+        return temporaryEffects.stream()
+                .filter(effect -> effect instanceof TemporaryEgoPenalty)
+                .map(effect -> (TemporaryEgoPenalty) effect)
+                .filter(penalty -> !penalty.isExpired())
+                .filter(penalty -> penalty.getDomain() == domain)
+                .mapToInt(TemporaryEgoPenalty::getValue)
+                .sum();
     }
 
+    /**
+     * Permanent points not yet spent in domain.
+     *
+     * <p>Note this sheet's {@link #getCharacter()} is {@code final}, while {@code
+     * AttributeAbilityServiceImpl#grantAttributeAbility} applies a permanent Ego gain by
+     * returning a <em>rebuilt</em> {@code Character}. So a permanent point earned after this
+     * sheet was constructed is invisible to it until a new sheet is built from the new Character
+     * — the same pre-existing ordering gap {@code MoralHerdadaAbility#applyStartingFama} sits on,
+     * not something this pool introduces.
+     */
     @Override
-    public int spendTemporaryEgoPoints(final EgoDomain domain, final int amount) {
-        return temporaryEgoPoints.get(domain).spend(amount);
+    public int getPermanentEgoPoints(final EgoDomain domain) {
+        return egoPoints.get(domain).getPermanentRemaining(getPermanentEgoMax(domain));
+    }
+
+    /**
+     * How many temporary points domain may hold right now — permanent points <em>remaining</em>
+     * plus every granted bonus, minus any active {@link TemporaryEgoPenalty}. See {@link
+     * EgoPointPool} for why this tracks permanent remaining rather than the permanent maximum.
+     */
+    @Override
+    public int getMaxTemporaryEgoPoints(final EgoDomain domain) {
+        return egoPoints.get(domain).getTemporaryCeiling(getPermanentEgoMax(domain), sumEgoPenalty(domain));
+    }
+
+    /**
+     * Temporary points not yet spent in domain, under the live {@link
+     * #getMaxTemporaryEgoPoints(EgoDomain) ceiling} — <em>not</em> a directly-held balance
+     * accumulated from zero, which is what this returned before the two-pool model landed.
+     */
+    @Override
+    public int getTemporaryEgoPoints(final EgoDomain domain) {
+        return egoPoints.get(domain).getTemporaryRemaining(getPermanentEgoMax(domain), sumEgoPenalty(domain));
+    }
+
+    /** Everything domain can still pay with, from either pool. The affordability read. */
+    @Override
+    public int getAvailableEgoPoints(final EgoDomain domain) {
+        return getPermanentEgoPoints(domain) + getTemporaryEgoPoints(domain);
+    }
+
+    /**
+     * Spends up to amount points of type from domain, reporting what <em>actually</em> left the
+     * pool.
+     *
+     * <p>The caller chooses the pool, and there is deliberately <strong>no fallback</strong> from
+     * {@link EgoPointType#TEMPORARY} to {@link EgoPointType#PERMANENT} when temporary is short:
+     * falling through would silently spend a permanent point, which costs twice over (see {@link
+     * EgoPointPool}), and that ambiguity is exactly what an explicit type removes.
+     *
+     * <p>There is also deliberately <strong>no shorter overload</strong> defaulting type to
+     * {@code TEMPORARY}. This codebase's cascading-overload convention is for an input that is
+     * genuinely <em>optional</em>, delegating down with {@code null}; {@code type} is not
+     * optional, it is the whole question this method exists to answer. Don't add one.
+     *
+     * <p>Floors at 0 rather than throwing — affordability is the caller's own check via {@link
+     * #getAvailableEgoPoints}, matching this codebase's "possession is validated; eligibility
+     * mostly isn't" restraint, and matching what {@code org.aventyrs.core.effect.Primor} needs,
+     * since a critical hit isn't a transaction its victim can decline.
+     */
+    @Override
+    public EgoPointSpend spendEgoPoints(final EgoDomain domain, final EgoPointType type, final int amount) {
+        EgoPointPool pool = egoPoints.get(domain);
+        int permanentMax = getPermanentEgoMax(domain);
+        int spent = type == EgoPointType.PERMANENT
+                ? pool.spendPermanent(permanentMax, amount)
+                : pool.spendTemporary(permanentMax, sumEgoPenalty(domain), amount);
+        return new EgoPointSpend(domain, type, spent);
+    }
+
+    /**
+     * Restores up to amount previously-spent temporary points in domain, returning how many
+     * actually came back — bounded by what was spent, so this can never push a pool past its own
+     * ceiling. Named "recover", not "gain": since the two-pool model landed it cannot accumulate
+     * past that ceiling, and "gain" would be a lie a caller only discovered at runtime.
+     */
+    @Override
+    public int recoverTemporaryEgoPoints(final EgoDomain domain, final int amount) {
+        return egoPoints.get(domain).recoverTemporary(getPermanentEgoMax(domain), sumEgoPenalty(domain), amount);
+    }
+
+    /**
+     * Raises domain's temporary <em>ceiling</em> by amount, attributed to source and
+     * non-cumulative per source — repeat grants from that <i>same</i> source don't stack past
+     * what it already granted, while a different source's grant still adds on top. See {@link
+     * EgoPointPool#grantTemporaryBonus}.
+     */
+    @Override
+    public int grantTemporaryEgoPointBonus(final EgoDomain domain, final Object source, final int amount) {
+        egoPoints.get(domain).grantTemporaryBonus(source, amount);
+        return getTemporaryEgoPoints(domain);
     }
 
     /**
@@ -248,15 +359,19 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     }
 
     /**
-     * Resolves every {@link PendingEgoRecovery} satisfied by a Rest of restType's tier, granting
-     * each one's owed points back, and discards them.
+     * Resolves every {@link PendingEgoRecovery} satisfied by a Rest of restType's tier, restoring
+     * each one's owed temporary points, and discards them. The restoration is bounded by the
+     * domain's own ceiling, like any other {@link #recoverTemporaryEgoPoints} call.
      */
     @Override
     public void applyPendingEgoRecoveries(final RestType restType) {
-        pendingEgoRecoveries.stream()
-                .filter(recovery -> recovery.isSatisfiedBy(restType))
-                .forEach(recovery -> gainTemporaryEgoPoints(recovery.getDomain(), recovery.getValue()));
-        pendingEgoRecoveries.removeIf(recovery -> recovery.isSatisfiedBy(restType));
+        pendingEgoRecoveries.removeIf(recovery -> {
+            if (!recovery.isSatisfiedBy(restType)) {
+                return false;
+            }
+            recoverTemporaryEgoPoints(recovery.getDomain(), recovery.getValue());
+            return true;
+        });
     }
 
     /**
@@ -388,7 +503,7 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
 
     /**
      * Begins this combatant's Turn, the mirror of {@link #finishTurn()}. turnNumber is 0-based,
-     * the same convention {@code ActionPointsService}/{@code MovementService} use.
+     * the same convention {@code ActionPointsService}/{@code ActionProfile} use.
      *
      * <p>Clears {@link #attributeDomainsRolledThisTurn} — see {@link #consumeFirstRollThisTurn},
      * whose first real consumer is {@code DexterityAbility#PRECISAO}'s "primeira rolagem... em

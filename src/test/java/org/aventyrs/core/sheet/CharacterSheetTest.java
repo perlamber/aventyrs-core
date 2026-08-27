@@ -289,50 +289,109 @@ class CharacterSheetTest {
         assertEquals(0, sheet.recoverDeterminationPoints(10));
     }
 
+    /** A fixture Character's Egos are all {@code base 2, variable 0}, so every pool starts at 2. */
     @Test
-    void temporaryEgoPointsStartAtZeroForEveryDomain() {
+    void bothEgoPoolsStartFullForEveryDomain() {
         CharacterSheet sheet = newSheet();
         for (EgoDomain domain : EgoDomain.values()) {
-            assertEquals(0, sheet.getTemporaryEgoPoints(domain));
+            assertEquals(2, sheet.getPermanentEgoPoints(domain));
+            assertEquals(2, sheet.getTemporaryEgoPoints(domain));
+            assertEquals(4, sheet.getAvailableEgoPoints(domain));
         }
     }
 
     @Test
-    void gainTemporaryEgoPointsAccumulates() {
+    void recoverTemporaryEgoPointsNeverExceedsTheCeiling() {
         CharacterSheet sheet = newSheet();
-        sheet.gainTemporaryEgoPoints(EgoDomain.SORTE, 1);
-        assertEquals(3, sheet.gainTemporaryEgoPoints(EgoDomain.SORTE, 2));
+        sheet.spendEgoPoints(EgoDomain.SORTE, EgoPointType.TEMPORARY, 1);
+
+        assertEquals(1, sheet.recoverTemporaryEgoPoints(EgoDomain.SORTE, 5));
+        assertEquals(2, sheet.getTemporaryEgoPoints(EgoDomain.SORTE));
     }
 
     @Test
-    void spendTemporaryEgoPointsReducesOnlyThatDomain() {
+    void spendEgoPointsReducesOnlyThatDomain() {
         CharacterSheet sheet = newSheet();
-        sheet.gainTemporaryEgoPoints(EgoDomain.AUTOCONTROLE, 3);
-        sheet.gainTemporaryEgoPoints(EgoDomain.SORTE, 3);
 
-        assertEquals(1, sheet.spendTemporaryEgoPoints(EgoDomain.AUTOCONTROLE, 2));
-        assertEquals(3, sheet.getTemporaryEgoPoints(EgoDomain.SORTE));
+        assertEquals(2, sheet.spendEgoPoints(EgoDomain.AUTOCONTROLE, EgoPointType.TEMPORARY, 2).getValue());
+        assertEquals(0, sheet.getTemporaryEgoPoints(EgoDomain.AUTOCONTROLE));
+        assertEquals(2, sheet.getTemporaryEgoPoints(EgoDomain.SORTE));
     }
 
     @Test
-    void spendTemporaryEgoPointsNeverGoesBelowZero() {
+    void spendEgoPointsReportsTheDomainAndPoolItDrewFrom() {
         CharacterSheet sheet = newSheet();
-        sheet.gainTemporaryEgoPoints(EgoDomain.RECURSOS, 1);
-        assertEquals(0, sheet.spendTemporaryEgoPoints(EgoDomain.RECURSOS, 10));
+        EgoPointSpend spend = sheet.spendEgoPoints(EgoDomain.SORTE, EgoPointType.PERMANENT, 1);
+
+        assertEquals(EgoDomain.SORTE, spend.getDomain());
+        assertEquals(EgoPointType.PERMANENT, spend.getType());
+        assertEquals(1, spend.getValue());
     }
 
     @Test
-    void gainNonCumulativeTemporaryEgoPointsDoesNotStackOnTopOfAnAlreadyHeldPointFromTheSameSource() {
+    void spendEgoPointsReportsWhatWasActuallySpentRatherThanWhatWasAsked() {
         CharacterSheet sheet = newSheet();
-        sheet.gainNonCumulativeTemporaryEgoPoints(EgoDomain.SORTE, "source", 1);
-        assertEquals(1, sheet.gainNonCumulativeTemporaryEgoPoints(EgoDomain.SORTE, "source", 1));
+        assertEquals(2, sheet.spendEgoPoints(EgoDomain.RECURSOS, EgoPointType.TEMPORARY, 10).getValue());
+        assertEquals(0, sheet.getTemporaryEgoPoints(EgoDomain.RECURSOS));
+    }
+
+    /** Spending a permanent point hurts twice — it also lowers the temporary ceiling above it. */
+    @Test
+    void spendingAPermanentEgoPointAlsoLowersTheTemporaryCeiling() {
+        CharacterSheet sheet = newSheet();
+        sheet.spendEgoPoints(EgoDomain.SORTE, EgoPointType.PERMANENT, 1);
+
+        assertEquals(1, sheet.getPermanentEgoPoints(EgoDomain.SORTE));
+        assertEquals(1, sheet.getMaxTemporaryEgoPoints(EgoDomain.SORTE));
+        assertEquals(2, sheet.getAvailableEgoPoints(EgoDomain.SORTE));
     }
 
     @Test
-    void gainNonCumulativeTemporaryEgoPointsFromADifferentSourceStacksOnTopOfAnother() {
+    void grantTemporaryEgoPointBonusDoesNotStackOnTopOfOneAlreadyGrantedByTheSameSource() {
         CharacterSheet sheet = newSheet();
-        sheet.gainNonCumulativeTemporaryEgoPoints(EgoDomain.SORTE, "source-a", 1);
-        assertEquals(2, sheet.gainNonCumulativeTemporaryEgoPoints(EgoDomain.SORTE, "source-b", 1));
+        sheet.grantTemporaryEgoPointBonus(EgoDomain.SORTE, "source", 1);
+
+        assertEquals(3, sheet.grantTemporaryEgoPointBonus(EgoDomain.SORTE, "source", 1));
+        assertEquals(3, sheet.getMaxTemporaryEgoPoints(EgoDomain.SORTE));
+    }
+
+    @Test
+    void grantTemporaryEgoPointBonusFromADifferentSourceStacksOnTopOfAnother() {
+        CharacterSheet sheet = newSheet();
+        sheet.grantTemporaryEgoPointBonus(EgoDomain.SORTE, "source-a", 1);
+
+        assertEquals(4, sheet.grantTemporaryEgoPointBonus(EgoDomain.SORTE, "source-b", 1));
+        assertEquals(4, sheet.getMaxTemporaryEgoPoints(EgoDomain.SORTE));
+    }
+
+    @Test
+    void aTemporaryEgoPenaltyLowersTheCeilingWithoutTouchingPermanentPoints() {
+        CharacterSheet sheet = newSheet();
+        sheet.applyEffect(new TemporaryEgoPenalty(EgoDomain.SORTE, 1, 1));
+
+        assertEquals(1, sheet.getMaxTemporaryEgoPoints(EgoDomain.SORTE));
+        assertEquals(1, sheet.getTemporaryEgoPoints(EgoDomain.SORTE));
+        assertEquals(2, sheet.getPermanentEgoPoints(EgoDomain.SORTE));
+    }
+
+    @Test
+    void aTemporaryEgoPenaltyRestoresTheCeilingOnceItExpires() {
+        CharacterSheet sheet = newSheet();
+        sheet.applyEffect(new TemporaryEgoPenalty(EgoDomain.SORTE, 2, 1));
+        assertEquals(0, sheet.getTemporaryEgoPoints(EgoDomain.SORTE));
+
+        sheet.finishTurn();
+
+        assertEquals(2, sheet.getMaxTemporaryEgoPoints(EgoDomain.SORTE));
+        assertEquals(2, sheet.getTemporaryEgoPoints(EgoDomain.SORTE));
+    }
+
+    @Test
+    void aTemporaryEgoPenaltyAffectsOnlyItsOwnDomain() {
+        CharacterSheet sheet = newSheet();
+        sheet.applyEffect(new TemporaryEgoPenalty(EgoDomain.SORTE, 2, 1));
+
+        assertEquals(2, sheet.getMaxTemporaryEgoPoints(EgoDomain.AUTOCONTROLE));
     }
 
     @Test
@@ -623,9 +682,13 @@ class CharacterSheetTest {
         assertTrue(sheet.consumeFirstRollThisTurn(AttributeDomain.DEXTERITY));
     }
 
+    // Each of these must spend first: a recovery restores previously-spent points, so against a
+    // full pool it is a no-op and the assertion would pass for the wrong reason.
+
     @Test
     void applyPendingEgoRecoveriesGrantsBackPointsOnceARestOfSufficientTierIsTaken() {
         CharacterSheet sheet = newSheet();
+        sheet.spendEgoPoints(EgoDomain.SORTE, EgoPointType.TEMPORARY, 2);
         sheet.owePendingEgoRecovery(new PendingEgoRecovery(EgoDomain.SORTE, 2, RestType.LONGO));
 
         sheet.applyPendingEgoRecoveries(RestType.LONGO);
@@ -636,6 +699,7 @@ class CharacterSheetTest {
     @Test
     void applyPendingEgoRecoveriesDoesNothingWhenTheRestTierIsTooLow() {
         CharacterSheet sheet = newSheet();
+        sheet.spendEgoPoints(EgoDomain.SORTE, EgoPointType.TEMPORARY, 2);
         sheet.owePendingEgoRecovery(new PendingEgoRecovery(EgoDomain.SORTE, 2, RestType.LONGO));
 
         sheet.applyPendingEgoRecoveries(RestType.CURTO);
@@ -643,15 +707,17 @@ class CharacterSheetTest {
         assertEquals(0, sheet.getTemporaryEgoPoints(EgoDomain.SORTE));
     }
 
+    /** Owes back fewer points than were spent, so a re-resolution would be visible as a 2. */
     @Test
     void applyPendingEgoRecoveriesOnlyResolvesEachRecoveryOnce() {
         CharacterSheet sheet = newSheet();
-        sheet.owePendingEgoRecovery(new PendingEgoRecovery(EgoDomain.SORTE, 2, RestType.MINIMO));
+        sheet.spendEgoPoints(EgoDomain.SORTE, EgoPointType.TEMPORARY, 2);
+        sheet.owePendingEgoRecovery(new PendingEgoRecovery(EgoDomain.SORTE, 1, RestType.MINIMO));
 
         sheet.applyPendingEgoRecoveries(RestType.MINIMO);
         sheet.applyPendingEgoRecoveries(RestType.MINIMO);
 
-        assertEquals(2, sheet.getTemporaryEgoPoints(EgoDomain.SORTE));
+        assertEquals(1, sheet.getTemporaryEgoPoints(EgoDomain.SORTE));
     }
 
     @Test

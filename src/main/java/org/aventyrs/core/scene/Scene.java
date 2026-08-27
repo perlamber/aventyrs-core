@@ -407,6 +407,29 @@ public class Scene {
     }
 
     /**
+     * Everyone in this Scene — those in the rotation (in Iniciativa order) followed by those
+     * added mid-Round and still waiting (in the order added). The union of {@link
+     * #getParticipantsInInitiativeOrder()} and {@link #getPendingParticipants()}, which are
+     * <strong>disjoint by construction</strong>: {@link #addParticipant} routes each entry to
+     * exactly one of the two, {@link #startNewRound()} only ever moves pending into active, and
+     * {@link #removeParticipant} searches both. So this needs no de-duplication, and no
+     * participant can be missed by it.
+     *
+     * <p>This is what a caller wants when the question is "who is in this Scene" rather than
+     * "whose Turn is it" — building an end-of-session roster, say. The other two accessors stay
+     * because turn order and not-yet-joined-ness are real distinctions elsewhere; this one
+     * exists so a caller asking the simpler question doesn't have to re-derive that the two
+     * halves are disjoint before concatenating them.
+     *
+     * <p>A fresh copy, like both halves it's built from — mutating it doesn't disturb the Scene.
+     */
+    public List<CombatantSheet> getAllParticipants() {
+        return allEntries()
+                .map(InitiativeEntry::getCombatantSheet)
+                .collect(Collectors.toList());
+    }
+
+    /**
      * Points this Scene's turn cursor at round/index without running any of the turn-boundary
      * behavior {@link #next()} does — no {@link CombatantSheet#startTurn(int)}, no {@link
      * CombatantSheet#finishTurn()}, no {@link #startNewRound()}. This is deliberate and is the

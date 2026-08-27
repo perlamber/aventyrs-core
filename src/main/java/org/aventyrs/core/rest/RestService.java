@@ -28,6 +28,13 @@ public interface RestService {
      * resolves every {@code org.aventyrs.core.sheet.PendingEgoRecovery} this Rest's tier
      * satisfies (see {@code CharacterSheet#applyPendingEgoRecoveries}) — e.g. {@code
      * org.aventyrs.core.effect.Primor}'s own temporary Ego points owed back on Rest.
+     *
+     * <p><strong>A Rest deliberately does not refill the temporary Ego pool generally.</strong>
+     * Temporary Ego points are recovered per <em>game session</em>, not per Descanso — see
+     * {@code org.aventyrs.core.character.services.EgoPointsService}, which this never calls. The
+     * only Ego points a Rest returns are the ones some effect specifically promised back, which
+     * is exactly what a {@code PendingEgoRecovery} is. Don't "fix" the omission by wiring session
+     * recovery in here.
      */
     void applyRest(Character character, CharacterSheet characterSheet, RestType restType);
 }

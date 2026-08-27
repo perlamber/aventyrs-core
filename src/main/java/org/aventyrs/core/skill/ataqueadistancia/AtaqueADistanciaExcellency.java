@@ -14,8 +14,18 @@ import org.aventyrs.core.skill.SkillType;
 @AllArgsConstructor
 public enum AtaqueADistanciaExcellency implements SkillExcellency {
 
-    // TODO: +1 to the wielded weapon's Dano Base — no weapon-damage system exists yet.
-    FOCADO(ExcellencyTier.FOCADO, "Danos Base da Arma +1."),
+    /**
+     * "+1 to the wielded weapon's Dano Base" — real since {@link
+     * org.aventyrs.core.character.DamageBase}/{@code DamageBaseService} landed. It raises the
+     * Dano Base of Ataque à Distância attacks only, which needs no check of its own here: the
+     * service consults just the attacking Perícia's own unlocked tiers.
+     */
+    FOCADO(ExcellencyTier.FOCADO, "Danos Base da Arma +1.") {
+        @Override
+        public int resolveDamageBaseIncrease() {
+            return 1;
+        }
+    },
 
     PRODIGIO(ExcellencyTier.PRODIGIO, "GD reduzido em -1 nível.") {
         @Override

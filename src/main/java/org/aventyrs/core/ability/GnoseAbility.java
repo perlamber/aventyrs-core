@@ -76,11 +76,18 @@ public enum GnoseAbility implements AttributeAbility {
 
     // Only the "+1 permanente em Autocontrole" half is real: resolvePermanentEgoGain below,
     // applied by AttributeAbilityServiceImpl#grantAttributeAbility the exact same way
-    // CharismaAbility#DESTINO_FAVORAVEL's own permanent Sorte point already is. The "primeira
-    // vez em cada sessão de jogo... 1 ponto temporário na Rodada seguinte" recovery half stays
-    // TODO'd — it needs the same "no game-session tracking system exists yet" gap
-    // AutocontroleAdvantage#MOTIVACAO_DE_MOSES's own "por sessão de jogo" clause already cites,
-    // plus a "next Rodada" delayed-grant mechanism nothing in this core has either.
+    // CharismaAbility#DESTINO_FAVORAVEL's own permanent Sorte point already is.
+    // Both halves of the recovery clause are now *expressible* — its trigger is
+    // CombatantSheet#getAvailableEgoPoints(AUTOCONTROLE) == 0 (the two-pool model is what makes
+    // "reduzido a zero" a question with an answer), and its grant is
+    // CombatantSheet#recoverTemporaryEgoPoints(AUTOCONTROLE, 1) — but two triggers are missing:
+    // TODO: no game-session tracking system exists, so "a primeira vez em cada sessão de jogo"
+    // can't be counted — the same gap AutocontroleAdvantage#MOTIVACAO_DE_MOSES cites.
+    // TODO: no "next Rodada" delayed-grant mechanism exists — CharacterSheet#startTurn is the
+    // only start-of-Turn hook and nothing schedules work into a future Rodada.
+    // Deliberately NOT wired to EgoAdvantage#resolveExtraSessionEgoRecovery: that hook is a flat
+    // per-session amount, while this is a conditional, delayed, triggered grant — a genuinely
+    // different shape, and this isn't an EgoAdvantage in the first place.
     ESTABILIDADE_EMOCIONAL("Você adquire permanentemente 1 ponto de Autocontrole, a primeira vez em cada sessão " +
             "de jogo que seu Autocontrole for reduzido a zero você receberá 1 ponto temporário neste Ego na " +
             "Rodada seguinte.") {

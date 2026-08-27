@@ -1,5 +1,6 @@
 package org.aventyrs.core.action;
 
+import org.aventyrs.core.ability.AttributeAbility;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.modifier.ModifierResolver;
@@ -28,7 +29,7 @@ public class ActionPointsServiceImpl implements ActionPointsService {
     @Override
     public int getMaxActionPoints(final Character character, final int turnNumber) {
         return Math.max(0, character.getActionProfile()
-                .adjustActionPoints(permanentActionPoints(character), turnNumber));
+                .adjustActionPoints(actionPointsBeforeProfile(character, turnNumber), turnNumber));
     }
 
     @Override
@@ -39,17 +40,21 @@ public class ActionPointsServiceImpl implements ActionPointsService {
     @Override
     public int getMaxActionPoints(final CombatantSheet sheet, final int turnNumber, final SceneContext sceneContext) {
         Character character = sheet.getCharacter();
-        int baseline = permanentActionPoints(character) + sheet.getTemporaryBonus(ModifierType.ACTION_POINTS);
+        int baseline = actionPointsBeforeProfile(character, turnNumber)
+                + sheet.getTemporaryBonus(ModifierType.ACTION_POINTS);
         return Math.max(0, character.getActionProfile().adjustActionPoints(baseline, turnNumber, sceneContext));
     }
 
     /**
      * Everything below the {@link ActionProfile} adjustment and below any sheet-level
      * {@code TemporaryBonus}: the fixed counter, the three-source {@code ACTION_POINTS} scan,
-     * and the character's own plain temporary bonus field. Shared by every overload so the
-     * profile is only ever applied once, and always last.
+     * the character's own plain temporary bonus field, and every {@link AttributeAbility}'s
+     * Turn-conditioned {@link AttributeAbility#resolveActionPointsBonus(int)} (e.g. {@code
+     * DexterityAbility#APRESSADO}'s even-Rodada +1PA), which a no-arg {@code @Modifier} method
+     * can't express. Shared by every overload so the profile is only ever applied once, and
+     * always last.
      */
-    private int permanentActionPoints(final Character character) {
+    private int actionPointsBeforeProfile(final Character character, final int turnNumber) {
         int bonus = modifierResolver.sumModifiers(character.getAttributeAbilities(), ModifierType.ACTION_POINTS);
         bonus += modifierResolver.sumModifiers(character.getSkillCompetencyAbilities(), ModifierType.ACTION_POINTS);
         for (Map.Entry<SkillType, CharacterSkill> entry : character.getSkills().entrySet()) {
@@ -57,6 +62,9 @@ public class ActionPointsServiceImpl implements ActionPointsService {
             List<SkillExcellency> unlockedExcellencies = SkillExcellency.unlockedBy(
                     entry.getKey().getExcellencyClass(), graduationValue);
             bonus += modifierResolver.sumModifiers(unlockedExcellencies, ModifierType.ACTION_POINTS);
+        }
+        for (AttributeAbility ability : character.getAttributeAbilities()) {
+            bonus += ability.resolveActionPointsBonus(turnNumber);
         }
         return character.getActionPoints() + bonus + character.getTemporaryActionPointsBonus();
     }

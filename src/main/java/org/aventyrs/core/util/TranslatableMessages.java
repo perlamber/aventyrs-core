@@ -13,6 +13,7 @@ public class TranslatableMessages {
     public static final String CHARACTER_SHEET_NOT_IN_SCENE = "CHARACTER_SHEET_NOT_IN_SCENE";
     public static final String INVALID_TURN_CURSOR = "INVALID_TURN_CURSOR";
     public static final String INVALID_SKILL_ROLL = "INVALID_SKILL_ROLL";
+    public static final String INVALID_DIE_ROLL = "INVALID_DIE_ROLL";
     public static final String REQUIRED_SKILL_TRAIT_NOT_HELD = "REQUIRED_SKILL_TRAIT_NOT_HELD";
     public static final String UNKNOWN_SKILL_TYPE = "UNKNOWN_SKILL_TYPE";
     public static final String INVALID_PARENT_RACE = "INVALID_PARENT_RACE";
@@ -27,6 +28,7 @@ public class TranslatableMessages {
     public static final String SKILL_TRAIT_SKILL_TYPE_MISMATCH = "SKILL_TRAIT_SKILL_TYPE_MISMATCH";
     public static final String INITIATIVE_NOT_WON = "INITIATIVE_NOT_WON";
     public static final String INVALID_DAMAGE_TYPE_ELEMENT_PAIRING = "INVALID_DAMAGE_TYPE_ELEMENT_PAIRING";
+    public static final String INVALID_DAMAGE_BASE = "INVALID_DAMAGE_BASE";
     public static final String REQUIRED_TITLE_TRAIT_NOT_HELD = "REQUIRED_TITLE_TRAIT_NOT_HELD";
     public static final String REQUIRED_ATTRIBUTE_ABILITY_NOT_HELD = "REQUIRED_ATTRIBUTE_ABILITY_NOT_HELD";
     public static final String TITLE_NOT_HELD = "TITLE_NOT_HELD";

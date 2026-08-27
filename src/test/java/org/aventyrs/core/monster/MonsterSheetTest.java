@@ -3,6 +3,7 @@ package org.aventyrs.core.monster;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.DefenseType;
 import org.aventyrs.core.character.EgoDomain;
+import org.aventyrs.core.sheet.EgoPointType;
 import org.aventyrs.core.item.ArmorItem;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.sheet.Bleeding;
@@ -95,12 +96,13 @@ class MonsterSheetTest {
     }
 
     @Test
-    void temporaryEgoPointsWorkOnAMonsterSoPrimorCanLandOnOne() {
+    void egoPointsWorkOnAMonsterSoPrimorCanLandOnOne() {
         MonsterSheet monster = capanga();
+        int ceiling = monster.getMaxTemporaryEgoPoints(EgoDomain.SORTE);
 
-        monster.gainTemporaryEgoPoints(EgoDomain.SORTE, 2);
-        assertEquals(2, monster.getTemporaryEgoPoints(EgoDomain.SORTE));
-        assertEquals(1, monster.spendTemporaryEgoPoints(EgoDomain.SORTE, 1));
+        assertEquals(ceiling, monster.getTemporaryEgoPoints(EgoDomain.SORTE));
+        assertEquals(1, monster.spendEgoPoints(EgoDomain.SORTE, EgoPointType.TEMPORARY, 1).getValue());
+        assertEquals(ceiling - 1, monster.getTemporaryEgoPoints(EgoDomain.SORTE));
     }
 
     @Test
