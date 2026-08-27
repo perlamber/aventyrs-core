@@ -14,9 +14,24 @@ package org.aventyrs.core.modifier;
  * org.aventyrs.core.skill.SkillType#getRollBonusType()} for the per-{@code SkillType} lookup —
  * summed *alongside*, not instead of, {@code SKILL_ROLL_BONUS} by {@code
  * org.aventyrs.core.skill.AbstractSkillInteraction}.
+ *
+ * <p>{@code DEFESAS} follows that exact same broad-plus-scoped shape one level down: it means
+ * "both Defesas", while {@code PHYSICAL_DEFENSE}/{@code MAGIC_DEFENSE} scope a bonus to DF or DM
+ * alone. All three are summed additively by {@code
+ * org.aventyrs.core.character.services.DefenseService}, so a source can name whichever it needs
+ * and a character holding some of each still totals correctly — see {@code
+ * org.aventyrs.core.character.DefenseType}.
+ *
+ * <p>{@code LIFE_MULTIPLIER} and {@code HIT_POINTS} are the two ways to grow a creature's PV,
+ * and they are not interchangeable: the first scales with Vigor (so it makes a tough creature
+ * tougher in proportion to what it already is), while the second is the flat "recebe Bônus
+ * Mágico de +NPV" shape, whose amount is stated outright and must not vary with the recipient's
+ * Vigor. Both are read by {@code
+ * org.aventyrs.core.character.services.HitPointsService#getMaxHitPoints}.
  */
 public enum ModifierType {
     LIFE_MULTIPLIER,
+    HIT_POINTS,
     SIZE_CATEGORY,
     MANA_MULTIPLIER,
     DETERMINATION_MULTIPLIER,
@@ -26,9 +41,13 @@ public enum ModifierType {
     REACTIONS,
     FREE_ACTIONS,
     INITIATIVE,
+    MOVEMENT,
     DAMAGE_REDUCTION,
     HALF_DAMAGE,
     ABSOLUTE_DAMAGE_REDUCTION,
+    DEFESAS,
+    PHYSICAL_DEFENSE,
+    MAGIC_DEFENSE,
     ATTENTION_ROLL_BONUS,
     ARTES_ROLL_BONUS,
     ATLETISMO_ROLL_BONUS,

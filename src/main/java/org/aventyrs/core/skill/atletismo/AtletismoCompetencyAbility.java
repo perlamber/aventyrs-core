@@ -3,6 +3,8 @@ package org.aventyrs.core.skill.atletismo;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.aventyrs.core.character.AttributeDomain;
+import org.aventyrs.core.modifier.Modifier;
+import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
 import org.aventyrs.core.skill.SkillType;
 
@@ -15,7 +17,9 @@ import java.util.Optional;
 @AllArgsConstructor
 public enum AtletismoCompetencyAbility implements SkillCompetencyAbility {
 
-    // TODO: grants Movimento Base Vertical — no movement/terrain system exists yet.
+    // TODO: grants Movimento Base Vertical — the general terrestrial Movimento Base stat
+    // now exists (MovementService), but this is a different sub-stat (climbing specifically)
+    // that stat doesn't track — no vertical-movement/terrain system exists yet.
     ALPINISTA_VELOZ("Você recebe Movimento Base Vertical."),
 
     // TODO: once per Cena, ignore Terreno Difícil, gaining an additional use at the 5th and
@@ -25,7 +29,8 @@ public enum AtletismoCompetencyAbility implements SkillCompetencyAbility {
     SALTO_PODEROSO("Uma vez por Cena você pode ignorar Terreno Difícil, novos usos desta " +
             "Habilidade são adquiridos ao alcançar a 5ª e 10ª Graduação."),
 
-    // TODO: grants Movimento Base de Natação — no movement/terrain system exists yet.
+    // TODO: grants Movimento Base de Natação — same story as ALPINISTA_VELOZ: the general
+    // Movimento Base stat exists now, but swimming is a different sub-stat it doesn't track.
     ANFIBIO("Você recebe Movimento Base de Natação."),
 
     // Substitutes Força for Destreza — see SkillCompetencyAbility.getSubstituteAttributeDomain().
@@ -36,9 +41,12 @@ public enum AtletismoCompetencyAbility implements SkillCompetencyAbility {
         }
     },
 
-    // TODO: +2UD to Movimento Base — no movement/distance system exists yet (same gap as
-    // AtaqueCorpoACorpoExcellency.FOCADO, which grants the identical bonus).
-    PASSO_LARGO("Movimento Base aumenta em +2UD.");
+    PASSO_LARGO("Movimento Base aumenta em +2UD.") {
+        @Modifier(ModifierType.MOVEMENT)
+        public int movementBonus() {
+            return 2;
+        }
+    };
 
     private final String description;
 

@@ -36,7 +36,7 @@ public enum EmpatiaSelvagemCompetencyAbility implements SkillCompetencyAbility {
     // TODO: spend 2PD as an Ação Livre to reroll a failed Empatia Selvagem roll, once per
     // creature — needs a roll-resolution-vs-DifficultyLevel engine (to know "failed") and a
     // per-creature usage-limit tracker, neither of which exist yet. Spending PD itself is
-    // already supported (CharacterSheet#spendDeterminationPoints), but the reroll/once-per
+    // already supported (CombatantSheet#spendDeterminationPoints), but the reroll/once-per
     // -creature logic around it isn't.
     CHARME_FEERICO("Você pode usar 2PD para refazer, como Ação Livre, uma rolagem de " +
             "Empatia Selvagem que tenha falhado, mas apenas uma vez para cada criatura."),

@@ -19,8 +19,12 @@ public interface CharacterCreationService {
     /** The single extra point a player must place among the 4 Egos at creation. */
     int EXTRA_EGO_POINTS = 1;
 
-    /** Minimum Autocontrole base, reached through creation-time allocation, to unlock a Vantagem de Autocontrole. */
-    int AUTOCONTROLE_ADVANTAGE_MIN_BASE = 3;
+    /**
+     * Minimum Ego base, reached through creation-time allocation, to unlock that Ego's own
+     * Vantagem de Ego — the same threshold for every {@link EgoDomain}, not a separate value
+     * per domain.
+     */
+    int EGO_ADVANTAGE_MIN_BASE = 3;
 
     /**
      * Resolves a character's starting {@link CharacterAttributes} from the player's choices.
@@ -53,11 +57,17 @@ public interface CharacterCreationService {
     CharacterEgos allocateEgos(Map<EgoDomain, Integer> extraPointAllocation) throws IllegalOperationException;
 
     /**
-     * Whether a Vantagem de Autocontrole may be chosen: only when the Autocontrole base
-     * resolved by {@link #allocateEgos} itself reached {@value #AUTOCONTROLE_ADVANTAGE_MIN_BASE}.
-     * A base raised to that value afterwards (Talentos, Títulos Aventyrs, other Habilidades)
-     * never grants this — those sources add to {@link org.aventyrs.core.character.EgoValue#getVariable()},
-     * not to {@link org.aventyrs.core.character.EgoValue#getBase()}.
+     * Whether domain's Vantagem de Ego may be chosen: only when that domain's base resolved
+     * by {@link #allocateEgos} itself reached {@value #EGO_ADVANTAGE_MIN_BASE}. A base raised
+     * to that value afterwards (Talentos, Títulos Aventyrs, other Habilidades) never grants
+     * this — those sources add to {@link org.aventyrs.core.character.EgoValue#getVariable()},
+     * not to {@link org.aventyrs.core.character.EgoValue#getBase()}. One generic method for
+     * every {@link EgoDomain} rather than a separate {@code isXAdvantageAvailable} method per
+     * domain (an earlier version had exactly that — {@code isAutocontroleAdvantageAvailable}/
+     * {@code isInitiativeAdvantageAvailable} — before the threshold was confirmed identical
+     * across domains), mirroring {@link CharacterEgos#getEgo} and
+     * {@link org.aventyrs.core.character.Character#getEgoAdvantage} already being generic
+     * over {@code EgoDomain} rather than one field/method per domain.
      */
-    boolean isAutocontroleAdvantageAvailable(CharacterEgos egos);
+    boolean isEgoAdvantageAvailable(EgoDomain domain, CharacterEgos egos);
 }

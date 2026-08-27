@@ -8,9 +8,11 @@ import org.aventyrs.core.skill.SkillType;
 import org.aventyrs.core.skill.ataqueadistancia.AtaqueADistanciaInteraction;
 
 /**
- * Requests an Ataque Corpo-a-Corpo Perícia test. Like {@link AtaqueADistanciaInteraction},
- * the rules text compares this roll against a target's DF or DM rather than a fixed GD, but
- * that target-side lookup/conversion is left to a layer above this core. This is also the
+ * Requests an Ataque Corpo-a-Corpo Perícia test. Like {@link AtaqueADistanciaInteraction}, the
+ * rules text compares this roll against a target's DF or DM rather than a fixed GD — that
+ * comparison lives in {@code org.aventyrs.core.combat.AttackDelivery}, which rolls this
+ * Interaction and judges the total against the defender's Defesa. This class still only computes
+ * the roll; it doesn't know what it's being compared to. This is also the
  * delivery Perícia for Magias with a Toque range descriptor — see {@link
  * org.aventyrs.core.magic.SpellCastingService}. If the character has a {@code
  * SkillCompetencyAbility} for this same skill whose {@link SkillCompetencyAbility

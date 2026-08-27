@@ -138,6 +138,42 @@ class SceneContextTest {
     }
 
     @Test
+    void getAlliesWithinReturnsOnlyAlliesAtOrCloserThanMaxRange() {
+        CharacterSheet adjacentAlly = newSheet();
+        CharacterSheet curtaAlly = newSheet();
+        CharacterSheet farAlly = newSheet();
+        SceneContext context = new SceneContext(
+                List.of(adjacentAlly, curtaAlly, farAlly),
+                List.of(),
+                Map.of(adjacentAlly, Range.ADJACENTE, curtaAlly, Range.DISTANCIA_CURTA, farAlly, Range.DISTANCIA_MUITO_LONGA));
+
+        assertEquals(List.of(adjacentAlly), context.getAlliesWithin(Range.ADJACENTE));
+        assertEquals(Set.of(adjacentAlly, curtaAlly), Set.copyOf(context.getAlliesWithin(Range.DISTANCIA_CURTA)));
+    }
+
+    @Test
+    void getAlliesWithinExcludesAlliesWithNoKnownDistance() {
+        CharacterSheet trackedAlly = newSheet();
+        CharacterSheet untrackedAlly = newSheet();
+        SceneContext context = new SceneContext(
+                List.of(trackedAlly, untrackedAlly), List.of(), Map.of(trackedAlly, Range.ADJACENTE));
+
+        assertEquals(List.of(trackedAlly), context.getAlliesWithin(Range.DISTANCIA_MUITO_LONGA));
+    }
+
+    @Test
+    void getEnemiesWithinReturnsOnlyEnemiesAtOrCloserThanMaxRange() {
+        CharacterSheet adjacentEnemy = newSheet();
+        CharacterSheet farEnemy = newSheet();
+        SceneContext context = new SceneContext(
+                List.of(), List.of(adjacentEnemy, farEnemy),
+                Map.of(adjacentEnemy, Range.ADJACENTE, farEnemy, Range.DISTANCIA_LONGA));
+
+        assertEquals(List.of(adjacentEnemy), context.getEnemiesWithin(Range.ADJACENTE));
+        assertEquals(Set.of(adjacentEnemy, farEnemy), Set.copyOf(context.getEnemiesWithin(Range.DISTANCIA_LONGA)));
+    }
+
+    @Test
     void terrainTypeIsNullWhenBuiltFromTheThreeArgConstructor() {
         SceneContext context = new SceneContext(List.of(), List.of(), Map.of());
 
@@ -164,5 +200,52 @@ class SceneContextTest {
         SceneContext context = new SceneContext(List.of(), List.of(), Map.of());
 
         assertFalse(context.isTerrain(TerrainType.MOUNTAIN, TerrainType.CAVE));
+    }
+
+    @Test
+    void combatSceneCurrentRoundAndWonInitiativeDefaultToNonCombatWhenBuiltFromTheShorterConstructors() {
+        SceneContext threeArg = new SceneContext(List.of(), List.of(), Map.of());
+        SceneContext fourArg = new SceneContext(List.of(), List.of(), Map.of(), TerrainType.CAVE);
+
+        assertFalse(threeArg.isCombatScene());
+        assertEquals(0, threeArg.getCurrentRound());
+        assertFalse(threeArg.hasWonInitiative());
+        assertFalse(fourArg.isCombatScene());
+        assertEquals(0, fourArg.getCurrentRound());
+        assertFalse(fourArg.hasWonInitiative());
+    }
+
+    @Test
+    void sevenArgConstructorCarriesCombatSceneCurrentRoundAndWonInitiative() {
+        SceneContext context = new SceneContext(List.of(), List.of(), Map.of(), null, true, 1, true);
+
+        assertTrue(context.isCombatScene());
+        assertEquals(1, context.getCurrentRound());
+        assertTrue(context.hasWonInitiative());
+    }
+
+    @Test
+    void isWithinFirstCombatRoundsIsFalseOutsideACombatScene() {
+        SceneContext context = new SceneContext(List.of(), List.of(), Map.of(), null, false, 1, false);
+
+        assertFalse(context.isWithinFirstCombatRounds(2));
+    }
+
+    @Test
+    void isWithinFirstCombatRoundsExcludesRoundZero() {
+        SceneContext context = new SceneContext(List.of(), List.of(), Map.of(), null, true, 0, false);
+
+        assertFalse(context.isWithinFirstCombatRounds(2));
+    }
+
+    @Test
+    void isWithinFirstCombatRoundsIsTrueForRoundsOneThroughRoundCount() {
+        SceneContext roundOne = new SceneContext(List.of(), List.of(), Map.of(), null, true, 1, false);
+        SceneContext roundTwo = new SceneContext(List.of(), List.of(), Map.of(), null, true, 2, false);
+        SceneContext roundThree = new SceneContext(List.of(), List.of(), Map.of(), null, true, 3, false);
+
+        assertTrue(roundOne.isWithinFirstCombatRounds(2));
+        assertTrue(roundTwo.isWithinFirstCombatRounds(2));
+        assertFalse(roundThree.isWithinFirstCombatRounds(2));
     }
 }

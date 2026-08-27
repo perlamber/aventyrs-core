@@ -2,6 +2,8 @@ package org.aventyrs.core.skill.ataquecorpoacorpo;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.aventyrs.core.modifier.Modifier;
+import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.skill.ExcellencyTier;
 import org.aventyrs.core.skill.SkillExcellency;
 import org.aventyrs.core.skill.SkillType;
@@ -14,9 +16,12 @@ import org.aventyrs.core.skill.SkillType;
 @AllArgsConstructor
 public enum AtaqueCorpoACorpoExcellency implements SkillExcellency {
 
-    // TODO: +2UD to Movimento Base — no movement/distance system exists yet (same gap as
-    // AtletismoCompetencyAbility.SALTO_PODEROSO / DirigirECavalgarExcellency.FOCADO).
-    FOCADO(ExcellencyTier.FOCADO, "Movimento Base +2UD."),
+    FOCADO(ExcellencyTier.FOCADO, "Movimento Base +2UD.") {
+        @Modifier(ModifierType.MOVEMENT)
+        public int movementBonus() {
+            return 2;
+        }
+    },
 
     PRODIGIO(ExcellencyTier.PRODIGIO, "GD reduzido em -1 nível.") {
         @Override

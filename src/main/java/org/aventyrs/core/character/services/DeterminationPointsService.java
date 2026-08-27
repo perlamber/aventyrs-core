@@ -1,7 +1,7 @@
 package org.aventyrs.core.character.services;
 
 import org.aventyrs.core.character.Character;
-import org.aventyrs.core.sheet.CharacterSheet;
+import org.aventyrs.core.sheet.CombatantSheet;
 
 public interface DeterminationPointsService {
     int DEFAULT_DETERMINATION_MULTIPLIER = 3;
@@ -23,5 +23,5 @@ public interface DeterminationPointsService {
      * Current Determination Points: the maximum minus the Determination Points spent on the
      * character's sheet, never below zero.
      */
-    int getCurrentDeterminationPoints(Character character, CharacterSheet characterSheet);
+    int getCurrentDeterminationPoints(Character character, CombatantSheet characterSheet);
 }

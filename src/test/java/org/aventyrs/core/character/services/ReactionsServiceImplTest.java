@@ -6,12 +6,19 @@ import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.character.fixture.CharacterSkillFixture;
+import org.aventyrs.core.action.ActionProfile;
 import org.aventyrs.core.modifier.Modifier;
 import org.aventyrs.core.modifier.ModifierType;
+import org.aventyrs.core.scene.SceneContext;
+import org.aventyrs.core.sheet.CharacterSheet;
+import org.aventyrs.core.sheet.Player;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
 import org.aventyrs.core.skill.SkillType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -125,5 +132,68 @@ class ReactionsServiceImplTest {
                 .skillCompetencyAbility(new ReactionsMalusSkillCompetencyAbility())
                 .build();
         assertEquals(0, reactionsService.getTotalReactions(character));
+    }
+
+    // --- Per-Round totals: the CombatantSheet overloads -----------------------------------------
+
+    private static final SceneContext COMBAT_SCENE =
+            new SceneContext(List.of(), List.of(), Map.of(), null, true, 1, false);
+
+    private CharacterSheet sheetWithProfile(final ActionProfile profile) {
+        return CharacterSheet.of(CharacterFixture.blank(CharacterFixture.BLANK)
+                .actionProfile(profile)
+                .build(), new Player());
+    }
+
+    @Test
+    void perRoundTotalMatchesThePermanentTotalForAProfileWithNoReactionEffect() {
+        CharacterSheet sheet = sheetWithProfile(ActionProfile.CONSCIENCIA_DEFENSIVA);
+        assertEquals(1, reactionsService.getTotalReactions(sheet, 0));
+        assertEquals(1, reactionsService.getTotalReactions(sheet, 3));
+    }
+
+    @Test
+    void reflexosRapidosGrantsAnExtraReactionOnEveryRound() {
+        CharacterSheet sheet = sheetWithProfile(ActionProfile.REFLEXOS_RAPIDOS);
+        assertEquals(2, reactionsService.getTotalReactions(sheet, 0));
+        assertEquals(2, reactionsService.getTotalReactions(sheet, 4));
+    }
+
+    @Test
+    void estrategistaGrantsAnExtraReactionOnlyInsideACenaDeCombate() {
+        CharacterSheet sheet = sheetWithProfile(ActionProfile.ESTRATEGISTA);
+        assertEquals(1, reactionsService.getTotalReactions(sheet, 0));
+        assertEquals(2, reactionsService.getTotalReactions(sheet, 0, COMBAT_SCENE));
+    }
+
+    @Test
+    void aGrantedTemporaryBonusRaisesTheRoundsReactions() {
+        CharacterSheet sheet = sheetWithProfile(ActionProfile.CONSCIENCIA_DEFENSIVA);
+        sheet.grantTemporaryBonus(ModifierType.REACTIONS, 2, 1);
+        assertEquals(3, reactionsService.getTotalReactions(sheet, 0));
+    }
+
+    @Test
+    void aTemporaryBonusLeavesThePermanentTotalUntouched() {
+        CharacterSheet sheet = sheetWithProfile(ActionProfile.CONSCIENCIA_DEFENSIVA);
+        sheet.grantTemporaryBonus(ModifierType.REACTIONS, 2, 1);
+        assertEquals(1, reactionsService.getTotalReactions(sheet.getCharacter()));
+    }
+
+    @Test
+    void anExpiredTemporaryBonusNoLongerCounts() {
+        CharacterSheet sheet = sheetWithProfile(ActionProfile.CONSCIENCIA_DEFENSIVA);
+        sheet.grantTemporaryBonus(ModifierType.REACTIONS, 2, 1);
+        sheet.finishTurn();
+        assertEquals(1, reactionsService.getTotalReactions(sheet, 1));
+    }
+
+    @Test
+    void perRoundTotalNeverGoesBelowZero() {
+        CharacterSheet sheet = CharacterSheet.of(CharacterFixture.blank(CharacterFixture.BLANK)
+                .actionProfile(ActionProfile.REFLEXOS_RAPIDOS)
+                .skillCompetencyAbility(new ReactionsMalusSkillCompetencyAbility())
+                .build(), new Player());
+        assertEquals(0, reactionsService.getTotalReactions(sheet, 0));
     }
 }

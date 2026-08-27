@@ -43,7 +43,7 @@ import java.util.Map;
  *   rolagem" instead of a Rodada-scoped duration, {@code Range.ADJACENTE} instead of Distância
  *   Curta), but the same core piece is still missing either way: nothing in this core can
  *   trigger a standalone, opt-in Ação Livre activation outside of any skill's own roll to grant
- *   a self-targeted temporary bonus (every existing use of {@code CharacterSheet
+ *   a self-targeted temporary bonus (every existing use of {@code CombatantSheet
  *   #grantTemporaryBonus} is the *result* of a roll, e.g. {@code
  *   ArtesCompetencyAbility#DOM_BARDICO}), nor does {@code PersuasaoInteraction} take an {@code
  *   attackTarget}-style parameter to check adjacency against (same "melee/non-Ataque skills

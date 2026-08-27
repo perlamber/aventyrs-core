@@ -226,4 +226,20 @@ class AtaqueADistanciaInteractionTest {
 
         assertEquals(baseline, result.getSkillRollBonus());
     }
+
+    @Test
+    void applyToAppliesTheAttackAndDamageSizeCategoryModifier() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .attributes(CharacterAttributes.builder()
+                        .dexterity(AttributeValue.builder().domain(AttributeDomain.DEXTERITY).base(2).build())
+                        .build())
+                .sizeCategory(SizeCategory.MINUS_TWO)
+                .build();
+        CharacterSheet sheet = CharacterSheet.of(character, new Player());
+
+        InteractionResult result = ataqueADistanciaInteraction.applyTo(sheet);
+
+        // 2 dexterity + untrained penalty + SizeCategory.MINUS_TWO's attack/damage modifier (-1).
+        assertEquals(2 + Skill.UNTRAINED_PENALTY + SizeCategory.MINUS_TWO.getAttackAndDamageModifier(), result.getSkillRollBonus());
+    }
 }

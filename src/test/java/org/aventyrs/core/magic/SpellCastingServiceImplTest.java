@@ -3,6 +3,7 @@ package org.aventyrs.core.magic;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.sheet.CharacterSheet;
+import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.Interaction;
 import org.aventyrs.core.sheet.InteractionResult;
 import org.aventyrs.core.sheet.Player;
@@ -16,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 
 class SpellCastingServiceImplTest {
 
-    private static class FixedResultInteraction implements Interaction<CharacterSheet> {
+    private static class FixedResultInteraction implements Interaction<CombatantSheet> {
         private final InteractionResult result;
 
         private FixedResultInteraction(final InteractionResult result) {
@@ -24,7 +25,7 @@ class SpellCastingServiceImplTest {
         }
 
         @Override
-        public InteractionResult applyTo(final CharacterSheet target) {
+        public InteractionResult applyTo(final CombatantSheet target) {
             return result;
         }
     }

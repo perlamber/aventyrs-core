@@ -41,7 +41,8 @@ import java.util.Map;
  *   <li><b>Imunidade a Encantamentos</b> (+2 Bônus Racial em DM; immune to direct Encantamento
  *   effects, not indirect ones like an enchanted weapon's damage) — identical trait, wording,
  *   and mechanic to {@code Fada}'s/{@code Furia}'s own Imunidade a Encantamentos: DM (Defesa
- *   Mágica) isn't a concept this core computes at all (same gap {@code Elfo}'s own Linhagem
+ *   Mágica) is computable now — see {@code DefenseService} — leaving only the enum to hang it
+ *   on (same state as {@code Elfo}'s own Linhagem
  *   Feérica already cites), and the immunity half needs the same missing Encantamento-effect
  *   classification (direct vs. indirect) neither of those two races' own version could reach
  *   either.</li>
@@ -66,10 +67,12 @@ import java.util.Map;
  *   {@code AtaqueADistanciaInteraction} does (same "melee side isn't wired" gap CLAUDE.md's
  *   Abatedores de Gigantes section already flags), a target's DM lookup is "left to a layer
  *   above this core" (same as {@code Elfo}'s Linhagem Feérica), this core deliberately never
- *   rolls its own dice (the 1d6 itself is a caller's job, per the {@code skill} package-info),
- *   {@link org.aventyrs.core.character.DamageType} has no combined "Mágico Elemental" tag nor
- *   any per-element (Terra) subtype to classify the dano as, a temporary malus *inflicted on
- *   the target's* Pontos de Ação has no equivalent of {@code CharacterSheet
+ *   rolls its own dice (the 1d6 itself is a caller's job, per the {@code skill} package-info) —
+ *   {@link org.aventyrs.core.character.DamageType#ELEMENTAL} paired with {@link
+ *   org.aventyrs.core.character.Element#TERRA} can now classify the dano itself as "Dano
+ *   Mágico Elemental: Terra", but that alone doesn't unblock this trait given every other gap
+ *   listed here — a temporary malus *inflicted on
+ *   the target's* Pontos de Ação has no equivalent of {@code CombatantSheet
  *   #grantTemporaryBonus} (that mechanism only ever grants a bonus, self- or ally-side, never a
  *   malus on an opponent), Corrente de Efeitos is an entirely unbuilt system (same gap {@code
  *   AutocontroleAdvantage#RESOLUTO} already cites), the petrification's Encantamento

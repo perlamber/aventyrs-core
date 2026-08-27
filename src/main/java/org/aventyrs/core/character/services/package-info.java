@@ -24,23 +24,43 @@
  *       places the single extra point among the four
  *       {@link org.aventyrs.core.character.EgoDomain}s (every Ego starts at
  *       {@value org.aventyrs.core.character.services.CharacterCreationService#STARTING_EGO_POINTS}),
- *       returning a {@link org.aventyrs.core.character.CharacterEgos}.</li>
- *   <li><b>Vantagem de Autocontrole (conditional)</b> — if
- *       {@link org.aventyrs.core.character.services.CharacterCreationService#isAutocontroleAdvantageAvailable}
- *       is {@code true} for the {@code CharacterEgos} from step 3, the player may choose one
- *       {@link org.aventyrs.core.ego.AutocontroleAdvantage}; otherwise this stays {@code null}.
- *       This eligibility can never be reached later — see that method's javadoc.</li>
+ *       returning a {@link org.aventyrs.core.character.CharacterEgos}. This allocation decides
+ *       more than Vantagem eligibility (step 4) and the Iniciativa base {@link
+ *       org.aventyrs.core.character.services.InitiativeService} reads: each Ego's total is also
+ *       that domain's <b>permanent spendable point pool</b>, and — since the temporary ceiling
+ *       tracks permanent points remaining — the size of its temporary pool too. See {@code
+ *       org.aventyrs.core.sheet.EgoPointPool}, and {@link
+ *       org.aventyrs.core.character.services.EgoPointsService} for the per-session recovery of
+ *       the temporary half.</li>
+ *   <li><b>Vantagens de Ego (conditional, one check per domain with a catalog)</b> — for each
+ *       {@link org.aventyrs.core.character.EgoDomain} that has one (today: {@code AUTOCONTROLE}'s
+ *       {@link org.aventyrs.core.ego.AutocontroleAdvantage}, {@code INICIATIVA}'s {@link
+ *       org.aventyrs.core.ego.InitiativeAdvantage}), if {@link
+ *       org.aventyrs.core.character.services.CharacterCreationService#isEgoAdvantageAvailable}
+ *       is {@code true} for that domain against the {@code CharacterEgos} from step 3, the
+ *       player may choose one constant from that domain's catalog; a domain the player didn't
+ *       reach the threshold for (or that has no catalog yet) simply stays absent from {@link
+ *       org.aventyrs.core.character.Character#getEgoAdvantage}. This eligibility can never be
+ *       reached later — see that method's javadoc.</li>
  *   <li><b>Pick a {@link org.aventyrs.core.action.ActionProfile}</b> — one of the six, chosen
- *       once and permanent.</li>
+ *       once and permanent. It's a real mechanical choice, not flavour: the profile is the
+ *       last stage of every per-Round PA/Reação/Ação Livre total, applied on top of every
+ *       ability, excellency and granted bonus. Read those totals through the {@code
+ *       CombatantSheet}-taking overloads of {@code
+ *       org.aventyrs.core.action.ActionPointsService#getMaxActionPoints}, {@link
+ *       org.aventyrs.core.character.services.ReactionsService#getTotalReactions} and {@link
+ *       org.aventyrs.core.character.services.FreeActionsService#getTotalFreeActions} — the
+ *       {@code Character}-taking ones report the permanent total, with no profile and no
+ *       Round-scoped bonus applied.</li>
  *   <li><b>Assemble the {@code Character}</b> via {@link org.aventyrs.core.character.Character#builder()},
  *       passing the results of steps 1-5. Everything else (starting {@code skills},
- *       {@code attributeAbilities}, {@code skillCompetencyAbilities}, {@code abilityChoices},
- *       {@code actionPoints}, {@code temporaryActionPointsBonus}, {@code sizeCategory},
+ *       {@code attributeAbilities}, {@code activeAbilities}, {@code skillCompetencyAbilities},
+ *       {@code abilityChoices}, {@code actionPoints}, {@code temporaryActionPointsBonus}, {@code sizeCategory},
  *       {@code status}, {@code reactions}, {@code freeActions}, {@code tendencia}) has a
  *       sensible {@code @Builder.Default} and rarely needs overriding at creation. {@code
  *       sexo} ({@link org.aventyrs.core.character.Character.Sexo}) is the one exception with
  *       no default at all — {@code null} unless set, since no eligibility/validation logic
- *       for it exists here (unlike, say, step 4's Autocontrole).</li>
+ *       for it exists here (unlike, say, step 4's Vantagens de Ego).</li>
  * </ol>
  *
  * <pre>{@code
@@ -63,17 +83,44 @@
  *         .egos(egos)
  *         .actionProfile(ActionProfile.REFLEXOS_RAPIDOS);
  *
- * if (creation.isAutocontroleAdvantageAvailable(egos)) {
- *     builder.autocontroleAdvantage(AutocontroleAdvantage.RESOLUTO); // player's choice
+ * if (creation.isEgoAdvantageAvailable(EgoDomain.AUTOCONTROLE, egos)) {
+ *     builder.egoAdvantage(EgoDomain.AUTOCONTROLE, AutocontroleAdvantage.RESOLUTO); // player's choice
+ * }
+ * if (creation.isEgoAdvantageAvailable(EgoDomain.INICIATIVA, egos)) {
+ *     builder.egoAdvantage(EgoDomain.INICIATIVA, InitiativeAdvantage.IMPETO); // player's choice
  * }
  *
  * Character character = builder.build();
- * CharacterSheet sheet = CharacterSheet.of(character, player);
+ * CombatantSheet sheet = CombatantSheet.of(character, player);
  * }</pre>
+ *
+ * <h2>Creating a foe instead</h2>
+ *
+ * None of the above applies to a monster. It has no player, allocates no points, picks no
+ * Vantagens de Ego and no {@code ActionProfile} of its own (it carries {@code
+ * MonsterTemplate.DEFAULT_ACTION_PROFILE}, the one profile that adjusts none of the three
+ * counters, unless its stat block says otherwise) — its stats are authored whole, on a stat block,
+ * and its Attributes and Perícias are subject to none of the ceilings step 2 enforces. Build one
+ * through {@code org.aventyrs.core.monster.MonsterTemplate} instead:
+ *
+ * <pre>{@code
+ * MonsterSheet thug = GenericMonster.CAPANGA.spawn(gm);          // a generic foe, on-scene
+ * MonsterSheet boss = AbstractMonsterTemplate.builder()...     // a designed one
+ *         .build().spawn(gm);
+ * }</pre>
+ *
+ * <p>A monster also cannot be advanced afterwards: {@link
+ * org.aventyrs.core.character.services.CharacterAttributeService#upgradeBase}, {@link
+ * org.aventyrs.core.character.services.SkillGraduationService#upgradeGraduation}, {@code
+ * FeatService#grantFeat} and {@code TitleAbilityService#grantTitleAbility} all take a {@code
+ * CharacterSheet} because that is where experience lives, and a {@code MonsterSheet} isn't one.
+ * That's a compile-time guarantee, not a runtime check — see {@code
+ * org.aventyrs.core.sheet.CombatantSheet}.
  *
  * <h2>Keeping this current</h2>
  *
- * This list is a living inventory of every creation-time choice, in order — <b>whenever a
+ * Both lists above are living inventories — the player one of every creation-time choice in
+ * order, the foe one of how a monster is built instead. <b>Whenever a
  * new mechanic adds a creation-time choice</b> (a new Ego/Attribute-like allocation, another
  * "pick one permanently" enum like {@code ActionProfile}, a new conditional Vantagem like
  * Autocontrole's), add a numbered step here describing it and update the code example. Don't

@@ -2,11 +2,13 @@ package org.aventyrs.core.sheet;
 
 import org.aventyrs.core.character.CharacterStatus;
 import org.aventyrs.core.character.DamageBonus;
-import org.aventyrs.core.modifier.ModifierType;
+import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.skill.CriticalResult;
 import org.aventyrs.core.skill.DifficultyLevel;
 import org.aventyrs.core.skill.SkillExcellency;
 import org.aventyrs.core.skill.artes.ArtesExcellency;
+
+import java.util.List;
 
 import lombok.Builder;
 import lombok.Getter;
@@ -27,7 +29,7 @@ public class InteractionResult {
 
     /**
      * Total GD (DifficultyLevel) steps reduced for this Perícia test, aggregated from
-     * whatever's currently known on the CharacterSheet — for now, only the trained Skill's
+     * whatever's currently known on the CombatantSheet — for now, only the trained Skill's
      * unlocked {@link org.aventyrs.core.skill.SkillExcellency} tiers (e.g.
      * {@link org.aventyrs.core.skill.artes.ArtesExcellency#PRODIGIO}). More sources (Talentos,
      * temporary buffs, etc.) would add to this same total as they're built.
@@ -35,48 +37,35 @@ public class InteractionResult {
     Integer difficultyReduction;
 
     /**
-     * A temporary bonus this roll produced for *someone else* to receive — e.g. {@code
-     * ArtesCompetencyAbility#DOM_BARDICO}: motivating allies grants a bonus this roll
-     * computes, but who actually receives it is resolved by a layer above this core, via
-     * {@code org.aventyrs.core.scene.Scene#getAllies}. {@code null} when this Interaction
-     * didn't grant one — same stays-{@code null}-when-not-applicable convention as every
-     * other field here. When non-{@code null}, a caller is expected to call {@code
-     * CharacterSheet#grantTemporaryBonus} on each intended recipient with this value,
-     * {@link #temporaryBonusModifierType}, and {@link #temporaryBonusRounds}.
+     * Every temporary bonus this roll/activation produced for *someone else* to receive — e.g.
+     * {@code ArtesCompetencyAbility#DOM_BARDICO} (one entry, {@code TargetScope#ALLIES}) or
+     * {@code org.aventyrs.core.title.santo.GritoDeGuerraVulcanoInteraction} (multiple entries
+     * at once — two Vantagem bonuses plus a Defesas one, all {@code
+     * TargetScope#SELF_AND_ALLIES}) — who actually receives each one is resolved by a layer
+     * above this core, via {@code org.aventyrs.core.scene.Scene#getAllies}/{@code #getEnemies}
+     * or the actor itself for {@code TargetScope#SELF}/{@code SELF_AND_ALLIES}. {@code null}
+     * when this Interaction didn't grant any — same stays-{@code null}-when-not-applicable
+     * convention as every other field here, same as {@link #egoGainDomains}'s own null-vs-empty
+     * distinction: {@code null} means "not applicable," a non-null (possibly empty) list means
+     * "this Interaction is the kind that can grant these, here's what it computed this time."
+     * When non-{@code null}, a caller is expected to call {@code CombatantSheet
+     * #grantTemporaryBonus} on each intended recipient with each {@link Blessing}'s own
+     * {@code modifierType}/{@code value}/{@code rounds}.
+     *
+     * <p>A {@link Blessing} is a small, self-contained value object (not four parallel fields
+     * here) specifically so more than one can be reported from a single Interaction without
+     * ambiguity about which value pairs with which type/duration/scope — an earlier design had
+     * exactly that shape (singular {@code temporaryBonusValue}/{@code temporaryBonusModifierType}/
+     * {@code temporaryBonusRounds}/{@code temporaryBonusScope} fields), which worked for
+     * DOM_BARDICO's own single grant but had no way to represent Grito de Guerra Vulcano's
+     * three simultaneous ones.
      */
-    Integer temporaryBonusValue;
-
-    /**
-     * The {@link ModifierType} {@link #temporaryBonusValue} should be granted as — the broad
-     * {@code ModifierType#SKILL_ROLL_BONUS} (DOM_BARDICO's own case — its rules text says
-     * "rolagens de Perícias", unrestricted, rather than naming one specific Perícia) or one
-     * specific Perícia's own type (e.g. {@code org.aventyrs.core.skill.SkillType#ATLETISMO
-     * .getRollBonusType()}), matching {@link org.aventyrs.core.sheet.TemporaryBonus}'s own
-     * field — this is a {@code ModifierType}, not a {@code SkillType}, for exactly that
-     * reason: it's what {@code CharacterSheet#grantTemporaryBonus} actually takes, with no
-     * extra mapping step for the caller to get wrong.
-     */
-    ModifierType temporaryBonusModifierType;
-
-    /**
-     * How many Rodadas {@link #temporaryBonusValue} lasts once granted — e.g. DOM_BARDICO's
-     * own 1/2/3 Rodadas depending on the caster's Artes Graduação.
-     */
-    Integer temporaryBonusRounds;
-
-    /**
-     * Who {@link #temporaryBonusValue} applies to — {@code ALLIES} for DOM_BARDICO. A caller
-     * resolves the actual recipient list from this (via {@code Scene#getAllies}/
-     * {@code #getEnemies}, or its own single-target lookup) — this core only says *who kind*,
-     * never the concrete list, same as {@link #temporaryBonusValue} itself only says *what*,
-     * never *who receives it*.
-     */
-    TargetScope temporaryBonusScope;
+    List<Blessing> blessings;
 
     /**
      * The highest GD this roll reached — {@code null} unless the Interaction was given a
      * {@code org.aventyrs.core.skill.SkillRoll} to compute it from (see {@code
-     * AbstractSkillInteraction#applyTo(CharacterSheet, org.aventyrs.core.scene.SceneContext,
+     * AbstractSkillInteraction#applyTo(CombatantSheet, org.aventyrs.core.scene.SceneContext,
      * org.aventyrs.core.skill.SkillRoll)}) — this core never rolls dice itself, so without an
      * already-rolled {@code SkillRoll} handed in, there's nothing to resolve a tier from.
      * Computed from {@code skillRollBonus + skillRoll.getTotal()} against {@link
@@ -101,4 +90,94 @@ public class InteractionResult {
      * present.
      */
     DamageBonus damageBonus;
+
+    /**
+     * The amount of {@link #resourceLossType} this Interaction drained — e.g. a {@code
+     * org.aventyrs.core.effect.DamageInteraction}'s post-mitigation Hit Point damage (see
+     * {@code org.aventyrs.core.character.services.DamageService#calculateFinalDamage}),
+     * or {@code org.aventyrs.core.effect.ManaPurge}'s immediate Magic Point drain. {@code
+     * null} for every Interaction that doesn't drain a resource, same stays-{@code
+     * null}-when-not-applicable convention as every other field here — paired with
+     * {@link #resourceLossType} rather than growing a new field per resource kind as more
+     * resource-draining Interactions are added.
+     */
+    Integer resourceLossValue;
+
+    /** Which {@link ResourceType} {@link #resourceLossValue} was lost from. */
+    ResourceType resourceLossType;
+
+    /**
+     * The amount of {@link #resourceGainType} this Interaction restored — e.g. {@code
+     * org.aventyrs.core.title.santo.AbencoadoPelaLuzInteraction}'s touch heal (Abençoado pela
+     * Luz's "recupera PV como se passasse por um Descanso Curto" branch). A separate pair from
+     * {@link #resourceLossValue}/{@link #resourceLossType} rather than a signed value on the
+     * same field — {@code resourceLossValue} is documented as what an Interaction "drained,"
+     * and overloading it with a negative number to mean "restored" would misrepresent that.
+     * {@code null} for every Interaction that doesn't restore a resource, same
+     * stays-{@code null}-when-not-applicable convention as every other field here.
+     */
+    Integer resourceGainValue;
+
+    /** Which {@link ResourceType} {@link #resourceGainValue} was restored to. */
+    ResourceType resourceGainType;
+
+    /**
+     * How many temporary Ego points this Interaction drained — e.g. {@code
+     * org.aventyrs.core.effect.Primor}'s "perde 2/1 pontos temporários de Sorte ou
+     * Autocontrole". {@code null} for every Interaction that doesn't drain temporary Ego
+     * points, same stays-{@code null}-when-not-applicable convention as every other field
+     * here. A separate pair from {@link #resourceLossValue}/{@link #resourceLossType}
+     * rather than reusing it — temporary Ego points ({@link EgoDomain}: Autocontrole,
+     * Recursos, Sorte, Iniciativa) are a genuinely different pool from PV/PM/PD ({@link
+     * ResourceType}), not just another value for the same enum.
+     *
+     * <p>This is the amount a spend <em>actually</em> took (see {@link
+     * EgoPointSpend#getValue()}), which against a nearly-empty pool is less than the effect
+     * asked for. It always comes from the <em>temporary</em> half: nothing in this ruleset
+     * drains permanent Ego points automatically. There is deliberately no {@link EgoPointType}
+     * field alongside it — one whose value is always {@code TEMPORARY} would be building for a
+     * consumer that doesn't exist.
+     */
+    Integer egoLossValue;
+
+    /** Which {@link EgoDomain} {@link #egoLossValue} was lost from. */
+    EgoDomain egoLossDomain;
+
+    /**
+     * Which Ego domains this roll already granted a non-cumulative temporary point in — e.g.
+     * {@code org.aventyrs.core.ability.CharismaAbility#DESTINO_FAVORAVEL} granting Sorte and
+     * Autocontrole on the roller's own Sucesso Crítico Maior. Unlike {@link
+     * #temporaryBonusValue} (a grant for *someone else* this core can't resolve the recipient
+     * for), this roll's own target is unambiguous, so the grant is already applied directly
+     * via {@link CombatantSheet#grantTemporaryEgoPointBonus} — which raises that domain's
+     * temporary <em>ceiling</em>, keyed by the granting ability as its source — by the time
+     * this result is returned; this field
+     * is purely a report of what happened, same as {@link #egoLossValue}/{@link
+     * #egoLossDomain} already are for {@code org.aventyrs.core.effect.Primor}. Always exactly
+     * 1 point per listed domain (no ability needing a different value exists yet). {@code
+     * null} when this Interaction didn't grant any, same stays-{@code
+     * null}-when-not-applicable convention as every other field here.
+     */
+    List<EgoDomain> egoGainDomains;
+
+    /**
+     * The next Interaction in the Skill -&gt; Damage -&gt; EffectChain -&gt;
+     * CriticalEffect pipeline (see {@code org.aventyrs.core.effect} package-info), if
+     * this stage's own outcome means another one should follow — e.g. a {@code
+     * org.aventyrs.core.effect.DamageInteraction} that actually dealt damage handing off
+     * to whatever {@code org.aventyrs.core.effect.EffectChain}/{@code
+     * org.aventyrs.core.effect.CriticalEffect} the caller supplied. Typed as the shared
+     * {@link Interaction}&lt;{@link CombatantSheet}&gt; interface, not any one concrete
+     * stage, so every stage is interchangeable in this slot; a caller drives the whole
+     * pipeline generically via {@code while (result.getNextInteraction() != null) result
+     * = target.receiveInteraction(result.getNextInteraction());} without ever knowing
+     * which concrete stages exist for a given roll. {@code null} means this stage didn't
+     * apply, or had nothing to chain into — same stays-{@code null}-when-not-applicable
+     * convention as every other field here; every stage decides for itself whether to
+     * populate this, no central orchestrator exists to decide it on a stage's behalf.
+     * Distinct from {@link #nextInteractable} (a possible *different target* for a
+     * future hand-off, e.g. a Ricochete-style ability's new target) — this field is
+     * about which *behavior* runs next on the current flow, not who it runs against.
+     */
+    Interaction<CombatantSheet> nextInteraction;
 }

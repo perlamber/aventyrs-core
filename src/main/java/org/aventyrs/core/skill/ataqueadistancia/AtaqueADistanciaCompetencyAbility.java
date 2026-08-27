@@ -3,11 +3,12 @@ package org.aventyrs.core.skill.ataqueadistancia;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.aventyrs.core.character.AttributeDomain;
+import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.DamageBonus;
 import org.aventyrs.core.character.DamageType;
 import org.aventyrs.core.scene.Range;
 import org.aventyrs.core.scene.SceneContext;
-import org.aventyrs.core.sheet.CharacterSheet;
+import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.skill.Skill;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
 import org.aventyrs.core.skill.SkillType;
@@ -54,8 +55,10 @@ public enum AtaqueADistanciaCompetencyAbility implements SkillCompetencyAbility 
     // target's distance), so it needs sceneContext/attackTarget handed in explicitly instead.
     FRIEZA("Vantagem nas rolagens de dano de Ataques à Distância realizados contra alvos " +
             "em Distância Curta ou inferior.") {
+        // Overrides the 4-arg overload, per the cascading convention, even though neither of
+        // its two extra parameters is read here: only the target's distance matters.
         @Override
-        public Optional<DamageBonus> resolveDamageBonus(final SceneContext sceneContext, final CharacterSheet attackTarget) {
+        public Optional<DamageBonus> resolveDamageBonus(final SkillType attackingSkillType, final SceneContext sceneContext, final CombatantSheet attackTarget, final Character actor) {
             if (sceneContext == null || attackTarget == null) {
                 return Optional.empty();
             }
@@ -71,7 +74,7 @@ public enum AtaqueADistanciaCompetencyAbility implements SkillCompetencyAbility 
     // Distância Muito Curta from the original and roll this Perícia again, dealing 1d6
     // damage (or the Magia/Efeito's own described damage if lower) on success — the Distância
     // vocabulary exists now (org.aventyrs.core.scene.Range), but SceneContext only answers
-    // "how far is CharacterSheet X", not "which targets are within Y of this other target",
+    // "how far is CombatantSheet X", not "which targets are within Y of this other target",
     // so picking a *new* target this way still isn't expressible; also no "Corrente de
     // Efeitos" (chain-effect) or Magia/Efeito entity exists yet, and this core deliberately
     // never rolls dice (1d6) — see the skill package-info.

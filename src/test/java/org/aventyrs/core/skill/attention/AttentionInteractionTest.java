@@ -6,9 +6,12 @@ import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterAttributes;
 import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.character.CharacterStatus;
+import org.aventyrs.core.character.SizeCategory;
 import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.character.fixture.CharacterSkillFixture;
+import org.aventyrs.core.ability.InstinctAbility;
 import org.aventyrs.core.race.Elfo;
+import org.aventyrs.core.title.santo.Santo;
 import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.InteractionResult;
 import org.aventyrs.core.sheet.Player;
@@ -163,5 +166,54 @@ class AttentionInteractionTest {
         InteractionResult result = attentionInteraction.applyTo(sheet);
 
         assertEquals(0, result.getSkillRollBonus());
+    }
+
+    @Test
+    void applyToAppliesTheStealthAndAttentionSizeCategoryModifier() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .attributes(CharacterAttributes.builder()
+                        .instinct(AttributeValue.builder().domain(AttributeDomain.INSTINCT).base(2).build())
+                        .build())
+                .sizeCategory(SizeCategory.PLUS_TWO)
+                .build();
+        CharacterSheet sheet = CharacterSheet.of(character, new Player());
+
+        InteractionResult result = attentionInteraction.applyTo(sheet);
+
+        // 2 instinct + untrained penalty + SizeCategory.PLUS_TWO's stealth/attention modifier (-1).
+        assertEquals(2 + Skill.UNTRAINED_PENALTY + SizeCategory.PLUS_TWO.getStealthAndAttentionModifier(), result.getSkillRollBonus());
+    }
+
+    @Test
+    void applyToGrantsSentirAIntencaoVantagemWhenNoTitleIsHeld() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .attributes(CharacterAttributes.builder()
+                        .instinct(AttributeValue.builder().domain(AttributeDomain.INSTINCT).base(2).build())
+                        .build())
+                .attributeAbility(InstinctAbility.SENTIR_A_INTENCAO)
+                .build();
+        CharacterSheet sheet = CharacterSheet.of(character, new Player());
+
+        InteractionResult result = attentionInteraction.applyTo(sheet);
+
+        assertEquals(2 + Skill.UNTRAINED_PENALTY + Skill.ADVANTAGE_BONUS, result.getSkillRollBonus());
+        assertEquals(0, result.getDifficultyReduction());
+    }
+
+    @Test
+    void applyToGrantsSentirAIntencaoDifficultyReductionOnceATitleIsHeld() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .attributes(CharacterAttributes.builder()
+                        .instinct(AttributeValue.builder().domain(AttributeDomain.INSTINCT).base(2).build())
+                        .build())
+                .attributeAbility(InstinctAbility.SENTIR_A_INTENCAO)
+                .primaryTitle(new Santo(List.of(), List.of()))
+                .build();
+        CharacterSheet sheet = CharacterSheet.of(character, new Player());
+
+        InteractionResult result = attentionInteraction.applyTo(sheet);
+
+        assertEquals(2 + Skill.UNTRAINED_PENALTY, result.getSkillRollBonus());
+        assertEquals(1, result.getDifficultyReduction());
     }
 }

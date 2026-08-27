@@ -1,5 +1,8 @@
 package org.aventyrs.core.skill.ataquecorpoacorpo;
 
+import org.aventyrs.core.modifier.ModifierResolver;
+import org.aventyrs.core.modifier.ModifierResolverImpl;
+import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.skill.SkillExcellency;
 import org.aventyrs.core.skill.SkillType;
 import org.junit.jupiter.api.Test;
@@ -44,5 +47,14 @@ class AtaqueCorpoACorpoExcellencyTest {
         assertEquals(List.of(AtaqueCorpoACorpoExcellency.FOCADO), SkillExcellency.unlockedBy(AtaqueCorpoACorpoExcellency.class, 5));
         assertEquals(List.of(AtaqueCorpoACorpoExcellency.FOCADO, AtaqueCorpoACorpoExcellency.PRODIGIO, AtaqueCorpoACorpoExcellency.LENDA),
                 SkillExcellency.unlockedBy(AtaqueCorpoACorpoExcellency.class, 10));
+    }
+
+    @Test
+    void onlyFocadoGrantsAMovementModifier() {
+        ModifierResolver modifierResolver = new ModifierResolverImpl();
+        for (AtaqueCorpoACorpoExcellency excellency : AtaqueCorpoACorpoExcellency.values()) {
+            int expected = excellency == AtaqueCorpoACorpoExcellency.FOCADO ? 2 : 0;
+            assertEquals(expected, modifierResolver.sumModifiers(excellency, ModifierType.MOVEMENT));
+        }
     }
 }

@@ -25,7 +25,10 @@ import java.util.Map;
  *   <li><b>Longevidade</b> (~500 anos) — same "no age/lifespan concept" gap as every other
  *   race; purely narrative today.</li>
  *   <li><b>Tamanho é Documento</b> (never loses the Defesa bonus/malus from Categoria de
- *   Tamanho) — DF (Defesa Física) isn't a concept this core computes at all, same as DM (see
+ *   Tamanho) — DF is computable now ({@code ModifierType#PHYSICAL_DEFENSE} + {@code
+ *   DefenseService}), but this clause is a *conditional* bonus keyed on the attacker's Categoria
+ *   de Tamanho, which a no-arg {@code @Modifier} can't see; it needs a target-aware hook of its
+ *   own, not the flat grant DM's own citations now describe (see
  *   {@code AtaqueADistanciaInteraction}'s own javadoc: a target's DF/DM lookup is "left to a
  *   layer above this core"); there's nothing here to override this against.</li>
  *   <li><b>Rigidez Ymiriana</b> (RD against attackers 2+ Categorias de Tamanho smaller) — a
@@ -41,7 +44,7 @@ import java.util.Map;
  *   construtos/construções, quando o alvo é menor) — needs an Item/Equipamento entity (doesn't
  *   exist — same gap {@code ProfissaoCompetencyAbility#FORJA_VULCANA} cites) to damage, and a
  *   way to classify an attack's target as an object/construct/construção, which this core has
- *   no concept of at all ({@link org.aventyrs.core.sheet.CharacterSheet} only ever represents
+ *   no concept of at all ({@link org.aventyrs.core.sheet.CombatantSheet} only ever represents
  *   a Character). The *shape* of the Vantagem-on-dano half would otherwise fit {@code
  *   SkillCompetencyAbility#resolveDamageBonus} (see {@code AtaqueADistanciaCompetencyAbility
  *   #FRIEZA}), once that classification exists.</li>

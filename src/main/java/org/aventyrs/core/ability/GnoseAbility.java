@@ -3,53 +3,130 @@ package org.aventyrs.core.ability;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.aventyrs.core.character.AttributeDomain;
+import org.aventyrs.core.character.Character;
+import org.aventyrs.core.character.EgoDomain;
+import org.aventyrs.core.skill.SkillTraitKind;
+import org.aventyrs.core.skill.SkillType;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+import java.util.OptionalInt;
+import java.util.Set;
 
 @Getter
 @AllArgsConstructor
 public enum GnoseAbility implements AttributeAbility {
 
-    // TODO: grants a new Especialização for up to 3 known Perícias — typed, held
-    // SkillSpecializations now exist (org.aventyrs.core.skill.SkillSpecialization,
-    // CharacterSkill#getSpecializations()), but there's still no hook for an ability's own
-    // acquisition to grant one onto a chosen Perícia's CharacterSkill; same gap
-    // ConhecimentosCompetencyAbility.GENERALISTA's own TODO cites.
-    DOMINIO_DO_CONHECIMENTO("Você recebe uma nova Especialização de até 3 Perícias conhecidas."),
+    // Mirrors CharismaAbility#CHARME's own resolvePendingSkillTraitChoices shape, minus the
+    // Attribute-domain filter — "Perícias conhecidas" here means every currently trained
+    // Perícia, not just Gnose-based ones — and capped at DOMINIO_DO_CONHECIMENTO_CHOICE_LIMIT
+    // rather than one per candidate, per this ability's own "até 3" text. Each resolved entry
+    // goes through org.aventyrs.core.character.services.AttributeAbilityService
+    // #grantSpecializationChoice (specialization only — unlike CHARME, this ability owes no
+    // SkillCompetencyAbility alongside it, which is what resolvePendingSkillTraitKinds reports).
+    // The cap is reported, not enforced at resolution time: grantSpecializationChoice records
+    // whatever it's handed, same unenforced-prerequisite restraint already applied to
+    // "Requer N Graduações"-style clauses elsewhere.
+    // ConhecimentosCompetencyAbility.GENERALISTA is the same shape one level down — a
+    // SkillCompetencyAbility rather than an AttributeAbility — and is now wired to the same
+    // grantSpecializationChoice mechanism via its own resolvePendingSpecializationChoices;
+    DOMINIO_DO_CONHECIMENTO("Você recebe uma nova Especialização de até 3 Perícias conhecidas.") {
+        @Override
+        public List<SkillType> resolvePendingSkillTraitChoices(final Collection<SkillType> trainedSkills) {
+            return List.copyOf(trainedSkills);
+        }
 
-    // TODO: grants a new Habilidade de Competência for up to 2 known Perícias, still subject to its
-    // prerequisites — no Perícia/Habilidade de Competência system exists yet.
+        @Override
+        public OptionalInt resolvePendingSkillTraitChoiceLimit() {
+            return OptionalInt.of(DOMINIO_DO_CONHECIMENTO_CHOICE_LIMIT);
+        }
+
+        @Override
+        public Set<SkillTraitKind> resolvePendingSkillTraitKinds() {
+            return Set.of(SkillTraitKind.SPECIALIZATION);
+        }
+    },
+
+    // Mirrors CharismaAbility#CHARME's own resolvePendingSkillTraitChoices/Kinds shape, minus
+    // the Attribute-domain filter — "até 2 Perícias conhecidas" here means any known Perícia,
+    // not just Gnose-based ones — and capped at GENIALIDADE_E_ESFORCO_CHOICE_LIMIT, mirroring
+    // DOMINIO_DO_CONHECIMENTO's own "até 3" shape. This only resolves *which* Perícias owe the
+    // choice; the granted SkillCompetencyAbility's own prerequisites ("você ainda precisa
+    // cumprir com seus pré-requisitos") are, as always, unenforced — same restraint already
+    // applied to every other unenforced acquisition prerequisite in this codebase.
     GENIALIDADE_E_ESFORCO("Você adquire uma nova Habilidade de Competência de até 2 Perícias conhecidas, você " +
-            "ainda precisa cumprir com seus pré-requisitos."),
+            "ainda precisa cumprir com seus pré-requisitos.") {
+        @Override
+        public List<SkillType> resolvePendingSkillTraitChoices(final Collection<SkillType> trainedSkills) {
+            return List.copyOf(trainedSkills);
+        }
 
-    // TODO: grants +1 permanent Autocontrole and a recovery effect the first time Autocontrole hits zero each
-    // session — no Autocontrole/Ego system exists yet.
+        @Override
+        public OptionalInt resolvePendingSkillTraitChoiceLimit() {
+            return OptionalInt.of(GENIALIDADE_E_ESFORCO_CHOICE_LIMIT);
+        }
+
+        @Override
+        public Set<SkillTraitKind> resolvePendingSkillTraitKinds() {
+            return Set.of(SkillTraitKind.COMPETENCY_ABILITY);
+        }
+    },
+
+    // Only the "+1 permanente em Autocontrole" half is real: resolvePermanentEgoGain below,
+    // applied by AttributeAbilityServiceImpl#grantAttributeAbility the exact same way
+    // CharismaAbility#DESTINO_FAVORAVEL's own permanent Sorte point already is.
+    // Both halves of the recovery clause are now *expressible* — its trigger is
+    // CombatantSheet#getAvailableEgoPoints(AUTOCONTROLE) == 0 (the two-pool model is what makes
+    // "reduzido a zero" a question with an answer), and its grant is
+    // CombatantSheet#recoverTemporaryEgoPoints(AUTOCONTROLE, 1) — but two triggers are missing:
+    // TODO: no game-session tracking system exists, so "a primeira vez em cada sessão de jogo"
+    // can't be counted — the same gap AutocontroleAdvantage#MOTIVACAO_DE_MOSES cites.
+    // TODO: no "next Rodada" delayed-grant mechanism exists — CharacterSheet#startTurn is the
+    // only start-of-Turn hook and nothing schedules work into a future Rodada.
+    // Deliberately NOT wired to EgoAdvantage#resolveExtraSessionEgoRecovery: that hook is a flat
+    // per-session amount, while this is a conditional, delayed, triggered grant — a genuinely
+    // different shape, and this isn't an EgoAdvantage in the first place.
     ESTABILIDADE_EMOCIONAL("Você adquire permanentemente 1 ponto de Autocontrole, a primeira vez em cada sessão " +
             "de jogo que seu Autocontrole for reduzido a zero você receberá 1 ponto temporário neste Ego na " +
-            "Rodada seguinte."),
+            "Rodada seguinte.") {
+        @Override
+        public Optional<EgoDomain> resolvePermanentEgoGain() {
+            return Optional.of(EgoDomain.AUTOCONTROLE);
+        }
+    },
 
-    // TODO: lets you permanently replace a chosen Perícia's base Atributo with Gnose —
-    // persisting *which* Perícia was chosen is no longer the blocker (see
-    // org.aventyrs.core.ability.AcquiredChoice / Character#getAbilityChoices /
-    // org.aventyrs.core.character.services.AbilityChoiceService#getChoiceFor). A substitution
-    // mechanism now exists for the *unconditional, fixed-Perícia* case (see
-    // org.aventyrs.core.skill.SkillCompetencyAbility#getSubstituteAttributeDomain() /
-    // AtaqueCorpoACorpoCompetencyAbility.ACUIDADE), but this ability's shape is different: the
-    // substituted-into Attribute (Gnose) is fixed, but *which Perícia* it applies to is a
-    // per-character choice, not a fixed one enum-constant-to-enum-constant like ACUIDADE's —
-    // so no single `<Skill>CompetencyAbility` constant can host the override. What's still
-    // missing is a mechanism where a `<Skill>Interaction` checks
-    // AbilityChoiceService.getChoiceFor(character, PERITO_TEORICO) against its own SkillType
-    // before calling CharacterSkillService.getValueForRoll's substituteAttributeDomain
-    // overload.
+    // The concrete, grantable form of this ability is org.aventyrs.core.ability
+    // .PeritoTeoricoAbility — one constant per SkillType, since which Perícia was chosen is
+    // which constant a character holds, not a separately-recorded value. This constant stays
+    // the catalog/rules-text entry (mirrors ArtesCompetencyAbility#APRIMORAR_COM_ARTE's own
+    // redirect-to-instance-class comment).
     PERITO_TEORICO("Escolha uma Perícia conhecida, você pode substituir o Atributo Base da Perícia escolhida por " +
             "Gnose, esta escolha não pode ser revertida."),
 
-    // TODO: grants training in all untrained Perícias without initial Especializações — no
-    // hook for granting Perícia training itself at acquisition time exists yet (same "Race has
-    // no hook for granting starting Perícia training" gap CLAUDE.md documents for Elfo's Origem
-    // Mística); the "without initial Especializações" half is trivially satisfiable once that
-    // exists (CharacterSkill.specializations already defaults to an empty list).
+    // "Todas as Perícias que não for treinado" is real: resolveGrantedSkillTraining below
+    // returns every currently-untrained SkillType, and AttributeAbilityServiceImpl
+    // #grantAttributeAbility grants a fresh CharacterSkill for each. The "não recebem
+    // Especializações iniciais" half needs nothing further — CharacterSkill.specializations
+    // already defaults to an empty list.
     RATO_DE_BIBLIOTECA("Você recebe treinamento em todas as Perícias que não for treinado, mas as Perícias " +
-            "treinadas desta forma não recebem Especializações iniciais.");
+            "treinadas desta forma não recebem Especializações iniciais.") {
+        @Override
+        public List<SkillType> resolveGrantedSkillTraining(final Character character) {
+            return Arrays.stream(SkillType.values())
+                    .filter(skillType -> !character.getSkills().containsKey(skillType))
+                    .toList();
+        }
+    };
+
+    /** The "até 3" in {@link #DOMINIO_DO_CONHECIMENTO}'s rules text: how many of the Perícias it
+     * offers as candidates the player may actually take the new Especialização on. */
+    public static final int DOMINIO_DO_CONHECIMENTO_CHOICE_LIMIT = 3;
+
+    /** The "até 2" in {@link #GENIALIDADE_E_ESFORCO}'s rules text: how many of the Perícias it
+     * offers as candidates the player may actually take the new Habilidade de Competência on. */
+    public static final int GENIALIDADE_E_ESFORCO_CHOICE_LIMIT = 2;
 
     private final String description;
 

@@ -8,22 +8,31 @@ import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.Singular;
 import org.aventyrs.core.ability.AcquiredChoice;
+import org.aventyrs.core.ability.ActiveAbility;
 import org.aventyrs.core.ability.AttributeAbility;
 import org.aventyrs.core.action.ActionPointsService;
 import org.aventyrs.core.action.ActionProfile;
+import org.aventyrs.core.character.services.DeterminationPointsService;
 import org.aventyrs.core.character.services.FreeActionsService;
+import org.aventyrs.core.character.services.HitPointsService;
 import org.aventyrs.core.character.services.MagicPointsService;
 import org.aventyrs.core.character.services.ReactionsService;
-import org.aventyrs.core.ego.AutocontroleAdvantage;
+import org.aventyrs.core.ego.EgoAdvantage;
+import org.aventyrs.core.feat.Feat;
+import org.aventyrs.core.item.Item;
 import org.aventyrs.core.race.Race;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.Player;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
 import org.aventyrs.core.skill.SkillType;
+import org.aventyrs.core.title.AventyrTitle;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import static org.aventyrs.core.util.TranslatableMessages.NOT_ENOUGH_EXPERIENCE;
 
@@ -33,14 +42,20 @@ import static org.aventyrs.core.util.TranslatableMessages.NOT_ENOUGH_EXPERIENCE;
 public class Character {
     /**
      * A unique, stable identifier for this Character — independent of any specific
-     * {@link org.aventyrs.core.sheet.CharacterSheet} wrapping it (see that class's own
+     * {@link org.aventyrs.core.sheet.CombatantSheet} wrapping it (see that class's own
      * {@code id}), e.g. so {@link org.aventyrs.core.scene.Scene} can tell participants apart
      * without relying on object-reference equality.
      */
     @Builder.Default
     protected UUID id = UUID.randomUUID();
 
-    @NonNull
+    /**
+     * The {@link Player} behind this character, or {@code null} for one nobody plays — a monster
+     * (see {@code org.aventyrs.core.monster.MonsterTemplate}), or an NPC. Deliberately not
+     * {@code @NonNull}: nothing in this core reads it, and the {@code player} that actually
+     * matters is {@link org.aventyrs.core.sheet.CharacterSheet}'s own, which stays required
+     * there because a <i>player character's sheet</i> genuinely has one.
+     */
     protected Player player;
 
     @NonNull
@@ -53,14 +68,14 @@ public class Character {
      * The character's sex — e.g. {@code PersuasaoCompetencyAbility#SEDUTOR}'s "personagens do
      * sexo oposto". No default and not {@code @NonNull}: unlike {@link #race}/{@link #name},
      * nothing in this core currently requires every {@code Character} to name one, so it
-     * stays {@code null} unless set, same as {@link #autocontroleAdvantage}.
+     * stays {@code null} unless set.
      */
     protected Sexo sexo;
 
     /**
      * The deity (if any) this character is devoted to. No default and not {@code @NonNull},
-     * same as {@link #sexo}/{@link #autocontroleAdvantage} — nothing in this core currently
-     * requires every {@code Character} to name one.
+     * same as {@link #sexo} — nothing in this core currently requires every {@code Character}
+     * to name one.
      */
     protected Deity deity;
 
@@ -81,12 +96,18 @@ public class Character {
     protected CharacterEgos egos;
 
     /**
-     * The Vantagem de Autocontrole chosen at creation, or {@code null} if the character
-     * either wasn't eligible (see
-     * {@link org.aventyrs.core.character.services.CharacterCreationService#isAutocontroleAdvantageAvailable})
-     * or chose not to pick one.
+     * The Vantagem de Ego chosen at creation for each {@link EgoDomain} whose eligibility
+     * threshold was reached (see {@link
+     * org.aventyrs.core.character.services.CharacterCreationService#isEgoAdvantageAvailable}),
+     * keyed by domain for O(1) lookup — mirrors {@link #skills}' shape rather than growing one
+     * more nullable field per domain (an earlier version had separate {@code
+     * autocontroleAdvantage}/{@code initiativeAdvantage} fields; a domain with no eligible or
+     * chosen Vantagem is simply absent from this map, not a {@code null} value inside it). Use
+     * {@link #getEgoAdvantage(EgoDomain)} rather than indexing this map directly.
      */
-    protected AutocontroleAdvantage autocontroleAdvantage;
+    @NonNull
+    @Singular
+    protected Map<EgoDomain, EgoAdvantage> egoAdvantages;
 
     /** Trained Perícias, keyed by {@link SkillType} for O(1) lookup instead of filtering a list. */
     @NonNull
@@ -96,6 +117,17 @@ public class Character {
     @NonNull
     @Singular
     protected List<AttributeAbility> attributeAbilities;
+
+    /**
+     * Every {@link ActiveAbility} this character has acquired — e.g. {@code
+     * FocusAbility#CONCENTRACAO_PROFUNDA}'s own activatable state, granted here the moment
+     * that ability is acquired via {@link AttributeAbility#resolveActiveAbility()}. Distinct
+     * from {@link #attributeAbilities}/{@link #skillCompetencyAbilities}: those are always-on,
+     * this is something the holder must actively spend resources to trigger.
+     */
+    @NonNull
+    @Singular
+    protected List<ActiveAbility> activeAbilities;
 
     /** Habilidades de Competência acquired from trained Perícias (e.g. ArtesCompetencyAbility). */
     @NonNull
@@ -112,6 +144,91 @@ public class Character {
     @NonNull
     @Singular
     protected List<AcquiredChoice<?>> abilityChoices;
+
+    /**
+     * Feats acquired via {@link org.aventyrs.core.character.services.FeatService#grantFeat} —
+     * unlike {@link #skillCompetencyAbilities}/{@link #attributeAbilities}'s {@code @Singular}
+     * shape (fixed at creation, through the builder only), this is a real mutable list: a Feat
+     * is acquired well after a character is created, spending XP, the same
+     * Character-progression shape as {@link #grantTitle}/{@link #selectCentelhaSuperior} — see
+     * {@link #grantFeat(Feat)}. Defaults to a fresh, empty, mutable list when built through the
+     * normal Lombok builder (a new instance per {@code build()} call, so no aliasing across
+     * separate Characters) — but {@code CharacterFixture} bypasses that builder entirely and
+     * defaults this to an immutable {@code List.of()} instead, same as every other trait list
+     * there; a test that needs to grant a Feat onto a fixture-built Character must first swap
+     * in a fresh mutable list via {@code .toBuilder().feats(new ArrayList<>()).build()}.
+     */
+    @NonNull
+    @Builder.Default
+    protected List<Feat> feats = new ArrayList<>();
+
+    /**
+     * The Itens this character currently has equipped — the same real-mutable-list shape as
+     * {@link #feats}, and for the same reason: equipment is picked up, worn and dropped long
+     * after a character exists, so it can't be a {@code @Singular} builder-only list. Granted
+     * via {@link #equip(Item)}/{@link #unequip(Item)}.
+     *
+     * <p>These are {@link Item} <b>catalog entries</b>, not owned copies: every copy of an
+     * Armadura Completa has the same DF/DM/Dureza, so the enum constant itself is what's held.
+     * Per-copy state (Dureza actually remaining, Obra-Prima tier, Aprimoramentos, who produced
+     * it) is still deliberately unmodeled and would be a separate held-instance type wrapping a
+     * catalog entry — see {@link Item}'s own javadoc. Equipping the same catalog constant twice
+     * therefore genuinely means "wearing two of them", and both contribute.
+     *
+     * <p>Read by {@code org.aventyrs.core.character.services.DefenseService} (an item's DF/DM
+     * columns plus its Favor's {@code DEFESAS}/{@code PHYSICAL_DEFENSE}/{@code MAGIC_DEFENSE}
+     * bonuses) and by {@code DamageService#getTotalDamageReduction} (a Favor's {@code
+     * DAMAGE_REDUCTION}), which is what finally makes {@code
+     * org.aventyrs.core.item.ArmorItem}'s Favores real rather than data with no consumer.
+     *
+     * <p>Same fixture caveat as {@link #feats}: {@code CharacterFixture} bypasses the Lombok
+     * builder and defaults this to an immutable {@code List.of()}, so a test that equips
+     * something must first swap in a fresh mutable list via {@code .toBuilder().equipment(new
+     * ArrayList<>()).build()}.
+     */
+    @NonNull
+    @Builder.Default
+    protected List<Item> equipment = new ArrayList<>();
+
+    /**
+     * The Título Aventyr in this character's Título Primário slot, or {@code null} if none —
+     * same "nullable, no default" shape as {@link #sexo}/{@link #deity}. Unlike an earlier
+     * version of this design (a single {@code List<AventyrTitle> titles} field, with each held
+     * Título self-reporting whether it was "the" primary one), a character holds **exactly
+     * three** Título slots — Primário/Secundário/Terciário, {@link #secondaryTitle}/
+     * {@link #tertiaryTitle} below — and which slot a Título occupies is a fact about the
+     * *Character*, not the Título instance: it's now structurally impossible to have two
+     * "primary" Títulos, rather than an unenforced invariant. Set via {@link
+     * #grantTitle(AventyrTitle, TitleSlot)}, mirroring {@code CharacterSkill#increaseGraduation}'s
+     * own plain-mutator shape (a Título costs no XP and needs no {@code CombatantSheet}, so —
+     * unlike {@code CharacterAttributeService#upgradeBase} — there's no reason to route it
+     * through a dedicated service that returns a new value either). See CLAUDE.md's "Adding a
+     * new Título" section for the full rationale.
+     */
+    protected AventyrTitle primaryTitle;
+
+    /** The Título Aventyr in this character's Título Secundário slot, or {@code null} if none — see {@link #primaryTitle}. */
+    protected AventyrTitle secondaryTitle;
+
+    /** The Título Aventyr in this character's Título Terciário slot, or {@code null} if none — see {@link #primaryTitle}. */
+    protected AventyrTitle tertiaryTitle;
+
+    /**
+     * Whether this character has already spent {@code InstinctAbility#CENTELHA_SUPERIOR}'s own
+     * one-time "uma Suprema adicional" grant — a plain flag, not a reference to which Título
+     * received it (that's already recoverable, if ever needed, by scanning {@link
+     * #getAllTitles()}'s own held abilities). {@code false} by default, same shape as {@link
+     * #reactions}/{@link #freeActions}'s own {@code @Builder.Default} fields. A real stored
+     * flag, not something derived purely by counting each held Título's own Supremas — once a
+     * Título that started with none receives its first Suprema, a plain count can no longer
+     * tell "that was the normal base allotment" apart from "that was CENTELHA_SUPERIOR's own
+     * extra," so {@code
+     * org.aventyrs.core.character.services.TitleAbilityService#getAvailableSupremaSlots}/
+     * {@code #grantTitleAbility} both need this explicit marker instead. Set via {@link
+     * #selectCentelhaSuperior()}.
+     */
+    @Builder.Default
+    protected boolean centelhaSuperiorSelected = false;
 
     @NonNull
     protected ActionProfile actionProfile;
@@ -136,11 +253,28 @@ public class Character {
     @Builder.Default
     protected int temporaryActionPointsBonus = 0;
 
+    /**
+     * The character's own fixed Multiplicador de Vida, feeding {@code
+     * HitPointsService#getMaxHitPoints} (which multiplies it by Vigor's total). Defaults to
+     * {@code HitPointsService.DEFAULT_LIFE_MULTIPLIER}, and is editable per character exactly
+     * like {@link #manaMultiplier} — a GM house rule, a campaign adjustment, or a monster whose
+     * bulk shouldn't be paid for in Vigor. Without this, the only way to make something tanky
+     * was to inflate Vigor, which also inflates every Vigor-governed Perícia roll and its
+     * Determinação pool; a 200-PV ooze with ordinary reflexes had no representation.
+     */
     @Builder.Default
-    protected SizeCategory sizeCategory = SizeCategory.ZERO;
+    protected int lifeMultiplier = HitPointsService.DEFAULT_LIFE_MULTIPLIER;
+
+    /**
+     * The character's own fixed Multiplicador de Determinação — the {@link #lifeMultiplier}
+     * counterpart for {@code DeterminationPointsService#getMaxDeterminationPoints}, added for
+     * the same reason and defaulting to that service's own constant.
+     */
+    @Builder.Default
+    protected int determinationMultiplier = DeterminationPointsService.DEFAULT_DETERMINATION_MULTIPLIER;
 
     @Builder.Default
-    CharacterStatus status = CharacterStatus.CLEAN;
+    protected SizeCategory sizeCategory = SizeCategory.ZERO;
 
     /**
      * The character's own fixed Reação counter — what they have when no external influence
@@ -173,6 +307,82 @@ public class Character {
      */
     @Builder.Default
     protected int manaMultiplier = MagicPointsService.DEFAULT_MANA_MULTIPLIER;
+
+    /**
+     * The Vantagem de Ego chosen for domain, or {@code null} if none was chosen (or the
+     * character was never eligible) for that domain — mirrors {@link CharacterEgos#getEgo}'s
+     * shape for the {@link #egoAdvantages} map.
+     */
+    public EgoAdvantage getEgoAdvantage(final EgoDomain domain) {
+        return egoAdvantages.get(domain);
+    }
+
+    /**
+     * Grants title into slot — see {@link #primaryTitle}'s own javadoc for why this is a real
+     * mutator. Overwrites whatever (if anything) already occupied that slot.
+     */
+    public void grantTitle(@NonNull final AventyrTitle title, @NonNull final TitleSlot slot) {
+        switch (slot) {
+            case PRIMARY -> primaryTitle = title;
+            case SECONDARY -> secondaryTitle = title;
+            case TERTIARY -> tertiaryTitle = title;
+        }
+    }
+
+    /**
+     * Appends feat to this character's held Feats — a plain mutator, same as {@link
+     * #grantTitle}: prerequisite validation and XP spending are {@code
+     * org.aventyrs.core.character.services.FeatService#grantFeat}'s job, not this method's; it
+     * trusts the caller already did both, the same restraint {@link
+     * org.aventyrs.core.title.AventyrTitle#grantAbility} applies. Throws {@code
+     * UnsupportedOperationException} if {@link #feats} is currently an immutable list (e.g. a
+     * fixture-built Character that never swapped in a mutable one — see {@link #feats}'s own
+     * javadoc).
+     */
+    public void grantFeat(@NonNull final Feat feat) {
+        feats.add(feat);
+    }
+
+    /**
+     * Adds item to this character's equipped {@link #equipment} — a plain mutator, same as
+     * {@link #grantFeat}: it validates nothing. Whether the character can actually carry or
+     * wield it (Carga doesn't exist in this core), whether they paid its Preço in Pontos de
+     * Equipamento (no PE economy exists either), and whether they meet the {@code ItemFavor}'s
+     * own Requisitos (that's resolved per-read, live, by {@link Item#grantsFavorTo}) are all
+     * outside this method. Throws {@code UnsupportedOperationException} if {@link #equipment} is
+     * currently an immutable list — see that field's own javadoc.
+     */
+    public void equip(@NonNull final Item item) {
+        equipment.add(item);
+    }
+
+    /**
+     * Removes one occurrence of item from {@link #equipment}, returning whether anything was
+     * actually removed. The mirror of {@link #equip(Item)}, and equally unvalidating.
+     */
+    public boolean unequip(@NonNull final Item item) {
+        return equipment.remove(item);
+    }
+
+    /**
+     * Marks {@code InstinctAbility#CENTELHA_SUPERIOR}'s one-time extra Suprema grant as spent —
+     * see {@link #centelhaSuperiorSelected}'s own javadoc.
+     */
+    public void selectCentelhaSuperior() {
+        this.centelhaSuperiorSelected = true;
+    }
+
+    /**
+     * Every Título Aventyr slot this character has actually filled, Primário first — e.g. for a
+     * caller that needs to scan every held Título's own abilities regardless of which slot each
+     * occupies (see {@code DamageServiceImpl}'s own Título-ability scan). Empty slots are
+     * simply omitted, never a {@code null} entry.
+     */
+    public List<AventyrTitle> getAllTitles() {
+        return Stream.of(primaryTitle, secondaryTitle, tertiaryTitle)
+                .filter(Objects::nonNull)
+                .toList();
+    }
 
     public enum Sexo {
         MASCULINO,

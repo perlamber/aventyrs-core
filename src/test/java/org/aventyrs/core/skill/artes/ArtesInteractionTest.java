@@ -11,6 +11,7 @@ import org.aventyrs.core.character.fixture.CharacterSkillFixture;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.scene.Scene;
 import org.aventyrs.core.scene.SceneContext;
+import org.aventyrs.core.sheet.Blessing;
 import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.InteractionResult;
 import org.aventyrs.core.sheet.Player;
@@ -124,7 +125,7 @@ class ArtesInteractionTest {
         CharacterSheet sheet = sheetWithCharismaAndSkill(2, artesSkill);
         sheet.grantTemporaryBonus(ModifierType.SKILL_ROLL_BONUS, 3, 1);
 
-        sheet.tickTemporaryBonuses();
+        sheet.tickTemporaryEffects();
         InteractionResult result = artesInteraction.applyTo(sheet);
 
         assertEquals(3, result.getSkillRollBonus());
@@ -172,78 +173,80 @@ class ArtesInteractionTest {
         assertEquals(10, result.getSkillRollBonus());
     }
 
+    // A roll comfortably reaching at least GD Médio for every graduation value these tests use,
+    // so a Blessing is always actually produced when one of these three round-threshold tests
+    // needs to inspect it (rounds don't depend on which exact GD tier was reached, only on
+    // whether one was reached at all).
+    private static final SkillRoll QUALIFYING_ROLL = new SkillRoll(List.of(6, 6, 6));
+
     @Test
-    void applyToLeavesTemporaryBonusFieldsNullWithoutDomBardico() {
+    void applyToLeavesBlessingsNullWithoutDomBardico() {
         CharacterSkill artesSkill = CharacterSkillFixture.blank(CharacterSkillFixture.ARTES_1).build();
         CharacterSheet sheet = sheetWithCharismaAndSkill(2, artesSkill);
 
         InteractionResult result = artesInteraction.applyTo(sheet);
 
-        assertNull(result.getTemporaryBonusModifierType());
-        assertNull(result.getTemporaryBonusRounds());
-        assertNull(result.getTemporaryBonusValue());
+        assertNull(result.getBlessings());
     }
 
     @Test
-    void applyToSetsOneRodadaForDomBardicoBelowFiveGraduacoes() {
+    void applyToReportsDomBardicoAsTheBlessingsSource() {
         CharacterSheet sheet = sheetWithDomBardicoAndArtesGraduation(4);
 
-        InteractionResult result = artesInteraction.applyTo(sheet);
+        InteractionResult result = artesInteraction.applyTo(sheet, null, QUALIFYING_ROLL);
 
-        assertEquals(ModifierType.SKILL_ROLL_BONUS, result.getTemporaryBonusModifierType());
-        assertEquals(1, result.getTemporaryBonusRounds());
-        assertEquals(TargetScope.ALLIES, result.getTemporaryBonusScope());
-        assertNull(result.getTemporaryBonusValue());
+        assertEquals(ArtesCompetencyAbility.DOM_BARDICO.name(), result.getBlessings().get(0).getSource());
     }
 
     @Test
-    void applyToSetsTwoRodadasForDomBardicoAtFiveGraduacoes() {
+    void applyToReportsOneRodadaBlessingForDomBardicoBelowFiveGraduacoes() {
+        CharacterSheet sheet = sheetWithDomBardicoAndArtesGraduation(4);
+
+        InteractionResult result = artesInteraction.applyTo(sheet, null, QUALIFYING_ROLL);
+
+        assertEquals(1, result.getBlessings().size());
+        Blessing blessing = result.getBlessings().get(0);
+        assertEquals(ModifierType.SKILL_ROLL_BONUS, blessing.getModifierType());
+        assertEquals(TargetScope.ALLIES, blessing.getScope());
+        assertEquals(1, blessing.getRounds());
+    }
+
+    @Test
+    void applyToReportsTwoRodadaBlessingForDomBardicoAtFiveGraduacoes() {
         CharacterSheet sheet = sheetWithDomBardicoAndArtesGraduation(5);
 
-        InteractionResult result = artesInteraction.applyTo(sheet);
+        InteractionResult result = artesInteraction.applyTo(sheet, null, QUALIFYING_ROLL);
 
-        assertEquals(2, result.getTemporaryBonusRounds());
+        assertEquals(2, result.getBlessings().get(0).getRounds());
     }
 
     @Test
-    void applyToSetsThreeRodadasForDomBardicoAtTenGraduacoes() {
+    void applyToReportsThreeRodadaBlessingForDomBardicoAtTenGraduacoes() {
         CharacterSheet sheet = sheetWithDomBardicoAndArtesGraduation(10);
 
-        InteractionResult result = artesInteraction.applyTo(sheet);
+        InteractionResult result = artesInteraction.applyTo(sheet, null, QUALIFYING_ROLL);
 
-        assertEquals(3, result.getTemporaryBonusRounds());
+        assertEquals(3, result.getBlessings().get(0).getRounds());
     }
 
     @Test
-    void applyToWithASceneContextStillSetsDomBardicoFields() {
+    void applyToWithASceneContextStillReportsTheBlessing() {
         CharacterSheet sheet = sheetWithDomBardicoAndArtesGraduation(5);
         Scene scene = new Scene();
         UUID party = UUID.randomUUID();
         scene.addParticipant(sheet, 10, party);
         SceneContext sceneContext = scene.buildContext(sheet, Map.of());
 
-        InteractionResult result = artesInteraction.applyTo(sheet, sceneContext);
+        InteractionResult result = artesInteraction.applyTo(sheet, sceneContext, QUALIFYING_ROLL);
 
-        assertEquals(ModifierType.SKILL_ROLL_BONUS, result.getTemporaryBonusModifierType());
-        assertEquals(TargetScope.ALLIES, result.getTemporaryBonusScope());
-        assertEquals(2, result.getTemporaryBonusRounds());
+        Blessing blessing = result.getBlessings().get(0);
+        assertEquals(ModifierType.SKILL_ROLL_BONUS, blessing.getModifierType());
+        assertEquals(TargetScope.ALLIES, blessing.getScope());
+        assertEquals(2, blessing.getRounds());
     }
 
     @Test
-    void oneArgApplyToDelegatesThroughToTheOverriddenTwoArgVersion() {
-        // Proves AbstractSkillInteraction's applyTo(target) -> applyTo(target, null) delegation
-        // still dispatches virtually to ArtesInteraction's own override, not the base class's.
-        CharacterSheet sheet = sheetWithDomBardicoAndArtesGraduation(10);
-
-        InteractionResult viaOneArg = artesInteraction.applyTo(sheet);
-        InteractionResult viaTwoArgWithNullContext = artesInteraction.applyTo(sheet, null);
-
-        assertEquals(viaTwoArgWithNullContext.getTemporaryBonusRounds(), viaOneArg.getTemporaryBonusRounds());
-        assertEquals(TargetScope.ALLIES, viaOneArg.getTemporaryBonusScope());
-    }
-
-    @Test
-    void applyToWithASkillRollBelowMedioLeavesTemporaryBonusValueNull() {
+    void applyToWithASkillRollBelowMedioReportsNoBlessing() {
         // graduationValue=0 -> bonus 1 (1 carisma + 0 graduação); dice [2,3,4]=9 -> total 10,
         // short of even VERY_EASY's 12 -> reachedDifficultyLevel is null -> no bonus granted.
         CharacterSheet sheet = sheetWithDomBardicoAndArtesGraduation(0);
@@ -251,9 +254,7 @@ class ArtesInteractionTest {
 
         InteractionResult result = artesInteraction.applyTo(sheet, null, skillRoll);
 
-        assertNull(result.getTemporaryBonusValue());
-        // The roll-resolution fields themselves are still set independently.
-        assertEquals(TargetScope.ALLIES, result.getTemporaryBonusScope());
+        assertNull(result.getBlessings());
     }
 
     @Test
@@ -266,7 +267,7 @@ class ArtesInteractionTest {
         InteractionResult result = artesInteraction.applyTo(sheet, null, skillRoll);
 
         assertEquals(DifficultyLevel.MEDIUM, result.getReachedDifficultyLevel());
-        assertEquals(1, result.getTemporaryBonusValue());
+        assertEquals(1, result.getBlessings().get(0).getValue());
     }
 
     @Test
@@ -278,7 +279,7 @@ class ArtesInteractionTest {
         InteractionResult result = artesInteraction.applyTo(sheet, null, skillRoll);
 
         assertEquals(DifficultyLevel.HARD, result.getReachedDifficultyLevel());
-        assertEquals(2, result.getTemporaryBonusValue());
+        assertEquals(2, result.getBlessings().get(0).getValue());
     }
 
     @Test
@@ -290,7 +291,7 @@ class ArtesInteractionTest {
         InteractionResult result = artesInteraction.applyTo(sheet, null, skillRoll);
 
         assertEquals(DifficultyLevel.VERY_HARD, result.getReachedDifficultyLevel());
-        assertEquals(3, result.getTemporaryBonusValue());
+        assertEquals(3, result.getBlessings().get(0).getValue());
     }
 
     @Test
@@ -302,7 +303,7 @@ class ArtesInteractionTest {
         InteractionResult result = artesInteraction.applyTo(sheet, null, skillRoll);
 
         assertEquals(DifficultyLevel.UNLIKELY, result.getReachedDifficultyLevel());
-        assertEquals(4, result.getTemporaryBonusValue());
+        assertEquals(4, result.getBlessings().get(0).getValue());
     }
 
     @Test
@@ -317,7 +318,7 @@ class ArtesInteractionTest {
         InteractionResult result = artesInteraction.applyTo(sheet, null, skillRoll);
 
         assertEquals(DifficultyLevel.UNIMAGINABLE, result.getReachedDifficultyLevel());
-        assertEquals(4, result.getTemporaryBonusValue());
+        assertEquals(4, result.getBlessings().get(0).getValue());
     }
 
     @Test
@@ -329,7 +330,7 @@ class ArtesInteractionTest {
         InteractionResult result = artesInteraction.applyTo(sheet, null, skillRoll);
 
         assertEquals(DifficultyLevel.MIRACLE, result.getReachedDifficultyLevel());
-        assertEquals(5, result.getTemporaryBonusValue());
+        assertEquals(5, result.getBlessings().get(0).getValue());
     }
 
     @Test

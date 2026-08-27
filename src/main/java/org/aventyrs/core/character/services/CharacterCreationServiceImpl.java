@@ -62,15 +62,7 @@ public class CharacterCreationServiceImpl implements CharacterCreationService {
     }
 
     private void assignAttribute(final CharacterAttributes.CharacterAttributesBuilder builder, final AttributeDomain domain, final AttributeValue value) {
-        switch (domain) {
-            case VIGOR -> builder.vigor(value);
-            case STRENGTH -> builder.strength(value);
-            case DEXTERITY -> builder.dexterity(value);
-            case FOCUS -> builder.focus(value);
-            case INSTINCT -> builder.instinct(value);
-            case GNOSE -> builder.gnose(value);
-            case CHARISMA -> builder.charisma(value);
-        }
+        CharacterAttributes.assign(builder, domain, value);
     }
 
     @Override
@@ -86,8 +78,8 @@ public class CharacterCreationServiceImpl implements CharacterCreationService {
     }
 
     @Override
-    public boolean isAutocontroleAdvantageAvailable(final CharacterEgos egos) {
-        return egos.getAutocontrole().getBase() >= AUTOCONTROLE_ADVANTAGE_MIN_BASE;
+    public boolean isEgoAdvantageAvailable(final EgoDomain domain, final CharacterEgos egos) {
+        return egos.getEgo(domain).getBase() >= EGO_ADVANTAGE_MIN_BASE;
     }
 
     private void validateEgoPointAllocation(final Map<EgoDomain, Integer> extraPointAllocation) throws IllegalOperationException {

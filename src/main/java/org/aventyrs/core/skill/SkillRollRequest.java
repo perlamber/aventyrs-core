@@ -4,7 +4,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NonNull;
 import org.aventyrs.core.scene.SceneContext;
-import org.aventyrs.core.sheet.CharacterSheet;
+import org.aventyrs.core.sheet.CombatantSheet;
 
 /**
  * Everything needed to request one Perícia roll, bundled into a single value object for a
@@ -22,7 +22,7 @@ public class SkillRollRequest {
     @NonNull
     private final SkillType skillType;
     @NonNull
-    private final CharacterSheet target;
+    private final CombatantSheet target;
     private final SceneContext sceneContext;
     private final SkillRoll skillRoll;
 }

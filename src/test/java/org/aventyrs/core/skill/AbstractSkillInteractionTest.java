@@ -1,12 +1,18 @@
 package org.aventyrs.core.skill;
 
+import org.aventyrs.core.ability.AttributeAbility;
+import org.aventyrs.core.ability.CharismaAbility;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.AttributeValue;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterAttributes;
 import org.aventyrs.core.character.CharacterSkill;
+import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.character.fixture.CharacterSkillFixture;
+import org.aventyrs.core.ability.DexterityAbility;
+import org.aventyrs.core.ego.InitiativeAdvantage;
+import org.aventyrs.core.ego.SorteAdvantage;
 import org.aventyrs.core.race.Anao;
 import org.aventyrs.core.race.AnoesRacialAbility;
 import org.aventyrs.core.race.Elfo;
@@ -14,11 +20,14 @@ import org.aventyrs.core.race.ElfosRacialAbility;
 import org.aventyrs.core.scene.Range;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.CharacterSheet;
+import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.InteractionResult;
 import org.aventyrs.core.sheet.Player;
+import org.aventyrs.core.skill.artes.ArtesAprimorarComArteAbility;
 import org.aventyrs.core.skill.artes.ArtesCompetencyAbility;
 import org.aventyrs.core.skill.artes.ArtesSpecialization;
+import org.aventyrs.core.skill.ataqueadistancia.AtaqueADistanciaInteraction;
 import org.aventyrs.core.skill.ataquecorpoacorpo.AtaqueCorpoACorpoInteraction;
 import org.aventyrs.core.skill.attention.AttentionCompetencyAbility;
 import org.aventyrs.core.skill.attention.AttentionInteraction;
@@ -31,10 +40,11 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
- * Demonstrates the extension point {@code AbstractSkillInteraction#applyTo(CharacterSheet,
+ * Demonstrates the extension point {@code AbstractSkillInteraction#applyTo(CombatantSheet,
  * SceneContext)} exists for: a "gang up" style ability whose bonus scales with how many
  * allies are within a given {@link Range}, clamped to a maximum — the shape a real ability
  * like that would take, using a private test-only subclass (no such ability currently exists
@@ -54,7 +64,7 @@ class AbstractSkillInteractionTest {
         }
 
         @Override
-        public InteractionResult applyTo(final CharacterSheet target, final SceneContext sceneContext) {
+        public InteractionResult applyTo(final CombatantSheet target, final SceneContext sceneContext) {
             InteractionResult result = super.applyTo(target, sceneContext);
             if (sceneContext == null) {
                 return result;
@@ -318,5 +328,274 @@ class AbstractSkillInteractionTest {
 
         assertEquals(DifficultyLevel.EASY, plainResult.getReachedDifficultyLevel());
         assertEquals(DifficultyLevel.MEDIUM, expertResult.getReachedDifficultyLevel());
+    }
+
+    private CharacterSheet attentionSheetHoldingAttributeAbility(final AttributeAbility... abilities) {
+        Character.CharacterBuilder builder = CharacterFixture.blank(CharacterFixture.BLANK);
+        for (AttributeAbility ability : abilities) {
+            builder.attributeAbility(ability);
+        }
+        return CharacterSheet.of(builder.build(), new Player());
+    }
+
+    /**
+     * {@code CharismaAbility#DESTINO_FAVORAVEL}'s reactive half: a Sucesso Crítico Maior
+     * (three 6s) on any Perícia roll directly grants a non-cumulative temporary point in
+     * Sorte and Autocontrole (the roll's own target is unambiguous, unlike DOM_BARDICO's
+     * ally-scoped bonus, so this is applied immediately rather than merely reported) and
+     * reports the granted domains on {@code egoGainDomains} — exercised generically, through
+     * {@link AttentionInteraction}, since this is computed once in {@code
+     * AbstractSkillInteraction} for every skill, not per-Interaction.
+     *
+     * <p>Asserted as a movement of the temporary <em>ceiling</em> — a fixture Character's Egos
+     * total 2, so the grant takes it 2 → 3 — since that is what the grant actually raises.
+     */
+    @Test
+    void applyToGrantsAndReportsEgoGainDomainsOnDestinoFavoravelMajorCriticalSuccess() {
+        CharacterSheet sheet = attentionSheetHoldingAttributeAbility(CharismaAbility.DESTINO_FAVORAVEL);
+        SkillRoll skillRoll = new SkillRoll(List.of(6, 6, 6));
+        assertEquals(2, sheet.getMaxTemporaryEgoPoints(EgoDomain.SORTE));
+
+        InteractionResult result = new AttentionInteraction().applyTo(sheet, null, skillRoll);
+
+        assertEquals(List.of(EgoDomain.SORTE, EgoDomain.AUTOCONTROLE), result.getEgoGainDomains());
+        assertEquals(3, sheet.getMaxTemporaryEgoPoints(EgoDomain.SORTE));
+        assertEquals(3, sheet.getMaxTemporaryEgoPoints(EgoDomain.AUTOCONTROLE));
+    }
+
+    @Test
+    void applyToRepeatedDestinoFavoravelTriggersDoNotStackPastOnePoint() {
+        CharacterSheet sheet = attentionSheetHoldingAttributeAbility(CharismaAbility.DESTINO_FAVORAVEL);
+        SkillRoll skillRoll = new SkillRoll(List.of(6, 6, 6));
+        AttentionInteraction attentionInteraction = new AttentionInteraction();
+
+        attentionInteraction.applyTo(sheet, null, skillRoll);
+        attentionInteraction.applyTo(sheet, null, skillRoll);
+
+        assertEquals(3, sheet.getMaxTemporaryEgoPoints(EgoDomain.SORTE));
+        assertEquals(3, sheet.getMaxTemporaryEgoPoints(EgoDomain.AUTOCONTROLE));
+    }
+
+    /**
+     * DESTINO_FAVORAVEL's own "não cumulativo" grant only caps *its own* repeat triggers —
+     * see {@code EgoPointPool#grantTemporaryBonus}. A ceiling bonus from an unrelated source
+     * isn't clamped down by it, and still adds on top normally.
+     */
+    @Test
+    void applyToDestinoFavoravelStacksOnTopOfASorteBonusFromAnUnrelatedSource() {
+        CharacterSheet sheet = attentionSheetHoldingAttributeAbility(CharismaAbility.DESTINO_FAVORAVEL);
+        sheet.grantTemporaryEgoPointBonus(EgoDomain.SORTE, "unrelated-source", 2);
+        SkillRoll skillRoll = new SkillRoll(List.of(6, 6, 6));
+
+        new AttentionInteraction().applyTo(sheet, null, skillRoll);
+
+        assertEquals(5, sheet.getMaxTemporaryEgoPoints(EgoDomain.SORTE));
+    }
+
+    @Test
+    void applyToLeavesEgoGainDomainsNullOnANonCriticalRoll() {
+        CharacterSheet sheet = attentionSheetHoldingAttributeAbility(CharismaAbility.DESTINO_FAVORAVEL);
+        SkillRoll skillRoll = new SkillRoll(List.of(3, 4, 5));
+
+        InteractionResult result = new AttentionInteraction().applyTo(sheet, null, skillRoll);
+
+        assertNull(result.getEgoGainDomains());
+    }
+
+    @Test
+    void applyToLeavesEgoGainDomainsNullWithoutDestinoFavoravelEvenOnMajorCriticalSuccess() {
+        CharacterSheet sheet = attentionSheetHoldingAttributeAbility();
+        SkillRoll skillRoll = new SkillRoll(List.of(6, 6, 6));
+
+        InteractionResult result = new AttentionInteraction().applyTo(sheet, null, skillRoll);
+
+        assertNull(result.getEgoGainDomains());
+    }
+
+    private CharacterSheet sheetHoldingImpeto() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .egoAdvantage(EgoDomain.INICIATIVA, InitiativeAdvantage.IMPETO)
+                .build();
+        return CharacterSheet.of(character, new Player());
+    }
+
+    private SceneContext combatContext(final int currentRound, final boolean wonInitiative) {
+        return new SceneContext(List.of(), List.of(), Map.of(), null, true, currentRound, wonInitiative);
+    }
+
+    /**
+     * {@code EgoAdvantage#resolveConditionalRollBonus} (e.g. {@code InitiativeAdvantage#IMPETO})
+     * is summed generically for *every* skill via {@code AbstractSkillInteraction
+     * #sumEgoAdvantageRollBonuses} — exercised here through plain {@link AttentionInteraction},
+     * a skill wholly unrelated to Iniciativa, to prove it reaches the real {@code
+     * skillRollBonus} sum rather than just IMPETO's own isolated {@code
+     * resolveConditionalRollBonus} call (see {@code InitiativeAdvantageTest} for that
+     * unit-level coverage).
+     */
+    @Test
+    void applyToAddsImpetosVantagemToAnySkillRollDuringTheFirstTwoRoundsOfACombatScene() {
+        CharacterSheet sheet = sheetHoldingImpeto();
+
+        InteractionResult roundOne = new AttentionInteraction().applyTo(sheet, combatContext(1, false));
+        InteractionResult roundTwo = new AttentionInteraction().applyTo(sheet, combatContext(2, false));
+
+        // Instinto base(1, untouched default) + UNTRAINED_PENALTY(-2) + IMPETO's Vantagem(2) = 1.
+        assertEquals(1, roundOne.getSkillRollBonus());
+        assertEquals(1, roundTwo.getSkillRollBonus());
+    }
+
+    @Test
+    void applyToOmitsImpetosVantagemPastTheFirstTwoRoundsOrOutsideACombatScene() {
+        CharacterSheet sheet = sheetHoldingImpeto();
+        SceneContext nonCombat = new SceneContext(List.of(), List.of(), Map.of(), null, false, 1, false);
+
+        InteractionResult roundThree = new AttentionInteraction().applyTo(sheet, combatContext(3, false));
+        InteractionResult outsideCombat = new AttentionInteraction().applyTo(sheet, nonCombat);
+        InteractionResult noContext = new AttentionInteraction().applyTo(sheet);
+
+        assertEquals(-1, roundThree.getSkillRollBonus());
+        assertEquals(-1, outsideCombat.getSkillRollBonus());
+        assertEquals(-1, noContext.getSkillRollBonus());
+    }
+
+    /**
+     * {@code EgoAdvantage#resolveDamageBonus} is resolved generically for every attack-skill
+     * roll — exercised here through {@link AtaqueCorpoACorpoInteraction} specifically (not
+     * Ataque à Distância) to prove IMPETO's dano bonus reaches Ataque Corpo a Corpo too, unlike
+     * {@code AtaqueADistanciaCompetencyAbility#FRIEZA}'s own dano bonus, which CLAUDE.md notes
+     * is still unwired for melee.
+     */
+    @Test
+    void applyToAddsImpetosDamageBonusOnAnAttackSkillRollWhenInitiativeWasWon() {
+        CharacterSheet sheet = sheetHoldingImpeto();
+
+        InteractionResult result = new AtaqueCorpoACorpoInteraction().applyTo(sheet, combatContext(1, true));
+
+        assertEquals(Skill.ADVANTAGE_BONUS, result.getDamageBonus().getValue());
+    }
+
+    @Test
+    void applyToOmitsImpetosDamageBonusWhenInitiativeWasNotWon() {
+        CharacterSheet sheet = sheetHoldingImpeto();
+
+        InteractionResult result = new AtaqueCorpoACorpoInteraction().applyTo(sheet, combatContext(1, false));
+
+        assertNull(result.getDamageBonus());
+    }
+
+    @Test
+    void applyToOmitsImpetosDamageBonusForANonAttackSkillEvenWhenInitiativeWasWon() {
+        CharacterSheet sheet = sheetHoldingImpeto();
+
+        InteractionResult result = new AttentionInteraction().applyTo(sheet, combatContext(1, true));
+
+        assertNull(result.getDamageBonus());
+    }
+
+    private CharacterSheet sheetHoldingLetalidadeProgressiva() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .attributeAbility(DexterityAbility.LETALIDADE_PROGRESSIVA)
+                .build();
+        return CharacterSheet.of(character, new Player());
+    }
+
+    /**
+     * {@code DexterityAbility#LETALIDADE_PROGRESSIVA} widens Acerto Crítico Menor's margin for
+     * Ataque à Distância during a Cena de Combate's early Rounds — exercised end-to-end through
+     * {@link AtaqueADistanciaInteraction} (this ability's own Perícia) to prove {@code
+     * AbstractSkillInteraction#sumCriticalMarginIncrease} actually reaches {@code
+     * SkillRoll#getCriticalResult(int)}, not just {@code DexterityAbilityTest}'s own
+     * isolated {@code resolveCriticalMarginIncrease} coverage. 6+5+2 has only one 6 — not
+     * Acerto Crítico Menor at margin 0 — but with the +1 margin this ability grants in Round 1,
+     * the 5 now counts alongside the 6 for the qualifying pair.
+     */
+    @Test
+    void applyToWidensAcertoCriticoMenorViaLetalidadeProgressivaDuringCombat() {
+        CharacterSheet sheet = sheetHoldingLetalidadeProgressiva();
+        SkillRoll roll = new SkillRoll(List.of(6, 5, 2));
+        SceneContext combatRoundOne = new SceneContext(List.of(), List.of(), Map.of(), null, true, 1, false);
+
+        InteractionResult withoutContext = new AtaqueADistanciaInteraction().applyTo(sheet, null, roll);
+        InteractionResult duringCombat = new AtaqueADistanciaInteraction().applyTo(sheet, combatRoundOne, roll);
+
+        assertEquals(CriticalResult.NONE, withoutContext.getCriticalResult());
+        assertEquals(CriticalResult.ACERTO_CRITICO_MENOR, duringCombat.getCriticalResult());
+    }
+
+    private CharacterSheet sheetHoldingAceAndArtesMarginSources() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .egoAdvantage(EgoDomain.SORTE, SorteAdvantage.ACE)
+                .skillCompetencyAbility(new ArtesAprimorarComArteAbility(SkillType.ATLETISMO))
+                .build();
+        return CharacterSheet.of(character, new Player());
+    }
+
+    /**
+     * {@code EgoAdvantage#resolveCriticalMarginIncrease} ({@code SorteAdvantage#ACE}) and
+     * {@code SkillCompetencyAbility#resolveCriticalMarginIncrease} ({@code
+     * ArtesAprimorarComArteAbility}'s "Margem Crítica Menor" branch) are meant to be additive —
+     * exercised together, through the ATLETISMO-flavored {@code GangUpBonusInteraction} above,
+     * to prove {@code sumCriticalMarginIncrease} actually sums across sources rather than only
+     * ever picking up one. 3+3+1 needs a margin of at least 4 to read as Acerto Crítico Menor
+     * (widening the qualifying face down to 2, so both 3s count): ACE alone only grants its
+     * +3 outside a Cena de Combate for a non-Ataque skill (ATLETISMO qualifies), and Artes'
+     * branch alone only grants +1 — neither alone reaches 4, but together they do.
+     */
+    @Test
+    void applyToSumsCriticalMarginIncreaseAcrossAllThreeAbilitySources() {
+        CharacterSheet sheet = sheetHoldingAceAndArtesMarginSources();
+        SkillRoll roll = new SkillRoll(List.of(3, 3, 1));
+        SceneContext nonCombatContext = new SceneContext(List.of(), List.of(), Map.of(), null, false, 0, false);
+
+        InteractionResult withoutContext = interaction.applyTo(sheet, null, roll);
+        InteractionResult withNonCombatContext = interaction.applyTo(sheet, nonCombatContext, roll);
+
+        assertEquals(CriticalResult.NONE, withoutContext.getCriticalResult());
+        assertEquals(CriticalResult.ACERTO_CRITICO_MENOR, withNonCombatContext.getCriticalResult());
+    }
+
+    private CharacterSheet sheetHoldingPrecisao() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .attributeAbility(DexterityAbility.PRECISAO)
+                .build();
+        return CharacterSheet.of(character, new Player());
+    }
+
+    /**
+     * {@code DexterityAbility#PRECISAO} grants Vantagem only on the first Destreza-based
+     * Perícia roll each of the holder's own Turns — exercised end-to-end through {@link
+     * AtaqueADistanciaInteraction} (a Destreza-based Perícia, see {@code AtaqueADistancia}'s
+     * own {@code AttributeDomain}) to prove {@code AbstractSkillInteraction
+     * #sumFirstRollOfTurnBonuses} actually reaches {@code skillRollBonus}, correctly gated by
+     * {@code CharacterSheet#consumeFirstRollThisTurn}: a second roll on the same, still-active
+     * Turn doesn't repeat the bonus, but {@code startTurn} resets it for the next one.
+     */
+    @Test
+    void applyToGrantsPrecisaosVantagemOnlyOnceUntilTheNextTurnStarts() {
+        CharacterSheet sheet = sheetHoldingPrecisao();
+        SkillRoll roll = new SkillRoll(List.of(2, 3, 4));
+
+        InteractionResult firstRoll = new AtaqueADistanciaInteraction().applyTo(sheet, null, roll);
+        InteractionResult secondRollSameTurn = new AtaqueADistanciaInteraction().applyTo(sheet, null, roll);
+        sheet.startTurn(1);
+        InteractionResult firstRollNextTurn = new AtaqueADistanciaInteraction().applyTo(sheet, null, roll);
+
+        assertEquals(secondRollSameTurn.getSkillRollBonus() + Skill.ADVANTAGE_BONUS, firstRoll.getSkillRollBonus());
+        assertEquals(firstRoll.getSkillRollBonus(), firstRollNextTurn.getSkillRollBonus());
+    }
+
+    /**
+     * {@code AtaqueCorpoACorpo}'s own {@code AttributeDomain} is Força, not Destreza — even as
+     * this same character's genuinely-first roll of the Turn, PRECISAO grants nothing for it.
+     */
+    @Test
+    void applyToOmitsPrecisaosVantagemForANonDestrezaBasedRollEvenAsTheFirstOfTheTurn() {
+        CharacterSheet sheet = sheetHoldingPrecisao();
+        SkillRoll roll = new SkillRoll(List.of(2, 3, 4));
+
+        InteractionResult firstRoll = new AtaqueCorpoACorpoInteraction().applyTo(sheet, null, roll);
+        InteractionResult secondRoll = new AtaqueCorpoACorpoInteraction().applyTo(sheet, null, roll);
+
+        assertEquals(secondRoll.getSkillRollBonus(), firstRoll.getSkillRollBonus());
     }
 }

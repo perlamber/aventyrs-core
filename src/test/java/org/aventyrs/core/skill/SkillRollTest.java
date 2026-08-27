@@ -83,18 +83,66 @@ class SkillRollTest {
     }
 
     /**
-     * Documents the known TODO on {@code getCriticalResult()}: unlike Falha Crítica Menor
-     * (just fixed to require exactly 1+1+2), Acerto Crítico Menor is deliberately *not* fixed
-     * to a specific third die yet, since its margin isn't fixed at "5" the way Falha Crítica
-     * Menor's is fixed at "2" — abilities are expected to widen it. So two 6s plus *any*
-     * third die still reads as Acerto Crítico Menor for now, matching this same class's
-     * pre-fix behavior on the failure side — update this test if/when the margin-widening
-     * mechanism lands and this gets a real fix.
+     * Unlike Falha Crítica Menor (fixed to require exactly 1+1+2), Acerto Crítico Menor is
+     * deliberately *not* fixed to one specific third die, even with no margin widening applied
+     * (see {@link CriticalResult}'s own javadoc) — any two 6s is enough regardless of the third
+     * die, so the margin-widening mechanism (see {@link #getCriticalResultWidensAcertoCriticoMenorByTheGivenMargin})
+     * has something consistent to widen from.
      */
     @Test
-    void twoSixesWithAnyThirdDieIsStillAcertoCriticoMenorForNow() {
+    void twoSixesWithAnyThirdDieIsAcertoCriticoMenor() {
         assertEquals(CriticalResult.ACERTO_CRITICO_MENOR, new SkillRoll(List.of(6, 6, 1)).getCriticalResult());
         assertEquals(CriticalResult.ACERTO_CRITICO_MENOR, new SkillRoll(List.of(6, 6, 3)).getCriticalResult());
+    }
+
+    /**
+     * A margin of 1 (e.g. {@code AtaqueCorpoACorpoCompetencyAbility#ATAQUE_PRECISO}'s own "5s
+     * counting alongside 6s" rules text) lowers the qualifying face from 6 to 5 — two 5s now
+     * also read as Acerto Crítico Menor, which they don't at margin 0.
+     */
+    @Test
+    void getCriticalResultWidensAcertoCriticoMenorByTheGivenMargin() {
+        SkillRoll twoFives = new SkillRoll(List.of(5, 5, 2));
+
+        assertEquals(CriticalResult.NONE, twoFives.getCriticalResult(0));
+        assertEquals(CriticalResult.ACERTO_CRITICO_MENOR, twoFives.getCriticalResult(1));
+    }
+
+    /** A mixed pair (one 5, one 6) also qualifies once the margin widens the threshold to 5. */
+    @Test
+    void getCriticalResultCountsAMixedPairOnceWidened() {
+        SkillRoll fiveAndSix = new SkillRoll(List.of(5, 6, 2));
+
+        assertEquals(CriticalResult.NONE, fiveAndSix.getCriticalResult(0));
+        assertEquals(CriticalResult.ACERTO_CRITICO_MENOR, fiveAndSix.getCriticalResult(1));
+    }
+
+    /** A negative margin (never expected from a real source) is treated the same as 0. */
+    @Test
+    void getCriticalResultTreatsANegativeMarginAsZero() {
+        SkillRoll twoFives = new SkillRoll(List.of(5, 5, 2));
+
+        assertEquals(CriticalResult.NONE, twoFives.getCriticalResult(-1));
+    }
+
+    /**
+     * The margin only ever widens Acerto Crítico Menor — Falha Crítica Maior/Menor and Acerto
+     * Crítico Maior are each fixed at one exact dice combination in this ruleset's own rules
+     * text, with no ability anywhere citing a margin on any of the three.
+     */
+    @Test
+    void getCriticalResultMarginDoesNotAffectTheOtherThreeOutcomes() {
+        assertEquals(CriticalResult.FALHA_CRITICA_MAIOR, new SkillRoll(List.of(1, 1, 1)).getCriticalResult(5));
+        assertEquals(CriticalResult.FALHA_CRITICA_MENOR, new SkillRoll(List.of(1, 1, 2)).getCriticalResult(5));
+        assertEquals(CriticalResult.ACERTO_CRITICO_MAIOR, new SkillRoll(List.of(6, 6, 6)).getCriticalResult(5));
+    }
+
+    /** {@link SkillRoll#getCriticalResult()} is exactly {@code getCriticalResult(0)}. */
+    @Test
+    void noArgGetCriticalResultAppliesNoMargin() {
+        SkillRoll twoFives = new SkillRoll(List.of(5, 5, 2));
+
+        assertEquals(twoFives.getCriticalResult(0), twoFives.getCriticalResult());
     }
 
     @Test

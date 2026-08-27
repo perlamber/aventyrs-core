@@ -7,17 +7,26 @@ public class RestServiceImpl implements RestService {
 
     @Override
     public int getRecoveredHitPoints(final Character character, final RestType restType) {
-        return recovered(character.getAttributes().getVigor().getTotal(), restType);
+        int bonus = character.getAttributeAbilities().stream()
+                .mapToInt(ability -> ability.resolveRestHitPointsBonus(restType))
+                .sum();
+        return recovered(character.getAttributes().getVigor().getTotal(), restType) + bonus;
     }
 
     @Override
     public int getRecoveredMagicPoints(final Character character, final RestType restType) {
-        return recovered(character.getAttributes().getFocus().getTotal(), restType);
+        int bonus = character.getAttributeAbilities().stream()
+                .mapToInt(ability -> ability.resolveRestMagicPointsBonus(restType))
+                .sum();
+        return recovered(character.getAttributes().getFocus().getTotal(), restType) + bonus;
     }
 
     @Override
     public int getRecoveredDeterminationPoints(final Character character, final RestType restType) {
-        return recovered(character.getAttributes().getInstinct().getTotal(), restType);
+        int bonus = character.getAttributeAbilities().stream()
+                .mapToInt(ability -> ability.resolveRestDeterminationPointsBonus(restType))
+                .sum();
+        return recovered(character.getAttributes().getInstinct().getTotal(), restType) + bonus;
     }
 
     @Override
@@ -25,6 +34,7 @@ public class RestServiceImpl implements RestService {
         characterSheet.heal(getRecoveredHitPoints(character, restType));
         characterSheet.recoverMagicPoints(getRecoveredMagicPoints(character, restType));
         characterSheet.recoverDeterminationPoints(getRecoveredDeterminationPoints(character, restType));
+        characterSheet.applyPendingEgoRecoveries(restType);
     }
 
     /**

@@ -6,7 +6,8 @@ import org.aventyrs.core.character.services.CharacterSkillService;
 import org.aventyrs.core.modifier.ModifierResolver;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.scene.SceneContext;
-import org.aventyrs.core.sheet.CharacterSheet;
+import org.aventyrs.core.sheet.Blessing;
+import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.InteractionResult;
 import org.aventyrs.core.sheet.TargetScope;
 import org.aventyrs.core.skill.AbstractSkillInteraction;
@@ -15,6 +16,8 @@ import org.aventyrs.core.skill.Skill;
 import org.aventyrs.core.skill.SkillRoll;
 import org.aventyrs.core.skill.SkillType;
 
+import java.util.List;
+
 /**
  * Requests an Artes Perícia test. Which of Artes' specializations ({@link ArtesSpecialization})
  * the roll is for doesn't change {@code skillRollBonus}/{@code difficultyReduction} — a held
@@ -22,18 +25,20 @@ import org.aventyrs.core.skill.SkillType;
  * {@code reachedDifficultyLevel} to expert thresholds; see {@link AbstractSkillInteraction} for
  * how that and the roll bonus/difficultyReduction are actually computed.
  *
- * <p>A character holding {@link ArtesCompetencyAbility#DOM_BARDICO} additionally has this
- * roll set {@code temporaryBonusModifierType} ({@link ModifierType#SKILL_ROLL_BONUS}, since
- * this ability's own rules text is unrestricted — "rolagens de Perícias", not one specific
- * Perícia), {@code temporaryBonusScope} ({@link TargetScope#ALLIES} — "concedendo... a eles
- * (mas não a você)"), {@code temporaryBonusRounds} (1 Rodada normally, 2 at 5 Graduações in
- * Artes, 3 at 10), and — once a {@link SkillRoll} is supplied — {@code temporaryBonusValue}
- * via {@link #domBardicoBonusValue(DifficultyLevel)}, looked up from the
- * {@code reachedDifficultyLevel} {@code AbstractSkillInteraction} already resolves: MEDIUM→1,
- * HARD→2, VERY_HARD→3, UNLIKELY/UNIMAGINABLE→4 (UNIMAGINABLE isn't named in the rules text;
- * treated as inheriting UNLIKELY's value until MIRACLE is reached — an inference, not
- * confirmed text), MIRACLE→5. Below MEDIUM (VERY_EASY/EASY) or when no roll was supplied at
- * all, {@code temporaryBonusValue} stays {@code null}.
+ * <p>A character holding {@link ArtesCompetencyAbility#DOM_BARDICO} additionally has this roll
+ * report one {@link Blessing} on {@link InteractionResult#getBlessings()} once a {@link
+ * SkillRoll} reaching at least GD Médio was supplied: {@link ModifierType#SKILL_ROLL_BONUS}
+ * (this ability's own rules text is unrestricted — "rolagens de Perícias", not one specific
+ * Perícia), {@link TargetScope#ALLIES} ("concedendo... a eles (mas não a você)"), a duration of
+ * 1 Rodada normally (2 at 5 Graduações in Artes, 3 at 10), and a value looked up via {@link
+ * #domBardicoBonusValue(DifficultyLevel)} from the {@code reachedDifficultyLevel} {@code
+ * AbstractSkillInteraction} already resolves: MEDIUM→1, HARD→2, VERY_HARD→3,
+ * UNLIKELY/UNIMAGINABLE→4 (UNIMAGINABLE isn't named in the rules text; treated as inheriting
+ * UNLIKELY's value until MIRACLE is reached — an inference, not confirmed text), MIRACLE→5.
+ * Below MEDIUM (VERY_EASY/EASY), or when no roll was supplied at all, no {@code Blessing} is
+ * reported — there's nothing coherent to grant without a resolved value, so {@link
+ * InteractionResult#getBlessings()} stays {@code null} in that case, same as when DOM_BARDICO
+ * isn't held at all.
  */
 public class ArtesInteraction extends AbstractSkillInteraction {
 
@@ -46,17 +51,19 @@ public class ArtesInteraction extends AbstractSkillInteraction {
     }
 
     @Override
-    public InteractionResult applyTo(final CharacterSheet target, final SceneContext sceneContext, final SkillRoll skillRoll) {
+    public InteractionResult applyTo(final CombatantSheet target, final SceneContext sceneContext, final SkillRoll skillRoll) {
         InteractionResult result = super.applyTo(target, sceneContext, skillRoll);
         Character character = target.getCharacter();
         if (!character.getSkillCompetencyAbilities().contains(ArtesCompetencyAbility.DOM_BARDICO)) {
             return result;
         }
+        Integer bonusValue = domBardicoBonusValue(result.getReachedDifficultyLevel());
+        if (bonusValue == null) {
+            return result;
+        }
+        Blessing domBardicoBlessing = new Blessing(ModifierType.SKILL_ROLL_BONUS, bonusValue, domBardicoRounds(character), TargetScope.ALLIES, ArtesCompetencyAbility.DOM_BARDICO.name());
         return result.toBuilder()
-                .temporaryBonusModifierType(ModifierType.SKILL_ROLL_BONUS)
-                .temporaryBonusScope(TargetScope.ALLIES)
-                .temporaryBonusRounds(domBardicoRounds(character))
-                .temporaryBonusValue(domBardicoBonusValue(result.getReachedDifficultyLevel()))
+                .blessings(List.of(domBardicoBlessing))
                 .build();
     }
 

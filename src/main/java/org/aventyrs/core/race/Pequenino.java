@@ -44,11 +44,13 @@ import java.util.Map;
  *   Elfos' own Adaptação/Conexão com o Mana; same {@link Race#getNewFeatCost(org.aventyrs.core.feat.FeatCategory)}
  *   int-vs-fractional mismatch already flagged on {@code Elfos}.</li>
  *   <li><b>Ligeiro</b> (+2UD ao Movimento Base) and <b>Sempre Veloz</b> (never loses movement
- *   to difficult terrain) — this core has no aggregated "Movimento Base" character stat at
- *   all (unlike Reações/Ações Livres/Pontos de Ação — see CLAUDE.md's "Character-level stats
- *   aggregated from abilities" section — {@link SizeCategory#getMovementPerActionPoint()} is a
- *   pure function of size alone, with no bonus sources feeding into it), nor any terrain-
- *   difficulty concept for Sempre Veloz to cancel.</li>
+ *   to difficult terrain) — {@code org.aventyrs.core.character.services.MovementService} now
+ *   aggregates a real "Movimento Base" character stat (per-{@code ModifierType#MOVEMENT}
+ *   bonus sources included, unlike {@link SizeCategory#getMovementPerActionPoint()} alone),
+ *   but Pequenino still has no {@code *RacialAbility} catalog constant to carry Ligeiro's
+ *   +2UD through it (see CLAUDE.md's "Not every race needs a RacialAbility catalog" — none of
+ *   this race's traits fit that shape yet), and there's still no terrain-difficulty concept
+ *   for Sempre Veloz to cancel.</li>
  *   <li><b>Distraído e Motivado</b> (Desvantagem on a Perícia rolled in consecutive Rodadas;
  *   Vantagem from the 2nd roll of a Turn on, but only when it's a different Perícia than any
  *   rolled earlier that Turn) — needs this core to remember *which Perícias were already

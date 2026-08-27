@@ -1,10 +1,20 @@
 package org.aventyrs.core.scene;
 
+import org.aventyrs.core.ability.AttributeAbility;
+import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.character.fixture.CharacterFixture;
+import org.aventyrs.core.character.services.InitiativeBlessingService;
+import org.aventyrs.core.character.services.InitiativeBlessingServiceImpl;
+import org.aventyrs.core.ego.InitiativeAdvantage;
+import org.aventyrs.core.modifier.ModifierType;
+import org.aventyrs.core.sheet.Blessing;
 import org.aventyrs.core.sheet.CharacterSheet;
+import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.Player;
+import org.aventyrs.core.sheet.TargetScope;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -14,11 +24,31 @@ import java.util.Set;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SceneTest {
+
+    private final InitiativeBlessingService blessingService = new InitiativeBlessingServiceImpl();
+
+    private static class SelfOnlyBlessingAbility implements AttributeAbility {
+        @Override
+        public AttributeDomain getAttributeDomain() {
+            return AttributeDomain.INSTINCT;
+        }
+
+        @Override
+        public String getDescription() {
+            return "Test-only self-only initiative blessing source.";
+        }
+
+        @Override
+        public List<Blessing> resolveInitiativeBlessings() {
+            return List.of(new Blessing(ModifierType.REACTIONS, 1, 1, TargetScope.SELF, "SelfOnlyBlessingAbility"));
+        }
+    }
 
     @BeforeEach
     public void setup() {
@@ -28,6 +58,24 @@ class SceneTest {
     private CharacterSheet newSheet() {
         Character character = CharacterFixture.blank(CharacterFixture.BLANK).build();
         return CharacterSheet.of(character, new Player());
+    }
+
+    private CharacterSheet sheetWithPosicionamentoEstrategico() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .egoAdvantage(EgoDomain.INICIATIVA, InitiativeAdvantage.POSICIONAMENTO_ESTRATEGICO)
+                .build();
+        return CharacterSheet.of(character, new Player());
+    }
+
+    private CharacterSheet sheetWithSelfOnlyBlessing() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .attributeAbility(new SelfOnlyBlessingAbility())
+                .build();
+        return CharacterSheet.of(character, new Player());
+    }
+
+    private List<Blessing> blessingsFor(final CharacterSheet sheet) {
+        return blessingService.resolveBlessings(sheet.getCharacter());
     }
 
     @Test
@@ -57,7 +105,7 @@ class SceneTest {
         CharacterSheet second = newSheet();
 
         scene.addParticipant(first, 10);
-        List<CharacterSheet> updated = scene.addParticipant(second, 15);
+        List<CombatantSheet> updated = scene.addParticipant(second, 15);
 
         assertEquals(List.of(second, first), updated);
     }
@@ -142,6 +190,90 @@ class SceneTest {
 
         assertEquals(lateArrival, scene.next());
         assertEquals(1, scene.getCurrentRound());
+        assertEquals(List.of(lateArrival, a, b), scene.getParticipantsInInitiativeOrder());
+    }
+
+    @Test
+    void nextCallsFinishTurnOnTheParticipantWhoseTurnJustEnded() {
+        Scene scene = new Scene();
+        CharacterSheet a = newSheet();
+        CharacterSheet b = newSheet();
+        scene.addParticipant(a, 10);
+        scene.addParticipant(b, 5);
+        a.grantTemporaryBonus(ModifierType.INITIATIVE, 3, 1);
+        assertEquals(3, a.getTemporaryBonus(ModifierType.INITIATIVE));
+
+        scene.next();
+        assertEquals(3, a.getTemporaryBonus(ModifierType.INITIATIVE));
+        scene.next();
+
+        assertEquals(0, a.getTemporaryBonus(ModifierType.INITIATIVE));
+    }
+
+    @Test
+    void nextDoesNotCallFinishTurnOnTheVeryFirstCall() {
+        Scene scene = new Scene();
+        CharacterSheet a = newSheet();
+        scene.addParticipant(a, 10);
+        a.grantTemporaryBonus(ModifierType.INITIATIVE, 3, 1);
+
+        scene.next();
+
+        assertEquals(3, a.getTemporaryBonus(ModifierType.INITIATIVE));
+    }
+
+    @Test
+    void wonInitiativeReflectsAGrantedInitiativeBonusImmediately() {
+        Scene scene = new Scene();
+        UUID heroes = UUID.randomUUID();
+        UUID villains = UUID.randomUUID();
+        CharacterSheet hero = newSheet();
+        CharacterSheet villain = newSheet();
+        scene.addParticipant(hero, 5, heroes);
+        scene.addParticipant(villain, 18, villains);
+        assertFalse(scene.wonInitiative(hero));
+
+        // An Ability grants the bonus straight to the CharacterSheet it already holds a
+        // reference to — no call into Scene at all.
+        hero.grantTemporaryBonus(ModifierType.INITIATIVE, 20, 1);
+
+        assertTrue(scene.wonInitiative(hero));
+        assertFalse(scene.wonInitiative(villain));
+    }
+
+    @Test
+    void turnOrderStaysFrozenMidRoundThenReflectsAGrantedInitiativeBonusAtTheNextRoundBoundary() {
+        Scene scene = new Scene();
+        CharacterSheet a = newSheet();
+        CharacterSheet b = newSheet();
+        scene.addParticipant(a, 10);
+        scene.addParticipant(b, 5);
+
+        scene.next();
+        b.grantTemporaryBonus(ModifierType.INITIATIVE, 20, 2);
+        assertEquals(List.of(a, b), scene.getParticipantsInInitiativeOrder());
+
+        scene.next();
+        scene.next();
+
+        assertEquals(List.of(b, a), scene.getParticipantsInInitiativeOrder());
+    }
+
+    @Test
+    void participantAddedMidRoundWithAnActiveInitiativeBonusIsPositionedByItsEffectiveValueOnceMerged() {
+        Scene scene = new Scene();
+        CharacterSheet a = newSheet();
+        CharacterSheet b = newSheet();
+        CharacterSheet lateArrival = newSheet();
+        lateArrival.grantTemporaryBonus(ModifierType.INITIATIVE, 20, 2);
+        scene.addParticipant(a, 10);
+        scene.addParticipant(b, 5);
+
+        scene.next();
+        scene.addParticipant(lateArrival, 1);
+        scene.next();
+        scene.next();
+
         assertEquals(List.of(lateArrival, a, b), scene.getParticipantsInInitiativeOrder());
     }
 
@@ -289,5 +421,488 @@ class SceneTest {
         SceneContext context = scene.buildContext(actor, Map.of());
 
         assertEquals(TerrainType.MOUNTAIN, context.getTerrainType());
+    }
+
+    @Test
+    void combatSceneIsFalseByDefault() {
+        Scene scene = new Scene();
+        assertFalse(scene.isCombatScene());
+    }
+
+    @Test
+    void combatSceneCanBeSetAndRead() {
+        Scene scene = new Scene();
+        scene.setCombatScene(true);
+
+        assertTrue(scene.isCombatScene());
+    }
+
+    @Test
+    void buildContextCarriesCombatSceneAndCurrentRoundIntoTheSnapshot() {
+        Scene scene = new Scene();
+        scene.setCombatScene(true);
+        CharacterSheet a = newSheet();
+        CharacterSheet b = newSheet();
+        scene.addParticipant(a, 10);
+        scene.addParticipant(b, 5);
+        scene.next();
+        scene.next();
+        scene.next();
+
+        SceneContext context = scene.buildContext(a, Map.of());
+
+        assertTrue(context.isCombatScene());
+        assertEquals(1, context.getCurrentRound());
+    }
+
+    @Test
+    void wonInitiativeIsTrueForTheGroupHoldingTheHighestValue() {
+        Scene scene = new Scene();
+        UUID heroes = UUID.randomUUID();
+        UUID villains = UUID.randomUUID();
+        CharacterSheet fastHero = newSheet();
+        CharacterSheet slowHero = newSheet();
+        CharacterSheet villain = newSheet();
+        scene.addParticipant(fastHero, 18, heroes);
+        scene.addParticipant(slowHero, 5, heroes);
+        scene.addParticipant(villain, 11, villains);
+
+        assertTrue(scene.wonInitiative(fastHero));
+        assertTrue(scene.wonInitiative(slowHero));
+        assertFalse(scene.wonInitiative(villain));
+    }
+
+    @Test
+    void wonInitiativeIsTrueForEveryGroupTiedForTheHighestValue() {
+        Scene scene = new Scene();
+        UUID heroes = UUID.randomUUID();
+        UUID villains = UUID.randomUUID();
+        CharacterSheet hero = newSheet();
+        CharacterSheet villain = newSheet();
+        scene.addParticipant(hero, 10, heroes);
+        scene.addParticipant(villain, 10, villains);
+
+        assertTrue(scene.wonInitiative(hero));
+        assertTrue(scene.wonInitiative(villain));
+    }
+
+    @Test
+    void wonInitiativeThrowsForACharacterSheetNeverAddedToTheScene() {
+        Scene scene = new Scene();
+        CharacterSheet stranger = newSheet();
+
+        assertThrows(IllegalOperationException.class, () -> scene.wonInitiative(stranger));
+    }
+
+    @Test
+    void buildContextCarriesWonInitiativeIntoTheSnapshot() {
+        Scene scene = new Scene();
+        UUID heroes = UUID.randomUUID();
+        UUID villains = UUID.randomUUID();
+        CharacterSheet hero = newSheet();
+        CharacterSheet villain = newSheet();
+        scene.addParticipant(hero, 18, heroes);
+        scene.addParticipant(villain, 5, villains);
+
+        assertTrue(scene.buildContext(hero, Map.of()).hasWonInitiative());
+        assertFalse(scene.buildContext(villain, Map.of()).hasWonInitiative());
+    }
+
+    @Test
+    void applyInitiativeBlessingsThrowsWhenTheCharacterDidNotWinInitiative() {
+        Scene scene = new Scene();
+        UUID heroes = UUID.randomUUID();
+        UUID villains = UUID.randomUUID();
+        CharacterSheet hero = sheetWithPosicionamentoEstrategico();
+        CharacterSheet villain = newSheet();
+        scene.addParticipant(hero, 18, heroes);
+        scene.addParticipant(villain, 5, villains);
+
+        assertThrows(IllegalOperationException.class,
+                () -> scene.applyInitiativeBlessings(villain, blessingsFor(villain)));
+    }
+
+    @Test
+    void applyInitiativeBlessingsThrowsForACharacterSheetNeverAddedToTheScene() {
+        Scene scene = new Scene();
+        CharacterSheet stranger = sheetWithPosicionamentoEstrategico();
+
+        assertThrows(IllegalOperationException.class,
+                () -> scene.applyInitiativeBlessings(stranger, blessingsFor(stranger)));
+    }
+
+    @Test
+    void applyInitiativeBlessingsGrantsAnAllyScopedBlessingToTheWinnerAndItsAllies() {
+        Scene scene = new Scene();
+        UUID heroes = UUID.randomUUID();
+        UUID villains = UUID.randomUUID();
+        CharacterSheet winner = sheetWithPosicionamentoEstrategico();
+        CharacterSheet ally = newSheet();
+        CharacterSheet enemy = newSheet();
+        scene.addParticipant(winner, 18, heroes);
+        scene.addParticipant(ally, 8, heroes);
+        scene.addParticipant(enemy, 5, villains);
+
+        scene.applyInitiativeBlessings(winner, blessingsFor(winner));
+
+        assertEquals(2, winner.getTemporaryBonus(ModifierType.MOVEMENT));
+        assertEquals(2, ally.getTemporaryBonus(ModifierType.MOVEMENT));
+        assertEquals(0, enemy.getTemporaryBonus(ModifierType.MOVEMENT));
+    }
+
+    @Test
+    void applyInitiativeBlessingsGrantsASelfOnlyBlessingOnlyToTheWinner() {
+        Scene scene = new Scene();
+        UUID heroes = UUID.randomUUID();
+        CharacterSheet winner = sheetWithSelfOnlyBlessing();
+        CharacterSheet ally = newSheet();
+        scene.addParticipant(winner, 18, heroes);
+        scene.addParticipant(ally, 8, heroes);
+
+        scene.applyInitiativeBlessings(winner, blessingsFor(winner));
+
+        assertEquals(1, winner.getTemporaryBonus(ModifierType.REACTIONS));
+        assertEquals(0, ally.getTemporaryBonus(ModifierType.REACTIONS));
+    }
+
+    @Test
+    void applyInitiativeBlessingsRevokesThePreviousWinnersGrantWhenANewGroupWins() {
+        Scene scene = new Scene();
+        UUID heroes = UUID.randomUUID();
+        UUID villains = UUID.randomUUID();
+        CharacterSheet hero = sheetWithPosicionamentoEstrategico();
+        CharacterSheet villain = sheetWithPosicionamentoEstrategico();
+        scene.addParticipant(hero, 18, heroes);
+        scene.addParticipant(villain, 5, villains);
+        scene.applyInitiativeBlessings(hero, blessingsFor(hero));
+        assertEquals(2, hero.getTemporaryBonus(ModifierType.MOVEMENT));
+
+        // A new, higher-rolling villain joins, flipping who currently wins initiative.
+        CharacterSheet strongerVillain = newSheet();
+        scene.addParticipant(strongerVillain, 25, villains);
+        scene.applyInitiativeBlessings(strongerVillain, blessingsFor(strongerVillain));
+
+        assertEquals(0, hero.getTemporaryBonus(ModifierType.MOVEMENT));
+        assertEquals(0, villain.getTemporaryBonus(ModifierType.MOVEMENT));
+    }
+
+    @Test
+    void addParticipantAppliesActiveAllyScopedBlessingsToANewcomerJoiningTheBlessedGroup() {
+        Scene scene = new Scene();
+        UUID heroes = UUID.randomUUID();
+        CharacterSheet winner = sheetWithPosicionamentoEstrategico();
+        scene.addParticipant(winner, 18, heroes);
+        scene.applyInitiativeBlessings(winner, blessingsFor(winner));
+
+        CharacterSheet lateAlly = newSheet();
+        scene.addParticipant(lateAlly, 3, heroes);
+
+        assertEquals(2, lateAlly.getTemporaryBonus(ModifierType.MOVEMENT));
+    }
+
+    @Test
+    void addParticipantDoesNotApplyBlessingsToANewcomerJoiningADifferentGroup() {
+        Scene scene = new Scene();
+        UUID heroes = UUID.randomUUID();
+        UUID villains = UUID.randomUUID();
+        CharacterSheet winner = sheetWithPosicionamentoEstrategico();
+        scene.addParticipant(winner, 18, heroes);
+        scene.applyInitiativeBlessings(winner, blessingsFor(winner));
+
+        CharacterSheet lateEnemy = newSheet();
+        scene.addParticipant(lateEnemy, 3, villains);
+
+        assertEquals(0, lateEnemy.getTemporaryBonus(ModifierType.MOVEMENT));
+    }
+
+    @Test
+    void addParticipantWithTheTwoArgOverloadNeverMatchesTheBlessedGroup() {
+        Scene scene = new Scene();
+        UUID heroes = UUID.randomUUID();
+        CharacterSheet winner = sheetWithPosicionamentoEstrategico();
+        scene.addParticipant(winner, 18, heroes);
+        scene.applyInitiativeBlessings(winner, blessingsFor(winner));
+
+        CharacterSheet lone = newSheet();
+        scene.addParticipant(lone, 3);
+
+        assertEquals(0, lone.getTemporaryBonus(ModifierType.MOVEMENT));
+    }
+
+    @Test
+    void addParticipantDoesNotApplyASelfOnlyBlessingToANewcomerJoiningTheBlessedGroup() {
+        Scene scene = new Scene();
+        UUID heroes = UUID.randomUUID();
+        CharacterSheet winner = sheetWithSelfOnlyBlessing();
+        scene.addParticipant(winner, 18, heroes);
+        scene.applyInitiativeBlessings(winner, blessingsFor(winner));
+
+        CharacterSheet lateAlly = newSheet();
+        scene.addParticipant(lateAlly, 3, heroes);
+
+        assertEquals(0, lateAlly.getTemporaryBonus(ModifierType.REACTIONS));
+    }
+
+    @Test
+    void currentIndexAndCurrentCombatantStartUnsetAndFollowNext() {
+        Scene scene = new Scene();
+        CharacterSheet fast = newSheet();
+        CharacterSheet slow = newSheet();
+        scene.addParticipant(fast, 18);
+        scene.addParticipant(slow, 5);
+
+        assertEquals(-1, scene.getCurrentIndex());
+        assertNull(scene.getCurrentCombatant());
+
+        scene.next();
+        assertEquals(0, scene.getCurrentIndex());
+        assertEquals(fast, scene.getCurrentCombatant());
+
+        scene.next();
+        assertEquals(1, scene.getCurrentIndex());
+        assertEquals(slow, scene.getCurrentCombatant());
+    }
+
+    @Test
+    void getCurrentCombatantDoesNotAdvanceTheCursor() {
+        Scene scene = new Scene();
+        CharacterSheet only = newSheet();
+        scene.addParticipant(only, 10);
+        scene.next();
+
+        scene.getCurrentCombatant();
+        scene.getCurrentCombatant();
+
+        assertEquals(0, scene.getCurrentIndex());
+        assertEquals(0, scene.getCurrentRound());
+    }
+
+    @Test
+    void getPendingParticipantsHoldsWhoeverJoinedMidRoundUntilTheNextBoundary() {
+        Scene scene = new Scene();
+        CharacterSheet fast = newSheet();
+        CharacterSheet slow = newSheet();
+        scene.addParticipant(fast, 18);
+        scene.addParticipant(slow, 5);
+        scene.next();
+
+        CharacterSheet latecomer = newSheet();
+        scene.addParticipant(latecomer, 12);
+
+        assertEquals(List.of(latecomer), scene.getPendingParticipants());
+        assertFalse(scene.getParticipantsInInitiativeOrder().contains(latecomer));
+
+        scene.next();
+        scene.next();
+
+        assertEquals(List.of(), scene.getPendingParticipants());
+        assertEquals(List.of(fast, latecomer, slow), scene.getParticipantsInInitiativeOrder());
+    }
+
+    @Test
+    void restoreTurnCursorSetsRoundAndIndexWithoutRunningTurnBoundaryBehaviour() {
+        Scene scene = new Scene();
+        CharacterSheet fast = newSheet();
+        CharacterSheet slow = newSheet();
+        scene.addParticipant(fast, 18);
+        scene.addParticipant(slow, 5);
+        fast.grantTemporaryBonus(ModifierType.MOVEMENT, 2, 2);
+
+        scene.restoreTurnCursor(3, 1);
+
+        assertEquals(3, scene.getCurrentRound());
+        assertEquals(1, scene.getCurrentIndex());
+        assertEquals(slow, scene.getCurrentCombatant());
+        // Neither finishTurn() nor startTurn() ran, so the bonus is untouched by the restore.
+        assertEquals(2, fast.getTemporaryBonus(ModifierType.MOVEMENT));
+    }
+
+    @Test
+    void restoreTurnCursorRejectsAnIndexOutsideTheCurrentRotation() {
+        Scene scene = new Scene();
+        scene.addParticipant(newSheet(), 10);
+
+        assertThrows(IllegalOperationException.class, () -> scene.restoreTurnCursor(0, 1));
+        assertThrows(IllegalOperationException.class, () -> scene.restoreTurnCursor(0, -2));
+        assertThrows(IllegalOperationException.class, () -> scene.restoreTurnCursor(-1, 0));
+    }
+
+    @Test
+    void aParticipantAddedAfterRestoreTurnCursorWaitsForTheNextRoundBoundary() {
+        Scene scene = new Scene();
+        CharacterSheet fast = newSheet();
+        CharacterSheet slow = newSheet();
+        scene.addParticipant(fast, 18);
+        scene.addParticipant(slow, 5);
+        scene.restoreTurnCursor(2, 0);
+
+        CharacterSheet latecomer = newSheet();
+        scene.addParticipant(latecomer, 12);
+
+        assertEquals(List.of(latecomer), scene.getPendingParticipants());
+
+        assertEquals(slow, scene.next());
+        assertEquals(fast, scene.next());
+
+        assertEquals(3, scene.getCurrentRound());
+        assertEquals(List.of(fast, latecomer, slow), scene.getParticipantsInInitiativeOrder());
+    }
+
+    @Test
+    void removeParticipantReturnsFalseForSomeoneWhoWasNeverAdded() {
+        Scene scene = new Scene();
+        scene.addParticipant(newSheet(), 10);
+
+        assertFalse(scene.removeParticipant(newSheet()));
+    }
+
+    @Test
+    void removingSomeoneBeforeTheCursorKeepsTheSameCombatantActive() {
+        Scene scene = new Scene();
+        CharacterSheet fast = newSheet();
+        CharacterSheet medium = newSheet();
+        CharacterSheet slow = newSheet();
+        scene.addParticipant(fast, 18);
+        scene.addParticipant(medium, 11);
+        scene.addParticipant(slow, 5);
+        scene.next();
+        scene.next();
+
+        assertTrue(scene.removeParticipant(fast));
+
+        assertEquals(0, scene.getCurrentIndex());
+        assertEquals(medium, scene.getCurrentCombatant());
+        assertEquals(slow, scene.next());
+    }
+
+    @Test
+    void removingWhoeverIsActiveLeavesTheCursorOnWhoeverCameBeforeThem() {
+        Scene scene = new Scene();
+        CharacterSheet fast = newSheet();
+        CharacterSheet medium = newSheet();
+        CharacterSheet slow = newSheet();
+        scene.addParticipant(fast, 18);
+        scene.addParticipant(medium, 11);
+        scene.addParticipant(slow, 5);
+        scene.next();
+        scene.next();
+
+        assertTrue(scene.removeParticipant(medium));
+
+        assertEquals(0, scene.getCurrentIndex());
+        assertEquals(fast, scene.getCurrentCombatant());
+        assertEquals(slow, scene.next());
+    }
+
+    @Test
+    void removingSomeoneAfterTheCursorLeavesItWhereItWas() {
+        Scene scene = new Scene();
+        CharacterSheet fast = newSheet();
+        CharacterSheet medium = newSheet();
+        CharacterSheet slow = newSheet();
+        scene.addParticipant(fast, 18);
+        scene.addParticipant(medium, 11);
+        scene.addParticipant(slow, 5);
+        scene.next();
+
+        assertTrue(scene.removeParticipant(slow));
+
+        assertEquals(0, scene.getCurrentIndex());
+        assertEquals(fast, scene.getCurrentCombatant());
+        assertEquals(medium, scene.next());
+    }
+
+    @Test
+    void removingThePendingParticipantKeepsItOutOfTheNextRound() {
+        Scene scene = new Scene();
+        CharacterSheet only = newSheet();
+        scene.addParticipant(only, 10);
+        scene.next();
+        CharacterSheet latecomer = newSheet();
+        scene.addParticipant(latecomer, 12);
+
+        assertTrue(scene.removeParticipant(latecomer));
+
+        assertEquals(List.of(), scene.getPendingParticipants());
+        assertEquals(only, scene.next());
+        assertEquals(List.of(only), scene.getParticipantsInInitiativeOrder());
+    }
+
+    @Test
+    void removingTheLastParticipantResetsTheCursor() {
+        Scene scene = new Scene();
+        CharacterSheet only = newSheet();
+        scene.addParticipant(only, 10);
+        scene.next();
+
+        assertTrue(scene.removeParticipant(only));
+
+        assertEquals(-1, scene.getCurrentIndex());
+        assertNull(scene.getCurrentCombatant());
+        assertThrows(IllegalOperationException.class, scene::next);
+    }
+
+    @Test
+    void removeParticipantRevokesTheBlessingsThisSceneGrantedThem() {
+        Scene scene = new Scene();
+        UUID heroes = UUID.randomUUID();
+        CharacterSheet winner = sheetWithPosicionamentoEstrategico();
+        CharacterSheet ally = newSheet();
+        scene.addParticipant(winner, 18, heroes);
+        scene.addParticipant(ally, 12, heroes);
+        scene.applyInitiativeBlessings(winner, blessingsFor(winner));
+        assertEquals(2, ally.getTemporaryBonus(ModifierType.MOVEMENT));
+
+        assertTrue(scene.removeParticipant(ally));
+
+        assertEquals(0, ally.getTemporaryBonus(ModifierType.MOVEMENT));
+    }
+
+    // --- getAllParticipants ----------------------------------------------------------------
+
+    @Test
+    void getAllParticipantsReturnsTheRotationFollowedByWhoeverIsStillPending() {
+        Scene scene = new Scene();
+        CharacterSheet fast = newSheet();
+        CharacterSheet slow = newSheet();
+        scene.addParticipant(fast, 18);
+        scene.addParticipant(slow, 5);
+        scene.next();
+
+        CharacterSheet latecomer = newSheet();
+        scene.addParticipant(latecomer, 12);
+
+        assertEquals(List.of(fast, slow, latecomer), scene.getAllParticipants());
+    }
+
+    /** The whole point: a mid-Round joiner that getParticipantsInInitiativeOrder omits. */
+    @Test
+    void getAllParticipantsIncludesAMidRoundJoinerThatTheInitiativeOrderOmits() {
+        Scene scene = new Scene();
+        CharacterSheet fighter = newSheet();
+        scene.addParticipant(fighter, 10);
+        scene.next();
+
+        CharacterSheet latecomer = newSheet();
+        scene.addParticipant(latecomer, 4);
+
+        assertFalse(scene.getParticipantsInInitiativeOrder().contains(latecomer));
+        assertTrue(scene.getAllParticipants().contains(latecomer));
+    }
+
+    @Test
+    void getAllParticipantsIsEmptyForAnEmptyScene() {
+        assertEquals(List.of(), new Scene().getAllParticipants());
+    }
+
+    @Test
+    void getAllParticipantsReturnsADefensiveCopy() {
+        Scene scene = new Scene();
+        CharacterSheet fighter = newSheet();
+        scene.addParticipant(fighter, 10);
+
+        scene.getAllParticipants().clear();
+
+        assertEquals(List.of(fighter), scene.getAllParticipants());
     }
 }

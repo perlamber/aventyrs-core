@@ -54,11 +54,13 @@ import java.util.Set;
  *   same restraint as every other unenforced acquisition prerequisite in this codebase.</li>
  *   <li><b>Visão no escuro</b> (monochromatic darkvision) — same "no vision/senses concept"
  *   gap as Anões.</li>
- *   <li><b>Linhagem Feérica</b> (+2 DM racial bonus, +5 vs. Encantamentos) — DM (Defesa
- *   Mágica) isn't a concept this core computes at all; {@code AtaqueADistanciaInteraction}'s
- *   own javadoc already notes a target's DF/DM lookup is "left to a layer above this core".
- *   The narrower "+5 apenas contra Encantamentos" case would also need this codebase's
- *   familiar "doesn't track what a roll/effect is *for*" gap closed first.</li>
+ *   <li><b>Linhagem Feérica</b> (+2 DM racial bonus, +5 vs. Encantamentos) — the flat +2 half
+ *   is now expressible: {@code ModifierType#MAGIC_DEFENSE} exists and {@code
+ *   character.services.DefenseService} sums it across racial abilities like any other. What it
+ *   still lacks is somewhere to hang it — {@code Elfo} has no {@code *RacialAbility} enum, and
+ *   one exists only once a trait's shape genuinely fits (it now does). The narrower "+5 apenas
+ *   contra Encantamentos" case stays blocked on this codebase's familiar "doesn't track what a
+ *   roll/effect is *for*" gap.</li>
  *   <li><b>Conexão com o Mana</b> (Talentos Metamágicos cost 2.5 EXP instead of 3) — {@link
  *   Race#getNewFeatCost(org.aventyrs.core.feat.FeatCategory)} returns a plain {@code int},
  *   which can't represent a genuinely fractional 2.5 — the same int-vs-fractional mismatch

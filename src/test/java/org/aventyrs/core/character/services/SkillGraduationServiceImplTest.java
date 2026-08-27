@@ -1,5 +1,6 @@
 package org.aventyrs.core.character.services;
 
+import org.aventyrs.core.ability.PeritoTeoricoAbility;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.AttributeValue;
 import org.aventyrs.core.character.Character;
@@ -137,6 +138,40 @@ class SkillGraduationServiceImplTest {
 
         // The racial ability substitutes Destreza(5) for Força(3), so the cap is 2*5=10, not 2*3=6.
         assertEquals(10, skillGraduationService.getMaxGraduation(character, SkillType.ATAQUE_CORPO_A_CORPO));
+    }
+
+    @Test
+    void getMaxGraduationUsesTheSubstitutedAttributeFromPeritoTeoricoWhenPresent() {
+        CharacterSkill furtividadeSkill = CharacterSkillFixture.blank(CharacterSkillFixture.FURTIVIDADE_1).build();
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .attributes(CharacterAttributes.builder()
+                        .dexterity(AttributeValue.builder().domain(AttributeDomain.DEXTERITY).base(2).build())
+                        .gnose(AttributeValue.builder().domain(AttributeDomain.GNOSE).base(5).build())
+                        .build())
+                .skill(SkillType.FURTIVIDADE, furtividadeSkill)
+                .attributeAbility(PeritoTeoricoAbility.FURTIVIDADE)
+                .build();
+
+        // PeritoTeoricoAbility.FURTIVIDADE substitutes Gnose(5) for Destreza(2), so the cap is 2*5=10, not 2*2=4.
+        assertEquals(10, skillGraduationService.getMaxGraduation(character, SkillType.FURTIVIDADE));
+    }
+
+    @Test
+    void getMaxGraduationIsUnaffectedByPeritoTeoricoForAnUnchosenSkillType() {
+        CharacterSkill furtividadeSkill = CharacterSkillFixture.blank(CharacterSkillFixture.FURTIVIDADE_1).build();
+        CharacterSkill persuasaoSkill = CharacterSkillFixture.blank(CharacterSkillFixture.PERSUASAO_1).build();
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .attributes(CharacterAttributes.builder()
+                        .gnose(AttributeValue.builder().domain(AttributeDomain.GNOSE).base(5).build())
+                        .charisma(AttributeValue.builder().domain(AttributeDomain.CHARISMA).base(2).build())
+                        .build())
+                .skill(SkillType.FURTIVIDADE, furtividadeSkill)
+                .skill(SkillType.PERSUASAO, persuasaoSkill)
+                .attributeAbility(PeritoTeoricoAbility.FURTIVIDADE)
+                .build();
+
+        // The character only holds FURTIVIDADE's constant, so Persuasão's cap still uses Carisma(2)*2=4, not Gnose(5)*2=10.
+        assertEquals(4, skillGraduationService.getMaxGraduation(character, SkillType.PERSUASAO));
     }
 
     @Test

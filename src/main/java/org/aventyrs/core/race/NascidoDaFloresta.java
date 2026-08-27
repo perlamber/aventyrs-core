@@ -78,9 +78,9 @@ import static org.aventyrs.core.util.TranslatableMessages.INVALID_PARENT_RACE;
  *   Encantamento) — a GD-reduction variant of {@code Fada}'s/{@code Furia}'s own Feromônio
  *   Encantador (which grants Vantagem, a roll bonus, instead of reducing the target's GD) — the
  *   variance doesn't change which piece is missing: spending PD ({@code
- *   org.aventyrs.core.sheet.CharacterSheet#spendDeterminationPoints}), proximity ({@code
+ *   org.aventyrs.core.sheet.CombatantSheet#spendDeterminationPoints}), proximity ({@code
  *   org.aventyrs.core.scene.SceneContext#getDistanceTo}/{@code Range#DISTANCIA_CURTA}), and a
- *   Rodada-scoped duration ({@code CharacterSheet#grantTemporaryBonus}'s {@code rounds}
+ *   Rodada-scoped duration ({@code CombatantSheet#grantTemporaryBonus}'s {@code rounds}
  *   parameter) are each individually real, but nothing in this core can combine them into a
  *   standalone, opt-in Ação Livre activation — every existing trigger for a granted effect is the
  *   *result* of a skill roll ({@code ArtesCompetencyAbility#DOM_BARDICO}), not a standalone

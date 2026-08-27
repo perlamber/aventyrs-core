@@ -40,11 +40,13 @@ import java.util.Map;
  *   rather than the roll's purpose.</li>
  *   <li><b>Aventyr Incandescente</b> (1d6 extra ao ativar Habilidade de Título com Custo, 5-6
  *   concede aura +2PV a aliados adjacentes por 2 Rodadas, Margem Crítica Menor +1 e Corrente de
- *   Efeitos "Aventyr Incandescente" contra Monstros/Malignos) — needs a Título/Habilidade de
- *   Título activation system (this core's {@link org.aventyrs.core.character.Title} is "just an
- *   empty marker interface" per {@code Orc}'s own Herança Celeste citation), this core
- *   deliberately never rolls its own dice, and Corrente de Efeitos is an entirely unbuilt system
- *   (same gap {@code AutocontroleAdvantage#RESOLUTO} already cites).</li>
+ *   Efeitos "Aventyr Incandescente" contra Monstros/Malignos) — {@code
+ *   org.aventyrs.core.title.AventyrTitleAbility#getPDCost()} now models "Habilidade de Título
+ *   com Custo" for real (see {@code Santo}'s own catalog), but this trait still needs an
+ *   "ao ativar" trigger hook (no mechanism anywhere fires when a Título ability is actually
+ *   activated), this core deliberately never rolls its own dice, and Corrente de Efeitos is
+ *   an entirely unbuilt system (same gap {@code AutocontroleAdvantage#RESOLUTO} already
+ *   cites).</li>
  * </ul>
  *
  * <p>Tendência is deliberately left unconstrained, same treatment as every other race —

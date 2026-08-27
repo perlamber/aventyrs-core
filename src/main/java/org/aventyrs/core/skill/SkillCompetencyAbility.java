@@ -4,7 +4,8 @@ import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.DamageBonus;
 import org.aventyrs.core.scene.SceneContext;
-import org.aventyrs.core.sheet.CharacterSheet;
+import org.aventyrs.core.sheet.Blessing;
+import org.aventyrs.core.sheet.CombatantSheet;
 
 import java.util.Collection;
 import java.util.List;
@@ -52,8 +53,52 @@ public interface SkillCompetencyAbility extends SkillTrait {
      * this takes {@code sceneContext}/{@code attackTarget} explicitly instead of relying on
      * {@code ModifierResolver} to discover it.
      */
-    default Optional<DamageBonus> resolveDamageBonus(final SceneContext sceneContext, final CharacterSheet attackTarget) {
+    default Optional<DamageBonus> resolveDamageBonus(final SceneContext sceneContext, final CombatantSheet attackTarget) {
+        return resolveDamageBonus(null, sceneContext, attackTarget, null);
+    }
+
+    /**
+     * {@link #resolveDamageBonus(SceneContext, CombatantSheet)} with the two facts a proximity
+     * condition doesn't need but a holder-state condition does: which Perícia de Ataque is being
+     * rolled, and the roller's own {@link Character}. Cascading-overload convention — the
+     * 2-arg form above delegates here with {@code null}s and this one holds the real logic, so
+     * an override always goes on <em>this</em> one even when it ignores the two new parameters
+     * ({@code AtaqueADistanciaCompetencyAbility#FRIEZA} does exactly that).
+     *
+     * <p>{@code actor} is the ability's own holder, mirroring {@code
+     * org.aventyrs.core.ego.EgoAdvantage#resolveSkillSpecificRollBonus}'s "passed explicitly
+     * because the bonus may depend on the holder's own live state" shape — it's what {@code
+     * AtaqueCorpoACorpoCompetencyAbility#BRUTALIDADE} reads its own Graduação from, to tell
+     * whether it's still granting a flat dano bonus or has converted into a Dano Base increase
+     * (see {@link #resolveDamageBaseIncrease}). Both may be {@code null} when a caller reaches
+     * this through the shorter overload; an override conditioned on either treats {@code null}
+     * as "condition not met," the same restraint every other {@code resolve*} hook applies.
+     */
+    default Optional<DamageBonus> resolveDamageBonus(final SkillType attackingSkillType, final SceneContext sceneContext, final CombatantSheet attackTarget, final Character actor) {
         return Optional.empty();
+    }
+
+    /**
+     * How many Dano Base scale-ups this ability grants an attack made with attackingSkillType —
+     * e.g. {@code AtaqueCorpoACorpoCompetencyAbility#BRUTALIDADE}'s +1 (or +2) once its holder
+     * reaches the Graduação that converts its flat dano bonus into a Dano Base increase, or
+     * {@code ArtesAprimorarComArteAbility}'s "Perícias de Ataque - Dano Base +1" branch. Summed
+     * by {@code org.aventyrs.core.character.services.DamageBaseService#getDamageBase} across
+     * {@code SkillCompetencyAbility#allFor} (so racial abilities count), and applied to the
+     * wielded item's own {@link org.aventyrs.core.character.DamageBase}.
+     *
+     * <p>The service deliberately does <b>not</b> pre-filter by {@link #getSkillType()}: an
+     * ability may raise the Dano Base of a Perícia other than its own (that's precisely what
+     * {@code ArtesAprimorarComArteAbility}, an <i>Artes</i> ability, does for the Perícia de
+     * Ataque its holder chose). Each override checks attackingSkillType itself — same shape and
+     * reason as {@link #resolveCriticalMarginIncrease}. character is the holder, for a clause
+     * gated on their own Graduação. Zero by default; only override on a constant whose rules
+     * text raises Dano Base, never for a flat "+N aos Danos" (that's {@link
+     * #resolveDamageBonus} — see {@link org.aventyrs.core.character.DamageBase}'s javadoc for
+     * why the two never merge).
+     */
+    default int resolveDamageBaseIncrease(final SkillType attackingSkillType, final Character character) {
+        return 0;
     }
 
     /**
@@ -67,7 +112,7 @@ public interface SkillCompetencyAbility extends SkillTrait {
      * already uses — unlike {@link #resolveDamageBonus}, which only ever expects one bonus to
      * apply per roll.
      */
-    default Optional<Integer> resolveAttackRollBonus(final CharacterSheet actor, final CharacterSheet attackTarget) {
+    default Optional<Integer> resolveAttackRollBonus(final CombatantSheet actor, final CombatantSheet attackTarget) {
         return Optional.empty();
     }
 
@@ -88,6 +133,60 @@ public interface SkillCompetencyAbility extends SkillTrait {
      */
     default Optional<Integer> resolveConditionalRollBonus(final SceneContext sceneContext, final SkillTrait requestedAbility) {
         return Optional.empty();
+    }
+
+    /**
+     * Every {@link SkillType} this ability still owes the holder a {@code SkillSpecialization}
+     * choice for, given character's currently trained Perícias — e.g. {@code
+     * ConhecimentosCompetencyAbility#GENERALISTA}'s own "divididas entre até 2 Perícias à sua
+     * escolha," mirroring {@code AttributeAbility#resolvePendingSkillTraitChoices}' shape (see
+     * that method's own javadoc, and {@code GnoseAbility#DOMINIO_DO_CONHECIMENTO}, for the
+     * identical specialization-only case on the AttributeAbility side). Empty by default; only
+     * override on a constant whose rules text requires the player to pick one or more Perícias
+     * for a new Especialização at acquisition time.
+     *
+     * <p>Unlike {@code AttributeAbility}'s counterpart, there's no {@code
+     * AttributeAbilityService#grantAttributeAbility}-equivalent acquisition service for {@code
+     * SkillCompetencyAbility} to report this through yet (see CLAUDE.md's "Adding a new
+     * Perícia" section on the missing eligibility service) — a caller resolves each entry
+     * directly via {@code AttributeAbilityService#grantSpecializationChoice} once the player
+     * picks, the same generic (character, skillType, specialization) mutation
+     * DOMINIO_DO_CONHECIMENTO's own entries resolve through; this method itself never mutates
+     * anything.
+     */
+    default List<SkillType> resolvePendingSpecializationChoices(Character character) {
+        return List.of();
+    }
+
+    /**
+     * Every {@link Blessing} this Habilidade de Competência grants the moment its
+     * holder wins initiative for their group — mirrors {@code
+     * org.aventyrs.core.ego.EgoAdvantage#resolveInitiativeBlessings}'s own shape (see that
+     * method's javadoc for the full mechanism, and {@code
+     * org.aventyrs.core.character.services.InitiativeBlessingService} for how this is scanned
+     * alongside {@code EgoAdvantage}/{@code org.aventyrs.core.ability.AttributeAbility}).
+     * Empty by default; only override on a constant whose rules text grants a bonus
+     * specifically for winning initiative.
+     */
+    default List<Blessing> resolveInitiativeBlessings() {
+        return List.of();
+    }
+
+    /**
+     * How many extra "números" this Habilidade de Competência widens skillType's Margem
+     * Crítica Menor by right now, conditioned on {@link SceneContext} — e.g. {@code
+     * org.aventyrs.core.skill.artes.ArtesAprimorarComArteAbility}'s "Outras Perícias – Margem
+     * Crítica Menor +1" branch (see its own {@code getCriticalMarginReduction(SkillType)},
+     * which this delegates to; sceneContext is unused there since that branch isn't
+     * Scene-conditioned). Mirrors {@code
+     * org.aventyrs.core.ability.AttributeAbility#resolveCriticalMarginIncrease}/{@code
+     * org.aventyrs.core.ego.EgoAdvantage#resolveCriticalMarginIncrease}'s identical shape — see
+     * {@code SkillRoll#getCriticalResult(int)} for how the sum across all three is actually
+     * consumed. Zero by default; only override on a constant (or instance, for a choice-carrying
+     * ability) whose rules text widens Margem Crítica Menor like this.
+     */
+    default int resolveCriticalMarginIncrease(final SkillType skillType, final SceneContext sceneContext) {
+        return 0;
     }
 
     /**

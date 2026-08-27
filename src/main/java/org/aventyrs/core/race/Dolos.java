@@ -36,12 +36,15 @@ import java.util.Map;
  *   every other race, compounded here by a creation-time choice between *which* Perícia to
  *   train (not just which Especialização) that this core also has no hook for.</li>
  *   <li><b>Como o Vento</b> (+2UD Movimento Base; Movimento Base de Voo por 1PA+3PD, duração
- *   1d6+Carisma Rodadas normalmente ou 1 Rodada em cenas estressantes) — this core has no
- *   aggregated "Movimento Base" stat at all (same gap {@code Pequenino}'s own Ligeiro/Sempre
- *   Veloz cites), no activated-ability-outside-a-roll trigger (same gap {@code Aquan}'s own
- *   Corpo Maleável cites), and this core deliberately never rolls its own dice (the "1d6"
- *   duration is a caller's job, per the {@code skill} package-info) nor distinguishes a "cena
- *   estressante" from any other.</li>
+ *   1d6+Carisma Rodadas normalmente ou 1 Rodada em cenas estressantes) — {@code
+ *   MovementService} now aggregates a real "Movimento Base" stat (same fix {@code Pequenino}'s
+ *   own Ligeiro/Sempre Veloz cites), but Dolos still has no {@code *RacialAbility} catalog
+ *   constant to carry the flat +2UD through it, flight is a different sub-stat that stat
+ *   doesn't track (same gap {@code AtletismoCompetencyAbility.ALPINISTA_VELOZ}/{@code ANFIBIO}
+ *   cite for climbing/swimming), and this whole clause still has no activated-ability-outside-
+ *   a-roll trigger (same gap {@code Aquan}'s own Corpo Maleável cites) — this core also
+ *   deliberately never rolls its own dice (the "1d6" duration is a caller's job, per the
+ *   {@code skill} package-info) nor distinguishes a "cena estressante" from any other.</li>
  *   <li><b>Saúde Forte em Corpo Frágil</b> (-1 Multiplicador de PV; imunidade a doenças
  *   mundanas) — the PV-multiplier malus hits the same {@code HitPointsServiceImpl
  *   #getLifeMultiplier} "doesn't scan {@code race.getRacialAbilities()}" gap {@code Colosso}'s

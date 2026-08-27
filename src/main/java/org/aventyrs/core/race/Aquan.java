@@ -42,8 +42,11 @@ import java.util.Map;
  *   entity/list exists yet") plus a "Cura effect" modifier hook this core doesn't have.</li>
  *   <li><b>Dependência Aquática</b> (+1/-1 Multiplicador de PV conforme contato com água,
  *   Movimento Base de Natação, +2UD Movimento) — same environment-tracking gap as Corpo
- *   Maleável, plus this core has no aggregated "Movimento Base" stat at all (same gap {@code
- *   Pequenino}'s own Ligeiro/Sempre Veloz cites).</li>
+ *   Maleável; {@code MovementService} now aggregates a real "Movimento Base" stat (same fix
+ *   {@code Pequenino}'s own Ligeiro/Sempre Veloz cites) for the flat +2UD clause, but Aquan
+ *   still has no {@code *RacialAbility} catalog constant to carry it through, and swimming is
+ *   a different sub-stat that stat doesn't track (same gap {@code AtletismoCompetencyAbility
+ *   .ANFIBIO} cites).</li>
  * </ul>
  *
  * <p>Tendência is deliberately left unconstrained, same treatment as every other race —

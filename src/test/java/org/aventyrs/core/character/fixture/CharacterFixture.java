@@ -10,10 +10,11 @@ import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterAttributes;
 import org.aventyrs.core.character.CharacterEgos;
 import org.aventyrs.core.character.CharacterSkill;
-import org.aventyrs.core.character.CharacterStatus;
 import org.aventyrs.core.character.SizeCategory;
 import org.aventyrs.core.character.services.CharacterAttributeService;
 import org.aventyrs.core.character.services.FreeActionsService;
+import org.aventyrs.core.character.services.DeterminationPointsService;
+import org.aventyrs.core.character.services.HitPointsService;
 import org.aventyrs.core.character.services.MagicPointsService;
 import org.aventyrs.core.character.services.ReactionsService;
 import org.aventyrs.core.race.Human;
@@ -76,6 +77,20 @@ public class CharacterFixture extends SimpleFixture {
      * don't care about identity; a test that needs several distinct Characters (e.g. for
      * {@code Scene}'s allies) must override {@code .id(UUID.randomUUID())} on each one via
      * {@link #blank}'s returned builder.
+     *
+     * <p>{@code feats} is set to the same immutable {@code List.of()} every other trait list
+     * here uses — a test that actually grants a Feat (via {@code
+     * org.aventyrs.core.character.services.FeatService#grantFeat} or {@code Character
+     * #grantFeat} directly) must first swap in a fresh mutable list, e.g. {@code
+     * .toBuilder().feats(new ArrayList<>()).build()} — see {@code Character#feats}'s own
+     * javadoc for why a shared mutable instance can't just be defaulted here instead (it would
+     * alias across every Character built from this template).
+     *
+     * <p>{@code equipment} carries the exact same caveat, for the exact same reason — a test
+     * that equips an {@code Item} (via {@code Character#equip}) must first do {@code
+     * .toBuilder().equipment(new ArrayList<>()).build()}, or pass the items straight to the
+     * builder as {@code .equipment(List.of(ArmorItem.ARMADURA_COMPLETA))} when nothing needs to
+     * mutate the list afterwards.
      */
     private static void loadCharacterTemplates() {
         Fixture.of(Character.class).addTemplate(BLANK, new Rule() {
@@ -89,19 +104,29 @@ public class CharacterFixture extends SimpleFixture {
                 this.add("tendencia", 1);
                 this.add("attributes", CharacterAttributes.builder().build());
                 this.add("egos", CharacterEgos.builder().build());
-                this.add("autocontroleAdvantage", null);
+                this.add("egoAdvantages", Map.of());
                 this.add("skills", Map.of());
                 this.add("attributeAbilities", List.of());
+                this.add("activeAbilities", List.of());
                 this.add("skillCompetencyAbilities", List.of());
                 this.add("abilityChoices", List.of());
-                this.add("actionProfile", ActionProfile.REFLEXOS_RAPIDOS);
+                this.add("feats", List.of());
+                this.add("equipment", List.of());
+                this.add("primaryTitle", null);
+                this.add("secondaryTitle", null);
+                this.add("tertiaryTitle", null);
+                this.add("centelhaSuperiorSelected", false);
+                // CONSCIENCIA_DEFENSIVA is the one profile that adjusts none of PA/Reações/Ações
+                // Livres, so a fixture-built Character carries no hidden Perfil de Ação bonus.
+                this.add("actionProfile", ActionProfile.CONSCIENCIA_DEFENSIVA);
                 this.add("actionPoints", ActionPointsService.DEFAULT_ACTION_POINTS);
                 this.add("temporaryActionPointsBonus", 0);
                 this.add("reactions", ReactionsService.DEFAULT_REACTIONS);
                 this.add("freeActions", FreeActionsService.DEFAULT_FREE_ACTIONS);
                 this.add("manaMultiplier", MagicPointsService.DEFAULT_MANA_MULTIPLIER);
+                this.add("lifeMultiplier", HitPointsService.DEFAULT_LIFE_MULTIPLIER);
+                this.add("determinationMultiplier", DeterminationPointsService.DEFAULT_DETERMINATION_MULTIPLIER);
                 this.add("sizeCategory", SizeCategory.ZERO);
-                this.add("status", CharacterStatus.CLEAN);
             }
         });
     }
@@ -132,7 +157,7 @@ public class CharacterFixture extends SimpleFixture {
                         .instinct(AttributeValue.builder().domain(AttributeDomain.INSTINCT).base(5).variable(6).build())
                         .build());
                 this.add("egos", CharacterEgos.builder().build());
-                this.add("autocontroleAdvantage", null);
+                this.add("egoAdvantages", Map.of());
                 this.add("skills", Map.of(
                         SkillType.ATAQUE_CORPO_A_CORPO, skillWithGraduation(new AtaqueCorpoACorpo(), 1),
                         SkillType.ATLETISMO, skillWithGraduation(new Atletismo(), 2),
@@ -140,20 +165,30 @@ public class CharacterFixture extends SimpleFixture {
                         SkillType.DOMINIO_DO_MANA, skillWithGraduation(new DominioDoMana(), 4),
                         SkillType.PERSUASAO, skillWithGraduation(new Persuasao(), 0)));
                 this.add("attributeAbilities", List.of());
+                this.add("activeAbilities", List.of());
                 this.add("skillCompetencyAbilities", List.of(
                         AtaqueCorpoACorpoCompetencyAbility.ACUIDADE,
                         AtletismoCompetencyAbility.ACROBATA,
                         AtaqueADistanciaCompetencyAbility.DISPARO_ARCANO,
                         DominioDoManaCompetencyAbility.MAGIA_SELVAGEM));
                 this.add("abilityChoices", List.of());
-                this.add("actionProfile", ActionProfile.REFLEXOS_RAPIDOS);
+                this.add("feats", List.of());
+                this.add("equipment", List.of());
+                this.add("primaryTitle", null);
+                this.add("secondaryTitle", null);
+                this.add("tertiaryTitle", null);
+                this.add("centelhaSuperiorSelected", false);
+                // CONSCIENCIA_DEFENSIVA is the one profile that adjusts none of PA/Reações/Ações
+                // Livres, so a fixture-built Character carries no hidden Perfil de Ação bonus.
+                this.add("actionProfile", ActionProfile.CONSCIENCIA_DEFENSIVA);
                 this.add("actionPoints", ActionPointsService.DEFAULT_ACTION_POINTS);
                 this.add("temporaryActionPointsBonus", 0);
                 this.add("reactions", ReactionsService.DEFAULT_REACTIONS);
                 this.add("freeActions", FreeActionsService.DEFAULT_FREE_ACTIONS);
                 this.add("manaMultiplier", MagicPointsService.DEFAULT_MANA_MULTIPLIER);
+                this.add("lifeMultiplier", HitPointsService.DEFAULT_LIFE_MULTIPLIER);
+                this.add("determinationMultiplier", DeterminationPointsService.DEFAULT_DETERMINATION_MULTIPLIER);
                 this.add("sizeCategory", SizeCategory.ZERO);
-                this.add("status", CharacterStatus.CLEAN);
             }
         });
     }

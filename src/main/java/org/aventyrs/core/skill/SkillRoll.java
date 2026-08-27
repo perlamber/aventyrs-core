@@ -11,7 +11,7 @@ import static org.aventyrs.core.util.TranslatableMessages.INVALID_SKILL_ROLL;
  * ruleset. This core deliberately never rolls dice itself (see the {@code skill}
  * package-info's "What this library computes" section), so the caller (an API layer) rolls
  * physically or via an RNG and hands the individual face values in here — not just their sum,
- * since {@link #getCriticalResult()} depends on which specific faces came up (matching dice
+ * since {@link #getCriticalResult(int)} depends on which specific faces came up (matching dice
  * at the extremes), not the total alone.
  *
  * <p>{@code dice} is validated at construction — exactly 3 values, each 1-6 — since this is a
@@ -71,8 +71,34 @@ public class SkillRoll {
         return dice.stream().mapToInt(Integer::intValue).sum();
     }
 
-    /** See {@link CriticalResult} for what each outcome means and how it's detected here. */
+    /** Same as {@link #getCriticalResult(int)} with no Margem Crítica widening applied. */
     public CriticalResult getCriticalResult() {
+        return getCriticalResult(0);
+    }
+
+    /**
+     * See {@link CriticalResult} for what each outcome means. criticalMarginIncrease is the
+     * combined "número" widening from every source that grants one right now — see {@link
+     * org.aventyrs.core.ability.AttributeAbility#resolveCriticalMarginIncrease}/{@link
+     * org.aventyrs.core.ego.EgoAdvantage#resolveCriticalMarginIncrease}/{@link
+     * SkillCompetencyAbility#resolveCriticalMarginIncrease} (e.g. {@link
+     * org.aventyrs.core.ability.DexterityAbility#LETALIDADE_PROGRESSIVA}), summed by {@link
+     * AbstractSkillInteraction} across all three before calling this — a caller with no such
+     * source in hand can pass 0, same as the plain-fixed-threshold behavior this method used to
+     * have unconditionally. Only widens Acerto Crítico Menor: unlike it, Falha Crítica Menor/
+     * Maior and Acerto Crítico Maior are each fixed at one exact dice combination in this
+     * ruleset's own text, with no ability anywhere citing a margin on any of the three.
+     *
+     * <p>Widening lowers the face value two dice must clear from {@code MAX_FACE_VALUE} down by
+     * criticalMarginIncrease (floored at {@code MIN_FACE_VALUE}, and negative increases treated
+     * as 0) — e.g. a margin of 1 means two dice showing 5 <em>or</em> 6 now count, matching
+     * {@code AtaqueCorpoACorpoCompetencyAbility#ATAQUE_PRECISO}'s own rules text ("5s counting
+     * alongside 6s"). Checked with {@code >=}, not {@code ==}: three dice within the widened
+     * range (e.g. margin 1 on 6+6+5) still reads as Acerto Crítico Menor, not a non-match — it
+     * can never collide with Acerto Crítico Maior, which is checked first and only ever matches
+     * a literal three 6s regardless of any margin.
+     */
+    public CriticalResult getCriticalResult(final int criticalMarginIncrease) {
         int total = getTotal();
         if (total == MAJOR_CRITICAL_FAILURE_TOTAL) {
             return CriticalResult.FALHA_CRITICA_MAIOR;
@@ -83,16 +109,8 @@ public class SkillRoll {
         if (total == MINOR_CRITICAL_FAILURE_TOTAL) {
             return CriticalResult.FALHA_CRITICA_MENOR;
         }
-        // TODO: Acerto Crítico Menor's margin isn't fixed at "two 6s" the way Falha Crítica
-        // Menor's is at exactly 1+1+2 — abilities like
-        // AtaqueCorpoACorpoCompetencyAbility#ATAQUE_PRECISO widen it (e.g. 5s counting
-        // alongside 6s), so this needs a caller-supplied/modifier-driven margin, not a fixed
-        // sum threshold (unlike the Falha Crítica Menor fix above, "sum == 17" wouldn't stay
-        // correct once the margin can widen). Left on the old face-count check for now — same
-        // bug class just fixed above still applies here (e.g. 6+6+1 currently, incorrectly,
-        // reads as Acerto Crítico Menor too) — revisit once the margin-widening mechanism
-        // exists.
-        if (countFace(MAX_FACE_VALUE) == 2) {
+        int widenedThreshold = Math.max(MIN_FACE_VALUE, MAX_FACE_VALUE - Math.max(0, criticalMarginIncrease));
+        if (countFacesAtOrAbove(widenedThreshold) >= 2) {
             return CriticalResult.ACERTO_CRITICO_MENOR;
         }
         return CriticalResult.NONE;
@@ -100,5 +118,9 @@ public class SkillRoll {
 
     private int countFace(final int face) {
         return (int) dice.stream().filter(rolled -> rolled == face).count();
+    }
+
+    private int countFacesAtOrAbove(final int face) {
+        return (int) dice.stream().filter(rolled -> rolled >= face).count();
     }
 }
