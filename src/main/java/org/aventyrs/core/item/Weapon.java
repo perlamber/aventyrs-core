@@ -1,10 +1,13 @@
 package org.aventyrs.core.item;
 
 import org.aventyrs.core.character.DamageBase;
+import org.aventyrs.core.skill.AttackSource;
 import org.aventyrs.core.skill.SkillType;
 
 /**
- * An {@link Item} that can actually be swung — the only kind that has a Dano Base at all.
+ * An {@link Item} that can actually be swung — the only kind that has a Dano Base at all, and
+ * (alongside {@code org.aventyrs.core.magic.Spell}) one of the two things an attack can be made
+ * with, hence {@link AttackSource}.
  *
  * <p>This exists so {@link #getDamageBase()} lives where it's meaningful instead of on every
  * {@code Item}. A pauldron has no Dano Base column, and a signature typed to {@code Item}
@@ -25,7 +28,7 @@ import org.aventyrs.core.skill.SkillType;
  * {@link ItemType#OFFENSIVE} one. That's the usual restraint: catalogs and builders in this
  * codebase are data holders, not gatekeepers.
  */
-public interface Weapon extends Item {
+public interface Weapon extends Item, AttackSource {
 
     /**
      * The Dano Base this weapon deals — the starting row of {@link DamageBase}'s scale that its
@@ -46,4 +49,14 @@ public interface Weapon extends Item {
      * a per-swing choice, and no catalog entry needs it yet.
      */
     SkillType getSkillType();
+
+    /**
+     * A weapon <em>is</em> an {@link AttackSource}, and the Perícia it presents there is the same
+     * {@link #getSkillType()} column above — so this delegates rather than adding a second,
+     * separately-authorable answer that could disagree with the first. Don't override it.
+     */
+    @Override
+    default SkillType getAttackSkillType() {
+        return getSkillType();
+    }
 }

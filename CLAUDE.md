@@ -26,9 +26,11 @@ These hold across every section below; they aren't repeated per-feature.
   and have every shorter one delegate down with `null`; the longest holds all the real logic. A
   subclass overrides the **longest** overload it needs, never a shorter one — virtual dispatch
   still routes the short forms to it. Used by `AbstractSkillInteraction#applyTo`
-  (`CharacterSheet` → `+SceneContext` → `+SkillRoll`, plus `AtaqueADistanciaInteraction`'s 4-arg
-  `+attackTarget`), `DamageService`, `DamageInteraction`, `SceneContext`, and `Scene
-  #addParticipant`.
+  (`CombatantSheet` → `+SceneContext` → `+SkillRoll` → `+attackTarget` → `+AttackSource`, the
+  last holding all the logic), `DamageService`, `DamageInteraction`, `SceneContext`, and `Scene
+  #addParticipant`. Two deliberate non-cascades to know: `ActionPointsService`'s `Character`/
+  `CombatantSheet` pair and `DamageBaseService`'s `Weapon`/`SkillType` pair are *different
+  questions*, not optional inputs, and don't delegate.
 - **"Can't apply it yet" doesn't mean "can't compute it yet."** A formula is real, tested data
   even when the stat it feeds is entirely missing — TODO the *application*, not the
   *arithmetic*, and say which is which. This extends to *granting*: a `Blessing` typed to a
@@ -64,7 +66,9 @@ These hold across every section below; they aren't repeated per-feature.
   Dice results, distances, and initiative values all arrive already resolved from a caller. A
   bonus scoped to a narrative *purpose* ("only for animal-related rolls") can't be modeled —
   document the simplification on the constant rather than silently narrowing or over-granting.
-  A scope of specific *named* skills is trackable, and does have a hook.
+  A scope of specific *named* skills is trackable, and does have a hook. So is a scope of *what
+  the attack was made with* — `Weapon` and `Spell` are both `AttackSource`s and reach a roll;
+  don't file a new clause under this restriction without checking which of the three it is.
 
 ## Missing systems — the gap catalog
 
@@ -74,7 +78,7 @@ Check here before assuming a TODO needs a new gap named. Nothing below exists in
 | --- | --- |
 | **Defesas — *mostly built*** | `DefenseService` + `DefenseType` are real, and `DEFESAS`/`PHYSICAL_DEFENSE`/`MAGIC_DEFENSE` all have readers. What's still missing is narrower: `Santo#getDefesasBonus` has no granting trigger (*when* each adjacent ally receives it), and a foe's Defesa is an authored flat number with no defined conversion from a GD reduction's *níveis*. Don't cite this as "no Defesas stat exists".
 | **Owned/produced item copy** | The `Item` *catalog* is real, and so is inventory now — `Character#equipment` (worn/wielded, scanned by `DefenseService`/`DamageService`) and `AbstractCombatantSheet#inventory` (carried, including a foe's loot). Still missing: **per-copy state** (Dureza remaining, Obra-Prima tier, Aprimoramentos, who produced it), a PE economy, and production/repair. Cite the specific piece, not a blanket "no Item entity" or "no inventory". |
-| **Classifying an attack as Desarmado/Arma Natural** | `DamageBaseService` takes the wielded `Item` (`null` = unarmed), but nothing marks an attack as an *Arma Natural* — so `ArtesMarciaisFeat#ARTISTA_MARCIAL`'s Dano Base grant currently applies to every attack its holder makes. Gating on `weapon == null` would silently drop the Armas Naturais half. |
+| **Classifying an attack as Desarmado/Arma Natural** | A roll can now say *what* it was made with — `AttackSource` reaches `applyTo` as its 5th parameter — but that does **not** close this. `AttackSource` is implemented only by `Weapon`/`Spell`, so an Ataque Desarmado is just a `null`, indistinguishable from a caller who didn't say; and nothing marks a weapon as an *Arma Natural* either. So `ArtesMarciaisFeat#ARTISTA_MARCIAL`'s Dano Base grant still applies to every attack its holder makes, and gating it on `attackSource == null` would both over-apply (an unspecified attack) and silently drop the Armas Naturais half. Two markers missing, not one. |
 | **Damage-type-scoped mitigation, and damage-type immunity** | `DamageType` has no Corte/Perfuração/Impacto breakdown (nor Profano/Natural/Esmagamento), and RD/RA are resolved with no notion of damage type — the one exception is `AttributeAbility#resolveDamageReduction`, unreachable from a `SkillCompetencyAbility`. *Nullifying* a damage type outright is a further missing stage: there is no immunity mechanism of any kind. Cited by `Zumbi` (imune a Profanos/Naturais, -3 vs Esmagamento). |
 | **Multiplicative stages** | `MovementService` sums `MOVEMENT` additively with no halving stage (unlike `DamageService`'s real `HALF_DAMAGE`). Don't add a `MOVEMENT_HALVED` constant — the mechanism is missing, not just a reader. |
 | **Temporary PA/Reação/Ação Livre grants — *built*** | Closed. The `CombatantSheet`-taking overloads of `ActionPointsService#getMaxActionPoints`/`ReactionsService#getTotalReactions`/`FreeActionsService#getTotalFreeActions` read `getTemporaryBonus(ACTION_POINTS/REACTIONS/FREE_ACTIONS)` for real. The `Character`-only overloads still can't — no sheet to ask — so cite *that* if a caller only holds a `Character`, not "the mechanism is missing". |
@@ -1171,6 +1175,12 @@ Neither ever calls the other. Both are report-only, both roll exactly once (the 
   `isAttackSkill()`, not on `AtaqueADistanciaInteraction`. That was the fix
   `AnoesRacialAbility.ABATEDORES_DE_GIGANTES` needed — its rules text always covered every Perícia
   de Ataque, but melee had no way to see the target.
+- **`DeliveredAttack#attackSource` carries what the attack is made with** (a `Weapon` or a
+  `Spell`), and `AttackDelivery` hands it to the longest `applyTo` so a delivery-scoped ability
+  like `ARREMESSO_PODEROSO` resolves against the real attack — see "Unconditional Perícia
+  base-Attribute substitution". It's optional, and applies on the `attackRoll == null`
+  bonuses-only preview path too. `AttackReceiver` has no equivalent: the roll there is the
+  defender's Esquiva e Aparar, and this core models nothing about what the *foe* swung.
 
 ## Raças — `org.aventyrs.core.race`, not `org.aventyrs.core.character`
 
@@ -1483,9 +1493,21 @@ TODO reason across ability enums (`AtaqueCorpoACorpoCompetencyAbility.ACUIDADE`,
 `AtaqueADistanciaCompetencyAbility.DISPARO_ARCANO`, `AtletismoCompetencyAbility.ACROBATA`,
 `AttentionCompetencyAbility.ALMA_DE_SHERLOCK`'s substitution half, `DominioDoManaCompetencyAbility
 .MAGIA_SELVAGEM`, `EmpatiaSelvagemCompetencyAbility.ACADEMICO_SELVAGEM`/`INSTINTO_ANIMAL`,
-`FurtividadeCompetencyAbility.LADINO_TEORICO`, `PersuasaoCompetencyAbility.FORCA_OPRESSORA`),
-and — for the *unconditional* case (always substitutes, no scoping to a specific
-attack/delivery method) — it's now mechanically real, following `ACUIDADE` as the reference:
+`FurtividadeCompetencyAbility.LADINO_TEORICO`, `PersuasaoCompetencyAbility.FORCA_OPRESSORA`).
+It's mechanically real in **two** shapes, and which one a constant uses is decided by whether
+its rules text attaches a circumstance:
+
+| | hook | reference |
+| --- | --- | --- |
+| unconditional | `getSubstituteAttributeDomain()` (no args) | `ACUIDADE` |
+| scoped to how the attack is delivered | `resolveSubstituteAttributeDomain(AttackSource)` | `ARREMESSO_PODEROSO` |
+
+A constant picks exactly one. Overriding the unconditional hook for a scoped clause substitutes
+on every roll, including the ones the clause excludes; the scoped hook **defaults to the
+unconditional one**, so every unconditional overrider is untouched by its existence and
+`resolveAttributeDomain` still has a single call site. Note that inverts the usual
+cascading-overload direction (short delegates *down* to long) — it's a defaulting relationship,
+not a cascade, and is worth remembering before "fixing" it.
 
 - `SkillCompetencyAbility` carries a `default Optional<AttributeDomain>
   getSubstituteAttributeDomain()` returning `Optional.empty()`, mirroring
@@ -1500,21 +1522,23 @@ attack/delivery method) — it's now mechanically real, following `ACUIDADE` as 
   with `null`), non-null overrides it. The service itself never scans abilities — it only
   ever receives a resolved value.
 - Resolving *which* Attribute (if any) applies is `SkillCompetencyAbility
-  .resolveAttributeDomain(skillCompetencyAbilities, skillType, defaultDomain)`'s job — a
-  static method on the interface, mirroring `SkillExcellency.unlockedBy`'s existing
+  .resolveAttributeDomain(skillCompetencyAbilities, skillType, defaultDomain[, AttackSource])`'s
+  job — a static method on the interface, mirroring `SkillExcellency.unlockedBy`'s existing
   static-method-on-interface shape. It filters for entries whose `getSkillType()` matches
-  `skillType` and whose `getSubstituteAttributeDomain()` is present, returning the first
-  match's Attribute or `defaultDomain` if none — byte-for-byte identical at every call site
-  (only `skillType`/`defaultDomain` vary), so it's a single shared method rather than
-  duplicated. It's called unconditionally by `AbstractSkillInteraction.applyTo` for every
-  skill now (see the next section) — safe even for skills with no substituting ability, since
-  it just falls through to `defaultDomain` — and by `SkillGraduationService`'s max-Graduação
-  cap for the same reason.
-- This only covers the *unconditional* case. A substitution scoped to a specific circumstance
-  (e.g. `AtaqueADistanciaCompetencyAbility.ARREMESSO_PODEROSO`, only for thrown-weapon/spell
-  attacks) can't be modeled this way — same "this codebase doesn't track what a roll is *for*"
-  simplification already documented for scoped Vantagem bonuses below; document that gap in a
-  TODO on the constant instead. `GnoseAbility.PERITO_TEORICO` is also a different shape
+  `skillType` and whose `resolveSubstituteAttributeDomain(attackSource)` is present, returning
+  the first match's Attribute or `defaultDomain` if none — byte-for-byte identical at every call
+  site (only `skillType`/`defaultDomain` vary), so it's a single shared method rather than
+  duplicated. **First match wins and the rules name no precedence** when a character holds two
+  substituting abilities for one Perícia (Ataque Corpo-a-Corpo's `ACUIDADE`/`SAGACIDADE_ARCANA`
+  are that pair today), so none is invented. It's called unconditionally by
+  `AbstractSkillInteraction.applyTo` for every skill — safe even for skills with no substituting
+  ability, since it just falls through to `defaultDomain`.
+- **The Graduação cap deliberately calls the 3-arg form**, passing no `AttackSource`, so only
+  *unconditional* substitutions widen it. `SkillGraduationService` asks which Attribute
+  currently **governs** the Perícia; a delivery-scoped substitution governs only some of its
+  rolls. `ACUIDADE` widens the cap, `ARREMESSO_PODEROSO` doesn't — that asymmetry is the point,
+  not an oversight, and `SkillGraduationServiceImplTest` pins both directions.
+- `GnoseAbility.PERITO_TEORICO` is a different shape
   entirely: which Attribute to substitute is fixed (Gnose), but *which Perícia* it applies to
   is a per-character choice, not a fixed one enum-constant-to-enum-constant mapping like
   `ACUIDADE`'s — but unlike a truly open-ended choice, every legal option is already known at
@@ -1532,9 +1556,47 @@ attack/delivery method) — it's now mechanically real, following `ACUIDADE` as 
   Perícia's own natural Attribute applies if neither does. Both call sites needed no
   constructor/DI changes for this — it's a pure function over `character.getAttributeAbilities()`,
   already in hand at both.
+- **`AttackSource` (`org.aventyrs.core.skill`) is the delivery channel, and it's an interface
+  `Weapon` and `Spell` implement directly** — there is no wrapper type standing between them and
+  a roll, and don't reintroduce one. Its single member is `getAttackSkillType()`, which is not a
+  new column: `Weapon#getSkillType()` (delegated to by a `default`, so the two can't drift) and
+  `Spell#getAttackSkillType()` both already carried it, and naming the concept they share is what
+  keeps this from being a marker interface. Only `Weapon` extends it, never `Item` — same
+  enforcement-by-type as keeping `getDamageBase()` off a pauldron.
+- **A hook narrows by `instanceof`, not by asking the interface.** There is no `isThrown()`/
+  `isWeapon()`: which `ItemCategory` values count as "arremesso" is one clause's reading and the
+  next clause's would differ, so the test lives on the constant — `ARREMESSO_PODEROSO` is
+  `instanceof Spell || (instanceof Weapon w && w.getCategory() == THROWABLE)`, the same way
+  `FRIEZA` holds both the amount and the `Range` condition of its own bonus rather than pushing
+  either onto `SceneContext`.
+- **`null` means the caller didn't say**, and an `instanceof` chain reads that as "no scope
+  matched" for free — no null branch needed. It does *not* mean "unarmed": an Ataque Desarmado
+  has no representation, deliberately, because nothing consumes one yet and a constant for it
+  would have to pick an `getAttackSkillType()` that an Ataque Desarmado has no fixed answer for.
+- It reaches the roll as the **fifth and last** `applyTo` parameter, and that placement is
+  forced, not stylistic: the resolved `AttributeDomain` feeds `getValueForRoll`, both
+  `sumAttributeDomain*` scans, and — decisively — `consumeFirstRollThisTurn(domain)`, which is
+  *stateful*. A domain resolved after the fact can't un-consume a Turn's first roll, so the
+  usual "layer it onto the result" trick (which is exactly how the `attackTarget` half still
+  works, see `applyAttackTargetBonuses`) is unavailable here. Being a parameter rather than a
+  field on `SkillRoll` also keeps the substitution visible on `AttackDelivery`'s bonuses-only
+  preview path, where no dice have been rolled yet. Callers pass the `Weapon`/`Spell` itself —
+  `.attackSource(ADAGA_DE_ARREMESSO)`, not a wrapper around it.
+- **Because the logic moved to the 5-arg overload, a subclass must override *that* one.**
+  `ArtesInteraction` was moved from the 3-arg accordingly, even though Artes is not a Perícia de
+  Ataque and reads neither new parameter — an override left on a shorter overload is silently
+  skipped by any caller using a longer one. `EsquivaEApararInteraction`'s own 4-arg
+  `(..., DefenseType)` is a separate signature rather than an override and needed no change.
+- Reachable end-to-end from `DeliveredAttack#attackSource` (via `AttackDelivery`) and
+  `SkillRollRequest#attackSource` (via `SkillInteractionFactory`), both optional. **`SpellCasting
+  Service` is the one path it does *not* reach**: `castSpell` takes an already-built delivery
+  `Interaction` and runs it through `receiveInteraction` (the 1-arg `applyTo`), so there's no
+  seam — closing that needs `castSpell` to take the `Spell` itself, which the missing target-GD
+  resolution will force anyway. TODO'd on the service.
 - Building this mechanism doesn't retroactively finish every ability that cites it — check
-  each constant's own TODO. `ACUIDADE`, `SAGACIDADE_ARCANA`, `ACROBATA`, `DISPARO_ARCANO`, and
-  `MAGIA_SELVAGEM` are fully wired (enum override + `Interaction` filter + service overload;
+  each constant's own TODO. `ACUIDADE`, `SAGACIDADE_ARCANA`, `ACROBATA`, `DISPARO_ARCANO`,
+  `MAGIA_SELVAGEM` and `ARREMESSO_PODEROSO` are fully wired (enum override + `Interaction`
+  filter + service overload;
   `SAGACIDADE_ARCANA` needed only the enum override, the other two pieces being generic since
   `ACUIDADE` landed — Ataque Corpo-a-Corpo is now the one Perícia with *two* substituting
   abilities, and `resolveAttributeDomain`'s first-match wins between them, since the rules name

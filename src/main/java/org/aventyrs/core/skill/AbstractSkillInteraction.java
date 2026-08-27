@@ -93,13 +93,14 @@ import static org.aventyrs.core.util.TranslatableMessages.REQUIRED_SKILL_TRAIT_N
  * {@code AtaqueADistanciaCompetencyAbility#FRIEZA}, resolved here generically instead since no
  * {@code EgoAdvantage} granting this needs an explicit {@code attackTarget}.
  *
- * <p>{@code applyTo} has three overloads, each just delegating down to the next one with
- * {@code null} for the newly-added parameter — {@code applyTo(target)} → {@code
- * applyTo(target, sceneContext)} → {@code applyTo(target, sceneContext, skillRoll)}, the last
- * one holding all the real logic. A subclass with something genuinely skill-specific to add
- * overrides the **longest** overload it needs data from (not a shorter one — {@link
- * ArtesInteraction} overrides the 3-arg one even though it doesn't touch {@code skillRoll}
- * itself, simply because that's where {@code applyTo}'s real logic lives) and calls {@code
+ * <p>{@code applyTo} has five overloads, each just delegating down to the next one with
+ * {@code null} for the newly-added parameter — {@code applyTo(target)} → {@code +sceneContext}
+ * → {@code +skillRoll} → {@code +attackTarget} → {@code +attackSource}, the last one holding
+ * all the real logic. A subclass with something genuinely skill-specific to add overrides the
+ * **longest** overload (not a shorter one — {@link ArtesInteraction} overrides the 5-arg one
+ * even though it touches neither {@code attackTarget} nor {@code attackSource}, simply because
+ * that's where {@code applyTo}'s real logic lives, and an override placed any higher would be
+ * skipped by a caller using a longer form) and calls {@code
  * super.applyTo(...)} first, then layers its own addition on top of the result — most skills
  * need nothing extra (e.g. {@link DominioDoManaInteraction}'s "this is always the second of
  * two rolls" note is documentation, not behavior). Every shorter overload still reaches a
@@ -195,6 +196,49 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
      * itself yet).
      */
     public InteractionResult applyTo(final CombatantSheet target, final SceneContext sceneContext, final SkillRoll skillRoll) {
+        return applyTo(target, sceneContext, skillRoll, null);
+    }
+
+    /**
+     * Same as {@link #applyTo(CombatantSheet, SceneContext, SkillRoll, CombatantSheet,
+     * AttackSource)} with nothing known about how the attack is being delivered.
+     */
+    public InteractionResult applyTo(final CombatantSheet target, final SceneContext sceneContext, final SkillRoll skillRoll, final CombatantSheet attackTarget) {
+        return applyTo(target, sceneContext, skillRoll, attackTarget, null);
+    }
+
+    /**
+     * The overload that holds all the real logic — every shorter one delegates down to it with
+     * {@code null} for the parameters it doesn't carry, so a subclass with something to add
+     * overrides <b>this</b> one (see {@link ArtesInteraction}) and every shorter form still
+     * reaches the override through ordinary virtual dispatch.
+     *
+     * <p>attackTarget is the combatant this attack is actually being made against, so a held
+     * ability like {@code AtaqueADistanciaCompetencyAbility#FRIEZA} (conditioned on the target's
+     * distance) or {@code AnoesRacialAbility#ABATEDORES_DE_GIGANTES} (on its {@link
+     * SizeCategory}) can resolve against the real target rather than a generic fact about the
+     * encounter. Neither is reachable from the shared scan, because a no-arg {@code @Modifier}
+     * method can't see a target. That half lives here rather than on one Interaction because
+     * the rules text covers every <b>Perícia de Ataque</b>, not just Ataque à Distância — it was
+     * on {@code AtaqueADistanciaInteraction} only because that was the first one wired, leaving
+     * Ataque Corpo a Corpo silently missing both bonuses.
+     *
+     * <p>attackSource is what the attack is being delivered <em>with</em> — see {@link
+     * AttackSource}. It reaches {@link SkillCompetencyAbility#resolveAttributeDomain(
+     * java.util.Collection, SkillType, AttributeDomain, AttackSource)} <b>before</b> the roll is
+     * computed, which is the whole reason it's a parameter here rather than a field on {@link
+     * SkillRoll} or something layered onto the result afterwards: the resolved {@link
+     * AttributeDomain} feeds {@code getValueForRoll}, both {@code sumAttributeDomain*} scans and
+     * — decisively — {@link CombatantSheet#consumeFirstRollThisTurn}, which is stateful and
+     * cannot be un-consumed once keyed to the wrong domain. Being a parameter also keeps the
+     * substitution visible on the bonuses-only path, where no dice have been rolled yet.
+     *
+     * <p>Neither extra parameter is gated: a {@code null} attackSource, or one handed to a
+     * non-attack Perícia, is harmless rather than an error — nothing about a delivery method or
+     * a target is meaningful for an Atletismo roll, and refusing it would only push the check
+     * onto callers.
+     */
+    public InteractionResult applyTo(final CombatantSheet target, final SceneContext sceneContext, final SkillRoll skillRoll, final CombatantSheet attackTarget, final AttackSource attackSource) {
         Character character = target.getCharacter();
         CharacterSkill characterSkill = findCharacterSkill(character);
         if (skillRoll != null) {
@@ -206,7 +250,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
         AttributeDomain naturalDomain = characterSkill.getSkill().getAttributeDomain();
         AttributeDomain peritoTeoricoDomain = PeritoTeoricoAbility.resolveAttributeDomain(character.getAttributeAbilities(), skillType, naturalDomain);
         AttributeDomain attributeDomain = SkillCompetencyAbility.resolveAttributeDomain(
-                skillCompetencyAbilities, skillType, peritoTeoricoDomain);
+                skillCompetencyAbilities, skillType, peritoTeoricoDomain, attackSource);
 
         int bonus = characterSkillService.getValueForRoll(characterSkill, character.getAttributes(), character.getRace(), attributeDomain);
         bonus += sumSkillRollBonusModifiers(character.getAttributeAbilities());
@@ -266,27 +310,22 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
             }
         }
 
-        return result.build();
+        return applyAttackTargetBonuses(result.build(), target, sceneContext, attackTarget);
     }
 
     /**
-     * Same as {@link #applyTo(CombatantSheet, SceneContext, SkillRoll)}, but also given
-     * attackTarget — the combatant this attack is actually being made against — so a held ability
-     * like {@code AtaqueADistanciaCompetencyAbility#FRIEZA} (conditioned on the target's
-     * distance) or {@code AnoesRacialAbility#ABATEDORES_DE_GIGANTES} (on its {@code
-     * SizeCategory}) can resolve against the real target rather than a generic fact about the
-     * encounter. Neither is reachable from the shared scan above, because a no-arg {@code
-     * @Modifier} method can't see a target.
+     * The attackTarget-conditioned half of the roll, layered onto an otherwise-complete result:
+     * the first non-empty {@link SkillCompetencyAbility#resolveDamageBonus} ({@code FRIEZA}), and
+     * the <em>sum</em> of {@link SkillCompetencyAbility#resolveAttackRollBonus} ({@code
+     * ABATEDORES_DE_GIGANTES}) — summed rather than first-non-empty because, unlike a dano bonus,
+     * more than one is expected to apply at once.
      *
-     * <p>Lives here rather than on one Interaction because the rules text covers every <b>Perícia
-     * de Ataque</b>, not just Ataque à Distância — it was on {@code AtaqueADistanciaInteraction}
-     * only because that was the first one wired, leaving Ataque Corpo a Corpo silently missing
-     * both bonuses. A non-attack skill returns {@code super.applyTo} untouched, so calling this
-     * on one is harmless rather than an error: nothing about a target is meaningful for an
-     * Atletismo roll, and refusing it would only push the check onto callers.
+     * <p>Unlike the substituted {@link AttributeDomain}, both of these genuinely can be applied
+     * after the fact: neither feeds anything the main body already consumed. A non-attack skill
+     * or a {@code null} attackTarget returns result untouched.
      */
-    public InteractionResult applyTo(final CombatantSheet target, final SceneContext sceneContext, final SkillRoll skillRoll, final CombatantSheet attackTarget) {
-        InteractionResult result = applyTo(target, sceneContext, skillRoll);
+    private InteractionResult applyAttackTargetBonuses(final InteractionResult built, final CombatantSheet target, final SceneContext sceneContext, final CombatantSheet attackTarget) {
+        InteractionResult result = built;
         if (!skillType.isAttackSkill() || attackTarget == null) {
             return result;
         }

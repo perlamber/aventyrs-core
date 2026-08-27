@@ -5,10 +5,15 @@ import org.aventyrs.core.character.AttributeValue;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterAttributes;
 import org.aventyrs.core.character.CharacterSkill;
+import org.aventyrs.core.character.DamageBase;
 import org.aventyrs.core.character.DefenseType;
 import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.character.fixture.CharacterSkillFixture;
+import org.aventyrs.core.item.AbstractWeapon;
+import org.aventyrs.core.item.ItemCategory;
+import org.aventyrs.core.item.Weapon;
+import org.aventyrs.core.skill.ataqueadistancia.AtaqueADistanciaCompetencyAbility;
 import org.aventyrs.core.effect.DamageInteraction;
 import org.aventyrs.core.effect.Definhar;
 import org.aventyrs.core.effect.EffectChainService;
@@ -240,5 +245,86 @@ class AttackDeliveryTest {
                         .attackSkill(SkillType.ATLETISMO)
                         .attackRoll(new SkillRoll(List.of(3, 3, 3)))
                         .build()));
+    }
+
+    private static final Weapon ADAGA_DE_ARREMESSO = AbstractWeapon.builder()
+            .name("Adaga de Arremesso")
+            .category(ItemCategory.THROWABLE)
+            .damageBase(DamageBase.of(1, 2))
+            .skillType(SkillType.ATAQUE_A_DISTANCIA)
+            .build();
+
+    /**
+     * A thrower holding ARREMESSO_PODEROSO: Força 9 against Destreza 2, so which Attribute
+     * governed the Ataque à Distância roll is unmistakable in the reported attackTotal.
+     */
+    private CharacterSheet thrower() {
+        CharacterSkill skill = CharacterSkillFixture.blank(CharacterSkillFixture.ATAQUE_A_DISTANCIA_1).build();
+        skill.increaseGraduation(1);
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .attributes(CharacterAttributes.builder()
+                        .strength(AttributeValue.builder().domain(AttributeDomain.STRENGTH).base(5).variable(4).build())
+                        .dexterity(AttributeValue.builder().domain(AttributeDomain.DEXTERITY).base(2).build())
+                        .build())
+                .skill(SkillType.ATAQUE_A_DISTANCIA, skill)
+                .skillCompetencyAbility(AtaqueADistanciaCompetencyAbility.ARREMESSO_PODEROSO)
+                .build();
+        return CharacterSheet.of(character, new Player());
+    }
+
+    private DeliveredAttack.DeliveredAttackBuilder throwAt(final MonsterSheet foe, final CharacterSheet attacker) {
+        return DeliveredAttack.from(foe, DefenseType.PHYSICAL)
+                .attacker(attacker)
+                .attackSkill(SkillType.ATAQUE_A_DISTANCIA);
+    }
+
+    /** Força(5+4) + Graduação(1). */
+    private static final int THROWN_BONUS = 10;
+
+    /** Destreza(2) + Graduação(1). */
+    private static final int UNSCOPED_BONUS = 3;
+
+    @Test
+    void anAttackSourceReachesTheRollThroughResolve() {
+        MonsterSheet capanga = GenericMonster.CAPANGA.spawn(new Player());
+        SkillRoll roll = new SkillRoll(List.of(2, 2, 2));
+
+        DeliveredAttackResult result = attackDelivery.resolve(throwAt(capanga, thrower())
+                .attackSource(ADAGA_DE_ARREMESSO)
+                .attackRoll(roll)
+                .build());
+
+        assertEquals(THROWN_BONUS + roll.getTotal(), result.getAttackTotal());
+    }
+
+    /** Omitting it is not an error — the roll simply keeps the Perícia's own Attribute. */
+    @Test
+    void omittingTheAttackSourceLeavesTheRollUnscoped() {
+        MonsterSheet capanga = GenericMonster.CAPANGA.spawn(new Player());
+        SkillRoll roll = new SkillRoll(List.of(2, 2, 2));
+
+        DeliveredAttackResult result = attackDelivery.resolve(throwAt(capanga, thrower())
+                .attackRoll(roll)
+                .build());
+
+        assertEquals(UNSCOPED_BONUS + roll.getTotal(), result.getAttackTotal());
+    }
+
+    /**
+     * The bonuses-only preview path, and the reason attackSource is a parameter of the roll
+     * rather than a field on {@link SkillRoll}: with no dice yet, attackTotal is the bonus alone,
+     * and it must already reflect the substituted Attribute — otherwise a caller would show the
+     * player a lower number than the roll they are about to make will actually use.
+     */
+    @Test
+    void theAttackSourceAppliesOnThePreviewPathWithNoRollYet() {
+        MonsterSheet capanga = GenericMonster.CAPANGA.spawn(new Player());
+
+        DeliveredAttackResult result = attackDelivery.resolve(throwAt(capanga, thrower())
+                .attackSource(ADAGA_DE_ARREMESSO)
+                .build());
+
+        assertNull(result.getHit());
+        assertEquals(THROWN_BONUS, result.getAttackTotal());
     }
 }

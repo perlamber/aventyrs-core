@@ -11,6 +11,7 @@ import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.InteractionResult;
 import org.aventyrs.core.sheet.TargetScope;
 import org.aventyrs.core.skill.AbstractSkillInteraction;
+import org.aventyrs.core.skill.AttackSource;
 import org.aventyrs.core.skill.DifficultyLevel;
 import org.aventyrs.core.skill.Skill;
 import org.aventyrs.core.skill.SkillRoll;
@@ -50,9 +51,15 @@ public class ArtesInteraction extends AbstractSkillInteraction {
         super(SkillType.ARTES, characterSkillService, modifierResolver);
     }
 
+    /**
+     * Overrides the <b>longest</b> {@code applyTo}, per {@link AbstractSkillInteraction}'s own
+     * convention — neither {@code attackTarget} nor {@code attackSource} means anything for an
+     * Artes roll (Artes isn't a Perícia de Ataque), but that's where the real logic lives, and
+     * an override on a shorter overload would be bypassed by any caller using a longer one.
+     */
     @Override
-    public InteractionResult applyTo(final CombatantSheet target, final SceneContext sceneContext, final SkillRoll skillRoll) {
-        InteractionResult result = super.applyTo(target, sceneContext, skillRoll);
+    public InteractionResult applyTo(final CombatantSheet target, final SceneContext sceneContext, final SkillRoll skillRoll, final CombatantSheet attackTarget, final AttackSource attackSource) {
+        InteractionResult result = super.applyTo(target, sceneContext, skillRoll, attackTarget, attackSource);
         Character character = target.getCharacter();
         if (!character.getSkillCompetencyAbilities().contains(ArtesCompetencyAbility.DOM_BARDICO)) {
             return result;

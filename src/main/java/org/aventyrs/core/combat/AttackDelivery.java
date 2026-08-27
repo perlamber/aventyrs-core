@@ -91,9 +91,11 @@ public class AttackDelivery {
      * <p>Rolls the attacker's Perícia <b>exactly once</b> — that call consumes {@code
      * CombatantSheet#consumeFirstRollThisTurn} and can grant a temporary Ego point on a critical
      * success, so rolling twice for one attack would double-consume the Turn's state. It goes
-     * through the 4-arg {@code applyTo}, so a target-conditioned ability ({@code FRIEZA}'s
-     * proximity damage bonus, {@code ABATEDORES_DE_GIGANTES}' bonus against a larger foe)
-     * resolves against the real defender.
+     * through the longest {@code applyTo}, so both a target-conditioned ability ({@code FRIEZA}'s
+     * proximity damage bonus, {@code ABATEDORES_DE_GIGANTES}' bonus against a larger foe) and a
+     * delivery-conditioned one ({@code ARREMESSO_PODEROSO}'s substituted Attribute, from {@link
+     * DeliveredAttack#getAttackSource()}) resolve against the real attack rather than a generic
+     * fact about the encounter.
      *
      * <p>With no {@code attackRoll} supplied, the comparison and the chain are skipped: every
      * outcome stays {@code null}, while {@code attackTotal} (the bonuses alone) and {@code
@@ -109,7 +111,7 @@ public class AttackDelivery {
         SkillRoll attackRoll = attack.getAttackRoll();
 
         InteractionResult attackResult = SkillInteractionFactory.create(attack.getAttackSkill())
-                .applyTo(attack.getAttacker(), attack.getSceneContext(), attackRoll, defender);
+                .applyTo(attack.getAttacker(), attack.getSceneContext(), attackRoll, defender, attack.getAttackSource());
 
         int requiredTotal = attack.getDefenseValue();
         int attackTotal = attackResult.getSkillRollBonus()

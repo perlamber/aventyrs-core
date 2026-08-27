@@ -25,19 +25,44 @@ public interface SkillCompetencyAbility extends SkillTrait {
     }
 
     /**
-     * The Attribute this ability unconditionally lets its own Perícia use instead of that
-     * Perícia's normal base Attribute — e.g. {@code AtaqueCorpoACorpoCompetencyAbility
+     * The Attribute this ability lets its own Perícia use instead of that Perícia's normal
+     * base Attribute, <b>unconditionally</b> — e.g. {@code AtaqueCorpoACorpoCompetencyAbility
      * .ACUIDADE} substituting Destreza for Ataque Corpo-a-Corpo's normal Força. Empty by
-     * default; only override on a constant whose rules text grants the substitution
-     * unconditionally. A substitution that's scoped to a specific circumstance (e.g.
-     * {@code AtaqueADistanciaCompetencyAbility.ARREMESSO_PODEROSO}, only for thrown-weapon/
-     * spell attacks) can't be modeled this way yet — this codebase doesn't track what a roll
-     * is *for*, the same simplification already applied to scoped Vantagem bonuses (see
-     * CLAUDE.md's "Vantagem is a flat +2 bonus" section); document that gap in a TODO on the
-     * constant instead of over- or under-granting here.
+     * default; only override on a constant whose rules text grants the substitution with no
+     * circumstance attached.
+     *
+     * <p>A substitution <em>scoped</em> to how the attack is delivered — {@code
+     * AtaqueADistanciaCompetencyAbility.ARREMESSO_PODEROSO}, only for thrown weapons and
+     * Magias — overrides {@link #resolveSubstituteAttributeDomain(AttackSource)} instead, and
+     * must leave this one empty: an unconditional answer here would substitute on every roll,
+     * including the bow shot the clause excludes. A substitution scoped to something this core
+     * still doesn't track (a roll's narrative <em>purpose</em>) remains unmodelable either way
+     * — document that in a TODO on the constant rather than over- or under-granting.
      */
     default Optional<AttributeDomain> getSubstituteAttributeDomain() {
         return Optional.empty();
+    }
+
+    /**
+     * The Attribute this ability lets its own Perícia use right now, given what the attack is
+     * being delivered with — the delivery-scoped counterpart to {@link
+     * #getSubstituteAttributeDomain()}, and the hook a clause like {@code
+     * AtaqueADistanciaCompetencyAbility#ARREMESSO_PODEROSO}'s "apenas para rolagens de ataques
+     * com armas de arremessos e magias" needs. attackSource is the {@code Weapon} or {@code Spell}
+     * itself; an override narrows it with {@code instanceof} plus whatever column it cares about,
+     * rather than asking {@link AttackSource} to classify itself. It is {@code null} whenever the
+     * caller didn't say what the attack was made with, which every override must read as "no
+     * scope matched", never as an error — an {@code instanceof} chain gets that for free.
+     *
+     * <p><b>This defaults to the unconditional answer, rather than the other way round.</b> It
+     * is not the usual cascading-overload pair (where the short form delegates <em>down</em>
+     * with {@code null} and the long one holds the logic) — the relationship here is
+     * "unless you're scoped, whatever you substitute unconditionally still applies", which is
+     * what lets every existing unconditional overrider stay untouched while {@link
+     * #resolveAttributeDomain} needs only this one call site.
+     */
+    default Optional<AttributeDomain> resolveSubstituteAttributeDomain(final AttackSource attackSource) {
+        return getSubstituteAttributeDomain();
     }
 
     /**
@@ -190,18 +215,38 @@ public interface SkillCompetencyAbility extends SkillTrait {
     }
 
     /**
-     * The Attribute that currently governs skillType's roll/graduation-cap for a character
-     * holding skillCompetencyAbilities — defaultDomain, unless one of those abilities
-     * targets this same skillType and {@link #getSubstituteAttributeDomain()} isn't empty,
-     * in which case the substituted Attribute wins. Shared by every {@code <Skill>Interaction}
-     * that supports substitution (see {@code AtaqueCorpoACorpoInteraction}) and by
-     * {@code SkillGraduationService}'s max-graduation cap — both need the exact same
-     * resolution, so it lives here once rather than duplicated at each call site.
+     * Same as {@link #resolveAttributeDomain(Collection, SkillType, AttributeDomain,
+     * AttackSource)} with nothing known about how the attack is being delivered — so only
+     * <em>unconditional</em> substitutions apply.
+     *
+     * <p>This is the form {@code SkillGraduationService}'s max-Graduação cap calls, and that is
+     * the right answer rather than an oversight: the cap asks which Attribute <em>currently
+     * governs</em> this Perícia, and a delivery-scoped substitution governs only some of its
+     * rolls. {@code AtaqueCorpoACorpoCompetencyAbility#ACUIDADE} widens the cap; {@code
+     * AtaqueADistanciaCompetencyAbility#ARREMESSO_PODEROSO} deliberately doesn't.
      */
     static AttributeDomain resolveAttributeDomain(final Collection<SkillCompetencyAbility> skillCompetencyAbilities, final SkillType skillType, final AttributeDomain defaultDomain) {
+        return resolveAttributeDomain(skillCompetencyAbilities, skillType, defaultDomain, null);
+    }
+
+    /**
+     * The Attribute that currently governs skillType's roll for a character holding
+     * skillCompetencyAbilities — defaultDomain, unless one of those abilities targets this same
+     * skillType and its {@link #resolveSubstituteAttributeDomain(AttackSource)} isn't empty, in
+     * which case the substituted Attribute wins. Shared by every {@code <Skill>Interaction}
+     * that supports substitution (see {@code AtaqueCorpoACorpoInteraction}) and, through the
+     * shorter overload above, by {@code SkillGraduationService}'s max-graduation cap — both
+     * need the exact same resolution, so it lives here once rather than duplicated at each
+     * call site.
+     *
+     * <p>First match wins, and the rules name no precedence when a character holds two
+     * substituting abilities for one Perícia (Ataque Corpo-a-Corpo's {@code ACUIDADE}/{@code
+     * SAGACIDADE_ARCANA} are the pair this can happen with today), so none is invented here.
+     */
+    static AttributeDomain resolveAttributeDomain(final Collection<SkillCompetencyAbility> skillCompetencyAbilities, final SkillType skillType, final AttributeDomain defaultDomain, final AttackSource attackSource) {
         return skillCompetencyAbilities.stream()
                 .filter(ability -> ability.getSkillType() == skillType)
-                .map(SkillCompetencyAbility::getSubstituteAttributeDomain)
+                .map(ability -> ability.resolveSubstituteAttributeDomain(attackSource))
                 .flatMap(Optional::stream)
                 .findFirst()
                 .orElse(defaultDomain);

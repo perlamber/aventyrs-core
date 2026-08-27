@@ -1,9 +1,14 @@
 package org.aventyrs.core.skill.ataqueadistancia;
 
 import org.aventyrs.core.character.AttributeDomain;
+import org.aventyrs.core.character.DamageBase;
 import org.aventyrs.core.character.DamageBonus;
 import org.aventyrs.core.character.DamageType;
 import org.aventyrs.core.character.fixture.CharacterFixture;
+import org.aventyrs.core.item.AbstractWeapon;
+import org.aventyrs.core.item.ItemCategory;
+import org.aventyrs.core.item.Weapon;
+import org.aventyrs.core.magic.TestSpell;
 import org.aventyrs.core.modifier.ModifierResolver;
 import org.aventyrs.core.modifier.ModifierResolverImpl;
 import org.aventyrs.core.modifier.ModifierType;
@@ -11,6 +16,7 @@ import org.aventyrs.core.scene.Range;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.Player;
+import org.aventyrs.core.skill.AttackSource;
 import org.aventyrs.core.skill.Skill;
 import org.aventyrs.core.skill.SkillType;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,10 +26,25 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static org.aventyrs.core.skill.ataqueadistancia.AtaqueADistanciaCompetencyAbility.ARREMESSO_PODEROSO;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
 class AtaqueADistanciaCompetencyAbilityTest {
+
+    private static final Weapon ADAGA_DE_ARREMESSO = AbstractWeapon.builder()
+            .name("Adaga de Arremesso")
+            .category(ItemCategory.THROWABLE)
+            .damageBase(DamageBase.of(1, 2))
+            .skillType(SkillType.ATAQUE_A_DISTANCIA)
+            .build();
+
+    private static final Weapon ARCO_LONGO = AbstractWeapon.builder()
+            .name("Arco Longo")
+            .category(ItemCategory.BOW)
+            .damageBase(DamageBase.of(2, 0))
+            .skillType(SkillType.ATAQUE_A_DISTANCIA)
+            .build();
 
     @BeforeEach
     void setup() {
@@ -101,7 +122,7 @@ class AtaqueADistanciaCompetencyAbilityTest {
     }
 
     @Test
-    void onlyDisparoArcanoSubstitutesTheBaseAttribute() {
+    void onlyDisparoArcanoSubstitutesTheBaseAttributeUnconditionally() {
         for (AtaqueADistanciaCompetencyAbility ability : AtaqueADistanciaCompetencyAbility.values()) {
             if (ability == AtaqueADistanciaCompetencyAbility.DISPARO_ARCANO) {
                 assertEquals(Optional.of(AttributeDomain.FOCUS), ability.getSubstituteAttributeDomain());
@@ -109,5 +130,61 @@ class AtaqueADistanciaCompetencyAbilityTest {
                 assertEquals(Optional.empty(), ability.getSubstituteAttributeDomain());
             }
         }
+    }
+
+    /**
+     * ARREMESSO_PODEROSO must leave the unconditional hook empty — overriding it would hand
+     * Força to the bow shot its own clause excludes.
+     */
+    @Test
+    void arremessoPoderosoSubstitutesNothingUnconditionally() {
+        assertEquals(Optional.empty(), ARREMESSO_PODEROSO.getSubstituteAttributeDomain());
+    }
+
+    @Test
+    void arremessoPoderosoSubstitutesForcaForAThrownWeapon() {
+        assertEquals(Optional.of(AttributeDomain.STRENGTH),
+                ARREMESSO_PODEROSO.resolveSubstituteAttributeDomain(ADAGA_DE_ARREMESSO));
+    }
+
+    @Test
+    void arremessoPoderosoSubstitutesForcaForAMagia() {
+        assertEquals(Optional.of(AttributeDomain.STRENGTH),
+                ARREMESSO_PODEROSO.resolveSubstituteAttributeDomain(new TestSpell()));
+    }
+
+    /** A bow is fired, not thrown — the half of the Perícia the clause deliberately excludes. */
+    @Test
+    void arremessoPoderosoSubstitutesNothingForAFiredWeapon() {
+        assertEquals(Optional.empty(),
+                ARREMESSO_PODEROSO.resolveSubstituteAttributeDomain(ARCO_LONGO));
+    }
+
+    /**
+     * An Ataque Desarmado and a caller who simply didn't say are both a {@code null} source —
+     * neither is a thrown weapon nor a Magia, so both correctly leave the roll on Destreza. The
+     * two are not distinguishable, and nothing needs them to be; see CLAUDE.md's gap catalog.
+     */
+    @Test
+    void arremessoPoderosoSubstitutesNothingWithoutAnAttackSource() {
+        assertEquals(Optional.empty(), ARREMESSO_PODEROSO.resolveSubstituteAttributeDomain(null));
+    }
+
+    /**
+     * The delivery-scoped hook defaults to the unconditional one, so DISPARO_ARCANO keeps
+     * substituting Foco whatever the attack is made with, and the constants that substitute
+     * nothing still substitute nothing under a qualifying source.
+     */
+    @Test
+    void aThrownSourceChangesNoOtherAbilitysSubstitution() {
+        AttackSource thrown = ADAGA_DE_ARREMESSO;
+        for (AtaqueADistanciaCompetencyAbility ability : AtaqueADistanciaCompetencyAbility.values()) {
+            if (ability == ARREMESSO_PODEROSO) {
+                continue;
+            }
+            assertEquals(ability.getSubstituteAttributeDomain(), ability.resolveSubstituteAttributeDomain(thrown));
+        }
+        assertEquals(Optional.of(AttributeDomain.FOCUS),
+                AtaqueADistanciaCompetencyAbility.DISPARO_ARCANO.resolveSubstituteAttributeDomain(thrown));
     }
 }
