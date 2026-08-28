@@ -119,6 +119,12 @@ aliasing across separate Characters.
 
 ## 5. Write tests
 
+**Use the `testing-a-feat` skill** — it carries the full test checklist, and the rule that
+matters most: a Talento is tested by the effect it causes on a character who *legally acquired
+it* (through `FeatService#grantFeat`, meeting its own `FeatRequirements`), read from the service
+that consumes its hook — never by calling the hook and asserting its return value. The outline
+below is the shape that skill expands on.
+
 One file per tree enum (create if this is the tree's first constant, extend if not):
 - Every constant has a non-blank description.
 - Every constant reports the tree's fixed `FeatCategory`.

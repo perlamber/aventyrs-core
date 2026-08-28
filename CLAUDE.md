@@ -248,7 +248,18 @@ per-acquisition player choices of its own today. `Feat`/`FeatRequirements`/`Abst
 mutate, the same shape as `CharacterAttributeService#upgradeBase`/
 `TitleAbilityService#grantTitleAbility`) are the whole mechanism. **Use the `adding-a-feat`
 skill**, which carries the checklist, the enum-wrapping shape, and the mutable-`feats` fixture
-trap.
+trap, and the **`testing-a-feat` skill** to test one.
+
+**A Talento is tested by what it does to a character who legally acquired it**, never by calling
+its hook and asserting the return value. The character must satisfy that Talento's own
+`FeatRequirements` and acquire it through `FeatService#grantFeat` — `Character#grantFeat`
+validates nothing, so a test using it would still pass for a Talento no character could ever
+reach — and the assertion reads the consuming service before and after (`DamageBaseService`,
+`SpellService`, `DefenseService`, `MagicPointsService`, `RestService`), not the hook.
+`ArtesMarciaisFeatTest`/`MetamagicoFeatIntegrationTest` are the reference; `MetamagicoFeatTest`
+is the second layer, where a formula's own edge cases (rounding, zero floors) still belong. A
+Race that overrides `Race#getNewFeatCost` gets its own catalog-driven `<Race>FeatCostTest` —
+`GigantesFeatCostTest` today, and `Gigantes` is still the only Race with a discount.
 
 **`Feat` is `sealed`, and that is what makes the catalog enumerable.** `permits
 ArtesMarciaisFeat, MetamagicoFeat, AbstractFeat`, so `FeatCatalog` discovers every authored
