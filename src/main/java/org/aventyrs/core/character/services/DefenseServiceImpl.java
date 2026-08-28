@@ -29,7 +29,8 @@ public class DefenseServiceImpl implements DefenseService {
 
     @Override
     public int getTotalDefense(final Character character, final DefenseType defenseType) {
-        return sumAbilityModifiers(character, defenseType) + sumEquipment(character, defenseType);
+        return sumAbilityModifiers(character, defenseType) + sumEquipment(character, defenseType)
+                + sumFeats(character, defenseType);
     }
 
     @Override
@@ -72,6 +73,18 @@ public class DefenseServiceImpl implements DefenseService {
             total += item.resolveFavorBonus(defenseType.getModifierType(), character);
         }
         return total;
+    }
+
+    /**
+     * Every held Talento's unconditional contribution to this Defesa — {@code
+     * Feat#resolveDefenseBonus}. Feats are deliberately not part of the {@code @Modifier} scan
+     * above (nothing else in this codebase scans them reflectively), so they get their own
+     * explicit pass, the same way equipment does.
+     */
+    private int sumFeats(final Character character, final DefenseType defenseType) {
+        return character.getFeats().stream()
+                .mapToInt(feat -> feat.resolveDefenseBonus(defenseType, character))
+                .sum();
     }
 
     private int sumBothTypes(final java.util.Collection<?> sources, final DefenseType defenseType) {

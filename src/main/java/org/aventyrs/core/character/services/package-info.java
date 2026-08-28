@@ -112,8 +112,11 @@
  * <p>A monster also cannot be advanced afterwards: {@link
  * org.aventyrs.core.character.services.CharacterAttributeService#upgradeBase}, {@link
  * org.aventyrs.core.character.services.SkillGraduationService#upgradeGraduation}, {@code
- * FeatService#grantFeat} and {@code TitleAbilityService#grantTitleAbility} all take a {@code
- * CharacterSheet} because that is where experience lives, and a {@code MonsterSheet} isn't one.
+ * FeatService#grantFeat}, {@code TitleAbilityService#grantTitleAbility} and {@code
+ * SpellService#grantSpell} all take a {@code CharacterSheet} because that is where experience
+ * lives, and a {@code MonsterSheet} isn't one. ({@code grantSpell} spends none <i>yet</i> — see
+ * its own javadoc — but takes the sheet for the same reason, so a foe can't climb an Árvore de
+ * Magia either.)
  * That's a compile-time guarantee, not a runtime check — see {@code
  * org.aventyrs.core.sheet.CombatantSheet}.
  *

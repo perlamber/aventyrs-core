@@ -36,4 +36,8 @@ public class TranslatableMessages {
     public static final String TITLE_ABILITY_PREREQUISITE_NOT_MET = "TITLE_ABILITY_PREREQUISITE_NOT_MET";
     public static final String FEAT_PREREQUISITE_NOT_MET = "FEAT_PREREQUISITE_NOT_MET";
     public static final String NOT_AN_ATTACK_SKILL = "NOT_AN_ATTACK_SKILL";
+    public static final String INVALID_AREA_OF_EFFECT = "INVALID_AREA_OF_EFFECT";
+    public static final String INVALID_SPELL_TARGETING = "INVALID_SPELL_TARGETING";
+    public static final String INVALID_SPELL_TREE = "INVALID_SPELL_TREE";
+    public static final String SPELL_PREREQUISITE_NOT_MET = "SPELL_PREREQUISITE_NOT_MET";
 }

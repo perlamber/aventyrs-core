@@ -85,7 +85,7 @@ Check here before assuming a TODO needs a new gap named. Nothing below exists in
 | **Temporary RA grants** | `getTotalAbsoluteDamageReduction` never reads `getTemporaryBonus(ABSOLUTE_DAMAGE_REDUCTION)` — RA comes only from continuously-scanned passive hooks. |
 | **Round-scoped Attribute bonuses** | `AttributeValue` has only `base`/`racialBonus`/`variable`, all permanent — never summed via `ModifierType`. |
 | **Roll-resolution engine — *partly built*** | The Margem Crítica half is real: `SkillRoll#getCriticalResult(int)` takes a widening margin, and `AbstractSkillInteraction#sumCriticalMarginIncrease` feeds it the sum of `resolveCriticalMarginIncrease` across `EgoAdvantage`/`AttributeAbility`/`SkillCompetencyAbility`. Still missing: a GD threshold/margin comparison, a hook for auto-success effects, and any consumer for the differently-shaped `ArtesAprimorarComArteAbility#getCriticalMarginReduction`. |
-| **Area de Efeito** | Cited but unbuilt — see `EsquivaEApararCompetencyAbility.EVASAO`. |
+| **Area de Efeito — *described, not resolved*** | The footprint is real data: `scene.AreaOfEffect` (an `AreaShape` — CIRCULO/LINHA/CONE — plus one length in UD), reachable from `Spell#getTargeting()`. Three things are still missing, so cite the specific one: (a) **footprint resolution** — nothing turns an area into a set of hexes or targets; a LINHA/CONE additionally needs a *facing*, which is chosen per cast, not authored on the Magia, so this belongs in `scene.grid` taking the aim as arguments; (b) **no classification of an incoming attack as an area one** — `AttackDelivery`/`AttackReceiver` carry no such flag, which is what still blocks `EsquivaEApararCompetencyAbility.EVASAO` and `AbencoadoPelaLuzAbility`; (c) **caster exclusion** — "a Conjurador is never damaged by their own Magia" is a universal rule, so it is deliberately *not* a column anywhere (no `excludesCaster` flag); it belongs to the missing targeting resolution, and `Spell` has no damage column to test against anyway. |
 | **Malefício classification** | No Encantamento/Maldição/Doença tag exists — see `Withering`, `ABRIR_DEFESAS`. |
 | **Living/undead classification** | No vitality tag on `Character`. `CreatureType` has only HUMANOIDE/FEERICO/MONSTRUOSO, none of which is about being alive. `MonsterTemplate#isUndead()` is a deliberately narrow stand-in — exact for every combatant this core can build, wrong the day a player character can be undead or a construct must count as non-living. |
 | **A summon acting on its summoner's roll** | `SummonedMonsterTemplate` builds a creature a Conjurador raised, but nothing models the player then *rolling for it*. `AttackDelivery` assumes the roller is the attacker and `AttackReceiver` that they're the defender; neither has a notion of rolling on a third combatant's behalf. This is why `CriticalEffect#applicableTo` is shared between them. |
@@ -249,6 +249,47 @@ mutate, the same shape as `CharacterAttributeService#upgradeBase`/
 `TitleAbilityService#grantTitleAbility`) are the whole mechanism. **Use the `adding-a-feat`
 skill**, which carries the checklist, the enum-wrapping shape, and the mutable-`feats` fixture
 trap.
+
+**`Feat` is `sealed`, and that is what makes the catalog enumerable.** `permits
+ArtesMarciaisFeat, MetamagicoFeat, AbstractFeat`, so `FeatCatalog` discovers every authored
+Talento via `Feat.class.getPermittedSubclasses()` — reflection with no classpath scan, no I/O,
+and no silent partial results. A classpath walk was rejected deliberately: it has to special-case
+exploded dirs vs JAR entries vs the module path, and when it guesses wrong a whole Talento tree
+just quietly stops being offered. The permits clause is **compiler-enforced**, so the same
+mistake is a build failure instead.
+
+- **`AbstractFeat` is `non-sealed` with a *public* all-args constructor** — the extension point
+  that keeps sealing from closing this library off. A consumer's homebrew Talento is
+  `new AbstractFeat(category, description, requirements) { @Override ... }`, a first-class
+  `Feat` everywhere, that simply never appears in `FeatCatalog` — correct, since the catalog is
+  the authored ruleset, not every `Feat` constructible. **Don't implement `Feat` directly** (the
+  compiler now refuses it); two tests were converted to `AbstractFeat` when this landed.
+- **Discovery lives in `FeatCatalog`, never as a `static` field on `Feat`.** `Feat` declares
+  `default` methods, so initialising `MetamagicoFeat` initialises `Feat` first — a static
+  initialiser on `Feat` calling `getEnumConstants()` back on that enum would observe it
+  mid-initialisation and could read its constants as `null`. A separate class breaks the cycle.
+- `FeatService#getAvailableFeats(Character)` (prerequisites met, not already held) and
+  `#getAffordableFeats(Character, CharacterSheet)` (that list, narrowed by the XP wallet) are
+  **deliberately separate methods, not a flag**: "am I allowed this?" and "can I afford it?"
+  differ over time and a UI wants both. Cost is per-Race, so two characters with identical
+  Talentos and identical XP can get different answers.
+
+**`Feat` also carries four `default resolve*` hooks**, not one — `resolveDamageBaseIncrease`,
+plus `resolveBranchLevelIncrease` (the Árvore de Magia cap), `resolveDefenseBonus(DefenseType,
+Character)` and `resolveManaMultiplierIncrease`/`resolveRestMagicPointsBonus(RestType,
+Character)`. The skill's "keep it on the tree enum until a second consumer earns the interface"
+rule still holds for a formula only that tree reads — but **a hook a *service* must scan for has
+to be on `Feat` itself**, since `character.getFeats()` is a `List<Feat>` and a service can see
+nothing narrower. That is what promoted these four. Feats are deliberately **not** part of any
+`ModifierResolver` `@Modifier` scan (nothing scans them reflectively), so each consuming service
+gives them an explicit pass, the way `DefenseServiceImpl` already does for equipment.
+
+`MetamagicoFeat` is the second tree, and worth reading before adding a third — it's the first to
+need a **sibling constant as a prerequisite**, which Java's forward-reference rule forbids in
+constructor arguments even when qualified. Two things fall out: `featRequirements` is held as a
+`Supplier<FeatRequirements>` rather than a plain field, and **the constants are ordered so every
+prerequisite is declared before its dependents** (`MetamagicoFeatTest` pins that ordering, so a
+future insertion can't silently break it).
 
 One fact worth knowing outside that checklist: **a Talento's prerequisites are real, enforced
 data** — the second exception (alongside `AventyrTitleAbility`'s "Requer N Especializações/
@@ -505,6 +546,119 @@ started granting a Reação for real, every fixture-built Character and every fo
 block is silent would have silently carried an extra one. Worth remembering when picking a
 placeholder constant: "does nothing today" is not a stable property.
 
+## Árvores de Magia — `SpellTree`, `SpellBranch`, and the three acquisition gates
+
+A Magia's place in its Árvore is three columns on `Spell`: `getTree()`, `getBranchLevel()` (how
+deep) and `getBranch()` (which ramificação, `Optional.empty()` on the **trunk**).
+
+```
+SEMENTE ── BROTO ─┬─ MUDA(A) ── EMERGENTE(A) ─┬─ FLORESCENTE
+                  └─ MUDA(B) ── EMERGENTE(B) ─┘
+\_____ trunk ____/ \____ ramificações _____/  \___ trunk ___/
+```
+
+- **Convergence has no mechanism — being branchless *is* it.** A Magia after the branches rejoin
+  reports no `SpellBranch`, so it sits on every path and the branch gate can never refuse it.
+  Don't add a "these branches converge here" structure; there's nothing for it to do.
+- **Zero or two ramificações, never one.** `SpellTree.validateBranches` throws
+  `INVALID_SPELL_TREE` on 1 or 3+ — a divergence into a single path is meaningless, and
+  `MAGIA_ALTERNATIVA`'s "ambas as ramificações" only reads for two. It's called from the branch
+  gate, so no tree reaches an acquisition decision unvalidated.
+- **`SpellTree`/`SpellBranch` are interfaces**, like `AventyrTitle`/`Feat` — trees are authored
+  per family, and a central catalog enum would sit empty until the first one lands. **No tree is
+  authored yet**; `TestSpellTree`/`TestSpellBranch` are the test stubs, shaped exactly like
+  Aliados da Natureza (diverge at MUDA, converge at FLORESCENTE).
+
+### The three gates — `Spell#isEligible(Character, BranchLevel maxBranchLevel)`
+
+All three must hold, the same combine-every-prerequisite shape as `Feat#isEligible` and
+`AventyrTitleAbility#isEligible`. Enforced by `SpellService#grantSpell`.
+
+| gate | rule |
+| --- | --- |
+| **Cap** | `maxBranchLevel` must reach the Magia's own `BranchLevel` |
+| **Climb** | unless SEMENTE, a Magia of **this same tree** must be held at the *immediately* shallower rung |
+| **Branch** | no Magia of this tree may be held on a *different* ramificação |
+
+- **All three are derived, never stored.** There is no "chosen branch" field and no
+  unlocked-levels counter: a Conjurador's branch in a tree simply *is* whichever ramificação
+  their acquired Magias sit on. Same recompute-on-demand discipline as `HitPointsService
+  #getStatus`/`InitiativeEntry#getEffectiveInitiativeValue`. Don't add a
+  `Map<SpellTree, SpellBranch>` — it could only ever disagree with `getSpells()`.
+- **The cap arrives already resolved**, not scanned inside `isEligible` — the same
+  resolve-then-pass-in shape `DamageServiceImpl` uses for `hasLowerPvAdjacentAlly`. That keeps
+  the gates a pure function and the feat scan in the service layer.
+- **Only the branch gate has an exemption**: `MagiaAlternativaAbility` held for this tree's
+  `MagicType`. It loosens neither the cap nor the climb — `SpellEligibilityTest` pins that.
+- **A foothold in a *different* tree never counts** for the climb. That's what makes a capped
+  Conjurador spend sideways — more Magias at their current depth, from other Árvores — until a
+  Talento raises the cap.
+- `BranchLevel` carries the ladder operations the gates ask for: `isAtLeast` (ordinal
+  comparison, same as `Range#isWithin`), `previous()` (empty at SEMENTE) and `advancedBy` (the
+  clamping the cap uses).
+
+### The cap, and `MAGIA_ALTERNATIVA`
+
+- `SpellService#getMaxBranchLevel` is `SEMENTE` advanced by the summed
+  `Feat#resolveBranchLevelIncrease` across `character.getFeats()`, clamped at FLORESCENTE.
+  **Talentos are the only source** — there is deliberately no `ModifierType` for this and no
+  three-source `ModifierResolver` scan, so a Habilidade or an Excelência can't grant spell
+  depth. `MetamagicoFeat` authors the complete ladder: `ARCANISTA` → BROTO,
+  `ARCANISTA_EXPERIENTE` → MUDA, `MESTRE_ARCANISTA` → EMERGENTE, `DESAFIADOR_DA_REALIDADE` →
+  FLORESCENTE, each granting **exactly one rung**. Summing one rung apiece is only correct
+  *because they chain* — each names the previous as its `requiredFeat`, so they can't be acquired
+  out of order or in isolation, and holding all four lands exactly on FLORESCENTE. A fifth rung
+  would grant +1 like the rest; never compensate for a missing rung by granting +2 somewhere.
+- `SpellService#grantSpell` **spends no XP**, deliberately — no acquisition cost has been
+  specified, and inventing one would bake in a number rules text then has to override. It still
+  takes a `CharacterSheet`, so adding a cost stays a one-line change. This is the service's one
+  open question, flagged in its javadoc.
+- `MagiaAlternativaAbility` (`org.aventyrs.core.ability`) is one `AttributeAbility` constant per
+  `MagicType` — CLAUDE.md's pattern 3, mirroring `PeritoTeoricoAbility` exactly. Grant the
+  constant, not `FocusAbility.MAGIA_ALTERNATIVA`, which stays the catalog/rules-text entry.
+- ⚠️ **`MagicType` and the rules text disagree.** `MAGIA_ALTERNATIVA` names eight types —
+  including **Temporal** and **Umbral**, which the enum lacks — and omits the `NATURAL` it has.
+  `MagiaAlternativaAbility` follows the enum (one constant per existing value). Settle this
+  before authoring a tree typed `NATURAL`, which could never be exempted if NATURAL isn't a real
+  Tipo de Magia. Adding a `MagicType` constant means adding a matching one there.
+
+## A Magia's reach — `SpellReach`, `SpellTargeting`, `AreaOfEffect`
+
+`SpellReach` is only the *discriminator* (PESSOAL/TOQUE/AREA_DE_EFEITO/DISTANCIA). It can never
+describe a Magia on its own — three of its four constants need a parameter an enum constant has
+nowhere to put — so `Spell#getTargeting()` returns a **`SpellTargeting`** record pairing it with
+exactly the parameters that reach takes, validated in the canonical constructor:
+
+| reach | `range` | `area` |
+| --- | --- | --- |
+| `PESSOAL` | absent | absent |
+| `TOQUE` | absent (Adjacente implied) | absent |
+| `DISTANCIA` | required | absent |
+| `AREA_DE_EFEITO` | *optional* — absent means centred on the Conjurador | required |
+
+Anything else throws `IllegalOperationException`/`INVALID_SPELL_TARGETING` — the same
+cross-field pairing check `DamageBonus` applies to its own type/element pair, and for the same
+reason: the combination is authored data, so a meaningless one is a mistake, not a value.
+
+- **`PESSOAL` and `AREA_DE_EFEITO` are the pair most easily confused.** `PESSOAL` is strictly
+  single-target-on-self — a Magia castable nowhere else. A burst *centred* on the Conjurador is
+  an `AREA_DE_EFEITO` with no `range`; it affects an area, and only its origin differs from the
+  ranged case. For that constant alone, `range` answers "how far away may the centre be placed",
+  not "how far can this reach a target".
+- **`LINHA` and `CONE` are emanations** (`AreaShape#isEmanation`) — they radiate from the
+  Conjurador, so they have no centre to place and may never carry a `range`. Only a `CIRCULO`
+  can. Relaxing that is deleting one clause of `isLegalCombination`.
+- **`AreaOfEffect` is one shape plus one length in UD**, and lives in `org.aventyrs.core.scene`
+  beside `Range`, not in `magic` — `EsquivaEApararCompetencyAbility.EVASAO` and
+  `AbencoadoPelaLuzAbility` both describe Área de Efeito effects that aren't Magias. A LINHA is
+  1 UD wide and a CONE's spread derives from its length; neither is stored, since no rules text
+  names a width or an angle yet.
+- **`TOQUE` stores no `Range.ADJACENTE`** — the constant implies it, and storing it too would be
+  authored redundancy that could disagree with itself.
+
+What this does *not* do is in the gap catalog's "Area de Efeito" row: no footprint resolution,
+no classification of an incoming attack as area-based, and no caster-exclusion flag.
+
 ## Casting a Magia is two separate rolls — `org.aventyrs.core.magic.SpellCastingService`
 
 Casting a Magia with a rolled effect always involves **two** rolls, not one: whichever
@@ -516,9 +670,13 @@ this: it rolls the given delivery Interaction, then rolls Domínio do Mana, and 
 `InteractionResult`s in a `SpellCastingResult` — it never picks the delivery Interaction
 itself (the caller does, since only the caller knows which Magia/weapon is being used).
 
-No `Magia` entity/list exists yet, so `SpellCastingService` only computes both rolls' bonuses
-— it doesn't know either roll's target GD, so it can't resolve success/failure for either
-roll yet. This is deliberately left as a TODO on the service itself rather than guessed at.
+`Spell` is a real entity now, and a character carries the Magias they know (`Character#spells`,
+via `SpellService#grantSpell` — see "Árvores de Magia" above). What's still missing is narrower:
+**no Magia is authored anywhere** (no Árvore de Magia exists yet, so there is no catalog to cast
+*from*), and `SpellCastingService` still doesn't know either roll's target GD, so it computes
+both rolls' bonuses without resolving success/failure for either. Cite the missing *catalog* or
+the missing *GD*, not a missing `Magia` entity. Left as a TODO on the service rather than
+guessed at.
 
 This is also where an ability whose effect targets the *delivery* roll, not Domínio do Mana's
 own, would eventually plug in — don't try to force it onto

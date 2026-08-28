@@ -20,6 +20,7 @@ import org.aventyrs.core.character.services.ReactionsService;
 import org.aventyrs.core.ego.EgoAdvantage;
 import org.aventyrs.core.feat.Feat;
 import org.aventyrs.core.item.Item;
+import org.aventyrs.core.magic.Spell;
 import org.aventyrs.core.race.Race;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.Player;
@@ -161,6 +162,21 @@ public class Character {
     @NonNull
     @Builder.Default
     protected List<Feat> feats = new ArrayList<>();
+
+    /**
+     * Magias acquired via {@link org.aventyrs.core.character.services.SpellService#grantSpell} —
+     * the same real-mutable-list shape as {@link #feats}, and for the same reason: a Magia is
+     * learned well after a character is created, by climbing an Árvore de Magia, not chosen at
+     * creation through the builder. Granted via {@link #grantSpell(Spell)}.
+     *
+     * <p>Carries the identical {@code CharacterFixture} caveat {@link #feats} documents: the
+     * fixture bypasses the Lombok builder, so this defaults to an immutable {@code List.of()}
+     * there. A test granting a Magia onto a fixture-built Character must first swap in a fresh
+     * mutable list via {@code .toBuilder().spells(new ArrayList<>()).build()}.
+     */
+    @NonNull
+    @Builder.Default
+    protected List<Spell> spells = new ArrayList<>();
 
     /**
      * The Itens this character currently has equipped — the same real-mutable-list shape as
@@ -341,6 +357,16 @@ public class Character {
      */
     public void grantFeat(@NonNull final Feat feat) {
         feats.add(feat);
+    }
+
+    /**
+     * Adds spell to this character's known {@link #spells} — a plain mutator, the same shape as
+     * {@link #grantFeat}. Every acquisition rule (the level cap, the in-tree climb, the branch
+     * lock) is enforced by {@code SpellService#grantSpell}, not here — the usual
+     * builders-and-mutators-aren't-gatekeepers restraint this codebase applies everywhere else.
+     */
+    public void grantSpell(@NonNull final Spell spell) {
+        spells.add(spell);
     }
 
     /**

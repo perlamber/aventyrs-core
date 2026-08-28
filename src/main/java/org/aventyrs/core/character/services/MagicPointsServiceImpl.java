@@ -21,7 +21,10 @@ public class MagicPointsServiceImpl implements MagicPointsService {
     @Override
     public int getManaMultiplier(final Character character) {
         int bonus = modifierResolver.sumModifiers(character.getAttributeAbilities(), ModifierType.MANA_MULTIPLIER);
-        return character.getManaMultiplier() + bonus;
+        int featBonus = character.getFeats().stream()
+                .mapToInt(feat -> feat.resolveManaMultiplierIncrease(character))
+                .sum();
+        return character.getManaMultiplier() + bonus + featBonus;
     }
 
     @Override

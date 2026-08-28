@@ -26,10 +26,13 @@ public enum EsquivaEApararCompetencyAbility implements SkillCompetencyAbility {
     // TODO: +3 Defesas scoped to resisting Área de Efeito attacks specifically, rising to +5
     // once 7 Graduações are reached. The Defesas half is no longer what blocks this —
     // ModifierType.PHYSICAL_DEFENSE/MAGIC_DEFENSE and DefenseService are real now, so a flat
-    // Defesa bonus is expressible. Two blockers remain, both unchanged: (1) no Área de Efeito
-    // concept exists to scope it to, and (2) it's a graduation-tiered scaling bonus (same shape
-    // as DominioDoManaCompetencyAbility.LETALIDADE_ARCANA) — @Modifier supports only a fixed
-    // value per constant and can't read the holder's own graduation to pick +3 vs +5.
+    // Defesa bonus is expressible. Two blockers remain: (1) an Área de Efeito can now be
+    // *described* (scene.AreaOfEffect, reachable from Spell#getTargeting()), but nothing marks
+    // an *incoming* attack as an area one — AttackReceiver carries no such classification — so
+    // there is still no flag for DefenseService to scope this bonus to; and (2) it's a
+    // graduation-tiered scaling bonus (same shape as
+    // DominioDoManaCompetencyAbility.LETALIDADE_ARCANA) — @Modifier supports only a fixed value
+    // per constant and can't read the holder's own graduation to pick +3 vs +5.
     EVASAO("Defesas +3 para resistir à ataques e efeitos com Área de Efeito, benefício muda " +
             "para +5 ao alcançar 7 Graduações."),
 

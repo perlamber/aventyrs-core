@@ -96,9 +96,12 @@
  *   package decides only whether each group fires, and in what order they chain.</li>
  *   <li><b>It doesn't spend a Reação</b>, or check that the defender has one to spend. This core
  *   tracks counters, not when they may be spent.</li>
- *   <li><b>It doesn't know about Área de Efeito</b>, forced targeting/interception, or reactive
- *   damage — all still missing systems, cited by {@code EsquivaEApararCompetencyAbility#EVASAO}
- *   and {@code SantoAbility#GUARDA_VIDAS} among others.</li>
+ *   <li><b>It resolves one attacker against one defender.</b> An Área de Efeito can be described
+ *   ({@code org.aventyrs.core.scene.AreaOfEffect}), but nothing resolves it into a set of
+ *   targets, and neither entry point classifies an incoming attack as an area one — so {@code
+ *   EsquivaEApararCompetencyAbility#EVASAO} still has no flag to scope its Defesa bonus to.
+ *   Forced targeting/interception and reactive damage remain missing outright, cited by {@code
+ *   SantoAbility#GUARDA_VIDAS} among others.</li>
  * </ul>
  */
 package org.aventyrs.core.combat;

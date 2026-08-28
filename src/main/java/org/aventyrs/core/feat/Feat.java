@@ -2,9 +2,24 @@ package org.aventyrs.core.feat;
 
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterSkill;
+import org.aventyrs.core.character.DefenseType;
+import org.aventyrs.core.rest.RestType;
 import org.aventyrs.core.skill.SkillType;
 
-public interface Feat {
+/**
+ * A Talento. <b>Sealed</b>, which is what lets {@link FeatCatalog} enumerate every authored
+ * Talento reflectively via {@link Class#getPermittedSubclasses()} — see that class for why this
+ * beats scanning the classpath. The compiler enforces the permits clause, so a new Talento tree
+ * physically cannot exist without appearing in the catalog.
+ *
+ * <p>{@link AbstractFeat} is deliberately {@code non-sealed}: a consumer of this library that
+ * needs a Talento of its own (a homebrew rule, a test double) extends that instead of
+ * implementing this directly. Such a Talento is a real {@code Feat} everywhere — {@code
+ * FeatService#grantFeat} takes it, {@link #isEligible} works — it simply isn't part of the
+ * authored catalog, which is correct: {@code FeatCatalog} lists the ruleset, not every {@code
+ * Feat} that could ever be constructed.
+ */
+public sealed interface Feat permits ArtesMarciaisFeat, MetamagicoFeat, AbstractFeat {
     FeatCategory getFeatCategory();
     String getDescription();
     FeatRequirements getFeatRequirements();
@@ -49,6 +64,69 @@ public interface Feat {
      * different mechanics that must not be summed together.
      */
     default int resolveDamageBaseIncrease(final Character character) {
+        return 0;
+    }
+
+    /**
+     * How many {@link org.aventyrs.core.magic.BranchLevel} rungs this Talento raises its
+     * holder's general Árvore de Magia cap by. Summed by {@code
+     * org.aventyrs.core.character.services.SpellService#getMaxBranchLevel} across {@code
+     * Character#getFeats()}, advancing from {@code BranchLevel#SEMENTE} — the cap is what {@code
+     * org.aventyrs.core.magic.Spell#isEligible}'s first gate checks, so until a Talento here
+     * raises it a Conjurador can only acquire more Magias at their current depth, from other
+     * Árvores.
+     *
+     * <p>Zero by default; only override on a constant whose rules text raises the cap. Talentos
+     * that do belong in {@code FeatCategory#METAMAGICO}, which has no enum authored yet — this
+     * hook and its service are wired ahead of the first one, so it drops in with no further
+     * changes. Same default-hook shape as {@link #resolveDamageBaseIncrease} above.
+     */
+    default int resolveBranchLevelIncrease(final Character character) {
+        return 0;
+    }
+
+    /**
+     * A flat, unconditional bonus this Talento grants to defenseType — summed by {@code
+     * org.aventyrs.core.character.services.DefenseService#getTotalDefense} across {@code
+     * Character#getFeats()}, alongside the usual three-source {@code @Modifier} scan.
+     *
+     * <p>Takes both the {@link DefenseType} and the character because a Talento's Defesa clause
+     * is routinely scoped to one of DF/DM and scaled off the holder's own live state — {@code
+     * MetamagicoFeat#ARCANISTA}'s "Bônus em sua DM igual a metade de suas Graduações em Domínio
+     * do Mana" is both at once, which no compile-time-fixed {@code @Modifier} value could
+     * express. Zero by default.
+     *
+     * <p>Only for an <b>unconditional</b> bonus. A Defesa scoped to what is being resisted
+     * ("para resistir aos efeitos de magias que seja capaz de conjurar") can't be expressed
+     * here — nothing classifies an incoming effect that way; see {@code
+     * EsquivaEApararCompetencyAbility#EVASAO}'s identical blocker.
+     */
+    default int resolveDefenseBonus(final DefenseType defenseType, final Character character) {
+        return 0;
+    }
+
+    /**
+     * How much this Talento raises the holder's Mana Multiplier — summed by {@code
+     * MagicPointsService#getManaMultiplier} across {@code Character#getFeats()}, on top of
+     * {@code Character#getManaMultiplier()} and the {@code ModifierType#MANA_MULTIPLIER} scan.
+     * Zero by default.
+     */
+    default int resolveManaMultiplierIncrease(final Character character) {
+        return 0;
+    }
+
+    /**
+     * Extra Pontos de Mana this Talento recovers on a Descanso of restType — summed by {@code
+     * org.aventyrs.core.rest.RestService#getRecoveredMagicPoints} across {@code
+     * Character#getFeats()}, alongside {@code AttributeAbility#resolveRestMagicPointsBonus}'s
+     * own scan.
+     *
+     * <p>Takes the character too, unlike the {@code AttributeAbility} hook it mirrors, because a
+     * Talento's recovery clause may scale off the holder's own state — {@code
+     * MetamagicoFeat#MENTE_EXPANDIDA}'s "+1PM para cada Título Aventyr que tenha desperto".
+     * Zero by default.
+     */
+    default int resolveRestMagicPointsBonus(final RestType restType, final Character character) {
         return 0;
     }
 

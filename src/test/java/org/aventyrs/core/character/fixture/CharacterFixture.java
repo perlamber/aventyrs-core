@@ -112,6 +112,7 @@ public class CharacterFixture extends SimpleFixture {
                 this.add("abilityChoices", List.of());
                 this.add("feats", List.of());
                 this.add("equipment", List.of());
+                this.add("spells", List.of());
                 this.add("primaryTitle", null);
                 this.add("secondaryTitle", null);
                 this.add("tertiaryTitle", null);
@@ -174,6 +175,7 @@ public class CharacterFixture extends SimpleFixture {
                 this.add("abilityChoices", List.of());
                 this.add("feats", List.of());
                 this.add("equipment", List.of());
+                this.add("spells", List.of());
                 this.add("primaryTitle", null);
                 this.add("secondaryTitle", null);
                 this.add("tertiaryTitle", null);

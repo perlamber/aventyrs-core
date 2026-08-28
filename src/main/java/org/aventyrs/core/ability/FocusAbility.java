@@ -58,7 +58,12 @@ public enum FocusAbility implements AttributeAbility {
             "primeira magia, você pode adicionar seu valor integral de Foco, ao invés da metade, aos seus " +
             "efeitos."),
 
-    // TODO: grants access to a chosen Magic Type's second branch — depends on a Magic/Spell Tree system that doesn't exist yet.
+    // Real, via org.aventyrs.core.ability.MagiaAlternativaAbility — one constant per MagicType,
+    // so the chosen Tipo de Magia is which constant a character holds (the same shape
+    // GnoseAbility.PERITO_TEORICO uses). Grant that constant, not this one; this stays the
+    // catalog/rules-text entry. Holding it exempts its holder from Spell#isEligible's branch
+    // gate on every Árvore de Magia of that type. Note the rules text names Temporal and Umbral,
+    // which MagicType lacks, and omits the NATURAL it has — see MagiaAlternativaAbility's javadoc.
     MAGIA_ALTERNATIVA("Você pode adquirir magias de ramos adicionais de algumas de suas Árvores de Magia. " +
             "Escolha um Tipo de Magia entre Divina, Elemental, Encantamento, Invocação, Temporal, Primordial, " +
             "Profana ou Umbral: você pode aprender magias de ambas as ramificações dos tipos de magia escolhidos.");
