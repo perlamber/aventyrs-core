@@ -37,7 +37,7 @@ import java.util.Map;
  *   all; purely narrative today.</li>
  *   <li><b>1 Talento Feérico adicional</b> (determines the character's linhagem within the
  *   race) — same "no Feat catalog, no {@code Character.feats} list" gap as every other race's
- *   free Talentos; {@code org.aventyrs.core.feat.FeatCategory#FERRICO} already exists as a
+ *   free Talentos; {@code org.aventyrs.core.feat.FeatCategory#FEERICO} already exists as a
  *   category (alongside {@code #MONSTRUOSO}/{@code #ELFICO}/{@code #BESTIAL}), but {@code
  *   org.aventyrs.core.feat.Feat} still has no catalog of concrete named Feats within it.</li>
  *   <li><b>Treinamento em Conhecimentos</b> (+ Especialização adicional em Metamágico ou

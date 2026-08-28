@@ -4,7 +4,9 @@ import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.character.DefenseType;
 import org.aventyrs.core.rest.RestType;
+import org.aventyrs.core.skill.SkillCompetencyAbility;
 import org.aventyrs.core.skill.SkillType;
+import org.aventyrs.core.title.TitleArchetype;
 
 /**
  * A Talento. <b>Sealed</b>, which is what lets {@link FeatCatalog} enumerate every authored
@@ -19,7 +21,7 @@ import org.aventyrs.core.skill.SkillType;
  * authored catalog, which is correct: {@code FeatCatalog} lists the ruleset, not every {@code
  * Feat} that could ever be constructed.
  */
-public sealed interface Feat permits ArtesMarciaisFeat, MetamagicoFeat, AbstractFeat {
+public sealed interface Feat permits ArtesMarciaisFeat, ArtificeFeat, ArtilhariaFeat, AssassinoFeat, CavalariaFeat, DestinoFeat, DuelistaFeat, EscudeiroFeat, MobilidadeFeat, PeritoFeat, SobrevivenciaFeat, MetamagicoFeat, AbstractFeat {
     FeatCategory getFeatCategory();
     String getDescription();
     FeatRequirements getFeatRequirements();
@@ -29,10 +31,16 @@ public sealed interface Feat permits ArtesMarciaisFeat, MetamagicoFeat, Abstract
      * #getFeatRequirements()} — an Attribute's base reaching {@code requiredAttributeValue}
      * (skipped when {@code attributeDomain} is unset), a Perícia's Graduação reaching {@code
      * requiredSkillGraduation} (skipped when {@code requiredSkillType} is unset; an untrained
-     * Perícia reads as Graduação 0, same as everywhere else in this core), and {@code
-     * requiredFeat} already being held (skipped when unset). All three are independent — a
-     * requirement left unset never blocks eligibility — and, when more than one is set, all
-     * must hold at once, mirroring {@code AventyrTitleAbility#isEligible}'s identical
+     * Perícia reads as Graduação 0, same as everywhere else in this core), {@code
+     * requiredFeat} already being held (skipped when unset), {@code
+     * requiredSkillCompetencyAbility} already being held — racial Habilidades included, via
+     * {@code SkillCompetencyAbility#allFor} (skipped when unset), enough Títulos Aventyr Despertos
+     * — optionally of one {@link TitleArchetype} — for {@code requiredAwakenedTitles} (skipped
+     * when zero, which is every non-Aventyr-tier Talento), the holder's Race matching {@code
+     * requiredRace} (skipped when unset), and enough already-held Talentos of {@code
+     * requiredFeatCategory} (skipped when unset). Every clause is independent — a requirement
+     * left unset never blocks eligibility — and, when more than one is set, all must hold at
+     * once, mirroring {@code AventyrTitleAbility#isEligible}'s identical
      * combine-every-set-prerequisite shape. Checked by {@code
      * org.aventyrs.core.character.services.FeatService#grantFeat} before granting.
      */
@@ -48,7 +56,45 @@ public sealed interface Feat permits ArtesMarciaisFeat, MetamagicoFeat, Abstract
         boolean featSatisfied = requirements.requiredFeat() == null
                 || character.getFeats().contains(requirements.requiredFeat());
 
-        return attributeSatisfied && skillSatisfied && featSatisfied;
+        boolean competencySatisfied = requirements.requiredSkillCompetencyAbility() == null
+                || SkillCompetencyAbility.allFor(character)
+                        .contains(requirements.requiredSkillCompetencyAbility());
+
+        boolean titlesSatisfied = countAwakenedTitles(character, requirements.requiredTitleArchetype())
+                >= requirements.requiredAwakenedTitles();
+
+        boolean raceSatisfied = requirements.requiredRace() == null
+                || requirements.requiredRace().isInstance(character.getRace());
+
+        boolean categoryCountSatisfied = requirements.requiredFeatCategory() == null
+                || countFeatsOfCategory(character, requirements.requiredFeatCategory())
+                        >= requirements.requiredFeatCategoryCount();
+
+        return attributeSatisfied && skillSatisfied && featSatisfied && competencySatisfied
+                && titlesSatisfied && raceSatisfied && categoryCountSatisfied;
+    }
+
+    /**
+     * How many Títulos Aventyr character currently has Desperto — every filled slot of {@code
+     * Character#getAllTitles()}, narrowed to one {@link TitleArchetype} when archetype is
+     * non-null. "Desperto" is simply "held": there is no separate awakening step, and no
+     * Talento in the catalog gates on a Título's own Especializações or Supremas.
+     */
+    private static long countAwakenedTitles(final Character character, final TitleArchetype archetype) {
+        return character.getAllTitles().stream()
+                .filter(title -> archetype == null || title.getArchetype() == archetype)
+                .count();
+    }
+
+    /**
+     * How many Talentos of featCategory character already holds — the "2 outros Talentos de
+     * Destino" clause. The Talento being tested is never among them, since eligibility is only
+     * ever asked before it is granted.
+     */
+    private static long countFeatsOfCategory(final Character character, final FeatCategory featCategory) {
+        return character.getFeats().stream()
+                .filter(feat -> feat.getFeatCategory() == featCategory)
+                .count();
     }
 
     /**
@@ -127,6 +173,62 @@ public sealed interface Feat permits ArtesMarciaisFeat, MetamagicoFeat, Abstract
      * Zero by default.
      */
     default int resolveRestMagicPointsBonus(final RestType restType, final Character character) {
+        return 0;
+    }
+
+    /**
+     * How many UD this Talento adds to its holder's Movimento Base — summed by {@code
+     * org.aventyrs.core.character.services.MovementService#getMovementBase} across {@code
+     * Character#getFeats()}, alongside the usual three-source {@code ModifierType#MOVEMENT} scan.
+     * Zero by default.
+     *
+     * <p>Like that {@code ModifierType}, this is a figure <b>per Ponto de Ação</b>, not a
+     * whole-Turn allowance — see {@code MovementService}'s own javadoc for why the two readings
+     * land differently, and only override here for a clause of the "seu Movimento Base aumenta em
+     * +NUD" shape.
+     */
+    default int resolveMovementIncrease(final Character character) {
+        return 0;
+    }
+
+    /**
+     * How many Pontos de Ação this Talento permanently adds — summed by {@code
+     * org.aventyrs.core.character.services.ActionPointsService#getMaxActionPoints} across {@code
+     * Character#getFeats()}, alongside the usual three-source {@code ModifierType#ACTION_POINTS}
+     * scan. Zero by default.
+     *
+     * <p>Only for a <b>permanent</b> grant ("você adquire permanentemente +1PA"). A Talento
+     * granting Pontos de Ação for a Turn or a Rodada is a {@code Blessing} of {@code
+     * ModifierType#ACTION_POINTS} instead, which only the {@code CombatantSheet} overloads read.
+     */
+    default int resolveActionPointsIncrease(final Character character) {
+        return 0;
+    }
+
+    /**
+     * How much this Talento raises the holder's Determination Multiplier — summed by {@code
+     * org.aventyrs.core.character.services.DeterminationPointsService#getDeterminationMultiplier}
+     * across {@code Character#getFeats()}, on top of {@code Character#getDeterminationMultiplier()}
+     * and the {@code ModifierType#DETERMINATION_MULTIPLIER} scan. Zero by default.
+     *
+     * <p>The Determinação twin of {@link #resolveManaMultiplierIncrease}, added for {@code
+     * DestinoFeat#CORACAO_DE_FERRO}'s "seu multiplicador de PD aumenta em +1".
+     */
+    default int resolveDeterminationMultiplierIncrease(final Character character) {
+        return 0;
+    }
+
+    /**
+     * How much this Talento raises the holder's Life Multiplier — summed by {@code
+     * org.aventyrs.core.character.services.HitPointsService#getLifeMultiplier} across {@code
+     * Character#getFeats()}, on top of {@code Character#getLifeMultiplier()} and the {@code
+     * ModifierType#LIFE_MULTIPLIER} scan. Zero by default.
+     *
+     * <p>Not interchangeable with a flat {@code ModifierType#HIT_POINTS} grant — see {@code
+     * HitPointsService} for why a stated PV amount and a multiplier uplift only agree at one
+     * particular Vigor. Use this only for rules text that says "Multiplicador de PV".
+     */
+    default int resolveLifeMultiplierIncrease(final Character character) {
         return 0;
     }
 

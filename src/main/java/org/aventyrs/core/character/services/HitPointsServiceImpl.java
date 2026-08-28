@@ -1,6 +1,7 @@
 package org.aventyrs.core.character.services;
 
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.feat.Feat;
 import org.aventyrs.core.character.CharacterStatus;
 import org.aventyrs.core.modifier.ModifierResolver;
 import org.aventyrs.core.modifier.ModifierResolverImpl;
@@ -23,6 +24,11 @@ public class HitPointsServiceImpl implements HitPointsService {
     @Override
     public int getLifeMultiplier(final Character character) {
         int bonus = modifierResolver.sumModifiers(character.getAttributeAbilities(), ModifierType.LIFE_MULTIPLIER);
+        // Talentos are outside every ModifierResolver scan, so they get an explicit pass — the
+        // same shape MagicPointsServiceImpl uses for resolveManaMultiplierIncrease.
+        for (Feat feat : character.getFeats()) {
+            bonus += feat.resolveLifeMultiplierIncrease(character);
+        }
         return character.getLifeMultiplier() + bonus;
     }
 

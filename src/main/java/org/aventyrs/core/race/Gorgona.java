@@ -24,7 +24,7 @@ import java.util.Map;
  *   Character.feats} list" gap as every other race's free Talentos; unlike most races' own
  *   version of this trait, the rules text here doesn't name one fixed category but a choice
  *   between {@code org.aventyrs.core.feat.FeatCategory#MONSTRUOSO} and "Talentos Raciais" in
- *   general (every {@code Type.RACIAL} constant — {@code MONSTRUOSO}/{@code FERRICO}/{@code
+ *   general (every {@code Type.RACIAL} constant — {@code MONSTRUOSO}/{@code FEERICO}/{@code
  *   ELFICO}/{@code BESTIAL} — not one specific one), which doesn't change the underlying gap
  *   but is flagged rather than silently narrowed to a guess.</li>
  * </ul>

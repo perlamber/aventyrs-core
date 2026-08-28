@@ -118,8 +118,8 @@ class ArtesMarciaisFeatTest {
     }
 
     @Test
-    void theTreeHasOneTalento() {
-        assertEquals(1, ArtesMarciaisFeat.values().length);
+    void theTreeHasEveryTalentoTheCatalogAuthors() {
+        assertEquals(8, ArtesMarciaisFeat.values().length);
     }
 
     // ---------- can a character reach it? ----------

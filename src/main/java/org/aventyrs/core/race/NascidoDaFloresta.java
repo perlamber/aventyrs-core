@@ -47,7 +47,7 @@ import static org.aventyrs.core.util.TranslatableMessages.INVALID_PARENT_RACE;
  *   gap as every other race; purely narrative today.</li>
  *   <li><b>2 Talentos adicionais</b> (Metamágicos, Feéricos ou Elementais) — same "no Feat
  *   catalog, no {@code Character.feats} list, no hook for granting extra Talento slots" gap as
- *   every other race's free Talentos; {@code FeatCategory#METAMAGICO}/{@code #FERRICO}/{@code
+ *   every other race's free Talentos; {@code FeatCategory#METAMAGICO}/{@code #FEERICO}/{@code
  *   #ELEMENTAL} already exist as categories to eventually restrict the grant to.</li>
  *   <li><b>Considerados Elementais para pré-requisitos de Talentos</b> — an unenforced-
  *   prerequisite classification, same restraint this codebase already applies to every "Requer N

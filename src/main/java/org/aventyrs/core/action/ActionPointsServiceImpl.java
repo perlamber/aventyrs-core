@@ -2,6 +2,7 @@ package org.aventyrs.core.action;
 
 import org.aventyrs.core.ability.AttributeAbility;
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.feat.Feat;
 import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.modifier.ModifierResolver;
 import org.aventyrs.core.modifier.ModifierResolverImpl;
@@ -62,6 +63,11 @@ public class ActionPointsServiceImpl implements ActionPointsService {
             List<SkillExcellency> unlockedExcellencies = SkillExcellency.unlockedBy(
                     entry.getKey().getExcellencyClass(), graduationValue);
             bonus += modifierResolver.sumModifiers(unlockedExcellencies, ModifierType.ACTION_POINTS);
+        }
+        // Talentos are outside every ModifierResolver scan, so they get an explicit pass — the
+        // same shape DefenseServiceImpl and MovementServiceImpl use.
+        for (Feat feat : character.getFeats()) {
+            bonus += feat.resolveActionPointsIncrease(character);
         }
         for (AttributeAbility ability : character.getAttributeAbilities()) {
             bonus += ability.resolveActionPointsBonus(turnNumber);

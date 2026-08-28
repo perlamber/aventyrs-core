@@ -3,6 +3,7 @@ package org.aventyrs.core.character.services;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.character.SizeCategory;
+import org.aventyrs.core.feat.Feat;
 import org.aventyrs.core.modifier.ModifierResolver;
 import org.aventyrs.core.modifier.ModifierResolverImpl;
 import org.aventyrs.core.modifier.ModifierType;
@@ -41,6 +42,11 @@ public class MovementServiceImpl implements MovementService {
             List<SkillExcellency> unlockedExcellencies = SkillExcellency.unlockedBy(
                     entry.getKey().getExcellencyClass(), graduationValue);
             total += modifierResolver.sumModifiers(unlockedExcellencies, ModifierType.MOVEMENT);
+        }
+        // Talentos are not part of any ModifierResolver scan (nothing scans them reflectively),
+        // so they get an explicit pass here — the same shape DefenseServiceImpl already uses.
+        for (Feat feat : character.getFeats()) {
+            total += feat.resolveMovementIncrease(character);
         }
         return Math.max(0, total);
     }

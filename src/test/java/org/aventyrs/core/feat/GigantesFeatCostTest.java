@@ -24,6 +24,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -37,11 +38,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * here), that the discount reaches the XP wallet through {@link FeatService#grantFeat}, and that
  * it doesn't leak into any other category or any other Race.
  *
- * <p><b>No Sobrevivência Talento is authored yet</b> — {@code FeatCategory#SOBREVIVENCIA} has no
- * enum in this catalog. The catalog-driven tests below therefore pass vacuously over that
- * category today and start covering it the moment one lands; the end-to-end spend is proven with
- * a homebrew {@link AbstractFeat} until then, and should be pointed at the real constant when
- * there is one.
+ * <p>{@code SobrevivenciaFeat} now authors the category, so the catalog-driven tests below run
+ * over real constants rather than vacuously. The end-to-end spend still goes through a homebrew
+ * {@link AbstractFeat} on purpose: it has no Pré-requisito, which isolates the cost question
+ * from any eligibility one — every authored Sobrevivência Talento gates on an Attribute, a
+ * Perícia or another Talento.
  */
 class GigantesFeatCostTest {
 
@@ -92,9 +93,11 @@ class GigantesFeatCostTest {
 
     // ---------- every authored Talento, charged the right number ----------
 
-    /** Vacuous while the category has no enum; covers every constant automatically once it does. */
+    /** Covers every authored constant automatically — driven off the catalog, not a fixed list. */
     @Test
     void everyAuthoredSobrevivenciaTalentoCostsTheReducedPrice() {
+        assertFalse(FeatCatalog.in(FeatCategory.SOBREVIVENCIA).isEmpty(),
+                "the category is authored now; a vacuous pass would hide a regression");
         for (Feat feat : FeatCatalog.in(FeatCategory.SOBREVIVENCIA)) {
             assertEquals(SOBREVIVENCIA_COST, gigantes.getNewFeatCost(feat.getFeatCategory()),
                     feat.toString());
@@ -203,12 +206,23 @@ class GigantesFeatCostTest {
      */
     @Test
     void theAffordableListingAgreesWithTheDiscount() {
-        Character giant = character(gigantes).build();
-        Character human = character(new Human()).build();
+        Character giant = vigorousSurvivorOf(gigantes);
+        Character human = vigorousSurvivorOf(new Human());
 
+        // VITALIDADE asks only for Vigor 4, which both characters have — so the only thing
+        // separating them at this wallet is the Race's own price for a Sobrevivência Talento.
         assertTrue(featService.getAffordableFeats(giant, sheetWith(giant, SOBREVIVENCIA_COST))
-                .containsAll(FeatCatalog.in(FeatCategory.SOBREVIVENCIA)));
+                .contains(SobrevivenciaFeat.VITALIDADE));
         assertTrue(featService.getAffordableFeats(human, sheetWith(human, SOBREVIVENCIA_COST)).isEmpty(),
                 "no Talento costs a Human as little as " + SOBREVIVENCIA_COST);
+    }
+
+    /** Vigor 4, which is exactly {@link SobrevivenciaFeat#VITALIDADE}'s whole Pré-requisito. */
+    private static Character vigorousSurvivorOf(final Race race) {
+        return character(race)
+                .attributes(CharacterAttributes.builder()
+                        .vigor(AttributeValue.builder().domain(AttributeDomain.VIGOR).base(4).build())
+                        .build())
+                .build();
     }
 }

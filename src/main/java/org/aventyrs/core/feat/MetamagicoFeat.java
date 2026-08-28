@@ -214,6 +214,21 @@ public enum MetamagicoFeat implements Feat {
                     .requiredFeat(MetamagicoFeat.CONJURACAO_RAPIDA)
                     .build()),
 
+    // TODO: same missing Magia-storage mechanism as ARMAZENAR_MAGIA — a cast Magia has nowhere to
+    // be held between casting and release, and Spell carries no activation-cost column for
+    // "descarregar como Ação Livre ou Reação" to set.
+    // Note the storage capacity is expressed in BranchLevel terms (two SEMENTE/BROTO, or one
+    // MUDA), which BranchLevel#isAtLeast already compares — only the store itself is missing.
+    ARMAZENAR_MAGIA_SUPERIOR(
+            "Você pode conjurar e \"guardar\" uma Magia do Tipo Semente ou Broto adicional (para um "
+                    + "total de 2 Magias armazenadas) ou armazenar uma única magia do tipo Muda. Você pode "
+                    + "descarregar suas magias armazenadas como Ação Livre ou Reação.",
+            () -> FeatRequirements.builder()
+                    .requiredFeat(MetamagicoFeat.ARMAZENAR_MAGIA)
+                    .requiredSkillType(SkillType.DOMINIO_DO_MANA)
+                    .requiredSkillGraduation(7)
+                    .build()),
+
     // TODO: the -1PA reduction is blocked on the same missing casting time CONJURACAO_RAPIDA
     // cites — Spell carries no PA cost column, so there is nothing to reduce or floor at 1PA.
     // TODO: "iniciem seu efeito 1 Rodada após a conjuração" needs a delayed-effect mechanism.
@@ -319,6 +334,24 @@ public enum MetamagicoFeat implements Feat {
                     + "reduzido em -1PM (mínimo 1PM).",
             () -> FeatRequirements.builder()
                     .requiredFeat(MetamagicoFeat.MENTE_EXPANDIDA)
+                    .build()),
+
+    // TODO: same mimetizar gap as the rest of the Aptidão ladder, now at FLORESCENTE depth.
+    // TODO: the immunity half is a further stage than any mitigation this core has — the gap
+    // catalog records that no damage-nullifying mechanism of any kind exists — and it is
+    // additionally scoped to "Magias que você é capaz de conjurar", the same unexpressible scope
+    // ARTESAO_DE_BARREIRAS and APTIDAO_MAGICA_AMPLA both cite for their own DM bonuses.
+    // TODO: "enquanto tiver ao menos 10PD em sua reserva de Bônus Bases" reads a Determinação
+    // reserve threshold; PD is spendable but no hook conditions an effect on how much remains.
+    APTIDAO_MAGICA_DRACONICA(
+            "Escolha uma magia Florescente de uma das Árvores de Magias conhecidas através do "
+                    + "talento ‘Aptidão Mágica Ampla’, você é capaz de mimetizar a magia escolhida ao custo "
+                    + "de 5PD. Enquanto tiver ao menos 10PD em sua reserva de Bônus Bases você é imune a "
+                    + "Magias que você é capaz de conjurar.",
+            () -> FeatRequirements.builder()
+                    .requiredFeat(MetamagicoFeat.APTIDAO_MAGICA_SUPREMA)
+                    .requiredSkillType(SkillType.DOMINIO_DO_MANA)
+                    .requiredSkillGraduation(9)
                     .build());
 
     /** One rung of {@link BranchLevel}'s ladder — what each cap-raising Talento grants. */

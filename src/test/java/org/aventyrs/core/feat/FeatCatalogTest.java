@@ -43,8 +43,11 @@ class FeatCatalogTest {
     @Test
     void theCatalogHoldsEveryConstantOfEveryAuthoredTree() {
         List<Feat> expected = new ArrayList<>();
-        expected.addAll(Arrays.asList(ArtesMarciaisFeat.values()));
-        expected.addAll(Arrays.asList(MetamagicoFeat.values()));
+        for (Class<?> permitted : Feat.class.getPermittedSubclasses()) {
+            if (permitted.isEnum()) {
+                expected.addAll(Arrays.asList((Feat[]) permitted.getEnumConstants()));
+            }
+        }
 
         assertTrue(FeatCatalog.all().containsAll(expected));
         assertEquals(expected.size(), FeatCatalog.all().size());
@@ -103,7 +106,8 @@ class FeatCatalogTest {
 
     @Test
     void aCategoryWithNoEnumAuthoredYetIsEmptyRatherThanAbsent() {
-        assertTrue(FeatCatalog.in(FeatCategory.ASSASSINO).isEmpty());
+        // A racial tree — none is authored yet, and the general trees have all been filled in.
+        assertTrue(FeatCatalog.in(FeatCategory.VAMPIRICO).isEmpty());
     }
 
     @Test

@@ -79,8 +79,8 @@ class MetamagicoFeatTest {
     }
 
     @Test
-    void theTreeHasThirteenTalentos() {
-        assertEquals(13, MetamagicoFeat.values().length);
+    void theTreeHasEveryTalentoTheCatalogAuthors() {
+        assertEquals(15, MetamagicoFeat.values().length);
     }
 
     @Test
