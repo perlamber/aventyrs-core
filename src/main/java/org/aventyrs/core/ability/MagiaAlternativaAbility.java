@@ -18,14 +18,15 @@ import org.aventyrs.core.magic.MagicType;
  * as ramificações dos tipos de magia escolhidos". It loosens neither the level cap nor the climb
  * requirement.
  *
- * <p><b>The rules text and {@link MagicType} disagree, and this enum follows the enum.</b>
- * MAGIA_ALTERNATIVA names eight types — Divina, Elemental, Encantamento, Invocação,
- * <em>Temporal</em>, Primordial, Profana and <em>Umbral</em> — while {@link MagicType} has seven:
- * those minus Temporal and Umbral, plus a {@code NATURAL} the ability text omits. One constant
- * per existing {@code MagicType} value is generated here, so this enum stays complete with
- * respect to the type system; whichever list is authoritative, resolving it means changing
- * {@link MagicType} first and this enum follows. Worth settling before authoring a tree typed
- * {@code NATURAL}, which could never be exempted if NATURAL isn't a real Tipo de Magia.
+ * <p><b>The rules text's eight types are now all present, and {@link MagicType} carries a ninth.</b>
+ * MAGIA_ALTERNATIVA names Divina, Elemental, Encantamento, Invocação, <em>Temporal</em>,
+ * Primordial, Profana and <em>Umbral</em>. Temporal and Umbral were missing from {@link
+ * MagicType} until the Magia catalog was authored — {@code TEMPO} and {@code TRANSPORTE} are two
+ * fully-specified Temporal trees — and both exist now, so every type the ability text names has a
+ * constant here. The one remaining disagreement runs the other way: {@code NATURAL} is a {@link
+ * MagicType} the ability text omits, and three complete trees are typed with it, so a constant is
+ * generated for it too rather than leaving those trees unexemptable. One constant per {@code
+ * MagicType} value stays the rule.
  *
  * <p>Whenever a {@link MagicType} constant is added, add a matching constant here too.
  */
@@ -39,7 +40,9 @@ public enum MagiaAlternativaAbility implements AttributeAbility {
     ENCANTAMENTO(MagicType.ENCANTAMENTO),
     NATURAL(MagicType.NATURAL),
     ELEMENTAL(MagicType.ELEMENTAL),
-    PRIMORDIAL(MagicType.PRIMORDIAL);
+    PRIMORDIAL(MagicType.PRIMORDIAL),
+    TEMPORAL(MagicType.TEMPORAL),
+    UMBRAL(MagicType.UMBRAL);
 
     private final MagicType magicType;
 

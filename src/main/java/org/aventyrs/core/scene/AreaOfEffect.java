@@ -80,6 +80,59 @@ public record AreaOfEffect(AreaShape shape, int unidadesDeDistancia) {
         return new AreaOfEffect(AreaShape.CONE, length);
     }
 
+    /** A line of the given length in UD that pierces through what it passes — see {@link AreaShape#PENETRANTE}. */
+    public static AreaOfEffect penetrating(final int length) {
+        return new AreaOfEffect(AreaShape.PENETRANTE, length);
+    }
+
+    /** A burst of the given radius in UD — see {@link AreaShape#EXPLOSAO}. */
+    public static AreaOfEffect explosion(final int radius) {
+        return new AreaOfEffect(AreaShape.EXPLOSAO, radius);
+    }
+
+    /**
+     * The same footprint, sized by one of {@link Range}'s named bands rather than a raw UD count.
+     * The Magia catalog names every area size with exactly those words — {@code Área Circular
+     * Média}, {@code Cone Curto} — so this is the vocabulary an authored area is written in, and
+     * no new one had to be invented for it.
+     *
+     * <p>{@link Range#AO_ALCANCE_DOS_OLHOS} has no fixed UD count and so cannot size an area;
+     * passing it throws {@link IllegalOperationException} ({@code INVALID_AREA_OF_EFFECT}), the
+     * same treatment every other malformed footprint gets.
+     */
+    public static AreaOfEffect of(final AreaShape shape, final Range range) {
+        Integer unidadesDeDistancia = range == null ? null : range.getMaxUnidadesDeDistancia();
+        if (unidadesDeDistancia == null) {
+            throw new IllegalOperationException(INVALID_AREA_OF_EFFECT);
+        }
+        return new AreaOfEffect(shape, unidadesDeDistancia);
+    }
+
+    /** A disc whose radius is one of {@link Range}'s bands — see {@link #of(AreaShape, Range)}. */
+    public static AreaOfEffect circle(final Range range) {
+        return of(AreaShape.CIRCULO, range);
+    }
+
+    /** A line whose length is one of {@link Range}'s bands — see {@link #of(AreaShape, Range)}. */
+    public static AreaOfEffect line(final Range range) {
+        return of(AreaShape.LINHA, range);
+    }
+
+    /** A cone whose length is one of {@link Range}'s bands — see {@link #of(AreaShape, Range)}. */
+    public static AreaOfEffect cone(final Range range) {
+        return of(AreaShape.CONE, range);
+    }
+
+    /** A piercing line whose length is one of {@link Range}'s bands — see {@link #of(AreaShape, Range)}. */
+    public static AreaOfEffect penetrating(final Range range) {
+        return of(AreaShape.PENETRANTE, range);
+    }
+
+    /** A burst whose radius is one of {@link Range}'s bands — see {@link #of(AreaShape, Range)}. */
+    public static AreaOfEffect explosion(final Range range) {
+        return of(AreaShape.EXPLOSAO, range);
+    }
+
     /** Whether this footprint radiates outward from whoever produced it — see {@link AreaShape#isEmanation()}. */
     public boolean isEmanation() {
         return shape.isEmanation();

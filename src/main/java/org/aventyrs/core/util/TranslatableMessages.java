@@ -39,5 +39,7 @@ public class TranslatableMessages {
     public static final String INVALID_AREA_OF_EFFECT = "INVALID_AREA_OF_EFFECT";
     public static final String INVALID_SPELL_TARGETING = "INVALID_SPELL_TARGETING";
     public static final String INVALID_SPELL_TREE = "INVALID_SPELL_TREE";
+    public static final String INVALID_SPELL_DURATION = "INVALID_SPELL_DURATION";
+    public static final String INVALID_SPELL_ACTIVATION = "INVALID_SPELL_ACTIVATION";
     public static final String SPELL_PREREQUISITE_NOT_MET = "SPELL_PREREQUISITE_NOT_MET";
 }

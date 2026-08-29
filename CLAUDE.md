@@ -85,11 +85,11 @@ Check here before assuming a TODO needs a new gap named. Nothing below exists in
 | **Temporary RA grants** | `getTotalAbsoluteDamageReduction` never reads `getTemporaryBonus(ABSOLUTE_DAMAGE_REDUCTION)` — RA comes only from continuously-scanned passive hooks. |
 | **Round-scoped Attribute bonuses** | `AttributeValue` has only `base`/`racialBonus`/`variable`, all permanent — never summed via `ModifierType`. |
 | **Roll-resolution engine — *partly built*** | The Margem Crítica half is real: `SkillRoll#getCriticalResult(int)` takes a widening margin, and `AbstractSkillInteraction#sumCriticalMarginIncrease` feeds it the sum of `resolveCriticalMarginIncrease` across `EgoAdvantage`/`AttributeAbility`/`SkillCompetencyAbility`. Still missing: a GD threshold/margin comparison, a hook for auto-success effects, and any consumer for the differently-shaped `ArtesAprimorarComArteAbility#getCriticalMarginReduction`. |
-| **Area de Efeito — *described, not resolved*** | The footprint is real data: `scene.AreaOfEffect` (an `AreaShape` — CIRCULO/LINHA/CONE — plus one length in UD), reachable from `Spell#getTargeting()`. Three things are still missing, so cite the specific one: (a) **footprint resolution** — nothing turns an area into a set of hexes or targets; a LINHA/CONE additionally needs a *facing*, which is chosen per cast, not authored on the Magia, so this belongs in `scene.grid` taking the aim as arguments; (b) **no classification of an incoming attack as an area one** — `AttackDelivery`/`AttackReceiver` carry no such flag, which is what still blocks `EsquivaEApararCompetencyAbility.EVASAO` and `AbencoadoPelaLuzAbility`; (c) **caster exclusion** — "a Conjurador is never damaged by their own Magia" is a universal rule, so it is deliberately *not* a column anywhere (no `excludesCaster` flag); it belongs to the missing targeting resolution, and `Spell` has no damage column to test against anyway. |
+| **Area de Efeito — *described, not resolved*** | The footprint is real data: `scene.AreaOfEffect` (an `AreaShape` — CIRCULO/LINHA/CONE/PENETRANTE/EXPLOSAO — plus one length in UD), reachable from `Spell#getTargeting()`, and ~35 authored Magias now supply one. Four things are still missing, so cite the specific one: (a) **footprint resolution** — nothing turns an area into a set of hexes or targets; a LINHA/CONE additionally needs a *facing*, which is chosen per cast, not authored on the Magia, so this belongs in `scene.grid` taking the aim as arguments; (b) **no classification of an incoming attack as an area one** — `AttackDelivery`/`AttackReceiver` carry no such flag, which is what still blocks `EsquivaEApararCompetencyAbility.EVASAO` and `AbencoadoPelaLuzAbility`; (c) **caster exclusion** — "a Conjurador is never damaged by their own Magia" is a universal rule, so it is deliberately *not* a column anywhere (no `excludesCaster` flag); it belongs to the missing targeting resolution, and `Spell` has no damage column to test against anyway; (d) **a Foco-scaled footprint** — four Magias grow their area at Foco 5 or above ("aumenta para Média se tiver Foco 5 ou superior"), and `AreaOfEffect` holds one fixed length, so each is authored at its base size with the growth clause in its prose. That needs a footprint resolvable against a sheet, which is (a). |
 | **Malefício classification** | No Encantamento/Maldição/Doença tag exists — see `Withering`, `ABRIR_DEFESAS`. |
 | **Living/undead classification** | No vitality tag on `Character`. `CreatureType` has only HUMANOIDE/FEERICO/MONSTRUOSO, none of which is about being alive. `MonsterTemplate#isUndead()` is a deliberately narrow stand-in — exact for every combatant this core can build, wrong the day a player character can be undead or a construct must count as non-living. |
 | **A summon acting on its summoner's roll** | `SummonedMonsterTemplate` builds a creature a Conjurador raised, but nothing models the player then *rolling for it*. `AttackDelivery` assumes the roller is the attacker and `AttackReceiver` that they're the defender; neither has a notion of rolling on a third combatant's behalf. This is why `CriticalEffect#applicableTo` is shared between them. |
-| **Fadiga/asfixia, and healing inversion** | Nothing tracks sleep or breathing, so "não precisam dormir ou respirar" has no effect to be exempt from; and `CombatantSheet#heal` has no hook to redirect a recovery into damage (`Zumbi`'s Divine-magic clause, which also needs the missing `Magia` entity). |
+| **Fadiga/asfixia, and healing inversion** | Nothing tracks sleep or breathing, so "não precisam dormir ou respirar" has no effect to be exempt from; and `CombatantSheet#heal` has no hook to redirect a recovery into damage (`Zumbi`'s Divine-magic clause — note `Zumbi` **is** `ReanimarSpell.REANIMAR`'s stat block, and what's missing between them is only a `Spell`-to-`MonsterTemplate` link). |
 | **A foe's own dano roll — *half-closed*** | `DamageBase` now models exactly a "1d6+3"-shaped figure, so a stat block's "Danos de Ataques" finally has a type to live in — but `MonsterTemplate` has no column for it and `AttackDelivery`/`AttackReceiver` still assemble a `DamageInteraction` with the caller supplying the number. This core still never rolls the dice. Cite the missing *column*, not a missing concept. |
 | **Forced attack targeting / interception** | No "another Character becomes the target instead" mid-resolution — see `SantoAbility.GUARDA_VIDAS`. |
 | **Reactive/retaliation damage** | `DamageService` only computes damage *to* a target *from* an attacker, never the reverse. |
@@ -575,10 +575,12 @@ SEMENTE ── BROTO ─┬─ MUDA(A) ── EMERGENTE(A) ─┬─ FLORESCENTE
   `INVALID_SPELL_TREE` on 1 or 3+ — a divergence into a single path is meaningless, and
   `MAGIA_ALTERNATIVA`'s "ambas as ramificações" only reads for two. It's called from the branch
   gate, so no tree reaches an acquisition decision unvalidated.
-- **`SpellTree`/`SpellBranch` are interfaces**, like `AventyrTitle`/`Feat` — trees are authored
-  per family, and a central catalog enum would sit empty until the first one lands. **No tree is
-  authored yet**; `TestSpellTree`/`TestSpellBranch` are the test stubs, shaped exactly like
-  Aliados da Natureza (diverge at MUDA, converge at FLORESCENTE).
+- **`SpellTree`/`SpellBranch` are interfaces**, like `AventyrTitle`/`Feat`, so a consumer can
+  author their own. **All 20 Árvores of the ruleset are authored** in
+  `org.aventyrs.core.magic.catalog` — see "The Magia catalog" below.
+  `TestSpellTree`/`TestSpellBranch`/`TestSpell` still exist and should stay: the acquisition-gate
+  tests need Magias placed at arbitrary spots in a tree of a known shape, and pinning the engine's
+  own tests to real catalog entries would make a rules revision break them.
 
 ### The three gates — `Spell#isEligible(Character, BranchLevel maxBranchLevel)`
 
@@ -627,11 +629,125 @@ All three must hold, the same combine-every-prerequisite shape as `Feat#isEligib
 - `MagiaAlternativaAbility` (`org.aventyrs.core.ability`) is one `AttributeAbility` constant per
   `MagicType` — CLAUDE.md's pattern 3, mirroring `PeritoTeoricoAbility` exactly. Grant the
   constant, not `FocusAbility.MAGIA_ALTERNATIVA`, which stays the catalog/rules-text entry.
-- ⚠️ **`MagicType` and the rules text disagree.** `MAGIA_ALTERNATIVA` names eight types —
-  including **Temporal** and **Umbral**, which the enum lacks — and omits the `NATURAL` it has.
-  `MagiaAlternativaAbility` follows the enum (one constant per existing value). Settle this
-  before authoring a tree typed `NATURAL`, which could never be exempted if NATURAL isn't a real
-  Tipo de Magia. Adding a `MagicType` constant means adding a matching one there.
+- ⚠️ **`MagicType` and the rules text mostly agree now.** `TEMPORAL` and `UMBRAL` were added
+  when the catalog landed (Tempo and Transporte are two fully-specified Temporal trees), so every
+  type `MAGIA_ALTERNATIVA` names has a constant. The one remaining disagreement runs the other
+  way: `NATURAL` is a `MagicType` the ability text omits, and three trees are typed with it, so a
+  constant exists for it too rather than leaving them unexemptable. **Adding a `MagicType`
+  constant still means adding a matching `MagiaAlternativaAbility` one.**
+- ⚠️ **`NATURAL` is both a `MagicType` and an `ElementalType`, deliberately.** The source document
+  lists it as an Elemental subdivision (L15) yet tags three trees with it standalone, and does not
+  reconcile the two. Both constants exist so either reading has somewhere to go; that's a refusal
+  to pick a side, not a resolution.
+- **The exemption matches *either* of a tree's two Tipos de Magia**, via `SpellTree#hasMagicType`.
+  The catalog's two-part tag is not a precedence statement — `ALIADOS DA NATUREZA
+  (Natural/Invocação)` is as much an Invocação tree as a Natural one.
+
+## The Magia catalog — `org.aventyrs.core.magic.catalog`
+
+All **145 Magias across 20 Árvores** of the ruleset's complete section are authored, transcribed
+from `docs/rules/magias.txt`. Read `docs/rules/magias-index.md` alongside them: it is the
+source-of-truth survey, and it records every count, every source-document defect, and every
+judgement call made while transcribing.
+
+- **One `MagicTree` constant per Árvore, one `<Tree>Spell` enum per Árvore** (`PiromanciaSpell`,
+  `VidaSpell`, …), mirroring `Feat`'s one-enum-per-tree shape — and enums specifically because a
+  consumer persists a Conjurador's known Magias, and `name()` is the stable key that survives a
+  round trip.
+- **`MagicBranch` holds all 36 ramificações in one enum**, two per diverging tree. That is not the
+  shared `PRIMEIRA`/`SEGUNDA` enum `SpellBranch`'s javadoc rejects: every constant belongs to
+  exactly one tree, so no two trees share a branch object and `isEligible`'s identity comparison
+  stays correct.
+- **`SpellCatalog` is the entry point** — `all()`, `in(tree)`, `at(rung)`, `ofType(magicType)`.
+  Unlike `FeatCatalog` it uses **no reflection at all**: the trees are an enum and each knows its
+  own Magias (`SpellTree#getSpells()`), so it is a flat-map over `MagicTree.values()`. That is why
+  `Spell` is deliberately **not** sealed — a consumer's homebrew Magia is a first-class `Spell`
+  that simply never appears in the catalog.
+- **`SpellCatalogTest` stands in for the missing `permits` clause.** Wiring a tree's enum into its
+  `MagicTree` constant is a separate step from writing the enum, and forgetting it fails
+  *silently* — `getSpells()` just answers empty and the whole Árvore stops being offered. The test
+  pins per-tree counts, branch invariants, and every blank descriptor against the source document.
+
+### Authoring one — `SpellData` + `AuthoredSpell`
+
+A Magia is a `SpellData` (a `@Builder` whose every field is a descriptor line of the rules text)
+plus two methods. `AuthoredSpell` is the whole of the per-tree delegation written once — twenty
+trees times fifteen columns is three hundred methods it replaces — so a tree enum is constants, a
+`getData()` and a `getTree()`.
+
+**Prose is transcribed verbatim, including the document's own typos and inconsistencies**, with a
+note on the constant saying so. An invocation's stat block is the one exception: it is summarised
+with a TODO, because it belongs in a `MonsterTemplate` and `Spell` has no column pointing at one.
+
+**Every "can't apply it yet" gets its gap named on the constant**, per the usual TODO discipline.
+The catalog is complete, exact and almost entirely *inert* — the rungs, PM costs, acquisition
+gates and category tags are live, but nearly every *effect* is blocked. The index's authoring-status
+section carries the blocker-to-Magia table; check it before assuming a new mechanism unblocks a
+tree.
+
+### Four columns the catalog forced into existence
+
+Each closed a gap this file used to name. Don't re-derive them:
+
+- **`SpellDuration`** replaces the old `int getDuration()`, and the reason is `POTENCIALIZAR` —
+  57 of 145 Magias carry it, and it adds "+2d6 **unidades**" in the Magia's *own* unit. Storing
+  `1 minuto` as a bare `12` lands that at 1/12th its magnitude. So it holds a count, a
+  `DurationUnit` (1 min = 12 Rodadas, carried-in knowledge stated in no source document), a
+  `concentration` flag and a `DurationKind`. `inRodadas()` is the canonical form.
+  - **Concentração is a flag, not a kind**, and its count is the **trailing** one: the effect runs
+    uncounted while focus holds, and the count starts when focus breaks (on the caster's own cast
+    or attack — *not* on being attacked). 20 Magias. Two narrow things are missing: moving a
+    `TemporaryEffect`'s `remainingRounds` from `null` to a count, and a caster-to-sustained-effects
+    link for the 17 that land on someone else's sheet (`Scene.grantedBlessings` is the precedent).
+  - **`SAME_AS_REFERENCED` holds a `Supplier`**, for the same forward-reference reason
+    `MetamagicoFeat`'s `FeatRequirements` is one. It is not cosmetic: Corpo Rochoso's *Dádiva de
+    Epona* raises Rigidez Térrea's Duração, and five Magias must follow it.
+- **`ActivationTime`/`ActivationType`** — `Tempo de Ativação` is not a PA count: five Magias cost a
+  Reação and four an Ação Livre.
+- **`ElementalType`** — the catalog never writes a bare "Elemental", always `Elemental: Fogo`. It's
+  a column on `SpellTree` rather than constants on `MagicType`, because the two are asked about
+  independently and folding them would narrow a `MagiaAlternativaAbility.ELEMENTAL` exemption.
+- **`Spell#getEffectChainDescription()`** — the `Corrente de Efeitos` field, and it is **prose, not
+  an enum reference**. The 145 Magias name 69 distinct Correntes inline and *none* appears in the
+  shared 13-entry Corrente catalog; the two populations are completely disjoint.
+
+### Two columns are derivable, and one of them is redundant
+
+- **`GD da Conjuração` is a function of the rung, not an independent column.** Semente→Fácil,
+  Broto→Médio, Muda→Difícil, Emergente→Muito Difícil, Florescente→Improvável, with **zero
+  deviations** across the 134 of 145 Magias that state a plain tier (the other 11 are 4 blanks, 3
+  bare-`DM do Alvo`, 3 per-rung tables and 1 allegiance-conditioned entry). The `ou DM do Alvo
+  (maior)` floor is orthogonal — all 46 of those still state their rung's tier.
+  `Spell.castingDifficultyAgainst(BranchLevel)` *is* this ladder; it was written for the three
+  dispelling Magias, which apply it to the rung of the effect they target rather than their own.
+  **So a blank GD is derivable, not unknowable** — the four blank ones are still authored as
+  `null`, because filling them by rule is a decision nobody has taken, not because the value is
+  unknown.
+- **An unstated `Tempo de Ativação` is 2PA**, which is also the catalog's modal value (58 of 145).
+  Don't apply it over an authored value: the one Umbral Magia that states a time states a Reação.
+
+Both matter mainly for the **44 unauthored Umbral Magias** — `GD da Conjuração` is the only column
+blank on all 44, and it is exactly the one these rules recover. What actually keeps that section
+out of `MagicTree` is that acquisition is gated on a *Força Umbral* Talento that does not exist.
+`docs/rules/magias-index.md` carries the full listing.
+
+### Branch roles are the one place this catalog contains judgement
+
+The document names no ramificação, but it does state what the two always are (L30: "Um deles
+aprofunda o efeito principal da magia, enquanto outro foca na evolução dos Efeitos Alternativos").
+So `MagicBranch` names them by `BranchRole` — `PRINCIPAL`/`ALTERNATIVO` — rather than inventing 36
+names. **Which entry holds which role is a reading**, and every constant records its own trace.
+
+- **The document's printed order carries no meaning.** In 14 of 18 diverging trees the first-listed
+  entry deepens the principal effect; in Morte, Piromancia, Reanimar and Voo it is the second. That
+  split is the evidence.
+- **Six trees carry no `Efeito Alternativo` before their divergence**, so L30's second half has
+  nothing to point at and the trace runs on the principal effect alone.
+- **Ocultação breaks the rule outright** and says so on the constant; **Polimorfismo is close to a
+  coin flip** and says so too. Don't "fix" either without new rules text.
+- **Piromancia's two are the only branches with names of their own** (Eldur / Boros), carried by
+  every Magia on each path, so those two override their role label via `MagicBranch`'s optional
+  `authoredName`.
 
 ## A Magia's reach — `SpellReach`, `SpellTargeting`, `AreaOfEffect`
 
@@ -681,13 +797,19 @@ this: it rolls the given delivery Interaction, then rolls Domínio do Mana, and 
 `InteractionResult`s in a `SpellCastingResult` — it never picks the delivery Interaction
 itself (the caller does, since only the caller knows which Magia/weapon is being used).
 
-`Spell` is a real entity now, and a character carries the Magias they know (`Character#spells`,
-via `SpellService#grantSpell` — see "Árvores de Magia" above). What's still missing is narrower:
-**no Magia is authored anywhere** (no Árvore de Magia exists yet, so there is no catalog to cast
-*from*), and `SpellCastingService` still doesn't know either roll's target GD, so it computes
-both rolls' bonuses without resolving success/failure for either. Cite the missing *catalog* or
-the missing *GD*, not a missing `Magia` entity. Left as a TODO on the service rather than
-guessed at.
+`Spell` is a real entity, the full 145-Magia catalog is authored (see "The Magia catalog"
+below), and a character carries the Magias they know (`Character#spells`, via
+`SpellService#grantSpell`). What's still missing is narrower than it was: `SpellCastingService`
+doesn't know either roll's target GD, so it computes both rolls' bonuses without resolving
+success/failure for either.
+
+**Cite the missing *GD*, not a missing catalog or a missing `Magia` entity** — both of those are
+closed. And be precise about which GD: the Domínio do Mana roll's own is real authored data
+(`Spell#getCastingDifficultyLevel()`), so what's actually absent is the *delivery* roll's, which
+is the target's Defesa Mágica — an authored flat number on a `MonsterSheet` that nothing compares
+a roll against. Two authored GD shapes are blocked on that same comparison:
+`isCastingDifficultyFlooredByTargetMagicDefense()` (49 Magias) and `getCastingDifficultyAgainst`
+(3). Left as a TODO on the service rather than guessed at.
 
 This is also where an ability whose effect targets the *delivery* roll, not Domínio do Mana's
 own, would eventually plug in — don't try to force it onto

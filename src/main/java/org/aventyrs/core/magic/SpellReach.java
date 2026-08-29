@@ -31,5 +31,19 @@ public enum SpellReach {
     AREA_DE_EFEITO,
 
     /** A single target at a distance, up to the {@code Range} the Magia states. */
-    DISTANCIA
+    DISTANCIA,
+
+    /**
+     * Reaches somewhere no {@code Range} can measure — another plane. Two Magias are authored this
+     * way, both in the Transporte tree: {@code Alcance: Mesmo Plano} (Portal) and {@code Alcance:
+     * Planos Elementais} (Portal Planar).
+     *
+     * <p>It takes no parameters, exactly as {@link #PESSOAL} and {@link #TOQUE} do, and for a
+     * blunter reason: <b>this core has no planar concept at all</b> — no plane exists as a value,
+     * so there is nothing to name as a destination and no distance to state. The constant is a
+     * classification and nothing more, kept so the two Magias can state their reach at all rather
+     * than leaving it {@code null}. Which plane each reaches stays in its own prose until planes
+     * are modelled.
+     */
+    PLANAR
 }

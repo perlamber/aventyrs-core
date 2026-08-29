@@ -20,6 +20,7 @@ import static org.aventyrs.core.util.TranslatableMessages.INVALID_SPELL_TARGETIN
  * ---------------  ---------------------------------  ---------
  * PESSOAL          absent                             absent
  * TOQUE            absent (Adjacente is implied)      absent
+ * PLANAR           absent (no Range measures a plane) absent
  * DISTANCIA        required                           absent
  * AREA_DE_EFEITO   optional — see below               required
  * </pre>
@@ -71,6 +72,9 @@ public record SpellTargeting(SpellReach reach, Range range, AreaOfEffect area) {
     /** A single target the Conjurador must touch — see {@link SpellReach#TOQUE}. */
     public static final SpellTargeting TOQUE = new SpellTargeting(SpellReach.TOQUE, null, null);
 
+    /** Reaches another plane, which no {@code Range} measures — see {@link SpellReach#PLANAR}. */
+    public static final SpellTargeting PLANAR = new SpellTargeting(SpellReach.PLANAR, null, null);
+
     public SpellTargeting {
         if (reach == null || !isLegalCombination(reach, range, area)) {
             throw new IllegalOperationException(INVALID_SPELL_TARGETING);
@@ -79,7 +83,7 @@ public record SpellTargeting(SpellReach reach, Range range, AreaOfEffect area) {
 
     private static boolean isLegalCombination(final SpellReach reach, final Range range, final AreaOfEffect area) {
         return switch (reach) {
-            case PESSOAL, TOQUE -> range == null && area == null;
+            case PESSOAL, TOQUE, PLANAR -> range == null && area == null;
             case DISTANCIA -> range != null && area == null;
             // An emanation radiates from the Conjurador, so it has no centre to place at a Range.
             case AREA_DE_EFEITO -> area != null && !(area.isEmanation() && range != null);

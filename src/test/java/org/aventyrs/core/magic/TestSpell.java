@@ -1,6 +1,5 @@
 package org.aventyrs.core.magic;
 
-import org.aventyrs.core.effect.CriticalEffectType;
 import org.aventyrs.core.scene.Range;
 import org.aventyrs.core.skill.DifficultyLevel;
 import org.aventyrs.core.skill.SkillType;
@@ -8,16 +7,19 @@ import org.aventyrs.core.skill.SkillType;
 import java.util.Optional;
 
 /**
- * A minimal {@link Spell} for tests. No {@code Spell} implementation exists in main source yet
- * (no Magia catalog does — see {@link SpellCastingService}'s own TODO), and every consumer wired
- * so far reads only which Perícia delivers the Magia, or merely that there <em>is</em> one — so
- * this is a plain hand-written stub rather than a Fixture Factory template or a builder. Lombok
- * is main-source-only in this project, so a test stub has to be written out either way.
+ * A minimal {@link Spell} for tests, deliberately independent of the authored catalog in {@code
+ * org.aventyrs.core.magic.catalog}. The acquisition-gate tests need Magias placed at arbitrary
+ * spots in a tree of a known shape, which a real Árvore cannot provide — and pinning those tests
+ * to real catalog entries would make a rules revision break the engine's own tests.
  *
- * <p>Describes an ordinary ranged attack Magia: delivered by Ataque à Distância, cast with
- * Domínio do Mana, reaching a single target at Distância Média, and sitting on {@link
- * TestSpellTree#DIVERGING}'s trunk at SEMENTE. Every column other than those returns a neutral
- * value — assert on one only after giving it a real one here.
+ * <p>Describes an ordinary ranged attack Magia: delivered by Ataque à Distância, cast with Domínio
+ * do Mana, reaching a single target at Distância Média, and sitting on {@link
+ * TestSpellTree#DIVERGING}'s trunk at SEMENTE. Every column other than those takes {@link Spell}'s
+ * own default — assert on one only after giving it a real value here.
+ *
+ * <p>It implements {@link Spell} directly rather than going through {@link AuthoredSpell}/{@link
+ * SpellData}, which is what a consumer's homebrew Magia would normally use: {@code Spell} is
+ * unsealed precisely so that stays possible, and this stub is the standing proof that it does.
  *
  * <p>Use {@link #at(SpellTree, BranchLevel, SpellBranch)} to place one somewhere specific in a
  * tree; that is what the acquisition-gate tests vary.
@@ -56,8 +58,18 @@ public class TestSpell implements Spell {
     }
 
     @Override
+    public String getName() {
+        return "Test Magia";
+    }
+
+    @Override
     public SkillType getAttackSkillType() {
         return attackSkillType;
+    }
+
+    @Override
+    public ActivationTime getActivationTime() {
+        return ActivationTime.pa(2);
     }
 
     @Override
@@ -73,21 +85,6 @@ public class TestSpell implements Spell {
     @Override
     public String getPrimaryEffectDescription() {
         return null;
-    }
-
-    @Override
-    public String getSecondaryEffectDescription() {
-        return null;
-    }
-
-    @Override
-    public CriticalEffectType getCriticalEffectType() {
-        return null;
-    }
-
-    @Override
-    public SkillType getConjurationSkillType() {
-        return SkillType.DOMINIO_DO_MANA;
     }
 
     @Override
@@ -116,8 +113,8 @@ public class TestSpell implements Spell {
     }
 
     @Override
-    public int getDuration() {
-        return 0;
+    public SpellDuration getDuration() {
+        return SpellDuration.INSTANTANEA;
     }
 
     @Override
