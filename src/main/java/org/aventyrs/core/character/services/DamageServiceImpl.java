@@ -10,6 +10,7 @@ import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.scene.Range;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.CombatantSheet;
+import org.aventyrs.core.skill.SkillCompetencyAbility;
 import org.aventyrs.core.skill.SkillExcellency;
 import org.aventyrs.core.skill.SkillType;
 
@@ -204,9 +205,16 @@ public class DamageServiceImpl implements DamageService {
                 .sum();
     }
 
+    /**
+     * The standard three-source scan. The competency source is {@code
+     * SkillCompetencyAbility#allFor}, not {@code character.getSkillCompetencyAbilities()} — a
+     * Habilidade Racial grants RD/RA the same way an acquired one does, and scanning only the
+     * acquired list silently dropped it ({@code GuamposRacialAbility#VIGOR_DE_EPONA}, "reduzem
+     * em -1 todo dano sofrido", is the first racial ability to grant either).
+     */
     private int sumAcrossSources(final Character character, final ModifierType modifierType) {
         int total = modifierResolver.sumModifiers(character.getAttributeAbilities(), modifierType);
-        total += modifierResolver.sumModifiers(character.getSkillCompetencyAbilities(), modifierType);
+        total += modifierResolver.sumModifiers(SkillCompetencyAbility.allFor(character), modifierType);
         for (Map.Entry<SkillType, CharacterSkill> entry : character.getSkills().entrySet()) {
             int graduationValue = entry.getValue().getGraduation().getGraduationValue();
             List<SkillExcellency> unlockedExcellencies = SkillExcellency.unlockedBy(

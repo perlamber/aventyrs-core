@@ -3,6 +3,7 @@ package org.aventyrs.core.race;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.SizeCategory;
+import org.aventyrs.core.effect.CriticalEffectType;
 import org.aventyrs.core.feat.FeatCategory;
 import org.aventyrs.core.sheet.DlcRuleset;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
@@ -73,6 +74,22 @@ public interface Race {
      * default; most races have none.
      */
     public default List<SkillCompetencyAbility> getRacialAbilities() { return List.of(); }
+
+    /**
+     * Efeitos Críticos every member of this race simply shrugs off — an Anatomia clause naming
+     * them by identity, e.g. {@code Troll}'s Anatomia Vegetal ("imunes aos efeitos críticos
+     * Atordoante, Ferida Profunda e Sangramento"). Empty by default; nearly every race has none.
+     *
+     * <p>Read by {@code org.aventyrs.core.sheet.AbstractCombatantSheet#getCriticalEffectImmunities()},
+     * so a race's immunities reach {@code org.aventyrs.core.effect.CriticalEffect#applicableTo}
+     * with no per-race wiring — the player-facing counterpart to {@code
+     * org.aventyrs.core.monster.MonsterTemplate#getCriticalEffectImmunities()}, which is where a
+     * foe's own authored anatomy clause lives. Keyed on {@link CriticalEffectType} for exactly
+     * the reason that enum's own javadoc gives: a stat block names every Efeito Crítico it
+     * resists, including the 18 with no implementation behind them, and those immunities are
+     * real authored data now rather than the day someone builds the effect.
+     */
+    default Set<CriticalEffectType> getCriticalEffectImmunities() { return Set.of(); }
 
     /**
      * Cost in XP to learn a new Feat

@@ -480,14 +480,20 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     }
 
     /**
-     * None, unless a subclass says otherwise — a combatant is vulnerable to every Efeito Crítico
-     * by default, and only an authored anatomy clause changes that. {@code MonsterSheet}
-     * overrides this; {@code CharacterSheet} deliberately does not (no player-facing trait grants
-     * one yet — see {@code ProfissaoCompetencyAbility}'s still-unbuilt Resistência a Críticos).
+     * Whatever this combatant's Raça shrugs off — {@code Race#getCriticalEffectImmunities()},
+     * empty for all but {@code Troll}'s Anatomia Vegetal today. A combatant is otherwise
+     * vulnerable to every Efeito Crítico, and only an authored anatomy clause changes that.
+     *
+     * <p>{@code MonsterSheet} overrides this rather than adding to it: a foe's anatomy is
+     * authored wholesale on its {@code MonsterTemplate}, and its {@code Character}'s race is the
+     * single catch-all {@code Monstruoso} (which grants none), so there is nothing of the race's
+     * to lose. A player-<i>acquired</i> trait still has no path here — see {@code
+     * ProfissaoCompetencyAbility}'s still-unbuilt Resistência a Críticos, which would need a
+     * scan over held abilities rather than this one flat lookup.
      */
     @Override
     public Set<CriticalEffectType> getCriticalEffectImmunities() {
-        return Set.of();
+        return getCharacter().getRace().getCriticalEffectImmunities();
     }
 
     /**

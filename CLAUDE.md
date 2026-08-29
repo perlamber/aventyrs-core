@@ -1418,8 +1418,12 @@ class**, not a catalog enum — it carries per-instance choices a constant can't
 
 An Anatomia clause naming Efeitos Críticos a creature shrugs off is real, enforced data.
 `CriticalEffectType` is the identity an immunity names, and `CombatantSheet
-#getCriticalEffectImmunities()` (default empty on `AbstractCombatantSheet`, overridden by
-`MonsterSheet`) is the set.
+#getCriticalEffectImmunities()` is the set. It has **two sources, one per kind of sheet**:
+`AbstractCombatantSheet` reads the holder's `Race#getCriticalEffectImmunities()` (empty for every
+race but `Troll`'s Anatomia Vegetal), and `MonsterSheet` *overrides* that with its
+`MonsterTemplate`'s own — a foe's anatomy is authored wholesale, and its `Character`'s race is the
+catch-all `Monstruoso`, so there is nothing of the race's to lose. A player-*acquired* trait still
+has no path in: that would need a scan over held abilities, not this one flat lookup.
 
 - **Keyed on an enum, not on `Class<? extends CriticalEffect>`.** Four of the five effects a Zumbi
   resists — Amaldiçoar, Dilacerar, Excruciante, Ferida Profunda — have no implementation at all.
@@ -1475,7 +1479,7 @@ Neither ever calls the other. Both are report-only, both roll exactly once (the 
 
 ## Raças — `org.aventyrs.core.race`, not `org.aventyrs.core.character`
 
-`Race` and every implementation (~22 today, plus `CreatureType`, `AbstractMesticoRace` and any
+`Race` and every implementation (29 today, plus `CreatureType`, `AbstractMesticoRace` and any
 `*RacialAbility` enums) live in their own top-level package, `org.aventyrs.core.race` — a
 sibling of `org.aventyrs.core.character`, not a subpackage of it, mirroring how
 `org.aventyrs.core.ability`/`org.aventyrs.core.feat` already sit alongside `character` rather

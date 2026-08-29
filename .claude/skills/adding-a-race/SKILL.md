@@ -141,17 +141,32 @@ character of that race with **no Interaction-specific code at all**.
 
 ### Don't force an enum into existence for symmetry
 
-**Having no racial abilities is by far the common case.** Of the ~22 races in this package,
-exactly **three** override `getRacialAbilities()` with real content — `Anao`, `Elfo`, and the
-Mestiços (which inherit rather than author). Every other race leaves it at `Race`'s empty
-default, because none of their traits fit the shape: some aren't roll-conditioned at all (a
-Defesa modifier, a conditional RD), one needs a target classification this core can't make, and
-several are really "grant an acquisition slot" traits.
+**Having no racial abilities is by far the common case.** Of the 29 races in this package,
+**seven** override `getRacialAbilities()` with real content — `Anao`, `Elfo`, `Aviano`,
+`Goblin`, `Guampo`, `HomemFera`, and the Mestiços (which inherit rather than author). Every
+other race leaves it at `Race`'s empty default, because none of their traits fit the shape: some
+aren't roll-conditioned at all (a Defesa modifier, a conditional RD), one needs a target
+classification this core can't make, and several are really "grant an acquisition slot" traits.
+`Ogro`, `Indomito` and `Troll` are the three most recent races to add none at all, and each says
+why in its javadoc.
 
-**Only build a `<Race>RacialAbility` enum once a trait's shape genuinely fits** — there are only
-two such enums today (`AnoesRacialAbility`, `ElfosRacialAbility`). If the race has none, the
-javadoc says why (see `Human`'s closing paragraph) and you are done. Don't create one for
+**Only build a `<Race>RacialAbility` enum once a trait's shape genuinely fits** — there are six
+today (`AnoesRacialAbility`, `ElfosRacialAbility`, `AvianosRacialAbility`,
+`GoblinsRacialAbility`, `GuamposRacialAbility`, `HomensFeraRacialAbility`). If the race has none,
+the javadoc says why (see `Human`'s closing paragraph) and you are done. Don't create one for
 symmetry.
+
+**A racial ability is not limited to roll bonuses.** `GuamposRacialAbility#VIGOR_DE_EPONA` grants
+flat RD and `HomensFeraRacialAbility#FORTALECIMENTO_FERAL` flat Movimento Base — both ordinary
+`@Modifier` methods, both reaching their service because `DamageServiceImpl` and
+`MovementServiceImpl` scan `SkillCompetencyAbility.allFor`. When a clause grants a stat rather
+than a roll bonus, check that the consuming service uses `allFor` and not
+`character.getSkillCompetencyAbilities()` alone before assuming it is a gap.
+
+**A Característica that is neither a roll bonus nor a stat may still have its own `Race` hook.**
+`Race#getCriticalEffectImmunities()` is the one that exists (`Troll`'s Anatomia Vegetal); an
+immunity is a filter, not a modifier, so forcing it into a `*RacialAbility` enum would have been
+the wrong shape.
 
 ### Writing the constants
 
