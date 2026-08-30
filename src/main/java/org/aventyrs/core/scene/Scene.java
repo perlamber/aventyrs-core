@@ -207,8 +207,21 @@ public class Scene {
      * @throws IllegalOperationException if characterSheet was never added to this Scene
      */
     public SceneContext buildContext(final CombatantSheet characterSheet, final Map<CombatantSheet, Range> distances) {
+        return buildContext(characterSheet, distances, null);
+    }
+
+    /**
+     * Same as {@link #buildContext(CombatantSheet, Map)}, but also naming the combatant on the
+     * other side of the roll this context is being built for — see {@code
+     * SceneContext#getOpposedCharacter()} for which side that is (the target on an attack roll,
+     * the attacker on a defence roll). Pass {@code null}, or use the shorter overload, for a
+     * roll that opposes nobody.
+     * @throws IllegalOperationException if characterSheet was never added to this Scene
+     */
+    public SceneContext buildContext(final CombatantSheet characterSheet, final Map<CombatantSheet, Range> distances,
+                                      final CombatantSheet opposedCharacter) {
         return new SceneContext(getAllies(characterSheet), getEnemies(characterSheet), distances, terrainType,
-                combatScene, currentRound, wonInitiative(characterSheet));
+                combatScene, currentRound, wonInitiative(characterSheet), opposedCharacter);
     }
 
     /** The kind of environment this Scene is currently taking place in, or {@code null} if never set. */

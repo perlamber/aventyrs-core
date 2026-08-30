@@ -106,8 +106,9 @@ class FeatCatalogTest {
 
     @Test
     void aCategoryWithNoEnumAuthoredYetIsEmptyRatherThanAbsent() {
-        // A racial tree — none is authored yet, and the general trees have all been filled in.
-        assertTrue(FeatCatalog.in(FeatCategory.VAMPIRICO).isEmpty());
+        // Regalia and Aventyr are the two trees deliberately left unauthored; every other
+        // general tree is filled in, and the racial trees are being authored in batches.
+        assertTrue(FeatCatalog.in(FeatCategory.REGALIA).isEmpty());
     }
 
     @Test

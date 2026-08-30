@@ -2,6 +2,7 @@ package org.aventyrs.core.character.services;
 
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.DefenseType;
+import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.sheet.CombatantSheet;
 
@@ -57,6 +58,15 @@ public interface DefenseService {
      * Character-versus-sheet split {@code DamageService} uses for RD/RA.
      */
     int getTotalDefense(Character character, DefenseType defenseType);
+
+    /**
+     * Same as {@link #getTotalDefense(Character, DefenseType)}, but also letting a held {@code
+     * Feat} condition its bonus on who is attacking — see {@code
+     * Feat#resolveDefenseBonus(DefenseType, Character, SceneContext)}. The shorter overload
+     * delegates here with a {@code null} sceneContext, the usual cascading convention, so an
+     * unconditional bonus is unaffected either way.
+     */
+    int getTotalDefense(Character character, DefenseType defenseType, SceneContext sceneContext);
 
     /**
      * Same as {@link #getTotalDefense(Character, DefenseType)}, plus target's currently-active

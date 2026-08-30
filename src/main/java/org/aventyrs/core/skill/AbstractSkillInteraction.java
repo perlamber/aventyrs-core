@@ -15,6 +15,7 @@ import org.aventyrs.core.character.services.HitPointsServiceImpl;
 import org.aventyrs.core.character.services.CharacterSkillService;
 import org.aventyrs.core.character.services.CharacterSkillServiceImpl;
 import org.aventyrs.core.ego.EgoAdvantage;
+import org.aventyrs.core.feat.Feat;
 import org.aventyrs.core.modifier.ModifierResolver;
 import org.aventyrs.core.modifier.ModifierResolverImpl;
 import org.aventyrs.core.modifier.ModifierType;
@@ -260,6 +261,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
         bonus += target.getTemporaryBonus(ModifierType.SKILL_ROLL_BONUS);
         bonus += target.getTemporaryBonus(skillType.getRollBonusType());
         bonus += sumConditionalRollBonuses(skillCompetencyAbilities, sceneContext, skillRoll);
+        bonus += sumFeatRollBonuses(character, sceneContext, skillRoll);
         bonus += sumEgoAdvantageRollBonuses(character.getEgoAdvantages().values(), sceneContext);
         bonus += sumEgoAdvantageSkillSpecificRollBonuses(character.getEgoAdvantages().values(), sceneContext, target);
         bonus += sizeCategoryRollBonus(characterSizeService.getEffectiveSizeCategory(character));
@@ -273,6 +275,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                 .mapToInt(SkillCompetencyAbility::getDifficultyReduction)
                 .sum();
         difficultyReduction += sumAttributeDomainDifficultyReductions(character.getAttributeAbilities(), attributeDomain, character);
+        difficultyReduction += sumFeatDifficultyReductions(character);
 
         InteractionResult.InteractionResultBuilder result = InteractionResult.builder()
                 .resultStatus(hitPointsService.getStatus(target))
@@ -390,6 +393,32 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
      * contributes to {@code skillRollBonus}/{@code difficultyReduction}/attribute substitution
      * exactly like an acquired one would, with no special-casing at any call site.
      */
+    /**
+     * Sums {@link Feat#resolveSkillRollBonus} across every held Talento — the {@code Feat}
+     * counterpart to {@link #sumConditionalRollBonuses}, and needed for the same reason {@link
+     * #sumFeatDifficultyReductions} is: Talentos are outside every {@code ModifierResolver} scan,
+     * so they get an explicit pass. Safe to call unconditionally — {@code sceneContext}/{@code
+     * skillRoll} may each be {@code null}, which every override reads as "condition not met".
+     */
+    private int sumFeatRollBonuses(final Character character, final SceneContext sceneContext, final SkillRoll skillRoll) {
+        SkillTrait requestedAbility = skillRoll == null ? null : skillRoll.getRequestedAbility();
+        return character.getFeats().stream()
+                .mapToInt(feat -> feat.resolveSkillRollBonus(skillType, sceneContext, requestedAbility, character))
+                .sum();
+    }
+
+    /**
+     * Sums {@link Feat#resolveDifficultyReduction} across every held Talento. Talentos are
+     * outside every {@code ModifierResolver} scan (nothing scans them reflectively), so they get
+     * an explicit pass here — the same shape {@code DefenseServiceImpl}/{@code
+     * MovementServiceImpl} already use for their own {@code Feat} hooks.
+     */
+    private int sumFeatDifficultyReductions(final Character character) {
+        return character.getFeats().stream()
+                .mapToInt(feat -> feat.resolveDifficultyReduction(skillType, character))
+                .sum();
+    }
+
     private List<SkillCompetencyAbility> allSkillCompetencyAbilities(final Character character) {
         return SkillCompetencyAbility.allFor(character);
     }
@@ -517,6 +546,11 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                 .sum();
         total += character.getEgoAdvantages().values().stream()
                 .mapToInt(advantage -> advantage.resolveCriticalMarginIncrease(skillType, sceneContext))
+                .sum();
+        // Talentos are outside every ModifierResolver scan, so they get an explicit fourth pass —
+        // the same shape sumFeatRollBonuses/sumFeatDifficultyReductions already use.
+        total += character.getFeats().stream()
+                .mapToInt(feat -> feat.resolveCriticalMarginIncrease(skillType, sceneContext, character))
                 .sum();
         return total;
     }

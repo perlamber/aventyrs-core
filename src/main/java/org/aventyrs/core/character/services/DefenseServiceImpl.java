@@ -3,6 +3,7 @@ package org.aventyrs.core.character.services;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.character.DefenseType;
+import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.item.Item;
 import org.aventyrs.core.modifier.ModifierResolver;
 import org.aventyrs.core.modifier.ModifierResolverImpl;
@@ -29,8 +30,13 @@ public class DefenseServiceImpl implements DefenseService {
 
     @Override
     public int getTotalDefense(final Character character, final DefenseType defenseType) {
+        return getTotalDefense(character, defenseType, null);
+    }
+
+    @Override
+    public int getTotalDefense(final Character character, final DefenseType defenseType, final SceneContext sceneContext) {
         return sumAbilityModifiers(character, defenseType) + sumEquipment(character, defenseType)
-                + sumFeats(character, defenseType);
+                + sumFeats(character, defenseType, sceneContext);
     }
 
     @Override
@@ -81,9 +87,9 @@ public class DefenseServiceImpl implements DefenseService {
      * above (nothing else in this codebase scans them reflectively), so they get their own
      * explicit pass, the same way equipment does.
      */
-    private int sumFeats(final Character character, final DefenseType defenseType) {
+    private int sumFeats(final Character character, final DefenseType defenseType, final SceneContext sceneContext) {
         return character.getFeats().stream()
-                .mapToInt(feat -> feat.resolveDefenseBonus(defenseType, character))
+                .mapToInt(feat -> feat.resolveDefenseBonus(defenseType, character, sceneContext))
                 .sum();
     }
 

@@ -137,4 +137,5 @@ public interface Item {
     default List<ItemBonus> resolveFavorBonuses(final Character character) {
         return getFavor() == null ? List.of() : getFavor().resolveBonuses(character);
     }
+
 }

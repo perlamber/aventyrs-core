@@ -3,6 +3,7 @@ package org.aventyrs.core.character.services;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.character.DamageType;
+import org.aventyrs.core.feat.Feat;
 import org.aventyrs.core.item.Item;
 import org.aventyrs.core.modifier.ModifierResolver;
 import org.aventyrs.core.modifier.ModifierResolverImpl;
@@ -38,7 +39,26 @@ public class DamageServiceImpl implements DamageService {
     @Override
     public int getTotalDamageReduction(final Character character) {
         return Math.max(0, sumAcrossSources(character, ModifierType.DAMAGE_REDUCTION)
-                + sumEquipmentDamageReduction(character));
+                + sumEquipmentDamageReduction(character)
+                + sumFeatDamageReduction(character));
+    }
+
+    /**
+     * The fifth RD source: every held {@link Feat}'s {@code resolveDamageReduction}. Talentos are
+     * outside every {@code ModifierResolver} scan (nothing scans them reflectively), so they get
+     * an explicit pass — the same shape {@code DefenseServiceImpl}/{@code MovementServiceImpl}
+     * already use for their own {@code Feat} hooks.
+     *
+     * <p>No {@code ABSOLUTE_DAMAGE_REDUCTION} counterpart, for the same reason
+     * {@link #sumEquipmentDamageReduction} has none: no Talento grants RA, so a symmetric scan
+     * would be built for a hypothetical consumer.
+     */
+    private int sumFeatDamageReduction(final Character character) {
+        int total = 0;
+        for (Feat feat : character.getFeats()) {
+            total += feat.resolveDamageReduction(character);
+        }
+        return total;
     }
 
     @Override
@@ -46,6 +66,7 @@ public class DamageServiceImpl implements DamageService {
         Character character = target.getCharacter();
         int total = sumAcrossSources(character, ModifierType.DAMAGE_REDUCTION);
         total += sumEquipmentDamageReduction(character);
+        total += sumFeatDamageReduction(character);
         total += sumAttributeAbilityDamageReduction(character, target, damageType, source);
         return Math.max(0, total);
     }

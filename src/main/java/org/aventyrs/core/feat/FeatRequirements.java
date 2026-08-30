@@ -1,6 +1,8 @@
 package org.aventyrs.core.feat;
 
 import org.aventyrs.core.character.AttributeDomain;
+import org.aventyrs.core.character.Deity;
+import org.aventyrs.core.race.CreatureType;
 import org.aventyrs.core.race.Race;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
 import org.aventyrs.core.skill.SkillType;
@@ -55,6 +57,24 @@ import lombok.Builder;
  *                                  org.aventyrs.core.race.Race}). Tested with {@code
  *                                  isInstance}, so a Mestiço subclass of a named parent race
  *                                  still qualifies.
+ * @param requiredCreatureType      when set, the holder's {@code Race#getCreatureType()} must be
+ *                                  this — "Apenas personagens de raça Feérica", "apenas
+ *                                  criaturas Monstruosas". Distinct from {@code requiredRace}
+ *                                  and not a substitute for it: a {@link CreatureType} spans
+ *                                  many races (Fada, Fúria, Sátiro and Nascido da Floresta are
+ *                                  all {@code FEERICO}), which is exactly what these clauses
+ *                                  mean. Where rules text names two specific races of one type
+ *                                  ("apenas Fadas e Fúrias"), this is <i>looser</i> than
+ *                                  written — the safe direction, and noted on the constant.
+ * @param requiredDeity             when set, the holder's {@code Character#getDeity()} must be
+ *                                  exactly this — "Apenas personagens Orcs <b>Devotos de
+ *                                  Epona</b>". A real, enforced clause rather than a comment
+ *                                  because {@link Deity} and the field behind it both already
+ *                                  exist; unset means devotion is irrelevant, which is every
+ *                                  Talento but two today. Note this tests devotion alone, not
+ *                                  the Adepto/Fiel/Fundamentalista <i>tier</i> the Talentos de
+ *                                  Devoção are split across — that second progression system
+ *                                  has no field, which is why those 20 stay unauthored.
  * @param requiredFeatCategory      when set, the holder must already hold {@code
  *                                  requiredFeatCategoryCount} other Talentos of this category —
  *                                  "2 outros Talentos de Destino". The Talento being tested is
@@ -72,6 +92,8 @@ public record FeatRequirements (
         int requiredAwakenedTitles,
         TitleArchetype requiredTitleArchetype,
         Class<? extends Race> requiredRace,
+        CreatureType requiredCreatureType,
+        Deity requiredDeity,
         FeatCategory requiredFeatCategory,
         int requiredFeatCategoryCount
 ) {}
