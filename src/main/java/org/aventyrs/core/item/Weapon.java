@@ -38,6 +38,18 @@ public interface Weapon extends Item, AttackSource {
     DamageBase getDamageBase();
 
     /**
+     * The Dano Base this weapon <em>currently</em> delivers — {@link #getDamageBase()} until it is
+     * destroyed, and {@link DamageBase#UNARMED} from then on. A shattered sword grants nothing, so
+     * swinging the wreck is an Ataque Desarmado: the bottom rung of the scale, and literally what
+     * a bare fist deals. This is the form {@code DamageBaseService} reads; {@link
+     * #getDamageBase()} stays the authored column, so a repair mechanism would restore it
+     * untouched.
+     */
+    default DamageBase getEffectiveDamageBase() {
+        return isDestroyed() ? DamageBase.UNARMED : getDamageBase();
+    }
+
+    /**
      * The Perícia that governs this weapon's use — Ataque Corpo a Corpo for a machado, Ataque à
      * Distância for an arco. This is a column of the weapon itself, not a per-swing decision:
      * it's what {@code DamageBaseService#getDamageBase(Character, Weapon)} scans by, selecting

@@ -184,12 +184,13 @@ public class Character {
      * after a character exists, so it can't be a {@code @Singular} builder-only list. Granted
      * via {@link #equip(Item)}/{@link #unequip(Item)}.
      *
-     * <p>These are {@link Item} <b>catalog entries</b>, not owned copies: every copy of an
-     * Armadura Completa has the same DF/DM/Dureza, so the enum constant itself is what's held.
-     * Per-copy state (Dureza actually remaining, Obra-Prima tier, Aprimoramentos, who produced
-     * it) is still deliberately unmodeled and would be a separate held-instance type wrapping a
-     * catalog entry — see {@link Item}'s own javadoc. Equipping the same catalog constant twice
-     * therefore genuinely means "wearing two of them", and both contribute.
+     * <p>A catalog entry ({@code org.aventyrs.core.item.ItemTemplate}) may be equipped directly, in which case every
+     * copy of an Armadura Completa reads identically and the enum constant itself is what's held
+     * — equipping the same constant twice therefore genuinely means "wearing two of them", and
+     * both contribute. A forged {@code org.aventyrs.core.item.AbstractItem} carries per-copy state instead: its own
+     * damage ({@link Item#applyDamage}), Obra-Prima and Aprimoramento. Who produced it is still
+     * unmodeled — see {@link Item}'s own javadoc. A copy reduced to 0 PV stays in this list as
+     * garbage and simply grants nothing ({@link Item#isDestroyed()}).
      *
      * <p>Read by {@code org.aventyrs.core.character.services.DefenseService} (an item's DF/DM
      * columns plus its Favor's {@code DEFESAS}/{@code PHYSICAL_DEFENSE}/{@code MAGIC_DEFENSE}

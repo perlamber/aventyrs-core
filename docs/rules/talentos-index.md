@@ -131,7 +131,7 @@ with enforced Pré-requisitos and a named blocker.
 | 2 | `OrquicoFeat` | 5 | Terra nas Veias (PV mult. per Título), Tremor's Efeito Passivo (PV mult.) |
 | 3 | `TrollFeat` | 5 | none — every constant extends the unbuilt Regeneração Reativa or Sono de Pedra |
 | 3 | `GnomoFeat` | 4 | Duende (+1 DM), Favoritos de Tesla (−1 nível de GD em Profissão) |
-| 3 | `GoblinFeat` | 2 | none — both GD clauses are purpose-scoped, and Dureza has no consumer |
+| 3 | `GoblinFeat` | 2 | none — both GD clauses are purpose-scoped, and both Dureza clauses set the value at *creation*, which needs a production mechanic (Dureza itself is damageable now) |
 | 3 | `HumanoFeat` | 3 | none — all three extend the unbuilt Aprendizado Rápido |
 | 3 | `MesticoFeat` | 1 | none — the inherited-Característica cap is fixed at construction |
 | 3 | `IndomitoFeat` | 1 | none — Ferocidade de Lacerto is unbuilt |

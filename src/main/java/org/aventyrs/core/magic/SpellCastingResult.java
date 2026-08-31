@@ -2,6 +2,7 @@ package org.aventyrs.core.magic;
 
 import lombok.Builder;
 import lombok.Getter;
+import org.aventyrs.core.scene.ActiveAreaSpellEffect;
 import org.aventyrs.core.sheet.InteractionResult;
 
 /**
@@ -14,4 +15,6 @@ import org.aventyrs.core.sheet.InteractionResult;
 public class SpellCastingResult {
     InteractionResult deliveryResult;
     InteractionResult dominioDoManaResult;
+    Integer durationInRounds;
+    ActiveAreaSpellEffect areaSpellEffect;
 }

@@ -100,8 +100,8 @@ class NascidoDoDragaoTest {
         assertEquals(ElementalType.FOGO, new NascidoDoDragao(new Human(), ElementalType.AGUA).getOpposedElementalType());
         assertEquals(ElementalType.GELO, new NascidoDoDragao(new Human(), ElementalType.MAGMA).getOpposedElementalType());
         assertEquals(ElementalType.MAGMA, new NascidoDoDragao(new Human(), ElementalType.GELO).getOpposedElementalType());
-        assertEquals(ElementalType.AR, new NascidoDoDragao(new Human(), ElementalType.TERRA).getOpposedElementalType());
-        assertEquals(ElementalType.TERRA, new NascidoDoDragao(new Human(), ElementalType.AR).getOpposedElementalType());
+        assertEquals(ElementalType.VENTO, new NascidoDoDragao(new Human(), ElementalType.TERRA).getOpposedElementalType());
+        assertEquals(ElementalType.TERRA, new NascidoDoDragao(new Human(), ElementalType.VENTO).getOpposedElementalType());
         assertEquals(ElementalType.ELETRICIDADE, new NascidoDoDragao(new Human(), ElementalType.NATURAL).getOpposedElementalType());
         assertEquals(ElementalType.NATURAL, new NascidoDoDragao(new Human(), ElementalType.ELETRICIDADE).getOpposedElementalType());
     }

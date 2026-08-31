@@ -260,7 +260,9 @@ public enum DuelistaFeat implements Feat {
 
     /** "Você pode substituir sua rolagem de Defesa Física por uma Rolagem de Perícia de Ataque." */
     // TODO: AttackReceiver rolls the defender's Esquiva e Aparar with no hook to swap in another
-    //  Perícia, and damaging the attacker's weapon needs per-copy item state (Dureza).
+    //  Perícia. Damaging the weapon is expressible now (Item#applyDamage), but AttackReceiver
+    //  models nothing about what the foe swung — IncomingAttack carries no attack source — so
+    //  there is no weapon to reach for on that side of the exchange.
     DEFENDER_SE_ATACANDO(
             "Apenas uma vez por Rodada, você pode substituir sua rolagem de Defesa Física por uma "
                     + "Rolagem de Perícia de Ataque. Se for bem-sucedido você evita o ataque que "

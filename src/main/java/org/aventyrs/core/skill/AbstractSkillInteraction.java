@@ -19,6 +19,7 @@ import org.aventyrs.core.feat.Feat;
 import org.aventyrs.core.modifier.ModifierResolver;
 import org.aventyrs.core.modifier.ModifierResolverImpl;
 import org.aventyrs.core.modifier.ModifierType;
+import org.aventyrs.core.item.Item;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.IllegalOperationException;
@@ -260,6 +261,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
         bonus += sumSkillRollBonusModifiers(unlockedExcellencies);
         bonus += target.getTemporaryBonus(ModifierType.SKILL_ROLL_BONUS);
         bonus += target.getTemporaryBonus(skillType.getRollBonusType());
+        bonus += sumEquipmentRollBonuses(character);
         bonus += sumConditionalRollBonuses(skillCompetencyAbilities, sceneContext, skillRoll);
         bonus += sumFeatRollBonuses(character, sceneContext, skillRoll);
         bonus += sumEgoAdvantageRollBonuses(character.getEgoAdvantages().values(), sceneContext);
@@ -404,6 +406,13 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
         SkillTrait requestedAbility = skillRoll == null ? null : skillRoll.getRequestedAbility();
         return character.getFeats().stream()
                 .mapToInt(feat -> feat.resolveSkillRollBonus(skillType, sceneContext, requestedAbility, character))
+                .sum();
+    }
+
+    /** Equipment-held bonuses are data, so they have an explicit pass rather than a modifier scan. */
+    private int sumEquipmentRollBonuses(final Character character) {
+        return character.getEquipment().stream()
+                .mapToInt(item -> item.resolveEnhancementBonus(skillType.getRollBonusType(), skillType, character))
                 .sum();
     }
 

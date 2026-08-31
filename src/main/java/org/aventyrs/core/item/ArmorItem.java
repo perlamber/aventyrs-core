@@ -14,7 +14,7 @@ import lombok.Getter;
  * A sibling enum per {@link ItemCategory} follows the same shape as more items are supplied.
  */
 @Getter
-public enum ArmorItem implements Item {
+public enum ArmorItem implements ItemTemplate {
 
     /**
      * Armadura Completa (Pesado/Raro). Its Conjuração column reads "Desvantagem" rather than a

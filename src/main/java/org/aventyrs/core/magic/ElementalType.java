@@ -25,12 +25,12 @@ public enum ElementalType {
 
     AGUA,
     GELO,
-    AR,
+    VENTO,
     ELETRICIDADE,
 
     /**
-     * Every element at once — {@code ARSENAL ELEMENTAL (Encantamento/Elemental: Todos)}, whose
-     * Magias let the Conjurador pick the element per cast.
+     * Every element at once, usable only by a resistance. An elemental attack or Magia must name
+     * the concrete element it uses.
      */
     TODOS
 }

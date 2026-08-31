@@ -44,8 +44,8 @@ class CharacterSizeServiceTest {
     }
 
     @Test
-    void bonusIsClampedAtThePlusFourCeiling() {
-        Character character = characterOfSize(SizeCategory.PLUS_FOUR, VigorAbility.SANGUE_DE_GIGANTE);
-        assertEquals(SizeCategory.PLUS_FOUR, sizeService.getEffectiveSizeCategory(character));
+    void bonusIsClampedAtThePlusTenCeiling() {
+        Character character = characterOfSize(SizeCategory.PLUS_TEN, VigorAbility.SANGUE_DE_GIGANTE);
+        assertEquals(SizeCategory.PLUS_TEN, sizeService.getEffectiveSizeCategory(character));
     }
 }

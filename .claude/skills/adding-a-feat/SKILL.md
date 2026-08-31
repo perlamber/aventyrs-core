@@ -1,6 +1,6 @@
 ---
 name: adding-a-feat
-description: This skill should be used when the user asks to "add a new Talento", "add a new Feat", "add [Feat name] to [tree]Feat", or references adding a new entry to org.aventyrs.core.feat. Walks through producing a catalog entry like `ArtesMarciaisFeat.ARTISTA_MARCIAL` — its requirements, its bonus, and the enum wrapping class — mirroring CLAUDE.md's "Adding a new Talento (Feat)" section.
+description: This skill should be used when the user asks to "add a new Talento", "add a new Feat", "add [Feat name] to [tree]Feat", or references adding a new entry to org.aventyrs.core.feat. Walks through producing a catalog entry like `ArtesMarciaisFeat.ARTISTA_MARCIAL` — its requirements, its bonus, and the enum wrapping class — plus the sealed-catalog / `resolve*`-hook rationale, mirroring `ArtesMarciaisFeat`/`MetamagicoFeat` as the reference.
 ---
 
 # Adding a new Talento (Feat)
@@ -8,9 +8,58 @@ description: This skill should be used when the user asks to "add a new Talento"
 A Talento sits alongside skills/Títulos as an acquirable character trait, but it's a flat
 catalog — one enum per Talento *tree*, named by `FeatCategory` (e.g. `ArtesMarciaisFeat` for
 `FeatCategory.ARTE_MARCIAL`), mirroring `<Skill>CompetencyAbility`'s one-enum-per-domain shape.
-This skill is the full checklist; `CLAUDE.md`'s own "Adding a new Talento (Feat)" section
-keeps only the two cross-cutting facts (enforced prerequisites, and `Character#feats`'
-mutability) that matter to someone not adding a Talento at all.
+This skill is the full checklist; the architectural rationale is in section 0 (it used to live
+in CLAUDE.md's "Adding a new Talento (Feat)" section). Use the **`testing-a-feat`** skill to
+test one.
+
+## 0. Architectural rationale
+
+`Feat`/`FeatRequirements`/`AbstractFeat`/`FeatCategory` plus `FeatService#grantFeat(Character,
+CharacterSheet, Feat)` (validate `Feat#isEligible`, spend `Race#getNewFeatCost` XP —
+`Race.BASE_NEW_FEAT_COST` is 3 — then mutate, the same shape as
+`CharacterAttributeService#upgradeBase`/`TitleAbilityService#grantTitleAbility`) are the whole
+mechanism.
+
+- **`Feat` is `sealed`, and that is what makes the catalog enumerable.** `permits
+  ArtesMarciaisFeat, MetamagicoFeat, AbstractFeat`, so `FeatCatalog` discovers every authored
+  Talento via `Feat.class.getPermittedSubclasses()` — reflection with no classpath scan, no I/O,
+  and no silent partial results. A classpath walk was rejected deliberately: it has to
+  special-case exploded dirs vs JAR entries vs the module path, and when it guesses wrong a whole
+  Talento tree just quietly stops being offered. The permits clause is **compiler-enforced**.
+- **`AbstractFeat` is `non-sealed` with a *public* all-args constructor** — the extension point
+  that keeps sealing from closing this library off. A consumer's homebrew Talento is
+  `new AbstractFeat(category, description, requirements) { @Override ... }`, a first-class `Feat`
+  everywhere, that simply never appears in `FeatCatalog`. **Don't implement `Feat` directly**
+  (the compiler now refuses it).
+- **Discovery lives in `FeatCatalog`, never as a `static` field on `Feat`.** `Feat` declares
+  `default` methods, so initialising `MetamagicoFeat` initialises `Feat` first — a static
+  initialiser on `Feat` calling `getEnumConstants()` back on that enum would observe it
+  mid-initialisation and could read its constants as `null`. A separate class breaks the cycle.
+- `FeatService#getAvailableFeats(Character)` (prerequisites met, not already held) and
+  `#getAffordableFeats(Character, CharacterSheet)` (that list, narrowed by the XP wallet) are
+  **deliberately separate methods, not a flag**: "am I allowed this?" and "can I afford it?"
+  differ over time and a UI wants both. Cost is per-Race, so two characters with identical
+  Talentos and identical XP can get different answers.
+- **`Feat` carries four `default resolve*` hooks**, not one — `resolveDamageBaseIncrease`,
+  `resolveBranchLevelIncrease` (the Árvore de Magia cap — see the `magic-system` skill),
+  `resolveDefenseBonus(DefenseType, Character)` and `resolveManaMultiplierIncrease`/
+  `resolveRestMagicPointsBonus(RestType, Character)`. The "keep it on the tree enum until a
+  second consumer earns the interface" rule still holds for a formula only that tree reads — but
+  **a hook a *service* must scan for has to be on `Feat` itself**, since `character.getFeats()`
+  is a `List<Feat>`. Feats are deliberately **not** part of any `ModifierResolver` `@Modifier`
+  scan, so each consuming service gives them an explicit pass, the way `DefenseServiceImpl`
+  already does for equipment.
+- **A Talento's prerequisites are real, enforced data** — the second exception (alongside
+  `AventyrTitleAbility`'s "Requer N Especializações/Habilidades") to this codebase's usual
+  "leave 'Requer N Graduações' as an unenforced comment" restraint, because a Talento's own
+  Pré-requisito is always a simple numeric/identity threshold `FeatRequirements` can model
+  directly.
+- `MetamagicoFeat` is the second tree, and worth reading before adding a third — it's the first
+  to need a **sibling constant as a prerequisite**, which Java's forward-reference rule forbids
+  in constructor arguments. Two things fall out: `featRequirements` is held as a
+  `Supplier<FeatRequirements>` rather than a plain field, and **the constants are ordered so
+  every prerequisite is declared before its dependents** (`MetamagicoFeatTest` pins that
+  ordering).
 
 ## 1. Read the rules text first
 
@@ -72,8 +121,8 @@ that needs no constant-specific override.
 
 ## 3. Classify the Descrição's mechanic
 
-Same discipline as every other ability catalog in this codebase (see CLAUDE.md's "Adding a new
-Perícia" TODO-writing convention, and the Título skill's own step 3):
+Same discipline as every other ability catalog in this codebase (see CLAUDE.md's TODO-writing
+convention in "Recurring conventions", and the `adding-a-title` skill's own step 3):
 
 - **Real now**: pure arithmetic over already-real data — e.g. `ArtesMarciaisFeat
   #getDanoBaseBonus(Character)` sums a flat base plus `character.getAllTitles().size()`
@@ -148,10 +197,9 @@ ArrayList<>()).build()`.
 
 ## 6. Update docs
 
-- This skill, if the checklist itself changed.
-- CLAUDE.md's "Adding a new Talento (Feat)" section only if an *architectural* fact changed
-  (the catalog shape, prerequisite enforcement, `Character#feats`' mutability) — routine
-  checklist changes belong here, not there.
+- This skill — section 0 if an *architectural* fact changed (the catalog shape, prerequisite
+  enforcement, the `resolve*` hooks), the checklist steps otherwise. Update CLAUDE.md's skill
+  index only if the trigger surface changed.
 
 ## Reference files to read first
 

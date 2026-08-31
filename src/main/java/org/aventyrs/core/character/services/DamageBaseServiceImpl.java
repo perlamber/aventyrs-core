@@ -13,12 +13,12 @@ public class DamageBaseServiceImpl implements DamageBaseService {
 
     @Override
     public DamageBase getDamageBase(final Character character, final SkillType attackingSkill) {
-        return DamageBase.UNARMED.scaledUp(sumScaleUps(character, attackingSkill));
+        return DamageBase.UNARMED.scaledUp(sumScaleUps(character, attackingSkill, null));
     }
 
     @Override
     public DamageBase getDamageBase(final Character character, @NonNull final Weapon weapon) {
-        return weapon.getDamageBase().scaledUp(sumScaleUps(character, weapon.getSkillType()));
+        return weapon.getEffectiveDamageBase().scaledUp(sumScaleUps(character, weapon.getSkillType(), weapon));
     }
 
     /**
@@ -26,7 +26,7 @@ public class DamageBaseServiceImpl implements DamageBaseService {
      * {@link DamageBaseService}'s own javadoc for the three sources and why the Excelência one
      * is scoped to the attacking Perícia alone.
      */
-    private int sumScaleUps(final Character character, final SkillType attackingSkill) {
+    private int sumScaleUps(final Character character, final SkillType attackingSkill, final Weapon weapon) {
         int scaleUps = character.getFeats().stream()
                 .mapToInt(feat -> feat.resolveDamageBaseIncrease(character))
                 .sum();
@@ -34,6 +34,11 @@ public class DamageBaseServiceImpl implements DamageBaseService {
         scaleUps += SkillCompetencyAbility.allFor(character).stream()
                 .mapToInt(ability -> ability.resolveDamageBaseIncrease(attackingSkill, character))
                 .sum();
+        if (weapon != null) {
+            scaleUps += character.getEquipment().stream()
+                    .mapToInt(item -> item.resolveEnhancementDamageBaseIncrease(weapon, character))
+                    .sum();
+        }
 
         return scaleUps + sumAttackingSkillExcellencies(character, attackingSkill);
     }

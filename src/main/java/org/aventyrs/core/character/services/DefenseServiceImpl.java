@@ -3,6 +3,7 @@ package org.aventyrs.core.character.services;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.character.DefenseType;
+import org.aventyrs.core.character.DamageDescriptor;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.item.Item;
 import org.aventyrs.core.modifier.ModifierResolver;
@@ -35,13 +36,27 @@ public class DefenseServiceImpl implements DefenseService {
 
     @Override
     public int getTotalDefense(final Character character, final DefenseType defenseType, final SceneContext sceneContext) {
-        return sumAbilityModifiers(character, defenseType) + sumEquipment(character, defenseType)
+        return sumAbilityModifiers(character, defenseType) + sumEquipment(character, defenseType, sceneContext)
                 + sumFeats(character, defenseType, sceneContext);
     }
 
     @Override
     public int getTotalDefense(final CombatantSheet target, final DefenseType defenseType) {
-        return getTotalDefense(target.getCharacter(), defenseType)
+        return getTotalDefense(target, defenseType, null);
+    }
+
+    @Override
+    public int getTotalDefense(final CombatantSheet target, final DefenseType defenseType,
+                               final SceneContext sceneContext) {
+        return getTotalDefense(target, defenseType, sceneContext, null);
+    }
+
+    @Override
+    public int getTotalDefense(final CombatantSheet target, final DefenseType defenseType,
+                               final SceneContext sceneContext, final DamageDescriptor damageDescriptor) {
+        return sumAbilityModifiers(target.getCharacter(), defenseType)
+                + sumEquipment(target.getCharacter(), defenseType, sceneContext, damageDescriptor)
+                + sumFeats(target.getCharacter(), defenseType, sceneContext)
                 + target.getTemporaryBonus(ModifierType.DEFESAS)
                 + target.getTemporaryBonus(defenseType.getModifierType());
     }
@@ -65,18 +80,20 @@ public class DefenseServiceImpl implements DefenseService {
     }
 
     /**
-     * Every equipped {@link Item}'s contribution: its flat DF or DM column (unconditional — it
-     * applies to anyone carrying the item) plus whichever Defesa-typed {@code ItemBonus}es its
-     * {@code ItemFavor} currently grants this character ({@code resolveFavorBonus} already
-     * returns 0 for an item with no Favor, or one whose Requisitos aren't met, so there's
-     * nothing to null-check here).
+     * Every equipped {@link Item}'s contribution: its flat DF or DM column, the item's
+     * Masterpiece contribution (which can replace its own base column for a "muda para" Favor),
+     * plus whichever Defesa-typed {@code ItemBonus}es its {@code ItemFavor} currently grants.
      */
-    private int sumEquipment(final Character character, final DefenseType defenseType) {
+    private int sumEquipment(final Character character, final DefenseType defenseType,
+                             final SceneContext sceneContext) {
+        return sumEquipment(character, defenseType, sceneContext, null);
+    }
+
+    private int sumEquipment(final Character character, final DefenseType defenseType,
+                             final SceneContext sceneContext, final DamageDescriptor damageDescriptor) {
         int total = 0;
         for (Item item : character.getEquipment()) {
-            total += defenseType.columnOf(item);
-            total += item.resolveFavorBonus(ModifierType.DEFESAS, character);
-            total += item.resolveFavorBonus(defenseType.getModifierType(), character);
+            total += item.getEffectiveDefenseBonus(defenseType, character, sceneContext, damageDescriptor);
         }
         return total;
     }

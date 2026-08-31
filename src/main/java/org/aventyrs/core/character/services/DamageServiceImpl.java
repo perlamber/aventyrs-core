@@ -3,6 +3,7 @@ package org.aventyrs.core.character.services;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.character.DamageType;
+import org.aventyrs.core.character.DamageDescriptor;
 import org.aventyrs.core.feat.Feat;
 import org.aventyrs.core.item.Item;
 import org.aventyrs.core.modifier.ModifierResolver;
@@ -63,9 +64,22 @@ public class DamageServiceImpl implements DamageService {
 
     @Override
     public int getTotalDamageReduction(final CombatantSheet target, final DamageType damageType, final CombatantSheet source) {
+        return getTotalDamageReduction(target, damageType, null, source);
+    }
+
+    @Override
+    public int getTotalDamageReduction(final CombatantSheet target, final DamageDescriptor damageDescriptor,
+                                       final CombatantSheet source) {
+        return getTotalDamageReduction(target,
+                damageDescriptor == null ? null : damageDescriptor.damageType(), damageDescriptor, source);
+    }
+
+    private int getTotalDamageReduction(final CombatantSheet target, final DamageType damageType,
+                                        final DamageDescriptor damageDescriptor, final CombatantSheet source) {
         Character character = target.getCharacter();
         int total = sumAcrossSources(character, ModifierType.DAMAGE_REDUCTION);
         total += sumEquipmentDamageReduction(character);
+        total += sumEquipmentDamageReduction(character, damageDescriptor);
         total += sumFeatDamageReduction(character);
         total += sumAttributeAbilityDamageReduction(character, target, damageType, source);
         return Math.max(0, total);
@@ -73,8 +87,8 @@ public class DamageServiceImpl implements DamageService {
 
     /**
      * The fourth RD source, alongside the three {@link #sumAcrossSources} scans: every equipped
-     * {@link Item}'s {@code ItemFavor}, for whatever {@code DAMAGE_REDUCTION} it currently
-     * grants this character — 0 for an item with no Favor, or one whose Requisitos aren't met.
+     * {@link Item}'s {@code ItemFavor} and Masterpiece, for whatever {@code DAMAGE_REDUCTION}
+     * they currently grant this character — 0 when the relevant requirements are not met.
      * This is what makes {@code org.aventyrs.core.item.ArmorItem}'s RD Favores (e.g. {@code
      * ARMADURA_COMPLETA}'s "Dano de Corte sofrido é reduzido em -2", modeled as plain RD since
      * no damage-type-scoped mitigation exists) real rather than data with no consumer.
@@ -87,8 +101,15 @@ public class DamageServiceImpl implements DamageService {
         int total = 0;
         for (Item item : character.getEquipment()) {
             total += item.resolveFavorBonus(ModifierType.DAMAGE_REDUCTION, character);
+            total += item.resolveEnhancementBonus(ModifierType.DAMAGE_REDUCTION, null, character);
         }
         return total;
+    }
+
+    private int sumEquipmentDamageReduction(final Character character, final DamageDescriptor damageDescriptor) {
+        return character.getEquipment().stream()
+                .mapToInt(item -> item.resolveEnhancementDamageReduction(damageDescriptor, character))
+                .sum();
     }
 
     @Override
@@ -143,23 +164,33 @@ public class DamageServiceImpl implements DamageService {
 
     @Override
     public int calculateFinalDamage(final Character character, final int rawDamage, final boolean ignoreDamageReduction) {
-        return computeFinalDamage(character, null, null, null, null, rawDamage, ignoreDamageReduction);
+        return computeFinalDamage(character, null, null, null, null, null, rawDamage, ignoreDamageReduction);
     }
 
     @Override
     public int calculateFinalDamage(final Character character, final SceneContext sceneContext, final int rawDamage, final boolean ignoreDamageReduction) {
-        return computeFinalDamage(character, null, sceneContext, null, null, rawDamage, ignoreDamageReduction);
+        return computeFinalDamage(character, null, sceneContext, null, null, null, rawDamage, ignoreDamageReduction);
     }
 
     @Override
     public int calculateFinalDamage(final CombatantSheet target, final SceneContext sceneContext,
                                      final DamageType damageType, final CombatantSheet source,
                                      final int rawDamage, final boolean ignoreDamageReduction) {
-        return computeFinalDamage(target.getCharacter(), target, sceneContext, damageType, source, rawDamage, ignoreDamageReduction);
+        return computeFinalDamage(target.getCharacter(), target, sceneContext, damageType, null, source,
+                rawDamage, ignoreDamageReduction);
+    }
+
+    @Override
+    public int calculateFinalDamage(final CombatantSheet target, final SceneContext sceneContext,
+                                    final DamageDescriptor damageDescriptor, final CombatantSheet source,
+                                    final int rawDamage, final boolean ignoreDamageReduction) {
+        return computeFinalDamage(target.getCharacter(), target, sceneContext, damageDescriptor.damageType(),
+                damageDescriptor, source, rawDamage, ignoreDamageReduction);
     }
 
     private int computeFinalDamage(final Character character, final CombatantSheet target, final SceneContext sceneContext,
-                                    final DamageType damageType, final CombatantSheet source,
+                                    final DamageType damageType, final DamageDescriptor damageDescriptor,
+                                    final CombatantSheet source,
                                     final int rawDamage, final boolean ignoreDamageReduction) {
         final boolean halfDamage = sumAcrossSources(character, ModifierType.HALF_DAMAGE) > 0
                 || character.getEgoAdvantages().values().stream()
@@ -169,7 +200,7 @@ public class DamageServiceImpl implements DamageService {
                 : computeTotalAbsoluteDamageReduction(character, null, sceneContext);
         if (!ignoreDamageReduction) {
             reduction += target != null
-                    ? getTotalDamageReduction(target, damageType, source)
+                    ? getTotalDamageReduction(target, damageType, damageDescriptor, source)
                     : getTotalDamageReduction(character);
         }
         int afterFlatReduction = Math.max(0, rawDamage - reduction);
@@ -179,21 +210,41 @@ public class DamageServiceImpl implements DamageService {
 
     @Override
     public int applyDamage(final CombatantSheet characterSheet, final int rawDamage, final boolean ignoreDamageReduction) {
-        return applyDamage(characterSheet, null, null, null, rawDamage, ignoreDamageReduction);
+        return applyDamage(characterSheet, null, null, null, null, rawDamage, ignoreDamageReduction);
     }
 
     @Override
     public int applyDamage(final CombatantSheet characterSheet, final SceneContext sceneContext,
                             final int rawDamage, final boolean ignoreDamageReduction) {
-        return applyDamage(characterSheet, sceneContext, null, null, rawDamage, ignoreDamageReduction);
+        return applyDamage(characterSheet, sceneContext, null, null, null, rawDamage, ignoreDamageReduction);
     }
 
     @Override
     public int applyDamage(final CombatantSheet characterSheet, final SceneContext sceneContext,
                             final DamageType damageType, final CombatantSheet source,
                             final int rawDamage, final boolean ignoreDamageReduction) {
-        int finalDamage = calculateFinalDamage(characterSheet, sceneContext, damageType, source, rawDamage, ignoreDamageReduction);
-        return characterSheet.applyDamage(finalDamage);
+        return applyDamage(characterSheet, sceneContext, damageType, null, source, rawDamage, ignoreDamageReduction);
+    }
+
+    @Override
+    public int applyDamage(final CombatantSheet characterSheet, final SceneContext sceneContext,
+                           final DamageDescriptor damageDescriptor, final CombatantSheet source,
+                           final int rawDamage, final boolean ignoreDamageReduction) {
+        return applyDamage(characterSheet, sceneContext, damageDescriptor.damageType(), damageDescriptor,
+                source, rawDamage, ignoreDamageReduction);
+    }
+
+    private int applyDamage(final CombatantSheet characterSheet, final SceneContext sceneContext,
+                            final DamageType damageType, final DamageDescriptor damageDescriptor,
+                            final CombatantSheet source, final int rawDamage, final boolean ignoreDamageReduction) {
+        int finalDamage = computeFinalDamage(characterSheet.getCharacter(), characterSheet, sceneContext,
+                damageType, damageDescriptor, source, rawDamage, ignoreDamageReduction);
+        int totalDamageTaken = characterSheet.applyDamage(finalDamage);
+        if (finalDamage > 0) {
+            characterSheet.getCharacter().getEquipment().forEach(
+                    item -> item.notifyFinalDamageTaken(finalDamage, sceneContext));
+        }
+        return totalDamageTaken;
     }
 
     private int sumEgoAdvantageAbsoluteDamageReduction(final Character character, final SceneContext sceneContext) {

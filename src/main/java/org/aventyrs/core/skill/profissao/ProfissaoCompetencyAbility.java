@@ -9,10 +9,11 @@ import org.aventyrs.core.skill.SkillType;
  * The Habilidades de Competência available to characters trained in Profissão. Every one of
  * these is about equipment a character *produces or repairs*, and none is expressible for
  * real today. {@code org.aventyrs.core.item.Item} now exists as a catalog entry — carrying
- * Dureza, Defesas (DF/DM) and Conjuração columns among others — so "no Item entity at all" is
- * no longer the blocker it once was; what's still missing is everything about a produced or
- * owned *copy*: production time, Carga, a repair mechanic, per-copy state, who produced it,
- * and the choices baked in at its creation. Critical resistance and the Margem Crítica Maior
+ * Dureza, Defesas (DF/DM) and Conjuração columns among others — and a forged copy now takes
+ * damage for real ({@code Item#applyDamage}), so neither "no Item entity at all" nor "Dureza has
+ * no consumer" is the blocker it once was; what's still missing is everything about *producing*
+ * or *repairing* one: production time, Carga, a repair mechanic, who produced it, and the
+ * choices baked in at its creation. Critical resistance and the Margem Crítica Maior
  * axis don't exist anywhere either. See each constant's TODO for its own remaining gap.
  */
 @Getter
@@ -47,20 +48,19 @@ public enum ProfissaoCompetencyAbility implements SkillCompetencyAbility {
 
     // TODO: +2 to Dureza recovered when repairing an item/equipment (no longer a dice roll,
     // so that particular blocker is gone), extendable to Magias/Habilidades at 5 Graduações,
-    // then the bonus itself becomes +5 total at 10 Graduações — still needs an
-    // item *copy* with mutable, damageable Dureza (the {@code Item} catalog entry's own
-    // {@code getHardness()} is the pristine value, not a per-copy remaining one) and a repair
-    // mechanic (neither exists), a
-    // Dureza-equivalent concept on Magias/Habilidades (doesn't exist either), and a
+    // then the bonus itself becomes +5 total at 10 Graduações — a copy with mutable, damageable
+    // Dureza now exists ({@code Item#applyDamage}/{@code getCurrentHardness}), but damage is
+    // one-way: there is no repair entry point to add the +2 to, no
+    // Dureza-equivalent concept on Magias/Habilidades (doesn't exist either), and no
     // graduation-crossing-a-threshold trigger for the 10th-Graduação bump (same gap as
     // ArtesExcellency.FOCADO/LENDA's Fama trigger).
     REPARO_MELHORADO("Sempre que você reparar um item ou equipamento a Dureza recuperada " +
             "aumenta em +2, com 5 Graduações você pode estender este efeito às suas Magias " +
             "e Habilidades, com 10 Graduações este benefício muda para +5."),
 
-    // TODO: +50% to produced equipment's Dureza — {@code Item#getHardness()} is now a real
-    // stat, but nothing models a *produced* copy whose value could differ from its catalog
-    // entry's, and no production mechanic exists to apply the increase at.
+    // TODO: +50% to produced equipment's Dureza — {@code Item#getEffectiveHardness()} is now a
+    // real, damageable maximum, but nothing *produces* a copy, so there is no moment at which to
+    // apply an increase to the value it is created with.
     AUMENTAR_A_DUREZA("A Dureza dos equipamentos que você produz aumenta em 50%."),
 
     // TODO: +5 to produced equipment's Carga capacity — no Item/Equipamento entity or Carga

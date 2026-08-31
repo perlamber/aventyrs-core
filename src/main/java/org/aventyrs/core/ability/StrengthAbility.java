@@ -22,6 +22,11 @@ public enum StrengthAbility implements AttributeAbility {
             "outros personagens. Você recebe Vantagem em rolagens de Dano para atacar personagens caídos ou " +
             "desprevenidos."),
 
+    // TODO: the Vantagem half is scoped to a target classification this core does not carry
+    //  (objects and construtos are not a CreatureType), and the shield damage needs a hook on
+    //  AttackDelivery: dealing it is expressible now (Item#applyDamage, and Item#isDestroyed is
+    //  exactly the "caso o escudo seja destruído" fallback condition), but nothing resolves which
+    //  of the target's equipped items is the escudo and rolls the damage onto it.
     ESTILHACADOR("Você recebe Vantagem em rolagens de Perícias de Ataque (baseadas em Força) e Danos efetuadas " +
             "contra objetos e construtos. Adicionalmente, seus Ataques Corpo-a-Corpo bem-sucedidos contra outros " +
             "personagens causam 2 pontos de dano ao item tipo 'escudo' que o alvo esteja utilizando; caso o " +

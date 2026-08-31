@@ -9,6 +9,7 @@ import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.skill.SkillExcellency;
 import org.aventyrs.core.skill.SkillType;
+import org.aventyrs.core.item.Item;
 
 import java.util.List;
 import java.util.Map;
@@ -56,6 +57,9 @@ public class FreeActionsServiceImpl implements FreeActionsService {
             List<SkillExcellency> unlockedExcellencies = SkillExcellency.unlockedBy(
                     entry.getKey().getExcellencyClass(), graduationValue);
             total += modifierResolver.sumModifiers(unlockedExcellencies, ModifierType.FREE_ACTIONS);
+        }
+        for (Item item : character.getEquipment()) {
+            total += item.resolveEnhancementBonus(ModifierType.FREE_ACTIONS, null, character);
         }
         return total;
     }

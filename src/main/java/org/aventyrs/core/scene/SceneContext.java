@@ -5,6 +5,7 @@ import org.aventyrs.core.sheet.CombatantSheet;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -67,6 +68,7 @@ public class SceneContext {
      * in both directions.
      */
     private final CombatantSheet opposedCharacter;
+    private final UUID sceneId;
 
     public SceneContext(final List<CombatantSheet> allies, final List<CombatantSheet> enemies, final Map<CombatantSheet, Range> distances) {
         this(allies, enemies, distances, null);
@@ -74,7 +76,7 @@ public class SceneContext {
 
     /** Same as the 3-arg constructor, but also carrying the Scene's current {@code terrainType}. */
     public SceneContext(final List<CombatantSheet> allies, final List<CombatantSheet> enemies, final Map<CombatantSheet, Range> distances, final TerrainType terrainType) {
-        this(allies, enemies, distances, terrainType, false, 0, false, null);
+        this(allies, enemies, distances, terrainType, false, 0, false, null, null);
     }
 
     /**
@@ -85,7 +87,7 @@ public class SceneContext {
      */
     public SceneContext(final List<CombatantSheet> allies, final List<CombatantSheet> enemies, final Map<CombatantSheet, Range> distances,
                          final TerrainType terrainType, final boolean combatScene, final int currentRound, final boolean wonInitiative) {
-        this(allies, enemies, distances, terrainType, combatScene, currentRound, wonInitiative, null);
+        this(allies, enemies, distances, terrainType, combatScene, currentRound, wonInitiative, null, null);
     }
 
     /**
@@ -98,6 +100,13 @@ public class SceneContext {
      */
     public SceneContext(final List<CombatantSheet> allies, final List<CombatantSheet> enemies, final Map<CombatantSheet, Range> distances,
                          final TerrainType terrainType, final boolean combatScene, final int currentRound, final boolean wonInitiative, final CombatantSheet opposedCharacter) {
+        this(allies, enemies, distances, terrainType, combatScene, currentRound, wonInitiative, opposedCharacter, null);
+    }
+
+    /** The full snapshot form, including the identity of the Scene that produced it. */
+    public SceneContext(final List<CombatantSheet> allies, final List<CombatantSheet> enemies, final Map<CombatantSheet, Range> distances,
+                        final TerrainType terrainType, final boolean combatScene, final int currentRound,
+                        final boolean wonInitiative, final CombatantSheet opposedCharacter, final UUID sceneId) {
         this.allies = allies;
         this.enemies = enemies;
         this.distances = distances;
@@ -106,6 +115,7 @@ public class SceneContext {
         this.currentRound = currentRound;
         this.wonInitiative = wonInitiative;
         this.opposedCharacter = opposedCharacter;
+        this.sceneId = sceneId;
     }
 
     public List<CombatantSheet> getAllies() {
@@ -199,6 +209,11 @@ public class SceneContext {
     /** See {@link #opposedCharacter} — {@code null} when the roll opposes nobody. */
     public CombatantSheet getOpposedCharacter() {
         return opposedCharacter;
+    }
+
+    /** Identity of the Scene that produced this snapshot, or {@code null} for a direct context. */
+    public UUID getSceneId() {
+        return sceneId;
     }
 
     /**

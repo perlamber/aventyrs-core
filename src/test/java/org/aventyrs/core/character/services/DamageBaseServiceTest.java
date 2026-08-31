@@ -7,7 +7,10 @@ import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.character.fixture.CharacterSkillFixture;
 import org.aventyrs.core.feat.ArtesMarciaisFeat;
 import org.aventyrs.core.item.AbstractWeapon;
+import org.aventyrs.core.item.AbstractItem;
+import org.aventyrs.core.item.DefensiveImprovement;
 import org.aventyrs.core.item.ItemCategory;
+import org.aventyrs.core.item.ItemImprovement;
 import org.aventyrs.core.item.Weapon;
 import org.aventyrs.core.skill.SkillType;
 import org.aventyrs.core.skill.artes.ArtesAprimorarComArteAbility;
@@ -16,6 +19,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -86,6 +90,23 @@ class DamageBaseServiceTest {
 
         // +1, and no Título Aventyr held, so exactly one row: 2d6+0 -> 2d6+1.
         assertEquals(DamageBase.of(2, 1), damageBaseService.getDamageBase(character, ESPADA));
+    }
+
+    @Test
+    void bencaoSelvagemRaisesOnlyTheNaturalWeaponUsedForTheAttack() {
+        AbstractItem blessedArmor = AbstractItem.builder().name("Armadura Abençoada")
+                .category(ItemCategory.ARMOR).build();
+        blessedArmor.setImprovement(ItemImprovement.of(DefensiveImprovement.BENCAO_SELVAGEM));
+        Weapon naturalWeapon = AbstractWeapon.builder()
+                .name("Garras")
+                .category(ItemCategory.NATURAL_WEAPON)
+                .damageBase(DamageBase.of(2, 0))
+                .skillType(SkillType.ATAQUE_CORPO_A_CORPO)
+                .build();
+        Character character = blankCharacter().equipment(List.of(blessedArmor, naturalWeapon)).build();
+
+        assertEquals(DamageBase.of(2, 1), damageBaseService.getDamageBase(character, naturalWeapon));
+        assertEquals(DamageBase.of(2, 0), damageBaseService.getDamageBase(character, ESPADA));
     }
 
     /**

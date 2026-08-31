@@ -42,6 +42,9 @@ public enum MagicType {
     /** "manipular o Mana existente em outros seres e objetos". */
     ENCANTAMENTO,
 
+    /** Magias whose effects are Maldições. */
+    MALDICAO,
+
     /** See the class javadoc — the document uses this both as a top-level type and as an {@link ElementalType}. */
     NATURAL,
 

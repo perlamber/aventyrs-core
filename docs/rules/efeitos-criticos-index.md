@@ -191,7 +191,8 @@ Beyond the three named under the defensive list, and excluding anything already 
 | Oprimir, Veneno Vampírico, Magicae Mortis | Roubo de Determinação; Roubo de Vida on a Corrente | *Roubo de Mana / de Determinação* — Oprimir is its first real consumer |
 | Ferida Profunda, Veneno Vampírico | reducing a target's **Multiplicador de PV** | new — the field is a `Character` column with no effect path |
 | Ferida Profunda, Excruciante, Sangramento | suppressing or halving **healing** | *healing inversion* — `heal` has no hook |
-| Estilhaçador, Fortalecer, Repelir e Suprimir, Sabotar | per-copy item **Dureza**/damage | *owned/produced item copy* |
+| Estilhaçador, Repelir e Suprimir, Sabotar | *built* — `Item#applyDamage`; each still needs its own path to reach the victim's item | — |
+| Fortalecer | **repairing** an item, and per-Scene damage tracking ("PV perdidos nesta Cena") | *owned/produced item copy* — damage is one-way |
 | Cataclismo, Toque Sombrio, Explosão Cataclísmica | damage typed **Elemental / Profano** | *damage-type-scoped mitigation* |
 | Enrijecer Musculatura | Desvantagem scoped to *Perícias Físicas* | trackable — a named-skill scope, per CLAUDE.md's Vantagem rules |
 | Atordoante, Repelir e Suprimir | raising an action's **PA cost** | new — `ActionProfile#adjustSkillRollCost` is the nearest hook |

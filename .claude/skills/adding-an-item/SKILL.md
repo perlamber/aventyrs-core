@@ -17,11 +17,12 @@ block lists, and its `ItemFavor` carries that block's conditional half as real
 resolved the *opposite* way from a Título's — a Título is a per-character held instance because
 its specializations are per-acquisition data; an item has no such per-acquisition data.
 
-Per-copy state is deliberately unmodeled: **Dureza actually remaining, Obra-Prima tier,
-Aprimoramentos, and who produced it** would need a separate held-instance type wrapping a
-catalog entry. Don't build it speculatively — several TODOs cite it
-(`ProfissaoCompetencyAbility`, `ResourcesAdvantage#HERANCA_FAMILIAR`), but none is unblocked by
-the catalog alone.
+Per-copy state is only partly modeled. **Damage to the item itself is real** — a forged copy
+carries its own `damageTaken`, spent through `Item#applyDamage(int)` and read back via
+`getCurrentHardness()`/`isDestroyed()`; author the `hardness` column as the pristine maximum and
+that machinery takes care of the rest. **Who produced it** is still unmodeled, and so is repair.
+Don't build either speculatively — several TODOs cite them (`ProfissaoCompetencyAbility`,
+`ResourcesAdvantage#HERANCA_FAMILIAR`), but none is unblocked by the catalog alone.
 
 **Inventory, however, is real** — `Character#equipment` (worn/wielded) and
 `AbstractCombatantSheet#inventory` (carried, including a foe's loot). Both are mutable
@@ -39,7 +40,7 @@ maps to exactly one field:
 | Descrição | `description` | flavour/usage text, **never** mechanics |
 | Preço | `price` | in Pontos de Equipamento (PE) |
 | DF / DM | `physicalDefenseBonus` / `magicDefenseBonus` | |
-| Dureza | `hardness` | the *pristine* value, not a per-copy remaining one |
+| Dureza | `hardness` | the *pristine* maximum; a copy's remaining PV is `getCurrentHardness()` |
 | Conjuração | `castingBonus` | see step 3 |
 | Favor + Requisitos | `ItemFavor` | see step 2 — `null` when "Favor: Nenhum" |
 
@@ -66,7 +67,7 @@ single-source-of-truth convention every ability enum follows.
 
 **It's data, not `@Modifier` methods, and that's forced.** `@Modifier`'s `ModifierType` is a
 compile-time-fixed annotation value, so one shared `ItemFavor` class could never vary which type
-a given item grants — the identical limitation CLAUDE.md's "A ModifierType per skill" documents.
+a given item grants — the identical limitation the `skill-roll-mechanics` skill's "A ModifierType per skill" documents.
 **Don't try to route items through `ModifierResolver`.**
 
 **`ItemBonus` is deliberately not `TemporaryBonus` or `Blessing`.** An item's Favor lasts as
@@ -141,9 +142,12 @@ Two do, and a new item's values flow into them automatically with no wiring:
   RD that `getTotalDamageReduction` already sums for real.
 - **DF/DM** — `DefenseServiceImpl.sumEquipment` walks the same list per `DefenseType`.
 
-Three still have **no consumer**, each blocked on a *different* missing system: **Preço** (PE has
-no budget/economy), **Dureza** (no damage/repair mechanic), **Conjuração** (no item-granted hook
-on either of `SpellCastingService`'s two rolls). Their values are still real, exact data — per
+- **Dureza** — the pool `Item#applyDamage` spends; at 0 the copy is destroyed and every bonus
+  above stops applying.
+
+Two still have **no consumer**, each blocked on a *different* missing system: **Preço** (PE has
+no budget/economy) and **Conjuração** (no item-granted hook on either of `SpellCastingService`'s
+two rolls). Their values are still real, exact data — per
 this codebase's "can't apply it yet doesn't mean can't compute it yet" discipline. Author them
 correctly; just don't claim they do something.
 

@@ -96,9 +96,11 @@ import static org.aventyrs.core.util.TranslatableMessages.NO_PARTICIPANTS_IN_SCE
  * maintains is reproduced by the same code that maintains it, not by a second copy of the rule.
  */
 public class Scene {
+    private final UUID id = UUID.randomUUID();
     private final List<InitiativeEntry> activeEntries = new ArrayList<>();
     private final List<InitiativeEntry> pendingEntries = new ArrayList<>();
     private final Map<CombatantSheet, List<TemporaryBonus>> grantedBlessings = new HashMap<>();
+    private final List<ActiveAreaSpellEffect> activeAreaSpellEffects = new ArrayList<>();
 
     private int currentIndex = -1;
     private int currentRound = 0;
@@ -221,7 +223,12 @@ public class Scene {
     public SceneContext buildContext(final CombatantSheet characterSheet, final Map<CombatantSheet, Range> distances,
                                       final CombatantSheet opposedCharacter) {
         return new SceneContext(getAllies(characterSheet), getEnemies(characterSheet), distances, terrainType,
-                combatScene, currentRound, wonInitiative(characterSheet), opposedCharacter);
+                combatScene, currentRound, wonInitiative(characterSheet), opposedCharacter, id);
+    }
+
+    /** This Scene's stable identity, carried by contexts to scope stateful effects. */
+    public UUID getId() {
+        return id;
     }
 
     /** The kind of environment this Scene is currently taking place in, or {@code null} if never set. */
@@ -442,6 +449,16 @@ public class Scene {
                 .collect(Collectors.toList());
     }
 
+    /** Registers a lasting area effect produced by a Magia cast in this Scene. */
+    public void addAreaSpellEffect(final ActiveAreaSpellEffect effect) {
+        activeAreaSpellEffects.add(effect);
+    }
+
+    /** Lasting area effects currently active in this Scene. */
+    public List<ActiveAreaSpellEffect> getActiveAreaSpellEffects() {
+        return List.copyOf(activeAreaSpellEffects);
+    }
+
     /**
      * Points this Scene's turn cursor at round/index without running any of the turn-boundary
      * behavior {@link #next()} does — no {@link CombatantSheet#startTurn(int)}, no {@link
@@ -540,6 +557,8 @@ public class Scene {
      * relative order they already had, the same tie behavior {@link #insertSorted} preserves.
      */
     private void startNewRound() {
+        activeAreaSpellEffects.forEach(ActiveAreaSpellEffect::tick);
+        activeAreaSpellEffects.removeIf(ActiveAreaSpellEffect::isExpired);
         activeEntries.addAll(pendingEntries);
         pendingEntries.clear();
         activeEntries.sort(Comparator.comparingInt(InitiativeEntry::getEffectiveInitiativeValue).reversed());

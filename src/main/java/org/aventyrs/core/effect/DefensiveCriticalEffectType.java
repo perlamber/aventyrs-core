@@ -32,7 +32,8 @@ package org.aventyrs.core.effect;
  *
  * <p>These are <b>identities, not implementations</b>: no class produces one and nothing consumes
  * one yet, exactly as most of {@link CriticalEffectType} is. Several need mechanisms this core
- * does not have — forced movement, forced targeting, reactive damage and per-copy item Dureza —
+ * does not have — forced movement, forced targeting and reactive damage (per-copy item Dureza is
+ * built now: see {@code Item#applyDamage}, which Repelir e Suprimir/Retorno de Danos would call) —
  * so authoring the identity now is the "can't apply it yet doesn't mean can't compute it yet"
  * discipline, not a claim that the effect works.
  *

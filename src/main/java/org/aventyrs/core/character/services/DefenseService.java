@@ -2,6 +2,7 @@ package org.aventyrs.core.character.services;
 
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.DefenseType;
+import org.aventyrs.core.character.DamageDescriptor;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.sheet.CombatantSheet;
@@ -73,4 +74,11 @@ public interface DefenseService {
      * {@code DEFESAS}/scoped {@code TemporaryBonus}es. The overload real callers use.
      */
     int getTotalDefense(CombatantSheet target, DefenseType defenseType);
+
+    /** Sheet-aware Defesa calculation with Scene-conditioned item benefits. */
+    int getTotalDefense(CombatantSheet target, DefenseType defenseType, SceneContext sceneContext);
+
+    /** Descriptor-aware defense calculation for a matching elemental attack or Magia. */
+    int getTotalDefense(CombatantSheet target, DefenseType defenseType, SceneContext sceneContext,
+                        DamageDescriptor damageDescriptor);
 }

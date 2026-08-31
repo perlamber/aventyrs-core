@@ -91,7 +91,7 @@ public enum MagicTree implements SpellTree {
             TransporteSpell.class),
     VIDA("Vida", MagicType.NATURAL, MagicType.DIVINA, null,
             VidaSpell.class),
-    VOO("Voo", MagicType.ENCANTAMENTO, MagicType.ELEMENTAL, ElementalType.AR,
+    VOO("Voo", MagicType.ENCANTAMENTO, MagicType.ELEMENTAL, ElementalType.VENTO,
             VooSpell.class);
 
     private final String name;

@@ -112,8 +112,8 @@ expressible first, and don't skip it just because *some* clause is still TODO'd:
   shape instead — a genuinely different target resolution, not a variant of the single-target
   one: it **reports** what to grant via `InteractionResult#getBlessings()` (a `List<Blessing>`)
   rather than mutating anything itself, mirroring `ArtesCompetencyAbility#DOM_BARDICO`'s own
-  established "compute what, caller applies who" shape (see CLAUDE.md's "Temporary bonuses from
-  other Characters" section for `Blessing`'s full shape) — just with more than one `Blessing`
+  established "compute what, caller applies who" shape (see the `granting-a-blessing` skill for
+  `Blessing`'s full shape) — just with more than one `Blessing`
   at once, since DOM_BARDICO only ever grants one. Check which shape actually matches (direct
   mutation of one known recipient, vs. reporting one-or-more blessings for a caller to apply to
   a resolved-later recipient set) before copying either pattern.
@@ -283,7 +283,7 @@ own worked example (`AbencoadoPelaLuzAbility`) surfaces that are easy to miss:
   `<Title>.java` before assuming step 3's `activate<X>` method has anything to validate
   against — `Santo`'s own field needed exactly this widening (originally `List<SantoAbility>`)
   once `activateGritoDeGuerraVulcano` needed to check whether a gated Habilidade was held.
-- CLAUDE.md's "Títulos Aventyr" section if this skill's own checklist changed.
+- The `adding-a-title` skill's section 0 if an architectural fact changed.
 
 ## Reference files to read first
 

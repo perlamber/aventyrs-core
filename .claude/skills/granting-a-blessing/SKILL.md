@@ -1,6 +1,6 @@
 ---
 name: granting-a-blessing
-description: This skill should be used whenever rules text describes granting a bonus of any kind or amount — Vantagem, a flat +N to a Perícia roll or dano roll, RD, RA, Movimento, Pontos de Ação, Iniciativa, Defesas, or any other ModifierType-style stat — to the character themselves and/or their allies, for a limited Duração/number of Rodadas. Trigger phrases include (not limited to) "você e seus aliados", "você e aliados em Distância X/adjacentes", "a eles, mas não a você", "ao vencer a iniciativa", "recebe Vantagem em rolagens de Perícias", "recebe RD/RA por N Rodadas", "concede um Bônus de +N", or any Vantagem de Ego/Habilidade/Habilidade de Competência/Habilidade de Título clause naming a temporary, trigger-based grant — whether the trigger is activating an ability/Perícia roll or winning initiative for the group. Also use it when explicitly asked to "add a Blessing", "grant a bonus to allies", or "add a temporary buff". Walks through confirming this is actually a `Blessing` case (not a permanent `@Modifier`, a per-roll conditional bonus, or a damage/RA hook), classifying the trigger, resolving/adding the right `ModifierType`, choosing the `TargetScope`, and wiring it — mirroring CLAUDE.md's "Temporary bonuses from other Characters" and "Movimento Base, and blessings granted on winning initiative" sections.
+description: This skill should be used whenever rules text describes granting a bonus of any kind or amount — Vantagem, a flat +N to a Perícia roll or dano roll, RD, RA, Movimento, Pontos de Ação, Iniciativa, Defesas, or any other ModifierType-style stat — to the character themselves and/or their allies, for a limited Duração/number of Rodadas. Trigger phrases include (not limited to) "você e seus aliados", "você e aliados em Distância X/adjacentes", "a eles, mas não a você", "ao vencer a iniciativa", "recebe Vantagem em rolagens de Perícias", "recebe RD/RA por N Rodadas", "concede um Bônus de +N", or any Vantagem de Ego/Habilidade/Habilidade de Competência/Habilidade de Título clause naming a temporary, trigger-based grant — whether the trigger is activating an ability/Perícia roll or winning initiative for the group. Also use it when explicitly asked to "add a Blessing", "grant a bonus to allies", or "add a temporary buff". Walks through confirming this is actually a `Blessing` case (not a permanent `@Modifier`, a per-roll conditional bonus, or a damage/RA hook), classifying the trigger, resolving/adding the right `ModifierType`, choosing the `TargetScope`, and wiring it — with `DOM_BARDICO` / `GRITO_DE_GUERRA_VULCANO` / `POSICIONAMENTO_ESTRATEGICO` as the reference constants.
 ---
 
 # Granting a `Blessing`
@@ -15,9 +15,21 @@ reporting three `Blessing`s at once), and `InitiativeAdvantage#POSICIONAMENTO_ES
 (winning-initiative trigger, `TargetScope.SELF_AND_ALLIES`). Read all three before assuming a
 new case is a fourth genuinely distinct shape.
 
-Read CLAUDE.md's "Temporary bonuses from other Characters" and "Movimento Base, and blessings
-granted on winning initiative" sections first — this skill is the operational checklist on top
-of them.
+The `scene-context-and-positioning` skill covers the `Scene`-internal apply/revoke and
+ally-propagation facts for the initiative-win trigger; `skill-roll-mechanics` covers "Vantagem
+is a flat +2 bonus" and `aggregated-character-stats` covers the `MOVEMENT`/`ACTION_POINTS`/etc.
+counters a `Blessing` can target. This skill is the operational checklist for the grant itself.
+
+The consumer-side data model (for anyone reading `InteractionResult.blessings` without granting
+one): `TemporaryBonus` (`org.aventyrs.core.sheet`) pairs a `ModifierType`, an `int value`, and a
+`remainingRounds` countdown; `CharacterSheet#grantTemporaryBonus(ModifierType, value, rounds)`
+adds one and `getTemporaryBonus(ModifierType)` sums every active one of that type;
+`tickTemporaryBonuses()` (reached via `finishTurn()`) counts them down. `Blessing`
+(`ModifierType`, `value`, `rounds`, `TargetScope scope`, `String source`) is what an Interaction
+*reports*; `InteractionResult.blessings` is a `List` that stays `null` when nothing is granted.
+`CharacterSheet` doesn't track *who* granted a bonus — a caller resolves recipients via
+`Scene.getAllies`/`getEnemies` / `SceneContext.getAlliesWithin` and calls `grantTemporaryBonus`
+on each.
 
 ## 1. Confirm this is actually a `Blessing` case
 
@@ -29,8 +41,8 @@ misrepresents the rules text. Rule these out first:
   mentioned, no activation) — a plain `@Modifier(ModifierType.X)` method on the ability/
   excellency, summed by the flat reflection-based scan (`ReactionsService`/`DamageService`/
   `AbstractSkillInteraction`/etc.). **Not** a `Blessing` — nothing to grant/revoke, it's just
-  always active while the trait is held. See CLAUDE.md's "Vantagem is a flat +2 bonus" and
-  "Character-level stats aggregated from abilities" sections.
+  always active while the trait is held. See the `skill-roll-mechanics` and
+  `aggregated-character-stats` skills.
 - **A per-roll bonus conditioned on live `SceneContext` facts** (e.g. "durante as duas
   primeiras Rodadas de uma Cena de Combate", "se tiver inimigos em Distância Curta"), computed
   fresh every roll rather than granted-then-ticking-down — `EgoAdvantage

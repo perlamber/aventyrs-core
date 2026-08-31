@@ -125,7 +125,8 @@ public class AttackReceiver {
         SkillRoll defenseRoll = attack.getDefenseRoll();
 
         InteractionResult defenseResult = esquivaEApararInteraction.applyTo(
-                defender, attack.getSceneContext(), defenseRoll, attack.getDefenseType());
+                defender, attack.getSceneContext(), defenseRoll, attack.getDefenseType(),
+                attack.getDamageDescriptor());
 
         DifficultyLevel effectiveDifficultyLevel =
                 attack.getDifficultyLevel().easier(defenseResult.getDifficultyReduction());

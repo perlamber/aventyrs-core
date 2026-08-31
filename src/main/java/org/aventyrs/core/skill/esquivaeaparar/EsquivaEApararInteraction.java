@@ -3,6 +3,7 @@ package org.aventyrs.core.skill.esquivaeaparar;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.DefenseType;
+import org.aventyrs.core.character.DamageDescriptor;
 import org.aventyrs.core.character.services.CharacterSkillService;
 import org.aventyrs.core.character.services.DefenseService;
 import org.aventyrs.core.character.services.DefenseServiceImpl;
@@ -88,10 +89,21 @@ public class EsquivaEApararInteraction extends AbstractSkillInteraction {
      * resisting.
      */
     public InteractionResult applyTo(final CombatantSheet target, final SceneContext sceneContext, final SkillRoll skillRoll, final DefenseType defenseType) {
+        return applyTo(target, sceneContext, skillRoll, defenseType, null);
+    }
+
+    /**
+     * Descriptor-aware form for a defense roll against an elemental attack. defenseType remains
+     * caller-selected: ordinary weapons use DF unless their own rules explicitly require DM.
+     */
+    public InteractionResult applyTo(final CombatantSheet target, final SceneContext sceneContext,
+                                     final SkillRoll skillRoll, final DefenseType defenseType,
+                                     final DamageDescriptor damageDescriptor) {
         InteractionResult result = super.applyTo(target, sceneContext, skillRoll);
         Character character = target.getCharacter();
 
-        int adjustment = defenseType == null ? 0 : defenseService.getTotalDefense(target, defenseType);
+        int adjustment = defenseType == null ? 0
+                : defenseService.getTotalDefense(target, defenseType, sceneContext, damageDescriptor);
         adjustment -= armorCategoryPenalty(character);
         if (adjustment == 0) {
             return result;
@@ -157,8 +169,8 @@ public class EsquivaEApararInteraction extends AbstractSkillInteraction {
             if (item.getType() != ItemType.DEFENSIVE) {
                 continue;
             }
-            if (item.getWeightClass().ordinal() > heaviest.ordinal()) {
-                heaviest = item.getWeightClass();
+            if (item.getEffectiveWeightClass().ordinal() > heaviest.ordinal()) {
+                heaviest = item.getEffectiveWeightClass();
             }
         }
         return heaviest;

@@ -43,4 +43,5 @@ public class TranslatableMessages {
     public static final String INVALID_SPELL_DURATION = "INVALID_SPELL_DURATION";
     public static final String INVALID_SPELL_ACTIVATION = "INVALID_SPELL_ACTIVATION";
     public static final String SPELL_PREREQUISITE_NOT_MET = "SPELL_PREREQUISITE_NOT_MET";
+    public static final String INVALID_SPELL_CAST_TARGET = "INVALID_SPELL_CAST_TARGET";
 }

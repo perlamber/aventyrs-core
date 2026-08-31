@@ -69,7 +69,7 @@ public enum OrquicoFeat implements Feat {
      */
     // TODO: re-typing an attack's dano is not expressible — DamageType is a classification a
     //  caller supplies per hit, and nothing lets a held trait *override* what an attack deals.
-    //  DamageBonus can carry ELEMENTAL + Element.TERRA, but that types a bonus, not the attack.
+    //  DamageBonus can carry ELEMENTAL + ElementalType.TERRA, but that types a bonus, not the attack.
     // TODO: the "+Metade do Vigor às rolagens de danos físicos" half is a flat dano bonus whose
     //  amount is computable, but Feat has no resolveDamageBonus hook — that lives on
     //  SkillCompetencyAbility and EgoAdvantage only, and both are reached through the skill

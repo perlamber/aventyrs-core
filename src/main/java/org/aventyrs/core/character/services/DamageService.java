@@ -2,9 +2,9 @@ package org.aventyrs.core.character.services;
 
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.DamageType;
+import org.aventyrs.core.character.DamageDescriptor;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.CombatantSheet;
-import org.aventyrs.core.skill.SkillExcellency;
 
 /**
  * Computes and applies damage mitigation. Two independent flat reductions exist — RD
@@ -51,6 +51,9 @@ public interface DamageService {
      * applies. Never negative.
      */
     int getTotalDamageReduction(CombatantSheet target, DamageType damageType, CombatantSheet source);
+
+    /** Descriptor-aware RD calculation, including equipped-item resistance to a concrete element. */
+    int getTotalDamageReduction(CombatantSheet target, DamageDescriptor damageDescriptor, CombatantSheet source);
 
     /** Total RA, same three sources as RD. Never negative. */
     int getTotalAbsoluteDamageReduction(Character character);
@@ -110,6 +113,11 @@ public interface DamageService {
     int calculateFinalDamage(CombatantSheet target, SceneContext sceneContext,
                               DamageType damageType, CombatantSheet source, int rawDamage, boolean ignoreDamageReduction);
 
+    /** Descriptor-aware final-damage calculation for elemental attacks. */
+    int calculateFinalDamage(CombatantSheet target, SceneContext sceneContext,
+                             DamageDescriptor damageDescriptor, CombatantSheet source,
+                             int rawDamage, boolean ignoreDamageReduction);
+
     /**
      * Computes the final damage (see {@link #calculateFinalDamage}) and applies it to
      * characterSheet — Shield points are absorbed first, then Hit Points, per
@@ -139,4 +147,9 @@ public interface DamageService {
      */
     int applyDamage(CombatantSheet characterSheet, SceneContext sceneContext,
                      DamageType damageType, CombatantSheet source, int rawDamage, boolean ignoreDamageReduction);
+
+    /** Applies fully-classified damage, including equipped-item resistance to a concrete element. */
+    int applyDamage(CombatantSheet characterSheet, SceneContext sceneContext,
+                    DamageDescriptor damageDescriptor, CombatantSheet source,
+                    int rawDamage, boolean ignoreDamageReduction);
 }

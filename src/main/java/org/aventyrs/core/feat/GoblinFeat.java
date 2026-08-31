@@ -5,8 +5,10 @@ import org.aventyrs.core.skill.SkillType;
 
 /**
  * Talentos Goblins — both about improvised engineering, and both blocked on the same two gaps:
- * <b>Dureza has no consumer</b> (an {@code Item}'s column is real, exact data, but no damage or
- * repair mechanic reads it) and the GD reduction they grant is <b>purpose-scoped</b>.
+ * <b>nothing models a produced copy</b> (Dureza is now a real, spendable pool — {@code
+ * Item#applyDamage}/{@code getCurrentHardness} — but these clauses set it at <i>creation</i>, and
+ * no production mechanic exists to set it at) and the GD reduction they grant is
+ * <b>purpose-scoped</b>.
  *
  * <p>That second point is worth reading alongside {@code GnomoFeat#FAVORITOS_DE_TESLA}, which
  * grants a −1 nível on the same Perícia and <i>is</i> real. The difference is the whole reason
@@ -24,9 +26,10 @@ public enum GoblinFeat implements Feat {
     // TODO: the GD reduction is scoped to a narrative purpose ("para criar equipamento"), which
     //  this core does not track — see the class javadoc for why this disqualifies it from
     //  Feat#resolveDifficultyReduction where FAVORITOS_DE_TESLA qualifies.
-    // TODO: the Dureza penalty needs both a consumer for Item#getHardness (there is none — no
-    //  damage or repair mechanic) and the missing owned-item copy, since it is a property of the
-    //  particular item produced rather than of the catalog entry.
+    // TODO: the Dureza penalty needs a production mechanic. Dureza itself is real and damageable
+    //  now (Item#applyDamage/getCurrentHardness/isDestroyed), but this halves the value an item is
+    //  *created* with, which is a property of the particular copy produced rather than of the
+    //  catalog entry, and nothing produces a copy yet.
     ENGENHEIRO_DE_IMPROVISOS(
             "O GD de rolagens de Profissão para criar equipamento é reduzida em -1 Nível. Itens "
                     + "criados utilizando efeitos deste Talento tem a Dureza reduzida à metade.",
@@ -41,11 +44,12 @@ public enum GoblinFeat implements Feat {
      * "Você pode substituir os Engenheiro de Improvisos e reduzir a GD da rolagem de Profissão em
      * -2 Níveis… Itens tecnológicos criados desta forma explodem quando sua Dureza chega à zero."
      */
-    // TODO: same purpose-scoped GD gap and same missing Dureza consumer as its prerequisite.
-    // TODO: the explosion needs three further things — an item whose Dureza can reach zero
-    //  (missing owned-item copy), Área de Efeito – Explosão resolution (nothing turns a footprint
-    //  into a set of targets), and a die roll this core never makes. Note "itens tecnológicos" is
-    //  also a classification Item does not carry: ItemCategory names shape, not technology.
+    // TODO: same purpose-scoped GD gap and same missing production mechanic as its prerequisite.
+    // TODO: the explosion needs three further things — a trigger fired when an item is destroyed
+    //  (Item#isDestroyed is a derived state nothing observes; this codebase has no observer
+    //  mechanism anywhere), Área de Efeito – Explosão resolution (nothing turns a footprint into a
+    //  set of targets), and a die roll this core never makes. Note "itens tecnológicos" is also a
+    //  classification Item does not carry: ItemCategory names shape, not technology.
     KABUM(
             "Você pode substituir os Engenheiro de Improvisos e reduzir a GD da rolagem de "
                     + "Profissão em -2 Níveis (ao invés de -1 Nível), se o fizer a Dureza do "

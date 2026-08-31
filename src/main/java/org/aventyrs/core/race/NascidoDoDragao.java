@@ -113,7 +113,7 @@ public class NascidoDoDragao implements Race {
      * opposition, so promoting it would be building a shared mechanism for its first consumer.
      *
      * <p>Two naming notes on the source table. It writes the fourth row's element as <i>Vento</i>
-     * where the third writes <i>Ar</i> for the same element — {@link ElementalType#AR} covers
+     * where the third writes <i>Ar</i> for the same element — {@link ElementalType#VENTO} covers
      * both. And {@link ElementalType#NATURAL} appears here as an Elemento Base while also being a
      * {@code MagicType}; that ambiguity is the source document's own and is deliberately left
      * unresolved (see {@code ElementalType}'s javadoc).
@@ -123,8 +123,8 @@ public class NascidoDoDragao implements Race {
             ElementalType.AGUA, ElementalType.FOGO,
             ElementalType.MAGMA, ElementalType.GELO,
             ElementalType.GELO, ElementalType.MAGMA,
-            ElementalType.TERRA, ElementalType.AR,
-            ElementalType.AR, ElementalType.TERRA,
+            ElementalType.TERRA, ElementalType.VENTO,
+            ElementalType.VENTO, ElementalType.TERRA,
             ElementalType.NATURAL, ElementalType.ELETRICIDADE,
             ElementalType.ELETRICIDADE, ElementalType.NATURAL);
 
