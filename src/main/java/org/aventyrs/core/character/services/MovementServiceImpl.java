@@ -4,6 +4,7 @@ import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.character.SizeCategory;
 import org.aventyrs.core.feat.Feat;
+import org.aventyrs.core.item.Item;
 import org.aventyrs.core.modifier.ModifierResolver;
 import org.aventyrs.core.modifier.ModifierResolverImpl;
 import org.aventyrs.core.modifier.ModifierType;
@@ -47,6 +48,12 @@ public class MovementServiceImpl implements MovementService {
         // so they get an explicit pass here — the same shape DefenseServiceImpl already uses.
         for (Feat feat : character.getFeats()) {
             total += feat.resolveMovementIncrease(character);
+        }
+        // Equipment-held bonuses are data, not @Modifier methods — an explicit pass, the same
+        // shape DamageServiceImpl/AbstractSkillInteraction use for resolveEnhancementBonus. This
+        // is what makes a Pedra do Poder's "Movimento Base +2UD" Efeito Base real.
+        for (Item item : character.getEquipment()) {
+            total += item.resolveEnhancementBonus(ModifierType.MOVEMENT, null, character);
         }
         return Math.max(0, total);
     }

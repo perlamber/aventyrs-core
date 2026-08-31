@@ -78,7 +78,7 @@ Check here before assuming a TODO needs a new gap named. Nothing below exists in
 | Missing system | Notes / where cited |
 | --- | --- |
 | **Defesas — *mostly built*** | `DefenseService` + `DefenseType` are real, and `DEFESAS`/`PHYSICAL_DEFENSE`/`MAGIC_DEFENSE` all have readers. What's still missing is narrower: `Santo#getDefesasBonus` has no granting trigger (*when* each adjacent ally receives it), and a foe's Defesa is an authored flat number with no defined conversion from a GD reduction's *níveis*. Don't cite this as "no Defesas stat exists".
-| **Owned/produced item copy** | The `Item` *catalog* is real, and so is inventory now — `Character#equipment` (worn/wielded, scanned by `DefenseService`/`DamageService`) and `AbstractCombatantSheet#inventory` (carried, including a foe's loot). **Dureza remaining is now built** — `Item#applyDamage`/`getCurrentHardness`/`isDestroyed`, mitigated by the item's own enhancements only (see "Damage to an item, and what a destroyed one stops granting"). Still missing: the rest of per-copy state (who produced it), a PE economy, and production/**repair** — damage is one-way today. Cite the specific piece, not a blanket "no Item entity", "no inventory" or "no Dureza". |
+| **Owned/produced item copy** | The `Item` *catalog* is real, and so is inventory now — `Character#equipment` (worn/wielded, scanned by `DefenseService`/`DamageService`) and `AbstractCombatantSheet#inventory` (carried, including a foe's loot). Per-copy state built: **Dureza remaining** (`Item#applyDamage`/`getCurrentHardness`/`isDestroyed`, mitigated by the item's own enhancements only — see "Damage to an item…"), a fitted **Obra-Prima/Aprimoramento** (`DefensiveMasterpiece`/`DefensiveImprovement` + `ItemMasterpiece`/`ItemImprovement`), and a socketed **Pedra do Poder** (`PowerStone` = `PowerStoneType` + `PowerStoneQuality` + optional masterpiece/improvement, gated on `DefensiveImprovement.ENCAIXE` via `AbstractItem#setPowerStone`). Still missing: who produced it, a PE economy, production/**repair** (damage is one-way), the offensive Obra-Prima/Aprimoramento catalogs, and the Pedra do Poder **charge/Resfriamento/Vinculação economy** (authored data, no activation or bind step). Cite the specific piece, not a blanket "no Item entity", "no inventory" or "no Dureza". |
 | **Classifying an attack as Desarmado/Arma Natural** | A roll can now say *what* it was made with — `AttackSource` reaches `applyTo` as its 5th parameter — but that does **not** close this. `AttackSource` is implemented only by `Weapon`/`Spell`, so an Ataque Desarmado is just a `null`, indistinguishable from a caller who didn't say; and nothing marks a weapon as an *Arma Natural* either. So `ArtesMarciaisFeat#ARTISTA_MARCIAL`'s Dano Base grant still applies to every attack its holder makes, and gating it on `attackSource == null` would both over-apply (an unspecified attack) and silently drop the Armas Naturais half. Two markers missing, not one. |
 | **Damage-type-scoped mitigation, and damage-type immunity** | `DamageType` has no Corte/Perfuração/Impacto breakdown (nor Profano/Natural/Esmagamento), and RD/RA are resolved with no notion of damage type — the one exception is `AttributeAbility#resolveDamageReduction`, unreachable from a `SkillCompetencyAbility`. *Nullifying* a damage type outright is a further missing stage: there is no immunity mechanism of any kind. Cited by `Zumbi` (imune a Profanos/Naturais, -3 vs Esmagamento). |
 | **Multiplicative stages** | `MovementService` sums `MOVEMENT` additively with no halving stage (unlike `DamageService`'s real `HALF_DAMAGE`). Don't add a `MOVEMENT_HALVED` constant — the mechanism is missing, not just a reader. |
@@ -104,7 +104,7 @@ Check here before assuming a TODO needs a new gap named. Nothing below exists in
 | **Game-session tracking — *the boundary is the consumer's, the state is missing*** | The end-of-session *trigger* is deliberately outside this core: a Narrador presses a button, and the consumer calls `EgoPointsService#applySessionRecovery(Map<CombatantSheet, EgoDomain>)` — one call carrying the table's per-player choices. `MOTIVACAO_DE_MOSES`/`DILETO_DE_TYKHE` are fully real through it. What's still absent is any per-session **state**: no session identity, no counter, nothing recording that a session happened. Hence recovery is deliberately **not idempotent** (double-application is the consumer's to prevent), and a clause that must *count* within a session — `ESTABILIDADE_EMOCIONAL`'s "a primeira vez em cada sessão", `MeioElfo`'s "1x por sessão" — stays unbuildable, because a manual button marks a boundary without telling this core it was crossed. |
 | **Roubo de Mana / de Determinação** | Only Roubo de Vida exists (`LifeStealService`). |
 | **Terreno difícil** | `TerrainType` describes a whole Scene, not a per-movement cost to ignore. |
-| **Item numeric columns** | PE has no economy and Conjuração no item-granted hook on either `SpellCastingService` roll. Dureza is off this list: it is a real, consumed pool now — only *repair* is still absent. |
+| **Item numeric columns** | PE has no economy and Conjuração no item-granted hook on either `SpellCastingService` roll. Dureza is off this list: it is a real, consumed pool now — only *repair* is still absent. So is a Pedra do Poder's Cargas/Resfriamento/Danos de Vinculação/Duração do Efeito (`PowerStoneQuality`): exact authored data, but no activation service and no forge/bind step consume it. |
 | **Acquisition-slot grants** | "Grants an extra acquisition slot" traits (`Elfo`' Origem Mística, `Anao`' Pequenos Gigantes) have no shape. |
 | **Fractional Talento costs** | `getNewFeatCost` returns `int`, so a 2.5-XP discount can't be represented (`Gigantes`' whole-number 2 can). |
 
@@ -147,15 +147,25 @@ lists (`ItemWeightClass`/`ItemRarity`, `description`, `price` in PE, `physicalDe
 `ItemFavor`/`ItemBonus`/`ItemRequirements` shapes, the one-enum-per-`ItemCategory` layout, the
 `Skill.DISADVANTAGE_MALUS` convention, and the test checklist. The architecture:
 
-- **Catalog, not owned copy** — the same split `AventyrTitle`'s javadoc documents, resolved the
-  *other* way than a Título's: an item's stats are identical for every copy, so the enum
-  constant *is* the item. Per-copy state (Dureza actually remaining, Obra-Prima tier,
-  Aprimoramentos, who produced it) is deliberately unmodeled, and would be a separate
-  held-instance type wrapping a catalog entry. Don't build it speculatively; several TODOs cite
-  it (`ProfissaoCompetencyAbility`, `ResourcesAdvantage#HERANCA_FAMILIAR`), but none is
-  unblocked by the catalog alone. **Inventory itself is real**, though — `Character#equipment`
-  (worn/wielded) and `AbstractCombatantSheet#inventory` (carried, including a foe's loot), both
-  mutable `List<Item>` with plain mutators, the same shape as `Character#feats`.
+- **Catalog vs owned copy** — the split `AventyrTitle`'s javadoc documents. The **catalog** side
+  is `ItemTemplate` (the enum constants: `ArmorItem` etc.); the **owned copy** side is `Item`
+  proper, built via `AbstractItem`/`AbstractWeapon`, carrying its own per-copy state: Dureza
+  remaining (`applyDamage`), a fitted Obra-Prima/Aprimoramento (`DefensiveMasterpiece`/
+  `DefensiveImprovement` wrapped by `ItemMasterpiece`/`ItemImprovement`), a socketed **Pedra do
+  Poder** (`PowerStone`), and a Regalia's `ItemActiveAbility`. Still unmodeled: who produced it,
+  the offensive Obra-Prima/Aprimoramento catalogs, and any Pedra do Poder charge/bind economy —
+  several TODOs cite these (`ProfissaoCompetencyAbility`, `ResourcesAdvantage#HERANCA_FAMILIAR`).
+  **Inventory is real** — `Character#equipment` (worn/wielded, scanned by every
+  `resolveEnhancement*` consumer) and `AbstractCombatantSheet#inventory` (carried), both mutable
+  `List<Item>`, the same shape as `Character#feats`.
+- **Pedra do Poder** (`PowerStoneType` × `PowerStoneQuality`, + optional `PowerStoneMasterpiece`/
+  `PowerStoneImprovement`) — a per-copy socketed buff with a **tri-modal** effect: an always-on
+  Efeito Base plus one of an Efeito Defensivo/Ofensivo, selected by the host's `Item#getType()`.
+  Its passive `ItemBonus`-typed effects fold into the Masterpiece/Improvement aggregation via
+  `Item#resolvePowerStoneBonus`; `AbstractItem#setPowerStone` gates the socket on
+  `DefensiveImprovement.ENCAIXE` (armor/shield only until an offensive Encaixe exists). Most mode
+  effects are catalog-only, TODO'd on the same gaps the racial-feat catalog cites (no elemental
+  resistance, no first-instance damage tracking, no attribute-from-equipment hook, …).
 - **`ItemFavor` is the conditional half, and its bonuses are real data, not prose**: it carries
   a list of `ItemBonus` (a `ModifierType` + value pair), resolved via `ItemFavor#resolveBonus
   (ModifierType, Character)` / `Item#resolveFavorBonus(...)` — 0 unless the `ItemRequirements`

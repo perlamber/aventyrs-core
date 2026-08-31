@@ -60,6 +60,13 @@ import org.aventyrs.core.modifier.ModifierType;
  * <p><b>Dano Base is not here</b>, deliberately — it lives on {@link Weapon}, the sub-interface
  * for items that can actually be swung, so that nothing can ask a helmet what it hits for. See
  * that interface's own javadoc.
+ *
+ * <p>A copy can also carry a <b>Pedra do Poder</b> ({@link #getPowerStone()}), socketed once the
+ * Encaixe Aprimoramento is fitted. Its tri-modal buff — an always-on Efeito Base plus one of an
+ * Efeito Defensivo/Ofensivo chosen from {@link #getType()} — folds into the same enhancement
+ * aggregation the Masterpiece and Improvement use ({@link #resolvePowerStoneBonus},
+ * {@link #resolveEnhancementBonus}, {@link #resolveEnhancementDamageBaseIncrease}). Its
+ * charge/Resfriamento/Vinculação economy is authored data with no consumer yet, like Preço.
  */
 public interface Item {
 
@@ -209,8 +216,20 @@ public interface Item {
                 ? 0 : getImprovement().getEffectiveDefenseBonus(
                         defenseType, character, sceneContext, this, damageDescriptor);
         return defenseType.columnOf(this) + masterpieceBonus + improvementBonus
+                + resolvePowerStoneBonus(ModifierType.DEFESAS)
+                + resolvePowerStoneBonus(defenseType.getModifierType())
                 + resolveFavorBonus(ModifierType.DEFESAS, character)
                 + resolveFavorBonus(defenseType.getModifierType(), character);
+    }
+
+    /**
+     * How much of modifierType this item's socketed Pedra do Poder currently grants — 0 for an
+     * item with none, or a destroyed one. The stone selects its Efeito Defensivo or Efeito
+     * Ofensivo from {@link #getType()}; its Efeito Base always applies.
+     */
+    default int resolvePowerStoneBonus(final ModifierType modifierType) {
+        return getPowerStone() == null || isDestroyed() ? 0
+                : getPowerStone().resolveBonus(modifierType, getType());
     }
 
     /** Every non-Favor numeric bonus granted by this item's fitted enhancements. */
@@ -224,7 +243,7 @@ public interface Item {
                 : getMasterpiece().resolveBonus(modifierType, skillType, character);
         int improvementBonus = getImprovement() == null ? 0
                 : getImprovement().resolveBonus(modifierType, skillType, character);
-        return masterpieceBonus + improvementBonus;
+        return masterpieceBonus + improvementBonus + resolvePowerStoneBonus(modifierType);
     }
 
     /** Dano Base scale-ups this item grants when weapon is the attack source. */
@@ -236,7 +255,9 @@ public interface Item {
                 : getMasterpiece().resolveDamageBaseIncrease(weapon, character);
         int improvementBonus = getImprovement() == null ? 0
                 : getImprovement().resolveDamageBaseIncrease(weapon, character);
-        return masterpieceBonus + improvementBonus;
+        int powerStoneBonus = getPowerStone() == null ? 0
+                : getPowerStone().resolveDamageBaseIncrease(weapon, getType());
+        return masterpieceBonus + improvementBonus + powerStoneBonus;
     }
 
     /** This item's fitted enhancement reduction for one fully-classified incoming damage instance. */
@@ -343,6 +364,15 @@ public interface Item {
     /** A unique item may carry a single improvement; most items do not. */
     default Improvement getImprovement() {
         return this instanceof AbstractItem item ? item.getImprovement() : null;
+    }
+
+    /**
+     * The Pedra do Poder socketed into this item, or {@code null} while it has none. Requires the
+     * Encaixe Aprimoramento to fit (see {@link AbstractItem#setPowerStone}); a catalog {@link
+     * ItemTemplate} never has one.
+     */
+    default PowerStone getPowerStone() {
+        return this instanceof AbstractItem item ? item.getPowerStone() : null;
     }
 
     /**

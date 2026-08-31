@@ -123,13 +123,38 @@ Improvement/Masterpiece layer) and are **stale**. The current shape:
   `ItemImprovement` / `ItemMasterpiece` are the per-copy wrappers holding creation-time choices
   (`camadaDeReforco`, `bencaoElemental`, `magistral`, `sobMedida`).
 
-### Authored (3 of the 12 source subsections)
+### Authored (7 of the 12 source subsections)
 
 | source subsection | code | n | note |
 | --- | --- | --- | --- |
 | Armaduras | `ArmorItem` | 8 / 8 | the reference catalog; `ArmorItemTest` pins the count |
 | Obras-Primas Defensivas | `DefensiveMasterpiece` | 15 / 15 | `DefensiveMasterpieceTest` pins 15 |
 | Aprimoramentos de Obras-Primas Defensivas | `DefensiveImprovement` | 17 / 17 | `DefensiveImprovementTest` pins 17 |
+| Tipos de Pedras do Poder | `PowerStoneType` | 17 / 17 | tri-modal (base + defensivo/ofensivo by host `ItemType`); `PowerStoneCatalogTest` pins the counts |
+| Qualidades de Pedra (Jolda/Joia/Relíquia/AEthernum) | `PowerStoneQuality` | 4 / 4 | Preço + Cargas/Resfriamento/Vinculação/Duração — authored-inert, no consumer |
+| Obras-Primas de Pedras do Poder | `PowerStoneMasterpiece` | 5 / 5 | charge-economy deltas folded by `PowerStone` |
+| Aprimoramentos de Obras-Primas (Pedra) | `PowerStoneImprovement` | 1 / 1 | Conexão Veloz only — modeled like `ItemRarity` |
+
+**Pedras do Poder — what's live vs authored-inert.** A `PowerStone` is a per-copy fitted
+instance (`PowerStoneType` + `PowerStoneQuality` + optional masterpiece/improvement), socketed
+via `AbstractItem#setPowerStone`, which requires `DefensiveImprovement.ENCAIXE` fitted — so an
+armor/shield only until an offensive Encaixe exists. Its passive mode effects fold into the same
+`Item` enhancement aggregation the Masterpiece/Improvement use (`resolvePowerStoneBonus`), so
+they reach `DefenseService`/`DamageService`/`MovementService`/`DamageBaseService` with no service
+change bar one: `MovementServiceImpl` gained the equipment `MOVEMENT` pass it lacked.
+
+- **Expressible today** (typed `ItemBonus`, per the racial-feat-catalog ratio): Hematita /
+  Relâmpago Dourado / Mitral Puro `MOVEMENT +2`; Rútilo Subterrâneo `DEFESAS +2` + Atletismo
+  Vantagem; Mitral Puro / Hematita "Vantagem em Perícia de Ataque"; Calcita Vulcânica / Adamante
+  Bruto / Sombra Solidificada `DAMAGE_REDUCTION 1` (the first two damage-type-simplified, Sombra
+  unscoped); Sombra Solidificada offensive Dano Base +1.
+- **Authored catalog + per-constant TODO** (~11 stones): blocked on no
+  Resistência/Vulnerabilidade Elemental, no first-instance-per-Rodada damage tracking, no Área de
+  Efeito, no attribute-grant-from-equipment hook, no multiplicative/halving stage, no
+  Corrupção/immunity, no Roubo de Vida from equipment, no PV-regen tick.
+- **The charge economy is authored-inert** — `PowerStoneQuality`'s Cargas/Resfriamento/Danos de
+  Vinculação/Duração and the `PowerStoneMasterpiece` deltas are exact figures nothing reads (no
+  activation service, no forge/bind step), same as Preço.
 
 ### Not authored
 
@@ -142,9 +167,8 @@ Improvement/Masterpiece layer) and are **stale**. The current shape:
   weapon, Cone area) and the five Defesas Naturais have no category.
 - **17 Obras-Primas Ofensivas + 18 Aprimoramentos Ofensivos** — no `OffensiveMasterpiece` /
   `OffensiveImprovement`. `Masterpiece`/`Improvement` were built defensive-first; the offensive
-  halves are the obvious second consumer.
-- **27 Pedras do Poder** — no model of any kind. `AbstractItem` has `improvementEffectSceneId`
-  but nothing for a socketed stone, its charge/cooldown table, or its 3-mode effect.
+  halves are the obvious second consumer. `OffensiveImprovement.ENCAIXE` is also what would
+  unblock socketing a Pedra do Poder into a weapon.
 - **Equipamentos Tecnológicos** — stub in the source too.
 
 ### Mechanisms already built that an unwritten catalog would flow into
@@ -163,7 +187,13 @@ No wiring needed — these all scan `character.getEquipment()`:
   `resolveEnhancementBonus(skillType.getRollBonusType(), skillType, …)`.
 - **Reações / Ações Livres** — `ReactionsServiceImpl` / `FreeActionsServiceImpl` sum
   `resolveEnhancementBonus(REACTIONS / FREE_ACTIONS)`.
+- **Movimento** — `MovementServiceImpl` sums `resolveEnhancementBonus(MOVEMENT)` per equipped
+  item (added with the Pedra do Poder work — it was the one `resolveEnhancement*` consumer
+  missing).
 - **Spell Duração** — `SpellDurationServiceImpl` sums `resolveEnhancementDurationIncreaseInRounds`.
+- **Pedra do Poder** — folded into `resolveEnhancementBonus` /
+  `resolveEnhancementDamageBaseIncrease` / `getEffectiveDefenseBonus` via
+  `Item#resolvePowerStoneBonus(type)`, so all of the above pick it up.
 - **Dureza / destruction** — `Item#applyDamage` spends `damageTaken`; at 0 PV every column above
   reads absent. `DamageServiceImpl` calls `notifyFinalDamageTaken` on each equipped item.
 - **Regalia active abilities** — `ItemActiveAbility` + `AbstractItem#setActiveAbility`
@@ -214,6 +244,9 @@ typed bonus:
   per-`ItemCategory` enum; author `Dano` as `DamageBase`, `Tipo` as `DamageType` (once it has a
   breakdown — until then prose), Efeito Crítico via the efeitos-criticos catalog.
 - **Add a pin test** in the `SpellCatalogTest` style once more than one subsection is authored —
-  nothing currently checks the code against this document's counts.
+  `PowerStoneCatalogTest` pins the Pedra counts; `ArmorItemTest` / `Defensive*Test` pin theirs.
+- **Offensive Obras-Primas / Aprimoramentos** pair naturally with `OffensiveMasterpiece` /
+  `OffensiveImprovement`; adding `OffensiveImprovement.ENCAIXE` also lets a weapon take a Pedra
+  do Poder (loosen `AbstractItem#setPowerStone`'s guard to accept it too).
 - **Update CLAUDE.md's inline section and the `adding-an-item` skill** to the
-  `ItemTemplate`/`Improvement`/`Masterpiece` model — both are stale as of this index.
+  `ItemTemplate`/`Improvement`/`Masterpiece`/`PowerStone` model — both are stale as of this index.

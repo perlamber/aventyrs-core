@@ -40,6 +40,7 @@ public class AbstractItem implements Item {
     private ItemFavor favor;
     private Masterpiece masterpiece;
     private Improvement improvement;
+    private PowerStone powerStone;
     private boolean regalia;
     private ItemActiveAbility activeAbility;
     private UUID improvementEffectSceneId;
@@ -109,6 +110,23 @@ public class AbstractItem implements Item {
             }
         }
         this.improvement = improvement;
+    }
+
+    /**
+     * Sockets a Pedra do Poder into this item. Requires the Encaixe Aprimoramento
+     * ({@link DefensiveImprovement#ENCAIXE}) already fitted — "permite encaixe de Pedra do
+     * Poder" — so an armor or shield only, until an offensive Encaixe exists. Same
+     * guard-on-the-setter style as {@link #setImprovement}/{@link #setMasterpiece}; the
+     * {@code @SuperBuilder}'s {@code powerStone(...)} bypasses it, per CLAUDE.md's
+     * "Builder-bypassable invariants".
+     */
+    public void setPowerStone(final PowerStone powerStone) {
+        if (powerStone != null && !(improvement instanceof ItemImprovement fitted
+                && fitted.getDefinition() == DefensiveImprovement.ENCAIXE)) {
+            throw new IllegalArgumentException(
+                    "A Pedra do Poder requires the Encaixe Aprimoramento fitted to its host item.");
+        }
+        this.powerStone = powerStone;
     }
 
     public void setRegalia(final boolean regalia) {
