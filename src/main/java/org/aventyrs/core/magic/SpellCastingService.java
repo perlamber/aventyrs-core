@@ -3,6 +3,8 @@ package org.aventyrs.core.magic;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.Interaction;
 
+import java.util.Optional;
+
 /**
  * Orchestrates a {@link SpellCastRequest}: the caster's delivery roll, followed by their Domínio
  * do Mana roll. The request keeps the spell, targeting, Scene, and resolved scene snapshot
@@ -31,4 +33,21 @@ public interface SpellCastingService {
      * caster, Magia, targeting, and Scene state remain available to the cast.
      */
     SpellCastingResult castSpell(CombatantSheet target, Interaction<CombatantSheet> deliveryInteraction);
+
+    /**
+     * The primary damage {@code spell} would deal cast by {@code caster} right now, or {@link
+     * Optional#empty()} for a Magia that authors no {@link Spell#getPrimaryDamage()}.
+     *
+     * <p>{@code deterministicAmount} is the Magia's flat bonus plus its Foco term — {@code
+     * Foco/2} for a {@code "Metade do Foco"} effect, upgraded to full {@code Foco} when this
+     * would be {@code caster}'s first Magia of the Rodada ({@code
+     * caster.getActionsThisRound()} holds no {@code Spell} action) <b>and</b> {@code caster} holds
+     * an ability whose {@code AttributeAbility#upgradesFirstSpellOfRoundFocusScaling()} is true
+     * ({@code FocusAbility#MAGIA_PODEROSA}). The {@code diceCount} d6 stay the caller's to roll —
+     * this core never rolls dice.
+     *
+     * <p>This is a pure read; {@link #castSpell(SpellCastRequest)} calls it and puts the result
+     * on {@link SpellCastingResult#getPrimaryDamage()}.
+     */
+    Optional<ResolvedSpellDamage> resolvePrimaryDamage(Spell spell, CombatantSheet caster);
 }

@@ -42,6 +42,20 @@ public enum ModifierType {
     FREE_ACTIONS,
     INITIATIVE,
     MOVEMENT,
+    /**
+     * A flat modifier to a <b>dano roll</b> — not to a Perícia roll, and not damage reduction.
+     * Its counterpart on the roll side is {@code SKILL_ROLL_BONUS}: "Vantagem em rolagens de
+     * Dano" is the same flat +2 that Vantagem is anywhere else (see {@code Skill#ADVANTAGE_BONUS}),
+     * and a Desvantagem the same -2.
+     *
+     * <p>Exists so a source that carries {@code ModifierType}-typed data rather than a typed
+     * {@code DamageBonus} can still reach a dano roll — a {@code TemporaryBonus} granted by
+     * another character's action, or a {@code ConditionType.ConditionEffect} (Caído's "Desvantagem
+     * em rolagens de Dano Corpo-a-Corpo", the fear ladder's proximity-scoped one). Abilities that
+     * grant <i>typed</i> extra damage keep returning a {@code DamageBonus} instead; both are
+     * summed together by {@code AbstractSkillInteraction}.
+     */
+    DAMAGE_ROLL_BONUS,
     DAMAGE_REDUCTION,
     HALF_DAMAGE,
     ABSOLUTE_DAMAGE_REDUCTION,

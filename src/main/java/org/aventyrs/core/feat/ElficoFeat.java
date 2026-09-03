@@ -33,8 +33,11 @@ import org.aventyrs.core.skill.SkillType;
  *
  * <p>"Elfos podem possuir até 2 talentos Guardião, Meio-Elfos apenas um" is <b>not enforced</b>:
  * it is a per-race cap on how many Talentos of a sub-type may be held, and {@code
- * FeatRequirements} carries only thresholds that must be met, never a ceiling. Same family as
- * the exclusion clauses recorded in {@code docs/rules/talentos-index.md}.
+ * FeatRequirements} carries only thresholds that must be met, never a ceiling. {@code
+ * ArtesMarciaisFeat} enforces its own sub-type cap ("nenhum outro Talento Dominar Arte Marcial")
+ * with a local {@code isEligible} override; this one differs — the cap depends on the holder's
+ * Race, not on another held Talento — so the same shape does not transfer, and it stays a
+ * comment for now.
  */
 public enum ElficoFeat implements Feat {
 
@@ -177,9 +180,10 @@ public enum ElficoFeat implements Feat {
     // TODO: a per-character CreatureType — Race#getCreatureType() takes no Character, so a type
     //  that changes with what its holder acquired is inexpressible. Same gap PequeninoFeat's two
     //  Linhagem Talentos and Indomito's Monstros em Potencial cite.
-    // TODO: mimetizar has no mechanism, the Árvore is an acquisition-time choice a flat enum
-    //  constant cannot hold, and spending PD in place of PM has no cost step to redirect —
-    //  SpellCastingService spends nothing at all.
+    // TODO: mimetizar has no mechanism, and spending PD in place of PM has no cost step to
+    //  redirect — SpellCastingService spends nothing at all. (The chosen Árvore could be
+    //  recorded now — a choice-carrying AbstractFeat subclass, see FocoEmPericiaFeat — but
+    //  mimetizar is the blocker, not the choice.)
     ALMA_FEERICA(
             "Você é considerado um personagem Feérico para requisitos de Talentos e Habilidades. "
                     + "Escolha uma Árvore de Magia Natural, você pode mimetizar as magias Broto e "

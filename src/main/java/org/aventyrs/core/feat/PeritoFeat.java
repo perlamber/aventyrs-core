@@ -1,32 +1,42 @@
 package org.aventyrs.core.feat;
 
 import org.aventyrs.core.character.AttributeDomain;
+import org.aventyrs.core.character.Character;
+import org.aventyrs.core.scene.SceneContext;
+import org.aventyrs.core.skill.Skill;
+import org.aventyrs.core.skill.SkillTrait;
 import org.aventyrs.core.skill.SkillType;
 
 /**
  * Talentos de Perito — depth in a chosen Perícia rather than breadth.
  *
  * <p>Almost the whole tree hangs off {@link #FOCO_EM_PERICIA}'s acquisition-time choice of a
- * Perícia, and that choice is the tree's central blocker: nine constants here condition on
- * "a Perícia escolhida", which nothing records. This is CLAUDE.md's pattern-3 case — the choice
- * space is small and fixed at compile time (every {@code SkillType}) — so the shape that would
- * work is one constant per Perícia, exactly as {@code org.aventyrs.core.ability
- * .PeritoTeoricoAbility} does for Gnose. That is deliberately <b>not</b> done here yet: it turns
- * one Talento into fourteen constants and the same treatment would be owed to {@code
- * AssassinoFeat#ACERTO_CRITICO_APRIMORADO} and {@code ArtilhariaFeat#ATIRADOR_PERFEITO}, so it
- * is worth deciding once rather than three times.
+ * Perícia. That choice is now recorded: {@link FocoEmPericiaFeat} is the acquired,
+ * choice-carrying form (an {@link AbstractFeat} subclass granted in place of the bare constant,
+ * the same split {@code ArtesAprimorarComArteAbility} keeps against its enum constant), and the
+ * "a Perícia escolhida" constants below read it via {@link FocoEmPericiaFeat#chosenBy}. Only
+ * {@link #FOCO_EM_PERICIA} itself is fully unblocked by that — every dependent hits a second
+ * blocker of its own, noted per constant.
  *
- * <p>A second blocker recurs: "Vantagem adicional". A plain Vantagem is a flat {@code
- * Skill#ADVANTAGE_BONUS} (+2), but <em>stacking</em> a second one onto a roll that already has
- * it is not distinguishable from a larger flat bonus, and no hook lets a Talento contribute to a
- * Perícia roll at all — {@code AbstractSkillInteraction} scans the three ability sources plus the
- * sheet's TemporaryBonus, never {@code character.getFeats()}.
+ * <p>That recurring second blocker is "Vantagem adicional". A plain Vantagem is a flat {@code
+ * Skill#ADVANTAGE_BONUS} (+2) and {@link Feat#resolveSkillRollBonus} does reach a Perícia roll
+ * for real — {@code AbstractSkillInteraction#sumFeatRollBonuses} scans {@code
+ * character.getFeats()} alongside the three ability sources. What is still missing is the
+ * <em>adicional</em>: stacking a second Vantagem onto a roll that already has one is not
+ * distinguishable from a larger flat bonus, since nothing records that a roll is already
+ * advantaged. {@link #LEITURA_COMPORTAMENTAL} is the one constant here needing neither the
+ * chosen-Perícia representation nor that distinction, and it is granted for real.
  */
 public enum PeritoFeat implements Feat {
 
-    /** "Escolha uma perícia, adquira vantagem nas rolagens da Perícia escolhida." */
-    // TODO: needs the chosen-Perícia representation and a Feat roll-bonus hook — see the enum's
-    //  own javadoc for both.
+    /**
+     * "Escolha uma perícia, adquira vantagem nas rolagens da Perícia escolhida."
+     *
+     * <p><b>Real</b>, through {@link FocoEmPericiaFeat} — the acquired, choice-carrying form
+     * granted in {@code Character#feats} in place of this constant, which stays the
+     * catalog/rules-text entry. The Vantagem is a flat {@code Skill#ADVANTAGE_BONUS} on the
+     * chosen Perícia, summed by {@code AbstractSkillInteraction#sumFeatRollBonuses}.
+     */
     // TODO: its Pré-requisito is conditional on the choice itself ("Treinamento na Perícia
     //  escolhida, que não seja de ataque, ou 4 graduações se for uma Perícia de ataque"), so it
     //  cannot be checked before the choice exists; left unset.
@@ -38,9 +48,12 @@ public enum PeritoFeat implements Feat {
      * "Sempre que efetuar rolagens de uma Perícia que você tenha Foco você adquire Vantagem
      * adicional", provided no ally or neutral is within Distância Curta.
      */
-    // TODO: the proximity condition is expressible (SceneContext#countAlliesWithin), but no Feat
-    //  hook receives a SceneContext; and "personagens neutros" is a third allegiance this core
-    //  does not have — Scene splits participants into allies and everyone else.
+    // TODO: which Perícia a character has Foco in is now readable (FocoEmPericiaFeat#chosenBy).
+    //  Two blockers remain: the ally half of the proximity condition is expressible
+    //  (Feat#resolveSkillRollBonus receives a SceneContext, so SceneContext#countAlliesWithin is
+    //  reachable) but "personagens neutros" is a third allegiance this core does not have —
+    //  Scene splits participants into allies and everyone else; and this grants "Vantagem
+    //  adicional", the stacking this enum's javadoc describes as unrepresented.
     DISCRETO(
             "Sempre que efetuar rolagens de uma Perícia que você tenha Foco você adquire Vantagem "
                     + "adicional. Este talento só pode ser usado se você não tiver aliados ou "
@@ -55,7 +68,8 @@ public enum PeritoFeat implements Feat {
      * você recebe vantagem adicional."
      */
     // TODO: a "plateia" is 4+ intelligent neutral characters — the same missing neutral
-    //  allegiance as DISCRETO, and no Feat hook sees the Scene.
+    //  allegiance as DISCRETO. Counting them is the only blocker on the condition itself; the
+    //  Scene is reachable (Feat#resolveSkillRollBonus takes a SceneContext).
     EXIBICIONISTA(
             "Sempre que efetuar rolagens de uma Perícia que você tenha foco em frente a uma "
                     + "plateia você recebe vantagem adicional. Considere plateia um grupo de 4 ou "
@@ -68,8 +82,12 @@ public enum PeritoFeat implements Feat {
      * "A primeira rolagem da Perícia escolhida que fizer em cada um de seus Turnos tem o Tempo de
      * Ação reduzido em -1PA."
      */
-    // TODO: ModifierType.SKILL_ROLL_COST exists and ActionPointsService reads it, but only from
-    //  attributeAbilities — no Feat hook, and no scoping to one Perícia or to a Turn's first roll.
+    // TODO: the chosen Perícia is readable now (FocoEmPericiaFeat#chosenBy), but the effect is
+    //  still blocked: ModifierType.SKILL_ROLL_COST exists and ActionPointsService reads it, but
+    //  only from attributeAbilities — Feat has no SKILL_ROLL_COST hook (the new
+    //  resolveAttackCostDifficultyReduction is a GD hook, not that). The action log now records a
+    //  roll's Perícia, so "the Turn's first roll of the chosen Perícia" is derivable from it —
+    //  only the cost hook is missing.
     PERITO_VELOZ(
             "A primeira rolagem da Perícia escolhida que fizer em cada um de seus Turnos tem o "
                     + "Tempo de Ação reduzido em -1PA.",
@@ -100,8 +118,12 @@ public enum PeritoFeat implements Feat {
      * "Se não estiver em combate você pode optar por reduzir o GD de suas rolagens em -2 Níveis ao
      * custo de triplicar seu Tempo de Ação."
      */
-    // TODO: a Feat cannot reduce a roll's GD — getDifficultyReduction() is a
-    //  SkillCompetencyAbility/SkillExcellency hook no Interaction scans Talentos for.
+    // TODO: Feat#resolveDifficultyReduction is real and scanned by
+    //  AbstractSkillInteraction#sumFeatDifficultyReductions, but it is documented for an
+    //  *unconditional* reduction on a named Perícia, and this one is conditioned on being out of
+    //  combat — SceneContext#isCombatScene() would answer that, but resolveDifficultyReduction
+    //  takes no SceneContext (unlike resolveSkillRollBonus). "Triplicar seu Tempo de Ação" has no
+    //  representation either; what a roll costs is the caller's.
     // TODO: rerolling the lowest die has no representation — this core never rolls dice.
     // TODO: its Pré-requisito counts Habilidades de Competência or Especializações of the chosen
     //  Perícia; FeatRequirements can name one Habilidade, not a count of them, and not either/or.
@@ -121,20 +143,30 @@ public enum PeritoFeat implements Feat {
      * "A Margem Crítica de todas as suas rolagens de Perícias é aumentada em +2", excluding
      * Perícias de Ataque and Esquiva e Aparar.
      *
-     * <p>Unusually, this one names the Margem Crítica without narrowing to the Menor tier — so it
-     * matches {@code SkillRoll#getCriticalResult(int)}'s shape exactly, and the exclusion is
-     * expressible via {@code SkillType#isAttackSkill()}.
+     * <p><b>Real.</b> Unusually, this one names the Margem Crítica without narrowing to the Menor
+     * tier — so it matches {@code SkillRoll#getCriticalResult(int)}'s shape exactly — and the
+     * exclusion is expressible via {@code SkillType#isAttackSkill()}. The one Talento in this tree
+     * that needs neither the chosen-Perícia representation nor the "adicional" stacking the enum
+     * javadoc describes: it names every Perícia and states a plain number.
      */
-    // TODO: resolveCriticalMarginIncrease is not on Feat — it lives on EgoAdvantage/
-    //  AttributeAbility/SkillCompetencyAbility, the only three sources
-    //  AbstractSkillInteraction#sumCriticalMarginIncrease scans. This is the single best
-    //  candidate in the catalog for promoting that hook, since nothing else about it is missing.
     // TODO: "4 ou mais Graduações em pelo menos 3 diferentes Perícias" is a count across
-    //  Perícias; FeatRequirements names one Perícia and one threshold.
+    //  Perícias; FeatRequirements names one Perícia and one threshold, so the Pré-requisito is
+    //  left unset and this is wrongly open.
     CONTROLE_DA_SITUACAO(
             "A Margem Crítica de todas as suas rolagens de Perícias é aumentada em +2. Este "
                     + "Talento não afeta rolagens de Perícias de Ataque e Esquivar e Aparar.",
-            FeatRequirements.builder().build()),
+            FeatRequirements.builder().build()) {
+        /**
+         * Unconditional on everything but the Perícia rolled — no Scene and no holder state is
+         * consulted, so it applies to a bonuses-only query as readily as to a live roll.
+         */
+        @Override
+        public int resolveCriticalMarginIncrease(final SkillType skillType, final SceneContext sceneContext,
+                                                  final Character character) {
+            boolean excluded = skillType.isAttackSkill() || skillType == SkillType.ESQUIVA_E_APARAR;
+            return excluded ? 0 : CONTROLE_DA_SITUACAO_MARGIN_INCREASE;
+        }
+    },
 
     /**
      * "Após falhar em uma rolagem de Perícia você pode optar por tentar novamente a mesma ação, se
@@ -154,7 +186,8 @@ public enum PeritoFeat implements Feat {
                     .build()),
 
     /** "Sempre que for beneficiado pelos efeitos de 'Lembrar Como se Faz', a segunda rolagem tem o GD reduzido em -1 nível." */
-    // TODO: builds on LEMBRAR_COMO_SE_FAZ, which is itself unbuilt, and a Feat cannot reduce a GD.
+    // TODO: builds on LEMBRAR_COMO_SE_FAZ, which is itself unbuilt — so although
+    //  Feat#resolveDifficultyReduction is real, there is no "segunda rolagem" to reduce the GD of.
     // TODO: disjunctive Pré-requisito (Gnose 5 ou Foco 5) — see LEMBRAR_COMO_SE_FAZ.
     LEMBRAR_REVISAR_E_APRIMORAR(
             "Sempre que for beneficiado pelos efeitos de ‘Lembrar Como se Faz’, a segunda rolagem "
@@ -173,18 +206,24 @@ public enum PeritoFeat implements Feat {
      * a flat {@code Skill#ADVANTAGE_BONUS} on one <em>named</em> Perícia, which {@code
      * ModifierType#PERSUASAO_ROLL_BONUS} exists precisely to carry.
      */
-    // TODO: no Feat hook reaches a Perícia roll — AbstractSkillInteraction scans the three
-    //  ability sources plus the sheet's TemporaryBonus, never character.getFeats(). Adding one
-    //  would make this half real with no other missing piece.
-    // TODO: the Atenção half is scoped to one Especialização (Discernir Motivação) and reduces a
-    //  GD, neither of which a Talento can do.
+    // TODO: the Atenção half is scoped to one Especialização (Discernir Motivação). {@code
+    //  Feat#resolveDifficultyReduction} takes a SkillType but no SkillTrait, so it cannot see
+    //  which Especialização the roll was requested with — unlike resolveSkillRollBonus, which
+    //  does receive one. Reducing the GD of *every* Atenção roll would be wider than the clause.
     LEITURA_COMPORTAMENTAL(
             "Adquira vantagem em suas rolagens de ‘Persuasão’. A GD de suas rolagens de Atenção: "
                     + "Discernir Motivação é reduzida em -1 nível.",
             FeatRequirements.builder()
                     .attributeDomain(AttributeDomain.INSTINCT)
                     .requiredAttributeValue(3)
-                    .build()),
+                    .build()) {
+        /** One named Perícia, no condition — the plain form of this tree's recurring clause. */
+        @Override
+        public int resolveSkillRollBonus(final SkillType skillType, final SceneContext sceneContext,
+                                          final SkillTrait requestedAbility, final Character character) {
+            return skillType == SkillType.PERSUASAO ? Skill.ADVANTAGE_BONUS : 0;
+        }
+    },
 
     /**
      * "Você recebe Vantagem em suas rolagens de 'Artes' e 'Persuasão', mas apenas quando tiver a
@@ -236,8 +275,10 @@ public enum PeritoFeat implements Feat {
      * "Enquanto você for o último a agir, sua Margem Crítica Menor aumenta em +1 para cada Título
      * Aventyr Desperto."
      */
-    // TODO: same turn-order-position and Iniciativa-maximum blockers as ANALISTA_TATICO.
-    // TODO: Margem Crítica hook missing on Feat, and this names the Menor tier specifically.
+    // TODO: same turn-order-position and Iniciativa-maximum blockers as ANALISTA_TATICO —
+    //  Feat#resolveCriticalMarginIncrease exists and names the Menor tier this clause wants, but
+    //  "enquanto você for o último a agir" has nothing to read: turn order is not live on
+    //  SceneContext.
     // TODO: resistance to Correntes de Efeitos is not a stat — EffectChainService compares a
     //  margin, with no per-character resistance term to raise or lower.
     GRANDE_ANALISTA_TATICO(
@@ -253,8 +294,11 @@ public enum PeritoFeat implements Feat {
      * "Você recebe Vantagem adicional em suas Rolagens da Perícia escolhida enquanto houver pelo
      * menos dois aliados em Distância Curta treinados nesta mesma Perícia."
      */
-    // TODO: SceneContext#getAlliesWithin resolves the proximity half and each ally's Graduação is
-    //  readable, but no Feat hook receives a SceneContext.
+    // TODO: the chosen Perícia is readable now (FocoEmPericiaFeat#chosenBy), and the proximity
+    //  half is expressible — Feat#resolveSkillRollBonus receives the SceneContext,
+    //  SceneContext#getAlliesWithin resolves it, and each ally's Graduação in that Perícia is
+    //  readable. What still blocks it is the "adicional" stacking this enum's javadoc describes:
+    //  nothing records that a roll is already advantaged.
     TRABALHO_EM_EQUIPE(
             "Você recebe Vantagem adicional em suas Rolagens da Perícia escolhida no Talento Foco "
                     + "em Perícia enquanto houver pelo menos dois aliados em Distância Curta "
@@ -264,7 +308,9 @@ public enum PeritoFeat implements Feat {
                     .build()),
 
     /** "Ao invés de receber Vantagem adicional a GD de sua rolagem será reduzida em -1 Nível." */
-    // TODO: builds on TRABALHO_EM_EQUIPE, which is itself unbuilt, and a Feat cannot reduce a GD.
+    // TODO: builds on TRABALHO_EM_EQUIPE, which is itself unbuilt (blocked on the "adicional"
+    //  stacking) — so although Feat#resolveDifficultyReduction is real, there is no "Vantagem
+    //  adicional" trigger for it to replace.
     TRABALHO_EM_EQUIPE_APRIMORADO(
             "Sempre que você puder ser beneficiado pelo Talento Trabalho em Equipe, ao invés de "
                     + "receber Vantagem adicional a GD de sua rolagem será reduzida em -1 Nível.",
@@ -298,6 +344,9 @@ public enum PeritoFeat implements Feat {
                     .requiredSkillType(SkillType.ATLETISMO)
                     .requiredSkillGraduation(1)
                     .build());
+
+    /** CONTROLE_DA_SITUACAO's own stated "+2" to the Margem Crítica. */
+    private static final int CONTROLE_DA_SITUACAO_MARGIN_INCREASE = 2;
 
     private final String description;
     private final FeatRequirements featRequirements;

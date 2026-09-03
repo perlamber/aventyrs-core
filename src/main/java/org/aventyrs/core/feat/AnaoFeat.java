@@ -4,6 +4,7 @@ import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.DefenseType;
 import org.aventyrs.core.character.SizeCategory;
+import org.aventyrs.core.item.Weapon;
 import org.aventyrs.core.race.Anao;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.skill.Skill;
@@ -14,8 +15,10 @@ import org.aventyrs.core.title.TitleArchetype;
 /**
  * Talentos Anões — the Ymirian half of the Anão's own tree.
  *
- * <p><b>Four of the five carry real effects.</b> {@link #FILHO_DE_YMIR} and {@link
- * #VIGOR_DO_INVERNO} go through {@code Feat}'s multiplier hooks; {@link #VANTAGEM_DE_TAMANHO} and
+ * <p><b>Four of the five carry real effects.</b> {@link #FILHO_DE_YMIR} goes through {@code
+ * Feat}'s PV-multiplier hook and the weapon-aware {@code resolveDamageBaseIncrease} (its "de
+ * armas" scope excludes only a bare-handed Ataque Desarmado); {@link #VIGOR_DO_INVERNO} through
+ * the multiplier hook; {@link #VANTAGEM_DE_TAMANHO} and
  * {@link #GLORIA_YMIRIANA} are conditioned on <i>who is on the other side of the roll</i>, and
  * became expressible when {@code SceneContext#getOpposedCharacter()} landed — the target on an
  * attack roll, the attacker on a defence roll. Between them they are the reason two new {@code
@@ -78,12 +81,6 @@ public enum AnaoFeat implements Feat {
      * <p>Note the Pré-requisito is a bare "Vigor 4" — no race clause — so despite the Anão tag
      * this Talento is open to anyone who reaches it, exactly as printed.
      */
-    // TODO: "de armas" cannot be honoured — resolveDamageBaseIncrease(Character) sees neither
-    //  the Weapon nor the SkillType, so the scale-up also applies to an Ataque Desarmado, which
-    //  this clause excludes. Over-grants in that one case; granting nothing would be further
-    //  from the text. Closing it needs the hook widened to take the AttackSource, which is the
-    //  same missing distinction CLAUDE.md's "Classifying an attack as Desarmado/Arma Natural"
-    //  row names.
     FILHO_DE_YMIR(
             "Seu Multiplicador de PV e Dano Base de armas aumentam em +1.",
             FeatRequirements.builder()
@@ -95,9 +92,12 @@ public enum AnaoFeat implements Feat {
             return 1;
         }
 
+        /** "de armas" — any wielded {@link Weapon} (an Arma Natural is still an arma), never a
+         * bare-handed Ataque Desarmado, which {@code DamageBaseService} passes here as a {@code
+         * null} weapon. */
         @Override
-        public int resolveDamageBaseIncrease(final Character character) {
-            return 1;
+        public int resolveDamageBaseIncrease(final Character character, final Weapon weapon) {
+            return weapon == null ? 0 : 1;
         }
     },
 

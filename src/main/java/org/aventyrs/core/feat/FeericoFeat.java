@@ -209,12 +209,10 @@ public enum FeericoFeat implements Feat {
     /**
      * "Escolha entre Artes, Atenção e Persuasão… Você recebe uma Habilidade de Competência de
      * cada Perícia escolhida e Vantagem em suas rolagens."
+     *
+     * <p>The Vantagem half is <b>real</b>, through {@link AdotadoPorSylphFeat} — the acquired,
+     * choice-carrying form granted in place of this constant.
      */
-    // TODO: the Vantagem is real in shape but its scope is an acquisition-time *choice* — one
-    //  Perícia per Título Desperto, from a list of three — and a Feat is a flat catalog constant
-    //  carrying no per-acquisition data. The two shapes that could hold it both exist (an
-    //  instance-based class, or one constant per option) but neither fits a tree that is one
-    //  enum class. Same blocker as HumanoFeat#LIMIAR_DA_EVOLUCAO.
     // TODO: the free Habilidade de Competência per chosen Perícia is the acquisition-slot gap.
     ADOTADO_POR_SYLPH(
             "Escolha entre Artes, Atenção e Persuasão. Você pode escolher uma desta Perícias para "

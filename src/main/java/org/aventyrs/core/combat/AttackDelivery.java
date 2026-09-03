@@ -62,6 +62,9 @@ import static org.aventyrs.core.util.TranslatableMessages.NOT_AN_ATTACK_SKILL;
  *
  * <p>TODO: apply the attacker's difficultyReduction once the rules define what one nível is
  * worth against a flat Defesa (or once a foe's Defesa is authored as a tier rather than a number).
+ * {@code AssassinoFeat#SAQUE_RELAMPAGO}'s "-1 nível" is the first authored clause blocked here —
+ * it joins {@code unappliedDifficultyReduction} on this path and applies for real on the direct
+ * skill-roll path and via {@link AttackReceiver}.
  *
  * <h2>What it produces</h2>
  *
@@ -88,14 +91,17 @@ public class AttackDelivery {
     /**
      * Resolves attack, reporting the whole exchange without applying any of it.
      *
-     * <p>Rolls the attacker's Perícia <b>exactly once</b> — that call consumes {@code
-     * CombatantSheet#consumeFirstRollThisTurn} and can grant a temporary Ego point on a critical
-     * success, so rolling twice for one attack would double-consume the Turn's state. It goes
+     * <p>Rolls the attacker's Perícia <b>exactly once</b> — that call can grant a temporary Ego
+     * point on a critical success (the only state it changes; the first-roll-of-Turn check it
+     * also runs is non-mutating now), so rolling twice for one attack would double-grant. It goes
      * through the longest {@code applyTo}, so both a target-conditioned ability ({@code FRIEZA}'s
      * proximity damage bonus, {@code ABATEDORES_DE_GIGANTES}' bonus against a larger foe) and a
      * delivery-conditioned one ({@code ARREMESSO_PODEROSO}'s substituted Attribute, from {@link
      * DeliveredAttack#getAttackSource()}) resolve against the real attack rather than a generic
-     * fact about the encounter.
+     * fact about the encounter. The API is expected to call {@code
+     * attacker.recordAction(...)} after {@code resolve} returns, building the {@code
+     * CombatantAction} from {@code getAttackResult().getGoverningAttributeDomain()} and the
+     * {@code AttackSource}/{@code ActionCost} it supplied.
      *
      * <p>With no {@code attackRoll} supplied, the comparison and the chain are skipped: every
      * outcome stays {@code null}, while {@code attackTotal} (the bonuses alone) and {@code
@@ -135,7 +141,7 @@ public class AttackDelivery {
 
         if (hit) {
             attackResult = attackResult.toBuilder()
-                    .nextInteraction(buildChain(attack, criticalEffectTriggered, effectChainTriggered))
+                    .nextInteraction(buildChain(attack, criticalResult, criticalEffectTriggered, effectChainTriggered))
                     .build();
         }
 
@@ -161,6 +167,7 @@ public class AttackDelivery {
      * the filter is shared between both directions rather than written here twice.
      */
     private Interaction<CombatantSheet> buildChain(final DeliveredAttack attack,
+                                                    final CriticalResult criticalResult,
                                                     final boolean criticalEffectTriggered,
                                                     final boolean effectChainTriggered) {
         List<Effect> stages = new ArrayList<>();
@@ -168,7 +175,7 @@ public class AttackDelivery {
             stages.addAll(attack.getEffectChains());
         }
         if (criticalEffectTriggered) {
-            stages.addAll(CriticalEffect.applicableTo(attack.getDefender(), attack.getCriticalEffects()));
+            stages.addAll(CriticalEffect.applicableTo(attack.getDefender(), allCriticalEffects(attack, criticalResult)));
         }
 
         Interaction<CombatantSheet> next = null;
@@ -176,5 +183,20 @@ public class AttackDelivery {
             next = stages.get(i).chainInto(next);
         }
         return new DamageInteraction(damageService).chainInto(next);
+    }
+
+    /**
+     * The caller-supplied Efeitos Críticos plus every one the attacker's Talentos add for this
+     * kind of hit — {@code AssassinoFeat#ABRIR_FERIDAS}'s "'Sangramento' como Efeito Crítico
+     * adicional". Talentos are outside every {@code ModifierResolver} scan, so they get an
+     * explicit pass, the same shape {@code AbstractSkillInteraction} uses for its own {@code
+     * Feat} hooks.
+     */
+    private List<CriticalEffect> allCriticalEffects(final DeliveredAttack attack, final CriticalResult criticalResult) {
+        List<CriticalEffect> effects = new ArrayList<>(attack.getCriticalEffects());
+        attack.getAttacker().getCharacter().getFeats().forEach(feat ->
+                effects.addAll(feat.resolveExtraCriticalEffects(attack.getAttacker().getCharacter(),
+                        attack.getAttackSkill(), attack.getAttackSource(), criticalResult)));
+        return effects;
     }
 }

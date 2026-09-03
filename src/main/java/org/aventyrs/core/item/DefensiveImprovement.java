@@ -91,9 +91,18 @@ public enum DefensiveImprovement implements Improvement {
     BENCAO_SELVAGEM("Benção Selvagem", ItemRarity.RARE, 0, 0, 1, 0, 0,
             "Margem Crítica Menor de Ataques efetuados com Armas Naturais aumenta em +1 número.",
             "Dano Base de Ataques efetuados com Armas Naturais aumenta em +1.") {
+        /**
+         * Asks the wielder, not the weapon: a Talento can make an ordinary blade count as an Arma
+         * Natural for its holder (see {@code Feat#reclassifiesAsNaturalWeapon}), and this Favor's
+         * "Ataques efetuados com Armas Naturais" follows that. Falls back to the weapon's own
+         * category when no character is supplied.
+         */
         @Override
         public int resolveDamageBaseIncrease(final Weapon weapon, final Character character) {
-            return weapon.getCategory() == ItemCategory.NATURAL_WEAPON ? 1 : 0;
+            boolean natural = character == null
+                    ? weapon.getCategory() == ItemCategory.NATURAL_WEAPON
+                    : character.treatsAsNaturalWeapon(weapon);
+            return natural ? 1 : 0;
         }
     },
     BENCAO_ELEMENTAL("Benção Elemental", ItemRarity.UNCOMMON, 0, 0, 0, 0, 0,

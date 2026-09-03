@@ -56,9 +56,13 @@ public class DefenseServiceImpl implements DefenseService {
                                final SceneContext sceneContext, final DamageDescriptor damageDescriptor) {
         return sumAbilityModifiers(target.getCharacter(), defenseType)
                 + sumEquipment(target.getCharacter(), defenseType, sceneContext, damageDescriptor)
-                + sumFeats(target.getCharacter(), defenseType, sceneContext)
+                + sumFeats(target.getCharacter(), defenseType, sceneContext, target)
                 + target.getTemporaryBonus(ModifierType.DEFESAS)
-                + target.getTemporaryBonus(defenseType.getModifierType());
+                + target.getTemporaryBonus(defenseType.getModifierType())
+                // Desprevenido's -2 Defesas, and anything conferring it (Caído, Flanqueado,
+                // Cego, or the fear ladder while close enough to its origin).
+                + target.getConditionBonus(ModifierType.DEFESAS, sceneContext)
+                + target.getConditionBonus(defenseType.getModifierType(), sceneContext);
     }
 
     /**
@@ -105,8 +109,17 @@ public class DefenseServiceImpl implements DefenseService {
      * explicit pass, the same way equipment does.
      */
     private int sumFeats(final Character character, final DefenseType defenseType, final SceneContext sceneContext) {
+        return sumFeats(character, defenseType, sceneContext, null);
+    }
+
+    /**
+     * holder is the combatant's own sheet, or {@code null} on the {@code Character}-only entry
+     * point — a Talento conditioned on live combat state reads that as "condition not met".
+     */
+    private int sumFeats(final Character character, final DefenseType defenseType,
+                          final SceneContext sceneContext, final CombatantSheet holder) {
         return character.getFeats().stream()
-                .mapToInt(feat -> feat.resolveDefenseBonus(defenseType, character, sceneContext))
+                .mapToInt(feat -> feat.resolveDefenseBonus(defenseType, character, sceneContext, holder))
                 .sum();
     }
 

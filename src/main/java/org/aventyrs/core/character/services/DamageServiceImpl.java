@@ -55,9 +55,18 @@ public class DamageServiceImpl implements DamageService {
      * would be built for a hypothetical consumer.
      */
     private int sumFeatDamageReduction(final Character character) {
+        return sumFeatDamageReduction(character, null);
+    }
+
+    /**
+     * holder is the combatant's own sheet, or {@code null} on the {@code Character}-only entry
+     * point — a Talento conditioned on live state (a held Condição) reads that as "condition not
+     * met", the same convention a {@code null} {@code SceneContext} already has.
+     */
+    private int sumFeatDamageReduction(final Character character, final CombatantSheet holder) {
         int total = 0;
         for (Feat feat : character.getFeats()) {
-            total += feat.resolveDamageReduction(character);
+            total += feat.resolveDamageReduction(character, holder);
         }
         return total;
     }
@@ -80,7 +89,7 @@ public class DamageServiceImpl implements DamageService {
         int total = sumAcrossSources(character, ModifierType.DAMAGE_REDUCTION);
         total += sumEquipmentDamageReduction(character);
         total += sumEquipmentDamageReduction(character, damageDescriptor);
-        total += sumFeatDamageReduction(character);
+        total += sumFeatDamageReduction(character, target);
         total += sumAttributeAbilityDamageReduction(character, target, damageType, source);
         return Math.max(0, total);
     }

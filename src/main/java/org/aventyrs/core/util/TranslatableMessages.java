@@ -13,6 +13,7 @@ public class TranslatableMessages {
     public static final String CHARACTER_SHEET_NOT_IN_SCENE = "CHARACTER_SHEET_NOT_IN_SCENE";
     public static final String INVALID_TURN_CURSOR = "INVALID_TURN_CURSOR";
     public static final String INVALID_SKILL_ROLL = "INVALID_SKILL_ROLL";
+    public static final String INVALID_ACTION_COST = "INVALID_ACTION_COST";
     public static final String INVALID_DIE_ROLL = "INVALID_DIE_ROLL";
     public static final String REQUIRED_SKILL_TRAIT_NOT_HELD = "REQUIRED_SKILL_TRAIT_NOT_HELD";
     public static final String UNKNOWN_SKILL_TYPE = "UNKNOWN_SKILL_TYPE";
@@ -23,6 +24,15 @@ public class TranslatableMessages {
     public static final String CRITICAL_EFFECT_REQUIRES_A_CRITICAL_HIT = "CRITICAL_EFFECT_REQUIRES_A_CRITICAL_HIT";
     public static final String INVALID_PRIMOR_EGO_DOMAIN = "INVALID_PRIMOR_EGO_DOMAIN";
     public static final String ACTIVE_ABILITY_NOT_HELD = "ACTIVE_ABILITY_NOT_HELD";
+
+    /** A weapon cannot be drawn because the character is not carrying it. */
+    public static final String WEAPON_NOT_CARRIED = "WEAPON_NOT_CARRIED";
+
+    /** A weapon cannot be drawn because it is already in hand. */
+    public static final String WEAPON_ALREADY_DRAWN = "WEAPON_ALREADY_DRAWN";
+
+    /** A held Condição forbids getting a weapon into your hands at all — Devorado. */
+    public static final String WEAPON_DRAW_PREVENTED = "WEAPON_DRAW_PREVENTED";
     public static final String NOT_ENOUGH_ACTION_POINTS = "NOT_ENOUGH_ACTION_POINTS";
     public static final String NOT_ENOUGH_MAGIC_POINTS = "NOT_ENOUGH_MAGIC_POINTS";
     public static final String SKILL_NOT_TRAINED = "SKILL_NOT_TRAINED";
@@ -44,4 +54,11 @@ public class TranslatableMessages {
     public static final String INVALID_SPELL_ACTIVATION = "INVALID_SPELL_ACTIVATION";
     public static final String SPELL_PREREQUISITE_NOT_MET = "SPELL_PREREQUISITE_NOT_MET";
     public static final String INVALID_SPELL_CAST_TARGET = "INVALID_SPELL_CAST_TARGET";
+    public static final String INVALID_SPELL_DAMAGE = "INVALID_SPELL_DAMAGE";
+
+    /** The caster is under a Condição that forbids Conjurar Magias — Silêncio. */
+    public static final String SPELL_CASTING_PREVENTED = "SPELL_CASTING_PREVENTED";
+
+    /** The actor is under a Condição that forbids activating Habilidades — Silêncio. */
+    public static final String ABILITY_ACTIVATION_PREVENTED = "ABILITY_ACTIVATION_PREVENTED";
 }

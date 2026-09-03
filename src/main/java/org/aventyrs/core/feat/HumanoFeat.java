@@ -65,11 +65,11 @@ public enum HumanoFeat implements Feat {
      * seu segundo Título Aventyr você recebe uma Habilidade do Atributo escolhido."
      */
     // TODO: a Talento cannot grant an Atributo bonus — same gap as
-    //  AnaoFeat#CONSELHEIRO_DE_GUERRA_YMIRIANO and TrollFeat#VIGOR_TROLLICO. This one is harder
-    //  still: *which* Atributo is a per-acquisition choice, and a Feat is a flat catalog constant
-    //  carrying no such data. The two shapes that could hold it both exist — an instance-based
-    //  class (ArtesAprimorarComArteAbility's pattern) or one constant per AttributeDomain
-    //  (PeritoTeoricoAbility's) — but neither fits an enum whose whole tree is one enum class.
+    //  AnaoFeat#CONSELHEIRO_DE_GUERRA_YMIRIANO and TrollFeat#VIGOR_TROLLICO. *Which* Atributo is
+    //  a per-acquisition choice, and the choice-carrying-instance shape (see
+    //  FocoEmPericiaFeat/PeritoFeat#FOCO_EM_PERICIA) now exists for exactly this — but it only
+    //  records the pick; there is still no hook a chosen-Atributo instance could override to grant
+    //  the bonus, so the primary blocker stands.
     // TODO: the second-Título clause is the "grant an extra acquisition slot" gap, restricted to
     //  the chosen Atributo.
     LIMIAR_DA_EVOLUCAO(

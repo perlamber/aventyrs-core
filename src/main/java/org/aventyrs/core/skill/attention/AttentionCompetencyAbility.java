@@ -2,8 +2,13 @@ package org.aventyrs.core.skill.attention;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.aventyrs.core.character.AttributeDomain;
+import org.aventyrs.core.scene.SceneContext;
+import org.aventyrs.core.skill.DifficultyLevel;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
 import org.aventyrs.core.skill.SkillType;
+
+import java.util.Optional;
 
 /**
  * The Habilidades de Competência available to characters trained in Atenção.
@@ -12,25 +17,39 @@ import org.aventyrs.core.skill.SkillType;
 @AllArgsConstructor
 public enum AttentionCompetencyAbility implements SkillCompetencyAbility {
 
-    // TODO: automatic success, skipping the roll entirely, to perceive occurrences at
-    // Distância Muito Curta whose GD is Média or lower — the Distância vocabulary itself now
-    // exists (org.aventyrs.core.scene.Range), but that only tracks distance *between
-    // CombatantSheets* (see SceneContext), not to an arbitrary in-fiction occurrence, so it
-    // doesn't directly cover this case; still needs a roll-resolution-vs-DifficultyLevel
-    // engine too (to know an occurrence's GD and compare it against Média).
+    /**
+     * "Você é sempre bem-sucedido, dispensando rolagens… cuja GD seja igual ou inferior à Média."
+     * <b>The GD ceiling is real</b>, through {@link
+     * SkillCompetencyAbility#resolveAutomaticSuccess}: the roll now states the target it was made
+     * against, so "igual ou inferior à Média" is a comparison this ability can make.
+     */
+    // TODO: "em Distância Muito Curta" is not enforced. Range exists, but SceneContext measures
+    //  distance between CombatantSheets and the thing being perceived is an in-fiction
+    //  occurrence, not a combatant — so there is nothing to measure to. Granted at any distance,
+    //  which is wider than the clause; the alternative is granting nothing.
     PERCEPCAO_DE_FOXM("Você é sempre bem-sucedido, dispensando rolagens, para perceber " +
-            "ocorrências em Distância Muito Curta cuja GD seja igual ou inferior à Média."),
+            "ocorrências em Distância Muito Curta cuja GD seja igual ou inferior à Média.") {
+        @Override
+        public boolean resolveAutomaticSuccess(final SkillType skillType, final int targetValue,
+                                                final SceneContext sceneContext) {
+            return skillType == SkillType.ATTENTION
+                    && targetValue <= DifficultyLevel.MEDIUM.getBaseValue();
+        }
+    },
 
-    // TODO: lets this Perícia use Gnose instead of its normal base Attribute (Instinto), and
-    // grants perfect non-magical maze/labyrinth backtracking. The substitution half's
-    // mechanism now exists (see SkillCompetencyAbility.getSubstituteAttributeDomain() /
-    // AtaqueCorpoACorpoCompetencyAbility.ACUIDADE), this constant just doesn't override it
-    // yet, and AttentionInteraction doesn't yet resolve/pass it into
-    // CharacterSkillService.getValueForRoll's substituteAttributeDomain overload (same
-    // remaining wiring gap as FurtividadeCompetencyAbility.LADINO_TEORICO); the
-    // maze/navigation half still needs its own system, unrelated to attribute substitution.
+    // Two halves. The substitution — Gnose for Instinto — is real, riding
+    // SkillCompetencyAbility.getSubstituteAttributeDomain().
+    // TODO: "nunca se perde em labirintos (não-mágicos)" needs a navigation/exploration system
+    // to be exempt from; this core tracks no location beyond a Cena's participants and the
+    // distances between them (org.aventyrs.core.scene.SceneContext), so there is no
+    // getting-lost state for perfect backtracking to override.
     ALMA_DE_SHERLOCK("Você pode substituir o Atributo Base desta perícia por Gnose e nunca " +
-            "se perde em labirintos (não-mágicos), sempre sabendo como retornar ao início."),
+            "se perde em labirintos (não-mágicos), sempre sabendo como retornar ao início.") {
+        @Override
+        public Optional<AttributeDomain> getSubstituteAttributeDomain() {
+            return Optional.of(AttributeDomain.GNOSE);
+        }
+    },
 
     // TODO: lets you sense magical auras (Regalias, Encantamentos, Maldições) on people and
     // objects — no magic-aura/enchantment-detection system exists yet.

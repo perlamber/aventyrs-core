@@ -2,7 +2,13 @@ package org.aventyrs.core.feat;
 
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.scene.SceneContext;
+import org.aventyrs.core.scene.TerrainType;
+import org.aventyrs.core.skill.Skill;
+import org.aventyrs.core.skill.SkillTrait;
 import org.aventyrs.core.skill.SkillType;
+
+import java.util.Optional;
 
 /**
  * Talentos de Sobrevivência — staying alive: armour, favoured terrain, and refusing to drop.
@@ -104,10 +110,13 @@ public enum SobrevivenciaFeat implements Feat {
     /**
      * "Escolha um tipo de terreno. Você recebe Bônus de +2 em suas Defesas e Vantagem em rolagens
      * de Furtividade e de Conhecimentos: Natureza no terreno escolhido."
+     *
+     * <p><b>Real</b>, through {@link TerrenoPrediletoFeat} — the acquired, choice-carrying form
+     * granted in place of this constant. The six terrenos the rules name are exactly {@link
+     * TerrainType}'s six constants, and "no terreno escolhido" is read off the {@code
+     * SceneContext} both hooks receive, the same way {@code ElficoFeat#GUARDIAO_DOS_BOSQUES}
+     * reads it.
      */
-    // TODO: TerrainType describes a whole Scene, but its constants are not the six named here
-    //  (Aquáticos, Cidades, Desertos, Florestas, Montanhas, Subterrâneo), and no Feat hook
-    //  receives a SceneContext to read the current terrain from.
     // TODO: its Pré-requisito names an Especialização (Conhecimentos: Natureza);
     //  FeatRequirements models a Habilidade de Competência but not a SkillSpecialization.
     TERRENO_PREDILETO(
@@ -122,24 +131,43 @@ public enum SobrevivenciaFeat implements Feat {
     /**
      * "Sua Margem Crítica Menor aumenta em +1 número, então você recebe Vantagem em rolagens de
      * Perícias de Ataque e Danos enquanto no terreno escolhido."
+     *
+     * <p>The terrain match is real now ({@link TerrenoPrediletoFeat#chosenBy}), so both halves
+     * this hook family can reach are wired: the Margem Crítica <b>Menor</b> half (all {@code
+     * SkillRoll#getCriticalResult(int)}'s margin touches — Acerto Crítico Maior stays a literal
+     * triple-6, and any Maior widening would need its own explicit mechanism) and the Perícias de
+     * Ataque Vantagem half.
      */
-    // TODO: same missing terrain match as TERRENO_PREDILETO; Margem Crítica hook missing on Feat
-    //  and named to the Menor tier only; granting a Corrente de Efeitos has no hook.
+    // TODO: "e Danos" — a Vantagem on a *dano* roll has no Feat hook. Granting a Corrente de
+    //  Efeitos – Oprimir has no hook on the attack path either.
     MESTRE_DE_CACA(
             "Sua Margem Crítica Menor aumenta em +1 número, então você recebe Vantagem em rolagens "
                     + "de Perícias de Ataque e Danos enquanto no terreno escolhido. Nestes "
                     + "terrenos seus ataques recebem a Corrente de Efeitos – Oprimir.",
             FeatRequirements.builder()
                     .requiredFeat(TERRENO_PREDILETO)
-                    .build()),
+                    .build()) {
+        @Override
+        public int resolveCriticalMarginIncrease(final SkillType skillType, final SceneContext sceneContext,
+                                                   final Character character) {
+            return inChosenTerrain(character, sceneContext) ? MESTRE_DE_CACA_MARGIN_INCREASE : 0;
+        }
+
+        @Override
+        public int resolveSkillRollBonus(final SkillType skillType, final SceneContext sceneContext,
+                                          final SkillTrait requestedAbility, final Character character) {
+            return inChosenTerrain(character, sceneContext) && skillType.isAttackSkill()
+                    ? Skill.ADVANTAGE_BONUS : 0;
+        }
+    },
 
     /**
      * "Você recebe Bônus de +1 em Vigor e Resistência à Críticos para resistir a ataques enquanto
      * estiver em seu Terreno Predileto."
      */
-    // TODO: same missing terrain match as TERRENO_PREDILETO.
-    // TODO: a round-scoped Attribute bonus does not exist — AttributeValue's three components are
-    //  all permanent (gap catalog, "Round-scoped Attribute bonuses").
+    // TODO: the terrain match is real now (TerrenoPrediletoFeat#chosenBy), but neither effect it
+    //  would gate is: a round-scoped Attribute bonus does not exist — AttributeValue's three
+    //  components are all permanent (gap catalog, "Round-scoped Attribute bonuses").
     // TODO: "Resistência à Críticos" is not a stat — CriticalEffect immunity is per named
     //  CriticalEffectType, not a general resistance.
     PROTETOR_TERRITORIALISTA(
@@ -225,9 +253,11 @@ public enum SobrevivenciaFeat implements Feat {
      * "Após ter seus PV reduzidos à zero ou menos você ainda pode agir por uma quantidade de
      * Rodadas igual a 1 + quantidade de Títulos Aventyrs que possuir."
      */
-    // TODO: CharacterStatus is derived from current PV on every call, so FALLEN/COMMA/DEAD cannot
-    //  be suspended — there is no stored tier to override, and nothing gates acting on status.
-    // TODO: "não é afetado pelo Malefício Coma" needs Malefício classification (gap catalog).
+    // TODO: "Coma" here is CharacterStatus.COMMA, not a Condição — despite the rules text calling
+    //  it a Malefício, it is a tier of the PV ladder, so ConditionType has no entry for it and
+    //  should not gain one. CharacterStatus is derived from current PV on every call, so
+    //  FALLEN/COMMA/DEAD cannot be suspended: there is no stored tier to override, and nothing
+    //  gates acting on status. That one gap blocks both halves of this clause.
     // TODO: capping PA at 2 in a way effects cannot raise needs a ceiling stage;
     //  ActionPointsService sums additively and clamps only at 0.
     // TODO: disjunctive Pré-requisitos on both halves (Vigor *ou* Instinto 5; Duro de Ferir *ou*
@@ -244,6 +274,22 @@ public enum SobrevivenciaFeat implements Feat {
                     .requiredFeat(DURO_DE_FERIR)
                     .requiredAwakenedTitles(1)
                     .build());
+
+    /** MESTRE_DE_CACA's own stated "+1 número" to the Margem Crítica Menor. */
+    private static final int MESTRE_DE_CACA_MARGIN_INCREASE = 1;
+
+    /**
+     * Whether character holds {@link TerrenoPrediletoFeat} and sceneContext is currently that
+     * chosen terrain — the "enquanto no terreno escolhido" condition every dependent of {@link
+     * #TERRENO_PREDILETO} shares.
+     */
+    private static boolean inChosenTerrain(final Character character, final SceneContext sceneContext) {
+        if (sceneContext == null) {
+            return false;
+        }
+        Optional<TerrainType> chosen = TerrenoPrediletoFeat.chosenBy(character);
+        return chosen.isPresent() && sceneContext.isTerrain(chosen.get());
+    }
 
     private final String description;
     private final FeatRequirements featRequirements;

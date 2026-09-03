@@ -176,15 +176,36 @@ already-physically-rolled result in. Every Perícia roll in this ruleset is 3d6 
   `UNIMAGINABLE` handled by inference — see `ArtesInteraction`'s own javadoc), but e.g.
   `MedicinaECuraExcellency.FOCADO`'s auto-success is still unbuilt. Deliberately don't guess at
   a mapping where the rules text leaves genuine ambiguity.
+- `SkillRoll` also carries an optional 4th ctor arg, an `org.aventyrs.core.sheet.ActionCost`
+  (`ACTION_POINTS`/`FREE_ACTION`/`REACTION` + `spentActionPoints()`). It is **metadata, not a
+  resolution input** — nothing in the bonus/GD math reads it except
+  `Feat#resolveAttackCostDifficultyReduction` (the cost-conditioned GD hook,
+  `AssassinoFeat#SAQUE_RELAMPAGO`). `InteractionResult` gained `governingAttributeDomain` (the
+  resolved domain, for building a `CombatantAction`).
+- **The first-roll-of-Turn check is non-mutating now.** `applyTo` reads
+  `CombatantSheet#isFirstRollOfTurnFor(AttributeDomain)` — a slice of the per-Rodada action log
+  after the `startTurn` marker — instead of the removed `consumeFirstRollThisTurn`. The "mark it
+  happened" step is the API's explicit `recordAction(CombatantAction)` afterwards; a preview
+  `applyTo` with no follow-up record no longer burns the flag. See the `skill` package-info's
+  "Recording an action" section and the `aggregated-character-stats` skill.
 
 ### Margem Crítica — `resolveCriticalMarginIncrease`
 
 `SkillRoll#getCriticalResult(int)` takes a widening margin, and
 `AbstractSkillInteraction#sumCriticalMarginIncrease` feeds it the sum of
 `resolveCriticalMarginIncrease(SkillType, SceneContext)` across `EgoAdvantage`/
-`AttributeAbility`/`SkillCompetencyAbility` — those exact three, identical signature.
-`SorteAdvantage.ACE` is the reference override. Its still-unconsumed differently-shaped
-neighbour is `ArtesAprimorarComArteAbility#getCriticalMarginReduction`.
+`AttributeAbility`/`SkillCompetencyAbility` — those exact three, identical signature —
+**plus** `Feat`, which carries `resolveCriticalMarginIncrease(SkillType, SceneContext,
+Character[, AttackSource[, CombatantSheet holder]])`: the 4-arg form is the `Feat` counterpart,
+the 5-arg one (defaulting down) is for a clause scoped to *what the attack was made with* (an
+`AttackMethod` matched against the delivered `AttackSource`), and the 6-arg one (defaulting down
+again, `holder` = `target`) is for a clause reading the roller's live combat state — held
+`Condição`s or the per-Rodada/per-Cena action log (`AssassinoFeat.ACERTO_CRITICO_RELAMPAGO`).
+`SorteAdvantage.ACE` is the ability-side reference override;
+`AssassinoFeat.ACERTO_CRITICO_APRIMORADO` (via `AcertoCriticoAprimoradoFeat`) is the
+attack-method-scoped `Feat` one. `Feat#resolveSkillRollBonus` grew the same trailing-
+`AttackSource` cascading overload, summed by `sumFeatRollBonuses`. Its still-unconsumed
+differently-shaped neighbour is `ArtesAprimorarComArteAbility#getCriticalMarginReduction`.
 
 ## Reference files to read first
 

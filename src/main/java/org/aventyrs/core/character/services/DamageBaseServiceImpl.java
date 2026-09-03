@@ -28,7 +28,7 @@ public class DamageBaseServiceImpl implements DamageBaseService {
      */
     private int sumScaleUps(final Character character, final SkillType attackingSkill, final Weapon weapon) {
         int scaleUps = character.getFeats().stream()
-                .mapToInt(feat -> feat.resolveDamageBaseIncrease(character))
+                .mapToInt(feat -> feat.resolveDamageBaseIncrease(character, weapon))
                 .sum();
 
         scaleUps += SkillCompetencyAbility.allFor(character).stream()

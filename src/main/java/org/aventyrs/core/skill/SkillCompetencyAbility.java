@@ -5,6 +5,7 @@ import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.DamageBonus;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.Blessing;
+import org.aventyrs.core.sheet.TargetScope;
 import org.aventyrs.core.sheet.CombatantSheet;
 
 import java.util.Collection;
@@ -195,6 +196,72 @@ public interface SkillCompetencyAbility extends SkillTrait {
      */
     default List<Blessing> resolveInitiativeBlessings() {
         return List.of();
+    }
+
+    /**
+     * Extra Movimento Base, in UD, this trait grants on one specific movement of the Rodada —
+     * for a clause scoped to <i>which</i> movement it is, e.g. {@code
+     * org.aventyrs.core.ability.DexterityAbility#PASSOS_LONGOS}'s "seu primeiro movimento em
+     * cada Rodada tem a distância aumentada em +2UD". movementIndex is 0-based, so the first
+     * movement of the Rodada is 0; it comes from {@code CombatantSheet
+     * #getMovementsTakenThisRound()} / {@code CombatantSheet#consumeMovementThisRound()}.
+     *
+     * <p><b>Per Ponto de Ação, like every other movement figure in this core</b> — see {@code
+     * MovementService#getMovementBase}. A clause naming a UD amount is always widening what one
+     * Ponto de Ação buys, never handing out a one-off distance, so this is summed into the same
+     * per-Ponto-de-Ação total the permanent {@code ModifierType#MOVEMENT} scan produces rather
+     * than added once afterwards.
+     *
+     * <p>Zero by default; only override on a constant whose rules text scopes a movement bonus
+     * to a particular movement of the Rodada. An unconditional "+NUD ao Movimento Base" is a
+     * plain {@code @Modifier(ModifierType.MOVEMENT)} method instead, and a Round-<i>window</i>
+     * clause ("nas duas primeiras Rodadas") is a {@code TemporaryBonus} — both are different
+     * axes from this one.
+     */
+    default int resolveRoundMovementIncrease(int movementIndex) {
+        return 0;
+    }
+
+    /**
+     * {@link Blessing}s this ability grants <b>because the roll succeeded</b> — the "após ser
+     * bem-sucedido…" family, e.g. {@code PersuasaoCompetencyAbility#FINTAR_APRIMORADO}'s Vantagem
+     * on the next Ataque roll this Rodada. Empty by default.
+     *
+     * <p>Resolved by {@code AbstractSkillInteraction} <b>only once the roll is known to have
+     * succeeded</b> — so an override does not check that itself, only whichever further condition
+     * its own clause states. A roll with no stated GD never triggers this: {@code
+     * InteractionResult#succeeded} is {@code null} there, which is "cannot tell", not "yes".
+     *
+     * <p>The Blessings are <b>reported, not applied</b>. They land on {@code
+     * InteractionResult#blessings} for the caller to grant, exactly as the initiative-time ones
+     * do — this Interaction has no business mutating a sheet that may not even be the recipient
+     * (a {@link TargetScope} may name allies). See the {@code granting-a-blessing} skill.
+     *
+     * <p>requestedAbility is what the roll was made *as*, so a clause scoped to one Especialização
+     * ("após ser bem-sucedido em rolagens de Intimidação") can narrow to it.
+     */
+    default List<Blessing> resolveSuccessBlessings(final SkillType skillType, final SkillTrait requestedAbility,
+                                                    final SceneContext sceneContext) {
+        return List.of();
+    }
+
+    /**
+     * Whether this ability makes a skillType roll succeed <b>without the dice mattering</b> —
+     * "você é sempre bem-sucedido, dispensando rolagens". False by default.
+     *
+     * <p>{@code targetValue} is the Grau de Dificuldade the roll is up against, already eased by
+     * any {@code difficultyReduction} the roller holds. It is a parameter because auto-success is
+     * routinely capped: {@code AttentionCompetencyAbility#PERCEPCAO_DE_FOXM} succeeds only
+     * against a GD "igual ou inferior à Média", so an override compares against {@code
+     * DifficultyLevel#MEDIUM.getBaseValue()} rather than granting unconditionally.
+     *
+     * <p>Consulted only when the roll states a target at all — with none, there is no GD to be
+     * automatically good enough for, and {@code InteractionResult#succeeded} stays {@code null}.
+     * sceneContext carries the proximity or terrain such a clause is usually conditioned on, and
+     * is {@code null} outside a Scene, which every override must read as "condition not met".
+     */
+    default boolean resolveAutomaticSuccess(final SkillType skillType, final int targetValue, final SceneContext sceneContext) {
+        return false;
     }
 
     /**

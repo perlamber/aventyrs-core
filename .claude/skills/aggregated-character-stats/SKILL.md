@@ -113,15 +113,20 @@ started granting a Reação for real, every fixture-built Character and every fo
 block is silent would have silently carried an extra one. Worth remembering when picking a
 placeholder constant: "does nothing today" is not a stable property.
 
-## Movimento Base — `MovementService#getMovementBase(Character)`
+## Movimento Base — `MovementService#getMovementBase`
 
 Follows the `InitiativeService` variant of the aggregated-stat shape (no new `Character`
 field, no `CharacterFixture` change). Base is derived — `SizeCategory.getMovementPerActionPoint()`
 (via `CharacterSizeService#getEffectiveSizeCategory`, so size-shifting is reflected) — plus the
 usual `ModifierType.MOVEMENT` three-source sum, using `SkillCompetencyAbility.allFor` so racial
 abilities count (unlike `ReactionsService`/`InitiativeService`, which predate that fix). Floored
-at 0. Returns the **permanent** figure only; a caller wanting this Round's actual one adds
-`CharacterSheet#getTemporaryBonus(ModifierType.MOVEMENT)`.
+at 0. The `Character` overload returns the **permanent** figure only. Two `CombatantSheet`
+overloads add what's scoped to now: `getMovementBase(sheet, movementIndex)` holds all the logic
+— permanent, plus `getTemporaryBonus(ModifierType.MOVEMENT)`, plus `resolveRoundMovementIncrease`
+across the same four sources the permanent scan covers (`AttributeAbility`,
+`SkillCompetencyAbility`, `Feat`, equipped `Item`) — and `getMovementBase(sheet)` resolves it
+against `sheet.getMovementsTakenThisRound()`, i.e. "the movement I'd make next". The
+`Character`/`CombatantSheet` pair deliberately does **not** cascade, same as `ActionPointsService`.
 
 **It is a figure *per Ponto de Ação*, not a whole-Turn allowance**, which is why it takes no
 `turnNumber` and never touches `ActionPointsService`. A character spends their Pontos de Ação
@@ -131,16 +136,56 @@ has no business making. A caller that wants distance covered multiplies this by 
 points were actually spent moving. `MovementServiceImpl` used to multiply, and its constructor
 took an `ActionPointsService` for it; both are gone.
 
-That per-point reading is also what a `MOVEMENT` bonus means, and it lands differently
-depending on the rules text granting it. "Seu Movimento Base aumenta em +2UD"
-(`AtaqueCorpoACorpoExcellency.FOCADO`, `AtletismoCompetencyAbility.PASSO_LARGO`,
-`DexterityAbility.PASSOS_LONGOS`, `InitiativeAdvantage.POSICIONAMENTO_ESTRATEGICO`) lands
-exactly — every point spent moving is worth that much more. `SorteAdvantage.AS_NA_MANGA`'s
+**Every movement figure in this ruleset is per Ponto de Ação — carry that into any new
+movement clause.** A UD amount named anywhere always widens what *one* Ponto de Ação buys, and
+is never a one-off distance added once to a movement's total. This holds for all three axes: a
+permanent `ModifierType.MOVEMENT` bonus, a Round-scoped `TemporaryBonus`, and a bonus scoped to
+one particular movement of the Rodada (`resolveRoundMovementIncrease`). So Movimento Base 4,
+`+2UD`, 3 Pontos de Ação spent moving covers (4+2)x3 = 18UD, never 4x3+2 = 14UD.
+
+"Seu Movimento Base aumenta em +2UD" (`AtaqueCorpoACorpoExcellency.FOCADO`,
+`AtletismoCompetencyAbility.PASSO_LARGO`, `InitiativeAdvantage.POSICIONAMENTO_ESTRATEGICO`)
+lands exactly — every point spent moving is worth that much more. `SorteAdvantage.AS_NA_MANGA`'s
 "você pode se mover até 2UD" is a **one-shot step**, and as a `MOVEMENT` `TemporaryBonus` it
 over-grants once its holder spends more than one Ponto de Ação moving; that's flagged on the
 constant and deliberately kept, since a one-shot movement allowance is a mechanism this core
 doesn't have and granting nothing would be further from the clause. Check which of the two
 shapes a new grant is before reaching for `ModifierType.MOVEMENT`.
+
+**Three axes, three homes.** An unconditional "+NUD ao Movimento Base" is a plain
+`@Modifier(ModifierType.MOVEMENT)` method. A Round-*window* clause ("nas duas primeiras Rodadas
+de cada Cena de Combate") is a `TemporaryBonus`/`Blessing`. A clause scoped to *which movement of
+the Rodada* it is — `DexterityAbility.PASSOS_LONGOS`'s "seu primeiro movimento em cada Rodada",
+`MobilidadeFeat.VELOCISTA`'s "+1UD para cada outro movimento feito no mesmo Turno" — is
+`resolveRoundMovementIncrease(movementIndex[, character])`, where `movementIndex` is 0-based, so
+0 *is* the first movement and the index doubles as the count of movements already made.
+`CombatantSheet#consumeMovementThisRound()` hands out those indices (atomic query-and-consume)
+and `getMovementsTakenThisRound()` previews without claiming; both reset in `startTurn`, which is
+what makes them per-Rodada.
+
+What is still *not* tracked about a movement is its **distance** and its **direction**, so
+"após se mover por uma Distância Curta" and "para se aproximar de inimigos" remain unbuildable.
+
+## The Turn lifecycle and the action logs
+
+`CombatantSheet` has `startTurn(int)` / `finishTurn()` / `startNewRound()` / `startNewScene()`.
+Roll-actions are logged into **two** lists via one `recordAction(CombatantAction)`:
+`getActionsThisRound()` (cleared by `startNewRound()`, which `Scene#next()` calls at the Rodada
+wrap) and `getActionsThisCena()` (cleared only by `startNewScene()`, which `Scene#addParticipant`
+calls). `startTurn` marks a per-Turn slice of the Rodada list, so
+`isFirstRollOfTurnFor(AttributeDomain)` / `isFirstAttackRollOfTurn()` answer a *per-Turn*
+question against a *per-Rodada* list — that pair replaced the old `consumeFirstRollThisTurn` Set,
+and gates `AttributeAbility#resolveFirstRollOfTurnBonus` (`DexterityAbility#PRECISAO`). A
+"primeira ... na Cena" clause reads `getActionsThisCena()` / `hasDrawnWeaponThisScene()`
+(`AssassinoFeat#SAQUE_RELAMPAGO`'s rider, `ACERTO_CRITICO_RELAMPAGO`). **The API records;
+`applyTo` only reads** — a preview no longer burns the flag. A `CombatantAction` carries the
+`SkillType`, the resolved governing `AttributeDomain` (from
+`InteractionResult#getGoverningAttributeDomain()`), the `AttackSource`, an `ActionCost`
+(`org.aventyrs.core.sheet` — `ACTION_POINTS`/`FREE_ACTION`/`REACTION` + `spentActionPoints()`, a
+sibling concern to `ActionProfile`'s), a `turnNumber`, and an `ActionOutcome`. Without a live
+`Scene` the logs start empty and the API must call `startNewRound()` / `startNewScene()` at its
+own boundaries — same fallback the movement counter has. There is **no scene-end** trigger, so
+"até o fim da Cena" is approximated with a long Rodada count (`ARCANISMO_AVASSALADOR`).
 
 Vertical/swim movement (`AtletismoCompetencyAbility.ALPINISTA_VELOZ`/`ANFIBIO`) and a
 mount's own movement (`DirigirECavalgarExcellency`) are a **different** sub-stat — don't wire

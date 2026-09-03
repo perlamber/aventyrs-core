@@ -5,6 +5,7 @@ import org.aventyrs.core.character.AttributeValue;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterAttributes;
 import org.aventyrs.core.character.CharacterSkill;
+import org.aventyrs.core.character.DamageDescriptor;
 import org.aventyrs.core.character.DefenseType;
 import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.ego.AutocontroleAdvantage;
@@ -354,10 +355,10 @@ class AttackReceiverTest {
     }
 
     /**
-     * The defense roll is the one thing resolve does that genuinely changes state (it consumes
-     * CharacterSheet#consumeFirstRollThisTurn and can grant a temporary Ego point on a critical
-     * success), so it must happen exactly once per incoming attack — rolling twice would
-     * double-consume the first-roll-of-turn state.
+     * The defense roll is the one thing resolve does that genuinely changes state (it can grant
+     * a temporary Ego point on a critical success — the first-roll-of-Turn check it also runs is
+     * non-mutating now), so it must happen exactly once per incoming attack; rolling twice would
+     * double-grant that Ego point.
      */
     @Test
     void resolveRollsTheDefenseExactlyOnce() {
@@ -372,14 +373,21 @@ class AttackReceiverTest {
         assertEquals(1, counting.calls);
     }
 
+    /**
+     * Counts on the <em>longest</em> {@code applyTo} overload — the one holding all the logic,
+     * which every shorter form delegates down to (CLAUDE.md, "Cascading overloads"). Counting on
+     * the four-argument form instead would miss every call {@link AttackReceiver#resolve} makes,
+     * since it passes a {@code DamageDescriptor} and so reaches the five-argument form directly.
+     */
     private static class CountingInteraction extends EsquivaEApararInteraction {
         private int calls;
 
         @Override
         public InteractionResult applyTo(final CombatantSheet target, final SceneContext sceneContext,
-                                          final SkillRoll skillRoll, final DefenseType defenseType) {
+                                          final SkillRoll skillRoll, final DefenseType defenseType,
+                                          final DamageDescriptor damageDescriptor) {
             calls++;
-            return super.applyTo(target, sceneContext, skillRoll, defenseType);
+            return super.applyTo(target, sceneContext, skillRoll, defenseType, damageDescriptor);
         }
     }
 }

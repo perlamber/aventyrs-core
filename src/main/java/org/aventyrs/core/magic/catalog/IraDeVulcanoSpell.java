@@ -4,6 +4,8 @@ import org.aventyrs.core.effect.CriticalEffectType;
 import org.aventyrs.core.magic.ActivationTime;
 import org.aventyrs.core.magic.AuthoredSpell;
 import org.aventyrs.core.magic.BranchLevel;
+import org.aventyrs.core.magic.ElementalType;
+import org.aventyrs.core.magic.SpellDamage;
 import org.aventyrs.core.magic.SpellData;
 import org.aventyrs.core.magic.SpellDuration;
 import org.aventyrs.core.magic.SpellTargeting;
@@ -37,6 +39,7 @@ public enum IraDeVulcanoSpell implements AuthoredSpell {
             .castingDifficultyFlooredByTargetMagicDefense(true)
             .description("Sopra um jato de magma em alvos próximos")
             .primaryEffectDescription("Causa Metade do Foco pontos de Dano Mágico Elemental: Magma ao alvo.")
+            .primaryDamage(SpellDamage.halfFocusElemental(0, ElementalType.MAGMA))
             .criticalEffectType(CriticalEffectType.INFLAMAR)
             .duration(SpellDuration.INSTANTANEA)
             .targeting(SpellTargeting.areaDeEfeito(AreaOfEffect.penetrating(Range.DISTANCIA_MEDIA)))
@@ -52,6 +55,7 @@ public enum IraDeVulcanoSpell implements AuthoredSpell {
             .description("Sopra uma grande quantidade de magma em seus alvos.")
             .primaryEffectDescription("Alvos atingidos sofrem 1d6+Metade do Foco pontos de Dano Mágico Elemental: "
                     + "Magma.")
+            .primaryDamage(SpellDamage.halfFocusElemental(1, ElementalType.MAGMA))
             .effectChainDescription("Estilhaço Vulcânico: Permite atingir um terceiro alvo com o efeito Penetrante.")
             .criticalEffectType(CriticalEffectType.INFLAMAR)
             .duration(SpellDuration.INSTANTANEA)
@@ -69,6 +73,8 @@ public enum IraDeVulcanoSpell implements AuthoredSpell {
             .description("Sopra uma quantidade massiva de magma em seus alvos.")
             .primaryEffectDescription("Causa 2d6+Metade do Foco pontos de Dano Mágico Elemental: Magma, dano "
                     + "reduzido em 2 para cada UD percorrido.")
+            // The "-2 por UD percorrido" falloff stays prose — this core does no geometry.
+            .primaryDamage(SpellDamage.halfFocusElemental(2, ElementalType.MAGMA))
             .effectChainDescription("Folego Vulcano: Vantagem na rolagem de Dano, dano reduzido em 1 (ao invés de 2) "
                     + "para cada UD percorrido.")
             .criticalEffectType(CriticalEffectType.INFLAMAR)
@@ -119,6 +125,8 @@ public enum IraDeVulcanoSpell implements AuthoredSpell {
                     + "detritos tomam o local, causando 2d6 Pontos de Dano Mágico Elemental: Magma a todos que ainda "
                     + "estiverem na área. "
                     + "Apenas o dano primário desta magia pode ser beneficiado por efeitos críticos.")
+            // Primary wave only. The delayed 2d6 second wave needs effect scheduling this core lacks.
+            .primaryDamage(SpellDamage.halfFocusElemental(3, ElementalType.MAGMA))
             .criticalEffectType(CriticalEffectType.INFLAMAR)
             .duration(SpellDuration.INSTANTANEA)
             .targeting(SpellTargeting.areaDeEfeito(AreaOfEffect.circle(Range.DISTANCIA_LONGA)))

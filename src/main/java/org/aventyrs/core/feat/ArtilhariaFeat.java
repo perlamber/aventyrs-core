@@ -1,5 +1,7 @@
 package org.aventyrs.core.feat;
 
+import org.aventyrs.core.character.Character;
+import org.aventyrs.core.skill.AttackSource;
 import org.aventyrs.core.skill.SkillType;
 
 /**
@@ -33,14 +35,12 @@ public enum ArtilhariaFeat implements Feat {
      * "Escolha um tipo de arma de Ataque a Distância ou de Arremesso, você recebe Vantagem nas
      * rolagens de ataque sempre que atacar inimigos à Distâncias Médias ou superiores."
      *
-     * <p>The Vantagem itself is an ordinary {@code Skill#ADVANTAGE_BONUS}, and the range condition
-     * is expressible ({@code Range#DISTANCIA_MEDIA} and beyond, via {@code SceneContext}).
+     * <p><b>Real</b>, through {@link AtiradorPerfeitoFeat} — the acquired, choice-carrying form
+     * granted in place of this constant. {@code Feat#resolveSkillRollBonus}'s {@link AttackSource}
+     * overload supplies the chosen weapon type; the range condition reads {@code
+     * SceneContext#getOpposedCharacter()}/{@code getDistanceTo}, the same way {@code
+     * Feat#resolveCriticalMarginIncrease}'s own javadoc points an opponent-conditioned clause to.
      */
-    // TODO: no Feat hook receives a SceneContext or an AttackSource, so neither the range
-    //  condition nor the chosen weapon type can be tested — a flat grant would apply at every
-    //  range, with every weapon.
-    // TODO: carries an acquisition-time choice (a tipo de arma) — CLAUDE.md's AcquiredChoice
-    //  pattern, still without a consuming mechanism.
     ATIRADOR_PERFEITO(
             "Escolha um tipo de arma de Ataque a Distância ou de Arremesso, você recebe Vantagem "
                     + "nas rolagens de ataque sempre que atacar inimigos à Distâncias Médias ou "
@@ -74,9 +74,19 @@ public enum ArtilhariaFeat implements Feat {
                     .requiredFeat(ATIRADOR_PERFEITO)
                     .build()),
 
-    /** "A distância máxima de seus ataques à Distância, físicos e Mágicos, aumentam em +1 nível." */
-    // TODO: nothing reads a character's maximum attack range — Range bands describe a resolved
-    //  distance handed in by a caller, and no stat expresses how far this character can reach.
+    /**
+     * "A distância máxima de seus ataques à Distância, físicos e Mágicos, aumentam em +1 nível."
+     *
+     * <p>The flat "+1 nível" half is real: {@link #resolveAttackRangeIncrease} returns one band
+     * for any attack delivered by {@link SkillType#ATAQUE_A_DISTANCIA} — a weapon de Ataque à
+     * Distância/Arremesso or a ranged Magia alike, which is the "físicos e Mágicos" scope —
+     * and {@code org.aventyrs.core.character.services.AttackRangeService} advances the source's
+     * own Alcance by it.
+     */
+    // TODO: the "+1 passo adicional (total +2 níveis) sempre que efetuar ataques utilizando dos
+    //  benefícios de 'Mira Impecável'" half needs the gap catalog's "this one delivered attack"
+    //  scoping — no per-attack hook is scoped to "an attack made by activating another Talento"
+    //  (same blocker as ABATER_A_CACA / MIRA_MORTAL).
     TIRO_LONGO(
             "A distância máxima de seus ataques à Distância, físicos e Mágicos, aumentam em +1 "
                     + "nível. Sempre que efetuar ataques utilizando dos benefícios do Talento "
@@ -85,7 +95,13 @@ public enum ArtilhariaFeat implements Feat {
             FeatRequirements.builder()
                     .requiredSkillType(SkillType.ATAQUE_A_DISTANCIA)
                     .requiredSkillGraduation(3)
-                    .build()),
+                    .build()) {
+        @Override
+        public int resolveAttackRangeIncrease(final Character character, final AttackSource attackSource) {
+            return attackSource != null
+                    && attackSource.getAttackSkillType() == SkillType.ATAQUE_A_DISTANCIA ? 1 : 0;
+        }
+    },
 
     /**
      * "Após fazer um ataque com uma arma à distância você pode fazer um ataque adicional com a

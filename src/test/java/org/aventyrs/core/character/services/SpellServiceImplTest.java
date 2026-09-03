@@ -17,9 +17,11 @@ import org.aventyrs.core.sheet.Player;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -37,6 +39,8 @@ class SpellServiceImplTest {
             TestSpell.at(TestSpellTree.DIVERGING, BranchLevel.MUDA, TestSpellBranch.BRANCH_A);
     private static final Spell MUDA_B =
             TestSpell.at(TestSpellTree.DIVERGING, BranchLevel.MUDA, TestSpellBranch.BRANCH_B);
+    private static final Spell LINEAR_SEMENTE =
+            TestSpell.at(TestSpellTree.LINEAR, BranchLevel.SEMENTE, null);
 
     @BeforeEach
     void setup() {
@@ -64,7 +68,14 @@ class SpellServiceImplTest {
                 .build();
     }
 
+    /** A sheet with enough XP that a gate test never fails on the price instead. */
     private static CharacterSheet sheetFor(final Character character) {
+        CharacterSheet sheet = CharacterSheet.of(character, new Player());
+        sheet.accumulateExperience(BigDecimal.valueOf(100));
+        return sheet;
+    }
+
+    private static CharacterSheet brokeSheetFor(final Character character) {
         return CharacterSheet.of(character, new Player());
     }
 
@@ -94,6 +105,64 @@ class SpellServiceImplTest {
         Character character = character(List.of(capRaisingFeat(0)));
 
         assertEquals(BranchLevel.SEMENTE, spellService.getMaxBranchLevel(character));
+    }
+
+    // ---------- getKnownTrees ----------
+
+    @Test
+    void getKnownTreesIsEmptyWithNoSpells() {
+        assertEquals(Set.of(), spellService.getKnownTrees(character(List.of())));
+    }
+
+    @Test
+    void getKnownTreesListsEachDistinctTreeOnce() {
+        Character character = character(List.of(), TRUNK_SEMENTE, TRUNK_BROTO, LINEAR_SEMENTE);
+
+        assertEquals(Set.of(TestSpellTree.DIVERGING, TestSpellTree.LINEAR),
+                spellService.getKnownTrees(character));
+    }
+
+    // ---------- getAcquisitionCost ----------
+
+    @Test
+    void getAcquisitionCostFollowsTheRungLadder() {
+        Character character = character(List.of());
+
+        assertEquals(0, BigDecimal.ZERO.compareTo(spellService.getAcquisitionCost(character, TRUNK_SEMENTE)));
+        assertEquals(0, BigDecimal.ONE.compareTo(spellService.getAcquisitionCost(character, TRUNK_BROTO)));
+        assertEquals(0, BigDecimal.valueOf(2).compareTo(spellService.getAcquisitionCost(character, MUDA_A)));
+    }
+
+    @Test
+    void aFeatThatGrantsTheSpellWaivesItsCost() {
+        Character character = character(List.of(freeBrotoFeat()), TRUNK_SEMENTE);
+
+        assertEquals(0, BigDecimal.ZERO.compareTo(spellService.getAcquisitionCost(character, TRUNK_BROTO)));
+    }
+
+    @Test
+    void aFeatDiscountIsSubtractedFromTheRungCost() {
+        Character character = character(List.of(discountFeat("0.5")));
+
+        assertEquals(0, new BigDecimal("1.5").compareTo(spellService.getAcquisitionCost(character, MUDA_A)));
+    }
+
+    @Test
+    void discountsFromEveryFeatStackAndFloorAtZero() {
+        Character character = character(List.of(discountFeat("0.5"), discountFeat("5")));
+
+        assertEquals(0, BigDecimal.ZERO.compareTo(spellService.getAcquisitionCost(character, TRUNK_BROTO)));
+    }
+
+    /** A homebrew Talento that only knows how to discount spell acquisition. */
+    private static Feat discountFeat(final String amount) {
+        return new AbstractFeat(FeatCategory.METAMAGICO, "Spell discount of " + amount + ".",
+                FeatRequirements.builder().build()) {
+            @Override
+            public BigDecimal resolveSpellAcquisitionCostReduction(final Character character, final Spell spell) {
+                return new BigDecimal(amount);
+            }
+        };
     }
 
     // ---------- grantSpell ----------
@@ -153,14 +222,74 @@ class SpellServiceImplTest {
         assertTrue(raised.getSpells().contains(TRUNK_BROTO));
     }
 
+    // ---------- grantSpell — the XP price ----------
+
     @Test
-    void grantSpellSpendsNoExperience() {
+    void aSementeCostsNothing() {
         Character character = character(List.of());
-        CharacterSheet sheet = sheetFor(character);
-        sheet.accumulateExperience(java.math.BigDecimal.TEN);
+        CharacterSheet sheet = brokeSheetFor(character);
 
         spellService.grantSpell(character, sheet, TRUNK_SEMENTE);
 
-        assertEquals(0, java.math.BigDecimal.TEN.compareTo(sheet.getUnUsedExperience()));
+        assertEquals(0, BigDecimal.ZERO.compareTo(sheet.getUnUsedExperience()));
+    }
+
+    @Test
+    void grantSpellSpendsTheRungCost() {
+        Character character = character(List.of(capRaisingFeat(1)), TRUNK_SEMENTE);
+        CharacterSheet sheet = sheetFor(character);
+
+        spellService.grantSpell(character, sheet, TRUNK_BROTO);
+
+        assertEquals(0, BigDecimal.valueOf(99).compareTo(sheet.getUnUsedExperience()));
+    }
+
+    @Test
+    void grantSpellSpendsTheDiscountedCost() {
+        Character character = character(List.of(capRaisingFeat(2), discountFeat("1")), TRUNK_SEMENTE, TRUNK_BROTO);
+        CharacterSheet sheet = sheetFor(character);
+
+        spellService.grantSpell(character, sheet, MUDA_A); // rung cost 2, minus the 1 discount
+
+        assertEquals(0, BigDecimal.valueOf(99).compareTo(sheet.getUnUsedExperience()));
+    }
+
+    @Test
+    void grantSpellRejectsAndSpendsNothingWhenExperienceIsShort() {
+        Character character = character(List.of(capRaisingFeat(1)), TRUNK_SEMENTE);
+        CharacterSheet sheet = brokeSheetFor(character);
+
+        assertThrows(IllegalOperationException.class,
+                () -> spellService.grantSpell(character, sheet, TRUNK_BROTO));
+
+        assertEquals(List.of(TRUNK_SEMENTE), character.getSpells());
+        assertEquals(0, BigDecimal.ZERO.compareTo(sheet.getUnUsedExperience()));
+    }
+
+    @Test
+    void aFeatGrantedSpellIsAcquiredWithoutSpendingExperience() {
+        Character character = character(List.of(freeBrotoFeat()), TRUNK_SEMENTE);
+        CharacterSheet sheet = brokeSheetFor(character);
+
+        spellService.grantSpell(character, sheet, TRUNK_BROTO);
+
+        assertTrue(character.getSpells().contains(TRUNK_BROTO));
+        assertEquals(0, BigDecimal.ZERO.compareTo(sheet.getUnUsedExperience()));
+    }
+
+    /** A stand-in for ARCANISTA: raises the cap and hands out TRUNK_BROTO as its own benefit. */
+    private static Feat freeBrotoFeat() {
+        return new AbstractFeat(FeatCategory.METAMAGICO, "Grants the Broto free.",
+                FeatRequirements.builder().build()) {
+            @Override
+            public int resolveBranchLevelIncrease(final Character character) {
+                return 1;
+            }
+
+            @Override
+            public boolean grantsFreeSpellAcquisition(final Character character, final Spell spell) {
+                return spell == TRUNK_BROTO;
+            }
+        };
     }
 }

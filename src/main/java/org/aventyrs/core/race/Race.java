@@ -5,9 +5,11 @@ import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.SizeCategory;
 import org.aventyrs.core.effect.CriticalEffectType;
 import org.aventyrs.core.feat.FeatCategory;
+import org.aventyrs.core.magic.Spell;
 import org.aventyrs.core.sheet.DlcRuleset;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -104,6 +106,23 @@ public interface Race {
      * @return int Cost to learn a new skill based on this character's spec
      */
     public default int getNewSkillCost(){ return BASE_NEW_SKILL_COST;}
+
+    /**
+     * EXP this Race takes off {@code
+     * org.aventyrs.core.character.services.SpellService#getAcquisitionCost} for spell — {@code
+     * Agastias}'s "Magia é Ciência" (-0.5 EXP para aprender novas magias), and the same
+     * still-unmodelled clause on {@code Furia}/{@code NascidoDaFloresta}. Summed with every held
+     * Talento's {@code org.aventyrs.core.feat.Feat#resolveSpellAcquisitionCostReduction}; the
+     * aggregate is floored at zero. {@link BigDecimal#ZERO} by default — every race without the
+     * trait, which is nearly all of them.
+     *
+     * <p>{@code BigDecimal}, not {@code int} like {@link #getNewFeatCost}, because these clauses
+     * are fractional (0.5) — the mismatch that kept {@code getNewFeatCost} from expressing
+     * "Talentos custam 2.5 EXP" is deliberately not repeated here.
+     */
+    default BigDecimal resolveSpellAcquisitionCostReduction(final Character character, final Spell spell) {
+        return BigDecimal.ZERO;
+    }
 
     /**
      *

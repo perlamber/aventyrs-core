@@ -14,10 +14,12 @@ import java.util.stream.Collectors;
  * {@link Scene#getAllies}/{@link Scene#getEnemies}'s output at the moment this was built —
  * see {@link Scene#buildContext} for that common case — but this class itself doesn't hold or
  * query a {@code Scene}, so it stays a plain, cheap-to-construct value object: a test or a
- * caller without a live {@code Scene} can build one directly from any two lists). This core
- * has no grid/positioning system of its own, so {@code distances} is always supplied
- * already-resolved by a caller too (same as {@link InitiativeEntry}'s own {@code
- * initiativeValue} isn't rolled by this core either) — it only needs entries for whichever
+ * caller without a live {@code Scene} can build one directly from any two lists). {@code
+ * distances} is always supplied already-resolved by a caller too (same as {@link
+ * InitiativeEntry}'s own {@code initiativeValue} isn't rolled by this core either): no
+ * participant carries a position, so although {@code org.aventyrs.core.scene.grid} can convert
+ * a hex distance into a {@link Range}, nothing here does it for a caller. The map only needs
+ * entries for whichever
  * participants are actually close enough to matter; anyone missing is treated as out of range
  * by every {@code *Within} method here.
  *

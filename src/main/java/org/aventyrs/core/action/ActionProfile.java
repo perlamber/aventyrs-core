@@ -34,6 +34,9 @@ public enum ActionProfile {
     // gap EgoAdvantage's POSICIONAMENTO_ESTRATEGICO cites), so this profile's Reação *count*
     // is untouched: it never grants or removes one, it exempts specific movements from
     // provoking them. adjustReactions is the wrong hook for it, not a missing one.
+    // Identifying *which* movement is no longer part of the gap — CombatantSheet
+    // #consumeMovementThisRound() numbers them — but "nos 2 primeiros UD percorridos" needs a
+    // movement's distance tracked, which nothing records either.
     CONSCIENCIA_DEFENSIVA("Em seu primeiro movimento de cada Rodada, nos 2 primeiros UD " +
             "percorridos, você não provoca Reações. Em Rodadas ímpares nenhum de seus " +
             "movimentos provoca Reações."),

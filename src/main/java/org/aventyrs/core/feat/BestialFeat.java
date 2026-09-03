@@ -90,7 +90,9 @@ public enum BestialFeat implements Feat {
     // TODO: Atributo bonus, Arma Natural and the free Especialização/Habilidade are all blocked
     //  — see the class javadoc.
     // TODO: Faro Apurado is a Vantagem on Atenção scoped to a narrative purpose ("a partir do
-    //  olfato"), and Feat has no roll-bonus hook at all — every flat roll bonus in this core is
+    //  olfato"), which CLAUDE.md records as unmodellable — this core never tracks what a roll
+    //  is for, so Feat#resolveSkillRollBonus (which is real) has nothing to test. Granting it on
+    //  every Atenção roll would be wider than the clause. Every flat roll bonus in this core is
     //  a @Modifier method on an ability, and Talentos are outside every ModifierResolver scan.
     //  Note the scoping alone would not have blocked it: AvianosRacialAbility
     //  #VISAO_ALEM_DO_ALCANCE grants its own purpose-scoped Atenção Vantagem broadly with the

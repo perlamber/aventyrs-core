@@ -19,8 +19,11 @@ import org.aventyrs.core.effect.Definhar;
 import org.aventyrs.core.effect.EffectChainService;
 import org.aventyrs.core.effect.Sangramento;
 import org.aventyrs.core.ego.AutocontroleAdvantage;
+import org.aventyrs.core.feat.SaqueRelampagoFeat;
+import org.aventyrs.core.feat.WeaponOrSpellChoice;
 import org.aventyrs.core.monster.GenericMonster;
 import org.aventyrs.core.monster.MonsterSheet;
+import org.aventyrs.core.sheet.ActionCost;
 import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.Player;
@@ -81,6 +84,38 @@ class AttackDeliveryTest {
         assertEquals(result.getRequiredTotal(), result.getAttackTotal());
         assertEquals(0, result.getMargin());
         assertTrue(result.getHit());
+    }
+
+    /**
+     * SAQUE_RELAMPAGO's "-1 nível" reaches an attack roll's {@code difficultyReduction}, but a
+     * foe's flat Defesa has no tier to ease — so on this path it is reported on {@code
+     * unappliedDifficultyReduction} and the required total is untouched (Option B / the
+     * "Open question" this class documents).
+     */
+    @Test
+    void saqueRelampagosReductionIsReportedUnappliedAgainstAFlatDefesa() {
+        MonsterSheet capanga = GenericMonster.CAPANGA.spawn(new Player());
+        CharacterSkill skill = CharacterSkillFixture.blank(CharacterSkillFixture.ATAQUE_CORPO_A_CORPO_1).build();
+        skill.increaseGraduation(3);
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .feats(new java.util.ArrayList<>())
+                .attributes(CharacterAttributes.builder()
+                        .strength(AttributeValue.builder().domain(AttributeDomain.STRENGTH).base(4).build())
+                        .build())
+                .skill(SkillType.ATAQUE_CORPO_A_CORPO, skill)
+                .build();
+        character.grantFeat(SaqueRelampagoFeat.of(WeaponOrSpellChoice.WEAPONS));
+        CharacterSheet hero = CharacterSheet.of(character, new Player());
+        Weapon sword = AbstractWeapon.builder().name("Espada").category(ItemCategory.HEAVY_BLADE)
+                .damageBase(DamageBase.of(2, 0)).skillType(SkillType.ATAQUE_CORPO_A_CORPO).build();
+
+        DeliveredAttackResult result = attackDelivery.resolve(attackOn(capanga, hero)
+                .attackSource(sword)
+                .attackRoll(new SkillRoll(List.of(3, 3, 3), null, null, ActionCost.ofActionPoints(1)))
+                .build());
+
+        assertEquals(1, result.getUnappliedDifficultyReduction());
+        assertEquals(capanga.getPhysicalDefense(), result.getRequiredTotal());
     }
 
     @Test

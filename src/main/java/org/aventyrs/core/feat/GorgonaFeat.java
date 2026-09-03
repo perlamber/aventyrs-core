@@ -35,9 +35,12 @@ public enum GorgonaFeat implements Feat {
     //  racial trait catalogued), so widening its Alcance widens nothing.
     // TODO: Corrente de Efeitos is an unbuilt system, and "Enrijecer Musculatura" is not among
     //  the 13 EffectChainService resolves.
-    // TODO: "sempre considerado Amaldiçoado" needs the Malefício classification this core lacks,
-    //  and losing Imunidade a Encantamentos needs a mechanism for a Talento to *suppress* a
-    //  Característica Racial — Race#getRacialAbilities() is read live with no way to suspend it.
+    // TODO: "sempre considerado Amaldiçoado" now has a classification to name
+    //  (ConditionType.AMALDICOADO, appliable open-ended with a null duration), but nothing applies
+    //  a Condition from a held Talento — Feat has no condition hook, and "sempre" is a standing
+    //  state rather than a triggered one. Losing Imunidade a Encantamentos additionally needs a
+    //  mechanism for a Talento to *suppress* a Característica Racial — Race#getRacialAbilities()
+    //  is read live with no way to suspend it — and no Encantamento condition is authored.
     MARCA_DA_MALDICAO(
             "Você está sempre em sua forma monstruosa e é incapaz de alternar para a forma "
                     + "humanoide. O Alcance de seu Olhar de Lacerto aumenta para Distância Curta e "
@@ -164,9 +167,10 @@ public enum GorgonaFeat implements Feat {
      * "Escolha duas Árvores de Magia Natural, você pode Mimetizar as magias Semente das Árvores
      * escolhidas."
      */
-    // TODO: mimetizar has no mechanism, the two Árvores are an acquisition-time choice a flat
-    //  enum constant cannot hold, spending PD in place of PM has no cost step to redirect, and
-    //  the whole effect is form-gated. Four independent blockers.
+    // TODO: mimetizar has no mechanism, spending PD in place of PM has no cost step to redirect,
+    //  and the whole effect is form-gated. (The two chosen Árvores could be recorded now — a
+    //  choice-carrying AbstractFeat subclass, see FocoEmPericiaFeat — but mimetizar is the
+    //  blocker.)
     ABENCOADA_PELO_CONCLAVE(
             "Você pode adquirir Talentos Feéricos. Escolha duas Árvores de Magia Natural, você "
                     + "pode Mimetizar as magias Semente das Árvores escolhidas. Ao Despertar seu "

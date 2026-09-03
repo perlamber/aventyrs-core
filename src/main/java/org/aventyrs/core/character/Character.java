@@ -20,6 +20,8 @@ import org.aventyrs.core.character.services.ReactionsService;
 import org.aventyrs.core.ego.EgoAdvantage;
 import org.aventyrs.core.feat.Feat;
 import org.aventyrs.core.item.Item;
+import org.aventyrs.core.item.ItemCategory;
+import org.aventyrs.core.item.Weapon;
 import org.aventyrs.core.magic.Spell;
 import org.aventyrs.core.race.Race;
 import org.aventyrs.core.sheet.IllegalOperationException;
@@ -208,6 +210,29 @@ public class Character {
     protected List<Item> equipment = new ArrayList<>();
 
     /**
+     * The {@link Weapon}s this character currently has <b>in hand</b> — drawn, as opposed to
+     * merely carried. Always a subset of {@link #equipment}: you cannot draw what you are not
+     * carrying, which {@link #drawWeapon(Weapon)} enforces.
+     *
+     * <p><b>"Utilizando uma arma" means drawn, not equipped.</b> A sword sheathed on your belt is
+     * in {@code equipment} and is not being used — which is what lets {@code
+     * ArtesMarciaisFeat#DEFESA_DE_MAOS_LIMPAS} pay out to a martial artist who owns a blade but
+     * is fighting bare-handed, and what {@code AssassinoFeat#SAQUE_RAPIDO}'s "sacar uma arma"
+     * changes.
+     *
+     * <p><b>No hands.</b> Drawing is tracked as a plain set of weapons, not as hand slots: no
+     * entry in {@code docs/rules/equipamentos.txt} states how many hands a weapon needs, so a
+     * two-handed weapon would have nothing to declare itself with. Every Talento reading this
+     * today asks only "is anything drawn" / "is this drawn", never *which* hand. Hand slots are
+     * the natural next step once the catalogue carries handedness.
+     *
+     * <p>Same fixture caveat as {@link #equipment}.
+     */
+    @NonNull
+    @Builder.Default
+    protected List<Weapon> drawnWeapons = new ArrayList<>();
+
+    /**
      * The Título Aventyr in this character's Título Primário slot, or {@code null} if none —
      * same "nullable, no default" shape as {@link #sexo}/{@link #deity}. Unlike an earlier
      * version of this design (a single {@code List<AventyrTitle> titles} field, with each held
@@ -356,6 +381,29 @@ public class Character {
      * fixture-built Character that never swapped in a mutable one — see {@link #feats}'s own
      * javadoc).
      */
+    /**
+     * Whether this character counts weapon as an <b>Arma Natural</b> — the single view every
+     * Arma-Natural clause consults, rather than each testing {@code ItemCategory.NATURAL_WEAPON}
+     * for itself.
+     *
+     * <p>True when the weapon simply is one, <em>or</em> when a held Talento reclassifies it (see
+     * {@link Feat#reclassifiesAsNaturalWeapon}) — which is what makes {@code
+     * ArtesMarciaisFeat#DOMINAR_ARTE_MARCIAL_FERROADA_ESMAGADORA}'s "consideradas Armas Naturais
+     * para você" reach the other Talentos its rules text promises it reaches. Being
+     * per-character is the whole point: the same dagger is an Arma Natural for its holder and an
+     * ordinary blade for anyone else, so this cannot live on {@link org.aventyrs.core.item.Weapon}.
+     *
+     * <p>{@code null} is false rather than an error — an Ataque Desarmado is not a weapon, and
+     * every caller here reaches this from a hook whose weapon parameter is optional.
+     */
+    public boolean treatsAsNaturalWeapon(final Weapon weapon) {
+        if (weapon == null) {
+            return false;
+        }
+        return weapon.getCategory() == ItemCategory.NATURAL_WEAPON
+                || feats.stream().anyMatch(feat -> feat.reclassifiesAsNaturalWeapon(weapon, this));
+    }
+
     public void grantFeat(@NonNull final Feat feat) {
         feats.add(feat);
     }
@@ -384,10 +432,50 @@ public class Character {
     }
 
     /**
+     * Takes weapon in hand — the "sacar uma arma" of {@code AssassinoFeat#SAQUE_RAPIDO}. Refuses
+     * a weapon this character is not carrying, and is idempotent: drawing what is already drawn
+     * changes nothing and reports {@code false}.
+     *
+     * @return whether the weapon was actually drawn by this call
+     */
+    public boolean drawWeapon(@NonNull final Weapon weapon) {
+        if (!equipment.contains(weapon) || drawnWeapons.contains(weapon)) {
+            return false;
+        }
+        return drawnWeapons.add(weapon);
+    }
+
+    /**
+     * Puts weapon away — "guardar sua arma" ({@code AssassinoFeat#TROCA_DE_ARMA_VELOZ}). It stays
+     * in {@link #equipment}; only the hand is freed.
+     *
+     * @return whether the weapon was actually drawn before this call
+     */
+    public boolean sheatheWeapon(@NonNull final Weapon weapon) {
+        return drawnWeapons.remove(weapon);
+    }
+
+    /** Whether weapon is currently in hand. */
+    public boolean isDrawn(final Weapon weapon) {
+        return weapon != null && drawnWeapons.contains(weapon);
+    }
+
+    /** Whether this character has any weapon in hand — "está utilizando uma arma". */
+    public boolean isWieldingAWeapon() {
+        return !drawnWeapons.isEmpty();
+    }
+
+    /**
      * Removes one occurrence of item from {@link #equipment}, returning whether anything was
      * actually removed. The mirror of {@link #equip(Item)}, and equally unvalidating.
      */
     public boolean unequip(@NonNull final Item item) {
+        // A weapon that leaves the character's possession cannot still be in their hand. Guarded
+        // by contains() so an un-drawn weapon never touches the list — CharacterFixture defaults
+        // drawnWeapons to an immutable List.of(), which a blind remove() would blow up on.
+        if (item instanceof Weapon weapon && drawnWeapons.contains(weapon)) {
+            drawnWeapons.remove(weapon);
+        }
         return equipment.remove(item);
     }
 

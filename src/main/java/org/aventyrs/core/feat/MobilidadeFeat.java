@@ -8,15 +8,18 @@ import org.aventyrs.core.skill.SkillType;
  * Talentos de Mobilidade — moving further, moving first, and attacking around a move.
  *
  * <p>The one tree so far with genuinely working effects: {@link #MOVIMENTO_RAPIDO} and {@link
- * #VELOCISTA} raise Movimento Base for real through {@link Feat#resolveMovementIncrease}, and
- * {@link #MAIS_VELOZ_QUE_A_VISAO} grants a permanent Ponto de Ação through {@link
- * Feat#resolveActionPointsIncrease}. Both hooks were added for this tree.
+ * #VELOCISTA} raise Movimento Base for real through {@link Feat#resolveMovementIncrease},
+ * {@link #VELOCISTA}'s cumulative half lands through {@link Feat#resolveRoundMovementIncrease},
+ * and {@link #MAIS_VELOZ_QUE_A_VISAO} grants a permanent Ponto de Ação through {@link
+ * Feat#resolveActionPointsIncrease}. All three hooks were added for this tree.
  *
- * <p>What blocks the rest is mostly one thing: <b>a movement already made is not tracked</b>.
- * {@code MovementService} answers "how far per Ponto de Ação", and nothing records that a
- * character moved this Turn, how far, or in which direction — so "após se mover por uma
- * Distância Curta", "se você se moveu em seu último Turno" and "para se aproximar de inimigos"
- * are all untestable. Investidas and Reposicionar are likewise unmodelled manoeuvres.
+ * <p>What blocks the rest is <b>how much of a movement is tracked</b>. The <i>count</i> now is:
+ * {@code CombatantSheet#consumeMovementThisRound()} numbers each movement of the Rodada, which
+ * is what makes VELOCISTA's "para cada outro movimento feito no mesmo Turno" real. What still
+ * isn't recorded is a movement's <i>distance</i> or its <i>direction</i> — so "após se mover por
+ * uma Distância Curta" and "para se aproximar de inimigos" remain untestable — nor whether a
+ * character moved in a <i>previous</i> Turn, since the counter resets at each Turn's start.
+ * Investidas and Reposicionar are likewise unmodelled manoeuvres.
  */
 public enum MobilidadeFeat implements Feat {
 
@@ -28,7 +31,9 @@ public enum MobilidadeFeat implements Feat {
      * exactly the shape {@code ModifierType.MOVEMENT} means (see {@code MovementService}).
      */
     // TODO: the Rodadas Pares half needs Reposicionar as a distinct action with its own
-    //  distance; this core has one Movimento Base figure and no per-manoeuvre allowance.
+    //  distance; this core has one Movimento Base figure and no per-manoeuvre allowance. The
+    //  "primeira ação" half alone would now be expressible (Feat#resolveRoundMovementIncrease,
+    //  movementIndex 0), but not the Reposicionar scoping that narrows it.
     MOVIMENTO_RAPIDO(
             "Seu Movimento Base aumenta em +2UD, em Rodadas Pares a distância de sua primeira ação "
                     + "para Reposicionar-se aumenta em +1UD.",
@@ -43,10 +48,13 @@ public enum MobilidadeFeat implements Feat {
      * "Seu Movimento Base aumenta em +1UD, então aumenta cumulativamente em +1UD para cada outro
      * movimento feito no mesmo Turno."
      *
-     * <p><b>The flat half is real.</b>
+     * <p><b>Both halves are real.</b> The flat "+1UD" is {@link #resolveMovementIncrease}; the
+     * cumulative half is {@link #resolveRoundMovementIncrease}, now that {@code
+     * CombatantSheet#consumeMovementThisRound()} counts the movements already made and {@code
+     * MovementService#getMovementBase(CombatantSheet, int)} resolves against that count.
+     *
+     * <p>Both are per Ponto de Ação, per {@code MovementService}'s class javadoc.
      */
-    // TODO: the cumulative half needs movements already made this Turn to be counted — see this
-    //  enum's own javadoc. Granting it flat would over-grant on a character who has not moved.
     VELOCISTA(
             "Seu Movimento Base aumenta em +1UD, então aumenta cumulativamente em +1UD para cada "
                     + "outro movimento feito no mesmo Turno.",
@@ -56,6 +64,16 @@ public enum MobilidadeFeat implements Feat {
         @Override
         public int resolveMovementIncrease(final Character character) {
             return 1;
+        }
+
+        /**
+         * "+1UD para cada <em>outro</em> movimento feito no mesmo Turno" — movementIndex is
+         * 0-based, so it is already exactly the number of other movements made before this one:
+         * 0 on the Rodada's first movement, 1 on the second, and so on.
+         */
+        @Override
+        public int resolveRoundMovementIncrease(final int movementIndex, final Character character) {
+            return movementIndex;
         }
     },
 
@@ -170,7 +188,10 @@ public enum MobilidadeFeat implements Feat {
     // TODO: halving Movimento is the gap catalog's "Multiplicative stages" row — MovementService
     //  sums additively with no halving stage, and a MOVEMENT_HALVED constant is explicitly not
     //  the fix.
-    // TODO: "enquanto furtivo" needs a lasting hidden state; Furtividade resolves a roll.
+    // TODO: "enquanto furtivo" is now ConditionType.ESCONDIDO, but a held trait cannot see its
+    //  holder's Condições — Feat#resolveMovementIncrease takes a Character, and a Condition lives
+    //  on the CombatantSheet, which no Feat hook receives. Halving has no mechanism either (gap
+    //  catalog, "Multiplicative stages"); don't add a MOVEMENT_HALVED constant.
     MOVIMENTO_FURTIVO(
             "Você pode se mover enquanto furtivo, mas seu Movimento Base é reduzido à metade. Se "
                     + "você possuir 7 ou mais Graduações em Furtividade este Talento não mais "

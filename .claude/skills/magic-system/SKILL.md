@@ -82,10 +82,24 @@ All three must hold, the same combine-every-prerequisite shape as `Feat#isEligib
   `requiredFeat`, so they can't be acquired out of order or in isolation, and holding all four
   lands exactly on FLORESCENTE. A fifth rung would grant +1 like the rest; never compensate for
   a missing rung by granting +2 somewhere.
-- `SpellService#grantSpell` **spends no XP**, deliberately — no acquisition cost has been
-  specified, and inventing one would bake in a number rules text then has to override. It still
-  takes a `CharacterSheet`, so adding a cost stays a one-line change. This is the service's one
-  open question, flagged in its javadoc.
+- `SpellService#grantSpell` **spends `getAcquisitionCost(character, spell)` XP**, then mutates —
+  the same validate→spend→grant order as `FeatService#grantFeat`. The base price is
+  `SpellService.ACQUISITION_EXPERIENCE_COST`, keyed on `BranchLevel`: `0 / 1 / 2 / 3 / 5` for
+  SEMENTE / BROTO / MUDA / EMERGENTE / FLORESCENTE. Only the four deeper figures are authored (the
+  `MetamagicoFeat` ladder's "ao custo de N exp" clauses, the ruleset's only stated spell cost);
+  SEMENTE-is-free is an inference. It's a `BigDecimal` (like `SkillGraduationService`'s cost), so
+  a fractional discount is representable. `getAcquisitionCost(character, spell)` is where every
+  adjustment lands: **`Feat#grantsFreeSpellAcquisition`** waives it outright (a Magia a held
+  Talento hands out — `MetamagicoFeat#ARCANISTA`'s chosen Sementes/Brotos, wired ahead of its
+  choice class), and otherwise **`Feat#resolveSpellAcquisitionCostReduction` +
+  `Race#resolveSpellAcquisitionCostReduction`** are summed off the base and floored at zero —
+  `Agastias`'s "Magia é Ciência" (−0.5 EXP, unscoped) is the live consumer; `ElementalFeat
+  #ARCANISMO_ELEMENTAL` and the `Furia`/`NascidoDaFloresta` "Natural" clauses are the pending
+  ones. A UI must call `getAcquisitionCost` (not the map) so all of that shows.
+- `SpellService#getKnownTrees(Character)` — the distinct `SpellTree`s over `character.getSpells()`,
+  i.e. the Árvores the Conjurador *conhece* (holding any one Magia of a tree is knowing it, since
+  the climb gate makes the first one a SEMENTE). Derived, never stored — same discipline as the
+  branch resolution. What `MetamagicoFeat#ARCANISTA`'s "conhece N Árvores de Magia" reads.
 - `MagiaAlternativaAbility` (`org.aventyrs.core.ability`) is one `AttributeAbility` constant per
   `MagicType` — pattern 3 in the `ability-acquisition-and-substitution` skill, mirroring
   `PeritoTeoricoAbility` exactly. Grant the constant, not `FocusAbility.MAGIA_ALTERNATIVA`,
@@ -141,10 +155,36 @@ note on the constant saying so. An invocation's stat block is the one exception:
 with a TODO, because it belongs in a `MonsterTemplate` and `Spell` has no column pointing at one.
 
 **Every "can't apply it yet" gets its gap named on the constant**, per the usual TODO discipline.
-The catalog is complete, exact and almost entirely *inert* — the rungs, PM costs, acquisition
-gates and category tags are live, but nearly every *effect* is blocked. The index's authoring-status
-section carries the blocker-to-Magia table; check it before assuming a new mechanism unblocks a
-tree.
+The catalog is complete, exact and mostly *inert* — the rungs, PM costs, acquisition gates,
+category tags and (for a handful of Magias) primary damage are live, but most *effects* are still
+blocked. The index's authoring-status section carries the blocker-to-Magia table; check it before
+assuming a new mechanism unblocks a tree.
+
+### A Magia's primary damage — `SpellDamage` / `resolvePrimaryDamage`
+
+`SpellData#primaryDamage` (nullable; `Spell#getPrimaryDamage()` → `Optional`) is the structured
+form of an `Efeito:` line like *"Causa 2d6+Metade do Foco pontos de Dano Mágico Elemental: Magma"*
+— a `SpellDamage` record of `(diceCount, flatBonus, FocusScaling, DamageType, ElementalType)`.
+
+- **Split along the "this core never rolls dice" line.** `diceCount` d6 are the *caller's* to roll
+  and add (same boundary as `DamageBase`); `flatBonus` + the Foco term are deterministic.
+  `SpellCastingService#resolvePrimaryDamage(spell, caster)` computes the deterministic part into a
+  `ResolvedSpellDamage` (`deterministicAmount`, `diceCount`, type, element, `focusFullyApplied`),
+  and `castSpell` puts it on `SpellCastingResult#getPrimaryDamage()`. **Report-only** — nothing
+  applies it; the caller rolls the dice, adds, and runs its own `DamageInteraction`.
+- **`FocusScaling.HALF` is the only authored value.** `FocusAbility#MAGIA_PODEROSA` upgrades it to
+  `FULL` for the caster's first Magia of a Rodada (no `Spell` in `caster.getActionsThisRound()`)
+  via `AttributeAbility#upgradesFirstSpellOfRoundFocusScaling()`. `NONE` exists for a dice-only
+  figure but no authored Magia needs it yet.
+- **"Dano Mágico Elemental: X" and bare "Dano Elemental: X" both map to `DamageType.ELEMENTAL` +
+  the element** — there is no `MAGICO_ELEMENTAL` constant, and `ELEMENTAL` already reads as the
+  magical case (`FISICO_ELEMENTAL` being the physical one). Pairing validated like `DamageBonus`.
+- **Authored so far:** the four straightforward `IraDeVulcanoSpell` damage rungs (Sopro de Magma
+  Menor/Maior, Torrente Vulcânica, Ira de Vulcano's primary wave) and three `PiromanciaSpell`
+  entries (Hálito de Eldur, Bola de Fogo Elduriana, Olhar de Eldur). What `SpellDamage` does
+  **not** hold, and stays prose on the constant: distance falloff ("-2 por UD"), a recurring "a
+  cada Rodada" cadence, a delayed second wave, damage to someone other than the cast target, and
+  every *healing* effect. Extend it Magia-by-Magia as a real consumer needs each.
 
 ### Four columns the catalog forced into existence
 
@@ -261,7 +301,9 @@ itself (the caller does, since only the caller knows which Magia/weapon is being
 `Spell` is a real entity, the full 145-Magia catalog is authored, and a character carries the
 Magias they know (`Character#spells`, via `SpellService#grantSpell`). What's still missing is
 narrower than it was: `SpellCastingService` doesn't know either roll's target GD, so it
-computes both rolls' bonuses without resolving success/failure for either.
+computes both rolls' bonuses without resolving success/failure for either. It *does* now report
+`SpellCastingResult#getPrimaryDamage()` for a Magia that authors a `SpellDamage` (see "A Magia's
+primary damage" above) — deterministic part resolved, dice left to the caller, nothing applied.
 
 **Cite the missing *GD*, not a missing catalog or a missing `Magia` entity** — both of those are
 closed. And be precise about which GD: the Domínio do Mana roll's own is real authored data
@@ -306,5 +348,8 @@ the example that originally justified building it.
   `SpellCastingServiceImpl.java` (`SpellCastingServiceImplTest.java`).
 - `src/main/java/org/aventyrs/core/magic/SpellDuration.java` / `DurationUnit.java` /
   `DurationKind.java` / `ActivationTime.java` / `ElementalType.java`.
+- `src/main/java/org/aventyrs/core/magic/SpellDamage.java` / `FocusScaling.java` /
+  `ResolvedSpellDamage.java` (`SpellDamageTest.java`) — the primary-damage model;
+  `AttributeAbility#upgradesFirstSpellOfRoundFocusScaling` / `FocusAbility#MAGIA_PODEROSA`.
 - `docs/rules/magias-index.md` — the source-of-truth survey; `docs/rules/magias.txt` — the raw
   rules text.

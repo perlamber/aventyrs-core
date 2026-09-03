@@ -93,6 +93,11 @@ public interface AuthoredSpell extends Spell {
     }
 
     @Override
+    default Optional<SpellDamage> getPrimaryDamage() {
+        return Optional.ofNullable(getData().getPrimaryDamage());
+    }
+
+    @Override
     default String getSecondaryEffectDescription() {
         return getData().getSecondaryEffectDescription();
     }

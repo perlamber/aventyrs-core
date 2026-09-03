@@ -15,11 +15,14 @@ import org.aventyrs.core.skill.SkillType;
 public enum PersuasaoExcellency implements SkillExcellency {
 
     // TODO: +1 per 5 points of Fama (Positiva or Negativa, whichever applies) to Persuasão
-    // rolls — org.aventyrs.core.sheet.CombatantSheet already tracks famaPositiva/
-    // famaNegativa directly, but this bonus is a per-character variable scaling with that
-    // count, not a fixed constant, so the @Modifier/ModifierResolver mechanism (parameterless
-    // methods returning a fixed value) can't express it; "a que for aplicável" also implies
-    // choosing which Fama applies per roll/target, which isn't tracked either.
+    // rolls. Fama is real and readable (org.aventyrs.core.sheet.CharacterSheet tracks
+    // famaPositiva/famaNegativa; EgoAdvantage MORAL_HERDADA already scales a roll bonus off it
+    // for real), but a SkillExcellency reaches a roll only through @Modifier/ModifierResolver —
+    // parameterless methods returning a fixed value — so it cannot see the sheet whose Fama it
+    // would scale with. Unlike EgoAdvantage/SkillCompetencyAbility/Feat, SkillExcellency has no
+    // resolve* hook taking a CombatantSheet; that is the missing piece, not Fama.
+    // TODO: "a que for aplicável" also implies choosing which Fama applies per roll/target,
+    // which isn't tracked either.
     FOCADO(ExcellencyTier.FOCADO, "Você recebe Bônus de +1 para 5 pontos de Fama (a que for " +
             "aplicável) às suas rolagens de Persuasão."),
 

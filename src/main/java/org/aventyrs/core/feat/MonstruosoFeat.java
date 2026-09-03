@@ -3,6 +3,8 @@ package org.aventyrs.core.feat;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.DefenseType;
+import org.aventyrs.core.item.ItemCategory;
+import org.aventyrs.core.item.Weapon;
 import org.aventyrs.core.race.CreatureType;
 import org.aventyrs.core.title.TitleArchetype;
 
@@ -10,9 +12,11 @@ import org.aventyrs.core.title.TitleArchetype;
  * Talentos Monstruosos — the open tree any Monstruoso race can draw on, from unusual anatomy to
  * extra heads to acid blood.
  *
- * <p>Two constants carry real effects, and they are the batch's most interesting pair: {@link
- * #PELE_RIJA} grants DF and RD together, and {@link #OSSOS_OCOS} is the catalog's <b>first
- * Talento to apply a real malus</b> — a −1 Multiplicador de PV paid for by a +1UD Movimento Base.
+ * <p>Three constants carry real effects: {@link #PELE_RIJA} grants DF and RD together;
+ * {@link #OSSOS_OCOS} is the catalog's <b>first Talento to apply a real malus</b> — a −1
+ * Multiplicador de PV paid for by a +1UD Movimento Base; and {@link #SELVAGERIA} raises the Dano
+ * Base of an Arma Natural by +1, expressible since {@code Feat#resolveDamageBaseIncrease} began
+ * seeing the weapon and {@code ItemCategory.NATURAL_WEAPON} began marking one.
  *
  * <p>Gated through {@code FeatRequirements#requiredCreatureType}, since "Raça Monstruosa" spans
  * Aviano, Goblin, Ogro, Guampo, Indômito, Troll and Bestial with no common supertype.
@@ -174,8 +178,9 @@ public enum MonstruosoFeat implements Feat {
      * "Uma terceira cabeça nasce em ti… Alvos de seus ataques e personagens intimidados por você
      * perdem temporariamente 1 ponto de Autocontrole."
      */
-    // TODO: a Talento cannot grant an Atributo bonus, and "o Atributo faltante" additionally
-    //  depends on which one DUAS_CABECAS chose — a per-acquisition choice a flat enum cannot hold.
+    // TODO: a Talento cannot grant an Atributo bonus. "o Atributo faltante" also depends on which
+    //  one DUAS_CABECAS chose — recordable now via a choice-carrying AbstractFeat subclass (see
+    //  FocoEmPericiaFeat), but the Atributo-grant is the blocker.
     // TODO: draining a target's temporary Autocontrole is close: CombatantSheet#spendEgoPoints is
     //  exactly the raw-drain entry point (the one Primor uses, deliberately distinct from a
     //  holder's own deliberate use). What is missing is the trigger — nothing fires off "this
@@ -257,15 +262,15 @@ public enum MonstruosoFeat implements Feat {
      * "O Dano Base de todas as suas Armas Naturais aumenta em +1. Os Bônus em danos concedidos
      * por Ferocidade são convertidos em Aumento de Dano Base."
      */
-    // TODO: withheld even though Feat#resolveDamageBaseIncrease exists, because that hook is
-    //  unconditional and sees neither the weapon nor the SkillType — granting it here would raise
-    //  the Dano Base of *every* attack, where the clause covers Armas Naturais alone. Contrast
-    //  AnaoFeat#FILHO_DE_YMIR, whose "de armas" scope is granted with the over-grant documented:
-    //  there the excluded case is only an Ataque Desarmado, here it would be every weapon the
-    //  character ever wields. The direction of the error is what differs, not the hook.
-    // TODO: "os Bônus de Ferocidade são convertidos em Dano Base" is the exclusive-conversion
-    //  shape AtaqueCorpoACorpoCompetencyAbility#BRUTALIDADE already implements for real — worth
-    //  reading as the model, once Armas Naturais exist.
+    /**
+     * "O Dano Base de todas as suas Armas Naturais aumenta em +1." The Armas Naturais half is
+     * <b>real</b> now that {@link Feat#resolveDamageBaseIncrease(Character, Weapon)} sees the
+     * weapon: {@code weapon.getCategory() == }{@link ItemCategory#NATURAL_WEAPON} scopes it
+     * exactly, so a wielded blade or an Ataque Desarmado gets nothing.
+     */
+    // TODO: "os Bônus de Ferocidade são convertidos em Dano Base" stays unbuilt — Ferocidade
+    //  (the Característica Racial) has no representation. AtaqueCorpoACorpoCompetencyAbility
+    //  #BRUTALIDADE is the exclusive-conversion shape to model it on once it exists.
     SELVAGERIA(
             "O Dano Base de todas as suas Armas Naturais aumenta em +1. Os Bônus em danos "
                     + "concedidos por Ferocidade são convertidos em Aumento de Dano Base.",
@@ -273,7 +278,12 @@ public enum MonstruosoFeat implements Feat {
                     .requiredFeat(FEROCIDADE)
                     .requiredAwakenedTitles(1)
                     .requiredTitleArchetype(TitleArchetype.BRUTO)
-                    .build());
+                    .build()) {
+        @Override
+        public int resolveDamageBaseIncrease(final Character character, final Weapon weapon) {
+            return character.treatsAsNaturalWeapon(weapon) ? 1 : 0;
+        }
+    };
 
     private static final int PELE_RIJA_BONUS = 2;
 

@@ -61,6 +61,14 @@ class ArtesMarciaisFeatTest {
             .skillType(SkillType.ATAQUE_A_DISTANCIA)
             .build();
 
+    /** An Arma Natural — {@code ItemCategory.NATURAL_WEAPON} is what ARTISTA_MARCIAL keys off. */
+    private static final Weapon GARRAS = AbstractWeapon.builder()
+            .name("Garras")
+            .category(ItemCategory.NATURAL_WEAPON)
+            .damageBase(DamageBase.of(1, 1))
+            .skillType(SkillType.ATAQUE_CORPO_A_CORPO)
+            .build();
+
     @BeforeEach
     void setup() {
         CharacterFixture.loadTemplates();
@@ -181,25 +189,25 @@ class ArtesMarciaisFeatTest {
 
     // ---------- what changes once they hold it? ----------
 
+    /** The Dano Base it raises is an Ataque Desarmado's — which starts at the bottom of the scale. */
     @Test
-    void acquiringItRaisesTheDanoBaseTheCharacterSwingsWith() throws IllegalOperationException {
-        Character character = martialArtist().build();
-        DamageBase before = damageBaseService.getDamageBase(character, ESPADA);
-
-        featService.grantFeat(character, sheetWith(character, BigDecimal.TEN), ArtesMarciaisFeat.ARTISTA_MARCIAL);
-
-        assertEquals(before.scaledUp(1), damageBaseService.getDamageBase(character, ESPADA));
-    }
-
-    /** The same grant reaches an Ataque Desarmado, which starts at the bottom of the scale. */
-    @Test
-    void acquiringItRaisesAnUnarmedStrikeToo() throws IllegalOperationException {
+    void acquiringItRaisesTheUnarmedDanoBaseTheCharacterSwingsWith() throws IllegalOperationException {
         Character character = martialArtist().build();
 
         featService.grantFeat(character, sheetWith(character, BigDecimal.TEN), ArtesMarciaisFeat.ARTISTA_MARCIAL);
 
         assertEquals(DamageBase.UNARMED.scaledUp(1),
                 damageBaseService.getDamageBase(character, SkillType.ATAQUE_CORPO_A_CORPO));
+    }
+
+    /** It also reaches an Arma Natural — {@code ItemCategory.NATURAL_WEAPON} is what marks one. */
+    @Test
+    void acquiringItRaisesANaturalWeaponToo() throws IllegalOperationException {
+        Character character = martialArtist().build();
+
+        featService.grantFeat(character, sheetWith(character, BigDecimal.TEN), ArtesMarciaisFeat.ARTISTA_MARCIAL);
+
+        assertEquals(GARRAS.getDamageBase().scaledUp(1), damageBaseService.getDamageBase(character, GARRAS));
     }
 
     /**
@@ -210,13 +218,14 @@ class ArtesMarciaisFeatTest {
     void itScalesWithEachTituloAventyrDesperto() throws IllegalOperationException {
         Character titleless = martialArtist().build();
         Character oneTitle = martialArtist().primaryTitle(new Santo(List.of(), List.of())).build();
-        DamageBase before = damageBaseService.getDamageBase(titleless, ESPADA);
 
         featService.grantFeat(titleless, sheetWith(titleless, BigDecimal.TEN), ArtesMarciaisFeat.ARTISTA_MARCIAL);
         featService.grantFeat(oneTitle, sheetWith(oneTitle, BigDecimal.TEN), ArtesMarciaisFeat.ARTISTA_MARCIAL);
 
-        assertEquals(before.scaledUp(1), damageBaseService.getDamageBase(titleless, ESPADA));
-        assertEquals(before.scaledUp(2), damageBaseService.getDamageBase(oneTitle, ESPADA));
+        assertEquals(DamageBase.UNARMED.scaledUp(1),
+                damageBaseService.getDamageBase(titleless, SkillType.ATAQUE_CORPO_A_CORPO));
+        assertEquals(DamageBase.UNARMED.scaledUp(2),
+                damageBaseService.getDamageBase(oneTitle, SkillType.ATAQUE_CORPO_A_CORPO));
     }
 
     @Test
@@ -225,11 +234,11 @@ class ArtesMarciaisFeatTest {
                 .primaryTitle(new Santo(List.of(), List.of()))
                 .secondaryTitle(new Santo(List.of(), List.of()))
                 .build();
-        DamageBase before = damageBaseService.getDamageBase(twoTitles, ESPADA);
 
         featService.grantFeat(twoTitles, sheetWith(twoTitles, BigDecimal.TEN), ArtesMarciaisFeat.ARTISTA_MARCIAL);
 
-        assertEquals(before.scaledUp(3), damageBaseService.getDamageBase(twoTitles, ESPADA));
+        assertEquals(DamageBase.UNARMED.scaledUp(3),
+                damageBaseService.getDamageBase(twoTitles, SkillType.ATAQUE_CORPO_A_CORPO));
     }
 
     // ---------- what must not change? ----------
@@ -250,20 +259,18 @@ class ArtesMarciaisFeatTest {
     }
 
     /**
-     * The known over-application, pinned deliberately: the clause names Ataques Desarmados e
-     * Armas Naturais, but nothing classifies an attack as either (see CLAUDE.md's gap catalog),
-     * so the grant currently reaches a wielded Arco too. This assertion is what should change
-     * the day that classification lands — it is not a claim that the ranged swing *should*
-     * benefit.
+     * The clause names Ataques Desarmados e Armas Naturais only — a wielded weapon, whether the
+     * ESPADA or the ARCO, is left exactly where it was. This is what changed when {@code
+     * DamageBaseService} began passing the weapon to the hook.
      */
     @Test
-    void itCurrentlyReachesEveryAttackForLackOfAnUnarmedMarker() throws IllegalOperationException {
+    void itLeavesAWieldedWeaponUntouched() throws IllegalOperationException {
         Character character = martialArtist().build();
-        DamageBase before = damageBaseService.getDamageBase(character, ARCO);
 
         featService.grantFeat(character, sheetWith(character, BigDecimal.TEN), ArtesMarciaisFeat.ARTISTA_MARCIAL);
 
-        assertEquals(before.scaledUp(1), damageBaseService.getDamageBase(character, ARCO));
+        assertEquals(DamageBase.of(2, 0), damageBaseService.getDamageBase(character, ESPADA));
+        assertEquals(DamageBase.of(2, 0), damageBaseService.getDamageBase(character, ARCO));
     }
 
     @Test
@@ -271,6 +278,7 @@ class ArtesMarciaisFeatTest {
         Character character = martialArtist().build();
 
         assertEquals(DamageBase.of(2, 0), damageBaseService.getDamageBase(character, ESPADA));
+        assertEquals(GARRAS.getDamageBase(), damageBaseService.getDamageBase(character, GARRAS));
         assertEquals(DamageBase.UNARMED,
                 damageBaseService.getDamageBase(character, SkillType.ATAQUE_CORPO_A_CORPO));
     }
@@ -281,5 +289,50 @@ class ArtesMarciaisFeatTest {
                 .contains(ArtesMarciaisFeat.ARTISTA_MARCIAL));
         assertFalse(featService.getAvailableFeats(character().build())
                 .contains(ArtesMarciaisFeat.ARTISTA_MARCIAL));
+    }
+
+    // ---------- the Dominar Arte Marcial mutual-exclusion cap ----------
+
+    /** Graduação 7 in Ataque Corpo-a-Corpo and two Títulos — clears every Dominar/Mista Pré-requisito. */
+    private static Character.CharacterBuilder dominarCapable() {
+        return character()
+                .attributes(strength(2))
+                .skill(SkillType.ATAQUE_CORPO_A_CORPO, meleeAt(7))
+                .primaryTitle(new Santo(List.of(), List.of()))
+                .secondaryTitle(new Santo(List.of(), List.of()));
+    }
+
+    @Test
+    void aSecondDominarStyleIsRefusedWhileTheFirstIsHeld() {
+        Character character = dominarCapable().build();
+        assertTrue(ArtesMarciaisFeat.DOMINAR_ARTE_MARCIAL_ARTE_FLUIDA.isEligible(character));
+        assertTrue(ArtesMarciaisFeat.DOMINAR_ARTE_MARCIAL_TIGRE_E_SERPENTE.isEligible(character));
+
+        character.grantFeat(ArtesMarciaisFeat.DOMINAR_ARTE_MARCIAL_ARTE_FLUIDA);
+
+        assertFalse(ArtesMarciaisFeat.DOMINAR_ARTE_MARCIAL_TIGRE_E_SERPENTE.isEligible(character));
+        assertFalse(ArtesMarciaisFeat.DOMINAR_ARTE_MARCIAL_FERROADA_ESMAGADORA.isEligible(character));
+    }
+
+    @Test
+    void arteMarcialMistaRaisesTheCapToTwoButNotThree() {
+        Character character = dominarCapable().build();
+        character.grantFeat(ArtesMarciaisFeat.DOMINAR_ARTE_MARCIAL_ARTE_FLUIDA);
+        character.grantFeat(ArtesMarciaisFeat.ARTE_MARCIAL_MISTA);
+
+        assertTrue(ArtesMarciaisFeat.DOMINAR_ARTE_MARCIAL_TIGRE_E_SERPENTE.isEligible(character));
+
+        character.grantFeat(ArtesMarciaisFeat.DOMINAR_ARTE_MARCIAL_TIGRE_E_SERPENTE);
+
+        assertFalse(ArtesMarciaisFeat.DOMINAR_ARTE_MARCIAL_FERROADA_ESMAGADORA.isEligible(character));
+    }
+
+    @Test
+    void aNonDominarArteMarcialTalentoIsNeverCappedByHoldingDominarStyles() {
+        Character character = dominarCapable().build();
+        character.grantFeat(ArtesMarciaisFeat.DOMINAR_ARTE_MARCIAL_ARTE_FLUIDA);
+
+        // ARTISTA_MARCIAL is Arte Marcial but not a Dominar style — still eligible.
+        assertTrue(ArtesMarciaisFeat.ARTISTA_MARCIAL.isEligible(character));
     }
 }

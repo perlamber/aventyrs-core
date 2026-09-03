@@ -1,6 +1,7 @@
 package org.aventyrs.core.item;
 
 import org.aventyrs.core.character.DamageBase;
+import org.aventyrs.core.scene.Range;
 import org.aventyrs.core.skill.AttackSource;
 import org.aventyrs.core.skill.SkillType;
 
@@ -70,5 +71,51 @@ public interface Weapon extends Item, AttackSource {
     @Override
     default SkillType getAttackSkillType() {
         return getSkillType();
+    }
+
+    /**
+     * This weapon's authored Alcance — the maximum {@link Range} it reaches before any
+     * range-extending Talento or ability. <b>Defaults to {@link Range#ADJACENTE}</b>: a
+     * corpo-a-corpo weapon, which is most of the catalog, and the one band a weapon that never
+     * says otherwise should present. A weapon de Ataque à Distância or de Arremesso authors its
+     * own — {@code AbstractWeapon} carries it as a {@code @Builder.Default} column.
+     *
+     * <p>Unlike {@link #getDamageBase()}/{@link #getSkillType()} this is <em>not</em> abstract:
+     * it has a sane universal default and the great majority of call sites don't consult it, so
+     * forcing every builder to state it would be noise. {@code
+     * org.aventyrs.core.character.services.AttackRangeService} is what reads it.
+     */
+    default Range getRange() {
+        return Range.ADJACENTE;
+    }
+
+    /**
+     * Whether this weapon can be knocked out of its wielder's hands — true unless a fitted
+     * Obra-Prima or Aprimoramento says otherwise ("Não pode ser desarmado"). Consulted by {@code
+     * CombatantSheet#disarm(Weapon)}, which refuses rather than silently dropping the weapon.
+     *
+     * <p>On {@code Weapon} rather than {@code Item} because the question is only meaningful for
+     * something held to fight with: a helmet is not disarmable, it is simply worn, and asking
+     * would invite a stand-in answer. Same enforcement-by-type reasoning as {@link
+     * #getDamageBase()}.
+     *
+     * <p>Not gated on {@link Item#isDestroyed()} — a shattered sword is still gripped, and
+     * knocking the wreck away is exactly as possible as knocking away a whole one.
+     */
+    default boolean isDisarmable() {
+        boolean masterpiecePrevents = getMasterpiece() != null && getMasterpiece().preventsDisarming();
+        boolean improvementPrevents = getImprovement() != null && getImprovement().preventsDisarming();
+        return !masterpiecePrevents && !improvementPrevents;
+    }
+
+    /**
+     * The Alcance this weapon <em>currently</em> reaches — {@link #getRange()} until it is
+     * destroyed, and {@link Range#ADJACENTE} from then on. A shattered bow carries no further
+     * than a bare fist, exactly as {@link #getEffectiveDamageBase()} drops such a weapon to
+     * {@link DamageBase#UNARMED}. This is the form {@code AttackRangeService} reads; {@link
+     * #getRange()} stays the authored column, so a repair mechanism would restore it untouched.
+     */
+    default Range getEffectiveRange() {
+        return isDestroyed() ? Range.ADJACENTE : getRange();
     }
 }

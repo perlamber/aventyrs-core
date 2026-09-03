@@ -32,6 +32,19 @@ import java.util.function.Supplier;
  * fifth rung is ever added, it grants +1 like the rest; never compensate for a missing rung by
  * granting +2 somewhere.
  *
+ * <h2>The "ao custo de N exp" clauses</h2>
+ *
+ * Each ladder rung also lets its holder learn extra Magias of the tier it unlocks, "de outras
+ * Árvores que você conheça", at a stated exp cost — 1 (Broto), 2 (Muda), 3 (Emergente), 5
+ * (Florescente). Those four figures <em>are</em> {@code SpellService.ACQUISITION_EXPERIENCE_COST}
+ * now, and {@code SpellService#grantSpell} spends them for real, so the cost half of these
+ * clauses is live: with the cap raised (by the same rung), a further Broto/Muda/… from an Árvore
+ * the Conjurador already conhece goes through the ordinary climb/branch gates at exactly that
+ * price. What the ladder does <em>not</em> yet do is hand out the initial Sementes/Brotos of the
+ * chosen trees for free — that is {@link #ARCANISTA}'s own TODO (it needs an
+ * acquisition-time-choice class to record the picks and override {@code
+ * Feat#grantsFreeSpellAcquisition}).
+ *
  * <h2>What "Conhecimento: Metamágico" costs this catalog</h2>
  *
  * Most of these Talentos require training or Graduações in <i>Conhecimento: Metamágico</i>, which
@@ -51,13 +64,16 @@ public enum MetamagicoFeat implements Feat {
     // unconditional ("permanentemente") and pure arithmetic off Domínio do Mana's Graduação.
     //
     // TODO: "conhece N Árvores de Magia" (N = Graduações em Conhecimento Metamágico), with every
-    // Semente of a known Árvore learned automatically, and 2 chosen Árvores whose Brotos it can
-    // cast. Blocked on three separate missing pieces: (1) no "Árvores conhecidas" concept exists
-    // — SpellTree is a catalog, and Character tracks acquired Magias, not known trees; (2) no
-    // auto-learning path — SpellService#grantSpell is the only way a Magia is acquired and it is
-    // always a deliberate call; (3) the per-Magia XP costs named here and on the other rungs
-    // (1exp Broto, 2exp Muda, 5exp Florescente) have nowhere to live, since grantSpell spends no
-    // XP at all — see its own javadoc.
+    // Semente of uma Árvore conhecida learned automatically, and 2 chosen Árvores whose Brotos it
+    // can cast. The foundation is in place now: SpellService#getKnownTrees derives the "Árvores
+    // conhecidas" set from the spell list, SpellService#grantSpell spends the per-rung
+    // SpellService.ACQUISITION_EXPERIENCE_COST (1/2/3/5 for Broto/Muda/Emergente/Florescente),
+    // and Feat#grantsFreeSpellAcquisition waives that cost for a Magia a Talento hands out. Still
+    // missing: (1) this Talento is a plain enum constant with nowhere to record the N chosen
+    // trees / the 2 Broto trees — it needs the acquisition-time-choice class the adding-a-feat
+    // skill describes, which is also where grantsFreeSpellAcquisition gets a real override; (2)
+    // no auto-learning path — grantSpell is still the only way a Magia enters the spell list and
+    // every call is deliberate, so "automaticamente aprendidas" has no loop to run.
     // TODO: "RM para resistir aos efeitos de Magias que você conheça" — RM (Redução Mágica) is
     // not a concept this core computes at all (same gap Gorgona's javadoc already cites), and
     // the "Magias que você conheça" scope needs an incoming effect to be classified as a
@@ -189,10 +205,14 @@ public enum MetamagicoFeat implements Feat {
                     .requiredFeat(MetamagicoFeat.ARCANISTA_EXPERIENTE)
                     .build()),
 
-    // TODO: a Magia has no casting time to reduce — Spell carries no PA cost column, and nothing
-    // resolves one. The Desvantagem half has a constant ready (Skill#DISADVANTAGE_MALUS) but no
-    // way to scope it to "this one cast", nor to Dano/Cura rolls specifically; and the trade is
-    // opt-in per cast, which is a per-activation choice this core has no shape for.
+    // TODO: the casting-time reduction has a column to read now — Spell#getActivationTime()
+    // (ActivationTime.actionPoints()) — but nothing resolves an *effective* cast cost from it:
+    // SpellCastingService#castSpell rolls the delivery Perícia and Domínio do Mana and spends
+    // nothing, so there is no PA figure to reduce or floor at 1PA — the same missing cost step
+    // Guampo's Benção Divina javadoc cites. The Desvantagem half has a constant ready
+    // (Skill#DISADVANTAGE_MALUS) but no way to scope it to "this one cast", nor to Dano/Cura rolls
+    // specifically; and the trade is opt-in per cast, which is a per-activation choice this core
+    // has no shape for.
     CONJURACAO_RAPIDA(
             "Você pode optar por receber Desvantagem nas rolagens de Perícia de Conjuração, Dano "
                     + "e Cura mágica de uma magia. Se o fizer o tempo de conjuração da desta magia será "
@@ -229,8 +249,9 @@ public enum MetamagicoFeat implements Feat {
                     .requiredSkillGraduation(7)
                     .build()),
 
-    // TODO: the -1PA reduction is blocked on the same missing casting time CONJURACAO_RAPIDA
-    // cites — Spell carries no PA cost column, so there is nothing to reduce or floor at 1PA.
+    // TODO: the -1PA reduction reads Spell#getActivationTime() for its base now, but is blocked
+    // on the same missing cost step CONJURACAO_RAPIDA cites — SpellCastingService#castSpell spends
+    // no PA, so there is nothing to reduce or floor at 1PA (the gap Guampo's javadoc cites).
     // TODO: "iniciem seu efeito 1 Rodada após a conjuração" needs a delayed-effect mechanism.
     // TemporaryEffect counts a Round-scoped effect *down* toward expiry; nothing schedules one to
     // *begin* later, and CharacterSheet#startTurn — the natural trigger — is still a no-op.
@@ -326,9 +347,11 @@ public enum MetamagicoFeat implements Feat {
         }
     },
 
-    // TODO: no Mana cost is ever resolved through a service — BranchLevel#getManaCost is a flat
-    // column read by nobody, and no Talento Metamágico activation spends PM either (see the
-    // Barreira gap). A -1PM floor-1 reduction has no calculation to sit in front of.
+    // TODO: no Mana cost is ever resolved through a service — Spell#getManaCost() (delegating to
+    // BranchLevel#getManaCost) is authored data read by nobody, SpellCastingService#castSpell
+    // spends no PM (the gap Guampo's javadoc cites), and no Talento Metamágico activation spends
+    // PM either (see the Barreira gap). A -1PM floor-1 reduction has no calculation to sit in
+    // front of.
     ENGENHEIRO_DO_MANA(
             "O Custo de Mana para Conjurar Magias e ativar efeitos de Talentos Metamágicos é "
                     + "reduzido em -1PM (mínimo 1PM).",

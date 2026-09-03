@@ -10,6 +10,9 @@ import org.aventyrs.core.character.Deity;
 import org.aventyrs.core.character.DefenseType;
 import org.aventyrs.core.character.TitleSlot;
 import org.aventyrs.core.character.fixture.CharacterFixture;
+import org.aventyrs.core.item.AbstractWeapon;
+import org.aventyrs.core.item.ItemCategory;
+import org.aventyrs.core.item.Weapon;
 import org.aventyrs.core.character.services.DamageBaseService;
 import org.aventyrs.core.character.services.DamageBaseServiceImpl;
 import org.aventyrs.core.character.services.DamageService;
@@ -126,19 +129,23 @@ class RacialFeatEffectIntegrationTest {
     // ---------- Anão ----------
 
     @Test
-    void filhoDeYmirRaisesBothTheLifeMultiplierAndDanoBase() throws IllegalOperationException {
+    void filhoDeYmirRaisesTheLifeMultiplierAndTheDanoBaseOfAWieldedWeaponButNotBareHands()
+            throws IllegalOperationException {
         Character character = character()
                 .attributes(CharacterAttributes.builder()
                         .vigor(AttributeValue.builder().domain(AttributeDomain.VIGOR).base(4).build())
                         .build())
                 .build();
+        Weapon machado = AbstractWeapon.builder().name("Machado").category(ItemCategory.HEAVY_BLADE)
+                .damageBase(DamageBase.of(2, 0)).skillType(SkillType.ATAQUE_CORPO_A_CORPO).build();
         int multiplierBefore = hitPointsService.getLifeMultiplier(character);
-        DamageBase danoBefore = damageBaseService.getDamageBase(character, SkillType.ATAQUE_CORPO_A_CORPO);
 
         acquire(character, AnaoFeat.FILHO_DE_YMIR);
 
         assertEquals(multiplierBefore + 1, hitPointsService.getLifeMultiplier(character));
-        assertEquals(danoBefore.scaledUp(1),
+        // "Dano Base de armas" — a wielded weapon scales up, a bare-handed strike does not.
+        assertEquals(DamageBase.of(2, 1), damageBaseService.getDamageBase(character, machado));
+        assertEquals(DamageBase.UNARMED,
                 damageBaseService.getDamageBase(character, SkillType.ATAQUE_CORPO_A_CORPO));
     }
 
@@ -1126,17 +1133,25 @@ class RacialFeatEffectIntegrationTest {
     }
 
     /**
-     * Selvageria is withheld even though {@code resolveDamageBaseIncrease} exists: that hook is
-     * unconditional, so granting it would raise every weapon's Dano Base where the clause covers
-     * Armas Naturais alone. Filho de Ymir goes the other way because its excluded case is only an
-     * Ataque Desarmado — the direction of the error is what differs.
+     * Both scope their "+1 Dano Base" off the weapon, in opposite directions: Selvageria covers
+     * Armas Naturais <em>only</em>, Filho de Ymir's "de armas" covers any wielded weapon but not
+     * a bare-handed Ataque Desarmado.
      */
     @Test
-    void selvageriaRaisesNoDanoBaseWhereFilhoDeYmirDoes() {
+    void selvageriaRaisesOnlyArmasNaturaisWhileFilhoDeYmirRaisesAnyWieldedWeapon() {
         Character monstro = vigorousCharacter(4);
+        Weapon claws = AbstractWeapon.builder().name("Garras").category(ItemCategory.NATURAL_WEAPON)
+                .damageBase(DamageBase.of(1, 0)).skillType(SkillType.ATAQUE_CORPO_A_CORPO).build();
+        Weapon blade = AbstractWeapon.builder().name("Espada").category(ItemCategory.HEAVY_BLADE)
+                .damageBase(DamageBase.of(2, 0)).skillType(SkillType.ATAQUE_CORPO_A_CORPO).build();
 
-        assertEquals(0, MonstruosoFeat.SELVAGERIA.resolveDamageBaseIncrease(monstro));
-        assertEquals(1, AnaoFeat.FILHO_DE_YMIR.resolveDamageBaseIncrease(monstro));
+        assertEquals(1, MonstruosoFeat.SELVAGERIA.resolveDamageBaseIncrease(monstro, claws));
+        assertEquals(0, MonstruosoFeat.SELVAGERIA.resolveDamageBaseIncrease(monstro, blade));
+        assertEquals(0, MonstruosoFeat.SELVAGERIA.resolveDamageBaseIncrease(monstro, null));
+
+        assertEquals(1, AnaoFeat.FILHO_DE_YMIR.resolveDamageBaseIncrease(monstro, claws));
+        assertEquals(1, AnaoFeat.FILHO_DE_YMIR.resolveDamageBaseIncrease(monstro, blade));
+        assertEquals(0, AnaoFeat.FILHO_DE_YMIR.resolveDamageBaseIncrease(monstro, null));
     }
 
     @Test

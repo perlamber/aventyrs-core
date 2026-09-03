@@ -246,6 +246,22 @@ public interface Item {
         return masterpieceBonus + improvementBonus + resolvePowerStoneBonus(modifierType);
     }
 
+    /**
+     * Extra Movimento Base, in UD, this item grants on one specific movement of the Rodada —
+     * the per-movement counterpart of the {@code ModifierType#MOVEMENT} bonus {@link
+     * #resolveEnhancementBonus} already carries, for an Equipamento whose rules text scopes its
+     * bonus to <i>which</i> movement of the Rodada it is. movementIndex is 0-based.
+     *
+     * <p>Zero by default and, like every other bonus-granting default here, gated on {@link
+     * #isDestroyed()} in this one place so no consuming service needs a check of its own. No
+     * catalogued Equipamento names such a clause yet — the hook exists so {@code
+     * MovementServiceImpl} resolves all four of its permanent-{@code MOVEMENT} sources on the
+     * per-movement axis too, rather than silently covering three of them.
+     */
+    default int resolveRoundMovementIncrease(final int movementIndex, final Character character) {
+        return 0;
+    }
+
     /** Dano Base scale-ups this item grants when weapon is the attack source. */
     default int resolveEnhancementDamageBaseIncrease(final Weapon weapon, final Character character) {
         if (isDestroyed()) {

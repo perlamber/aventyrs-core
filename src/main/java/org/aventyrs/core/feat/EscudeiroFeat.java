@@ -40,8 +40,10 @@ public enum EscudeiroFeat implements Feat {
      * could compute; only the shield condition blocks it, and granting unconditionally would
      * hand the bonus to a character carrying nothing.
      */
-    // TODO: carries an acquisition-time choice (which Escudo item) — CLAUDE.md's AcquiredChoice
-    //  pattern, still without a consuming mechanism.
+    // TODO: the choice is "um item escolhido do tipo Escudo" — a specific Item, but no Escudo
+    //  item catalog is authored (only ArmorItem), so there is nothing to pick. Gating on any
+    //  equipped ItemCategory.SHIELD would be looser than the text. The choice-carrying
+    //  AbstractFeat mechanism (see FocoEmPericiaFeat) is not the blocker.
     ESPECIALISTA_EM_ESCUDO(
             "Você recebe +1 em suas Defesas enquanto utilizar um item escolhido do tipo ‘Escudo’. "
                     + "Escolha um item do tipo ‘Escudo’, se tiver 4 ou mais graduações em ‘Esquiva "
@@ -101,9 +103,12 @@ public enum EscudeiroFeat implements Feat {
      * "Após uma rolagem de Iniciativa, se você não for o primeiro a agir, nas duas primeiras
      * Rodadas do combate você recebe bônus de +3 em suas Defesas", or +5 if last to act.
      */
-    // TODO: the round window is expressible (SceneContext#isWithinFirstCombatRounds(2)) and
-    //  "ganhou a iniciativa" has a resolver, but "not first"/"last to act" is turn-order position
-    //  which Scene exposes for nobody, and no Feat hook receives a SceneContext at all.
+    // TODO: everything but the turn-order position is reachable now —
+    //  Feat#resolveDefenseBonus(DefenseType, Character, SceneContext) takes a SceneContext (see
+    //  AnaoFeat#VANTAGEM_DE_TAMANHO), the round window is SceneContext#isWithinFirstCombatRounds(2)
+    //  and "ganhou a iniciativa" has a resolver. What blocks it is "não for o primeiro"/"o último
+    //  a agir": turn-order position is not live on Scene, and the two branches grant different
+    //  amounts (+3 vs +5), so neither can be picked.
     // TODO: "você ignora efeitos que reduzem Defesas" needs suppression of a malus by source;
     //  DefenseService sums every contribution with no notion of which granted it.
     INICIO_DEFENSIVO(
@@ -147,8 +152,10 @@ public enum EscudeiroFeat implements Feat {
      * "Você não perde Bônus Defensivo ao atacar com Escudos", plus +2 Margem Crítica Menor and a
      * Corrente de Efeitos on criticals.
      */
-    // TODO: Margem Crítica — resolveCriticalMarginIncrease is not on Feat, and this names the
-    //  Menor tier specifically where SkillRoll widens both together (see AssassinoFeat).
+    // TODO: Feat#resolveCriticalMarginIncrease is real (see PeritoFeat#CONTROLE_DA_SITUACAO), but
+    //  this bonus is scoped to "ataques com Escudos" — nothing marks a Escudo as the thing swung,
+    //  so granting it would widen every attack roll. (It names the Menor tier, which is all the
+    //  hook touches anyway — see AssassinoFeat's enum javadoc.)
     // TODO: granting a Corrente de Efeitos to a critical has no hook on the attack path.
     ARTE_DO_ESCUDO_ATACANTE(
             "Você não perde Bônus Defensivo ao atacar com Escudos. Seus ataques com Escudos feitos "
@@ -162,8 +169,9 @@ public enum EscudeiroFeat implements Feat {
     /**
      * "A GD de seu primeiro Ataque com Escudo de cada um de seus Turnos é reduzida em -1 nível."
      */
-    // TODO: a Feat cannot reduce a roll's GD — getDifficultyReduction() is a
-    //  SkillCompetencyAbility/SkillExcellency hook that no Interaction scans Talentos for.
+    // TODO: Feat#resolveDifficultyReduction is real and scanned by
+    //  AbstractSkillInteraction#sumFeatDifficultyReductions, but it is documented for an
+    //  *unconditional* reduction on a named Perícia.
     // TODO: "Empurrão Violento" is a manoeuvre with no representation, and "Alcance Estendido
     //  como Aprimoramento" needs per-copy item state (gap catalog, "Owned/produced item copy").
     DOMINIO_DA_ARTE_DO_ESCUDO_ATACANTE(

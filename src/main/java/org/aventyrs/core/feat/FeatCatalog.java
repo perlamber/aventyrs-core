@@ -69,7 +69,8 @@ public final class FeatCatalog {
      */
     public static List<Feat> availableFor(final Character character) {
         return ALL.stream()
-                .filter(feat -> !character.getFeats().contains(feat))
+                .filter(feat -> character.getFeats().stream()
+                        .noneMatch(held -> held.catalogEntry() == feat))
                 .filter(feat -> feat.isEligible(character))
                 .toList();
     }

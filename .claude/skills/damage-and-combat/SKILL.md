@@ -1,6 +1,6 @@
 ---
 name: damage-and-combat
-description: This skill should be used for any work on combat resolution, damage, or the sheet type hierarchy — `AttackDelivery`/`AttackReceiver` (the two mirrored entry points), `DamageBase`/`DamageBaseService` (the odometer scale, `getDamageBase(Character, Weapon|SkillType)`), `DamageService` (RD/RA/half-damage mitigation order, `calculateFinalDamage`, `applyDamage`), `HitPointsService#getStatus`/`getMaxHitPoints` and `CharacterStatus` being derived-not-stored, ally-facing RA scans (`resolveAllyAbsoluteDamageReduction`, `sumAllyGrantedAbsoluteDamageReduction`), `SceneContext`-conditioned RA/half-damage hooks, `CombatantSheet` vs `CharacterSheet` vs `MonsterSheet`, `lifeMultiplier`/`ModifierType.HIT_POINTS`, or `CriticalEffect`. Also use it when asked why a `DamageBase` scale-up isn't a `DamageBonus`, why monsters can't level up, why `CharacterStatus` isn't stored, or why RA is scanned rather than granted.
+description: This skill should be used for any work on combat resolution, damage, or the sheet type hierarchy — `AttackDelivery`/`AttackReceiver` (the two mirrored entry points), `DamageBase`/`DamageBaseService` (the odometer scale, `getDamageBase(Character, Weapon|SkillType)`), `AttackRangeService`/`Weapon#getRange`/`Range#increasedBy`/`Feat#resolveAttackRangeIncrease` (an attack's maximum distance from the Weapon or Spell, widened by Talentos — `ArtilhariaFeat#TIRO_LONGO`), `DamageService` (RD/RA/half-damage mitigation order, `calculateFinalDamage`, `applyDamage`), `HitPointsService#getStatus`/`getMaxHitPoints` and `CharacterStatus` being derived-not-stored, ally-facing RA scans (`resolveAllyAbsoluteDamageReduction`, `sumAllyGrantedAbsoluteDamageReduction`), `SceneContext`-conditioned RA/half-damage hooks, `CombatantSheet` vs `CharacterSheet` vs `MonsterSheet`, `lifeMultiplier`/`ModifierType.HIT_POINTS`, or `CriticalEffect`. Also use it when asked why a `DamageBase` scale-up isn't a `DamageBonus`, why monsters can't level up, why `CharacterStatus` isn't stored, why an attack's range isn't a character stat, or why RA is scanned rather than granted.
 ---
 
 # Damage, combat resolution, and the sheet hierarchy
@@ -66,20 +66,39 @@ The player always rolls, so a foe contributes a fixed number whichever way an ex
 | Foe contributes | a GD + flat bonus | a flat Defesa (DF or DM) |
 | Critical trigger | the roll's **Falha** Crítica | the roll's **Acerto** Crítico |
 
-Neither ever calls the other. Both are report-only, both roll exactly once (the roll consumes
-`consumeFirstRollThisTurn` and can grant an Ego point), and both assemble the same pre-wired
-`Damage → Correntes → Críticos` chain onto the result's `nextInteraction`.
+Neither ever calls the other. Both are report-only, both roll exactly once (the roll can grant
+an Ego point on a critical — the only state it changes; the first-roll-of-Turn check it also
+runs is non-mutating now), and both assemble the same pre-wired `Damage → Correntes → Críticos`
+chain onto the result's `nextInteraction`. **Neither records the action** — the API calls
+`CombatantSheet#recordAction` after `resolve` returns, using
+`getAttackResult().getGoverningAttributeDomain()` and the `AttackSource`/`ActionCost` it supplied.
 
 - `CriticalEffect#validateCriticalHit` demands an *Acerto* Crítico, which is correct for
   `AttackDelivery` and **still awkward for `AttackReceiver`**, where the trigger is a Falha
   Crítica — a caller there has to construct the Efeito with a value describing something that
   didn't happen, and the Maior/Menor severity it should inherit from the defence roll is picked by
   hand. That translation is still missing; don't assume the offensive direction fixed it.
+- **`AttackDelivery` merges the attacker's Talentos' Efeitos Críticos** into the chain —
+  `Feat#resolveExtraCriticalEffects(attacker, attackSkill, attackSource, criticalResult)` returns
+  a `List<CriticalEffect>` (`AssassinoFeat#ABRIR_FERIDAS` → a `Sangramento`), concatenated with
+  the caller-supplied `DeliveredAttack#getCriticalEffects()` and then filtered by
+  `CriticalEffect#applicableTo`. `AttackReceiver` has no equivalent — `IncomingAttack` carries no
+  attacker to scan.
+- **The defeat trigger is `DefeatBlessingService`, not in either entry point.** Nothing reports
+  "this blow was fatal" back to the attacker, so the caller checks its own
+  `DeliveredAttackResult` / `HitPointsService#getStatus` and calls
+  `applyDefeatBlessings(attacker, defeated, viaCriticalHit)`, which scans
+  `Feat#resolveDefeatBlessings` and applies each `Blessing` on the attacker
+  (`SANGUE_QUENTE`/`VIOLENCIA_DESCOMUNAL`/`ARCANISMO_AVASSALADOR`).
 - The Corrente margin is inverted for `AttackReceiver` (attack beats defence by 5, or 7 vs
   `RESOLUTO`) — an inference from `EffectChainService`'s own text, flagged on the class.
 - `AttackDelivery` **reports but does not apply** the attacker's `difficultyReduction`: it's
   denominated in níveis and a foe's Defesa is a flat integer, with no defined conversion. TODO'd
-  on the class rather than guessed at.
+  on the class rather than guessed at. `AssassinoFeat#SAQUE_RELAMPAGO`'s "-1 nível" (via
+  `Feat#resolveAttackCostDifficultyReduction`, gated on the roll's `ActionCost` and the
+  per-Rodada action log) is the first authored clause that lands here — it flows into
+  `getUnappliedDifficultyReduction()` on this path, and applies for real on the direct
+  skill-roll path and via `AttackReceiver` (`DifficultyLevel#easier`).
 - **The `attackTarget`-aware 4-arg `applyTo` lives on `AbstractSkillInteraction`**, gated on
   `isAttackSkill()`, not on `AtaqueADistanciaInteraction`. That was the fix
   `AnoesRacialAbility.ABATEDORES_DE_GIGANTES` needed — its rules text always covered every Perícia
@@ -193,6 +212,38 @@ Character actor)` — with the original 2-arg form delegating down with `null`s.
 it also still doesn't check `attackingSkillType`, so an Ataque à Distância ability's dano bonus
 applies to a Corpo-a-Corpo swing; that's pre-existing.
 
+## An attack's maximum range — `AttackRangeService`
+
+Same shape as `DamageBaseService`, one axis over: an attack's max distance is a property of the
+**Weapon or Spell**, advanced by the attacker's Talentos. `AttackRangeService#getEffectiveRange`
+has two non-cascading overloads — `(Character, Weapon)` → `Range`, `(Character, Spell)` →
+`Optional<Range>` (empty for a Pessoal/Toque/Planar/caster-centred reach that names no placed
+distance).
+
+- **The authored column.** `Weapon#getRange()` is a `@Builder.Default` of `Range.ADJACENTE` on
+  `AbstractWeapon` — *not* `@NonNull` like `damageBase`/`skillType`, because a weapon that never
+  states an Alcance genuinely *is* a corpo-a-corpo one and almost no call site consults it (no
+  test builder needed touching). `Weapon#getEffectiveRange()` drops to `ADJACENTE` once the
+  weapon is destroyed, mirroring `getEffectiveDamageBase()` → `UNARMED`. A Magia's is
+  `spell.getTargeting().range()`.
+- **`Range#increasedBy(int steps)`** shifts a band up the nearest-to-farthest ladder, clamped at
+  both ends. A step is a whole band (a nível/passo de distância), never a UD count — which is why
+  the `Feat` hook returns an `int` and there is no `ModifierType.RANGE`, the same reasoning
+  `SpellService#getMaxBranchLevel` uses.
+- **`Feat#resolveAttackRangeIncrease(Character, AttackSource)`** is the only source scanned, and
+  the **first `Feat` hook to take an `AttackSource`** — a range clause is scoped to *how* the
+  attack is delivered. `ArtilhariaFeat#TIRO_LONGO` checks `getAttackSkillType() ==
+  ATAQUE_A_DISTANCIA` (true of an arco and a ranged Magia alike — its "físicos e Mágicos"
+  scope). `null` = "caller didn't say", read as no-match.
+- **No ability or equipment source yet** — deliberately. No `SkillCompetencyAbility`/
+  `AttributeAbility` constant states an unconditional "+N níveis de distância" (add the hook with
+  its first consumer); the offensive Aprimoramento catalog ("Alcance Estendido") doesn't exist,
+  and Arco Longo's "Alcance Base muda para" Favor is a *replacement* with no `ModifierType`. Add
+  a `getEquipment()` pass when that lands, like `DamageBaseServiceImpl` already has one.
+- **Nothing gates an attack on being in range** — `AttackDelivery` and
+  `SpellCastingService#validateRequest` never compare `range()` to the target's distance. This
+  service answers "how far can they reach", not "did it connect".
+
 ## Damage mitigation — `DamageService`
 
 Three layers of mitigation, in a fixed order:
@@ -298,6 +349,11 @@ instead.
 - `src/main/java/org/aventyrs/core/character/DamageBase.java` /
   `src/main/java/org/aventyrs/core/character/services/DamageBaseService.java` /
   `DamageBaseServiceImpl.java`.
+- `src/main/java/org/aventyrs/core/character/services/AttackRangeService.java` /
+  `AttackRangeServiceImpl.java` — the max-range twin of `DamageBaseService`;
+  `src/main/java/org/aventyrs/core/scene/Range.java` (`increasedBy`),
+  `src/main/java/org/aventyrs/core/item/Weapon.java` (`getRange`/`getEffectiveRange`),
+  `Feat#resolveAttackRangeIncrease`, `ArtilhariaFeat#TIRO_LONGO`.
 - `src/main/java/org/aventyrs/core/character/services/DamageService.java` /
   `DamageServiceImpl.java` — mitigation order, ally scans, `SceneContext` overloads.
 - `src/main/java/org/aventyrs/core/character/services/HitPointsService.java`

@@ -28,10 +28,10 @@ public enum PequeninoFeat implements Feat {
      * rolagens de Perícias diferentes desencadeiam este efeito."
      */
     // TODO: needs a within-Turn roll counter, and a discriminating one — it must know that a
-    //  second roll happened and that it was a *different* Perícia. CharacterSheet tracks
-    //  Round-scoped TemporaryEffects, not activation or roll counts, and the one thing close to
-    //  it (consumeFirstRollThisTurn) is keyed by AttributeDomain and answers only "was this the
-    //  first", never "which Perícias have been rolled".
+    //  second roll happened and that it was a *different* Perícia. The action log
+    //  (CombatantSheet#getActionsThisRound()) now records each roll's Perícia and its Turn slice,
+    //  so "a second, different Perícia this Turn" is derivable from it — but the log only holds
+    //  actions the API chose to record, and nothing fires the PA grant off a roll (next TODO).
     // TODO: the PA it grants is Rodada-scoped, so it is a Blessing of ModifierType.ACTION_POINTS
     //  rather than Feat#resolveActionPointsIncrease (which is for a permanent grant) — but
     //  nothing fires a Blessing off a roll being made.

@@ -50,6 +50,23 @@ grows), buys compile-time enumerability and zero runtime bookkeeping. Prefer thi
 
 Don't build a service to validate that a choice is *legal* — just record what was picked.
 
+**Talentos use pattern 1 too.** A `Feat` whose rules say "escolha uma Perícia / um tipo de
+terreno / um tipo de arma" is a hand-written `final class <Name>Feat extends AbstractFeat`
+carrying a `@NonNull` choice field, granted in place of the enum constant, overriding
+`Feat#catalogEntry()` to return that constant (so `isEligible`/`FeatCatalog#availableFor` still
+match) and the relevant `resolve*` hook. Because the `Feat` hooks are already parameterized
+with `SkillType`/`SceneContext`/`AttackSource`, no three-way method split is needed — the choice
+field feeds them directly. Weapon-type choices are `org.aventyrs.core.item.AttackMethod`
+(weapon `ItemCategory` constants + `NATURAL_WEAPON` + `OFFENSIVE_MAGIC`), matched against the
+delivered `AttackSource` via `AttackMethod#matches`, reached through the trailing-`AttackSource`
+cascading overload of `Feat#resolveSkillRollBonus`/`resolveCriticalMarginIncrease`. See the
+`adding-a-feat` skill's step 3b; references are `FocoEmPericiaFeat`, `TerrenoPrediletoFeat`,
+`EspecialistaEmArmaFeat`, `AtiradorPerfeitoFeat`, `AcertoCriticoAprimoradoFeat`,
+`AdotadoPorSylphFeat`. `SaqueRelampagoFeat` is the same pattern with a **coarser** choice type —
+a local `WeaponOrSpellChoice` enum (`WEAPONS`/`SPELLS`, `matches(AttackSource)` by `instanceof`),
+*not* the per-category `AttackMethod`, because "Armas ou Magias" is the whole-category split and
+only one Talento names it. It overrides `Feat#resolveAttackCostDifficultyReduction`.
+
 ## Unconditional Perícia base-Attribute substitution — `SkillCompetencyAbility.getSubstituteAttributeDomain()`
 
 "Lets this Perícia use Attribute X instead of its normal base Attribute" is another common
@@ -124,12 +141,14 @@ not a cascade.
   has no representation, deliberately, because nothing consumes one yet.
 - It reaches the roll as the **fifth and last** `applyTo` parameter, and that placement is
   forced: the resolved `AttributeDomain` feeds `getValueForRoll`, both `sumAttributeDomain*`
-  scans, and — decisively — `consumeFirstRollThisTurn(domain)`, which is *stateful*. A domain
-  resolved after the fact can't un-consume a Turn's first roll, so the usual "layer it onto the
-  result" trick (how the `attackTarget` half still works, see `applyAttackTargetBonuses`) is
-  unavailable here. Being a parameter rather than a field on `SkillRoll` also keeps the
-  substitution visible on `AttackDelivery`'s bonuses-only preview path. Callers pass the
-  `Weapon`/`Spell` itself — `.attackSource(ADAGA_DE_ARREMESSO)`, not a wrapper around it.
+  scans, the `isFirstRollOfTurnFor(domain)` check, and `InteractionResult#getGoverningAttributeDomain()`
+  (which the API needs to build a `CombatantAction`). The usual "layer it onto the result" trick
+  (how the `attackTarget` half still works, see `applyAttackTargetBonuses`) can't produce a
+  substituted domain that all of those already consumed. Being a parameter rather than a field on
+  `SkillRoll` also keeps the substitution visible on `AttackDelivery`'s bonuses-only preview
+  path. (`SkillRoll` *does* carry an optional `ActionCost` — but that is metadata, read by no
+  resolution step, so it is fine as a field.) Callers pass the `Weapon`/`Spell` itself —
+  `.attackSource(ADAGA_DE_ARREMESSO)`, not a wrapper around it.
 - **Because the logic moved to the 5-arg overload, a subclass must override *that* one.**
   `ArtesInteraction` was moved from the 3-arg accordingly, even though Artes reads neither new
   parameter — an override left on a shorter overload is silently skipped by any caller using a

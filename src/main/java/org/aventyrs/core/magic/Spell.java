@@ -113,6 +113,17 @@ public interface Spell extends AttackSource {
     String getPrimaryEffectDescription();
 
     /**
+     * The structured numeric damage of the {@code Efeito:} line, or {@link Optional#empty()} when
+     * the Magia's primary effect deals none, or deals damage this core cannot model yet — see
+     * {@link SpellDamage}. Resolved against a caster by {@code
+     * SpellCastingService#resolvePrimaryDamage}. Defaults to empty; an {@link AuthoredSpell}
+     * reads it off {@link SpellData#getPrimaryDamage()}.
+     */
+    default Optional<SpellDamage> getPrimaryDamage() {
+        return Optional.empty();
+    }
+
+    /**
      * The {@code Efeito Alternativo – ‹name›:} block, or {@code null} for the 82 Magias with
      * none. "Um personagem que aprenda a versão base automaticamente aprende sua segunda versão"
      * — it is not separately acquired, which is why it is a column here rather than its own

@@ -56,12 +56,17 @@ public enum ElementalFeat implements Feat {
      * de dano e cura tem seus efeitos numéricos aumentados em +2, suas Magias de Encantamento
      * com este elemento tem a Duração aumentada em +1 Rodada."
      */
-    // TODO: the EXP discount has two independent blockers — SpellService#grantSpell spends no XP
-    //  at all (deliberately: no acquisition cost is specified, see that service's javadoc), so
-    //  there is no figure to discount, and getNewFeatCost's int would not hold 0.5 anyway.
-    // TODO: "efeitos numéricos aumentados em +2" needs a Magia to *have* a numeric effect. Spell
-    //  has no damage or healing column at all — the catalog is 145 Magias of authored prose with
-    //  live rungs, PM costs and gates, and inert effects.
+    // TODO: the EXP discount now has both a figure and a hook — SpellService#grantSpell spends
+    //  SpellService.ACQUISITION_EXPERIENCE_COST (BigDecimal, so 0.5 fits) and getAcquisitionCost
+    //  sums Feat#resolveSpellAcquisitionCostReduction. What still blocks it is the scope: "magias
+    //  Elementais de seu elemento" needs both a per-Magia Elemental type (Spell has getPrimaryType/
+    //  getSecondaryType, so "Elemental" is checkable) AND "seu elemento", which has no column to
+    //  read (class javadoc) — so this constant can't yet tell which Elemental Magias qualify.
+    // TODO: "efeitos numéricos aumentados em +2" — a few Magias now carry a structured
+    //  Spell#getPrimaryDamage() (SpellDamage), resolved by SpellCastingService#resolvePrimaryDamage,
+    //  so a flat +2 to the deterministic amount would have somewhere to land. Still blocked: no
+    //  hook on that resolution for a Feat to contribute to, healing has no column at all, and the
+    //  "de seu elemento" scope is the same missing element column the EXP half cites.
     // TODO: the Duração uplift would modify SpellDuration, which is authored per Magia and read
     //  as a constant; nothing resolves a Magia's Duração against its caster.
     ARCANISMO_ELEMENTAL(
@@ -151,11 +156,12 @@ public enum ElementalFeat implements Feat {
      * causa danos mágicos."
      */
     // TODO: gated on an active Gana, which cannot be activated.
-    // TODO: three further blockers — Feat has no resolveCriticalMarginIncrease (it lives on
-    //  EgoAdvantage/AttributeAbility/SkillCompetencyAbility); redirecting an Ataque roll to
+    // TODO: two further blockers — redirecting an Ataque roll to
     //  compare against DM instead of DF is not expressible, since a foe's Defesa is an authored
     //  number nothing compares a roll against yet; and "seu primeiro ataque em cada Rodada" is
-    //  the "this one delivered attack" scoping gap.
+    //  the "this one delivered attack" scoping gap. The Margem Crítica itself is no longer a
+    //  blocker — Feat#resolveCriticalMarginIncrease is real (see PeritoFeat#CONTROLE_DA_SITUACAO)
+    //  — but it cannot be scoped to one attack of the Rodada.
     // TODO: Corrente de Efeitos – Explosão Cataclísmica is not among the 13 EffectChainService
     //  resolves.
     GOLPE_CATACLISMICO(

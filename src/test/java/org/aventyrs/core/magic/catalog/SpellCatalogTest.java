@@ -229,6 +229,26 @@ class SpellCatalogTest {
         assertEquals(4, countActivations(org.aventyrs.core.magic.ActivationType.ACAO_LIVRE));
     }
 
+    @Test
+    void theStructuredPrimaryDamageIsAuthoredWhereItHasBeenModelled() {
+        Map<String, org.aventyrs.core.magic.SpellDamage> byName = SpellCatalog.all().stream()
+                .filter(spell -> spell.getPrimaryDamage().isPresent())
+                .collect(Collectors.toMap(Spell::getName, spell -> spell.getPrimaryDamage().orElseThrow()));
+
+        // Ira de Vulcano's four straightforward damage rungs, plus three Piromancia entries.
+        assertEquals(Set.of("Sopro de Magma Menor", "Sopro de Magma Maior", "Torrente Vulcânica",
+                        "Ira de Vulcano", "Hálito de Eldur", "Bola de Fogo Elduriana", "Olhar de Eldur"),
+                byName.keySet());
+
+        org.aventyrs.core.magic.SpellDamage menor = byName.get("Sopro de Magma Menor");
+        assertEquals(0, menor.diceCount());
+        assertEquals(org.aventyrs.core.magic.FocusScaling.HALF, menor.focusScaling());
+        assertEquals(org.aventyrs.core.magic.ElementalType.MAGMA, menor.elementalType());
+
+        byName.values().forEach(damage ->
+                assertEquals(org.aventyrs.core.magic.FocusScaling.HALF, damage.focusScaling()));
+    }
+
     private static long countActivations(final org.aventyrs.core.magic.ActivationType type) {
         return SpellCatalog.all().stream()
                 .map(Spell::getActivationTime)

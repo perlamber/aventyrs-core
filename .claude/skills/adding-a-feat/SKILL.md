@@ -40,10 +40,28 @@ mechanism.
   **deliberately separate methods, not a flag**: "am I allowed this?" and "can I afford it?"
   differ over time and a UI wants both. Cost is per-Race, so two characters with identical
   Talentos and identical XP can get different answers.
-- **`Feat` carries four `default resolve*` hooks**, not one — `resolveDamageBaseIncrease`,
-  `resolveBranchLevelIncrease` (the Árvore de Magia cap — see the `magic-system` skill),
-  `resolveDefenseBonus(DefenseType, Character)` and `resolveManaMultiplierIncrease`/
-  `resolveRestMagicPointsBonus(RestType, Character)`. The "keep it on the tree enum until a
+- **`Feat` carries a family of `default resolve*` hooks**, not one — among them
+  `resolveDamageBaseIncrease(Character, Weapon)`, `resolveAttackRangeIncrease(Character,
+  AttackSource)` and `resolveAttackCostDifficultyReduction(SkillType, SceneContext, Character,
+  AttackSource, ActionCost, List<CombatantAction>)` (both take an `AttackSource` — a range clause
+  scoped to delivery, and a GD clause scoped to *what the attack cost* plus the Rodada's prior
+  actions, `AssassinoFeat#SAQUE_RELAMPAGO`; the latter is first-consumer-shaped, see
+  `damage-and-combat`), `resolveBranchLevelIncrease` (the Árvore de Magia cap — see the
+  `magic-system` skill), `grantsFreeSpellAcquisition(Character, Spell)` /
+  `resolveSpellAcquisitionCostReduction(Character, Spell)` → `BigDecimal` (a Talento that hands a
+  Magia to its holder free, or discounts the XP price — both fed to
+  `SpellService#getAcquisitionCost`, which also sums the `Race` twin; the waiver is wired ahead
+  of `MetamagicoFeat#ARCANISTA`'s choice class, the discount alongside
+  `ElementalFeat#ARCANISMO_ELEMENTAL`), `resolveDefenseBonus(DefenseType, Character)`,
+  `resolveManaMultiplierIncrease`/`resolveRestMagicPointsBonus(RestType, Character)`, the
+  movement/action-point ones, `resolveExtraCriticalEffects(...)` (Efeitos Críticos a Talento adds
+  to a critical hit — `AttackDelivery` scans it, `AssassinoFeat#ABRIR_FERIDAS`), and
+  `resolveDefeatBlessings(attacker, defeated, viaCriticalHit)` (`Blessing`s the moment one of the
+  holder's attacks drops a foe — `DefeatBlessingService`, caller-driven). Several hooks now have a
+  trailing `CombatantSheet holder` overload that falls through to the sheet-less form
+  (`resolveSkillRollBonus`, `resolveDefenseBonus`, `resolveDamageReduction`,
+  `resolveCriticalMarginIncrease`) — override it for a clause reading held `Condição`s or the
+  per-Rodada/per-Cena action log. The "keep it on the tree enum until a
   second consumer earns the interface" rule still holds for a formula only that tree reads — but
   **a hook a *service* must scan for has to be on `Feat` itself**, since `character.getFeats()`
   is a `List<Feat>`. Feats are deliberately **not** part of any `ModifierResolver` `@Modifier`
@@ -150,6 +168,41 @@ check whether it fits an existing hook first (`Feat` currently has none of
 `SkillCompetencyAbility`'s roll-scoped `resolve*` hooks — if a Talento needs one, that's a
 second real consumer; add it to `Feat` itself at that point, not before).
 
+## 3b. Acquisition-time choice ("escolha uma Perícia / um tipo de terreno / um tipo de arma")
+
+When the Descrição opens with a player pick, the enum constant **cannot** hold it — one
+constant is shared by every character. Model it exactly like `ArtesAprimorarComArteAbility`:
+
+- A hand-written `final class <Name>Feat extends AbstractFeat` in `org.aventyrs.core.feat`,
+  with a `@NonNull` final choice field, a `static of(...)` factory, and `super(...)` delegating
+  `getFeatCategory()/getDescription()/getFeatRequirements()` to the enum constant.
+- Override `Feat#catalogEntry()` to return the enum constant. This is what keeps
+  `Feat#isEligible`'s `requiredFeat` check and `FeatCatalog#availableFor`'s "already held"
+  filter working — both compare against `catalogEntry()`, not object identity. **Do not** add a
+  custom `equals`.
+- Override the `resolve*` hook(s) the clause reaches, branching on the choice.
+- Add a `static Optional<C> chosenBy(Character)` (mirrors
+  `PeritoTeoricoAbility.resolveAttributeDomain`) so dependent Talentos in the same tree — which
+  stay plain enum constants — can read the pick.
+- Leave the enum constant in place as the catalog/rules entry, with its TODO block replaced by
+  a javadoc `<p><b>Real</b>, through {@link <Name>Feat}` note. `FeatCatalog` still lists the
+  constant (the choice instance isn't an enum, so it's never listed); the caller builds the
+  instance at grant time and passes it to the existing `grantFeat`.
+- **Choice types**: a `SkillType`, `TerrainType` (its six constants *are* the six terrenos),
+  `AttributeDomain`, `EgoDomain`, a `Set<SkillType>`. A "tipo de arma / armas naturais / magias
+  ofensivas" choice is `org.aventyrs.core.item.AttackMethod` — matched against the delivered
+  `AttackSource` via `AttackMethod#matches`, using the trailing-`AttackSource` cascading
+  overload of `resolveSkillRollBonus`/`resolveCriticalMarginIncrease` (the longer form defaults
+  to the shorter — override the longer one). A **coarser** "Armas ou Magias" (whole-category)
+  choice is a local 2-value enum instead — `WeaponOrSpellChoice` (`SaqueRelampagoFeat`) — kept
+  local because only one Talento names it; `matches(AttackSource)` is a bare `instanceof`.
+
+References: `FocoEmPericiaFeat` (SkillType), `TerrenoPrediletoFeat` (TerrainType + a
+Scene-conditioned hook), `EspecialistaEmArmaFeat`/`AtiradorPerfeitoFeat`/
+`AcertoCriticoAprimoradoFeat` (AttackMethod), `AdotadoPorSylphFeat` (a set). Still unbuildable:
+a chosen-Atributo/Ego grant (blocked on the acquisition-slot / Talento-can't-grant-Atributo
+gaps), and a `FeatRequirements` clause about *another* held Talento's own choice.
+
 ## 4. Wire `FeatService`
 
 Nothing to build here — `FeatService#grantFeat(Character, CharacterSheet, Feat)` already
@@ -223,4 +276,8 @@ ArrayList<>()).build()`.
   requirement-isolation test shape (one test per independently-unmet prerequisite), and the
   `CharacterFixture` mutable-`feats`-swap pattern.
 - `src/main/java/org/aventyrs/core/skill/artes/ArtesAprimorarComArteAbility.java` — the
-  "compute the real formula even with no caller yet" precedent step 3 follows.
+  "compute the real formula even with no caller yet" precedent step 3 follows, and the
+  catalog-constant-vs-acquired-instance split step 3b mirrors.
+- `src/main/java/org/aventyrs/core/feat/FocoEmPericiaFeat.java` /
+  `src/main/java/org/aventyrs/core/feat/EspecialistaEmArmaFeat.java` — the step-3b
+  choice-carrying `AbstractFeat` subclass, and `AttackMethod` as a choice type.

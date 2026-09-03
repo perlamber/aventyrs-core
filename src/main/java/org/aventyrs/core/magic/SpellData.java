@@ -69,6 +69,13 @@ public class SpellData {
     /** {@code Efeito:} */
     private final String primaryEffectDescription;
 
+    /**
+     * The structured damage of {@link #primaryEffectDescription}, or {@code null} for a Magia
+     * whose primary effect deals none (utility, healing, a buff) or whose damage cannot yet be
+     * modelled (positional, delayed, falloff-only) — see {@link SpellDamage}.
+     */
+    private final SpellDamage primaryDamage;
+
     /** {@code Efeito Alternativo – ‹name›:}, or {@code null}. */
     private final String secondaryEffectDescription;
 

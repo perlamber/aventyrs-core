@@ -51,6 +51,7 @@ table before writing a line:
 | Categoria de Tamanho | **Real** — `getBaseSizeCategory()` + `generateEmptyCharacter` |
 | Feérico / Humanoide / Monstruoso | **Real** — `getCreatureType()`, no default, always override |
 | "Talentos [de tipo X] custam N EXP" | **Real only if N is a whole number** — `getNewFeatCost(FeatCategory)` |
+| "Aprender magias custa N EXP a menos" | **Real** — `resolveSpellAcquisitionCostReduction(Character, Spell)` → `BigDecimal` (fractional is fine, unlike feat cost); `SpellService#getAcquisitionCost` sums it with the `Feat` twin and floors. `Agastias`' "Magia é Ciência" is the reference. A scope of "de seu elemento" / "Naturais" is still a gap (no per-Magia element column; type is checkable via `Spell#getPrimaryType`). |
 | A conditional roll bonus / Vantagem | **Real** — a `*RacialAbility` constant, see step 3 |
 | **Idiomas** | Gap — no Language/Idioma concept exists anywhere in this core |
 | **Longevidade / idade** | Gap — no age/lifespan concept on `Character` or `Race` |

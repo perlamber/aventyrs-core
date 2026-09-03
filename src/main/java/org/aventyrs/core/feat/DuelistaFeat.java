@@ -1,7 +1,17 @@
 package org.aventyrs.core.feat;
 
 import org.aventyrs.core.character.AttributeDomain;
+import org.aventyrs.core.character.Character;
+import org.aventyrs.core.item.AttackMethod;
+import org.aventyrs.core.scene.Range;
+import org.aventyrs.core.scene.SceneContext;
+import org.aventyrs.core.sheet.CombatantSheet;
+import org.aventyrs.core.skill.AttackSource;
+import org.aventyrs.core.skill.Skill;
+import org.aventyrs.core.skill.SkillTrait;
 import org.aventyrs.core.skill.SkillType;
+
+import java.util.Optional;
 
 /**
  * Talentos de Duelista — weapon mastery, two-weapon fighting, and trading accuracy for damage.
@@ -24,10 +34,11 @@ public enum DuelistaFeat implements Feat {
     /**
      * "Escolha entre um tipo de arma, armas naturais ou magias ofensivas. Receba vantagem nas
      * rolagens de ataque com a arma escolhida."
+     *
+     * <p><b>Real</b>, through {@link EspecialistaEmArmaFeat} — the acquired, choice-carrying form
+     * granted in place of this constant. {@code Feat#resolveSkillRollBonus}'s {@link AttackSource}
+     * overload is what lets the Vantagem scope to "com a arma escolhida" rather than any weapon.
      */
-    // TODO: carries an acquisition-time choice; and no Feat hook reaches a Perícia roll —
-    //  AbstractSkillInteraction never scans character.getFeats(). See PeritoFeat's javadoc for
-    //  the choice-representation question, which this constant shares.
     ESPECIALISTA_EM_ARMA(
             "Escolha entre um tipo de arma, armas naturais ou magias ofensivas. Receba vantagem "
                     + "nas rolagens de ataque com a arma escolhida, ou com suas magias ofensivas "
@@ -69,9 +80,13 @@ public enum DuelistaFeat implements Feat {
 
     /**
      * "Você recebe Vantagem em suas rolagens de Ataque Corpo-a-Corpo contra alvos adjacentes."
+     * <b>The Vantagem is real.</b>
+     *
+     * <p>On a Perícia de Ataque roll {@code SceneContext#getOpposedCharacter()} is the target, so
+     * "alvos adjacentes" is {@code getDistanceTo(target).isWithin(Range.ADJACENTE)} — the same
+     * reading {@code AnaoFeat#VANTAGEM_DE_TAMANHO} takes of its own opponent clause.
      */
-    // TODO: the range condition is expressible (Range#ADJACENTE) but no Feat hook receives a
-    //  SceneContext or an attack target; reroll for the second half.
+    // TODO: "rolar novamente o dado de menor valor" — reroll, see the enum's own javadoc.
     // TODO: disjunctive Pré-requisito (Talento Lutador Nato *ou* 4 Graduações); modelled as the
     //  Talento branch, so the pure-Graduação route is wrongly refused.
     LUTAR_ENGAJADO(
@@ -81,7 +96,26 @@ public enum DuelistaFeat implements Feat {
                     + "Dano.",
             FeatRequirements.builder()
                     .requiredFeat(LUTADOR_NATO)
-                    .build()),
+                    .build()) {
+        /**
+         * Returns 0 with no Scene, or with no target to measure against: the clause is scoped to
+         * adjacency, so granting it unconditionally would hand the Vantagem to every melee swing
+         * including the ones made at reach.
+         */
+        @Override
+        public int resolveSkillRollBonus(final SkillType skillType, final SceneContext sceneContext,
+                                          final SkillTrait requestedAbility, final Character character) {
+            if (skillType != SkillType.ATAQUE_CORPO_A_CORPO || sceneContext == null) {
+                return 0;
+            }
+            CombatantSheet target = sceneContext.getOpposedCharacter();
+            if (target == null) {
+                return 0;
+            }
+            Range distance = sceneContext.getDistanceTo(target);
+            return distance != null && distance.isWithin(Range.ADJACENTE) ? Skill.ADVANTAGE_BONUS : 0;
+        }
+    },
 
     /**
      * "Enquanto empunhar 2 armas simultaneamente você poderá realizar dois ataques, um com cada
@@ -123,11 +157,23 @@ public enum DuelistaFeat implements Feat {
                     .requiredFeat(COMBATER_COM_2_ARMAS)
                     .build()),
 
-    /** "Você recebe Vantagem em todas as suas rolagens de ataque feitas com qualquer arma ou se estiver desarmado." */
-    // TODO: no Feat hook reaches a Perícia roll. Unusually, this half is *unconditional* across
-    //  both Perícias de Ataque, so a Feat roll-bonus hook would make it real outright.
+    /**
+     * "Você recebe Vantagem em todas as suas rolagens de ataque feitas com qualquer arma ou se
+     * estiver desarmado." <b>The Vantagem is real.</b>
+     *
+     * <p>"Com qualquer arma ou se estiver desarmado" enumerates every way an attack can be made,
+     * so it needs no condition at all — which is why this is the one constant in the tree the
+     * missing Arma Natural/Desarmado markers don't block. Contrast {@code
+     * ArtesMarciaisFeat#ARTISTA_MARCIAL}, whose clause covers only *some* of those cases and so
+     * genuinely needs the distinction.
+     */
+    // TODO: "o primeiro ataque que fizer a cada Rodada… tem seu Tempo de Ação reduzido em -1PA"
+    //  needs a per-Rodada attack counter — the "Especialista em Arma" choice itself is readable
+    //  now (EspecialistaEmArmaFeat#chosenBy), but there is still no per-attack cost hook to scope.
     // TODO: "apenas personagens que não escolheram Magias Ofensivas" is an exclusion on the
-    //  prerequisite Talento's own recorded choice, which is not represented.
+    //  prerequisite Talento's own recorded choice; the choice is readable now, but
+    //  FeatRequirements has no hook for "a held Talento's own choice must differ from X" —
+    //  every clause it expresses is about the holder's stats/traits, not another Feat's payload.
     DOMINAR_ARMAS(
             "Você recebe Vantagem em todas as suas rolagens de ataque feitas com qualquer arma ou "
                     + "se estiver desarmado. Adicionalmente o primeiro ataque que fizer a cada "
@@ -138,18 +184,40 @@ public enum DuelistaFeat implements Feat {
                     .requiredSkillType(SkillType.ATAQUE_CORPO_A_CORPO)
                     .requiredSkillGraduation(6)
                     .requiredFeat(ESPECIALISTA_EM_ARMA)
-                    .build()),
+                    .build()) {
+        /** Unconditional across both Perícias de Ataque — no Scene or target is consulted. */
+        @Override
+        public int resolveSkillRollBonus(final SkillType skillType, final SceneContext sceneContext,
+                                          final SkillTrait requestedAbility, final Character character) {
+            return skillType.isAttackSkill() ? Skill.ADVANTAGE_BONUS : 0;
+        }
+    },
 
-    /** "Seus ataques possuem a Margem Crítica Menor aumentada em +1 e recebem a Corrente de Efeitos – Golpe Trovejante." */
-    // TODO: Margem Crítica hook missing on Feat, and this names the Menor tier specifically (see
-    //  AssassinoFeat's javadoc); granting a Corrente de Efeitos has no hook on the attack path.
+    /**
+     * "Seus ataques possuem a Margem Crítica Menor aumentada em +1 e recebem a Corrente de
+     * Efeitos – Golpe Trovejante."
+     *
+     * <p>The Margem Crítica half is <b>real</b> — {@link EspecialistaEmArmaFeat#chosenBy} makes
+     * "o método escolhido" readable, and {@code Feat#resolveCriticalMarginIncrease(SkillType,
+     * SceneContext, Character, AttackSource)} takes exactly the {@link AttackSource} the match
+     * needs.
+     */
+    // TODO: granting a Corrente de Efeitos has no hook on the attack path.
     MAESTRIA_EM_ARMA(
             "Enquanto estiver utilizando o método escolhido para atacar no Talento ‘Especialista "
                     + "em Arma’, seus ataques possuem a Margem Crítica Menor aumentada em +1 e "
                     + "recebem a Corrente de Efeitos – Golpe Trovejante.",
             FeatRequirements.builder()
                     .requiredFeat(DOMINAR_ARMAS)
-                    .build()),
+                    .build()) {
+        @Override
+        public int resolveCriticalMarginIncrease(final SkillType skillType, final SceneContext sceneContext,
+                                                   final Character character, final AttackSource attackSource) {
+            Optional<AttackMethod> chosen = EspecialistaEmArmaFeat.chosenBy(character);
+            boolean usingChosenMethod = chosen.isPresent() && chosen.get().matches(attackSource, character);
+            return skillType.isAttackSkill() && usingChosenMethod ? MAESTRIA_EM_ARMA_MARGIN_INCREASE : 0;
+        }
+    },
 
     /** "Você pode escolher receber Desvantagem em sua Rolagem de Danos para adquirir Vantagem em sua Rolagem de Perícia de Ataque." */
     // TODO: the damage-for-accuracy trade — see the enum's own javadoc. This is ATAQUE_CONCENTRADO
@@ -177,8 +245,11 @@ public enum DuelistaFeat implements Feat {
                     .build()),
 
     /** "Enquanto estiver cego ou privado de seus sentidos visuais você não fica Desprevenido em função destas condições." */
-    // TODO: needs blindness and the Desprevenido condition; this core has no status-condition
-    //  system, so there is nothing to be exempt from.
+    // TODO: ConditionType.CEGO and DESPREVENIDO both exist now, and CEGO confers DESPREVENIDO for
+    //  real — what this clause needs is the opposite: a way for a held trait to *suppress* an
+    //  implied condition (the same gap ArtesMarciaisFeat#DOMINAR_ARTE_MARCIAL_SUBMISSAO cites).
+    //  The 1d6 half of CEGO is unbuilt besides, so "não precisa efetuar rolagens de 1d6" would be
+    //  exempt from nothing.
     COMBATER_AS_CEGAS(
             "Enquanto estiver cego ou privado de seus sentidos visuais você não fica Desprevenido "
                     + "em função destas condições e não precisa efetuar rolagens de 1d6 para "
@@ -235,7 +306,8 @@ public enum DuelistaFeat implements Feat {
                     .build()),
 
     /** "Seu segundo ataque contra um mesmo alvo na mesma Rodada tem a Margem Crítica Menor aumentada em +2 números." */
-    // TODO: Margem Crítica hook missing on Feat, Menor tier only; and "segundo ataque contra um
+    // TODO: Feat#resolveCriticalMarginIncrease is real and names the Menor tier this clause
+    //  wants; what blocks it is "segundo ataque contra um
     //  mesmo alvo" needs per-target attack counting within a Rodada, which nothing tracks.
     // TODO: the critical dano half (Metade da Gnose) is computable but Feat has no dano hook.
     EXPLORAR_PONTOS_FRACOS(
@@ -276,8 +348,10 @@ public enum DuelistaFeat implements Feat {
                     .build()),
 
     /** "Você pode usar o Talento Defender-se Atacando também em substituição à Defesa Mágica." */
-    // TODO: builds on DEFENDER_SE_ATACANDO, and its exception needs Malefício classification —
-    //  no Encantamento/Maldição tag exists (gap catalog, "Malefício classification").
+    // TODO: builds on DEFENDER_SE_ATACANDO. Its exception names Encantamento and Maldição, which
+    //  are two different kinds of thing: Maldição is ConditionType.AMALDICOADO, while Encantamento
+    //  is MagicType.ENCANTAMENTO — a Magia, not a Condição, and nothing tracks which Magias are
+    //  currently affecting a combatant. There is no per-condition immunity mechanism either.
     DEFENDER_SE_ATACANDO_SUPERIOR(
             "Você pode usar o Talento Defender-se Atacando também em substituição à Defesa Mágica, "
                     + "exceto para evitar Encantamentos e Maldições.",
@@ -304,6 +378,9 @@ public enum DuelistaFeat implements Feat {
                     .attributeDomain(AttributeDomain.VIGOR)
                     .requiredAttributeValue(5)
                     .build());
+
+    /** MAESTRIA_EM_ARMA's own stated "+1" to the Margem Crítica Menor. */
+    private static final int MAESTRIA_EM_ARMA_MARGIN_INCREASE = 1;
 
     private final String description;
     private final FeatRequirements featRequirements;

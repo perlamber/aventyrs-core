@@ -43,11 +43,12 @@ import java.util.Map;
  *   is otherwise the same already-real piece Feromônio Encantador and {@code
  *   EmpatiaSelvagemCompetencyAbility#CHARME_FEERICO} share.</li>
  *   <li><b>Magia Natural</b> (casting characters spend 0.5 EXP less to learn additional Natural-
- *   type spells) — same missing Magia entity as Natureza Mágica, plus this core has no
- *   spell-*learning*-cost system at all (only {@code SkillGraduationService}/{@code
- *   CharacterAttributeService}'s upgrade-cost formulas exist, neither of which concerns
- *   learning a new spell) — a different missing system than the Feat-cost discount below, not
- *   the same gap twice.</li>
+ *   type spells) — the spell-learning-cost system now exists ({@code
+ *   SpellService#getAcquisitionCost} aggregates {@code Race#resolveSpellAcquisitionCostReduction},
+ *   which {@code Agastias} uses for its unscoped equivalent), and "Natural-type" is checkable via
+ *   {@code Spell#getPrimaryType}/{@code getSecondaryType} against {@code MagicType#NATURAL}. What
+ *   still blocks it here is only that Fúria's Características Raciais aren't modelled as constants
+ *   at all yet — none of this gap-list is.</li>
  *   <li><b>Conexão com o Mana</b> (Talentos Metamágicos custam 2.5 EXP ao invés de 3) —
  *   identical trait, same name, and same mechanic as {@code Elfo}'s own Conexão com o Mana: {@link
  *   Race#getNewFeatCost(org.aventyrs.core.feat.FeatCategory)} returns a plain {@code int}, which

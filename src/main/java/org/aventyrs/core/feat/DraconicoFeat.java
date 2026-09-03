@@ -30,9 +30,9 @@ public enum DraconicoFeat implements Feat {
      */
     // TODO: no weapon catalog is authored (only ArmorItem), and nothing marks a weapon as an
     //  Arma Natural — the two-markers-missing gap CLAUDE.md's "Classifying an attack as
-    //  Desarmado/Arma Natural" row names. The pick-two-of-four choice would additionally need
-    //  the AcquiredChoice mechanism, which no Talento uses today: a Feat is a flat catalog
-    //  constant carrying no per-acquisition data (see CLAUDE.md's one-enum-per-tree rationale).
+    //  Desarmado/Arma Natural" row names. The pick-two-of-four choice could be recorded now (a
+    //  choice-carrying AbstractFeat subclass — see FocoEmPericiaFeat), but there is no Arma
+    //  Natural entity for the pick to point at.
     ARMAMENTO_DRACONICO(
             "Assim como os Dragões você possui um repertório de Armas Naturais, escolha duas "
                     + "armas entre: Chifres Poderosos, Cauda Chicote, Garras Afiadas e Presas "
@@ -81,10 +81,9 @@ public enum DraconicoFeat implements Feat {
     // TODO: no Arma Natural concept, so there is no Sopro to roll — same gap as
     //  ARMAMENTO_DRACONICO. Its element would be NascidoDoDragao#getElementalLineage(), which is
     //  real data, but nothing consumes an elemental damage type either.
-    // TODO: the Margem Crítica half needs resolveCriticalMarginIncrease, which lives on
-    //  EgoAdvantage/AttributeAbility/SkillCompetencyAbility but not on Feat — and it would have
-    //  to be scoped to this one weapon's rolls, which is the "this one delivered attack"
-    //  scoping gap.
+    // TODO: Feat#resolveCriticalMarginIncrease is real (see PeritoFeat#CONTROLE_DA_SITUACAO), but
+    //  the bonus would have to be scoped to this one weapon's rolls — the "this one delivered
+    //  attack" scoping gap — and the Sopro it scopes to does not exist.
     SOPRO_DE_DRAGAO(
             "Você tem a Arma Natural: Arma de Sopro e é capaz de soprar energia Elemental como um "
                     + "Dragão Verdadeiro. A Margem Crítica Menor aumenta em +1 e o dano do Sopro "

@@ -1,5 +1,7 @@
 package org.aventyrs.core.magic;
 
+import org.aventyrs.core.ability.AttributeAbility;
+import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.Interaction;
 import org.aventyrs.core.sheet.InteractionResult;
@@ -7,9 +9,11 @@ import org.aventyrs.core.scene.ActiveAreaSpellEffect;
 import org.aventyrs.core.skill.AbstractSkillInteraction;
 import org.aventyrs.core.skill.dominiodomana.DominioDoManaInteraction;
 
+import java.util.Optional;
 import java.util.OptionalInt;
 
 import static org.aventyrs.core.util.TranslatableMessages.INVALID_SPELL_CAST_TARGET;
+import static org.aventyrs.core.util.TranslatableMessages.SPELL_CASTING_PREVENTED;
 
 public class SpellCastingServiceImpl implements SpellCastingService {
 
@@ -55,7 +59,39 @@ public class SpellCastingServiceImpl implements SpellCastingService {
                 .dominioDoManaResult(dominioDoManaResult)
                 .durationInRounds(durationInRounds.isPresent() ? durationInRounds.getAsInt() : null)
                 .areaSpellEffect(areaSpellEffect)
+                .primaryDamage(resolvePrimaryDamage(request.getSpell(), request.getCaster()).orElse(null))
                 .build();
+    }
+
+    @Override
+    public Optional<ResolvedSpellDamage> resolvePrimaryDamage(final Spell spell, final CombatantSheet caster) {
+        return spell.getPrimaryDamage().map(damage -> resolve(damage, caster));
+    }
+
+    private ResolvedSpellDamage resolve(final SpellDamage damage, final CombatantSheet caster) {
+        int focusTotal = caster.getCharacter().getAttributes().getAttribute(AttributeDomain.FOCUS).getTotal();
+        boolean upgradeHalfToFull = isFirstSpellCastOfRound(caster)
+                && caster.getCharacter().getAttributeAbilities().stream()
+                        .anyMatch(AttributeAbility::upgradesFirstSpellOfRoundFocusScaling);
+
+        int focusContribution = switch (damage.focusScaling()) {
+            case NONE -> 0;
+            case FULL -> focusTotal;
+            case HALF -> upgradeHalfToFull ? focusTotal : focusTotal / 2;
+        };
+        boolean focusFullyApplied = switch (damage.focusScaling()) {
+            case NONE -> false;
+            case FULL -> true;
+            case HALF -> upgradeHalfToFull;
+        };
+
+        return new ResolvedSpellDamage(damage.flatBonus() + focusContribution, damage.diceCount(),
+                damage.damageType(), damage.elementalType(), focusFullyApplied);
+    }
+
+    private static boolean isFirstSpellCastOfRound(final CombatantSheet caster) {
+        return caster.getActionsThisRound().stream()
+                .noneMatch(action -> action.attackSource() instanceof Spell);
     }
 
     @Override
@@ -69,6 +105,12 @@ public class SpellCastingServiceImpl implements SpellCastingService {
     }
 
     private void validateRequest(final SpellCastRequest request) {
+        // Silêncio: "não podem Conjurar Magias". Refused rather than resolved-and-discarded,
+        // since casting spends Pontos de Mana — the caster must not pay for a Magia that
+        // cannot happen.
+        if (request.getCaster().isSpellCastingPrevented(request.getSceneContext())) {
+            throw new org.aventyrs.core.sheet.IllegalOperationException(SPELL_CASTING_PREVENTED);
+        }
         if (!request.getScene().getAllParticipants().contains(request.getCaster())
                 || request.getCombatantTarget() != null
                 && !request.getScene().getAllParticipants().contains(request.getCombatantTarget())) {

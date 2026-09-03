@@ -95,8 +95,9 @@ public enum DestinoFeat implements Feat {
      * do Atributo escolhido."
      */
     // TODO: an acquisition-slot grant — the gap catalog records that such traits have no shape.
-    //  Character#grantAttributeAbility exists, but which Habilidade was chosen is an
-    //  acquisition-time choice with no representation.
+    //  Character#grantAttributeAbility exists; the chosen Atributo/Habilidade could be recorded
+    //  (a choice-carrying AbstractFeat subclass, see FocoEmPericiaFeat), but the *granting* of a
+    //  free ability slot is the blocker.
     PRODIGIO(
             "Escolha um Atributo que você possua valor Base 2 ou superior. Você adquire uma "
                     + "Habilidade do Atributo escolhido, você ainda precisa preencher requisitos "
@@ -146,8 +147,9 @@ public enum DestinoFeat implements Feat {
     /**
      * "A GD para Conjurar suas Magias Naturais é reduzida em -1 Nível."
      */
-    // TODO: a Feat cannot reduce a roll's GD, and SpellCastingService does not resolve either
-    //  roll's target GD at all yet.
+    // TODO: Feat#resolveDifficultyReduction is real, but it is summed by
+    //  AbstractSkillInteraction on a Perícia roll — a Conjuração GD is a different question, and
+    //  SpellCastingService does not resolve either roll's target GD at all yet.
     // TODO: scoped to Magias of one MagicType — note the enum's NATURAL constant is itself in
     //  question (see CLAUDE.md's MagiaAlternativaAbility warning).
     // TODO: its Pré-requisito names 'Escolhido de Gaea', a Talento de Devoção, which is excluded

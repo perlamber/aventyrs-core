@@ -80,10 +80,15 @@
  *
  * {@code resolve} assembles the chain but applies none of it, and touches no resource on the
  * defender — the same restraint {@code GritoDeGuerraVulcanoInteraction} applies to the Blessings
- * it reports. The one thing that does change is the defence roll itself happening ({@code
- * CombatantSheet#consumeFirstRollThisTurn}, and, on a critical success, a non-cumulative raise
- * of the defender's temporary Ego ceiling),
- * which is why {@code resolve} rolls exactly once per attack.
+ * it reports. The one thing that does change is the roll itself happening — on a critical
+ * success, a non-cumulative raise of the roller's temporary Ego ceiling (the first-roll-of-Turn
+ * check it also runs is non-mutating now) — which is why {@code resolve} rolls exactly once per
+ * attack. The API records the exchange afterwards via {@code CombatantSheet#recordAction}, and —
+ * if it determines the blow was fatal — calls {@code
+ * org.aventyrs.core.character.services.DefeatBlessingService#applyDefeatBlessings} (this core has
+ * no defeat observer). {@code AttackDelivery} does merge the attacker's Talentos' own Efeitos
+ * Críticos ({@code Feat#resolveExtraCriticalEffects}) into a critical hit's chain before the
+ * immunity filter.
  *
  * <h2>What this package deliberately doesn't do</h2>
  *

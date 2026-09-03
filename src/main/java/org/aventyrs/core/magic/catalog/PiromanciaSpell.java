@@ -5,6 +5,8 @@ import org.aventyrs.core.magic.ActivationTime;
 import org.aventyrs.core.magic.AuthoredSpell;
 import org.aventyrs.core.magic.BranchLevel;
 import org.aventyrs.core.magic.DurationUnit;
+import org.aventyrs.core.magic.ElementalType;
+import org.aventyrs.core.magic.SpellDamage;
 import org.aventyrs.core.magic.SpellData;
 import org.aventyrs.core.magic.SpellDuration;
 import org.aventyrs.core.magic.SpellTargeting;
@@ -132,6 +134,8 @@ public enum PiromanciaSpell implements AuthoredSpell {
             .primaryEffectDescription("Ao conjurar essa magia o conjurador pode soprar a sua frente um cone de fogo, "
                     + "infligindo 1d6+Metade do Foco de Dano Mágico Elemental: Fogo a todos os alvos em sua Área de "
                     + "Efeito. Este dano é reduzido em 1 para cada UD percorrida.")
+            // The "-1 por UD percorrida" falloff stays prose — this core does no geometry.
+            .primaryDamage(SpellDamage.halfFocusElemental(1, ElementalType.FOGO))
             .secondaryEffectDescription("Cuspe de Salamandra: O Alcance desta magia muda para Alvo Único Distante – "
                     + "Distância Média e o dano muda para 2d6+Metade do Foco, este dano é reduzido em 1 para cada "
                     + "2UD entre você e o alvo.")
@@ -179,6 +183,8 @@ public enum PiromanciaSpell implements AuthoredSpell {
                     + "impacto a Bola de Fogo Elduriana explode, causando 2d6+Metade do Foco pontos de Dano Mágico "
                     + "Elemental: Fogo no alvo e em todos os outros personagens em Distância Curta. Objetos em posse "
                     + "dos personagens afetados sofrem metade deste dano.")
+            // The half-damage-to-carried-objects rider stays prose — no per-copy item damage from a spell yet.
+            .primaryDamage(SpellDamage.halfFocusElemental(2, ElementalType.FOGO))
             .secondaryEffectDescription("Chuva de Meteoros: Este efeito pode ser ativado apenas em locais com céu "
                     + "aberto. Dos céus caem diversas pedras incandescentes. Um alvo Ao Alcance dos Olhos e todos os "
                     + "personagens à Distância Longa dele sofrem 1d6+Metade do Foco pontos de Dano. Objetos em posse "
@@ -239,6 +245,9 @@ public enum PiromanciaSpell implements AuthoredSpell {
                     + "dano sofrido por seus usuários. "
                     + "Personagens e Objetos que tenham seus PV reduzidos à zero ou menos são destruídos "
                     + "imediatamente e não podem ser revividos ou reparados.")
+            // "Dano Elemental: Fogo" -> ELEMENTAL/FOGO. The "-2 em alvos posteriores" falloff and the
+            // half-damage-to-equipment rider stay prose (no target ordering / spell-to-item damage yet).
+            .primaryDamage(SpellDamage.halfFocusElemental(2, ElementalType.FOGO))
             .effectChainDescription("Julgamento Elduriano: Esta magia ignora RA e RM, assim como toda e quaisquer "
                     + "formas de Redução ou Imunidade à danos Elemental: Fogo que os alvos possuam.")
             .criticalEffectType(CriticalEffectType.INFLAMAR)

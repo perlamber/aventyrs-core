@@ -8,6 +8,9 @@ import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.character.DefenseType;
 import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.magic.BranchLevel;
+import org.aventyrs.core.magic.Spell;
+import org.aventyrs.core.magic.TestSpell;
+import org.aventyrs.core.magic.TestSpellTree;
 import org.aventyrs.core.rest.RestType;
 import org.aventyrs.core.skill.Skill;
 import org.aventyrs.core.skill.SkillGraduation;
@@ -194,6 +197,25 @@ class MetamagicoFeatTest {
                 assertEquals(0, feat.resolveManaMultiplierIncrease(any), feat.name());
                 assertEquals(0, feat.resolveRestMagicPointsBonus(RestType.LONGO, any), feat.name());
             }
+        }
+    }
+
+    // ---------- free spell acquisition ----------
+
+    /**
+     * ARCANISTA is meant to hand out its chosen trees' Sementes/Brotos for free, but until it
+     * has an acquisition-time-choice class to record the picks, no constant can override the
+     * hook — so every one still reports the default.
+     */
+    @Test
+    void noConstantWaivesOrDiscountsSpellAcquisitionCostYet() {
+        Character any = character().build();
+        Spell anySpell = TestSpell.at(TestSpellTree.DIVERGING, BranchLevel.BROTO, null);
+
+        for (MetamagicoFeat feat : MetamagicoFeat.values()) {
+            assertFalse(feat.grantsFreeSpellAcquisition(any, anySpell), feat.name());
+            assertEquals(0, java.math.BigDecimal.ZERO
+                    .compareTo(feat.resolveSpellAcquisitionCostReduction(any, anySpell)), feat.name());
         }
     }
 

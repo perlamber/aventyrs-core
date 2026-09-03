@@ -140,6 +140,7 @@ public class Scene {
      * @return the CombatantSheets in Iniciativa order after this addition
      */
     public List<CombatantSheet> addParticipant(final CombatantSheet characterSheet, final int initiativeValue, final UUID group) {
+        characterSheet.startNewScene();
         InitiativeEntry entry = new InitiativeEntry(characterSheet, initiativeValue, group);
         if (currentIndex == -1) {
             insertSorted(activeEntries, entry);
@@ -345,10 +346,11 @@ public class Scene {
      * {@code TemporaryBonus} that participant is holding (including one targeting {@code
      * ModifierType.INITIATIVE}) toward expiry. Wraps back to the top once every participant has
      * acted, which also advances {@link #getCurrentRound()} and calls {@link
-     * #startNewRound()} — merging in any participant added mid-Round *and* re-deriving turn
-     * order from everyone's current {@link InitiativeEntry#getEffectiveInitiativeValue()}, so a
+     * #startNewRound()} — merging in any participant added mid-Round, re-deriving turn
+     * order from everyone's current {@link InitiativeEntry#getEffectiveInitiativeValue()} (so a
      * granted/expired Iniciativa bonus is reflected in the order from the next Round onward,
-     * never mid-Round. Finally calls {@link CombatantSheet#startTurn(int)} on whoever's turn is
+     * never mid-Round), *and* clearing every active participant's per-Rodada action log via
+     * {@link CombatantSheet#startNewRound()}. Finally calls {@link CombatantSheet#startTurn(int)} on whoever's turn is
      * now beginning, passing {@link #getCurrentRound()} as its turnNumber — unlike {@code
      * finishTurn()}, this fires even on the very first call, since that call does start
      * someone's Turn, just none has ended yet.
@@ -555,6 +557,10 @@ public class Scene {
      * reflected in the turn order from this Round onward. {@code List#sort} is stable, so ties
      * (including a newly-merged pending entry tying with an existing one) keep whatever
      * relative order they already had, the same tie behavior {@link #insertSorted} preserves.
+     *
+     * <p>Finally calls {@link CombatantSheet#startNewRound()} on every active participant
+     * (newcomers already merged in above), clearing each one's per-Rodada action log before the
+     * first {@link CombatantSheet#startTurn(int)} of the new Round.
      */
     private void startNewRound() {
         activeAreaSpellEffects.forEach(ActiveAreaSpellEffect::tick);
@@ -562,6 +568,7 @@ public class Scene {
         activeEntries.addAll(pendingEntries);
         pendingEntries.clear();
         activeEntries.sort(Comparator.comparingInt(InitiativeEntry::getEffectiveInitiativeValue).reversed());
+        activeEntries.forEach(entry -> entry.getCombatantSheet().startNewRound());
     }
 
     /** Inserts before the first entry with a strictly lower value, keeping ties in insertion order. */

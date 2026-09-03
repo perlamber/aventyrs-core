@@ -100,7 +100,12 @@ user's request, and the 20 Talentos de Devoção excluded above.
 | `MobilidadeFeat` | 14 | `ArtificeFeat` | 3 |
 
 **150 Talentos.** Every one carries its rules text verbatim and enforced Pré-requisitos; the
-handful with working effects are listed in `GeneralFeatEffectIntegrationTest`.
+handful with working effects are listed in `GeneralFeatEffectIntegrationTest`. `ArtesMarciaisFeat`
+now has three live: `ARTISTA_MARCIAL` (Dano Base +1 for Ataque Desarmado / Arma Natural),
+`DEFESA_DE_MAOS_LIMPAS` (+2 Defesas unless wielding a non-natural weapon), and
+`DOMINAR_ARTE_MARCIAL_TIGRE_E_SERPENTE` (+1 Margem Crítica de Ataques Corpo-a-Corpo) — all
+unblocked once `ItemCategory.NATURAL_WEAPON` and the weapon-aware `resolveDamageBaseIncrease`
+overload landed.
 
 ### Clause shapes `FeatRequirements` still cannot express
 
@@ -152,9 +157,10 @@ with enforced Pré-requisitos and a named blocker.
 Talentos, `FeatCatalog` now holds **272** — the whole authorable ruleset bar Regalia (5), Aventyr
 (19) and the 20 Talentos de Devoção, all deferred above.
 
-**14 constants carry live effects.** They cluster in Élfico, Feérico, Monstruoso and Górgona;
-batches 3–5 produced 2 between them, because those trees mostly extend a Característica Racial
-that is itself unbuilt.
+**15 constants carry live effects** (Élfico, Feérico, Monstruoso, Górgona clusters; batches 3–5
+produced 2 between them, because those trees mostly extend a Característica Racial that is itself
+unbuilt). `MonstruosoFeat#SELVAGERIA` was the latest to flip — its Armas Naturais Dano Base half
+became expressible once `Feat#resolveDamageBaseIncrease` grew its weapon-aware overload.
 
 ### Vampírico is the one tree with no race behind it
 
@@ -195,17 +201,24 @@ Destreza-scoped Vantagem) is still missing, but the framed trade stands on its o
 `GiganteFeat`'s two Clã Talentos and `GorgonaFeat#CABELO_SERPENTINO`, withheld whole because only
 their malus could be expressed.
 
-The same asymmetry decides two Dano Base clauses. `AnaoFeat#FILHO_DE_YMIR` grants "+1 Dano Base de
-armas" with its over-grant documented, because the only excluded case is an Ataque Desarmado;
-`MonstruosoFeat#SELVAGERIA` is withheld, because its "Armas Naturais" scope would over-grant to
-every weapon the holder ever wields. Same hook, opposite direction of error.
+The same asymmetry once decided two Dano Base clauses — **now both are precise**.
+`Feat#resolveDamageBaseIncrease` grew a `(Character, Weapon)` overload (`DamageBaseService` passes
+the wielded weapon, `null` on its Ataque Desarmado overload), so a clause can scope by *what the
+attack was made with*: `AnaoFeat#FILHO_DE_YMIR`'s "de armas" grants to any wielded weapon but not
+bare hands, and `MonstruosoFeat#SELVAGERIA`'s "de todas as suas Armas Naturais" grants only when
+`weapon.getCategory() == ItemCategory.NATURAL_WEAPON`. SELVAGERIA's second half (Ferocidade Bônus
+→ Dano Base) is still blocked on the unbuilt Ferocidade Racial.
 
 ### Recurring racial blockers
 
 Most constants cite one of these rather than a novel gap:
 
-- **No Arma Natural** — no weapon catalog is authored, and nothing marks a weapon as natural.
-  Blocks all of Dracônico's repertoire and every Herança Bestial.
+- **No Arma Natural — *partly closed*** — `ItemCategory.NATURAL_WEAPON` marks a weapon as
+  natural, and `Feat#resolveDamageBaseIncrease(Character, Weapon)` can scope a Dano Base clause
+  by it (`MonstruosoFeat#SELVAGERIA`, `ArtesMarciaisFeat#ARTISTA_MARCIAL`/`DEFESA_DE_MAOS_LIMPAS`).
+  Still missing: no *weapon catalog* is authored, so nothing produces the natural weapons
+  Dracônico's repertoire and every Herança Bestial assume, and no Talento can reclassify a
+  wielded weapon as natural for its holder (`ArtesMarciaisFeat#DOMINAR_ARTE_MARCIAL_FERROADA_ESMAGADORA`).
 - **No flight state** — no Movimento Base de Voo distinct from the ordinary one. Blocks three of
   four Aviano Talentos outright.
 - **No form/transformation state** — blocks Draconato, Metamorfose Selvagem, the Homem-Fera line.
@@ -216,7 +229,11 @@ Most constants cite one of these rather than a novel gap:
   `EgoAdvantage`, both reached through a skill Interaction rather than `character.getFeats()`.
 - **No extra acquisition slot** — "você aprende uma Habilidade de Competência" has no shape;
   `AttributeAbilityService#getUnlockedAbilitySlots` counts slots from a raw Atributo base. The
-  single most-cited blocker of the racial catalog.
+  single most-cited blocker of the racial catalog. Distinct from *recording an acquisition-time
+  pick* ("escolha uma Perícia/terreno/Árvore"), which **is** built now — a choice-carrying
+  `AbstractFeat` subclass (`FocoEmPericiaFeat` etc., see the `adding-a-feat` skill); racial
+  Talentos citing a choice (Dracônico's repertoire, Vampírico's Formas, Górgona/Élfico's
+  Árvores) stay blocked on a *different* gap (form state, weapon catalog, mimetizar).
 - **Aprendizado Rápido is unbuilt** — blocks the whole Humano tree plus `GnomoFeat#SABICHAO`.
 - **Resistência / Vulnerabilidade Elemental** — blocks all 9 `ElementalFeat` constants outright,
   plus clauses in Dracônico, Troll and the Guampo/Nascido do Dragão races. `DamageType` has no
@@ -267,6 +284,12 @@ Most constants cite one of these rather than a novel gap:
 - **`FeatRequirements#requiredCreatureType`** (batch 6) — "Apenas personagens de raça Feérica"
   spans five race classes with no common supertype, so `requiredRace` cannot express it. Six
   consumers in `FeericoFeat` alone, and Monstruoso will add more.
+- **`Feat#resolveDamageBaseIncrease(Character, Weapon)`** — the weapon-aware overload of the
+  batch-1 hook, added when `ItemCategory.NATURAL_WEAPON` made "what the attack was made with"
+  answerable. `DamageBaseService` passes the wielded weapon (`null` on its Ataque Desarmado
+  overload). Live consumers: `AnaoFeat#FILHO_DE_YMIR` ("de armas", not bare hands),
+  `MonstruosoFeat#SELVAGERIA` (Armas Naturais only), and the general
+  `ArtesMarciaisFeat#ARTISTA_MARCIAL` (Ataque Desarmado + Arma Natural).
 
 ### `SceneContext#getOpposedCharacter()` — the clause-shape unlock
 
@@ -291,7 +314,15 @@ Two further hooks fell out, both with a single consumption point:
   would silently zero `ARCANISTA`, `DUENDE`, `ASAS_DE_DRAGAO` and `PELE_RIJA`. Same direction
   `SkillCompetencyAbility#resolveSubstituteAttributeDomain(AttackSource)` uses.
 - **`Feat#resolveCriticalMarginIncrease(SkillType, SceneContext, Character)`** — the `Feat`
-  counterpart of the hook already on `AttributeAbility`/`SkillCompetencyAbility`/`EgoAdvantage`.
+  counterpart of the hook already on `AttributeAbility`/`SkillCompetencyAbility`/`EgoAdvantage`,
+  scanned by `AbstractSkillInteraction#sumCriticalMarginIncrease`. Second consumer since:
+  `ArtesMarciaisFeat#DOMINAR_ARTE_MARCIAL_TIGRE_E_SERPENTE`'s flat "+1 Margem Crítica de Ataques
+  Corpo-a-Corpo". Like `GLORIA_YMIRIANA` it widens both critical tiers (all
+  `SkillRoll#getCriticalResult(int)` offers), a documented over-grant on the Maior tier. The
+  many general-tree TODOs that still say the hook "does not exist on Feat" are **stale** —
+  `AssassinoFeat`, `PeritoFeat`, `EscudeiroFeat`, `ElementalFeat`, `ElficoFeat`, `DraconicoFeat`
+  — each now blocked only on a *further* clause (a Menor-only tier, an action-type marker, a
+  terrain match), not on the hook.
 
 **Bonuses stack.** `GLORIA_YMIRIANA` and `AnoesRacialAbility#ABATEDORES_DE_GIGANTES` both apply
 against a target 2+ Categorias larger, and the roll gets both — Talentos and Habilidades Raciais

@@ -2,15 +2,21 @@ package org.aventyrs.core.skill.furtividade;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
 import org.aventyrs.core.skill.SkillType;
 
+import java.util.Optional;
+
 /**
- * The Habilidades de Competência available to characters trained in Furtividade. Every one
- * of these needs a system this core doesn't have yet (a specialization-scoped action gate, a
- * GD-*increase* expression, a stealth/observation-state flag, cross-skill Vantagem,
- * weapon/trap damage, or attribute substitution) so none are expressible for real today; see
- * each constant's TODO.
+ * The Habilidades de Competência available to characters trained in Furtividade. {@link
+ * #LADINO_TEORICO} is real — its Atributo Base substitution rides the mechanism {@link
+ * SkillCompetencyAbility#getSubstituteAttributeDomain()} provides. Each of the rest needs a
+ * system this core doesn't have yet (a specialization-scoped action gate, a GD-*increase*
+ * expression, an observation-state flag, or weapon/trap damage); see each constant's TODO. The
+ * hidden state itself now exists — {@code ConditionType#ESCONDIDO} — but no {@code
+ * SkillCompetencyAbility} hook receives the {@code CombatantSheet} a Condição is held on, so the
+ * two constants that read it still cannot.
  */
 @Getter
 @AllArgsConstructor
@@ -33,12 +39,12 @@ public enum FurtividadeCompetencyAbility implements SkillCompetencyAbility {
             "Maestria da Ocultação e Infiltrador, em um aliado adjacente, a GD para esta " +
             "ação aumenta em +1 Nível."),
 
-    // TODO: Vantagem on every Perícia roll (not just Furtividade's own) while "Furtivo",
-    // scoped to Cenas de Combate — same structural gap as AtletismoExcellency.LENDA: it
-    // would need to apply across every <Skill>Interaction, not just
-    // FurtividadeInteraction, plus there's no "is the character currently Furtivo" state or
-    // Cena-de-Combate-state tracked anywhere to gate it on (same Cena-de-Combate gap as
-    // AttentionCompetencyAbility.ARDIL_DE_MARPLE).
+    // TODO: the "Furtivo" state is now ConditionType.ESCONDIDO and "Cenas de Combate" is
+    // SceneContext#isCombatScene(), but a held trait cannot see its holder's Condições —
+    // resolveConditionalRollBonus takes a SceneContext and a SkillTrait, and a Condition lives on
+    // the CombatantSheet, which no SkillCompetencyAbility hook receives. Applying across every
+    // <Skill>Interaction is no longer part of the gap: the hook is summed generically for
+    // whichever Perícia is being rolled.
     ACAO_SURPRESA("Em Cenas de Combate você recebe Vantagem em suas Rolagens de Perícia " +
             "enquanto estiver Furtivo."),
 
@@ -51,19 +57,20 @@ public enum FurtividadeCompetencyAbility implements SkillCompetencyAbility {
 
     // TODO: +2 damage on traps/attacks made while hidden, then +1 more at the 5th and 10th
     // graduation (a graduation-tiered scaling bonus, not a flat one — same shape as
-    // DominioDoManaCompetencyAbility.LETALIDADE_ARCANA) — no weapon/trap damage system
-    // exists yet.
+    // DominioDoManaCompetencyAbility.LETALIDADE_ARCANA). "Enquanto escondido" is now
+    // ConditionType.ESCONDIDO, but a held trait cannot see its holder's Condições —
+    // resolveDamageBonus takes the attackTarget's sheet and the acting Character, never the
+    // actor's own sheet, which is where a Condition lives. Traps have no representation either.
     MORTE_OCULTA("Suas armadilhas e seu ataques enquanto escondido causam +2 pontos de " +
             "danos adicionais, este benefício aumenta em +1 na 5ª e 10ª graduação."),
 
-    // TODO: lets this Perícia use Gnose instead of its normal base Attribute (Destreza) — the
-    // substitution mechanism itself now exists (see SkillCompetencyAbility
-    // .getSubstituteAttributeDomain() / AtaqueCorpoACorpoCompetencyAbility.ACUIDADE), this
-    // constant just doesn't override it yet, and FurtividadeInteraction doesn't yet
-    // resolve/pass it into CharacterSkillService.getValueForRoll's substituteAttributeDomain
-    // overload (same remaining wiring gap as EmpatiaSelvagemCompetencyAbility
-    // .ACADEMICO_SELVAGEM/INSTINTO_ANIMAL).
-    LADINO_TEORICO("Você pode substituir o Atributo Base desta perícia por Gnose.");
+    // Substitutes Gnose for Destreza — see SkillCompetencyAbility.getSubstituteAttributeDomain().
+    LADINO_TEORICO("Você pode substituir o Atributo Base desta perícia por Gnose.") {
+        @Override
+        public Optional<AttributeDomain> getSubstituteAttributeDomain() {
+            return Optional.of(AttributeDomain.GNOSE);
+        }
+    };
 
     private final String description;
 

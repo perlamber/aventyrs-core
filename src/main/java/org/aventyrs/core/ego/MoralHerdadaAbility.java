@@ -85,8 +85,9 @@ public class MoralHerdadaAbility implements EgoAdvantage {
      *
      * <p><strong>Not called automatically by anything yet</strong>: {@code
      * CharacterCreationServiceImpl} only ever assembles a plain {@link Character} — Fama lives
-     * on {@link CombatantSheet} (see {@link CombatantSheet#increaseFamaPositiva}/{@link
-     * CombatantSheet#increaseFamaNegativa}), and no {@code CombatantSheet} exists yet at
+     * on {@link CharacterSheet} (see {@link CharacterSheet#increaseFamaPositiva}/{@link
+     * CharacterSheet#increaseFamaNegativa}) — it is player-only, which is why the shared {@code
+     * CombatantSheet} has none — and no sheet exists yet at
      * Character-creation time for this to grant onto (the same Character-then-CombatantSheet
      * ordering gap {@code CharacterAttributeService#upgradeBase}/{@code
      * SkillGraduationService#upgradeGraduation} already work around by taking both explicitly).

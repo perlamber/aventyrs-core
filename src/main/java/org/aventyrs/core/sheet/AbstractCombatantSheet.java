@@ -8,12 +8,17 @@ import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.effect.CriticalEffectType;
 import org.aventyrs.core.item.Item;
+import org.aventyrs.core.item.ItemWeightClass;
+import org.aventyrs.core.item.Weapon;
 import org.aventyrs.core.modifier.ModifierType;
+import org.aventyrs.core.scene.Range;
+import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.rest.RestType;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumMap;
-import java.util.EnumSet;
+import java.util.stream.Stream;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -102,9 +107,26 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     @Getter(AccessLevel.NONE)
     private final List<PendingEgoRecovery> pendingEgoRecoveries = new ArrayList<>();
 
-    /** Every {@link AttributeDomain} that has already governed a Perícia roll this Turn. */
+    /** Every roll-action taken since this Rodada began — see {@link #recordAction}. */
     @Getter(AccessLevel.NONE)
-    private final Set<AttributeDomain> attributeDomainsRolledThisTurn = EnumSet.noneOf(AttributeDomain.class);
+    private final List<CombatantAction> actionsThisRound = new ArrayList<>();
+
+    /** Every roll-action taken since this Cena began — cleared only by {@link #startNewScene()}. */
+    @Getter(AccessLevel.NONE)
+    private final List<CombatantAction> actionsThisCena = new ArrayList<>();
+
+    /** Index into {@link #actionsThisRound} where the current Turn's actions begin — set by {@link #startTurn}. */
+    @Getter(AccessLevel.NONE)
+    private int actionCountAtTurnStart = 0;
+
+    /** Movements taken since this Rodada began — see {@link #consumeMovementThisRound()}. */
+    private int movementsTakenThisRound = 0;
+
+    /** Whether a weapon was drawn since this Turn began — see {@link #drawWeapon(Weapon)}. */
+    private boolean drewWeaponThisTurn = false;
+
+    /** Whether a weapon was drawn at any point since this Cena began — cleared by {@link #startNewScene()}. */
+    private boolean drewWeaponThisScene = false;
 
     protected AbstractCombatantSheet(@NonNull final Character character) {
         this.character = character;
@@ -174,6 +196,11 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
      */
     @Override
     public int heal(final int amount) {
+        // Feridas Dolorosas: "não pode ser curado e nem regenerar pontos de vida". Refused
+        // outright rather than reduced to 0 healing, so a Sangramento isn't cleared either.
+        if (isHealingPrevented()) {
+            return getDamageTaken();
+        }
         if (amount > 0) {
             temporaryEffects.removeIf(effect -> effect instanceof Bleeding);
         }
@@ -476,7 +503,21 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     public void tickTemporaryEffects() {
         temporaryEffects.forEach(effect -> effect.applyRoundEffect(this));
         temporaryEffects.forEach(TemporaryEffect::tick);
+        List<Condition> decaying = temporaryEffects.stream()
+                .filter(effect -> effect instanceof Condition)
+                .map(effect -> (Condition) effect)
+                .filter(TemporaryEffect::isExpired)
+                .filter(condition -> condition.getType().getDecaysTo() != null)
+                .toList();
         temporaryEffects.removeIf(TemporaryEffect::isExpired);
+        // "Ao fim da duração alvo se torna Assustado" — the fear ladder steps down rather than
+        // simply ending, so a decaying Condition is replaced by its successor at the moment it
+        // expires, carrying the same origin and that successor's own stated duration. Applied
+        // after the removal sweep so the successor isn't swept out in the same pass.
+        decaying.forEach(condition -> applyCondition(new Condition(
+                condition.getType().getDecaysTo(),
+                ConditionType.DEFAULT_FEAR_DURATION_IN_ROUNDS,
+                condition.getSource())));
     }
 
     /**
@@ -511,30 +552,279 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
      * Begins this combatant's Turn, the mirror of {@link #finishTurn()}. turnNumber is 0-based,
      * the same convention {@code ActionPointsService}/{@code ActionProfile} use.
      *
-     * <p>Clears {@link #attributeDomainsRolledThisTurn} — see {@link #consumeFirstRollThisTurn},
-     * whose first real consumer is {@code DexterityAbility#PRECISAO}'s "primeira rolagem... em
-     * cada um de seus Turnos". Nothing else triggers "no início do seu turno" yet
-     * ({@link Bleeding}/{@link ManaDrain}/{@link Withering} all apply at Turn-<em>end</em>), so
-     * turnNumber stays unused for now, still in hand for whatever plugs in next.
+     * <p>Resets {@link #movementsTakenThisRound} (see {@link #consumeMovementThisRound()}) and
+     * marks where this Turn's actions begin in {@link #actionsThisRound} — the per-Rodada log
+     * itself is <em>not</em> cleared here (a Reação taken on another combatant's Turn belongs to
+     * this Rodada), only at {@link #startNewRound()}. {@link #isFirstRollOfTurnFor} reads the
+     * slice after this marker, which is what keeps {@code DexterityAbility#PRECISAO}'s "primeira
+     * rolagem... em cada um de seus Turnos" per-<em>Turn</em>. Nothing else triggers "no início
+     * do seu turno" yet ({@link Bleeding}/{@link ManaDrain}/{@link Withering} all apply at
+     * Turn-<em>end</em>), so turnNumber stays unused for now, still in hand for whatever plugs in
+     * next.
      */
     @Override
     public void startTurn(final int turnNumber) {
-        attributeDomainsRolledThisTurn.clear();
+        movementsTakenThisRound = 0;
+        actionCountAtTurnStart = actionsThisRound.size();
+        drewWeaponThisTurn = false;
     }
 
     /**
-     * Whether rolledDomain hasn't yet governed a Perícia roll this Turn — and, if so, marks it as
-     * having happened now, in the same call. {@link Set#add}'s return value makes this an atomic
-     * query-and-consume, exactly what a "first roll of the Turn" check/claim needs. Reset by
-     * {@link #startTurn}; without a live {@code Scene} ever calling that, the set simply starts
-     * empty, so the first roll for any domain still correctly reads as "first".
-     *
-     * <p>Called unconditionally by {@code AbstractSkillInteraction} for every actual roll,
-     * regardless of whether the roller holds any ability that cares — this tracks an objective
-     * fact about the Turn, independent of who reacts to it.
+     * Begins a new Rodada: clears the action log and resets the per-Turn marker. Called by
+     * {@code Scene#next()} on every active participant at the Rodada wrap; without a live {@code
+     * Scene} the log simply starts empty, so a "first this Rodada" clause still reads correctly —
+     * the same fallback {@link #consumeMovementThisRound()} has, and the API is expected to call
+     * this at its own Rodada boundary.
      */
     @Override
-    public boolean consumeFirstRollThisTurn(final AttributeDomain rolledDomain) {
-        return attributeDomainsRolledThisTurn.add(rolledDomain);
+    public void startNewRound() {
+        actionsThisRound.clear();
+        actionCountAtTurnStart = 0;
+    }
+
+    /**
+     * Begins a new Cena: clears both action logs and the per-Cena drawn-weapon flag. {@code
+     * Scene#addParticipant} calls this when the sheet joins; the API calls it otherwise.
+     */
+    @Override
+    public void startNewScene() {
+        actionsThisCena.clear();
+        actionsThisRound.clear();
+        actionCountAtTurnStart = 0;
+        drewWeaponThisScene = false;
+    }
+
+    /**
+     * Appends action to this Rodada's log (and this Cena's). Called explicitly by the API after
+     * it has resolved a roll (or an {@code AttackDelivery}/{@code AttackReceiver} exchange) —
+     * never from inside {@code AbstractSkillInteraction#applyTo}, which only <em>reads</em> the log.
+     */
+    @Override
+    public void recordAction(final CombatantAction action) {
+        actionsThisRound.add(action);
+        actionsThisCena.add(action);
+    }
+
+    @Override
+    public List<CombatantAction> getActionsThisRound() {
+        return Collections.unmodifiableList(actionsThisRound);
+    }
+
+    @Override
+    public List<CombatantAction> getActionsThisCena() {
+        return Collections.unmodifiableList(actionsThisCena);
+    }
+
+    @Override
+    public boolean hasDrawnWeaponThisScene() {
+        return drewWeaponThisScene;
+    }
+
+    @Override
+    public boolean isFirstRollOfTurnFor(final AttributeDomain domain) {
+        return actionsThisRound.subList(actionCountAtTurnStart, actionsThisRound.size()).stream()
+                .noneMatch(action -> action.governingDomain() == domain);
+    }
+
+    @Override
+    public boolean isFirstAttackRollOfTurn() {
+        return actionsThisRound.subList(actionCountAtTurnStart, actionsThisRound.size()).stream()
+                .noneMatch(action -> action.skill() != null && action.skill().isAttackSkill());
+    }
+
+    @Override
+    public int getMovementsTakenThisRound() {
+        return movementsTakenThisRound;
+    }
+
+    /**
+     * Reset by {@link #startTurn}, which is what makes this per-<i>Rodada</i> despite living on a
+     * Turn boundary: each participant has one Turn per Rodada, the equivalence {@link
+     * #finishTurn()} already relies on. Without a live {@code Scene} ever calling {@code
+     * startTurn}, the counter simply starts at 0, so the first movement still correctly reads as
+     * first.
+     */
+    @Override
+    public int consumeMovementThisRound() {
+        return movementsTakenThisRound++;
+    }
+    // --- Condições / Malefícios ---------------------------------------------------------------
+
+    /**
+     * Replaces any held {@link Condition} naming the same {@link ConditionType} before adding
+     * this one, which is narrower than {@link #applyEffect}'s own {@code isCumulative()} handling
+     * — that compares by {@code getClass()}, and every Condition shares one class, so going
+     * through it would let a new Desprevenido silently lift an unrelated Silêncio.
+     */
+    @Override
+    public void applyCondition(final Condition condition) {
+        removeCondition(condition.getType());
+        temporaryEffects.add(condition);
+    }
+
+    @Override
+    public void removeCondition(final ConditionType conditionType) {
+        temporaryEffects.removeIf(effect -> effect instanceof Condition held
+                && held.getType() == conditionType);
+    }
+
+    /** Held, unexpired Conditions — the directly-applied ones, before implications. */
+    private Stream<Condition> heldConditions() {
+        return temporaryEffects.stream()
+                .filter(effect -> effect instanceof Condition)
+                .map(effect -> (Condition) effect)
+                .filter(condition -> !condition.isExpired());
+    }
+
+    /**
+     * Walks each held Condition's {@link ConditionType#getImplied()} graph, keeping an implied
+     * entry only while its own {@link Range} scope holds against that Condition's origin. The
+     * walk is iterative with a seen-set so a cycle in the catalogue cannot hang it — nothing
+     * authored today implies its way back around, but a data table is the wrong place to rely on
+     * that.
+     */
+    @Override
+    public Set<ConditionType> getActiveConditions(final SceneContext sceneContext) {
+        return activeConditionOrigins(sceneContext).keySet();
+    }
+
+    /**
+     * Every {@link ConditionType} in force mapped to the held {@link Condition} that put it
+     * there — its own instance for a directly-applied one, or whichever implied it. <b>Keyed by
+     * type, so a condition conferred by two different sources appears once</b>: being Desprevenido
+     * because you are both Caído and Flanqueado is not worse than being Desprevenido, and summing
+     * per held Condition instead would charge its -2 Defesas twice. Where two sources imply the
+     * same condition, the first encountered supplies the origin any range-scoped effect of that
+     * condition measures against; nothing authored today implies a range-scoped effect from two
+     * places, so no precedence is invented.
+     */
+    private Map<ConditionType, Condition> activeConditionOrigins(final SceneContext sceneContext) {
+        Map<ConditionType, Condition> active = new EnumMap<>(ConditionType.class);
+        heldConditions().forEach(held -> collectConditions(held, held.getType(), sceneContext, active));
+        return active;
+    }
+
+    private void collectConditions(final Condition held, final ConditionType type,
+                                    final SceneContext sceneContext, final Map<ConditionType, Condition> active) {
+        if (active.putIfAbsent(type, held) != null) {
+            return;
+        }
+        type.getImplied().forEach((implied, within) -> {
+            if (held.appliesWithin(within, sceneContext)) {
+                collectConditions(held, implied, sceneContext, active);
+            }
+        });
+    }
+
+    @Override
+    public boolean hasCondition(final ConditionType conditionType, final SceneContext sceneContext) {
+        return activeConditionOrigins(sceneContext).containsKey(conditionType);
+    }
+
+    /**
+     * Sums each active condition's effects <b>once</b>, resolving any proximity scope against the
+     * origin of whichever held Condition put it in force — so an implied condition brings its
+     * numbers with it (Caído really does cost 2 Defesas through the Desprevenido it confers)
+     * without a second source of the same condition charging them again.
+     */
+    @Override
+    public int getConditionBonus(final ModifierType modifierType, final SceneContext sceneContext) {
+        return activeConditionOrigins(sceneContext).entrySet().stream()
+                .mapToInt(entry -> new Condition(entry.getKey(), null, entry.getValue().getSource())
+                        .resolveBonus(modifierType, sceneContext))
+                .sum();
+    }
+
+    /**
+     * Applies {@link ConditionType#DESARMADO} only once <b>no</b> wielded {@link Weapon} remains.
+     * A fighter holding two blades who loses one is not Desarmado — the condition's Desvantagem
+     * on every Ataque and Dano roll is the penalty for having nothing to fight with, and charging
+     * it to someone still holding a sword would plainly overshoot. The rules text states the
+     * condition's effects, not when it is inflicted, so this reading is ours; it is the narrow
+     * one.
+     *
+     * <p>Open-ended (a {@code null} duration): being disarmed ends by picking a weapon back up,
+     * which is {@link #rearm(Weapon)}, never by counting down Rodadas.
+     */
+    @Override
+    public boolean drawWeapon(final Weapon weapon) {
+        boolean drawn = getCharacter().drawWeapon(weapon);
+        if (drawn) {
+            drewWeaponThisTurn = true;
+            drewWeaponThisScene = true;
+        }
+        return drawn;
+    }
+
+    @Override
+    public boolean hasDrawnWeaponThisTurn() {
+        return drewWeaponThisTurn;
+    }
+
+    @Override
+    public java.util.Optional<Weapon> disarm(final Weapon weapon) {
+        if (!weapon.isDisarmable() || !getCharacter().unequip(weapon)) {
+            return java.util.Optional.empty();
+        }
+        if (wieldsNoWeapon()) {
+            applyCondition(new Condition(ConditionType.DESARMADO, null));
+        }
+        return java.util.Optional.of(weapon);
+    }
+
+    @Override
+    public boolean rearm(final Weapon weapon) {
+        if (anyConditionPrevents(null, ConditionType::preventsArming)) {
+            return false;
+        }
+        getCharacter().equip(weapon);
+        removeCondition(ConditionType.DESARMADO);
+        return true;
+    }
+
+    private boolean wieldsNoWeapon() {
+        return getCharacter().getEquipment().stream().noneMatch(item -> item instanceof Weapon);
+    }
+
+    @Override
+    public boolean canAttackWith(final Weapon weapon) {
+        if (weapon == null) {
+            return true;
+        }
+        return !anyConditionPrevents(null, ConditionType::restrictsAttacksToLightWeapons)
+                || weapon.getEffectiveWeightClass() == ItemWeightClass.LIGHT;
+    }
+
+    @Override
+    public int getAttackerDamageBonusFromConditions(final SceneContext sceneContext) {
+        return activeConditionOrigins(sceneContext).keySet().stream()
+                .mapToInt(ConditionType::getAttackerDamageBonus)
+                .sum();
+    }
+
+    /** True while any active condition forbids the thing predicate names. */
+    private boolean anyConditionPrevents(final SceneContext sceneContext,
+                                          final java.util.function.Predicate<ConditionType> predicate) {
+        return activeConditionOrigins(sceneContext).keySet().stream().anyMatch(predicate);
+    }
+
+    @Override
+    public boolean isMovementPrevented(final SceneContext sceneContext) {
+        return anyConditionPrevents(sceneContext, ConditionType::preventsMovement);
+    }
+
+    @Override
+    public boolean isHealingPrevented() {
+        return anyConditionPrevents(null, ConditionType::preventsHealing);
+    }
+
+    @Override
+    public boolean isAbilityActivationPrevented(final SceneContext sceneContext) {
+        return anyConditionPrevents(sceneContext, ConditionType::preventsAbilityActivation);
+    }
+
+    @Override
+    public boolean isSpellCastingPrevented(final SceneContext sceneContext) {
+        return anyConditionPrevents(sceneContext, ConditionType::preventsSpellCasting);
     }
 }

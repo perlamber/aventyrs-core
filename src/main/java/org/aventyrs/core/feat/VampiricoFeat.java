@@ -69,11 +69,11 @@ public enum VampiricoFeat implements Feat {
      */
     // TODO: needs a form state — the same missing piece DraconicoFeat#DRACONATO, HomemFera's
     //  Forma Híbrida and Gorgona's own forms are blocked on.
-    // TODO: the choice of two Formas from a table of six is per-acquisition data a flat enum
-    //  constant cannot hold, and each Forma grants its own Arma Natural (no weapon catalog) plus
-    //  its own ability — among them a Movimento Base Vertical, a Movimento Base de Voo, a
-    //  Multiplicador de PV, a Corrente de Efeitos and an outright immunity to physical damage.
-    //  Every one of those is separately blocked.
+    // TODO: the choice of two Formas from a table of six could be recorded now (a choice-carrying
+    //  AbstractFeat subclass — see FocoEmPericiaFeat), but each Forma grants its own Arma Natural
+    //  (no weapon catalog) plus its own ability — among them a Movimento Base Vertical, a
+    //  Movimento Base de Voo, a Multiplicador de PV, a Corrente de Efeitos and an outright
+    //  immunity to physical damage. Every one of those is separately blocked.
     // TODO: "Dampiros escolhem 1, Rakshasa escolhem 4" names two Vampiro sub-races that, like the
     //  Vampiro race itself, have no representation here.
     METAMORFOSE_DRACULEA(

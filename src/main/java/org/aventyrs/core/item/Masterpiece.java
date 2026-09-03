@@ -40,6 +40,19 @@ public interface Masterpiece {
         return 0;
     }
 
+    /**
+     * Whether this enhancement stops its weapon being knocked out of its wielder's hands —
+     * the "Não pode ser desarmado" Característica Adicional (Manopla de Segurança, an
+     * Aprimoramento de Obra-Prima Ofensiva). False by default.
+     *
+     * <p>No constant overrides it yet: the offensive Obra-Prima/Aprimoramento catalogues are not
+     * authored (only the defensive ones are), so this is the hook {@code Weapon#isDisarmable()}
+     * consults, waiting on the catalogue rather than on a mechanism.
+     */
+    default boolean preventsDisarming() {
+        return false;
+    }
+
     /** How many Dano Base scale-ups this masterpiece grants when weapon is the attack source. */
     default int resolveDamageBaseIncrease(final Weapon weapon, final Character character) {
         return 0;

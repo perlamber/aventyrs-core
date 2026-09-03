@@ -20,8 +20,9 @@ import org.aventyrs.core.skill.SkillType;
 @AllArgsConstructor
 public enum ProfissaoCompetencyAbility implements SkillCompetencyAbility {
 
-    // TODO: -20% to item/equipment Tempo de Produção — no Item/Equipamento entity or
-    // production-time system exists yet.
+    // TODO: -20% to item/equipment Tempo de Produção. Item is a real catalog entry now, so the
+    // missing piece is narrower: nothing *produces* a copy, and no production-time stat exists
+    // to reduce.
     CONSTRUTOR_EFICIENTE("Tempo de Produção de itens e equipamentos reduzido em 20%."),
 
     // TODO: produced Equipamentos Defensivos permanently grant Resistência a Críticos (a
@@ -38,8 +39,9 @@ public enum ProfissaoCompetencyAbility implements SkillCompetencyAbility {
     // an item-granted value of it) or +1 Conjuração (a Magia-effect bonus, same gap as
     // DominioDoManaCompetencyAbility.ARCANISMO_EXPLOSIVA). Needs an
     // Item/Equipamento entity carrying who produced it and which choice was made at
-    // creation — {@code Item} is a catalog entry with no per-copy state or producer, so none
-    // of that exists yet.
+    // creation — Item now carries real per-copy state (Dureza taken, Obra-Prima, Aprimoramentos,
+    // a Pedra do Poder) but records no producer, and nothing produces a copy at which a choice
+    // could be baked in.
     FORJA_VULCANA("Equipamentos que você produz tem benefícios adicionais: Equipamentos " +
             "Defensivos concedem Resistência à Críticos, além disso concedem Redução de " +
             "Danos Sofridos 1 ou Bônus de +1 em Defesas (definido na criação do item). " +
@@ -63,8 +65,9 @@ public enum ProfissaoCompetencyAbility implements SkillCompetencyAbility {
     // apply an increase to the value it is created with.
     AUMENTAR_A_DUREZA("A Dureza dos equipamentos que você produz aumenta em 50%."),
 
-    // TODO: +5 to produced equipment's Carga capacity — no Item/Equipamento entity or Carga
-    // (carrying capacity) stat exists yet.
+    // TODO: +5 to produced equipment's Carga capacity. Item is real and carries an
+    // ItemWeightClass, but Carga (carrying capacity) is a different stat that no Item column
+    // holds — and nothing produces a copy to apply the increase at.
     EXPANDIR_CARGA("A capacidade de Carga dos Equipamentos que você produz aumenta em +5.");
 
     private final String description;
