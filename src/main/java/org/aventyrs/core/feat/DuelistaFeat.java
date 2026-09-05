@@ -370,6 +370,9 @@ public enum DuelistaFeat implements Feat {
     //  *from* an attacker, never the reverse (gap catalog, "Reactive/retaliation damage").
     // TODO: "Resistência à Críticos" is not a stat; CriticalEffect immunity is per named
     //  CriticalEffectType, not a general resistance.
+    // Keeps the unsuffixed name of the two Talentos the rules both call "Coração de Ferro";
+    // DestinoFeat's is CORACAO_DE_FERRO_DO_DESTINO. See that constant for why they cannot share
+    // one name: a Feat's name() is its persisted identity.
     CORACAO_DE_FERRO(
             "Você recebe Resistência à Críticos. Sempre que um atacante Corpo-a-Corpo lhe infligir "
                     + "danos físicos ele também sofre 1 ponto de Dano Físico, se o ataque for um "

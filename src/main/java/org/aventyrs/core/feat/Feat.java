@@ -868,7 +868,7 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      * and the {@code ModifierType#DETERMINATION_MULTIPLIER} scan. Zero by default.
      *
      * <p>The Determinação twin of {@link #resolveManaMultiplierIncrease}, added for {@code
-     * DestinoFeat#CORACAO_DE_FERRO}'s "seu multiplicador de PD aumenta em +1".
+     * DestinoFeat#CORACAO_DE_FERRO_DO_DESTINO}'s "seu multiplicador de PD aumenta em +1".
      */
     default int resolveDeterminationMultiplierIncrease(final Character character) {
         return 0;

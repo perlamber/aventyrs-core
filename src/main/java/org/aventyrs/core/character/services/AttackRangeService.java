@@ -30,13 +30,22 @@ import org.aventyrs.core.scene.Range;
  * {@code PESSOAL}/{@code TOQUE}/{@code PLANAR} or caster-centred Magia has no placed maximum range
  * to widen — nothing extends those, so the answer is "not applicable" rather than a band.
  *
- * <h2>Where the steps come from — one source today</h2>
+ * <h2>Where the widening comes from — a Talento source, plus Size for melee</h2>
  *
  * Every held {@code Feat}'s {@code Feat#resolveAttackRangeIncrease(Character, AttackSource)}, passed
  * the weapon or Magia as the {@code AttackSource} so a clause can scope itself to how the attack is
  * delivered ({@code TIRO_LONGO} grants only to {@code ATAQUE_A_DISTANCIA}). Talentos sit outside
  * every {@code ModifierResolver} scan, so this is an explicit pass over {@code Character#getFeats()},
  * the same shape {@code MovementServiceImpl}/{@code DamageBaseServiceImpl} use.
+ *
+ * <p>A weapon whose authored Alcance is {@link Range#ADJACENTE} — corpo-a-corpo — is additionally
+ * widened by the attacker's own {@code CharacterSizeService#getEffectiveSizeCategory}
+ * ({@code SizeCategory#getRange()}, converted back to a band via
+ * {@link Range#fromUnidadesDeDistancia}), the same size source {@code MovementServiceImpl} reads
+ * for Movimento per Ponto de Ação — a maior creature reaches further with an unarmed or melee
+ * strike. A weapon whose Alcance is already something other than ADJACENTE is left alone: this
+ * models reach, not a general size-scaled bonus to every attack. Magias have no such widening —
+ * a Conjurador's reach isn't their own body's.
  *
  * <p><b>No ability or equipment source yet</b>, each deliberately absent rather than forgotten:
  * <ul>
@@ -60,8 +69,9 @@ public interface AttackRangeService {
     /**
      * The maximum {@link Range} character reaches swinging, firing or throwing weapon —
      * {@code weapon.getEffectiveRange()} (its authored Alcance, or {@link Range#ADJACENTE} once
-     * the weapon is destroyed) advanced by the summed Talento steps described on this interface.
-     * Never past {@link Range#AO_ALCANCE_DOS_OLHOS}.
+     * the weapon is destroyed), widened for a corpo-a-corpo weapon by character's own
+     * effective {@code SizeCategory}, then advanced by the summed Talento steps described on
+     * this interface. Never past {@link Range#AO_ALCANCE_DOS_OLHOS}.
      */
     Range getEffectiveRange(Character character, Weapon weapon);
 

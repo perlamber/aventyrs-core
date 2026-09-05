@@ -11,9 +11,36 @@ import org.aventyrs.core.skill.AttackSource;
 
 public class AttackRangeServiceImpl implements AttackRangeService {
 
+    private final CharacterSizeService characterSizeService;
+
+    public AttackRangeServiceImpl() {
+        this(new CharacterSizeServiceImpl());
+    }
+
+    public AttackRangeServiceImpl(final CharacterSizeService characterSizeService) {
+        this.characterSizeService = characterSizeService;
+    }
+
     @Override
     public Range getEffectiveRange(final Character character, @NonNull final Weapon weapon) {
-        return weapon.getEffectiveRange().increasedBy(sumFeatSteps(character, weapon));
+        return sizeAdjustedMeleeBase(character, weapon.getEffectiveRange())
+                .increasedBy(sumFeatSteps(character, weapon));
+    }
+
+    /**
+     * A corpo-a-corpo weapon's {@link Range#ADJACENTE} base widened by the attacking {@link
+     * Character}'s own {@link org.aventyrs.core.character.SizeCategory#getRange()} — a maior
+     * creature's reach, in UD, converted back to a band via {@link
+     * Range#fromUnidadesDeDistancia}. A weapon whose Alcance is already something other than
+     * ADJACENTE (Ataque à Distância, Arremesso) is untouched: Size only widens the reach of an
+     * attack that starts adjacent, not a ranged weapon's own authored band.
+     */
+    private Range sizeAdjustedMeleeBase(final Character character, final Range base) {
+        if (base != Range.ADJACENTE) {
+            return base;
+        }
+        int meleeReach = characterSizeService.getEffectiveSizeCategory(character).getRange();
+        return Range.fromUnidadesDeDistancia(meleeReach);
     }
 
     @Override

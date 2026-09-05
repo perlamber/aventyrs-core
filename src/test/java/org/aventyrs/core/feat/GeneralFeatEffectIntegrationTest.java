@@ -164,7 +164,7 @@ class GeneralFeatEffectIntegrationTest {
         Character character = character().build();
         int before = determinationPointsService.getDeterminationMultiplier(character);
 
-        acquire(character, DestinoFeat.CORACAO_DE_FERRO);
+        acquire(character, DestinoFeat.CORACAO_DE_FERRO_DO_DESTINO);
 
         assertEquals(before + 1, determinationPointsService.getDeterminationMultiplier(character));
     }

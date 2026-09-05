@@ -28,13 +28,18 @@ public enum DestinoFeat implements Feat {
      * Feat#resolveDeterminationMultiplierIncrease} — an unconditional, permanent uplift consumed
      * by {@code DeterminationPointsService}. That hook was added for this constant.
      *
-     * <p>Not to be confused with {@code DuelistaFeat#CORACAO_DE_FERRO}: the catalog authors two
-     * unrelated Talentos under this same name, in different trees.
+     * <p>The rules text names this Talento "Coração de Ferro", the same as the unrelated {@code
+     * DuelistaFeat#CORACAO_DE_FERRO} in another tree. The constant here is suffixed {@code
+     * _DO_DESTINO} to keep the two apart, because a {@code Feat}'s {@code name()} <b>is</b> its
+     * persisted identity — {@code FeatCatalog} indexes by it and aventyrs-api stores a held Talento
+     * as that bare string, so two constants sharing one name are indistinguishable once written and
+     * load back as whichever a reader indexes first. Display text comes from {@link
+     * #getDescription()}, never from the constant name, so the suffix is invisible to a player.
      */
     // TODO: the Descanso recovery half needs a PD equivalent of resolveRestMagicPointsBonus —
     //  RestService recovers PD but scans no Talento hook for it. The figure itself is computable
     //  (2 + getAllTitles().size()).
-    CORACAO_DE_FERRO(
+    CORACAO_DE_FERRO_DO_DESTINO(
             "Sua força de vontade permitiu desenvolver-se mais que a maioria, seu multiplicador de "
                     + "PD aumenta em +1. Sua recuperação de PD também aumenta, a cada Descanso "
                     + "você recupera +2PD, e então +1PD para cada Título Aventyr que tenha "

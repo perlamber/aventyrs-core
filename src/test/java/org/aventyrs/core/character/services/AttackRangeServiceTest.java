@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.DamageBase;
+import org.aventyrs.core.character.SizeCategory;
 import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.feat.ArtilhariaFeat;
 import org.aventyrs.core.item.AbstractWeapon;
@@ -91,6 +92,39 @@ class AttackRangeServiceTest {
         wreck.applyDamage(6);
 
         assertEquals(Range.DISTANCIA_MUITO_CURTA, attackRangeService.getEffectiveRange(character, wreck));
+    }
+
+    @Test
+    void aLargerSizeCategoryWidensAMeleeWeaponsAdjacenteReach() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .feats(new ArrayList<>())
+                .sizeCategory(SizeCategory.PLUS_TWO)
+                .build();
+
+        assertEquals(Range.DISTANCIA_MUITO_CURTA, attackRangeService.getEffectiveRange(character, DAGGER));
+    }
+
+    @Test
+    void sizeCategoryLeavesAnAlreadyRangedWeaponsAlcanceAlone() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .feats(new ArrayList<>())
+                .sizeCategory(SizeCategory.PLUS_TWO)
+                .build();
+
+        assertEquals(Range.DISTANCIA_LONGA, attackRangeService.getEffectiveRange(character, LONGBOW));
+    }
+
+    @Test
+    void sizeWideningAndTiroLongoStackOnAMeleeWeapon() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .feats(new ArrayList<>())
+                .sizeCategory(SizeCategory.PLUS_TWO)
+                .build();
+        character.grantFeat(ArtilhariaFeat.TIRO_LONGO);
+
+        // TIRO_LONGO only grants its flat step to ATAQUE_A_DISTANCIA, so the dagger only sees
+        // the size widening — this pins that the two sources don't get conflated.
+        assertEquals(Range.DISTANCIA_MUITO_CURTA, attackRangeService.getEffectiveRange(character, DAGGER));
     }
 
     @Test
