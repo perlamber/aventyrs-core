@@ -54,9 +54,10 @@
  * <em>actually</em> spent rather than what was asked for — resolved for real by {@code
  * RestServiceImpl#applyRest}, since {@code RestService} (unlike Scene's still-nonexistent
  * turn shifter) already is a complete "a Rest happened" trigger. A fourth, {@link
- * org.aventyrs.core.effect.Sabotage}, is a deliberate placeholder — it targets equipment,
- * not a CombatantSheet resource pool, and this core has no Item/Equipamento entity at all
- * yet (same gap {@code ProfissaoCompetencyAbility}'s own class javadoc documents), so its
+ * org.aventyrs.core.effect.Sabotage}, is a deliberate placeholder — it targets equipment
+ * rather than a CombatantSheet resource pool, and although {@code Item}, {@code
+ * CombatantSheet#getInventory} and {@code Item#applyDamage} are all real now, nothing
+ * classifies an item as "tecnológico" and no Efeito Crítico damages one automatically, so its
  * {@code applyTo} computes nothing beyond {@code resultStatus}; see its own class javadoc
  * for the full breakdown. A fifth, {@link org.aventyrs.core.effect.RealExecution}, is
  * fully real — it guarantees {@code CharacterStatus#DEAD} (the closest thing this core

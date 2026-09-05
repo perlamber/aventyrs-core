@@ -9,12 +9,15 @@ import org.aventyrs.core.character.services.InitiativeBlessingService;
 import org.aventyrs.core.character.services.InitiativeBlessingServiceImpl;
 import org.aventyrs.core.ego.InitiativeAdvantage;
 import org.aventyrs.core.modifier.ModifierType;
+import org.aventyrs.core.sheet.ActionCost;
 import org.aventyrs.core.sheet.Blessing;
 import org.aventyrs.core.sheet.CharacterSheet;
+import org.aventyrs.core.sheet.CombatantAction;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.Player;
 import org.aventyrs.core.sheet.TargetScope;
+import org.aventyrs.core.skill.SkillType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -58,6 +61,11 @@ class SceneTest {
     private CharacterSheet newSheet() {
         Character character = CharacterFixture.blank(CharacterFixture.BLANK).build();
         return CharacterSheet.of(character, new Player());
+    }
+
+    private static CombatantAction sampleAction() {
+        return new CombatantAction(SkillType.ATAQUE_A_DISTANCIA, AttributeDomain.DEXTERITY, null,
+                ActionCost.ofActionPoints(1), 0, null);
     }
 
     private CharacterSheet sheetWithPosicionamentoEstrategico() {
@@ -158,6 +166,53 @@ class SceneTest {
         assertEquals(0, scene.getCurrentRound());
         scene.next();
         assertEquals(1, scene.getCurrentRound());
+    }
+
+    @Test
+    void addParticipantStartsAFreshCenaForThatSheet() {
+        CharacterSheet sheet = newSheet();
+        sheet.recordAction(sampleAction());   // left over from a previous Cena
+
+        new Scene().addParticipant(sheet, 10);
+
+        assertTrue(sheet.getActionsThisCena().isEmpty());
+        assertTrue(sheet.getActionsThisRound().isEmpty());
+    }
+
+    @Test
+    void nextClearsEveryParticipantsActionLogAtARoundBoundary() {
+        Scene scene = new Scene();
+        CharacterSheet first = newSheet();
+        CharacterSheet second = newSheet();
+        scene.addParticipant(first, 10);
+        scene.addParticipant(second, 5);
+
+        scene.next();                                   // first's Turn, Round 0
+        first.recordAction(sampleAction());
+        scene.next();                                   // second's Turn, Round 0
+        second.recordAction(sampleAction());
+        scene.next();                                   // wraps to Round 1
+
+        assertEquals(1, scene.getCurrentRound());
+        assertTrue(first.getActionsThisRound().isEmpty());
+        assertTrue(second.getActionsThisRound().isEmpty());
+    }
+
+    @Test
+    void aReactionRecordedOnAnotherCombatantsTurnSurvivesUntilTheRoundWraps() {
+        Scene scene = new Scene();
+        CharacterSheet first = newSheet();
+        CharacterSheet second = newSheet();
+        scene.addParticipant(first, 10);
+        scene.addParticipant(second, 5);
+
+        scene.next();                                   // first's Turn, Round 0
+        second.recordAction(sampleAction());            // second reacts during first's Turn
+        scene.next();                                   // second's Turn — still Round 0
+        assertEquals(1, second.getActionsThisRound().size());
+
+        scene.next();                                   // wraps to Round 1
+        assertTrue(second.getActionsThisRound().isEmpty());
     }
 
     @Test

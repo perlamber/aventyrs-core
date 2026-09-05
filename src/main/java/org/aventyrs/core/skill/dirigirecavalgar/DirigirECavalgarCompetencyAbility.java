@@ -43,9 +43,11 @@ public enum DirigirECavalgarCompetencyAbility implements SkillCompetencyAbility 
             "cavalgando um animal é retirada, porém você sofre Desvantagem em todas as " +
             "rolagens de Perícias baseadas em Força e Destreza feitas nestas condições."),
 
-    // TODO: automatic success on Dirigir e Cavalgar rolls while not under great stress — no
-    // roll-resolution-vs-DifficultyLevel engine (to know what "success" means) or
-    // stress-tracking system exists yet.
+    // TODO: automatic success is expressible now (SkillCompetencyAbility#resolveAutomaticSuccess,
+    // see AttentionCompetencyAbility.PERCEPCAO_DE_FOXM), but "enquanto não estiver sob grande
+    // estresse" has nothing to read: no stress concept exists, and SceneContext#isCombatScene()
+    // is a narrower thing than stress. Granting it unconditionally would make every Dirigir e
+    // Cavalgar roll automatic.
     DIRECAO_SEGURA("Você é bem-sucedido em quaisquer rolagens de Dirigir e Cavalgar " +
             "enquanto não estiver sob grande estresse."),
 

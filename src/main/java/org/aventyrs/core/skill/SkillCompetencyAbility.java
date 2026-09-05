@@ -5,6 +5,7 @@ import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.DamageBonus;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.Blessing;
+import org.aventyrs.core.sheet.TargetScope;
 import org.aventyrs.core.sheet.CombatantSheet;
 
 import java.util.Collection;
@@ -25,19 +26,44 @@ public interface SkillCompetencyAbility extends SkillTrait {
     }
 
     /**
-     * The Attribute this ability unconditionally lets its own Perícia use instead of that
-     * Perícia's normal base Attribute — e.g. {@code AtaqueCorpoACorpoCompetencyAbility
+     * The Attribute this ability lets its own Perícia use instead of that Perícia's normal
+     * base Attribute, <b>unconditionally</b> — e.g. {@code AtaqueCorpoACorpoCompetencyAbility
      * .ACUIDADE} substituting Destreza for Ataque Corpo-a-Corpo's normal Força. Empty by
-     * default; only override on a constant whose rules text grants the substitution
-     * unconditionally. A substitution that's scoped to a specific circumstance (e.g.
-     * {@code AtaqueADistanciaCompetencyAbility.ARREMESSO_PODEROSO}, only for thrown-weapon/
-     * spell attacks) can't be modeled this way yet — this codebase doesn't track what a roll
-     * is *for*, the same simplification already applied to scoped Vantagem bonuses (see
-     * CLAUDE.md's "Vantagem is a flat +2 bonus" section); document that gap in a TODO on the
-     * constant instead of over- or under-granting here.
+     * default; only override on a constant whose rules text grants the substitution with no
+     * circumstance attached.
+     *
+     * <p>A substitution <em>scoped</em> to how the attack is delivered — {@code
+     * AtaqueADistanciaCompetencyAbility.ARREMESSO_PODEROSO}, only for thrown weapons and
+     * Magias — overrides {@link #resolveSubstituteAttributeDomain(AttackSource)} instead, and
+     * must leave this one empty: an unconditional answer here would substitute on every roll,
+     * including the bow shot the clause excludes. A substitution scoped to something this core
+     * still doesn't track (a roll's narrative <em>purpose</em>) remains unmodelable either way
+     * — document that in a TODO on the constant rather than over- or under-granting.
      */
     default Optional<AttributeDomain> getSubstituteAttributeDomain() {
         return Optional.empty();
+    }
+
+    /**
+     * The Attribute this ability lets its own Perícia use right now, given what the attack is
+     * being delivered with — the delivery-scoped counterpart to {@link
+     * #getSubstituteAttributeDomain()}, and the hook a clause like {@code
+     * AtaqueADistanciaCompetencyAbility#ARREMESSO_PODEROSO}'s "apenas para rolagens de ataques
+     * com armas de arremessos e magias" needs. attackSource is the {@code Weapon} or {@code Spell}
+     * itself; an override narrows it with {@code instanceof} plus whatever column it cares about,
+     * rather than asking {@link AttackSource} to classify itself. It is {@code null} whenever the
+     * caller didn't say what the attack was made with, which every override must read as "no
+     * scope matched", never as an error — an {@code instanceof} chain gets that for free.
+     *
+     * <p><b>This defaults to the unconditional answer, rather than the other way round.</b> It
+     * is not the usual cascading-overload pair (where the short form delegates <em>down</em>
+     * with {@code null} and the long one holds the logic) — the relationship here is
+     * "unless you're scoped, whatever you substitute unconditionally still applies", which is
+     * what lets every existing unconditional overrider stay untouched while {@link
+     * #resolveAttributeDomain} needs only this one call site.
+     */
+    default Optional<AttributeDomain> resolveSubstituteAttributeDomain(final AttackSource attackSource) {
+        return getSubstituteAttributeDomain();
     }
 
     /**
@@ -173,6 +199,72 @@ public interface SkillCompetencyAbility extends SkillTrait {
     }
 
     /**
+     * Extra Movimento Base, in UD, this trait grants on one specific movement of the Rodada —
+     * for a clause scoped to <i>which</i> movement it is, e.g. {@code
+     * org.aventyrs.core.ability.DexterityAbility#PASSOS_LONGOS}'s "seu primeiro movimento em
+     * cada Rodada tem a distância aumentada em +2UD". movementIndex is 0-based, so the first
+     * movement of the Rodada is 0; it comes from {@code CombatantSheet
+     * #getMovementsTakenThisRound()} / {@code CombatantSheet#consumeMovementThisRound()}.
+     *
+     * <p><b>Per Ponto de Ação, like every other movement figure in this core</b> — see {@code
+     * MovementService#getMovementBase}. A clause naming a UD amount is always widening what one
+     * Ponto de Ação buys, never handing out a one-off distance, so this is summed into the same
+     * per-Ponto-de-Ação total the permanent {@code ModifierType#MOVEMENT} scan produces rather
+     * than added once afterwards.
+     *
+     * <p>Zero by default; only override on a constant whose rules text scopes a movement bonus
+     * to a particular movement of the Rodada. An unconditional "+NUD ao Movimento Base" is a
+     * plain {@code @Modifier(ModifierType.MOVEMENT)} method instead, and a Round-<i>window</i>
+     * clause ("nas duas primeiras Rodadas") is a {@code TemporaryBonus} — both are different
+     * axes from this one.
+     */
+    default int resolveRoundMovementIncrease(int movementIndex) {
+        return 0;
+    }
+
+    /**
+     * {@link Blessing}s this ability grants <b>because the roll succeeded</b> — the "após ser
+     * bem-sucedido…" family, e.g. {@code PersuasaoCompetencyAbility#FINTAR_APRIMORADO}'s Vantagem
+     * on the next Ataque roll this Rodada. Empty by default.
+     *
+     * <p>Resolved by {@code AbstractSkillInteraction} <b>only once the roll is known to have
+     * succeeded</b> — so an override does not check that itself, only whichever further condition
+     * its own clause states. A roll with no stated GD never triggers this: {@code
+     * InteractionResult#succeeded} is {@code null} there, which is "cannot tell", not "yes".
+     *
+     * <p>The Blessings are <b>reported, not applied</b>. They land on {@code
+     * InteractionResult#blessings} for the caller to grant, exactly as the initiative-time ones
+     * do — this Interaction has no business mutating a sheet that may not even be the recipient
+     * (a {@link TargetScope} may name allies). See the {@code granting-a-blessing} skill.
+     *
+     * <p>requestedAbility is what the roll was made *as*, so a clause scoped to one Especialização
+     * ("após ser bem-sucedido em rolagens de Intimidação") can narrow to it.
+     */
+    default List<Blessing> resolveSuccessBlessings(final SkillType skillType, final SkillTrait requestedAbility,
+                                                    final SceneContext sceneContext) {
+        return List.of();
+    }
+
+    /**
+     * Whether this ability makes a skillType roll succeed <b>without the dice mattering</b> —
+     * "você é sempre bem-sucedido, dispensando rolagens". False by default.
+     *
+     * <p>{@code targetValue} is the Grau de Dificuldade the roll is up against, already eased by
+     * any {@code difficultyReduction} the roller holds. It is a parameter because auto-success is
+     * routinely capped: {@code AttentionCompetencyAbility#PERCEPCAO_DE_FOXM} succeeds only
+     * against a GD "igual ou inferior à Média", so an override compares against {@code
+     * DifficultyLevel#MEDIUM.getBaseValue()} rather than granting unconditionally.
+     *
+     * <p>Consulted only when the roll states a target at all — with none, there is no GD to be
+     * automatically good enough for, and {@code InteractionResult#succeeded} stays {@code null}.
+     * sceneContext carries the proximity or terrain such a clause is usually conditioned on, and
+     * is {@code null} outside a Scene, which every override must read as "condition not met".
+     */
+    default boolean resolveAutomaticSuccess(final SkillType skillType, final int targetValue, final SceneContext sceneContext) {
+        return false;
+    }
+
+    /**
      * How many extra "números" this Habilidade de Competência widens skillType's Margem
      * Crítica Menor by right now, conditioned on {@link SceneContext} — e.g. {@code
      * org.aventyrs.core.skill.artes.ArtesAprimorarComArteAbility}'s "Outras Perícias – Margem
@@ -190,18 +282,73 @@ public interface SkillCompetencyAbility extends SkillTrait {
     }
 
     /**
-     * The Attribute that currently governs skillType's roll/graduation-cap for a character
-     * holding skillCompetencyAbilities — defaultDomain, unless one of those abilities
-     * targets this same skillType and {@link #getSubstituteAttributeDomain()} isn't empty,
-     * in which case the substituted Attribute wins. Shared by every {@code <Skill>Interaction}
-     * that supports substitution (see {@code AtaqueCorpoACorpoInteraction}) and by
-     * {@code SkillGraduationService}'s max-graduation cap — both need the exact same
-     * resolution, so it lives here once rather than duplicated at each call site.
+     * The factor this ability multiplies an item's <b>Tempo de Produção</b> by when its holder
+     * fabricates equipment — {@code 0.8} for {@code ProfissaoCompetencyAbility#CONSTRUTOR_EFICIENTE}'s
+     * "-20%". {@code 1.0} (no change) by default; only override on a constant whose rules text
+     * scales production time. Read by {@code
+     * org.aventyrs.core.character.services.EquipmentCraftingService#getFabricationTimeInDays}, which
+     * multiplies the factors from every held ability together.
+     */
+    default double resolveProductionTimeMultiplier() {
+        return 1.0;
+    }
+
+    /**
+     * The factor this ability multiplies the <b>Dureza</b> of a copy its holder forges by —
+     * {@code 1.5} for {@code ProfissaoCompetencyAbility#AUMENTAR_A_DUREZA}'s "aumenta em 50%".
+     * {@code 1.0} by default; only override on a constant whose rules text scales produced
+     * Dureza. Applied by {@code EquipmentCraftingService#forge} to the forged {@code
+     * AbstractItem}'s {@code hardness} field at creation.
+     */
+    default double resolveProducedHardnessMultiplier() {
+        return 1.0;
+    }
+
+    /**
+     * Extra Dureza recovered per repair action when {@code holder} repairs an item —
+     * {@code ProfissaoCompetencyAbility#REPARO_MELHORADO}'s "+2" (or "+5" once the holder's
+     * Profissão Graduação reaches 10). {@code 0} by default; only override on a constant whose
+     * rules text adds to repaired Dureza. Summed into the recovery by {@code
+     * EquipmentCraftingService#repair}. {@code holder} may be {@code null} (a preview with no
+     * character), which an override gated on the holder's own Graduação reads as "the lower tier".
+     */
+    default int resolveRepairHardnessBonus(final Character holder) {
+        return 0;
+    }
+
+    /**
+     * Same as {@link #resolveAttributeDomain(Collection, SkillType, AttributeDomain,
+     * AttackSource)} with nothing known about how the attack is being delivered — so only
+     * <em>unconditional</em> substitutions apply.
+     *
+     * <p>This is the form {@code SkillGraduationService}'s max-Graduação cap calls, and that is
+     * the right answer rather than an oversight: the cap asks which Attribute <em>currently
+     * governs</em> this Perícia, and a delivery-scoped substitution governs only some of its
+     * rolls. {@code AtaqueCorpoACorpoCompetencyAbility#ACUIDADE} widens the cap; {@code
+     * AtaqueADistanciaCompetencyAbility#ARREMESSO_PODEROSO} deliberately doesn't.
      */
     static AttributeDomain resolveAttributeDomain(final Collection<SkillCompetencyAbility> skillCompetencyAbilities, final SkillType skillType, final AttributeDomain defaultDomain) {
+        return resolveAttributeDomain(skillCompetencyAbilities, skillType, defaultDomain, null);
+    }
+
+    /**
+     * The Attribute that currently governs skillType's roll for a character holding
+     * skillCompetencyAbilities — defaultDomain, unless one of those abilities targets this same
+     * skillType and its {@link #resolveSubstituteAttributeDomain(AttackSource)} isn't empty, in
+     * which case the substituted Attribute wins. Shared by every {@code <Skill>Interaction}
+     * that supports substitution (see {@code AtaqueCorpoACorpoInteraction}) and, through the
+     * shorter overload above, by {@code SkillGraduationService}'s max-graduation cap — both
+     * need the exact same resolution, so it lives here once rather than duplicated at each
+     * call site.
+     *
+     * <p>First match wins, and the rules name no precedence when a character holds two
+     * substituting abilities for one Perícia (Ataque Corpo-a-Corpo's {@code ACUIDADE}/{@code
+     * SAGACIDADE_ARCANA} are the pair this can happen with today), so none is invented here.
+     */
+    static AttributeDomain resolveAttributeDomain(final Collection<SkillCompetencyAbility> skillCompetencyAbilities, final SkillType skillType, final AttributeDomain defaultDomain, final AttackSource attackSource) {
         return skillCompetencyAbilities.stream()
                 .filter(ability -> ability.getSkillType() == skillType)
-                .map(SkillCompetencyAbility::getSubstituteAttributeDomain)
+                .map(ability -> ability.resolveSubstituteAttributeDomain(attackSource))
                 .flatMap(Optional::stream)
                 .findFirst()
                 .orElse(defaultDomain);

@@ -15,10 +15,15 @@ import org.aventyrs.core.character.services.HitPointsServiceImpl;
 import org.aventyrs.core.character.services.CharacterSkillService;
 import org.aventyrs.core.character.services.CharacterSkillServiceImpl;
 import org.aventyrs.core.ego.EgoAdvantage;
+import org.aventyrs.core.feat.Feat;
 import org.aventyrs.core.modifier.ModifierResolver;
 import org.aventyrs.core.modifier.ModifierResolverImpl;
 import org.aventyrs.core.modifier.ModifierType;
+import org.aventyrs.core.item.Item;
 import org.aventyrs.core.scene.SceneContext;
+import org.aventyrs.core.sheet.ActionCost;
+import org.aventyrs.core.sheet.Blessing;
+import org.aventyrs.core.sheet.CombatantAction;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.Interaction;
@@ -78,9 +83,10 @@ import static org.aventyrs.core.util.TranslatableMessages.REQUIRED_SKILL_TRAIT_N
  * uses {@link SizeCategory#getDefenseModifier()} — every other Perícia gets 0 — plus, via
  * {@link #sumFirstRollOfTurnBonuses}, every held {@code AttributeAbility}'s own {@link
  * AttributeAbility#resolveFirstRollOfTurnBonus} (e.g. {@code DexterityAbility#PRECISAO}'s
- * Vantagem), but only once {@link CombatantSheet#consumeFirstRollThisTurn} has confirmed this
+ * Vantagem), but only once {@link CombatantSheet#isFirstRollOfTurnFor} confirms this
  * actual roll (skillRoll non-{@code null}) is target's first this Turn governed by whichever
- * Attribute domain is resolved above. Computes {@code
+ * Attribute domain is resolved above — a non-mutating read; the API records the action
+ * afterwards via {@code CombatantSheet#recordAction}. Computes {@code
  * difficultyReduction} from unlocked {@code SkillExcellency} tiers
  * plus every entry of that same combined acquired-plus-racial list's own {@link
  * SkillCompetencyAbility#getDifficultyReduction()}. {@link SkillCompetencyAbility
@@ -93,13 +99,19 @@ import static org.aventyrs.core.util.TranslatableMessages.REQUIRED_SKILL_TRAIT_N
  * {@code AtaqueADistanciaCompetencyAbility#FRIEZA}, resolved here generically instead since no
  * {@code EgoAdvantage} granting this needs an explicit {@code attackTarget}.
  *
- * <p>{@code applyTo} has three overloads, each just delegating down to the next one with
- * {@code null} for the newly-added parameter — {@code applyTo(target)} → {@code
- * applyTo(target, sceneContext)} → {@code applyTo(target, sceneContext, skillRoll)}, the last
- * one holding all the real logic. A subclass with something genuinely skill-specific to add
- * overrides the **longest** overload it needs data from (not a shorter one — {@link
- * ArtesInteraction} overrides the 3-arg one even though it doesn't touch {@code skillRoll}
- * itself, simply because that's where {@code applyTo}'s real logic lives) and calls {@code
+ * <p>{@code applyTo} has six overloads, each just delegating down to the next one with
+ * {@code null} for the newly-added parameter — {@code applyTo(target)} → {@code +sceneContext}
+ * → {@code +skillRoll} → {@code +attackTarget} → {@code +attackSource} → {@code
+ * +additionalTargets}, the last one holding all the real logic. That last list is what {@code
+ * ArtesMarciaisFeat#DOMINAR_ARTE_MARCIAL_ARTE_FLUIDA}'s "seus ataques afetam um alvo adicional"
+ * needs: one roll, several Defesas to compare it against, and a dano Desvantagem conditioned on
+ * how many targets there are. {@code attackTarget} remains the <b>primary</b> target, and every
+ * target-conditioned hook still resolves against that one alone.
+ * A subclass with something genuinely skill-specific to add overrides the
+ * **longest** overload (not a shorter one — {@link ArtesInteraction} overrides the 6-arg one
+ * even though it touches neither {@code additionalTargets} nor {@code attackSource}, simply because
+ * that's where {@code applyTo}'s real logic lives, and an override placed any higher would be
+ * skipped by a caller using a longer form) and calls {@code
  * super.applyTo(...)} first, then layers its own addition on top of the result — most skills
  * need nothing extra (e.g. {@link DominioDoManaInteraction}'s "this is always the second of
  * two rolls" note is documentation, not behavior). Every shorter overload still reaches a
@@ -195,6 +207,93 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
      * itself yet).
      */
     public InteractionResult applyTo(final CombatantSheet target, final SceneContext sceneContext, final SkillRoll skillRoll) {
+        return applyTo(target, sceneContext, skillRoll, null);
+    }
+
+    /**
+     * Same as {@link #applyTo(CombatantSheet, SceneContext, SkillRoll, CombatantSheet,
+     * AttackSource)} with nothing known about how the attack is being delivered.
+     */
+    public InteractionResult applyTo(final CombatantSheet target, final SceneContext sceneContext, final SkillRoll skillRoll, final CombatantSheet attackTarget) {
+        return applyTo(target, sceneContext, skillRoll, attackTarget, null);
+    }
+
+    /**
+     * The single-target form of the longest {@link #applyTo(CombatantSheet, SceneContext,
+     * SkillRoll, CombatantSheet, AttackSource, List)} — it delegates with no additional targets,
+     * and stays the entry point every one-target caller uses. Only an attack affecting more than
+     * one target needs the longer form.
+     *
+     * <p><b>A subclass with something to add overrides the 6-arg form, not this one</b> — this
+     * is a pure delegator now, so an override placed here would be skipped by a caller naming
+     * additional targets.
+     *
+     * <p>attackTarget is the combatant this attack is actually being made against, so a held
+     * ability like {@code AtaqueADistanciaCompetencyAbility#FRIEZA} (conditioned on the target's
+     * distance) or {@code AnoesRacialAbility#ABATEDORES_DE_GIGANTES} (on its {@link
+     * SizeCategory}) can resolve against the real target rather than a generic fact about the
+     * encounter. Neither is reachable from the shared scan, because a no-arg {@code @Modifier}
+     * method can't see a target. That half lives here rather than on one Interaction because
+     * the rules text covers every <b>Perícia de Ataque</b>, not just Ataque à Distância — it was
+     * on {@code AtaqueADistanciaInteraction} only because that was the first one wired, leaving
+     * Ataque Corpo a Corpo silently missing both bonuses.
+     *
+     * <p>attackSource is what the attack is being delivered <em>with</em> — see {@link
+     * AttackSource}. It reaches {@link SkillCompetencyAbility#resolveAttributeDomain(
+     * java.util.Collection, SkillType, AttributeDomain, AttackSource)} <b>before</b> the roll is
+     * computed, which is the whole reason it's a parameter here rather than a field on {@link
+     * SkillRoll} or something layered onto the result afterwards: the resolved {@link
+     * AttributeDomain} feeds {@code getValueForRoll}, both {@code sumAttributeDomain*} scans and
+     * the {@link CombatantSheet#isFirstRollOfTurnFor} check, and is reported on {@link
+     * InteractionResult#getGoverningAttributeDomain()} so the API can build the matching {@code
+     * CombatantAction}. Being a parameter also keeps the substitution visible on the bonuses-only
+     * path, where no dice have been rolled yet.
+     *
+     * <p>Neither extra parameter is gated: a {@code null} attackSource, or one handed to a
+     * non-attack Perícia, is harmless rather than an error — nothing about a delivery method or
+     * a target is meaningful for an Atletismo roll, and refusing it would only push the check
+     * onto callers.
+     */
+    public InteractionResult applyTo(final CombatantSheet target, final SceneContext sceneContext, final SkillRoll skillRoll, final CombatantSheet attackTarget, final AttackSource attackSource) {
+        return applyTo(target, sceneContext, skillRoll, attackTarget, attackSource, List.of());
+    }
+
+    /**
+     * The overload that holds all the real logic, and the one a subclass with something to add
+     * overrides — every shorter form delegates down to it, the 5-arg one passing an empty
+     * additionalTargets list.
+     *
+     * <p>additionalTargets are the combatants this one attack reaches <b>beyond</b> {@code
+     * attackTarget}, which stays the <b>primary</b> target — empty for every ordinary attack.
+     * More than one target is what {@code ArtesMarciaisFeat#DOMINAR_ARTE_MARCIAL_ARTE_FLUIDA}'s
+     * "seus ataques afetam um alvo adicional" produces; see {@code
+     * org.aventyrs.core.combat.AttackDelivery}, which compares this <em>one</em> roll against
+     * each target's own Defesa in turn. Two things follow from the roll being one roll:
+     *
+     * <ul>
+     *   <li>Every <b>target-conditioned</b> hook — {@link SkillCompetencyAbility#resolveDamageBonus},
+     *   {@link SkillCompetencyAbility#resolveAttackRollBonus} — resolves against the primary
+     *   target alone, exactly as it did when there was only ever one. That is why the extra
+     *   targets are a separate trailing parameter rather than {@code attackTarget} being widened
+     *   into a list: recomputing those hooks per target would need a per-target result, no
+     *   authored trait asks for one, and the rules scope the extra targets to the comparison and
+     *   the damage rather than to the bonuses. Widening the existing parameter would also have
+     *   made a plain {@code applyTo(target, ctx, roll, null, null)} call ambiguous.</li>
+     *   <li>A clause conditioned on <b>how many</b> targets there are reaches {@link
+     *   Feat#resolveDamageBonus(SkillType, SceneContext, CombatantSheet, Character, AttackSource,
+     *   int)} instead, since the single dano roll it modifies belongs to the attack rather than
+     *   to any one target. The count passed there is the primary plus the extras — {@code 0} when
+     *   no target was named at all, which an override reads as "condition not met".</li>
+     * </ul>
+     *
+     * <p>Nothing here checks that the extra targets are legal — that they are adjacent to the
+     * primary (this core does no geometry) or that the attacker is entitled to that many. The
+     * count is enforced once, on the service entry point that applies it ({@code
+     * AttackDelivery#resolve}), the same place every other cap in this core lives.
+     */
+    public InteractionResult applyTo(final CombatantSheet target, final SceneContext sceneContext, final SkillRoll skillRoll, final CombatantSheet attackTarget, final AttackSource attackSource, final List<CombatantSheet> additionalTargets) {
+        int targetCount = (attackTarget == null ? 0 : 1)
+                + (additionalTargets == null ? 0 : additionalTargets.size());
         Character character = target.getCharacter();
         CharacterSkill characterSkill = findCharacterSkill(character);
         if (skillRoll != null) {
@@ -206,21 +305,34 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
         AttributeDomain naturalDomain = characterSkill.getSkill().getAttributeDomain();
         AttributeDomain peritoTeoricoDomain = PeritoTeoricoAbility.resolveAttributeDomain(character.getAttributeAbilities(), skillType, naturalDomain);
         AttributeDomain attributeDomain = SkillCompetencyAbility.resolveAttributeDomain(
-                skillCompetencyAbilities, skillType, peritoTeoricoDomain);
+                skillCompetencyAbilities, skillType, peritoTeoricoDomain, attackSource);
 
         int bonus = characterSkillService.getValueForRoll(characterSkill, character.getAttributes(), character.getRace(), attributeDomain);
+        // Bonuses to the *governing Atributo* itself — the one place they are read (see
+        // ModifierType.<ATTR>_BONUS / Feat#resolveAttributeBonus): a permanent Talento grant
+        // (MESTRE_VAMPIRO) and a round-scoped TemporaryBonus (DOM_DE_MIRCALLA, a Poder Vampírico).
+        bonus += character.getFeats().stream()
+                .mapToInt(feat -> feat.resolveAttributeBonus(attributeDomain, character))
+                .sum();
+        bonus += target.getTemporaryBonus(attributeDomain.getBonusModifierType());
         bonus += sumSkillRollBonusModifiers(character.getAttributeAbilities());
         bonus += sumSkillRollBonusModifiers(skillCompetencyAbilities);
         List<SkillExcellency> unlockedExcellencies = SkillExcellency.unlockedBy(skillType.getExcellencyClass(), graduationValue);
         bonus += sumSkillRollBonusModifiers(unlockedExcellencies);
         bonus += target.getTemporaryBonus(ModifierType.SKILL_ROLL_BONUS);
         bonus += target.getTemporaryBonus(skillType.getRollBonusType());
+        // Malefício maluses — Caído/Agarrado's blanket Desvantagem, Desarmado's Ataque-only one,
+        // and the fear ladder's, which applies only while within reach of the fear's origin.
+        bonus += target.getConditionBonus(ModifierType.SKILL_ROLL_BONUS, sceneContext);
+        bonus += target.getConditionBonus(skillType.getRollBonusType(), sceneContext);
+        bonus += sumEquipmentRollBonuses(character);
         bonus += sumConditionalRollBonuses(skillCompetencyAbilities, sceneContext, skillRoll);
+        bonus += sumFeatRollBonuses(target, sceneContext, skillRoll, attackSource);
         bonus += sumEgoAdvantageRollBonuses(character.getEgoAdvantages().values(), sceneContext);
         bonus += sumEgoAdvantageSkillSpecificRollBonuses(character.getEgoAdvantages().values(), sceneContext, target);
         bonus += sizeCategoryRollBonus(characterSizeService.getEffectiveSizeCategory(character));
         bonus += sumAttributeDomainRollBonuses(character.getAttributeAbilities(), attributeDomain, character);
-        if (skillRoll != null && target.consumeFirstRollThisTurn(attributeDomain)) {
+        if (skillRoll != null && target.isFirstRollOfTurnFor(attributeDomain)) {
             bonus += sumFirstRollOfTurnBonuses(character.getAttributeAbilities(), attributeDomain);
         }
 
@@ -229,15 +341,20 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                 .mapToInt(SkillCompetencyAbility::getDifficultyReduction)
                 .sum();
         difficultyReduction += sumAttributeDomainDifficultyReductions(character.getAttributeAbilities(), attributeDomain, character);
+        difficultyReduction += sumFeatDifficultyReductions(character);
+        if (skillRoll != null) {
+            difficultyReduction += sumFeatAttackCostDifficultyReductions(character, sceneContext, attackSource,
+                    skillRoll.getActionCost(), target.getActionsThisRound());
+        }
 
         InteractionResult.InteractionResultBuilder result = InteractionResult.builder()
                 .resultStatus(hitPointsService.getStatus(target))
                 .skillRollBonus(bonus)
-                .difficultyReduction(difficultyReduction);
+                .difficultyReduction(difficultyReduction)
+                .governingAttributeDomain(skillRoll != null ? attributeDomain : null);
 
         if (skillType.isAttackSkill()) {
-            resolveEgoAdvantageDamageBonus(character.getEgoAdvantages().values(), sceneContext)
-                    .ifPresent(result::damageBonus);
+            sumDamageBonus(target, sceneContext, null, attackSource, targetCount).ifPresent(result::damageBonus);
         }
 
         if (skillRoll != null) {
@@ -245,10 +362,23 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
             Optional<DifficultyLevel> reached = expert
                     ? DifficultyLevel.reachedByAsExpert(bonus + skillRoll.getTotal())
                     : DifficultyLevel.reachedBy(bonus + skillRoll.getTotal());
-            int criticalMarginIncrease = sumCriticalMarginIncrease(character, skillCompetencyAbilities, sceneContext);
+            int criticalMarginIncrease = sumCriticalMarginIncrease(target, skillCompetencyAbilities, sceneContext, attackSource);
             CriticalResult criticalResult = skillRoll.getCriticalResult(criticalMarginIncrease);
             result.reachedDifficultyLevel(reached.orElse(null))
                     .criticalResult(criticalResult);
+            resolveOutcome(bonus + skillRoll.getTotal(), skillRoll.getTargetValue(), difficultyReduction,
+                    skillCompetencyAbilities, sceneContext).ifPresent(outcome -> {
+                        result.succeeded(outcome.succeeded()).margin(outcome.margin());
+                        if (outcome.succeeded()) {
+                            List<Blessing> earned = skillCompetencyAbilities.stream()
+                                    .flatMap(ability -> ability.resolveSuccessBlessings(
+                                            skillType, skillRoll.getRequestedAbility(), sceneContext).stream())
+                                    .toList();
+                            if (!earned.isEmpty()) {
+                                result.blessings(earned);
+                            }
+                        }
+                    });
 
             if (criticalResult.isCriticalSuccess()) {
                 List<EgoDomain> egoGainDomains = new ArrayList<>();
@@ -266,36 +396,31 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
             }
         }
 
-        return result.build();
+        return applyAttackTargetBonuses(result.build(), target, sceneContext, attackTarget, attackSource, targetCount);
     }
 
     /**
-     * Same as {@link #applyTo(CombatantSheet, SceneContext, SkillRoll)}, but also given
-     * attackTarget — the combatant this attack is actually being made against — so a held ability
-     * like {@code AtaqueADistanciaCompetencyAbility#FRIEZA} (conditioned on the target's
-     * distance) or {@code AnoesRacialAbility#ABATEDORES_DE_GIGANTES} (on its {@code
-     * SizeCategory}) can resolve against the real target rather than a generic fact about the
-     * encounter. Neither is reachable from the shared scan above, because a no-arg {@code
-     * @Modifier} method can't see a target.
+     * The attackTarget-conditioned half of the roll, layered onto an otherwise-complete result:
+     * the first non-empty {@link SkillCompetencyAbility#resolveDamageBonus} ({@code FRIEZA}), and
+     * the <em>sum</em> of {@link SkillCompetencyAbility#resolveAttackRollBonus} ({@code
+     * ABATEDORES_DE_GIGANTES}) — summed rather than first-non-empty because, unlike a dano bonus,
+     * more than one is expected to apply at once.
      *
-     * <p>Lives here rather than on one Interaction because the rules text covers every <b>Perícia
-     * de Ataque</b>, not just Ataque à Distância — it was on {@code AtaqueADistanciaInteraction}
-     * only because that was the first one wired, leaving Ataque Corpo a Corpo silently missing
-     * both bonuses. A non-attack skill returns {@code super.applyTo} untouched, so calling this
-     * on one is harmless rather than an error: nothing about a target is meaningful for an
-     * Atletismo roll, and refusing it would only push the check onto callers.
+     * <p>Unlike the substituted {@link AttributeDomain}, both of these genuinely can be applied
+     * after the fact: neither feeds anything the main body already consumed. A non-attack skill
+     * or a {@code null} attackTarget returns result untouched.
      */
-    public InteractionResult applyTo(final CombatantSheet target, final SceneContext sceneContext, final SkillRoll skillRoll, final CombatantSheet attackTarget) {
-        InteractionResult result = applyTo(target, sceneContext, skillRoll);
+    private InteractionResult applyAttackTargetBonuses(final InteractionResult built, final CombatantSheet target, final SceneContext sceneContext, final CombatantSheet attackTarget, final AttackSource attackSource, final int targetCount) {
+        InteractionResult result = built;
         if (!skillType.isAttackSkill() || attackTarget == null) {
             return result;
         }
         List<SkillCompetencyAbility> abilities = allSkillCompetencyAbilities(target.getCharacter());
 
-        Optional<DamageBonus> damageBonus = abilities.stream()
-                .map(ability -> ability.resolveDamageBonus(skillType, sceneContext, attackTarget, target.getCharacter()))
-                .flatMap(Optional::stream)
-                .findFirst();
+        // Recomputed rather than added to what the main body already put there: the same four
+        // sources are scanned again, now with the real attackTarget, so a target-conditioned
+        // bonus (FRIEZA) joins the sum instead of the whole total being replaced by it.
+        Optional<DamageBonus> damageBonus = sumDamageBonus(target, sceneContext, attackTarget, attackSource, targetCount);
         if (damageBonus.isPresent()) {
             result = result.toBuilder().damageBonus(damageBonus.get()).build();
         }
@@ -351,6 +476,60 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
      * contributes to {@code skillRollBonus}/{@code difficultyReduction}/attribute substitution
      * exactly like an acquired one would, with no special-casing at any call site.
      */
+    /**
+     * Sums {@link Feat#resolveSkillRollBonus(SkillType, SceneContext, SkillTrait, Character,
+     * AttackSource)} across every held Talento — the {@code Feat} counterpart to {@link
+     * #sumConditionalRollBonuses}, and needed for the same reason {@link
+     * #sumFeatDifficultyReductions} is: Talentos are outside every {@code ModifierResolver} scan,
+     * so they get an explicit pass. Safe to call unconditionally — {@code sceneContext}/{@code
+     * skillRoll}/{@code attackSource} may each be {@code null}, which every override reads as
+     * "condition not met".
+     */
+    private int sumFeatRollBonuses(final CombatantSheet holder, final SceneContext sceneContext,
+                                    final SkillRoll skillRoll, final AttackSource attackSource) {
+        Character character = holder.getCharacter();
+        SkillTrait requestedAbility = skillRoll == null ? null : skillRoll.getRequestedAbility();
+        return character.getFeats().stream()
+                .mapToInt(feat -> feat.resolveSkillRollBonus(
+                        skillType, sceneContext, requestedAbility, character, attackSource, holder))
+                .sum();
+    }
+
+    /** Equipment-held bonuses are data, so they have an explicit pass rather than a modifier scan. */
+    private int sumEquipmentRollBonuses(final Character character) {
+        return character.getEquipment().stream()
+                .mapToInt(item -> item.resolveEnhancementBonus(skillType.getRollBonusType(), skillType, character))
+                .sum();
+    }
+
+    /**
+     * Sums {@link Feat#resolveDifficultyReduction} across every held Talento. Talentos are
+     * outside every {@code ModifierResolver} scan (nothing scans them reflectively), so they get
+     * an explicit pass here — the same shape {@code DefenseServiceImpl}/{@code
+     * MovementServiceImpl} already use for their own {@code Feat} hooks.
+     */
+    private int sumFeatDifficultyReductions(final Character character) {
+        return character.getFeats().stream()
+                .mapToInt(feat -> feat.resolveDifficultyReduction(skillType, character))
+                .sum();
+    }
+
+    /**
+     * Sums {@link Feat#resolveAttackCostDifficultyReduction} across every held Talento — the
+     * conditional GD hook scoped to an attack's Pontos de Ação cost and the Rodada's prior
+     * actions ({@code AssassinoFeat#SAQUE_RELAMPAGO}). Only called when a {@code SkillRoll} was
+     * supplied; {@code actionsThisRound} is read, never written — the API records the action
+     * afterwards via {@code CombatantSheet#recordAction}.
+     */
+    private int sumFeatAttackCostDifficultyReductions(final Character character, final SceneContext sceneContext,
+                                                      final AttackSource attackSource, final ActionCost actionCost,
+                                                      final List<CombatantAction> actionsThisRound) {
+        return character.getFeats().stream()
+                .mapToInt(feat -> feat.resolveAttackCostDifficultyReduction(
+                        skillType, sceneContext, character, attackSource, actionCost, actionsThisRound))
+                .sum();
+    }
+
     private List<SkillCompetencyAbility> allSkillCompetencyAbilities(final Character character) {
         return SkillCompetencyAbility.allFor(character);
     }
@@ -422,9 +601,9 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
     /**
      * Sums {@link AttributeAbility#resolveFirstRollOfTurnBonus} across every held Habilidade —
      * e.g. {@code DexterityAbility#PRECISAO}'s Vantagem on the first Destreza-based roll each
-     * Turn. Only ever called once {@link CombatantSheet#consumeFirstRollThisTurn} has already
-     * confirmed this is target's first roll governed by rolledDomain this Turn (see that
-     * method's own javadoc for the Turn-tracking mechanism) — a constant overriding {@code
+     * Turn. Only ever called once {@link CombatantSheet#isFirstRollOfTurnFor} has confirmed this
+     * is target's first roll governed by rolledDomain this Turn (see that method's own javadoc
+     * for the per-Turn slice of the action log it reads) — a constant overriding {@code
      * resolveFirstRollOfTurnBonus} doesn't need to check that condition itself.
      */
     private int sumFirstRollOfTurnBonuses(final Collection<AttributeAbility> attributeAbilities, final AttributeDomain rolledDomain) {
@@ -440,7 +619,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
      * Habilidade — e.g. {@code InstinctAbility#SENTIR_A_INTENCAO}'s Vantagem on every
      * Instinto-governed roll. Unlike {@link #sumFirstRollOfTurnBonuses}, called
      * unconditionally on every roll, not gated behind {@code CombatantSheet
-     * #consumeFirstRollThisTurn}.
+     * #isFirstRollOfTurnFor}.
      */
     private int sumAttributeDomainRollBonuses(final Collection<AttributeAbility> attributeAbilities, final AttributeDomain rolledDomain, final Character character) {
         return attributeAbilities.stream()
@@ -458,6 +637,57 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                 .sum();
     }
 
+    /** One roll's verdict against the GD it was made for — see {@code InteractionResult#succeeded}. */
+    private record RollOutcome(boolean succeeded, int margin) {
+    }
+
+    /**
+     * Compares a roll's finished total against the Grau de Dificuldade it was made against,
+     * returning empty when no target was stated — which is what leaves {@code
+     * InteractionResult#succeeded} {@code null} rather than {@code false}.
+     *
+     * <p>difficultyReduction is denominated in <i>níveis</i> and is applied by easing the target
+     * that many steps, not by subtracting it as a flat number — a nível is worth a different
+     * number of points at each tier. The target is resolved back to a tier via {@link
+     * DifficultyLevel#reachedBy} to do that; a target between tiers (a computed "GD 10+Vigor")
+     * eases from whichever tier it reaches, and one below the easiest tier cannot be eased at
+     * all. This mirrors {@code AttackReceiver#resolve}, which eases the attack's own {@code
+     * DifficultyLevel} by the defender's reduction before deriving a threshold.
+     *
+     * <p>A tie succeeds: a total exactly equal to the target beats it, the same reading {@code
+     * AttackReceiver} takes ("a tie is a successful defense").
+     *
+     * <p>An {@code resolveAutomaticSuccess} ability short-circuits the comparison entirely — see
+     * that hook's own javadoc — and reports a margin of 0, since no roll needed to be beaten.
+     */
+    private Optional<RollOutcome> resolveOutcome(final int total, final Integer targetValue, final int difficultyReduction,
+                                                  final List<SkillCompetencyAbility> abilities, final SceneContext sceneContext) {
+        if (targetValue == null) {
+            return Optional.empty();
+        }
+        int effectiveTarget = easedTarget(targetValue, difficultyReduction);
+        boolean automatic = abilities.stream()
+                .anyMatch(ability -> ability.resolveAutomaticSuccess(skillType, effectiveTarget, sceneContext));
+        if (automatic) {
+            return Optional.of(new RollOutcome(true, 0));
+        }
+        return Optional.of(new RollOutcome(total >= effectiveTarget, total - effectiveTarget));
+    }
+
+    /**
+     * targetValue made easier by that many níveis. Resolves the number back to the tier it
+     * reaches, steps that tier down, and takes the new tier's own base value; a target too low to
+     * reach any tier has nothing to ease and is returned unchanged.
+     */
+    private int easedTarget(final int targetValue, final int difficultyReduction) {
+        if (difficultyReduction <= 0) {
+            return targetValue;
+        }
+        return DifficultyLevel.reachedBy(targetValue)
+                .map(tier -> tier.easier(difficultyReduction).getBaseValue())
+                .orElse(targetValue);
+    }
+
     /**
      * Sums {@code resolveCriticalMarginIncrease} across all three ability sources this class
      * already scans for everything else — {@code character.getAttributeAbilities()} (e.g.
@@ -469,7 +699,8 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
      * to call unconditionally otherwise since sceneContext being {@code null} is already handled
      * by every override the same way {@link #sumEgoAdvantageRollBonuses} already relies on.
      */
-    private int sumCriticalMarginIncrease(final Character character, final List<SkillCompetencyAbility> skillCompetencyAbilities, final SceneContext sceneContext) {
+    private int sumCriticalMarginIncrease(final CombatantSheet holder, final List<SkillCompetencyAbility> skillCompetencyAbilities, final SceneContext sceneContext, final AttackSource attackSource) {
+        Character character = holder.getCharacter();
         int total = character.getAttributeAbilities().stream()
                 .mapToInt(ability -> ability.resolveCriticalMarginIncrease(skillType, sceneContext))
                 .sum();
@@ -479,24 +710,58 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
         total += character.getEgoAdvantages().values().stream()
                 .mapToInt(advantage -> advantage.resolveCriticalMarginIncrease(skillType, sceneContext))
                 .sum();
+        // Talentos are outside every ModifierResolver scan, so they get an explicit fourth pass —
+        // the same shape sumFeatRollBonuses/sumFeatDifficultyReductions already use.
+        total += character.getFeats().stream()
+                .mapToInt(feat -> feat.resolveCriticalMarginIncrease(skillType, sceneContext, character, attackSource, holder))
+                .sum();
         return total;
     }
 
     /**
-     * The first non-empty {@link EgoAdvantage#resolveDamageBonus} across every held Vantagem
-     * de Ego, only ever consulted for an attack-skill roll (see {@link SkillType#isAttackSkill()})
-     * — the {@code EgoAdvantage} counterpart to {@code SkillCompetencyAbility#resolveDamageBonus},
-     * resolved generically here (covering both Ataque à Distância and Ataque Corpo a Corpo)
-     * rather than needing a skill-specific overload with an explicit {@code attackTarget}, since
-     * no {@code EgoAdvantage} granting this needs one (unlike {@code
-     * AtaqueADistanciaCompetencyAbility#FRIEZA}'s proximity condition). Same "only one bonus
-     * expected to apply per roll" convention as that method.
+     * Every dano-roll contribution this roller currently has, summed into one {@link DamageBonus}
+     * — see {@link DamageBonus#total}. Four sources, all additive:
+     *
+     * <ul>
+     *   <li>{@code SkillCompetencyAbility#resolveDamageBonus} — e.g. {@code BRUTALIDADE}'s +1.</li>
+     *   <li>{@code EgoAdvantage#resolveDamageBonus} — e.g. {@code InitiativeAdvantage#IMPETO}.</li>
+     *   <li>{@code Feat#resolveDamageBonus} — Talentos sit outside every {@code ModifierResolver}
+     *   scan, so they get their own pass, the same shape {@link #sumFeatRollBonuses} uses. Handed
+     *   the {@code attackSource} too, for a clause scoped to what the attack was made with
+     *   ({@code MonstruosoFeat#FEROCIDADE}'s Armas Naturais).</li>
+     *   <li>{@link ModifierType#DAMAGE_ROLL_BONUS} on the sheet — a {@code TemporaryBonus} and any
+     *   Condição in force (Caído/Desarmado's Desvantagem, the fear ladder's proximity-scoped one),
+     *   which are {@code ModifierType}-typed data rather than typed {@code DamageBonus}es.</li>
+     * </ul>
+     *
+     * <p>Only ever called for a Perícia de Ataque. attackTarget is {@code null} on the main-body
+     * pass and real on the {@link #applyAttackTargetBonuses} one, so a target-conditioned bonus
+     * simply doesn't contribute until there is a target to test.
      */
-    private Optional<DamageBonus> resolveEgoAdvantageDamageBonus(final Collection<EgoAdvantage> egoAdvantages, final SceneContext sceneContext) {
-        return egoAdvantages.stream()
+    private Optional<DamageBonus> sumDamageBonus(final CombatantSheet target, final SceneContext sceneContext,
+                                                final CombatantSheet attackTarget, final AttackSource attackSource,
+                                                final int targetCount) {
+        Character character = target.getCharacter();
+        List<DamageBonus> typed = new ArrayList<>();
+        allSkillCompetencyAbilities(character).stream()
+                .map(ability -> ability.resolveDamageBonus(skillType, sceneContext, attackTarget, character))
+                .flatMap(Optional::stream)
+                .forEach(typed::add);
+        character.getEgoAdvantages().values().stream()
                 .map(advantage -> advantage.resolveDamageBonus(sceneContext))
                 .flatMap(Optional::stream)
-                .findFirst();
+                .forEach(typed::add);
+        character.getFeats().stream()
+                .map(feat -> feat.resolveDamageBonus(skillType, sceneContext, attackTarget, character, attackSource, targetCount))
+                .flatMap(Optional::stream)
+                .forEach(typed::add);
+        int flat = target.getTemporaryBonus(ModifierType.DAMAGE_ROLL_BONUS)
+                + target.getConditionBonus(ModifierType.DAMAGE_ROLL_BONUS, sceneContext);
+        if (attackTarget != null) {
+            // Outward-facing: what the *victim's* own Condições hand the attacker (Flanqueado).
+            flat += attackTarget.getAttackerDamageBonusFromConditions(sceneContext);
+        }
+        return DamageBonus.total(typed, flat);
     }
 
     /**

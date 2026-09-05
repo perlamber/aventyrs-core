@@ -195,7 +195,7 @@ null choice is rejected at construction; and the instance reports the catalog co
 - `src/main/java/org/aventyrs/core/skill/SkillType.java` — the four per-skill pieces
   (`excellencyClass`, `skillFactory`, `rollBonusType`, `interactionFactory`) every new
   constant must set.
-- `src/main/java/org/aventyrs/core/skill/ModifierType.java` — where the matching
+- `src/main/java/org/aventyrs/core/modifier/ModifierType.java` — where the matching
   `<SKILL>_ROLL_BONUS` constant goes.
 - `src/main/java/org/aventyrs/core/ability/PeritoTeoricoAbility.java` — the per-`SkillType`
   constant that must also be added for `GnoseAbility.PERITO_TEORICO` to reach the new skill.

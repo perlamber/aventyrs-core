@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.Singular;
 import org.aventyrs.core.character.DefenseType;
+import org.aventyrs.core.character.DamageDescriptor;
 import org.aventyrs.core.effect.CriticalEffect;
 import org.aventyrs.core.effect.DamageInteraction;
 import org.aventyrs.core.effect.EffectChain;
@@ -46,6 +47,12 @@ public class IncomingAttack {
     /** Whether the defender resists with DF or DM. */
     @NonNull
     private final DefenseType defenseType;
+
+    /**
+     * The exact elemental classification of this attack, or {@code null} for an unclassified
+     * attack. It conditions elemental defenses but does not choose {@link #defenseType}.
+     */
+    private final DamageDescriptor damageDescriptor;
 
     /**
      * A flat modifier on top of {@link #difficultyLevel}'s own threshold — how much harder (or,

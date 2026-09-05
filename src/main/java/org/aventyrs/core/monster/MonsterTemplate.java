@@ -139,8 +139,8 @@ public interface MonsterTemplate {
      * Whether this creature is a Morto-Vivo. Narrow on purpose: it exists because clauses like
      * the Zumbi's "Vantagem em rolagens de Perícias de Ataque efetuadas contra personagens
      * vivos" need to tell the living from the not, and this core has no such classification —
-     * {@code org.aventyrs.core.race.CreatureType} has only HUMANOIDE/FEERICO/MONSTRUOSO, none of
-     * which is about being alive.
+     * {@code org.aventyrs.core.race.CreatureType} is an essence/anatomy axis (HUMANOIDE, FEERICO,
+     * RENASCIDO, DRAGAO …), none of whose values is about being alive.
      *
      * <p>So "living" is resolved as "not a foe whose stat block said this" — which is exact for
      * every combatant this core can currently produce (a {@code CharacterSheet} is always

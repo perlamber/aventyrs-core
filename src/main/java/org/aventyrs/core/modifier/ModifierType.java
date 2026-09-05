@@ -42,6 +42,20 @@ public enum ModifierType {
     FREE_ACTIONS,
     INITIATIVE,
     MOVEMENT,
+    /**
+     * A flat modifier to a <b>dano roll</b> — not to a Perícia roll, and not damage reduction.
+     * Its counterpart on the roll side is {@code SKILL_ROLL_BONUS}: "Vantagem em rolagens de
+     * Dano" is the same flat +2 that Vantagem is anywhere else (see {@code Skill#ADVANTAGE_BONUS}),
+     * and a Desvantagem the same -2.
+     *
+     * <p>Exists so a source that carries {@code ModifierType}-typed data rather than a typed
+     * {@code DamageBonus} can still reach a dano roll — a {@code TemporaryBonus} granted by
+     * another character's action, or a {@code ConditionType.ConditionEffect} (Caído's "Desvantagem
+     * em rolagens de Dano Corpo-a-Corpo", the fear ladder's proximity-scoped one). Abilities that
+     * grant <i>typed</i> extra damage keep returning a {@code DamageBonus} instead; both are
+     * summed together by {@code AbstractSkillInteraction}.
+     */
+    DAMAGE_ROLL_BONUS,
     DAMAGE_REDUCTION,
     HALF_DAMAGE,
     ABSOLUTE_DAMAGE_REDUCTION,
@@ -61,5 +75,26 @@ public enum ModifierType {
     MEDICINA_E_CURA_ROLL_BONUS,
     PERSUASAO_ROLL_BONUS,
     PROFISSAO_ROLL_BONUS,
-    CONHECIMENTOS_ROLL_BONUS
+    CONHECIMENTOS_ROLL_BONUS,
+
+    /**
+     * A round-scoped bonus to one Atributo — the vehicle for a temporary "recebe Bônus de +1 em
+     * Carisma e Instinto" ({@code VampiricoFeat#DOM_DE_MIRCALLA}, a Poder Vampírico). One per
+     * {@link org.aventyrs.core.character.AttributeDomain}, looked up via {@code
+     * AttributeDomain#getBonusModifierType()}.
+     *
+     * <p><b>Partial reader.</b> Only {@code
+     * org.aventyrs.core.skill.AbstractSkillInteraction} consumes these so far — a bonus reaches a
+     * Perícia roll governed by that Atributo, and nothing else (HP/PM/PD/Defesa/Conjuração still
+     * read {@code AttributeValue#getTotal()} directly). This is the "Round-scoped Attribute
+     * bonuses" gap being closed one consumer at a time; the permanent {@code
+     * Feat#resolveAttributeBonus} grant is read at the same one place.
+     */
+    STRENGTH_BONUS,
+    VIGOR_BONUS,
+    DEXTERITY_BONUS,
+    FOCUS_BONUS,
+    INSTINCT_BONUS,
+    GNOSE_BONUS,
+    CHARISMA_BONUS
 }

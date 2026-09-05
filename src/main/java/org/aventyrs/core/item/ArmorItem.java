@@ -1,6 +1,7 @@
 package org.aventyrs.core.item;
 
 import org.aventyrs.core.character.AttributeDomain;
+import org.aventyrs.core.effect.DefensiveCriticalEffectType;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.skill.Skill;
 
@@ -13,7 +14,7 @@ import lombok.Getter;
  * A sibling enum per {@link ItemCategory} follows the same shape as more items are supplied.
  */
 @Getter
-public enum ArmorItem implements Item {
+public enum ArmorItem implements ItemTemplate {
 
     /**
      * Armadura Completa (Pesado/Raro). Its Conjuração column reads "Desvantagem" rather than a
@@ -44,7 +45,8 @@ public enum ArmorItem implements Item {
                     .description("Dano de Corte sofrido é reduzido em -2.")
                     .requirements(new ItemRequirements(AttributeDomain.STRENGTH, 3))
                     .bonus(new ItemBonus(ModifierType.DAMAGE_REDUCTION, 2))
-                    .build()),
+                    .build(),
+            DefensiveCriticalEffectType.RETORNO_DE_DANOS),
 
     /**
      * Armadura de Gladiador (Leve/Comum). "Favor: Nenhum" is exactly a {@code null} {@link
@@ -68,7 +70,8 @@ public enum ArmorItem implements Item {
             1,
             24,
             0,
-            null),
+            null,
+            DefensiveCriticalEffectType.CONTRA_ATACANTE),
 
     /**
      * Armadura de Justa (Pesado/Épico) — the first item whose Raridade is {@link
@@ -114,7 +117,8 @@ public enum ArmorItem implements Item {
                             + "Movimento Base reduzido à metade.")
                     .requirements(new ItemRequirements(AttributeDomain.STRENGTH, 4))
                     .bonus(new ItemBonus(ModifierType.DAMAGE_REDUCTION, 2))
-                    .build()),
+                    .build(),
+            DefensiveCriticalEffectType.PROVOCAR),
 
     /**
      * Couraça (Médio/Incomum). Its Favor's "Dano de Corte e Perfuração" scoping is the same
@@ -136,7 +140,8 @@ public enum ArmorItem implements Item {
                     .description("Dano de Corte e Perfuração sofrido é reduzido em -1.")
                     .requirements(new ItemRequirements(AttributeDomain.STRENGTH, 3))
                     .bonus(new ItemBonus(ModifierType.DAMAGE_REDUCTION, 1))
-                    .build()),
+                    .build(),
+            DefensiveCriticalEffectType.RETORNO_DE_DANOS),
 
     /**
      * Meia Armadura (Médio/Comum) — a plain {@link ModifierType#DAMAGE_REDUCTION} 1 at Força
@@ -156,7 +161,8 @@ public enum ArmorItem implements Item {
                     .description("Dano de Corte sofrido é reduzido em -1.")
                     .requirements(new ItemRequirements(AttributeDomain.STRENGTH, 3))
                     .bonus(new ItemBonus(ModifierType.DAMAGE_REDUCTION, 1))
-                    .build()),
+                    .build(),
+            DefensiveCriticalEffectType.RETORNO_DE_DANOS),
 
     /**
      * Robe Cerimonial (Leve/Incomum) — the first item gated on an {@link AttributeDomain}
@@ -184,7 +190,8 @@ public enum ArmorItem implements Item {
                     .description("Dano Mágico sofrido reduzido em -2.")
                     .requirements(new ItemRequirements(AttributeDomain.GNOSE, 3))
                     .bonus(new ItemBonus(ModifierType.DAMAGE_REDUCTION, 2))
-                    .build()),
+                    .build(),
+            DefensiveCriticalEffectType.SURTO_ARCANO),
 
     /**
      * Robe de Guerra (Médio/Raro) — the one cataloged Favor whose RD needs no simplification
@@ -205,7 +212,8 @@ public enum ArmorItem implements Item {
                     .description("Dano sofrido reduzido em -1.")
                     .requirements(new ItemRequirements(AttributeDomain.GNOSE, 4))
                     .bonus(new ItemBonus(ModifierType.DAMAGE_REDUCTION, 1))
-                    .build()),
+                    .build(),
+            DefensiveCriticalEffectType.SURTO_ARCANO),
 
     /**
      * Roupa Pesada (Leve/Comum) — its Favor grants a flat +1 to DF and +1 to DM at once,
@@ -236,7 +244,8 @@ public enum ArmorItem implements Item {
                     .description("Concede Bônus de +1 em DF e +1 em DM.")
                     .requirements(new ItemRequirements(AttributeDomain.DEXTERITY, 3))
                     .bonus(new ItemBonus(ModifierType.DEFESAS, 2))
-                    .build());
+                    .build(),
+            DefensiveCriticalEffectType.LIBERDADE_DE_ACAO);
 
     private final String name;
     private final String description;
@@ -249,10 +258,28 @@ public enum ArmorItem implements Item {
     private final int castingBonus;
     private final ItemFavor favor;
 
+    /**
+     * The Efeito Crítico Defensivo this armour grants its wearer, from the source catalog's
+     * "Atualizando os Equipamentos Defensivos" table — every Armadura has one, so this is
+     * never {@code null}.
+     *
+     * <p>It lives here rather than on {@code Item} because "apenas Armaduras e Escudos recebem
+     * Efeitos Críticos Defensivos" — a Capa or an Elmo grants none, and a defaulted column on
+     * {@code Item} would make "a helmet" and "a breastplate" answer alike, the same mistake
+     * keeping {@code getDamageBase()} off {@code Item} avoids. Promote it to a shared interface
+     * when a {@code ShieldItem} lands and needs the identical shape, not before.
+     *
+     * <p><b>Nothing reads it yet</b> — a Defensive effect fires on an Acerto Crítico in the
+     * wearer's own Defesa roll, and neither {@code AttackReceiver} nor {@code
+     * EsquivaEApararInteraction} resolves that branch. The values are exact authored data all
+     * the same, like this enum's own Preço and Dureza columns.
+     */
+    private final DefensiveCriticalEffectType defensiveCriticalEffect;
+
     ArmorItem(final String name, final String description, final ItemWeightClass weightClass,
               final ItemRarity rarity, final int price, final int physicalDefenseBonus,
               final int magicDefenseBonus, final int hardness, final int castingBonus,
-              final ItemFavor favor) {
+              final ItemFavor favor, final DefensiveCriticalEffectType defensiveCriticalEffect) {
         this.name = name;
         this.description = description;
         this.weightClass = weightClass;
@@ -263,6 +290,7 @@ public enum ArmorItem implements Item {
         this.hardness = hardness;
         this.castingBonus = castingBonus;
         this.favor = favor;
+        this.defensiveCriticalEffect = defensiveCriticalEffect;
     }
 
     @Override

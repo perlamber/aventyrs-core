@@ -67,6 +67,27 @@
  * AutocontroleAdvantage#RESOLUTO}). An attack can trigger a Corrente de Efeitos without
  * critting, and crit without triggering one.
  *
+ * <h2>One attack, several targets — {@code AttackDelivery} only</h2>
+ *
+ * A Talento can widen an attack past its one target — {@code
+ * ArtesMarciaisFeat#DOMINAR_ARTE_MARCIAL_ARTE_FLUIDA}'s "seus ataques afetam um alvo adicional".
+ * {@code DeliveredAttack#getAdditionalTargets()} carries them as {@link
+ * org.aventyrs.core.combat.AttackTarget}s (each with its own Defesa), and {@code resolve} refuses
+ * more than {@code AttackTargetingService#getMaximumTargets} allows.
+ *
+ * <p><b>The roll still happens once.</b> One {@code attackTotal} is compared against every
+ * target's Defesa in turn, and one {@code CriticalResult} covers them all — what is judged per
+ * target is the margin, whether it landed, whether it cleared <i>that</i> defender's Corrente
+ * threshold, and which Efeitos Críticos their anatomy admits. Each extra target gets a {@link
+ * org.aventyrs.core.combat.DeliveredAttackTargetResult}; the primary one keeps the flat fields on
+ * {@link org.aventyrs.core.combat.DeliveredAttackResult}, so every single-target caller is
+ * untouched.
+ *
+ * <p>The dano roll is one roll too. Feed the <i>same</i> figure to every chain: an additional
+ * target's head is marked {@code DamageInteraction#halvingDamage()}, so the Meio-Dano is applied
+ * inside, after RD and RA. {@code AttackReceiver} has no counterpart to any of this — a foe
+ * attacking the player is one foe against one roller.
+ *
  * <h2>Damage is not computed here</h2>
  *
  * Deliberately: turning a roll into a raw damage figure needs a weapon/dano-roll concept this
@@ -80,10 +101,15 @@
  *
  * {@code resolve} assembles the chain but applies none of it, and touches no resource on the
  * defender — the same restraint {@code GritoDeGuerraVulcanoInteraction} applies to the Blessings
- * it reports. The one thing that does change is the defence roll itself happening ({@code
- * CombatantSheet#consumeFirstRollThisTurn}, and, on a critical success, a non-cumulative raise
- * of the defender's temporary Ego ceiling),
- * which is why {@code resolve} rolls exactly once per attack.
+ * it reports. The one thing that does change is the roll itself happening — on a critical
+ * success, a non-cumulative raise of the roller's temporary Ego ceiling (the first-roll-of-Turn
+ * check it also runs is non-mutating now) — which is why {@code resolve} rolls exactly once per
+ * attack. The API records the exchange afterwards via {@code CombatantSheet#recordAction}, and —
+ * if it determines the blow was fatal — calls {@code
+ * org.aventyrs.core.character.services.DefeatBlessingService#applyDefeatBlessings} (this core has
+ * no defeat observer). {@code AttackDelivery} does merge the attacker's Talentos' own Efeitos
+ * Críticos ({@code Feat#resolveExtraCriticalEffects}) into a critical hit's chain before the
+ * immunity filter.
  *
  * <h2>What this package deliberately doesn't do</h2>
  *
@@ -96,9 +122,17 @@
  *   package decides only whether each group fires, and in what order they chain.</li>
  *   <li><b>It doesn't spend a Reação</b>, or check that the defender has one to spend. This core
  *   tracks counters, not when they may be spent.</li>
- *   <li><b>It doesn't know about Área de Efeito</b>, forced targeting/interception, or reactive
- *   damage — all still missing systems, cited by {@code EsquivaEApararCompetencyAbility#EVASAO}
- *   and {@code SantoAbility#GUARDA_VIDAS} among others.</li>
+ *   <li><b>It doesn't pick an attack's targets.</b> It enforces <i>how many</i> there may be
+ *   (see below) and nothing more: every clause granting an extra target also requires it to be
+ *   adjacent to the primary one, which is geometry between two combatants who are both not the
+ *   roller — a {@code SceneContext} holds distances measured only from its own holder. Choosing
+ *   them is the caller's step.</li>
+ *   <li><b>It resolves one <i>attacker</i>, and an Área de Efeito is still a different thing.</b>
+ *   An area can be described ({@code org.aventyrs.core.scene.AreaOfEffect}), but nothing resolves
+ *   it into a set of targets, and neither entry point classifies an incoming attack as an area
+ *   one — so {@code EsquivaEApararCompetencyAbility#EVASAO} still has no flag to scope its Defesa
+ *   bonus to. Forced targeting/interception and reactive damage remain missing outright, cited by
+ *   {@code SantoAbility#GUARDA_VIDAS} among others.</li>
  * </ul>
  */
 package org.aventyrs.core.combat;

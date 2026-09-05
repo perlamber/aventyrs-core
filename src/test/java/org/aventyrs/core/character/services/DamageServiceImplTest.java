@@ -6,6 +6,7 @@ import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.character.DamageType;
+import org.aventyrs.core.character.DefenseType;
 import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.character.SizeCategory;
 import org.aventyrs.core.character.TitleSlot;
@@ -13,6 +14,10 @@ import org.aventyrs.core.character.AttributeValue;
 import org.aventyrs.core.character.CharacterAttributes;
 import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.item.ArmorItem;
+import org.aventyrs.core.item.AbstractItem;
+import org.aventyrs.core.item.DefensiveImprovement;
+import org.aventyrs.core.item.ItemCategory;
+import org.aventyrs.core.item.ItemImprovement;
 import org.aventyrs.core.character.fixture.CharacterSkillFixture;
 import org.aventyrs.core.ego.InitiativeAdvantage;
 import org.aventyrs.core.modifier.Modifier;
@@ -30,6 +35,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -195,6 +201,34 @@ class DamageServiceImplTest {
         assertEquals(4, damageService.calculateFinalDamage(character, 12, false));
     }
 
+    /**
+     * The attack's own Meio-Dano — {@code ARTE_FLUIDA}'s "os danos no alvo adicional são reduzidos
+     * à metade" — is the last stage exactly like the target's own, so RD comes off the raw figure
+     * first: 12 - 3 = 9, halved to 4, not 12 halved to 6 and then reduced.
+     */
+    @Test
+    void anAttackCanHalveTheDamageItselfAndStillDoesSoAfterDamageReduction() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .attributeAbility(new DamageReductionAbility())
+                .build();
+        CharacterSheet sheet = CharacterSheet.of(character, new Player());
+
+        assertEquals(9, damageService.calculateFinalDamage(sheet, null, (DamageType) null, null, 12, false));
+        assertEquals(4, damageService.calculateFinalDamage(sheet, null, null, null, 12, false, true));
+    }
+
+    /** Two half-damage sources never quarter — the attack's is OR'd into the target's, not stacked. */
+    @Test
+    void anAttacksHalfDamageDoesNotStackWithTheTargetsOwn() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .skillCompetencyAbility(new HalfDamageAbility())
+                .build();
+        CharacterSheet sheet = CharacterSheet.of(character, new Player());
+
+        assertEquals(6, damageService.calculateFinalDamage(sheet, null, (DamageType) null, null, 12, false));
+        assertEquals(6, damageService.calculateFinalDamage(sheet, null, null, null, 12, false, true));
+    }
+
     @Test
     void calculateFinalDamageNeverGoesBelowZero() {
         Character character = CharacterFixture.blank(CharacterFixture.BLANK)
@@ -310,11 +344,30 @@ class DamageServiceImplTest {
         assertEquals(4, sheet.getDamageTaken());
     }
 
+    @Test
+    void applyDamageDoesNotExtendBencaoDeProtecaoWhenMitigationLeavesNoFinalDamage() {
+        AbstractItem item = AbstractItem.builder().name("Item de teste").category(ItemCategory.ARMOR).build();
+        item.addImprovement(ItemImprovement.of(DefensiveImprovement.BENCAO_DE_PROTECAO));
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .attributeAbility(new DamageReductionAbility())
+                .equipment(List.of(item))
+                .build();
+        CharacterSheet sheet = CharacterSheet.of(character, new Player());
+        SceneContext firstRound = combatContext(1, false, UUID.randomUUID());
+
+        assertEquals(0, damageService.applyDamage(sheet, firstRound, 3, false));
+        assertEquals(3, new DefenseServiceImpl().getTotalDefense(sheet, DefenseType.PHYSICAL, firstRound));
+    }
+
     private Character characterWithRigidezDaMontanha(final SizeCategory sizeCategory) {
         return CharacterFixture.blank(CharacterFixture.BLANK)
                 .attributeAbility(VigorAbility.RIGIDEZ_DA_MONTANHA)
                 .sizeCategory(sizeCategory)
                 .build();
+    }
+
+    private SceneContext combatContext(final int currentRound, final boolean wonInitiative, final UUID sceneId) {
+        return new SceneContext(List.of(), List.of(), Map.of(), null, true, currentRound, wonInitiative, null, sceneId);
     }
 
     @Test
@@ -446,7 +499,8 @@ class DamageServiceImplTest {
         CharacterSheet allySheet = allySheetWithDamageTaken(5);
         SceneContext sceneContext = new SceneContext(List.of(allySheet), List.of(), Map.of(allySheet, Range.ADJACENTE));
 
-        int finalDamage = damageService.calculateFinalDamage(holderSheet, sceneContext, null, null, 10, false);
+        int finalDamage = damageService.calculateFinalDamage(
+                holderSheet, sceneContext, (DamageType) null, null, 10, false);
 
         assertEquals(10 - DamageService.DEFAULT_DAMAGE_REDUCTION, finalDamage);
     }

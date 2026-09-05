@@ -18,10 +18,10 @@ import org.aventyrs.core.character.EgoDomain;
 public enum ResourcesAdvantage implements EgoAdvantage {
 
     // TODO: -2PE (minimum 1PE) on buying/producing equipment in campaign, and -1PE
-    // (minimum 1PE) on Obra-Prima upgrades/Aprimoramentos/Habilidade de Título usage — {@code
-    // org.aventyrs.core.item.Item#getPrice()} is now a real PE figure per catalog entry, but
-    // no PE *budget/economy* exists to spend it from, and Obra-Prima tiers/Aprimoramentos are
-    // per-owned-copy upgrades this core still doesn't model at all.
+    // (minimum 1PE) on Obra-Prima upgrades/Aprimoramentos/Habilidade de Título usage — producing
+    // equipment now has a costed entry point (EquipmentCraftingService#getFabricationCost) and
+    // Obra-Primas/Aprimoramentos are modeled per copy, so the remaining blocker is narrow: no PE
+    // *budget/economy* to spend against, no buying flow, and no discount hook on either cost.
     BARGANHISTA("Comprar ou produzir equipamentos após a criação do Personagem, em " +
             "campanha, custam 2 Pontos de Equipamentos a menos, até o mínimo de 1PE; " +
             "Melhorias de Obras-Primas, Aprimoramentos e uso de Habilidades de Título " +
@@ -29,10 +29,12 @@ public enum ResourcesAdvantage implements EgoAdvantage {
 
     // TODO: grants a chosen Equipamento Comum Ofensivo (any Raridade) at character
     // creation, upgraded to a Comum/Incomum Obra-Prima with no Aprimoramentos, excluding
-    // Equipamentos Tecnológicos/Regalias — {@code org.aventyrs.core.item.ItemRarity} and
-    // {@code ItemType#OFFENSIVE} are real now, but Obra-Prima tiers/Aprimoramentos (per-owned-
-    // copy upgrades) and Tecnológico/Regalia classifications still aren't modeled, and nothing
-    // on {@code Character}/{@code CombatantSheet} holds an item to grant one onto.
+    // Equipamentos Tecnológicos/Regalias — Obra-Prima tiers/Aprimoramentos and the Regalia
+    // marker ({@code Item#isRegalia()}/{@code getRegaliaGrade()}) are all modeled now, and
+    // {@code Character#equipment} holds items; the remaining blockers are a Tecnológico
+    // classification and, above all, no character-creation flow that makes such a choice
+    // (only {@code CharacterCreationServiceImpl}'s fixed path exists — the same gap {@code
+    // MoralHerdadaAbility} cites).
     HERANCA_FAMILIAR("Durante a criação do personagem você pode escolher um Equipamento " +
             "Comum Ofensivo de qualquer Raridade, o item escolhido é uma Obra-Prima Comum " +
             "ou Incomum e não possui Aprimoramentos. Não é possível obter Equipamentos " +

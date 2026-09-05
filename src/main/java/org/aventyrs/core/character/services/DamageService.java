@@ -2,9 +2,9 @@ package org.aventyrs.core.character.services;
 
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.DamageType;
+import org.aventyrs.core.character.DamageDescriptor;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.CombatantSheet;
-import org.aventyrs.core.skill.SkillExcellency;
 
 /**
  * Computes and applies damage mitigation. Two independent flat reductions exist — RD
@@ -51,6 +51,9 @@ public interface DamageService {
      * applies. Never negative.
      */
     int getTotalDamageReduction(CombatantSheet target, DamageType damageType, CombatantSheet source);
+
+    /** Descriptor-aware RD calculation, including equipped-item resistance to a concrete element. */
+    int getTotalDamageReduction(CombatantSheet target, DamageDescriptor damageDescriptor, CombatantSheet source);
 
     /** Total RA, same three sources as RD. Never negative. */
     int getTotalAbsoluteDamageReduction(Character character);
@@ -111,6 +114,32 @@ public interface DamageService {
                               DamageType damageType, CombatantSheet source, int rawDamage, boolean ignoreDamageReduction);
 
     /**
+     * Same as {@link #calculateFinalDamage(CombatantSheet, SceneContext, DamageType,
+     * CombatantSheet, int, boolean)}, but with the Meio-Dano stage forced on by the
+     * <b>attack</b> rather than found on the target.
+     *
+     * <p>Every other half-damage source in this core belongs to whoever is being hit — a {@code
+     * ModifierType#HALF_DAMAGE} modifier or an {@code EgoAdvantage#resolveHalfDamage} of their
+     * own. This parameter is the other direction: {@code
+     * ArtesMarciaisFeat#DOMINAR_ARTE_MARCIAL_ARTE_FLUIDA}'s "os danos no alvo adicional são
+     * reduzidos à metade" is a property of the blow, and the combatant taking it has nothing to
+     * carry it with. It is <b>additive</b> with the scanned sources, exactly as those already
+     * are with each other: either alone is enough to halve, and two never quarter.
+     *
+     * <p>It stays the last stage regardless of where it came from — RD and RA come off first,
+     * then what remains is halved (rounded down), so a target with RD is not charged the
+     * halving twice.
+     */
+    int calculateFinalDamage(CombatantSheet target, SceneContext sceneContext,
+                             DamageType damageType, CombatantSheet source,
+                             int rawDamage, boolean ignoreDamageReduction, boolean halfDamage);
+
+    /** Descriptor-aware final-damage calculation for elemental attacks. */
+    int calculateFinalDamage(CombatantSheet target, SceneContext sceneContext,
+                             DamageDescriptor damageDescriptor, CombatantSheet source,
+                             int rawDamage, boolean ignoreDamageReduction);
+
+    /**
      * Computes the final damage (see {@link #calculateFinalDamage}) and applies it to
      * characterSheet — Shield points are absorbed first, then Hit Points, per
      * {@link CombatantSheet#applyDamage}. No
@@ -139,4 +168,9 @@ public interface DamageService {
      */
     int applyDamage(CombatantSheet characterSheet, SceneContext sceneContext,
                      DamageType damageType, CombatantSheet source, int rawDamage, boolean ignoreDamageReduction);
+
+    /** Applies fully-classified damage, including equipped-item resistance to a concrete element. */
+    int applyDamage(CombatantSheet characterSheet, SceneContext sceneContext,
+                    DamageDescriptor damageDescriptor, CombatantSheet source,
+                    int rawDamage, boolean ignoreDamageReduction);
 }

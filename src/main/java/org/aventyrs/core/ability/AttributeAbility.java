@@ -53,6 +53,30 @@ public interface AttributeAbility {
     }
 
     /**
+     * How many temporary Ego points this ability owes its holder <em>on the following
+     * Rodada</em> the first time in a game session that domain's spendable points are reduced
+     * to zero — {@link GnoseAbility#ESTABILIDADE_EMOCIONAL}'s "a primeira vez em cada sessão de
+     * jogo que seu Autocontrole for reduzido a zero você receberá 1 ponto temporário neste Ego
+     * na Rodada seguinte". 0 by default, and 0 for any domain other than the one the ability's
+     * own rules text names.
+     *
+     * <p>Resolved by {@code AbstractCombatantSheet#spendEgoPoints} — the single funnel both a
+     * deliberate use and an enemy's drain pass through, since "for reduzido a zero" does not
+     * care <em>how</em> the pool emptied (deliberately unlike {@link
+     * org.aventyrs.core.ego.EgoAdvantage#resolveEgoSpendRecovery}, which only a holder's own
+     * chosen expenditure triggers). The once-per-session guard is {@code
+     * CombatantSheet#consumeOncePerSession}, keyed on the ability constant itself, and the
+     * delivery is {@code CombatantSheet#scheduleTemporaryEgoPointGrant} — see both for what a
+     * "session" and a "next Rodada" mean here.
+     *
+     * <p>Same "resolve, don't mutate" shape as {@link #resolvePermanentEgoGain}: this only
+     * says how much is owed.
+     */
+    default int resolveEgoDepletionGrant(EgoDomain domain) {
+        return 0;
+    }
+
+    /**
      * The {@link ActiveAbility} this ability grants the character the moment it's acquired —
      * e.g. {@link FocusAbility#CONCENTRACAO_PROFUNDA}'s own activatable state. Empty by
      * default; only override on a constant whose rules text describes something the holder
@@ -276,14 +300,50 @@ public interface AttributeAbility {
      * org.aventyrs.core.ability.DexterityAbility#PRECISAO}'s Vantagem on the first
      * Destreza-based Perícia roll each Turn. Only ever called by {@code
      * AbstractSkillInteraction} once {@link org.aventyrs.core.sheet.CombatantSheet
-     * #consumeFirstRollThisTurn} has already confirmed this roll is that first one (see that
-     * method's own javadoc for how "first this Turn" is tracked) — so, unlike this interface's
-     * other {@code resolve*} hooks, an override doesn't need to check that condition itself,
-     * only gate on rolledDomain. Empty by default; only override on a constant whose rules
-     * text grants a bonus scoped to the first roll of a Turn like this.
+     * #isFirstRollOfTurnFor} confirms this roll is that first one (it reads the per-Turn slice of
+     * the sheet's action log) — so, unlike this interface's other {@code resolve*} hooks, an
+     * override doesn't need to check that condition itself, only gate on rolledDomain. Empty by
+     * default; only override on a constant whose rules text grants a bonus scoped to the first
+     * roll of a Turn like this.
      */
     default Optional<Integer> resolveFirstRollOfTurnBonus(AttributeDomain rolledDomain) {
         return Optional.empty();
+    }
+
+    /**
+     * Whether this ability makes the holder's <b>first Magia of each Rodada</b> add its full Foco
+     * where the effect's rules text says "Metade do Foco" — {@code FocusAbility#MAGIA_PODEROSA}.
+     * Read by {@code org.aventyrs.core.magic.SpellCastingService#resolvePrimaryDamage} when it
+     * resolves a Magia's {@link org.aventyrs.core.magic.SpellDamage}, gated there on the caster
+     * having recorded no Magia in {@code CombatantSheet#getActionsThisRound()} yet this Rodada.
+     * False by default; only {@code MAGIA_PODEROSA} overrides it.
+     */
+    default boolean upgradesFirstSpellOfRoundFocusScaling() {
+        return false;
+    }
+
+    /**
+     * Extra Movimento Base, in UD, this trait grants on one specific movement of the Rodada —
+     * for a clause scoped to <i>which</i> movement it is, e.g. {@code
+     * org.aventyrs.core.ability.DexterityAbility#PASSOS_LONGOS}'s "seu primeiro movimento em
+     * cada Rodada tem a distância aumentada em +2UD". movementIndex is 0-based, so the first
+     * movement of the Rodada is 0; it comes from {@code CombatantSheet
+     * #getMovementsTakenThisRound()} / {@code CombatantSheet#consumeMovementThisRound()}.
+     *
+     * <p><b>Per Ponto de Ação, like every other movement figure in this core</b> — see {@code
+     * MovementService#getMovementBase}. A clause naming a UD amount is always widening what one
+     * Ponto de Ação buys, never handing out a one-off distance, so this is summed into the same
+     * per-Ponto-de-Ação total the permanent {@code ModifierType#MOVEMENT} scan produces rather
+     * than added once afterwards.
+     *
+     * <p>Zero by default; only override on a constant whose rules text scopes a movement bonus
+     * to a particular movement of the Rodada. An unconditional "+NUD ao Movimento Base" is a
+     * plain {@code @Modifier(ModifierType.MOVEMENT)} method instead, and a Round-<i>window</i>
+     * clause ("nas duas primeiras Rodadas") is a {@code TemporaryBonus} — both are different
+     * axes from this one.
+     */
+    default int resolveRoundMovementIncrease(int movementIndex) {
+        return 0;
     }
 
     /**

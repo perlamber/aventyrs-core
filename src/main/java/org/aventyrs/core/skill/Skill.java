@@ -26,6 +26,10 @@ public interface Skill {
      */
     int DISADVANTAGE_MALUS = -2;
 
+    // Both figures apply unchanged to a *dano* roll: "Vantagem em rolagens de Dano" is the same
+    // flat +2, carried as a DamageBonus (or a ModifierType.DAMAGE_ROLL_BONUS for an untyped
+    // source) and summed by AbstractSkillInteraction — see DamageBonus#total.
+
     public AttributeDomain getAttributeDomain();
 
     SkillType getSkillType();

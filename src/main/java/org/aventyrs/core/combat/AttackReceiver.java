@@ -76,10 +76,11 @@ import java.util.List;
  * <p><b>Report-only otherwise.</b> {@link #resolve} assembles the chain but applies none of it,
  * and touches no resource on the defender — the same restraint {@code
  * GritoDeGuerraVulcanoInteraction} applies to the Blessings it reports. The one unavoidable
- * exception is the defense roll itself: {@code applyTo} consumes {@code
- * CombatantSheet#consumeFirstRollThisTurn} and may grant a temporary Ego point on a critical
- * success. That's the roll genuinely happening, not an outcome being applied — which is also why
- * {@link #resolve} calls the Interaction <b>exactly once</b>, never twice for one attack.
+ * exception is the defense roll itself: {@code applyTo} may grant a temporary Ego point on a
+ * critical success (the first-roll-of-Turn check it also runs is non-mutating now). That's the
+ * roll genuinely happening, not an outcome being applied — which is also why {@link #resolve}
+ * calls the Interaction <b>exactly once</b>, never twice for one attack. The API records the
+ * exchange afterwards via {@code defender.recordAction(...)}.
  */
 public class AttackReceiver {
 
@@ -125,7 +126,8 @@ public class AttackReceiver {
         SkillRoll defenseRoll = attack.getDefenseRoll();
 
         InteractionResult defenseResult = esquivaEApararInteraction.applyTo(
-                defender, attack.getSceneContext(), defenseRoll, attack.getDefenseType());
+                defender, attack.getSceneContext(), defenseRoll, attack.getDefenseType(),
+                attack.getDamageDescriptor());
 
         DifficultyLevel effectiveDifficultyLevel =
                 attack.getDifficultyLevel().easier(defenseResult.getDifficultyReduction());

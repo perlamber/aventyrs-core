@@ -7,6 +7,7 @@ import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.item.ArmorItem;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.rest.RestType;
+import org.aventyrs.core.skill.SkillType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -649,37 +650,98 @@ class CharacterSheetTest {
         assertEquals(1, sheet.getDamageTaken());
     }
 
-    @Test
-    void consumeFirstRollThisTurnReturnsTrueTheFirstTimeForAGivenDomain() {
-        CharacterSheet sheet = newSheet();
-
-        assertTrue(sheet.consumeFirstRollThisTurn(AttributeDomain.DEXTERITY));
+    private static CombatantAction action(final AttributeDomain governingDomain) {
+        return new CombatantAction(SkillType.ATAQUE_A_DISTANCIA, governingDomain, null,
+                ActionCost.ofActionPoints(1), 0, null);
     }
 
     @Test
-    void consumeFirstRollThisTurnReturnsFalseOnASubsequentCallForTheSameDomain() {
+    void recordActionAppendsToActionsThisRound() {
         CharacterSheet sheet = newSheet();
-        sheet.consumeFirstRollThisTurn(AttributeDomain.DEXTERITY);
 
-        assertFalse(sheet.consumeFirstRollThisTurn(AttributeDomain.DEXTERITY));
+        sheet.recordAction(action(AttributeDomain.DEXTERITY));
+
+        assertEquals(1, sheet.getActionsThisRound().size());
+        assertEquals(AttributeDomain.DEXTERITY, sheet.getActionsThisRound().get(0).governingDomain());
     }
 
     @Test
-    void consumeFirstRollThisTurnTracksEachDomainIndependently() {
+    void getActionsThisRoundIsUnmodifiable() {
         CharacterSheet sheet = newSheet();
-        sheet.consumeFirstRollThisTurn(AttributeDomain.DEXTERITY);
 
-        assertTrue(sheet.consumeFirstRollThisTurn(AttributeDomain.STRENGTH));
+        assertThrows(UnsupportedOperationException.class,
+                () -> sheet.getActionsThisRound().add(action(AttributeDomain.DEXTERITY)));
     }
 
     @Test
-    void startTurnResetsWhichDomainsHaveAlreadyRolled() {
+    void isFirstRollOfTurnForIsTrueUntilAnActionGovernedByThatDomainIsRecorded() {
         CharacterSheet sheet = newSheet();
-        sheet.consumeFirstRollThisTurn(AttributeDomain.DEXTERITY);
+        assertTrue(sheet.isFirstRollOfTurnFor(AttributeDomain.DEXTERITY));
+
+        sheet.recordAction(action(AttributeDomain.DEXTERITY));
+
+        assertFalse(sheet.isFirstRollOfTurnFor(AttributeDomain.DEXTERITY));
+    }
+
+    @Test
+    void isFirstRollOfTurnForTracksEachDomainIndependently() {
+        CharacterSheet sheet = newSheet();
+        sheet.recordAction(action(AttributeDomain.DEXTERITY));
+
+        assertTrue(sheet.isFirstRollOfTurnFor(AttributeDomain.STRENGTH));
+    }
+
+    @Test
+    void startTurnMarksTheBoundarySoAPriorTurnsActionsDoNotCount() {
+        CharacterSheet sheet = newSheet();
+        sheet.recordAction(action(AttributeDomain.DEXTERITY));
 
         sheet.startTurn(1);
 
-        assertTrue(sheet.consumeFirstRollThisTurn(AttributeDomain.DEXTERITY));
+        assertTrue(sheet.isFirstRollOfTurnFor(AttributeDomain.DEXTERITY));
+    }
+
+    @Test
+    void startTurnDoesNotClearActionsThisRound() {
+        CharacterSheet sheet = newSheet();
+        sheet.recordAction(action(AttributeDomain.DEXTERITY));
+
+        sheet.startTurn(1);
+
+        assertEquals(1, sheet.getActionsThisRound().size());
+    }
+
+    @Test
+    void startNewRoundClearsTheLogAndResetsTheMarker() {
+        CharacterSheet sheet = newSheet();
+        sheet.recordAction(action(AttributeDomain.DEXTERITY));
+        sheet.startTurn(1);
+        sheet.recordAction(action(AttributeDomain.STRENGTH));
+
+        sheet.startNewRound();
+
+        assertTrue(sheet.getActionsThisRound().isEmpty());
+        assertTrue(sheet.isFirstRollOfTurnFor(AttributeDomain.DEXTERITY));
+        assertTrue(sheet.isFirstRollOfTurnFor(AttributeDomain.STRENGTH));
+    }
+
+    @Test
+    void theCenaLogSurvivesARodadaWrapButNotStartNewScene() {
+        CharacterSheet sheet = newSheet();
+        sheet.recordAction(action(AttributeDomain.DEXTERITY));
+
+        sheet.startNewRound();
+        assertTrue(sheet.getActionsThisRound().isEmpty());
+        assertEquals(1, sheet.getActionsThisCena().size(), "the Cena log outlasts the Rodada wrap");
+
+        sheet.startNewScene();
+        assertTrue(sheet.getActionsThisCena().isEmpty());
+    }
+
+    @Test
+    void getActionsThisCenaIsUnmodifiable() {
+        assertThrows(UnsupportedOperationException.class,
+                () -> newSheet().getActionsThisCena().add(action(AttributeDomain.DEXTERITY)));
     }
 
     // Each of these must spend first: a recovery restores previously-spent points, so against a

@@ -18,10 +18,11 @@ import org.aventyrs.core.skill.SkillType;
 public enum ArtesExcellency implements SkillExcellency {
 
     // TODO: +2 to Fama Positiva or Fama Negativa, whichever the player chooses once when
-    // Artes graduation first reaches 3 — Fama is tracked
-    // (CombatantSheet.increaseFamaPositiva/increaseFamaNegativa), and the permanent choice
-    // itself could be persisted via org.aventyrs.core.ability.AcquiredChoice — but nothing
-    // yet detects a graduation crossing a threshold to trigger this automatically.
+    // Artes graduation first reaches 3. Fama itself is real and mutable
+    // (CharacterSheet.increaseFamaPositiva/increaseFamaNegativa — it is player-only, so it lives
+    // there rather than on CombatantSheet), and the permanent choice could be persisted via
+    // org.aventyrs.core.ability.AcquiredChoice. What is missing is the *trigger*: nothing detects
+    // a Graduação crossing a threshold, so there is no moment at which to apply the grant.
     FOCADO(ExcellencyTier.FOCADO, "Fama Positiva ou Negativa (à escolha) +2."),
 
     PRODIGIO(ExcellencyTier.PRODIGIO, "GD reduzido em -1 nível.") {

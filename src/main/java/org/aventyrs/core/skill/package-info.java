@@ -19,6 +19,59 @@
  * CharacterStatus status   = result.getResultStatus();        // the character's current status
  * }</pre>
  *
+ * <h2>Telling the roll what it is up against, and reading the verdict</h2>
+ *
+ * A {@link org.aventyrs.core.skill.SkillRoll} may state the <b>Grau de Dificuldade it was made
+ * against</b>. Supply it and the result reports whether the roll beat it; leave it out and the
+ * verdict is {@code null}, which means <b>"nobody said"</b> — not "failed":
+ *
+ * <pre>{@code
+ * SkillRoll roll = SkillRoll.against(List.of(4, 5, 6), DifficultyLevel.MEDIUM);
+ *
+ * // receiveInteraction takes the Interaction alone, so a roll goes through applyTo…
+ * InteractionResult result = new AtletismoInteraction().applyTo(sheet, sceneContext, roll);
+ *
+ * // …or through the factory, which carries the same SkillRoll:
+ * InteractionResult result = SkillInteractionFactory.resolve(SkillRollRequest.builder()
+ *         .skillType(SkillType.ATLETISMO).target(sheet).skillRoll(roll).build());
+ *
+ * Boolean succeeded = result.getSucceeded(); // TRUE / FALSE / null == "no target was stated"
+ * Integer margin    = result.getMargin();    // signed distance from the target; null likewise
+ * }</pre>
+ *
+ * <p><b>A caller must not read {@code null} as a failure.</b> The three states are distinct, and
+ * every ability gated on success treats {@code null} as "cannot tell".
+ *
+ * <p>The target is a plain number, not a
+ * {@link org.aventyrs.core.skill.DifficultyLevel} — most GDs are a tier, and
+ * {@code SkillRoll.against(dice, tier)} resolves one for you, but some are computed
+ * ("GD 10 + Vigor") and land between tiers. Use
+ * {@code new SkillRoll(dice, requestedAbility, targetValue)} for those.
+ *
+ * <p>A {@link org.aventyrs.core.skill.SkillRoll} may also carry an
+ * {@link org.aventyrs.core.sheet.ActionCost} — what the action this roll represents cost (a
+ * Pontos de Ação amount, an Ação Livre, or a Reação) — via
+ * {@code new SkillRoll(dice, requestedAbility, targetValue, actionCost)}. It is metadata: only a
+ * cost-gated Talento reads it ({@code AssassinoFeat#SAQUE_RELAMPAGO}). {@code null} means "not
+ * stated".
+ *
+ * <p>Two things happen automatically once a target is stated, and a caller needs to know about
+ * both because neither is visible in the dice:
+ *
+ * <ul>
+ *   <li><b>The roller's own {@code difficultyReduction} is already applied</b> — it eases the
+ *   target by whole <i>níveis</i> before comparing, so do <b>not</b> subtract it again yourself.
+ *   {@code getDifficultyReduction()} is still reported for display.</li>
+ *   <li><b>An ability may make the roll succeed outright</b>, regardless of the dice
+ *   ("sempre bem-sucedido, dispensando rolagens"). Such a roll reports {@code succeeded == true}
+ *   with a {@code margin} of {@code 0}.</li>
+ * </ul>
+ *
+ * <p>A roll that succeeds may also earn {@link org.aventyrs.core.sheet.Blessing}s — reported on
+ * {@code result.getBlessings()} for the caller to grant, exactly as the initiative-time ones
+ * are. They are never applied by the Interaction itself, since a {@code Blessing}'s
+ * {@link org.aventyrs.core.sheet.TargetScope} may name someone other than the roller.
+ *
  * <p>A caller that only has a {@link org.aventyrs.core.skill.SkillType} in hand (e.g. an API
  * layer deserializing an incoming roll request) doesn't need to know which concrete
  * {@code <Skill>Interaction} class that maps to — {@link org.aventyrs.core.skill.SkillRollRequest}
@@ -30,7 +83,7 @@
  * SkillRollRequest request = SkillRollRequest.builder()
  *         .skillType(SkillType.ARTES)
  *         .target(sheet)
- *         .skillRoll(new SkillRoll(List.of(4, 5, 6))) // the caller's own already-rolled dice
+ *         .skillRoll(SkillRoll.against(List.of(4, 5, 6), DifficultyLevel.MEDIUM))
  *         .build();
  *
  * InteractionResult result = SkillInteractionFactory.resolve(request);
@@ -61,12 +114,33 @@
  * steps the target {@link org.aventyrs.core.skill.DifficultyLevel} should be shifted easier by
  * (via {@link org.aventyrs.core.skill.DifficultyLevel#easier}).
  *
+ * <p>The result also reports {@code governingAttributeDomain} — the {@code AttributeDomain} that
+ * actually governed the roll after every substitution — {@code null} unless a {@code SkillRoll}
+ * was supplied.
+ *
  * <p>This core deliberately never rolls dice, never knows what {@code DifficultyLevel} a
  * specific check is being made against, and never decides success or failure — a UI or API
  * layer sitting on top of this library owns the actual roll (add {@code rollBonus} to its own
  * dice result, shift its own target GD by {@code difficultyReduction}, then compare). This
  * keeps the core a pure rules calculator: given a Character's current state, what are the
  * inputs to this roll — nothing about how those inputs get turned into a die result.
+ *
+ * <h2>Recording an action</h2>
+ *
+ * After resolving a roll, the caller may log it on the combatant's per-Rodada action log:
+ *
+ * <pre>{@code
+ * InteractionResult result = new AtaqueADistanciaInteraction().applyTo(sheet, ctx, roll, target, weapon);
+ * sheet.recordAction(new CombatantAction(
+ *         SkillType.ATAQUE_A_DISTANCIA, result.getGoverningAttributeDomain(), weapon,
+ *         roll.getActionCost(), scene.getCurrentRound(), ActionOutcome.from(result)));
+ * }</pre>
+ *
+ * {@code applyTo} never records for you — it only <em>reads</em> the log (for
+ * {@code DexterityAbility#PRECISAO}'s "first roll of your Turn" and
+ * {@code AssassinoFeat#SAQUE_RELAMPAGO}'s "first cheap attack of the Rodada"). Not recording
+ * means those never advance. Clear the log each Rodada with {@code sheet.startNewRound()}, or
+ * drive the Scene with {@code Scene#next()}, which does it for every participant at the wrap.
  *
  * <h2>Adding a new Perícia</h2>
  *

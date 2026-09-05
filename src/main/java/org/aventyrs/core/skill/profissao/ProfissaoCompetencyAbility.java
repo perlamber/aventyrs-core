@@ -2,75 +2,90 @@ package org.aventyrs.core.skill.profissao;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.aventyrs.core.character.Character;
+import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
 import org.aventyrs.core.skill.SkillType;
 
 /**
- * The Habilidades de Competência available to characters trained in Profissão. Every one of
- * these is about equipment a character *produces or repairs*, and none is expressible for
- * real today. {@code org.aventyrs.core.item.Item} now exists as a catalog entry — carrying
- * Dureza, Defesas (DF/DM) and Conjuração columns among others — so "no Item entity at all" is
- * no longer the blocker it once was; what's still missing is everything about a produced or
- * owned *copy*: production time, Carga, a repair mechanic, per-copy state, who produced it,
- * and the choices baked in at its creation. Critical resistance and the Margem Crítica Maior
- * axis don't exist anywhere either. See each constant's TODO for its own remaining gap.
+ * The Habilidades de Competência available to characters trained in Profissão — almost all about
+ * equipment a character <i>produces or repairs</i>. The fabrication/reparo pipeline now exists
+ * ({@code org.aventyrs.core.character.services.EquipmentCraftingService}), so three of these are
+ * real: {@link #CONSTRUTOR_EFICIENTE} scales Tempo de Produção, {@link #AUMENTAR_A_DUREZA} scales
+ * a forged copy's Dureza, and {@link #REPARO_MELHORADO} adds to repaired Dureza — via the
+ * {@code resolveProductionTimeMultiplier}/{@code resolveProducedHardnessMultiplier}/{@code
+ * resolveRepairHardnessBonus} hooks on {@link SkillCompetencyAbility}. {@link #FORJA_VULCANA} and
+ * {@link #EXPANDIR_CARGA} stay unexpressed — see their TODOs for the narrower remaining gap
+ * (Resistência a Críticos / Margem Crítica Maior / Carga, none of which exist anywhere).
  */
 @Getter
 @AllArgsConstructor
 public enum ProfissaoCompetencyAbility implements SkillCompetencyAbility {
 
-    // TODO: -20% to item/equipment Tempo de Produção — no Item/Equipamento entity or
-    // production-time system exists yet.
-    CONSTRUTOR_EFICIENTE("Tempo de Produção de itens e equipamentos reduzido em 20%."),
+    CONSTRUTOR_EFICIENTE("Tempo de Produção de itens e equipamentos reduzido em 20%.") {
+        @Override
+        public double resolveProductionTimeMultiplier() {
+            return 0.8;
+        }
+    },
 
-    // TODO: produced Equipamentos Defensivos permanently grant Resistência a Críticos (a
-    // new critical-hit-resistance concept, distinct from anything modeled today) plus a
-    // choice — baked in at item creation — between Redução de Danos Sofridos 1 (RD is now
-    // mechanically real — see DamageService.getTotalDamageReduction — but unlike
-    // ArtesAprimorarComArteAbility's now-working RDS branch, this choice lives on the
-    // produced item, not the character) or +1 Defesas; produced Equipamentos
-    // Ofensivos grant Margem Crítica Maior +1 (a *different* axis from every other skill's
-    // "Margem Crítica Menor" — a Menor-axis, Perícia-scoped concept now exists, see
-    // ArtesAprimorarComArteAbility#getCriticalMarginReduction, but nothing models the Maior
-    // axis or an item-scoped value of either) plus a choice between +1 Dano Base (a
-    // Perícia-scoped Dano Base concept now exists too, same file, but again nothing models
-    // an item-granted value of it) or +1 Conjuração (a Magia-effect bonus, same gap as
-    // DominioDoManaCompetencyAbility.ARCANISMO_EXPLOSIVA). Needs an
-    // Item/Equipamento entity carrying who produced it and which choice was made at
-    // creation — {@code Item} is a catalog entry with no per-copy state or producer, so none
-    // of that exists yet.
+    // TODO: only the "quem produziu" half is real now (EquipmentCraftingService#forge stamps
+    // AbstractItem#producedByCharacterId). The benefits themselves stay unexpressed: produced
+    // Equipamentos Defensivos grant Resistência a Críticos (a critical-hit-resistance concept
+    // that exists nowhere) plus an item-scoped choice between Redução de Danos Sofridos 1 or
+    // +1 Defesas (RD is real on the character, but not as a per-produced-copy value); produced
+    // Equipamentos Ofensivos grant Margem Crítica Maior +1 (a *different* axis from every
+    // skill's Margem Crítica Menor — nothing models the Maior axis or an item-scoped value)
+    // plus a choice between +1 Dano Base or +1 Conjuração (again, no item-granted value of
+    // either — same gap as DominioDoManaCompetencyAbility.ARCANISMO_EXPLOSIVA). And nothing
+    // records the creation-time choice: forge() takes no such parameter.
     FORJA_VULCANA("Equipamentos que você produz tem benefícios adicionais: Equipamentos " +
             "Defensivos concedem Resistência à Críticos, além disso concedem Redução de " +
             "Danos Sofridos 1 ou Bônus de +1 em Defesas (definido na criação do item). " +
             "Equipamentos Ofensivos: Margem Crítica Maior +1, além disso possuem Dano Base " +
             "+1 ou Conjuração +1."),
 
-    // TODO: +2 to Dureza recovered when repairing an item/equipment (no longer a dice roll,
-    // so that particular blocker is gone), extendable to Magias/Habilidades at 5 Graduações,
-    // then the bonus itself becomes +5 total at 10 Graduações — still needs an
-    // item *copy* with mutable, damageable Dureza (the {@code Item} catalog entry's own
-    // {@code getHardness()} is the pristine value, not a per-copy remaining one) and a repair
-    // mechanic (neither exists), a
-    // Dureza-equivalent concept on Magias/Habilidades (doesn't exist either), and a
-    // graduation-crossing-a-threshold trigger for the 10th-Graduação bump (same gap as
-    // ArtesExcellency.FOCADO/LENDA's Fama trigger).
+    // The "+2 Dureza recuperada" is real, via resolveRepairHardnessBonus, and so is the
+    // "muda para +5 com 10 Graduações" step. TODO: the "com 5 Graduações estende às suas
+    // Magias e Habilidades" clause stays unimplemented — neither a Magia nor a Habilidade has
+    // any Dureza-equivalent pool for a repair to restore.
     REPARO_MELHORADO("Sempre que você reparar um item ou equipamento a Dureza recuperada " +
             "aumenta em +2, com 5 Graduações você pode estender este efeito às suas Magias " +
-            "e Habilidades, com 10 Graduações este benefício muda para +5."),
+            "e Habilidades, com 10 Graduações este benefício muda para +5.") {
+        @Override
+        public int resolveRepairHardnessBonus(final Character holder) {
+            return profissaoGraduation(holder) >= EXTENDED_REPAIR_GRADUATION ? 5 : 2;
+        }
+    },
 
-    // TODO: +50% to produced equipment's Dureza — {@code Item#getHardness()} is now a real
-    // stat, but nothing models a *produced* copy whose value could differ from its catalog
-    // entry's, and no production mechanic exists to apply the increase at.
-    AUMENTAR_A_DUREZA("A Dureza dos equipamentos que você produz aumenta em 50%."),
+    AUMENTAR_A_DUREZA("A Dureza dos equipamentos que você produz aumenta em 50%.") {
+        @Override
+        public double resolveProducedHardnessMultiplier() {
+            return 1.5;
+        }
+    },
 
-    // TODO: +5 to produced equipment's Carga capacity — no Item/Equipamento entity or Carga
-    // (carrying capacity) stat exists yet.
+    // TODO: +5 to produced equipment's Carga capacity. Carga (carrying capacity) is a stat no
+    // Item column holds and nothing on Character reads — the fabrication pipeline gives this a
+    // moment to apply at (EquipmentCraftingService#forge), but there is still no value to raise.
     EXPANDIR_CARGA("A capacidade de Carga dos Equipamentos que você produz aumenta em +5.");
+
+    /** REPARO_MELHORADO's "+2 muda para +5" happens once Profissão Graduação reaches this. */
+    private static final int EXTENDED_REPAIR_GRADUATION = 10;
 
     private final String description;
 
     @Override
     public SkillType getSkillType() {
         return SkillType.PROFISSAO;
+    }
+
+    /** holder's Profissão Graduação, or 0 when untrained or when holder is {@code null}. */
+    private static int profissaoGraduation(final Character holder) {
+        if (holder == null) {
+            return 0;
+        }
+        CharacterSkill profissao = holder.getSkills().get(SkillType.PROFISSAO);
+        return profissao == null ? 0 : profissao.getGraduation().getGraduationValue();
     }
 }

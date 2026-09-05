@@ -3,10 +3,14 @@ package org.aventyrs.core.race;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.SizeCategory;
+import org.aventyrs.core.effect.CriticalEffectType;
 import org.aventyrs.core.feat.FeatCategory;
+import org.aventyrs.core.item.NaturalWeapon;
+import org.aventyrs.core.magic.Spell;
 import org.aventyrs.core.sheet.DlcRuleset;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -21,6 +25,21 @@ public interface Race {
      * parent {@link Race} against (see {@code AbstractMesticoRace}/{@code MeioElfo}).
      */
     CreatureType getCreatureType();
+
+    /**
+     * The {@link CreatureType} a {@code FeatRequirements#requiredCreatureType} (and any other
+     * "must be Feérico/Humanoide/Monstruoso" gate) is checked against — {@link
+     * #getCreatureType()} by default, which is every living race.
+     *
+     * <p>Split out only for a {@link CreatureType#RENASCIDO} race, whose rules text says its
+     * <em>prerequisites</em> still count its life-race's type ("Para critérios de pré-requisitos,
+     * Vampiros podem ser considerados Feéricos, Humanoides ou Monstruosos, conforme sua raça em
+     * vida") even though it <em>is</em> a Morto-Vivo. {@code Vampiro} overrides this to its chosen
+     * parent race's type; nothing else does.
+     */
+    default CreatureType getPrerequisiteCreatureType() {
+        return getCreatureType();
+    }
 
     /**
      * Whether this race is itself a Mestiço (mixed-blood) race — e.g. {@code MeioElfo} or any
@@ -75,6 +94,37 @@ public interface Race {
     public default List<SkillCompetencyAbility> getRacialAbilities() { return List.of(); }
 
     /**
+     * Armas Naturais ({@link NaturalWeapon}) every member of this race is born with — {@code
+     * Vampiro}'s Sangue, Poder e Dependência ("a maioria desenvolve Armas Naturais"), the
+     * per-{@code EspiritoAnimal} Armamentos Naturais a {@code HomemFera} would grant once its
+     * form state exists. Empty by default; nearly every race has none.
+     *
+     * <p>The race-side counterpart of {@code
+     * org.aventyrs.core.feat.Feat#getGrantedNaturalWeapons} — both feed {@code
+     * Character#getNaturalWeapons()}, the single view of what a character can strike with
+     * unarmed. Like that hook there is no possession gate on the attack path ({@code
+     * DamageBaseService} takes the {@link org.aventyrs.core.item.Weapon} as a parameter); this
+     * is the list a UI offers.
+     */
+    default List<NaturalWeapon> getGrantedNaturalWeapons() { return List.of(); }
+
+    /**
+     * Efeitos Críticos every member of this race simply shrugs off — an Anatomia clause naming
+     * them by identity, e.g. {@code Troll}'s Anatomia Vegetal ("imunes aos efeitos críticos
+     * Atordoante, Ferida Profunda e Sangramento"). Empty by default; nearly every race has none.
+     *
+     * <p>Read by {@code org.aventyrs.core.sheet.AbstractCombatantSheet#getCriticalEffectImmunities()},
+     * so a race's immunities reach {@code org.aventyrs.core.effect.CriticalEffect#applicableTo}
+     * with no per-race wiring — the player-facing counterpart to {@code
+     * org.aventyrs.core.monster.MonsterTemplate#getCriticalEffectImmunities()}, which is where a
+     * foe's own authored anatomy clause lives. Keyed on {@link CriticalEffectType} for exactly
+     * the reason that enum's own javadoc gives: a stat block names every Efeito Crítico it
+     * resists, including the 18 with no implementation behind them, and those immunities are
+     * real authored data now rather than the day someone builds the effect.
+     */
+    default Set<CriticalEffectType> getCriticalEffectImmunities() { return Set.of(); }
+
+    /**
      * Cost in XP to learn a new Feat
      *
      * @param featCategory
@@ -87,6 +137,23 @@ public interface Race {
      * @return int Cost to learn a new skill based on this character's spec
      */
     public default int getNewSkillCost(){ return BASE_NEW_SKILL_COST;}
+
+    /**
+     * EXP this Race takes off {@code
+     * org.aventyrs.core.character.services.SpellService#getAcquisitionCost} for spell — {@code
+     * Agastias}'s "Magia é Ciência" (-0.5 EXP para aprender novas magias), and the same
+     * still-unmodelled clause on {@code Furia}/{@code NascidoDaFloresta}. Summed with every held
+     * Talento's {@code org.aventyrs.core.feat.Feat#resolveSpellAcquisitionCostReduction}; the
+     * aggregate is floored at zero. {@link BigDecimal#ZERO} by default — every race without the
+     * trait, which is nearly all of them.
+     *
+     * <p>{@code BigDecimal}, not {@code int} like {@link #getNewFeatCost}, because these clauses
+     * are fractional (0.5) — the mismatch that kept {@code getNewFeatCost} from expressing
+     * "Talentos custam 2.5 EXP" is deliberately not repeated here.
+     */
+    default BigDecimal resolveSpellAcquisitionCostReduction(final Character character, final Spell spell) {
+        return BigDecimal.ZERO;
+    }
 
     /**
      *

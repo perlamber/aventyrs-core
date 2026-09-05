@@ -62,4 +62,31 @@ class RangeTest {
         assertEquals(Range.AO_ALCANCE_DOS_OLHOS, Range.fromUnidadesDeDistancia(25));
         assertEquals(Range.AO_ALCANCE_DOS_OLHOS, Range.fromUnidadesDeDistancia(1000));
     }
+
+    @Test
+    void increasedByShiftsUpTheBandLadder() {
+        assertEquals(Range.DISTANCIA_MEDIA, Range.DISTANCIA_CURTA.increasedBy(1));
+        assertEquals(Range.DISTANCIA_MUITO_LONGA, Range.DISTANCIA_MEDIA.increasedBy(2));
+        assertEquals(Range.DISTANCIA_MUITO_CURTA, Range.ADJACENTE.increasedBy(1));
+    }
+
+    @Test
+    void increasedByZeroIsIdentity() {
+        for (Range range : Range.values()) {
+            assertEquals(range, range.increasedBy(0));
+        }
+    }
+
+    @Test
+    void increasedByClampsAtAoAlcanceDosOlhos() {
+        assertEquals(Range.AO_ALCANCE_DOS_OLHOS, Range.DISTANCIA_MUITO_LONGA.increasedBy(1));
+        assertEquals(Range.AO_ALCANCE_DOS_OLHOS, Range.DISTANCIA_CURTA.increasedBy(99));
+        assertEquals(Range.AO_ALCANCE_DOS_OLHOS, Range.AO_ALCANCE_DOS_OLHOS.increasedBy(3));
+    }
+
+    @Test
+    void increasedByClampsAtAdjacenteForNegativeSteps() {
+        assertEquals(Range.ADJACENTE, Range.DISTANCIA_CURTA.increasedBy(-5));
+        assertEquals(Range.DISTANCIA_MUITO_CURTA, Range.DISTANCIA_MEDIA.increasedBy(-2));
+    }
 }

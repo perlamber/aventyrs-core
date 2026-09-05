@@ -10,10 +10,14 @@ import lombok.Getter;
  * inferior"), plus {@link #AO_ALCANCE_DOS_OLHOS} — not a fixed UD count, but "a distância
  * máxima é limitada à capacidade visual do personagem" per the rules text, so {@link
  * #maxUnidadesDeDistancia} is {@code null} for it alone. Ordered nearest-to-farthest so
- * {@link #isWithin} can compare bands directly — this core has no grid/positioning system to
- * compute a Range from, so it's always supplied already-resolved by a caller, same as {@link
- * InitiativeEntry}'s own {@code initiativeValue} — but {@link #fromUnidadesDeDistancia} lets a
- * caller who *does* track a raw UD count convert instead of resolving the band itself.
+ * {@link #isWithin} can compare bands directly. A Range is supplied already-resolved by a
+ * caller, same as {@link InitiativeEntry}'s own {@code initiativeValue} — nothing here derives
+ * one from where the participants actually stand. Two conversions exist for a caller who tracks
+ * position itself: {@link #fromUnidadesDeDistancia} from a raw UD count, and {@code
+ * org.aventyrs.core.scene.grid.RangeBand#fromHexDistance} from {@code
+ * org.aventyrs.core.scene.grid.HexGrid}'s hex-step distance. The grid is a real, tested
+ * facility, but it is one this core offers a caller rather than one {@code SceneContext} runs:
+ * no participant carries a {@code GridPosition}, so positions never become distances here.
  */
 @Getter
 @AllArgsConstructor
@@ -32,6 +36,20 @@ public enum Range {
     /** Whether this Range is maxRange or nearer — e.g. "Distância Curta ou inferior". */
     public boolean isWithin(final Range maxRange) {
         return this.ordinal() <= maxRange.ordinal();
+    }
+
+    /**
+     * This Range widened by {@code steps} bands up the nearest-to-farthest ladder —
+     * {@code DISTANCIA_CURTA.increasedBy(1)} is {@code DISTANCIA_MEDIA}. Clamps at both ends:
+     * never past {@link #AO_ALCANCE_DOS_OLHOS}, and never before {@link #ADJACENTE} for a
+     * negative {@code steps}. This is how {@code
+     * org.aventyrs.core.character.services.AttackRangeService} applies a Talento's "+N níveis de
+     * distância" to a weapon's or Magia's authored Alcance — a step is a whole band, not a UD
+     * count, so nothing here touches {@link #maxUnidadesDeDistancia}.
+     */
+    public Range increasedBy(final int steps) {
+        Range[] all = values();
+        return all[Math.min(all.length - 1, Math.max(0, this.ordinal() + steps))];
     }
 
     /**

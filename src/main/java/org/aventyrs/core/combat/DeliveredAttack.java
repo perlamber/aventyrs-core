@@ -11,6 +11,7 @@ import org.aventyrs.core.effect.EffectChain;
 import org.aventyrs.core.monster.MonsterSheet;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.CombatantSheet;
+import org.aventyrs.core.skill.AttackSource;
 import org.aventyrs.core.skill.SkillRoll;
 import org.aventyrs.core.skill.SkillType;
 
@@ -71,6 +72,43 @@ public class DeliveredAttack {
 
     /** Nearby allies/enemies and their ranges, or {@code null} outside an encounter. */
     private final SceneContext sceneContext;
+
+    /**
+     * What this attack is being delivered with — pass the {@link org.aventyrs.core.item.Weapon}
+     * or the {@link org.aventyrs.core.magic.Spell} itself, since both <i>are</i> {@link
+     * AttackSource}s. {@code null} when the caller didn't say: optional like {@link
+     * #sceneContext}/{@link #attackRoll}, and read as "no scope matched" rather than as an error,
+     * so every existing caller is unaffected.
+     *
+     * <p>It reaches the Perícia roll itself, where a delivery-scoped ability such as {@code
+     * AtaqueADistanciaCompetencyAbility#ARREMESSO_PODEROSO} narrows on it by type — including on
+     * the {@code attackRoll == null} preview path, since which Attribute governs the roll is part
+     * of the bonus figure a caller shows the player before they roll.
+     *
+     * <p>It deliberately does <b>not</b> fill in {@link #attackSkill}, even though {@link
+     * AttackSource#getAttackSkillType()} could answer: a caller passing both would then have one
+     * of them silently overrule the other. Naming the Perícia stays the caller's call, and the
+     * two disagreeing is a caller bug this class doesn't hide. Nothing validates that they
+     * agree either — the usual builders-aren't-gatekeepers restraint.
+     */
+    private final AttackSource attackSource;
+
+    /**
+     * Targets this attack affects <b>beyond</b> {@link #defender}, each with their own Defesa —
+     * empty for every ordinary attack. What {@code
+     * ArtesMarciaisFeat#DOMINAR_ARTE_MARCIAL_ARTE_FLUIDA}'s "seus ataques afetam um alvo
+     * adicional" produces, and what {@link AttackDelivery#resolve} compares the one attack total
+     * against in turn, reporting each on {@link DeliveredAttackResult#getAdditionalTargetResults()}.
+     *
+     * <p><b>The caller picks them.</b> The rules require an additional target to be adjacent to
+     * the primary one, which is pairwise geometry between two combatants who are both not the
+     * roller — something a {@code SceneContext} cannot answer and this core never computes. What
+     * {@link AttackDelivery} does enforce is the <em>count</em>, against {@code
+     * AttackTargetingService#getMaximumTargets}: a caller cannot name more targets than the
+     * attacker's Talentos entitle them to.
+     */
+    @Singular
+    private final List<AttackTarget> additionalTargets;
 
     /**
      * The Efeitos Críticos this attack inflicts if the attack roll comes up an Acerto Crítico.

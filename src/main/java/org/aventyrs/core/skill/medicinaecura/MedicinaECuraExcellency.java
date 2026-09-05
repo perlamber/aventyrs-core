@@ -14,13 +14,15 @@ import org.aventyrs.core.skill.SkillType;
 @AllArgsConstructor
 public enum MedicinaECuraExcellency implements SkillExcellency {
 
-    // TODO: automatic success on rolls to stanch bleeding while no enemies are within
-    // Distância Curta. The enemy-proximity condition itself is now checkable for real —
-    // see org.aventyrs.core.scene.SceneContext#hasEnemyWithin(Range.DISTANCIA_CURTA) — but
-    // this still needs a roll-resolution-vs-DifficultyLevel engine to define "success" in
-    // the first place (same gap as AtaqueADistanciaCompetencyAbility.DIRECAO_SEGURA-style
-    // auto-success effects), which doesn't exist yet; nothing currently calls
-    // AbstractSkillInteraction's SceneContext-accepting applyTo overload for this ability.
+    // TODO: both halves are individually real — the enemy-proximity condition is
+    // SceneContext#hasEnemyWithin(Range.DISTANCIA_CURTA), and automatic success is
+    // SkillCompetencyAbility#resolveAutomaticSuccess (see AttentionCompetencyAbility
+    // .PERCEPCAO_DE_FOXM). What blocks this one is that it is a SkillExcellency, and that
+    // interface has no resolve* hook at all: AbstractSkillInteraction scans it only for @Modifier
+    // methods and getDifficultyReduction(), so it receives neither the SceneContext this needs
+    // nor the target GD. That hook parity is the gap, not the engine.
+    // TODO: "estancar sangramentos" additionally scopes this to one purpose of the Perícia, which
+    // this core does not track (CLAUDE.md's "never tracks what a roll is for").
     FOCADO(ExcellencyTier.FOCADO, "Se não tiver inimigos próximos (Distância Curta) você é " +
             "sempre considerado bem-sucedido em rolagens para estancar sangramentos."),
 

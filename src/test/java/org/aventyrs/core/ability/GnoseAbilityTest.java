@@ -125,6 +125,30 @@ class GnoseAbilityTest {
         assertEquals(Optional.of(EgoDomain.AUTOCONTROLE), GnoseAbility.ESTABILIDADE_EMOCIONAL.resolvePermanentEgoGain());
     }
 
+    /** "1 ponto temporário neste Ego" — Autocontrole, and no other domain. */
+    @Test
+    void estabilidadeEmocionalOwesOneTemporaryAutocontrolePointOnDepletion() {
+        assertEquals(GnoseAbility.DEPLETION_TEMPORARY_GRANT,
+                GnoseAbility.ESTABILIDADE_EMOCIONAL.resolveEgoDepletionGrant(EgoDomain.AUTOCONTROLE));
+        for (EgoDomain domain : EgoDomain.values()) {
+            if (domain != EgoDomain.AUTOCONTROLE) {
+                assertEquals(0, GnoseAbility.ESTABILIDADE_EMOCIONAL.resolveEgoDepletionGrant(domain));
+            }
+        }
+    }
+
+    @Test
+    void noOtherAbilityReactsToEgoDepletion() {
+        for (GnoseAbility ability : GnoseAbility.values()) {
+            if (ability == GnoseAbility.ESTABILIDADE_EMOCIONAL) {
+                continue;
+            }
+            for (EgoDomain domain : EgoDomain.values()) {
+                assertEquals(0, ability.resolveEgoDepletionGrant(domain));
+            }
+        }
+    }
+
     @Test
     void ratoDeBibliotecaGrantsTrainingInEveryUntrainedSkill() {
         Character character = characterTrainedIn(new Artes(), new Persuasao());

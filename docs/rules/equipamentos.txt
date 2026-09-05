@@ -1,0 +1,1366 @@
+Lista de Equipamentos
+Equipamentos Comuns
+Equipamentos Defensivos
+Armaduras
+
+Armadura Completa (Pesado/Raro)
+Descrição:
+Favor: Dano de Corte sofrido é reduzido em -2.
+Preço | DF | DM | Dureza | Conjuração | Requisitos
+20 | +5 | +2 | 32 | Desvantagem | Força 3
+
+Efeitos Adicionais: Nenhum.
+Armadura de Gladiador (Leve/Comum)
+Descrição:
+Favor: Nenhum
+Preço | DF | DM | Dureza | Conjuração | Requisitos
+5 | +2 | +1 | 24 | - | Nenhum
+
+Efeitos Adicionais: Nenhum.
+Armadura de Justa (Pesado/Épico)
+Descrição:
+Favor: Dano de Corte e Perfuração sofrido é reduzido em -2, Movimento Base reduzido à metade.
+Preço | DF | DM | Dureza | Conjuração | Requisitos
+24 | +4 | +4 | 35 | Desvantagem | Força 4
+
+Efeitos Adicionais: Nenhum.
+Couraça (Médio/Incomum)
+Descrição:
+Favor: Dano de Corte e Perfuração sofrido é reduzido em -1.
+Preço | DF | DM | Dureza | Conjuração | Requisitos
+11 | +3 | +1 | 28 | - | Força 3
+
+Efeitos Adicionais: Nenhum.
+Meia Armadura (Médio/Comum)
+Descrição:
+Favor: Dano de Corte sofrido é reduzido em -1.
+Preço | DF | DM | Dureza | Conjuração | Requisitos
+13 | +3 | +3 | 28 | Desvantagem | Força 3
+
+Efeitos Adicionais: Nenhum.
+Robe Cerimonial (Leve/Incomum)
+Descrição:
+Favor: Dano Mágico sofrido reduzido em -2.
+Preço | DF | DM | Dureza | Conjuração | Requisitos
+9 | +1 | +3 | 20 | +1 | Gnose 3
+
+Efeitos Adicionais: Nenhum.
+Robe de Guerra (Médio/Raro)
+Descrição:
+Favor: Dano sofrido reduzido em -1.
+Preço | DF | DM | Dureza | Conjuração | Requisitos
+18 | +2 | +5 | 28 | +2 | Gnose 4
+
+Efeitos Adicionais: Nenhum.
+Roupa Pesada (Leve/Comum)
+Descrição:
+Favor: Concede Bônus de +1 na Defesa faltante entre DF ou DM.
+Preço | DF | DM | Dureza | Conjuração | Requisitos
+3 | +0 | +0 | 20 | - | Destreza 3
+
+Efeitos Adicionais: Concede Bônus de +1 em DF ou DM, definido na fabricação.
+
+Botas
+
+Botas do Aventureiro (Leve/Comum)
+Descrição:
+Favor: Bônus em Movimento Base muda para +2UD na primeira Rodada.
+Preço | DF | DM | Dureza | Conjuração | Requisitos
+2 | +0 | +0 | 20 | - | Destreza 3
+
+Efeitos Adicionais: Movimento Base (todos) aumenta em +1.
+Botinas de Escalada (Leve/Incomum)
+Descrição:
+Favor: Movimento Base Vertical e de escalada aumentam em +2UD.
+Preço | DF | DM | Dureza | Conjuração | Requisitos
+4 | +0 | +0 | 20 | - | Força 3
+
+Efeitos Adicionais: Vantagem nas rolagens de Atletismo para Escalar.
+Grevas dos Anões (Pesada/Épico)
+Descrição:
+Favor: Bônus nas Defesas enquanto em movimento muda para +2.
+Preço | DF | DM | Dureza | Conjuração | Requisitos
+12 | +1 | +1 | 24 | - | Vigor 3
+
+Efeitos Adicionais: Bônus de +1 nas Defesas enquanto em movimento.
+Nadadeiras Deciembranas (Leve/Raro)
+Descrição:
+Favor: Movimento Base de Natação +2UD.
+Preço | DF | DM | Dureza | Conjuração | Requisitos
+6 | +0 | +0 | 20 | - | Força 3
+
+Efeitos Adicionais: Vantagem nas rolagens de Atletismo para Natação.
+Sandalhas do Corredor (Leve/Incomum)
+Descrição:
+Favor: Distância da ação Reposicionar-se aumenta em +1UD.
+Preço | DF | DM | Dureza | Conjuração | Requisitos
+6 | +0 | +0 | 20 | - | Destreza 3
+
+Efeitos Adicionais: Movimento Base (terrestre) aumenta em +2UD.
+Sandalhas dos Pequeninos (Leve/Raro)
+Descrição:
+Favor: Movimento Base (todos) aumenta em +1.
+Preço | DF | DM | Dureza | Conjuração | Requisitos
+8 | +0 | +0 | 20 | - | Destreza 3
+
+Efeitos Adicionais: Concede Vantagem nas rolagens de Furtividade.
+
+Capas
+
+Capa do Viajante (Leve/Comum)
+Descrição:
+Favor: Resistência Elemental: Fogo e Frio.
+Preço | DF | DM | Dureza | Conjuração | Requisitos
+2 | +0 | +0 | 20 | - | Vigor 3
+
+Efeitos Adicionais: Protege o personagem de efeitos climáticos variáveis, mas não extremos.
+Capa Esvoaçante (Leve/Incomum)
+Descrição:
+Favor: Concede Vantagem em rolagens de Persuasão.
+Preço | DF | DM | Dureza | Conjuração | Requisitos
+8 | +0 | +0 | 20 | - | Carisma 3
+
+Efeitos Adicionais: Nenhum.
+Gabardina Élfica (Leve/Raro)
+Descrição:
+Favor: Bônus em danos e curas mágicas mudam para +2.
+Preço | DF | DM | Dureza | Conjuração | Requisitos
+11 | +0 | +0 | 20 | +1 | Foco 3
+
+Efeitos Adicionais: Efeitos de danos e curas mágicas aumentam em +1.
+Manto Nortenho (Médio/Raro)
+Descrição:
+Favor: Dano Físico sofrido é reduzido em -1.
+Preço | DF | DM | Dureza | Conjuração | Requisitos
+10 | +1 | +0 | 24 | - | Vigor 3
+
+Efeitos Adicionais: Nenhum.
+Poncho do Aventureiro (Leve/Comum)
+Descrição:
+Favor: Resistência Elemental: Todas
+Preço | DF | DM | Dureza | Conjuração | Requisitos
+6 | +1 | +0 | 20 | - | Destreza 3
+
+Efeitos Adicionais: Nenhum.
+Sobretudo do Inquisidor (Leve/Incomum)
+Descrição:
+Favor: Duração de Encantamentos e Maldições reduzidas em -1 Rodada, não reduz duração de Magias Elementais: Fogo, Sagradas e Primordiais.
+Preço | DF | DM | Dureza | Conjuração | Requisitos
+7 | +0 | +1 | 20 | +1 | Foco 3
+
+Efeitos Adicionais: Dano Mágico sofrido reduzido em -1.
+Veste Sombria (Leve/Incomum)
+Descrição:
+Favor: Concede ao usuário Vantagem nas rolagens de Ladinice.
+Preço | DF | DM | Dureza | Conjuração | Requisitos
+9 | +0 | +0 | 20 | +1 | Destreza 3
+
+Efeitos Adicionais: Concede ao usuário Vantagem nas rolagens de Furtividade.
+
+Escudos
+
+Braçadeiras (Leve/Incomum)
+Descrição:
+Favor: Bônus defensivos desencadeado quando não fizer ações ofensivas afeta Defesas ao invés de DM.
+Preço | DF | DM | Dureza | Conjuração | Requisitos
+5 | +0 | +1 | 20 | - | Destreza 3
+
+Efeitos Adicionais: Concede Bônus de +1 em DM do usuário se ele não tiver realizado nenhuma ação ofensiva nesta Rodada.
+Bracelete Arcano (Leve/Raro)
+Descrição:
+Favor: Bônus em Defesas do efeito ativo muda para +2.
+Preço | DF | DM | Dureza | Conjuração | Requisitos
+11 | +0 | +1 | 20 | +1 | Foco 3
+
+Efeitos Adicionais: Com o Tempo de Ação de 1PA, o usuário pode utilizar 2PM para aumentar os Bônus nas Defesas em +1 por 3 Rodadas (efeito não cumulativo). Apenas personagens capazes de Conjurar ou Mimetizar magias podem ativar este efeito.
+Broquel (Leve/Incomum)
+Descrição:
+Favor: Bônus defensivos desencadeado quando não fizer ações ofensivas afeta Defesas ao invés de DF.
+Preço | DF | DM | Dureza | Conjuração | Requisitos
+4 | +1 | +0 | 20 | - | Destreza 3
+
+Efeitos Adicionais: Concede Bônus de +1 em DF do usuário se ele não tiver realizado nenhuma ação ofensiva nesta Rodada.
+
+Escudo Médio (Médio/Comum)
+Descrição:
+Favor: Adicionalmente aos bônus defensivos desencadeados quando não fizer ações ofensivas, danos sofridos são reduzidos em -1.
+Preço | DF | DM | Dureza | Conjuração | Requisitos
+5 | +2 | +1 | 20 | - | Força 3
+
+Efeitos Adicionais: Concede Bônus de +1 nas Defesas do usuário se ele não tiver realizado nenhuma ação ofensiva nesta Rodada.
+Escudo de Corpo (Pesado/Raro)
+Descrição:
+Favor: Adicionalmente aos bônus defensivos desencadeados quando não fizer ações ofensivas, danos sofridos são reduzidos em -1.
+Preço | DF | DM | Dureza | Conjuração | Requisitos
+9 | +2 | +2 | 20 | Desvantagem | Força 3
+
+Efeitos Adicionais: Concede Bônus de +2 nas Defesas do usuário se ele não tiver realizado nenhuma ação ofensiva nesta Rodada.
+
+Repulsor (Médio/Épico)
+Descrição:
+Favor: Enquanto efeito estiver ativo reduz danos sofridos em -1.
+Preço | DF | DM | Dureza | Conjuração | Requisitos
+14 | +1 | +1 | 20 | +2 | Foco 3
+
+Efeitos Adicionais: Com o Tempo de Ação de 1PA, o usuário pode utilizar 2PM para aumentar os Bônus nas Defesas em +2 por 3 Rodadas (efeito não cumulativo). Apenas personagens capazes de Conjurar ou Mimetizar magias podem ativar este efeito.
+
+Protetores de Cabeça
+
+Capacetes e Elmos Fechados (Médio/Comum)
+Descrição:
+Favor: Duração de Encantamentos hostis reduzida em 1 Rodada.
+Preço | DF | DM | Dureza | Conjuração | Requisitos
+7 | +1 | +1 | 20 | - | Vigor 3
+
+Efeitos Adicionais: Concede ao seu usuário Bônus de +1 em DF ou DM, definido na fabricação.
+Chapéu Galante (Leve/Incomum)
+Descrição:
+Favor: Vantagem concedida em rolagens de Persuasão muda de apenas Diplomacias para qualquer finalidade.
+Preço | DF | DM | Dureza | Conjuração | Requisitos
+8 | +0 | +0 | 20 | - | Carisma 3
+
+Efeitos Adicionais: Vantagem em rolagens de Persuasão para Diplomacia.
+Charme do Artesão (Médio/Raro)
+Descrição:
+Favor: Primeira rolagem de Artes ou Conhecimentos, conforme Perícia definida na criação, efetuada em cada Rodada tem o Tempo de Ação reduzido em -1PA.
+Preço | DF | DM | Dureza | Conjuração | Requisitos
+8 | +0 | +0 | 20 | - | Car 3/Gno 3
+
+Efeitos Adicionais: Vantagem em rolagens de Artes ou Conhecimentos, benefício definido durante a fabricação.
+Face do Bufão (Leve/Raro)
+Descrição:
+Favor: Vantagem em rolagens de Ladinice.
+Preço | DF | DM | Dureza | Conjuração | Requisitos
+3 | +0 | +0 | 20 | +1 | Carisma 3
+
+Efeitos Adicionais: Vantagem em rolagens de Persuasão para Blefar ou Intimidar, benefício definido durante a fabricação.
+Gorro do Mago (Leve/Épico)
+Descrição:
+Favor: Duração dos Encantamentos conjurados aumentam em +1 Rodada.
+Preço | DF | DM | Dureza | Conjuração | Requisitos
+8 | +0 | +1 | 20 | +1 | Foco 4
+
+Efeitos Adicionais: Efeitos de danos e curas mágicas aumentam em +1.
+Máscara Primal (Médio/Raro)
+Descrição:
+Favor: Concede Vantagem nas rolagens de Persuasão efetuada contra Monstros.
+Preço | DF | DM | Dureza | Conjuração | Requisitos
+4 | +0 | +0 | 20 | +1 | Carisma 3
+
+Efeitos Adicionais: Concede Vantagem nas rolagens de Empatia Selvagem.
+Tiaras e Bandanas (Leve/Incomum)
+Descrição:
+Favor: Nenhum.
+Preço | DF | DM | Dureza | Conjuração | Requisitos
+3 | +0 | +0 | 20 | - | Nenhum
+
+Efeitos Adicionais: Concede Bônus de +1 em DF ou DM, definido na fabricação.
+
+Equipamentos Ofensivos
+Armas
+Arco
+
+Arco Composto (Médio/Raro) | Preço 17 | Dureza 
+Descrição: 
+Favor: Adiciona Metade da Força aos Danos Causados.
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
+1d6+2 | Projétil | Projétil (17) | Longa | Força 3
+
+Efeitos Adicionais: Exige o uso de ambas as mãos para atirar.
+Arco Curto (Leve/Comum) | Preço 9
+Descrição: 
+Favor: Margem Crítica Menor muda para 16.
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
+1d6+1 | Projétil | Projétil (17) | Média | Destreza 3
+
+Efeitos Adicionais: Exige o uso de ambas as mãos para atirar.
+Arco Longo (Pesado/Incomum) | Preço 14
+Descrição: 
+Favor: Alcance Base muda para Distância Muito Longa
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
+1d6+3 | Projétil | Projétil (17) | Longa | Destreza 3
+
+Efeitos Adicionais: Exige o uso de ambas as mãos para atirar.
+
+Arremesso
+
+Dardos e Shukens (Leve/Comum) | Preço 7
+Descrição: 
+Favor: Primeiro arremesso em cada um de seus Turnos tem o Tempo de Ação reduzido em -1PA.
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
+1d6+1 | Perfurante | Excruciante (17) | Curto | Destreza 3
+
+Efeitos Adicionais: Vendido em kits de 6 unidades
+Pilum (Médio/Raro) | Preço 14
+Descrição: 
+Favor: Causa +1d6 pontos de danos adicionais se o alvo for um objeto, construto ou equipamento.
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
+2d6 | Perfurante | Estilhaçador(17) | Curto | For 3/Des 3
+
+Efeitos Adicionais: Também pode ser usado como Arma Corpo-a-Corpo, dano reduzido para 1d6+1.
+Arremessos de Pilum possuem a Corrente de Efeitos – Destruidor de Escudos: Causa a mesma quantidade de danos ao Escudo do alvo.
+Zarabatana (Leve/Comum) | Preço 6
+Descrição: 
+Favor: Dano Base do Dardo aumenta em +1 (para um total de +2).
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
+Projétil | Projétil | Projétil | Médio | Destreza 4
+
+Efeitos Adicionais: Usada apenas para disparar Dardos, o Dano Base dos dardos aumenta em +1 e a Distância Base muda para Longa.
+Tempo de Recarga 1PA.
+Zarabatana de Caça (Médio/Comum) | Preço 9
+Descrição: 
+Favor: Margem Crítica Menor muda para 16 e recebe Ferida Profunda como um Efeito Crítico adicional.
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
+Projétil | Projétil | Projétil | Longo | Destreza 4
+
+Efeitos Adicionais: Usada apenas para disparar Dardos, o Dano Base dos dardos aumenta em +2 e a Distância Base muda para Muito Longa.
+Exige o uso de ambas as mãos para atirar, Tempo de Recarga 1PA.
+
+Balestra
+
+Besta de Mão (Leve/Raro) | Preço 17
+Descrição: 
+Favor: Uma vez por Cena pode disparar como Ação Livre.
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
+1d6+3 | Projétil | Projétil (16) | Médio | Destreza 3
+
+Efeitos Adicionais: Precisa ser recarregada após cada disparo, Tempo de Ação da recarga 1PA.
+Besta de Repetição (Médio/Mítico) | Preço 22
+Descrição: 
+Favor: Tempo de Ação da recarga reduzido para 1PA.
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
+1d6+2 | Projétil | Projétil (16) | Médio | Destreza 4
+
+Efeitos Adicionais: Exige o uso de ambas as mãos para atirar.
+Precisa ser recarregada após 5 disparos, Tempo de Ação da recarga 2PA.
+Besta Pesada (Pesado/Incomum) | Preço 14
+Descrição: 
+Favor: Vantagem nas Rolagens de Ataque à Distância.
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
+2d6+1 | Projétil | Projétil (16) | Longo | Des 3/For 3
+
+Efeitos Adicionais: Exige o uso de ambas as mãos para atirar.
+Precisa ser recarregada após cada disparo, Tempo de Ação da recarga 1PA.
+
+Chicote
+
+Chicote (Leve/Incomum) | Preço 11
+Descrição: 
+Favor: Possui a Corrente de Efeitos - Prender e Puxar: Inutiliza um Equipamento do alvo, arma ou escudo, até que o alvo gaste 1PA para soltá-lo. Se o alvo for um objeto solto poderá puxá-lo até você (+1PA).
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
+1d6+1 | Corte | Atordoante (16) | Curta | Nenhum
+
+Efeitos Adicionais: Nenhum
+Chicote Ferrão (Médio/Raro) | Preço 14
+Descrição: 
+Favor: Possui a Corrente de Efeitos - Prender e Puxar: Inutiliza um Equipamento do alvo, arma ou escudo, até que o alvo gaste 1PA para soltá-lo. Se o alvo for um objeto solto poderá puxá-lo até você (+1PA).
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
+1d6+2 | Corte | Atordoante (16) | Curta | Nenhum
+
+Efeitos Adicionais: Nenhum.
+Corrente Espinhosa (Pesado/Raro) | Preço 15
+Descrição: Uma exótica e robusta corrente de metal, com espinhos e lâminas entre seus pesados e desajeitados elos.
+Favor: Possui a Corrente de Efeitos – Esmaga e Mói: Adicionalmente o tipo de dano causado é Perfurante e os danos aumentam em +1d6.
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
+2d6 | Esmagamento | Desmembrar (16) | Muito Curta | Nenhum
+
+Efeitos Adicionais: Grande, lenta e extremamente pesada, exige uso de ambas as mãos para atacar e o Tempo de Ação dos ataques é aumentado em +1PA.
+Espada Chicote (Leve/ Mítico) | Preço 26
+Descrição: 
+Favor: Possui a Corrente de Efeitos – Marcar Território: Este ataque atinge um personagem adicional, o novo alvo pode sofrer até 1d6 pontos de danos, mas apenas se estiver adjacente ao alvo primário e se suas Defesas forem superadas.
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
+1d6+1 | Esmagamento | Guilhotina (17) | Adjacente | Nenhum
+
+Efeitos Adicionais: Recebe o Aprimoramento Alcance Estendido mesmo se não for uma Obra-Prima, atacar alvos que não estejam adjacentes reduz o Dano Base desta Arma para 1d6.
+
+Clava
+
+Bordão ou Bo (Médio/Comum) | Preço 7
+Descrição: 
+Favor: Concede Bônus de +2 as Defesas do usuário
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
+1d6+2 | Esmagamento | Atordoante (17) | Adjacente | Destreza 3
+
+Efeitos Adicionais: Versões Obras-Primas podem receber Aprimoramentos de Equipamentos ofensivos ou defensivos. Exige o uso de ambas as mãos para atacar.
+Maça ou Mangual (Leve/Comum) | Preço 6
+Descrição: 
+Favor: Vantagem nas rolagens de Danos Críticos.
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
+1d6+1 | Esmagamento | Atordoante (17) | Adjacente | Força 3
+
+Efeitos Adicionais: Nenhum
+Maça de Guerra ou Mangual Pesado (Médio/Incomum) | Preço 11
+Descrição: 
+Favor: Danos Críticos +1d6.
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
+1d6+3 | Esmagamento | Atordoante (17) | Adjacente | Força 3
+
+Efeitos Adicionais: Nenhum
+Martelo de Guerra ou Tetsubo (Pesado/Raro) | Preço 14
+Descrição: 
+Favor: Dano Base da Arma muda para 2d6+1.
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
+1d6+3 | Esmagamento | Estilhaçador (17) | Adjacente | Força 4
+
+Efeitos Adicionais: Personagens com Força 3 ou inferior precisam utilizar ambas as mãos para atacar.
+Tonfa (Leve/Raro) | Preço 6
+Descrição: 
+Favor: Bônus cumulativo de +1 em DF para cada Tonfa empunhada.
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
+1d6+1 | Esmagamento | Atordoante (17) | Adjacente | Destreza 4
+
+Efeitos Adicionais: Versões Obras-Primas podem receber Aprimoramentos de Equipamentos ofensivos e defensivos.
+
+Lâmina Leve
+
+Adaga, Kunai ou Seax (Leve/Comum) | Preço 3
+Descrição: 
+Favor: Nenhum
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
+1d6+1 | Perfurante | Sangramento (17) | Adjacente | Nenhum
+
+Efeitos Adicionais: Pode ser utilizado como uma Arma de Arremesso – Alvo Único Distância Curta.
+Espada Curta ou Wakizashi (Leve/Comum) | Preço 5
+Descrição: 
+Favor: Nenhum
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
+1d6+2 | Cortante | Dilacerar (17) | Adjacente | Nenhum
+
+Efeitos Adicionais: Nenhum
+Espada Gancho ou Sai (Leve/Raro) | Preço 13
+Descrição: 
+Favor: Ataques recebem a Corrente de Efeitos – Prender a Arma: Alvo sofre Desvantagem nas Rolagens de Perícia de Ataque e Danos por 1 Rodada. Armas Naturais são imunes a esta Corrente de Efeitos.
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
+1d6+1 | Perfurante | Sangramento (17) | Adjacente | Nenhum
+
+Efeitos Adicionais: DF +1
+Florete ou Sabre (Leve/Incomum) | Preço 11
+Descrição: 
+Favor: Margem Crítica Menor muda para 16.
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
+1d6+2 | Perfurante | Sangramento (17) | Adjacente | Destreza 3
+
+Efeitos Adicionais: Pode receber o Aprimoramento Guarda Mãos mesmo se não for uma Obra-Prima, o preço do Aprimoramento deve ser pago normalmente. Versões Obras-Primas desta arma sempre recebem este Aprimoramento como efeito adicional.
+Foice de Mão (Leve/Incomum) | Preço 8
+Descrição: 
+Favor: Margem Crítica Menor muda para 16.
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
+1d6+1 | Cortante | Dilacerar (17) | Adjacente | Destreza 3
+
+Efeitos Adicionais: Pode receber o Aprimoramento Corrente com Peso mesmo se não for uma Obra-Prima, o preço do Aprimoramento deve ser pago normalmente.
+Machado de Mão (Leve/Comum) | Preço 6
+Descrição: 
+Favor: Nenhum
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
+1d6+2 | Cortante | Dilacerar (17) | Adjacente | Nenhum
+
+Efeitos Adicionais: Pode ser usado como arma de Arremesso – Alvo Único Distância Curta, quando arremessado o Dano Base da Arma muda para 1d6+1.
+
+Lâmina Pesada
+
+Espada Bastarda ou Kodachi (Médio/Raro) | Preço 7
+Descrição: 
+Favor: Nenhum
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
+1d6+2 | Cortante | Dilacerar (17) | Adjacente | Nenhum
+
+Efeitos Adicionais: Nenhum
+Espada Longa ou Katana (Pesada/Incomum) | Preço 10
+Descrição: 
+Favor: Dano Base muda para 2d6.
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
+1d6+3 | Cortante | Desmembrar (17) | Adjacente | Força 4
+
+Efeitos Adicionais: Nenhum
+Foice de Batalha (Pesado/Incomum) | Preço 10
+Descrição: 
+Favor: Margem Crítica Menor muda para 16.
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
+1d6+2 | Cortante | Dilacerar (17) | Adjacente | Des 3/For 3
+
+Efeitos Adicionais: Permite aumentar o Tempo de Ação de rolagens de Ataque Corpo-a-Corpo em +1PA para aumentar a Margem Crítica em +1.
+Machado de Guerra (Pesado/Comum) | Preço 12
+Descrição: 
+Favor: Vantagem nas Rolagens de Danos Críticos.
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
+2d6 | Cortante | Desmembrar (17) | Adjacente | Força 4
+
+Efeitos Adicionais: Pode ser usado como arma de Arremesso – Alvo Único Distância Curta, quando arremessado o Dano Base da Arma muda para 1d6+3.
+Mata-Dragão (Pesado/Mítico) | Preço 20
+Descrição: Uma espada enorme, larga e maciça, de proporções surreais. Normalmente usada em rituais ou festivais por sua beleza e imponência, mas é considerada impossível de empunhar em combate.
+Favor: Margem Crítica Menor muda para 15.
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
+3d6 | Esmagamento | Desmembrar (17) | Adjacente | Força 6
+
+Efeitos Adicionais: Apenas personagens com Força 4 ou superior podem empunhá-la. Exige uso de ambas as mãos para atacar e o Tempo de Ação dos ataques é aumentado em +1PA.
+Montante ou Odachi (Pesado/Raro) | Preço 15
+Descrição: 
+Favor: Dano Base muda para 2d6+1.
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
+2d6 | Cortante | Desmembrar (17) | Adjacente | Força 4
+
+Efeitos Adicionais: Nenhum
+
+Lança
+
+Alabarda ou Naginata (Média/Rara) | Preço 12
+Descrição: 
+Favor: Alcance Base muda para Muito Curto e Margem Crítica Menor muda para 16.
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
+1d6+2 | Cortante | Ferida Profunda (17) | Adjacente | For 4 ou Des 4
+
+Efeitos Adicionais: Dano Base muda para 2d6 quanto utilizada enquanto montando um animal ou dirigindo.
+Javelin (Média/Comum) | Preço 9
+Descrição: 
+Favor: Vantagem nas rolagens de Ataque à Distância.
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
+1d6+1 | Perfurante | Ferida Profunda (17) | Muito Curta | For 3 ou Des 3
+
+Efeitos Adicionais: Pode ser utilizado como uma Arma de Arremesso – Alvo Único Distância Longa. Arremessos de Javelin bem-sucedidos recebem Vantagem nas rolagens de Danos.
+Lança (Média/Comum) | Preço 8
+Descrição: 
+Favor: Margem Crítica Menor muda para 16.
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
+1d6+3 | Perfurante | Empalar (17) | Muito Curta | For 3 ou Des 3
+
+Efeitos Adicionais: Pode ser utilizado como uma Arma de Arremesso – Alvo Único Distância Média.
+Lança de Justa (Pesada/Raro) | Preço 15
+Descrição: 
+Favor: Recebe a Corrente de Efeitos – Derrubar: Alvos atingidos são derrubados, recebendo a Condição Caído.
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
+1d6+1 | Perfurante | Desmembrar (17) | Muito Curta | Força 4
+
+Efeitos Adicionais: Dano Base muda para 2d6+2 quanto utilizada enquanto montando um animal ou dirigindo.
+Pique (Pesada/Incomum) | Preço 12
+Descrição: 
+Favor: Margem Crítica Menor muda para 16 e não mais aumenta o Tempo de Ação dos Ataques.
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
+1d6+2 | Perfurante | Empalar (17) | Curta | For 4 ou Des 4
+
+Efeitos Adicionais: Exige uso de ambas as mãos para atacar e o Tempo de Ação dos ataques é aumentado em +1PA.
+
+Fortalecimento
+
+Armadilha de Urso (Leve/Raro) | Preço 15
+Descrição: Uma dentadura de metal laminada e muito afiada.
+Favor: Possui a Corrente de Efeitos – Arrancar Bocados: Aplica o efeito Sangramento ao alvo.
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
++1 | Corte | Excruciante | Adjacente | Des 3/Vig 3
+
+Efeitos Adicionais: Aumenta o Danos Base das Presas Afiadas e altera o tipo de Efeito Crítico.
+Considerado Arma Natural para efeitos de Talentos e Habilidades.
+Bota Laminada (Leve/Raro) | Preço 12
+Descrição: 
+Favor: Margem Crítica do Ataque Desarmado aumentada em +1 número.
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
++1 | Variável | Dilacerar | Adjacente | For 3 ou Des 3
+
+Efeitos Adicionais: Aumenta o Danos Base do Ataque Desarmado e altera o tipo de Efeito Crítico.
+Tipo de Dano definido entre Cortante ou Perfurante durante a confecção do item. Este Equipamento ocupa o espaço de um item do tipo Bota.
+Considerado Ataque Desarmado para efeitos de Talentos e Habilidades.
+Calda Espinhosa (Leve/Incomum) | Preço 11
+Descrição: Diversas cintas com grandes espinhos que devem ser anexas à calda do personagem.
+Favor: Possui a Corrente de Efeitos – Calda Poderosa: Multiplicador de PV do alvo é reduzido em -1, efeito não cumulativo.
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
++1 | Variável | Ferida Profunda | Adjacente | For 3/Vig 3
+
+Efeitos Adicionais: Aumenta o Danos Base da Calda Chicote ou Calda Constritora e altera o tipo de Efeito Crítico.
+Tipo de Dano definido entre Cortante ou Perfurante durante a confecção do item. Este Equipamento ocupa o espaço de um item do tipo Bota.
+Considerado Arma Natural para efeitos de Talentos e Habilidades.
+Cestus (Leve/Comum) | Preço 3
+Descrição: 
+Favor: Defesas +1.
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
++1 | Esmagamento | Prevenir | Adjacente | For 3 ou Des 3
+
+Efeitos Adicionais: Aumenta o Danos Base do Ataque Desarmado e altera o tipo de Efeito Crítico.
+Considerado Ataque Desarmado para efeitos de Talentos e Habilidades.
+Empalador (Pesado/Raro) | Preço 15
+Descrição: Coras colocadas nos Chifres Poderosos com espinhos e ganchos, tornando os ataques do chifre ainda mais letais.
+Favor: Investidas utilizando o Empalador recebem a Corrente de Efeitos – Ferida Mortal: Dano aumenta em +1d6 e aplica o Efeito Crítico Empalar.
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
++1 | Perfuração | Estilhaçador | +1UD | For 3/Des 3
+
+Efeitos Adicionais: Aumenta o Danos Base dos Chifres Poderosos, altera o tipo de Efeito Crítico e Alcance.
+Considerado Arma Natural para efeitos de Talentos e Habilidades.
+Garras de Aço (Leve/Raro) | Preço 15
+Descrição: Luvas reforçadas que protegem as mãos e fortalecem as garras.
+Favor: Defesas +1 e recebe a Corrente de Efeitos – Corte Limpo: Efeitos de Curas direcionados ao alvo são reduzidos à metade por 1 Rodada.
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
++1 | Esmagamento | Prevenir | Adjacente | Des 3/Vig 3
+
+Efeitos Adicionais: Aumenta o Danos Base das Garras Afiadas e altera o tipo de Efeito Crítico.
+Considerado Arma Natural para efeitos de Talentos e Habilidades.
+Grevas Esmagadoras (Leve/Incomum) | Preço 9
+Descrição: 
+Favor: Margem Crítica do Ataque Desarmado aumentada em +1 número.
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
++1 | Esmagamento | Estilhaçador | Adjacente | For 3 ou Des 3
+
+Efeitos Adicionais: Aumenta o Danos Base do Ataque Desarmado e altera o tipo de Efeito Crítico.
+Este Equipamento ocupa o espaço de um item do tipo Bota.
+Considerado Ataque Desarmado para efeitos de Talentos e Habilidades.
+Katar (Leve/Raro) | Preço 13
+Descrição: 
+Favor: Margem Crítica do Ataque Desarmado aumentada em +1 número.
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
++1 | Perfurante | Empalar | Adjacente | For 3 ou Des 3
+
+Efeitos Adicionais: Aumenta o Danos Base do Ataque Desarmado e altera o tipo de Efeito Crítico.
+Considerado Ataque Desarmado para efeitos de Talentos e Habilidades.
+Manopla com Garras (Leve/Incomum) | Preço 11
+Descrição: 
+Favor: Bônus de Dano Base do Ataque Desarmado muda para +2.
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
++1 | Cortante | Sangramento | Adjacente | For 3 ou Des 3
+
+Efeitos Adicionais: Aumenta o Danos Base do Ataque Desarmado e altera o tipo de Efeito Crítico.
+Considerado Ataque Desarmado para efeitos de Talentos e Habilidades.
+
+Artefatos de Conjuração
+
+Adaga de Cerimônias (Leve/Incomum) | Preço 12
+Descrição: 
+Favor: Bônus do efeito ativo muda para +2.
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
+1d6+1 | Perfurante | Primor (17) | Adjacente | Des 3/Foc 3
+
+Efeitos Adicionais: Com o Tempo de Ação de 1PA, o usuário pode utilizar 2PM para aumentar o Dano Base dos Ataques Físicos, Danos Mágicos e Curas Mágicas em +1 por 3 Rodadas (efeito não cumulativo). Apenas personagens capazes de Conjurar ou Mimetizar magias podem ativar este efeito.
+Báculo (Leve/Incomum) | Preço 12
+Descrição: 
+Favor: Vantagem nas Rolagens de Perícias para Conjuração de Magias. Magias conjuradas recebem a Corrente de Efeitos – Toque Divino: Efeitos de danos e curas desta sua magia aumentam em +2.
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
+1d6+1 | Esmagamento | Atordoante (17) | Adjacente | Foco 3
+
+Efeitos Adicionais: Margem Crítica Menor das Magias que conjurar aumentam em +1.
+Bisarma Canalizadora (Pesado/Épico) | Preço 20
+Descrição: 
+Favor: Enquanto efeito estiver ativo recebe Alcance Estendido como Aprimoramento de Obra-Prima adicional.
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
+2d6+1 | Perfurante | Primor (16) | Muito Curto | For 3/Foc 3
+
+Efeitos Adicionais: Exige uso de ambas as mãos para atacar.
+Com o Tempo de Ação de 1PA, o usuário pode utilizar 2PM para receber Vantagem em suas rolagens de Perícias para ataques e conjurações por 3 Rodadas (efeito não cumulativo). Apenas personagens capazes de Conjurar ou Mimetizar magias podem ativar este efeito.
+Bola de Crista (Leve/Épico) | Preço 20
+Descrição: 
+Favor: Vantagem nas Rolagens de Perícias para Conjuração de Magias. Magias conjuradas recebem a Corrente de Efeitos – Futuro Previsto: Esta Magia aplica Efeitos Críticos Menores aos alvos.
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
+- | - | - | - | Foco 4
+
+Efeitos Adicionais: Alcance de suas Magias de Toque aumentam em +1UD, Alcance de suas Magias à Distância aumentam em 1 passo. Magias conjuradas não mais desencadeiam Efeitos Críticos Menores em função da soma dos dados em suas rolagens de Perícias.
+Cajado do Amparo (Médio/Comum) | Preço 14
+Descrição: 
+Favor: Magias conjuradas recebem a Corrente de Efeitos – Marcas da Proteção: Bônus nas Defesas concedido muda para +3. Esta Corrente de Efeitos não desencadeia durante Conjuração de Magias do tipo Semente.
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
+1d6+1 | Esmagamento | Atordoante (17) | Adjacente | Foco 3
+
+Efeitos Adicionais: Fornece Bônus de +1 em suas Defesas por 1 Rodada após conjurar uma Magia.
+Cajado de Guerra (Médio/Raro) | Preço 26
+Descrição: 
+Favor: Margem Crítica Menor das Magias que conjurar aumentam em +2. Magias conjuradas recebem a Corrente de Efeitos – Marcas da Guerra: Os Bônus em Efeitos de danos e curas de suas Magias e em suas Defesas mudam para +2.
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
+1d6+3 | Esmagamento | Atordoante (17) | Adjacente | For 3/Foc 3
+
+Efeitos Adicionais: Efeitos de danos e curas magicas aumentam em +1. Concede Bônus de +1 em suas Defesas por 1 Rodada após conjurar uma Magia.
+Gladio Canalizador (Médio/Raro) | Preço 16
+Descrição: 
+Favor: Bônus na Margem Crítica Menor do efeito ativo muda para +3.
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
+1d6+3 | Cortante | Primor (17) | Adjacente | For 3/Foc 3
+
+Efeitos Adicionais: Com o Tempo de Ação de 1PA, o usuário pode utilizar 2PM para aumentar a Margem Crítica Menor de Ataques e Magias em +2 por 3 Rodadas (efeito não cumulativo). Apenas personagens capazes de Conjurar ou Mimetizar magias podem ativar este efeito.
+Grimório (Leve/Comum) | Preço 6
+Descrição: 
+Favor: Margem Crítica Menor das Magias que conjurar aumentam em +2. Rolagens Críticas de Magias recebem a Corrente de Efeitos – Otimização Metamágica: Os Efeitos Críticos desta magia desencadeiam duas vezes.
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
+- | - | Atordoante (17) | Adjacente | Foco 4
+
+Efeitos Adicionais: Tempo de Conjuração da primeira Magia que conjurar a cada Rodada é reduzido em -1PA.
+Varinha (Leve/Comum) | Preço 10
+Descrição: 
+Favor: Margem Crítica Menor das Magias que conjurar aumentam em +1. Custos de Bônus Bases usados para conjurar a primeira magia de cada Rodada são reduzidos em -1 (até o mínimo de 1 Bônus Base).
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
+- | - | - | - | Foco 3
+
+Efeitos Adicionais: Margem Crítica Menor das Magias que conjurar aumentam em +1. Vantagem nas rolagens de Perícias para conjurar Magias.
+
+Projéteis
+
+Bodkin (Incomum) | Preço 2
+Descrição: 
+Favor: Nenhum
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
+Arma | Perfurante | Excruciante | Arma | Nenhum
+
+Efeitos Adicionais: Margem Crítica Menor da arma aumenta em +1 número. Este Projétil não pode ser recuperada após ser disparado.
+Preço para 15 unidades.
+Esférica (Raro) | Preço 3
+Descrição: 
+Favor: Nenhum
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
+Arma | Esmagamento | Estilhaçador | Arma | Nenhum
+
+Efeitos Adicionais: Ataque recebe a Corrente de Efeito – Disparo Esmagador: Adicionalmente o alvo e seus Equipamentos Defensivos sofrem 1 ponto de dano.
+Preço para 15 unidades.
+Folha Cortante (Incomum) | Preço 3
+Descrição: 
+Favor: Nenhum
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
+Arma | Cortante | Dilacerar | Arma | Nenhum
+
+Efeitos Adicionais: Ataque recebe a Corrente de Efeitos – Trespassar Longínquo: Tipo de ataque muda de Alvo Único para Penetrante (Distância Curta).
+Preço para 15 unidades.
+Ponta Simples (Leve/Comum) | Preço 3
+Descrição: 
+Favor: Nenhum
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
+Arma | Perfurante | Sangramento | Arma | Nenhum
+
+Efeitos Adicionais: Nenhum
+Preço para 30 unidades.
+Ponta Dupla (Raro) | Preço 4
+Descrição: 
+Favor: Nenhum
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
+Arma | Perfurante | Ferida Profunda | Arma | Nenhum
+
+Efeitos Adicionais: Ataque recebe a Corrente de Efeitos – Desestabilizar: O Movimento Base do alvo é reduzido em -1UD. Se o alvo tiver Movimento Base de Voo, ele pousará obrigatoriamente no próximo Turno dele e será impedido de Voar por 2 Rodadas.
+Preço para 10 unidades.
+Porta Fogo (Raro) | Preço 5
+Descrição: 
+Favor: Nenhum
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
+Arma | Esmagamento | Inflamar | Arma | Nenhum
+
+Efeitos Adicionais: Corrente de Efeitos – Incendiar: Causa +1d6 pontos de danos e o tipo de dano muda para Físico Elemental: Fogo.
+Preço para 10 unidades.
+
+Próteses <em produção>
+
+Equipamentos Naturais
+Armas Naturais
+
+Arma de Sopro (Leve/Natural)
+Descrição: Armas de Sopro permitem que certos personagens criem e emitir energia física elemental.
+Favor: Adiciona metade do Vigor ao Dano.
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
+1d6+2 | Elemental | Cataclismo (17) | Cone (Médio) | Vigor 3
+
+Efeitos Adicionais: Refrigeração 1, dano reduzido em -1 à cada UD percorrido.
+Ataque Desarmado (Leve/Natural)
+Descrição: Ataques feitos com punhos, pernas e outras partes do corpo.
+Favor: Nenhum
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
+1d6 | Esmagamento | Atordoante (17) | Adjacente | Nenhum
+
+Efeitos Adicionais: Desvantagem nas rolagens de Ataque Corpo-a-Corpo.
+Cauda Chicote (Média/Natural)
+Descrição: Uma Cauda fina e leve, mas muito rápida, algumas vezes com ossos sobressalentes e pesados na ponta, sendo ideal para ataques velozes.
+Favor: Corrente de Efeitos – Chicotear: Empurra o alvo 1UD para trás e então causa 2 pontos de danos aos equipamentos defensivos dele.
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
+1d6+1 | Esmagamento | Estilhaçador (17) | Adjacente | Destreza 3
+
+Efeitos Adicionais: Empurra o alvo 1UD para trás em Acertos Críticos.
+Cauda Constritora (Pesada/Natural)
+Descrição: Uma Cauda longa e pesada, que permite se enrolar nas mais diversas superfícies e criaturas.
+Favor: Corrente de Efeitos – Agarrar e Constringir: Se prende ao alvo automaticamente, fazendo o sofrer danos igual ao próprio Vigor a cada Rodada subsequente (rolagem resistida de Ataque para se soltar).
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
+1d6+1 | Esmagamento | Estilhaçador (17) | Adjacente | Vigor 3
+
+Efeitos Adicionais: Atacar com a Cauda ou se mover durante Agarrar e Constringir liberta o alvo imediatamente.
+Chifres Poderosos (Média/Natural)
+Descrição: Chifres, galhadas ou cornos poderosos, capazes de desferir ataques poderosos.
+Favor: Dano em investidas aumenta +1d6.
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
+1d6+1 | Perfuração | Empalar (17) | Adjacente | Força 3
+
+Efeitos Adicionais: Atacar após se mover em direção ao alvo aumenta o dano em +1.
+Garras Afiadas (Leve/Natural)
+Descrição: Garras longas e naturalmente afiadas, capaz de retalhar a carne de seus inimigos.
+Favor: Margem Crítica aumentada em +1 número.
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
+1d6+1 | Corte | Dilacerar (16) | Adjacente | Destreza 3
+
+Efeitos Adicionais: Não é possível segurar objetos enquanto ataca com as Garras Afiadas.
+Presas Longas (Leve/Natural)
+Descrição:
+Favor: Ataques com as Presas Longas recebem Roubo de Vida 1.
+Dano | Tipo | Efeito Crítico | Alcance | Requisitos
+1d6+1 | Perfuração | Sangramento (16) | Adjacente | Vigor 5
+
+Efeitos Adicionais: Corrente de Efeitos – Saliva Anticoagulante: Margem-Crítica deste ataque aumenta em +1, efeitos de Sangramento no alvo aumentam em +1 Rodada.
+
+Defesas Naturais
+
+Corpo Exposto (Leve/Natural)
+Descrição: Ausência de Equipamentos Defensivos, apenas o corpo em sua forma natural.
+Favor: Defesas +2, Conjuração +1.
+DF | DM | Conjuração | Requisitos
++0 | +0 | +0 | Destreza 4
+
+Efeitos Adicionais: Cumulativo apenas com Equipamentos Defensivos do tipo Escudo.
+Cascos e Conchas (Pesado/Natural)
+Descrição:
+Favor: Dano Cortante e Perfurante sofrido é reduzido em -2.
+DF | DM | Conjuração | Requisitos
++3 | +2 | Desvantagem | Vigor 4
+
+Efeitos Adicionais: Nenhum.
+Espinhos (Médio/Natural)
+Descrição:
+Favor: Concede RE: Todas.
+DF | DM | Conjuração | Requisitos
++1 | +3 | - | Vigor 3
+
+Efeitos Adicionais: Nenhum.
+Pele Escamosa ou Emplumada (Leve/Natural)
+Descrição:
+Favor: Dano Cortante sofrido é reduzido em -1.
+DF | DM | Conjuração | Requisitos
++2 | +2 | - | Vigor 3
+
+Efeitos Adicionais: Vantagem em rolagens de Furtividade.
+Pele Escorregadia (Leve/Natural)
+Descrição:
+Favor: Redução de Danos de Esmagamento muda para -2.
+DF | DM | Conjuração | Requisitos
++1 | +1 | - | Vigor 3
+
+Efeitos Adicionais: Danos de Esmagamento sofrido é reduzido em -1.  
+Bônus de +2 nas Defesas para resistir a agarrões e tentativas de derrubadas.
+
+Itens Obras-Primas
+Tipos de Obras-Primas
+Obras-Primas Ofensivas
+
+Precisa (Comum)
+Favor: Bônus em rolagens de Ataque +1
+DF | DM | Ataque | Danos | Conjuração | Requisitos
++0 | +0 | +1 | +0 | +0 | Destreza 3
+
+Características Adicionais: Nenhum
+Brutal (Incomum)
+Favor: Dano Base da Arma aumenta em +1
+DF | DM | Ataque | Danos | Conjuração | Requisitos
++0 | +0 | +0 | +1 | +0 | Força 3
+
+Características Adicionais: Nenhum
+Equilibrada (Incomum)
+Favor: Bônus em rolagens de Ataque e Conjuração +1
+DF | DM | Ataque | Danos | Conjuração | Requisitos
++0 | +0 | +0 | +1 | +0 | For 3/Gno 3
+
+Características Adicionais: Nenhum
+Defensora (Comum)
+Favor: Dano sofrido reduzido em -1.
+DF | DM | Ataque | Danos | Conjuração | Requisitos
++1 | +1 | +0 | +0 | +0 | Des 3/Gno 3
+
+Características Adicionais: Nenhum
+Conjuradora (Incomum)
+Favor: Bônus em rolagens de Conjuração +1
+DF | DM | Ataque | Danos | Conjuração | Requisitos
++0 | +0 | +0 | +0 | +1 | Foco 3
+
+Características Adicionais: Nenhum
+Poderosa (Raro)
+Favor: Magias de Dano ou Cura, Corrente de Efeitos – Foco: Efeito +2.
+DF | DM | Ataque | Danos | Conjuração | Requisitos
++0 | +0 | +0 | +0 | +1 | Foco 3
+
+Características Adicionais: Magias tem Dano e Cura +1, Duração +1.
+Banhada em Prata (Incomum)
+Favor: Margem Crítica Menor aumentada em +2 contra Monstros.
+DF | DM | Ataque | Danos | Conjuração | Requisitos
++0 | +0 | +1 | +1 | +1 | Gnose 3
+
+Características Adicionais: Benefícios desta Obra-Prima são aplicados apenas em ataques, Conjurações de Magias e efeitos rolados contra Monstros.
+Banhada em Ouro (Raro)
+Favor: Margem Crítica Menor de Ataques rolados contra a DM aumentada em +1.
+DF | DM | Ataque | Danos | Conjuração | Requisitos
++0 | +0 | +1 | +0 | +1 | Foco 3
+
+Características Adicionais: Primeiro Ataque da Rodada ignora RM.
+Magistral (Raro)
+Favor: Dano Base da Arma aumenta em +1
+DF | DM | Ataque | Danos | Conjuração | Requisitos
++0 | +0 | +1 | +0 | +0 | For 3/Dex 3
+
+Características Adicionais: Nenhum
+Decisiva (Incomum)
+Favor: Margem Crítica Maior +1.
+DF | DM | Ataque | Danos | Conjuração | Requisitos
++0 | +0 | +0 | +0 | +0 | Destreza 5
+
+Características Adicionais: Margem Crítica Menor +1.
+Material Especial - Dyospiros (Incomum)
+Favor: Ataque feito contra a DM do alvo e causa danos mágicos.
+DF | DM | Ataque | Danos | Conjuração | Requisitos
++0 | +0 | +0 | +1 | +0 | Foco 3
+
+Características Adicionais: Esta arma é feita de madeira, danos Cortantes são substituídos por Esmagamento.
+Material Especial – Ossos de Monstro (Raro)
+Favor: Fornece uma Habilidade Monstruosa Deviante ou Predador, definida aleatoriamente na construção do item.
+DF | DM | Ataque | Danos | Conjuração | Requisitos
++0 | +0 | +0 | +1 | +0 | Gnose 3
+
+Características Adicionais: Ativar o Favor 1PA e 3PM, Duração 2 Rodadas.
+Material Especial – Gelo Verdadeiro (Raro)
+Favor: Corrente de Efeitos – Gelo Verdadeiro: Dano +3
+DF | DM | Ataque | Danos | Conjuração | Requisitos
++0 | +0 | +1 | +0 | +0 | Força 3
+
+Características Adicionais: Dano causado é Físico Elemental: Gelo
+Material Especial – Mitral (Épico)
+Favor: Danos Críticos aumentam em +3
+DF | DM | Ataque | Danos | Conjuração | Requisitos
++0 | +0 | +1 | +0 | +0 | Destreza 3
+
+Características Adicionais: Margem Crítica Menor +1.
+Material Especial – Dente de Dragão (Mítico)
+Favor: Corrente de Efeitos – Fúria Dracônica: Área de Efeito – Explosão.
+DF | DM | Ataque | Danos | Conjuração | Requisitos
++0 | +0 | +1 | +1 | +1 | Destreza 3
+
+Características Adicionais: Dano causado é Físico Elemental
+Material Especial – Adamantina (Épico)
+Favor: Corrente de Efeitos - Ataque Meteórico: Dano Físico +3
+DF | DM | Ataque | Danos | Conjuração | Requisitos
++0 | +0 | +0 | +1 | +0 | Destreza 3
+
+Características Adicionais: Dano Base +1.
+Material Especial – Espírito Umbral (Mítico)
+Favor: Apenas quando em acordo, a arma conta como um Subordinado de tipo determinado em sua confecção.
+DF | DM | Ataque | Danos | Conjuração | Requisitos
++0 | +0 | +1 | +0 | +1 | Carisma 5
+
+Características Adicionais: Este item está vivo e é senciente, pode se comunicar telepaticamente com seu usuário e costuma ajudar seu portador quando seus objetivos estão alinhados.
+Quando em acordo o primeiro ataque efetuado em seu turno causa +1d6 Pontos de Danos, em desacordo atrapalha o usuário concedendo redutor de -1d6 Pontos de Danos. Entrar em acordo com a arma exige sucesso em uma rolagem de Atenção: Discernir Motivação e Persuasão, ambas GD Difícil.
+
+Aprimoramentos de Obras-Primas Ofensivas
+
+Oculta (Incomum)
+Favor: Vantagem em rolagens de Furtividade
+DF | DM | Ataque | Danos | Conjuração
++0 | +0 | +0 | +0 | +0
+
+Características Adicionais: Item tem aparência de item comum.
+Arcanista (Rara)
+Favor: Cura e Danos Mágicos +1
+DF | DM | Ataque | Danos | Conjuração
++0 | +0 | +0 | +0 | +1
+
+Características Adicionais: Nenhum.
+Cruel (Comum)
+Favor: Bônus em Danos Críticos muda para +3
+DF | DM | Ataque | Danos | Conjuração
++0 | +0 | +0 | +0 | +0
+
+Características Adicionais: Danos Críticos +2.
+Encaixe (Épico)
+Favor: Nenhum
+DF | DM | Ataque | Danos | Conjuração
++0 | +0 | +0 | +0 | +0
+
+Características Adicionais: Permite encaixe de Pedra do Poder.
+Guarda Mãos (Comum)
+Favor: Nenhum
+DF | DM | Ataque | Danos | Conjuração
++1 | +0 | +0 | +0 | +0
+
+Características Adicionais: Nenhum.
+Benção de Proteção (Incomum)
+Favor: Nenhum
+DF | DM | Ataque | Danos | Conjuração
++1 | +1 | +0 | +0 | +0
+
+Características Adicionais: Nenhum.
+Alcance Estendido (Raro)
+Favor: Bônus de +1 em rolagens de Ataque e Dano alvos não adjacentes.
+DF | DM | Ataque | Danos | Conjuração
++0 | +0 | +0 | +0 | +0
+
+Características Adicionais: Distância de Ataque aumenta +1UD.
+Benção Elemental (Raro)
+Favor: Bônus de +1 em Conjuração e Danos de Magia Elemental.
+DF | DM | Ataque | Danos | Conjuração
++0 | +0 | +0 | +1 | +0
+
+Características Adicionais: Danos causados são Elemental (tipo escolhido na fabricação) em adicional aos seus tipos.
+Machado Anexo (Incomum)
+Favor: Nenhum
+DF | DM | Ataque | Danos | Conjuração
++0 | +0 | +0 | +0 | +0
+
+Características Adicionais: Armas de Ataque à Distância são Machados.
+Benção Elduriana (Épico)
+Favor: Corrente de Efeitos – Inquisição: GD de Magias do Alvo +2 níveis.
+DF | DM | Ataque | Danos | Conjuração
++0 | +0 | +0 | +0 | +0
+
+Características Adicionais: Roubo de Mana 1.
+Benção Vulcana (Épico)
+Favor: Corrente de Efeitos – Ignora Resistências: Ignora RE e RM.
+DF | DM | Ataque | Danos | Conjuração
++0 | +0 | +0 | +0 | +0
+
+Características Adicionais: Ignora RD do alvo.
+Benção Ymiriana (Incomum)
+Favor: Dano Base da Arma aumenta em +1.
+DF | DM | Ataque | Danos | Conjuração
++0 | +0 | +0 | +1 | +0
+
+Características Adicionais: Nenhum.
+Manopla de Segurança (Comum)
+Favor: Nenhum
+DF | DM | Ataque | Danos | Conjuração
++0 | +0 | +1 | +0 | +0
+
+Características Adicionais: Não pode ser desarmado.
+Corrente com Peso (Incomum)
+Favor: Corrente de Efeitos – Corrente Atacante: Dano +1d6.
+DF | DM | Ataque | Danos | Conjuração
++0 | +0 | +0 | +0 | +0
+
+Características Adicionais: Apenas Armas Leves e passa a exigir uso de ambas as mãos.
+Pente Alongado (Raro)
+Favor: Quantidade de munições muda pra +3.
+DF | DM | Ataque | Danos | Conjuração
++0 | +0 | +0 | +0 | +0
+
+Características Adicionais: Apenas armas à Distância, +2 munições.
+Baioneta (Comum)
+Favor: Nenhum
+DF | DM | Ataque | Danos | Conjuração
++0 | +0 | +0 | +0 | +0
+
+Características Adicionais: Armas de Ataque à Distância são Lanças.
+Maldição: Solve-Vidas (Mítico)
+Favor: Roubo de Vida +1
+DF | DM | Ataque | Danos | Conjuração
++0 | +0 | +1 | +0 | +0
+
+Características Adicionais: Roubo de Vida 2.
+Maldição: Ladra do AEther (Mítico)
+Favor: Roubo de Mana e Determinação +1
+DF | DM | Ataque | Danos | Conjuração
++0 | +0 | +1 | +0 | +0
+
+Características Adicionais: Roubo de Mana e Determinação 1
+
+Obras-Primas Defensivas
+
+Conjuradora (Incomum)
+Favor: Margem Crítica Menor de Magias aumentada em -1.
+DF | DM | Conjuração | Requisitos
++0 | +0 | +1 | Foco 3
+
+Características Adicionais: Nenhum
+Reforçada (Comum)
+Favor: Bônus em DF muda para +2.
+DF | DM | Conjuração | Requisitos
++1 | +0 | +0 | Destreza 3
+
+Características Adicionais: Nenhum
+Rúnica (Comum)
+Favor: Bônus em DM muda para +2.
+DF | DM | Conjuração | Requisitos
++0 | +1 | +0 | Força 3
+
+Características Adicionais: Nenhum
+Equilibrada (Incomum)
+Favor: Danos sofridos reduzidos em -1.
+DF | DM | Conjuração | Requisitos
++1 | +1 | +0 | For 3/Gno 3
+
+Características Adicionais: Nenhum
+Magistral (Incomum)
+Favor: Bônus na Defesa escolhida muda para +3.
+DF | DM | Conjuração | Requisitos
++0 | +0 | +0 | Des 3/Gno 3
+
+Características Adicionais: Concede Bônus de +2 em DF ou DM, definido na criação deste equipamento.
+Sob Medida (Incomum)
+Favor: Concede uma Ação Livre ou uma Reação adicional, definido na criação deste equipamento.
+DF | DM | Conjuração | Requisitos
++0 | +0 | +0 | Foco 3
+
+Características Adicionais: Pode receber 2 tipos de Aprimoramento de Obra-Prima adicionais.
+Banhada em Prata (Incomum)
+Favor: Bônus Defensivos mudam para +3 para resistir ao primeiro ataque ou efeito de um monstro a cada Rodada.
+DF | DM | Conjuração | Requisitos
++1 | +1 | +1 | Gnose 3
+
+Características Adicionais: Benefícios desta Obra-Prima são aplicados apenas para resistir a ataques e efeitos de Monstros e para Conjurar Magias em monstros alvos.
+Banhada em Ouro (Raro)
+Favor: Efeitos de Danos e Curas Mágicas de suas magias aumentam em +2.
+DF | DM | Conjuração | Requisitos
++0 | +1 | +1 | Foco 3
+
+Características Adicionais: Vantagem em rolagens de Persuasão.
+Material Especial - Dyospiros (Incomum)
+Favor: Concede RM, exceto para resistir à efeitos de Armas de Dyospiros.
+DF | DM | Conjuração | Requisitos
++0 | +2 | +0 | Foco 3
+
+Características Adicionais: Apenas equipamentos do Escudo Médios ou Pesados podem ser feitas deste Material.
+Material Especial – Couro de Monstro (Raro)
+Favor: Fornece uma Habilidade Monstruosa Deviante ou Predador, definida aleatoriamente na construção do item.
+DF | DM | Conjuração | Requisitos
++1 | +1 | +1 | Gnose 3
+
+Características Adicionais: Ativar o Favor 1PA e 3PM, Duração 2 Rodadas.
+Material Especial – Gelo Verdadeiro (Raro)
+Favor: Atacantes Corpo-a-Corpo sofrem 3 pontos de danos Físico Elemental: Gelo.
+DF | DM | Conjuração | Requisitos
++2 | +0 | +0 | Força 3
+
+Características Adicionais: Dano sofrido reduzido em -1, exceto para resistir a danos de armas de Gelo Verdadeiro.
+Material Especial – Mitral (Épico)
+Favor: Resistência à Críticos. Bônus em DM aumenta para +6 para resistir ao primeiro efeito mágico da Cena.
+DF | DM | Conjuração | Requisitos
++1 | +2 | +1 | Destreza 3
+
+Características Adicionais: Concede RM ao usuário.
+Equipamento base é considerado uma Categoria de Peso inferior.
+Material Especial – Couro de Dragão (Mítico)
+Favor: RE muda para Todos os Elementos. Dano do Elemento do Dragão é reduzido à metade (efeito de Meio-Dano).
+DF | DM | Conjuração | Requisitos
++2 | +2 | +1 | Vigor 3
+
+Características Adicionais: Usuário ganha RE para resistir a efeitos do Elemento do Dragão. Escudos feitos de Couro de Dragão, quando usados para atacar, causam +1d6 pontos de danos e o tipo de dano muda para Físico Elemental.
+Material Especial – Adamantina (Épico)
+Favor: Primeiro dano sofrido em Rodadas Ímpares é reduzido à metade (efeito de Meio-Dano). Bônus em DF aumenta para +6 para resistir ao primeiro ataque que inflija danos físicos da Cena.
+DF | DM | Conjuração | Requisitos
++2 | +1 | +0 | Vigor 3
+
+Características Adicionais: Concede RD ao usuário.
+Equipamento base é considerado uma Categoria de Peso Superior.
+Material Especial – Espírito Umbral (Mítico)
+Favor: Apenas quando em acordo, a armadura conta como um Subordinado de tipo determinado em sua confecção.
+DF | DM | Conjuração | Requisitos
++1 | +1 | +0 | Carisma 5
+
+Características Adicionais: Este item está vivo e é senciente, pode se comunicar telepaticamente com seu usuário e costuma ajudar seu portador quando seus objetivos estão alinhados.
+Quando em acordo concede RA ao usuário e Resistência à Críticos, em desacordo não fornece Bônus Defensivos ao usuário e aumenta a Margem Crítica Menor dos atacantes em +2 números. Entrar em acordo com a arma exige sucesso em uma rolagem de Atenção: Discernir Motivação e Persuasão, ambas GD Difícil.
+
+Aprimoramentos de Obras-Primas Defensivas
+
+Oculta (Incomum)
+Favor: Vantagem em rolagens de Furtividade
+DF | DM | Ataque | Danos | Conjuração
++0 | +0 | +0 | +0 | +0
+
+Características Adicionais: Item tem aparência de item comum.
+Encantadora (Rara)
+Favor: Duração de Encantamentos e Maldições +1 Rodada.
+DF | DM | Ataque | Danos | Conjuração
++0 | +0 | +0 | +0 | +1
+
+Características Adicionais: Nenhum.
+Resistente (Comum)
+Favor: Nenhum.
+DF | DM | Ataque | Danos | Conjuração
++0 | +0 | +0 | +0 | +0
+
+Características Adicionais: PV deste Equipamento aumentam em +10, danos causados a este equipamento são reduzidos em -1.
+Encaixe (Épico)
+Favor: Nenhum
+DF | DM | Ataque | Danos | Conjuração
++0 | +0 | +0 | +0 | +0
+
+Características Adicionais: Apenas Armaduras e Escudos, permite encaixe de Pedra do Poder.
+Ajustada (Comum)
+Favor: Nenhum
+DF | DM | Ataque | Danos | Conjuração
++1 | +0 | +0 | +0 | +0
+
+Características Adicionais: PV deste item é reduzido em -5, Categoria de Peso do item reduzida em -1 nível.
+Benção de Proteção (Incomum)
+Favor: Bônus de Defesas aumentam para +3 nas duas primeiras Rodada do combate. Se você sofrer Danos durante este efeito este Bônus aumenta para +5.
+DF | DM | Ataque | Danos | Conjuração
++1 | +1 | +0 | +0 | +0
+
+Características Adicionais: Nenhum.
+Benção Selvagem (Raro)
+Favor: Margem Crítica Menor de Ataques efetuados com Armas Naturais aumenta em +1 número.
+DF | DM | Ataque | Danos | Conjuração
++0 | +0 | +1 | +0 | +0
+
+Características Adicionais: Dano Base de Ataques efetuados com Armas Naturais aumenta em +1.
+Benção Elemental (Incomum)
+Favor: Defesas +2 para resistir a ataques e magias do Elemento escolhido.
+DF | DM | Ataque | Danos | Conjuração
++0 | +0 | +0 | +0 | +0
+
+Características Adicionais: Recebe RE para resistir a um Elemento (escolhido na criação).
+Benção Elduriana (Raro)
+Favor: Duração de Encantamentos e Maldições hostis reduzidas em -1 Rodada.
+DF | DM | Ataque | Danos | Conjuração
++0 | +0 | +0 | +0 | +0
+
+Características Adicionais: Danos Mágicos sofridos reduzidos em -1.
+Benção Vulcana (Raro)
+Favor: Danos Elementais sofridos reduzidos em -1.
+DF | DM | Ataque | Danos | Conjuração
++0 | +0 | +0 | +0 | +0
+
+Características Adicionais: Danos Físicos sofridos reduzidos em -1.
+Benção Ymiriana (Raro)
+Favor: O Bônus em Danos aumenta para +2 por 1 Rodada após sofrer um ataque.
+DF | DM | Ataque | Danos | Conjuração
++0 | +0 | +0 | +1 | +0
+
+Características Adicionais: Nenhum.
+Camuflada (Comum)
+Favor: Vantagem adicional nas rolagens de Furtividade em tipo de ambiente definido na criação do item.
+DF | DM | Ataque | Danos | Conjuração
++0 | +0 | +0 | +0 | +0
+
+Características Adicionais: Apenas equipamentos do tipo Armadura. Vantagem em rolagens de Furtividade
+Espinhosa (Comum)
+Favor: Dano dos espinhos aumentado para 2.
+DF | DM | Ataque | Danos | Conjuração
++0 | +0 | +0 | +0 | +0
+
+Características Adicionais: Atacantes corpo-a-corpo e suas armas sofrem 1 pontos de Dano Físico ao te atacar.
+Camada de Reforço (Incomum)
+Favor: Defesas +1 (Apenas Escudos recebem este Favor).
+DF | DM | Ataque | Danos | Conjuração
++0 | +0 | +0 | +0 | +0
+
+Características Adicionais: Bônus de +1 em DF ou DM, definido na criação. Equipamentos do tipo Escudo, em substituição aos efeitos anteriores recebem Defesas +1.
+Rigidez Refletora (Comum)
+Favor: Nenhum
+DF | DM | Ataque | Danos | Conjuração
++0 | +0 | +0 | +0 | +0
+
+Características Adicionais: Armas de atacantes corpo-a-corpo sofrem 2 pontos de danos, projeteis são destruídos.
+Maldição: Solve-Vidas (Mítico)
+Favor: Sempre que um Personagem inimigo vivo tiver seus PV reduzidos à 0 ou menos em até Distância Curta ele será imediatamente morto e você recupera uma quantidade de PV igual ao Vigor dele.
+DF | DM | Ataque | Danos | Conjuração
++0 | +0 | +0 | +1 | +0
+
+Características Adicionais: Nenhuma.
+Maldição: Ladra do AEther (Mítico)
+Favor: Sempre que você for afetado por efeitos de Magias que não sejam sementes ou efeitos de habilidades mágicas de Monstros você recupera 1PM e 1PD.
+DF | DM | Ataque | Danos | Conjuração
++0 | +0 | +1 | +1 | +0
+
+Características Adicionais: Nenhum.
+
+Pedras do Poder
+Tipos de Pedras do Poder
+Adamante Bruto (Sintética)
+Efeito Base: Vigor +1, ataques recebem a Corrente de Efeitos – Impacto Meteórico: Ataque se torna Área de Efeito - Explosão.
+Equipamento Defensivo: RD, Danos cortantes e perfurantes reduzidos em -1.
+Equipamento Ofensivo: Ataques Ignoram RD e efeitos de Meio-Dano.
+Aqua Marina (Elemental: Água)
+Efeito Base: Permite respirar na água, concede Movimento Base de Natação.
+Equipamento Defensivo: Ignora o primeiro dano Elemental: Água sofrido, então concede RE: Água.
+Equipamento Ofensivo: Distância do Ataque aumenta em +2UD, Dano causado é Elemental: Água em adição aos seus tipos.
+Calcita Vulcânica (Elemental: Magma)
+Efeito Base: Dano +1, Danos Físicos sofridos reduzidos em -1.
+Equipamento Defensivo: Ignora o primeiro dano Elemental: Magma sofrido, então concede RE: Magma.
+Equipamento Ofensivo: Dano Crítico +1d6, Dano causado é Elemental: Magma em adição aos seus tipos.
+Cianita Dracônica (Dracônica)
+Efeito Base: Instinto +1, Danos Elementais recebem Cataclismo como Efeito Crítico adicional.
+Equipamento Defensivo: O primeiro Dano Elemental sofrido em cada Rodada é reduzido à metade (efeito de meio-dano).
+Equipamento Ofensivo: Ignora RE e Efeitos de Meio-Dano utilizados para reduzir danos Elementais.
+Citrino Incandescente (Elemental: Fogo)
+Efeito Base: Personagens em Distância Muito Curta sofrem 3 pontos de Danos Físicos Elementais: Fogo a cada Rodada.
+Equipamento Defensivo: Ignora o primeiro dano Elemental: Fogo sofrido, então concede RE: Fogo.
+Equipamento Ofensivo: Dano causado é Elemental: Fogo em adição aos seus tipos, Efeito Crítico base muda para Inflamar.
+Coração Vazio (Planar)
+Efeito Base: Você se torna imune a Efeitos de Corrupção.
+Equipamento Defensivo: Atacantes sofrem 1 ponto de dano, cumulativo, para cada ataque bem-sucedido efetuado anteriormente. Efeito de Corrupção.
+Equipamento Ofensivo: Alvo sofre 1 ponto de dano adicional, cumulativo, para cada ataque sofrido antes. Efeito de Corrupção.
+Esfera de AEther (Primordial)
+Efeito Base: Foco +1
+Equipamento Defensivo: Danos mágicos sofridos reduzidos à metade, Duração de Encantamentos e Maldições sofridas reduzidas à metade.
+Equipamento Ofensivo: Pode ser anexo apenas à Artefatos de Conjuração. Dano e Cura mágica +3, Duração de seus Encantamentos e Maldições +2 Rodadas.
+Fluorita Prismática (Elemental)
+Efeito Base: Carisma +1, Conjuração de Magias Elementais +1
+Equipamento Defensivo: Defesas +3 para resistir a efeitos Elementais.
+Equipamento Ofensivo: Danos causados são Elementais: Todos em substituição aos seus outros tipos e o Efeito Crítico base muda para Cataclismo.
+Hematita do Vendaval (Elemental: Ar)
+Efeito Base: Destreza +1, Movimento Base +2UD
+Equipamento Defensivo: Ignora o primeiro dano Elemental: Ar sofrido, então concede RE: Ar.
+Equipamento Ofensivo: Vantagem no Ataque e Corrente de Efeitos – Vendaval: Alvo é empurrado 2UD para trás.
+Mitral Puro (Sintética)
+Efeito Base: Vantagem nas rolagens de Perícia de Ataque, Movimento Base +2UD
+Equipamento Defensivo: Margem Crítica Menor dos inimigos atacantes reduzida em -2 números.
+Equipamento Ofensivo: Margem Crítica Menor aumentada em +2 números.
+Moldavita Selvagem (Natural)
+Efeito Base: Danos que causar não podem ser curados, exceto com Descansos Verdadeiros
+Equipamento Defensivo: Ignora o primeiro dano Natural sofrido, você se torna imune a efeitos Naturais.
+Equipamento Ofensivo: Dano causado é Elemental: Natural em adição aos seus tipos.
+Opala Purificadora (Sagrada)
+Efeito Base: Você recupera 2PV a cada Rodada.
+Equipamento Defensivo: Danos profanos reduzidos em -3, Duração de efeitos Profanos reduzido em -2 Rodadas.
+Equipamento Ofensivo: Dano causado é Sagrado em adição aos seus tipos e aumenta em +1d6 contra Mortos-Vivos e Abissais.
+Relâmpago Dourado (Temporal)
+Efeito Base: Movimento Base aumenta em +2UD e seus movimentos não permitem Reações.
+Equipamento Defensivo: Após se mover por ao menos 5UD você recebe +2PA (não cumulativo).
+Equipamento Ofensivo: Uma vez por Rodada seu Tempo de Ação de rolagens de Perícia de Ataque e Domínio do Mana é reduzido em -1PA.
+Rútilo Subterrâneo (Elemental: Terra)
+Efeito Base: Defesas +2, Vantagem nas Rolagens de Atletismo e seus movimentos ignoram Terreno Difícil.
+Equipamento Defensivo: Armas inimigas corpo-a-corpo e projéteis sofrem 2 pontos de danos. Ignora o primeiro dano Elemental: Terra sofrido, então concede RE: Terra.
+Equipamento Ofensivo: Vantagem nas Rolagens de Danos contra objetos, os danos causados são Elemental: Terra em adição aos seus tipos.
+Sodalita Gélida (Elemental: Gelo)
+Efeito Base: Força +1.
+Equipamento Defensivo: Ignora o primeiro dano Elemental: Gelo sofrido, então concede RE: Gelo.
+Equipamento Ofensivo: Vantagem nas Rolagens de Danos, os danos causados são Elemental: Gelo em adição aos seus tipos.
+Sombra Solidificada (Umbral)
+Efeito Base: Item conta como um subordinado (definido na criação, baseado no personagem da Umbra derrotado).
+Equipamento Defensivo: Danos sofridos reduzidos em 1.
+Equipamento Ofensivo: Dano Base da Arma aumentado em +1.
+Turmalina Obscura (Profana)
+Efeito Base: Danos e Curas Sagradas reduzidos em -3, Duração de efeitos Sagrados reduzido em -2 Rodadas.
+Equipamento Defensivo: Roubo de Vida 2 e imunidade a efeitos de Roubo de Vida.
+Equipamento Ofensivo: Dano causado é Profano em adição aos seus tipos e recebe Oferenda Maldita como Efeito Crítico adicional.
+
+Qualidades, Raridades e Preço
+Jolda (Comum)
+Preço | Cargas | Danos | Resfriamento | Duração do Efeito
+5 | 5 | 3 | 5 | 2 Rodadas
+
+Outras Informações: Não pode ser Obra-Prima
+Joia (Incomum)
+Preço | Cargas | Danos | Resfriamento | Duração do Efeito
+10 | 10 | 2 | 4 | 3 Rodadas
+
+Outras Informações: Remover antecipadamente reduz tempo de Resfriamento do Equipamento em quantidade proporcional a Duração de restante.
+Relíquia (Raro)
+Preço | Cargas | Danos | Resfriamento | Duração do Efeito
+20 | 20 | 2 | 3 | 3 Rodadas
+
+Outras Informações:
+AEthernum (Mítico)
+Preço | Cargas | Danos | Resfriamento | Duração do Efeito
+50 | 20 | 3 | 2 | 4 Rodadas
+
+Outras Informações: Pode ser recarregada consumindo outras Pedras do Poder
+Obras-Primas de Pedras do Poder
+Resfriamento Rápido (Incomum)
+Tempo de Resfriamento reduzido em -1 Rodada.
+Duração Estendida (Incomum)
+Duração do Efeito aumentada em +2 Rodadas, Tempo de Resfriamento aumentado em +1 Rodada.
+Carga Extra (Raro)
+O número de Cargas é aumentado em +50%.
+Solve-Vidas (Épico)
+Durante a Vinculação inflige danos ao Personagem ao invés do Equipamento.
+Refinada (Épico)
+Danos causados durante a Vinculação da Pedra do Poder é reduzido em -1.
+
+Aprimoramentos de Obras-Primas
+Conexão Veloz (Raro)
+Tempo de Vinculação reduzido para Ação Livre.
+Equipamentos Tecnológicos <em produção>
+Ark’ano
+Vapor
+Xayah
+
+Núcleos Superiores
+Obras-Primas Tecnológicas
+Aprimoramentos de Obras-Primas Tecnológicas

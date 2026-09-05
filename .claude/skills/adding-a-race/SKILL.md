@@ -50,7 +50,10 @@ table before writing a line:
 | Atributos Raciais (player picks N points among a set) | **Real** — `getChoosableAttributeBonusPoints()` + `getChoosableAttributes()` |
 | Categoria de Tamanho | **Real** — `getBaseSizeCategory()` + `generateEmptyCharacter` |
 | Feérico / Humanoide / Monstruoso | **Real** — `getCreatureType()`, no default, always override |
+| Renascido / Morto-Vivo, "para pré-requisitos conta como sua raça em vida" | **Real** — `getCreatureType()` returns `CreatureType.RENASCIDO`, and override `getPrerequisiteCreatureType()` to the life-race's type (default is `getCreatureType()`). `Vampiro` is the reference. The Morto-Vivo *behaviours* (healing inversion, no sleep/breath, damage-type immunity) are all still gaps. |
+| Arma Natural every member is born with | **Real** — `getGrantedNaturalWeapons()` → `List<NaturalWeapon>`, folded into `Character#getNaturalWeapons()` with the `Feat` twin (`Vampiro`'s per-lineage Presas Longas/Garras Afiadas). A per-*form* natural weapon (`HomemFera`) still needs the form state. |
 | "Talentos [de tipo X] custam N EXP" | **Real only if N is a whole number** — `getNewFeatCost(FeatCategory)` |
+| "Aprender magias custa N EXP a menos" | **Real** — `resolveSpellAcquisitionCostReduction(Character, Spell)` → `BigDecimal` (fractional is fine, unlike feat cost); `SpellService#getAcquisitionCost` sums it with the `Feat` twin and floors. `Agastias`' "Magia é Ciência" is the reference. A scope of "de seu elemento" / "Naturais" is still a gap (no per-Magia element column; type is checkable via `Spell#getPrimaryType`). |
 | A conditional roll bonus / Vantagem | **Real** — a `*RacialAbility` constant, see step 3 |
 | **Idiomas** | Gap — no Language/Idioma concept exists anywhere in this core |
 | **Longevidade / idade** | Gap — no age/lifespan concept on `Character` or `Race` |
@@ -141,17 +144,32 @@ character of that race with **no Interaction-specific code at all**.
 
 ### Don't force an enum into existence for symmetry
 
-**Having no racial abilities is by far the common case.** Of the ~22 races in this package,
-exactly **three** override `getRacialAbilities()` with real content — `Anao`, `Elfo`, and the
-Mestiços (which inherit rather than author). Every other race leaves it at `Race`'s empty
-default, because none of their traits fit the shape: some aren't roll-conditioned at all (a
-Defesa modifier, a conditional RD), one needs a target classification this core can't make, and
-several are really "grant an acquisition slot" traits.
+**Having no racial abilities is by far the common case.** Of the 29 races in this package,
+**seven** override `getRacialAbilities()` with real content — `Anao`, `Elfo`, `Aviano`,
+`Goblin`, `Guampo`, `HomemFera`, and the Mestiços (which inherit rather than author). Every
+other race leaves it at `Race`'s empty default, because none of their traits fit the shape: some
+aren't roll-conditioned at all (a Defesa modifier, a conditional RD), one needs a target
+classification this core can't make, and several are really "grant an acquisition slot" traits.
+`Ogro`, `Indomito` and `Troll` are the three most recent races to add none at all, and each says
+why in its javadoc.
 
-**Only build a `<Race>RacialAbility` enum once a trait's shape genuinely fits** — there are only
-two such enums today (`AnoesRacialAbility`, `ElfosRacialAbility`). If the race has none, the
-javadoc says why (see `Human`'s closing paragraph) and you are done. Don't create one for
+**Only build a `<Race>RacialAbility` enum once a trait's shape genuinely fits** — there are six
+today (`AnoesRacialAbility`, `ElfosRacialAbility`, `AvianosRacialAbility`,
+`GoblinsRacialAbility`, `GuamposRacialAbility`, `HomensFeraRacialAbility`). If the race has none,
+the javadoc says why (see `Human`'s closing paragraph) and you are done. Don't create one for
 symmetry.
+
+**A racial ability is not limited to roll bonuses.** `GuamposRacialAbility#VIGOR_DE_EPONA` grants
+flat RD and `HomensFeraRacialAbility#FORTALECIMENTO_FERAL` flat Movimento Base — both ordinary
+`@Modifier` methods, both reaching their service because `DamageServiceImpl` and
+`MovementServiceImpl` scan `SkillCompetencyAbility.allFor`. When a clause grants a stat rather
+than a roll bonus, check that the consuming service uses `allFor` and not
+`character.getSkillCompetencyAbilities()` alone before assuming it is a gap.
+
+**A Característica that is neither a roll bonus nor a stat may still have its own `Race` hook.**
+`Race#getCriticalEffectImmunities()` is the one that exists (`Troll`'s Anatomia Vegetal); an
+immunity is a filter, not a modifier, so forcing it into a `*RacialAbility` enum would have been
+the wrong shape.
 
 ### Writing the constants
 
@@ -203,11 +221,19 @@ A Mestiço picks a parent `Race` at creation. Two invariants, both constructor-e
 `IllegalOperationException`:
 
 - **`INVALID_PARENT_RACE`** — `parentRace.isMestico()` is rejected ("que não seja mestiça"), so
-  Mestiços never chain. `MeioElfo` additionally rejects a non-`HUMANOIDE` parent.
+  Mestiços never chain. `MeioElfo` additionally rejects a non-`HUMANOIDE` parent; `Vampiro`
+  rejects a parent whose `CreatureType` is outside the chosen sub-raça's allowed set (its
+  `VampiroLineage` carries a `Set<CreatureType>`), and an Atributo-Herdado pick the parent
+  doesn't grant.
 - **`INVALID_INHERITED_RACIAL_ABILITIES`** — at most 2, and every one must actually belong to
   `parentRace.getRacialAbilities()`.
 
 Override `isMestico()` to `true` — that flag is what the *next* Mestiço's validation reads.
+
+**A Mestiço with a second in-race choice** (`Vampiro`'s sub-raça, `Agastias`' Linhagem) declares
+that as a nested enum on the race class, carrying whatever authored data the choice fixes — for
+`Vampiro.VampiroLineage`, the +1 Atributo, the feeding Armas Naturais, and the allowed parent
+types. The constructor takes the enum value alongside the parent `Race`.
 
 **"2 Características Raciais aleatórias" does not mean this core rolls anything.** The same
 discipline as `SkillRoll` applies: the constructor accepts up to 2 *already-externally-resolved*
@@ -319,4 +345,7 @@ For a `*RacialAbility` enum, add `<Race>RacialAbilityTest` covering each constan
 - `org.aventyrs.core.race.AnoesRacialAbility` — both hard ability shapes.
 - `org.aventyrs.core.race.AbstractMesticoRace` + `Colosso` + `Agastias` — the Elemental shape.
 - `org.aventyrs.core.race.MeioElfo` — the bespoke Mestiço.
+- `org.aventyrs.core.race.Vampiro` — the `RENASCIDO` split (`getPrerequisiteCreatureType()`), a
+  race that grants Armas Naturais (`getGrantedNaturalWeapons()`), a nested sub-raça choice enum,
+  and a sub-raça-constrained parent validation.
 - `src/test/java/org/aventyrs/core/race/AnaoTest` — the test shape to copy.

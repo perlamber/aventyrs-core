@@ -14,7 +14,12 @@ import org.aventyrs.core.sheet.CombatantSheet;
  * {@code applyTo} directly. {@code skillType} and {@code target} are required; {@code
  * sceneContext} and {@code skillRoll} are optional (either or both may be {@code null}, same as
  * every {@code applyTo} overload already accepts) — a request for a plain roll with no
- * proximity data and no dice yet supplies neither.
+ * proximity data and no dice yet supplies neither. {@code attackSource} is optional too, and
+ * meaningful only on a Perícia de Ataque roll.
+ *
+ * <p>{@code attackTarget} is deliberately absent: it is a {@code CombatantSheet}, which this
+ * value object has no way to resolve from a deserialized request, and an attack that needs one
+ * belongs in {@code org.aventyrs.core.combat.DeliveredAttack} rather than here.
  */
 @Getter
 @Builder
@@ -25,4 +30,12 @@ public class SkillRollRequest {
     private final CombatantSheet target;
     private final SceneContext sceneContext;
     private final SkillRoll skillRoll;
+
+    /**
+     * What an attack is being delivered with, for a request that is one — the {@link
+     * org.aventyrs.core.item.Weapon} or {@link org.aventyrs.core.magic.Spell} itself, since both
+     * are {@link AttackSource}s. Optional like the two above; {@code null} on any non-attack
+     * roll, and on an attack whose caller didn't say.
+     */
+    private final AttackSource attackSource;
 }

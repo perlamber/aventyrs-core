@@ -19,7 +19,9 @@ import org.aventyrs.core.race.Elfo;
 import org.aventyrs.core.race.ElfosRacialAbility;
 import org.aventyrs.core.scene.Range;
 import org.aventyrs.core.scene.SceneContext;
+import org.aventyrs.core.sheet.ActionCost;
 import org.aventyrs.core.sheet.CharacterSheet;
+import org.aventyrs.core.sheet.CombatantAction;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.InteractionResult;
@@ -28,6 +30,7 @@ import org.aventyrs.core.skill.artes.ArtesAprimorarComArteAbility;
 import org.aventyrs.core.skill.artes.ArtesCompetencyAbility;
 import org.aventyrs.core.skill.artes.ArtesSpecialization;
 import org.aventyrs.core.skill.ataqueadistancia.AtaqueADistanciaInteraction;
+import org.aventyrs.core.skill.ataquecorpoacorpo.AtaqueCorpoACorpoCompetencyAbility;
 import org.aventyrs.core.skill.ataquecorpoacorpo.AtaqueCorpoACorpoInteraction;
 import org.aventyrs.core.skill.attention.AttentionCompetencyAbility;
 import org.aventyrs.core.skill.attention.AttentionInteraction;
@@ -42,6 +45,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Demonstrates the extension point {@code AbstractSkillInteraction#applyTo(CombatantSheet,
@@ -522,6 +526,40 @@ class AbstractSkillInteractionTest {
         assertEquals(CriticalResult.ACERTO_CRITICO_MENOR, duringCombat.getCriticalResult());
     }
 
+    private CharacterSheet sheetHoldingAtaquePreciso() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .skillCompetencyAbility(AtaqueCorpoACorpoCompetencyAbility.ATAQUE_PRECISO)
+                .build();
+        return CharacterSheet.of(character, new Player());
+    }
+
+    /**
+     * {@code AtaqueCorpoACorpoCompetencyAbility#ATAQUE_PRECISO} widens Acerto Crítico Menor's
+     * margin by +1 with no condition at all — so unlike {@code LETALIDADE_PROGRESSIVA} above it
+     * applies with no {@code SceneContext}. 6+5+2 has a single 6 (not Acerto Crítico Menor at
+     * margin 0); at margin 1 the 5 counts alongside it for the qualifying pair.
+     */
+    @Test
+    void applyToWidensAcertoCriticoMenorViaAtaquePrecisoWithNoScene() {
+        CharacterSheet sheet = sheetHoldingAtaquePreciso();
+        SkillRoll roll = new SkillRoll(List.of(6, 5, 2));
+
+        InteractionResult result = new AtaqueCorpoACorpoInteraction().applyTo(sheet, null, roll);
+
+        assertEquals(CriticalResult.ACERTO_CRITICO_MENOR, result.getCriticalResult());
+    }
+
+    /** Scoped to its own Perícia — the same roll on another Perícia keeps the narrow margin. */
+    @Test
+    void ataquePrecisoDoesNotWidenAnotherPericiasMargin() {
+        CharacterSheet sheet = sheetHoldingAtaquePreciso();
+        SkillRoll roll = new SkillRoll(List.of(6, 5, 2));
+
+        InteractionResult result = new AtaqueADistanciaInteraction().applyTo(sheet, null, roll);
+
+        assertEquals(CriticalResult.NONE, result.getCriticalResult());
+    }
+
     private CharacterSheet sheetHoldingAceAndArtesMarginSources() {
         Character character = CharacterFixture.blank(CharacterFixture.BLANK)
                 .egoAdvantage(EgoDomain.SORTE, SorteAdvantage.ACE)
@@ -567,8 +605,9 @@ class AbstractSkillInteractionTest {
      * AtaqueADistanciaInteraction} (a Destreza-based Perícia, see {@code AtaqueADistancia}'s
      * own {@code AttributeDomain}) to prove {@code AbstractSkillInteraction
      * #sumFirstRollOfTurnBonuses} actually reaches {@code skillRollBonus}, correctly gated by
-     * {@code CharacterSheet#consumeFirstRollThisTurn}: a second roll on the same, still-active
-     * Turn doesn't repeat the bonus, but {@code startTurn} resets it for the next one.
+     * {@code CharacterSheet#isFirstRollOfTurnFor}. {@code applyTo} no longer self-consumes, so
+     * the API records the action between rolls; a second roll on the same still-active Turn then
+     * doesn't repeat the bonus, and {@code startTurn} clears the per-Turn slice for the next one.
      */
     @Test
     void applyToGrantsPrecisaosVantagemOnlyOnceUntilTheNextTurnStarts() {
@@ -576,12 +615,44 @@ class AbstractSkillInteractionTest {
         SkillRoll roll = new SkillRoll(List.of(2, 3, 4));
 
         InteractionResult firstRoll = new AtaqueADistanciaInteraction().applyTo(sheet, null, roll);
+        sheet.recordAction(new CombatantAction(SkillType.ATAQUE_A_DISTANCIA,
+                firstRoll.getGoverningAttributeDomain(), null, ActionCost.ofActionPoints(1), 0, null));
         InteractionResult secondRollSameTurn = new AtaqueADistanciaInteraction().applyTo(sheet, null, roll);
         sheet.startTurn(1);
         InteractionResult firstRollNextTurn = new AtaqueADistanciaInteraction().applyTo(sheet, null, roll);
 
         assertEquals(secondRollSameTurn.getSkillRollBonus() + Skill.ADVANTAGE_BONUS, firstRoll.getSkillRollBonus());
         assertEquals(firstRoll.getSkillRollBonus(), firstRollNextTurn.getSkillRollBonus());
+    }
+
+    /**
+     * {@code applyTo} is non-mutating with respect to the action log: two rolls with no {@code
+     * recordAction} between them both read as the Turn's first, so both carry PRECISAO's Vantagem
+     * — the fix for the old "a preview re-run burns the first-roll flag" wart.
+     */
+    @Test
+    void applyToRecordsNothingItselfAndReadsTheLog() {
+        CharacterSheet sheet = sheetHoldingPrecisao();
+        SkillRoll roll = new SkillRoll(List.of(2, 3, 4));
+
+        InteractionResult firstRoll = new AtaqueADistanciaInteraction().applyTo(sheet, null, roll);
+        InteractionResult secondRoll = new AtaqueADistanciaInteraction().applyTo(sheet, null, roll);
+
+        assertTrue(sheet.getActionsThisRound().isEmpty());
+        assertEquals(firstRoll.getSkillRollBonus(), secondRoll.getSkillRollBonus());
+    }
+
+    /** The resolved governing domain is reported for a real roll, and {@code null} with no {@code SkillRoll}. */
+    @Test
+    void applyToPopulatesGoverningAttributeDomain() {
+        CharacterSheet sheet = sheetHoldingPrecisao();
+
+        InteractionResult withRoll = new AtaqueADistanciaInteraction()
+                .applyTo(sheet, null, new SkillRoll(List.of(2, 3, 4)));
+        InteractionResult withoutRoll = new AtaqueADistanciaInteraction().applyTo(sheet);
+
+        assertEquals(AttributeDomain.DEXTERITY, withRoll.getGoverningAttributeDomain());
+        assertNull(withoutRoll.getGoverningAttributeDomain());
     }
 
     /**

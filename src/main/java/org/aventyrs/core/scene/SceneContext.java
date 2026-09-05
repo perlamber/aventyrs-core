@@ -5,6 +5,7 @@ import org.aventyrs.core.sheet.CombatantSheet;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -13,10 +14,12 @@ import java.util.stream.Collectors;
  * {@link Scene#getAllies}/{@link Scene#getEnemies}'s output at the moment this was built —
  * see {@link Scene#buildContext} for that common case — but this class itself doesn't hold or
  * query a {@code Scene}, so it stays a plain, cheap-to-construct value object: a test or a
- * caller without a live {@code Scene} can build one directly from any two lists). This core
- * has no grid/positioning system of its own, so {@code distances} is always supplied
- * already-resolved by a caller too (same as {@link InitiativeEntry}'s own {@code
- * initiativeValue} isn't rolled by this core either) — it only needs entries for whichever
+ * caller without a live {@code Scene} can build one directly from any two lists). {@code
+ * distances} is always supplied already-resolved by a caller too (same as {@link
+ * InitiativeEntry}'s own {@code initiativeValue} isn't rolled by this core either): no
+ * participant carries a position, so although {@code org.aventyrs.core.scene.grid} can convert
+ * a hex distance into a {@link Range}, nothing here does it for a caller. The map only needs
+ * entries for whichever
  * participants are actually close enough to matter; anyone missing is treated as out of range
  * by every {@code *Within} method here.
  *
@@ -46,6 +49,28 @@ public class SceneContext {
     private final boolean combatScene;
     private final int currentRound;
     private final boolean wonInitiative;
+    /**
+     * The combatant on the <b>other side</b> of the roll this context is built for, or {@code
+     * null} when the roll opposes nobody (a plain Perícia check, or no active Scene).
+     *
+     * <p><b>Which side it is depends on the Perícia being rolled</b>, and that is deliberate
+     * rather than two fields: on a Perícia de Ataque it is the <i>target</i> being attacked, and
+     * on an Esquiva e Aparar roll it is the <i>attacker</i> being defended against. One
+     * exchange has exactly one opponent, so a single reference describes it from either side —
+     * a reader disambiguates with {@code SkillType#isAttackSkill()}, which every consumer
+     * already has in hand.
+     *
+     * <p>This is what makes a clause conditioned on <i>who</i> is opposite expressible from a
+     * {@code Feat}, which carries no per-roll parameters of its own — e.g. {@code
+     * AnaoFeat#VANTAGEM_DE_TAMANHO}'s Defesa bonus against larger attackers and {@code
+     * AnaoFeat#GLORIA_YMIRIANA}'s Vantagem against targets that are not smaller. It overlaps
+     * with, but does not replace, {@code AbstractSkillInteraction}'s own {@code attackTarget}
+     * parameter: that one reaches {@code SkillCompetencyAbility#resolveAttackRollBonus} on the
+     * attack side only, while this reaches every hook that already takes a {@code SceneContext},
+     * in both directions.
+     */
+    private final CombatantSheet opposedCharacter;
+    private final UUID sceneId;
 
     public SceneContext(final List<CombatantSheet> allies, final List<CombatantSheet> enemies, final Map<CombatantSheet, Range> distances) {
         this(allies, enemies, distances, null);
@@ -53,18 +78,37 @@ public class SceneContext {
 
     /** Same as the 3-arg constructor, but also carrying the Scene's current {@code terrainType}. */
     public SceneContext(final List<CombatantSheet> allies, final List<CombatantSheet> enemies, final Map<CombatantSheet, Range> distances, final TerrainType terrainType) {
-        this(allies, enemies, distances, terrainType, false, 0, false);
+        this(allies, enemies, distances, terrainType, false, 0, false, null, null);
     }
 
     /**
-     * Same as the 4-arg constructor, but also carrying combatScene/currentRound/wonInitiative
-     * — see {@link Scene#buildContext} for the common case of resolving these from a live
-     * {@link Scene}. A caller building a {@code SceneContext} directly (e.g. a test, or no
-     * active Scene at all) that doesn't care about these gets sensible non-combat defaults
-     * from the shorter constructors instead.
+     * Same as the 4-arg constructor, but also carrying combatScene/currentRound/wonInitiative —
+     * for a roll that opposes nobody. Delegates down with a {@code null} {@code
+     * opposedCharacter}, the same cascading shape the 3- and 4-arg constructors already use, so
+     * a caller that does not care about the opposed combatant needs no placeholder argument.
      */
     public SceneContext(final List<CombatantSheet> allies, final List<CombatantSheet> enemies, final Map<CombatantSheet, Range> distances,
                          final TerrainType terrainType, final boolean combatScene, final int currentRound, final boolean wonInitiative) {
+        this(allies, enemies, distances, terrainType, combatScene, currentRound, wonInitiative, null, null);
+    }
+
+    /**
+     * The full form: everything the 7-arg constructor carries, plus {@link #opposedCharacter} —
+     * the combatant on the other side of the roll this context is for. See {@link
+     * Scene#buildContext} for the common case of resolving all of it from a live {@link Scene}.
+     * A caller building a {@code SceneContext} directly (e.g. a test, or no active Scene at all)
+     * that doesn't care about these gets sensible non-combat defaults from the shorter
+     * constructors instead.
+     */
+    public SceneContext(final List<CombatantSheet> allies, final List<CombatantSheet> enemies, final Map<CombatantSheet, Range> distances,
+                         final TerrainType terrainType, final boolean combatScene, final int currentRound, final boolean wonInitiative, final CombatantSheet opposedCharacter) {
+        this(allies, enemies, distances, terrainType, combatScene, currentRound, wonInitiative, opposedCharacter, null);
+    }
+
+    /** The full snapshot form, including the identity of the Scene that produced it. */
+    public SceneContext(final List<CombatantSheet> allies, final List<CombatantSheet> enemies, final Map<CombatantSheet, Range> distances,
+                        final TerrainType terrainType, final boolean combatScene, final int currentRound,
+                        final boolean wonInitiative, final CombatantSheet opposedCharacter, final UUID sceneId) {
         this.allies = allies;
         this.enemies = enemies;
         this.distances = distances;
@@ -72,6 +116,8 @@ public class SceneContext {
         this.combatScene = combatScene;
         this.currentRound = currentRound;
         this.wonInitiative = wonInitiative;
+        this.opposedCharacter = opposedCharacter;
+        this.sceneId = sceneId;
     }
 
     public List<CombatantSheet> getAllies() {
@@ -160,6 +206,16 @@ public class SceneContext {
     /** Whether the acting Character's own sub-group won initiative — see {@link Scene#wonInitiative}. */
     public boolean hasWonInitiative() {
         return wonInitiative;
+    }
+
+    /** See {@link #opposedCharacter} — {@code null} when the roll opposes nobody. */
+    public CombatantSheet getOpposedCharacter() {
+        return opposedCharacter;
+    }
+
+    /** Identity of the Scene that produced this snapshot, or {@code null} for a direct context. */
+    public UUID getSceneId() {
+        return sceneId;
     }
 
     /**

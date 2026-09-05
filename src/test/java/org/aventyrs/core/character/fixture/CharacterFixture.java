@@ -28,18 +28,17 @@ import org.aventyrs.core.skill.atletismo.AtletismoCompetencyAbility;
 import org.aventyrs.core.skill.dominiodomana.DominioDoMana;
 import org.aventyrs.core.skill.dominiodomana.DominioDoManaCompetencyAbility;
 import org.aventyrs.core.skill.persuasao.Persuasao;
+import org.aventyrs.core.skill.attention.Attention;
+import org.aventyrs.core.skill.attention.AttentionCompetencyAbility;
+import org.aventyrs.core.skill.conhecimentos.Conhecimentos;
+import org.aventyrs.core.skill.empatiaselvagem.EmpatiaSelvagem;
+import org.aventyrs.core.skill.empatiaselvagem.EmpatiaSelvagemCompetencyAbility;
+import org.aventyrs.core.skill.furtividade.Furtividade;
+import org.aventyrs.core.skill.furtividade.FurtividadeCompetencyAbility;
+import org.aventyrs.core.skill.persuasao.PersuasaoCompetencyAbility;
 import org.aventyrs.core.skill.Skill;
 import org.aventyrs.core.skill.SkillGraduation;
 import org.aventyrs.core.skill.SkillType;
-import org.aventyrs.core.skill.ataqueadistancia.AtaqueADistancia;
-import org.aventyrs.core.skill.ataqueadistancia.AtaqueADistanciaCompetencyAbility;
-import org.aventyrs.core.skill.ataquecorpoacorpo.AtaqueCorpoACorpo;
-import org.aventyrs.core.skill.ataquecorpoacorpo.AtaqueCorpoACorpoCompetencyAbility;
-import org.aventyrs.core.skill.atletismo.Atletismo;
-import org.aventyrs.core.skill.atletismo.AtletismoCompetencyAbility;
-import org.aventyrs.core.skill.dominiodomana.DominioDoMana;
-import org.aventyrs.core.skill.dominiodomana.DominioDoManaCompetencyAbility;
-import org.aventyrs.core.skill.persuasao.Persuasao;
 import org.aventyrs.core.util.SimpleFixture;
 
 import java.util.List;
@@ -112,6 +111,10 @@ public class CharacterFixture extends SimpleFixture {
                 this.add("abilityChoices", List.of());
                 this.add("feats", List.of());
                 this.add("equipment", List.of());
+                this.add("drawnWeapons", List.of());
+                this.add("spells", List.of());
+
+                this.add("regaliasCraftedByGrade", Map.of());
                 this.add("primaryTitle", null);
                 this.add("secondaryTitle", null);
                 this.add("tertiaryTitle", null);
@@ -132,10 +135,19 @@ public class CharacterFixture extends SimpleFixture {
     }
 
     /**
-     * Força is left at its default (untouched) so ACUIDADE/ACROBATA's substituted Destreza is
-     * distinguishable from what Ataque Corpo-a-Corpo/Atletismo would roll without it; Carisma
-     * is likewise left untouched as Persuasão's control (no substituting ability targets it).
-     * Foco and Instinto need a total above {@link CharacterAttributeService#MAX_ATTRIBUTE_BASE}
+     * Every Attribute here carries a distinct total, so a roll that used the wrong one is
+     * always visible in the assertion: Força 2, Destreza 5, Carisma 1, Gnose 7, Foco 8,
+     * Instinto 11. Força stays low so ACUIDADE/ACROBATA's substituted Destreza is
+     * distinguishable from what Ataque Corpo-a-Corpo/Atletismo would roll without it, and
+     * Carisma is the lowest of all so both Perícias based on it (Persuasão, Empatia Selvagem)
+     * visibly gain from substituting.
+     *
+     * <p>Conhecimentos is the no-leak control — Gnose-based and named by no substituting
+     * Habilidade de Competência, so its roll must stay on Gnose no matter how many
+     * substitutions the character holds. Persuasão can no longer serve that role now that
+     * {@code PersuasaoCompetencyAbility#FORCA_OPRESSORA} is wired.
+     *
+     * <p>Foco and Instinto need a total above {@link CharacterAttributeService#MAX_ATTRIBUTE_BASE}
      * to stay distinguishable from Destreza's own total, so the excess is modeled as
      * {@code variable} (spells/feats/equipment), not {@code base} — a real character can never
      * have a base above 5; only bonuses from other sources push the total higher.
@@ -155,6 +167,8 @@ public class CharacterFixture extends SimpleFixture {
                         .dexterity(AttributeValue.builder().domain(AttributeDomain.DEXTERITY).base(5).build())
                         .focus(AttributeValue.builder().domain(AttributeDomain.FOCUS).base(5).variable(3).build())
                         .instinct(AttributeValue.builder().domain(AttributeDomain.INSTINCT).base(5).variable(6).build())
+                        .gnose(AttributeValue.builder().domain(AttributeDomain.GNOSE).base(7).build())
+                        .charisma(AttributeValue.builder().domain(AttributeDomain.CHARISMA).base(1).build())
                         .build());
                 this.add("egos", CharacterEgos.builder().build());
                 this.add("egoAdvantages", Map.of());
@@ -163,17 +177,37 @@ public class CharacterFixture extends SimpleFixture {
                         SkillType.ATLETISMO, skillWithGraduation(new Atletismo(), 2),
                         SkillType.ATAQUE_A_DISTANCIA, skillWithGraduation(new AtaqueADistancia(), 3),
                         SkillType.DOMINIO_DO_MANA, skillWithGraduation(new DominioDoMana(), 4),
-                        SkillType.PERSUASAO, skillWithGraduation(new Persuasao(), 0)));
+                        SkillType.PERSUASAO, skillWithGraduation(new Persuasao(), 0),
+                        // These three stay below ExcellencyTier.FOCADO's threshold of 3, so no
+                        // unlocked Excelência adds a roll bonus of its own (EmpatiaSelvagemExcellency
+                        // .FOCADO grants one) and each assertion isolates the substitution alone.
+                        SkillType.ATTENTION, skillWithGraduation(new Attention(), 1),
+                        SkillType.FURTIVIDADE, skillWithGraduation(new Furtividade(), 2),
+                        SkillType.EMPATIA_SELVAGEM, skillWithGraduation(new EmpatiaSelvagem(), 1),
+                        // The no-leak control: Conhecimentos is the Perícia no substituting
+                        // Habilidade de Competência names, so its roll must stay on Gnose.
+                        SkillType.CONHECIMENTOS, skillWithGraduation(new Conhecimentos(), 0)));
                 this.add("attributeAbilities", List.of());
                 this.add("activeAbilities", List.of());
                 this.add("skillCompetencyAbilities", List.of(
                         AtaqueCorpoACorpoCompetencyAbility.ACUIDADE,
                         AtletismoCompetencyAbility.ACROBATA,
                         AtaqueADistanciaCompetencyAbility.DISPARO_ARCANO,
-                        DominioDoManaCompetencyAbility.MAGIA_SELVAGEM));
+                        DominioDoManaCompetencyAbility.MAGIA_SELVAGEM,
+                        AttentionCompetencyAbility.ALMA_DE_SHERLOCK,
+                        PersuasaoCompetencyAbility.FORCA_OPRESSORA,
+                        FurtividadeCompetencyAbility.LADINO_TEORICO,
+                        // INSTINTO_ANIMAL is deliberately left off — holding both Empatia Selvagem
+                        // substitutions at once resolves by first-match, which is its own case (see
+                        // AttributeSubstitutionFeatureTest) rather than this template's concern.
+                        EmpatiaSelvagemCompetencyAbility.ACADEMICO_SELVAGEM));
                 this.add("abilityChoices", List.of());
                 this.add("feats", List.of());
                 this.add("equipment", List.of());
+                this.add("drawnWeapons", List.of());
+                this.add("spells", List.of());
+
+                this.add("regaliasCraftedByGrade", Map.of());
                 this.add("primaryTitle", null);
                 this.add("secondaryTitle", null);
                 this.add("tertiaryTitle", null);

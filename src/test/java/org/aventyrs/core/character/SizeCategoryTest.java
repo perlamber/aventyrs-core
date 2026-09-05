@@ -51,8 +51,8 @@ class SizeCategoryTest {
     }
 
     @Test
-    void shiftClampsAtThePlusFourCeiling() {
-        assertEquals(SizeCategory.PLUS_FOUR, SizeCategory.PLUS_FOUR.shift(1));
+    void shiftClampsAtThePlusTenCeiling() {
+        assertEquals(SizeCategory.PLUS_TEN, SizeCategory.PLUS_TEN.shift(1));
     }
 
     @Test

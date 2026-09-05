@@ -5,8 +5,10 @@ import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.effect.CriticalEffectType;
 import org.aventyrs.core.item.Item;
+import org.aventyrs.core.item.Weapon;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.rest.RestType;
+import org.aventyrs.core.scene.SceneContext;
 
 import java.util.List;
 import java.util.Set;
@@ -117,9 +119,68 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
     /** Raises this domain's temporary ceiling, non-cumulatively per source. */
     int grantTemporaryEgoPointBonus(EgoDomain domain, Object source, int amount);
 
+    /**
+     * Hands this sheet amount genuinely spendable temporary points in domain, from source —
+     * the "você receberá N pontos temporários neste Ego" shape, as opposed to {@link
+     * #recoverTemporaryEgoPoints}'s "get back what you spent".
+     *
+     * <p><strong>Two steps, and both are needed.</strong> It widens the ceiling via {@link
+     * #grantTemporaryEgoPointBonus} <em>and</em> then calls {@link
+     * #recoverTemporaryEgoPoints}. Neither alone works for a pool that has been emptied: with
+     * every point spent the ceiling is 0 and a bare recovery restores nothing, while a bare
+     * ceiling widening is capped per source (deliberately, per {@code EgoPointPool
+     * #grantTemporaryBonus}'s "não cumulativo") and so grants nothing the second time the same
+     * source fires. Widening first, then recovering under the widened ceiling, gives one usable
+     * point on every trigger without the ceiling creeping upward once per trigger.
+     *
+     * @return int this domain's spendable temporary points after the grant
+     */
+    int grantTemporaryEgoPoints(EgoDomain domain, Object source, int amount);
+
+    /**
+     * Registers a {@link DelayedEgoGrant} — temporary Ego points owed at the start of this
+     * sheet's <em>next</em> Rodada, delivered by {@link #startNewRound()}. Grants scheduled
+     * more than once before that boundary all land together at it.
+     */
+    void scheduleTemporaryEgoPointGrant(EgoDomain domain, Object source, int amount);
+
     void owePendingEgoRecovery(PendingEgoRecovery recovery);
 
     void applyPendingEgoRecoveries(RestType restType);
+
+    // --- Game session -----------------------------------------------------------------------
+
+    /**
+     * Claims marker for this game session, returning {@code true} only the first time it is
+     * claimed — the "a primeira vez em cada sessão de jogo" guard ({@code
+     * GnoseAbility#ESTABILIDADE_EMOCIONAL}, and {@code MeioElfo}'s still-unbuilt "1x por
+     * sessão"). marker identifies <em>what</em> is being claimed, and is compared by
+     * {@code equals} — an ability enum constant is the intended kind of key, one per clause.
+     *
+     * <p><strong>A session is this sheet object's own lifetime.</strong> The state backing this
+     * is a {@code transient} field: it lives as long as the sheet does — the consuming client
+     * holds the sheet open for as long as the table is playing — and is deliberately absent
+     * from anything persisted, so a sheet reloaded from storage starts a fresh session with
+     * every marker unclaimed. That is the whole session concept this core has, and it is what
+     * a session boundary <em>is</em> here: no session identity, no counter, nothing to record.
+     * {@link #startNewSession()} is the explicit reset for a process that outlives one session.
+     *
+     * <p>Deliberately <em>not</em> tied to {@code EgoPointsService#applySessionRecovery}: that
+     * call is a Narrador's end-of-session button in the consuming app and carries no promise of
+     * being made at all, whereas this guard must hold whether or not anyone presses it.
+     */
+    boolean consumeOncePerSession(Object marker);
+
+    /** Whether marker has already been claimed this session — the non-consuming reader. */
+    boolean hasConsumedOncePerSession(Object marker);
+
+    /**
+     * Begins a new game session for this combatant: forgets every {@link
+     * #consumeOncePerSession} marker, so each once-per-session clause may fire again. Only a
+     * consumer that keeps one sheet instance alive across two sittings needs to call it — a
+     * client that rebuilds its sheets per session gets the same effect for free.
+     */
+    void startNewSession();
 
     // --- Temporary effects ------------------------------------------------------------------
 
@@ -130,6 +191,130 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
     int grantTemporaryBonus(ModifierType type, int value, int rounds);
 
     int getTemporaryBonus(ModifierType type);
+
+    // --- Condições / Malefícios ---------------------------------------------------------------
+
+    /**
+     * Puts this combatant under condition, replacing any held {@link Condition} of the same
+     * {@link ConditionType} (refreshing its duration) rather than stacking a second — see {@link
+     * Condition}'s own javadoc for why a condition is a state, not a stacking bonus.
+     */
+    void applyCondition(Condition condition);
+
+    /** Lifts conditionType, along with anything it was implying. A no-op if not held. */
+    void removeCondition(ConditionType conditionType);
+
+    /**
+     * Every {@link ConditionType} currently in force, including ones only <i>implied</i> by
+     * another (Caído confers Desprevenido), resolved transitively. An implication scoped to a
+     * {@link org.aventyrs.core.scene.Range} counts only while that proximity holds, which is why
+     * this takes the sceneContext — Assustado confers Desprevenido, but only while adjacent to
+     * the origin of the fear.
+     */
+    Set<ConditionType> getActiveConditions(SceneContext sceneContext);
+
+    /** Whether conditionType is in force, directly or by implication. */
+    boolean hasCondition(ConditionType conditionType, SceneContext sceneContext);
+
+    /**
+     * The summed numeric malus every active condition contributes toward modifierType — the
+     * {@link Condition} counterpart to {@link #getTemporaryBonus}, queried separately because a
+     * condition's effect can be proximity-scoped and so needs the Scene to resolve. A service
+     * reading a {@link ModifierType} sums both.
+     */
+    int getConditionBonus(ModifierType modifierType, SceneContext sceneContext);
+
+    /**
+     * Takes weapon in hand and records that it happened <b>this Turn</b> — the timed form of
+     * {@code Character#drawWeapon(Weapon)}, which knows nothing about Turns. What {@code
+     * AssassinoFeat#SAQUE_RAPIDO}'s "a primeira rolagem de Perícia de Ataque que realizar neste
+     * mesmo turno" is measured against.
+     *
+     * @return whether the weapon was actually drawn (false if not carried, or already in hand)
+     */
+    boolean drawWeapon(Weapon weapon);
+
+    /**
+     * Whether this combatant has drawn a weapon since their Turn began. Reset by {@link
+     * #startTurn(int)}, like every other per-Turn marker; with no live {@code Scene} calling
+     * that, it simply reads false until something is drawn.
+     */
+    boolean hasDrawnWeaponThisTurn();
+
+    /**
+     * Whether this combatant has drawn a weapon at any point since this Cena began. Reset by
+     * {@link #startNewScene()} (which {@code Scene#addParticipant} calls); {@code
+     * AssassinoFeat#SAQUE_RELAMPAGO}'s "imediatamente após sacar sua primeira arma... na Cena de
+     * Combate" rider is measured against it. With no live {@code Scene} it reads false until a
+     * weapon is drawn and then stays true.
+     */
+    boolean hasDrawnWeaponThisScene();
+
+    /**
+     * Knocks weapon out of this combatant's hands — the effect that inflicts {@link
+     * ConditionType#DESARMADO}. Unequips it and, if nothing else armed remains, applies the
+     * condition.
+     *
+     * @return the weapon actually dropped, or empty when it was not wielded or {@link
+     * Weapon#isDisarmable()} refuses ("Não pode ser desarmado")
+     *
+     * <p><b>The dropped weapon is handed back, not put anywhere.</b> A disarmed weapon falls on
+     * the ground, and this core models no ground — so the caller decides where it lands (an
+     * enemy's hand, the floor, {@link #addToInventory} if it is merely stowed). Returning it is
+     * that handoff; losing track of it would be the alternative.
+     */
+    java.util.Optional<Weapon> disarm(Weapon weapon);
+
+    /**
+     * Puts weapon back in this combatant's hands, lifting {@link ConditionType#DESARMADO}. The
+     * mirror of {@link #disarm(Weapon)} — being Desarmado lasts until you are armed again, not a
+     * fixed number of Rodadas, which is why the condition it applies is open-ended.
+     *
+     * @return whether the weapon was actually taken up; {@code false} when a held condition
+     * forbids it ({@link ConditionType#preventsArming()} — Devorado, where nothing you dropped
+     * is reachable from inside a creature), in which case neither the equipment nor the condition
+     * changes
+     */
+    boolean rearm(Weapon weapon);
+
+    /**
+     * Whether this combatant may currently attack with weapon — {@code null} meaning an Ataque
+     * Desarmado, which is always allowed. False only while a held condition restricts them to
+     * light weapons ({@link ConditionType#restrictsAttacksToLightWeapons()} — Devorado, where a
+     * greatsword cannot be brought to bear inside a creature but a dagger still can).
+     *
+     * <p>A question, not a gate: nothing in this core refuses an attack made with a weapon this
+     * returns {@code false} for, because there is no validation point between choosing an attack
+     * and resolving one. A caller deciding which attacks to present asks this.
+     */
+    boolean canAttackWith(Weapon weapon);
+
+    /**
+     * The flat dano-roll bonus this combatant's conditions grant to <b>whoever attacks them</b> —
+     * Flanqueado's "Atacar um personagem Flanqueado garante Vantagem na rolagem de Dano". Read
+     * off the <em>target</em>'s sheet by {@code AbstractSkillInteraction}, the mirror of {@link
+     * #getConditionBonus}, which is what the holder themselves suffers.
+     */
+    int getAttackerDamageBonusFromConditions(SceneContext sceneContext);
+
+    /**
+     * Whether a held condition forbids moving at all — Agarrado/Imobilizado's "não pode realizar
+     * movimentos". A prohibition, deliberately not a large negative {@link ModifierType#MOVEMENT}:
+     * {@code MovementService} reports 0 rather than arithmetic that happens to floor there.
+     */
+    boolean isMovementPrevented(SceneContext sceneContext);
+
+    /**
+     * Whether a held condition forbids recovering Pontos de Vida — Feridas Dolorosas' "não pode
+     * ser curado e nem regenerar". Takes no Scene: no condition scopes this by proximity.
+     */
+    boolean isHealingPrevented();
+
+    /** Whether a held condition forbids activating Habilidades de Aventyr/de Monstro — Silêncio. */
+    boolean isAbilityActivationPrevented(SceneContext sceneContext);
+
+    /** Whether a held condition forbids Conjurar Magias — Silêncio. */
+    boolean isSpellCastingPrevented(SceneContext sceneContext);
 
     int getTotalLifeSteal();
 
@@ -151,15 +336,87 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
 
     // --- Turn lifecycle -----------------------------------------------------------------------
 
-    /** Begins this combatant's Turn. turnNumber is 0-based. */
+    /**
+     * Begins this combatant's Turn. turnNumber is 0-based. Also marks where this Turn's actions
+     * begin in {@link #getActionsThisRound()}, so {@link #isFirstRollOfTurnFor} can answer a
+     * per-Turn question against the per-Rodada log.
+     */
     void startTurn(int turnNumber);
 
     /** Ends this combatant's Turn, advancing its {@link TemporaryEffect}s by one Rodada. */
     void finishTurn();
 
     /**
-     * Whether rolledDomain hasn't yet governed a Perícia roll this Turn — and, if so, marks it
-     * as having happened now, in the same call.
+     * Begins a new Rodada for this combatant: clears {@link #getActionsThisRound()}, resets
+     * the per-Turn marker {@link #startTurn(int)} sets, and delivers every {@link
+     * DelayedEgoGrant} scheduled during the Rodada just ended. Called by {@code
+     * org.aventyrs.core.scene.Scene#next()} on every active participant at the Rodada wrap,
+     * <em>before</em> {@code startTurn} on whoever acts first. With no live {@code Scene} ever
+     * calling it, the log simply starts empty and the API must call this at its own Rodada
+     * boundary — the same fallback {@link #consumeMovementThisRound()} documents.
      */
-    boolean consumeFirstRollThisTurn(AttributeDomain rolledDomain);
+    void startNewRound();
+
+    /**
+     * Begins a new Cena for this combatant: clears {@link #getActionsThisCena()} (and, with it,
+     * {@link #getActionsThisRound()}) and {@link #hasDrawnWeaponThisScene()}. Called by {@code
+     * Scene#addParticipant} when this sheet joins a Scene; the API calls it directly otherwise.
+     * A "primeira ... na Cena" clause needs a boundary the per-Rodada log cannot give.
+     */
+    void startNewScene();
+
+    /**
+     * Appends an action this combatant took this Rodada — see {@link CombatantAction}. The API
+     * calls this <b>explicitly</b> after resolving a roll (or an {@code AttackDelivery}/{@code
+     * AttackReceiver} exchange); it is never a side effect of {@code
+     * AbstractSkillInteraction#applyTo}. The action also lands in {@link #getActionsThisCena()}.
+     */
+    void recordAction(CombatantAction action);
+
+    /** Every action recorded since this Rodada began — an unmodifiable view, in order. */
+    List<CombatantAction> getActionsThisRound();
+
+    /**
+     * Every action recorded since this Cena began — an unmodifiable view, in order. Unlike
+     * {@link #getActionsThisRound()} this is not cleared at the Rodada wrap, only by {@link
+     * #startNewScene()}; a "primeira magia conjurada na Cena" / "primeiro ataque de cada cena"
+     * clause reads this.
+     */
+    List<CombatantAction> getActionsThisCena();
+
+    /**
+     * Whether no action recorded during this combatant's current Turn was governed by domain —
+     * the non-mutating replacement for the old {@code consumeFirstRollThisTurn}. "This Turn" is
+     * the slice of {@link #getActionsThisRound()} after the marker {@link #startTurn(int)} set;
+     * the "mark it happened" step is now the API's {@link #recordAction} call. Gates {@code
+     * AttributeAbility#resolveFirstRollOfTurnBonus} ({@code DexterityAbility#PRECISAO}).
+     */
+    boolean isFirstRollOfTurnFor(AttributeDomain domain);
+
+    /**
+     * Whether no <b>Perícia de Ataque</b> roll has been made yet this Turn — the attack-scoped
+     * sibling of {@link #isFirstRollOfTurnFor(AttributeDomain)}, sliced from the same per-Rodada
+     * log at the same {@link #startTurn(int)} marker.
+     *
+     * <p>A non-mutating read, and the roll being resolved is not yet in the log (the API records
+     * it afterwards), so asking during resolution correctly answers "is <i>this</i> the first".
+     */
+    boolean isFirstAttackRollOfTurn();
+
+    /**
+     * How many movements this combatant has already made this Rodada — 0 before the first one,
+     * so it doubles as the 0-based index of whichever movement comes next. Read, never consumed:
+     * a caller previewing "how far would my next movement go" asks this; one actually moving
+     * calls {@link #consumeMovementThisRound()} instead.
+     */
+    int getMovementsTakenThisRound();
+
+    /**
+     * Records a movement as taken, returning its own 0-based index within this Rodada — 0 for
+     * the first. The mutating counterpart of {@link #getMovementsTakenThisRound()}: a clause
+     * scoped to "seu primeiro movimento em cada Rodada" needs to claim that position in the act
+     * of asking for it, or two callers could both believe they were first. (Roll-actions use the
+     * separate {@link #recordAction}/{@link #getActionsThisRound()} log instead.)
+     */
+    int consumeMovementThisRound();
 }

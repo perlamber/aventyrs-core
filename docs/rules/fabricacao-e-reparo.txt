@@ -1,0 +1,87 @@
+Fabricando e Reparando Equipamentos
+
+Fonte: bloco de regras fornecido pelo autor (não presente no docx de Equipamentos V19). Este
+arquivo é a fonte da verdade para o subsistema modelado em
+org.aventyrs.core.character.services.EquipmentCraftingService.
+
+NOTA DE RECONCILIAÇÃO — o texto original diz "Perícia Conhecimento" para a fabricação, mas as
+Especializações de ofício (Metalurgia, Alfaiataria e Curtume, Joalheria, Mecânica, Alvenaria e
+Carpintaria) pertencem a ProfissaoSpecialization, e os Talentos já existentes ArtificeFeat e
+GoblinFeat tratam a criação de equipamentos como "uma rolagem de Profissão (Especialização
+conforme o tipo)". O core modela a fabricação como uma rolagem de Profissão (ofício). O reparo
+mantém as duas: uma rolagem de Profissão (ofício) pelo trabalho, e a rolagem de Conhecimentos que
+o texto nomeia — a segunda tem o GD abaixo.
+
+================================================================================================
+Fabricando Equipamentos
+
+Equipamentos podem ser encontrados, comprados ou fabricados. Equipamentos comprados devem ser
+adquiridos por seu valor de Custo (Preço). Fabricar um item custa apenas metade do valor
+referido, exigindo em contrapartida tempo e rolagens bem-sucedidas da Perícia (ver nota de
+reconciliação). Cada tipo de item exige uma Especialização diferente da Perícia para ser
+fabricado; o Grau de Dificuldade varia de acordo com a sua Raridade.
+
+Raridade  | GD
+Comum     | Médio
+Incomum   | Difícil
+Raro      | Muito Difícil
+Épico     | Improvável
+Mítico    | Inimaginável
+
+Obras-Primas — criar uma Obra-Prima exige um valor mínimo de Graduações, que varia conforme a
+Raridade da Obra-Prima; o Grau de Dificuldade também aumenta em +1 nível.
+
+Raridade  | Graduação Mínima | GD
+Comum     | 1                | Difícil
+Incomum   | 3                | Muito Difícil
+Raro      | 5                | Improvável
+Épico     | 7                | Inimaginável
+Mítico    | 10               | Milagre
+
+Aprimoramentos — após serem criados, os Equipamentos Obras-Primas podem ser melhorados com
+Aprimoramentos. Itens Leves podem possuir apenas 1 Aprimoramento, Médios até 2 diferentes
+Aprimoramentos, Pesados até 3 diferentes Aprimoramentos. Aprimorar exige um novo teste da Perícia
+Conhecimentos; para cada outro Aprimoramento que o item já possua você recebe Desvantagem
+cumulativa na rolagem.
+
+Raridade  | GD
+Comum     | Difícil
+Incomum   | Muito Difícil
+Raro      | Improvável
+Épico     | Inimaginável
+Mítico    | Milagre
+
+Tempo — o tempo para fabricar um Equipamento é igual à metade de seu valor de compra (custo),
+medido em dias. Exemplo: uma Espada Longa custa 7PE e leva 3 dias para ser produzida. Instalar
+Aprimoramentos em Obras-Primas usa a mesma base de cálculo.
+
+================================================================================================
+Reparando Equipamentos
+
+Itens possuem Dureza — os Pontos de Vida (PV) de um objeto — que indicam quanto dano podem
+sofrer até serem destruídos. Reparar é normalmente mais barato que adquirir peças novas.
+
+Para reparar é necessário: investimento em Pontos de Equipamento (PE), tempo em rolagens
+bem-sucedidas da Perícia Profissão (com a especialização apropriada), e ser bem-sucedido em uma
+rolagem de Conhecimentos.
+
+PE — itens que sofreram dano total inferior a metade dos seus PV custam 10% de seu valor;
+itens que já perderam mais da metade dos PV custam 1/3 do valor total. (Sempre arredondado para
+baixo, mínimo 1PE.) Exemplos: Espada Longa (7PE) — 1PE se pouco danificada, 2PE se muito
+danificada. Armadura de Justa Banhada em Ouro (44PE) — 4PE por reparo leve, 14PE em situação
+crítica.
+
+Tempo — Equipamentos que perderam até metade dos PV exigem 1 hora de trabalho por PV perdido;
+os que perderam mais da metade exigem 2 horas por PV perdido. Exemplos: reparar 9PV de uma
+Espada Longa leva 9 horas; reparar 18 pontos de dano de uma Armadura de Justa leva 36 horas.
+
+Conhecimentos — o GD do reparo varia conforme a Raridade. Obras-Primas possuem dificuldades
+maiores. Reparar itens que possuam Aprimoramentos concede Desvantagem cumulativa (uma por
+Aprimoramento) na rolagem.
+
+Raridade  | GD Comum     | GD Obra-Prima
+Comum     | Muito Fácil  | Fácil
+Incomum   | Fácil        | Médio
+Raro      | Médio        | Difícil
+Épico     | Difícil      | Muito Difícil
+Mítico    | Muito Difícil| Improvável

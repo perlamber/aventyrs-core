@@ -1,6 +1,8 @@
 package org.aventyrs.core.combat;
 
 import lombok.NonNull;
+import org.aventyrs.core.character.services.AttackTargetingService;
+import org.aventyrs.core.character.services.AttackTargetingServiceImpl;
 import org.aventyrs.core.character.services.DamageService;
 import org.aventyrs.core.character.services.DamageServiceImpl;
 import org.aventyrs.core.effect.CriticalEffect;
@@ -21,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.aventyrs.core.util.TranslatableMessages.NOT_AN_ATTACK_SKILL;
+import static org.aventyrs.core.util.TranslatableMessages.TOO_MANY_ATTACK_TARGETS;
 
 /**
  * The entry point for "this character is attacking someone" — the mirror of {@link
@@ -50,6 +53,22 @@ import static org.aventyrs.core.util.TranslatableMessages.NOT_AN_ATTACK_SKILL;
  * <p>The last two are independent: an attack can clear the Corrente threshold without critting,
  * and crit without clearing it.
  *
+ * <h2>More than one target</h2>
+ *
+ * A Talento can widen an attack past its one target ({@code
+ * ArtesMarciaisFeat#DOMINAR_ARTE_MARCIAL_ARTE_FLUIDA}). {@link
+ * DeliveredAttack#getAdditionalTargets()} carries them, and {@link #resolve} refuses more than
+ * {@code AttackTargetingService#getMaximumTargets} allows — it enforces <b>how many</b>, never
+ * <b>which</b>: the adjacency those clauses require is geometry between two combatants who are
+ * both not the roller, so picking the targets is the caller's step.
+ *
+ * <p>The roll still happens once. The three questions above are then asked again per additional
+ * target against <em>that</em> defender's own Defesa, and answered on a {@link
+ * DeliveredAttackTargetResult} each; the primary target keeps the flat fields on {@link
+ * DeliveredAttackResult}, so a single-target caller sees no change at all. Every additional
+ * target's chain head is marked {@code DamageInteraction#halvingDamage()} — one attack makes one
+ * dano roll, and the Meio-Dano is applied inside it.
+ *
  * <h2>Open question: the attacker's own {@code difficultyReduction}</h2>
  *
  * A Perícia's GD reduction is denominated in <i>níveis</i>, which is exactly what {@code
@@ -62,6 +81,9 @@ import static org.aventyrs.core.util.TranslatableMessages.NOT_AN_ATTACK_SKILL;
  *
  * <p>TODO: apply the attacker's difficultyReduction once the rules define what one nível is
  * worth against a flat Defesa (or once a foe's Defesa is authored as a tier rather than a number).
+ * {@code AssassinoFeat#SAQUE_RELAMPAGO}'s "-1 nível" is the first authored clause blocked here —
+ * it joins {@code unappliedDifficultyReduction} on this path and applies for real on the direct
+ * skill-roll path and via {@link AttackReceiver}.
  *
  * <h2>What it produces</h2>
  *
@@ -75,41 +97,63 @@ public class AttackDelivery {
 
     private final EffectChainService effectChainService;
     private final DamageService damageService;
+    private final AttackTargetingService attackTargetingService;
 
     public AttackDelivery() {
         this(new EffectChainServiceImpl(), new DamageServiceImpl());
     }
 
     public AttackDelivery(final EffectChainService effectChainService, final DamageService damageService) {
+        this(effectChainService, damageService, new AttackTargetingServiceImpl());
+    }
+
+    public AttackDelivery(final EffectChainService effectChainService, final DamageService damageService,
+                          final AttackTargetingService attackTargetingService) {
         this.effectChainService = effectChainService;
         this.damageService = damageService;
+        this.attackTargetingService = attackTargetingService;
     }
 
     /**
      * Resolves attack, reporting the whole exchange without applying any of it.
      *
-     * <p>Rolls the attacker's Perícia <b>exactly once</b> — that call consumes {@code
-     * CombatantSheet#consumeFirstRollThisTurn} and can grant a temporary Ego point on a critical
-     * success, so rolling twice for one attack would double-consume the Turn's state. It goes
-     * through the 4-arg {@code applyTo}, so a target-conditioned ability ({@code FRIEZA}'s
-     * proximity damage bonus, {@code ABATEDORES_DE_GIGANTES}' bonus against a larger foe)
-     * resolves against the real defender.
+     * <p>Rolls the attacker's Perícia <b>exactly once</b> — that call can grant a temporary Ego
+     * point on a critical success (the only state it changes; the first-roll-of-Turn check it
+     * also runs is non-mutating now), so rolling twice for one attack would double-grant. It goes
+     * through the longest {@code applyTo}, so both a target-conditioned ability ({@code FRIEZA}'s
+     * proximity damage bonus, {@code ABATEDORES_DE_GIGANTES}' bonus against a larger foe) and a
+     * delivery-conditioned one ({@code ARREMESSO_PODEROSO}'s substituted Attribute, from {@link
+     * DeliveredAttack#getAttackSource()}) resolve against the real attack rather than a generic
+     * fact about the encounter. The API is expected to call {@code
+     * attacker.recordAction(...)} after {@code resolve} returns, building the {@code
+     * CombatantAction} from {@code getAttackResult().getGoverningAttributeDomain()} and the
+     * {@code AttackSource}/{@code ActionCost} it supplied.
      *
      * <p>With no {@code attackRoll} supplied, the comparison and the chain are skipped: every
      * outcome stays {@code null}, while {@code attackTotal} (the bonuses alone) and {@code
-     * requiredTotal} are still reported, so a caller can show a player what they need to roll.
+     * requiredTotal} are still reported — for every target, so a caller can show a player what
+     * they need to roll against each of them.
      *
-     * @throws IllegalOperationException if {@code attackSkill} isn't a Perícia de Ataque
+     * @throws IllegalOperationException if {@code attackSkill} isn't a Perícia de Ataque, or if
+     *         the attack names more targets than the attacker's Talentos entitle them to
      */
     public DeliveredAttackResult resolve(@NonNull final DeliveredAttack attack) {
         if (!attack.getAttackSkill().isAttackSkill()) {
             throw new IllegalOperationException(NOT_AN_ATTACK_SKILL);
         }
+        List<AttackTarget> additionalTargets = attack.getAdditionalTargets();
+        int declaredTargets = 1 + additionalTargets.size();
+        if (declaredTargets > attackTargetingService.getMaximumTargets(
+                attack.getAttacker().getCharacter(), attack.getAttackSkill())) {
+            throw new IllegalOperationException(TOO_MANY_ATTACK_TARGETS);
+        }
         CombatantSheet defender = attack.getDefender();
         SkillRoll attackRoll = attack.getAttackRoll();
 
+        List<CombatantSheet> extraTargets = additionalTargets.stream().map(AttackTarget::defender).toList();
         InteractionResult attackResult = SkillInteractionFactory.create(attack.getAttackSkill())
-                .applyTo(attack.getAttacker(), attack.getSceneContext(), attackRoll, defender);
+                .applyTo(attack.getAttacker(), attack.getSceneContext(), attackRoll, defender,
+                        attack.getAttackSource(), extraTargets);
 
         int requiredTotal = attack.getDefenseValue();
         int attackTotal = attackResult.getSkillRollBonus()
@@ -121,6 +165,10 @@ public class AttackDelivery {
                 .unappliedDifficultyReduction(attackResult.getDifficultyReduction());
 
         if (attackRoll == null) {
+            additionalTargets.forEach(target -> result.additionalTargetResult(DeliveredAttackTargetResult.builder()
+                    .defender(target.defender())
+                    .requiredTotal(target.defenseValue())
+                    .build()));
             return result.attackResult(attackResult).build();
         }
 
@@ -133,8 +181,13 @@ public class AttackDelivery {
 
         if (hit) {
             attackResult = attackResult.toBuilder()
-                    .nextInteraction(buildChain(attack, criticalEffectTriggered, effectChainTriggered))
+                    .nextInteraction(buildChain(attack, defender, criticalResult, criticalEffectTriggered,
+                            effectChainTriggered, false))
                     .build();
+        }
+
+        for (AttackTarget target : additionalTargets) {
+            result.additionalTargetResult(resolveAdditionalTarget(attack, target, attackTotal, criticalResult));
         }
 
         return result.attackResult(attackResult)
@@ -143,6 +196,39 @@ public class AttackDelivery {
                 .criticalResult(criticalResult)
                 .criticalEffectTriggered(criticalEffectTriggered)
                 .effectChainTriggered(effectChainTriggered)
+                .build();
+    }
+
+    /**
+     * The same comparison the primary target got, against one additional target's own Defesa, with
+     * the <b>one already-rolled</b> {@code attackTotal} and the one {@code criticalResult} —
+     * neither is re-derived, because the attack is one roll. What genuinely differs per target is
+     * the margin, whether it landed, whether it cleared <em>that</em> defender's Corrente
+     * threshold, and the chain built for them.
+     *
+     * <p>Its chain head is marked {@code halvingDamage()} — "os danos no alvo adicional são
+     * reduzidos à metade". The Efeitos Críticos are filtered against this defender's own anatomy,
+     * so an immunity of theirs applies to them alone.
+     */
+    private DeliveredAttackTargetResult resolveAdditionalTarget(final DeliveredAttack attack, final AttackTarget target,
+                                                                 final int attackTotal, final CriticalResult criticalResult) {
+        CombatantSheet defender = target.defender();
+        int margin = attackTotal - target.defenseValue();
+        boolean hit = margin >= 0;
+        boolean criticalEffectTriggered = hit && criticalResult != null && criticalResult.isCriticalSuccess();
+        boolean effectChainTriggered = hit
+                && margin >= effectChainService.getRequiredMargin(defender.getCharacter());
+
+        return DeliveredAttackTargetResult.builder()
+                .defender(defender)
+                .requiredTotal(target.defenseValue())
+                .margin(margin)
+                .hit(hit)
+                .criticalEffectTriggered(criticalEffectTriggered)
+                .effectChainTriggered(effectChainTriggered)
+                .nextInteraction(hit
+                        ? buildChain(attack, defender, criticalResult, criticalEffectTriggered, effectChainTriggered, true)
+                        : null)
                 .build();
     }
 
@@ -156,23 +242,48 @@ public class AttackDelivery {
      *
      * <p>The Efeitos Críticos are filtered through {@link CriticalEffect#applicableTo} first, so
      * one the defender's anatomy is immune to never reaches the chain — see that method for why
-     * the filter is shared between both directions rather than written here twice.
+     * the filter is shared between both directions rather than written here twice. defender is a
+     * parameter rather than read off attack, because a multi-target attack builds one chain per
+     * target and each is filtered against its <em>own</em> anatomy.
+     *
+     * <p>halfDamage marks the head {@code DamageInteraction} as dealing Meio-Dano — set for an
+     * additional target and never for the primary one. The stages behind it are unaffected: the
+     * halving belongs to the damage, not to the Efeitos it triggers.
      */
     private Interaction<CombatantSheet> buildChain(final DeliveredAttack attack,
+                                                    final CombatantSheet defender,
+                                                    final CriticalResult criticalResult,
                                                     final boolean criticalEffectTriggered,
-                                                    final boolean effectChainTriggered) {
+                                                    final boolean effectChainTriggered,
+                                                    final boolean halfDamage) {
         List<Effect> stages = new ArrayList<>();
         if (effectChainTriggered) {
             stages.addAll(attack.getEffectChains());
         }
         if (criticalEffectTriggered) {
-            stages.addAll(CriticalEffect.applicableTo(attack.getDefender(), attack.getCriticalEffects()));
+            stages.addAll(CriticalEffect.applicableTo(defender, allCriticalEffects(attack, criticalResult)));
         }
 
         Interaction<CombatantSheet> next = null;
         for (int i = stages.size() - 1; i >= 0; i--) {
             next = stages.get(i).chainInto(next);
         }
-        return new DamageInteraction(damageService).chainInto(next);
+        DamageInteraction head = new DamageInteraction(damageService);
+        return (halfDamage ? head.halvingDamage() : head).chainInto(next);
+    }
+
+    /**
+     * The caller-supplied Efeitos Críticos plus every one the attacker's Talentos add for this
+     * kind of hit — {@code AssassinoFeat#ABRIR_FERIDAS}'s "'Sangramento' como Efeito Crítico
+     * adicional". Talentos are outside every {@code ModifierResolver} scan, so they get an
+     * explicit pass, the same shape {@code AbstractSkillInteraction} uses for its own {@code
+     * Feat} hooks.
+     */
+    private List<CriticalEffect> allCriticalEffects(final DeliveredAttack attack, final CriticalResult criticalResult) {
+        List<CriticalEffect> effects = new ArrayList<>(attack.getCriticalEffects());
+        attack.getAttacker().getCharacter().getFeats().forEach(feat ->
+                effects.addAll(feat.resolveExtraCriticalEffects(attack.getAttacker().getCharacter(),
+                        attack.getAttackSkill(), attack.getAttackSource(), criticalResult)));
+        return effects;
     }
 }

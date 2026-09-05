@@ -5,17 +5,25 @@ import org.aventyrs.core.character.AttributeValue;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterAttributes;
 import org.aventyrs.core.character.CharacterSkill;
+import org.aventyrs.core.character.DamageBase;
 import org.aventyrs.core.character.DefenseType;
 import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.character.fixture.CharacterSkillFixture;
+import org.aventyrs.core.item.AbstractWeapon;
+import org.aventyrs.core.item.ItemCategory;
+import org.aventyrs.core.item.Weapon;
+import org.aventyrs.core.skill.ataqueadistancia.AtaqueADistanciaCompetencyAbility;
 import org.aventyrs.core.effect.DamageInteraction;
 import org.aventyrs.core.effect.Definhar;
 import org.aventyrs.core.effect.EffectChainService;
 import org.aventyrs.core.effect.Sangramento;
 import org.aventyrs.core.ego.AutocontroleAdvantage;
+import org.aventyrs.core.feat.SaqueRelampagoFeat;
+import org.aventyrs.core.feat.WeaponOrSpellChoice;
 import org.aventyrs.core.monster.GenericMonster;
 import org.aventyrs.core.monster.MonsterSheet;
+import org.aventyrs.core.sheet.ActionCost;
 import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.Player;
@@ -76,6 +84,38 @@ class AttackDeliveryTest {
         assertEquals(result.getRequiredTotal(), result.getAttackTotal());
         assertEquals(0, result.getMargin());
         assertTrue(result.getHit());
+    }
+
+    /**
+     * SAQUE_RELAMPAGO's "-1 nível" reaches an attack roll's {@code difficultyReduction}, but a
+     * foe's flat Defesa has no tier to ease — so on this path it is reported on {@code
+     * unappliedDifficultyReduction} and the required total is untouched (Option B / the
+     * "Open question" this class documents).
+     */
+    @Test
+    void saqueRelampagosReductionIsReportedUnappliedAgainstAFlatDefesa() {
+        MonsterSheet capanga = GenericMonster.CAPANGA.spawn(new Player());
+        CharacterSkill skill = CharacterSkillFixture.blank(CharacterSkillFixture.ATAQUE_CORPO_A_CORPO_1).build();
+        skill.increaseGraduation(3);
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .feats(new java.util.ArrayList<>())
+                .attributes(CharacterAttributes.builder()
+                        .strength(AttributeValue.builder().domain(AttributeDomain.STRENGTH).base(4).build())
+                        .build())
+                .skill(SkillType.ATAQUE_CORPO_A_CORPO, skill)
+                .build();
+        character.grantFeat(SaqueRelampagoFeat.of(WeaponOrSpellChoice.WEAPONS));
+        CharacterSheet hero = CharacterSheet.of(character, new Player());
+        Weapon sword = AbstractWeapon.builder().name("Espada").category(ItemCategory.HEAVY_BLADE)
+                .damageBase(DamageBase.of(2, 0)).skillType(SkillType.ATAQUE_CORPO_A_CORPO).build();
+
+        DeliveredAttackResult result = attackDelivery.resolve(attackOn(capanga, hero)
+                .attackSource(sword)
+                .attackRoll(new SkillRoll(List.of(3, 3, 3), null, null, ActionCost.ofActionPoints(1)))
+                .build());
+
+        assertEquals(1, result.getUnappliedDifficultyReduction());
+        assertEquals(capanga.getPhysicalDefense(), result.getRequiredTotal());
     }
 
     @Test
@@ -240,5 +280,86 @@ class AttackDeliveryTest {
                         .attackSkill(SkillType.ATLETISMO)
                         .attackRoll(new SkillRoll(List.of(3, 3, 3)))
                         .build()));
+    }
+
+    private static final Weapon ADAGA_DE_ARREMESSO = AbstractWeapon.builder()
+            .name("Adaga de Arremesso")
+            .category(ItemCategory.THROWABLE)
+            .damageBase(DamageBase.of(1, 2))
+            .skillType(SkillType.ATAQUE_A_DISTANCIA)
+            .build();
+
+    /**
+     * A thrower holding ARREMESSO_PODEROSO: Força 9 against Destreza 2, so which Attribute
+     * governed the Ataque à Distância roll is unmistakable in the reported attackTotal.
+     */
+    private CharacterSheet thrower() {
+        CharacterSkill skill = CharacterSkillFixture.blank(CharacterSkillFixture.ATAQUE_A_DISTANCIA_1).build();
+        skill.increaseGraduation(1);
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .attributes(CharacterAttributes.builder()
+                        .strength(AttributeValue.builder().domain(AttributeDomain.STRENGTH).base(5).variable(4).build())
+                        .dexterity(AttributeValue.builder().domain(AttributeDomain.DEXTERITY).base(2).build())
+                        .build())
+                .skill(SkillType.ATAQUE_A_DISTANCIA, skill)
+                .skillCompetencyAbility(AtaqueADistanciaCompetencyAbility.ARREMESSO_PODEROSO)
+                .build();
+        return CharacterSheet.of(character, new Player());
+    }
+
+    private DeliveredAttack.DeliveredAttackBuilder throwAt(final MonsterSheet foe, final CharacterSheet attacker) {
+        return DeliveredAttack.from(foe, DefenseType.PHYSICAL)
+                .attacker(attacker)
+                .attackSkill(SkillType.ATAQUE_A_DISTANCIA);
+    }
+
+    /** Força(5+4) + Graduação(1). */
+    private static final int THROWN_BONUS = 10;
+
+    /** Destreza(2) + Graduação(1). */
+    private static final int UNSCOPED_BONUS = 3;
+
+    @Test
+    void anAttackSourceReachesTheRollThroughResolve() {
+        MonsterSheet capanga = GenericMonster.CAPANGA.spawn(new Player());
+        SkillRoll roll = new SkillRoll(List.of(2, 2, 2));
+
+        DeliveredAttackResult result = attackDelivery.resolve(throwAt(capanga, thrower())
+                .attackSource(ADAGA_DE_ARREMESSO)
+                .attackRoll(roll)
+                .build());
+
+        assertEquals(THROWN_BONUS + roll.getTotal(), result.getAttackTotal());
+    }
+
+    /** Omitting it is not an error — the roll simply keeps the Perícia's own Attribute. */
+    @Test
+    void omittingTheAttackSourceLeavesTheRollUnscoped() {
+        MonsterSheet capanga = GenericMonster.CAPANGA.spawn(new Player());
+        SkillRoll roll = new SkillRoll(List.of(2, 2, 2));
+
+        DeliveredAttackResult result = attackDelivery.resolve(throwAt(capanga, thrower())
+                .attackRoll(roll)
+                .build());
+
+        assertEquals(UNSCOPED_BONUS + roll.getTotal(), result.getAttackTotal());
+    }
+
+    /**
+     * The bonuses-only preview path, and the reason attackSource is a parameter of the roll
+     * rather than a field on {@link SkillRoll}: with no dice yet, attackTotal is the bonus alone,
+     * and it must already reflect the substituted Attribute — otherwise a caller would show the
+     * player a lower number than the roll they are about to make will actually use.
+     */
+    @Test
+    void theAttackSourceAppliesOnThePreviewPathWithNoRollYet() {
+        MonsterSheet capanga = GenericMonster.CAPANGA.spawn(new Player());
+
+        DeliveredAttackResult result = attackDelivery.resolve(throwAt(capanga, thrower())
+                .attackSource(ADAGA_DE_ARREMESSO)
+                .build());
+
+        assertNull(result.getHit());
+        assertEquals(THROWN_BONUS, result.getAttackTotal());
     }
 }

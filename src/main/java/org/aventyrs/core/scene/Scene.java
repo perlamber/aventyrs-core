@@ -96,9 +96,11 @@ import static org.aventyrs.core.util.TranslatableMessages.NO_PARTICIPANTS_IN_SCE
  * maintains is reproduced by the same code that maintains it, not by a second copy of the rule.
  */
 public class Scene {
+    private final UUID id = UUID.randomUUID();
     private final List<InitiativeEntry> activeEntries = new ArrayList<>();
     private final List<InitiativeEntry> pendingEntries = new ArrayList<>();
     private final Map<CombatantSheet, List<TemporaryBonus>> grantedBlessings = new HashMap<>();
+    private final List<ActiveAreaSpellEffect> activeAreaSpellEffects = new ArrayList<>();
 
     private int currentIndex = -1;
     private int currentRound = 0;
@@ -138,6 +140,7 @@ public class Scene {
      * @return the CombatantSheets in Iniciativa order after this addition
      */
     public List<CombatantSheet> addParticipant(final CombatantSheet characterSheet, final int initiativeValue, final UUID group) {
+        characterSheet.startNewScene();
         InitiativeEntry entry = new InitiativeEntry(characterSheet, initiativeValue, group);
         if (currentIndex == -1) {
             insertSorted(activeEntries, entry);
@@ -207,8 +210,26 @@ public class Scene {
      * @throws IllegalOperationException if characterSheet was never added to this Scene
      */
     public SceneContext buildContext(final CombatantSheet characterSheet, final Map<CombatantSheet, Range> distances) {
+        return buildContext(characterSheet, distances, null);
+    }
+
+    /**
+     * Same as {@link #buildContext(CombatantSheet, Map)}, but also naming the combatant on the
+     * other side of the roll this context is being built for — see {@code
+     * SceneContext#getOpposedCharacter()} for which side that is (the target on an attack roll,
+     * the attacker on a defence roll). Pass {@code null}, or use the shorter overload, for a
+     * roll that opposes nobody.
+     * @throws IllegalOperationException if characterSheet was never added to this Scene
+     */
+    public SceneContext buildContext(final CombatantSheet characterSheet, final Map<CombatantSheet, Range> distances,
+                                      final CombatantSheet opposedCharacter) {
         return new SceneContext(getAllies(characterSheet), getEnemies(characterSheet), distances, terrainType,
-                combatScene, currentRound, wonInitiative(characterSheet));
+                combatScene, currentRound, wonInitiative(characterSheet), opposedCharacter, id);
+    }
+
+    /** This Scene's stable identity, carried by contexts to scope stateful effects. */
+    public UUID getId() {
+        return id;
     }
 
     /** The kind of environment this Scene is currently taking place in, or {@code null} if never set. */
@@ -325,10 +346,11 @@ public class Scene {
      * {@code TemporaryBonus} that participant is holding (including one targeting {@code
      * ModifierType.INITIATIVE}) toward expiry. Wraps back to the top once every participant has
      * acted, which also advances {@link #getCurrentRound()} and calls {@link
-     * #startNewRound()} — merging in any participant added mid-Round *and* re-deriving turn
-     * order from everyone's current {@link InitiativeEntry#getEffectiveInitiativeValue()}, so a
+     * #startNewRound()} — merging in any participant added mid-Round, re-deriving turn
+     * order from everyone's current {@link InitiativeEntry#getEffectiveInitiativeValue()} (so a
      * granted/expired Iniciativa bonus is reflected in the order from the next Round onward,
-     * never mid-Round. Finally calls {@link CombatantSheet#startTurn(int)} on whoever's turn is
+     * never mid-Round), *and* clearing every active participant's per-Rodada action log via
+     * {@link CombatantSheet#startNewRound()}. Finally calls {@link CombatantSheet#startTurn(int)} on whoever's turn is
      * now beginning, passing {@link #getCurrentRound()} as its turnNumber — unlike {@code
      * finishTurn()}, this fires even on the very first call, since that call does start
      * someone's Turn, just none has ended yet.
@@ -429,6 +451,16 @@ public class Scene {
                 .collect(Collectors.toList());
     }
 
+    /** Registers a lasting area effect produced by a Magia cast in this Scene. */
+    public void addAreaSpellEffect(final ActiveAreaSpellEffect effect) {
+        activeAreaSpellEffects.add(effect);
+    }
+
+    /** Lasting area effects currently active in this Scene. */
+    public List<ActiveAreaSpellEffect> getActiveAreaSpellEffects() {
+        return List.copyOf(activeAreaSpellEffects);
+    }
+
     /**
      * Points this Scene's turn cursor at round/index without running any of the turn-boundary
      * behavior {@link #next()} does — no {@link CombatantSheet#startTurn(int)}, no {@link
@@ -525,11 +557,18 @@ public class Scene {
      * reflected in the turn order from this Round onward. {@code List#sort} is stable, so ties
      * (including a newly-merged pending entry tying with an existing one) keep whatever
      * relative order they already had, the same tie behavior {@link #insertSorted} preserves.
+     *
+     * <p>Finally calls {@link CombatantSheet#startNewRound()} on every active participant
+     * (newcomers already merged in above), clearing each one's per-Rodada action log before the
+     * first {@link CombatantSheet#startTurn(int)} of the new Round.
      */
     private void startNewRound() {
+        activeAreaSpellEffects.forEach(ActiveAreaSpellEffect::tick);
+        activeAreaSpellEffects.removeIf(ActiveAreaSpellEffect::isExpired);
         activeEntries.addAll(pendingEntries);
         pendingEntries.clear();
         activeEntries.sort(Comparator.comparingInt(InitiativeEntry::getEffectiveInitiativeValue).reversed());
+        activeEntries.forEach(entry -> entry.getCombatantSheet().startNewRound());
     }
 
     /** Inserts before the first entry with a strictly lower value, keeping ties in insertion order. */

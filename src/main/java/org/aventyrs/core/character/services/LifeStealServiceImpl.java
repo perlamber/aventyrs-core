@@ -15,6 +15,9 @@ public class LifeStealServiceImpl implements LifeStealService {
         int bonus = character.getAttributeAbilities().stream()
                 .mapToInt(AttributeAbility::resolveLifeStealBonus)
                 .sum();
+        bonus += character.getFeats().stream()
+                .mapToInt(feat -> feat.resolveLifeStealBonus(character))
+                .sum();
         return base + bonus;
     }
 }

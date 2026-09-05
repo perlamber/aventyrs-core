@@ -29,6 +29,18 @@ public interface AventyrTitle {
     String getName();
 
     /**
+     * Which broad kind of Título this is — the axis a Talento's Pré-requisito names when it
+     * demands not merely "1 Título Aventyr Desperto" but "1 Título Aventyr <b>Bruto</b>
+     * Desperto" (see {@link TitleArchetype}, and {@code
+     * org.aventyrs.core.feat.FeatRequirements#requiredTitleArchetype} for the consuming gate).
+     *
+     * <p>Abstract rather than defaulted: every Título belongs to exactly one archetype, so
+     * there is no sensible fallback, and a new Título silently defaulting to the wrong one
+     * would quietly hand its holder Talentos they should not qualify for.
+     */
+    TitleArchetype getArchetype();
+
+    /**
      * The base passive granted just for holding this Título, with no activation cost of its
      * own — e.g. Santo's own "Despertar" clause. Lives here, not on a catalog
      * {@link AventyrTitleAbility} constant, because the base effect isn't itself a

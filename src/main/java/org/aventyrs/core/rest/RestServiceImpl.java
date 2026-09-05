@@ -18,7 +18,10 @@ public class RestServiceImpl implements RestService {
         int bonus = character.getAttributeAbilities().stream()
                 .mapToInt(ability -> ability.resolveRestMagicPointsBonus(restType))
                 .sum();
-        return recovered(character.getAttributes().getFocus().getTotal(), restType) + bonus;
+        int featBonus = character.getFeats().stream()
+                .mapToInt(feat -> feat.resolveRestMagicPointsBonus(restType, character))
+                .sum();
+        return recovered(character.getAttributes().getFocus().getTotal(), restType) + bonus + featBonus;
     }
 
     @Override
