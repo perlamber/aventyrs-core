@@ -27,7 +27,11 @@ forge itself to `ItemForgery` — driven by an `ItemSpecification` (base `ItemTe
 its catalog entry). `ItemForgery.by(...)` applies every gate — including `Feat
 #itsAllowedToCraftRegalia`, the *permission* an `ArtificeFeat` grants, as distinct from the
 prerequisites for acquiring that Talento — while `ItemForgery.donatedByAventyr(spec)` is the GM
-path: no gates, no costs, and the copy is marked `Item#isDonatedByAventyr()`. The service (in
+path: no gates, no costs, and the copy is marked `Item#isDonatedByAventyr()`.
+`ItemForgery.purchased(spec)` is the third: a shop sale, no crafter-gates but it refuses a
+Regalia, the copy is neither a donation nor stamped with a maker, and `ItemPurchaseService`
+wraps it to spend `AbstractCombatantSheet#equipmentPoints` (the PE budget) — so a new item's
+`price` column *is* spent now, on a purchase. The service (in
 `org.aventyrs.core.character.services`) keeps the numbers around the forge — the days of work and
 the GD from `ItemRarity`; the forge stamps `producedByCharacterId`. The forge is also assembled a
 decision at a time — `setMasterpiece`/`addImprovement`/`setActiveAbility` each re-total
@@ -36,8 +40,9 @@ that, halved once at the end. **So author a `getPriceModifier()` on a new Obra-P
 Aprimoramento the moment its rules text gives one a Preço** — every forge that fits it prices it
 with no further wiring; today they all return 0. A copy holds a `List<Improvement>` capped 1/2/3 by
 `ItemWeightClass`, fitted via `AbstractItem#addImprovement` (`getImprovement()` is a deprecated
-first-or-null shim). Still unmodeled and not to be built speculatively: a PE economy
-(`ResourcesAdvantage#BARGANHISTA`), the offensive Obra-Prima/Aprimoramento catalogs.
+first-or-null shim). Still unmodeled and not to be built speculatively: a PE economy for
+*production* (a self-forge reports its cost, only a purchase spends), the offensive
+Obra-Prima/Aprimoramento catalogs.
 
 **Inventory, however, is real** — `Character#equipment` (worn/wielded) and
 `AbstractCombatantSheet#inventory` (carried, including a foe's loot). Both are mutable
@@ -159,12 +164,14 @@ Two do, and a new item's values flow into them automatically with no wiring:
 
 - **Dureza** — the pool `Item#applyDamage` spends; at 0 the copy is destroyed and every bonus
   above stops applying.
+- **Preço** — spent when the item is *bought from an `ItemStore`*: `ItemPurchaseService` debits
+  `AbstractCombatantSheet#equipmentPoints`, less `ResourcesAdvantage#BARGANHISTA`. A self-forge
+  still only reports its cost.
 
-Two still have **no consumer**, each blocked on a *different* missing system: **Preço** (PE has
-no budget/economy) and **Conjuração** (no item-granted hook on either of `SpellCastingService`'s
-two rolls). Their values are still real, exact data — per
-this codebase's "can't apply it yet doesn't mean can't compute it yet" discipline. Author them
-correctly; just don't claim they do something.
+**Conjuração** still has **no consumer** — no item-granted hook on either of
+`SpellCastingService`'s two rolls. Its value is still real, exact data — per this codebase's
+"can't apply it yet doesn't mean can't compute it yet" discipline. Author it correctly; just
+don't claim it does something.
 
 `ItemInteraction` remains a bare "TODO implement" stub — nothing yet *uses* an item as an
 `Interaction`. Adding an item does not change that.
@@ -181,6 +188,12 @@ layout exactly. `ItemCategory` already enumerates the full set (ARMOR, BOOTS, CL
 HELMET, RING, SHIELD, BOW, THROWABLE, CROSSBOW, WHIP, CLUB, NATURAL_WEAPON, LIGHT_BLADE,
 HEAVY_BLADE, SPEAR, PROJECTILE, POTION, SCROLL), each carrying its `ItemType`
 (Ofensivo/Defensivo/Utilitário/Consumível) — so `getType()` is derived, never authored.
+
+**A new category enum must be registered in `ItemCatalog.CATALOG_ENUMS`** — the hand-maintained
+list `ItemCatalog` (the `FeatCatalog` equivalent) flattens to answer "every `ItemTemplate`",
+which is what an `ItemStore` offers up to its `maxRarity`. There's no sealed `permits` to catch
+a forgotten entry (tests use anonymous `ItemTemplate`s), so `ItemCatalogTest` counts constants
+instead — extend that count too.
 
 `NaturalWeapon` is the second catalog after `ArmorItem`, and the shape sibling for any weapon
 category: it `implements ItemTemplate, Weapon`, so it adds `getDamageBase()`/`getSkillType()`/
@@ -218,4 +231,7 @@ sweeps:
   (unexpressible halving), `ROUPA_PESADA` (the net-effect trap).
 - `org.aventyrs.core.item.Item` — the interface and its three `default` Favor helpers.
 - `org.aventyrs.core.item.ItemFavor` / `ItemBonus` / `ItemRequirements`.
+- `org.aventyrs.core.item.ItemCatalog` / `ItemStore` / `ItemForgery#purchased` +
+  `org.aventyrs.core.character.services.ItemPurchaseService` — the catalog aggregator and the
+  shop-buying flow a new catalog constant automatically joins.
 - `src/test/java/org/aventyrs/core/item/ArmorItemTest` — the test shape to copy.

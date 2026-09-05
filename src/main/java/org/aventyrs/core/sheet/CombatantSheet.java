@@ -94,6 +94,17 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
 
     boolean removeFromInventory(Item item);
 
+    // --- Equipment Points (PE) -------------------------------------------------------------
+
+    /** This combatant's Pontos de Equipamento balance — the budget an item store purchase spends. */
+    int getEquipmentPoints();
+
+    /** Adds PE to the balance (a starting budget, a Narrador grant); returns the new balance. */
+    int grantEquipmentPoints(int amount);
+
+    /** Spends PE; returns the balance left. Throws {@code NOT_ENOUGH_EQUIPMENT_POINTS} if short. */
+    int spendEquipmentPoints(int amount);
+
     // --- Ego points -------------------------------------------------------------------------
     // Two spendable pools per EgoDomain, permanent and temporary; see EgoPointPool for the model
     // and for why spending a permanent point costs twice over.
@@ -370,6 +381,11 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
      * calls this <b>explicitly</b> after resolving a roll (or an {@code AttackDelivery}/{@code
      * AttackReceiver} exchange); it is never a side effect of {@code
      * AbstractSkillInteraction#applyTo}. The action also lands in {@link #getActionsThisCena()}.
+     *
+     * <p>A caller with a live {@code org.aventyrs.core.scene.Scene} calls {@code
+     * Scene#recordAction(CombatantSheet, CombatantAction)} instead — that keeps a permanent
+     * Scene-wide history for the client and downstreams to this method. This one stays the
+     * entry point for a caller driving the API with no Scene.
      */
     void recordAction(CombatantAction action);
 

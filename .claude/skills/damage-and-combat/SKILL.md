@@ -69,9 +69,18 @@ The player always rolls, so a foe contributes a fixed number whichever way an ex
 Neither ever calls the other. Both are report-only, both roll exactly once (the roll can grant
 an Ego point on a critical — the only state it changes; the first-roll-of-Turn check it also
 runs is non-mutating now), and both assemble the same pre-wired `Damage → Correntes → Críticos`
-chain onto the result's `nextInteraction`. **Neither records the action** — the API calls
-`CombatantSheet#recordAction` after `resolve` returns, using
-`getAttackResult().getGoverningAttributeDomain()` and the `AttackSource`/`ActionCost` it supplied.
+chain onto the result's `nextInteraction`. **Neither records the action**, but both build it:
+`DeliveredAttack`/`IncomingAttack` carry an optional `Scene` (mirroring `SpellCastRequest`'s
+"live Scene beside the `SceneContext` snapshot"), and `resolve` bundles the roll as a ready
+`CombatantAction` on `DeliveredAttackResult`/`IncomingAttackResult#getRecordedAction()` — skill,
+resolved `governingAttributeDomain`, the `AttackSource`/`ActionCost` supplied, `turnNumber` from
+`Scene#getCurrentRound()` (0 with no Scene), and the verdict (`AttackReceiver`'s is signed from
+the *defender's* side — `succeeded` = defence held, `margin` positive when it held). `null` on
+the preview path. The caller files it with one `scene.recordAction(actor, result.getRecordedAction())`
+(or `actor.recordAction(...)` with no Scene). `SpellCastingService#castSpell` does the same on
+`SpellCastingResult#getRecordedAction()`, partial there (no roll is handed to `castSpell`, so
+domain/verdict stay unset; the `Spell` as `attackSource` is the part the "primeira Magia da
+Rodada" clause reads back).
 
 - `CriticalEffect#validateCriticalHit` demands an *Acerto* Crítico, which is correct for
   `AttackDelivery` and **still awkward for `AttackReceiver`**, where the trigger is a Falha
@@ -277,11 +286,25 @@ there with their first consumer.
 
 ## An attack's maximum range — `AttackRangeService`
 
-Same shape as `DamageBaseService`, one axis over: an attack's max distance is a property of the
-**Weapon or Spell**, advanced by the attacker's Talentos. `AttackRangeService#getEffectiveRange`
-has two non-cascading overloads — `(Character, Weapon)` → `Range`, `(Character, Spell)` →
-`Optional<Range>` (empty for a Pessoal/Toque/Planar/caster-centred reach that names no placed
-distance).
+Same shape as `DamageBaseService`, one axis over: an attack's max distance starts with the
+**Weapon or Spell**, is widened by the attacker's **Categoria de Tamanho**, and is then advanced by
+the attacker's Talentos. `AttackRangeService#getEffectiveRange` has two non-cascading overloads —
+`(Character, Weapon)` → `Range`, `(Character, Spell)` → `Optional<Range>` (empty for a
+Pessoal/Toque/Planar/caster-centred reach that names no placed distance).
+
+- **Size always contributes, in one of two ways** (`docs/rules/categorias-de-tamanho.txt`, Alcance
+  column). `Range.ADJACENTE` is *not* a distance — it means no space between the combatants — so
+  nothing is added to it: a weapon stating no reach of its own takes `SizeCategory#getRange()`
+  wholesale, while a weapon that *does* state one (Lança, arco) has `SizeCategory#getRangeModifier()`
+  added, **ranged and thrown included**. That split is what keeps a giant's lança out-reaching its
+  own fist. Magias take no size widening.
+- **Two forms, and the difference matters.** `getEffectiveRangeInUnidadesDeDistancia` is the reach;
+  `getEffectiveRange` rounds it *up* into a band. `Range` is geometric (1/2/4/8/16/24 UD) and the
+  size modifier is linear, so most reaches have no band: an adaga at Categoria +4 reaches 3 UD and
+  comes back as `DISTANCIA_CURTA`, worth 4. The band stays correct for `isWithin` questions — it is
+  the smallest band *covering* the reach — but **anything measuring against a position wants the UD
+  form**. Talento steps are band steps, so they compose after the rounding and never reach the UD
+  figure.
 
 - **The authored column.** `Weapon#getRange()` is a `@Builder.Default` of `Range.ADJACENTE` on
   `AbstractWeapon` — *not* `@NonNull` like `damageBase`/`skillType`, because a weapon that never

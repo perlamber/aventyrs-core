@@ -2,6 +2,7 @@ package org.aventyrs.core.magic;
 
 import org.aventyrs.core.ability.AttributeAbility;
 import org.aventyrs.core.character.AttributeDomain;
+import org.aventyrs.core.sheet.CombatantAction;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.Interaction;
 import org.aventyrs.core.sheet.InteractionResult;
@@ -60,6 +61,7 @@ public class SpellCastingServiceImpl implements SpellCastingService {
                 .durationInRounds(durationInRounds.isPresent() ? durationInRounds.getAsInt() : null)
                 .areaSpellEffect(areaSpellEffect)
                 .primaryDamage(resolvePrimaryDamage(request.getSpell(), request.getCaster()).orElse(null))
+                .recordedAction(recordedAction(request, deliveryResult))
                 .build();
     }
 
@@ -87,6 +89,23 @@ public class SpellCastingServiceImpl implements SpellCastingService {
 
         return new ResolvedSpellDamage(damage.flatBonus() + focusContribution, damage.diceCount(),
                 damage.damageType(), damage.elementalType(), focusFullyApplied);
+    }
+
+    /**
+     * Bundles the cast as a ready-to-file {@link CombatantAction} for {@link
+     * SpellCastingResult#getRecordedAction()} — the {@link Spell} as {@code attackSource} is the
+     * part {@code isFirstSpellCastOfRound} reads back once this is recorded. Partial: no roll is
+     * supplied to {@code castSpell}, so the governing domain and verdict stay unset. Not recorded
+     * here — the caller files it via {@code scene.recordAction(caster, action)}.
+     */
+    private CombatantAction recordedAction(final SpellCastRequest request, final InteractionResult deliveryResult) {
+        return new CombatantAction(
+                request.getSpell().getAttackSkillType(),
+                deliveryResult.getGoverningAttributeDomain(),
+                request.getSpell(),
+                null,
+                request.getScene().getCurrentRound(),
+                null);
     }
 
     private static boolean isFirstSpellCastOfRound(final CombatantSheet caster) {

@@ -17,15 +17,24 @@ import org.aventyrs.core.character.EgoDomain;
 @AllArgsConstructor
 public enum ResourcesAdvantage implements EgoAdvantage {
 
-    // TODO: -2PE (minimum 1PE) on buying/producing equipment in campaign, and -1PE
-    // (minimum 1PE) on Obra-Prima upgrades/Aprimoramentos/Habilidade de Título usage — producing
-    // equipment now has a costed entry point (EquipmentCraftingService#getFabricationCost) and
-    // Obra-Primas/Aprimoramentos are modeled per copy, so the remaining blocker is narrow: no PE
-    // *budget/economy* to spend against, no buying flow, and no discount hook on either cost.
+    /**
+     * The "comprar equipamentos ... custam 2 Pontos de Equipamentos a menos, até o mínimo de
+     * 1PE" half is real: {@link #resolveEquipmentPurchaseDiscount()} returns 2, and {@code
+     * org.aventyrs.core.character.services.ItemPurchaseService} subtracts it and applies the 1PE
+     * floor. Still TODO: the "-2PE a menos" on <i>producing</i> equipment ({@code
+     * EquipmentCraftingService}/{@code ItemForgery} report a cost but nothing spends it), and the
+     * "-1PE (mínimo 1PE)" on Obra-Prima upgrades / Aprimoramentos / Habilidade de Título usage —
+     * none of those have a PE spender to discount.
+     */
     BARGANHISTA("Comprar ou produzir equipamentos após a criação do Personagem, em " +
             "campanha, custam 2 Pontos de Equipamentos a menos, até o mínimo de 1PE; " +
             "Melhorias de Obras-Primas, Aprimoramentos e uso de Habilidades de Título " +
-            "custam -1PE (mínimo 1PE)."),
+            "custam -1PE (mínimo 1PE).") {
+        @Override
+        public int resolveEquipmentPurchaseDiscount() {
+            return 2;
+        }
+    },
 
     // TODO: grants a chosen Equipamento Comum Ofensivo (any Raridade) at character
     // creation, upgraded to a Comum/Incomum Obra-Prima with no Aprimoramentos, excluding

@@ -26,6 +26,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import static org.aventyrs.core.util.TranslatableMessages.NOT_ENOUGH_EQUIPMENT_POINTS;
+
 /**
  * Every {@link CombatantSheet} behaviour, implemented once — the resource pools, the temporary
  * Ego points, the {@link TemporaryEffect} list and the Turn lifecycle. {@link CharacterSheet}
@@ -86,9 +88,9 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
      * where an {@link Item} lands the moment it's bought (or otherwise acquired), via {@link
      * #addToInventory(Item)}. Lives here rather than on {@code Character} because it's per-sheet
      * acquired state, not a fixed trait of the Character itself (the same reason a player's
-     * experience lives on {@link CharacterSheet}), and because a future PE (Pontos de
-     * Equipamento) economy funding these purchases belongs alongside it — unlike {@code
-     * Character#equipment}, which is a fixed trait of the Character (what they're currently
+     * experience lives on {@link CharacterSheet}), and because the PE (Pontos de Equipamento)
+     * economy funding these purchases lives alongside it in {@link #equipmentPoints} — unlike
+     * {@code Character#equipment}, which is a fixed trait of the Character (what they're currently
      * wearing/wielding) regardless of which sheet is in play.
      *
      * <p>On this shared class rather than {@link CharacterSheet} because loot is not a
@@ -99,11 +101,23 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
      * genuinely means owning two of them. Space is unlimited — no Carga/capacity concept exists
      * in this core, so nothing here ever rejects an addition.
      *
-     * <p>No PE economy exists yet (see {@link Item}'s own javadoc), so "buying" isn't a validated
-     * transaction here — a caller resolves whatever price-paying happens elsewhere and calls
-     * {@link #addToInventory(Item)} once it has.
+     * <p>Buying <em>is</em> a validated transaction now, but not here: {@code
+     * org.aventyrs.core.character.services.ItemPurchaseService} debits {@link #equipmentPoints}
+     * and calls {@link #addToInventory(Item)} with the forged copy. Every other way an item
+     * arrives (loot, a GM grant, a self-forge) still just calls {@code addToInventory}.
      */
     private final List<Item> inventory = new ArrayList<>();
+
+    /**
+     * This sheet's Pontos de Equipamento balance — the budget {@code
+     * org.aventyrs.core.character.services.ItemPurchaseService} spends to buy Equipamento, and
+     * that {@code ResourcesAdvantage#BARGANHISTA} discounts. A plain held balance (contrast the
+     * Ego pools' spent-counters), moved by {@link #grantEquipmentPoints(int)} /
+     * {@link #spendEquipmentPoints(int)}, the same shape as {@link CharacterSheet}'s experience
+     * wallet. On this shared class, next to {@link #inventory}, for the reason that field's
+     * javadoc gives; a monster simply leaves it at 0.
+     */
+    private int equipmentPoints = 0;
 
     /** Temporary Ego points owed back at this sheet's next qualifying Rest. */
     @Getter(AccessLevel.NONE)
@@ -495,11 +509,43 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
 
     /**
      * Adds item to this sheet's {@link #getInventory()} — a plain mutator: it validates nothing
-     * (no Preço/PE spend, no capacity check, since neither exists yet).
+     * (no capacity check — no Carga concept exists). Paying for a purchase is {@code
+     * org.aventyrs.core.character.services.ItemPurchaseService}'s job, via {@link
+     * #spendEquipmentPoints(int)} then this method; a caller acquiring an item any other way
+     * (loot, a GM grant, a craft) just calls this.
      */
     @Override
     public void addToInventory(final Item item) {
         inventory.add(item);
+    }
+
+    // --- Equipment Points (PE) ---------------------------------------------------------------
+
+    /**
+     * Adds amount Pontos de Equipamento to this sheet's balance, returning the new balance —
+     * the mirror of {@code CharacterSheet#accumulateExperience}. A Narrador grant, or a starting
+     * budget at creation. Rejects a negative amount.
+     */
+    public int grantEquipmentPoints(final int amount) {
+        if (amount < 0) {
+            throw new IllegalOperationException(NOT_ENOUGH_EQUIPMENT_POINTS);
+        }
+        return equipmentPoints += amount;
+    }
+
+    /**
+     * Spends amount Pontos de Equipamento, returning the balance left. The subtraction happens
+     * only once the result is known non-negative — the same order {@code
+     * CharacterSheet#useExperience} keeps so a rejected spend never silently corrupts the balance.
+     *
+     * @throws IllegalOperationException ({@code NOT_ENOUGH_EQUIPMENT_POINTS}) if the balance is short
+     */
+    public int spendEquipmentPoints(final int amount) {
+        int remaining = equipmentPoints - amount;
+        if (remaining < 0) {
+            throw new IllegalOperationException(NOT_ENOUGH_EQUIPMENT_POINTS);
+        }
+        return equipmentPoints = remaining;
     }
 
     /**
@@ -702,7 +748,9 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     /**
      * Appends action to this Rodada's log (and this Cena's). Called explicitly by the API after
      * it has resolved a roll (or an {@code AttackDelivery}/{@code AttackReceiver} exchange) —
-     * never from inside {@code AbstractSkillInteraction#applyTo}, which only <em>reads</em> the log.
+     * never from inside {@code AbstractSkillInteraction#applyTo}, which only <em>reads</em> the
+     * log. A caller with a live {@code Scene} reaches this through {@code Scene#recordAction},
+     * which also files the action in the Scene's permanent history.
      */
     @Override
     public void recordAction(final CombatantAction action) {

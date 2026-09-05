@@ -9,6 +9,7 @@ import org.aventyrs.core.character.DamageDescriptor;
 import org.aventyrs.core.effect.CriticalEffect;
 import org.aventyrs.core.effect.DamageInteraction;
 import org.aventyrs.core.effect.EffectChain;
+import org.aventyrs.core.scene.Scene;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.skill.DifficultyLevel;
@@ -70,6 +71,17 @@ public class IncomingAttack {
 
     /** Nearby allies/enemies and their ranges, or {@code null} outside an encounter. */
     private final SceneContext sceneContext;
+
+    /**
+     * The live {@link Scene} this attack happens in, or {@code null} when the caller is driving
+     * the API without one — the same optional-live-Scene-beside-the-snapshot shape {@code
+     * org.aventyrs.core.magic.SpellCastRequest} carries. {@link AttackReceiver#resolve} never
+     * mutates it; it reads {@link Scene#getCurrentRound()} to stamp the {@code turnNumber} on the
+     * {@code CombatantAction} it builds for {@link IncomingAttackResult#getRecordedAction()}, so
+     * the caller records the defence with a single {@code scene.recordAction(defender,
+     * result.getRecordedAction())} instead of re-assembling that action by hand.
+     */
+    private final Scene scene;
 
     /**
      * Who is attacking, or {@code null} when nothing/nobody in particular is (a trap, an

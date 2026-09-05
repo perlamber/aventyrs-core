@@ -1,0 +1,104 @@
+Categorias de Tamanho
+
+Fonte: tabela de tamanho fornecida pelo autor. Este arquivo é a fonte da verdade para o
+enum org.aventyrs.core.character.SizeCategory e para os modificadores de tamanho aplicados
+em AbstractSkillInteraction (rolagens), AttackRangeService (alcance corpo-a-corpo) e
+MovementService (Movimento Base por Ponto de Ação).
+
+O humano é a referência: Categoria 0, 1,5m a 2m de altura. Toda outra Categoria desloca
+altura, alcance, ataque/dano, Defesas, Movimento e Furtividade/Atenção em relação a essa
+base. Categorias negativas são criaturas menores que um humano; positivas, maiores.
+
+================================================================================================
+Tabela (como transcrita da fonte)
+
+CATEGORIA | Altura Mínima | Altura Máxima | Alcance | Ataque | E Dano | Defesas | Movimento | Furtiv. e Atenção
+   -4     |     0,1m      |     0,4m      |   1UD   |  -2    |  +2    |   +2    |    1UD    |        +2
+   -3     |     0,4m      |     0,7m      |   1UD   |  -2    |  +2    |   +2    |    1UD    |        +2
+   -2     |     0,7m      |     1,0m      |   1UD   |  -1    |  +1    |   +1    |    2UD    |        +1
+   -1     |     1,0m      |     1,4m      |   1UD   |  -1    |  +1    |   +1    |    3UD    |        +1
+    0     |     1,5m      |     2,0m      |   1UD   |  +0    |  +0    |   +0    |    4UD    |        +0
+   +1     |     2,2m      |     3,0m      |   1UD   |  +1    |  -1    |   -1    |    5UD    |        -1
+   +2     |     3,3m      |     4,5m      |   2UD   |  +1    |  -1    |   -1    |    6UD    |        -1
+   +3     |     4,8m      |     7,2m      |   2UD   |  +2    |  -2    |   -2    |    7UD    |        -2
+   +4     |     7,2m      |    10,1m      |   3UD   |  +2    |  -2    |   -2    |    8UD    |        -2
+
+================================================================================================
+NOTA DE RECONCILIAÇÃO — como o core modela a tabela
+
+- "Ataque" e "E Dano" são uma única coluna. A fonte separa o cabeçalho em duas células, mas
+  trata-se de um só modificador de Ataque e Dano, igual à coluna "Ataque" acima (-2 em -4,
+  +2 em +4). SizeCategory#getAttackAndDamageModifier() = signum(cat) * teto(|cat| / 2):
+  -4→-2, -3→-2, -2→-1, -1→-1, 0→0, +1→+1, +2→+1, +3→+2, +4→+2. Ele se aplica tanto à rolagem
+  de Ataque quanto à de Dano — uma criatura menor causa MENOS dano, não mais.
+  Os valores da coluna "E Dano" na transcrição coincidem com "Defesas" (o inverso de
+  "Ataque"), não com o modificador de dano real; são leitura da(s) coluna(s) de Defesa.
+
+- "Defesas" (Física e Mágica) e "Furtividade e Atenção" são o negativo do modificador de
+  Ataque e Dano: SizeCategory#getDefenseModifier() e #getStealthAndAttentionModifier() =
+  -getAttackAndDamageModifier(). Criaturas menores são mais difíceis de acertar e de
+  perceber; maiores, o contrário.
+
+- "Alcance" é o alcance de um ataque que não tem alcance próprio, em UD:
+  SizeCategory#getRange() = máx(1, 1 + piso(cat / 2)). O Tamanho SEMPRE contribui para o
+  alcance, mas de duas formas distintas (AttackRangeService), porque Range.ADJACENTE não é
+  uma distância — significa que não há espaço entre os combatentes, e não "1UD":
+
+    * Arma sem alcance próprio (Alcance = Adjacente: punho, adaga, espada) — o alcance é a
+      coluna "Alcance" acima, lida diretamente. Um corpo maior alcança mais longe por ser
+      maior, não porque a adjacência tenha crescido.
+
+    * Arma que declara o próprio alcance (Lança em Muito Curta, Arco em Longa) — soma-se
+      SizeCategory#getRangeModifier() = piso(cat / 2) à distância declarada, com piso em
+      1UD. Vale para TODA arma que declare alcance, incluindo Arremesso e Ataque à
+      Distância: um gigante puxa um arco longo mais longe que um goblin.
+
+  É essa separação que mantém a lança de um gigante alcançando mais que o próprio punho
+  dele. Magias não recebem alargamento por Tamanho — o alcance de um Conjurador não é o do
+  corpo dele.
+
+- CORPO (REGRA NOVA, não transcrita da fonte): SizeCategory#getBodyRadius() =
+  máx(0, piso(cat / 2)) — o quanto o corpo da criatura se estende a partir do próprio
+  centro, em UD. É a outra metade da coluna "Alcance": se um corpo maior alcança mais longe
+  por ser maior, então também é alcançado antes, porque já ocupa o espaço entre os dois.
+  Derivado de getRangeModifier() para que os dois números nunca discordem sobre o tamanho
+  do mesmo corpo.
+
+    Categoria  |  ≤ +1  | +2/+3 | +4/+5 | +6/+7
+    Raio       |  0UD   |  1UD  |  2UD  |  3UD
+
+  Quem mede alcance subtrai APENAS o raio do alvo — o raio do próprio atacante já está pago
+  pela coluna "Alcance", e subtraí-lo de novo contaria o mesmo corpo duas vezes. Onde
+  nenhuma das partes é quem rola ("alvos adicionais precisam estar adjacentes ao alvo
+  primário"), os dois raios contam.
+
+    alcança  <=>  distância(atacante, alvo) - raio(alvo) <= alcance do atacante
+    adjacentes <=>  distância(a, b) - raio(a) - raio(b) <= 1
+
+  Exemplo: um humano desarmado (1UD) atinge um gigante +2 a 2 hexes (2-1=1) e um +4 a
+  3 hexes (3-2=1). Duas criaturas de Categoria comum não mudam em distância nenhuma.
+
+  ATENÇÃO — isto é uma regra de ALCANCE, não de OCUPAÇÃO. A criatura continua ocupando
+  exatamente uma posição para movimento e posicionamento, como o resto do corpus pressupõe
+  (magias.txt:665 "não é possível posicionar a barreira em um espaço ocupado por outros
+  personagens"; Forma de Magma, magias.txt:862, concede ocupar o mesmo espaço que outros
+  como efeito SEPARADO do +2 de Categoria — ou seja, a fonte não liga Tamanho a espaço).
+
+- PRECISÃO: Range é uma escala geométrica (1/2/4/8/16/24UD) e o modificador de Tamanho é
+  linear, então a maioria dos alcances não é representável como faixa e
+  Range.fromUnidadesDeDistancia SEMPRE arredonda para cima — uma adaga na Categoria +4
+  alcança 3UD (Muito Curta + 1), e a faixa devolvida é Curta, que vale 4UD. A faixa continua
+  correta para comparações (Range#isWithin), mas quem precisa MEDIR deve usar
+  AttackRangeService#getEffectiveRangeInUnidadesDeDistancia, que informa o alcance exato.
+
+- "Movimento" é o Movimento Base por Ponto de Ação: SizeCategory#getMovementPerActionPoint()
+  = máx(1, 4 + cat). É a figura por Ponto de Ação, nunca o total de um movimento
+  (MovementService).
+
+- SizeCategory estende a escala até +10 (usada por habilidades que deslocam a Categoria,
+  p.ex. Sangue de Gigante, via SizeCategory#shift e CharacterSizeService
+  #getEffectiveSizeCategory). Alturas acima de +4: +5 10,1–14m, +6 14–20m, +7 20–28m,
+  +8 28–40m, +9 40–60m, +10 60–100m; os modificadores seguem as mesmas fórmulas.
+
+Ainda não aplicado pelo core: o modificador de "Defesas" só chega à rolagem de Esquiva e
+Aparar (AbstractSkillInteraction), não ao stat de Defesa Física/Mágica em DefenseService.

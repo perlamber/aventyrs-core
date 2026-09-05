@@ -1,6 +1,8 @@
 package org.aventyrs.core.scene;
 
+import org.aventyrs.core.item.ItemStore;
 import org.aventyrs.core.sheet.Blessing;
+import org.aventyrs.core.sheet.CombatantAction;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.TargetScope;
@@ -47,6 +49,24 @@ import static org.aventyrs.core.util.TranslatableMessages.NO_PARTICIPANTS_IN_SCE
  * de Combate" only applies once one has begun. Paired with {@link #getCurrentRound()} via
  * {@link SceneContext#isWithinFirstCombatRounds}, and with {@link #wonInitiative} for whichever
  * Vantagens further condition themselves on having won initiative.
+ *
+ * <p>{@link #itemStore} is another such bit of optional Scene-scoped state: an {@link ItemStore}
+ * a caller attaches once the party reaches somewhere they can buy Equipamento (a town, a
+ * travelling merchant), {@code null} on a Scene with nowhere to shop — the same lifecycle as
+ * {@link #terrainType}. A store carries no items of its own; it offers the whole {@code
+ * ItemCatalog} up to its Raridade ceiling, and {@code
+ * org.aventyrs.core.character.services.ItemPurchaseService} is what turns an offer into a
+ * paid-for owned copy. It is deliberately not carried into {@link #buildContext} — a store is
+ * not roll-relevant snapshot state.
+ *
+ * <p>{@link #getActionHistory()} is this Scene's permanent combat log: every {@link
+ * CombatantAction} a caller records flows in through {@link #recordAction(CombatantSheet,
+ * CombatantAction)}, which appends a {@link SceneAction} here <em>and</em> downstreams the
+ * action to the acting combatant's own per-Rodada/per-Cena logs. Unlike those logs it is
+ * never cleared — the Rodada and Cena boundaries reset what a "primeira ... nesta Rodada"
+ * clause reads, not the history a client renders. {@link CombatantSheet#recordAction} stays
+ * callable directly for a caller driving the API with no live Scene, the same split {@link
+ * #next()} has with {@link CombatantSheet#startNewRound()}.
  *
  * <p>{@link #applyInitiativeBlessings} is the caller-invoked hook for the moment a group
  * actually wins initiative: given the winner's own already-resolved {@link
@@ -101,11 +121,13 @@ public class Scene {
     private final List<InitiativeEntry> pendingEntries = new ArrayList<>();
     private final Map<CombatantSheet, List<TemporaryBonus>> grantedBlessings = new HashMap<>();
     private final List<ActiveAreaSpellEffect> activeAreaSpellEffects = new ArrayList<>();
+    private final List<SceneAction> actionHistory = new ArrayList<>();
 
     private int currentIndex = -1;
     private int currentRound = 0;
     private TerrainType terrainType;
     private boolean combatScene;
+    private ItemStore itemStore;
     private List<Blessing> activeBlessings = List.of();
 
     /**
@@ -250,6 +272,16 @@ public class Scene {
     /** Sets whether this Scene is currently a Cena de Combate — e.g. once combat actually breaks out. */
     public void setCombatScene(final boolean combatScene) {
         this.combatScene = combatScene;
+    }
+
+    /** The {@link ItemStore} the party can currently shop at, or {@code null} if there is none. */
+    public ItemStore getItemStore() {
+        return itemStore;
+    }
+
+    /** Attaches (or clears, with {@code null}) the store the party can currently buy Equipamento from. */
+    public void setItemStore(final ItemStore itemStore) {
+        this.itemStore = itemStore;
     }
 
     /**
@@ -459,6 +491,41 @@ public class Scene {
     /** Lasting area effects currently active in this Scene. */
     public List<ActiveAreaSpellEffect> getActiveAreaSpellEffects() {
         return List.copyOf(activeAreaSpellEffects);
+    }
+
+    /**
+     * Records an action combatant took in this Scene: appends it to this Scene's permanent
+     * {@link #getActionHistory() history} — kept for the client to display, never cleared —
+     * and downstreams it to combatant's own per-Rodada and per-Cena logs via {@link
+     * CombatantSheet#recordAction}. This is the entry point a caller with a live Scene uses
+     * after resolving a roll (or an {@code AttackDelivery}/{@code AttackReceiver} exchange);
+     * {@link CombatantSheet#recordAction} stays callable directly for a caller driving the API
+     * without a Scene, the same split {@link #next()} has with {@link
+     * CombatantSheet#startNewRound()}.
+     *
+     * <p>Matches combatant against this Scene's participants by {@link CombatantSheet#getId()},
+     * like {@link #getAllies}/{@link #removeParticipant} already do, searching the rotation and
+     * the pending set alike — an action a newcomer takes before it joins the rotation still
+     * belongs in the history.
+     *
+     * @throws IllegalOperationException if combatant was never added to this Scene
+     */
+    public void recordAction(final CombatantSheet combatant, final CombatantAction action) {
+        if (allEntries().noneMatch(entry -> entry.getCombatantSheet().getId().equals(combatant.getId()))) {
+            throw new IllegalOperationException(CHARACTER_SHEET_NOT_IN_SCENE);
+        }
+        actionHistory.add(new SceneAction(combatant, action));
+        combatant.recordAction(action);
+    }
+
+    /**
+     * Every action recorded in this Scene since it began, in the order they were recorded — a
+     * fresh unmodifiable copy, so mutating it doesn't disturb the Scene. Not cleared at any
+     * Rodada or Cena boundary; that is what the per-combatant logs on {@link CombatantSheet}
+     * are for. This is the whole-Scene combat log a client renders.
+     */
+    public List<SceneAction> getActionHistory() {
+        return List.copyOf(actionHistory);
     }
 
     /**

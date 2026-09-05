@@ -19,10 +19,13 @@ import org.aventyrs.core.effect.EffectChainServiceImpl;
 import org.aventyrs.core.effect.Sangramento;
 import org.aventyrs.core.skill.CriticalResult;
 import org.aventyrs.core.item.ArmorItem;
+import org.aventyrs.core.scene.Scene;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.InteractionResult;
 import org.aventyrs.core.skill.esquivaeaparar.EsquivaEApararInteraction;
+import org.aventyrs.core.sheet.ActionCost;
 import org.aventyrs.core.sheet.CharacterSheet;
+import org.aventyrs.core.sheet.CombatantAction;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.Player;
 import org.aventyrs.core.skill.DifficultyLevel;
@@ -371,6 +374,46 @@ class AttackReceiverTest {
                 .build());
 
         assertEquals(1, counting.calls);
+    }
+
+    @Test
+    void resolveHandsBackARecordedActionForTheDefenceWithTheVerdictSignedFromTheDefendersSide() {
+        CharacterSheet defender = defender(3, 3);
+        CharacterSheet ally = defender(2, 1);
+        Scene scene = new Scene();
+        scene.addParticipant(defender, 12);
+        scene.addParticipant(ally, 3);
+        scene.next();
+        scene.next();
+        scene.next();                                                     // wraps to Round 1
+
+        IncomingAttackResult result = attackReceiver.resolve(attackOn(defender)
+                .scene(scene)
+                .defenseRoll(new SkillRoll(List.of(5, 3, 3), null, null, ActionCost.REACTION))  // 11 + 7 = 18, ties
+                .build());
+
+        CombatantAction action = result.getRecordedAction();
+        assertEquals(SkillType.ESQUIVA_E_APARAR, action.skill());
+        assertEquals(AttributeDomain.DEXTERITY, action.governingDomain());
+        assertNull(action.attackSource());
+        assertEquals(ActionCost.REACTION, action.cost());
+        assertEquals(1, action.turnNumber());
+        assertTrue(action.outcome().succeeded());                         // the defence held
+        assertEquals(0, action.outcome().margin());                       // positive when it holds
+        assertEquals(result.getEffectiveDifficultyLevel(), action.outcome().reachedDifficultyLevel());
+    }
+
+    @Test
+    void theRecordedActionIsNullWithoutADefenseRollAndTurnNumberIsZeroWithNoScene() {
+        CharacterSheet defender = defender(3, 3);
+
+        assertNull(attackReceiver.resolve(attackOn(defender).build()).getRecordedAction());
+
+        IncomingAttackResult rolled = attackReceiver.resolve(attackOn(defender)
+                .defenseRoll(new SkillRoll(List.of(4, 3, 3)))             // 10 + 7 = 17, one short of 18
+                .build());
+        assertEquals(0, rolled.getRecordedAction().turnNumber());
+        assertFalse(rolled.getRecordedAction().outcome().succeeded());
     }
 
     /**

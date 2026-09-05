@@ -42,6 +42,25 @@ class CharacterSheetTest {
     }
 
     @Test
+    void equipmentPointsStartAtZeroAndMoveThroughGrantAndSpend() {
+        CharacterSheet sheet = newSheet();
+        assertEquals(0, sheet.getEquipmentPoints());
+
+        assertEquals(10, sheet.grantEquipmentPoints(10));
+        assertEquals(4, sheet.spendEquipmentPoints(6));
+        assertEquals(4, sheet.getEquipmentPoints());
+    }
+
+    @Test
+    void spendingMoreEquipmentPointsThanHeldThrowsAndLeavesTheBalanceIntact() {
+        CharacterSheet sheet = newSheet();
+        sheet.grantEquipmentPoints(3);
+
+        assertThrows(IllegalOperationException.class, () -> sheet.spendEquipmentPoints(4));
+        assertEquals(3, sheet.getEquipmentPoints());
+    }
+
+    @Test
     void shieldAbsorbsDamageBeforeDamageTaken() {
         CharacterSheet sheet = newSheet();
         sheet.addShield(4);

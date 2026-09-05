@@ -9,6 +9,7 @@ import org.aventyrs.core.effect.CriticalEffect;
 import org.aventyrs.core.effect.DamageInteraction;
 import org.aventyrs.core.effect.EffectChain;
 import org.aventyrs.core.monster.MonsterSheet;
+import org.aventyrs.core.scene.Scene;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.skill.AttackSource;
@@ -72,6 +73,17 @@ public class DeliveredAttack {
 
     /** Nearby allies/enemies and their ranges, or {@code null} outside an encounter. */
     private final SceneContext sceneContext;
+
+    /**
+     * The live {@link Scene} this attack happens in, or {@code null} when the caller is driving
+     * the API without one — the same optional-live-Scene-beside-the-snapshot shape {@code
+     * org.aventyrs.core.magic.SpellCastRequest} carries. {@link AttackDelivery#resolve} never
+     * mutates it; it reads {@link Scene#getCurrentRound()} to stamp the {@code turnNumber} on the
+     * {@code CombatantAction} it builds for {@link DeliveredAttackResult#getRecordedAction()}, so
+     * the caller records the exchange with a single {@code scene.recordAction(attacker,
+     * result.getRecordedAction())} instead of re-assembling that action by hand.
+     */
+    private final Scene scene;
 
     /**
      * What this attack is being delivered with — pass the {@link org.aventyrs.core.item.Weapon}

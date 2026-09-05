@@ -216,6 +216,90 @@ class SceneTest {
     }
 
     @Test
+    void recordActionDownstreamsToTheActingCombatantsOwnLogs() {
+        Scene scene = new Scene();
+        CharacterSheet actor = newSheet();
+        scene.addParticipant(actor, 10);
+
+        CombatantAction action = sampleAction();
+        scene.recordAction(actor, action);
+
+        assertEquals(List.of(action), actor.getActionsThisRound());
+        assertEquals(List.of(action), actor.getActionsThisCena());
+    }
+
+    @Test
+    void recordActionAccumulatesSceneHistoryPairedWithTheActor() {
+        Scene scene = new Scene();
+        CharacterSheet first = newSheet();
+        CharacterSheet second = newSheet();
+        scene.addParticipant(first, 10);
+        scene.addParticipant(second, 5);
+
+        CombatantAction firstAction = sampleAction();
+        CombatantAction secondAction = sampleAction();
+        scene.recordAction(first, firstAction);
+        scene.recordAction(second, secondAction);
+
+        assertEquals(List.of(new SceneAction(first, firstAction), new SceneAction(second, secondAction)),
+                scene.getActionHistory());
+    }
+
+    @Test
+    void sceneActionHistorySurvivesRoundAndCenaBoundariesThatClearThePerCombatantLogs() {
+        Scene scene = new Scene();
+        CharacterSheet first = newSheet();
+        CharacterSheet second = newSheet();
+        scene.addParticipant(first, 10);
+        scene.addParticipant(second, 5);
+
+        scene.next();                              // first's Turn, Round 0
+        scene.recordAction(first, sampleAction());
+        scene.next();
+        scene.next();                              // wraps to Round 1 — clears per-Rodada logs
+        first.startNewScene();                     // clears per-Cena logs
+
+        assertTrue(first.getActionsThisRound().isEmpty());
+        assertTrue(first.getActionsThisCena().isEmpty());
+        assertEquals(1, scene.getActionHistory().size());
+    }
+
+    @Test
+    void recordActionForACombatantNeverAddedThrows() {
+        Scene scene = new Scene();
+        scene.addParticipant(newSheet(), 10);
+
+        assertThrows(IllegalOperationException.class,
+                () -> scene.recordAction(newSheet(), sampleAction()));
+    }
+
+    @Test
+    void recordActionAcceptsAParticipantStillWaitingToJoinTheRotation() {
+        Scene scene = new Scene();
+        CharacterSheet inRotation = newSheet();
+        CharacterSheet lateArrival = newSheet();
+        scene.addParticipant(inRotation, 10);
+        scene.next();
+        scene.addParticipant(lateArrival, 20);     // held in the pending set until next Round
+
+        scene.recordAction(lateArrival, sampleAction());
+
+        assertEquals(1, scene.getActionHistory().size());
+        assertEquals(1, lateArrival.getActionsThisRound().size());
+    }
+
+    @Test
+    void getActionHistoryReturnsACopyThatDoesNotDisturbTheScene() {
+        Scene scene = new Scene();
+        CharacterSheet actor = newSheet();
+        scene.addParticipant(actor, 10);
+        scene.recordAction(actor, sampleAction());
+
+        assertThrows(UnsupportedOperationException.class,
+                () -> scene.getActionHistory().add(new SceneAction(actor, sampleAction())));
+    }
+
+    @Test
     void participantAddedMidRoundDoesNotInterruptTheCurrentRound() {
         Scene scene = new Scene();
         CharacterSheet a = newSheet();
@@ -476,6 +560,20 @@ class SceneTest {
         SceneContext context = scene.buildContext(actor, Map.of());
 
         assertEquals(TerrainType.MOUNTAIN, context.getTerrainType());
+    }
+
+    @Test
+    void itemStoreIsUnsetByDefaultAndRoundTripsThroughItsSetter() {
+        Scene scene = new Scene();
+        assertNull(scene.getItemStore());
+
+        org.aventyrs.core.item.ItemStore store =
+                new org.aventyrs.core.item.ItemStore(org.aventyrs.core.item.ItemRarity.UNCOMMON);
+        scene.setItemStore(store);
+        assertEquals(store, scene.getItemStore());
+
+        scene.setItemStore(null);
+        assertNull(scene.getItemStore());
     }
 
     @Test

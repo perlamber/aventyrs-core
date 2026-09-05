@@ -11,6 +11,8 @@ import org.aventyrs.core.effect.Effect;
 import org.aventyrs.core.effect.EffectChain;
 import org.aventyrs.core.effect.EffectChainService;
 import org.aventyrs.core.effect.EffectChainServiceImpl;
+import org.aventyrs.core.sheet.ActionOutcome;
+import org.aventyrs.core.sheet.CombatantAction;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.Interaction;
@@ -124,10 +126,12 @@ public class AttackDelivery {
      * proximity damage bonus, {@code ABATEDORES_DE_GIGANTES}' bonus against a larger foe) and a
      * delivery-conditioned one ({@code ARREMESSO_PODEROSO}'s substituted Attribute, from {@link
      * DeliveredAttack#getAttackSource()}) resolve against the real attack rather than a generic
-     * fact about the encounter. The API is expected to call {@code
-     * attacker.recordAction(...)} after {@code resolve} returns, building the {@code
-     * CombatantAction} from {@code getAttackResult().getGoverningAttributeDomain()} and the
-     * {@code AttackSource}/{@code ActionCost} it supplied.
+     * fact about the encounter. {@code resolve} bundles the roll as a ready {@code CombatantAction}
+     * on {@link DeliveredAttackResult#getRecordedAction()} — it does <b>not</b> record it (still
+     * report-only) — so the caller files the exchange with one {@code
+     * Scene#recordAction(attacker, result.getRecordedAction())} (or {@code
+     * attacker.recordAction(...)} with no live Scene), instead of re-assembling the action from
+     * {@code getGoverningAttributeDomain()} and the source/cost it supplied.
      *
      * <p>With no {@code attackRoll} supplied, the comparison and the chain are skipped: every
      * outcome stays {@code null}, while {@code attackTotal} (the bonuses alone) and {@code
@@ -196,7 +200,28 @@ public class AttackDelivery {
                 .criticalResult(criticalResult)
                 .criticalEffectTriggered(criticalEffectTriggered)
                 .effectChainTriggered(effectChainTriggered)
+                .recordedAction(recordedAction(attack, attackResult, hit, margin, criticalResult))
                 .build();
+    }
+
+    /**
+     * Bundles the attacker's roll as a ready-to-file {@link CombatantAction} — the caller records
+     * it via {@code scene.recordAction(attacker, action)} rather than re-deriving it from {@code
+     * getAttackResult().getGoverningAttributeDomain()} and the source/cost it supplied. The verdict
+     * comes from {@link AttackDelivery}'s own comparison against the flat Defesa (the Perícia roll
+     * itself was made against nothing stated), and {@code turnNumber} from {@link
+     * DeliveredAttack#getScene()} when one is present. Never recorded here — {@link #resolve} stays
+     * report-only.
+     */
+    private CombatantAction recordedAction(final DeliveredAttack attack, final InteractionResult attackResult,
+                                            final boolean hit, final int margin, final CriticalResult criticalResult) {
+        return new CombatantAction(
+                attack.getAttackSkill(),
+                attackResult.getGoverningAttributeDomain(),
+                attack.getAttackSource(),
+                attack.getAttackRoll().getActionCost(),
+                attack.getScene() == null ? 0 : attack.getScene().getCurrentRound(),
+                new ActionOutcome(hit, margin, criticalResult, null));
     }
 
     /**

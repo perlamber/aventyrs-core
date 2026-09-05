@@ -112,4 +112,17 @@ public class TranslatableMessages {
 
     /** A Regalia Divina's Centelhas must come from a Dragão, Elemental, Abissal ou Celestial. */
     public static final String REGALIA_DIVINE_DONOR_REQUIRED = "REGALIA_DIVINE_DONOR_REQUIRED";
+
+    /** The combatant does not have enough Pontos de Equipamento (PE) for this purchase. */
+    public static final String NOT_ENOUGH_EQUIPMENT_POINTS = "NOT_ENOUGH_EQUIPMENT_POINTS";
+
+    /** This item store does not sell the requested Equipamento — above its Raridade ceiling, a
+     * Regalia, or an Arma/Defesa Natural. */
+    public static final String ITEM_NOT_OFFERED = "ITEM_NOT_OFFERED";
+
+    /** An item store's Raridade ceiling must be a purchasable tier — {@code NATURAL} is not one. */
+    public static final String STORE_RARITY_NOT_PURCHASABLE = "STORE_RARITY_NOT_PURCHASABLE";
+
+    /** A Regalia is never stocked by an item store — it is forged for a specific Centelha, not sold. */
+    public static final String STORE_DOES_NOT_SELL_REGALIA = "STORE_DOES_NOT_SELL_REGALIA";
 }

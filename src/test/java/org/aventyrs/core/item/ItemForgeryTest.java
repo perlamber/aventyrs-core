@@ -490,6 +490,34 @@ class ItemForgeryTest {
         assertThrows(IllegalOperationException.class, forgery::forge);
     }
 
+    // ----------------------------------------------------------------- a store purchase
+
+    @Test
+    void aPurchasedCopyHasNoMakerAndIsNotAnAventyrDonation() throws IllegalOperationException {
+        Item bought = ItemForgery.purchased(ItemSpecification.of(ArmorItem.ARMADURA_DE_GLADIADOR)).forge();
+
+        assertTrue(bought instanceof AbstractItem);
+        assertNull(((AbstractItem) bought).getProducedByCharacterId());
+        assertFalse(bought.isDonatedByAventyr());
+    }
+
+    @Test
+    void aStoreNeverSellsARegalia() {
+        ItemForgery forgery = ItemForgery.purchased(
+                ItemSpecification.regalia(ArmorItem.ARMADURA_DE_GLADIADOR, RegaliaGrade.MENOR));
+
+        assertThrows(IllegalOperationException.class, forgery::validate);
+        assertThrows(IllegalOperationException.class, forgery::forge);
+    }
+
+    @Test
+    void aBuyerPaysFullMarketValueNotTheSelfForgeHalf() {
+        ItemForgery forgery = ItemForgery.purchased(ItemSpecification.of(ArmorItem.ARMADURA_COMPLETA));
+
+        assertEquals(ArmorItem.ARMADURA_COMPLETA.getPrice(), forgery.getTotalValue());
+        assertEquals(ArmorItem.ARMADURA_COMPLETA.getPrice(), forgery.getPurchasePrice());
+    }
+
     private static ItemActiveAbility testAbility() {
         return new ItemActiveAbility() {
             @Override public String getDescription() { return "Uma habilidade de teste."; }

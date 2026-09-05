@@ -23,7 +23,9 @@ import org.aventyrs.core.skill.profissao.ProfissaoSpecialization;
  * over free and marked as such, {@code ItemForgery.donatedByAventyr(specification)}, which
  * deliberately lives on {@code ItemForgery} rather than here: every number this service exists to
  * compute is exactly what a donation skips. See the "Builder-bypassable
- * invariants" convention. A <i>player</i> goes through this service, which prices the work in
+ * invariants" convention. <b>Buying</b> a ready-made copy from a shop is a third path, also
+ * outside this service — {@code ItemForgery.purchased(specification)} produces it and {@code
+ * ItemPurchaseService} debits the buyer's Pontos de Equipamento. A <i>player</i> goes through this service, which prices the work in
  * Pontos de Equipamento, measures it in days/hours, resolves the Grau de Dificuldade from
  * Raridade, and enforces the player-side gates: the right Especialização de Profissão, the
  * minimum Graduação an Obra-Prima needs, and the Categoria de Peso Aprimoramento cap.

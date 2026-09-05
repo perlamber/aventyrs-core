@@ -12,6 +12,11 @@ import org.aventyrs.core.skill.SkillType;
  * "a primeira vez que fizer um ataque... a cada Rodada", and {@code CombatantSheet
  * #isFirstRollOfTurnFor} for {@code DexterityAbility#PRECISAO}.
  *
+ * <p>When a live {@code org.aventyrs.core.scene.Scene} is driving, the caller records through
+ * {@code Scene#recordAction(CombatantSheet, CombatantAction)} instead: it keeps a permanent
+ * Scene-wide history (an {@code org.aventyrs.core.scene.SceneAction} per entry, pairing this
+ * with the acting combatant) for the client to display, then downstreams here.
+ *
  * <p>Scope: a roll-action only for now (an attack or a Perícia check). Movement has its own
  * counter ({@code consumeMovementThisRound}); ability activations and roll-less casts are not
  * logged here yet.

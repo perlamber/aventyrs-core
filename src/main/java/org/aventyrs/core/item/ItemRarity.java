@@ -128,6 +128,27 @@ public enum ItemRarity {
         };
     }
 
+    /**
+     * Whether an item of this Raridade can be bought or sold at all — {@code true} for every
+     * scarcity tier, {@code false} only for {@link #NATURAL}: an Arma or Defesa Natural is part
+     * of a body, never traded. This is what an {@code ItemStore} filters its catalog by, and
+     * what its own ceiling must satisfy.
+     */
+    public boolean isPurchasable() {
+        return this != NATURAL;
+    }
+
+    /**
+     * Whether this Raridade is no rarer than other, by scarcity order
+     * ({@code COMMON < UNCOMMON < RARE < EPIC < MYTHIC}). {@link #NATURAL} sits outside that
+     * order entirely — it is a body-part marker, not a tier — so this is {@code false} whenever
+     * either side is {@code NATURAL}, never throwing. The comparison relies on declaration
+     * order, which is the documented scarcity ladder; callers never touch {@code ordinal()}.
+     */
+    public boolean isAtMost(final ItemRarity other) {
+        return this != NATURAL && other != NATURAL && ordinal() <= other.ordinal();
+    }
+
     private IllegalStateException naturalUnsupported() {
         return new IllegalStateException("Equipamentos Naturais are part of a body — never fabricated or repaired.");
     }

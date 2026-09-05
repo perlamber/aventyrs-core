@@ -23,8 +23,10 @@ import org.aventyrs.core.feat.SaqueRelampagoFeat;
 import org.aventyrs.core.feat.WeaponOrSpellChoice;
 import org.aventyrs.core.monster.GenericMonster;
 import org.aventyrs.core.monster.MonsterSheet;
+import org.aventyrs.core.scene.Scene;
 import org.aventyrs.core.sheet.ActionCost;
 import org.aventyrs.core.sheet.CharacterSheet;
+import org.aventyrs.core.sheet.CombatantAction;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.Player;
 import org.aventyrs.core.skill.CriticalResult;
@@ -361,5 +363,47 @@ class AttackDeliveryTest {
 
         assertNull(result.getHit());
         assertEquals(THROWN_BONUS, result.getAttackTotal());
+    }
+
+    @Test
+    void resolveHandsBackARecordedActionCarryingTheRollAndItsVerdict() {
+        MonsterSheet capanga = GenericMonster.CAPANGA.spawn(new Player());
+        CharacterSheet hero = attacker(4, 3);                                  // 7 bonus, DF 13
+        Weapon sword = AbstractWeapon.builder().name("Espada").category(ItemCategory.HEAVY_BLADE)
+                .damageBase(DamageBase.of(2, 0)).skillType(SkillType.ATAQUE_CORPO_A_CORPO).build();
+        Scene scene = new Scene();
+        scene.addParticipant(hero, 15);
+        scene.addParticipant(capanga, 5);
+        scene.next();
+        scene.next();
+        scene.next();                                                          // wraps to Round 1
+
+        DeliveredAttackResult result = attackDelivery.resolve(attackOn(capanga, hero)
+                .attackSource(sword)
+                .scene(scene)
+                .attackRoll(new SkillRoll(List.of(2, 2, 2), null, null, ActionCost.ofActionPoints(1)))
+                .build());
+
+        CombatantAction action = result.getRecordedAction();
+        assertEquals(SkillType.ATAQUE_CORPO_A_CORPO, action.skill());
+        assertEquals(AttributeDomain.STRENGTH, action.governingDomain());
+        assertEquals(sword, action.attackSource());
+        assertEquals(ActionCost.ofActionPoints(1), action.cost());
+        assertEquals(1, action.turnNumber());
+        assertTrue(action.outcome().succeeded());
+        assertEquals(0, action.outcome().margin());
+    }
+
+    @Test
+    void theRecordedActionIsNullOnThePreviewPathAndTurnNumberIsZeroWithNoScene() {
+        MonsterSheet capanga = GenericMonster.CAPANGA.spawn(new Player());
+        CharacterSheet hero = attacker(4, 3);
+
+        assertNull(attackDelivery.resolve(attackOn(capanga, hero).build()).getRecordedAction());
+
+        DeliveredAttackResult rolled = attackDelivery.resolve(attackOn(capanga, hero)
+                .attackRoll(new SkillRoll(List.of(2, 2, 2)))
+                .build());
+        assertEquals(0, rolled.getRecordedAction().turnNumber());
     }
 }

@@ -29,8 +29,13 @@ import org.aventyrs.core.modifier.ModifierType;
  * <p><b>Most of the numeric columns still have no consumer</b>, each blocked on its own separate
  * missing system rather than one shared gap — DF/DM being the exception that now has one:
  * <ul>
- *   <li>{@link #getPrice()} is in Pontos de Equipamento (PE). No PE budget/economy exists —
- *   the gap {@code ResourcesAdvantage#BARGANHISTA}'s own "-2PE, mínimo 1PE" already cites.</li>
+ *   <li>{@link #getPrice()} is in Pontos de Equipamento (PE). There is now a PE budget on a
+ *   {@code CombatantSheet} and a buying flow that spends it — {@code
+ *   org.aventyrs.core.character.services.ItemPurchaseService} debits {@code
+ *   CombatantSheet#spendEquipmentPoints} for a copy bought from a {@link ItemStore}, and {@code
+ *   ResourcesAdvantage#BARGANHISTA}'s "-2PE, mínimo 1PE" is real through it. What still has no
+ *   spender: <i>producing</i> equipment (the cost {@code EquipmentCraftingService}/{@code
+ *   ItemForgery} report), and any Obra-Prima/Aprimoramento Preço column (all still 0).</li>
  *   <li><b>{@link #getPhysicalDefenseBonus()}/{@link #getMagicDefenseBonus()} (DF/DM) are no
  *   longer inert</b> — {@code org.aventyrs.core.character.services.DefenseService} sums them for
  *   every equipped item, and {@code

@@ -1,6 +1,6 @@
 ---
 name: scene-context-and-positioning
-description: This skill should be used for any work on org.aventyrs.core.scene — `Scene` (sub-groups via `InitiativeEntry.group`, `addParticipant`, `getAllies`/`getEnemies`, `buildContext`, `next`/`startNewRound`, `wonInitiative`, `applyInitiativeBlessings`), `SceneContext` (the resolved snapshot: `allies`/`enemies`/distances, `hasAllyWithin`/`countAlliesWithin`/`getAlliesWithin`, `isCombatScene`, `isWithinFirstCombatRounds`), `Range` (the seven UD bands), `InitiativeEntry#getEffectiveInitiativeValue` and mid-Scene initiative changes, or `Character`/`CharacterSheet` `UUID id` and identity. Also use it when asked why `SceneContext` holds no `Scene` reference, why turn order isn't live, how a proximity-gated bonus reads distance, or how `CharacterSheet.of` reconstructs an existing id from a DTO.
+description: This skill should be used for any work on org.aventyrs.core.scene — `Scene` (sub-groups via `InitiativeEntry.group`, `addParticipant`, `getAllies`/`getEnemies`, `buildContext`, `next`/`startNewRound`, `wonInitiative`, `applyInitiativeBlessings`), `SceneContext` (the resolved snapshot: `allies`/`enemies`/distances, `hasAllyWithin`/`countAlliesWithin`/`getAlliesWithin`, `isCombatScene`, `isWithinFirstCombatRounds`), `Range` (the seven UD bands), `InitiativeEntry#getEffectiveInitiativeValue` and mid-Scene initiative changes, `Scene#itemStore` (an `ItemStore`/`ItemCatalog` shop a Scene can hold, bought from via `ItemPurchaseService` + the `AbstractCombatantSheet` PE wallet), or `Character`/`CharacterSheet` `UUID id` and identity. Also use it when asked why `SceneContext` holds no `Scene` reference, why turn order isn't live, how a proximity-gated bonus reads distance, why the item store isn't in `SceneContext`, or how `CharacterSheet.of` reconstructs an existing id from a DTO.
 ---
 
 # Scene, SceneContext, and positioning
@@ -115,6 +115,22 @@ Three more facts `Scene` resolves once and carries into the `SceneContext` snaps
 
 A caller building a `SceneContext` directly gets non-combat defaults (`false`/`0`/`false`).
 
+## Shopping — `Scene#itemStore`
+
+`Scene.getItemStore()`/`setItemStore(ItemStore)` — optional Scene-scoped state with the same
+lifecycle as `terrainType` (`null` until a caller attaches one, once the party reaches
+somewhere they can buy Equipamento). `ItemStore` (`org.aventyrs.core.item`) carries **no items
+of its own**: a single `maxRarity` property, over which `getOfferedItems()` returns the whole
+`ItemCatalog` slice (`ItemCatalog.availableUpTo`). Turning an offer into a paid-for owned copy
+is `org.aventyrs.core.character.services.ItemPurchaseService` — it forges via
+`ItemForgery.purchased(spec)`, debits `CombatantSheet#spendEquipmentPoints` (the PE wallet on
+`AbstractCombatantSheet`, next to `inventory`) less `ResourcesAdvantage#BARGANHISTA`, and adds
+the copy to the buyer's inventory. A store never sells a Regalia.
+
+**Deliberately not in `SceneContext`.** A store is not roll-relevant snapshot state, so
+`buildContext` doesn't carry it — the same call that omits it is where `terrainType`/
+`combatScene` *are* carried, so the distinction is explicit.
+
 ## Iniciativa can change mid-Scene — `InitiativeEntry#getEffectiveInitiativeValue`
 
 `getInitiativeValue()` is fixed once rolled, but a participant's Iniciativa *standing* isn't:
@@ -150,6 +166,30 @@ tracks, so it can just ask.
   `Withering` all apply at Turn-*end*) — so its wiring has no test yet; add one alongside
   whatever first overrides a start-of-Turn hook.
 
+## Scene action history — `Scene#recordAction`
+
+A `Scene` keeps a **permanent combat log** the client renders: `Scene#getActionHistory()`
+returns `List<SceneAction>` (a `SceneAction` is `record(CombatantSheet combatant,
+CombatantAction action)` — the per-combatant logs on the sheet don't record who acted because
+each belongs to one sheet, but a Scene-wide history needs it). It is **never cleared** — not by
+`next()`, `startNewRound()`, or `startNewScene()`; those reset what a "primeira … nesta Rodada"
+clause reads, not the history.
+
+`Scene#recordAction(CombatantSheet, CombatantAction)` is the entry point a Scene-driven caller
+uses after resolving a roll or an `AttackDelivery`/`AttackReceiver` exchange: it appends a
+`SceneAction` to the history **and** downstreams to `CombatantSheet#recordAction` (the sheet's
+own per-Rodada/per-Cena logs). It validates membership by `CombatantSheet#getId()` (searching
+`activeEntries` + `pendingEntries`, throwing `CHARACTER_SHEET_NOT_IN_SCENE`), like `getAllies`.
+`CombatantSheet#recordAction` stays callable directly for a caller with no live `Scene` — the
+same split `next()` has with `CombatantSheet#startNewRound()`. The orchestrators build the
+`CombatantAction` for you and hand it back ready to file: `AttackDelivery`/`AttackReceiver` on
+`DeliveredAttackResult`/`IncomingAttackResult#getRecordedAction()`, `SpellCastingService` on
+`SpellCastingResult#getRecordedAction()` — `DeliveredAttack`/`IncomingAttack` gained an optional
+`Scene` for it, mirroring `SpellCastRequest`. None of them record; the caller still calls
+`scene.recordAction(actor, result.getRecordedAction())`. `SceneAction` holds the
+`CombatantSheet` reference (not just the id), the precedent `grantedBlessings`/
+`activeAreaSpellEffects` set for a `Scene`-owned collection.
+
 ## Blessings granted on winning initiative — the `Scene`-internal facts
 
 Adding an initiative-win `Blessing` is the `granting-a-blessing` skill's job. Two
@@ -177,8 +217,10 @@ Adding an initiative-win `Blessing` is the `granting-a-blessing` skill's job. Tw
   `addParticipant`, `next`/`startNewRound`, `wonInitiative`, `applyInitiativeBlessings`.
 - `src/main/java/org/aventyrs/core/scene/SceneContext.java` (`SceneContextTest.java`).
 - `src/main/java/org/aventyrs/core/scene/Range.java` / `InitiativeEntry.java` /
-  `AreaOfEffect.java`.
+  `AreaOfEffect.java` / `SceneAction.java`.
 - `src/main/java/org/aventyrs/core/sheet/CharacterSheet.java` (`startTurn`/`finishTurn`,
   `of(...)` overloads).
 - `src/main/java/org/aventyrs/core/character/services/InitiativeBlessingService.java` /
   `InitiativeBlessingServiceImpl.java`.
+- `src/main/java/org/aventyrs/core/item/ItemStore.java` / `ItemCatalog.java` +
+  `character/services/ItemPurchaseService.java` — the `Scene#itemStore` shopping flow.

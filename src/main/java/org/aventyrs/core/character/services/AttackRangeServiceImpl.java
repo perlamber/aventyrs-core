@@ -4,6 +4,7 @@ import java.util.Optional;
 
 import lombok.NonNull;
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.character.SizeCategory;
 import org.aventyrs.core.item.Weapon;
 import org.aventyrs.core.magic.Spell;
 import org.aventyrs.core.scene.Range;
@@ -23,24 +24,36 @@ public class AttackRangeServiceImpl implements AttackRangeService {
 
     @Override
     public Range getEffectiveRange(final Character character, @NonNull final Weapon weapon) {
-        return sizeAdjustedMeleeBase(character, weapon.getEffectiveRange())
-                .increasedBy(sumFeatSteps(character, weapon));
+        int reach = getEffectiveRangeInUnidadesDeDistancia(character, weapon);
+        Range band = reach == UNBOUNDED_RANGE
+                ? Range.AO_ALCANCE_DOS_OLHOS
+                : Range.fromUnidadesDeDistancia(reach);
+        return band.increasedBy(sumFeatSteps(character, weapon));
     }
 
     /**
-     * A corpo-a-corpo weapon's {@link Range#ADJACENTE} base widened by the attacking {@link
-     * Character}'s own {@link org.aventyrs.core.character.SizeCategory#getRange()} — a maior
-     * creature's reach, in UD, converted back to a band via {@link
-     * Range#fromUnidadesDeDistancia}. A weapon whose Alcance is already something other than
-     * ADJACENTE (Ataque à Distância, Arremesso) is untouched: Size only widens the reach of an
-     * attack that starts adjacent, not a ranged weapon's own authored band.
+     * The authored Alcance widened by the attacker's Categoria de Tamanho — see the interface for
+     * why {@link Range#ADJACENTE} substitutes the size's own reach while every other band has the
+     * modifier added to it.
+     *
+     * <p>The branch is on what the weapon <em>states</em>, not on which Perícia swings it, because
+     * the question being asked is "does this weapon have a reach of its own?" and only its Alcance
+     * answers that. One consequence worth knowing: a destroyed weapon reports {@link
+     * Range#ADJACENTE} through {@code getEffectiveRange()}, so a shattered bow takes the melee
+     * substitution — correct, since swinging the wreck is what is left to do with it.
      */
-    private Range sizeAdjustedMeleeBase(final Character character, final Range base) {
-        if (base != Range.ADJACENTE) {
-            return base;
+    @Override
+    public int getEffectiveRangeInUnidadesDeDistancia(final Character character, @NonNull final Weapon weapon) {
+        SizeCategory size = characterSizeService.getEffectiveSizeCategory(character);
+        Range authored = weapon.getEffectiveRange();
+        if (authored == Range.ADJACENTE) {
+            return size.getRange();
         }
-        int meleeReach = characterSizeService.getEffectiveSizeCategory(character).getRange();
-        return Range.fromUnidadesDeDistancia(meleeReach);
+        Integer authoredUnidades = authored.getMaxUnidadesDeDistancia();
+        if (authoredUnidades == null) {
+            return UNBOUNDED_RANGE;
+        }
+        return Math.max(SizeCategory.MINIMUM_MELEE_RANGE, authoredUnidades + size.getRangeModifier());
     }
 
     @Override

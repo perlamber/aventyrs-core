@@ -22,12 +22,13 @@ import static org.aventyrs.core.util.TranslatableMessages.MASTERPIECE_GRADUATION
 import static org.aventyrs.core.util.TranslatableMessages.REGALIA_CRAFTING_NOT_PERMITTED;
 import static org.aventyrs.core.util.TranslatableMessages.REGALIA_DIVINE_DONOR_REQUIRED;
 import static org.aventyrs.core.util.TranslatableMessages.REGALIA_DONOR_NOT_WILLING;
+import static org.aventyrs.core.util.TranslatableMessages.STORE_DOES_NOT_SELL_REGALIA;
 
 /**
  * One attempt at making an {@link Item} copy: an {@link ItemSpecification} (what to make) plus
- * who is making it and what powers the work. Build one with {@link #by} or {@link
- * #donatedByAventyr}, then {@link #validate()} to ask whether it may proceed, or {@link #forge()}
- * to validate and produce the copy.
+ * who is making it and what powers the work. Build one with {@link #by}, {@link
+ * #donatedByAventyr} or {@link #purchased}, then {@link #validate()} to ask whether it may
+ * proceed, or {@link #forge()} to validate and produce the copy.
  *
  * <pre>
  * // a crafter forging a Regalia Menor on a masterwork ring
@@ -41,7 +42,7 @@ import static org.aventyrs.core.util.TranslatableMessages.REGALIA_DONOR_NOT_WILL
  *         ItemSpecification.regalia(RingItem.ANEL_DE_PRATA, RegaliaGrade.DIVINA)).forge();
  * </pre>
  *
- * <h2>Two ways to make a thing</h2>
+ * <h2>Three ways to make a thing</h2>
  * <ul>
  *   <li><b>{@link #by} — a character forges it.</b> Every gate below applies, and the copy is
  *   stamped with its maker ({@code producedByCharacterId}), scaled by their Dureza abilities, and
@@ -53,6 +54,15 @@ import static org.aventyrs.core.util.TranslatableMessages.REGALIA_DONOR_NOT_WILL
  *   EquipmentCraftingService} javadoc describes as living outside it — it is deliberately not a
  *   method on that service, because every number that service exists to compute (GD, days, PE)
  *   is exactly what a donation skips.</li>
+ *   <li><b>{@link #purchased} — a store sells it.</b> No crafter and no crafter-gates (trade,
+ *   permission, Graduação floor, Dureza scaling), but the copy is <b>neither a donation</b> —
+ *   {@link Item#isDonatedByAventyr()} stays {@code false}, someone did make it, just not the
+ *   buyer — <b>nor stamped with a maker</b> ({@code producedByCharacterId} stays {@code null},
+ *   "maker unknown", the same as loot). The Aprimoramento-fit rules still apply (a bought
+ *   Obra-Prima must be a coherent copy), and a <b>Regalia is refused</b> ({@code
+ *   STORE_DOES_NOT_SELL_REGALIA}) — a Regalia is forged for one Centelha, never stocked. What a
+ *   buyer pays is {@link #getPurchasePrice()} (full market value), and {@code
+ *   org.aventyrs.core.character.services.ItemPurchaseService} is what debits it.</li>
  * </ul>
  *
  * <h2>What a forge checks</h2>
@@ -128,6 +138,9 @@ public final class ItemForgery {
     /** The Centelha donation powering a Regalia forge; {@code null} for an ordinary item or a donation. */
     private final RegaliaDonation donation;
 
+    /** Whether this forge is a store purchase — see {@link #purchased(ItemSpecification)}. */
+    private final boolean purchased;
+
     /**
      * What the piece being made is worth in PE right now — see {@link #getTotalValue()}. Held
      * rather than derived on demand because the mutators are where a caller watches it change,
@@ -136,11 +149,13 @@ public final class ItemForgery {
     private int totalValue;
 
     private ItemForgery(final Character crafter, final ProfissaoSpecialization trade,
-                        final ItemSpecification specification, final RegaliaDonation donation) {
+                        final ItemSpecification specification, final RegaliaDonation donation,
+                        final boolean purchased) {
         this.crafter = crafter;
         this.trade = trade;
         this.specification = specification;
         this.donation = donation;
+        this.purchased = purchased;
         recalculateTotalValue();
     }
 
@@ -153,7 +168,7 @@ public final class ItemForgery {
                                  @NonNull final ProfissaoSpecialization trade,
                                  @NonNull final ItemSpecification specification,
                                  final RegaliaDonation donation) {
-        return new ItemForgery(crafter, trade, specification, donation);
+        return new ItemForgery(crafter, trade, specification, donation, false);
     }
 
     /** A forge of an ordinary (non-Regalia) item, which needs no Centelha donation. */
@@ -169,12 +184,23 @@ public final class ItemForgery {
      * this way is distinguishable from one a crafter earned, and advances nobody's craft history.
      */
     public static ItemForgery donatedByAventyr(@NonNull final ItemSpecification specification) {
-        return new ItemForgery(null, null, specification, null);
+        return new ItemForgery(null, null, specification, null, false);
     }
 
-    /** Whether this forge is Aventyr's gift rather than a character's work. */
+    /**
+     * A store selling a copy built to specification. No crafter and no crafter-gates, but — unlike
+     * {@link #donatedByAventyr} — the copy is not marked an Aventyr gift and carries no maker (see
+     * this class's javadoc). A specification naming a {@link RegaliaGrade} is refused by {@link
+     * #validate()} ({@code STORE_DOES_NOT_SELL_REGALIA}); {@link #getPurchasePrice()} is what a
+     * buyer pays.
+     */
+    public static ItemForgery purchased(@NonNull final ItemSpecification specification) {
+        return new ItemForgery(null, null, specification, null, true);
+    }
+
+    /** Whether this forge is Aventyr's gift rather than a character's work or a store purchase. */
     public boolean isDonation() {
-        return crafter == null;
+        return crafter == null && !purchased;
     }
 
     /**
@@ -249,6 +275,17 @@ public final class ItemForgery {
         return isDonation() ? 0 : Math.max(1, totalValue / 2);
     }
 
+    /**
+     * What buying this from a store costs, in PE — the <b>full</b> {@link #getTotalValue()}, never
+     * below 1. A purchase pays market value; the half {@link #getForgingCost()} charges is the
+     * discount for doing the work yourself. Only meaningful on the {@link #purchased} path — a
+     * store applies any {@code ResourcesAdvantage#BARGANHISTA} discount on top (see {@code
+     * org.aventyrs.core.character.services.ItemPurchaseService}).
+     */
+    public int getPurchasePrice() {
+        return Math.max(1, totalValue);
+    }
+
     /** Sums the base Preço and every fitted part's own modifier. See {@link #getTotalValue()}. */
     private void recalculateTotalValue() {
         int value = specification.getBase().getPrice();
@@ -274,6 +311,14 @@ public final class ItemForgery {
         if (isDonation()) {
             return;
         }
+        if (purchased) {
+            if (specification.isRegalia()) {
+                throw new IllegalOperationException(STORE_DOES_NOT_SELL_REGALIA);
+            }
+            requireImprovementsFit();
+            requireActiveAbilityHost();
+            return;
+        }
         requireTrade();
         if (specification.isRegalia()) {
             requireRegaliaPermissionAndDonation();
@@ -291,7 +336,7 @@ public final class ItemForgery {
      * specification needs no permission and reports {@code true}; so does a donation.
      */
     public boolean isPermitted() {
-        if (isDonation() || !specification.isRegalia()) {
+        if (isDonation() || purchased || !specification.isRegalia()) {
             return true;
         }
         return crafter.getFeats().stream()
@@ -313,7 +358,7 @@ public final class ItemForgery {
         validate();
         AbstractItem forged = AbstractItem.builderFromTemplate(specification.getBase())
                 .hardness((int) Math.floor(specification.getBase().getHardness() * hardnessFactor()))
-                .producedByCharacterId(isDonation() ? null : crafter.getId())
+                .producedByCharacterId(crafter == null ? null : crafter.getId())
                 .donatedByAventyr(isDonation())
                 .regaliaGrade(specification.getRegaliaGrade())
                 .build();
@@ -324,7 +369,7 @@ public final class ItemForgery {
         if (specification.getActiveAbility() != null) {
             forged.setActiveAbility(specification.getActiveAbility());
         }
-        if (!isDonation() && specification.isRegalia()) {
+        if (crafter != null && specification.isRegalia()) {
             crafter.recordRegaliaCrafted(specification.getRegaliaGrade());
         }
         return forged;
@@ -396,9 +441,9 @@ public final class ItemForgery {
         }
     }
 
-    /** A donation is unscaled: nobody worked it, so no crafter's abilities touch it. */
+    /** A donation or a store purchase is unscaled: no crafter, so no crafter's abilities touch it. */
     private double hardnessFactor() {
-        return isDonation() ? 1.0 : SkillCompetencyAbility.allFor(crafter).stream()
+        return crafter == null ? 1.0 : SkillCompetencyAbility.allFor(crafter).stream()
                 .mapToDouble(SkillCompetencyAbility::resolveProducedHardnessMultiplier)
                 .reduce(1.0, (a, b) -> a * b);
     }

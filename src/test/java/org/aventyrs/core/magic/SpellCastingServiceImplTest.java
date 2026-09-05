@@ -171,6 +171,35 @@ class SpellCastingServiceImplTest {
         assertNull(result.getAreaSpellEffect());
     }
 
+    @Test
+    void castSpellHandsBackARecordedActionCarryingTheSpellAndTheSceneRound() {
+        SpellCastingService spellCastingService = new SpellCastingServiceImpl();
+        Scene scene = sceneWithCaster();
+        CharacterSheet target = CharacterSheet.of(
+                CharacterFixture.blank(CharacterFixture.BLANK).build(), new Player());
+        scene.addParticipant(target, 0);
+        scene.next();                                   // caster's Turn, Round 0
+        Spell spell = new TestSpell();
+
+        SpellCastingResult result = spellCastingService.castSpell(SpellCastRequest.builder()
+                .caster(sheet)
+                .spell(spell)
+                .scene(scene)
+                .sceneContext(scene.buildContext(sheet, Map.of(target, Range.DISTANCIA_MEDIA), target))
+                .combatantTarget(target)
+                .build());
+
+        CombatantAction action = result.getRecordedAction();
+        assertSame(spell, action.attackSource());
+        assertEquals(spell.getAttackSkillType(), action.skill());
+        assertEquals(0, action.turnNumber());
+
+        // Filing it downstreams to the caster's own log — what the "primeira Magia da Rodada"
+        // Focus-scaling clause reads back.
+        scene.recordAction(sheet, action);
+        assertTrue(sheet.getActionsThisRound().stream().anyMatch(a -> a.attackSource() instanceof Spell));
+    }
+
     // ---------- resolvePrimaryDamage ----------
 
     private final SpellCastingService damageService = new SpellCastingServiceImpl();

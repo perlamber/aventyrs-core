@@ -213,4 +213,18 @@ public interface EgoAdvantage {
     default int resolveCriticalMarginIncrease(final SkillType skillType, final SceneContext sceneContext) {
         return 0;
     }
+
+    /**
+     * How many Pontos de Equipamento this Vantagem shaves off buying a piece of Equipamento from
+     * an item store — {@link ResourcesAdvantage#BARGANHISTA}'s "custam 2 Pontos de Equipamentos a
+     * menos". Summed across the holder's Vantagens by {@code
+     * org.aventyrs.core.character.services.ItemPurchaseService}, which then floors the price at
+     * 1PE ("até o mínimo de 1PE"). Zero by default.
+     *
+     * <p>Only the <em>purchase</em> half of BARGANHISTA is expressed here; its -1PE on Obra-Prima
+     * upgrades / Aprimoramentos / Habilidade de Título usage still has no spender to discount.
+     */
+    default int resolveEquipmentPurchaseDiscount() {
+        return 0;
+    }
 }

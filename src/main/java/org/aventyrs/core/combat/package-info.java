@@ -104,7 +104,10 @@
  * it reports. The one thing that does change is the roll itself happening — on a critical
  * success, a non-cumulative raise of the roller's temporary Ego ceiling (the first-roll-of-Turn
  * check it also runs is non-mutating now) — which is why {@code resolve} rolls exactly once per
- * attack. The API records the exchange afterwards via {@code CombatantSheet#recordAction}, and —
+ * attack. Each {@code resolve} bundles the roll as a ready {@code CombatantAction} on its result
+ * ({@code getRecordedAction()}) without recording it, so the API files the exchange afterwards
+ * with {@code Scene#recordAction(actor, result.getRecordedAction())} (or {@code
+ * CombatantSheet#recordAction} with no live Scene), and —
  * if it determines the blow was fatal — calls {@code
  * org.aventyrs.core.character.services.DefeatBlessingService#applyDefeatBlessings} (this core has
  * no defeat observer). {@code AttackDelivery} does merge the attacker's Talentos' own Efeitos

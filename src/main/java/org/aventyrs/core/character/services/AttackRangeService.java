@@ -12,14 +12,19 @@ import org.aventyrs.core.scene.Range;
  * own authored Alcance, advanced up the band ladder by every "+N níveis de distância" the
  * attacking {@link Character} brings to it.
  *
- * <h2>An attack's reach belongs to what it was made with, not to the character</h2>
+ * <h2>An attack's reach starts with what it was made with, and the body wielding it</h2>
  *
- * There is no character-level "range" stat and this service never invents one: a weapon states
- * its Alcance ({@link Weapon#getRange()} — {@link Range#ADJACENTE} for the corpo-a-corpo default),
- * and a Magia states its reach ({@code spell.getTargeting().range()}, non-null only for a {@code
- * DISTANCIA} or a placed-centre {@code AREA_DE_EFEITO}). A Talento such as {@code
- * ArtilhariaFeat#TIRO_LONGO} only <em>shifts</em> that authored band; it is meaningless without a
- * source to shift.
+ * A weapon states its Alcance ({@link Weapon#getRange()} — {@link Range#ADJACENTE} for the
+ * corpo-a-corpo default), and a Magia states its reach ({@code spell.getTargeting().range()},
+ * non-null only for a {@code DISTANCIA} or a placed-centre {@code AREA_DE_EFEITO}). A Talento such
+ * as {@code ArtilhariaFeat#TIRO_LONGO} only <em>shifts</em> that authored band; it is meaningless
+ * without a source to shift.
+ *
+ * <p><b>The attacker's Categoria de Tamanho is the one character-level contribution</b>, per the
+ * Alcance column of {@code docs/rules/categorias-de-tamanho.txt}: a larger body reaches further
+ * with whatever it holds. See {@link #getEffectiveRangeInUnidadesDeDistancia} for how it composes
+ * with the weapon's own Alcance, and why {@link Range#ADJACENTE} is the case that substitutes
+ * rather than adds. Magias take no such widening — a Conjurador's reach is not their own body's.
  *
  * <h2>Two overloads, two questions — not a cascading pair</h2>
  *
@@ -67,13 +72,63 @@ import org.aventyrs.core.scene.Range;
 public interface AttackRangeService {
 
     /**
-     * The maximum {@link Range} character reaches swinging, firing or throwing weapon —
-     * {@code weapon.getEffectiveRange()} (its authored Alcance, or {@link Range#ADJACENTE} once
-     * the weapon is destroyed), widened for a corpo-a-corpo weapon by character's own
-     * effective {@code SizeCategory}, then advanced by the summed Talento steps described on
-     * this interface. Never past {@link Range#AO_ALCANCE_DOS_OLHOS}.
+     * The {@link Range} band character's attack with weapon falls into — {@link
+     * #getEffectiveRangeInUnidadesDeDistancia} resolved to a band, then advanced by the summed
+     * Talento steps described on this interface. Never past {@link Range#AO_ALCANCE_DOS_OLHOS}.
+     *
+     * <p><b>This is a rounded-<em>up</em> summary, not the reach.</b> {@link Range} is a geometric
+     * ladder (1/2/4/8/16/24 UD) while a size modifier is linear, so most reaches are not
+     * expressible as a band: an adaga wielded at Categoria +4 reaches 3 UD — Muito Curta plus one —
+     * and {@link Range#fromUnidadesDeDistancia} can only answer {@link Range#DISTANCIA_CURTA},
+     * which is worth 4.
+     *
+     * <p>That is exactly right for the question a band asks. {@link Range#isWithin} still answers
+     * correctly, because the band returned is the smallest one that <em>covers</em> the reach: 3 UD
+     * maps to CURTA, and {@code CURTA.isWithin(DISTANCIA_MUITO_CURTA)} is properly {@code false}.
+     * It becomes wrong only if a caller reads {@link Range#getMaxUnidadesDeDistancia()} off the
+     * result and treats it as a distance — <b>a caller measuring anything wants {@link
+     * #getEffectiveRangeInUnidadesDeDistancia} instead</b>.
      */
     Range getEffectiveRange(Character character, Weapon weapon);
+
+    /**
+     * How far character actually reaches with weapon, in Unidades de Distância — the figure a
+     * caller measuring against a position needs, and the one {@link #getEffectiveRange} rounds up
+     * into a band.
+     *
+     * <p>Two cases, because {@link Range#ADJACENTE} is not a distance. It means there is no space
+     * between the combatants at all, so nothing is added to it:
+     * <ul>
+     *   <li>a weapon that states <b>no reach of its own</b> ({@code getEffectiveRange() ==
+     *   ADJACENTE} — a fist, a dagger, a sword) reaches the attacker's own {@code
+     *   SizeCategory#getRange()}, the Alcance column of the Categorias de Tamanho table. A bigger
+     *   creature reaches further because of its body, not because adjacency grew;</li>
+     *   <li>a weapon that <b>does</b> state one (a Lança at Muito Curta, an arco at Longa) has
+     *   {@code SizeCategory#getRangeModifier()} added to that stated distance, floored at {@code
+     *   SizeCategory#MINIMUM_MELEE_RANGE}. This applies to <b>every</b> such weapon — Arremesso and
+     *   Ataque à Distância included; a giant draws a longbow further than a goblin does.</li>
+     * </ul>
+     *
+     * <p>The split is what keeps a giant's lança out-reaching its own fist. Modelling the first
+     * case as a substitution rather than as "add to 1 UD" costs nothing numerically today — the
+     * Alcance column <em>is</em> {@code max(1, 1 + modifier)} — and stays correct if the authored
+     * column ever stops following that formula.
+     *
+     * <p><b>Talento steps are not included here</b>, and cannot be: {@code
+     * Feat#resolveAttackRangeIncrease} returns whole band steps ("+1 nível de distância"), never a
+     * UD count, so they can only be applied to the band form. This figure is the authored Alcance
+     * plus Size, nothing else. Adding a UD-valued Talento hook needs a rules source that states
+     * one.
+     *
+     * <p>{@link #UNBOUNDED_RANGE} for a weapon whose Alcance is {@link
+     * Range#AO_ALCANCE_DOS_OLHOS}, which names no fixed distance to add to.
+     */
+    int getEffectiveRangeInUnidadesDeDistancia(Character character, Weapon weapon);
+
+    /** What {@link #getEffectiveRangeInUnidadesDeDistancia} reports for a reach limited only by
+     * sight — {@link Range#AO_ALCANCE_DOS_OLHOS} has no {@code maxUnidadesDeDistancia}, so there is
+     * no number to state and none to add a modifier to. */
+    int UNBOUNDED_RANGE = Integer.MAX_VALUE;
 
     /**
      * The maximum {@link Range} character reaches casting spell at a target — the Magia's own

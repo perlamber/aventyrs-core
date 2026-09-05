@@ -127,20 +127,31 @@
  *
  * <h2>Recording an action</h2>
  *
- * After resolving a roll, the caller may log it on the combatant's per-Rodada action log:
+ * After resolving a roll, the caller may log it. With a live {@code Scene}, record through it —
+ * the action lands in the Scene's permanent history (a {@code SceneAction} per entry, for
+ * the client's combat log) and is downstreamed to the combatant's own per-Rodada log:
  *
  * <pre>{@code
  * InteractionResult result = new AtaqueADistanciaInteraction().applyTo(sheet, ctx, roll, target, weapon);
- * sheet.recordAction(new CombatantAction(
+ * CombatantAction action = new CombatantAction(
  *         SkillType.ATAQUE_A_DISTANCIA, result.getGoverningAttributeDomain(), weapon,
- *         roll.getActionCost(), scene.getCurrentRound(), ActionOutcome.from(result)));
+ *         roll.getActionCost(), scene.getCurrentRound(), ActionOutcome.from(result));
+ * scene.recordAction(sheet, action);   // or sheet.recordAction(action) with no live Scene
  * }</pre>
  *
- * {@code applyTo} never records for you — it only <em>reads</em> the log (for
+ * Hand-assembly like that is only for a direct {@code Interaction.applyTo} call. The
+ * orchestrators build the {@code CombatantAction} for you and hand it back ready to file:
+ * {@code AttackDelivery}/{@code AttackReceiver} on {@code DeliveredAttackResult}/{@code
+ * IncomingAttackResult#getRecordedAction()}, and {@code SpellCastingService} on {@code
+ * SpellCastingResult#getRecordedAction()} — none of them record it, so the caller still does
+ * {@code scene.recordAction(actor, result.getRecordedAction())}.
+ *
+ * <p>{@code applyTo} never records for you — it only <em>reads</em> the log (for
  * {@code DexterityAbility#PRECISAO}'s "first roll of your Turn" and
  * {@code AssassinoFeat#SAQUE_RELAMPAGO}'s "first cheap attack of the Rodada"). Not recording
  * means those never advance. Clear the log each Rodada with {@code sheet.startNewRound()}, or
  * drive the Scene with {@code Scene#next()}, which does it for every participant at the wrap.
+ * The Scene's own history is never cleared.
  *
  * <h2>Adding a new Perícia</h2>
  *

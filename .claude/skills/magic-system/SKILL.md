@@ -305,6 +305,15 @@ computes both rolls' bonuses without resolving success/failure for either. It *d
 `SpellCastingResult#getPrimaryDamage()` for a Magia that authors a `SpellDamage` (see "A Magia's
 primary damage" above) — deterministic part resolved, dice left to the caller, nothing applied.
 
+`castSpell(SpellCastRequest)` also bundles the cast as a ready `CombatantAction` on
+`SpellCastingResult#getRecordedAction()` — the delivering Perícia, the `Spell` as `attackSource`,
+and `turnNumber` from `request.getScene().getCurrentRound()`. Partial: no roll is handed to
+`castSpell`, so `governingAttributeDomain` and the `ActionOutcome` verdict stay unset (unlike
+`DeliveredAttackResult`'s, where the roll is supplied). Not recorded — the caller files it with
+`scene.recordAction(caster, action)`, and once filed the `Spell` `attackSource` is what
+`isFirstSpellCastOfRound` / `upgradesFirstSpellOfRoundFocusScaling` read back. The legacy
+`castSpell(CombatantSheet, Interaction)` overload leaves it `null` (no Scene).
+
 **Cite the missing *GD*, not a missing catalog or a missing `Magia` entity** — both of those are
 closed. And be precise about which GD: the Domínio do Mana roll's own is real authored data
 (`Spell#getCastingDifficultyLevel()`), so what's actually absent is the *delivery* roll's, which

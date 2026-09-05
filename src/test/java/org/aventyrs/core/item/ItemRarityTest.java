@@ -4,7 +4,9 @@ import org.aventyrs.core.skill.DifficultyLevel;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ItemRarityTest {
 
@@ -43,6 +45,23 @@ class ItemRarityTest {
         assertEquals(5, ItemRarity.RARE.getMinimumMasterpieceGraduation());
         assertEquals(7, ItemRarity.EPIC.getMinimumMasterpieceGraduation());
         assertEquals(10, ItemRarity.MYTHIC.getMinimumMasterpieceGraduation());
+    }
+
+    @Test
+    void everyScarcityTierIsPurchasableAndNaturalIsNot() {
+        assertTrue(ItemRarity.COMMON.isPurchasable());
+        assertTrue(ItemRarity.MYTHIC.isPurchasable());
+        assertFalse(ItemRarity.NATURAL.isPurchasable());
+    }
+
+    @Test
+    void isAtMostComparesByScarcityOrderAndExcludesNatural() {
+        assertTrue(ItemRarity.RARE.isAtMost(ItemRarity.EPIC));
+        assertTrue(ItemRarity.EPIC.isAtMost(ItemRarity.EPIC));
+        assertFalse(ItemRarity.EPIC.isAtMost(ItemRarity.RARE));
+
+        assertFalse(ItemRarity.NATURAL.isAtMost(ItemRarity.MYTHIC));
+        assertFalse(ItemRarity.COMMON.isAtMost(ItemRarity.NATURAL));
     }
 
     @Test
