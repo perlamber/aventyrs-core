@@ -1,22 +1,31 @@
 package org.aventyrs.core.feat;
 
+import java.util.Optional;
+
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.character.DamageBonus;
+import org.aventyrs.core.character.DamageType;
 import org.aventyrs.core.character.DefenseType;
-import org.aventyrs.core.item.ItemCategory;
 import org.aventyrs.core.item.Weapon;
 import org.aventyrs.core.race.CreatureType;
+import org.aventyrs.core.scene.SceneContext;
+import org.aventyrs.core.skill.AttackSource;
+import org.aventyrs.core.skill.SkillType;
+import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.title.TitleArchetype;
 
 /**
  * Talentos Monstruosos — the open tree any Monstruoso race can draw on, from unusual anatomy to
  * extra heads to acid blood.
  *
- * <p>Three constants carry real effects: {@link #PELE_RIJA} grants DF and RD together;
+ * <p>Four constants carry real effects: {@link #PELE_RIJA} grants DF and RD together;
  * {@link #OSSOS_OCOS} is the catalog's <b>first Talento to apply a real malus</b> — a −1
- * Multiplicador de PV paid for by a +1UD Movimento Base; and {@link #SELVAGERIA} raises the Dano
- * Base of an Arma Natural by +1, expressible since {@code Feat#resolveDamageBaseIncrease} began
- * seeing the weapon and {@code ItemCategory.NATURAL_WEAPON} began marking one.
+ * Multiplicador de PV paid for by a +1UD Movimento Base; {@link #SELVAGERIA} raises the Dano
+ * Base of an Arma Natural by +1; and {@link #FEROCIDADE} adds a Título-scaled flat bonus to an
+ * Arma Natural dano roll. The last two are expressible since {@code Feat#resolveDamageBaseIncrease}
+ * / {@code resolveDamageBonus} began seeing the {@code AttackSource} and {@code NaturalWeapon}
+ * began authoring the weapons {@code Character#treatsAsNaturalWeapon} recognises.
  *
  * <p>Gated through {@code FeatRequirements#requiredCreatureType}, since "Raça Monstruosa" spans
  * Aviano, Goblin, Ogro, Guampo, Indômito, Troll and Bestial with no common supertype.
@@ -161,9 +170,10 @@ public enum MonstruosoFeat implements Feat {
     //  only ever computes damage *to* a target *from* an attacker, never the reverse, and nothing
     //  lets a victim respond to having been hit. Same blocker as ElementalFeat#REPARACAO_ELEMENTAL
     //  and TrollFeat#REGENERACAO_REATIVA_ESPINHOSA.
-    // TODO: the +2 for an Arma Natural or Desarmado attacker needs the two markers CLAUDE.md's
-    //  "Classifying an attack as Desarmado/Arma Natural" row names — and AttackSource reaches the
-    //  attacker's own roll, not the victim's sheet.
+    // TODO: the +2 for an Arma Natural or Desarmado attacker — the Arma Natural marker exists now
+    //  (NaturalWeapon / Character#treatsAsNaturalWeapon), but AttackSource reaches the attacker's
+    //  own roll, not the victim's sheet, so a retaliation clause on the victim cannot see it; and
+    //  an Ataque Desarmado still has no AttackSource at all on the Perícia-roll path.
     SANGUE_ACIDO(
             "Sempre que for atingido por um ataque Corpo-a-Corpo, o atacante sofre 1 ponto de "
                     + "Dano Físico Elemental: Natural. Este dano aumenta em +2 se o atacante tiver "
@@ -225,10 +235,16 @@ public enum MonstruosoFeat implements Feat {
     /**
      * "Você recebe Bônus de +1 em rolagens de danos de suas Armas Naturais, este Bônus aumenta
      * cumulativamente em +1 para cada Título Aventyr que você tenha Desperto."
+     *
+     * <p><b>Real.</b> A flat dano bonus of {@code 1 + }Títulos Despertos on any attack the holder
+     * makes with a weapon their {@code Character#treatsAsNaturalWeapon} recognises — resolved
+     * through the trailing-{@code AttackSource} overload of {@link Feat#resolveDamageBonus}, which
+     * {@code AbstractSkillInteraction} now hands the delivery channel. Untyped, so it flattens to
+     * {@code FISICO} in {@code DamageBonus#total}, the established reading of "+N em rolagens de
+     * Danos". {@code SELVAGERIA} later converts this into a Dano Base increase — the same
+     * exclusive-conversion shape as {@code AtaqueCorpoACorpoCompetencyAbility#BRUTALIDADE} — but
+     * that half stays blocked on the Ferocidade Característica Racial having no representation.
      */
-    // TODO: a flat dano bonus from a Talento has no hook — resolveDamageBonus lives on
-    //  SkillCompetencyAbility and EgoAdvantage, both reached through a skill Interaction rather
-    //  than through character.getFeats(). And the scope is Armas Naturais, which do not exist.
     FEROCIDADE(
             "Você recebe Bônus de +1 em rolagens de danos de suas Armas Naturais, este Bônus "
                     + "aumenta cumulativamente em +1 para cada Título Aventyr que você tenha "
@@ -236,7 +252,17 @@ public enum MonstruosoFeat implements Feat {
             FeatRequirements.builder()
                     .requiredCreatureType(CreatureType.MONSTRUOSO)
                     .requiredAwakenedTitles(1)
-                    .build()),
+                    .build()) {
+        @Override
+        public Optional<DamageBonus> resolveDamageBonus(final SkillType attackingSkillType, final SceneContext sceneContext,
+                                                         final CombatantSheet attackTarget, final Character actor,
+                                                         final AttackSource attackSource) {
+            if (actor == null || !(attackSource instanceof Weapon weapon) || !actor.treatsAsNaturalWeapon(weapon)) {
+                return Optional.empty();
+            }
+            return Optional.of(new DamageBonus(FEROCIDADE_BASE_BONUS + actor.getAllTitles().size(), DamageType.FISICO));
+        }
+    },
 
     /**
      * "Você sente a presença de personagens que não sejam Monstros ou Monstruosos em Distância
@@ -261,16 +287,16 @@ public enum MonstruosoFeat implements Feat {
     /**
      * "O Dano Base de todas as suas Armas Naturais aumenta em +1. Os Bônus em danos concedidos
      * por Ferocidade são convertidos em Aumento de Dano Base."
-     */
-    /**
-     * "O Dano Base de todas as suas Armas Naturais aumenta em +1." The Armas Naturais half is
-     * <b>real</b> now that {@link Feat#resolveDamageBaseIncrease(Character, Weapon)} sees the
-     * weapon: {@code weapon.getCategory() == }{@link ItemCategory#NATURAL_WEAPON} scopes it
-     * exactly, so a wielded blade or an Ataque Desarmado gets nothing.
+     *
+     * <p>The Dano Base half is <b>real</b> now that {@link Feat#resolveDamageBaseIncrease(Character,
+     * Weapon)} sees the weapon: it scopes the +1 with {@code Character#treatsAsNaturalWeapon},
+     * the per-character view that also catches a Talento-reclassified weapon, so a wielded blade
+     * or an Ataque Desarmado (a {@code null} weapon) gets nothing.
      */
     // TODO: "os Bônus de Ferocidade são convertidos em Dano Base" stays unbuilt — Ferocidade
-    //  (the Característica Racial) has no representation. AtaqueCorpoACorpoCompetencyAbility
-    //  #BRUTALIDADE is the exclusive-conversion shape to model it on once it exists.
+    //  (the Característica Racial) has no representation, and this is a *conversion* of the
+    //  FEROCIDADE Talento's own dano bonus (now real), not that bonus itself. Model it on
+    //  AtaqueCorpoACorpoCompetencyAbility#BRUTALIDADE's exclusive-conversion shape once it exists.
     SELVAGERIA(
             "O Dano Base de todas as suas Armas Naturais aumenta em +1. Os Bônus em danos "
                     + "concedidos por Ferocidade são convertidos em Aumento de Dano Base.",
@@ -286,6 +312,7 @@ public enum MonstruosoFeat implements Feat {
     };
 
     private static final int PELE_RIJA_BONUS = 2;
+    private static final int FEROCIDADE_BASE_BONUS = 1;
 
     private final String description;
     private final FeatRequirements featRequirements;

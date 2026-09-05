@@ -53,7 +53,7 @@ class AbstractItemTest {
         AbstractItem item = AbstractItem.builder()
                 .name("Anel da Chama")
                 .category(ItemCategory.RING)
-                .regalia(true)
+                .regaliaGrade(RegaliaGrade.MENOR)
                 .build();
 
         Masterpiece masterpiece = new Masterpiece() {
@@ -76,6 +76,11 @@ class AbstractItemTest {
             @Override
             public String getDescription() {
                 return "Melhora a potência arcana.";
+            }
+
+            @Override
+            public ItemRarity getRarity() {
+                return ItemRarity.COMMON;
             }
         };
         ItemActiveAbility activeAbility = new ItemActiveAbility() {
@@ -106,14 +111,32 @@ class AbstractItemTest {
         };
 
         item.setMasterpiece(masterpiece);
-        item.setImprovement(improvement);
+        item.addImprovement(improvement);
         item.setActiveAbility(activeAbility);
 
         assertEquals(masterpiece, item.getMasterpiece());
-        assertEquals(improvement, item.getImprovement());
+        assertEquals(improvement, item.getImprovements().get(0));
         assertEquals(activeAbility, item.getActiveAbility());
         assertTrue(item.isRegalia());
         assertEquals(activeAbility, ((Item) item).getActiveAbility());
+    }
+
+    @Test
+    void carriesSeveralAprimoramentosAtOnceAndTheirBonusesStack() {
+        AbstractItem armor = AbstractItem.builder()
+                .name("Armadura Reforçada")
+                .category(ItemCategory.ARMOR)
+                .weightClass(ItemWeightClass.HEAVY)
+                .hardness(30)
+                .build();
+
+        armor.addImprovement(ItemImprovement.of(DefensiveImprovement.RESISTENTE)); // +10 Dureza, -1 item damage
+        armor.addImprovement(ItemImprovement.of(DefensiveImprovement.AJUSTADA));   // -5 Dureza
+
+        assertEquals(2, armor.getImprovements().size());
+        assertEquals(35, armor.getEffectiveHardness()); // 30 + 10 - 5
+        // getImprovement() shim still answers with the first fitted one.
+        assertEquals(ItemImprovement.of(DefensiveImprovement.RESISTENTE), armor.getImprovement());
     }
 
     @Test

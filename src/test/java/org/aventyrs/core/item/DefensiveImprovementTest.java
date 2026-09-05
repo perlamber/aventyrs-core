@@ -110,7 +110,7 @@ class DefensiveImprovementTest {
                 .category(ItemCategory.ARMOR)
                 .weightClass(ItemWeightClass.HEAVY)
                 .build();
-        adjusted.setImprovement(ItemImprovement.of(DefensiveImprovement.AJUSTADA));
+        adjusted.addImprovement(ItemImprovement.of(DefensiveImprovement.AJUSTADA));
 
         assertEquals(ItemWeightClass.MEDIUM, adjusted.getEffectiveWeightClass());
     }
@@ -177,7 +177,7 @@ class DefensiveImprovementTest {
 
     private AbstractItem defensiveItem(final ItemCategory category, final int hardness, final ItemImprovement improvement) {
         AbstractItem item = AbstractItem.builder().name("Item de teste").category(category).hardness(hardness).build();
-        item.setImprovement(improvement);
+        item.addImprovement(improvement);
         return item;
     }
 

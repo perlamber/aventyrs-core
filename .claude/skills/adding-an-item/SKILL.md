@@ -17,12 +17,27 @@ block lists, and its `ItemFavor` carries that block's conditional half as real
 resolved the *opposite* way from a Título's — a Título is a per-character held instance because
 its specializations are per-acquisition data; an item has no such per-acquisition data.
 
-Per-copy state is only partly modeled. **Damage to the item itself is real** — a forged copy
-carries its own `damageTaken`, spent through `Item#applyDamage(int)` and read back via
-`getCurrentHardness()`/`isDestroyed()`; author the `hardness` column as the pristine maximum and
-that machinery takes care of the rest. **Who produced it** is still unmodeled, and so is repair.
-Don't build either speculatively — several TODOs cite them (`ProfissaoCompetencyAbility`,
-`ResourcesAdvantage#HERANCA_FAMILIAR`), but none is unblocked by the catalog alone.
+Per-copy state is now substantially modeled. **Damage to the item itself is real** — a forged
+copy carries its own `damageTaken`, spent through `Item#applyDamage(int)`, healed through
+`Item#repair(int)`, read back via `getCurrentHardness()`/`isDestroyed()`; author the `hardness`
+column as the pristine maximum and that machinery takes care of the rest. **Fabricação, reparo
+and Aprimoramento installation** run through `EquipmentCraftingService`, which delegates the
+forge itself to `ItemForgery` — driven by an `ItemSpecification` (base `ItemTemplate` +
+`ItemMasterpiece` + `List<Improvement>` + optional `RegaliaGrade`: everything a copy is, beyond
+its catalog entry). `ItemForgery.by(...)` applies every gate — including `Feat
+#itsAllowedToCraftRegalia`, the *permission* an `ArtificeFeat` grants, as distinct from the
+prerequisites for acquiring that Talento — while `ItemForgery.donatedByAventyr(spec)` is the GM
+path: no gates, no costs, and the copy is marked `Item#isDonatedByAventyr()`. The service (in
+`org.aventyrs.core.character.services`) keeps the numbers around the forge — the days of work and
+the GD from `ItemRarity`; the forge stamps `producedByCharacterId`. The forge is also assembled a
+decision at a time — `setMasterpiece`/`addImprovement`/`setActiveAbility` each re-total
+`getTotalValue()` (base Preço + every part's `getPriceModifier()`), and `getForgingCost()` is half
+that, halved once at the end. **So author a `getPriceModifier()` on a new Obra-Prima or
+Aprimoramento the moment its rules text gives one a Preço** — every forge that fits it prices it
+with no further wiring; today they all return 0. A copy holds a `List<Improvement>` capped 1/2/3 by
+`ItemWeightClass`, fitted via `AbstractItem#addImprovement` (`getImprovement()` is a deprecated
+first-or-null shim). Still unmodeled and not to be built speculatively: a PE economy
+(`ResourcesAdvantage#BARGANHISTA`), the offensive Obra-Prima/Aprimoramento catalogs.
 
 **Inventory, however, is real** — `Character#equipment` (worn/wielded) and
 `AbstractCombatantSheet#inventory` (carried, including a foe's loot). Both are mutable
@@ -163,9 +178,15 @@ overrides `getCategory()` to return its one fixed category. Lombok's `@Getter` c
 
 If the category has no enum yet, create `<Category>Item` alongside `ArmorItem` and follow its
 layout exactly. `ItemCategory` already enumerates the full set (ARMOR, BOOTS, CLOAK, GLOVES,
-HELMET, RING, SHIELD, BOW, THROWABLE, CROSSBOW, WHIP, CLUB, LIGHT_BLADE, HEAVY_BLADE, SPEAR,
-PROJECTILE, POTION, SCROLL), each carrying its `ItemType`
+HELMET, RING, SHIELD, BOW, THROWABLE, CROSSBOW, WHIP, CLUB, NATURAL_WEAPON, LIGHT_BLADE,
+HEAVY_BLADE, SPEAR, PROJECTILE, POTION, SCROLL), each carrying its `ItemType`
 (Ofensivo/Defensivo/Utilitário/Consumível) — so `getType()` is derived, never authored.
+
+`NaturalWeapon` is the second catalog after `ArmorItem`, and the shape sibling for any weapon
+category: it `implements ItemTemplate, Weapon`, so it adds `getDamageBase()`/`getSkillType()`/
+`getRange()` alongside the `Item` columns, and every economy column (Preço, DF/DM, Dureza,
+Conjuração) is a fixed `0` with `getFavor()` fixed `null` — a body part is not bought, forged,
+or `ModifierType`-buffed. Its Efeito Crítico stays javadoc-only (no weapon→crit scan exists).
 
 **`AbstractItem` (`@Builder`) is the `AbstractFeat` equivalent** — use it for a one-off or
 caller-supplied item that doesn't belong in a catalog enum, not for a cataloged one.

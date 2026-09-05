@@ -201,6 +201,34 @@ class DamageServiceImplTest {
         assertEquals(4, damageService.calculateFinalDamage(character, 12, false));
     }
 
+    /**
+     * The attack's own Meio-Dano — {@code ARTE_FLUIDA}'s "os danos no alvo adicional são reduzidos
+     * à metade" — is the last stage exactly like the target's own, so RD comes off the raw figure
+     * first: 12 - 3 = 9, halved to 4, not 12 halved to 6 and then reduced.
+     */
+    @Test
+    void anAttackCanHalveTheDamageItselfAndStillDoesSoAfterDamageReduction() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .attributeAbility(new DamageReductionAbility())
+                .build();
+        CharacterSheet sheet = CharacterSheet.of(character, new Player());
+
+        assertEquals(9, damageService.calculateFinalDamage(sheet, null, (DamageType) null, null, 12, false));
+        assertEquals(4, damageService.calculateFinalDamage(sheet, null, null, null, 12, false, true));
+    }
+
+    /** Two half-damage sources never quarter — the attack's is OR'd into the target's, not stacked. */
+    @Test
+    void anAttacksHalfDamageDoesNotStackWithTheTargetsOwn() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .skillCompetencyAbility(new HalfDamageAbility())
+                .build();
+        CharacterSheet sheet = CharacterSheet.of(character, new Player());
+
+        assertEquals(6, damageService.calculateFinalDamage(sheet, null, (DamageType) null, null, 12, false));
+        assertEquals(6, damageService.calculateFinalDamage(sheet, null, null, null, 12, false, true));
+    }
+
     @Test
     void calculateFinalDamageNeverGoesBelowZero() {
         Character character = CharacterFixture.blank(CharacterFixture.BLANK)
@@ -319,7 +347,7 @@ class DamageServiceImplTest {
     @Test
     void applyDamageDoesNotExtendBencaoDeProtecaoWhenMitigationLeavesNoFinalDamage() {
         AbstractItem item = AbstractItem.builder().name("Item de teste").category(ItemCategory.ARMOR).build();
-        item.setImprovement(ItemImprovement.of(DefensiveImprovement.BENCAO_DE_PROTECAO));
+        item.addImprovement(ItemImprovement.of(DefensiveImprovement.BENCAO_DE_PROTECAO));
         Character character = CharacterFixture.blank(CharacterFixture.BLANK)
                 .attributeAbility(new DamageReductionAbility())
                 .equipment(List.of(item))

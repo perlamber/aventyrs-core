@@ -53,6 +53,30 @@ public interface AttributeAbility {
     }
 
     /**
+     * How many temporary Ego points this ability owes its holder <em>on the following
+     * Rodada</em> the first time in a game session that domain's spendable points are reduced
+     * to zero — {@link GnoseAbility#ESTABILIDADE_EMOCIONAL}'s "a primeira vez em cada sessão de
+     * jogo que seu Autocontrole for reduzido a zero você receberá 1 ponto temporário neste Ego
+     * na Rodada seguinte". 0 by default, and 0 for any domain other than the one the ability's
+     * own rules text names.
+     *
+     * <p>Resolved by {@code AbstractCombatantSheet#spendEgoPoints} — the single funnel both a
+     * deliberate use and an enemy's drain pass through, since "for reduzido a zero" does not
+     * care <em>how</em> the pool emptied (deliberately unlike {@link
+     * org.aventyrs.core.ego.EgoAdvantage#resolveEgoSpendRecovery}, which only a holder's own
+     * chosen expenditure triggers). The once-per-session guard is {@code
+     * CombatantSheet#consumeOncePerSession}, keyed on the ability constant itself, and the
+     * delivery is {@code CombatantSheet#scheduleTemporaryEgoPointGrant} — see both for what a
+     * "session" and a "next Rodada" mean here.
+     *
+     * <p>Same "resolve, don't mutate" shape as {@link #resolvePermanentEgoGain}: this only
+     * says how much is owed.
+     */
+    default int resolveEgoDepletionGrant(EgoDomain domain) {
+        return 0;
+    }
+
+    /**
      * The {@link ActiveAbility} this ability grants the character the moment it's acquired —
      * e.g. {@link FocusAbility#CONCENTRACAO_PROFUNDA}'s own activatable state. Empty by
      * default; only override on a constant whose rules text describes something the holder

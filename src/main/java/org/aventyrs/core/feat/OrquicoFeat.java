@@ -101,11 +101,11 @@ public enum OrquicoFeat implements Feat {
      * #TERRA_NAS_VEIAS} for a holder of both, since {@code
      * HitPointsService#getLifeMultiplier} sums every Talento's contribution.
      */
-    // TODO: the Efeito Ativo needs three things at once — an activated ability spending 3PA+3PM
-    //  (nothing converts a spend into an attack), a dano bonus from a Feat (no hook, see
-    //  PALADINO_DE_EPONA), and Área de Efeito — Explosão resolution, which is CLAUDE.md's "Area
-    //  de Efeito" row part (a): AreaOfEffect describes a footprint that nothing turns into a set
-    //  of targets.
+    // TODO: the Efeito Ativo needs three things at once — the 3PA+3PM spend is now expressible
+    //  (ActiveAbilityService#activate), but it converts into a timed TemporaryEffect, not the
+    //  one-off *attack* this clause fires; the dano bonus is real from a Feat now
+    //  (Feat#resolveDamageBonus), but scoped to "this one activated attack" (no hook); and Área
+    //  de Efeito — Explosão resolution is CLAUDE.md's "Area de Efeito" row part (a).
     TREMOR(
             "Efeito Ativo - Ao Tempo de Ação de 3PA e Custo de 3PM, você pode realizar um ataque "
                     + "em um alvo em seu alcance com uma de suas Armas ou Armas Naturais. Para "

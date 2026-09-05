@@ -101,11 +101,23 @@ user's request, and the 20 Talentos de Devoção excluded above.
 
 **150 Talentos.** Every one carries its rules text verbatim and enforced Pré-requisitos; the
 handful with working effects are listed in `GeneralFeatEffectIntegrationTest`. `ArtesMarciaisFeat`
-now has three live: `ARTISTA_MARCIAL` (Dano Base +1 for Ataque Desarmado / Arma Natural),
-`DEFESA_DE_MAOS_LIMPAS` (+2 Defesas unless wielding a non-natural weapon), and
-`DOMINAR_ARTE_MARCIAL_TIGRE_E_SERPENTE` (+1 Margem Crítica de Ataques Corpo-a-Corpo) — all
-unblocked once `ItemCategory.NATURAL_WEAPON` and the weapon-aware `resolveDamageBaseIncrease`
-overload landed.
+now has five live: `ARTISTA_MARCIAL` (Dano Base +1 for Ataque Desarmado / Arma Natural),
+`DEFESA_DE_MAOS_LIMPAS` (+2 Defesas unless wielding a non-natural weapon),
+`DOMINAR_ARTE_MARCIAL_FERROADA_ESMAGADORA` (light melee weapons count as Armas Naturais),
+`DOMINAR_ARTE_MARCIAL_TIGRE_E_SERPENTE` (+1 Margem Crítica de Ataques Corpo-a-Corpo) and
+`DOMINAR_ARTE_MARCIAL_ARTE_FLUIDA` — the first three unblocked once
+`ItemCategory.NATURAL_WEAPON` and the weapon-aware `resolveDamageBaseIncrease` overload landed,
+the last once multi-target attack resolution did (see below).
+
+**`ArtificeFeat` (3) is fully live.** All three Artesão de Regalias constants forge their grade
+through `EquipmentCraftingService#forgeRegalia` (`RegaliaGrade` MENOR/SUPERIOR/DIVINA — GD
+Inimaginável/Milagre, 90/145/180 days, the trade + Talento + willing-Centelha-donor gates, and a
+Dragão/Elemental/Abissal/Celestial donor for Divina), and their "posse de uma Regalia" /
+"criação de 3 ou mais Regalias" Pré-requisitos are enforced via the new `FeatRequirements`
+clauses `requiredRegaliaInPossession` / `craftedRegaliaGrade`+`craftedRegaliaCount`
+(`Character#getRegaliasCrafted`). Left to the GM: the Centelha loss itself (Centelhas are still
+untracked — the `DestinoFeat#FRAGMENTO_DA_ENCARNACAO_DE_GILGAMESH` gap), the *Forja do Olho de
+Deus* location, and the Divina mandatory-Acerto-Crítico (reported, not enforced).
 
 ### Clause shapes `FeatRequirements` still cannot express
 
@@ -140,7 +152,7 @@ with enforced Pré-requisitos and a named blocker.
 | 3 | `HumanoFeat` | 3 | none — all three extend the unbuilt Aprendizado Rápido |
 | 3 | `MesticoFeat` | 1 | none — the inherited-Característica cap is fixed at construction |
 | 3 | `IndomitoFeat` | 1 | none — Ferocidade de Lacerto is unbuilt |
-| 4 | `BestialFeat` | 9 | none — every Herança is built from four systemically blocked clauses |
+| 4 | `BestialFeat` | 9 | every Herança grants its "+1 de bônus racial em &lt;Atributo&gt;" via `Feat#resolveAttributeBonus` (partial reach — a governed Perícia roll only); Bovídea/Canina/Felina also grant an Arma Natural. The swim/flight/vertical movement, free acquisition slot and Faro Apurado clauses stay blocked |
 | 4 | `FeralFeat` | 6 | none — three grant Atributos, three reshape the unbuilt Forma Híbrida |
 | 5 | `ElementalFeat` | 9 | none — the whole tree waits on Resistência/Vulnerabilidade Elemental |
 | 5 | `GiganteFeat` | 4 | none — two withheld whole rather than half-implemented (see below) |
@@ -291,6 +303,17 @@ Most constants cite one of these rather than a novel gap:
   `MonstruosoFeat#SELVAGERIA` (Armas Naturais only), and the general
   `ArtesMarciaisFeat#ARTISTA_MARCIAL` (Ataque Desarmado + Arma Natural).
 
+- **`Feat#resolveAdditionalTargets(SkillType, Character)`** and **`Feat#resolveDamageBonus(...,
+  int targetCount)`** — the pair `ArtesMarciaisFeat#DOMINAR_ARTE_MARCIAL_ARTE_FLUIDA` needed, and
+  the reason multi-target attack resolution exists at all. The first states how many targets
+  beyond the primary a Talento grants (summed by `AttackTargetingService#getMaximumTargets`,
+  enforced by `AttackDelivery#resolve`); the second lets a clause condition on how many targets
+  the one dano roll covers, since a multi-target attack still rolls dano once. Both check the
+  Talento's own gates internally, so the extra target and its Desvantagem can never disagree.
+  The adjacency half of every such clause is **not** enforced — it is geometry between two
+  combatants who are both not the roller, so choosing the targets stays the caller's job. Second
+  consumer waiting: `CavalariaFeat#ATAQUE_EM_ARCO`, still blocked on a montaria concept.
+
 ### `SceneContext#getOpposedCharacter()` — the clause-shape unlock
 
 The combatant on the other side of the roll: the **target** on a Perícia de Ataque, the
@@ -341,9 +364,11 @@ Vampiros". Each still needs revisiting individually.
   introducing something like `CharacterAttributeService#getTotalAttribute(Character,
   AttributeDomain)` and routing every reader through it; done piecemeal, the bonus would silently
   apply to rolls but not to PV, or to PM but not to the Graduação cap. Its own piece of work.
-  **Built in batch 6** — see above. `BestialFeat#HERANCA_CANINA` remains withheld even so: its
-  Faro Apurado is purpose-scoped ("a partir do olfato"), and the hook is for scopes this core can
-  actually express.
+  **Built in batch 6** — see above. Every `BestialFeat` Herança now grants its own "+1 de bônus
+  racial em &lt;Atributo&gt;" through it (`HERANCA_ANFIBIA`'s Vigor +1 is computed but currently
+  unobservable — no Perícia is Vigor-governed). `HERANCA_CANINA`'s *Faro Apurado* clause remains
+  withheld even so: it is purpose-scoped ("a partir do olfato"), and the hook is for scopes this
+  core can actually express.
 
 ### Three clause shapes worth knowing before the next batch
 

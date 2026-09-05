@@ -71,6 +71,8 @@ class GeneralFeatEffectIntegrationTest {
     private final HitPointsService hitPointsService = new HitPointsServiceImpl();
     private final DeterminationPointsService determinationPointsService = new DeterminationPointsServiceImpl();
     private final DefenseService defenseService = new DefenseServiceImpl();
+    private final org.aventyrs.core.character.services.AttackTargetingService attackTargetingService =
+            new org.aventyrs.core.character.services.AttackTargetingServiceImpl();
 
     @BeforeEach
     void setup() {
@@ -263,6 +265,56 @@ class GeneralFeatEffectIntegrationTest {
                         .strength(AttributeValue.builder().domain(AttributeDomain.STRENGTH).base(2).build())
                         .build())
                 .skill(SkillType.ESQUIVA_E_APARAR, trained(new EsquivaEAparar(), 5))
+                .primaryTitle(new Santo(List.of(), List.of()));
+    }
+
+    /**
+     * ARTE FLUIDA's extra target: a bare-handed stylist may name two, and either a drawn
+     * non-natural weapon or an equipped Escudo takes it away again.
+     */
+    @Test
+    void arteFluidaGrantsOneExtraTargetOnlyWhileEmptyHandedAndShieldless() throws IllegalOperationException {
+        Weapon blade = weapon(ItemCategory.LIGHT_BLADE);
+        Character stylist = arteFluidaCapable().build();
+        assertEquals(1, attackTargetingService.getMaximumTargets(stylist, SkillType.ATAQUE_CORPO_A_CORPO));
+
+        acquire(stylist, ArtesMarciaisFeat.DOMINAR_ARTE_MARCIAL_ARTE_FLUIDA);
+        assertEquals(2, attackTargetingService.getMaximumTargets(stylist, SkillType.ATAQUE_CORPO_A_CORPO));
+
+        stylist.equip(blade);
+        stylist.drawWeapon(blade);
+        assertEquals(1, attackTargetingService.getMaximumTargets(stylist, SkillType.ATAQUE_CORPO_A_CORPO));
+
+        stylist.sheatheWeapon(blade);
+        stylist.equip(org.aventyrs.core.item.AbstractItem.builder()
+                .name("Escudo Redondo").category(ItemCategory.SHIELD).build());
+        assertEquals(1, attackTargetingService.getMaximumTargets(stylist, SkillType.ATAQUE_CORPO_A_CORPO));
+    }
+
+    /**
+     * ARTE FLUIDA's price: "enquanto houver mais de um alvo você sofre Desvantagem em rolagens de
+     * Danos" — a flat -2 on the one dano roll, and nothing at all against a single target.
+     */
+    @Test
+    void arteFluidaChargesDanoDesvantagemOnlyWhileMoreThanOneTargetIsNamed() throws IllegalOperationException {
+        Character stylist = arteFluidaCapable().build();
+        acquire(stylist, ArtesMarciaisFeat.DOMINAR_ARTE_MARCIAL_ARTE_FLUIDA);
+        CharacterSheet sheet = CharacterSheet.of(stylist, new Player());
+        CharacterSheet primary = CharacterSheet.of(character().build(), new Player());
+        CharacterSheet extra = CharacterSheet.of(character().build(), new Player());
+
+        assertNull(SkillType.ATAQUE_CORPO_A_CORPO.newInteraction()
+                .applyTo(sheet, null, null, primary, null).getDamageBonus());
+        assertEquals(Skill.DISADVANTAGE_MALUS, SkillType.ATAQUE_CORPO_A_CORPO.newInteraction()
+                .applyTo(sheet, null, null, primary, null, List.of(extra)).getDamageBonus().getValue());
+    }
+
+    /** Ataque Corpo-a-Corpo 5 plus one Título Aventyr Desperto — ARTE_FLUIDA's exact ladder. */
+    private static Character.CharacterBuilder arteFluidaCapable() {
+        return character()
+                .equipment(new ArrayList<>())
+                .drawnWeapons(new ArrayList<>())
+                .skill(SkillType.ATAQUE_CORPO_A_CORPO, trained(new AtaqueCorpoACorpo(), 5))
                 .primaryTitle(new Santo(List.of(), List.of()));
     }
 

@@ -2,6 +2,7 @@ package org.aventyrs.core.feat;
 
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Deity;
+import org.aventyrs.core.item.RegaliaGrade;
 import org.aventyrs.core.race.CreatureType;
 import org.aventyrs.core.race.Race;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
@@ -57,9 +58,13 @@ import lombok.Builder;
  *                                  org.aventyrs.core.race.Race}). Tested with {@code
  *                                  isInstance}, so a Mestiço subclass of a named parent race
  *                                  still qualifies.
- * @param requiredCreatureType      when set, the holder's {@code Race#getCreatureType()} must be
- *                                  this — "Apenas personagens de raça Feérica", "apenas
- *                                  criaturas Monstruosas". Distinct from {@code requiredRace}
+ * @param requiredCreatureType      when set, the holder's {@code
+ *                                  Race#getPrerequisiteCreatureType()} must be this — "Apenas
+ *                                  personagens de raça Feérica", "apenas criaturas Monstruosas".
+ *                                  That hook is {@code getCreatureType()} for every living race
+ *                                  and the life-race's type for a {@code RENASCIDO} one (a
+ *                                  {@code Vampiro} counts as its raça em vida here). Distinct
+ *                                  from {@code requiredRace}
  *                                  and not a substitute for it: a {@link CreatureType} spans
  *                                  many races (Fada, Fúria, Sátiro and Nascido da Floresta are
  *                                  all {@code FEERICO}), which is exactly what these clauses
@@ -80,6 +85,11 @@ import lombok.Builder;
  *                                  "2 outros Talentos de Destino". The Talento being tested is
  *                                  never itself counted (it is not yet held).
  * @param requiredFeatCategoryCount how many of {@code requiredFeatCategory} are needed.
+ * @param craftedRegaliaGrade       when set, the holder must have forged at least {@code
+ *                                  craftedRegaliaCount} Regalias of this grade — "ter sido
+ *                                  bem-sucedido na criação de 3 ou mais Regalias", read off {@code
+ *                                  Character#getRegaliasCrafted(RegaliaGrade)}.
+ * @param craftedRegaliaCount       how many Regalias of {@code craftedRegaliaGrade} are needed.
  */
 @Builder
 public record FeatRequirements (
@@ -95,5 +105,7 @@ public record FeatRequirements (
         CreatureType requiredCreatureType,
         Deity requiredDeity,
         FeatCategory requiredFeatCategory,
-        int requiredFeatCategoryCount
+        int requiredFeatCategoryCount,
+        RegaliaGrade craftedRegaliaGrade,
+        int craftedRegaliaCount
 ) {}

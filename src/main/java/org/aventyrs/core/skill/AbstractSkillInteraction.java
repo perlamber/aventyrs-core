@@ -99,12 +99,17 @@ import static org.aventyrs.core.util.TranslatableMessages.REQUIRED_SKILL_TRAIT_N
  * {@code AtaqueADistanciaCompetencyAbility#FRIEZA}, resolved here generically instead since no
  * {@code EgoAdvantage} granting this needs an explicit {@code attackTarget}.
  *
- * <p>{@code applyTo} has five overloads, each just delegating down to the next one with
+ * <p>{@code applyTo} has six overloads, each just delegating down to the next one with
  * {@code null} for the newly-added parameter — {@code applyTo(target)} → {@code +sceneContext}
- * → {@code +skillRoll} → {@code +attackTarget} → {@code +attackSource}, the last one holding
- * all the real logic. A subclass with something genuinely skill-specific to add overrides the
- * **longest** overload (not a shorter one — {@link ArtesInteraction} overrides the 5-arg one
- * even though it touches neither {@code attackTarget} nor {@code attackSource}, simply because
+ * → {@code +skillRoll} → {@code +attackTarget} → {@code +attackSource} → {@code
+ * +additionalTargets}, the last one holding all the real logic. That last list is what {@code
+ * ArtesMarciaisFeat#DOMINAR_ARTE_MARCIAL_ARTE_FLUIDA}'s "seus ataques afetam um alvo adicional"
+ * needs: one roll, several Defesas to compare it against, and a dano Desvantagem conditioned on
+ * how many targets there are. {@code attackTarget} remains the <b>primary</b> target, and every
+ * target-conditioned hook still resolves against that one alone.
+ * A subclass with something genuinely skill-specific to add overrides the
+ * **longest** overload (not a shorter one — {@link ArtesInteraction} overrides the 6-arg one
+ * even though it touches neither {@code additionalTargets} nor {@code attackSource}, simply because
  * that's where {@code applyTo}'s real logic lives, and an override placed any higher would be
  * skipped by a caller using a longer form) and calls {@code
  * super.applyTo(...)} first, then layers its own addition on top of the result — most skills
@@ -214,10 +219,14 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
     }
 
     /**
-     * The overload that holds all the real logic — every shorter one delegates down to it with
-     * {@code null} for the parameters it doesn't carry, so a subclass with something to add
-     * overrides <b>this</b> one (see {@link ArtesInteraction}) and every shorter form still
-     * reaches the override through ordinary virtual dispatch.
+     * The single-target form of the longest {@link #applyTo(CombatantSheet, SceneContext,
+     * SkillRoll, CombatantSheet, AttackSource, List)} — it delegates with no additional targets,
+     * and stays the entry point every one-target caller uses. Only an attack affecting more than
+     * one target needs the longer form.
+     *
+     * <p><b>A subclass with something to add overrides the 6-arg form, not this one</b> — this
+     * is a pure delegator now, so an override placed here would be skipped by a caller naming
+     * additional targets.
      *
      * <p>attackTarget is the combatant this attack is actually being made against, so a held
      * ability like {@code AtaqueADistanciaCompetencyAbility#FRIEZA} (conditioned on the target's
@@ -246,6 +255,45 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
      * onto callers.
      */
     public InteractionResult applyTo(final CombatantSheet target, final SceneContext sceneContext, final SkillRoll skillRoll, final CombatantSheet attackTarget, final AttackSource attackSource) {
+        return applyTo(target, sceneContext, skillRoll, attackTarget, attackSource, List.of());
+    }
+
+    /**
+     * The overload that holds all the real logic, and the one a subclass with something to add
+     * overrides — every shorter form delegates down to it, the 5-arg one passing an empty
+     * additionalTargets list.
+     *
+     * <p>additionalTargets are the combatants this one attack reaches <b>beyond</b> {@code
+     * attackTarget}, which stays the <b>primary</b> target — empty for every ordinary attack.
+     * More than one target is what {@code ArtesMarciaisFeat#DOMINAR_ARTE_MARCIAL_ARTE_FLUIDA}'s
+     * "seus ataques afetam um alvo adicional" produces; see {@code
+     * org.aventyrs.core.combat.AttackDelivery}, which compares this <em>one</em> roll against
+     * each target's own Defesa in turn. Two things follow from the roll being one roll:
+     *
+     * <ul>
+     *   <li>Every <b>target-conditioned</b> hook — {@link SkillCompetencyAbility#resolveDamageBonus},
+     *   {@link SkillCompetencyAbility#resolveAttackRollBonus} — resolves against the primary
+     *   target alone, exactly as it did when there was only ever one. That is why the extra
+     *   targets are a separate trailing parameter rather than {@code attackTarget} being widened
+     *   into a list: recomputing those hooks per target would need a per-target result, no
+     *   authored trait asks for one, and the rules scope the extra targets to the comparison and
+     *   the damage rather than to the bonuses. Widening the existing parameter would also have
+     *   made a plain {@code applyTo(target, ctx, roll, null, null)} call ambiguous.</li>
+     *   <li>A clause conditioned on <b>how many</b> targets there are reaches {@link
+     *   Feat#resolveDamageBonus(SkillType, SceneContext, CombatantSheet, Character, AttackSource,
+     *   int)} instead, since the single dano roll it modifies belongs to the attack rather than
+     *   to any one target. The count passed there is the primary plus the extras — {@code 0} when
+     *   no target was named at all, which an override reads as "condition not met".</li>
+     * </ul>
+     *
+     * <p>Nothing here checks that the extra targets are legal — that they are adjacent to the
+     * primary (this core does no geometry) or that the attacker is entitled to that many. The
+     * count is enforced once, on the service entry point that applies it ({@code
+     * AttackDelivery#resolve}), the same place every other cap in this core lives.
+     */
+    public InteractionResult applyTo(final CombatantSheet target, final SceneContext sceneContext, final SkillRoll skillRoll, final CombatantSheet attackTarget, final AttackSource attackSource, final List<CombatantSheet> additionalTargets) {
+        int targetCount = (attackTarget == null ? 0 : 1)
+                + (additionalTargets == null ? 0 : additionalTargets.size());
         Character character = target.getCharacter();
         CharacterSkill characterSkill = findCharacterSkill(character);
         if (skillRoll != null) {
@@ -260,6 +308,13 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                 skillCompetencyAbilities, skillType, peritoTeoricoDomain, attackSource);
 
         int bonus = characterSkillService.getValueForRoll(characterSkill, character.getAttributes(), character.getRace(), attributeDomain);
+        // Bonuses to the *governing Atributo* itself — the one place they are read (see
+        // ModifierType.<ATTR>_BONUS / Feat#resolveAttributeBonus): a permanent Talento grant
+        // (MESTRE_VAMPIRO) and a round-scoped TemporaryBonus (DOM_DE_MIRCALLA, a Poder Vampírico).
+        bonus += character.getFeats().stream()
+                .mapToInt(feat -> feat.resolveAttributeBonus(attributeDomain, character))
+                .sum();
+        bonus += target.getTemporaryBonus(attributeDomain.getBonusModifierType());
         bonus += sumSkillRollBonusModifiers(character.getAttributeAbilities());
         bonus += sumSkillRollBonusModifiers(skillCompetencyAbilities);
         List<SkillExcellency> unlockedExcellencies = SkillExcellency.unlockedBy(skillType.getExcellencyClass(), graduationValue);
@@ -299,7 +354,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                 .governingAttributeDomain(skillRoll != null ? attributeDomain : null);
 
         if (skillType.isAttackSkill()) {
-            sumDamageBonus(target, sceneContext, null).ifPresent(result::damageBonus);
+            sumDamageBonus(target, sceneContext, null, attackSource, targetCount).ifPresent(result::damageBonus);
         }
 
         if (skillRoll != null) {
@@ -341,7 +396,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
             }
         }
 
-        return applyAttackTargetBonuses(result.build(), target, sceneContext, attackTarget);
+        return applyAttackTargetBonuses(result.build(), target, sceneContext, attackTarget, attackSource, targetCount);
     }
 
     /**
@@ -355,7 +410,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
      * after the fact: neither feeds anything the main body already consumed. A non-attack skill
      * or a {@code null} attackTarget returns result untouched.
      */
-    private InteractionResult applyAttackTargetBonuses(final InteractionResult built, final CombatantSheet target, final SceneContext sceneContext, final CombatantSheet attackTarget) {
+    private InteractionResult applyAttackTargetBonuses(final InteractionResult built, final CombatantSheet target, final SceneContext sceneContext, final CombatantSheet attackTarget, final AttackSource attackSource, final int targetCount) {
         InteractionResult result = built;
         if (!skillType.isAttackSkill() || attackTarget == null) {
             return result;
@@ -365,7 +420,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
         // Recomputed rather than added to what the main body already put there: the same four
         // sources are scanned again, now with the real attackTarget, so a target-conditioned
         // bonus (FRIEZA) joins the sum instead of the whole total being replaced by it.
-        Optional<DamageBonus> damageBonus = sumDamageBonus(target, sceneContext, attackTarget);
+        Optional<DamageBonus> damageBonus = sumDamageBonus(target, sceneContext, attackTarget, attackSource, targetCount);
         if (damageBonus.isPresent()) {
             result = result.toBuilder().damageBonus(damageBonus.get()).build();
         }
@@ -671,7 +726,9 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
      *   <li>{@code SkillCompetencyAbility#resolveDamageBonus} — e.g. {@code BRUTALIDADE}'s +1.</li>
      *   <li>{@code EgoAdvantage#resolveDamageBonus} — e.g. {@code InitiativeAdvantage#IMPETO}.</li>
      *   <li>{@code Feat#resolveDamageBonus} — Talentos sit outside every {@code ModifierResolver}
-     *   scan, so they get their own pass, the same shape {@link #sumFeatRollBonuses} uses.</li>
+     *   scan, so they get their own pass, the same shape {@link #sumFeatRollBonuses} uses. Handed
+     *   the {@code attackSource} too, for a clause scoped to what the attack was made with
+     *   ({@code MonstruosoFeat#FEROCIDADE}'s Armas Naturais).</li>
      *   <li>{@link ModifierType#DAMAGE_ROLL_BONUS} on the sheet — a {@code TemporaryBonus} and any
      *   Condição in force (Caído/Desarmado's Desvantagem, the fear ladder's proximity-scoped one),
      *   which are {@code ModifierType}-typed data rather than typed {@code DamageBonus}es.</li>
@@ -681,7 +738,9 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
      * pass and real on the {@link #applyAttackTargetBonuses} one, so a target-conditioned bonus
      * simply doesn't contribute until there is a target to test.
      */
-    private Optional<DamageBonus> sumDamageBonus(final CombatantSheet target, final SceneContext sceneContext, final CombatantSheet attackTarget) {
+    private Optional<DamageBonus> sumDamageBonus(final CombatantSheet target, final SceneContext sceneContext,
+                                                final CombatantSheet attackTarget, final AttackSource attackSource,
+                                                final int targetCount) {
         Character character = target.getCharacter();
         List<DamageBonus> typed = new ArrayList<>();
         allSkillCompetencyAbilities(character).stream()
@@ -693,7 +752,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                 .flatMap(Optional::stream)
                 .forEach(typed::add);
         character.getFeats().stream()
-                .map(feat -> feat.resolveDamageBonus(skillType, sceneContext, attackTarget, character))
+                .map(feat -> feat.resolveDamageBonus(skillType, sceneContext, attackTarget, character, attackSource, targetCount))
                 .flatMap(Optional::stream)
                 .forEach(typed::add);
         int flat = target.getTemporaryBonus(ModifierType.DAMAGE_ROLL_BONUS)

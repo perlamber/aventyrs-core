@@ -53,13 +53,14 @@ public class ArtesInteraction extends AbstractSkillInteraction {
 
     /**
      * Overrides the <b>longest</b> {@code applyTo}, per {@link AbstractSkillInteraction}'s own
-     * convention — neither {@code attackTarget} nor {@code attackSource} means anything for an
-     * Artes roll (Artes isn't a Perícia de Ataque), but that's where the real logic lives, and
+     * convention — none of {@code attackTarget}, {@code attackSource} or {@code
+     * additionalTargets} means anything for an Artes roll (Artes isn't a Perícia de Ataque, so it
+     * can never be made against more than one target), but that's where the real logic lives, and
      * an override on a shorter overload would be bypassed by any caller using a longer one.
      */
     @Override
-    public InteractionResult applyTo(final CombatantSheet target, final SceneContext sceneContext, final SkillRoll skillRoll, final CombatantSheet attackTarget, final AttackSource attackSource) {
-        InteractionResult result = super.applyTo(target, sceneContext, skillRoll, attackTarget, attackSource);
+    public InteractionResult applyTo(final CombatantSheet target, final SceneContext sceneContext, final SkillRoll skillRoll, final CombatantSheet attackTarget, final AttackSource attackSource, final List<CombatantSheet> additionalTargets) {
+        InteractionResult result = super.applyTo(target, sceneContext, skillRoll, attackTarget, attackSource, additionalTargets);
         Character character = target.getCharacter();
         if (!character.getSkillCompetencyAbilities().contains(ArtesCompetencyAbility.DOM_BARDICO)) {
             return result;

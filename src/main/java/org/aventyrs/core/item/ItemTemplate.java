@@ -19,8 +19,8 @@ public interface ItemTemplate extends Item {
     }
 
     @Override
-    default boolean isRegalia() {
-        return false;
+    default RegaliaGrade getRegaliaGrade() {
+        return null;
     }
 
     /**

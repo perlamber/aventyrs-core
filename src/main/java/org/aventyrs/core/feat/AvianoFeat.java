@@ -11,10 +11,12 @@ import org.aventyrs.core.skill.SkillType;
  *
  * <p>Three of the four are catalog entries with enforced Pré-requisitos and no effect, blocked
  * on one shared missing system: <b>this core models no flight</b>. `Aviano`'s own Braços Alados
- * racial trait already records it — there is no flight state, no Movimento Base de Voo distinct
- * from the ordinary one, and no "spend a resource to enter a timed state" transaction for the
- * PD cost and Duração these Talentos modify. Every one of them adjusts a figure that does not
- * exist, so none grants a partial effect.
+ * racial trait already records it — there is no flight state and no Movimento Base de Voo
+ * distinct from the ordinary one. (The generic "spend a resource to enter a timed state"
+ * transaction now exists — {@code ActiveAbilityService#activate} + {@code ActiveAbility}, with a
+ * PA/PM/PV cost — but flight is a distance sub-stat plus a facing/altitude notion, not a
+ * `TemporaryBonus`, and the PD cost these Talentos name is not among the supported ones.) Every
+ * one of them adjusts a figure that does not exist, so none grants a partial effect.
  *
  * <p>{@link #VISAO_DA_VERDADE} is the exception, and the reason {@code
  * Feat#resolveDifficultyReduction} exists: its GD clause is the plain unconditional form, on a

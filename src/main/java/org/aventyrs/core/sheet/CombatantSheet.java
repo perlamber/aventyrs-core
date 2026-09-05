@@ -119,9 +119,68 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
     /** Raises this domain's temporary ceiling, non-cumulatively per source. */
     int grantTemporaryEgoPointBonus(EgoDomain domain, Object source, int amount);
 
+    /**
+     * Hands this sheet amount genuinely spendable temporary points in domain, from source —
+     * the "você receberá N pontos temporários neste Ego" shape, as opposed to {@link
+     * #recoverTemporaryEgoPoints}'s "get back what you spent".
+     *
+     * <p><strong>Two steps, and both are needed.</strong> It widens the ceiling via {@link
+     * #grantTemporaryEgoPointBonus} <em>and</em> then calls {@link
+     * #recoverTemporaryEgoPoints}. Neither alone works for a pool that has been emptied: with
+     * every point spent the ceiling is 0 and a bare recovery restores nothing, while a bare
+     * ceiling widening is capped per source (deliberately, per {@code EgoPointPool
+     * #grantTemporaryBonus}'s "não cumulativo") and so grants nothing the second time the same
+     * source fires. Widening first, then recovering under the widened ceiling, gives one usable
+     * point on every trigger without the ceiling creeping upward once per trigger.
+     *
+     * @return int this domain's spendable temporary points after the grant
+     */
+    int grantTemporaryEgoPoints(EgoDomain domain, Object source, int amount);
+
+    /**
+     * Registers a {@link DelayedEgoGrant} — temporary Ego points owed at the start of this
+     * sheet's <em>next</em> Rodada, delivered by {@link #startNewRound()}. Grants scheduled
+     * more than once before that boundary all land together at it.
+     */
+    void scheduleTemporaryEgoPointGrant(EgoDomain domain, Object source, int amount);
+
     void owePendingEgoRecovery(PendingEgoRecovery recovery);
 
     void applyPendingEgoRecoveries(RestType restType);
+
+    // --- Game session -----------------------------------------------------------------------
+
+    /**
+     * Claims marker for this game session, returning {@code true} only the first time it is
+     * claimed — the "a primeira vez em cada sessão de jogo" guard ({@code
+     * GnoseAbility#ESTABILIDADE_EMOCIONAL}, and {@code MeioElfo}'s still-unbuilt "1x por
+     * sessão"). marker identifies <em>what</em> is being claimed, and is compared by
+     * {@code equals} — an ability enum constant is the intended kind of key, one per clause.
+     *
+     * <p><strong>A session is this sheet object's own lifetime.</strong> The state backing this
+     * is a {@code transient} field: it lives as long as the sheet does — the consuming client
+     * holds the sheet open for as long as the table is playing — and is deliberately absent
+     * from anything persisted, so a sheet reloaded from storage starts a fresh session with
+     * every marker unclaimed. That is the whole session concept this core has, and it is what
+     * a session boundary <em>is</em> here: no session identity, no counter, nothing to record.
+     * {@link #startNewSession()} is the explicit reset for a process that outlives one session.
+     *
+     * <p>Deliberately <em>not</em> tied to {@code EgoPointsService#applySessionRecovery}: that
+     * call is a Narrador's end-of-session button in the consuming app and carries no promise of
+     * being made at all, whereas this guard must hold whether or not anyone presses it.
+     */
+    boolean consumeOncePerSession(Object marker);
+
+    /** Whether marker has already been claimed this session — the non-consuming reader. */
+    boolean hasConsumedOncePerSession(Object marker);
+
+    /**
+     * Begins a new game session for this combatant: forgets every {@link
+     * #consumeOncePerSession} marker, so each once-per-session clause may fire again. Only a
+     * consumer that keeps one sheet instance alive across two sittings needs to call it — a
+     * client that rebuilds its sheets per session gets the same effect for free.
+     */
+    void startNewSession();
 
     // --- Temporary effects ------------------------------------------------------------------
 
@@ -288,8 +347,9 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
     void finishTurn();
 
     /**
-     * Begins a new Rodada for this combatant: clears {@link #getActionsThisRound()} and resets
-     * the per-Turn marker {@link #startTurn(int)} sets. Called by {@code
+     * Begins a new Rodada for this combatant: clears {@link #getActionsThisRound()}, resets
+     * the per-Turn marker {@link #startTurn(int)} sets, and delivers every {@link
+     * DelayedEgoGrant} scheduled during the Rodada just ended. Called by {@code
      * org.aventyrs.core.scene.Scene#next()} on every active participant at the Rodada wrap,
      * <em>before</em> {@code startTurn} on whoever acts first. With no live {@code Scene} ever
      * calling it, the log simply starts empty and the API must call this at its own Rodada

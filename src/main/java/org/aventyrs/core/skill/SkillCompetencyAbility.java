@@ -282,6 +282,41 @@ public interface SkillCompetencyAbility extends SkillTrait {
     }
 
     /**
+     * The factor this ability multiplies an item's <b>Tempo de Produção</b> by when its holder
+     * fabricates equipment — {@code 0.8} for {@code ProfissaoCompetencyAbility#CONSTRUTOR_EFICIENTE}'s
+     * "-20%". {@code 1.0} (no change) by default; only override on a constant whose rules text
+     * scales production time. Read by {@code
+     * org.aventyrs.core.character.services.EquipmentCraftingService#getFabricationTimeInDays}, which
+     * multiplies the factors from every held ability together.
+     */
+    default double resolveProductionTimeMultiplier() {
+        return 1.0;
+    }
+
+    /**
+     * The factor this ability multiplies the <b>Dureza</b> of a copy its holder forges by —
+     * {@code 1.5} for {@code ProfissaoCompetencyAbility#AUMENTAR_A_DUREZA}'s "aumenta em 50%".
+     * {@code 1.0} by default; only override on a constant whose rules text scales produced
+     * Dureza. Applied by {@code EquipmentCraftingService#forge} to the forged {@code
+     * AbstractItem}'s {@code hardness} field at creation.
+     */
+    default double resolveProducedHardnessMultiplier() {
+        return 1.0;
+    }
+
+    /**
+     * Extra Dureza recovered per repair action when {@code holder} repairs an item —
+     * {@code ProfissaoCompetencyAbility#REPARO_MELHORADO}'s "+2" (or "+5" once the holder's
+     * Profissão Graduação reaches 10). {@code 0} by default; only override on a constant whose
+     * rules text adds to repaired Dureza. Summed into the recovery by {@code
+     * EquipmentCraftingService#repair}. {@code holder} may be {@code null} (a preview with no
+     * character), which an override gated on the holder's own Graduação reads as "the lower tier".
+     */
+    default int resolveRepairHardnessBonus(final Character holder) {
+        return 0;
+    }
+
+    /**
      * Same as {@link #resolveAttributeDomain(Collection, SkillType, AttributeDomain,
      * AttackSource)} with nothing known about how the attack is being delivered — so only
      * <em>unconditional</em> substitutions apply.

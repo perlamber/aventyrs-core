@@ -5,6 +5,7 @@ import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.SizeCategory;
 import org.aventyrs.core.effect.CriticalEffectType;
 import org.aventyrs.core.feat.FeatCategory;
+import org.aventyrs.core.item.NaturalWeapon;
 import org.aventyrs.core.magic.Spell;
 import org.aventyrs.core.sheet.DlcRuleset;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
@@ -24,6 +25,21 @@ public interface Race {
      * parent {@link Race} against (see {@code AbstractMesticoRace}/{@code MeioElfo}).
      */
     CreatureType getCreatureType();
+
+    /**
+     * The {@link CreatureType} a {@code FeatRequirements#requiredCreatureType} (and any other
+     * "must be Feérico/Humanoide/Monstruoso" gate) is checked against — {@link
+     * #getCreatureType()} by default, which is every living race.
+     *
+     * <p>Split out only for a {@link CreatureType#RENASCIDO} race, whose rules text says its
+     * <em>prerequisites</em> still count its life-race's type ("Para critérios de pré-requisitos,
+     * Vampiros podem ser considerados Feéricos, Humanoides ou Monstruosos, conforme sua raça em
+     * vida") even though it <em>is</em> a Morto-Vivo. {@code Vampiro} overrides this to its chosen
+     * parent race's type; nothing else does.
+     */
+    default CreatureType getPrerequisiteCreatureType() {
+        return getCreatureType();
+    }
 
     /**
      * Whether this race is itself a Mestiço (mixed-blood) race — e.g. {@code MeioElfo} or any
@@ -76,6 +92,21 @@ public interface Race {
      * default; most races have none.
      */
     public default List<SkillCompetencyAbility> getRacialAbilities() { return List.of(); }
+
+    /**
+     * Armas Naturais ({@link NaturalWeapon}) every member of this race is born with — {@code
+     * Vampiro}'s Sangue, Poder e Dependência ("a maioria desenvolve Armas Naturais"), the
+     * per-{@code EspiritoAnimal} Armamentos Naturais a {@code HomemFera} would grant once its
+     * form state exists. Empty by default; nearly every race has none.
+     *
+     * <p>The race-side counterpart of {@code
+     * org.aventyrs.core.feat.Feat#getGrantedNaturalWeapons} — both feed {@code
+     * Character#getNaturalWeapons()}, the single view of what a character can strike with
+     * unarmed. Like that hook there is no possession gate on the attack path ({@code
+     * DamageBaseService} takes the {@link org.aventyrs.core.item.Weapon} as a parameter); this
+     * is the list a UI offers.
+     */
+    default List<NaturalWeapon> getGrantedNaturalWeapons() { return List.of(); }
 
     /**
      * Efeitos Críticos every member of this race simply shrugs off — an Anatomia clause naming

@@ -25,11 +25,12 @@ public enum GoblinFeat implements Feat {
      */
     // TODO: the GD reduction is scoped to a narrative purpose ("para criar equipamento"), which
     //  this core does not track — see the class javadoc for why this disqualifies it from
-    //  Feat#resolveDifficultyReduction where FAVORITOS_DE_TESLA qualifies.
-    // TODO: the Dureza penalty needs a production mechanic. Dureza itself is real and damageable
-    //  now (Item#applyDamage/getCurrentHardness/isDestroyed), but this halves the value an item is
-    //  *created* with, which is a property of the particular copy produced rather than of the
-    //  catalog entry, and nothing produces a copy yet.
+    //  Feat#resolveDifficultyReduction where FAVORITOS_DE_TESLA qualifies. EquipmentCraftingService
+    //  now has a fabrication GD to reduce, but no Feat hook feeds a step into it.
+    // TODO: the Dureza penalty needs a per-forge hook. Fabrication produces a copy now
+    //  (EquipmentCraftingService#forge, which already scales Dureza via
+    //  SkillCompetencyAbility#resolveProducedHardnessMultiplier for AUMENTAR_A_DUREZA), but there
+    //  is no Feat-side equivalent, and forge() takes no "this Talento was used" marker to gate one.
     ENGENHEIRO_DE_IMPROVISOS(
             "O GD de rolagens de Profissão para criar equipamento é reduzida em -1 Nível. Itens "
                     + "criados utilizando efeitos deste Talento tem a Dureza reduzida à metade.",

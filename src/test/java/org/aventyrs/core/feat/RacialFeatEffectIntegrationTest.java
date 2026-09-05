@@ -47,6 +47,7 @@ import org.aventyrs.core.race.Pequenino;
 import org.aventyrs.core.race.Race;
 import org.aventyrs.core.race.Satiro;
 import org.aventyrs.core.race.Troll;
+import org.aventyrs.core.race.Vampiro;
 import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.IllegalOperationException;
@@ -111,6 +112,11 @@ class RacialFeatEffectIntegrationTest {
 
     private static Character.CharacterBuilder character() {
         return CharacterFixture.blank(CharacterFixture.BLANK).feats(new ArrayList<>());
+    }
+
+    /** A character of the Vampiro race — a Nosferatu (Humanoide in life), for the Vampírico tree. */
+    private static Character.CharacterBuilder vampiro() {
+        return character().race(new Vampiro(Vampiro.VampiroLineage.NOSFERATU, new Human()));
     }
 
     private static CharacterSheet fundedSheet(final Character character) {
@@ -473,10 +479,63 @@ class RacialFeatEffectIntegrationTest {
     // ---------- Bestial ----------
 
     /**
-     * Batch 4 delivers no mechanical effects at all — every Herança is built from four clauses
-     * that are each systemically blocked (see {@code BestialFeat}'s javadoc). What it does
-     * deliver is the enforced ladder, so that is what is pinned: Aceitar a Lacerto counts three
-     * held Heranças, never itself.
+     * Every Herança opens with "+1 de bônus racial em &lt;Atributo&gt;", now real through {@code
+     * Feat#resolveAttributeBonus} — so a Herança-governed Perícia roll gets the +1 and a roll
+     * governed by any other Atributo does not. Herança Bovídea grants Força, and Atletismo is
+     * Força-governed.
+     */
+    @Test
+    void herancaBovideaRaisesAForcaGovernedRollButNotACharismaGovernedOne() throws IllegalOperationException {
+        Character bestial = character().race(new Bestial()).build();
+        CharacterSheet sheet = CharacterSheet.of(bestial, new Player());
+        int atletismoBefore = rollBonusIn(sheet, SkillType.ATLETISMO, null);
+        int artesBefore = rollBonusIn(sheet, SkillType.ARTES, null);
+
+        acquire(bestial, BestialFeat.HERANCA_BOVIDEA);
+
+        assertEquals(atletismoBefore + 1, rollBonusIn(sheet, SkillType.ATLETISMO, null));
+        assertEquals(artesBefore, rollBonusIn(sheet, SkillType.ARTES, null));
+    }
+
+    /** Each Herança grants +1 to its own fixed Atributo and to no other. */
+    @Test
+    void eachHerancaGrantsExactlyItsOwnAtributoBonus() {
+        Character bestial = character().race(new Bestial()).build();
+        Map<BestialFeat, AttributeDomain> expected = Map.of(
+                BestialFeat.HERANCA_ANFIBIA, AttributeDomain.VIGOR,
+                BestialFeat.HERANCA_AVIANA, AttributeDomain.FOCUS,
+                BestialFeat.HERANCA_BOVIDEA, AttributeDomain.STRENGTH,
+                BestialFeat.HERANCA_CANINA, AttributeDomain.INSTINCT,
+                BestialFeat.HERANCA_CETACEA, AttributeDomain.GNOSE,
+                BestialFeat.HERANCA_FELINA, AttributeDomain.DEXTERITY,
+                BestialFeat.HERANCA_REPTILIANA, AttributeDomain.CHARISMA);
+
+        expected.forEach((feat, granted) -> {
+            for (AttributeDomain domain : AttributeDomain.values()) {
+                assertEquals(domain == granted ? 1 : 0, feat.resolveAttributeBonus(domain, bestial),
+                        feat + " should grant +1 to " + granted + " only");
+            }
+        });
+        // The two Aventyr-tier Talentos grant no Atributo bonus.
+        assertEquals(0, BestialFeat.ACEITAR_A_LACERTO.resolveAttributeBonus(AttributeDomain.INSTINCT, bestial));
+        assertEquals(0, BestialFeat.METAMORFOSE_SELVAGEM.resolveAttributeBonus(AttributeDomain.STRENGTH, bestial));
+    }
+
+    /**
+     * Herança Anfíbia's clause is "+1 de bônus racial em Vigor", and no Perícia is Vigor-governed
+     * — so the bonus is computed for real yet currently reaches no roll. Pinned so the "compute it
+     * even with no reader" discipline is visible rather than read later as a bug.
+     */
+    @Test
+    void herancaAnfibiaComputesItsVigorBonusEvenThoughNoPericiaReadsIt() {
+        Character bestial = character().race(new Bestial()).build();
+
+        assertEquals(1, BestialFeat.HERANCA_ANFIBIA.resolveAttributeBonus(AttributeDomain.VIGOR, bestial));
+    }
+
+    /**
+     * What the tree also delivers is the enforced ladder: Aceitar a Lacerto counts three held
+     * Heranças, never itself.
      */
     @Test
     void aceitarALacertoWaitsForThreeHerancasBestiais() throws IllegalOperationException {
@@ -1197,29 +1256,28 @@ class RacialFeatEffectIntegrationTest {
     // ---------- Vampírico ----------
 
     /**
-     * The whole tree is ungated: every constant reads "Apenas personagens da Raça Vampiro" and no
-     * such race exists in this core. Pinned so the looseness is a recorded decision rather than
-     * something discovered later — and so this test fails the moment a Vampiro race lands and the
-     * clauses should be tightened.
+     * Every constant reads "Apenas personagens da Raça Vampiro", and {@code Vampiro} now exists —
+     * so the whole tree gates on {@code requiredRace(Vampiro.class)}, and still not on {@code
+     * requiredCreatureType} (a Vampiro's prerequisite type is its life-race's, not a single value).
      */
     @Test
-    void everyVampiricoTalentoIsUngatedBecauseNoVampiroRaceExists() {
+    void everyVampiricoTalentoGatesOnTheVampiroRace() {
         for (VampiricoFeat feat : VampiricoFeat.values()) {
-            assertEquals(null, feat.getFeatRequirements().requiredRace(),
-                    feat + " gates on a race, but no Vampiro race exists yet");
+            assertEquals(Vampiro.class, feat.getFeatRequirements().requiredRace(),
+                    feat + " must gate on the Vampiro race");
             assertEquals(null, feat.getFeatRequirements().requiredCreatureType(),
                     feat + " must not use CreatureType as a stand-in for the Vampiro race");
         }
     }
 
     /**
-     * A Poder Vampírico is an activated power with a Duração, so none may grant a standing bonus.
-     * Osteomancia is the clause this most nearly catches: its "+2 em suas Defesas" would map
-     * straight onto resolveDefenseBonus.
+     * A Poder Vampírico grants nothing while merely <em>held</em> — its buff only exists once
+     * {@code ActiveAbilityService#activate} enters the timed state. See {@code
+     * PoderVampiricoActivationTest} for the activated side.
      */
     @Test
-    void noPoderVampiricoGrantsAStandingBonus() throws IllegalOperationException {
-        Character vampiro = character().build();
+    void aHeldPoderVampiricoGrantsNothingUntilActivated() throws IllegalOperationException {
+        Character vampiro = vampiro().build();
         int physicalBefore = defenseService.getTotalDefense(vampiro, DefenseType.PHYSICAL);
         int magicBefore = defenseService.getTotalDefense(vampiro, DefenseType.MAGIC);
         int movementBefore = movementService.getMovementBase(vampiro);
@@ -1230,7 +1288,7 @@ class RacialFeatEffectIntegrationTest {
         assertEquals(physicalBefore, defenseService.getTotalDefense(vampiro, DefenseType.PHYSICAL));
         assertEquals(magicBefore, defenseService.getTotalDefense(vampiro, DefenseType.MAGIC));
 
-        Character celere = character().build();
+        Character celere = vampiro().build();
         celere.grantTitle(new Santo(List.of(), List.of()), TitleSlot.PRIMARY);
         acquire(celere, VampiricoFeat.CELERIDADE_VAMPIRICA);
 
@@ -1240,7 +1298,7 @@ class RacialFeatEffectIntegrationTest {
 
     @Test
     void poderVampiricoDuradouroWaitsForTwoOtherVampiricoTalentos() throws IllegalOperationException {
-        Character vampiro = character().build();
+        Character vampiro = vampiro().build();
 
         assertFalse(VampiricoFeat.PODER_VAMPIRICO_DURADOURO.isEligible(vampiro));
 

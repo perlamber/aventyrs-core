@@ -50,7 +50,9 @@ public enum FeericoFeat implements Feat {
                     .build()),
 
     /** "O Custo de Ativação do Efeito de Voo é reduzido em -1PM." */
-    // TODO: adjusts the Custo and Duração of a flight effect that cannot be activated.
+    // TODO: adjusts the Custo and Duração of a flight effect. The generic activation transaction
+    //  exists now (ActiveAbilityService#activate), but flight itself is an unmodelled distance
+    //  sub-stat with no effect to have a Custo or Duração — see Aviano's Braços Alados.
     BENCAO_DE_FLORA(
             "O Custo de Ativação do Efeito de Voo é reduzido em -1PM. A Duração de seu Efeito de "
                     + "Voo muda para 2d6+Metade do Foco Rodadas.",

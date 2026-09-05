@@ -1,14 +1,26 @@
 package org.aventyrs.core.feat;
 
+import org.aventyrs.core.character.Character;
 import org.aventyrs.core.race.Pequenino;
+import org.aventyrs.core.scene.SceneContext;
+import org.aventyrs.core.sheet.CombatantSheet;
+import org.aventyrs.core.skill.AttackSource;
+import org.aventyrs.core.skill.Skill;
+import org.aventyrs.core.skill.SkillTrait;
+import org.aventyrs.core.skill.SkillType;
 
 /**
  * Talentos Pequeninos — one about acting twice in a Turn, two about changing what kind of
  * creature the holder is, and one about striking from hiding.
  *
- * <p>No constant carries a mechanical effect. The two Linhagem Talentos are the most interesting
- * failure of the batch: each changes the holder's <b>Tipo de Personagem</b> outright ("seu tipo
- * de Personagem muda para Feérico"), which is the same shape {@code Indomito}'s Monstros em
+ * <p>Only one clause is real — {@link #SILENCIO_PRE_SURPRESA}'s Vantagem on the first Rolagem de
+ * Furtividade of each Cena, expressible through {@code Feat#resolveSkillRollBonus}'s {@code
+ * CombatantSheet} overload and the per-Cena action log ({@code
+ * CombatantSheet#getActionsThisCena()}).
+ *
+ * <p>The two Linhagem Talentos are the most interesting failure of the batch: each changes the
+ * holder's <b>Tipo de Personagem</b> outright ("seu tipo de Personagem muda para Feérico"),
+ * which is the same shape {@code Indomito}'s Monstros em
  * Potencial is blocked on — {@code Race#getCreatureType()} takes no {@code Character}, so a
  * creature type that varies with what its holder acquired cannot be expressed. Their EXP
  * discount is blocked twice over: {@code Race#getNewFeatCost} returns an {@code int} that cannot
@@ -82,10 +94,13 @@ public enum PequeninoFeat implements Feat {
      * "Você recebe Vantagem em sua primeira Rolagem de Furtividade efetuada em cada Cena.
      * Enquanto nenhum outro personagem puder te ver, suas Rolagens de Perícia tem o GD reduzido
      * em -1 nível."
+     *
+     * <p>The Vantagem half is <b>real</b>: a flat {@link Skill#ADVANTAGE_BONUS} on a Furtividade
+     * roll when the per-Cena action log ({@code CombatantSheet#getActionsThisCena()}) holds no
+     * earlier Furtividade action — the same "primeira … na Cena" check {@code SaqueRelampagoFeat}
+     * and {@code AssassinoFeat#SAQUE_RELAMPAGO} already make. {@code applyTo} only reads the log;
+     * the API records the roll afterwards, so the current roll is never counted against itself.
      */
-    // TODO: the Vantagem needs a per-Cena counter (nothing tracks a Cena boundary) and a Feat
-    //  roll-bonus hook, which does not exist — every flat roll bonus in this core is a @Modifier
-    //  method on an ability, and Talentos are outside every ModifierResolver scan.
     // TODO: the GD half is *not* the unconditional shape Feat#resolveDifficultyReduction takes:
     //  it is gated on being unseen (no visibility/detection state exists), carved out for two
     //  named Perícias, and additionally limited to once per Rodada. Contrast
@@ -98,7 +113,19 @@ public enum PequeninoFeat implements Feat {
             FeatRequirements.builder()
                     .requiredRace(Pequenino.class)
                     .requiredAwakenedTitles(1)
-                    .build());
+                    .build()) {
+        @Override
+        public int resolveSkillRollBonus(final SkillType skillType, final SceneContext sceneContext,
+                                          final SkillTrait requestedAbility, final Character character,
+                                          final AttackSource attackSource, final CombatantSheet holder) {
+            if (skillType != SkillType.FURTIVIDADE || holder == null) {
+                return 0;
+            }
+            boolean firstFurtividadeThisCena = holder.getActionsThisCena().stream()
+                    .noneMatch(action -> action.skill() == SkillType.FURTIVIDADE);
+            return firstFurtividadeThisCena ? Skill.ADVANTAGE_BONUS : 0;
+        }
+    };
 
     private final String description;
     private final FeatRequirements featRequirements;

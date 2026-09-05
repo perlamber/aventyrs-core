@@ -463,7 +463,7 @@ class ConditionTest {
     @Test
     void aWeaponWithAnUndisarmableImprovementStaysInHand() {
         AbstractWeapon bonded = weapon("Espada Acorrentada");
-        bonded.setImprovement(new Improvement() {
+        bonded.addImprovement(new Improvement() {
             @Override
             public String getName() {
                 return "Manopla de Segurança";
@@ -472,6 +472,11 @@ class ConditionTest {
             @Override
             public String getDescription() {
                 return "Não pode ser desarmado.";
+            }
+
+            @Override
+            public org.aventyrs.core.item.ItemRarity getRarity() {
+                return org.aventyrs.core.item.ItemRarity.UNCOMMON;
             }
 
             @Override

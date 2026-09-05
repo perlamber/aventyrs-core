@@ -2,9 +2,12 @@ package org.aventyrs.core.item;
 
 import org.aventyrs.core.ability.ItemActiveAbility;
 
+import lombok.Builder;
 import lombok.Getter;
 import lombok.experimental.SuperBuilder;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -39,14 +42,41 @@ public class AbstractItem implements Item {
     private int castingBonus;
     private ItemFavor favor;
     private Masterpiece masterpiece;
-    private Improvement improvement;
+    @Builder.Default
+    private List<Improvement> improvements = new ArrayList<>();
     private PowerStone powerStone;
-    private boolean regalia;
+    private RegaliaGrade regaliaGrade;
     private ItemActiveAbility activeAbility;
+
+    /**
+     * The {@code Character#getId()} of whoever forged this copy, or {@code null} for one whose
+     * maker is unknown (a template-forged bridge copy, a GM drop, loot). Stamped by {@code
+     * org.aventyrs.core.character.services.EquipmentCraftingService#forge}; the "quem produziu"
+     * half of {@code ProfissaoCompetencyAbility#FORJA_VULCANA} and {@code
+     * ResourcesAdvantage#BARGANHISTA} reads it.
+     */
+    private UUID producedByCharacterId;
+
+    /**
+     * Whether this copy was handed over by Aventyr itself rather than made by anyone — the GM
+     * path, {@link ItemForgery#donatedByAventyr(ItemSpecification)}. Distinct from a {@code null}
+     * {@link #producedByCharacterId}, which only says the maker is unknown (loot, a bridge copy):
+     * this says there was no making and no cost, and it is what tells a Regalia a party was given
+     * apart from one a crafter earned.
+     */
+    private boolean donatedByAventyr;
+
     private UUID improvementEffectSceneId;
     private int improvementEffectLastActiveRound;
 
-    public static AbstractItem fromTemplate(final ItemTemplate template) {
+    /**
+     * A builder pre-filled with template's catalog columns — the shared half of {@link
+     * #fromTemplate} and {@code
+     * org.aventyrs.core.character.services.EquipmentCraftingService#forge} (which overrides
+     * {@code hardness} and sets {@code producedByCharacterId} before building). Per-copy state
+     * (damage, Obra-Prima, Aprimoramentos, Pedra do Poder) is deliberately not carried over.
+     */
+    public static AbstractItemBuilder<?, ?> builderFromTemplate(final ItemTemplate template) {
         return AbstractItem.builder()
                 .template(template)
                 .name(template.getName())
@@ -59,8 +89,11 @@ public class AbstractItem implements Item {
                 .magicDefenseBonus(template.getMagicDefenseBonus())
                 .hardness(template.getHardness())
                 .castingBonus(template.getCastingBonus())
-                .favor(template.getFavor())
-                .build();
+                .favor(template.getFavor());
+    }
+
+    public static AbstractItem fromTemplate(final ItemTemplate template) {
+        return builderFromTemplate(template).build();
     }
 
     /**
@@ -88,7 +121,18 @@ public class AbstractItem implements Item {
         this.masterpiece = masterpiece;
     }
 
-    public void setImprovement(final Improvement improvement) {
+    /**
+     * Fits one more Aprimoramento to this copy. Keeps only the <b>type-compatibility</b> guards
+     * the old single-value {@code setImprovement} carried (right wrapper class, defensive item,
+     * ENCAIXE/CAMUFLADA/CAMADA_DE_REFORCO shape) — the <b>rules gates</b> (item must be an
+     * Obra-Prima, the {@code getWeightClass().getMaximumImprovements()} slot cap, no duplicate
+     * definition) live on {@code
+     * org.aventyrs.core.character.services.EquipmentCraftingService#installImprovement}, the
+     * validated player entry point, per CLAUDE.md's "Caps and prerequisites are enforced only on
+     * the service entry point". The {@code @SuperBuilder}'s {@code improvements(...)} bypasses
+     * even these.
+     */
+    public void addImprovement(final Improvement improvement) {
         if (improvement instanceof DefensiveImprovement) {
             throw new IllegalArgumentException("Use ItemImprovement to fit a defensive improvement.");
         }
@@ -109,35 +153,45 @@ public class AbstractItem implements Item {
                 throw new IllegalArgumentException("Camada de Reforço uses the shield variant only on shields.");
             }
         }
-        this.improvement = improvement;
+        if (improvements == null) {
+            improvements = new ArrayList<>();
+        }
+        improvements.add(improvement);
     }
 
     /**
      * Sockets a Pedra do Poder into this item. Requires the Encaixe Aprimoramento
      * ({@link DefensiveImprovement#ENCAIXE}) already fitted — "permite encaixe de Pedra do
      * Poder" — so an armor or shield only, until an offensive Encaixe exists. Same
-     * guard-on-the-setter style as {@link #setImprovement}/{@link #setMasterpiece}; the
+     * guard-on-the-setter style as {@link #addImprovement}/{@link #setMasterpiece}; the
      * {@code @SuperBuilder}'s {@code powerStone(...)} bypasses it, per CLAUDE.md's
      * "Builder-bypassable invariants".
      */
     public void setPowerStone(final PowerStone powerStone) {
-        if (powerStone != null && !(improvement instanceof ItemImprovement fitted
-                && fitted.getDefinition() == DefensiveImprovement.ENCAIXE)) {
+        boolean encaixeFitted = improvements != null && improvements.stream()
+                .anyMatch(fitted -> fitted instanceof ItemImprovement itemImprovement
+                        && itemImprovement.getDefinition() == DefensiveImprovement.ENCAIXE);
+        if (powerStone != null && !encaixeFitted) {
             throw new IllegalArgumentException(
                     "A Pedra do Poder requires the Encaixe Aprimoramento fitted to its host item.");
         }
         this.powerStone = powerStone;
     }
 
-    public void setRegalia(final boolean regalia) {
-        if (!regalia && activeAbility != null) {
+    /**
+     * Sets (or clears, with {@code null}) this copy's Regalia grade. A copy that carries an
+     * {@link ItemActiveAbility} cannot be demoted to a non-Regalia — the same guard the old
+     * boolean marker enforced. The {@code @SuperBuilder}'s {@code regaliaGrade(...)} bypasses it.
+     */
+    public void setRegaliaGrade(final RegaliaGrade regaliaGrade) {
+        if (regaliaGrade == null && activeAbility != null) {
             throw new IllegalStateException("An item with an active ability must be a Regalia.");
         }
-        this.regalia = regalia;
+        this.regaliaGrade = regaliaGrade;
     }
 
     public void setActiveAbility(final ItemActiveAbility activeAbility) {
-        if (activeAbility != null && !regalia) {
+        if (activeAbility != null && regaliaGrade == null) {
             throw new IllegalStateException("Only a Regalia may have an active ability.");
         }
         this.activeAbility = activeAbility;

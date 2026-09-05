@@ -1,6 +1,6 @@
 ---
 name: ego-point-pools
-description: This skill should be used for any work on the two spendable Ego point pools per `EgoDomain` on a `CombatantSheet` — `EgoPointPool` (the four equations: permanentMax/permanentRemaining/temporaryCeiling/temporaryRemaining), `CombatantSheet#spendEgoPoints`/`getAvailableEgoPoints`, `EgoPointsService#useEgoPointsForEffect`/`applySessionRecovery`, `EgoPointSpend`/`EgoPointType`, `PendingEgoRecovery`, `TemporaryEgoPenalty`, `grantTemporaryEgoPointBonus`, or the `EgoAdvantage` hooks `resolveEgoSpendRecovery`/`resolveEgoSpendBlessings`/`resolveExtraSessionEgoRecovery`/`resolvePermanentEgoGain`. Also use it when asked why spending a permanent point "hurts twice", why there's a `spent` counter instead of a held balance, why `AUTOCONTROLE`/`RECURSOS`/`SORTE` aren't `ModifierType`s, or how `Primor`'s drain differs from a deliberate use.
+description: This skill should be used for any work on the two spendable Ego point pools per `EgoDomain` on a `CombatantSheet` — `EgoPointPool` (the four equations: permanentMax/permanentRemaining/temporaryCeiling/temporaryRemaining), `CombatantSheet#spendEgoPoints`/`getAvailableEgoPoints`, `EgoPointsService#useEgoPointsForEffect`/`applySessionRecovery`, `EgoPointSpend`/`EgoPointType`, `PendingEgoRecovery`, `TemporaryEgoPenalty`, `grantTemporaryEgoPointBonus`/`grantTemporaryEgoPoints`, `scheduleTemporaryEgoPointGrant`/`DelayedEgoGrant` (points owed on the next Rodada), `CombatantSheet#consumeOncePerSession`/`startNewSession` (the once-per-game-session guard, a transient per-sheet marker set), `AttributeAbility#resolveEgoDepletionGrant` (a clause reacting to an Ego being reduced to zero), or the `EgoAdvantage` hooks `resolveEgoSpendRecovery`/`resolveEgoSpendBlessings`/`resolveExtraSessionEgoRecovery`/`resolvePermanentEgoGain`. Also use it when asked why spending a permanent point "hurts twice", why there's a `spent` counter instead of a held balance, why `AUTOCONTROLE`/`RECURSOS`/`SORTE` aren't `ModifierType`s, or how `Primor`'s drain differs from a deliberate use, why a granted temporary point takes two steps, or what "a primeira vez em cada sessão de jogo" means here.
 ---
 
 # Ego points are two pools per domain — `EgoPointPool`, `spendEgoPoints`
@@ -37,8 +37,9 @@ special-cases that — it falls out of the arithmetic. `EgoPointFeatureTest` pin
   foe or an absent player — no `instanceof CharacterSheet` filter, no "everyone in the Scene"
   default. Pair it with `Scene#getAllParticipants()` (active ∪ pending, disjoint by construction)
   to build the roster. It is **deliberately not idempotent**: a second press recovers again,
-  bounded only by each ceiling, and guarding that belongs to the consumer, since this core has no
-  session state to hang a guard on.
+  bounded only by each ceiling, and guarding that belongs to the consumer: the only session state
+  this core has is the per-sheet `consumeOncePerSession` set below, which is a clause-level guard,
+  not a record that a session ended.
 - **Rest does not refill the temporary pool.** `RestService#applyRest` resolves only
   `PendingEgoRecovery` — points some effect *specifically promised back* (today: `Primor`'s).
   Don't wire session recovery into it.
@@ -108,6 +109,40 @@ source** — this is what `CharismaAbility.DESTINO_FAVORAVEL`'s "um ponto tempor
 cumulativo" actually is. Repeat triggers from that same source don't widen it twice; an unrelated
 source's grant still adds on top.
 
+**Handing over a genuinely spendable point is `grantTemporaryEgoPoints(domain, source, amount)`,
+and it is two steps.** It widens the ceiling *and then* recovers under it. Neither half works
+alone on an emptied pool: with everything spent the ceiling is 0, so a bare
+`recoverTemporaryEgoPoints` restores nothing, while a bare `grantTemporaryEgoPointBonus` is capped
+per source and so grants nothing the second time that same source fires. Use it whenever rules
+text says "você receberá N pontos temporários neste Ego"; use `recoverTemporaryEgoPoints` only for
+"get back what you spent".
+
+**A grant owed on the *next* Rodada is `scheduleTemporaryEgoPointGrant(domain, source, amount)`**,
+carried as a `DelayedEgoGrant` and delivered by `startNewRound()` — the real Rodada boundary
+(`Scene#next()` calls it). Deliberately *not* a `TemporaryEffect`: those tick at Turn end via
+`finishTurn`, so one registered mid-Rodada would fire inside the very Rodada it must skip. With
+nothing ever calling `startNewRound`, the grant simply waits — the same fallback
+`consumeMovementThisRound` documents.
+
+**"A primeira vez em cada sessão de jogo" is `CombatantSheet#consumeOncePerSession(marker)`** —
+`true` only the first claim, backed by a `transient` per-sheet set. **A session is the sheet
+object's lifetime in the running client**: the client keeps the sheet open for as long as the
+table plays, and the state is deliberately excluded from anything persisted, so a reloaded sheet
+starts a fresh session. `startNewSession()` resets it for a process that outlives one sitting;
+`hasConsumedOncePerSession` is the non-consuming reader. This is **independent of**
+`applySessionRecovery`'s GM button above — that call may never be made, and this guard must hold
+regardless.
+
+**Ego depletion is a trigger, and it fires on a drain too.** `AttributeAbility
+#resolveEgoDepletionGrant(domain)` says how many temporary points a held ability owes on the
+following Rodada the first time in a session that domain is reduced to zero
+(`GnoseAbility.ESTABILIDADE_EMOCIONAL`, +1 Autocontrole). It resolves inside
+`AbstractCombatantSheet#spendEgoPoints`, the one funnel both a deliberate use and `Primor`'s drain
+pass through — because "for reduzido a zero" doesn't care which emptied the pool, deliberately
+unlike `useEgoPointsForEffect`, which exists precisely to keep a drain from paying a Vantagem. A
+pool emptied some other way (a `TemporaryEgoPenalty` landing) does **not** trigger it: nothing
+does that today, and `applyEffect` has no equivalent hook.
+
 ## Reference files to read first
 
 - `src/main/java/org/aventyrs/core/sheet/EgoPointPool.java` — the four equations.
@@ -116,5 +151,7 @@ source's grant still adds on top.
 - `src/main/java/org/aventyrs/core/character/services/EgoPointsService.java` /
   `EgoPointsServiceImpl.java` — `useEgoPointsForEffect`, `applySessionRecovery`.
 - `src/main/java/org/aventyrs/core/sheet/EgoPointSpend.java` / `EgoPointType.java` /
-  `TemporaryEgoPenalty.java` / `PendingEgoRecovery.java`.
+  `TemporaryEgoPenalty.java` / `PendingEgoRecovery.java` / `DelayedEgoGrant.java`.
 - `src/test/java/org/aventyrs/core/**/EgoPointFeatureTest.java` — pins both spend orderings.
+- `src/test/java/org/aventyrs/core/sheet/EstabilidadeEmocionalFeatureTest.java` — the
+  depletion trigger, the once-per-session guard and the next-Rodada delivery, end to end.

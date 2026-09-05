@@ -1,20 +1,30 @@
 package org.aventyrs.core.feat;
 
+import java.util.List;
+
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.DefenseType;
+import org.aventyrs.core.item.NaturalWeapon;
 import org.aventyrs.core.race.NascidoDoDragao;
+import org.aventyrs.core.scene.SceneContext;
+import org.aventyrs.core.skill.AttackSource;
+import org.aventyrs.core.skill.SkillType;
 
 /**
  * Talentos Dracônicos — the Nascido do Dragão's own tree, and the ruleset's route to the
  * physical inheritance of a true Dragon: natural weapons, wings, a breath weapon, and finally a
  * full draconic form.
  *
- * <p>Only one clause is real — {@link #ASAS_DE_DRAGAO}'s +2 Defesas, which is unconditional
- * because the wings are always there. Everything else in the tree hangs off one of two missing
- * systems, both already recorded on {@code NascidoDoDragao} itself: <b>no Arma Natural</b> (no
- * weapon catalog is authored, and nothing marks a weapon as natural) and <b>no flight or form
- * state</b>.
+ * <p>The Arma Natural half of the tree is now real: {@link #ARMAMENTO_DRACONICO} (through {@link
+ * ArmamentoDraconicoFeat}) and {@link #SOPRO_DE_DRAGAO} grant entries of the {@link NaturalWeapon}
+ * catalog, surfaced by {@code Character#getNaturalWeapons()}, and {@link #SOPRO_DE_DRAGAO}'s "+1
+ * Margem Crítica Menor" applies for real, scoped to a Sopro attack. What is still blocked hangs
+ * off <b>no flight or form state</b> (recorded on {@code NascidoDoDragao} itself), the missing
+ * <b>elemental damage type</b> and this core rolling <b>no dice</b> (the "+1d6 … para cada
+ * Título Aventyr Desperto" riders), and the missing <b>equipment restriction</b> mechanism
+ * ({@link #ASAS_DE_DRAGAO}'s Capa clause). {@link #ASAS_DE_DRAGAO}'s +2 Defesas is unconditional
+ * because the wings are always there, and real.
  *
  * <p><b>"Recém-criados" is not modelled.</b> Two constants restrict themselves to a Nascido do
  * Dragão "recém-criado", i.e. acquirable only at character creation. Nothing anywhere tracks
@@ -27,12 +37,13 @@ public enum DraconicoFeat implements Feat {
     /**
      * "Assim como os Dragões você possui um repertório de Armas Naturais, escolha duas armas
      * entre: Chifres Poderosos, Cauda Chicote, Garras Afiadas e Presas Longas."
+     *
+     * <p><b>Real.</b> The pick-two-of-four choice is recorded by {@link ArmamentoDraconicoFeat}
+     * (grant that in {@code Character#feats}, not this bare constant), which returns the two
+     * chosen {@link NaturalWeapon}s from {@code Feat#getGrantedNaturalWeapons}. Their Dano Base
+     * and Perícia come from the catalog; each weapon's own authored Favor / Efeito Crítico is
+     * still unmodeled — see {@link NaturalWeapon}.
      */
-    // TODO: no weapon catalog is authored (only ArmorItem), and nothing marks a weapon as an
-    //  Arma Natural — the two-markers-missing gap CLAUDE.md's "Classifying an attack as
-    //  Desarmado/Arma Natural" row names. The pick-two-of-four choice could be recorded now (a
-    //  choice-carrying AbstractFeat subclass — see FocoEmPericiaFeat), but there is no Arma
-    //  Natural entity for the pick to point at.
     ARMAMENTO_DRACONICO(
             "Assim como os Dragões você possui um repertório de Armas Naturais, escolha duas "
                     + "armas entre: Chifres Poderosos, Cauda Chicote, Garras Afiadas e Presas "
@@ -77,26 +88,42 @@ public enum DraconicoFeat implements Feat {
      * "Você tem a Arma Natural: Arma de Sopro e é capaz de soprar energia Elemental como um
      * Dragão Verdadeiro. A Margem Crítica Menor aumenta em +1 e o dano do Sopro aumenta em +1d6
      * para cada Título Aventyr Desperto."
+     *
+     * <p><b>Two of three parts are real.</b> It grants {@link NaturalWeapon#ARMA_DE_SOPRO}
+     * (through {@code Feat#getGrantedNaturalWeapons}), and its "+1 Margem Crítica Menor" applies
+     * for real — {@code resolveCriticalMarginIncrease}'s {@link AttackSource} overload scopes it
+     * to an attack made <em>with</em> the Arma de Sopro, which CLAUDE.md lists as trackable
+     * ("a scope of what the attack was made with").
      */
-    // TODO: no Arma Natural concept, so there is no Sopro to roll — same gap as
-    //  ARMAMENTO_DRACONICO. Its element would be NascidoDoDragao#getElementalLineage(), which is
-    //  real data, but nothing consumes an elemental damage type either.
-    // TODO: Feat#resolveCriticalMarginIncrease is real (see PeritoFeat#CONTROLE_DA_SITUACAO), but
-    //  the bonus would have to be scoped to this one weapon's rolls — the "this one delivered
-    //  attack" scoping gap — and the Sopro it scopes to does not exist.
+    // TODO: "o dano do Sopro aumenta em +1d6 para cada Título Aventyr Desperto" is still blocked
+    //  — this core rolls no dice, and the Sopro's Elemental damage type has no representation
+    //  (DamageType has no elemental breakdown; its element would be
+    //  NascidoDoDragao#getElementalLineage(), which is real data with no consumer).
     SOPRO_DE_DRAGAO(
             "Você tem a Arma Natural: Arma de Sopro e é capaz de soprar energia Elemental como um "
                     + "Dragão Verdadeiro. A Margem Crítica Menor aumenta em +1 e o dano do Sopro "
                     + "aumenta em +1d6 para cada Título Aventyr Desperto.",
             FeatRequirements.builder()
                     .requiredRace(NascidoDoDragao.class)
-                    .build()),
+                    .build()) {
+        @Override
+        public List<NaturalWeapon> getGrantedNaturalWeapons(final Character character) {
+            return List.of(NaturalWeapon.ARMA_DE_SOPRO);
+        }
+
+        @Override
+        public int resolveCriticalMarginIncrease(final SkillType skillType, final SceneContext sceneContext,
+                                                  final Character character, final AttackSource attackSource) {
+            return attackSource == NaturalWeapon.ARMA_DE_SOPRO ? SOPRO_CRITICAL_MARGIN_INCREASE : 0;
+        }
+    },
 
     /**
      * "Após usar seu Sopro de Dragão você emana uma aura de energia que te acompanha por 2
      * Rodadas… personagens adjacentes sofrem 2 pontos de Dano Físico Elemental."
      */
-    // TODO: triggered by SOPRO_DE_DRAGAO, which does not exist yet.
+    // TODO: triggered by "usar seu Sopro de Dragão" — SOPRO_DE_DRAGAO grants the Arma de Sopro
+    //  now, but nothing models the act of attacking with it as an event this can fire from.
     // TODO: recurring damage to everyone adjacent at the start of each of the holder's Turns is
     //  an outward, area-shaped effect nothing models: DamageService only ever computes damage
     //  *to* one target *from* an attacker, CharacterSheet#startTurn is still a no-op with no
@@ -138,6 +165,7 @@ public enum DraconicoFeat implements Feat {
                     .build());
 
     private static final int ASAS_DEFENSE_BONUS = 2;
+    private static final int SOPRO_CRITICAL_MARGIN_INCREASE = 1;
 
     private final String description;
     private final FeatRequirements featRequirements;

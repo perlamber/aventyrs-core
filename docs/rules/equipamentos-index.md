@@ -114,9 +114,11 @@ skill both describe the *pre-redesign* model (a catalog enum implementing `Item`
 Improvement/Masterpiece layer) and are **stale**. The current shape:
 
 - **`Item`** is now the *owned copy* contract (per-copy `damageTaken`, fitted `Masterpiece` /
-  `Improvement`, `isRegalia`, `ItemActiveAbility`); **`ItemTemplate extends Item`** is the
-  catalog blueprint, with `forge()` bridging the two. `AbstractItem` is the builder-built copy;
-  `AbstractWeapon extends AbstractItem implements Weapon` adds `damageBase` + `skillType`.
+  `Improvement`, a **Regalia** marker `getRegaliaGrade()` → `RegaliaGrade` [`isRegalia()` iff set
+  — a per-copy property, **never an `ItemRarity`**], `ItemActiveAbility`); **`ItemTemplate extends
+  Item`** is the catalog blueprint, with `forge()` bridging the two. `AbstractItem` is the
+  builder-built copy; `AbstractWeapon extends AbstractItem implements Weapon` adds `damageBase` +
+  `skillType`.
 - **`Improvement` / `Masterpiece`** interfaces carry rich hooks (`getEffectiveDefenseBonus`,
   `resolveBonus`, `resolveDamageBaseIncrease`, `resolveDamageReduction`,
   `resolveDurationIncreaseInRounds`, `onFinalDamageTaken`, weight/hardness deltas).
@@ -197,7 +199,17 @@ No wiring needed — these all scan `character.getEquipment()`:
 - **Dureza / destruction** — `Item#applyDamage` spends `damageTaken`; at 0 PV every column above
   reads absent. `DamageServiceImpl` calls `notifyFinalDamageTaken` on each equipped item.
 - **Regalia active abilities** — `ItemActiveAbility` + `AbstractItem#setActiveAbility`
-  (guarded: only a Regalia may hold one).
+  (guarded: only a Regalia — a copy with a `RegaliaGrade` — may hold one).
+- **Regalia crafting (Talentos de Artífice)** — `EquipmentCraftingService#forgeRegalia(crafter,
+  trade, base, RegaliaGrade, RegaliaDonation)`. `RegaliaGrade` (MENOR/SUPERIOR/DIVINA) carries the
+  GD (Inimaginável / Milagre), the days (90 / 145 / 180), whether an Acerto Crítico is mandatory
+  (Divina) and whether an external essence donor is required (Divina). The forge gates on the
+  trade Especialização, the matching `ArtificeFeat` (`ArtificeFeat.requiredToForge`), a willing
+  `RegaliaDonation` and — for Divina — a `CreatureType.DRAGAO`/`ELEMENTAL`/`ABISSAL`/`CELESTIAL`
+  donor; on success it marks the copy, stamps `producedByCharacterId` and calls
+  `Character#recordRegaliaCrafted`. Not modeled (GM's call): the Centelha *loss*, the *Forja do
+  Olho de Deus* location, the mandatory-Crítico (reported via
+  `regaliaCraftingRequiresCriticalResult`), and the PE cost.
 
 Still no consumer: **Preço** (no PE economy) and the **Conjuração** column (no item-granted hook
 on either `SpellCastingService` roll) — real, exact data per the "can't apply it yet doesn't
@@ -235,6 +247,31 @@ typed bonus:
 - **Weapon-as-Arremesso dual mode** — "Pode ser usado como Arma de Arremesso, Dano Base muda
   para 1d6+1". One `Weapon` has one `SkillType` and one `DamageBase`; `getSkillType()`'s own
   javadoc already notes a thrown-lança can't say so.
+
+## Fabricação e Reparo — the player-side crafting pipeline
+
+Rules text: [`fabricacao-e-reparo.txt`](fabricacao-e-reparo.txt) (author-supplied; **not** in the
+Equipamentos docx). Modeled by `org.aventyrs.core.character.services.EquipmentCraftingService`
+(+ `…Impl`), caller-driven — it prices and times the work and resolves the GD, but does not roll
+the Perícia (this core never rolls). `forge` / `repair` / `installImprovement` mutate only after
+the caller has determined the roll succeeded.
+
+- **Which Perícia** — fabrication is a **Profissão** (trade Especialização) roll, not the
+  Conhecimentos the text names: the trades live on `ProfissaoSpecialization` and `ArtificeFeat` /
+  `GoblinFeat` already call crafting a Profissão roll. Reparo keeps both — a Profissão (trade)
+  roll for the labour plus the Conhecimentos roll whose GD `RepairAssessment` carries.
+- **Rarity → GD** lives on `ItemRarity` (`getFabricationDifficulty`, `getImprovementInstallDifficulty`,
+  `getRepairDifficulty`, `getMasterpieceRepairDifficulty`, `getMinimumMasterpieceGraduation`);
+  `NATURAL` throws.
+- **Multiple Aprimoramentos per copy** — `AbstractItem` now holds a `List<Improvement>`
+  (`addImprovement`), capped 1 / 2 / 3 by `ItemWeightClass#getMaximumImprovements()` and gated on
+  the copy being an Obra-Prima, both enforced in `installImprovement`. `Item#getImprovement()` is
+  a deprecated first-or-null shim; every enhancement-aggregation default on `Item` sums the list,
+  so no consuming service changed.
+- **Still missing** — no PE economy (cost is reported, not spent — the `ResourcesAdvantage#BARGANHISTA`
+  gap), no Aprimoramento Preço column (so install cost/time are unavailable), the "estende a
+  Magias e Habilidades" clause of `REPARO_MELHORADO` (no Dureza on either), and the
+  `FORJA_VULCANA` benefits (Resistência a Críticos / Margem Crítica Maior / item-scoped choices).
 
 ## When authoring starts
 

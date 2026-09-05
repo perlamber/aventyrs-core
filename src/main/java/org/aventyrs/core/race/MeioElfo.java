@@ -74,8 +74,11 @@ import static org.aventyrs.core.util.TranslatableMessages.INVALID_PARENT_RACE;
  *   grant a fixed {@code AttributeAbility} outright the way {@link #getFixedAttributeBonuses()}
  *   grants Atributo points (same "no hook for granting X at creation" shape as every other
  *   racial-grant gap).</li>
- *   <li><b>Provar Seu Valor</b> (+2 Iniciativa, 1x por sessão, dura 1 Cena) — no "game session"
- *   concept exists anywhere in this core.</li>
+ *   <li><b>Provar Seu Valor</b> (+2 Iniciativa, 1x por sessão, dura 1 Cena) — the
+ *   once-per-session half is expressible now ({@code CombatantSheet#consumeOncePerSession},
+ *   whose session is the sheet's own lifetime), but the clause still has no <em>trigger</em>
+ *   to hang on (a Race grants no {@code Blessing} on any event) and no Cena-scoped duration —
+ *   a {@code TemporaryBonus} counts Rodadas, and nothing signals a Cena ending.</li>
  *   <li><b>Conexão com o Mana</b> (Talentos Metamágicos custam 2.5 EXP) — identical trait/name
  *   to {@code Elfo}'s own Conexão com o Mana; same int-vs-fractional mismatch already flagged
  *   there ({@link #getNewFeatCost(org.aventyrs.core.feat.FeatCategory)} returns a plain {@code

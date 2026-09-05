@@ -14,9 +14,10 @@ import org.aventyrs.core.skill.SkillType;
 @AllArgsConstructor
 public enum ProfissaoExcellency implements SkillExcellency {
 
-    // TODO: -1PE to Equipamento creation/purchase costs, never below 1PE. Item#getPrice() is a
-    // real PE figure per catalog entry, so what is missing is only the economy around it: no PE
-    // budget to spend from, and no purchase or production entry point to apply a discount at.
+    // TODO: -1PE to Equipamento creation/purchase costs, never below 1PE. Production now has an
+    // entry point (EquipmentCraftingService#getFabricationCost, a real PE figure), so the gap is
+    // narrower: no PE budget to spend that cost from, and no purchase flow at all — and no
+    // SkillExcellency hook feeds a discount into the fabrication cost either.
     FOCADO(ExcellencyTier.FOCADO, "Custos de criação e compras de Equipamentos reduzido em " +
             "-1PE (mínimo 1PE)."),
 

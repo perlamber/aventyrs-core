@@ -97,11 +97,11 @@ class PowerStoneTest {
     @Test
     void vantagemAtletismoEfeitoBaseReachesTheRoll() {
         AbstractItem bare = AbstractItem.builder().name("Peitoral").category(ItemCategory.ARMOR).build();
-        bare.setImprovement(ItemImprovement.of(DefensiveImprovement.ENCAIXE));
+        bare.addImprovement(ItemImprovement.of(DefensiveImprovement.ENCAIXE));
         int baseline = atletismoBonus(characterWith(bare));
 
         AbstractItem socketed = AbstractItem.builder().name("Peitoral").category(ItemCategory.ARMOR).build();
-        socketed.setImprovement(ItemImprovement.of(DefensiveImprovement.ENCAIXE));
+        socketed.addImprovement(ItemImprovement.of(DefensiveImprovement.ENCAIXE));
         socketed.setPowerStone(PowerStone.of(PowerStoneType.RUTILO_SUBTERRANEO, PowerStoneQuality.RELIQUIA));
 
         assertEquals(baseline + Skill.ADVANTAGE_BONUS, atletismoBonus(characterWith(socketed)));
@@ -131,7 +131,7 @@ class PowerStoneTest {
     void aDestroyedHostStopsGrantingItsStone() {
         AbstractItem armor = AbstractItem.builder()
                 .name("Peitoral Encaixado").category(ItemCategory.ARMOR).hardness(1).build();
-        armor.setImprovement(ItemImprovement.of(DefensiveImprovement.ENCAIXE));
+        armor.addImprovement(ItemImprovement.of(DefensiveImprovement.ENCAIXE));
         armor.setPowerStone(PowerStone.of(PowerStoneType.RUTILO_SUBTERRANEO, PowerStoneQuality.RELIQUIA));
         Character character = characterWith(armor);
 
@@ -151,7 +151,7 @@ class PowerStoneTest {
         assertThrows(IllegalArgumentException.class, () -> bare.setPowerStone(
                 PowerStone.of(PowerStoneType.SOMBRA_SOLIDIFICADA, PowerStoneQuality.JOIA)));
 
-        bare.setImprovement(ItemImprovement.of(DefensiveImprovement.ENCAIXE));
+        bare.addImprovement(ItemImprovement.of(DefensiveImprovement.ENCAIXE));
         bare.setPowerStone(PowerStone.of(PowerStoneType.SOMBRA_SOLIDIFICADA, PowerStoneQuality.JOIA));
         assertEquals(PowerStoneType.SOMBRA_SOLIDIFICADA, bare.getPowerStone().getType());
     }
@@ -198,7 +198,7 @@ class PowerStoneTest {
     private AbstractItem socketed(final PowerStone stone) {
         AbstractItem armor = AbstractItem.builder()
                 .name("Peitoral Encaixado").category(ItemCategory.ARMOR).build();
-        armor.setImprovement(ItemImprovement.of(DefensiveImprovement.ENCAIXE));
+        armor.addImprovement(ItemImprovement.of(DefensiveImprovement.ENCAIXE));
         armor.setPowerStone(stone);
         return armor;
     }

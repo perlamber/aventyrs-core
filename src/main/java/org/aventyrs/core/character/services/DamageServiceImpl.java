@@ -173,20 +173,28 @@ public class DamageServiceImpl implements DamageService {
 
     @Override
     public int calculateFinalDamage(final Character character, final int rawDamage, final boolean ignoreDamageReduction) {
-        return computeFinalDamage(character, null, null, null, null, null, rawDamage, ignoreDamageReduction);
+        return computeFinalDamage(character, null, null, null, null, null, rawDamage, ignoreDamageReduction, false);
     }
 
     @Override
     public int calculateFinalDamage(final Character character, final SceneContext sceneContext, final int rawDamage, final boolean ignoreDamageReduction) {
-        return computeFinalDamage(character, null, sceneContext, null, null, null, rawDamage, ignoreDamageReduction);
+        return computeFinalDamage(character, null, sceneContext, null, null, null, rawDamage, ignoreDamageReduction, false);
     }
 
     @Override
     public int calculateFinalDamage(final CombatantSheet target, final SceneContext sceneContext,
                                      final DamageType damageType, final CombatantSheet source,
                                      final int rawDamage, final boolean ignoreDamageReduction) {
+        return calculateFinalDamage(target, sceneContext, damageType, source, rawDamage, ignoreDamageReduction, false);
+    }
+
+    @Override
+    public int calculateFinalDamage(final CombatantSheet target, final SceneContext sceneContext,
+                                     final DamageType damageType, final CombatantSheet source,
+                                     final int rawDamage, final boolean ignoreDamageReduction,
+                                     final boolean halfDamage) {
         return computeFinalDamage(target.getCharacter(), target, sceneContext, damageType, null, source,
-                rawDamage, ignoreDamageReduction);
+                rawDamage, ignoreDamageReduction, halfDamage);
     }
 
     @Override
@@ -194,14 +202,22 @@ public class DamageServiceImpl implements DamageService {
                                     final DamageDescriptor damageDescriptor, final CombatantSheet source,
                                     final int rawDamage, final boolean ignoreDamageReduction) {
         return computeFinalDamage(target.getCharacter(), target, sceneContext, damageDescriptor.damageType(),
-                damageDescriptor, source, rawDamage, ignoreDamageReduction);
+                damageDescriptor, source, rawDamage, ignoreDamageReduction, false);
     }
 
+    /**
+     * attackHalvesDamage is the attack's <em>own</em> Meio-Dano — see {@link
+     * DamageService#calculateFinalDamage(CombatantSheet, SceneContext, DamageType, CombatantSheet,
+     * int, boolean, boolean)}. It is OR'd into the two sources the target carries, never counted
+     * separately, so the halving still happens exactly once and still happens last.
+     */
     private int computeFinalDamage(final Character character, final CombatantSheet target, final SceneContext sceneContext,
                                     final DamageType damageType, final DamageDescriptor damageDescriptor,
                                     final CombatantSheet source,
-                                    final int rawDamage, final boolean ignoreDamageReduction) {
-        final boolean halfDamage = sumAcrossSources(character, ModifierType.HALF_DAMAGE) > 0
+                                    final int rawDamage, final boolean ignoreDamageReduction,
+                                    final boolean attackHalvesDamage) {
+        final boolean halfDamage = attackHalvesDamage
+                || sumAcrossSources(character, ModifierType.HALF_DAMAGE) > 0
                 || character.getEgoAdvantages().values().stream()
                         .anyMatch(advantage -> advantage.resolveHalfDamage(sceneContext));
         int reduction = target != null
@@ -247,7 +263,7 @@ public class DamageServiceImpl implements DamageService {
                             final DamageType damageType, final DamageDescriptor damageDescriptor,
                             final CombatantSheet source, final int rawDamage, final boolean ignoreDamageReduction) {
         int finalDamage = computeFinalDamage(characterSheet.getCharacter(), characterSheet, sceneContext,
-                damageType, damageDescriptor, source, rawDamage, ignoreDamageReduction);
+                damageType, damageDescriptor, source, rawDamage, ignoreDamageReduction, false);
         int totalDamageTaken = characterSheet.applyDamage(finalDamage);
         if (finalDamage > 0) {
             characterSheet.getCharacter().getEquipment().forEach(

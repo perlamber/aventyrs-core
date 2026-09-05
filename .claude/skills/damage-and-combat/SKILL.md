@@ -1,6 +1,6 @@
 ---
 name: damage-and-combat
-description: This skill should be used for any work on combat resolution, damage, or the sheet type hierarchy — `AttackDelivery`/`AttackReceiver` (the two mirrored entry points), `DamageBase`/`DamageBaseService` (the odometer scale, `getDamageBase(Character, Weapon|SkillType)`), `AttackRangeService`/`Weapon#getRange`/`Range#increasedBy`/`Feat#resolveAttackRangeIncrease` (an attack's maximum distance from the Weapon or Spell, widened by Talentos — `ArtilhariaFeat#TIRO_LONGO`), `DamageService` (RD/RA/half-damage mitigation order, `calculateFinalDamage`, `applyDamage`), `HitPointsService#getStatus`/`getMaxHitPoints` and `CharacterStatus` being derived-not-stored, ally-facing RA scans (`resolveAllyAbsoluteDamageReduction`, `sumAllyGrantedAbsoluteDamageReduction`), `SceneContext`-conditioned RA/half-damage hooks, `CombatantSheet` vs `CharacterSheet` vs `MonsterSheet`, `lifeMultiplier`/`ModifierType.HIT_POINTS`, or `CriticalEffect`. Also use it when asked why a `DamageBase` scale-up isn't a `DamageBonus`, why monsters can't level up, why `CharacterStatus` isn't stored, why an attack's range isn't a character stat, or why RA is scanned rather than granted.
+description: This skill should be used for any work on combat resolution, damage, or the sheet type hierarchy — `AttackDelivery`/`AttackReceiver` (the two mirrored entry points), `DamageBase`/`DamageBaseService` (the odometer scale, `getDamageBase(Character, Weapon|SkillType)`), `AttackRangeService`/`Weapon#getRange`/`Range#increasedBy`/`Feat#resolveAttackRangeIncrease` (an attack's maximum distance from the Weapon or Spell, widened by Talentos — `ArtilhariaFeat#TIRO_LONGO`), `DamageService` (RD/RA/half-damage mitigation order, `calculateFinalDamage`, `applyDamage`), multi-target attacks (`AttackTargetingService`/`Feat#resolveAdditionalTargets`/`DeliveredAttack#additionalTargets`/`DamageInteraction#halvingDamage` — `ArtesMarciaisFeat#DOMINAR_ARTE_MARCIAL_ARTE_FLUIDA`), `HitPointsService#getStatus`/`getMaxHitPoints` and `CharacterStatus` being derived-not-stored, ally-facing RA scans (`resolveAllyAbsoluteDamageReduction`, `sumAllyGrantedAbsoluteDamageReduction`), `SceneContext`-conditioned RA/half-damage hooks, `CombatantSheet` vs `CharacterSheet` vs `MonsterSheet`, `lifeMultiplier`/`ModifierType.HIT_POINTS`, or `CriticalEffect`. Also use it when asked why a `DamageBase` scale-up isn't a `DamageBonus`, why monsters can't level up, why `CharacterStatus` isn't stored, why an attack's range isn't a character stat, why RA is scanned rather than granted, or why this core enforces how many targets an attack has but not which ones.
 ---
 
 # Damage, combat resolution, and the sheet hierarchy
@@ -111,6 +111,61 @@ chain onto the result's `nextInteraction`. **Neither records the action** — th
   roll there is the defender's Esquiva e Aparar, and this core models nothing about what the
   *foe* swung.
 
+### One attack, several targets
+
+`ArtesMarciaisFeat#DOMINAR_ARTE_MARCIAL_ARTE_FLUIDA`'s "seus ataques afetam um alvo adicional" is
+real, and it runs entirely through `AttackDelivery` — `AttackReceiver` has no counterpart, since a
+foe attacking the player is one foe against one roller.
+
+**How many is a character stat; which ones is not.** `Feat#resolveAdditionalTargets(SkillType,
+Character)` states how many targets beyond the primary a Talento grants (its own conditions
+checked inside the hook — `ARTE_FLUIDA` returns 0 while a non-natural weapon is drawn or a Escudo
+is equipped), and `AttackTargetingService#getMaximumTargets` sums that onto `BASE_TARGETS` = 1.
+`AttackDelivery#resolve` refuses an attack naming more (`TOO_MANY_ATTACK_TARGETS`) — a cap
+enforced on the service entry point that applies it, like every other cap here.
+
+Every clause granting an extra target also requires it to be **adjacent to the primary one**. That
+is pairwise geometry between two combatants who are both *not* the roller, and a `SceneContext`
+holds distances measured only from its own holder — so nothing in this core can check it.
+**Choosing the targets is the caller's (in practice the UI's) job**; this core enforces the count
+and nothing else. Don't add an adjacency check here; it belongs with the missing `scene.grid`.
+
+**The roll is one roll.** `AttackDelivery` calls `applyTo` once — rolling twice would double-grant
+the critical-success Ego point — and compares the one `attackTotal` against each target's own
+Defesa:
+
+| | primary target | each additional target |
+| --- | --- | --- |
+| carried on | `DeliveredAttack#defender`/`defenseValue` | `DeliveredAttack#additionalTargets` (`List<AttackTarget>`) |
+| reported on | `DeliveredAttackResult`'s flat fields | one `DeliveredAttackTargetResult` each, in order |
+| margin / hit / Corrente threshold | its own | its own — all three are per-target |
+| `CriticalResult` | the roll's | the same roll's; only *whether it landed* differs |
+| Efeitos Críticos | filtered against its anatomy | filtered against **its** anatomy |
+| chain head | plain `DamageInteraction` | `DamageInteraction#halvingDamage()` |
+
+**The extra targets are a trailing parameter, not a widened `attackTarget`.**
+`AbstractSkillInteraction`'s longest `applyTo` is now `(target, sceneContext, skillRoll,
+attackTarget, attackSource, List<CombatantSheet> additionalTargets)`. `attackTarget` stays the
+**primary** target and remains the one every target-conditioned hook resolves against
+(`resolveDamageBonus`, `resolveAttackRollBonus`) — the rules scope the extra targets to the
+comparison and the damage, not to the bonuses, and recomputing those per target would need a
+per-target result no authored trait asks for. Widening the existing parameter into a list was
+tried and rejected: it makes a plain `applyTo(t, ctx, roll, null, null)` call ambiguous.
+
+**The dano roll is one roll too**, so a clause conditioned on *how many* targets there are is a
+property of the attack rather than of any target: `Feat#resolveDamageBonus(SkillType, SceneContext,
+CombatantSheet, Character, AttackSource, int targetCount)` is the hook, and `ARTE_FLUIDA` returns a
+flat `Skill#DISADVANTAGE_MALUS` from it while `targetCount > 1`. `targetCount` is `0` when no
+target was named at all (the bonuses-only preview path), which an override reads as "condition not
+met" — never as "one target".
+
+**Meio-Dano on the additional target is real mitigation, not a halved input.**
+`DamageInteraction#halvingDamage()` (a fluent marker, the sibling of `chainInto`) reaches
+`DamageService#calculateFinalDamage(…, boolean halfDamage)`, which **OR**s it into the target's own
+`ModifierType.HALF_DAMAGE`/`EgoAdvantage#resolveHalfDamage` sources. So it still applies last —
+after RD and RA — and two half-damage sources never quarter. The caller feeds the *same* dano
+figure to every chain; the halving happens inside.
+
 ### Efeito Crítico immunity — `CriticalEffect#applicableTo`
 
 An Anatomia clause naming Efeitos Críticos a creature shrugs off is real, enforced data.
@@ -212,6 +267,14 @@ Character actor)` — with the original 2-arg form delegating down with `null`s.
 it also still doesn't check `attackingSkillType`, so an Ataque à Distância ability's dano bonus
 applies to a Corpo-a-Corpo swing; that's pre-existing.
 
+**`Feat#resolveDamageBonus` has a trailing-`AttackSource` overload** — same
+defaults-to-the-shorter-form relationship as `resolveSkillRollBonus`/`resolveCriticalMarginIncrease`.
+`AbstractSkillInteraction#sumDamageBonus` now threads the delivery channel through, so a
+Talento clause scoped to *what the attack was made with* is expressible: `MonstruosoFeat#FEROCIDADE`
+narrows with `actor.treatsAsNaturalWeapon(weapon)` for its "+1 em rolagens de danos de suas
+Armas Naturais". `SkillCompetencyAbility`/`EgoAdvantage` did **not** grow the parameter — add it
+there with their first consumer.
+
 ## An attack's maximum range — `AttackRangeService`
 
 Same shape as `DamageBaseService`, one axis over: an attack's max distance is a property of the
@@ -265,8 +328,10 @@ An ability granting RD *or* RA without a number in its rules text uses
 `APRIMORAR_COM_ARTE`'s "+1 RDS").
 
 RD being real doesn't make every RD-granting ability real — `APRIMORAR_COM_ARTE` grants it as
-one branch of a choice, `ProfissaoCompetencyAbility.FORJA_VULCANA` as a per-item choice still
-blocked on the missing owned-item copy. Check what's *actually* blocking an ability.
+one branch of a choice, `ProfissaoCompetencyAbility.FORJA_VULCANA` as a per-produced-item choice
+still blocked on the missing Resistência a Críticos / Margem Crítica Maior / item-scoped-bonus
+mechanisms (the forge pipeline itself now exists — `EquipmentCraftingService`). Check what's
+*actually* blocking an ability.
 
 ### `CharacterStatus` is derived, never stored
 
@@ -355,7 +420,13 @@ instead.
   `src/main/java/org/aventyrs/core/item/Weapon.java` (`getRange`/`getEffectiveRange`),
   `Feat#resolveAttackRangeIncrease`, `ArtilhariaFeat#TIRO_LONGO`.
 - `src/main/java/org/aventyrs/core/character/services/DamageService.java` /
-  `DamageServiceImpl.java` — mitigation order, ally scans, `SceneContext` overloads.
+  `DamageServiceImpl.java` — mitigation order, ally scans, `SceneContext` overloads, the
+  attacker-side `halfDamage` parameter.
+- `src/main/java/org/aventyrs/core/character/services/AttackTargetingService.java` /
+  `AttackTargetingServiceImpl.java`, `src/main/java/org/aventyrs/core/combat/AttackTarget.java` /
+  `DeliveredAttackTargetResult.java`, `Feat#resolveAdditionalTargets`,
+  `DamageInteraction#halvingDamage` — multi-target resolution
+  (`MultiTargetAttackTest.java`, `AttackTargetingServiceImplTest.java`).
 - `src/main/java/org/aventyrs/core/character/services/HitPointsService.java`
   (`HitPointsServiceTest.java`) — `getStatus`, `getMaxHitPoints`.
 - `src/main/java/org/aventyrs/core/character/CharacterStatus.java`.

@@ -37,7 +37,9 @@ public enum ElementalFeat implements Feat {
      * outra arma ao toque, o Dano Base da Arma escolhida aumenta em +2 e o tipo de dano causado
      * muda para Físico Elemental por 2 Rodadas."
      */
-    // TODO: an activated ability spending PA and PD, which nothing converts into an effect.
+    // TODO: an activated ability — ActiveAbilityService#activate now enters a timed state for a
+    //  PA/PM/PV cost, but not for a PD ("2PD") one, and this grants a weapon-scoped Dano Base
+    //  uplift (below), not a plain ModifierType TemporaryBonus.
     // TODO: the Dano Base uplift is scoped to one *chosen weapon* for 2 Rodadas.
     //  Feat#resolveDamageBaseIncrease is unconditional and sees neither the weapon nor a
     //  duration, so granting it there would raise every attack the holder ever makes, forever.

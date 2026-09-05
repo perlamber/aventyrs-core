@@ -35,6 +35,9 @@ public class TranslatableMessages {
     public static final String WEAPON_DRAW_PREVENTED = "WEAPON_DRAW_PREVENTED";
     public static final String NOT_ENOUGH_ACTION_POINTS = "NOT_ENOUGH_ACTION_POINTS";
     public static final String NOT_ENOUGH_MAGIC_POINTS = "NOT_ENOUGH_MAGIC_POINTS";
+
+    /** An activated ability's Pontos de Vida cost exceeds what the holder can safely spend. */
+    public static final String NOT_ENOUGH_HIT_POINTS = "NOT_ENOUGH_HIT_POINTS";
     public static final String SKILL_NOT_TRAINED = "SKILL_NOT_TRAINED";
     public static final String SKILL_TRAIT_SKILL_TYPE_MISMATCH = "SKILL_TRAIT_SKILL_TYPE_MISMATCH";
     public static final String INITIATIVE_NOT_WON = "INITIATIVE_NOT_WON";
@@ -47,6 +50,12 @@ public class TranslatableMessages {
     public static final String TITLE_ABILITY_PREREQUISITE_NOT_MET = "TITLE_ABILITY_PREREQUISITE_NOT_MET";
     public static final String FEAT_PREREQUISITE_NOT_MET = "FEAT_PREREQUISITE_NOT_MET";
     public static final String NOT_AN_ATTACK_SKILL = "NOT_AN_ATTACK_SKILL";
+
+    /**
+     * An attack named more targets than the attacker's Talentos entitle them to — see {@code
+     * AttackTargetingService#getMaximumTargets}.
+     */
+    public static final String TOO_MANY_ATTACK_TARGETS = "TOO_MANY_ATTACK_TARGETS";
     public static final String INVALID_AREA_OF_EFFECT = "INVALID_AREA_OF_EFFECT";
     public static final String INVALID_SPELL_TARGETING = "INVALID_SPELL_TARGETING";
     public static final String INVALID_SPELL_TREE = "INVALID_SPELL_TREE";
@@ -61,4 +70,46 @@ public class TranslatableMessages {
 
     /** The actor is under a Condição that forbids activating Habilidades — Silêncio. */
     public static final String ABILITY_ACTIVATION_PREVENTED = "ABILITY_ACTIVATION_PREVENTED";
+
+    /** The crafter doesn't hold the Especialização de Profissão a given kind of item needs. */
+    public static final String CRAFTING_TRADE_NOT_HELD = "CRAFTING_TRADE_NOT_HELD";
+
+    /** Fabricating an Obra-Prima of this Raridade needs a higher Profissão Graduação than the crafter has. */
+    public static final String MASTERPIECE_GRADUATION_TOO_LOW = "MASTERPIECE_GRADUATION_TOO_LOW";
+
+    /** An Aprimoramento can only be fitted to an Obra-Prima. */
+    public static final String ITEM_NOT_A_MASTERPIECE = "ITEM_NOT_A_MASTERPIECE";
+
+    /** The item already carries as many Aprimoramentos as its Categoria de Peso allows. */
+    public static final String IMPROVEMENT_SLOTS_FULL = "IMPROVEMENT_SLOTS_FULL";
+
+    /** The item already carries this exact Aprimoramento — "Aprimoramentos diferentes". */
+    public static final String DUPLICATE_IMPROVEMENT = "DUPLICATE_IMPROVEMENT";
+
+    /** A shared catalog {@code ItemTemplate} cannot be forged, repaired or modified in place. */
+    public static final String CANNOT_MODIFY_TEMPLATE = "CANNOT_MODIFY_TEMPLATE";
+
+    /**
+     * An {@code ItemActiveAbility} was asked for on a forge that is not making a Regalia — only a
+     * Regalia carries one ({@code AbstractItem#setActiveAbility}'s own guard, reported here as a
+     * refusal a caller can show rather than an {@code IllegalStateException}).
+     */
+    public static final String ACTIVE_ABILITY_REQUIRES_REGALIA = "ACTIVE_ABILITY_REQUIRES_REGALIA";
+
+    /**
+     * No Talento the crafter holds permits forging a Regalia of this grade <em>right now</em> —
+     * either they never acquired the Talento de Artífice for it, or its use-condition isn't met
+     * (no Regalia of that grade in their possession). One message for both, because {@code
+     * Feat#itsAllowedToCraftRegalia} answers the two as one question.
+     */
+    public static final String REGALIA_CRAFTING_NOT_PERMITTED = "REGALIA_CRAFTING_NOT_PERMITTED";
+
+    /**
+     * The Centelha donor is not willing — "Se o personagem doador não for voluntário ou se
+     * arrepender em meio ao processo a criação da Regalia irá falhar".
+     */
+    public static final String REGALIA_DONOR_NOT_WILLING = "REGALIA_DONOR_NOT_WILLING";
+
+    /** A Regalia Divina's Centelhas must come from a Dragão, Elemental, Abissal ou Celestial. */
+    public static final String REGALIA_DIVINE_DONOR_REQUIRED = "REGALIA_DIVINE_DONOR_REQUIRED";
 }

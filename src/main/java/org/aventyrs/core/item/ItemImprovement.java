@@ -9,6 +9,8 @@ import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.skill.SkillType;
 
+import java.util.Objects;
+
 import lombok.NonNull;
 
 /** An Improvement fitted to one item, retaining any selection made while that item was created. */
@@ -67,6 +69,11 @@ public final class ItemImprovement implements Improvement {
     @Override
     public String getDescription() {
         return definition.getDescription();
+    }
+
+    @Override
+    public ItemRarity getRarity() {
+        return definition.getRarity();
     }
 
     @Override
@@ -145,5 +152,19 @@ public final class ItemImprovement implements Improvement {
     @Override
     public int resolveDurationIncreaseInRounds(final Spell spell, final Character character) {
         return definition.resolveDurationIncreaseInRounds(spell, character);
+    }
+
+    @Override
+    public boolean equals(final Object other) {
+        if (!(other instanceof ItemImprovement improvement)) {
+            return false;
+        }
+        return definition == improvement.definition && selectedDefense == improvement.selectedDefense
+                && selectedElementalType == improvement.selectedElementalType;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(definition, selectedDefense, selectedElementalType);
     }
 }

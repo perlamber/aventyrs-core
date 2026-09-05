@@ -24,4 +24,18 @@ public interface ItemActiveAbility extends ActiveAbility {
      * An active ability bound to a specific item instance, such as a regalia or crafted item.
      * It shares the same activation contract as a character ability but remains item-scoped.
      */
+
+    /**
+     * What binding this ability into an item adds to that item's worth, in PE — read by {@code
+     * org.aventyrs.core.item.ItemForgery#getTotalValue()}, which sums it alongside {@code
+     * Masterpiece#getPriceModifier()} and {@code Improvement#getPriceModifier()}.
+     *
+     * <p>0 by default, and 0 everywhere today: no Preço column is authored for an item ability
+     * any more than for an Obra-Prima or an Aprimoramento (CLAUDE.md's "Item numeric columns"
+     * gap). The <em>arithmetic</em> is real all the same — author a constant's modifier here and
+     * every forge that binds it prices it, with no further wiring.
+     */
+    default int getPriceModifier() {
+        return 0;
+    }
 }

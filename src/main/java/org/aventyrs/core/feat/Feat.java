@@ -1,5 +1,7 @@
 package org.aventyrs.core.feat;
 
+import org.aventyrs.core.ability.ActiveAbility;
+import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import java.math.BigDecimal;
 import java.util.List;
@@ -13,7 +15,10 @@ import org.aventyrs.core.skill.CriticalResult;
 import org.aventyrs.core.character.DamageBonus;
 import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.character.DefenseType;
+import org.aventyrs.core.item.Item;
 import org.aventyrs.core.item.ItemCategory;
+import org.aventyrs.core.item.NaturalWeapon;
+import org.aventyrs.core.item.RegaliaGrade;
 import org.aventyrs.core.item.Weapon;
 import org.aventyrs.core.magic.Spell;
 import org.aventyrs.core.rest.RestType;
@@ -75,8 +80,10 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      * when zero, which is every non-Aventyr-tier Talento), the holder's Race matching {@code
      * requiredRace} (skipped when unset), the holder's {@code CreatureType} matching {@code
      * requiredCreatureType} (skipped when unset), the holder's devotion matching {@code requiredDeity}
-     * (skipped when unset), and enough already-held Talentos of {@code
-     * requiredFeatCategory} (skipped when unset). Every clause is independent — a requirement
+     * (skipped when unset), enough already-held Talentos of {@code
+     * requiredFeatCategory} (skipped when unset), and enough Regalias of {@code
+     * craftedRegaliaGrade} already forged by the holder (skipped when unset — the "criação de 3 ou
+     * mais Regalias" gate). Every clause is independent — a requirement
      * left unset never blocks eligibility — and, when more than one is set, all must hold at
      * once, mirroring {@code AventyrTitleAbility#isEligible}'s identical
      * combine-every-set-prerequisite shape. Checked by {@code
@@ -106,7 +113,7 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
                 || requirements.requiredRace().isInstance(character.getRace());
 
         boolean creatureTypeSatisfied = requirements.requiredCreatureType() == null
-                || requirements.requiredCreatureType() == character.getRace().getCreatureType();
+                || requirements.requiredCreatureType() == character.getRace().getPrerequisiteCreatureType();
 
         boolean deitySatisfied = requirements.requiredDeity() == null
                 || requirements.requiredDeity() == character.getDeity();
@@ -115,9 +122,13 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
                 || countFeatsOfCategory(character, requirements.requiredFeatCategory())
                         >= requirements.requiredFeatCategoryCount();
 
+        boolean regaliaCraftHistorySatisfied = requirements.craftedRegaliaGrade() == null
+                || character.getRegaliasCrafted(requirements.craftedRegaliaGrade())
+                        >= requirements.craftedRegaliaCount();
+
         return attributeSatisfied && skillSatisfied && featSatisfied && competencySatisfied
                 && titlesSatisfied && raceSatisfied && creatureTypeSatisfied && deitySatisfied
-                && categoryCountSatisfied;
+                && categoryCountSatisfied && regaliaCraftHistorySatisfied;
     }
 
     /**
@@ -218,6 +229,70 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     default Optional<DamageBonus> resolveDamageBonus(final SkillType attackingSkillType, final SceneContext sceneContext,
                                                       final CombatantSheet attackTarget, final Character actor) {
         return Optional.empty();
+    }
+
+    /**
+     * The same dano bonus, for a clause conditioned on <b>what the attack was made with</b> —
+     * {@code MonstruosoFeat#FEROCIDADE}'s "+1 em rolagens de danos de suas Armas Naturais". {@code
+     * attackSource} is the wielded {@link Weapon} or cast {@code Spell} itself; a natural-weapon
+     * clause narrows it with {@code actor.treatsAsNaturalWeapon(weapon)}, the same per-character
+     * view {@link #resolveDamageBaseIncrease(Character, Weapon)}'s Arma-Natural overriders use.
+     *
+     * <p><b>Defaults to the 4-arg form, not the other way round</b> — the same defaulting
+     * relationship every other trailing-{@code AttackSource} {@code Feat} overload has (see {@link
+     * #resolveSkillRollBonus(SkillType, SceneContext, SkillTrait, Character, AttackSource)}): an
+     * existing 4-arg overrider keeps working untouched, and a constant overriding <em>this</em>
+     * one must return its own unconditional value too if it has one. {@code null} {@code
+     * attackSource} means the caller didn't say — read as "no scope matched".
+     */
+    default Optional<DamageBonus> resolveDamageBonus(final SkillType attackingSkillType, final SceneContext sceneContext,
+                                                      final CombatantSheet attackTarget, final Character actor,
+                                                      final AttackSource attackSource) {
+        return resolveDamageBonus(attackingSkillType, sceneContext, attackTarget, actor);
+    }
+
+    /**
+     * The same dano bonus, for a clause conditioned on <b>how many targets this one attack is
+     * affecting</b> — {@code ArtesMarciaisFeat#DOMINAR_ARTE_MARCIAL_ARTE_FLUIDA}'s "enquanto
+     * houver mais de um alvo você sofre Desvantagem em rolagens de Danos". One attack against
+     * several targets still makes a <em>single</em> dano roll, so this is a property of the roll
+     * rather than of any one target, which is why it is a count here and not something resolved
+     * per {@code attackTarget}.
+     *
+     * <p>{@code targetCount} is how many targets the attack was declared against — {@code 0} on
+     * the bonuses-only preview path and on any call that named no target at all, which an
+     * override must read as "condition not met" rather than as "one target". {@code attackTarget}
+     * stays the <b>primary</b> target, the one every target-conditioned hook resolves against.
+     *
+     * <p><b>Defaults to the 5-arg form</b>, the same defaulting relationship every other longer
+     * {@code Feat} overload has: an existing overrider keeps working untouched, and a constant
+     * overriding <em>this</em> one must return its own unconditional value too if it has one.
+     */
+    default Optional<DamageBonus> resolveDamageBonus(final SkillType attackingSkillType, final SceneContext sceneContext,
+                                                      final CombatantSheet attackTarget, final Character actor,
+                                                      final AttackSource attackSource, final int targetCount) {
+        return resolveDamageBonus(attackingSkillType, sceneContext, attackTarget, actor, attackSource);
+    }
+
+    /**
+     * How many targets <b>beyond the primary one</b> an attack of attackingSkillType made by
+     * character may affect — {@code ArtesMarciaisFeat#DOMINAR_ARTE_MARCIAL_ARTE_FLUIDA}'s "seus
+     * ataques afetam um alvo adicional". Zero by default, and summed by {@code
+     * org.aventyrs.core.character.services.AttackTargetingService#getMaximumTargets} across
+     * {@code Character#getFeats()} on top of the one target every attack already has.
+     *
+     * <p>Any condition the clause carries is the override's own to check — {@code ARTE_FLUIDA}
+     * returns 0 while its holder wields a non-natural weapon or a Escudo, exactly as it does for
+     * its dano Desvantagem, so the two halves can never disagree.
+     *
+     * <p><b>Which</b> combatants those extra targets are is deliberately not decided here. The
+     * rules require them to be adjacent to the primary target, and this core does no geometry
+     * (a {@code SceneContext} only holds distances measured from its own holder, never between
+     * two other combatants) — so the caller picks the targets and {@code
+     * org.aventyrs.core.combat.AttackDelivery} only enforces the count.
+     */
+    default int resolveAdditionalTargets(final SkillType attackingSkillType, final Character character) {
+        return 0;
     }
 
     default int resolveDamageBaseIncrease(final Character character, final Weapon weapon) {
@@ -484,6 +559,100 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     default List<CriticalEffect> resolveExtraCriticalEffects(final Character attacker, final SkillType attackSkill,
                                                              final AttackSource attackSource,
                                                              final CriticalResult criticalResult) {
+        return List.of();
+    }
+
+    /**
+     * The {@link ActiveAbility} this Talento grants its holder — a Poder Vampírico (see {@code
+     * org.aventyrs.core.feat.PoderVampiricoActiveAbility}), triggered through {@code
+     * org.aventyrs.core.character.services.ActiveAbilityService#activate}. Empty by default.
+     *
+     * <p>Mirrors {@code org.aventyrs.core.ability.AttributeAbility#resolveActiveAbility}, with
+     * one wiring difference: an {@code AttributeAbility}'s active ability is copied onto {@code
+     * Character.activeAbilities} at acquisition, whereas a Talento's is surfaced live by {@code
+     * Character#getActiveAbilities()} aggregating {@code getFeats()}. So a constant overriding
+     * this <b>must return a stable singleton</b> (an enum-constant field) — {@code
+     * ActiveAbilityService#activate} identifies the held ability by reference.
+     */
+    default Optional<ActiveAbility> resolveActiveAbility() {
+        return Optional.empty();
+    }
+
+    /**
+     * How much this Talento adds to the holder's Roubo de Vida total — summed by {@code
+     * org.aventyrs.core.character.services.LifeStealService#getTotalLifeSteal} alongside {@code
+     * AttributeAbility#resolveLifeStealBonus}, and, like that scan, applied <b>only when the
+     * holder already has an active {@code LifeSteal} effect</b> ("amplify, never grant from
+     * nothing"). {@code VampiricoFeat#SEDE_DE_SANGUE} returns its Títulos Despertos count.
+     * Zero by default.
+     *
+     * <p>Real, computable data with no automatic combat caller — nothing in this core resolves a
+     * dealt hit and reads {@code getTotalLifeSteal} yet, the same status the rest of the Roubo de
+     * Vida infrastructure has.
+     */
+    default int resolveLifeStealBonus(final Character character) {
+        return 0;
+    }
+
+    /**
+     * A flat bonus this Talento adds to one Atributo — {@code VampiricoFeat#MESTRE_VAMPIRO}'s
+     * "+1 ao Bônus Racial em Atributo ganho por ser um Vampiro". Overriding CLAUDE.md's "a
+     * Talento cannot grant an Atributo bonus" for the first time, so the reach is deliberately
+     * narrow: <b>only {@code AbstractSkillInteraction} reads it</b> — the bonus reaches a Perícia
+     * roll governed by domain and nothing else (HP/PM/PD/Defesa/Conjuração still read {@code
+     * AttributeValue#getTotal()} directly). Document that partial reach on any constant that
+     * overrides this. Zero by default.
+     *
+     * <p>For a <b>round-scoped</b> Atributo bonus (a Poder Vampírico like {@code DOM_DE_MIRCALLA})
+     * grant a {@code TemporaryBonus} of {@code domain.getBonusModifierType()} instead — the same
+     * one reader picks both up.
+     */
+    default int resolveAttributeBonus(final AttributeDomain domain, final Character character) {
+        return 0;
+    }
+
+    /**
+     * The {@link RegaliaGrade} this Talento currently permits holder to forge — the {@code
+     * ArtificeFeat} ladder's whole payload, and {@code null} for every other Talento.
+     *
+     * <p><b>A permission, not a prerequisite.</b> A Talento's {@link FeatRequirements} say what
+     * a character must have to <i>acquire</i> it; this says what holding it lets them <i>do</i>,
+     * and the two are genuinely different questions. {@code ARTESAO_DE_REGALIAS_MENOR} is a case
+     * where both exist and only one used to be modeled: Profissão 7 is what you need to learn it
+     * (a requirement), while "a Regalia em sua posse" is what you need in hand each time you
+     * forge (a condition of use). Gating acquisition on possession would have meant a crafter
+     * who sold their Regalia had never learned anything.
+     *
+     * <p>So this hook answers "may this holder forge that grade <em>right now</em>", and returns
+     * {@code null} when the use-conditions aren't met — which is why it takes {@code holder} at
+     * all. Callers must therefore treat {@code null} as "not permitted", never as "no such
+     * Talento". {@code org.aventyrs.core.item.ItemForgery} is the consumer; it scans every held
+     * Talento and refuses the forge when none permits the grade asked for.
+     *
+     * <p>Deliberately one grade, not a set: each rung of the ladder permits exactly its own
+     * grade, and a crafter reaches the higher rungs holding the lower Talentos too (each names
+     * the one below in {@code requiredFeat}), so the union falls out of the scan.
+     */
+    default RegaliaGrade itsAllowedToCraftRegalia(final Character holder) {
+        return null;
+    }
+
+    /**
+     * The Armas Naturais ({@link NaturalWeapon}) this Talento grants its holder — a Chifres
+     * Poderosos from {@code BestialFeat#HERANCA_BOVIDEA}, the two picked by {@code
+     * org.aventyrs.core.feat.ArmamentoDraconicoFeat}. Aggregated by {@code
+     * Character#getNaturalWeapons()} and, through it, the single answer to "what can this
+     * character strike with unarmed". Empty by default.
+     *
+     * <p>Same default-empty-list shape as {@link #resolveExtraCriticalEffects} / {@link
+     * #resolveDefeatBlessings}, and takes {@code character} for the same reason every {@code
+     * Feat} hook does — a future clause could scale the grant off holder state, though none does
+     * yet. A granted Arma Natural needs no possession gate on the attack path: {@code
+     * DamageBaseService} takes the {@link Weapon} as a parameter and never looks it up, and
+     * {@link Character#treatsAsNaturalWeapon(Weapon)} already recognises any {@link
+     * ItemCategory#NATURAL_WEAPON} weapon.
+     */
+    default List<NaturalWeapon> getGrantedNaturalWeapons(final Character character) {
         return List.of();
     }
 

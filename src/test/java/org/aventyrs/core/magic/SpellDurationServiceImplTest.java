@@ -68,7 +68,7 @@ class SpellDurationServiceImplTest {
 
     private Character characterWith(final ItemImprovement improvement) {
         AbstractItem item = AbstractItem.builder().name("Item de teste").category(ItemCategory.ARMOR).build();
-        item.setImprovement(improvement);
+        item.addImprovement(improvement);
         return CharacterFixture.blank(CharacterFixture.BLANK).equipment(List.of(item)).build();
     }
 

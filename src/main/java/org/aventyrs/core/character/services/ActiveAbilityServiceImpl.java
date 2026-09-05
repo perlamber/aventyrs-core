@@ -6,24 +6,33 @@ import org.aventyrs.core.action.ActionPointsServiceImpl;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.IllegalOperationException;
+import org.aventyrs.core.sheet.TemporaryEffect;
 
 import static org.aventyrs.core.util.TranslatableMessages.ABILITY_ACTIVATION_PREVENTED;
 import static org.aventyrs.core.util.TranslatableMessages.ACTIVE_ABILITY_NOT_HELD;
 import static org.aventyrs.core.util.TranslatableMessages.NOT_ENOUGH_ACTION_POINTS;
+import static org.aventyrs.core.util.TranslatableMessages.NOT_ENOUGH_HIT_POINTS;
 import static org.aventyrs.core.util.TranslatableMessages.NOT_ENOUGH_MAGIC_POINTS;
 
 public class ActiveAbilityServiceImpl implements ActiveAbilityService {
 
     private final ActionPointsService actionPointsService;
     private final MagicPointsService magicPointsService;
+    private final HitPointsService hitPointsService;
 
     public ActiveAbilityServiceImpl() {
-        this(new ActionPointsServiceImpl(), new MagicPointsServiceImpl());
+        this(new ActionPointsServiceImpl(), new MagicPointsServiceImpl(), new HitPointsServiceImpl());
     }
 
     public ActiveAbilityServiceImpl(final ActionPointsService actionPointsService, final MagicPointsService magicPointsService) {
+        this(actionPointsService, magicPointsService, new HitPointsServiceImpl());
+    }
+
+    public ActiveAbilityServiceImpl(final ActionPointsService actionPointsService, final MagicPointsService magicPointsService,
+                                    final HitPointsService hitPointsService) {
         this.actionPointsService = actionPointsService;
         this.magicPointsService = magicPointsService;
+        this.hitPointsService = hitPointsService;
     }
 
     @Override
@@ -46,8 +55,20 @@ public class ActiveAbilityServiceImpl implements ActiveAbilityService {
         if (magicPointsService.getCurrentMagicPoints(character, characterSheet) < ability.getMagicPointCost()) {
             throw new IllegalOperationException(NOT_ENOUGH_MAGIC_POINTS);
         }
+        // "consomem 3PV cada" — a Poder Vampírico cannot be activated if paying it would drop the
+        // holder to 0 PV or below. Provenance ("recuperados exclusivamente com Roubo de Vida") is
+        // not tracked; the loss is plain damage.
+        if (ability.getHitPointCost() > 0
+                && hitPointsService.getCurrentHitPoints(character, characterSheet) <= ability.getHitPointCost()) {
+            throw new IllegalOperationException(NOT_ENOUGH_HIT_POINTS);
+        }
 
         characterSheet.spendMagicPoints(ability.getMagicPointCost());
-        characterSheet.applyEffect(ability.resolveEffect(character));
+        if (ability.getHitPointCost() > 0) {
+            characterSheet.applyDamage(ability.getHitPointCost());
+        }
+        for (TemporaryEffect effect : ability.resolveEffects(character)) {
+            characterSheet.applyEffect(effect);
+        }
     }
 }

@@ -10,6 +10,7 @@ import org.aventyrs.core.item.ItemWeightClass;
 import org.aventyrs.core.item.Weapon;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.CombatantSheet;
+import org.aventyrs.core.skill.AttackSource;
 import org.aventyrs.core.skill.Skill;
 import org.aventyrs.core.skill.SkillType;
 
@@ -105,12 +106,36 @@ public enum ArtesMarciaisFeat implements Feat {
     /**
      * "Enquanto não estiver utilizando nenhuma arma - exceto Armas Naturais - e nenhum item do
      * tipo Escudo seus ataques afetam um alvo adicional."
+     *
+     * <p><b>Fully real</b>, and the Talento that made multi-target attack resolution exist. Three
+     * halves, all wired:
+     *
+     * <ul>
+     *   <li>The <b>extra target</b> is {@link #resolveAdditionalTargets}, summed by {@code
+     *   AttackTargetingService#getMaximumTargets} and enforced by {@code AttackDelivery#resolve},
+     *   which compares the one attack total against each target's own Defesa.</li>
+     *   <li>The <b>dano Desvantagem</b> is {@link #resolveDamageBonus(SkillType, SceneContext,
+     *   CombatantSheet, Character, AttackSource, int)} — a flat {@code Skill#DISADVANTAGE_MALUS},
+     *   conditioned on the attack's target count rather than on any one target, because a
+     *   multi-target attack still makes a single dano roll.</li>
+     *   <li>The <b>halved damage</b> on the additional target is {@code
+     *   DamageInteraction#halvingDamage()}, which {@code AttackDelivery} sets on the chain head it
+     *   builds for every target but the primary. It is real Meio-Dano — applied after RD and RA,
+     *   the same last stage every other half-damage source lands on.</li>
+     * </ul>
+     *
+     * <p>Both gates read the same two facts, and both hooks check them, so the Talento can never
+     * grant the extra target without also charging the Desvantagem: "não estiver utilizando
+     * nenhuma arma, exceto Armas Naturais" is {@link #wieldsANonNaturalWeapon} (drawn weapons, not
+     * merely carried ones — see that method), and "nenhum item do tipo Escudo" is {@link
+     * #wieldsAShield}. The mutual-exclusion Pré-requisito is enforced by this enum's {@code
+     * isEligible} override.
+     *
+     * <p>"Alvos adicionais precisam estar adjacentes ao alvo primário" is deliberately <b>not</b>
+     * checked: it is pairwise geometry between two combatants who are both not the roller, which a
+     * {@code SceneContext} cannot answer and this core never computes. Choosing the targets is the
+     * caller's step; this core enforces only how many there may be.
      */
-    // TODO: needs multi-target attack resolution — AttackDelivery resolves exactly one target.
-    //  This is the sole blocker of the effect; the "nenhuma arma exceto Armas Naturais" and
-    //  "nenhum item do tipo Escudo" gates are both expressible now (ItemCategory.NATURAL_WEAPON
-    //  and ItemCategory.SHIELD), there is just nothing yet to gate. The mutual-exclusion
-    //  Pré-requisito is enforced by this enum's isEligible override.
     DOMINAR_ARTE_MARCIAL_ARTE_FLUIDA(
             "Enquanto não estiver utilizando nenhuma arma - exceto Armas Naturais - e nenhum item "
                     + "do tipo Escudo seus ataques afetam um alvo adicional. Alvos adicionais "
@@ -121,7 +146,28 @@ public enum ArtesMarciaisFeat implements Feat {
                     .requiredSkillType(SkillType.ATAQUE_CORPO_A_CORPO)
                     .requiredSkillGraduation(5)
                     .requiredAwakenedTitles(1)
-                    .build()),
+                    .build()) {
+        @Override
+        public int resolveAdditionalTargets(final SkillType attackingSkillType, final Character character) {
+            return arteFluidaApplies(character) ? ARTE_FLUIDA_ADDITIONAL_TARGETS : 0;
+        }
+
+        /**
+         * "Enquanto houver mais de um alvo" — {@code targetCount} of 0 is the bonuses-only preview
+         * path and 1 an ordinary attack, so neither is charged the Desvantagem. Overriding the
+         * longest overload with no unconditional value of its own to add, per {@code Feat}'s
+         * defaulting convention.
+         */
+        @Override
+        public Optional<DamageBonus> resolveDamageBonus(final SkillType attackingSkillType, final SceneContext sceneContext,
+                                                         final CombatantSheet attackTarget, final Character actor,
+                                                         final AttackSource attackSource, final int targetCount) {
+            if (targetCount <= 1 || !arteFluidaApplies(actor)) {
+                return Optional.empty();
+            }
+            return Optional.of(new DamageBonus(Skill.DISADVANTAGE_MALUS, DamageType.FISICO));
+        }
+    },
 
     /**
      * "Armas leves de combate corpo-a-corpo que você utilizar são consideradas Armas Naturais
@@ -159,9 +205,7 @@ public enum ArtesMarciaisFeat implements Feat {
          */
         @Override
         public boolean reclassifiesAsNaturalWeapon(final Weapon weapon, final Character character) {
-            boolean wieldsAShield = character.getEquipment().stream()
-                    .anyMatch(item -> item.getCategory() == ItemCategory.SHIELD);
-            return !wieldsAShield
+            return !wieldsAShield(character)
                     && weapon.getEffectiveWeightClass() == ItemWeightClass.LIGHT
                     && weapon.getSkillType() == SkillType.ATAQUE_CORPO_A_CORPO;
         }
@@ -312,6 +356,31 @@ public enum ArtesMarciaisFeat implements Feat {
 
     /** ARTE_MARCIAL_MISTA's own flat "+1" to Defesas per Talento de Arte Marcial held. */
     private static final int ARTE_MARCIAL_MISTA_DEFENSE_BONUS_PER_FEAT = 1;
+
+    /** ARTE_FLUIDA's "um alvo adicional" — one target beyond the primary. */
+    private static final int ARTE_FLUIDA_ADDITIONAL_TARGETS = 1;
+
+    /**
+     * ARTE_FLUIDA's own gate, shared by both of its halves so the extra target and the dano
+     * Desvantagem can never disagree about whether the Talento is currently active.
+     */
+    private static boolean arteFluidaApplies(final Character character) {
+        return !wieldsANonNaturalWeapon(character) && !wieldsAShield(character);
+    }
+
+    /**
+     * Whether character has an item of {@link ItemCategory#SHIELD} equipped — the "nenhum item do
+     * tipo Escudo" gate {@link #DOMINAR_ARTE_MARCIAL_ARTE_FLUIDA} and {@link
+     * #DOMINAR_ARTE_MARCIAL_FERROADA_ESMAGADORA} share.
+     *
+     * <p>Reads {@code Character#getEquipment()}, not {@code getDrawnWeapons()}, unlike {@link
+     * #wieldsANonNaturalWeapon}: a Escudo is not a {@link Weapon}, so it has no drawn/sheathed
+     * state to consult — being equipped <em>is</em> carrying it on the arm.
+     */
+    private static boolean wieldsAShield(final Character character) {
+        return character.getEquipment().stream()
+                .anyMatch(item -> item.getCategory() == ItemCategory.SHIELD);
+    }
 
     /**
      * Whether character is wielding any {@link Weapon} that is <b>not</b> an Arma Natural for

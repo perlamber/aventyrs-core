@@ -94,6 +94,23 @@ public class DeliveredAttack {
     private final AttackSource attackSource;
 
     /**
+     * Targets this attack affects <b>beyond</b> {@link #defender}, each with their own Defesa —
+     * empty for every ordinary attack. What {@code
+     * ArtesMarciaisFeat#DOMINAR_ARTE_MARCIAL_ARTE_FLUIDA}'s "seus ataques afetam um alvo
+     * adicional" produces, and what {@link AttackDelivery#resolve} compares the one attack total
+     * against in turn, reporting each on {@link DeliveredAttackResult#getAdditionalTargetResults()}.
+     *
+     * <p><b>The caller picks them.</b> The rules require an additional target to be adjacent to
+     * the primary one, which is pairwise geometry between two combatants who are both not the
+     * roller — something a {@code SceneContext} cannot answer and this core never computes. What
+     * {@link AttackDelivery} does enforce is the <em>count</em>, against {@code
+     * AttackTargetingService#getMaximumTargets}: a caller cannot name more targets than the
+     * attacker's Talentos entitle them to.
+     */
+    @Singular
+    private final List<AttackTarget> additionalTargets;
+
+    /**
      * The Efeitos Críticos this attack inflicts if the attack roll comes up an Acerto Crítico.
      * Caller-constructed, because this core has no way to know which one a given weapon or Magia
      * carries.

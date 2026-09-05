@@ -80,7 +80,7 @@ public enum ArtesaoSpell implements AuthoredSpell {
             .targeting(SpellTargeting.TOQUE)
             .build()),
 
-    /** TODO an object's PV is real and spendable now ({@code Item#applyDamage}), but damage is one-way: nothing repairs a copy, and a destroyed one is deliberately unrecoverable. */
+    /** TODO an object's PV is real, spendable ({@code Item#applyDamage}) and now restorable ({@code Item#repair}), but nothing routes a cast Magia's "2d6+Metade do Foco" recovery into a target Item — no Spell→Item effect link, same gap as every other authored Magia effect. */
     RESTAURAR_OBJETOS(SpellData.builder()
             .name("Restaurar Objetos")
             .branchLevel(BranchLevel.MUDA)

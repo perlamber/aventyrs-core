@@ -16,13 +16,15 @@ import org.aventyrs.core.modifier.ModifierType;
  * <p>The old model conflated these two concepts: a catalog entry such as {@link ArmorItem}
  * also implemented this interface. This redesign keeps the compatibility bridge in place by
  * making template-backed enums implement {@link ItemTemplate}; the unique instance contract stays
- * here. Per-copy state is where damage, Obra-Prima and Aprimoramento already live — see {@link
- * #applyDamage(int)} and {@link #isDestroyed()} for the first of those. <b>Who forged it</b> is
- * still not modeled (cited by {@code org.aventyrs.core.ego.ResourcesAdvantage#BARGANHISTA}/{@code
- * #HERANCA_FAMILIAR} and {@code org.aventyrs.core.skill.profissao.ProfissaoCompetencyAbility}),
- * and belongs on the held instance rather than in the static catalog. {@link Masterpiece} is now modeled through
- * {@link DefensiveMasterpiece}/{@link ItemMasterpiece}; the item copy holds one, including any
- * creation-time choice it needs.
+ * here. Per-copy state is where damage, Obra-Prima and Aprimoramentos already live — see {@link
+ * #applyDamage(int)} / {@link #repair(int)} and {@link #isDestroyed()} for the first of those.
+ * <b>Who forged it</b> lives on {@code AbstractItem#producedByCharacterId}, stamped by {@code
+ * org.aventyrs.core.character.services.EquipmentCraftingService#forge} — the service that also
+ * prices and times fabrication/reparo (still cited by {@code
+ * org.aventyrs.core.ego.ResourcesAdvantage#BARGANHISTA} for the missing PE economy).
+ * {@link Masterpiece} is modeled through {@link DefensiveMasterpiece}/{@link ItemMasterpiece} —
+ * the copy holds one, plus a weight-class-capped {@link List} of {@link Improvement}s
+ * ({@link #getImprovements()}).
  *
  * <p><b>Most of the numeric columns still have no consumer</b>, each blocked on its own separate
  * missing system rather than one shared gap — DF/DM being the exception that now has one:
@@ -37,10 +39,10 @@ import org.aventyrs.core.modifier.ModifierType;
  *   pool of roll bonuses rather than a passive stat, and {@code
  *   org.aventyrs.core.combat.AttackReceiver} for the entry point that drives it.</li>
  * <li><b>{@link #getHardness()} (Dureza) is no longer inert</b> — it is this copy's maximum PV,
- *   spent by {@link #applyDamage(int)} and read back through {@link #getCurrentHardness()}/{@link
- *   #isDestroyed()}. What's still missing is <i>repair</i> and <i>production</i>, which is what
- *   {@code ProfissaoCompetencyAbility#REPARO_MELHORADO}/{@code #AUMENTAR_A_DUREZA} are now
- *   TODO'd on.</li>
+ *   spent by {@link #applyDamage(int)}, restored by {@link #repair(int)}, and read back through
+ *   {@link #getCurrentHardness()}/{@link #isDestroyed()}. Fabricação and reparo run through
+ *   {@code EquipmentCraftingService}; {@code ProfissaoCompetencyAbility#AUMENTAR_A_DUREZA}/{@code
+ *   #REPARO_MELHORADO} are real through it.</li>
  *   <li>{@link #getCastingBonus()} (Conjuração) has no conjuração-roll hook: casting is two
  *   rolls (see {@code org.aventyrs.core.magic.SpellCastingService}), but neither takes an
  *   item-granted modifier, and no {@code Magia} entity exists to carry one against.</li>
@@ -100,7 +102,7 @@ public interface Item {
      */
     default ItemWeightClass getEffectiveWeightClass() {
         int masterpieceBonus = getMasterpiece() == null ? 0 : getMasterpiece().getWeightClassBonus();
-        int improvementBonus = getImprovement() == null ? 0 : getImprovement().getWeightClassBonus();
+        int improvementBonus = getImprovements().stream().mapToInt(Improvement::getWeightClassBonus).sum();
         return getWeightClass().adjustedBy(masterpieceBonus + improvementBonus);
     }
 
@@ -112,7 +114,7 @@ public interface Item {
      */
     default int getEffectiveHardness() {
         int masterpieceBonus = getMasterpiece() == null ? 0 : getMasterpiece().getHardnessBonus();
-        int improvementBonus = getImprovement() == null ? 0 : getImprovement().getHardnessBonus();
+        int improvementBonus = getImprovements().stream().mapToInt(Improvement::getHardnessBonus).sum();
         return Math.max(0, getHardness() + masterpieceBonus + improvementBonus);
     }
 
@@ -164,7 +166,7 @@ public interface Item {
      */
     default int getItemDamageReduction() {
         int masterpieceReduction = getMasterpiece() == null ? 0 : getMasterpiece().getItemDamageReduction();
-        int improvementReduction = getImprovement() == null ? 0 : getImprovement().getItemDamageReduction();
+        int improvementReduction = getImprovements().stream().mapToInt(Improvement::getItemDamageReduction).sum();
         return Math.max(0, masterpieceReduction + improvementReduction);
     }
 
@@ -192,6 +194,28 @@ public interface Item {
         return finalDamage;
     }
 
+    /**
+     * Restores up to rawRecovery points of this copy's lost Dureza, returning how much was
+     * actually recovered (never more than the damage currently carried). The mirror of {@link
+     * #applyDamage(int)} — the raw mutation beneath {@code
+     * org.aventyrs.core.character.services.EquipmentCraftingService#repair}, which is the
+     * validated entry point that also folds in {@code
+     * ProfissaoCompetencyAbility#REPARO_MELHORADO}'s bonus.
+     *
+     * <p>An {@link ItemTemplate} recovers nothing and returns 0, same silent no-op as {@link
+     * #applyDamage}. A destroyed copy <b>can</b> be brought back this way — nothing here treats
+     * {@link #isDestroyed()} as terminal (only "repair" as a rules concept has no cost table for
+     * it, which is the service's problem, not this mutator's).
+     */
+    default int repair(final int rawRecovery) {
+        if (!(this instanceof AbstractItem item)) {
+            return 0;
+        }
+        int recovered = Math.max(0, Math.min(rawRecovery, item.getDamageTaken()));
+        item.setDamageTaken(item.getDamageTaken() - recovered);
+        return recovered;
+    }
+
     /** This item's complete current DF or DM contribution, including fitted enhancements and Favor. */
     default int getEffectiveDefenseBonus(final org.aventyrs.core.character.DefenseType defenseType,
                                          final Character character,
@@ -212,9 +236,10 @@ public interface Item {
         }
         int masterpieceBonus = getMasterpiece() == null
                 ? 0 : getMasterpiece().getEffectiveDefenseBonus(defenseType, character);
-        int improvementBonus = getImprovement() == null
-                ? 0 : getImprovement().getEffectiveDefenseBonus(
-                        defenseType, character, sceneContext, this, damageDescriptor);
+        int improvementBonus = getImprovements().stream()
+                .mapToInt(improvement -> improvement.getEffectiveDefenseBonus(
+                        defenseType, character, sceneContext, this, damageDescriptor))
+                .sum();
         return defenseType.columnOf(this) + masterpieceBonus + improvementBonus
                 + resolvePowerStoneBonus(ModifierType.DEFESAS)
                 + resolvePowerStoneBonus(defenseType.getModifierType())
@@ -241,8 +266,9 @@ public interface Item {
         }
         int masterpieceBonus = getMasterpiece() == null ? 0
                 : getMasterpiece().resolveBonus(modifierType, skillType, character);
-        int improvementBonus = getImprovement() == null ? 0
-                : getImprovement().resolveBonus(modifierType, skillType, character);
+        int improvementBonus = getImprovements().stream()
+                .mapToInt(improvement -> improvement.resolveBonus(modifierType, skillType, character))
+                .sum();
         return masterpieceBonus + improvementBonus + resolvePowerStoneBonus(modifierType);
     }
 
@@ -269,8 +295,9 @@ public interface Item {
         }
         int masterpieceBonus = getMasterpiece() == null ? 0
                 : getMasterpiece().resolveDamageBaseIncrease(weapon, character);
-        int improvementBonus = getImprovement() == null ? 0
-                : getImprovement().resolveDamageBaseIncrease(weapon, character);
+        int improvementBonus = getImprovements().stream()
+                .mapToInt(improvement -> improvement.resolveDamageBaseIncrease(weapon, character))
+                .sum();
         int powerStoneBonus = getPowerStone() == null ? 0
                 : getPowerStone().resolveDamageBaseIncrease(weapon, getType());
         return masterpieceBonus + improvementBonus + powerStoneBonus;
@@ -279,29 +306,32 @@ public interface Item {
     /** This item's fitted enhancement reduction for one fully-classified incoming damage instance. */
     default int resolveEnhancementDamageReduction(final DamageDescriptor damageDescriptor,
                                                   final Character character) {
-        return getImprovement() == null || isDestroyed() ? 0
-                : getImprovement().resolveDamageReduction(damageDescriptor, character);
+        return isDestroyed() ? 0 : getImprovements().stream()
+                .mapToInt(improvement -> improvement.resolveDamageReduction(damageDescriptor, character))
+                .sum();
     }
 
     /**
-     * The Rodadas this item's fitted Aprimoramento adds to spell's resolved Duração — the entry
+     * The Rodadas this item's fitted Aprimoramentos add to spell's resolved Duração — the entry
      * point {@code org.aventyrs.core.magic.SpellDurationService} scans equipment through, so a
      * destroyed item stops extending a Duração without that service knowing about destruction.
      */
     default int resolveEnhancementDurationIncreaseInRounds(final Spell spell, final Character character) {
-        return getImprovement() == null || isDestroyed() ? 0
-                : getImprovement().resolveDurationIncreaseInRounds(spell, character);
+        return isDestroyed() ? 0 : getImprovements().stream()
+                .mapToInt(improvement -> improvement.resolveDurationIncreaseInRounds(spell, character))
+                .sum();
     }
 
     /**
-     * Notifies this item's fitted Improvement after its wearer takes final damage. Catalog
-     * templates and items without an Improvement deliberately do nothing.
+     * Notifies each of this item's fitted Improvements after its wearer takes final damage.
+     * Catalog templates and items without an Improvement deliberately do nothing.
      */
     default void notifyFinalDamageTaken(final int finalDamage,
                                         final org.aventyrs.core.scene.SceneContext sceneContext) {
-        if (getImprovement() != null && !isDestroyed()) {
-            getImprovement().onFinalDamageTaken(this, finalDamage, sceneContext);
+        if (isDestroyed()) {
+            return;
         }
+        getImprovements().forEach(improvement -> improvement.onFinalDamageTaken(this, finalDamage, sceneContext));
     }
 
     /** Opens this item's current improvement-effect window through the stated Scene Round. */
@@ -377,9 +407,25 @@ public interface Item {
         return this instanceof AbstractItem item ? item.getMasterpiece() : null;
     }
 
-    /** A unique item may carry a single improvement; most items do not. */
+    /**
+     * Every Aprimoramento fitted to this copy — empty for a template, and capped at {@code
+     * getWeightClass().getMaximumImprovements()} (1 / 2 / 3) by {@link
+     * AbstractItem#addImprovement}. All the enhancement-aggregation defaults above sum across
+     * this list, so a consuming service never iterates it itself.
+     */
+    default List<Improvement> getImprovements() {
+        return this instanceof AbstractItem item ? item.getImprovements() : List.of();
+    }
+
+    /**
+     * The first fitted Aprimoramento, or {@code null} — kept for the handful of call sites that
+     * predate multi-Aprimoramento support ({@code Weapon#isDisarmable}, some tests).
+     *
+     * @deprecated prefer {@link #getImprovements()}; an item can carry more than one.
+     */
+    @Deprecated
     default Improvement getImprovement() {
-        return this instanceof AbstractItem item ? item.getImprovement() : null;
+        return getImprovements().isEmpty() ? null : getImprovements().get(0);
     }
 
     /**
@@ -397,6 +443,26 @@ public interface Item {
      */
     ItemActiveAbility getActiveAbility();
 
-    /** Whether this owned item is a Regalia. */
-    boolean isRegalia();
+    /**
+     * This owned copy's {@link RegaliaGrade} — Menor / Superior / Divina — or {@code null} for an
+     * ordinary piece of Equipamento. <b>A Regalia is a property of the copy, not an {@link
+     * ItemRarity}</b>: the grade is orthogonal to how rare the base Equipamento is. Set only by
+     * {@code org.aventyrs.core.character.services.EquipmentCraftingService#forgeRegalia} (or the
+     * unvalidated builder); a catalog {@link ItemTemplate} never has one.
+     */
+    RegaliaGrade getRegaliaGrade();
+
+    /** Whether this owned item is a Regalia — {@code true} exactly when {@link #getRegaliaGrade()} is set. */
+    default boolean isRegalia() {
+        return getRegaliaGrade() != null;
+    }
+
+    /**
+     * Whether this copy was given by Aventyr rather than forged by a character — see {@link
+     * AbstractItem#isDonatedByAventyr()}. Always {@code false} for a catalog {@link ItemTemplate}
+     * (a template is neither made nor given; it is the description of a thing).
+     */
+    default boolean isDonatedByAventyr() {
+        return this instanceof AbstractItem item && item.isDonatedByAventyr();
+    }
 }

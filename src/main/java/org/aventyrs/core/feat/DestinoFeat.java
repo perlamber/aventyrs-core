@@ -209,8 +209,9 @@ public enum DestinoFeat implements Feat {
      * "Você recebe Bônus Racial de +2 em todos os Atributos para cada Centelha que você não possua
      * ou voluntariamente não Despertar."
      */
-    // TODO: a Centelha is not modelled — nothing represents a character possessing, lacking, or
-    //  sacrificing one, which is also what blocks the whole ArtificeFeat tree.
+    // TODO: a Centelha is not modelled — nothing represents a character possessing or lacking
+    //  one (its *sacrifice* is now a caller assertion, RegaliaDonation, which is enough for the
+    //  ArtificeFeat tree but not for this "para cada Centelha que você não possua" count).
     // TODO: disjunctive Pré-requisito (the Talento *ou* lacking a Centelha).
     FRAGMENTO_DA_ENCARNACAO_DE_GILGAMESH(
             "Você recebe Bônus Racial de +2 em todos os Atributos para cada Centelha que você não "

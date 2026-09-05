@@ -104,7 +104,7 @@ public interface Weapon extends Item, AttackSource {
      */
     default boolean isDisarmable() {
         boolean masterpiecePrevents = getMasterpiece() != null && getMasterpiece().preventsDisarming();
-        boolean improvementPrevents = getImprovement() != null && getImprovement().preventsDisarming();
+        boolean improvementPrevents = getImprovements().stream().anyMatch(Improvement::preventsDisarming);
         return !masterpiecePrevents && !improvementPrevents;
     }
 

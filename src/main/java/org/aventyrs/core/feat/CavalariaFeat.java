@@ -67,9 +67,16 @@ public enum CavalariaFeat implements Feat {
      * <p>Note the rules text names "Combate Corpo-a-Corpo" where the Perícia is Ataque
      * Corpo-a-Corpo; read as the same Perícia.
      */
-    // TODO: needs a montaria/veículo concept.
-    // TODO: needs multi-target attack resolution — AttackDelivery resolves exactly one target,
-    //  and nothing expresses "compare this roll against a second Defesa".
+    // TODO: needs a montaria/veículo concept — "enquanto estiver montado ou dirigindo" is the
+    //  only thing still blocking this constant. Multi-target attack resolution is built now
+    //  (Feat#resolveAdditionalTargets, AttackTargetingService, DeliveredAttack#additionalTargets),
+    //  and it already does everything this Talento's own mechanics need: one roll compared
+    //  against each target's Defesa, one dano roll, Meio-Dano on the extra target. What it can't
+    //  yet be gated on is the mount. Note the two differences from ARTE_FLUIDA when this lands:
+    //  the Meio-Dano applies to *every* target including the primary ("em cada alvo"), which
+    //  DeliveredAttackTargetResult's per-target halving does not currently express for the
+    //  primary; and "apenas ataques físicos" needs the attack's DamageType, which the delivery
+    //  path never carries.
     ATAQUE_EM_ARCO(
             "Enquanto estiver montado ou dirigindo você pode comparar o resultado de suas Rolagens "
                     + "de Ataque Corpo-a-Corpo com as Defesas de um alvo adicional e que estejam "

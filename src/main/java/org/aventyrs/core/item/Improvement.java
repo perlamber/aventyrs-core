@@ -16,6 +16,12 @@ public interface Improvement {
 
     String getDescription();
 
+    /**
+     * This Aprimoramento's Raridade — the tier its install Grau de Dificuldade is read from
+     * ({@code org.aventyrs.core.item.ItemRarity#getImprovementInstallDifficulty()}).
+     */
+    ItemRarity getRarity();
+
     default int getPhysicalDefenseBonus() {
         return 0;
     }

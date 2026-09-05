@@ -2,8 +2,11 @@ package org.aventyrs.core.combat;
 
 import lombok.Builder;
 import lombok.Getter;
+import lombok.Singular;
 import org.aventyrs.core.sheet.InteractionResult;
 import org.aventyrs.core.skill.CriticalResult;
+
+import java.util.List;
 
 /**
  * What {@link AttackDelivery#resolve} reports about one attack the player made — the mirror of
@@ -63,4 +66,15 @@ public class DeliveredAttackResult {
      * {@link AttackDelivery}'s javadoc for the open question behind that.
      */
     private final int unappliedDifficultyReduction;
+
+    /**
+     * One entry per {@link DeliveredAttack#getAdditionalTargets()}, in the order they were
+     * supplied — empty for every ordinary single-target attack.
+     *
+     * <p>The primary target's own outcome stays on this class's flat fields rather than joining
+     * the list: every attack has exactly one primary, every existing caller already reads it
+     * there, and only it carries the {@link #attackResult} the whole attack shares.
+     */
+    @Singular
+    private final List<DeliveredAttackTargetResult> additionalTargetResults;
 }

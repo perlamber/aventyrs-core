@@ -21,6 +21,8 @@ import org.aventyrs.core.ego.EgoAdvantage;
 import org.aventyrs.core.feat.Feat;
 import org.aventyrs.core.item.Item;
 import org.aventyrs.core.item.ItemCategory;
+import org.aventyrs.core.item.NaturalWeapon;
+import org.aventyrs.core.item.RegaliaGrade;
 import org.aventyrs.core.item.Weapon;
 import org.aventyrs.core.magic.Spell;
 import org.aventyrs.core.race.Race;
@@ -31,6 +33,7 @@ import org.aventyrs.core.skill.SkillType;
 import org.aventyrs.core.title.AventyrTitle;
 
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -122,15 +125,34 @@ public class Character {
     protected List<AttributeAbility> attributeAbilities;
 
     /**
-     * Every {@link ActiveAbility} this character has acquired — e.g. {@code
-     * FocusAbility#CONCENTRACAO_PROFUNDA}'s own activatable state, granted here the moment
-     * that ability is acquired via {@link AttributeAbility#resolveActiveAbility()}. Distinct
-     * from {@link #attributeAbilities}/{@link #skillCompetencyAbilities}: those are always-on,
-     * this is something the holder must actively spend resources to trigger.
+     * Every {@link ActiveAbility} this character has acquired from an {@link AttributeAbility}
+     * — e.g. {@code FocusAbility#CONCENTRACAO_PROFUNDA}'s own activatable state, copied here the
+     * moment that ability is acquired via {@link AttributeAbility#resolveActiveAbility()}.
+     * Distinct from {@link #attributeAbilities}/{@link #skillCompetencyAbilities}: those are
+     * always-on, this is something the holder must actively spend resources to trigger.
+     *
+     * <p>A Talento-granted Poder Vampírico is <b>not</b> copied here — it is surfaced live by
+     * {@link #getActiveAbilities()} aggregating {@link #feats}. Read that method, never this
+     * field, to get "every {@code ActiveAbility} this character can trigger".
      */
     @NonNull
     @Singular
+    @Getter(AccessLevel.NONE)
     protected List<ActiveAbility> activeAbilities;
+
+    /**
+     * Every {@link ActiveAbility} this character can trigger — the {@link #activeAbilities}
+     * copied over from an {@code AttributeAbility} at acquisition, plus every held Talento's own
+     * {@link Feat#resolveActiveAbility()} (a Poder Vampírico). {@code
+     * ActiveAbilityService#activate} identifies a held ability by reference, which is why a
+     * {@code Feat} overriding {@code resolveActiveAbility} must return a stable singleton.
+     */
+    public List<ActiveAbility> getActiveAbilities() {
+        return Stream.concat(
+                        activeAbilities.stream(),
+                        feats.stream().flatMap(feat -> feat.resolveActiveAbility().stream()))
+                .toList();
+    }
 
     /** Habilidades de Competência acquired from trained Perícias (e.g. ArtesCompetencyAbility). */
     @NonNull
@@ -272,6 +294,22 @@ public class Character {
     @Builder.Default
     protected boolean centelhaSuperiorSelected = false;
 
+    /**
+     * How many Regalias of each {@link RegaliaGrade} this character has successfully forged —
+     * the "ter sido bem-sucedido na criação de 3 ou mais Regalias" craft-history count the
+     * {@code org.aventyrs.core.feat.ArtificeFeat} ladder gates on. A real stored counter because
+     * this core keeps no game-session or action history to derive it from (the same reason {@link
+     * #centelhaSuperiorSelected} is a stored flag). Incremented by {@link
+     * #recordRegaliaCrafted(RegaliaGrade)}, which {@code
+     * org.aventyrs.core.character.services.EquipmentCraftingService#forgeRegalia} calls on a
+     * successful forge. Defaults to a fresh mutable map through the Lombok builder; {@code
+     * CharacterFixture} bypasses that and leaves it {@link Map#of()} — same caveat as {@link
+     * #feats} — so {@link #recordRegaliaCrafted} tolerates an immutable starting map.
+     */
+    @NonNull
+    @Builder.Default
+    protected Map<RegaliaGrade, Integer> regaliasCraftedByGrade = new EnumMap<>(RegaliaGrade.class);
+
     @NonNull
     protected ActionProfile actionProfile;
 
@@ -404,6 +442,27 @@ public class Character {
                 || feats.stream().anyMatch(feat -> feat.reclassifiesAsNaturalWeapon(weapon, this));
     }
 
+    /**
+     * The Armas Naturais ({@link NaturalWeapon}) this character possesses — the parts of its
+     * body it can strike with, and what a caller names as the {@link Weapon} when rolling such
+     * an attack (there is no possession gate: {@code DamageBaseService} takes the weapon as a
+     * parameter, so this is the list a UI offers, not a check the roll enforces).
+     *
+     * <p>Two sources, deduplicated: held Talentos via {@link Feat#getGrantedNaturalWeapons}
+     * ({@code ArmamentoDraconicoFeat}, {@code DraconicoFeat#SOPRO_DE_DRAGAO}, {@code BestialFeat}'s
+     * Bovídea/Canina/Felina Heranças) and the {@link Race} via {@link
+     * Race#getGrantedNaturalWeapons()} ({@code Vampiro}'s Sangue, Poder e Dependência). {@code
+     * NascidoDoDragao}/{@code Feral}/{@code Monstruoso}/{@code HomemFera} name Armas Naturais in
+     * their rules text too but are blocked on a form state or a per-sub-race authoring gap.
+     */
+    public List<NaturalWeapon> getNaturalWeapons() {
+        return Stream.concat(
+                        feats.stream().flatMap(feat -> feat.getGrantedNaturalWeapons(this).stream()),
+                        race == null ? Stream.empty() : race.getGrantedNaturalWeapons().stream())
+                .distinct()
+                .toList();
+    }
+
     public void grantFeat(@NonNull final Feat feat) {
         feats.add(feat);
     }
@@ -485,6 +544,53 @@ public class Character {
      */
     public void selectCentelhaSuperior() {
         this.centelhaSuperiorSelected = true;
+    }
+
+    /**
+     * Whether this character has a Regalia of at least minimumGrade among their {@link
+     * #equipment} — the <b>use</b>-condition every {@code ArtificeFeat} names ("Após estudar
+     * incansavelmente a Regalia em sua posse …"), read by {@code Feat#itsAllowedToCraftRegalia}.
+     * Grades compare by rank ({@code MENOR < SUPERIOR < DIVINA}), so {@link RegaliaGrade#MENOR}
+     * asks only "any Regalia at all".
+     *
+     * <p><b>Not an acquisition prerequisite.</b> Studying a Regalia is what the Talento's rules
+     * text describes doing <i>with</i> it; nothing there gates learning the Talento on still
+     * owning one. That is why this is consulted at forge time and not by {@code Feat#isEligible}
+     * — a crafter who sells the Regalia they trained on keeps the Talento and simply cannot use
+     * it until they hold one again.
+     *
+     * <p>Scans the equipped list rather than a full inventory for the usual reason: a {@code
+     * Character} has no inventory — that lives on {@code AbstractCombatantSheet} — so a Regalia
+     * carried in a pack is invisible here, the same simplification every other equipment scan in
+     * this core makes.
+     */
+    public boolean possessesRegalia(@NonNull final RegaliaGrade minimumGrade) {
+        return equipment.stream()
+                .map(Item::getRegaliaGrade)
+                .anyMatch(grade -> grade != null && grade.compareTo(minimumGrade) >= 0);
+    }
+
+    /** How many Regalias of grade this character has successfully forged so far. */
+    public int getRegaliasCrafted(@NonNull final RegaliaGrade grade) {
+        return regaliasCraftedByGrade == null ? 0 : regaliasCraftedByGrade.getOrDefault(grade, 0);
+    }
+
+    /**
+     * Records one more successfully-forged Regalia of grade — the mutator {@code
+     * EquipmentCraftingService#forgeRegalia} calls after a successful craft. Swaps in a mutable
+     * map first if the character was built through {@code CharacterFixture} (which leaves the
+     * field {@link Map#of()}), the same defensive copy {@link #grantFeat} does not need only
+     * because its list is seeded mutable by the real builder.
+     */
+    public void recordRegaliaCrafted(@NonNull final RegaliaGrade grade) {
+        if (!(regaliasCraftedByGrade instanceof EnumMap)) {
+            Map<RegaliaGrade, Integer> mutable = new EnumMap<>(RegaliaGrade.class);
+            if (regaliasCraftedByGrade != null) {
+                mutable.putAll(regaliasCraftedByGrade);
+            }
+            regaliasCraftedByGrade = mutable;
+        }
+        regaliasCraftedByGrade.merge(grade, 1, Integer::sum);
     }
 
     /**

@@ -82,7 +82,7 @@ class ItemDamageTest {
         AbstractItem armor = armor(10, null);
 
         armor.applyDamage(25);
-        armor.setImprovement(ItemImprovement.of(DefensiveImprovement.RESISTENTE));
+        armor.addImprovement(ItemImprovement.of(DefensiveImprovement.RESISTENTE));
 
         assertEquals(25, armor.getDamageTaken());
         assertEquals(20, armor.getEffectiveHardness());
@@ -128,7 +128,7 @@ class ItemDamageTest {
     @Test
     void aDestroyedItemStopsGrantingItsDefesasFavorAndEnhancementBonuses() {
         AbstractItem armor = AbstractItem.fromTemplate(ArmorItem.ARMADURA_COMPLETA);
-        armor.setImprovement(ItemImprovement.of(DefensiveImprovement.OCULTA));
+        armor.addImprovement(ItemImprovement.of(DefensiveImprovement.OCULTA));
         Character character = characterWith(armor);
         CharacterSheet sheet = CharacterSheet.of(character, new Player());
 
@@ -188,7 +188,7 @@ class ItemDamageTest {
                 .hardness(hardness)
                 .build();
         if (improvement != null) {
-            item.setImprovement(improvement);
+            item.addImprovement(improvement);
         }
         return item;
     }

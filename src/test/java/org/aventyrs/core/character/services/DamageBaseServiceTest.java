@@ -130,7 +130,7 @@ class DamageBaseServiceTest {
     void anUnarmedStrikeTakesNoWeaponBoundEnhancementScaleUp() {
         AbstractItem blessedArmor = AbstractItem.builder().name("Armadura Abençoada")
                 .category(ItemCategory.ARMOR).build();
-        blessedArmor.setImprovement(ItemImprovement.of(DefensiveImprovement.BENCAO_SELVAGEM));
+        blessedArmor.addImprovement(ItemImprovement.of(DefensiveImprovement.BENCAO_SELVAGEM));
         Character character = blankCharacter().equipment(new ArrayList<>(List.of(blessedArmor))).build();
 
         assertEquals(DamageBase.UNARMED,
@@ -141,7 +141,7 @@ class DamageBaseServiceTest {
     void bencaoSelvagemRaisesOnlyTheNaturalWeaponUsedForTheAttack() {
         AbstractItem blessedArmor = AbstractItem.builder().name("Armadura Abençoada")
                 .category(ItemCategory.ARMOR).build();
-        blessedArmor.setImprovement(ItemImprovement.of(DefensiveImprovement.BENCAO_SELVAGEM));
+        blessedArmor.addImprovement(ItemImprovement.of(DefensiveImprovement.BENCAO_SELVAGEM));
         Weapon naturalWeapon = AbstractWeapon.builder()
                 .name("Garras")
                 .category(ItemCategory.NATURAL_WEAPON)

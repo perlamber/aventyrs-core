@@ -55,10 +55,17 @@ misrepresents the rules text. Rule these out first:
   #resolveAbsoluteDamageReduction`/`#resolveHalfDamage` or `AventyrTitleAbility
   #resolveAbsoluteDamageReduction` (see `InitiativeAdvantage#TORRE_EM_MOVIMENTO`,
   `SantoAbility#BASTIAO_DOS_NECESSITADOS`).
+- **A self-buff the holder spends a resource to switch on for a fixed Duração** ("como uma Ação
+  Livre, gaste 3PV, dura 2 Rodadas" — a Poder Vampírico, `FocusAbility#CONCENTRACAO_PROFUNDA`) —
+  an `ActiveAbility`, not a `Blessing`. It returns its own `TemporaryEffect`s from
+  `resolveEffects(Character)`; `ActiveAbilityService#activate` does the affordability check
+  (PA/PM/**PV**), the spend, and the apply. A Talento grants one via `Feat#resolveActiveAbility()`
+  (stable singleton). See `PoderVampiricoActiveAbility`.
 - **A `Blessing`** is what's left: the rules text names an actual **duration** ("por N
   Rodadas", "nas duas primeiras Rodadas", a graduation/PV-scaled duration) and an actual
-  **trigger** (activating an ability/Habilidade/Perícia roll, or winning initiative) — not a
-  live per-roll condition, not a standing passive.
+  **trigger applied to *someone else* or the whole group** (activating an ability/Habilidade/
+  Perícia roll that buffs allies, or winning initiative) — not a live per-roll condition, not a
+  standing passive, not a self-only activated state (that's the `ActiveAbility` above).
 
 ## 2. Read the rules text for the four facts a `Blessing` needs
 

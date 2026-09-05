@@ -3,6 +3,7 @@ package org.aventyrs.core.sheet;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
+import org.aventyrs.core.ability.AttributeAbility;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.EgoDomain;
@@ -18,6 +19,7 @@ import org.aventyrs.core.rest.RestType;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
+import java.util.HashSet;
 import java.util.stream.Stream;
 import java.util.List;
 import java.util.Map;
@@ -106,6 +108,19 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     /** Temporary Ego points owed back at this sheet's next qualifying Rest. */
     @Getter(AccessLevel.NONE)
     private final List<PendingEgoRecovery> pendingEgoRecoveries = new ArrayList<>();
+
+    /** Temporary Ego points owed at the start of this sheet's next Rodada — see {@link DelayedEgoGrant}. */
+    @Getter(AccessLevel.NONE)
+    private final List<DelayedEgoGrant> scheduledEgoGrants = new ArrayList<>();
+
+    /**
+     * Every once-per-game-session marker already claimed — see {@link #consumeOncePerSession}.
+     * {@code transient} on purpose, and that is the whole session model: a session is this
+     * sheet object's lifetime in the running client, so these markers must never travel into
+     * persisted state and hand a reloaded sheet a session it has already used up.
+     */
+    @Getter(AccessLevel.NONE)
+    private final transient Set<Object> consumedSessionMarkers = new HashSet<>();
 
     /** Every roll-action taken since this Rodada began — see {@link #recordAction}. */
     @Getter(AccessLevel.NONE)
@@ -349,7 +364,41 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         int spent = type == EgoPointType.PERMANENT
                 ? pool.spendPermanent(permanentMax, amount)
                 : pool.spendTemporary(permanentMax, sumEgoPenalty(domain), amount);
+        applyEgoDepletionGrants(domain);
         return new EgoPointSpend(domain, type, spent);
+    }
+
+    /**
+     * Schedules whatever any held ability owes this sheet for domain having just been reduced to
+     * zero — {@code GnoseAbility#ESTABILIDADE_EMOCIONAL}'s temporary point. A no-op unless the
+     * domain is genuinely empty (both pools), unless an ability actually reacts to it, and
+     * unless this is the first time this session ({@link #consumeOncePerSession}).
+     *
+     * <p>Called from {@link #spendEgoPoints} because that is the one funnel <em>both</em> a
+     * holder's deliberate use and {@code org.aventyrs.core.effect.Primor}'s drain pass through,
+     * and "for reduzido a zero" doesn't care which emptied the pool — deliberately unlike
+     * {@code EgoPointsService#useEgoPointsForEffect}, which exists precisely to keep a drain
+     * from triggering a Vantagem.
+     *
+     * <p>Scans {@code attributeAbilities} only, not the usual three sources: this is a trigger,
+     * not an aggregated stat, and the one clause that reacts to Ego depletion is an
+     * {@code AttributeAbility}. Widen it when a second, differently-typed one exists.
+     *
+     * <p>One path to zero is deliberately not covered: a {@link TemporaryEgoPenalty} landing
+     * (or a permanent Ego maximum dropping) can empty a domain without any spend, and {@link
+     * #applyEffect} has no equivalent hook. No effect in this core empties a pool that way
+     * today, and adding a second trigger site before one does would be guessing at its shape.
+     */
+    private void applyEgoDepletionGrants(final EgoDomain domain) {
+        if (getAvailableEgoPoints(domain) > 0) {
+            return;
+        }
+        for (AttributeAbility ability : character.getAttributeAbilities()) {
+            int owed = ability.resolveEgoDepletionGrant(domain);
+            if (owed > 0 && consumeOncePerSession(ability)) {
+                scheduleTemporaryEgoPointGrant(domain, ability, owed);
+            }
+        }
     }
 
     /**
@@ -376,6 +425,28 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     }
 
     /**
+     * Widens domain's ceiling for source, then recovers under the widened ceiling — see {@link
+     * CombatantSheet#grantTemporaryEgoPoints} for why an outright grant of temporary points
+     * needs both halves, and why neither on its own survives an emptied pool.
+     */
+    @Override
+    public int grantTemporaryEgoPoints(final EgoDomain domain, final Object source, final int amount) {
+        grantTemporaryEgoPointBonus(domain, source, amount);
+        recoverTemporaryEgoPoints(domain, amount);
+        return getTemporaryEgoPoints(domain);
+    }
+
+    /**
+     * Registers a {@link DelayedEgoGrant}; {@link #startNewRound()} delivers it. Doesn't grant
+     * anything itself, the same "register now, resolve at the boundary" shape {@link
+     * #owePendingEgoRecovery} has for a Rest.
+     */
+    @Override
+    public void scheduleTemporaryEgoPointGrant(final EgoDomain domain, final Object source, final int amount) {
+        scheduledEgoGrants.add(new DelayedEgoGrant(domain, source, amount));
+    }
+
+    /**
      * Registers a {@link PendingEgoRecovery} — e.g. {@code org.aventyrs.core.effect.Primor}'s
      * promise that the temporary Ego points it just spent come back at the next qualifying Rest.
      * Doesn't spend anything itself; the caller spends first, then registers the return.
@@ -399,6 +470,27 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
             recoverTemporaryEgoPoints(recovery.getDomain(), recovery.getValue());
             return true;
         });
+    }
+
+    /**
+     * Claims marker for this session, {@code true} only the first time — see {@link
+     * CombatantSheet#consumeOncePerSession} for what a session is here (this sheet object's own
+     * lifetime, hence the {@code transient} backing field).
+     */
+    @Override
+    public boolean consumeOncePerSession(final Object marker) {
+        return consumedSessionMarkers.add(marker);
+    }
+
+    @Override
+    public boolean hasConsumedOncePerSession(final Object marker) {
+        return consumedSessionMarkers.contains(marker);
+    }
+
+    /** Forgets every claimed marker, letting each once-per-session clause fire again. */
+    @Override
+    public void startNewSession() {
+        consumedSessionMarkers.clear();
     }
 
     /**
@@ -580,6 +672,19 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     public void startNewRound() {
         actionsThisRound.clear();
         actionCountAtTurnStart = 0;
+        applyScheduledEgoGrants();
+    }
+
+    /**
+     * Delivers every {@link DelayedEgoGrant} scheduled during the Rodada just ended, and clears
+     * them — the "na Rodada seguinte" half of {@code GnoseAbility#ESTABILIDADE_EMOCIONAL}.
+     * Private: a grant is registered through {@link #scheduleTemporaryEgoPointGrant} and lands
+     * at the one Rodada boundary, never on demand.
+     */
+    private void applyScheduledEgoGrants() {
+        List<DelayedEgoGrant> due = List.copyOf(scheduledEgoGrants);
+        scheduledEgoGrants.clear();
+        due.forEach(grant -> grantTemporaryEgoPoints(grant.getDomain(), grant.getSource(), grant.getValue()));
     }
 
     /**
