@@ -52,6 +52,21 @@ public enum PowerStoneMasterpiece {
     /** Whether Vinculação damages the bearer rather than the host item (Solve-Vidas). */
     private final boolean bindsToBearer;
 
+    /**
+     * This Obra-Prima's Preço in PE — its {@link #getRarity()} read down the Pedras do Poder
+     * column of the "Preços de Obras-Primas" table (Comum 4, Incomum 6, Raro 9, Épico 13,
+     * Mítico 18). Read directly from {@link EnhancementPricing} rather than through {@link
+     * Masterpiece}, which this enum does not implement: a stone's refinements adjust its charge
+     * economy rather than granting an item bonus.
+     *
+     * <p>Like every other {@link PowerStoneQuality} figure it has no consumer yet — nothing
+     * totals a stone's worth, and {@code ItemForgery#getTotalValue()} sums the host item's parts
+     * only. Exact authored data all the same.
+     */
+    public int getPriceModifier() {
+        return EnhancementPricing.masterpiecePrice(rarity, EnhancementPriceCategory.POWER_STONE);
+    }
+
     PowerStoneMasterpiece(final ItemRarity rarity, final int cooldownRoundsDelta,
                           final int effectDurationRoundsDelta, final int chargeMultiplierPercent,
                           final int bindingDamageDelta, final boolean bindsToBearer) {

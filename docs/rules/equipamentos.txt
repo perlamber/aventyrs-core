@@ -830,6 +830,23 @@ Efeitos Adicionais: Danos de Esmagamento sofrido é reduzido em -1.
 Bônus de +2 nas Defesas para resistir a agarrões e tentativas de derrubadas.
 
 Itens Obras-Primas
+
+Preços de Obras-Primas
+Raridade | Armas | Armaduras | Pedras do Poder
+Comum    | 6     | 8         | 4
+Incomum  | 12    | 12        | 6
+Raro     | 24    | 20        | 9
+Épico    | 36    | 32        | 13
+Mítico   | 48    | 48        | 18
+
+Preços de Aprimoramentos
+Raridade | Armas | Armaduras | Pedras do Poder
+Comum    | 4     | 5         | 2
+Incomum  | 8     | 8         | 4
+Raro     | 13    | 12        | 7
+Épico    | 19    | 18        | 11
+Mítico   | 26    | 24        | 16
+
 Tipos de Obras-Primas
 Obras-Primas Ofensivas
 

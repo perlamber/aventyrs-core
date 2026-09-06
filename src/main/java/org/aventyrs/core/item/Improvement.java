@@ -22,6 +22,14 @@ public interface Improvement {
      */
     ItemRarity getRarity();
 
+    /**
+     * Which column of the "Preços de Aprimoramentos" table this one is priced from — Armas for
+     * an Aprimoramento Ofensivo, Armaduras for a Defensivo. Abstract rather than defaulted on
+     * purpose: a silent default would price the unauthored offensive catalog off the armour
+     * column, and the two differ at Comum, Raro and Épico.
+     */
+    EnhancementPriceCategory getPriceCategory();
+
     default int getPhysicalDefenseBonus() {
         return 0;
     }
@@ -60,8 +68,14 @@ public interface Improvement {
         return 0;
     }
 
+    /**
+     * This Aprimoramento's Preço in PE, from the "Preços de Aprimoramentos" table — its own
+     * {@link #getRarity()} (never its host Obra-Prima's) read down this Aprimoramento's {@link
+     * #getPriceCategory()} column. Summed into a forge's worth by {@code
+     * ItemForgery#getTotalValue()}.
+     */
     default int getPriceModifier() {
-        return 0;
+        return EnhancementPricing.improvementPrice(getRarity(), getPriceCategory());
     }
 
     default int getEffectiveDefenseBonus(final DefenseType defenseType, final Character character) {

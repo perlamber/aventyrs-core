@@ -58,6 +58,21 @@ public final class ItemMasterpiece implements Masterpiece {
     }
 
     @Override
+    public ItemRarity getRarity() {
+        return definition.getRarity();
+    }
+
+    /**
+     * The fitted copy is priced exactly as its catalog entry is — a creation-time choice
+     * (Magistral's Defesa, Sob Medida's Ação Livre/Reação) changes what the Obra-Prima does, not
+     * what it costs.
+     */
+    @Override
+    public EnhancementPriceCategory getPriceCategory() {
+        return definition.getPriceCategory();
+    }
+
+    @Override
     public int getPhysicalDefenseBonus() {
         return definition.getPhysicalDefenseBonus();
     }

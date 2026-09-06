@@ -215,6 +215,12 @@ public enum DefensiveImprovement implements Improvement {
         return favorDescription;
     }
 
+    /** Every entry here is fitted to a defensive item, so all of them price off the Armaduras column. */
+    @Override
+    public EnhancementPriceCategory getPriceCategory() {
+        return EnhancementPriceCategory.ARMOR;
+    }
+
     public boolean requiresDefenseChoice() {
         return false;
     }

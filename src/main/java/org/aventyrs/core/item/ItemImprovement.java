@@ -76,6 +76,16 @@ public final class ItemImprovement implements Improvement {
         return definition.getRarity();
     }
 
+    /**
+     * The fitted copy is priced exactly as its catalog entry is — a creation-time choice
+     * (Camada de Reforço's Defesa, Benção Elemental's element) changes what the Aprimoramento
+     * does, not what it costs.
+     */
+    @Override
+    public EnhancementPriceCategory getPriceCategory() {
+        return definition.getPriceCategory();
+    }
+
     @Override
     public int getPhysicalDefenseBonus() {
         return definition.getPhysicalDefenseBonus();

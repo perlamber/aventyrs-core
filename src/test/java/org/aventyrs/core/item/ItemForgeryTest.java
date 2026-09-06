@@ -232,6 +232,32 @@ class ItemForgeryTest {
     }
 
     @Test
+    void theForgedCopyIsNamedFromItsBaseObraPrimaAndAprimoramentos() throws IllegalOperationException {
+        Character crafter = crafter(7, null);
+        ItemSpecification specification = ItemSpecification.builder()
+                .base(ArmorItem.ARMADURA_COMPLETA)
+                .masterpiece(ItemMasterpiece.of(DefensiveMasterpiece.REFORCADA))
+                .improvement(ItemImprovement.of(DefensiveImprovement.RESISTENTE))
+                .improvement(ItemImprovement.of(DefensiveImprovement.AJUSTADA))
+                .build();
+
+        Item forged = ItemForgery.by(crafter, ProfissaoSpecialization.JOALHERIA, specification).forge();
+
+        assertEquals(ArmorItem.ARMADURA_COMPLETA.getName() + " Reforçada Resistente Ajustada",
+                forged.getName());
+    }
+
+    /** Nothing fitted: the copy keeps the base Equipamento's name unchanged. */
+    @Test
+    void aBareForgeKeepsTheBaseName() throws IllegalOperationException {
+        Character crafter = crafter(7, RegaliaGrade.MENOR, ArtificeFeat.ARTESAO_DE_REGALIAS_MENOR);
+
+        Item forged = forgeryOf(crafter, RegaliaGrade.MENOR).forge();
+
+        assertEquals("Anel de Prata", forged.getName());
+    }
+
+    @Test
     void anAprimoramentoNeedsAnObraPrimaToHostIt() {
         Character crafter = crafter(7, null);
         ItemSpecification noMasterpiece = ItemSpecification.builder()
@@ -369,9 +395,9 @@ class ItemForgeryTest {
     }
 
     /**
-     * Each decision is its own commissioned work and re-totals the piece. Every catalog Preço
-     * modifier is 0 today, so what this pins is the arithmetic and the recompute, not a figure
-     * that moves — see {@link ItemForgery}'s own javadoc.
+     * Each decision is its own commissioned work and re-totals the piece — every Obra-Prima and
+     * Aprimoramento now carries a real Preço from {@link EnhancementPricing}, so each one moves
+     * the figure. See {@link ItemForgery}'s own javadoc.
      */
     @Test
     void eachDecisionRePricesThePieceFromTheWholeSpecification() {
@@ -389,6 +415,25 @@ class ItemForgeryTest {
                 + DefensiveImprovement.AJUSTADA.getPriceModifier();
         assertEquals(expected, forgery.getTotalValue());
         assertEquals(expected / 2, forgery.getForgingCost());
+    }
+
+    /**
+     * The rules' own worked example, priced end to end: an "Armadura de Justa Banhada em Ouro"
+     * is 44PE in {@code docs/rules/fabricacao-e-reparo.txt}'s repair-cost examples — the Épico
+     * armour's 24PE base plus a Raro Obra-Prima's 20PE off the Armaduras column. The number
+     * comes from a different rules block than the price grid does, so this is an independent
+     * check that both the table and the column mapping are read right.
+     */
+    @Test
+    void theArmaduraDeJustaBanhadaEmOuroExampleTotalsFortyFourPE() {
+        ItemForgery forgery = ItemForgery.by(crafter(7, null), ProfissaoSpecialization.METALURGIA,
+                ItemSpecification.of(ArmorItem.ARMADURA_DE_JUSTA));
+
+        forgery.setMasterpiece(ItemMasterpiece.of(DefensiveMasterpiece.BANHADA_EM_OURO));
+
+        assertEquals(44, forgery.getTotalValue());
+        assertEquals(22, forgery.getForgingCost());
+        assertEquals(44, ItemForgery.purchased(forgery.getSpecification()).getPurchasePrice());
     }
 
     /** The total is recomputed, never accumulated: dropping the Obra-Prima drops its price too. */

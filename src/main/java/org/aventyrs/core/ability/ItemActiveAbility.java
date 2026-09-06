@@ -31,9 +31,11 @@ public interface ItemActiveAbility extends ActiveAbility {
      * Masterpiece#getPriceModifier()} and {@code Improvement#getPriceModifier()}.
      *
      * <p>0 by default, and 0 everywhere today: no Preço column is authored for an item ability
-     * any more than for an Obra-Prima or an Aprimoramento (CLAUDE.md's "Item numeric columns"
-     * gap). The <em>arithmetic</em> is real all the same — author a constant's modifier here and
-     * every forge that binds it prices it, with no further wiring.
+     * (CLAUDE.md's "Item numeric columns" gap). It is now the <em>only</em> part of a forge that
+     * contributes nothing — an Obra-Prima and an Aprimoramento are both priced from their
+     * Raridade by {@code org.aventyrs.core.item.EnhancementPricing}. The <em>arithmetic</em> is
+     * real all the same — author a constant's modifier here and every forge that binds it prices
+     * it, with no further wiring.
      */
     default int getPriceModifier() {
         return 0;

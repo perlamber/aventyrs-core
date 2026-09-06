@@ -3,8 +3,14 @@ package org.aventyrs.core.sheet;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.EgoDomain;
+import org.aventyrs.core.character.DamageBase;
 import org.aventyrs.core.character.fixture.CharacterFixture;
+import org.aventyrs.core.item.AbstractItem;
+import org.aventyrs.core.item.AbstractWeapon;
 import org.aventyrs.core.item.ArmorItem;
+import org.aventyrs.core.item.Item;
+import org.aventyrs.core.item.ItemCategory;
+import org.aventyrs.core.item.ItemWeightClass;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.rest.RestType;
 import org.aventyrs.core.skill.SkillType;
@@ -12,6 +18,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -828,5 +835,147 @@ class CharacterSheetTest {
         CharacterSheet sheet = newSheet();
 
         assertFalse(sheet.removeFromInventory(ArmorItem.COURACA));
+    }
+
+    // --- Equipment slot validation ----------------------------------------------------------
+
+    private static CharacterSheet sheetWithMutableEquipment() {
+        CharacterFixture.loadTemplates();
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .equipment(new ArrayList<>())
+                .build();
+        return CharacterSheet.of(character, new Player());
+    }
+
+    private static Item shield() {
+        return AbstractItem.builder().name("Escudo Médio").category(ItemCategory.SHIELD)
+                .weightClass(ItemWeightClass.MEDIUM).build();
+    }
+
+    private static AbstractWeapon weapon(final ItemCategory category, final ItemWeightClass weightClass) {
+        return AbstractWeapon.builder().name(category + " " + weightClass).category(category)
+                .weightClass(weightClass).damageBase(DamageBase.UNARMED)
+                .skillType(SkillType.ATAQUE_CORPO_A_CORPO).build();
+    }
+
+    @Test
+    void equipAddsTheItemToTheCharacterWhenTheLoadoutStaysLegal() {
+        CharacterSheet sheet = sheetWithMutableEquipment();
+
+        sheet.equip(ArmorItem.COURACA);
+
+        assertEquals(List.of(ArmorItem.COURACA), sheet.getCharacter().getEquipment());
+    }
+
+    @Test
+    void equipRejectsASecondItemInASingleBodySlotAndLeavesTheCharacterUntouched() {
+        CharacterSheet sheet = sheetWithMutableEquipment();
+        sheet.equip(ArmorItem.COURACA);
+
+        IllegalOperationException thrown =
+                assertThrows(IllegalOperationException.class, () -> sheet.equip(ArmorItem.MEIA_ARMADURA));
+        assertEquals("EQUIPMENT_SLOT_ALREADY_OCCUPIED", thrown.getMessage());
+        assertEquals(List.of(ArmorItem.COURACA), sheet.getCharacter().getEquipment());
+    }
+
+    @Test
+    void equipRejectsASecondShield() {
+        CharacterSheet sheet = sheetWithMutableEquipment();
+        sheet.equip(shield());
+
+        IllegalOperationException thrown =
+                assertThrows(IllegalOperationException.class, () -> sheet.equip(shield()));
+        assertEquals("TOO_MANY_SHIELDS", thrown.getMessage());
+    }
+
+    @Test
+    void aShieldPairsWithOneLightWeapon() {
+        CharacterSheet sheet = sheetWithMutableEquipment();
+
+        sheet.equip(shield());
+        sheet.equip(weapon(ItemCategory.LIGHT_BLADE, ItemWeightClass.LIGHT));
+
+        assertEquals(2, sheet.getCharacter().getEquipment().size());
+    }
+
+    @Test
+    void twoLightWeaponsFitInTwoHands() {
+        CharacterSheet sheet = sheetWithMutableEquipment();
+
+        sheet.equip(weapon(ItemCategory.LIGHT_BLADE, ItemWeightClass.LIGHT));
+        sheet.equip(weapon(ItemCategory.CLUB, ItemWeightClass.LIGHT));
+
+        assertTrue(sheet.getCharacter().getEquipment().size() == 2);
+    }
+
+    @Test
+    void aShieldCannotBeHeldAlongsideAHeavyWeapon() {
+        CharacterSheet sheet = sheetWithMutableEquipment();
+        sheet.equip(shield());
+
+        IllegalOperationException thrown = assertThrows(IllegalOperationException.class,
+                () -> sheet.equip(weapon(ItemCategory.HEAVY_BLADE, ItemWeightClass.HEAVY)));
+        assertEquals("NOT_ENOUGH_HANDS", thrown.getMessage());
+    }
+
+    @Test
+    void aBowNeedsBothHandsEvenWhenItIsLightSoNoShieldFits() {
+        CharacterSheet sheet = sheetWithMutableEquipment();
+        sheet.equip(weapon(ItemCategory.BOW, ItemWeightClass.LIGHT));
+
+        assertFalse(sheet.canEquip(shield()));
+        assertThrows(IllegalOperationException.class, () -> sheet.equip(shield()));
+    }
+
+    @Test
+    void aCrossbowAndAWeaponExceedTwoHands() {
+        CharacterSheet sheet = sheetWithMutableEquipment();
+        sheet.equip(weapon(ItemCategory.CROSSBOW, ItemWeightClass.MEDIUM));
+
+        assertThrows(IllegalOperationException.class,
+                () -> sheet.equip(weapon(ItemCategory.LIGHT_BLADE, ItemWeightClass.LIGHT)));
+    }
+
+    @Test
+    void bodyArmourAndAWieldedLoadoutCoexist() {
+        CharacterSheet sheet = sheetWithMutableEquipment();
+
+        sheet.equip(ArmorItem.COURACA);
+        sheet.equip(shield());
+        sheet.equip(weapon(ItemCategory.LIGHT_BLADE, ItemWeightClass.LIGHT));
+
+        assertTrue(sheet.canEquip(AbstractItem.builder().name("Anel").category(ItemCategory.RING).build()));
+    }
+
+    @Test
+    void canEquipIsTheNonThrowingMirrorOfEquip() {
+        CharacterSheet sheet = sheetWithMutableEquipment();
+        sheet.equip(ArmorItem.COURACA);
+
+        assertFalse(sheet.canEquip(ArmorItem.COURACA));
+        assertTrue(sheet.canEquip(shield()));
+    }
+
+    @Test
+    void validateEquipmentLoadoutCatchesAnIllegalLoadoutAssembledThroughTheBuilder() {
+        CharacterFixture.loadTemplates();
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .equipment(new ArrayList<>(List.of(ArmorItem.COURACA, ArmorItem.MEIA_ARMADURA)))
+                .build();
+        CharacterSheet sheet = CharacterSheet.of(character, new Player());
+
+        assertThrows(IllegalOperationException.class, sheet::validateEquipmentLoadout);
+    }
+
+    @Test
+    void validateEquipmentLoadoutPassesForALegalBuilderLoadout() {
+        CharacterFixture.loadTemplates();
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .equipment(new ArrayList<>(List.of(ArmorItem.COURACA, shield(),
+                        weapon(ItemCategory.LIGHT_BLADE, ItemWeightClass.LIGHT))))
+                .build();
+        CharacterSheet sheet = CharacterSheet.of(character, new Player());
+
+        sheet.validateEquipmentLoadout();
     }
 }

@@ -125,4 +125,20 @@ public class TranslatableMessages {
 
     /** A Regalia is never stocked by an item store — it is forged for a specific Centelha, not sold. */
     public static final String STORE_DOES_NOT_SELL_REGALIA = "STORE_DOES_NOT_SELL_REGALIA";
+
+    /**
+     * Two Itens contend for the same single Equipamento slot — a character wears at most one
+     * Armadura, one Elmo, one par de Botas, one Capa and one par de Manoplas.
+     */
+    public static final String EQUIPMENT_SLOT_ALREADY_OCCUPIED = "EQUIPMENT_SLOT_ALREADY_OCCUPIED";
+
+    /** A character may wield at most one Escudo at a time. */
+    public static final String TOO_MANY_SHIELDS = "TOO_MANY_SHIELDS";
+
+    /**
+     * The equipped Escudos and armas need more hands than the character has — two hands. A shield
+     * or a one-handed weapon takes one; a Lâmina Pesada, a two-handed weapon, or any Arco/Besta
+     * takes both.
+     */
+    public static final String NOT_ENOUGH_HANDS = "NOT_ENOUGH_HANDS";
 }

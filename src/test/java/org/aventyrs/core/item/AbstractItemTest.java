@@ -66,6 +66,16 @@ class AbstractItemTest {
             public String getDescription() {
                 return "A chama se acende ao toque.";
             }
+
+            @Override
+            public ItemRarity getRarity() {
+                return ItemRarity.COMMON;
+            }
+
+            @Override
+            public EnhancementPriceCategory getPriceCategory() {
+                return EnhancementPriceCategory.ARMOR;
+            }
         };
         Improvement improvement = new Improvement() {
             @Override
@@ -81,6 +91,11 @@ class AbstractItemTest {
             @Override
             public ItemRarity getRarity() {
                 return ItemRarity.COMMON;
+            }
+
+            @Override
+            public EnhancementPriceCategory getPriceCategory() {
+                return EnhancementPriceCategory.ARMOR;
             }
         };
         ItemActiveAbility activeAbility = new ItemActiveAbility() {

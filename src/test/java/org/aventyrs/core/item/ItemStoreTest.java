@@ -42,4 +42,51 @@ class ItemStoreTest {
         assertFalse(store.offers(
                 ItemSpecification.regalia(ArmorItem.ARMADURA_COMPLETA, RegaliaGrade.MENOR)));
     }
+
+    @Test
+    void offeredMasterpiecesAndImprovementsAreTheDefensiveCatalogUpToTheCeiling() {
+        ItemStore store = new ItemStore(ItemRarity.RARE);
+
+        assertEquals(
+                java.util.Arrays.stream(DefensiveMasterpiece.values())
+                        .filter(masterpiece -> masterpiece.getRarity().isAtMost(ItemRarity.RARE))
+                        .toList(),
+                store.getOfferedMasterpieces());
+        assertTrue(store.getOfferedMasterpieces().contains(DefensiveMasterpiece.REFORCADA)); // Comum
+        assertFalse(store.getOfferedMasterpieces().contains(DefensiveMasterpiece.MITRAL));   // Épico
+
+        assertTrue(store.getOfferedImprovements().contains(DefensiveImprovement.RESISTENTE)); // Comum
+        assertFalse(store.getOfferedImprovements().contains(DefensiveImprovement.ENCAIXE));   // Épico
+    }
+
+    @Test
+    void offersGatesMasterpiecesAndImprovementsByRarity() {
+        ItemStore store = new ItemStore(ItemRarity.RARE);
+
+        assertTrue(store.offers(DefensiveMasterpiece.REFORCADA));
+        assertFalse(store.offers(DefensiveMasterpiece.MITRAL));
+        assertTrue(store.offers(DefensiveImprovement.RESISTENTE));
+        assertFalse(store.offers(DefensiveImprovement.ENCAIXE));
+    }
+
+    @Test
+    void offersAppliesTheCeilingToEveryPartOfARequestedCopy() {
+        ItemStore store = new ItemStore(ItemRarity.RARE);
+
+        assertTrue(store.offers(ItemSpecification.builder()
+                .base(ArmorItem.ARMADURA_COMPLETA)
+                .masterpiece(ItemMasterpiece.of(DefensiveMasterpiece.REFORCADA))
+                .improvement(ItemImprovement.of(DefensiveImprovement.RESISTENTE))
+                .build()));
+
+        assertFalse(store.offers(ItemSpecification.builder()
+                .base(ArmorItem.ARMADURA_COMPLETA)
+                .masterpiece(ItemMasterpiece.of(DefensiveMasterpiece.MITRAL)) // Épico
+                .build()));
+
+        assertFalse(store.offers(ItemSpecification.builder()
+                .base(ArmorItem.ARMADURA_COMPLETA)
+                .improvement(ItemImprovement.of(DefensiveImprovement.ENCAIXE)) // Épico
+                .build()));
+    }
 }

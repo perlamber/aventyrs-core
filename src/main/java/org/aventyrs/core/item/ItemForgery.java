@@ -110,11 +110,12 @@ import static org.aventyrs.core.util.TranslatableMessages.STORE_DOES_NOT_SELL_RE
  * full Preço to the total and the single halving happens in {@code getForgingCost()}, so adding
  * two 10-PE Aprimoramentos costs 10, never 5+5 rounded twice.
  *
- * <p><b>Every catalog Preço modifier is 0 today</b> — no Obra-Prima, Aprimoramento or item
- * ability authors one (CLAUDE.md's "Item numeric columns" gap), so a real forge's total currently
- * equals its base Preço. The arithmetic is real regardless; authoring a modifier prices every
- * forge that uses it with no further wiring. <b>And the cost is reported, not spent</b>: this
- * core has no PE economy, so nothing deducts it from anyone.
+ * <p><b>Obras-Primas and Aprimoramentos are priced for real</b> — {@link EnhancementPricing}
+ * resolves each one's Preço from its Raridade and its column of the source grids, so an
+ * Armadura de Justa (24PE) fitted with Banhada em Ouro (Raro, Armaduras: 20PE) totals the 44PE
+ * the rules' own repair example names. Only an {@code ItemActiveAbility} still contributes 0:
+ * no Preço column is authored for one (CLAUDE.md's "Item numeric columns" gap). <b>And a forge's
+ * cost is reported, not spent</b> — only a store purchase debits PE.
  *
  * <p><b>A forgery is a description, not a receipt.</b> The mutators change what will be made;
  * only {@link #forge()} makes it — and it mutates the crafter, advancing the Regalia history.
@@ -351,12 +352,16 @@ public final class ItemForgery {
      * producedByCharacterId} — or, for a donation, unscaled, unstamped and marked as Aventyr's.
      * A forged Regalia is recorded on the crafter's Regalia history.
      *
+     * <p>The copy's {@link Item#getName() name} is {@link #composeName() composed} from the base
+     * Equipamento's plus every fitted Obra-Prima's and Aprimoramento's.
+     *
      * <p>The copy is <b>returned, not equipped</b>: what its owner does with it is the caller's
      * business.
      */
     public Item forge() throws IllegalOperationException {
         validate();
         AbstractItem forged = AbstractItem.builderFromTemplate(specification.getBase())
+                .name(composeName())
                 .hardness((int) Math.floor(specification.getBase().getHardness() * hardnessFactor()))
                 .producedByCharacterId(crafter == null ? null : crafter.getId())
                 .donatedByAventyr(isDonation())
@@ -373,6 +378,24 @@ public final class ItemForgery {
             crafter.recordRegaliaCrafted(specification.getRegaliaGrade());
         }
         return forged;
+    }
+
+    /**
+     * The forged copy's name: the base Equipamento's, then its fitted Obra-Prima's, then each
+     * Aprimoramento's in the order they were added, space-joined. A bare forge keeps the base
+     * name unchanged ("Anel de Prata"); the same base fitted with the Reforçada Obra-Prima and a
+     * Resistente Aprimoramento becomes "Anel de Prata Reforçada Resistente". The parts name the
+     * copy; they don't restate the base.
+     */
+    private String composeName() {
+        StringBuilder name = new StringBuilder(specification.getBase().getName());
+        if (specification.getMasterpiece() != null) {
+            name.append(' ').append(specification.getMasterpiece().getName());
+        }
+        for (Improvement improvement : specification.getImprovements()) {
+            name.append(' ').append(improvement.getName());
+        }
+        return name.toString();
     }
 
     private void requireTrade() throws IllegalOperationException {

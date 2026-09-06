@@ -21,4 +21,14 @@ public enum PowerStoneImprovement {
     PowerStoneImprovement(final ItemRarity rarity) {
         this.rarity = rarity;
     }
+
+    /**
+     * This Aprimoramento's Preço in PE — its {@link #getRarity()} read down the Pedras do Poder
+     * column of the "Preços de Aprimoramentos" table (Comum 2, Incomum 4, Raro 7, Épico 11,
+     * Mítico 16). Read directly from {@link EnhancementPricing} for the same reason {@link
+     * PowerStoneMasterpiece#getPriceModifier()} is, and with the same missing consumer.
+     */
+    public int getPriceModifier() {
+        return EnhancementPricing.improvementPrice(rarity, EnhancementPriceCategory.POWER_STONE);
+    }
 }

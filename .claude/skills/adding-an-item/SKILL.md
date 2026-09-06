@@ -36,9 +36,13 @@ wraps it to spend `AbstractCombatantSheet#equipmentPoints` (the PE budget) — s
 the GD from `ItemRarity`; the forge stamps `producedByCharacterId`. The forge is also assembled a
 decision at a time — `setMasterpiece`/`addImprovement`/`setActiveAbility` each re-total
 `getTotalValue()` (base Preço + every part's `getPriceModifier()`), and `getForgingCost()` is half
-that, halved once at the end. **So author a `getPriceModifier()` on a new Obra-Prima or
-Aprimoramento the moment its rules text gives one a Preço** — every forge that fits it prices it
-with no further wiring; today they all return 0. A copy holds a `List<Improvement>` capped 1/2/3 by
+that, halved once at the end. **A new Obra-Prima or Aprimoramento is priced automatically** —
+`Masterpiece`/`Improvement#getPriceModifier()` default to an `EnhancementPricing` lookup from the
+constant's `getRarity()` down its `getPriceCategory()` column (the Armas / Armaduras / Pedras do
+Poder grids under "Itens Obras-Primas" in `docs/rules/equipamentos.txt`), so the only thing a new
+constant owes is those two, both abstract on purpose. Only `ItemActiveAbility#getPriceModifier()`
+still returns 0 — author it the moment its rules text gives one a Preço. A copy holds a
+`List<Improvement>` capped 1/2/3 by
 `ItemWeightClass`, fitted via `AbstractItem#addImprovement` (`getImprovement()` is a deprecated
 first-or-null shim). Still unmodeled and not to be built speculatively: a PE economy for
 *production* (a self-forge reports its cost, only a purchase spends), the offensive

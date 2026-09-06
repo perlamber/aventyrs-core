@@ -480,6 +480,11 @@ class ConditionTest {
             }
 
             @Override
+            public org.aventyrs.core.item.EnhancementPriceCategory getPriceCategory() {
+                return org.aventyrs.core.item.EnhancementPriceCategory.WEAPON;
+            }
+
+            @Override
             public boolean preventsDisarming() {
                 return true;
             }

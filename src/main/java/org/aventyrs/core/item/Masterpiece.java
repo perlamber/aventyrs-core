@@ -15,6 +15,21 @@ public interface Masterpiece {
 
     String getDescription();
 
+    /**
+     * This Obra-Prima's Raridade — the tier its fabrication Grau de Dificuldade, its crafter's
+     * minimum Graduação ({@code ItemRarity#getMinimumMasterpieceGraduation()}) and its Preço
+     * ({@link #getPriceModifier()}) are all read from.
+     */
+    ItemRarity getRarity();
+
+    /**
+     * Which column of the "Preços de Obras-Primas" table this one is priced from — Armas for an
+     * Obra-Prima Ofensiva, Armaduras for a Defensiva. Abstract rather than defaulted on purpose:
+     * a silent default would price the unauthored offensive catalog off the armour column, and
+     * the two differ at every tier but Incomum and Mítico.
+     */
+    EnhancementPriceCategory getPriceCategory();
+
     default int getPhysicalDefenseBonus() {
         return 0;
     }
@@ -72,7 +87,12 @@ public interface Masterpiece {
         return 0;
     }
 
+    /**
+     * This Obra-Prima's Preço in PE, from the "Preços de Obras-Primas" table — its {@link
+     * #getRarity()} read down this Obra-Prima's own {@link #getPriceCategory()} column. Summed
+     * into a forge's worth by {@code ItemForgery#getTotalValue()}.
+     */
     default int getPriceModifier() {
-        return 0;
+        return EnhancementPricing.masterpiecePrice(getRarity(), getPriceCategory());
     }
 }

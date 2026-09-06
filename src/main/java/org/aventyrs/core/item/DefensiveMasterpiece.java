@@ -98,6 +98,12 @@ public enum DefensiveMasterpiece implements Masterpiece {
         return favorDescription;
     }
 
+    /** Every entry here is fitted to a defensive item, so all of them price off the Armaduras column. */
+    @Override
+    public EnhancementPriceCategory getPriceCategory() {
+        return EnhancementPriceCategory.ARMOR;
+    }
+
     @Override
     public int getEffectiveDefenseBonus(final DefenseType defenseType, final Character character) {
         if (this == REFORCADA && defenseType == DefenseType.PHYSICAL && requirements.isMetBy(character)) {
