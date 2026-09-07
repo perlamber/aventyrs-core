@@ -1,5 +1,6 @@
 package org.aventyrs.core.character.services;
 
+import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.feat.Feat;
 import org.aventyrs.core.character.CharacterStatus;
@@ -42,7 +43,7 @@ public class HitPointsServiceImpl implements HitPointsService {
     @Override
     public int getMaxHitPoints(final Character character) {
         return BASE_HIT_POINTS
-                + character.getAttributes().getVigor().getTotal() * getLifeMultiplier(character)
+                + character.getEffectiveAttributeTotal(AttributeDomain.VIGOR) * getLifeMultiplier(character)
                 + getHitPointsBonus(character);
     }
 

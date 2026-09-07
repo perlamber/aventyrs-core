@@ -1,5 +1,6 @@
 package org.aventyrs.core.effect;
 
+import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.IllegalOperationException;
@@ -72,7 +73,7 @@ public class ManaPurge extends AbstractEffect implements CriticalEffect {
         target.spendMagicPoints(IMMEDIATE_DRAIN);
 
         Optional<Integer> remainingRounds = criticalResult == CriticalResult.ACERTO_CRITICO_MENOR
-                ? Optional.of(affectedCharacter.getAttributes().getFocus().getTotal())
+                ? Optional.of(affectedCharacter.getEffectiveAttributeTotal(AttributeDomain.FOCUS))
                 : Optional.empty();
         target.applyEffect(new ManaDrain(PER_ROUND_DRAIN, remainingRounds));
 

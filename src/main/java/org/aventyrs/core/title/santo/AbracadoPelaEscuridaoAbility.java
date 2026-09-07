@@ -5,6 +5,7 @@ import lombok.Getter;
 
 import java.util.Optional;
 
+import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.sheet.Interaction;
 import org.aventyrs.core.title.AventyrTitleAbility;
@@ -152,8 +153,8 @@ public enum AbracadoPelaEscuridaoAbility implements AventyrTitleAbility {
      * The "gastar uma quantidade de pontos de vida igual ao seu Vigor" cost shared by
      * {@code SACRIFICIO_YMIRIANO} and {@code FUROR_DE_SYLPH} — real, tested: Vigor's total is
      * already a plain value this core computes everywhere else
-     * ({@code character.getAttributes().getVigor().getTotal()}), so this needs no missing
-     * system of its own, even though what the spent PV actually buys is TODO'd on both
+     * ({@code character.getEffectiveAttributeTotal(AttributeDomain.VIGOR)}), so this needs no
+     * missing system of its own, even though what the spent PV actually buys is TODO'd on both
      * constants. Returns 0 for the other two constants, rather than throwing, so a caller
      * never needs to guard on which constant it's holding.
      */
@@ -161,7 +162,7 @@ public enum AbracadoPelaEscuridaoAbility implements AventyrTitleAbility {
         if (this != SACRIFICIO_YMIRIANO && this != FUROR_DE_SYLPH) {
             return 0;
         }
-        return character.getAttributes().getVigor().getTotal();
+        return character.getEffectiveAttributeTotal(AttributeDomain.VIGOR);
     }
 
     /**

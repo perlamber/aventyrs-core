@@ -1,5 +1,6 @@
 package org.aventyrs.core.effect;
 
+import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.services.HitPointsService;
 import org.aventyrs.core.sheet.CombatantSheet;
@@ -96,7 +97,7 @@ public class RealExecution extends AbstractEffect implements CriticalEffect {
             destroyed = true;
         } else {
             int currentHitPoints = hitPointsService.getCurrentHitPoints(affectedCharacter, target);
-            int vigorTotal = affectedCharacter.getAttributes().getVigor().getTotal();
+            int vigorTotal = affectedCharacter.getEffectiveAttributeTotal(AttributeDomain.VIGOR);
             destroyed = currentHitPoints <= MENOR_VIGOR_MULTIPLIER * vigorTotal;
         }
 

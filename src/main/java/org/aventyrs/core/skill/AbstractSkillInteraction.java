@@ -367,7 +367,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
             result.reachedDifficultyLevel(reached.orElse(null))
                     .criticalResult(criticalResult);
             resolveOutcome(bonus + skillRoll.getTotal(), skillRoll.getTargetValue(), difficultyReduction,
-                    skillCompetencyAbilities, sceneContext).ifPresent(outcome -> {
+                    skillCompetencyAbilities, character.getFeats(), sceneContext, character).ifPresent(outcome -> {
                         result.succeeded(outcome.succeeded()).margin(outcome.margin());
                         if (outcome.succeeded()) {
                             List<Blessing> earned = skillCompetencyAbilities.stream()
@@ -657,17 +657,21 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
      * <p>A tie succeeds: a total exactly equal to the target beats it, the same reading {@code
      * AttackReceiver} takes ("a tie is a successful defense").
      *
-     * <p>An {@code resolveAutomaticSuccess} ability short-circuits the comparison entirely — see
-     * that hook's own javadoc — and reports a margin of 0, since no roll needed to be beaten.
+     * <p>A {@code resolveAutomaticSuccess} Skill Competency Ability or Talento short-circuits the
+     * comparison entirely — see those hooks' own javadocs — and reports a margin of 0, since no
+     * roll needed to be beaten.
      */
     private Optional<RollOutcome> resolveOutcome(final int total, final Integer targetValue, final int difficultyReduction,
-                                                  final List<SkillCompetencyAbility> abilities, final SceneContext sceneContext) {
+                                                  final List<SkillCompetencyAbility> abilities, final List<Feat> feats,
+                                                  final SceneContext sceneContext, final Character character) {
         if (targetValue == null) {
             return Optional.empty();
         }
         int effectiveTarget = easedTarget(targetValue, difficultyReduction);
         boolean automatic = abilities.stream()
-                .anyMatch(ability -> ability.resolveAutomaticSuccess(skillType, effectiveTarget, sceneContext));
+                .anyMatch(ability -> ability.resolveAutomaticSuccess(skillType, effectiveTarget, sceneContext))
+                || feats.stream().anyMatch(feat -> feat.resolveAutomaticSuccess(
+                        skillType, effectiveTarget, sceneContext, character));
         if (automatic) {
             return Optional.of(new RollOutcome(true, 0));
         }
@@ -799,17 +803,19 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
      * text names Força specifically. Two statements about two different numbers, so a finesse
      * swordsman rolls on Destreza and still adds half their Força.
      *
-     * <p>Reads {@code AttributeValue#getTotal()}, the permanent value, exactly as {@code
-     * SpellCastingService#resolvePrimaryDamage} does for its own Foco term: a round-scoped {@code
-     * ModifierType#STRENGTH_BONUS} reaches a Perícia roll governed by Força and nothing else (see
-     * CLAUDE.md), and a dano roll is not that roll.
+     * <p>Reads {@code Character#getEffectiveAttributeTotal(STRENGTH)} — the permanent value (base
+     * + racial + variable) plus any permanent {@code Feat#resolveAttributeBonus} grant, exactly
+     * as every other Atributo-total reader now does. A round-scoped {@code
+     * ModifierType#STRENGTH_BONUS} {@code TemporaryBonus} still does <b>not</b> reach it: that is
+     * read only on a Perícia roll governed by Força (see CLAUDE.md), and a dano roll is not that
+     * roll.
      */
     private int resolveMeleeStrengthDamage(final CombatantSheet attacker) {
         if (skillType != SkillType.ATAQUE_CORPO_A_CORPO) {
             return 0;
         }
         Character character = attacker.getCharacter();
-        int strength = character.getAttributes().getAttribute(AttributeDomain.STRENGTH).getTotal();
+        int strength = character.getEffectiveAttributeTotal(AttributeDomain.STRENGTH);
         boolean fullStrength = isFirstAttackOfRound(attacker)
                 && character.getAttributeAbilities().stream()
                         .anyMatch(AttributeAbility::upgradesFirstMeleeAttackOfRoundStrengthScaling);

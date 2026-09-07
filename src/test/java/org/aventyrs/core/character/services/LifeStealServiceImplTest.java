@@ -4,10 +4,13 @@ import org.aventyrs.core.ability.VigorAbility;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.TitleSlot;
 import org.aventyrs.core.character.fixture.CharacterFixture;
+import org.aventyrs.core.feat.ElficoFeat;
 import org.aventyrs.core.feat.VampiricoFeat;
+import org.aventyrs.core.race.Elfo;
 import org.aventyrs.core.race.Human;
 import org.aventyrs.core.race.Vampiro;
 import org.aventyrs.core.sheet.CharacterSheet;
+import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.LifeSteal;
 import org.aventyrs.core.sheet.Player;
 import org.aventyrs.core.title.santo.Santo;
@@ -15,6 +18,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -109,5 +113,21 @@ class LifeStealServiceImplTest {
     void sedeDeSangueGrantsNothingWithNoActiveLifeSteal() {
         Character character = vampiroWithSedeDeSangue(2);
         assertEquals(0, lifeStealService.getTotalLifeSteal(character, sheet(character)));
+    }
+
+    @Test
+    void corruptorSombrioGrantsLifeStealWithoutAnActiveEffect() throws IllegalOperationException {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .race(new Elfo())
+                .feats(new ArrayList<>())
+                .build();
+        CharacterSheet sheet = sheet(character);
+        sheet.accumulateExperience(BigDecimal.valueOf(100));
+        FeatService featService = new FeatServiceImpl();
+
+        featService.grantFeat(character, sheet, ElficoFeat.GUARDIAO_DOS_BOSQUES);
+        featService.grantFeat(character, sheet, ElficoFeat.CORRUPTOR_SOMBRIO);
+
+        assertEquals(1, lifeStealService.getTotalLifeSteal(character, sheet));
     }
 }

@@ -2,13 +2,18 @@ package org.aventyrs.core.feat;
 
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.effect.Definhar;
+import org.aventyrs.core.effect.EffectChain;
 import org.aventyrs.core.race.Elfo;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.scene.TerrainType;
+import org.aventyrs.core.skill.DifficultyLevel;
 import org.aventyrs.core.skill.Skill;
 import org.aventyrs.core.skill.conhecimentos.ConhecimentosSpecialization;
 import org.aventyrs.core.skill.SkillTrait;
 import org.aventyrs.core.skill.SkillType;
+
+import java.util.List;
 
 /**
  * Talentos Élficos — four <b>Guardiões</b>, each adapting the holder to one environment, plus
@@ -151,11 +156,8 @@ public enum ElficoFeat implements Feat {
     // TODO: the Vantagem and the paired Desvantagem are both conditioned on lighting — shadow,
     //  night, bright sun — and nothing models light or time of day. Both halves are withheld
     //  together, so the Talento is neither better nor worse than written.
-    // TODO: Roubo de Vida is real (LifeStealService), but it is sourced from an active LifeSteal
-    //  effect on the sheet plus AttributeAbility#resolveLifeStealBonus — a Feat has no hook, and
-    //  LifeSteal is deliberately kept off ModifierType.
-    // TODO: Corrente de Efeitos – Definhar exists as an effect class, but nothing attaches a
-    //  Corrente to every attack a character makes.
+    // TODO: Definhar reaches physical attacks through Feat#resolveEffectChains and AttackDelivery,
+    //  but SpellCastingService has no post-delivery EffectChain pipeline to attach it to Magias.
     // TODO: "possuir tendência neutra ou maligna" is unenforced — Tendência is a plain
     //  unvalidated 1-10 value and FeatRequirements has no clause for it. So is "perde a limitação
     //  racial para adquirir o Título Bruxo", which is a Título-side restriction nothing validates.
@@ -170,7 +172,18 @@ public enum ElficoFeat implements Feat {
             FeatRequirements.builder()
                     .requiredFeatCategory(FeatCategory.ELFICO)
                     .requiredFeatCategoryCount(1)
-                    .build()),
+                    .build()) {
+        @Override
+        public int resolveGrantedLifeSteal(final Character character) {
+            return LIFE_STEAL;
+        }
+
+        @Override
+        public List<EffectChain> resolveEffectChains(final Character attacker, final SkillType attackSkill,
+                                                      final org.aventyrs.core.skill.AttackSource attackSource) {
+            return List.of(new Definhar());
+        }
+    },
 
     /**
      * "Você é considerado um personagem Feérico para requisitos de Talentos e Habilidades.
@@ -200,12 +213,6 @@ public enum ElficoFeat implements Feat {
      * catalog to reduce a roll's GD, and the shape {@code Feat#resolveDifficultyReduction} exists
      * for: unconditional, one named Perícia.
      */
-    // TODO: "Margem Crítica Menor +2 para cada Título Aventyr Desperto" needs
-    //  resolveCriticalMarginIncrease, which lives on EgoAdvantage/AttributeAbility/
-    //  SkillCompetencyAbility but not on Feat.
-    // TODO: "sempre considerado bem-sucedido quando o GD for Médio ou inferior" is an
-    //  auto-success hook, which this core has never had — the same still-unbuilt piece
-    //  MedicinaECuraExcellency#FOCADO and AttentionCompetencyAbility#PERCEPCAO_DE_FOXM wait on.
     SENTIDOS_ABSOLUTOS(
             "A GD de suas rolagens de Atenção é reduzida em -1 Nível. Sua Margem Crítica Menor de "
                     + "suas rolagens de Atenção aumentam em +2 números para cada Título Aventyr "
@@ -224,9 +231,26 @@ public enum ElficoFeat implements Feat {
         public int resolveDifficultyReduction(final SkillType skillType, final Character character) {
             return skillType == SkillType.ATTENTION ? ATENCAO_DIFFICULTY_REDUCTION : 0;
         }
+
+        @Override
+        public int resolveCriticalMarginIncrease(final SkillType skillType, final SceneContext sceneContext,
+                                                 final Character character) {
+            return skillType == SkillType.ATTENTION
+                    ? CRITICAL_MARGIN_PER_AWAKENED_TITLE * character.getAllTitles().size()
+                    : 0;
+        }
+
+        @Override
+        public boolean resolveAutomaticSuccess(final SkillType skillType, final int targetValue,
+                                               final SceneContext sceneContext, final Character character) {
+            return skillType == SkillType.ATTENTION
+                    && targetValue <= DifficultyLevel.MEDIUM.getBaseValue();
+        }
     };
 
     private static final int ATENCAO_DIFFICULTY_REDUCTION = 1;
+    private static final int CRITICAL_MARGIN_PER_AWAKENED_TITLE = 2;
+    private static final int LIFE_STEAL = 1;
 
     /**
      * The Vantagem every Guardião grants, differing only in which {@link TerrainType} unlocks it:

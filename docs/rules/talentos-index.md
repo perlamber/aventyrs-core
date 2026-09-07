@@ -141,7 +141,7 @@ with enforced Pré-requisitos and a named blocker.
 
 | batch | tree | constants | real clauses |
 | --- | --- | --- | --- |
-| 1 | `AnaoFeat` | 5 | Filho de Ymir (PV mult. + Dano Base), Vigor do Inverno (PV mult.), Vantagem de Tamanho + Glória Ymiriana (opposed-combatant, see below) |
+| 1 | `AnaoFeat` | 5 | Filho de Ymir (PV mult. + Dano Base), Vigor do Inverno (PV mult.), Vantagem de Tamanho + Glória Ymiriana (opposed-combatant, see below), Conselheiro de Guerra Ymiriano (+1 Gnose to the full effective total + a free Habilidade de Força — `ConselheiroDeGuerraYmirianoFeat`, see below) — **all 5 real** |
 | 1 | `AvianoFeat` | 4 | Visão da Verdade (−1 nível de GD em Atenção) |
 | 2 | `DraconicoFeat` | 5 | Asas de Dragão (+2 Defesas) |
 | 2 | `OgricoFeat` | 4 | none — every constant extends the unbuilt Bocarra |
@@ -355,20 +355,28 @@ Many constants across other trees are now unblocked by the same field — anythi
 alvos X", "efetuadas contra Personagens de Tendência Y", or "quando roladas contra outros
 Vampiros". Each still needs revisiting individually.
 
-### One hook considered and deliberately not built
+### `Feat#resolveAttributeBonus` — now reaches the full effective total
 
-- **`Feat#resolveAttributeBonus`** — cited by 9+ constants across five trees ("+1 Bônus Racial em
-  X"), and the most-wanted hook in the racial catalog. **Not batch-sized**: unlike
-  `resolveDifficultyReduction`, which had exactly one consumption point, an Attribute total is
-  read at **27 call sites across 9 files** with no chokepoint. Building it means first
-  introducing something like `CharacterAttributeService#getTotalAttribute(Character,
-  AttributeDomain)` and routing every reader through it; done piecemeal, the bonus would silently
-  apply to rolls but not to PV, or to PM but not to the Graduação cap. Its own piece of work.
-  **Built in batch 6** — see above. Every `BestialFeat` Herança now grants its own "+1 de bônus
-  racial em &lt;Atributo&gt;" through it (`HERANCA_ANFIBIA`'s Vigor +1 is computed but currently
-  unobservable — no Perícia is Vigor-governed). `HERANCA_CANINA`'s *Faro Apurado* clause remains
-  withheld even so: it is purpose-scoped ("a partir do olfato"), and the hook is for scopes this
-  core can actually express.
+Cited by 9+ constants across five trees ("+1 Bônus Racial em X"), and the most-wanted hook in
+the racial catalog. **Built in batch 6** for the Perícia-roll path (every `BestialFeat` Herança,
+`VampiricoFeat#MESTRE_VAMPIRO`), then **finished** alongside `AnaoFeat#CONSELHEIRO_DE_GUERRA_YMIRIANO`:
+`Character#getEffectiveAttributeTotal(domain)` = `AttributeValue#getTotal()` + the
+`resolveAttributeBonus` scan, and every Atributo-*total* reader now calls it — PV/PM/PD,
+Conjuração, Rest, `EsquivaEApararInteraction`, `ItemRequirements`, `SpellDurationService`, the
+half-Atributo effect maths, the melee ½-Força dano term. `getBase()` readers (Graduação cap,
+Habilidade slot count, `FeatRequirements`) deliberately stay put; `AbstractSkillInteraction`
+keeps its equivalent inline sum (routing `getValueForRoll` would double-count). So
+`HERANCA_ANFIBIA`'s Vigor +1 — once "computed but unobservable" — now moves max PV.
+`HERANCA_CANINA`'s *Faro Apurado* clause remains withheld: it is purpose-scoped ("a partir do
+olfato"), and the hook is for scopes this core can express.
+
+- **`Feat#getGrantedAttributeAbilities(Character)`** fell out of the same constant — a Talento
+  handing its holder one **named** Habilidade de Atributo for free, folded live into
+  `Character#getAttributeAbilities()` (mirroring `getGrantedNaturalWeapons`), validated against
+  the raw `getAcquiredAttributeAbilities()` so it costs no paid slot. Passive/`resolve*` hooks
+  only. `CONSELHEIRO_DE_GUERRA_YMIRIANO` is the sole consumer; `HumanoFeat#LIMIAR_DA_EVOLUCAO`
+  and `TrollFeat#VIGOR_TROLLICO` cite it but each has its own remaining blocker (a chosen
+  Atributo, a second-Título trigger; an unmodelled sub-lineage).
 
 ### Three clause shapes worth knowing before the next batch
 

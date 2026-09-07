@@ -64,8 +64,13 @@ mechanism.
   targets beyond the primary one attack may name — `AttackTargetingService`,
   `ArtesMarciaisFeat#DOMINAR_ARTE_MARCIAL_ARTE_FLUIDA`; the hook answers *how many*, never *which*
   — adjacency is the caller's, see `damage-and-combat`), `resolveAttributeBonus(AttributeDomain, Character)` (a flat
-  Atributo grant, the first Talento hook to do so — read *only* by `AbstractSkillInteraction`
-  into a governed Perícia roll, `VampiricoFeat#MESTRE_VAMPIRO`), and `resolveActiveAbility()` →
+  permanent Atributo grant, summed by `Character#getEffectiveAttributeTotal` which every
+  Atributo-*total* reader now calls — PV/PM/PD, Conjuração, Rest, Defesa, `ItemRequirements`, the
+  melee ½-Força term; `VampiricoFeat#MESTRE_VAMPIRO`, `ConselheiroDeGuerraYmirianoFeat`),
+  `getGrantedAttributeAbilities(Character)` (a *named* Habilidade de Atributo handed to the
+  holder free — folded into `Character#getAttributeAbilities()` past the `AttributeAbilityService`
+  slot economy, passive/`resolve*` hooks only; `ConselheiroDeGuerraYmirianoFeat`), and
+  `resolveActiveAbility()` →
   `Optional<ActiveAbility>` (a Poder Vampírico — an activatable timed state triggered through
   `ActiveAbilityService#activate`; must return a **stable singleton**, since
   `Character#getActiveAbilities()` aggregates `getFeats()` live and `activate` matches by `==` —
@@ -235,9 +240,13 @@ constant is shared by every character. Model it exactly like `ArtesAprimorarComA
 References: `FocoEmPericiaFeat` (SkillType), `TerrenoPrediletoFeat` (TerrainType + a
 Scene-conditioned hook), `EspecialistaEmArmaFeat`/`AtiradorPerfeitoFeat`/
 `AcertoCriticoAprimoradoFeat` (AttackMethod), `AdotadoPorSylphFeat` /
-`ArmamentoDraconicoFeat` (a set). Still unbuildable:
-a chosen-Atributo/Ego grant (blocked on the acquisition-slot / Talento-can't-grant-Atributo
-gaps), and a `FeatRequirements` clause about *another* held Talento's own choice.
+`ArmamentoDraconicoFeat` (a set). A **fixed**-Atributo grant is buildable now:
+`ConselheiroDeGuerraYmirianoFeat` carries a chosen `StrengthAbility`, grants a fixed +1 Gnose
+via `resolveAttributeBonus` and the picked ability via `getGrantedAttributeAbilities`, and its
+`of(Character, choice)` factory enforces "que você cumpra os requisitos". Still unbuildable: a
+*chosen*-Atributo grant (needs a subclass whose `resolveAttributeBonus`/`getGrantedAttributeAbilities`
+branch on the picked `AttributeDomain` — `HumanoFeat#LIMIAR_DA_EVOLUCAO`), a chosen-Ego grant,
+and a `FeatRequirements` clause about *another* held Talento's own choice.
 
 ## 4. Wire `FeatService`
 

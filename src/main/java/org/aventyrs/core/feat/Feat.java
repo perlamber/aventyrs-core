@@ -1,12 +1,14 @@
 package org.aventyrs.core.feat;
 
 import org.aventyrs.core.ability.ActiveAbility;
+import org.aventyrs.core.ability.AttributeAbility;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import org.aventyrs.core.effect.CriticalEffect;
+import org.aventyrs.core.effect.EffectChain;
 import org.aventyrs.core.sheet.ActionCost;
 import org.aventyrs.core.sheet.Blessing;
 import org.aventyrs.core.sheet.CombatantAction;
@@ -550,6 +552,31 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     }
 
     /**
+     * Whether this Talento makes a roll automatically succeed against its effective target GD —
+     * {@code ElficoFeat#SENTIDOS_ABSOLUTOS}'s "sempre considerado bem-sucedido" clause. The
+     * target has already received every GD reduction, so an override compares it directly to the
+     * ceiling stated by its rule.
+     *
+     * <p>Only consulted when the caller supplied a target GD. A roll made against no stated
+     * target remains unresolved rather than being reported as successful. False by default.
+     */
+    default boolean resolveAutomaticSuccess(final SkillType skillType, final int targetValue,
+                                            final SceneContext sceneContext, final Character character) {
+        return false;
+    }
+
+    /**
+     * Correntes de Efeito this Talento adds to each attack made by its holder — {@code
+     * ElficoFeat#CORRUPTOR_SOMBRIO}'s Definhar. Empty by default. {@code AttackDelivery} combines
+     * these with the attack's caller-supplied chains and applies them only when the shared
+     * Corrente threshold is met.
+     */
+    default List<EffectChain> resolveEffectChains(final Character attacker, final SkillType attackSkill,
+                                                  final AttackSource attackSource) {
+        return List.of();
+    }
+
+    /**
      * Extra {@link CriticalEffect}s this Talento adds to an attack the holder lands as a critical
      * — {@code AssassinoFeat#ABRIR_FERIDAS}'s "seus ataques recebem 'Sangramento' como Efeito
      * Crítico adicional". Merged with the caller-supplied list and then filtered by the victim's
@@ -595,6 +622,16 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     }
 
     /**
+     * Roubo de Vida this Talento grants as a standing source, before any amplifiers — {@code
+     * ElficoFeat#CORRUPTOR_SOMBRIO}'s "recebe Roubo de Vida 1". Unlike {@link
+     * #resolveLifeStealBonus(Character)}, this establishes life steal even with no active
+     * {@code LifeSteal} effect. Zero by default.
+     */
+    default int resolveGrantedLifeSteal(final Character character) {
+        return 0;
+    }
+
+    /**
      * A flat bonus this Talento adds to one Atributo — {@code VampiricoFeat#MESTRE_VAMPIRO}'s
      * "+1 ao Bônus Racial em Atributo ganho por ser um Vampiro". Overriding CLAUDE.md's "a
      * Talento cannot grant an Atributo bonus" for the first time, so the reach is deliberately
@@ -609,6 +646,28 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      */
     default int resolveAttributeBonus(final AttributeDomain domain, final Character character) {
         return 0;
+    }
+
+    /**
+     * Habilidades de Atributo this Talento grants its holder for free, outside {@code
+     * org.aventyrs.core.character.services.AttributeAbilityService}'s slot economy — "1
+     * Habilidade de Força (que você cumpra os requisitos)", {@code
+     * AnaoFeat#CONSELHEIRO_DE_GUERRA_YMIRIANO}, recorded on {@link
+     * ConselheiroDeGuerraYmirianoFeat}. Folded live into {@code Character#getAttributeAbilities()}
+     * the same way {@link #getGrantedNaturalWeapons} feeds {@code Character#getNaturalWeapons()}
+     * and {@link #resolveActiveAbility} feeds {@code Character#getActiveAbilities()} — so every
+     * three-source ability scan and {@code AbstractSkillInteraction} pick it up with no service
+     * change. Empty by default.
+     *
+     * <p><b>Passive / {@code resolve*} hooks only.</b> The one-time acquisition side-effects
+     * {@code AttributeAbilityServiceImpl#grantAttributeAbility} applies — a copied {@link
+     * ActiveAbility}, a permanent Ego point, granted Perícia training, pending trait choices —
+     * are <i>not</i> run for a Talento-granted ability. Every {@code
+     * org.aventyrs.core.ability.StrengthAbility} constant is passive, so this bites only if the
+     * hook is later reused for an Atributo whose Habilidades aren't.
+     */
+    default List<AttributeAbility> getGrantedAttributeAbilities(final Character character) {
+        return List.of();
     }
 
     /**

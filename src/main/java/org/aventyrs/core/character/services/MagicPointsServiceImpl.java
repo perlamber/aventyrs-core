@@ -1,5 +1,6 @@
 package org.aventyrs.core.character.services;
 
+import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.modifier.ModifierResolver;
 import org.aventyrs.core.modifier.ModifierResolverImpl;
@@ -29,7 +30,7 @@ public class MagicPointsServiceImpl implements MagicPointsService {
 
     @Override
     public int getMaxMagicPoints(final Character character) {
-        return BASE_MAGIC_POINTS + character.getAttributes().getFocus().getTotal() * getManaMultiplier(character);
+        return BASE_MAGIC_POINTS + character.getEffectiveAttributeTotal(AttributeDomain.FOCUS) * getManaMultiplier(character);
     }
 
     @Override

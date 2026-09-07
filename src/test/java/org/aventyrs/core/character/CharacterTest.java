@@ -142,4 +142,44 @@ class CharacterTest {
 
         assertFalse(character.unequip(ArmorItem.COURACA));
     }
+
+    @Test
+    void effectiveAttributeTotalIsTheBareTotalWithNoFeatGrant() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .attributes(CharacterAttributes.builder()
+                        .gnose(AttributeValue.builder().domain(AttributeDomain.GNOSE).base(4).variable(1).build())
+                        .build())
+                .build();
+
+        assertEquals(5, character.getEffectiveAttributeTotal(AttributeDomain.GNOSE));
+    }
+
+    @Test
+    void effectiveAttributeTotalAddsEveryHeldFeatsAttributeBonus() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .attributes(CharacterAttributes.builder()
+                        .gnose(AttributeValue.builder().domain(AttributeDomain.GNOSE).base(5).build())
+                        .strength(AttributeValue.builder().domain(AttributeDomain.STRENGTH).base(3).build())
+                        .build())
+                .feats(new java.util.ArrayList<>())
+                .build();
+        character.grantFeat(new org.aventyrs.core.feat.ConselheiroDeGuerraYmirianoFeat(
+                org.aventyrs.core.ability.StrengthAbility.DESTRUIDOR_DE_MUROS));
+
+        assertEquals(6, character.getEffectiveAttributeTotal(AttributeDomain.GNOSE));
+        assertEquals(3, character.getEffectiveAttributeTotal(AttributeDomain.STRENGTH), "untouched Atributo");
+    }
+
+    @Test
+    void attributeAbilitiesFoldInFeatGrantedOnesButAcquiredListDoesNot() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .feats(new java.util.ArrayList<>())
+                .build();
+        character.grantFeat(new org.aventyrs.core.feat.ConselheiroDeGuerraYmirianoFeat(
+                org.aventyrs.core.ability.StrengthAbility.SUBJUGAR));
+
+        assertTrue(character.getAttributeAbilities()
+                .contains(org.aventyrs.core.ability.StrengthAbility.SUBJUGAR));
+        assertTrue(character.getAcquiredAttributeAbilities().isEmpty());
+    }
 }

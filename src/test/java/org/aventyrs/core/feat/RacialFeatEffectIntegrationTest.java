@@ -1,5 +1,6 @@
 package org.aventyrs.core.feat;
 
+import org.aventyrs.core.ability.StrengthAbility;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.AttributeValue;
 import org.aventyrs.core.character.Character;
@@ -13,6 +14,8 @@ import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.item.AbstractWeapon;
 import org.aventyrs.core.item.ItemCategory;
 import org.aventyrs.core.item.Weapon;
+import org.aventyrs.core.character.services.AttributeAbilityService;
+import org.aventyrs.core.character.services.AttributeAbilityServiceImpl;
 import org.aventyrs.core.character.services.DamageBaseService;
 import org.aventyrs.core.character.services.DamageBaseServiceImpl;
 import org.aventyrs.core.character.services.DamageService;
@@ -62,8 +65,10 @@ import org.aventyrs.core.skill.attention.Attention;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.scene.TerrainType;
 import org.aventyrs.core.skill.CriticalResult;
+import org.aventyrs.core.skill.DifficultyLevel;
 import org.aventyrs.core.skill.SkillRoll;
 import org.aventyrs.core.skill.attention.AttentionInteraction;
+import org.aventyrs.core.skill.ataquecorpoacorpo.AtaqueCorpoACorpoInteraction;
 import org.aventyrs.core.skill.conhecimentos.ConhecimentosSpecialization;
 import org.aventyrs.core.magic.ElementalType;
 import org.aventyrs.core.title.AventyrTitle;
@@ -223,6 +228,94 @@ class RacialFeatEffectIntegrationTest {
                 .build();
         character.grantTitle(new Santo(List.of(), List.of()), TitleSlot.PRIMARY);
         return character;
+    }
+
+    // ---------- Anão: Conselheiro de Guerra Ymiriano ----------
+
+    private final AttributeAbilityService attributeAbilityService = new AttributeAbilityServiceImpl();
+
+    private static Character.CharacterBuilder anaoConselheiro(final int gnoseBase, final int strengthBase) {
+        return character().race(new Anao())
+                .attributes(CharacterAttributes.builder()
+                        .gnose(AttributeValue.builder().domain(AttributeDomain.GNOSE).base(gnoseBase).build())
+                        .strength(AttributeValue.builder().domain(AttributeDomain.STRENGTH).base(strengthBase).build())
+                        .build());
+    }
+
+    /**
+     * "Bônus Racial de +1 em Gnose" — an ordinary {@code Feat#resolveAttributeBonus} grant, so
+     * now that every Atributo-total reader routes through {@code
+     * Character#getEffectiveAttributeTotal} it reaches a Gnose-governed Perícia roll <b>and</b>
+     * the raw effective total, not just the roll path the hook was born on.
+     */
+    @Test
+    void conselheiroDeGuerraRaisesEffectiveGnose() throws IllegalOperationException {
+        Character anao = anaoConselheiro(5, 3).build();
+        CharacterSheet sheet = CharacterSheet.of(anao, new Player());
+        int gnoseTotalBefore = anao.getEffectiveAttributeTotal(AttributeDomain.GNOSE);
+        int conhecimentosBefore = rollBonusIn(sheet, SkillType.CONHECIMENTOS, null);
+        int atletismoBefore = rollBonusIn(sheet, SkillType.ATLETISMO, null);
+
+        featService.grantFeat(anao, fundedSheet(anao),
+                ConselheiroDeGuerraYmirianoFeat.of(anao, StrengthAbility.DESTRUIDOR_DE_MUROS));
+
+        assertEquals(gnoseTotalBefore + 1, anao.getEffectiveAttributeTotal(AttributeDomain.GNOSE));
+        assertEquals(conhecimentosBefore + 1, rollBonusIn(sheet, SkillType.CONHECIMENTOS, null));
+        assertEquals(atletismoBefore, rollBonusIn(sheet, SkillType.ATLETISMO, null), "Força roll untouched");
+    }
+
+    /**
+     * "1 Habilidade de Força" — folded into {@code Character#getAttributeAbilities()} without
+     * ever appearing in {@code getAcquiredAttributeAbilities()}, and fully functional: the
+     * chosen {@code DESTRUIDOR_DE_MUROS} upgrades the Rodada's first melee swing to full Força.
+     */
+    @Test
+    void conselheiroDeGuerraGrantsTheChosenHabilidadeDeForcaLiveAndWorking() throws IllegalOperationException {
+        Character anao = anaoConselheiro(5, 6).build();
+
+        featService.grantFeat(anao, fundedSheet(anao),
+                ConselheiroDeGuerraYmirianoFeat.of(anao, StrengthAbility.DESTRUIDOR_DE_MUROS));
+
+        assertTrue(anao.getAttributeAbilities().contains(StrengthAbility.DESTRUIDOR_DE_MUROS));
+        assertFalse(anao.getAcquiredAttributeAbilities().contains(StrengthAbility.DESTRUIDOR_DE_MUROS));
+
+        InteractionResult swing = new AtaqueCorpoACorpoInteraction()
+                .applyTo(CharacterSheet.of(anao, new Player()), null, null);
+        assertEquals(6, swing.getDamageBonus().getValue(), "full Força, via the granted DESTRUIDOR_DE_MUROS");
+    }
+
+    /** The free Habilidade never consumes a paid {@code AttributeAbilityService} slot. */
+    @Test
+    void conselheiroDeGuerrasFreeHabilidadeDoesNotEatARealSlot() throws IllegalOperationException {
+        Character anao = anaoConselheiro(5, 5).build();
+        featService.grantFeat(anao, fundedSheet(anao),
+                ConselheiroDeGuerraYmirianoFeat.of(anao, StrengthAbility.DESTRUIDOR_DE_MUROS));
+
+        Character afterFirst = attributeAbilityService
+                .grantAttributeAbility(anao, StrengthAbility.SUBJUGAR).getCharacter();
+        Character afterSecond = attributeAbilityService
+                .grantAttributeAbility(afterFirst, StrengthAbility.ESTILHACADOR).getCharacter();
+
+        // Strength base 5 unlocks 2 real slots; both are still spendable despite the free one.
+        assertEquals(2, afterSecond.getAcquiredAttributeAbilities().size());
+        assertTrue(afterSecond.getAttributeAbilities().contains(StrengthAbility.DESTRUIDOR_DE_MUROS));
+    }
+
+    @Test
+    void conselheiroDeGuerraRefusesAGnoseBelowFive() {
+        Character anao = anaoConselheiro(4, 3).build();
+
+        assertThrows(IllegalOperationException.class, () -> featService.grantFeat(anao, fundedSheet(anao),
+                new ConselheiroDeGuerraYmirianoFeat(StrengthAbility.DESTRUIDOR_DE_MUROS)));
+    }
+
+    /** "que você cumpra os requisitos" — no Força ability slot (base &lt; 3) means no pick. */
+    @Test
+    void conselheiroDeGuerraRefusesAChoiceWithNoForcaSlot() {
+        Character anao = anaoConselheiro(5, 2).build();
+
+        assertThrows(IllegalOperationException.class,
+                () -> ConselheiroDeGuerraYmirianoFeat.of(anao, StrengthAbility.DESTRUIDOR_DE_MUROS));
     }
 
     // ---------- Aviano ----------
@@ -522,15 +615,24 @@ class RacialFeatEffectIntegrationTest {
     }
 
     /**
-     * Herança Anfíbia's clause is "+1 de bônus racial em Vigor", and no Perícia is Vigor-governed
-     * — so the bonus is computed for real yet currently reaches no roll. Pinned so the "compute it
-     * even with no reader" discipline is visible rather than read later as a bug.
+     * Herança Anfíbia's clause is "+1 de bônus racial em Vigor". No Perícia is Vigor-governed, so
+     * it still reaches no roll — but since every Atributo-total reader now routes through {@code
+     * Character#getEffectiveAttributeTotal}, the +1 does move the effective Vigor total and, with
+     * it, max PV (PV = Vigor total × Multiplicador de Vida).
      */
     @Test
-    void herancaAnfibiaComputesItsVigorBonusEvenThoughNoPericiaReadsIt() {
+    void herancaAnfibiasVigorBonusReachesTheEffectiveTotalAndMaxHitPoints() throws IllegalOperationException {
         Character bestial = character().race(new Bestial()).build();
+        int vigorBefore = bestial.getEffectiveAttributeTotal(AttributeDomain.VIGOR);
+        int hitPointsBefore = hitPointsService.getMaxHitPoints(bestial);
 
         assertEquals(1, BestialFeat.HERANCA_ANFIBIA.resolveAttributeBonus(AttributeDomain.VIGOR, bestial));
+
+        acquire(bestial, BestialFeat.HERANCA_ANFIBIA);
+
+        assertEquals(vigorBefore + 1, bestial.getEffectiveAttributeTotal(AttributeDomain.VIGOR));
+        assertEquals(hitPointsBefore + hitPointsService.getLifeMultiplier(bestial),
+                hitPointsService.getMaxHitPoints(bestial));
     }
 
     /**
@@ -861,6 +963,48 @@ class RacialFeatEffectIntegrationTest {
         acquire(elfo, ElficoFeat.SENTIDOS_ABSOLUTOS);
 
         assertEquals(before + 1, attentionInteraction.applyTo(sheet).getDifficultyReduction());
+    }
+
+    @Test
+    void sentidosAbsolutosWidensOnlyAttentionCriticalMarginByTwoPerAwakenedTitle()
+            throws IllegalOperationException {
+        Character elfo = character().race(new Elfo())
+                .attributes(CharacterAttributes.builder()
+                        .instinct(AttributeValue.builder().domain(AttributeDomain.INSTINCT).base(3).build())
+                        .build())
+                .skill(SkillType.ATTENTION, trainedAttention())
+                .build();
+        elfo.grantTitle(new Santo(List.of(), List.of()), TitleSlot.PRIMARY);
+        CharacterSheet sheet = CharacterSheet.of(elfo, new Player());
+        SkillRoll twoFours = new SkillRoll(List.of(4, 4, 1));
+
+        acquire(elfo, ElficoFeat.SENTIDOS_ABSOLUTOS);
+
+        assertEquals(CriticalResult.ACERTO_CRITICO_MENOR,
+                attentionInteraction.applyTo(sheet, null, twoFours).getCriticalResult());
+        assertEquals(CriticalResult.NONE, SkillType.FURTIVIDADE.newInteraction()
+                .applyTo(sheet, null, twoFours).getCriticalResult());
+    }
+
+    @Test
+    void sentidosAbsolutosAutomaticallySucceedsAtMediumOrLowerButNotAbove()
+            throws IllegalOperationException {
+        Character elfo = character().race(new Elfo())
+                .attributes(CharacterAttributes.builder()
+                        .instinct(AttributeValue.builder().domain(AttributeDomain.INSTINCT).base(3).build())
+                        .build())
+                .skill(SkillType.ATTENTION, trainedAttention())
+                .build();
+        elfo.grantTitle(new Santo(List.of(), List.of()), TitleSlot.PRIMARY);
+        CharacterSheet sheet = CharacterSheet.of(elfo, new Player());
+        SkillRoll lowMediumRoll = SkillRoll.against(List.of(1, 1, 1), DifficultyLevel.MEDIUM);
+        SkillRoll lowVeryHardRoll = SkillRoll.against(List.of(1, 1, 1), DifficultyLevel.VERY_HARD);
+
+        acquire(elfo, ElficoFeat.SENTIDOS_ABSOLUTOS);
+
+        assertTrue(attentionInteraction.applyTo(sheet, null, lowMediumRoll).getSucceeded());
+        assertEquals(0, attentionInteraction.applyTo(sheet, null, lowMediumRoll).getMargin());
+        assertFalse(attentionInteraction.applyTo(sheet, null, lowVeryHardRoll).getSucceeded());
     }
 
     // ---------- Feérico ----------

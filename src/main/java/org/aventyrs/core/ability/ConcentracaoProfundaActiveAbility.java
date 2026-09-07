@@ -44,7 +44,7 @@ public class ConcentracaoProfundaActiveAbility implements ActiveAbility {
      */
     @Override
     public TemporaryEffect resolveEffect(final Character character) {
-        int halfFocus = character.getAttributes().getAttribute(AttributeDomain.FOCUS).getTotal() / 2;
+        int halfFocus = character.getEffectiveAttributeTotal(AttributeDomain.FOCUS) / 2;
         return new TemporaryBonus(ModifierType.SKILL_ROLL_BONUS, halfFocus, getDurationInRounds());
     }
 }

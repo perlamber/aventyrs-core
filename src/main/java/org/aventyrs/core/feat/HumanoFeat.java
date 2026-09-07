@@ -64,14 +64,16 @@ public enum HumanoFeat implements Feat {
      * "Escolha um Atributo, você recebe Bônus Racial de +1 no Atributo Escolhido. Ao Despertar
      * seu segundo Título Aventyr você recebe uma Habilidade do Atributo escolhido."
      */
-    // TODO: a Talento cannot grant an Atributo bonus — same gap as
-    //  AnaoFeat#CONSELHEIRO_DE_GUERRA_YMIRIANO and TrollFeat#VIGOR_TROLLICO. *Which* Atributo is
-    //  a per-acquisition choice, and the choice-carrying-instance shape (see
-    //  FocoEmPericiaFeat/PeritoFeat#FOCO_EM_PERICIA) now exists for exactly this — but it only
-    //  records the pick; there is still no hook a chosen-Atributo instance could override to grant
-    //  the bonus, so the primary blocker stands.
-    // TODO: the second-Título clause is the "grant an extra acquisition slot" gap, restricted to
-    //  the chosen Atributo.
+    // TODO: the Atributo-bonus and free-Habilidade halves are both mechanically expressible now —
+    //  Feat#resolveAttributeBonus (reaching every Atributo-total reader via
+    //  Character#getEffectiveAttributeTotal) and Feat#getGrantedAttributeAbilities, both real
+    //  through AnaoFeat#CONSELHEIRO_DE_GUERRA_YMIRIANO / ConselheiroDeGuerraYmirianoFeat. What
+    //  still blocks this one: (a) *which* Atributo is a per-acquisition choice, so it needs its
+    //  own choice-carrying AbstractFeat subclass (the FocoEmPericiaFeat shape) whose
+    //  resolveAttributeBonus/getGrantedAttributeAbilities branch on the picked AttributeDomain;
+    //  (b) the free Habilidade is gated on Despertar a *second* Título — this core has no
+    //  second-Título trigger, so the grant can't be withheld until then. Both are this Talento's
+    //  own work, not a missing shared mechanism.
     LIMIAR_DA_EVOLUCAO(
             "Juntamente ao seu Título Aventyr você desperta o sangue dos Primeiros Homens em seu "
                     + "corpo. Escolha uma Atributo, você recebe Bônus Racial de +1 no Atributo "

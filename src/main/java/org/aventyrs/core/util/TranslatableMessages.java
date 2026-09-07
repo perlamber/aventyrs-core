@@ -49,6 +49,13 @@ public class TranslatableMessages {
     public static final String EXTRA_SUPREMA_ALREADY_GRANTED = "EXTRA_SUPREMA_ALREADY_GRANTED";
     public static final String TITLE_ABILITY_PREREQUISITE_NOT_MET = "TITLE_ABILITY_PREREQUISITE_NOT_MET";
     public static final String FEAT_PREREQUISITE_NOT_MET = "FEAT_PREREQUISITE_NOT_MET";
+    /**
+     * The Habilidade de Força chosen for {@code AnaoFeat#CONSELHEIRO_DE_GUERRA_YMIRIANO} —
+     * "1 Habilidade de Força (que você cumpra os requisitos)" — was picked by a character with
+     * no Força ability slot (Força base below {@code
+     * AttributeAbilityService#FIRST_ABILITY_ATTRIBUTE_BASE}).
+     */
+    public static final String CONSELHEIRO_STRENGTH_ABILITY_REQUIREMENT_NOT_MET = "CONSELHEIRO_STRENGTH_ABILITY_REQUIREMENT_NOT_MET";
     public static final String NOT_AN_ATTACK_SKILL = "NOT_AN_ATTACK_SKILL";
 
     /**

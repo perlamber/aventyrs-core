@@ -284,6 +284,7 @@ public class AttackDelivery {
         List<Effect> stages = new ArrayList<>();
         if (effectChainTriggered) {
             stages.addAll(attack.getEffectChains());
+            stages.addAll(effectChainsGrantedByFeats(attack));
         }
         if (criticalEffectTriggered) {
             stages.addAll(CriticalEffect.applicableTo(defender, allCriticalEffects(attack, criticalResult)));
@@ -310,5 +311,12 @@ public class AttackDelivery {
                 effects.addAll(feat.resolveExtraCriticalEffects(attack.getAttacker().getCharacter(),
                         attack.getAttackSkill(), attack.getAttackSource(), criticalResult)));
         return effects;
+    }
+
+    private List<EffectChain> effectChainsGrantedByFeats(final DeliveredAttack attack) {
+        return attack.getAttacker().getCharacter().getFeats().stream()
+                .flatMap(feat -> feat.resolveEffectChains(attack.getAttacker().getCharacter(),
+                        attack.getAttackSkill(), attack.getAttackSource()).stream())
+                .toList();
     }
 }

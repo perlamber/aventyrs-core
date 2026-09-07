@@ -12,12 +12,12 @@ import org.aventyrs.core.character.Character;
  * that record across packages and carrying a {@code requiredFeat}/{@code requiredSkillType}
  * an item never names. Widen this if a real item ever requires a Perícia/Talento/Título.
  *
- * <p>One deliberate difference from {@code FeatRequirements}: this checks {@link
- * org.aventyrs.core.character.AttributeValue#getTotal()}, not {@code getBase()}. Acquiring a
- * Talento is a permanent investment gated on what the character personally invested in;
- * whether an item's Favor applies is a "can I meet this right now" question, so a Bônus Racial
- * or a variable bonus from a spell/feat/other equipment counts toward it the same as base
- * does.
+ * <p>One deliberate difference from {@code FeatRequirements}: this checks {@code
+ * Character#getEffectiveAttributeTotal} (base + racial + variable + any {@code
+ * Feat#resolveAttributeBonus} grant), not {@code getBase()}. Acquiring a Talento is a permanent
+ * investment gated on what the character personally invested in; whether an item's Favor
+ * applies is a "can I meet this right now" question, so a Bônus Racial or a variable bonus from
+ * a spell/feat/other equipment counts toward it the same as base does.
  *
  * <p>A {@code null} {@code attributeDomain} means "no requirement at all" — {@link
  * #isMetBy(Character)} then always holds, same convention every unset {@code FeatRequirements}
@@ -28,6 +28,6 @@ public record ItemRequirements(AttributeDomain attributeDomain, int requiredAttr
     /** Whether character currently satisfies this requirement. */
     public boolean isMetBy(final Character character) {
         return attributeDomain == null
-                || character.getAttributes().getAttribute(attributeDomain).getTotal() >= requiredAttributeValue;
+                || character.getEffectiveAttributeTotal(attributeDomain) >= requiredAttributeValue;
     }
 }

@@ -1,5 +1,6 @@
 package org.aventyrs.core.rest;
 
+import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.sheet.CharacterSheet;
 
@@ -10,7 +11,7 @@ public class RestServiceImpl implements RestService {
         int bonus = character.getAttributeAbilities().stream()
                 .mapToInt(ability -> ability.resolveRestHitPointsBonus(restType))
                 .sum();
-        return recovered(character.getAttributes().getVigor().getTotal(), restType) + bonus;
+        return recovered(character.getEffectiveAttributeTotal(AttributeDomain.VIGOR), restType) + bonus;
     }
 
     @Override
@@ -21,7 +22,7 @@ public class RestServiceImpl implements RestService {
         int featBonus = character.getFeats().stream()
                 .mapToInt(feat -> feat.resolveRestMagicPointsBonus(restType, character))
                 .sum();
-        return recovered(character.getAttributes().getFocus().getTotal(), restType) + bonus + featBonus;
+        return recovered(character.getEffectiveAttributeTotal(AttributeDomain.FOCUS), restType) + bonus + featBonus;
     }
 
     @Override
@@ -29,7 +30,7 @@ public class RestServiceImpl implements RestService {
         int bonus = character.getAttributeAbilities().stream()
                 .mapToInt(ability -> ability.resolveRestDeterminationPointsBonus(restType))
                 .sum();
-        return recovered(character.getAttributes().getInstinct().getTotal(), restType) + bonus;
+        return recovered(character.getEffectiveAttributeTotal(AttributeDomain.INSTINCT), restType) + bonus;
     }
 
     @Override

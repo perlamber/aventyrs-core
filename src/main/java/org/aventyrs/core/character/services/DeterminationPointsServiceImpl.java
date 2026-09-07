@@ -1,5 +1,6 @@
 package org.aventyrs.core.character.services;
 
+import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.feat.Feat;
 import org.aventyrs.core.modifier.ModifierResolver;
@@ -32,7 +33,7 @@ public class DeterminationPointsServiceImpl implements DeterminationPointsServic
 
     @Override
     public int getMaxDeterminationPoints(final Character character) {
-        return BASE_DETERMINATION_POINTS + character.getAttributes().getInstinct().getTotal() * getDeterminationMultiplier(character);
+        return BASE_DETERMINATION_POINTS + character.getEffectiveAttributeTotal(AttributeDomain.INSTINCT) * getDeterminationMultiplier(character);
     }
 
     @Override

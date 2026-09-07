@@ -122,7 +122,39 @@ public class Character {
 
     @NonNull
     @Singular
+    @Getter(AccessLevel.NONE)
     protected List<AttributeAbility> attributeAbilities;
+
+    /**
+     * The Habilidades de Atributo acquired through {@code
+     * org.aventyrs.core.character.services.AttributeAbilityService} — the raw builder list,
+     * without the Talento-granted ones {@link #getAttributeAbilities()} folds in. {@code
+     * AttributeAbilityServiceImpl} validates slot use against <i>this</i> list, so a free
+     * Talento-granted Habilidade (see {@link Feat#getGrantedAttributeAbilities}) never consumes
+     * a paid slot.
+     */
+    public List<AttributeAbility> getAcquiredAttributeAbilities() {
+        return attributeAbilities;
+    }
+
+    /**
+     * Every Habilidade de Atributo currently in effect — those acquired via {@code
+     * AttributeAbilityService} ({@link #getAcquiredAttributeAbilities()}) plus every held
+     * Talento's {@link Feat#getGrantedAttributeAbilities} ({@code
+     * AnaoFeat#CONSELHEIRO_DE_GUERRA_YMIRIANO}'s free Habilidade de Força). Live aggregation,
+     * mirroring {@link #getActiveAbilities()} / {@link #getNaturalWeapons()} — so every
+     * three-source ability scan and the Perícia-roll path see the granted ability with no
+     * service change. A Talento-granted ability contributes only its passive/{@code resolve*}
+     * hooks, not the one-time acquisition side-effects the service applies — see that hook's
+     * javadoc.
+     */
+    public List<AttributeAbility> getAttributeAbilities() {
+        return Stream.concat(
+                        attributeAbilities.stream(),
+                        feats.stream().flatMap(feat -> feat.getGrantedAttributeAbilities(this).stream()))
+                .distinct()
+                .toList();
+    }
 
     /**
      * Every {@link ActiveAbility} this character has acquired from an {@link AttributeAbility}
@@ -152,6 +184,25 @@ public class Character {
                         activeAbilities.stream(),
                         feats.stream().flatMap(feat -> feat.resolveActiveAbility().stream()))
                 .toList();
+    }
+
+    /**
+     * This character's effective total for domain — {@link AttributeValue#getTotal()} (base +
+     * racial + variable, already resolved on {@link #attributes}) plus every held Talento's
+     * {@link Feat#resolveAttributeBonus} grant ({@code
+     * AnaoFeat#CONSELHEIRO_DE_GUERRA_YMIRIANO}'s +1 Gnose, {@code VampiricoFeat#MESTRE_VAMPIRO},
+     * every {@code BestialFeat} Herança). <b>Every consumer of an Atributo <i>total</i> calls
+     * this</b>; {@link AttributeValue#getBase()} readers — the Graduação cap, the Habilidade
+     * slot count, {@code FeatRequirements}/{@code CharacterAttributeService} — deliberately do
+     * not, since those gate on what the character personally invested.
+     *
+     * <p>Round-scoped {@code ModifierType.<ATTR>_BONUS} {@code TemporaryBonus}es are still read
+     * only on the Perícia-roll path ({@code AbstractSkillInteraction}), which needs a {@code
+     * CombatantSheet} this method has no access to — that limitation is unchanged.
+     */
+    public int getEffectiveAttributeTotal(final AttributeDomain domain) {
+        return attributes.getAttribute(domain).getTotal()
+                + feats.stream().mapToInt(feat -> feat.resolveAttributeBonus(domain, this)).sum();
     }
 
     /** Habilidades de Competência acquired from trained Perícias (e.g. ArtesCompetencyAbility). */

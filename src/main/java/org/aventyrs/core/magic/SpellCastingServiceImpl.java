@@ -71,7 +71,7 @@ public class SpellCastingServiceImpl implements SpellCastingService {
     }
 
     private ResolvedSpellDamage resolve(final SpellDamage damage, final CombatantSheet caster) {
-        int focusTotal = caster.getCharacter().getAttributes().getAttribute(AttributeDomain.FOCUS).getTotal();
+        int focusTotal = caster.getCharacter().getEffectiveAttributeTotal(AttributeDomain.FOCUS);
         boolean upgradeHalfToFull = isFirstSpellCastOfRound(caster)
                 && caster.getCharacter().getAttributeAbilities().stream()
                         .anyMatch(AttributeAbility::upgradesFirstSpellOfRoundFocusScaling);

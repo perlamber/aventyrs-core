@@ -151,7 +151,7 @@ public class EsquivaEApararInteraction extends AbstractSkillInteraction {
         }
         boolean lessened = SkillCompetencyAbility.allFor(character)
                 .contains(EsquivaEApararCompetencyAbility.ENCOURACADO_E_VELOZ);
-        int dexterity = character.getAttributes().getAttribute(AttributeDomain.DEXTERITY).getTotal();
+        int dexterity = character.getEffectiveAttributeTotal(AttributeDomain.DEXTERITY);
         if (heaviest == ItemWeightClass.MEDIUM) {
             return lessened ? 0 : dexterity / 2;
         }

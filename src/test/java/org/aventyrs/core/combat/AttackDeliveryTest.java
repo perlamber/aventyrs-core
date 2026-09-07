@@ -20,6 +20,7 @@ import org.aventyrs.core.effect.EffectChainService;
 import org.aventyrs.core.effect.Sangramento;
 import org.aventyrs.core.ego.AutocontroleAdvantage;
 import org.aventyrs.core.feat.SaqueRelampagoFeat;
+import org.aventyrs.core.feat.ElficoFeat;
 import org.aventyrs.core.feat.WeaponOrSpellChoice;
 import org.aventyrs.core.monster.GenericMonster;
 import org.aventyrs.core.monster.MonsterSheet;
@@ -36,6 +37,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.ArrayList;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -59,6 +61,7 @@ class AttackDeliveryTest {
         CharacterSkill skill = CharacterSkillFixture.blank(CharacterSkillFixture.ATAQUE_CORPO_A_CORPO_1).build();
         skill.increaseGraduation(graduation);
         Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .feats(new ArrayList<>())
                 .attributes(CharacterAttributes.builder()
                         .strength(AttributeValue.builder().domain(AttributeDomain.STRENGTH).base(strengthBase).build())
                         .build())
@@ -163,6 +166,22 @@ class AttackDeliveryTest {
 
         assertTrue(result.getHit());
         assertInstanceOf(DamageInteraction.class, result.getAttackResult().getNextInteraction());
+    }
+
+    @Test
+    void corruptorSombrioAddsDefinharToAnEffectChainTriggeredAttack() {
+        MonsterSheet capanga = GenericMonster.CAPANGA.spawn(new Player());
+        CharacterSheet hero = attacker(6, 6);
+        hero.getCharacter().grantFeat(ElficoFeat.GUARDIAO_DOS_BOSQUES);
+        hero.getCharacter().grantFeat(ElficoFeat.CORRUPTOR_SOMBRIO);
+
+        DeliveredAttackResult result = attackDelivery.resolve(attackOn(capanga, hero)
+                .attackRoll(new SkillRoll(List.of(6, 6, 6)))
+                .build());
+
+        DamageInteraction head = assertInstanceOf(DamageInteraction.class,
+                result.getAttackResult().getNextInteraction());
+        assertInstanceOf(Definhar.class, head.getNextInteraction());
     }
 
     /**

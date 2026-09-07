@@ -28,7 +28,7 @@ public class SpellDurationServiceImpl implements SpellDurationService {
             case FIXED -> OptionalInt.of(duration.count() * duration.unit().getRodadas());
             case TARGET_ATTRIBUTE -> target == null
                     ? OptionalInt.empty()
-                    : OptionalInt.of(target.getAttributes().getAttribute(duration.scalingAttribute()).getTotal()
+                    : OptionalInt.of(target.getEffectiveAttributeTotal(duration.scalingAttribute())
                             * duration.unit().getRodadas());
             case UNTIL_END_OF_TURN -> OptionalInt.empty();
             case SAME_AS_REFERENCED -> resolveAuthoredDurationInRounds(duration.reference().get(), target);

@@ -112,9 +112,10 @@ public enum TrollFeat implements Feat {
      * {@code FeatRequirements#requiredFeatCategory}, and reads exactly as written: the Talento
      * being tested is never counted among the two.
      */
-    // TODO: a Talento cannot grant an Atributo bonus — Race#getFixedAttributeBonuses() is the
-    //  only racial-bonus hook and it belongs to the Race, not to an acquired Talento. Same gap
-    //  as AnaoFeat#CONSELHEIRO_DE_GUERRA_YMIRIANO.
+    // TODO: the "+1 em Vigor" half is expressible now — an unconditional Feat#resolveAttributeBonus
+    //  override (reaching every Atributo-total reader via Character#getEffectiveAttributeTotal),
+    //  exactly as ConselheiroDeGuerraYmirianoFeat does for its Gnose half. Wire it here once the
+    //  RD/RM half below is addressed, so the constant lands whole rather than half-done.
     // TODO: the RD/RM half needs the unmodelled sub-lineage to pick between them, and RM
     //  (Redução Mágica) is not a concept this core computes at all — the same gap Gorgona's own
     //  Monstros em pele de Fada cites. Granting the RD half unconditionally would hand it to

@@ -15,7 +15,7 @@ import org.aventyrs.core.title.TitleArchetype;
 /**
  * Talentos Anões — the Ymirian half of the Anão's own tree.
  *
- * <p><b>Four of the five carry real effects.</b> {@link #FILHO_DE_YMIR} goes through {@code
+ * <p><b>All five carry real effects.</b> {@link #FILHO_DE_YMIR} goes through {@code
  * Feat}'s PV-multiplier hook and the weapon-aware {@code resolveDamageBaseIncrease} (its "de
  * armas" scope excludes only a bare-handed Ataque Desarmado); {@link #VIGOR_DO_INVERNO} through
  * the multiplier hook; {@link #VANTAGEM_DE_TAMANHO} and
@@ -25,9 +25,11 @@ import org.aventyrs.core.title.TitleArchetype;
  * Feat} hooks exist: a {@code SceneContext}-aware {@code resolveDefenseBonus} and {@code
  * resolveCriticalMarginIncrease}.
  *
- * <p>{@link #CONSELHEIRO_DE_GUERRA_YMIRIANO} is the one constant still inert, and the opposed
- * sheet does not help it: it grants an Atributo bonus and a free Habilidade, neither of which is
- * about an opponent.
+ * <p>{@link #CONSELHEIRO_DE_GUERRA_YMIRIANO} is real through {@link
+ * ConselheiroDeGuerraYmirianoFeat} — a +1 Gnose {@code resolveAttributeBonus} grant (reaching
+ * every Atributo-total reader via {@code Character#getEffectiveAttributeTotal}) plus a free
+ * Habilidade de Força via {@code Feat#getGrantedAttributeAbilities}, the first Talento to grant
+ * a Habilidade de Atributo outside the {@code AttributeAbilityService} slot economy.
  *
  * <p><b>The tree tag is {@code Anão}, not the general tag printed beside it.</b> Every constant
  * here carries a second tag (Sobrevivência, Bruto, Perito) that is supplementary — racial beats
@@ -71,7 +73,7 @@ public enum AnaoFeat implements Feat {
             }
             // "Metade do Vigor", rounded down — the same reading every other "Metade de X" clause
             // in this catalog takes.
-            return character.getAttributes().getVigor().getTotal() / 2;
+            return character.getEffectiveAttributeTotal(AttributeDomain.VIGOR) / 2;
         }
     },
 
@@ -104,13 +106,16 @@ public enum AnaoFeat implements Feat {
     /**
      * "Você adquire Bônus Racial de +1 em Gnose e 1 Habilidade de Força (que você cumpra os
      * requisitos)."
+     *
+     * <p><b>Real</b>, through {@link ConselheiroDeGuerraYmirianoFeat} — grant that
+     * choice-carrying instance (with the picked Habilidade de Força) in place of this bare
+     * constant, which stays the catalog / rules-text entry. The Gnose bonus is an ordinary
+     * {@link Feat#resolveAttributeBonus} grant, reaching every Atributo-total reader now that
+     * they route through {@code Character#getEffectiveAttributeTotal}; the free Habilidade de
+     * Força rides {@link Feat#getGrantedAttributeAbilities} into {@code
+     * Character#getAttributeAbilities()} without spending an {@code AttributeAbilityService}
+     * slot.
      */
-    // TODO: a Talento cannot grant an Atributo bonus — Race#getFixedAttributeBonuses() is the
-    //  only racial-bonus hook and it belongs to the Race, not to an acquired Talento; nothing
-    //  reads a Feat for AttributeValue at all.
-    // TODO: the free StrengthAbility is the "grant an extra acquisition slot" gap —
-    //  AttributeAbilityService#getUnlockedAbilitySlots counts slots from the raw Atributo base
-    //  with no notion of an extra one, the same shape Anao's own Pequenos Gigantes cites.
     CONSELHEIRO_DE_GUERRA_YMIRIANO(
             "Você adquire Bônus Racial de +1 em Gnose e 1 Habilidade de Força (que você cumpra "
                     + "os requisitos).",
