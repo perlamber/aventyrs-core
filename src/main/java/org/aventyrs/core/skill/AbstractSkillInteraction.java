@@ -732,6 +732,9 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
      *   <li>{@link ModifierType#DAMAGE_ROLL_BONUS} on the sheet — a {@code TemporaryBonus} and any
      *   Condição in force (Caído/Desarmado's Desvantagem, the fear ladder's proximity-scoped one),
      *   which are {@code ModifierType}-typed data rather than typed {@code DamageBonus}es.</li>
+     *   <li>{@link #resolveMeleeStrengthDamage} — the base Ataque Corpo-a-Corpo rule's half-Força
+     *   term. Not a held trait like the four above but a property of the Perícia itself, which is
+     *   why it hangs off no {@code resolve*} scan.</li>
      * </ul>
      *
      * <p>Only ever called for a Perícia de Ataque. attackTarget is {@code null} on the main-body
@@ -756,12 +759,78 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                 .flatMap(Optional::stream)
                 .forEach(typed::add);
         int flat = target.getTemporaryBonus(ModifierType.DAMAGE_ROLL_BONUS)
-                + target.getConditionBonus(ModifierType.DAMAGE_ROLL_BONUS, sceneContext);
+                + target.getConditionBonus(ModifierType.DAMAGE_ROLL_BONUS, sceneContext)
+                + resolveMeleeStrengthDamage(target);
         if (attackTarget != null) {
             // Outward-facing: what the *victim's* own Condições hand the attacker (Flanqueado).
             flat += attackTarget.getAttackerDamageBonusFromConditions(sceneContext);
         }
         return DamageBonus.total(typed, flat);
+    }
+
+    /**
+     * The Força an Ataque Corpo-a-Corpo adds to its own dano roll: <b>half the attacker's Força,
+     * rounded down</b> — or the whole value on the Rodada's first attack, for a holder of {@code
+     * StrengthAbility#DESTRUIDOR_DE_MUROS}. Zero for every other Perícia.
+     *
+     * <p><b>A dano bonus, not a Dano Base scale-up.</b> It is a flat addend to an already-rolled
+     * total, so it belongs here and never in {@code DamageBaseService} — the two stages never
+     * mix (see {@link org.aventyrs.core.character.DamageBase}'s own javadoc). The rules' own
+     * notation keeps them apart the same way: a stat block writes {@code 1d6+4 (Base 2 + Metade
+     * da Força)}, naming the row and this term as separate quantities.
+     *
+     * <p><b>Melee only.</b> Ataque à Distância adds nothing — which is exactly why the Arco
+     * Composto carries a Favor granting "Metade da Força aos Danos Causados" of its own
+     * ({@code docs/rules/equipamentos.txt}); that Favor would be redundant if a ranged attack
+     * already had the term. (It has no {@code ModifierType} to be granted through yet — an
+     * {@code ItemBonus} is a flat type-and-value pair and cannot express a derived half-Atributo
+     * — and the offensive weapon catalog it belongs to doesn't exist, so nothing authors it.)
+     *
+     * <p><b>Contributed untyped</b>, into {@code DamageBonus#total}'s flatModifier rather than as
+     * a typed {@code DamageBonus}: the rules qualify it with no {@link
+     * org.aventyrs.core.character.DamageType}, so it takes whichever type the roll's first typed
+     * contributor sets, and reads as {@code FISICO} when there is none — the established reading
+     * of an unqualified dano addend, and the same one {@code BRUTALIDADE} already takes.
+     *
+     * <p><b>It stays Força under an Atributo substitution.</b> {@code ACUIDADE}/{@code
+     * SAGACIDADE_ARCANA} substitute Destreza/Foco via {@code
+     * SkillCompetencyAbility#getSubstituteAttributeDomain()}, but that hook replaces "o Atributo
+     * Base desta perícia" — the Atributo governing the <i>roll</i> — while this term's own rules
+     * text names Força specifically. Two statements about two different numbers, so a finesse
+     * swordsman rolls on Destreza and still adds half their Força.
+     *
+     * <p>Reads {@code AttributeValue#getTotal()}, the permanent value, exactly as {@code
+     * SpellCastingService#resolvePrimaryDamage} does for its own Foco term: a round-scoped {@code
+     * ModifierType#STRENGTH_BONUS} reaches a Perícia roll governed by Força and nothing else (see
+     * CLAUDE.md), and a dano roll is not that roll.
+     */
+    private int resolveMeleeStrengthDamage(final CombatantSheet attacker) {
+        if (skillType != SkillType.ATAQUE_CORPO_A_CORPO) {
+            return 0;
+        }
+        Character character = attacker.getCharacter();
+        int strength = character.getAttributes().getAttribute(AttributeDomain.STRENGTH).getTotal();
+        boolean fullStrength = isFirstAttackOfRound(attacker)
+                && character.getAttributeAbilities().stream()
+                        .anyMatch(AttributeAbility::upgradesFirstMeleeAttackOfRoundStrengthScaling);
+        return fullStrength ? strength : strength / 2;
+    }
+
+    /**
+     * Whether attacker has yet to roll a Perícia de Ataque this Rodada — the gate {@code
+     * DESTRUIDOR_DE_MUROS}'s "o primeiro ataque que realizar a cada Rodada" needs, and the exact
+     * mirror of {@code SpellCastingServiceImpl#isFirstSpellCastOfRound}.
+     *
+     * <p>Reads the per-Rodada log, not the per-Turn slice {@code
+     * CombatantSheet#isFirstAttackRollOfTurn()} exposes: those are different windows, and this
+     * clause names the Rodada. <b>The log is written by the caller</b> ({@code
+     * Scene#recordAction}/{@code CombatantSheet#recordAction}), never by {@code applyTo} — so a
+     * consumer that never records its attacks leaves every attack looking like the Rodada's
+     * first, the same standing caveat every reader of this log carries.
+     */
+    private static boolean isFirstAttackOfRound(final CombatantSheet attacker) {
+        return attacker.getActionsThisRound().stream()
+                .noneMatch(action -> action.skill() != null && action.skill().isAttackSkill());
     }
 
     /**

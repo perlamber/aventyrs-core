@@ -323,6 +323,27 @@ public interface AttributeAbility {
     }
 
     /**
+     * Whether this ability makes the holder's <b>first attack of each Rodada</b> add their full
+     * Força to its dano roll where the base rule adds half — {@code
+     * StrengthAbility#DESTRUIDOR_DE_MUROS}. Read by {@code AbstractSkillInteraction}'s dano-bonus
+     * sum, gated there on the attacker having recorded no Perícia de Ataque roll in {@code
+     * CombatantSheet#getActionsThisRound()} yet this Rodada.
+     *
+     * <p>The exact mirror of {@link #upgradesFirstSpellOfRoundFocusScaling}, deliberately: both
+     * ask "does this holder's first X of the Rodada use a whole Atributo instead of half of it",
+     * and keeping the two shapes identical is what makes the pair legible. They stay separate
+     * hooks rather than one parameterized by {@link AttributeDomain} because the two clauses gate
+     * on different actions (a Magia versus an attack) and nothing needs to ask both at once.
+     *
+     * <p><b>"O primeiro ataque" means any attack</b>, not the first <i>melee</i> one — a holder
+     * who opens the Rodada with a bow shot has spent it, and the swing that follows adds only
+     * half. False by default; only {@code DESTRUIDOR_DE_MUROS} overrides it.
+     */
+    default boolean upgradesFirstMeleeAttackOfRoundStrengthScaling() {
+        return false;
+    }
+
+    /**
      * Extra Movimento Base, in UD, this trait grants on one specific movement of the Rodada —
      * for a clause scoped to <i>which</i> movement it is, e.g. {@code
      * org.aventyrs.core.ability.DexterityAbility#PASSOS_LONGOS}'s "seu primeiro movimento em

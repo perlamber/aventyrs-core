@@ -12,8 +12,19 @@ public enum StrengthAbility implements AttributeAbility {
             "considerados Médios, Médios são considerados Leves). Esta Habilidade não muda a Categoria Base do " +
             "Equipamento, mas permite receber os benefícios da mudança de Categoria."),
 
+    /**
+     * Real. The base rule adds half the attacker's Força to an Ataque Corpo-a-Corpo's dano roll;
+     * this upgrades that to the full value on the Rodada's first attack, resolved by {@code
+     * AbstractSkillInteraction}'s dano-bonus sum via {@link
+     * AttributeAbility#upgradesFirstMeleeAttackOfRoundStrengthScaling()}.
+     */
     DESTRUIDOR_DE_MUROS("O primeiro ataque que realizar a cada Rodada utiliza seu valor de Força integral nas " +
-            "rolagens de dano, ao invés da metade."),
+            "rolagens de dano, ao invés da metade.") {
+        @Override
+        public boolean upgradesFirstMeleeAttackOfRoundStrengthScaling() {
+            return true;
+        }
+    },
 
     MOVIMENTO_LIVRE("O primeiro Ponto de Ação (PA) que utilizar em cada Rodada para mover-se, escalar ou nadar " +
             "ignora efeitos de Terreno Difícil."),

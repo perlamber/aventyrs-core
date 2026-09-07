@@ -95,10 +95,22 @@ These hold across every subsystem skill and section; they aren't repeated per-fe
   authored — `equipamentos.txt` still gives no weapon a hands column. The plain `Character#equip`
   mutator stays unvalidating and builder-bypassable; `CombatantSheet#rearm` and a foe's loadout
   don't go through the check.
-- **A critical hit rolls one extra die, plus a flat +2** — 2d6+1 crits for 3d6+1, then +2, then
-  the attack's own bonuses. **Any "+1d6" effect respects `DamageBase.MAX_DICE`**: at 3 dice the
-  extra die becomes +2 instead, so 3d6+1 becomes 3d6+3. That rule is general, not
-  critical-specific, and applies to every clause granting an extra die.
+- **A critical hit grants Vantagem em Danos — a flat +2, and *no* extra die.** It is an ordinary
+  `Skill#ADVANTAGE_BONUS` on the dano roll, the same +2 Vantagem is worth everywhere else, so a
+  crit is a `DamageBonus` contributor and not a stage of its own. **The "+1d6" belongs to specific
+  traits, never to the baseline**, and they divide into two kinds: one *replaces* the Vantagem
+  (`AssassinoFeat#VIOLENCIA_DESCOMUNAL` — "Você não recebe Vantagem em Danos em seus Acertos
+  Críticos, ao invés disso recebe Bônus de +1d6", which is the clause that proves what the
+  baseline is), and the rest *add* to it (Mira Mortal, the two Bruto Título clauses at
+  `talentos.txt:295`/`299`, Rancor Ymiriano). Nothing here is modelled — neither the baseline
+  Vantagem nor any grant — so a crit currently changes the dano roll not at all.
+  **Do not describe crit damage as "an extra die plus +2"**; that conflated the Talento's
+  replacement die with the base rule, and this bullet said so until it was checked against
+  `talentos.txt`.
+  ⚠️ **Unverified:** whether a granted "+1d6" is subject to `DamageBase.MAX_DICE` (at 3 dice
+  becoming +2 instead). That claim arrived attached to the wrong crit rule above and may be
+  downstream of the same error — a bonus die is not a Dano Base die, and the cap governs the
+  Dano Base scale. Confirm against the core rulebook before relying on it.
 - **Every movement figure is per Ponto de Ação.** A UD amount named by any movement clause —
   a permanent `ModifierType.MOVEMENT` bonus, a Round-scoped `TemporaryBonus`, or one scoped to a
   particular movement of the Rodada (`resolveRoundMovementIncrease`) — always widens what *one*
@@ -114,6 +126,19 @@ These hold across every subsystem skill and section; they aren't repeated per-fe
   `ConditionType#getAttackerDamageBonus` (Flanqueado) — is **summed** by `DamageBonus#total`, not
   first-wins. Mixed `DamageType`s flatten to the first typed contributor's; an untyped-only total
   is `FISICO`. A net of zero reports no bonus at all.
+- **An Ataque Corpo-a-Corpo adds half its attacker's Força to the dano roll**, floored, untyped —
+  `AbstractSkillInteraction#resolveMeleeStrengthDamage`, summed into `DamageBonus#total`'s
+  flatModifier alongside the four trait scans. It is a property of the *Perícia*, not of anything
+  held, so it hangs off no `resolve*` hook; `StrengthAbility#DESTRUIDOR_DE_MUROS` upgrades the
+  Rodada's **first attack** (any attack, not the first melee one) to the full value via
+  `AttributeAbility#upgradesFirstMeleeAttackOfRoundStrengthScaling`, the exact mirror of
+  `upgradesFirstSpellOfRoundFocusScaling`. **Melee only** — Ataque à Distância adds nothing, which
+  is why the Arco Composto has a Favor granting the term (unauthored: `ItemBonus` can't express a
+  derived half-Atributo, and the offensive weapon catalog doesn't exist). **A dano bonus, never a
+  Dano Base scale-up** — the rules' own `1d6+4 (Base 2 + Metade da Força)` notation keeps the two
+  apart. It stays **Força** under an `ACUIDADE`/`SAGACIDADE_ARCANA` substitution: that hook
+  replaces the Atributo governing the *roll*, and reads `getTotal()`, so a round-scoped
+  `STRENGTH_BONUS` doesn't reach it.
 - **This core never rolls dice, never does geometry, and never tracks what a roll is *for*.**
   Dice results, distances, and initiative values all arrive already resolved from a caller. A
   bonus scoped to a narrative *purpose* ("only for animal-related rolls") can't be modeled —

@@ -1,6 +1,6 @@
 ---
 name: damage-and-combat
-description: This skill should be used for any work on combat resolution, damage, or the sheet type hierarchy — `AttackDelivery`/`AttackReceiver` (the two mirrored entry points), `DamageBase`/`DamageBaseService` (the odometer scale, `getDamageBase(Character, Weapon|SkillType)`), `AttackRangeService`/`Weapon#getRange`/`Range#increasedBy`/`Feat#resolveAttackRangeIncrease` (an attack's maximum distance from the Weapon or Spell, widened by Talentos — `ArtilhariaFeat#TIRO_LONGO`), `DamageService` (RD/RA/half-damage mitigation order, `calculateFinalDamage`, `applyDamage`), multi-target attacks (`AttackTargetingService`/`Feat#resolveAdditionalTargets`/`DeliveredAttack#additionalTargets`/`DamageInteraction#halvingDamage` — `ArtesMarciaisFeat#DOMINAR_ARTE_MARCIAL_ARTE_FLUIDA`), `HitPointsService#getStatus`/`getMaxHitPoints` and `CharacterStatus` being derived-not-stored, ally-facing RA scans (`resolveAllyAbsoluteDamageReduction`, `sumAllyGrantedAbsoluteDamageReduction`), `SceneContext`-conditioned RA/half-damage hooks, `CombatantSheet` vs `CharacterSheet` vs `MonsterSheet`, `lifeMultiplier`/`ModifierType.HIT_POINTS`, or `CriticalEffect`. Also use it when asked why a `DamageBase` scale-up isn't a `DamageBonus`, why monsters can't level up, why `CharacterStatus` isn't stored, why an attack's range isn't a character stat, why RA is scanned rather than granted, or why this core enforces how many targets an attack has but not which ones.
+description: This skill should be used for any work on combat resolution, damage, or the sheet type hierarchy — `AttackDelivery`/`AttackReceiver` (the two mirrored entry points), `DamageBase`/`DamageBaseService` (the odometer scale, `getDamageBase(Character, Weapon|SkillType)`), `AttackRangeService`/`Weapon#getRange`/`Range#increasedBy`/`Feat#resolveAttackRangeIncrease` (an attack's maximum distance from the Weapon or Spell, widened by Talentos — `ArtilhariaFeat#TIRO_LONGO`), `DamageService` (RD/RA/half-damage mitigation order, `calculateFinalDamage`, `applyDamage`), the melee half-Força dano term (`AbstractSkillInteraction#resolveMeleeStrengthDamage`, `StrengthAbility#DESTRUIDOR_DE_MUROS`, `AttributeAbility#upgradesFirstMeleeAttackOfRoundStrengthScaling`), multi-target attacks (`AttackTargetingService`/`Feat#resolveAdditionalTargets`/`DeliveredAttack#additionalTargets`/`DamageInteraction#halvingDamage` — `ArtesMarciaisFeat#DOMINAR_ARTE_MARCIAL_ARTE_FLUIDA`), `HitPointsService#getStatus`/`getMaxHitPoints` and `CharacterStatus` being derived-not-stored, ally-facing RA scans (`resolveAllyAbsoluteDamageReduction`, `sumAllyGrantedAbsoluteDamageReduction`), `SceneContext`-conditioned RA/half-damage hooks, `CombatantSheet` vs `CharacterSheet` vs `MonsterSheet`, `lifeMultiplier`/`ModifierType.HIT_POINTS`, or `CriticalEffect`. Also use it when asked why a `DamageBase` scale-up isn't a `DamageBonus`, why monsters can't level up, why `CharacterStatus` isn't stored, why an attack's range isn't a character stat, why RA is scanned rather than granted, why this core enforces how many targets an attack has but not which ones, or why the melee Força term hangs off no `resolve*` hook and doesn't follow an Atributo substitution.
 ---
 
 # Damage, combat resolution, and the sheet hierarchy
@@ -283,6 +283,50 @@ Talento clause scoped to *what the attack was made with* is expressible: `Monstr
 narrows with `actor.treatsAsNaturalWeapon(weapon)` for its "+1 em rolagens de danos de suas
 Armas Naturais". `SkillCompetencyAbility`/`EgoAdvantage` did **not** grow the parameter — add it
 there with their first consumer.
+
+## The melee Força term — the one dano bonus nobody holds
+
+**An Ataque Corpo-a-Corpo adds half its attacker's Força to the dano roll**, rounded down.
+`AbstractSkillInteraction#resolveMeleeStrengthDamage` resolves it and `sumDamageBonus` folds it
+into `DamageBonus#total`'s flatModifier beside the four trait scans.
+
+**It hangs off no `resolve*` hook, and that's the point.** Every other contributor is something
+the character *holds* — a Habilidade, a Vantagem, a Talento, a Condição. This one is a property of
+the **Perícia itself**, true of anyone who swings, so there is nothing to scan and no interface to
+widen. Don't go looking for the ability that grants it, and don't add one.
+
+**Melee only.** `resolveMeleeStrengthDamage` returns 0 for anything but `ATAQUE_CORPO_A_CORPO`.
+The corroboration is the Arco Composto, whose authored Favor is "Adiciona Metade da Força aos
+Danos Causados" (`docs/rules/equipamentos.txt`) — a Favor that would be redundant if a ranged
+attack already had the term. That Favor is *unauthored*, and blocked twice over: an `ItemBonus` is
+a flat `ModifierType`-and-value pair and cannot express a derived half-Atributo, and the offensive
+weapon catalog doesn't exist (`ItemCatalog` registers `ArmorItem` and `NaturalWeapon` only).
+
+**A dano bonus, never a Dano Base scale-up.** The section above says the two never merge; this is
+the clause most likely to tempt you, because "+ Metade da Força" reads like part of a weapon's
+damage line. It isn't — the rules' own stat-block notation, `1d6+4 (Base 2 + Metade da Força)`,
+names the row and the term as separate quantities, exactly the split this codebase keeps.
+
+**`StrengthAbility#DESTRUIDOR_DE_MUROS` upgrades the Rodada's first attack to the full value**,
+via `AttributeAbility#upgradesFirstMeleeAttackOfRoundStrengthScaling()` — the deliberate mirror of
+`upgradesFirstSpellOfRoundFocusScaling()`, down to the gate: no attack yet in
+`CombatantSheet#getActionsThisRound()`. Three things to know about that gate:
+
+- **"O primeiro ataque" is any attack**, not the first *melee* one. Opening with a bow shot spends
+  the upgrade. A non-attack Perícia doesn't.
+- **It reads the per-Rodada log, not the per-Turn slice.** `isFirstAttackRollOfTurn()` is a
+  different window; this clause names the Rodada.
+- **The log is written by the caller.** `applyTo` only reads it, so a consumer that never calls
+  `recordAction` leaves every attack looking like the Rodada's first — the standing caveat every
+  reader of that log carries, not a bug in this term.
+
+**It stays Força under a substitution.** `ACUIDADE`/`SAGACIDADE_ARCANA` replace the Atributo
+governing the *roll* via `getSubstituteAttributeDomain()`; this term's own rules text names Força.
+Two statements about two different numbers — a finesse swordsman rolls on Destreza and still adds
+half their Força. It reads `AttributeValue#getTotal()`, the permanent value, exactly as
+`SpellCastingService#resolvePrimaryDamage` does for its Foco term: a round-scoped
+`ModifierType#STRENGTH_BONUS` reaches a Força-governed Perícia roll and nothing else, and a dano
+roll is not that roll.
 
 ## An attack's maximum range — `AttackRangeService`
 

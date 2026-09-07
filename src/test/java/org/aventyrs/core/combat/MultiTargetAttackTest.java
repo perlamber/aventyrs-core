@@ -201,6 +201,13 @@ class MultiTargetAttackTest {
 
     // ---------- the dano Desvantagem ----------
 
+    /**
+     * The stylist has Força 6, so every melee dano roll already carries the base rule's half-Força
+     * term of +3 before this Talento is considered. What naming a second target changes is the
+     * <i>difference</i> between the two rolls, which is the Desvantagem.
+     */
+    private static final int STYLIST_HALF_STRENGTH = 3;
+
     @Test
     void namingASecondTargetCostsTheStylistDesvantagemOnTheDanoRoll() {
         CharacterSheet stylist = fluidStylist();
@@ -209,13 +216,15 @@ class MultiTargetAttackTest {
 
         DeliveredAttackResult single = attackDelivery.resolve(attack(stylist, primary)
                 .attackRoll(roll).build());
-        assertNull(single.getAttackResult().getDamageBonus(), "one target, nothing to pay");
+        assertEquals(STYLIST_HALF_STRENGTH, single.getAttackResult().getDamageBonus().getValue(),
+                "one target: the base half-Força term alone, nothing paid");
 
         DeliveredAttackResult doubled = attackDelivery.resolve(attack(stylist, primary)
                 .additionalTarget(AttackTarget.of(foeWithPhysicalDefense(13), DefenseType.PHYSICAL))
                 .attackRoll(roll).build());
         assertNotNull(doubled.getAttackResult().getDamageBonus());
-        assertEquals(Skill.DISADVANTAGE_MALUS, doubled.getAttackResult().getDamageBonus().getValue());
+        assertEquals(STYLIST_HALF_STRENGTH + Skill.DISADVANTAGE_MALUS,
+                doubled.getAttackResult().getDamageBonus().getValue());
     }
 
     /** Missing an additional target still cost the Desvantagem — the clause is about naming them. */
@@ -227,7 +236,8 @@ class MultiTargetAttackTest {
                 .build());
 
         assertFalse(result.getAdditionalTargetResults().get(0).getHit());
-        assertEquals(Skill.DISADVANTAGE_MALUS, result.getAttackResult().getDamageBonus().getValue());
+        assertEquals(STYLIST_HALF_STRENGTH + Skill.DISADVANTAGE_MALUS,
+                result.getAttackResult().getDamageBonus().getValue());
     }
 
     // ---------- Meio-Dano on the additional target ----------

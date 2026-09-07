@@ -253,10 +253,14 @@ class GeneralFeatEffectIntegrationTest {
 
         CharacterSheet unarmedSheet = CharacterSheet.of(unarmed, new Player());
         CharacterSheet armedSheet = CharacterSheet.of(armed, new Player());
-        assertEquals(Skill.ADVANTAGE_BONUS, SkillType.ATAQUE_CORPO_A_CORPO.newInteraction()
+
+        // Força 2, so both rolls already carry the base rule's half-Força term of +1. The Vantagem
+        // is the difference between them.
+        int halfStrength = 1;
+        assertEquals(halfStrength + Skill.ADVANTAGE_BONUS, SkillType.ATAQUE_CORPO_A_CORPO.newInteraction()
                 .applyTo(unarmedSheet, null, null).getDamageBonus().getValue());
-        assertNull(SkillType.ATAQUE_CORPO_A_CORPO.newInteraction()
-                .applyTo(armedSheet, null, null).getDamageBonus());
+        assertEquals(halfStrength, SkillType.ATAQUE_CORPO_A_CORPO.newInteraction()
+                .applyTo(armedSheet, null, null).getDamageBonus().getValue());
     }
 
     private static Character.CharacterBuilder impactoRochosoCapable() {
