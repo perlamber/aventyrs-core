@@ -25,6 +25,7 @@ import org.aventyrs.core.item.NaturalWeapon;
 import org.aventyrs.core.item.RegaliaGrade;
 import org.aventyrs.core.item.Weapon;
 import org.aventyrs.core.magic.Spell;
+import org.aventyrs.core.magic.MimetizedSpell;
 import org.aventyrs.core.race.Race;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.Player;
@@ -252,6 +253,19 @@ public class Character {
     @NonNull
     @Builder.Default
     protected List<Spell> spells = new ArrayList<>();
+
+    /**
+     * Magias granted by a mimetizing Talento, separate from learned {@link #spells}: they do not
+     * satisfy a Magic Tree's acquisition gates and will be cast only through a dedicated mimicry
+     * service. Granted by {@link #grantMimetizedSpell(MimetizedSpell)} during Feat acquisition.
+     *
+     * <p>Like {@link #feats}, this is mutable when built normally. {@code CharacterFixture}
+     * initializes it with an immutable {@code List.of()}, so a fixture-built Character receiving
+     * a mimetized Magia must use {@code .toBuilder().mimetizedSpells(new ArrayList<>()).build()}.
+     */
+    @NonNull
+    @Builder.Default
+    protected List<MimetizedSpell> mimetizedSpells = new ArrayList<>();
 
     /**
      * The Itens this character currently has equipped — the same real-mutable-list shape as
@@ -526,6 +540,11 @@ public class Character {
      */
     public void grantSpell(@NonNull final Spell spell) {
         spells.add(spell);
+    }
+
+    /** Adds a Talento-granted mimetized Magia without making it a learned {@link Spell}. */
+    public void grantMimetizedSpell(@NonNull final MimetizedSpell spell) {
+        mimetizedSpells.add(spell);
     }
 
     /**

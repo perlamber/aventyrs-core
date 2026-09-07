@@ -23,6 +23,7 @@ public class FeatServiceImpl implements FeatService {
         characterSheet.useExperience(BigDecimal.valueOf(cost));
 
         character.grantFeat(feat);
+        feat.getGrantedMimetizedSpells(character).forEach(character::grantMimetizedSpell);
         return feat;
     }
 

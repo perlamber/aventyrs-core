@@ -4,13 +4,20 @@ import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.DefenseType;
 import org.aventyrs.core.character.SizeCategory;
+import org.aventyrs.core.character.services.DamageService;
+import org.aventyrs.core.character.services.HitPointsServiceImpl;
 import org.aventyrs.core.item.Weapon;
+import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.race.Anao;
 import org.aventyrs.core.scene.SceneContext;
+import org.aventyrs.core.sheet.Blessing;
+import org.aventyrs.core.sheet.TargetScope;
 import org.aventyrs.core.skill.Skill;
 import org.aventyrs.core.skill.SkillTrait;
 import org.aventyrs.core.skill.SkillType;
 import org.aventyrs.core.title.TitleArchetype;
+
+import java.util.List;
 
 /**
  * Talentos Anões — the Ymirian half of the Anão's own tree.
@@ -18,7 +25,8 @@ import org.aventyrs.core.title.TitleArchetype;
  * <p><b>All five carry real effects.</b> {@link #FILHO_DE_YMIR} goes through {@code
  * Feat}'s PV-multiplier hook and the weapon-aware {@code resolveDamageBaseIncrease} (its "de
  * armas" scope excludes only a bare-handed Ataque Desarmado); {@link #VIGOR_DO_INVERNO} through
- * the multiplier hook; {@link #VANTAGEM_DE_TAMANHO} and
+ * the multiplier hook plus a {@code Feat#resolveCombatStartBlessings} pair (RD + Resistência a
+ * Críticos, lasting ½ Multiplicador de PV Rodadas); {@link #VANTAGEM_DE_TAMANHO} and
  * {@link #GLORIA_YMIRIANA} are conditioned on <i>who is on the other side of the roll</i>, and
  * became expressible when {@code SceneContext#getOpposedCharacter()} landed — the target on an
  * attack roll, the attacker on a defence roll. Between them they are the reason two new {@code
@@ -166,16 +174,25 @@ public enum AnaoFeat implements Feat {
     /**
      * "Seu Multiplicador de PV aumenta em 1. No início de cada combate você recebe RD e
      * Resistência a Críticos por uma quantidade de Rodadas igual à metade de seu Multiplicador
-     * de PV." The multiplier half is real.
+     * de PV." <b>All three halves real.</b>
+     *
+     * <p>The PV multiplier rides {@link Feat#resolveLifeMultiplierIncrease}. The combat-start
+     * grant rides {@link Feat#resolveCombatStartBlessings} — two {@link Blessing}s, both {@code
+     * TargetScope#SELF}, both lasting {@code getLifeMultiplier / 2} Rodadas (floored, this
+     * Talento's own +1 included), applied by {@code
+     * org.aventyrs.core.character.services.CombatStartBlessingService} when the caller turns the
+     * Cena into a Cena de Combate:
+     * <ul>
+     *   <li>RD, at {@link DamageService#DEFAULT_DAMAGE_REDUCTION} (the "recebe RD" with no number
+     *   convention — and exactly one RC/RD instance's -2 per {@code
+     *   docs/rules/defesas-e-resistencias.txt}), now summed for real by {@code
+     *   DamageServiceImpl}'s {@code CombatantSheet} overload;</li>
+     *   <li>Resistência a Críticos, one instance ({@link ModifierType#CRITICAL_RESISTANCE} {@code
+     *   2}), subtracted from an attacker's Margem Crítica Menor widening by {@code
+     *   AbstractSkillInteraction} — see that {@code ModifierType}'s javadoc for the pieces of the
+     *   RC rule that still can't be expressed (the Maior clause, PRIMORDIAL scoping).</li>
+     * </ul>
      */
-    // TODO: the RD half needs a start-of-combat trigger, which nothing has — a Feat is scanned
-    //  where a service asks, never fired by an event, and this codebase has no observer
-    //  mechanism anywhere. Note the Duração would be computable once it did
-    //  (HitPointsService#getLifeMultiplier / 2, this Talento's own +1 included).
-    // TODO: Resistência a Críticos is not a stat this core computes — distinct from
-    //  Race#getCriticalEffectImmunities(), which is an all-or-nothing filter keyed on an
-    //  identity, not a resistance value. Same unbuilt piece ProfissaoCompetencyAbility and
-    //  Troll's own Anatomia Vegetal both cite.
     VIGOR_DO_INVERNO(
             "Seu Multiplicador de PV aumenta em 1. No início de cada combate você recebe RD e "
                     + "Resistência a Críticos por uma quantidade de Rodadas igual à metade de seu "
@@ -190,9 +207,23 @@ public enum AnaoFeat implements Feat {
         public int resolveLifeMultiplierIncrease(final Character character) {
             return 1;
         }
+
+        @Override
+        public List<Blessing> resolveCombatStartBlessings(final Character character) {
+            int rounds = new HitPointsServiceImpl().getLifeMultiplier(character) / 2;
+            return List.of(
+                    new Blessing(ModifierType.DAMAGE_REDUCTION, DamageService.DEFAULT_DAMAGE_REDUCTION,
+                            rounds, TargetScope.SELF, name()),
+                    new Blessing(ModifierType.CRITICAL_RESISTANCE, CRITICAL_RESISTANCE_INSTANCE,
+                            rounds, TargetScope.SELF, name()));
+        }
     };
 
     private static final int GLORIA_CRITICAL_MARGIN_INCREASE = 2;
+
+    /** One instance of Resistência à Críticos — a -2 to an attacker's Margem Crítica Menor, per
+     * {@code docs/rules/defesas-e-resistencias.txt}. */
+    private static final int CRITICAL_RESISTANCE_INSTANCE = 2;
 
     /**
      * The attack target's Categoria de Tamanho, or {@code null} when this roll opposes nobody.

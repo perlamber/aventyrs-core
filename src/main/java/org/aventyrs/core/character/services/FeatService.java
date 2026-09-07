@@ -19,7 +19,8 @@ public interface FeatService {
     /**
      * Validates feat's own {@link Feat#isEligible(Character)} prerequisite, spends {@code
      * character.getRace().getNewFeatCost(feat.getFeatCategory())} XP from characterSheet, then
-     * grants feat via {@link Character#grantFeat(Feat)}.
+     * grants feat via {@link Character#grantFeat(Feat)}, then records every mimetized Magia the
+     * feat grants via {@link Character#grantMimetizedSpell(org.aventyrs.core.magic.MimetizedSpell)}.
      *
      * @throws IllegalOperationException if feat's prerequisite (Attribute base, Perícia
      *                                    Graduação, and/or an already-held required Feat) isn't

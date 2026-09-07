@@ -7,13 +7,15 @@ description: This skill should be used whenever rules text describes granting a 
 
 A `Blessing` (`org.aventyrs.core.sheet`) is a small value object — `ModifierType`, `int value`,
 `int rounds`, `TargetScope scope`, `String source` — for a **temporary, trigger-based bonus**
-granted to the holder and/or their Scene allies. Three real constants use it today, covering
-both triggers and every current `TargetScope`: `ArtesCompetencyAbility#DOM_BARDICO` (roll-time
+granted to the holder and/or their Scene allies. Real constants use it today across every
+current `TargetScope` and every trigger: `ArtesCompetencyAbility#DOM_BARDICO` (roll-time
 activation, `TargetScope.ALLIES` — excludes the caster), `AbencoadoPelaLuzAbility
 #GRITO_DE_GUERRA_VULCANO` (a Título Habilidade's own activation, `TargetScope.SELF_AND_ALLIES`,
-reporting three `Blessing`s at once), and `InitiativeAdvantage#POSICIONAMENTO_ESTRATEGICO`
-(winning-initiative trigger, `TargetScope.SELF_AND_ALLIES`). Read all three before assuming a
-new case is a fourth genuinely distinct shape.
+reporting three `Blessing`s at once), `InitiativeAdvantage#POSICIONAMENTO_ESTRATEGICO`
+(winning-initiative trigger, `TargetScope.SELF_AND_ALLIES`), and `AnaoFeat#VIGOR_DO_INVERNO`
+(`Feat#resolveCombatStartBlessings`, a start-of-combat trigger applied by
+`CombatStartBlessingService`, `TargetScope.SELF`, duration scaled off holder state). Read the
+relevant ones before assuming a new case is a genuinely distinct shape.
 
 The `scene-context-and-positioning` skill covers the `Scene`-internal apply/revoke and
 ally-propagation facts for the initiative-win trigger; `skill-roll-mechanics` covers "Vantagem
@@ -89,6 +91,17 @@ misrepresents the rules text. Rule these out first:
   specific gap, until a fourth source is added to `InitiativeBlessingServiceImpl`). Resolved by
   `InitiativeBlessingService#resolveBlessings(Character)` and applied by `Scene
   #applyInitiativeBlessings` — this class doesn't touch `CharacterSheet` itself.
+- **"No início de cada combate ..." (start of combat)** — override `default List<Blessing>
+  resolveCombatStartBlessings(Character)` on `Feat` (the only source scanned today —
+  `AnaoFeat#VIGOR_DO_INVERNO`). Resolved *and applied* by `CombatStartBlessingService
+  #applyCombatStartBlessings(CombatantSheet)`, caller-driven from wherever `Scene#setCombatScene(true)`
+  is (this core has no combat observer), exactly the `DefeatBlessingService` shape. The Blessing
+  carries its own Duração — a duration that scales off holder state (Vigor do Inverno's ½
+  Multiplicador de PV) is computed inside the override from `character`, the way
+  `AssassinoFeat#SANGUE_QUENTE` computes its *value*. Every such Blessing is `TargetScope.SELF`
+  so far; a `TemporaryBonus` of a `ModifierType` with an existing non-temporary consumer (RD's
+  reflection scan) needs that consumer taught to read `getTemporaryBonus` too — done for
+  `DAMAGE_REDUCTION` on the `CombatantSheet` overload of `DamageService#getTotalDamageReduction`.
 - **Any other explicit activation** (a Habilidade's own Custo de Ativação, or a Perícia roll's
   own rules text like DOM_BARDICO's) — report it via `InteractionResult#getBlessings()` on the
   relevant `<X>Interaction` (a `<Skill>Interaction` for a Perícia-roll-time grant, or a
@@ -150,6 +163,11 @@ the `ModifierType` already has a working, different consumer.
 - **Initiative-win trigger**: `return List.of(new Blessing(...));` from the overridden
   `resolveInitiativeBlessings()`. Nothing else to wire — `InitiativeBlessingService`/`Scene
   #applyInitiativeBlessings` already pick it up generically.
+- **Start-of-combat trigger**: `return List.of(new Blessing(...));` from the overridden
+  `Feat#resolveCombatStartBlessings(Character)`. Nothing else to wire — `CombatStartBlessingService`
+  scans it generically. If the Blessing's `ModifierType` already has a non-temporary consumer
+  (RD, Defesas, …), verify that consumer's `CombatantSheet` overload reads `getTemporaryBonus`
+  of that type; add the read if not (as `DamageServiceImpl` now does for `DAMAGE_REDUCTION`).
 - **Activation trigger**: set `InteractionResult.builder().blessings(List.of(...)).build()`
   (or `.toBuilder()` if extending a base result — see `ArtesInteraction`'s own `applyTo`
   override) inside the relevant `<X>Interaction`. If more than one `Blessing` applies at once
@@ -176,6 +194,11 @@ the `ModifierType` already has a working, different consumer.
   genuinely new scanning path (not just a new constant on an existing one), add `SceneTest`
   coverage mirroring `applyInitiativeBlessingsGrantsAnAllyScopedBlessingToTheWinnerAndItsAllies`/
   `applyInitiativeBlessingsGrantsASelfOnlyBlessingOnlyToTheWinner`.
+- **Start-of-combat trigger**: a `CombatStartBlessingServiceImplTest` case (mirror
+  `DefeatBlessingServiceImplTest`) asserting the granted `Blessing` fields and that they land as
+  `TemporaryBonus`es on the combatant, plus a "no such Talento → empty" case; and, if a
+  non-temporary consumer was taught to read the type, a case in that service's test proving the
+  round-scoped grant is now summed on the `CombatantSheet` path but not the `Character`-only one.
 - **Activation trigger**: a `<X>InteractionTest` asserting the reported `blessings` list — see
   `GritoDeGuerraVulcanoInteractionTest`/`ArtesInteractionTest`'s DOM_BARDICO cases for the
   shape (including the "ability not held → `blessings` stays `null`" case, and, for
@@ -204,6 +227,11 @@ the `ModifierType` already has a working, different consumer.
   scan for the initiative-win trigger.
 - `src/main/java/org/aventyrs/core/scene/Scene.java` (`applyInitiativeBlessings`,
   `SceneTest.java`) — how an initiative-win `Blessing` actually gets applied/revoked.
+- `src/main/java/org/aventyrs/core/character/services/CombatStartBlessingServiceImpl.java`
+  (`CombatStartBlessingServiceImplTest.java`) + `AnaoFeat#VIGOR_DO_INVERNO` — the start-of-combat
+  trigger, `TargetScope.SELF`, a holder-state-scaled duration, and a `DAMAGE_REDUCTION` Blessing
+  that needed `DamageServiceImpl` taught to read `getTemporaryBonus`. Mirrors
+  `DefeatBlessingServiceImpl` (`Feat#resolveDefeatBlessings`).
 - `src/main/java/org/aventyrs/core/title/santo/AbencoadoPelaLuzInteraction.java` — the
   direct-mutation, single-known-recipient shape that does **not** use `Blessing` at all,
   included here specifically so it's easy to tell apart from the activation-trigger case above.

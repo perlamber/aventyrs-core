@@ -363,6 +363,13 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                     ? DifficultyLevel.reachedByAsExpert(bonus + skillRoll.getTotal())
                     : DifficultyLevel.reachedBy(bonus + skillRoll.getTotal());
             int criticalMarginIncrease = sumCriticalMarginIncrease(target, skillCompetencyAbilities, sceneContext, attackSource);
+            // Resistência a Críticos — the attack target's own round-scoped RC (a Blessing, as
+            // AnaoFeat#VIGOR_DO_INVERNO grants) narrows this roller's Margem Crítica Menor back.
+            // getCriticalResult floors a net-negative widening at 0, which is the "até o mínimo
+            // de 17" clamp — RC cancels widening rather than making a crit harder than baseline.
+            // See ModifierType.CRITICAL_RESISTANCE for the RC pieces still not expressible.
+            criticalMarginIncrease -= attackTarget == null ? 0
+                    : attackTarget.getTemporaryBonus(ModifierType.CRITICAL_RESISTANCE);
             CriticalResult criticalResult = skillRoll.getCriticalResult(criticalMarginIncrease);
             result.reachedDifficultyLevel(reached.orElse(null))
                     .criticalResult(criticalResult);

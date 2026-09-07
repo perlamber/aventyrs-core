@@ -13,6 +13,7 @@ import org.aventyrs.core.character.fixture.CharacterSkillFixture;
 import org.aventyrs.core.ability.DexterityAbility;
 import org.aventyrs.core.ego.InitiativeAdvantage;
 import org.aventyrs.core.ego.SorteAdvantage;
+import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.race.Anao;
 import org.aventyrs.core.race.AnoesRacialAbility;
 import org.aventyrs.core.race.Elfo;
@@ -558,6 +559,28 @@ class AbstractSkillInteractionTest {
         InteractionResult result = new AtaqueADistanciaInteraction().applyTo(sheet, null, roll);
 
         assertEquals(CriticalResult.NONE, result.getCriticalResult());
+    }
+
+    /**
+     * The attack target's own Resistência a Críticos ({@code ModifierType.CRITICAL_RESISTANCE},
+     * as {@code AnaoFeat#VIGOR_DO_INVERNO} grants) narrows the attacker's Margem Crítica Menor
+     * back. 6+5+2 crits at Ataque Preciso's +1 margin; one RC instance (-2) more than cancels it,
+     * leaving a single 6 — no crit.
+     */
+    @Test
+    void applyToSubtractsTheAttackTargetsCriticalResistanceFromTheMargin() {
+        CharacterSheet sheet = sheetHoldingAtaquePreciso();
+        SkillRoll roll = new SkillRoll(List.of(6, 5, 2));
+
+        CharacterSheet defender = CharacterSheet.of(CharacterFixture.blank(CharacterFixture.BLANK).build(), new Player());
+        InteractionResult withoutResistance = new AtaqueCorpoACorpoInteraction()
+                .applyTo(sheet, null, roll, defender, null);
+        assertEquals(CriticalResult.ACERTO_CRITICO_MENOR, withoutResistance.getCriticalResult());
+
+        defender.grantTemporaryBonus(ModifierType.CRITICAL_RESISTANCE, 2, 3);
+        InteractionResult withResistance = new AtaqueCorpoACorpoInteraction()
+                .applyTo(sheet, null, roll, defender, null);
+        assertEquals(CriticalResult.NONE, withResistance.getCriticalResult());
     }
 
     private CharacterSheet sheetHoldingAceAndArtesMarginSources() {

@@ -83,8 +83,10 @@ public enum GorgonaFeat implements Feat {
      * {@code DamageService#DEFAULT_DAMAGE_REDUCTION}, the convention for an RD clause with no
      * number in its rules text.
      */
-    // TODO: Resistência a Críticos is form-gated *and* is not a stat this core computes —
-    //  distinct from Race#getCriticalEffectImmunities(), which is an identity-keyed filter.
+    // TODO: Resistência a Críticos — ModifierType.CRITICAL_RESISTANCE now exists (consumed off a
+    //  round-scoped grant on the attack target by AbstractSkillInteraction), but this clause is
+    //  form-gated ("enquanto em sua Forma Monstruosa" — no form state) *and* needs a permanent-RC
+    //  Feat scan on the attacker crit path. Still distinct from Race#getCriticalEffectImmunities().
     PROTECAO_DO_DEUS_DOS_MONSTROS(
             "Você recebe RDS e RD, enquanto em sua Forma Monstruosa você recebe Resistência à "
                     + "Críticos. Um mesmo personagem não pode possuir os Talentos Proteção do Deus "
@@ -108,7 +110,8 @@ public enum GorgonaFeat implements Feat {
     //  Gorgona's own Monstros em pele de Fada and TrollFeat#VIGOR_TROLLICO cite. Only the RDS
     //  half lands, which makes this Talento strictly weaker than its Monstros twin today even
     //  though the two are written as equals.
-    // TODO: Resistência a Críticos is form-gated and uncomputed, same as its twin.
+    // TODO: Resistência a Críticos — form-gated ("enquanto em sua forma Feérica"), and needs a
+    //  permanent-RC Feat scan on the attacker crit path; same as its twin above.
     PROTECAO_DA_RAINHA_DAS_FADAS(
             "Você recebe RDS e RM, enquanto em sua forma Feérica você recebe Resistência a "
                     + "Críticos. Um mesmo personagem não pode possuir os Talentos Proteção do Deus "

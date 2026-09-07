@@ -12,6 +12,8 @@ import org.aventyrs.core.feat.Feat;
 import org.aventyrs.core.feat.MetamagicoFeat;
 import org.aventyrs.core.feat.FeatCategory;
 import org.aventyrs.core.feat.FeatRequirements;
+import org.aventyrs.core.magic.MimetizedSpell;
+import org.aventyrs.core.magic.TestSpell;
 import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.Player;
@@ -55,6 +57,7 @@ class FeatServiceImplTest {
                         .build())
                 .skill(SkillType.ATAQUE_CORPO_A_CORPO, trainedAtaqueCorpoACorpo(2))
                 .feats(new ArrayList<>())
+                .mimetizedSpells(new ArrayList<>())
                 .build();
     }
 
@@ -109,6 +112,32 @@ class FeatServiceImplTest {
 
         assertEquals(List.of(ArtesMarciaisFeat.ARTISTA_MARCIAL), character.getFeats());
         assertEquals(BigDecimal.valueOf(7), sheet.getUnUsedExperience());
+    }
+
+    @Test
+    void grantFeatRecordsItsMimetizedSpellsWithoutLearningThemNormally() throws IllegalOperationException {
+        MimetizedSpell mimetizedSpell = MimetizedSpell.builder()
+                .spell(new TestSpell())
+                .determinationPointCost(2)
+                .build();
+        Feat mimetizingFeat = new AbstractFeat(FeatCategory.ARTE_MARCIAL, "Test-only mimetizing Feat.",
+                FeatRequirements.builder().build()) {
+            @Override
+            public List<MimetizedSpell> getGrantedMimetizedSpells(final Character character) {
+                return List.of(mimetizedSpell);
+            }
+        };
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .feats(new ArrayList<>())
+                .mimetizedSpells(new ArrayList<>())
+                .build();
+        CharacterSheet sheet = sheetWithExperience(character, BigDecimal.TEN);
+
+        featService.grantFeat(character, sheet, mimetizingFeat);
+
+        assertEquals(List.of(mimetizingFeat), character.getFeats());
+        assertEquals(List.of(mimetizedSpell), character.getMimetizedSpells());
+        assertTrue(character.getSpells().isEmpty());
     }
 
     @Test

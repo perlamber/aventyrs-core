@@ -560,4 +560,15 @@ class DamageServiceImplTest {
 
         assertEquals(10, damageService.calculateFinalDamage(character, 10, true));
     }
+
+    @Test
+    void aRoundScopedDamageReductionBonusIsSummedOnTheSheetPath() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK).build();
+        CharacterSheet target = CharacterSheet.of(character, new Player());
+        target.grantTemporaryBonus(ModifierType.DAMAGE_REDUCTION, 2, 3);
+
+        assertEquals(2, damageService.getTotalDamageReduction(target, DamageType.FISICO, null));
+        // ...but the Character-only overload has no sheet to read it from.
+        assertEquals(0, damageService.getTotalDamageReduction(character));
+    }
 }

@@ -91,6 +91,11 @@ public class DamageServiceImpl implements DamageService {
         total += sumEquipmentDamageReduction(character, damageDescriptor);
         total += sumFeatDamageReduction(character, target);
         total += sumAttributeAbilityDamageReduction(character, target, damageType, source);
+        // A round-scoped RD grant — a Blessing/TemporaryBonus, as AnaoFeat#VIGOR_DO_INVERNO
+        // hands its holder at combat start. Only reachable on this CombatantSheet-taking path;
+        // the Character-only overload above has no sheet to ask, the same limitation the
+        // aggregate ACTION_POINTS/REACTIONS/FREE_ACTIONS reads already carry.
+        total += target.getTemporaryBonus(ModifierType.DAMAGE_REDUCTION);
         return Math.max(0, total);
     }
 

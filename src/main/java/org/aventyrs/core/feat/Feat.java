@@ -23,6 +23,7 @@ import org.aventyrs.core.item.NaturalWeapon;
 import org.aventyrs.core.item.RegaliaGrade;
 import org.aventyrs.core.item.Weapon;
 import org.aventyrs.core.magic.Spell;
+import org.aventyrs.core.magic.MimetizedSpell;
 import org.aventyrs.core.rest.RestType;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.skill.AttackSource;
@@ -470,6 +471,17 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     }
 
     /**
+     * Mimetized Magias this Talento grants when it is acquired. Unlike {@link
+     * #grantsFreeSpellAcquisition(Character, Spell)}, these are not learned Magias: {@code
+     * FeatService} stores them in {@code Character.mimetizedSpells}, leaving {@code
+     * Character.spells} and Magic Tree progression untouched. A dedicated mimicry casting service
+     * will consume them; {@code SpellCastingService} remains learned-spell-only.
+     */
+    default List<MimetizedSpell> getGrantedMimetizedSpells(final Character character) {
+        return List.of();
+    }
+
+    /**
      * EXP this Talento takes off {@code SpellService#getAcquisitionCost} for spell — {@code
      * ElementalFeat#ARCANISMO_ELEMENTAL}'s "Aprender magias Elementais de seu elemento custa
      * 0.5EXP a menos". Summed across {@code character.getFeats()} together with {@code
@@ -727,6 +739,25 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      */
     default List<Blessing> resolveDefeatBlessings(final Character attacker, final CombatantSheet defeated,
                                                   final boolean viaCriticalHit) {
+        return List.of();
+    }
+
+    /**
+     * {@link Blessing}s this Talento grants its holder at the start of a combat — {@code
+     * AnaoFeat#VIGOR_DO_INVERNO}'s "No início de cada combate você recebe RD e Resistência a
+     * Críticos por uma quantidade de Rodadas igual à metade de seu Multiplicador de PV." Resolved
+     * and applied by {@code
+     * org.aventyrs.core.character.services.CombatStartBlessingService#applyCombatStartBlessings},
+     * which the caller invokes when a Cena turns into a Cena de Combate — this core has no combat
+     * observer, the same caller-drives-it shape as {@link #resolveDefeatBlessings} / {@code
+     * recordAction} / session recovery. Empty by default.
+     *
+     * <p>The Blessing already carries its own Duração in Rodadas: a clause whose duration scales
+     * off holder state (Vigor do Inverno's ½ Multiplicador de PV) computes it here from {@code
+     * character}, the same way {@code AssassinoFeat#SANGUE_QUENTE} computes its value from the
+     * holder's Títulos.
+     */
+    default List<Blessing> resolveCombatStartBlessings(final Character character) {
         return List.of();
     }
 

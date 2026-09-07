@@ -392,7 +392,19 @@ needs both — see the `attribute-graduation-progression` skill).
 
 An ability granting RD *or* RA without a number in its rules text uses
 `DamageService.DEFAULT_DAMAGE_REDUCTION` (+2); only deviate when the text states one (e.g.
-`APRIMORAR_COM_ARTE`'s "+1 RDS").
+`APRIMORAR_COM_ARTE`'s "+1 RDS"). A *round-scoped* RD grant (a `Blessing`/`TemporaryBonus` of
+`ModifierType.DAMAGE_REDUCTION` — `AnaoFeat#VIGOR_DO_INVERNO`'s combat-start grant) is summed
+only on the `CombatantSheet` overloads of `getTotalDamageReduction`, not the `Character`-only
+one, which has no sheet to read `getTemporaryBonus` from.
+
+**Resistência a Críticos (RC)** — `ModifierType.CRITICAL_RESISTANCE`, a *defender-side* narrowing
+of an attacker's Margem Crítica Menor. `AbstractSkillInteraction` subtracts the attack target's
+`getTemporaryBonus(CRITICAL_RESISTANCE)` from the summed `criticalMarginIncrease` before
+`SkillRoll#getCriticalResult` (so it reaches `AttackDelivery`, not the `AttackReceiver` mirror —
+the attacker rolls nothing there). One instance = value 2 per `docs/rules/defesas-e-resistencias.txt`.
+Only a round-scoped grant is read today; the "-1 à Margem Crítica Maior" clause, PRIMORDIAL
+scoping, and a permanent-RC scan on the attacker crit path are all still missing — see the CLAUDE.md
+gap-catalog "Resistência a Críticos" row.
 
 RD being real doesn't make every RD-granting ability real — `APRIMORAR_COM_ARTE` grants it as
 one branch of a choice, `ProfissaoCompetencyAbility.FORJA_VULCANA` as a per-produced-item choice

@@ -60,7 +60,12 @@ public enum MonstruosoFeat implements Feat {
      * "Você recebe Resistência a Críticos. Você ignora o primeiro Efeito Crítico Menor que sofrer
      * em cada Cena de Combate."
      */
-    // TODO: Resistência a Críticos is not a stat this core computes.
+    // TODO: Resistência a Críticos — ModifierType.CRITICAL_RESISTANCE now exists and
+    //  AbstractSkillInteraction subtracts an attack target's *round-scoped* total from the
+    //  attacker's Margem Crítica Menor widening, but there is no permanent-RC scan on that path
+    //  (only getTemporaryBonus is read). This unconditional grant needs one added — a Feat pass
+    //  over the target's held Talentos there, the mirror of sumCriticalMarginIncrease's own
+    //  fourth pass. See ModifierType.CRITICAL_RESISTANCE for the RC clauses still inexpressible.
     // TODO: ignoring an Efeito Crítico is close to expressible but not quite — CriticalEffect
     //  #applicableTo already filters a victim's immunities, but it keys on CriticalEffectType
     //  (which effect) and this clause keys on *severity* (Menor vs Maior), which the filter does

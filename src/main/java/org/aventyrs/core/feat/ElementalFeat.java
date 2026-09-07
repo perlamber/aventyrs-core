@@ -204,8 +204,11 @@ public enum ElementalFeat implements Feat {
     // this transformation is permanent rather than a Forma with a Duração, so the grant is
     // unconditional. The clause states no number, so it uses DamageService's own default — the
     // convention CLAUDE.md sets for an RD clause with no figure in its rules text.
-    // TODO: Resistência a Críticos is not a stat this core computes — distinct from
-    //  Race#getCriticalEffectImmunities(), which is an all-or-nothing filter keyed on an identity.
+    // TODO: Resistência a Críticos — ModifierType.CRITICAL_RESISTANCE now exists, but only a
+    //  *round-scoped* grant on the attack target is read (AbstractSkillInteraction's
+    //  getTemporaryBonus subtraction). This permanent grant needs a Feat scan added on that same
+    //  attacker crit path. Still distinct from Race#getCriticalEffectImmunities(), an
+    //  all-or-nothing filter keyed on an identity.
     TRANSFORMACAO_ELEMENTAL(
             "Você se transforma em um ser Elemental completo. Você recebe RDS e Resistência a "
                     + "Críticos. O dano causado por sua Reparação Elemental muda para 1d6, este "

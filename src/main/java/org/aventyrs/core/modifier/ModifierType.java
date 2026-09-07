@@ -59,6 +59,31 @@ public enum ModifierType {
     DAMAGE_REDUCTION,
     HALF_DAMAGE,
     ABSOLUTE_DAMAGE_REDUCTION,
+    /**
+     * Resistência à Críticos (RC) — a <b>defender-side</b> reduction of the Margem Crítica an
+     * attack made against this combatant can reach. Per {@code
+     * docs/rules/defesas-e-resistencias.txt}, each instance lowers the attacker's Margem Crítica
+     * Menor by -2 (and Maior by -1), so a bonus of {@code 2} here is one instance.
+     *
+     * <p><b>Partial reader.</b> Only {@code
+     * org.aventyrs.core.skill.AbstractSkillInteraction} consumes it — the attacker-rolls path
+     * subtracts the attack target's total from the summed Margem Crítica Menor widening before
+     * {@code SkillRoll#getCriticalResult(int)}, so it also reaches {@code
+     * org.aventyrs.core.combat.AttackDelivery}, which routes through that same interaction. Not
+     * read on the {@code org.aventyrs.core.combat.AttackReceiver} mirror (the attacker rolls
+     * nothing there). The "-1 à Margem Crítica Maior" clause has no expression — this ruleset
+     * models no Acerto Crítico Maior margin at all — and the "até o mínimo de 17" floor is
+     * approximated as "cannot push the attacker below their own baseline margin" (a net negative
+     * widening is floored at 0 by {@code getCriticalResult}). No "não-PRIMORDIAL" scoping either;
+     * the crit path carries no PRIMORDIAL marker.
+     *
+     * <p>Read only via {@code CombatantSheet#getTemporaryBonus} today — a {@code Blessing}/{@code
+     * TemporaryBonus}, as {@code AnaoFeat#VIGOR_DO_INVERNO} grants at combat start. A permanent
+     * RC source ({@code MonstruosoFeat}, {@code ElementalFeat}, {@code GorgonaFeat}, {@code
+     * Troll}'s Anatomia Vegetal, {@code ProfissaoCompetencyAbility}) would need its own scan
+     * added here, and each is blocked on a form state or an unrelated system besides.
+     */
+    CRITICAL_RESISTANCE,
     DEFESAS,
     PHYSICAL_DEFENSE,
     MAGIC_DEFENSE,

@@ -37,10 +37,13 @@ import java.util.Set;
  *
  * <p>Everything else needs a system this core doesn't have yet:
  * <ul>
- *   <li><b>Anatomia Vegetal's other three clauses</b> — <i>Resistência a Críticos</i> is not a
- *   stat this core computes at all (the same unbuilt piece {@code ProfissaoCompetencyAbility}
- *   cites, and distinct from the immunity list above, which is an all-or-nothing filter rather
- *   than a resistance value); the <b>vulnerabilities</b> (Fogo for every Troll, plus Natural for
+ *   <li><b>Anatomia Vegetal's other three clauses</b> — <i>Resistência a Críticos</i> has a
+ *   {@code ModifierType.CRITICAL_RESISTANCE} now, but it is consumed only off a <i>round-scoped</i>
+ *   grant on an attack target ({@code AbstractSkillInteraction}), and a permanent, race-granted
+ *   RC would need a scan added on that same attacker crit path (the same piece {@code
+ *   ProfissaoCompetencyAbility} still cites; distinct from the immunity list above, an
+ *   all-or-nothing filter rather than a resistance value); the <b>vulnerabilities</b> (Fogo for
+ *   every Troll, plus Natural for
  *   a Troll do Inverno and Gelo for one da Floresta) need damage-type-scoped mitigation, which
  *   {@code DamageService} has no notion of — and a <i>vulnerability</i> is a further missing
  *   stage beyond that, since nothing amplifies damage either; "recuperam danos sofridos por

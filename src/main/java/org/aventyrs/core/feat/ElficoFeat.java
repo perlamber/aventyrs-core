@@ -4,6 +4,12 @@ import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.effect.Definhar;
 import org.aventyrs.core.effect.EffectChain;
+import org.aventyrs.core.magic.ActivationTime;
+import org.aventyrs.core.magic.MimetizedSpell;
+import org.aventyrs.core.magic.SpellDuration;
+import org.aventyrs.core.magic.catalog.AliadosDaNaturezaSpell;
+import org.aventyrs.core.magic.catalog.RegeneracaoSpell;
+import org.aventyrs.core.magic.catalog.VooSpell;
 import org.aventyrs.core.race.Elfo;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.scene.TerrainType;
@@ -53,8 +59,6 @@ public enum ElficoFeat implements Feat {
      * <p>"Uma floresta ou bosque" is exactly {@link TerrainType#FOREST}, so this is the cleanest
      * mapping of the four Guardiões.
      */
-    // TODO: mimetizar 'Cativar Animal' at 2PD has no mechanism — SpellCastingService cannot cast
-    //  a Magia the caster does not know. Same gap NascidoDoDragao's Magia Dracônica cites.
     // TODO: "não podem adquirir o título Bruxo" is an exclusion on a *Título*, and nothing
     //  validates Título acquisition against a held Talento.
     GUARDIAO_DOS_BOSQUES(
@@ -71,6 +75,11 @@ public enum ElficoFeat implements Feat {
                                           final SkillTrait requestedAbility, final Character character) {
             return guardiaoBonus(skillType, sceneContext, requestedAbility, TerrainType.FOREST);
         }
+
+        @Override
+        public List<MimetizedSpell> getGrantedMimetizedSpells(final Character character) {
+            return List.of(mimetize(AliadosDaNaturezaSpell.CATIVAR_ANIMAL, 2));
+        }
     },
 
     /**
@@ -82,7 +91,8 @@ public enum ElficoFeat implements Feat {
      * wider scope than the enum carries — nothing models ambient temperature — so this grants on
      * the desert half alone, which is narrower than the text rather than wider.
      */
-    // TODO: mimetizar 'Dádiva de Undine' — same missing mimicry mechanism as its sibling.
+    // TODO: "Dádiva de Undine" does not appear in the authored spell catalog. The similarly
+    // named Lágrima de Undine is a different Muda spell, so it must not be substituted silently.
     // TODO: the Bruxo exclusion is unenforceable, same as its sibling.
     GUARDIAO_DAS_DUNAS(
             "Você possui pele negra ou outro tom escuro, o forte sol do deserto com suas altas "
@@ -112,7 +122,6 @@ public enum ElficoFeat implements Feat {
     //  records as missing. Mapping it to MOUNTAIN would grant the bonus in caves-and-crags Scenes
     //  the clause does not cover and withhold it while flying, which it does. Granting nothing is
     //  the honest reading until either state exists.
-    // TODO: mimetizar 'Voo' — same missing mimicry mechanism as its siblings.
     GUARDIAO_DAS_NUVENS(
             "Você possui pele em tom acinzentado e um corpo adaptado ao frio das Montanhas. "
                     + "Enquanto estiver em locais de grande altitude, ou voando, você recebe "
@@ -122,7 +131,18 @@ public enum ElficoFeat implements Feat {
                     + "Rodadas, ao custo de 3PD.",
             FeatRequirements.builder()
                     .requiredRace(Elfo.class)
-                    .build()),
+                    .build()) {
+        @Override
+        public List<MimetizedSpell> getGrantedMimetizedSpells(final Character character) {
+            return List.of(MimetizedSpell.builder()
+                    .spell(VooSpell.VOO_LIVRE)
+                    .determinationPointCost(3)
+                    .activationTimeOverride(ActivationTime.pa(1))
+                    .durationOverride(SpellDuration.rodadas(2))
+                    .selfOnly(true)
+                    .build());
+        }
+    },
 
     /**
      * "Enquanto estiverem com pelo menos metade do seu corpo submerso, recebem Vantagem nas
@@ -134,8 +154,7 @@ public enum ElficoFeat implements Feat {
     //  from its siblings': Ataque and Furtividade unconditionally, but Conhecimentos and Empatia
     //  Selvagem only "para informações referente a vida e hábitos marinhos" — a narrative purpose
     //  this core does not track.
-    // TODO: breathing underwater has no state to toggle, and mimetizar 'Regeneração' has no
-    //  mechanism.
+    // TODO: breathing underwater has no state to toggle.
     GUARDIAO_DAS_PROFUNDEZAS(
             "Com pele em tom azulado e brânquias no pescoço, os Guardiões das Profundezas são "
                     + "Elfos de características anfíbias, capazes de viver na água e em terra "
@@ -147,7 +166,12 @@ public enum ElficoFeat implements Feat {
                     + "'Regeneração', ao custo de 2PD.",
             FeatRequirements.builder()
                     .requiredRace(Elfo.class)
-                    .build()),
+                    .build()) {
+        @Override
+        public List<MimetizedSpell> getGrantedMimetizedSpells(final Character character) {
+            return List.of(mimetize(RegeneracaoSpell.REGENERACAO, 2));
+        }
+    },
 
     /**
      * "Você recebe Vantagem em suas rolagens de Perícias efetuadas enquanto estiver sob a
@@ -298,5 +322,13 @@ public enum ElficoFeat implements Feat {
     @Override
     public FeatRequirements getFeatRequirements() {
         return featRequirements;
+    }
+
+    private static MimetizedSpell mimetize(final org.aventyrs.core.magic.Spell spell,
+                                           final int determinationPointCost) {
+        return MimetizedSpell.builder()
+                .spell(spell)
+                .determinationPointCost(determinationPointCost)
+                .build();
     }
 }

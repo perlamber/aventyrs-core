@@ -48,7 +48,12 @@ public interface DamageService {
      * its own data (e.g. {@code SizeCategory}) is what a held ability's condition may need;
      * damageType/source may be {@code null} (unclassified damage / no known attacker), same
      * restraint every other Scene/roll-conditioned {@code resolve*} hook in this core already
-     * applies. Never negative.
+     * applies.
+     *
+     * <p>Also reads {@code target.getTemporaryBonus(ModifierType.DAMAGE_REDUCTION)} — a
+     * round-scoped RD grant ({@code AnaoFeat#VIGOR_DO_INVERNO}'s combat-start Blessing). The
+     * {@link #getTotalDamageReduction(Character)} overload structurally cannot (no sheet), the
+     * same split the aggregate Pontos de Ação / Reações reads carry. Never negative.
      */
     int getTotalDamageReduction(CombatantSheet target, DamageType damageType, CombatantSheet source);
 

@@ -1,0 +1,55 @@
+Defesas e Resistências
+
+Fonte: bloco de regras fornecido pelo autor. Este arquivo é a fonte da verdade para o
+subsistema de Resistências (RD/RM/RE/RC/RA/RDS/Meio-Dano/Resistência à Corrente de Efeitos).
+
+================================================================================================
+Resistindo a Danos e Efeitos Ofensivos
+
+Resistência à Danos (RD)
+  Cada instância reduz o Dano Físico não-PRIMORDIAL e não-ELEMENTAL em -2.
+  Reduz a Duração de Efeitos Físicos contínuos não-PRIMORDIAIS que inflijam danos em -1 Unidade
+  (a redução de Duração não se acumula entre instâncias).
+
+Resistência à Magias (RM)
+  Cada instância reduz o Dano Mágico não-PRIMORDIAL em -2.
+  Reduz a Duração de Efeitos Mágicos contínuos não-PRIMORDIAIS em -1 Unidade (a redução de
+  Duração não se acumula entre instâncias).
+
+Resistência Elemental (RE)
+  Cada instância reduz Danos Elementais Físicos e Mágicos em -2.
+  Reduz a Duração de Efeitos Elementais contínuos em -1 Unidade (a redução de Duração não se
+  acumula entre instâncias).
+
+Resistência à Críticos (RC)
+  A Margem Crítica Menor dos ataques não-PRIMORDIAIS sofridos é reduzida em -2, até o mínimo de 17.
+  A Margem Crítica Maior dos ataques não-PRIMORDIAIS sofridos é reduzida em -1, até o mínimo de 18.
+
+Resistência Absoluta (RA)
+  Cada instância reduz os Danos Físicos, Mágicos e Elementais já reduzidos em -2.
+  A Margem Crítica Menor dos ataques sofridos é reduzida em -1, até o mínimo de 17 (a Redução de
+  Margem Crítica Menor não se acumula entre instâncias).
+  A Margem Crítica Maior dos ataques sofridos é reduzida em -1, até o mínimo de 18 (a Redução de
+  Margem Crítica Menor não se acumula entre instâncias).
+  Reduz a Duração de Efeitos contínuos em -1 Unidade (a redução de Duração não se acumula entre
+  instâncias).
+
+Redução de Danos Sofridos (RDS)
+  Cada instância reduz os Danos não-PRIMORDIAIS de ordens Físicas e Mágicas em -1.
+
+Meio-Dano
+  Instâncias de Meio-Dano não são acumulativas entre si e reduzem os Danos Sofridos à metade.
+  Quando especificado na fonte, pode se limitar a reduzir apenas danos Físicos, Mágicos e
+  Elementais.
+  Efeitos de Meio-Dano são os últimos efeitos de Resistência a serem aplicados, vigorando após
+  as reduções de RA, RD, RDS e RM.
+  Danos reduzidos à metade por quaisquer efeitos ou fontes não podem ser reduzidos por Efeitos
+  de Meio-Dano.
+
+Resistência à Corrente de Efeitos
+  Todos os Personagens possuem natural Resistência à Corrente de Efeitos 5, o que indica que
+  Correntes de Efeitos desencadeiam apenas após superarem às Defesas do alvo em 5 ou mais.
+  Aumentos na Resistência a Corrente de Efeitos são sempre enumerados, indicando o valor que
+  deve ser acrescido – somado aos 5 iniciais.
+  Reduções na Resistência a Corrente de Efeitos são sempre enumeradas, indicando o valor que
+  deve ser decrescido – subtraído dos 5 iniciais.
