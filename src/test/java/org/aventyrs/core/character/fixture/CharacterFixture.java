@@ -5,6 +5,7 @@ import br.com.six2six.fixturefactory.Rule;
 import org.aventyrs.core.action.ActionPointsService;
 import org.aventyrs.core.action.ActionProfile;
 import org.aventyrs.core.character.AttributeDomain;
+import org.aventyrs.core.character.Alignment;
 import org.aventyrs.core.character.AttributeValue;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterAttributes;
@@ -100,7 +101,7 @@ public class CharacterFixture extends SimpleFixture {
                 this.add("race", new Human());
                 this.add("sexo", null);
                 this.add("deity", null);
-                this.add("tendencia", 1);
+                this.add("alignment", Alignment.NEUTRAL);
                 this.add("attributes", CharacterAttributes.builder().build());
                 this.add("egos", CharacterEgos.builder().build());
                 this.add("egoAdvantages", Map.of());
@@ -162,7 +163,7 @@ public class CharacterFixture extends SimpleFixture {
                 this.add("race", new Human());
                 this.add("sexo", null);
                 this.add("deity", null);
-                this.add("tendencia", 1);
+                this.add("alignment", Alignment.NEUTRAL);
                 this.add("attributes", CharacterAttributes.builder()
                         .strength(AttributeValue.builder().domain(AttributeDomain.STRENGTH).base(2).build())
                         .dexterity(AttributeValue.builder().domain(AttributeDomain.DEXTERITY).base(5).build())
@@ -207,6 +208,7 @@ public class CharacterFixture extends SimpleFixture {
                 this.add("equipment", List.of());
                 this.add("drawnWeapons", List.of());
                 this.add("spells", List.of());
+                this.add("mimetizedSpells", List.of());
 
                 this.add("regaliasCraftedByGrade", Map.of());
                 this.add("primaryTitle", null);

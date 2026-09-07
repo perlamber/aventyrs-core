@@ -34,6 +34,7 @@ import org.aventyrs.core.skill.SkillType;
 import org.aventyrs.core.title.AventyrTitle;
 
 import java.util.ArrayList;
+import java.util.Set;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -86,15 +87,9 @@ public class Character {
      */
     protected Deity deity;
 
-    /**
-     * Tendência — a 1-10 scale (per this ruleset's character sheet). Defaults to 1 (the
-     * floor of that range, not a meaningful "neutral" value — chosen only so an unset
-     * {@code Character} doesn't silently read as an out-of-range 0). Nothing in this core
-     * currently validates a value actually stays within 1-10, same restraint already applied
-     * to {@code AttributeValue#base}/{@code CharacterSkill}'s Graduação elsewhere.
-     */
+    /** Tendência de alinhamento, used by Talento prerequisites such as Corruptor Sombrio's. */
     @Builder.Default
-    protected int tendencia = 6;
+    protected Alignment alignment = Alignment.NEUTRAL;
 
     @NonNull
     protected CharacterAttributes attributes;
@@ -155,6 +150,23 @@ public class Character {
                         feats.stream().flatMap(feat -> feat.getGrantedAttributeAbilities(this).stream()))
                 .distinct()
                 .toList();
+    }
+
+    /**
+     * Every creature type this character counts as for Talento/Habilidade prerequisites: its
+     * Race's ordinary prerequisite type plus types supplied by held Talentos. It does not change
+     * the Race's actual {@code getCreatureType()}, which remains the creature's true identity.
+     */
+    public Set<org.aventyrs.core.race.CreatureType> getPrerequisiteCreatureTypes() {
+        return Stream.concat(
+                        Stream.of(race.getPrerequisiteCreatureType()),
+                        feats.stream().flatMap(feat -> feat.getGrantedPrerequisiteCreatureTypes(this).stream()))
+                .collect(java.util.stream.Collectors.toUnmodifiableSet());
+    }
+
+    /** Whether a racial trait or held Talento lets this character breathe underwater. */
+    public boolean canBreatheUnderwater() {
+        return feats.stream().anyMatch(feat -> feat.allowsUnderwaterBreathing(this));
     }
 
     /**

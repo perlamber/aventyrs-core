@@ -71,6 +71,7 @@ public class SceneContext {
      */
     private final CombatantSheet opposedCharacter;
     private final UUID sceneId;
+    private final EnvironmentalState environmentalState;
 
     public SceneContext(final List<CombatantSheet> allies, final List<CombatantSheet> enemies, final Map<CombatantSheet, Range> distances) {
         this(allies, enemies, distances, null);
@@ -78,7 +79,7 @@ public class SceneContext {
 
     /** Same as the 3-arg constructor, but also carrying the Scene's current {@code terrainType}. */
     public SceneContext(final List<CombatantSheet> allies, final List<CombatantSheet> enemies, final Map<CombatantSheet, Range> distances, final TerrainType terrainType) {
-        this(allies, enemies, distances, terrainType, false, 0, false, null, null);
+        this(allies, enemies, distances, terrainType, false, 0, false, null, null, EnvironmentalState.ORDINARY);
     }
 
     /**
@@ -89,7 +90,8 @@ public class SceneContext {
      */
     public SceneContext(final List<CombatantSheet> allies, final List<CombatantSheet> enemies, final Map<CombatantSheet, Range> distances,
                          final TerrainType terrainType, final boolean combatScene, final int currentRound, final boolean wonInitiative) {
-        this(allies, enemies, distances, terrainType, combatScene, currentRound, wonInitiative, null, null);
+        this(allies, enemies, distances, terrainType, combatScene, currentRound, wonInitiative, null, null,
+                EnvironmentalState.ORDINARY);
     }
 
     /**
@@ -102,13 +104,27 @@ public class SceneContext {
      */
     public SceneContext(final List<CombatantSheet> allies, final List<CombatantSheet> enemies, final Map<CombatantSheet, Range> distances,
                          final TerrainType terrainType, final boolean combatScene, final int currentRound, final boolean wonInitiative, final CombatantSheet opposedCharacter) {
-        this(allies, enemies, distances, terrainType, combatScene, currentRound, wonInitiative, opposedCharacter, null);
+        this(allies, enemies, distances, terrainType, combatScene, currentRound, wonInitiative, opposedCharacter, null,
+                EnvironmentalState.ORDINARY);
     }
 
     /** The full snapshot form, including the identity of the Scene that produced it. */
     public SceneContext(final List<CombatantSheet> allies, final List<CombatantSheet> enemies, final Map<CombatantSheet, Range> distances,
                         final TerrainType terrainType, final boolean combatScene, final int currentRound,
                         final boolean wonInitiative, final CombatantSheet opposedCharacter, final UUID sceneId) {
+        this(allies, enemies, distances, terrainType, combatScene, currentRound, wonInitiative, opposedCharacter,
+                sceneId, EnvironmentalState.ORDINARY);
+    }
+
+    /**
+     * The full snapshot form with environmental facts for the actor this context describes.
+     * Shorter constructors deliberately use {@link EnvironmentalState#ORDINARY}.
+     */
+    public SceneContext(final List<CombatantSheet> allies, final List<CombatantSheet> enemies,
+                        final Map<CombatantSheet, Range> distances, final TerrainType terrainType,
+                        final boolean combatScene, final int currentRound, final boolean wonInitiative,
+                        final CombatantSheet opposedCharacter, final UUID sceneId,
+                        final EnvironmentalState environmentalState) {
         this.allies = allies;
         this.enemies = enemies;
         this.distances = distances;
@@ -118,6 +134,7 @@ public class SceneContext {
         this.wonInitiative = wonInitiative;
         this.opposedCharacter = opposedCharacter;
         this.sceneId = sceneId;
+        this.environmentalState = environmentalState == null ? EnvironmentalState.ORDINARY : environmentalState;
     }
 
     public List<CombatantSheet> getAllies() {
@@ -216,6 +233,11 @@ public class SceneContext {
     /** Identity of the Scene that produced this snapshot, or {@code null} for a direct context. */
     public UUID getSceneId() {
         return sceneId;
+    }
+
+    /** The resolved environment applying to this context's actor. */
+    public EnvironmentalState getEnvironmentalState() {
+        return environmentalState;
     }
 
     /**

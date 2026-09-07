@@ -1,6 +1,7 @@
 package org.aventyrs.core.title;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 /**
@@ -27,6 +28,14 @@ public interface AventyrTitle {
 
     /** This Título's own name, e.g. "Santo" — matches its rules-text header exactly. */
     String getName();
+
+    /**
+     * This title's named identity when a rule distinguishes it from its archetype. Most Títulos
+     * have no identity consumer and remain empty until one does.
+     */
+    default Optional<TitleIdentity> getIdentity() {
+        return Optional.empty();
+    }
 
     /**
      * Which broad kind of Título this is — the axis a Talento's Pré-requisito names when it

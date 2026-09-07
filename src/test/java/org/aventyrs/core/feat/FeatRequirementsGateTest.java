@@ -1,10 +1,13 @@
 package org.aventyrs.core.feat;
 
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.character.Alignment;
 import org.aventyrs.core.character.TitleSlot;
 import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.race.Anao;
 import org.aventyrs.core.race.Human;
+import org.aventyrs.core.race.Elfo;
+import org.aventyrs.core.race.CreatureType;
 import org.aventyrs.core.title.AventyrTitle;
 import org.aventyrs.core.title.AventyrTitleAbility;
 import org.aventyrs.core.title.AventyrTitleSpecialization;
@@ -17,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -168,5 +172,31 @@ class FeatRequirementsGateTest {
         Character anaoWithTitulo = character().race(new Anao()).build();
         anaoWithTitulo.grantTitle(new Santo(List.of(), List.of()), TitleSlot.PRIMARY);
         assertTrue(feat.isEligible(anaoWithTitulo));
+    }
+
+    @Test
+    void almaFeericaAddsFeericoOnlyToTheHoldersPrerequisiteTypes() {
+        Character elf = character().race(new Elfo()).build();
+        Feat feericoOnly = featRequiring(FeatRequirements.builder()
+                .requiredCreatureType(CreatureType.FEERICO)
+                .build());
+
+        assertFalse(feericoOnly.isEligible(elf));
+
+        elf.grantFeat(ElficoFeat.ALMA_FEERICA);
+
+        assertTrue(feericoOnly.isEligible(elf));
+        assertEquals(CreatureType.HUMANOIDE, elf.getRace().getCreatureType());
+    }
+
+    @Test
+    void corruptorRequiresANeutralOrEvilAlignment() {
+        Character goodElf = character().race(new Elfo()).alignment(Alignment.GOOD).build();
+        goodElf.grantFeat(ElficoFeat.GUARDIAO_DOS_BOSQUES);
+        Character neutralElf = character().race(new Elfo()).alignment(Alignment.NEUTRAL).build();
+        neutralElf.grantFeat(ElficoFeat.GUARDIAO_DOS_BOSQUES);
+
+        assertFalse(ElficoFeat.CORRUPTOR_SOMBRIO.isEligible(goodElf));
+        assertTrue(ElficoFeat.CORRUPTOR_SOMBRIO.isEligible(neutralElf));
     }
 }

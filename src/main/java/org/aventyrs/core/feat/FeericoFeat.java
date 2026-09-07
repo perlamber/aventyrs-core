@@ -231,13 +231,12 @@ public enum FeericoFeat implements Feat {
      * "Recebe Monstruoso com um tipo de criatura adicional, também recebe Vantagem em suas
      * rolagens de Furtividade e Persuasão." The Vantagem is real.
      */
-    // TODO: "Monstruoso com um tipo de criatura adicional" needs a character to hold *two*
-    //  CreatureTypes at once — Race#getCreatureType() returns one and takes no Character, so this
-    //  is the per-character CreatureType gap in its hardest form.
+    // TODO: "Monstruoso com um tipo de criatura adicional" needs an acquisition-time choice of
+    //  which additional CreatureType to grant. Character prerequisite types can now be extended
+    //  by a held Feat (Alma Feérica), but this text neither names the type nor limits the choice.
     // TODO: the GD half is scoped to the *target's* Tendência, and resolveDifficultyReduction
     //  carries no target — the roll's opponent is not a parameter of a GD reduction anywhere in
-    //  this core. Tendência itself is a plain unvalidated 1-10 value with no Bondosa/Maligna
-    //  banding.
+    //  this core. Alignment is typed, but the roll hook still has no target sheet to inspect.
     FAUNO(
             "Você tem o corpo coberto de pelos e maior número de feições caprinas. Recebe "
                     + "Monstruoso com um tipo de criatura adicional, também recebe Vantagem em "

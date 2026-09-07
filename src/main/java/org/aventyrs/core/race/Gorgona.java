@@ -92,7 +92,7 @@ import java.util.Map;
  * <p>Tendência is deliberately left unconstrained, same treatment as every other race — the
  * rules text's "muitos membros da Raça não se dão bem com" Fadas/Lacerto-aligned individuals
  * specifically (not a general Tendência skew) doesn't map onto {@link
- * Character#getTendencia()}'s plain 1-10 scale at all; this core has no faction/allegiance
+ * Character#getAlignment()}'s moral alignment at all; this core has no faction/allegiance
  * concept to express a targeted dislike like this one either way (same "no
  * faction-relationship/allegiance concept" gap {@code Scene#getEnemies}'s own javadoc already
  * flags).

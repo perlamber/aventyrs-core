@@ -3,6 +3,7 @@ package org.aventyrs.core.feat;
 import org.aventyrs.core.ability.ActiveAbility;
 import org.aventyrs.core.ability.AttributeAbility;
 import org.aventyrs.core.character.AttributeDomain;
+import org.aventyrs.core.character.Alignment;
 import org.aventyrs.core.character.Character;
 import java.math.BigDecimal;
 import java.util.List;
@@ -31,6 +32,7 @@ import org.aventyrs.core.skill.SkillCompetencyAbility;
 import org.aventyrs.core.skill.SkillTrait;
 import org.aventyrs.core.skill.SkillType;
 import org.aventyrs.core.title.TitleArchetype;
+import org.aventyrs.core.title.TitleIdentity;
 
 /**
  * A Talento. <b>Sealed</b>, which is what lets {@link FeatCatalog} enumerate every authored
@@ -116,7 +118,7 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
                 || requirements.requiredRace().isInstance(character.getRace());
 
         boolean creatureTypeSatisfied = requirements.requiredCreatureType() == null
-                || requirements.requiredCreatureType() == character.getRace().getPrerequisiteCreatureType();
+                || character.getPrerequisiteCreatureTypes().contains(requirements.requiredCreatureType());
 
         boolean deitySatisfied = requirements.requiredDeity() == null
                 || requirements.requiredDeity() == character.getDeity();
@@ -129,9 +131,35 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
                 || character.getRegaliasCrafted(requirements.craftedRegaliaGrade())
                         >= requirements.craftedRegaliaCount();
 
+        boolean alignmentSatisfied = requirements.requiredAlignments().isEmpty()
+                || requirements.requiredAlignments().contains(character.getAlignment());
+
         return attributeSatisfied && skillSatisfied && featSatisfied && competencySatisfied
                 && titlesSatisfied && raceSatisfied && creatureTypeSatisfied && deitySatisfied
-                && categoryCountSatisfied && regaliaCraftHistorySatisfied;
+                && categoryCountSatisfied && regaliaCraftHistorySatisfied && alignmentSatisfied;
+    }
+
+    /**
+     * Additional creature types this holder counts as for prerequisites. This does not change the
+     * Race's actual type; {@code ElficoFeat#ALMA_FEERICA} is the first consumer.
+     */
+    default java.util.Set<org.aventyrs.core.race.CreatureType> getGrantedPrerequisiteCreatureTypes(
+            final Character character) {
+        return java.util.Set.of();
+    }
+
+    /**
+     * This Talento's opinion on acquiring a named Título. {@code NO_OPINION} by default; an
+     * explicit {@code ALLOW} overrides a {@code PROHIBIT} from another held Talento.
+     */
+    default TitleAcquisitionPermission resolveTitleAcquisitionPermission(final java.util.Optional<TitleIdentity> title,
+                                                                          final Character character) {
+        return TitleAcquisitionPermission.NO_OPINION;
+    }
+
+    /** Whether this Talento lets its holder breathe underwater. */
+    default boolean allowsUnderwaterBreathing(final Character character) {
+        return false;
     }
 
     /**

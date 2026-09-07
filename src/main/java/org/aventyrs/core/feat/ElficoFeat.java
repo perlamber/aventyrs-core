@@ -1,6 +1,7 @@
 package org.aventyrs.core.feat;
 
 import org.aventyrs.core.character.AttributeDomain;
+import org.aventyrs.core.character.Alignment;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.effect.Definhar;
 import org.aventyrs.core.effect.EffectChain;
@@ -11,15 +12,23 @@ import org.aventyrs.core.magic.catalog.AliadosDaNaturezaSpell;
 import org.aventyrs.core.magic.catalog.RegeneracaoSpell;
 import org.aventyrs.core.magic.catalog.VooSpell;
 import org.aventyrs.core.race.Elfo;
+import org.aventyrs.core.race.MeioElfo;
+import org.aventyrs.core.race.CreatureType;
 import org.aventyrs.core.scene.SceneContext;
+import org.aventyrs.core.scene.Altitude;
+import org.aventyrs.core.scene.EnvironmentalState;
+import org.aventyrs.core.scene.LightLevel;
 import org.aventyrs.core.scene.TerrainType;
 import org.aventyrs.core.skill.DifficultyLevel;
 import org.aventyrs.core.skill.Skill;
 import org.aventyrs.core.skill.conhecimentos.ConhecimentosSpecialization;
 import org.aventyrs.core.skill.SkillTrait;
 import org.aventyrs.core.skill.SkillType;
+import org.aventyrs.core.title.TitleIdentity;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 /**
  * Talentos Élficos — four <b>Guardiões</b>, each adapting the holder to one environment, plus
@@ -59,17 +68,13 @@ public enum ElficoFeat implements Feat {
      * <p>"Uma floresta ou bosque" is exactly {@link TerrainType#FOREST}, so this is the cleanest
      * mapping of the four Guardiões.
      */
-    // TODO: "não podem adquirir o título Bruxo" is an exclusion on a *Título*, and nothing
-    //  validates Título acquisition against a held Talento.
     GUARDIAO_DOS_BOSQUES(
             "Você possui pele em tom claro. Enquanto estiver em uma floresta ou bosque você "
                     + "recebe Vantagem em rolagens nas Perícias de Ataque, 'Empatia Selvagem', "
                     + "'Conhecimentos: Natureza' e em 'Furtividade'. Você também pode mimetizar a "
                     + "magia 'Cativar Animal' ao custo de 2PD. Guardiões dos Bosques não podem "
                     + "adquirir o título Bruxo.",
-            FeatRequirements.builder()
-                    .requiredRace(Elfo.class)
-                    .build()) {
+            FeatRequirements.builder().build()) {
         @Override
         public int resolveSkillRollBonus(final SkillType skillType, final SceneContext sceneContext,
                                           final SkillTrait requestedAbility, final Character character) {
@@ -79,6 +84,12 @@ public enum ElficoFeat implements Feat {
         @Override
         public List<MimetizedSpell> getGrantedMimetizedSpells(final Character character) {
             return List.of(mimetize(AliadosDaNaturezaSpell.CATIVAR_ANIMAL, 2));
+        }
+
+        @Override
+        public TitleAcquisitionPermission resolveTitleAcquisitionPermission(
+                final Optional<TitleIdentity> title, final Character character) {
+            return prohibitsBruxo(title);
         }
     },
 
@@ -93,7 +104,6 @@ public enum ElficoFeat implements Feat {
      */
     // TODO: "Dádiva de Undine" does not appear in the authored spell catalog. The similarly
     // named Lágrima de Undine is a different Muda spell, so it must not be substituted silently.
-    // TODO: the Bruxo exclusion is unenforceable, same as its sibling.
     GUARDIAO_DAS_DUNAS(
             "Você possui pele negra ou outro tom escuro, o forte sol do deserto com suas altas "
                     + "temperaturas pouco lhe incomodam. Você recebe vantagem em rolagens nas "
@@ -102,13 +112,17 @@ public enum ElficoFeat implements Feat {
                     + "temperaturas elevadas. Você também pode mimetizar a magia 'Dádiva de "
                     + "Undine' ao custo de 2PD. Guardiões das Dunas não podem adquirir o título "
                     + "Bruxo.",
-            FeatRequirements.builder()
-                    .requiredRace(Elfo.class)
-                    .build()) {
+            FeatRequirements.builder().build()) {
         @Override
         public int resolveSkillRollBonus(final SkillType skillType, final SceneContext sceneContext,
                                           final SkillTrait requestedAbility, final Character character) {
             return guardiaoBonus(skillType, sceneContext, requestedAbility, TerrainType.DESERT);
+        }
+
+        @Override
+        public TitleAcquisitionPermission resolveTitleAcquisitionPermission(
+                final Optional<TitleIdentity> title, final Character character) {
+            return prohibitsBruxo(title);
         }
     },
 
@@ -129,9 +143,19 @@ public enum ElficoFeat implements Feat {
                     + "'Conhecimentos: Natureza' e 'Furtividade'. Você também pode mimetizar a "
                     + "magia 'Voo' em você mesmo, com Tempo de Conjuração de 1PA e Duração de 2 "
                     + "Rodadas, ao custo de 3PD.",
-            FeatRequirements.builder()
-                    .requiredRace(Elfo.class)
-                    .build()) {
+            FeatRequirements.builder().build()) {
+        @Override
+        public int resolveSkillRollBonus(final SkillType skillType, final SceneContext sceneContext,
+                                          final SkillTrait requestedAbility, final Character character) {
+            if (sceneContext == null) {
+                return 0;
+            }
+            EnvironmentalState state = sceneContext.getEnvironmentalState();
+            return state.altitude() == Altitude.HIGH || state.flying()
+                    ? guardiaoBonus(skillType, requestedAbility)
+                    : 0;
+        }
+
         @Override
         public List<MimetizedSpell> getGrantedMimetizedSpells(final Character character) {
             return List.of(MimetizedSpell.builder()
@@ -148,10 +172,7 @@ public enum ElficoFeat implements Feat {
      * "Enquanto estiverem com pelo menos metade do seu corpo submerso, recebem Vantagem nas
      * rolagens de Perícias de Ataque e 'Furtividade'."
      */
-    // TODO: withheld for the same reason as GUARDIAO_DAS_NUVENS — "com pelo menos metade do corpo
-    //  submerso" is a per-character state, not a property of the Scene, so TerrainType.AQUATIC
-    //  would grant it to an Elfo standing dry on a boat. Note this Guardião's scopes also differ
-    //  from its siblings': Ataque and Furtividade unconditionally, but Conhecimentos and Empatia
+    // TODO: Conhecimentos and Empatia
     //  Selvagem only "para informações referente a vida e hábitos marinhos" — a narrative purpose
     //  this core does not track.
     // TODO: breathing underwater has no state to toggle.
@@ -164,12 +185,30 @@ public enum ElficoFeat implements Feat {
                     + "rolagens de 'Conhecimento: Natureza' e Empatia Selvagem para informações "
                     + "referente a vida e hábitos marinhos. Também podem mimetizar a magia "
                     + "'Regeneração', ao custo de 2PD.",
-            FeatRequirements.builder()
-                    .requiredRace(Elfo.class)
-                    .build()) {
+            FeatRequirements.builder().build()) {
+        @Override
+        public int resolveSkillRollBonus(final SkillType skillType, final SceneContext sceneContext,
+                                          final SkillTrait requestedAbility, final Character character) {
+            return sceneContext != null && sceneContext.getEnvironmentalState().atLeastHalfSubmerged()
+                    && (skillType.isAttackSkill() || skillType == SkillType.FURTIVIDADE)
+                    ? Skill.ADVANTAGE_BONUS
+                    : 0;
+        }
+
+        @Override
+        public boolean allowsUnderwaterBreathing(final Character character) {
+            return true;
+        }
+
         @Override
         public List<MimetizedSpell> getGrantedMimetizedSpells(final Character character) {
             return List.of(mimetize(RegeneracaoSpell.REGENERACAO, 2));
+        }
+
+        @Override
+        public TitleAcquisitionPermission resolveTitleAcquisitionPermission(
+                final Optional<TitleIdentity> title, final Character character) {
+            return prohibitsBruxo(title);
         }
     },
 
@@ -177,14 +216,8 @@ public enum ElficoFeat implements Feat {
      * "Você recebe Vantagem em suas rolagens de Perícias efetuadas enquanto estiver sob a
      * cobertura de uma sombra ou durante a noite… Você Recebe Roubo de Vida 1."
      */
-    // TODO: the Vantagem and the paired Desvantagem are both conditioned on lighting — shadow,
-    //  night, bright sun — and nothing models light or time of day. Both halves are withheld
-    //  together, so the Talento is neither better nor worse than written.
     // TODO: Definhar reaches physical attacks through Feat#resolveEffectChains and AttackDelivery,
     //  but SpellCastingService has no post-delivery EffectChain pipeline to attach it to Magias.
-    // TODO: "possuir tendência neutra ou maligna" is unenforced — Tendência is a plain
-    //  unvalidated 1-10 value and FeatRequirements has no clause for it. So is "perde a limitação
-    //  racial para adquirir o Título Bruxo", which is a Título-side restriction nothing validates.
     CORRUPTOR_SOMBRIO(
             "Sua pele lentamente começa a escurecer, até se tornar preta como ébano. Você recebe "
                     + "Vantagem em suas rolagens de Perícias efetuadas enquanto estiver sob a "
@@ -196,6 +229,7 @@ public enum ElficoFeat implements Feat {
             FeatRequirements.builder()
                     .requiredFeatCategory(FeatCategory.ELFICO)
                     .requiredFeatCategoryCount(1)
+                    .requiredAlignments(Set.of(Alignment.NEUTRAL, Alignment.EVIL))
                     .build()) {
         @Override
         public int resolveGrantedLifeSteal(final Character character) {
@@ -203,9 +237,30 @@ public enum ElficoFeat implements Feat {
         }
 
         @Override
+        public int resolveSkillRollBonus(final SkillType skillType, final SceneContext sceneContext,
+                                          final SkillTrait requestedAbility, final Character character) {
+            if (sceneContext == null) {
+                return 0;
+            }
+            return sceneContext.getEnvironmentalState().lightLevel().isDarkOrShadowed()
+                    ? Skill.ADVANTAGE_BONUS
+                    : sceneContext.getEnvironmentalState().lightLevel() == LightLevel.BRIGHT
+                    ? Skill.DISADVANTAGE_MALUS
+                    : 0;
+        }
+
+        @Override
         public List<EffectChain> resolveEffectChains(final Character attacker, final SkillType attackSkill,
                                                       final org.aventyrs.core.skill.AttackSource attackSource) {
             return List.of(new Definhar());
+        }
+
+        @Override
+        public TitleAcquisitionPermission resolveTitleAcquisitionPermission(
+                final Optional<TitleIdentity> title, final Character character) {
+            return title.filter(TitleIdentity.BRUXO::equals)
+                    .map(ignored -> TitleAcquisitionPermission.ALLOW)
+                    .orElse(TitleAcquisitionPermission.NO_OPINION);
         }
     },
 
@@ -214,9 +269,6 @@ public enum ElficoFeat implements Feat {
      * Escolha uma Árvore de Magia Natural, você pode mimetizar as magias Broto e Muda da árvore
      * escolhida."
      */
-    // TODO: a per-character CreatureType — Race#getCreatureType() takes no Character, so a type
-    //  that changes with what its holder acquired is inexpressible. Same gap PequeninoFeat's two
-    //  Linhagem Talentos and Indomito's Monstros em Potencial cite.
     // TODO: mimetizar has no mechanism, and spending PD in place of PM has no cost step to
     //  redirect — SpellCastingService spends nothing at all. (The chosen Árvore could be
     //  recorded now — a choice-carrying AbstractFeat subclass, see FocoEmPericiaFeat — but
@@ -230,7 +282,12 @@ public enum ElficoFeat implements Feat {
             FeatRequirements.builder()
                     .requiredRace(Elfo.class)
                     .requiredAwakenedTitles(1)
-                    .build()),
+                    .build()) {
+        @Override
+        public Set<CreatureType> getGrantedPrerequisiteCreatureTypes(final Character character) {
+            return Set.of(CreatureType.FEERICO);
+        }
+    },
 
     /**
      * "A GD de suas rolagens de Atenção é reduzida em -1 Nível." Real — the third Talento in the
@@ -291,6 +348,10 @@ public enum ElficoFeat implements Feat {
         if (sceneContext == null || !sceneContext.isTerrain(terrain)) {
             return 0;
         }
+        return guardiaoBonus(skillType, requestedAbility);
+    }
+
+    private static int guardiaoBonus(final SkillType skillType, final SkillTrait requestedAbility) {
         if (skillType.isAttackSkill()
                 || skillType == SkillType.EMPATIA_SELVAGEM
                 || skillType == SkillType.FURTIVIDADE) {
@@ -324,11 +385,38 @@ public enum ElficoFeat implements Feat {
         return featRequirements;
     }
 
+    @Override
+    public boolean isEligible(final Character character) {
+        if (!Feat.super.isEligible(character)) {
+            return false;
+        }
+        if (!isGuardian()) {
+            return true;
+        }
+        int maximum = character.getRace() instanceof Elfo ? 2
+                : character.getRace() instanceof MeioElfo ? 1 : 0;
+        long heldGuardians = character.getFeats().stream()
+                .filter(feat -> feat.catalogEntry() instanceof ElficoFeat elfico && elfico.isGuardian())
+                .count();
+        return heldGuardians < maximum;
+    }
+
+    private boolean isGuardian() {
+        return this == GUARDIAO_DOS_BOSQUES || this == GUARDIAO_DAS_DUNAS
+                || this == GUARDIAO_DAS_NUVENS || this == GUARDIAO_DAS_PROFUNDEZAS;
+    }
+
     private static MimetizedSpell mimetize(final org.aventyrs.core.magic.Spell spell,
                                            final int determinationPointCost) {
         return MimetizedSpell.builder()
                 .spell(spell)
                 .determinationPointCost(determinationPointCost)
                 .build();
+    }
+
+    private static TitleAcquisitionPermission prohibitsBruxo(final Optional<TitleIdentity> title) {
+        return title.filter(TitleIdentity.BRUXO::equals)
+                .map(ignored -> TitleAcquisitionPermission.PROHIBIT)
+                .orElse(TitleAcquisitionPermission.NO_OPINION);
     }
 }

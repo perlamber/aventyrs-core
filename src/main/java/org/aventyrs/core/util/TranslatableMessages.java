@@ -48,6 +48,7 @@ public class TranslatableMessages {
     public static final String TITLE_NOT_HELD = "TITLE_NOT_HELD";
     public static final String EXTRA_SUPREMA_ALREADY_GRANTED = "EXTRA_SUPREMA_ALREADY_GRANTED";
     public static final String TITLE_ABILITY_PREREQUISITE_NOT_MET = "TITLE_ABILITY_PREREQUISITE_NOT_MET";
+    public static final String TITLE_ACQUISITION_PREVENTED = "TITLE_ACQUISITION_PREVENTED";
     public static final String FEAT_PREREQUISITE_NOT_MET = "FEAT_PREREQUISITE_NOT_MET";
     /**
      * The Habilidade de Força chosen for {@code AnaoFeat#CONSELHEIRO_DE_GUERRA_YMIRIANO} —
@@ -72,6 +73,7 @@ public class TranslatableMessages {
     public static final String INVALID_SPELL_CAST_TARGET = "INVALID_SPELL_CAST_TARGET";
     public static final String INVALID_SPELL_DAMAGE = "INVALID_SPELL_DAMAGE";
     public static final String INVALID_MIMETIZED_SPELL = "INVALID_MIMETIZED_SPELL";
+    public static final String MIMETIZED_SPELL_NOT_HELD = "MIMETIZED_SPELL_NOT_HELD";
 
     /** The caster is under a Condição that forbids Conjurar Magias — Silêncio. */
     public static final String SPELL_CASTING_PREVENTED = "SPELL_CASTING_PREVENTED";

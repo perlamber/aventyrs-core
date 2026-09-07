@@ -6,6 +6,7 @@ import org.aventyrs.core.character.TitleSlot;
 import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.feat.ElficoFeat;
 import org.aventyrs.core.feat.VampiricoFeat;
+import org.aventyrs.core.magic.MimetizedSpell;
 import org.aventyrs.core.race.Elfo;
 import org.aventyrs.core.race.Human;
 import org.aventyrs.core.race.Vampiro;
@@ -120,6 +121,7 @@ class LifeStealServiceImplTest {
         Character character = CharacterFixture.blank(CharacterFixture.BLANK)
                 .race(new Elfo())
                 .feats(new ArrayList<>())
+                .mimetizedSpells(new ArrayList<MimetizedSpell>())
                 .build();
         CharacterSheet sheet = sheet(character);
         sheet.accumulateExperience(BigDecimal.valueOf(100));

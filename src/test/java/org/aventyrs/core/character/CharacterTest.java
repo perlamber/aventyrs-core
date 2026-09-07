@@ -21,10 +21,10 @@ class CharacterTest {
     }
 
     @Test
-    void tendenciaDefaultsToOneWhenNotSet() {
+    void alignmentDefaultsToNeutralWhenNotSet() {
         Character character = CharacterFixture.blank(CharacterFixture.BLANK).build();
 
-        assertEquals(1, character.getTendencia());
+        assertEquals(Alignment.NEUTRAL, character.getAlignment());
     }
 
     @Test
@@ -35,14 +35,14 @@ class CharacterTest {
     }
 
     @Test
-    void builderAssignsSexoAndTendencia() {
+    void builderAssignsSexoAndAlignment() {
         Character character = CharacterFixture.blank(CharacterFixture.BLANK)
                 .sexo(Character.Sexo.FEMININO)
-                .tendencia(8)
+                .alignment(Alignment.EVIL)
                 .build();
 
         assertEquals(Character.Sexo.FEMININO, character.getSexo());
-        assertEquals(8, character.getTendencia());
+        assertEquals(Alignment.EVIL, character.getAlignment());
     }
 
     @Test

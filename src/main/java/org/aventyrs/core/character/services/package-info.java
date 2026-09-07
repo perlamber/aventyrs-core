@@ -14,6 +14,9 @@
  *   <li><b>Pick a {@link org.aventyrs.core.race.Race}</b> (e.g.
  *       {@link org.aventyrs.core.race.Human}) — it drives step 2's racial bonuses and
  *       the XP costs {@code Race} exposes for later advancement.</li>
+ *   <li><b>Pick an {@link org.aventyrs.core.character.Alignment}</b> — it defaults to
+ *       {@code NEUTRAL}, but some Talentos have a moral-alignment prerequisite (e.g. Corruptor
+ *       Sombrio accepts {@code NEUTRAL} or {@code EVIL}).</li>
  *   <li><b>Allocate Attributes</b> — {@link org.aventyrs.core.character.services.CharacterCreationService#allocateAttributes}
  *       spends the {@value org.aventyrs.core.character.services.CharacterCreationService#STARTING_ATTRIBUTE_POINTS}
  *       starting points (no base above
@@ -53,10 +56,10 @@
  *       {@code Character}-taking ones report the permanent total, with no profile and no
  *       Round-scoped bonus applied.</li>
  *   <li><b>Assemble the {@code Character}</b> via {@link org.aventyrs.core.character.Character#builder()},
- *       passing the results of steps 1-5. Everything else (starting {@code skills},
+ *       passing the results of steps 1-6. Everything else (starting {@code skills},
  *       {@code attributeAbilities}, {@code activeAbilities}, {@code skillCompetencyAbilities},
  *       {@code abilityChoices}, {@code actionPoints}, {@code temporaryActionPointsBonus}, {@code sizeCategory},
- *       {@code status}, {@code reactions}, {@code freeActions}, {@code tendencia}) has a
+ *       {@code status}, {@code reactions}, {@code freeActions}, {@code alignment}) has a
  *       sensible {@code @Builder.Default} and rarely needs overriding at creation. {@code
  *       sexo} ({@link org.aventyrs.core.character.Character.Sexo}) is the one exception with
  *       no default at all — {@code null} unless set, since no eligibility/validation logic
@@ -79,6 +82,7 @@
  *         .player(player)
  *         .name("Aria")
  *         .race(race)
+ *         .alignment(Alignment.NEUTRAL)
  *         .attributes(attributes)
  *         .egos(egos)
  *         .actionProfile(ActionProfile.REFLEXOS_RAPIDOS);

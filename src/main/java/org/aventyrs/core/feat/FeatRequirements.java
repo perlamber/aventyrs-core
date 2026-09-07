@@ -1,6 +1,7 @@
 package org.aventyrs.core.feat;
 
 import org.aventyrs.core.character.AttributeDomain;
+import org.aventyrs.core.character.Alignment;
 import org.aventyrs.core.character.Deity;
 import org.aventyrs.core.item.RegaliaGrade;
 import org.aventyrs.core.race.CreatureType;
@@ -10,6 +11,7 @@ import org.aventyrs.core.skill.SkillType;
 import org.aventyrs.core.title.TitleArchetype;
 
 import lombok.Builder;
+import java.util.Set;
 
 /**
  * Every prerequisite a {@link Feat} can name, as a flat record of independent clauses — an
@@ -90,6 +92,8 @@ import lombok.Builder;
  *                                  bem-sucedido na criação de 3 ou mais Regalias", read off {@code
  *                                  Character#getRegaliasCrafted(RegaliaGrade)}.
  * @param craftedRegaliaCount       how many Regalias of {@code craftedRegaliaGrade} are needed.
+ * @param requiredAlignments        permitted alignments for the holder. An unset or empty set
+ *                                  means the Talento has no alignment prerequisite.
  */
 @Builder
 public record FeatRequirements (
@@ -107,5 +111,10 @@ public record FeatRequirements (
         FeatCategory requiredFeatCategory,
         int requiredFeatCategoryCount,
         RegaliaGrade craftedRegaliaGrade,
-        int craftedRegaliaCount
-) {}
+        int craftedRegaliaCount,
+        Set<Alignment> requiredAlignments
+) {
+    public FeatRequirements {
+        requiredAlignments = requiredAlignments == null ? Set.of() : Set.copyOf(requiredAlignments);
+    }
+}
