@@ -11,6 +11,7 @@ import org.aventyrs.core.sheet.TemporaryBonus;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -22,6 +23,7 @@ import static org.aventyrs.core.util.TranslatableMessages.CHARACTER_SHEET_NOT_IN
 import static org.aventyrs.core.util.TranslatableMessages.INITIATIVE_NOT_WON;
 import static org.aventyrs.core.util.TranslatableMessages.INVALID_TURN_CURSOR;
 import static org.aventyrs.core.util.TranslatableMessages.NO_PARTICIPANTS_IN_SCENE;
+import static org.aventyrs.core.util.TranslatableMessages.SCENE_ALREADY_IN_COMBAT;
 
 /**
  * A Cena: the scope many rules key off (e.g. "uma vez a cada Cena", "ao longo da Cena").
@@ -43,11 +45,16 @@ import static org.aventyrs.core.util.TranslatableMessages.NO_PARTICIPANTS_IN_SCE
  * {@code AnoesRacialAbility#FILHOS_DA_MONTANHA}.
  *
  * <p>{@link #combatScene} is the other predicted bit of Scene-scoped state, now real: {@code
- * false} until a caller sets it via {@link #setCombatScene} once combat actually breaks out —
- * a Cena starts as a plain Cena and only becomes a Cena de Combate at that point, matching how
- * rules text like {@code InitiativeAdvantage#IMPETO}'s "nas duas primeiras Rodadas de cada Cena
- * de Combate" only applies once one has begun. Paired with {@link #getCurrentRound()} via
- * {@link SceneContext#isWithinFirstCombatRounds}, and with {@link #wonInitiative} for whichever
+ * false} until combat breaks out — a Cena starts as a plain Cena and only becomes a Cena de
+ * Combate at that point, matching how rules text like {@code InitiativeAdvantage#IMPETO}'s "nas
+ * duas primeiras Rodadas de cada Cena de Combate" only applies once one has begun. {@link
+ * #startCombat()} is the entry point for that moment: it flips the flag <em>and</em> fires every
+ * participant's {@link CombatantSheet#startCombat()} (start-of-combat Talento Blessings — {@code
+ * AnaoFeat#VIGOR_DO_INVERNO}); {@link #setCombatScene} stays the bare flag mutator for a Scene
+ * rebuilt already mid-combat. <b>{@link #getCurrentRound()} only advances while {@code
+ * combatScene} is true</b> — {@link #next()} wraps its cursor before combat but leaves the
+ * counter on Round 0. Paired with {@link #getCurrentRound()} via {@link
+ * SceneContext#isWithinFirstCombatRounds}, and with {@link #wonInitiative} for whichever
  * Vantagens further condition themselves on having won initiative.
  *
  * <p>{@link #itemStore} is another such bit of optional Scene-scoped state: an {@link ItemStore}
@@ -269,9 +276,47 @@ public class Scene {
         return combatScene;
     }
 
-    /** Sets whether this Scene is currently a Cena de Combate — e.g. once combat actually breaks out. */
+    /**
+     * Sets whether this Scene is currently a Cena de Combate — the plain flag mutator, e.g. for a
+     * Scene rebuilt from persistence already mid-combat. {@link #startCombat()} is what a caller
+     * uses when combat <em>breaks out</em> here: it flips this flag <em>and</em> fires every
+     * participant's start-of-combat Talento triggers.
+     */
     public void setCombatScene(final boolean combatScene) {
         this.combatScene = combatScene;
+    }
+
+    /**
+     * Combat breaks out in this Scene. Turns {@link #isCombatScene()} on and calls {@link
+     * CombatantSheet#startCombat()} on every participant — those in the rotation and those still
+     * pending alike — so each applies whatever {@code Feat#resolveCombatStartBlessings} its
+     * Talentos grant ({@code AnaoFeat#VIGOR_DO_INVERNO}). Returns what each participant was
+     * granted, keyed by sheet in initiative order, omitting anyone granted nothing.
+     *
+     * <p>This is the only point from which {@link #getCurrentRound()} begins to advance: {@link
+     * #next()} increments it only while {@link #isCombatScene()} is true, so a Scene that has
+     * cycled turns before combat stays on Round 0 until here.
+     *
+     * <p>Like {@link #applyInitiativeBlessings}, this class does not reach into a Service to
+     * resolve what abilities grant — each {@link CombatantSheet} resolves its own, off its own
+     * {@code Character}. Firing it again on an already-combat Scene is a bug, not a refresh.
+     *
+     * @throws IllegalOperationException ({@code SCENE_ALREADY_IN_COMBAT}) if this Scene is
+     *                                    already a Cena de Combate
+     */
+    public Map<CombatantSheet, List<Blessing>> startCombat() {
+        if (combatScene) {
+            throw new IllegalOperationException(SCENE_ALREADY_IN_COMBAT);
+        }
+        combatScene = true;
+        Map<CombatantSheet, List<Blessing>> grantedByParticipant = new LinkedHashMap<>();
+        for (InitiativeEntry entry : allEntries().toList()) {
+            List<Blessing> granted = entry.getCombatantSheet().startCombat();
+            if (!granted.isEmpty()) {
+                grantedByParticipant.put(entry.getCombatantSheet(), granted);
+            }
+        }
+        return grantedByParticipant;
     }
 
     /** The {@link ItemStore} the party can currently shop at, or {@code null} if there is none. */
@@ -377,12 +422,14 @@ public class Scene {
      * very first call, before anyone has had a turn yet) — this is what advances any Round-scoped
      * {@code TemporaryBonus} that participant is holding (including one targeting {@code
      * ModifierType.INITIATIVE}) toward expiry. Wraps back to the top once every participant has
-     * acted, which also advances {@link #getCurrentRound()} and calls {@link
-     * #startNewRound()} — merging in any participant added mid-Round, re-deriving turn
-     * order from everyone's current {@link InitiativeEntry#getEffectiveInitiativeValue()} (so a
-     * granted/expired Iniciativa bonus is reflected in the order from the next Round onward,
-     * never mid-Round), *and* clearing every active participant's per-Rodada action log via
-     * {@link CombatantSheet#startNewRound()}. Finally calls {@link CombatantSheet#startTurn(int)} on whoever's turn is
+     * acted; <b>while {@link #isCombatScene()} is true</b> that wrap also advances {@link
+     * #getCurrentRound()} and calls {@link #startNewRound()} — merging in any participant added
+     * mid-Round, re-deriving turn order from everyone's current {@link
+     * InitiativeEntry#getEffectiveInitiativeValue()} (so a granted/expired Iniciativa bonus is
+     * reflected in the order from the next Round onward, never mid-Round), *and* clearing every
+     * active participant's per-Rodada action log via {@link CombatantSheet#startNewRound()}.
+     * Before combat, the wrap only resets the cursor — no Rodada boundary fires and the counter
+     * stays at 0. Finally calls {@link CombatantSheet#startTurn(int)} on whoever's turn is
      * now beginning, passing {@link #getCurrentRound()} as its turnNumber — unlike {@code
      * finishTurn()}, this fires even on the very first call, since that call does start
      * someone's Turn, just none has ended yet.
@@ -398,8 +445,13 @@ public class Scene {
         currentIndex++;
         if (currentIndex >= activeEntries.size()) {
             currentIndex = 0;
-            currentRound++;
-            startNewRound();
+            // A Rodada is a combat unit — the counter and the Rodada-boundary bookkeeping only
+            // move once combat has actually broken out (see startCombat()). A Scene cycling turns
+            // beforehand simply wraps its cursor and stays on Round 0.
+            if (combatScene) {
+                currentRound++;
+                startNewRound();
+            }
         }
         CombatantSheet active = activeEntries.get(currentIndex).getCombatantSheet();
         active.startTurn(currentRound);

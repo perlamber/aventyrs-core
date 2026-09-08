@@ -102,8 +102,20 @@ blocked. Each one's TODO says which piece `SceneContext` closed and which remain
 
 Three more facts `Scene` resolves once and carries into the `SceneContext` snapshot:
 
-- `Scene.combatScene` (`isCombatScene()`/`setCombatScene(boolean)`) — `false` until a caller
-  flips it once combat breaks out, same as `terrainType` starts unset.
+- `Scene.combatScene` (`isCombatScene()`) — `false` until combat breaks out. **`Scene.startCombat()`
+  is the entry point for that moment**: it flips the flag *and* fires `CombatantSheet#startCombat()`
+  on every participant (rotation + pending), which each applies its own `Feat#resolveCombatStartBlessings`
+  as `TemporaryBonus`es (`AnaoFeat#VIGOR_DO_INVERNO`) — idempotent within a Cena, re-armed by
+  `startNewScene()`. `startCombat()` returns `Map<CombatantSheet, List<Blessing>>` (what each was
+  granted) and throws `SCENE_ALREADY_IN_COMBAT` if already a Cena de Combate. `setCombatScene(boolean)`
+  stays the bare flag mutator for a Scene rebuilt already mid-combat (with `restoreTurnCursor`).
+  The Scene never reaches into a Service to resolve blessings — each sheet resolves its own, the
+  same restraint `applyInitiativeBlessings`/`buildContext` follow.
+- **`Scene.getCurrentRound()` only advances while `combatScene` is true.** `next()` still cycles
+  the turn cursor before combat, but the wrap leaves the counter on Round 0 and fires no Rodada
+  boundary (`startNewRound()` — pending merge, initiative re-sort, per-Rodada log clear, area-effect
+  tick). So a combat test needs `scene.startCombat()` (or `setCombatScene(true)`) after adding
+  participants before any round-dependent assertion.
 - `Scene.wonInitiative(CharacterSheet)` resolves "ganhou a iniciativa" at the **sub-group**
   level: a group's value is the highest individual `getEffectiveInitiativeValue()` among its
   members, compared against every other group's highest. A tie for the overall highest is a win
@@ -154,6 +166,8 @@ tracks, so it can just ask.
   (the same guarantee `addParticipant` gives a mid-Round newcomer via `pendingEntries`).
   `Scene#next()`'s round-wrap point is `startNewRound()` — merges `pendingEntries` *and*
   re-sorts `activeEntries` by effective value (`List#sort`, stable, so ties keep their order).
+  The wrap runs `startNewRound()` and bumps `currentRound` **only while `isCombatScene()`** (see
+  `startCombat()` above); before combat it just resets the cursor.
 - `Scene#next()` calls `CharacterSheet#finishTurn()` on whoever's turn is ending (skipped on
   the first call), which is what actually ticks `TemporaryBonus`es toward expiry. Consequence:
   a 1-Rodada bonus on the participant last in the order expires in the very `next()` call that

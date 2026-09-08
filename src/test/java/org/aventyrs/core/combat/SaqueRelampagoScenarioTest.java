@@ -83,6 +83,7 @@ class SaqueRelampagoScenarioTest {
         Scene scene = new Scene();
         scene.addParticipant(hero, 20);
         scene.addParticipant(foe, 5);
+        scene.startCombat();
 
         scene.next();                                   // hero's Turn, Round 0
         int firstOfRoundZero = cheapAttackReduction(hero, 0);

@@ -159,6 +159,7 @@ class SceneTest {
         CharacterSheet second = newSheet();
         scene.addParticipant(first, 10);
         scene.addParticipant(second, 5);
+        scene.startCombat();
 
         scene.next();
         assertEquals(0, scene.getCurrentRound());
@@ -186,6 +187,7 @@ class SceneTest {
         CharacterSheet second = newSheet();
         scene.addParticipant(first, 10);
         scene.addParticipant(second, 5);
+        scene.startCombat();
 
         scene.next();                                   // first's Turn, Round 0
         first.recordAction(sampleAction());
@@ -205,6 +207,7 @@ class SceneTest {
         CharacterSheet second = newSheet();
         scene.addParticipant(first, 10);
         scene.addParticipant(second, 5);
+        scene.startCombat();
 
         scene.next();                                   // first's Turn, Round 0
         second.recordAction(sampleAction());            // second reacts during first's Turn
@@ -322,6 +325,7 @@ class SceneTest {
         CharacterSheet lateArrival = newSheet();
         scene.addParticipant(a, 10);
         scene.addParticipant(b, 5);
+        scene.startCombat();
 
         scene.next();
         scene.addParticipant(lateArrival, 20);
@@ -387,6 +391,7 @@ class SceneTest {
         CharacterSheet b = newSheet();
         scene.addParticipant(a, 10);
         scene.addParticipant(b, 5);
+        scene.startCombat();
 
         scene.next();
         b.grantTemporaryBonus(ModifierType.INITIATIVE, 20, 2);
@@ -407,6 +412,7 @@ class SceneTest {
         lateArrival.grantTemporaryBonus(ModifierType.INITIATIVE, 20, 2);
         scene.addParticipant(a, 10);
         scene.addParticipant(b, 5);
+        scene.startCombat();
 
         scene.next();
         scene.addParticipant(lateArrival, 1);
@@ -588,6 +594,51 @@ class SceneTest {
         scene.setCombatScene(true);
 
         assertTrue(scene.isCombatScene());
+    }
+
+    @Test
+    void currentRoundStaysAtZeroUntilCombatStarts() {
+        Scene scene = new Scene();
+        CharacterSheet first = newSheet();
+        CharacterSheet second = newSheet();
+        scene.addParticipant(first, 10);
+        scene.addParticipant(second, 5);
+
+        scene.next();
+        scene.next();
+        scene.next();                                   // would wrap to Round 1 in combat
+        assertEquals(0, scene.getCurrentRound());
+
+        scene.startCombat();
+        scene.next();
+        scene.next();
+        assertEquals(1, scene.getCurrentRound());
+    }
+
+    @Test
+    void startCombatTurnsOnTheCombatFlagAndFiresEachParticipantsStartCombat() {
+        Scene scene = new Scene();
+        CharacterSheet active = newSheet();
+        CharacterSheet pending = newSheet();
+        scene.addParticipant(active, 10);
+        scene.next();
+        scene.addParticipant(pending, 5);              // held pending, cursor already moved
+
+        scene.startCombat();
+
+        assertTrue(scene.isCombatScene());
+        // Each participant's own startCombat() already fired, so a direct call now grants nothing.
+        assertTrue(active.startCombat().isEmpty());
+        assertTrue(pending.startCombat().isEmpty());
+    }
+
+    @Test
+    void startCombatRefusesToRunOnAnAlreadyCombatScene() {
+        Scene scene = new Scene();
+        scene.addParticipant(newSheet(), 10);
+        scene.startCombat();
+
+        assertThrows(IllegalOperationException.class, scene::startCombat);
     }
 
     @Test
@@ -837,6 +888,7 @@ class SceneTest {
         CharacterSheet slow = newSheet();
         scene.addParticipant(fast, 18);
         scene.addParticipant(slow, 5);
+        scene.startCombat();
         scene.next();
 
         CharacterSheet latecomer = newSheet();
@@ -887,6 +939,7 @@ class SceneTest {
         CharacterSheet slow = newSheet();
         scene.addParticipant(fast, 18);
         scene.addParticipant(slow, 5);
+        scene.setCombatScene(true);   // a Scene rebuilt already mid-combat
         scene.restoreTurnCursor(2, 0);
 
         CharacterSheet latecomer = newSheet();

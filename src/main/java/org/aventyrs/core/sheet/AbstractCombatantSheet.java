@@ -8,6 +8,7 @@ import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.effect.CriticalEffectType;
+import org.aventyrs.core.feat.Feat;
 import org.aventyrs.core.item.Item;
 import org.aventyrs.core.item.ItemWeightClass;
 import org.aventyrs.core.item.Weapon;
@@ -156,6 +157,9 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
 
     /** Whether a weapon was drawn at any point since this Cena began — cleared by {@link #startNewScene()}. */
     private boolean drewWeaponThisScene = false;
+
+    /** Whether {@link #startCombat()} has already fired this Cena — its idempotency guard, re-armed by {@link #startNewScene()}. */
+    private boolean combatStarted = false;
 
     protected AbstractCombatantSheet(@NonNull final Character character) {
         this.character = character;
@@ -743,6 +747,30 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         actionsThisRound.clear();
         actionCountAtTurnStart = 0;
         drewWeaponThisScene = false;
+        combatStarted = false;
+    }
+
+    /**
+     * Resolves and applies this combatant's start-of-combat Talento Blessings — see {@link
+     * CombatantSheet#startCombat()}. Scans {@link #getCharacter()}'s Talentos (the sheet acting
+     * on its own Character, the same way it reads {@code getFeats()} for every other resolve
+     * pass), grants each {@link Blessing} as a {@link TemporaryBonus}, and returns them.
+     * A no-op returning an empty list if already fired this Cena.
+     */
+    @Override
+    public List<Blessing> startCombat() {
+        if (combatStarted) {
+            return List.of();
+        }
+        combatStarted = true;
+        List<Blessing> granted = new ArrayList<>();
+        for (Feat feat : getCharacter().getFeats()) {
+            for (Blessing blessing : feat.resolveCombatStartBlessings(getCharacter())) {
+                grantTemporaryBonus(blessing.getModifierType(), blessing.getValue(), blessing.getRounds());
+                granted.add(blessing);
+            }
+        }
+        return granted;
     }
 
     /**

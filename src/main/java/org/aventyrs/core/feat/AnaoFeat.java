@@ -179,9 +179,8 @@ public enum AnaoFeat implements Feat {
      * <p>The PV multiplier rides {@link Feat#resolveLifeMultiplierIncrease}. The combat-start
      * grant rides {@link Feat#resolveCombatStartBlessings} — two {@link Blessing}s, both {@code
      * TargetScope#SELF}, both lasting {@code getLifeMultiplier / 2} Rodadas (floored, this
-     * Talento's own +1 included), applied by {@code
-     * org.aventyrs.core.character.services.CombatStartBlessingService} when the caller turns the
-     * Cena into a Cena de Combate:
+     * Talento's own +1 included), applied by {@code CombatantSheet#startCombat()} (fired for
+     * every participant by {@code Scene#startCombat()}):
      * <ul>
      *   <li>RD, at {@link DamageService#DEFAULT_DAMAGE_REDUCTION} (the "recebe RD" with no number
      *   convention — and exactly one RC/RD instance's -2 per {@code

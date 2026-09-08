@@ -393,6 +393,7 @@ class AttackDeliveryTest {
         Scene scene = new Scene();
         scene.addParticipant(hero, 15);
         scene.addParticipant(capanga, 5);
+        scene.startCombat();
         scene.next();
         scene.next();
         scene.next();                                                          // wraps to Round 1

@@ -12,6 +12,7 @@ public class TranslatableMessages {
     public static final String NO_PARTICIPANTS_IN_SCENE = "NO_PARTICIPANTS_IN_SCENE";
     public static final String CHARACTER_SHEET_NOT_IN_SCENE = "CHARACTER_SHEET_NOT_IN_SCENE";
     public static final String INVALID_TURN_CURSOR = "INVALID_TURN_CURSOR";
+    public static final String SCENE_ALREADY_IN_COMBAT = "SCENE_ALREADY_IN_COMBAT";
     public static final String INVALID_SKILL_ROLL = "INVALID_SKILL_ROLL";
     public static final String INVALID_ACTION_COST = "INVALID_ACTION_COST";
     public static final String INVALID_DIE_ROLL = "INVALID_DIE_ROLL";

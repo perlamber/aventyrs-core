@@ -373,8 +373,25 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
      * {@link #getActionsThisRound()}) and {@link #hasDrawnWeaponThisScene()}. Called by {@code
      * Scene#addParticipant} when this sheet joins a Scene; the API calls it directly otherwise.
      * A "primeira ... na Cena" clause needs a boundary the per-Rodada log cannot give.
+     *
+     * <p>Also re-arms {@link #startCombat()} — a new Cena can bring a fresh combat.
      */
     void startNewScene();
+
+    /**
+     * Begins a combat for this combatant: resolves every {@link Blessing} its held Talentos
+     * grant at the start of a combat ({@code Feat#resolveCombatStartBlessings} —
+     * {@code AnaoFeat#VIGOR_DO_INVERNO}'s "No início de cada combate você recebe RD e Resistência
+     * a Críticos"), applies each as a {@link TemporaryBonus} on this sheet, and returns them.
+     *
+     * <p>{@code Scene#startCombat()} calls this on every participant; a caller with no live
+     * {@code Scene} calls it directly when combat breaks out. <b>Idempotent within a Cena</b> —
+     * a second call before the next {@link #startNewScene()} grants nothing and returns an empty
+     * list, so an orchestrator and a direct caller can't double-apply. Unlike the initiative-win
+     * blessings {@code Scene#applyInitiativeBlessings} tracks, these are not revoked on a later
+     * event — they simply count down like any other {@link TemporaryBonus}.
+     */
+    List<Blessing> startCombat();
 
     /**
      * Appends an action this combatant took this Rodada — see {@link CombatantAction}. The API

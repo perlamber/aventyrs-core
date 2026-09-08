@@ -5,6 +5,7 @@ import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.character.DamageBase;
 import org.aventyrs.core.character.fixture.CharacterFixture;
+import org.aventyrs.core.feat.AnaoFeat;
 import org.aventyrs.core.item.AbstractItem;
 import org.aventyrs.core.item.AbstractWeapon;
 import org.aventyrs.core.item.ArmorItem;
@@ -768,6 +769,25 @@ class CharacterSheetTest {
     void getActionsThisCenaIsUnmodifiable() {
         assertThrows(UnsupportedOperationException.class,
                 () -> newSheet().getActionsThisCena().add(action(AttributeDomain.DEXTERITY)));
+    }
+
+    @Test
+    void startCombatAppliesFeatBlessingsOncePerCenaAndReArmsWithStartNewScene() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK).feats(new ArrayList<>()).build();
+        character.grantFeat(AnaoFeat.VIGOR_DO_INVERNO);
+        CharacterSheet sheet = CharacterSheet.of(character, new Player());
+
+        assertEquals(2, sheet.startCombat().size());
+        int rd = sheet.getTemporaryBonus(ModifierType.DAMAGE_REDUCTION);
+        assertTrue(rd > 0);
+
+        // A second call this Cena grants nothing more.
+        assertTrue(sheet.startCombat().isEmpty());
+        assertEquals(rd, sheet.getTemporaryBonus(ModifierType.DAMAGE_REDUCTION));
+
+        // A new Cena re-arms it.
+        sheet.startNewScene();
+        assertEquals(2, sheet.startCombat().size());
     }
 
     // Each of these must spend first: a recovery restores previously-spent points, so against a

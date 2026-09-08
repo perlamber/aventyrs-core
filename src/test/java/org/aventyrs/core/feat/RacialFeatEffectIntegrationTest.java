@@ -18,8 +18,6 @@ import org.aventyrs.core.magic.MimetizedSpell;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.character.services.AttributeAbilityService;
 import org.aventyrs.core.character.services.AttributeAbilityServiceImpl;
-import org.aventyrs.core.character.services.CombatStartBlessingService;
-import org.aventyrs.core.character.services.CombatStartBlessingServiceImpl;
 import org.aventyrs.core.character.services.DamageBaseService;
 import org.aventyrs.core.character.services.DamageBaseServiceImpl;
 import org.aventyrs.core.character.services.DamageService;
@@ -204,20 +202,23 @@ class RacialFeatEffectIntegrationTest {
     /**
      * "No início de cada combate você recebe RD e Resistência a Críticos por uma quantidade de
      * Rodadas igual à metade de seu Multiplicador de PV." — applied by {@code
-     * CombatStartBlessingService} when the caller turns the Cena into a Cena de Combate. Base
-     * Multiplicador de PV 4, +1 from the Talento → 5, halved → 2 Rodadas.
+     * CombatantSheet#startCombat()} when combat breaks out. Base Multiplicador de PV 4, +1 from
+     * the Talento → 5, halved → 2 Rodadas.
      */
     @Test
     void vigorDoInvernoGrantsRdAndCriticalResistanceAtCombatStart() throws IllegalOperationException {
-        CombatStartBlessingService combatStartBlessingService = new CombatStartBlessingServiceImpl();
         Character character = anaoWithVigorAndTitle(5);
         acquire(character, AnaoFeat.VIGOR_DO_INVERNO);
         CharacterSheet sheet = CharacterSheet.of(character, new Player());
 
-        combatStartBlessingService.applyCombatStartBlessings(sheet);
+        sheet.startCombat();
 
         assertEquals(DamageService.DEFAULT_DAMAGE_REDUCTION, sheet.getTemporaryBonus(ModifierType.DAMAGE_REDUCTION));
         assertEquals(2, sheet.getTemporaryBonus(ModifierType.CRITICAL_RESISTANCE));
+
+        // Idempotent within a Cena — a second call grants nothing more.
+        assertTrue(sheet.startCombat().isEmpty());
+        assertEquals(DamageService.DEFAULT_DAMAGE_REDUCTION, sheet.getTemporaryBonus(ModifierType.DAMAGE_REDUCTION));
     }
 
     @Test

@@ -774,11 +774,10 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      * {@link Blessing}s this Talento grants its holder at the start of a combat — {@code
      * AnaoFeat#VIGOR_DO_INVERNO}'s "No início de cada combate você recebe RD e Resistência a
      * Críticos por uma quantidade de Rodadas igual à metade de seu Multiplicador de PV." Resolved
-     * and applied by {@code
-     * org.aventyrs.core.character.services.CombatStartBlessingService#applyCombatStartBlessings},
-     * which the caller invokes when a Cena turns into a Cena de Combate — this core has no combat
-     * observer, the same caller-drives-it shape as {@link #resolveDefeatBlessings} / {@code
-     * recordAction} / session recovery. Empty by default.
+     * and applied by {@code CombatantSheet#startCombat()} (which {@code Scene#startCombat()} fires
+     * on every participant) — this core has no combat observer, so a caller drives it, the same
+     * shape as {@link #resolveDefeatBlessings} / {@code recordAction} / session recovery. Empty
+     * by default.
      *
      * <p>The Blessing already carries its own Duração in Rodadas: a clause whose duration scales
      * off holder state (Vigor do Inverno's ½ Multiplicador de PV) computes it here from {@code

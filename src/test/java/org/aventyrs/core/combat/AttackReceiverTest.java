@@ -383,6 +383,7 @@ class AttackReceiverTest {
         Scene scene = new Scene();
         scene.addParticipant(defender, 12);
         scene.addParticipant(ally, 3);
+        scene.startCombat();
         scene.next();
         scene.next();
         scene.next();                                                     // wraps to Round 1

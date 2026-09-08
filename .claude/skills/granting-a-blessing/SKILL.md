@@ -14,7 +14,7 @@ activation, `TargetScope.ALLIES` — excludes the caster), `AbencoadoPelaLuzAbil
 reporting three `Blessing`s at once), `InitiativeAdvantage#POSICIONAMENTO_ESTRATEGICO`
 (winning-initiative trigger, `TargetScope.SELF_AND_ALLIES`), and `AnaoFeat#VIGOR_DO_INVERNO`
 (`Feat#resolveCombatStartBlessings`, a start-of-combat trigger applied by
-`CombatStartBlessingService`, `TargetScope.SELF`, duration scaled off holder state). Read the
+`CombatantSheet#startCombat()`, `TargetScope.SELF`, duration scaled off holder state). Read the
 relevant ones before assuming a new case is a genuinely distinct shape.
 
 The `scene-context-and-positioning` skill covers the `Scene`-internal apply/revoke and
@@ -93,12 +93,13 @@ misrepresents the rules text. Rule these out first:
   #applyInitiativeBlessings` — this class doesn't touch `CharacterSheet` itself.
 - **"No início de cada combate ..." (start of combat)** — override `default List<Blessing>
   resolveCombatStartBlessings(Character)` on `Feat` (the only source scanned today —
-  `AnaoFeat#VIGOR_DO_INVERNO`). Resolved *and applied* by `CombatStartBlessingService
-  #applyCombatStartBlessings(CombatantSheet)`, caller-driven from wherever `Scene#setCombatScene(true)`
-  is (this core has no combat observer), exactly the `DefeatBlessingService` shape. The Blessing
-  carries its own Duração — a duration that scales off holder state (Vigor do Inverno's ½
-  Multiplicador de PV) is computed inside the override from `character`, the way
-  `AssassinoFeat#SANGUE_QUENTE` computes its *value*. Every such Blessing is `TargetScope.SELF`
+  `AnaoFeat#VIGOR_DO_INVERNO`). Resolved *and applied* by `CombatantSheet#startCombat()` — the
+  sheet scans its own `Character`'s Talentos and grants each as a `TemporaryBonus`, returning
+  them; it is idempotent within a Cena (re-armed by `startNewScene()`). `Scene#startCombat()`
+  fires it for every participant and flips `isCombatScene()` (this core has no combat observer —
+  a caller drives it). The Blessing carries its own Duração — a duration that scales off holder
+  state (Vigor do Inverno's ½ Multiplicador de PV) is computed inside the override from
+  `character`, the way `AssassinoFeat#SANGUE_QUENTE` computes its *value*. Every such Blessing is `TargetScope.SELF`
   so far; a `TemporaryBonus` of a `ModifierType` with an existing non-temporary consumer (RD's
   reflection scan) needs that consumer taught to read `getTemporaryBonus` too — done for
   `DAMAGE_REDUCTION` on the `CombatantSheet` overload of `DamageService#getTotalDamageReduction`.
@@ -164,7 +165,7 @@ the `ModifierType` already has a working, different consumer.
   `resolveInitiativeBlessings()`. Nothing else to wire — `InitiativeBlessingService`/`Scene
   #applyInitiativeBlessings` already pick it up generically.
 - **Start-of-combat trigger**: `return List.of(new Blessing(...));` from the overridden
-  `Feat#resolveCombatStartBlessings(Character)`. Nothing else to wire — `CombatStartBlessingService`
+  `Feat#resolveCombatStartBlessings(Character)`. Nothing else to wire — `CombatantSheet#startCombat()`
   scans it generically. If the Blessing's `ModifierType` already has a non-temporary consumer
   (RD, Defesas, …), verify that consumer's `CombatantSheet` overload reads `getTemporaryBonus`
   of that type; add the read if not (as `DamageServiceImpl` now does for `DAMAGE_REDUCTION`).
@@ -194,11 +195,12 @@ the `ModifierType` already has a working, different consumer.
   genuinely new scanning path (not just a new constant on an existing one), add `SceneTest`
   coverage mirroring `applyInitiativeBlessingsGrantsAnAllyScopedBlessingToTheWinnerAndItsAllies`/
   `applyInitiativeBlessingsGrantsASelfOnlyBlessingOnlyToTheWinner`.
-- **Start-of-combat trigger**: a `CombatStartBlessingServiceImplTest` case (mirror
-  `DefeatBlessingServiceImplTest`) asserting the granted `Blessing` fields and that they land as
-  `TemporaryBonus`es on the combatant, plus a "no such Talento → empty" case; and, if a
-  non-temporary consumer was taught to read the type, a case in that service's test proving the
-  round-scoped grant is now summed on the `CombatantSheet` path but not the `Character`-only one.
+- **Start-of-combat trigger**: a `CharacterSheetTest` case on `startCombat()` asserting the
+  granted `Blessing`s land as `TemporaryBonus`es and that a second call the same Cena grants
+  nothing (idempotency, re-armed by `startNewScene()`); a `SceneTest` case that `Scene#startCombat()`
+  fires it for every participant and refuses to run twice; and, if a non-temporary consumer was
+  taught to read the `ModifierType`, a case proving the round-scoped grant is summed on the
+  `CombatantSheet` path but not the `Character`-only one.
 - **Activation trigger**: a `<X>InteractionTest` asserting the reported `blessings` list — see
   `GritoDeGuerraVulcanoInteractionTest`/`ArtesInteractionTest`'s DOM_BARDICO cases for the
   shape (including the "ability not held → `blessings` stays `null`" case, and, for
@@ -227,11 +229,11 @@ the `ModifierType` already has a working, different consumer.
   scan for the initiative-win trigger.
 - `src/main/java/org/aventyrs/core/scene/Scene.java` (`applyInitiativeBlessings`,
   `SceneTest.java`) — how an initiative-win `Blessing` actually gets applied/revoked.
-- `src/main/java/org/aventyrs/core/character/services/CombatStartBlessingServiceImpl.java`
-  (`CombatStartBlessingServiceImplTest.java`) + `AnaoFeat#VIGOR_DO_INVERNO` — the start-of-combat
-  trigger, `TargetScope.SELF`, a holder-state-scaled duration, and a `DAMAGE_REDUCTION` Blessing
-  that needed `DamageServiceImpl` taught to read `getTemporaryBonus`. Mirrors
-  `DefeatBlessingServiceImpl` (`Feat#resolveDefeatBlessings`).
+- `src/main/java/org/aventyrs/core/sheet/AbstractCombatantSheet.java` (`startCombat()`) +
+  `src/main/java/org/aventyrs/core/scene/Scene.java` (`startCombat()`) + `AnaoFeat#VIGOR_DO_INVERNO`
+  — the start-of-combat trigger, `TargetScope.SELF`, a holder-state-scaled duration, and a
+  `DAMAGE_REDUCTION` Blessing that needed `DamageServiceImpl` taught to read `getTemporaryBonus`.
+  The sheet scans its own `Character`'s Talentos (`Feat#resolveCombatStartBlessings`).
 - `src/main/java/org/aventyrs/core/title/santo/AbencoadoPelaLuzInteraction.java` — the
   direct-mutation, single-known-recipient shape that does **not** use `Blessing` at all,
   included here specifically so it's easy to tell apart from the activation-trigger case above.

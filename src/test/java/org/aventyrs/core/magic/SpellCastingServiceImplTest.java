@@ -121,6 +121,7 @@ class SpellCastingServiceImplTest {
     void areaSpellEffectExpiresAfterItsSceneRoundDuration() {
         SpellCastingService spellCastingService = new SpellCastingServiceImpl();
         Scene scene = sceneWithCaster();
+        scene.startCombat();
         spellCastingService.castSpell(SpellCastRequest.builder()
                 .caster(sheet)
                 .spell(areaSpell(SpellDuration.rodadas(2)))
