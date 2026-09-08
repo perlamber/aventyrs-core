@@ -10,10 +10,12 @@ import org.aventyrs.core.sheet.TemporaryBonus;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -66,6 +68,22 @@ import static org.aventyrs.core.util.TranslatableMessages.SCENE_ALREADY_IN_COMBA
  * paid-for owned copy. It is deliberately not carried into {@link #buildContext} — a store is
  * not roll-relevant snapshot state.
  *
+ * <p>{@link #getConnections()} is this Scene's place in a 4-way map graph: up to four
+ * neighbouring Scenes, one per {@link Direction} (north/south/east/west), held here only as
+ * their {@code UUID}s — {@link #setConnection}/{@link #removeConnection} record and clear them
+ * one side at a time and nothing more. This class deliberately stays passive about the graph:
+ * it never resolves an id to a {@link Scene}, never loads a neighbour, and never touches a
+ * neighbour's own connection map. Keeping both sides of a link consistent — this Scene points
+ * {@code direction} at the neighbour, the neighbour points {@link Direction#opposite()} back —
+ * and persisting the pair belongs to a service one layer up that owns a {@link Scene}
+ * repository and a transaction, neither of which this core has. What lives here is the whole of
+ * scene adjacency this core models: no diagonals, no distance between Scenes, no pathfinding —
+ * a consumer reads {@link #getConnection(Direction)}, resolves the id itself, and builds
+ * anything transitive on top. Connections are map topology, independent of the combat and
+ * session lifecycle — no boundary method ({@link #next()}, {@link #startNewRound()}, {@code
+ * startNewScene}) touches them. Like {@link #buildContext}, this is not carried into {@link
+ * SceneContext}: which Scene lies north is not roll-relevant snapshot state.
+ *
  * <p>{@link #getActionHistory()} is this Scene's permanent combat log: every {@link
  * CombatantAction} a caller records flows in through {@link #recordAction(CombatantSheet,
  * CombatantAction)}, which appends a {@link SceneAction} here <em>and</em> downstreams the
@@ -115,6 +133,8 @@ import static org.aventyrs.core.util.TranslatableMessages.SCENE_ALREADY_IN_COMBA
  * a server every client mirrors — is rebuilt here in two passes rather than by replaying {@link
  * #next()} once per elapsed turn (which would re-fire every {@link CombatantSheet#startTurn(int)}
  * and {@link CombatantSheet#finishTurn()} along the way, ticking effects that already ticked).
+ * Construct it with its saved identity ({@link #Scene(UUID)}) so {@link #getId()} matches what
+ * neighbouring Scenes point at, then restore its {@link #setConnection connections}.
  * First add everyone already in the rotation, while {@link #getCurrentIndex()} is still {@code -1}
  * and {@link #addParticipant} therefore inserts straight into the live order; then {@link
  * #restoreTurnCursor} to the round/index reached elsewhere; then add whoever joined mid-Round.
@@ -123,12 +143,13 @@ import static org.aventyrs.core.util.TranslatableMessages.SCENE_ALREADY_IN_COMBA
  * maintains is reproduced by the same code that maintains it, not by a second copy of the rule.
  */
 public class Scene {
-    private final UUID id = UUID.randomUUID();
+    private final UUID id;
     private final List<InitiativeEntry> activeEntries = new ArrayList<>();
     private final List<InitiativeEntry> pendingEntries = new ArrayList<>();
     private final Map<CombatantSheet, List<TemporaryBonus>> grantedBlessings = new HashMap<>();
     private final List<ActiveAreaSpellEffect> activeAreaSpellEffects = new ArrayList<>();
     private final List<SceneAction> actionHistory = new ArrayList<>();
+    private final Map<Direction, UUID> connections = new EnumMap<>(Direction.class);
 
     private int currentIndex = -1;
     private int currentRound = 0;
@@ -136,6 +157,27 @@ public class Scene {
     private boolean combatScene;
     private ItemStore itemStore;
     private List<Blessing> activeBlessings = List.of();
+
+    /** A Scene with a fresh identity — the common case, for a Scene created during play. */
+    public Scene() {
+        this(UUID.randomUUID());
+    }
+
+    /**
+     * A Scene reconstructed with an existing identity — for a caller loading one from persistence
+     * (or mirroring one from a peer), so its {@link #getId()} matches the value that was saved and
+     * every neighbour id another Scene's {@link #getConnections()} points at still resolves to it.
+     * The same purpose {@code CharacterSheet.of(character, player, id)} serves for a sheet.
+     *
+     * <p>Turn order, the round cursor, sub-groups and connections are still restored separately,
+     * afterward — see this class's own javadoc for the two-pass rebuild, {@link #restoreTurnCursor},
+     * {@link #addParticipant}'s explicit-group overload and {@link #setConnection}.
+     *
+     * @throws NullPointerException if id is {@code null}
+     */
+    public Scene(final UUID id) {
+        this.id = Objects.requireNonNull(id, "id");
+    }
 
     /**
      * Adds a CombatantSheet with its rolled initiative value, in a sub-group of its own —
@@ -256,7 +298,11 @@ public class Scene {
                 combatScene, currentRound, wonInitiative(characterSheet), opposedCharacter, id);
     }
 
-    /** This Scene's stable identity, carried by contexts to scope stateful effects. */
+    /**
+     * This Scene's stable identity — carried by contexts to scope stateful effects, and the key
+     * another Scene's {@link #getConnections()} stores it under. Auto-generated by {@link #Scene()},
+     * or the value passed to {@link #Scene(UUID)} when a caller rebuilds one from persistence.
+     */
     public UUID getId() {
         return id;
     }
@@ -327,6 +373,52 @@ public class Scene {
     /** Attaches (or clears, with {@code null}) the store the party can currently buy Equipamento from. */
     public void setItemStore(final ItemStore itemStore) {
         this.itemStore = itemStore;
+    }
+
+    /**
+     * Records that the Scene identified by neighbourId lies immediately to direction of this one,
+     * replacing whatever was there. <b>Single-sided by design.</b> This class stores raw
+     * neighbour ids and nothing more — it does not resolve them to {@link Scene} instances, does
+     * not load anything, and does not touch the neighbour's own connection map. Keeping the two
+     * sides of a link consistent (this Scene points {@code direction} at the neighbour, the
+     * neighbour points {@link Direction#opposite()} back), and persisting both, is the caller's
+     * job — the natural home for that is a service one layer up that owns the {@link Scene}
+     * repository and a transaction boundary, since this core has neither.
+     *
+     * <p>This is the whole of scene adjacency held here: a 4-way id map a consumer reads via
+     * {@link #getConnection(Direction)} and resolves itself. No pathfinding, no distance between
+     * Scenes, no validation (a caller may even store this Scene's own id — nothing here reads it).
+     * Connections outlive every combat and session boundary; no lifecycle method touches them.
+     */
+    public void setConnection(final Direction direction, final UUID neighbourId) {
+        connections.put(direction, neighbourId);
+    }
+
+    /**
+     * Clears this Scene's connection along direction, if any — again single-sided (see {@link
+     * #setConnection}): the former neighbour's opposite-facing link is left untouched for the
+     * caller to clear too.
+     *
+     * @return whether a connection was actually removed
+     */
+    public boolean removeConnection(final Direction direction) {
+        return connections.remove(direction) != null;
+    }
+
+    /** The id of the Scene connected along direction, or {@code null} if there is no neighbour that way. */
+    public UUID getConnection(final Direction direction) {
+        return connections.get(direction);
+    }
+
+    /**
+     * This Scene's neighbour ids keyed by the {@link Direction} each lies in — only the
+     * directions actually connected are present. A fresh copy, so mutating it doesn't disturb
+     * the Scene; use {@link #setConnection}/{@link #removeConnection} to change connections.
+     */
+    public Map<Direction, UUID> getConnections() {
+        Map<Direction, UUID> copy = new EnumMap<>(Direction.class);
+        copy.putAll(connections);
+        return copy;
     }
 
     /**

@@ -1111,4 +1111,149 @@ class SceneTest {
 
         assertEquals(List.of(fighter), scene.getAllParticipants());
     }
+
+    @Test
+    void twoFreshScenesHaveDistinctIds() {
+        assertFalse(new Scene().getId().equals(new Scene().getId()));
+    }
+
+    @Test
+    void aSceneCanBeReconstructedWithAnExistingId() {
+        UUID savedId = UUID.randomUUID();
+
+        Scene rebuilt = new Scene(savedId);
+
+        assertEquals(savedId, rebuilt.getId());
+    }
+
+    @Test
+    void reconstructingWithANullIdIsRejected() {
+        assertThrows(NullPointerException.class, () -> new Scene(null));
+    }
+
+    @Test
+    void aRebuiltSceneResolvesTheNeighbourIdAnotherSceneStored() {
+        UUID northId = UUID.randomUUID();
+        Scene here = new Scene();
+        here.setConnection(Direction.NORTH, northId);
+
+        // the neighbour, loaded separately, is reconstructed with the very id 'here' points at
+        Scene north = new Scene(northId);
+
+        assertEquals(north.getId(), here.getConnection(Direction.NORTH));
+    }
+
+    @Test
+    void aFreshSceneHasNoConnections() {
+        Scene scene = new Scene();
+
+        assertTrue(scene.getConnections().isEmpty());
+        for (Direction direction : Direction.values()) {
+            assertNull(scene.getConnection(direction));
+        }
+    }
+
+    @Test
+    void setConnectionRecordsANeighbourIdInThatDirection() {
+        Scene scene = new Scene();
+        UUID neighbourId = UUID.randomUUID();
+
+        scene.setConnection(Direction.NORTH, neighbourId);
+
+        assertEquals(neighbourId, scene.getConnection(Direction.NORTH));
+    }
+
+    @Test
+    void setConnectionIsSingleSided_theNeighbourIsNotTouched() {
+        Scene here = new Scene();
+        Scene there = new Scene();
+
+        here.setConnection(Direction.NORTH, UUID.randomUUID());
+
+        // this core keeps the opposite side consistent for nobody — that's the service's job
+        assertTrue(there.getConnections().isEmpty());
+    }
+
+    @Test
+    void setConnectionReplacesWhateverWasThere() {
+        Scene scene = new Scene();
+        UUID first = UUID.randomUUID();
+        UUID second = UUID.randomUUID();
+        scene.setConnection(Direction.EAST, first);
+
+        scene.setConnection(Direction.EAST, second);
+
+        assertEquals(second, scene.getConnection(Direction.EAST));
+    }
+
+    @Test
+    void removeConnectionClearsOnlyThisSide() {
+        Scene scene = new Scene();
+        scene.setConnection(Direction.WEST, UUID.randomUUID());
+
+        assertTrue(scene.removeConnection(Direction.WEST));
+        assertNull(scene.getConnection(Direction.WEST));
+    }
+
+    @Test
+    void removeConnectionOnAnUnconnectedDirectionIsANoOp() {
+        assertFalse(new Scene().removeConnection(Direction.NORTH));
+    }
+
+    @Test
+    void aSceneCanHoldANeighbourInEachOfTheFourDirections() {
+        Scene centre = new Scene();
+        UUID n = UUID.randomUUID();
+        UUID s = UUID.randomUUID();
+        UUID e = UUID.randomUUID();
+        UUID w = UUID.randomUUID();
+
+        centre.setConnection(Direction.NORTH, n);
+        centre.setConnection(Direction.SOUTH, s);
+        centre.setConnection(Direction.EAST, e);
+        centre.setConnection(Direction.WEST, w);
+
+        assertEquals(Map.of(Direction.NORTH, n, Direction.SOUTH, s, Direction.EAST, e, Direction.WEST, w),
+                centre.getConnections());
+    }
+
+    @Test
+    void getConnectionsReturnsADefensiveCopy() {
+        Scene scene = new Scene();
+        UUID neighbourId = UUID.randomUUID();
+        scene.setConnection(Direction.EAST, neighbourId);
+
+        scene.getConnections().clear();
+
+        assertEquals(neighbourId, scene.getConnection(Direction.EAST));
+    }
+
+    /** A caller building a bidirectional link mirrors it with Direction#opposite() itself. */
+    @Test
+    void bothSidesOfALinkAreTheCallersResponsibility() {
+        Scene here = new Scene();
+        Scene there = new Scene();
+        UUID hereId = UUID.randomUUID();
+        UUID thereId = UUID.randomUUID();
+
+        here.setConnection(Direction.NORTH, thereId);
+        there.setConnection(Direction.NORTH.opposite(), hereId);
+
+        assertEquals(thereId, here.getConnection(Direction.NORTH));
+        assertEquals(hereId, there.getConnection(Direction.SOUTH));
+    }
+
+    @Test
+    void connectionsSurviveCombatAndRoundBoundaries() {
+        Scene here = new Scene();
+        UUID thereId = UUID.randomUUID();
+        here.setConnection(Direction.NORTH, thereId);
+        here.addParticipant(newSheet(), 10);
+
+        here.startCombat();
+        here.next();
+        here.next();
+
+        assertEquals(thereId, here.getConnection(Direction.NORTH));
+    }
 }
