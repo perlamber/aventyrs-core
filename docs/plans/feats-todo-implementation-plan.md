@@ -342,8 +342,11 @@ Atributo).
   no sheet, and a three-Rodada Forma raising max PV would need those totals recomputed per Rodada,
   which this core deliberately does not do. Same limit `VampiricoFeat#DOM_DE_MIRCALLA` has always
   had, and the test pins both halves of it.
-- **Still open:** a per-Rodada **Multiplicador de PV** uplift (same root cause); **equipment
-  restrictions**; **suppression of racial traits**; the per-Forma **Arma Natural** swap.
+- **Still open:** a **Multiplicador de PV** uplift in force only while transformed (its figure
+  scales per Título Desperto like the rest of that sentence — a *permanent* per-Título multiplier
+  is already ordinary, `OrquicoFeat#TERRA_NAS_VEIAS`; what is missing is sheet reach, since
+  `getLifeMultiplier` takes a `Character`); **equipment restrictions**; **suppression of racial
+  traits**; the per-Forma **Arma Natural** swap.
 
 **Landed on top of slice 2:** `DRACONATO`'s size/Força/Foco uplift and `ANCIENTEFORME`'s
 Defesas/size/Carisma/Foco one — every half of both Talentos except Ancienteforme's PV multiplier
