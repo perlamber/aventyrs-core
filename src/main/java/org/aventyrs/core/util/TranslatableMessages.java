@@ -51,6 +51,13 @@ public class TranslatableMessages {
     public static final String TITLE_ABILITY_PREREQUISITE_NOT_MET = "TITLE_ABILITY_PREREQUISITE_NOT_MET";
     public static final String TITLE_ACQUISITION_PREVENTED = "TITLE_ACQUISITION_PREVENTED";
     public static final String FEAT_PREREQUISITE_NOT_MET = "FEAT_PREREQUISITE_NOT_MET";
+
+    /**
+     * The bare catalog constant of a Talento whose acquisition requires choosing between {@code
+     * ActiveAbility}s was passed to {@code FeatService#grantFeat} — see {@code
+     * Feat#resolveActiveAbilityChoice}. Grant the acquired, choice-carrying form instead.
+     */
+    public static final String FEAT_REQUIRES_ACTIVE_ABILITY_CHOICE = "FEAT_REQUIRES_ACTIVE_ABILITY_CHOICE";
     /**
      * The Habilidade de Força chosen for {@code AnaoFeat#CONSELHEIRO_DE_GUERRA_YMIRIANO} —
      * "1 Habilidade de Força (que você cumpra os requisitos)" — was picked by a character with

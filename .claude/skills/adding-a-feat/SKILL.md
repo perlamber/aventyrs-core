@@ -104,7 +104,21 @@ mechanism.
   *several* activatable things overrides the plural `resolveActiveAbilities()` instead** (it
   defaults to the singular) — `MetamorfoseDraculeaFeat`, where each chosen Forma Metamórfica is its
   own shape and `activate` matches by `==`, so "which shape" must be part of the ability's
-  identity. Several hooks now have a
+  identity.
+
+⚠️ **A Talento whose acquisition makes the player *choose* between activatable abilities must
+advertise that choice**, or no client can discover it. Override
+`resolveActiveAbilityChoice(Character)` → `ActiveAbilityChoice(picks, options)`, returning the
+actual `ActiveAbility` instances (already filtered for that holder — a Rakshasa is not offered
+Névoa), and return the **same singletons** the acquired form will hold, since `activate` matches by
+`==`: what the client is shown is what it picks, and what it picks is what gets granted.
+`FeatService#grantFeat` then **refuses the bare catalog constant** for such a Talento, so the
+requirement cannot be silently skipped. `VampiricoFeat#METAMORFOSE_DRACULEA` is the reference.
+
+The catalog's *other* acquisition choices — a Perícia, a terreno, a weapon type, a `SkillTrait`,
+an `AttributeAbility` — are still undiscoverable this way, each knowable only by finding its own
+acquired-form class (`ArmamentoDraconicoFeat.ALLOWED_CHOICES` is the closest anything gets). A
+general descriptor covering all of them is the obvious next step; don't add a second one-off. Several hooks now have a
   trailing `CombatantSheet holder` overload that falls through to the sheet-less form
   (`resolveSkillRollBonus`, `resolveDefenseBonus`, `resolveDamageReduction`,
   `resolveCriticalMarginIncrease`) — override it for a clause reading held `Condição`s or the

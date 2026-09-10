@@ -2,6 +2,8 @@ package org.aventyrs.core.feat;
 
 import org.aventyrs.core.ability.ActiveAbility;
 import org.aventyrs.core.character.Character;
+import java.util.List;
+import org.aventyrs.core.character.services.FeatServiceImpl;
 import org.aventyrs.core.character.DamageBase;
 import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.character.services.ActiveAbilityService;
@@ -27,6 +29,7 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -107,6 +110,80 @@ class MetamorfoseDraculeaTest {
         assertThrows(IllegalArgumentException.class,
                 () -> MetamorfoseDraculeaFeat.of(rakshasa, withNevoa));
         assertEquals(4, MetamorfoseDraculeaFeat.of(rakshasa, withoutNevoa).getChosenFormas().size());
+    }
+
+    // ---------- Discovering the choice from the catalog ----------
+
+    /**
+     * The point of {@code Feat#resolveActiveAbilityChoice}: a client walking the catalog can ask
+     * any constant whether it needs a choice, and get the options already filtered for this
+     * holder — without knowing that {@code MetamorfoseDraculeaFeat} or {@code FormaMetamorfica}
+     * exist at all.
+     */
+    @Test
+    void theCatalogConstantAdvertisesItsChoice() {
+        Character nosferatu = vampiro(VampiroLineage.NOSFERATU);
+
+        ActiveAbilityChoice choice = VampiricoFeat.METAMORFOSE_DRACULEA.resolveActiveAbilityChoice(nosferatu);
+
+        assertEquals(2, choice.picks());
+        assertEquals(6, choice.options().size(), "the whole table");
+        assertTrue(choice.options().stream().allMatch(MetamorfoseActiveAbility.class::isInstance));
+        // Each option can be rendered without knowing what it is.
+        assertTrue(choice.options().stream().noneMatch(option -> option.getDescription().isBlank()));
+    }
+
+    /** The options are filtered per holder, so a client never reimplements a Talento's own rules. */
+    @Test
+    void aRakshasaIsNotOfferedNevoa() {
+        ActiveAbilityChoice choice = VampiricoFeat.METAMORFOSE_DRACULEA
+                .resolveActiveAbilityChoice(vampiro(VampiroLineage.RAKSHASA));
+
+        assertEquals(4, choice.picks());
+        assertEquals(5, choice.options().size());
+        assertTrue(choice.options().stream()
+                .map(MetamorfoseActiveAbility.class::cast)
+                .noneMatch(ability -> ability.getForma() == FormaMetamorfica.NEVOA));
+    }
+
+    /** Every other Talento answers null — the signal is unambiguous. */
+    @Test
+    void aTalentoWithNoChoiceSaysSo() {
+        Character nosferatu = vampiro(VampiroLineage.NOSFERATU);
+
+        assertNull(VampiricoFeat.OSTEOMANCIA.resolveActiveAbilityChoice(nosferatu));
+        assertNull(DraconicoFeat.DRACONATO.resolveActiveAbilityChoice(nosferatu));
+    }
+
+    /**
+     * And the requirement is enforced, not merely advertised: granting the bare constant would
+     * hand over a Metamorfose with no Formas, so {@code FeatService#grantFeat} refuses it.
+     */
+    @Test
+    void grantingTheBareConstantIsRefused() {
+        Character nosferatu = vampiro(VampiroLineage.NOSFERATU);
+        CharacterSheet sheet = CharacterSheet.of(nosferatu, new Player());
+        sheet.accumulateExperience(java.math.BigDecimal.valueOf(100));
+
+        assertThrows(IllegalOperationException.class, () -> new FeatServiceImpl()
+                .grantFeat(nosferatu, sheet, VampiricoFeat.METAMORFOSE_DRACULEA));
+    }
+
+    /** What a client picked from the offered options is what it can then grant, and activate. */
+    @Test
+    void theChosenOptionsAreTheAbilitiesGranted() throws IllegalOperationException {
+        Character nosferatu = vampiro(VampiroLineage.NOSFERATU);
+        CharacterSheet sheet = CharacterSheet.of(nosferatu, new Player());
+        sheet.accumulateExperience(java.math.BigDecimal.valueOf(100));
+        ActiveAbilityChoice choice = VampiricoFeat.METAMORFOSE_DRACULEA.resolveActiveAbilityChoice(nosferatu);
+        List<ActiveAbility> picked = choice.options().subList(0, choice.picks());
+
+        new FeatServiceImpl().grantFeat(nosferatu, sheet,
+                MetamorfoseDraculeaFeat.ofChosenAbilities(nosferatu, picked));
+
+        assertEquals(picked, nosferatu.getActiveAbilities(), "same instances, so == matching works");
+        activeAbilityService.activate(nosferatu, sheet, picked.get(0), 0);
+        assertNotNull(sheet.getCurrentForm());
     }
 
     // ---------- One activatable shape per chosen Forma ----------

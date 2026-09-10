@@ -10,6 +10,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import static org.aventyrs.core.util.TranslatableMessages.FEAT_PREREQUISITE_NOT_MET;
+import static org.aventyrs.core.util.TranslatableMessages.FEAT_REQUIRES_ACTIVE_ABILITY_CHOICE;
 
 public class FeatServiceImpl implements FeatService {
 
@@ -17,6 +18,13 @@ public class FeatServiceImpl implements FeatService {
     public Feat grantFeat(final Character character, final CharacterSheet characterSheet, final Feat feat) throws IllegalOperationException {
         if (!feat.isEligible(character, characterSheet)) {
             throw new IllegalOperationException(FEAT_PREREQUISITE_NOT_MET);
+        }
+        // A Talento whose rules make the player choose between ActiveAbilities cannot be granted
+        // as the bare catalog constant — that would hand over a Metamorfose with no Formas. The
+        // acquired, choice-carrying form reports the constant through catalogEntry(), so "is this
+        // still the plain constant" is exactly feat == feat.catalogEntry().
+        if (feat == feat.catalogEntry() && feat.resolveActiveAbilityChoice(character) != null) {
+            throw new IllegalOperationException(FEAT_REQUIRES_ACTIVE_ABILITY_CHOICE);
         }
 
         int cost = character.getRace().getNewFeatCost(feat.getFeatCategory());

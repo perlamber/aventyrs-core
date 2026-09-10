@@ -51,7 +51,7 @@ public final class MetamorfoseDraculeaFeat extends AbstractFeat {
                 VampiricoFeat.METAMORFOSE_DRACULEA.getFeatRequirements());
         this.chosenFormas = EnumSet.copyOf(chosenFormas);
         this.transformations = this.chosenFormas.stream()
-                .map(forma -> (ActiveAbility) new MetamorfoseActiveAbility(forma))
+                .map(FormaMetamorfica::getTransformation)
                 .toList();
     }
 
@@ -74,6 +74,24 @@ public final class MetamorfoseDraculeaFeat extends AbstractFeat {
             throw new IllegalArgumentException("A Rakshasa cannot take Névoa");
         }
         return new MetamorfoseDraculeaFeat(chosenFormas);
+    }
+
+    /**
+     * The same thing, from the {@link ActiveAbility}s a client actually picked — the options a
+     * {@code Feat#resolveActiveAbilityChoice} offering handed it. Resolves each back to its
+     * {@link FormaMetamorfica} and validates exactly as {@link #of(Character, Set)} does, so a
+     * client never has to know the enum behind the ability it was shown.
+     */
+    public static MetamorfoseDraculeaFeat ofChosenAbilities(@NonNull final Character holder,
+                                                            @NonNull final List<ActiveAbility> chosen) {
+        Set<FormaMetamorfica> formas = EnumSet.noneOf(FormaMetamorfica.class);
+        for (ActiveAbility ability : chosen) {
+            if (!(ability instanceof MetamorfoseActiveAbility metamorfose)) {
+                throw new IllegalArgumentException("Not a Forma Metamórfica: " + ability);
+            }
+            formas.add(metamorfose.getForma());
+        }
+        return of(holder, formas);
     }
 
     /**

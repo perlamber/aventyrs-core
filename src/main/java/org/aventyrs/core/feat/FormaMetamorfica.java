@@ -1,6 +1,7 @@
 package org.aventyrs.core.feat;
 
 import lombok.Getter;
+import org.aventyrs.core.ability.ActiveAbility;
 import org.aventyrs.core.item.NaturalWeapon;
 import org.aventyrs.core.sheet.FormType;
 
@@ -47,6 +48,15 @@ public enum FormaMetamorfica {
     SERPENTE_ESPINHOSA(FormType.SERPENTE_ESPINHOSA, NaturalWeapon.CAUDA_CONSTRITORA,
             "Corrente de Efeitos – Veneno Vampírico.");
 
+    /**
+     * The activatable shape this row <em>is</em> — one stable instance per constant, built here so
+     * that the ability a client is offered through {@code Feat#resolveActiveAbilityChoice} is the
+     * very object the acquired Talento ends up holding. {@code ActiveAbilityService#activate}
+     * matches a held ability by {@code ==}, so anything less than a singleton would make an
+     * offered choice unactivatable.
+     */
+    private final ActiveAbility transformation = new MetamorfoseActiveAbility(this);
+
     private final FormType form;
 
     /** The Arma Natural this shape fights with, or {@code null} for Névoa, which fights with none. */
@@ -54,6 +64,16 @@ public enum FormaMetamorfica {
 
     /** The row's HABILIDADE column, verbatim — authored data, granted by nothing yet. */
     private final String abilityDescription;
+
+    /** Every Forma a holder may legally choose — the whole table, minus Névoa for a Rakshasa. */
+    static java.util.Set<FormaMetamorfica> availableTo(final org.aventyrs.core.character.Character holder) {
+        java.util.Set<FormaMetamorfica> available = java.util.EnumSet.allOf(FormaMetamorfica.class);
+        if (holder.getRace() instanceof org.aventyrs.core.race.Vampiro vampiro
+                && vampiro.getLineage() == org.aventyrs.core.race.Vampiro.VampiroLineage.RAKSHASA) {
+            available.remove(NEVOA);
+        }
+        return available;
+    }
 
     FormaMetamorfica(final FormType form, final NaturalWeapon naturalWeapon, final String abilityDescription) {
         this.form = form;

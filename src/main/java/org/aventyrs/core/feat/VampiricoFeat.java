@@ -99,7 +99,22 @@ public enum VampiricoFeat implements Feat {
                     + "Gigante, Cavalo de Chifres, Lobo Dentes-de-Sabre, Morcego Atroz, Névoa e "
                     + "Serpente Espinhosa (Dampiros podem escolher apenas 1, Rakshasa podem "
                     + "escolher 4, mas não podem se transformar em Névoa).",
-            FeatRequirements.builder().requiredRace(Vampiro.class).build()),
+            FeatRequirements.builder().requiredRace(Vampiro.class).build()) {
+        /**
+         * "Escolha 2 Formas Metamórficas … (Dampiros podem escolher apenas 1, Rakshasa podem
+         * escolher 4, mas não podem se transformar em Névoa)" — advertised so a client can
+         * discover the choice from the catalog constant itself, and so {@code
+         * FeatService#grantFeat} refuses this constant taken plain.
+         */
+        @Override
+        public ActiveAbilityChoice resolveActiveAbilityChoice(final Character holder) {
+            return new ActiveAbilityChoice(
+                    MetamorfoseDraculeaFeat.choicesFor(holder),
+                    FormaMetamorfica.availableTo(holder).stream()
+                            .map(FormaMetamorfica::getTransformation)
+                            .toList());
+        }
+    },
 
     /**
      * "Você recebe Bônus Racial de +1 em Carisma e Instinto. Estes Bônus aumentam em +1 para cada
