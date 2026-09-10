@@ -15,6 +15,7 @@ import org.aventyrs.core.sheet.DlcRuleset;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.Player;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
+import org.aventyrs.core.skill.ataqueadistancia.AtaqueADistanciaCompetencyAbility;
 import org.aventyrs.core.skill.ataquecorpoacorpo.AtaqueCorpoACorpoCompetencyAbility;
 import org.aventyrs.core.skill.SkillType;
 import org.junit.jupiter.api.BeforeEach;
@@ -88,6 +89,29 @@ class SkillGraduationServiceImplTest {
 
         // ACUIDADE substitutes Destreza(5) for Força(3), so the cap is 2*5=10, not 2*3=6.
         assertEquals(10, skillGraduationService.getMaxGraduation(character, SkillType.ATAQUE_CORPO_A_CORPO));
+    }
+
+    /**
+     * The deliberate counterpart to the test above. A <em>delivery-scoped</em> substitution
+     * doesn't widen the cap: the cap asks which Attribute currently <em>governs</em> the Perícia,
+     * and ARREMESSO_PODEROSO governs only the rolls made with a thrown weapon or a Magia. This is
+     * why {@code SkillGraduationServiceImpl} keeps calling the 3-arg {@code
+     * resolveAttributeDomain}, which passes no {@code AttackSource}.
+     */
+    @Test
+    void getMaxGraduationIgnoresADeliveryScopedSubstitution() {
+        CharacterSkill ataqueADistanciaSkill = CharacterSkillFixture.blank(CharacterSkillFixture.ATAQUE_A_DISTANCIA_1).build();
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .attributes(CharacterAttributes.builder()
+                        .strength(AttributeValue.builder().domain(AttributeDomain.STRENGTH).base(5).build())
+                        .dexterity(AttributeValue.builder().domain(AttributeDomain.DEXTERITY).base(3).build())
+                        .build())
+                .skill(SkillType.ATAQUE_A_DISTANCIA, ataqueADistanciaSkill)
+                .skillCompetencyAbility(AtaqueADistanciaCompetencyAbility.ARREMESSO_PODEROSO)
+                .build();
+
+        // Destreza(3) governs, so the cap stays 2*3=6 — not the 2*5=10 Força would give.
+        assertEquals(6, skillGraduationService.getMaxGraduation(character, SkillType.ATAQUE_A_DISTANCIA));
     }
 
     private static class SubstitutingRacialAbility implements SkillCompetencyAbility {

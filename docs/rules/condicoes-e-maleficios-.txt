@@ -1,0 +1,125 @@
+Condições do Personagem - Malefícios 
+
+Abalado 
+
+Alvo sofre Desvantagem em suas rolagens de perícia enquanto estiver a até 4UD da origem de seu medo 
+
+Condição permanece ativa por 2 Rodadas, a menos que a origem do efeito diga o contrário 
+
+Assustado 
+
+Alvo sofre Desvantagem em suas rolagens de perícia e Dano enquanto estiver a até 4UD da origem de seu medo 
+
+Recebe a Condição desprevenido enquanto adjacente a origem de seu medo 
+
+Condição permanece ativa por 2 Rodadas, a menos que a origem do efeito diga o contrário 
+
+Ao fim da duração alvo se torna Abalado 
+
+Apavorado 
+
+Alvo sofre Desvantagem em suas rolagens de perícia e Dano enquanto estiver a até 8UD da origem de seu medo 
+
+Recebe a Condição desprevenido enquanto estiver a menos de 4UD da origem de seu medo 
+
+Sempre deve tentar se manter afastado, ao menos 4UD, da origem de seu medo 
+
+Condição permanece ativa por 2 Rodadas, a menos que a origem do efeito diga o contrário 
+
+Ao fim da duração alvo se torna Assustado 
+
+Amaldiçoado 
+
+Efeitos conforme descrição da maldição. 
+
+Desprevenido 
+
+Personagem sofre Redutor de -2 em suas Defesas 
+
+Flanqueado 
+
+Personagens flanqueados, cercados, ficam Desprevenidos 
+
+Atacar um personagem Flanqueado garante Vantagem na rolagem de Dano 
+
+Caído 
+
+Considerados Desprevenidos 
+
+Sofrem Desvantagens em suas rolagens de Perícias 
+
+Agarrado 
+
+Não pode realizar movimentos 
+
+Sofre Desvantagem em rolagens de Perícia 
+
+Pode usar 1PA para tentar se livrar, efetuando uma nova rolagem de ataque para Agarrar 
+
+Pode usar 3PA para se libertar imediatamente, mas se torna vulnerável a reação Defender o Perímetro 
+
+Imobilizado 
+
+Não pode realizar movimentos ou rolagens de perícias baseadas em Força ou Destreza, exceto para se soltar 
+
+Pode usar 1PA para tentar se livrar, efetuando uma nova rolagem de ataque para Agarrar 
+
+Pode usar 3PA para se libertar imediatamente, mas se torna vulnerável a reação Defender o Perímetro 
+
+Após se libertarem mudam para a Condição Agarrado 
+
+Devorado 
+
+Podem efetuar rolagens de Ataque Corpo-a-Corpo desarmado ou com Armas Leves, GD 10+Vigor 
+
+Precisam causar uma quantidade de dano igual ao dobro do Vigor de quem o devorou para se libertarem, sendo regurgitados  
+
+Sofrem Desvantagem na rolagem de Dano para cada Categoria de Tamanho inferior ao personagem que o devorou. 
+
+Ataques realizados no interior de outras criaturas ignoram RD que elas possuam. 
+
+Desarmado 
+
+Desvantagem nas rolagens de Perícia de Ataque e Dano. 
+
+Confuso 
+
+O tempo de todas as ações aumentam em 1PA. 
+
+Cego 
+
+Deve rolar 1d6 sempre que efetuar uma rolagem de perícia 
+
+Perícias de efeitos pessoal, falham com resultados 2 ou menos 
+
+Rolagens de Ataque corpo a Corpo falham com resultados 3 ou menos 
+
+Rolagens de Ataque à Distância falham com resultados menores que 5 
+
+Adicionalmente são considerados desprevenidos. 
+
+Feridas Dolorosas 
+
+O personagem não pode ser curado e nem regenerar pontos de vida. 
+
+Silêncio 
+
+Personagem não podem ativar Habilidades de Aventyrs ou de Monstros e não podem Conjurar Magias. 
+
+Caído 
+
+Desvantagem em rolagens de Perícias e Dano Corpo-a-Corpo 
+
+Também considerado Desprevenido 
+
+Envenado 
+
+Alvo perde Multiplicador de Bônus Base, conforme especificado no efeito 
+
+Personagens imunes a efeitos Selvagens também são imunes a este efeito 
+
+Doente 
+
+Alvo sofre redutores conforme especificado no efeito. 
+
+Personagens imunes a efeitos Selvagens também são imunes a este efeito 

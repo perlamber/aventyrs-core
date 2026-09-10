@@ -24,7 +24,7 @@ import java.util.Map;
  *   Character.feats} list" gap as every other race's free Talentos; unlike most races' own
  *   version of this trait, the rules text here doesn't name one fixed category but a choice
  *   between {@code org.aventyrs.core.feat.FeatCategory#MONSTRUOSO} and "Talentos Raciais" in
- *   general (every {@code Type.RACIAL} constant — {@code MONSTRUOSO}/{@code FERRICO}/{@code
+ *   general (every {@code Type.RACIAL} constant — {@code MONSTRUOSO}/{@code FEERICO}/{@code
  *   ELFICO}/{@code BESTIAL} — not one specific one), which doesn't change the underlying gap
  *   but is flagged rather than silently narrowed to a guess.</li>
  * </ul>
@@ -50,11 +50,11 @@ import java.util.Map;
  *   granting +1 Carisma/+1 RM, and a Monstruosa form, granting +1 Força/+1 RD and a "Presas
  *   Longas" Arma Natural) — needs a "retain an activated stance for as long as desired" toggle-
  *   state concept this core has no equivalent of (same gap {@code Bestial}'s own Corpo Quimérico
- *   cites), plus RM (Redução Mágica) isn't a concept this core computes at all (unlike RD,
- *   which is real — {@code
- *   org.aventyrs.core.character.services.DamageService#getTotalDamageReduction} — but even RD
- *   can't be granted here since it would need to apply only while the toggle is in its
- *   Monstruosa state, which nothing tracks), and an Item/Equipamento entity for the Arma
+ *   cites) — RD and RM are both real stats now ({@code
+ *   org.aventyrs.core.character.services.DamageService#getTotalDamageReduction}/{@code
+ *   #getTotalMagicReduction}), but neither can be granted here, since each would have to apply
+ *   only while the toggle is in one of its two states and nothing tracks that — and an
+ *   Item/Equipamento entity for the Arma
  *   Natural itself (same gap {@code Gigantes}' own Tudo é Frágil and {@code
  *   ProfissaoCompetencyAbility#FORJA_VULCANA} cite).</li>
  *   <li><b>Olhar de Lacerto</b> (spend 2PA + 1PD for an Ataque Corpo-a-Corpo roll, em até
@@ -92,7 +92,7 @@ import java.util.Map;
  * <p>Tendência is deliberately left unconstrained, same treatment as every other race — the
  * rules text's "muitos membros da Raça não se dão bem com" Fadas/Lacerto-aligned individuals
  * specifically (not a general Tendência skew) doesn't map onto {@link
- * Character#getTendencia()}'s plain 1-10 scale at all; this core has no faction/allegiance
+ * Character#getAlignment()}'s moral alignment at all; this core has no faction/allegiance
  * concept to express a targeted dislike like this one either way (same "no
  * faction-relationship/allegiance concept" gap {@code Scene#getEnemies}'s own javadoc already
  * flags).

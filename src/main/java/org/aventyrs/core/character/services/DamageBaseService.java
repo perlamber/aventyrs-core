@@ -40,8 +40,11 @@ import org.aventyrs.core.skill.SkillType;
  *
  * Three sources, summed:
  * <ul>
- *   <li>every held {@code Feat}'s {@code Feat#resolveDamageBaseIncrease(Character)} (e.g.
- *   {@code ArtesMarciaisFeat#ARTISTA_MARCIAL});</li>
+ *   <li>every held {@code Feat}'s {@code Feat#resolveDamageBaseIncrease(Character, Weapon)},
+ *   passed the wielded weapon ({@code null} on the {@link #getDamageBase(Character, SkillType)}
+ *   path, which is an Ataque Desarmado) — so {@code ArtesMarciaisFeat#ARTISTA_MARCIAL} can grant
+ *   only to an Ataque Desarmado or Arma Natural, and {@code AnaoFeat#FILHO_DE_YMIR}'s "de armas"
+ *   only to a wielded weapon;</li>
  *   <li>every held Habilidade de Competência's {@code
  *   SkillCompetencyAbility#resolveDamageBaseIncrease(SkillType, Character)} — scanned via
  *   {@code SkillCompetencyAbility#allFor} so racial abilities count, and deliberately

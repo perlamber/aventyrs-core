@@ -1,6 +1,7 @@
 package org.aventyrs.core.character;
 
 import org.aventyrs.core.sheet.IllegalOperationException;
+import org.aventyrs.core.magic.ElementalType;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -15,16 +16,16 @@ class DamageBonusTest {
 
         assertEquals(2, damageBonus.getValue());
         assertEquals(DamageType.FISICO, damageBonus.getType());
-        assertNull(damageBonus.getElement());
+        assertNull(damageBonus.getElementalType());
     }
 
     @Test
     void constructorAssignsValueTypeAndElementForAnElementalType() {
-        DamageBonus damageBonus = new DamageBonus(2, DamageType.ELEMENTAL, Element.TERRA);
+        DamageBonus damageBonus = new DamageBonus(2, DamageType.ELEMENTAL, ElementalType.TERRA);
 
         assertEquals(2, damageBonus.getValue());
         assertEquals(DamageType.ELEMENTAL, damageBonus.getType());
-        assertEquals(Element.TERRA, damageBonus.getElement());
+        assertEquals(ElementalType.TERRA, damageBonus.getElementalType());
     }
 
     @Test
@@ -36,6 +37,6 @@ class DamageBonusTest {
     @Test
     void constructorRejectsANonElementalTypeWithAnElement() {
         assertThrows(IllegalOperationException.class,
-                () -> new DamageBonus(2, DamageType.PRIMORDIAL, Element.FOGO));
+                () -> new DamageBonus(2, DamageType.PRIMORDIAL, ElementalType.FOGO));
     }
 }

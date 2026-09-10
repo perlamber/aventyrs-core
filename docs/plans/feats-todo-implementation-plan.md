@@ -1,0 +1,382 @@
+# Talentos TODO — phased implementation plan
+
+~381 `TODO:` lines live across the 32 `*Feat` files in `org.aventyrs.core.feat`. Almost none
+is a *feat-specific* problem: each is blocked on one of a small set of **missing engine
+mechanics** catalogued in `CLAUDE.md` ("Missing systems — the gap catalog"). This plan groups
+the work by that mechanic, orders the groups by dependency and return-on-effort, and says which
+constants each group lands.
+
+## How to read this
+
+- A **phase** builds one or a few related mechanics, then wires *every* constant that was only
+  waiting on it, with tests, and updates the mechanic's subsystem skill + the `CLAUDE.md` gap
+  catalog row + any `package-info.java`.
+- Constant counts are approximate — the exact set is re-derived at phase start by re-reading
+  each cited constant's own TODO (per `CLAUDE.md`: *"When a mechanism gets built, don't assume
+  it finished every trait citing it; check each constant's own TODO"*).
+- "Effort" is rough sessions of focused work, design doc included.
+- Phases 0–4 are **harvest** — mechanics already built or nearly so; highest ROI, do first.
+  Phases 5–7 are **core state systems**. Phases 8–11 are **large combat/magic systems**.
+  Phase 12 is **narrow deep systems**. The "Won't schedule" section stays as sharpened
+  comments.
+
+---
+
+## Phase 0 — Stale-TODO reconciliation sweep
+
+**No new mechanics.** Several hooks named as "missing" in TODO prose already exist; the memory
+note *"Stale TODOs"* and `CLAUDE.md`'s TODO-discipline bullet both call this out. Walk every
+feat file once, and for each TODO either turn it into working code+test or rewrite it to cite
+the *real* current blocker.
+
+Known-stale patterns to reconcile (verify each against the interface before acting):
+
+| Prose in TODO | Reality | Action |
+| --- | --- | --- |
+| "a Talento cannot grant an Atributo bonus" | `Feat#resolveAttributeBonus(AttributeDomain, Character)` exists, summed by `Character#getEffectiveAttributeTotal`. `TrollFeat#VIGOR_TROLLICO`'s own TODO already says so. | Wire the unconditional `+N` half for `FeralFeat` (×3), `MonstruosoFeat` (×2–3), `FeericoFeat` (×3), `BestialFeat` Heranças, `TrollFeat#VIGOR_TROLLICO`/`BENCAO_DE_MAPINGUARI`, `DestinoFeat`. Leave a TODO only for the still-blocked other half. |
+| "Feat has no dano-bonus hook" | `Feat#resolveDamageBonus` (4-arg: `SceneContext`, target, actor, count) exists. | Wire the computable flat bonus for `DuelistaFeat#FORCA_EXCESSIVA` (half Vigor), `DuelistaFeat` crit-dano halves, `OrquicoFeat` (half Vigor to physical dano). Self-damage / typed-damage riders stay TODO. |
+| "the EXP discount has no hook" | `Feat#resolveSpellAcquisitionCostReduction` + `SpellService#grantSpell` spend it. | Wire `ElementalFeat` and any sibling citing it. |
+| "Feat#resolveCriticalMarginIncrease is real, but…" | The `holder`-taking overload exists (`AssassinoFeat#ACERTO_CRITICO_RELAMPAGO`). | Wire the unconditional margin bump for `DuelistaFeat`/`EscudeiroFeat`/`SobrevivenciaFeat` constants whose *only* block was the hook. |
+| "needs a per-Rodada / per-Turn / per-Cena activation counter" | The roll-action log is built (`getActionsThisRound/Turn/Cena`, `isFirstAttackRollOfTurn`). | Reconcile `CavalariaFeat`, `ArtilhariaFeat`, `DuelistaFeat#GOLPE_OPORTUNO`, `PequeninoFeat#SILENCIO_PRE_SURPRESA` — some are now expressible; the rest need a *count of activations of one specific ability*, which is still missing. |
+| "resolveDifficultyReduction is real, but summed by…" | Confirm the summation concern per constant; several are wireable. | `PeritoFeat`, `DestinoFeat`, `EscudeiroFeat`. |
+
+**Deliverable:** a diff that closes an estimated 30–50 TODOs outright and sharpens the rest.
+**Effort:** 1–2 sessions. **Do first — nothing depends on it and it shrinks every later phase.**
+
+---
+
+## Phase 1 — Small additive stats & caps ✅ **DONE**
+
+Self-contained numeric mechanics with no cross-system reach.
+
+### 1a. Permanent Resistência a Críticos scan ✅
+Built as `CombatantSheet#getTotalCriticalResistance(SceneContext)` — the sheet totals its Raça's
+`Race#getCriticalResistance()`, each held Talento's `Feat#resolveCriticalResistance`, and the
+round-scoped `ModifierType.CRITICAL_RESISTANCE` `TemporaryBonus`; `AbstractSkillInteraction` now
+subtracts that total instead of reading `getTemporaryBonus` directly. One instance is
+`CombatantSheet.CRITICAL_RESISTANCE_INSTANCE`, promoted out of `AnaoFeat`'s private constant.
+- **Landed:** `MonstruosoFeat#ANATOMIA_INCOMUM`, `ElementalFeat#TRANSFORMACAO_ELEMENTAL`,
+  `DuelistaFeat#CORACAO_DE_FERRO`, `SobrevivenciaFeat#PROTETOR_TERRITORIALISTA` (terrain-gated),
+  plus the racial `Troll`.
+- **Not landed, second blocker found:** `GorgonaFeat#PROTECAO_DO_DEUS_DOS_MONSTROS` /
+  `#PROTECAO_DA_RAINHA_DAS_FADAS` are form-gated (Phase 5). `TrollFeat`/`GiganteFeat` turned out
+  to have no RC clause at all — the plan's list was approximate.
+- **Deliberately not built:** a `SkillCompetencyAbility`/`AttributeAbility` hook. No constant
+  wants one — `ProfissaoCompetencyAbility#FORJA_VULCANA`'s RC is *item*-scoped, a shape neither
+  `Item` nor the sheet total has, and that is now what its TODO cites.
+- Still deferred: the "−1 à Margem Crítica Maior" clause, non-PRIMORDIAL scoping, item-scoped RC.
+- ⚠️ Design note carried in the javadoc: the `SceneContext` the scan receives is the **attacker's**
+  snapshot (the only one in reach — `SceneContext` holds no `Scene`), so an override may read
+  Scene-wide facts and must never read proximity.
+
+### 1b. RM — Redução Mágica ✅
+A magic-damage path did exist (`DamageType.MAGICO` already reaches `calculateFinalDamage`), so
+this did not pull Phase 8 forward. `ModifierType.MAGIC_REDUCTION` +
+`DamageService#getTotalMagicReduction(CombatantSheet)` (same five sources as RD), added to the
+flat stage **only** when the caller typed the hit `MAGICO`; skipped by `ignoreDamageReduction`
+alongside RD (an inference, documented).
+- **Landed:** `GorgonaFeat#PROTECAO_DA_RAINHA_DAS_FADAS` (its RM half was unconditional all
+  along — only its RC is form-gated), `DefensiveMasterpiece#DYOSPIROS` and `#MITRAL`.
+- **Not landed, second blocker found:** `MetamagicoFeat#ARCANISTA` (scoped to "Magias que você
+  conheça" — nothing classifies an incoming effect as a specific Magia),
+  `TrollFeat#VIGOR_TROLLICO` (unmodelled sub-lineage), `GorgonaFeat#MONSTROS_EM_PELE_DE_FADA`
+  (form toggle), `EscudeiroFeat#BASTIAO_DE_VIDRO` (needs mitigation to be *suppressible*).
+- **Known incorrectness, deliberately left:** RD is still type-blind, so a MAGICO hit takes RD
+  *and* RM. Narrowing RD is Phase 8's job; the over-mitigation is documented on
+  `ModifierType#MAGIC_REDUCTION`, `DamageType` and the gap-catalog row.
+- RE (Resistência Elemental) got no constant: every authored RE clause is scoped to one
+  `ElementalType`, which is the `DamageDescriptor` path equipment already uses.
+
+### 1c. Ceiling / absolute-set stage ✅ (one half; the other has no consumer)
+- **Categoria de Tamanho** — built as *two* hooks, because the catalog authors both shapes:
+  `Feat#resolveSizeCategoryOverride` (an absolute set) and `Feat#resolveSizeCategoryIncrease`
+  (a shift). `CharacterSizeService#getEffectiveSizeCategory` applies the override first, then
+  every shift — the `@Modifier` scan and the Talento one — on top of it.
+  **Landed:** `GnomoFeat#DUENDE` (→ -2), `FeericoFeat#PIXIE` (→ -3), `FeericoFeat#LUPERCAL` (→ 0),
+  and `GiganteFeat#GIGANTE_DO_CLA_EMPUSA`, which is now granted **whole** (size shift + Força per
+  Título + the -2 Defesas) rather than withheld. Its Jotun twin stays withheld: its malus alone
+  is still inexpressible.
+- **PA ceiling — not built, and should not be.** The catalog's only PA-ceiling clause is
+  `SobrevivenciaFeat#PERMANECER_CONSCIENTE` (the plan named a constant that does not exist), and
+  it is gated on "enquanto Permanecer Consciente estiver ativo" — an active state that does not
+  exist either. A ceiling stage built today would have nothing that could switch it on. Build it
+  with that state; its TODO now says so.
+
+**Depends on:** Phase 0 (so counts are clean).
+
+---
+
+## Phase 2 — FeatRequirements expansion (acquisition-gating correctness) ✅ **DONE**
+
+**Built:** `anyOf` (nested disjunction groups, checked recursively — outer clauses AND at least
+one branch, so common ground is written once); `maximumAttributeDomain`/`Value` and
+`maximumEgoDomain`/`Value`; `requiredAnyAttributeValue` + the narrower
+`requiredAnyRacialAttributeValue`; `forbiddenRace`; `forbiddenFeats`; `requiredFame` /
+`requiredTotalExperience`. `requiredFeat` became a `@Singular` set (every existing `.requiredFeat(X)`
+call site still compiles) and `requiredSkillCompetencyAbility` became `requiredSkillTraits`, typed
+as `SkillTrait`, so an Especialização prerequisite fits the same clause.
+
+`Feat#isEligible(Character, CharacterSheet)` is the authoritative form; `isEligible(Character)`
+delegates with `null` and **skips** the two sheet-side clauses rather than failing them.
+`FeatService#grantFeat` and the new `getAvailableFeats(Character, CharacterSheet)` /
+`FeatCatalog#availableFor(Character, CharacterSheet)` pass the sheet, so the sheet-less listing is
+a documented *superset* of the real gate — pinned by a test.
+
+**Two things found on the way:**
+- A latent bug: six constants override `isEligible(Character)` (`ArtesMarciaisFeat`, `ElficoFeat`,
+  four in `AssassinoFeat`). Adding the 2-arg form would have silently bypassed every one at
+  `grantFeat`; they now override the 2-arg form.
+- A `Supplier<FeatRequirements>` does **not** make a forward reference to a later enum constant
+  legal — Java's rule is about the reference, not when it is evaluated. Mutually-exclusive pairs
+  therefore need the `Supplier` *and* a `private static` accessor for the forward half (a method
+  body is not an initializer). Five enums converted.
+
+**Not built, deliberately** — each recorded in `docs/rules/talentos-index.md` under "What a
+Pré-requisito still cannot say": "personagens recém-criados" (nothing records creation time); a
+*second* Perícia Graduação; a constraint on another held Talento's recorded *choice* (the three
+cases want equals/differs/is-a-weapon, which is not data); a cap on how many of a family may be
+held. The last three stay `isEligible` overrides. `FeralFeat`'s "não pode ser **usado** em
+conjunto" is a use restriction and deliberately does not become a `forbiddenFeat`.
+
+**Original plan text follows.**
+
+### Phase 2 (as planned)
+
+`FeatRequirements`/`isEligible` currently expresses only "attribute/skill/feat threshold that
+must be met". Add:
+
+- **Disjunctive groups** — "Gnose 3 *ou* Foco 3", "Lutador Nato *ou* 4 Graduações",
+  "EXP total ≥ 15 *ou* 1 Título Desperto". (~15 constants model only one branch today.)
+- **Maximum-value prerequisites** — "Força ≤ 2", "Iniciativa 2 ou inferior".
+- **Any-attribute-at-value** — "qualquer Atributo com Valor Base 5", "qualquer Atributo que
+  receba bônus Racial com Base ≥ 3".
+- **Negated race** — "apenas personagens não-humanos".
+- **Mutual exclusion** — "não pode possuir mais de um Talento de Clã"; two feats that exclude
+  each other (`MobilidadeFeat` Investida Solar/Lunar).
+- **Held-feat's-own-choice** — "a held Talento's chosen Perícia/Atributo must (not) be X".
+- **CharacterSheet-side values** — `Fama 15`, `EXP total ≥ N`. Requires `FeatRequirements` to
+  see sheet data at `grantFeat` (today it reads `Character` only) — decide: pass the sheet, or
+  a small projection.
+
+Split out if it needs its own concept: **"recém-criados"** (creation-time-only) — nothing
+records when a Talento was acquired or that a character is freshly created. Defer to a
+"character provenance" mini-phase or leave as documented gate.
+
+- Lands (gating correctness only — effects may still be blocked): ~20+ across `DestinoFeat`,
+  `PeritoFeat`, `DuelistaFeat`, `MonstruosoFeat`, `VampiricoFeat`, `MobilidadeFeat`,
+  `SobrevivenciaFeat`, `GiganteFeat`, `IndomitoFeat`.
+- **Effort:** 1–2 sessions (record/enum shape + tests via `FeatRequirementsGateTest`).
+- **Value:** `FeatCatalog#availableFor` / `isEligible` stop returning wrong answers; independent
+  of every effect phase.
+
+---
+
+## Phase 3 — Acquisition-slot grants
+
+Generalise the narrowly-built `Feat#getGrantedAttributeAbilities` (currently: one *named*
+ability, `ConselheiroDeGuerraYmirianoFeat`) to the shapes the gap catalog lists as missing:
+
+- An **open-choice slot** — "uma Habilidade de Competência de Atletismo à sua escolha", "uma
+  Especialização de Atenção". Model with the existing `AcquiredChoice<C>` / `AbilityChoiceService`.
+- A **free Especialização / Habilidade de Competência slot** not tied to one Perícia.
+- A **`Race` hook** counterpart (today only `Feat` can grant) — for the racial constants, out of
+  plan scope but the hook is shared.
+
+- Lands: `DestinoFeat#PRODIGIO`/`APADRINHADO`/`FILHO_DA_FORTUNA`, `PeritoFeat#POLIMATA`,
+  `GnomoFeat` (×2), `BestialFeat` free-Competência halves (×4), `FeericoFeat#DADIVA_FEERICA`,
+  `HumanoFeat`, `GorgonaFeat` — ~12.
+- **Effort:** 1–2 sessions. **Depends on:** Phase 2 for the ones whose slot is gated.
+
+---
+
+## Phase 4 — Active-ability-backed timed effects + Resfriamento
+
+The activation transaction (`ActiveAbility` + `ActiveAbilityService#activate`: validate held,
+check PA/PM/PV, spend, apply `TemporaryEffect`s) and the `Blessing`/`TargetScope` machinery both
+exist. What's missing is **Resfriamento (cooldown)** and the authoring of specific abilities.
+
+- **Resfriamento** — `ActiveAbility#getCooldownRounds()` + a per-sheet cooldown ledger checked by
+  `activate`, decremented at the Rodada boundary (`startNewRound`).
+- **Barreira Mágica** — `ArcanistaActiveAbility` (1PA + 3PM → +2 Defesas / 2 Rodadas, Resfriamento
+  1) and its two upgrades (+3 self & +1 adjacent allies; +5 & +3) via `Blessing` with an
+  ally `TargetScope`.
+- **Other ready timed states** — audit `OrquicoFeat#TREMOR` (3PA+3PM), `ElementalFeat` Gana (if
+  merely a timed bonus and not a form), `GnomoFeat` active half. Author the ones that are pure
+  timed bonuses; route the rest to Phase 5.
+
+- Lands: `MetamagicoFeat#ARCANISTA`/`ARCANISTA_EXPERIENTE`/`ARTESAO_DE_BARREIRAS` + 2 upgrade
+  constants (~5); `OrquicoFeat#TREMOR` (partial — aftershock needs Phase 9); `ElementalFeat`
+  Gana-gated constants become activatable (~4, effects still need Phase 8/9).
+- **Effort:** 2 sessions.
+
+---
+
+## Phase 5 — Form state system  ⭐ largest single unlock
+
+A **persistent alternate shape** (entered/exited, not timed) on `CombatantSheet`:
+`CharacterForm` carrying — stat deltas, ability grants, `SizeCategory` override, equipment
+restrictions, and a set of effects/hooks "active only while in this form". Plus a small
+**equipment-restriction** sub-concept ("é impossível usar equipamentos enquanto ativo",
+"impede Equipamentos do tipo Capa").
+
+- Design task: write `docs/rules/`-style notes + a `scene`/`character` `package-info` update +
+  a new `form-state` subsystem skill.
+- Lands: `DraconicoFeat#DRACONATO`/`METAMORFOSE_DRACULEA` (+ unblocks the `AURA_DRACONICA` /
+  `SOPRO` chain pending Phase 9), `FeralFeat` Forma Híbrida (×3), `BestialFeat#FORMA_BESTIAL`,
+  `GorgonaFeat` forms (×4), `FeericoFeat` forms (×3), `MonstruosoFeat#APARENCIA_MONSTRUOSA`,
+  `VampiricoFeat` (×2), plus `HomemFera`/`NascidoDoDragao` racial forms (out of plan scope but
+  same mechanism) — **~20 feat constants**.
+- **Effort:** 3–5 sessions. **Depends on:** nothing hard; do *after* the harvest phases so the
+  design absorbs fewer incidental fixes.
+
+---
+
+## Phase 6 — Flight & vertical / aquatic movement sub-stats
+
+- Parallel movement axes in `MovementService`: **Movimento Base de Voo / de Natação / de
+  Escalada**, each resolved the same three-source way as land Movimento.
+- A **flight state** — often gated behind a Phase 5 form or a Phase 4 activation; the flag
+  itself is small.
+- Lands: `AvianoFeat` (whole tree ~5), `DraconicoFeat` flight halves, `FeericoFeat#ASAS_FEERICAS`,
+  `BestialFeat` swim/flight, `PeritoFeat#CRIANCA_DO_MAR` / climbing, `MobilidadeFeat#NADADOR`,
+  `FeericoFeat#NADADEIRAS` — **~15**.
+- **Effort:** 2 sessions. **Depends on:** Phase 5 for form-gated flight; the sub-stat is
+  independent.
+
+---
+
+## Phase 7 — Positioning & manoeuvre system
+
+`CLAUDE.md`: *"this core never does geometry"* — so model these **caller-adjudicated**: the
+engine reports amounts and legality, the caller/UI applies position, mirroring the
+`difficultyReduction` "computed, reported unapplied" precedent.
+
+- **Forced movement** — knockback / "empurrado NUD" / Reposicionar (amount + direction reported).
+- **Investida** (charge) as a distinct action with its own movement allowance.
+- **Movement-provokes-Reação** + suppression of it ("seu movimento não provoca Reações").
+- **Per-manoeuvre movement allowance** (distinct from the per-PA figure).
+- **Distance moved this Turn / last Turn** — extend `consumeMovementThisRound` to record a
+  distance and survive a Turn boundary (today it resets at `startTurn`).
+- Lands: `MobilidadeFeat` (Investida ×3, Reposicionar, exempt-from-Reação ×2, "moved this/last
+  Turn" halves), `EscudeiroFeat` (×3), `CavalariaFeat` (partial), `ArtesMarciaisFeat` manoeuvre
+  Vantagens, `ArtesMarciaisFeat#DOMINAR_ARTE_MARCIAL_*` Agarrar/Empurrar/Derrubar — **~12**.
+- **Effort:** 2–3 sessions. Consider a **partial** delivery (hooks + reported amounts only).
+
+---
+
+## Phase 8 — Damage-type system
+
+- `DamageType` breakdown — Corte / Perfuração / Impacto, Profano / Natural / Esmagamento.
+- **Damage-type-scoped RD/RA** — resolve mitigation with a notion of incoming type
+  (`AttributeAbility#resolveDamageReduction` already takes a `DamageDescriptor`; extend to the
+  `SkillCompetencyAbility` / `Feat` / equipment paths).
+- **Damage retyping** — a `Feat`/ability hook that changes an attack's `DamageType`
+  (`OrquicoFeat#PALADINO_DE_EPONA`, `FeralFeat`, `ElementalFeat`).
+- **Damage-type immunity** — a nullification stage beyond RD/RA (`MetamagicoFeat` immunity half,
+  `ElementalFeat`, `Zumbi` racial).
+- Touches `DamageService` core, every `Weapon`'s authored type, and monster stat blocks.
+- Lands: `OrquicoFeat` (×3), `FeralFeat` (×2), `ElementalFeat` (×4), `MonstruosoFeat`,
+  `MetamagicoFeat`, `GorgonaFeat`, `SobrevivenciaFeat` — **~15**.
+- **Effort:** 3–4 sessions. **Depends on:** partly pulled forward by Phase 1b (RM).
+
+---
+
+## Phase 9 — Área de Efeito resolution, area damage, retaliation
+
+- **Footprint resolution** — `scene.grid` turning an `AreaOfEffect` + a per-cast aim into a set
+  of targets; LINHA/CONE facing as arguments; caster exclusion; Foco-scaled footprint growth.
+- **Incoming-attack "is area" flag** on `AttackDelivery`/`AttackReceiver` (unblocks
+  `EsquivaEApararCompetencyAbility#EVASAO`, `AbencoadoPelaLuzAbility` too).
+- **Outward area damage at Turn end** — the Aura shape (`DraconicoFeat#AURA_DRACONICA`,
+  `ElementalFeat`, `OrquicoFeat` aftershock, `TrollFeat`).
+- **Reactive / retaliation damage** — `DamageService` reverse path + a trigger fired on taking
+  damage (also serves `FeralFeat`/`TrollFeat` Regeneração Reativa — the healing counterpart).
+- Lands: `DuelistaFeat#ATAQUE_GIRATORIO`/`GOLPE_TEMPESTADE`, `MobilidadeFeat#INVESTIDA_*`,
+  `OrquicoFeat#TREMOR`/aftershock, `ElementalFeat` (×3), `DraconicoFeat#AURA_DRACONICA`,
+  `MonstruosoFeat` retaliation (×2), `FeralFeat`/`TrollFeat` Regeneração Reativa,
+  `SobrevivenciaFeat` — **~18**.
+- **Effort:** 4+ sessions — the largest. **Depends on:** Phase 4 (activation), Phase 7 (grid).
+
+---
+
+## Phase 10 — Spellcasting extensions
+
+- **Mimetizar** — an acquisition-less casting path: cast a Magia the caster never learned
+  (`SpellCastingService` gains a "mimicked spell" entry point that skips `Spell#isEligible`).
+- **Magia storage** — cast now, release later as an Ação Livre (`MetamagicoFeat#ARMAZENAR_MAGIA`
+  ×2). A per-sheet "held cast" slot.
+- **Spell numeric-effect uplift** (+2 to structured numeric effects), **Duração uplift**,
+  **casting-time reduction** (`Spell#getActivationTime()` column exists), **delayed effect**
+  ("inicia 1 Rodada após a conjuração").
+- **Mana cost resolved through a service** — `Spell#getManaCost()` exists but nothing spends it.
+- Lands: `MetamagicoFeat` Aptidão ladder (~6), `ARMAZENAR_MAGIA` (×2), `ARTESAO` ladder,
+  `GnomoFeat`, `GorgonaFeat`, `ElficoFeat` (×2), `FeericoFeat`, `FadasFeat`, `FuriasFeat`,
+  `ElementalFeat` — **~18**.
+- **Effort:** 3 sessions. **Depends on:** Phase 8 for spell damage type; `magic-system` skill.
+
+---
+
+## Phase 11 — Montaria / veículo
+
+A mount/vehicle the holder is "on": its own Pontos de Ação and movement, and an "enquanto
+montado / dirigindo" state.
+- Lands: `CavalariaFeat` (whole tree ~6), parts of `MobilidadeFeat`.
+- **Effort:** 2–3 sessions. Self-contained — schedulable any time after Phase 1. Low priority
+  unless Cavalaria matters to a campaign.
+
+---
+
+## Phase 12 — Título / Destino / Vampiro relational systems
+
+Deep, narrow-consumer systems — do last.
+- **Despertar timeline** — title-awakening schedule, PV/PM-multiplier uplift on awakening,
+  ordering constraints ("adquirido antes de Despertar"), EXP thresholds.
+- **Título Habilidade activation cost** — `AventyrTitleAbility` has no cost column.
+- **Centelha** — a possess/lack resource (also a Regalia-crafting gate today adjudicated by GM).
+- **Laços-de-Sangue** — master/progeny relation between Vampiros; **gerar Prole** (creating a
+  `Character` at runtime).
+- **PD-equivalent rest recovery** — a Determinação twin of `resolveRestMagicPointsBonus`.
+- **Favoritismo** — unmodelled social mechanic.
+- Lands: `DestinoFeat` (whole tree ~10), `VampiricoFeat` (×5), parts of `DraconicoFeat` /
+  `AventyrTitle`.
+- **Effort:** 3–4 sessions.
+
+---
+
+## Won't schedule — keep as sharpened comments
+
+These are blocked by design decisions, not missing work. Leave a one-line TODO citing the
+reason; revisit only if a scheduled phase incidentally enables one.
+
+| Blocker | Constants |
+| --- | --- |
+| **Core never rolls dice** — reroll a die, reroll lowest die | `ArtilhariaFeat`, `DuelistaFeat` (×3), `PeritoFeat` (×3) |
+| **An attack is caller-initiated** — "grants an extra attack / projectile" | `EscudeiroFeat`, `ArtilhariaFeat` (×2), `DuelistaFeat` (×2) |
+| **Narrative-purpose scoping** — "rolagens relacionadas a animais", "para criar equipamento", "para se aproximar de aliados" | `GoblinFeat`, `BestialFeat#FARO_APURADO`, `PeritoFeat`, `GiganteFeat` |
+| **Pure geometry / distance falloff** — "−1 para cada UD percorrido", terrain mapping in Distância Média | `ElementalFeat`, `BestialFeat#ECOLOCALIZACAO` |
+| **State that exempts from nothing** — breathing/sleep exemptions where the state isn't tracked and nothing charges for it | `BestialFeat`, `AvianoFeat`, `PeritoFeat`, `ElficoFeat`, `TrollFeat#SONO_DE_PEDRA` |
+| **"count of activations of one specific ability"** — distinct from the roll-action log | `ArtilhariaFeat`, `CavalariaFeat`, `OrquicoFeat` "uma vez a cada Rodada" halves |
+
+---
+
+## Dependency summary
+
+```
+Phase 0 (stale sweep) ──► everything (shrinks each later phase)
+Phase 1 (small stats) ──► independent
+Phase 2 (FeatRequirements) ──► Phase 3 (gated slots)
+Phase 4 (activation + Resfriamento) ──► Phase 9 (activated auras)
+Phase 5 (form state) ──► Phase 6 (form-gated flight), parts of 9, 12
+Phase 7 (positioning/grid) ──► Phase 9 (area footprint)
+Phase 1b (RM) ──► pulled from Phase 8 (damage-type)
+Phase 8 (damage-type) ──► Phase 10 (spell damage type)
+Phase 11 (montaria) ──► independent, any time after Phase 1
+```
+
+## Per-phase checklist (`CLAUDE.md` conventions)
+
+1. Build the mechanic for its **real** consumers only — no speculative widening.
+2. Wire every waiting constant; write effect-level tests (`testing-a-feat` skill).
+3. Re-scan constants that cite the mechanic — some have a *second* blocker.
+4. Update the subsystem skill, the `CLAUDE.md` gap-catalog row, and any `package-info.java`.
+5. If rules text for a skill was leaned on as precedent elsewhere, fix those citations too.

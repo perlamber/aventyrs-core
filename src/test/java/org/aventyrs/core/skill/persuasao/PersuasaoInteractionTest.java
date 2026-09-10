@@ -80,4 +80,25 @@ class PersuasaoInteractionTest {
 
         assertEquals(0, result.getSkillRollBonus());
     }
+
+    /**
+     * An equipped Capa whose Favor grants "Vantagem em Persuasão" (a flat +2 on the whole
+     * Perícia) is summed into the roll — the item-Favor pass {@code
+     * AbstractSkillInteraction#sumEquipmentRollBonuses} now makes.
+     */
+    @Test
+    void applyToSumsAnEquippedCapaEsvoacanteFavorPersuasaoVantagem() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .attributes(CharacterAttributes.builder()
+                        .charisma(AttributeValue.builder().domain(AttributeDomain.CHARISMA).base(3).build())
+                        .build())
+                .equipment(java.util.List.of(org.aventyrs.core.item.CloakItem.CAPA_ESVOACANTE))
+                .build();
+        CharacterSheet sheet = CharacterSheet.of(character, new Player());
+
+        InteractionResult result = persuasaoInteraction.applyTo(sheet);
+
+        // charisma 3, untrained (-2), + Vantagem (+2) = 3
+        assertEquals(3, result.getSkillRollBonus());
+    }
 }

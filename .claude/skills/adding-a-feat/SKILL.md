@@ -1,6 +1,6 @@
 ---
 name: adding-a-feat
-description: This skill should be used when the user asks to "add a new Talento", "add a new Feat", "add [Feat name] to [tree]Feat", or references adding a new entry to org.aventyrs.core.feat. Walks through producing a catalog entry like `ArtesMarciaisFeat.ARTISTA_MARCIAL` — its requirements, its bonus, and the enum wrapping class — mirroring CLAUDE.md's "Adding a new Talento (Feat)" section.
+description: This skill should be used when the user asks to "add a new Talento", "add a new Feat", "add [Feat name] to [tree]Feat", or references adding a new entry to org.aventyrs.core.feat. Walks through producing a catalog entry like `ArtesMarciaisFeat.ARTISTA_MARCIAL` — its requirements, its bonus, and the enum wrapping class — plus the sealed-catalog / `resolve*`-hook rationale, mirroring `ArtesMarciaisFeat`/`MetamagicoFeat` as the reference.
 ---
 
 # Adding a new Talento (Feat)
@@ -8,19 +8,117 @@ description: This skill should be used when the user asks to "add a new Talento"
 A Talento sits alongside skills/Títulos as an acquirable character trait, but it's a flat
 catalog — one enum per Talento *tree*, named by `FeatCategory` (e.g. `ArtesMarciaisFeat` for
 `FeatCategory.ARTE_MARCIAL`), mirroring `<Skill>CompetencyAbility`'s one-enum-per-domain shape.
-This skill is the full checklist; `CLAUDE.md`'s own "Adding a new Talento (Feat)" section
-keeps only the two cross-cutting facts (enforced prerequisites, and `Character#feats`'
-mutability) that matter to someone not adding a Talento at all.
+This skill is the full checklist; the architectural rationale is in section 0 (it used to live
+in CLAUDE.md's "Adding a new Talento (Feat)" section). Use the **`testing-a-feat`** skill to
+test one.
+
+## 0. Architectural rationale
+
+`Feat`/`FeatRequirements`/`AbstractFeat`/`FeatCategory` plus `FeatService#grantFeat(Character,
+CharacterSheet, Feat)` (validate `Feat#isEligible`, spend `Race#getNewFeatCost` XP —
+`Race.BASE_NEW_FEAT_COST` is 3 — then mutate, the same shape as
+`CharacterAttributeService#upgradeBase`/`TitleAbilityService#grantTitleAbility`) are the whole
+mechanism.
+
+- **`Feat` is `sealed`, and that is what makes the catalog enumerable.** `permits
+  ArtesMarciaisFeat, MetamagicoFeat, AbstractFeat`, so `FeatCatalog` discovers every authored
+  Talento via `Feat.class.getPermittedSubclasses()` — reflection with no classpath scan, no I/O,
+  and no silent partial results. A classpath walk was rejected deliberately: it has to
+  special-case exploded dirs vs JAR entries vs the module path, and when it guesses wrong a whole
+  Talento tree just quietly stops being offered. The permits clause is **compiler-enforced**.
+- **`AbstractFeat` is `non-sealed` with a *public* all-args constructor** — the extension point
+  that keeps sealing from closing this library off. A consumer's homebrew Talento is
+  `new AbstractFeat(category, description, requirements) { @Override ... }`, a first-class `Feat`
+  everywhere, that simply never appears in `FeatCatalog`. **Don't implement `Feat` directly**
+  (the compiler now refuses it).
+- **Discovery lives in `FeatCatalog`, never as a `static` field on `Feat`.** `Feat` declares
+  `default` methods, so initialising `MetamagicoFeat` initialises `Feat` first — a static
+  initialiser on `Feat` calling `getEnumConstants()` back on that enum would observe it
+  mid-initialisation and could read its constants as `null`. A separate class breaks the cycle.
+- `FeatService#getAvailableFeats(Character)` (prerequisites met, not already held) and
+  `#getAffordableFeats(Character, CharacterSheet)` (that list, narrowed by the XP wallet) are
+  **deliberately separate methods, not a flag**: "am I allowed this?" and "can I afford it?"
+  differ over time and a UI wants both. Cost is per-Race, so two characters with identical
+  Talentos and identical XP can get different answers.
+- **`Feat` carries a family of `default resolve*` hooks**, not one — among them
+  `resolveDamageBaseIncrease(Character, Weapon)`, `resolveAttackRangeIncrease(Character,
+  AttackSource)` and `resolveAttackCostDifficultyReduction(SkillType, SceneContext, Character,
+  AttackSource, ActionCost, List<CombatantAction>)` (both take an `AttackSource` — a range clause
+  scoped to delivery, and a GD clause scoped to *what the attack cost* plus the Rodada's prior
+  actions, `AssassinoFeat#SAQUE_RELAMPAGO`; the latter is first-consumer-shaped, see
+  `damage-and-combat`), `resolveBranchLevelIncrease` (the Árvore de Magia cap — see the
+  `magic-system` skill), `grantsFreeSpellAcquisition(Character, Spell)` /
+  `resolveSpellAcquisitionCostReduction(Character, Spell)` → `BigDecimal` (a Talento that hands a
+  Magia to its holder free, or discounts the XP price — both fed to
+  `SpellService#getAcquisitionCost`, which also sums the `Race` twin; the waiver is wired ahead
+  of `MetamagicoFeat#ARCANISTA`'s choice class, the discount alongside
+  `ElementalFeat#ARCANISMO_ELEMENTAL`), `resolveDefenseBonus(DefenseType, Character)`,
+  `resolveManaMultiplierIncrease`/`resolveRestMagicPointsBonus(RestType, Character)`, the
+  movement/action-point ones, `resolveExtraCriticalEffects(...)` (Efeitos Críticos a Talento adds
+  to a critical hit — `AttackDelivery` scans it, `AssassinoFeat#ABRIR_FERIDAS`), and
+  `resolveDefeatBlessings(attacker, defeated, viaCriticalHit)` (`Blessing`s the moment one of the
+  holder's attacks drops a foe — `DefeatBlessingService`, caller-driven),
+  `getGrantedNaturalWeapons(Character)` (`NaturalWeapon`s — `Character#getNaturalWeapons()`),
+  `resolveLifeStealBonus(Character)` (Roubo de Vida amplification — `LifeStealService`,
+  `VampiricoFeat#SEDE_DE_SANGUE`), `resolveAdditionalTargets(SkillType, Character)` (how many
+  targets beyond the primary one attack may name — `AttackTargetingService`,
+  `ArtesMarciaisFeat#DOMINAR_ARTE_MARCIAL_ARTE_FLUIDA`; the hook answers *how many*, never *which*
+  — adjacency is the caller's, see `damage-and-combat`), `resolveAttributeBonus(AttributeDomain, Character)` (a flat
+  permanent Atributo grant, summed by `Character#getEffectiveAttributeTotal` which every
+  Atributo-*total* reader now calls — PV/PM/PD, Conjuração, Rest, Defesa, `ItemRequirements`, the
+  melee ½-Força term; `VampiricoFeat#MESTRE_VAMPIRO`, `ConselheiroDeGuerraYmirianoFeat`),
+  `getGrantedAttributeAbilities(Character)` (a *named* Habilidade de Atributo handed to the
+  holder free — folded into `Character#getAttributeAbilities()` past the `AttributeAbilityService`
+  slot economy, passive/`resolve*` hooks only; `ConselheiroDeGuerraYmirianoFeat`), and
+  `resolveMagicReduction(Character)` (RM — Resistência à Magias, the magic-damage twin of
+  `resolveDamageReduction`; reaches only a hit typed `DamageType.MAGICO`, see `damage-and-combat`),
+  `resolveCriticalResistance(Character, SceneContext)` (RC — a *defender-side* narrowing of
+  whoever attacks the holder, totalled with the `Race` grant and any `TemporaryBonus` by
+  `CombatantSheet#getTotalCriticalResistance`; ⚠️ its `sceneContext` is the **attacker's**
+  snapshot, so read only Scene-wide facts from it — never proximity),
+  `resolveSizeCategoryOverride(Character)` → `SizeCategory` (an absolute *set* — "sua Categoria
+  de Tamanho muda para -2", `GnomoFeat#DUENDE`) and `resolveSizeCategoryIncrease(Character)` (the
+  *shift* twin — "aumenta em +1", `GiganteFeat#GIGANTE_DO_CLA_EMPUSA`); `CharacterSizeService`
+  applies the override first and every shift on top of it, and
+  `resolveActiveAbility()` →
+  `Optional<ActiveAbility>` (a Poder Vampírico — an activatable timed state triggered through
+  `ActiveAbilityService#activate`; must return a **stable singleton**, since
+  `Character#getActiveAbilities()` aggregates `getFeats()` live and `activate` matches by `==` —
+  see `PoderVampiricoActiveAbility` / `VampiricoFeat`). Several hooks now have a
+  trailing `CombatantSheet holder` overload that falls through to the sheet-less form
+  (`resolveSkillRollBonus`, `resolveDefenseBonus`, `resolveDamageReduction`,
+  `resolveCriticalMarginIncrease`) — override it for a clause reading held `Condição`s or the
+  per-Rodada/per-Cena action log. `resolveDamageBonus` has a trailing `int targetCount` overload
+  on the same defaulting terms, for a clause conditioned on how many targets the one dano roll
+  covers (`ARTE_FLUIDA`'s "enquanto houver mais de um alvo … Desvantagem em rolagens de Danos");
+  `0` there means no target was named, never "one". The "keep it on the tree enum until a
+  second consumer earns the interface" rule still holds for a formula only that tree reads — but
+  **a hook a *service* must scan for has to be on `Feat` itself**, since `character.getFeats()`
+  is a `List<Feat>`. Feats are deliberately **not** part of any `ModifierResolver` `@Modifier`
+  scan, so each consuming service gives them an explicit pass, the way `DefenseServiceImpl`
+  already does for equipment.
+- **A Talento's prerequisites are real, enforced data** — the second exception (alongside
+  `AventyrTitleAbility`'s "Requer N Especializações/Habilidades") to this codebase's usual
+  "leave 'Requer N Graduações' as an unenforced comment" restraint, because a Talento's own
+  Pré-requisito is always a simple numeric/identity threshold `FeatRequirements` can model
+  directly.
+- `MetamagicoFeat` is the second tree, and worth reading before adding a third — it's the first
+  to need a **sibling constant as a prerequisite**, which Java's forward-reference rule forbids
+  in constructor arguments. Two things fall out: `featRequirements` is held as a
+  `Supplier<FeatRequirements>` rather than a plain field, and **the constants are ordered so
+  every prerequisite is declared before its dependents** (`MetamagicoFeatTest` pins that
+  ordering).
 
 ## 1. Read the rules text first
 
 Get the Talento's name, its full Pré-requisito line, and its full Descrição verbatim.
 
 `Feat` (`org.aventyrs.core.feat`) is the shared interface — `getFeatCategory()`/
-`getDescription()`/`getFeatRequirements()`, plus a default `isEligible(Character)` that combines
-*every* set prerequisite in `getFeatRequirements()` at once (mirrors `AventyrTitleAbility
-#isEligible`'s identical shape, with Attribute/Perícia/Feat prerequisites instead of
-Especialização/other-Habilidade ones). `FeatRequirements` (a `@Builder record`) carries the raw
+`getDescription()`/`getFeatRequirements()`, plus a default `isEligible(Character, CharacterSheet)`
+that combines *every* set prerequisite in `getFeatRequirements()` at once (mirrors
+`AventyrTitleAbility#isEligible`'s identical shape, with Attribute/Perícia/Feat prerequisites
+instead of Especialização/other-Habilidade ones). `isEligible(Character)` delegates to it with a
+`null` sheet — **the 2-arg form is the one to override**, since that is what `grantFeat` calls. `FeatRequirements` (a `@Builder record`) carries the raw
 data. Unlike most "Requer N..." prerequisites elsewhere in this core (left as an unenforced
 comment), a Talento's prerequisites are always simple numeric/identity thresholds, so they're
 modeled as real, structured, *enforced* data.
@@ -31,7 +129,58 @@ three):
 - A Perícia Graduação floor (e.g. "2 Graduações em Ataque Corpo-a-Corpo") →
   `requiredSkillType`/`requiredSkillGraduation`.
 - Another specific Talento already held (e.g. "Requer Artista Marcial") → `requiredFeat`,
-  pointing at that other Talento's own enum constant.
+  pointing at that other Talento's own enum constant. **Repeat the call** for a Pré-requisito
+  naming two — the field behind it is a `@Singular` set.
+- A held Habilidade de Competência **or Especialização** → `requiredSkillTrait`, typed as
+  `SkillTrait` so both kinds share the clause; N Títulos Aventyr Despertos
+  (optionally of one `TitleArchetype`) → `requiredAwakenedTitles`/`requiredTitleArchetype`; a Race
+  / `CreatureType` / `Deity` → `requiredRace`/`requiredCreatureType`/`requiredDeity`; N other
+  Talentos of a tree → `requiredFeatCategory`/`requiredFeatCategoryCount`.
+- **A count of Regalias the holder has forged** ("criação de 3 ou mais Regalias Menores") →
+  `craftedRegaliaGrade`/`craftedRegaliaCount` (read off `Character#getRegaliasCrafted`) — the
+  `ArtificeFeat` ladder's own acquisition gate.
+- **A ceiling** ("Força igual ou inferior à 2", "Iniciativa 2 ou inferior") →
+  `maximumAttributeDomain`/`maximumAttributeValue`, or `maximumEgoDomain`/`maximumEgoValue` when
+  the clause names an Ego (Iniciativa is one). Inclusive, and a separate clause from the minimum —
+  a Talento naming both names two different domains.
+- **A threshold on no particular Atributo** ("Atributo 3 ou Superior") →
+  `requiredAnyAttributeValue`; the narrower "qualquer atributo *que receba bônus Racial*" →
+  `requiredAnyRacialAttributeValue`.
+- **A negation** — "apenas personagens não-humanos" → `forbiddenRace`; "que não possuam o Talento
+  X", and each half of a mutually-exclusive pair → `forbiddenFeat`.
+- **Fama or lifetime EXP** → `requiredFame`/`requiredTotalExperience`. These live on the
+  `CharacterSheet`, so only `isEligible(Character, CharacterSheet)` tests them; the sheet-less
+  overload skips them, which keeps a preview listing looser than the real gate rather than
+  stricter. `FeatService#grantFeat` always passes the sheet.
+- **A disjunction** ("Destreza 3 e Saque Rápido, *ou* Foco 5") → one `.alternative(...)` per
+  branch, each a nested `FeatRequirements`. At least one branch must hold **on top of** every
+  clause set on the outer record, so anything common to all branches is written once, outside.
+
+⚠️ **A mutually-exclusive pair forces two things on its enum.** Each half names its twin as a
+`forbiddenFeat`, so one direction is a forward reference. Hold the requirements as a
+`Supplier<FeatRequirements>` (the `MetamagicoFeat` pattern) **and** reach the later constant
+through a small `private static Feat` accessor: the `Supplier` defers *evaluation*, but Java's
+forward-reference rule is about the *reference*, and only a method body (not an initializer)
+lifts it. `PequeninoFeat`/`HumanoFeat`/`GiganteFeat`/`GorgonaFeat`/`MobilidadeFeat` all do this.
+A pair whose text runs one way only (`FeericoFeat#SIRENIDEO` forbids `PIXIE`, not the reverse)
+needs neither, since a backward reference is legal.
+
+**What a Pré-requisito still cannot say**, and what to do instead: "personagens recém-criados"
+(nothing records creation time); a *second* Perícia Graduação (the pair is singular); a constraint
+on another held Talento's recorded *choice*; a cap on how many of a family may be held at once.
+The last three are `isEligible(Character, CharacterSheet)` overrides — override **that** form,
+not the 1-arg one, or `grantFeat` will not reach your check.
+
+**Before filing a clause here, ask whether it gates *acquiring* the Talento or *using* it.**
+`FeatRequirements` answers "may this character learn it", checked once by `FeatService#grantFeat`;
+a condition that must hold *every time the Talento is exercised* belongs in a `resolve*`-style
+hook instead, because a requirement that stops being true would otherwise read as un-learning the
+Talento. `ArtificeFeat` is the worked example and carries both: Profissão 7 / the rung below / the
+forged-Regalia history are requirements, while "a Regalia em sua posse" is a **permission
+condition** — `Feat#itsAllowedToCraftRegalia(Character holder)` returns the `RegaliaGrade` the
+holder may forge *right now*, `null` when they hold no Regalia, and `org.aventyrs.core.item
+.ItemForgery` scans every held Talento rather than looking up a specific constant. A crafter who
+sells their Regalia keeps the Talento and simply cannot forge until they own one again.
 
 Then classify the Descrição's mechanic the same way every other ability in this codebase is
 classified — see step 3.
@@ -72,8 +221,8 @@ that needs no constant-specific override.
 
 ## 3. Classify the Descrição's mechanic
 
-Same discipline as every other ability catalog in this codebase (see CLAUDE.md's "Adding a new
-Perícia" TODO-writing convention, and the Título skill's own step 3):
+Same discipline as every other ability catalog in this codebase (see CLAUDE.md's TODO-writing
+convention in "Recurring conventions", and the `adding-a-title` skill's own step 3):
 
 - **Real now**: pure arithmetic over already-real data — e.g. `ArtesMarciaisFeat
   #getDanoBaseBonus(Character)` sums a flat base plus `character.getAllTitles().size()`
@@ -101,6 +250,48 @@ check whether it fits an existing hook first (`Feat` currently has none of
 `SkillCompetencyAbility`'s roll-scoped `resolve*` hooks — if a Talento needs one, that's a
 second real consumer; add it to `Feat` itself at that point, not before).
 
+## 3b. Acquisition-time choice ("escolha uma Perícia / um tipo de terreno / um tipo de arma")
+
+When the Descrição opens with a player pick, the enum constant **cannot** hold it — one
+constant is shared by every character. Model it exactly like `ArtesAprimorarComArteAbility`:
+
+- A hand-written `final class <Name>Feat extends AbstractFeat` in `org.aventyrs.core.feat`,
+  with a `@NonNull` final choice field, a `static of(...)` factory, and `super(...)` delegating
+  `getFeatCategory()/getDescription()/getFeatRequirements()` to the enum constant.
+- Override `Feat#catalogEntry()` to return the enum constant. This is what keeps
+  `Feat#isEligible`'s `requiredFeat` check and `FeatCatalog#availableFor`'s "already held"
+  filter working — both compare against `catalogEntry()`, not object identity. **Do not** add a
+  custom `equals`.
+- Override the `resolve*` hook(s) the clause reaches, branching on the choice.
+- Add a `static Optional<C> chosenBy(Character)` (mirrors
+  `PeritoTeoricoAbility.resolveAttributeDomain`) so dependent Talentos in the same tree — which
+  stay plain enum constants — can read the pick.
+- Leave the enum constant in place as the catalog/rules entry, with its TODO block replaced by
+  a javadoc `<p><b>Real</b>, through {@link <Name>Feat}` note. `FeatCatalog` still lists the
+  constant (the choice instance isn't an enum, so it's never listed); the caller builds the
+  instance at grant time and passes it to the existing `grantFeat`.
+- **Choice types**: a `SkillType`, `TerrainType` (its six constants *are* the six terrenos),
+  `AttributeDomain`, `EgoDomain`, a `Set<SkillType>`, a `Set<NaturalWeapon>` (`ArmamentoDraconicoFeat`
+  — "escolha duas armas entre …", validated to exactly N of a fixed allow-list, granted via
+  `Feat#getGrantedNaturalWeapons`). A "tipo de arma / armas naturais / magias
+  ofensivas" choice is `org.aventyrs.core.item.AttackMethod` — matched against the delivered
+  `AttackSource` via `AttackMethod#matches`, using the trailing-`AttackSource` cascading
+  overload of `resolveSkillRollBonus`/`resolveCriticalMarginIncrease` (the longer form defaults
+  to the shorter — override the longer one). A **coarser** "Armas ou Magias" (whole-category)
+  choice is a local 2-value enum instead — `WeaponOrSpellChoice` (`SaqueRelampagoFeat`) — kept
+  local because only one Talento names it; `matches(AttackSource)` is a bare `instanceof`.
+
+References: `FocoEmPericiaFeat` (SkillType), `TerrenoPrediletoFeat` (TerrainType + a
+Scene-conditioned hook), `EspecialistaEmArmaFeat`/`AtiradorPerfeitoFeat`/
+`AcertoCriticoAprimoradoFeat` (AttackMethod), `AdotadoPorSylphFeat` /
+`ArmamentoDraconicoFeat` (a set). A **fixed**-Atributo grant is buildable now:
+`ConselheiroDeGuerraYmirianoFeat` carries a chosen `StrengthAbility`, grants a fixed +1 Gnose
+via `resolveAttributeBonus` and the picked ability via `getGrantedAttributeAbilities`, and its
+`of(Character, choice)` factory enforces "que você cumpra os requisitos". Still unbuildable: a
+*chosen*-Atributo grant (needs a subclass whose `resolveAttributeBonus`/`getGrantedAttributeAbilities`
+branch on the picked `AttributeDomain` — `HumanoFeat#LIMIAR_DA_EVOLUCAO`), a chosen-Ego grant,
+and a `FeatRequirements` clause about *another* held Talento's own choice.
+
 ## 4. Wire `FeatService`
 
 Nothing to build here — `FeatService#grantFeat(Character, CharacterSheet, Feat)` already
@@ -118,6 +309,12 @@ defaults to a fresh `new ArrayList<>()` per `Character.builder().build()` call, 
 aliasing across separate Characters.
 
 ## 5. Write tests
+
+**Use the `testing-a-feat` skill** — it carries the full test checklist, and the rule that
+matters most: a Talento is tested by the effect it causes on a character who *legally acquired
+it* (through `FeatService#grantFeat`, meeting its own `FeatRequirements`), read from the service
+that consumes its hook — never by calling the hook and asserting its return value. The outline
+below is the shape that skill expands on.
 
 One file per tree enum (create if this is the tree's first constant, extend if not):
 - Every constant has a non-blank description.
@@ -142,22 +339,28 @@ ArrayList<>()).build()`.
 
 ## 6. Update docs
 
-- This skill, if the checklist itself changed.
-- CLAUDE.md's "Adding a new Talento (Feat)" section only if an *architectural* fact changed
-  (the catalog shape, prerequisite enforcement, `Character#feats`' mutability) — routine
-  checklist changes belong here, not there.
+- This skill — section 0 if an *architectural* fact changed (the catalog shape, prerequisite
+  enforcement, the `resolve*` hooks), the checklist steps otherwise. Update CLAUDE.md's skill
+  index only if the trigger surface changed.
 
 ## Reference files to read first
 
 - `src/main/java/org/aventyrs/core/feat/ArtesMarciaisFeat.java` — the worked example this
   skill follows (a tree with one constant so far, `ARTISTA_MARCIAL`, with a real Dano Base
   formula method and no wired caller yet).
-- `src/main/java/org/aventyrs/core/feat/Feat.java` — `isEligible(Character)`, the
-  requirement-check mechanism every new Talento's Pré-requisito plugs into via
-  `FeatRequirements`.
-- `src/main/java/org/aventyrs/core/feat/FeatRequirements.java` — the four prerequisite fields
-  (`attributeDomain`/`requiredAttributeValue`, `requiredSkillType`/`requiredSkillGraduation`,
-  `requiredFeat`); leave any subset unset when the rules text doesn't name it.
+- `src/main/java/org/aventyrs/core/feat/Feat.java` — `isEligible(Character, CharacterSheet)`,
+  the requirement-check mechanism every new Talento's Pré-requisito plugs into via
+  `FeatRequirements`. The 1-arg form delegates to it; override the 2-arg one.
+- `src/main/java/org/aventyrs/core/feat/FeatRequirements.java` — every prerequisite field
+  (`attributeDomain`/`requiredAttributeValue` and its `maximum…` ceiling twin,
+  `requiredAnyAttributeValue`/`requiredAnyRacialAttributeValue`, `maximumEgoDomain`/`…Value`,
+  `requiredSkillType`/`requiredSkillGraduation`,
+  `requiredFeats`, `forbiddenFeats`, `requiredSkillTraits`, `requiredAwakenedTitles`/`requiredTitleArchetype`,
+  `requiredRace`/`forbiddenRace`/`requiredCreatureType`/`requiredDeity`, `requiredFeatCategory`/`…Count`,
+  `craftedRegaliaGrade`/`craftedRegaliaCount`, `requiredFame`/`requiredTotalExperience`, and
+  `anyOf` for a disjunction); leave any subset
+  unset when the rules text doesn't name it. Note what is *not* here: a condition of use — see
+  `Feat#itsAllowedToCraftRegalia` and `org.aventyrs.core.item.ItemForgery`.
 - `src/main/java/org/aventyrs/core/character/services/FeatService.java`/
   `FeatServiceImpl.java` — the single entry point (`grantFeat`) that validates `isEligible`
   then spends XP via `Race#getNewFeatCost`, mirroring `TitleAbilityServiceImpl
@@ -169,4 +372,11 @@ ArrayList<>()).build()`.
   requirement-isolation test shape (one test per independently-unmet prerequisite), and the
   `CharacterFixture` mutable-`feats`-swap pattern.
 - `src/main/java/org/aventyrs/core/skill/artes/ArtesAprimorarComArteAbility.java` — the
-  "compute the real formula even with no caller yet" precedent step 3 follows.
+  "compute the real formula even with no caller yet" precedent step 3 follows, and the
+  catalog-constant-vs-acquired-instance split step 3b mirrors.
+- `src/main/java/org/aventyrs/core/feat/FocoEmPericiaFeat.java` /
+  `src/main/java/org/aventyrs/core/feat/EspecialistaEmArmaFeat.java` — the step-3b
+  choice-carrying `AbstractFeat` subclass, and `AttackMethod` as a choice type.
+- `src/main/java/org/aventyrs/core/feat/ArmamentoDraconicoFeat.java` — a step-3b subclass whose
+  choice is a validated `Set` (exactly N of a fixed allow-list) granting via a non-`resolve*`
+  hook (`Feat#getGrantedNaturalWeapons`).

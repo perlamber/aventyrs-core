@@ -1,0 +1,215 @@
+Corrente de Efeitos e Efeitos Críticos
+
+Correntes de Efeitos
+O que são Correntes de Efeitos
+Quando ativar uma Corrente de Efeitos
+Resistência a Corrente de Efeitos
+
+Lista de Corrente de Efeitos
+Definhar
+O Alvo sofre 1 ponto de Dano Físico Profano por Rodada por Vigor Rodadas (não cumulativo). Este é um Efeito de Maldição.
+
+Enrijecer Musculatura 
+O corpo do alvo se torna mais rígido temporariamente, por isso as rolagens de Perícias Físicas (baseadas em Força e Destreza) dele são feitas em Desvantagem por 1 Rodada. Este é um efeito de Envenenamento.
+
+Escancarar Defesas 
+Seu próximo ataque contra este mesmo alvo tem a GD reduzida em -1 Nível.
+
+Excomungar 
+Remove uma das Maldições ou Encantamentos Naturais presentes no alvo.
+ 
+Explosão Cataclísmica 
+Este ataque recebe Área de Efeito – Explosão e Cataclismo como um Efeito Crítico adicional.
+
+Ferida Infecciosa
+Este ataque causa 3 pontos de danos adicionais, estes danos adicionais só podem ser recuperados com Descansos.
+
+Golpe Trovejante 
+Se este ataque for um Acerto Crítico, o Efeito Crítico natural de sua arma é aplicado duas vezes.
+
+Magicae Mortis 
+Esta Magia recebe Roubo de Vida igual à 1+ seu número de Títulos Arcanos ou Abençoados Despertos.
+
+Oprimir
+Este ataque recebe Roubo de Determinação 1, se este ataque for um Acerto Crítico o Roubo de Determinação muda para 2.
+
+Remover Aflição 
+Os Alvos recuperam +2PV.
+
+Rugido
+Alvo é empurrado 1UD para trás, se este ataque for um Acerto Crítico o dano causado aumenta em +2.
+
+Toque Sombrio 
+O dano causado aumenta em +1 e é Profano em substituição aos seus tipos.
+
+Veneno Vampírico 
+O Multiplicador de PV do alvo é reduzido em -1 e ele sofre 2 pontos de Dano Mágico Profano, então o alvo sofre 2 Pontos de Dano Mágico Profano por Rodada. Este é um efeito de Envenenamento, possui Roubo de Vida 1 e tem por Duração 2 Rodadas.
+
+Efeitos Críticos
+O que são Efeitos Críticos
+Como aplicar um Efeito Crítico
+O que é a Resistência à Críticos
+
+Lista de Efeitos Críticos Defensivos
+Efeitos Críticos Defensivos substituem as falhas críticas inimigas em caso de Sucesso Crítico nas rolagens de Defesas.
+Apenas Armaduras e Escudos recebem Efeitos Críticos Defensivos e seus efeitos são cumulativos, outros equipamentos Defensivos não concedem este tipo de benefício.
+
+Lista de Efeitos Críticos Defensivos
+Choque de AEther
+	•	Maior: Seu Multiplicador de PM aumenta em +1 por 2 Rodadas, o Multiplicador de PM do atacante é reduzindo em -1 até que ele passe por um Descanso.
+	•	Menor: Você recupera 2PM, o personagem atacante perde 2PM.
+
+Contra-Atacante 
+	•	Maior: Você pode desferir um contra-ataque contra o atacante, você recebe Vantagem em sua rolagem Danos e aplica seu Efeito Crítico Menor.
+	•	Menor: Você pode desferir um contra-ataque contra o atacante, você recebe Vantagem em sua rolagem Danos.
+
+Faísca de Determinação
+	•	Maior: Seu Multiplicador de PD aumenta em +1 por 2 Rodadas, o Multiplicador de PD do atacante é reduzindo em -1 até que ele passe por um Descanso.
+	•	Menor: Você recupera 2PD, o personagem atacante perde 2PD.
+
+Ímpeto Defensivo
+	•	Maior: Você empurra o atacante 2UD para trás, então se torna imune aos ataques dele por 1 Rodada.
+	•	Menor: Você empurra o atacante 1UD para trás, então recebe Bônus de +2 em suas Defesas para resistir aos ataques dele por 1 Rodada.
+
+Liberdade de Ação
+	•	Maior: Você pode se mover até 2UD em qualquer direção livre, este movimento ignora Terrenos Difíceis. Movimentos do atacante são considerados em Terreno Difícil por 1 Rodada.
+	•	Menor: Você pode se mover até 2UD em qualquer direção livre, este movimento ignora Terrenos Difíceis.
+
+Provocar
+	•	Maior: O atacante sofre 3 pontos de Dano Físico Primordial, então será desafiado e o próximo ataque dele deverá ter você novamente como alvo primário. Sua Margem Crítica Menor para resistir a este próximo ataque aumenta em +3 números.
+	•	Menor: O atacante sofre 1 pontos de Dano Físico Primordial, então será desafiado e o próximo ataque dele deverá ter você novamente como alvo primário. Sua Margem Crítica Menor para resistir a este próximo ataque aumenta em +1 números.
+
+Repelir e Suprimir: 
+	•	Maior: A arma do alvo sofre 2d6 pontos de dano, a arma se torna inutilizável por 1 Rodada. Se o ataque repelido for mágico os danos são causados ao conjurador e ele será impedido de efetuar novas conjurações.
+	•	Menor: A arma do alvo sofre 1d6 pontos de dano, por 1 Rodada novos ataques deste mesmo tipo exigem 1PA adicional para serem realizados por 1 Rodada. Se o ataque repelido for mágico os danos são causados ao conjurador a supressão afeta suas próximas conjurações.
+
+Retorno de Danos
+	•	Maior: Atacante corpo-a-corpo e sua arma sofrem 3d6+Vigor pontos de Dano Físico Primordial, projéteis são destruídos e não aplicam áreas de efeitos.
+	•	Menor: Atacante corpo-a-corpo e sua arma sofrem 1d6+Vigor pontos de Dano Físicos Primordial, projéteis são destruídos e não aplicam áreas de efeitos.
+
+Surto Arcano
+	•	Maior: Você encontra espaço perfeito para uma conjuração rápida, pode conjurar uma qualquer imediatamente (custos de Bônus Base ainda devem ser cumpridos).
+	•	Menor: Você encontra espaço para uma conjuração rápida, pode conjurar uma Magia Semente ou Broto imediatamente (custos de Bônus Base ainda devem ser cumpridos).
+
+Atualizando os Equipamentos Defensivos
+Armaduras
+	•	Armadura Completa: Retorno de Danos
+	•	Armadura de Gladiador: Contra-Atacante
+	•	Armadura de Justa: Provocar
+	•	Couraça: Retorno de Danos
+	•	Meia Armadura: Retorno de Danos
+	•	Robe Cerimonial: Surto Arcano
+	•	Robe de Guerra: Surto Arcano
+	•	Roupa Pesada: Liberdade de Ação
+Escudos
+	•	Braçadeiras: Faísca de Determinação
+	•	Bracelete Arcano: Choque de AEther
+	•	Broquel: Contra-Atacante
+	•	Escudo Médio: Repelir e Suprimir
+	•	Escudo de Corpo: Provocar
+	•	Repulsor: Choque de AEther
+Defesas Naturais
+	•	Espinhos: Retorno de Danos
+	•	Cascos e Conchas: Faísca de Determinação
+	•	Corpo Exposto (Sem armaduras ou escudos): Liberdade de Ação
+	•	Pele Escamosa ou Emplumada: Choque de AEther
+	•	Pele Escorregadia: Liberdade de Ação
+
+Lista de Efeitos Críticos Ofensivos 
+<remake pendente>
+Amaldiçoar
+	•	Maior: Alvo recebe a condição Amaldiçoado por 1d6 rodadas, enquanto estiver amaldiçoado recebe Redutor de -5 em suas Defesas.
+	•	Menor: Alvo recebe a condição Amaldiçoado por 1d6 rodadas, enquanto estiver amaldiçoado recebe Redutor de -2 em suas Defesas.
+
+Amenizar
+	•	Maior: O alvo recebe RA para resistir a todos os ataques sofridos nas próximas 2 Rodadas.
+	•	Menor: O alvo recebe RA para resistir a todos os ataques sofridos nesta Rodada.
+
+Atordoante
+	•	Maior o alvo não pode realizar nenhuma ação por 1 Rodada.
+	•	Menor: o alvo não pode realizar Ações Livres e Reações e suas ações utilizam 1PA a mais serem executadas por 1 Rodada.
+
+Cataclismo
+	•	Maior: Na Rodada seguinte o alvo sofre uma quantidade de dano igual ao dano Elemental causado por este ataque.
+	•	Menor: Na Rodada seguinte o alvo sofre metade do dano Elemental deste ataque.
+
+Desmembrar
+	•	Maior: O alvo tem um de seus membros amputados.
+	•	Menor: O alvo tem um de seus membros inutilizados por 2 rodadas, se o alvo tiver perdido pelo menos metade de seus PV nesta cena, ao invés disso, o membro é amputado.
+
+Dilacerar
+	•	Maior: O alvo perde 1 ponto temporário de Força e Destreza.
+	•	Menor: O alvo perde 1 ponto temporário de Força ou Destreza, definido aleatoriamente.
+
+Empalar
+	•	Maior: A arma fica presa no alvo, remover a arma requer 1 ação livre, ou 2PA do alvo, remover a arma causa 3d6 pontos de dano (este dano não pode ser reduzido por efeitos de redução). 
+	•	Menor: A arma fica presa no alvo, remover a arma requer 1PA (do usuário ou do alvo), remover a arma causa 2d6 pontos de dano (este dano não pode ser reduzido por efeitos de redução). 
+
+Estilhaçador
+	•	Maior: Todos os itens do alvo sofrem metade do dano sofrido por seu dono
+	•	Maior: Item, escolhido aleatoriamente, sofre metade do dano sofrido por seu dono
+1: Arma; 2: Armadura; 3: Escudo; 4; Capa; 5: Elmo; 6: Núcleo Tecnológico. 
+Deve ser rolado novamente se o alvo não utilizar um item do tipo escolhido.
+
+Excruciante
+	•	Maior: O alvo perde 2PD, e 1PD adicional por rodada. (até o fim da cena ou 1 minuto, o que for maior). Efeitos de cura interrompem a perda de PD por rodada.
+	•	Menor: O alvo perde 2PD, e 1PD adicional por rodada por até um número de rodadas igual ao Instinto dele. Efeitos de cura interrompem a perda de PD por rodada.
+
+Execução Real
+	•	Maior: O alvo é imediatamente destruído e não poderá ser ressuscitado.
+	•	Menor: Se o alvo deste ataque tiver seus PV reduzidos à uma quantidade igual ou inferior ao dobro do Vigor dele ele será imediatamente destruído e não poderá ser ressuscitado.
+
+Ferida Profunda
+	•	Maior: Alvo perde 3 Multiplicadores de PV (não cumulativo) e não pode ser alvo de efeitos de cura até o final da Cena.
+	•	Menor: Alvo perde 2 Multiplicador de PV (não cumulativo). Efeitos de cura são reduzidos à metade por 2 Rodadas (cumulativo).
+
+Fortalecer
+	•	Maior: Item afetado recupera todos os seus PV perdidos nesta Cena, e concede RD e RM ao seu usuário por 2 Rodadas.
+	•	Menor: Item afetado concede RD e RM ao seu usuário por 2 Rodadas.
+
+Guilhotina
+	•	Maior: Receba Vantagem em rolagens de Ataque e Dano por 2 Rodadas, a Margem Crítica Menor dos seus ataques aumenta em +2 números (efeitos cumulativos).
+	•	Menor: Receba Vantagem em rolagens de Ataque e Dano por 1 Rodada, a Margem Crítica Menor dos seus ataques aumenta em +1 número (efeitos cumulativos).
+
+
+Imunizar
+	•	Maior: alvo se torna imune a encantamentos nocivos e maldições por 5 Rodadas.
+	•	Menor: alvo se torna imune a encantamentos nocivos e maldições por 2 Rodadas.
+
+Inflamar
+	•	Maior: alvo sofre 2 pontos de dano de fogo por Rodada, até que o apague 3PA.
+	•	Menor: alvo sofre 2 pontos de dano de fogo por Rodada, até que o apague 2PA.
+
+Oferenda Maldita
+	•	Maior: Roubo de Vida 2d6
+	•	Menor: Roubo de Vida 1d6
+
+Potencializar
+	•	Maior: A duração da magia aumenta em +2d6 unidades.
+	•	Menor: A duração da magia aumenta em +1d6 unidades.
+
+Prevenir
+	•	Maior: Recebe Bônus de +5 em suas Defesas para evitar ataques do alvo por 2 Rodadas.
+Se o alvo for um objeto ou magia, ao invés disso, o Bônus Recebido é aplicado apenas para evitar efeitos e ataques deste objeto ou magia.
+	•	Menor: Recebe Bônus de +2 em suas Defesas para evitar ataques do alvo por 2 Rodadas. 
+Se o alvo for um objeto ou magia, ao invés disso, o Bônus Recebido é aplicado apenas para evitar efeitos e ataques deste objeto ou magia.
+Primor
+	•	Maior: Alvo perde 2 pontos temporários de Sorte ou Autocontrole (definido aleatoriamente), pontos perdidos desta forma são recuperados no próximo Descanso Longo do alvo.
+	•	Menor: Alvo perde 1 ponto temporário de Sorte ou Autocontrole (definido aleatoriamente), pontos perdidos desta forma são recuperados no próximo Descanso do alvo.
+
+Purga-Mana
+	•	Maior: O alvo perde 2PM, e 1PM adicional por Rodada (até o fim da cena ou 1 minuto, o que for maior). Efeitos de cura interrompem a perda de PM por rodada.
+	•	Menor: O alvo perde 2PM, e 1PM adicional por Rodada por até um número de Rodadas igual ao Foco dele. Efeitos de cura interrompem a perda de PM por rodada.
+
+Sabotar
+	•	Maior: Itens tecnológicos afetados são destruídos
+	•	Menor: Itens tecnológicos sofrem 3d6 pontos de dano
+
+Sangramento
+	•	Maior: O alvo perde 2PV, e 1PV adicional por Rodada (até o fim da cena ou 1 minuto, o que for maior). Efeitos de cura interrompem a perda de PV por rodada.
+	•	Menor: O alvo perde 2PV, e 1PV adicional por Rodada por até um número de Rodadas igual ao Vigor dele. Efeitos de cura interrompem a perda de PV por rodada.
+
+Toque do AEther
+	•	Maior: Alvo não pode Conjurar Magias e Ativar Habilidades de Títulos ou Monstruosas por 2 Rodadas. Magias e Habilidades do alvo, ou que estejam encantando o alvo, são interrompidas.
+	•	Menor: Alvo não pode Conjurar Magias e Ativar Habilidades de Títulos ou Monstruosas por 1 Rodada. Magias e Habilidades do alvo, ou que estejam encantando o alvo, conjuradas ou ativadas na última Rodada são interrompidas.
+

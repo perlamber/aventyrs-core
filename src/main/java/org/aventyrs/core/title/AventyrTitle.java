@@ -1,6 +1,7 @@
 package org.aventyrs.core.title;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 /**
@@ -27,6 +28,26 @@ public interface AventyrTitle {
 
     /** This Título's own name, e.g. "Santo" — matches its rules-text header exactly. */
     String getName();
+
+    /**
+     * This title's named identity when a rule distinguishes it from its archetype. Most Títulos
+     * have no identity consumer and remain empty until one does.
+     */
+    default Optional<TitleIdentity> getIdentity() {
+        return Optional.empty();
+    }
+
+    /**
+     * Which broad kind of Título this is — the axis a Talento's Pré-requisito names when it
+     * demands not merely "1 Título Aventyr Desperto" but "1 Título Aventyr <b>Bruto</b>
+     * Desperto" (see {@link TitleArchetype}, and {@code
+     * org.aventyrs.core.feat.FeatRequirements#requiredTitleArchetype} for the consuming gate).
+     *
+     * <p>Abstract rather than defaulted: every Título belongs to exactly one archetype, so
+     * there is no sensible fallback, and a new Título silently defaulting to the wrong one
+     * would quietly hand its holder Talentos they should not qualify for.
+     */
+    TitleArchetype getArchetype();
 
     /**
      * The base passive granted just for holding this Título, with no activation cost of its

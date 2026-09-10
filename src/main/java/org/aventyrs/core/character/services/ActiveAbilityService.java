@@ -23,14 +23,18 @@ public interface ActiveAbilityService {
      * org.aventyrs.core.action.ActionPointsService#canAffordSkillRoll} already uses for a
      * Perícia roll's own PA cost;
      * this core still has no persisted "PA already spent this Turn" pool, so this checks the
-     * Turn's max, not a running spent total); and that characterSheet currently has enough
-     * Magic Points (via {@link MagicPointsService#getCurrentMagicPoints}) to afford its
-     * {@link ActiveAbility#getMagicPointCost()}. Throws {@link IllegalOperationException} on
-     * any failure, leaving characterSheet untouched.
+     * Turn's max, not a running spent total); that characterSheet currently has enough Magic
+     * Points (via {@link MagicPointsService#getCurrentMagicPoints}) to afford its {@link
+     * ActiveAbility#getMagicPointCost()}; and, when {@link ActiveAbility#getHitPointCost()} is
+     * positive, that spending it would not drop the holder to 0 PV or below (a Poder Vampírico
+     * "consome 3PV" but cannot be self-fatal). Throws {@link IllegalOperationException} on any
+     * failure, leaving characterSheet untouched.
      *
-     * <p>On success: spends the Magic Point cost (via {@link CombatantSheet#spendMagicPoints})
-     * and applies {@code ability.resolveEffect(character)} (via {@link
-     * CombatantSheet#applyEffect}) — a caller never resolves or applies the granted effect
+     * <p>On success: spends the Magic Point cost (via {@link CombatantSheet#spendMagicPoints}),
+     * the Hit Point cost if any (via {@link CombatantSheet#applyDamage} — plain damage, its
+     * "recuperados exclusivamente com Roubo de Vida" provenance untracked), and applies every
+     * effect from {@code ability.resolveEffects(character)} (via {@link
+     * CombatantSheet#applyEffect}) — a caller never resolves or applies the granted effects
      * itself.
      *
      * @throws IllegalOperationException if ability isn't held, or character/characterSheet

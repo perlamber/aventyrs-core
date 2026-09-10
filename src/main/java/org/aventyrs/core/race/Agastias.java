@@ -4,9 +4,12 @@ import lombok.Getter;
 import lombok.NonNull;
 import org.aventyrs.core.ability.AttributeAbility;
 import org.aventyrs.core.character.AttributeDomain;
+import org.aventyrs.core.character.Character;
 import org.aventyrs.core.feat.FeatCategory;
+import org.aventyrs.core.magic.Spell;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
@@ -21,11 +24,13 @@ import java.util.Map;
  * parentRace} itself, captured via {@link Linhagem} rather than a second subclass (it's not a
  * new race, just which half of the same one).
  *
- * <p>Two traits are mechanically real: {@link #getFixedAttributeBonuses()} (+2 Gnose, or +3 if
+ * <p>Three traits are mechanically real: {@link #getFixedAttributeBonuses()} (+2 Gnose, or +3 if
  * {@code parentRace} also grants Gnose; -1 Foco ou -1 Força per {@link #getLinhagem()},
- * unenforced floor of 1) and Categoria de Tamanho inherited from {@code
+ * unenforced floor of 1); Categoria de Tamanho inherited from {@code
  * parentRace.getBaseSizeCategory()} with no offset ("herdam a Categoria de Tamanho de suas
- * contrapartes mortais").
+ * contrapartes mortais"); and <b>Magia é Ciência</b> ({@link
+ * #resolveSpellAcquisitionCostReduction} — every Magia costs 0.5 EXP less to learn, unscoped,
+ * now that {@code SpellService#getAcquisitionCost} exists and aggregates such discounts).
  *
  * <p>Everything else needs a system this core doesn't have yet:
  * <ul>
@@ -48,9 +53,6 @@ import java.util.Map;
  *   Mana, and the Graduação-cost half needs {@code SkillGraduationService#getUpgradeCost} to
  *   take a {@link Race} at all, which it doesn't (same gap Humanos'/{@code Pequenino}'s own
  *   Aprendizado Rápido cite).</li>
- *   <li><b>Magia é Ciência</b> (-0.5 EXP para aprender novas magias) — needs a Magia entity plus
- *   a spell-*learning*-cost system, neither of which exist (same gap {@code Satiro}'s own
- *   Herança Druídica cites).</li>
  * </ul>
  *
  * <p>Tendência is deliberately left unconstrained, same treatment as every other race —
@@ -68,6 +70,9 @@ public class Agastias extends AbstractMesticoRace {
     private static final int PRIMARY_BONUS = 2;
     private static final int PRIMARY_BONUS_WHEN_PARENT_GRANTS_IT = 3;
     private static final int REDUCED_BONUS = -1;
+
+    /** "Magia é Ciência" — aprender novas magias custa -0.5 EXP, whatever the Magia. */
+    private static final BigDecimal MAGIA_E_CIENCIA_DISCOUNT = new BigDecimal("0.5");
 
     private final Linhagem linhagem;
 
@@ -92,5 +97,16 @@ public class Agastias extends AbstractMesticoRace {
     @Override
     protected int getSizeCategoryOffset() {
         return 0;
+    }
+
+    /**
+     * "Magia é Ciência" — {@code -0.5 EXP para aprender novas magias}, with no restriction on
+     * which Magia, so the discount applies to every {@code spell}. {@code SpellService
+     * #getAcquisitionCost} floors the aggregate, so on a Semente (base 0) this simply reads back
+     * as 0 rather than -0.5.
+     */
+    @Override
+    public BigDecimal resolveSpellAcquisitionCostReduction(final Character character, final Spell spell) {
+        return MAGIA_E_CIENCIA_DISCOUNT;
     }
 }

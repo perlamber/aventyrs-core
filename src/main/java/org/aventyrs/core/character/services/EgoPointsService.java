@@ -37,13 +37,17 @@ import java.util.Map;
  * The intended shape is a Narrador pressing an end-of-session button, which maps onto {@link
  * #applySessionRecovery(Map)} — one call, carrying the table's collected choices.
  *
- * <p>What is genuinely absent is any <em>per-session state</em> — no session identity, no
- * counter, nothing recording that a session happened (CLAUDE.md's "Game-session tracking" gap).
- * Two consequences worth knowing before building against this: recovery here is deliberately not
- * idempotent (see {@link #applySessionRecovery(Map)}), and a clause that needs to <em>count</em>
- * within a session — {@code GnoseAbility#ESTABILIDADE_EMOCIONAL}'s "a primeira vez em cada sessão
- * de jogo", {@code MeioElfo}'s "1x por sessão" — is still unbuildable, because a manual button
- * marks a boundary without ever telling this core it was crossed.
+ * <p>There is still no session <em>identity</em> and no counter here, so recovery through this
+ * service is deliberately not idempotent (see {@link #applySessionRecovery(Map)}) — a manual
+ * button marks a boundary without ever telling this core it was crossed.
+ *
+ * <p>A clause that must fire only <em>once</em> within a session is a different question, and it
+ * <strong>is</strong> answered: {@code CombatantSheet#consumeOncePerSession} claims a marker
+ * against transient per-sheet state, where a session is the sheet object's own lifetime in the
+ * running client ({@code GnoseAbility#ESTABILIDADE_EMOCIONAL} is its first consumer; {@code
+ * MeioElfo}'s "1x por sessão" is blocked on other pieces, not on this one). That guard
+ * deliberately does not depend on anyone pressing the end-of-session button this service serves
+ * — the two are independent notions of a session, and only one of them is a UI action.
  */
 public interface EgoPointsService {
 

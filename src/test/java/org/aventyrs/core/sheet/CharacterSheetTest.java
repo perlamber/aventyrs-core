@@ -3,14 +3,23 @@ package org.aventyrs.core.sheet;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.EgoDomain;
+import org.aventyrs.core.character.DamageBase;
 import org.aventyrs.core.character.fixture.CharacterFixture;
+import org.aventyrs.core.feat.AnaoFeat;
+import org.aventyrs.core.item.AbstractItem;
+import org.aventyrs.core.item.AbstractWeapon;
 import org.aventyrs.core.item.ArmorItem;
+import org.aventyrs.core.item.Item;
+import org.aventyrs.core.item.ItemCategory;
+import org.aventyrs.core.item.ItemWeightClass;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.rest.RestType;
+import org.aventyrs.core.skill.SkillType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -35,9 +44,45 @@ class CharacterSheetTest {
     }
 
     @Test
+    void hasActedOffensivelyThisRoundTracksRecordedAttackActionsAndClearsAtTheRodadaWrap() {
+        CharacterSheet sheet = newSheet();
+        assertFalse(sheet.hasActedOffensivelyThisRound());
+
+        sheet.recordAction(new CombatantAction(SkillType.ATTENTION, AttributeDomain.INSTINCT,
+                null, null, 1, null));
+        assertFalse(sheet.hasActedOffensivelyThisRound());
+
+        sheet.recordAction(new CombatantAction(SkillType.ATAQUE_CORPO_A_CORPO, AttributeDomain.STRENGTH,
+                null, null, 1, null));
+        assertTrue(sheet.hasActedOffensivelyThisRound());
+
+        sheet.startNewRound();
+        assertFalse(sheet.hasActedOffensivelyThisRound());
+    }
+
+    @Test
     void damageReducesAvailableHitPointsBudget() {
         CharacterSheet sheet = newSheet();
         assertEquals(5, sheet.applyDamage(5));
+    }
+
+    @Test
+    void equipmentPointsStartAtZeroAndMoveThroughGrantAndSpend() {
+        CharacterSheet sheet = newSheet();
+        assertEquals(0, sheet.getEquipmentPoints());
+
+        assertEquals(10, sheet.grantEquipmentPoints(10));
+        assertEquals(4, sheet.spendEquipmentPoints(6));
+        assertEquals(4, sheet.getEquipmentPoints());
+    }
+
+    @Test
+    void spendingMoreEquipmentPointsThanHeldThrowsAndLeavesTheBalanceIntact() {
+        CharacterSheet sheet = newSheet();
+        sheet.grantEquipmentPoints(3);
+
+        assertThrows(IllegalOperationException.class, () -> sheet.spendEquipmentPoints(4));
+        assertEquals(3, sheet.getEquipmentPoints());
     }
 
     @Test
@@ -649,37 +694,117 @@ class CharacterSheetTest {
         assertEquals(1, sheet.getDamageTaken());
     }
 
-    @Test
-    void consumeFirstRollThisTurnReturnsTrueTheFirstTimeForAGivenDomain() {
-        CharacterSheet sheet = newSheet();
-
-        assertTrue(sheet.consumeFirstRollThisTurn(AttributeDomain.DEXTERITY));
+    private static CombatantAction action(final AttributeDomain governingDomain) {
+        return new CombatantAction(SkillType.ATAQUE_A_DISTANCIA, governingDomain, null,
+                ActionCost.ofActionPoints(1), 0, null);
     }
 
     @Test
-    void consumeFirstRollThisTurnReturnsFalseOnASubsequentCallForTheSameDomain() {
+    void recordActionAppendsToActionsThisRound() {
         CharacterSheet sheet = newSheet();
-        sheet.consumeFirstRollThisTurn(AttributeDomain.DEXTERITY);
 
-        assertFalse(sheet.consumeFirstRollThisTurn(AttributeDomain.DEXTERITY));
+        sheet.recordAction(action(AttributeDomain.DEXTERITY));
+
+        assertEquals(1, sheet.getActionsThisRound().size());
+        assertEquals(AttributeDomain.DEXTERITY, sheet.getActionsThisRound().get(0).governingDomain());
     }
 
     @Test
-    void consumeFirstRollThisTurnTracksEachDomainIndependently() {
+    void getActionsThisRoundIsUnmodifiable() {
         CharacterSheet sheet = newSheet();
-        sheet.consumeFirstRollThisTurn(AttributeDomain.DEXTERITY);
 
-        assertTrue(sheet.consumeFirstRollThisTurn(AttributeDomain.STRENGTH));
+        assertThrows(UnsupportedOperationException.class,
+                () -> sheet.getActionsThisRound().add(action(AttributeDomain.DEXTERITY)));
     }
 
     @Test
-    void startTurnResetsWhichDomainsHaveAlreadyRolled() {
+    void isFirstRollOfTurnForIsTrueUntilAnActionGovernedByThatDomainIsRecorded() {
         CharacterSheet sheet = newSheet();
-        sheet.consumeFirstRollThisTurn(AttributeDomain.DEXTERITY);
+        assertTrue(sheet.isFirstRollOfTurnFor(AttributeDomain.DEXTERITY));
+
+        sheet.recordAction(action(AttributeDomain.DEXTERITY));
+
+        assertFalse(sheet.isFirstRollOfTurnFor(AttributeDomain.DEXTERITY));
+    }
+
+    @Test
+    void isFirstRollOfTurnForTracksEachDomainIndependently() {
+        CharacterSheet sheet = newSheet();
+        sheet.recordAction(action(AttributeDomain.DEXTERITY));
+
+        assertTrue(sheet.isFirstRollOfTurnFor(AttributeDomain.STRENGTH));
+    }
+
+    @Test
+    void startTurnMarksTheBoundarySoAPriorTurnsActionsDoNotCount() {
+        CharacterSheet sheet = newSheet();
+        sheet.recordAction(action(AttributeDomain.DEXTERITY));
 
         sheet.startTurn(1);
 
-        assertTrue(sheet.consumeFirstRollThisTurn(AttributeDomain.DEXTERITY));
+        assertTrue(sheet.isFirstRollOfTurnFor(AttributeDomain.DEXTERITY));
+    }
+
+    @Test
+    void startTurnDoesNotClearActionsThisRound() {
+        CharacterSheet sheet = newSheet();
+        sheet.recordAction(action(AttributeDomain.DEXTERITY));
+
+        sheet.startTurn(1);
+
+        assertEquals(1, sheet.getActionsThisRound().size());
+    }
+
+    @Test
+    void startNewRoundClearsTheLogAndResetsTheMarker() {
+        CharacterSheet sheet = newSheet();
+        sheet.recordAction(action(AttributeDomain.DEXTERITY));
+        sheet.startTurn(1);
+        sheet.recordAction(action(AttributeDomain.STRENGTH));
+
+        sheet.startNewRound();
+
+        assertTrue(sheet.getActionsThisRound().isEmpty());
+        assertTrue(sheet.isFirstRollOfTurnFor(AttributeDomain.DEXTERITY));
+        assertTrue(sheet.isFirstRollOfTurnFor(AttributeDomain.STRENGTH));
+    }
+
+    @Test
+    void theCenaLogSurvivesARodadaWrapButNotStartNewScene() {
+        CharacterSheet sheet = newSheet();
+        sheet.recordAction(action(AttributeDomain.DEXTERITY));
+
+        sheet.startNewRound();
+        assertTrue(sheet.getActionsThisRound().isEmpty());
+        assertEquals(1, sheet.getActionsThisCena().size(), "the Cena log outlasts the Rodada wrap");
+
+        sheet.startNewScene();
+        assertTrue(sheet.getActionsThisCena().isEmpty());
+    }
+
+    @Test
+    void getActionsThisCenaIsUnmodifiable() {
+        assertThrows(UnsupportedOperationException.class,
+                () -> newSheet().getActionsThisCena().add(action(AttributeDomain.DEXTERITY)));
+    }
+
+    @Test
+    void startCombatAppliesFeatBlessingsOncePerCenaAndReArmsWithStartNewScene() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK).feats(new ArrayList<>()).build();
+        character.grantFeat(AnaoFeat.VIGOR_DO_INVERNO);
+        CharacterSheet sheet = CharacterSheet.of(character, new Player());
+
+        assertEquals(2, sheet.startCombat().size());
+        int rd = sheet.getTemporaryBonus(ModifierType.DAMAGE_REDUCTION);
+        assertTrue(rd > 0);
+
+        // A second call this Cena grants nothing more.
+        assertTrue(sheet.startCombat().isEmpty());
+        assertEquals(rd, sheet.getTemporaryBonus(ModifierType.DAMAGE_REDUCTION));
+
+        // A new Cena re-arms it.
+        sheet.startNewScene();
+        assertEquals(2, sheet.startCombat().size());
     }
 
     // Each of these must spend first: a recovery restores previously-spent points, so against a
@@ -747,5 +872,147 @@ class CharacterSheetTest {
         CharacterSheet sheet = newSheet();
 
         assertFalse(sheet.removeFromInventory(ArmorItem.COURACA));
+    }
+
+    // --- Equipment slot validation ----------------------------------------------------------
+
+    private static CharacterSheet sheetWithMutableEquipment() {
+        CharacterFixture.loadTemplates();
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .equipment(new ArrayList<>())
+                .build();
+        return CharacterSheet.of(character, new Player());
+    }
+
+    private static Item shield() {
+        return AbstractItem.builder().name("Escudo Médio").category(ItemCategory.SHIELD)
+                .weightClass(ItemWeightClass.MEDIUM).build();
+    }
+
+    private static AbstractWeapon weapon(final ItemCategory category, final ItemWeightClass weightClass) {
+        return AbstractWeapon.builder().name(category + " " + weightClass).category(category)
+                .weightClass(weightClass).damageBase(DamageBase.UNARMED)
+                .skillType(SkillType.ATAQUE_CORPO_A_CORPO).build();
+    }
+
+    @Test
+    void equipAddsTheItemToTheCharacterWhenTheLoadoutStaysLegal() {
+        CharacterSheet sheet = sheetWithMutableEquipment();
+
+        sheet.equip(ArmorItem.COURACA);
+
+        assertEquals(List.of(ArmorItem.COURACA), sheet.getCharacter().getEquipment());
+    }
+
+    @Test
+    void equipRejectsASecondItemInASingleBodySlotAndLeavesTheCharacterUntouched() {
+        CharacterSheet sheet = sheetWithMutableEquipment();
+        sheet.equip(ArmorItem.COURACA);
+
+        IllegalOperationException thrown =
+                assertThrows(IllegalOperationException.class, () -> sheet.equip(ArmorItem.MEIA_ARMADURA));
+        assertEquals("EQUIPMENT_SLOT_ALREADY_OCCUPIED", thrown.getMessage());
+        assertEquals(List.of(ArmorItem.COURACA), sheet.getCharacter().getEquipment());
+    }
+
+    @Test
+    void equipRejectsASecondShield() {
+        CharacterSheet sheet = sheetWithMutableEquipment();
+        sheet.equip(shield());
+
+        IllegalOperationException thrown =
+                assertThrows(IllegalOperationException.class, () -> sheet.equip(shield()));
+        assertEquals("TOO_MANY_SHIELDS", thrown.getMessage());
+    }
+
+    @Test
+    void aShieldPairsWithOneLightWeapon() {
+        CharacterSheet sheet = sheetWithMutableEquipment();
+
+        sheet.equip(shield());
+        sheet.equip(weapon(ItemCategory.LIGHT_BLADE, ItemWeightClass.LIGHT));
+
+        assertEquals(2, sheet.getCharacter().getEquipment().size());
+    }
+
+    @Test
+    void twoLightWeaponsFitInTwoHands() {
+        CharacterSheet sheet = sheetWithMutableEquipment();
+
+        sheet.equip(weapon(ItemCategory.LIGHT_BLADE, ItemWeightClass.LIGHT));
+        sheet.equip(weapon(ItemCategory.CLUB, ItemWeightClass.LIGHT));
+
+        assertTrue(sheet.getCharacter().getEquipment().size() == 2);
+    }
+
+    @Test
+    void aShieldCannotBeHeldAlongsideAHeavyWeapon() {
+        CharacterSheet sheet = sheetWithMutableEquipment();
+        sheet.equip(shield());
+
+        IllegalOperationException thrown = assertThrows(IllegalOperationException.class,
+                () -> sheet.equip(weapon(ItemCategory.HEAVY_BLADE, ItemWeightClass.HEAVY)));
+        assertEquals("NOT_ENOUGH_HANDS", thrown.getMessage());
+    }
+
+    @Test
+    void aBowNeedsBothHandsEvenWhenItIsLightSoNoShieldFits() {
+        CharacterSheet sheet = sheetWithMutableEquipment();
+        sheet.equip(weapon(ItemCategory.BOW, ItemWeightClass.LIGHT));
+
+        assertFalse(sheet.canEquip(shield()));
+        assertThrows(IllegalOperationException.class, () -> sheet.equip(shield()));
+    }
+
+    @Test
+    void aCrossbowAndAWeaponExceedTwoHands() {
+        CharacterSheet sheet = sheetWithMutableEquipment();
+        sheet.equip(weapon(ItemCategory.CROSSBOW, ItemWeightClass.MEDIUM));
+
+        assertThrows(IllegalOperationException.class,
+                () -> sheet.equip(weapon(ItemCategory.LIGHT_BLADE, ItemWeightClass.LIGHT)));
+    }
+
+    @Test
+    void bodyArmourAndAWieldedLoadoutCoexist() {
+        CharacterSheet sheet = sheetWithMutableEquipment();
+
+        sheet.equip(ArmorItem.COURACA);
+        sheet.equip(shield());
+        sheet.equip(weapon(ItemCategory.LIGHT_BLADE, ItemWeightClass.LIGHT));
+
+        assertTrue(sheet.canEquip(AbstractItem.builder().name("Anel").category(ItemCategory.RING).build()));
+    }
+
+    @Test
+    void canEquipIsTheNonThrowingMirrorOfEquip() {
+        CharacterSheet sheet = sheetWithMutableEquipment();
+        sheet.equip(ArmorItem.COURACA);
+
+        assertFalse(sheet.canEquip(ArmorItem.COURACA));
+        assertTrue(sheet.canEquip(shield()));
+    }
+
+    @Test
+    void validateEquipmentLoadoutCatchesAnIllegalLoadoutAssembledThroughTheBuilder() {
+        CharacterFixture.loadTemplates();
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .equipment(new ArrayList<>(List.of(ArmorItem.COURACA, ArmorItem.MEIA_ARMADURA)))
+                .build();
+        CharacterSheet sheet = CharacterSheet.of(character, new Player());
+
+        assertThrows(IllegalOperationException.class, sheet::validateEquipmentLoadout);
+    }
+
+    @Test
+    void validateEquipmentLoadoutPassesForALegalBuilderLoadout() {
+        CharacterFixture.loadTemplates();
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .equipment(new ArrayList<>(List.of(ArmorItem.COURACA, shield(),
+                        weapon(ItemCategory.LIGHT_BLADE, ItemWeightClass.LIGHT))))
+                .build();
+        CharacterSheet sheet = CharacterSheet.of(character, new Player());
+
+        sheet.validateEquipmentLoadout();
     }
 }

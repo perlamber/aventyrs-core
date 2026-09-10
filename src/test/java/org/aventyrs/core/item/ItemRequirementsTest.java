@@ -46,6 +46,24 @@ class ItemRequirementsTest {
         assertTrue(new ItemRequirements(null, 99).isMetBy(character));
     }
 
+    /** "Car 3/Gno 3" — either Atributo at the value satisfies the requirement. */
+    @Test
+    void isMetWhenEitherOfTwoNamedAttributesReachesTheValue() {
+        ItemRequirements charismaOrGnose =
+                new ItemRequirements(AttributeDomain.CHARISMA, 3, AttributeDomain.GNOSE);
+
+        assertTrue(charismaOrGnose.isMetBy(characterWith(AttributeDomain.CHARISMA, 3)));
+        assertTrue(charismaOrGnose.isMetBy(characterWith(AttributeDomain.GNOSE, 3)));
+        assertFalse(charismaOrGnose.isMetBy(characterWith(AttributeDomain.CHARISMA, 2)));
+    }
+
+    private static Character characterWith(final AttributeDomain domain, final int base) {
+        return CharacterFixture.blank(CharacterFixture.BLANK)
+                .attributes(org.aventyrs.core.character.CharacterAttributes.of(
+                        java.util.Map.of(domain, base)))
+                .build();
+    }
+
     private static Character characterWithStrength(final int base, final int racialBonus, final int variable) {
         return CharacterFixture.blank(CharacterFixture.BLANK)
                 .attributes(CharacterAttributes.builder()

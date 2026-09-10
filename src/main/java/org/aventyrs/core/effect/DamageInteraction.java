@@ -35,6 +35,7 @@ public class DamageInteraction implements Interaction<CombatantSheet> {
     private final DamageService damageService;
     private final HitPointsService hitPointsService;
     private Interaction<CombatantSheet> nextInteraction;
+    private boolean halfDamage;
 
     public DamageInteraction() {
         this(new DamageServiceImpl());
@@ -61,6 +62,24 @@ public class DamageInteraction implements Interaction<CombatantSheet> {
      */
     public DamageInteraction chainInto(final Interaction<CombatantSheet> nextInteraction) {
         this.nextInteraction = nextInteraction;
+        return this;
+    }
+
+    /**
+     * Marks this stage as dealing Meio-Dano because of <b>the attack</b>, not because of anything
+     * the target carries — {@code ArtesMarciaisFeat#DOMINAR_ARTE_MARCIAL_ARTE_FLUIDA}'s "os danos
+     * no alvo adicional são reduzidos à metade", which {@code
+     * org.aventyrs.core.combat.AttackDelivery} sets on the chain head it builds for each
+     * <em>additional</em> target and never on the primary one's.
+     *
+     * <p>A fluent setter rather than a constructor argument or another {@code applyTo} parameter,
+     * for the same reason {@link #chainInto} is one: a whole chain is assembled up front and
+     * handed over as one object, so anything the head needs to know has to be attachable to it.
+     * It is OR'd with the target's own half-damage sources inside {@link DamageService}, so a
+     * blow can never be quartered.
+     */
+    public DamageInteraction halvingDamage() {
+        this.halfDamage = true;
         return this;
     }
 
@@ -122,7 +141,7 @@ public class DamageInteraction implements Interaction<CombatantSheet> {
                                       final DamageType damageType, final CombatantSheet source,
                                       final int rawDamage, final boolean ignoreDamageReduction,
                                       final Interaction<CombatantSheet> nextInteraction) {
-        int finalDamage = damageService.calculateFinalDamage(target, sceneContext, damageType, source, rawDamage, ignoreDamageReduction);
+        int finalDamage = damageService.calculateFinalDamage(target, sceneContext, damageType, source, rawDamage, ignoreDamageReduction, halfDamage);
         target.applyDamage(finalDamage);
 
         InteractionResult.InteractionResultBuilder result = InteractionResult.builder()

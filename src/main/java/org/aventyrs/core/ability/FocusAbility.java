@@ -53,12 +53,27 @@ public enum FocusAbility implements AttributeAbility {
         }
     },
 
-    // TODO: conditional effect — first spell cast each Round uses full Foco instead of half.
+    // Real for a Magia whose Efeito is authored as a SpellDamage (Ira de Vulcano, part of
+    // Piromancia): SpellCastingService#resolvePrimaryDamage upgrades that Magia's "Metade do
+    // Foco" term to full Foco when the caster has cast no Magia yet this Rodada — via
+    // AttributeAbility#upgradesFirstSpellOfRoundFocusScaling below. Still prose on a Magia whose
+    // numeric effect isn't a plain damage-to-the-target figure (healing, a delayed/positional
+    // wave, distance falloff) — those have no SpellDamage yet.
     MAGIA_PODEROSA("Algumas de suas magias são mais poderosas que o normal. A cada Rodada, quando conjurar sua " +
             "primeira magia, você pode adicionar seu valor integral de Foco, ao invés da metade, aos seus " +
-            "efeitos."),
+            "efeitos.") {
+        @Override
+        public boolean upgradesFirstSpellOfRoundFocusScaling() {
+            return true;
+        }
+    },
 
-    // TODO: grants access to a chosen Magic Type's second branch — depends on a Magic/Spell Tree system that doesn't exist yet.
+    // Real, via org.aventyrs.core.ability.MagiaAlternativaAbility — one constant per MagicType,
+    // so the chosen Tipo de Magia is which constant a character holds (the same shape
+    // GnoseAbility.PERITO_TEORICO uses). Grant that constant, not this one; this stays the
+    // catalog/rules-text entry. Holding it exempts its holder from Spell#isEligible's branch
+    // gate on every Árvore de Magia of that type. Note the rules text names Temporal and Umbral,
+    // which MagicType lacks, and omits the NATURAL it has — see MagiaAlternativaAbility's javadoc.
     MAGIA_ALTERNATIVA("Você pode adquirir magias de ramos adicionais de algumas de suas Árvores de Magia. " +
             "Escolha um Tipo de Magia entre Divina, Elemental, Encantamento, Invocação, Temporal, Primordial, " +
             "Profana ou Umbral: você pode aprender magias de ambas as ramificações dos tipos de magia escolhidos.");

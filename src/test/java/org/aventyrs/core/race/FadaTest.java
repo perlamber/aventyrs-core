@@ -43,7 +43,7 @@ class FadaTest {
 
     @Test
     void usesTheBaseCostsForFeatsAndSkills() {
-        assertEquals(Race.BASE_NEW_FEAT_COST, fada.getNewFeatCost(FeatCategory.FERRICO));
+        assertEquals(Race.BASE_NEW_FEAT_COST, fada.getNewFeatCost(FeatCategory.FEERICO));
         assertEquals(Race.BASE_NEW_SKILL_COST, fada.getNewSkillCost());
     }
 }

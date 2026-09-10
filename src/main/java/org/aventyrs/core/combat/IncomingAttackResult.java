@@ -2,6 +2,7 @@ package org.aventyrs.core.combat;
 
 import lombok.Builder;
 import lombok.Getter;
+import org.aventyrs.core.sheet.CombatantAction;
 import org.aventyrs.core.sheet.InteractionResult;
 import org.aventyrs.core.skill.CriticalResult;
 import org.aventyrs.core.skill.DifficultyLevel;
@@ -80,4 +81,19 @@ public class IncomingAttackResult {
      * {@code defenseRoll}.
      */
     private final Boolean effectChainTriggered;
+
+    /**
+     * The defender's Esquiva e Aparar roll bundled as a {@link CombatantAction} ready to file —
+     * {@code SkillType.ESQUIVA_E_APARAR}, the resolved {@code governingAttributeDomain}, the
+     * {@code ActionCost} the caller put on the {@code defenseRoll} (a Reação, usually), the
+     * {@code turnNumber} (from {@link IncomingAttack#getScene()}'s current Rodada, or 0 with no
+     * Scene) and the roll's verdict — {@code succeeded} is whether the defence held, and {@code
+     * margin} is signed from the defender's side (positive when they defended). {@code null} on
+     * the {@code defenseRoll == null} preview path.
+     *
+     * <p>{@link AttackReceiver#resolve} builds it but does <b>not</b> record it. The caller files
+     * it with {@code scene.recordAction(defender, action)} (or {@code defender.recordAction(action)}
+     * with no Scene).
+     */
+    private final CombatantAction recordedAction;
 }

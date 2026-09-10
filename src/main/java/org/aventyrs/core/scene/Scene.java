@@ -1,6 +1,8 @@
 package org.aventyrs.core.scene;
 
+import org.aventyrs.core.item.ItemStore;
 import org.aventyrs.core.sheet.Blessing;
+import org.aventyrs.core.sheet.CombatantAction;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.TargetScope;
@@ -8,9 +10,12 @@ import org.aventyrs.core.sheet.TemporaryBonus;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.EnumMap;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -20,6 +25,7 @@ import static org.aventyrs.core.util.TranslatableMessages.CHARACTER_SHEET_NOT_IN
 import static org.aventyrs.core.util.TranslatableMessages.INITIATIVE_NOT_WON;
 import static org.aventyrs.core.util.TranslatableMessages.INVALID_TURN_CURSOR;
 import static org.aventyrs.core.util.TranslatableMessages.NO_PARTICIPANTS_IN_SCENE;
+import static org.aventyrs.core.util.TranslatableMessages.SCENE_ALREADY_IN_COMBAT;
 
 /**
  * A Cena: the scope many rules key off (e.g. "uma vez a cada Cena", "ao longo da Cena").
@@ -41,12 +47,51 @@ import static org.aventyrs.core.util.TranslatableMessages.NO_PARTICIPANTS_IN_SCE
  * {@code AnoesRacialAbility#FILHOS_DA_MONTANHA}.
  *
  * <p>{@link #combatScene} is the other predicted bit of Scene-scoped state, now real: {@code
- * false} until a caller sets it via {@link #setCombatScene} once combat actually breaks out —
- * a Cena starts as a plain Cena and only becomes a Cena de Combate at that point, matching how
- * rules text like {@code InitiativeAdvantage#IMPETO}'s "nas duas primeiras Rodadas de cada Cena
- * de Combate" only applies once one has begun. Paired with {@link #getCurrentRound()} via
- * {@link SceneContext#isWithinFirstCombatRounds}, and with {@link #wonInitiative} for whichever
+ * false} until combat breaks out — a Cena starts as a plain Cena and only becomes a Cena de
+ * Combate at that point, matching how rules text like {@code InitiativeAdvantage#IMPETO}'s "nas
+ * duas primeiras Rodadas de cada Cena de Combate" only applies once one has begun. {@link
+ * #startCombat()} is the entry point for that moment: it flips the flag <em>and</em> fires every
+ * participant's {@link CombatantSheet#startCombat()} (start-of-combat Talento Blessings — {@code
+ * AnaoFeat#VIGOR_DO_INVERNO}); {@link #setCombatScene} stays the bare flag mutator for a Scene
+ * rebuilt already mid-combat. <b>{@link #getCurrentRound()} only advances while {@code
+ * combatScene} is true</b> — {@link #next()} wraps its cursor before combat but leaves the
+ * counter on Round 0. Paired with {@link #getCurrentRound()} via {@link
+ * SceneContext#isWithinFirstCombatRounds}, and with {@link #wonInitiative} for whichever
  * Vantagens further condition themselves on having won initiative.
+ *
+ * <p>{@link #itemStore} is another such bit of optional Scene-scoped state: an {@link ItemStore}
+ * a caller attaches once the party reaches somewhere they can buy Equipamento (a town, a
+ * travelling merchant), {@code null} on a Scene with nowhere to shop — the same lifecycle as
+ * {@link #terrainType}. A store carries no items of its own; it offers the whole {@code
+ * ItemCatalog} up to its Raridade ceiling, and {@code
+ * org.aventyrs.core.character.services.ItemPurchaseService} is what turns an offer into a
+ * paid-for owned copy. It is deliberately not carried into {@link #buildContext} — a store is
+ * not roll-relevant snapshot state.
+ *
+ * <p>{@link #getConnections()} is this Scene's place in a 4-way map graph: up to four
+ * neighbouring Scenes, one per {@link Direction} (north/south/east/west), held here only as
+ * their {@code UUID}s — {@link #setConnection}/{@link #removeConnection} record and clear them
+ * one side at a time and nothing more. This class deliberately stays passive about the graph:
+ * it never resolves an id to a {@link Scene}, never loads a neighbour, and never touches a
+ * neighbour's own connection map. Keeping both sides of a link consistent — this Scene points
+ * {@code direction} at the neighbour, the neighbour points {@link Direction#opposite()} back —
+ * and persisting the pair belongs to a service one layer up that owns a {@link Scene}
+ * repository and a transaction, neither of which this core has. What lives here is the whole of
+ * scene adjacency this core models: no diagonals, no distance between Scenes, no pathfinding —
+ * a consumer reads {@link #getConnection(Direction)}, resolves the id itself, and builds
+ * anything transitive on top. Connections are map topology, independent of the combat and
+ * session lifecycle — no boundary method ({@link #next()}, {@link #startNewRound()}, {@code
+ * startNewScene}) touches them. Like {@link #buildContext}, this is not carried into {@link
+ * SceneContext}: which Scene lies north is not roll-relevant snapshot state.
+ *
+ * <p>{@link #getActionHistory()} is this Scene's permanent combat log: every {@link
+ * CombatantAction} a caller records flows in through {@link #recordAction(CombatantSheet,
+ * CombatantAction)}, which appends a {@link SceneAction} here <em>and</em> downstreams the
+ * action to the acting combatant's own per-Rodada/per-Cena logs. Unlike those logs it is
+ * never cleared — the Rodada and Cena boundaries reset what a "primeira ... nesta Rodada"
+ * clause reads, not the history a client renders. {@link CombatantSheet#recordAction} stays
+ * callable directly for a caller driving the API with no live Scene, the same split {@link
+ * #next()} has with {@link CombatantSheet#startNewRound()}.
  *
  * <p>{@link #applyInitiativeBlessings} is the caller-invoked hook for the moment a group
  * actually wins initiative: given the winner's own already-resolved {@link
@@ -88,6 +133,8 @@ import static org.aventyrs.core.util.TranslatableMessages.NO_PARTICIPANTS_IN_SCE
  * a server every client mirrors — is rebuilt here in two passes rather than by replaying {@link
  * #next()} once per elapsed turn (which would re-fire every {@link CombatantSheet#startTurn(int)}
  * and {@link CombatantSheet#finishTurn()} along the way, ticking effects that already ticked).
+ * Construct it with its saved identity ({@link #Scene(UUID)}) so {@link #getId()} matches what
+ * neighbouring Scenes point at, then restore its {@link #setConnection connections}.
  * First add everyone already in the rotation, while {@link #getCurrentIndex()} is still {@code -1}
  * and {@link #addParticipant} therefore inserts straight into the live order; then {@link
  * #restoreTurnCursor} to the round/index reached elsewhere; then add whoever joined mid-Round.
@@ -96,15 +143,41 @@ import static org.aventyrs.core.util.TranslatableMessages.NO_PARTICIPANTS_IN_SCE
  * maintains is reproduced by the same code that maintains it, not by a second copy of the rule.
  */
 public class Scene {
+    private final UUID id;
     private final List<InitiativeEntry> activeEntries = new ArrayList<>();
     private final List<InitiativeEntry> pendingEntries = new ArrayList<>();
     private final Map<CombatantSheet, List<TemporaryBonus>> grantedBlessings = new HashMap<>();
+    private final List<ActiveAreaSpellEffect> activeAreaSpellEffects = new ArrayList<>();
+    private final List<SceneAction> actionHistory = new ArrayList<>();
+    private final Map<Direction, UUID> connections = new EnumMap<>(Direction.class);
 
     private int currentIndex = -1;
     private int currentRound = 0;
     private TerrainType terrainType;
     private boolean combatScene;
+    private ItemStore itemStore;
     private List<Blessing> activeBlessings = List.of();
+
+    /** A Scene with a fresh identity — the common case, for a Scene created during play. */
+    public Scene() {
+        this(UUID.randomUUID());
+    }
+
+    /**
+     * A Scene reconstructed with an existing identity — for a caller loading one from persistence
+     * (or mirroring one from a peer), so its {@link #getId()} matches the value that was saved and
+     * every neighbour id another Scene's {@link #getConnections()} points at still resolves to it.
+     * The same purpose {@code CharacterSheet.of(character, player, id)} serves for a sheet.
+     *
+     * <p>Turn order, the round cursor, sub-groups and connections are still restored separately,
+     * afterward — see this class's own javadoc for the two-pass rebuild, {@link #restoreTurnCursor},
+     * {@link #addParticipant}'s explicit-group overload and {@link #setConnection}.
+     *
+     * @throws NullPointerException if id is {@code null}
+     */
+    public Scene(final UUID id) {
+        this.id = Objects.requireNonNull(id, "id");
+    }
 
     /**
      * Adds a CombatantSheet with its rolled initiative value, in a sub-group of its own —
@@ -138,6 +211,7 @@ public class Scene {
      * @return the CombatantSheets in Iniciativa order after this addition
      */
     public List<CombatantSheet> addParticipant(final CombatantSheet characterSheet, final int initiativeValue, final UUID group) {
+        characterSheet.startNewScene();
         InitiativeEntry entry = new InitiativeEntry(characterSheet, initiativeValue, group);
         if (currentIndex == -1) {
             insertSorted(activeEntries, entry);
@@ -207,8 +281,30 @@ public class Scene {
      * @throws IllegalOperationException if characterSheet was never added to this Scene
      */
     public SceneContext buildContext(final CombatantSheet characterSheet, final Map<CombatantSheet, Range> distances) {
+        return buildContext(characterSheet, distances, null);
+    }
+
+    /**
+     * Same as {@link #buildContext(CombatantSheet, Map)}, but also naming the combatant on the
+     * other side of the roll this context is being built for — see {@code
+     * SceneContext#getOpposedCharacter()} for which side that is (the target on an attack roll,
+     * the attacker on a defence roll). Pass {@code null}, or use the shorter overload, for a
+     * roll that opposes nobody.
+     * @throws IllegalOperationException if characterSheet was never added to this Scene
+     */
+    public SceneContext buildContext(final CombatantSheet characterSheet, final Map<CombatantSheet, Range> distances,
+                                      final CombatantSheet opposedCharacter) {
         return new SceneContext(getAllies(characterSheet), getEnemies(characterSheet), distances, terrainType,
-                combatScene, currentRound, wonInitiative(characterSheet));
+                combatScene, currentRound, wonInitiative(characterSheet), opposedCharacter, id);
+    }
+
+    /**
+     * This Scene's stable identity — carried by contexts to scope stateful effects, and the key
+     * another Scene's {@link #getConnections()} stores it under. Auto-generated by {@link #Scene()},
+     * or the value passed to {@link #Scene(UUID)} when a caller rebuilds one from persistence.
+     */
+    public UUID getId() {
+        return id;
     }
 
     /** The kind of environment this Scene is currently taking place in, or {@code null} if never set. */
@@ -226,9 +322,103 @@ public class Scene {
         return combatScene;
     }
 
-    /** Sets whether this Scene is currently a Cena de Combate — e.g. once combat actually breaks out. */
+    /**
+     * Sets whether this Scene is currently a Cena de Combate — the plain flag mutator, e.g. for a
+     * Scene rebuilt from persistence already mid-combat. {@link #startCombat()} is what a caller
+     * uses when combat <em>breaks out</em> here: it flips this flag <em>and</em> fires every
+     * participant's start-of-combat Talento triggers.
+     */
     public void setCombatScene(final boolean combatScene) {
         this.combatScene = combatScene;
+    }
+
+    /**
+     * Combat breaks out in this Scene. Turns {@link #isCombatScene()} on and calls {@link
+     * CombatantSheet#startCombat()} on every participant — those in the rotation and those still
+     * pending alike — so each applies whatever {@code Feat#resolveCombatStartBlessings} its
+     * Talentos grant ({@code AnaoFeat#VIGOR_DO_INVERNO}). Returns what each participant was
+     * granted, keyed by sheet in initiative order, omitting anyone granted nothing.
+     *
+     * <p>This is the only point from which {@link #getCurrentRound()} begins to advance: {@link
+     * #next()} increments it only while {@link #isCombatScene()} is true, so a Scene that has
+     * cycled turns before combat stays on Round 0 until here.
+     *
+     * <p>Like {@link #applyInitiativeBlessings}, this class does not reach into a Service to
+     * resolve what abilities grant — each {@link CombatantSheet} resolves its own, off its own
+     * {@code Character}. Firing it again on an already-combat Scene is a bug, not a refresh.
+     *
+     * @throws IllegalOperationException ({@code SCENE_ALREADY_IN_COMBAT}) if this Scene is
+     *                                    already a Cena de Combate
+     */
+    public Map<CombatantSheet, List<Blessing>> startCombat() {
+        if (combatScene) {
+            throw new IllegalOperationException(SCENE_ALREADY_IN_COMBAT);
+        }
+        combatScene = true;
+        Map<CombatantSheet, List<Blessing>> grantedByParticipant = new LinkedHashMap<>();
+        for (InitiativeEntry entry : allEntries().toList()) {
+            List<Blessing> granted = entry.getCombatantSheet().startCombat();
+            if (!granted.isEmpty()) {
+                grantedByParticipant.put(entry.getCombatantSheet(), granted);
+            }
+        }
+        return grantedByParticipant;
+    }
+
+    /** The {@link ItemStore} the party can currently shop at, or {@code null} if there is none. */
+    public ItemStore getItemStore() {
+        return itemStore;
+    }
+
+    /** Attaches (or clears, with {@code null}) the store the party can currently buy Equipamento from. */
+    public void setItemStore(final ItemStore itemStore) {
+        this.itemStore = itemStore;
+    }
+
+    /**
+     * Records that the Scene identified by neighbourId lies immediately to direction of this one,
+     * replacing whatever was there. <b>Single-sided by design.</b> This class stores raw
+     * neighbour ids and nothing more — it does not resolve them to {@link Scene} instances, does
+     * not load anything, and does not touch the neighbour's own connection map. Keeping the two
+     * sides of a link consistent (this Scene points {@code direction} at the neighbour, the
+     * neighbour points {@link Direction#opposite()} back), and persisting both, is the caller's
+     * job — the natural home for that is a service one layer up that owns the {@link Scene}
+     * repository and a transaction boundary, since this core has neither.
+     *
+     * <p>This is the whole of scene adjacency held here: a 4-way id map a consumer reads via
+     * {@link #getConnection(Direction)} and resolves itself. No pathfinding, no distance between
+     * Scenes, no validation (a caller may even store this Scene's own id — nothing here reads it).
+     * Connections outlive every combat and session boundary; no lifecycle method touches them.
+     */
+    public void setConnection(final Direction direction, final UUID neighbourId) {
+        connections.put(direction, neighbourId);
+    }
+
+    /**
+     * Clears this Scene's connection along direction, if any — again single-sided (see {@link
+     * #setConnection}): the former neighbour's opposite-facing link is left untouched for the
+     * caller to clear too.
+     *
+     * @return whether a connection was actually removed
+     */
+    public boolean removeConnection(final Direction direction) {
+        return connections.remove(direction) != null;
+    }
+
+    /** The id of the Scene connected along direction, or {@code null} if there is no neighbour that way. */
+    public UUID getConnection(final Direction direction) {
+        return connections.get(direction);
+    }
+
+    /**
+     * This Scene's neighbour ids keyed by the {@link Direction} each lies in — only the
+     * directions actually connected are present. A fresh copy, so mutating it doesn't disturb
+     * the Scene; use {@link #setConnection}/{@link #removeConnection} to change connections.
+     */
+    public Map<Direction, UUID> getConnections() {
+        Map<Direction, UUID> copy = new EnumMap<>(Direction.class);
+        copy.putAll(connections);
+        return copy;
     }
 
     /**
@@ -324,11 +514,14 @@ public class Scene {
      * very first call, before anyone has had a turn yet) — this is what advances any Round-scoped
      * {@code TemporaryBonus} that participant is holding (including one targeting {@code
      * ModifierType.INITIATIVE}) toward expiry. Wraps back to the top once every participant has
-     * acted, which also advances {@link #getCurrentRound()} and calls {@link
-     * #startNewRound()} — merging in any participant added mid-Round *and* re-deriving turn
-     * order from everyone's current {@link InitiativeEntry#getEffectiveInitiativeValue()}, so a
-     * granted/expired Iniciativa bonus is reflected in the order from the next Round onward,
-     * never mid-Round. Finally calls {@link CombatantSheet#startTurn(int)} on whoever's turn is
+     * acted; <b>while {@link #isCombatScene()} is true</b> that wrap also advances {@link
+     * #getCurrentRound()} and calls {@link #startNewRound()} — merging in any participant added
+     * mid-Round, re-deriving turn order from everyone's current {@link
+     * InitiativeEntry#getEffectiveInitiativeValue()} (so a granted/expired Iniciativa bonus is
+     * reflected in the order from the next Round onward, never mid-Round), *and* clearing every
+     * active participant's per-Rodada action log via {@link CombatantSheet#startNewRound()}.
+     * Before combat, the wrap only resets the cursor — no Rodada boundary fires and the counter
+     * stays at 0. Finally calls {@link CombatantSheet#startTurn(int)} on whoever's turn is
      * now beginning, passing {@link #getCurrentRound()} as its turnNumber — unlike {@code
      * finishTurn()}, this fires even on the very first call, since that call does start
      * someone's Turn, just none has ended yet.
@@ -344,8 +537,13 @@ public class Scene {
         currentIndex++;
         if (currentIndex >= activeEntries.size()) {
             currentIndex = 0;
-            currentRound++;
-            startNewRound();
+            // A Rodada is a combat unit — the counter and the Rodada-boundary bookkeeping only
+            // move once combat has actually broken out (see startCombat()). A Scene cycling turns
+            // beforehand simply wraps its cursor and stays on Round 0.
+            if (combatScene) {
+                currentRound++;
+                startNewRound();
+            }
         }
         CombatantSheet active = activeEntries.get(currentIndex).getCombatantSheet();
         active.startTurn(currentRound);
@@ -427,6 +625,51 @@ public class Scene {
         return allEntries()
                 .map(InitiativeEntry::getCombatantSheet)
                 .collect(Collectors.toList());
+    }
+
+    /** Registers a lasting area effect produced by a Magia cast in this Scene. */
+    public void addAreaSpellEffect(final ActiveAreaSpellEffect effect) {
+        activeAreaSpellEffects.add(effect);
+    }
+
+    /** Lasting area effects currently active in this Scene. */
+    public List<ActiveAreaSpellEffect> getActiveAreaSpellEffects() {
+        return List.copyOf(activeAreaSpellEffects);
+    }
+
+    /**
+     * Records an action combatant took in this Scene: appends it to this Scene's permanent
+     * {@link #getActionHistory() history} — kept for the client to display, never cleared —
+     * and downstreams it to combatant's own per-Rodada and per-Cena logs via {@link
+     * CombatantSheet#recordAction}. This is the entry point a caller with a live Scene uses
+     * after resolving a roll (or an {@code AttackDelivery}/{@code AttackReceiver} exchange);
+     * {@link CombatantSheet#recordAction} stays callable directly for a caller driving the API
+     * without a Scene, the same split {@link #next()} has with {@link
+     * CombatantSheet#startNewRound()}.
+     *
+     * <p>Matches combatant against this Scene's participants by {@link CombatantSheet#getId()},
+     * like {@link #getAllies}/{@link #removeParticipant} already do, searching the rotation and
+     * the pending set alike — an action a newcomer takes before it joins the rotation still
+     * belongs in the history.
+     *
+     * @throws IllegalOperationException if combatant was never added to this Scene
+     */
+    public void recordAction(final CombatantSheet combatant, final CombatantAction action) {
+        if (allEntries().noneMatch(entry -> entry.getCombatantSheet().getId().equals(combatant.getId()))) {
+            throw new IllegalOperationException(CHARACTER_SHEET_NOT_IN_SCENE);
+        }
+        actionHistory.add(new SceneAction(combatant, action));
+        combatant.recordAction(action);
+    }
+
+    /**
+     * Every action recorded in this Scene since it began, in the order they were recorded — a
+     * fresh unmodifiable copy, so mutating it doesn't disturb the Scene. Not cleared at any
+     * Rodada or Cena boundary; that is what the per-combatant logs on {@link CombatantSheet}
+     * are for. This is the whole-Scene combat log a client renders.
+     */
+    public List<SceneAction> getActionHistory() {
+        return List.copyOf(actionHistory);
     }
 
     /**
@@ -525,11 +768,18 @@ public class Scene {
      * reflected in the turn order from this Round onward. {@code List#sort} is stable, so ties
      * (including a newly-merged pending entry tying with an existing one) keep whatever
      * relative order they already had, the same tie behavior {@link #insertSorted} preserves.
+     *
+     * <p>Finally calls {@link CombatantSheet#startNewRound()} on every active participant
+     * (newcomers already merged in above), clearing each one's per-Rodada action log before the
+     * first {@link CombatantSheet#startTurn(int)} of the new Round.
      */
     private void startNewRound() {
+        activeAreaSpellEffects.forEach(ActiveAreaSpellEffect::tick);
+        activeAreaSpellEffects.removeIf(ActiveAreaSpellEffect::isExpired);
         activeEntries.addAll(pendingEntries);
         pendingEntries.clear();
         activeEntries.sort(Comparator.comparingInt(InitiativeEntry::getEffectiveInitiativeValue).reversed());
+        activeEntries.forEach(entry -> entry.getCombatantSheet().startNewRound());
     }
 
     /** Inserts before the first entry with a strictly lower value, keeping ties in insertion order. */

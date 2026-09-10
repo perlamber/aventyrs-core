@@ -15,17 +15,27 @@ import java.util.Optional;
 @AllArgsConstructor
 public enum DexterityAbility implements AttributeAbility {
 
-    // The "+1UD Movimento Base" clause is real (movementBonus() below) — Movimento Base being
-    // per Ponto de Ação, this widens every point spent moving, which is what the clause says.
-    // TODO: "seu primeiro movimento em cada Rodada tem a distância aumentada em +2UD" stays
-    // unimplemented — it's conditioned on *which* movement in the Rodada this is (the first),
-    // which MovementService's single per-Ponto-de-Ação figure has no way to express; needs a
-    // per-movement-action tracking concept this core doesn't have.
+    /**
+     * <b>Both halves are real.</b> The permanent "+1UD" is {@link #movementBonus()}; the "+2UD
+     * no primeiro movimento em cada Rodada" is {@link #resolveRoundMovementIncrease(int)},
+     * resolved by {@code MovementService#getMovementBase(CombatantSheet, int)} against the
+     * movement counter {@code CombatantSheet#consumeMovementThisRound()} keeps.
+     *
+     * <p>Both are per Ponto de Ação, per {@code MovementService}'s class javadoc — so on the
+     * first movement of a Rodada this ability is worth +3UD for every Ponto de Ação spent on it,
+     * and +1UD on every movement after.
+     */
     PASSOS_LONGOS("Seu Movimento Base aumenta em +1UD. Seu primeiro movimento em cada Rodada tem a distância " +
             "aumentada em +2UD.") {
         @Modifier(ModifierType.MOVEMENT)
         public int movementBonus() {
             return 1;
+        }
+
+        /** "Primeiro movimento em cada Rodada" is movementIndex 0, and only that one. */
+        @Override
+        public int resolveRoundMovementIncrease(final int movementIndex) {
+            return movementIndex == 0 ? FIRST_MOVEMENT_BONUS : 0;
         }
     },
     //TODO bonus no ataque corpo a corpo e mecanica de investida.
@@ -91,6 +101,9 @@ public enum DexterityAbility implements AttributeAbility {
 
     /** LETALIDADE_PROGRESSIVA's benefits end once combate reaches its 6th Round. */
     private static final int BENEFIT_ENDS_ROUND = 6;
+
+    /** PASSOS_LONGOS's own stated "+2UD" on the Rodada's first movement. */
+    private static final int FIRST_MOVEMENT_BONUS = 2;
 
     private final String description;
 

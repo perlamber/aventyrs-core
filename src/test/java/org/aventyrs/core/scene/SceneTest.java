@@ -9,12 +9,15 @@ import org.aventyrs.core.character.services.InitiativeBlessingService;
 import org.aventyrs.core.character.services.InitiativeBlessingServiceImpl;
 import org.aventyrs.core.ego.InitiativeAdvantage;
 import org.aventyrs.core.modifier.ModifierType;
+import org.aventyrs.core.sheet.ActionCost;
 import org.aventyrs.core.sheet.Blessing;
 import org.aventyrs.core.sheet.CharacterSheet;
+import org.aventyrs.core.sheet.CombatantAction;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.Player;
 import org.aventyrs.core.sheet.TargetScope;
+import org.aventyrs.core.skill.SkillType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -58,6 +61,11 @@ class SceneTest {
     private CharacterSheet newSheet() {
         Character character = CharacterFixture.blank(CharacterFixture.BLANK).build();
         return CharacterSheet.of(character, new Player());
+    }
+
+    private static CombatantAction sampleAction() {
+        return new CombatantAction(SkillType.ATAQUE_A_DISTANCIA, AttributeDomain.DEXTERITY, null,
+                ActionCost.ofActionPoints(1), 0, null);
     }
 
     private CharacterSheet sheetWithPosicionamentoEstrategico() {
@@ -151,6 +159,7 @@ class SceneTest {
         CharacterSheet second = newSheet();
         scene.addParticipant(first, 10);
         scene.addParticipant(second, 5);
+        scene.startCombat();
 
         scene.next();
         assertEquals(0, scene.getCurrentRound());
@@ -158,6 +167,139 @@ class SceneTest {
         assertEquals(0, scene.getCurrentRound());
         scene.next();
         assertEquals(1, scene.getCurrentRound());
+    }
+
+    @Test
+    void addParticipantStartsAFreshCenaForThatSheet() {
+        CharacterSheet sheet = newSheet();
+        sheet.recordAction(sampleAction());   // left over from a previous Cena
+
+        new Scene().addParticipant(sheet, 10);
+
+        assertTrue(sheet.getActionsThisCena().isEmpty());
+        assertTrue(sheet.getActionsThisRound().isEmpty());
+    }
+
+    @Test
+    void nextClearsEveryParticipantsActionLogAtARoundBoundary() {
+        Scene scene = new Scene();
+        CharacterSheet first = newSheet();
+        CharacterSheet second = newSheet();
+        scene.addParticipant(first, 10);
+        scene.addParticipant(second, 5);
+        scene.startCombat();
+
+        scene.next();                                   // first's Turn, Round 0
+        first.recordAction(sampleAction());
+        scene.next();                                   // second's Turn, Round 0
+        second.recordAction(sampleAction());
+        scene.next();                                   // wraps to Round 1
+
+        assertEquals(1, scene.getCurrentRound());
+        assertTrue(first.getActionsThisRound().isEmpty());
+        assertTrue(second.getActionsThisRound().isEmpty());
+    }
+
+    @Test
+    void aReactionRecordedOnAnotherCombatantsTurnSurvivesUntilTheRoundWraps() {
+        Scene scene = new Scene();
+        CharacterSheet first = newSheet();
+        CharacterSheet second = newSheet();
+        scene.addParticipant(first, 10);
+        scene.addParticipant(second, 5);
+        scene.startCombat();
+
+        scene.next();                                   // first's Turn, Round 0
+        second.recordAction(sampleAction());            // second reacts during first's Turn
+        scene.next();                                   // second's Turn — still Round 0
+        assertEquals(1, second.getActionsThisRound().size());
+
+        scene.next();                                   // wraps to Round 1
+        assertTrue(second.getActionsThisRound().isEmpty());
+    }
+
+    @Test
+    void recordActionDownstreamsToTheActingCombatantsOwnLogs() {
+        Scene scene = new Scene();
+        CharacterSheet actor = newSheet();
+        scene.addParticipant(actor, 10);
+
+        CombatantAction action = sampleAction();
+        scene.recordAction(actor, action);
+
+        assertEquals(List.of(action), actor.getActionsThisRound());
+        assertEquals(List.of(action), actor.getActionsThisCena());
+    }
+
+    @Test
+    void recordActionAccumulatesSceneHistoryPairedWithTheActor() {
+        Scene scene = new Scene();
+        CharacterSheet first = newSheet();
+        CharacterSheet second = newSheet();
+        scene.addParticipant(first, 10);
+        scene.addParticipant(second, 5);
+
+        CombatantAction firstAction = sampleAction();
+        CombatantAction secondAction = sampleAction();
+        scene.recordAction(first, firstAction);
+        scene.recordAction(second, secondAction);
+
+        assertEquals(List.of(new SceneAction(first, firstAction), new SceneAction(second, secondAction)),
+                scene.getActionHistory());
+    }
+
+    @Test
+    void sceneActionHistorySurvivesRoundAndCenaBoundariesThatClearThePerCombatantLogs() {
+        Scene scene = new Scene();
+        CharacterSheet first = newSheet();
+        CharacterSheet second = newSheet();
+        scene.addParticipant(first, 10);
+        scene.addParticipant(second, 5);
+
+        scene.next();                              // first's Turn, Round 0
+        scene.recordAction(first, sampleAction());
+        scene.next();
+        scene.next();                              // wraps to Round 1 — clears per-Rodada logs
+        first.startNewScene();                     // clears per-Cena logs
+
+        assertTrue(first.getActionsThisRound().isEmpty());
+        assertTrue(first.getActionsThisCena().isEmpty());
+        assertEquals(1, scene.getActionHistory().size());
+    }
+
+    @Test
+    void recordActionForACombatantNeverAddedThrows() {
+        Scene scene = new Scene();
+        scene.addParticipant(newSheet(), 10);
+
+        assertThrows(IllegalOperationException.class,
+                () -> scene.recordAction(newSheet(), sampleAction()));
+    }
+
+    @Test
+    void recordActionAcceptsAParticipantStillWaitingToJoinTheRotation() {
+        Scene scene = new Scene();
+        CharacterSheet inRotation = newSheet();
+        CharacterSheet lateArrival = newSheet();
+        scene.addParticipant(inRotation, 10);
+        scene.next();
+        scene.addParticipant(lateArrival, 20);     // held in the pending set until next Round
+
+        scene.recordAction(lateArrival, sampleAction());
+
+        assertEquals(1, scene.getActionHistory().size());
+        assertEquals(1, lateArrival.getActionsThisRound().size());
+    }
+
+    @Test
+    void getActionHistoryReturnsACopyThatDoesNotDisturbTheScene() {
+        Scene scene = new Scene();
+        CharacterSheet actor = newSheet();
+        scene.addParticipant(actor, 10);
+        scene.recordAction(actor, sampleAction());
+
+        assertThrows(UnsupportedOperationException.class,
+                () -> scene.getActionHistory().add(new SceneAction(actor, sampleAction())));
     }
 
     @Test
@@ -183,6 +325,7 @@ class SceneTest {
         CharacterSheet lateArrival = newSheet();
         scene.addParticipant(a, 10);
         scene.addParticipant(b, 5);
+        scene.startCombat();
 
         scene.next();
         scene.addParticipant(lateArrival, 20);
@@ -248,6 +391,7 @@ class SceneTest {
         CharacterSheet b = newSheet();
         scene.addParticipant(a, 10);
         scene.addParticipant(b, 5);
+        scene.startCombat();
 
         scene.next();
         b.grantTemporaryBonus(ModifierType.INITIATIVE, 20, 2);
@@ -268,6 +412,7 @@ class SceneTest {
         lateArrival.grantTemporaryBonus(ModifierType.INITIATIVE, 20, 2);
         scene.addParticipant(a, 10);
         scene.addParticipant(b, 5);
+        scene.startCombat();
 
         scene.next();
         scene.addParticipant(lateArrival, 1);
@@ -424,6 +569,20 @@ class SceneTest {
     }
 
     @Test
+    void itemStoreIsUnsetByDefaultAndRoundTripsThroughItsSetter() {
+        Scene scene = new Scene();
+        assertNull(scene.getItemStore());
+
+        org.aventyrs.core.item.ItemStore store =
+                new org.aventyrs.core.item.ItemStore(org.aventyrs.core.item.ItemRarity.UNCOMMON);
+        scene.setItemStore(store);
+        assertEquals(store, scene.getItemStore());
+
+        scene.setItemStore(null);
+        assertNull(scene.getItemStore());
+    }
+
+    @Test
     void combatSceneIsFalseByDefault() {
         Scene scene = new Scene();
         assertFalse(scene.isCombatScene());
@@ -435,6 +594,51 @@ class SceneTest {
         scene.setCombatScene(true);
 
         assertTrue(scene.isCombatScene());
+    }
+
+    @Test
+    void currentRoundStaysAtZeroUntilCombatStarts() {
+        Scene scene = new Scene();
+        CharacterSheet first = newSheet();
+        CharacterSheet second = newSheet();
+        scene.addParticipant(first, 10);
+        scene.addParticipant(second, 5);
+
+        scene.next();
+        scene.next();
+        scene.next();                                   // would wrap to Round 1 in combat
+        assertEquals(0, scene.getCurrentRound());
+
+        scene.startCombat();
+        scene.next();
+        scene.next();
+        assertEquals(1, scene.getCurrentRound());
+    }
+
+    @Test
+    void startCombatTurnsOnTheCombatFlagAndFiresEachParticipantsStartCombat() {
+        Scene scene = new Scene();
+        CharacterSheet active = newSheet();
+        CharacterSheet pending = newSheet();
+        scene.addParticipant(active, 10);
+        scene.next();
+        scene.addParticipant(pending, 5);              // held pending, cursor already moved
+
+        scene.startCombat();
+
+        assertTrue(scene.isCombatScene());
+        // Each participant's own startCombat() already fired, so a direct call now grants nothing.
+        assertTrue(active.startCombat().isEmpty());
+        assertTrue(pending.startCombat().isEmpty());
+    }
+
+    @Test
+    void startCombatRefusesToRunOnAnAlreadyCombatScene() {
+        Scene scene = new Scene();
+        scene.addParticipant(newSheet(), 10);
+        scene.startCombat();
+
+        assertThrows(IllegalOperationException.class, scene::startCombat);
     }
 
     @Test
@@ -684,6 +888,7 @@ class SceneTest {
         CharacterSheet slow = newSheet();
         scene.addParticipant(fast, 18);
         scene.addParticipant(slow, 5);
+        scene.startCombat();
         scene.next();
 
         CharacterSheet latecomer = newSheet();
@@ -734,6 +939,7 @@ class SceneTest {
         CharacterSheet slow = newSheet();
         scene.addParticipant(fast, 18);
         scene.addParticipant(slow, 5);
+        scene.setCombatScene(true);   // a Scene rebuilt already mid-combat
         scene.restoreTurnCursor(2, 0);
 
         CharacterSheet latecomer = newSheet();
@@ -904,5 +1110,150 @@ class SceneTest {
         scene.getAllParticipants().clear();
 
         assertEquals(List.of(fighter), scene.getAllParticipants());
+    }
+
+    @Test
+    void twoFreshScenesHaveDistinctIds() {
+        assertFalse(new Scene().getId().equals(new Scene().getId()));
+    }
+
+    @Test
+    void aSceneCanBeReconstructedWithAnExistingId() {
+        UUID savedId = UUID.randomUUID();
+
+        Scene rebuilt = new Scene(savedId);
+
+        assertEquals(savedId, rebuilt.getId());
+    }
+
+    @Test
+    void reconstructingWithANullIdIsRejected() {
+        assertThrows(NullPointerException.class, () -> new Scene(null));
+    }
+
+    @Test
+    void aRebuiltSceneResolvesTheNeighbourIdAnotherSceneStored() {
+        UUID northId = UUID.randomUUID();
+        Scene here = new Scene();
+        here.setConnection(Direction.NORTH, northId);
+
+        // the neighbour, loaded separately, is reconstructed with the very id 'here' points at
+        Scene north = new Scene(northId);
+
+        assertEquals(north.getId(), here.getConnection(Direction.NORTH));
+    }
+
+    @Test
+    void aFreshSceneHasNoConnections() {
+        Scene scene = new Scene();
+
+        assertTrue(scene.getConnections().isEmpty());
+        for (Direction direction : Direction.values()) {
+            assertNull(scene.getConnection(direction));
+        }
+    }
+
+    @Test
+    void setConnectionRecordsANeighbourIdInThatDirection() {
+        Scene scene = new Scene();
+        UUID neighbourId = UUID.randomUUID();
+
+        scene.setConnection(Direction.NORTH, neighbourId);
+
+        assertEquals(neighbourId, scene.getConnection(Direction.NORTH));
+    }
+
+    @Test
+    void setConnectionIsSingleSided_theNeighbourIsNotTouched() {
+        Scene here = new Scene();
+        Scene there = new Scene();
+
+        here.setConnection(Direction.NORTH, UUID.randomUUID());
+
+        // this core keeps the opposite side consistent for nobody — that's the service's job
+        assertTrue(there.getConnections().isEmpty());
+    }
+
+    @Test
+    void setConnectionReplacesWhateverWasThere() {
+        Scene scene = new Scene();
+        UUID first = UUID.randomUUID();
+        UUID second = UUID.randomUUID();
+        scene.setConnection(Direction.EAST, first);
+
+        scene.setConnection(Direction.EAST, second);
+
+        assertEquals(second, scene.getConnection(Direction.EAST));
+    }
+
+    @Test
+    void removeConnectionClearsOnlyThisSide() {
+        Scene scene = new Scene();
+        scene.setConnection(Direction.WEST, UUID.randomUUID());
+
+        assertTrue(scene.removeConnection(Direction.WEST));
+        assertNull(scene.getConnection(Direction.WEST));
+    }
+
+    @Test
+    void removeConnectionOnAnUnconnectedDirectionIsANoOp() {
+        assertFalse(new Scene().removeConnection(Direction.NORTH));
+    }
+
+    @Test
+    void aSceneCanHoldANeighbourInEachOfTheFourDirections() {
+        Scene centre = new Scene();
+        UUID n = UUID.randomUUID();
+        UUID s = UUID.randomUUID();
+        UUID e = UUID.randomUUID();
+        UUID w = UUID.randomUUID();
+
+        centre.setConnection(Direction.NORTH, n);
+        centre.setConnection(Direction.SOUTH, s);
+        centre.setConnection(Direction.EAST, e);
+        centre.setConnection(Direction.WEST, w);
+
+        assertEquals(Map.of(Direction.NORTH, n, Direction.SOUTH, s, Direction.EAST, e, Direction.WEST, w),
+                centre.getConnections());
+    }
+
+    @Test
+    void getConnectionsReturnsADefensiveCopy() {
+        Scene scene = new Scene();
+        UUID neighbourId = UUID.randomUUID();
+        scene.setConnection(Direction.EAST, neighbourId);
+
+        scene.getConnections().clear();
+
+        assertEquals(neighbourId, scene.getConnection(Direction.EAST));
+    }
+
+    /** A caller building a bidirectional link mirrors it with Direction#opposite() itself. */
+    @Test
+    void bothSidesOfALinkAreTheCallersResponsibility() {
+        Scene here = new Scene();
+        Scene there = new Scene();
+        UUID hereId = UUID.randomUUID();
+        UUID thereId = UUID.randomUUID();
+
+        here.setConnection(Direction.NORTH, thereId);
+        there.setConnection(Direction.NORTH.opposite(), hereId);
+
+        assertEquals(thereId, here.getConnection(Direction.NORTH));
+        assertEquals(hereId, there.getConnection(Direction.SOUTH));
+    }
+
+    @Test
+    void connectionsSurviveCombatAndRoundBoundaries() {
+        Scene here = new Scene();
+        UUID thereId = UUID.randomUUID();
+        here.setConnection(Direction.NORTH, thereId);
+        here.addParticipant(newSheet(), 10);
+
+        here.startCombat();
+        here.next();
+        here.next();
+
+        assertEquals(thereId, here.getConnection(Direction.NORTH));
     }
 }

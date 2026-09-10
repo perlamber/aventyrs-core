@@ -24,9 +24,11 @@ public enum MedicinaECuraCompetencyAbility implements SkillCompetencyAbility {
 
     // TODO: an activated ability rolled against GD Média during another creature's Descanso;
     // on success the target recovers 1d6 additional PV/PM/PD at the end of that Descanso —
-    // needs a roll-resolution-vs-DifficultyLevel engine and this core deliberately never
-    // rolls dice (1d6) — see the skill package-info. The recovery itself, once resolved,
-    // would layer on top of org.aventyrs.core.rest.RestService's existing PV/PM/PD recovery.
+    // the GD Média check is expressible now (a SkillRoll states its own targetValue), but this
+    // core deliberately never rolls dice, so the "1d6 additional" is the caller's — see the
+    // skill package-info. The recovery itself, once resolved, would layer on top of
+    // org.aventyrs.core.rest.RestService's existing PV/PM/PD recovery, and nothing hooks a
+    // Perícia roll's outcome into a Descanso.
     MEDICINA_ALTERNATIVA("Você pode, antes ou durante o descanso de outra criatura, fazer " +
             "massagens, usar de acupuntura ou outros recursos prazerosos e relaxantes, para " +
             "melhorar a qualidade do descanso do alvo. Faça uma rolagem contra GD média, se " +
@@ -38,9 +40,10 @@ public enum MedicinaECuraCompetencyAbility implements SkillCompetencyAbility {
     // #getRecoveredHitPoints/#applyRest already computes that number), limited to once per
     // target until their next Descanso Longo (even after a failed attempt), plus a Corrente
     // de Efeitos — Milagre Maior tier that also recovers PM/PD (RestService#applyRest already
-    // does that too). Blocked on a roll-resolution-vs-DifficultyLevel engine and a
-    // per-target "already attempted since last Descanso Longo" tracker, neither of which
-    // exist yet.
+    // does that too). "Raising this roll's own GD and succeeding" is expressible now — a caller
+    // states the harder targetValue and InteractionResult reports whether it was beaten. What
+    // remains is the per-target "already attempted since last Descanso Longo" tracker, and a way
+    // for a Perícia roll's success to hand another character a Descanso Curto's recovery.
     MILAGREIRO("Quando fizer rolagens de Medicina e Cura para tratar e estancar ferimentos " +
             "você pode aumentar o Grau de Dificuldade para Difícil, se o fizer e for " +
             "bem-sucedido os personagens afetados recuperam PV como se passassem por um " +

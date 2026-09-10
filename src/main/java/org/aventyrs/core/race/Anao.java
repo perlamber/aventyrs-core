@@ -49,7 +49,7 @@ import java.util.Map;
  *
  * <p>Tendência is deliberately left unconstrained: the rules text only says Anões "raramente"
  * pick extremist tendências (Samaritano/Destruidor) — advisory, not a hard rule — so {@link
- * Character#getTendencia()} stays a plain, unvalidated 1-10 value for this race like any
+ * Character#getAlignment()} stays a player-selected value for this race like any
  * other.
  */
 public class Anao implements Race {

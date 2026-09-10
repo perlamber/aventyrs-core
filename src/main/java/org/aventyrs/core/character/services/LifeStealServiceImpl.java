@@ -8,12 +8,17 @@ public class LifeStealServiceImpl implements LifeStealService {
 
     @Override
     public int getTotalLifeSteal(final Character character, final CombatantSheet characterSheet) {
-        int base = characterSheet.getTotalLifeSteal();
+        int base = characterSheet.getTotalLifeSteal() + character.getFeats().stream()
+                .mapToInt(feat -> feat.resolveGrantedLifeSteal(character))
+                .sum();
         if (base <= 0) {
             return base;
         }
         int bonus = character.getAttributeAbilities().stream()
                 .mapToInt(AttributeAbility::resolveLifeStealBonus)
+                .sum();
+        bonus += character.getFeats().stream()
+                .mapToInt(feat -> feat.resolveLifeStealBonus(character))
                 .sum();
         return base + bonus;
     }

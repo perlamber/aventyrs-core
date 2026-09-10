@@ -5,6 +5,7 @@ import org.aventyrs.core.character.AttributeValue;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterAttributes;
 import org.aventyrs.core.character.CharacterSkill;
+import org.aventyrs.core.character.DamageDescriptor;
 import org.aventyrs.core.character.DefenseType;
 import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.ego.AutocontroleAdvantage;
@@ -18,10 +19,13 @@ import org.aventyrs.core.effect.EffectChainServiceImpl;
 import org.aventyrs.core.effect.Sangramento;
 import org.aventyrs.core.skill.CriticalResult;
 import org.aventyrs.core.item.ArmorItem;
+import org.aventyrs.core.scene.Scene;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.InteractionResult;
 import org.aventyrs.core.skill.esquivaeaparar.EsquivaEApararInteraction;
+import org.aventyrs.core.sheet.ActionCost;
 import org.aventyrs.core.sheet.CharacterSheet;
+import org.aventyrs.core.sheet.CombatantAction;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.Player;
 import org.aventyrs.core.skill.DifficultyLevel;
@@ -354,10 +358,10 @@ class AttackReceiverTest {
     }
 
     /**
-     * The defense roll is the one thing resolve does that genuinely changes state (it consumes
-     * CharacterSheet#consumeFirstRollThisTurn and can grant a temporary Ego point on a critical
-     * success), so it must happen exactly once per incoming attack — rolling twice would
-     * double-consume the first-roll-of-turn state.
+     * The defense roll is the one thing resolve does that genuinely changes state (it can grant
+     * a temporary Ego point on a critical success — the first-roll-of-Turn check it also runs is
+     * non-mutating now), so it must happen exactly once per incoming attack; rolling twice would
+     * double-grant that Ego point.
      */
     @Test
     void resolveRollsTheDefenseExactlyOnce() {
@@ -372,14 +376,62 @@ class AttackReceiverTest {
         assertEquals(1, counting.calls);
     }
 
+    @Test
+    void resolveHandsBackARecordedActionForTheDefenceWithTheVerdictSignedFromTheDefendersSide() {
+        CharacterSheet defender = defender(3, 3);
+        CharacterSheet ally = defender(2, 1);
+        Scene scene = new Scene();
+        scene.addParticipant(defender, 12);
+        scene.addParticipant(ally, 3);
+        scene.startCombat();
+        scene.next();
+        scene.next();
+        scene.next();                                                     // wraps to Round 1
+
+        IncomingAttackResult result = attackReceiver.resolve(attackOn(defender)
+                .scene(scene)
+                .defenseRoll(new SkillRoll(List.of(5, 3, 3), null, null, ActionCost.REACTION))  // 11 + 7 = 18, ties
+                .build());
+
+        CombatantAction action = result.getRecordedAction();
+        assertEquals(SkillType.ESQUIVA_E_APARAR, action.skill());
+        assertEquals(AttributeDomain.DEXTERITY, action.governingDomain());
+        assertNull(action.attackSource());
+        assertEquals(ActionCost.REACTION, action.cost());
+        assertEquals(1, action.turnNumber());
+        assertTrue(action.outcome().succeeded());                         // the defence held
+        assertEquals(0, action.outcome().margin());                       // positive when it holds
+        assertEquals(result.getEffectiveDifficultyLevel(), action.outcome().reachedDifficultyLevel());
+    }
+
+    @Test
+    void theRecordedActionIsNullWithoutADefenseRollAndTurnNumberIsZeroWithNoScene() {
+        CharacterSheet defender = defender(3, 3);
+
+        assertNull(attackReceiver.resolve(attackOn(defender).build()).getRecordedAction());
+
+        IncomingAttackResult rolled = attackReceiver.resolve(attackOn(defender)
+                .defenseRoll(new SkillRoll(List.of(4, 3, 3)))             // 10 + 7 = 17, one short of 18
+                .build());
+        assertEquals(0, rolled.getRecordedAction().turnNumber());
+        assertFalse(rolled.getRecordedAction().outcome().succeeded());
+    }
+
+    /**
+     * Counts on the <em>longest</em> {@code applyTo} overload — the one holding all the logic,
+     * which every shorter form delegates down to (CLAUDE.md, "Cascading overloads"). Counting on
+     * the four-argument form instead would miss every call {@link AttackReceiver#resolve} makes,
+     * since it passes a {@code DamageDescriptor} and so reaches the five-argument form directly.
+     */
     private static class CountingInteraction extends EsquivaEApararInteraction {
         private int calls;
 
         @Override
         public InteractionResult applyTo(final CombatantSheet target, final SceneContext sceneContext,
-                                          final SkillRoll skillRoll, final DefenseType defenseType) {
+                                          final SkillRoll skillRoll, final DefenseType defenseType,
+                                          final DamageDescriptor damageDescriptor) {
             calls++;
-            return super.applyTo(target, sceneContext, skillRoll, defenseType);
+            return super.applyTo(target, sceneContext, skillRoll, defenseType, damageDescriptor);
         }
     }
 }

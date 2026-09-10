@@ -1,0 +1,2119 @@
+TALENTOS
+TALENTOS GERAIS
+Artes Marciais
+Estados Federados
+Artista Marcial (Geral/Arte Marcial)
+Pré-requisito: Força 2 e 2 Graduações em Ataque Corpo-a-Corpo
+Descrição: O Dano Base de seus Ataques Desarmados e Armas Naturais aumentam em +1, o Dano Base cumulativamente aumenta em +1 para cada Título Aventyr Desperto que você possua.
+
+Defesa de Mãos Limpas (Geral/Arte Marcial)
+Pré-requisito: Talento Arte Marcial e 4 Graduações em Esquiva e Aparar
+Descrição: Enquanto não estiver utilizando nenhuma arma, exceto Armas Naturais, você recebe Bônus de +2 em suas Defesas, este Bônus aumenta cumulativamente em +1 para cada Título Aventyr que você tenha Desperto.
+
+TALENTOS GERAIS AVENTYRS
+Arte Marcial Mista (Aventyr/Geral/Arte Marcial)
+Pré-requisito: 7 Graduações em Ataque Corpo-a-Corpo, pelo menos 2 Títulos Aventyr Despertos e qualquer Talento Dominar Arte Marcial.
+Descrição: Você recebe Bônus de +1 em rolagens de Danos Críticos de Armas Naturais e Defesas para cada Talento de Arte Marcial que possuir.
+Você pode possuir um segundo Talento de Dominar Arte Marcial.
+
+Dominar Arte Marcial: Arte Fluida (Aventyr/Geral/Arte Marcial)
+Pré-requisito: 5 Graduações em Ataque Corpo-a-Corpo, pelo menos 1 Título Aventyr Desperto e nenhum outro Talento Dominar Arte Marcial.
+Descrição: Enquanto não estiver utilizando nenhuma arma - exceto Armas Naturais - e nenhum item do tipo Escudo seus ataques afetam um alvo adicional. Alvos adicionais precisar estar adjacentes ao alvo primário.
+Enquanto houver mais de um alvo você sofre Desvantagem em rolagens de Danos, os danos no alvo adicional são reduzidos à metade.
+
+Dominar Arte Marcial: Ferroada Esmagadora (Aventyr/Geral/Arte Marcial)
+Pré-requisito: 5 Graduações em Ataque Corpo-a-Corpo, pelo menos 1 Título Aventyr Desperto e nenhum outro Talento Dominar Arte Marcial.
+Descrição: Enquanto não estiver utilizando nenhum item do tipo Escudo, armas leves de combate corpo-a-corpo que você utilizar são consideradas Armas Naturais para você. 
+Esta Arte Marcial permite que você utilize quaisquer outros Talentos ou Habilidades que afetem Armas Naturais para afetar sua arma, exceto para substituir explicitamente Ataques Desarmados.
+
+Dominar Arte Marcial: Impacto Rochoso (Aventyr/Geral/Arte Marcial)
+Pré-requisito: 5 Graduações em Esquiva e Aparar, pelo menos 1 Título Aventyr Desperto e nenhum outro Talento Dominar Arte Marcial.
+Descrição: Enquanto não estiver utilizando nenhuma arma, atacando apenas com Ataques Desarmados, você recebe Vantagem em suas Rolagens de Dano, este benefício muda para +1d6 se o seu ataque for uma Reação.
+Enquanto estiver utilizando um item do tipo Escudo você recebe Bônus de +2 em suas Defesas para resistir à Reações de outros personagens.
+
+Dominar Arte Marcial: Submissão (Aventyr/Geral/Arte Marcial)
+Pré-requisito: 5 Graduações em Ataque Corpo-a-Corpo, pelo menos 1 Título Aventyr Desperto e nenhum outro Talento Dominar Arte Marcial.
+Descrição: Você não é considerado Desprevenido enquanto estiver Caído e não sofre Desvantagens em rolagens de Perícias de Ataque com Armas Naturais ou Desarmado nesta condição, você também recebe Vantagem em suas rolagens de Ataque Corpo-a-Corpo para Agarrar, Empurrar ou Derrubar.
+Enquanto estiver caído você recebe Bônus de +2 em sua DF, pode realizar uma Reação adicional e pode se levantar como Ação Livre. 
+
+
+Dominar Arte Marcial: Tigre e Serpente (Aventyr/Geral/Arte Marcial)
+Pré-requisito: 5 Graduações em Ataque Corpo-a-Corpo, pelo menos 1 Título Aventyr Desperto e nenhum outro Talento Dominar Arte Marcial.
+Descrição: A Margem Crítica Menor de seus Ataques Corpo-a-Corpo aumenta em +1 e seus Acertos Críticos ganham a Corrente de Efeitos – Rugido.
+O aumento na Margem Crítica Menor muda para +3 (ao invés de +1) se o seu ataque for uma Ação Livre ou Reação.
+
+Artilharia
+Módulo Básico
+Abater a Caça (Artilharia)
+Pré-requisitos: 3 Graduações em 'Ataque à Distância' e o Talento 'atirador perfeito'
+Descrição: Sempre que utilizar o talento 'Atirador Perfeito' você recebe também vantagem nas rolagens de dano.
+
+Atirador Perfeito (Artilharia)
+Pré-requisitos: 2 Graduações em 'Ataque a Distância'
+Descrição: Escolha um tipo de arma de Ataque a Distância ou de Arremesso, você recebe Vantagem nas rolagens de ataque sempre que atacar inimigos à Distâncias Médias ou superiores enquanto utilizando armas do tipo escolhido.
+
+Mira Impecável (Artilharia)
+Pré-requisitos: Treinamento em Ataque-à-distância
+Descrição: Você pode aumentar seu tempo de disparo em +1PA quando atacar utilizando a perícia 'ataque à distância', se o fizer poderá rolar novamente o dado de menor valor em sua rolagem. 
+O novo resultado será utilizado, mesmo que seja inferior ao anterior.
+
+Mira Mortal (Artilharia)
+Pré-requisitos: Talento ‘Mira Impecável’ e ‘Acerto Crítico Aprimorado’, com arma escolhida de ataque à distância ou arremesso.
+Descrição: Sempre que tiver um Acerto Crítico usando o talento ‘Mira Impecável’ você causa +1d6 de dano adicional.
+
+Tiro Duplo (Geral/Artilharia)
+Pré-requisito: 2 outros Talentos de Artilharia e 5 Graduações em Ataque à Distância
+Descrição: Uma vez por Rodada, em seu Turno, você pode disparar um projétil adicional em seus ataques, se o fizer os danos causados pelo ataque aumentam em +1d6 independentemente do tipo de projétil utilizado, você recebe Desvantagem nesta rolagem de Ataque à Distância.
+Correntes de Efeito e Efeitos Críticos aplicam seus efeitos duas vezes.
+
+Tiro Longo (Artilharia)
+Pré-requisitos: 3 graduações em Ataque-à-distância
+Descrição: A distância máxima de seus ataques à Distância, físicos e Mágicos, aumentam em +1 nível. 
+Sempre que efetuar ataques utilizando dos benefícios do Talento ‘Mira Impecável’, a distância dos seus ataques aumenta em +1 passo (para o total de +2 níveis).
+
+Tiro Rápido (Artilharia)
+Pré-requisitos: talento 'mira impecável'
+Descrição: Após fazer um ataque com uma arma à distância você pode fazer um ataque adicional com a mesma arma em desvantagem ao custo de 1PA.
+Este talento pode ser utilizado apenas uma vez por Rodada.
+
+Um tiro, uma morte (Artilharia)
+Pré-requisitos: 4 graduações em 'Ataque a Distância' e o talento 'Atirador Perfeito'
+Regra: Você recebe Vantagem em suas rolagens de Dano sempre que utilizar o Talento 'Atirador Perfeito'
+
+O Grande Continente
+Disparo às Cegas (Geral/Artilharia)
+Pré-requisito: Talento Combater as Cegas, 4 Graduações em Ataque à Distância.
+Descrição:  Você pode estender os benefícios de Combater as Cegas aos seus Ataques-a-Distância efetuados contra alvos em até Distância Média.
+
+TALENTOS GERAIS AVENTYRS
+Tiro Múltiplo (Aventyr/Artilharia)
+Pré-requisito: Talento Tiro Duplo e 7 Graduações em Ataque à Distância
+Descrição: Como Tiro Duplo, mas você pode disparar uma quantidade de projéteis adicionais é igual a sua quantidade de Títulos Aventyr Despertos (mínimo 2 projéteis, máximo 4 projéteis). 
+
+
+Cavalaria
+O Grande Continente
+Ataque em Arco (Geral/Cavalaria)
+Pré-requisito: Talento Grande Ginete e 4 Graduações em Combate Corpo-a-Corpo
+Descrição: Enquanto estiver montado ou dirigindo você pode comparar o resultado de suas Rolagens de Ataque Corpo-a-Corpo com as Defesas de um alvo adicional e que estejam adjacentes entre si, você deve fazer uma única rolagem de danos para todos os alvos, o valor dos danos causados em cada alvo é igual a metade do valor rolado (Efeito de Meio-Dano) independentemente do número de alvos atingidos. Apenas ataques físicos podem ser beneficiados por este Talento.
+
+Direção Caótica (Geral/Cavalaria)
+Pré-requisito: 4 Graduações em Dirigir e Cavalgar e a Habilidade de Competência Ginete
+Descrição: Você pode interromper o movimento de sua Montaria ou Veículo, realizar outras ações, então continuar o movimento.
+Apenas uma ação pode ser feita desta forma, independente do seu Tempo de Ação, e apenas se a Ação puder ser concluída no mesmo Turno.
+
+Grande Ginete (Geral/Cavalaria)
+Pré-requisito: 4 Graduações em Dirigir e Cavalgar e a Habilidade de Competência Ginete
+Descrição: Você não sofre Desvantagens em rolagens de Perícias baseadas em Força ou Destreza enquanto estiver montado ou dirigindo em função da Habilidade Ginete, ao invés disso recebe Vantagem nestas rolagens de Perícias.
+
+Montar e Desmontar Instantâneo (Geral/Cavalaria)
+Pré-requisito: Talento Grande Ginete
+Descrição: Você pode Montar ou Desmontar de sua montaria, ou entrar e sair de um veículo, como Ação Livre. Você também pode Desmontar de sua Montaria como Reação.
+Este Talento pode ser utilizado apenas uma vez a cada Rodada.
+
+TALENTOS GERAIS AVENTYRS
+Montaria de Combate (Aventyr/Cavalaria)
+Pré-requisito: Dirigir e Cavalgar 4 Graduações e pelo menos 1 Título Aventyr Desperto
+Descrição: Os movimentos com sua montaria consomem apenas 2PA delas, permitindo a elas efetuarem outras ações (que não sejam de movimento) com os PA restante, se possuírem.
+O máximo de ações que uma montaria pode realizar em seu Turno é igual à quantidade de Títulos Aventyr Despertos que você possuir, mas sempre limitados a quantidade de Pontos de Ação da montaria.
+
+
+
+
+Assassino
+Módulo Básico
+Abrir Feridas (Assassino)
+Pré-requisitos: Talento 'Acerto Crítico Aprimorado', Força e Destreza 3;
+Descrição: Seus ataques recebem ‘Sangramento’ como Efeito Crítico adicional.
+
+Acerto Crítico Aprimorado (Assassino)
+Descrição: escolha entre um Tipo de Arma ou Conjuração de Magias. Sua Margem Crítica Menor com o tipo de arma escolhida, ou das magias que você conjurar, é aumentada em +1.
+
+Acerto crítico Arcano (Assassino)
+Pré-requisitos: Talentos 'Acerto Crítico Aprimorado’ (Magias) e 'Saque Relâmpago';
+Descrição: A primeira magia conjurada a cada Rodada utilizando apenas 1PA ou Ação Livre tem a Margem Crítica Menor aumentada em +1.
+
+Acerto crítico Relâmpago (Assassino)
+Pré-requisitos: Talentos 'Acerto Crítico Aprimorado’ (Armas) e 'Saque Relâmpago';
+Descrição: A Margem Crítica Menor aumenta em +2 em seu primeiro ataque de cada cena. Este benefício é válido apenas se o ataque for realizado imediatamente após sacar Armas do tipo escolhida no talento ‘Acerto Crítico Aprimorado’. 
+A partir da segunda Rodada do combate, seu primeiro ataque de cada Rodada com esta mesma arma tem a Margem Crítica Menor aumentada em +1.
+
+Golpe de Finalização (Assassino)
+Pré-requisitos: 3 outros talentos de Assassino.
+Descrição: Você recebe Vantagem em rolagens de Danos em alvos que já tenham perdido pelo menos a metade de seus PV. 
+Se possuir 7 ou mais graduações na Perícia de Ataque utilizada, as Margens Críticas Menor e Maior de seus Golpes de Finalização aumentam em +1.
+
+Golpe Sobrenatural (Assassino)
+Pré-requisitos: Foco 2 e o Talento ‘Golpe de Finalização’
+Descrição: Sempre que realizar Golpes de Finalização você pode gastar 1PM, se o fizer sua rolagem de ataque será efetuada contra a DM do alvo, ao invés da DF, este ataque causa Danos Mágicos. 
+Acertos Críticos de Golpes Sobrenaturais recebem a Corrente de Efeitos – Escancarar Defesas.
+Este Talento pode ser utilizado apenas 1 vez a cada Rodada.
+
+Golpe Sombra Sobrenatural (Assassino)
+Pré-requisitos: Foco 3 e o talento ‘Golpe Sobrenatural’
+Descrição: Após ser bem-sucedido em realizar um Golpe Sobrenatural você pode gastar +2PM, se o fizer poderá realizar um novo Golpe Sobrenatural contra o mesmo alvo como uma Ação Livre. 
+Sempre que efetuar um segundo Golpe Sobrenatural contra um mesmo alvo na mesma Rodada, este segundo ataque tem a Margem Crítica Menor e Maior aumentadas em +1 número.
+Golpe Sombra Sobrenatural pode ser utilizado apenas em seu Turno e apenas uma vez por Rodada.
+
+
+Saque Rápido (Assassino)
+Pré-requisitos: Destreza 2; 
+Descrição: Você pode sacar uma arma como Ação Livre, a primeira rolagem de Perícia de Ataque que realizar neste mesmo turno será feita em Desvantagem.
+
+Saque Relâmpago (Assassino)
+Pré-requisitos: Destreza 3 e o talento ‘Saque Rápido’, ou Foco 5; 
+Descrição: Escolha entre Armas ou Magias. 
+A cada Rodada, a primeira vez que fizer um ataque utilizando apenas 1PA ou Ação Livre a GD da Perícia de Ataque é reduzida em -1 nível.
+Se este ataque for realizado imediatamente após sacar sua primeira arma, ou for a primeira magia conjurada, na Cena de Combate, você também recebe Vantagem nesta Rolagem.
+
+Troca de Arma Veloz (Assassino)
+Pré-requisitos: Talento 'saque rápido'
+Descrição: Você pode guardar sua arma atual como uma Reação. Este Talento pode ser usado apenas uma vez a cada Rodada.
+Não é possível usar o Talento Saque Rápido para sacar uma arma guardada usando este Talento.
+
+Estados Federados
+Escudo de Sombras (Geral/Assassino)
+Pré-requisitos: Talento Corrida Furtiva
+Descrição: Você recebe Bônus de +3 em suas Defesas e RDS enquanto estiver escondido ou invisível.
+
+TALENTOS GERAIS AVENTYRS
+Furta-Talantes (Aventyr)
+Pré-requisito: Ter desperto ao menos 1 Título Aventyr
+Descrição: Quando for bem-sucedido em executar um Acerto Crítico, seu alvo perde 1PD e você recupera 1PD. Se o Acerto Crítico for Maior, ao invés disso, você adquire +1PD permanente. 
+Estes efeitos são ativados apenas uma vez por Rodada, e apenas uma quantidade de vezes por Cena de Combate igual ao seu Instinto.
+
+Sangue Quente (Aventyr/Assassino)
+Pré-requisitos: Talento ‘Golpe de Finalização’ e qualquer título de Aventyr.
+Descrição: Sempre que derrotar um inimigo, reduzindo seus PV à 0 ou menos, para este Turno você recebe +1PA e então +1PA para cada Título Aventyr que possuir.
+
+Tesouros de Grurton
+TALENTOS GERAIS AVENTYRS
+Violência Descomunal (Aventyr/Bruto/Assassino)
+Pré-requisitos: Força 5 e pelo menos 1 Título Aventys Desperto.
+Descrição: Você não recebe Vantagem em Danos em seus Acertos Críticos, ao invés disso recebe Bônus de +1d6.
+Sempre que eliminar um alvo (reduzindo seus PV à zero ou menos pela primeira vez na Cena) com um Acerto Crítico, seu Movimento Base aumenta em +dobro do Número de Títulos Brutos Despertos, mas apenas para se aproximar de personagens inimigos.
+
+O Olho de Deus
+TALENTOS GERAIS AVENTYRS
+Especialista Tecnológico (Aventyr/Especialista/Assassino)
+Pré-requisitos: 4 Graduações em Ataque Corpo-a-Corpo e em Profissão (requer a especialização Mecânica).
+Descrição: O Dano Base de suas Armas Tecnológicas aumenta em +1.
+Você recebe Bônus de +3 em rolagens de Danos Críticos de Armas Tecnológicas para cada Título Aventyr Especialista Desperto.
+
+Dragões de Drak’arya
+TALENTOS GERAIS AVENTYRS
+Arcanismo Avassalador (Aventyr/Arcano/Assassino)
+Pré-requisitos: Talento Acerto Crítico Aprimorado e 7 Graduações em Domínio do Mana
+Descrição: Suas Magias ofensivas têm a Margem Crítica Menor aumenta em 1+ Número de Títulos Arcanos Despertos.
+Sempre que eliminar um alvo (reduzindo seus PV à zero ou menos pela primeira vez na Cena) com um Acerto Crítico você recebe Bônus cumulativo de +1 em Conjuração até o fim da Cena.
+
+Morte e Renascimento
+TALENTOS GERAIS AVENTYRS
+Banquetear-se (Aventyr/Assassino)
+Pré-requisitos: Raça Renascida e pelo menos 1 Título Aventyr Desperto 
+Descrição: Seu primeiro Acerto Crítico em rolagem de Perícia de Ataque de cada Rodada recebe Roubo de Vida 1.
+Caso possua 2 Títulos Aventyrs Despertos ao invés de Roubo de Vida você recebe Roubo de Bônus Base 1.
+
+Destino
+Módulo Básico
+Aparência Inofensiva (Destino)
+Pré-requisitos: Carisma 3 e Força igual ou inferior à 2.
+Descrição: A menos que você seja o único alvo disponível, ou já tenha realizado ações ofensivas contra seus inimigos, você nunca será alvo primário de ataques, Magias ou Habilidades inimigas nas duas primeiras Rodadas de um combate.
+Este Talento afeta apenas inimigos inteligentes.
+
+Aparência Verdadeiramente Inofensiva (Destino)
+Pré-requisitos: Talento Aparência Inofensiva, Carisma 5 e Força 1.
+Descrição: A menos que você seja o único alvo disponível, ou já tenha realizado ações ofensivas contra seus inimigos, você nunca será alvo primário de ataques, Magias ou Habilidades inimigas nas quatro primeiras Rodadas de um combate.
+
+Arcanismo Druídico (Destino)
+Pré-requisitos: Talento 'Escolhido de Gaea'
+Descrição: A GD para Conjurar suas Magias Naturais são reduzidos em -1 Nível. 
+Se você tiver pelo menos 1 Título Aventyr Desperto, o Tempo de Conjuração da primeira Magia Natural que conjurar em Rodadas Ímpares é reduzido em -1PA.
+
+Autoconhecimento (Destino)
+Pré-requisitos: Nenhum
+Descrição: Escolha um Ego que você possua valor 2 ou superior.
+Você adquire uma Vantagem do Ego escolhido.
+
+Coração de Ferro (Destino)
+Descrição: Sua força de vontade permitiu desenvolver-se mais que a maioria, seu multiplicador de PD aumenta em +1.
+Sua recuperação de PD também aumenta, a cada Descanso você recupera +2PD, e então +1PD para cada Título Aventyr que tenha Desperto.
+
+Prodígio (Destino)
+Pré-requisitos: Nenhum
+Descrição: Escolha um Atributo que você possua valor Base 2 ou superior.
+Você adquire uma Habilidade do Atributo escolhido, você ainda precisa preencher requisitos de Atributos Mínimos - se houver.
+
+Sorte de Moses (Sobrevivência)
+Pré-requisitos: Qualquer Atributo com Valor Base 5 e qualquer outro Talento de Destino
+Descrição: Você adquire 1 ponto permanente de 'Sorte'. Enquanto sua quantidade de PV for igual ou menor que seu valor de 'Vigor', usos e perdas de 'Sorte' que seriam permanentes ao invés disso são temporárias.
+
+O Grande Continente
+Favoritismo Maior (Geral/Destino)
+Pré-requisito: Fama 15
+Descrição: Escolha uma Perícia, você recebe os benefícios de Favoritismo da Perícia quando efetuada em disputa contra um oponente que o reconheça ou visando um alvo que o reconheça, mesmo que não tenham pessoas neutras a cena assistindo.
+
+Genialidade (Geral/Destino)
+Pré-requisito: Atributo 3 ou Superior
+Descrição: Escolha um Atributo, você recebe uma das Habilidades do Atributo escolhido.
+Você precisa cumprir com Requisitos da Habilidade de Atributo escolhida para receber seus benefícios.
+
+O Olho de Deus
+Abdicador (Geral/Destino)
+Pré-requisito: Atrasar Despertar
+Descrição: Você não Desperta Títulos Aventyr, mantendo suas Centelhas inertes indefinidamente.
+Os Benefícios de Atrasar Despertar são dobrados e seu Multiplicador de PV e PM aumentam em +1 para Cada Título ainda não Desperto.
+
+Atrasar Despertar (Geral/Destino)
+Pré-requisito: Nenhum
+Descrição: Você pode escolher atrasar seu Despertar de Títulos, recebendo seus benefícios apenas quando quiser e se quiser.
+Você recebe Bônus de +1 em Rolagens de Perícias e Danos, além de Redução de Danos Sofridos e aumento de Margem Crítica Menor em rolagens de Perícias, estes benefícios aumentam em +1 para cada 15EXP e são multiplicados pelo número de Títulos ainda não Despertos. 
+Este Talento deve ser adquirido antes de Despertar seus Títulos.
+
+Fragmento da Encarnação de Gilgamesh (Geral/Destino)
+Pré-requisito: Talento Atrasar Despertar ou Não possuir uma ou mais Centelhas
+Descrição: 
+Você recebe Bônus Racial de +2 em todos os Atributos para cada Centelha que você não possua ou voluntariamente não Despertar.
+
+TALENTOS GERAIS AVENTYRS
+Genialidade Desperta (Aventyr/Destino)
+Pré-requisito: Talento Genialidade e pelo menos 2 Títulos de Aventyr Desperto
+Descrição: Escolha um Atributo, você recebe +1 de Bônus Racial no Atributo escolhido e uma de suas Habilidades do Atributo.
+Você precisa cumprir com Requisitos da Habilidade de Atributo escolhida para receber seus benefícios.
+
+Excepcionalidade (Aventyr/Destino)
+Pré-requisito: ter pelo menos 1 Títulos de Aventyr Desperto e 2 outros Talentos de Destino.
+Descrição: Escolha um Talento Racial que você cumpra todos os demais requisitos, além da Raça.
+Você recebe os benefícios do Talento escolhido.
+Este Talento só pode ser adquirido por personagens que passem longos períodos de convivência com, ou que tenha sido criado por, membros da raça de referência.
+
+
+Império das Profundezas
+TALENTOS GERAIS AVENTYRS
+Centelha Aventyr Bruta (Aventyr/Bruto)
+Pré-requisito: Ter desperto ao menos 1 Título Aventyr Bruto
+Descrição: Uma vez por Cena para cada Título Aventyr Bruto Desperto você pode escolher aumentar a Margem Crítica Menor de uma Perícia de Ataque em +1 número. Para este ataque seu dano Crítico aumenta em +1d6 para cada Título Aventyr Bruto Desperto.
+
+Centelha Aventyr Consagrada (Aventyr/Abençoado)
+Pré-requisito: Ter desperto ao menos 1 Título Aventyr Abençoado
+Descrição: Uma vez por Cena para cada Título Aventyr Bruto Desperto você pode escolher aumentar a Margem Crítica Menor de uma Perícia de Ataque em +1 número. Para este ataque seu dano Crítico aumenta em +1d6 para cada Título Aventyr Bruto Desperto.
+
+Centelha Aventyr Elemental (Aventyr/Arcano)
+Pré-requisito: Ter desperto ao menos 1 Título Aventyr Arcano
+Descrição: Uma vez por Cena para cada Título Aventyr Arcano Desperto você pode Mimetizar uma Magia Broto ou Muda, mesmo que você não conheça a Magia. 
+
+Centelha Aventyr Precisa (Aventyr/Especialista)
+Pré-requisito: Ter desperto ao menos 1 Título Aventyr Especialista
+Descrição: Uma vez por Cena para cada Título Aventyr Especialista Desperto você pode reduzir o GD de uma Perícia que não seja de Ataque em -1 Nível.
+
+Estados Federados
+TALENTOS GERAIS AVENTYRS
+Acelerar Habilidade (Aventyr/Destino)
+Pré-requisito: Ter desperto ao menos 1 Título Aventyr
+Descrição: Você pode reduzir o Tempo de Ativação de suas Habilidades de Título em -1PA, acelerar Habilidades aumenta o Custo de Ativação da Habilidade em +2PD.
+Este efeito pode ser ativado apenas uma vez a cada Rodada e apenas em seu Turno.
+
+Alcance de Habilidade Estendido (Aventyr)
+Pré-requisito: Ter desperto ao menos 1 Título Aventyr
+Descrição: Suas Habilidades que possuem Alcance tem o Distância aumentado em 1 passo.
+Durante a ativação da Habilidade Você pode aumentar seu custo em +2PD, se o fizer, Distância é aumentada em mais um passo.
+
+Artesão da Vontade (Aventyr)
+Pré-requisito: Ter desperto ao menos 1 Título Aventyr
+Descrição: Você recebe Vantagem em suas rolagens de Perícia que façam parte de uma Habilidades de Títulos e que tenha outro Personagem como Alvo, se a rolagem for de uma Perícia de Ataque bem-sucedida você também recebe Vantagem na rolagem de dano.
+
+Centelha Duradoura (Aventyr/Destino)
+Pré-requisito: Ter desperto ao menos 1 Título Aventyr
+Descrição: Durante a Ativação de uma Habilidade você pode aumentar seu Custo em +2PD, se o fizer a Duração da Habilidade é aumentada em +2 Unidades.
+
+Centelha Gran-Aventyr Antecipada (Aventyr/Destino)
+Pré-requisito: Talento ‘Despertar Antecipado’
+Descrição: Você desperta seu Título Secundário ao atingir a marca de 23EXP.
+
+Despertar Antecipado (Aventyr/Destino)
+Pré-requisito: Apenas personagens recém-criados 
+Descrição: Seu personagem desperta seu Título Primário ao fim da primeira sessão de Jogo.
+
+Moldar a Determinação (Aventyr)
+Pré-requisito: Ter desperto ao menos 1 Título Aventyr
+Descrição: Você pode aumentar o Tempo de Ativação de uma Habilidade em +1PA para reduzir seu Custo de Ativação em -2PD.
+Não é possível reduzir Custos de Ativação à 0PD mais de uma vez na mesma Cena, reduções posteriores são limitadas ao mínimo de 1PD.
+
+Sombras da Umbra
+Sincretismo Religioso (Geral/Devoto/Destino)
+Pré-requisito: Apenas Devotos de Deuses Elementais ou Senhores Umbrais
+Descrição: Escolha uma segunda Divindade, você deve seguir as Obrigações e Restrições da divindade escolhida e é considerado um Devoto de ambas as divindades.
+Este Talento custa apenas 1EXP para Homens-Fera, mas apenas para culto a Gaea e um Senhor Umbral (ou A Esquecida).
+
+Duelista
+Módulo Básico
+Ataque Concentrado (Duelista)
+Pré-requisitos: Força 4 e o talento 'Lutador Nato'
+Descrição: Você pode optar por receber Desvantagem em rolagens de ‘Ataque Corpo-a-Corpo’ para receber vantagem em sua rolagem de dano.
+Se utilizar este Talento ao mesmo tempo que Lutador Nato, ao invés da Vantagem na rolagem de Dano, seu dano aumenta em +1d6.
+
+Combater com 2 armas (Duelista)
+Pré-requisitos: 3 graduações em ‘Ataque Corpo-a-corpo’
+Descrição: Enquanto empunhar 2 armas simultaneamente você poderá realizar dois ataques, um com cada uma de suas armas, ao custo de 3PA. rolagens de Perícias de Ataque feitas desta forma sofrem Desvantagem.
+Se a arma na mão inábil não for uma arma leve adicionalmente você sofre Desvantagem nas rolagens de Danos.
+
+Defesa com 2 armas (Duelista)
+Pré-requisitos: Talento 'combater com 2 armas' e 3 graduações em 'esquiva e aparar'
+Descrição: Você recebe um bônus de +1 em DF enquanto estiver empunhando 2 armas, e bônus cumulativo de +2 em DF (para um total de +3) se não utilizar nenhuma de suas armas para atacar. 
+Este Bônus aumenta para +2/+4 se tiver 4 ou mais Graduações em Ataque Corpo-a-Corpo, e para +3/+5 se tiver 7 ou mais Graduações.
+Estes bônus em DF são reduzidos à zero por 1 Rodada se ambas as armas foram utilizadas para atacar em seu Turno, a menos que você tenha 10 Graduações.
+
+Dominar Armas (Duelista)
+Pré-requisitos: Talento 'Especialista em Arma' e 6 graduações em uma perícia de Ataque.
+Descrição: Apenas personagens que não escolheram Magias Ofensivas, no Talento ‘Especialista em Arma’, podem adquirir este Talento.
+Você recebe Vantagem em todas as suas rolagens de ataque feitas com qualquer arma ou se estiver desarmado. Adicionalmente o primeiro ataque que fizer a cada Rodada, com a arma escolhida no talento ‘Especialista em Arma’, tem seu Tempo de Ação reduzido em -1PA (mínimo 1PA).
+
+Especialista em Arma (Duelista)
+Pré-requisitos: 2 Graduações em uma das Perícia de Ataque
+Descrição: Escolha entre um tipo de arma, armas naturais ou magias ofensivas. Receba vantagem nas rolagens de ataque com a arma escolhida, ou com suas magias ofensivas (que exija uma rolagem de perícia de Ataque), conforme escolhido.
+
+Lutador Nato (Duelista) 
+Pré-requisitos: Treinado em ‘Ataque Corpo à Corpo’
+Descrição: Você pode aumentar o Tempo de Ação de um Ataque Corpo-a-Corpo em +1PA, se o fizer poderá rolar novamente o dado de menor valor em sua rolagem. 
+O novo resultado será utilizado, mesmo que seja inferior ao anterior.
+
+Lutar Engajado (Duelista)
+Pré-requisitos: Talento ‘Lutador Nato’ ou 4 Graduações em Ataque Corpo-a-Corpo
+Descrição: Você recebe Vantagem em suas rolagens de Ataque Corpo-a-Corpo contra alvos adjacentes.
+Sempre que usar o talento Lutador Nato contra um alvo adjacente poderá também rolar novamente o dado de menor valor em suas rolagens de Dano.
+
+Maestria em Arma (Duelista)
+Pré-requisitos: Talento 'Dominar Armas'
+Descrição: Enquanto estiver utilizando o método escolhido para atacar no Talento ‘Especialista em Arma’, seus ataques possuem a Margem Crítica Menor aumentada em +1 e recebem a Corrente de Efeitos – Golpe Trovejante.
+
+
+Estados Federados
+Ataque Rápido (Geral/Duelista) 
+Pré-requisito: 2 Graduações em Ataque Corpo-a-Corpo
+Descrição: Ao desferir um ataque você pode escolher receber Desvantagem em sua Rolagem de Danos para adquirir Vantagem em sua Rolagem de Perícia de Ataque.
+
+Ataque Repentino (Geral/Duelista)
+Pré-requisito: Talento Ataque Rápido e 4 Graduações em uma Perícia de Ataque
+Descrição: Você é capaz de fazer um ataque de grande velocidade, mas que causa poucos danos.
+Uma vez por Turno você pode fazer uma rolagem de Perícia de Ataque ao tempo de 1PA.
+Os danos causados por este ataque são reduzidos à metade, este é um efeito de Meio-Dano.
+
+Combater às Cegas (Geral/Duelista)
+Pré-requisito: Instinto 3, 4 Graduações em Ataque Corpo-a-Corpo e 2 Graduações em Atenção
+Descrição: Enquanto estiver cego ou privado de seus sentidos visuais você não fica Desprevenido em função destas condições e não precisa efetuar rolagens de 1d6 para utilizar efeitos pessoais e Ataques Corpo-a-Corpo.
+Para receber os benefícios deste Talento, rolagens de Perícias feitas às cegas recebem Desvantagem.
+
+TALENTOS GERAIS AVENTYRS
+Ataque Giratório (Aventyr/Duelista)
+Pré-requisito: 4 outros Talentos de Duelista e pelo menos 1 Título Aventyr Desperto.
+Descrição: Apenas uma vez por Rodada, ao realizar um ataque com uma Arma ou Ataque Desarmado seu tipo de ataque muda para Área de Efeito – Explosão.
+
+Um-Dois (Aventyr/Duelista)
+Pré-requisito: Ter Desperto pelo menos 1 Título Aventyr e ter os Talentos Ataque Rápido e Ataque Concentrado
+Descrição: Após ser bem-sucedido em um Ataque Rápido você pode fazer imediatamente um Ataque Concentrado ao custo de 1PA.
+
+Tesouros de Grurton
+Força Excessiva (Duelista)
+Pré-requisito: Força 3 e Vigor 4
+Descrição: Você pode adicionar metade do seu valor de Vigor à sua rolagem de danos físicos corpo-a-corpo, se o fizer e for bem-sucedido você sofre 2 pontos de Dano Físico Primordial.
+Danos sofridos desta forma não podem ser reduzidos e são recuperados apenas com Descansos Verdadeiros.
+
+TALENTOS GERAIS AVENTYRS
+Explorar pontos Fracos (Aventyr/Duelista)
+Pré-requisito: 4 Graduações em Ataque Corpo-a-Corpo e 2 Graduações em Medicina e Cura
+Descrição: Seu segundo ataque contra um mesmo alvo na mesma Rodada tem a Margem Crítica Menor aumenta em +2 números.
+Seus Acertos Críticos causam Metade da Gnose como dano adicional.
+
+Feridas Ardentes (Aventyr/Duelista)
+Pré-requisito: Explorar pontos Fracos
+Descrição: O dano adicional de Metade da Gnose, causados em seus Danos Críticos, não podem ser curados, exceto por Descansos Verdadeiros e efeitos de Roubo de Vida.
+
+Sombras da Umbra
+TALENTOS GERAIS AVENTYRS
+Defender-se Atacando (Aventyr/Duelista)
+Pré-requisito: Ter Desperto pelo menos 1 Título Aventyr e ter outros 3 Talentos de Duelista
+Descrição: Apenas uma vez por Rodada, você pode substituir sua rolagem de Defesa Física por uma Rolagem de Perícia de Ataque.
+Se for bem-sucedido você evita o ataque que lhe seria causado e inflige Força pontos de danos à arma ou projétil utilizado, se for malsucedido o atacante recebe Vantagem na rolagem de danos deste ataque.
+
+Defender-se Atacando Superior (Aventyr/Duelista)
+Pré-requisito: Talento Defender-se Atacando 
+Descrição: Você pode usar o Talento Defender-se Atacando também em substituição à Defesa Mágica, exceto para evitar Encantamentos e Maldições.
+
+
+Escudeiro
+Módulo Básico
+Atacar com Escudos (Escudeiro)
+Pré-requisitos: 2 Graduações em 'Ataque corpo-a-corpo'
+Descrição: Você pode usar seu escudo para atacar, se o fizer você perde metade dos bônus em Defesas concedidos por ele até o início de seu próximo turno.
+Rolagens de Ataque Corpo-a-Corpo efetuadas com escudos recebem Metade das suas Graduações em Esquiva e Aparar + Bônus Defensivos do Escudo (com os Bônus de Defesa Física quando rolada contra a DF do alvo ou com os Bônus de Defesa Mágica quando rolada contra a DM do alvo), o dano causado varia conforme o tipo de escudo. 
+Escudos Leves 1d6+1, Médios 1d6+2, Pesados 1d6+3. Escudos possuem Margem Crítica Menor 17 e Sucesso Crítico: Atordoante. 
+Ataques com escudos podem receber benefícios de ataque e dano de Talentos e Habilidades Aventyrs, atacar duas ou mais vezes com um escudo faz com que você não receba seus bônus em Defesas até o início de sua próxima Rodada.
+
+Defesa Tartaruga (Escudeiro)
+Pré-requisitos: talento 'Especialista em Escudo' e 4 graduações em 'Esquiva e Aparar'
+Descrição: Se você não se mover em seu Turno e estiver empunhando um escudo que você seja especialista, você recebe um Bônus de +2 em suas Defesas por 1 Rodada.
+Personagens das raças Gigante e Anão não perdem os bônus concedidos por este Talento se o único movimento feito por eles na Rodada for 'Reposicionar'.
+
+Escudo Veloz (Escudeiro)
+Pré-requisitos: Nenhum
+Descrição: Sempre que iniciar um combate com um Escudo de Categoria Média ou Pesada em mãos, sua iniciativa aumenta em +2.
+
+
+Espartano (Escudeiro/Duelista)
+Pré-requisitos: Talento 'Atacar com Escudo' e 3 graduações em 'Ataque corpo-a-corpo'
+Descrição: Após realizar uma rolagem de Perícia de Ataque, você pode realizar um Ataque com Escudo em Desvantagem com Tempo de Ação reduzido em -1PA. 
+
+Especialista em Escudo (Escudeiro)
+Pré-requisitos: Treinado em 'esquiva e aparar'
+Descrição: Você recebe +1 em suas Defesas enquanto utilizar um item escolhido do tipo ‘Escudo’.
+Escolha um item do tipo ‘Escudo’, se tiver 4 ou mais graduações em ‘Esquiva e Aparar’ enquanto estiver utilizando o item escolhido este Bônus aumenta para +2, se tiver 7 ou mais Graduações este Bônus aumenta para +3.
+
+Início Defensivo (Escudeiro)
+Pré-requisitos: 2 graduações em 'Esquiva e Aparar'
+Descrição: Após uma rolagem de Iniciativa, se você não for o primeiro a agir, nas duas primeiras Rodadas do combate você recebe bônus de +3 em suas Defesas. Se você for o último a agir este bônus aumenta para +5.
+Durante estas Rodadas iniciais você ignora efeitos que reduzem Defesas.
+
+O Grande Continente
+Ataque Múltiplo com Escudos (Geral/Escudeiro)
+Pré-requisito: Talento Atacar com Escudos
+Descrição: Você mantém metade dos Bônus Defensivos de seu Escudo ao realizar mais de um Ataque com Escudos na mesma Rodada.
+
+
+Império das Profundezas
+TALENTOS GERAIS AVENTYRS
+Arte do Escudo Atacante (Aventyr/Escudeiro)
+Pré-requisito: Apenas Personagens com pelo menos 1 Título Aventyr Desperto e que possuam o Talento Ataque Múltiplo com Escudos
+Descrição: Você não perde Bônus Defensivo ao atacar com Escudos.
+Seus ataques com Escudos feitos em seus Turnos tem a Margem Crítica Menor aumenta em +2 números e seus Acertos Críticos recebem a Corrente de Efeitos – Rugido.
+
+Domínio da Arte do Escudo Atacante (Aventyr/Escudeiro)
+Pré-requisito: Talento Arte do Escudo Atacante
+Descrição: A GD de seu primeiro Ataque com Escudo de cada um de seus Turnos é reduzida em -1 nível.
+Após ser bem-sucedido em realizar um Empurrão Violento seu Escudo recebe Alcance Estendido como Aprimoramento até o final do Turno.
+
+Mestre Escudeiro (Aventyr/Escudeiro)
+Pré-requisito: Ter Desperto pelo menos 1 Título Aventyr e ter outros 2 Talentos de Escudeiro
+Descrição: Você pode fazer Reações mesmo quando o efeito impedir Reações.
+Enquanto estiver utilizando um item do tipo Escudo você pode fazer Reações do tipo Defender o Perímetro mesmo quando for alvo de investidas.
+
+Tesouros de Grurton
+TALENTOS GERAIS AVENTYRS
+Coração de Ferro (Duelista)
+Pré-requisito: Vigor 5
+Descrição: Você recebe Resistência à Críticos.
+Sempre que um atacante Corpo-a-Corpo lhe infligir danos físicos ele também sofre 1 ponto de Dano Físico, se o ataque for um Acerto Crítico ao invés disso ele sofre 3 pontos de Danos Físicos.
+Criar Refúgio (Aventyr/Escudeiro)
+Pré-requisito: Ter Desperto pelo menos 1 Título Aventyr e ter outros 2 Talentos de Escudeiro
+Descrição: Enquanto portar um Escudo de Corpo e não efetuar ataques você reduz danos sofridos à zero.
+O número de ataques que podem ser reduzidos à zero desta forma é igual à 1+ número de Títulos que você possuir.
+
+Dragões de Drak’arya
+TALENTOS GERAIS AVENTYRS
+Asas Adamantinas (Aventyr/Escudeiro)
+Pré-requisito: Ter Desperto pelo menos 1 Título Aventyr e possuir Asas
+Descrição: Você recebe Bônus de +2 em suas Defesas enquanto não estiver utilizando suas asas para voar.
+Para efeitos diversos, como Talentos e Habilidades, suas Asas são consideradas itens do tipo Escudo enquanto você não estiver voando.
+
+Morte e Renascimento
+TALENTOS GERAIS AVENTYRS
+Bastião de Vidro (Aventyr/Escudeiro)
+Pré-requisito: Ter Desperto pelo menos 1 Título Aventyr e ter outros 3 Talentos de Escudeiro
+Descrição: Você não é beneficiado por efeitos de Redução de Danos Sofridos, ao invés disso você recebe Bônus em Defesa igual ao valor que você receberia de Redução de Danos Sofridos.
+Você não é beneficiado por RA, RD e RM, ao invés disso você recebe Bônus de +1 em Defesas para cada um destes efeitos.
+
+Metamágico
+Módulo Básico
+Arcanista (Metamágico)
+Pré-requisitos: Treinamento em 'Conhecimento: Metamágico' e ‘Domínio do Mana’.
+Descrição: Você consegue conjurar magias do tipo Semente e Broto. Escolha uma quantidade de árvores de magia igual ao seu número de Graduações em Conhecimento Metamágico, você conhece estas árvores de magias e sabe utilizar todas as magias do tipo Semente das árvores de magias escolhidas. Ao adquirir novas graduações, novas Árvores de Magia também podem ser escolhidas, as magias do tipo Semente são automaticamente aprendidas. 
+Em seguida Escolha 2 das Árvores de Magia que você conheça, você aprende a conjurar as Magias Brotos destas árvores. Você pode aprender novas Magias Brotos ao longo da história, de outras Árvores que você conheça, ao custo de 1 exp.
+Você recebe permanentemente Bônus de +1 sua DM, este Bônus aumenta cumulativamente em +1 ao alcançar a 4ª, 7ª e 10ª Graduação em Domínio do Mana, adicionalmente você recebe RM para resistir aos efeitos de Magias que você conheça.
+
+Arcanista Experiente (Metamágico)
+Pré-requisitos: Talento 'Arcanista' e 3 Graduações em 'Conhecimento: Metamágico'
+Descrição: Escolha 2 Árvores de Magia que você conheça, nas quais você seja capaz de conjurar magias do tipo Broto, você aprende a conjurar as magias do tipo Muda destas árvores. Magias aprendidas desta forma são sempre do mesmo ramo da magia de nível anterior. Você pode aprender novas Mudas ao longo da história, de outras árvores que você conheça magias do tipo Broto, ao custo de 2 exp.
+Você também pode gastar PM para criar Barreiras Mágicas que o protege de ataques, esta ação consome 1PA e 3PM, você recebe Bônus de +2 em suas Defesas. Barreiras criadas desta forma tem Duração de 2 Rodadas, podem ter a Duração estendida por quaisquer efeitos que aumente a Duração de Magias, e Resfriamento 1.
+
+Armazenar Magia (Metamágico)
+Pré-requisitos: Talento ‘Conjuração Rápida’
+Descrição: Você pode conjurar e "guardar" uma Magia do Tipo Semente ou Broto para soltá-la como uma Ação Livre posteriormente. Apenas uma magia pode ser armazenada desta forma por vez e ela será automaticamente dissipada se não for utilizada até seu próximo Descanso. 
+
+Armazenar Magia Superior (Metamágico)
+Pré-requisitos: Talento ‘Armazenar Magia’ e 7 Graduações em Domínio do Mana.
+Descrição: Você pode conjurar e "guardar" uma Magia do Tipo Semente ou Broto adicional (para um total de 2 Magias armazenadas) ou armazenar uma única magia do tipo Muda. Você pode descarregar suas magias armazenadas como Ação Livre ou Reação. 
+
+
+Artesão de Barreiras (Metamágico)
+Pré-requisitos: talento 'Arcanista Experiente'
+Descrição: Você pode conjurar Barreiras Mágicas como Ação Livre.
+Enquanto estiver com uma Barreira Mágica ativa a GD para resistir às magias que você também seja capaz de conjurar é reduzida em -1 nível.
+
+Aptidão Mágica Ampla (Metamágico)
+Pré-requisitos: Treinado em Domínio do Mana; Instinto 4, Raça Feérica ou Raça Elemental.
+Descrição: Escolha três Árvores de Magia, você pode mimetizar as magias Sementes e Broto destas árvores. Magias Broto conjuradas com este talento utilizam 2PD, ao invés de 1PM. 
+Você recebe Bônus de +3 em DM para resistir aos efeitos de magias que seja capaz de conjurar.
+
+Aptidão Mágica Assombrosa (Metamágico)
+Pré-requisitos: Talento ‘Aptidão Mágica Ampla’ e 4 Graduações em Domínio do Mana.
+Descrição: Escolha uma magia Muda de cada Árvore de Magia conhecida através do talento ‘Aptidão Mágica Ampla’, você é capaz de mimetizar as magias escolhidas ao custo de 3PD cada.
+Seu Bônus em DM para resistir às magias que você é capaz de conjurar aumenta para +5.
+
+Aptidão Mágica Suprema (Metamágico)
+Pré-requisitos: Talento ‘Aptidão Mágica Assombrosa’ e 7 Graduações em Domínio do Mana.
+Descrição: Escolha uma magia Emergente de cada Árvore de Magia conhecida através do talento ‘Aptidão Mágica Ampla’, e que você seja conheça uma Muda de seu ramo, você é capaz de mimetizar as magias escolhidas ao custo de 5PD.
+Seu Bônus em DM para resistir às magias que você é capaz de conjurar aumenta para +7.
+
+Conjuração Rápida (Metamágico)
+Pré-requisitos: Domínio do Mana 4 Graduações
+Descrição: Apenas uma vez por Rodada, você pode optar por receber Desvantagem nas rolagens de Perícia de Conjuração, Dano e Cura mágica de uma magia. Se o fizer o tempo de conjuração da desta magia será reduzido em -1PA. 
+
+Desafiador da Realidade (Metamágico)
+Pré-requisitos: Talento 'Mestre Arcanista' e 9 Graduações em 'Conhecimento Metamágico'.
+Descrição: Escolha 2 Árvores de Magia que você conheça, nas quais você seja capaz de conjurar magias do tipo Emergente, você aprende a conjurar as magias do tipo Florescente destas árvores. Magias aprendidas desta forma são sempre do mesmo ramo da magia de nível anterior. Você pode aprender novas magias Florescentes ao longo da história, de outras árvores que você conheça magias do tipo Broto, ao custo de 5 exp.
+Suas Barreiras Mágicas lhe concedem Bônus de +5 em suas Defesas, então +3 às Defesas de seus aliados adjacentes.
+
+Engenheiro do Mana (Metamágico)
+Pré-requisitos: Talento 'Mente Expandida'
+Descrição: O Custo de Mana para Conjurar Magias ou ativar efeitos de Talentos Metamágicos é reduzido em -1PM (mínimo 1PM).
+
+Mente Expandida (Metamágico)
+Pré-requisitos: Treinado em 'Conhecimento Metamágico'
+Descrição: Você consegue conjurar mais magias do que o normal, seu multiplicador de PM é aumentado em 1.
+Sua recuperação de PM também aumenta, a cada Descanso você recupera +2PM, então +1PM para cada Título Aventyr que tenha desperto.
+
+
+
+Mestre Arcanista (Metamágico)
+Pré-requisitos: Talento 'Arcanista Experiente' e 6 Graduações em 'Conhecimento Metamágico'
+Descrição: Escolha 2 Árvores de Magia que você conheça, nas quais você seja capaz de conjurar magias do tipo Muda, você aprende a conjurar as magias do tipo Emergentes destas árvores. Magias aprendidas desta forma são sempre do mesmo ramo da magia de nível anterior. Você pode aprender novas magias Emergentes ao longo da história, de outras árvores que você conheça magias do tipo Broto, ao custo de 3 exp.
+Barreiras Mágicas criadas por você agora concedem Bônus de +3 em suas Defesas e de +1 às Defesas de seus aliados adjacentes. 
+
+Procrastinar Conjuração (Metamágico)
+Pré-requisitos: Talento ‘Conjuração Rápida’
+Descrição: você pode fazer com que suas magias iniciem seu efeito 1 Rodada após a conjuração, magias conjuradas desta forma tem o Custo de Conjuração aumentado em +2 Unidades e o Tempo de Conjuração reduzido em -2PA (mínimo 1PA). Este Talento não afeta magias conjuradas como Ação Livre ou Reação.
+Magias de longo alcance ou de área deve ter sua direção ou local alvo escolhido no momento da conjuração inicial, sendo direcionadas ao ponto especificado mesmo se não tiver um alvo válido.
+
+Dragões de Drak’arya
+Aptidão Mágica Dracônica (Metamágico)
+Pré-requisitos: Talento ‘Aptidão Mágica Suprema e 9 Graduações em Domínio do Mana.
+Descrição: Escolha uma magia Florescente de uma das Árvores de Magias conhecidas através do talento ‘Aptidão Mágica Ampla’, você é capaz de mimetizar a magia escolhida ao custo de 5PD.
+Enquanto tiver ao menos 10PD em sua reserva de Bônus Bases você é imune a Magias que você é capaz de conjurar.
+
+Feitiçaria Dracônica (Geral/Devoto/Destino)
+Pré-requisito: Apenas Devotos do Dragão do Leste ou Servos de um Dragão Primordial com os Talentos Arcanismo ou Aptidão Mágica Ampla.
+Descrição: Você agora pode aprender Árvores de Magias Dracônicas.
+Escolha uma Árvore de Magia Dracônica, você pode conjurar as Magias Semente e Broto da Árvore escolhida.
+
+TALENTOS GERAIS AVENTYRS
+Acelerar Conjuração (Aventyr/Arcano)
+Pré-requisito: Ter desperto ao menos 1 Título Aventyr Arcano
+Descrição: Uma vez por Turno você pode aumentar o Custo de Conjuração de uma magia em +2PM para reduzir seu Tempo de Conjuração em -1PA.
+
+Tocar o Horizonte (Aventyr/Arcano)
+Pré-requisito: Domínio do Mana 7 Graduações e o Talento Toque Longínquo. 
+Descrição: Apenas uma vez por Rodada, você pode estender o alcance de Toque Longínquo para Alvo Único Distante - Distância Média. 
+
+Toque Longínquo (Aventyr/Arcano)
+Pré-requisito: Domínio do Mana 4 Graduações e pelo menos 1 Título Aventyr desperto. 
+Descrição: Você pode conjurar Magias de Toque como Alvo Único Distante - Distância Muito Curta. 
+Ativar este Talento aumenta o Custo de Conjuração em +2PM.
+
+Morte e Renascimento
+Magicae Mortis (Aventyr/Arcano/Abençoado)
+Pré-requisito: Raça Renascida e 3 Talentos Metamágicos. 
+Descrição: A primeira Magia ofensiva que conjurar a cada Rodada recebe a Corrente de Efeito – Magicae Mortis.
+
+
+Sombras da Umbra
+Força Umbral (Geral/Devoto/Destino)
+Pré-requisito: Apenas Devotos de Senhores Umbrais com o Talento Arcanismo ou com o Talento Aptidão Mágica Ampla.
+Descrição: Você agora pode aprender Árvores de Magias Umbrais.
+Escolha uma Árvore de Magia Umbral, você pode conjurar as Magias Semente e Broto da Árvore escolhida.
+
+Mobilidade
+Módulo Básico
+Se Mover e Atacar (Mobilidade)
+Descrição: Talento ‘Esquiva’
+Você recebe Vantagem em Rolagens de Perícias de Ataque feitas após se mover por uma Distância Curta ou superior.
+Seu Movimento Base aumenta em +2UD para se mover imediatamente após efetuar uma Rolagem de Perícia de Ataque.
+
+
+Esquiva (Mobilidade)
+Descrição: Você recebe Bônus de +2 em suas Defesas para resistir à Reações de seus inimigos.
+Se você se moveu em seu último Turno, então você recebe Bônus de +1 em suas Defesas para resistir à ataques sofridos fora de seu Turno por 1 Rodada.
+
+Iniciativa Aprimorada (Mobilidade)
+Descrição: Você adquire 1 ponto permanente de Iniciativa e então, se sua Iniciativa se tornar 4 ou mais, você adquire uma Vantagem de Iniciativa.
+
+Liderar o Avanço (Mobilidade)
+Pré-requisitos: Talento ‘Iniciativa Aprimorada’
+Descrição: Sempre que ganhar uma rolagem de Iniciativa, nas 2 primeiras Rodadas de cada Cena de Combate você adquire +2PA (não cumulativo).
+
+Movimento Furtivo (Mobilidade)
+Pré-requisitos: Furtividade 2 Graduações
+Descrição: Você pode se mover enquanto furtivo, mas seu Movimento Base é reduzido à metade. Se Você possuir 7 ou mais Graduações em Furtividade este Talento não mais reduz sem Movimento Base.
+
+Movimento Rápido (Mobilidade)
+Pré-requisitos: Não possui
+Descrição: Seu Movimento Base aumenta em +2UD, em Rodadas Pares a distância de sua primeira ação para Reposicionar-se aumenta em +1UD.
+	
+Mais Veloz que a Visão (Mobilidade)	
+Pré-requisitos: quaisquer outros 2 talentos de Mobilidade; 
+Descrição: Você adquire permanentemente +1PA.
+
+Porta Estandarte (Mobilidade)
+Pré-requisitos: Talento ‘Liderar o Avanço’; Destreza 3 ou Carisma 3.
+Descrição: Você pode adicionar Metade de seu valor de Destreza ou do valor de Carisma, a sua escolha, às suas rolagens de Iniciativa. 
+Nas 2 primeiras Rodadas do combate, apenas se você for o primeiro a agir, você e seus aliados recebem Pontos de Ação adicionais, sendo +2PA na primeira Rodada e +1PA na segunda. Nestas Rodadas iniciais seu Movimento Base aumenta em +2UD sempre que se mover em direção a um inimigo e o Movimento Base de seus aliados aumentam em +2UD para se moverem em sua direção.
+
+Velocista (Mobilidade) 
+Pré-requisitos: Talento Movimento Rápido
+Descrição: Seu Movimento Base aumenta em +1UD, então aumenta cumulativamente em +1UD para cada outro movimento feito no mesmo Turno.
+
+Império das Profundezas
+Investida Aquática (Mobilidade) 
+Pré-requisitos: 4 Graduações em Atletismo e a Especialização Triatleta.
+Descrição: Em combate, rolagens de Perícia de Ataque realizadas imediatamente após ser bem-sucedido em rolagens de Atletismo para Natação tem o Tempo de Ação reduzido em -1PA.
+Personagens que possuam Movimento Base de Natação tem o Tempo de Ação de investidas sempre reduzidos em -1PA.
+
+Estados Federados
+Movimento Acrobático (Mobilidade) 
+Pré-requisitos: 
+Descrição: 3 Talentos de Mobilidade
+Apenas uma vez por Rodada e apenas quando puder fazer uma Ação de Reposicionar, você pode fazer uma acrobacia para se mover de forma segura pelo cenário, sem provocar Reações.
+A Distância que seu Movimento Acrobático pode percorrer é igual à Metade da Destreza UD, a distância máxima aumenta em +2UD para cada Título Aventyr que você possuir.
+
+Tesouros de Grurton
+Investida Selvagem (Mobilidade) 
+Pré-requisitos: 3 Talentos de Mobilidade e 7 Graduações em Ataque Corpo-a-Corpo
+Descrição: Suas Investidas recebem Área de Efeito – Explosão.
+Durante o movimento da investida você recebe Redução de Danos Sofridos igual ao número de Títulos Aventyrs que você possuir.
+
+TALENTOS GERAIS AVENTYRS
+Investida Selvagem Solar (Aventyr/Bruto/Mobilidade)
+Pré-requisitos: Talento Investida Selvagem e um Título Aventyr Bruto Desperto
+Descrição: Se em sua Investida Selvagem você causar danos à 3 ou mais inimigos você recebe Bônus em Defesas igual à 1+ quantidade de Títulos Aventyr Bruto Despertos, Duração em Rodadas igual ao número de inimigos atingidos pela explosão da investida. Os Bônus em Defesas aumentam em +1 por alvo se utilizar um item do tipo Escudo de peso Médio ou Superior.
+Um mesmo personagem não pode possuir Investida Selvagem Lunar e Investida Selvagem Solar.
+
+Investida Selvagem Lunar (Aventyr/Bruto/Mobilidade)
+Pré-requisitos: Talento Investida Selvagem e um Título Aventyr Bruto Desperto
+Descrição: Se em sua Investida Selvagem você causar danos à 3 ou mais inimigos, você recebe Roubo de Vida igual à 1+ quantidade de Títulos Aventyr Bruto Despertos, Duração em Rodadas igual ao número de inimigos atingidos pela explosão da investida. O valor do Roubo de Vida aumenta em +1 se utilizar uma arma de peso Médio ou Superior.
+Um mesmo personagem não pode possuir Investida Selvagem Lunar e Investida Selvagem Solar.
+
+Perito
+Módulo Básico
+Controle da Situação (Perito) 
+Pré-requisitos: 4 ou mais Graduações em pelo menos 3 diferentes Perícias.
+Descrição: A Margem Crítica de todas as suas rolagens de Perícias é aumentada em +2.
+Este Talento não afeta rolagens de Perícias de Ataque e Esquivar e Aparar.
+
+Discreto (Perito)
+Pré-requisitos: talento 'Foco em Perícia'
+Descrição: Sempre que efetuar rolagens de uma Perícia que você tenha Foco você adquire Vantagem adicional. Este talento só pode ser usado se você não tiver aliados ou personagens neutros em Distâncias Curtas.
+Se adicionalmente nenhum inimigo puder vê-lo você também recebe Vantagem em rolagens de Dano.
+
+Exibicionista (Perito)
+Pré-requisitos: talento 'foco em perícia'
+Descrição: Sempre que efetuar rolagens de uma Perícia que você tenha foco em frente a uma plateia você recebe vantagem adicional. Considere plateia um grupo de 4 ou mais personagens inteligentes neutros a cena.
+
+Foco em Perícia (Perito)
+Pré-requisitos: Treinamento na Perícia escolhida, que não seja de ataque, ou 4 graduações se for uma Perícia de ataque
+Descrição: Escolha uma perícia, adquira vantagem nas rolagens da Perícia escolhida.
+
+Lembrar Como se Faz (Perito)
+Pré-requisitos: Gnose 3 ou Foco 3
+Descrição: Após falhar em uma rolagem de Perícia você pode optar por tentar novamente a mesma ação, se o fizer a nova tentativa utilizará apenas 1PA e poderá ser rolada com bônus de Vantagem.
+
+Lembrar, Revisar e Aprimorar (Perito)
+Pré-requisitos: Gnose 5 ou Foco 5, e o Talento ‘Lembrar como se Faz’ 
+Descrição: Sempre que for beneficiado pelos efeitos de ‘Lembrar Como se Faz’, a segunda rolagem tem o GD reduzido em -1 nível.
+
+Leitura Comportamental (Perito)
+Pré-requisitos: Instinto 3
+Descrição: Adquira vantagem em suas rolagens de 'Persuasão'.
+A GD de suas rolagens de Atenção: Discernir Motivação é reduzida em -1 nível.
+
+Maestria em Perícia (Perito)
+Pré-requisitos: Talento 'Foco em Perícia' (em Perícia que não seja de ataque) e 2 Habilidades de Competência ou 4 Especializações, da perícia escolhida.
+Descrição: Se não estiver em combate ou qualquer outra situação de estresse, você pode optar por reduzir o GD de suas rolagens em -2 Níveis ao custo de triplicar seu Tempo de Ação.
+Sob situações de estresse ou combates, ao invés dos efeitos anteriores, você poderá rolar novamente o dado de menor valor de suas rolagens.
+Apenas a Perícia escolhida em Foco em Perícia recebe estes benefícios.
+Este Talento não pode ser usado em conjunto com a perícia Persuasão e Atenção.
+
+
+
+Mestre Perito (Perito)
+Pré-requisitos: Gnose 5, Talento ‘Perito Veloz’ e 5 Graduações na Perícia escolhida
+Descrição: Na primeira Rodada de cada Cena de Combate você pode optar por utilizar a Perícia escolhida como uma Ação Livre ou como uma Reação.
+Nas segundas Rodadas você poderá utilizar a Perícia escolhida como uma Ação Livre.
+Estes benefícios são restritos a uma utilização por Rodada.
+
+Mestre em Atuação (Perito)
+Pré-requisitos: 2 graduações em Atuação e em Persuasão.
+Descrição: Você recebe Vantagem em suas rolagens de 'Artes' e 'Persuasão', mas apenas quando tiver a intenção de blefar, realizar ações teatrais ou disfarces.
+
+Perito Veloz (Perito)
+Pré-requisitos: Gnose 3 e o Talento Foco em Perícia.
+Descrição: A primeira rolagem da Perícia escolhida que fizer em cada um de seus Turnos tem o Tempo de Ação reduzido em -1PA.
+
+Treinado em Perícias (Perito)
+Pré-requisitos: Personagens recém-criados ou Graduação 4 em 3 diferentes Perícias.
+Descrição: Escolha 3 Perícias que você possua Treinamento. Você pode escolher uma Especialização ou Habilidade de Competência de cada uma destas Perícias.
+
+O Grande Continente
+Analista Tático (Geral/Perito)
+Pré-requisito: Iniciativa 2 ou inferior
+Descrição: No início de cada Cena de Combate, antes de qualquer ação sua, você pode escolher reduzir seu valor de Iniciativa de modo a agir por último.
+Enquanto você for o último a agir você recebe uma Ação Livre e Reação adicional.
+
+TALENTOS GERAIS AVENTYRS
+Grande Analista Tático (Geral/Perito/Aventyr)
+Pré-requisito: Iniciativa 2 ou inferior
+Descrição: Enquanto você for o último a agir, sua Margem Crítica Menor aumenta em +1 para cada Título Aventyr Desperto.
+Enquanto você for o último a agir, a sua resistência a Corrente de Efeitos aumenta em +1 e a resistência à Correntes de Efeitos de seus inimigos alvos (apenas para resistir aos seus efeitos) é reduzida em -1.
+
+Panteão de Tellus
+Trabalho em Equipe (Geral/Perito)
+Pré-requisito: Talento Foco em Perícia
+Descrição: Você recebe Vantagem adicional em suas Rolagens da Perícia escolhida no Talento Foco em Perícia enquanto houver pelo menos dois aliados em Distância Curta treinados nesta mesma Perícia.
+
+TALENTOS GERAIS AVENTYRS
+Trabalho em Equipe Aprimorado (Aventyr/Perito)
+Pré-requisito: Ter Desperto pelo menos 1 Título Aventyr e ter o Talento Trabalho em Equipe
+Descrição: Sempre que você puder ser beneficiado pelo Talento Trabalho em Equipe, ao invés de receber Vantagem adicional a GD de sua rolagem será reduzida em -1 Nível. 
+
+Império das Profundezas
+Criança do Mar (Geral/Perito)
+Pré-requisito: Treinamento em Atletismo, Especialização Pulmão de Aço e a Habilidade de Competência Anfíbio.
+Descrição: Você pode respirar na água por um curto período, ao custo de 1PD por Rodada.
+
+Tesouros de Grurton
+Rei da Montanha (Geral/Perito)
+Pré-requisito: Treinamento em Atletismo, Especialização Levantamento de Peso e a Habilidade de Competência Alpinista Veloz.
+Descrição: Como insetos, você é capaz de se mover e grudar em paredes e tetos, incluindo superfícies lisas e movimentos de cabeça para baixo, ao custo de 1PD por Rodada.
+
+
+Sombras da Umbra
+Falsa Devoção (Geral/Devoto/Especialista)
+Pré-requisito: Devotos de Sylph, da Escuridão Profunda, de Senhores Umbrais ou dA Esquecida.
+Descrição: Escolha uma Divindade, você vive falsamente sobre os dogmas da divindade escolhida e é beneficiado por isso.
+Você é considerado Devoto Adepto da divindade escolhida para efeitos de Talentos e Habilidades mesmo que não siga as Obrigações e Restrições.
+
+O Olho de Deus
+Artesão de Regalias Menor (Geral/Artífice/Especialista)
+Pré-requisito: Profissão 7 e posse de uma Regalia
+Descrição: Após estudar incansavelmente a Regalia em sua posse, você agora pode criar Regalias Menores.
+Criar uma Regalia Menor exige uma rolagem de Profissão (Especialização conforme o tipo de Regalia) na GD Inimaginável, não é possível reduzir GD desta rolagem com Habilidades, Vantagens ou Efeitos, exceto Habilidades de Artífice.
+Como custo adicional é necessário que um personagem sacrifique voluntariamente uma de suas Centelhas, despejando seu sangue sobre o equipamento. Se o personagem doador não for voluntário ou se arrepender em meio ao processo a criação da Regalia irá falhar.
+A Criação de uma Regalia Menor leva até 90 dias de trabalho, esta duração pode ser reduzida drasticamente em uma Forja do Olha de Deus e com Habilidades de Artífice.
+Para critérios de Forja de Equipamentos, as Habilidades dos Artífices Despertos que beneficiam Obras-Primas também beneficiam Regalias. 
+
+Artesão de Regalias Superiores (Geral/Artífice/Especialista)
+Pré-requisito: Profissão 10 e posse de uma Regalia Superior ou Divina
+Descrição: Após estudar Regalias Superior e ter sido bem-sucedido na criação de 3 ou mais Regalias Menores, você se tornou capaz de criar Regalias Superiores.
+Criar uma Regalia Superior exige uma rolagem de Profissão (Especialização conforme o tipo de Regalia) na GD Milagre, não é possível reduzir GD desta rolagem com Habilidades, Vantagens ou Efeitos, exceto Habilidades de Artífice.
+Como custo adicional é necessário que um personagem sacrifique voluntariamente todas as suas Centelhas, despejando seu sangue sobre o equipamento. Se o personagem doador não for voluntário ou se arrepender em meio ao processo a criação da Regalia irá falhar.
+A Criação de uma Regalia Superior leva até 145 dias de trabalho, esta duração pode ser reduzida drasticamente em uma Forja do Olha de Deus e com Habilidades de Artífice.
+
+Artesão de Regalias Divinas (Geral/Artífice/Especialista)
+Pré-requisito: Profissão 10 e posse de uma Regalia Divina
+Descrição: Após estudar Regalias Superior e ter sido bem-sucedido na criação de 3 ou mais Regalias Divinas você dominou a arte da criação de Regalias e agora pode Regalias Divinas.
+Criar uma Regalia Divina exige uma rolagem de Profissão (Especialização conforme o tipo de Regalia) na GD Milagre, não é possível reduzir GD desta rolagem com Habilidades, Vantagens ou Efeitos (exceto Habilidades de Artífice), e que tenha por resultado um obrigatório um Acerto Crítico.
+Como custo adicional é necessário que um Dragão, Elemental, Abissal ou Celestial sacrifique voluntariamente suas Centelhas, vinculando sua essência sobre o equipamento. Se o personagem doador não for voluntário o processo a criação da Regalia irá falhar.
+A Criação de uma Regalia Superior leva até 180 dias de trabalho e deve ser feita exclusivamente em uma Forja do Olha de Deus.
+
+Regalia
+O Grande Continente
+Dominar Regalias (Geral/Regalia)
+Pré-requisito: Apenas personagens com 10EXP ou mais e que já tenha utilizado uma Regalia Verdadeira.
+Descrição: As duas primeiras ativações de Regalias em cada Cena não custam PV.
+
+Encarnação de Gilgamesh (Geral/Regalia)
+Pré-requisito: Apenas Personagens com 30EXP ou mais e que possuam o Talento Uno com as Regalias 
+Descrição: Após ativar uma Regalia ela permanecerá ativa por toda a Cena enquanto em pleno uso.
+As Regalias ainda são desativadas se forem embainhadas ou derrubadas, exigindo nova ativação.
+
+Uno com as Regalias (Geral/Regalia) 
+Pré-requisito: Apenas Personagens com 15EXP ou mais e que possuam o Talento Dominar Regalias. 
+Descrição: O Tempo de Ativação de cada Habilidades ativadas de suas Regalias são reduzidas para Desprezível.
+
+TALENTOS GERAIS AVENTYRS
+Mestre de Guerra de Gilgamesh (Geral/Regalia)
+Pré-requisito: Possuir 2 outros Talentos de Regalias e nenhum Títulos Aventyr Despertos.
+Descrição: Enquanto estiver sob efeito de uma Regalia (incluindo efeitos passivos), quando efetuar uma rolagem Crítica em Perícia ou derrotar um inimigo (reduzindo os PV dele para zero ou menos) você recupera Vigor PV.
+Esta Habilidade possui Resfriamento 2 e permite recuperar PV utilizados para ativar Regalias.
+
+Moral de Gilgamesh (Geral/Regalia)
+Pré-requisito: Talento Dominar Regalias e nenhum Títulos Aventyr Despertos.
+Descrição: Escolha uma Perícia para cada Regalia em sua posse.
+Você recebe Vantagem em todas as suas Rolagens das Perícias escolhidas enquanto estiver sob efeito (incluindo efeitos passivos) de suas Regalias.
+
+Sobrevivência
+Módulo Básico
+Armadilheiro Precavido (Sobrevivência/Monstruoso)
+Pré-requisitos: ‘Furtividade’ 4
+Descrição: Você pode deixar uma Armadilha Portátil parcialmente preparada para instalação imediata.
+Você pode instalar a Armadilha Portátil escolhida como uma Ação Livre.
+
+Cura Acelerada (Sobrevivência/Monstruoso)
+Pré-requisitos: 'Vigor' 2
+Descrição: Descansos Verdadeiros e efeitos de Magias ou Habilidades baseadas em Tempo de Descanso te permitem recuperar PV adicionais.
+A cada efeito de Descanso você recupera +2PV, e então +1PV para cada Título Aventyr que tenha desperto.
+
+
+Determinação de Moses (Sobrevivência)
+Pré-requisitos: 'Instinto' 4 e o talento 'Duro de Matar'
+Descrição: Você adquire 1 ponto permanente de 'Autocontrole'. Enquanto seus PV estiverem iguais ou menores que seu valor de 'Vigor', usos e perdas de 'Autocontrole' que seriam permanentes ao invés disso são temporárias.
+
+Dominar Armaduras (Sobrevivência)
+Pré-requisitos: Talento 'Especialista em Armaduras' e 4 graduações em 'Esquiva e Aparar'
+Descrição: Os Bônus em Defesas concedidos por Especialista em Armaduras se aplicam a qualquer armadura que vestir, adicionalmente você recebe bônus de +2 em suas Defesas enquanto estiver vestindo uma armadura da categoria que você se especializou.
+
+Duro de Matar (Sobrevivência)
+Pré-requisitos: 'Instinto' ou 'vigor' 3
+Descrição: Se algum efeito iniciado por outro personagem for reduzir seus PV à 0 ou menos, ao invés disso, aquele efeito reduzirá seu PV para 1. Este efeito é ativado automaticamente, após sua ativação não pode ser usado novamente até seu próximo Descanso Longo.
+
+Especialista em Armaduras (Sobrevivência)
+Pré-requisitos: 2 graduações em ‘Esquiva e Aparar’
+Descrição: Escolha um tipo de armadura entre Leve, Média ou Pesada. Você recebe bônus de +1 em suas Defesas enquanto utilizar uma armadura do tipo escolhido.
+Os bônus concedidos por este talento são aumentados para +2 quando o personagem tiver 4 graduações em 'Esquiva e Aparar', +3 quando tiver 7 graduações, então para +5 com 10 graduações.
+
+Mestre de Caça (Sobrevivência)
+Pré-requisitos: Talento Terreno Predileto.
+Descrição: Sua Margem Crítica Menor aumenta em +1 número, então você recebe Vantagem em rolagens de Perícias de Ataque e Danos enquanto no terreno escolhido.
+Nestes terrenos seus ataques recebem a Corrente de Efeitos – Oprimir.
+
+Protetor Territorialista (Sobrevivência)
+Pré-requisitos: Talento Terreno Predileto
+Descrição: Você recebe Bônus de +1 em Vigor e Resistência à Críticos para resistir a ataques enquanto estiver em seu Terreno Predileto.
+Você também pode estender os benefícios de Terreno Predileto e Talentos relacionados as áreas urbanas instaladas em seu terreno escolhido.
+
+Terreno Predileto (Sobrevivência)
+Pré-requisitos: 'Vigor' 3 e a especialização Conhecimentos: Natureza.
+Descrição: Escolha um tipo de terreno entre Aquáticos, Cidades, Desertos, Florestas, Montanhas, Subterrâneo.
+Você recebe Bônus de +2 em suas Defesas e Vantagem em rolagens de Furtividade e de Conhecimentos: Natureza no terreno escolhido.
+
+
+Vitalidade (Sobrevivência)
+Pré-requisitos: 'Vigor' 4
+Descrição: Você é mais resistente que o normal, seu Multiplicador de Pontos de Vida aumenta em +1.
+Enquanto sua quantidade de PV atuais for igual ou inferior ao seu valor de Multiplicador de PV, você recebe RD.
+
+Tesouros de Grurton
+TALENTOS GERAIS AVENTYRS
+Duro de Ferir (Aventyr/Sobrevivência)
+Pré-requisitos: Vigor 4, Talento Duro de Matar e pelo menos 1 Título Aventyr Desperto.
+Descrição: Os primeiros Danos que você sofrer a cada Cena de Combate é reduzido à metade.
+A quantidade de ataques que você pode reduzir danos desta forma é igual a quantidade de Títulos Aventyrs que você possuir, este é um efeito de Meio-Dano.
+
+Duro de Matar Superior (Aventyr/Sobrevivência)
+Pré-requisitos: Instinto 4, Talento Duro de Matar e Duro de Ferir
+Descrição: Após ativar o Talento Duro de Matar, em seu próximo Turno você recupera uma quantidade de PV iguais ao seu Vigor. Adicionalmente você reduz os danos dos próximos dois ataques sofridos à metade (Efeito de Meio-Dano).
+
+Permanecer Consciente (Aventyr/Sobrevivência)
+Pré-requisitos: Vigor ou Instinto 5, Duro de Ferir ou Duro de Matar.
+Descrição: Após ter seus PV reduzidos à zero ou menos você ainda pode agir por uma quantidade de Rodadas igual a 1+ quantidade de Títulos Aventyrs que possuir.
+Você não é afetado pelo Malefício Coma durante estas Rodadas e, enquanto Permanecer Consciente estiver ativo, seus PA são reduzidos à 2 e não podem ser aumentados por efeitos.
+
+O Olho de Deus
+TALENTOS GERAIS AVENTYRS
+Resistencia à Centelhas Externas (Aventyr)
+Pré-requisito: Instinto 3
+Descrição: Você recebe Bônus em suas Defesas igual à 2+ Metade do Instinto para resistir aos Efeitos de Habilidades de Títulos de outros Personagens e a Habilidades Monstruosas.
+A Duração dos Efeitos de Habilidades nocivas, que superarem suas Defesas, é limitada à 3 Rodadas.
+Apenas Habilidades que possuam Alvo ou Área de efeito desencadeiam os efeitos deste Talento.
+
+
+TALENTO RACIAIS
+Anão
+Panteão de Tellus
+Vantagem de Tamanho (Anão/Sobrevivência)
+Pré-requisito: Personagem da Raça Anão com pelo menos 1 Título Aventyr Bruto Desperto
+Descrição: Você recebe Bônus de +Metade do Vigor em Defesas para resistir aos ataques de oponentes de Categorias de Tamanhos superiores à sua.
+
+Filho de Ymir (Anão/Bruto)
+Pré-requisito: Vigor 4
+Descrição: Seu Multiplicador de PV e Dano Base de armas aumentam em +1.
+
+Conselheiro de Guerra Ymiriano (Anão/Perito)
+Pré-requisito: Gnose 5
+Descrição: Você adquire Bônus Racial de +1 em Gnose e 1 Habilidade de Força (que você cumpra os requisitos). 
+
+TALENTOS RACIAIS AVENTYRS
+Glória Ymiriana (Aventyr/Anão/Bruto)
+Pré-requisito: Personagem da Raça Anão com pelo menos 1 Título Aventyr Bruto Desperto
+Descrição: Você recebe os benefícios de Abatedores de Gigantes contra qualquer alvo que não seja menor que você.
+Sua Margem Crítica Menor aumenta em +2 para atacar alvos maiores que você.
+
+Vigor do Inverno (Anão/Aventyr/Sobrevivência)
+Pré-requisito: Apenas Personagens Anões com Vigor 5 ou mais e pelo menos 1 Título Aventyr desperto. 
+Descrição: Seu Multiplicador de PV aumenta em 1. 
+No início de cada combate você recebe RD e Resistência a Críticos por uma quantidade de Rodadas igual à metade de seu Multiplicador de PV.
+
+Aviano
+Módulo Básico
+TALENTOS RACIAIS AVENTYRS
+Coração Alado (Monstruoso/Aventyr/Aviano)
+Pré-requisitos: Apenas personagens Avianos.
+Descrição: A Duração de seu Efeito de Voo aumenta em +1d6 Rodadas. 
+Seu Movimento Base de Voo aumenta em +2UD para cada Título Aventyr Desperto que possuir.
+
+O Grande Continente
+TALENTOS RACIAIS AVENTYRS
+Braços Livres (Aventyr/Aviano)
+Pré-requisito: Apenas Personagens Avianos com Destreza 4 ou mais e pelo menos 1 Título Aventyr desperto.
+Descrição: Seu corpo muda e seus braços e asas se separam, agora você pode usar suas mãos livremente enquanto voando, elas não são mais consideradas membros inábeis, mas seu Movimento Base de Voo é reduzido em -3UD.
+
+Eterno Viajante (Aventyr/Aviano)
+Pré-requisito: Coração Alado e pelo menos 1 Título Aventyr desperto.
+Descrição: Enquanto estiver consciente você pode voar sem limites de Duração, mesmo em Cenas estressantes.
+Você pode desligar parte do seu cérebro e dormir voando em linha reta por até Descanso Mínimo, mas apenas se aparentar estar em segurança nos momentos iniciais.
+
+Visão da Verdade (Aventyr/Aviano)
+Pré-requisito: Personagem da Raça Aviano com pelo menos 1 Título Aventyr Desperto
+Descrição: A GD de suas rolagens de Atenção é reduzida em -1 Nível, adicionalmente você pode enxergar auras mágicas e personagens invisíveis.
+
+Bestial
+Módulo Básico
+Herança Anfíbia (Bestial)
+Pré-requisitos: apenas 'Bestiais'
+Descrição: Receba +1 de bônus racial em Vigor e Movimento Base de Natação. 
+Personagens com este talento podem respirar dentro e fora d’agua normalmente e possuem pele escorregadia, sem pelos, que lhes garantem Vantagem para resistir a ataques de agarrar, se livrar de cordas e outros objetos, ou lugares apertados, que te prendam. 
+Bestiais Anfíbios recebem uma Habilidade de Competência de Furtividade.
+
+Herança Aviana (Bestial)	
+Pré-requisitos: apenas criaturas da raça Bestial
+Descrição: Receba +1 de bônus racial em Foco. Você agora tem asas e possui Movimento Base de Voo.
+Em Cenas de Combate voar exige o uso de 2PA e 3PD, a capacidade de voo poderá ser usada por 1d6 Rodadas, +1 Rodada para cada Talento de Herança que possuir. Encerrada a duração retornam ao solo lentamente, de forma segura.
+Bestiais Avianos recebem uma Habilidade de Competência de Persuasão.
+
+Herança Bovídea (Bestial)
+Pré-requisitos: apenas criaturas da raça Bestial
+Descrição: Você recebe +1 de bônus racial no atributo Força e Arma Natural Chifres Poderosos.
+Bestiais Bovídeos recebem uma Habilidade de Competência de Atletismo.
+
+Herança Canina (Bestial)
+Pré-requisitos: apenas criaturas da raça Bestial
+Descrição: Você recebe +1 de bônus racial em Instinto, Arma Natural Presas Longas e Faro Apurado – Vantagem em rolagens de Atenção para perceber ameaças a partir do olfato. 
+Bestiais Caninos recebem uma Especialização e uma Habilidade de Competência de 'Atenção'.
+
+Herança Cetácea (Bestial)
+Pré-requisitos: apenas criaturas da raça Bestial
+Descrição: Você recebe +1 de bônus racial no atributo Gnose e a habilidade Ecolocalização – Você pode gastar 2PD para reduzir a GD de testes de Atenção em -1 nível, sempre que o fizer você mapeia todo o terreno (sem precisão de detalhes) em Distância Média.
+Bestiais com este talento recebem uma Especialização adicional de ‘Persuasão’ e podem permanecer submersos, sem respirar, pelo dobro do tempo.
+
+Herança Felina (Bestial)
+Pré-requisitos: apenas criaturas da raça Bestial
+Descrição: Receba +1 de bônus racial em Destreza, Visão no Escuro e Arma Natural Garras Afiadas. 
+Bestiais Felinos recebem uma Habilidade de Competência adicional de ‘Furtividade’.
+
+Herança Reptiliana (Bestial)
+Pré-requisitos: apenas criaturas da raça Bestial
+Descrição: Receba +1 de bônus racial em Carisma e Movimento Base Vertical.
+Bestiais Reptilianos recebem uma Especialização adicional de 'Atletismo'. 
+
+TALENTOS RACIAIS AVENTYRS
+Panteão de Tellus
+TALENTOS RACIAIS AVENTYRS
+Aceitar a Lacerto (Aventyr/Bestial)
+Pré-requisito: Apenas Personagens com 3 ou mais Talentos Bestiais e pelo menos 1 Título Aventyr desperto.
+Descrição:  A partir da terceira Rodada de Cenas de Combate, como uma Ação Livre, você pode gastar temporariamente 1 ponto de Autocontrole e Mimetizar os Efeitos da Ferocidade de Lacerto (Característica da Raça Indômito) por Instinto Rodadas. 
+Enquanto estiver Mimetizando a Ferocidade de Lacerto suas Armas Naturais causam +1d6 pontos de dano adicionais.
+Este efeito pode ser ativado apenas uma vez a cada Cena de Combate.
+
+Metamorfose Selvagem (Aventyr/Bestial)
+Pré-requisito: Personagem da Raça Bestial com pelo menos 1 Título Aventyr Desperto
+Descrição: Você pode gastar 2PD para se transformar em um animal que pertence a uma categoria de Talento Bestial que você possua.
+Enquanto transformado em animal seu movimento Base aumenta em +2UD, você recebe Bônus de +2 nas Defesas e Vantagem em suas rolagens Ataque e Dano com armas naturais.
+É impossível usar equipamentos enquanto este Talento estiver ativo.
+
+
+Dracônico
+Dragões de Drak’arya
+Armamento Dracônico (Dracônico)
+Pré-requisitos: Apenas Nascidos do Dragão recém-criados
+Descrição: Assim como os Dragões você possui um repertório de Armas Naturais, escolha duas armas entre: Chifres Poderosos, Cauda Chicote, Garras Afiadas e Presas Longas. Você possui as Armas Naturais escolhidas.
+
+Asas de Dragão (Dracônico)
+Pré-requisitos: Apenas Nascidos do Dragão recém-criados
+Descrição: Você tem asas e possui Movimento Base de Voo.
+Iniciar uma ação de voo em situações estressantes, como as Cenas de Combate, exige o uso de 4PD. Este Custo é reduzido em -2 para cada Título Aventyr que o personagem possua.
+A Duração do Efeito de Voo é igual à 1d6+Metade do Vigor Rodadas.
+Asas de Dragão são extremamente grandes, rígidas e resistentes, por isso concedem Bônus de +2 as suas Defesas, mas o impede de usar Equipamentos do tipo Capa.
+
+Aura Dracônica (Dracônico)
+Pré-requisito: Instinto 3 e o Talento Sopro de Dragão
+Descrição: Após usar seu Sopro de Dragão você emana uma aura de energia que te acompanhada por 2 Rodadas.
+Durante a ativação da aura e no início de cada um dos seus Turnos subsequentes, enquanto a aura estiver ativa, personagens adjacentes sofrem 2 pontos de Dano Físico Elemental.
+O dano da aura aumenta em +1 e o alcance em +1UD para cada Título Aventyr Desperto.
+
+Sopro de Dragão (Dracônico)
+Pré-requisito: Somente personagens da raça Nascidos do Dragão
+Descrição: Você tem a Arma Natural: Arma de Sopro e é capaz de soprar energia Elemental como um Dragão Verdadeiro.
+A Margem Crítica Menor aumenta em +1 e o dano do Sopro aumenta em +1d6 para cada Título Aventyr Desperto.
+
+TALENTOS RACIAIS AVENTYRS
+Draconato (Dracônico)
+Pré-requisito: Apenas personagens da raça Nascido do Dragão com pelo menos 1 Título Aventyr Desperto
+Descrição: Temporariamente você pode mudar sua forma física, se transformando em um dragão bípede, abandonando quaisquer traços raciais existente.
+Transformar-se em um Draconato requer 3PA + 3PD, ao fazê-lo sua Categoria de Tamanho, Força e Foco aumentam em +2 para cada Título Aventyr que você possuir.
+A Duração na forma de Draconato é de 3 Rodadas, este Efeito não poderá ser reativado até que passe por um Descanso Longo.
+
+Elemental
+Panteão de Tellus
+Arcanismo Elemental (Elemental)
+Pré-requisito: Talento Gana Elemental
+Descrição: Aprender magias Elementais de seu elemento custa 0.5EXP a menos.
+Suas Magias Elementais de dano e cura tem seus efeitos numéricos aumentados em +2, suas Magias de Encantamento com este elemento tem a Duração aumentada em +1 Rodada.
+
+Gana Elemental (Elemental)
+Pré-requisito: Apenas personagens de Raças Elementais.
+Descrição: Ao tempo de 1PA e ao custo de 2PD você pode encantar uma de suas Armas Naturais ou uma outra arma ao toque, o Dano Base da Arma escolhida aumenta em +2 e o tipo de dano causado muda para Físico Elemental por 2 Rodadas. 
+RAÇA
+DANO ELEMENTAL
+Agástia Trovejante
+Eletricidade
+Agástia Vulcano
+Magma
+Aquan
+Água
+Colosso
+Terra
+Dólos
+Vento
+Elemental da Madeira
+Natural
+Flaminídeo
+Fogo
+Invernal
+Gelo
+
+Reparação Elemental (Elemental)
+Pré-requisito: Talento Resistência Elemental
+Descrição: Como uma Reação você pode fazer com que seu corpo seja coberto pelo seu elemento ou de espinhos elementais, este efeito tem por Duração apenas o Turno em que foi ativado. Personagens adjacentes que te causarem danos enquanto seu corpo estiver coberto de seu elemento ou espinhos sofrem 2 pontos de Dano Físico Elemental, este Dano é aumentado em +1 para cada Título Aventyr que você tiver Desperto.
+
+Resistência Elemental (Elemental)
+Pré-requisito: Apenas personagens de Raças Elementais.
+Descrição: Conforme seu Elemento, você reduz o primeiro dano Elemental de cada Cena à metade (efeito de Meio-Dano), então recebe Resistência Elemental (RE) para resistir aos efeitos Elementais posteriores.
+RAÇA
+RESISTENCIA ELEMENTAL
+Agástia Trovejante
+Eletricidade
+Agástia Vulcano
+Magma
+Aquan
+Água
+Colosso
+Terra
+Dólos
+Vento
+Elemental da Madeira
+Natural
+Flaminídeo
+Fogo
+Invernal
+Gelo
+
+
+Resistência Elemental Superior (Elemental)
+Pré-requisito: Talento Resistência Elemental.
+Descrição: A cada Cena você pode reduzir a zero o primeiro dano elemental do elemento qual você é resistente, danos posteriores são reduzidos à metade.
+
+TALENTOS RACIAIS AVENTYRS
+Aura Cataclísmica (Aventyr/Elemental)
+Pré-requisito: Talento Gana Elemental e pelo menos 2 Títulos Aventyr Despertos
+Descrição: No final de cada um de seus Turnos, enquanto estiver com Gana Cataclísmica ativa, você causa 1d6 pontos de Dano Mágico Elemental a todos os personagens em Distância Curta, este dano é reduzido em 1 para cada UD percorrido.
+
+Golpe Cataclísmico (Aventyr/Elemental)
+Pré-requisito: Talento Gana Elemental e pelo menos 1 Título Aventyr Desperto
+Descrição: Seu primeiro ataque em cada Rodada, enquanto estiver com Gana Elemental ativo, tem a Margem Crítica Menor aumentada em +1, tem sua Rolagem efetuada contra a DM de seu alvo e causa danos mágicos.
+Se este ataque for um Acerto Crítico ele receberá a Corrente de Efeitos – Explosão Cataclísmica. 
+
+Imunidade Elemental (Aventyr/Elemental)
+Pré-requisito: Talento Resistência Elemental Superior e um Título Aventyr Desperto.
+Descrição: Você se torna imune ao elemento que você adquiriu resistência.
+
+Transformação Elemental (Aventyr/Elemental)
+Pré-requisito: 2 Títulos Aventyr Despertos e os Talentos Reparação Elemental e Resistência Elemental Superior
+Descrição: Você se transforma em um ser Elemental completo.
+Você recebe RDS e Resistência a Críticos.
+O dano causado por sua Reparação Elemental muda para 1d6, este dano aumenta em +1 para cada Título Aventyr Desperto.
+
+
+Élfico
+Módulo Básico
+Corruptor Sombrio (Élfico)
+Pré-requisito: Requer qualquer outro talento élfico e possuir tendência de alinhamento neutro ou maligno; 
+Descrição: Sua pele lentamente começa a escurecer, até se tornar preta como ébano. 
+Você recebe Vantagem em suas rolagens de Perícias efetuadas enquanto estiver sob a cobertura de uma sombra ou durante a noite, esta Vantagem é cumulativa com a fornecida em outros Talentos Raciais Élficos, mas é quase cego em locais luminosos, por isso sofre Desvantagem em rolagens de Perícias efetuadas em locais muito claros ou sob a luz do sol. 
+Elfos com este talento perdem a limitação racial para adquirir o Título de Aventyr Bruxo, seus Ataques e Magias roubam a vitalidade da natureza ao seu redor e dos alvos, os murchando e manchando com uma escuridão sobrenatural. 
+Você Recebe Roubo de Vida 1 e seus ataques e Magias recebem Corrente de Efeito – Definhar.
+
+
+Guardião dos Bosques (Élfico)
+Pré-requisito: Apenas Elfos e Meio-Elfos recém-criados. 
+Elfos podem possuir até 2 talentos 'Élficos' do tipo 'Guardião', Meio-Elfos apenas um.
+Descrição: Você possui pele em tom claro.
+Enquanto estiver em uma floresta ou bosque você recebe Vantagem em rolagens nas Perícias de Ataque, 'Empatia Selvagem', ‘Conhecimentos: Natureza’ e em 'Furtividade'. Você também pode mimetizar a magia 'Cativar Animal' ao custo de 2PD.
+Guardiões dos Bosques não podem adquirir o título Bruxo.
+
+Guardião das Dunas (Élfico)
+Pré-requisito: Apenas Elfos e Meio-Elfos recém-criados. 
+Elfos podem possuir até 2 talentos 'Élficos' do tipo 'Guardião', Meio-Elfos apenas um.
+Descrição: Você possui pele negra ou outro tom escuro, o forte sol do deserto com suas altas temperaturas pouco lhe incomodam. 
+Você recebe vantagem em rolagens nas Perícias de Ataque, 'Empatia Selvagem', ‘Conhecimentos: Natureza’ e 'Furtividade', mas apenas enquanto estiver em desertos ou outros lugares de temperaturas elevadas. Você também pode mimetizar a magia 'Dádiva de Undine' ao custo de 2PD. 
+Guardiões das Dunas não podem adquirir o título Bruxo.
+
+Guardião das Nuvens (Élfico)
+Pré-requisito: Apenas Elfos e Meio-Elfos recém-criados. Elfos podem possuir até 2 talentos 'Élficos' do tipo 'Guardião', Meio-elfos apenas um.
+Descrição: Você possui pele em tom acinzentado e um corpo adaptado ao frio das Montanhas. Enquanto estiver em locais de grande altitude, ou voando, você recebe vantagem em rolagens nas Perícias de Ataque, em 'Empatia Selvagem', ‘Conhecimentos: Natureza’ e 'Furtividade'. Você também pode mimetizar a magia 'Voo’ em você mesmo, com Tempo de Conjuração de 1PA e Duração de 2 Rodadas, ao custo de 3PD.
+
+Guardião das Profundezas (Élfico)
+Pré-requisito: Apenas Elfos e Meio-Elfos recém-criados. Elfos podem possuir até 2 talentos 'Élficos' do tipo 'Guardião', Meio-Elfos apenas um.
+Descrição: Com pele em tom azulado e brânquias no pescoço, os Guardiões das Profundezes são Elfos de características anfíbias, capazes de viver na água e em terra firma. Possuem a capacidade de Respirar na Água e, enquanto estiverem com pelo menos metade do seu corpo submerso, recebem Vantagem nas rolagens de Perícias de Ataque e 'Furtividade', também recebem Vantagem em suas rolagens de ‘Conhecimento: Natureza’ e Empatia Selvagem para informações referente a vida e hábitos marinhos. Também podem mimetizar a magia 'Regeneração', ao custo de 2PD.
+Os Guardiões das Profundezas não podem adquirir o título Bruxo.
+
+TALENTOS RACIAIS AVENTYRS
+Alma Feérica (Aventyr/Élfico/Destino)
+Pré-requisito: Personagem da Raça Élfo com pelo menos 1 Título Aventyr Desperto
+Descrição: Você é considerado um personagem Feérico para requisitos de Talentos e Habilidades.
+Escolha uma Árvore de Magia Natural, você pode mimetizar as magias Broto e Muda da árvore escolhida. Caso possua 2 Títulos Despertos também poderá mimetizar Emergentes.
+Magias Mimetizadas desta forma utilizam PD em substituição aos PM.
+
+
+Sentidos Absolutos (Élfico/Aventyr/Sobrevivência)
+Pré-requisito: Apenas Elfos com Instinto 3 ou mais, treinados em Atenção que possuam pelo menos 1 Título Aventyr Desperto.
+Descrição:  A GD de suas rolagens de Atenção é reduzida em -1 Nível. 
+Sua Margem Crítica Menor de suas rolagens de Atenção aumentam em +2 números para cada Título Aventyr Desperto.
+Você é sempre considerado bem-sucedido em rolagens de Atenção quando o GD for Médio ou inferior, dispensando a necessidade de rolar os dados.
+
+Feérico
+Módulo Básico
+Asas (Feérico/Monstruoso)
+Pré-requisitos: Apenas Avianos e Bestiais, ou personagens recém-criados de raça Feérica.
+Descrição: Você tem asas e possui Movimento Base de Voo. Enquanto voando seu Movimento Base aumenta em +2UD.
+Iniciar uma ação de voo em situações estressantes, como as Cenas de Combate, exige o uso de 3PD, Feéricos usam 3PM. Este Custo é reduzido em 1 para cada Título Aventyr que o personagem possua.
+A Duração do Efeito de Voo é igual à 1d6+Metade do Vigor Rodadas.
+
+Benção de Flora (Feérico)
+Pré-requisitos: Apenas personagens Feéricos com o Talento Asas.
+Descrição: O Custo de Ativação do Efeito de Voo é reduzido em -1PM.
+A Duração de seu Efeito de Voo muda para 2d6+Metade do Foco Rodadas.
+
+Dríade (Feérico)
+Pré-requisito: Apenas personagens de raça Feérica
+Descrição: Você pode, com auxílio de um ritual, transferir sua essência vital para uma árvore. Enquanto estiver a uma distância igual ou inferior a ‘Instinto’ quilômetros de sua árvore você não envelhece, se torna imune a doenças não mágicas e não pode morrer por causas naturais. Enquanto a distância for maior, a quantidade de PV, PD e PM que recuperam a cada Descanso é reduzida pela metade.
+Se algum efeito lhe causar danos suficientes para reduzir seus PV à zero ou menos, ao invés disso sua árvore morrerá e sua essência vital voltará para o seu corpo. Você sofre redutor permanente de -1 Multiplicador de PV, seus PV atuais mudam para 10, independentemente da quantidade de dano sofrido.
+Se a árvore que guarda a essência vital do Dríade for destruída de qualquer outra forma, você – ao mesmo tempo – também morrerá, por isso raramente Dríades se afastam da árvore qual se vincularam.
+É possível encerrar voluntariamente a conexão com uma árvore, mas quando o fazem envelhecem metade do tempo que passou vinculado aquela árvore, Desconectar-se de uma árvore – assim como conectar-se à uma - é um ritual que leva um dia inteiro sem descanso, quase ininterruptos cantos e danças em honra à Flora, Deusa e Rainha das Fadas. Pausas são permitidas apenas para comer dos frutos da própria árvore e tomar chás feitos de suas folhas. 
+Devido aos efeitos de envelhecimento, Dríades antigos não se desconectam de sua árvore, pois esta ação poderia fazê-los morrer de velhice imediatamente.
+
+Pixie (Feérico)
+Pré-requisito: apenas Fadas e Fúrias recém-criadas
+Descrição: Sua categoria de tamanho muda para -3, você tem asas e Movimento Base de Voo 8UD. 
+Voar em Cenas estressantes, como Combates, exige o uso de 2PM ao Tempo de Ação Livre, a capacidade de voo poderá ser usada por 2d6+Metade do Carisma Rodadas, +3 Rodadas para cada Título Aventyr Desperto que possuir. Quando encerrada a Duração retornam ao solo lentamente, de forma segura.
+
+TALENTOS RACIAIS AVENTYRS
+Ninfa (Feérico)	
+Pré-requisito: apenas criaturas de raça feérica, do sexo feminino, que possuam pelo menos 1 título Aventyr.
+Descrição: Você recebe Bônus de +1 Racial em Carisma e vantagem em rolagens de ‘Empatia Selvagem’.
+
+Panteão de Tellus
+TALENTOS RACIAIS AVENTYRS
+Aspecto da Bondade Natural (Aventyr/Fadas)
+Pré-requisito: Personagem da Raça Fada com pelo menos 1 Título Aventyr Desperto
+Descrição: Conjurar Magias Divinas e Naturais em personagem aliados ou neutros custam 1PM ou 1PD à menos (mínimo 1 Unidade).
+
+Aspecto da Decomposição Natural (Aventyr/Fúrias)
+Pré-requisito: Personagem da Raça Fúria com pelo menos 1 Título Aventyr Desperto
+Descrição: Conjurar Magias Profanas e Encantamentos em personagens inimigos ou neutros custam 1PM ou 1PD à menos (mínimo 1 Unidade).
+
+Espírito da Floresta (Aventyr/Feérico)
+Pré-requisito: Apenas Fadas, Fúrias e Sátiros.
+Descrição: Você pode Mimetizar Magias Naturais, do tipo Broto, ao custo de 2PD.
+Esta ação pode ser efetuada mesmo que você não conheça as magias e não cumpra com seus pré-requisitos.
+
+Sentir o fluxo de Mana (Feérico/Aventyr)
+Pré-requisito: Apenas Personagens Feéricos treinados em Domínio do Mana e que possuam ao menos 1 Título Aventyr desperto
+Descrição: Você é capaz de sentir mudanças no Mana ao seu redor, sempre que outros personagens conjurarem magias em Distância Curta você irá identificá-los automaticamente.
+
+Ancienteforme (Feérico)
+Pré-requisito: Talento Dríade e pelo menos 1 Título Aventyr Desperto
+Descrição: Temporariamente você pode mudar sua forma física, se transformando em um Anciente, uma árvore viva, abandonando seus traços raciais.
+Transformar-se em um Anciente requer 3PA e 3PD, para cada Título Aventyr Desperto suas Defesas e Multiplicador de PV, Categoria de Tamanho aumentam em +2, enquanto seu Carisma e Foco aumentam em +1.
+Ancientefome dura por apenas 3 Rodadas, Nascidos da Florestas permanecem nesta forma por +2 Rodadas.
+Após utilizar deste Efeito ele não pode ser ativado novamente até que você passe por um Descanso Longo.
+
+
+Império das Profundezas
+Sirenídeo (Feérico)
+Pré-requisito: Apenas Fadas e Fúrias recém-criadas e que não possuam o Talento ‘Pixie’.
+Descrição: A parte inferior de teu corpo, no lugar das pernas, é similar ao de uma criatura marinha (Fadas possuem a parte inferior de peixes, Fúrias de lulas ou polvos). Você possui guelras e pode respirar dentro e fora d'agua, possui também Movimento Base de Natação 6UD, mas em terra seu Movimento Base é reduzido para apenas 2UD. 
+Personagens com este Talento recebem Bônus Racial de +1 em Vigor e Vantagem nas rolagens de Artes.
+Tesouros de Grurton
+TALENTOS RACIAIS AVENTYRS
+Adotado por Sylph (Feérico/Sátiro/Aventyr/Especialista)
+Pré-requisito: Personagens Feéricos com pelo menos 1 Título Aventyr Desperto.
+Descrição: Escolha entre Artes, Atenção e Persuasão. Você pode escolher uma desta Perícias para cada Título Aventyr Desperto.
+Personagens Sátiros que possuam um Título Aventyr Especialista Desperto podem escolher uma Perícia listada adicional.
+Você recebe uma Habilidade de Competência de cada Perícia escolhida e Vantagem em suas rolagens. 
+
+
+
+
+Feral
+Módulo Básico
+Sombras da Umbra
+Presas com Destreza Manual (Feral/Especialista)
+Pré-requisito: Apenas Homens-Fera com Destreza Base 3 ou superior.
+Descrição: Você recebe Bônus Racial de +1 em Destreza e pode usar suas Presas Longas para empunhar armas e manipular objetos como se fosse uma de suas mãos.
+
+Benção de Mapinguari (Feral/Sobrevivência)
+Pré-requisito: Apenas Homens-Fera com Vigor Base 3 ou superior.
+Descrição: Você recebe Bônus Racial de +1 em Vigor e adquire a Habilidade Racial Regeneração Reativa (Trolls).
+“Regeneração Reativa – Após sofrer danos de fontes inimigas recuperam 1PV por Rodada (em seus Turnos) por uma quantidade de Rodadas igual ao próprio Vigor. A quantidade de PV recuperados desta forma não pode superar os danos sofridos (Efeito não cumulativo).”
+
+Desprezo Natural (Feral/Assassino)
+Pré-requisito: Apenas Homens-Fera com Força Base 3 ou superior.
+Descrição: Você recebe Bônus Racial de +1 em Força, o Tipo de Dano base de suas Armas Naturais mudam para Físico Elemental: Natural em substituição aos seus tipos e recebem a Corrente de Efeitos – Ferida Infecciosa.
+
+TALENTOS RACIAIS AVENTYRS
+Transformação Rápida (Aventyr/Feral)
+Pré-requisito: 2 outros Talentos Ferais.
+Descrição: O Custo e Tempo de Ativação de sua Habilidade Racial Forma Híbrida é reduzido em -1 unidade, mas a Duração é reduzida em -2 Rodadas.
+Este Talento não pode ser usado em conjunto com Transformação Duradoura.
+
+Transformação Duradoura (Aventyr/Feral)
+Pré-requisito: 3 outros Talentos Ferais e 1 Título Aventyr Desperto
+Descrição: Você pode aumentar o Custo de suas Transformações em +2PM para estender a Duração até o final da Cena.
+Ativar este efeito durante a noite faz com que a Duração mude para Quantidade de Títulos Desperto Horas.
+Este Talento não pode ser usado em conjunto com Transformação Rápida.
+
+Aspecto das Feras (Aventyr/Feral)
+Pré-requisito: Transformação Duradoura
+Descrição: Suas transformações não possuem mais Duração, mas mantê-las ativas em local iluminado pelo sol exige um Custo de 2PM a cada Instinto Horas.
+
+Gigante
+Módulo Básico
+O Grande Continente
+Zelo pelos Frágeis (Sobrevivência/Gigante)
+Pré-requisito: Personagem da Raça Gigante com pelo menos 1 Título Aventyr Desperto
+Descrição: Você se acostumou a viver com as criaturas de tamanhos inferiores, não ferir ninguém acidentalmente se tornou natural.
+A característica Cuidado Para Não Quebrar não te concede mais quaisquer Desvantagens.
+Seu Movimento Base aumenta em +2UD para cada Títulos Aventyr Despertos, mas apenas para se aproximar de aliados feridos que pertençam à Categorias de Tamanhos inferiores à sua.
+
+TALENTOS RACIAIS AVENTYRS
+Escudo Que Anda (Escudeiro/Gigante/Aventyr)
+Pré-requisito: Apenas Personagens Gigantes com pelo menos 1 Título Aventyr desperto
+Descrição: Talento Zelo pelos Frágeis
+Seus aliados recebem Bônus de +1 em Defesas enquanto estiverem adjacentes a você.
+Este Bônus aumenta em +1 para cada Título Aventyr Desperto, então em +1 para cada Título Abençoado desperto.
+
+Gigante do Clã Empusa (Destino/Aventyr/Gigante)
+Pré-requisito: Personagem da Raça Gigante com pelo menos 1 Título Aventyr Desperto
+Descrição: O Despertar de sua Centelha também desperta um poder latente em seu sangue, fruto da descendência Abissal. Você se torna maior e mais poderoso, mas se torna mais frágil.
+Sua Categoria de Tamanho aumenta em +1, então recebe Bônus de +1 Força para cada Título Aventyr Desperto, mas recebe Redutor de -2 em suas Defesas.
+Um mesmo personagem não pode possuir mais um de um Talento de Clã.
+
+Gigante do Clã Jotun (Destino/Aventyr/Gigante)
+Pré-requisito: Personagem da Raça Gigante com pelo menos 1 Título Aventyr Desperto
+Descrição: O Despertar de sua Centelha também desperta um poder latente em seu sangue, fruto da descendência Titânica. Você se torna maior e mais resistente, mas seus movimentos se tornam mais rígidos e lentos.
+Sua Categoria de Tamanho aumenta em +1, então recebe Bônus de +1 em Vigor para cada Título Aventyr Desperto, mas recebe Desvantagens em rolagens de Perícias Físicas (baseadas em Força e Destreza), exceto Esquiva e Aparar.
+Um mesmo personagem não pode possuir mais um de um Talento de Clã.
+
+
+
+Gnomo
+O Grande Continente
+Duende (Gnomo)
+Pré-requisito: Apenas Gnomos recém-criados.
+Descrição: Sua Categoria de Tamanho muda para -2, você recebe Bônus de +1 na DM e você pode Mimetizar Sementes, que não sejam Profanas, de qualquer Árvore de Magias.
+O Número de vezes que você pode mimetizar uma mesma Semente é igual à 1 + Número de Títulos Aventyr Despertos, este limite é renovado sempre que passar por um Descanso Longo Verdadeiro.
+
+Sabichão (Gnomo)
+Pré-requisito: Gnose 4.
+Descrição: Você aprende uma Habilidade de Competência de uma Perícia treinada.
+Você estende os Benefícios de Aprendizado Rápido até a sétima Graduação.
+
+TALENTOS RACIAIS AVENTYRS
+Favoritos de Tesla (Aventyr/Gnomo)
+Pré-requisito: Apenas personagens Gnomos com ao menos um Título Aventyr desperto
+Descrição: A GD de suas rolagens de Profissão é reduzida em -1 nível.
+
+Mimetizar Competência (Aventyr/Perito/Gnomo)
+Pré-requisito: Apenas personagens Gnomos com ao menos um Título Aventyr desperto
+Descrição: A capacidade de adaptação dos Gnomos os permite fazer coisas incríveis.
+Efeito Passivo – Você adquire uma Habilidade de Competência de uma Perícia Treinada qual tenha pelo menos 2 Graduações.
+Efeito Ativo – Apenas uma vez por Cena, você pode gastar 2PM, ao Tempo de 2PA, para adquirir uma temporariamente uma Habilidade de Competência de uma Perícia Treinada que você possua, este efeito dura até o final da cena.
+
+Goblin
+Módulo Básico
+O Grande Continente
+TALENTOS RACIAIS AVENTYRS
+Engenheiro de Improvisos (Goblin/Perito/Aventyr)
+Pré-requisito: Apenas Personagens das Raças Goblin com 5 ou mais Graduações em Conhecimentos. 
+Descrição: O GD de rolagens de Profissão para criar equipamento é reduzida em -1 Nível.
+Itens criados utilizando efeitos deste Talento tem a Dureza reduzida à metade.
+
+TALENTOS RACIAIS AVENTYRS
+Kabum! (Goblin/Perito/Aventyr)
+Pré-requisito: Engenheiro de Improvisos
+Descrição: Você pode substituir os Engenheiro de Improvisos e reduzir a GD da rolagem de Profissão em -2 Níveis (ao invés de -1 Nível), se o fizer a Dureza do Equipamento é reduzida para 5PV (ou 1/3, o que for menor). 
+Itens tecnológicos criados desta forma explodem quando sua Dureza chega à zero, causando 1d6 Pontos de Dano Físico Elemental: Fogo para cada Título Aventyr que você possuir, Área de Efeito – Explosão.
+
+
+Górgona
+O Grande Continente
+Marca da Maldição! (Górgona/Destino/Monstruoso)
+Pré-requisito: Apenas Górgonas recém-criadas
+Descrição: Você está sempre em sua forma monstruosa e é incapaz de alternar para a forma humanoide.
+O Alcance de seu Olhar de Lacerto aumenta para Distância Curta e suas Presas Longas recebem a Corrente de Efeitos – Enrijecer Musculatura.
+Para efeitos diversos você é sempre considerado um personagem Amaldiçoado e não possui a Característica Racial Imunidade a Encantamentos.
+Um mesmo personagem não pode possuir os Talentos Marca da Maldição e Acolhida por Flora.
+
+Acolhida por Flora! (Górgona/Destino/Feérico)
+Pré-requisito: Apenas Górgonas recém-criadas
+Descrição: Você está completamente liberta da maldição e não pode acessar a forma monstruosa.
+Você não possui a Característica Racial Abandonada pelos Deuses, ao invés disso recebe a Habilidade Feromônio Encantador (ver Fadas e Fúrias), também recebe Bônus de +2 em Conjuração, Danos e Curas de suas Magias Naturais.
+Um mesmo personagem não pode possuir os Talentos Marca da Maldição e Acolhida por Flora.
+
+Proteção do Deus dos Monstros! (Górgona/Monstruoso)
+Pré-requisito: Apenas Górgonas com Força 4 ou superior.
+Descrição: Você recebe RDS e RD, enquanto em sua Forma Monstruosa você recebe Resistência à Críticos.
+Um mesmo personagem não pode possuir os Talentos Proteção do Deus dos Monstros e Proteção da Rainha das Fadas.
+
+Proteção da Rainha das Fadas (Górgona/Feérico)
+Pré-requisito: Apenas Górgonas com Carisma 4 ou superior.
+Descrição: Você recebe RDS e RM, enquanto em sua forma Feérica você recebe Resistência a Críticos.
+Um mesmo personagem não pode possuir os Talentos Proteção do Deus dos Monstros e Proteção da Rainha das Fadas.
+
+TALENTOS RACIAIS AVENTYRS
+Cabelo Serpentino! (Górgona/Aventyr)
+Pré-requisito: Apenas Górgonas com pelo menos 1 Título Aventyr Desperto.
+Descrição: Seu cabelo está sempre em forma de Serpente, o que assusta ou incomoda outros personagens.
+Você recebe Desvantagens em rolagens de Persuasão, mas recebe Vantagem em suas Rolagens de Ataque e Danos de seu Olhar de Lacerto.
+
+
+Aceitar a Selvageria (Górgona/Bruto/Aventyr)
+Pré-requisito: Apenas Górgonas com pelo menos 1 Título Aventyr Desperto.
+Descrição: Você pode adquirir Talentos Monstruosos que não sejam Raciais e recebe a Habilidade Racial Ferocidade de Lacerto (ver Indômitos) como se fosse um Impuro. Talentos Monstruosos adquiridos tem seus efeitos desencadeados apenas durante a Forma Monstruosa.
+“Ferocidade de Lacerto - Combates longos te conectam aos seus instintos mais destrutivos, a partir do terceiro turno de combate você recebem Resistência a Danos (RD), Vantagem em rolagens de Ataque Corpo-a-Corpo e Danos, se tornam incapazes de criar estratégias complexas e atacam sempre o personagem mais próximo. Neste estado também não conseguem usar Perícias que exijam concentração. 
+É possível gastar um ponto temporário de Autocontrole para evitar ou finalizar a Ferocidade de Lacerto.”
+
+
+Abençoada pelo Conclave (Górgona/Arcano/Aventyr)
+Pré-requisito: Apenas Górgonas com pelo menos 1 Título Aventyr Desperto.
+Descrição: Você pode adquirir Talentos Feéricos.
+Escolha duas Árvores de Magia Natural, você pode Mimetizar as magias Semente das Árvores escolhidas.
+Ao Despertar seu primeiro Título poderá conjurar as magias Broto destas árvores ao custo de 2PD. Ao Despertar seu segundo Título Aventyr também poderá conjurar as magias do Tipo Muda (ao custo de 3PD).
+Magias das Árvores de Magia escolhidas só podem ser Mimetizadas enquanto em sua forma Feérica.
+
+Guampo (não possui)
+Módulo Básico
+TALENTOS RACIAIS AVENTYRS
+O Grande Continente
+TALENTOS RACIAIS AVENTYRS
+Panteão de Tellus
+TALENTOS RACIAIS AVENTYRS
+Império das Profundezas
+TALENTOS RACIAIS AVENTYRS
+Estados Federados
+TALENTOS RACIAIS AVENTYRS
+Tesouros de Grurton
+TALENTOS RACIAIS AVENTYRS
+Sombras da Umbra
+TALENTOS RACIAIS AVENTYRS
+O Olho de Deus
+TALENTOS RACIAIS AVENTYRS
+Dragões de Drak’arya
+TALENTOS RACIAIS AVENTYRS
+Morte e Renascimento
+TALENTOS RACIAIS AVENTYRS
+
+
+
+Humanos
+Módulo Básico
+O Grande Continente
+Aprendizado Rápido e Contínuo (Perito/Humano)
+Pré-requisito: Personagem da Raça Humano
+Descrição: Um Exemplar entre os Humanos, sua Habilidade Aprendizado Rápido te beneficia até a quinta Graduação em Perícia, após Despertar um Título Aventyr você estende os benefícios de Aprendizado até a sétima Graduação.
+Após Despertar seu segundo Título Aventyr você recebe uma Especialização ou Habilidade de Competência de cada Perícia beneficiada por Aprendizado Rápido (os benefícios podem ser escolhidos separadamente para cada Perícia).
+Um mesmo personagem não pode adquirir Aprendizado Rápido e Contínuo e Limiar da Evolução.
+
+TALENTOS RACIAIS AVENTYRS
+Entender os Fundamentos (Aventyr/Especialista/Humano)
+Pré-requisito: Apenas Personagens Humanos com pelo menos 1 Título Aventyr desperto.
+Descrição: Você adquire novas Habilidades de Competência ou Especializações de Perícias com 3, 5, 7 e 10 Graduações, ao invés de 4, 7 e 10 Graduações.
+
+Limiar da Evolução (Aventyr/Destino/Humano)
+Pré-requisito: Apenas Personagens Humanos com pelo menos 1 Título Aventyr desperto.
+Descrição: Juntamente ao seu Título Aventyr você desperta o sangue dos Primeiros Homens em seu corpo.
+Escolha uma Atributo, você recebe Bônus Racial de +1 no Atributo Escolhido.
+Ao Despertar seu segundo Título Aventyr você recebe uma Habilidade do Atributo escolhido.
+Um mesmo personagem não pode adquirir Aprendizado Rápido e Contínuo e Limiar da Evolução.
+
+Indômito
+Módulo Básico
+O Grande Continente
+TALENTOS RACIAIS AVENTYRS
+Reconhecer suas Presas (Aventyr/Indômito/Gigante Enfurecido)
+Pré-requisito: Apenas Personagens com o Título Aventyr Gigante Enfurecido ou raça Indômito
+Descrição: Enquanto estiver em Frenesi ou sob efeito da Ferocidade de Lacerto, você reconhece seus aliados e pode escolher não os atacar, mesmo que outras Habilidades ou Efeitos de qualquer origem digam o contrário.
+Este efeito funciona apenas nas primeiras 2+ Metade do Instinto Rodadas do Frenesi ou da Ferocidade de Lacerto (se tiver ambas considere a que iniciar primeiro).
+
+Renegar à Lacerto (Indômito/Aventyr/Destino)
+Pré-requisito: Apenas Personagens da Raça Indômito com pelo menos 1 Título Aventyr desperto
+Descrição: Você não entra na Ferocidade de Lacerto enquanto tiver aliados vivos e conscientes, com 1 ou mais PV, em Distância Curta.
+
+Panteão de Tellus
+TALENTOS RACIAIS AVENTYRS
+Império das Profundezas
+TALENTOS RACIAIS AVENTYRS
+Estados Federados
+TALENTOS RACIAIS AVENTYRS
+Tesouros de Grurton
+TALENTOS RACIAIS AVENTYRS
+Sombras da Umbra
+TALENTOS RACIAIS AVENTYRS
+O Olho de Deus
+TALENTOS RACIAIS AVENTYRS
+Dragões de Drak’arya
+TALENTOS RACIAIS AVENTYRS
+Morte e Renascimento
+TALENTOS RACIAIS AVENTYRS
+
+
+Lâmia (não possui)
+O Grande Continente
+TALENTOS RACIAIS AVENTYRS
+Panteão de Tellus
+TALENTOS RACIAIS AVENTYRS
+Império das Profundezas
+TALENTOS RACIAIS AVENTYRS
+Estados Federados
+TALENTOS RACIAIS AVENTYRS
+Tesouros de Grurton
+TALENTOS RACIAIS AVENTYRS
+Sombras da Umbra
+TALENTOS RACIAIS AVENTYRS
+O Olho de Deus
+TALENTOS RACIAIS AVENTYRS
+Dragões de Drak’arya
+TALENTOS RACIAIS AVENTYRS
+Morte e Renascimento
+TALENTOS RACIAIS AVENTYRS
+
+
+Mestiço
+Módulo Básico
+Panteão de Tellus
+Característica Racial Adicional (Mestiço)
+Pré-requisitos: Apenas personagens Mestiços recém-criados.
+Descrição: Você recebe uma Característica Racial adicional em Mestiço Humanoide ou Mestiço Mortal.
+Esta Característica extra pode ser escolhida por você, sem a necessidade de seleções aleatórias.
+
+Monstruoso
+Módulo Básico
+Alfa (Monstruoso)
+Pré-requisito: Raça Monstruosa, ter qualquer atributo que receba bônus Racial com valor Base igual à 5. 
+Descrição: Receba +1 de bônus Racial em um dos atributos cedidos por sua Raça ou no atributo 'Força', a sua escolha. Adicionalmente você recebe vantagem em rolagens de Persuasão e Atenção: Discernir Motivação efetuadas contra outros indivíduos de sua raça que não possuam este Talento.
+
+Anatomia incomum (Monstruoso)
+Pré-requisito: Apenas personagens não-humanos recém-criados; 
+Descrição: Você recebe Resistência a Críticos.
+ Você ignora o primeiro Efeitos Críticos Menor que sofrer em cada Cena de Combate
+Você ignora um Efeito Crítico Menor adicional para cada Título Aventyr Desperto.
+
+Anatomia única (Monstruoso)
+Pré-requisito: Talento 'anatomia incomum'
+Descrição: Você é imune a Efeitos Críticos Menores.
+Sua resistência às Correntes de Efeitos aumenta em +2.
+
+Duas Cabeças (Monstruoso)
+Pré-requisitos: Apenas personagens Bestiais ou Ogros, ou membros de outras raças Monstruosa que possuam pelo menos 1 Título Aventyr.
+Descrição: Você possui 2 cabeças, duas pensam melhor do que uma. 
+Você adquire Bônus Racial de +1 em Gnose ou Instinto, a sua escolha, mas sofre desvantagem em rolagens de perícia baseadas ‘Carisma’ (exceto Persuasão: Intimidação) quando roladas contra criaturas não monstruosas, devido temor ou repulsa que sua aparência causa.
+
+Ossos Ocos (Monstruoso/Destino)
+Pré-requisitos: Apenas personagens recém-criados.
+Descrição: Seus ossos são mais leves que o normal, porém mais frágeis. 
+Você adquire vantagem em suas rolagens de Perícia baseadas em Destreza e seu Movimento Base aumenta em +1UD, mas seu multiplicador de PV é reduzido em -1.
+
+Pele Rija (Monstruoso/Geral)
+Pré-requisitos: Raças Monstruosa ou Vigor 4.
+Descrição: Você recebe Bônus Racial de +2 em DF e RDS.
+
+Sangue ácido (Monstruoso)
+Pré-requisitos: Personagens de raça Monstruosa com Vigor 3 ou superior.
+Descrição: Sempre que for atingido por um ataque Corpo-a-Corpo, o atacante sofre 1 pontos de Dano Físico Elemental: Natural. Este dano aumenta em +2 se o atacante tiver utilizado de Armas Naturais ou Desarmado.
+
+TALENTOS RACIAIS AVENTYRS
+Cérbero (Aventyr/Monstruoso)
+Pré-requisito: Talento ‘Duas Cabeças’ e 2 Títulos de Aventyr Despertos
+Descrição: Uma terceira cabeça nasce em ti. Você adquire bônus racial de +1 no Atributo faltante, aquele que não foi escolhido no talento ‘Duas cabeças’, entre Instinto e Gnose.
+Alvos de seus ataques (físicos e mágicos) e personagens intimidados por você, perdem temporariamente 1 ponto de Autocontrole. Pontos de Autocontrole perdidos desta forma são recuperados 1 a cada descanso completo, efeito não cumulativo.
+
+Mimetizar: Forma Humana (Aventyr/Feérico/Monstruoso)
+Pré-requisitos: Qualquer personagem de raça Monstruosa com pelo menos 1 Título Aventyr desperto, ou de raça Feérica.
+Descrição: Você pode mudar sua aparência, assumindo uma forma humana comum. Você perde características raciais físicas, como escamas, chifres, garras etc.
+Sua aparência base é similar, o máximo possível, de sua forma natural e é sempre igual, você não consegue se passar por outras pessoas com esta habilidade.
+Personagens Monstruosos precisam utilizar 2PD para ativar este efeito, personagens Feéricos utilizam 2PM.
+
+Tesouros de Grurton
+Ferocidade (Monstruoso/Artes Marciais)
+Pré-requisito: Personagem de Raças Monstruosas com pelo menos 1 Título Aventyr Desperto
+Descrição: Você recebe Bônus de +1 em rolagens de danos de suas Armas Naturais, este Bônus aumenta cumulativamente em +1 para cada Título Aventyr que você tenha Desperto.
+
+TALENTOS RACIAIS AVENTYRS
+Farejar o Medo (Monstruoso/Aventyr)
+Pré-requisito: Apenas Personagens Monstruosos com pelo menos 1 Título Aventyr desperto e o Talento Combater às Cegas.
+Descrição: Você sente a presença de personagens que não sejam Monstros ou Monstruosos em Distância Curta, identificando suas posições automaticamente, dispensando quaisquer testes de Perícia para encontrá-los. 
+Você não recebe Desvantagens em Perícias para atacar às cegas os personagens identificados desta forma.
+
+Selvageria (Aventyr/Monstruoso/Bruto)
+Pré-requisito: Talento Ferocidade e pelo menos 1 Título Aventyr Bruto Desperto
+Descrição: O Dano Base de toda as suas Armas Naturais aumenta em +1.
+Os Bônus em danos concedidos por Ferocidade são convertidos em Aumento de Dano Base.
+
+
+Ôgrico
+Módulo Básico
+Tesouros de Grurton
+Mandíbula Desarticulada (Ôgrico)
+Pré-requisito: Apenas personagens da Raça Ogro.
+Descrição: Você pode engolir personagens de até uma Categoria de Tamanho superior à sua. 
+Personagens da sua Categoria de Tamanho ocupar 3 Pontos de Vigor em seu estômago, personagens até uma Categoria superior ocupam 4 Pontos de Vigor.
+
+TALENTOS RACIAIS AVENTYRS
+Devoratriz (Aventyr/Ôgrico)
+Pré-requisito: Apenas personagens da Raça Ogro com ao menos 1 Título Aventyr Desperto.
+Descrição: Seus ataques com a Bocarra recebem Roubo de Vida, o Roubo de Vida também se aplica a alvos sofrendo danos pelos efeitos de Devorar Inteiro.
+Personagem com zero ou menos PV em seu interior morrem instantaneamente e você recupera uma quantidade de PV igual ao Vigor do alvo.
+Seu Roubo de Vida é igual a sua quantidade de Título Aventyrs Despertos.
+
+Dois Estômagos (Aventyr/Ôgrico)
+Pré-requisito: Apenas personagens da Raça Ogro com ao menos 1 Título Aventyr Desperto.
+Descrição: Você é considerado como tendo Vigor +2 para calcular a quantidade de alvos que você pode Engolir Inteiro.
+
+Poderoso Glutão (Aventyr/Ôgrico)
+Pré-requisito: Apenas personagens da Raça Ogro com ao menos 1 Título Aventyr Desperto.
+Descrição: Alvos engolidos ocupam 1 Ponto de Vigor a menos (mínimo 1 Ponto de Vigor), o tempo de sua digestão é reduzido à metade.
+
+Órquico
+Tesouros de Grurton
+Agnação Ancestral Superior (Destino/Órquico)
+Pré-requisito: Apenas personagens Orcs Devotos de Epona.
+Descrição: Após realizar uma Agnação Ancestral você recebe um Subordinado do tipo Peão, que te auxiliará até seu próximo Descanso.
+
+Terra nas Veias (Sobrevivência/Órquico)
+Pré-requisito: Apenas personagens Orcs com Vigor Base 3 ou superior.
+Descrição: Seu Multiplicador de PV aumenta em +1 para cada Título Aventyr desperto.
+
+TALENTOS RACIAIS AVENTYRS
+Paladino de Epona (Aventyr/Abençoado/Órquico)
+Pré-requisito: Apenas personagens Orcs Devotos de Epona, com Vigor Base 5 e pelo menos 1 Título Aventyr Desperto.
+Descrição: Seus ataques com Armas e Armas Naturais causam danos Físicos Elementais: Terra em substituição aos seus tipos. Suas Magias, apenas Divinas e Elementais: Terra, capazes de infligir danos sempre causam Danos Físico ao invés de Mágicos
+Você pode adicionar Metade do Vigor às suas rolagens de danos físicos., se um efeito puder alterar a natureza dos seus danos para mágico ela deixará de fazê-lo.
+Tremor (Aventyr/Bruto/Órquico)
+Pré-requisito: Talento Paladino de Epona
+Descrição: Você pode invocar um poder ancestral para causar um ataque poderoso.
+Efeito Ativo - Ao Tempo de Ação de 3PA e Custo de 3PM, você pode realizar um ataque em um alvo em seu alcance com uma de suas Armas ou Armas Naturais. Para este ataque você recebe Vantagem em sua Rolagem de Ataque Corpo-a-Corpo e Bônus em rolagem de danos igual ao seus Multiplicadores de PV, o dano causado é Físico Elemental: Terra e tem Área de Efeito – Explosão.
+Efeito Passivo - Se tiver 2 Títulos Aventyr Despertos e ao menos 1 deles for Abençoado seu Multiplicador de PV aumenta em +1.
+
+Tremor Residual (Aventyr/Bruto/Órquico)
+Pré-requisito: Talento Tremor e 1 Título Aventyr Bruto Desperto
+Descrição: Seu ataque de Tremor é ainda mais poderoso, causando danos posteriores aos personagens na área afetada.
+Na Rodada após utilizar Tremor, como uma Ação Livre e ao Custo de 1PM, você pode fazer tremer a Área de Efeito, causando Danos Físico Primordial igual a Metade dos seus Multiplicadores de PV a todos os outros personagens na área.
+Você pode repetir este efeito por uma quantidade de Rodadas igual ao número de Títulos Aventyr Brutos que você possuir, mas apenas uma vez a cada Rodada.
+
+
+
+Pequenino
+Módulo Básico
+O Grande Continente
+TALENTOS RACIAIS AVENTYRS
+Hiperatividade (Pequenino/Aventyr/Perito)
+Pré-requisito: Apenas personagens Pequeninos com ao menos 1 Título Aventyr desperto.
+Descrição: Sempre que efetuar uma segunda rolagem de Perícia num mesmo Turno você recebe +1PA.
+Apenas rolagens de Perícias diferentes desencadeiam este efeito e os Pontos de Ação ganhos desta forma duram apenas por esta Rodada.
+
+Linhagem de Flora (Pequenino/Aventyr/Destino)
+Pré-requisito: Apenas Pequeninos que não possuam o Talento ‘Linhagem de Lacerto’.
+Descrição: Seu tipo de Personagem muda para Feérico e você pode adquirir Talentos deste tipo.
+Para você os Talentos Feéricos custam -0.5EXP.
+
+Linhagem de Lacerto (Pequenino/Aventyr/Destino)
+Pré-requisito: Apenas Pequeninos não possuam o Talento ‘Linhagem de Flora’.
+Descrição: Seu tipo de Personagem muda para Monstruoso e você pode adquirir Talentos deste tipo.
+Para você os Talentos Monstruosos custam -0.5EXP.
+
+Silêncio Pré-Surpresa (Pequenino/Aventyr/Especialista)
+Pré-requisito: Apenas Personagens Pequeninos com pelo menos 1 Título Aventyr desperto
+Descrição: Você recebe Vantagem em sua primeira Rolagem de Furtividade efetuada em cada Cena. Enquanto nenhum outro personagem puder te ver, suas Rolagens de Perícia tem o GD reduzido em -1 nível, este efeito não reduz o GD de Conhecimentos e Profissão. Este efeito pode ser ativado apenas uma vez a cada Rodada.
+Renascido (não possui)
+Módulo Básico
+TALENTOS RACIAIS AVENTYRS
+O Grande Continente
+TALENTOS RACIAIS AVENTYRS
+Panteão de Tellus
+TALENTOS RACIAIS AVENTYRS
+Império das Profundezas
+TALENTOS RACIAIS AVENTYRS
+Estados Federados
+TALENTOS RACIAIS AVENTYRS
+Tesouros de Grurton
+TALENTOS RACIAIS AVENTYRS
+Sombras da Umbra
+TALENTOS RACIAIS AVENTYRS
+O Olho de Deus
+TALENTOS RACIAIS AVENTYRS
+Dragões de Drak’arya
+TALENTOS RACIAIS AVENTYRS
+Morte e Renascimento
+TALENTOS RACIAIS AVENTYRS
+
+Sátiro
+Tesouros de Grurton
+Fauno (Feérico/Sátiro/Destino)
+Pré-requisito: Apenas Sátiros recém-criados que não possuam o Talento Lupercal.
+Descrição: Você tem o corpo coberto de pelos e maior número de feições caprinas. 
+Recebe Monstruoso com um tipo de criatura adicional, também recebe Vantagem em suas rolagens de Furtividade e Persuasão.
+O GD de suas rolagens de Artes, Atenção e Persuasão efetuadas contra Personagens de Tendência Bondosa é reduzido em -1.
+
+Lupercal (Feérico/Sátiro/Destino)
+Pré-requisito: Apenas Sátiros recém-criados que não possuam o Talento Fauno.
+Descrição: Sua Categoria de Tamanho muda para 0, também recebe Vantagem em suas rolagens de Artes e Atenção.
+O GD de suas rolagens de Artes, Atenção e Persuasão efetuadas contra Personagens de Tendência Maligna é reduzido em -1.
+
+TALENTOS RACIAIS AVENTYRS
+Sombras da Umbra
+TALENTOS RACIAIS AVENTYRS
+O Olho de Deus
+TALENTOS RACIAIS AVENTYRS
+Dragões de Drak’arya
+TALENTOS RACIAIS AVENTYRS
+Morte e Renascimento
+TALENTOS RACIAIS AVENTYRS
+
+
+Troll
+O Grande Continente
+Sono Leve (Troll/Sobrevivência)
+Pré-requisito: Apenas personagens da raça Troll com Instinto 3 ou Superior.
+Descrição: Enquanto no Sono de Pedra você pode despertar ao sofrer qualquer quantidade de danos ou ao perceber anomalias ao seu redor.
+
+TALENTOS RACIAIS AVENTYRS
+Regeneração Reativa Espinhosa (Aventyr/Troll)
+Pré-requisito: Apenas Trolls da Floresta com o Talento Regeneração Reativa Superior.
+Descrição: Enquanto em Regeneração Reativa seu corpo exala esporos que inflige dor e danos a quem estiver próximo. Personagens adjacentes que não sejam Trolls da Floresta, sofrem Dano Físico Elemental: Natural  igual 1+ número de Títulos Aventyr Despertos que você possuir (não cumulativo com múltiplas ativações de Regeneração Reativa).
+
+Regeneração Reativa Invernal (Aventyr/Troll)
+Pré-requisito: Apenas Trolls do Inverno com o Talento Regeneração Reativa Superior.
+Descrição: Enquanto Regeneração reativa estiver ativa você recebe RDS igual à 1+ número de Títulos Aventyrs (não cumulativo com múltiplas ativações de Regeneração Reativa), esta RDS é aplicável somente ao primeiro ataque sofrido a cada Rodada.
+
+Regeneração Reativa Superior (Aventyr/Troll)
+Pré-requisito: Apenas personagens da raça Troll com Vigor 3 ou Superior e ao menos 1 Título Aventyr Desperto.
+Descrição: Os Efeitos regenerativos de sua Regeneração Reativa se tornam cumulativos, podendo somar uma quantidade de efeitos simultâneos igual 1+ número de Títulos Aventyr Despertos.
+
+Vigor Tróllico (Aventyr/Troll)
+Pré-requisito: 2 outros Talentos Raciais Troll.
+Descrição: Você recebe Bônus Racial de +1 em Vigor.
+Trolls da Floresta adicionalmente recebem RM, Trolls do Inverno adicionalmente recebem RD.
+
+Panteão de Tellus
+TALENTOS RACIAIS AVENTYRS
+Império das Profundezas
+TALENTOS RACIAIS AVENTYRS
+Estados Federados
+TALENTOS RACIAIS AVENTYRS
+Tesouros de Grurton
+TALENTOS RACIAIS AVENTYRS
+Sombras da Umbra
+TALENTOS RACIAIS AVENTYRS
+O Olho de Deus
+TALENTOS RACIAIS AVENTYRS
+Dragões de Drak’arya
+TALENTOS RACIAIS AVENTYRS
+Morte e Renascimento
+TALENTOS RACIAIS AVENTYRS
+
+
+Vampírico
+Morte e Renascimento
+Poder Vampírico – Abominação (Vampírico)
+Pré-requisito: Apenas personagens da Raça Vampiro
+Descrição: V
+
+Poder Vampírico – Armamento de Orlok (Vampírico)
+Pré-requisito: Apenas personagens da Raça Vampiro
+Descrição: Você recebe Vantagem em rolagens de Ataque e Dano e estende seu Roubo de Vida Racial e de Poderes Vampíricos a todos os seus ataques Corpo-a-Corpo e Magias capazes de causar danos diretamente.
+
+Poder Vampírico – Metamorfose Dracúlea (Vampírico)
+Pré-requisito: Apenas personagens da Raça Vampiro
+Descrição: Você adquire a capacidade de se transformar em animais ou névoa, enquanto usando metamorfose seus Equipamentos se adaptam ao seu corpo, itens defensivos continuam concedendo seus benefícios, armas não podem seu utilizadas, são substituídas por armas naturais, e você ganha novas habilidades.
+Escolha 2 Formas Metamórficas (Dampiros podem escolher apenas 1, Rakshasa podem escolher 4, mas não podem se transformar em Névoa):
+FORMA METAMÓRFICA
+ARMA NATURAL
+HABILIDADE
+Aranha Gigante
+Presas Longas
+Movimento Base Vertical e Vantagem em Furtividade 
+Cavalo de Chifres
+Chifres Poderosos
+Ignora Terreno Difícil e Multiplicador de PV +1 
+Lobo Dentes-de-Sabre
+Presas Longas
+Vantagem em Perícias de Ataque, pode empunhar armas de uma mão com as presas
+Morcego Atroz
+Presas Longas
+Movimento Base de Voo e Roubo de Vida aumentado em +2
+Névoa
+Nenhum
+Imune a dano físico (exceto fogo e armas de Dyospiros), mas é incapaz de causar danos
+Serpente Espinhosa
+Cauda Constritora
+Corrente de Efeitos – Veneno Vampírico.
+
+Poder Vampírico – Dom de Mircalla (Vampírico)
+Pré-requisito: Apenas personagens da Raça Vampiro
+Descrição: Você recebe Bônus Racial de +1 em Carisma e Instinto.
+Estes Bônus aumentam em +1 para cada Título Aventyr que você possuir
+
+Poder Vampírico – Osteomancia (Vampírico)
+Pré-requisito: Apenas personagens da Raça Vampiro
+Descrição: Você pode moldar seus ossos para melhor proteger seu corpo, recebendo Bônus de +2 em suas Defesas.
+Os Bônus em Defesas aumentam em +1 para cada Título Aventyr que você possuir.
+
+Poder Vampírico – Presença de Carmilla (Vampírico)
+Pré-requisito: Apenas personagens da Raça Vampiro
+Descrição: Você é capaz de roubar sangue dos vivos próximos a você.
+A cada Rodada você recupera 1PV para cada personagem vivo em Distância Muito Curta que esteja ferido (que tenha perdido 1 ou mais PV), este é um efeito de Roubo de Vida. 
+A Distância aumenta em +1 nível para cada Título Aventyr que você possuir
+
+Poder Vampírico Duradouro (Vampírico)
+Pré-requisito: 2 outros Talentos de Poderes Vampíricos
+Descrição: a Duração de seus Poderes Vampíricos aumenta para 2 Rodadas.
+Adicionalmente a Duração de seus Poderes aumentam em +1 Rodada para cada Título Aventyr que você possuir.
+
+TALENTOS RACIAIS AVENTYRS
+Laços Rompidos (Aventyr/Vampírico)
+Pré-requisito: Apenas personagens da raça Vampiro com EXP total igual ou superior à 15 ou 1 Título Aventyr Desperto.
+Descrição: Desfaz os Laços-de-Sangue, não precisando mais obedecer ao seu mestre. Vantagem em rolagens de Perícias baseadas em Carisma e Atenção efetuadas contra outros Vampiros.
+
+Mestre Vampiro (Aventyr/Vampírico)
+Pré-requisito: Talento Laços Rompidos e ter Desperto 2 Títulos Aventyrs ou ter alcançado EXP total 30 ou superior.
+Descrição: Você chega no ponto evolutivo mais alto da sua raça, que poucos dos seus irmãos de sangue conseguem alcançar.
+Seu Bônus Racial em Atributo ganho por ser um Vampiro aumenta em +1 e sua Vantagem em rolagens de Perícias baseadas em Carisma e Atenção é aplicada contra quaisquer outros personagens, não apenas quando roladas contra Vampiros, mas quando efetuadas contra outras Vampiros a GD é reduzida em -1 Nível.
+Você agora pode gerar Prole, criando outros Vampiros – Dampiros não recebem este benefício.
+
+Poder Vampírico – Celeridade Vampírica (Aventyr/Vampírico)
+Pré-requisito: Apenas personagens da Raça Vampiro com 1 ou mais Títulos Aventyr Despertos.
+Descrição: Você recebe temporariamente +1 PA.
+Enquanto afetado por Celeridade seu Movimento Base aumenta em +1 para cada Título Aventyr que você possuir.
+
+Poder Vampírico – Sede de Sangue (Aventyr/Vampírico)
+Pré-requisito: Apenas personagens da Raça Vampiro com 1 ou mais Títulos Aventyr Despertos.
+Descrição: Seu Roubo de Vida Racial aumenta em +1 para cada Título Desperto que você possuir.
+
+
+
+Pendente
+Módulo Básico
+TALENTOS RACIAIS AVENTYRS
+O Grande Continente
+TALENTOS RACIAIS AVENTYRS
+Panteão de Tellus
+TALENTOS RACIAIS AVENTYRS
+Império das Profundezas
+TALENTOS RACIAIS AVENTYRS
+Estados Federados
+TALENTOS RACIAIS AVENTYRS
+Tesouros de Grurton
+TALENTOS RACIAIS AVENTYRS
+Sombras da Umbra
+TALENTOS RACIAIS AVENTYRS
+O Olho de Deus
+TALENTOS RACIAIS AVENTYRS
+Dragões de Drak’arya
+TALENTOS RACIAIS AVENTYRS
+Morte e Renascimento
+TALENTOS RACIAIS AVENTYRS
+
+
+
+
+
+
+TALENTOS REGIONAIS (em produção)
+Talentos de Cenário contam como Talentos Gerais, mas estão relacionados a naturalidade, cultura e fé dos Personagens. 
+Como o nome sugere, os Talentos de Cenário são de uso restrito no próprio Cenário de Campanha. Não é recomendado utilizar Talentos de um Cenário em outro, pois os diferentes elementos que compõe o Cenário podem não ser compatível, pois podem se referir a regiões e divindades inexistentes.
+Os Talentos de Cenário são divididos em dois grupos: Talentos de Devoto e Talentos Regionais.
+Talentos de Devoto fazem referente a fé no Panteão de Deuses do Cenário, no como estas crenças diversas influenciam os personagens.
+Talentos Regionais referem-se à Naturalidade de cada personagens, características únicas que apenas personagens nascidos numa determinada região podem desenvolver.
+
+Grande Continente
+Deciembro
+Vigor Deciembrano (Tellus/Sobrevivência)
+Pré-requisito: Apenas personagens nativos de Deciembro (que possuam o antecedente Forasteiro Deciembrano)
+Descrição: 
+Efeito – Global: Respiração Deciembrana: Ao custo de 2PM e 2PD, Tempo de Ação Desprezível, recebem a capacidade de respirar na água por Instinto ou Foco Minutos (o que for maior). Este Benefício não pode ser ativado uma segunda vez até que o personagem passe por um Descanso Longo.
+Efeito – Regional: Vantagem nas rolagens de Conhecimentos: Natureza, Furtividade e Perícias de Ataque.
+
+Harenai
+Harenai (Tellus/Sobrevivência)
+Pré-requisito: 
+Efeito – Global: 
+Efeito – Regional:
+Descrição: 
+
+Império Elduriano
+Império Elduriano (Tellus/Sobrevivência)
+Pré-requisito: 
+Descrição: 
+Efeito – Global: 
+Efeito – Regional:
+
+Jully
+
+Norte
+Norte (Tellus/Sobrevivência)
+Pré-requisito: 
+Descrição: 
+Efeito Global: Recebe Resistência Elemental: Gelo.
+Efeito Regional: Vantagem nas rolagens de Conhecimento: Natureza e Geo-história, 
+Efeito Aventyr – Rancor Ymiriano: Apenas uma vez por personagem, após ter seus PV reduzidos à zero ou menos, mesmo que você esteja morto, você pode desferir último ataque contra um alvo, se bem-sucedido este ataque causa danos maximizados, aplica seu Efeito Crítico Maior e tem seu dano aumentado em +1d6 para cada Título Aventyr que você possuir.
+
+Ofiussa
+Resiliência do Aventureiro (Tellus/Sobrevivência)
+Pré-requisito: Nativo Ofiussa
+Descrição: 
+Efeito Global: A primeira vez em uma Cena que seus PV forem reduzidos à um número menor ou igual ao seu Carisma, ao invés disso ele é reduzido para uma quantidade igual ao seu Carisma. Este efeito desencadeia apenas se a sua quantidade de PV for superior ao seu valor de Carisma e apenas uma vez por dia.
+Efeito Regional: Enquanto sua quantidade de PV for igual ou inferior ao seu valor de Carisma a Margem Crítica Menor de todas as suas rolagens de Perícia aumentam em +2.
+Efeito Aventyr – Segunda Chance: Apenas uma vez por personagem, duas Rodadas após seus PV serem reduzidos à zero ou menos, mesmo que você esteja morto, seus PV se tornam iguais a quantidade de Títulos Aventyr que você possuir.
+
+Vastara
+Vastara (Tellus/Sobrevivência)
+Pré-requisito: 
+Descrição: 
+Efeito – Global: 
+Efeito – Regional:
+
+Vel’dorah
+Vel’dorah (Tellus/Sobrevivência)
+Pré-requisito: 
+Descrição: 
+Efeito – Global: 
+Efeito – Regional:
+
+Estados Federados
+Genbu 
+Pré-requisito: 
+Descrição: 
+Efeito – Global: 
+Efeito – Regional:
+
+Suzaku
+Pré-requisito: 
+Descrição: 
+Efeito – Global: 
+Efeito – Regional:
+
+Seiryu
+Pré-requisito: 
+Descrição: 
+Efeito – Global: 
+Efeito – Regional:
+
+Byakko
+Pré-requisito: 
+Descrição: 
+Efeito – Global: 
+Efeito – Regional:
+Grurton
+Solari
+Pré-requisito: 
+Descrição: 
+Efeito – Global: 
+Efeito – Regional:
+
+Lunari
+Pré-requisito: 
+Descrição: 
+Efeito – Global: 
+Efeito – Regional:
+
+Sem Pátria Reconhecida
+Indígena
+Pré-requisito: 
+Descrição: 
+Efeito – Global: 
+Efeito – Regional:
+
+Bárbaro das Montanhas
+Pré-requisito: 
+Descrição: 
+Efeito – Global: 
+Efeito – Regional:
+
+Nômade do Deserto
+Pré-requisito: 
+Descrição: 
+Efeito – Global: 
+Efeito – Regional:
+
+Ilhéu ou Navegante
+Pré-requisito: 
+Descrição: 
+Efeito – Global: 
+Efeito – Regional:
+
+Visitante Planar
+Olho de Deus
+Pré-requisito: 
+Descrição: 
+Efeito – Global: 
+Efeito – Regional:
+
+Drak’arya
+Pré-requisito: 
+Descrição: 
+Efeito – Global: 
+Efeito – Regional:
+
+Viajante do Vazio
+Pré-requisito: 
+Descrição: 
+Efeito – Global: 
+Efeito – Regional:
+
+
+TALENTOS DE DEVOTO
+Panteão de Tellus
+Talentos de Devoção
+Acólito da Luz Primordial (Tellus/Devoto)
+Pré-requisitos: Devoto da Luz Primordial
+Descrição: 
+	•	Adepto: Resistência às Correntes de Efeitos +2. 
+	•	Fiel: Suas Magias e Habilidades que tenham como alvos um ou mais aliados recebem a Corrente de Efeitos – Remover Aflição.
+	•	Fundamentalista: Você recebe Bônus de +2 em suas Defesas e suas Magias divinas recebem a Corrente de Efeitos – Excomungar.
+
+Adépto da Escuridão Profunda (Tellus/Devoto)
+Pré-requisitos: Devoto da Escuridão Profunda
+Descrição: 
+	•	Adepto: Você recebe Vantagem em suas Rolagens de Furtividade e Perícias de Ataque durante a noite e em locais com ampla cobertura do sol (como construções e cavernas).
+	•	Fiel: Você deve evitar claridades e luz solar, assim como efeitos Divinos e de Fogo. Seus ataques físicos e Mágicos recebem a Corrente de Efeito – Toque Sombrio.
+	•	Fundamentalista: Você nunca se expõe diretamente a luz ou quaisquer formas de iluminação. Seus ataques recebem Roubo de Vida 2, mas todos os outros efeitos de curas (incluindo Descansos) são reduzidos em -3.
+
+Armamento Vulcano (Tellus/Devoto)
+Pré-requisitos: Devoto de Vulcano
+Descrição:
+	•	Adepto: O Dano Base de todas as suas armas aumenta em +1
+	•	Fiel: Os Bônus em Defesas de todas as Armaduras ou Escudos (à sua escolha) que você utilizar aumenta em +1
+	•	Fundamentalista: Margem Crítica Menor de seus Ataques aumentam em +1, Margem Crítica Menor de seus inimigos são reduzidas em -1.
+
+Astúcia de Sylph (Tellus/Devoto)
+Pré-requisitos: 3 Graduações em 'Persuasão' e em Atenção
+Descrição: A verdade não importa se seu argumento for melhor.
+	•	Adepto: Você recebe uma Habilidade de Competência de Atenção
+	•	Fiel: Você recebe uma Habilidade de Competência de Persuasão.
+	•	Fundamentalista: Você recebe uma segunda Habilidade de Competência de Atenção e de Persuasão.
+
+Benção de Surt’Eldur (Tellus/Devoto)
+Pré-requisitos: Devoto de Eldur
+Descrição: 
+	•	Adepto: Você recebe RM
+	•	Fiel: Sua resistência à Corrente de Efeitos aumenta em +2.
+	•	Fundamentalista: Você recebe RDS para resistir aos ataques de Monstros e personagens devotos de outras Divindades (exceto Luz Primordial), adicionalmente recebe Roubo de Vida 1 em seus ataques efetuados contra personagens devotos de outras Divindades (exceto Luz Primordial).
+
+Caminhar de Epona (Tellus/Devoto)
+Pré-requisitos: Devoto de Epona
+Descrição: 
+	•	Adepto: Enquanto em terra seu Movimento Base aumenta em +2UD
+	•	Fiel: Enquanto se movimentando em terra, você recebe Bônus de +2 em Defesas e você pode ignorar Terreno Difícil
+	•	Fundamentalista: RDS.
+
+Escolhido de Gaea (Tellus/Devoto)
+Pré-requisitos: Devoto de Gaea
+Descrição: 
+	•	Adepto: Você recebe Vantagem nas rolagens das Perícias 'Conhecimentos: Natureza', 'Empatia Selvagem' e ‘Medicina e Cura’
+	•	Fiel:  Você recebe duas Habilidade de Competências escolhidas entre as Perícias Conhecimentos, Empatia Selvagem e Medicina e Cura
+	•	Fundamentalista: A GD de suas rolagens das Perícias 'Conhecimentos: Natureza', 'Empatia Selvagem' e ‘Medicina e Cura’ é reduzida em -1 nível
+
+Impacto Ymiriano (Tellus/Devoto)
+Pré-requisitos: Devoto de Ymir
+Descrição: 
+	•	Adepto: Escolha um efeito entre: Danos físicos causados +1 ou Defesas +1.
+	•	Fiel: Ao custo de 2PD e apenas uma vez por Rodada, o tipo de dano de seu ataque muda para Elemental: Gelo (Físico ou Mágico, conforme tipo do ataque) e recebe a Corrente de Efeito – Explosão Cataclísmica.
+	•	Fundamentalista: Você recebe Bônus Variável de +1 em Força ou Vigor, a sua escolha.
+
+Mentalidade de Tesla (Tellus/Devoto)
+Pré-requisitos: Devoto de Tesla
+Descrição: 
+	•	Adepto: Você adquire uma nova Especialização de Conhecimentos.
+	•	Fiel: Você adquire uma Habilidade de Competência de Conhecimentos.
+	•	Fundamentalista: O GD de suas rolagens de Conhecimentos é reduzido em -1 nível.
+
+Tocado por Undine e Haloi (Tellus/Devoto)
+Pré-requisitos: Devoto de Undine e Haloi
+Descrição: 
+	•	Adepto: Efeitos de cura de Habilidades e Magias que sejam Ativos ou Conjurados por você são aumentados em +1.
+	•	Fiel: Recebe +1 nas suas Defesas e Vantagem Rolagens de Perícia de Ataque e Domínio do Mana enquanto em uma embarcação, rio ou mar.
+	•	Fundamentalista: Após ser alvo de Magias ou Habilidades, conjurados ou ativados por outros personagens, que te permitam recuperar PV o dano de seus ataques aumentam em +1 por 1 Rodada.
+
+Abraçado pela Esquecida (Tellus/Devoto)
+Pré-requisitos: Devoto dA Esquecida
+Descrição: 
+	•	Adepto: Recebe Vantagem em Furtividade para rolagens da especialização Maestria da Ocultação.
+	•	Fiel: Recebe Bônus de +1 em Defesas para resistir a efeitos não-umbrais e você sente a presença de personagens e criaturas umbrais em Distância Longa (não é possível saber o local exato, apenas sente a existência).
+	•	Fundamentalista: Apenas uma vez por Cena, você pode fazer uma breve oração à Esquecida (Tempo de Ação 3PA) para invocar uma sombra conselheira, que te auxilia agindo como um Subordinado Peão, Cavaleiro ou Torre por Concentração +1 Rodada.
+
+Cultista Umbral (Tellus/Devoto)
+Pré-requisitos: Cultista de um Senhor Umbral
+Descrição: 
+	•	Adepto: Recebe Vantagem em Furtividade para rolagens da especialização Maestria da Ocultação.
+	•	Fiel: A Margem Crítica Menor de suas Perícias de Ataque e Persuasão roladas contra personagens não Umbrais aumentam em +1.
+	•	Fundamentalista: Dano Crítico contra alvos não Umbrais aumentam em +3.
+
+Talentos de Palavras de Poder
+Palavras de Poder: Desprezar Latência (Geral/Devoto/Aventyr)
+Pré-requisito: Outro Talento de Palavras de Poder e pelo menos 1 Título Aventyr Desperto.
+Descrição: Você pode ignorar a Latência das Palavra de Poder.
+A quantidade de vezes que você pode ignorar a Latência a cada dia é igual ao número de Títulos Aventyr Despertos que você possuir, recuperando esta capacidade após passar por um Descanso Longo Verdadeiro ou Superior.
+
+Palavras de Poder: Palavra Primordial Adicional (Geral/Devoto)
+Pré-requisito: Apenas Devotos Fiéis ou Fundamentalistas de uma Divindade Primordial que possuam o Talento Palavras de Poder: Verbum CAElestis ou Verbum Obscurum.
+Descrição: Você aprende um conjunto de Palavras do Poder Adicional.
+Devotos da Luz Primordial podem aprender um conjunto de Palavras do Poder adicional, escolhido entre Eletricidade, Fogo, Magma ou Terra.
+Devotos da Escuridão Profunda podem aprender um conjunto de Palavras do Poder adicional, escolhido entre Natural, Água, Gelo e Ar.
+
+Palavras de Poder: Verbum CAElestis (Geral/Devoto)
+Pré-requisito: Devoto de qualquer Divindade Primordial ou Elemental.
+Descrição: Apenas personagens recém-criados (em função de sua linhagem ou origem) podem escolher este Talento, excepcionalmente – com base nos eventos da história narrada – é possível adquiri-lo de forma temporária ou permanente como premiação (dispensando a necessidade de EXP) em uma missão sagrada.
+As Magias do tipo Base de cada Palavra de Poder está disponível a todos os personagens independentes do seu nível de Devoção. As Magias do tipo Graça são disponibilizadas apenas aos Fiéis que possuam algum Título Aventyr Desperto. Magias do tipo Milagre são acessíveis apenas aos Fundamentalistas que possuam dois Títulos Despertos.
+Este Talento concede acesso a duas Palavras de Poder.
+Devotos da Luz Primordial recebem as Palavras Divinas e um conjunto de Palavras Elementais escolhidos entre Eletricidade, Fogo, Magma ou Terra.
+Devotos da Escuridão Profunda recebem as Palavras Profanas e um conjunto de Palavras Elementais escolhidos entre Natural, Água, Gelo e Ar.
+Devotos de Tesla, Surt’Eldur, Vulcano e Epona recebem as Palavras Elementais que representam sua Divindade e as Palavras Divinas.
+Devotos de Gaea, Undine e Haloi, Ymir e Sylph recebem as Palavras Elementais que representam sua Divindade e as Palavras Profanas.
+Palavras de Poder não são afetadas por Talentos Metamágicos, mas ainda podem receber benefícios de Foco, Domínio do Mana, Habilidades de Títulos e Equipamentos.
+Conjurar uma Palavra de Poder Base exige o uso de 1PM, Graças exigem 4PM e Milagres 7PM.
+Palavras de Poder são manifestações do Poder das Divindades por intermédio do Personagem, elas são mais poderosas que as Magias Comuns, mas causam certo desgaste aos personagens, que se tornam impedidos de conjurá-las novamente por um tempo, este efeito é chamado Latência.
+“Latência - Não é possível conjurar a mesma Palavra de Poder até que passe o tempo de especificado.”
+Palavras de Poder: Verbum Draconum (Geral/Devoto) <Em produção>
+Pré-requisito: Devoto do Dragão do Leste ou Servo de um Dragão Primordial.
+Descrição: <Em produção>
+
+Palavras de Poder: Verbum Obscurum (Geral/Devoto)
+Pré-requisito: Cultista de qualquer Senhor Umbral ou Devoto dA Esquecida.
+Descrição: Descrição: Apenas personagens recém-criados (em função de sua linhagem ou origem) podem escolher este Talento, excepcionalmente – com base nos eventos da história narrada – é possível adquiri-lo de forma temporária ou permanente como premiação (dispensando a necessidade de EXP) em uma missão sagrada.
+As Magias do tipo Base de cada Palavra de Poder está disponível a todos os personagens independentes do seu nível de Devoção. As Magias do tipo Graça são disponibilizadas apenas aos Fiéis que possuam algum Título Aventyr Desperto. Magias do tipo Milagre são acessíveis apenas aos Fundamentalistas que possuam dois Títulos Despertos.
+Este Talento concede acesso a duas Palavras de Poder.
+Devotos da Esquecida recebem as Palavras Umbrais e um conjunto de Palavras Sombrias.
+Cultistas dos Senhores Umbrais recebem as Palavras Umbrais e um conjunto de Palavras Sombrias que representam o Senhor Umbral que cultuar.
+Palavras de Poder não são afetadas por Talentos Metamágicos, mas ainda podem receber benefícios de Foco, Domínio do Mana, Habilidades de Títulos e Equipamentos.
+Conjurar uma Palavra de Poder Base exige o uso de 2PM, Graças exigem 4PM e Milagres 7PM.
+Palavras de Poder são manifestações do Poder das Divindades por intermédio do Personagem, elas são mais poderosas que as Magias Comuns, mas causam certo desgaste aos personagens, que se tornam impedidos de conjurá-las novamente por um tempo, este efeito é chamado Latência.
+“Latência - Não é possível conjurar a mesma Palavra de Poder até que passe o tempo de especificado.”
+
+

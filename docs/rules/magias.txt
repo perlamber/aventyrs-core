@@ -1,0 +1,3052 @@
+Magias 
+Módulo Básico
+
+O Arcanismo e as Preces Divinas
+Magias ou Arcanismos são, por definição, o domínio e a manipulação do AEther e do Mana para a criação de efeitos fantásticos.
+O AEther é o nome dado à energia primordial do universo, uma força bruta que compõe todas as coisas. Mana é o resquício de Poder Divino presente na natureza, seres vivos e elementos.
+As Magias podem ser iniciadas evocando o poder dos Deuses diretamente, através de Preces Divinas, ou de técnicas de uma ciência exata chamada Metamagia, que estuda formas de extrair energias diretamente do próprio corpo e do ambiente. Ambas as formas permitem acessar o AEther ou o Mana com igual qualidade e então, usando de Runas Arcanas, Gestos Mágicos e a Recitação de Encantos, conseguem modificar o espaço, o tempo e a matéria para provocar um efeito.
+O uso da Magia é chamado de Conjuração, por isso seus usuários são conhecidos como Conjuradores, mas os estudantes de Metamagia consideram mais apropriado o termo Arcanistas, enquanto os Devotos preferem ser chamados de Evocadores.
+Existe ainda um terceiro grupo de praticantes de magias, os chamados Tocados.
+Tocados são indivíduas cuja Raça, Linhagem, Centelha Aventyr ou característica particular lhe permite acessar o AEther e o Mana de maneira natural, sem estudo prévio ou intervenção divina, e que por isso conseguem intuitivamente imitar efeitos mágicos, ato conhecido como Mimetismo Arcano ou Mimetismo Mágico. Exemplos de Tocados são as Fadas e Fúrias, com suas capacidades mágicas Raciais e, assim como elas, a maioria dos Tocados - seja por uma limitação do dom ou falta de conhecimento - consegue Mimetizar o Arcanismo de forma limitada ou são restritos apenas à Magias específicas.
+
+Categorias e Árvores de Magia
+As magias são classificadas em dois grupos: Categorias e Árvores.
+As Categorias referem-se ao tipo de Mana empregado na conjuração ou ao efeito gerado pela magia.
+Magias que utilizem fontes de Mana oriundas das Deusas Primordiais - senhoras da criação e destruição, vida e morte - são chamadas magias Divinas ou Profanas. Há também as magias Elementais – subdivididas em Fogo, Magma, Terra, Natural, Água, Gelo, Ar e Eletricidade –, advindas dos Deuses Elementais ou da manipulação dos resquícios de suas energias.
+Encantamentos são magias capazes de manipular o Mana existente em outros seres e objetos, odendo influenciar corpo, mente e percepção da realidade, alterando interações com o mundo ao redor, Magias Temporais são capazes de manipular o espaço-tempo e as Invocações são capazes de convocar ou criar criaturas para servir e auxiliar o Conjurador. 
+Por últimos temos as magias Primordiais, que são magias que utilizam o AEther ao invés do Mana, para gerar efeitos neutros ou brutos.
+Em Tellus a primeira Raça a estudar a Magia, tratá-la como ciência exata e a classificar tudo aquilo que envolve o ato de sua Conjuração, foram os Elfos, também foram eles quem ensinaram as magias as raças aliadas, que então passaram para outros aliados, até que com o passar dos séculos seu conceito foi propagado pelo mundo.
+É importante destacar que, embora não tenham sido os primeiros Conjuradores, os Elfos foram os pioneiros no estudo da magia como ciência. Dragões e povos antigos já conseguiam manipular o AEther e os diferentes tipos de Mana para gerar Arcanismos, o acesso à Magia era mais restrito, instintivo e simplório, porém igualmente poderoso, sendo este um conjunto de técnicas atualmente conhecidos como Arcanismo Antigo.
+Ainda sobre as terminologias, a visão Élfica classificou as Magias em Árvores, compostas por variações técnicas cada vez mais complexas que permitem gerar efeitos mais poderosos utilizando de um mesmo padrão de Energia, Runas, Gestos ou Encantos.
+Os efeitos mais simples possíveis são chamados Sementes, e então, de acordo com seu nível de poder, complexidade e progresso natural, temos respectivamente as magias Brotos, Mudas, Emergentes e Florescentes.
+Há rumores sobre magias além do nível Florescente, cujos conhecimentos teriam sido destruídos em guerras antigas. Sem registros confiáveis e sem Conjuradores que possam reproduzi-las, especula-se que apenas Dragões Primordiais e Elementais Poderosos guardem os segredos de tal poder.
+
+
+Aprendendo Magias
+Qualquer personagem pode aprender a Conjurar Magias, variando apenas os métodos, conforme sua história e antecedente. 
+Passagem de conhecimentos hereditários, estudos acadêmicos, devoção aos Deuses ou o Despertar de sua Centelha Aventyr são exemplos que moldam a trajetória do personagem, nas regras do jogo, porém, o processo é mais direto: basta adquirir os Talentos Metamágicos correspondentes.
+O aprendizado de Magias ocorre de maneira linear, sendo necessário dominar uma versão anterior antes de aprender uma versão mais poderosa ou versátil, as características do aprendizado então se dão de acordo com as regras descritas nos Talentos adquiridos.
+Certas magias possuem Efeitos Alternativos, um personagem que aprenda a versão base automaticamente aprende sua segunda versão.
+Muitas Árvores de Magias se dividem em Ramos de Especialização. Um deles aprofunda o efeito principal da magia, enquanto outro foca na evolução dos Efeitos Alternativos. Durante a progressão do personagem, é necessário escolher um dos Ramos de Especialização, sem possibilidade de adquirir magias do outro ramo.
+
+Conjurando Magias
+A conjuração de magias, nome dado ao ato de criar um efeito mágico, exige que os personagens conheçam a magia escolhida e possuam a quantidade necessária de energia mágica, chamada Pontos de Mana (PM).
+Cada magia possui descritores que devem ser observados, como o número de Pontos de Ação (PA) e Pontos de Mana (PM) requeridos, além do alcance. Seguindo esses critérios, a conjuração pode ser iniciada.
+PONTOS DE MANA (PM) PARA COMJURAÇÃO DE MAGIAS
+SEMENTE
+Nenhum
+BROTOS
+1
+MUDAS
+3
+EMERGENTES
+5
+FLORESCENTES
+7
+
+Todas as magias realizadas em terceiros exigem uma Rolagem de Perícia. Utiliza-se a Perícias Ataque Corpo-a-Corpo para magias de Toque, Ataque à Distância para magias que visem Alvo Distante ou Área de Efeito (conforme seu descritor) e Domínio do Mana para magias Pessoais ou que não podem ser evitadas por meios comuns.
+Rolagens de Perícia das Magias Ofensivas, também chamados ataques mágicos, são realizadas contra a Defesa Mágica (DM) dos alvos, surtindo efeitos apenas se superar este valor. Magias com Área de Efeito podem atingir múltiplos personagens, afetando aqueles cuja DM seja superada. Uma única rolagem deve ser feita e o resultado comparado à DM de todos os alvos.
+Algumas magias possuem também o descritor Corrente de Efeitos. Algumas magias possuem o descritor Corrente de Efeitos. Quando bem-sucedidas, se o resultado da rolagem superar a DM do alvo em 5 ou mais (por exemplo, um resultado 17+ contra uma DM 12), efeitos adicionais serão aplicados.
+
+Tipos de Magias <Pendente>
+Magias de Invocação
+Algumas magias permitem invocar outros personagens para auxiliar um Conjurador, estas são chamadas Magias de Invocação.
+As magias de Invocação criam, invocam ou convocam criaturas diversas, como animais ou monstros, estes personagens são, na maioria das vezes obedientes e controlados pelo Conjurador. O Personagem Jogador deve escolher as ações destes Personagens, respeitando suas características.
+Seres invocados agem sempre após o conjurador que o invocou, como se parte das ações dele fosse dar os comandos e ordens.
+O número máximo de Personagens Invocados por Magia que um mesmo Personagem Jogador pode controlar é igual ao valor do Foco, superando esta quantidade os personagens invocados adicionais não podem ser controlados, seguindo as ações padrões especificadas na magia ou sofrendo um dos efeitos aleatórios abaixo:
+	•	Aguardar Comando: Fica inerte aguardando que o Conjurador tenha disponibilidade para comandá-lo.
+	•	Auxílio Voluntário: Obedece ao Conjurador, mas a Duração da magia é reduzida à metade
+	•	Dissipação Voluntária: O personagem invocado desaparece
+	•	Fúria do Invocado: Ataca o personagem mais próximo
+	•	Rancor: Ataca o Conjurador
+	•	Torpor: Fica parado e sem executar ações até o final da magia
+
+
+
+Lista de Arcanismos e Preces Divinas
+ALIADOS DA NATUREZA (Natural/Invocação)
+Semente – Cativar Animal 
+Tempo de Ativação: 2PA
+Perícia Chave para conjuração: Ataque Corpo-a-Corpo.
+GD da Conjuração: Fácil (13|14) ou DM do Alvo (maior)
+Descrição: Torna um animal amigável a você.
+Efeito: Toca um animal, tornando-o amistoso a você e ao seu grupo.
+O animal tocado também lhe ajuda em combate, se tornando um Subordinado do tipo Cavaleiro ou Torre, desde que suas ações não sejam contrárias aos instintos do animal (como lutar contra seu próprio bando ou destruir seu habitat).
+Um mesmo animal não pode ser alvo deste efeito uma segunda vez sem que antes passe por um Descanso.
+Corrente de Efeitos – Domar: O animal alvo se torna completamente obediente, realizando inclusive ações contrárias aos seus instintos.
+Forçar um animal a fazer algo contrário ao seu instinto natural pode fazer com que ele se volte contra você após a Duração da magia.
+Efeito Crítico: Potencializar
+Duração: 3 Rodadas
+Alcance: Toque
+Efeito Alternativo – Falsa Matilha: A Duração da magia é reduzida à metade. O animal tocado se torna um Subordinado Prodigioso.
+
+
+Broto – Aliados da Natureza 
+Tempo de Ativação: 2PA
+Perícia Chave para conjuração: Domínio do Mana
+GD da Conjuração: Médio (16|18)
+Descrição: Invoca um animal da região para ajudar o conjurador.
+Efeito: Esta magia transporta um animal da região para o seu lado, o animal transportado se torna temporariamente obediente, ao fim da Duração da magia, ou se o animal fosse sofrer um dano letal, o animal desaparece, transportado em segurança de volta ao seu local de origem.
+Atributos e Perícias:
+	•	Força 4, Destreza 3, Vigor 1, Gnose 1, Instinto 3, Foco 1, Carisma 2
+	•	Ataque Corpo-a-Corpo [Primal] +4
+	•	Atenção [Sentidos Apurados] +2
+	•	Esquiva e Aparar [Guerreiro Natural] +2
+	•	Furtividade [Maestria da Ocultação] +2
+Características Especiais: 
+	•	Recebem Bônus em Perícia de Ataque igual à quantidade de Graduações em Domínio do Mana de seu Conjurador.
+	•	Se você possuir 4 ou mais Graduações em Domínio do Mana recebe Bônus Mágico (encantamento) de +5PV e Defesas +2
+	•	Se você possuir 7 ou mais Graduações em Domínio do Mana recebe Bônus Mágico (encantamento) de +2 em Força e Destreza
+	•	Se você possuir 10 Graduações em Domínio do Mana reduz GD de Perícias em -1 Nível (efeito de encantamento)
+	•	Membros Múltiplos: Podem usar 3PA para realizar 2 ataques com Desvantagem na Rolagem de Perícia de Ataque, em Rodadas pares recebem +1PA.
+Outras Informações: 
+	•	Categoria de Tamanho +0.
+	•	Possuem 3 Pontos de Ação (PA).
+	•	15PV (Multiplicador de PV x5) e Defesas +3.
+	•	Danos de Ataques 1d6+4 (Base 2+ Metade da Força).
+Apenas 1 Aliado da Natureza pode ser invocado por vez, caso um novo Aliado da Natureza seja invocado o anterior desaparece ao final do Turno.
+Efeito Crítico: Potencializar
+Duração: 3 Rodadas
+Alcance: Adjacente
+Efeito Alternativo – Predador Regional: Você pode aumentar o Custo de Conjuração em +1PM, se o fizer o animal invocado será um forte exemplar da sua espécie, recebendo +2 Graduações em suas Perícias e Vigor +1.
+
+Muda – Canção de Flora
+Tempo de Ativação: 3PA
+Perícia Chave para conjuração: Domínio do Mana
+GD da Conjuração: Difícil (20|23)
+Descrição: Esta magia imita uma cantiga mágica feérica, e invoca diversos animais para lhe auxiliar.
+Efeito: Como Aliado da Natureza, mas invoca 1 Predador Regional e 1 Aliado da Natureza para lhe auxiliar.
+É possível invocar um número maior de animais com esta magia aumentando seu Custo de Conjuração em +2PM para cada animal adicional.
+Você pode usar esta magia em conjunto com Predador Regional, mas deverá utilizar +1PM para cada animal fortalecido.
+Não é possível manter invocações de Canção de Flora e Aliados da Natureza simultaneamente. Conjurar Canção de Flora enquanto houver algum animal invocado por conjurações anteriores de Canção de Flora dissipa a conjuração anterior.
+Efeito Crítico: Potencializar
+Duração: Concentração + 2 Rodadas
+Alcance: Adjacente
+Corrente de Efeitos – Fauna Flora: Como efeito adicional invoca 1 Aliado da Natureza para cada 3 Graduações em Conhecimento: Natureza que você possuir.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Muda – Experimento de Larcerto
+Tempo de Ativação: 3PA
+Perícia Chave para conjuração: Domínio do Mana
+GD da Conjuração: Difícil (20|23)
+Descrição: Invoca um animal monstruoso para lhe ajudar.
+Efeito: Ao conjurar esta magia um animal monstruoso próximo é invocado para lhe ajudar, como uma quimera, um vorme, kraken dentre outros. A criatura invocada é obediente ao conjurador, e assim como Aliado da Natureza, a fera é devolvida ao seu local original ao fim da duração da magia, ou em caso de dano letal.
+Atributos e Perícias:
+	•	Força 6, Destreza 4, Vigor 3, Gnose 1, Instinto 4, Foco 1, Carisma 2
+	•	Ataque Corpo-a-Corpo [Primal] +5 +1
+	•	Atenção [Sentidos Apurados] +4 -1
+	•	Esquiva e Aparar [Guerreiro Natural] +5 -1
+	•	Furtividade [Maestria da Ocultação] +4 -1
+Características Especiais: 
+	•	Recebem Bônus em Perícia de Ataque igual à quantidade de Graduações em Domínio do Mana de seu Conjurador.
+	•	Se você possuir 7 ou mais Graduações em Domínio do Mana recebe Bônus Mágico (encantamento) de +2 em Força, Destreza e Vigor.
+	•	Se você possuir 10 Graduações em Domínio do Mana reduz GD de Perícias em -1 Nível (efeito de encantamento)
+	•	Bônus Racial de +4 em Defesa Física
+Outras Informações: 
+	•	Categoria de Tamanho +1.
+	•	Possuem 3 Pontos de Ação (PA).
+	•	25PV (Multiplicador de PV x5) e DF +12 / DM +8.
+	•	Danos de Ataques 1d6+7 (Base 3+ Metade da Força + Tamanho).
+	•	Também possuem 1 dos poderes abaixo, escolhido aleatoriamente:
+	•	Corrente de Efeitos – Inocular Veneno: O alvo adquire o Malefício Veneno, sofrendo redutor de -1 multiplicador de PV (não cumulativo), recuperados após um Descanso Longo.
+	•	Sopro Elemental: 3PA, Área de Efeito – Cone de 4UD. 2d6+2 (1+ Metade do Vigor) de Dano Mágico Elemental, reduzido em 2 a cada UD, Refrigeração 1.
+	•	Aura Elemental: Causa 2 de Dano Físico Elemental a cada Rodada em alvos adjacentes.
+	•	Corrente de Efeitos – Devorar Inteiro: Alvo é engolido no ataque e precisa fazer uma rolagem de ataque GD Muito Difícil e causar danos igual ao Dobro do Vigor do Experimento de Lacerto para se libertar. Apenas personagens menores que o Experimento de Lacerto podem ser devorados desta forma e até 1 personagem para cada ponto de Vigor.
+	•	Bruto: Recebe RD e Dano aumenta +1d6
+	•	Membros Múltiplos: Membros Múltiplos: Podem usar 3PA para realizar 2 ataques com Desvantagem na Rolagem de Perícia de Ataque, em Rodadas pares recebem +1 PA.
+Não é possível manter mais de uma criatura invocada por Experimento de Lacerto ao mesmo tempo.
+Efeito Crítico: Potencializar
+Duração: 3 Rodadas
+Alcance: Adjacente
+
+
+
+
+Emergente – Totem de Gaea
+Tempo de Ativação: 3PA
+Perícia Chave para conjuração: Domínio do Mana
+GD da Conjuração: Muito Difícil (25|28)
+Descrição: Cria um totem que invoca Predadores Regionais e fortalece Animais aliados próximos.
+Efeito: Ao conjurar esta magia um Totem com a forma de diversos animais entalhados surge a frente do conjurador, e em seguida um destes animais ganha vida, dando lugar a um novo entalhe animal. A cada Rodada um novo animal é criado desta forma.
+Animais criados pelo Totem de Gaea são Predadores Regionais criados pela magia Aliados da Natureza. Todos os animais aliados que estejam em Distância Longa do Totem recebem +1PA, Força +2, Vigor +2 e reduzem o GD de rolagens de Perícias em -1 nível.
+É possível combinar animais invocador com Totem de Gaea com os invocados por Canção de Flora ou Aliados da Natureza.
+Efeito Crítico: Potencializar
+Duração: 3 Rodadas
+Alcance: Adjacente
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Emergente – Orgulho de Lacerto
+Tempo de Ativação: 3PA
+Perícia Chave para conjuração: Domínio do Mana
+GD da Conjuração: Muito Difícil (25|28)
+Descrição: Invoca um monstro verdadeiro para lutar ao seu lado.
+Efeito: Ao conjurar esta magia um Monstro da região é invocado para lhe ajudar temporariamente.
+Atributos e Perícias:
+	•	Força 8, Destreza 7, Vigor 5, Gnose 1, Instinto 6, Foco 1, Carisma 3
+	•	Ataque Corpo-a-Corpo [Primal] +10 +1
+	•	Atenção [Sentidos Apurados] +5 -1
+	•	Esquiva e Aparar [Guerreiro Natural] +7 -1
+	•	Furtividade [Maestria da Ocultação] +7 -1
+Características Especiais: 
+	•	Recebem Bônus em Perícia de Ataque igual à quantidade de Graduações em Domínio do Mana de seu Conjurador.
+	•	Se você possuir 7 ou mais Graduações em Domínio do Mana recebe Bônus Mágico (encantamento) de +2 em Força, Destreza e Vigor.
+	•	Se você possuir 10 Graduações em Domínio do Mana reduz GD de Perícias em -1 Nível (efeito de encantamento).
+	•	Bônus Racial de +5 em Defesas, Danos Físicos sofridos reduzidos em -2.
+Outras Informações: 
+	•	Categoria de Tamanho +2.
+	•	Possuem 4 Pontos de Ação (PA).
+	•	35PV (Multiplicador de PV x5) e DF +18 / DM +18.
+	•	Danos de Ataques 2d6+5 (Base 0+ Metade da Força + Tamanho).
+	•	Também possuem 2 dos poderes abaixo, escolhidos aleatoriamente:
+	•	Corrente de Efeitos – Inocular Veneno: O alvo adquire o Malefício Veneno e perde 2 multiplicadores de PV (não cumulativo), recupera 1 ao fim da cena e outro após um Descanso Longo Verdadeiro.
+	•	Sopro Elemental: 3PA, Área de Efeito – Cone de 6UD. 3d6 de Dano, reduzido em 1 a cada UD, Refrigeração 1.
+	•	Aura Elemental: Causa 1d6 de Dano Mágico Elemental a cada rodada em alvos adjacentes.
+	•	Corrente de Efeitos – Devorar Inteiro: Alvo é engolido no ataque e precisa fazer uma rolagem de ataque GD Muito Difícil e causar danos igual ao Dobro do Vigor do Orgulho de Lacerto para se libertar. Apenas personagens menores que o Orgulho de Lacerto podem ser devorados desta forma e até 1 personagem para cada ponto de Vigor.
+	•	Bruto: Recebe RA e RE, Vigor +3 e Dano aumenta +1d6.
+	•	Membros Múltiplos: Membros Múltiplos: Podem usar 3PA para realizar 2 ataques com Desvantagem na Rolagem de Perícia de Ataque, em Rodadas pares recebem +1 PA.
+Não é possível manter mais de uma criatura invocada por Orgulho de Lacerto ao mesmo tempo.
+Efeito Crítico: Potencializar
+Duração: Concentração +2 Rodadas
+Alcance: Adjacente
+Efeito Alternativo - Laboratório de Lacerto: Ao invés de invocar um monstro com as qualidades do Orgulho de Lacerto, invoca simultaneamente   2 Experimentos de Lacerto, este efeito não é cumulativo com a magia Orgulho de Lacerto.
+
+
+Florescente – Despertar Anciente de Gaea
+Tempo de Ativação: 4PA
+Perícia Chave para conjuração: Domínio do Mana
+GD da Conjuração: Improvável (32|36)
+Descrição: Invoca um Anciente, uma poderosa e gentil Árvore Humanoide, para te auxiliar.
+Efeito: Como parte da conjuração desta magia é preciso tocar uma árvore, invocando sobre ela a marca do Chamado de Gaea, despertando-a como um Anciente.
+Ancientes são algumas das encarnações mais poderosas da Natureza e sua invocação é exaustiva, mas normalmente traz grandes benefícios, principalmente em um combate. Possuem Atributos 10, podem realizar rolagens de quaisquer Perícias com Bônus igual ao ‘Domínio do Mana’ de seu conjurador ou +20, o que for maior, e causam 3d6+7 de dano, possuem Categoria de Tamanho +3, 3PA, 70PV (Multiplicador de PV x6), DF +20 e DM +25.
+Atributos e Perícias:
+	•	Força 8, Destreza 10, Vigor 10, Gnose 3, Instinto 8, Foco 4, Carisma 6
+	•	Ataque Corpo-a-Corpo [Primal] +10 +2
+	•	Atenção [Sentidos Apurados] +8 -2
+	•	Esquiva e Aparar [Guerreiro Natural] +8 -2
+	•	Furtividade [Maestria da Ocultação] +5 -2
+Características Especiais: 
+	•	Recebem Bônus em Perícia de Ataque igual à quantidade de Graduações em Domínio do Mana de seu Conjurador.
+	•	Se você possuir 10 Graduações em Domínio do Mana reduz GD de Perícias em -2 Níveis (efeito de encantamento)
+	•	Bônus Racial de +2 em Defesa Física e de +5 em Defesa Mágica, Danos Físicos sofridos reduzidos em -3.
+	•	Imunidade a Efeitos Críticos Menores e Encantamentos nocivos.
+Outras Informações: 
+	•	Categoria de Tamanho +3.
+	•	Possuem 3 Pontos de Ação (PA).
+	•	70PV (Multiplicador de PV x6) e DF +18 / DM +21.
+	•	Danos de Ataques 2d6+7 (Base 1+ Metade da Força + Tamanho).
+	•	Benção da Regeneração: Recuperam 1d6+5 (Metade do Vigor) PV no início de cada Rodada.
+	•	Benção Compartilhada: Em Rodadas Pares curam aliados adjacentes em quantidade igual aos PV recuperados com Benção da Regeneração (Aura Mágica, Natural/Divina). 
+Efeito Crítico: Potencializar
+Duração: Concentração +2 Rodadas.
+Alcance: Toque
+ANULAÇÃO (Primordial)
+Semente - Identificação 
+Tempo de Conjuração: 2 PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Variável (Sementes: Fácil, Brotos: Médio, Mudas: Difícil, Emergentes: Muito Difícil, Florescentes: Improvável)
+Descrição: Permite a identificação dos efeitos de uma Magia ou de um Item.
+Efeito: O conjurador descobre os efeitos de uma magia ativa, item encantado, Regalia ou item tecnológico.
+Efeito Crítico: Prevenir
+Duração: Instantânea
+Alcance: Alvo Único - Toque
+Efeito Alternativo – Anulação Arcana: Após identificar uma magia ativa, se for um encantamento, caso o conjurador seja capaz de lançar a magia identificada, ele poderá fazê-lo. Se fizer, ao invés de ativar os efeitos da magia as duas se anularão. Se a magia em questão for permanente, ao invés disso ela ficará inerte por uma quantidade de rodadas igual ao ‘Domínio do Mana’ do conjurador.
+
+
+Broto - Detectar Magia 
+Tempo de Conjuração: 1PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Médio (16|18) 
+Descrição: Esta magia torna visível a aura mágica de magias, itens encantados, Regalias Verdadeiras, e conjuradores.
+Efeito: Ao conjurar esta magia seu conjurador consegue enxergar a aura mágica de todos os equipamentos afetados por magias. Esta área aumenta em +2UD para cada PA utilizado em sua conjuração.
+Corrente de Efeitos – Detectar Conjuradores: Conjuradores de magia dentro da área de efeito, que possuam valores em ‘Domínio do Mana’ menor que o do conjurador, também são revelados por esta magia.
+Efeito Crítico: Prevenir
+Duração: Concentração + 1 Rodadas
+Alcance: Área de Efeito – Área Circular Média, centralizada em você.
+
+Muda - Campo de Magia Caótica 
+Tempo de Conjuração: 2PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Difícil (20|23)
+Descrição: Capaz de perturbar o Aether e o Mana da área, dificultando a conjuração de magias e ativações de itens encantados em seu interior. 
+Efeito:  Magias não primordiais e itens encantados na área de efeito podem parar de funcionar ou apresentar comportamentos instáveis e inesperados. Sempre que um item ou uma magia for utilizada dentro da área de efeito desta magia um dado deverá ser rolado.
+Resultados 1 e 2 indicam falha na conjuração ou que a magia imbuída no item foi temporariamente dissipada; 3 e 4 indicam que as magias apresentam comportamentos inesperados, como mudanças de alvo, elementos e efeitos; 5 e 6 indicam perfeito funcionamento.
+Corrente de Efeitos – Área de Magia Morta: Se o conjurador tiver 7 ou mais Graduações em ‘Domínio do Mana’, todas as magias não-Primordiais em seu interior são desativadas.
+Efeito Crítico: Potencializar
+Duração: 1 minuto
+Alcance: Área de Efeito – Área Circular Média, aumenta em 1 Categoria se tiver Foco 5 ou superior.
+
+Emergente - Área de Magia Viva 
+Tempo de Conjuração: 3PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Muito Difícil (25|28)
+Descrição: Cria uma área dentro de Campo de Magia Caótica ou de uma Área de Magia Morta que, dentro dela, permite que conjuradores utilizem magias normalmente.
+Efeito: Cria uma pequena área dentro de um Campo de Magia Caótica ou de uma Área de Magia Morta que, enquanto dentro dela, magias funcionam normalmente, ignorando efeitos limitadores existentes no terreno.
+Corrente de Efeitos – Campo de Magia Persistente:  Se 10 Graduações em Domínio do Mana, suas Magias conjuradas dentro de sua Área de Magia Viva não podem ser anuladas por nenhum efeito.
+Efeito Crítico: Potencializar
+Duração: 1 minuto.
+Alcance: Área de Efeito – Área Circular Curta, aumenta para Área Circular Média se tiver Foco 5 ou superior.
+
+Florescente - Bomba de AEther Menor 
+Tempo de Conjuração: 4PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Improvável (32|36)
+Descrição: Uma das magias mais poderosas conhecidas e seu uso é considerado um tabu. O conjurador cria em suas mãos uma esfera de energia primordial massiva, uma imitação menor da arma mágica usada contra o reino de Jully, pelo Olho de Deus.
+Efeito: Esta magia cria uma esfera de energia translúcida em suas mãos e ela detonará após 3 Rodadas
+Após ser conjurada pode ser arremessada em até Distância Longa ao Tempo de 2PA, ou simplesmente depositada em algum lugar.
+Ao explodir todas as Magias ativas na área são dissipadas. Criaturas vivas na área sofrem 2d6 pontos de Dano Primordial, então perdem 1d6PD e 1d6PM, objetos e mortos-vivos sofrem o dobro de danos. 
+Após a explosão a área afetada se tornará uma Área de Magia Caótica, adicionalmente causa 2 pontos de danos a todos os personagens vivos na área (danos dobrados à Mortos-Vivos e Objetos) e se torna um Terreno Difícil em função de uma distorção na física local. 
+A Bomba de AEther afeta a essência de tudo em seu interior e causa danos a nível molecular, seus danos não são considerados nem físicos e nem mágicos, por isso seus danos não podem ser reduzidos ou evitados por efeitos.
+Efeito Crítico: Potencializar
+Duração: 10 Rodadas.
+Alcance: Área de Efeito – Área Circular Longa, o Alcance dobra e tiver Foco 5 ou superior.
+
+
+
+ARSENAL ELEMENTAL (Encantamento/Elemental: Todos)
+Semente - Retaliação Elemental 
+Tempo de Conjuração: Reação
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Fácil (13|14)
+Descrição: Personagens que te atacarem são punidas por forças Elementais.
+Efeito: Esta magia pode ser conjurada apenas quando estiver sendo atacado por um inimigo adjacente.
+Escolha um elemento entre: Fogo, Terra, Água ou Vento, o personagem que estiver te atacando sofre Metade do Foco pontos de dano Mágico Elemental. 
+A cada Cena esta magia pode ser Conjurada apenas uma vez para cada Elemento.
+Os efeitos desta magia não podem ser potencializados por Equipamentos, mas ainda pode ser afetado por Habilidades de Foco, Talentos e Habilidades de Títulos Aventyr.
+Efeito Crítico: Cataclismo
+Duração: Instantânea
+Alcance: Pessoal
+Efeito Alternativo - Proteção Elemental: Ao invés de causar dano você pode receber Bônus Elemental de +Metade do Foco em suas Defesas. 
+
+Broto - Benção Elemental 
+Tempo de Ativação: 2PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Médio (16|18) 
+Descrição: Você pode clamar pelo apoio dos Elementais para que eles fortifiquem seus equipamentos.
+Efeito: O equipamento tocado pelo conjurador adquire propriedades mágicas adicionais. Armas encantadas desta forma fornecem Vantagem nas rolagens de Ataque ou Dano, Armaduras ou Escudos fornecem Bônus de +2 em DF ou DM. 
+A escolha das propriedades do encanto deve ser efetuada no momento da conjuração.
+Efeito Crítico: Fortalecer
+Duração: 3 Rodadas
+Alcance: Alvo Único - Toque
+Efeito Alternativo: Distribuição - Você pode trocar a vantagem recebida em ataque ou dano de Armas por um bônus de +1 em rolagens de ataque e dano, Armaduras e Escudos podem dividir os bônus defensivos, concedendo Bônus de +1 às Defesas.
+
+
+
+Muda - Arma Elemental 
+Tempo de Ativação: 2PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Difícil (20|23)
+Descrição: O ímpeto dos Elementais encanta suas armas, concedendo-a dando mágico adicional.
+Efeito: A arma tocada concede vantagem nas rolagens de ataque e dano ao seu usuário. 
+Escolha um elemento entre: Fogo, Magma, Terra, Água, Gelo, Som ou Vento, Eletricidade e Selvagem. Ataques realizados com esta arma são rolados contra DM e metade de seu dano passa a ser do Elemento escolhido. Armas de ataque a distância imbuem o poder em suas munições.
+Efeito Crítico: Armas afetadas por esta magia adquirem Cataclismo como Efeito Crítico Adicional.
+Duração: 3 Rodadas 
+Alcance: Alvo Único - Toque
+Efeito Alternativo - Natureza Impetuosa: Você pode afetar um Personagem ao invés de uma arma, e todas as armas que ela utilizar receberão os benefícios de Arma Elemental, assim como seus ataques desarmados. 
+Afetar Personagens ao invés de Armas é menos eficiente, reduzindo a duração da magia pela metade.
+Muda - Bastião Elemental 
+Tempo de Ativação: 2PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Difícil (20|23)
+Descrição: Você clama pela proteção dos elementos, e eles te ouvem, e te protegem.
+Efeito: Você deve tocar um item do tipo ‘Escudo’, como um escudo ou uma braçadeira. O item tocado concede RD ao seu usuário.
+Escolha um elemento entre: Fogo, Magma, Terra, Água, Gelo, Som ou Vento, Eletricidade e Selvagem. O usuário do item também recebe Resistência Elemental ao elemento escolhido.
+Efeito Crítico: Fortalecer
+Duração: 3 Rodadas
+Alcance: Alvo Único - Toque
+Corrente de Efeitos - Escudo Cromático: O escudo tocado adicionalmente fornece Resistência Elemental: Todos os Elementos ao seu usuário.
+
+
+
+
+
+
+
+Emergente - Fúria Elemental 
+Tempo de Ativação: 2PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Muito Difícil (25|28)
+Descrição: Os espíritos Elementais o cercam, e atacam seus oponentes com força e fúria.
+Efeito: Escolha um elemento disponível em Arma Elemental. Inimigos adjacentes sofrem 2 pontos de dano no início de cada turno do conjurador. Inimigos adjacentes que atacarem o conjurador sofrem 2+’Metade do Foco’ pontos de Dano Mágico Elemental.
+Efeito Crítico: Potencializar
+Duração: 3 Rodadas
+Alcance: Alvo Único - Toque
+
+Emergente - Armadura Elemental 
+Tempo de Ativação: 2PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Muito Difícil (25|28)
+Descrição: Os espíritos Elementais o cercam, ou aos seus aliados, e o protegem das ameaças externas.
+Efeito:  Você recebe Bônus de +4 em suas Defesas e RM.
+Escolha um elemento disponível em Bastião Elemental. Você se torna imune ao elemento escolhido e recebe Resistência Elemental a todos os outros Elementos.
+Efeito Crítico: Fortalecer
+Duração: 3 Rodadas
+Alcance: Alvo Único - Toque
+
+Florescente - Campeão Elemental
+Tempo de Ativação: Livre
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Improvável (32|36)
+Descrição: O conjurador se transforma em um poderoso Elemental, e adquire diversas de suas habilidades.
+Efeito: Escolha um elemento, você se transforma em uma Criatura Elemental do tipo escolhido. Sua aparência pouco muda, sua pele se transfora no elemento escolhido e passa a expelir grandes constantemente farpas ou fagulhas elementais.
+Enquanto nessa forma você recebe Bônus de +2 em Foco, adquire os Benefícios de Natureza Impetuosa, Fúria Elemental, Escudo Cromático e Armadura Elemental (mesmo que não utilize um item do tipo Armadura ou Escudo) e não pode conjurar magias.
+Efeito Crítico: Potencializar
+Duração: 3 Rodadas
+Alcance: Alvo Único - Toque
+ARTESÃO (Encantamento/Elemental: Magma)
+Semente - Ataque Certeiro 
+Tempo de Conjuração: 2PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Fácil (13|14)
+Descrição: Aumenta temporariamente a letalidade de uma arma.
+Efeito: Arma tocada tem seu Dano aumentado em +1 e concede Vantagem na rolagem da Perícia de Ataque.
+Corrente de Efeitos – Graça da Guerra: O Tempo de Conjuração desta magia é reduzido em -1PA.
+Efeito Crítico: Fortalecer
+Duração: 1 Rodada.
+Alcance: Toque
+Efeito Alternativo – Ataque Letal: Em substituição aos efeitos padrões a arma tocada tem a Margem Crítica Menor aumentada em +2 números. Assim como Ataque Certeiro também recebe a Corrente de Efeitos – Graça da Guerra.	.
+
+
+Broto - Aprimorar 
+Tempo de Conjuração: 2PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Médio (16|18)
+Descrição: Transforma um equipamento mundano em uma versão obra-prima.
+Efeito: Item tocado se transforma em uma Obra-Prima comum ou incomum, de tipo escolhido aleatoriamente.
+Corrente de Efeito – Favor Vulcano: o tipo de Obra-Prima é escolhido aleatoriamente entre incomum ou raro.
+Efeito Crítico: Fortalecer
+Duração: 3 Rodadas
+Alcance: Toque
+Efeito Alternativo – Reforjar: Você pode mudar o tipo de Obra-Prima de um equipamento por outro de usa escolha, o novo tipo deverá pertencer a uma raridade um nível superior. Apenas Obras-Primas naturais podem ser alvo deste Efeito.  
+
+
+
+
+Muda - Restaurar Objetos 
+Tempo de Conjuração: 2PA
+Perícia Chave para Conjuração: Domínio do Mana 
+GD da Conjuração: Difícil (20|23)
+Descrição: Faz com que um objeto se recupere dos danos sofridos, podendo voltar até mesmo ao seu estado original.
+Efeito: Ao tocar um objeto o conjurador pode fazer com que ele recupere 2d6+Metade do Foco PV. 
+Corrente de Efeitos – Forja Branca: O objeto alvo desta magia recebe um Aprimoramento de Obra-Prima por 2 Rodadas, se aplicável.
+Efeito Crítico: Fortalecer
+Duração: Instantâneo
+Alcance: Toque
+
+
+
+
+
+
+Muda - Invocar Traje de Batalha 
+Tempo de Conjuração: 2PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: 
+Descrição: Invoca uma Arma, uma Armadura ou um item do tipo Escudo.
+Efeito: Você deve mentalizar o tipo de item durante a conjuração, então o item imaginado é criado em sua posse, armas e escudos em mãos, armaduras e braçadeiras lhe vestindo.
+Não é possível criar itens tecnológicos ou obras-primas desta forma.
+Corrente de Efeitos – Dádiva do Deus da Guerra: O item criado é uma Obra-Prima de sua preferência, escolhida entre comuns, incomuns ou raras. Caso possua 5 ou mais Graduações em Domínio do Mana, o item recebe também um Aprimoramento aleatório de qualquer raridade.
+Efeito Crítico: Fortalecer
+Duração: 3 Rodadas
+Alcance: Pessoal
+Efeito Alternativo – Forja do Progresso:  Você pode criar itens tecnológicos com esta magia, este efeito também pode receber os benefícios de Dádiva do Deus da Guerra. Itens invocados desta forma utilizam PM ao invés de Carga. Conjurar este efeito exige 10 graduações em Domínio do Mana.
+
+
+
+
+Emergente - Regalia Provisória 
+Tempo de Conjuração: 3PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Muito Difícil (25|28)
+Descrição: Transforma um item Obra-Prima em uma falsa Regalia por um breve período.
+Efeito: A tocar uma Obra-Prima ela receberá uma quantidade de Aprimoramentos, a sua escolha e de qualquer raridade, igual Metade do seu Foco. 
+Adicionalmente você deve escolher entre efeitos Elementais, Divinos, Profanos ou Primordiais.
+
+Armas
+Armaduras
+Divino
+Dano causado é sagrado, não reduz PV para valores negativos, mas ignora RD e RA
+Cura seu usuário em 3PV por Rodada
+Elemental
+Vantagem do Dano, dano causado se torna de um elemento escolhido
+DF+2 e imunidade ao elemento escolhido.
+Primordial
+Vantagem no ataque, dano se torna mágico e ignora RM.
+DM+2, reduz a metade dano mágico não primordial ou de outras regalias
+Profano
+Dano causado é profano, recebe Roubo de Vida 2
+Imunidade a magias profanas e roubo de vida
+
+Corrente de Efeitos – Musa de Gilgamesh: Adicionalmente aos efeitos anteriores, armas podem ser ativadas utilizando 2PM em uma Ação Livre, aumentando o dano causado em +1d6 por 1 Rodada. Armaduras e Escudos podem ser ativados utilizando 2PM em uma Reação, concedendo ao usuário RA e causando 1d6 pontos de dano aos atacantes corpo-a-corpo, estes benefícios também dura por 1 Rodada.
+Efeito Crítico: Fortalecer 
+Duração: 3 Rodadas
+Alcance: Toque
+
+
+Florescente – Glória de Gilgamesh
+Tempo de Conjuração: 4PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Improvável (32|36)
+Descrição: Diversos dentre os seus equipamentos são transformados em Regalias Provisórias.
+Efeito: Até Metade do Foco equipamentos em sua posse são afetados simultaneamente por Regalia Provisória.
+Corrente de Efeitos – Campeão de Vulcano: Todos os seus equipamentos Obra-Prima são afetados por Regalia Provisória.
+Efeito Crítico: Fortalecer 
+Duração: 3 Rodadas
+Alcance: Toque
+Efeito Alternativo – Arsenal de Gilgamesh: Um equipamento seu e de cada aliado adjacente se transforma em uma Regalia Provisória, você pode escolher os benefícios de cada item individualmente.
+
+
+
+
+
+
+CORPO ROCHOSO (Encantamento/Elemental: Terra)
+
+Semente - Durabilidade
+Tempo de Conjuração: 2PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Fácil (13|14)
+Descrição: Você lança uma benção de proteção contra um alvo, endurecendo sua pele.
+Efeito: Alvo tocado recebe Bônus de +1 em DF.
+Corrente de Efeitos - Durabilidade Maior: Ao invés dos efeitos anteriores, alvo recebe Bônus de +1 em ambas as Defesas.
+Efeito Crítico: Amenizar
+Duração: 2 Rodadas
+Alcance: Toque
+
+Broto - Rigidez Térrea
+Tempo de Conjuração: 2PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Médio (16|18) ou DM do Alvo (Maior)
+Descrição: O corpo do Alvo é endurecido com uma fina camada de terra, que o protege de ataques externos com sua energia Elemental.
+Efeito: Alvo tocado recebe RD.
+Sempre que o alvo sofrer danos a arma que lhe atingiu sofre 2 pontos de danos, atacantes desarmados sofrem o dano, ao invés disso.
+Efeito Crítico: Amenizar
+Duração: 3 Rodadas
+Alcance: Toque
+
+
+Muda - Corpo Rochoso
+Tempo de Conjuração: 2PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Difícil (20|23)
+Descrição: Transforma o corpo do alvo em pedra, tornando o extremamente resistente à danos físicos.
+Efeito: Apenas personagens sob efeito de Rigidez Térrea podem ser alvos dessa magia.
+Todo o dano físico sofrido pelo alvo desta magia é reduzido à metade.
+Corrente de Efeitos - Órgãos Rochosos: Alvo adicionalmente se torna imune à Efeitos Críticos Menores.
+Efeito Crítico: Amenizar
+Duração: A mesma da Rigidez Térrea
+Alcance: Toque
+Muda - Enrijecer Articulações
+Tempo de Conjuração: 2PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Difícil (20|23) ou DM do Alvo (Maior)
+Descrição: Os músculos e articulações do alvo são transformados em pedra, dificultando seus movimentos.
+Efeito: O Movimento Base do alvo é reduzido em -2UD e ele sofre Desvantagem em rolagens de Perícias baseadas em Força e Destreza.
+Corrente de Efeitos - Corpo Pesado: Sempre que o alvo for afetado por outras magias, como efeito adicionalmente sofre Redutor de -1PA por 1 Rodada, este efeito não é cumulativo.
+Efeito Crítico: Amenizar
+Duração: A mesma da Rigidez Térrea 
+Alcance: Toque
+
+
+
+
+Emergente - Corpo Diamantino
+Tempo de Conjuração: 2PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Muito Difícil (25|28)
+Descrição: Cobre o corpo do alvo com cristais de AEther, tornando o capaz de absorver magia.
+Efeito: Apenas personagens sobe feito de Corpo Rochoso podem ser alvos dessa magia.
+Todo o dano mágico sofrido pelo Alvo é reduzido à metade, a Duração de encantamentos de outras Árvores de Magia e Habilidades são reduzidas à metade.
+Corrente de Efeitos – Dádiva de Epona: A Duração da Rigidez Térrea aumenta em +2 Rodadas.
+Efeito Crítico: Amenizar
+Duração: A mesma da Rigidez Térrea 
+Alcance: Toque
+
+Emergente - Caixão Rochoso
+Tempo de Conjuração: 2PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Muito Difícil (25|28) ou DM do Alvo (Maior)
+Descrição: Aumenta magicamente a quantidade de pedras ao corpo do alvo, tornando-o irreconhecível e extremamente pesado.
+Efeito: Apenas personagens sob efeito de Enrijecer Articulações podem ser alvos dessa magia.
+O Alvo perde uma quantidade de PA iguais a metade do seu Foco (nunca reduz para menos de 1PA), na primeira Rodada de efeito também se torna incapaz de realizar Reações ou Ações Livres.
+Enquanto sob efeito do Caixão Rochoso o alvo sofre 1d6 pontos de Dano Mágico Elemental: Terra em função do enorme peso o esmagando.
+Corrente de Efeitos – Dádiva de Epona: A Duração da Rigidez Térrea aumenta em +2 Rodadas.
+Efeito Crítico: Amenizar
+Duração: A mesma da Rigidez Térrea 
+Alcance: Toque
+
+
+Florescente - Corpo Adamantino
+Tempo de Conjuração: 3PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Improvável (32|36) ou DM dos Alvos (Maior)
+Descrição: Cobre o alvo com uma expeça camada de Adamante, um material extremamente resistente e pesado.
+Efeito: Apenas personagens sob efeito de Corpo Diamantino ou Caixão Rochoso pode ser afetado por esta Magia.
+Se uma fonte puder causar danos ao alvo e fazê-lo perder mais do que 2PV, ao invés disso o alvo perde apenas 2PV. Se o alvo for um personagem inimigo o dano mágico máximo sofrido muda para 2+Metade do Foco.
+Enquanto na Forma Adamantina o alvo não pode Conjurar e Mimetizar Magias, ou Ativar Habilidades de Título.
+O peso e pressão do Corpo Adamantino fere o alvo, fazendo com que ele perca 1d6PV por Rodada, este dano não pode ser reduzido ou evitado.
+Corrente de Efeitos - Réquiem de Epona: A vida perdida aumenta para 2d6PV por Rodada, personagens cujos PV sejam reduzidos à zero ou menos com esta magia se tornam estátuas eternamente. Apenas personagens inimigos são afetados por esta Corrente de Efeitos. 
+Efeito Crítico: Amenizar
+Duração: A mesma da Rigidez Térrea 
+Alcance: Toque
+DOMINIO PRIMORDIAL (Primordial)
+
+Semente - Estalo Primordial 
+Tempo de Conjuração: 3PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: 
+Descrição: Ao estalar seus dedos um alvo visível, que esteja próximo do conjurador, sofre dano primordial.
+Efeito: Escolha um alvo dentro do alcance desta magia, o alvo escolhido sofre 2+Metade do Foco pontos de dano. 
+O Dano dessa magia é reduzido em -1 para cada UD entre você e o alvo.
+Efeito Crítico: Execução Real
+Duração: Instantâneo
+Alcance: Alvo Único Distante - Distância Curta
+
+
+Broto - Projétil Primordial 
+Tempo de Conjuração: 3PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Médio (16|18)
+Descrição: Cria um pequeno projétil que, quando lançado, persegue seu alvo.
+Efeito: O conjurador desta magia deve escolher um alvo visível dentro de seu Alcance, em seguida um projétil feito de energia primordial é criado e lançado na direção do alvo. 
+Esta magia sempre acerta o alvo, ignorando sua DM, e causa 1d6+Metade do Foco pontos de dano, este dano é reduzido em 1 para cada 2UD entre você e o alvo.
+Conjuradores com maiores conhecimento de magia causam danos maiores, com 5 graduações em ‘Conhecimento Metamágico’ recebem Vantagem na rolagem de Dano, com 10 graduações, ao invés de Vantagem, causam +1d6 pontos de dano.
+Efeito Crítico: Execução Real
+Duração: Instantâneo
+Alcance: Alvo Único Distante
+Efeito Alternativo – Artilharia Primordial: Ao invés de criar um único projétil, o conjurador pode criar 1d6 projéteis menores, que causam 2 pontos de dano cada. O conjurador deve escolher um alvo para cada projétil, não é possível afetar um mesmo personagem com mais de um projétil, a menos que ele seja uma horda. Este dano é reduzido em -1 se o alvo estiver em uma Distância superior a Curta.
+Conjuradores com 5 graduações em ‘Conhecimento Metamágico’ criam 2 projéteis adicionais, com 10 graduações o total de projéteis muda para 2d6.
+
+Broto - Égide Primordial 
+Tempo de Conjuração: 3PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Médio (16|18)
+Descrição: Cria uma barreira à frente do conjurador, que o protege de magias não primordiais, mas que potencializa magias primordiais.
+Efeito: O conjurador cria uma barreira feita de Energia Primordial em um ponto adjacente. A barreira não se move, permanecendo estática nesta posição. Não é possível posicionar a barreira em um espaço ocupado por outros personagens.
+Em função de sua espessura é impossível afetar um personagem do outro lado da barreira com magias de toque, magias que afetariam Alvos Distantes ou de Área de Efeito são bloqueadas, assim como projéteis imbuídos com magia.
+Magias primordiais que toquem a barreira, ao invés de serem bloqueadas são potencializadas, seu alcance é aumentado em +2UD e seu dano aumentam em +1.
+Efeito Crítico: Potencializar
+Duração: 3 Rodadas
+Alcance: Adjacente
+Efeito Alternativo - Barricada Primordial: O conjurador pode escolher cobrir uma área maior com sua Égide Primordial, para cada UD adicional a Duração desta magia é reduzida em 1 Rodada.  É possível fazer proteções curvas ou coberturas superiores desta forma.
+
+
+
+
+Muda - Proteção Primordial 
+Tempo de Conjuração: 3PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: 
+Descrição: Cria anéis de energia que se expandem rapidamente, causando danos a todas as criaturas ao redor enquanto protegem o conjurador.
+Efeito: Cria um anel de energia primordial ao redor de você, que lhe protege de ataques inimigos. Você recebe Bônus de +2 em suas Defesas.
+Seu Conhecimento Metamágico é crucial para determinar as capacidades de proteção desta magia, com 5 Graduações o Bônus em Defesas muda para +3, com 10 graduações aumenta para +5. 
+Sempre que você for alvo de um ataque o anel defensivo se expande, ferindo e empurrando os agressores. Todos os inimigos em Distância Curta sofrem uma quantidade de pontos de dano igual à Metade do Bônus Defensivo recebido + Metade do Foco, este dano é reduzido em -1 para cada 2UD entre você e o alvo. Personagens que sofram pelo menos 3 pontos de dano desta forma são empurrados 1UD para trás.
+Apenas personagens capazes de conjurar ‘Projétil Primordial’ e ‘Égide Primordial’ podem conjurar esta magia.
+Efeito Crítico: Potencializar
+Duração: 3 Rodadas
+Alcance: Pessoal
+Efeito Alternativo – Nova Primordial: Como uma Ação Livre, enquanto Proteção Primordial estiver ativa, você pode fazer com que os anéis mágicos se expandam até se dissiparem, causando 2d6+Metade do Foco pontos de dano a todos os inimigos em Distância Longa, o dano é reduzido em -1 para cada UD entre você e os alvos, personagens atingidos em Distância Curta são empurrados 1UD para trás. 
+Após conjurar Nova Primordial a Duração da Proteção Primordial é imediatamente encerrada.
+
+Emergente - Armamento Primordial 
+Tempo de Conjuração: 1PA
+Perícia Chave para Conjuração: Domínio do Mana 
+GD da Conjuração: Muito Difícil (25|28)
+Descrição: O conjurador se cerca de energia primordial, fortalecendo suas magias, dando a elas adicionalmente o tipo Primordial.
+Efeito: Após conjurar esta magia você fica sobrecarregado de energia Primordial, emitindo uma forte aura.
+Outras magias que conjurar enquanto estiver sob o efeito de Armamento Primordial custam +1PM para serem conjuradas, recebem o tipo Primordial e tem seu GD reduzido em -1 nível, adicionalmente tem a Margem Crítica Menor aumentada em +2 números e recebem o Efeito Crítico: Execução Real.
+Efeito Crítico: Guilhotina
+Duração: 1 Rodada
+Alcance: Pessoal
+
+
+Florescente - Corpo de AEther
+Tempo de Ativação: 4PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Improvável (32|36)
+Descrição: Você se transforma em ser feito de Mana e Aether, elevando seu poder ofensivo e defensivo aos limites.
+Efeito: Uma das mais poderosas magias conhecidas, Corpo do Aether te transforma em um ser feito da mais pura energia do universo, por um curto período sua constituição é comparável à dos Deuses Primordiais.
+Enquanto nessa forma todas as suas magias são convertidas em magias Primordiais em substituição aos seus tipos e suas magias ofensivas custam +2PM, tem sua Perícia Chave para Conjuração alterada para Domínio do Mana, com GD proporcional ao seu poder e se bem-sucedidas sempre acertam seu alvo. Também recebem os Efeito Crítico ‘Toque do Aether’ e Guilhotina, a Margem Crítica Menor destas magias aumenta em +3 números.
+Nível da Magia
+Grau de Dificuldade
+Semente
+Sempre bem-sucedido
+Broto
+Muito Fácil 
+Muda
+Fácil 
+Emergente
+Médio 
+Florescente
+Difícil
+
+Você também recebe grande tenacidade, reduzindo todo o dano recebido à metade, exceto danos de fontes Primordiais e de Regalias.
+Como consequência da imensa quantidade de energia fluindo por seu corpo você perde 1d6PV e 2PD por Rodada, caso seus PV ou PD cheguem a zero antes do fim da Duração da magia ela é dissipada precocemente.
+Efeito Crítico: Amenizar
+Duração: 2 Rodadas
+Alcance: Pessoal
+
+
+FÚRIA DE TESLA (Encantamento/Elemental: Eletricidade)
+
+Semente - Magnetizar
+Tempo de Conjuração: 3PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Fácil (13|14) ou DM do Alvo (Maior)
+Descrição: Faz com que um equipamento adquira propriedades magnéticas
+Efeito: Você pode tocar um equipamento metálico e magnetizá-lo, equipamentos magnéticos podem atrair ou serem atraídos por outros de metal.
+Uma arma ou armadura tocada será atraída por armaduras e escudos, facilitando acertar o alvo, concedendo Vantagem as rolagens de ataque de seu portador.
+Armaduras e Escudos tocados atraem ataques de armas metálicas, dificultando a esquiva, concedendo Redutor de -2 nas Defesas do alvo para evitar ataques sofridos por armas metálicas.
+Efeito Crítico: Potencializar
+Duração: 2 Rodadas
+Alcance: Toque
+
+Broto - Toque de Tesla
+Tempo de Conjuração: 3PA
+Perícia Chave para Conjuração: Ataque Corpo-a-Corpo
+GD da Conjuração: Médio (16|18) ou DM do alvo (Maior)
+Descrição: Você pode encantar sua mão com energia elétrica, causando danos com seu toque.
+Efeito: O alvo tocado sofre 1d6+Metade do Foco pontos de Dano Mágico Elemental. 
+Se o alvo desta magia estiver em posse de qualquer equipamento de metal você poderá tocá-lo a distância, afetando-o mesmo que esteja em Distância Curta.
+Efeito Crítico: Atordoante
+Duração: Instantâneo
+Alcance: Toque
+
+Muda - Abraço de Tesla
+Tempo de Conjuração: 3PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Difícil (20|23)
+Descrição: Você encanta todo o seu corpo com energia elétrica, amplificando seus ataques e aprimorando suas defesas.
+Efeito: Você recebe Bônus em Defesas igual à metade do seu Foco, adicionalmente você recebe Vantagem em suas rolagens de Ataque e Dano.
+Enquanto sob efeito do Abraço de Tesla, sempre que você efetuar uma rolagem de Perícia de Ataque ou Esquiva e Aparar, você recebe a Corrente de Efeitos - Brilhantismo de Tesla: Seu alvo ou atacante sofre 2 pontos de Dano Mágico Elemental: Eletricidade, se ele estiver em posse de equipamentos de metal, ao invés disso, o dano muda para 1d6.
+Efeito Crítico: Potencializar
+Duração: 3 Rodadas
+Alcance: Pessoal
+
+
+
+Emergente - Aura Chocante
+Tempo de Conjuração: 2PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Muito Difícil (25|28)
+Descrição: seu encantamento libera uma aura mágica elétrica que causa danos a todos os personagens próximos
+Efeito: Esta magia pode ser conjurada apenas se você estiver sob efeito de Abraço de Tesla.
+No início de cada um de seus turnos todos os personagens em Distância Curta sofrem Metade do Foco pontos de Dano Mágico Elemental: Eletricidade.
+Corrente de Efeitos - Sagacidade de Tesla: Apenas personagens inimigos sofrem danos por esta magia.
+Efeito Crítico: Potencializar (afeta Duração do Abraço de Tesla)
+Duração: Mesma do Abraço do Tesla
+Alcance: Pessoal
+Emergente - Passo Relampejante
+Tempo de Conjuração: Ação Livre
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Muito Difícil (25|28)
+Descrição: Você se torna extremamente veloz por um breve momento.
+Efeito: Esta magia pode ser conjurada apenas se você estiver sob efeito de Abraço de Tesla e apenas uma vez a cada Rodada.
+Você recebe temporariamente +3PA e nesta Rodada suas ações não provocam Reações.
+Efeito Crítico: Potencializar (afeta Duração do Abraço de Tesla)
+Duração: Instantâneo 
+Alcance: Pessoal
+
+
+
+
+
+Florescente - Nova Chocante
+Tempo de Conjuração: 3PA
+Perícia Chave para Conjuração: Ataque à Distância
+GD da Conjuração: Improvável (32|36) ou DM dos Alvos (Maior)
+Descrição: Uma poderosa explosão de energia em forma de anel capaz de causar grandes danos e aturdir seus inimigos.
+Efeito: Esta magia pode ser conjurada apenas se você estiver sob efeito de Abraço de Tesla.
+Todos os personagens afetados sofrem 2d6+Metade do Foco pontos de Dano Mágico Elemental: Eletricidade e perdem -2PA por 2 Rodadas (até o mínimo de 2PA).
+O dano causado aumenta em +1 para cada Rodada restante na Duração do Abraço de Tesla, ao fim da conjuração a Duração do Abraço de Tesla é reduzida à zero.
+Corrente de Efeitos - Sagacidade de Tesla: Apenas personagens inimigos sofrem danos por esta magia.
+Efeito Crítico: Atordoante
+Duração: Instantâneo
+Alcance: Área de Efeito – Área Circular Curta
+
+Florescente - Ímpeto Trovejante
+Tempo de Conjuração: 2PA
+Perícia Chave para Conjuração: Ataque Corpo-a-Corpo
+GD da Conjuração: Improvável (32|36) ou DM dos Alvos (Maior)
+Descrição: Você se move em velocidade ofuscante até o alvo, se chocando contra ele causando grande de dano.
+Efeito: Esta magia pode ser conjurada apenas se você estiver sob efeito de Abraço de Tesla.
+Escolha um alvo em Distância Longa, você se move rapidamente até o personagem escolhido e se choca com ele, esta ação não permite Reações. O alvo sofre 3d6+Metade do Foco pontos de Dano.
+O dano causado aumenta em +2 para cada Rodada restante na Duração do Abraço de Tesla, ao fim da conjuração a Duração do Abraço de Tesla é reduzida à zero.
+Corrente de Efeitos - Precisão de Tesla: Sua Margem Crítica Menor para este ataque é aumentada em +5 números.
+Efeito Crítico: Toque do AEther
+Duração: Instantâneo
+Alcance: Toque
+
+
+
+IRA DE VULCANO (Elemental: Magma)
+
+Semente - Sopro de Magma Menor
+Tempo de Conjuração: 3PA
+Perícia Chave para Conjuração: Ataque à Distância
+GD da Conjuração: Fácil (13|14) ou DM do Alvo (Maior)
+Descrição: Sopra um jato de magma em alvos próximos
+Efeito: Causa Metade do Foco pontos de Dano Mágico Elemental: Magma ao alvo.
+Efeito Crítico: Inflamar
+Duração: Instantâneo 
+Alcance: Área de Efeito - Penetrante Médio 
+
+Broto - Sopro de Magma Maior
+Tempo de Conjuração: 3PA
+Perícia Chave para Conjuração: Ataque à Distância
+GD da Conjuração: Médio (16|18) ou DM do Alvo (Maior)
+Descrição: Sopra uma grande quantidade de magma em seus alvos.
+Efeito: Alvos atingidos sofrem 1d6+Metade do Foco pontos de Dano Mágico Elemental: Magma.
+Corrente de Efeitos - Estilhaço Vulcânico: Permite atingir um terceiro alvo com o efeito Penetrante.
+Efeito Crítico: Inflamar
+Duração: Instantâneo
+Alcance: Área de Efeito - Penetrante Longo
+
+Muda - Torrente Vulcânica
+Tempo de Conjuração: 3PA
+Perícia Chave para Conjuração: Ataque à Distância
+GD da Conjuração: Difícil (20|23) ou DM do Alvo (Maior)
+Descrição: Sopra uma quantidade massiva de magma em seus alvos.
+Efeito: Causa 2d6+Metade do Foco pontos de Dano Mágico Elemental: Magma, dano reduzido em 2 para cada UD percorrido.
+Corrente de Efeitos - Folego Vulcano: Vantagem na rolagem de Dano, dano reduzido em 1 (ao invés de 2) para cada UD percorrido.
+Efeito Crítico: Inflamar
+Duração: Instantâneo
+Alcance: Área de Efeito – Cone Médio.
+
+
+Emergente - Forma de Magma
+Tempo de Conjuração: 3PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Muito Difícil (25|28) 
+Descrição: Se transforma em uma poça de magma viva.
+Efeito: Você se transforma numa poça de Magma, enquanto nesta forma sua Categoria de Tamanho aumenta em +2, você recebe RA, imunidade à Magma e pode ocupar o mesmo espaço que outros personagens.
+Personagens que iniciarem seus Turnos ocupando o mesmo espaço que você sofrem 1d6+Metade do Foco pontos de Dano Mágico Elemental: Magma.
+Efeito Crítico: Amenizar
+Duração: 3 Rodadas
+Alcance: Pessoal
+
+Florescente - Ira de Vulcano
+Tempo de Conjuração: 5PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Improvável (32|36) ou DM dos Alvos (Maior)
+Descrição: Invoca uma erupção Vulcânica centralizada em você, evocando jatos de magma do subsolo de Tellus.
+Efeito: Causa 3d6+Metade do Foco pontos de Dano Mágico Elemental: Magma em todos os personagens dentro da área desta magia. 2 Rodadas após este efeito uma chuva de Magma e detritos tomam o local, causando 2d6 Pontos de Dano Mágico Elemental: Magma a todos que ainda estiverem na área.
+Apenas o dano primário desta magia pode ser beneficiado por efeitos críticos.
+Efeito Crítico: Inflamar
+Duração: Instantâneo
+Alcance: Área de Efeito – Área Circular Longa
+
+
+MORTE (Profana)
+
+Semente - Impor Arrepsia 
+Tempo de Conjuração: Reação
+Perícia Chave para Conjuração: Ataque à Distância
+GD da Conjuração: DM do alvo
+Descrição: Uma maldição que impede outros personagens de se beneficiarem do ‘Ego’.
+Efeito: O alvo desta magia tem seu uso de ‘Ego’ negado e não pode fazer novos usos de ‘Ego’ enquanto sob efeito desta magia. O ponto de ‘Ego’ que seria usado não é perdido.
+Impor Arrepsia é uma Maldição e aplica o Malefício Amaldiçoado no alvo enquanto os efeitos da magia estiverem ativos. 
+Os PdN que tentarem utilizar efeitos de ‘Ego’ podem ser afetados por Traumatizar, se isto ocorrer o efeito solicitado pelo Narrador é perdido e os jogadores recebem os pontos temporários de ‘Ego’ normalmente.
+Corrente de Efeitos – Traumatizar: Em adição ao efeito anterior, o alvo desta magia perde o ponto de Ego que tentou utilizar e sofre Desvantagem em sua próxima rolagem de perícia. Traumatizar não afeta um mesmo personagem duas vezes no mesmo dia.
+Efeito Crítico: Potencializar
+Duração: 1 Rodada
+Alcance: Alvo Único Distante – Distância Curta
+
+
+Broto - Toque Antivida 
+Tempo de Conjuração: 3PA
+Perícia Chave para Conjuração: Ataque Corpo-a-Corpo
+GD da Conjuração: Médio (16|18) ou DM do alvo (Maior)
+Descrição: Esta magia drena a força vital do conjurador e de seu alvo, entregando-as a Escuridão, ou outras criaturas Profanas.
+Efeito: Como parte da conjuração desta magia um outro personagem deve ser tocado. Durante esta ação as mãos do conjurador ficam coberta por uma fumaça negra e fétida de energia Profana.
+O personagem tocado pelo conjurador sofre 3d6+Metade do Foco pontos de danos Mágico Profano, você então perde uma quantidade de Pontos de Vida igual à metade do dano que causar.
+Esta magia é uma Maldição e aplica a Condição ‘Amaldiçoado’ em seu alvo e no conjurador durante 1 rodada. Mortos-Vivos são imunes aos efeitos desta magia.
+Corrente de Efeitos – Veneno Sombrio: Quando conjurado sobre um personagem previamente amaldiçoado, no início de seu próximo turno você e o alvo sofrem 1d6 pontos de Dano Profano e são ambos amaldiçoados por +1 Rodada.
+Efeito Crítico: Oferenda Maldita
+Duração: Instantânea
+Alcance: Alvo Único - Toque
+Efeito Alternativo – Estigma: O dano no alvo é reduzido para 1d6+Metade do Foco, você ainda sofre metade do dano que causar. Este efeito aplica a Corrente de Efeitos – Veneno Sombrio mesmo que não supere a DM do alvo em 5, também recebe adicionalmente a Corrente de Efeitos – Perdição Arcana: Esta magia recebe Roubo de Mana 1, e o alvo perde 1PM.
+
+
+
+Broto - Imbuir Fadiga
+Tempo de Conjuração: 3PA
+Perícia Chave para Conjuração: Ataque Corpo-a-Corpo
+GD da Conjuração: Médio (16|18) ou DM do alvo (Maior)
+Descrição: Uma maldição que atrapalha a concentração de seus alvos.
+Efeito: O alvo desta magia recebe o Malefício Amaldiçoado e sofre Desvantagem em suas rolagens de perícia enquanto a maldição perdurar.
+Se o alvo desta magia estiver previamente amaldiçoado adicionalmente ele sofre Desvantagem em suas rolagens de Dano e Efeitos de magia.
+Corrente de Efeitos - Corrente da Fadiga: Você deve escolher um personagem adjacente ao alvo desta magia que não seja você mesmo, se a DM do personagem escolhido for inferior ao resultado de sua rolagem de Ataque Corpo-a-Corpo ele também sofrerá os efeitos desta magia.
+Duração: 3 Rodadas
+Alcance: Alvo Único - Toque
+
+
+
+
+
+
+
+
+
+
+
+
+
+Muda - Raio Antivida 
+Tempo de Conjuração: 3PA
+Perícia Chave para Conjuração: Ataque Corpo-a-Corpo
+GD da Conjuração: Difícil (20|23) ou DM do alvo (Maior)
+Descrição: Uma maldição que conecta o conjurador e seu alvo, roubando vida a vida de ambos.
+Efeito: Lança um raio de energia escura contra um alvo distante, se bem-sucedido o conjurador e o alvo são conectados e ambos recebem a Condição ‘Amaldiçoado’ enquanto o conjurador se mantiver concentrado.
+O alvo sofre 1d6+Metade do Foco pontos de dano e, em cada Rodada próxima, no turno do conjurador, sofre 1d6 pontos de dano adicionais automaticamente.
+Personagens conjuradores desta magia perdem uma quantidade de Pontos de Vida iguais à metade de todo o dano que causarem com ela.
+Efeito Crítico: Oferenda Maldita
+Duração: Concentração +1 Rodada.
+Alcance: Alvo Único Distante – Distância Média
+Corrente de Efeitos – Conexão Mortis: O alvo desta magia tem seu Multiplicador de PV reduzidos em 1, e o conjurador tem seu multiplicador aumentado em 1, enquanto ambos estiverem amaldiçoados por esta magia. Se o alvo da magia estiver previamente Amaldiçoado, o dano inicial desta magia é aumentado em +2d6.
+Os PV ganhos pelo conjurador devido ao aumento do multiplicador são os últimos a serem perdidos.
+Muda - Onda da Exaustão
+Tempo de Conjuração: 3PA
+Perícia Chave para Conjuração: Ataque à Distância
+GD da Conjuração: Difícil (20|23) ou DM do alvo (Maior)
+Descrição: Um cone de energia que drena as forças e energias de seus alvos.
+Efeito: Escolha 1 Atributo.
+Se o alvo de Onda de Exaustão for um Personagem Jogador todas as rolagens de Perícia efetuadas por este Personagem que tenham o Atributo Base escolhido tem a GD aumenta em 1 Grau. 
+Rolagens destas perícias efetuadas por um Personagem Jogador afetado contra outro Personagem Jogador, ao invés do efeito acima, são feitas em Desvantagem.
+Por outro lado, se o alvo desta magia for um PdN, a GD das perícias dele (baseadas no atributo escolhido) são reduzidas em 1 Grau.
+Personagens afetados por Onda de Exaustão são considerados Amaldiçoados enquanto estiverem sob efeito desta magia.
+Corrente de Efeitos – Estresse Intenso: Você pode escolher um segundo atributo para afetar aos alvos desta magia. Como efeito adicional os Personagens afetados não pode ativar efeitos de Autocontrole.
+Efeito Crítico: Toque do Aether
+Duração: 3 Rodadas
+Alcance: Ataque à Distância - Área de Efeito em Cone Curto, aumenta para Cone Médio se tiver Foco 5 ou superior.
+
+
+Emergente – Grito da Banshee
+Tempo de Conjuração: 3PA
+Perícia Chave para Conjuração: Ataque à Distância
+GD da Conjuração: Muito Difícil (25|28) ou DM do alvo (Maior)
+Descrição: Um poderoso grito amaldiçoa e causa grande dano aos seus alvos.
+Efeito: Como parte de sua conjuração o conjurador desta magia solta um grito poderoso, magicamente amplificado, e que pode ser ouvido a grandes distancias.
+Você e todas as criaturas que ouvirem este grito, que estejam em sua Área de Efeito, se tornam automaticamente Amaldiçoados por 2 Rodadas, mesmo que sua DM não seja superada.
+O grito do conjurador causa efeito devastador naqueles que estão próximos, outros personagens dentro de sua área de efeito e que tenham a DM superadas sofrem 2d6+Metade do Foco pontos de dano e ficam surdos enquanto estiverem amaldiçoados por esta magia. 
+O conjurador perde uma quantidade de pontos de vida igual à metade do dano que rolar.
+Corrente de Efeitos – Maldição da Banshee: Efeitos de Cura em Personagens que tenham sofrido danos por esta magia são reduzidos à metade, os alvos ficam surdos permanentemente.
+Efeitos que removem maldições curam a surdez.
+Efeito Crítico: Oferenda Maldita
+Duração: Instantânea
+Alcance: Ataque à Distância – Área de Efeito Circular Média, centralizada em você.
+Emergente - Ruína
+Tempo de Conjuração: 3PA
+Perícia Chave para Conjuração: Ataque Corpo-a-Corpo
+GD da Conjuração: Muito Difícil (25|28) ou DM do alvo (Maior)
+Descrição: Esta maldição poderosa, capaz de trazer toda forma de infortúnios ao seu alvo.
+Efeito: Um personagem tocado com esta magia perde temporariamente 3 pontos de todos os seus Egos (exceto Recursos), e não pode utilizar efeitos de Egos enquanto a duração desta magia estiver ativa.
+O personagem recebe o Malefício Amaldiçoado enquanto Ruína estiver ativa.
+Outras rolagens de Perícia efetuadas contra o alvo recebem a Corrente de Efeitos – Marca da Queda: Se esta rolagem não for um Sucesso Crítico Maior ela recebe os benefícios de Sucesso Crítico Menor, independente dos números rolados. Sucessos Críticos Maiores aumentam a duração desta maldição em +1 Rodada.
+Pontos de Ego perdidos desta forma são recuperados um de cada ego a cada Descanso Total.
+Corrente de Efeitos – Macular a Alma: O alvo desta magia sofre uma maldição adicional, de duração permanentemente até ser removida. Esta maldição secundária faz com que o personagem afetado não recupere um dos pontos de Sorte ou Autocontrole perdidos em ‘Ruína’. Este efeito é cumulativo.
+Efeito Crítico: Toque do Aether
+Duração: Até 1 Hora
+Alcance: Adjacente
+
+Florescente - Escravizar os Caídos 
+Tempo de Conjuração: 3PA
+Perícia Chave para Conjuração: Ataque à Distância
+GD da Conjuração: Improvável (32|36) ou DM do Alvo (Maior).
+Descrição: Um Grito capaz de levar a morte aqueles que ouvem e que amaldiçoa os que sobrevivem.
+Efeito: De Conjuração similar ao Grito da Banshee, Escravizar o Caído tem como parte de seu componente um poderoso grito, afetando com energia profana todos aqueles em sua Área de Efeito.
+Você e todas as criaturas que ouvirem este grito, que estejam em sua Área de Efeito, se tornam automaticamente Amaldiçoados por 3 Rodadas, mesmo que sua DM não seja superada. Personagens amaldiçoados por essa magia perdem temporariamente 1 ponto de Ego, personagens adjacentes a você perdem o dobro, e não podem usar efeitos de Ego enquanto sob efeito da maldição - Efeitos de perda de Egos não cumulativos.
+Outros personagens na Área de Efeito sofrem 3d6+ Metade do Foco pontos de Dano, você perde uma quantidade de pontos de vida igual à metade do dano rolado desta forma.
+O real poder desta magia está além da maldição e dos danos causados, personagens que cheguem à zero ou menos PV em decorrência dos danos sofridos morrem imediatamente e tem sua excessiva vital absorvida e escravizada, se tornando um Subordinados. 
+Personagens combatentes se tornam Cavaleiros ou Torres, conjuradores podem se tornar Cavaleiros, Bispos, Reis ou Rainhas, personagens sem especializações claras se tornam Peões.
+Você recupera 2PV, 1PD e 1PM para cada essência vital que devorar desta forma, estes são considerados efeitos de Roubo de Bônus Base.
+Corrente de Efeitos – Chamado do Rei dos Mortos: Os alvos se tornaram Subordinados Prodigiosos e a quantidade de Pontos de Vida recuperados por devorar essência vital é dobrada.
+Efeito Crítico: Oferenda Maldita
+Duração: Instantânea
+Alcance: Ataque à Distância – Área de Efeito Circular Média, centralizada em você.
+
+
+OCULTAÇÃO (Encantamento) 
+Semente - Criar Distração
+Tempo de Conjuração: 1PA
+Perícia Chave para Conjuração: Ataque à Distância
+GD da Conjuração: DM do Alvo
+Descrição: Você cria uma ilusão dinâmica, o alvo enxerga nela algo que chama sua atenção por um breve segundo, e então ela desaparece.
+Efeito: Você pode fazer rolagens de 'Ladinice' ou de 'Furtividade' contra o alvo, mesmo que ele esteja ciente de sua presença.
+Efeito Crítico: Prevenir
+Alcance: Alvo Único Distante – Distância Curta, muda para Área de Efeito – Cone Curto se tiver Foco 5 ou superior.
+Duração: Instantânea
+Efeito Alternativo - Visão/Som Fantasma: O alvo escuta sons ou enxerga vultos vindo de espaços vazios, as distâncias são limitadas ao alcance da magia.
+
+Broto - Ocultar-se nas Sombras
+Tempo de Conjuração: 2PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Médio (16|18) 
+Descrição: Você se torna invisível enquanto estiver sobre a cobertura de uma sombra.
+Efeito: Enquanto estiver em uma sombra grande o suficiente para cobri-lo você não pode ser visto ou detectado por meios visuais.
+Realizar qualquer ação que afete terceiros não voluntários, ou sair da cobertura da sombra, cancela os efeitos dessa magia.
+Efeito Crítico: Guilhotina
+Duração: Até 2 minutos
+Alcance: Pessoal
+Efeito Alternativo - Ocultação em Massa: Você pode ocultar criaturas além de você se a sombra for grande o bastante, se o fizer o Custo de Conjuração aumenta em +2PM para cada outro personagem além de você e a GD muda para Difícil.
+
+
+Muda – Ludibriar os Olhos
+Tempo de Conjuração: 3PA
+Perícia Chave para Conjuração: Ataque à Distância
+GD da Conjuração: Difícil (20|23) ou DM do Alvo (Maior)
+Descrição: Você se torna invisível, mas apenas aos olhos dos alvos afetados por esta magia.
+Efeito: Um cone de energia é lançado à frente do conjurador, todos os alvos atingidos têm sua mente nublada, e os olhos deles não mais conseguem enxergar o conjurador.
+Este é um efeito hipnótico, de Encantamento, e realizar uma ação ofensiva (que afete terceiros) cancela esta magia, tornando você novamente visível a todos os personagens antes afetados.
+Efeito Crítico: Potencializar
+Duração: 3 Rodadas
+Alcance: Área de Efeito – Cone Médio.
+
+
+Muda - Dobrar Sombras
+Tempo de Conjuração: 3PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Difícil (20|23)
+Descrição: Você pode aumentar ou diminuir o tamanho de uma sombra.
+Efeito: você pode moldar, aumentar ou reduzir o tamanho e forma de uma ou mais sombras em seu alcance. O total de modificações de tamanho por conjuração é de 1UD para cada 2 Graduações em ' Domínio do Mana '.
+Efeito Crítico: Potencializar
+Duração: 1 minuto
+Alcance: Área de Efeito – Sombras em Distância Curta.
+Efeito Alternativo - Purgar Sombra: Você pode fazer desaparecer por completo a sombra de uma criatura ou objeto.
+
+
+
+
+
+
+Emergente - Invisibilidade Verdadeira
+Tempo de Conjuração: 3PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Muito Difícil (25|28)
+Descrição: Você se torna realmente invisível.
+Efeito: Um encantamento poderoso e que pode ser conjurada apenas sobre si mesmo. 
+Quando bem-sucedido na conjuração você se torna invisível, e nenhum Personagem é capaz de detectá-lo utilizando da visão por meios não mágicos, mas ainda é possível percebê-lo utilizando outros sentidos.
+Efetuar ações ofensivas cancelam esta magia, a primeira ação ofensiva que realizar enquanto invisível recebe a Corrente de Efeitos – Invisibilidade Persistente: No final deste turno sua Invisibilidade Verdadeira é reativada, a Duração não é renovada, permanecendo a mesma restante da conjuração inicial.
+Efeito Crítico: Potencializar
+Duração: 3 Rodadas
+Alcance: Pessoal
+Corrente de Efeitos - Presença Nula: Sua presença não pode ser percebida através da audição e olfato, tornando impossível detectá-lo com estes sentidos por meios não mágicos.
+Efeito Alternativo - Purgar Invisibilidade: A Perícia Chave para Conjuração muda para Ataque à Distância e o GD se torna igual à DM do alvo. Você lança um cone de energia com alcance de 4m para sua frente, personagens invisíveis dentro da área, por qualquer tipo de efeito de invisibilidade, se torna visível. Corrente de Efeitos – Roubar Invisibilidade: Você se torna invisível por uma quantidade de Rodadas igual ao número de alvos afetados 
+
+Florescente - Campo de Invisibilidade
+Tempo de Conjuração: 1PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Improvável (32|36)
+Descrição: Você pode tornar invisível múltiplos personagens e objetos simultaneamente.
+Efeito: Você pode tornar invisível diversos Personagens inteligentes, ou objetos, próximos a você. Os alvos são afetados por Invisibilidade Verdadeira, mas suas ações não recebem a Corrente de Efeitos – Invisibilidade Persistente.
+Para cada alvo o Tempo de Conjuração desta magia aumenta em +1PA.
+Efeito Crítico: Potencializar
+Duração: 2 Minutos. 
+Alcance: Área de Efeito – Área Circular Curta, tendo você como centro.
+Efeito Alternativo - Refúgio Invisível: Você pode mudar Alcance desta magia para toque e afetar uma Construção. A Construção, com tudo e todos que estiverem dentro dela, não pode ser vista por quem estiver do lado de fora. A Duração da Magia muda para Concentração + Foco Horas, se qualquer personagem em seu interior realizar ações ofensivas contra personagens no exterior a magia é encerrada imediatamente.
+Emergente - Rastejar nas Sombras
+Tempo de Conjuração: 2PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Muito Difícil (25|28)
+Descrição: Você pode entrar nas sombras de criaturas e objetos.
+Efeito: Você consegue entrar nas sombras de uma criatura ou objeto, enquanto estiver dentro das sombras você não pode ser afetado ou detectado por meios comuns e se torna imune a Dano Físico, mas ainda pode sofrer danos mágicos.
+Enquanto estiver dentro de uma sombra você não pode afetar o espaço exterior.
+Efeito Crítico: Potencializar
+Duração: 3 Rodadas
+Alcance: Pessoal
+Efeito Alternativo - Ataque Sombrio:  Você pode conjurar esta versão da magia apenas enquanto estiver sob efeito de ‘Ocultar-se nas Sombras’ ou ‘Rastejar nas Sombras’. Você pode realizar uma rolagem de Perícia de Ataque contra a DM de um alvo à até 4m. Alvos Corpo à Corpo sofrem 3d6+Metade do Foco pontos de Dano Mágico Profano. Alvos à Distância sofrem 2d6+Metade do Foco. Efeito Crítico muda para Oferenda Sombria.
+Ataques realizados desta forma recebem a Corrente de Efeitos – Maldição Sombria: O alvo deste ataque tem sua Margem para Falhas Críticas Menores aumenta em 2 números (rolagens 6 ou menos, efeito não cumulativo), por 2 Rodadas.
+Realizar um Ataque Sombrio não cancela efeitos de Invisibilidade ou de Rastejar nas Sombras, mas reduz a Duração destes efeitos em 1 Rodada, exceto quando o alvo estiver Amaldiçoado.
+
+Florescente - Aspecto Sombrio
+Tempo de Conjuração: 3PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Improvável (32|36)
+Descrição: Você se torna temporariamente um Aspecto Sombrio, uma criatura da Umbra Profunda composta apenas de sombras.
+Efeito: Enquanto na forma de Aspecto Sombrio você não pode realizar ataques físicos e não é afetado por eles, sendo imune a efeitos não mágicos.
+Nesta forma, adicionalmente, você também pode conjurar 'Rastejar nas Sombras' e 'Moldar Sombras' sem gastar PM, e está sempre sob o efeito de 'Ocultar-se nas Sombras'. Enquanto estiver sob a cobertura de uma sombra suas Magias recebem a Corrente de Efeitos – Vampirismo Umbral: Esta magia adquire Roubo de Vida 2 como um efeito adicional.
+Efeito Crítico: Potencializar
+Duração: 3 Rodadas
+Alcance: Pessoal
+
+
+
+
+PIROMANCIA (Divina/Elemental: Fogo)
+Semente - Luz de Vela 
+Tempo de Conjuração: 2PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Fácil (13|14)
+Descrição: Cria uma pequena chama, pouco maior que o de uma vela, nas mãos de seu conjurador.
+Efeito: Cria uma pequena chama capaz de iluminar uma área circular que permite a visão em Distância Curta. 
+Estas chamas são muito pequenas e não podem ser utilizadas ofensivamente, mas podem ser utilizadas para acender fogueiras e incendiar materiais inflamáveis.
+Efeito Crítico: Potencializar
+Duração: Concentração + até 1 minuto.
+Alcance: Pessoal
+
+
+Broto - Golpe de Fogo 
+Tempo de Conjuração: 2PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Médio (16|18) ou DM do alvo (Maior)
+Descrição: As mãos do conjurador, e suas armas naturais, são envoltas por uma grande chama, lembrando as armas de um Elemental do Fogo.
+Efeito: Conforme a descrição, as mãos e as armas naturais do conjurador são tomadas por chamas.
+Seus ataques desarmados, ou realizados com suas armas naturais, passam a ser rolados contra a DM do alvo, se bem-sucedido o dano causado muda para 2d6+Metade do Foco (a Força não é aplicada ao dano dos ataques feitos com essa magia). Seus ataques adquirem o Efeito Crítico Inflamar, como um Efeito Crítico adicional.
+Efeito Crítico: Potencializar
+Duração: 3 Rodadas
+Alcance: Pessoal
+Efeito Alternativo - Armamento Elduriano: O alcance desta magia muda para Toque e deve ser conjurada sobre uma arma. Ataques com arma tocada devem ser realizados contra DM, recebem vantagem na rolagem de dano e tipo de dano causado muda para Dano Mágico Elemental: Fogo, recebe Efeito Crítico: inflamar.
+
+
+
+Broto - Fogo Fátuo 
+Tempo de Conjuração: 2PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Médio (16|18) 
+Descrição: Cria uma chama flutuante que ilumina o caminho e protege o alvo de magias do próprio conjurador.
+Efeito: Cria uma chama flutuante que paira sobre a cabeça do alvo e o persegue, iluminando seu caminho, como se este fosse afetado pela magia Luz de Vela. 
+Esta magia também fornece imunidade a magias do tipo Elemental: Fogo lançadas por você, e reduz à metade o dano que as suas outras magias causariam ao alvo.
+Corrente de Efeitos – Amor Boros: Enquanto Fogo Fátuo estiver ativo, sempre que o Alvo for beneficiado por outras magias, do tipo Broto ou superior, lançadas por você ele adicionalmente recupera 1PV.
+Efeito Crítico: Inflamar
+Duração: Concentração + 2 Rodadas
+Alcance: Alvo Único – Toque ou Pessoal
+Efeito Alternativo – Maldição Ignis: A Perícia chave muda para Ataque à Distância, O GD para Médio ou DM do Alvo (Maior) e o alcance para Alvo Único – Distância Curta. Sempre que o alvo da Maldição Ignis for alvo de outras magias, Broto ou Superiores, ele adicionalmente perderá 1PV. O alvo também recebe a Malefício Amaldiçoado.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Muda - Hálito de Eldur 
+Tempo de Conjuração: 2PA
+Perícia Chave para Conjuração: Ataque à Distância
+GD da Conjuração: Difícil (20|23) ou DM do Alvo (Maior)
+Descrição: Permite ao conjurador soprar um cone de fogo a sua frente.
+Efeito: Ao conjurar essa magia o conjurador pode soprar a sua frente um cone de fogo, infligindo 1d6+Metade do Foco de Dano Mágico Elemental: Fogo a todos os alvos em sua Área de Efeito. Este dano é reduzido em 1 para cada UD percorrida.
+Efeito Alternativa – Cuspe de Salamandra: O Alcance desta magia muda para Alvo Único Distante – Distância Média e o dano muda para 2d6+Metade do Foco, este dano é reduzido em 1 para cada 2UD entre você e o alvo. 
+Efeito Crítico: Inflamar
+Duração: Instantânea
+Alcance: Área de Efeito – Cone Curto.
+
+
+Muda - Fogueira Boros 
+Tempo de Conjuração: 2PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Difícil (20|23)
+Descrição: Uma fogueira que recupera as forças daqueles ao seu redor, recebendo seu calor.
+Efeito: Cria uma fogueira no chão, imóvel, adjacente a você. A Fogueira Boros aquece todas as criaturas em seu Alcance.
+Os personagens ao redor da Fogueira recuperam 2PV por rodada, personagens em Distância Muito Curta adicionalmente recebem Resistência Elemental: Frio.
+Devotos de Eldur, na primeira Rodada de contato com essa magia, recuperam 2PD. Este efeito não beneficia o mesmo personagem 2 vezes, voltando a beneficiá-lo apenas após passar por um Descanso Longo.
+Efeito Crítico: Potencializar
+Duração: 5 Rodadas
+Alcance: Área de Efeito – Personagens à até Distância Curta.
+
+
+Emergente - Bola de Fogo Elduriana 
+Tempo de Conjuração: 2PA
+Perícia Chave para Conjuração: Ataque à Distância
+GD da Conjuração: Muito Difícil (25|28) ou DM do Alvo (Maior)
+Descrição: Invoca uma bola de fogo que quando lançada explode causando grandes danos.
+Efeito: Você cria uma bola de fogo em suas mãos e lança contra um alvo ou área. Ao impacto a Bola de Fogo Elduriana explode, causando 2d6+Metade do Foco pontos de Dano Mágico Elemental: Fogo no alvo e em todos os outros personagens em Distância Curta. Objetos em posse dos personagens afetados sofrem metade deste dano.
+Efeito Crítico: Inflamar
+Duração: Instantânea 
+Alcance: Alvo Único – Distância Média
+Efeito Alternativo - Chuva de Meteoros: Este efeito pode ser ativado apenas em locais com céu aberto. Dos céus caem diversas pedras incandescentes. Um alvo Ao Alcance dos Olhos e todos os personagens à Distância Longa dele sofrem 1d6+Metade do Foco pontos de Dano. Objetos em posse dos personagens afetados sofrem metade deste dano. 
+
+Emergente - Bolo de Fogo Boros 
+Tempo de Conjuração: 3PA
+Perícia Chave para Conjuração: Ataque à Distância
+GD da Conjuração: Muito Difícil (25|28) ou DM do Alvo (Maior)
+Descrição: O conjurador cria uma esfera flamejante, que quando lançada cura seus aliados e fere seus inimigos.
+Efeito: A Bola de Fogo Boros deve ser lançada em um personagem aliado.
+Cura 2d6PV+Metade do Foco do alvo e metade deste valor de todos os aliados adjacentes a ele. Inimigos adjacentes ao alvo sofrem uma quantidade de pontos de danos igual à metade dos pontos de vida curados - pelo alvo principal - com esta magia.
+Efeito Crítico: Amenizar
+Duração: Instantânea
+Alcance: Alvo Único – Distância Curta
+Efeito Alternativo - Chuva Boros: Com alcance pessoal e apenas em local aberto, uma chuva de fogo cai no local, recuperando 3d6+Metade do Foco PV e de todos os personagens adjacentes.
+
+
+
+
+Florescente - Olhar de Eldur 
+Tempo de Conjuração: 3PA
+Perícia Chave para Conjuração: Ataque à Distância
+GD da Conjuração: Improvável (32|36) ou DM do Alvo (Maior)
+Descrição: O conjurador dispara dos olhos um raio de energia Elemental: Fogo de seus olhos.
+Efeito: Apenas devotos de Eldur podem aprender esta magia.
+Esta magia tem por alvo principal apenas personagens que você possa ver.
+O Alvo, e todos os personagens entre você e o alvo, sofrem 2d6+Metade do Foco pontos de Dano Elemental: Fogo. Sempre que um personagem é atingido por esta magia ela enfraquece os efeitos dela, reduzindo em 2 o dano em alvos posteriores.
+Todos os Equipamentos utilizados por personagens afetados por esta magia sofrem metade do dano sofrido por seus usuários. 
+Personagens e Objetos que tenham seus PV reduzidos à zero ou menos são destruídos imediatamente e não podem ser revividos ou reparados.
+Corrente de Efeitos – Julgamento Elduriano: Esta magia ignora RA e RM, assim como toda e quaisquer formas de Redução ou Imunidade à danos Elemental: Fogo que os alvos possuam.
+Efeito Crítico: Inflamar
+Duração: Instantânea
+Alcance: Área de Efeito - Linha Média
+
+Florescente - Valquíria Boros 
+Tempo de Conjuração: 3PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Improvável (32|36)
+Descrição: A sombra de Celestial Flamejante cobre seu corpo, curando a você e seus aliados, fortalece suas defesas e pune seus inimigos.
+Efeito: Apenas devotos de Eldur podem aprender esta magia.
+Você adquire Imunidade a Dano Elemental: Fogo, e emite uma aura flamejante, que afeta os personagens adjacentes.
+Você e seus Aliados afetados pela aura flamejante recuperam 1d6+Metade do Foco PV a cada Rodada, inimigos sofrem esta mesma quantidade em pontos de Dano Mágico Elemental: Fogo. 
+Enquanto nessa forma você recebe Bônus de +5 em suas Defesas e RM para resistir aos efeitos de magia que não sejam Divinas ou Primordiais.
+Corrente de Efeito – Aspecto Boros: Na Rodada de conjuração desta magia você e seus aliados recuperam 3d6PV (Ao invés de 1d6+Metade do Foco).
+Efeito Crítico: Potencializar
+Duração: 3 Rodadas
+Alcance: Pessoal
+
+
+
+
+POLIMORFISMO (Encantamento/Natural)
+Semente - Rearranjo Corporal 
+Tempo de Conjuração: Reação
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Fácil (13|14) para alvos aliados ou pessoal, DM para alvo para inimigos.
+Descrição: Lança um raio em uma criatura viva, cujos efeitos são capazes de modificar brevemente o corpo do alvo, o atrapalhando ou auxiliando em sua ação atual.
+Efeito: O conjurador consegue alterar momentaneamente partes do corpo do alvo, com seu alvo, por exemplo fazendo encolher um braço para que um inimigo erre seu ataque, ou que um aliado cresça alguns centímetros para alcançar um lugar mais alto, concedendo assim Vantagem ou Desvantagem na rolagem de Perícia do alvo.
+Se o Alvo for um PDN a Dificuldade para superá-lo em sua Perícia ativa é reduzida em 2.
+Rearranjo Corporal lançado por um conjurador específico não é capaz de afetar o mesmo alvo duas vezes, até que o alvo passe por seu próximo descanso.
+Efeito Crítico: Potencializar
+Duração: Instantânea
+Alcance: Alvo Único – Distância Curta
+Efeito Alternativo – Rearranjo Estendido: Ao invés de Reação, o tempo de execução da magia muda para 1PA. Se o fizer a duração da magia muda para 1 rodada.
+
+
+Broto - Murcha-Corpo 
+Tempo de Conjuração: 2PA
+Perícia Chave para Conjuração: Ataque à Distância
+GD da Conjuração: Médio (16|18) ou DM do alvo (Maior)
+Descrição: Um personagem afetado por esta magia tem sua força e agilidade provisoriamente drenada.
+Efeito: O Alvo desta magia recebe Redutor variável de -2 em Força ou Destreza. Este efeito não reduz Atributos à um total de zero ou menos.
+Corrente de Efeitos – Murcha-Almas: Em substituição ao efeito anterior o alvo sofre Redutor de -2 em Força e Destreza.
+Efeito Crítico: Dilacerar
+Duração: 3 Rodadas 
+Alcance: Alvo Único – Distância Média
+Broto - Infla-Músculos 
+Tempo de Conjuração: 2PA
+Perícia Chave para Conjuração: Domínio de Mana
+GD da Conjuração: Médio (16|18) ou DM do alvo (Maior)
+Descrição: O alvo do conjurador tem sua força física aumentada.
+Efeito: Um personagem tocado pelo conjurador adquire temporariamente Bônus de +1 em Força ou 1 de Destreza.
+Corrente de Efeitos – Inflar o Ego: Em substituição ao efeito anterior o alvo recebe Bônus de +2 em Força ou Destreza.
+Efeito Crítico: Amenizar
+Duração: 3 Rodadas
+Alcance: Pessoal ou Toque
+
+
+
+
+Muda - Serra-Pernas 
+Tempo de Conjuração: 2PA
+Perícia Chave para Conjuração: Ataque à Distância
+GD da Conjuração: Difícil (20|23) ou DM do Alvo (Maior)
+Descrição: Um raio que, ao acertar o alvo, reduz seu tamanho e capacidades físicas.
+Efeito: O conjurador lança de suas mãos um raio que, ao afetar o alvo, concede redutor variável de -2 em Força e Destreza. Esta magia não reduz Atributos à um total de zero ou menos.
+O conjurador desta magia pode gastar PM adicional em sua conjuração, aumentado a sua duração em 2 rodadas para cada PM gasto desta maneira.
+Corrente de Efeitos – Espremer: Em adicional aos efeitos anteriores, o alvo desta magia tem sua Categoria de Tamanho reduzida em 1 número.
+Corrente de Efeitos Alternativa – Fraqueza Momentânea: Em seu próximo Turno o alvo sofre Desvantagem em suas rolagens de Perícias baseadas em Força e Destreza. Adicionalmente o alvo é amaldiçoado durante toda a Duração desta magia.
+Efeito Crítico: Dilacerar
+Duração: 3 Rodadas 
+Alcance: Alvo Único Distante – Distância Média
+
+
+Muda - Ogrificar 
+Tempo de Conjuração: 2PA
+Perícia Chave para Conjuração: Domínio de Mana
+GD da Conjuração: Difícil (20|23)
+Descrição: Ao modificar o corpo de seu alvo, esta magia concede ao mesmo maior força ou agilidade.
+Efeito: Alvo tocado adquire bônus variável de +2 em Força ou Destreza.
+Efeito Crítico: Amenizar
+Duração: 3 Rodadas
+Alcance: Pessoal ou Toque
+Corrente de Efeitos - Gigantecer: Em substituição ao efeito anterior o alvo recebe Bônus de +2 em Força e Destreza, a Categoria de Tamanho do alvo aumenta em +1. 
+
+
+
+
+
+
+
+
+Emergente - Toque de Nanicolina
+Tempo de Conjuração: 3PA
+Perícia Chave para Conjuração: Ataque Corpo-a-corpo
+GD da Conjuração: Muito Difícil (25|28) ou DM do Alvo (Maior)
+Descrição: Criaturas tocadas por esta magia tem seu tamanho bastante reduzido, além de perder a grande parte de suas capacidades físicas.
+Efeito: O toque do conjurador com essa magia reduz em -2 a Categoria de Tamanho do Alvo, que adicionalmente sofre Redutor -3 em Força e Destreza. 
+Efeito Crítico: Dilacerar
+Duração: 3 Rodadas
+Alcance: Pessoal ou Toque
+Efeito Alternativo – Aura do Encolhimento: O Alcance desta magia é alterado para Pessoal, a GD para Difícil e a Duração aumentada para +2 Minutos. Você e até dois aliados adjacentes tem a Categoria de Tamanho reduzida em -2.
+
+
+Emergente - Titânecer 
+Tempo de Conjuração: 3PA
+Perícia Chave para Conjuração: Domínio de Mana
+GD da Conjuração: Muito Difícil (25|28) 
+Descrição: O alvo desta magia adquire grande Força, Resistência e Agilidade, e tem seu tamanho aumentado, assumindo as características dos lendários Titãs.
+Efeito: O alvo recebe Bônus de +2 em Força e Destreza, seu multiplicador de PV e sua Categoria de Tamanho aumentadas em +2.
+Efeito Crítico: Amenizar
+Duração: 3 Rodadas
+Alcance: Pessoal ou Toque
+Efeito Alternativo – Armada Ôgrica: Você e mais dois aliados adjacentes, recebem os benefícios de Ogrificar. Os bônus concedidos podem ser escolhidos individualmente, este efeito não ativa a Corrente de Efeitos – Gigantecer. 
+
+
+
+Florescente - Enfadecer
+Tempo de Conjuração: 3PA
+Perícia Chave para Conjuração: Ataque à Distância
+GD da Conjuração: Improvável (32|36) ou DM do Alvo (Maior)
+Descrição: Uma magia poderosa, capaz de reduzir ao mínimo as capacidades físicas de seu alvo, ao mesmo que tempo que reduz drasticamente seu tamanho.
+Efeito: Personagens tocados por esta magia tem sua Força e Destrezas reduzidas à 1, sua Categoria de Tamanho é reduzida em 3.
+A aparência da criatura muda ligeiramente, transparecendo inocência, fofura e delicadeza.
+Corrente de Efeitos – Boneca de Porcelana: Adicionalmente aos efeitos anteriores, o alvo desta magia perde sua RD e RM, e efeitos de Cura que ele receberia são reduzidos à metade.
+Efeito Crítico: Dilacerar
+Duração: 1 Rodada.
+Alcance: Alvo Único – Distância Muito Curta.
+
+Florescente - Dracônecer 
+Tempo de Conjuração: 3PA
+Perícia Chave para Conjuração: Domínio de Mana
+GD da Conjuração: Improvável (32|36) ou DM do Alvo (Maior)
+Descrição: Um personagem tocado por esta magia se torna fisicamente tão poderoso e resistente quanto um Dragão.
+Efeito: O alvo recebe Bônus +3 em Força e Destreza, sua Categoria de Tamanho e multiplicador de PV aumentados em +2.
+Corrente de Efeitos – Draconato: Adicionalmente aos efeitos anteriores, o alvo desta magia recebe asas e capacidade de voar com Movimento Base de Voo igual à sua velocidade em terra. O corpo dele é coberto por escamas de Dragão, que lhe fornecem RD e RM.
+Efeito Crítico: Amenizar
+Duração: 3 Rodadas
+Alcance: Pessoal ou Toque
+
+
+
+
+
+
+PROFANAR (Profana)
+
+Semente - Lacerar a Alma
+Tempo de Conjuração: 2PA
+Perícia Chave para Conjuração: Ataque Corpo-a-Corpo
+GD da Conjuração: DM do Alvo
+Descrição: Um ataque que rouba a vitalidade do alvo.
+Efeito: Como parte da conjuração desta magia você deve tocar um inimigo, seu toque recebe Roubo de Vida 2. O Alvo deste ataque sofre uma quantidade de pontos de dano Profano igual à metade de seu Foco.
+Apenas personagens vivos e que possuam 1 ou mais PV podem ser alvo deste efeito.
+Efeito Crítico: Amaldiçoar
+Duração: Instantânea
+Alcance: Toque
+Efeito Alternativo – Arrancar a Alma: O personagem tocado por esta magia morre instantaneamente e você recupera 3PV. 
+Apenas personagens vivos e que possuam 0 ou menos PV podem ser alvo deste efeito.
+
+
+Broto - Drenar Vida 
+Tempo de Conjuração: 3PA
+Perícia Chave para Conjuração: Ataque à Distância
+GD da Conjuração: Médio (16|18) ou DM do alvo (Maior)
+Descrição: Um ataque feito com uma corrente mágica que conecta o conjurador e seu alvo, transferindo a vitalidade do alvo para si.
+Efeito: Você cria uma corrente com grilhões mágicos, um deles conectados a você e outro ao seu alvo, se for bem-sucedido. O alvo desta magia sofre 1d6+Metade do Foco Pontos de Dano Profano, +2 Pontos de Dano em cada Rodada seguinte. 
+Esta magia possui Roubo de Vida 2 e é dissipada caso o alvo se distancie do conjurador além de seu alcance.
+Corrente de Efeitos – Enraizar: O alvo não pode se mover na primeira Rodada de efeito desta magia, mas ainda pode fazer outras ações normalmente.
+Efeito Crítico: Oferenda Maldita
+Duração: Concentração + 1 Rodada
+Alcance: Alvo Único – Distância Média
+
+Broto - Solo Profano 
+Tempo de Conjuração: 2PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Médio (16|18) ou DM do alvo (Maior)
+Descrição: Uma magia capaz de corromper uma área e afetar os vivos que andarem sobre ela.
+Efeito: Mortos-Vivos e Abissais nesta área recuperam 2PV a cada Rodada e recebem Vantagem em suas rolagens de Perícias de Ataque e Dano.
+Personagens vivos dentro da área sofrem 1+Metade do Foco pontos de Dano a cada Rodada.
+Enquanto estiver se concentrando para manter o Solo Profano você não pode se mover.
+Efeito Crítico: Potencializar
+Duração: Concentração +2 Rodadas.
+Alcance: Área de Efeito – Área Circular Média, centralizada em você. Após a conjuração o solo profano permanece ativo no mesmo local, mesmo que você se mova.
+Corrente de Efeitos – Terreno Sanguessugas: Esta magia recebe Roubo de Vida 1. 
+
+
+
+
+Muda – Toque do Ceifeiro
+Tempo de Conjuração: 3PA
+Perícia Chave para Conjuração: Ataque à Distância
+GD da Conjuração: Difícil (20|23) ou DM do Alvo (Maior)
+Descrição: Invoca uma criatura feita de sombras e energia mortis, cujo toque absorve as forças vitais do alvo e as transfere para o conjurador.
+Efeito:  O conjurador invoca um Comensal da Morte, uma das entidades que recolhe as forças dos vivos e as entregam para a própria Escuridão.
+A gigantesca criatura ataca o alvo com sua foice, capaz de afetar criaturas distantes, causando danos ao corpo, a mente e essência do alvo.
+Essa magia confere o Malefício Amaldiçoado ao alvo por 2 Rodadas, ele também perde 1d6PD, 1d6PM e 1d6+Metade do Foco PV.
+Esta magia recebe Roubou de Vida 2, apenas personagens vivos podem ser alvo deste ataque.
+Corrente de Efeitos – Estigma Profano: Se o alvo for um personagem previamente Amaldiçoado ele perde adicionalmente +1d6PV, +1d6PM e +1d6PD, esta magia recebe Roubo de Determinação 1, Roubo de Mana 1, Roubo de Vida 3 (em substituição ao Roubo de Vida 2).
+Efeito Crítico: Oferenda Maldita
+Duração: Instantânea
+Alcance: Alvo Único – Distância Curta
+
+Muda - Face do Abismo 
+Tempo de Conjuração: 1PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Difícil (20|23)  
+Descrição: Aprimora um Solo Profano, fortalecendo seus efeitos.
+Efeito: Seres vivos dentro da Área de Efeito do ‘Solo Profano’, tem seus efeitos de cura e recuperação de vida reduzidos à metade, exceto por efeitos de Roubo de Vida.
+Rolagens de Perícias de Ataque e Dano efetuados por todos os personagens dentro do Solo Profano recebem Bônus de Vantagem. 
+Os seus ataques, físicos e mágicos, e os efetuados por Mortos-Vivos e Abissais dentro desta área recebem Roubo de Vida 1.
+Corrente de Efeitos – Traumatizar: Outros personagens, exceto Mortos-Vivos e Abissais, sofrem 1d6 Pontos de Dano Profano e não podem ativar efeitos de Ego dentro do Solo Profano.
+Efeito Crítico: Amaldiçoar (aplicado a todos os Personagens na área)
+Duração: A mesma do ‘Solo Profano’
+Alcance: O mesmo do ‘Solo Profano’.
+
+
+
+
+
+
+
+Emergente - Sacrifico Profano 
+Tempo de Conjuração: 4PA
+Perícia Chave para Conjuração: Ataque Corpo-a-Corpo
+GD da Conjuração: Muito Difícil (25|28) ou DM dos Alvos (maior).
+Descrição: Sacrifica um Aliado ou Subordinado para causar grande dano e recuperar as próprias forças.
+Efeito: O conjurador toca simultaneamente um aliado e um inimigo, e os preenche com uma grande quantidade de energia Profana. O aliado e o inimigo tocado sofrem 3d6+Metade do Foco pontos de dano.
+Você recupera uma quantidade de PV igual ao Vigor de cada personagem que tenha seus PV reduzidos à zero ou menos com essa magia. Você recupera o dobro de PV de alvos amaldiçoados.
+Corrente de Efeitos – Funeral Herege: Você recupera uma quantidade de PD igual ao Instinto de cada personagem que tenha seus PV reduzidos à zero ou menos com essa magia, e de PM igual ao Foco deles.
+Você recupera o dobro de PD, PM e PV de alvos amaldiçoados.
+Efeito Crítico: Oferenda Maldita
+Duração: Instantânea.
+Alcance: Toque
+
+
+Emergente – Coração do Abismo
+Tempo de Conjuração: 2PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Muito Difícil (25|28) 
+Descrição: Aprimora a Face do Abismo, tornando-a ainda mais letal.
+Efeito: Cada personagem dentro do Solo Profano tem seu Multiplicador de PV reduzidos em 1 a cada Rodada. 
+Sempre que você for bem-sucedido em reduzir os PV de outro personagem à zero ou menos em decorrência de seus ataques e magias (incluindo o Solo Profano) você recupera 1 de seus próprios Multiplicadores de PV.
+Efeito Crítico: Amaldiçoar (aplicado a todos os Personagens na área)
+Duração: A mesma do ‘Solo Profano’.
+Alcance: O mesmo do ‘Solo Profano’
+Corrente de Efeitos – Favor da Escuridão: Sempre que um personagem tiver seus PV reduzidos à zero ou menos você recupera 2 Multiplicadores de PV (ao invés de apenas 1), este personagem retornará para lhe auxiliar no combate enquanto o Solo Profano permanecer ativo. Considere estes personagens como Subordinado de um tipo à sua escolha.
+Estes personagens são considerados Personagens Possuídos, efeitos que encerram possessões os liberta, encerrando o efeito sobre eles.
+
+
+
+
+
+Florescente - Portal para a Escuridão 
+Tempo de Conjuração: 5PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Improvável (32|36)
+Descrição: Sacrifica uma criatura para abrir um portal para o Abismo, o Plano Primordial da Escuridão.
+Efeito: Um breve ritual que envolve o sacrifício de um alvo. 
+Você cria com sua magia uma pequena lâmina feita de sombras, esta quando usada para atacar causa 3d6+Metade do Foco pontos de dano e Efeito Crítico Oferenda Maldita. Alvos voluntários não sofrem danos, mas são eliminados imediatamente.
+Ataques rolados com esta lâmina são feitos contra DM dos alvos, caso um personagem tenha seus PV reduzidos à zero ou menos ele será destruído e não poderá ser ressuscitado, seus restos mortais se levantarão formando um portal de passagem disforme. Qualquer personagem que passe por baixo dele é levado ao Plano Primordial da Escuridão.
+Efeito Crítico: Potencializar
+Duração: 3 Rodadas
+Duração do Portal: 1 minuto.
+Alcance: Pessoal
+Efeito Alternativo – Regresso ao Equilíbrio:  Uma vez no Abismo o conjurador pode abrir um portal para retornar ao Plano Material invocando uma nova lâmina e se flagelando com ela, sacrificando metade dos seus PV atuais.
+
+PROTEÇÃO INVERNAL (Encantamento/Elemental: Gelo)
+Semente - Corpo Frio
+Tempo de Conjuração: 2PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Fácil (13|14)
+Descrição: Alvo se torna resistente ao Frio, natural e mágico. 
+Efeito: Enquanto sob efeito desta magia, o personagem tocado se torna resistente ao frio, não sofrendo os efeitos comuns das baixas temperaturas. 
+O alvo também recebe RE: Gelo.
+Efeito Crítico: Imunizar
+Duração: 2 Rodadas
+Alcance: Pessoal ou Toque
+
+Broto - Corpo Gélido
+Tempo de Conjuração: 2PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Médio (16|18) 
+Descrição: Um personagem se torna extremamente resistente aos efeitos do frio.
+Efeito: A pele do alvo é coberta por uma veste mágica feita de gelo e neve, concedendo Bônus de +1 nas Defesas e o permitindo ignorar parcialmente efeitos do frio extremo. Todo dano Elemental: Gelo, físico ou mágico, sofrido pelo alvo é reduzido à metade.
+Corrente de Efeitos - Abraço Gélido: Como efeito adicional a veste é coberta de pequenos espinhos gélidos que congelam aqueles que o tocam. Personagens agarrados pelo alvo, ou que o estejam agarrando, sofrem Redutor de -2PA por 1 Rodada (até o mínimo de 2PA).
+Efeito Crítico: Imunizar
+Duração: 3 Rodadas 
+Alcance: Pessoal ou Toque
+
+
+Muda - Coração do Inverno
+Tempo de Conjuração: 2PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Difícil (20|23)
+Descrição: O alvo se torna imune aos efeitos do frio e causa danos elementais aqueles ao seu redor.
+Efeito: O alvo é coberto por uma armadura mágica feita de gelo verdadeiro que lhe concede Bônus de +2 nas Defesas e o torna imune aos efeitos Elementais: Gelo.
+Corrente de Efeitos - Geada: Personagens adjacentes ao alvo sofrem 2 pontos de Dano Mágico Elemental: Gelo a cada Rodada.
+Efeito Crítico: Imunizar
+Duração: 3 Rodadas 
+Alcance: Pessoal ou Toque
+Muda - Grilhões do Inverno
+Tempo de Conjuração: 3PA
+Perícia Chave para Conjuração: Ataque Corpo-a-Corpo
+GD da Conjuração: Difícil (20|23)
+Descrição: Grilhões de gelo prendem o alvo, reduzindo sua mobilidade.
+Efeito: O alvo tocado é preso por algemas de gelo verdadeiro, personagens presos desta forma sofrem redutor de -1PA (até o mínimo de 2PA) e Desvantagem e suas rolagens de Perícia.
+Corrente de Efeitos - Queimaduras de Gelo: Como efeito adicional o alvo sofre 1d6 pontos de Dano Elemental: Gelo a cada Rodada.
+Efeito Crítico: Atordoante
+Duração: 3 Rodadas 
+Alcance: Toque
+
+
+
+Emergente - Muralha de Gelo
+Tempo de Conjuração: 3PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Muito Difícil (25|28)
+Descrição: Cria uma muralha de indestrutível de gelo verdadeiro a sua frente.
+Efeito: Você pode criar uma muralha reta de 2+Metade do Foco UD à sua Frente, a altura da muralha é igual a Metade do Foco UD.
+Corrente de Efeitos - Nevasca Menor: Personagens adjacentes a muralha sofrem 2d6 pontos de Dano Mágico Elemental: Gelo a cada Rodada. 
+Efeito Crítico: Potencializar
+Duração: 3 Rodadas 
+Alcance: Adjacente
+
+
+Emergente - Prisão Invernal
+Tempo de Conjuração: 3PA
+Perícia Chave para Conjuração: Ataque à Distância
+GD da Conjuração: Muito Difícil (25|28)
+Descrição: Prende o alvo com diversas correntes de gelo, prejudicando gravemente sua mobilidade.
+Efeito: O alvo é enredado por diversas correntes de gelo verdadeiro, fazendo sofrer Desvantagem em rolagens de Perícia e Dano.
+O personagem alvo também sofre Redutor em PA igual a metade do seu Foco (até o mínimo de 2PA) e seu Movimento Base é reduzido à metade.
+Corrente de Efeitos - Queimaduras de Gelo: Como efeito adicional o alvo sofre 1d6 pontos de Dano Elemental: Gelo a cada Rodada.
+Efeito Crítico: Atordoante
+Duração: 3 Rodadas 
+Alcance: Toque   
+
+
+Florescente - Redoma Invernal
+Tempo de Conjuração: 4PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Improvável (32|36)
+Descrição: Cria uma redoma indestrutível feita de gelo verdadeira ao seu redor.
+Efeito: Similar a muralha de gelo, esta magia cria uma muralha de gelo ao seu redor e com altura suficiente para sempre cobrir a você e seu aliados.
+As paredes da redoma são indestrutíveis, isolando completamente os personagens em seu interior do mundo exterior.
+Corrente de Efeitos - Nevasca Maior: Personagens adjacentes à redoma sofrem 3d6 pontos de Dano Mágico Elemental: Gelo a cada Rodada.
+Efeito Crítico: Potencializar
+Duração: 3 Rodadas 
+Alcance: Área de Efeito – Área Circular Média, centralizada em você. 
+Efeito Alternativo - Exílio Invernal: a Redoma Invernal é criada ao redor de um único personagem, se este personagem for um hostil a Duração é reduzido à metade.
+REANIMAR (Profana/Invocação)
+Semente - Necropotência 
+Tempo de Conjuração: 2PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Fácil (13|14) 
+Descrição: Cria uma fenda escura que fortalece a primeira magia Profana que passar por ela.
+Efeito: O conjurador desta magia cria uma espécie de portal a sua frente, que desaparece no final do mesmo turno que é conjurado. Este efeito segue o conjurador, permanecendo sempre a sua frente. A primeira magia Profana que que tocar o portal, ou passar por ela, será Necropotêncializada, garantindo Vantagem em sua rolagem de Ataque e de Efeito.
+Efeito Crítico:
+Duração: Até o final do turno
+Alcance: Adjacente
+Efeito Alternativo – Sacrifício Mortis: O conjurador pode pegar a essência de um servo Morto-Vivo voluntário, o destruindo no processo. Se o fizer criará um portal maior e mais denso, capaz de maximizar os dados de dano da magia que passar por ela.
+
+Broto - Reanimar 
+Tempo de Conjuração: 3PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Médio (16|18) ou DM do alvo (Maior)
+Descrição: Transforma um cadáver em um Zumbi ou Esqueleto.
+Efeito: O conjurador pode transformar um cadáver em um morto-vivo do tipo Zumbi.
+Mortos-Vivos destes tipos não possuem inteligência e perdem quaisquer conhecimentos de sua vida anterior. 
+Criaturas criadas com esta magia não recuperam PV com Descansos e Magias Divinas, não precisam dormir, comer ou respirar, e não sofrem Desvantagem em rolagens de Perícias baseadas em Força, Destreza e Instinto, devido à falta de Treinamento.
+Zumbi - Atributos e Perícias:
+	•	Força 4, Destreza 1, Vigor 2, Gnose 1, Instinto 1, Foco 1, Carisma 1
+	•	Ataque Corpo-a-Corpo [Primal] +2
+Características Especiais: 
+	•	Recebem Vantagem em rolagens de Perícias de Ataque efetuadas contra personagens vivos.
+	•	Recebem Bônus em Perícia de Ataque igual à quantidade de Graduações em Domínio do Mana de seu Conjurador.
+	•	Se você possuir 4 ou mais Graduações em Domínio do Mana recebe Bônus Mágico (encantamento) de +10PV.
+	•	Se você possuir 7 ou mais Graduações em Domínio do Mana recebe Bônus Mágico (encantamento) de +2 em Força e Roubo de Vida 1.
+	•	Se você possuir 10 Graduações em Domínio do Mana reduz GD de Perícias em -1 Nível (efeito de encantamento)
+	•	Bônus Racial de +5 em Defesas, Danos Físicos de Esmagamento sofridos reduzidos em -3.
+	•	Anatomia de Morto-Vivo Menor – Não precisam dormir ou respirar, sofrem Danos de Magias Divinas que recuperam PV ao invés de se curarem e são imunes a danos Profanos e Naturais. Adicionalmente são Imunes aos Efeitos Críticos Amaldiçoar, Dilacerar, Excruciante, Ferida Profunda e Sangramento.
+Outras Informações: 
+	•	Categoria de Tamanho igual à do corpo usado (mínimo -2, máximo +2).
+	•	Possuem 2 Pontos de Ação (PA).
+	•	20PV (Multiplicador de PV x5) e Defesas +6.
+	•	Danos de Ataques 1d6+3 (Base 1+ Metade da Força).
+Efeito Crítico:
+Duração: Concentração + 2 Rodadas.
+Alcance: Toque
+Efeito Alternativo – Servo Cadavérico: O morto-vivo gerado com esta magia não consegue executar ações de formas independentes, mas são prestativos e podem ser usados como ajudantes. O corpo é reanimado como um Subordinado do tipo Cavaleiro ou Torre. Conjurar a magia desta forma lhe concede a Corrente de Efeitos – Escudeiro Cadavérico: O morto-vivo gerado conta como um Subordinado Prodigioso nas 2 primeiras Rodadas de Efeito desta magia.
+
+
+Muda - Cura Mortis 
+Tempo de Conjuração: 2PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Difícil (20|23) ou DM do Alvo (Maior)
+Descrição: Esta magia permite ao seu conjurador curar mortos-vivos.
+Efeito: Como parte dessa magia é preciso tocar um Personagem Morto-Vivo. 
+O alvo recupera 2d6 + Metade do Foco PV, você perde uma quantidade de pontos de vida igual a metade deste valor.
+Não é possível curar a si mesmo com esta Magia.
+Corrente de Efeitos – Regeneração Mortis: Adicionalmente aos efeitos anteriores o alvo recupera 2PV por Metade do Foco Rodadas.
+Efeito Crítico: Amenizar
+Duração: Instantânea
+Alcance: Toque
+Efeito Alternativo – Necrofagia: A Perícia Chave para conjurar esta magia muda para Ataque Corpo-a-Corpo e a GD para DM do Alvo. O Morto-Vivo tocado sofre 2d6+Metade do Foco pontos de Dano, você recupera uma quantidade de PV igual a metade do dano causado.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Muda – Criar Carniçal
+Tempo de Conjuração: 4PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Difícil (20|23)
+Descrição: Carniçais são criaturas similares aos zumbis, mas são ágeis e inteligentes. Diferente dos Zumbis, Carniçais possuem maior variedade de Atributos, habilidades e graduações em Perícias. 
+Efeito: Cria um Carniçal para lutar ao lado do conjurador.
+Atributos e Perícias:
+	•	Força 6, Destreza 4, Vigor 4, Gnose 1, Instinto 4, Foco 1, Carisma 1
+	•	Ataque Corpo-a-Corpo [Primal, Infantaria Leve, Infantaria Pesada] +6
+	•	Atenção [Sentidos Apurados] +4
+	•	Esquiva e Aparar [Lutador Leve, Soldado de Infantaria, Peso Pesado] +4
+	•	Furtividade [Maestria da Ocultação] +4
+Características Especiais: 
+	•	Recebem Bônus em Perícia de Ataque igual à quantidade de Graduações em Domínio do Mana de seu Conjurador.
+	•	Se você possuir 7 ou mais Graduações em Domínio do Mana recebe Bônus Mágico (encantamento) de +2 em Força, Destreza e Vigor.
+	•	Se você possuir 10 Graduações em Domínio do Mana reduz GD de Perícias em -1 Nível (efeito de encantamento).
+	•	Bônus Racial de +3 em Defesas, Danos Físicos sofridos reduzidos em -2.
+	•	Anatomia de Morto-Vivo Menor – Não precisam dormir ou respirar, sofrem Danos de Magias Divinas que recuperam PV ao invés de se curarem, são imunes a danos Profanos e Naturais. Adicionalmente são Imunes aos Efeitos Críticos Amaldiçoar, Dilacerar, Excruciante, Ferida Profunda e Sangramento.
+Outras Informações: 
+	•	Categoria de Tamanho igual à do corpo usado (mínimo -1, máximo +2).
+	•	Possuem 3 Pontos de Ação (PA).
+	•	26PV (Multiplicador de PV x4) e Defesas +11.
+	•	Danos de Ataques 2d6+3 (Base 0+ Metade da Força).
+Efeito Crítico: Potencializar
+Duração: Concentração + 2 Rodadas
+Alcance: Toque
+Efeito Alternativo – Açougueiro: Você pode aumentar o custo de Conjuração desta magia em +5PM ao para criar seu Carniçal. Se o fizer não poderá controlar mais nenhum outro Carniçal com esta magia. Seres criados com este método não possuem Duração, permanecendo ativos até terem seus PV reduzidos à 0. Recebem +1PA, Vantagem nas rolagens de Perícias de Ataque e Danos, possuem Roubo de Vida 1 e recuperam 1d6PV sempre que reduzem os PV de um personagem vivo à zero ou menos.
+Os PM adicionais utilizados para conjurar essa magia são recuperados apenas se este Morto-Vivo for destruído e somente após você passar por um Descanso Longo.
+
+
+
+
+Emergente - Escudo de Cadáveres 
+Tempo de Conjuração: Reação
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Muito Difícil (25|28) 
+Descrição: O conjurador pode transferir parte dos danos que sofreria para um Morto-Vivo sob seu controle.
+Efeito: Esta magia pode ser conjurada apenas enquanto você for o alvo primário de um ataque, metade do dano que o ataque causaria a você ao invés disso é causado a um morto-vivo adjacente que você controle, ou que te veja como um aliado.
+Este é um efeito de Meio-Dano.
+Corrente de Efeitos – Necro Sadismo: Esta Corrente de Efeitos é ativada apenas quando o atacante for um personagem morto-vivo. Metade dos Danos que seriam causados a você ao invés disso é causado ao próprio atacante. 
+Efeito Crítico: Amenizar
+Duração: Instantânea
+Alcance: Pessoal
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Emergente – Invocar Abantesma 
+Tempo de Conjuração: 5PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Muito Difícil (25|28)
+Descrição: Ao tocar um cadáver você Invoca um Fantasma para lhe servir.
+Efeito: Um breve ritual que permite invocar uma criatura inteligente que tenha morrido naquele local ou nas proximidades. O conjurador não escolhe quem será invocado, uma alma aleatória receberá o chamado.
+Fantasmas atacam à Distância, são incorpóreos e imunes à danos Físicos (exceto danos Elementais), seus ataques possuem a Corrente de Efeitos – Possessão Furiosa: O alvo é possuído (efeito de possessão) por 2 Rodadas e sempre ataca o aliado mais próximo. Personagens possuídos desta forma não podem Conjurar Magias que não sejam Raciais ou ativar Habilidades Aventyr, mas são beneficiados por efeitos ativos ou passivos.
+Fantasmas não possuem PV, quando sofrem danos a Duração da Magia é reduzida em -1 Rodada.
+Atributos e Perícias:
+	•	Força Nula, Destreza 8, Vigor Nulo, Gnose 2, Instinto 5, Foco 2, Carisma 2
+	•	Ataque à Distância [Artilharia Leve] +10
+	•	Atenção [Sentidos Apurados] +10
+	•	Esquiva e Aparar [Lutador Leve, Soldado de Infantaria, Peso Pesado] +10
+	•	Furtividade [Maestria da Ocultação] +4
+Características Especiais: 
+	•	Recebem Bônus em Perícia de Ataque igual à quantidade de Graduações em Domínio do Mana de seu Conjurador.
+	•	Se você possuir 7 ou mais Graduações em Domínio do Mana recebe Bônus Mágico (encantamento) de +2 em Força, Destreza e Vigor.
+	•	Se você possuir 10 Graduações em Domínio do Mana reduz GD de Perícias em -1 Nível (efeito de encantamento).
+	•	Possuem Movimento Base de Voo.
+	•	Não podem se afastar além de Distância Longa de seu Conjurador.
+	•	Anatomia de Morto-Vivo Menor – Não precisam dormir ou respirar, sofrem Danos de Magias Divinas que recuperam PV ao invés de se curarem e são imunes a efeitos Naturais. Adicionalmente são Imunes aos Efeitos Críticos Amaldiçoar, Dilacerar, Excruciante, Ferida Profunda e Sangramento.
+Outras Informações: 
+	•	Categoria de Tamanho 0.
+	•	Possuem 4 Pontos de Ação (PA).
+	•	Defesas +18.
+	•	Efetuam ataques contra a DM dos alvos. Danos de Ataques –1d6+6 (Base 2+ Metade da Destreza)
+Efeito Crítico: Potencializar
+Duração: 5 Rodadas
+Alcance: Adjacente
+
+
+
+Florescente - Cadáver Instável
+Tempo de Conjuração: 2PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Improvável (32|36)
+Descrição: Um Morto-Vivo sob controle do conjurador explode com efeitos de dano e cura.
+Efeito: Seu toque faz com que Morto-Vivo controlado por você, que não seja um subordinado, cresça por algumas Rodadas e em seguida exploda, afetando todos os personagens ao redor.
+O alvo tocado aumenta em 1 sua Categoria de Tamanho e recebe Vantagem em suas rolagens de Ataque e Dano. A cada nova Rodada você deve rolar 1d6, resultados ímpares repetem este efeito de forma cumulativa.
+Ao fim da Duração desta magia, ou quando você obtiver um resultado par na rolagem de 1d6, o cadáver explode causando 1d6+Metade do Foco pontos de dano em todos os personagens vivos em Distância Curta. O dano causado aumenta em +1d6 para cada Categoria de Tamanho que o alvo ganhou com esta magia.
+Se você estiver dentro da área da explosão você recupera uma quantidade de PV igual à metade do dano rolado.
+Efeito Crítico: Imunizar
+Duração: 2 Rodadas.
+Alcance: Toque
+Corrente de Efeitos – Graça da Escuridão: Seus aliados não sofrem danos decorrente da explosão do Cadáver Instável.
+
+Florescente - Festim dos Mortos 
+Tempo de Conjuração: 5PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Improvável (32|36)
+Descrição: O conjurador profana uma área escolhida, fazendo surgir mortos vivos no local.
+Efeito: Ao lançar esta magia você cria a sua frente um Sarcófago Negro, um sarcófago feito de energia profana materializada.
+A cada Rodada você deve rolar 1d6, resultados de 1 a 3 indicam que um Zumbi se levantará dele, resultados 4 e 5 indicam a presença de Carniçal, resultados 6 indicam a presença de um Abantesma. Mortos vivos criados desta forma são consideradas criaturas Invocadas para todos os efeitos, não podem ter a Duração estendida por efeitos ou Concentração e só podem agir na Rodada seguinte a sua aparição.
+O grande número de mortos criados com essa magia torna ela instável, e você pode não conseguir controlar todos os seres invocados. Se seu número máximo de invocações for superado mortos-vivos continuaram sendo invocados sem obedecer a nenhum mestre e com uma fome insaciável, sempre atacam o personagem vivo mais próximo. 
+Se você possuir 10 Graduações em Domínio do Mana, todos os Mortos-Vivos aliados (mas não você mesmo) que estejam em Distância Curta do Sarcófago Negro ou Jazigo Profano efetuam rolagens de Perícia com a GD reduzida em -2 Níveis.
+Efeito Crítico: Prevenir
+Duração: 3 Rodadas
+Alcance: Área de Efeito – Área Circular Muito Curta, o centro da área é um ponto adjacente ao conjurador.
+Efeito Alternativo – Horda Faminta: Ao invés de um sarcófago você pode conjurar um jazigo profano. A cada Rodada, adicionalmente à criatura invocada aleatoriamente, um zumbi será invocado. Você não possui controle de nenhum morto-vivo invocado desta forma e eles sempre atacar o personagem vivo mais próximo do jazigo.
+
+REGENERAÇÃO (Encantamento/Elemental: Água)
+
+Semente - Regeneração
+Tempo de Ativação: 2PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Fácil (13|14)
+Descrição: Alvo recupera lentamente seus pontos de vida.
+Efeito: Alvo recupera Metade do Foco PV, depois disso recupera +1PV por Rodada.
+Este efeito não pode afetar o mesmo alvo até que ele passe por um Descanso Longo.
+Efeito Crítico: Potencializar
+Duração: ‘Vigor do Alvo’ Rodadas
+Alcance: Toque
+
+
+Broto – Regeneração Maior
+Tempo de Ativação: 2PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Médio (16|18)
+Descrição: Cura o alvo tocado, após isso ele lentamente recupera pontos de vida a cada rodada.
+Efeito: O personagem tocado recupera 1d6PV+Metade do Foco, depois disso recupera +1PV por Rodada.
+Efeito Crítico: Potencializar
+Duração: ‘Vigor do Alvo’ Rodadas
+Alcance: Toque
+Efeito Alternativo – Regeneração em Massa:  Até 2 personagens adjacentes recuperam Metade do Foco PV, depois disso recuperam +2PV por Rodada.
+
+
+Muda – Lágrima de Undine
+Tempo de Ativação: 3PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Difícil (20|23)
+Descrição: Cura um personagem ou recupera um membro amputado.
+Efeito: O personagem tocado recupera 2d6PV+Metade do Foco, ou regenera um membro amputado em seu próximo turno.
+Adicionalmente, nas Rodadas posteriores, o alvo recupera +3PV por Rodada.
+Efeito Crítico: Potencializar
+Duração: ‘Vigor do Alvo’ Rodadas
+Alcance: Toque
+Efeito Alternativo – Vingança de Haloi: A Perícia Chave para Conjuração muda para Ataque Corpo-a-Corpo com GD igual à DM do alvo, o personagem tocado sofre 2d6 pontos de dano e você recupera 2PV por uma quantidade de Rodadas igual ao dano causado ou regenera um membro amputado. Esta magia possui a Corrente de Efeitos – Sangue Sugas: Esta magia recebe Oferenda Maldita como Efeito Crítico adicional.
+
+
+
+Emergente – Ressurreição 
+Tempo de Ativação: 4PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Muito Difícil (25|28)
+Descrição: Ressuscita um personagem morto recentemente.
+Efeito: Ressuscita um personagem morto a até ‘Domínio do Mana’ Rodadas.
+O alvo retorna a vida com Metade do Foco Pontos de Vida, então recupera +1d6PV por Rodada.
+Apenas personagens voluntários, mortos nas últimas Metade do Foco Rodadas e que queiram retornar a vida, podem ser ressuscitados com esta magia.
+Efeito Crítico: Potencializar
+Duração: ‘Vigor do Alvo’ Rodadas
+Alcance: Toque
+Efeito Alternativo – Marionete de Undine: O alvo desta magia retorna a vida com metade dos seus PV e recupera 3PV por Rodada, mas deve fazer um favor a deusa Undine (acordado entre o narrador e o jogador cujo personagem foi ressuscitado).
+
+Emergente – Escarnio de Haloi
+Tempo de Ativação: Reação
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Muito Difícil (25|28)
+Descrição: O alvo não pode morrer neste turno e recupera Pontos de Vida.
+Efeito: Se um ataque fosse reduzir os PV do alvo para zero ou menos, ao invés disso ele permanecerá com 1PV.
+Nas rodadas posteriores adicionalmente o alvo recupera +1d6PV.
+Efeito Crítico: Potencializar
+Duração: ‘Vigor do Alvo’ Rodadas
+Alcance: Toque
+Efeito Alternativo – Paradoxo do Afogado: O Tempo de Conjuração de Retorno dos Afogados é de 3PA e apenas personagens mortos nas últimas 2 Rodadas podem ser alvos de seus efeitos, o alvo retorna a vida com todos os seus PV, mas perde 1d6PV a cada Rodada e não tem negado qual efeito de cura. Enquanto revividos recebem Vantagem em suas rolagens de Perícias de Ataque e Dano. Ao fim da Duração desta magia a vida do alvo é invertida, valores de PV positivos remanescentes se tornam negativos, valores negativos se tornam positivos.
+
+Florescente – Renascimento nas Águas
+Tempo de Ativação: 4PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Improvável (32|36)
+Descrição: Ressuscita um personagem morto.
+Efeito: Ressuscita um personagem morto que queira retornar a vida.
+O alvo é ressuscitado com Metade de seus Pontos de Vida, depois disso recupera 1d6+Metade do Foco PV a cada Rodada, personagens ressuscitados desta forma recebem Vantagem em suas Rolagens de Perícia, Dano e Efeitos de Magia enquanto estiverem sob os efeitos curativos da magia.
+Efeito Crítico: Potencializar
+Duração: ‘Vigor do Alvo’ Rodadas
+Alcance: Toque
+
+Efeito Alternativo – Ressurreição em Massa: Você pode fazer com que todos os personagens mortos em Distância Curta retornam a vida com Metade do Foco PV.
+
+TEMPO (Encantamento/Temporal)
+
+Semente – Aumentar Passos
+Tempo de Ativação: 2 PA, pode ser conjurado como Reação por personagens com Domínio do Mana 5 ou superior ao custo de 3PM.
+Perícia Chave para Conjuração: 
+GD da Conjuração:
+Descrição: Esta magia reduz a velocidade de movimento de seu alvo.
+Efeito: O personagem alvo tem seu Movimento Base aumentado em +2UD.
+Esta magia não afeta objetos e construtos. Um mesmo personagem não pode ser afetado por esta magia em turnos consecutivos.
+Efeito Crítico: Potencializar
+Duração: 1 Rodada
+Alcance: Alvo Único Distante – Distância Curta
+Efeito Alternativo – Reduzir Passos: A perícia chave para conjuração desta magia muda para Ataque à Distância. 
+Personagem afetados por Reduzir Passos tem seu Movimento Base reduzido em -2UD. Esta magia não afeta objetos e construtos, e nunca reduz o Movimento Base de um personagem a menos que 2UD.
+Corrente de Efeitos - Enredar: Em substituição aos efeitos anteriores, o Movimento Base do alvo é reduzido em -4UD, até o mínimo de 1UD.
+
+
+Broto - Asas nos Pés 
+Tempo de Ativação: 2 PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Médio (16|18)
+Descrição: O alvo desta magia se torna mais veloz.
+Efeito: Personagens tocados por esta magia adquirem +1PA adicional.
+Esta magia não permite ao alvo superar o limite de 5PA e anula os efeitos de Raízes nos Pés.
+Efeito Crítico: Potencializar
+Duração: 3 Rodadas
+Alcance: Pessoal ou Toque
+Efeito Alternativo - Aprimorar Condução: O movimento de um veículo ou animal de montaria é aumentado em 50%. 
+Broto - Raízes nos Pés 
+Tempo de Ativação: 2 PA
+Perícia Chave para Conjuração: Ataque à Distância
+GD da Conjuração: Médio (16|18) ou DM do alvo (Maior)
+Descrição: Esta magia reduz a velocidade de seu alvo.
+Efeito: Personagens afetados por esta magia sofrem redutor de -1PA.
+Esta magia nunca reduz o total de PA do alvo a menos que 2PA e anula os efeitos de Asas nos Pés.
+Efeito Crítico: Potencializar
+Duração: 3 Rodadas
+Alcance: Alvo Único Distante – Distância Média
+Efeito Alternativo – Retardar Condução: O Alcance desta magia muda para Alvos Distantes – Cone Curto e a Duração é reduzida para 1 Rodada. Veículos e Montarias afetadas tem seu deslocamento reduzido à metade.
+
+
+
+Muda - Acelerar 
+Tempo de Ativação: 3PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Difícil (20|23)
+Descrição: Esta magia torna seus alvos extremamente velozes.
+Efeito: Alvos desta magia adquirem temporariamente +2PA, até um máximo de 6PA.
+Efeito Crítico: Potencializar
+Duração: 3 Rodadas
+Alcance: Pessoal ou Toque
+Efeito Alternativo - Aceleração em Massa: O alcance desta magia muda para Pessoal e Adjacente. O conjurador e aliados adjacentes adquirem +1PA. Conjurar a magia desta forma exige o uso de +1 PM para cada criatura adjacente afetada.
+Muda - Lentidão 
+Tempo de Ativação: 2PA
+Perícia Chave para Conjuração: 
+GD da Conjuração: Difícil (20|23) ou DM do Alvo (Maior)
+Descrição: Reduz drasticamente a velocidade de um ou mais personagens.
+Efeito: O alvo desta magia tem sofre redutor de -2PA.
+Esta magia nunca reduz o total de PA do alvo a menos que 2PA.
+Efeito Crítico: Potencializar
+Duração: 3 Rodadas
+Alcance: Alvo Único – Distância Curta
+Efeito Alternativo - Lentidão em Massa: O Alcance desta magia muda para Alvo Distante - cone de até 6 metros, criaturas afetadas sofrem redutor de -1PA.
+
+Emergente - Paradoxo Temporal 
+Tempo de Ativação: 3PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Muito Difícil (25|28)
+Descrição: Um campo que acelera os aliados e desacelera os inimigos.
+Efeito: Cria uma área que, dentro dela, o conjurador e seus aliados adquirem temporariamente +1PA, e inimigos sofrem redutor de -1PA.
+Esta magia não reduz o total de PA dos inimigos para menos que 2, personagens que deixem a área imediatamente deixam de receber seus efeitos.
+Efeito Crítico: Potencializar
+Duração: 2 Rodadas
+Alcance: Ponto Central em Distância Média, Área de Efeito – Área Circular Curta
+Efeito Alternativo – Entrelaçamento Temporal: A Duração da Conjuração muda para Concentração +1 Rodada. Você e seus aliados recebem temporariamente +2PA.
+
+Florescente - Parar o Tempo 
+Tempo de Ativação: Livre
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Improvável (32|36)
+Descrição: O conjurador afeta as matrizes do universo, interrompendo brevemente o fluxo do tempo.
+Efeito: Ao conjurar essa magia, o conjurador tem seu total de PA dobrados. 
+Este efeito é cumulativo com outras magias desta mesma Árvore de Magias e te permite superar quaisquer limites de PA total em sua Rodada.
+Efeito Crítico: Amenizar*
+Duração: Instantânea
+Alcance: Pessoal
+Efeito Alternativo - Prisão Temporal: O Alcance desta magia é alterada para toque, a criatura tocada é removida brevemente do tempo, perdendo o seu próximo turno.
+Enquanto fora do tempo o alvo não pode ser afetado por nenhum outro efeito e não sofre danos proveniente de ataques. Efeitos que seriam desencadeados no turno do alvo deixam de fazê-lo, e são ativados apenas na rodada seguinte. Efeitos que afetem o alvo e que possuam uma duração não tem seu tempo reduzido enquanto o alvo está fora do tempo.
+Você não pode afetar um mesmo personagem com Prisão Temporal até que você passe por um Descanso Longo.
+
+TRANSPORTE (Temporal/Invocação)
+
+Semente - Magica de Rua 
+Tempo de Conjuração: 2 PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Fácil (13|14) 
+Descrição: Permite ao conjurador transportar um objeto para outro local, e então recebê-lo de volta.
+Efeito: Um objeto tocado é teletransportado pra um local próximo, em Distância Curta, retornando as suas mãos ao fim de sua Duração. 
+Esta magia afeta apenas objetos que não estejam em alcance visual de outros personagens. 
+Efeito Crítico: Potencializar
+Duração: 2 Rodadas
+Alcance: Toque
+Efeito Alternativo – Desaparecimento Caótico: A Duração da magia muda para Instantânea, de funcionamento similar à Magia de Rua, ao conjurar esta magia você não escolhe o destino temporário do objeto, ele aparecerá em um local aleatório em Distância Média e não retornará para suas mãos. 
+
+
+Broto - Piscar 
+Tempo de Conjuração: Ação Livre
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Médio (16|18)
+Descrição: Permite se teletransportar para um local próximo.
+Efeito: Esta magia permite a você, ou um objeto em sua posse, se teletransportar para um local à até 1d6+Metade do Foco UD. 
+A Distância aumenta para 2d6+Metade do Foco UD se você tiver 5 o mais Graduações em ‘Domínio do Mana’, então para 3d6+Metade do Foco UD se tiver 10 Graduações.
+O local de destino é limitado à locais que o conjurador possa ver.
+Efeito Crítico: Potencializar
+Duração: Instantâneo
+Alcance: Pessoal
+
+
+
+Broto - Montaria na Manga 
+Tempo de Conjuração: 2 PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Médio (16|18)
+Descrição: Cria magicamente um veículo ou animal de montaria.
+Efeito: Permite a você invocar um animal ou veículo leve (para apenas 1 pessoa) feito de energia primordial para que possa ser usado como transporte.
+Por motivos desconhecidos esta magia não funciona se outros personagens estiverem vendo sua invocação, por isso normalmente os animais são invocados de trás de objetos, capaz, casas, árvores etc.
+O veículo ou mantaria invocada possui 10PV e ignoram todo o dano sofrido de fontes não Primordiais ou Regalias, o movimento base da invocação é de 11UD. 
+Efeito Crítico: Potencializar
+Duração: 3 Rodadas
+Alcance: Adjacente
+Corrente de Efeitos – Duração Expandida: A duração desta magia aumenta para 1 hora.
+
+
+
+
+Muda - Teletransporte Verdadeiro
+Tempo de Conjuração: 2PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Difícil (20|23)
+Descrição: Você pode se teletransportar para um local conhecido.
+Efeito: Permite se teletransportar para um local conhecido à até ‘Domínio do Mana’*1000 UD.
+Efeito Crítico: Potencializar
+Duração: Instantânea
+Alcance: Pessoal
+Efeito Alternativo – Piscar Longínquo: O tempo de Conjuração muda para 1PA, você pode se teletransportar para um local aleatório, em 2d6*100 UD, na direção escolhida. Você sempre surge em solo firme e nunca em espaços ocupados por objetos ou outros personagens.
+
+
+
+Muda - Carruagem Oculta 
+Tempo de Conjuração: 3PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Difícil (20|23)
+Descrição: Cria um veículo veloz capaz de voar e transportar diversos personagens.
+Efeito: Você pode invocar um animal ou veículo existente ou imaginário, conforme sua vontade, capaz de transportar o conjurador e até outros 3 personagens.
+O Movimento Base da Carruagem Oculta é de 9UD e possui 18PV, também ignoram todo o dano sofrido por fontes não Primordiais ou Regalias.
+Efeito Crítico: Potencializar
+Duração: Concentração +1 Rodada
+Alcance: Adjacente
+Efeito Alternativo – Transporte Alado: O número máximo de pessoas no veículo é reduzido para 2, o meio de transporte invocado recebe Movimento Base de Voo.
+Emergente - Portal 
+Tempo de Conjuração: 4PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Muito Difícil (25|28)
+Descrição: Abre um portal para um local conhecido.
+Efeito: Ao conjurar esta magia, seu conjurador deve escolher um local conhecido dentro do mesmo plano. Um portal é então aberto a sua frente e permite que qualquer personagem que passe por ele viaje instantaneamente para o local escolhido.
+Efeito Crítico: Potencializar
+Duração: 3 Rodadas
+Alcance: Mesmo Plano
+Efeito Alternativo – Portal de Fuga: O Tempo de Conjuração desta magia muda para 2PA e a Duração para 1 Rodada. Ao invés do efeito padrão, o destino do portal passa a ser um local aleatório à até 3d6*1000 UD. Portal da Fuga não recebe os benefícios de Efeitos Críticos.
+
+
+
+
+Emergente - Viajante do Aether 
+Tempo de Conjuração: 4PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Muito Difícil (25|28)
+Descrição: Um veículo extremamente veloz e capaz e resistir aos efeitos do Aether.
+Efeito: Invoca um veículo extremamente veloz e capaz de voar, podemos até mesmo ultrapassar o domo que protege Tellus e navegar no Aether.
+O Viajante do Aether tem o Movimento Base de 20UD, possui 30PV e é imune a danos, exceto aqueles causados por Regalias. Personagens em seu interior são protegidos de quais efeitos externos, seja ele Aether, Magias ou ataques.
+A velocidade deste veículo aumenta a cada Rodada em operação, acelerando em +10UD por Rodada, até o máximo de 100UD. Este veículo pode carregar até 5 personagens.
+Efeito Crítico: Potencializar
+Duração: Concentração + 1 Rodada
+Alcance: Adjacente
+
+
+
+
+
+
+Florescente - Portal Planar
+Tempo de Conjuração: 4 PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Improvável (32|36)
+Descrição: Permite ao conjurador abrir um portal para um plano Elemental.
+Efeito: Ao conjurar esta magia deve se escolher um Plano Elemental, e então um portal será aberto para o plano escolhido. 
+Caso você conheça algum local do plano de destino você pode abrir um portal diretamente para este local, caso contrário o portal levará à um local aleatório do Plano especificado.
+Efeito Crítico: Potencializar
+Duração: 2 Rodadas
+Alcance: Planos Elementais
+Efeito Alternativo – Retorno à Tellus: Permite abrir um portal de volta para o plano material, este efeito pode ser gerado apenas quando estiver em um Plano Elemental.
+
+
+
+
+
+
+
+
+
+Florescente - Perfuratriz de Sonhos 
+Tempo de Conjuração: 2 PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Improvável (32|36)
+Descrição: Um veículo capaz de cruzar o véu do tempo, da realidade e ir para o mundo dos sonhos.
+Efeito: Você pode invocar o mais veloz e poderoso dos veículos.
+Completamente imune a efeitos externos a Perfuratriz dos Sonhos é indestrutível, tem Movimento Base de 50UD e sua velocidade aumenta em +10UD a cada Rodada, até o máximo de 500UD. 
+Ao atingir sua velocidade máxima a Perfuratriz dos sonhos pode viajar para o passado, futuro ou ir para o Mundo dos Sonhos, o Plano dos Deuses Morpheus e Tykhé.
+Enquanto no passado os personagens não podem deixar a perfuratriz, a pressão do fluxo do tempo mata imediatamente quaisquer que o fizer, mas podem observar seus imutáveis eventos. 
+Caso viagem para o futuro sofrem menos dos efeitos do tempo, mas ainda assim podem morrer caso permaneçam muito tempo sujeito a ele, nestas condições os personagens perdem 1 Multiplicador de PV a cada hora fora da perfuratriz.
+Até o máximo de 5 personagens podem viajar desta forma.
+Efeito Crítico: Potencializar
+Duração: Concentração + 1 Rodada.
+Alcance: Adjacente
+
+
+
+
+
+
+
+
+VIDA (Natural/Divina)
+
+Semente - Aliviar a Dor 
+Tempo de Conjuração: 2PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Fácil (13|14)
+Descrição: Você pode fechar feridas e fazer parar qualquer tipo de dor ao toque.
+Efeito: Interrompe qualquer efeito de Sangramento sofrido pelo alvo, se ele não estiver sob sangramento, ao invés disso essa magia cura o alvo, como se ele passasse por um Descanso Mínimo.
+Este é um efeito similar a Descanso e não substitui Descansos reais.
+O efeito de cura desta magia só afeta o alvo 1 vez, voltando a afetá-lo somente após ele passar por um Descanso Longo.
+Efeito Crítico: Amenizar
+Duração: Instantânea
+Alcance: Pessoal ou Toque
+Efeito Alternativo: Procrastinar Ferimento - Como uma Reação você pode fazer com os PV que você, ou um aliado em Distância Curta, perderia em decorrência de um ataque sejam perdidos apenas no Rodada seguinte. Corrente de Efeitos - Estancar: Se o dano sofrido fosse causar efeitos de Sangramento ele não causará este efeito.
+
+
+Broto - Revigorar 
+Tempo de Conjuração: 2PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Médio (16|18) ou DM do alvo (Maior)
+Descrição: Seu toque devolve a vitalidade dos seus aliados.
+Efeito: Você pode fazer com que um alvo recupere PV como se passasse por um Descanso Longo. Corrente de Efeitos – Sobrecura: O alvo desta magia adicionalmente recupera +1d6+Metade do Foco PV.
+Este é um efeito similar a Descanso e não substitui Descansos reais.
+Efeito Crítico: Amenizar
+Duração: Instantânea
+Alcance: Pessoal ou Toque
+Efeito Alternativo – Benção Bifurcada: Você pode curar até 2 alvos ao mesmo tempo. O GD da Conjuração muda pra Médio, se bem-sucedido ambos os alvos recuperam PV como se passassem por um Descanso Mínimo. Pode aplicar a Corrente de Efeitos – Sobrecura.
+
+
+
+
+Broto - Toque Curativo 
+Tempo de Conjuração: 2PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Efeitos mundanos ou de magias Sementes: Fácil, Brotos: Médio, Mudas: Difícil, Emergentes: Muito Difícil, Florescentes: Improvável.
+Descrição: Você poder curar doenças e remover venenos ao toque.
+Efeito:  Com seu toque você pode remover os Malefícios Doença e Venenos de um alvo.
+Apenas doenças de origem mundana, não mágica, pode ser removida desta forma.
+Efeito Crítico: Imunizar
+Duração: Instantânea
+Alcance: Pessoal ou Toque
+Corrente de Efeitos - Transferir Doenças e Venenos: Quando for bem-sucedido em usar Toque Curativo, você pode escolher tomar para si o Malefício, ao invés de dissipá-lo, e então transferir para um novo alvo.
+Você sofre os efeitos negativos do Maleficio enquanto estiver com ele, mas pode transferi-lo a qualquer momento para um novo alvo, esta ação exige uma rolagem de perícia 'Ataque Corpo-a-Corpo', realizada contra DM do alvo.
+Caso falhe em alguma tentativa de transferir os efeitos, este persistirá no corpo do conjurador até seu próximo Descanso Longo.
+
+
+
+
+Muda - Revigorar Maior 
+Tempo de Conjuração: 3PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Difícil (20|23) ou DM do alvo (Maior)
+Descrição: Com um toque você consegue recuperar grandes quantidades energia vital de seus aliados.
+Efeito: Você pode fazer com que uma criatura tocada recupere PV como se passasse por um Descanso Total. Corrente de Efeitos – Sobrecura.
+Este é um efeito similar a Descanso e não substitui Descansos reais.
+Efeito Crítico: Amenizar
+Duração: Instantânea
+Alcance: Pessoal ou Toque
+Efeito Alternativo - Cura em Massa: Ao invés de afetar um único alvo você pode fazer com que você e todos os outros personagens à até 2m de você recuperem PV como se passassem por Descanso Mínimo. Pode aplicar a Corrente de Efeitos – Sobrecura.
+Muda - Remover Maldição 
+Tempo de Conjuração: 2PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Remover maldições mágicas de Sementes: Fácil, Brotos: Média Mudas: Difícil, Emergentes: Muito Difícil, Florescentes: Improvável. Maldições provenientes de Habilidades Monstruosas ou Aventyrs são de Grau Muito Difícil.
+Descrição: Você pode remover o Malefício Maldição com seu toque.
+Efeito: Conforme descrição, seu toque com esta magia é capaz de encerrar os efeitos de maldições.
+Efeito Crítico: Imunizar
+Duração: Instantânea
+Alcance: Pessoal ou Toque
+
+
+
+
+Emergente - Nova Rejuvenescedora 
+Tempo de Ativação: 3 PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Muito Difícil (25|28)
+Descrição: Você pode criar um anel de energia curativa que expande rapidamente, recuperando as forças de todas as criaturas ao redor.
+Efeito: Tendo o conjurador como centro, um pulso de energia positiva corre o cenário e recupera PV de todas as criaturas no alcance da magia como se passassem por um Descanso Longo. Corrente de Efeitos – Sobrecura.
+Inimigos do conjurador recuperam apenas metade desta quantidade de PV.
+Efeito Crítico: Amenizar
+Duração: Instantânea
+Alcance: Área de Efeito – Área Circular Curta, centralizada em você.
+Efeito Alternativo - Fonte da Juventude: Sua onda de energia curativa recupera PV, PM e PD de todas as criaturas afetadas, mas não recupera o conjurador, como se passassem por um descanso curto.
+Criaturas hostis ao conjurador recuperam pontos como se passassem por um descanso mínimo.
+Emergente - Exorcizar 
+Tempo de Ativação: 3 PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Muito Difícil (25|28)
+Descrição: Ao toque você pode remover maldições, doenças mundanas ou mágicas, e findar possessões.
+Efeito: Tocar uma criatura com esta magia o permite remover todos os Malefícios Maldição, Doença e Possessão de seu alvo.
+Corrente de Efeitos - Barganha Negra: Ao invés de apenas expulsar o possuidor você pode fazer com que a criatura expulsa, apenas no caso de ter sido invocada por outro conjurador, tente possuir aquele que a invocou. 
+Efeito Crítico: Imunizar
+Duração: Instantânea 
+Alcance: Pessoal ou Toque
+
+
+
+
+
+Florescente - Benção da Luz 
+Tempo de Ativação: 3PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Improvável (32|36)
+Descrição: Você pode recuperar totalmente uma criatura ferida.
+Efeito: Seu toque recupera todos os PV perdidos da criatura tocada.
+Efeito Crítico: Amenizar
+Duração: Instantânea
+Alcance: Pessoal ou Toque
+Efeito Alternativo - Corrente Abençoada: Você pode afetar criaturas adicionais com esta magia, desde que elas estejam adjacentes a você ou a uma criatura curada por esta magia. Para cada criatura adicional é necessário o uso de +3PM.
+
+
+
+Florescente - Corpo Fechado 
+Tempo de Ativação: 4PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Improvável (32|36)
+Descrição: Encerra malefícios e impede o alvo de ser afetado por novos malefícios.
+Efeito: O alvo desta magia tem todos os Malefícios removidos, este personagem também se torna imune à Malefícios enquanto estiver sofre efeito de Corpo Fechado.
+Efeito Crítico: Amenizar
+Duração: Concentração + 2 Rodadas
+Alcance: Pessoal ou Toque
+
+
+
+
+
+
+
+
+
+VOO (Encantamento/Elemental: Ar)
+
+
+Semente - Queda Lenta 
+Tempo de Conjuração: 2PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: GD da Conjuração: Fácil (13|14) ou DM do Alvo (Maior)
+Descrição: Reduz a velocidade de um objeto ou personagem em queda livre.
+Efeito: O alvo tem sua velocidade em queda livre reduzida, nunca se movimentando mais que Distância Muito Curta em direção ao solo. 
+Efeito Crítico: Amenizar
+Duração: Concentração
+Alcance: Alvo Único Distante - Distância Curta 
+Efeito Alternativo - Queda Sincronizada: Conjurada sobre si mesmo, o conjurador pode fazer com que outros personagens e objetos em queda caiam na mesma velocidade que você. Apenas personagens com 5 ou mais Graduações em Conhecimentos podem Conjurar este efeito.
+
+Broto - Levitar 
+Tempo de Conjuração: 2PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Médio (16|18) ou DM do Alvo (Maior)
+Descrição: O conjurador cede a um personagem o poder da levitação.
+Efeito: Personagem tocado adquire a capacidade de levitar verticalmente, ou de ficar parado livremente no ar.
+Enquanto sob efeito dessa magia, o movimento vertical de cada personagem é igual à metade do seu Movimento Base, movimentos horizontais no ar são limitados ao espaço adjacentes.
+Efeito Crítico: Amenizar
+Duração: Concentração + 1 Rodada
+Alcance: Toque
+Efeito Alternativo – Poltergeist: Você pode fazer com que um objeto em Distância Curta levite verticalmente, até uma altura máxima igual a metade de seu Foco. Apenas objetos que não estejam sob posse ou guarda de outros personagens podem ser afetada por esta magia.
+
+
+
+Muda - Purgar Asas
+Tempo de Conjuração: 3PA
+Perícia Chave para Conjuração: Ataque à Distância
+GD da Conjuração: Difícil (20|23) ou DM do alvo (Maior)
+Descrição: Você pode negar a capacidade de levitar ou voar de outras criaturas.
+Efeito: O alvo desta magia perde a capacidade de voar ou levitar, independente desta habilidade ser de origem natural ou mágica.
+Enquanto sob este efeito o alvo não consegue voar ou levitar, mesmo que receba esta habilidade de novas fontes. Quando perdem suas habilidades o alvo passa a ser lentamente puxado para o chão, como se estivesse sob efeito de Queda Lenta.
+Efeito Crítico: Prevenir
+Duração: Concentração + 1 Rodada
+Alcance: Alvo Único Distante – Distância Média
+Efeito Alternativo – Prisão de Ar: Ao invés de cair, o alvo fica preso no ar, imóvel, incapaz de se mover ou de pousar. Indefeso, o alvo também sofre penalidade de -2 em DF e DM. 
+Este efeito alternativo reduz a duração desta magia pela metade.
+
+Muda - Voo Livre
+Tempo de Conjuração: 3PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Difícil (20|23) ou DM do alvo (Maior)
+Descrição: Concede a um personagem a capacidade de voar.
+Efeito: O alvo desta magia Movimento Base de Voo.
+A velocidade do voo é igual ao Movimento Base do alvo somado à metade do seu Foco.
+Efeito Crítico: Amenizar
+Duração: Concentração +2 Rodada
+Alcance: Toque
+
+
+
+
+
+
+
+Emergente - Furtar Asas 
+Tempo de Conjuração: 4PA
+Perícia Chave para Conjuração: Ataque à Distância
+GD da Conjuração: Muito Difícil (25|28)
+Descrição: O conjurador rouba a capacidade de levitar ou voar de outras criaturas.
+Efeito: O alvo desta magia perde a capacidade de voar e levitar, como se fosse afetada por ‘Purgar Asas’, o conjurador adquire a habilidade perdida por ela. O conjurador pode voar ou levitar, conforme habilidade do alvo.
+Efeito Crítico: Prevenir
+Duração: 3 Rodadas
+Alcance: Alvo Único Distante – Distância Média
+Efeito Alternativo – Transferir o Dom: Você pode transferir uma habilidade de voo ou levitação adquirida com esta magia para outros personagens ao toque, esta ação exige o uso de 2PA e dispensa o uso de PM.
+
+
+
+
+
+
+
+
+
+
+
+Emergente - Voo em Massa 
+Tempo de Conjuração: 4PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Muito Difícil (25|28)
+Descrição: O conjurador e seus aliados próximos adquirem a capacidade de voar.
+Efeito: Você emite uma poderosa aura mágica, que permite que ele e todos os aliados adjacentes, no momento da conjuração, adquiram a habilidade de voar, como se afetados pela Magia Voo Livre. 
+Após a conjuração os aliados afetados podem se distanciar de você, até Distância Longa, sem perder os benefícios da magia.
+Efeito Crítico: Amenizar
+Duração: 3 Rodadas
+Alcance: Pessoal e Área de Efeito – Explosão.
+Corrente de Efeitos – Pouso Seguro: Aliados que se afastem do conjurador além dos limites da magia são afetados automaticamente por Queda Lenta.
+
+Florescente - Escarnio de Sylph 
+Tempo de Conjuração: 5PA
+Perícia Chave para Conjuração: Domínio do Mana
+GD da Conjuração: Improvável (32|36)e
+Descrição: Uma magia capaz de dar capacidade de voar para quem não voa enquanto remove esta habilidade daqueles que antes a detinham.
+Efeito: Na área de efeito desta magia todos os personagens que possuam a habilidade de voar perdem esta habilidade e não podem recuperá-las, como se afetadas por Purgar Asas. Simultaneamente todos os personagens que antes não podiam voar recebem esta habilidade, como se fossem afetadas por Voo Livre.
+Efeito Crítico: Guilhotina
+Duração: 2 Rodadas 
+Alcance: Área de Efeito – Área Circular Longa
+Efeito Alternativo:  Inverter Gravidade - Você pode inverter a gravidade da área, fazendo criaturas e objetos "caírem para cima", até a altura máxima de Metade do Foco UD.
+
+
+
+
+
+
+
+
+
+
+
+
+Sombras da Umbra
+ A Força Umbral
+Força Umbral é o nome dado a manipulação do Mana Umbral. Considerados tabus e vistos como forças desconhecidas, as Magias Umbrais em essência são similares aos Arcanismos e Preces Divinas, mas utilizam de conhecimentos obscuros e proibidos para sua formulação ou de poderes concedidos por Senhores Umbrais ou pela Esquecida para sua evocação. 
+Para aprender ou acessar Magias Umbrais é necessário o Talento Arcanismo Umbral.
+
+“Força Umbral (Geral/Devoto/Destino)
+Pré-requisito: Apenas Devotos de Senhores Umbrais, Talentos Arcanismo ou Aptidão Mágica Ampla.
+Descrição: Você agora pode aprender Árvores de Magias Umbrais.
+Escolha uma Árvore de Magia Umbral, você pode conjurar as Magias Semente e Broto da Árvore escolhida.”
+
+Árvores de Magias Umbrais
+Calor Invertido (Umbral/Elemental: Fogo e Gelo)
+	•	Semente - Furta-Chamas
+Tempo de Ativação: 
+Perícia Chave para Conjuração: 
+GD da Conjuração: 
+Descrição: Apaga uma chama Natural ou Mágica não-Umbral
+Efeito: Apaga uma chama dentro do seu Alcance, a chama não pode ter Categoria de Tamanho superior à Metade do Foco.
+Efeito Crítico:
+Duração: 
+Alcance: Alvo Único Distante - Distância Média
+Efeito Alternativo – Chama Alheia: Este efeito alternativo pode ser conjurado apenas após utilizar Furta-Chamas e em até 2 Rodadas.
+Se a chama afetada for um efeito mundano, você pode invocar as chamas em novo local na Área de Efeito, se for uma chama mágica você pode replicar seus efeitos.
+
+	•	Broto – Fumaça Furta-Luz
+Tempo de Ativação: 
+Perícia Chave para Conjuração: 
+GD da Conjuração: 
+Descrição: Cria uma zona esfumaçada de escuridão completa.
+Efeito: Preenche a área com uma fumaça espeça e que impede a visão.
+Luzes oriundas de chamas naturais não iluminam o local, luzes de origem mágica tem a eficácia reduzida à metade.
+Personagens dentro da área da magia tem a visão limitada às Adjacências, não enxergando nada além desta distância, personagens com a Habilidades Visão no Escuro, ao invés disso, tem a visão limitada à Distância Muito Curta.
+Efeito Crítico: Potencializar 
+Duração: 3 Rodadas
+Alcance: Ponto Central em Distância Curta, Área de Efeito – Área Circular Média.
+
+
+	•	Muda – Privação de Calor
+Tempo de Ativação: 
+Perícia Chave para Conjuração: 
+GD da Conjuração: 
+Descrição: Aprimora a Fumaça Furta-Luz, fazendo-a causar danos Elementais e Umbral.
+Efeito: Aprimora os efeitos de Fumaça Furta-Luz, personagens não-Umbrais em seu interior sofrem 1d6 pontos de Dano Mágico Elemental: Fogo e Gelo a cada Rodada. Personagens que percam pelo menos 3PV desta forma sofrem Metade do Foco pontos de dano Mágico Umbral.
+Privação de Calor causa apenas metade de seu dano à personagens aliados (efeito de Meio-Dano).
+Efeito Crítico: Purga-Mana
+Duração: A mesma da Fumaça Furta-Luz
+Alcance: O mesmo da Fumaça Furta-Luz
+
+	•	Emergente – Combustão Sombria: 
+Tempo de Ativação: 
+Perícia Chave para Conjuração: 
+GD da Conjuração: 
+Descrição: Aprimora Privação de Calor.
+Efeito: 
+Esta Magia pode ser conjurada apenas enquanto você estiver dentro da área da Fumaça Furta-Luz.
+Não é possível reduzir danos dentro da Fumaça Furta-Luz, sempre que um personagem em sua Área de Efeito sofrer 3 ou mais pontos de Dano Umbral ele afetado pelo Efeito Crítico Menor Excruciante.
+Inimigos no interior da Fumaça Furta-Luz sofrem imediatamente Metade do Foco pontos de Dano Mágico Umbral (efeito Instantâneo).
+Efeito Crítico: Purga-Mana
+Duração: A mesma da Fumaça Furta-Luz
+Alcance: O mesmo da Fumaça Furta-Luz
+
+	•	Broto – Lanças Fuligens
+Tempo de Ativação: 
+Perícia Chave para Conjuração: 
+GD da Conjuração: 
+Descrição: 
+Efeito: Causa 1d6 pontos de Dano Mágico Elemental: Gelo a todos os personagens e objetos (incluindo equipamentos) dentro da Área de Efeito.
+Personagens e objetos que sofram 4 ou mais pontos de danos de Lança Fuligens são Amaldiçoados por 1 Rodada, sofrendo os efeitos da magia novamente na Rodada seguinte. Danos consecutivos são Umbrais em substituição aos seus tipos.
+Um mesmo alvo pode ser afetado por efeitos de Lança Fuligens até Metade do Foco +1 vezes por Cena.
+Efeito Crítico: Inflamar
+Duração: Instantâneo 
+Alcance: Ponto Central em Distância Curta, Área de Efeito – Área Circular Muito Curta.
+
+
+	•	Muda – Lembranças de Amaterasu
+Tempo de Ativação: 
+Perícia Chave para Conjuração: 
+GD da Conjuração: 
+Descrição: 
+Efeito: Apenas alvos afetados pela Maldição da Lança Fuligens pode ser alvo de Lembranças de Amaterasu.
+Danos contínuos da Maldição aumentam cumulativamente em +1d6 a cada Rodada que o efeito for renovado e são Elemental: Fogo em substituição aos seus tipos.
+Efeito Crítico: Inflamar.
+Duração: 
+Alcance: Distância Curta
+
+	•	Emergente – Invocação de Chamas-Negras
+Tempo de Ativação: 
+Perícia Chave para Conjuração: 
+GD da Conjuração: 
+Descrição: Fortalece a Maldição do Lança-Fuligens, queimando não apenas a carne, mas também o espírito do alvo.
+Efeito: Apenas alvos afetados pela Maldição da Lança Fuligens pode ser alvo de Invocação de Chamas-Negras.
+O Alvo perde -1 Multiplicadores de Pontos de Vida (não cumulativo) e os danos da Maldição Lança Fuligens recebem Roubo de Vida 3.
+Multiplicadores de PV perdidos desta forma são recuperados a cada Descanso e o Roubo de Vida muda para 5 se o alvo estiver sob efeito de Inflamar.
+Efeito Crítico: Inflamar.
+Duração: 
+Alcance: 
+
+	•	Florescente – Vislumbre do Titã de Chamas Negras
+Tempo de Ativação: 
+Perícia Chave para Conjuração: 
+GD da Conjuração: 
+Descrição: Vislumbre do Titã de Chamas Negras pode ser conjurado sobre Privação de Calor ou em um alvo afetado pela Maldição de Lança Fuligens. 
+Quando conjurada sobre Privação de Calor estende a Duração por +2 Rodadas e inflige 2d6 de Dano Mágico Elemental: Gelo a cada Rodada a cada inimigo em seu interior, inimigos que sofram estes danos 3 ou mais pontos de danos ficam Cegos por 3 Rodadas.
+Se Conjurada em um alvo afetado pela Maldição de Lança Fuligens inflige 3d6 pontos de dano Mágico Elemental: Fogo alvo, então 2d6 pontos de dano Mágico Umbral na Rodada seguinte.
+Personagens que ficarem com PV inferiores à Metade do Foco morrem instantaneamente e seus corpos são consumidos por chamas, por isso não podem ser revividos.
+Efeito Crítico: Inflamar
+Duração: 
+Alcance: 
+
+
+Afogamento Umbral (Umbral/Elemental: Água)
+	•	Semente – Hidrocinestesia:
+Tempo de Ativação: 
+Perícia Chave para Conjuração: Ataque Corpo-a-Corpo
+GD da Conjuração: 
+Descrição: Afeta o alvo com uma ilusão que prejudica os movimentos.
+Efeito: O alvo tem a ilusão de estar com o corpo submerso nas águas, seus movimentos ficam lentos e pesados. O alvo sofre Redutor Variável de -1 em Força por 1 Rodada.
+Efeito Crítico:
+Duração: Instantânea
+Alcance: 
+
+	•	Broto – Correntes Oceânicas
+Tempo de Ativação: 
+Perícia Chave para Conjuração: Ataque Corpo-a-Corpo
+GD da Conjuração: 
+Descrição: 
+Efeito: O Movimento Base do Alvo é reduzido à 2UD por 2 Rodadas. Alvos que tenham os PV reduzidos a uma quantidade inferior à metade dos seus PV totais, ao invés disso, tem o Movimento Base reduzido à 1UD.
+Em terra seca esta magia afeta apenas personagens vivos que não sejam Umbrais, mas em contato com grandes volumes de água (como mares, rios e lagos) pode afetar qualquer personagem ou objetos.
+Efeito Crítico:
+Duração: Instantâneo
+Alcance: Toque
+
+	•	Muda – Cárcere Aquático
+
+Tempo de Ativação: 
+Perícia Chave para Conjuração: Ataque Corpo-a-Corpo
+GD da Conjuração: 
+Descrição: 
+Efeito: Aprimora os Grilhões Oceânicos, o alvo perde metade dos seus PA e sofrem 2d6 pontos de dano mágico Elemental: Água.
+Alvos reduzidos à metade dos seus pontos de vida adicionalmente sofrem Metade do Foco pontos de dano mágico umbral.
+Efeito Crítico:
+Duração: 
+Alcance: Toque ou Alvo Único Distante – Distância Curta.
+
+
+	•	Emergente – Afogamento Umbral
+Tempo de Ativação: 
+Perícia Chave para Conjuração: Ataque Corpo-a-Corpo
+GD da Conjuração: 
+Descrição: 
+Efeito: O alvo é coberto por um líquido negro e começa a se afogar, perdendo metade dos seus Multiplicadores de PV e se tornando incapaz de realizar Ações Livre ou Reações.
+Alvos que com PV atual reduzidos a uma quantidade inferior à metade dos seus PV totais adicionalmente sofrem 1d6 pontos de dano mágico umbral a cada Rodada. 
+As ilusões do Afogamento Umbral afetam seus alvos por Metade do Foco Rodadas.
+Efeito Crítico:
+Duração: Instantâneo
+Alcance: Toque
+
+	•	Florescente – Sombra da Coruja Afogada
+
+Tempo de Ativação: 
+Perícia Chave para Conjuração: Ataque Corpo-a-Corpo
+GD da Conjuração: 
+Descrição: 
+Efeito: Além dos danos físicos o alvo sofre um ataque mental, enxergando a grandeza e os terrores do Afogado. 
+O alvo sofre 3d6 pontos de danos mágico Umbral e tem seus PA reduzidos à zero por 1 Rodada, se este dano reduzir os PV do alvo a valores inferiores à metade de seu total, como efeito adicional, o Autocontrole dele será reduzido temporariamente em Metade do Foco por 2 Rodadas.
+Pontos de Autocontrole perdidos desta forma são recuperados 1 a cada 2 Rodadas. Se o alvo for derrotado (PV reduzidos à zero ou menos) antes de recuperar seus PV ele adquire a condição Amaldiçoado, maldição Terror do Afogado, com Duração indefinida.
+“Terror do Afogado – Pontos de Autocontrole perdidos não são recuperados até que a Maldição seja removida.”
+Efeito Crítico:
+Duração: 
+Alcance: 
+
+
+Invocação do Raio Negro (Umbral/Elemental: Eletricidade)
+	•	Semente – Induzir Condução
+Tempo de Ativação: 
+Perícia Chave para Conjuração: 
+GD da Conjuração: 
+Descrição: 
+Efeito: Magias Elementais: Eletricidade conjuradas sobre o alvo recebem Bônus de +2 em Conjuração.
+Personagens que possuam RE: Eletricidade, que sofram Meio-Dano de Eletricidade ou que sejam imunes a Eletricidade são imunes a esta magia.
+Efeito Crítico:
+Duração: 2 Rodadas
+Alcance: 
+
+	•	Broto – Estalo
+Tempo de Ativação: 
+Perícia Chave para Conjuração: 
+GD da Conjuração: 
+Descrição: 
+Efeito: Alvo sofre 2 pontos de dano Mágico Elemental: Eletricidade, então 1 Ponto de dano Mágico Elemental: Eletricidade por Metade do Foco Rodadas.
+Enquanto afetado por Estalo a Margem Crítica Menor de Magias Elementais: Eletricidade aumentam em +2 números.
+Efeito Crítico: Atordoante
+Duração: 
+Alcance: 
+
+	•	Muda – Invocação do Raio Negro
+Tempo de Ativação: 
+Perícia Chave para Conjuração: 
+GD da Conjuração: 
+Descrição: 
+Efeito: 
+Causa 2d6 pontos de dano Mágico Elemental: Eletricidade ao alvo.
+A Margem Crítica Menor desta magia é aumentada em Metade do Foco números.
+Efeito Crítico:
+Duração: 
+Alcance: 
+Efeito Alternativo - Raio Negro Bifurcado: Você pode escolher até 2 diferentes alvos, o dano causado em cada um muda para 1d6 Pontos de Dano Mágico Elemental.
+
+
+	•	Emergente - Impor Supercondução Sombria
+Tempo de Ativação: 
+Perícia Chave para Conjuração: 
+GD da Conjuração: 
+Descrição: 
+Efeito: Aprimora Induzir Condução em todos os Alvos afetados em Distância Média.
+Em substituição aos Efeitos de Induzir Condução, Magias Elementais: Eletricidade conjuradas sobre o alvo tem o GD reduzido em -1 nível, danos de Eletricidade causados mudam sua natureza para Umbral e infligem Metade do Foco pontos de danos a cada alvo e personagens adjacentes aos alvos primários (se houver).
+Efeito Crítico:
+Duração: 
+Alcance: 
+
+	•	Florescente – Rugido do Dragão Negro
+Tempo de Ativação: 
+Perícia Chave para Conjuração: 
+GD da Conjuração: 
+Descrição: 
+Efeito: Causa 2d6+Metade do Foco pontos de dano Mágico Elemental: Eletricidade a todos os inimigos em Distância Longa, então plica Induzir Condução aos Personagens que sofreram danos do Rugido do Dragão Negro.
+Efeito Crítico:
+Duração: 
+Alcance: 
+Efeito Alternativo – Olhar de Yin Lung: Causa 1d6 pontos de Danos Mágico Elemental a todos os personagens Ao Alcance dos Olhos, este efeito tem a Margem Crítica Menor aumentada em +Metade do Foco.
+
+
+
+Chamado do Observador (Umbral/Divina)
+	•	Semente - Visão Longínqua
+Tempo de Ativação: 
+Perícia Chave para Conjuração: 
+GD da Conjuração: 
+Descrição: 
+Efeito: Você pode projetar um olho mágico à Distância Longa, este olho enxerga uma Área Circula Média no Cenário.
+Você pode invocar o olho mágico apenas em lugares onde você pode ver.
+Efeito Crítico:
+Duração: 
+Alcance: 
+
+	•	Broto – Mapear
+Tempo de Ativação: 
+Perícia Chave para Conjuração: 
+GD da Conjuração: 
+Descrição: 
+Efeito: Você conjura uma diversidade de olhos que se afastam de você até Distância Muito Longa, você tem uma breve visão de todo o Cenário dentro do Alcance. Mapear te permite perceber a geografia, caminhos, objetos e personagens dentro da área, mas por serem muitas informações ao mesmo tempo não é possível identificar detalhes precisos.
+Efeito Crítico:
+Duração: 
+Alcance: 
+
+	•	Muda – Visão dos Justos
+Tempo de Ativação: 
+Perícia Chave para Conjuração: 
+GD da Conjuração: 
+Descrição: 
+Efeito: Escolha um personagem que você possa ver ou saiba precisamente onde está.
+Um olho vai até o personagem escolhido e se choca com ele, o alvo então recupera 1d6+Vigor do Alvo PV (efeito Divino) e recebe visão ampliada, que garante Bônus de +Metade do Foco em Defesa Física.
+Você tem visão plena do alvo ao logo da Duração da Magia.
+Efeito Crítico:
+Duração: 3 Rodadas
+Alcance: 
+
+	•	Muda – Visão do Pecadores: 
+Tempo de Ativação: 
+Perícia Chave para Conjuração: 
+GD da Conjuração: 
+Descrição: 
+Efeito: Escolha um personagem não-Umbral que você possa ver ou saiba precisamente onde está.
+Um olho vai até o personagem escolhido e se choca com ele, o alvo então sofre 1d6+Vigor do Alvo Pontos de Dano Mágico Umbral e tem a visão ofuscada, sofrendo Redutor de -Metade do Foco em Defesa Física.
+Você tem visão plena do alvo ao logo da Duração da Magia.
+Efeito Crítico:
+Duração: 3 Rodadas
+Alcance: 
+
+	•	Emergente – Chamado do Observador
+Tempo de Ativação: 
+Perícia Chave para Conjuração: 
+GD da Conjuração: 
+Descrição: 
+Efeito: Invoca um Observador, um servo disforme do Muitos Olhos, para lhe auxiliar.
+Observadores são criaturas de aparência grotesca, com dezenas de olhos e que agem como batedores e suportes no exército de seu Senhor Umbral.
+Observadores
+Atributos e Perícias:
+	•	Força 3, Destreza 7, Vigor 4, Gnose 4, Instinto 4, Foco 6, Carisma 3
+	•	Ataque à Distância [Conjurador de Linha de Trás] +8
+	•	Atenção [Sentidos Apurados] +8
+	•	Conhecimentos [Cosmologia] +4
+	•	Domínio do Mana [Arcanismo Hereditário] +8
+	•	Esquiva e Aparar [Guerreiro Natural] +7
+	•	Persuasão [Intimidação] +6
+Características Especiais: 
+	•	Recebem Bônus em Perícia de Ataque e Domínio do Mana igual à quantidade de Graduações em Domínio do Mana de seu Conjurador.
+	•	Se você possuir 7 ou mais Graduações em Domínio do Mana recebe Bônus Mágico (encantamento) de +2 em Destreza, Foco e Instinto.
+	•	Se você possuir 10 Graduações em Domínio do Mana reduz GD de Perícias em -1 Nível (efeito de encantamento).
+	•	Bônus Racial de +4 em Defesas.
+	•	Nunca recebe Redutores ou Desvantagens em Esquiva e Aparar.
+	•	Nunca recebe Redutores ou Desvantagens em Atenção.
+	•	Não pode ser Flanqueado e nunca fica Desprevenido.
+	•	Por efeito Racial pode mimetizar Visão dos Justos e Visão dos Pecadores (23PM).
+	•	Está permanentemente sob efeito de Mapear e Levitar (Voo).
+	•	Não provoca Reações ao mimetizar Magias Raciais.
+Outras Informações: 
+	•	Categoria de Tamanho 0.
+	•	Possuem 4 Pontos de Ação (PA).
+	•	26PV (Multiplicador de PV x4) e DF +18 / DM +18.
+	•	Danos de Ataques 1d6+5 (Base 2+ Metade da Destreza), aumentado em +1d6 contra alvos afetados por Visão dos Pecadores.
+Apenas 1 Observador pode ser invocado por vez, tentativas de invocação de um segundo Observador enquanto o primeiro estiver ativo falham automaticamente.
+Efeito Crítico:
+Duração: 
+Alcance: 
+
+	•	Florescente – Avatar dos Muitos Olhos
+Tempo de Ativação: 
+Perícia Chave para Conjuração: 
+GD da Conjuração: 
+Descrição: 
+Efeito: Por alguns instantes você manifesta o poder dos Muitos Olhos, então dezenas de olhos se abrem em seu corpo, paredes, objetos inanimados e partes diversas do cenário Ao Alcance dos Olhos.
+Você identifica tudo que existe no Cenário ao longo da Duração da Magia, incluindo todos os personagens presentes.
+A cada Rodada você pode escolher até Metade do Foco personagens, à sua escolha personagens escolhidos recuperam 2d6PV (efeito divino) ou sofrem 2d6 pontos de dano mágico Umbral (requer Ataque à Distância para cada alvo).
+Efeito Crítico:
+Duração: 2 Rodadas
+Alcance: 
+Efeito Alternativo – XXX:
+
+
+Armada Decapitada (Umbral/Profana)
+	•	Semente – Conselheiro Umbral
+Tempo de Ativação: 
+Perícia Chave para Conjuração: 
+GD da Conjuração: 
+Descrição: Você pode invocar um jovem Conselheiro, uma a cabeça espectral voadora, para lhe aconselhar.
+O Conselheiro Umbral conta como um Subordinado do tipo Peão. 
+Além do auxílio em rolagens de Perícias o Conselho pode responder a perguntas diversas, limitado aos seus conhecimentos e experiências particulares (Gnose 3, Conhecimentos, Medicina e Cura e Profissão 4 Graduações).
+No ato da conjuração você pode sacrificar 3PV para invocar um Conselheiro Experiente (Gnose 4, Conhecimentos, Medicina e Cura e Profissão 7 Graduações).
+PV gastos com esta magia e versões alternativas só podem recuperados com Descansos e Efeitos de Roubo de Vida.
+Efeito: 
+Efeito Crítico:
+Duração: 2 Rodadas
+Alcance: 
+Efeito Alternativo – Mestre Conselheiro: ao custo de 5PV você pode invocar um Mestre Conselheiro. Mestre conselheiros são Subordinados Prodigiosos, possuem (Gnose 5, Conhecimentos, Medicina e Cura e Profissão 10 Graduações).
+
+	•	Broto – Guardiões Sombrios
+Tempo de Ativação: 
+Perícia Chave para Conjuração: 
+GD da Conjuração: 
+Descrição: 
+Efeito: Guardiões Sombrios são Soldados Sem Cabeça, treinados exaustivamente na arte da defesa, agem como protetores e guarda-costas obstinados. Quando invocados contam como Subordinados do tipo Torre e permanecem ativos por 3 Rodadas ou até serem destruídos.
+Além de agir como um Subordinado são protetores obstinados, atacando qualquer personagem que se aproxime de você e que não uma invocação da Armada Decapitada, priorizando as ameaças óbvias e então os personagens mais próximos.
+Nunca se afastam de você além de Distância Muito Curta, caso você se afaste a ação deles sempre será se aproximar até esta Distância, mesmo que a movimentação os coloque em risco.
+<ficha>
+No ato da conjuração você pode sacrificar 3PV para invocar um Escudeiro Sombrio (Força +1, Ataque Corpo à Corpo +2 e Bônus Racial em Defesas +2).
+PV gastos com esta magia e versões alternativas só podem recuperados com Descansos e Efeitos de Roubo de Vida.
+Efeito Crítico:
+Duração: 
+Alcance: 
+Efeito Alternativo – Cavaleiro Negro: Os mais poderosos dentre os Guardiões Umbrais, contam como Torres Prodigiosas e não atacam seus aliados, adicionalmente recebem Atributos melhorados (Força +2, Perícias de Ataque +4 e Bônus Racial em Defesas +4). Invocar um Cavaleiro Negro exige um sacrifício de 5PV.
+
+
+
+	•	Muda – Reverendo Decapitado
+Tempo de Ativação: 
+Perícia Chave para Conjuração: 
+GD da Conjuração: 
+Descrição: 
+Efeito: Reverendos Decapitados são protetores e curandeiros. 
+De ações similares aos Guardiões Sombrios, contam como Subordinados do tipo Bispo, permanecem ativos por 3 Rodadas ou até serem destruídos e são capazes de distinguir seus aliados e inimigos e de atacar ameaças longínquas. Quando bem-sucedidos em rolagens de Medicina e Cura (GD Difícil) podem curar 1d6+Vigor do Alvo PV ao toque.
+Tal como os Guardiões, também nunca se afastam de você, se limitando a distância Muito Curta e sempre priorizar os seus cuidados.
+<ficha>
+No ato da conjuração você pode sacrificar 5PV para invocar um Bispo Decapitado (Gnose +1, Ataque à Distância e Medicina e Cura +2 e Bônus Racial em Defesas +2). 
+PV gastos com esta magia e versões alternativas só podem ser recuperados com Descansos e Efeitos de Roubo de Vida.
+Efeito Crítico:
+Duração: 
+Alcance: 
+Efeito Alternativo – Cardeal Degolado: Abaixo apenas do Pontífice Decapitado e os mais poderosos dentre os Reverendos Decapitados que podem ser invocados, contam como Bispos Prodigiosas, adicionalmente recebem Atributos melhorados (Gnose +2, Ataque à Distância e Medicina e Cura +4 e Bônus Racial em Defesas +4) e, quando bem-sucedidos, o toque do Cardeal Degolado pode curar 2d6+Vigor do Alvo PV.  Invocar um Cardeal Degolado exige um sacrifício de 7PV.
+
+	•	Emergente – Mula sem Cabeça
+Tempo de Ativação: 
+Perícia Chave para Conjuração: 
+GD da Conjuração: 
+Descrição: 
+Efeito: Criaturas metamorfas, concubinas, montarias e guardiãs do Decapitado, são mulheres capazes de se transformar em poderosas montarias e de fortalecer aqueles que nelas montam.
+Quando invocadas contam como Subordinados do tipo Rainha. Enquanto usadas por você como Montarias são imunes à danos, se movem até 12UD por Rodada e lhe concede a Habilidade de Competência Ginete (Dirigir e Cavalgar). Movimentar-se com uma Mula sem Cabeça não requer rolagens de Dirigir e Cavalgar e utiliza apenas 1PA. A Mula sem Cabeça emite uma poderosa aura, inimigos adjacentes a ela sofrem 2d6+Próprio Vigor pontos de Dano Mágico Umbral.
+<ficha>
+No ato da conjuração você pode sacrificar 7PV para invocar um Corcel sem Cabeça (Movimento Base +3UD). Rolagens de Perícias efetuadas enquanto montando um Corcel sem Cabeça são efetuadas em Vantagem, a aura do Corcel afeta personagens em Distância Muito Curta.
+PV gastos com esta magia e versões alternativas só podem ser recuperados com Descansos e Efeitos de Roubo de Vida.
+Efeito Crítico:
+Duração: 
+Alcance: 
+Efeito Alternativo – Pesadelo sem Cabeça: Normalmente utilizadas penas pelo Decapitado ou pelas Dullahan, são as mais poderosas e velozes dentre as montarias Umbrais (Movimento Base +5). Rolagens de Perícias efetuadas enquanto montando um Pesadelo sem Cabeça tem o GD reduzido em -1 Nível e a aura do Pesadelo afeta personagens em Distância Curta. Os movimentos dos Pesadelos sem Cabeça não emitem sons e não provocam Reações.
+
+
+	•	Muda – Sombras dos Berserks
+Tempo de Ativação: 
+Perícia Chave para Conjuração: 
+GD da Conjuração: 
+Descrição: 
+Efeito: Sombras dos Berserks são guerreiros atacantes furiosos, treinados em técnicas ofensivas e capazes de ignorar a dor ou medo, lutando contra qualquer tipo de inimigo até a morte. Quando invocados contam como Subordinados do tipo Cavaleiro e permanecem ativos por 3 Rodadas ou até serem destruídos.
+Além de agir como um Subordinado são combatentes frenéticos e atacam qualquer personagem que possam ver, exceto você e personagens que não uma invocação da Armada Decapitada, priorizando as ameaças óbvias e então os personagens mais próximos.
+Os Berseks sempre buscam um próximo inimigo, não se preocupando com a sua segurança ou integridade, foram nascidos pra lutar e os fazem enquanto possível, se não houver alvos válidos correm numa direção aleatória, procurando por um próximo adversário.
+<ficha>
+No ato da conjuração você pode sacrificar 5PV para invocar um Einherjar, um poderoso Berserk de Elite (Força +3, Vantagem em rolagens de Danos, Margem Crítica Menor aumentada em +2 e Redutor Racial de -4 em Defesas).
+PV gastos com esta magia e versões alternativas só podem recuperados com Descansos e Efeitos de Roubo de Vida.
+Efeito Crítico:
+Duração: 
+Alcance: 
+Efeito Alternativo – Convocar os Keres: Quando um Eihenriar sobrevive a centenas de lutas seus corpos entram num processo de monstrificação e sua fúria inspira a todos. Contam como Cavaleiros Prodigiosas e se tornam ainda mais letais (Força +5, Vantagem em rolagens de Danos, Margem Crítica Menor aumentada em +4 e Redutor Racial de -6 em Defesas). Invocar um Keres exige um sacrifício de 7PV.
+
+
+	•	Emergente – Lorde Obscuro
+
+Tempo de Ativação: 
+Perícia Chave para Conjuração: 
+GD da Conjuração: 
+Descrição: 
+Efeito: Lordes Obscuros são os comandantes das legiões de decapitados.
+Uma armadura sem cabeça feita de sombras, sem corpos físicos, avança pelos campos de batalha guiando os guerreiros sem cabeças para a frente de batalha.
+Enquanto invocados contam como Subordinados do tipo Rei e seguem sempre avançando no campo de batalha em direção ao inimigo mais próximo, persistindo em combate por 3 Rodadas ou até serem destruídos.
+Possuem uma poderosa aura de terror, você e quaisquer invocações da Armada Umbral em até Distância Média recebem Bônus Variável de +2 em Força, inimigos na área sofrem Redutor Variável de -1 Força (mínimo 1).
+<ficha>
+No ato da conjuração você pode sacrificar 7PV para invocar um Barão Decapitado (Força +2, como efeito adicional a Aura Concede reduz Efeitos de Cura dos inimigos à metade).
+PV gastos com esta magia e versões alternativas só podem recuperados com Descansos e Efeitos de Roubo de Vida.
+Efeito Crítico:
+Duração: 
+Alcance: 
+Efeito Alternativo – Conde Obscuro: Um lorde de alta patente, Condes Obscuros possuem grande poder e influência, sendo capazes de mudar fortemente as direções do campo de batalha. Quando invocados contam como Reis Prodigiosos e se sua presença é ainda mais impactante (Força +4, sua aura aumenta o Multiplicador de PV de seus aliados em +1 e anula efeitos de curas de inimigos). Invocar um Conde exige um sacrifício de 10PV.
+
+
+	•	Florescente – Barganha dos Dullahan
+Tempo de Ativação: 
+Perícia Chave para Conjuração: 
+GD da Conjuração: 
+Descrição: 
+Efeito: Dullahan, aqueles que carregam a essência dO Decapitado, cavaleiros sem cabeça que representam a vontade da Morte por Vinganças.
+Um Dullahan pode ser invocado mediante contrato e apenas para uma vingança ou como forma de proteção contra um oponente poderoso que tenha te feriado gravemente, mas nunca por outros objetivos. Inimigos mortos por um Dullahan é levado para a Umbra para serem decapitados, por isso não podem ser revividos.
+A invocação de um Dullahan exige um contrato, um valor baseado na dificuldade do trabalho e que pode ser pago com o próprio sangue ou itens de valor. Barganhar com um Dullahan tem por custo adicional Pontos de Recursos ou Multiplicadores de PV, quanto mais poderoso o inimigo, maior o custo, sendo 1 ponto temporário de Recursos ou 1 Multiplicador temporário de PV para cada 10EXP do inimigo). 
+Multiplicadores de PV perdidos desta maneira são recuperados 1 a cada 2 Descansos Totais. Cada ponto utilizado confere ao Dullahan invocado Bônus Umbral de +2 em todos os Atributos, se a perda de Multiplicadores de PV durante a Barganha puder te levar ao Torpor ao invés disso morrerá e a Duração desta Magia muda para até que a ordem seja cumprida ou o Dullahan morra.
+Dullahan
+Atributos e Perícias:
+	•	Força 6, Destreza 6, Vigor 6, Gnose 5, Instinto 6, Foco 3, Carisma 6
+	•	Ataque à Distância [Técnicas de Arremesso] +10
+	•	Ataque Corpo-a-Corpo [Infantaria Pesada] +10
+	•	Atenção [Rastrear] +8
+	•	Atletismo [Tri Atleta] +8
+	•	Conhecimentos [Cosmologia] +8
+	•	Dirigir e Cavalgar [Animais e Veículos Terrestres] +10
+	•	Esquiva e Aparar [Guerreiro Natural] +10
+	•	Furtividade [Maestria da Ocultação] +5 -2
+Características Especiais: 
+	•	Recebem Bônus em Perícia de Ataque igual à quantidade de Graduações em Domínio do Mana de seu Conjurador.
+	•	Se você possuir 10 Graduações em Domínio do Mana reduz GD de Perícias em -2 Níveis (efeito de encantamento)
+	•	Imunidade a Encantamentos nocivos e Maldições.
+	•	Pode invocar Adagas ou uma Montante para desferir ataques ou arremessar, danos causados com estas armas são sempre Umbrais, ignorando quaisquer mudanças de natureza.
+	•	Pode Mimetizar Efeitos, Especializações e Habilidades (mas não Supremas) de qualquer Título Aventyr Bruto com Duração limitada à 3 Rodadas, efeitos Passivos exigem 1PA para serem ativados.
+	•	Arauto – Rolagens de Perícias baseadas em Força, Destreza e Instinto em -1 nível contra seu alvo principal ou desafios que atrapalhem sua missão.
+	•	Arauto - Bônus Racial de +10 em Rolagens de Ataque.
+	•	Arauto - Bônus Racial de +10 em Defesas, Danos Físicos sofridos reduzidos em -3.
+	•	Arauto - Regenera PV igual o próprio Foco a cada Rodada e recebe Roubo de Vida igual ao próprio Foco.
+	•	Bônus de Arauto duplicados enquanto estiver dirigindo a Cóiste Bodhar.
+Outras Informações: 
+	•	Categoria de Tamanho 0.
+	•	Possuem 5 Pontos de Ação (PA).
+	•	40PV (Multiplicador de PV x5) e DF +18 / DM +21.
+	•	35PD (Multiplicador de PD x5) e Ego 5 (todos).
+	•	Danos de Ataques com a Montante são de 2d6+9 (Base 7+ Metade da Força).
+	•	Danos de Arremessos de Adaga são de 1d6+6 (Base 3+ Metade da Destreza).
+
+Efeito Crítico:
+Duração: Concentração + 1 Rodada.
+Alcance: 
+Efeito Alternativo - Cóiste Bodhar: Invoca a Carruagem do Dullahan e seus corcéis negros.
+O Movimento por Rodada da Cóiste Bodhar é de 30UD +5 UD por Rodada (máximo de 50UD, ou de 100UD se controlada por uma Dullahan em direção ao seu alvo). Esta carruagem não emite sons, não deixa rastros e se mescla a escuridão enquanto se move, sendo impossível de ser identificada à distância ou rastreada por personagens que tenham 6 ou menos Graduações em Atenção.
+Julgamento do Tecelão (Umbral/Elemental: Terra e Magma)
+	•	Semente – Caminhar do Tece-Mortes 
+Tempo de Ativação: 
+Perícia Chave para Conjuração: 
+GD da Conjuração: 
+Descrição: 
+Efeito: Você recebe Movimento Base Vertical.
+Seu Movimento Base aumenta em +2UD enquanto no Domínio das Teias.
+Seu Movimento Base aumenta em +2UD para se mover em direção a um alvo em Casulo do Funeral.
+Efeito Crítico:
+Duração: 2 Rodadas
+Alcance: 
+
+	•	Broto – Viagem Aracnídea
+Tempo de Ativação: 
+Perícia Chave para Conjuração: 
+GD da Conjuração: 
+Descrição: 
+Efeito: Você pode lançar uma teia num local do cenário, então usar ela para se puxar até o alvo ou fazer movimento de pêndulo para superar obstáculos.
+Efeito Crítico:
+Duração: 
+Alcance: 
+Efeito Alternativo – Marca Predatória: Você pode lançar uma teia em um alvo. Você e o alvo não podem se afastar além do tamanho da teia criada (calculado conforme UD percorrido). A teia possui Metade do Foco PV, reduzem danos físicos sofridos em -1 e Defesas igual à 10 + quantidade de Graduações em Domínio do Mana. Você e o alvo podem se puxar em direção ao outro com rolagens resistidas da Perícia Atletismo.
+
+	•	Muda – Domínio das Teias Negras
+Tempo de Ativação: 
+Perícia Chave para Conjuração: 
+GD da Conjuração: 
+Descrição: Lança teias por todas as direções, criando um terreno favorável.
+Efeito: Você cria uma rede extensa de teias por toda a Área de Efeito da Magia, outros personagens na área tem o Movimento Base reduzido em -2UD, a cada Rodada o Movimento Base dos personagens é reduzido cumulativamente em -1UD, se o Movimento Base for reduzido à zero adicionalmente os personagens são impedidos de efetuarem Ações Livres. 
+Personagens capazes de Ignorar Terrenos Difíceis sofrem as reduções de mobilidade secundárias desta magia apenas em Rodadas Pares.
+Enquanto sob Domínio das Teias Negras você ignora Terrenos Difíceis, recebe Bônus de +2 em Defesas e recebe Vantagem em rolagens de Ataque Corpo-a-Corpo e de Danos Umbrais.
+Efeito Crítico:
+Duração: 
+Alcance: 
+Efeito Alternativo – Casulo de Funeral: Lança uma grande quantidade de Teias sobre um único alvo, que tem seu Movimento Base reduzido em -Metade do Foco UD, a cada Rodada o Movimento do personagem é cumulativamente reduzido em -1UD. Quando o Movimento Base for reduzido à zero adicionalmente os personagens são impedidos de efetuarem Ações Livres e é considerado Desprevenido.
+
+	•	Emergente – Convocar Tecedeiras Vulcânicas
+Tempo de Ativação: 
+Perícia Chave para Conjuração: 
+GD da Conjuração: 
+Descrição: Invoca um grupo de Construtos Aracnídeos feitos de energia Elemental e Umbral para lhe auxiliar.
+Efeito: Como custo adicional para invocar as Tecedeiras Vulcânicas é preciso utilizar Pontos Temporários de Sorte, cada ponto utilizado permite invocar uma dupla destas criaturas.
+Tecedeiras Vulcânicas
+	•	Força Nula, Destreza 8, Vigor 1, Gnose 1, Instinto 6, Foco 3, Carisma 3
+	•	Ataque à Distância [Conjurador de Linha de Trás] +10 -1
+	•	Ataque Corpo-a-Corpo [Primal, Acuidade] +10 -1
+	•	Atenção [Sentidos Apurados] +6 +1
+	•	Furtividade [Maestria da Ocultação] +6 +1
+Características Especiais: 
+	•	Recebem Bônus em Perícia de Ataque igual à quantidade de Graduações em Domínio do Mana de seu Conjurador.
+	•	Se você possuir 7 ou mais Graduações em Domínio do Mana recebe Bônus Mágico (encantamento) de +2 em Destreza e Foco.
+	•	Se você possuir 10 Graduações em Domínio do Mana reduz GD de Perícias em -1 Nível (efeito de encantamento).
+	•	Passivamente sobre efeito contínuo de Caminhar do Tece-Mortes
+	•	Podem Mimetizar as Magias Viagem Aracnídea
+	•	Efetua rolagens de Ataques contra a DM do alvo e inflige Dano Mágico Umbral.
+	•	Ataques Corpo-a-Corpo inserem Magma na carne dos alvos, causando Desvantagem em rolagens de Perícia devido a dor intensa.
+	•	Ataques Corpo-a-Corpo recebem a Corrente de Efeitos – Veneno da Casualidade: alvo é envenenado, sofrendo 2 pontos de danos por até Vigor do Alvo Rodadas e perdendo 1 ponto temporário de Sorte (efeitos cumulativos até 3x).
+Outras Informações: 
+	•	Categoria de Tamanho -2.
+	•	Possuem 3 Pontos de Ação (PA).
+	•	Danos de Ataques 1d6+1 (Base 1+ Metade da Foco - Tamanho).
+
+Efeito Crítico:
+Duração: 
+Alcance: 
+
+	•	Emergente – Aspecto do Destino
+Tempo de Ativação: 
+Perícia Chave para Conjuração: 
+GD da Conjuração: 
+Descrição: 
+Efeito: Como custo adicional para conjurar Aspecto do Destino é preciso utilizar Pontos Temporários de Sorte, cada ponto utilizado garante efeitos adicionais.
+Você recebe Bônus em Força e Foco, recebe as Armas Naturais Presas Longas e Garras Afiadas, também recebe Roubo de Vida.
+O Valor dos Bônus em Atributos e Roubo de Vida é igual ao dobro da quantidade de Pontos de Sorte utilizados na Conjuração.
+Ataques efetuados com suas Armas Naturais são rolados contra a DM do alvo, causam Danos Mágicos Elemental: Terra e recebem a Corrente de Efeitos – Peçonha do Destino Negro: O tipo de Dano deste ataque muda para Mágico Umbral em substituição aos seus tipos e é envenenado, perdendo 2 pontos temporários de Sorte (efeito cumulativo até 2x).
+Efeito Crítico:
+Duração: 
+Alcance: 
+
+
+	•	Florescente – Julgamento do Tecelão:
+Tempo de Ativação: 
+Perícia Chave para Conjuração: 
+GD da Conjuração: 
+Descrição: 
+Efeito: Causa 1d6 pontos de Dano Mágico Umbral a até Metade do Foco inimigos em Distância Curta.
+Se os inimigos estiverem no Domínio das Teias este dano aumenta em +1d6.
+Inimigos que tenham valores de Sorte inferiores ao seu sofrem dano aumentado em +1d6.
+Corrente de Efeito – Tecer a Morte: Personagens que tenham sofrido danos do Julgamento do Tecelão e que possuam uma quantidade de PV igual ou inferior ao dobro da sua Sorte morrem imediatamente.
+Efeito Crítico:
+Duração: 
+Alcance: 
+
+
+Devorador de Mundos (Umbral/Elemental: Natural/Ar)
+	•	Semente – Bote Inesperado
+Tempo de Ativação: 
+Perícia Chave para Conjuração: 
+GD da Conjuração: 
+Descrição: 
+Efeito: Esta magia afeta apenas alvos que não possam vê-lo ou que estejam desprevenidos.
+Você investe contra um alvo, exclusivamente para este ataque você recebe Movimento Base de Voo. Esta é uma ação de investida regular e recebe todos os seus benefícios e devem seguir os critérios padrões.
+Este ataque recebe a Corrente de Efeitos – Envenenar com a Loucura: Alvo é envenenado por 2 Rodadas, então perde 1 ponto temporário de Autocontrole (não cumulativo). 
+Pontos de Autocontrole perdidos por esta magia e outras da mesma Árvore são recuperados ao fim da Duração dos Efeitos de envenenamento.
+Efeito Crítico:
+Duração: 
+Alcance: 
+
+	•	Broto – Envenenar a Mente
+Tempo de Ativação: 
+Perícia Chave para Conjuração: 
+GD da Conjuração: 
+Descrição: 
+Efeito: Você recebe provisoriamente Presas Longas como Arma Natural e efetua um ataque de mordida contra um personagem, o alvo da mordida é envenenado por 1 Rodada e sofrem efeito de Confusão (Encantamento, Elemental: Ar).
+Personagens afetados por Envenenar a Mente, como primeira ação de seu próximo Turno, obrigatoriamente atacam o personagem mais próximo dele, priorizando os próprios aliados. 
+Para este ataque a Margem Crítica Menor do alvo é aumentada em +2 números, o tipo de ataque muda para Mágico Elemental: Ar em substituição aos seus tipos. 
+Corrente de Efeitos – Envenenar a Mente: O alvo perde 1 ponto temporário de Autocontrole, se o alvo também estiver sob efeito de Envenenar com a Loucura a Duração do Veneno desta magia muda para 2 Rodadas, afetando a primeira ação do alvo em cada uma destas Rodadas.
+Efeito Crítico:
+Duração: 
+Alcance: 
+
+
+	•	Muda – Envenenar com a Fúria
+Tempo de Ativação: 
+Perícia Chave para Conjuração: 
+GD da Conjuração: 
+Descrição: 
+Efeito Passivo: esta magia aprimora permanentemente os efeitos de Envenenar a Mente, garantindo os seguintes efeitos adicionais:
+	•	O Custo de Conjuração de Envenenar a Mente aumenta em +1PM.
+	•	Personagens envenenados recebem Bônus de +2 em Força e recebem Cataclismo como Efeito Crítico adicional.
+	•	Caso o personagem afetado seja bem-sucedido em aplicar um Efeito Crítico no alvo você recebe 1 ponto temporário de Autocontrole (não cumulativo).
+	•	Se alvo estiver sob efeito de Envenenar com a Loucura, a Duração do veneno Envenenar com a Loucura aumenta em +1 Rodada.
+Efeito Crítico:
+Duração: 
+Alcance: 
+
+	•	 Broto – Corrupção por Contato
+Tempo de Ativação: Reação
+Perícia Chave para Conjuração: 
+GD da Conjuração: 
+Descrição: 
+Efeito: Ao ser atacado você cobre instantaneamente seu corpo com um óleo venenoso. Personagem que te atacar Corpo-a-Corpo sofrem Metade do Foco + Metade do Próprio Vigor pontos de Danos Mágico Umbral, se o ataque for bem-sucedido adicionalmente são envenenados (efeito Elemental: Natural) e perdem 1 ponto temporário de Autocontrole. 
+Se o atacante estiver sob efeitos de Envenenar com a Loucura esta magia recebe a Corrente de Efeitos – Corrupção por Contato: A Duração do veneno desta magia muda para 2 Rodadas.
+Efeito Crítico:
+Duração: 
+Alcance: 
+
+	•	Muda – Praga da Corrupção
+Efeito Passivo: Esta magia fortalece os efeitos de Corrupção por Contato, garantindo os seguintes efeitos adicionais:
+	•	O Custo de Conjuração de Corrupção por Contato aumenta em +1PM.
+	•	Personagens afetados pelo veneno de Corrupção por Contato disseminam o veneno aos personagens adjacentes no início de cada Rodada, espalhando a perda de Autocontrole aos outros personagens.
+	•	A Margem Crítica Menor de seus ataques contra alvos afetados pelo veneno da Corrupção por Contato aumenta em +2 números. 
+	•	Desferir um Acerto Crítico pela primeira vez em um alvo afetado aumenta a Duração do veneno em +1 Rodada. Desferir um segundo Acerto Crítico garante a você um ponto temporário de Autocontrole (não cumulativo).
+Tempo de Ativação: 
+Perícia Chave para Conjuração: 
+GD da Conjuração: 
+Descrição: 
+Efeito: 
+Efeito Crítico:
+Duração: 
+Alcance: 
+Efeito Alternativo – XXX:
+
+
+	•	Emergente – Forma da Serpente Emplumada
+Tempo de Ativação: 
+Perícia Chave para Conjuração: 
+GD da Conjuração: 
+Descrição: 
+Efeito: Como um Custo adicional para Conjurar Forma da Serpente Emplumada você precisa utilizar um Ponto Temporário de Autocontrole.
+Você recebe Bônus de +1 em Força, Foco e Carisma, também recebe Asas.
+Suas Asas não lhe garantem Movimento Base de Voo, mas lhe concedem Bônus de +1 nas Defesas, servem de distração que permite a você conjurar Bote Inesperado mesmo contra alvos que possam vê-lo e expelem continuamente Esporos da Insanidade.
+“Esporos da Insanidade - Seu corpo expele continuamente esporos venenosos que afetam personagens em Distância Muito Curta, personagens afetados pelos esporos perdem 1 ponto temporário de Autocontrole, pontos perdidos desta forma são recuperados após manter-se distante por 2 Rodadas. Este é um Efeito de Veneno Mágico Natural, personagens imunes à venenos mágicos ou a efeitos Naturais também são imunes a este efeito.”
+Efeito Crítico:
+Duração: 
+Alcance: 
+
+	•	Florescente – Devorador de Mundos
+Tempo de Ativação: 
+Perícia Chave para Conjuração: 
+GD da Conjuração: 
+Descrição: 
+Efeito: Esta Magia pode ser Conjurada apenas enquanto na Forma da Serpente Emplumada.
+Você invoca uma nuvem de chuva umbral, cujas gotas negras enlouquecem aqueles em sua Área de Efeito.
+Todos os personagens em Distância Longa perdem 1 Ponto Temporário de Autocontrole. Personagens que tenham seu autocontrole reduzidos à zero com este efeito são Amaldiçoados por tempo indeterminado e não podem recuperar pontos de Ego até que a maldição seja quebrada.
+Personagens que possuam menos Autocontrole que você, adicionalmente sofrem 2d6+ Metade do Foco Pontos de Dano Mágico Umbral.
+Efeito Crítico:
+Duração: 
+Alcance: 
+
+Florescente – Barganha dos Dullahan
+- Cóiste Bodhar
+
+Julgamento do Tecelão (Umbral/Elemental: Terra e Magma)
+Semente – Caminhar do Tece-Mortes: movimento vertical + movimento aumentado no Domínio das Teias ou na direção de um alvo em Casulo do Funeral
+Broto – Viagem Aracnídea: lança uma teia num local (cenário), pode se puxar até a teia ou fazer movimento de pêndulo para superar obstáculos.
+Muda – Domínio das Teias Negras: reduz mobilidade cumulativa em área
+Emergente – Convocar Tecedeiras Vulcânicas: -sorte para invoca 3 aranhas – possuem Caminhar do Tece-Mortes e podem usar a viagem aracnídea, roubo de vida 1 [vida recuperada vai pra vc] e veneno (Corrente de Efeitos – Peçonha do Ceifador Menor: reduz sorte até 3x, alvos afetados pelas 3 perdem +1 de sorte)
+Muda – Casulo de Funeral Umbral: reduz mobilidade cumulativa alvo único
+Emergente – Aspecto da Aranha: -sorte para se transformar em aranha, sofre danos reduzidos, ataques fortificados [terra + se ataque eliminar o alvo ganha pra roubo de bb3] e aplica veneno até 2x (Corrente de Efeitos – Peçonha do Ceifador Maior: reduz sorte até 2x, alvos afetados 2x perdem +2 de sorte)
+Florescente – Julgamento do Tecelão: -sorte para eliminar alvos com menos sorte que você.
+
+Devorador de Mundos (Umbral/Elemental: Natural/Ar)
+Semente – Bote Inesperado: Esta magia afeta apenas alvos que não possam vê-lo ou que estejam desprevenidos.
+Como parte da Conjuração você deve investir contra um alvo (para este ataque você recebe Movimento Base de Voo. Você recebe Vantagem em sua Rolagem de Perícia, este ataque recebe a Corrente de Efeitos – Envenenar com a Loucura: Alvo é envenenado por 2 Rodadas, então perde 1 ponto temporário de Autocontrole (não cumulativo). 
+Pontos de Autocontrole perdidos por esta magia e outras da mesma Árvore são recuperados ao fim da Duração dos Efeitos de envenenamento.
+
+Broto – Envenenar a Mente: Alvo é envenenado (mordida), este veneno dura 1 Rodada e tem um efeito de confusão (elemental: vento + encantamento). Personagens afetados por Envenenar a Mente, como primeira ação de seu próximo Turno, obrigatoriamente atacam o personagem mais próximo dele, priorizando os próprios aliados. 
+Para este ataque a Margem Crítica Menor do alvo é aumentada em +2 números, o tipo de ataque muda para Mágico Elemental: Vento em substituição aos seus tipos. 
+Esta magia possui a Corrente de Efeitos – Envenenar a Mente: O alvo perde 1 ponto temporário de Autocontrole, se o alvo também estiver sob efeito de Envenenar com a Loucura a Duração do Veneno desta magia muda para 2 Rodadas, afetando a primeira ação do alvo em cada uma destas Rodadas.
+
+Muda – Envenenar com a Fúria: 
+Efeito Passivo: esta magia aprimora permanentemente os efeitos de Envenenar a Mente, garantindo os seguintes efeitos adicionais:
+	•	Personagens envenenados recebem Bônus de +2 em Força e recebem Cataclismo como Efeito Crítico adicional.
+	•	Caso o personagem afetado seja bem-sucedido em aplicar um Efeito Crítico no alvo você recebe 1 ponto temporário de Autocontrole (não cumulativo).
+	•	Se alvo estiver sob efeito de Envenenar com a Loucura, a Duração do veneno Envenenar com a Loucura aumenta em +1 Rodada.
+
+Broto – Corrupção por Contato: Reação – Ao ser atacado você cobre seu corpo com um óleo venenoso. Personagem que te atacar C-a-C sofrem Metade do Foco + Metade do Próprio Vigor pontos de Danos Mágico Umbral, se o ataque for bem-sucedido adicionalmente são envenenados (efeito Elemental: Natural) e perdem 1 ponto temporário de Autocontrole. 
+Se o atacante estiver sob efeitos de Envenenar com a Loucura esta magia recebe a Corrente de Efeitos – Corrupção por Contato: A Duração do veneno desta magia muda para 2 Rodadas.
+
+Muda – Praga da Corrupção: 
+Efeito Passivo: Esta magia fortalece os efeitos de Corrupção por contato, garantindo os seguintes efeitos adicionais:
+	•	Personagens afetados pelo veneno de Corrupção por Contato disseminam o veneno aos personagens adjacentes no início de cada Rodada, espalhando a perda de Autocontrole aos outros personagens.
+	•	A Margem Crítica Menor de seus ataques contra alvos afetados pelo veneno da Corrupção por Contato aumenta em +2 números. 
+	•	Desferir um Acerto Crítico pela primeira vez em um alvo afetado aumenta a Duração do veneno em +1 Rodada. Desferir um segundo Acerto Crítico garante a você um ponto temporário de Autocontrole (não cumulativo).
+
+Emergente – Forma da Serpente Emplumada: Força +1, Carisma +1, Movimento Base de Voo. 
+Pode aplicar Bote Inesperado mesmo em oponentes que estejam cientes de sua presença.
+Esporos Venenosos - Seu corpo expele continuamente esporos venenosos que afetam personagens em Distância Muito Curta, personagens afetados pelos esporos perdem 1 ponto temporário de Autocontrole, pontos perdidos desta forma são recuperados após manter-se distante por 2 Rodadas.
+Presas Venenosas - Sempre sob efeito de Envenenar a Mente se Envenenar com a Fúria for uma de suas Magias conhecidas.
+Plumagem Venenosa - Sempre sob efeito de Corrupção por Contato se Praga da Corrupção for uma de suas Magias conhecidas.
+
+
+Florescente – Devorador de Mundos: Pode ser ativado apenas enquanto na Forma da Serpente Emplumada.
+Você invoca uma chuva venenosa, então todos os personagens em Distância Longa perdem 1 Ponto Temporário de Autocontrole.
+Personagens que tenham seu autocontrole reduzidos à zero com este efeito são Amaldiçoados por tempo indeterminado e não podem recuperar pontos de Ego até que a maldição seja quebrada.
+Personagens que possuam menos Autocontrole que você sofrem 3d6+ Metade do Foco Pontos de Dano Mágico Umbral.
+
+
+
+
+
+

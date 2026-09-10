@@ -1,5 +1,6 @@
 package org.aventyrs.core.sheet;
 
+import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.CharacterStatus;
 import org.aventyrs.core.character.DamageBonus;
 import org.aventyrs.core.character.EgoDomain;
@@ -26,6 +27,16 @@ public class InteractionResult {
 
     /** The Perícia roll bonus computed by a skill-test Interaction (e.g. AttentionInteraction). */
     Integer skillRollBonus;
+
+    /**
+     * The {@link AttributeDomain} that actually governed this Perícia roll, <b>after</b> every
+     * substitution (Perito Teórico / {@code SkillCompetencyAbility} / {@code AttackSource}).
+     * {@code null} unless a {@code org.aventyrs.core.skill.SkillRoll} was supplied. Reported so a
+     * caller can build a {@link CombatantAction} for {@link CombatantSheet#recordAction} without
+     * re-deriving the resolution — same stays-{@code null}-when-not-applicable convention as
+     * every other field here.
+     */
+    AttributeDomain governingAttributeDomain;
 
     /**
      * Total GD (DifficultyLevel) steps reduced for this Perícia test, aggregated from
@@ -73,6 +84,29 @@ public class InteractionResult {
      * to look up its own bonus value.
      */
     DifficultyLevel reachedDifficultyLevel;
+
+    /**
+     * Whether this roll <b>beat the Grau de Dificuldade it was made against</b> — {@code true}
+     * on a tie or better, since a total equal to the threshold succeeds (the same reading {@code
+     * org.aventyrs.core.combat.AttackReceiver} takes of a defence, where "a tie is a successful
+     * defense").
+     *
+     * <p>{@code null} when nobody said what the roll was against — either no {@code SkillRoll}
+     * was handed in at all, or one with no {@code targetValue}. <b>That is a third answer, not a
+     * failure</b>: an ability gated on success must read {@code null} as "cannot tell", never as
+     * "failed", the same three-state discipline {@link #reachedDifficultyLevel} already uses.
+     *
+     * <p>Any {@link #difficultyReduction} the roller holds is applied to the target before
+     * comparing, so a GD-easing trait genuinely moves the bar.
+     */
+    Boolean succeeded;
+
+    /**
+     * By how much this roll beat its target — positive on a success, negative on a failure, and
+     * {@code null} whenever {@link #succeeded} is. The margin several clauses need ("se exceder a
+     * GD em 5 ou mais"), reported rather than recomputed by each caller.
+     */
+    Integer margin;
 
     /**
      * The critical outcome of the {@code SkillRoll} this Interaction was given, or {@code

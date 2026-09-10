@@ -16,12 +16,14 @@ import org.aventyrs.core.skill.SkillType;
 import java.util.Optional;
 
 /**
- * The Habilidades de Competência available to characters trained in Ataque Corpo-a-Corpo.
- * Three are fully real — the unconditional Attribute substitutions of {@link #ACUIDADE}
+ * The Habilidades de Competência available to characters trained in Ataque Corpo-a-Corpo. All
+ * but one are fully real — the unconditional Attribute substitutions of {@link #ACUIDADE}
  * (Destreza) and {@link #SAGACIDADE_ARCANA} (Foco), both via {@link SkillCompetencyAbility
- * #getSubstituteAttributeDomain()}, and all three tiers of {@link #BRUTALIDADE}, since {@link
- * DamageBase} landed. The rest still need a system this core doesn't have (critical margin
- * scoped to one Perícia, or Malefício/status-effect tracking); see each constant's TODO.
+ * #getSubstituteAttributeDomain()}; all three tiers of {@link #BRUTALIDADE}, since {@link
+ * DamageBase} landed; and {@link #ATAQUE_PRECISO}'s Margem Crítica Menor widening, via {@link
+ * SkillCompetencyAbility#resolveCriticalMarginIncrease}. Only {@link #ABRIR_DEFESAS} still needs
+ * a system this core doesn't have (a critical-hit trigger that can afflict the target); see its
+ * TODO.
  */
 @Getter
 @AllArgsConstructor
@@ -98,20 +100,37 @@ public enum AtaqueCorpoACorpoCompetencyAbility implements SkillCompetencyAbility
         }
     },
 
-    // TODO: +1 to this Perícia's own Margem Crítica Menor, unconditionally — a
-    // Perícia-scoped critical-margin concept now exists (see ArtesAprimorarComArteAbility
-    // #getCriticalMarginReduction), but that one is parameterized by a dynamically-chosen
-    // Perícia; this constant would need its own always-on equivalent (mirroring how
-    // #damageReduction() is unconditional there), which isn't wired anywhere yet since
-    // nothing calls either version in an actual roll.
+    /**
+     * Real. "+1 número" to the Margem Crítica Menor of this Perícia's own rolls, with no
+     * condition — {@link SkillCompetencyAbility#resolveCriticalMarginIncrease} carries it and
+     * {@code AbstractSkillInteraction#sumCriticalMarginIncrease} feeds the sum into {@code
+     * SkillRoll#getCriticalResult(int)}. Unlike {@code
+     * ArtesAprimorarComArteAbility#getCriticalMarginReduction}, which is parameterized by a
+     * dynamically-chosen Perícia, this one names its own, so it needs no acquisition-time state.
+     */
     ATAQUE_PRECISO("A margem crítica menor de seus Ataques Corpo-a-Corpo é aumentada em +1 " +
-            "número."),
+            "número.") {
+        /**
+         * Scoped to Ataque Corpo-a-Corpo by this constant itself: the sum is run for whichever
+         * Perícia is being rolled and applies no filter of its own, so a racial grant of this
+         * ability would otherwise widen every roll's Margem Crítica. sceneContext is unused —
+         * the clause names no circumstance, unlike {@code SorteAdvantage#ACE}.
+         */
+        @Override
+        public int resolveCriticalMarginIncrease(final SkillType skillType, final SceneContext sceneContext) {
+            return skillType == SkillType.ATAQUE_CORPO_A_CORPO ? ATAQUE_PRECISO_MARGIN_INCREASE : 0;
+        }
+    },
 
-    // TODO: a critical hit inflicts the Malefício Desprevenido on the target for 1 Rodada —
-    // no Malefício/status-effect system, critical-hit-trigger detection, or Rodada-scoped
-    // duration tracking exists yet.
+    // TODO: a critical hit inflicts the Malefício Desprevenido on the target for 1 Rodada. Two
+    // thirds of that is real now — ConditionType.DESPREVENIDO exists and Condition counts down in
+    // Rodadas — but nothing *applies* a condition off a critical hit: no hook on the attack path
+    // reports "this roll crit" to a trait that would react by afflicting the target.
     ABRIR_DEFESAS("Após um acerto crítico seu alvo recebe o Malefício Desprevenido por 1 " +
             "Rodada.");
+
+    /** "aumentada em +1 número" — ATAQUE_PRECISO's own stated figure. */
+    private static final int ATAQUE_PRECISO_MARGIN_INCREASE = 1;
 
     /** The Graduação at which BRUTALIDADE's flat dano bonus is converted into +1 Dano Base. */
     private static final int BRUTALIDADE_CONVERSION_GRADUATION = 5;

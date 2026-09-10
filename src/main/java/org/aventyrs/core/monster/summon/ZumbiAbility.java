@@ -118,8 +118,9 @@ public class ZumbiAbility implements SkillCompetencyAbility {
      * <p><b>"Living" is resolved as "not a foe whose stat block declared itself Morto-Vivo."</b>
      * That is exact for every combatant this core can build today — a {@code CharacterSheet} is
      * always a living character, and the only non-living things are foes that say so — but it is
-     * a narrowing, not the real classification: {@code org.aventyrs.core.race.CreatureType} has
-     * only HUMANOIDE/FEERICO/MONSTRUOSO, none of which is about vitality. The day a player
+     * a narrowing, not the real classification: {@code org.aventyrs.core.race.CreatureType} is an
+     * essence/anatomy axis (HUMANOIDE, FEERICO, RENASCIDO, DRAGAO …), none of which is about
+     * vitality. The day a player
      * character can be undead, or a construct/elemental must count as non-living without being a
      * Morto-Vivo, this needs a real anatomy tag on {@code Character} instead. See
      * {@code MonsterTemplate#isUndead()}.

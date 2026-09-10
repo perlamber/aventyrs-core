@@ -1,13 +1,18 @@
 package org.aventyrs.core.character.services;
 
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.title.santo.Santo;
+import org.aventyrs.core.character.TitleSlot;
 import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.character.DamageBase;
 import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.character.fixture.CharacterSkillFixture;
 import org.aventyrs.core.feat.ArtesMarciaisFeat;
 import org.aventyrs.core.item.AbstractWeapon;
+import org.aventyrs.core.item.AbstractItem;
+import org.aventyrs.core.item.DefensiveImprovement;
 import org.aventyrs.core.item.ItemCategory;
+import org.aventyrs.core.item.ItemImprovement;
 import org.aventyrs.core.item.Weapon;
 import org.aventyrs.core.skill.SkillType;
 import org.aventyrs.core.skill.artes.ArtesAprimorarComArteAbility;
@@ -16,6 +21,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -79,13 +85,73 @@ class DamageBaseServiceTest {
         assertThrows(NullPointerException.class, () -> damageBaseService.getDamageBase(character, (Weapon) null));
     }
 
+    /** ARTISTA_MARCIAL's "+1" scopes to Ataque Desarmado / Arma Natural — a wielded blade gets none. */
     @Test
-    void aFeatsGrantScalesTheWeaponUp() {
+    void artistaMarcialScalesUpAnUnarmedStrikeAndANaturalWeaponButNotAWieldedOne() {
         Character character = blankCharacter().build();
         character.grantFeat(ArtesMarciaisFeat.ARTISTA_MARCIAL);
+        Weapon claws = AbstractWeapon.builder()
+                .name("Garras").category(ItemCategory.NATURAL_WEAPON)
+                .damageBase(DamageBase.of(2, 0)).skillType(SkillType.ATAQUE_CORPO_A_CORPO).build();
 
-        // +1, and no Título Aventyr held, so exactly one row: 2d6+0 -> 2d6+1.
-        assertEquals(DamageBase.of(2, 1), damageBaseService.getDamageBase(character, ESPADA));
+        // no Título Aventyr held, so exactly one row.
+        assertEquals(DamageBase.UNARMED.scaledUp(1),
+                damageBaseService.getDamageBase(character, SkillType.ATAQUE_CORPO_A_CORPO));
+        assertEquals(DamageBase.of(2, 1), damageBaseService.getDamageBase(character, claws));
+        assertEquals(DamageBase.of(2, 0), damageBaseService.getDamageBase(character, ESPADA));
+    }
+
+    /**
+     * An Ataque Desarmado starts at the bottom rung and climbs with the holder's own traits —
+     * here ARTISTA_MARCIAL, whose grant is "+1 cumulativamente para cada Título Aventyr Desperto",
+     * so a Título raises the unarmed strike a further row.
+     */
+    @Test
+    void anUnarmedStrikeStartsAtTheBottomRungAndScalesWithFeatsAndTitulos() {
+        Character character = blankCharacter().build();
+        assertEquals(DamageBase.UNARMED,
+                damageBaseService.getDamageBase(character, SkillType.ATAQUE_CORPO_A_CORPO));
+
+        character.grantFeat(ArtesMarciaisFeat.ARTISTA_MARCIAL);
+        assertEquals(DamageBase.UNARMED.scaledUp(1),
+                damageBaseService.getDamageBase(character, SkillType.ATAQUE_CORPO_A_CORPO));
+
+        character.grantTitle(new Santo(List.of(), List.of()), TitleSlot.PRIMARY);
+        assertEquals(DamageBase.UNARMED.scaledUp(2),
+                damageBaseService.getDamageBase(character, SkillType.ATAQUE_CORPO_A_CORPO));
+    }
+
+    /**
+     * "All bonuses not bound to any weapon" — an Ataque Desarmado keeps every trait-borne
+     * scale-up but takes none from fitted Equipamento enhancements, which have no weapon to be
+     * fitted to. BENCAO_SELVAGEM raises an Arma Natural's Dano Base and must not raise a punch's.
+     */
+    @Test
+    void anUnarmedStrikeTakesNoWeaponBoundEnhancementScaleUp() {
+        AbstractItem blessedArmor = AbstractItem.builder().name("Armadura Abençoada")
+                .category(ItemCategory.ARMOR).build();
+        blessedArmor.addImprovement(ItemImprovement.of(DefensiveImprovement.BENCAO_SELVAGEM));
+        Character character = blankCharacter().equipment(new ArrayList<>(List.of(blessedArmor))).build();
+
+        assertEquals(DamageBase.UNARMED,
+                damageBaseService.getDamageBase(character, SkillType.ATAQUE_CORPO_A_CORPO));
+    }
+
+    @Test
+    void bencaoSelvagemRaisesOnlyTheNaturalWeaponUsedForTheAttack() {
+        AbstractItem blessedArmor = AbstractItem.builder().name("Armadura Abençoada")
+                .category(ItemCategory.ARMOR).build();
+        blessedArmor.addImprovement(ItemImprovement.of(DefensiveImprovement.BENCAO_SELVAGEM));
+        Weapon naturalWeapon = AbstractWeapon.builder()
+                .name("Garras")
+                .category(ItemCategory.NATURAL_WEAPON)
+                .damageBase(DamageBase.of(2, 0))
+                .skillType(SkillType.ATAQUE_CORPO_A_CORPO)
+                .build();
+        Character character = blankCharacter().equipment(List.of(blessedArmor, naturalWeapon)).build();
+
+        assertEquals(DamageBase.of(2, 1), damageBaseService.getDamageBase(character, naturalWeapon));
+        assertEquals(DamageBase.of(2, 0), damageBaseService.getDamageBase(character, ESPADA));
     }
 
     /**
@@ -139,9 +205,11 @@ class DamageBaseServiceTest {
                 .skillCompetencyAbility(AtaqueCorpoACorpoCompetencyAbility.BRUTALIDADE)
                 .skill(SkillType.ATAQUE_CORPO_A_CORPO, meleeSkillAt(10))
                 .build();
-        character.grantFeat(ArtesMarciaisFeat.ARTISTA_MARCIAL);
+        // FILHO_DE_YMIR's "+1 Dano Base de armas" applies to a wielded weapon (ARTISTA_MARCIAL
+        // would not — its scope is Ataque Desarmado / Arma Natural).
+        character.grantFeat(org.aventyrs.core.feat.AnaoFeat.FILHO_DE_YMIR);
 
-        // +1 Aprimorar com Arte, +2 Brutalidade at 10 Graduações, +1 Artista Marcial = 4 rows.
+        // +1 Aprimorar com Arte, +2 Brutalidade at 10 Graduações, +1 Filho de Ymir = 4 rows.
         assertEquals(DamageBase.of(3, 0), damageBaseService.getDamageBase(character, ESPADA));
     }
 }

@@ -1,5 +1,6 @@
 package org.aventyrs.core.character.services;
 
+import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.modifier.ModifierResolver;
 import org.aventyrs.core.modifier.ModifierResolverImpl;
@@ -21,12 +22,15 @@ public class MagicPointsServiceImpl implements MagicPointsService {
     @Override
     public int getManaMultiplier(final Character character) {
         int bonus = modifierResolver.sumModifiers(character.getAttributeAbilities(), ModifierType.MANA_MULTIPLIER);
-        return character.getManaMultiplier() + bonus;
+        int featBonus = character.getFeats().stream()
+                .mapToInt(feat -> feat.resolveManaMultiplierIncrease(character))
+                .sum();
+        return character.getManaMultiplier() + bonus + featBonus;
     }
 
     @Override
     public int getMaxMagicPoints(final Character character) {
-        return BASE_MAGIC_POINTS + character.getAttributes().getFocus().getTotal() * getManaMultiplier(character);
+        return BASE_MAGIC_POINTS + character.getEffectiveAttributeTotal(AttributeDomain.FOCUS) * getManaMultiplier(character);
     }
 
     @Override

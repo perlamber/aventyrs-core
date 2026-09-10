@@ -39,7 +39,8 @@ public enum AbencoadoPelaLuzAbility implements AventyrTitleAbility {
     // the *new* target specifically" still needs the same "doesn't track what a roll is *for*"
     // gap documented elsewhere, plus the forced-targeting mechanism above; and "Efeito de Encantamento" + "Área de Efeito" are both unmodeled
     // classifications (Encantamento — see SantoSpecialization#ABENCOADO_PELA_LUZ's own TODO;
-    // Área de Efeito — cited but unbuilt, see EsquivaEApararCompetencyAbility#EVASAO's own
+    // Área de Efeito — scene.AreaOfEffect describes a footprint now, but nothing classifies an
+    // effect already in flight as an area one, see EsquivaEApararCompetencyAbility#EVASAO's own
     // TODO). getPDCost() reports the rules text's stated *minimum* (1) — the actual cost is
     // "Variável", chosen by the activating player above that floor, which this int-returning
     // method has no way to represent beyond the floor itself.

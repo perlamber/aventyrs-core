@@ -14,11 +14,11 @@ import org.aventyrs.core.skill.CriticalResult;
  * #ACERTO_CRITICO_MAIOR} destroys every "item tecnológico" the target is carrying;
  * {@link CriticalResult#ACERTO_CRITICO_MENOR} deals 3d6 damage to them instead.
  *
- * <p>None of that is expressible today: this core has no Item/Equipamento entity at all
- * (see {@code org.aventyrs.core.item.ItemInteraction}, an unrelated pre-existing stub —
- * same gap {@code ProfissaoCompetencyAbility}'s own class javadoc already documents), so
- * there's nothing to classify as "tecnológico", no per-CombatantSheet inventory to find
- * such items on, and no "destroyed"/damage-taken state for one to mutate. The 3d6 damage
+ * <p>Most of the machinery it needs now exists: {@code org.aventyrs.core.item.Item} is real,
+ * {@code CombatantSheet#getInventory} is the per-combatant list to find carried items on, and
+ * {@code Item#applyDamage}/{@code isDestroyed} are the damage-taken and destroyed state to
+ * mutate. Two things still block it: nothing classifies an item as "tecnológico", and nothing
+ * calls {@code applyDamage} automatically from an Efeito Crítico. The 3d6 damage
  * roll itself is also out of scope for this core regardless (it never rolls dice — see
  * {@code org.aventyrs.core.skill} package-info's "What this library computes" section),
  * matching how {@link Sangramento}/{@link ManaPurge} are handed an already-resolved

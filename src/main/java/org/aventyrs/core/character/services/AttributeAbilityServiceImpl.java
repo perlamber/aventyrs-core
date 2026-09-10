@@ -45,7 +45,9 @@ public class AttributeAbilityServiceImpl implements AttributeAbilityService {
     @Override
     public AttributeAbilityGrantResult grantAttributeAbility(final Character character, final AttributeAbility ability) throws IllegalOperationException {
         int attributeBase = character.getAttributes().getAttribute(ability.getAttributeDomain()).getBase();
-        validateChoice(attributeBase, character.getAttributeAbilities(), ability);
+        // Validate against the raw acquired list, not the aggregate: a Talento-granted free
+        // Habilidade (Feat#getGrantedAttributeAbilities) must never consume a paid slot.
+        validateChoice(attributeBase, character.getAcquiredAttributeAbilities(), ability);
 
         Character.CharacterBuilder builder = character.toBuilder().attributeAbility(ability);
         ability.resolvePermanentEgoGain().ifPresent(domain ->

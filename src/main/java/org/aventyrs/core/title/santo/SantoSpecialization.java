@@ -23,11 +23,14 @@ public enum SantoSpecialization implements AventyrTitleSpecialization {
     // established "no eligibility validation service" restraint (see CLAUDE.md's "Adding a
     // new Perícia" section). The "recupera PV como se passasse por um Descanso Curto" branch
     // is real — see #resolveShortRestHealAmount below. The "Remover um Malefício, escolhido
-    // entre Doença, Encantamento ou Maldição" branch is TODO'd: no Malefício/status-effect
-    // classification exists anywhere in this core (see AtaqueCorpoACorpoCompetencyAbility
-    // #ABRIR_DEFESAS's own "Malefício Desprevenido" citation, and CriticalEffect's own "no
-    // Malefício/status-effect tracking" javadoc) — Doença, Encantamento, and Maldição would
-    // all need to be modeled as one before any of them could be "removed."
+    // entre Doença, Encantamento ou Maldição" branch is partly unblocked: Malefícios are real
+    // now (ConditionType/Condition) and CombatantSheet#removeCondition is the removal itself, so
+    // two of the three named kinds map straight onto ConditionType.DOENTE and AMALDICOADO.
+    // TODO: "Encantamento" is not a Condição at all — it is MagicType.ENCANTAMENTO, so removing
+    // one means dispelling an active Magia of that type from the target, and nothing tracks which
+    // Magias are currently affecting a combatant (Scene holds only ActiveAreaSpellEffect, keyed
+    // to a position rather than to a target).
+    // TODO: this Habilidade has no entry point that takes the player's choice of which to remove.
     ABENCOADO_PELA_LUZ(
             "Seu toque tem capacidades curativas, ao tocar outro personagem você pode " +
             "escolher entre fazer com que ele recupere PV como se passasse por um Descanso " +

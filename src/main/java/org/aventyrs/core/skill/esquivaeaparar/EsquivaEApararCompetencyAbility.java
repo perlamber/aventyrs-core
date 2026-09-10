@@ -26,10 +26,13 @@ public enum EsquivaEApararCompetencyAbility implements SkillCompetencyAbility {
     // TODO: +3 Defesas scoped to resisting Área de Efeito attacks specifically, rising to +5
     // once 7 Graduações are reached. The Defesas half is no longer what blocks this —
     // ModifierType.PHYSICAL_DEFENSE/MAGIC_DEFENSE and DefenseService are real now, so a flat
-    // Defesa bonus is expressible. Two blockers remain, both unchanged: (1) no Área de Efeito
-    // concept exists to scope it to, and (2) it's a graduation-tiered scaling bonus (same shape
-    // as DominioDoManaCompetencyAbility.LETALIDADE_ARCANA) — @Modifier supports only a fixed
-    // value per constant and can't read the holder's own graduation to pick +3 vs +5.
+    // Defesa bonus is expressible. Two blockers remain: (1) an Área de Efeito can now be
+    // *described* (scene.AreaOfEffect, reachable from Spell#getTargeting()), but nothing marks
+    // an *incoming* attack as an area one — AttackReceiver carries no such classification — so
+    // there is still no flag for DefenseService to scope this bonus to; and (2) it's a
+    // graduation-tiered scaling bonus (same shape as
+    // DominioDoManaCompetencyAbility.LETALIDADE_ARCANA) — @Modifier supports only a fixed value
+    // per constant and can't read the holder's own graduation to pick +3 vs +5.
     EVASAO("Defesas +3 para resistir à ataques e efeitos com Área de Efeito, benefício muda " +
             "para +5 ao alcançar 7 Graduações."),
 
@@ -53,11 +56,12 @@ public enum EsquivaEApararCompetencyAbility implements SkillCompetencyAbility {
 
     // TODO: an activated ability rolling Esquiva e Aparar instead of an Ataque Perícia
     // against GD Difícil; on success, reduces the GD to attack that specific target by -1
-    // Nível for 2 Rodadas — needs a roll-resolution-vs-DifficultyLevel engine (to know
-    // "success" against a fixed GD, same gap as ArtesCompetencyAbility.DOM_BARDICO), plus a
-    // Rodada-scoped duration system and a way to apply a GD reduction to a specific
-    // opponent's future attack rolls (a cross-character effect, not a self-buff) — none of
-    // which exist yet.
+    // Nível for 2 Rodadas. "Success against a fixed GD" is answerable now (a SkillRoll carries
+    // its own targetValue and InteractionResult reports succeeded), and a Rodada-scoped grant is
+    // an ordinary Blessing via resolveSuccessBlessings — but the grant here is a GD *reduction*
+    // applied to this roller's future attacks against one specific opponent, and a Blessing
+    // carries a ModifierType, not a GD step scoped to a named target. That cross-character,
+    // per-opponent shape is what is still missing.
     ESTUDAR_DEFESAS("Você pode efetuar rolagens de Esquiva e Aparar ao invés da Perícia de " +
             "Ataque contra GD Difícil para analisar o oponente, seus padrões de " +
             "movimentos, brechas na armadura etc. Se for bem-sucedido você reduz em o GD " +

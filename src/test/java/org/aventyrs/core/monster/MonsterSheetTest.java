@@ -6,11 +6,14 @@ import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.sheet.EgoPointType;
 import org.aventyrs.core.item.ArmorItem;
 import org.aventyrs.core.modifier.ModifierType;
+import org.aventyrs.core.sheet.ActionCost;
 import org.aventyrs.core.sheet.Bleeding;
 import org.aventyrs.core.sheet.CharacterSheet;
+import org.aventyrs.core.sheet.CombatantAction;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.Player;
 import org.aventyrs.core.skill.DifficultyLevel;
+import org.aventyrs.core.skill.SkillType;
 import org.junit.jupiter.api.Test;
 
 import java.util.Optional;
@@ -108,12 +111,18 @@ class MonsterSheetTest {
     @Test
     void theTurnLifecycleWorksAsOnAPlayerSheet() {
         MonsterSheet monster = capanga();
+        CombatantAction dexAction = new CombatantAction(SkillType.ATAQUE_A_DISTANCIA,
+                AttributeDomain.DEXTERITY, null, ActionCost.ofActionPoints(1), 0, null);
 
-        assertTrue(monster.consumeFirstRollThisTurn(AttributeDomain.DEXTERITY));
-        assertFalse(monster.consumeFirstRollThisTurn(AttributeDomain.DEXTERITY));
+        assertTrue(monster.isFirstRollOfTurnFor(AttributeDomain.DEXTERITY));
+        monster.recordAction(dexAction);
+        assertFalse(monster.isFirstRollOfTurnFor(AttributeDomain.DEXTERITY));
 
         monster.startTurn(1);
-        assertTrue(monster.consumeFirstRollThisTurn(AttributeDomain.DEXTERITY));
+        assertTrue(monster.isFirstRollOfTurnFor(AttributeDomain.DEXTERITY));
+
+        monster.startNewRound();
+        assertTrue(monster.getActionsThisRound().isEmpty());
     }
 
     @Test

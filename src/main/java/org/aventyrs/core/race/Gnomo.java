@@ -45,7 +45,7 @@ import java.util.Set;
  *   same int-vs-fractional mismatch already flagged on {@code Elfos}'/Humanos'/{@code
  *   Pequenino}'s own Talento-discount traits; "Talento Feérico" doesn't match any existing
  *   {@code org.aventyrs.core.feat.FeatCategory} constant (the existing {@code Type.RACIAL}
- *   ones are {@code MONSTRUOSO}/{@code FERRICO}/{@code ELFICO}/{@code BESTIAL} — flagged, not
+ *   ones are {@code MONSTRUOSO}/{@code FEERICO}/{@code ELFICO}/{@code BESTIAL} — flagged, not
  *   guessed, same "get the source text before modeling" discipline as {@code Range}'s own
  *   history); and there's no mechanism for a race to grant eligibility for exactly N Talentos
  *   from a restricted category in the first place.</li>

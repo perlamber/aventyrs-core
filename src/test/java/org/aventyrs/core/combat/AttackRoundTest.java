@@ -121,6 +121,37 @@ class AttackRoundTest {
         assertEquals(7, brute.getDamageTaken());
     }
 
+    @Test
+    void bothSidesOfTheExchangeAreFiledIntoTheSceneHistoryFromTheResults() {
+        CharacterSheet hero = hero();
+        MonsterSheet brute = GenericMonster.BRUTAMONTES.spawn(new Player());
+        Scene scene = new Scene();
+        scene.setCombatScene(true);
+        scene.addParticipant(hero, 14, UUID.randomUUID());
+        scene.addParticipant(brute, 9, UUID.randomUUID());
+        scene.next();                                   // hero's Turn, Round 0
+
+        IncomingAttackResult inbound = attackReceiver.resolve(IncomingAttack.builder()
+                .defender(hero).attacker(brute)
+                .difficultyLevel(brute.getAttackDifficulty()).attackBonus(brute.getAttackBonus())
+                .defenseType(DefenseType.PHYSICAL).scene(scene)
+                .defenseRoll(new SkillRoll(List.of(1, 1, 3)))
+                .build());
+        scene.recordAction(hero, inbound.getRecordedAction());
+
+        DeliveredAttackResult outbound = attackDelivery.resolve(DeliveredAttack.from(brute, DefenseType.PHYSICAL)
+                .attacker(hero).attackSkill(SkillType.ATAQUE_CORPO_A_CORPO).scene(scene)
+                .attackRoll(new SkillRoll(List.of(4, 4, 4)))
+                .build());
+        scene.recordAction(hero, outbound.getRecordedAction());
+
+        assertEquals(2, scene.getActionHistory().size());
+        assertEquals(hero, scene.getActionHistory().get(0).combatant());
+        assertEquals(SkillType.ESQUIVA_E_APARAR, scene.getActionHistory().get(0).action().skill());
+        assertEquals(SkillType.ATAQUE_CORPO_A_CORPO, scene.getActionHistory().get(1).action().skill());
+        assertEquals(2, hero.getActionsThisRound().size());   // downstreamed to the sheet's own log
+    }
+
     /**
      * The lifted 4-arg overload's real payoff: ABATEDORES_DE_GIGANTES' rules text covers every
      * Perícia de Ataque, but before the overload moved up to AbstractSkillInteraction only

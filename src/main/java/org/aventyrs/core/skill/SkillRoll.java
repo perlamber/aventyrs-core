@@ -1,5 +1,6 @@
 package org.aventyrs.core.skill;
 
+import org.aventyrs.core.sheet.ActionCost;
 import org.aventyrs.core.sheet.IllegalOperationException;
 
 import java.util.List;
@@ -26,6 +27,27 @@ import static org.aventyrs.core.util.TranslatableMessages.INVALID_SKILL_ROLL;
  * roll's reached {@link DifficultyLevel} is resolved via {@link
  * DifficultyLevel#reachedByAsExpert} instead of {@link DifficultyLevel#reachedBy}. {@code null}
  * means "just a plain roll, no specific trait being invoked," and skips that check entirely.
+ *
+ * <p>{@code targetValue} is the number this roll has to <b>beat</b> — the Grau de Dificuldade it
+ * was made against, already reduced to a plain int. Optional, and {@code null} for a roll made
+ * against nothing in particular, in which case {@code InteractionResult#getSucceeded()} stays
+ * {@code null} too: "nobody said what this was against" is a different answer from "failed".
+ *
+ * <p><b>A number, not a {@link DifficultyLevel}.</b> The usual source is {@code
+ * DifficultyLevel#getBaseValue()}, but not every GD in the rules is a tier — {@code
+ * ConditionType#DEVORADO}'s "GD 10+Vigor" is computed from a creature and lands between them —
+ * so the comparison is arithmetic, exactly as {@code
+ * org.aventyrs.core.combat.AttackReceiver#resolve} already does for the combat side. Use {@link
+ * #against(List, DifficultyLevel)} when the target genuinely is a tier.
+ *
+ * <p>{@code actionCost} is optional roll <b>metadata</b> — the Pontos de Ação / Ação Livre /
+ * Reação this roll's action cost (see {@link org.aventyrs.core.sheet.ActionCost}). Deliberately
+ * <em>not</em> a domain-resolution input the way {@code attackSource} is: nothing in {@link
+ * AbstractSkillInteraction}'s bonus or GD math reads it except the one cost-conditioned {@code
+ * Feat} hook ({@code Feat#resolveAttackCostDifficultyReduction}, for {@code
+ * AssassinoFeat#SAQUE_RELAMPAGO}). It is carried so the caller can build a {@code
+ * org.aventyrs.core.sheet.CombatantAction} for the per-Rodada log and so a cost-gated Talento
+ * can see it. {@code null} means "caller didn't say".
  */
 public class SkillRoll {
     private static final int EXPECTED_DICE_COUNT = 3;
@@ -40,12 +62,31 @@ public class SkillRoll {
 
     private final List<Integer> dice;
     private final SkillTrait requestedAbility;
+    private final Integer targetValue;
+    private final ActionCost actionCost;
 
     public SkillRoll(final List<Integer> dice) {
-        this(dice, null);
+        this(dice, null, null, null);
     }
 
     public SkillRoll(final List<Integer> dice, final SkillTrait requestedAbility) {
+        this(dice, requestedAbility, null, null);
+    }
+
+    /**
+     * A roll made against a {@link DifficultyLevel} tier — the common case, resolving the tier to
+     * its {@link DifficultyLevel#getBaseValue()} so the comparison stays arithmetic.
+     */
+    public static SkillRoll against(final List<Integer> dice, final DifficultyLevel target) {
+        return new SkillRoll(dice, null, target == null ? null : target.getBaseValue());
+    }
+
+    public SkillRoll(final List<Integer> dice, final SkillTrait requestedAbility, final Integer targetValue) {
+        this(dice, requestedAbility, targetValue, null);
+    }
+
+    public SkillRoll(final List<Integer> dice, final SkillTrait requestedAbility, final Integer targetValue,
+                     final ActionCost actionCost) {
         if (dice.size() != EXPECTED_DICE_COUNT) {
             throw new IllegalOperationException(INVALID_SKILL_ROLL);
         }
@@ -56,6 +97,16 @@ public class SkillRoll {
         }
         this.dice = dice;
         this.requestedAbility = requestedAbility;
+        this.targetValue = targetValue;
+        this.actionCost = actionCost;
+    }
+
+    /**
+     * The number this roll has to beat, or {@code null} when it was made against nothing stated.
+     * See this class's own javadoc for why it is an int rather than a {@link DifficultyLevel}.
+     */
+    public Integer getTargetValue() {
+        return targetValue;
     }
 
     /**
@@ -64,6 +115,15 @@ public class SkillRoll {
      */
     public SkillTrait getRequestedAbility() {
         return requestedAbility;
+    }
+
+    /**
+     * What this roll's action cost — a Pontos de Ação amount, an Ação Livre, or a Reação — or
+     * {@code null} when the caller didn't say. See this class's own javadoc for why it is
+     * metadata rather than a resolution input.
+     */
+    public ActionCost getActionCost() {
+        return actionCost;
     }
 
     /** The sum of all 3 dice — what gets added to the Perícia's own bonus and compared against a GD. */
@@ -87,7 +147,8 @@ public class SkillRoll {
      * source in hand can pass 0, same as the plain-fixed-threshold behavior this method used to
      * have unconditionally. Only widens Acerto Crítico Menor: unlike it, Falha Crítica Menor/
      * Maior and Acerto Crítico Maior are each fixed at one exact dice combination in this
-     * ruleset's own text, with no ability anywhere citing a margin on any of the three.
+     * ruleset's own text. A clause that widens Acerto Crítico <em>Maior</em> is a separate,
+     * explicit mechanism — it does not ride this margin, and none is authored yet.
      *
      * <p>Widening lowers the face value two dice must clear from {@code MAX_FACE_VALUE} down by
      * criticalMarginIncrease (floored at {@code MIN_FACE_VALUE}, and negative increases treated

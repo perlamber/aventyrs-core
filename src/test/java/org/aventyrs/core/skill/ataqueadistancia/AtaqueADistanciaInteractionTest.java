@@ -6,10 +6,15 @@ import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterAttributes;
 import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.character.CharacterStatus;
+import org.aventyrs.core.character.DamageBase;
 import org.aventyrs.core.character.DamageType;
 import org.aventyrs.core.character.SizeCategory;
 import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.character.fixture.CharacterSkillFixture;
+import org.aventyrs.core.item.AbstractWeapon;
+import org.aventyrs.core.item.ItemCategory;
+import org.aventyrs.core.item.Weapon;
+import org.aventyrs.core.magic.TestSpell;
 import org.aventyrs.core.race.Anao;
 import org.aventyrs.core.race.Human;
 import org.aventyrs.core.race.Race;
@@ -18,6 +23,7 @@ import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.InteractionResult;
 import org.aventyrs.core.sheet.Player;
+import org.aventyrs.core.skill.AttackSource;
 import org.aventyrs.core.skill.Skill;
 import org.aventyrs.core.skill.SkillType;
 import org.junit.jupiter.api.BeforeEach;
@@ -241,5 +247,83 @@ class AtaqueADistanciaInteractionTest {
 
         // 2 dexterity + untrained penalty + SizeCategory.MINUS_TWO's attack/damage modifier (-1).
         assertEquals(2 + Skill.UNTRAINED_PENALTY + SizeCategory.MINUS_TWO.getAttackAndDamageModifier(), result.getSkillRollBonus());
+    }
+
+    private static final Weapon ADAGA_DE_ARREMESSO = AbstractWeapon.builder()
+            .name("Adaga de Arremesso")
+            .category(ItemCategory.THROWABLE)
+            .damageBase(DamageBase.of(1, 2))
+            .skillType(SkillType.ATAQUE_A_DISTANCIA)
+            .build();
+
+    private static final Weapon ARCO_LONGO = AbstractWeapon.builder()
+            .name("Arco Longo")
+            .category(ItemCategory.BOW)
+            .damageBase(DamageBase.of(2, 0))
+            .skillType(SkillType.ATAQUE_A_DISTANCIA)
+            .build();
+
+    /**
+     * Força 9 against Destreza 2, so which Attribute governed the roll is unmistakable in
+     * skillRollBonus. The excess sits in variable rather than base, per CLAUDE.md's fixture rule
+     * that only base is capped at 5.
+     */
+    private CharacterSheet arremessoPoderosoSheet(final boolean holdsTheAbility) {
+        CharacterSkill ataqueADistanciaSkill = CharacterSkillFixture.blank(CharacterSkillFixture.ATAQUE_A_DISTANCIA_1).build();
+        ataqueADistanciaSkill.increaseGraduation(1);
+        Character.CharacterBuilder builder = CharacterFixture.blank(CharacterFixture.BLANK)
+                .attributes(CharacterAttributes.builder()
+                        .strength(AttributeValue.builder().domain(AttributeDomain.STRENGTH).base(5).variable(4).build())
+                        .dexterity(AttributeValue.builder().domain(AttributeDomain.DEXTERITY).base(2).build())
+                        .build())
+                .skill(SkillType.ATAQUE_A_DISTANCIA, ataqueADistanciaSkill);
+        if (holdsTheAbility) {
+            builder.skillCompetencyAbility(AtaqueADistanciaCompetencyAbility.ARREMESSO_PODEROSO);
+        }
+        return CharacterSheet.of(builder.build(), new Player());
+    }
+
+    /** Destreza(2) + Graduação(1). */
+    private static final int DEXTERITY_TOTAL = 3;
+
+    /** Força(5+4) + Graduação(1). */
+    private static final int STRENGTH_TOTAL = 10;
+
+    private int bonusWith(final CharacterSheet sheet, final AttackSource attackSource) {
+        return ataqueADistanciaInteraction.applyTo(sheet, null, null, null, attackSource).getSkillRollBonus();
+    }
+
+    @Test
+    void arremessoPoderosoSubstitutesForcaWhenTheAttackIsThrown() {
+        assertEquals(STRENGTH_TOTAL, bonusWith(arremessoPoderosoSheet(true), ADAGA_DE_ARREMESSO));
+    }
+
+    @Test
+    void arremessoPoderosoSubstitutesForcaWhenTheAttackDeliversAMagia() {
+        assertEquals(STRENGTH_TOTAL, bonusWith(arremessoPoderosoSheet(true), new TestSpell()));
+    }
+
+    @Test
+    void arremessoPoderosoLeavesAFiredWeaponOnDestreza() {
+        assertEquals(DEXTERITY_TOTAL, bonusWith(arremessoPoderosoSheet(true), ARCO_LONGO));
+    }
+
+    /**
+     * The shorter overloads pass a {@code null} attackSource, so a plain roll by a holder is
+     * unaffected — this is the "scoped, not unconditional" guarantee that separates
+     * ARREMESSO_PODEROSO from DISPARO_ARCANO.
+     */
+    @Test
+    void arremessoPoderosoDoesNotApplyToAPlainRoll() {
+        CharacterSheet sheet = arremessoPoderosoSheet(true);
+
+        assertEquals(DEXTERITY_TOTAL, ataqueADistanciaInteraction.applyTo(sheet).getSkillRollBonus());
+        assertEquals(DEXTERITY_TOTAL, bonusWith(sheet, null));
+    }
+
+    /** The control: a thrown source alone substitutes nothing without the ability. */
+    @Test
+    void aThrownAttackSourceAloneSubstitutesNothing() {
+        assertEquals(DEXTERITY_TOTAL, bonusWith(arremessoPoderosoSheet(false), ADAGA_DE_ARREMESSO));
     }
 }

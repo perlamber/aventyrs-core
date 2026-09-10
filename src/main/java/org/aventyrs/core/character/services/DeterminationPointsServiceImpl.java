@@ -1,6 +1,8 @@
 package org.aventyrs.core.character.services;
 
+import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.feat.Feat;
 import org.aventyrs.core.modifier.ModifierResolver;
 import org.aventyrs.core.modifier.ModifierResolverImpl;
 import org.aventyrs.core.modifier.ModifierType;
@@ -21,12 +23,17 @@ public class DeterminationPointsServiceImpl implements DeterminationPointsServic
     @Override
     public int getDeterminationMultiplier(final Character character) {
         int bonus = modifierResolver.sumModifiers(character.getAttributeAbilities(), ModifierType.DETERMINATION_MULTIPLIER);
+        // Talentos are outside every ModifierResolver scan, so they get an explicit pass — the
+        // same shape MagicPointsServiceImpl uses for resolveManaMultiplierIncrease.
+        for (Feat feat : character.getFeats()) {
+            bonus += feat.resolveDeterminationMultiplierIncrease(character);
+        }
         return character.getDeterminationMultiplier() + bonus;
     }
 
     @Override
     public int getMaxDeterminationPoints(final Character character) {
-        return BASE_DETERMINATION_POINTS + character.getAttributes().getInstinct().getTotal() * getDeterminationMultiplier(character);
+        return BASE_DETERMINATION_POINTS + character.getEffectiveAttributeTotal(AttributeDomain.INSTINCT) * getDeterminationMultiplier(character);
     }
 
     @Override

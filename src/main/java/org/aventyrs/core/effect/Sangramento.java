@@ -1,5 +1,6 @@
 package org.aventyrs.core.effect;
 
+import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.sheet.Bleeding;
 import org.aventyrs.core.sheet.CombatantSheet;
@@ -72,7 +73,7 @@ public class Sangramento extends AbstractEffect implements CriticalEffect {
         target.applyDamage(IMMEDIATE_DAMAGE);
 
         Optional<Integer> remainingRounds = criticalResult == CriticalResult.ACERTO_CRITICO_MENOR
-                ? Optional.of(affectedCharacter.getAttributes().getVigor().getTotal())
+                ? Optional.of(affectedCharacter.getEffectiveAttributeTotal(AttributeDomain.VIGOR))
                 : Optional.empty();
         target.applyEffect(new Bleeding(PER_ROUND_DAMAGE, remainingRounds));
 

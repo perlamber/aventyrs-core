@@ -64,7 +64,7 @@ class SatiroTest {
 
     @Test
     void usesTheBaseCostsForFeatsAndSkills() {
-        assertEquals(Race.BASE_NEW_FEAT_COST, satiro.getNewFeatCost(FeatCategory.FERRICO));
+        assertEquals(Race.BASE_NEW_FEAT_COST, satiro.getNewFeatCost(FeatCategory.FEERICO));
         assertEquals(Race.BASE_NEW_SKILL_COST, satiro.getNewSkillCost());
     }
 }

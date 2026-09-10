@@ -1,0 +1,199 @@
+package org.aventyrs.core.feat;
+
+import org.aventyrs.core.character.AttributeDomain;
+import org.aventyrs.core.character.Character;
+import org.aventyrs.core.character.DefenseType;
+import org.aventyrs.core.race.Gigantes;
+
+import java.util.function.Supplier;
+
+/**
+ * Talentos Gigantes — two about protecting smaller allies, two about awakening an ancestral clã.
+ *
+ * <p>One constant carries a mechanical effect — {@link #GIGANTE_DO_CLA_EMPUSA}, whole. The other
+ * three are worth reading for *why* they don't, because none is blocked in the ordinary way.
+ *
+ * <p><b>{@link #ESCUDO_QUE_ANDA} is the second real consumer of ally-facing Defesas.</b> Its
+ * "aliados adjacentes recebem Bônus de +1 em Defesas" is the same shape as Santo's Despertar,
+ * which CLAUDE.md's gap catalog already names as the case that would justify generalising the
+ * ally-scanning mechanism. That mechanism half-exists: {@code
+ * DamageServiceImpl#sumAllyGrantedAbsoluteDamageReduction} already walks a target's adjacent
+ * allies and asks each what it grants outward, for RA. Defesas has no equivalent scan, and
+ * {@code DefenseService} would need one plus a {@code Feat} hook to be asked through.
+ *
+ * <p><b>The two Clã Talentos were withheld deliberately, and only one still is.</b> Each pairs
+ * bonuses — a Categoria de Tamanho uplift, a per-Título Atributo bonus — with a malus, and the
+ * rule this tree follows is that a Talento is granted whole or not at all: implementing only the
+ * half that hurts leaves a character strictly worse off for having acquired it, and implementing
+ * only the halves that help leaves them strictly better, both further from the rules text than
+ * granting nothing. {@link #GIGANTE_DO_CLA_EMPUSA} can now be granted whole ({@code
+ * Feat#resolveSizeCategoryIncrease} + {@code resolveAttributeBonus} + a negative {@code
+ * resolveDefenseBonus}). {@link #GIGANTE_DO_CLA_JOTUN} cannot: its malus is a Desvantagem scoped
+ * by {@code AttributeDomain} with a named Perícia carve-out, which no hook expresses — so its
+ * bonuses keep waiting on it.
+ */
+public enum GiganteFeat implements Feat {
+
+    /**
+     * "A característica Cuidado Para Não Quebrar não te concede mais quaisquer Desvantagens. Seu
+     * Movimento Base aumenta em +2UD para cada Título Aventyr Desperto, mas apenas para se
+     * aproximar de aliados feridos que pertençam à Categorias de Tamanhos inferiores à sua."
+     */
+    // TODO: Cuidado Para Não Quebrar is itself unbuilt — Gigantes' own javadoc records why: its
+    //  Desvantagem is scoped to "Perícias baseadas em Força ou Destreza", an AttributeDomain
+    //  scope no hook expresses. A Talento suppressing it has nothing to suppress, and there is
+    //  no mechanism for suppressing a Desvantagem either.
+    // TODO: the Movimento uplift is scoped to a *purpose* ("apenas para se aproximar de aliados
+    //  feridos" of a smaller Categoria de Tamanho), and this core does not track what movement
+    //  is for. Granting it through resolveMovementIncrease would raise the holder's Movimento
+    //  Base for every purpose, which the clause explicitly excludes.
+    ZELO_PELOS_FRAGEIS(
+            "Você se acostumou a viver com as criaturas de tamanhos inferiores, não ferir ninguém "
+                    + "acidentalmente se tornou natural. A característica Cuidado Para Não Quebrar "
+                    + "não te concede mais quaisquer Desvantagens. Seu Movimento Base aumenta em "
+                    + "+2UD para cada Títulos Aventyr Despertos, mas apenas para se aproximar de "
+                    + "aliados feridos que pertençam à Categorias de Tamanhos inferiores à sua.",
+            () -> FeatRequirements.builder()
+                    .requiredRace(Gigantes.class)
+                    .requiredAwakenedTitles(1)
+                    .build()),
+
+    /**
+     * "Seus aliados recebem Bônus de +1 em Defesas enquanto estiverem adjacentes a você. Este
+     * Bônus aumenta em +1 para cada Título Aventyr Desperto, então em +1 para cada Título
+     * Abençoado desperto."
+     *
+     * <p><b>Source-document defect.</b> Its {@code Descrição:} line opens with the bare text
+     * "Talento Zelo pelos Frágeis" — a prerequisite that slipped into the description field, the
+     * same defect {@code docs/rules/talentos-index.md} records at L635 for <i>Se Mover e
+     * Atacar</i>. Read as a prerequisite and recorded as {@code requiredFeat}; the description
+     * below is the remaining, genuine text.
+     */
+    // TODO: an ally-facing continuous Defesas grant — see the class javadoc. The amount is fully
+    //  computable off Character#getAllTitles() (one per Título, one more per Abençoado); what is
+    //  missing is the scan, and a Feat hook for it to reach. Second real consumer of the shape,
+    //  after Santo's Despertar.
+    ESCUDO_QUE_ANDA(
+            "Seus aliados recebem Bônus de +1 em Defesas enquanto estiverem adjacentes a você. "
+                    + "Este Bônus aumenta em +1 para cada Título Aventyr Desperto, então em +1 "
+                    + "para cada Título Abençoado desperto.",
+            () -> FeatRequirements.builder()
+                    .requiredRace(Gigantes.class)
+                    .requiredFeat(ZELO_PELOS_FRAGEIS)
+                    .requiredAwakenedTitles(1)
+                    .build()),
+
+    /**
+     * "Sua Categoria de Tamanho aumenta em +1, então recebe Bônus de +1 Força para cada Título
+     * Aventyr Desperto, mas recebe Redutor de -2 em suas Defesas."
+     */
+    // All three halves are real now, so the Talento is granted whole rather than withheld: the
+    // Categoria de Tamanho step through Feat#resolveSizeCategoryIncrease (a *shift*, exactly as
+    // written — unlike GnomoFeat#DUENDE's absolute set), the Força through
+    // Feat#resolveAttributeBonus, and the Defesas malus through resolveDefenseBonus. Its Jotun
+    // twin stays withheld because its own malus is still inexpressible; see there.
+    // "Um mesmo personagem não pode possuir mais de um Talento de Clã" is enforced now, through
+    // FeatRequirements#forbiddenFeats — each Clã Talento naming its twin.
+    GIGANTE_DO_CLA_EMPUSA(
+            "O Despertar de sua Centelha também desperta um poder latente em seu sangue, fruto da "
+                    + "descendência Abissal. Você se torna maior e mais poderoso, mas se torna "
+                    + "mais frágil. Sua Categoria de Tamanho aumenta em +1, então recebe Bônus de "
+                    + "+1 Força para cada Título Aventyr Desperto, mas recebe Redutor de -2 em "
+                    + "suas Defesas. Um mesmo personagem não pode possuir mais um de um Talento "
+                    + "de Clã.",
+            () -> FeatRequirements.builder()
+                    .requiredRace(Gigantes.class)
+                    .forbiddenFeat(giganteDoClaJotun())
+                    .requiredAwakenedTitles(1)
+                    .build()) {
+        @Override
+        public int resolveSizeCategoryIncrease(final Character character) {
+            return CLA_SIZE_CATEGORY_INCREASE;
+        }
+
+        /** "+1 Força para cada Título Aventyr Desperto" — every held Título counts, per Feat#isEligible. */
+        @Override
+        public int resolveAttributeBonus(final AttributeDomain attributeDomain, final Character character) {
+            return attributeDomain == AttributeDomain.STRENGTH ? character.getAllTitles().size() : 0;
+        }
+
+        @Override
+        public int resolveDefenseBonus(final DefenseType defenseType, final Character character) {
+            return EMPUSA_DEFENSE_MALUS;
+        }
+    },
+
+    /**
+     * "Sua Categoria de Tamanho aumenta em +1, então recebe Bônus de +1 em Vigor para cada Título
+     * Aventyr Desperto, mas recebe Desvantagens em rolagens de Perícias Físicas."
+     */
+    // TODO: withheld as a whole, unlike its Empusa twin, and for the reason the class javadoc
+    //  gives: its bonuses are grantable now (the size step and the Vigor both have hooks), but
+    //  its malus alone is not, so granting them would leave a Jotun strictly better off than
+    //  written. Both halves keep waiting together.
+    // TODO: its malus is not expressible — a Desvantagem on "Perícias
+    //  Físicas (baseadas em Força e Destreza), exceto Esquiva e Aparar" is scoped by
+    //  AttributeDomain with a named exception, which is the same shape Gigantes' own Cuidado
+    //  para não Quebrar is blocked on.
+    GIGANTE_DO_CLA_JOTUN(
+            "O Despertar de sua Centelha também desperta um poder latente em seu sangue, fruto da "
+                    + "descendência Titânica. Você se torna maior e mais resistente, mas seus "
+                    + "movimentos se tornam mais rígidos e lentos. Sua Categoria de Tamanho "
+                    + "aumenta em +1, então recebe Bônus de +1 em Vigor para cada Título Aventyr "
+                    + "Desperto, mas recebe Desvantagens em rolagens de Perícias Físicas "
+                    + "(baseadas em Força e Destreza), exceto Esquiva e Aparar. Um mesmo "
+                    + "personagem não pode possuir mais um de um Talento de Clã.",
+            () -> FeatRequirements.builder()
+                    .requiredRace(Gigantes.class)
+                    .forbiddenFeat(GiganteFeat.GIGANTE_DO_CLA_EMPUSA)
+                    .requiredAwakenedTitles(1)
+                    .build());
+
+    /** "Sua Categoria de Tamanho aumenta em +1" — one step, stated by both Clã Talentos. */
+    private static final int CLA_SIZE_CATEGORY_INCREASE = 1;
+
+    /** Empusa's own "Redutor de -2 em suas Defesas", applying to both DF and DM. */
+    private static final int EMPUSA_DEFENSE_MALUS = -2;
+
+    /**
+     * {@link #GIGANTE_DO_CLA_JOTUN}, reached through a method rather than named directly: Java forbids
+     * referencing a <em>later</em> enum constant from an earlier constant's constructor arguments,
+     * and a {@link Supplier} does not lift that — the restriction is on the reference, not on when
+     * it is evaluated. A static method body is not an initializer, so the forward reference is
+     * legal here. Only the forward half of each mutually-exclusive pair needs one; the constant
+     * declared second names its twin directly.
+     */
+    private static Feat giganteDoClaJotun() {
+        return GIGANTE_DO_CLA_JOTUN;
+    }
+
+    private final String description;
+    /**
+     * Held as a {@link Supplier} rather than a plain field because this tree's mutually-exclusive
+     * Talentos name each <em>other</em> as a {@code forbiddenFeat}, and Java forbids referencing
+     * an enum constant from another constant's constructor arguments. Deferring construction to
+     * the first {@link #getFeatRequirements()} call sidesteps that, the same way {@code
+     * MetamagicoFeat} already does for its own sibling {@code requiredFeat} chain.
+     */
+    private final Supplier<FeatRequirements> featRequirements;
+
+    GiganteFeat(final String description, final Supplier<FeatRequirements> featRequirements) {
+        this.description = description;
+        this.featRequirements = featRequirements;
+    }
+
+    @Override
+    public FeatCategory getFeatCategory() {
+        return FeatCategory.GIGANTE;
+    }
+
+    @Override
+    public String getDescription() {
+        return description;
+    }
+
+    @Override
+    public FeatRequirements getFeatRequirements() {
+        return featRequirements.get();
+    }
+}

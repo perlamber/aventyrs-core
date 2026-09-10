@@ -1,6 +1,6 @@
 ---
 name: adding-a-title
-description: This skill should be used when the user asks to "add a new Título", "add a new Aventyr Title", "implement a Título Aventyr", "add a new Santo-style title", or references adding a new entry to org.aventyrs.core.title. Walks through the full checklist of files/tests a new AventyrTitle needs, mirroring CLAUDE.md's "Títulos Aventyr" section.
+description: This skill should be used when the user asks to "add a new Título", "add a new Aventyr Title", "implement a Título Aventyr", "add a new Santo-style title", or references adding a new entry to org.aventyrs.core.title. Walks through the full checklist of files/tests a new AventyrTitle needs plus the architectural rationale, mirroring `Santo` as the reference implementation.
 ---
 
 # Adding a new Título Aventyr
@@ -9,9 +9,37 @@ A Título Aventyr (e.g. `Santo`) sits alongside `Race`/skills/ego advantages as 
 character concept in this codebase, but a character can hold several simultaneously — unlike
 `Race`'s single field — one optionally flagged as the holder's Título Primário. This skill
 walks through building a new one from scratch, following the exact conventions `Santo`
-established as the reference implementation. Read `CLAUDE.md`'s "Títulos Aventyr"
-section first — it carries the full architectural rationale; this skill is the operational
-checklist on top of it.
+established as the reference implementation. The architectural rationale is in the next
+section (it used to live in CLAUDE.md's "Títulos Aventyr" section); the rest of this skill is
+the operational checklist on top of it. `adding-a-title-specialization` covers a Título's two
+Especializações and their gated abilities.
+
+## 0. Architectural rationale
+
+- **Catalog vs. instance**: `AventyrTitle` is the per-character *held instance* (same shape as
+  `MoralHerdadaAbility`/`ArtesAprimorarComArteAbility`), **not** a stateless-per-family class
+  like `Race` — held specializations/abilities are genuinely per-acquisition data. "Which
+  Título family this is" is answered by which concrete class implements `AventyrTitle`,
+  deliberately not a separate identity enum.
+- **Three slots, not a list**: `Character` holds plain nullable `primaryTitle`/`secondaryTitle`/
+  `tertiaryTitle` fields, keyed by `TitleSlot` (`org.aventyrs.core.character`, mirroring
+  `EgoDomain`'s placement). **Whether an instance is the holder's Título Primário is not a
+  method on `AventyrTitle`** — it's a fact about *which slot* holds it, so at most one can ever
+  be primary by construction; a caller resolves `Character#getPrimaryTitle() == title`
+  externally and passes it in where needed. `Character#grantTitle(AventyrTitle, TitleSlot)` sets
+  the field directly, overwriting that slot — acquiring a Título costs no XP and needs no
+  `CharacterSheet`, so unlike `upgradeBase`/`upgradeGraduation` there's no service to route
+  through. `Character#getAllTitles()` is the derived list (Primário first, empty slots omitted)
+  a scanning service uses. `CharacterFixture` sets all three to `null`.
+- **"Requer N Especializações/Habilidades" prerequisites are real, enforced data** — one of
+  only two exceptions in this codebase to the usual "leave prerequisites as an unenforced
+  comment" restraint (the other is `Feat`), enforced by `TitleAbilityService#grantTitleAbility`
+  (`TITLE_ABILITY_PREREQUISITE_NOT_MET`). The Suprema-per-combination cap is softer:
+  `getAvailableSupremaSlots` reports how many more a Título may receive, and `grantTitleAbility`
+  enforces it on that one entry point, but constructing an `AventyrTitle` directly with more is
+  still unchecked.
+- **Keep `org.aventyrs.core.title/package-info.java` current** whenever the granting API changes
+  shape — same discipline as `character.services`' own package-info.
 
 ## 1. Read the rules text first
 
@@ -142,8 +170,7 @@ Grant via `character.grantTitle(new <Title>(...), TitleSlot.PRIMARY)` (or `SECON
 `TERTIARY`) — never rebuild through `.toBuilder()` for this. `Character` holds exactly three
 plain nullable Título fields (`primaryTitle`/`secondaryTitle`/`tertiaryTitle`), not a list —
 `TitleSlot` (`org.aventyrs.core.character`) names which one. Use `character.getAllTitles()`
-when a scanning service needs every held Título regardless of slot (see CLAUDE.md's own
-rationale).
+when a scanning service needs every held Título regardless of slot (see section 0).
 
 ## 5. Extend a scanning service only when truly needed
 
@@ -181,7 +208,8 @@ One file per new type:
 ## 7. Update docs
 
 - `org.aventyrs.core.title/package-info.java` if the granting API's shape changed.
-- CLAUDE.md's "Títulos Aventyr" section if the checklist itself changed.
+- This skill's section 0 if an *architectural* fact changed, and the skill index in CLAUDE.md
+  if the trigger surface changed.
 
 ## 8. Invoke `adding-a-title-specialization`
 

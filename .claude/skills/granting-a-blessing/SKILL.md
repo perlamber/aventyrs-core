@@ -1,23 +1,37 @@
 ---
 name: granting-a-blessing
-description: This skill should be used whenever rules text describes granting a bonus of any kind or amount — Vantagem, a flat +N to a Perícia roll or dano roll, RD, RA, Movimento, Pontos de Ação, Iniciativa, Defesas, or any other ModifierType-style stat — to the character themselves and/or their allies, for a limited Duração/number of Rodadas. Trigger phrases include (not limited to) "você e seus aliados", "você e aliados em Distância X/adjacentes", "a eles, mas não a você", "ao vencer a iniciativa", "recebe Vantagem em rolagens de Perícias", "recebe RD/RA por N Rodadas", "concede um Bônus de +N", or any Vantagem de Ego/Habilidade/Habilidade de Competência/Habilidade de Título clause naming a temporary, trigger-based grant — whether the trigger is activating an ability/Perícia roll or winning initiative for the group. Also use it when explicitly asked to "add a Blessing", "grant a bonus to allies", or "add a temporary buff". Walks through confirming this is actually a `Blessing` case (not a permanent `@Modifier`, a per-roll conditional bonus, or a damage/RA hook), classifying the trigger, resolving/adding the right `ModifierType`, choosing the `TargetScope`, and wiring it — mirroring CLAUDE.md's "Temporary bonuses from other Characters" and "Movimento Base, and blessings granted on winning initiative" sections.
+description: This skill should be used whenever rules text describes granting a bonus of any kind or amount — Vantagem, a flat +N to a Perícia roll or dano roll, RD, RA, Movimento, Pontos de Ação, Iniciativa, Defesas, or any other ModifierType-style stat — to the character themselves and/or their allies, for a limited Duração/number of Rodadas. Trigger phrases include (not limited to) "você e seus aliados", "você e aliados em Distância X/adjacentes", "a eles, mas não a você", "ao vencer a iniciativa", "recebe Vantagem em rolagens de Perícias", "recebe RD/RA por N Rodadas", "concede um Bônus de +N", or any Vantagem de Ego/Habilidade/Habilidade de Competência/Habilidade de Título clause naming a temporary, trigger-based grant — whether the trigger is activating an ability/Perícia roll or winning initiative for the group. Also use it when explicitly asked to "add a Blessing", "grant a bonus to allies", or "add a temporary buff". Walks through confirming this is actually a `Blessing` case (not a permanent `@Modifier`, a per-roll conditional bonus, or a damage/RA hook), classifying the trigger, resolving/adding the right `ModifierType`, choosing the `TargetScope`, and wiring it — with `DOM_BARDICO` / `GRITO_DE_GUERRA_VULCANO` / `POSICIONAMENTO_ESTRATEGICO` as the reference constants.
 ---
 
 # Granting a `Blessing`
 
 A `Blessing` (`org.aventyrs.core.sheet`) is a small value object — `ModifierType`, `int value`,
 `int rounds`, `TargetScope scope`, `String source` — for a **temporary, trigger-based bonus**
-granted to the holder and/or their Scene allies. Three real constants use it today, covering
-both triggers and every current `TargetScope`: `ArtesCompetencyAbility#DOM_BARDICO` (roll-time
+granted to the holder and/or their Scene allies. Real constants use it today across every
+current `TargetScope` and every trigger: `ArtesCompetencyAbility#DOM_BARDICO` (roll-time
 activation, `TargetScope.ALLIES` — excludes the caster), `AbencoadoPelaLuzAbility
 #GRITO_DE_GUERRA_VULCANO` (a Título Habilidade's own activation, `TargetScope.SELF_AND_ALLIES`,
-reporting three `Blessing`s at once), and `InitiativeAdvantage#POSICIONAMENTO_ESTRATEGICO`
-(winning-initiative trigger, `TargetScope.SELF_AND_ALLIES`). Read all three before assuming a
-new case is a fourth genuinely distinct shape.
+reporting three `Blessing`s at once), `InitiativeAdvantage#POSICIONAMENTO_ESTRATEGICO`
+(winning-initiative trigger, `TargetScope.SELF_AND_ALLIES`), and `AnaoFeat#VIGOR_DO_INVERNO`
+(`Feat#resolveCombatStartBlessings`, a start-of-combat trigger applied by
+`CombatantSheet#startCombat()`, `TargetScope.SELF`, duration scaled off holder state). Read the
+relevant ones before assuming a new case is a genuinely distinct shape.
 
-Read CLAUDE.md's "Temporary bonuses from other Characters" and "Movimento Base, and blessings
-granted on winning initiative" sections first — this skill is the operational checklist on top
-of them.
+The `scene-context-and-positioning` skill covers the `Scene`-internal apply/revoke and
+ally-propagation facts for the initiative-win trigger; `skill-roll-mechanics` covers "Vantagem
+is a flat +2 bonus" and `aggregated-character-stats` covers the `MOVEMENT`/`ACTION_POINTS`/etc.
+counters a `Blessing` can target. This skill is the operational checklist for the grant itself.
+
+The consumer-side data model (for anyone reading `InteractionResult.blessings` without granting
+one): `TemporaryBonus` (`org.aventyrs.core.sheet`) pairs a `ModifierType`, an `int value`, and a
+`remainingRounds` countdown; `CharacterSheet#grantTemporaryBonus(ModifierType, value, rounds)`
+adds one and `getTemporaryBonus(ModifierType)` sums every active one of that type;
+`tickTemporaryBonuses()` (reached via `finishTurn()`) counts them down. `Blessing`
+(`ModifierType`, `value`, `rounds`, `TargetScope scope`, `String source`) is what an Interaction
+*reports*; `InteractionResult.blessings` is a `List` that stays `null` when nothing is granted.
+`CharacterSheet` doesn't track *who* granted a bonus — a caller resolves recipients via
+`Scene.getAllies`/`getEnemies` / `SceneContext.getAlliesWithin` and calls `grantTemporaryBonus`
+on each.
 
 ## 1. Confirm this is actually a `Blessing` case
 
@@ -29,8 +43,8 @@ misrepresents the rules text. Rule these out first:
   mentioned, no activation) — a plain `@Modifier(ModifierType.X)` method on the ability/
   excellency, summed by the flat reflection-based scan (`ReactionsService`/`DamageService`/
   `AbstractSkillInteraction`/etc.). **Not** a `Blessing` — nothing to grant/revoke, it's just
-  always active while the trait is held. See CLAUDE.md's "Vantagem is a flat +2 bonus" and
-  "Character-level stats aggregated from abilities" sections.
+  always active while the trait is held. See the `skill-roll-mechanics` and
+  `aggregated-character-stats` skills.
 - **A per-roll bonus conditioned on live `SceneContext` facts** (e.g. "durante as duas
   primeiras Rodadas de uma Cena de Combate", "se tiver inimigos em Distância Curta"), computed
   fresh every roll rather than granted-then-ticking-down — `EgoAdvantage
@@ -43,10 +57,17 @@ misrepresents the rules text. Rule these out first:
   #resolveAbsoluteDamageReduction`/`#resolveHalfDamage` or `AventyrTitleAbility
   #resolveAbsoluteDamageReduction` (see `InitiativeAdvantage#TORRE_EM_MOVIMENTO`,
   `SantoAbility#BASTIAO_DOS_NECESSITADOS`).
+- **A self-buff the holder spends a resource to switch on for a fixed Duração** ("como uma Ação
+  Livre, gaste 3PV, dura 2 Rodadas" — a Poder Vampírico, `FocusAbility#CONCENTRACAO_PROFUNDA`) —
+  an `ActiveAbility`, not a `Blessing`. It returns its own `TemporaryEffect`s from
+  `resolveEffects(Character)`; `ActiveAbilityService#activate` does the affordability check
+  (PA/PM/**PV**), the spend, and the apply. A Talento grants one via `Feat#resolveActiveAbility()`
+  (stable singleton). See `PoderVampiricoActiveAbility`.
 - **A `Blessing`** is what's left: the rules text names an actual **duration** ("por N
   Rodadas", "nas duas primeiras Rodadas", a graduation/PV-scaled duration) and an actual
-  **trigger** (activating an ability/Habilidade/Perícia roll, or winning initiative) — not a
-  live per-roll condition, not a standing passive.
+  **trigger applied to *someone else* or the whole group** (activating an ability/Habilidade/
+  Perícia roll that buffs allies, or winning initiative) — not a live per-roll condition, not a
+  standing passive, not a self-only activated state (that's the `ActiveAbility` above).
 
 ## 2. Read the rules text for the four facts a `Blessing` needs
 
@@ -70,6 +91,18 @@ misrepresents the rules text. Rule these out first:
   specific gap, until a fourth source is added to `InitiativeBlessingServiceImpl`). Resolved by
   `InitiativeBlessingService#resolveBlessings(Character)` and applied by `Scene
   #applyInitiativeBlessings` — this class doesn't touch `CharacterSheet` itself.
+- **"No início de cada combate ..." (start of combat)** — override `default List<Blessing>
+  resolveCombatStartBlessings(Character)` on `Feat` (the only source scanned today —
+  `AnaoFeat#VIGOR_DO_INVERNO`). Resolved *and applied* by `CombatantSheet#startCombat()` — the
+  sheet scans its own `Character`'s Talentos and grants each as a `TemporaryBonus`, returning
+  them; it is idempotent within a Cena (re-armed by `startNewScene()`). `Scene#startCombat()`
+  fires it for every participant and flips `isCombatScene()` (this core has no combat observer —
+  a caller drives it). The Blessing carries its own Duração — a duration that scales off holder
+  state (Vigor do Inverno's ½ Multiplicador de PV) is computed inside the override from
+  `character`, the way `AssassinoFeat#SANGUE_QUENTE` computes its *value*. Every such Blessing is `TargetScope.SELF`
+  so far; a `TemporaryBonus` of a `ModifierType` with an existing non-temporary consumer (RD's
+  reflection scan) needs that consumer taught to read `getTemporaryBonus` too — done for
+  `DAMAGE_REDUCTION` on the `CombatantSheet` overload of `DamageService#getTotalDamageReduction`.
 - **Any other explicit activation** (a Habilidade's own Custo de Ativação, or a Perícia roll's
   own rules text like DOM_BARDICO's) — report it via `InteractionResult#getBlessings()` on the
   relevant `<X>Interaction` (a `<Skill>Interaction` for a Perícia-roll-time grant, or a
@@ -131,6 +164,11 @@ the `ModifierType` already has a working, different consumer.
 - **Initiative-win trigger**: `return List.of(new Blessing(...));` from the overridden
   `resolveInitiativeBlessings()`. Nothing else to wire — `InitiativeBlessingService`/`Scene
   #applyInitiativeBlessings` already pick it up generically.
+- **Start-of-combat trigger**: `return List.of(new Blessing(...));` from the overridden
+  `Feat#resolveCombatStartBlessings(Character)`. Nothing else to wire — `CombatantSheet#startCombat()`
+  scans it generically. If the Blessing's `ModifierType` already has a non-temporary consumer
+  (RD, Defesas, …), verify that consumer's `CombatantSheet` overload reads `getTemporaryBonus`
+  of that type; add the read if not (as `DamageServiceImpl` now does for `DAMAGE_REDUCTION`).
 - **Activation trigger**: set `InteractionResult.builder().blessings(List.of(...)).build()`
   (or `.toBuilder()` if extending a base result — see `ArtesInteraction`'s own `applyTo`
   override) inside the relevant `<X>Interaction`. If more than one `Blessing` applies at once
@@ -157,6 +195,12 @@ the `ModifierType` already has a working, different consumer.
   genuinely new scanning path (not just a new constant on an existing one), add `SceneTest`
   coverage mirroring `applyInitiativeBlessingsGrantsAnAllyScopedBlessingToTheWinnerAndItsAllies`/
   `applyInitiativeBlessingsGrantsASelfOnlyBlessingOnlyToTheWinner`.
+- **Start-of-combat trigger**: a `CharacterSheetTest` case on `startCombat()` asserting the
+  granted `Blessing`s land as `TemporaryBonus`es and that a second call the same Cena grants
+  nothing (idempotency, re-armed by `startNewScene()`); a `SceneTest` case that `Scene#startCombat()`
+  fires it for every participant and refuses to run twice; and, if a non-temporary consumer was
+  taught to read the `ModifierType`, a case proving the round-scoped grant is summed on the
+  `CombatantSheet` path but not the `Character`-only one.
 - **Activation trigger**: a `<X>InteractionTest` asserting the reported `blessings` list — see
   `GritoDeGuerraVulcanoInteractionTest`/`ArtesInteractionTest`'s DOM_BARDICO cases for the
   shape (including the "ability not held → `blessings` stays `null`" case, and, for
@@ -185,6 +229,11 @@ the `ModifierType` already has a working, different consumer.
   scan for the initiative-win trigger.
 - `src/main/java/org/aventyrs/core/scene/Scene.java` (`applyInitiativeBlessings`,
   `SceneTest.java`) — how an initiative-win `Blessing` actually gets applied/revoked.
+- `src/main/java/org/aventyrs/core/sheet/AbstractCombatantSheet.java` (`startCombat()`) +
+  `src/main/java/org/aventyrs/core/scene/Scene.java` (`startCombat()`) + `AnaoFeat#VIGOR_DO_INVERNO`
+  — the start-of-combat trigger, `TargetScope.SELF`, a holder-state-scaled duration, and a
+  `DAMAGE_REDUCTION` Blessing that needed `DamageServiceImpl` taught to read `getTemporaryBonus`.
+  The sheet scans its own `Character`'s Talentos (`Feat#resolveCombatStartBlessings`).
 - `src/main/java/org/aventyrs/core/title/santo/AbencoadoPelaLuzInteraction.java` — the
   direct-mutation, single-known-recipient shape that does **not** use `Blessing` at all,
   included here specifically so it's easy to tell apart from the activation-trigger case above.

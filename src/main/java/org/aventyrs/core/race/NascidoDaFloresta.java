@@ -47,7 +47,7 @@ import static org.aventyrs.core.util.TranslatableMessages.INVALID_PARENT_RACE;
  *   gap as every other race; purely narrative today.</li>
  *   <li><b>2 Talentos adicionais</b> (Metamágicos, Feéricos ou Elementais) — same "no Feat
  *   catalog, no {@code Character.feats} list, no hook for granting extra Talento slots" gap as
- *   every other race's free Talentos; {@code FeatCategory#METAMAGICO}/{@code #FERRICO}/{@code
+ *   every other race's free Talentos; {@code FeatCategory#METAMAGICO}/{@code #FEERICO}/{@code
  *   #ELEMENTAL} already exist as categories to eventually restrict the grant to.</li>
  *   <li><b>Considerados Elementais para pré-requisitos de Talentos</b> — an unenforced-
  *   prerequisite classification, same restraint this codebase already applies to every "Requer N
@@ -62,12 +62,13 @@ import static org.aventyrs.core.util.TranslatableMessages.INVALID_PARENT_RACE;
  *   int-vs-fractional mismatch already flagged there ({@link
  *   #getNewFeatCost(org.aventyrs.core.feat.FeatCategory)} returns a plain {@code int}).</li>
  *   <li><b>Domínio da Natureza</b> (Magias conjuradas contam como Naturais além de seus tipos,
- *   exceto Primordiais/Umbrais que ficam impossíveis de aprender; custam 0.5 EXP a menos) —
- *   needs a Magia entity with a concrete catalog and spell-type classification ({@code
- *   org.aventyrs.core.magic.SpellCastingService}'s own "No Magia entity/list exists yet"), plus
- *   a spell-*learning*-cost system this core has no equivalent of — same missing pieces {@code
- *   Furia}'s own Magia Natural cites, plus another 0.5-EXP fractional-cost case beyond what
- *   {@code getNewFeatCost} alone would need.</li>
+ *   exceto Primordiais/Umbrais que ficam impossíveis de aprender; custam 0.5 EXP a menos) — the
+ *   0.5-EXP discount now has somewhere to live ({@code Race#resolveSpellAcquisitionCostReduction},
+ *   which {@code SpellService#getAcquisitionCost} aggregates and floors) and, since every Magia
+ *   this race casts counts as Natural, the discount is effectively unscoped like {@code
+ *   Agastias}'s. Still blocked: this race's Características Raciais aren't modelled as constants
+ *   yet, and "contam como Naturais" / "Primordiais e Umbrais impossíveis de aprender" needs a
+ *   spell-type reclassification + acquisition veto nothing has.</li>
  *   <li><b>Imunidade a Magias</b> (immune to most spells, Primordiais/Umbrais excepted; still
  *   affected by indirect magical effects like enchanted weapons) — same missing Encantamento/
  *   spell-*type*-classification concept {@code Furia}'s own Imunidade a Encantamentos cites,

@@ -2,9 +2,10 @@ package org.aventyrs.core.character.services;
 
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.DamageType;
+import org.aventyrs.core.character.DamageDescriptor;
+import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.CombatantSheet;
-import org.aventyrs.core.skill.SkillExcellency;
 
 /**
  * Computes and applies damage mitigation. Two independent flat reductions exist — RD
@@ -28,8 +29,10 @@ public interface DamageService {
      * The RD an ability grants when its own rules text doesn't spell out an explicit bonus
      * (e.g. just "concede RD" with no number). Also reused as RA's own unspecified-bonus
      * default (e.g. {@code InitiativeAdvantage#TORRE_EM_MOVIMENTO}'s "você recebe RA" with no
-     * number of its own) — RD and RA are independent reductions, but nothing in the rules text
-     * suggests a different unspecified-amount convention for one versus the other.
+     * number of its own) and as RM's ({@link #getTotalMagicReduction}) — RD, RA and RM are
+     * independent reductions, but {@code docs/rules/defesas-e-resistencias.txt} prices one
+     * instance of each at the same -2, and nothing in the rules text suggests a different
+     * unspecified-amount convention for one versus the others.
      */
     int DEFAULT_DAMAGE_REDUCTION = 2;
 
@@ -48,9 +51,35 @@ public interface DamageService {
      * its own data (e.g. {@code SizeCategory}) is what a held ability's condition may need;
      * damageType/source may be {@code null} (unclassified damage / no known attacker), same
      * restraint every other Scene/roll-conditioned {@code resolve*} hook in this core already
-     * applies. Never negative.
+     * applies.
+     *
+     * <p>Also reads {@code target.getTemporaryBonus(ModifierType.DAMAGE_REDUCTION)} — a
+     * round-scoped RD grant ({@code AnaoFeat#VIGOR_DO_INVERNO}'s combat-start Blessing). The
+     * {@link #getTotalDamageReduction(Character)} overload structurally cannot (no sheet), the
+     * same split the aggregate Pontos de Ação / Reações reads carry. Never negative.
      */
     int getTotalDamageReduction(CombatantSheet target, DamageType damageType, CombatantSheet source);
+
+    /** Descriptor-aware RD calculation, including equipped-item resistance to a concrete element. */
+    int getTotalDamageReduction(CombatantSheet target, DamageDescriptor damageDescriptor, CombatantSheet source);
+
+    /**
+     * Total RM — Resistência à Magias, the magic-damage counterpart of RD. Summed from the same
+     * five sources {@link #getTotalDamageReduction(CombatantSheet, DamageType, CombatantSheet)}
+     * uses: the three-source {@code @Modifier} scan of {@link ModifierType#MAGIC_REDUCTION}, every
+     * equipped {@code Item}'s Favor and enhancements ({@code DefensiveMasterpiece#DYOSPIROS}/
+     * {@code #MITRAL}'s "Concede RM"), every held Talento's {@code Feat#resolveMagicReduction}
+     * ({@code GorgonaFeat#PROTECAO_DA_RAINHA_DAS_FADAS}), and a round-scoped {@code
+     * TemporaryBonus}. Never negative.
+     *
+     * <p><b>Only applied to damage typed {@code DamageType#MAGICO}</b> — {@code
+     * calculateFinalDamage} adds this to the mitigation total on that condition alone, so an
+     * unclassified hit is unaffected. Takes a sheet and no {@code damageType}/{@code source}: no
+     * authored RM clause is conditioned on either, unlike RD's attacker-size-scoped {@code
+     * AttributeAbility} hook. There is no {@code Character}-only overload for the same reason —
+     * every real caller resolving typed damage already holds the sheet.
+     */
+    int getTotalMagicReduction(CombatantSheet target);
 
     /** Total RA, same three sources as RD. Never negative. */
     int getTotalAbsoluteDamageReduction(Character character);
@@ -111,6 +140,32 @@ public interface DamageService {
                               DamageType damageType, CombatantSheet source, int rawDamage, boolean ignoreDamageReduction);
 
     /**
+     * Same as {@link #calculateFinalDamage(CombatantSheet, SceneContext, DamageType,
+     * CombatantSheet, int, boolean)}, but with the Meio-Dano stage forced on by the
+     * <b>attack</b> rather than found on the target.
+     *
+     * <p>Every other half-damage source in this core belongs to whoever is being hit — a {@code
+     * ModifierType#HALF_DAMAGE} modifier or an {@code EgoAdvantage#resolveHalfDamage} of their
+     * own. This parameter is the other direction: {@code
+     * ArtesMarciaisFeat#DOMINAR_ARTE_MARCIAL_ARTE_FLUIDA}'s "os danos no alvo adicional são
+     * reduzidos à metade" is a property of the blow, and the combatant taking it has nothing to
+     * carry it with. It is <b>additive</b> with the scanned sources, exactly as those already
+     * are with each other: either alone is enough to halve, and two never quarter.
+     *
+     * <p>It stays the last stage regardless of where it came from — RD and RA come off first,
+     * then what remains is halved (rounded down), so a target with RD is not charged the
+     * halving twice.
+     */
+    int calculateFinalDamage(CombatantSheet target, SceneContext sceneContext,
+                             DamageType damageType, CombatantSheet source,
+                             int rawDamage, boolean ignoreDamageReduction, boolean halfDamage);
+
+    /** Descriptor-aware final-damage calculation for elemental attacks. */
+    int calculateFinalDamage(CombatantSheet target, SceneContext sceneContext,
+                             DamageDescriptor damageDescriptor, CombatantSheet source,
+                             int rawDamage, boolean ignoreDamageReduction);
+
+    /**
      * Computes the final damage (see {@link #calculateFinalDamage}) and applies it to
      * characterSheet — Shield points are absorbed first, then Hit Points, per
      * {@link CombatantSheet#applyDamage}. No
@@ -139,4 +194,9 @@ public interface DamageService {
      */
     int applyDamage(CombatantSheet characterSheet, SceneContext sceneContext,
                      DamageType damageType, CombatantSheet source, int rawDamage, boolean ignoreDamageReduction);
+
+    /** Applies fully-classified damage, including equipped-item resistance to a concrete element. */
+    int applyDamage(CombatantSheet characterSheet, SceneContext sceneContext,
+                    DamageDescriptor damageDescriptor, CombatantSheet source,
+                    int rawDamage, boolean ignoreDamageReduction);
 }

@@ -1,5 +1,6 @@
 package org.aventyrs.core.effect;
 
+import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.InteractionResult;
@@ -56,7 +57,7 @@ public class Definhar extends AbstractEffect implements EffectChain {
     @Override
     public InteractionResult applyTo(final CombatantSheet target) {
         Character affectedCharacter = target.getCharacter();
-        int vigorTotal = affectedCharacter.getAttributes().getVigor().getTotal();
+        int vigorTotal = affectedCharacter.getEffectiveAttributeTotal(AttributeDomain.VIGOR);
 
         target.applyEffect(new Withering(PER_ROUND_DAMAGE, Optional.of(vigorTotal)));
 

@@ -9,10 +9,15 @@ import org.aventyrs.core.character.CharacterAttributes;
 import org.aventyrs.core.character.CharacterEgos;
 import org.aventyrs.core.character.SizeCategory;
 import org.aventyrs.core.feat.FeatCategory;
+import org.aventyrs.core.magic.BranchLevel;
+import org.aventyrs.core.magic.Spell;
+import org.aventyrs.core.magic.TestSpell;
+import org.aventyrs.core.magic.TestSpellTree;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.Player;
 import org.junit.jupiter.api.Test;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
@@ -85,6 +90,23 @@ class AgastiasTest {
         Agastias agastias = new Agastias(new Human(), Agastias.Linhagem.VULCANO);
         assertEquals(Race.BASE_NEW_FEAT_COST, agastias.getNewFeatCost(FeatCategory.PERITO));
         assertEquals(Race.BASE_NEW_SKILL_COST, agastias.getNewSkillCost());
+    }
+
+    @Test
+    void magiaECienciaTakesHalfAnExpOffEveryMagia() {
+        Agastias agastias = new Agastias(new Human(), Agastias.Linhagem.VULCANO);
+        Spell broto = TestSpell.at(TestSpellTree.LINEAR, BranchLevel.BROTO, null);
+        Spell emergente = TestSpell.at(TestSpellTree.LINEAR, BranchLevel.EMERGENTE, null);
+
+        assertEquals(0, new BigDecimal("0.5").compareTo(agastias.resolveSpellAcquisitionCostReduction(null, broto)));
+        assertEquals(0, new BigDecimal("0.5").compareTo(agastias.resolveSpellAcquisitionCostReduction(null, emergente)));
+    }
+
+    @Test
+    void anOrdinaryRaceGivesNoSpellAcquisitionDiscount() {
+        assertEquals(0, BigDecimal.ZERO.compareTo(
+                new Human().resolveSpellAcquisitionCostReduction(null,
+                        TestSpell.at(TestSpellTree.LINEAR, BranchLevel.BROTO, null))));
     }
 
     @Test

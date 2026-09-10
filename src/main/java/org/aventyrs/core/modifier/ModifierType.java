@@ -42,9 +42,84 @@ public enum ModifierType {
     FREE_ACTIONS,
     INITIATIVE,
     MOVEMENT,
+    /**
+     * A flat modifier to a <b>dano roll</b> — not to a Perícia roll, and not damage reduction.
+     * Its counterpart on the roll side is {@code SKILL_ROLL_BONUS}: "Vantagem em rolagens de
+     * Dano" is the same flat +2 that Vantagem is anywhere else (see {@code Skill#ADVANTAGE_BONUS}),
+     * and a Desvantagem the same -2.
+     *
+     * <p>Exists so a source that carries {@code ModifierType}-typed data rather than a typed
+     * {@code DamageBonus} can still reach a dano roll — a {@code TemporaryBonus} granted by
+     * another character's action, or a {@code ConditionType.ConditionEffect} (Caído's "Desvantagem
+     * em rolagens de Dano Corpo-a-Corpo", the fear ladder's proximity-scoped one). Abilities that
+     * grant <i>typed</i> extra damage keep returning a {@code DamageBonus} instead; both are
+     * summed together by {@code AbstractSkillInteraction}.
+     */
+    DAMAGE_ROLL_BONUS,
     DAMAGE_REDUCTION,
+    /**
+     * Resistência à Magias (RM) — the magic-damage counterpart of {@link #DAMAGE_REDUCTION}. Per
+     * {@code docs/rules/defesas-e-resistencias.txt} each instance reduces Dano Mágico
+     * não-PRIMORDIAL by -2, so a bonus of {@code DamageService#DEFAULT_DAMAGE_REDUCTION} here is
+     * one instance — the same figure a numberless "você recebe RM" clause grants.
+     *
+     * <p>Resolved by {@code DamageService#getTotalMagicReduction} from the same five sources RD
+     * uses (the three-source {@code @Modifier} scan, equipped {@link
+     * org.aventyrs.core.item.Item}s, held Talentos via {@code Feat#resolveMagicReduction}, and a
+     * round-scoped {@code TemporaryBonus}), and added to the mitigation total by {@code
+     * calculateFinalDamage} <b>only when the incoming damage is typed {@code
+     * DamageType#MAGICO}</b> — an unclassified hit ({@code damageType} {@code null}, which is
+     * what most callers still pass) gets none of it, since "caller didn't say" is not "this was
+     * magic".
+     *
+     * <p><b>RD is still type-blind, so magic damage is currently over-mitigated.</b> The rules
+     * give RD only to Dano Físico não-PRIMORDIAL e não-ELEMENTAL, but {@code
+     * getTotalDamageReduction} applies it whatever the type — so a hit typed {@code MAGICO} takes
+     * RD <em>and</em> RM today. Narrowing RD belongs to the damage-type system (CLAUDE.md's
+     * "Damage-type-scoped mitigation" row), not here; this constant only closes the missing
+     * resistance, not the over-broad one.
+     *
+     * <p>Resistência Elemental (RE) is the third sibling in that rules block and has no constant:
+     * nothing in the catalog grants a plain RE that isn't also scoped to one {@code
+     * org.aventyrs.core.magic.ElementalType}, which is the {@code DamageDescriptor} path already
+     * built for equipment. Add it with its first real consumer.
+     */
+    MAGIC_REDUCTION,
     HALF_DAMAGE,
     ABSOLUTE_DAMAGE_REDUCTION,
+    /**
+     * Resistência à Críticos (RC) — a <b>defender-side</b> reduction of the Margem Crítica an
+     * attack made against this combatant can reach. Per {@code
+     * docs/rules/defesas-e-resistencias.txt}, each instance lowers the attacker's Margem Crítica
+     * Menor by -2 (and Maior by -1), so a bonus of {@code 2} here is one instance.
+     *
+     * <p><b>This constant is only the round-scoped half of RC.</b> A {@code Blessing}/{@code
+     * TemporaryBonus} typed with it ({@code AnaoFeat#VIGOR_DO_INVERNO}'s combat-start grant) is
+     * one source; a <em>standing</em> grant from the holder's Raça ({@code
+     * Race#getCriticalResistance()}) or a held Talento ({@code Feat#resolveCriticalResistance})
+     * is the other, and carries no {@code ModifierType} at all. Both are summed by {@code
+     * CombatantSheet#getTotalCriticalResistance}, which is what a consumer should call — reading
+     * {@code getTemporaryBonus(CRITICAL_RESISTANCE)} alone sees only the timed half.
+     *
+     * <p><b>Partial reader.</b> Only {@code
+     * org.aventyrs.core.skill.AbstractSkillInteraction} consumes that total — the attacker-rolls
+     * path subtracts the attack target's figure from the summed Margem Crítica Menor widening
+     * before {@code SkillRoll#getCriticalResult(int)}, so it also reaches {@code
+     * org.aventyrs.core.combat.AttackDelivery}, which routes through that same interaction. Not
+     * read on the {@code org.aventyrs.core.combat.AttackReceiver} mirror (the attacker rolls
+     * nothing there). The "-1 à Margem Crítica Maior" clause has no expression — this ruleset
+     * models no Acerto Crítico Maior margin at all — and the "até o mínimo de 17" floor is
+     * approximated as "cannot push the attacker below their own baseline margin" (a net negative
+     * widening is floored at 0 by {@code getCriticalResult}). No "não-PRIMORDIAL" scoping either;
+     * the crit path carries no PRIMORDIAL marker.
+     *
+     * <p>Still without a home: an <b>item-scoped</b> RC, a value a produced or worn Equipamento
+     * carries and passes to its wearer ({@code ProfissaoCompetencyAbility#FORJA_VULCANA}) —
+     * neither {@code Item} nor the sheet total has a notion of one — and a {@code
+     * SkillCompetencyAbility}/{@code AttributeAbility} standing grant, which no constant in the
+     * catalog asks for.
+     */
+    CRITICAL_RESISTANCE,
     DEFESAS,
     PHYSICAL_DEFENSE,
     MAGIC_DEFENSE,
@@ -61,5 +136,27 @@ public enum ModifierType {
     MEDICINA_E_CURA_ROLL_BONUS,
     PERSUASAO_ROLL_BONUS,
     PROFISSAO_ROLL_BONUS,
-    CONHECIMENTOS_ROLL_BONUS
+    CONHECIMENTOS_ROLL_BONUS,
+
+    /**
+     * A round-scoped bonus to one Atributo — the vehicle for a temporary "recebe Bônus de +1 em
+     * Carisma e Instinto" ({@code VampiricoFeat#DOM_DE_MIRCALLA}, a Poder Vampírico). One per
+     * {@link org.aventyrs.core.character.AttributeDomain}, looked up via {@code
+     * AttributeDomain#getBonusModifierType()}.
+     *
+     * <p><b>Partial reader.</b> Only {@code
+     * org.aventyrs.core.skill.AbstractSkillInteraction} consumes these so far — a bonus reaches a
+     * Perícia roll governed by that Atributo, and nothing else (HP/PM/PD/Defesa/Conjuração still
+     * read {@code AttributeValue#getTotal()} directly). This is the "Round-scoped Attribute
+     * bonuses" gap being closed one consumer at a time. The <b>permanent</b> {@code
+     * Feat#resolveAttributeBonus} grant is <em>not</em> restricted this way — it is summed by
+     * {@code Character#getEffectiveAttributeTotal}, which every Atributo-total reader calls.
+     */
+    STRENGTH_BONUS,
+    VIGOR_BONUS,
+    DEXTERITY_BONUS,
+    FOCUS_BONUS,
+    INSTINCT_BONUS,
+    GNOSE_BONUS,
+    CHARISMA_BONUS
 }

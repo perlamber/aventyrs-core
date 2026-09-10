@@ -40,10 +40,14 @@ import org.aventyrs.core.modifier.ModifierType;
  * the {@code CombatantSheet}-taking overloads of {@code
  * org.aventyrs.core.action.ActionPointsService#getMaxActionPoints}/{@code
  * org.aventyrs.core.character.services.ReactionsService#getTotalReactions}/{@code
- * org.aventyrs.core.character.services.FreeActionsService#getTotalFreeActions}. Note the
- * qualifier on that last one: the {@code Character}-only overloads structurally cannot see a
+ * org.aventyrs.core.character.services.FreeActionsService#getTotalFreeActions}, and a {@code
+ * ModifierType#DAMAGE_REDUCTION}-typed one — {@code AnaoFeat#VIGOR_DO_INVERNO}'s combat-start
+ * grant — by the {@code CombatantSheet}-taking overload of {@code
+ * org.aventyrs.core.character.services.DamageService#getTotalDamageReduction}. Note the
+ * qualifier on those: the {@code Character}-only overloads structurally cannot see a
  * sheet's {@code TemporaryBonus}, so a caller holding only a {@code Character} still reads the
- * unblessed total.
+ * unblessed total. A {@code ModifierType#CRITICAL_RESISTANCE}-typed one (same grant) is read by
+ * {@code AbstractSkillInteraction} off the <em>attack target</em>'s sheet.
  *
  * <p>{@code source} identifies which trait granted this — e.g. {@code "DOM_BARDICO"}/
  * {@code "GRITO_DE_GUERRA_VULCANO"} — so a caller aggregating several {@code Blessing}s from

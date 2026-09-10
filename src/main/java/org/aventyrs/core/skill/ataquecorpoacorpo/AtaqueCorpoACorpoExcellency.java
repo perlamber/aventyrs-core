@@ -30,8 +30,13 @@ public enum AtaqueCorpoACorpoExcellency implements SkillExcellency {
         }
     },
 
-    // TODO: +2 to this Perícia's Margem Crítica Menor — no Margem Crítica (critical-margin)
-    // concept exists yet (same gap as AtaqueCorpoACorpoCompetencyAbility.ATAQUE_PRECISO).
+    // TODO: +2 to this Perícia's Margem Crítica Menor. The Margem Crítica mechanism itself is
+    // real and consumed (SkillRoll#getCriticalResult(int), fed by
+    // AbstractSkillInteraction#sumCriticalMarginIncrease — AtaqueCorpoACorpoCompetencyAbility
+    // .ATAQUE_PRECISO grants exactly this shape for real). What blocks it is narrower: SkillExcellency is the one ability source
+    // AbstractSkillInteraction#sumCriticalMarginIncrease does not scan — it has no
+    // resolveCriticalMarginIncrease hook, unlike AttributeAbility/SkillCompetencyAbility/
+    // EgoAdvantage/Feat, which all carry one and are all summed for real.
     LENDA(ExcellencyTier.LENDA, "Margem Crítica Menor aumentada em +2 números.");
 
     private final ExcellencyTier tier;

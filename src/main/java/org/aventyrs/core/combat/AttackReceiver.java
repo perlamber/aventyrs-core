@@ -9,12 +9,15 @@ import org.aventyrs.core.effect.Effect;
 import org.aventyrs.core.effect.EffectChain;
 import org.aventyrs.core.effect.EffectChainService;
 import org.aventyrs.core.effect.EffectChainServiceImpl;
+import org.aventyrs.core.sheet.ActionOutcome;
+import org.aventyrs.core.sheet.CombatantAction;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.Interaction;
 import org.aventyrs.core.sheet.InteractionResult;
 import org.aventyrs.core.skill.CriticalResult;
 import org.aventyrs.core.skill.DifficultyLevel;
 import org.aventyrs.core.skill.SkillRoll;
+import org.aventyrs.core.skill.SkillType;
 import org.aventyrs.core.skill.esquivaeaparar.EsquivaEApararInteraction;
 
 import java.util.ArrayList;
@@ -76,10 +79,14 @@ import java.util.List;
  * <p><b>Report-only otherwise.</b> {@link #resolve} assembles the chain but applies none of it,
  * and touches no resource on the defender — the same restraint {@code
  * GritoDeGuerraVulcanoInteraction} applies to the Blessings it reports. The one unavoidable
- * exception is the defense roll itself: {@code applyTo} consumes {@code
- * CombatantSheet#consumeFirstRollThisTurn} and may grant a temporary Ego point on a critical
- * success. That's the roll genuinely happening, not an outcome being applied — which is also why
- * {@link #resolve} calls the Interaction <b>exactly once</b>, never twice for one attack.
+ * exception is the defense roll itself: {@code applyTo} may grant a temporary Ego point on a
+ * critical success (the first-roll-of-Turn check it also runs is non-mutating now). That's the
+ * roll genuinely happening, not an outcome being applied — which is also why {@link #resolve}
+ * calls the Interaction <b>exactly once</b>, never twice for one attack. {@link #resolve} bundles
+ * the defence roll as a ready {@code CombatantAction} on {@link
+ * IncomingAttackResult#getRecordedAction()} without recording it, so the caller files the exchange
+ * with one {@code Scene#recordAction(defender, result.getRecordedAction())} — or {@code
+ * defender.recordAction(...)} with no live Scene.
  */
 public class AttackReceiver {
 
@@ -125,7 +132,8 @@ public class AttackReceiver {
         SkillRoll defenseRoll = attack.getDefenseRoll();
 
         InteractionResult defenseResult = esquivaEApararInteraction.applyTo(
-                defender, attack.getSceneContext(), defenseRoll, attack.getDefenseType());
+                defender, attack.getSceneContext(), defenseRoll, attack.getDefenseType(),
+                attack.getDamageDescriptor());
 
         DifficultyLevel effectiveDifficultyLevel =
                 attack.getDifficultyLevel().easier(defenseResult.getDifficultyReduction());
@@ -161,7 +169,30 @@ public class AttackReceiver {
                 .criticalResult(criticalResult)
                 .criticalEffectTriggered(criticalEffectTriggered)
                 .effectChainTriggered(effectChainTriggered)
+                .recordedAction(recordedAction(attack, defenseResult, defended, defenseTotal - requiredTotal,
+                        criticalResult, effectiveDifficultyLevel))
                 .build();
+    }
+
+    /**
+     * Bundles the defender's Esquiva e Aparar roll as a ready-to-file {@link CombatantAction} —
+     * the caller records it via {@code scene.recordAction(defender, action)}. The verdict is from
+     * the <em>defender's</em> side: {@code succeeded} is whether the defence held, {@code margin}
+     * is {@code defenseTotal - requiredTotal} (positive when it held), and {@code turnNumber}
+     * comes from {@link IncomingAttack#getScene()} when one is present. Never recorded here —
+     * {@link #resolve} stays report-only.
+     */
+    private CombatantAction recordedAction(final IncomingAttack attack, final InteractionResult defenseResult,
+                                            final boolean defended, final int defenderMargin,
+                                            final CriticalResult criticalResult,
+                                            final DifficultyLevel effectiveDifficultyLevel) {
+        return new CombatantAction(
+                SkillType.ESQUIVA_E_APARAR,
+                defenseResult.getGoverningAttributeDomain(),
+                null,
+                attack.getDefenseRoll().getActionCost(),
+                attack.getScene() == null ? 0 : attack.getScene().getCurrentRound(),
+                new ActionOutcome(defended, defenderMargin, criticalResult, effectiveDifficultyLevel));
     }
 
     /**

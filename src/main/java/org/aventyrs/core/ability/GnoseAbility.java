@@ -74,17 +74,17 @@ public enum GnoseAbility implements AttributeAbility {
         }
     },
 
-    // Only the "+1 permanente em Autocontrole" half is real: resolvePermanentEgoGain below,
-    // applied by AttributeAbilityServiceImpl#grantAttributeAbility the exact same way
+    // Both halves are real. The "+1 permanente em Autocontrole" is resolvePermanentEgoGain
+    // below, applied by AttributeAbilityServiceImpl#grantAttributeAbility the exact same way
     // CharismaAbility#DESTINO_FAVORAVEL's own permanent Sorte point already is.
-    // Both halves of the recovery clause are now *expressible* — its trigger is
-    // CombatantSheet#getAvailableEgoPoints(AUTOCONTROLE) == 0 (the two-pool model is what makes
-    // "reduzido a zero" a question with an answer), and its grant is
-    // CombatantSheet#recoverTemporaryEgoPoints(AUTOCONTROLE, 1) — but two triggers are missing:
-    // TODO: no game-session tracking system exists, so "a primeira vez em cada sessão de jogo"
-    // can't be counted — the same gap AutocontroleAdvantage#MOTIVACAO_DE_MOSES cites.
-    // TODO: no "next Rodada" delayed-grant mechanism exists — CharacterSheet#startTurn is the
-    // only start-of-Turn hook and nothing schedules work into a future Rodada.
+    // The conditional half is resolveEgoDepletionGrant: AbstractCombatantSheet#spendEgoPoints
+    // notices the domain hit zero (the two-pool model is what makes "reduzido a zero" a question
+    // with an answer, and that funnel catches an enemy's Primor drain as well as a deliberate
+    // use — the rules text doesn't care which emptied it), CombatantSheet#consumeOncePerSession
+    // enforces "a primeira vez em cada sessão de jogo" against transient per-session state
+    // (a session is the sheet's lifetime in the running client — see that method's javadoc),
+    // and CombatantSheet#scheduleTemporaryEgoPointGrant defers the point to the next
+    // startNewRound() for "na Rodada seguinte".
     // Deliberately NOT wired to EgoAdvantage#resolveExtraSessionEgoRecovery: that hook is a flat
     // per-session amount, while this is a conditional, delayed, triggered grant — a genuinely
     // different shape, and this isn't an EgoAdvantage in the first place.
@@ -94,6 +94,12 @@ public enum GnoseAbility implements AttributeAbility {
         @Override
         public Optional<EgoDomain> resolvePermanentEgoGain() {
             return Optional.of(EgoDomain.AUTOCONTROLE);
+        }
+
+        /** "1 ponto temporário neste Ego" — this Ego being Autocontrole, and no other. */
+        @Override
+        public int resolveEgoDepletionGrant(final EgoDomain domain) {
+            return domain == EgoDomain.AUTOCONTROLE ? DEPLETION_TEMPORARY_GRANT : 0;
         }
     },
 
@@ -123,6 +129,12 @@ public enum GnoseAbility implements AttributeAbility {
     /** The "até 3" in {@link #DOMINIO_DO_CONHECIMENTO}'s rules text: how many of the Perícias it
      * offers as candidates the player may actually take the new Especialização on. */
     public static final int DOMINIO_DO_CONHECIMENTO_CHOICE_LIMIT = 3;
+
+    /**
+     * The single temporary Autocontrole point {@link #ESTABILIDADE_EMOCIONAL} hands over on the
+     * Rodada after that Ego is first emptied in a game session.
+     */
+    public static final int DEPLETION_TEMPORARY_GRANT = 1;
 
     /** The "até 2" in {@link #GENIALIDADE_E_ESFORCO}'s rules text: how many of the Perícias it
      * offers as candidates the player may actually take the new Habilidade de Competência on. */

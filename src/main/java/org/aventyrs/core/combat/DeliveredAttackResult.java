@@ -2,8 +2,12 @@ package org.aventyrs.core.combat;
 
 import lombok.Builder;
 import lombok.Getter;
+import lombok.Singular;
+import org.aventyrs.core.sheet.CombatantAction;
 import org.aventyrs.core.sheet.InteractionResult;
 import org.aventyrs.core.skill.CriticalResult;
+
+import java.util.List;
 
 /**
  * What {@link AttackDelivery#resolve} reports about one attack the player made — the mirror of
@@ -63,4 +67,28 @@ public class DeliveredAttackResult {
      * {@link AttackDelivery}'s javadoc for the open question behind that.
      */
     private final int unappliedDifficultyReduction;
+
+    /**
+     * The attacker's roll bundled as a {@link CombatantAction} ready to file — its Perícia,
+     * the resolved {@code governingAttributeDomain}, the {@link DeliveredAttack#getAttackSource()}
+     * and {@code ActionCost} the caller supplied, the {@code turnNumber} (from {@link
+     * DeliveredAttack#getScene()}'s current Rodada, or 0 with no Scene) and the roll's verdict.
+     * {@code null} on the {@code attackRoll == null} preview path — no action was taken.
+     *
+     * <p>{@link AttackDelivery#resolve} builds it but does <b>not</b> record it (it stays
+     * report-only). The caller files it with {@code scene.recordAction(attacker, action)} (or
+     * {@code attacker.recordAction(action)} with no Scene) — one call, no hand-assembly.
+     */
+    private final CombatantAction recordedAction;
+
+    /**
+     * One entry per {@link DeliveredAttack#getAdditionalTargets()}, in the order they were
+     * supplied — empty for every ordinary single-target attack.
+     *
+     * <p>The primary target's own outcome stays on this class's flat fields rather than joining
+     * the list: every attack has exactly one primary, every existing caller already reads it
+     * there, and only it carries the {@link #attackResult} the whole attack shares.
+     */
+    @Singular
+    private final List<DeliveredAttackTargetResult> additionalTargetResults;
 }

@@ -9,6 +9,7 @@ import org.aventyrs.core.sheet.InteractionResult;
 import org.aventyrs.core.title.AventyrTitle;
 import org.aventyrs.core.title.AventyrTitleAbility;
 import org.aventyrs.core.title.AventyrTitleSpecialization;
+import org.aventyrs.core.title.TitleArchetype;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -53,6 +54,16 @@ public class Santo implements AventyrTitle {
                  @NonNull final List<AventyrTitleAbility> abilities) {
         this.specializations = specializations;
         this.abilities = new ArrayList<>(abilities);
+    }
+
+    /**
+     * Santo is an {@link TitleArchetype#ABENCOADO} Título — "os guerreiros divinos", the same
+     * wording its own rules-text header uses, and the archetype the <i>Centelha Aventyr
+     * Consagrada</i> Talento gates on.
+     */
+    @Override
+    public TitleArchetype getArchetype() {
+        return TitleArchetype.ABENCOADO;
     }
 
     @Override

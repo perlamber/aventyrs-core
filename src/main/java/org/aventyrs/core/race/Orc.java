@@ -47,13 +47,15 @@ import java.util.Map;
  *   already unlocks a slot at base 3, but has no notion of a race-granted *extra* one — this
  *   trait is actually *less* restrictive than Pequenos Gigantes (any {@code StrengthAbility},
  *   not 2 named ones), but the missing "extra slot" concept is identical either way.</li>
- *   <li><b>Placitude Térrea</b> (1 extra temporary Autocontrole point per game session) —
- *   needs two things this core doesn't have: a "game session" concept at all (this core
- *   tracks {@code Scene}/Rodada/Turno, nothing above that), and a temporary-points pool for
- *   Ego values in the first place — {@link org.aventyrs.core.character.EgoValue} only has
- *   {@code base}/{@code variable}, no temporary component (same gap {@code
- *   GnoseAbility#ESTABILIDADE_EMOCIONAL}'s own "1 temporary point in this Ego" already
- *   cites).</li>
+ *   <li><b>Placitude Térrea</b> (1 extra temporary Autocontrole point per game session) — the
+ *   two pieces it used to cite both exist now: the temporary Ego pool ({@code EgoPointPool},
+ *   granted through {@code CombatantSheet#grantTemporaryEgoPoints}) and a once-per-session
+ *   guard ({@code CombatantSheet#consumeOncePerSession}, which {@code
+ *   GnoseAbility#ESTABILIDADE_EMOCIONAL} already uses). What's missing is narrower: a
+ *   <em>Race</em> hook for a per-session Ego grant — {@code
+ *   EgoAdvantage#resolveExtraSessionEgoRecovery} is the equivalent one level over, and {@code
+ *   Race} has no counterpart, nor does {@code EgoPointsService#applySessionRecovery} scan
+ *   the race.</li>
  *   <li><b>Herança Celeste</b> (Cura/Defesa/Redução-de-Dano effects of Magias Elementais:
  *   Terra ou Sagrada increased +1 per Título Aventyr Desperto) — needs a Magia entity with an
  *   element/school classification (none exists — see {@code

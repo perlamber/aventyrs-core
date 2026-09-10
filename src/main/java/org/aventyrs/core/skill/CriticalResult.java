@@ -13,12 +13,10 @@ package org.aventyrs.core.skill;
  * (e.g. 5s counting alongside 6s), so {@link SkillRoll#getCriticalResult(int)} takes the
  * combined widening as a parameter instead of using a fixed threshold — see that method's own
  * javadoc for how the two matching dice are found once the required face value is lowered.
- * {@code ATAQUE_PRECISO} itself is still TODO'd (it needs its own enum/Interaction wiring), but
- * the margin-widening mechanism it was blocked on now exists — {@link
+ * That widening has several real sources now: {@code ATAQUE_PRECISO} itself, {@link
  * org.aventyrs.core.ability.DexterityAbility#LETALIDADE_PROGRESSIVA}, {@link
  * org.aventyrs.core.ego.SorteAdvantage#ACE}, and {@code
- * org.aventyrs.core.skill.artes.ArtesAprimorarComArteAbility}'s "Margem Crítica Menor" branch
- * are the first real sources feeding it.
+ * org.aventyrs.core.skill.artes.ArtesAprimorarComArteAbility}'s "Margem Crítica Menor" branch.
  *
  * <p>Abilities like {@code ATAQUE_PRECISO} above are also expected to eventually widen which
  * face values count toward a Menor result on the *dano* side, not just this roll's own

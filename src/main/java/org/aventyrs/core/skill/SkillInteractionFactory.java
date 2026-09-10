@@ -21,12 +21,17 @@ public final class SkillInteractionFactory {
 
     /**
      * Resolves request's {@link SkillType} to the right {@code <Skill>Interaction} and applies
-     * it to request's target/sceneContext/skillRoll in one call — the single entry point a
-     * caller wrapping up an incoming roll request (see {@link SkillRollRequest}) needs, instead
-     * of manually looking up the right {@code <Skill>Interaction} class itself.
+     * it to request's target/sceneContext/skillRoll/attackSource in one call — the single entry
+     * point a caller wrapping up an incoming roll request (see {@link SkillRollRequest}) needs,
+     * instead of manually looking up the right {@code <Skill>Interaction} class itself.
+     *
+     * <p>{@code attackTarget} is passed as {@code null}: {@link SkillRollRequest} carries no
+     * such field, and an attack that has a real defender goes through {@code
+     * org.aventyrs.core.combat.AttackDelivery} instead, which supplies both it and the
+     * attackSource.
      */
     public static InteractionResult resolve(final SkillRollRequest request) {
         return create(request.getSkillType())
-                .applyTo(request.getTarget(), request.getSceneContext(), request.getSkillRoll());
+                .applyTo(request.getTarget(), request.getSceneContext(), request.getSkillRoll(), null, request.getAttackSource());
     }
 }

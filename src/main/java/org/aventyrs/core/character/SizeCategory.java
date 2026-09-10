@@ -30,7 +30,8 @@ public enum SizeCategory {
 
     private static final int BASE_MOVEMENT_PER_ACTION_POINT = 4;
     private static final int MINIMUM_MOVEMENT_PER_ACTION_POINT = 1;
-    private static final int MINIMUM_MELEE_RANGE = 1;
+    /** No attack ever reaches less than the hex in front of you, however small the attacker. */
+    public static final int MINIMUM_MELEE_RANGE = 1;
 
     private final int category;
     private final double minHeight;
@@ -82,15 +83,57 @@ public enum SizeCategory {
     }
 
     /**
-     * Half the size category, rounded down, added to (or subtracted from) a weapon's base range.
+     * How far this creature's body extends from its own centre, in UD — the space it takes up
+     * measured outward, and the <b>defender-side twin</b> of the Alcance column.
+     *
+     * <p>The rules give a larger body one spatial consequence, and give it outward: it reaches
+     * further ("Um corpo maior alcança mais longe por ser maior"). This is the other half of that
+     * same fact — an attacker needs less distance to touch a creature whose body already fills the
+     * space between them. Derived from {@link #getRangeModifier()} rather than authored separately
+     * so the two can never disagree about how big a body is.
+     *
+     * <p><b>Floored at zero.</b> A small creature is not <em>harder</em> to reach than a human; it
+     * simply takes up no extra space, so every Categoria up to +1 contributes nothing.
+     *
+     * <p>A caller measuring reach subtracts <b>only the target's</b> radius. The attacker's own is
+     * already paid for by the Alcance column, and subtracting it again would double-count the same
+     * body. Where neither party is the roller — the rules' "alvos adicionais precisam estar
+     * adjacentes ao alvo primário" — both radii count.
+     *
+     * <p>This is a <b>reach</b> rule, not an occupancy one: a creature still stands in exactly one
+     * position for movement and placement. This core holds no positions at all (see {@code
+     * SceneContext}), so it states how far a body extends and leaves the measuring to whoever
+     * tracks where the bodies are.
+     */
+    public int getBodyRadius() {
+        return Math.max(0, getRangeModifier());
+    }
+
+    /**
+     * Half the size category, rounded down, added to (or subtracted from) the base range of a
+     * weapon that states one — a Lança, a Pique, an arco. Read by {@code AttackRangeService} for
+     * every such weapon, Arremesso and Ataque à Distância included.
+     *
+     * <p>Not used for an adjacency-only weapon: that case reads {@link #getRange()} instead, for
+     * the reason documented there.
      */
     public int getRangeModifier() {
         return Math.floorDiv(category, 2);
     }
 
     /**
-     * Effective range in distance units for a weapon with the given base range.
-     * Melee attacks never have their range reduced below {@value #MINIMUM_MELEE_RANGE}UD.
+     * The <b>Alcance column</b> of the Categorias de Tamanho table, in UD — how far a body of this
+     * size reaches with an attack that has no reach of its own (a fist, a dagger, a sword: anything
+     * whose Alcance is {@code Range.ADJACENTE}). 1UD up to Categoria +1, 2UD at +2/+3, 3UD at +4,
+     * and onward by the same formula.
+     *
+     * <p>This is a reach, not a modifier — {@code AttackRangeService} substitutes it wholesale for
+     * an adjacency-only weapon rather than adding it to anything, because {@code Range.ADJACENTE}
+     * means there is no space between the combatants rather than a distance of 1UD. A weapon that
+     * <em>does</em> state a distance gets {@link #getRangeModifier()} added to it instead.
+     *
+     * <p>Never below {@value #MINIMUM_MELEE_RANGE}UD: a Categoria -4 creature still reaches the
+     * hex in front of it.
      */
     public int getRange() {
         return Math.max(MINIMUM_MELEE_RANGE, MINIMUM_MELEE_RANGE+getRangeModifier());

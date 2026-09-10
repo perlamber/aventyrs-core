@@ -50,6 +50,14 @@ class FocusAbilityTest {
     }
 
     @Test
+    void onlyMagiaPoderosaUpgradesFirstSpellFocusScaling() {
+        for (FocusAbility ability : FocusAbility.values()) {
+            boolean expected = ability == FocusAbility.MAGIA_PODEROSA;
+            assertEquals(expected, ability.upgradesFirstSpellOfRoundFocusScaling());
+        }
+    }
+
+    @Test
     void onlyCanalizadorDeManaGrantsARestMagicPointsBonus() {
         for (FocusAbility ability : FocusAbility.values()) {
             for (RestType restType : RestType.values()) {
