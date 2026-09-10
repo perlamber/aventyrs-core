@@ -8,6 +8,7 @@ import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.character.DefenseType;
 import org.aventyrs.core.character.TitleSlot;
 import org.aventyrs.core.character.DamageBase;
+import org.aventyrs.core.character.DamageBonus;
 import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.item.AbstractWeapon;
 import org.aventyrs.core.item.AttackMethod;
@@ -510,6 +511,56 @@ class GeneralFeatEffectIntegrationTest {
                 .applyTo(sheet, context, null, null, attackSource).getSkillRollBonus();
     }
 
+    private int rangedDanoBonus(final CharacterSheet sheet, final Weapon attackSource, final SceneContext context) {
+        DamageBonus danoBonus = SkillType.ATAQUE_A_DISTANCIA.newInteraction()
+                .applyTo(sheet, context, null, null, attackSource).getDamageBonus();
+        return danoBonus == null ? 0 : danoBonus.getValue();
+    }
+
+    /**
+     * {@code ArtilhariaFeat.ABATER_A_CACA} / {@code UM_TIRO_UMA_MORTE} — "sempre que utilizar o
+     * talento 'Atirador Perfeito' você recebe também vantagem nas rolagens de dano". Atirador
+     * Perfeito's benefit fires under a fixed condition (chosen weapon type, target at Média or
+     * beyond), so both Talentos add a flat {@code Skill#ADVANTAGE_BONUS} to the dano roll under
+     * that exact condition — and nothing when it does not hold.
+     */
+    @Test
+    void abaterACacaAddsDanoVantagemUnderAtiradorPerfeitosOwnCondition() throws IllegalOperationException {
+        Character character = character()
+                .skill(SkillType.ATAQUE_A_DISTANCIA,
+                        trained(new org.aventyrs.core.skill.ataqueadistancia.AtaqueADistancia(), 3))
+                .build();
+        CharacterSheet sheet = CharacterSheet.of(character, new Player());
+        CharacterSheet target = enemySheet();
+        Weapon bow = weapon(ItemCategory.BOW);
+        Weapon crossbow = weapon(ItemCategory.CROSSBOW);
+
+        acquire(character, AtiradorPerfeitoFeat.of(AttackMethod.BOW), ArtilhariaFeat.ABATER_A_CACA);
+
+        assertEquals(Skill.ADVANTAGE_BONUS,
+                rangedDanoBonus(sheet, bow, against(target, Range.DISTANCIA_MEDIA)));
+        // Too close, wrong weapon, and no Scene — each reads as "condition not met".
+        assertEquals(0, rangedDanoBonus(sheet, bow, against(target, Range.DISTANCIA_CURTA)));
+        assertEquals(0, rangedDanoBonus(sheet, crossbow, against(target, Range.DISTANCIA_MEDIA)));
+        assertEquals(0, rangedDanoBonus(sheet, bow, null));
+    }
+
+    @Test
+    void umTiroUmaMorteIsTheSameDanoVantagemAsAbaterACaca() throws IllegalOperationException {
+        Character character = character()
+                .skill(SkillType.ATAQUE_A_DISTANCIA,
+                        trained(new org.aventyrs.core.skill.ataqueadistancia.AtaqueADistancia(), 4))
+                .build();
+        CharacterSheet sheet = CharacterSheet.of(character, new Player());
+        CharacterSheet target = enemySheet();
+        Weapon bow = weapon(ItemCategory.BOW);
+
+        acquire(character, AtiradorPerfeitoFeat.of(AttackMethod.BOW), ArtilhariaFeat.UM_TIRO_UMA_MORTE);
+
+        assertEquals(Skill.ADVANTAGE_BONUS,
+                rangedDanoBonus(sheet, bow, against(target, Range.DISTANCIA_MEDIA)));
+    }
+
     @Test
     void lutarEngajadoGrantsVantagemOnlyAgainstAnAdjacentTarget() throws IllegalOperationException {
         Character character = duelist(1);
@@ -587,10 +638,16 @@ class GeneralFeatEffectIntegrationTest {
         assertEquals(persuasaoBefore, rollBonus(sheet, SkillType.PERSUASAO, null));
     }
 
+    private int meleeDanoBonus(final CharacterSheet sheet, final SceneContext context) {
+        DamageBonus danoBonus = SkillType.ATAQUE_CORPO_A_CORPO.newInteraction()
+                .applyTo(sheet, context, null).getDamageBonus();
+        return danoBonus == null ? 0 : danoBonus.getValue();
+    }
+
     /**
-     * {@code SobrevivenciaFeat.MESTRE_DE_CACA}'s two reachable halves — Margem Crítica Menor +1
-     * and Vantagem on Perícias de Ataque — apply only while in the Terreno Predileto chosen via
-     * {@link TerrenoPrediletoFeat}.
+     * {@code SobrevivenciaFeat.MESTRE_DE_CACA}'s three reachable halves — Margem Crítica Menor +1,
+     * Vantagem on Perícias de Ataque, and Vantagem on the dano roll — apply only while in the
+     * Terreno Predileto chosen via {@link TerrenoPrediletoFeat}.
      */
     @Test
     void mestreDeCacaAppliesOnlyInTheChosenTerreno() throws IllegalOperationException {
@@ -604,6 +661,7 @@ class GeneralFeatEffectIntegrationTest {
         SceneContext desert = new SceneContext(List.of(), List.of(), Map.of(), TerrainType.DESERT);
         int meleeBefore = rollBonus(sheet, SkillType.ATAQUE_CORPO_A_CORPO, desert);
         int atletismoBefore = rollBonus(sheet, SkillType.ATLETISMO, forest);
+        int danoBefore = meleeDanoBonus(sheet, forest);
         // A pair of 5s: NONE at margin 0, ACERTO_CRITICO_MENOR once MESTRE_DE_CACA's +1 widens
         // the qualifying face from 6 down to 5.
         SkillRoll roll = new SkillRoll(List.of(5, 5, 2));
@@ -618,6 +676,10 @@ class GeneralFeatEffectIntegrationTest {
         assertEquals(meleeBefore, rollBonus(sheet, SkillType.ATAQUE_CORPO_A_CORPO, desert));
         // Not a Perícia de Ataque — no Vantagem even in the chosen terrain.
         assertEquals(atletismoBefore, rollBonus(sheet, SkillType.ATLETISMO, forest));
+        // "e Danos" — a flat Vantagem on the dano roll, in the chosen terrain only.
+        assertEquals(danoBefore + Skill.ADVANTAGE_BONUS, meleeDanoBonus(sheet, forest));
+        assertEquals(danoBefore, meleeDanoBonus(sheet, desert));
+        assertEquals(danoBefore, meleeDanoBonus(sheet, null));
     }
 
     /** Ataque Corpo-a-Corpo at graduation, which every Duelista Pré-requisito here counts. */

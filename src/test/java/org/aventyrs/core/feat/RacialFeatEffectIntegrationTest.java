@@ -568,6 +568,26 @@ class RacialFeatEffectIntegrationTest {
         assertTrue(TrollFeat.REGENERACAO_REATIVA_INVERNAL.isEligible(troll));
     }
 
+    /**
+     * VIGOR_TROLLICO's "+1 em Vigor" half — unconditional (the clause names no sub-lineage
+     * condition), through {@code Feat#resolveAttributeBonus}, reaching the effective total. The
+     * RD/RM half stays blocked on the unmodelled sub-lineage.
+     */
+    @Test
+    void vigorTrollicoRaisesTheEffectiveVigor() throws IllegalOperationException {
+        Character troll = trollWithTitle();
+        acquire(troll, TrollFeat.SONO_LEVE, TrollFeat.REGENERACAO_REATIVA_SUPERIOR);
+        int vigorBefore = troll.getEffectiveAttributeTotal(AttributeDomain.VIGOR);
+        int hitPointsBefore = hitPointsService.getMaxHitPoints(troll);
+
+        acquire(troll, TrollFeat.VIGOR_TROLLICO);
+
+        assertEquals(vigorBefore + 1, troll.getEffectiveAttributeTotal(AttributeDomain.VIGOR));
+        assertEquals(hitPointsBefore + hitPointsService.getLifeMultiplier(troll),
+                hitPointsService.getMaxHitPoints(troll));
+        assertEquals(0, TrollFeat.VIGOR_TROLLICO.resolveAttributeBonus(AttributeDomain.INSTINCT, troll));
+    }
+
     private static Character trollWithTitle() {
         Character character = character().race(new Troll())
                 .attributes(CharacterAttributes.builder()
@@ -752,6 +772,34 @@ class RacialFeatEffectIntegrationTest {
 
         assertTrue(homemFera.getFeats().contains(FeralFeat.TRANSFORMACAO_RAPIDA));
         assertTrue(homemFera.getFeats().contains(FeralFeat.TRANSFORMACAO_DURADOURA));
+    }
+
+    /**
+     * The first three Talentos Ferais each open with "+1 Bônus Racial em &lt;Atributo&gt;" for a
+     * fixed Atributo — real now through {@code Feat#resolveAttributeBonus}, exactly as every
+     * {@code BestialFeat} Herança, and reaching the effective total via {@code
+     * Character#getEffectiveAttributeTotal}.
+     */
+    @Test
+    void thePhysicalTraitFeraisEachRaiseTheirOwnFixedAtributo() throws IllegalOperationException {
+        Character homemFera = homemFeraWithTitle();
+        int dexBefore = homemFera.getEffectiveAttributeTotal(AttributeDomain.DEXTERITY);
+        int vigorBefore = homemFera.getEffectiveAttributeTotal(AttributeDomain.VIGOR);
+        int strBefore = homemFera.getEffectiveAttributeTotal(AttributeDomain.STRENGTH);
+
+        acquire(homemFera, FeralFeat.PRESAS_COM_DESTREZA_MANUAL, FeralFeat.BENCAO_DE_MAPINGUARI,
+                FeralFeat.DESPREZO_NATURAL);
+
+        assertEquals(dexBefore + 1, homemFera.getEffectiveAttributeTotal(AttributeDomain.DEXTERITY));
+        assertEquals(vigorBefore + 1, homemFera.getEffectiveAttributeTotal(AttributeDomain.VIGOR));
+        assertEquals(strBefore + 1, homemFera.getEffectiveAttributeTotal(AttributeDomain.STRENGTH));
+        // Each grants +1 to exactly its own Atributo.
+        assertEquals(0, FeralFeat.PRESAS_COM_DESTREZA_MANUAL
+                .resolveAttributeBonus(AttributeDomain.VIGOR, homemFera));
+        assertEquals(1, FeralFeat.BENCAO_DE_MAPINGUARI
+                .resolveAttributeBonus(AttributeDomain.VIGOR, homemFera));
+        assertEquals(0, FeralFeat.TRANSFORMACAO_RAPIDA
+                .resolveAttributeBonus(AttributeDomain.VIGOR, homemFera));
     }
 
     private static Character homemFeraWithTitle() {
@@ -1035,19 +1083,51 @@ class RacialFeatEffectIntegrationTest {
 
     // ---------- Feérico ----------
 
+    /**
+     * NINFA grants Vantagem (+2) on Empatia Selvagem only — but its "+1 Racial em Carisma" reaches
+     * every Charisma-governed roll (Empatia Selvagem and Artes both are), and neither reaches a
+     * roll governed by another Atributo.
+     */
     @Test
-    void ninfaGrantsVantagemOnEmpatiaSelvagemOnly() throws IllegalOperationException {
+    void ninfaGrantsVantagemOnEmpatiaSelvagemAndItsCarismaBonusReachesEveryCarismaRoll()
+            throws IllegalOperationException {
         Character fada = character().race(new Fada()).build();
         fada.grantTitle(new Santo(List.of(), List.of()), TitleSlot.PRIMARY);
         CharacterSheet sheet = CharacterSheet.of(fada, new Player());
         int empatiaBefore = rollBonusIn(sheet, SkillType.EMPATIA_SELVAGEM, null);
         int artesBefore = rollBonusIn(sheet, SkillType.ARTES, null);
+        int furtividadeBefore = rollBonusIn(sheet, SkillType.FURTIVIDADE, null);
 
         acquire(fada, FeericoFeat.NINFA);
 
-        assertEquals(empatiaBefore + Skill.ADVANTAGE_BONUS,
+        // Vantagem + the Carisma +1 on Empatia Selvagem; just the Carisma +1 on Artes.
+        assertEquals(empatiaBefore + Skill.ADVANTAGE_BONUS + 1,
                 rollBonusIn(sheet, SkillType.EMPATIA_SELVAGEM, null));
-        assertEquals(artesBefore, rollBonusIn(sheet, SkillType.ARTES, null));
+        assertEquals(artesBefore + 1, rollBonusIn(sheet, SkillType.ARTES, null));
+        // Furtividade is Destreza-governed — untouched by both halves.
+        assertEquals(furtividadeBefore, rollBonusIn(sheet, SkillType.FURTIVIDADE, null));
+    }
+
+    /**
+     * NINFA's "+1 Racial em Carisma" and SIRENIDEO's "+1 Racial em Vigor" are real through {@code
+     * Feat#resolveAttributeBonus} — the same fixed-Atributo shape as every {@code BestialFeat}
+     * Herança, reaching the effective total.
+     */
+    @Test
+    void ninfaAndSirenideoEachRaiseTheirOwnFixedAtributo() throws IllegalOperationException {
+        Character fada = character().race(new Fada()).build();
+        fada.grantTitle(new Santo(List.of(), List.of()), TitleSlot.PRIMARY);
+        int carismaBefore = fada.getEffectiveAttributeTotal(AttributeDomain.CHARISMA);
+        int vigorBefore = fada.getEffectiveAttributeTotal(AttributeDomain.VIGOR);
+
+        acquire(fada, FeericoFeat.NINFA);
+
+        assertEquals(carismaBefore + 1, fada.getEffectiveAttributeTotal(AttributeDomain.CHARISMA));
+        assertEquals(vigorBefore, fada.getEffectiveAttributeTotal(AttributeDomain.VIGOR));
+        assertEquals(1, FeericoFeat.SIRENIDEO.resolveAttributeBonus(AttributeDomain.VIGOR, fada));
+        assertEquals(0, FeericoFeat.SIRENIDEO.resolveAttributeBonus(AttributeDomain.CHARISMA, fada));
+        // FAUNO and LUPERCAL grant no Atributo bonus.
+        assertEquals(0, FeericoFeat.LUPERCAL.resolveAttributeBonus(AttributeDomain.CHARISMA, fada));
     }
 
     @Test

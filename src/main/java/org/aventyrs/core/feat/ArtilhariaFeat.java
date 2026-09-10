@@ -1,7 +1,15 @@
 package org.aventyrs.core.feat;
 
+import java.util.Optional;
+
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.character.DamageBonus;
+import org.aventyrs.core.character.DamageType;
+import org.aventyrs.core.item.AttackMethod;
+import org.aventyrs.core.scene.SceneContext;
+import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.skill.AttackSource;
+import org.aventyrs.core.skill.Skill;
 import org.aventyrs.core.skill.SkillType;
 
 /**
@@ -50,9 +58,16 @@ public enum ArtilhariaFeat implements Feat {
                     .requiredSkillGraduation(2)
                     .build()),
 
-    /** "Sempre que utilizar o talento 'Atirador Perfeito' você recebe também vantagem nas rolagens de dano." */
-    // TODO: a Vantagem on a dano roll has no hook, and "sempre que utilizar outro Talento" is the
-    //  gap catalog's "This one delivered attack" scoping — no per-roll hook is scoped that way.
+    /**
+     * "Sempre que utilizar o talento 'Atirador Perfeito' você recebe também vantagem nas rolagens
+     * de dano."
+     *
+     * <p><b>Real.</b> Atirador Perfeito's benefit is not an opt-in — its Vantagem em Ataque
+     * triggers whenever the holder attacks with the chosen weapon type at Distância Média or
+     * beyond ({@link AtiradorPerfeitoFeat#matchesConditions}) — so "sempre que utilizar" is that
+     * same condition, and this grants a flat {@code Skill#ADVANTAGE_BONUS} to the dano roll under
+     * it, untyped so it flattens to {@code FISICO} in {@code DamageBonus#total}.
+     */
     ABATER_A_CACA(
             "Sempre que utilizar o talento ‘Atirador Perfeito’ você recebe também vantagem nas "
                     + "rolagens de dano.",
@@ -60,11 +75,19 @@ public enum ArtilhariaFeat implements Feat {
                     .requiredSkillType(SkillType.ATAQUE_A_DISTANCIA)
                     .requiredSkillGraduation(3)
                     .requiredFeat(ATIRADOR_PERFEITO)
-                    .build()),
+                    .build()) {
+        @Override
+        public Optional<DamageBonus> resolveDamageBonus(final SkillType attackingSkillType,
+                                                         final SceneContext sceneContext,
+                                                         final CombatantSheet attackTarget, final Character actor,
+                                                         final AttackSource attackSource) {
+            return atiradorPerfeitoDanoVantagem(actor, sceneContext, attackSource);
+        }
+    },
 
     /** "Você recebe Vantagem em suas rolagens de Dano sempre que utilizar o Talento 'Atirador Perfeito'." */
-    // TODO: identical blockers to ABATER_A_CACA. Note the two Talentos state the same effect in
-    //  the same words; the source authors both, so both are catalogued rather than merged.
+    // Identical effect to ABATER_A_CACA — the source authors both in the same words, so both are
+    // catalogued rather than merged, and both resolve through the same helper.
     UM_TIRO_UMA_MORTE(
             "Você recebe Vantagem em suas rolagens de Dano sempre que utilizar o Talento "
                     + "‘Atirador Perfeito’.",
@@ -72,7 +95,15 @@ public enum ArtilhariaFeat implements Feat {
                     .requiredSkillType(SkillType.ATAQUE_A_DISTANCIA)
                     .requiredSkillGraduation(4)
                     .requiredFeat(ATIRADOR_PERFEITO)
-                    .build()),
+                    .build()) {
+        @Override
+        public Optional<DamageBonus> resolveDamageBonus(final SkillType attackingSkillType,
+                                                         final SceneContext sceneContext,
+                                                         final CombatantSheet attackTarget, final Character actor,
+                                                         final AttackSource attackSource) {
+            return atiradorPerfeitoDanoVantagem(actor, sceneContext, attackSource);
+        }
+    },
 
     /**
      * "A distância máxima de seus ataques à Distância, físicos e Mágicos, aumentam em +1 nível."
@@ -180,6 +211,21 @@ public enum ArtilhariaFeat implements Feat {
                     .requiredFeat(TIRO_DUPLO)
                     .requiredAwakenedTitles(1)
                     .build());
+
+    /**
+     * The dano Vantagem {@link #ABATER_A_CACA} and {@link #UM_TIRO_UMA_MORTE} both grant — a flat
+     * {@code Skill#ADVANTAGE_BONUS}, present exactly when Atirador Perfeito's own condition holds
+     * ({@link AtiradorPerfeitoFeat#matchesConditions}), read via {@link
+     * AtiradorPerfeitoFeat#chosenBy}.
+     */
+    private static Optional<DamageBonus> atiradorPerfeitoDanoVantagem(final Character actor,
+                                                                      final SceneContext sceneContext,
+                                                                      final AttackSource attackSource) {
+        AttackMethod chosen = AtiradorPerfeitoFeat.chosenBy(actor).orElse(null);
+        return AtiradorPerfeitoFeat.matchesConditions(chosen, actor, sceneContext, attackSource)
+                ? Optional.of(new DamageBonus(Skill.ADVANTAGE_BONUS, DamageType.FISICO))
+                : Optional.empty();
+    }
 
     private final String description;
     private final FeatRequirements featRequirements;

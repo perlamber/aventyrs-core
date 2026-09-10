@@ -1,5 +1,6 @@
 package org.aventyrs.core.feat;
 
+import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.race.CreatureType;
 import org.aventyrs.core.race.Satiro;
@@ -12,11 +13,13 @@ import org.aventyrs.core.skill.SkillType;
  * Talentos Feéricos — the largest racial tree, spanning wings, tree-bonded Dríades, Pixies,
  * Sirenídeos and the two Sátiro lineages.
  *
- * <p>Four constants carry real effects, all of them the same shape: an <b>unconditional Vantagem
- * on named Perícias</b>, through {@code Feat#resolveSkillRollBonus}. {@link #NINFA} (Empatia
- * Selvagem), {@link #SIRENIDEO} (Artes), {@link #FAUNO} (Furtividade e Persuasão) and {@link
- * #LUPERCAL} (Artes e Atenção). Each also opens with an Atributo bonus a Talento cannot grant, so
- * every one of the four is half-implemented and says so.
+ * <p>Four constants carry a real <b>unconditional Vantagem on named Perícias</b>, through {@code
+ * Feat#resolveSkillRollBonus}: {@link #NINFA} (Empatia Selvagem), {@link #SIRENIDEO} (Artes),
+ * {@link #FAUNO} (Furtividade e Persuasão) and {@link #LUPERCAL} (Artes e Atenção). {@link #NINFA}
+ * and {@link #SIRENIDEO} additionally grant a <b>fixed-Atributo +1</b> through {@code
+ * Feat#resolveAttributeBonus} (Carisma, Vigor) — that half is now real too, the same as every
+ * {@code BestialFeat} Herança. {@link #FAUNO} and {@link #LUPERCAL} stay half-implemented: their
+ * Categoria de Tamanho set and target-Tendência-scoped GD reduction are both still blocked.
  *
  * <p><b>This tree is why {@code FeatRequirements#requiredCreatureType} exists.</b> "Apenas
  * personagens de raça Feérica" spans Fada, Fúria, Sátiro, Nascido da Floresta and Górgona — five
@@ -104,9 +107,9 @@ public enum FeericoFeat implements Feat {
 
     /**
      * "Você recebe Bônus de +1 Racial em Carisma e vantagem em rolagens de 'Empatia Selvagem'."
-     * The Vantagem is real.
+     * Both halves are real — the Carisma +1 through {@link Feat#resolveAttributeBonus}, the
+     * Vantagem through {@link Feat#resolveSkillRollBonus}.
      */
-    // TODO: a Talento cannot grant an Atributo bonus — see BestialFeat's class javadoc.
     // TODO: "do sexo feminino" is unenforced — Character#getSexo() exists and is nullable, but
     //  FeatRequirements has no clause for it and one constant is short of the bar for adding one.
     NINFA(
@@ -116,6 +119,11 @@ public enum FeericoFeat implements Feat {
                     .requiredCreatureType(CreatureType.FEERICO)
                     .requiredAwakenedTitles(1)
                     .build()) {
+        @Override
+        public int resolveAttributeBonus(final AttributeDomain domain, final Character character) {
+            return domain == AttributeDomain.CHARISMA ? FEERICO_ATTRIBUTE_BONUS : 0;
+        }
+
         @Override
         public int resolveSkillRollBonus(final SkillType skillType, final SceneContext sceneContext,
                                           final SkillTrait requestedAbility, final Character character) {
@@ -184,9 +192,11 @@ public enum FeericoFeat implements Feat {
 
     /**
      * "Personagens com este Talento recebem Bônus Racial de +1 em Vigor e Vantagem nas rolagens
-     * de Artes." The Vantagem is real.
+     * de Artes." Both halves are real — the Vigor +1 through {@link Feat#resolveAttributeBonus}
+     * (computed even though no Perícia is Vigor-governed, still reaching every Atributo-total
+     * reader via {@code Character#getEffectiveAttributeTotal}), the Vantagem through {@link
+     * Feat#resolveSkillRollBonus}.
      */
-    // TODO: a Talento cannot grant an Atributo bonus.
     // TODO: Movimento Base de Natação 6UD and a *reduced* land Movimento of 2UD are both absolute
     //  sets rather than the increment resolveMovementIncrease expresses, and swim movement is a
     //  separate sub-stat. Withheld together so the Talento is neither better nor worse than
@@ -201,6 +211,11 @@ public enum FeericoFeat implements Feat {
             FeatRequirements.builder()
                     .requiredCreatureType(CreatureType.FEERICO)
                     .build()) {
+        @Override
+        public int resolveAttributeBonus(final AttributeDomain domain, final Character character) {
+            return domain == AttributeDomain.VIGOR ? FEERICO_ATTRIBUTE_BONUS : 0;
+        }
+
         @Override
         public int resolveSkillRollBonus(final SkillType skillType, final SceneContext sceneContext,
                                           final SkillTrait requestedAbility, final Character character) {
@@ -276,6 +291,9 @@ public enum FeericoFeat implements Feat {
                     ? Skill.ADVANTAGE_BONUS : 0;
         }
     };
+
+    /** The "+1 Bônus Racial" NINFA and SIRENIDEO each grant for their fixed Atributo. */
+    private static final int FEERICO_ATTRIBUTE_BONUS = 1;
 
     private final String description;
     private final FeatRequirements featRequirements;

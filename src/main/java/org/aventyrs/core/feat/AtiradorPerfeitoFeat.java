@@ -1,5 +1,7 @@
 package org.aventyrs.core.feat;
 
+import java.util.Optional;
+
 import lombok.Getter;
 import lombok.NonNull;
 import org.aventyrs.core.character.Character;
@@ -33,6 +35,35 @@ public final class AtiradorPerfeitoFeat extends AbstractFeat {
         return new AtiradorPerfeitoFeat(chosenMethod);
     }
 
+    /**
+     * The método a character chose, if they hold this Talento. Mirrors {@link
+     * EspecialistaEmArmaFeat#chosenBy} — read by {@code ArtilhariaFeat#ABATER_A_CACA}/{@code
+     * UM_TIRO_UMA_MORTE}, whose "sempre que utilizar o talento 'Atirador Perfeito'" clause fires
+     * under the exact same weapon-type and range condition {@link #matchesConditions} checks.
+     */
+    public static Optional<AttackMethod> chosenBy(final Character character) {
+        return character.getFeats().stream()
+                .filter(AtiradorPerfeitoFeat.class::isInstance)
+                .map(AtiradorPerfeitoFeat.class::cast)
+                .map(AtiradorPerfeitoFeat::getChosenMethod)
+                .findFirst();
+    }
+
+    /**
+     * Whether an attack made by character with attackSource against the {@code
+     * SceneContext#getOpposedCharacter()} meets Atirador Perfeito's own condition — the chosen
+     * weapon type, and a target at Distância Média or beyond. Shared with the two dependent
+     * Talentos so their "sempre que utilizar Atirador Perfeito" scope can never drift from this.
+     */
+    public static boolean matchesConditions(final AttackMethod chosenMethod, final Character character,
+                                            final SceneContext sceneContext, final AttackSource attackSource) {
+        if (sceneContext == null || chosenMethod == null || !chosenMethod.matches(attackSource, character)) {
+            return false;
+        }
+        Range distanceToTarget = sceneContext.getDistanceTo(sceneContext.getOpposedCharacter());
+        return distanceToTarget != null && !distanceToTarget.isWithin(Range.DISTANCIA_CURTA);
+    }
+
     @Override
     public Feat catalogEntry() {
         return ArtilhariaFeat.ATIRADOR_PERFEITO;
@@ -49,11 +80,7 @@ public final class AtiradorPerfeitoFeat extends AbstractFeat {
     public int resolveSkillRollBonus(final SkillType skillType, final SceneContext sceneContext,
                                       final SkillTrait requestedAbility, final Character character,
                                       final AttackSource attackSource) {
-        if (sceneContext == null || !chosenMethod.matches(attackSource, character)) {
-            return 0;
-        }
-        Range distanceToTarget = sceneContext.getDistanceTo(sceneContext.getOpposedCharacter());
-        boolean atOrBeyondMedia = distanceToTarget != null && !distanceToTarget.isWithin(Range.DISTANCIA_CURTA);
-        return atOrBeyondMedia ? Skill.ADVANTAGE_BONUS : 0;
+        return matchesConditions(chosenMethod, character, sceneContext, attackSource)
+                ? Skill.ADVANTAGE_BONUS : 0;
     }
 }

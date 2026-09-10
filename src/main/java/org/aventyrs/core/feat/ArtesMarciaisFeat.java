@@ -322,8 +322,10 @@ public enum ArtesMarciaisFeat implements Feat {
      * The "segundo Talento de Dominar Arte Marcial" cap-raise is applied by this enum's {@code
      * isEligible} override.
      */
-    // TODO: the "Danos Críticos de Armas Naturais" half has no hook — DamageBonus applies to any
-    //  dano roll, with no notion of the critical half.
+    // TODO: the "Danos Críticos de Armas Naturais" half — Feat#resolveDamageBonus carries no
+    //  CriticalResult and this core models no crit-to-dano pathway at all (CLAUDE.md's crit-damage
+    //  bullet), so a dano bonus scoped to a critical has nowhere to attach; and the Arma-Natural
+    //  scope would narrow it besides.
     ARTE_MARCIAL_MISTA(
             "Você recebe Bônus de +1 em rolagens de Danos Críticos de Armas Naturais e Defesas "
                     + "para cada Talento de Arte Marcial que possuir. Você pode possuir um segundo "

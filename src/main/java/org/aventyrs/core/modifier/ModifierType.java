@@ -112,8 +112,9 @@ public enum ModifierType {
      * org.aventyrs.core.skill.AbstractSkillInteraction} consumes these so far — a bonus reaches a
      * Perícia roll governed by that Atributo, and nothing else (HP/PM/PD/Defesa/Conjuração still
      * read {@code AttributeValue#getTotal()} directly). This is the "Round-scoped Attribute
-     * bonuses" gap being closed one consumer at a time; the permanent {@code
-     * Feat#resolveAttributeBonus} grant is read at the same one place.
+     * bonuses" gap being closed one consumer at a time. The <b>permanent</b> {@code
+     * Feat#resolveAttributeBonus} grant is <em>not</em> restricted this way — it is summed by
+     * {@code Character#getEffectiveAttributeTotal}, which every Atributo-total reader calls.
      */
     STRENGTH_BONUS,
     VIGOR_BONUS,

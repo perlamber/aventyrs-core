@@ -1,17 +1,19 @@
 package org.aventyrs.core.feat;
 
 import org.aventyrs.core.character.AttributeDomain;
+import org.aventyrs.core.character.Character;
 import org.aventyrs.core.race.Troll;
 
 /**
  * Talentos Troll — four of the five extend <b>Regeneração Reativa</b>, the Troll's signature
  * Característica Racial, and the fifth extends Sono de Pedra.
  *
- * <p>None carries a mechanical effect, and all four regeneration Talentos are blocked on the
- * same missing piece already recorded on {@code Troll} itself: <b>nothing triggers off being
+ * <p>Only {@link #VIGOR_TROLLICO} carries a mechanical effect — its "+1 em Vigor" half, through
+ * {@link Feat#resolveAttributeBonus}. All four regeneration Talentos are blocked on the same
+ * missing piece already recorded on {@code Troll} itself: <b>nothing triggers off being
  * damaged</b>. {@code DamageService#applyDamage} reports a figure and mutates the sheet with no
  * hook for the victim to react — the healing counterpart of CLAUDE.md's "Reactive/retaliation
- * damage" row. Every constant here adjusts a figure of an effect that never starts.
+ * damage" row. Every regeneration constant here adjusts a figure of an effect that never starts.
  *
  * <p><b>Declaration order is not the document's.</b> {@link #REGENERACAO_REATIVA_ESPINHOSA} and
  * {@link #REGENERACAO_REATIVA_INVERNAL} both name {@link #REGENERACAO_REATIVA_SUPERIOR} as their
@@ -112,10 +114,12 @@ public enum TrollFeat implements Feat {
      * {@code FeatRequirements#requiredFeatCategory}, and reads exactly as written: the Talento
      * being tested is never counted among the two.
      */
-    // TODO: the "+1 em Vigor" half is expressible now — an unconditional Feat#resolveAttributeBonus
-    //  override (reaching every Atributo-total reader via Character#getEffectiveAttributeTotal),
-    //  exactly as ConselheiroDeGuerraYmirianoFeat does for its Gnose half. Wire it here once the
-    //  RD/RM half below is addressed, so the constant lands whole rather than half-done.
+    /**
+     * The "+1 em Vigor" half is <b>real</b>, through {@link Feat#resolveAttributeBonus} — an
+     * unconditional grant to every Troll regardless of sub-lineage (the clause names no
+     * condition), reaching every Atributo-total reader via {@code
+     * Character#getEffectiveAttributeTotal}, exactly as {@code BestialFeat}'s Heranças.
+     */
     // TODO: the RD/RM half needs the unmodelled sub-lineage to pick between them, and RM
     //  (Redução Mágica) is not a concept this core computes at all — the same gap Gorgona's own
     //  Monstros em pele de Fada cites. Granting the RD half unconditionally would hand it to
@@ -128,7 +132,15 @@ public enum TrollFeat implements Feat {
                     .requiredFeatCategory(FeatCategory.TROLL)
                     .requiredFeatCategoryCount(2)
                     .requiredAwakenedTitles(1)
-                    .build());
+                    .build()) {
+        @Override
+        public int resolveAttributeBonus(final AttributeDomain domain, final Character character) {
+            return domain == AttributeDomain.VIGOR ? VIGOR_TROLLICO_ATTRIBUTE_BONUS : 0;
+        }
+    };
+
+    /** VIGOR_TROLLICO's own stated "+1 em Vigor". */
+    private static final int VIGOR_TROLLICO_ATTRIBUTE_BONUS = 1;
 
     private final String description;
     private final FeatRequirements featRequirements;

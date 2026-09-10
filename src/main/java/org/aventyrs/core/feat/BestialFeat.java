@@ -14,22 +14,21 @@ import org.aventyrs.core.race.Bestial;
  * <p><b>Most of this tree is still inert</b>, and that is not seven separate accidents: every
  * Herança is built from the same four clauses, and two of the four are blocked. The two now
  * real are the <b>Atributo bonus</b> — every Herança grants its +1 through {@code
- * Feat#resolveAttributeBonus}, with the partial reach that hook documents — and the <b>Arma
- * Natural</b> grant, where {@link #HERANCA_BOVIDEA}/{@link #HERANCA_CANINA}/{@link #HERANCA_FELINA}
- * hand their holder a {@link NaturalWeapon} through {@code Feat#getGrantedNaturalWeapons},
- * surfaced by {@code Character#getNaturalWeapons()}.
+ * Feat#resolveAttributeBonus} — and the <b>Arma Natural</b> grant, where {@link #HERANCA_BOVIDEA}/
+ * {@link #HERANCA_CANINA}/{@link #HERANCA_FELINA} hand their holder a {@link NaturalWeapon}
+ * through {@code Feat#getGrantedNaturalWeapons}, surfaced by {@code Character#getNaturalWeapons()}.
  *
  * <ul>
  *   <li><b>"+1 de bônus racial em &lt;Atributo&gt;"</b> — <b>now real</b>, through {@code
  *   Feat#resolveAttributeBonus}: each of the seven Heranças returns +1 for its own fixed Atributo
- *   (Vigor for {@link #HERANCA_ANFIBIA}, Foco for {@link #HERANCA_AVIANA}, …). <b>Partial reach</b>,
- *   per that hook's javadoc — the +1 lands on a Perícia roll governed by that Atributo (read by
- *   {@code AbstractSkillInteraction}) and on nothing else: HP/PM/PD/Defesa/Conjuração still read
- *   {@code AttributeValue#getTotal()} directly. The clause calls it a "Bônus Racial", which reads
+ *   (Vigor for {@link #HERANCA_ANFIBIA}, Foco for {@link #HERANCA_AVIANA}, …). Summed by {@code
+ *   Character#getEffectiveAttributeTotal}, so it reaches <b>every Atributo-total reader</b> — a
+ *   Perícia roll governed by that Atributo, HP/PM/PD, Rest recovery, {@code ItemRequirements},
+ *   the half-Atributo maths. It does not reach {@code AttributeValue#getBase()} gates (the
+ *   Graduação cap, the Habilidade slot count). The clause calls it a "Bônus Racial", which reads
  *   permanent; it is a permanent grant here, unlike {@code VampiricoFeat#DOM_DE_MIRCALLA}'s
- *   round-scoped twin. {@link #HERANCA_ANFIBIA}'s Vigor +1 is computed but currently unobservable
- *   — no Perícia is Vigor-governed — the same "compute it even with no reader" discipline the
- *   rest of this core follows.</li>
+ *   round-scoped twin. {@link #HERANCA_ANFIBIA}'s Vigor +1 reaches no Perícia roll — no Perícia
+ *   is Vigor-governed — but still lifts the effective Vigor total and, with it, max PV.</li>
  *   <li><b>An Arma Natural</b> (Chifres Poderosos, Presas Longas, Garras Afiadas) — <b>now
  *   real</b>: authored in {@link NaturalWeapon} and granted per Herança. Each weapon's own
  *   authored Favor / Efeito Crítico is still unmodeled — see {@link NaturalWeapon}.</li>
@@ -52,8 +51,9 @@ public enum BestialFeat implements Feat {
      * "+1 de bônus racial em Vigor e Movimento Base de Natação… Vantagem para resistir a ataques
      * de agarrar, se livrar de cordas e outros objetos, ou lugares apertados."
      *
-     * <p>The Vigor +1 is <b>real</b>, through {@link Feat#resolveAttributeBonus} — computed but
-     * currently unobservable, since no Perícia is Vigor-governed (see the class javadoc).
+     * <p>The Vigor +1 is <b>real</b>, through {@link Feat#resolveAttributeBonus} — it reaches no
+     * Perícia roll (none is Vigor-governed) but does lift the effective Vigor total and max PV
+     * (see the class javadoc).
      */
     // TODO: swim movement and the free Habilidade de Competência are blocked — see the class
     //  javadoc for each.
@@ -81,8 +81,8 @@ public enum BestialFeat implements Feat {
     /**
      * "+1 de bônus racial em Foco. Você agora tem asas e possui Movimento Base de Voo."
      *
-     * <p>The Foco +1 is <b>real</b>, through {@link Feat#resolveAttributeBonus} — with the partial
-     * reach that hook documents (a Foco-governed Perícia roll only).
+     * <p>The Foco +1 is <b>real</b>, through {@link Feat#resolveAttributeBonus} — reaching every
+     * Atributo-total reader via {@code Character#getEffectiveAttributeTotal}.
      */
     // TODO: the free Habilidade de Competência is blocked — see the class javadoc. Flight
     //  additionally needs the flight state Aviano's own Braços Alados records (a distance sub-stat,
@@ -108,9 +108,8 @@ public enum BestialFeat implements Feat {
     /**
      * "+1 de bônus racial no atributo Força e Arma Natural Chifres Poderosos."
      *
-     * <p>Both halves are real — the Força +1 through {@link Feat#resolveAttributeBonus} (partial
-     * reach: a Força-governed Perícia roll only), the Arma Natural through {@link
-     * NaturalWeapon#CHIFRES_PODEROSOS}.
+     * <p>Both halves are real — the Força +1 through {@link Feat#resolveAttributeBonus}, the Arma
+     * Natural through {@link NaturalWeapon#CHIFRES_PODEROSOS}.
      */
     // TODO: the free Habilidade de Competência de Atletismo is still blocked — see the class javadoc.
     HERANCA_BOVIDEA(
@@ -134,8 +133,8 @@ public enum BestialFeat implements Feat {
      * "+1 de bônus racial em Instinto, Arma Natural Presas Longas e Faro Apurado – Vantagem em
      * rolagens de Atenção para perceber ameaças a partir do olfato."
      *
-     * <p>The Instinto +1 is real through {@link Feat#resolveAttributeBonus} (partial reach: an
-     * Instinto-governed Perícia roll only), and Presas Longas is granted.
+     * <p>The Instinto +1 is real through {@link Feat#resolveAttributeBonus}, and Presas Longas is
+     * granted.
      */
     // TODO: the free Especialização/Habilidade de Competência de Atenção is still blocked — see
     //  the class javadoc.
@@ -171,8 +170,7 @@ public enum BestialFeat implements Feat {
      * "+1 de bônus racial no atributo Gnose e a habilidade Ecolocalização – Você pode gastar 2PD
      * para reduzir a GD de testes de Atenção em -1 nível."
      *
-     * <p>The Gnose +1 is <b>real</b>, through {@link Feat#resolveAttributeBonus} (partial reach:
-     * a Gnose-governed Perícia roll only).
+     * <p>The Gnose +1 is <b>real</b>, through {@link Feat#resolveAttributeBonus}.
      */
     // TODO: the free Especialização is blocked — see the class javadoc.
     // TODO: Ecolocalização's GD reduction is *bought with a resource*, which is exactly the shape
@@ -199,9 +197,8 @@ public enum BestialFeat implements Feat {
     /**
      * "+1 de bônus racial em Destreza, Visão no Escuro e Arma Natural Garras Afiadas."
      *
-     * <p>Two halves are real — the Destreza +1 through {@link Feat#resolveAttributeBonus} (partial
-     * reach: a Destreza-governed Perícia roll only), the Arma Natural through {@link
-     * NaturalWeapon#GARRAS_AFIADAS}.
+     * <p>Two halves are real — the Destreza +1 through {@link Feat#resolveAttributeBonus}, the
+     * Arma Natural through {@link NaturalWeapon#GARRAS_AFIADAS}.
      */
     // TODO: the free Habilidade de Competência de Furtividade is still blocked — see the class
     //  javadoc. Visão no Escuro additionally needs a vision/senses concept.
@@ -226,8 +223,7 @@ public enum BestialFeat implements Feat {
     /**
      * "+1 de bônus racial em Carisma e Movimento Base Vertical."
      *
-     * <p>The Carisma +1 is <b>real</b>, through {@link Feat#resolveAttributeBonus} (partial reach:
-     * a Carisma-governed Perícia roll only).
+     * <p>The Carisma +1 is <b>real</b>, through {@link Feat#resolveAttributeBonus}.
      */
     // TODO: vertical movement and the free Especialização are blocked — see the class javadoc.
     HERANCA_REPTILIANA(

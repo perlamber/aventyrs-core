@@ -267,9 +267,12 @@ public enum DuelistaFeat implements Feat {
      * "Você pode adicionar metade do seu valor de Vigor à sua rolagem de danos físicos
      * corpo-a-corpo, se o fizer e for bem-sucedido você sofre 2 pontos de Dano Físico Primordial."
      */
-    // TODO: the bonus is computable (half Vigor) but Feat has no dano-bonus hook, and the
-    //  self-damage is a Dano Primordial that ignores mitigation and resists healing — neither an
-    //  unmitigable damage type nor a healing restriction exists.
+    // TODO: Feat#resolveDamageBonus now exists and the amount is computable (half Vigor), but
+    //  this is an opt-in bought with a cost ("você pode adicionar ... se o fizer ... você sofre
+    //  2 pontos de Dano Físico Primordial") — wiring it as an unconditional dano bonus would
+    //  auto-apply it every melee swing and silently skip the price. The self-damage is a Dano
+    //  Primordial that ignores mitigation and recovers only on a Descanso Verdadeiro — neither an
+    //  unmitigable damage type nor that healing restriction exists.
     FORCA_EXCESSIVA(
             "Você pode adicionar metade do seu valor de Vigor à sua rolagem de danos físicos "
                     + "corpo-a-corpo, se o fizer e for bem-sucedido você sofre 2 pontos de Dano "
@@ -309,7 +312,10 @@ public enum DuelistaFeat implements Feat {
     // TODO: Feat#resolveCriticalMarginIncrease is real and names the Menor tier this clause
     //  wants; what blocks it is "segundo ataque contra um
     //  mesmo alvo" needs per-target attack counting within a Rodada, which nothing tracks.
-    // TODO: the critical dano half (Metade da Gnose) is computable but Feat has no dano hook.
+    // TODO: the critical dano half (Metade da Gnose) is computable, and Feat#resolveDamageBonus
+    //  exists, but it carries no CriticalResult — this core models no crit-to-dano pathway at all
+    //  (CLAUDE.md's crit-damage bullet: "a crit currently changes the dano roll not at all"), so a
+    //  dano bonus scoped to "seus Acertos Críticos" has nowhere to attach.
     EXPLORAR_PONTOS_FRACOS(
             "Seu segundo ataque contra um mesmo alvo na mesma Rodada tem a Margem Crítica Menor "
                     + "aumentada em +2 números. Seus Acertos Críticos causam Metade da Gnose como "

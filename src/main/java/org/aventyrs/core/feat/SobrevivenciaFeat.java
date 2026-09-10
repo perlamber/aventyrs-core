@@ -2,8 +2,11 @@ package org.aventyrs.core.feat;
 
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.character.DamageBonus;
+import org.aventyrs.core.character.DamageType;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.scene.TerrainType;
+import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.skill.Skill;
 import org.aventyrs.core.skill.SkillTrait;
 import org.aventyrs.core.skill.SkillType;
@@ -132,14 +135,15 @@ public enum SobrevivenciaFeat implements Feat {
      * "Sua Margem Crítica Menor aumenta em +1 número, então você recebe Vantagem em rolagens de
      * Perícias de Ataque e Danos enquanto no terreno escolhido."
      *
-     * <p>The terrain match is real now ({@link TerrenoPrediletoFeat#chosenBy}), so both halves
-     * this hook family can reach are wired: the Margem Crítica <b>Menor</b> half (all {@code
+     * <p>The terrain match is real now ({@link TerrenoPrediletoFeat#chosenBy}), so three halves
+     * are wired: the Margem Crítica <b>Menor</b> increase (all {@code
      * SkillRoll#getCriticalResult(int)}'s margin touches — Acerto Crítico Maior stays a literal
-     * triple-6, and any Maior widening would need its own explicit mechanism) and the Perícias de
-     * Ataque Vantagem half.
+     * triple-6, and any Maior widening would need its own explicit mechanism), the Perícias de
+     * Ataque Vantagem, and the <b>dano</b> Vantagem — a flat {@code Skill#ADVANTAGE_BONUS}
+     * through {@link Feat#resolveDamageBonus}, untyped so it flattens to {@code FISICO} in {@code
+     * DamageBonus#total}, the established reading of "Vantagem em rolagens de Dano".
      */
-    // TODO: "e Danos" — a Vantagem on a *dano* roll has no Feat hook. Granting a Corrente de
-    //  Efeitos – Oprimir has no hook on the attack path either.
+    // TODO: granting a Corrente de Efeitos – Oprimir has no hook on the attack path.
     MESTRE_DE_CACA(
             "Sua Margem Crítica Menor aumenta em +1 número, então você recebe Vantagem em rolagens "
                     + "de Perícias de Ataque e Danos enquanto no terreno escolhido. Nestes "
@@ -158,6 +162,15 @@ public enum SobrevivenciaFeat implements Feat {
                                           final SkillTrait requestedAbility, final Character character) {
             return inChosenTerrain(character, sceneContext) && skillType.isAttackSkill()
                     ? Skill.ADVANTAGE_BONUS : 0;
+        }
+
+        @Override
+        public Optional<DamageBonus> resolveDamageBonus(final SkillType attackingSkillType,
+                                                         final SceneContext sceneContext,
+                                                         final CombatantSheet attackTarget, final Character actor) {
+            return attackingSkillType.isAttackSkill() && inChosenTerrain(actor, sceneContext)
+                    ? Optional.of(new DamageBonus(Skill.ADVANTAGE_BONUS, DamageType.FISICO))
+                    : Optional.empty();
         }
     },
 

@@ -70,10 +70,10 @@ public enum OrquicoFeat implements Feat {
     // TODO: re-typing an attack's dano is not expressible — DamageType is a classification a
     //  caller supplies per hit, and nothing lets a held trait *override* what an attack deals.
     //  DamageBonus can carry ELEMENTAL + ElementalType.TERRA, but that types a bonus, not the attack.
-    // TODO: the "+Metade do Vigor às rolagens de danos físicos" half is a flat dano bonus whose
-    //  amount is computable, but Feat has no resolveDamageBonus hook — that lives on
-    //  SkillCompetencyAbility and EgoAdvantage only, and both are reached through the skill
-    //  Interaction rather than through character.getFeats().
+    // TODO: the "+Metade do Vigor às rolagens de danos físicos" half — Feat#resolveDamageBonus now
+    //  exists and the amount is computable, but the clause is opt-in ("você pode adicionar") and
+    //  entangled with the unbuilt retyping (the whole point is that Elemental: Terra damage stays
+    //  physical), so wiring the +½Vigor alone would apply it to attacks the retyping never touched.
     // TODO: the Magia half additionally needs a Magia's own damage type, which Spell has no
     //  column for at all.
     PALADINO_DE_EPONA(

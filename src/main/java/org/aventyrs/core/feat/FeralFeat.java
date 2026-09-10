@@ -1,18 +1,21 @@
 package org.aventyrs.core.feat;
 
 import org.aventyrs.core.character.AttributeDomain;
+import org.aventyrs.core.character.Character;
 import org.aventyrs.core.race.HomemFera;
 
 /**
  * Talentos Ferais — the Homem-Fera's tree, split cleanly in two: three Talentos that graft a
  * physical trait on, and three Aventyr-tier ones that reshape <b>Forma Híbrida</b>'s economy.
  *
- * <p>No constant carries a mechanical effect, and the two halves fail for different reasons. The
- * first three each open with "+1 Bônus Racial em &lt;Atributo&gt;", which a Talento cannot grant
- * — see {@code BestialFeat}'s class javadoc for why that clause is systemically blocked. The last
- * three adjust the Custo, Tempo de Ativação and Duração of Forma Híbrida, which {@code HomemFera}
- * records as unbuilt: there is no form state, and no "spend a resource to enter a timed state"
- * transaction for these Talentos to make cheaper or longer.
+ * <p>The two halves of the tree fail for different reasons. The first three each open with "+1
+ * Bônus Racial em &lt;Atributo&gt;" for a <b>fixed</b> Atributo (Destreza, Vigor, Força) — that
+ * half is <b>real</b>, granted through {@link Feat#resolveAttributeBonus} and summed by {@code
+ * Character#getEffectiveAttributeTotal}, exactly as every {@code BestialFeat} Herança does — but
+ * the second clause of each is still blocked (a manual limitation, a re-typed dano, a Corrente).
+ * The last three adjust the Custo, Tempo de Ativação and Duração of Forma Híbrida, which {@code
+ * HomemFera} records as unbuilt: there is no form state, and no "spend a resource to enter a
+ * timed state" transaction for these Talentos to make cheaper or longer.
  *
  * <p>The Pré-requisito ladder <i>is</i> real throughout, and is this tree's most interesting
  * structural feature: {@link #TRANSFORMACAO_RAPIDA} and {@link #TRANSFORMACAO_DURADOURA} count
@@ -31,7 +34,9 @@ public enum FeralFeat implements Feat {
      * "Você recebe Bônus Racial de +1 em Destreza e pode usar suas Presas Longas para empunhar
      * armas e manipular objetos como se fosse uma de suas mãos."
      */
-    // TODO: a Talento cannot grant an Atributo bonus — see BestialFeat's class javadoc.
+    /**
+     * The Destreza +1 is <b>real</b>, through {@link Feat#resolveAttributeBonus}.
+     */
     // TODO: using Presas Longas as a hand needs both the Arma Natural concept and the limb
     //  concept Aviano's Braços Alados/Pés Hábeis pair is blocked on. With neither modelled there
     //  is no manual limitation for this to lift.
@@ -42,13 +47,20 @@ public enum FeralFeat implements Feat {
                     .requiredRace(HomemFera.class)
                     .attributeDomain(AttributeDomain.DEXTERITY)
                     .requiredAttributeValue(3)
-                    .build()),
+                    .build()) {
+        @Override
+        public int resolveAttributeBonus(final AttributeDomain domain, final Character character) {
+            return domain == AttributeDomain.DEXTERITY ? FERAL_ATTRIBUTE_BONUS : 0;
+        }
+    },
 
     /**
      * "Você recebe Bônus Racial de +1 em Vigor e adquire a Habilidade Racial Regeneração Reativa
      * (Trolls)."
      */
-    // TODO: a Talento cannot grant an Atributo bonus — see BestialFeat's class javadoc.
+    /**
+     * The Vigor +1 is <b>real</b>, through {@link Feat#resolveAttributeBonus}.
+     */
     // TODO: Regeneração Reativa is unbuilt — nothing triggers off taking damage, which is the
     //  healing counterpart of CLAUDE.md's "Reactive/retaliation damage" row. Note this Talento
     //  grants the Troll version at 1PV per Rodada rather than the 2PV Troll's own Característica
@@ -63,13 +75,20 @@ public enum FeralFeat implements Feat {
                     .requiredRace(HomemFera.class)
                     .attributeDomain(AttributeDomain.VIGOR)
                     .requiredAttributeValue(3)
-                    .build()),
+                    .build()) {
+        @Override
+        public int resolveAttributeBonus(final AttributeDomain domain, final Character character) {
+            return domain == AttributeDomain.VIGOR ? FERAL_ATTRIBUTE_BONUS : 0;
+        }
+    },
 
     /**
      * "Você recebe Bônus Racial de +1 em Força, o Tipo de Dano base de suas Armas Naturais mudam
      * para Físico Elemental: Natural… e recebem a Corrente de Efeitos – Ferida Infecciosa."
      */
-    // TODO: a Talento cannot grant an Atributo bonus — see BestialFeat's class javadoc.
+    /**
+     * The Força +1 is <b>real</b>, through {@link Feat#resolveAttributeBonus}.
+     */
     // TODO: re-typing an attack's dano is not expressible — DamageType is a classification a
     //  caller supplies per hit, and nothing lets a held trait override what an attack deals.
     //  Same gap OrquicoFeat#PALADINO_DE_EPONA cites, here compounded by there being no Arma
@@ -84,7 +103,12 @@ public enum FeralFeat implements Feat {
                     .requiredRace(HomemFera.class)
                     .attributeDomain(AttributeDomain.STRENGTH)
                     .requiredAttributeValue(3)
-                    .build()),
+                    .build()) {
+        @Override
+        public int resolveAttributeBonus(final AttributeDomain domain, final Character character) {
+            return domain == AttributeDomain.STRENGTH ? FERAL_ATTRIBUTE_BONUS : 0;
+        }
+    },
 
     /**
      * "O Custo e Tempo de Ativação de sua Habilidade Racial Forma Híbrida é reduzido em -1
@@ -137,6 +161,9 @@ public enum FeralFeat implements Feat {
                     .requiredFeat(TRANSFORMACAO_DURADOURA)
                     .requiredAwakenedTitles(1)
                     .build());
+
+    /** The "+1 de bônus racial" each of the three physical-trait Talentos grants for its fixed Atributo. */
+    private static final int FERAL_ATTRIBUTE_BONUS = 1;
 
     private final String description;
     private final FeatRequirements featRequirements;

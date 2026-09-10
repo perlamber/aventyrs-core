@@ -672,17 +672,25 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     }
 
     /**
-     * A flat bonus this Talento adds to one Atributo — {@code VampiricoFeat#MESTRE_VAMPIRO}'s
-     * "+1 ao Bônus Racial em Atributo ganho por ser um Vampiro". Overriding CLAUDE.md's "a
-     * Talento cannot grant an Atributo bonus" for the first time, so the reach is deliberately
-     * narrow: <b>only {@code AbstractSkillInteraction} reads it</b> — the bonus reaches a Perícia
-     * roll governed by domain and nothing else (HP/PM/PD/Defesa/Conjuração still read {@code
-     * AttributeValue#getTotal()} directly). Document that partial reach on any constant that
-     * overrides this. Zero by default.
+     * A flat, <b>permanent</b> bonus this Talento adds to one Atributo — {@code
+     * VampiricoFeat#MESTRE_VAMPIRO}'s "+1 ao Bônus Racial em Atributo ganho por ser um Vampiro",
+     * {@code AnaoFeat#CONSELHEIRO_DE_GUERRA_YMIRIANO}'s +1 Gnose, every {@code BestialFeat}
+     * Herança's fixed +1, {@code FeralFeat}/{@code FeericoFeat}'s fixed-Atributo halves. Summed by
+     * {@code Character#getEffectiveAttributeTotal(domain)}, which <b>every consumer of an Atributo
+     * total calls</b> — a Perícia roll governed by domain (via {@code AbstractSkillInteraction}),
+     * HP/PM/PD, Rest recovery, {@code ItemRequirements}, {@code SpellDurationService}, the
+     * half-Atributo effect maths, the melee ½-Força dano term. It does <b>not</b> reach {@code
+     * AttributeValue#getBase()} readers — the Graduação cap, the Habilidade slot count, {@code
+     * FeatRequirements}, {@code CharacterAttributeService#upgradeBase} — which gate on invested
+     * base. Zero by default.
+     *
+     * <p>Only for a <b>fixed</b> Atributo. A clause of the "escolha um Atributo" shape needs an
+     * acquisition-time-choice subclass whose override branches on the picked {@link
+     * AttributeDomain} — {@code HumanoFeat#LIMIAR_DA_EVOLUCAO}'s own work, still unbuilt.
      *
      * <p>For a <b>round-scoped</b> Atributo bonus (a Poder Vampírico like {@code DOM_DE_MIRCALLA})
-     * grant a {@code TemporaryBonus} of {@code domain.getBonusModifierType()} instead — the same
-     * one reader picks both up.
+     * grant a {@code TemporaryBonus} of {@code domain.getBonusModifierType()} instead — that path
+     * is still read only by {@code AbstractSkillInteraction} on the Perícia-roll path.
      */
     default int resolveAttributeBonus(final AttributeDomain domain, final Character character) {
         return 0;
