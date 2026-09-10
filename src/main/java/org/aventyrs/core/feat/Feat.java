@@ -762,6 +762,21 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      * this <b>must return a stable singleton</b> (an enum-constant field) — {@code
      * ActiveAbilityService#activate} identifies the held ability by reference.
      */
+    /**
+     * Every {@link ActiveAbility} this Talento grants — the plural form, for a Talento that hands
+     * over <b>several</b> at once. {@code VampiricoFeat#METAMORFOSE_DRACULEA} is what this exists
+     * for: the player picks two Formas Metamórficas (one for a Dampiro, four for a Rakshasa) and
+     * each is separately activatable, so a single {@code Optional} could not carry them.
+     *
+     * <p><b>Defaults to {@link #resolveActiveAbility()}</b>, so every existing overrider keeps
+     * working untouched — override <em>this</em> one only when there is genuinely more than one.
+     * The stable-singleton rule applies to each element for the same reason it applies to the
+     * singular form: {@code ActiveAbilityService#activate} matches a held ability by {@code ==}.
+     */
+    default List<ActiveAbility> resolveActiveAbilities() {
+        return resolveActiveAbility().stream().toList();
+    }
+
     default Optional<ActiveAbility> resolveActiveAbility() {
         return Optional.empty();
     }

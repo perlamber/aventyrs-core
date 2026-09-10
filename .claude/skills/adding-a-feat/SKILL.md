@@ -100,7 +100,11 @@ mechanism.
   after the activation has succeeded; it burns down at the Rodada boundary, never the Turn one.
   **When later Talentos restate a figure rather than adding to it** ("Barreiras Mágicas criadas por
   você *agora concedem* +3", then +5), grant the ability from the *first* rung alone and have it
-  read the holder's held rungs — one better ability, not three stacking ones. Several hooks now have a
+  read the holder's held rungs — one better ability, not three stacking ones. **A Talento granting
+  *several* activatable things overrides the plural `resolveActiveAbilities()` instead** (it
+  defaults to the singular) — `MetamorfoseDraculeaFeat`, where each chosen Forma Metamórfica is its
+  own shape and `activate` matches by `==`, so "which shape" must be part of the ability's
+  identity. Several hooks now have a
   trailing `CombatantSheet holder` overload that falls through to the sheet-less form
   (`resolveSkillRollBonus`, `resolveDefenseBonus`, `resolveDamageReduction`,
   `resolveCriticalMarginIncrease`) — override it for a clause reading held `Condição`s or the

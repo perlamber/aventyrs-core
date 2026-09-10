@@ -1054,10 +1054,21 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         return getCharacter().getEquipment().stream().noneMatch(item -> item instanceof Weapon);
     }
 
+    /**
+     * A {@code null} weapon is an Ataque Desarmado and always allowed. Otherwise two things can
+     * refuse: a held Condição restricting attacks to light weapons (Devorado), and the Forma the
+     * combatant is in — "armas não podem ser utilizadas" while metamorphosed. An Arma Natural is
+     * exempt from the Forma's refusal: a wolf's fangs are not equipment, and the same clause that
+     * forbids weapons says they are what replaces them.
+     */
     @Override
     public boolean canAttackWith(final Weapon weapon) {
         if (weapon == null) {
             return true;
+        }
+        if (currentForm != null && !currentForm.getEquipmentPolicy().permitsWeapons()
+                && !getCharacter().treatsAsNaturalWeapon(weapon)) {
+            return false;
         }
         return !anyConditionPrevents(null, ConditionType::restrictsAttacksToLightWeapons)
                 || weapon.getEffectiveWeightClass() == ItemWeightClass.LIGHT;

@@ -216,14 +216,15 @@ public class Character {
     /**
      * Every {@link ActiveAbility} this character can trigger — the {@link #activeAbilities}
      * copied over from an {@code AttributeAbility} at acquisition, plus every held Talento's own
-     * {@link Feat#resolveActiveAbility()} (a Poder Vampírico). {@code
+     * {@link Feat#resolveActiveAbilities()} (a Poder Vampírico; the plural form, since one
+     * Talento may grant several — Metamorfose Dracúlea's chosen Formas). {@code
      * ActiveAbilityService#activate} identifies a held ability by reference, which is why a
      * {@code Feat} overriding {@code resolveActiveAbility} must return a stable singleton.
      */
     public List<ActiveAbility> getActiveAbilities() {
         return Stream.concat(
                         activeAbilities.stream(),
-                        feats.stream().flatMap(feat -> feat.resolveActiveAbility().stream()))
+                        feats.stream().flatMap(feat -> feat.resolveActiveAbilities().stream()))
                 .toList();
     }
 

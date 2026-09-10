@@ -345,8 +345,24 @@ Atributo).
 - **Still open:** a **Multiplicador de PV** uplift in force only while transformed (its figure
   scales per Título Desperto like the rest of that sentence — a *permanent* per-Título multiplier
   is already ordinary, `OrquicoFeat#TERRA_NAS_VEIAS`; what is missing is sheet reach, since
-  `getLifeMultiplier` takes a `Character`); **equipment restrictions**; **suppression of racial
-  traits**; the per-Forma **Arma Natural** swap.
+  `getLifeMultiplier` takes a `Character`); **suppression of racial traits**; the per-Forma
+  **Arma Natural** swap.
+- **Equipment restrictions — done for the weapons half.** `FormType#getEquipmentPolicy()` returns
+  a `FormEquipmentPolicy`, since the rules give two different answers: `WEAPONS_SUPPRESSED` (the
+  Metamorfose Dracúlea shapes — defensive items keep working) and `ALL_SUPPRESSED` (Metamorfose
+  Selvagem). `CombatantSheet#canAttackWith` is the consumer, exempting Armas Naturais.
+  `ALL_SUPPRESSED` is defined but unassigned — `ANIMAL` stays unrestricted until Metamorfose
+  Selvagem is built, rather than restricting `HomemFera`'s Animal rung on the strength of a
+  Talento nothing can enter. `ASAS_DE_DRAGAO`'s permanent Capa ban is a different shape and stays
+  out.
+- **`VampiricoFeat#METAMORFOSE_DRACULEA` landed** — the tree's most elaborate constant.
+  `FormaMetamorfica` is the six-row table (Arma Natural + Habilidade, feat-scoped since the shapes
+  belong to this Talento); `MetamorfoseDraculeaFeat` records the acquisition-time choice and
+  validates both lineage rules (Dampiro 1 / Rakshasa 4 / otherwise 2, no Névoa for a Rakshasa);
+  each chosen Forma is separately activatable as a Poder Vampírico. That needed a **plural
+  `Feat#resolveActiveAbilities`** hook — a single `Optional` cannot carry four, and `activate`
+  matches by `==`, so "which shape" has to be part of each ability's identity. The plural hook is
+  the reusable piece for the next Talento wanting choosable Formas.
 
 **Landed on top of slice 2:** `DRACONATO`'s size/Força/Foco uplift and `ANCIENTEFORME`'s
 Defesas/size/Carisma/Foco one — every half of both Talentos except Ancienteforme's PV multiplier

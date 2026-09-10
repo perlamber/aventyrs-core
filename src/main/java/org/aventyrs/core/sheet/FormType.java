@@ -53,5 +53,49 @@ public enum FormType {
     ANCIENTE,
 
     /** Névoa — one of {@code VampiricoFeat#METAMORFOSE_DRACULEA}'s Formas Metamórficas. */
-    NEVOA
+    NEVOA(FormEquipmentPolicy.WEAPONS_SUPPRESSED),
+
+    // The remaining five Formas Metamórficas. Each is its own shape rather than being folded into
+    // ANIMAL, so a clause can ask "enquanto Morcego Atroz" — which the table's per-row Habilidades
+    // need. Their Armas Naturais and Habilidades are authored on {@code FormaMetamorfica}, not
+    // here: those belong to the Talento that grants them, while the shape belongs to the sheet.
+
+    /** Aranha Gigante — Movimento Vertical e Vantagem em Furtividade. */
+    ARANHA_GIGANTE(FormEquipmentPolicy.WEAPONS_SUPPRESSED),
+
+    /** Cavalo de Chifres — ignora Terreno Difícil, Multiplicador de PV +1. */
+    CAVALO_DE_CHIFRES(FormEquipmentPolicy.WEAPONS_SUPPRESSED),
+
+    /** Lobo Dentes-de-Sabre — Vantagem em Perícias de Ataque. */
+    LOBO_DENTES_DE_SABRE(FormEquipmentPolicy.WEAPONS_SUPPRESSED),
+
+    /** Morcego Atroz — Movimento de Voo, Roubo de Vida +2. */
+    MORCEGO_ATROZ(FormEquipmentPolicy.WEAPONS_SUPPRESSED),
+
+    /** Serpente Espinhosa — Corrente de Efeitos: Veneno Vampírico. */
+    SERPENTE_ESPINHOSA(FormEquipmentPolicy.WEAPONS_SUPPRESSED);
+
+    private final FormEquipmentPolicy equipmentPolicy;
+
+    FormType() {
+        this(FormEquipmentPolicy.UNRESTRICTED);
+    }
+
+    FormType(final FormEquipmentPolicy equipmentPolicy) {
+        this.equipmentPolicy = equipmentPolicy;
+    }
+
+    /**
+     * What this shape lets its holder keep using — {@link FormEquipmentPolicy#UNRESTRICTED} for
+     * every Forma whose rules text says nothing about equipment, which is most of them.
+     *
+     * <p>{@link #ANIMAL} is deliberately left unrestricted even though {@code
+     * BestialFeat#METAMORFOSE_SELVAGEM} would make it {@link FormEquipmentPolicy#ALL_SUPPRESSED}:
+     * that Talento is not built, so assigning the stricter policy now would restrict {@code
+     * HomemFera}'s own Animal rung — a different clause whose text this repo does not hold — on
+     * the strength of a Talento nothing can enter. Set it when Metamorfose Selvagem lands.
+     */
+    public FormEquipmentPolicy getEquipmentPolicy() {
+        return equipmentPolicy;
+    }
 }

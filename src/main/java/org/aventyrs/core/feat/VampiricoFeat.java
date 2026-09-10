@@ -28,7 +28,8 @@ import java.util.Optional;
  * 3PV and applies the buff as {@code TemporaryBonus}es/a {@code LifeSteal} for the Duração.
  * {@link #PODER_VAMPIRICO_DURADOURO} extends that Duração by one Rodada per Título Aventyr.
  *
- * <p>Still blocked: {@link #METAMORFOSE_DRACULEA} (form state), {@link #PRESENCA_DE_CARMILLA}
+ * <p>{@link #METAMORFOSE_DRACULEA} is real too, and the tree's most elaborate constant — see
+ * {@link MetamorfoseDraculeaFeat} and {@link FormaMetamorfica}. Still blocked: {@link #PRESENCA_DE_CARMILLA}
  * (a per-Rodada effect needs the Scene's neighbours and their PV, which {@code
  * TemporaryEffect#applyRoundEffect(CombatantSheet)} cannot see), {@link #LACOS_ROMPIDOS}/{@link
  * #MESTRE_VAMPIRO}'s target-scoped Vantagem / Laços-de-Sangue relation / gerar Prole, and {@link
@@ -78,17 +79,18 @@ public enum VampiricoFeat implements Feat {
      * "Você adquire a capacidade de se transformar em animais ou névoa… Escolha 2 Formas
      * Metamórficas."
      */
-    // TODO: needs a form state — the same missing piece DraconicoFeat#DRACONATO, HomemFera's
-    //  Forma Híbrida and Gorgona's own forms are blocked on. The Poder Vampírico activation
-    //  mechanism (now built) does NOT cover this: a Forma is a persistent alternate shape that
-    //  swaps weapons and racial traits, not a timed TemporaryBonus.
-    // TODO: the choice of two Formas from a table of six could be recorded now (a choice-carrying
-    //  AbstractFeat subclass — see ArmamentoDraconicoFeat for the Set shape), and each Forma's
-    //  Arma Natural has a catalog entry (NaturalWeapon). But each Forma also grants its own
-    //  ability — a Movimento Base Vertical/de Voo, a Multiplicador de PV, a Corrente de Efeitos,
-    //  physical-damage immunity — each separately blocked, and all gated on the form state.
-    // TODO: "Dampiros escolhem 1, Rakshasa escolhem 4" — Vampiro.VampiroLineage has DAMPIRO/RAKSHASA,
-    //  so the per-lineage count is expressible; the form state each Forma needs is the blocker.
+    // Real, through MetamorfoseDraculeaFeat — the acquired form recording which Formas were
+    // chosen, with both lineage rules validated (Dampiro 1 / Rakshasa 4 / otherwise 2, and no
+    // Névoa for a Rakshasa). Each chosen Forma is separately activatable as a Poder Vampírico
+    // (Ação Livre, 3PV, 2 Rodadas) through Feat#resolveActiveAbilities — the plural hook this
+    // Talento is the reason for — and entering one suppresses weapons while leaving defensive
+    // items working, which is this clause's own equipment rule (FormType#getEquipmentPolicy).
+    // TODO: each row's Arma Natural is authored on FormaMetamorfica but not granted — swapping
+    //  the holder's Armas Naturais per Forma needs sheet reach, since Character#getNaturalWeapons()
+    //  cannot ask which shape its owner is in (CLAUDE.md's Forma row).
+    // TODO: each row's own HABILIDADE is authored text and granted by nothing — Movimento Base
+    //  Vertical/de Voo (no sub-stat), Multiplicador de PV per Rodada (no sheet reach), a Corrente
+    //  de Efeitos, and Névoa's physical-damage immunity (no damage-type immunity stage).
     METAMORFOSE_DRACULEA(
             "Você adquire a capacidade de se transformar em animais ou névoa; enquanto usando "
                     + "metamorfose seus Equipamentos se adaptam ao seu corpo, itens defensivos "
