@@ -162,9 +162,20 @@ change bar one: `MovementServiceImpl` gained the equipment `MOVEMENT` pass it la
 
 - **26 base Defensivos** — every Bota, Capa, Escudo and Protetor de Cabeça. `ItemCategory` has
   `BOOTS`/`CLOAK`/`SHIELD`/`HELMET`/`GLOVES`/`RING` waiting; no `<Category>Item` enum exists.
-- **60 Armas** — the entire Ofensivo section. `Weapon`/`AbstractWeapon` exist but no catalog
-  enum (`BowItem`, `LightBladeItem`, …) does. `Fortalecimento` and `Artefatos de Conjuração`
-  have no `ItemCategory` at all (they are not a clean fit for `CLUB`/`GLOVES`).
+- **Armas — 8 of 11 subsections authored.** `BowItem` (3), `ThrowableItem` (4), `CrossbowItem`
+  (3), `WhipItem` (4), `ClubItem` (5), `LightBladeItem` (6), `HeavyBladeItem` (6), `SpearItem`
+  (5) — 36 weapons, each `implements ItemTemplate, Weapon` like `NaturalWeapon`, registered in
+  `ItemCatalog.CATALOG_ENUMS`. The Efeito Crítico column is now on `Weapon`
+  (`getCriticalEffect()` → `CriticalEffectType` or `null`, `getLesserCriticalMargin()` → the
+  authored 3d6 threshold), unread — no weapon→crit scan exists. Dureza/DF/DM/Conjuração are 0
+  throughout (the source leaves them blank for weapons); the Arco/Besta "Projétil" crit column
+  is a source-row defect (not a `CriticalEffectType`) modeled as `null`; nearly every Favor is
+  prose (Correntes de Efeitos, "muda para" overrides, crit-dano — all unreadable), the
+  exceptions being the two "Vantagem nas rolagens de Ataque à Distância" Favores (Besta Pesada,
+  Javelin → `ATAQUE_A_DISTANCIA_ROLL_BONUS`), Bordão's `DEFESAS +2`, and Espada Gancho's
+  `PHYSICAL_DEFENSE +1`. **Still unauthored:** `Projéteis` (6, ammunition — `PROJECTILE`
+  category exists), `Fortalecimento` (9) and `Artefatos de Conjuração` (9) — the latter two
+  have no `ItemCategory` (not a clean fit for `CLUB`/`GLOVES`).
 - **12 Equipamentos Naturais** — `ItemCategory.NATURAL_WEAPON` exists; `Arma de Sopro` (breath
   weapon, Cone area) and the five Defesas Naturais have no category.
 - **17 Obras-Primas Ofensivas + 18 Aprimoramentos Ofensivos** — no `OffensiveMasterpiece` /

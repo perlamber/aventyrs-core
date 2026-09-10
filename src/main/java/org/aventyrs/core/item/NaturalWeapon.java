@@ -2,6 +2,7 @@ package org.aventyrs.core.item;
 
 import lombok.Getter;
 import org.aventyrs.core.character.DamageBase;
+import org.aventyrs.core.effect.CriticalEffectType;
 import org.aventyrs.core.scene.Range;
 import org.aventyrs.core.skill.SkillType;
 
@@ -30,12 +31,12 @@ import org.aventyrs.core.skill.SkillType;
  *   all name mechanics with no {@code ItemBonus}-expressible shape. Per the {@code
  *   adding-an-item} skill, such a clause contributes no {@code ItemBonus} and stays in prose —
  *   here, in each constant's javadoc.</li>
- *   <li><b>No Efeito Crítico column.</b> Each entry authors one ("Empalar (17)", "Dilacerar
- *   (16)", …), but nothing scans a {@link Weapon} for a crit effect — {@code AttackDelivery}
- *   only reads the caller-supplied list plus {@code Feat#resolveExtraCriticalEffects}. Recorded
- *   in javadoc rather than added as an unread column (contrast {@link
- *   ArmorItem}'s {@code defensiveCriticalEffect}, which had the same "nothing reads it yet"
- *   status but a clear second consumer on the way). Add the column with its first real reader.</li>
+ *   <li><b>The Efeito Crítico column is authored but unread.</b> Each entry names one ("Empalar
+ *   (17)", "Dilacerar (16)", …), now carried by {@link Weapon#getCriticalEffect()}/{@link
+ *   Weapon#getLesserCriticalMargin()} — the column {@link BowItem} and the other Armas catalogs
+ *   promoted onto {@code Weapon}. Nothing scans it yet: {@code AttackDelivery} reads the
+ *   caller-supplied list plus {@code Feat#resolveExtraCriticalEffects}, never the Weapon. Add
+ *   the weapon→crit scan with its first real reader.</li>
  *   <li><b>Preço / DF / DM / Dureza / Conjuração are all 0.</b> A natural weapon has no Preço
  *   line at all, and is not an object that breaks or that a PE economy prices — {@link
  *   ItemRarity#NATURAL} is the marker for exactly that.</li>
@@ -68,7 +69,9 @@ public enum NaturalWeapon implements ItemTemplate, Weapon {
             ItemWeightClass.LIGHT,
             DamageBase.of(1, 2),
             SkillType.ATAQUE_A_DISTANCIA,
-            Range.DISTANCIA_MEDIA),
+            Range.DISTANCIA_MEDIA,
+            CriticalEffectType.CATACLISMO,
+            17),
 
     /**
      * Cauda Chicote (Média/Natural) — "uma Cauda fina e leve, mas muito rápida … ideal para
@@ -87,7 +90,9 @@ public enum NaturalWeapon implements ItemTemplate, Weapon {
             ItemWeightClass.MEDIUM,
             DamageBase.of(1, 1),
             SkillType.ATAQUE_CORPO_A_CORPO,
-            Range.ADJACENTE),
+            Range.ADJACENTE,
+            CriticalEffectType.ESTILHACADOR,
+            17),
 
     /**
      * Cauda Constritora (Pesada/Natural) — "uma Cauda longa e pesada, que permite se enrolar nas
@@ -105,7 +110,9 @@ public enum NaturalWeapon implements ItemTemplate, Weapon {
             ItemWeightClass.HEAVY,
             DamageBase.of(1, 1),
             SkillType.ATAQUE_CORPO_A_CORPO,
-            Range.ADJACENTE),
+            Range.ADJACENTE,
+            CriticalEffectType.ESTILHACADOR,
+            17),
 
     /**
      * Chifres Poderosos (Média/Natural) — "chifres, galhadas ou cornos poderosos, capazes de
@@ -122,7 +129,9 @@ public enum NaturalWeapon implements ItemTemplate, Weapon {
             ItemWeightClass.MEDIUM,
             DamageBase.of(1, 1),
             SkillType.ATAQUE_CORPO_A_CORPO,
-            Range.ADJACENTE),
+            Range.ADJACENTE,
+            CriticalEffectType.EMPALAR,
+            17),
 
     /**
      * Garras Afiadas (Leve/Natural) — "garras longas e naturalmente afiadas, capaz de retalhar a
@@ -141,7 +150,9 @@ public enum NaturalWeapon implements ItemTemplate, Weapon {
             ItemWeightClass.LIGHT,
             DamageBase.of(1, 1),
             SkillType.ATAQUE_CORPO_A_CORPO,
-            Range.ADJACENTE),
+            Range.ADJACENTE,
+            CriticalEffectType.DILACERAR,
+            16),
 
     /**
      * Presas Longas (Leve/Natural). Dano 1d6+1, Perfuração, Efeito Crítico Sangramento (16),
@@ -158,7 +169,9 @@ public enum NaturalWeapon implements ItemTemplate, Weapon {
             ItemWeightClass.LIGHT,
             DamageBase.of(1, 1),
             SkillType.ATAQUE_CORPO_A_CORPO,
-            Range.ADJACENTE),
+            Range.ADJACENTE,
+            CriticalEffectType.SANGRAMENTO,
+            16),
 
     /**
      * Ataque Desarmado (Leve/Natural) — "ataques feitos com punhos, pernas e outras partes do
@@ -182,7 +195,9 @@ public enum NaturalWeapon implements ItemTemplate, Weapon {
             ItemWeightClass.LIGHT,
             DamageBase.UNARMED,
             SkillType.ATAQUE_CORPO_A_CORPO,
-            Range.ADJACENTE);
+            Range.ADJACENTE,
+            CriticalEffectType.ATORDOANTE,
+            17);
 
     private final String name;
     private final String description;
@@ -190,15 +205,20 @@ public enum NaturalWeapon implements ItemTemplate, Weapon {
     private final DamageBase damageBase;
     private final SkillType skillType;
     private final Range range;
+    private final CriticalEffectType criticalEffect;
+    private final int lesserCriticalMargin;
 
     NaturalWeapon(final String name, final String description, final ItemWeightClass weightClass,
-                  final DamageBase damageBase, final SkillType skillType, final Range range) {
+                  final DamageBase damageBase, final SkillType skillType, final Range range,
+                  final CriticalEffectType criticalEffect, final int lesserCriticalMargin) {
         this.name = name;
         this.description = description;
         this.weightClass = weightClass;
         this.damageBase = damageBase;
         this.skillType = skillType;
         this.range = range;
+        this.criticalEffect = criticalEffect;
+        this.lesserCriticalMargin = lesserCriticalMargin;
     }
 
     @Override

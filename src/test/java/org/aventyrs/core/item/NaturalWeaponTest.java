@@ -3,6 +3,7 @@ package org.aventyrs.core.item;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.DamageBase;
 import org.aventyrs.core.character.fixture.CharacterFixture;
+import org.aventyrs.core.effect.CriticalEffectType;
 import org.aventyrs.core.scene.Range;
 import org.aventyrs.core.skill.SkillType;
 import org.junit.jupiter.api.BeforeEach;
@@ -58,6 +59,20 @@ class NaturalWeaponTest {
         Character character = CharacterFixture.blank(CharacterFixture.BLANK).build();
         Arrays.stream(NaturalWeapon.values())
                 .forEach(weapon -> assertTrue(character.treatsAsNaturalWeapon(weapon), weapon.getName()));
+    }
+
+    @Test
+    void everyConstantCarriesItsAuthoredEfeitoCriticoColumn() {
+        assertEquals(CriticalEffectType.CATACLISMO, NaturalWeapon.ARMA_DE_SOPRO.getCriticalEffect());
+        assertEquals(17, NaturalWeapon.ARMA_DE_SOPRO.getLesserCriticalMargin());
+        assertEquals(CriticalEffectType.ESTILHACADOR, NaturalWeapon.CAUDA_CHICOTE.getCriticalEffect());
+        assertEquals(CriticalEffectType.ESTILHACADOR, NaturalWeapon.CAUDA_CONSTRITORA.getCriticalEffect());
+        assertEquals(CriticalEffectType.EMPALAR, NaturalWeapon.CHIFRES_PODEROSOS.getCriticalEffect());
+        assertEquals(CriticalEffectType.DILACERAR, NaturalWeapon.GARRAS_AFIADAS.getCriticalEffect());
+        assertEquals(16, NaturalWeapon.GARRAS_AFIADAS.getLesserCriticalMargin());
+        assertEquals(CriticalEffectType.SANGRAMENTO, NaturalWeapon.PRESAS_LONGAS.getCriticalEffect());
+        assertEquals(16, NaturalWeapon.PRESAS_LONGAS.getLesserCriticalMargin());
+        assertEquals(CriticalEffectType.ATORDOANTE, NaturalWeapon.ATAQUE_DESARMADO.getCriticalEffect());
     }
 
     @Test
