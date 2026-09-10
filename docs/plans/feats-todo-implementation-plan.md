@@ -283,7 +283,48 @@ exist. What's missing is **Resfriamento (cooldown)** and the authoring of specif
 
 ---
 
-## Phase 5 — Form state system  ⭐ largest single unlock
+## Phase 5 — Form state system  ⭐ largest single unlock — **slice 1 of 3 DONE**
+
+The plan estimated 3–5 sessions, and that was right: the Forma is not one mechanism but a state
+plus five independent deltas. Split into slices so each lands whole rather than half-building all
+of it. **Slice 1 (the state and the gate) is done**; slices 2 and 3 are scoped below.
+
+### Slice 1 — the state and the gate ✅
+`sheet.FormType` (8 authored shapes) + `CombatantSheet#getCurrentForm()`/`enterForm`/`isInForm`.
+Two decisions worth keeping:
+- **No constant for "their own shape"** — that is `null`. `HomemFera`'s rules text lists Humanoide
+  alongside the three alternates, but modelling it would give "normal" two spellings; switching
+  back to Humanoide is *leaving* the Forma.
+- **Named by shape, not by source.** `MONSTRUOSA` is one constant though `Gorgona`, `HomemFera` and
+  `MonstruosoFeat` all reach it — "enquanto em sua Forma Monstruosa" asks about the shape.
+
+`enterForm` is an **unvalidating mutator** and nothing transforms anybody automatically, exactly
+like `applyCondition`. `CombatantSheet#canTakeForm` is the separate question, combining every held
+Talento's `Feat#resolveFormAccess` → `FormAccess` (`FORBIDDEN` refuses that shape; `REQUIRED` locks
+the holder in, refusing every other shape *and* their own). Three-valued for the reason
+`resolveTitleAcquisitionPermission` is: with booleans, "says nothing" and "says no" collapse.
+
+**Landed:** `GorgonaFeat#MARCA_DA_MALDICAO` (lock), `#ACOLHIDA_POR_FLORA` (forbid), and the
+form-gated Resistência a Críticos on both `#PROTECAO_DO_DEUS_DOS_MONSTROS` and
+`#PROTECAO_DA_RAINHA_DAS_FADAS` — which needed a new `CombatantSheet`-taking overload of
+`Feat#resolveCriticalResistance`, since the Forma lives on the sheet.
+
+### Slice 2 — entering a Forma as a transaction (not started)
+Reuses Phase 4's `ActiveAbility` cycle, which already handles cost/gates/effects/Resfriamento. Two
+pieces are missing from it: a **Pontos de Determinação cost** (Draconato and Ancienteforme cost
+3PA+3PD, Metamorfose Selvagem 2PD — `ActiveAbility` has PA/PM/PV only), and an **"until a Descanso
+Longo" Resfriamento**, which is a different unit from the Rodada count `getCooldownRounds()` holds.
+Plus a `TemporaryEffect` that clears the Forma when the Duração lapses — nothing expires one today.
+
+### Slice 3 — what a Forma actually *does* (not started)
+Five independent deltas, each its own missing mechanism, listed on the CLAUDE.md Forma row: a
+round-scoped **Atributo** bonus; a **`SizeCategory`** shift from a `TemporaryBonus`; **equipment
+restrictions**; **suppression of racial traits**; and the per-Forma **Arma Natural** swap. Several
+overlap other phases — the Atributo one is the same gap `VampiricoFeat#DOM_DE_MIRCALLA` cites.
+
+**Original plan text follows.**
+
+### Phase 5 (as planned)
 
 A **persistent alternate shape** (entered/exited, not timed) on `CombatantSheet`:
 `CharacterForm` carrying — stat deltas, ability grants, `SizeCategory` override, equipment

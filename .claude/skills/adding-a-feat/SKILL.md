@@ -75,12 +75,17 @@ mechanism.
   text routinely offers a choice between them in one clause; folded into
   `SkillCompetencyAbility#allFor` and `Character#getSpecializations(SkillType)`, so both reach the
   roll path unchanged — `HerancaBestialFeat`, `AdotadoPorSylphFeat`, `ChosenSkillTraitsFeat`), and
+  `resolveFormAccess(FormType, Character)` → `FormAccess` (whether this Talento forbids a Forma or
+  locks its holder into one — `CombatantSheet#canTakeForm` combines them; three-valued, so "says
+  nothing" and "says no" stay distinct, the same shape `resolveTitleAcquisitionPermission` uses),
   `resolveMagicReduction(Character)` (RM — Resistência à Magias, the magic-damage twin of
   `resolveDamageReduction`; reaches only a hit typed `DamageType.MAGICO`, see `damage-and-combat`),
-  `resolveCriticalResistance(Character, SceneContext)` (RC — a *defender-side* narrowing of
+  `resolveCriticalResistance(Character, SceneContext[, CombatantSheet])` (RC — a *defender-side* narrowing of
   whoever attacks the holder, totalled with the `Race` grant and any `TemporaryBonus` by
   `CombatantSheet#getTotalCriticalResistance`; ⚠️ its `sceneContext` is the **attacker's**
-  snapshot, so read only Scene-wide facts from it — never proximity),
+  snapshot, so read only Scene-wide facts from it — never proximity; the longest overload adds the
+  holder's own sheet, which is how a clause gated "enquanto em sua Forma X" reads
+  `CombatantSheet#isInForm`),
   `resolveSizeCategoryOverride(Character)` → `SizeCategory` (an absolute *set* — "sua Categoria
   de Tamanho muda para -2", `GnomoFeat#DUENDE`) and `resolveSizeCategoryIncrease(Character)` (the
   *shift* twin — "aumenta em +1", `GiganteFeat#GIGANTE_DO_CLA_EMPUSA`); `CharacterSizeService`

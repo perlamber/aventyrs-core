@@ -15,6 +15,8 @@ import org.aventyrs.core.sheet.Blessing;
 import org.aventyrs.core.sheet.CombatantAction;
 import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.CombatantSheet;
+import org.aventyrs.core.sheet.FormType;
+import org.aventyrs.core.sheet.FormAccess;
 import org.aventyrs.core.skill.CriticalResult;
 import org.aventyrs.core.character.DamageBonus;
 import org.aventyrs.core.character.CharacterSkill;
@@ -816,6 +818,30 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     }
 
     /**
+     * This Talento's opinion on its holder taking form — whether it forbids that shape, insists
+     * on it, or has nothing to say. {@link FormAccess#NO_OPINION} by default, which is every
+     * Talento but two.
+     *
+     * <p>Two clauses need it, and they pull in opposite directions: {@code
+     * GorgonaFeat#ACOLHIDA_POR_FLORA} <b>forbids</b> a shape ("não pode acessar a forma
+     * monstruosa"), while {@code GorgonaFeat#MARCA_DA_MALDICAO} <b>locks</b> its holder into one
+     * ("está sempre em sua forma monstruosa e é incapaz de alternar"), which refuses every
+     * <em>other</em> shape and the natural one besides. {@code CombatantSheet#canTakeForm}
+     * combines them: any {@code FORBIDDEN} refuses, and a {@code REQUIRED} refuses anything that
+     * is not the required shape.
+     *
+     * <p>Deliberately shaped like {@code resolveTitleAcquisitionPermission} rather than as a pair
+     * of boolean hooks — one answer per Talento per shape reads the same way the rules text does,
+     * and leaves no ambiguity about what two Talentos disagreeing means.
+     *
+     * @param form the shape being asked about; {@code null} asks about returning to the holder's
+     *             own shape, which is what a locking Talento also refuses
+     */
+    default FormAccess resolveFormAccess(final FormType form, final Character character) {
+        return FormAccess.NO_OPINION;
+    }
+
+    /**
      * Habilidades de Competência and Especializações this Talento grants its holder for free,
      * outside the Graduação ladder that normally doles them out — "você recebe uma Habilidade de
      * Competência de cada Perícia escolhida" ({@code FeericoFeat#ADOTADO_POR_SYLPH}), "recebem uma
@@ -1048,6 +1074,24 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      */
     default int resolveCriticalResistance(final Character character, final SceneContext sceneContext) {
         return 0;
+    }
+
+    /**
+     * The longer form of the RC grant, adding the holder's own {@link CombatantSheet} — what a
+     * clause scoped "enquanto em sua Forma Monstruosa" needs, since the Forma lives on the sheet
+     * ({@code CombatantSheet#isInForm}). {@code GorgonaFeat}'s two Proteções are what this exists
+     * for.
+     *
+     * <p><b>Defaults to the sheet-less form, not the other way round</b> — the same defaulting
+     * relationship every other {@code Feat} overload here uses, so existing overriders keep
+     * working untouched. {@code holder} is never {@code null} at the one call site that matters
+     * ({@code AbstractCombatantSheet#getTotalCriticalResistance} passes itself), but an override
+     * must still read a {@code null} as "condition not met" — nothing stops a future caller
+     * holding only a {@code Character}.
+     */
+    default int resolveCriticalResistance(final Character character, final SceneContext sceneContext,
+                                           final CombatantSheet holder) {
+        return resolveCriticalResistance(character, sceneContext);
     }
 
     /**

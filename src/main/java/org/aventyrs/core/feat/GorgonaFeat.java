@@ -4,6 +4,10 @@ import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.services.DamageService;
 import org.aventyrs.core.race.Gorgona;
+import org.aventyrs.core.sheet.CombatantSheet;
+import org.aventyrs.core.scene.SceneContext;
+import org.aventyrs.core.sheet.FormType;
+import org.aventyrs.core.sheet.FormAccess;
 
 import java.util.function.Supplier;
 
@@ -32,7 +36,9 @@ public enum GorgonaFeat implements Feat {
     /**
      * "Você está sempre em sua forma monstruosa e é incapaz de alternar para a forma humanoide."
      */
-    // TODO: locks the holder into a form that does not exist — see the class javadoc.
+    // "Está sempre em sua forma monstruosa e é incapaz de alternar para a forma humanoide" is
+    // real: a FormAccess.REQUIRED on MONSTRUOSA, which CombatantSheet#canTakeForm reads as
+    // refusing every other shape and the holder's own besides.
     // TODO: Olhar de Lacerto is itself unbuilt (Gorgona's javadoc calls it the densest gap of any
     //  racial trait catalogued), so widening its Alcance widens nothing.
     // TODO: Corrente de Efeitos is an unbuilt system, and "Enrijecer Musculatura" is not among
@@ -54,12 +60,18 @@ public enum GorgonaFeat implements Feat {
             () -> FeatRequirements.builder()
                     .requiredRace(Gorgona.class)
                     .forbiddenFeat(acolhidaPorFlora())
-                    .build()),
+                    .build()) {
+        @Override
+        public FormAccess resolveFormAccess(final FormType form, final Character character) {
+            return form == FormType.MONSTRUOSA ? FormAccess.REQUIRED : FormAccess.NO_OPINION;
+        }
+    },
 
     /**
      * "Você está completamente liberta da maldição e não pode acessar a forma monstruosa."
      */
-    // TODO: the mirror of MARCA_DA_MALDICAO, and blocked on the same missing form.
+    // "Não pode acessar a forma monstruosa" is real: a FormAccess.FORBIDDEN on MONSTRUOSA, the
+    // exact mirror of MARCA_DA_MALDICAO's lock.
     // TODO: suppressing Abandonadas pelos Deuses and substituting Feromônio Encantador both need
     //  a Talento to replace a Característica Racial, which nothing can do.
     // TODO: "+2 em Conjuração, Danos e Curas de suas Magias Naturais" needs a Magia to have
@@ -75,7 +87,12 @@ public enum GorgonaFeat implements Feat {
             () -> FeatRequirements.builder()
                     .requiredRace(Gorgona.class)
                     .forbiddenFeat(GorgonaFeat.MARCA_DA_MALDICAO)
-                    .build()),
+                    .build()) {
+        @Override
+        public FormAccess resolveFormAccess(final FormType form, final Character character) {
+            return form == FormType.MONSTRUOSA ? FormAccess.FORBIDDEN : FormAccess.NO_OPINION;
+        }
+    },
 
     /**
      * "Você recebe RDS e RD, enquanto em sua Forma Monstruosa você recebe Resistência à
@@ -87,10 +104,10 @@ public enum GorgonaFeat implements Feat {
      * {@code DamageService#DEFAULT_DAMAGE_REDUCTION}, the convention for an RD clause with no
      * number in its rules text.
      */
-    // TODO: Resistência a Críticos — the scan is built now (Feat#resolveCriticalResistance,
-    //  totalled by CombatantSheet#getTotalCriticalResistance), so the *only* remaining blocker is
-    //  the form gate: "enquanto em sua Forma Monstruosa", and no form state exists. Override that
-    //  hook the day it does. Still distinct from Race#getCriticalEffectImmunities().
+    // All three halves real now: RD unconditionally, and the Resistência a Críticos while in
+    // Forma Monstruosa — the form gate reads CombatantSheet#isInForm through
+    // resolveCriticalResistance's holder-taking overload. Still distinct from
+    // Race#getCriticalEffectImmunities().
     PROTECAO_DO_DEUS_DOS_MONSTROS(
             "Você recebe RDS e RD, enquanto em sua Forma Monstruosa você recebe Resistência à "
                     + "Críticos. Um mesmo personagem não pode possuir os Talentos Proteção do Deus "
@@ -105,6 +122,14 @@ public enum GorgonaFeat implements Feat {
         public int resolveDamageReduction(final Character character) {
             return DamageService.DEFAULT_DAMAGE_REDUCTION;
         }
+
+        /** "Enquanto em sua Forma Monstruosa você recebe Resistência à Críticos." */
+        @Override
+        public int resolveCriticalResistance(final Character character, final SceneContext sceneContext,
+                                              final CombatantSheet holder) {
+            return holder != null && holder.isInForm(FormType.MONSTRUOSA)
+                    ? CombatantSheet.CRITICAL_RESISTANCE_INSTANCE : 0;
+        }
     },
 
     /**
@@ -114,8 +139,8 @@ public enum GorgonaFeat implements Feat {
      * {@code DamageService#getTotalMagicReduction}) reduces Dano Mágico the way RDS reduces
      * physical, so this Talento is once again the equal of its Monstros twin, as written.
      */
-    // TODO: Resistência a Críticos — the scan is built (Feat#resolveCriticalResistance); the only
-    //  remaining blocker is the form gate ("enquanto em sua forma Feérica"), same as its twin.
+    // All three halves real now, the same way its twin's are — the Resistência a Críticos gated
+    // on Forma Feérica.
     PROTECAO_DA_RAINHA_DAS_FADAS(
             "Você recebe RDS e RM, enquanto em sua forma Feérica você recebe Resistência a "
                     + "Críticos. Um mesmo personagem não pode possuir os Talentos Proteção do Deus "
@@ -134,6 +159,14 @@ public enum GorgonaFeat implements Feat {
         @Override
         public int resolveMagicReduction(final Character character) {
             return DamageService.DEFAULT_DAMAGE_REDUCTION;
+        }
+
+        /** "Enquanto em sua forma Feérica você recebe Resistência a Críticos." */
+        @Override
+        public int resolveCriticalResistance(final Character character, final SceneContext sceneContext,
+                                              final CombatantSheet holder) {
+            return holder != null && holder.isInForm(FormType.FEERICA)
+                    ? CombatantSheet.CRITICAL_RESISTANCE_INSTANCE : 0;
         }
     },
 
