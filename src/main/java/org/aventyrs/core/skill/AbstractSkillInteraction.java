@@ -508,7 +508,8 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
     /** Equipment-held bonuses are data, so they have an explicit pass rather than a modifier scan. */
     private int sumEquipmentRollBonuses(final Character character) {
         return character.getEquipment().stream()
-                .mapToInt(item -> item.resolveEnhancementBonus(skillType.getRollBonusType(), skillType, character))
+                .mapToInt(item -> item.resolveFavorBonus(skillType.getRollBonusType(), character)
+                        + item.resolveEnhancementBonus(skillType.getRollBonusType(), skillType, character))
                 .sum();
     }
 

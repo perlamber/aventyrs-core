@@ -44,6 +44,23 @@ class CharacterSheetTest {
     }
 
     @Test
+    void hasActedOffensivelyThisRoundTracksRecordedAttackActionsAndClearsAtTheRodadaWrap() {
+        CharacterSheet sheet = newSheet();
+        assertFalse(sheet.hasActedOffensivelyThisRound());
+
+        sheet.recordAction(new CombatantAction(SkillType.ATTENTION, AttributeDomain.INSTINCT,
+                null, null, 1, null));
+        assertFalse(sheet.hasActedOffensivelyThisRound());
+
+        sheet.recordAction(new CombatantAction(SkillType.ATAQUE_CORPO_A_CORPO, AttributeDomain.STRENGTH,
+                null, null, 1, null));
+        assertTrue(sheet.hasActedOffensivelyThisRound());
+
+        sheet.startNewRound();
+        assertFalse(sheet.hasActedOffensivelyThisRound());
+    }
+
+    @Test
     void damageReducesAvailableHitPointsBudget() {
         CharacterSheet sheet = newSheet();
         assertEquals(5, sheet.applyDamage(5));

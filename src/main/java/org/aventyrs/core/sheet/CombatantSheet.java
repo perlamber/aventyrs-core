@@ -442,6 +442,21 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
     List<CombatantAction> getActionsThisRound();
 
     /**
+     * Whether this combatant has taken an offensive action (a Perícia de Ataque roll — which is
+     * also the delivery roll for an offensive Magia) so far this Rodada. Derived from {@link
+     * #getActionsThisRound()}, so it needs no state of its own and clears at the Rodada wrap
+     * like the log does — matching the rules' "nesta Rodada".
+     *
+     * <p>Gates the Escudos' defensive Favores ({@code ShieldItem#ESCUDO_MEDIO} and kin), whose
+     * "se não realizou nenhuma ação ofensiva nesta Rodada" bonuses resolve through {@code
+     * FavorCondition#NO_OFFENSIVE_ACTION_THIS_ROUND}.
+     */
+    default boolean hasActedOffensivelyThisRound() {
+        return getActionsThisRound().stream()
+                .anyMatch(action -> action.skill() != null && action.skill().isAttackSkill());
+    }
+
+    /**
      * Every action recorded since this Cena began — an unmodifiable view, in order. Unlike
      * {@link #getActionsThisRound()} this is not cleared at the Rodada wrap, only by {@link
      * #startNewScene()}; a "primeira magia conjurada na Cena" / "primeiro ataque de cada cena"

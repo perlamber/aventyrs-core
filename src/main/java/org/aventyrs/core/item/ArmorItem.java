@@ -14,7 +14,7 @@ import lombok.Getter;
  * A sibling enum per {@link ItemCategory} follows the same shape as more items are supplied.
  */
 @Getter
-public enum ArmorItem implements ItemTemplate {
+public enum ArmorItem implements CriticallyDefensiveItem {
 
     /**
      * Armadura Completa (Pesado/Raro). Its Conjuração column reads "Desvantagem" rather than a
@@ -259,20 +259,11 @@ public enum ArmorItem implements ItemTemplate {
     private final ItemFavor favor;
 
     /**
-     * The Efeito Crítico Defensivo this armour grants its wearer, from the source catalog's
-     * "Atualizando os Equipamentos Defensivos" table — every Armadura has one, so this is
-     * never {@code null}.
-     *
-     * <p>It lives here rather than on {@code Item} because "apenas Armaduras e Escudos recebem
-     * Efeitos Críticos Defensivos" — a Capa or an Elmo grants none, and a defaulted column on
-     * {@code Item} would make "a helmet" and "a breastplate" answer alike, the same mistake
-     * keeping {@code getDamageBase()} off {@code Item} avoids. Promote it to a shared interface
-     * when a {@code ShieldItem} lands and needs the identical shape, not before.
-     *
-     * <p><b>Nothing reads it yet</b> — a Defensive effect fires on an Acerto Crítico in the
-     * wearer's own Defesa roll, and neither {@code AttackReceiver} nor {@code
-     * EsquivaEApararInteraction} resolves that branch. The values are exact authored data all
-     * the same, like this enum's own Preço and Dureza columns.
+     * The Efeito Crítico Defensivo this armour grants its wearer — see {@link
+     * CriticallyDefensiveItem#getDefensiveCriticalEffect()}, the shared column promoted to that
+     * interface once {@link ShieldItem} landed and needed the identical shape. Never {@code
+     * null}: the source "Atualizando os Equipamentos Defensivos" table assigns one to every
+     * Armadura.
      */
     private final DefensiveCriticalEffectType defensiveCriticalEffect;
 

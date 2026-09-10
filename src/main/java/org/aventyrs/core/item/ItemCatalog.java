@@ -26,7 +26,8 @@ public final class ItemCatalog {
 
     /** Every enum that contributes {@link ItemTemplate} constants — add a category's enum here. */
     private static final List<Class<? extends ItemTemplate>> CATALOG_ENUMS =
-            List.of(ArmorItem.class, NaturalWeapon.class);
+            List.of(ArmorItem.class, BootsItem.class, CloakItem.class, ShieldItem.class,
+                    HelmetItem.class, NaturalWeapon.class);
 
     private static final List<ItemTemplate> ALL = discover();
 

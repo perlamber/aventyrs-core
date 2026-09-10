@@ -44,8 +44,8 @@ class AbstractItemTest {
 
         assertNull(item.getFavor());
         assertFalse(item.grantsFavorTo(null));
-        assertEquals(0, item.resolveFavorBonus(ModifierType.DAMAGE_REDUCTION, null));
-        assertEquals(List.of(), item.resolveFavorBonuses(null));
+        assertEquals(0, item.resolveFavorBonus(ModifierType.DAMAGE_REDUCTION, (Character) null));
+        assertEquals(List.of(), item.resolveFavorBonuses((Character) null));
     }
 
     @Test

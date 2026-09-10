@@ -55,7 +55,7 @@ public class DefenseServiceImpl implements DefenseService {
     public int getTotalDefense(final CombatantSheet target, final DefenseType defenseType,
                                final SceneContext sceneContext, final DamageDescriptor damageDescriptor) {
         return sumAbilityModifiers(target.getCharacter(), defenseType)
-                + sumEquipment(target.getCharacter(), defenseType, sceneContext, damageDescriptor)
+                + sumEquipment(target, defenseType, sceneContext, damageDescriptor)
                 + sumFeats(target.getCharacter(), defenseType, sceneContext, target)
                 + target.getTemporaryBonus(ModifierType.DEFESAS)
                 + target.getTemporaryBonus(defenseType.getModifierType())
@@ -98,6 +98,19 @@ public class DefenseServiceImpl implements DefenseService {
         int total = 0;
         for (Item item : character.getEquipment()) {
             total += item.getEffectiveDefenseBonus(defenseType, character, sceneContext, damageDescriptor);
+        }
+        return total;
+    }
+
+    /**
+     * The {@link CombatantSheet}-aware equipment pass — an Escudo's Favor bonus gated on live
+     * state (Escudo Médio's "se não realizou ação ofensiva nesta Rodada") resolves only here.
+     */
+    private int sumEquipment(final CombatantSheet target, final DefenseType defenseType,
+                             final SceneContext sceneContext, final DamageDescriptor damageDescriptor) {
+        int total = 0;
+        for (Item item : target.getCharacter().getEquipment()) {
+            total += item.getEffectiveDefenseBonus(defenseType, target, sceneContext, damageDescriptor);
         }
         return total;
     }

@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.modifier.ModifierType;
+import org.aventyrs.core.sheet.CombatantSheet;
 
 import lombok.Builder;
 import lombok.Getter;
@@ -69,25 +70,57 @@ public class ItemFavor {
      * How much of modifierType this Favor currently grants character — the sum of every
      * matching {@link ItemBonus} (additive, the same convention every other bonus source in
      * this core follows), or 0 when the requirement isn't met or nothing of that type is
-     * granted.
+     * granted. A bonus carrying a non-{@link FavorCondition#NONE} {@code condition} is excluded
+     * on this path — there is no sheet to judge it against, which reads as "cannot tell"; use
+     * {@link #resolveBonus(ModifierType, CombatantSheet)} for those.
      */
     public int resolveBonus(final ModifierType modifierType, final Character character) {
-        if (!isGrantedTo(character)) {
+        return resolveBonus(modifierType, character, null);
+    }
+
+    /**
+     * As {@link #resolveBonus(ModifierType, Character)}, but able to judge a bonus's {@link
+     * ItemBonus#condition()} against the wielder's live {@link CombatantSheet} — the Escudos'
+     * "se não realizou ação ofensiva nesta Rodada" bonuses only resolve here.
+     */
+    public int resolveBonus(final ModifierType modifierType, final CombatantSheet sheet) {
+        return resolveBonus(modifierType, sheet == null ? null : sheet.getCharacter(), sheet);
+    }
+
+    private int resolveBonus(final ModifierType modifierType, final Character character,
+                             final CombatantSheet sheet) {
+        if (character == null || !isGrantedTo(character)) {
             return 0;
         }
         return bonuses.stream()
                 .filter(bonus -> bonus.modifierType() == modifierType)
+                .filter(bonus -> bonus.condition().isMetBy(sheet))
                 .mapToInt(ItemBonus::value)
                 .sum();
     }
 
     /**
-     * Every bonus this Favor grants character right now — its full {@link #getBonuses()} list
-     * when the requirement is met, empty otherwise. For a caller applying all of them at once
-     * rather than asking about one {@link ModifierType} at a time.
+     * Every bonus this Favor grants character right now — its {@link #getBonuses()} list when
+     * the requirement is met (minus any conditioned bonus, which this path can't judge), empty
+     * otherwise. For a caller applying all of them at once rather than asking one {@link
+     * ModifierType} at a time.
      */
     public List<ItemBonus> resolveBonuses(final Character character) {
-        return isGrantedTo(character) ? bonuses : List.of();
+        if (!isGrantedTo(character)) {
+            return List.of();
+        }
+        return bonuses.stream().filter(bonus -> bonus.condition() == FavorCondition.NONE).toList();
+    }
+
+    /**
+     * Every bonus this Favor grants the wielder of sheet right now — {@link #resolveBonuses(Character)}
+     * plus whichever conditioned bonuses currently hold.
+     */
+    public List<ItemBonus> resolveBonuses(final CombatantSheet sheet) {
+        if (sheet == null || !isGrantedTo(sheet.getCharacter())) {
+            return List.of();
+        }
+        return bonuses.stream().filter(bonus -> bonus.condition().isMetBy(sheet)).toList();
     }
 
     /** Whether this Favor carries an "Efeitos Adicionais" line beyond the Favor itself. */

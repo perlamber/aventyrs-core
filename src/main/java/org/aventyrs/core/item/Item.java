@@ -236,6 +236,28 @@ public interface Item {
                                          final Character character,
                                          final org.aventyrs.core.scene.SceneContext sceneContext,
                                          final DamageDescriptor damageDescriptor) {
+        return getEffectiveDefenseBonus(defenseType, character, null, sceneContext, damageDescriptor);
+    }
+
+    /**
+     * As {@link #getEffectiveDefenseBonus(org.aventyrs.core.character.DefenseType, Character,
+     * org.aventyrs.core.scene.SceneContext, DamageDescriptor)}, but with the wielder's live
+     * {@link org.aventyrs.core.sheet.CombatantSheet} so a Favor bonus gated on live state (an
+     * Escudo's "se não realizou ação ofensiva nesta Rodada") can be judged. {@code
+     * org.aventyrs.core.character.services.DefenseService} calls this whenever it holds a sheet.
+     */
+    default int getEffectiveDefenseBonus(final org.aventyrs.core.character.DefenseType defenseType,
+                                         final org.aventyrs.core.sheet.CombatantSheet sheet,
+                                         final org.aventyrs.core.scene.SceneContext sceneContext,
+                                         final DamageDescriptor damageDescriptor) {
+        return getEffectiveDefenseBonus(defenseType, sheet.getCharacter(), sheet, sceneContext, damageDescriptor);
+    }
+
+    private int getEffectiveDefenseBonus(final org.aventyrs.core.character.DefenseType defenseType,
+                                         final Character character,
+                                         final org.aventyrs.core.sheet.CombatantSheet sheet,
+                                         final org.aventyrs.core.scene.SceneContext sceneContext,
+                                         final DamageDescriptor damageDescriptor) {
         if (isDestroyed()) {
             return 0;
         }
@@ -248,8 +270,8 @@ public interface Item {
         return defenseType.columnOf(this) + masterpieceBonus + improvementBonus
                 + resolvePowerStoneBonus(ModifierType.DEFESAS)
                 + resolvePowerStoneBonus(defenseType.getModifierType())
-                + resolveFavorBonus(ModifierType.DEFESAS, character)
-                + resolveFavorBonus(defenseType.getModifierType(), character);
+                + resolveFavorBonus(ModifierType.DEFESAS, character, sheet)
+                + resolveFavorBonus(defenseType.getModifierType(), character, sheet);
     }
 
     /**
@@ -396,7 +418,27 @@ public interface Item {
      * until then, a caller holding the item asks directly.
      */
     default int resolveFavorBonus(final ModifierType modifierType, final Character character) {
-        return getFavor() == null || isDestroyed() ? 0 : getFavor().resolveBonus(modifierType, character);
+        return resolveFavorBonus(modifierType, character, null);
+    }
+
+    /**
+     * As {@link #resolveFavorBonus(ModifierType, Character)}, but able to judge a Favor bonus
+     * gated on the wielder's live state ({@link org.aventyrs.core.item.FavorCondition}) — an
+     * Escudo's "se não realizou ação ofensiva nesta Rodada" only resolves through here.
+     */
+    default int resolveFavorBonus(final ModifierType modifierType,
+                                  final org.aventyrs.core.sheet.CombatantSheet sheet) {
+        return sheet == null ? 0 : resolveFavorBonus(modifierType, sheet.getCharacter(), sheet);
+    }
+
+    private int resolveFavorBonus(final ModifierType modifierType, final Character character,
+                                  final org.aventyrs.core.sheet.CombatantSheet sheet) {
+        if (getFavor() == null || isDestroyed() || character == null) {
+            return 0;
+        }
+        return sheet == null
+                ? getFavor().resolveBonus(modifierType, character)
+                : getFavor().resolveBonus(modifierType, sheet);
     }
 
     /**

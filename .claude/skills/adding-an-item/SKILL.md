@@ -137,10 +137,21 @@ no "Efeitos Adicionais" line at all.
 
 ### Efeitos Adicionais
 
-Granted by the *same* requirement, not independently — which is why it lives on `ItemFavor`
-rather than on `Item`. `null` for an item with none; check via `hasAdditionalEffects()`. It
-stays free text: what one does varies too widely per item to have a shared shape yet. **No
-cataloged item currently has one.**
+Granted by the *same* requirement as the Favor when there is one, and **unconditionally when
+there is no Favor** (an EA with no Favor to gate it applies to anyone carrying the item — model
+that as an `ItemFavor` with `requirements = null`, e.g. `HelmetItem#TIARAS_E_BANDANAS`).
+
+**An Efeito Adicional is a real mechanical effect, not flavour** — where it maps to a consumed
+`ModifierType` (an RD/RM, a Defesa, a `MOVEMENT` bump, a whole-Perícia Vantagem), fold it into
+`favor.bonuses` alongside the Favor line's own bonuses; `resolveBonus` doesn't care which line a
+bonus came from. Keep the `additionalEffects` **string** only for an EA this core genuinely
+can't express yet (an activation the item has no `ItemActiveAbility` path for, a "+1 DF ou DM
+definido na fabricação" per-copy production choice) — the same "lives in text until its
+mechanism exists" rule the Favor line follows; check via `hasAdditionalEffects()`.
+
+Many Botas/Capas/Escudos/Elmos have one — so unlike `ArmorItem`, a per-enum test does **not**
+assert `everyCatalogedFavorGrantsAtLeastOneRealBonus` (a fully-blocked Favor legitimately grants
+none); pin each blocked clause with its own `grantsNo<X>ForIts<Clause>Clause` test instead.
 
 Rule of thumb: everything on `Item` applies to anyone carrying it; everything on `ItemFavor`
 needs `Item#grantsFavorTo(Character)` to hold first.
@@ -159,18 +170,42 @@ own separate gaps — this core doesn't track what a roll is *for* — not on th
 
 ## 4. Know which columns actually reach a consumer
 
-Two do, and a new item's values flow into them automatically with no wiring:
+A new item's Favor bonus reaches a real consumer for these `ModifierType`s, with no wiring:
 
-- **The Favor's `DAMAGE_REDUCTION`** — `DamageServiceImpl` iterates `character.getEquipment()`
-  and calls `item.resolveFavorBonus(ModifierType.DAMAGE_REDUCTION, character)`, landing on the
-  RD that `getTotalDamageReduction` already sums for real.
-- **DF/DM** — `DefenseServiceImpl.sumEquipment` walks the same list per `DefenseType`.
+- **`DAMAGE_REDUCTION` / `MAGIC_REDUCTION`** — `DamageServiceImpl` iterates
+  `character.getEquipment()` and calls `item.resolveFavorBonus(type, character)` (or the
+  `CombatantSheet` overload on the sheet-aware RD path), landing on the RD/RM
+  `getTotalDamageReduction` / `getTotalMagicReduction` already sum.
+- **DF/DM (`DEFESAS` / `PHYSICAL_DEFENSE` / `MAGIC_DEFENSE`)** — `DefenseServiceImpl.sumEquipment`
+  walks the same list per `DefenseType`, sheet-aware on the `CombatantSheet` entry point.
+- **`MOVEMENT`** — `MovementServiceImpl.getMovementBase` scans equipped items' Favores beside
+  the enhancement pass (flat per-Ponto-de-Ação bump only; the per-movement-index axis is
+  `resolveRoundMovementIncrease`, still enhancement-only).
+- **A named Perícia's `<SKILL>_ROLL_BONUS`** — `AbstractSkillInteraction.sumEquipmentRollBonuses`
+  scans equipped items' Favores. Use it for "Vantagem em rolagens de \<Perícia\>" on a *whole*
+  Perícia (`Skill.ADVANTAGE_BONUS`); a purpose scope ("para Diplomacia") still can't be modeled.
 
 - **Dureza** — the pool `Item#applyDamage` spends; at 0 the copy is destroyed and every bonus
   above stops applying.
 - **Preço** — spent when the item is *bought from an `ItemStore`*: `ItemPurchaseService` debits
   `AbstractCombatantSheet#equipmentPoints`, less `ResourcesAdvantage#BARGANHISTA`. A self-forge
   still only reports its cost.
+
+### A Favor bonus gated on live combat state
+
+`ItemBonus` carries a `FavorCondition` (3rd record component, defaulting to `NONE` via the 2-arg
+constructor). `FavorCondition.NO_OFFENSIVE_ACTION_THIS_ROUND` is the Escudos' "se não realizou
+nenhuma ação ofensiva nesta Rodada" gate — resolved against
+`CombatantSheet#hasActedOffensivelyThisRound()` (itself derived from the per-Rodada action log,
+no new state). Such a bonus resolves to **0** through the plain `Character` path and only lands
+through the `CombatantSheet` overloads of `ItemFavor#resolveBonus` / `Item#resolveFavorBonus` /
+`Item#getEffectiveDefenseBonus`. Add a new `FavorCondition` constant only with a real consumer.
+
+### Dual-Atributo Requisitos
+
+`ItemRequirements` has an optional `alternativeDomain` 3rd component (2-arg constructor leaves it
+`null`) — `isMetBy` holds when *either* Atributo reaches the value. That is the "Car 3/Gno 3"
+column (`HelmetItem#CHARME_DO_ARTESAO`).
 
 **Conjuração** still has **no consumer** — no item-granted hook on either of
 `SpellCastingService`'s two rolls. Its value is still real, exact data — per this codebase's
@@ -187,11 +222,13 @@ don't claim it does something.
 `Item`, holds a `private final` field per column, takes them all through its constructor, and
 overrides `getCategory()` to return its one fixed category. Lombok's `@Getter` covers the rest.
 
-If the category has no enum yet, create `<Category>Item` alongside `ArmorItem` and follow its
-layout exactly. `ItemCategory` already enumerates the full set (ARMOR, BOOTS, CLOAK, GLOVES,
-HELMET, RING, SHIELD, BOW, THROWABLE, CROSSBOW, WHIP, CLUB, NATURAL_WEAPON, LIGHT_BLADE,
-HEAVY_BLADE, SPEAR, PROJECTILE, POTION, SCROLL), each carrying its `ItemType`
-(Ofensivo/Defensivo/Utilitário/Consumível) — so `getType()` is derived, never authored.
+The defensive catalogs are all present: `ArmorItem` (ARMOR), `BootsItem` (BOOTS), `CloakItem`
+(CLOAK), `ShieldItem` (SHIELD), `HelmetItem` (HELMET). If a category has no enum yet, create
+`<Category>Item` alongside `ArmorItem` and follow its layout exactly. `ItemCategory` already
+enumerates the full set (ARMOR, BOOTS, CLOAK, GLOVES, HELMET, RING, SHIELD, BOW, THROWABLE,
+CROSSBOW, WHIP, CLUB, NATURAL_WEAPON, LIGHT_BLADE, HEAVY_BLADE, SPEAR, PROJECTILE, POTION,
+SCROLL), each carrying its `ItemType` (Ofensivo/Defensivo/Utilitário/Consumível) — so
+`getType()` is derived, never authored.
 
 **A new category enum must be registered in `ItemCatalog.CATALOG_ENUMS`** — the hand-maintained
 list `ItemCatalog` (the `FeatCatalog` equivalent) flattens to answer "every `ItemTemplate`",
@@ -199,11 +236,18 @@ which is what an `ItemStore` offers up to its `maxRarity`. There's no sealed `pe
 a forgotten entry (tests use anonymous `ItemTemplate`s), so `ItemCatalogTest` counts constants
 instead — extend that count too.
 
-`NaturalWeapon` is the second catalog after `ArmorItem`, and the shape sibling for any weapon
-category: it `implements ItemTemplate, Weapon`, so it adds `getDamageBase()`/`getSkillType()`/
-`getRange()` alongside the `Item` columns, and every economy column (Preço, DF/DM, Dureza,
-Conjuração) is a fixed `0` with `getFavor()` fixed `null` — a body part is not bought, forged,
-or `ModifierType`-buffed. Its Efeito Crítico stays javadoc-only (no weapon→crit scan exists).
+**Efeito Crítico Defensivo — `ArmorItem` and `ShieldItem` only.** "Apenas Armaduras e Escudos
+recebem" it, so `getDefensiveCriticalEffect()` lives on the narrow `CriticallyDefensiveItem`
+interface (`extends ItemTemplate`) those two implement, never on `Item` — a Capa/Bota/Elmo grants
+none. Values come from `docs/rules/efeitos-criticos.txt`'s "Atualizando os Equipamentos
+Defensivos" table; nothing reads the column yet. `<Enum>DefensiveCriticalEffectTest` guards the
+transcription.
+
+`NaturalWeapon` is the shape sibling for any weapon category: it `implements ItemTemplate,
+Weapon`, so it adds `getDamageBase()`/`getSkillType()`/`getRange()` alongside the `Item` columns,
+and every economy column (Preço, DF/DM, Dureza, Conjuração) is a fixed `0` with `getFavor()`
+fixed `null` — a body part is not bought, forged, or `ModifierType`-buffed. Its Efeito Crítico
+stays javadoc-only (no weapon→crit scan exists).
 
 **`AbstractItem` (`@Builder`) is the `AbstractFeat` equivalent** — use it for a one-off or
 caller-supplied item that doesn't belong in a catalog enum, not for a cataloged one.
@@ -223,18 +267,29 @@ sweeps:
 - `<item>GrantsNo<X>ForIts<Clause>Clause` — pin each deliberate simplification from step 2, so a
   later reader can't mistake it for an oversight (see
   `armaduraDeJustaGrantsNoMovementBonusForItsHalvingClause`).
-- `<item>HasNoAdditionalEffects` / `hasOneConstantPerCatalogedArmor` /
-  `everyCatalogedFavorIsDescribedAndCarriesItsRequirements` /
-  `everyCatalogedFavorGrantsAtLeastOneRealBonus` — catalog-wide sweeps; extend the count in the
-  first when you add a constant.
+- `hasOneConstantPerCataloged<Category>` / `everyConstantIsANamed<Category>` /
+  `everyCatalogedFavorIsDescribed[AndCarriesItsRequirements]` — catalog-wide sweeps; extend the
+  count when you add a constant. `everyCatalogedFavorGrantsAtLeastOneRealBonus` is `ArmorItem`-only
+  (every Armadura Favor happens to be expressible); a category with fully-blocked Favores must
+  not assert it.
+- For a `CriticallyDefensiveItem` category (`ArmorItem`/`ShieldItem`), a
+  `<Category>DefensiveCriticalEffectTest` transcription-guards the Efeito Crítico Defensivo column.
+- For a `FavorCondition`-gated bonus, assert it resolves 0 on the `Character` path and the real
+  value on the `CombatantSheet` path — then drops after a recorded attack action (see
+  `ShieldItemTest`).
 
 ## Reference files to read first
 
 - `org.aventyrs.core.item.ArmorItem` — the reference catalog. `ARMADURA_COMPLETA` (full Favor +
   Desvantagem), `ARMADURA_DE_GLADIADOR` (`null` Favor, "-" Conjuração), `ARMADURA_DE_JUSTA`
   (unexpressible halving), `ROUPA_PESADA` (the net-effect trap).
-- `org.aventyrs.core.item.Item` — the interface and its three `default` Favor helpers.
-- `org.aventyrs.core.item.ItemFavor` / `ItemBonus` / `ItemRequirements`.
+- `org.aventyrs.core.item.ShieldItem` — a `CriticallyDefensiveItem` catalog with
+  `FavorCondition`-gated bonuses; `BootsItem`/`CloakItem`/`HelmetItem` for mostly-blocked Favores
+  with real `additionalEffects` lines.
+- `org.aventyrs.core.item.Item` — the interface and its `default` Favor/Defesa helpers (both a
+  `Character` and a `CombatantSheet` overload).
+- `org.aventyrs.core.item.ItemFavor` / `ItemBonus` / `ItemRequirements` / `FavorCondition` /
+  `CriticallyDefensiveItem`.
 - `org.aventyrs.core.item.ItemCatalog` / `ItemStore` / `ItemForgery#purchased` +
   `org.aventyrs.core.character.services.ItemPurchaseService` — the catalog aggregator and the
   shop-buying flow a new catalog constant automatically joins.

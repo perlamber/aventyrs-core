@@ -22,12 +22,24 @@ import org.aventyrs.core.character.Character;
  * <p>A {@code null} {@code attributeDomain} means "no requirement at all" — {@link
  * #isMetBy(Character)} then always holds, same convention every unset {@code FeatRequirements}
  * field already follows.
+ *
+ * <p>{@code alternativeDomain} is the "ou" half of a Requisitos column that names two Atributos
+ * ({@code HelmetItem#CHARME_DO_ARTESAO}'s "Car 3/Gno 3"): when set, meeting <em>either</em>
+ * domain at {@code requiredAttributeValue} satisfies the requirement. {@code null} for the usual
+ * single-Atributo column; the 2-arg constructor is the shorthand for it.
  */
-public record ItemRequirements(AttributeDomain attributeDomain, int requiredAttributeValue) {
+public record ItemRequirements(AttributeDomain attributeDomain, int requiredAttributeValue,
+                               AttributeDomain alternativeDomain) {
+
+    public ItemRequirements(final AttributeDomain attributeDomain, final int requiredAttributeValue) {
+        this(attributeDomain, requiredAttributeValue, null);
+    }
 
     /** Whether character currently satisfies this requirement. */
     public boolean isMetBy(final Character character) {
         return attributeDomain == null
-                || character.getEffectiveAttributeTotal(attributeDomain) >= requiredAttributeValue;
+                || character.getEffectiveAttributeTotal(attributeDomain) >= requiredAttributeValue
+                || (alternativeDomain != null
+                        && character.getEffectiveAttributeTotal(alternativeDomain) >= requiredAttributeValue);
     }
 }

@@ -15,10 +15,23 @@ import org.aventyrs.core.modifier.ModifierType;
  * dead weight here.
  *
  * <p>Use whichever {@code ModifierType} the Favor's rules text actually names — {@code
- * DAMAGE_REDUCTION} for RD, {@code ABSOLUTE_DAMAGE_REDUCTION} for RA, {@code DEFESAS},
- * {@code MOVEMENT}, the broad {@code SKILL_ROLL_BONUS}, or one specific Perícia's own
- * {@code <SKILL>_ROLL_BONUS} (see CLAUDE.md's "A ModifierType per skill"). A Favor whose
- * effect has no {@code ModifierType} at all yet stays as rules text on {@link
+ * DAMAGE_REDUCTION} for RD, {@code MAGIC_REDUCTION} for RM, {@code ABSOLUTE_DAMAGE_REDUCTION}
+ * for RA, {@code DEFESAS}, {@code MOVEMENT}, the broad {@code SKILL_ROLL_BONUS}, or one specific
+ * Perícia's own {@code <SKILL>_ROLL_BONUS} (see CLAUDE.md's "A ModifierType per skill"). A Favor
+ * whose effect has no {@code ModifierType} at all yet stays as rules text on {@link
  * ItemFavor#getDescription()} until the mechanism it needs exists.
+ *
+ * <p>{@code condition} is a further live-state gate on top of the Favor's own {@link
+ * ItemRequirements} — {@link FavorCondition#NONE} for almost every bonus, and something like
+ * {@link FavorCondition#NO_OFFENSIVE_ACTION_THIS_ROUND} for the Escudos, whose defensive bonuses
+ * blink on and off within a combat. A conditioned bonus resolves to 0 through the plain {@code
+ * Character} path ({@link ItemFavor#resolveBonus(ModifierType, org.aventyrs.core.character.Character)})
+ * — only the {@link org.aventyrs.core.sheet.CombatantSheet} overload can judge it. The 2-arg
+ * constructor is the unconditioned shorthand.
  */
-public record ItemBonus(ModifierType modifierType, int value) {}
+public record ItemBonus(ModifierType modifierType, int value, FavorCondition condition) {
+
+    public ItemBonus(final ModifierType modifierType, final int value) {
+        this(modifierType, value, FavorCondition.NONE);
+    }
+}

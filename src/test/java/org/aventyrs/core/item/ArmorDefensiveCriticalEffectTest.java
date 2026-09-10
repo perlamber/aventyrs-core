@@ -58,13 +58,12 @@ class ArmorDefensiveCriticalEffectTest {
 
     /**
      * The armours reach five of the nine catalogued effects. Choque de AEther, Faísca de
-     * Determinação and Repelir e Suprimir belong to Escudos and Defesas Naturais, neither of
-     * which this core models — an expected gap, not an omission.
+     * Determinação and Repelir e Suprimir belong to Escudos ({@code ShieldItem}, now modeled —
+     * see {@code ShieldDefensiveCriticalEffectTest}) and Defesas Naturais (still not modeled).
      *
-     * <p>Ímpeto Defensivo is a different case: the source catalogues it (L70–72) but its
-     * "Atualizando os Equipamentos Defensivos" table assigns it to <b>no</b> Armadura, Escudo or
-     * Defesa Natural at all. So no gear in the ruleset currently grants it. Recorded here so
-     * that adding a {@code ShieldItem} does not look like it closed this.
+     * <p>Ímpeto Defensivo is the one effect no gear reaches: the source catalogues it (L70–72)
+     * but its "Atualizando os Equipamentos Defensivos" table assigns it to <b>no</b> Armadura,
+     * Escudo or Defesa Natural at all. {@code ShieldItem} did not close this either.
      */
     @Test
     void armoursReachFiveOfTheNineCataloguedEffects() {

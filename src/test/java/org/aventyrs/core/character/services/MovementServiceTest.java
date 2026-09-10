@@ -185,6 +185,22 @@ class MovementServiceTest {
                 .build();
         assertEquals(0, movementService.getMovementBase(character));
     }
+
+    /** An equipped Botas Favor granting flat MOVEMENT is summed, gated on its Requisitos. */
+    @Test
+    void equippedBootsFavorMovementBonusIsAddedOnlyWhenItsRequirementIsMet() {
+        Character metRequirement = CharacterFixture.blank(CharacterFixture.BLANK)
+                .attributes(org.aventyrs.core.character.CharacterAttributes.of(
+                        java.util.Map.of(AttributeDomain.DEXTERITY, 3)))
+                .equipment(List.of(org.aventyrs.core.item.BootsItem.SANDALHAS_DOS_PEQUENINOS))
+                .build();
+        Character shortOfRequirement = CharacterFixture.blank(CharacterFixture.BLANK)
+                .equipment(List.of(org.aventyrs.core.item.BootsItem.SANDALHAS_DOS_PEQUENINOS))
+                .build();
+
+        assertEquals(5, movementService.getMovementBase(metRequirement));
+        assertEquals(4, movementService.getMovementBase(shortOfRequirement));
+    }
     // ---------- The per-movement axis: getMovementBase(CombatantSheet[, movementIndex]) ----------
 
     private static CharacterSheet sheetOf(final Character character) {

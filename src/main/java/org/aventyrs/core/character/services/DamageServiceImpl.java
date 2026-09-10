@@ -87,7 +87,7 @@ public class DamageServiceImpl implements DamageService {
                                         final DamageDescriptor damageDescriptor, final CombatantSheet source) {
         Character character = target.getCharacter();
         int total = sumAcrossSources(character, ModifierType.DAMAGE_REDUCTION);
-        total += sumEquipmentDamageReduction(character);
+        total += sumEquipmentDamageReduction(character, target);
         total += sumEquipmentDamageReduction(character, damageDescriptor);
         total += sumFeatDamageReduction(character, target);
         total += sumAttributeAbilityDamageReduction(character, target, damageType, source);
@@ -112,9 +112,21 @@ public class DamageServiceImpl implements DamageService {
      * real one. Add it when an item actually needs it.
      */
     private int sumEquipmentDamageReduction(final Character character) {
+        return sumEquipmentDamageReduction(character, (CombatantSheet) null);
+    }
+
+    /**
+     * holder is the wielder's own sheet, or {@code null} on the {@code Character}-only entry
+     * point — an Escudo's Favor gated on "se não realizou ação ofensiva nesta Rodada" (Escudo
+     * Médio / Escudo de Corpo) resolves only when the sheet is present, the same "condition not
+     * met" convention a {@code null} sheet already has on the {@code Feat} RD hook.
+     */
+    private int sumEquipmentDamageReduction(final Character character, final CombatantSheet holder) {
         int total = 0;
         for (Item item : character.getEquipment()) {
-            total += item.resolveFavorBonus(ModifierType.DAMAGE_REDUCTION, character);
+            total += holder == null
+                    ? item.resolveFavorBonus(ModifierType.DAMAGE_REDUCTION, character)
+                    : item.resolveFavorBonus(ModifierType.DAMAGE_REDUCTION, holder);
             total += item.resolveEnhancementBonus(ModifierType.DAMAGE_REDUCTION, null, character);
         }
         return total;

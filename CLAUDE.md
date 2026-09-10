@@ -317,29 +317,42 @@ a new category enum must be added there. `ItemCatalog.availableUpTo(ItemRarity)`
   effects are catalog-only, TODO'd on the same gaps the racial-feat catalog cites (no elemental
   resistance, no first-instance damage tracking, no attribute-from-equipment hook, …).
 - **`ItemFavor` is the conditional half, and its bonuses are real data, not prose**: it carries
-  a list of `ItemBonus` (a `ModifierType` + value pair), resolved via `ItemFavor#resolveBonus
-  (ModifierType, Character)` / `Item#resolveFavorBonus(...)` — 0 unless the `ItemRequirements`
-  (an `AttributeDomain` + value) are met. It's **data, not `@Modifier` methods**, unlike every
+  a list of `ItemBonus` (a `ModifierType` + value + `FavorCondition`), resolved via
+  `ItemFavor#resolveBonus(ModifierType, Character|CombatantSheet)` / `Item#resolveFavorBonus(...)`
+  — 0 unless the `ItemRequirements` are met. It's **data, not `@Modifier` methods**, unlike every
   ability enum, and that's forced: `@Modifier`'s `ModifierType` is a compile-time-fixed
   annotation value, so one shared `ItemFavor` class can't vary which type a given item grants —
   the same limitation "A ModifierType per skill" documents. **Don't route items through
   `ModifierResolver`.** `ItemBonus` is deliberately not `TemporaryBonus`/`Blessing` either: an
   item's Favor lasts as long as the item is carried and never reaches anyone but its wielder, so
-  a countdown, a `TargetScope` and a granting `source` would all be dead weight.
+  a countdown, a `TargetScope` and a granting `source` would all be dead weight. The **one**
+  live-state gate is `FavorCondition` (default `NONE`): `NO_OFFENSIVE_ACTION_THIS_ROUND` is the
+  Escudos' "se não realizou nenhuma ação ofensiva nesta Rodada" — read against
+  `CombatantSheet#hasActedOffensivelyThisRound()` (derived from the per-Rodada action log, no new
+  state), and resolves to 0 on any `Character`-only path.
+- **An "Efeitos Adicionais" line is a real effect, not flavour.** Fold it into `favor.bonuses`
+  wherever it maps to a consumed `ModifierType`; the `additionalEffects` string is only for one
+  this core still can't express. It is gated by the Favor's `ItemRequirements` when there is a
+  Favor, and applies unconditionally (`requirements = null`) when there isn't.
 - **`ItemRequirements` checks `getTotal()`, not `getBase()`** — deliberately unlike
   `FeatRequirements`, which uses `base`: acquiring a Talento is gated on what the character
   personally invested in, but whether an item's Favor applies is a "can I meet this right now"
   question, so a Bônus Racial or a variable bonus counts. It's a narrower record than
-  `FeatRequirements` (no `requiredSkillType`/`requiredFeat`) rather than a reuse of it — widen
-  it only if a real item ever names a Perícia/Talento/Título.
-- **Three columns reach a real consumer, one doesn't.** The Favor's `DAMAGE_REDUCTION` is scanned
-  by `DamageServiceImpl` over `character.getEquipment()`, and DF/DM by
-  `DefenseServiceImpl.sumEquipment` — a new item's values flow into both with no wiring. Dureza is a real pool too, spent by
-  `Item#applyDamage` (below). **Preço** is now spent — but only on a *store purchase*
-  (`ItemPurchaseService` debits `AbstractCombatantSheet#equipmentPoints`); a self-forge still
-  only reports it. **Conjuração still has no consumer** — no item-granted hook on either
-  `SpellCastingService` roll. Their values are real, exact data all the same, per the "can't apply it yet doesn't mean
-  can't compute it yet" discipline.
+  `FeatRequirements` (no `requiredSkillType`/`requiredFeat`), plus an optional `alternativeDomain`
+  for a "Car 3/Gno 3"-style two-Atributo column (`isMetBy` = either).
+- **The Favor reaches a real consumer for RD/RM, DF/DM, `MOVEMENT`, and a named Perícia's roll
+  bonus.** `DamageServiceImpl` scans `DAMAGE_REDUCTION`/`MAGIC_REDUCTION` (sheet-aware on the RD
+  path, so a `FavorCondition` gate lands), `DefenseServiceImpl.sumEquipment` DF/DM (sheet-aware
+  too), `MovementServiceImpl` a flat `MOVEMENT` bump, and `AbstractSkillInteraction` a
+  whole-Perícia `<SKILL>_ROLL_BONUS` — a new item's values flow into all of them with no wiring.
+  Dureza is a real pool spent by `Item#applyDamage`. **Preço** is spent only on a *store
+  purchase* (`ItemPurchaseService`); a self-forge only reports it. **Conjuração still has no
+  consumer** — no item-granted hook on either `SpellCastingService` roll. Their values are real,
+  exact data all the same, per the "can't apply it yet doesn't mean can't compute it yet"
+  discipline.
+- **Efeito Crítico Defensivo — Armaduras e Escudos only.** `getDefensiveCriticalEffect()` lives
+  on the `CriticallyDefensiveItem` interface (`ArmorItem`/`ShieldItem`), never on `Item` — a
+  Capa/Bota/Elmo grants none. Authored from `docs/rules/efeitos-criticos.txt`; no reader yet.
 - **Dano Base is on `Weapon`, not on `Item`** — `Weapon extends Item` adds exactly two abstract
   columns, `getDamageBase()` and `getSkillType()` (the Perícia it's swung with, which is what
   `DamageBaseService` scans by), and `AbstractWeapon extends AbstractItem` is its builder-built form

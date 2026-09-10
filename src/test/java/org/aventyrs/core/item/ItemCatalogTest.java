@@ -15,8 +15,14 @@ class ItemCatalogTest {
         List<ItemTemplate> all = ItemCatalog.all();
 
         assertTrue(all.containsAll(List.of(ArmorItem.values())));
+        assertTrue(all.containsAll(List.of(BootsItem.values())));
+        assertTrue(all.containsAll(List.of(CloakItem.values())));
+        assertTrue(all.containsAll(List.of(ShieldItem.values())));
+        assertTrue(all.containsAll(List.of(HelmetItem.values())));
         assertTrue(all.containsAll(List.of(NaturalWeapon.values())));
-        assertEquals(ArmorItem.values().length + NaturalWeapon.values().length, all.size());
+        assertEquals(ArmorItem.values().length + BootsItem.values().length
+                + CloakItem.values().length + ShieldItem.values().length
+                + HelmetItem.values().length + NaturalWeapon.values().length, all.size());
     }
 
     @Test

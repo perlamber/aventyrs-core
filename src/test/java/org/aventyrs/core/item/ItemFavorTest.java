@@ -103,6 +103,38 @@ class ItemFavorTest {
         assertEquals(List.of(), favor.resolveBonuses(characterWithStrengthBase(2)));
     }
 
+    @Test
+    void aConditionedBonusResolvesToZeroOnThePlainCharacterPathAndOnANullSheet() {
+        ItemFavor favor = ItemFavor.builder()
+                .requirements(FORCA_3)
+                .bonus(new ItemBonus(ModifierType.DEFESAS, 1,
+                        FavorCondition.NO_OFFENSIVE_ACTION_THIS_ROUND))
+                .build();
+
+        assertEquals(0, favor.resolveBonus(ModifierType.DEFESAS, characterWithStrengthBase(3)));
+        assertEquals(0, favor.resolveBonus(ModifierType.DEFESAS, (org.aventyrs.core.sheet.CombatantSheet) null));
+        assertEquals(List.of(), favor.resolveBonuses(characterWithStrengthBase(3)));
+    }
+
+    @Test
+    void aConditionedBonusResolvesThroughTheSheetPathWhileItsConditionHolds() {
+        ItemFavor favor = ItemFavor.builder()
+                .requirements(FORCA_3)
+                .bonus(new ItemBonus(ModifierType.DEFESAS, 1,
+                        FavorCondition.NO_OFFENSIVE_ACTION_THIS_ROUND))
+                .build();
+        org.aventyrs.core.sheet.CharacterSheet sheet = org.aventyrs.core.sheet.CharacterSheet.of(
+                characterWithStrengthBase(3), new org.aventyrs.core.sheet.Player());
+
+        assertEquals(1, favor.resolveBonus(ModifierType.DEFESAS, sheet));
+
+        sheet.recordAction(new org.aventyrs.core.sheet.CombatantAction(
+                org.aventyrs.core.skill.SkillType.ATAQUE_CORPO_A_CORPO, AttributeDomain.STRENGTH,
+                null, null, 1, null));
+
+        assertEquals(0, favor.resolveBonus(ModifierType.DEFESAS, sheet));
+    }
+
     private static ItemFavor damageReductionFavor() {
         return ItemFavor.builder()
                 .description("Favor")

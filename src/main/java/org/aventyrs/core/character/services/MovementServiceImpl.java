@@ -96,6 +96,7 @@ public class MovementServiceImpl implements MovementService {
         // shape DamageServiceImpl/AbstractSkillInteraction use for resolveEnhancementBonus. This
         // is what makes a Pedra do Poder's "Movimento Base +2UD" Efeito Base real.
         for (Item item : character.getEquipment()) {
+            total += item.resolveFavorBonus(ModifierType.MOVEMENT, character);
             total += item.resolveEnhancementBonus(ModifierType.MOVEMENT, null, character);
         }
         return Math.max(0, total);
