@@ -45,37 +45,64 @@ Known-stale patterns to reconcile (verify each against the interface before acti
 
 ---
 
-## Phase 1 — Small additive stats & caps
+## Phase 1 — Small additive stats & caps ✅ **DONE**
 
 Self-contained numeric mechanics with no cross-system reach.
 
-### 1a. Permanent Resistência a Críticos scan
-`ModifierType.CRITICAL_RESISTANCE` and the *round-scoped* grant exist; `AbstractSkillInteraction`
-already subtracts the target's `getTemporaryBonus(CRITICAL_RESISTANCE)` from attacker crit-margin
-widening. Add a **permanent-source scan** (Feat / AttributeAbility / SkillCompetencyAbility /
-Race) on that same subtraction, mirroring the three-source pattern.
-- Lands: `MonstruosoFeat#ANATOMIA_INCOMUM`, `GorgonaFeat` (×2), `ElementalFeat`, `SobrevivenciaFeat`,
-  `TrollFeat`, `GiganteFeat` — ~7, plus racial constants (`Troll`, `Gorgona`) outside this plan.
-- Still deferred: the "−1 à Margem Crítica Maior" clause (no Maior margin modelled), non-PRIMORDIAL
-  scoping.
+### 1a. Permanent Resistência a Críticos scan ✅
+Built as `CombatantSheet#getTotalCriticalResistance(SceneContext)` — the sheet totals its Raça's
+`Race#getCriticalResistance()`, each held Talento's `Feat#resolveCriticalResistance`, and the
+round-scoped `ModifierType.CRITICAL_RESISTANCE` `TemporaryBonus`; `AbstractSkillInteraction` now
+subtracts that total instead of reading `getTemporaryBonus` directly. One instance is
+`CombatantSheet.CRITICAL_RESISTANCE_INSTANCE`, promoted out of `AnaoFeat`'s private constant.
+- **Landed:** `MonstruosoFeat#ANATOMIA_INCOMUM`, `ElementalFeat#TRANSFORMACAO_ELEMENTAL`,
+  `DuelistaFeat#CORACAO_DE_FERRO`, `SobrevivenciaFeat#PROTETOR_TERRITORIALISTA` (terrain-gated),
+  plus the racial `Troll`.
+- **Not landed, second blocker found:** `GorgonaFeat#PROTECAO_DO_DEUS_DOS_MONSTROS` /
+  `#PROTECAO_DA_RAINHA_DAS_FADAS` are form-gated (Phase 5). `TrollFeat`/`GiganteFeat` turned out
+  to have no RC clause at all — the plan's list was approximate.
+- **Deliberately not built:** a `SkillCompetencyAbility`/`AttributeAbility` hook. No constant
+  wants one — `ProfissaoCompetencyAbility#FORJA_VULCANA`'s RC is *item*-scoped, a shape neither
+  `Item` nor the sheet total has, and that is now what its TODO cites.
+- Still deferred: the "−1 à Margem Crítica Maior" clause, non-PRIMORDIAL scoping, item-scoped RC.
+- ⚠️ Design note carried in the javadoc: the `SceneContext` the scan receives is the **attacker's**
+  snapshot (the only one in reach — `SceneContext` holds no `Scene`), so an override may read
+  Scene-wide facts and must never read proximity.
 
-### 1b. RM — Redução Mágica
-A magic-damage counterpart to RD. New `ModifierType.MAGIC_REDUCTION` + resolution in the
-magic-damage branch of `DamageService` (**verify a magic-damage path exists first** — if not,
-this pulls forward part of Phase 8).
-- Lands: `MetamagicoFeat#CONHECIMENTO_METAMAGICO` (RM half), `GorgonaFeat#MONSTROS_EM_PELE_DE_FADA`
-  / `FEITICEIRA`, `TrollFeat#VIGOR_TROLLICO` (RM half, needs Phase 2 sub-lineage too) — ~4.
+### 1b. RM — Redução Mágica ✅
+A magic-damage path did exist (`DamageType.MAGICO` already reaches `calculateFinalDamage`), so
+this did not pull Phase 8 forward. `ModifierType.MAGIC_REDUCTION` +
+`DamageService#getTotalMagicReduction(CombatantSheet)` (same five sources as RD), added to the
+flat stage **only** when the caller typed the hit `MAGICO`; skipped by `ignoreDamageReduction`
+alongside RD (an inference, documented).
+- **Landed:** `GorgonaFeat#PROTECAO_DA_RAINHA_DAS_FADAS` (its RM half was unconditional all
+  along — only its RC is form-gated), `DefensiveMasterpiece#DYOSPIROS` and `#MITRAL`.
+- **Not landed, second blocker found:** `MetamagicoFeat#ARCANISTA` (scoped to "Magias que você
+  conheça" — nothing classifies an incoming effect as a specific Magia),
+  `TrollFeat#VIGOR_TROLLICO` (unmodelled sub-lineage), `GorgonaFeat#MONSTROS_EM_PELE_DE_FADA`
+  (form toggle), `EscudeiroFeat#BASTIAO_DE_VIDRO` (needs mitigation to be *suppressible*).
+- **Known incorrectness, deliberately left:** RD is still type-blind, so a MAGICO hit takes RD
+  *and* RM. Narrowing RD is Phase 8's job; the over-mitigation is documented on
+  `ModifierType#MAGIC_REDUCTION`, `DamageType` and the gap-catalog row.
+- RE (Resistência Elemental) got no constant: every authored RE clause is scoped to one
+  `ElementalType`, which is the `DamageDescriptor` path equipment already uses.
 
-### 1c. Ceiling / absolute-set stage
-Two tiny mechanisms:
-- **PA ceiling** — "seus Pontos de Ação máximos passam a ser 2, e não podem ser aumentados"
-  (`SobrevivenciaFeat#INSTINTO_DE_SOBREVIVENCIA`). A cap applied *after* all `ACTION_POINTS`
-  addition in `ActionPointsService`.
-- **Categoria de Tamanho absolute-set** — `GnomoFeat`, `FeericoFeat#FADA_DIMINUTA`, `GiganteFeat`
-  clan feats set (not shift) the category. Needs a `Feat` hook returning an override `SizeCategory`.
-- Lands: ~5.
+### 1c. Ceiling / absolute-set stage ✅ (one half; the other has no consumer)
+- **Categoria de Tamanho** — built as *two* hooks, because the catalog authors both shapes:
+  `Feat#resolveSizeCategoryOverride` (an absolute set) and `Feat#resolveSizeCategoryIncrease`
+  (a shift). `CharacterSizeService#getEffectiveSizeCategory` applies the override first, then
+  every shift — the `@Modifier` scan and the Talento one — on top of it.
+  **Landed:** `GnomoFeat#DUENDE` (→ -2), `FeericoFeat#PIXIE` (→ -3), `FeericoFeat#LUPERCAL` (→ 0),
+  and `GiganteFeat#GIGANTE_DO_CLA_EMPUSA`, which is now granted **whole** (size shift + Força per
+  Título + the -2 Defesas) rather than withheld. Its Jotun twin stays withheld: its malus alone
+  is still inexpressible.
+- **PA ceiling — not built, and should not be.** The catalog's only PA-ceiling clause is
+  `SobrevivenciaFeat#PERMANECER_CONSCIENTE` (the plan named a constant that does not exist), and
+  it is gated on "enquanto Permanecer Consciente estiver ativo" — an active state that does not
+  exist either. A ceiling stage built today would have nothing that could switch it on. Build it
+  with that state; its TODO now says so.
 
-**Effort:** 1–2 sessions total. **Depends on:** Phase 0 (so counts are clean).
+**Depends on:** Phase 0 (so counts are clean).
 
 ---
 

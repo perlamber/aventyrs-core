@@ -7,6 +7,7 @@ import org.aventyrs.core.effect.CriticalEffectType;
 import org.aventyrs.core.feat.FeatCategory;
 import org.aventyrs.core.item.NaturalWeapon;
 import org.aventyrs.core.magic.Spell;
+import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.DlcRuleset;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
 
@@ -123,6 +124,25 @@ public interface Race {
      * real authored data now rather than the day someone builds the effect.
      */
     default Set<CriticalEffectType> getCriticalEffectImmunities() { return Set.of(); }
+
+    /**
+     * Resistência a Críticos (RC) every member of this race is born with — {@code Troll}'s
+     * Anatomia Vegetal. One instance is {@link CombatantSheet#CRITICAL_RESISTANCE_INSTANCE}, and
+     * a clause stating no figure grants exactly one. Zero by default; nearly every race has none.
+     *
+     * <p>Summed by {@code org.aventyrs.core.sheet.AbstractCombatantSheet#getTotalCriticalResistance}
+     * alongside the holder's Talentos and any round-scoped {@code
+     * org.aventyrs.core.modifier.ModifierType#CRITICAL_RESISTANCE} bonus, and subtracted from an
+     * <em>attacker</em>'s Margem Crítica Menor widening by {@code
+     * org.aventyrs.core.skill.AbstractSkillInteraction} — so a race's RC reaches the crit path
+     * with no per-race wiring, the same way {@link #getCriticalEffectImmunities()} does.
+     *
+     * <p><b>A different axis from that immunity list</b>, which this deliberately does not
+     * replace: an immunity names a {@link CriticalEffectType} by identity and drops it whole,
+     * while RC is a value that makes the Acerto Crítico itself harder to roll. {@code Troll}
+     * carries both, from the same Característica Racial.
+     */
+    default int getCriticalResistance() { return 0; }
 
     /**
      * Cost in XP to learn a new Feat

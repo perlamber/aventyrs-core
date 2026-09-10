@@ -4,6 +4,7 @@ import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.SizeCategory;
 import org.aventyrs.core.effect.CriticalEffectType;
+import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.DlcRuleset;
 
 import java.util.List;
@@ -12,7 +13,7 @@ import java.util.Set;
 
 /**
  * Defines what the Trolls race can do under each rule-set — a stateless race, like {@code
- * Anao}/{@code Elfo}. Three of its traits are mechanically real today:
+ * Anao}/{@code Elfo}. Four of its traits are mechanically real today:
  *
  * <ul>
  *   <li><b>{@link #getFixedAttributeBonuses()}</b> — +2 Força.</li>
@@ -25,6 +26,11 @@ import java.util.Set;
  *   CriticalEffect#applicableTo} with no per-race wiring. Only Sangramento has an implementation
  *   behind it today; the other two are named-only constants, and are resisted correctly the day
  *   someone builds them — exactly what {@link CriticalEffectType}'s own javadoc exists for.</li>
+ *   <li><b>{@link #getCriticalResistance()}</b> — the value half of that same Anatomia Vegetal:
+ *   one instance of Resistência a Críticos, narrowing the Margem Crítica Menor of whoever attacks
+ *   a Troll. Read by {@code AbstractCombatantSheet#getTotalCriticalResistance} and subtracted on
+ *   the attacker's crit path by {@code AbstractSkillInteraction}, again with no per-race
+ *   wiring.</li>
  * </ul>
  *
  * <p><b>Categoria de Tamanho is seeded at {@link SizeCategory#ZERO}</b>, the youngest rung of
@@ -37,12 +43,7 @@ import java.util.Set;
  *
  * <p>Everything else needs a system this core doesn't have yet:
  * <ul>
- *   <li><b>Anatomia Vegetal's other three clauses</b> — <i>Resistência a Críticos</i> has a
- *   {@code ModifierType.CRITICAL_RESISTANCE} now, but it is consumed only off a <i>round-scoped</i>
- *   grant on an attack target ({@code AbstractSkillInteraction}), and a permanent, race-granted
- *   RC would need a scan added on that same attacker crit path (the same piece {@code
- *   ProfissaoCompetencyAbility} still cites; distinct from the immunity list above, an
- *   all-or-nothing filter rather than a resistance value); the <b>vulnerabilities</b> (Fogo for
+ *   <li><b>Anatomia Vegetal's other two clauses</b> — the <b>vulnerabilities</b> (Fogo for
  *   every Troll, plus Natural for
  *   a Troll do Inverno and Gelo for one da Floresta) need damage-type-scoped mitigation, which
  *   {@code DamageService} has no notion of — and a <i>vulnerability</i> is a further missing
@@ -111,6 +112,16 @@ public class Troll implements Race {
         return Set.of(CriticalEffectType.ATORDOANTE,
                 CriticalEffectType.FERIDA_PROFUNDA,
                 CriticalEffectType.SANGRAMENTO);
+    }
+
+    /**
+     * Anatomia Vegetal's Resistência a Críticos — one instance, the clause stating no figure. The
+     * value half of the same Característica whose named immunities {@link
+     * #getCriticalEffectImmunities()} carries.
+     */
+    @Override
+    public int getCriticalResistance() {
+        return CombatantSheet.CRITICAL_RESISTANCE_INSTANCE;
     }
 
     @Override

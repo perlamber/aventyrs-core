@@ -47,6 +47,17 @@ import java.util.UUID;
  */
 public interface CombatantSheet extends Interactable<CombatantSheet> {
 
+    /**
+     * What <b>one instance</b> of Resistência a Críticos is worth — a -2 to the Margem Crítica
+     * Menor of whoever attacks this combatant, per {@code docs/rules/defesas-e-resistencias.txt}.
+     * Rules text reading "você recebe Resistência a Críticos" with no figure grants exactly one,
+     * the same convention {@code DamageService#DEFAULT_DAMAGE_REDUCTION} carries for a numberless
+     * RD clause. Lives here, on the interface that totals RC ({@link
+     * #getTotalCriticalResistance}), rather than on any one grantor — {@code Feat}, {@code Race}
+     * and a {@code Blessing}-granting Talento all state the same unit.
+     */
+    int CRITICAL_RESISTANCE_INSTANCE = 2;
+
     /** A stable identity for this combatant — what {@code Scene} keys its participants by. */
     UUID getId();
 
@@ -307,6 +318,27 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
      * #getConditionBonus}, which is what the holder themselves suffers.
      */
     int getAttackerDamageBonusFromConditions(SceneContext sceneContext);
+
+    /**
+     * This combatant's total Resistência a Críticos — every source, in {@link
+     * #CRITICAL_RESISTANCE_INSTANCE}-sized units: the standing grants from its Raça ({@code
+     * Race#getCriticalResistance()}) and its held Talentos ({@code
+     * Feat#resolveCriticalResistance}), plus any round-scoped {@link
+     * ModifierType#CRITICAL_RESISTANCE} {@code TemporaryBonus} ({@code AnaoFeat#VIGOR_DO_INVERNO}
+     * grants one at combat start). Zero for a combatant with none, which is most of them.
+     *
+     * <p>Another outward-facing query, like {@link #getAttackerDamageBonusFromConditions} —
+     * {@code AbstractSkillInteraction} reads it off the <em>attack target</em>'s sheet and
+     * subtracts it from the attacker's summed Margem Crítica Menor widening, so RC cancels
+     * widening rather than pushing a crit below its baseline (the net is floored at 0 by {@code
+     * SkillRoll#getCriticalResult}, which is this ruleset's approximation of the "até o mínimo de
+     * 17" clamp). Not read on the {@code AttackReceiver} mirror, where the attacker rolls nothing.
+     *
+     * <p>{@code sceneContext} is the <b>attacker's</b> snapshot at that call site, the only one in
+     * reach; see {@code Feat#resolveCriticalResistance} for which of its facts an override may
+     * safely read. {@code null} when there is no Scene.
+     */
+    int getTotalCriticalResistance(SceneContext sceneContext);
 
     /**
      * Whether a held condition forbids moving at all — Agarrado/Imobilizado's "não pode realizar

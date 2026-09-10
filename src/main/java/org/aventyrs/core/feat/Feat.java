@@ -18,6 +18,7 @@ import org.aventyrs.core.skill.CriticalResult;
 import org.aventyrs.core.character.DamageBonus;
 import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.character.DefenseType;
+import org.aventyrs.core.character.SizeCategory;
 import org.aventyrs.core.item.Item;
 import org.aventyrs.core.item.ItemCategory;
 import org.aventyrs.core.item.NaturalWeapon;
@@ -848,6 +849,59 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     }
 
     /**
+     * Flat, unconditional Resistência à Magias (RM) this Talento grants — the magic-damage twin
+     * of {@link #resolveDamageReduction(Character)}, summed by {@code
+     * DamageServiceImpl#getTotalMagicReduction} across {@code Character#getFeats()} and applied
+     * only to damage typed {@code DamageType#MAGICO}. A clause stating no number ("você recebe
+     * RM") grants one instance, {@code DamageService#DEFAULT_DAMAGE_REDUCTION}. Zero by default.
+     *
+     * <p><b>Only for an unconditional grant</b>, exactly as its RD twin — and RM's catalog is
+     * mostly conditional: {@code MetamagicoFeat#ARCANISTA}'s is scoped to "Magias que você
+     * conheça" (nothing classifies an incoming effect as a specific Magia), {@code
+     * TrollFeat#VIGOR_TROLLICO}'s to an unmodelled sub-lineage, {@code
+     * GorgonaFeat#MONSTROS_EM_PELE_DE_FADA}'s to a form. Each such constant says so on itself
+     * rather than overriding here.
+     *
+     * <p>No {@code CombatantSheet} overload, unlike RD's: no authored RM clause is conditioned on
+     * the holder's live combat state. Add one with the first that is.
+     */
+    default int resolveMagicReduction(final Character character) {
+        return 0;
+    }
+
+    /**
+     * Resistência a Críticos (RC) this Talento grants its holder — a <b>defender-side</b> value,
+     * summed by {@code org.aventyrs.core.sheet.AbstractCombatantSheet#getTotalCriticalResistance}
+     * alongside the holder's Raça grant and any round-scoped {@code
+     * ModifierType#CRITICAL_RESISTANCE} {@code TemporaryBonus}, and subtracted from an
+     * <em>attacker</em>'s summed Margem Crítica Menor widening by {@code
+     * AbstractSkillInteraction}. One instance of RC is {@link
+     * CombatantSheet#CRITICAL_RESISTANCE_INSTANCE}, per
+     * {@code docs/rules/defesas-e-resistencias.txt}; a clause reading "você recebe Resistência a
+     * Críticos" with no figure grants exactly one. Zero by default.
+     *
+     * <p>Talentos are outside every {@code ModifierResolver} scan, so they need an explicit hook
+     * where an ability would carry a {@code @Modifier} method — the same reason {@link
+     * #resolveDamageReduction} and {@link #resolveSkillRollBonus} exist. The counterpart for a
+     * <em>timed</em> grant is a {@code Blessing} of the same {@code ModifierType} ({@code
+     * AnaoFeat#VIGOR_DO_INVERNO} at combat start); this hook is for the standing kind.
+     *
+     * <p><b>{@code sceneContext} is the attacker's snapshot, not the holder's.</b> The RC scan
+     * runs on the attack target while the <em>attacker</em> is rolling, and that is the only
+     * {@link SceneContext} in reach — {@code SceneContext} holds no {@code Scene} reference, so
+     * the defender's own cannot be rebuilt. Only Scene-<em>wide</em> facts are therefore safe to
+     * read here — {@code getTerrainType()}, {@code isCombatScene()}, {@code getCurrentRound()},
+     * which are the same for every participant ({@code SobrevivenciaFeat#PROTETOR_TERRITORIALISTA}'s
+     * Terreno Predileto is what this exists for). A clause scoped by <em>proximity</em> must not
+     * override this hook: {@code getAllies}/{@code getAlliesWithin}/{@code getOpposedCharacter}
+     * would answer about the attacker. {@code null} whenever there is no active Scene, which
+     * every override must read as "condition not met".
+     */
+    default int resolveCriticalResistance(final Character character, final SceneContext sceneContext) {
+        return 0;
+    }
+
+    /**
      * A flat, unconditional bonus this Talento grants to defenseType — summed by {@code
      * org.aventyrs.core.character.services.DefenseService#getTotalDefense} across {@code
      * Character#getFeats()}, alongside the usual three-source {@code @Modifier} scan.
@@ -969,6 +1023,42 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      * unconditional "+NUD ao Movimento Base" belongs on {@link #resolveMovementIncrease}.
      */
     default int resolveRoundMovementIncrease(int movementIndex, Character character) {
+        return 0;
+    }
+
+    /**
+     * The {@link SizeCategory} this Talento makes its holder <b>be</b>, replacing whatever their
+     * Raça and every other source would otherwise give them — "Sua Categoria de Tamanho muda para
+     * -2" ({@code GnomoFeat#DUENDE}), "-3" ({@code FeericoFeat#PIXIE}), "0" ({@code
+     * FeericoFeat#LUPERCAL}). {@code null} by default, meaning this Talento says nothing about
+     * size.
+     *
+     * <p><b>An absolute set, not a shift</b> — the distinction {@code ModifierType#SIZE_CATEGORY}
+     * cannot express, which is why this is a hook of its own rather than another contributor to
+     * the {@code @Modifier} sum. Resolved by {@code CharacterSizeService#getEffectiveSizeCategory}:
+     * an override <em>wins over the base</em> and every shift then applies on top of it, so a
+     * Gnomo Duende who later gains a +1 shift is at -1, not at their racial size +1. Two Talentos
+     * overriding at once is not something the catalog does (each is race-locked and they exclude
+     * one another), and the resolution simply takes the smallest — see that service for why.
+     *
+     * <p>Deliberately not on {@code Race}: a race's size is already {@code
+     * Race#getBaseSizeCategory()}, which <em>is</em> the base this replaces.
+     */
+    default SizeCategory resolveSizeCategoryOverride(final Character character) {
+        return null;
+    }
+
+    /**
+     * How many steps this Talento shifts its holder's {@link SizeCategory} — "Sua Categoria de
+     * Tamanho aumenta em +1" ({@code GiganteFeat#GIGANTE_DO_CLA_EMPUSA}). Zero by default.
+     *
+     * <p>The {@code Feat} counterpart of the {@code ModifierType#SIZE_CATEGORY} {@code @Modifier}
+     * scan ({@code VigorAbility}'s Sangue de Gigante), which Talentos are outside of — the same
+     * explicit fourth pass {@link #resolveDamageReduction} and {@link #resolveDefenseBonus} get.
+     * Summed with that scan and applied <em>after</em> any {@link #resolveSizeCategoryOverride},
+     * then clamped by {@code SizeCategory#shift}.
+     */
+    default int resolveSizeCategoryIncrease(final Character character) {
         return 0;
     }
 

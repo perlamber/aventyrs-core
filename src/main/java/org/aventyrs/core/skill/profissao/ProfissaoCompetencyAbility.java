@@ -16,8 +16,8 @@ import org.aventyrs.core.skill.SkillType;
  * {@code resolveProductionTimeMultiplier}/{@code resolveProducedHardnessMultiplier}/{@code
  * resolveRepairHardnessBonus} hooks on {@link SkillCompetencyAbility}. {@link #FORJA_VULCANA} and
  * {@link #EXPANDIR_CARGA} stay unexpressed — see their TODOs for the narrower remaining gap
- * (a per-produced-copy Resistência a Críticos — `ModifierType.CRITICAL_RESISTANCE` exists but
- * only as a round-scoped grant read off an attack target — / Margem Crítica Maior / Carga).
+ * (a per-produced-copy Resistência a Críticos — a character's own RC is real, an item-scoped one
+ * is not — / Margem Crítica Maior / Carga).
  */
 @Getter
 @AllArgsConstructor
@@ -32,9 +32,11 @@ public enum ProfissaoCompetencyAbility implements SkillCompetencyAbility {
 
     // TODO: only the "quem produziu" half is real now (EquipmentCraftingService#forge stamps
     // AbstractItem#producedByCharacterId). The benefits themselves stay unexpressed: produced
-    // Equipamentos Defensivos grant Resistência a Críticos (ModifierType.CRITICAL_RESISTANCE
-    // exists, but only a round-scoped grant read off an attack target — no permanent, item-scoped
-    // value) plus an item-scoped choice between Redução de Danos Sofridos 1 or
+    // Equipamentos Defensivos grant Resistência a Críticos (a character's own RC is real now —
+    // Race/Feat grants totalled by CombatantSheet#getTotalCriticalResistance — but this one is
+    // *item-scoped*, a value carried by a produced copy and reaching whoever wears it, which
+    // neither Item nor that total has any notion of) plus an item-scoped choice between
+    // Redução de Danos Sofridos 1 or
     // +1 Defesas (RD is real on the character, but not as a per-produced-copy value); produced
     // Equipamentos Ofensivos grant Margem Crítica Maior +1 (a *different* axis from every
     // skill's Margem Crítica Menor — nothing models the Maior axis or an item-scoped value)

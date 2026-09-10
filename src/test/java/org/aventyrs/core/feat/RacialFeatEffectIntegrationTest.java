@@ -18,6 +18,8 @@ import org.aventyrs.core.magic.MimetizedSpell;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.character.services.AttributeAbilityService;
 import org.aventyrs.core.character.services.AttributeAbilityServiceImpl;
+import org.aventyrs.core.character.services.CharacterSizeService;
+import org.aventyrs.core.character.services.CharacterSizeServiceImpl;
 import org.aventyrs.core.character.services.DamageBaseService;
 import org.aventyrs.core.character.services.DamageBaseServiceImpl;
 import org.aventyrs.core.character.services.DamageService;
@@ -111,6 +113,7 @@ class RacialFeatEffectIntegrationTest {
     private final DamageService damageService = new DamageServiceImpl();
     private final MovementService movementService = new MovementServiceImpl();
     private final ActionPointsService actionPointsService = new ActionPointsServiceImpl();
+    private final CharacterSizeService sizeService = new CharacterSizeServiceImpl();
 
     @BeforeEach
     void setup() {
@@ -896,19 +899,44 @@ class RacialFeatEffectIntegrationTest {
     }
 
     /**
-     * Both Clã Talentos are withheld whole rather than half-implemented: Empusa's "-2 em suas
-     * Defesas" is expressible today, but granting only the malus would leave a character
-     * strictly worse off for acquiring the Talento.
+     * Empusa is granted whole now that all three of its halves have hooks: "Sua Categoria de
+     * Tamanho aumenta em +1", "+1 Força para cada Título Aventyr Desperto" (one Título here) and
+     * "Redutor de -2 em suas Defesas", the last on both DF and DM.
      */
     @Test
-    void neitherClaTalentoAppliesItsMalusWithoutItsBonuses() throws IllegalOperationException {
+    void giganteDoClaEmpusaGrantsItsSizeStepAndForcaAlongsideItsDefesasMalus()
+            throws IllegalOperationException {
         Character gigante = character().race(new Gigantes()).build();
         gigante.grantTitle(new Santo(List.of(), List.of()), TitleSlot.PRIMARY);
+        SizeCategory sizeBefore = sizeService.getEffectiveSizeCategory(gigante);
+        int forcaBefore = gigante.getEffectiveAttributeTotal(AttributeDomain.STRENGTH);
         int physicalBefore = defenseService.getTotalDefense(gigante, DefenseType.PHYSICAL);
+        int magicBefore = defenseService.getTotalDefense(gigante, DefenseType.MAGIC);
 
         acquire(gigante, GiganteFeat.GIGANTE_DO_CLA_EMPUSA);
 
-        assertEquals(physicalBefore, defenseService.getTotalDefense(gigante, DefenseType.PHYSICAL));
+        assertEquals(sizeBefore.shift(1), sizeService.getEffectiveSizeCategory(gigante));
+        assertEquals(forcaBefore + 1, gigante.getEffectiveAttributeTotal(AttributeDomain.STRENGTH));
+        assertEquals(physicalBefore - 2, defenseService.getTotalDefense(gigante, DefenseType.PHYSICAL));
+        assertEquals(magicBefore - 2, defenseService.getTotalDefense(gigante, DefenseType.MAGIC));
+    }
+
+    /**
+     * Its Jotun twin stays withheld whole: its bonuses are grantable now, but its Desvantagem on
+     * Força/Destreza Perícias (except Esquiva e Aparar) is not, and granting only the halves that
+     * help would leave a character strictly better off than the Talento is written.
+     */
+    @Test
+    void giganteDoClaJotunGrantsNothingWhileItsMalusIsInexpressible() throws IllegalOperationException {
+        Character gigante = character().race(new Gigantes()).build();
+        gigante.grantTitle(new Santo(List.of(), List.of()), TitleSlot.PRIMARY);
+        SizeCategory sizeBefore = sizeService.getEffectiveSizeCategory(gigante);
+        int vigorBefore = gigante.getEffectiveAttributeTotal(AttributeDomain.VIGOR);
+
+        acquire(gigante, GiganteFeat.GIGANTE_DO_CLA_JOTUN);
+
+        assertEquals(sizeBefore, sizeService.getEffectiveSizeCategory(gigante));
+        assertEquals(vigorBefore, gigante.getEffectiveAttributeTotal(AttributeDomain.VIGOR));
     }
 
     // ---------- Pequenino ----------

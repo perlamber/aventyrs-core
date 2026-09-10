@@ -11,6 +11,7 @@ import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.race.Anao;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.Blessing;
+import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.TargetScope;
 import org.aventyrs.core.skill.Skill;
 import org.aventyrs.core.skill.SkillTrait;
@@ -186,8 +187,10 @@ public enum AnaoFeat implements Feat {
      *   convention — and exactly one RC/RD instance's -2 per {@code
      *   docs/rules/defesas-e-resistencias.txt}), now summed for real by {@code
      *   DamageServiceImpl}'s {@code CombatantSheet} overload;</li>
-     *   <li>Resistência a Críticos, one instance ({@link ModifierType#CRITICAL_RESISTANCE} {@code
-     *   2}), subtracted from an attacker's Margem Crítica Menor widening by {@code
+     *   <li>Resistência a Críticos, one instance ({@link ModifierType#CRITICAL_RESISTANCE},
+     *   {@link CombatantSheet#CRITICAL_RESISTANCE_INSTANCE}) — summed with any standing RC the
+     *   holder's Raça or Talentos grant and subtracted from an attacker's Margem Crítica Menor
+     *   widening by {@code
      *   AbstractSkillInteraction} — see that {@code ModifierType}'s javadoc for the pieces of the
      *   RC rule that still can't be expressed (the Maior clause, PRIMORDIAL scoping).</li>
      * </ul>
@@ -213,16 +216,13 @@ public enum AnaoFeat implements Feat {
             return List.of(
                     new Blessing(ModifierType.DAMAGE_REDUCTION, DamageService.DEFAULT_DAMAGE_REDUCTION,
                             rounds, TargetScope.SELF, name()),
-                    new Blessing(ModifierType.CRITICAL_RESISTANCE, CRITICAL_RESISTANCE_INSTANCE,
+                    new Blessing(ModifierType.CRITICAL_RESISTANCE,
+                            CombatantSheet.CRITICAL_RESISTANCE_INSTANCE,
                             rounds, TargetScope.SELF, name()));
         }
     };
 
     private static final int GLORIA_CRITICAL_MARGIN_INCREASE = 2;
-
-    /** One instance of Resistência à Críticos — a -2 to an attacker's Margem Crítica Menor, per
-     * {@code docs/rules/defesas-e-resistencias.txt}. */
-    private static final int CRITICAL_RESISTANCE_INSTANCE = 2;
 
     /**
      * The attack target's Categoria de Tamanho, or {@code null} when this roll opposes nobody.

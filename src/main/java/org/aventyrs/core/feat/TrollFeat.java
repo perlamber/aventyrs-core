@@ -120,10 +120,12 @@ public enum TrollFeat implements Feat {
      * condition), reaching every Atributo-total reader via {@code
      * Character#getEffectiveAttributeTotal}, exactly as {@code BestialFeat}'s Heranças.
      */
-    // TODO: the RD/RM half needs the unmodelled sub-lineage to pick between them, and RM
-    //  (Redução Mágica) is not a concept this core computes at all — the same gap Gorgona's own
-    //  Monstros em pele de Fada cites. Granting the RD half unconditionally would hand it to
-    //  every Troll, including the Floresta ones the clause gives RM instead.
+    // TODO: RD and RM are both real stats now (Feat#resolveDamageReduction /
+    //  resolveMagicReduction), so the only blocker left on this half is the unmodelled
+    //  sub-lineage that picks between them — Troll da Floresta gets RM, Troll do Inverno RD, and
+    //  Troll deliberately models no such choice enum (see its own javadoc). Granting either
+    //  unconditionally would hand it to every Troll, including the half the clause gives the
+    //  other to.
     VIGOR_TROLLICO(
             "Você recebe Bônus Racial de +1 em Vigor. Trolls da Floresta adicionalmente recebem "
                     + "RM, Trolls do Inverno adicionalmente recebem RD.",

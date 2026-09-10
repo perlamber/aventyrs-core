@@ -57,6 +57,34 @@ public enum ModifierType {
      */
     DAMAGE_ROLL_BONUS,
     DAMAGE_REDUCTION,
+    /**
+     * Resistência à Magias (RM) — the magic-damage counterpart of {@link #DAMAGE_REDUCTION}. Per
+     * {@code docs/rules/defesas-e-resistencias.txt} each instance reduces Dano Mágico
+     * não-PRIMORDIAL by -2, so a bonus of {@code DamageService#DEFAULT_DAMAGE_REDUCTION} here is
+     * one instance — the same figure a numberless "você recebe RM" clause grants.
+     *
+     * <p>Resolved by {@code DamageService#getTotalMagicReduction} from the same five sources RD
+     * uses (the three-source {@code @Modifier} scan, equipped {@link
+     * org.aventyrs.core.item.Item}s, held Talentos via {@code Feat#resolveMagicReduction}, and a
+     * round-scoped {@code TemporaryBonus}), and added to the mitigation total by {@code
+     * calculateFinalDamage} <b>only when the incoming damage is typed {@code
+     * DamageType#MAGICO}</b> — an unclassified hit ({@code damageType} {@code null}, which is
+     * what most callers still pass) gets none of it, since "caller didn't say" is not "this was
+     * magic".
+     *
+     * <p><b>RD is still type-blind, so magic damage is currently over-mitigated.</b> The rules
+     * give RD only to Dano Físico não-PRIMORDIAL e não-ELEMENTAL, but {@code
+     * getTotalDamageReduction} applies it whatever the type — so a hit typed {@code MAGICO} takes
+     * RD <em>and</em> RM today. Narrowing RD belongs to the damage-type system (CLAUDE.md's
+     * "Damage-type-scoped mitigation" row), not here; this constant only closes the missing
+     * resistance, not the over-broad one.
+     *
+     * <p>Resistência Elemental (RE) is the third sibling in that rules block and has no constant:
+     * nothing in the catalog grants a plain RE that isn't also scoped to one {@code
+     * org.aventyrs.core.magic.ElementalType}, which is the {@code DamageDescriptor} path already
+     * built for equipment. Add it with its first real consumer.
+     */
+    MAGIC_REDUCTION,
     HALF_DAMAGE,
     ABSOLUTE_DAMAGE_REDUCTION,
     /**
@@ -65,10 +93,18 @@ public enum ModifierType {
      * docs/rules/defesas-e-resistencias.txt}, each instance lowers the attacker's Margem Crítica
      * Menor by -2 (and Maior by -1), so a bonus of {@code 2} here is one instance.
      *
+     * <p><b>This constant is only the round-scoped half of RC.</b> A {@code Blessing}/{@code
+     * TemporaryBonus} typed with it ({@code AnaoFeat#VIGOR_DO_INVERNO}'s combat-start grant) is
+     * one source; a <em>standing</em> grant from the holder's Raça ({@code
+     * Race#getCriticalResistance()}) or a held Talento ({@code Feat#resolveCriticalResistance})
+     * is the other, and carries no {@code ModifierType} at all. Both are summed by {@code
+     * CombatantSheet#getTotalCriticalResistance}, which is what a consumer should call — reading
+     * {@code getTemporaryBonus(CRITICAL_RESISTANCE)} alone sees only the timed half.
+     *
      * <p><b>Partial reader.</b> Only {@code
-     * org.aventyrs.core.skill.AbstractSkillInteraction} consumes it — the attacker-rolls path
-     * subtracts the attack target's total from the summed Margem Crítica Menor widening before
-     * {@code SkillRoll#getCriticalResult(int)}, so it also reaches {@code
+     * org.aventyrs.core.skill.AbstractSkillInteraction} consumes that total — the attacker-rolls
+     * path subtracts the attack target's figure from the summed Margem Crítica Menor widening
+     * before {@code SkillRoll#getCriticalResult(int)}, so it also reaches {@code
      * org.aventyrs.core.combat.AttackDelivery}, which routes through that same interaction. Not
      * read on the {@code org.aventyrs.core.combat.AttackReceiver} mirror (the attacker rolls
      * nothing there). The "-1 à Margem Crítica Maior" clause has no expression — this ruleset
@@ -77,11 +113,11 @@ public enum ModifierType {
      * widening is floored at 0 by {@code getCriticalResult}). No "não-PRIMORDIAL" scoping either;
      * the crit path carries no PRIMORDIAL marker.
      *
-     * <p>Read only via {@code CombatantSheet#getTemporaryBonus} today — a {@code Blessing}/{@code
-     * TemporaryBonus}, as {@code AnaoFeat#VIGOR_DO_INVERNO} grants at combat start. A permanent
-     * RC source ({@code MonstruosoFeat}, {@code ElementalFeat}, {@code GorgonaFeat}, {@code
-     * Troll}'s Anatomia Vegetal, {@code ProfissaoCompetencyAbility}) would need its own scan
-     * added here, and each is blocked on a form state or an unrelated system besides.
+     * <p>Still without a home: an <b>item-scoped</b> RC, a value a produced or worn Equipamento
+     * carries and passes to its wearer ({@code ProfissaoCompetencyAbility#FORJA_VULCANA}) —
+     * neither {@code Item} nor the sheet total has a notion of one — and a {@code
+     * SkillCompetencyAbility}/{@code AttributeAbility} standing grant, which no constant in the
+     * catalog asks for.
      */
     CRITICAL_RESISTANCE,
     DEFESAS,

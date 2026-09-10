@@ -1,12 +1,15 @@
 package org.aventyrs.core.feat;
 
+import org.aventyrs.core.character.AttributeDomain;
+import org.aventyrs.core.character.Character;
+import org.aventyrs.core.character.DefenseType;
 import org.aventyrs.core.race.Gigantes;
 
 /**
  * Talentos Gigantes — two about protecting smaller allies, two about awakening an ancestral clã.
  *
- * <p>No constant carries a mechanical effect, but two of the four are worth reading for *why*,
- * because neither is blocked in the ordinary way.
+ * <p>One constant carries a mechanical effect — {@link #GIGANTE_DO_CLA_EMPUSA}, whole. The other
+ * three are worth reading for *why* they don't, because none is blocked in the ordinary way.
  *
  * <p><b>{@link #ESCUDO_QUE_ANDA} is the second real consumer of ally-facing Defesas.</b> Its
  * "aliados adjacentes recebem Bônus de +1 em Defesas" is the same shape as Santo's Despertar,
@@ -16,12 +19,16 @@ import org.aventyrs.core.race.Gigantes;
  * allies and asks each what it grants outward, for RA. Defesas has no equivalent scan, and
  * {@code DefenseService} would need one plus a {@code Feat} hook to be asked through.
  *
- * <p><b>The two Clã Talentos are withheld deliberately, not merely blocked.</b> Each pairs
- * bonuses this core cannot grant (a Categoria de Tamanho uplift, a per-Título Atributo bonus)
- * with a malus it <i>could</i> — Empusa's "-2 em suas Defesas" is expressible today as a negative
- * {@code resolveDefenseBonus}. Implementing only the half that hurts would leave a character
- * strictly worse off for having acquired the Talento, which is further from the rules text than
- * granting nothing. Both halves wait together.
+ * <p><b>The two Clã Talentos were withheld deliberately, and only one still is.</b> Each pairs
+ * bonuses — a Categoria de Tamanho uplift, a per-Título Atributo bonus — with a malus, and the
+ * rule this tree follows is that a Talento is granted whole or not at all: implementing only the
+ * half that hurts leaves a character strictly worse off for having acquired it, and implementing
+ * only the halves that help leaves them strictly better, both further from the rules text than
+ * granting nothing. {@link #GIGANTE_DO_CLA_EMPUSA} can now be granted whole ({@code
+ * Feat#resolveSizeCategoryIncrease} + {@code resolveAttributeBonus} + a negative {@code
+ * resolveDefenseBonus}). {@link #GIGANTE_DO_CLA_JOTUN} cannot: its malus is a Desvantagem scoped
+ * by {@code AttributeDomain} with a named Perícia carve-out, which no hook expresses — so its
+ * bonuses keep waiting on it.
  */
 public enum GiganteFeat implements Feat {
 
@@ -78,12 +85,14 @@ public enum GiganteFeat implements Feat {
      * "Sua Categoria de Tamanho aumenta em +1, então recebe Bônus de +1 Força para cada Título
      * Aventyr Desperto, mas recebe Redutor de -2 em suas Defesas."
      */
-    // TODO: withheld as a whole rather than half-implemented — see the class javadoc. The -2
-    //  Defesas alone would be expressible through resolveDefenseBonus.
-    // TODO: a Talento cannot raise Categoria de Tamanho (Feat is outside every ModifierResolver
-    //  scan, and there is no resolveSizeCategoryIncrease hook) nor grant an Atributo bonus.
+    // All three halves are real now, so the Talento is granted whole rather than withheld: the
+    // Categoria de Tamanho step through Feat#resolveSizeCategoryIncrease (a *shift*, exactly as
+    // written — unlike GnomoFeat#DUENDE's absolute set), the Força through
+    // Feat#resolveAttributeBonus, and the Defesas malus through resolveDefenseBonus. Its Jotun
+    // twin stays withheld because its own malus is still inexpressible; see there.
     // TODO: "não pode possuir mais de um Talento de Clã" is an exclusion, and FeatRequirements
-    //  carries only thresholds that must be met.
+    //  carries only thresholds that must be met — so a Gigante can hold both Clã Talentos and
+    //  collect both size steps, which the text forbids.
     GIGANTE_DO_CLA_EMPUSA(
             "O Despertar de sua Centelha também desperta um poder latente em seu sangue, fruto da "
                     + "descendência Abissal. Você se torna maior e mais poderoso, mas se torna "
@@ -94,14 +103,33 @@ public enum GiganteFeat implements Feat {
             FeatRequirements.builder()
                     .requiredRace(Gigantes.class)
                     .requiredAwakenedTitles(1)
-                    .build()),
+                    .build()) {
+        @Override
+        public int resolveSizeCategoryIncrease(final Character character) {
+            return CLA_SIZE_CATEGORY_INCREASE;
+        }
+
+        /** "+1 Força para cada Título Aventyr Desperto" — every held Título counts, per Feat#isEligible. */
+        @Override
+        public int resolveAttributeBonus(final AttributeDomain attributeDomain, final Character character) {
+            return attributeDomain == AttributeDomain.STRENGTH ? character.getAllTitles().size() : 0;
+        }
+
+        @Override
+        public int resolveDefenseBonus(final DefenseType defenseType, final Character character) {
+            return EMPUSA_DEFENSE_MALUS;
+        }
+    },
 
     /**
      * "Sua Categoria de Tamanho aumenta em +1, então recebe Bônus de +1 em Vigor para cada Título
      * Aventyr Desperto, mas recebe Desvantagens em rolagens de Perícias Físicas."
      */
-    // TODO: same Categoria de Tamanho, Atributo and exclusion gaps as its Empusa twin.
-    // TODO: its malus is not even expressible, unlike Empusa's — a Desvantagem on "Perícias
+    // TODO: withheld as a whole, unlike its Empusa twin, and for the reason the class javadoc
+    //  gives: its bonuses are grantable now (the size step and the Vigor both have hooks), but
+    //  its malus alone is not, so granting them would leave a Jotun strictly better off than
+    //  written. Both halves keep waiting together.
+    // TODO: its malus is not expressible — a Desvantagem on "Perícias
     //  Físicas (baseadas em Força e Destreza), exceto Esquiva e Aparar" is scoped by
     //  AttributeDomain with a named exception, which is the same shape Gigantes' own Cuidado
     //  para não Quebrar is blocked on.
@@ -117,6 +145,12 @@ public enum GiganteFeat implements Feat {
                     .requiredRace(Gigantes.class)
                     .requiredAwakenedTitles(1)
                     .build());
+
+    /** "Sua Categoria de Tamanho aumenta em +1" — one step, stated by both Clã Talentos. */
+    private static final int CLA_SIZE_CATEGORY_INCREASE = 1;
+
+    /** Empusa's own "Redutor de -2 em suas Defesas", applying to both DF and DM. */
+    private static final int EMPUSA_DEFENSE_MALUS = -2;
 
     private final String description;
     private final FeatRequirements featRequirements;

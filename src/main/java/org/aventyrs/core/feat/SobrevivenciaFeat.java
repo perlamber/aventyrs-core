@@ -178,11 +178,14 @@ public enum SobrevivenciaFeat implements Feat {
      * "Você recebe Bônus de +1 em Vigor e Resistência à Críticos para resistir a ataques enquanto
      * estiver em seu Terreno Predileto."
      */
-    // TODO: the terrain match is real now (TerrenoPrediletoFeat#chosenBy), but neither effect it
-    //  would gate is: a round-scoped Attribute bonus does not exist — AttributeValue's three
-    //  components are all permanent (gap catalog, "Round-scoped Attribute bonuses").
-    // TODO: "Resistência à Críticos" is not a stat — CriticalEffect immunity is per named
-    //  CriticalEffectType, not a general resistance.
+    // The Resistência à Críticos half is real: one instance while in the chosen terrain (the
+    // clause states no figure — see CombatantSheet#CRITICAL_RESISTANCE_INSTANCE). Terreno is a
+    // Scene-wide fact, which is why this clause can be read off the *attacker's* SceneContext at
+    // all — see Feat#resolveCriticalResistance for that caveat.
+    // TODO: the "+1 em Vigor" half stays blocked — a round-scoped Attribute bonus reaches only a
+    //  Perícia roll governed by that Atributo (ModifierType.VIGOR_BONUS via a TemporaryBonus),
+    //  and there is no per-Rodada grant path for it here; AttributeValue's three components are
+    //  all permanent (gap catalog, "Round-scoped Attribute bonuses").
     PROTETOR_TERRITORIALISTA(
             "Você recebe Bônus de +1 em Vigor e Resistência à Críticos para resistir a ataques "
                     + "enquanto estiver em seu Terreno Predileto. Você também pode estender os "
@@ -190,7 +193,13 @@ public enum SobrevivenciaFeat implements Feat {
                     + "instaladas em seu terreno escolhido.",
             FeatRequirements.builder()
                     .requiredFeat(TERRENO_PREDILETO)
-                    .build()),
+                    .build()) {
+        @Override
+        public int resolveCriticalResistance(final Character character, final SceneContext sceneContext) {
+            return inChosenTerrain(character, sceneContext)
+                    ? CombatantSheet.CRITICAL_RESISTANCE_INSTANCE : 0;
+        }
+    },
 
     /**
      * "Você adquire 1 ponto permanente de 'Sorte'. Enquanto sua quantidade de PV for igual ou
@@ -272,7 +281,10 @@ public enum SobrevivenciaFeat implements Feat {
     //  FALLEN/COMMA/DEAD cannot be suspended: there is no stored tier to override, and nothing
     //  gates acting on status. That one gap blocks both halves of this clause.
     // TODO: capping PA at 2 in a way effects cannot raise needs a ceiling stage;
-    //  ActionPointsService sums additively and clamps only at 0.
+    //  ActionPointsService sums additively and clamps only at 0. Blocked twice over, and the
+    //  ceiling is the lesser half: this is the catalog's *only* PA-ceiling clause and it is
+    //  gated on "enquanto Permanecer Consciente estiver ativo", so a ceiling stage built today
+    //  would have nothing that could ever switch it on. Build it with the active state above.
     // TODO: disjunctive Pré-requisitos on both halves (Vigor *ou* Instinto 5; Duro de Ferir *ou*
     //  Duro de Matar); modelled as the Vigor and Duro de Ferir branches.
     PERMANECER_CONSCIENTE(

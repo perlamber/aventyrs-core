@@ -10,14 +10,14 @@ import org.aventyrs.core.race.Gorgona;
  * resolve it in opposite directions (embrace the monstrous form, or be freed from it), two
  * mutually-exclusive protections, and three Aventyr-tier Talentos.
  *
- * <p>Two constants carry real effects, both RD, through the {@code Feat#resolveDamageReduction}
- * hook this batch added: {@link #PROTECAO_DO_DEUS_DOS_MONSTROS} and {@link
- * #PROTECAO_DA_RAINHA_DAS_FADAS}.
+ * <p>Two constants carry real effects: {@link #PROTECAO_DO_DEUS_DOS_MONSTROS}'s RD, through the
+ * {@code Feat#resolveDamageReduction} hook, and {@link #PROTECAO_DA_RAINHA_DAS_FADAS}'s RD plus
+ * RM ({@code Feat#resolveMagicReduction}).
  *
  * <p><b>Every remaining constant is blocked on the same thing: Górgona's forms.</b> The race's
  * own Monstros em pele de Fada Característica — toggling between a Feérica and a Monstruosa form
- * — is unbuilt, and {@code Gorgona}'s javadoc records why (no "retain an activated stance" state,
- * and RM is not a concept this core computes). Six of these seven Talentos either presuppose a
+ * — is unbuilt, and {@code Gorgona}'s javadoc records why (no "retain an activated stance" state).
+ * Six of these seven Talentos either presuppose a
  * form, change which form the holder is locked into, or scope an effect to one.
  *
  * <p><b>Three exclusion pairs, none enforceable.</b> Marca da Maldição ↔ Acolhida por Flora, and
@@ -83,10 +83,10 @@ public enum GorgonaFeat implements Feat {
      * {@code DamageService#DEFAULT_DAMAGE_REDUCTION}, the convention for an RD clause with no
      * number in its rules text.
      */
-    // TODO: Resistência a Críticos — ModifierType.CRITICAL_RESISTANCE now exists (consumed off a
-    //  round-scoped grant on the attack target by AbstractSkillInteraction), but this clause is
-    //  form-gated ("enquanto em sua Forma Monstruosa" — no form state) *and* needs a permanent-RC
-    //  Feat scan on the attacker crit path. Still distinct from Race#getCriticalEffectImmunities().
+    // TODO: Resistência a Críticos — the scan is built now (Feat#resolveCriticalResistance,
+    //  totalled by CombatantSheet#getTotalCriticalResistance), so the *only* remaining blocker is
+    //  the form gate: "enquanto em sua Forma Monstruosa", and no form state exists. Override that
+    //  hook the day it does. Still distinct from Race#getCriticalEffectImmunities().
     PROTECAO_DO_DEUS_DOS_MONSTROS(
             "Você recebe RDS e RD, enquanto em sua Forma Monstruosa você recebe Resistência à "
                     + "Críticos. Um mesmo personagem não pode possuir os Talentos Proteção do Deus "
@@ -104,14 +104,13 @@ public enum GorgonaFeat implements Feat {
 
     /**
      * "Você recebe RDS e RM, enquanto em sua forma Feérica você recebe Resistência a Críticos."
-     * The RDS half is real.
+     * <b>Both the RDS and the RM halves are real</b>, and both unconditional — only the
+     * Resistência a Críticos is form-gated. RM ({@code ModifierType#MAGIC_REDUCTION}, resolved by
+     * {@code DamageService#getTotalMagicReduction}) reduces Dano Mágico the way RDS reduces
+     * physical, so this Talento is once again the equal of its Monstros twin, as written.
      */
-    // TODO: RM (Redução Mágica) is not a concept this core computes at all — the same gap
-    //  Gorgona's own Monstros em pele de Fada and TrollFeat#VIGOR_TROLLICO cite. Only the RDS
-    //  half lands, which makes this Talento strictly weaker than its Monstros twin today even
-    //  though the two are written as equals.
-    // TODO: Resistência a Críticos — form-gated ("enquanto em sua forma Feérica"), and needs a
-    //  permanent-RC Feat scan on the attacker crit path; same as its twin above.
+    // TODO: Resistência a Críticos — the scan is built (Feat#resolveCriticalResistance); the only
+    //  remaining blocker is the form gate ("enquanto em sua forma Feérica"), same as its twin.
     PROTECAO_DA_RAINHA_DAS_FADAS(
             "Você recebe RDS e RM, enquanto em sua forma Feérica você recebe Resistência a "
                     + "Críticos. Um mesmo personagem não pode possuir os Talentos Proteção do Deus "
@@ -123,6 +122,11 @@ public enum GorgonaFeat implements Feat {
                     .build()) {
         @Override
         public int resolveDamageReduction(final Character character) {
+            return DamageService.DEFAULT_DAMAGE_REDUCTION;
+        }
+
+        @Override
+        public int resolveMagicReduction(final Character character) {
             return DamageService.DEFAULT_DAMAGE_REDUCTION;
         }
     },

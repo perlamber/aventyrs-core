@@ -2,6 +2,7 @@ package org.aventyrs.core.feat;
 
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.character.SizeCategory;
 import org.aventyrs.core.race.CreatureType;
 import org.aventyrs.core.race.Satiro;
 import org.aventyrs.core.scene.SceneContext;
@@ -18,8 +19,10 @@ import org.aventyrs.core.skill.SkillType;
  * {@link #FAUNO} (Furtividade e Persuasão) and {@link #LUPERCAL} (Artes e Atenção). {@link #NINFA}
  * and {@link #SIRENIDEO} additionally grant a <b>fixed-Atributo +1</b> through {@code
  * Feat#resolveAttributeBonus} (Carisma, Vigor) — that half is now real too, the same as every
- * {@code BestialFeat} Herança. {@link #FAUNO} and {@link #LUPERCAL} stay half-implemented: their
- * Categoria de Tamanho set and target-Tendência-scoped GD reduction are both still blocked.
+ * {@code BestialFeat} Herança. {@link #LUPERCAL} additionally sets its holder's Categoria de
+ * Tamanho outright ({@code Feat#resolveSizeCategoryOverride}), as {@link #PIXIE} does; both stay
+ * half-implemented only for their target-Tendência-scoped GD reduction, which {@link #FAUNO}
+ * shares.
  *
  * <p><b>This tree is why {@code FeatRequirements#requiredCreatureType} exists.</b> "Apenas
  * personagens de raça Feérica" spans Fada, Fúria, Sátiro, Nascido da Floresta and Górgona — five
@@ -92,8 +95,9 @@ public enum FeericoFeat implements Feat {
     /**
      * "Sua categoria de tamanho muda para -3, você tem asas e Movimento Base de Voo 8UD."
      */
-    // TODO: a Talento cannot set Categoria de Tamanho (no hook, and this is an absolute set
-    //  rather than the shift ModifierType.SIZE_CATEGORY expresses), and flight does not exist.
+    // The Categoria de Tamanho set is real, through Feat#resolveSizeCategoryOverride.
+    // TODO: flight does not exist — no Movimento Base de Voo sub-stat, so the wings and the 8UD
+    //  have nothing to land on, and neither does the PM cost or the Duração that pays for them.
     // TODO: gated at FEERICO where the text says "apenas Fadas e Fúrias" — looser than written,
     //  see the class javadoc. Its exclusion of SIRENIDEO is unenforceable, as every exclusion is.
     PIXIE(
@@ -103,7 +107,12 @@ public enum FeericoFeat implements Feat {
                     + "Rodadas, +3 Rodadas para cada Título Aventyr Desperto que possuir.",
             FeatRequirements.builder()
                     .requiredCreatureType(CreatureType.FEERICO)
-                    .build()),
+                    .build()) {
+        @Override
+        public SizeCategory resolveSizeCategoryOverride(final Character character) {
+            return SizeCategory.MINUS_THREE;
+        }
+    },
 
     /**
      * "Você recebe Bônus de +1 Racial em Carisma e vantagem em rolagens de 'Empatia Selvagem'."
@@ -273,9 +282,9 @@ public enum FeericoFeat implements Feat {
      * "Sua Categoria de Tamanho muda para 0, também recebe Vantagem em suas rolagens de Artes e
      * Atenção." The Vantagem is real.
      */
-    // TODO: a Talento cannot set Categoria de Tamanho. Note the effect happens to be a +1 step
-    //  for a Sátiro, whose base is MINUS_ONE — the same coincidence GnomoFeat#DUENDE records, and
-    //  equally not something to rely on.
+    // The Categoria de Tamanho set is real, through Feat#resolveSizeCategoryOverride — stated as
+    // ZERO, the value the clause names, not as the +1 step from a Sátiro's own MINUS_ONE it
+    // happens to equal (the same care GnomoFeat#DUENDE takes).
     // TODO: the GD half is target-Tendência-scoped, same blocker as FAUNO's.
     LUPERCAL(
             "Sua Categoria de Tamanho muda para 0, também recebe Vantagem em suas rolagens de "
@@ -284,6 +293,11 @@ public enum FeericoFeat implements Feat {
             FeatRequirements.builder()
                     .requiredRace(Satiro.class)
                     .build()) {
+        @Override
+        public SizeCategory resolveSizeCategoryOverride(final Character character) {
+            return SizeCategory.ZERO;
+        }
+
         @Override
         public int resolveSkillRollBonus(final SkillType skillType, final SceneContext sceneContext,
                                           final SkillTrait requestedAbility, final Character character) {

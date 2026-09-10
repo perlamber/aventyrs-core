@@ -5,6 +5,7 @@ import java.util.List;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.DefenseType;
+import org.aventyrs.core.character.services.DamageService;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.skill.Skill;
 import org.aventyrs.core.skill.SkillType;
@@ -41,7 +42,11 @@ public enum DefensiveMasterpiece implements Masterpiece {
     // TODO: magic damage/healing effects are authored prose; Spell has no numeric effect to increase.
     BANHADA_EM_OURO("Banhada em Ouro", ItemRarity.RARE, 0, 1, 1, requirements(AttributeDomain.FOCUS, 3),
             "Efeitos de Danos e Curas Mágicas de suas magias aumentam em +2.", "Vantagem em rolagens de Persuasão."),
-    // TODO: RM and special-material classification for attack sources do not exist.
+    // The "Concede RM" half is real (ModifierType.MAGIC_REDUCTION, one instance — the clause
+    // states no figure). TODO: the "exceto para resistir à efeitos de Armas de Dyospiros" carve-out
+    // is not — nothing classifies an attack source by special material, so the RM is granted
+    // against every magic hit including a Dyospiros weapon's. Documented over-grant, the same
+    // shape ARMADURA_COMPLETA's "de Corte" scoping already carries.
     DYOSPIROS("Material Especial - Dyospiros", ItemRarity.UNCOMMON, 0, 2, 0, requirements(AttributeDomain.FOCUS, 3),
             "Concede RM, exceto para resistir à efeitos de Armas de Dyospiros.",
             "Apenas equipamentos do Escudo Médios ou Pesados podem ser feitas deste Material."),
@@ -53,7 +58,11 @@ public enum DefensiveMasterpiece implements Masterpiece {
     GELO_VERDADEIRO("Material Especial - Gelo Verdadeiro", ItemRarity.RARE, 2, 0, 0, requirements(AttributeDomain.STRENGTH, 3),
             "Atacantes Corpo-a-Corpo sofrem 3 pontos de danos Físico Elemental: Gelo.",
             "Dano sofrido reduzido em -1, exceto para resistir a danos de armas de Gelo Verdadeiro."),
-    // TODO: needs critical resistance, first-magic-effect Scene tracking and RM.
+    // The Aprimoramento's "Concede RM ao usuário" is real, as is the weight-class step
+    // (getWeightClassBonus). TODO: the Favor's two halves are not — a per-copy Resistência a
+    // Críticos (a character's own RC is real now, an item-granted one is not: see
+    // ModifierType#CRITICAL_RESISTANCE) and "o primeiro efeito mágico da Cena", which needs
+    // per-Cena magic-effect tracking.
     MITRAL("Material Especial - Mitral", ItemRarity.EPIC, 1, 2, 1, requirements(AttributeDomain.DEXTERITY, 3),
             "Resistência à Críticos. Bônus em DM aumenta para +6 para resistir ao primeiro efeito mágico da Cena.",
             "Concede RM ao usuário. Equipamento base é considerado uma Categoria de Peso inferior."),
@@ -125,7 +134,11 @@ public enum DefensiveMasterpiece implements Masterpiece {
             return 1;
         }
         if (this == ADAMANTINA && modifierType == ModifierType.DAMAGE_REDUCTION) {
-            return 2;
+            return DamageService.DEFAULT_DAMAGE_REDUCTION;
+        }
+        // "Concede RM" on both, stating no figure — one instance each.
+        if ((this == DYOSPIROS || this == MITRAL) && modifierType == ModifierType.MAGIC_REDUCTION) {
+            return DamageService.DEFAULT_DAMAGE_REDUCTION;
         }
         if (this == BANHADA_EM_OURO && modifierType == SkillType.PERSUASAO.getRollBonusType()
                 && skillType == SkillType.PERSUASAO) {

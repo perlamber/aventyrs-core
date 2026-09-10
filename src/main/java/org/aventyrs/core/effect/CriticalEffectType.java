@@ -140,8 +140,11 @@ public enum CriticalEffectType {
      * Maior: o item afetado recupera todos os PV perdidos nesta Cena e concede RD e RM ao seu
      * usuário por 2 Rodadas. Menor: apenas concede RD e RM por 2 Rodadas.
      *
-     * <p>"RM" appears nowhere else in this ruleset — this core models RD and RA. Likely RA, but
-     * the source does not say so; left as written.
+     * <p>RM is Resistência à Magias, real now as {@code ModifierType#MAGIC_REDUCTION} — so both
+     * halves of this grant have a stat to land on. What is still missing is the granting itself:
+     * no Efeito Crítico applies a {@code Blessing} to anyone, and the item-PV recovery needs a
+     * Cena-scoped record of damage dealt to a copy ({@code Item} tracks one running total with
+     * no provenance).
      */
     FORTALECER,
 

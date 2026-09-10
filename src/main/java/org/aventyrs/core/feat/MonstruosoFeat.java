@@ -19,7 +19,8 @@ import org.aventyrs.core.title.TitleArchetype;
  * Talentos Monstruosos — the open tree any Monstruoso race can draw on, from unusual anatomy to
  * extra heads to acid blood.
  *
- * <p>Four constants carry real effects: {@link #PELE_RIJA} grants DF and RD together;
+ * <p>Five constants carry real effects: {@link #ANATOMIA_INCOMUM} grants one instance of
+ * Resistência a Críticos; {@link #PELE_RIJA} grants DF and RD together;
  * {@link #OSSOS_OCOS} is the catalog's <b>first Talento to apply a real malus</b> — a −1
  * Multiplicador de PV paid for by a +1UD Movimento Base; {@link #SELVAGERIA} raises the Dano
  * Base of an Arma Natural by +1; and {@link #FEROCIDADE} adds a Título-scaled flat bonus to an
@@ -60,12 +61,10 @@ public enum MonstruosoFeat implements Feat {
      * "Você recebe Resistência a Críticos. Você ignora o primeiro Efeito Crítico Menor que sofrer
      * em cada Cena de Combate."
      */
-    // TODO: Resistência a Críticos — ModifierType.CRITICAL_RESISTANCE now exists and
-    //  AbstractSkillInteraction subtracts an attack target's *round-scoped* total from the
-    //  attacker's Margem Crítica Menor widening, but there is no permanent-RC scan on that path
-    //  (only getTemporaryBonus is read). This unconditional grant needs one added — a Feat pass
-    //  over the target's held Talentos there, the mirror of sumCriticalMarginIncrease's own
-    //  fourth pass. See ModifierType.CRITICAL_RESISTANCE for the RC clauses still inexpressible.
+    // The Resistência a Críticos is real: an unconditional grant of one instance, summed by
+    // CombatantSheet#getTotalCriticalResistance and subtracted from an attacker's Margem Crítica
+    // Menor widening. The clause states no figure, so it grants exactly one instance — see
+    // CombatantSheet#CRITICAL_RESISTANCE_INSTANCE.
     // TODO: ignoring an Efeito Crítico is close to expressible but not quite — CriticalEffect
     //  #applicableTo already filters a victim's immunities, but it keys on CriticalEffectType
     //  (which effect) and this clause keys on *severity* (Menor vs Maior), which the filter does
@@ -76,7 +75,12 @@ public enum MonstruosoFeat implements Feat {
             "Você recebe Resistência a Críticos. Você ignora o primeiro Efeito Crítico Menor que "
                     + "sofrer em cada Cena de Combate. Você ignora um Efeito Crítico Menor "
                     + "adicional para cada Título Aventyr Desperto.",
-            FeatRequirements.builder().build()),
+            FeatRequirements.builder().build()) {
+        @Override
+        public int resolveCriticalResistance(final Character character, final SceneContext sceneContext) {
+            return CombatantSheet.CRITICAL_RESISTANCE_INSTANCE;
+        }
+    },
 
     /** "Você é imune a Efeitos Críticos Menores. Sua resistência às Correntes de Efeitos aumenta em +2." */
     // TODO: severity-keyed immunity — see ANATOMIA_INCOMUM. Note this is the one clause in the

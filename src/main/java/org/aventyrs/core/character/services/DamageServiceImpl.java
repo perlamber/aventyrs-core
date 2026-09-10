@@ -126,6 +126,35 @@ public class DamageServiceImpl implements DamageService {
                 .sum();
     }
 
+    /**
+     * RM, the magic-damage twin of {@link #getTotalDamageReduction(CombatantSheet, DamageType,
+     * CombatantSheet)} — deliberately a copy of its shape rather than a shared parameterised
+     * helper: the two differ in which sources they consult (RD has an {@code AttributeAbility}
+     * hook taking the attacker; no RM clause is conditioned on one) and are expected to keep
+     * diverging as the damage-type system lands.
+     */
+    @Override
+    public int getTotalMagicReduction(final CombatantSheet target) {
+        Character character = target.getCharacter();
+        int total = sumAcrossSources(character, ModifierType.MAGIC_REDUCTION);
+        total += sumEquipmentMagicReduction(character);
+        for (Feat feat : character.getFeats()) {
+            total += feat.resolveMagicReduction(character);
+        }
+        total += target.getTemporaryBonus(ModifierType.MAGIC_REDUCTION);
+        return Math.max(0, total);
+    }
+
+    /** Every equipped Item's Favor and fitted enhancements, for whatever RM they grant. */
+    private int sumEquipmentMagicReduction(final Character character) {
+        int total = 0;
+        for (Item item : character.getEquipment()) {
+            total += item.resolveFavorBonus(ModifierType.MAGIC_REDUCTION, character);
+            total += item.resolveEnhancementBonus(ModifierType.MAGIC_REDUCTION, null, character);
+        }
+        return total;
+    }
+
     @Override
     public int getTotalAbsoluteDamageReduction(final Character character) {
         return sumAcrossSources(character, ModifierType.ABSOLUTE_DAMAGE_REDUCTION);
@@ -232,6 +261,16 @@ public class DamageServiceImpl implements DamageService {
             reduction += target != null
                     ? getTotalDamageReduction(target, damageType, damageDescriptor, source)
                     : getTotalDamageReduction(character);
+            // RM joins RD only for damage the caller actually classified as Mágico — "caller
+            // didn't say" (null) is not "this was magic". Grouped under the same
+            // ignoreDamageReduction flag as RD: the rules name RA as the reduction that can
+            // never be ignored and say nothing either way about RM, so an attack that bypasses
+            // mitigation is taken to bypass whichever of the two applies. That is an inference.
+            // Note RD itself is still type-blind, so a MAGICO hit currently takes both — see
+            // ModifierType#MAGIC_REDUCTION.
+            if (damageType == DamageType.MAGICO && target != null) {
+                reduction += getTotalMagicReduction(target);
+            }
         }
         int afterFlatReduction = Math.max(0, rawDamage - reduction);
         int finalDamage = halfDamage ? afterFlatReduction / 2 : afterFlatReduction;

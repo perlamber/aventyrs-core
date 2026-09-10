@@ -70,6 +70,16 @@ mechanism.
   `getGrantedAttributeAbilities(Character)` (a *named* Habilidade de Atributo handed to the
   holder free — folded into `Character#getAttributeAbilities()` past the `AttributeAbilityService`
   slot economy, passive/`resolve*` hooks only; `ConselheiroDeGuerraYmirianoFeat`), and
+  `resolveMagicReduction(Character)` (RM — Resistência à Magias, the magic-damage twin of
+  `resolveDamageReduction`; reaches only a hit typed `DamageType.MAGICO`, see `damage-and-combat`),
+  `resolveCriticalResistance(Character, SceneContext)` (RC — a *defender-side* narrowing of
+  whoever attacks the holder, totalled with the `Race` grant and any `TemporaryBonus` by
+  `CombatantSheet#getTotalCriticalResistance`; ⚠️ its `sceneContext` is the **attacker's**
+  snapshot, so read only Scene-wide facts from it — never proximity),
+  `resolveSizeCategoryOverride(Character)` → `SizeCategory` (an absolute *set* — "sua Categoria
+  de Tamanho muda para -2", `GnomoFeat#DUENDE`) and `resolveSizeCategoryIncrease(Character)` (the
+  *shift* twin — "aumenta em +1", `GiganteFeat#GIGANTE_DO_CLA_EMPUSA`); `CharacterSizeService`
+  applies the override first and every shift on top of it, and
   `resolveActiveAbility()` →
   `Optional<ActiveAbility>` (a Poder Vampírico — an activatable timed state triggered through
   `ActiveAbilityService#activate`; must return a **stable singleton**, since

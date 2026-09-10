@@ -3,6 +3,7 @@ package org.aventyrs.core.character.services;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.DamageType;
 import org.aventyrs.core.character.DamageDescriptor;
+import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.CombatantSheet;
 
@@ -28,8 +29,10 @@ public interface DamageService {
      * The RD an ability grants when its own rules text doesn't spell out an explicit bonus
      * (e.g. just "concede RD" with no number). Also reused as RA's own unspecified-bonus
      * default (e.g. {@code InitiativeAdvantage#TORRE_EM_MOVIMENTO}'s "você recebe RA" with no
-     * number of its own) — RD and RA are independent reductions, but nothing in the rules text
-     * suggests a different unspecified-amount convention for one versus the other.
+     * number of its own) and as RM's ({@link #getTotalMagicReduction}) — RD, RA and RM are
+     * independent reductions, but {@code docs/rules/defesas-e-resistencias.txt} prices one
+     * instance of each at the same -2, and nothing in the rules text suggests a different
+     * unspecified-amount convention for one versus the others.
      */
     int DEFAULT_DAMAGE_REDUCTION = 2;
 
@@ -59,6 +62,24 @@ public interface DamageService {
 
     /** Descriptor-aware RD calculation, including equipped-item resistance to a concrete element. */
     int getTotalDamageReduction(CombatantSheet target, DamageDescriptor damageDescriptor, CombatantSheet source);
+
+    /**
+     * Total RM — Resistência à Magias, the magic-damage counterpart of RD. Summed from the same
+     * five sources {@link #getTotalDamageReduction(CombatantSheet, DamageType, CombatantSheet)}
+     * uses: the three-source {@code @Modifier} scan of {@link ModifierType#MAGIC_REDUCTION}, every
+     * equipped {@code Item}'s Favor and enhancements ({@code DefensiveMasterpiece#DYOSPIROS}/
+     * {@code #MITRAL}'s "Concede RM"), every held Talento's {@code Feat#resolveMagicReduction}
+     * ({@code GorgonaFeat#PROTECAO_DA_RAINHA_DAS_FADAS}), and a round-scoped {@code
+     * TemporaryBonus}. Never negative.
+     *
+     * <p><b>Only applied to damage typed {@code DamageType#MAGICO}</b> — {@code
+     * calculateFinalDamage} adds this to the mitigation total on that condition alone, so an
+     * unclassified hit is unaffected. Takes a sheet and no {@code damageType}/{@code source}: no
+     * authored RM clause is conditioned on either, unlike RD's attacker-size-scoped {@code
+     * AttributeAbility} hook. There is no {@code Character}-only overload for the same reason —
+     * every real caller resolving typed damage already holds the sheet.
+     */
+    int getTotalMagicReduction(CombatantSheet target);
 
     /** Total RA, same three sources as RD. Never negative. */
     int getTotalAbsoluteDamageReduction(Character character);

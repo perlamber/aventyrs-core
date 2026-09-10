@@ -233,9 +233,10 @@ public enum EscudeiroFeat implements Feat {
      * "Você não é beneficiado por RA, RD e RM, ao invés disso você recebe Bônus de +1 em Defesas
      * para cada um destes efeitos."
      */
-    // TODO: converting mitigation into Defesa needs DamageService's RD/RA to be suppressible per
-    //  character; both are summed unconditionally with no opt-out, and "RM" has no constant at
-    //  all. The exchange rate itself is trivial once suppression exists.
+    // TODO: converting mitigation into Defesa needs DamageService's RD/RA/RM to be suppressible
+    //  per character; all three are real stats now (ModifierType.MAGIC_REDUCTION closed the RM
+    //  half) but each is summed unconditionally with no opt-out. The exchange rate itself is
+    //  trivial once suppression exists.
     BASTIAO_DE_VIDRO(
             "Você não é beneficiado por efeitos de Redução de Danos Sofridos, ao invés disso você "
                     + "recebe Bônus em Defesa igual ao valor que você receberia de Redução de "

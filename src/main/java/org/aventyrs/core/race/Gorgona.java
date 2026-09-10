@@ -50,11 +50,11 @@ import java.util.Map;
  *   granting +1 Carisma/+1 RM, and a Monstruosa form, granting +1 Força/+1 RD and a "Presas
  *   Longas" Arma Natural) — needs a "retain an activated stance for as long as desired" toggle-
  *   state concept this core has no equivalent of (same gap {@code Bestial}'s own Corpo Quimérico
- *   cites), plus RM (Redução Mágica) isn't a concept this core computes at all (unlike RD,
- *   which is real — {@code
- *   org.aventyrs.core.character.services.DamageService#getTotalDamageReduction} — but even RD
- *   can't be granted here since it would need to apply only while the toggle is in its
- *   Monstruosa state, which nothing tracks), and an Item/Equipamento entity for the Arma
+ *   cites) — RD and RM are both real stats now ({@code
+ *   org.aventyrs.core.character.services.DamageService#getTotalDamageReduction}/{@code
+ *   #getTotalMagicReduction}), but neither can be granted here, since each would have to apply
+ *   only while the toggle is in one of its two states and nothing tracks that — and an
+ *   Item/Equipamento entity for the Arma
  *   Natural itself (same gap {@code Gigantes}' own Tudo é Frágil and {@code
  *   ProfissaoCompetencyAbility#FORJA_VULCANA} cite).</li>
  *   <li><b>Olhar de Lacerto</b> (spend 2PA + 1PD for an Ataque Corpo-a-Corpo roll, em até

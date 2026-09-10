@@ -363,13 +363,16 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                     ? DifficultyLevel.reachedByAsExpert(bonus + skillRoll.getTotal())
                     : DifficultyLevel.reachedBy(bonus + skillRoll.getTotal());
             int criticalMarginIncrease = sumCriticalMarginIncrease(target, skillCompetencyAbilities, sceneContext, attackSource);
-            // Resistência a Críticos — the attack target's own round-scoped RC (a Blessing, as
-            // AnaoFeat#VIGOR_DO_INVERNO grants) narrows this roller's Margem Crítica Menor back.
-            // getCriticalResult floors a net-negative widening at 0, which is the "até o mínimo
-            // de 17" clamp — RC cancels widening rather than making a crit harder than baseline.
+            // Resistência a Críticos — the attack target's own RC narrows this roller's Margem
+            // Crítica Menor back: its Raça's and its Talentos' standing grants plus any
+            // round-scoped Blessing (AnaoFeat#VIGOR_DO_INVERNO), all summed by the target's own
+            // sheet. getCriticalResult floors a net-negative widening at 0, which is the "até o
+            // mínimo de 17" clamp — RC cancels widening rather than making a crit harder than
+            // baseline. The sceneContext handed over is this *attacker's* snapshot, the only one
+            // in reach; see Feat#resolveCriticalResistance for what an override may read from it.
             // See ModifierType.CRITICAL_RESISTANCE for the RC pieces still not expressible.
             criticalMarginIncrease -= attackTarget == null ? 0
-                    : attackTarget.getTemporaryBonus(ModifierType.CRITICAL_RESISTANCE);
+                    : attackTarget.getTotalCriticalResistance(sceneContext);
             CriticalResult criticalResult = skillRoll.getCriticalResult(criticalMarginIncrease);
             result.reachedDifficultyLevel(reached.orElse(null))
                     .criticalResult(criticalResult);

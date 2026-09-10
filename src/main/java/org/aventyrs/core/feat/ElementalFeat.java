@@ -3,6 +3,8 @@ package org.aventyrs.core.feat;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.services.DamageService;
 import org.aventyrs.core.race.AbstractMesticoRace;
+import org.aventyrs.core.scene.SceneContext;
+import org.aventyrs.core.sheet.CombatantSheet;
 
 /**
  * Talentos Elementais — the tree of the six Mestiços Elementais (Agástias, Aquan, Colosso,
@@ -204,11 +206,10 @@ public enum ElementalFeat implements Feat {
     // this transformation is permanent rather than a Forma with a Duração, so the grant is
     // unconditional. The clause states no number, so it uses DamageService's own default — the
     // convention CLAUDE.md sets for an RD clause with no figure in its rules text.
-    // TODO: Resistência a Críticos — ModifierType.CRITICAL_RESISTANCE now exists, but only a
-    //  *round-scoped* grant on the attack target is read (AbstractSkillInteraction's
-    //  getTemporaryBonus subtraction). This permanent grant needs a Feat scan added on that same
-    //  attacker crit path. Still distinct from Race#getCriticalEffectImmunities(), an
-    //  all-or-nothing filter keyed on an identity.
+    // The Resistência a Críticos is real too, and unconditional for the same reason the RDS is:
+    // one instance (the clause states no figure), summed by
+    // CombatantSheet#getTotalCriticalResistance off the attack target's own sheet. Still distinct
+    // from Race#getCriticalEffectImmunities(), an all-or-nothing filter keyed on an identity.
     TRANSFORMACAO_ELEMENTAL(
             "Você se transforma em um ser Elemental completo. Você recebe RDS e Resistência a "
                     + "Críticos. O dano causado por sua Reparação Elemental muda para 1d6, este "
@@ -220,6 +221,11 @@ public enum ElementalFeat implements Feat {
         @Override
         public int resolveDamageReduction(final Character character) {
             return DamageService.DEFAULT_DAMAGE_REDUCTION;
+        }
+
+        @Override
+        public int resolveCriticalResistance(final Character character, final SceneContext sceneContext) {
+            return CombatantSheet.CRITICAL_RESISTANCE_INSTANCE;
         }
     };
 

@@ -381,6 +381,13 @@ Three layers of mitigation, in a fixed order:
 1. **RD (Redução de Dano)** and **RA (Redução Absoluta)** — two independent flat reductions,
    each summed via the standard three-source scan and floored at 0. The only difference:
    `calculateFinalDamage`'s `ignoreDamageReduction` flag skips RD, never RA.
+1b. **RM (Resistência à Magias)** — `getTotalMagicReduction(CombatantSheet)`, added to the same
+   flat stage but **only when the caller typed the hit `DamageType.MAGICO`** (`null` means
+   "caller didn't say", not "this was magic"). Same five sources as RD — the `@Modifier` scan of
+   `ModifierType.MAGIC_REDUCTION`, equipped items, `Feat#resolveMagicReduction`, and a
+   `TemporaryBonus` — and skipped by the same `ignoreDamageReduction` flag (an inference; the
+   rules name only RA as un-ignorable). **RD is still type-blind**, so a MAGICO hit currently
+   takes RD *and* RM; narrowing RD is the damage-type system, not this.
 2. **Half damage** — applied *last*, after RD/RA, via the `halfDamage` flag. Rounds down.
 3. **Shield points** — absorbed inside `CharacterSheet#applyDamage` itself, after
    `DamageService` computed the post-mitigation amount.
@@ -397,20 +404,38 @@ An ability granting RD *or* RA without a number in its rules text uses
 only on the `CombatantSheet` overloads of `getTotalDamageReduction`, not the `Character`-only
 one, which has no sheet to read `getTemporaryBonus` from.
 
-**Resistência a Críticos (RC)** — `ModifierType.CRITICAL_RESISTANCE`, a *defender-side* narrowing
-of an attacker's Margem Crítica Menor. `AbstractSkillInteraction` subtracts the attack target's
-`getTemporaryBonus(CRITICAL_RESISTANCE)` from the summed `criticalMarginIncrease` before
+**Resistência a Críticos (RC)** — a *defender-side* narrowing of an attacker's Margem Crítica
+Menor. `AbstractSkillInteraction` subtracts the attack target's
+`getTotalCriticalResistance(sceneContext)` from the summed `criticalMarginIncrease` before
 `SkillRoll#getCriticalResult` (so it reaches `AttackDelivery`, not the `AttackReceiver` mirror —
-the attacker rolls nothing there). One instance = value 2 per `docs/rules/defesas-e-resistencias.txt`.
-Only a round-scoped grant is read today; the "-1 à Margem Crítica Maior" clause, PRIMORDIAL
-scoping, and a permanent-RC scan on the attacker crit path are all still missing — see the CLAUDE.md
-gap-catalog "Resistência a Críticos" row.
+the attacker rolls nothing there). One instance = `CombatantSheet.CRITICAL_RESISTANCE_INSTANCE`
+(2) per `docs/rules/defesas-e-resistencias.txt`, and a clause stating no figure grants one.
+
+**Two kinds of source, summed by the sheet.** A *standing* grant comes from the holder's Raça
+(`Race#getCriticalResistance()` — `Troll`'s Anatomia Vegetal) or a held Talento
+(`Feat#resolveCriticalResistance` — `MonstruosoFeat#ANATOMIA_INCOMUM`,
+`ElementalFeat#TRANSFORMACAO_ELEMENTAL`, `DuelistaFeat#CORACAO_DE_FERRO`,
+`SobrevivenciaFeat#PROTETOR_TERRITORIALISTA`); a *round-scoped* one is a `Blessing`/`TemporaryBonus`
+of `ModifierType.CRITICAL_RESISTANCE` (`AnaoFeat#VIGOR_DO_INVERNO` at combat start). Read
+`getTotalCriticalResistance`, never `getTemporaryBonus(CRITICAL_RESISTANCE)` alone — that sees
+only the timed half. There is deliberately **no `SkillCompetencyAbility`/`AttributeAbility` hook**:
+no constant asks for one (`ProfissaoCompetencyAbility#FORJA_VULCANA`'s RC is *item*-scoped).
+
+⚠️ The `sceneContext` passed to `getTotalCriticalResistance` at that call site is the
+**attacker's** snapshot — the only one in reach, since `SceneContext` holds no `Scene`. An
+override may read Scene-*wide* facts from it (`getTerrainType()`, `isCombatScene()`,
+`getCurrentRound()`); it must never read proximity (`getAlliesWithin`, `getOpposedCharacter`),
+which would answer about the wrong combatant.
+
+Still missing: the "-1 à Margem Crítica Maior" clause (no Maior margin modelled), PRIMORDIAL
+scoping, an item-granted RC, and pushing a crit *below* baseline (the net widening floors at 0,
+which approximates the "até o mínimo de 17" clamp).
 
 RD being real doesn't make every RD-granting ability real — `APRIMORAR_COM_ARTE` grants it as
 one branch of a choice, `ProfissaoCompetencyAbility.FORJA_VULCANA` as a per-produced-item choice
-still blocked on the missing Resistência a Críticos / Margem Crítica Maior / item-scoped-bonus
-mechanisms (the forge pipeline itself now exists — `EquipmentCraftingService`). Check what's
-*actually* blocking an ability.
+still blocked on the missing *item-scoped* Resistência a Críticos / Margem Crítica Maior /
+item-granted-bonus mechanisms (the forge pipeline itself now exists — `EquipmentCraftingService`,
+and a *character's* own RC is real). Check what's *actually* blocking an ability.
 
 ### `CharacterStatus` is derived, never stored
 

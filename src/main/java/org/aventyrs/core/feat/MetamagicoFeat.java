@@ -74,10 +74,11 @@ public enum MetamagicoFeat implements Feat {
     // skill describes, which is also where grantsFreeSpellAcquisition gets a real override; (2)
     // no auto-learning path — grantSpell is still the only way a Magia enters the spell list and
     // every call is deliberate, so "automaticamente aprendidas" has no loop to run.
-    // TODO: "RM para resistir aos efeitos de Magias que você conheça" — RM (Redução Mágica) is
-    // not a concept this core computes at all (same gap Gorgona's javadoc already cites), and
-    // the "Magias que você conheça" scope needs an incoming effect to be classified as a
-    // specific Magia, which nothing does.
+    // TODO: "RM para resistir aos efeitos de Magias que você conheça" — RM is real now
+    // (Feat#resolveMagicReduction), but that hook is for an *unconditional* grant and this one
+    // is scoped: it needs an incoming effect to be classified as a specific Magia, which nothing
+    // does. Granting it unconditionally would apply it to every magic hit, not just the known
+    // ones.
     ARCANISTA(
             "Você consegue conjurar magias do tipo Semente e Broto. Escolha uma quantidade de "
                     + "árvores de magia igual ao seu Conhecimento Metamágico, você conhece estas árvores de "

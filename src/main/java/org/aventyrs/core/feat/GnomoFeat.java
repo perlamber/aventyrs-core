@@ -3,6 +3,7 @@ package org.aventyrs.core.feat;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.DefenseType;
+import org.aventyrs.core.character.SizeCategory;
 import org.aventyrs.core.race.Gnomo;
 import org.aventyrs.core.skill.SkillType;
 
@@ -26,12 +27,11 @@ public enum GnomoFeat implements Feat {
      * <p>Unconditional and scoped to one Defesa, so it uses the narrow {@link DefenseType#MAGIC}
      * branch rather than the broad both-Defesas form {@code DraconicoFeat#ASAS_DE_DRAGAO} grants.
      */
-    // TODO: "Categoria de Tamanho muda para -2" is an absolute *set*, not the shift
-    //  ModifierType.SIZE_CATEGORY expresses, and Feat is outside every ModifierResolver scan
-    //  anyway — there is no resolveSizeCategoryIncrease hook. Worth noting the two happen to
-    //  agree here: this Talento is Gnomo-only and Gnomo's base is MINUS_ONE, so the effect is
-    //  exactly one step down. A hook would still have to be a shift, and a later race-size
-    //  change would silently break the equivalence.
+    // "Categoria de Tamanho muda para -2" is real, through Feat#resolveSizeCategoryOverride —
+    // an absolute *set*, which is why it needs that hook rather than the shift
+    // ModifierType.SIZE_CATEGORY expresses. Stated as the value it is, not as the one step down
+    // from Gnomo's own MINUS_ONE it happens to equal today: a later race-size change must not
+    // silently move a Duende.
     // TODO: Mimetizar has no mechanism — SpellCastingService cannot cast a Magia the caster does
     //  not know, and there is no per-Descanso use counter for the "1 + Títulos Despertos" limit.
     //  Same gap NascidoDoDragao's own Magia Dracônica cites. "Que não sejam Profanas" would
@@ -45,6 +45,11 @@ public enum GnomoFeat implements Feat {
             FeatRequirements.builder()
                     .requiredRace(Gnomo.class)
                     .build()) {
+        @Override
+        public SizeCategory resolveSizeCategoryOverride(final Character character) {
+            return SizeCategory.MINUS_TWO;
+        }
+
         @Override
         public int resolveDefenseBonus(final DefenseType defenseType, final Character character) {
             return defenseType == DefenseType.MAGIC ? DUENDE_MAGIC_DEFENSE_BONUS : 0;

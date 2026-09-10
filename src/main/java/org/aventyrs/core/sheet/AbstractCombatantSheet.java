@@ -983,6 +983,29 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
                 .sum();
     }
 
+    /**
+     * Every source of Resistência a Críticos this combatant has, summed additively: the standing
+     * grants from its Raça and its held Talentos, plus whatever round-scoped {@link
+     * ModifierType#CRITICAL_RESISTANCE} bonus is in force. Two sources, not the usual three-source
+     * {@code @Modifier} scan — no {@code AttributeAbility} or {@code SkillCompetencyAbility} in
+     * the catalog grants a standing RC ({@code ProfissaoCompetencyAbility#FORJA_VULCANA}'s is
+     * scoped to a <em>produced item</em>, not to its holder, so it needs a per-copy value rather
+     * than a hook here), and per this codebase's "second real consumer" restraint neither hook is
+     * added ahead of one.
+     *
+     * <p>Additive because RC instances stack: each is a separate -2, the same way two sources of
+     * RD sum. The subtraction itself, and the floor on it, live on the attacker's crit path — see
+     * {@link CombatantSheet#getTotalCriticalResistance}.
+     */
+    @Override
+    public int getTotalCriticalResistance(final SceneContext sceneContext) {
+        int total = getCharacter().getRace().getCriticalResistance();
+        total += getCharacter().getFeats().stream()
+                .mapToInt(feat -> feat.resolveCriticalResistance(getCharacter(), sceneContext))
+                .sum();
+        return total + getTemporaryBonus(ModifierType.CRITICAL_RESISTANCE);
+    }
+
     /** True while any active condition forbids the thing predicate names. */
     private boolean anyConditionPrevents(final SceneContext sceneContext,
                                           final java.util.function.Predicate<ConditionType> predicate) {

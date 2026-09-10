@@ -372,10 +372,10 @@ public enum DuelistaFeat implements Feat {
      * <p>One of the five Talentos with no Pré-requisito line; "Vigor 5" is printed as its
      * Pré-requisito and is modelled as such.
      */
+    // The Resistência à Críticos half is real: one instance, unconditional (see
+    // CombatantSheet#CRITICAL_RESISTANCE_INSTANCE — the clause states no figure).
     // TODO: retaliation damage does not exist — DamageService only computes damage *to* a target
     //  *from* an attacker, never the reverse (gap catalog, "Reactive/retaliation damage").
-    // TODO: "Resistência à Críticos" is not a stat; CriticalEffect immunity is per named
-    //  CriticalEffectType, not a general resistance.
     // Keeps the unsuffixed name of the two Talentos the rules both call "Coração de Ferro";
     // DestinoFeat's is CORACAO_DE_FERRO_DO_DESTINO. See that constant for why they cannot share
     // one name: a Feat's name() is its persisted identity.
@@ -386,7 +386,12 @@ public enum DuelistaFeat implements Feat {
             FeatRequirements.builder()
                     .attributeDomain(AttributeDomain.VIGOR)
                     .requiredAttributeValue(5)
-                    .build());
+                    .build()) {
+        @Override
+        public int resolveCriticalResistance(final Character character, final SceneContext sceneContext) {
+            return CombatantSheet.CRITICAL_RESISTANCE_INSTANCE;
+        }
+    };
 
     /** MAESTRIA_EM_ARMA's own stated "+1" to the Margem Crítica Menor. */
     private static final int MAESTRIA_EM_ARMA_MARGIN_INCREASE = 1;
