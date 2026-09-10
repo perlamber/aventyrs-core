@@ -9,6 +9,7 @@ import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.TemporaryEffect;
 
 import static org.aventyrs.core.util.TranslatableMessages.ABILITY_ACTIVATION_PREVENTED;
+import static org.aventyrs.core.util.TranslatableMessages.ABILITY_ON_COOLDOWN;
 import static org.aventyrs.core.util.TranslatableMessages.ACTIVE_ABILITY_NOT_HELD;
 import static org.aventyrs.core.util.TranslatableMessages.NOT_ENOUGH_ACTION_POINTS;
 import static org.aventyrs.core.util.TranslatableMessages.NOT_ENOUGH_HIT_POINTS;
@@ -46,6 +47,11 @@ public class ActiveAbilityServiceImpl implements ActiveAbilityService {
         if (characterSheet.isAbilityActivationPrevented(null)) {
             throw new IllegalOperationException(ABILITY_ACTIVATION_PREVENTED);
         }
+        // Resfriamento — checked alongside the other gates, before a single point is spent, so a
+        // refused activation costs nothing. Burned down at the Rodada boundary, never here.
+        if (characterSheet.getRemainingCooldown(ability) > 0) {
+            throw new IllegalOperationException(ABILITY_ON_COOLDOWN);
+        }
         // The sheet overload, not the Character one: activating an ability is combat-facing, and
         // the sheet is what carries a granted ACTION_POINTS TemporaryBonus. No SceneContext is
         // threaded through this call yet, so ESTRATEGISTA's combat malus reads as out-of-combat.
@@ -70,5 +76,8 @@ public class ActiveAbilityServiceImpl implements ActiveAbilityService {
         for (TemporaryEffect effect : ability.resolveEffects(character)) {
             characterSheet.applyEffect(effect);
         }
+        // Started only once everything above has succeeded — an activation that threw never
+        // happened, so it must not lock the ability out.
+        characterSheet.startCooldown(ability, ability.getCooldownRounds());
     }
 }

@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.NonNull;
 import org.aventyrs.core.ability.AttributeAbility;
 import org.aventyrs.core.character.AttributeDomain;
+import org.aventyrs.core.ability.ActiveAbility;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.effect.CriticalEffectType;
@@ -136,6 +137,24 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
      */
     @Getter(AccessLevel.NONE)
     private final transient Set<Object> consumedSessionMarkers = new HashSet<>();
+
+    /**
+     * Rodadas of Resfriamento still owed per {@link ActiveAbility} — see {@link
+     * #startCooldown}/{@link #getRemainingCooldown}. Keyed by <b>identity</b>, matching how
+     * {@code ActiveAbilityService#activate} recognises a held ability ({@code ==}, since {@code
+     * Character#getActiveAbilities()} aggregates live and a Talento-supplied ability must return
+     * a stable singleton). An {@code IdentityHashMap} says that outright rather than relying on
+     * enum constants happening to have identity equality.
+     */
+    @Getter(AccessLevel.NONE)
+    private final Map<ActiveAbility, Integer> cooldowns = new java.util.IdentityHashMap<>();
+
+    /**
+     * The alternate shape this combatant is currently in — {@code null} for their own, which is
+     * the state every sheet starts and mostly stays in. See {@link FormType}.
+     */
+    @Getter(AccessLevel.NONE)
+    private FormType currentForm;
 
     /** Every roll-action taken since this Rodada began — see {@link #recordAction}. */
     @Getter(AccessLevel.NONE)
@@ -723,6 +742,39 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         actionsThisRound.clear();
         actionCountAtTurnStart = 0;
         applyScheduledEgoGrants();
+        tickCooldowns();
+    }
+
+    /**
+     * Burns one Rodada off every Resfriamento still owed, dropping the ones that reach zero so
+     * the ledger stays exactly "what is still unavailable". Private, and driven only from the
+     * Rodada boundary — a Resfriamento measured in Rodadas must not tick at Turn end, or it
+     * would come back early for whoever acts late in the order.
+     */
+    private void tickCooldowns() {
+        cooldowns.replaceAll((ability, remaining) -> remaining - 1);
+        cooldowns.values().removeIf(remaining -> remaining <= 0);
+    }
+
+    /**
+     * Puts ability on Resfriamento for rounds Rodadas — called by {@code
+     * ActiveAbilityService#activate} once the activation has actually succeeded, never before,
+     * so a refused activation costs nothing. A rounds of 0 or less clears any existing entry
+     * rather than storing one, since "no Resfriamento" and "Resfriamento already elapsed" are
+     * the same state.
+     */
+    @Override
+    public void startCooldown(final ActiveAbility ability, final int rounds) {
+        if (rounds <= 0) {
+            cooldowns.remove(ability);
+            return;
+        }
+        cooldowns.put(ability, rounds);
+    }
+
+    @Override
+    public int getRemainingCooldown(final ActiveAbility ability) {
+        return cooldowns.getOrDefault(ability, 0);
     }
 
     /**
@@ -1001,9 +1053,65 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     public int getTotalCriticalResistance(final SceneContext sceneContext) {
         int total = getCharacter().getRace().getCriticalResistance();
         total += getCharacter().getFeats().stream()
-                .mapToInt(feat -> feat.resolveCriticalResistance(getCharacter(), sceneContext))
+                .mapToInt(feat -> feat.resolveCriticalResistance(getCharacter(), sceneContext, this))
                 .sum();
         return total + getTemporaryBonus(ModifierType.CRITICAL_RESISTANCE);
+    }
+
+    @Override
+    public FormType getCurrentForm() {
+        return currentForm;
+    }
+
+    /**
+     * Takes form, or returns to this combatant's own shape when it is {@code null}. Validates
+     * nothing — see {@link CombatantSheet#enterForm} for why, and {@link #canTakeForm} for the
+     * question a caller asks first.
+     */
+    @Override
+    public FormType enterForm(final FormType form) {
+        FormType previous = currentForm;
+        currentForm = form;
+        return previous;
+    }
+
+    /**
+     * Combines every held Talento's {@code Feat#resolveFormAccess}: one {@link
+     * FormAccess#FORBIDDEN} refuses, and a {@link FormAccess#REQUIRED} refuses anything that is
+     * not the shape it demands. A holder of two Talentos requiring <em>different</em> shapes can
+     * take neither, which is the honest reading — the rules avoid the situation by making such
+     * Talentos mutually exclusive ({@code GorgonaFeat}'s pairs), and {@code
+     * FeatRequirements#forbiddenFeats} now enforces that, so this is a state the catalog cannot
+     * actually produce.
+     */
+    @Override
+    public boolean canTakeForm(final FormType form) {
+        return !isForbidden(form) && isNotLockedElsewhere(form);
+    }
+
+    /** Whether some held Talento refuses form outright. */
+    private boolean isForbidden(final FormType form) {
+        return getCharacter().getFeats().stream()
+                .anyMatch(feat -> feat.resolveFormAccess(form, getCharacter()) == FormAccess.FORBIDDEN);
+    }
+
+    /**
+     * Whether no held Talento locks its holder into some shape <em>other</em> than form. A
+     * locking Talento refuses everything but the one shape it names — including the holder's own,
+     * which is why {@code form} being {@code null} is refused too rather than treated as neutral.
+     * Vacuously true when nothing locks, which is every character but a Górgona with Marca da
+     * Maldição.
+     */
+    private boolean isNotLockedElsewhere(final FormType form) {
+        for (Feat feat : getCharacter().getFeats()) {
+            for (FormType locked : FormType.values()) {
+                if (locked != form
+                        && feat.resolveFormAccess(locked, getCharacter()) == FormAccess.REQUIRED) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     /** True while any active condition forbids the thing predicate names. */

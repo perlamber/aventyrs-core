@@ -15,6 +15,8 @@ import org.aventyrs.core.sheet.Blessing;
 import org.aventyrs.core.sheet.CombatantAction;
 import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.CombatantSheet;
+import org.aventyrs.core.sheet.FormType;
+import org.aventyrs.core.sheet.FormAccess;
 import org.aventyrs.core.skill.CriticalResult;
 import org.aventyrs.core.character.DamageBonus;
 import org.aventyrs.core.character.CharacterSkill;
@@ -239,8 +241,7 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
         if (trait instanceof SkillCompetencyAbility ability) {
             return SkillCompetencyAbility.allFor(character).contains(ability);
         }
-        CharacterSkill characterSkill = character.getSkills().get(trait.getSkillType());
-        return characterSkill != null && characterSkill.getSpecializations().contains(trait);
+        return character.getSpecializations(trait.getSkillType()).contains(trait);
     }
 
     /**
@@ -817,6 +818,61 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     }
 
     /**
+     * This Talento's opinion on its holder taking form — whether it forbids that shape, insists
+     * on it, or has nothing to say. {@link FormAccess#NO_OPINION} by default, which is every
+     * Talento but two.
+     *
+     * <p>Two clauses need it, and they pull in opposite directions: {@code
+     * GorgonaFeat#ACOLHIDA_POR_FLORA} <b>forbids</b> a shape ("não pode acessar a forma
+     * monstruosa"), while {@code GorgonaFeat#MARCA_DA_MALDICAO} <b>locks</b> its holder into one
+     * ("está sempre em sua forma monstruosa e é incapaz de alternar"), which refuses every
+     * <em>other</em> shape and the natural one besides. {@code CombatantSheet#canTakeForm}
+     * combines them: any {@code FORBIDDEN} refuses, and a {@code REQUIRED} refuses anything that
+     * is not the required shape.
+     *
+     * <p>Deliberately shaped like {@code resolveTitleAcquisitionPermission} rather than as a pair
+     * of boolean hooks — one answer per Talento per shape reads the same way the rules text does,
+     * and leaves no ambiguity about what two Talentos disagreeing means.
+     *
+     * @param form the shape being asked about; {@code null} asks about returning to the holder's
+     *             own shape, which is what a locking Talento also refuses
+     */
+    default FormAccess resolveFormAccess(final FormType form, final Character character) {
+        return FormAccess.NO_OPINION;
+    }
+
+    /**
+     * Habilidades de Competência and Especializações this Talento grants its holder for free,
+     * outside the Graduação ladder that normally doles them out — "você recebe uma Habilidade de
+     * Competência de cada Perícia escolhida" ({@code FeericoFeat#ADOTADO_POR_SYLPH}), "recebem uma
+     * Especialização adicional de Atletismo" ({@code BestialFeat#HERANCA_REPTILIANA}). The single
+     * most-cited blocker of the racial catalog, and the {@link SkillTrait} twin of {@link
+     * #getGrantedAttributeAbilities}. Empty by default.
+     *
+     * <p><b>One hook for both kinds</b>, because the rules text routinely offers a choice between
+     * them in one clause ("uma Especialização <em>ou</em> Habilidade de Competência de cada uma
+     * destas Perícias" — {@code PeritoFeat#TREINADO_EM_PERICIAS}). Each consumer filters by kind:
+     * a {@code SkillCompetencyAbility} is folded into {@code SkillCompetencyAbility#allFor}, so
+     * every three-source scan and {@code AbstractSkillInteraction} pick it up with no service
+     * change; a {@code SkillSpecialization} is folded into {@code
+     * Character#getSpecializations(SkillType)}, which is what the roll path validates against.
+     *
+     * <p><b>Which trait is granted is the player's pick, so it lives on an acquired,
+     * choice-carrying {@code AbstractFeat} subclass</b> rather than on the bare enum constant —
+     * the same catalog-vs-acquired split {@code ConselheiroDeGuerraYmirianoFeat} keeps for its
+     * Habilidade de Força. A constant whose rules text names the trait outright could override
+     * here directly; none does.
+     *
+     * <p><b>Passive / {@code resolve*} hooks only</b>, exactly as {@link
+     * #getGrantedAttributeAbilities}: nothing runs whatever one-time side-effects an acquisition
+     * service would. No {@code SkillCompetencyAbility} in the catalog has any, so this costs
+     * nothing today.
+     */
+    default List<SkillTrait> getGrantedSkillTraits(final Character character) {
+        return List.of();
+    }
+
+    /**
      * Habilidades de Atributo this Talento grants its holder for free, outside {@code
      * org.aventyrs.core.character.services.AttributeAbilityService}'s slot economy — "1
      * Habilidade de Força (que você cumpra os requisitos)", {@code
@@ -1018,6 +1074,24 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      */
     default int resolveCriticalResistance(final Character character, final SceneContext sceneContext) {
         return 0;
+    }
+
+    /**
+     * The longer form of the RC grant, adding the holder's own {@link CombatantSheet} — what a
+     * clause scoped "enquanto em sua Forma Monstruosa" needs, since the Forma lives on the sheet
+     * ({@code CombatantSheet#isInForm}). {@code GorgonaFeat}'s two Proteções are what this exists
+     * for.
+     *
+     * <p><b>Defaults to the sheet-less form, not the other way round</b> — the same defaulting
+     * relationship every other {@code Feat} overload here uses, so existing overriders keep
+     * working untouched. {@code holder} is never {@code null} at the one call site that matters
+     * ({@code AbstractCombatantSheet#getTotalCriticalResistance} passes itself), but an override
+     * must still read a {@code null} as "condition not met" — nothing stops a future caller
+     * holding only a {@code Character}.
+     */
+    default int resolveCriticalResistance(final Character character, final SceneContext sceneContext,
+                                           final CombatantSheet holder) {
+        return resolveCriticalResistance(character, sceneContext);
     }
 
     /**

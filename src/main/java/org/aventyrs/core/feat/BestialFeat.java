@@ -36,8 +36,14 @@ import org.aventyrs.core.race.Bestial;
  *   from ordinary Movimento Base, deliberately not wired into {@code ModifierType#MOVEMENT} (see
  *   that type's own note, and {@code AtletismoCompetencyAbility#ALPINISTA_VELOZ}/{@code ANFIBIO}).
  *   Routing them there would raise the holder's ground movement, which no Herança says.</li>
- *   <li><b>"Recebem uma Habilidade de Competência de &lt;Perícia&gt;"</b> — the "grant an extra
- *   acquisition slot" gap, the single most-cited blocker of the racial catalog.</li>
+ *   <li><b>"Recebem uma Habilidade de Competência / Especialização de &lt;Perícia&gt;"</b> —
+ *   <b>now real</b>, through {@code Feat#getGrantedSkillTraits} and {@link HerancaBestialFeat},
+ *   the acquired form that records which trait the player picked. A granted {@code
+ *   SkillCompetencyAbility} joins {@code SkillCompetencyAbility#allFor}, a granted {@code
+ *   SkillSpecialization} joins {@code Character#getSpecializations(SkillType)}, so both reach the
+ *   roll path with no service change. This closed what was the single most-cited blocker of the
+ *   racial catalog. Nothing validates that the pick belongs to the Perícia the Herança names —
+ *   the usual builders-aren't-gatekeepers restraint.</li>
  * </ul>
  *
  * <p>What the tree <i>does</i> deliver is a fully enforced prerequisite ladder: {@link
@@ -55,7 +61,8 @@ public enum BestialFeat implements Feat {
      * Perícia roll (none is Vigor-governed) but does lift the effective Vigor total and max PV
      * (see the class javadoc).
      */
-    // TODO: swim movement and the free Habilidade de Competência are blocked — see the class
+    // The free Habilidade de Competência is real, recorded on HerancaBestialFeat.
+    // TODO: swim movement is blocked — see the class
     //  javadoc for each.
     // TODO: the Vantagem is scoped to resisting grapples, ropes and confinement — none of which
     //  is a manoeuvre this core represents, so there is no roll to apply it to. Distinct from a
@@ -84,7 +91,8 @@ public enum BestialFeat implements Feat {
      * <p>The Foco +1 is <b>real</b>, through {@link Feat#resolveAttributeBonus} — reaching every
      * Atributo-total reader via {@code Character#getEffectiveAttributeTotal}.
      */
-    // TODO: the free Habilidade de Competência is blocked — see the class javadoc. Flight
+    // The free Habilidade de Competência is real, recorded on HerancaBestialFeat.
+    // TODO: Flight
     //  additionally needs the flight state Aviano's own Braços Alados records (a distance sub-stat,
     //  not a TemporaryBonus). The activation transaction itself is now built
     //  (ActiveAbilityService#activate), but for a PA/PM/PV cost, not this clause's 2PA+3PD.
@@ -111,7 +119,7 @@ public enum BestialFeat implements Feat {
      * <p>Both halves are real — the Força +1 through {@link Feat#resolveAttributeBonus}, the Arma
      * Natural through {@link NaturalWeapon#CHIFRES_PODEROSOS}.
      */
-    // TODO: the free Habilidade de Competência de Atletismo is still blocked — see the class javadoc.
+    // The free Habilidade de Competência de Atletismo is real, recorded on HerancaBestialFeat.
     HERANCA_BOVIDEA(
             "Você recebe +1 de bônus racial no atributo Força e Arma Natural Chifres Poderosos. "
                     + "Bestiais Bovídeos recebem uma Habilidade de Competência de Atletismo.",
@@ -136,8 +144,8 @@ public enum BestialFeat implements Feat {
      * <p>The Instinto +1 is real through {@link Feat#resolveAttributeBonus}, and Presas Longas is
      * granted.
      */
-    // TODO: the free Especialização/Habilidade de Competência de Atenção is still blocked — see
-    //  the class javadoc.
+    // The free Especialização/Habilidade de Competência de Atenção is real, recorded on
+    // HerancaBestialFeat — one hook carries both kinds, exactly as this clause offers both.
     // TODO: Faro Apurado is a Vantagem on Atenção scoped to a narrative purpose ("a partir do
     //  olfato"), which CLAUDE.md records as unmodellable — this core never tracks what a roll
     //  is for, so Feat#resolveSkillRollBonus (which is real) has nothing to test. Granting it on
@@ -172,7 +180,7 @@ public enum BestialFeat implements Feat {
      *
      * <p>The Gnose +1 is <b>real</b>, through {@link Feat#resolveAttributeBonus}.
      */
-    // TODO: the free Especialização is blocked — see the class javadoc.
+    // The free Especialização is real, recorded on HerancaBestialFeat.
     // TODO: Ecolocalização's GD reduction is *bought with a resource*, which is exactly the shape
     //  Feat#resolveDifficultyReduction excludes — that hook is for an unconditional reduction, and
     //  nothing converts a PD spend into a per-roll effect. Contrast GnomoFeat#FAVORITOS_DE_TESLA,
@@ -200,7 +208,8 @@ public enum BestialFeat implements Feat {
      * <p>Two halves are real — the Destreza +1 through {@link Feat#resolveAttributeBonus}, the
      * Arma Natural through {@link NaturalWeapon#GARRAS_AFIADAS}.
      */
-    // TODO: the free Habilidade de Competência de Furtividade is still blocked — see the class
+    // The free Habilidade de Competência de Furtividade is real, recorded on HerancaBestialFeat.
+    // TODO: see the class
     //  javadoc. Visão no Escuro additionally needs a vision/senses concept.
     HERANCA_FELINA(
             "Receba +1 de bônus racial em Destreza, Visão no Escuro e Arma Natural Garras "
@@ -225,7 +234,8 @@ public enum BestialFeat implements Feat {
      *
      * <p>The Carisma +1 is <b>real</b>, through {@link Feat#resolveAttributeBonus}.
      */
-    // TODO: vertical movement and the free Especialização are blocked — see the class javadoc.
+    // The free Especialização de Atletismo is real, recorded on HerancaBestialFeat.
+    // TODO: vertical movement is blocked — see the class javadoc.
     HERANCA_REPTILIANA(
             "Receba +1 de bônus racial em Carisma e Movimento Base Vertical. Bestiais Reptilianos "
                     + "recebem uma Especialização adicional de 'Atletismo'.",

@@ -67,24 +67,40 @@ mechanism.
   permanent Atributo grant, summed by `Character#getEffectiveAttributeTotal` which every
   Atributo-*total* reader now calls — PV/PM/PD, Conjuração, Rest, Defesa, `ItemRequirements`, the
   melee ½-Força term; `VampiricoFeat#MESTRE_VAMPIRO`, `ConselheiroDeGuerraYmirianoFeat`),
-  `getGrantedAttributeAbilities(Character)` (a *named* Habilidade de Atributo handed to the
+  `getGrantedAttributeAbilities(Character)` (a Habilidade de Atributo handed to the
   holder free — folded into `Character#getAttributeAbilities()` past the `AttributeAbilityService`
-  slot economy, passive/`resolve*` hooks only; `ConselheiroDeGuerraYmirianoFeat`), and
+  slot economy, passive/`resolve*` hooks only; `ConselheiroDeGuerraYmirianoFeat`,
+  `HabilidadeDeAtributoEscolhidaFeat`), `getGrantedSkillTraits(Character)` (its `SkillTrait` twin —
+  a free Habilidade de Competência *or* Especialização, one hook for both kinds because the rules
+  text routinely offers a choice between them in one clause; folded into
+  `SkillCompetencyAbility#allFor` and `Character#getSpecializations(SkillType)`, so both reach the
+  roll path unchanged — `HerancaBestialFeat`, `AdotadoPorSylphFeat`, `ChosenSkillTraitsFeat`), and
+  `resolveFormAccess(FormType, Character)` → `FormAccess` (whether this Talento forbids a Forma or
+  locks its holder into one — `CombatantSheet#canTakeForm` combines them; three-valued, so "says
+  nothing" and "says no" stay distinct, the same shape `resolveTitleAcquisitionPermission` uses),
   `resolveMagicReduction(Character)` (RM — Resistência à Magias, the magic-damage twin of
   `resolveDamageReduction`; reaches only a hit typed `DamageType.MAGICO`, see `damage-and-combat`),
-  `resolveCriticalResistance(Character, SceneContext)` (RC — a *defender-side* narrowing of
+  `resolveCriticalResistance(Character, SceneContext[, CombatantSheet])` (RC — a *defender-side* narrowing of
   whoever attacks the holder, totalled with the `Race` grant and any `TemporaryBonus` by
   `CombatantSheet#getTotalCriticalResistance`; ⚠️ its `sceneContext` is the **attacker's**
-  snapshot, so read only Scene-wide facts from it — never proximity),
+  snapshot, so read only Scene-wide facts from it — never proximity; the longest overload adds the
+  holder's own sheet, which is how a clause gated "enquanto em sua Forma X" reads
+  `CombatantSheet#isInForm`),
   `resolveSizeCategoryOverride(Character)` → `SizeCategory` (an absolute *set* — "sua Categoria
   de Tamanho muda para -2", `GnomoFeat#DUENDE`) and `resolveSizeCategoryIncrease(Character)` (the
   *shift* twin — "aumenta em +1", `GiganteFeat#GIGANTE_DO_CLA_EMPUSA`); `CharacterSizeService`
   applies the override first and every shift on top of it, and
   `resolveActiveAbility()` →
-  `Optional<ActiveAbility>` (a Poder Vampírico — an activatable timed state triggered through
-  `ActiveAbilityService#activate`; must return a **stable singleton**, since
+  `Optional<ActiveAbility>` (an activatable timed state — a Poder Vampírico, a Barreira Mágica —
+  triggered through `ActiveAbilityService#activate`; must return a **stable singleton**, since
   `Character#getActiveAbilities()` aggregates `getFeats()` live and `activate` matches by `==` —
-  see `PoderVampiricoActiveAbility` / `VampiricoFeat`). Several hooks now have a
+  see `PoderVampiricoActiveAbility` / `VampiricoFeat`, and `BarreiraMagicaActiveAbility` /
+  `MetamagicoFeat#ARCANISTA_EXPERIENTE`). **A stated Resfriamento is
+  `ActiveAbility#getCooldownRounds()`** — `activate` refuses while it is owing and starts it only
+  after the activation has succeeded; it burns down at the Rodada boundary, never the Turn one.
+  **When later Talentos restate a figure rather than adding to it** ("Barreiras Mágicas criadas por
+  você *agora concedem* +3", then +5), grant the ability from the *first* rung alone and have it
+  read the holder's held rungs — one better ability, not three stacking ones. Several hooks now have a
   trailing `CombatantSheet holder` overload that falls through to the sheet-less form
   (`resolveSkillRollBonus`, `resolveDefenseBonus`, `resolveDamageReduction`,
   `resolveCriticalMarginIncrease`) — override it for a clause reading held `Condição`s or the
@@ -263,6 +279,18 @@ constant is shared by every character. Model it exactly like `ArtesAprimorarComA
   filter working — both compare against `catalogEntry()`, not object identity. **Do not** add a
   custom `equals`.
 - Override the `resolve*` hook(s) the clause reaches, branching on the choice.
+
+**Three of these classes now serve more than one constant**, which is worth copying before writing
+a fourth one-off. `HerancaBestialFeat` takes the `BestialFeat` Herança *plus* the pick, because
+every Herança has the same four clauses and differs only in which Atributo/Arma Natural/Perícia it
+names — so it forwards those two hooks to the constant by hand. `HabilidadeDeAtributoEscolhidaFeat`
+serves the three `DestinoFeat` constants whose payload is "uma Habilidade do Atributo escolhido",
+and needs no field for the Atributo at all: an `AttributeAbility` reports its own, so the two can
+never disagree. `ChosenSkillTraitsFeat` serves any constant across any tree whose *whole* payload
+is chosen traits — and takes no delegation, which is its entry condition. **`AbstractFeat`
+deliberately does not blanket-forward unoverridden hooks to `catalogEntry()`**: a choice-carrying
+form *replaces* its constant rather than decorating it, and a blanket forward would make it
+impossible to drop a clause on purpose.
 - Add a `static Optional<C> chosenBy(Character)` (mirrors
   `PeritoTeoricoAbility.resolveAttributeDomain`) so dependent Talentos in the same tree — which
   stay plain enum constants — can read the pick.

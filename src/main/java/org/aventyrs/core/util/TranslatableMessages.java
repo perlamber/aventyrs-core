@@ -58,6 +58,16 @@ public class TranslatableMessages {
      * AttributeAbilityService#FIRST_ABILITY_ATTRIBUTE_BASE}).
      */
     public static final String CONSELHEIRO_STRENGTH_ABILITY_REQUIREMENT_NOT_MET = "CONSELHEIRO_STRENGTH_ABILITY_REQUIREMENT_NOT_MET";
+
+    /**
+     * A Talento granting a free Habilidade de Atributo of a <em>chosen</em> Atributo — {@code
+     * DestinoFeat#PRODIGIO}/{@code #GENIALIDADE}/{@code #GENIALIDADE_DESPERTA}, via {@code
+     * HabilidadeDeAtributoEscolhidaFeat} — was picked with an ability whose Atributo the holder
+     * has no slot in (that Atributo's base below {@code
+     * AttributeAbilityService#FIRST_ABILITY_ATTRIBUTE_BASE}). The chosen-Atributo twin of {@link
+     * #CONSELHEIRO_STRENGTH_ABILITY_REQUIREMENT_NOT_MET}, which names Força outright.
+     */
+    public static final String CHOSEN_ATTRIBUTE_ABILITY_REQUIREMENT_NOT_MET = "CHOSEN_ATTRIBUTE_ABILITY_REQUIREMENT_NOT_MET";
     public static final String NOT_AN_ATTACK_SKILL = "NOT_AN_ATTACK_SKILL";
 
     /**
@@ -81,6 +91,13 @@ public class TranslatableMessages {
 
     /** The actor is under a Condição that forbids activating Habilidades — Silêncio. */
     public static final String ABILITY_ACTIVATION_PREVENTED = "ABILITY_ACTIVATION_PREVENTED";
+
+    /**
+     * The ability's Resfriamento has not elapsed — {@code
+     * CombatantSheet#getRemainingCooldown(ActiveAbility)} is still above zero. Distinct from
+     * {@link #ABILITY_ACTIVATION_PREVENTED}, which is a Condição forbidding activation outright.
+     */
+    public static final String ABILITY_ON_COOLDOWN = "ABILITY_ON_COOLDOWN";
 
     /** The crafter doesn't hold the Especialização de Profissão a given kind of item needs. */
     public static final String CRAFTING_TRADE_NOT_HELD = "CRAFTING_TRADE_NOT_HELD";

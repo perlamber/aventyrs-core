@@ -60,7 +60,7 @@ public enum GnomoFeat implements Feat {
      * "Você aprende uma Habilidade de Competência de uma Perícia treinada. Você estende os
      * Benefícios de Aprendizado Rápido até a sétima Graduação."
      */
-    // TODO: the free Habilidade de Competência is the "grant an extra acquisition slot" gap.
+    // The free Habilidade de Competência is real, recorded on ChosenSkillTraitsFeat.
     // TODO: Aprendizado Rápido is itself unbuilt — Gnomo's own javadoc records it, and so do
     //  Human's and Pequenino's: SkillGraduationService#getUpgradeCost takes no Race and has no
     //  notion of a per-race discount, and nothing records which Perícias were chosen for it. A
@@ -93,8 +93,9 @@ public enum GnomoFeat implements Feat {
      * An Efeito Passivo granting a Habilidade de Competência outright, plus an Efeito Ativo
      * borrowing one temporarily for a Cena.
      */
-    // TODO: the passive half is the "grant an extra acquisition slot" gap, here restricted to a
-    //  Perícia with 2+ Graduações.
+    // The passive half is real, recorded on ChosenSkillTraitsFeat. Its "de uma Perícia Treinada
+    // qual tenha pelo menos 2 Graduações" restriction is not validated there — the usual
+    // builders-aren't-gatekeepers restraint.
     // TODO: the active half needs a temporary *ability* grant, which is a different mechanism
     //  from TemporaryBonus — that carries a ModifierType and a value, not a trait. Nothing can
     //  add a SkillCompetencyAbility to a character for a limited time. It also needs a

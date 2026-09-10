@@ -171,7 +171,44 @@ records when a Talento was acquired or that a character is freshly created. Defe
 
 ---
 
-## Phase 3 — Acquisition-slot grants
+## Phase 3 — Acquisition-slot grants ✅ **DONE**
+
+**Built:** `Feat#getGrantedSkillTraits(Character)` — one hook for both trait kinds, because the
+rules text routinely offers a choice between them in one clause. A granted `SkillCompetencyAbility`
+is folded into `SkillCompetencyAbility#allFor` (now a three-source scan, deduplicated); a granted
+`SkillSpecialization` into the new `Character#getSpecializations(SkillType)`. Both roll-path
+readers (`AbstractSkillInteraction#validateRequestedTrait`, `Feat`'s own trait check) now go
+through the aggregating views rather than the raw lists, so a granted trait can be *named* on a
+roll like any acquired one.
+
+The existing `getGrantedAttributeAbilities` needed no widening: the open choice was already
+expressible, only a class to record it was missing.
+
+**Three acquired forms**, each serving several constants rather than one:
+- `HerancaBestialFeat` — the six `BestialFeat` Heranças, forwarding each constant's own Atributo
+  and Arma Natural clauses by hand. This closed what `BestialFeat`'s javadoc called *the single
+  most-cited blocker of the racial catalog*.
+- `HabilidadeDeAtributoEscolhidaFeat` — `DestinoFeat#PRODIGIO`/`GENIALIDADE`/`GENIALIDADE_DESPERTA`.
+  No field for the chosen Atributo: an `AttributeAbility` reports its own.
+- `ChosenSkillTraitsFeat` — any constant across any tree whose *whole* payload is chosen traits
+  (`PeritoFeat#TREINADO_EM_PERICIAS`, `GnomoFeat#SABICHAO`/`MIMETIZAR_COMPETENCIA`). No delegation,
+  which is its entry condition.
+
+`AdotadoPorSylphFeat` gained the grant half it was missing, with a second factory: the Perícia pick
+and the Habilidade pick are separate acts, so `of(SkillType...)` records the first alone and
+`of(SkillCompetencyAbility...)` records the finished state, deriving the Perícias from it.
+
+**Deliberately not built:** a blanket forward from `AbstractFeat` to `catalogEntry()` — a
+choice-carrying form replaces its constant rather than decorating it, and a blanket forward would
+make it impossible to drop a clause on purpose. **Still missing:** a free **Talento** slot
+("escolha um Talento Racial"), and a **`Race`** hook for any of these — `Anao`'s Pequenos Gigantes
+and `Elfo`'s Origem Mística are the same shape but `Feat` is the only granting path.
+`HumanoFeat#APRENDIZADO_RAPIDO_E_CONTINUO` stays blocked on a different gap: which Perícias
+Aprendizado Rápido benefits is a creation-time choice nothing records.
+
+**Original plan text follows.**
+
+### Phase 3 (as planned)
 
 Generalise the narrowly-built `Feat#getGrantedAttributeAbilities` (currently: one *named*
 ability, `ConselheiroDeGuerraYmirianoFeat`) to the shapes the gap catalog lists as missing:
@@ -189,7 +226,42 @@ ability, `ConselheiroDeGuerraYmirianoFeat`) to the shapes the gap catalog lists 
 
 ---
 
-## Phase 4 — Active-ability-backed timed effects + Resfriamento
+## Phase 4 — Active-ability-backed timed effects + Resfriamento ✅ **DONE**
+
+**Built:** `ActiveAbility#getCooldownRounds()` (0 by default) plus a per-sheet ledger —
+`CombatantSheet#startCooldown`/`getRemainingCooldown`, an `IdentityHashMap` keyed the same way
+`activate` recognises a held ability. `activate` checks it alongside the other gates *before* any
+cost is paid, and starts it only *after* the activation has fully succeeded, so a refused one
+neither costs nor locks out. It burns down at the **Rodada** boundary (`startNewRound()`),
+deliberately not on the `TemporaryEffect` countdown, which ticks at Turn *end* and would return a
+Rodada-measured Resfriamento early for whoever acts late in the order — the same reasoning
+`scheduleTemporaryEgoPointGrant` already follows.
+
+**Barreira Mágica** — `BarreiraMagicaActiveAbility`, granted by `MetamagicoFeat#ARCANISTA_EXPERIENTE`:
+1PA + 3PM for a `DEFESAS` `TemporaryBonus` over 2 Rodadas, Resfriamento 1. The two upgrade rungs
+*replace* the figure (+2 → +3 → +5) rather than adding to it, so **only the first rung grants the
+ability** and the ability reads the holder's held rungs — three rungs held means one better
+Barreira, not three stacking ones. Lands the self half of all three constants.
+
+**Audited and deliberately not landed** — each was on the plan's list, and each turned out to need
+something other than the activation transaction:
+- `OrquicoFeat#TREMOR` — its Efeito Ativo fires a **single attack**, not a timed state. `activate`
+  spends a cost and applies effects lasting N Rodadas; there is no Duração here to hold. The plan's
+  "partial" was wrong, and its TODO now says why.
+- `ElementalFeat#GANA_ELEMENTAL` — costs **2PD**, and `ActiveAbility` has no Determinação cost
+  field. Not added: the clause is blocked on a weapon-scoped Dano Base uplift and dano retyping
+  regardless, so a PD cost would have had no reachable consumer.
+- `GnomoFeat#MIMETIZAR_COMPETENCIA`'s active half — a **temporary ability** grant, which
+  `TemporaryBonus` (a `ModifierType` + value) cannot carry. Its passive half went real in Phase 3.
+- The `MESTRE_ARCANISTA`/`DESAFIADOR_DA_REALIDADE` **ally** halves — `activate` applies every
+  effect to the activator's own sheet and sees no `Scene`, so there is nobody adjacent to grant to.
+
+**Note:** a Pedra do Poder carries a Resfriamento of its own (`PowerStoneQuality`), item-side and
+still inert. Different mechanism; don't conflate them.
+
+**Original plan text follows.**
+
+### Phase 4 (as planned)
 
 The activation transaction (`ActiveAbility` + `ActiveAbilityService#activate`: validate held,
 check PA/PM/PV, spend, apply `TemporaryEffect`s) and the `Blessing`/`TargetScope` machinery both
@@ -211,7 +283,48 @@ exist. What's missing is **Resfriamento (cooldown)** and the authoring of specif
 
 ---
 
-## Phase 5 — Form state system  ⭐ largest single unlock
+## Phase 5 — Form state system  ⭐ largest single unlock — **slice 1 of 3 DONE**
+
+The plan estimated 3–5 sessions, and that was right: the Forma is not one mechanism but a state
+plus five independent deltas. Split into slices so each lands whole rather than half-building all
+of it. **Slice 1 (the state and the gate) is done**; slices 2 and 3 are scoped below.
+
+### Slice 1 — the state and the gate ✅
+`sheet.FormType` (8 authored shapes) + `CombatantSheet#getCurrentForm()`/`enterForm`/`isInForm`.
+Two decisions worth keeping:
+- **No constant for "their own shape"** — that is `null`. `HomemFera`'s rules text lists Humanoide
+  alongside the three alternates, but modelling it would give "normal" two spellings; switching
+  back to Humanoide is *leaving* the Forma.
+- **Named by shape, not by source.** `MONSTRUOSA` is one constant though `Gorgona`, `HomemFera` and
+  `MonstruosoFeat` all reach it — "enquanto em sua Forma Monstruosa" asks about the shape.
+
+`enterForm` is an **unvalidating mutator** and nothing transforms anybody automatically, exactly
+like `applyCondition`. `CombatantSheet#canTakeForm` is the separate question, combining every held
+Talento's `Feat#resolveFormAccess` → `FormAccess` (`FORBIDDEN` refuses that shape; `REQUIRED` locks
+the holder in, refusing every other shape *and* their own). Three-valued for the reason
+`resolveTitleAcquisitionPermission` is: with booleans, "says nothing" and "says no" collapse.
+
+**Landed:** `GorgonaFeat#MARCA_DA_MALDICAO` (lock), `#ACOLHIDA_POR_FLORA` (forbid), and the
+form-gated Resistência a Críticos on both `#PROTECAO_DO_DEUS_DOS_MONSTROS` and
+`#PROTECAO_DA_RAINHA_DAS_FADAS` — which needed a new `CombatantSheet`-taking overload of
+`Feat#resolveCriticalResistance`, since the Forma lives on the sheet.
+
+### Slice 2 — entering a Forma as a transaction (not started)
+Reuses Phase 4's `ActiveAbility` cycle, which already handles cost/gates/effects/Resfriamento. Two
+pieces are missing from it: a **Pontos de Determinação cost** (Draconato and Ancienteforme cost
+3PA+3PD, Metamorfose Selvagem 2PD — `ActiveAbility` has PA/PM/PV only), and an **"until a Descanso
+Longo" Resfriamento**, which is a different unit from the Rodada count `getCooldownRounds()` holds.
+Plus a `TemporaryEffect` that clears the Forma when the Duração lapses — nothing expires one today.
+
+### Slice 3 — what a Forma actually *does* (not started)
+Five independent deltas, each its own missing mechanism, listed on the CLAUDE.md Forma row: a
+round-scoped **Atributo** bonus; a **`SizeCategory`** shift from a `TemporaryBonus`; **equipment
+restrictions**; **suppression of racial traits**; and the per-Forma **Arma Natural** swap. Several
+overlap other phases — the Atributo one is the same gap `VampiricoFeat#DOM_DE_MIRCALLA` cites.
+
+**Original plan text follows.**
+
+### Phase 5 (as planned)
 
 A **persistent alternate shape** (entered/exited, not timed) on `CombatantSheet`:
 `CharacterForm` carrying — stat deltas, ability grants, `SizeCategory` override, equipment

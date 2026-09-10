@@ -355,19 +355,30 @@ public interface SkillCompetencyAbility extends SkillTrait {
     }
 
     /**
-     * {@code character.getSkillCompetencyAbilities()} (acquired) plus {@code
-     * character.getRace().getRacialAbilities()} (fixed per race) — see CLAUDE.md's "Racial
-     * Abilities reuse SkillCompetencyAbility" section. Every caller that needs "every ability
-     * of this kind, acquired or racial" (both {@link AbstractSkillInteraction}'s roll/
+     * <b>Three</b> sources: {@code character.getSkillCompetencyAbilities()} (acquired), {@code
+     * character.getRace().getRacialAbilities()} (fixed per race — see CLAUDE.md's "Racial
+     * Abilities reuse SkillCompetencyAbility" section), and every held Talento's {@code
+     * Feat#getGrantedSkillTraits} ("você recebe uma Habilidade de Competência de cada Perícia
+     * escolhida"), filtered to this kind. Every caller that needs "every ability
+     * of this kind, however it was come by" (both {@link AbstractSkillInteraction}'s roll/
      * difficulty-reduction computation and {@code SkillGraduationService}'s max-graduation
      * cap, which must resolve {@link #resolveAttributeDomain} against the exact same list —
      * they previously didn't, see CLAUDE.md's Attribute base/Graduação section) shares this
-     * one method rather than each concatenating the two lists itself and risking drift.
+     * one method rather than each concatenating the lists itself and risking drift.
+     *
+     * <p>Deduplicated: a Talento granting an ability the holder already acquired must not make
+     * it count twice, since several consumers <em>sum</em> across this list.
      */
     static List<SkillCompetencyAbility> allFor(final Character character) {
-        return Stream.concat(
+        return Stream.of(
                         character.getSkillCompetencyAbilities().stream(),
-                        character.getRace().getRacialAbilities().stream())
+                        character.getRace().getRacialAbilities().stream(),
+                        character.getFeats().stream()
+                                .flatMap(feat -> feat.getGrantedSkillTraits(character).stream())
+                                .filter(SkillCompetencyAbility.class::isInstance)
+                                .map(SkillCompetencyAbility.class::cast))
+                .flatMap(java.util.function.Function.identity())
+                .distinct()
                 .toList();
     }
 }

@@ -1,5 +1,6 @@
 package org.aventyrs.core.sheet;
 
+import org.aventyrs.core.ability.ActiveAbility;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.EgoDomain;
@@ -358,6 +359,72 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
 
     /** Whether a held condition forbids Conjurar Magias — Silêncio. */
     boolean isSpellCastingPrevented(SceneContext sceneContext);
+
+    // --- Forma --------------------------------------------------------------------------------
+
+    /**
+     * The alternate shape this combatant is currently in, or {@code null} — the overwhelmingly
+     * common answer — for their own. See {@link FormType} for why "normal" is an absent value
+     * rather than a constant.
+     *
+     * <p>What reads it is any clause scoped "enquanto em sua Forma X" — {@code
+     * GorgonaFeat#PROTECAO_DO_DEUS_DOS_MONSTROS}'s Resistência a Críticos, and every other
+     * form-gated hook. A {@code Feat} sees it through the {@code CombatantSheet}-taking overloads
+     * it already has.
+     */
+    FormType getCurrentForm();
+
+    /** Whether this combatant is currently in form — {@code false} for a {@code null} form. */
+    default boolean isInForm(FormType form) {
+        return getCurrentForm() == form;
+    }
+
+    /**
+     * Puts this combatant into form, or back into their own shape when form is {@code null}.
+     *
+     * <p><b>An unvalidating mutator</b>, the same split {@code Character#drawWeapon} keeps
+     * beneath {@code WeaponDrawService} and {@code applyCondition} keeps beneath nothing at all:
+     * it costs nothing, checks no Duração, and does not ask whether the holder may take that
+     * shape. {@link #canTakeForm} is the question; a caller that cares asks it first. Nothing in
+     * this core enters a Forma on its own — like a Condição, every transformation is a caller's
+     * call.
+     *
+     * @return the form left behind, or {@code null} if they were in none
+     */
+    FormType enterForm(FormType form);
+
+    /**
+     * Whether this combatant's own traits let them take form right now. Two things can refuse:
+     * a held Talento may <b>lock</b> its holder into one shape ({@code
+     * GorgonaFeat#MARCA_DA_MALDICAO} — "incapaz de alternar para a forma humanoide"), or
+     * <b>forbid</b> a shape outright ({@code GorgonaFeat#ACOLHIDA_POR_FLORA} — "não pode acessar
+     * a forma monstruosa"). Both are {@code Feat#resolveFormAccess} answers.
+     *
+     * <p>Says nothing about whether they can <em>afford</em> it, or whether they hold a trait that
+     * grants that shape at all — this is the "may they", not the "can they" or the "do they
+     * have it".
+     */
+    boolean canTakeForm(FormType form);
+
+    // --- Resfriamento ------------------------------------------------------------------------
+
+    /**
+     * Puts ability on Resfriamento for rounds Rodadas. Called by {@code
+     * ActiveAbilityService#activate} <em>after</em> a successful activation, so a refused one
+     * costs nothing; a rounds of 0 or less clears the entry instead of storing it.
+     */
+    void startCooldown(ActiveAbility ability, int rounds);
+
+    /**
+     * Rodadas of Resfriamento still owed before ability may be activated again — 0 when it is
+     * available, which is the normal state and the answer for every ability whose rules text
+     * states no Resfriamento at all.
+     *
+     * <p>Burned down one per Rodada by {@link #startNewRound()}, not by the {@link
+     * TemporaryEffect} tick — see {@code ActiveAbility#getCooldownRounds()} for why a
+     * Rodada-measured Resfriamento must not ride the Turn-end countdown.
+     */
+    int getRemainingCooldown(ActiveAbility ability);
 
     int getTotalLifeSteal();
 

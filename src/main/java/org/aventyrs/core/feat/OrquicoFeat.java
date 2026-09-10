@@ -101,11 +101,12 @@ public enum OrquicoFeat implements Feat {
      * #TERRA_NAS_VEIAS} for a holder of both, since {@code
      * HitPointsService#getLifeMultiplier} sums every Talento's contribution.
      */
-    // TODO: the Efeito Ativo needs three things at once — the 3PA+3PM spend is now expressible
-    //  (ActiveAbilityService#activate), but it converts into a timed TemporaryEffect, not the
-    //  one-off *attack* this clause fires; the dano bonus is real from a Feat now
-    //  (Feat#resolveDamageBonus), but scoped to "this one activated attack" (no hook); and Área
-    //  de Efeito — Explosão resolution is CLAUDE.md's "Area de Efeito" row part (a).
+    // TODO: the Efeito Ativo is *not* an ActiveAbility, and that is the point: activate() spends
+    //  a cost and applies TemporaryEffects lasting N Rodadas, while this clause fires a single
+    //  attack with no Duração at all. Adding a Resfriamento to that transaction (Phase 4) changed
+    //  nothing here. What it needs: an "activation that delivers one attack" shape; a dano bonus
+    //  scoped to "this one activated attack" (Feat#resolveDamageBonus is real but unscoped); and
+    //  Área de Efeito — Explosão resolution, CLAUDE.md's "Area de Efeito" row part (a).
     TREMOR(
             "Efeito Ativo - Ao Tempo de Ação de 3PA e Custo de 3PM, você pode realizar um ataque "
                     + "em um alvo em seu alcance com uma de suas Armas ou Armas Naturais. Para "
