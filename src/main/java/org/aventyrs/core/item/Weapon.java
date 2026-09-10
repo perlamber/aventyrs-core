@@ -1,6 +1,7 @@
 package org.aventyrs.core.item;
 
 import org.aventyrs.core.character.DamageBase;
+import org.aventyrs.core.effect.CriticalEffectType;
 import org.aventyrs.core.scene.Range;
 import org.aventyrs.core.skill.AttackSource;
 import org.aventyrs.core.skill.SkillType;
@@ -30,6 +31,14 @@ import org.aventyrs.core.skill.SkillType;
  * codebase are data holders, not gatekeepers.
  */
 public interface Weapon extends Item, AttackSource {
+
+    /**
+     * The Margem Crítica Menor a weapon's stat table assumes when its "Efeito Crítico" column
+     * prints an effect with no number after it — the widest a 3d6 attack roll can sum and still
+     * be only a Menor critical. {@code 17} throughout the Armas section of {@code
+     * docs/rules/equipamentos.txt}.
+     */
+    int DEFAULT_LESSER_CRITICAL_MARGIN = 17;
 
     /**
      * The Dano Base this weapon deals — the starting row of {@link DamageBase}'s scale that its
@@ -117,5 +126,44 @@ public interface Weapon extends Item, AttackSource {
      */
     default Range getEffectiveRange() {
         return isDestroyed() ? Range.ADJACENTE : getRange();
+    }
+
+    /**
+     * The Efeito Crítico Ofensivo this weapon inflicts on a critical hit — the "Efeito Crítico"
+     * column of its stat table (Sangramento for an adaga, Empalar for a lança, …) — or {@code
+     * null} for a weapon whose column names none this core catalogs. The Arcos and Bestas are
+     * the {@code null} case: their column reads "Projétil", which is not an entry in {@link
+     * CriticalEffectType} (nor anywhere in {@code docs/rules/efeitos-criticos.txt}) — the same
+     * kind of source-row defect {@code equipamentos-index.md} flags for the Zarabatanas.
+     *
+     * <p><b>Nothing reads this yet.</b> {@code AttackDelivery} resolves an Acerto Crítico from
+     * the caller-supplied list plus {@code Feat#resolveExtraCriticalEffects}, never from the
+     * Weapon. It is authored regardless — the same "can't apply it yet doesn't mean can't
+     * compute it yet" discipline that has {@link CriticalEffectType} transcribing 18 effects
+     * with no class behind them. Add the weapon→crit scan with its first real reader; until
+     * then this and {@link #getLesserCriticalMargin()} are exact, unread data.
+     *
+     * <p>Defaults to {@code null} so {@link AbstractWeapon} (and any one-off) need not state
+     * one; the catalog enums override it.
+     */
+    default CriticalEffectType getCriticalEffect() {
+        return null;
+    }
+
+    /**
+     * This weapon's Margem Crítica Menor — the 3d6 sum an attack roll must reach for a Menor
+     * critical, exactly as its stat table authors it (the "17" in "Sangramento (17)", the "16"
+     * a Florete's own column and Favor both name). <b>Lower is wider</b>: a weapon printed
+     * "(16)" crits one número more readily than one at the {@link
+     * #DEFAULT_LESSER_CRITICAL_MARGIN}.
+     *
+     * <p>Not wired to {@code SkillRoll}, which represents a Margem Crítica as a widening count
+     * ({@code criticalMarginIncrease}) off the top face rather than an absolute 3d6 threshold —
+     * reconciling the two representations is the first reader's job. A weapon Favor that further
+     * shifts this ("Margem Crítica Menor muda para 16") stays prose on the Favor for the same
+     * reason: there is no reader to apply a conditional shift to.
+     */
+    default int getLesserCriticalMargin() {
+        return DEFAULT_LESSER_CRITICAL_MARGIN;
     }
 }
