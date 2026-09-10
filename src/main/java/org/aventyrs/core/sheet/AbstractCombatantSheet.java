@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.NonNull;
 import org.aventyrs.core.ability.AttributeAbility;
 import org.aventyrs.core.character.AttributeDomain;
+import org.aventyrs.core.ability.ActiveAbility;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.effect.CriticalEffectType;
@@ -136,6 +137,17 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
      */
     @Getter(AccessLevel.NONE)
     private final transient Set<Object> consumedSessionMarkers = new HashSet<>();
+
+    /**
+     * Rodadas of Resfriamento still owed per {@link ActiveAbility} — see {@link
+     * #startCooldown}/{@link #getRemainingCooldown}. Keyed by <b>identity</b>, matching how
+     * {@code ActiveAbilityService#activate} recognises a held ability ({@code ==}, since {@code
+     * Character#getActiveAbilities()} aggregates live and a Talento-supplied ability must return
+     * a stable singleton). An {@code IdentityHashMap} says that outright rather than relying on
+     * enum constants happening to have identity equality.
+     */
+    @Getter(AccessLevel.NONE)
+    private final Map<ActiveAbility, Integer> cooldowns = new java.util.IdentityHashMap<>();
 
     /** Every roll-action taken since this Rodada began — see {@link #recordAction}. */
     @Getter(AccessLevel.NONE)
@@ -723,6 +735,39 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         actionsThisRound.clear();
         actionCountAtTurnStart = 0;
         applyScheduledEgoGrants();
+        tickCooldowns();
+    }
+
+    /**
+     * Burns one Rodada off every Resfriamento still owed, dropping the ones that reach zero so
+     * the ledger stays exactly "what is still unavailable". Private, and driven only from the
+     * Rodada boundary — a Resfriamento measured in Rodadas must not tick at Turn end, or it
+     * would come back early for whoever acts late in the order.
+     */
+    private void tickCooldowns() {
+        cooldowns.replaceAll((ability, remaining) -> remaining - 1);
+        cooldowns.values().removeIf(remaining -> remaining <= 0);
+    }
+
+    /**
+     * Puts ability on Resfriamento for rounds Rodadas — called by {@code
+     * ActiveAbilityService#activate} once the activation has actually succeeded, never before,
+     * so a refused activation costs nothing. A rounds of 0 or less clears any existing entry
+     * rather than storing one, since "no Resfriamento" and "Resfriamento already elapsed" are
+     * the same state.
+     */
+    @Override
+    public void startCooldown(final ActiveAbility ability, final int rounds) {
+        if (rounds <= 0) {
+            cooldowns.remove(ability);
+            return;
+        }
+        cooldowns.put(ability, rounds);
+    }
+
+    @Override
+    public int getRemainingCooldown(final ActiveAbility ability) {
+        return cooldowns.getOrDefault(ability, 0);
     }
 
     /**

@@ -1,6 +1,7 @@
 package org.aventyrs.core.feat;
 
 import org.aventyrs.core.character.AttributeDomain;
+import org.aventyrs.core.ability.ActiveAbility;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.character.DefenseType;
@@ -8,6 +9,7 @@ import org.aventyrs.core.magic.BranchLevel;
 import org.aventyrs.core.rest.RestType;
 import org.aventyrs.core.skill.SkillType;
 
+import java.util.Optional;
 import java.util.function.Supplier;
 
 /**
@@ -113,11 +115,15 @@ public enum MetamagicoFeat implements Feat {
 
     // Real: the second rung of the cap ladder (Muda).
     //
-    // TODO: Barreira Mágica — 1PA + 3PM for +2 Defesas over 2 Rodadas with Resfriamento 1. Three
-    // pieces missing: no activation path spends PA and PM together to apply an effect; no
-    // Resfriamento/cooldown concept exists anywhere in this core; and "efeitos que aumentem a
-    // Duração de Magias" has no hook. The +2 Defesas half alone would be an ordinary Blessing
-    // (grantTemporaryBonus(DEFESAS, 2, 2)) once something can trigger it.
+    // Barreira Mágica is real — BarreiraMagicaActiveAbility, triggered through
+    // ActiveAbilityService#activate: 1PA + 3PM for a DEFESAS TemporaryBonus over 2 Rodadas, with
+    // Resfriamento 1 (the catalog's first stated one, and what ActiveAbility#getCooldownRounds
+    // was added for). The two rungs above *replace* the +2 rather than adding to it, so the
+    // figure is resolved from the holder's held Talentos at activation and only this constant
+    // grants the ability — see that class.
+    // TODO: "podem ter a Duração estendida por quaisquer efeitos que aumente a Duração de Magias"
+    //  has no hook: SpellDurationService extends a Magia's own Duração, and a Barreira is an
+    //  ActiveAbility whose getDurationInRounds() nothing consults for extension.
     // TODO: "Magias aprendidas desta forma são sempre do mesmo ramo da magia de nível anterior" —
     // already true by construction, and stricter: Spell#isEligible's branch gate refuses the
     // opposite ramificação outright. Nothing to build; noted so the clause isn't re-derived.
@@ -136,19 +142,29 @@ public enum MetamagicoFeat implements Feat {
                     .requiredSkillType(SkillType.CONHECIMENTOS)
                     .requiredSkillGraduation(3)
                     .build()) {
+        private final ActiveAbility barreiraMagica = new BarreiraMagicaActiveAbility();
 
         @Override
         public int resolveBranchLevelIncrease(final Character character) {
             return ONE_RUNG;
         }
+
+        @Override
+        public Optional<ActiveAbility> resolveActiveAbility() {
+            return Optional.of(barreiraMagica);
+        }
     },
 
     // Real: the third rung of the cap ladder (Emergente).
     //
-    // TODO: the Barreira Mágica upgrade (+3 own Defesas, +1 to adjacent allies) is blocked on the
-    // same Barreira gap ARCANISTA_EXPERIENTE cites — nothing creates a Barreira for this to
-    // upgrade. Note each rung *replaces* the previous rung's Barreira figures rather than adding
-    // to them (+2 → +3 → +5), which is itself unexpressible until the Barreira exists.
+    // The Barreira Mágica upgrade's own half is real: holding this rung raises the Barreira the
+    // holder creates from +2 to +3 Defesas (a replacement, not a sum — see
+    // BarreiraMagicaActiveAbility, which reads the rungs rather than each rung granting its own).
+    // TODO: the "+1 às Defesas de seus aliados adjacentes" half is not — ActiveAbilityService
+    //  #activate applies every TemporaryEffect to the activator's own sheet and sees no Scene, so
+    //  there is nobody adjacent to grant to. It needs the outward-facing shape
+    //  AventyrTitleAbility#resolveAllyAbsoluteDamageReduction uses for Bastião dos Necessitados,
+    //  or a Scene threaded through activation.
     MESTRE_ARCANISTA(
             "Escolha 2 Árvores de Magia que você conheça, nas quais você seja capaz de conjurar "
                     + "magias do tipo Muda, você aprende a conjurar as magias do tipo Emergentes destas "
@@ -171,9 +187,9 @@ public enum MetamagicoFeat implements Feat {
 
     // Real: the top rung of the cap ladder (Florescente).
     //
-    // TODO: the Barreira Mágica upgrade (+5 own Defesas, +3 to adjacent allies) is blocked on the
-    // same Barreira gap; the ally half additionally needs the outward-facing scan shape
-    // AventyrTitleAbility#resolveAllyAbsoluteDamageReduction uses for Bastião dos Necessitados.
+    // Same as its predecessor: the self half is real (the Barreira becomes +5 Defesas).
+    // TODO: the "+3 às Defesas de seus aliados adjacentes" half needs the same missing ally
+    //  reach MESTRE_ARCANISTA's own +1 does.
     DESAFIADOR_DA_REALIDADE(
             "Escolha 2 Árvores de Magia que você conheça, nas quais você seja capaz de conjurar "
                     + "magias do tipo Emergente, você aprende a conjurar as magias do tipo Florescente destas "

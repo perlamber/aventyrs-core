@@ -226,7 +226,42 @@ ability, `ConselheiroDeGuerraYmirianoFeat`) to the shapes the gap catalog lists 
 
 ---
 
-## Phase 4 — Active-ability-backed timed effects + Resfriamento
+## Phase 4 — Active-ability-backed timed effects + Resfriamento ✅ **DONE**
+
+**Built:** `ActiveAbility#getCooldownRounds()` (0 by default) plus a per-sheet ledger —
+`CombatantSheet#startCooldown`/`getRemainingCooldown`, an `IdentityHashMap` keyed the same way
+`activate` recognises a held ability. `activate` checks it alongside the other gates *before* any
+cost is paid, and starts it only *after* the activation has fully succeeded, so a refused one
+neither costs nor locks out. It burns down at the **Rodada** boundary (`startNewRound()`),
+deliberately not on the `TemporaryEffect` countdown, which ticks at Turn *end* and would return a
+Rodada-measured Resfriamento early for whoever acts late in the order — the same reasoning
+`scheduleTemporaryEgoPointGrant` already follows.
+
+**Barreira Mágica** — `BarreiraMagicaActiveAbility`, granted by `MetamagicoFeat#ARCANISTA_EXPERIENTE`:
+1PA + 3PM for a `DEFESAS` `TemporaryBonus` over 2 Rodadas, Resfriamento 1. The two upgrade rungs
+*replace* the figure (+2 → +3 → +5) rather than adding to it, so **only the first rung grants the
+ability** and the ability reads the holder's held rungs — three rungs held means one better
+Barreira, not three stacking ones. Lands the self half of all three constants.
+
+**Audited and deliberately not landed** — each was on the plan's list, and each turned out to need
+something other than the activation transaction:
+- `OrquicoFeat#TREMOR` — its Efeito Ativo fires a **single attack**, not a timed state. `activate`
+  spends a cost and applies effects lasting N Rodadas; there is no Duração here to hold. The plan's
+  "partial" was wrong, and its TODO now says why.
+- `ElementalFeat#GANA_ELEMENTAL` — costs **2PD**, and `ActiveAbility` has no Determinação cost
+  field. Not added: the clause is blocked on a weapon-scoped Dano Base uplift and dano retyping
+  regardless, so a PD cost would have had no reachable consumer.
+- `GnomoFeat#MIMETIZAR_COMPETENCIA`'s active half — a **temporary ability** grant, which
+  `TemporaryBonus` (a `ModifierType` + value) cannot carry. Its passive half went real in Phase 3.
+- The `MESTRE_ARCANISTA`/`DESAFIADOR_DA_REALIDADE` **ally** halves — `activate` applies every
+  effect to the activator's own sheet and sees no `Scene`, so there is nobody adjacent to grant to.
+
+**Note:** a Pedra do Poder carries a Resfriamento of its own (`PowerStoneQuality`), item-side and
+still inert. Different mechanism; don't conflate them.
+
+**Original plan text follows.**
+
+### Phase 4 (as planned)
 
 The activation transaction (`ActiveAbility` + `ActiveAbilityService#activate`: validate held,
 check PA/PM/PV, spend, apply `TemporaryEffect`s) and the `Blessing`/`TargetScope` machinery both

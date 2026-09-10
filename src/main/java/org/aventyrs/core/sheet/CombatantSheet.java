@@ -1,5 +1,6 @@
 package org.aventyrs.core.sheet;
 
+import org.aventyrs.core.ability.ActiveAbility;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.EgoDomain;
@@ -358,6 +359,26 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
 
     /** Whether a held condition forbids Conjurar Magias — Silêncio. */
     boolean isSpellCastingPrevented(SceneContext sceneContext);
+
+    // --- Resfriamento ------------------------------------------------------------------------
+
+    /**
+     * Puts ability on Resfriamento for rounds Rodadas. Called by {@code
+     * ActiveAbilityService#activate} <em>after</em> a successful activation, so a refused one
+     * costs nothing; a rounds of 0 or less clears the entry instead of storing it.
+     */
+    void startCooldown(ActiveAbility ability, int rounds);
+
+    /**
+     * Rodadas of Resfriamento still owed before ability may be activated again — 0 when it is
+     * available, which is the normal state and the answer for every ability whose rules text
+     * states no Resfriamento at all.
+     *
+     * <p>Burned down one per Rodada by {@link #startNewRound()}, not by the {@link
+     * TemporaryEffect} tick — see {@code ActiveAbility#getCooldownRounds()} for why a
+     * Rodada-measured Resfriamento must not ride the Turn-end countdown.
+     */
+    int getRemainingCooldown(ActiveAbility ability);
 
     int getTotalLifeSteal();
 

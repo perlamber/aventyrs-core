@@ -34,6 +34,26 @@ public interface ActiveAbility {
     int getDurationInRounds();
 
     /**
+     * Resfriamento — how many Rodadas must pass after this ability is activated before it may be
+     * activated again. Zero by default, which is every ability whose rules text states no
+     * Resfriamento and means "as often as you can pay for it".
+     *
+     * <p>Counted from the activation, on the <b>Rodada</b> boundary ({@code
+     * CombatantSheet#startNewRound()}), not the Turn one — deliberately unlike a {@link
+     * TemporaryEffect}'s own countdown, which ticks at Turn <em>end</em> via {@code finishTurn}.
+     * A Resfriamento measured in Rodadas that ticked at Turn end would come back early for
+     * anyone acting late in the order. Same reasoning, and the same boundary, as {@code
+     * CombatantSheet#scheduleTemporaryEgoPointGrant}'s "na Rodada seguinte".
+     *
+     * <p>Independent of {@link #getDurationInRounds()}: a Resfriamento shorter than the Duração
+     * simply means the state can be refreshed before it lapses, which is what {@code
+     * MetamagicoFeat}'s Barreira Mágica (Duração 2, Resfriamento 1) says outright.
+     */
+    default int getCooldownRounds() {
+        return 0;
+    }
+
+    /**
      * The {@link TemporaryEffect} this ability grants once activated, computed from the
      * character's own current stats and not yet applied to any sheet. Kept for the
      * single-effect case; {@link #resolveEffects(Character)} is what {@code ActiveAbilityService}

@@ -86,10 +86,16 @@ mechanism.
   *shift* twin — "aumenta em +1", `GiganteFeat#GIGANTE_DO_CLA_EMPUSA`); `CharacterSizeService`
   applies the override first and every shift on top of it, and
   `resolveActiveAbility()` →
-  `Optional<ActiveAbility>` (a Poder Vampírico — an activatable timed state triggered through
-  `ActiveAbilityService#activate`; must return a **stable singleton**, since
+  `Optional<ActiveAbility>` (an activatable timed state — a Poder Vampírico, a Barreira Mágica —
+  triggered through `ActiveAbilityService#activate`; must return a **stable singleton**, since
   `Character#getActiveAbilities()` aggregates `getFeats()` live and `activate` matches by `==` —
-  see `PoderVampiricoActiveAbility` / `VampiricoFeat`). Several hooks now have a
+  see `PoderVampiricoActiveAbility` / `VampiricoFeat`, and `BarreiraMagicaActiveAbility` /
+  `MetamagicoFeat#ARCANISTA_EXPERIENTE`). **A stated Resfriamento is
+  `ActiveAbility#getCooldownRounds()`** — `activate` refuses while it is owing and starts it only
+  after the activation has succeeded; it burns down at the Rodada boundary, never the Turn one.
+  **When later Talentos restate a figure rather than adding to it** ("Barreiras Mágicas criadas por
+  você *agora concedem* +3", then +5), grant the ability from the *first* rung alone and have it
+  read the holder's held rungs — one better ability, not three stacking ones. Several hooks now have a
   trailing `CombatantSheet holder` overload that falls through to the sheet-less form
   (`resolveSkillRollBonus`, `resolveDefenseBonus`, `resolveDamageReduction`,
   `resolveCriticalMarginIncrease`) — override it for a clause reading held `Condição`s or the
