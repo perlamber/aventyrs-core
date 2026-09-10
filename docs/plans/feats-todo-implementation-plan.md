@@ -283,7 +283,7 @@ exist. What's missing is **Resfriamento (cooldown)** and the authoring of specif
 
 ---
 
-## Phase 5 — Form state system  ⭐ largest single unlock — **slices 1–2 of 3 DONE**
+## Phase 5 — Form state system  ⭐ largest single unlock — **slices 1–2 DONE, 3 partial**
 
 The plan estimated 3–5 sessions, and that was right: the Forma is not one mechanism but a state
 plus five independent deltas. Split into slices so each lands whole rather than half-building all
@@ -326,11 +326,33 @@ Their stat deltas are slice 3, and each constant now says so.
 `BestialFeat#METAMORFOSE_SELVAGEM` (2PD) was left: its text states no Duração and its whole payload
 is deltas plus an equipment restriction, so entering the shape alone would land nothing.
 
-### Slice 3 — what a Forma actually *does* (not started)
-Five independent deltas, each its own missing mechanism, listed on the CLAUDE.md Forma row: a
-round-scoped **Atributo** bonus; a **`SizeCategory`** shift from a `TemporaryBonus`; **equipment
-restrictions**; **suppression of racial traits**; and the per-Forma **Arma Natural** swap. Several
-overlap other phases — the Atributo one is the same gap `VampiricoFeat#DOM_DE_MIRCALLA` cites.
+### Slice 3 — what a Forma actually *does* — **two of five done**
+`FormaActiveAbility` grants its uplift as round-scoped `TemporaryBonus`es lasting the Duração,
+through `FormaActiveAbility.Uplift` — a per-Título figure per kind, because Draconato and
+Ancienteforme disagree on more than one number (+2 to everything, versus +2 size/Defesas but +1
+Atributo).
+
+- **`SizeCategory` shift — done.** `CharacterSizeService` gained a `CombatantSheet` overload
+  reading `getTemporaryBonus(SIZE_CATEGORY)` on top of the two existing shift sources; the roll
+  path routes through it. The `Character`-only overload structurally cannot see it, the same split
+  the aggregate PA/Reações/RD reads already carry.
+- **Round-scoped Atributo bonus — done, with the mechanism's own documented limit.** An
+  `<ATTR>_BONUS` `TemporaryBonus` reaches a Perícia roll governed by that Atributo and nothing
+  else. Not a shortcut: PV/PM/PD/Conjuração read `Character#getEffectiveAttributeTotal`, which has
+  no sheet, and a three-Rodada Forma raising max PV would need those totals recomputed per Rodada,
+  which this core deliberately does not do. Same limit `VampiricoFeat#DOM_DE_MIRCALLA` has always
+  had, and the test pins both halves of it.
+- **Still open:** a per-Rodada **Multiplicador de PV** uplift (same root cause); **equipment
+  restrictions**; **suppression of racial traits**; the per-Forma **Arma Natural** swap.
+
+**Landed on top of slice 2:** `DRACONATO`'s size/Força/Foco uplift and `ANCIENTEFORME`'s
+Defesas/size/Carisma/Foco one — every half of both Talentos except Ancienteforme's PV multiplier
+and both texts' "abandonando seus traços raciais".
+
+**The four remaining deltas share one root cause** worth naming before attacking them: each needs
+*sheet*-scoped state to reach a *`Character`*-level aggregate (`getEffectiveAttributeTotal`,
+`getRacialAbilities`, `getNaturalWeapons`, `getEquipment`). One architectural problem wearing four
+hats, not four separate features.
 
 **Original plan text follows.**
 
