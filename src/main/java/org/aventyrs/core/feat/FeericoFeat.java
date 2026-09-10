@@ -1,5 +1,6 @@
 package org.aventyrs.core.feat;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.aventyrs.core.character.AttributeDomain;
@@ -196,8 +197,12 @@ public enum FeericoFeat implements Feat {
     // The transformation itself is real — FormaActiveAbility, the same template DRACONATO uses:
     // 3PA + 3PD to enter FormType.ANCIENTE for 3 Rodadas, gated on a Descanso Longo before it can
     // be used again (ActiveAbility#getReactivationRest).
-    // TODO: the per-Título Defesas/PV/Categoria/Carisma/Foco uplift is not granted — round-scoped
-    //  Atributo and SizeCategory-from-the-sheet are the missing mechanisms (CLAUDE.md's Forma row).
+    // The per-Título Defesas (+2), Categoria de Tamanho (+2) and Carisma/Foco (+1) uplifts are
+    // granted, as round-scoped TemporaryBonuses lasting the Duração — the Atributo half with the
+    // usual partial reach (a Perícia roll governed by it, not PV/PM/Conjuração).
+    // TODO: the "Multiplicador de PV aumenta em +2 para cada Título" half is not — max PV is
+    //  derived from Character#getEffectiveAttributeTotal and the LIFE_MULTIPLIER scan, neither of
+    //  which sees the sheet, and this core does not recompute PV per Rodada.
     // TODO: "abandona seus traços raciais" needs the form to suppress racial traits, which nothing
     //  can do; and "Nascidos da Floresta permanecem +2 Rodadas" is a per-race Duração branch
     //  FormaActiveAbility keeps room for (its Duração is resolved, not constant) but does not yet
@@ -217,7 +222,11 @@ public enum FeericoFeat implements Feat {
                     .requiredAwakenedTitles(1)
                     .build()) {
         private final ActiveAbility transformation =
-                new FormaActiveAbility(this, FormType.ANCIENTE);
+                new FormaActiveAbility(this, FormType.ANCIENTE,
+                        // "suas Defesas … Categoria de Tamanho aumentam em +2, enquanto seu
+                        // Carisma e Foco aumentam em +1" — per Título Desperto.
+                        new FormaActiveAbility.Uplift(2, 2, 1,
+                                List.of(AttributeDomain.CHARISMA, AttributeDomain.FOCUS)));
 
         @Override
         public Optional<ActiveAbility> resolveActiveAbility() {

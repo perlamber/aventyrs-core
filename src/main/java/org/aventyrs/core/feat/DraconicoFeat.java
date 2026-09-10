@@ -153,9 +153,12 @@ public enum DraconicoFeat implements Feat {
     // ActiveAbilityService#activate: 3PA + 3PD to enter FormType.DRACONATO for 3 Rodadas, with the
     // "não poderá ser reativado até que passe por um Descanso Longo" gate enforced through
     // ActiveAbility#getReactivationRest (cleared by RestService#applyRest).
-    // TODO: the "+2 Categoria de Tamanho, Força e Foco para cada Título" is not granted — a
-    //  round-scoped Atributo bonus and a SizeCategory shift driven from the sheet are two
-    //  mechanisms this core lacks (CLAUDE.md's Forma row). The Forma is what they will hang off.
+    // The "+2 Categoria de Tamanho, Força e Foco para cada Título" is granted too, as
+    // round-scoped TemporaryBonuses lasting exactly the Duração. Partial reach on the Atributo
+    // half, and that is the mechanism's own limit rather than this Talento's: an <ATTR>_BONUS
+    // lands on a Perícia roll governed by that Atributo and nowhere else, since PV/PM/Conjuração
+    // read Character#getEffectiveAttributeTotal, which has no sheet. The Categoria de Tamanho
+    // half has no such limit — CharacterSizeService gained a sheet-taking overload for it.
     // TODO: "abandonando quaisquer traços raciais" needs the form to *suppress* the holder's
     //  racial traits, which nothing can do — Race#getRacialAbilities() is read live on every roll
     //  with no way to suspend it.
@@ -171,7 +174,10 @@ public enum DraconicoFeat implements Feat {
                     .requiredAwakenedTitles(1)
                     .build()) {
         private final ActiveAbility transformation =
-                new FormaActiveAbility(this, FormType.DRACONATO);
+                new FormaActiveAbility(this, FormType.DRACONATO,
+                        // "sua Categoria de Tamanho, Força e Foco aumentam em +2 para cada Título"
+                        new FormaActiveAbility.Uplift(2, 0, 2,
+                                List.of(AttributeDomain.STRENGTH, AttributeDomain.FOCUS)));
 
         @Override
         public Optional<ActiveAbility> resolveActiveAbility() {

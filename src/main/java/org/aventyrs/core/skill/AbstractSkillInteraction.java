@@ -330,7 +330,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
         bonus += sumFeatRollBonuses(target, sceneContext, skillRoll, attackSource);
         bonus += sumEgoAdvantageRollBonuses(character.getEgoAdvantages().values(), sceneContext);
         bonus += sumEgoAdvantageSkillSpecificRollBonuses(character.getEgoAdvantages().values(), sceneContext, target);
-        bonus += sizeCategoryRollBonus(characterSizeService.getEffectiveSizeCategory(character));
+        bonus += sizeCategoryRollBonus(characterSizeService.getEffectiveSizeCategory(target));
         bonus += sumAttributeDomainRollBonuses(character.getAttributeAbilities(), attributeDomain, character);
         if (skillRoll != null && target.isFirstRollOfTurnFor(attributeDomain)) {
             bonus += sumFirstRollOfTurnBonuses(character.getAttributeAbilities(), attributeDomain);

@@ -6,6 +6,7 @@ import org.aventyrs.core.feat.Feat;
 import org.aventyrs.core.modifier.ModifierResolver;
 import org.aventyrs.core.modifier.ModifierResolverImpl;
 import org.aventyrs.core.modifier.ModifierType;
+import org.aventyrs.core.sheet.CombatantSheet;
 
 public class CharacterSizeServiceImpl implements CharacterSizeService {
 
@@ -32,11 +33,25 @@ public class CharacterSizeServiceImpl implements CharacterSizeService {
      */
     @Override
     public SizeCategory getEffectiveSizeCategory(final Character character) {
+        return resolve(character, 0);
+    }
+
+    /**
+     * Adds the sheet's own round-scoped {@code SIZE_CATEGORY} bonus to the same two shift
+     * sources — a Forma's size uplift, which is a {@code TemporaryBonus} rather than a standing
+     * trait and so has nowhere to live on the {@code Character}.
+     */
+    @Override
+    public SizeCategory getEffectiveSizeCategory(final CombatantSheet sheet) {
+        return resolve(sheet.getCharacter(), sheet.getTemporaryBonus(ModifierType.SIZE_CATEGORY));
+    }
+
+    private SizeCategory resolve(final Character character, final int temporaryShift) {
         int bonus = modifierResolver.sumModifiers(character.getAttributeAbilities(), ModifierType.SIZE_CATEGORY);
         bonus += character.getFeats().stream()
                 .mapToInt(feat -> feat.resolveSizeCategoryIncrease(character))
                 .sum();
-        return resolveBaseSizeCategory(character).shift(bonus);
+        return resolveBaseSizeCategory(character).shift(bonus + temporaryShift);
     }
 
     /**

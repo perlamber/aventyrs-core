@@ -2,6 +2,11 @@ package org.aventyrs.core.feat;
 
 import org.aventyrs.core.ability.ActiveAbility;
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.skill.SkillType;
+import org.aventyrs.core.character.services.CharacterSizeServiceImpl;
+import org.aventyrs.core.character.services.CharacterSizeService;
+import org.aventyrs.core.character.SizeCategory;
+import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.TitleSlot;
 import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.character.services.ActiveAbilityService;
@@ -149,6 +154,67 @@ class FormaActivationTest {
 
         assertNull(sheet.getCurrentForm());
         assertFalse(sheet.isAwaitingRest(transformation), "a refused activation locks nothing out");
+    }
+
+    // ---------- What the Forma is worth while it lasts ----------
+
+    /**
+     * "Sua Categoria de Tamanho … aumenta em +2 para cada Título Aventyr que você possuir" — one
+     * Título here, so +2, and it lapses with the shape. Read through the sheet-taking overload
+     * {@code CharacterSizeService} gained for exactly this.
+     */
+    @Test
+    void theFormaRaisesCategoriaDeTamanhoWhileItLasts() throws IllegalOperationException {
+        Character character = draconico();
+        CharacterSheet sheet = CharacterSheet.of(character, new Player());
+        CharacterSizeService sizeService = new CharacterSizeServiceImpl();
+        SizeCategory before = sizeService.getEffectiveSizeCategory(sheet);
+
+        activeAbilityService.activate(character, sheet, transformationOf(character), 0);
+
+        assertEquals(before.shift(2), sizeService.getEffectiveSizeCategory(sheet));
+        assertEquals(before, sizeService.getEffectiveSizeCategory(character),
+                "the Character-only overload cannot see a sheet-held bonus");
+
+        sheet.finishTurn();
+        sheet.finishTurn();
+        sheet.finishTurn();
+
+        assertEquals(before, sizeService.getEffectiveSizeCategory(sheet), "gone with the shape");
+    }
+
+    /**
+     * "Força e Foco aumentam em +2" — as round-scoped bonuses, which reach a Perícia roll governed
+     * by that Atributo. Atletismo is Força-governed, so the roll bonus moves; the effective
+     * Atributo <em>total</em> deliberately does not, since PV/PM/Conjuração are not recomputed per
+     * Rodada.
+     */
+    @Test
+    void theFormaRaisesAGovernedPericiaRollButNotTheAttributeTotal() throws IllegalOperationException {
+        Character character = draconico();
+        CharacterSheet sheet = CharacterSheet.of(character, new Player());
+        int rollBefore = SkillType.ATLETISMO.newInteraction().applyTo(sheet).getSkillRollBonus();
+        int totalBefore = character.getEffectiveAttributeTotal(AttributeDomain.STRENGTH);
+
+        activeAbilityService.activate(character, sheet, transformationOf(character), 0);
+
+        assertEquals(rollBefore + 2, SkillType.ATLETISMO.newInteraction().applyTo(sheet).getSkillRollBonus());
+        assertEquals(totalBefore, character.getEffectiveAttributeTotal(AttributeDomain.STRENGTH),
+                "documented partial reach, not an oversight");
+    }
+
+    /** Every figure is per Título Desperto, so a Talento-holder with none would gain nothing. */
+    @Test
+    void theUpliftScalesWithTitulosDespertos() throws IllegalOperationException {
+        Character twoTitles = draconico();
+        twoTitles.grantTitle(new Santo(List.of(), List.of()), TitleSlot.SECONDARY);
+        CharacterSheet sheet = CharacterSheet.of(twoTitles, new Player());
+        CharacterSizeService sizeService = new CharacterSizeServiceImpl();
+        SizeCategory before = sizeService.getEffectiveSizeCategory(sheet);
+
+        activeAbilityService.activate(twoTitles, sheet, transformationOf(twoTitles), 0);
+
+        assertEquals(before.shift(4), sizeService.getEffectiveSizeCategory(sheet));
     }
 
     private static int availableDetermination(final Character character, final CharacterSheet sheet) {
