@@ -2,6 +2,7 @@ package org.aventyrs.core.feat;
 
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.character.DamageBonus;
 import org.aventyrs.core.character.DamageType;
 import org.aventyrs.core.character.DefenseType;
@@ -429,8 +430,8 @@ public enum ArtesMarciaisFeat implements Feat {
      * FeatRequirements}.
      */
     @Override
-    public boolean isEligible(final Character character) {
-        if (!Feat.super.isEligible(character)) {
+    public boolean isEligible(final Character character, final CharacterSheet sheet) {
+        if (!Feat.super.isEligible(character, sheet)) {
             return false;
         }
         if (!isDominarStyle()) {

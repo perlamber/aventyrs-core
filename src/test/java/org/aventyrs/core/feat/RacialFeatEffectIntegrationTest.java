@@ -867,15 +867,19 @@ class RacialFeatEffectIntegrationTest {
      * deliberate and visible rather than found later as a bug.
      */
     @Test
-    void transformacaoElementalEnforcesOnlyOneOfItsTwoRequiredTalentos() throws IllegalOperationException {
+    void transformacaoElementalEnforcesBothOfItsTwoRequiredTalentos() throws IllegalOperationException {
         Character elemental = character().race(new Colosso(new Human())).build();
         elemental.grantTitle(new Santo(List.of(), List.of()), TitleSlot.PRIMARY);
         elemental.grantTitle(new Santo(List.of(), List.of()), TitleSlot.SECONDARY);
         acquire(elemental, ElementalFeat.RESISTENCIA_ELEMENTAL,
                 ElementalFeat.RESISTENCIA_ELEMENTAL_SUPERIOR);
 
-        // Reparação Elemental is never acquired, yet the gate opens.
+        // Reparação Elemental is the second named Talento, and the gate stays shut without it.
         assertFalse(elemental.getFeats().contains(ElementalFeat.REPARACAO_ELEMENTAL));
+        assertFalse(ElementalFeat.TRANSFORMACAO_ELEMENTAL.isEligible(elemental));
+
+        acquire(elemental, ElementalFeat.REPARACAO_ELEMENTAL);
+
         assertTrue(ElementalFeat.TRANSFORMACAO_ELEMENTAL.isEligible(elemental));
     }
 
@@ -942,19 +946,24 @@ class RacialFeatEffectIntegrationTest {
     // ---------- Pequenino ----------
 
     /**
-     * Each Linhagem's whole Pré-requisito is an exclusion of the other, and exclusions are
-     * inexpressible — so a character can legally hold both, which the text forbids.
+     * Each Linhagem's whole Pré-requisito is an exclusion of the other, carried as a {@code
+     * FeatRequirements#forbiddenFeats} entry — so holding one shuts the door on the other, in
+     * whichever order they are attempted.
      */
     @Test
-    void theTwoLinhagemTalentosAreNotMutuallyExclusiveBecauseExclusionsAreInexpressible()
-            throws IllegalOperationException {
+    void theTwoLinhagemTalentosExcludeEachOther() throws IllegalOperationException {
         Character pequenino = character().race(new Pequenino()).build();
         pequenino.grantTitle(new Santo(List.of(), List.of()), TitleSlot.PRIMARY);
 
-        acquire(pequenino, PequeninoFeat.LINHAGEM_DE_FLORA, PequeninoFeat.LINHAGEM_DE_LACERTO);
+        assertTrue(PequeninoFeat.LINHAGEM_DE_FLORA.isEligible(pequenino));
+        assertTrue(PequeninoFeat.LINHAGEM_DE_LACERTO.isEligible(pequenino));
 
-        assertTrue(pequenino.getFeats().contains(PequeninoFeat.LINHAGEM_DE_FLORA));
-        assertTrue(pequenino.getFeats().contains(PequeninoFeat.LINHAGEM_DE_LACERTO));
+        acquire(pequenino, PequeninoFeat.LINHAGEM_DE_FLORA);
+
+        assertFalse(PequeninoFeat.LINHAGEM_DE_LACERTO.isEligible(pequenino));
+        assertThrows(IllegalOperationException.class,
+                () -> featService.grantFeat(pequenino, fundedSheet(pequenino),
+                        PequeninoFeat.LINHAGEM_DE_LACERTO));
     }
 
     /**
@@ -1522,7 +1531,7 @@ class RacialFeatEffectIntegrationTest {
         elemental.grantTitle(new Santo(List.of(), List.of()), TitleSlot.PRIMARY);
         elemental.grantTitle(new Santo(List.of(), List.of()), TitleSlot.SECONDARY);
         acquire(elemental, ElementalFeat.RESISTENCIA_ELEMENTAL,
-                ElementalFeat.RESISTENCIA_ELEMENTAL_SUPERIOR);
+                ElementalFeat.RESISTENCIA_ELEMENTAL_SUPERIOR, ElementalFeat.REPARACAO_ELEMENTAL);
         int before = damageService.getTotalDamageReduction(elemental);
 
         acquire(elemental, ElementalFeat.TRANSFORMACAO_ELEMENTAL);

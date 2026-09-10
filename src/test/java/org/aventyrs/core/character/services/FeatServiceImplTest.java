@@ -8,6 +8,7 @@ import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.feat.ArtesMarciaisFeat;
 import org.aventyrs.core.feat.AbstractFeat;
+import org.aventyrs.core.feat.DestinoFeat;
 import org.aventyrs.core.feat.Feat;
 import org.aventyrs.core.feat.MetamagicoFeat;
 import org.aventyrs.core.feat.FeatCategory;
@@ -177,16 +178,42 @@ class FeatServiceImplTest {
         assertFalse(featService.getAvailableFeats(character).contains(ArtesMarciaisFeat.ARTISTA_MARCIAL));
     }
 
+    /**
+     * The sheet-taking listing is exactly what {@link FeatService#grantFeat} will accept — it
+     * tests the same clauses against the same sheet, so nothing it offers can be refused.
+     */
     @Test
     void everyAvailableFeatIsActuallyGrantable() {
         Character character = characterMeetingArtistaMarcialRequirements();
         CharacterSheet sheet = sheetWithExperience(character, BigDecimal.valueOf(100));
 
-        for (Feat feat : List.copyOf(featService.getAvailableFeats(character))) {
+        for (Feat feat : List.copyOf(featService.getAvailableFeats(character, sheet))) {
             featService.grantFeat(character, sheet, feat);
         }
 
         assertTrue(character.getFeats().contains(ArtesMarciaisFeat.ARTISTA_MARCIAL));
+    }
+
+    /**
+     * The sheet-less listing can only be a <b>superset</b> of the sheet-taking one: it skips the
+     * two {@code CharacterSheet}-side prerequisites rather than failing them, so a Talento gated
+     * on Fama or EXP total shows up in a preview and is refused at {@code grantFeat}. Looser,
+     * never stricter — the direction every approximation in this catalog errs in.
+     */
+    @Test
+    void theSheetLessListingIsASupersetOfTheSheetTakingOne() {
+        Character character = characterMeetingArtistaMarcialRequirements();
+        CharacterSheet sheet = sheetWithExperience(character, BigDecimal.valueOf(100));
+
+        assertTrue(featService.getAvailableFeats(character)
+                .containsAll(featService.getAvailableFeats(character, sheet)));
+        // DestinoFeat#FAVORITISMO_MAIOR needs Fama 15, which this sheet has none of.
+        assertTrue(featService.getAvailableFeats(character).contains(DestinoFeat.FAVORITISMO_MAIOR));
+        assertFalse(featService.getAvailableFeats(character, sheet).contains(DestinoFeat.FAVORITISMO_MAIOR));
+
+        sheet.increaseFamaPositiva(15);
+
+        assertTrue(featService.getAvailableFeats(character, sheet).contains(DestinoFeat.FAVORITISMO_MAIOR));
     }
 
     @Test

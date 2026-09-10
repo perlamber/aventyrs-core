@@ -2,6 +2,7 @@ package org.aventyrs.core.feat;
 
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.skill.Skill;
 import org.aventyrs.core.skill.SkillTrait;
@@ -174,28 +175,41 @@ public enum PeritoFeat implements Feat {
      */
     // TODO: retrying a failed roll is the caller's own step — this core never rolls dice, and an
     //  InteractionResult reports a roll without offering to repeat it.
-    // TODO: its Pré-requisito is a disjunction (Gnose 3 *ou* Foco 3); modelled as the Gnose
-    //  branch only, so the Foco route is wrongly refused.
+    // The disjunctive Pré-requisito is real — "Gnose 3 *ou* Foco 3", two FeatRequirements#anyOf
+    // branches.
     LEMBRAR_COMO_SE_FAZ(
             "Após falhar em uma rolagem de Perícia você pode optar por tentar novamente a mesma "
                     + "ação, se o fizer a nova tentativa utilizará apenas 1PA e poderá ser rolada "
                     + "com bônus de Vantagem.",
             FeatRequirements.builder()
-                    .attributeDomain(AttributeDomain.GNOSE)
-                    .requiredAttributeValue(3)
+                    .alternative(FeatRequirements.builder()
+                            .attributeDomain(AttributeDomain.GNOSE)
+                            .requiredAttributeValue(3)
+                            .build())
+                    .alternative(FeatRequirements.builder()
+                            .attributeDomain(AttributeDomain.FOCUS)
+                            .requiredAttributeValue(3)
+                            .build())
                     .build()),
 
     /** "Sempre que for beneficiado pelos efeitos de 'Lembrar Como se Faz', a segunda rolagem tem o GD reduzido em -1 nível." */
     // TODO: builds on LEMBRAR_COMO_SE_FAZ, which is itself unbuilt — so although
     //  Feat#resolveDifficultyReduction is real, there is no "segunda rolagem" to reduce the GD of.
-    // TODO: disjunctive Pré-requisito (Gnose 5 ou Foco 5) — see LEMBRAR_COMO_SE_FAZ.
+    // Its own disjunction — "Gnose 5 ou Foco 5" — is real; the required Talento is common to
+    // both branches, so it stays on the outer group rather than being repeated in each.
     LEMBRAR_REVISAR_E_APRIMORAR(
             "Sempre que for beneficiado pelos efeitos de ‘Lembrar Como se Faz’, a segunda rolagem "
                     + "tem o GD reduzido em -1 nível.",
             FeatRequirements.builder()
-                    .attributeDomain(AttributeDomain.GNOSE)
-                    .requiredAttributeValue(5)
                     .requiredFeat(LEMBRAR_COMO_SE_FAZ)
+                    .alternative(FeatRequirements.builder()
+                            .attributeDomain(AttributeDomain.GNOSE)
+                            .requiredAttributeValue(5)
+                            .build())
+                    .alternative(FeatRequirements.builder()
+                            .attributeDomain(AttributeDomain.FOCUS)
+                            .requiredAttributeValue(5)
+                            .build())
                     .build()),
 
     /**
@@ -260,22 +274,25 @@ public enum PeritoFeat implements Feat {
      * modo a agir por último. Enquanto você for o último a agir você recebe uma Ação Livre e
      * Reação adicional."
      */
-    // TODO: "Iniciativa 2 ou inferior" is a *maximum*, and on an EgoDomain rather than an
-    //  Attribute — FeatRequirements expresses only Attribute minimums, so this is left unset and
-    //  is wrongly open to a high-Iniciativa character.
+    // "Iniciativa 2 ou inferior" is enforced now, through FeatRequirements#maximumEgoDomain —
+    // an EgoDomain rather than an AttributeDomain, since Iniciativa is an Ego in this ruleset.
     // TODO: deliberately lowering one's own Iniciativa has no entry point, and "enquanto for o
     //  último a agir" is turn-order position, which Scene resolves for nobody.
     ANALISTA_TATICO(
             "No início de cada Cena de Combate, antes de qualquer ação sua, você pode escolher "
                     + "reduzir seu valor de Iniciativa de modo a agir por último. Enquanto você "
                     + "for o último a agir você recebe uma Ação Livre e Reação adicional.",
-            FeatRequirements.builder().build()),
+            FeatRequirements.builder()
+                    .maximumEgoDomain(EgoDomain.INICIATIVA)
+                    .maximumEgoValue(2)
+                    .build()),
 
     /**
      * "Enquanto você for o último a agir, sua Margem Crítica Menor aumenta em +1 para cada Título
      * Aventyr Desperto."
      */
-    // TODO: same turn-order-position and Iniciativa-maximum blockers as ANALISTA_TATICO —
+    // Its own "Iniciativa 2 ou inferior" is enforced too, the same way.
+    // TODO: same turn-order-position blocker as ANALISTA_TATICO —
     //  Feat#resolveCriticalMarginIncrease exists and names the Menor tier this clause wants, but
     //  "enquanto você for o último a agir" has nothing to read: turn order is not live on
     //  SceneContext.
@@ -287,6 +304,8 @@ public enum PeritoFeat implements Feat {
                     + "resistência a Corrente de Efeitos aumenta em +1 e a resistência à Correntes "
                     + "de Efeitos de seus inimigos alvos é reduzida em -1.",
             FeatRequirements.builder()
+                    .maximumEgoDomain(EgoDomain.INICIATIVA)
+                    .maximumEgoValue(2)
                     .requiredAwakenedTitles(1)
                     .build()),
 

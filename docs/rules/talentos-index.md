@@ -119,19 +119,47 @@ clauses `requiredRegaliaInPossession` / `craftedRegaliaGrade`+`craftedRegaliaCou
 untracked — the `DestinoFeat#FRAGMENTO_DA_ENCARNACAO_DE_GILGAMESH` gap), the *Forja do Olho de
 Deus* location, and the Divina mandatory-Acerto-Crítico (reported, not enforced).
 
-### Clause shapes `FeatRequirements` still cannot express
+### Clause shapes `FeatRequirements` expresses
 
-Each is recorded on the constants it affects, and each makes that Talento's gate *looser* than
-the rules text — never stricter.
+The list below used to be headed "still cannot express". Every shape on it is now data:
 
-- **Disjunctions** — "Destreza 3 e Saque Rápido, **ou** Foco 5". Every set clause combines with
-  and. Eight constants; each records one branch, so the other route is wrongly refused.
-- **Two required Talentos** — `requiredFeat` is singular. Four constants.
-- **A required `SkillSpecialization`** — `requiredSkillCompetencyAbility` has no twin. Five.
-- **Attribute *maximums*** — "Força igual ou inferior à 2", "Iniciativa 2 ou inferior". Three.
-- **`CharacterSheet`-side values** — Fama, EXP total. `Feat#isEligible` takes only a `Character`.
-- **"Any Attribute at N"**, with no particular domain named. Three.
-- **Exclusions** — "nenhum outro Talento Dominar Arte Marcial". Seven.
+- **Disjunctions** — "Destreza 3 e Saque Rápido, **ou** Foco 5" → `anyOf`, a list of nested
+  `FeatRequirements` of which at least one must hold, *on top of* every clause on the outer
+  record (so clauses common to both branches are written once). Checked recursively.
+- **Two required Talentos** — `requiredFeats` is a `@Singular` set; the builder call is still
+  `.requiredFeat(X)`, repeated.
+- **A required `SkillSpecialization`** — `requiredSkillTraits` is typed as `SkillTrait`, so an
+  Especialização and a Habilidade de Competência share one clause.
+- **Attribute and Ego *maximums*** — `maximumAttributeDomain`/`Value` and
+  `maximumEgoDomain`/`Value` (Iniciativa is an Ego, not an Atributo). Inclusive, and their own
+  clause rather than a signed minimum, because a Talento naming both names two different domains.
+- **`CharacterSheet`-side values** — `requiredFame` / `requiredTotalExperience`, read through
+  `Feat#isEligible(Character, CharacterSheet)`. The sheet-less overload **skips** them, so
+  `FeatCatalog#availableFor(character)` is a superset of `availableFor(character, sheet)` —
+  looser, never stricter. `FeatService#grantFeat` always passes the sheet.
+- **"Any Attribute at N"** — `requiredAnyAttributeValue`, plus the narrower
+  `requiredAnyRacialAttributeValue` for "qualquer atributo *que receba bônus Racial*".
+- **Negated race** — `forbiddenRace`, the `isInstance` mirror of `requiredRace`.
+- **Exclusions** — `forbiddenFeats`. Mutually-exclusive pairs make each half name its twin, which
+  forces the enum to hold its requirements as a `Supplier<FeatRequirements>` (the `MetamagicoFeat`
+  pattern) *and* to reach the forward half through a small private static accessor: a `Supplier`
+  defers evaluation but does not make a forward reference to a later enum constant legal, while a
+  static method body is not an initializer and so does.
+
+### What a Pré-requisito still cannot say
+
+- **"Personagens recém-criados"** — nothing records when a Talento was acquired or that a
+  character is freshly made. Affects `FeericoFeat#PIXIE`/`#SIRENIDEO`, `PeritoFeat#TREINADO_EM_PERICIAS`.
+- **A second Perícia Graduação** — `requiredSkillType`/`requiredSkillGraduation` is one pair;
+  `AssassinoFeat#ESPECIALISTA_TECNOLOGICO` names two and keeps an `isEligible` override.
+- **A held Talento's own recorded *choice*** — "apenas personagens que não escolheram Magias
+  Ofensivas". The three cases want *equals*, *differs* and *is-a-weapon*, which is not data;
+  each stays an `isEligible` override (`DuelistaFeat#DOMINAR_ARMAS`, the two `AssassinoFeat`
+  Acerto Crítico constants).
+- **A cap on how many of a family may be held** — as opposed to a flat exclusion.
+  `ArtesMarciaisFeat`'s Dominar styles and `ElficoFeat`'s Guardiões override `isEligible`.
+- **A *use* restriction** — `FeralFeat`'s "não pode ser **usado** em conjunto" is not an
+  acquisition gate, and deliberately does not become one.
 
 ## Authoring status — racial trees (2026-08-29)
 

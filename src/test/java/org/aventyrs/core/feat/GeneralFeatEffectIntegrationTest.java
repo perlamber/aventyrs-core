@@ -40,6 +40,8 @@ import org.aventyrs.core.skill.CriticalResult;
 import org.aventyrs.core.skill.SkillGraduation;
 import org.aventyrs.core.skill.SkillRoll;
 import org.aventyrs.core.skill.SkillType;
+import org.aventyrs.core.skill.conhecimentos.ConhecimentosSpecialization;
+import org.aventyrs.core.skill.conhecimentos.Conhecimentos;
 import org.aventyrs.core.skill.ataquecorpoacorpo.AtaqueCorpoACorpo;
 import org.aventyrs.core.skill.esquivaeaparar.EsquivaEAparar;
 import org.aventyrs.core.title.santo.Santo;
@@ -651,9 +653,16 @@ class GeneralFeatEffectIntegrationTest {
      */
     @Test
     void mestreDeCacaAppliesOnlyInTheChosenTerreno() throws IllegalOperationException {
+        // Terreno Predileto's Pré-requisito names the Especialização Conhecimentos: Natureza
+        // alongside Vigor 3, so the fixture must hold it before the chain can be acquired.
         Character character = character()
                 .attributes(CharacterAttributes.builder()
                         .vigor(AttributeValue.builder().domain(AttributeDomain.VIGOR).base(3).build())
+                        .build())
+                .skill(SkillType.CONHECIMENTOS, CharacterSkill.builder()
+                        .skill(new Conhecimentos())
+                        .graduation(SkillGraduation.builder().graduationValue(1).build())
+                        .specializations(List.of(ConhecimentosSpecialization.NATUREZA))
                         .build())
                 .build();
         CharacterSheet sheet = CharacterSheet.of(character, new Player());

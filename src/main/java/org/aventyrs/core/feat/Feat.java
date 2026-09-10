@@ -13,10 +13,12 @@ import org.aventyrs.core.effect.EffectChain;
 import org.aventyrs.core.sheet.ActionCost;
 import org.aventyrs.core.sheet.Blessing;
 import org.aventyrs.core.sheet.CombatantAction;
+import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.skill.CriticalResult;
 import org.aventyrs.core.character.DamageBonus;
 import org.aventyrs.core.character.CharacterSkill;
+import org.aventyrs.core.character.AttributeValue;
 import org.aventyrs.core.character.DefenseType;
 import org.aventyrs.core.character.SizeCategory;
 import org.aventyrs.core.item.Item;
@@ -89,34 +91,97 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      * (skipped when unset), enough already-held Talentos of {@code
      * requiredFeatCategory} (skipped when unset), and enough Regalias of {@code
      * craftedRegaliaGrade} already forged by the holder (skipped when unset — the "criação de 3 ou
-     * mais Regalias" gate). Every clause is independent — a requirement
+     * mais Regalias" gate), plus the negative and bounded clauses: no {@code forbiddenFeats}
+     * held, the holder's Race not being a {@code forbiddenRace}, an Atributo staying at or under
+     * {@code maximumAttributeValue} and an Ego under {@code maximumEgoValue}, and <i>some</i>
+     * Atributo reaching {@code requiredAnyAttributeValue} / {@code
+     * requiredAnyRacialAttributeValue}. Every clause is independent — a requirement
      * left unset never blocks eligibility — and, when more than one is set, all must hold at
      * once, mirroring {@code AventyrTitleAbility#isEligible}'s identical
-     * combine-every-set-prerequisite shape. Checked by {@code
-     * org.aventyrs.core.character.services.FeatService#grantFeat} before granting.
+     * combine-every-set-prerequisite shape.
+     *
+     * <p><b>{@code FeatRequirements#anyOf} is the one exception to "all must hold".</b> When a
+     * Talento's Pré-requisito is a disjunction ("Destreza 3 e Saque Rápido, <i>ou</i> Foco 5"),
+     * each branch is a nested {@code FeatRequirements} and at least one of them must hold —
+     * <em>in addition</em> to every clause on the outer record, which is where the branches'
+     * common ground lives.
+     *
+     * <p>This overload cannot see the two {@code CharacterSheet}-side clauses; {@link
+     * #isEligible(Character, CharacterSheet)} can, and is what {@code
+     * org.aventyrs.core.character.services.FeatService#grantFeat} calls before granting.
      */
     default boolean isEligible(final Character character) {
-        FeatRequirements requirements = getFeatRequirements();
+        return isEligible(character, null);
+    }
 
+    /**
+     * The full check, adding the clauses whose value lives on the {@link CharacterSheet} rather
+     * than on {@code Character} — {@code requiredFame} and {@code requiredTotalExperience}.
+     * {@code FeatService#grantFeat} calls this one, so the authoritative gate always sees
+     * everything.
+     *
+     * <p><b>{@code sheet} being {@code null} skips those two clauses rather than failing them.</b>
+     * A {@code null} elsewhere in this core reads as "condition not met"; here it would read as
+     * "refuse", and refusing on a fact nobody was asked for would make {@code
+     * FeatCatalog#availableFor(Character)}'s preview <em>stricter</em> than the real gate — the
+     * opposite direction from every other approximation in this catalog, which is always looser
+     * than the rules text. A caller holding a sheet passes it and gets the exact answer.
+     *
+     * <p><b>This is the overload to override</b> for a constant whose exclusion cannot be
+     * expressed as data (see {@code FeatRequirements#forbiddenFeats} for the ones that can) —
+     * {@code ArtesMarciaisFeat}'s "at most one Dominar style" cap, {@code
+     * DuelistaFeat#DOMINAR_ARMAS}'s constraint on another held Talento's recorded <em>choice</em>.
+     * The sheet-less form delegates here, so an override is reached from both entry points.
+     */
+    default boolean isEligible(final Character character, final CharacterSheet sheet) {
+        return satisfies(getFeatRequirements(), character, sheet);
+    }
+
+    /**
+     * Whether character (and sheet, when given) satisfies requirements — every set clause, plus,
+     * when {@code anyOf} is non-empty, at least one of those nested groups. Recursive through
+     * that last part, which is what lets a disjunction branch carry a disjunction of its own.
+     */
+    private static boolean satisfies(final FeatRequirements requirements, final Character character,
+                                      final CharacterSheet sheet) {
         boolean attributeSatisfied = requirements.attributeDomain() == null
                 || character.getAttributes().getAttribute(requirements.attributeDomain()).getBase() >= requirements.requiredAttributeValue();
+
+        // A *maximum* — the clause the character must stay under ("Força igual ou inferior à 2").
+        // Its own pair of fields rather than a signed reuse of the minimum: a Talento naming both
+        // names two different Atributos.
+        boolean attributeMaximumSatisfied = requirements.maximumAttributeDomain() == null
+                || character.getAttributes().getAttribute(requirements.maximumAttributeDomain()).getBase()
+                        <= requirements.maximumAttributeValue();
+
+        boolean anyAttributeSatisfied = requirements.requiredAnyAttributeValue() <= 0
+                || anyAttributeReaches(character, requirements.requiredAnyAttributeValue(), false);
+
+        boolean anyRacialAttributeSatisfied = requirements.requiredAnyRacialAttributeValue() <= 0
+                || anyAttributeReaches(character, requirements.requiredAnyRacialAttributeValue(), true);
+
+        boolean egoMaximumSatisfied = requirements.maximumEgoDomain() == null
+                || character.getEgos().getEgo(requirements.maximumEgoDomain()).getBase()
+                        <= requirements.maximumEgoValue();
 
         boolean skillSatisfied = requirements.requiredSkillType() == null
                 || graduationOf(character, requirements.requiredSkillType()) >= requirements.requiredSkillGraduation();
 
-        boolean featSatisfied = requirements.requiredFeat() == null
-                || character.getFeats().stream()
-                        .anyMatch(held -> held.catalogEntry() == requirements.requiredFeat());
+        boolean featSatisfied = requirements.requiredFeats().stream().allMatch(required -> holds(character, required));
 
-        boolean competencySatisfied = requirements.requiredSkillCompetencyAbility() == null
-                || SkillCompetencyAbility.allFor(character)
-                        .contains(requirements.requiredSkillCompetencyAbility());
+        boolean noForbiddenFeatHeld = requirements.forbiddenFeats().stream().noneMatch(forbidden -> holds(character, forbidden));
+
+        boolean traitsSatisfied = requirements.requiredSkillTraits().stream()
+                .allMatch(trait -> holdsSkillTrait(character, trait));
 
         boolean titlesSatisfied = countAwakenedTitles(character, requirements.requiredTitleArchetype())
                 >= requirements.requiredAwakenedTitles();
 
         boolean raceSatisfied = requirements.requiredRace() == null
                 || requirements.requiredRace().isInstance(character.getRace());
+
+        boolean raceNotForbidden = requirements.forbiddenRace() == null
+                || !requirements.forbiddenRace().isInstance(character.getRace());
 
         boolean creatureTypeSatisfied = requirements.requiredCreatureType() == null
                 || character.getPrerequisiteCreatureTypes().contains(requirements.requiredCreatureType());
@@ -135,9 +200,63 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
         boolean alignmentSatisfied = requirements.requiredAlignments().isEmpty()
                 || requirements.requiredAlignments().contains(character.getAlignment());
 
-        return attributeSatisfied && skillSatisfied && featSatisfied && competencySatisfied
-                && titlesSatisfied && raceSatisfied && creatureTypeSatisfied && deitySatisfied
-                && categoryCountSatisfied && regaliaCraftHistorySatisfied && alignmentSatisfied;
+        // Sheet-side clauses: skipped, not failed, when no sheet was handed over — see the
+        // javadoc on the overload above for why that direction.
+        boolean fameSatisfied = requirements.requiredFame() <= 0 || sheet == null
+                || Math.max(sheet.getFamaPositiva(), sheet.getFamaNegativa()) >= requirements.requiredFame();
+
+        boolean experienceSatisfied = requirements.requiredTotalExperience() == null || sheet == null
+                || sheet.getTotalExperience().compareTo(requirements.requiredTotalExperience()) >= 0;
+
+        boolean disjunctionSatisfied = requirements.anyOf().isEmpty()
+                || requirements.anyOf().stream().anyMatch(branch -> satisfies(branch, character, sheet));
+
+        return attributeSatisfied && attributeMaximumSatisfied && anyAttributeSatisfied
+                && anyRacialAttributeSatisfied && egoMaximumSatisfied
+                && skillSatisfied && featSatisfied && noForbiddenFeatHeld && traitsSatisfied
+                && titlesSatisfied && raceSatisfied && raceNotForbidden && creatureTypeSatisfied
+                && deitySatisfied && categoryCountSatisfied && regaliaCraftHistorySatisfied
+                && alignmentSatisfied && fameSatisfied && experienceSatisfied && disjunctionSatisfied;
+    }
+
+    /**
+     * Whether character holds feat — compared through {@link #catalogEntry()}, so a
+     * choice-carrying instance ({@code FocoEmPericiaFeat}, …) counts as the catalog constant it
+     * wraps. Serves both {@code requiredFeats} and {@code forbiddenFeats}.
+     */
+    private static boolean holds(final Character character, final Feat feat) {
+        return character.getFeats().stream().anyMatch(held -> held.catalogEntry() == feat);
+    }
+
+    /**
+     * Whether character holds trait. Branches on the concrete {@link SkillTrait} kind, the same
+     * split {@code AbstractSkillInteraction#validateRequestedTrait} makes: a {@code
+     * SkillCompetencyAbility} is looked up through {@code SkillCompetencyAbility#allFor} (so one
+     * granted by the holder's Raça counts as held), a {@code SkillSpecialization} against its own
+     * Perícia's {@code CharacterSkill}, which an untrained character simply doesn't have.
+     */
+    private static boolean holdsSkillTrait(final Character character, final SkillTrait trait) {
+        if (trait instanceof SkillCompetencyAbility ability) {
+            return SkillCompetencyAbility.allFor(character).contains(ability);
+        }
+        CharacterSkill characterSkill = character.getSkills().get(trait.getSkillType());
+        return characterSkill != null && characterSkill.getSpecializations().contains(trait);
+    }
+
+    /**
+     * Whether some Atributo's {@code base} reaches value — the "Atributo 3 ou Superior" shape,
+     * which names no domain. When racialBonusOnly, only Atributos actually receiving a Bônus
+     * Racial count, which is the narrower clause {@code MonstruosoFeat#ALFA} names.
+     */
+    private static boolean anyAttributeReaches(final Character character, final int value,
+                                                final boolean racialBonusOnly) {
+        for (AttributeDomain domain : AttributeDomain.values()) {
+            AttributeValue attribute = character.getAttributes().getAttribute(domain);
+            if (attribute.getBase() >= value && (!racialBonusOnly || attribute.getRacialBonus() > 0)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

@@ -198,10 +198,8 @@ public enum ElementalFeat implements Feat {
      * it is not a Forma with a Duração and a Custo, so its RDS would be an unconditional grant if
      * there were a hook for it.
      */
-    // TODO: its Pré-requisito names *two* Talentos — Reparação Elemental and Resistência
-    //  Elemental Superior — and FeatRequirements#requiredFeat is singular. Only the second is
-    //  recorded, so the gate is looser than the text; this is one of the four constants
-    //  docs/rules/talentos-index.md lists under "Two required Talentos".
+    // Both required Talentos — Reparação Elemental and Resistência Elemental Superior — are
+    // enforced now: FeatRequirements#requiredFeats is a set.
     // The RDS half is real: RDS is ordinary RD (see ArtesCompetencyAbility's own "+1 RDS"), and
     // this transformation is permanent rather than a Forma with a Duração, so the grant is
     // unconditional. The clause states no number, so it uses DamageService's own default — the
@@ -216,6 +214,7 @@ public enum ElementalFeat implements Feat {
                     + "dano aumenta em +1 para cada Título Aventyr Desperto.",
             FeatRequirements.builder()
                     .requiredFeat(RESISTENCIA_ELEMENTAL_SUPERIOR)
+                    .requiredFeat(REPARACAO_ELEMENTAL)
                     .requiredAwakenedTitles(2)
                     .build()) {
         @Override

@@ -2,6 +2,7 @@ package org.aventyrs.core.race;
 
 import org.aventyrs.core.action.ActionProfile;
 import org.aventyrs.core.character.AttributeDomain;
+import org.aventyrs.core.character.AttributeValue;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterAttributes;
 import org.aventyrs.core.character.CharacterEgos;
@@ -146,10 +147,32 @@ class VampiroTest {
         assertEquals(List.of(NaturalWeapon.PRESAS_LONGAS), character.getNaturalWeapons());
     }
 
+
+    /**
+     * A character of vampiro whose Força sits at Base 5 <em>and</em> carries a Bônus Racial —
+     * what {@code FeatRequirements#requiredAnyRacialAttributeValue} looks for.
+     */
+    private static Character racialFive(final Vampiro vampiro) {
+        return vampiro.generateEmptyCharacter(List.of())
+                .player(new Player())
+                .name("Test")
+                .race(vampiro)
+                .attributes(CharacterAttributes.builder()
+                        .strength(AttributeValue.builder()
+                                .domain(AttributeDomain.STRENGTH).base(5).racialBonus(1).build())
+                        .build())
+                .egos(CharacterEgos.builder().build())
+                .actionProfile(ActionProfile.REFLEXOS_RAPIDOS)
+                .build();
+    }
+
     @Test
     void gatesTheVampiricoFeatTreeAndOpensTheLifeRacesTree() {
-        Character asanbosam = characterOf(new Vampiro(VampiroLineage.ASANBOSAM, new Monstruoso()));
-        Character nosferatu = characterOf(new Vampiro(VampiroLineage.NOSFERATU, new Human()));
+        // Alfa additionally demands "qualquer atributo que receba bônus Racial com valor Base 5",
+        // which is beside the point here — both Vampiros get it, so the only thing left to tell
+        // them apart is the life-race's CreatureType.
+        Character asanbosam = racialFive(new Vampiro(VampiroLineage.ASANBOSAM, new Monstruoso()));
+        Character nosferatu = racialFive(new Vampiro(VampiroLineage.NOSFERATU, new Human()));
         Human plainHuman = new Human();
         Character human = plainHuman.generateEmptyCharacter(List.of())
                 .player(new Player()).name("H").race(plainHuman)

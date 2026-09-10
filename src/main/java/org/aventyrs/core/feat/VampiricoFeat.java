@@ -1,6 +1,8 @@
 package org.aventyrs.core.feat;
 
 import org.aventyrs.core.ability.ActiveAbility;
+import java.math.BigDecimal;
+
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.race.Vampiro;
@@ -194,10 +196,10 @@ public enum VampiricoFeat implements Feat {
     //  ("baseadas em Carisma e Atenção", where Atenção is a Perícia rather than an Atributo, an
     //  inconsistency in the source) and by the *target* being a Vampiro, which
     //  resolveSkillRollBonus carries no opponent for.
-    // TODO: its Pré-requisito is a disjunction — "EXP total ≥ 15 ou 1 Título Aventyr Desperto" —
-    //  and every clause combines with and. The Título branch is recorded because the other is
-    //  unreachable anyway: EXP total lives on CharacterSheet and Feat#isEligible takes only a
-    //  Character, one of the CharacterSheet-side clauses docs/rules/talentos-index.md records.
+    // The Pré-requisito is fully enforced now — "EXP total ≥ 15 ou 1 Título Aventyr Desperto",
+    // two FeatRequirements#anyOf branches, with the Raça common to both on the outer group. The
+    // EXP branch reads CharacterSheet#getTotalExperience through Feat#isEligible's sheet-taking
+    // overload; a sheet-less preview skips it and falls back to the Título branch alone.
     // TODO: Laços-de-Sangue — a master-and-progeny relation between Vampiros — has no
     //  representation, so there is nothing to undo.
     LACOS_ROMPIDOS(
@@ -206,7 +208,12 @@ public enum VampiricoFeat implements Feat {
                     + "Vampiros.",
             FeatRequirements.builder()
                     .requiredRace(Vampiro.class)
-                    .requiredAwakenedTitles(1)
+                    .alternative(FeatRequirements.builder()
+                            .requiredTotalExperience(BigDecimal.valueOf(15))
+                            .build())
+                    .alternative(FeatRequirements.builder()
+                            .requiredAwakenedTitles(1)
+                            .build())
                     .build()),
 
     /**
@@ -224,7 +231,8 @@ public enum VampiricoFeat implements Feat {
     //  resolveDifficultyReduction carries no opponent either.
     // TODO: gerar Prole needs the Laços-de-Sangue relation, and creating another Character is
     //  outside anything this core models.
-    // TODO: same EXP-total disjunction as its prerequisite; only the 2-Título branch is recorded.
+    // Its own disjunction is enforced too — "2 Títulos Aventyr Despertos ou EXP total ≥ 30" —
+    // with the Raça and the required Talento common to both branches.
     MESTRE_VAMPIRO(
             "Você chega no ponto evolutivo mais alto da sua raça. Seu Bônus Racial em Atributo "
                     + "ganho por ser um Vampiro aumenta em +1 e sua Vantagem em rolagens de "
@@ -235,7 +243,12 @@ public enum VampiricoFeat implements Feat {
             FeatRequirements.builder()
                     .requiredRace(Vampiro.class)
                     .requiredFeat(LACOS_ROMPIDOS)
-                    .requiredAwakenedTitles(2)
+                    .alternative(FeatRequirements.builder()
+                            .requiredAwakenedTitles(2)
+                            .build())
+                    .alternative(FeatRequirements.builder()
+                            .requiredTotalExperience(BigDecimal.valueOf(30))
+                            .build())
                     .build()) {
         @Override
         public int resolveAttributeBonus(final AttributeDomain domain, final Character character) {

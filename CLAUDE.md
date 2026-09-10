@@ -59,7 +59,21 @@ These hold across every subsystem skill and section; they aren't repeated per-fe
   prerequisites. **And a prerequisite is not a condition of use**: `FeatRequirements`/`isEligible`
   answer "may they learn it", checked once at `grantFeat`; something that must hold *each time the
   trait is exercised* goes in a hook returning "not permitted right now" instead
-  (`Feat#itsAllowedToCraftRegalia` is the reference — see the Itens section).
+  (`Feat#itsAllowedToCraftRegalia` is the reference — see the Itens section; `FeralFeat`'s "não
+  pode ser **usado** em conjunto" is deliberately *not* a `forbiddenFeat` for the same reason).
+  **A `Feat` prerequisite is a full boolean now, not just a set of floors**: `FeatRequirements`
+  carries ceilings (`maximumAttributeValue`/`maximumEgoValue`), negations (`forbiddenRace`/
+  `forbiddenFeats`), domain-less thresholds (`requiredAnyAttributeValue`) and a real disjunction
+  (`anyOf`, nested groups of which one must hold *on top of* the outer clauses). Two clauses need
+  the `CharacterSheet` (`requiredFame`/`requiredTotalExperience`), so `isEligible(Character,
+  CharacterSheet)` is the authoritative form and the one to override — the `Character`-only
+  overload delegates to it with `null` and **skips** those two rather than failing them, keeping
+  `FeatCatalog#availableFor(character)` a superset of `availableFor(character, sheet)`: looser,
+  never stricter. A mutually-exclusive pair makes each half name its twin, which forces that enum
+  onto `Supplier<FeatRequirements>` *and* a `private static` accessor for the forward half — a
+  `Supplier` defers evaluation, but only a method body lifts Java's forward-reference rule. See
+  the `adding-a-feat` skill and `docs/rules/talentos-index.md` for what a Pré-requisito still
+  cannot say.
 - **Builder-bypassable invariants.** Caps and prerequisites are enforced only on the service
   entry point that applies them; `Character.builder()`, Fixture Factory templates, and plain
   mutators bypass them by design, and tests routinely rely on that.

@@ -151,14 +151,15 @@ public enum ArtilhariaFeat implements Feat {
 
     /** "Sempre que tiver um Acerto Crítico usando o talento 'Mira Impecável' você causa +1d6 de dano adicional." */
     // TODO: scoped to "this one delivered attack" made with another Talento — see ABATER_A_CACA.
-    // TODO: its Pré-requisito names *two* Talentos (Mira Impecável and Acerto Crítico
-    //  Aprimorado); requiredFeat is singular, so only the intra-tree one is recorded and
-    //  AssassinoFeat#ACERTO_CRITICO_APRIMORADO goes unenforced.
+    // Both required Talentos are enforced now — FeatRequirements#requiredFeats is a set, so a
+    // Pré-requisito naming two (here one from this tree and one from AssassinoFeat) needs no
+    // choosing between them.
     MIRA_MORTAL(
             "Sempre que tiver um Acerto Crítico usando o talento ‘Mira Impecável’ você causa +1d6 "
                     + "de dano adicional.",
             FeatRequirements.builder()
                     .requiredFeat(MIRA_IMPECAVEL)
+                    .requiredFeat(AssassinoFeat.ACERTO_CRITICO_APRIMORADO)
                     .build()),
 
     /**

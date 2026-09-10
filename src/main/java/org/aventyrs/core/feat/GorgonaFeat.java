@@ -5,6 +5,8 @@ import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.services.DamageService;
 import org.aventyrs.core.race.Gorgona;
 
+import java.util.function.Supplier;
+
 /**
  * Talentos Górgonas — a tree structured entirely around the race's own curse: two Talentos that
  * resolve it in opposite directions (embrace the monstrous form, or be freed from it), two
@@ -20,10 +22,10 @@ import org.aventyrs.core.race.Gorgona;
  * Six of these seven Talentos either presuppose a
  * form, change which form the holder is locked into, or scope an effect to one.
  *
- * <p><b>Three exclusion pairs, none enforceable.</b> Marca da Maldição ↔ Acolhida por Flora, and
- * Proteção do Deus dos Monstros ↔ Proteção da Rainha das Fadas. {@code FeatRequirements} carries
- * only thresholds that must be met, never one that must not — so a character can legally hold
- * both halves of either pair, which the text forbids.
+ * <p><b>Both exclusion pairs are enforced.</b> Marca da Maldição ↔ Acolhida por Flora, and
+ * Proteção do Deus dos Monstros ↔ Proteção da Rainha das Fadas — each half naming its twin as a
+ * {@code FeatRequirements#forbiddenFeats} entry, which is why this enum holds its requirements as
+ * a {@link Supplier} (see that field).
  */
 public enum GorgonaFeat implements Feat {
 
@@ -49,8 +51,9 @@ public enum GorgonaFeat implements Feat {
                     + "não possui a Característica Racial Imunidade a Encantamentos. Um mesmo "
                     + "personagem não pode possuir os Talentos Marca da Maldição e Acolhida por "
                     + "Flora.",
-            FeatRequirements.builder()
+            () -> FeatRequirements.builder()
                     .requiredRace(Gorgona.class)
+                    .forbiddenFeat(acolhidaPorFlora())
                     .build()),
 
     /**
@@ -69,8 +72,9 @@ public enum GorgonaFeat implements Feat {
                     + "disso recebe a Habilidade Feromônio Encantador, também recebe Bônus de +2 "
                     + "em Conjuração, Danos e Curas de suas Magias Naturais. Um mesmo personagem "
                     + "não pode possuir os Talentos Marca da Maldição e Acolhida por Flora.",
-            FeatRequirements.builder()
+            () -> FeatRequirements.builder()
                     .requiredRace(Gorgona.class)
+                    .forbiddenFeat(GorgonaFeat.MARCA_DA_MALDICAO)
                     .build()),
 
     /**
@@ -91,8 +95,9 @@ public enum GorgonaFeat implements Feat {
             "Você recebe RDS e RD, enquanto em sua Forma Monstruosa você recebe Resistência à "
                     + "Críticos. Um mesmo personagem não pode possuir os Talentos Proteção do Deus "
                     + "dos Monstros e Proteção da Rainha das Fadas.",
-            FeatRequirements.builder()
+            () -> FeatRequirements.builder()
                     .requiredRace(Gorgona.class)
+                    .forbiddenFeat(protecaoDaRainhaDasFadas())
                     .attributeDomain(AttributeDomain.STRENGTH)
                     .requiredAttributeValue(4)
                     .build()) {
@@ -115,8 +120,9 @@ public enum GorgonaFeat implements Feat {
             "Você recebe RDS e RM, enquanto em sua forma Feérica você recebe Resistência a "
                     + "Críticos. Um mesmo personagem não pode possuir os Talentos Proteção do Deus "
                     + "dos Monstros e Proteção da Rainha das Fadas.",
-            FeatRequirements.builder()
+            () -> FeatRequirements.builder()
                     .requiredRace(Gorgona.class)
+                    .forbiddenFeat(GorgonaFeat.PROTECAO_DO_DEUS_DOS_MONSTROS)
                     .attributeDomain(AttributeDomain.CHARISMA)
                     .requiredAttributeValue(4)
                     .build()) {
@@ -144,7 +150,7 @@ public enum GorgonaFeat implements Feat {
             "Seu cabelo está sempre em forma de Serpente, o que assusta ou incomoda outros "
                     + "personagens. Você recebe Desvantagens em rolagens de Persuasão, mas recebe "
                     + "Vantagem em suas Rolagens de Ataque e Danos de seu Olhar de Lacerto.",
-            FeatRequirements.builder()
+            () -> FeatRequirements.builder()
                     .requiredRace(Gorgona.class)
                     .requiredAwakenedTitles(1)
                     .build()),
@@ -165,7 +171,7 @@ public enum GorgonaFeat implements Feat {
                     + "Racial Ferocidade de Lacerto (ver Indômitos) como se fosse um Impuro. "
                     + "Talentos Monstruosos adquiridos tem seus efeitos desencadeados apenas "
                     + "durante a Forma Monstruosa.",
-            FeatRequirements.builder()
+            () -> FeatRequirements.builder()
                     .requiredRace(Gorgona.class)
                     .requiredAwakenedTitles(1)
                     .build()),
@@ -185,15 +191,46 @@ public enum GorgonaFeat implements Feat {
                     + "2PD. Ao Despertar seu segundo Título Aventyr também poderá conjurar as "
                     + "magias do Tipo Muda (ao custo de 3PD). Magias das Árvores escolhidas só "
                     + "podem ser Mimetizadas enquanto em sua forma Feérica.",
-            FeatRequirements.builder()
+            () -> FeatRequirements.builder()
                     .requiredRace(Gorgona.class)
                     .requiredAwakenedTitles(1)
                     .build());
 
-    private final String description;
-    private final FeatRequirements featRequirements;
+    /**
+     * {@link #ACOLHIDA_POR_FLORA}, reached through a method rather than named directly: Java forbids
+     * referencing a <em>later</em> enum constant from an earlier constant's constructor arguments,
+     * and a {@link Supplier} does not lift that — the restriction is on the reference, not on when
+     * it is evaluated. A static method body is not an initializer, so the forward reference is
+     * legal here. Only the forward half of each mutually-exclusive pair needs one; the constant
+     * declared second names its twin directly.
+     */
+    private static Feat acolhidaPorFlora() {
+        return ACOLHIDA_POR_FLORA;
+    }
 
-    GorgonaFeat(final String description, final FeatRequirements featRequirements) {
+    /**
+     * {@link #PROTECAO_DA_RAINHA_DAS_FADAS}, reached through a method rather than named directly: Java forbids
+     * referencing a <em>later</em> enum constant from an earlier constant's constructor arguments,
+     * and a {@link Supplier} does not lift that — the restriction is on the reference, not on when
+     * it is evaluated. A static method body is not an initializer, so the forward reference is
+     * legal here. Only the forward half of each mutually-exclusive pair needs one; the constant
+     * declared second names its twin directly.
+     */
+    private static Feat protecaoDaRainhaDasFadas() {
+        return PROTECAO_DA_RAINHA_DAS_FADAS;
+    }
+
+    private final String description;
+    /**
+     * Held as a {@link Supplier} rather than a plain field because this tree's mutually-exclusive
+     * Talentos name each <em>other</em> as a {@code forbiddenFeat}, and Java forbids referencing
+     * an enum constant from another constant's constructor arguments. Deferring construction to
+     * the first {@link #getFeatRequirements()} call sidesteps that, the same way {@code
+     * MetamagicoFeat} already does for its own sibling {@code requiredFeat} chain.
+     */
+    private final Supplier<FeatRequirements> featRequirements;
+
+    GorgonaFeat(final String description, final Supplier<FeatRequirements> featRequirements) {
         this.description = description;
         this.featRequirements = featRequirements;
     }
@@ -210,6 +247,6 @@ public enum GorgonaFeat implements Feat {
 
     @Override
     public FeatRequirements getFeatRequirements() {
-        return featRequirements;
+        return featRequirements.get();
     }
 }

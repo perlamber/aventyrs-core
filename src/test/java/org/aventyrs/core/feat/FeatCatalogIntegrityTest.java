@@ -42,13 +42,18 @@ class FeatCatalogIntegrityTest {
     @Test
     void aTalentoNamingAPrerequisiteTalentoResolvesItToARealFeat() {
         for (Feat feat : ALL) {
-            Feat required = feat.getFeatRequirements().requiredFeat();
-            if (required == null) {
-                continue;
+            for (Feat required : feat.getFeatRequirements().requiredFeats()) {
+                assertNotEquals(feat, required, feat + " names itself as its own prerequisite");
+                assertTrue(ALL.contains(required),
+                        feat + " requires " + required + ", which is not in the catalog");
             }
-            assertNotEquals(feat, required, feat + " names itself as its own prerequisite");
-            assertTrue(ALL.contains(required),
-                    feat + " requires " + required + ", which is not in the catalog");
+            // The negative form gets the same integrity check: an exclusion naming a Talento the
+            // catalog doesn't hold would silently never fire.
+            for (Feat forbidden : feat.getFeatRequirements().forbiddenFeats()) {
+                assertNotEquals(feat, forbidden, feat + " forbids itself");
+                assertTrue(ALL.contains(forbidden),
+                        feat + " forbids " + forbidden + ", which is not in the catalog");
+            }
         }
     }
 

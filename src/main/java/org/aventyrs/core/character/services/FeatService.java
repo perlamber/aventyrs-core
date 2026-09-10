@@ -17,7 +17,9 @@ import java.util.List;
 public interface FeatService {
 
     /**
-     * Validates feat's own {@link Feat#isEligible(Character)} prerequisite, spends {@code
+     * Validates feat's own {@link Feat#isEligible(Character, CharacterSheet)} prerequisite — the
+     * <em>sheet</em>-taking form, so the Fama and EXP-total clauses are enforced here rather than
+     * skipped as they are in a sheet-less preview — spends {@code
      * character.getRace().getNewFeatCost(feat.getFeatCategory())} XP from characterSheet, then
      * grants feat via {@link Character#grantFeat(Feat)}, then records every mimetized Magia the
      * feat grants via {@link Character#grantMimetizedSpell(org.aventyrs.core.magic.MimetizedSpell)}.
@@ -39,6 +41,18 @@ public interface FeatService {
      * grantable but never appears here — see {@code FeatCatalog}'s javadoc.
      */
     List<Feat> getAvailableFeats(Character character);
+
+    /**
+     * The same list, checked against characterSheet too — so the two {@code CharacterSheet}-side
+     * prerequisites ({@code FeatRequirements#requiredFame}, {@code #requiredTotalExperience}) are
+     * enforced rather than skipped.
+     *
+     * <p><b>Prefer this overload whenever a sheet is in hand</b>, which a character-management
+     * caller always has. Its result is exactly what {@link #grantFeat} will accept; the sheet-less
+     * form above can only be a <em>superset</em>, since it has no way to test those two clauses
+     * and skips them rather than refusing on a fact nobody supplied.
+     */
+    List<Feat> getAvailableFeats(Character character, CharacterSheet characterSheet);
 
     /**
      * {@link #getAvailableFeats} narrowed to what characterSheet's unused experience can

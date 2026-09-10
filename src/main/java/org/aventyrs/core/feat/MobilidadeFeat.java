@@ -4,6 +4,8 @@ import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.skill.SkillType;
 
+import java.util.function.Supplier;
+
 /**
  * Talentos de Mobilidade — moving further, moving first, and attacking around a move.
  *
@@ -37,7 +39,7 @@ public enum MobilidadeFeat implements Feat {
     MOVIMENTO_RAPIDO(
             "Seu Movimento Base aumenta em +2UD, em Rodadas Pares a distância de sua primeira ação "
                     + "para Reposicionar-se aumenta em +1UD.",
-            FeatRequirements.builder().build()) {
+            () -> FeatRequirements.builder().build()) {
         @Override
         public int resolveMovementIncrease(final Character character) {
             return 2;
@@ -58,7 +60,7 @@ public enum MobilidadeFeat implements Feat {
     VELOCISTA(
             "Seu Movimento Base aumenta em +1UD, então aumenta cumulativamente em +1UD para cada "
                     + "outro movimento feito no mesmo Turno.",
-            FeatRequirements.builder()
+            () -> FeatRequirements.builder()
                     .requiredFeat(MOVIMENTO_RAPIDO)
                     .build()) {
         @Override
@@ -85,7 +87,7 @@ public enum MobilidadeFeat implements Feat {
      */
     MAIS_VELOZ_QUE_A_VISAO(
             "Você adquire permanentemente +1PA.",
-            FeatRequirements.builder()
+            () -> FeatRequirements.builder()
                     .requiredFeatCategory(FeatCategory.MOBILIDADE)
                     .requiredFeatCategoryCount(2)
                     .build()) {
@@ -108,7 +110,7 @@ public enum MobilidadeFeat implements Feat {
             "Você recebe Bônus de +2 em suas Defesas para resistir à Reações de seus inimigos. Se "
                     + "você se moveu em seu último Turno, então você recebe Bônus de +1 em suas "
                     + "Defesas para resistir à ataques sofridos fora de seu Turno por 1 Rodada.",
-            FeatRequirements.builder().build()),
+            () -> FeatRequirements.builder().build()),
 
     /**
      * "Você recebe Vantagem em Rolagens de Perícias de Ataque feitas após se mover por uma
@@ -123,7 +125,7 @@ public enum MobilidadeFeat implements Feat {
             "Você recebe Vantagem em Rolagens de Perícias de Ataque feitas após se mover por uma "
                     + "Distância Curta ou superior. Seu Movimento Base aumenta em +2UD para se "
                     + "mover imediatamente após efetuar uma Rolagem de Perícia de Ataque.",
-            FeatRequirements.builder()
+            () -> FeatRequirements.builder()
                     .requiredFeat(ESQUIVA)
                     .build()),
 
@@ -139,7 +141,7 @@ public enum MobilidadeFeat implements Feat {
     INICIATIVA_APRIMORADA(
             "Você adquire 1 ponto permanente de Iniciativa e então, se sua Iniciativa se tornar 4 "
                     + "ou mais, você adquire uma Vantagem de Iniciativa.",
-            FeatRequirements.builder().build()),
+            () -> FeatRequirements.builder().build()),
 
     /**
      * "Sempre que ganhar uma rolagem de Iniciativa, nas 2 primeiras Rodadas de cada Cena de
@@ -155,7 +157,7 @@ public enum MobilidadeFeat implements Feat {
     LIDERAR_O_AVANCO(
             "Sempre que ganhar uma rolagem de Iniciativa, nas 2 primeiras Rodadas de cada Cena de "
                     + "Combate você adquire +2PA (não cumulativo).",
-            FeatRequirements.builder()
+            () -> FeatRequirements.builder()
                     .requiredFeat(INICIATIVA_APRIMORADA)
                     .build()),
 
@@ -165,8 +167,8 @@ public enum MobilidadeFeat implements Feat {
      */
     // TODO: same missing Feat initiative hook as LIDERAR_O_AVANCO, and the ally-facing half needs
     //  cross-character grants at initiative time plus direction-scoped movement.
-    // TODO: its Pré-requisito is a disjunction (Destreza 3 *ou* Carisma 3), which
-    //  FeatRequirements cannot express; modelled as the Destreza branch only.
+    // The disjunctive Pré-requisito is real — "Destreza 3 *ou* Carisma 3"; the required Talento
+    // is common to both branches, so it stays on the outer group.
     PORTA_ESTANDARTE(
             "Você pode adicionar Metade de seu valor de Destreza ou do valor de Carisma, a sua "
                     + "escolha, às suas rolagens de Iniciativa. Nas 2 primeiras Rodadas do "
@@ -175,10 +177,16 @@ public enum MobilidadeFeat implements Feat {
                     + "Nestas Rodadas iniciais seu Movimento Base aumenta em +2UD sempre que se "
                     + "mover em direção a um inimigo e o Movimento Base de seus aliados aumentam "
                     + "em +2UD para se moverem em sua direção.",
-            FeatRequirements.builder()
-                    .attributeDomain(AttributeDomain.DEXTERITY)
-                    .requiredAttributeValue(3)
+            () -> FeatRequirements.builder()
                     .requiredFeat(LIDERAR_O_AVANCO)
+                    .alternative(FeatRequirements.builder()
+                            .attributeDomain(AttributeDomain.DEXTERITY)
+                            .requiredAttributeValue(3)
+                            .build())
+                    .alternative(FeatRequirements.builder()
+                            .attributeDomain(AttributeDomain.CHARISMA)
+                            .requiredAttributeValue(3)
+                            .build())
                     .build()),
 
     /**
@@ -196,7 +204,7 @@ public enum MobilidadeFeat implements Feat {
             "Você pode se mover enquanto furtivo, mas seu Movimento Base é reduzido à metade. Se "
                     + "você possuir 7 ou mais Graduações em Furtividade este Talento não mais "
                     + "reduz seu Movimento Base.",
-            FeatRequirements.builder()
+            () -> FeatRequirements.builder()
                     .requiredSkillType(SkillType.FURTIVIDADE)
                     .requiredSkillGraduation(2)
                     .build()),
@@ -217,7 +225,7 @@ public enum MobilidadeFeat implements Feat {
                     + "bem-sucedido em rolagens de Atletismo para Natação tem o Tempo de Ação "
                     + "reduzido em -1PA. Personagens que possuam Movimento Base de Natação tem o "
                     + "Tempo de Ação de investidas sempre reduzidos em -1PA.",
-            FeatRequirements.builder()
+            () -> FeatRequirements.builder()
                     .requiredSkillType(SkillType.ATLETISMO)
                     .requiredSkillGraduation(4)
                     .build()),
@@ -239,7 +247,7 @@ public enum MobilidadeFeat implements Feat {
                     + "provocar Reações. A Distância que seu Movimento Acrobático pode percorrer é "
                     + "igual à Metade da Destreza UD, a distância máxima aumenta em +2UD para cada "
                     + "Título Aventyr que você possuir.",
-            FeatRequirements.builder()
+            () -> FeatRequirements.builder()
                     .requiredFeatCategory(FeatCategory.MOBILIDADE)
                     .requiredFeatCategoryCount(3)
                     .build()),
@@ -251,7 +259,7 @@ public enum MobilidadeFeat implements Feat {
             "Suas Investidas recebem Área de Efeito – Explosão. Durante o movimento da investida "
                     + "você recebe Redução de Danos Sofridos igual ao número de Títulos Aventyrs "
                     + "que você possuir.",
-            FeatRequirements.builder()
+            () -> FeatRequirements.builder()
                     .requiredSkillType(SkillType.ATAQUE_CORPO_A_CORPO)
                     .requiredSkillGraduation(7)
                     .requiredFeatCategory(FeatCategory.MOBILIDADE)
@@ -273,8 +281,9 @@ public enum MobilidadeFeat implements Feat {
                     + "investida. Os Bônus em Defesas aumentam em +1 por alvo se utilizar um item "
                     + "do tipo Escudo de peso Médio ou Superior. Um mesmo personagem não pode "
                     + "possuir Investida Selvagem Lunar e Investida Selvagem Solar.",
-            FeatRequirements.builder()
+            () -> FeatRequirements.builder()
                     .requiredFeat(INVESTIDA_SELVAGEM)
+                    .forbiddenFeat(investidaSelvagemLunar())
                     .requiredAwakenedTitles(1)
                     .requiredTitleArchetype(org.aventyrs.core.title.TitleArchetype.BRUTO)
                     .build()),
@@ -292,16 +301,36 @@ public enum MobilidadeFeat implements Feat {
                     + "investida. O valor do Roubo de Vida aumenta em +1 se utilizar uma arma de "
                     + "peso Médio ou Superior. Um mesmo personagem não pode possuir Investida "
                     + "Selvagem Lunar e Investida Selvagem Solar.",
-            FeatRequirements.builder()
+            () -> FeatRequirements.builder()
                     .requiredFeat(INVESTIDA_SELVAGEM)
+                    .forbiddenFeat(MobilidadeFeat.INVESTIDA_SELVAGEM_SOLAR)
                     .requiredAwakenedTitles(1)
                     .requiredTitleArchetype(org.aventyrs.core.title.TitleArchetype.BRUTO)
                     .build());
 
-    private final String description;
-    private final FeatRequirements featRequirements;
+    /**
+     * {@link #INVESTIDA_SELVAGEM_LUNAR}, reached through a method rather than named directly: Java forbids
+     * referencing a <em>later</em> enum constant from an earlier constant's constructor arguments,
+     * and a {@link Supplier} does not lift that — the restriction is on the reference, not on when
+     * it is evaluated. A static method body is not an initializer, so the forward reference is
+     * legal here. Only the forward half of each mutually-exclusive pair needs one; the constant
+     * declared second names its twin directly.
+     */
+    private static Feat investidaSelvagemLunar() {
+        return INVESTIDA_SELVAGEM_LUNAR;
+    }
 
-    MobilidadeFeat(final String description, final FeatRequirements featRequirements) {
+    private final String description;
+    /**
+     * Held as a {@link Supplier} rather than a plain field because this tree's mutually-exclusive
+     * Talentos name each <em>other</em> as a {@code forbiddenFeat}, and Java forbids referencing
+     * an enum constant from another constant's constructor arguments. Deferring construction to
+     * the first {@link #getFeatRequirements()} call sidesteps that, the same way {@code
+     * MetamagicoFeat} already does for its own sibling {@code requiredFeat} chain.
+     */
+    private final Supplier<FeatRequirements> featRequirements;
+
+    MobilidadeFeat(final String description, final Supplier<FeatRequirements> featRequirements) {
         this.description = description;
         this.featRequirements = featRequirements;
     }
@@ -318,6 +347,6 @@ public enum MobilidadeFeat implements Feat {
 
     @Override
     public FeatRequirements getFeatRequirements() {
-        return featRequirements;
+        return featRequirements.get();
     }
 }

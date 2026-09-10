@@ -2,6 +2,8 @@ package org.aventyrs.core.feat;
 
 import org.aventyrs.core.race.Human;
 
+import java.util.function.Supplier;
+
 /**
  * Talentos Humanos — all three about the Humano's defining Característica, <b>Aprendizado
  * Rápido</b>, and all three blocked on it.
@@ -13,11 +15,10 @@ import org.aventyrs.core.race.Human;
  * and the third replaces it outright, so none has anything to act on.
  *
  * <p><b>The mutual exclusion between {@link #APRENDIZADO_RAPIDO_E_CONTINUO} and {@link
- * #LIMIAR_DA_EVOLUCAO} is not enforced.</b> "Um mesmo personagem não pode adquirir" both is an
- * exclusion clause, and {@code FeatRequirements} has no negative form — every clause it carries
- * is a threshold that must be met, never one that must not. Seven Talentos across the catalog
- * share this, and it is recorded in {@code docs/rules/talentos-index.md} rather than worked
- * around; the gate is looser than the text, never stricter.
+ * #LIMIAR_DA_EVOLUCAO} is enforced.</b> "Um mesmo personagem não pode adquirir" both is an
+ * exclusion clause, which {@code FeatRequirements#forbiddenFeats} now carries — each half naming
+ * its twin. That mutual naming is why this enum holds its requirements as a {@link Supplier}
+ * (see that field), and why the forward half goes through {@link #limiarDaEvolucao()}.
  */
 public enum HumanoFeat implements Feat {
 
@@ -39,8 +40,9 @@ public enum HumanoFeat implements Feat {
                     + "benefícios podem ser escolhidos separadamente para cada Perícia). Um mesmo "
                     + "personagem não pode adquirir Aprendizado Rápido e Contínuo e Limiar da "
                     + "Evolução.",
-            FeatRequirements.builder()
+            () -> FeatRequirements.builder()
                     .requiredRace(Human.class)
+                    .forbiddenFeat(limiarDaEvolucao())
                     .build()),
 
     /**
@@ -55,7 +57,7 @@ public enum HumanoFeat implements Feat {
     ENTENDER_OS_FUNDAMENTOS(
             "Você adquire novas Habilidades de Competência ou Especializações de Perícias com 3, "
                     + "5, 7 e 10 Graduações, ao invés de 4, 7 e 10 Graduações.",
-            FeatRequirements.builder()
+            () -> FeatRequirements.builder()
                     .requiredRace(Human.class)
                     .requiredAwakenedTitles(1)
                     .build()),
@@ -80,15 +82,34 @@ public enum HumanoFeat implements Feat {
                     + "Escolhido. Ao Despertar seu segundo Título Aventyr você recebe uma "
                     + "Habilidade do Atributo escolhido. Um mesmo personagem não pode adquirir "
                     + "Aprendizado Rápido e Contínuo e Limiar da Evolução.",
-            FeatRequirements.builder()
+            () -> FeatRequirements.builder()
                     .requiredRace(Human.class)
+                    .forbiddenFeat(APRENDIZADO_RAPIDO_E_CONTINUO)
                     .requiredAwakenedTitles(1)
                     .build());
 
-    private final String description;
-    private final FeatRequirements featRequirements;
+    /**
+     * {@link #LIMIAR_DA_EVOLUCAO}, reached through a method rather than named directly: Java
+     * forbids referencing a <em>later</em> enum constant from an earlier constant's constructor
+     * arguments, and a {@link Supplier} does not lift that — the restriction is on the reference,
+     * not on when it is evaluated. A static method body is not an initializer, so the forward
+     * reference is legal here. Only the forward half of the pair needs one.
+     */
+    private static Feat limiarDaEvolucao() {
+        return LIMIAR_DA_EVOLUCAO;
+    }
 
-    HumanoFeat(final String description, final FeatRequirements featRequirements) {
+    private final String description;
+    /**
+     * Held as a {@link Supplier} rather than a plain field because this tree's mutually-exclusive
+     * Talentos name each <em>other</em> as a {@code forbiddenFeat}, and Java forbids referencing
+     * an enum constant from another constant's constructor arguments. Deferring construction to
+     * the first {@link #getFeatRequirements()} call sidesteps that, the same way {@code
+     * MetamagicoFeat} already does for its own sibling {@code requiredFeat} chain.
+     */
+    private final Supplier<FeatRequirements> featRequirements;
+
+    HumanoFeat(final String description, final Supplier<FeatRequirements> featRequirements) {
         this.description = description;
         this.featRequirements = featRequirements;
     }
@@ -105,6 +126,6 @@ public enum HumanoFeat implements Feat {
 
     @Override
     public FeatRequirements getFeatRequirements() {
-        return featRequirements;
+        return featRequirements.get();
     }
 }

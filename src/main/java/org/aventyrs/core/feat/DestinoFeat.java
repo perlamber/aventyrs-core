@@ -59,8 +59,9 @@ public enum DestinoFeat implements Feat {
     //  step to refuse one (the same direction the gap catalog's "Forced attack targeting /
     //  interception" row records, from the other side).
     // TODO: "inimigos inteligentes" is a creature classification CreatureType does not carry.
-    // TODO: "Força igual ou inferior à 2" is a *maximum*; FeatRequirements expresses only
-    //  Attribute minimums, so only the Carisma half is enforced.
+    // The "Força igual ou inferior à 2" maximum is enforced now —
+    // FeatRequirements#maximumAttributeDomain is its own clause, separate from the minimum,
+    // because a Talento naming both names two different Atributos.
     APARENCIA_INOFENSIVA(
             "A menos que você seja o único alvo disponível, ou já tenha realizado ações ofensivas "
                     + "contra seus inimigos, você nunca será alvo primário de ataques, Magias ou "
@@ -69,10 +70,15 @@ public enum DestinoFeat implements Feat {
             FeatRequirements.builder()
                     .attributeDomain(AttributeDomain.CHARISMA)
                     .requiredAttributeValue(3)
+                    .maximumAttributeDomain(AttributeDomain.STRENGTH)
+                    .maximumAttributeValue(2)
                     .build()),
 
     /** As {@link #APARENCIA_INOFENSIVA}, extended to the first four Rodadas. */
-    // TODO: same blockers as APARENCIA_INOFENSIVA, including the unenforceable Força maximum.
+    // Same targeting blockers as APARENCIA_INOFENSIVA; its Pré-requisito, though, is now fully
+    // enforced — "Carisma 5 e Força 1" is a minimum on one Atributo and an exact figure on
+    // another, read as the maximum it also is (a Força of 1 is the floor every Atributo starts
+    // at, so "Força 1" can only mean "no higher than 1").
     APARENCIA_VERDADEIRAMENTE_INOFENSIVA(
             "A menos que você seja o único alvo disponível, ou já tenha realizado ações ofensivas "
                     + "contra seus inimigos, você nunca será alvo primário de ataques, Magias ou "
@@ -80,6 +86,8 @@ public enum DestinoFeat implements Feat {
             FeatRequirements.builder()
                     .attributeDomain(AttributeDomain.CHARISMA)
                     .requiredAttributeValue(5)
+                    .maximumAttributeDomain(AttributeDomain.STRENGTH)
+                    .maximumAttributeValue(1)
                     .requiredFeat(APARENCIA_INOFENSIVA)
                     .build()),
 
@@ -111,13 +119,14 @@ public enum DestinoFeat implements Feat {
 
     /** "Escolha um Atributo, você recebe uma das Habilidades do Atributo escolhido." */
     // TODO: same acquisition-slot grant as PRODIGIO.
-    // TODO: "Atributo 3 ou Superior" names no particular Attribute — FeatRequirements tests one
-    //  named AttributeDomain, not "any", so this is left unset.
+    // "Atributo 3 ou Superior" is enforced now, through FeatRequirements#requiredAnyAttributeValue.
     GENIALIDADE(
             "Escolha um Atributo, você recebe uma das Habilidades do Atributo escolhido. Você "
                     + "precisa cumprir com Requisitos da Habilidade de Atributo escolhida para "
                     + "receber seus benefícios.",
-            FeatRequirements.builder().build()),
+            FeatRequirements.builder()
+                    .requiredAnyAttributeValue(3)
+                    .build()),
 
     /**
      * "Você recebe +1 de Bônus Racial no Atributo escolhido e uma de suas Habilidades do Atributo."
@@ -171,14 +180,18 @@ public enum DestinoFeat implements Feat {
      */
     // TODO: Favoritismo is an unmodelled mechanic, and "um oponente que o reconheça" needs
     //  recognition between characters, which nothing tracks.
-    // TODO: "Fama 15" is a CharacterSheet value; FeatRequirements reads only Character-side data,
-    //  and Feat#isEligible takes no sheet — the same split MoralHerdadaAbility#applyStartingFama
-    //  works around by taking both.
+    // "Fama 15" is enforced now: Feat#isEligible has a CharacterSheet-taking overload, which
+    // FeatService#grantFeat calls. Read as *either* Fama reaching 15 — the rules text says plain
+    // "Fama" while this core splits it Positiva/Negativa, and Favoritismo is about being
+    // recognised, which notoriety serves as well as renown. A sheet-less eligibility preview
+    // skips the clause rather than failing it, so the listing stays looser than the real gate.
     FAVORITISMO_MAIOR(
             "Escolha uma Perícia, você recebe os benefícios de Favoritismo da Perícia quando "
                     + "efetuada em disputa contra um oponente que o reconheça ou visando um alvo "
                     + "que o reconheça, mesmo que não tenham pessoas neutras a cena assistindo.",
-            FeatRequirements.builder().build()),
+            FeatRequirements.builder()
+                    .requiredFame(15)
+                    .build()),
 
     /**
      * "Você pode escolher atrasar seu Despertar de Títulos, recebendo seus benefícios apenas

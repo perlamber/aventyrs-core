@@ -38,7 +38,7 @@ public enum CavalariaFeat implements Feat {
             FeatRequirements.builder()
                     .requiredSkillType(SkillType.DIRIGIR_E_CAVALGAR)
                     .requiredSkillGraduation(4)
-                    .requiredSkillCompetencyAbility(DirigirECavalgarCompetencyAbility.GINETE)
+                    .requiredSkillTrait(DirigirECavalgarCompetencyAbility.GINETE)
                     .build()),
 
     /**
@@ -56,7 +56,7 @@ public enum CavalariaFeat implements Feat {
             FeatRequirements.builder()
                     .requiredSkillType(SkillType.DIRIGIR_E_CAVALGAR)
                     .requiredSkillGraduation(4)
-                    .requiredSkillCompetencyAbility(DirigirECavalgarCompetencyAbility.GINETE)
+                    .requiredSkillTrait(DirigirECavalgarCompetencyAbility.GINETE)
                     .build()),
 
     /**

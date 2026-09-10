@@ -2,6 +2,7 @@ package org.aventyrs.core.feat;
 
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.effect.CriticalEffect;
 import org.aventyrs.core.effect.Sangramento;
 import org.aventyrs.core.modifier.ModifierType;
@@ -138,9 +139,9 @@ public enum AssassinoFeat implements Feat {
      * {@code getActionsThisRound}), never per Cena. Granting it off the Turn-scoped state would
      * pay out on every Rodada's first attack after a re-draw, which is wider than the clause.
      *
-     * <p>The Pré-requisito is a disjunction — "Destreza 3 e Saque Rápido, <i>ou</i> Foco 5". The
-     * {@code FeatRequirements} carries the Destreza+Saque Rápido branch; {@link #isEligible} is
-     * overridden to also accept a Foco-5 build.
+     * <p>The Pré-requisito is a disjunction — "Destreza 3 e Saque Rápido, <i>ou</i> Foco 5" —
+     * carried as data now, through {@code FeatRequirements#anyOf}: two branches sharing no
+     * clause, so the outer group is empty and each branch stands alone.
      */
     SAQUE_RELAMPAGO(
             "Escolha entre Armas ou Magias. A cada Rodada, a primeira vez que fizer um ataque "
@@ -149,17 +150,16 @@ public enum AssassinoFeat implements Feat {
                     + "arma, ou for a primeira magia conjurada, na Cena de Combate, você também "
                     + "recebe Vantagem nesta Rolagem.",
             FeatRequirements.builder()
-                    .attributeDomain(AttributeDomain.DEXTERITY)
-                    .requiredAttributeValue(3)
-                    .requiredFeat(SAQUE_RAPIDO)
-                    .build()) {
-        /** "Destreza 3 e Saque Rápido" (the {@code FeatRequirements}) <b>or</b> "Foco 5". */
-        @Override
-        public boolean isEligible(final Character character) {
-            return super.isEligible(character)
-                    || character.getAttributes().getAttribute(AttributeDomain.FOCUS).getBase() >= FOCO_5;
-        }
-    },
+                    .alternative(FeatRequirements.builder()
+                            .attributeDomain(AttributeDomain.DEXTERITY)
+                            .requiredAttributeValue(3)
+                            .requiredFeat(SAQUE_RAPIDO)
+                            .build())
+                    .alternative(FeatRequirements.builder()
+                            .attributeDomain(AttributeDomain.FOCUS)
+                            .requiredAttributeValue(AssassinoFeat.FOCO_5)
+                            .build())
+                    .build()),
 
     /**
      * "Você pode guardar sua arma atual como uma Reação. Este Talento pode ser usado apenas uma
@@ -229,8 +229,8 @@ public enum AssassinoFeat implements Feat {
                     .requiredFeat(SAQUE_RELAMPAGO)
                     .build()) {
         @Override
-        public boolean isEligible(final Character character) {
-            return super.isEligible(character)
+        public boolean isEligible(final Character character, final CharacterSheet sheet) {
+            return super.isEligible(character, sheet)
                     && AcertoCriticoAprimoradoFeat.chosenBy(character)
                             .filter(method -> method == AttackMethod.OFFENSIVE_MAGIC).isPresent();
         }
@@ -258,8 +258,8 @@ public enum AssassinoFeat implements Feat {
                     .requiredFeat(SAQUE_RELAMPAGO)
                     .build()) {
         @Override
-        public boolean isEligible(final Character character) {
-            return super.isEligible(character)
+        public boolean isEligible(final Character character, final CharacterSheet sheet) {
+            return super.isEligible(character, sheet)
                     && AcertoCriticoAprimoradoFeat.chosenBy(character)
                             .filter(method -> method != AttackMethod.OFFENSIVE_MAGIC).isPresent();
         }
@@ -517,8 +517,8 @@ public enum AssassinoFeat implements Feat {
                     .requiredAwakenedTitles(1)
                     .build()) {
         @Override
-        public boolean isEligible(final Character character) {
-            return super.isEligible(character)
+        public boolean isEligible(final Character character, final CharacterSheet sheet) {
+            return super.isEligible(character, sheet)
                     && graduationOf(character, SkillType.PROFISSAO) >= TECH_PROFISSAO_GRADUATION
                     && holdsSpecialization(character, ProfissaoSpecialization.MECANICA);
         }

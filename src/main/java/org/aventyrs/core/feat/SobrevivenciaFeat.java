@@ -8,6 +8,7 @@ import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.scene.TerrainType;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.skill.Skill;
+import org.aventyrs.core.skill.conhecimentos.ConhecimentosSpecialization;
 import org.aventyrs.core.skill.SkillTrait;
 import org.aventyrs.core.skill.SkillType;
 
@@ -99,15 +100,22 @@ public enum SobrevivenciaFeat implements Feat {
     // TODO: no hook intercepts damage before it lands — see this enum's own javadoc.
     // TODO: "não pode ser usado novamente até seu próximo Descanso Longo" needs a per-rest
     //  charge; RestService recovers resources but tracks no once-per-rest flags.
-    // TODO: disjunctive Pré-requisito (Instinto *ou* Vigor 3); modelled as the Vigor branch only.
+    // The disjunctive Pré-requisito is real — "Instinto *ou* Vigor 3", two FeatRequirements#anyOf
+    // branches.
     DURO_DE_MATAR(
             "Se algum efeito iniciado por outro personagem for reduzir seus PV à 0 ou menos, ao "
                     + "invés disso, aquele efeito reduzirá seu PV para 1. Este efeito é ativado "
                     + "automaticamente, após sua ativação não pode ser usado novamente até seu "
                     + "próximo Descanso Longo.",
             FeatRequirements.builder()
-                    .attributeDomain(AttributeDomain.VIGOR)
-                    .requiredAttributeValue(3)
+                    .alternative(FeatRequirements.builder()
+                            .attributeDomain(AttributeDomain.INSTINCT)
+                            .requiredAttributeValue(3)
+                            .build())
+                    .alternative(FeatRequirements.builder()
+                            .attributeDomain(AttributeDomain.VIGOR)
+                            .requiredAttributeValue(3)
+                            .build())
                     .build()),
 
     /**
@@ -120,8 +128,9 @@ public enum SobrevivenciaFeat implements Feat {
      * SceneContext} both hooks receive, the same way {@code ElficoFeat#GUARDIAO_DOS_BOSQUES}
      * reads it.
      */
-    // TODO: its Pré-requisito names an Especialização (Conhecimentos: Natureza);
-    //  FeatRequirements models a Habilidade de Competência but not a SkillSpecialization.
+    // The Especialização Pré-requisito (Conhecimentos: Natureza) is real now —
+    // FeatRequirements#requiredSkillTraits is typed as SkillTrait, so an Especialização and a
+    // Habilidade de Competência both fit the one clause.
     TERRENO_PREDILETO(
             "Escolha um tipo de terreno entre Aquáticos, Cidades, Desertos, Florestas, Montanhas, "
                     + "Subterrâneo. Você recebe Bônus de +2 em suas Defesas e Vantagem em rolagens "
@@ -129,6 +138,7 @@ public enum SobrevivenciaFeat implements Feat {
             FeatRequirements.builder()
                     .attributeDomain(AttributeDomain.VIGOR)
                     .requiredAttributeValue(3)
+                    .requiredSkillTrait(ConhecimentosSpecialization.NATUREZA)
                     .build()),
 
     /**
@@ -211,13 +221,14 @@ public enum SobrevivenciaFeat implements Feat {
     // TODO: redirecting a permanent Ego spend to the temporary pool has no representation:
     //  spendEgoPoints names its pool at the call site and deliberately has no fallback between
     //  the two (see CLAUDE.md's "Spending names its pool").
-    // TODO: "qualquer Atributo com Valor Base 5" names no particular Attribute; FeatRequirements
-    //  tests one named AttributeDomain, so only the Talento-count half is enforced.
+    // "Qualquer Atributo com Valor Base 5" is enforced now, through
+    // FeatRequirements#requiredAnyAttributeValue — the form that names no domain at all.
     SORTE_DE_MOSES(
             "Você adquire 1 ponto permanente de ‘Sorte’. Enquanto sua quantidade de PV for igual "
                     + "ou menor que seu valor de ‘Vigor’, usos e perdas de ‘Sorte’ que seriam "
                     + "permanentes ao invés disso são temporárias.",
             FeatRequirements.builder()
+                    .requiredAnyAttributeValue(5)
                     .requiredFeatCategory(FeatCategory.DESTINO)
                     .requiredFeatCategoryCount(1)
                     .build()),
@@ -259,8 +270,8 @@ public enum SobrevivenciaFeat implements Feat {
     // TODO: chains off DURO_DE_MATAR's activation, which is itself unbuilt, and needs a
      //  start-of-Turn hook — CharacterSheet#startTurn exists but is a no-op with no effect
     //  registry behind it.
-    // TODO: names two required Talentos; requiredFeat is singular, so only DURO_DE_FERIR is
-    //  recorded (it already requires DURO_DE_MATAR transitively).
+    // Both required Talentos are enforced now — requiredFeats is a set — even though DURO_DE_FERIR
+    // already implies DURO_DE_MATAR transitively; the gate reads as the text writes it.
     DURO_DE_MATAR_SUPERIOR(
             "Após ativar o Talento Duro de Matar, em seu próximo Turno você recupera uma "
                     + "quantidade de PV iguais ao seu Vigor. Adicionalmente você reduz os danos "
@@ -269,6 +280,7 @@ public enum SobrevivenciaFeat implements Feat {
                     .attributeDomain(AttributeDomain.INSTINCT)
                     .requiredAttributeValue(4)
                     .requiredFeat(DURO_DE_FERIR)
+                    .requiredFeat(DURO_DE_MATAR)
                     .build()),
 
     /**

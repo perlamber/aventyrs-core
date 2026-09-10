@@ -9,6 +9,8 @@ import org.aventyrs.core.skill.Skill;
 import org.aventyrs.core.skill.SkillTrait;
 import org.aventyrs.core.skill.SkillType;
 
+import java.util.function.Supplier;
+
 /**
  * Talentos Pequeninos — one about acting twice in a Turn, two about changing what kind of
  * creature the holder is, and one about striking from hiding.
@@ -51,7 +53,7 @@ public enum PequeninoFeat implements Feat {
             "Sempre que efetuar uma segunda rolagem de Perícia num mesmo Turno você recebe +1PA. "
                     + "Apenas rolagens de Perícias diferentes desencadeiam este efeito e os "
                     + "Pontos de Ação ganhos desta forma duram apenas por esta Rodada.",
-            FeatRequirements.builder()
+            () -> FeatRequirements.builder()
                     .requiredRace(Pequenino.class)
                     .requiredAwakenedTitles(1)
                     .build()),
@@ -70,8 +72,9 @@ public enum PequeninoFeat implements Feat {
             "Seu tipo de Personagem muda para Feérico e você pode adquirir Talentos deste tipo. "
                     + "Para você os Talentos Feéricos custam -0.5EXP. Apenas Pequeninos que não "
                     + "possuam o Talento 'Linhagem de Lacerto'.",
-            FeatRequirements.builder()
+            () -> FeatRequirements.builder()
                     .requiredRace(Pequenino.class)
+                    .forbiddenFeat(linhagemDeLacerto())
                     .requiredAwakenedTitles(1)
                     .build()),
 
@@ -85,8 +88,9 @@ public enum PequeninoFeat implements Feat {
             "Seu tipo de Personagem muda para Monstruoso e você pode adquirir Talentos deste "
                     + "tipo. Para você os Talentos Monstruosos custam -0.5EXP. Apenas Pequeninos "
                     + "que não possuam o Talento 'Linhagem de Flora'.",
-            FeatRequirements.builder()
+            () -> FeatRequirements.builder()
                     .requiredRace(Pequenino.class)
+                    .forbiddenFeat(PequeninoFeat.LINHAGEM_DE_FLORA)
                     .requiredAwakenedTitles(1)
                     .build()),
 
@@ -110,7 +114,7 @@ public enum PequeninoFeat implements Feat {
                     + "Enquanto nenhum outro personagem puder te ver, suas Rolagens de Perícia tem "
                     + "o GD reduzido em -1 nível, este efeito não reduz o GD de Conhecimentos e "
                     + "Profissão. Este efeito pode ser ativado apenas uma vez a cada Rodada.",
-            FeatRequirements.builder()
+            () -> FeatRequirements.builder()
                     .requiredRace(Pequenino.class)
                     .requiredAwakenedTitles(1)
                     .build()) {
@@ -127,10 +131,29 @@ public enum PequeninoFeat implements Feat {
         }
     };
 
-    private final String description;
-    private final FeatRequirements featRequirements;
+    /**
+     * {@link #LINHAGEM_DE_LACERTO}, reached through a method rather than named directly: Java forbids
+     * referencing a <em>later</em> enum constant from an earlier constant's constructor arguments,
+     * and a {@link Supplier} does not lift that — the restriction is on the reference, not on when
+     * it is evaluated. A static method body is not an initializer, so the forward reference is
+     * legal here. Only the forward half of each mutually-exclusive pair needs one; the constant
+     * declared second names its twin directly.
+     */
+    private static Feat linhagemDeLacerto() {
+        return LINHAGEM_DE_LACERTO;
+    }
 
-    PequeninoFeat(final String description, final FeatRequirements featRequirements) {
+    private final String description;
+    /**
+     * Held as a {@link Supplier} rather than a plain field because this tree's mutually-exclusive
+     * Talentos name each <em>other</em> as a {@code forbiddenFeat}, and Java forbids referencing
+     * an enum constant from another constant's constructor arguments. Deferring construction to
+     * the first {@link #getFeatRequirements()} call sidesteps that, the same way {@code
+     * MetamagicoFeat} already does for its own sibling {@code requiredFeat} chain.
+     */
+    private final Supplier<FeatRequirements> featRequirements;
+
+    PequeninoFeat(final String description, final Supplier<FeatRequirements> featRequirements) {
         this.description = description;
         this.featRequirements = featRequirements;
     }
@@ -147,6 +170,6 @@ public enum PequeninoFeat implements Feat {
 
     @Override
     public FeatRequirements getFeatRequirements() {
-        return featRequirements;
+        return featRequirements.get();
     }
 }

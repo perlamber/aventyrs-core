@@ -3,6 +3,7 @@ package org.aventyrs.core.feat;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Alignment;
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.effect.Definhar;
 import org.aventyrs.core.effect.EffectChain;
 import org.aventyrs.core.magic.ActivationTime;
@@ -386,8 +387,8 @@ public enum ElficoFeat implements Feat {
     }
 
     @Override
-    public boolean isEligible(final Character character) {
-        if (!Feat.super.isEligible(character)) {
+    public boolean isEligible(final Character character, final CharacterSheet sheet) {
+        if (!Feat.super.isEligible(character, sheet)) {
             return false;
         }
         if (!isGuardian()) {

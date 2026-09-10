@@ -15,7 +15,7 @@ public class FeatServiceImpl implements FeatService {
 
     @Override
     public Feat grantFeat(final Character character, final CharacterSheet characterSheet, final Feat feat) throws IllegalOperationException {
-        if (!feat.isEligible(character)) {
+        if (!feat.isEligible(character, characterSheet)) {
             throw new IllegalOperationException(FEAT_PREREQUISITE_NOT_MET);
         }
 
@@ -33,8 +33,13 @@ public class FeatServiceImpl implements FeatService {
     }
 
     @Override
+    public List<Feat> getAvailableFeats(final Character character, final CharacterSheet characterSheet) {
+        return FeatCatalog.availableFor(character, characterSheet);
+    }
+
+    @Override
     public List<Feat> getAffordableFeats(final Character character, final CharacterSheet characterSheet) {
-        return getAvailableFeats(character).stream()
+        return getAvailableFeats(character, characterSheet).stream()
                 .filter(feat -> canAfford(character, characterSheet, feat))
                 .toList();
     }

@@ -3,6 +3,8 @@ package org.aventyrs.core.feat;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.SizeCategory;
+import org.aventyrs.core.race.Aviano;
+import org.aventyrs.core.race.Bestial;
 import org.aventyrs.core.race.CreatureType;
 import org.aventyrs.core.race.Satiro;
 import org.aventyrs.core.scene.SceneContext;
@@ -41,10 +43,12 @@ public enum FeericoFeat implements Feat {
      */
     // TODO: needs a flight state and a Movimento Base de Voo, which is a different sub-stat from
     //  ordinary Movimento Base — see Aviano's Braços Alados and BestialFeat's class javadoc.
-    // TODO: its Pré-requisito is a disjunction — "apenas Avianos e Bestiais, OU personagens
-    //  recém-criados de raça Feérica" — and every FeatRequirements clause combines with and. The
-    //  Feérico branch is recorded, so an Aviano or Bestial is wrongly refused; one of the eight
-    //  constants docs/rules/talentos-index.md lists under "Disjunctions".
+    // The disjunctive Pré-requisito is real now — "apenas Avianos e Bestiais, OU personagens
+    // recém-criados de raça Feérica" — as three FeatRequirements#anyOf branches, so an Aviano or
+    // Bestial is no longer wrongly refused.
+    // TODO: the Feérico branch is still missing its "recém-criados" half — nothing records when a
+    //  character was created or that they are freshly made, so that branch stays open to any
+    //  Feérico. Looser than written, in the direction this catalog always errs.
     ASAS(
             "Você tem asas e possui Movimento Base de Voo. Enquanto voando seu Movimento Base "
                     + "aumenta em +2UD. Iniciar uma ação de voo em situações estressantes, como as "
@@ -52,7 +56,11 @@ public enum FeericoFeat implements Feat {
                     + "reduzido em 1 para cada Título Aventyr que o personagem possua. A Duração "
                     + "do Efeito de Voo é igual à 1d6+Metade do Vigor Rodadas.",
             FeatRequirements.builder()
-                    .requiredCreatureType(CreatureType.FEERICO)
+                    .alternative(FeatRequirements.builder().requiredRace(Aviano.class).build())
+                    .alternative(FeatRequirements.builder().requiredRace(Bestial.class).build())
+                    .alternative(FeatRequirements.builder()
+                            .requiredCreatureType(CreatureType.FEERICO)
+                            .build())
                     .build()),
 
     /** "O Custo de Ativação do Efeito de Voo é reduzido em -1PM." */
@@ -99,7 +107,8 @@ public enum FeericoFeat implements Feat {
     // TODO: flight does not exist — no Movimento Base de Voo sub-stat, so the wings and the 8UD
     //  have nothing to land on, and neither does the PM cost or the Duração that pays for them.
     // TODO: gated at FEERICO where the text says "apenas Fadas e Fúrias" — looser than written,
-    //  see the class javadoc. Its exclusion of SIRENIDEO is unenforceable, as every exclusion is.
+    //  see the class javadoc. The exclusion runs one way only, exactly as the rules text writes
+    //  it: Sirenídeo forbids Pixie, Pixie forbids nothing.
     PIXIE(
             "Sua categoria de tamanho muda para -3, você tem asas e Movimento Base de Voo 8UD. "
                     + "Voar em Cenas estressantes, como Combates, exige o uso de 2PM ao Tempo de "
@@ -219,6 +228,7 @@ public enum FeericoFeat implements Feat {
                     + "de +1 em Vigor e Vantagem nas rolagens de Artes.",
             FeatRequirements.builder()
                     .requiredCreatureType(CreatureType.FEERICO)
+                    .forbiddenFeat(PIXIE)
                     .build()) {
         @Override
         public int resolveAttributeBonus(final AttributeDomain domain, final Character character) {

@@ -114,10 +114,11 @@ mechanism.
 Get the Talento's name, its full Pré-requisito line, and its full Descrição verbatim.
 
 `Feat` (`org.aventyrs.core.feat`) is the shared interface — `getFeatCategory()`/
-`getDescription()`/`getFeatRequirements()`, plus a default `isEligible(Character)` that combines
-*every* set prerequisite in `getFeatRequirements()` at once (mirrors `AventyrTitleAbility
-#isEligible`'s identical shape, with Attribute/Perícia/Feat prerequisites instead of
-Especialização/other-Habilidade ones). `FeatRequirements` (a `@Builder record`) carries the raw
+`getDescription()`/`getFeatRequirements()`, plus a default `isEligible(Character, CharacterSheet)`
+that combines *every* set prerequisite in `getFeatRequirements()` at once (mirrors
+`AventyrTitleAbility#isEligible`'s identical shape, with Attribute/Perícia/Feat prerequisites
+instead of Especialização/other-Habilidade ones). `isEligible(Character)` delegates to it with a
+`null` sheet — **the 2-arg form is the one to override**, since that is what `grantFeat` calls. `FeatRequirements` (a `@Builder record`) carries the raw
 data. Unlike most "Requer N..." prerequisites elsewhere in this core (left as an unenforced
 comment), a Talento's prerequisites are always simple numeric/identity thresholds, so they're
 modeled as real, structured, *enforced* data.
@@ -128,14 +129,47 @@ three):
 - A Perícia Graduação floor (e.g. "2 Graduações em Ataque Corpo-a-Corpo") →
   `requiredSkillType`/`requiredSkillGraduation`.
 - Another specific Talento already held (e.g. "Requer Artista Marcial") → `requiredFeat`,
-  pointing at that other Talento's own enum constant.
-- A held Habilidade de Competência → `requiredSkillCompetencyAbility`; N Títulos Aventyr Despertos
+  pointing at that other Talento's own enum constant. **Repeat the call** for a Pré-requisito
+  naming two — the field behind it is a `@Singular` set.
+- A held Habilidade de Competência **or Especialização** → `requiredSkillTrait`, typed as
+  `SkillTrait` so both kinds share the clause; N Títulos Aventyr Despertos
   (optionally of one `TitleArchetype`) → `requiredAwakenedTitles`/`requiredTitleArchetype`; a Race
   / `CreatureType` / `Deity` → `requiredRace`/`requiredCreatureType`/`requiredDeity`; N other
   Talentos of a tree → `requiredFeatCategory`/`requiredFeatCategoryCount`.
 - **A count of Regalias the holder has forged** ("criação de 3 ou mais Regalias Menores") →
   `craftedRegaliaGrade`/`craftedRegaliaCount` (read off `Character#getRegaliasCrafted`) — the
   `ArtificeFeat` ladder's own acquisition gate.
+- **A ceiling** ("Força igual ou inferior à 2", "Iniciativa 2 ou inferior") →
+  `maximumAttributeDomain`/`maximumAttributeValue`, or `maximumEgoDomain`/`maximumEgoValue` when
+  the clause names an Ego (Iniciativa is one). Inclusive, and a separate clause from the minimum —
+  a Talento naming both names two different domains.
+- **A threshold on no particular Atributo** ("Atributo 3 ou Superior") →
+  `requiredAnyAttributeValue`; the narrower "qualquer atributo *que receba bônus Racial*" →
+  `requiredAnyRacialAttributeValue`.
+- **A negation** — "apenas personagens não-humanos" → `forbiddenRace`; "que não possuam o Talento
+  X", and each half of a mutually-exclusive pair → `forbiddenFeat`.
+- **Fama or lifetime EXP** → `requiredFame`/`requiredTotalExperience`. These live on the
+  `CharacterSheet`, so only `isEligible(Character, CharacterSheet)` tests them; the sheet-less
+  overload skips them, which keeps a preview listing looser than the real gate rather than
+  stricter. `FeatService#grantFeat` always passes the sheet.
+- **A disjunction** ("Destreza 3 e Saque Rápido, *ou* Foco 5") → one `.alternative(...)` per
+  branch, each a nested `FeatRequirements`. At least one branch must hold **on top of** every
+  clause set on the outer record, so anything common to all branches is written once, outside.
+
+⚠️ **A mutually-exclusive pair forces two things on its enum.** Each half names its twin as a
+`forbiddenFeat`, so one direction is a forward reference. Hold the requirements as a
+`Supplier<FeatRequirements>` (the `MetamagicoFeat` pattern) **and** reach the later constant
+through a small `private static Feat` accessor: the `Supplier` defers *evaluation*, but Java's
+forward-reference rule is about the *reference*, and only a method body (not an initializer)
+lifts it. `PequeninoFeat`/`HumanoFeat`/`GiganteFeat`/`GorgonaFeat`/`MobilidadeFeat` all do this.
+A pair whose text runs one way only (`FeericoFeat#SIRENIDEO` forbids `PIXIE`, not the reverse)
+needs neither, since a backward reference is legal.
+
+**What a Pré-requisito still cannot say**, and what to do instead: "personagens recém-criados"
+(nothing records creation time); a *second* Perícia Graduação (the pair is singular); a constraint
+on another held Talento's recorded *choice*; a cap on how many of a family may be held at once.
+The last three are `isEligible(Character, CharacterSheet)` overrides — override **that** form,
+not the 1-arg one, or `grantFeat` will not reach your check.
 
 **Before filing a clause here, ask whether it gates *acquiring* the Talento or *using* it.**
 `FeatRequirements` answers "may this character learn it", checked once by `FeatService#grantFeat`;
@@ -314,14 +348,17 @@ ArrayList<>()).build()`.
 - `src/main/java/org/aventyrs/core/feat/ArtesMarciaisFeat.java` — the worked example this
   skill follows (a tree with one constant so far, `ARTISTA_MARCIAL`, with a real Dano Base
   formula method and no wired caller yet).
-- `src/main/java/org/aventyrs/core/feat/Feat.java` — `isEligible(Character)`, the
-  requirement-check mechanism every new Talento's Pré-requisito plugs into via
-  `FeatRequirements`.
+- `src/main/java/org/aventyrs/core/feat/Feat.java` — `isEligible(Character, CharacterSheet)`,
+  the requirement-check mechanism every new Talento's Pré-requisito plugs into via
+  `FeatRequirements`. The 1-arg form delegates to it; override the 2-arg one.
 - `src/main/java/org/aventyrs/core/feat/FeatRequirements.java` — every prerequisite field
-  (`attributeDomain`/`requiredAttributeValue`, `requiredSkillType`/`requiredSkillGraduation`,
-  `requiredFeat`, `requiredSkillCompetencyAbility`, `requiredAwakenedTitles`/`requiredTitleArchetype`,
-  `requiredRace`/`requiredCreatureType`/`requiredDeity`, `requiredFeatCategory`/`…Count`,
-  `craftedRegaliaGrade`/`craftedRegaliaCount`); leave any subset
+  (`attributeDomain`/`requiredAttributeValue` and its `maximum…` ceiling twin,
+  `requiredAnyAttributeValue`/`requiredAnyRacialAttributeValue`, `maximumEgoDomain`/`…Value`,
+  `requiredSkillType`/`requiredSkillGraduation`,
+  `requiredFeats`, `forbiddenFeats`, `requiredSkillTraits`, `requiredAwakenedTitles`/`requiredTitleArchetype`,
+  `requiredRace`/`forbiddenRace`/`requiredCreatureType`/`requiredDeity`, `requiredFeatCategory`/`…Count`,
+  `craftedRegaliaGrade`/`craftedRegaliaCount`, `requiredFame`/`requiredTotalExperience`, and
+  `anyOf` for a disjunction); leave any subset
   unset when the rules text doesn't name it. Note what is *not* here: a condition of use — see
   `Feat#itsAllowedToCraftRegalia` and `org.aventyrs.core.item.ItemForgery`.
 - `src/main/java/org/aventyrs/core/character/services/FeatService.java`/

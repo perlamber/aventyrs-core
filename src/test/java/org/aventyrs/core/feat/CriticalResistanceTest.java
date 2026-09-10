@@ -5,6 +5,7 @@ import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.character.services.FeatService;
 import org.aventyrs.core.character.services.FeatServiceImpl;
 import org.aventyrs.core.modifier.ModifierType;
+import org.aventyrs.core.race.Elfo;
 import org.aventyrs.core.race.Race;
 import org.aventyrs.core.race.Troll;
 import org.aventyrs.core.scene.SceneContext;
@@ -85,12 +86,14 @@ class CriticalResistanceTest {
 
     /**
      * {@code MonstruosoFeat#ANATOMIA_INCOMUM} — "Você recebe Resistência a Críticos", stating no
-     * figure, so exactly one instance. It has no Pré-requisito, so it is acquired for real here
-     * through {@code FeatService#grantFeat} rather than the plain mutator.
+     * figure, so exactly one instance. Its only Pré-requisito is "apenas personagens
+     * não-humanos", so it is acquired for real here — on an Elfo, which is not one, and which
+     * grants no RC of its own to muddle the total — through {@code FeatService#grantFeat} rather
+     * than the plain mutator.
      */
     @Test
     void anatomiaIncomumNarrowsAnAttackersCriticalMargin() throws IllegalOperationException {
-        Character defender = character().build();
+        Character defender = character().race(new Elfo()).build();
         CharacterSheet sheet = sheetOf(defender);
         sheet.accumulateExperience(BigDecimal.valueOf(100));
         featService.grantFeat(defender, sheet, MonstruosoFeat.ANATOMIA_INCOMUM);

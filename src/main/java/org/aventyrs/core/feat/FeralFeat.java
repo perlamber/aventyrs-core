@@ -23,10 +23,13 @@ import org.aventyrs.core.race.HomemFera;
  * FeatRequirements#requiredFeatCategory}, and {@link #ASPECTO_DAS_FERAS} names the latter
  * directly.
  *
- * <p><b>The mutual exclusion between the two Transformação Talentos is not enforced</b> — "não
- * pode ser usado em conjunto" is an exclusion clause, and {@code FeatRequirements} carries only
- * thresholds that must be met, never one that must not. Same shape as {@code HumanoFeat}'s own
- * pair, and recorded in {@code docs/rules/talentos-index.md}.
+ * <p><b>The two Transformação Talentos are deliberately <i>not</i> given a {@code
+ * FeatRequirements#forbiddenFeats} clause</b>, unlike every other exclusion in the catalog. Their
+ * rules text says "não pode ser <i>usado</i> em conjunto" — a restriction on using them together,
+ * not on acquiring both — and CLAUDE.md draws exactly that line: a prerequisite answers "may they
+ * learn it", checked once at {@code grantFeat}, while something that must hold each time the
+ * trait is exercised belongs in a hook. Both Talentos are unbuilt, so there is no use to gate
+ * yet; the clause lands with them.
  */
 public enum FeralFeat implements Feat {
 

@@ -87,15 +87,21 @@ public enum DuelistaFeat implements Feat {
      * reading {@code AnaoFeat#VANTAGEM_DE_TAMANHO} takes of its own opponent clause.
      */
     // TODO: "rolar novamente o dado de menor valor" — reroll, see the enum's own javadoc.
-    // TODO: disjunctive Pré-requisito (Talento Lutador Nato *ou* 4 Graduações); modelled as the
-    //  Talento branch, so the pure-Graduação route is wrongly refused.
+    // The disjunctive Pré-requisito is real now — "Talento Lutador Nato *ou* 4 Graduações em
+    // Ataque Corpo-a-Corpo", two FeatRequirements#anyOf branches.
     LUTAR_ENGAJADO(
             "Você recebe Vantagem em suas rolagens de Ataque Corpo-a-Corpo contra alvos "
                     + "adjacentes. Sempre que usar o talento Lutador Nato contra um alvo adjacente "
                     + "poderá também rolar novamente o dado de menor valor em suas rolagens de "
                     + "Dano.",
             FeatRequirements.builder()
-                    .requiredFeat(LUTADOR_NATO)
+                    .alternative(FeatRequirements.builder()
+                            .requiredFeat(LUTADOR_NATO)
+                            .build())
+                    .alternative(FeatRequirements.builder()
+                            .requiredSkillType(SkillType.ATAQUE_CORPO_A_CORPO)
+                            .requiredSkillGraduation(4)
+                            .build())
                     .build()) {
         /**
          * Returns 0 with no Scene, or with no target to measure against: the clause is scoped to
@@ -298,13 +304,13 @@ public enum DuelistaFeat implements Feat {
     /** "Após ser bem-sucedido em um Ataque Rápido você pode fazer imediatamente um Ataque Concentrado ao custo de 1PA." */
     // TODO: chains two Talentos that are both unbuilt, and granting an extra attack is not
     //  expressible.
-    // TODO: names *two* required Talentos; requiredFeat is singular, so only ATAQUE_CONCENTRADO
-    //  is recorded and ATAQUE_RAPIDO goes unenforced.
+    // Both required Talentos are enforced now — requiredFeats is a set.
     UM_DOIS(
             "Após ser bem-sucedido em um Ataque Rápido você pode fazer imediatamente um Ataque "
                     + "Concentrado ao custo de 1PA.",
             FeatRequirements.builder()
                     .requiredFeat(ATAQUE_CONCENTRADO)
+                    .requiredFeat(ATAQUE_RAPIDO)
                     .requiredAwakenedTitles(1)
                     .build()),
 

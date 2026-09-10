@@ -1,6 +1,7 @@
 package org.aventyrs.core.feat;
 
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.sheet.CharacterSheet;
 
 import java.util.Arrays;
 import java.util.EnumMap;
@@ -68,10 +69,21 @@ public final class FeatCatalog {
      * same list reached through the service layer.
      */
     public static List<Feat> availableFor(final Character character) {
+        return availableFor(character, null);
+    }
+
+    /**
+     * The same list, checked against sheet too — so the {@code CharacterSheet}-side prerequisites
+     * ({@code FeatRequirements#requiredFame}, {@code #requiredTotalExperience}) are enforced
+     * rather than skipped. Pass the sheet whenever one is in hand: without it those two clauses
+     * are simply not tested, which makes the listing looser than {@code FeatService#grantFeat}'s
+     * own check, never stricter.
+     */
+    public static List<Feat> availableFor(final Character character, final CharacterSheet sheet) {
         return ALL.stream()
                 .filter(feat -> character.getFeats().stream()
                         .noneMatch(held -> held.catalogEntry() == feat))
-                .filter(feat -> feat.isEligible(character))
+                .filter(feat -> feat.isEligible(character, sheet))
                 .toList();
     }
 

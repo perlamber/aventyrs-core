@@ -5,6 +5,8 @@ import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.DefenseType;
 import org.aventyrs.core.race.Gigantes;
 
+import java.util.function.Supplier;
+
 /**
  * Talentos Gigantes — two about protecting smaller allies, two about awakening an ancestral clã.
  *
@@ -51,7 +53,7 @@ public enum GiganteFeat implements Feat {
                     + "não te concede mais quaisquer Desvantagens. Seu Movimento Base aumenta em "
                     + "+2UD para cada Títulos Aventyr Despertos, mas apenas para se aproximar de "
                     + "aliados feridos que pertençam à Categorias de Tamanhos inferiores à sua.",
-            FeatRequirements.builder()
+            () -> FeatRequirements.builder()
                     .requiredRace(Gigantes.class)
                     .requiredAwakenedTitles(1)
                     .build()),
@@ -75,7 +77,7 @@ public enum GiganteFeat implements Feat {
             "Seus aliados recebem Bônus de +1 em Defesas enquanto estiverem adjacentes a você. "
                     + "Este Bônus aumenta em +1 para cada Título Aventyr Desperto, então em +1 "
                     + "para cada Título Abençoado desperto.",
-            FeatRequirements.builder()
+            () -> FeatRequirements.builder()
                     .requiredRace(Gigantes.class)
                     .requiredFeat(ZELO_PELOS_FRAGEIS)
                     .requiredAwakenedTitles(1)
@@ -90,9 +92,8 @@ public enum GiganteFeat implements Feat {
     // written — unlike GnomoFeat#DUENDE's absolute set), the Força through
     // Feat#resolveAttributeBonus, and the Defesas malus through resolveDefenseBonus. Its Jotun
     // twin stays withheld because its own malus is still inexpressible; see there.
-    // TODO: "não pode possuir mais de um Talento de Clã" is an exclusion, and FeatRequirements
-    //  carries only thresholds that must be met — so a Gigante can hold both Clã Talentos and
-    //  collect both size steps, which the text forbids.
+    // "Um mesmo personagem não pode possuir mais de um Talento de Clã" is enforced now, through
+    // FeatRequirements#forbiddenFeats — each Clã Talento naming its twin.
     GIGANTE_DO_CLA_EMPUSA(
             "O Despertar de sua Centelha também desperta um poder latente em seu sangue, fruto da "
                     + "descendência Abissal. Você se torna maior e mais poderoso, mas se torna "
@@ -100,8 +101,9 @@ public enum GiganteFeat implements Feat {
                     + "+1 Força para cada Título Aventyr Desperto, mas recebe Redutor de -2 em "
                     + "suas Defesas. Um mesmo personagem não pode possuir mais um de um Talento "
                     + "de Clã.",
-            FeatRequirements.builder()
+            () -> FeatRequirements.builder()
                     .requiredRace(Gigantes.class)
+                    .forbiddenFeat(giganteDoClaJotun())
                     .requiredAwakenedTitles(1)
                     .build()) {
         @Override
@@ -141,8 +143,9 @@ public enum GiganteFeat implements Feat {
                     + "Desperto, mas recebe Desvantagens em rolagens de Perícias Físicas "
                     + "(baseadas em Força e Destreza), exceto Esquiva e Aparar. Um mesmo "
                     + "personagem não pode possuir mais um de um Talento de Clã.",
-            FeatRequirements.builder()
+            () -> FeatRequirements.builder()
                     .requiredRace(Gigantes.class)
+                    .forbiddenFeat(GiganteFeat.GIGANTE_DO_CLA_EMPUSA)
                     .requiredAwakenedTitles(1)
                     .build());
 
@@ -152,10 +155,29 @@ public enum GiganteFeat implements Feat {
     /** Empusa's own "Redutor de -2 em suas Defesas", applying to both DF and DM. */
     private static final int EMPUSA_DEFENSE_MALUS = -2;
 
-    private final String description;
-    private final FeatRequirements featRequirements;
+    /**
+     * {@link #GIGANTE_DO_CLA_JOTUN}, reached through a method rather than named directly: Java forbids
+     * referencing a <em>later</em> enum constant from an earlier constant's constructor arguments,
+     * and a {@link Supplier} does not lift that — the restriction is on the reference, not on when
+     * it is evaluated. A static method body is not an initializer, so the forward reference is
+     * legal here. Only the forward half of each mutually-exclusive pair needs one; the constant
+     * declared second names its twin directly.
+     */
+    private static Feat giganteDoClaJotun() {
+        return GIGANTE_DO_CLA_JOTUN;
+    }
 
-    GiganteFeat(final String description, final FeatRequirements featRequirements) {
+    private final String description;
+    /**
+     * Held as a {@link Supplier} rather than a plain field because this tree's mutually-exclusive
+     * Talentos name each <em>other</em> as a {@code forbiddenFeat}, and Java forbids referencing
+     * an enum constant from another constant's constructor arguments. Deferring construction to
+     * the first {@link #getFeatRequirements()} call sidesteps that, the same way {@code
+     * MetamagicoFeat} already does for its own sibling {@code requiredFeat} chain.
+     */
+    private final Supplier<FeatRequirements> featRequirements;
+
+    GiganteFeat(final String description, final Supplier<FeatRequirements> featRequirements) {
         this.description = description;
         this.featRequirements = featRequirements;
     }
@@ -172,6 +194,6 @@ public enum GiganteFeat implements Feat {
 
     @Override
     public FeatRequirements getFeatRequirements() {
-        return featRequirements;
+        return featRequirements.get();
     }
 }

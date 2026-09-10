@@ -9,6 +9,7 @@ import org.aventyrs.core.character.DamageType;
 import org.aventyrs.core.character.DefenseType;
 import org.aventyrs.core.item.Weapon;
 import org.aventyrs.core.race.CreatureType;
+import org.aventyrs.core.race.Human;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.skill.AttackSource;
 import org.aventyrs.core.skill.SkillType;
@@ -44,10 +45,9 @@ public enum MonstruosoFeat implements Feat {
     // TODO: the Vantagem is scoped to the *target* — same race, and lacking this same Talento —
     //  and resolveSkillRollBonus carries no opponent. Nothing anywhere lets a roll bonus inspect
     //  who is being rolled against except the attack-specific resolveAttackRollBonus.
-    // TODO: its Pré-requisito is "qualquer atributo que receba bônus Racial com valor Base igual
-    //  à 5", which names no particular AttributeDomain — one of the three constants
-    //  docs/rules/talentos-index.md lists under "Any Attribute at N". Only the race clause is
-    //  enforced, so the gate is looser than written.
+    // "Qualquer atributo que receba bônus Racial com valor Base igual à 5" is enforced now,
+    // through FeatRequirements#requiredAnyRacialAttributeValue — the narrow form of the
+    // any-Atributo clause, which additionally demands the Atributo actually carry a Bônus Racial.
     ALFA(
             "Receba +1 de bônus Racial em um dos atributos cedidos por sua Raça ou no atributo "
                     + "'Força', a sua escolha. Adicionalmente você recebe vantagem em rolagens de "
@@ -55,6 +55,7 @@ public enum MonstruosoFeat implements Feat {
                     + "de sua raça que não possuam este Talento.",
             FeatRequirements.builder()
                     .requiredCreatureType(CreatureType.MONSTRUOSO)
+                    .requiredAnyRacialAttributeValue(5)
                     .build()),
 
     /**
@@ -69,13 +70,15 @@ public enum MonstruosoFeat implements Feat {
     //  #applicableTo already filters a victim's immunities, but it keys on CriticalEffectType
     //  (which effect) and this clause keys on *severity* (Menor vs Maior), which the filter does
     //  not carry. It also needs a per-Cena counter, which nothing tracks.
-    // TODO: "apenas personagens não-humanos" is a negated race clause, and FeatRequirements
-    //  carries only thresholds that must be met — so this is left ungated on race entirely.
+    // "Apenas personagens não-humanos" is enforced now, through FeatRequirements#forbiddenRace —
+    // the mirror of requiredRace, isInstance and all.
     ANATOMIA_INCOMUM(
             "Você recebe Resistência a Críticos. Você ignora o primeiro Efeito Crítico Menor que "
                     + "sofrer em cada Cena de Combate. Você ignora um Efeito Crítico Menor "
                     + "adicional para cada Título Aventyr Desperto.",
-            FeatRequirements.builder().build()) {
+            FeatRequirements.builder()
+                    .forbiddenRace(Human.class)
+                    .build()) {
         @Override
         public int resolveCriticalResistance(final Character character, final SceneContext sceneContext) {
             return CombatantSheet.CRITICAL_RESISTANCE_INSTANCE;
@@ -151,14 +154,18 @@ public enum MonstruosoFeat implements Feat {
     },
 
     /** "Você recebe Bônus Racial de +2 em DF e RDS." Both halves real. */
-    // TODO: its Pré-requisito is a disjunction — "Raças Monstruosa ou Vigor 4" — and every clause
-    //  combines with and. The Vigor branch is recorded rather than the race one, because it is
-    //  the branch a non-Monstruoso can reach; a Monstruoso with Vigor 3 is wrongly refused.
+    // The disjunctive Pré-requisito is real — "Raças Monstruosa ou Vigor 4", two
+    // FeatRequirements#anyOf branches, so a Monstruoso with Vigor 3 now qualifies as written.
     PELE_RIJA(
             "Você recebe Bônus Racial de +2 em DF e RDS.",
             FeatRequirements.builder()
-                    .attributeDomain(AttributeDomain.VIGOR)
-                    .requiredAttributeValue(4)
+                    .alternative(FeatRequirements.builder()
+                            .requiredCreatureType(CreatureType.MONSTRUOSO)
+                            .build())
+                    .alternative(FeatRequirements.builder()
+                            .attributeDomain(AttributeDomain.VIGOR)
+                            .requiredAttributeValue(4)
+                            .build())
                     .build()) {
         @Override
         public int resolveDefenseBonus(final DefenseType defenseType, final Character character) {
@@ -227,8 +234,8 @@ public enum MonstruosoFeat implements Feat {
     // TODO: needs an appearance/form state — the same missing piece Gorgona's own forms,
     //  DraconicoFeat#DRACONATO and HomemFera's Forma Híbrida are all blocked on, plus a way to
     //  suppress physical racial traits while it holds.
-    // TODO: its Pré-requisito is a disjunction — Monstruoso with a Título, or Feérico with none —
-    //  and every clause combines with and, so a Feérico is wrongly refused.
+    // The disjunctive Pré-requisito is real — "Monstruoso com 1 Título Desperto, ou Feérico" —
+    // two FeatRequirements#anyOf branches, each carrying its own Título count.
     MIMETIZAR_FORMA_HUMANA(
             "Você pode mudar sua aparência, assumindo uma forma humana comum. Você perde "
                     + "características raciais físicas, como escamas, chifres, garras etc. Sua "
@@ -237,8 +244,13 @@ public enum MonstruosoFeat implements Feat {
                     + "habilidade. Personagens Monstruosos precisam utilizar 2PD para ativar este "
                     + "efeito, personagens Feéricos utilizam 2PM.",
             FeatRequirements.builder()
-                    .requiredCreatureType(CreatureType.MONSTRUOSO)
-                    .requiredAwakenedTitles(1)
+                    .alternative(FeatRequirements.builder()
+                            .requiredCreatureType(CreatureType.MONSTRUOSO)
+                            .requiredAwakenedTitles(1)
+                            .build())
+                    .alternative(FeatRequirements.builder()
+                            .requiredCreatureType(CreatureType.FEERICO)
+                            .build())
                     .build()),
 
     /**

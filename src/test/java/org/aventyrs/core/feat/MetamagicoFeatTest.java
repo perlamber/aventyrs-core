@@ -90,8 +90,7 @@ class MetamagicoFeatTest {
     void everyPrerequisiteTalentoIsDeclaredBeforeItsDependent() {
         List<MetamagicoFeat> declared = List.of(MetamagicoFeat.values());
         for (MetamagicoFeat feat : declared) {
-            Feat required = feat.getFeatRequirements().requiredFeat();
-            if (required != null) {
+            for (Feat required : feat.getFeatRequirements().requiredFeats()) {
                 assertTrue(declared.indexOf(required) < declared.indexOf(feat),
                         feat.name() + " must be declared after its prerequisite");
             }
@@ -273,35 +272,35 @@ class MetamagicoFeatTest {
     @Test
     void theChainedTalentosEachNameTheirPredecessor() {
         assertEquals(MetamagicoFeat.ARCANISTA,
-                MetamagicoFeat.ARCANISTA_EXPERIENTE.getFeatRequirements().requiredFeat());
+                MetamagicoFeat.ARCANISTA_EXPERIENTE.getFeatRequirements().requiredFeats().iterator().next());
         assertEquals(MetamagicoFeat.ARCANISTA_EXPERIENTE,
-                MetamagicoFeat.MESTRE_ARCANISTA.getFeatRequirements().requiredFeat());
+                MetamagicoFeat.MESTRE_ARCANISTA.getFeatRequirements().requiredFeats().iterator().next());
         assertEquals(MetamagicoFeat.MESTRE_ARCANISTA,
-                MetamagicoFeat.DESAFIADOR_DA_REALIDADE.getFeatRequirements().requiredFeat());
+                MetamagicoFeat.DESAFIADOR_DA_REALIDADE.getFeatRequirements().requiredFeats().iterator().next());
         assertEquals(MetamagicoFeat.CONJURACAO_RAPIDA,
-                MetamagicoFeat.PROCRASTINAR_CONJURACAO.getFeatRequirements().requiredFeat());
+                MetamagicoFeat.PROCRASTINAR_CONJURACAO.getFeatRequirements().requiredFeats().iterator().next());
         assertEquals(MetamagicoFeat.ARCANISTA_EXPERIENTE,
-                MetamagicoFeat.ARTESAO_DE_BARREIRAS.getFeatRequirements().requiredFeat());
+                MetamagicoFeat.ARTESAO_DE_BARREIRAS.getFeatRequirements().requiredFeats().iterator().next());
         assertEquals(MetamagicoFeat.CONJURACAO_RAPIDA,
-                MetamagicoFeat.ARMAZENAR_MAGIA.getFeatRequirements().requiredFeat());
+                MetamagicoFeat.ARMAZENAR_MAGIA.getFeatRequirements().requiredFeats().iterator().next());
         assertEquals(MetamagicoFeat.APTIDAO_MAGICA_AMPLA,
-                MetamagicoFeat.APTIDAO_MAGICA_ASSOMBROSA.getFeatRequirements().requiredFeat());
+                MetamagicoFeat.APTIDAO_MAGICA_ASSOMBROSA.getFeatRequirements().requiredFeats().iterator().next());
         assertEquals(MetamagicoFeat.APTIDAO_MAGICA_ASSOMBROSA,
-                MetamagicoFeat.APTIDAO_MAGICA_SUPREMA.getFeatRequirements().requiredFeat());
+                MetamagicoFeat.APTIDAO_MAGICA_SUPREMA.getFeatRequirements().requiredFeats().iterator().next());
         assertEquals(MetamagicoFeat.MENTE_EXPANDIDA,
-                MetamagicoFeat.ENGENHEIRO_DO_MANA.getFeatRequirements().requiredFeat());
+                MetamagicoFeat.ENGENHEIRO_DO_MANA.getFeatRequirements().requiredFeats().iterator().next());
     }
 
     /** The four cap rungs form one unbroken chain, so none can be acquired out of order. */
     @Test
     void theCapLadderIsAnUnbrokenChain() {
-        assertNull(MetamagicoFeat.ARCANISTA.getFeatRequirements().requiredFeat());
+        assertTrue(MetamagicoFeat.ARCANISTA.getFeatRequirements().requiredFeats().isEmpty());
         assertEquals(MetamagicoFeat.ARCANISTA,
-                MetamagicoFeat.ARCANISTA_EXPERIENTE.getFeatRequirements().requiredFeat());
+                MetamagicoFeat.ARCANISTA_EXPERIENTE.getFeatRequirements().requiredFeats().iterator().next());
         assertEquals(MetamagicoFeat.ARCANISTA_EXPERIENTE,
-                MetamagicoFeat.MESTRE_ARCANISTA.getFeatRequirements().requiredFeat());
+                MetamagicoFeat.MESTRE_ARCANISTA.getFeatRequirements().requiredFeats().iterator().next());
         assertEquals(MetamagicoFeat.MESTRE_ARCANISTA,
-                MetamagicoFeat.DESAFIADOR_DA_REALIDADE.getFeatRequirements().requiredFeat());
+                MetamagicoFeat.DESAFIADOR_DA_REALIDADE.getFeatRequirements().requiredFeats().iterator().next());
     }
 
     @Test

@@ -106,7 +106,41 @@ alongside RD (an inference, documented).
 
 ---
 
-## Phase 2 — FeatRequirements expansion (acquisition-gating correctness)
+## Phase 2 — FeatRequirements expansion (acquisition-gating correctness) ✅ **DONE**
+
+**Built:** `anyOf` (nested disjunction groups, checked recursively — outer clauses AND at least
+one branch, so common ground is written once); `maximumAttributeDomain`/`Value` and
+`maximumEgoDomain`/`Value`; `requiredAnyAttributeValue` + the narrower
+`requiredAnyRacialAttributeValue`; `forbiddenRace`; `forbiddenFeats`; `requiredFame` /
+`requiredTotalExperience`. `requiredFeat` became a `@Singular` set (every existing `.requiredFeat(X)`
+call site still compiles) and `requiredSkillCompetencyAbility` became `requiredSkillTraits`, typed
+as `SkillTrait`, so an Especialização prerequisite fits the same clause.
+
+`Feat#isEligible(Character, CharacterSheet)` is the authoritative form; `isEligible(Character)`
+delegates with `null` and **skips** the two sheet-side clauses rather than failing them.
+`FeatService#grantFeat` and the new `getAvailableFeats(Character, CharacterSheet)` /
+`FeatCatalog#availableFor(Character, CharacterSheet)` pass the sheet, so the sheet-less listing is
+a documented *superset* of the real gate — pinned by a test.
+
+**Two things found on the way:**
+- A latent bug: six constants override `isEligible(Character)` (`ArtesMarciaisFeat`, `ElficoFeat`,
+  four in `AssassinoFeat`). Adding the 2-arg form would have silently bypassed every one at
+  `grantFeat`; they now override the 2-arg form.
+- A `Supplier<FeatRequirements>` does **not** make a forward reference to a later enum constant
+  legal — Java's rule is about the reference, not when it is evaluated. Mutually-exclusive pairs
+  therefore need the `Supplier` *and* a `private static` accessor for the forward half (a method
+  body is not an initializer). Five enums converted.
+
+**Not built, deliberately** — each recorded in `docs/rules/talentos-index.md` under "What a
+Pré-requisito still cannot say": "personagens recém-criados" (nothing records creation time); a
+*second* Perícia Graduação; a constraint on another held Talento's recorded *choice* (the three
+cases want equals/differs/is-a-weapon, which is not data); a cap on how many of a family may be
+held. The last three stay `isEligible` overrides. `FeralFeat`'s "não pode ser **usado** em
+conjunto" is a use restriction and deliberately does not become a `forbiddenFeat`.
+
+**Original plan text follows.**
+
+### Phase 2 (as planned)
 
 `FeatRequirements`/`isEligible` currently expresses only "attribute/skill/feat threshold that
 must be met". Add:
