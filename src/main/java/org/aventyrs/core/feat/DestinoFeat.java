@@ -7,10 +7,12 @@ import org.aventyrs.core.character.Character;
  * Talentos de Destino — what a character is, rather than what they can do: how enemies read
  * them, which Habilidades they were born to, and when their Títulos Aventyr awaken.
  *
- * <p>Two blockers dominate. The first is <b>granting another trait</b>: five constants here hand
- * out a Habilidade de Atributo, a Vantagem de Ego, or another Talento outright. Those are all
- * acquisition-slot grants, which the gap catalog records as having no shape — and a Vantagem de
- * Ego in particular is chosen once at character creation and never awarded later.
+ * <p>Two blockers dominate — one of them now half-lifted. The first is <b>granting another
+ * trait</b>: five constants here hand out a Habilidade de Atributo, a Vantagem de Ego, or another
+ * Talento outright. The three that grant a <b>Habilidade de Atributo</b> are real now, through
+ * {@link HabilidadeDeAtributoEscolhidaFeat}. The other two are not: a Vantagem de Ego is chosen
+ * once at character creation and never awarded later, and "treat me as holding another Talento"
+ * has no expression at all.
  *
  * <p>The second is the <b>Despertar timeline</b>. Half the Aventyr-tier constants here delay,
  * accelerate, or forgo awakening a Título, and trade on how many remain un-awakened. This core
@@ -107,10 +109,10 @@ public enum DestinoFeat implements Feat {
      * "Escolha um Atributo que você possua valor Base 2 ou superior. Você adquire uma Habilidade
      * do Atributo escolhido."
      */
-    // TODO: an acquisition-slot grant — the gap catalog records that such traits have no shape.
-    //  Character#grantAttributeAbility exists; the chosen Atributo/Habilidade could be recorded
-    //  (a choice-carrying AbstractFeat subclass, see FocoEmPericiaFeat), but the *granting* of a
-    //  free ability slot is the blocker.
+    // Real, through HabilidadeDeAtributoEscolhidaFeat — the acquired form recording which
+    // Habilidade the player picked, granted past the AttributeAbilityService slot economy by
+    // Feat#getGrantedAttributeAbilities. Its "Atributo com valor Base 2 ou superior" is the same
+    // floor that hook's own factory enforces, so the clause needs no second check.
     PRODIGIO(
             "Escolha um Atributo que você possua valor Base 2 ou superior. Você adquire uma "
                     + "Habilidade do Atributo escolhido, você ainda precisa preencher requisitos "
@@ -118,7 +120,8 @@ public enum DestinoFeat implements Feat {
             FeatRequirements.builder().build()),
 
     /** "Escolha um Atributo, você recebe uma das Habilidades do Atributo escolhido." */
-    // TODO: same acquisition-slot grant as PRODIGIO.
+    // Real, the same way as PRODIGIO — HabilidadeDeAtributoEscolhidaFeat serves all three of
+    // these constants, since an AttributeAbility already reports its own Atributo.
     // "Atributo 3 ou Superior" is enforced now, through FeatRequirements#requiredAnyAttributeValue.
     GENIALIDADE(
             "Escolha um Atributo, você recebe uma das Habilidades do Atributo escolhido. Você "
@@ -131,10 +134,13 @@ public enum DestinoFeat implements Feat {
     /**
      * "Você recebe +1 de Bônus Racial no Atributo escolhido e uma de suas Habilidades do Atributo."
      *
-     * <p>The Bônus Racial half is a real, writable field ({@code AttributeValue#racialBonus}) —
-     * only which Attribute receives it is unrecorded.
+     * <p>The chosen Atributo is recorded now, so the Bônus Racial lands on it — modelled as a
+     * {@code Feat#resolveAttributeBonus} grant rather than a write to {@code
+     * AttributeValue#racialBonus}, the same reading every other "recebe Bônus Racial de +1"
+     * Talento takes.
      */
-    // TODO: same acquisition-slot grant and unrepresented choice as PRODIGIO.
+    // Both halves real, through HabilidadeDeAtributoEscolhidaFeat: the chosen Habilidade, and
+    // the "+1 de Bônus Racial no Atributo escolhido" that only this constant of the three adds.
     GENIALIDADE_DESPERTA(
             "Escolha um Atributo, você recebe +1 de Bônus Racial no Atributo escolhido e uma de "
                     + "suas Habilidades do Atributo. Você precisa cumprir com Requisitos da "

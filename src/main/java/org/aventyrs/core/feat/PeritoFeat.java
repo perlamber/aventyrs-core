@@ -260,8 +260,11 @@ public enum PeritoFeat implements Feat {
      * "Escolha 3 Perícias que você possua Treinamento. Você pode escolher uma Especialização ou
      * Habilidade de Competência de cada uma destas Perícias."
      */
-    // TODO: this is an acquisition-slot grant — the gap catalog records that such traits have no
-    //  shape (Elfo's Origem Mística, Anão's Pequenos Gigantes are the same problem).
+    // Real, through ChosenSkillTraitsFeat — three chosen Especializações and/or Habilidades de
+    // Competência, one hook carrying both kinds exactly as this clause offers both. That the
+    // three must come from Perícias the holder is trained in is not validated (the usual
+    // builders-aren't-gatekeepers restraint). Elfo's Origem Mística and Anão's Pequenos Gigantes
+    // are the same shape and still wait on a Race hook — Feat is the only granting path.
     // TODO: "Personagens recém-criados" is a creation-time-only restriction with no
     //  representation; FeatRequirements has no notion of when a Talento may be taken.
     TREINADO_EM_PERICIAS(

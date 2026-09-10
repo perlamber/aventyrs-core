@@ -246,10 +246,12 @@ public enum FeericoFeat implements Feat {
      * "Escolha entre Artes, Atenção e Persuasão… Você recebe uma Habilidade de Competência de
      * cada Perícia escolhida e Vantagem em suas rolagens."
      *
-     * <p>The Vantagem half is <b>real</b>, through {@link AdotadoPorSylphFeat} — the acquired,
-     * choice-carrying form granted in place of this constant.
+     * <p><b>Both halves are real</b>, through {@link AdotadoPorSylphFeat} — the acquired,
+     * choice-carrying form granted in place of this constant: the Vantagem per chosen Perícia,
+     * and the free Habilidade de Competência from each.
      */
-    // TODO: the free Habilidade de Competência per chosen Perícia is the acquisition-slot gap.
+    // The free Habilidade de Competência per chosen Perícia is real too, recorded on
+    // AdotadoPorSylphFeat and surfaced through Feat#getGrantedSkillTraits.
     ADOTADO_POR_SYLPH(
             "Escolha entre Artes, Atenção e Persuasão. Você pode escolher uma desta Perícias para "
                     + "cada Título Aventyr Desperto. Personagens Sátiros que possuam um Título "

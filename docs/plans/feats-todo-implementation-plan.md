@@ -171,7 +171,44 @@ records when a Talento was acquired or that a character is freshly created. Defe
 
 ---
 
-## Phase 3 — Acquisition-slot grants
+## Phase 3 — Acquisition-slot grants ✅ **DONE**
+
+**Built:** `Feat#getGrantedSkillTraits(Character)` — one hook for both trait kinds, because the
+rules text routinely offers a choice between them in one clause. A granted `SkillCompetencyAbility`
+is folded into `SkillCompetencyAbility#allFor` (now a three-source scan, deduplicated); a granted
+`SkillSpecialization` into the new `Character#getSpecializations(SkillType)`. Both roll-path
+readers (`AbstractSkillInteraction#validateRequestedTrait`, `Feat`'s own trait check) now go
+through the aggregating views rather than the raw lists, so a granted trait can be *named* on a
+roll like any acquired one.
+
+The existing `getGrantedAttributeAbilities` needed no widening: the open choice was already
+expressible, only a class to record it was missing.
+
+**Three acquired forms**, each serving several constants rather than one:
+- `HerancaBestialFeat` — the six `BestialFeat` Heranças, forwarding each constant's own Atributo
+  and Arma Natural clauses by hand. This closed what `BestialFeat`'s javadoc called *the single
+  most-cited blocker of the racial catalog*.
+- `HabilidadeDeAtributoEscolhidaFeat` — `DestinoFeat#PRODIGIO`/`GENIALIDADE`/`GENIALIDADE_DESPERTA`.
+  No field for the chosen Atributo: an `AttributeAbility` reports its own.
+- `ChosenSkillTraitsFeat` — any constant across any tree whose *whole* payload is chosen traits
+  (`PeritoFeat#TREINADO_EM_PERICIAS`, `GnomoFeat#SABICHAO`/`MIMETIZAR_COMPETENCIA`). No delegation,
+  which is its entry condition.
+
+`AdotadoPorSylphFeat` gained the grant half it was missing, with a second factory: the Perícia pick
+and the Habilidade pick are separate acts, so `of(SkillType...)` records the first alone and
+`of(SkillCompetencyAbility...)` records the finished state, deriving the Perícias from it.
+
+**Deliberately not built:** a blanket forward from `AbstractFeat` to `catalogEntry()` — a
+choice-carrying form replaces its constant rather than decorating it, and a blanket forward would
+make it impossible to drop a clause on purpose. **Still missing:** a free **Talento** slot
+("escolha um Talento Racial"), and a **`Race`** hook for any of these — `Anao`'s Pequenos Gigantes
+and `Elfo`'s Origem Mística are the same shape but `Feat` is the only granting path.
+`HumanoFeat#APRENDIZADO_RAPIDO_E_CONTINUO` stays blocked on a different gap: which Perícias
+Aprendizado Rápido benefits is a creation-time choice nothing records.
+
+**Original plan text follows.**
+
+### Phase 3 (as planned)
 
 Generalise the narrowly-built `Feat#getGrantedAttributeAbilities` (currently: one *named*
 ability, `ConselheiroDeGuerraYmirianoFeat`) to the shapes the gap catalog lists as missing:

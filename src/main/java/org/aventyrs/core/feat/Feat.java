@@ -239,8 +239,7 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
         if (trait instanceof SkillCompetencyAbility ability) {
             return SkillCompetencyAbility.allFor(character).contains(ability);
         }
-        CharacterSkill characterSkill = character.getSkills().get(trait.getSkillType());
-        return characterSkill != null && characterSkill.getSpecializations().contains(trait);
+        return character.getSpecializations(trait.getSkillType()).contains(trait);
     }
 
     /**
@@ -814,6 +813,37 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      */
     default int resolveAttributeBonus(final AttributeDomain domain, final Character character) {
         return 0;
+    }
+
+    /**
+     * Habilidades de Competência and Especializações this Talento grants its holder for free,
+     * outside the Graduação ladder that normally doles them out — "você recebe uma Habilidade de
+     * Competência de cada Perícia escolhida" ({@code FeericoFeat#ADOTADO_POR_SYLPH}), "recebem uma
+     * Especialização adicional de Atletismo" ({@code BestialFeat#HERANCA_REPTILIANA}). The single
+     * most-cited blocker of the racial catalog, and the {@link SkillTrait} twin of {@link
+     * #getGrantedAttributeAbilities}. Empty by default.
+     *
+     * <p><b>One hook for both kinds</b>, because the rules text routinely offers a choice between
+     * them in one clause ("uma Especialização <em>ou</em> Habilidade de Competência de cada uma
+     * destas Perícias" — {@code PeritoFeat#TREINADO_EM_PERICIAS}). Each consumer filters by kind:
+     * a {@code SkillCompetencyAbility} is folded into {@code SkillCompetencyAbility#allFor}, so
+     * every three-source scan and {@code AbstractSkillInteraction} pick it up with no service
+     * change; a {@code SkillSpecialization} is folded into {@code
+     * Character#getSpecializations(SkillType)}, which is what the roll path validates against.
+     *
+     * <p><b>Which trait is granted is the player's pick, so it lives on an acquired,
+     * choice-carrying {@code AbstractFeat} subclass</b> rather than on the bare enum constant —
+     * the same catalog-vs-acquired split {@code ConselheiroDeGuerraYmirianoFeat} keeps for its
+     * Habilidade de Força. A constant whose rules text names the trait outright could override
+     * here directly; none does.
+     *
+     * <p><b>Passive / {@code resolve*} hooks only</b>, exactly as {@link
+     * #getGrantedAttributeAbilities}: nothing runs whatever one-time side-effects an acquisition
+     * service would. No {@code SkillCompetencyAbility} in the catalog has any, so this costs
+     * nothing today.
+     */
+    default List<SkillTrait> getGrantedSkillTraits(final Character character) {
+        return List.of();
     }
 
     /**

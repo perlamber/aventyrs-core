@@ -452,9 +452,12 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
      * see that method for why) and actually be held by the character — otherwise this roll is
      * trying to invoke a maneuver or Especialização the character never acquired.
      * Branches on the concrete {@link SkillTrait} kind: a {@link SkillCompetencyAbility} is
-     * checked against the Character's own acquired/racial ability lists (it doesn't need
-     * {@code characterSkill}); a {@link SkillSpecialization} is checked against {@code
-     * characterSkill.getSpecializations()} instead. This only validates the character actually
+     * checked against {@link SkillCompetencyAbility#allFor} (acquired, racial <em>and</em>
+     * Talento-granted — it doesn't need {@code characterSkill}); a {@link SkillSpecialization}
+     * against {@code Character#getSpecializations(SkillType)}, the matching aggregate. Both go
+     * through the aggregating view rather than the raw list, so a trait a Talento handed over
+     * ({@code Feat#getGrantedSkillTraits}) can be named on a roll like any other. This only
+     * validates the character actually
      * holds the named trait — it doesn't validate that an Especialização is actually the right
      * fit for whatever the roll is being used for narratively; that judgment stays with the
      * caller, the same restraint this codebase already applies everywhere it doesn't track what
@@ -466,10 +469,9 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
         }
         boolean held;
         if (requestedTrait instanceof SkillCompetencyAbility ability) {
-            held = character.getSkillCompetencyAbilities().contains(ability)
-                    || character.getRace().getRacialAbilities().contains(ability);
+            held = SkillCompetencyAbility.allFor(character).contains(ability);
         } else if (requestedTrait instanceof SkillSpecialization specialization) {
-            held = characterSkill.getSpecializations().contains(specialization);
+            held = character.getSpecializations(specialization.getSkillType()).contains(specialization);
         } else {
             held = false;
         }

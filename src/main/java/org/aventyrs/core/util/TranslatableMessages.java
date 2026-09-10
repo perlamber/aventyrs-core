@@ -58,6 +58,16 @@ public class TranslatableMessages {
      * AttributeAbilityService#FIRST_ABILITY_ATTRIBUTE_BASE}).
      */
     public static final String CONSELHEIRO_STRENGTH_ABILITY_REQUIREMENT_NOT_MET = "CONSELHEIRO_STRENGTH_ABILITY_REQUIREMENT_NOT_MET";
+
+    /**
+     * A Talento granting a free Habilidade de Atributo of a <em>chosen</em> Atributo — {@code
+     * DestinoFeat#PRODIGIO}/{@code #GENIALIDADE}/{@code #GENIALIDADE_DESPERTA}, via {@code
+     * HabilidadeDeAtributoEscolhidaFeat} — was picked with an ability whose Atributo the holder
+     * has no slot in (that Atributo's base below {@code
+     * AttributeAbilityService#FIRST_ABILITY_ATTRIBUTE_BASE}). The chosen-Atributo twin of {@link
+     * #CONSELHEIRO_STRENGTH_ABILITY_REQUIREMENT_NOT_MET}, which names Força outright.
+     */
+    public static final String CHOSEN_ATTRIBUTE_ABILITY_REQUIREMENT_NOT_MET = "CHOSEN_ATTRIBUTE_ABILITY_REQUIREMENT_NOT_MET";
     public static final String NOT_AN_ATTACK_SKILL = "NOT_AN_ATTACK_SKILL";
 
     /**

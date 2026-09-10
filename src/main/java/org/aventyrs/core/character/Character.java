@@ -30,6 +30,7 @@ import org.aventyrs.core.race.Race;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.Player;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
+import org.aventyrs.core.skill.SkillSpecialization;
 import org.aventyrs.core.skill.SkillType;
 import org.aventyrs.core.title.AventyrTitle;
 
@@ -148,6 +149,33 @@ public class Character {
         return Stream.concat(
                         attributeAbilities.stream(),
                         feats.stream().flatMap(feat -> feat.getGrantedAttributeAbilities(this).stream()))
+                .distinct()
+                .toList();
+    }
+
+    /**
+     * Every {@link org.aventyrs.core.skill.SkillSpecialization} this character holds in skillType
+     * — the ones recorded on their own {@link CharacterSkill}, plus any a held Talento grants
+     * through {@code Feat#getGrantedSkillTraits} ("recebem uma Especialização adicional de
+     * Atletismo"). Live aggregation, mirroring {@link #getAttributeAbilities()}; empty for a
+     * Perícia the character is untrained in <em>unless</em> a Talento granted one there.
+     *
+     * <p><b>This, not {@code CharacterSkill#getSpecializations()}, is what a consumer should
+     * read</b> — that field is the acquired list alone and misses every granted one. The
+     * {@code SkillCompetencyAbility} half of the same grant needs no equivalent view: {@code
+     * SkillCompetencyAbility#allFor} already was the single aggregating read, and folds them in
+     * there.
+     */
+    public List<SkillSpecialization> getSpecializations(final SkillType skillType) {
+        CharacterSkill characterSkill = skills.get(skillType);
+        return Stream.concat(
+                        characterSkill == null ? Stream.<SkillSpecialization>empty()
+                                : characterSkill.getSpecializations().stream(),
+                        feats.stream()
+                                .flatMap(feat -> feat.getGrantedSkillTraits(this).stream())
+                                .filter(SkillSpecialization.class::isInstance)
+                                .map(SkillSpecialization.class::cast)
+                                .filter(specialization -> specialization.getSkillType() == skillType))
                 .distinct()
                 .toList();
     }
