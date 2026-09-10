@@ -156,6 +156,14 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     @Getter(AccessLevel.NONE)
     private FormType currentForm;
 
+    /**
+     * Abilities that cannot be used again until a Descanso of the recorded tier — the other half
+     * of Resfriamento, kept apart from {@link #cooldowns} because a Descanso is not a number of
+     * Rodadas. Identity-keyed for the same reason.
+     */
+    @Getter(AccessLevel.NONE)
+    private final Map<ActiveAbility, RestType> restCooldowns = new java.util.IdentityHashMap<>();
+
     /** Every roll-action taken since this Rodada began — see {@link #recordAction}. */
     @Getter(AccessLevel.NONE)
     private final List<CombatantAction> actionsThisRound = new ArrayList<>();
@@ -670,7 +678,14 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
                 .filter(TemporaryEffect::isExpired)
                 .filter(condition -> condition.getType().getDecaysTo() != null)
                 .toList();
+        // A lapsing Forma must put its holder back into their own shape before it is swept out —
+        // the same "an expiring effect that must *do* something" case a decaying Condition gets.
+        boolean formLapsed = temporaryEffects.stream()
+                .anyMatch(effect -> effect instanceof FormEffect && effect.isExpired());
         temporaryEffects.removeIf(TemporaryEffect::isExpired);
+        if (formLapsed) {
+            enterForm(null);
+        }
         // "Ao fim da duração alvo se torna Assustado" — the fear ladder steps down rather than
         // simply ending, so a decaying Condition is replaced by its successor at the moment it
         // expires, carrying the same origin and that successor's own stated duration. Applied
@@ -775,6 +790,26 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     @Override
     public int getRemainingCooldown(final ActiveAbility ability) {
         return cooldowns.getOrDefault(ability, 0);
+    }
+
+    @Override
+    public void startRestCooldown(final ActiveAbility ability, final RestType restType) {
+        if (restType == null) {
+            restCooldowns.remove(ability);
+            return;
+        }
+        restCooldowns.put(ability, restType);
+    }
+
+    @Override
+    public boolean isAwaitingRest(final ActiveAbility ability) {
+        return restCooldowns.containsKey(ability);
+    }
+
+    /** A Descanso frees everything waiting on its own tier or a weaker one. */
+    @Override
+    public void clearRestCooldowns(final RestType restType) {
+        restCooldowns.values().removeIf(required -> restType.isAtLeast(required));
     }
 
     /**

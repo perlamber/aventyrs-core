@@ -426,6 +426,32 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
      */
     int getRemainingCooldown(ActiveAbility ability);
 
+    /**
+     * Records that ability cannot be used again until a Descanso of restType's tier — the
+     * "não poderá ser reativado até que passe por um Descanso Longo" gate, a different unit from
+     * the Rodada count above and tracked separately for that reason.
+     */
+    void startRestCooldown(ActiveAbility ability, RestType restType);
+
+    /** Whether ability is still waiting on a Descanso before it can be used again. */
+    boolean isAwaitingRest(ActiveAbility ability);
+
+    /**
+     * Clears every rest-gated Resfriamento a Descanso of restType satisfies — that tier
+     * <b>or stronger</b>, so a Descanso Total frees an ability waiting on a Longo. Called by
+     * {@code RestService#applyRest}.
+     */
+    void clearRestCooldowns(RestType restType);
+
+    /**
+     * Whether ability is unavailable for either reason — Rodadas still owed, or a Descanso still
+     * pending. What {@code ActiveAbilityService#activate} asks; the two queries above are for a
+     * caller that needs to say <em>why</em>.
+     */
+    default boolean isOnCooldown(ActiveAbility ability) {
+        return getRemainingCooldown(ability) > 0 || isAwaitingRest(ability);
+    }
+
     int getTotalLifeSteal();
 
     void tickTemporaryEffects();

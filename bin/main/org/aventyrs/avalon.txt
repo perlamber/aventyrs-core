@@ -1,0 +1,12 @@
+Rascunho:
+
+Elfo - Herdeiro de Avalon: Apenas Elfos puros sem patria reconhecida - 
+    Apesar de terem sido reduzidos à tribos distintas e espalhadas nas diferentes regiões de Tellus, 
+    os Elfos atuais herdam a graça de seus antepassados de uma terra distante, desconhecida pelo grande continente. 
+    Sua longevidade ímpar, os permitiu realizar uma grande travessia há muitos milênios, fugindo da grande queda
+    de Avalon. Seu sangue ainda carrega os traços distintos de seus grandes antepassados e raros indivíduos nascem 
+    com sua ancestralidade aflorada. Você nasceu com características diferentes dos demais de sua tribo e é tratado como um forasteiro,
+    não se identifica com seu estilo de vida e sonha em seguir o seu próprio caminho. 
+    Você tem uma aura inspiradora, quase divina, porém para todos que não são Elfos, recebe vantagem em rolagens de perícias 
+    baseadas em Carisma contra todas criaturas não Elficas e Meio Elficas, porém desvantagem contra Elfos, e pode despertar
+    talentos de Avalon que atenda os pré requisitos.

@@ -99,6 +99,15 @@ public class TranslatableMessages {
      */
     public static final String ABILITY_ON_COOLDOWN = "ABILITY_ON_COOLDOWN";
 
+    /** An activated ability's Pontos de Determinação cost exceeds what the holder has left. */
+    public static final String NOT_ENOUGH_DETERMINATION_POINTS = "NOT_ENOUGH_DETERMINATION_POINTS";
+
+    /**
+     * The Forma an ability would put its holder into is one their own Talentos refuse — see
+     * {@code CombatantSheet#canTakeForm} and {@code Feat#resolveFormAccess}.
+     */
+    public static final String FORM_NOT_AVAILABLE = "FORM_NOT_AVAILABLE";
+
     /** The crafter doesn't hold the Especialização de Profissão a given kind of item needs. */
     public static final String CRAFTING_TRADE_NOT_HELD = "CRAFTING_TRADE_NOT_HELD";
 

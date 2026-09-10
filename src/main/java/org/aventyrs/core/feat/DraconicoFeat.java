@@ -3,6 +3,10 @@ package org.aventyrs.core.feat;
 import java.util.List;
 
 import org.aventyrs.core.character.AttributeDomain;
+import java.util.Optional;
+
+import org.aventyrs.core.ability.ActiveAbility;
+import org.aventyrs.core.sheet.FormType;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.DefenseType;
 import org.aventyrs.core.item.NaturalWeapon;
@@ -145,13 +149,16 @@ public enum DraconicoFeat implements Feat {
      * "Temporariamente você pode mudar sua forma física, se transformando em um dragão bípede,
      * abandonando quaisquer traços raciais existente."
      */
-    // TODO: needs a form state — the same missing piece HomemFera's own Forma Híbrida is blocked
-    //  on, here with the extra requirement that the form *suppresses* the holder's racial traits,
-    //  which nothing can do (Race#getRacialAbilities() is read live on every roll with no way to
-    //  suspend it).
-    // TODO: "não poderá ser reativado até que passe por um Descanso Longo" needs a
-    //  once-per-Descanso activation counter; CharacterSheet tracks Round-scoped TemporaryEffects,
-    //  not activations, and RestService clears nothing of the kind.
+    // The transformation itself is real — FormaActiveAbility, triggered through
+    // ActiveAbilityService#activate: 3PA + 3PD to enter FormType.DRACONATO for 3 Rodadas, with the
+    // "não poderá ser reativado até que passe por um Descanso Longo" gate enforced through
+    // ActiveAbility#getReactivationRest (cleared by RestService#applyRest).
+    // TODO: the "+2 Categoria de Tamanho, Força e Foco para cada Título" is not granted — a
+    //  round-scoped Atributo bonus and a SizeCategory shift driven from the sheet are two
+    //  mechanisms this core lacks (CLAUDE.md's Forma row). The Forma is what they will hang off.
+    // TODO: "abandonando quaisquer traços raciais" needs the form to *suppress* the holder's
+    //  racial traits, which nothing can do — Race#getRacialAbilities() is read live on every roll
+    //  with no way to suspend it.
     DRACONATO(
             "Temporariamente você pode mudar sua forma física, se transformando em um dragão "
                     + "bípede, abandonando quaisquer traços raciais existente. Transformar-se em "
@@ -162,7 +169,15 @@ public enum DraconicoFeat implements Feat {
             FeatRequirements.builder()
                     .requiredRace(NascidoDoDragao.class)
                     .requiredAwakenedTitles(1)
-                    .build());
+                    .build()) {
+        private final ActiveAbility transformation =
+                new FormaActiveAbility(this, FormType.DRACONATO);
+
+        @Override
+        public Optional<ActiveAbility> resolveActiveAbility() {
+            return Optional.of(transformation);
+        }
+    };
 
     private static final int ASAS_DEFENSE_BONUS = 2;
     private static final int SOPRO_CRITICAL_MARGIN_INCREASE = 1;

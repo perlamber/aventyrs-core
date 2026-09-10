@@ -283,11 +283,11 @@ exist. What's missing is **Resfriamento (cooldown)** and the authoring of specif
 
 ---
 
-## Phase 5 — Form state system  ⭐ largest single unlock — **slice 1 of 3 DONE**
+## Phase 5 — Form state system  ⭐ largest single unlock — **slices 1–2 of 3 DONE**
 
 The plan estimated 3–5 sessions, and that was right: the Forma is not one mechanism but a state
 plus five independent deltas. Split into slices so each lands whole rather than half-building all
-of it. **Slice 1 (the state and the gate) is done**; slices 2 and 3 are scoped below.
+of it. **Slices 1 (the state and the gate) and 2 (entering one) are done**; slice 3 is scoped below.
 
 ### Slice 1 — the state and the gate ✅
 `sheet.FormType` (8 authored shapes) + `CombatantSheet#getCurrentForm()`/`enterForm`/`isInForm`.
@@ -309,12 +309,22 @@ form-gated Resistência a Críticos on both `#PROTECAO_DO_DEUS_DOS_MONSTROS` and
 `#PROTECAO_DA_RAINHA_DAS_FADAS` — which needed a new `CombatantSheet`-taking overload of
 `Feat#resolveCriticalResistance`, since the Forma lives on the sheet.
 
-### Slice 2 — entering a Forma as a transaction (not started)
-Reuses Phase 4's `ActiveAbility` cycle, which already handles cost/gates/effects/Resfriamento. Two
-pieces are missing from it: a **Pontos de Determinação cost** (Draconato and Ancienteforme cost
-3PA+3PD, Metamorfose Selvagem 2PD — `ActiveAbility` has PA/PM/PV only), and an **"until a Descanso
-Longo" Resfriamento**, which is a different unit from the Rodada count `getCooldownRounds()` holds.
-Plus a `TemporaryEffect` that clears the Forma when the Duração lapses — nothing expires one today.
+### Slice 2 — entering a Forma as a transaction ✅
+Reused Phase 4's `ActiveAbility` cycle rather than building a parallel one. Three pieces added to
+it: `getDeterminationPointCost()` (Formas are priced in **PD**, which `ActiveAbility` had no field
+for), `getReactivationRest()` → a `RestType` (a Resfriamento measured in **Descansos**, its own
+ledger, cleared by `RestService#applyRest` at that tier *or stronger*), and `resolveGrantedForm()`.
+`activate` now refuses while **either** cooldown is owing, refuses a shape the holder's Talentos
+forbid, enters it, and applies a `FormEffect` that returns them to their own shape as the Duração
+lapses — the one place leaving a Forma is not a caller's call.
+
+`FormaActiveAbility` is one class for both Talentos written to the same template (3PA + 3PD, 3
+Rodadas, not again until a Descanso Longo): **landed `DraconicoFeat#DRACONATO` and
+`FeericoFeat#ANCIENTEFORME`** — the transformation, its cost, its Duração and its gate, all real.
+Their stat deltas are slice 3, and each constant now says so.
+
+`BestialFeat#METAMORFOSE_SELVAGEM` (2PD) was left: its text states no Duração and its whole payload
+is deltas plus an equipment restriction, so entering the shape alone would land nothing.
 
 ### Slice 3 — what a Forma actually *does* (not started)
 Five independent deltas, each its own missing mechanism, listed on the CLAUDE.md Forma row: a

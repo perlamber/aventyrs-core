@@ -1,7 +1,11 @@
 package org.aventyrs.core.feat;
 
+import java.util.Optional;
+
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.sheet.FormType;
+import org.aventyrs.core.ability.ActiveAbility;
 import org.aventyrs.core.character.SizeCategory;
 import org.aventyrs.core.race.Aviano;
 import org.aventyrs.core.race.Bestial;
@@ -189,11 +193,16 @@ public enum FeericoFeat implements Feat {
      * "Temporariamente você pode mudar sua forma física, se transformando em um Anciente, uma
      * árvore viva, abandonando seus traços raciais."
      */
-    // TODO: needs a form state — the same missing piece DraconicoFeat#DRACONATO and HomemFera's
-    //  Forma Híbrida are blocked on, including the same "abandona seus traços raciais"
-    //  suppression that Race#getRacialAbilities() cannot be suspended for.
-    // TODO: "Nascidos da Floresta permanecem +2 Rodadas" would be a per-race Duração branch, and
-    //  "não pode ser reativado até um Descanso Longo" a per-Descanso activation counter.
+    // The transformation itself is real — FormaActiveAbility, the same template DRACONATO uses:
+    // 3PA + 3PD to enter FormType.ANCIENTE for 3 Rodadas, gated on a Descanso Longo before it can
+    // be used again (ActiveAbility#getReactivationRest).
+    // TODO: the per-Título Defesas/PV/Categoria/Carisma/Foco uplift is not granted — round-scoped
+    //  Atributo and SizeCategory-from-the-sheet are the missing mechanisms (CLAUDE.md's Forma row).
+    // TODO: "abandona seus traços raciais" needs the form to suppress racial traits, which nothing
+    //  can do; and "Nascidos da Floresta permanecem +2 Rodadas" is a per-race Duração branch
+    //  FormaActiveAbility keeps room for (its Duração is resolved, not constant) but does not yet
+    //  take — NascidoDaFloresta is a Race, and the ability sees the Character, so this one is
+    //  cheap once someone wants it.
     ANCIENTEFORME(
             "Temporariamente você pode mudar sua forma física, se transformando em um Anciente, "
                     + "uma árvore viva, abandonando seus traços raciais. Transformar-se em um "
@@ -206,7 +215,15 @@ public enum FeericoFeat implements Feat {
             FeatRequirements.builder()
                     .requiredFeat(DRIADE)
                     .requiredAwakenedTitles(1)
-                    .build()),
+                    .build()) {
+        private final ActiveAbility transformation =
+                new FormaActiveAbility(this, FormType.ANCIENTE);
+
+        @Override
+        public Optional<ActiveAbility> resolveActiveAbility() {
+            return Optional.of(transformation);
+        }
+    },
 
     /**
      * "Personagens com este Talento recebem Bônus Racial de +1 em Vigor e Vantagem nas rolagens
