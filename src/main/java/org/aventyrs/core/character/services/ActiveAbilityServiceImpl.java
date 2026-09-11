@@ -100,7 +100,7 @@ public class ActiveAbilityServiceImpl implements ActiveAbilityService {
         // caller's call.
         if (grantedForm != null) {
             characterSheet.enterForm(grantedForm);
-            characterSheet.applyEffect(new FormEffect(grantedForm, ability.getDurationInRounds()));
+            characterSheet.applyEffect(new FormEffect(grantedForm, ability.resolveDurationInRounds()));
         }
         // Started only once everything above has succeeded — an activation that threw never
         // happened, so it must not lock the ability out.

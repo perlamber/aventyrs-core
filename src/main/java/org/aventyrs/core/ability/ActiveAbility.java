@@ -47,6 +47,26 @@ public interface ActiveAbility {
     int getDurationInRounds();
 
     /**
+     * The same Duração, or {@code null} for a state that <b>never lapses on its own</b> — one the
+     * holder stays in until they end it. Defaults to {@link #getDurationInRounds()}, so every
+     * ability with a stated Duração needs no override.
+     *
+     * <p>{@code BestialFeat#METAMORFOSE_SELVAGEM} is why this exists: its clause prices the
+     * transformation and lists what it grants "enquanto este Talento estiver ativo" but states no
+     * Duração at all, unlike every other transformation in the catalog (Draconato 3 Rodadas,
+     * Ancienteforme 3, a Poder Vampírico 2). Read as a toggle rather than an omission — the same
+     * shape {@code Gorgona}'s Monstros em pele de Fada takes, and the shape two {@code FeralFeat}
+     * Talentos assume when they <em>remove</em> the Duração from a transformation.
+     *
+     * <p>Mirrors {@code TemporaryEffect}'s own {@code null remainingRounds}, which is what
+     * ultimately carries it — so an open-ended Forma's {@code FormEffect} simply never expires,
+     * and {@code CombatantSheet#enterForm(null)} is the way back.
+     */
+    default Integer resolveDurationInRounds() {
+        return getDurationInRounds();
+    }
+
+    /**
      * Resfriamento — how many Rodadas must pass after this ability is activated before it may be
      * activated again. Zero by default, which is every ability whose rules text states no
      * Resfriamento and means "as often as you can pay for it".

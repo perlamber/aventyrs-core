@@ -15,6 +15,11 @@ import lombok.Getter;
  * and for the same reason: an expiring effect that must *do* something cannot be swept out
  * silently.
  *
+ * <p><b>{@code remainingRounds} may be {@code null}</b>, for a Forma its holder stays in until
+ * they leave it — see {@code ActiveAbility#resolveDurationInRounds()}. Such an effect never
+ * expires from ticking, so nothing ever puts the sheet back: {@code
+ * CombatantSheet#enterForm(null)} is the only way out, which is exactly what a toggle means.
+ *
  * <p><b>Not cumulative.</b> A combatant is in one shape at a time, so a second Forma must replace
  * the first rather than leaving two countdowns racing to un-transform the same sheet.
  */
@@ -23,7 +28,7 @@ public class FormEffect extends TemporaryEffect {
 
     private final FormType form;
 
-    public FormEffect(final FormType form, final int remainingRounds) {
+    public FormEffect(final FormType form, final Integer remainingRounds) {
         super(remainingRounds);
         this.form = form;
     }

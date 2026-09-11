@@ -420,6 +420,26 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      * {@code Feat} overload has: an existing overrider keeps working untouched, and a constant
      * overriding <em>this</em> one must return its own unconditional value too if it has one.
      */
+    /**
+     * The longest form, adding the <b>actor's own</b> {@link CombatantSheet} — not the target's,
+     * which {@code attackTarget} already carries. What a dano clause conditioned on the attacker's
+     * live state needs: held {@code Condição}s, the per-Rodada log, and the Forma they are in
+     * ({@code BestialFeat#METAMORFOSE_SELVAGEM}'s "Vantagem em suas rolagens de Dano com armas
+     * naturais" applies only while transformed).
+     *
+     * <p><b>Defaults to the {@code targetCount} form</b>, like every other overload here.
+     * {@code holder} is {@code null} whenever the caller has only a {@code Character}, which an
+     * override must read as "condition not met". This is the dano twin of {@code
+     * resolveSkillRollBonus}'s own {@code AttackSource} + {@code holder} overload — the two
+     * halves of a clause that grants Vantagem on both rolls need the same reach.
+     */
+    default Optional<DamageBonus> resolveDamageBonus(final SkillType attackingSkillType, final SceneContext sceneContext,
+                                                      final CombatantSheet attackTarget, final Character actor,
+                                                      final AttackSource attackSource, final int targetCount,
+                                                      final CombatantSheet holder) {
+        return resolveDamageBonus(attackingSkillType, sceneContext, attackTarget, actor, attackSource, targetCount);
+    }
+
     default Optional<DamageBonus> resolveDamageBonus(final SkillType attackingSkillType, final SceneContext sceneContext,
                                                       final CombatantSheet attackTarget, final Character actor,
                                                       final AttackSource attackSource, final int targetCount) {
@@ -1229,6 +1249,21 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      */
     default int resolveMovementIncrease(final Character character) {
         return 0;
+    }
+
+    /**
+     * The longer form of the Movimento Base grant, adding the holder's own {@link CombatantSheet}
+     * — what a clause scoped "enquanto transformado" needs, since the Forma lives on the sheet
+     * ({@code BestialFeat#METAMORFOSE_SELVAGEM}'s "+2UD enquanto transformado em animal").
+     *
+     * <p><b>Defaults to the sheet-less form</b>, the same relationship every other {@code Feat}
+     * overload here uses, so existing overriders keep working. Read only by {@code
+     * MovementService#getMovementBase(CombatantSheet)}; the {@code Character}-only entry point
+     * structurally cannot reach it, and {@code holder} is {@code null} there — which every
+     * override must read as "condition not met".
+     */
+    default int resolveMovementIncrease(final Character character, final CombatantSheet holder) {
+        return resolveMovementIncrease(character);
     }
 
     /**

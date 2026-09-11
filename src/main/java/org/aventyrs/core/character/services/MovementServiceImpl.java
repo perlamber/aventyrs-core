@@ -57,6 +57,13 @@ public class MovementServiceImpl implements MovementService {
         }
         Character character = sheet.getCharacter();
         int total = getMovementBase(character) + sheet.getTemporaryBonus(ModifierType.MOVEMENT);
+        // A Talento whose Movimento clause is scoped to the holder's live state — the Forma they
+        // are in — can only be seen from here; the Character-only total above has no sheet to ask.
+        // Added on top rather than folded into that total so the permanent figure keeps its own
+        // floor, per this method's two-floors note.
+        for (Feat feat : character.getFeats()) {
+            total += feat.resolveMovementIncrease(character, sheet) - feat.resolveMovementIncrease(character);
+        }
 
         for (AttributeAbility ability : character.getAttributeAbilities()) {
             total += ability.resolveRoundMovementIncrease(movementIndex);

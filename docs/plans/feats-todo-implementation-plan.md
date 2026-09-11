@@ -351,10 +351,17 @@ Atributo).
   a `FormEquipmentPolicy`, since the rules give two different answers: `WEAPONS_SUPPRESSED` (the
   Metamorfose Dracúlea shapes — defensive items keep working) and `ALL_SUPPRESSED` (Metamorfose
   Selvagem). `CombatantSheet#canAttackWith` is the consumer, exempting Armas Naturais.
-  `ALL_SUPPRESSED` is defined but unassigned — `ANIMAL` stays unrestricted until Metamorfose
-  Selvagem is built, rather than restricting `HomemFera`'s Animal rung on the strength of a
-  Talento nothing can enter. `ASAS_DE_DRAGAO`'s permanent Capa ban is a different shape and stays
-  out.
+  `ANIMAL` is `ALL_SUPPRESSED`, which `HomemFera`'s Animal rung inherits (flagged — its text is
+  not in this repo). `ASAS_DE_DRAGAO`'s permanent Capa ban is a different shape and stays out.
+- **`BestialFeat#METAMORFOSE_SELVAGEM` landed whole** — 2PD into `FormType.ANIMAL`, with every
+  clause resolved *from the Forma* rather than scheduled as a countdown (+2UD Movimento, +2
+  Defesas, Vantagem em Ataque e Dano com Armas Naturais, and all equipment suppressed). That
+  needed `CombatantSheet holder` overloads on `Feat#resolveMovementIncrease` and
+  `resolveDamageBonus`, so all four halves of one clause read the same Forma.
+  ⚠️ **Its Duração is a reading, not a transcription**: the clause states none, so the shape is a
+  toggle (`ActiveAbility#resolveDurationInRounds()` → `null`). Every other transformation in the
+  catalog states a figure; `MetamorfoseSelvagemTest#theShapeNeverLapsesOnItsOwn` is where a later
+  source correction would land.
 - **`VampiricoFeat#METAMORFOSE_DRACULEA` landed** — the tree's most elaborate constant.
   `FormaMetamorfica` is the six-row table (Arma Natural + Habilidade, feat-scoped since the shapes
   belong to this Talento); `MetamorfoseDraculeaFeat` records the acquisition-time choice and

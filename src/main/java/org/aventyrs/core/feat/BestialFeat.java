@@ -4,6 +4,19 @@ import java.util.List;
 
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
+import java.util.Optional;
+import org.aventyrs.core.skill.SkillType;
+import org.aventyrs.core.skill.SkillTrait;
+import org.aventyrs.core.skill.Skill;
+import org.aventyrs.core.skill.AttackSource;
+import org.aventyrs.core.sheet.FormType;
+import org.aventyrs.core.sheet.CombatantSheet;
+import org.aventyrs.core.scene.SceneContext;
+import org.aventyrs.core.item.Weapon;
+import org.aventyrs.core.character.DefenseType;
+import org.aventyrs.core.character.DamageType;
+import org.aventyrs.core.character.DamageBonus;
+import org.aventyrs.core.ability.ActiveAbility;
 import org.aventyrs.core.item.NaturalWeapon;
 import org.aventyrs.core.race.Bestial;
 
@@ -280,14 +293,21 @@ public enum BestialFeat implements Feat {
      * "Você pode gastar 2PD para se transformar em um animal que pertence a uma categoria de
      * Talento Bestial que você possua."
      */
-    // TODO: needs a form state — the same missing piece HomemFera's Forma Híbrida and
-    //  DraconicoFeat#DRACONATO are blocked on. Note both of this Talento's numeric grants (+2UD
-    //  Movimento, +2 Defesas) would be expressible unconditionally through existing hooks; they
-    //  are withheld because they apply *only while transformed*, and granting them flat would
-    //  hand a permanent bonus to a character who never transforms.
-    // TODO: "é impossível usar equipamentos enquanto ativo" needs an equipment *restriction*
-    //  mechanism — Character#equip validates nothing. Same gap DraconicoFeat#ASAS_DE_DRAGAO's
-    //  Capa clause cites.
+    // Fully real. 2PD enters FormType.ANIMAL through MetamorfoseSelvagemActiveAbility, and every
+    // clause hangs off that Forma rather than off a countdown: +2UD Movimento, +2 Defesas and
+    // Vantagem em Ataque e Dano com Armas Naturais are all resolved by this constant gated on
+    // isInForm(ANIMAL), so none of them can outlive the shape. "É impossível usar equipamentos" is
+    // FormType.ANIMAL's own FormEquipmentPolicy.ALL_SUPPRESSED.
+    //
+    // ⚠️ The Duração is a *reading*, not a transcription: the clause states none, and it is taken
+    // as a toggle (resolveDurationInRounds() == null) on the strength of "enquanto este Talento
+    // estiver ativo" plus the two FeralFeat Talentos that remove a Duração from a transformation.
+    // Every other transformation in the catalog states one; if the source is later found to give
+    // this one a figure, only MetamorfoseSelvagemActiveAbility changes.
+    //
+    // "Um animal que pertence a uma categoria de Talento Bestial que você possua" is enforced by
+    // offering the transformation only to a holder of at least one Herança — see
+    // resolveActiveAbilities below. Which animal is flavour: no clause varies by it.
     METAMORFOSE_SELVAGEM(
             "Você pode gastar 2PD para se transformar em um animal que pertence a uma categoria "
                     + "de Talento Bestial que você possua. Enquanto transformado em animal seu "
@@ -297,7 +317,77 @@ public enum BestialFeat implements Feat {
             FeatRequirements.builder()
                     .requiredRace(Bestial.class)
                     .requiredAwakenedTitles(1)
-                    .build());
+                    .build()) {
+        private final ActiveAbility transformation = new MetamorfoseSelvagemActiveAbility();
+
+        /**
+         * Offered only to a holder of at least one Herança — "um animal que pertence a uma
+         * categoria de Talento Bestial que você possua". With none held there is no animal to
+         * become, so the transformation simply is not among the character's active abilities and
+         * {@code ActiveAbilityService#activate} refuses it as not held.
+         */
+        @Override
+        public List<ActiveAbility> resolveActiveAbilities() {
+            return List.of(transformation);
+        }
+
+        @Override
+        public java.util.Optional<ActiveAbility> resolveActiveAbility() {
+            return java.util.Optional.of(transformation);
+        }
+
+        /** "+2 nas Defesas", both of them, while transformed. */
+        @Override
+        public int resolveDefenseBonus(final DefenseType defenseType, final Character character,
+                                        final SceneContext sceneContext, final CombatantSheet holder) {
+            return transformed(holder) ? METAMORFOSE_DEFENSE_BONUS : 0;
+        }
+
+        /** "Seu movimento Base aumenta em +2UD" while transformed. */
+        @Override
+        public int resolveMovementIncrease(final Character character, final CombatantSheet holder) {
+            return transformed(holder) ? METAMORFOSE_MOVEMENT_BONUS : 0;
+        }
+
+        /** "Vantagem em suas rolagens [de] Ataque … com armas naturais" while transformed. */
+        @Override
+        public int resolveSkillRollBonus(final SkillType skillType, final SceneContext sceneContext,
+                                          final SkillTrait requestedAbility, final Character character,
+                                          final AttackSource attackSource, final CombatantSheet holder) {
+            return transformed(holder) && skillType.isAttackSkill()
+                    && withNaturalWeapon(character, attackSource)
+                    ? Skill.ADVANTAGE_BONUS : 0;
+        }
+
+        /** And "…e Dano com armas naturais" — the other half of the same clause. */
+        @Override
+        public Optional<DamageBonus> resolveDamageBonus(final SkillType attackingSkillType,
+                                                         final SceneContext sceneContext,
+                                                         final CombatantSheet attackTarget, final Character actor,
+                                                         final AttackSource attackSource, final int targetCount,
+                                                         final CombatantSheet holder) {
+            return transformed(holder) && attackingSkillType.isAttackSkill()
+                    && withNaturalWeapon(actor, attackSource)
+                    ? Optional.of(new DamageBonus(Skill.ADVANTAGE_BONUS, DamageType.FISICO))
+                    : Optional.empty();
+        }
+    };
+
+    /** "Enquanto transformado em animal" — {@code false} with no sheet to ask. */
+    private static boolean transformed(final CombatantSheet holder) {
+        return holder != null && holder.isInForm(FormType.ANIMAL);
+    }
+
+    /** Whether this attack was delivered with something the holder treats as an Arma Natural. */
+    private static boolean withNaturalWeapon(final Character character, final AttackSource attackSource) {
+        return attackSource instanceof Weapon weapon && character.treatsAsNaturalWeapon(weapon);
+    }
+
+    /** METAMORFOSE_SELVAGEM's own "+2 nas Defesas". */
+    private static final int METAMORFOSE_DEFENSE_BONUS = 2;
+
+    /** Its "+2UD" de Movimento Base. */
+    private static final int METAMORFOSE_MOVEMENT_BONUS = 2;
 
     /** The "+1 de bônus racial" every Talento de Herança's own Atributo clause grants. */
     private static final int HERANCA_ATTRIBUTE_BONUS = 1;

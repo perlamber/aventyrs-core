@@ -772,7 +772,8 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                 .flatMap(Optional::stream)
                 .forEach(typed::add);
         character.getFeats().stream()
-                .map(feat -> feat.resolveDamageBonus(skillType, sceneContext, attackTarget, character, attackSource, targetCount))
+                .map(feat -> feat.resolveDamageBonus(skillType, sceneContext, attackTarget, character,
+                        attackSource, targetCount, target))
                 .flatMap(Optional::stream)
                 .forEach(typed::add);
         int flat = target.getTemporaryBonus(ModifierType.DAMAGE_ROLL_BONUS)

@@ -29,7 +29,7 @@ public enum FormType {
      * Forma Animal — a whole animal, not a blend. {@code BestialFeat#METAMORFOSE_SELVAGEM}'s
      * "transformar em um animal", {@code HomemFera}'s Animal rung.
      */
-    ANIMAL,
+    ANIMAL(FormEquipmentPolicy.ALL_SUPPRESSED),
 
     /** Forma Híbrida — {@code HomemFera}'s Aventyr-only blend of Humanoide and Animal. */
     HIBRIDA,
@@ -89,11 +89,12 @@ public enum FormType {
      * What this shape lets its holder keep using — {@link FormEquipmentPolicy#UNRESTRICTED} for
      * every Forma whose rules text says nothing about equipment, which is most of them.
      *
-     * <p>{@link #ANIMAL} is deliberately left unrestricted even though {@code
-     * BestialFeat#METAMORFOSE_SELVAGEM} would make it {@link FormEquipmentPolicy#ALL_SUPPRESSED}:
-     * that Talento is not built, so assigning the stricter policy now would restrict {@code
-     * HomemFera}'s own Animal rung — a different clause whose text this repo does not hold — on
-     * the strength of a Talento nothing can enter. Set it when Metamorfose Selvagem lands.
+     * <p>⚠️ {@link #ANIMAL} is {@link FormEquipmentPolicy#ALL_SUPPRESSED} on the strength of
+     * {@code BestialFeat#METAMORFOSE_SELVAGEM}'s "é impossível usar equipamentos enquanto este
+     * Talento estiver ativo" — a character who is wholly an animal has no hands for gear, whatever
+     * put them there. {@code HomemFera}'s own Animal rung therefore <b>inherits</b> that
+     * restriction, and its clause is not in this repo to check against; revisit when that text
+     * lands.
      */
     public FormEquipmentPolicy getEquipmentPolicy() {
         return equipmentPolicy;
