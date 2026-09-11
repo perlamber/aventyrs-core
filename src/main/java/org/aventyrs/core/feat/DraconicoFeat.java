@@ -8,6 +8,8 @@ import java.util.Optional;
 import org.aventyrs.core.ability.ActiveAbility;
 import org.aventyrs.core.sheet.FormType;
 import org.aventyrs.core.character.Character;
+import java.util.Set;
+import org.aventyrs.core.item.ItemCategory;
 import org.aventyrs.core.character.DefenseType;
 import org.aventyrs.core.item.NaturalWeapon;
 import org.aventyrs.core.race.NascidoDoDragao;
@@ -26,9 +28,9 @@ import org.aventyrs.core.skill.SkillType;
  * Margem Crítica Menor" applies for real, scoped to a Sopro attack. What is still blocked hangs
  * off <b>no flight or form state</b> (recorded on {@code NascidoDoDragao} itself), the missing
  * <b>elemental damage type</b> and this core rolling <b>no dice</b> (the "+1d6 … para cada
- * Título Aventyr Desperto" riders), and the missing <b>equipment restriction</b> mechanism
- * ({@link #ASAS_DE_DRAGAO}'s Capa clause). {@link #ASAS_DE_DRAGAO}'s +2 Defesas is unconditional
- * because the wings are always there, and real.
+ * Título Aventyr Desperto" riders). {@link #ASAS_DE_DRAGAO} is fully real: its +2 Defesas is
+ * unconditional because the wings are always there, and so is the Capa restriction that pays for
+ * it — a permanent {@code Feat#getForbiddenEquipmentCategories} entry the equipment list enforces.
  *
  * <p><b>"Recém-criados" is not modelled.</b> Two constants restrict themselves to a Nascido do
  * Dragão "recém-criado", i.e. acquirable only at character creation. Nothing anywhere tracks
@@ -69,9 +71,10 @@ public enum DraconicoFeat implements Feat {
     // TODO: the flight half needs a flight state and a Movimento Base de Voo, neither of which
     //  exists — see Aviano's own Braços Alados. Note the PD cost, its per-Título reduction and
     //  the 1d6 + metade do Vigor Duração are all exact figures with nothing to apply them to.
-    // TODO: "impede de usar Equipamentos do tipo Capa" needs an equipment *restriction*
-    //  mechanism. Character#equip validates nothing (ItemCategory.CLOAK exists, but no rule
-    //  anywhere refuses an item), so the malus that pays for this bonus is currently free.
+    // "Impede de usar Equipamentos do tipo Capa" is real — a permanent
+    // Feat#getForbiddenEquipmentCategories entry, refused by CharacterSheet#equip/canEquip and
+    // caught on an already-assembled loadout by validateEquipmentLoadout. So the malus that pays
+    // for the +2 Defesas is no longer free.
     ASAS_DE_DRAGAO(
             "Você tem asas e possui Movimento Base de Voo. Iniciar uma ação de voo em situações "
                     + "estressantes, como as Cenas de Combate, exige o uso de 4PD. Este Custo é "
@@ -85,6 +88,15 @@ public enum DraconicoFeat implements Feat {
         @Override
         public int resolveDefenseBonus(final DefenseType defenseType, final Character character) {
             return ASAS_DEFENSE_BONUS;
+        }
+
+        /**
+         * "Mas o impede de usar Equipamentos do tipo Capa." Permanent: the wings are always
+         * there, which is the same reason the Defesas bonus above is unconditional.
+         */
+        @Override
+        public Set<ItemCategory> getForbiddenEquipmentCategories(final Character character) {
+            return Set.of(ItemCategory.CLOAK);
         }
     },
 

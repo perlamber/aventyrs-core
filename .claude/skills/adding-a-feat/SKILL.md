@@ -75,6 +75,10 @@ mechanism.
   text routinely offers a choice between them in one clause; folded into
   `SkillCompetencyAbility#allFor` and `Character#getSpecializations(SkillType)`, so both reach the
   roll path unchanged — `HerancaBestialFeat`, `AdotadoPorSylphFeat`, `ChosenSkillTraitsFeat`), and
+  `getForbiddenEquipmentCategories(Character)` (a whole `ItemCategory` the holder may never wear —
+  `DraconicoFeat#ASAS_DE_DRAGAO`'s Capa; **permanent**, enforced on the equipment list by
+  `CharacterSheet#equip`/`canEquip`/`validateEquipmentLoadout`, and not to be confused with a
+  Forma's temporary `FormEquipmentPolicy`, which answers "can I use this right now" instead),
   `resolveFormAccess(FormType, Character)` → `FormAccess` (whether this Talento forbids a Forma or
   locks its holder into one — `CombatantSheet#canTakeForm` combines them; three-valued, so "says
   nothing" and "says no" stay distinct, the same shape `resolveTitleAcquisitionPermission` uses),

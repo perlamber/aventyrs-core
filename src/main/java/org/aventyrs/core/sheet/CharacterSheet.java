@@ -15,6 +15,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
+import static org.aventyrs.core.util.TranslatableMessages.EQUIPMENT_CATEGORY_FORBIDDEN;
 import static org.aventyrs.core.util.TranslatableMessages.EQUIPMENT_SLOT_ALREADY_OCCUPIED;
 import static org.aventyrs.core.util.TranslatableMessages.NOT_ENOUGH_EXPERIENCE;
 import static org.aventyrs.core.util.TranslatableMessages.NOT_ENOUGH_HANDS;
@@ -167,6 +168,8 @@ public class CharacterSheet extends AbstractCombatantSheet {
      *   <li>at most one Armadura, Elmo, Botas, Capa and Manoplas each
      *       ({@code EQUIPMENT_SLOT_ALREADY_OCCUPIED});</li>
      *   <li>at most one Escudo ({@code TOO_MANY_SHIELDS});</li>
+     *   <li>no item of a category a held Talento forbids outright
+     *       ({@code EQUIPMENT_CATEGORY_FORBIDDEN}) — {@code DraconicoFeat#ASAS_DE_DRAGAO}'s Capa;</li>
      *   <li>the equipped Escudos and armas fit in two hands ({@code NOT_ENOUGH_HANDS}) — an
      *       Escudo or a one-handed weapon takes one hand, a two-handed weapon (a Lâmina Pesada or
      *       any non-Leve weapon) and every Arco/Besta take both. So a shield pairs with one light
@@ -197,8 +200,16 @@ public class CharacterSheet extends AbstractCombatantSheet {
         return candidate;
     }
 
-    /** The offending message key, or {@code null} when every item fits. */
-    private static String findLoadoutViolation(final List<Item> items) {
+    /**
+     * The offending message key, or {@code null} when every item fits. An instance method rather
+     * than a static one because the last rule is the holder's own: a Talento may forbid a whole
+     * {@link ItemCategory} outright ({@code Feat#getForbiddenEquipmentCategories}).
+     */
+    private String findLoadoutViolation(final List<Item> items) {
+        Set<ItemCategory> forbidden = forbiddenCategories();
+        if (items.stream().anyMatch(item -> forbidden.contains(item.getCategory()))) {
+            return EQUIPMENT_CATEGORY_FORBIDDEN;
+        }
         for (ItemCategory slot : SINGLE_BODY_SLOTS) {
             if (countOfCategory(items, slot) > 1) {
                 return EQUIPMENT_SLOT_ALREADY_OCCUPIED;
@@ -211,6 +222,13 @@ public class CharacterSheet extends AbstractCombatantSheet {
             return NOT_ENOUGH_HANDS;
         }
         return null;
+    }
+
+    /** Every category this character's held Talentos refuse outright — usually none. */
+    private Set<ItemCategory> forbiddenCategories() {
+        return getCharacter().getFeats().stream()
+                .flatMap(feat -> feat.getForbiddenEquipmentCategories(getCharacter()).stream())
+                .collect(java.util.stream.Collectors.toUnmodifiableSet());
     }
 
     private static long countOfCategory(final List<Item> items, final ItemCategory category) {

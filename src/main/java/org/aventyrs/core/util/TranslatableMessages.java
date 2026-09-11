@@ -58,6 +58,14 @@ public class TranslatableMessages {
      * Feat#resolveActiveAbilityChoice}. Grant the acquired, choice-carrying form instead.
      */
     public static final String FEAT_REQUIRES_ACTIVE_ABILITY_CHOICE = "FEAT_REQUIRES_ACTIVE_ABILITY_CHOICE";
+
+    /**
+     * A held Talento forbids that whole kind of Equipamento — {@code
+     * Feat#getForbiddenEquipmentCategories}, as {@code DraconicoFeat#ASAS_DE_DRAGAO} does for a
+     * Capa. A permanent restriction on the equipment list, distinct from a Forma's temporary
+     * {@code FormEquipmentPolicy}.
+     */
+    public static final String EQUIPMENT_CATEGORY_FORBIDDEN = "EQUIPMENT_CATEGORY_FORBIDDEN";
     /**
      * The Habilidade de Força chosen for {@code AnaoFeat#CONSELHEIRO_DE_GUERRA_YMIRIANO} —
      * "1 Habilidade de Força (que você cumpra os requisitos)" — was picked by a character with

@@ -8,6 +8,7 @@ import org.aventyrs.core.character.Character;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import org.aventyrs.core.effect.CriticalEffect;
 import org.aventyrs.core.effect.EffectChain;
 import org.aventyrs.core.sheet.ActionCost;
@@ -1095,6 +1096,28 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      */
     default int resolveMagicReduction(final Character character) {
         return 0;
+    }
+
+    /**
+     * {@link ItemCategory}s this Talento's holder can never wear or wield — a <b>permanent</b>
+     * restriction on the equipment list itself, not a Forma's temporary one. {@code
+     * DraconicoFeat#ASAS_DE_DRAGAO}'s "o impede de usar Equipamentos do tipo Capa" is the case:
+     * wings that big leave no room for a cloak, whatever the character is doing. Empty by default.
+     *
+     * <p>Enforced by {@code CharacterSheet#equip}/{@code canEquip}/{@code
+     * validateEquipmentLoadout} alongside the slot and two-hand rules, so a forbidden category is
+     * refused at the moment of equipping rather than quietly ignored later. {@code
+     * validateEquipmentLoadout} additionally catches a loadout assembled around the restriction —
+     * a Capa worn before the Talento was taken, or staged through the builder.
+     *
+     * <p><b>Distinct from a Forma's {@code FormEquipmentPolicy}</b>, and deliberately not merged
+     * with it: that one is temporary, keyed on the shape its holder is currently in, and answers
+     * "can I use this right now" at {@code CombatantSheet#canAttackWith}. This one answers "may
+     * this ever be on my body", and the two are different questions with different lifetimes — a
+     * Vampiro in wolf shape still <em>owns</em> the sword they cannot swing.
+     */
+    default Set<ItemCategory> getForbiddenEquipmentCategories(final Character character) {
+        return Set.of();
     }
 
     /**
