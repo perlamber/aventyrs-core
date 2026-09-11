@@ -67,7 +67,13 @@ public enum AssassinoFeat implements Feat {
     ACERTO_CRITICO_APRIMORADO(
             "Escolha entre um Tipo de Arma ou Conjuração de Magias. Sua Margem Crítica Menor com o "
                     + "tipo de arma escolhida, ou das magias que você conjurar, é aumentada em +1.",
-            FeatRequirements.builder().build()),
+            FeatRequirements.builder().build()) {
+        /** "Escolha entre um Tipo de Arma ou Conjuração de Magias." */
+        @Override
+        public List<FeatChoice<?>> resolveRequiredChoices(final Character holder) {
+            return List.of(FeatChoice.ofOne(AttackMethod.class, List.of(AttackMethod.values())));
+        }
+    },
 
     /**
      * "Você pode sacar uma arma como Ação Livre, a primeira rolagem de Perícia de Ataque que
@@ -159,7 +165,14 @@ public enum AssassinoFeat implements Feat {
                             .attributeDomain(AttributeDomain.FOCUS)
                             .requiredAttributeValue(AssassinoFeat.FOCO_5)
                             .build())
-                    .build()),
+                    .build()) {
+        /** "Escolha entre Armas ou Magias." */
+        @Override
+        public List<FeatChoice<?>> resolveRequiredChoices(final Character holder) {
+            return List.of(FeatChoice.ofOne(WeaponOrSpellChoice.class,
+                    List.of(WeaponOrSpellChoice.values())));
+        }
+    },
 
     /**
      * "Você pode guardar sua arma atual como uma Reação. Este Talento pode ser usado apenas uma

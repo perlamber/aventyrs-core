@@ -124,20 +124,22 @@ class MetamorfoseDraculeaTest {
     void theCatalogConstantAdvertisesItsChoice() {
         Character nosferatu = vampiro(VampiroLineage.NOSFERATU);
 
-        ActiveAbilityChoice choice = VampiricoFeat.METAMORFOSE_DRACULEA.resolveActiveAbilityChoice(nosferatu);
+        FeatChoice<?> choice = VampiricoFeat.METAMORFOSE_DRACULEA.resolveRequiredChoices(nosferatu).get(0);
 
         assertEquals(2, choice.picks());
+        assertEquals(ActiveAbility.class, choice.type(), "the type token a client routes on");
         assertEquals(6, choice.options().size(), "the whole table");
         assertTrue(choice.options().stream().allMatch(MetamorfoseActiveAbility.class::isInstance));
         // Each option can be rendered without knowing what it is.
-        assertTrue(choice.options().stream().noneMatch(option -> option.getDescription().isBlank()));
+        assertTrue(choice.options().stream().map(ActiveAbility.class::cast)
+                .noneMatch(option -> option.getDescription().isBlank()));
     }
 
     /** The options are filtered per holder, so a client never reimplements a Talento's own rules. */
     @Test
     void aRakshasaIsNotOfferedNevoa() {
-        ActiveAbilityChoice choice = VampiricoFeat.METAMORFOSE_DRACULEA
-                .resolveActiveAbilityChoice(vampiro(VampiroLineage.RAKSHASA));
+        FeatChoice<?> choice = VampiricoFeat.METAMORFOSE_DRACULEA
+                .resolveRequiredChoices(vampiro(VampiroLineage.RAKSHASA)).get(0);
 
         assertEquals(4, choice.picks());
         assertEquals(5, choice.options().size());
@@ -151,8 +153,8 @@ class MetamorfoseDraculeaTest {
     void aTalentoWithNoChoiceSaysSo() {
         Character nosferatu = vampiro(VampiroLineage.NOSFERATU);
 
-        assertNull(VampiricoFeat.OSTEOMANCIA.resolveActiveAbilityChoice(nosferatu));
-        assertNull(DraconicoFeat.DRACONATO.resolveActiveAbilityChoice(nosferatu));
+        assertTrue(VampiricoFeat.OSTEOMANCIA.resolveRequiredChoices(nosferatu).isEmpty());
+        assertTrue(DraconicoFeat.DRACONATO.resolveRequiredChoices(nosferatu).isEmpty());
     }
 
     /**
@@ -175,8 +177,9 @@ class MetamorfoseDraculeaTest {
         Character nosferatu = vampiro(VampiroLineage.NOSFERATU);
         CharacterSheet sheet = CharacterSheet.of(nosferatu, new Player());
         sheet.accumulateExperience(java.math.BigDecimal.valueOf(100));
-        ActiveAbilityChoice choice = VampiricoFeat.METAMORFOSE_DRACULEA.resolveActiveAbilityChoice(nosferatu);
-        List<ActiveAbility> picked = choice.options().subList(0, choice.picks());
+        FeatChoice<?> choice = VampiricoFeat.METAMORFOSE_DRACULEA.resolveRequiredChoices(nosferatu).get(0);
+        List<ActiveAbility> picked = choice.options().stream()
+                .map(ActiveAbility.class::cast).toList().subList(0, choice.picks());
 
         new FeatServiceImpl().grantFeat(nosferatu, sheet,
                 MetamorfoseDraculeaFeat.ofChosenAbilities(nosferatu, picked));

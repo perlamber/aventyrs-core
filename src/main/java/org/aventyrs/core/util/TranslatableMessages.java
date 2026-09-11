@@ -53,11 +53,11 @@ public class TranslatableMessages {
     public static final String FEAT_PREREQUISITE_NOT_MET = "FEAT_PREREQUISITE_NOT_MET";
 
     /**
-     * The bare catalog constant of a Talento whose acquisition requires choosing between {@code
-     * ActiveAbility}s was passed to {@code FeatService#grantFeat} — see {@code
-     * Feat#resolveActiveAbilityChoice}. Grant the acquired, choice-carrying form instead.
+     * The bare catalog constant of a Talento whose acquisition requires the player to choose
+     * something was passed to {@code FeatService#grantFeat} — see {@code
+     * Feat#resolveRequiredChoices}. Grant the acquired, choice-carrying form instead.
      */
-    public static final String FEAT_REQUIRES_ACTIVE_ABILITY_CHOICE = "FEAT_REQUIRES_ACTIVE_ABILITY_CHOICE";
+    public static final String FEAT_REQUIRES_CHOICE = "FEAT_REQUIRES_CHOICE";
 
     /**
      * A held Talento forbids that whole kind of Equipamento — {@code

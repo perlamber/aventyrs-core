@@ -2,6 +2,7 @@ package org.aventyrs.core.feat;
 
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
+import java.util.List;
 import org.aventyrs.core.item.AttackMethod;
 import org.aventyrs.core.scene.Range;
 import org.aventyrs.core.scene.SceneContext;
@@ -46,7 +47,13 @@ public enum DuelistaFeat implements Feat {
             FeatRequirements.builder()
                     .requiredSkillType(SkillType.ATAQUE_CORPO_A_CORPO)
                     .requiredSkillGraduation(2)
-                    .build()),
+                    .build()) {
+        /** "Escolha entre um tipo de arma, armas naturais ou magias ofensivas." */
+        @Override
+        public List<FeatChoice<?>> resolveRequiredChoices(final Character holder) {
+            return List.of(FeatChoice.ofOne(AttackMethod.class, List.of(AttackMethod.values())));
+        }
+    },
 
     /**
      * "Você pode aumentar o Tempo de Ação de um Ataque Corpo-a-Corpo em +1PA, se o fizer poderá

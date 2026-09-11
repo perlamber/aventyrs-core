@@ -422,7 +422,9 @@ class GeneralFeatEffectIntegrationTest {
         int meleeBefore = rollBonus(sheet, SkillType.ATAQUE_CORPO_A_CORPO, null);
         int rangedBefore = rollBonus(sheet, SkillType.ATAQUE_A_DISTANCIA, null);
 
-        acquire(character, DuelistaFeat.ESPECIALISTA_EM_ARMA, DuelistaFeat.DOMINAR_ARMAS);
+        // ESPECIALISTA_EM_ARMA requires a choice, so the bare constant is no longer grantable —
+        // DOMINAR_ARMAS needs it held, and its own effect does not depend on which was picked.
+        acquire(character, EspecialistaEmArmaFeat.of(AttackMethod.HEAVY_BLADE), DuelistaFeat.DOMINAR_ARMAS);
 
         assertEquals(meleeBefore + Skill.ADVANTAGE_BONUS, rollBonus(sheet, SkillType.ATAQUE_CORPO_A_CORPO, null));
         assertEquals(rangedBefore + Skill.ADVANTAGE_BONUS, rollBonus(sheet, SkillType.ATAQUE_A_DISTANCIA, null));
@@ -435,7 +437,9 @@ class GeneralFeatEffectIntegrationTest {
         CharacterSheet sheet = CharacterSheet.of(character, new Player());
         int before = rollBonus(sheet, SkillType.ATLETISMO, null);
 
-        acquire(character, DuelistaFeat.ESPECIALISTA_EM_ARMA, DuelistaFeat.DOMINAR_ARMAS);
+        // ESPECIALISTA_EM_ARMA requires a choice, so the bare constant is no longer grantable —
+        // DOMINAR_ARMAS needs it held, and its own effect does not depend on which was picked.
+        acquire(character, EspecialistaEmArmaFeat.of(AttackMethod.HEAVY_BLADE), DuelistaFeat.DOMINAR_ARMAS);
 
         assertEquals(before, rollBonus(sheet, SkillType.ATLETISMO, null));
     }

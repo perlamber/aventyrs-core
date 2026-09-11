@@ -50,7 +50,7 @@ public enum FormaMetamorfica {
 
     /**
      * The activatable shape this row <em>is</em> — one stable instance per constant, built here so
-     * that the ability a client is offered through {@code Feat#resolveActiveAbilityChoice} is the
+     * that the ability a client is offered through {@code Feat#resolveRequiredChoices} is the
      * very object the acquired Talento ends up holding. {@code ActiveAbilityService#activate}
      * matches a held ability by {@code ==}, so anything less than a singleton would make an
      * offered choice unactivatable.

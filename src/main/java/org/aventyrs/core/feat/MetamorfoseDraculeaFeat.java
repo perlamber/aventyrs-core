@@ -78,7 +78,7 @@ public final class MetamorfoseDraculeaFeat extends AbstractFeat {
 
     /**
      * The same thing, from the {@link ActiveAbility}s a client actually picked — the options a
-     * {@code Feat#resolveActiveAbilityChoice} offering handed it. Resolves each back to its
+     * {@code Feat#resolveRequiredChoices} offering handed it. Resolves each back to its
      * {@link FormaMetamorfica} and validates exactly as {@link #of(Character, Set)} does, so a
      * client never has to know the enum behind the ability it was shown.
      */

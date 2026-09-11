@@ -784,21 +784,22 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      * ActiveAbilityService#activate} identifies the held ability by reference.
      */
     /**
-     * The choice between {@link ActiveAbility}s this Talento makes its holder pick at acquisition,
-     * or {@code null} — the answer for every Talento but {@code
-     * VampiricoFeat#METAMORFOSE_DRACULEA} — when it grants whatever it grants outright.
+     * Every choice this Talento makes its holder pick when acquiring it, or empty — the answer for
+     * most of the catalog — when it grants whatever it grants outright.
      *
-     * <p><b>A non-{@code null} answer means the bare catalog constant is not grantable</b>:
-     * {@code FeatService#grantFeat} refuses it and demands the acquired, choice-carrying form
-     * instead. That is what makes the requirement impossible to miss rather than merely
-     * documented, and it is why a client can walk the whole catalog asking this one question
-     * rather than knowing which constants are special.
+     * <p><b>A non-empty answer means the bare catalog constant is not grantable</b>: {@code
+     * FeatService#grantFeat} refuses it and demands the acquired, choice-carrying form instead
+     * ({@code FocoEmPericiaFeat}, {@code MetamorfoseDraculeaFeat}, …). That is what makes the
+     * requirement impossible to miss rather than merely documented, and it is why a client can
+     * walk the whole catalog asking this one question rather than knowing which constants are
+     * special — see {@link FeatChoice}.
      *
-     * <p>The returned options are already filtered for holder — see {@link ActiveAbilityChoice},
-     * which also records what this hook deliberately does <em>not</em> cover.
+     * <p>Each choice's options are already filtered for holder, so a client never reimplements a
+     * Talento's own rules to present it. A Talento asking for more than one thing returns more
+     * than one {@code FeatChoice}; none in the catalog does yet, but the shape allows it.
      */
-    default ActiveAbilityChoice resolveActiveAbilityChoice(final Character holder) {
-        return null;
+    default List<FeatChoice<?>> resolveRequiredChoices(final Character holder) {
+        return List.of();
     }
 
     /**

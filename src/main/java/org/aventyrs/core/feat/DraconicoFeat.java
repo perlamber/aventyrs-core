@@ -56,7 +56,14 @@ public enum DraconicoFeat implements Feat {
                     + "Longas. Você possui as Armas Naturais escolhidas.",
             FeatRequirements.builder()
                     .requiredRace(NascidoDoDragao.class)
-                    .build()),
+                    .build()) {
+        /** "Escolha duas armas entre: Chifres Poderosos, Cauda Chicote, Garras Afiadas e Presas Longas." */
+        @Override
+        public List<FeatChoice<?>> resolveRequiredChoices(final Character holder) {
+            return List.of(new FeatChoice<>(NaturalWeapon.class, 2,
+                    List.copyOf(ArmamentoDraconicoFeat.ALLOWED_CHOICES)));
+        }
+    },
 
     /**
      * "Você tem asas e possui Movimento Base de Voo… Asas de Dragão são extremamente grandes,

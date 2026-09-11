@@ -2,6 +2,7 @@ package org.aventyrs.core.feat;
 
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
+import java.util.List;
 import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.skill.Skill;
@@ -43,7 +44,13 @@ public enum PeritoFeat implements Feat {
     //  cannot be checked before the choice exists; left unset.
     FOCO_EM_PERICIA(
             "Escolha uma perícia, adquira vantagem nas rolagens da Perícia escolhida.",
-            FeatRequirements.builder().build()),
+            FeatRequirements.builder().build()) {
+        /** "Escolha uma perícia" — any of them; the Talento narrows nothing. */
+        @Override
+        public List<FeatChoice<?>> resolveRequiredChoices(final Character holder) {
+            return List.of(FeatChoice.ofOne(SkillType.class, List.of(SkillType.values())));
+        }
+    },
 
     /**
      * "Sempre que efetuar rolagens de uma Perícia que você tenha Foco você adquire Vantagem

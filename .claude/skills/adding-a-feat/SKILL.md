@@ -110,19 +110,28 @@ mechanism.
   own shape and `activate` matches by `==`, so "which shape" must be part of the ability's
   identity.
 
-⚠️ **A Talento whose acquisition makes the player *choose* between activatable abilities must
-advertise that choice**, or no client can discover it. Override
-`resolveActiveAbilityChoice(Character)` → `ActiveAbilityChoice(picks, options)`, returning the
-actual `ActiveAbility` instances (already filtered for that holder — a Rakshasa is not offered
-Névoa), and return the **same singletons** the acquired form will hold, since `activate` matches by
-`==`: what the client is shown is what it picks, and what it picks is what gets granted.
-`FeatService#grantFeat` then **refuses the bare catalog constant** for such a Talento, so the
-requirement cannot be silently skipped. `VampiricoFeat#METAMORFOSE_DRACULEA` is the reference.
+⚠️ **Any Talento with an acquisition choice must advertise it**, or no client can discover it.
+Override `resolveRequiredChoices(Character)` → `List<FeatChoice<?>>`, each
+`FeatChoice<T>(Class<T> type, int picks, List<T> options)` carrying the type token a caller routes
+on, how many must be picked, and the options **already filtered for that holder** — so a client
+never reimplements a Talento's own rules to present its choice. `FeatService#grantFeat` then
+**refuses the bare catalog constant** (`FEAT_REQUIRES_CHOICE`), which matters because a
+choice-carrying Talento's effect usually lives *entirely* on its acquired form: granting the
+constant plain costs XP and does nothing.
 
-The catalog's *other* acquisition choices — a Perícia, a terreno, a weapon type, a `SkillTrait`,
-an `AttributeAbility` — are still undiscoverable this way, each knowable only by finding its own
-acquired-form class (`ArmamentoDraconicoFeat.ALLOWED_CHOICES` is the closest anything gets). A
-general descriptor covering all of them is the obvious next step; don't add a second one-off. Several hooks now have a
+Two rules when writing one:
+- **Offer the real values.** For an `ActiveAbility` choice, offer the **same singletons** the
+  acquired form will hold — `activate` matches by `==`, so what the client is shown must be what
+  it picks (`FormaMetamorfica#getTransformation`).
+- **Filter, don't validate-later.** Narrow `options` by the holder's own rules (`Rakshasa` → no
+  Névoa); keep the acquired form's factory validating too, as the belt to that braces.
+
+**Four acquired forms still cannot declare their choice** — `AdotadoPorSylphFeat`,
+`HerancaBestialFeat`, `ChosenSkillTraitsFeat`, `HabilidadeDeAtributoEscolhidaFeat` — because
+nothing indexes their options: there is no registry of a Perícia's own competency/specialization
+constants, nor of every `AttributeAbility`. `SkillType` already carries an `excellencyClass` and
+`AttributeDomain` could carry an ability class the same way, so both are mirror-additions. Add the
+registry rather than a one-off list on the constant. Several hooks now have a
   trailing `CombatantSheet holder` overload that falls through to the sheet-less form
   (`resolveSkillRollBonus`, `resolveDefenseBonus`, `resolveDamageReduction`,
   `resolveCriticalMarginIncrease`) — override it for a clause reading held `Condição`s or the

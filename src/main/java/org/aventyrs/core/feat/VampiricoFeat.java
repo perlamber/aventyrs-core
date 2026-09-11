@@ -107,12 +107,12 @@ public enum VampiricoFeat implements Feat {
          * FeatService#grantFeat} refuses this constant taken plain.
          */
         @Override
-        public ActiveAbilityChoice resolveActiveAbilityChoice(final Character holder) {
-            return new ActiveAbilityChoice(
+        public java.util.List<FeatChoice<?>> resolveRequiredChoices(final Character holder) {
+            return java.util.List.of(new FeatChoice<>(ActiveAbility.class,
                     MetamorfoseDraculeaFeat.choicesFor(holder),
                     FormaMetamorfica.availableTo(holder).stream()
                             .map(FormaMetamorfica::getTransformation)
-                            .toList());
+                            .toList()));
         }
     },
 

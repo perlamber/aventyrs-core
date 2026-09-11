@@ -2,6 +2,7 @@ package org.aventyrs.core.feat;
 
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
+import java.util.List;
 import org.aventyrs.core.character.DamageBonus;
 import org.aventyrs.core.character.DamageType;
 import org.aventyrs.core.scene.SceneContext;
@@ -139,7 +140,13 @@ public enum SobrevivenciaFeat implements Feat {
                     .attributeDomain(AttributeDomain.VIGOR)
                     .requiredAttributeValue(3)
                     .requiredSkillTrait(ConhecimentosSpecialization.NATUREZA)
-                    .build()),
+                    .build()) {
+        /** "Escolha um tipo de terreno entre Aquáticos, Cidades, Desertos, Florestas, Montanhas, Subterrâneo." */
+        @Override
+        public List<FeatChoice<?>> resolveRequiredChoices(final Character holder) {
+            return List.of(FeatChoice.ofOne(TerrainType.class, List.of(TerrainType.values())));
+        }
+    },
 
     /**
      * "Sua Margem Crítica Menor aumenta em +1 número, então você recebe Vantagem em rolagens de
