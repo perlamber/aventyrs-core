@@ -58,9 +58,17 @@ mechanism.
   to a critical hit — `AttackDelivery` scans it, `AssassinoFeat#ABRIR_FERIDAS`), and
   `resolveDefeatBlessings(attacker, defeated, viaCriticalHit)` (`Blessing`s the moment one of the
   holder's attacks drops a foe — `DefeatBlessingService`, caller-driven),
-  `getGrantedNaturalWeapons(Character)` (`NaturalWeapon`s — `Character#getNaturalWeapons()`),
-  `resolveLifeStealBonus(Character)` (Roubo de Vida amplification — `LifeStealService`,
-  `VampiricoFeat#SEDE_DE_SANGUE`), `resolveAdditionalTargets(SkillType, Character)` (how many
+  `getGrantedNaturalWeapons(Character[, CombatantSheet])` (`NaturalWeapon`s — the short form feeds
+  `Character#getNaturalWeapons()`, the Forma-blind "out of any shape" view; the **longer form**
+  feeds `CombatantSheet#getNaturalWeapons()` and is what a per-Forma grant overrides, leaving the
+  short one empty — `MetamorfoseDraculeaFeat`), `replacesNaturalWeaponsWhileInForm(Character,
+  CombatantSheet)` (whether that grant *replaces* the holder's own rather than joining them; a
+  separate hook from an empty grant list because "grants none" and "grants none **and** cancels
+  everyone else's" are different answers — Névoa needs the second, and it is what lets
+  `canAttackWith` refuse every Arma Natural),
+  `resolveLifeStealBonus(Character[, CombatantSheet])` (Roubo de Vida amplification —
+  `LifeStealService`, `VampiricoFeat#SEDE_DE_SANGUE`; the longer form is for a Forma-gated
+  figure, `FormaMetamorfica#MORCEGO_ATROZ`), `resolveAdditionalTargets(SkillType, Character)` (how many
   targets beyond the primary one attack may name — `AttackTargetingService`,
   `ArtesMarciaisFeat#DOMINAR_ARTE_MARCIAL_ARTE_FLUIDA`; the hook answers *how many*, never *which*
   — adjacency is the caller's, see `damage-and-combat`), `resolveAttributeBonus(AttributeDomain, Character)` (a flat

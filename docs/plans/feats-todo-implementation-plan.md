@@ -345,8 +345,31 @@ Atributo).
 - **Still open:** a **Multiplicador de PV** uplift in force only while transformed (its figure
   scales per Título Desperto like the rest of that sentence — a *permanent* per-Título multiplier
   is already ordinary, `OrquicoFeat#TERRA_NAS_VEIAS`; what is missing is sheet reach, since
-  `getLifeMultiplier` takes a `Character`); **suppression of racial traits**; the per-Forma
-  **Arma Natural** swap.
+  `getLifeMultiplier` takes a `Character`); and **suppression of racial traits** ("abandonando
+  seus traços raciais", which occurs in exactly two Talentos — `DRACONATO` and `ANCIENTEFORME` —
+  and in neither is built).
+- **Arma Natural swap — done, by deriving rather than swapping.** `Feat#getGrantedNaturalWeapons(
+  Character, CombatantSheet)` lets a worn shape contribute its own and
+  `Feat#replacesNaturalWeaponsWhileInForm` lets it replace the holder's, both aggregated by the new
+  **`CombatantSheet#getNaturalWeapons()`**; `Character#getNaturalWeapons()` stays Forma-blind.
+  **The rejected alternative was mutating the equipment/weapon list on transforming** — it needs a
+  matching restore on all three ways out of a Forma (a `FormEffect` lapsing, `enterForm(null)`, a
+  second Forma displacing the first), and any path that forgets silently eats the character's
+  gear. Deriving needs no undo, which is the same reasoning `FormEquipmentPolicy` already followed.
+  ⚠️ **The *replacement* is a reading, not a transcription**: "armas não podem ser utilizadas, são
+  substituídas por armas naturais" takes *armas* as the subject of "são substituídas", so the text
+  arguably replaces only weapons; it is read as also cancelling the holder's own Armas Naturais
+  because the shapes are whole animals. `FormaMetamorfica`'s javadoc carries the counter-argument.
+  Névoa's empty list closes half of "é incapaz de causar danos" for free.
+- **Three of the six HABILIDADE rows landed with it** — Aranha's Furtividade Vantagem, Lobo's
+  Perícias de Ataque Vantagem, Morcego's Roubo de Vida +2 (which needed a
+  `resolveLifeStealBonus(Character, CombatantSheet)` overload). The other three are blocked on
+  *different* systems and each constant now says which, rather than sharing one blanket TODO.
+- **Fixed a test that asserted the opposite of the rules.** Lobo Dentes-de-Sabre's row ends "pode
+  empunhar armas de uma mão com as presas", but `MetamorfoseDraculeaTest` transformed into Lobo
+  specifically and asserted a one-handed sword was refused. The clawback is now
+  `FormType#permitsOneHandedWeapons()`, the general-suppression test was repointed at Morcego, and
+  Lobo has its own test covering both halves.
 - **Equipment restrictions — done for the weapons half.** `FormType#getEquipmentPolicy()` returns
   a `FormEquipmentPolicy`, since the rules give two different answers: `WEAPONS_SUPPRESSED` (the
   Metamorfose Dracúlea shapes — defensive items keep working) and `ALL_SUPPRESSED` (Metamorfose
@@ -375,10 +398,13 @@ Atributo).
 Defesas/size/Carisma/Foco one — every half of both Talentos except Ancienteforme's PV multiplier
 and both texts' "abandonando seus traços raciais".
 
-**The four remaining deltas share one root cause** worth naming before attacking them: each needs
-*sheet*-scoped state to reach a *`Character`*-level aggregate (`getEffectiveAttributeTotal`,
-`getRacialAbilities`, `getNaturalWeapons`, `getEquipment`). One architectural problem wearing four
-hats, not four separate features.
+**The remaining deltas share one root cause** worth naming before attacking them: each needs
+*sheet*-scoped state to reach a *`Character`*-level aggregate. That was true of all four, and is
+how two of them were closed — `getNaturalWeapons` and `getEquipment` each grew a sheet-aware twin
+beside the Forma-blind original rather than being made to mutate. The same move is available to
+the two left: `getEffectiveAttributeTotal` (the PV multiplier) and `getRacialAbilities`
+(suppression). One architectural problem wearing four hats, not four separate features — and the
+hat is now a known shape.
 
 **Original plan text follows.**
 

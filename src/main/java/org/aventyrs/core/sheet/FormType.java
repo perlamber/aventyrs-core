@@ -66,8 +66,12 @@ public enum FormType {
     /** Cavalo de Chifres — ignora Terreno Difícil, Multiplicador de PV +1. */
     CAVALO_DE_CHIFRES(FormEquipmentPolicy.WEAPONS_SUPPRESSED),
 
-    /** Lobo Dentes-de-Sabre — Vantagem em Perícias de Ataque. */
-    LOBO_DENTES_DE_SABRE(FormEquipmentPolicy.WEAPONS_SUPPRESSED),
+    /**
+     * Lobo Dentes-de-Sabre — Vantagem em Perícias de Ataque, and the table's one clawback: "pode
+     * empunhar armas de uma mão com as presas", so {@link FormEquipmentPolicy#WEAPONS_SUPPRESSED}
+     * stops at two-handed weapons here.
+     */
+    LOBO_DENTES_DE_SABRE(FormEquipmentPolicy.WEAPONS_SUPPRESSED, true),
 
     /** Morcego Atroz — Movimento de Voo, Roubo de Vida +2. */
     MORCEGO_ATROZ(FormEquipmentPolicy.WEAPONS_SUPPRESSED),
@@ -77,12 +81,19 @@ public enum FormType {
 
     private final FormEquipmentPolicy equipmentPolicy;
 
+    private final boolean oneHandedWeaponsPermitted;
+
     FormType() {
         this(FormEquipmentPolicy.UNRESTRICTED);
     }
 
     FormType(final FormEquipmentPolicy equipmentPolicy) {
+        this(equipmentPolicy, false);
+    }
+
+    FormType(final FormEquipmentPolicy equipmentPolicy, final boolean oneHandedWeaponsPermitted) {
         this.equipmentPolicy = equipmentPolicy;
+        this.oneHandedWeaponsPermitted = oneHandedWeaponsPermitted;
     }
 
     /**
@@ -95,8 +106,32 @@ public enum FormType {
      * put them there. {@code HomemFera}'s own Animal rung therefore <b>inherits</b> that
      * restriction, and its clause is not in this repo to check against; revisit when that text
      * lands.
+     *
+     * <p><b>The policy is not the whole answer for two shapes.</b> Both exceptions live inside
+     * {@link FormEquipmentPolicy#WEAPONS_SUPPRESSED} and are per-shape rather than per-policy,
+     * which is why they are columns here instead of new policy constants: {@link
+     * #LOBO_DENTES_DE_SABRE} claws back one-handed weapons ({@link #permitsOneHandedWeapons()}),
+     * and {@link #NEVOA} goes the other way — its holder can use no Arma Natural either, which
+     * falls out of {@code Feat#replacesNaturalWeaponsWhileInForm} emptying the list rather than
+     * from anything here.
      */
     public FormEquipmentPolicy getEquipmentPolicy() {
         return equipmentPolicy;
+    }
+
+    /**
+     * Whether this shape keeps one-handed weapons usable despite suppressing weapons generally —
+     * {@link #LOBO_DENTES_DE_SABRE}'s "pode empunhar armas de uma mão com as presas", the only
+     * constant that answers {@code true}.
+     *
+     * <p>Handedness is <b>inferred</b>, not authored: {@code CombatantSheet#canAttackWith} reuses
+     * the same {@code ItemWeightClass}-plus-category rule {@code CharacterSheet}'s two-hand
+     * loadout budget applies, since {@code equipamentos.txt} gives no weapon a hands column.
+     * Meaningless while the policy is {@link FormEquipmentPolicy#UNRESTRICTED} (nothing to claw
+     * back) or {@link FormEquipmentPolicy#ALL_SUPPRESSED} (the clause that would grant it does not
+     * exist on any such shape).
+     */
+    public boolean permitsOneHandedWeapons() {
+        return oneHandedWeaponsPermitted;
     }
 }

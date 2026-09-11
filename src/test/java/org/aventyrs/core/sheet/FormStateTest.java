@@ -6,11 +6,13 @@ import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterAttributes;
 import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.feat.GorgonaFeat;
+import org.aventyrs.core.item.NaturalWeapon;
 import org.aventyrs.core.race.Gorgona;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -124,6 +126,31 @@ class FormStateTest {
     }
 
     // ---------- What reads the Forma ----------
+
+    /**
+     * The second thing a Forma is read for, after the Resistência a Críticos below: which Armas
+     * Naturais their holder can strike with. A shape claiming none leaves the answer alone, which
+     * is every Forma outside {@code FormaMetamorfica}'s table — the Górgona shapes included.
+     *
+     * <p>The mechanism itself ({@code Feat#getGrantedNaturalWeapons(Character, CombatantSheet)}
+     * and its replacement half) is exercised in {@code MetamorfoseDraculeaTest}; what belongs here
+     * is that the sheet view is Forma-aware at all, and that it stays inert for a shape with no
+     * claim on it.
+     */
+    @Test
+    void theNaturalWeaponViewIsFormaAwareButInertForAShapeThatClaimsNothing() {
+        Character gorgona = gorgona();
+        CharacterSheet sheet = sheetOf(gorgona);
+        List<NaturalWeapon> own = sheet.getNaturalWeapons();
+
+        assertEquals(gorgona.getNaturalWeapons(), own,
+                "out of any Forma the sheet view is exactly the Character view");
+
+        sheet.enterForm(FormType.MONSTRUOSA);
+
+        assertEquals(own, sheet.getNaturalWeapons(),
+                "Forma Monstruosa names no Arma Natural, so it takes and gives nothing");
+    }
 
     /**
      * {@code GorgonaFeat#PROTECAO_DO_DEUS_DOS_MONSTROS}'s "enquanto em sua Forma Monstruosa você

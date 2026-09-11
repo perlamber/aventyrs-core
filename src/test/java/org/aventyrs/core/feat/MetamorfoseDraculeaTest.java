@@ -10,6 +10,7 @@ import org.aventyrs.core.character.services.ActiveAbilityService;
 import org.aventyrs.core.character.services.ActiveAbilityServiceImpl;
 import org.aventyrs.core.item.AbstractWeapon;
 import org.aventyrs.core.item.ItemCategory;
+import org.aventyrs.core.item.ItemWeightClass;
 import org.aventyrs.core.item.NaturalWeapon;
 import org.aventyrs.core.item.Weapon;
 import org.aventyrs.core.race.Human;
@@ -19,6 +20,7 @@ import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.FormType;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.Player;
+import org.aventyrs.core.skill.Skill;
 import org.aventyrs.core.skill.SkillType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -43,9 +45,18 @@ class MetamorfoseDraculeaTest {
 
     private final ActiveAbilityService activeAbilityService = new ActiveAbilityServiceImpl();
 
+    /**
+     * No {@code weightClass}, so {@code AbstractCombatantSheet#isTwoHanded} reads it as
+     * <b>one-handed</b> — which matters, because Lobo Dentes-de-Sabre's row exempts exactly that.
+     */
     private static final Weapon SWORD = AbstractWeapon.builder()
             .name("Espada").category(ItemCategory.HEAVY_BLADE)
             .damageBase(DamageBase.of(1, 1)).skillType(SkillType.ATAQUE_CORPO_A_CORPO).build();
+
+    /** Explicitly two-handed, for the half of Lobo's clawback that does <em>not</em> apply. */
+    private static final Weapon GREATSWORD = AbstractWeapon.builder()
+            .name("Montante").category(ItemCategory.HEAVY_BLADE).weightClass(ItemWeightClass.HEAVY)
+            .damageBase(DamageBase.of(2, 0)).skillType(SkillType.ATAQUE_CORPO_A_CORPO).build();
 
     @BeforeEach
     void setup() {
@@ -64,6 +75,19 @@ class MetamorfoseDraculeaTest {
         Character vampiro = vampiro(VampiroLineage.NOSFERATU);
         vampiro.grantFeat(MetamorfoseDraculeaFeat.of(vampiro,
                 EnumSet.of(FormaMetamorfica.LOBO_DENTES_DE_SABRE, FormaMetamorfica.MORCEGO_ATROZ)));
+        return vampiro;
+    }
+
+    /**
+     * A Nosferatu who picked Serpente and Névoa — the fixture the <b>replacement</b> is visible
+     * on. {@link #shapeshifter()} cannot show it: Lobo, Morcego and Aranha all grant Presas
+     * Longas, which a Nosferatu already has racially, so swapping and adding look identical there.
+     * Serpente grants a Cauda Constritora the lineage does not have, and Névoa grants nothing.
+     */
+    private static Character serpentAndMist() {
+        Character vampiro = vampiro(VampiroLineage.NOSFERATU);
+        vampiro.grantFeat(MetamorfoseDraculeaFeat.of(vampiro,
+                EnumSet.of(FormaMetamorfica.SERPENTE_ESPINHOSA, FormaMetamorfica.NEVOA)));
         return vampiro;
     }
 
@@ -239,6 +263,10 @@ class MetamorfoseDraculeaTest {
     /**
      * "Armas não podem ser utilizadas" while metamorphosed — but an Arma Natural is exempt, since
      * the same clause says those are what replaces them. And it lifts when the shape does.
+     *
+     * <p>Tested on <b>Morcego Atroz</b> rather than Lobo: Lobo's own row claws one-handed weapons
+     * back ("pode empunhar armas de uma mão com as presas"), so it is the wrong shape to pin the
+     * general rule on — see {@link #loboAloneKeepsOneHandedWeaponsUsable}.
      */
     @Test
     void weaponsCannotBeUsedWhileMetamorphosedButArmasNaturaisCan() throws IllegalOperationException {
@@ -248,15 +276,36 @@ class MetamorfoseDraculeaTest {
         assertTrue(sheet.canAttackWith(SWORD), "unremarkable before transforming");
 
         activeAbilityService.activate(character, sheet,
-                transformationInto(character, FormaMetamorfica.LOBO_DENTES_DE_SABRE), 0);
+                transformationInto(character, FormaMetamorfica.MORCEGO_ATROZ), 0);
 
         assertFalse(sheet.canAttackWith(SWORD));
-        assertTrue(sheet.canAttackWith(NaturalWeapon.PRESAS_LONGAS), "an Arma Natural is not equipment");
-        assertTrue(sheet.canAttackWith(null), "nor is an Ataque Desarmado");
+        assertTrue(sheet.canAttackWith(NaturalWeapon.PRESAS_LONGAS), "the bat's own fangs");
+        assertTrue(sheet.canAttackWith(null), "an Ataque Desarmado is not a weapon to suppress");
 
         sheet.enterForm(null);
 
         assertTrue(sheet.canAttackWith(SWORD), "the restriction goes with the shape");
+    }
+
+    /**
+     * The table's one clawback: Lobo Dentes-de-Sabre's "pode empunhar armas de uma mão com as
+     * presas". One-handed weapons survive the suppression <em>in that shape only</em>; two-handed
+     * ones do not, and no other Forma grants the exemption.
+     */
+    @Test
+    void loboAloneKeepsOneHandedWeaponsUsable() throws IllegalOperationException {
+        Character character = shapeshifter();
+        CharacterSheet sheet = CharacterSheet.of(character, new Player());
+
+        activeAbilityService.activate(character, sheet,
+                transformationInto(character, FormaMetamorfica.LOBO_DENTES_DE_SABRE), 0);
+
+        assertTrue(sheet.canAttackWith(SWORD), "uma mão — held in the fangs");
+        assertFalse(sheet.canAttackWith(GREATSWORD), "two hands is more than a wolf's jaw can do");
+
+        sheet.enterForm(FormType.MORCEGO_ATROZ);
+
+        assertFalse(sheet.canAttackWith(SWORD), "the clawback belongs to Lobo, not to the Talento");
     }
 
     /** A Forma whose text says nothing about equipment restricts nothing — Draconato, Anciente. */
@@ -269,7 +318,7 @@ class MetamorfoseDraculeaTest {
         assertTrue(sheet.canAttackWith(SWORD));
     }
 
-    /** The table's Arma Natural column is authored, even where nothing grants it yet. */
+    /** The table's Arma Natural column is authored data, independent of what reads it. */
     @Test
     void everyFormaCarriesItsTableRow() {
         assertEquals(NaturalWeapon.CHIFRES_PODEROSOS, FormaMetamorfica.CAVALO_DE_CHIFRES.getNaturalWeapon());
@@ -278,5 +327,151 @@ class MetamorfoseDraculeaTest {
         for (FormaMetamorfica forma : FormaMetamorfica.values()) {
             assertFalse(forma.getAbilityDescription().isBlank(), forma + " has no Habilidade text");
         }
+    }
+
+    // ---------- The Arma Natural swap ----------
+
+    /**
+     * "São substituídas por armas naturais", read as replacing the holder's own. A Nosferatu has
+     * Presas Longas by lineage; as a Serpente Espinhosa they have the Cauda Constritora and
+     * nothing else.
+     */
+    @Test
+    void theWornShapesArmaNaturalReplacesTheHoldersOwn() throws IllegalOperationException {
+        Character character = serpentAndMist();
+        CharacterSheet sheet = CharacterSheet.of(character, new Player());
+
+        assertEquals(List.of(NaturalWeapon.PRESAS_LONGAS), sheet.getNaturalWeapons(),
+                "out of any Forma, the sheet view is the Character view");
+
+        activeAbilityService.activate(character, sheet,
+                transformationInto(character, FormaMetamorfica.SERPENTE_ESPINHOSA), 0);
+
+        assertEquals(List.of(NaturalWeapon.CAUDA_CONSTRITORA), sheet.getNaturalWeapons());
+        assertTrue(sheet.canAttackWith(NaturalWeapon.CAUDA_CONSTRITORA));
+        assertFalse(sheet.canAttackWith(NaturalWeapon.PRESAS_LONGAS),
+                "a snake has no fangs of that kind while it is a snake");
+    }
+
+    /**
+     * Névoa's column reads "Nenhum", and under replacement that empties the list outright — half
+     * of "é incapaz de causar danos" falling out of the weapon path. The other half is still
+     * unmodelled: an Ataque Desarmado is not a weapon, so nothing here refuses one.
+     */
+    @Test
+    void nevoaLeavesItsHolderWithNoArmaNaturalAtAll() throws IllegalOperationException {
+        Character character = serpentAndMist();
+        CharacterSheet sheet = CharacterSheet.of(character, new Player());
+
+        activeAbilityService.activate(character, sheet,
+                transformationInto(character, FormaMetamorfica.NEVOA), 0);
+
+        assertTrue(sheet.getNaturalWeapons().isEmpty());
+        for (NaturalWeapon weapon : NaturalWeapon.values()) {
+            assertFalse(sheet.canAttackWith(weapon), weapon + " should be unusable as mist");
+        }
+        assertFalse(sheet.canAttackWith(SWORD), "and weapons were already suppressed");
+    }
+
+    /**
+     * <b>The reason this is derived rather than swapped.</b> All three ways out of a Forma have to
+     * restore the holder's own Armas Naturais, and none of them writes anything: the Duração
+     * lapsing, {@code enterForm(null)}, and a second Forma displacing the first.
+     */
+    @Test
+    void everyWayOutOfTheShapeRestoresTheHoldersOwnWeapons() throws IllegalOperationException {
+        Character character = serpentAndMist();
+        CharacterSheet sheet = CharacterSheet.of(character, new Player());
+        List<NaturalWeapon> own = sheet.getNaturalWeapons();
+
+        // 1. the Duração lapsing on its own
+        activeAbilityService.activate(character, sheet,
+                transformationInto(character, FormaMetamorfica.SERPENTE_ESPINHOSA), 0);
+        assertEquals(List.of(NaturalWeapon.CAUDA_CONSTRITORA), sheet.getNaturalWeapons());
+        for (int rodada = 0; rodada < 5; rodada++) {
+            sheet.finishTurn();
+            sheet.startNewRound();
+        }
+        assertNull(sheet.getCurrentForm(), "the Poder Vampírico's 2 Rodadas are long spent");
+        assertEquals(own, sheet.getNaturalWeapons(), "restored with nothing to restore");
+
+        // 2. leaving by hand
+        sheet.enterForm(FormType.SERPENTE_ESPINHOSA);
+        assertEquals(List.of(NaturalWeapon.CAUDA_CONSTRITORA), sheet.getNaturalWeapons());
+        sheet.enterForm(null);
+        assertEquals(own, sheet.getNaturalWeapons());
+
+        // 3. a second Forma displacing the first
+        sheet.enterForm(FormType.SERPENTE_ESPINHOSA);
+        sheet.enterForm(FormType.NEVOA);
+        assertTrue(sheet.getNaturalWeapons().isEmpty(), "the new shape's answer, not the old one's");
+    }
+
+    /**
+     * A shape the holder never picked is not theirs — a GM bare-{@code enterForm}ing someone into
+     * Aranha Gigante grants no fangs and triggers no replacement, which mirrors their having no
+     * way to enter it. {@code shapeshifter()} picked Lobo and Morcego.
+     */
+    @Test
+    void anUnchosenShapeGrantsNothingAndReplacesNothing() {
+        CharacterSheet sheet = CharacterSheet.of(shapeshifter(), new Player());
+
+        sheet.enterForm(FormType.ARANHA_GIGANTE);
+
+        assertEquals(List.of(NaturalWeapon.PRESAS_LONGAS), sheet.getNaturalWeapons(),
+                "still exactly what the lineage grants");
+    }
+
+    /** And a Forma from outside this table replaces nothing either — Draconato has no row. */
+    @Test
+    void aFormaOutsideTheTableLeavesTheHoldersWeaponsAlone() {
+        CharacterSheet sheet = CharacterSheet.of(serpentAndMist(), new Player());
+
+        sheet.enterForm(FormType.DRACONATO);
+
+        assertEquals(List.of(NaturalWeapon.PRESAS_LONGAS), sheet.getNaturalWeapons());
+    }
+
+    // ---------- The three live Habilidades ----------
+
+    /** Aranha Gigante — "Vantagem em Furtividade", and only while actually a spider. */
+    @Test
+    void aranhaGiganteGrantsFurtividadeVantagemOnlyWhileWorn() {
+        Character character = vampiro(VampiroLineage.NOSFERATU);
+        character.grantFeat(MetamorfoseDraculeaFeat.of(character,
+                EnumSet.of(FormaMetamorfica.ARANHA_GIGANTE, FormaMetamorfica.NEVOA)));
+        CharacterSheet sheet = CharacterSheet.of(character, new Player());
+        int before = rollBonus(sheet, SkillType.FURTIVIDADE);
+        int meleeBefore = rollBonus(sheet, SkillType.ATAQUE_CORPO_A_CORPO);
+
+        sheet.enterForm(FormType.ARANHA_GIGANTE);
+
+        assertEquals(before + Skill.ADVANTAGE_BONUS, rollBonus(sheet, SkillType.FURTIVIDADE));
+        assertEquals(meleeBefore, rollBonus(sheet, SkillType.ATAQUE_CORPO_A_CORPO),
+                "the spider's Vantagem is Furtividade's alone — Lobo is the one with the attack half");
+
+        sheet.enterForm(null);
+
+        assertEquals(before, rollBonus(sheet, SkillType.FURTIVIDADE));
+    }
+
+    /** Lobo Dentes-de-Sabre — "Vantagem em Perícias de Ataque", both of them, and nothing else. */
+    @Test
+    void loboGrantsVantagemOnPericiasDeAtaqueOnly() {
+        CharacterSheet sheet = CharacterSheet.of(shapeshifter(), new Player());
+        int meleeBefore = rollBonus(sheet, SkillType.ATAQUE_CORPO_A_CORPO);
+        int rangedBefore = rollBonus(sheet, SkillType.ATAQUE_A_DISTANCIA);
+        int furtividadeBefore = rollBonus(sheet, SkillType.FURTIVIDADE);
+
+        sheet.enterForm(FormType.LOBO_DENTES_DE_SABRE);
+
+        assertEquals(meleeBefore + Skill.ADVANTAGE_BONUS, rollBonus(sheet, SkillType.ATAQUE_CORPO_A_CORPO));
+        assertEquals(rangedBefore + Skill.ADVANTAGE_BONUS, rollBonus(sheet, SkillType.ATAQUE_A_DISTANCIA));
+        assertEquals(furtividadeBefore, rollBonus(sheet, SkillType.FURTIVIDADE),
+                "not a Perícia de Ataque");
+    }
+
+    private static int rollBonus(final CharacterSheet sheet, final SkillType skillType) {
+        return skillType.newInteraction().applyTo(sheet, null, null).getSkillRollBonus();
     }
 }

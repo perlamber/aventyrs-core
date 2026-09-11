@@ -85,13 +85,27 @@ public enum VampiricoFeat implements Feat {
     // (Ação Livre, 3PV, 2 Rodadas) through Feat#resolveActiveAbilities — the plural hook this
     // Talento is the reason for — and entering one suppresses weapons while leaving defensive
     // items working, which is this clause's own equipment rule (FormType#getEquipmentPolicy).
-    // TODO: each row's Arma Natural is authored on FormaMetamorfica but not granted — swapping
-    //  the holder's Armas Naturais per Forma needs sheet reach, since Character#getNaturalWeapons()
-    //  cannot ask which shape its owner is in (CLAUDE.md's Forma row).
-    // TODO: each row's own HABILIDADE is authored text and granted by nothing — Movimento Base
-    //  Vertical/de Voo (no sub-stat), Multiplicador de PV per Rodada (no sheet reach), a Corrente
-    //  de Efeitos, and Névoa's physical-damage immunity (no damage-type immunity stage).
+    // Each row's ARMA NATURAL column is granted for real now, through
+    // MetamorfoseDraculeaFeat#getGrantedNaturalWeapons(Character, CombatantSheet) and read off
+    // CombatantSheet#getNaturalWeapons() — and it *replaces* the holder's own while the shape is
+    // worn. That replacement is a reading rather than a transcription; FormaMetamorfica's javadoc
+    // carries the two counts on which the source argues the other way.
+    // Three of the six HABILIDADE entries are live too: Aranha's Furtividade Vantagem, Lobo's
+    // Perícias de Ataque Vantagem (plus its one-handed-weapon clawback, FormType
+    // #permitsOneHandedWeapons) and Morcego's Roubo de Vida +2.
+    // TODO: the other HABILIDADE entries are authored text granted by nothing, each blocked on its
+    //  own missing system rather than one shared gap — see the per-constant TODOs on
+    //  FormaMetamorfica, which name them individually (a Movimento Base sub-stat for Vertical/Voo,
+    //  a per-movement Terreno Difícil cost, the Multiplicador de PV's sheet reach, damage-type
+    //  immunity, and a concrete Corrente de Efeitos over an inert ConditionType#ENVENENADO).
+    // TODO: Névoa's "é incapaz de causar danos" is only half closed. Emptying its Armas Naturais
+    //  stops the weapon path, but nothing stops a damaging Magia, and canAttackWith(null) — an
+    //  Ataque Desarmado — stays unconditionally true. A blanket damage prohibition exists nowhere.
     METAMORFOSE_DRACULEA(
+            // NOTE: the source reads "armas não podem seu [sic] utilizadas, são substituídas por
+            // armas naturais" — two comma-joined clauses. The "seu"→"ser" typo is repaired and an
+            // "e" inserted for readability; the grammar matters, since whether "são substituídas"
+            // takes *armas* as its subject is exactly what FormaMetamorfica's reading turns on.
             "Você adquire a capacidade de se transformar em animais ou névoa; enquanto usando "
                     + "metamorfose seus Equipamentos se adaptam ao seu corpo, itens defensivos "
                     + "continuam concedendo seus benefícios, armas não podem ser utilizadas e são "

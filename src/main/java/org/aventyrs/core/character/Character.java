@@ -561,6 +561,11 @@ public class Character {
      * NascidoDoDragao}/{@code Feral}/{@code Monstruoso}/{@code HomemFera} name Armas Naturais in
      * their rules text too but are blocked on a form state or a per-sub-race authoring gap.
      */
+    // NOTE: this is the sheet-less view — what the character has out of any Forma. A shape can
+    // add to it and even replace it outright (Metamorfose Dracúlea's per-row ARMA NATURAL column),
+    // but only a sheet knows which shape is worn, so read CombatantSheet#getNaturalWeapons()
+    // wherever one is in hand. This method deliberately stays Forma-blind rather than growing an
+    // overload: it is what a Character is, not what a combatant currently looks like.
     public List<NaturalWeapon> getNaturalWeapons() {
         return Stream.concat(
                         feats.stream().flatMap(feat -> feat.getGrantedNaturalWeapons(this).stream()),

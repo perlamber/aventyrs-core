@@ -11,7 +11,9 @@ import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.effect.CriticalEffectType;
 import org.aventyrs.core.feat.Feat;
 import org.aventyrs.core.item.Item;
+import org.aventyrs.core.item.ItemCategory;
 import org.aventyrs.core.item.ItemWeightClass;
+import org.aventyrs.core.item.NaturalWeapon;
 import org.aventyrs.core.item.Weapon;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.scene.Range;
@@ -1055,11 +1057,19 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     }
 
     /**
-     * A {@code null} weapon is an Ataque Desarmado and always allowed. Otherwise two things can
-     * refuse: a held Condição restricting attacks to light weapons (Devorado), and the Forma the
-     * combatant is in — "armas não podem ser utilizadas" while metamorphosed. An Arma Natural is
-     * exempt from the Forma's refusal: a wolf's fangs are not equipment, and the same clause that
-     * forbids weapons says they are what replaces them.
+     * A {@code null} weapon is an Ataque Desarmado and always allowed — a punch is not a weapon
+     * there is anything to suppress. Otherwise three things can refuse: a held Condição
+     * restricting attacks to light weapons (Devorado), the Forma's equipment policy ("armas não
+     * podem ser utilizadas" while metamorphosed), and a Forma that <em>replaces</em> its holder's
+     * Armas Naturais, which refuses every one outside the replacement set.
+     *
+     * <p><b>The Arma Natural exemption is possession-blind unless a Forma replaces.</b> By default
+     * this asks {@code Character#treatsAsNaturalWeapon}, which tests the category and never the
+     * holder's list — matching {@code Character#getNaturalWeapons()}'s "no possession gate" note,
+     * and what keeps a Bestial in Forma Animal able to name any Arma Natural. Only a shape that
+     * declares a replacement ({@code Feat#replacesNaturalWeaponsWhileInForm}) narrows it to
+     * {@link #getNaturalWeapons()}, which is how Névoa's "é incapaz de causar danos" refuses
+     * everything: it grants none and cancels the rest.
      */
     @Override
     public boolean canAttackWith(final Weapon weapon) {
@@ -1067,11 +1077,70 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
             return true;
         }
         if (currentForm != null && !currentForm.getEquipmentPolicy().permitsWeapons()
-                && !getCharacter().treatsAsNaturalWeapon(weapon)) {
+                && !isUsableNaturalWeaponInCurrentForm(weapon)
+                && !(currentForm.permitsOneHandedWeapons() && !isTwoHanded(weapon))) {
             return false;
         }
         return !anyConditionPrevents(null, ConditionType::restrictsAttacksToLightWeapons)
                 || weapon.getEffectiveWeightClass() == ItemWeightClass.LIGHT;
+    }
+
+    /**
+     * Whether weapon is an Arma Natural this combatant may currently strike with. A Forma that
+     * replaces narrows the question from "is this an Arma Natural at all" to "is it one of
+     * <i>mine</i>"; every other shape keeps the category-only answer.
+     */
+    private boolean isUsableNaturalWeaponInCurrentForm(final Weapon weapon) {
+        if (replacesNaturalWeapons()) {
+            return weapon instanceof NaturalWeapon natural
+                    && getNaturalWeapons().contains(natural);
+        }
+        return getCharacter().treatsAsNaturalWeapon(weapon);
+    }
+
+    /**
+     * The two-hand inference {@code CharacterSheet}'s loadout budget applies, restated here rather
+     * than shared: {@code equipamentos.txt} gives no weapon a hands column, so handedness comes
+     * from {@link ItemWeightClass} plus category. Read only by {@link
+     * FormType#permitsOneHandedWeapons()}'s one consumer (Lobo Dentes-de-Sabre).
+     *
+     * <p>Reads the <b>authored</b> {@code getWeightClass()} rather than {@code
+     * getEffectiveWeightClass()}, matching {@code CharacterSheet#isTwoHanded} exactly. Two
+     * reasons, and the second is why this is not a shortcut: a weapon whose weight class was never
+     * authored makes the effective form throw, and more importantly the two methods must agree —
+     * a weapon that takes two hands in the loadout budget but one hand here would be incoherent.
+     */
+    private static boolean isTwoHanded(final Weapon weapon) {
+        return weapon.getCategory() == ItemCategory.BOW
+                || weapon.getCategory() == ItemCategory.CROSSBOW
+                || weapon.getWeightClass() == ItemWeightClass.MEDIUM
+                || weapon.getWeightClass() == ItemWeightClass.HEAVY;
+    }
+
+    /** Whether any held Talento replaces this combatant's Armas Naturais for the worn Forma. */
+    private boolean replacesNaturalWeapons() {
+        return currentForm != null && getCharacter().getFeats().stream()
+                .anyMatch(feat -> feat.replacesNaturalWeaponsWhileInForm(getCharacter(), this));
+    }
+
+    /**
+     * Two sources, and a replacement stage on top — the same shape as {@link
+     * #getTotalCriticalResistance}, which also sums the Race's contribution with a per-{@code
+     * Feat} hook taking {@code this}.
+     */
+    @Override
+    public List<NaturalWeapon> getNaturalWeapons() {
+        Character character = getCharacter();
+        List<NaturalWeapon> fromForm = character.getFeats().stream()
+                .flatMap(feat -> feat.getGrantedNaturalWeapons(character, this).stream())
+                .distinct()
+                .toList();
+        if (replacesNaturalWeapons()) {
+            return fromForm;
+        }
+        return Stream.concat(character.getNaturalWeapons().stream(), fromForm.stream())
+                .distinct()
+                .toList();
     }
 
     @Override

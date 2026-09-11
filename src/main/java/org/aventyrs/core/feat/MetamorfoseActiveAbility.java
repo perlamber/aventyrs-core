@@ -21,13 +21,17 @@ import java.util.List;
  * duram por 2 Rodadas e consomem 3PV cada". The costs and Duração are shared with {@link
  * PoderVampiricoActiveAbility} through its constants rather than restated.
  *
- * <p><b>What activating it does today:</b> enters the Forma, which suppresses weapons through
- * {@code FormType#getEquipmentPolicy()} (defensive items keep working, per the clause) and expires
- * on its own via the {@code FormEffect} {@code ActiveAbilityService} applies. What it does
- * <em>not</em> do is grant the row's Arma Natural or its Habilidade — see {@link
- * FormaMetamorfica} for why each is blocked, and note the Arma Natural specifically is the Forma
- * delta CLAUDE.md records as needing sheet reach ({@code Character#getNaturalWeapons()} has no
- * sheet to ask which shape its owner is in).
+ * <p><b>What activating it does:</b> enters the Forma, and expires on its own via the {@code
+ * FormEffect} {@code ActiveAbilityService} applies. Everything the shape is <em>worth</em> —
+ * suppressed weapons ({@code FormType#getEquipmentPolicy()}), the row's Arma Natural replacing the
+ * holder's own, and the three live Habilidades — is resolved <b>from the worn Forma</b> by {@link
+ * MetamorfoseDraculeaFeat}'s hooks, never granted here as a bonus alongside it.
+ *
+ * <p>That split is deliberate and is the convention for anything lasting "while transformed": a
+ * bonus scheduled beside the Forma would count down on its own clock and could expire while its
+ * holder was still in the shape. Nothing is written on transforming, so nothing has to be restored
+ * when the Duração lapses, when {@code enterForm(null)} is called, or when a second Forma displaces
+ * this one — all three exits are the same no-op.
  */
 @Getter
 final class MetamorfoseActiveAbility implements ActiveAbility {

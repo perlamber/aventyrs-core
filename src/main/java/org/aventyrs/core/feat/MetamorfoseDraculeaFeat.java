@@ -4,8 +4,15 @@ import lombok.Getter;
 import lombok.NonNull;
 import org.aventyrs.core.ability.ActiveAbility;
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.item.NaturalWeapon;
 import org.aventyrs.core.race.Vampiro;
 import org.aventyrs.core.race.Vampiro.VampiroLineage;
+import org.aventyrs.core.scene.SceneContext;
+import org.aventyrs.core.sheet.CombatantSheet;
+import org.aventyrs.core.skill.AttackSource;
+import org.aventyrs.core.skill.Skill;
+import org.aventyrs.core.skill.SkillTrait;
+import org.aventyrs.core.skill.SkillType;
 
 import java.util.EnumMap;
 import java.util.EnumSet;
@@ -35,6 +42,9 @@ public final class MetamorfoseDraculeaFeat extends AbstractFeat {
 
     /** "Escolha 2 Formas Metamórficas" — the figure for every lineage but the two named below. */
     private static final int DEFAULT_CHOICES = 2;
+
+    /** {@code FormaMetamorfica#MORCEGO_ATROZ}'s "Roubo de Vida aumentado em +2". */
+    private static final int MORCEGO_LIFE_STEAL_BONUS = 2;
 
     private static final Map<VampiroLineage, Integer> CHOICES_BY_LINEAGE = new EnumMap<>(Map.of(
             VampiroLineage.DAMPIRO, 1,
@@ -117,5 +127,88 @@ public final class MetamorfoseDraculeaFeat extends AbstractFeat {
     @Override
     public List<ActiveAbility> resolveActiveAbilities() {
         return transformations;
+    }
+
+    /**
+     * The {@link FormaMetamorfica} sheet's holder is currently wearing, or {@code null} — out of
+     * any Forma, in a shape this Talento does not name, or in one the holder never picked.
+     *
+     * <p><b>The chosen set is part of the test, deliberately.</b> A shape the player did not pick
+     * is not theirs, which mirrors {@link #resolveActiveAbilities()} — they have no way to enter
+     * it. The visible consequence: a GM who bare-{@code enterForm}s someone into Aranha Gigante
+     * when they picked Lobo and Morcego gets no fangs and no replacement, which is the honest
+     * answer rather than a silent grant.
+     */
+    private FormaMetamorfica wornForma(final CombatantSheet sheet) {
+        if (sheet == null) {
+            return null;
+        }
+        FormaMetamorfica worn = FormaMetamorfica.of(sheet.getCurrentForm());
+        return worn != null && chosenFormas.contains(worn) ? worn : null;
+    }
+
+    /**
+     * The worn shape's ARMA NATURAL column — Cauda Constritora for Serpente Espinhosa, nothing at
+     * all for Névoa, whose column reads "Nenhum".
+     *
+     * <p><b>Only the long form is overridden</b>, so the sheet-less {@code
+     * getGrantedNaturalWeapons(Character)} stays empty for this Talento. That is correct and not
+     * an omission: out of any Forma, Metamorfose Dracúlea grants no Arma Natural whatsoever.
+     */
+    @Override
+    public List<NaturalWeapon> getGrantedNaturalWeapons(final Character character,
+                                                        final CombatantSheet sheet) {
+        FormaMetamorfica worn = wornForma(sheet);
+        if (worn == null || worn.getNaturalWeapon() == null) {
+            return List.of();
+        }
+        return List.of(worn.getNaturalWeapon());
+    }
+
+    /**
+     * "Armas não podem ser utilizadas, são substituídas por armas naturais" — read as replacing
+     * the holder's own Armas Naturais too, for as long as the shape is worn. See {@link
+     * FormaMetamorfica} for the two counts on which the source argues otherwise, and why it is
+     * read this way regardless.
+     *
+     * <p>True for <em>every</em> worn row including Névoa, which is the point: Névoa grants no
+     * weapon and cancels the rest, leaving a holder who can strike with nothing.
+     */
+    @Override
+    public boolean replacesNaturalWeaponsWhileInForm(final Character character,
+                                                      final CombatantSheet sheet) {
+        return wornForma(sheet) != null;
+    }
+
+    /**
+     * The HABILIDADE column's two Vantagem rows — Aranha Gigante's Furtividade and Lobo
+     * Dentes-de-Sabre's Perícias de Ataque. Both are worth nothing until their holder is actually
+     * wearing that shape, which is why this reads the sheet rather than the {@link Character}.
+     */
+    @Override
+    public int resolveSkillRollBonus(final SkillType skillType, final SceneContext sceneContext,
+                                     final SkillTrait requestedAbility, final Character character,
+                                     final AttackSource attackSource, final CombatantSheet holder) {
+        FormaMetamorfica worn = wornForma(holder);
+        if (worn == null) {
+            return 0;
+        }
+        boolean applies = switch (worn) {
+            case ARANHA_GIGANTE -> skillType == SkillType.FURTIVIDADE;
+            case LOBO_DENTES_DE_SABRE -> skillType != null && skillType.isAttackSkill();
+            default -> false;
+        };
+        return applies ? Skill.ADVANTAGE_BONUS : 0;
+    }
+
+    /**
+     * Morcego Atroz's "Roubo de Vida aumentado em +2". An amplifier like every other {@code
+     * resolveLifeStealBonus} — {@code LifeStealService} applies it only when the holder already
+     * has an active {@code LifeSteal}, so a bat with no Roubo de Vida to amplify still steals
+     * nothing.
+     */
+    @Override
+    public int resolveLifeStealBonus(final Character character, final CombatantSheet sheet) {
+        return wornForma(sheet) == FormaMetamorfica.MORCEGO_ATROZ ? MORCEGO_LIFE_STEAL_BONUS : 0;
     }
 }

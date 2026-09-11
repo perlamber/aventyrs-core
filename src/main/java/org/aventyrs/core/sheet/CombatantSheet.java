@@ -302,15 +302,48 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
 
     /**
      * Whether this combatant may currently attack with weapon — {@code null} meaning an Ataque
-     * Desarmado, which is always allowed. False only while a held condition restricts them to
-     * light weapons ({@link ConditionType#restrictsAttacksToLightWeapons()} — Devorado, where a
-     * greatsword cannot be brought to bear inside a creature but a dagger still can).
+     * Desarmado, which is always allowed. False in three cases:
+     *
+     * <ul>
+     *   <li>a held condition restricts them to light weapons ({@link
+     *   ConditionType#restrictsAttacksToLightWeapons()} — Devorado, where a greatsword cannot be
+     *   brought to bear inside a creature but a dagger still can);</li>
+     *   <li>their current Forma suppresses weapons ({@link FormType#getEquipmentPolicy()}) and
+     *   this is one — Armas Naturais are exempt, and {@link FormType#permitsOneHandedWeapons()}
+     *   exempts one-handed weapons too on the one shape that claws them back;</li>
+     *   <li>their current Forma <b>replaces</b> their Armas Naturais and this is not one of the
+     *   replacements ({@link #getNaturalWeapons()}) — a Vampiro in Névoa can use none at all.</li>
+     * </ul>
      *
      * <p>A question, not a gate: nothing in this core refuses an attack made with a weapon this
      * returns {@code false} for, because there is no validation point between choosing an attack
      * and resolving one. A caller deciding which attacks to present asks this.
      */
     boolean canAttackWith(Weapon weapon);
+
+    /**
+     * The Armas Naturais this combatant can strike with <b>right now</b> — the sheet-aware twin of
+     * {@code Character#getNaturalWeapons()}, and the one to read whenever a sheet is in hand.
+     *
+     * <p>The two differ only while a Forma is worn. {@code
+     * Feat#getGrantedNaturalWeapons(Character, CombatantSheet)} lets a shape contribute its own
+     * ({@code FormaMetamorfica}'s ARMA NATURAL column — Cauda Constritora for a Serpente
+     * Espinhosa), and {@code Feat#replacesNaturalWeaponsWhileInForm} lets it <b>replace</b> what
+     * its holder otherwise has, so a Nosferatu in that shape loses their lineage's Presas Longas
+     * for the duration and a Vampiro in Névoa is left with nothing. Out of any Forma, and for
+     * every shape no Talento claims, this is exactly the {@code Character} view.
+     *
+     * <p><b>Derived, never stored.</b> Nothing is written on transforming and nothing is restored
+     * on changing back — which is what makes it correct across all three ways a Forma ends (a
+     * {@code FormEffect} lapsing, {@code #enterForm(null)}, and a second Forma displacing the
+     * first). A swap-the-list implementation would need an undo on each.
+     *
+     * <p><b>The list a UI offers, not a check the roll enforces</b> — the same standing as {@code
+     * Character#getNaturalWeapons()}. {@code DamageBaseService} takes the {@link Weapon} as a
+     * parameter and never looks it up. {@link #canAttackWith(Weapon)} is the one place it is
+     * consulted, and that is itself a question rather than a gate.
+     */
+    java.util.List<org.aventyrs.core.item.NaturalWeapon> getNaturalWeapons();
 
     /**
      * The flat dano-roll bonus this combatant's conditions grant to <b>whoever attacks them</b> —

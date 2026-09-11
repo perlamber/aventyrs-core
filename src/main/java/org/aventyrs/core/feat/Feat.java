@@ -838,6 +838,19 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     }
 
     /**
+     * The same figure for a holder <b>whose current Forma is visible</b> — {@code
+     * FormaMetamorfica#MORCEGO_ATROZ}'s "Roubo de Vida aumentado em +2", which is worth nothing
+     * until its holder is actually a bat.
+     *
+     * <p><b>Defaults *down* to {@link #resolveLifeStealBonus(Character)}</b>, the {@code Feat}
+     * convention — every existing override sits on the shorter form and is untouched. A {@code
+     * null} sheet reads as "no Forma in force".
+     */
+    default int resolveLifeStealBonus(final Character character, final CombatantSheet sheet) {
+        return resolveLifeStealBonus(character);
+    }
+
+    /**
      * Roubo de Vida this Talento grants as a standing source, before any amplifiers — {@code
      * ElficoFeat#CORRUPTOR_SOMBRIO}'s "recebe Roubo de Vida 1". Unlike {@link
      * #resolveLifeStealBonus(Character)}, this establishes life steal even with no active
@@ -983,15 +996,61 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      * character strike with unarmed". Empty by default.
      *
      * <p>Same default-empty-list shape as {@link #resolveExtraCriticalEffects} / {@link
-     * #resolveDefeatBlessings}, and takes {@code character} for the same reason every {@code
-     * Feat} hook does — a future clause could scale the grant off holder state, though none does
-     * yet. A granted Arma Natural needs no possession gate on the attack path: {@code
-     * DamageBaseService} takes the {@link Weapon} as a parameter and never looks it up, and
-     * {@link Character#treatsAsNaturalWeapon(Weapon)} already recognises any {@link
+     * #resolveDefeatBlessings}. A granted Arma Natural needs no possession gate on the attack
+     * path: {@code DamageBaseService} takes the {@link Weapon} as a parameter and never looks it
+     * up, and {@link Character#treatsAsNaturalWeapon(Weapon)} already recognises any {@link
      * ItemCategory#NATURAL_WEAPON} weapon.
+     *
+     * <p><b>This is the sheet-less form — "what does this Talento grant out of any Forma".</b> A
+     * grant that depends on the shape its holder is currently wearing overrides {@link
+     * #getGrantedNaturalWeapons(Character, CombatantSheet)} instead, and leaves this one empty.
      */
     default List<NaturalWeapon> getGrantedNaturalWeapons(final Character character) {
         return List.of();
+    }
+
+    /**
+     * The Armas Naturais this Talento grants a holder <b>whose current Forma is visible</b> —
+     * {@code MetamorfoseDraculeaFeat}'s per-shape swap, where a Vampiro in Serpente Espinhosa
+     * fights with the Cauda Constritora the table's ARMA NATURAL column names for that row.
+     * Aggregated by {@code CombatantSheet#getNaturalWeapons()}; {@code Character#getNaturalWeapons()}
+     * reads only the shorter form, since a {@link Character} has no shape to be in.
+     *
+     * <p><b>Defaults *down* to {@link #getGrantedNaturalWeapons(Character)}</b>, the {@code Feat}
+     * convention rather than the cascading one used elsewhere in this core — see {@link
+     * #resolveCriticalResistance(Character, SceneContext, CombatantSheet)} for the sibling pair.
+     * Every existing override sits on the shorter form and keeps working untouched.
+     *
+     * @param sheet the holder's sheet, or {@code null} on a {@link Character}-only path, which
+     *              reads as "no Forma in force" and falls through to the shorter form
+     */
+    default List<NaturalWeapon> getGrantedNaturalWeapons(final Character character,
+                                                         final CombatantSheet sheet) {
+        return getGrantedNaturalWeapons(character);
+    }
+
+    /**
+     * Whether this Talento's Forma-granted Armas Naturais <b>replace</b> the holder's own rather
+     * than joining them — {@code VampiricoFeat#METAMORFOSE_DRACULEA}'s "armas não podem ser
+     * utilizadas, são substituídas por armas naturais". A Nosferatu in Serpente Espinhosa has the
+     * Cauda Constritora and <em>not</em> the Presas Longas their lineage grants; in Névoa, whose
+     * ARMA NATURAL column reads "Nenhum", they have none at all.
+     *
+     * <p><b>A deliberate reading, not a transcription</b> — see {@code FormaMetamorfica} for the
+     * two counts on which the source text argues the other way, and why it was read this way
+     * regardless. It is deliberately <em>not</em> the "abandonando seus traços raciais" clause,
+     * which belongs to {@code DraconicoFeat#DRACONATO} / {@code FeericoFeat#ANCIENTEFORME} and
+     * remains unbuilt: this cancels Armas Naturais only, and only while the shape is worn.
+     *
+     * <p>Separate from returning an empty {@link #getGrantedNaturalWeapons(Character,
+     * CombatantSheet)} because "grants none" and "grants none <b>and</b> cancels everyone else's"
+     * are different answers, and Névoa needs the second. {@code false} by default, so a Forma with
+     * no table row — {@code BestialFeat#METAMORFOSE_SELVAGEM}'s {@code FormType#ANIMAL} — leaves
+     * its holder's own Armas Naturais exactly as they were.
+     */
+    default boolean replacesNaturalWeaponsWhileInForm(final Character character,
+                                                      final CombatantSheet sheet) {
+        return false;
     }
 
     /**
