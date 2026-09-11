@@ -1,12 +1,17 @@
 package org.aventyrs.core.feat;
 
-import org.aventyrs.core.skill.Skill;
 import org.aventyrs.core.skill.SkillType;
 import org.junit.jupiter.api.Test;
+
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
+/**
+ * The choice-carrying instance itself. The Vantagem each chosen Perícia buys is asserted off the
+ * Interaction in {@code RacialFeatEffectIntegrationTest}.
+ */
 class AdotadoPorSylphFeatTest {
 
     @Test
@@ -17,12 +22,11 @@ class AdotadoPorSylphFeatTest {
         assertEquals(FeericoFeat.ADOTADO_POR_SYLPH.getDescription(), feat.getDescription());
     }
 
+    /** The choice is a <em>set</em> — one Perícia per Título Desperto, so it is more than one pick. */
     @Test
-    void grantsVantagemOnEveryChosenSkillOnly() {
+    void carriesEveryChosenPericia() {
         AdotadoPorSylphFeat feat = AdotadoPorSylphFeat.of(SkillType.ARTES, SkillType.ATTENTION);
 
-        assertEquals(Skill.ADVANTAGE_BONUS, feat.resolveSkillRollBonus(SkillType.ARTES, null, null, null));
-        assertEquals(Skill.ADVANTAGE_BONUS, feat.resolveSkillRollBonus(SkillType.ATTENTION, null, null, null));
-        assertEquals(0, feat.resolveSkillRollBonus(SkillType.PERSUASAO, null, null, null));
+        assertEquals(Set.of(SkillType.ARTES, SkillType.ATTENTION), feat.getChosenSkills());
     }
 }

@@ -1,6 +1,5 @@
 package org.aventyrs.core.feat;
 
-import org.aventyrs.core.skill.Skill;
 import org.aventyrs.core.skill.SkillType;
 import org.junit.jupiter.api.Test;
 
@@ -26,14 +25,13 @@ class FocoEmPericiaFeatTest {
         assertThrows(NullPointerException.class, () -> FocoEmPericiaFeat.of(null));
     }
 
+    /**
+     * The choice is what the instance carries; the Vantagem it buys is asserted off the
+     * Interaction in {@code GeneralFeatEffectIntegrationTest}.
+     */
     @Test
-    void grantsVantagemOnTheChosenSkillAndNothingElse() {
-        FocoEmPericiaFeat feat = FocoEmPericiaFeat.of(SkillType.ATLETISMO);
-
-        assertEquals(Skill.ADVANTAGE_BONUS,
-                feat.resolveSkillRollBonus(SkillType.ATLETISMO, null, null, null));
-        assertEquals(0,
-                feat.resolveSkillRollBonus(SkillType.PERSUASAO, null, null, null));
+    void carriesTheChosenSkill() {
+        assertEquals(SkillType.ATLETISMO, FocoEmPericiaFeat.of(SkillType.ATLETISMO).getChosenSkill());
     }
 
     /** No custom equals — two instances with the same choice are still distinct objects. */

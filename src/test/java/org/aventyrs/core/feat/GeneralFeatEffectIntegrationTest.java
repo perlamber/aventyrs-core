@@ -464,6 +464,24 @@ class GeneralFeatEffectIntegrationTest {
     }
 
     /**
+     * "nas rolagens de ataque" — a Perícia that is not one gets nothing, even while holding the
+     * very weapon that was chosen. The guard that catches a scoping condition dropped from the hook.
+     */
+    @Test
+    void especialistaEmArmaDoesNotLeakIntoANonAttackPericia() throws IllegalOperationException {
+        Character character = duelist(2);
+        CharacterSheet sheet = CharacterSheet.of(character, new Player());
+        Weapon lightBlade = weapon(ItemCategory.LIGHT_BLADE);
+        int before = SkillType.ATLETISMO.newInteraction()
+                .applyTo(sheet, null, null, null, lightBlade).getSkillRollBonus();
+
+        acquire(character, EspecialistaEmArmaFeat.of(AttackMethod.LIGHT_BLADE));
+
+        assertEquals(before, SkillType.ATLETISMO.newInteraction()
+                .applyTo(sheet, null, null, null, lightBlade).getSkillRollBonus());
+    }
+
+    /**
      * {@code DuelistaFeat.MAESTRIA_EM_ARMA} — Margem Crítica Menor +1 only while attacking with
      * the {@code EspecialistaEmArmaFeat} choice.
      */
@@ -693,6 +711,97 @@ class GeneralFeatEffectIntegrationTest {
         assertEquals(danoBefore + Skill.ADVANTAGE_BONUS, meleeDanoBonus(sheet, forest));
         assertEquals(danoBefore, meleeDanoBonus(sheet, desert));
         assertEquals(danoBefore, meleeDanoBonus(sheet, null));
+    }
+
+    /**
+     * {@code SobrevivenciaFeat.TERRENO_PREDILETO} on its own, before any dependent — Vantagem on
+     * Furtividade and on Conhecimentos: Natureza, and +2 to both Defesas, all of it only in the
+     * chosen terrain. {@link #mestreDeCacaAppliesOnlyInTheChosenTerreno} exercises the same choice
+     * through a Talento that reads it; this pins what the choice is worth by itself.
+     */
+    @Test
+    void terrenoPrediletoAppliesItsOwnThreeHalvesOnlyInTheChosenTerreno() throws IllegalOperationException {
+        Character character = naturalist();
+        CharacterSheet sheet = CharacterSheet.of(character, new Player());
+        SceneContext forest = new SceneContext(List.of(), List.of(), Map.of(), TerrainType.FOREST);
+        SceneContext desert = new SceneContext(List.of(), List.of(), Map.of(), TerrainType.DESERT);
+        int furtividadeBefore = rollBonus(sheet, SkillType.FURTIVIDADE, forest);
+        int physicalBefore = defenseService.getTotalDefense(sheet, DefenseType.PHYSICAL, forest);
+        int magicBefore = defenseService.getTotalDefense(sheet, DefenseType.MAGIC, forest);
+
+        acquire(character, TerrenoPrediletoFeat.of(TerrainType.FOREST));
+
+        assertEquals(furtividadeBefore + Skill.ADVANTAGE_BONUS, rollBonus(sheet, SkillType.FURTIVIDADE, forest));
+        assertEquals(furtividadeBefore, rollBonus(sheet, SkillType.FURTIVIDADE, desert),
+                "the wrong terrain is worth nothing");
+        assertEquals(furtividadeBefore, rollBonus(sheet, SkillType.FURTIVIDADE, null),
+                "and no Scene reads as 'condition not met'");
+        assertEquals(physicalBefore + 2, defenseService.getTotalDefense(sheet, DefenseType.PHYSICAL, forest));
+        assertEquals(magicBefore + 2, defenseService.getTotalDefense(sheet, DefenseType.MAGIC, forest));
+        assertEquals(physicalBefore, defenseService.getTotalDefense(sheet, DefenseType.PHYSICAL, desert));
+    }
+
+    /** The Conhecimentos half is narrower still — the chosen terrain <em>and</em> Natureza. */
+    @Test
+    void terrenoPrediletoReachesConhecimentosOnlyThroughTheNaturezaEspecializacao()
+            throws IllegalOperationException {
+        Character character = naturalist();
+        CharacterSheet sheet = CharacterSheet.of(character, new Player());
+        SceneContext forest = new SceneContext(List.of(), List.of(), Map.of(), TerrainType.FOREST);
+
+        acquire(character, TerrenoPrediletoFeat.of(TerrainType.FOREST));
+
+        // The Especialização reaches the roll as the SkillRoll's requestedAbility — a plain roll
+        // names none, which is the "not Natureza" case here since the fixture holds no other.
+        int asNatureza = SkillType.CONHECIMENTOS.newInteraction()
+                .applyTo(sheet, forest, new SkillRoll(List.of(3, 3, 3), ConhecimentosSpecialization.NATUREZA))
+                .getSkillRollBonus();
+        int asAPlainRoll = SkillType.CONHECIMENTOS.newInteraction()
+                .applyTo(sheet, forest, new SkillRoll(List.of(3, 3, 3)))
+                .getSkillRollBonus();
+
+        assertEquals(Skill.ADVANTAGE_BONUS, asNatureza - asAPlainRoll);
+    }
+
+    /** Vigor 3 plus the Conhecimentos: Natureza Especialização — Terreno Predileto's Pré-requisito. */
+    private static Character naturalist() {
+        return character()
+                .attributes(CharacterAttributes.builder()
+                        .vigor(AttributeValue.builder().domain(AttributeDomain.VIGOR).base(3).build())
+                        .build())
+                .skill(SkillType.CONHECIMENTOS, CharacterSkill.builder()
+                        .skill(new Conhecimentos())
+                        .graduation(SkillGraduation.builder().graduationValue(1).build())
+                        .specializations(List.of(ConhecimentosSpecialization.NATUREZA))
+                        .build())
+                .build();
+    }
+
+    /**
+     * {@code AssassinoFeat.ACERTO_CRITICO_APRIMORADO} chosen as {@code OFFENSIVE_MAGIC} — the
+     * branch of the choice that is not a weapon at all. {@code ChoiceFeatAttackDeliveryTest} covers
+     * the weapon branch through a delivered attack; a Magia's Margem Crítica has no equivalent
+     * delivery path (nothing threads an {@code AttackSource} through {@code SpellCastingService}'s
+     * Margem Crítica), so the Interaction is as far as this one goes.
+     */
+    @Test
+    void acertoCriticoAprimoradoWidensTheMarginForMagiaWhenMagiaWasChosen()
+            throws IllegalOperationException {
+        Character character = character()
+                .skill(SkillType.ATAQUE_A_DISTANCIA,
+                        trained(new org.aventyrs.core.skill.ataqueadistancia.AtaqueADistancia(), 2))
+                .build();
+        CharacterSheet sheet = CharacterSheet.of(character, new Player());
+        SkillRoll fives = new SkillRoll(List.of(5, 5, 1));
+        Weapon bow = weapon(ItemCategory.BOW);
+
+        acquire(character, AcertoCriticoAprimoradoFeat.of(AttackMethod.OFFENSIVE_MAGIC));
+
+        assertEquals(CriticalResult.ACERTO_CRITICO_MENOR, SkillType.ATAQUE_A_DISTANCIA.newInteraction()
+                .applyTo(sheet, null, fives, null, new org.aventyrs.core.magic.TestSpell()).getCriticalResult());
+        assertEquals(CriticalResult.NONE, SkillType.ATAQUE_A_DISTANCIA.newInteraction()
+                .applyTo(sheet, null, fives, null, bow).getCriticalResult(),
+                "a bow is not a Magia — the choice was spent elsewhere");
     }
 
     /** Ataque Corpo-a-Corpo at graduation, which every Duelista Pré-requisito here counts. */

@@ -5,8 +5,14 @@ import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.AttributeValue;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterAttributes;
+import org.aventyrs.core.character.DamageBonus;
 import org.aventyrs.core.character.fixture.CharacterFixture;
+import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.IllegalOperationException;
+import org.aventyrs.core.sheet.Player;
+import org.aventyrs.core.skill.DifficultyLevel;
+import org.aventyrs.core.skill.SkillRoll;
+import org.aventyrs.core.skill.SkillType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -99,5 +105,56 @@ class ConselheiroDeGuerraYmirianoFeatTest {
                 ConselheiroDeGuerraYmirianoFeat.of(withSlot, StrengthAbility.DESTRUIDOR_DE_MUROS);
 
         assertEquals(StrengthAbility.DESTRUIDOR_DE_MUROS, feat.getChosenAbility());
+    }
+
+    // ---------- what the two halves are worth, read off a roll ----------
+
+    /**
+     * The fixed half: "Bônus Racial de +1 em Gnose" reaches a Gnose-governed Perícia roll —
+     * Conhecimentos — as one more point of Atributo, and leaves a Força-governed one alone.
+     */
+    @Test
+    void theGnoseBonusReachesAGnoseGovernedPericiaRoll() {
+        Character before = characterWithStrengthBase(3);
+        Character after = characterWithStrengthBase(3);
+        after.grantFeat(new ConselheiroDeGuerraYmirianoFeat(StrengthAbility.DESTRUIDOR_DE_MUROS));
+
+        assertEquals(rollMargin(before, SkillType.CONHECIMENTOS) + 1, rollMargin(after, SkillType.CONHECIMENTOS));
+        assertEquals(rollMargin(before, SkillType.ATLETISMO), rollMargin(after, SkillType.ATLETISMO),
+                "a Força-governed Perícia is untouched");
+    }
+
+    /**
+     * The chosen half, read off the effect the pick actually has: {@code DESTRUIDOR_DE_MUROS}
+     * makes the Rodada's first attack scale dano by the <em>whole</em> Força rather than half it,
+     * so the melee dano bonus differs from a holder who picked something else. This is the
+     * assertion that would fail if the granted Habilidade never reached {@code
+     * Character#getAttributeAbilities()}.
+     */
+    @Test
+    void theChosenHabilidadeIsInEffectOnARoll() {
+        Character destruidor = characterWithStrengthBase(4);
+        destruidor.grantFeat(new ConselheiroDeGuerraYmirianoFeat(StrengthAbility.DESTRUIDOR_DE_MUROS));
+        Character subjugar = characterWithStrengthBase(4);
+        subjugar.grantFeat(new ConselheiroDeGuerraYmirianoFeat(StrengthAbility.SUBJUGAR));
+
+        int forca = destruidor.getEffectiveAttributeTotal(AttributeDomain.STRENGTH);
+
+        assertEquals(forca - forca / 2, meleeDanoBonus(destruidor) - meleeDanoBonus(subjugar),
+                "the whole Força instead of half it, for the Rodada's first attack");
+    }
+
+    /** The margin against a stated GD — one more point of the governing Atributo moves it by one. */
+    private static int rollMargin(final Character character, final SkillType skillType) {
+        return skillType.newInteraction()
+                .applyTo(CharacterSheet.of(character, new Player()), null,
+                        SkillRoll.against(List.of(3, 3, 3), DifficultyLevel.MEDIUM))
+                .getMargin();
+    }
+
+    private static int meleeDanoBonus(final Character character) {
+        DamageBonus danoBonus = SkillType.ATAQUE_CORPO_A_CORPO.newInteraction()
+                .applyTo(CharacterSheet.of(character, new Player()), null, null).getDamageBonus();
+        return danoBonus == null ? 0 : danoBonus.getValue();
     }
 }

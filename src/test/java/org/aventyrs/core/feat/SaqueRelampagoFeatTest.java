@@ -194,6 +194,35 @@ class SaqueRelampagoFeatTest {
         assertEquals(eased - 1, notEased);
     }
 
+    /**
+     * "Escolha entre Armas ou Magias" — the choice discriminates on the roll itself, not only in
+     * the hook's truth table. A holder who picked Armas gets nothing from a Magia, and the
+     * mirror-image holder gets nothing from a weapon.
+     */
+    @Test
+    void theChoiceDiscriminatesOnTheRoll() throws IllegalOperationException {
+        Character weaponAssassin = assassin();
+        Character spellAssassin = dexterousBuild().build();
+        CharacterSheet spellSheet = CharacterSheet.of(spellAssassin, new Player());
+        spellSheet.accumulateExperience(BigDecimal.valueOf(50));
+        featService.grantFeat(spellAssassin, spellSheet, AssassinoFeat.SAQUE_RAPIDO);
+        featService.grantFeat(spellAssassin, spellSheet, SaqueRelampagoFeat.of(WeaponOrSpellChoice.SPELLS));
+
+        SkillRoll roll = new SkillRoll(List.of(3, 3, 3), null, DifficultyLevel.MEDIUM.getBaseValue(),
+                ActionCost.ofActionPoints(1));
+        CharacterSheet weaponSheet = CharacterSheet.of(weaponAssassin, new Player());
+
+        assertEquals(reductionOn(weaponSheet, roll, SPELL) + 1, reductionOn(weaponSheet, roll, WEAPON),
+                "Armas was chosen — a Magia is not eased");
+        assertEquals(reductionOn(spellSheet, roll, WEAPON) + 1, reductionOn(spellSheet, roll, SPELL),
+                "and the opposite choice gives the opposite result");
+    }
+
+    private static int reductionOn(final CharacterSheet sheet, final SkillRoll roll, final AttackSource source) {
+        return new AtaqueADistanciaInteraction().applyTo(sheet, null, roll, null, source)
+                .getDifficultyReduction();
+    }
+
     @Test
     void everyOtherAssassinoConstantLeavesTheAttackCostReductionAtZero() {
         for (AssassinoFeat feat : AssassinoFeat.values()) {
