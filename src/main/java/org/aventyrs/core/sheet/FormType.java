@@ -112,7 +112,7 @@ public enum FormType {
      * which is why they are columns here instead of new policy constants: {@link
      * #LOBO_DENTES_DE_SABRE} claws back one-handed weapons ({@link #permitsOneHandedWeapons()}),
      * and {@link #NEVOA} goes the other way — its holder can use no Arma Natural either, which
-     * falls out of {@code Feat#replacesNaturalWeaponsWhileInForm} emptying the list rather than
+     * falls out of {@code Feat#resolveRacialTraitSuppression} emptying the list rather than
      * from anything here.
      */
     public FormEquipmentPolicy getEquipmentPolicy() {

@@ -69,6 +69,10 @@ mechanism.
   survives even `ALL` — and creature type is never suppressed. "Replacement" is *suppress + grant*
   composed, so there is no separate replacement hook: `FormaMetamorfica#NEVOA` suppresses and
   grants nothing, which is what makes `canAttackWith` refuse every Arma Natural),
+  `resolveLifeMultiplierIncrease(Character[, CombatantSheet])` (Multiplicador de PV — the longer
+  form is for a Forma-scoped one, and **every Forma-scoped multiplier must use it** rather than a
+  `LIFE_MULTIPLIER` `TemporaryBonus`: a countdown is tied to itself, not to the shape, so it would
+  survive an early `enterForm(null)`. `FeericoFeat#ANCIENTEFORME`, `FormaMetamorfica#CAVALO_DE_CHIFRES`),
   `resolveLifeStealBonus(Character[, CombatantSheet])` (Roubo de Vida amplification —
   `LifeStealService`, `VampiricoFeat#SEDE_DE_SANGUE`; the longer form is for a Forma-gated
   figure, `FormaMetamorfica#MORCEGO_ATROZ`), `resolveAdditionalTargets(SkillType, Character)` (how many

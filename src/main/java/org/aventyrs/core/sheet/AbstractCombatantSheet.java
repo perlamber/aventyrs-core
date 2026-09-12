@@ -1074,7 +1074,7 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
      * this asks {@code Character#treatsAsNaturalWeapon}, which tests the category and never the
      * holder's list — matching {@code Character#getNaturalWeapons()}'s "no possession gate" note,
      * and what keeps a Bestial in Forma Animal able to name any Arma Natural. Only a shape that
-     * declares a replacement ({@code Feat#replacesNaturalWeaponsWhileInForm}) narrows it to
+     * declares a replacement ({@code Feat#resolveRacialTraitSuppression}) narrows it to
      * {@link #getNaturalWeapons()}, which is how Névoa's "é incapaz de causar danos" refuses
      * everything: it grants none and cancels the rest.
      */

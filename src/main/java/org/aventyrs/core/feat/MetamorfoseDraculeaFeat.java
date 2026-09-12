@@ -47,6 +47,9 @@ public final class MetamorfoseDraculeaFeat extends AbstractFeat {
     /** {@code FormaMetamorfica#MORCEGO_ATROZ}'s "Roubo de Vida aumentado em +2". */
     private static final int MORCEGO_LIFE_STEAL_BONUS = 2;
 
+    /** {@code FormaMetamorfica#CAVALO_DE_CHIFRES}'s "Multiplicador de PV +1". */
+    private static final int CAVALO_LIFE_MULTIPLIER_BONUS = 1;
+
     private static final Map<VampiroLineage, Integer> CHOICES_BY_LINEAGE = new EnumMap<>(Map.of(
             VampiroLineage.DAMPIRO, 1,
             VampiroLineage.RAKSHASA, 4));
@@ -221,5 +224,17 @@ public final class MetamorfoseDraculeaFeat extends AbstractFeat {
     @Override
     public int resolveLifeStealBonus(final Character character, final CombatantSheet sheet) {
         return wornForma(sheet) == FormaMetamorfica.MORCEGO_ATROZ ? MORCEGO_LIFE_STEAL_BONUS : 0;
+    }
+
+    /**
+     * Cavalo de Chifres' "Multiplicador de PV +1". Resolved from the worn Forma rather than
+     * scheduled as a {@code TemporaryBonus} beside it: these shapes are enterable through the
+     * bare {@code enterForm} mutator as well as through the Poder Vampírico, so a countdown could
+     * lapse while its holder was still a horse.
+     */
+    @Override
+    public int resolveLifeMultiplierIncrease(final Character character, final CombatantSheet sheet) {
+        return wornForma(sheet) == FormaMetamorfica.CAVALO_DE_CHIFRES
+                ? CAVALO_LIFE_MULTIPLIER_BONUS : 0;
     }
 }

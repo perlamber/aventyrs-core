@@ -22,7 +22,8 @@ import org.aventyrs.core.sheet.FormType;
  * #SERPENTE_ESPINHOSA} fights with the Cauda Constritora and not the Presas Longas their lineage
  * grants; in {@link #NEVOA}, whose column reads "Nenhum", they have none at all. Surfaced by
  * {@code CombatantSheet#getNaturalWeapons()} through {@code Feat#getGrantedNaturalWeapons(Character,
- * CombatantSheet)} and {@code Feat#replacesNaturalWeaponsWhileInForm}.
+ * CombatantSheet)}, with the holder's own silenced by {@code Feat#resolveRacialTraitSuppression}
+ * at its {@code NATURAL_WEAPONS_ONLY} rung — "replacement" is those two composed.
  *
  * <p><b>That replacement is a deliberate reading, not a transcription</b>, and the source argues
  * the other way on two counts, both recorded here so a later reader sees a decision rather than a
@@ -39,11 +40,12 @@ import org.aventyrs.core.sheet.FormType;
  * This is emphatically <b>not</b> the racial-trait-suppression gap being closed: it cancels Armas
  * Naturais only, only while the shape is worn, and only for this Talento.
  *
- * <p><b>The HABILIDADE column is three-sixths live.</b> {@link #ARANHA_GIGANTE}'s Furtividade
- * Vantagem, {@link #LOBO_DENTES_DE_SABRE}'s Perícias de Ataque Vantagem and {@link
- * #MORCEGO_ATROZ}'s "Roubo de Vida +2" are granted for real, Forma-gated. The rest are authored
- * text granted by nothing, each blocked on its own missing system — see the per-constant javadoc
- * rather than assuming one shared blocker.
+ * <p><b>The HABILIDADE column is four-sixths live.</b> {@link #ARANHA_GIGANTE}'s Furtividade
+ * Vantagem, {@link #LOBO_DENTES_DE_SABRE}'s Perícias de Ataque Vantagem, {@link
+ * #MORCEGO_ATROZ}'s "Roubo de Vida +2" and {@link #CAVALO_DE_CHIFRES}'s "Multiplicador de PV +1"
+ * are granted for real, Forma-gated. The rest are authored text granted by nothing, each blocked
+ * on its own missing system — see the per-constant javadoc rather than assuming one shared
+ * blocker.
  */
 @Getter
 public enum FormaMetamorfica {
@@ -59,14 +61,13 @@ public enum FormaMetamorfica {
             "Movimento Base Vertical e Vantagem em Furtividade."),
 
     /**
-     * Neither half is granted, and they are blocked on different things.
+     * The "Multiplicador de PV +1" half is granted for real, Forma-gated — resolved from the worn
+     * shape through {@code Feat#resolveLifeMultiplierIncrease(Character, CombatantSheet)} and read
+     * by {@code HitPointsService#getMaxHitPoints(Character, CombatantSheet)}, so a Cavalo de
+     * Chifres is genuinely harder to kill while it is one.
      *
      * <p>TODO: "Ignora Terreno Difícil" — {@code TerrainType} describes a whole Scene, not a
      *  per-movement cost there is anything to ignore.
-     * <p>TODO: "Multiplicador de PV +1" — {@code HitPointsService#getLifeMultiplier} takes a
-     *  {@code Character} and cannot see a Forma, which lives on the sheet. The arithmetic is
-     *  ordinary (a permanent per-Título multiplier is real — {@code OrquicoFeat#TERRA_NAS_VEIAS});
-     *  the reach is what is missing.
      */
     CAVALO_DE_CHIFRES(FormType.CAVALO_DE_CHIFRES, NaturalWeapon.CHIFRES_PODEROSOS,
             "Ignora Terreno Difícil e Multiplicador de PV +1."),

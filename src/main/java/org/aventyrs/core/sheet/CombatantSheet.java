@@ -328,7 +328,7 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
      * <p>The two differ only while a Forma is worn. {@code
      * Feat#getGrantedNaturalWeapons(Character, CombatantSheet)} lets a shape contribute its own
      * ({@code FormaMetamorfica}'s ARMA NATURAL column — Cauda Constritora for a Serpente
-     * Espinhosa), and {@code Feat#replacesNaturalWeaponsWhileInForm} lets it <b>replace</b> what
+     * Espinhosa), and {@code Feat#resolveRacialTraitSuppression} lets it <b>silence</b> what
      * its holder otherwise has, so a Nosferatu in that shape loses their lineage's Presas Longas
      * for the duration and a Vampiro in Névoa is left with nothing. Out of any Forma, and for
      * every shape no Talento claims, this is exactly the {@code Character} view.

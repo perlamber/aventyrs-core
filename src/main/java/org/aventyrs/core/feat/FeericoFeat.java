@@ -202,9 +202,11 @@ public enum FeericoFeat implements Feat {
     // The per-Título Defesas (+2), Categoria de Tamanho (+2) and Carisma/Foco (+1) uplifts are
     // granted, as round-scoped TemporaryBonuses lasting the Duração — the Atributo half with the
     // usual partial reach (a Perícia roll governed by it, not PV/PM/Conjuração).
-    // TODO: the "Multiplicador de PV aumenta em +2 para cada Título" half is not — max PV is
-    //  derived from Character#getEffectiveAttributeTotal and the LIFE_MULTIPLIER scan, neither of
-    //  which sees the sheet, and this core does not recompute PV per Rodada.
+    // The "Multiplicador de PV aumenta em +2 para cada Título" half is real too, as a
+    // LIFE_MULTIPLIER TemporaryBonus read by HitPointsService#getMaxHitPoints(Character,
+    // CombatantSheet) — so a transformed Anciente's max PV genuinely rises and falls back when
+    // the Duração lapses. Damage on the sheet is not re-scaled, so current PV follows the max;
+    // see that method for what the fall-back can do to a holder damaged while transformed.
     // "Abandonando seus traços raciais" is real: RacialTraitSuppression.ALL while the Forma
     // holds. Only the Race term of each trait goes, and the Habilidade/Atributo halves carry the
     // same sheet-reach limit noted above (the Perícia-roll path, not PV/PM/Conjuração).
@@ -227,8 +229,8 @@ public enum FeericoFeat implements Feat {
                     .build()) {
         private final ActiveAbility transformation =
                 new FormaActiveAbility(this, FormType.ANCIENTE,
-                        // "suas Defesas … Categoria de Tamanho aumentam em +2, enquanto seu
-                        // Carisma e Foco aumentam em +1" — per Título Desperto.
+                        // "suas Defesas e Multiplicador de PV, Categoria de Tamanho aumentam em
+                        // +2, enquanto seu Carisma e Foco aumentam em +1" — per Título Desperto.
                         new FormaActiveAbility.Uplift(2, 2, 1,
                                 List.of(AttributeDomain.CHARISMA, AttributeDomain.FOCUS)));
 
@@ -244,6 +246,22 @@ public enum FeericoFeat implements Feat {
             return sheet != null && sheet.isInForm(FormType.ANCIENTE)
                     ? RacialTraitSuppression.ALL
                     : RacialTraitSuppression.NONE;
+        }
+
+        /**
+         * "Para cada Título Aventyr Desperto … Multiplicador de PV … aumenta em +2."
+         *
+         * <p>Resolved from the worn Forma rather than granted as a {@code TemporaryBonus} beside
+         * it, unlike the Defesas/Categoria/Atributo halves of the same sentence. A countdown is
+         * tied to itself, not to the shape: a holder leaving early through {@code
+         * enterForm(null)} would keep the uplift, and one still transformed when it lapsed would
+         * lose it. Max PV is too visible a number to let drift apart from the shape granting it.
+         */
+        @Override
+        public int resolveLifeMultiplierIncrease(final Character character, final CombatantSheet sheet) {
+            return sheet != null && sheet.isInForm(FormType.ANCIENTE)
+                    ? ANCIENTE_LIFE_MULTIPLIER_PER_TITLE * character.getAllTitles().size()
+                    : 0;
         }
     },
 
@@ -359,6 +377,9 @@ public enum FeericoFeat implements Feat {
 
     /** The "+1 Bônus Racial" NINFA and SIRENIDEO each grant for their fixed Atributo. */
     private static final int FEERICO_ATTRIBUTE_BONUS = 1;
+
+    /** {@link #ANCIENTEFORME}'s "Multiplicador de PV … aumenta em +2" — per Título Desperto. */
+    private static final int ANCIENTE_LIFE_MULTIPLIER_PER_TITLE = 2;
 
     private final String description;
     private final FeatRequirements featRequirements;

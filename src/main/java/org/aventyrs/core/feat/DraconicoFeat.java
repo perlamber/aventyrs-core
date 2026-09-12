@@ -201,7 +201,8 @@ public enum DraconicoFeat implements Feat {
                     .build()) {
         private final ActiveAbility transformation =
                 new FormaActiveAbility(this, FormType.DRACONATO,
-                        // "sua Categoria de Tamanho, Força e Foco aumentam em +2 para cada Título"
+                        // "sua Categoria de Tamanho, Força e Foco aumentam em +2 para cada
+                        // Título" — no Defesas and no Multiplicador de PV, unlike Ancienteforme.
                         new FormaActiveAbility.Uplift(2, 0, 2,
                                 List.of(AttributeDomain.STRENGTH, AttributeDomain.FOCUS)));
 

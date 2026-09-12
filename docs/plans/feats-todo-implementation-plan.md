@@ -283,11 +283,13 @@ exist. What's missing is **Resfriamento (cooldown)** and the authoring of specif
 
 ---
 
-## Phase 5 — Form state system  ⭐ largest single unlock — **slices 1–2 DONE, 3 partial**
+## Phase 5 — Form state system  ⭐ largest single unlock — **DONE (slices 1–3)**
 
 The plan estimated 3–5 sessions, and that was right: the Forma is not one mechanism but a state
 plus five independent deltas. Split into slices so each lands whole rather than half-building all
-of it. **Slices 1 (the state and the gate) and 2 (entering one) are done**; slice 3 is scoped below.
+of it. **All three slices are done** — the state and the gate, entering one, and the five deltas
+a Forma carries. What is still TODO'd inside this phase is per-clause rather than per-mechanism:
+see the slice-3 notes for which Habilidade is blocked on which missing system.
 
 ### Slice 1 — the state and the gate ✅
 `sheet.FormType` (8 authored shapes) + `CombatantSheet#getCurrentForm()`/`enterForm`/`isInForm`.
@@ -342,10 +344,24 @@ Atributo).
   no sheet, and a three-Rodada Forma raising max PV would need those totals recomputed per Rodada,
   which this core deliberately does not do. Same limit `VampiricoFeat#DOM_DE_MIRCALLA` has always
   had, and the test pins both halves of it.
-- **Still open, and now the only one:** a **Multiplicador de PV** uplift in force only while
-  transformed (its figure scales per Título Desperto like the rest of that sentence — a
-  *permanent* per-Título multiplier is already ordinary, `OrquicoFeat#TERRA_NAS_VEIAS`; what is
-  missing is sheet reach, since `getLifeMultiplier` takes a `Character`).
+- **Multiplicador de PV uplift — done. Phase 5 slice 3 is closed.**
+  `HitPointsService#getLifeMultiplier(Character, CombatantSheet)` and
+  `getMaxHitPoints(Character, CombatantSheet)` are the sheet-aware twins, summing every Talento's
+  `Feat#resolveLifeMultiplierIncrease(Character, CombatantSheet)`; `ANCIENTEFORME` (+2 per Título)
+  and `FormaMetamorfica#CAVALO_DE_CHIFRES` (+1 flat) are the consumers. `getCurrentHitPoints` and
+  `getStatus(CombatantSheet)` route through it — both already held a sheet, which is why the
+  change reached the whole PV path without touching a caller.
+  **Resolved from the Forma, not scheduled as a `TemporaryBonus`** — and the test found that the
+  hard way: a first cut granted Ancienteforme's uplift the way `FormaActiveAbility` grants the
+  Defesas/Categoria halves of the same sentence, and
+  `currentHitPointsFollowTheMaximumUpAndBackDown` failed because a countdown survives an early
+  `enterForm(null)`. CLAUDE.md already stated the rule ("a bonus lasting *while transformed*
+  should be resolved from the Forma") and the first cut violated it; the three existing
+  `TemporaryBonus` halves survive only because their Duração and the Forma's are the same figure.
+  ⚠️ **Max PV moves and current PV follows** — damage is not re-scaled, so a character damaged
+  while transformed can drop a `CharacterStatus` tier when the shape ends. A derivation, not a
+  transcription: the rules say nothing about accumulated damage when a multiplier falls back, and
+  re-scaling or clamping are equally inventable, so neither was invented.
 - **Suppression of racial traits — done, as a four-rung ladder.** `RacialTraitSuppression`
   (`NONE` → `NATURAL_WEAPONS_ONLY` → `PHYSICAL` → `ALL`), declared by
   `Feat#resolveRacialTraitSuppression` and folded by `CombatantSheet#getRacialTraitSuppression()`,
@@ -381,7 +397,7 @@ Atributo).
   `ActiveAbility` grants already is.
 - **Arma Natural swap — done, by deriving rather than swapping.** `Feat#getGrantedNaturalWeapons(
   Character, CombatantSheet)` lets a worn shape contribute its own and
-  `Feat#replacesNaturalWeaponsWhileInForm` lets it replace the holder's, both aggregated by the new
+  `Feat#resolveRacialTraitSuppression` silences the holder's own, both aggregated by the new
   **`CombatantSheet#getNaturalWeapons()`**; `Character#getNaturalWeapons()` stays Forma-blind.
   **The rejected alternative was mutating the equipment/weapon list on transforming** — it needs a
   matching restore on all three ways out of a Forma (a `FormEffect` lapsing, `enterForm(null)`, a

@@ -24,11 +24,16 @@ public class HitPointsServiceImpl implements HitPointsService {
 
     @Override
     public int getLifeMultiplier(final Character character) {
+        return getLifeMultiplier(character, null);
+    }
+
+    @Override
+    public int getLifeMultiplier(final Character character, final CombatantSheet characterSheet) {
         int bonus = modifierResolver.sumModifiers(character.getAttributeAbilities(), ModifierType.LIFE_MULTIPLIER);
         // Talentos are outside every ModifierResolver scan, so they get an explicit pass — the
         // same shape MagicPointsServiceImpl uses for resolveManaMultiplierIncrease.
         for (Feat feat : character.getFeats()) {
-            bonus += feat.resolveLifeMultiplierIncrease(character);
+            bonus += feat.resolveLifeMultiplierIncrease(character, characterSheet);
         }
         return character.getLifeMultiplier() + bonus;
     }
@@ -42,14 +47,20 @@ public class HitPointsServiceImpl implements HitPointsService {
 
     @Override
     public int getMaxHitPoints(final Character character) {
+        return getMaxHitPoints(character, null);
+    }
+
+    @Override
+    public int getMaxHitPoints(final Character character, final CombatantSheet characterSheet) {
         return BASE_HIT_POINTS
-                + character.getEffectiveAttributeTotal(AttributeDomain.VIGOR) * getLifeMultiplier(character)
+                + character.getEffectiveAttributeTotal(AttributeDomain.VIGOR, characterSheet)
+                        * getLifeMultiplier(character, characterSheet)
                 + getHitPointsBonus(character);
     }
 
     @Override
     public int getCurrentHitPoints(final Character character, final CombatantSheet characterSheet) {
-        return Math.max(0, getMaxHitPoints(character) - characterSheet.getDamageTaken());
+        return Math.max(0, getMaxHitPoints(character, characterSheet) - characterSheet.getDamageTaken());
     }
 
     @Override
@@ -77,7 +88,7 @@ public class HitPointsServiceImpl implements HitPointsService {
 
     @Override
     public CharacterStatus getStatus(final CombatantSheet characterSheet) {
-        int maxHitPoints = getMaxHitPoints(characterSheet.getCharacter());
+        int maxHitPoints = getMaxHitPoints(characterSheet.getCharacter(), characterSheet);
         return getStatus(maxHitPoints - characterSheet.getDamageTaken(), maxHitPoints);
     }
 }

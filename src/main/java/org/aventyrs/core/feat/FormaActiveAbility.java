@@ -121,13 +121,22 @@ final class FormaActiveAbility implements ActiveAbility {
      * você possuir" says — and both Talentos already demand one Título to acquire, so the figure
      * is never zero in practice.
      *
-     * <p><b>Partial reach, and deliberately so.</b> The Atributo bonuses land on a Perícia roll
-     * governed by that Atributo and nowhere else — that is the whole of what {@code
-     * ModifierType.<ATTR>_BONUS} reaches (see its javadoc): PV/PM/PD and Conjuração read
-     * {@code Character#getEffectiveAttributeTotal}, which has no sheet and so cannot see a
-     * round-scoped grant. A Forma lasting three Rodadas raising max PV would need those totals
-     * recomputed per Rodada, which this core does not do. The {@code SIZE_CATEGORY} half has no
-     * such limit: {@code CharacterSizeService} gained a sheet-taking overload for exactly this.
+     * <p><b>Partial reach on the Atributo half, and deliberately so.</b> Those bonuses land on a
+     * Perícia roll governed by that Atributo and nowhere else — that is the whole of what {@code
+     * ModifierType.<ATTR>_BONUS} reaches (see its javadoc): PV/PM/PD and Conjuração read {@code
+     * Character#getEffectiveAttributeTotal}, whose sheet-taking overload resolves racial
+     * suppression but not a round-scoped grant. <b>The other three halves have no such limit</b>,
+     * each through a sheet-taking overload added for exactly this: {@code SIZE_CATEGORY} via
+     * {@code CharacterSizeService} and Defesas via {@code DefenseService}.
+     *
+     * <p><b>The Multiplicador de PV is deliberately not here</b>, though Ancienteforme's text
+     * names one. It is resolved <em>from</em> the Forma instead ({@code
+     * Feat#resolveLifeMultiplierIncrease(Character, CombatantSheet)}), because a {@code
+     * TemporaryBonus} is tied to its own countdown rather than to the shape: a holder who leaves
+     * early through {@code enterForm(null)} would keep the uplift, and a holder still transformed
+     * when it lapsed would lose it. Max PV is too visible a number to let drift apart from the
+     * shape that granted it — and the same hazard applies in principle to the three halves above,
+     * which survive only because their Duração and the Forma's are the same figure.
      *
      * <p>Returns the list; {@code resolveEffect} is the single-effect shim the interface keeps and
      * is not what {@code ActiveAbilityService} applies.

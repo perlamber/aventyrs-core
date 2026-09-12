@@ -1452,6 +1452,27 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
         return 0;
     }
 
+    /**
+     * The same figure for a holder <b>whose current Forma is visible</b> — {@code
+     * FormaMetamorfica#CAVALO_DE_CHIFRES}'s "Multiplicador de PV +1", which is worth nothing
+     * until its holder is actually a horned horse.
+     *
+     * <p><b>Defaults *down* to {@link #resolveLifeMultiplierIncrease(Character)}</b>, the {@code
+     * Feat} convention — every existing override sits on the shorter form and is untouched, and a
+     * permanent multiplier ({@code OrquicoFeat#TERRA_NAS_VEIAS}) keeps reaching the sheet-less
+     * path that PV creation and a {@code Character}-only caller read.
+     *
+     * <p><b>Every Forma-scoped multiplier goes through here</b>, including {@code
+     * FeericoFeat#ANCIENTEFORME}'s per-Título "+2" — which its own {@code FormaActiveAbility}
+     * could have granted as a {@code LIFE_MULTIPLIER} {@code TemporaryBonus} alongside the
+     * Defesas and Categoria halves of the same sentence, and deliberately does not. A countdown
+     * is tied to itself rather than to the shape: leaving early through {@code enterForm(null)}
+     * would keep the uplift, and still being transformed when it lapsed would lose it.
+     */
+    default int resolveLifeMultiplierIncrease(final Character character, final CombatantSheet sheet) {
+        return resolveLifeMultiplierIncrease(character);
+    }
+
     private static int graduationOf(final Character character, final SkillType skillType) {
         CharacterSkill characterSkill = character.getSkills().get(skillType);
         return characterSkill == null ? 0 : characterSkill.getGraduation().getGraduationValue();
