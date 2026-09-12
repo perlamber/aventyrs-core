@@ -346,6 +346,25 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
     java.util.List<org.aventyrs.core.item.NaturalWeapon> getNaturalWeapons();
 
     /**
+     * How much of this combatant's {@code Race} is temporarily silenced — the strongest rung any
+     * held Talento declares through {@code Feat#resolveRacialTraitSuppression}, folded into one
+     * answer. "Abandonando seus traços raciais" and its narrower cousins.
+     *
+     * <p><b>The single question every racial aggregation asks</b>, so a new suppressible trait is
+     * wired by consulting this rather than by growing another mechanism. Read by {@link
+     * #getNaturalWeapons()}, {@link #getCriticalEffectImmunities()}, {@link
+     * #getTotalCriticalResistance(org.aventyrs.core.scene.SceneContext)}, {@code
+     * CharacterSizeService} and {@code SkillCompetencyAbility#allFor} — see {@link
+     * org.aventyrs.core.race.RacialTraitSuppression} for the ladder, which trait each rung
+     * reaches, and the traits no rung ever touches (creature type above all).
+     *
+     * <p>Suppression removes the <b>racial term only</b>. Every trait it reaches is aggregated
+     * from more than one source, and a Talento-granted or round-scoped contribution to the same
+     * stat survives untouched.
+     */
+    org.aventyrs.core.race.RacialTraitSuppression getRacialTraitSuppression();
+
+    /**
      * The flat dano-roll bonus this combatant's conditions grant to <b>whoever attacks them</b> —
      * Flanqueado's "Atacar um personagem Flanqueado garante Vantagem na rolagem de Dano". Read
      * off the <em>target</em>'s sheet by {@code AbstractSkillInteraction}, the mirror of {@link

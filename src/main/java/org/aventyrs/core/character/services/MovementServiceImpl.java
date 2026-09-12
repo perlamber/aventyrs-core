@@ -68,7 +68,7 @@ public class MovementServiceImpl implements MovementService {
         for (AttributeAbility ability : character.getAttributeAbilities()) {
             total += ability.resolveRoundMovementIncrease(movementIndex);
         }
-        for (SkillCompetencyAbility ability : SkillCompetencyAbility.allFor(character)) {
+        for (SkillCompetencyAbility ability : SkillCompetencyAbility.allFor(character, sheet)) {
             total += ability.resolveRoundMovementIncrease(movementIndex);
         }
         for (Feat feat : character.getFeats()) {

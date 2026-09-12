@@ -300,7 +300,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
             validateRequestedTrait(character, characterSkill, skillRoll.getRequestedAbility());
         }
         int graduationValue = characterSkill.getGraduation().getGraduationValue();
-        List<SkillCompetencyAbility> skillCompetencyAbilities = allSkillCompetencyAbilities(character);
+        List<SkillCompetencyAbility> skillCompetencyAbilities = allSkillCompetencyAbilities(target);
 
         AttributeDomain naturalDomain = characterSkill.getSkill().getAttributeDomain();
         AttributeDomain peritoTeoricoDomain = PeritoTeoricoAbility.resolveAttributeDomain(character.getAttributeAbilities(), skillType, naturalDomain);
@@ -308,6 +308,14 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                 skillCompetencyAbilities, skillType, peritoTeoricoDomain, attackSource);
 
         int bonus = characterSkillService.getValueForRoll(characterSkill, character.getAttributes(), character.getRace(), attributeDomain);
+        // "Abandonando seus traços raciais" — the racial half of the governing Atributo goes for
+        // as long as the Forma holds. Subtracted here rather than routed through
+        // Character#getEffectiveAttributeTotal(domain, sheet): getValueForRoll reads the raw
+        // CharacterAttributes and has no sheet, and folding the helper in would double-count the
+        // Talento grants this method adds for itself two lines down.
+        if (target.getRacialTraitSuppression().suppressesInnateTraits()) {
+            bonus -= character.getAttributes().getAttribute(attributeDomain).getRacialBonus();
+        }
         // Bonuses to the *governing Atributo* itself — the one place they are read (see
         // ModifierType.<ATTR>_BONUS / Feat#resolveAttributeBonus): a permanent Talento grant
         // (MESTRE_VAMPIRO) and a round-scoped TemporaryBonus (DOM_DE_MIRCALLA, a Poder Vampírico).
@@ -425,7 +433,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
         if (!skillType.isAttackSkill() || attackTarget == null) {
             return result;
         }
-        List<SkillCompetencyAbility> abilities = allSkillCompetencyAbilities(target.getCharacter());
+        List<SkillCompetencyAbility> abilities = allSkillCompetencyAbilities(target);
 
         // Recomputed rather than added to what the main body already put there: the same four
         // sources are scanned again, now with the real attackTarget, so a target-conditioned
@@ -543,8 +551,13 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                 .sum();
     }
 
-    private List<SkillCompetencyAbility> allSkillCompetencyAbilities(final Character character) {
-        return SkillCompetencyAbility.allFor(character);
+    /**
+     * Takes the actor's {@link CombatantSheet} rather than their {@link Character} so that a
+     * Forma suppressing the holder's race ("abandonando seus traços raciais") drops their
+     * Habilidades Raciais from the roll. Every call site here already holds the sheet.
+     */
+    private List<SkillCompetencyAbility> allSkillCompetencyAbilities(final CombatantSheet actor) {
+        return SkillCompetencyAbility.allFor(actor.getCharacter(), actor);
     }
 
     /**
@@ -763,7 +776,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                                                 final int targetCount) {
         Character character = target.getCharacter();
         List<DamageBonus> typed = new ArrayList<>();
-        allSkillCompetencyAbilities(character).stream()
+        allSkillCompetencyAbilities(target).stream()
                 .map(ability -> ability.resolveDamageBonus(skillType, sceneContext, attackTarget, character))
                 .flatMap(Optional::stream)
                 .forEach(typed::add);
@@ -829,7 +842,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
             return 0;
         }
         Character character = attacker.getCharacter();
-        int strength = character.getEffectiveAttributeTotal(AttributeDomain.STRENGTH);
+        int strength = character.getEffectiveAttributeTotal(AttributeDomain.STRENGTH, attacker);
         boolean fullStrength = isFirstAttackOfRound(attacker)
                 && character.getAttributeAbilities().stream()
                         .anyMatch(AttributeAbility::upgradesFirstMeleeAttackOfRoundStrengthScaling);

@@ -16,6 +16,7 @@ import org.aventyrs.core.item.ItemWeightClass;
 import org.aventyrs.core.item.NaturalWeapon;
 import org.aventyrs.core.item.Weapon;
 import org.aventyrs.core.modifier.ModifierType;
+import org.aventyrs.core.race.RacialTraitSuppression;
 import org.aventyrs.core.scene.Range;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.rest.RestType;
@@ -712,6 +713,12 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
      */
     @Override
     public Set<CriticalEffectType> getCriticalEffectImmunities() {
+        // Half of the anatomy pair, and so silenced from PHYSICAL upward: a Troll passing for
+        // human has no vegetal anatomy to shrug a Sangramento off with. Empty rather than a
+        // filtered set, since the Race is the only source there is.
+        if (getRacialTraitSuppression().suppressesPhysicalTraits()) {
+            return Set.of();
+        }
         return getCharacter().getRace().getCriticalEffectImmunities();
     }
 
@@ -1091,7 +1098,7 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
      * <i>mine</i>"; every other shape keeps the category-only answer.
      */
     private boolean isUsableNaturalWeaponInCurrentForm(final Weapon weapon) {
-        if (replacesNaturalWeapons()) {
+        if (getRacialTraitSuppression().suppressesNaturalWeapons()) {
             return weapon instanceof NaturalWeapon natural
                     && getNaturalWeapons().contains(natural);
         }
@@ -1117,28 +1124,51 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
                 || weapon.getWeightClass() == ItemWeightClass.HEAVY;
     }
 
-    /** Whether any held Talento replaces this combatant's Armas Naturais for the worn Forma. */
-    private boolean replacesNaturalWeapons() {
-        return currentForm != null && getCharacter().getFeats().stream()
-                .anyMatch(feat -> feat.replacesNaturalWeaponsWhileInForm(getCharacter(), this));
+    /**
+     * How much of this combatant's {@code Race} is currently silenced — the strongest rung any
+     * held Talento declares through {@code Feat#resolveRacialTraitSuppression}. The single
+     * question every racial aggregation on this sheet asks; see {@link RacialTraitSuppression}
+     * for the ladder and for what no rung ever touches.
+     *
+     * <p>Short-circuits to {@link RacialTraitSuppression#NONE} out of any Forma. Every clause in
+     * the catalog is Forma-gated, and it saves walking the Talento list on the overwhelmingly
+     * common path — but it is also the reason a future clause suppressing traits <em>without</em>
+     * a Forma would need this guard lifted rather than just a new rung.
+     */
+    @Override
+    public RacialTraitSuppression getRacialTraitSuppression() {
+        if (currentForm == null) {
+            return RacialTraitSuppression.NONE;
+        }
+        Character character = getCharacter();
+        RacialTraitSuppression total = RacialTraitSuppression.NONE;
+        for (Feat feat : character.getFeats()) {
+            total = RacialTraitSuppression.strongest(total,
+                    feat.resolveRacialTraitSuppression(character, this));
+        }
+        return total;
     }
 
     /**
-     * Two sources, and a replacement stage on top — the same shape as {@link
-     * #getTotalCriticalResistance}, which also sums the Race's contribution with a per-{@code
+     * Two sources, with the racial one droppable — the same shape as {@link
+     * #getTotalCriticalResistance}, which also combines the Race's contribution with a per-{@code
      * Feat} hook taking {@code this}.
+     *
+     * <p>The Talento term is deliberately read through the <b>sheet-aware</b> hook, which defaults
+     * down to the sheet-less one, so it carries both an ordinary grant ({@code
+     * ArmamentoDraconicoFeat}'s picked pair) and a Forma's own ({@code FormaMetamorfica}'s ARMA
+     * NATURAL column) in one pass. Suppression removes only the {@code Race} term: a Talento
+     * granting claws is not a racial trait, and keeps them in any shape.
      */
     @Override
     public List<NaturalWeapon> getNaturalWeapons() {
         Character character = getCharacter();
-        List<NaturalWeapon> fromForm = character.getFeats().stream()
-                .flatMap(feat -> feat.getGrantedNaturalWeapons(character, this).stream())
-                .distinct()
-                .toList();
-        if (replacesNaturalWeapons()) {
-            return fromForm;
+        Stream<NaturalWeapon> fromFeats = character.getFeats().stream()
+                .flatMap(feat -> feat.getGrantedNaturalWeapons(character, this).stream());
+        if (getRacialTraitSuppression().suppressesNaturalWeapons() || character.getRace() == null) {
+            return fromFeats.distinct().toList();
         }
-        return Stream.concat(character.getNaturalWeapons().stream(), fromForm.stream())
+        return Stream.concat(character.getRace().getGrantedNaturalWeapons().stream(), fromFeats)
                 .distinct()
                 .toList();
     }
@@ -1163,10 +1193,17 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
      * <p>Additive because RC instances stack: each is a separate -2, the same way two sources of
      * RD sum. The subtraction itself, and the floor on it, live on the attacker's crit path — see
      * {@link CombatantSheet#getTotalCriticalResistance}.
+     *
+     * <p><b>Only the Raça term is suppressible</b> (the other half of the anatomy pair, so from
+     * {@link RacialTraitSuppression#PHYSICAL} upward). The Talento and {@code TemporaryBonus}
+     * terms are not racial traits and survive every rung — {@code AnaoFeat#VIGOR_DO_INVERNO}'s
+     * combat-start grant is still owed to a transformed holder.
      */
     @Override
     public int getTotalCriticalResistance(final SceneContext sceneContext) {
-        int total = getCharacter().getRace().getCriticalResistance();
+        int total = getRacialTraitSuppression().suppressesPhysicalTraits()
+                ? 0
+                : getCharacter().getRace().getCriticalResistance();
         total += getCharacter().getFeats().stream()
                 .mapToInt(feat -> feat.resolveCriticalResistance(getCharacter(), sceneContext, this))
                 .sum();

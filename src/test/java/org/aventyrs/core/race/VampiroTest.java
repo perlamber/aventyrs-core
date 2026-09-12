@@ -159,7 +159,7 @@ class VampiroTest {
                 .race(vampiro)
                 .attributes(CharacterAttributes.builder()
                         .strength(AttributeValue.builder()
-                                .domain(AttributeDomain.STRENGTH).base(5).racialBonus(1).build())
+                                .domain(AttributeDomain.STRENGTH).base(5).fixedRacialBonus(1).build())
                         .build())
                 .egos(CharacterEgos.builder().build())
                 .actionProfile(ActionProfile.REFLEXOS_RAPIDOS)

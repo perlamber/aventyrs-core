@@ -370,9 +370,39 @@ public interface SkillCompetencyAbility extends SkillTrait {
      * it count twice, since several consumers <em>sum</em> across this list.
      */
     static List<SkillCompetencyAbility> allFor(final Character character) {
+        return allFor(character, null);
+    }
+
+    /**
+     * The same three sources, with the <b>racial</b> one droppable — a holder whose Forma
+     * suppresses their whole race ("abandonando seus traços raciais") loses their Habilidades
+     * Raciais for its duration, while the acquired and Talento-granted sources stay put.
+     *
+     * <p><b>Read this form wherever a {@code CombatantSheet} is in hand.</b> The sheet-less
+     * {@link #allFor(Character)} delegates here with {@code null} and so can never suppress,
+     * which is exactly how far the mechanism reaches. Routed (they hold a sheet):
+     * {@code AbstractSkillInteraction}'s roll/dano scans, {@code DefenseServiceImpl}'s
+     * sheet-taking overloads, {@code MovementServiceImpl#getMovementBase(CombatantSheet, int)},
+     * and {@code DamageServiceImpl}'s RD/RM/RA/Meio-Dano sheet paths. <b>Not</b> routed, by
+     * construction rather than oversight — each takes only a {@link Character}:
+     * {@code HitPointsServiceImpl}, {@code DamageBaseServiceImpl}, {@code
+     * SkillGraduationServiceImpl}, {@code EquipmentCraftingServiceImpl}/{@code ItemForgery},
+     * {@code EsquivaEApararInteraction#armorCategoryPenalty}, the {@code Character}-only
+     * Defesa/Movimento/Dano overloads, and {@code Feat}'s possession check (deliberately: whether
+     * a trait was ever <em>acquired</em> is not a question a Forma answers).
+     *
+     * <p>That is the same documented partial reach a round-scoped Atributo bonus has (CLAUDE.md's
+     * Forma row) — so a suppression TODO should cite the specific caller, never "the mechanism".
+     */
+    static List<SkillCompetencyAbility> allFor(final Character character,
+                                               final org.aventyrs.core.sheet.CombatantSheet sheet) {
+        boolean racialSuppressed = sheet != null
+                && sheet.getRacialTraitSuppression().suppressesInnateTraits();
         return Stream.of(
                         character.getSkillCompetencyAbilities().stream(),
-                        character.getRace().getRacialAbilities().stream(),
+                        racialSuppressed
+                                ? Stream.<SkillCompetencyAbility>empty()
+                                : character.getRace().getRacialAbilities().stream(),
                         character.getFeats().stream()
                                 .flatMap(feat -> feat.getGrantedSkillTraits(character).stream())
                                 .filter(SkillCompetencyAbility.class::isInstance)

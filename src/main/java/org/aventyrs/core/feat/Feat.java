@@ -27,6 +27,7 @@ import org.aventyrs.core.character.SizeCategory;
 import org.aventyrs.core.item.Item;
 import org.aventyrs.core.item.ItemCategory;
 import org.aventyrs.core.item.NaturalWeapon;
+import org.aventyrs.core.race.RacialTraitSuppression;
 import org.aventyrs.core.item.RegaliaGrade;
 import org.aventyrs.core.item.Weapon;
 import org.aventyrs.core.magic.Spell;
@@ -1030,27 +1031,31 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     }
 
     /**
-     * Whether this Talento's Forma-granted Armas Naturais <b>replace</b> the holder's own rather
-     * than joining them — {@code VampiricoFeat#METAMORFOSE_DRACULEA}'s "armas não podem ser
-     * utilizadas, são substituídas por armas naturais". A Nosferatu in Serpente Espinhosa has the
-     * Cauda Constritora and <em>not</em> the Presas Longas their lineage grants; in Névoa, whose
-     * ARMA NATURAL column reads "Nenhum", they have none at all.
+     * How much of its holder's {@link org.aventyrs.core.race.Race} this Talento temporarily
+     * silences — the "abandonando seus traços raciais" family, plus the narrower clauses that
+     * drop only part of a body. {@link RacialTraitSuppression#NONE} by default, which is every
+     * Talento but three; see that enum for the ladder, which rung each clause sits on, and what
+     * no rung ever touches.
      *
-     * <p><b>A deliberate reading, not a transcription</b> — see {@code FormaMetamorfica} for the
-     * two counts on which the source text argues the other way, and why it was read this way
-     * regardless. It is deliberately <em>not</em> the "abandonando seus traços raciais" clause,
-     * which belongs to {@code DraconicoFeat#DRACONATO} / {@code FeericoFeat#ANCIENTEFORME} and
-     * remains unbuilt: this cancels Armas Naturais only, and only while the shape is worn.
+     * <p>Folded across every held Talento by {@code CombatantSheet#getRacialTraitSuppression()},
+     * which is the single question every aggregation asks. Suppression drops exactly the {@code
+     * Race} term of a trait: a Talento-granted Resistência a Críticos, or a round-scoped {@code
+     * TemporaryBonus}, survives even {@link RacialTraitSuppression#ALL}.
      *
-     * <p>Separate from returning an empty {@link #getGrantedNaturalWeapons(Character,
-     * CombatantSheet)} because "grants none" and "grants none <b>and</b> cancels everyone else's"
-     * are different answers, and Névoa needs the second. {@code false} by default, so a Forma with
-     * no table row — {@code BestialFeat#METAMORFOSE_SELVAGEM}'s {@code FormType#ANIMAL} — leaves
-     * its holder's own Armas Naturais exactly as they were.
+     * <p><b>Separate from returning an empty {@link #getGrantedNaturalWeapons(Character,
+     * CombatantSheet)}</b>, because "grants none" and "grants none <b>and</b> cancels the
+     * holder's own" are different answers — {@code FormaMetamorfica#NEVOA} needs the second.
+     * A Forma-granting Talento therefore states both halves independently: what the shape
+     * suppresses here, and what it hands over there. "Replacement" is those two composed, which
+     * is why there is no third hook for it.
+     *
+     * <p>Takes the {@code sheet} because every consumer is Forma-gated and a {@link Character}
+     * cannot see which shape it is wearing; {@code null} reads as "no Forma in force", so a
+     * {@code Character}-only path is never suppressed.
      */
-    default boolean replacesNaturalWeaponsWhileInForm(final Character character,
-                                                      final CombatantSheet sheet) {
-        return false;
+    default RacialTraitSuppression resolveRacialTraitSuppression(final Character character,
+                                                                 final CombatantSheet sheet) {
+        return RacialTraitSuppression.NONE;
     }
 
     /**

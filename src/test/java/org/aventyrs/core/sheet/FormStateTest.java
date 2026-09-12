@@ -8,6 +8,7 @@ import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.feat.GorgonaFeat;
 import org.aventyrs.core.item.NaturalWeapon;
 import org.aventyrs.core.race.Gorgona;
+import org.aventyrs.core.race.RacialTraitSuppression;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -133,9 +134,10 @@ class FormStateTest {
      * is every Forma outside {@code FormaMetamorfica}'s table — the Górgona shapes included.
      *
      * <p>The mechanism itself ({@code Feat#getGrantedNaturalWeapons(Character, CombatantSheet)}
-     * and its replacement half) is exercised in {@code MetamorfoseDraculeaTest}; what belongs here
-     * is that the sheet view is Forma-aware at all, and that it stays inert for a shape with no
-     * claim on it.
+     * and {@code Feat#resolveRacialTraitSuppression}) is exercised in {@code
+     * MetamorfoseDraculeaTest} and {@code RacialTraitSuppressionTest}; what belongs here is that
+     * the sheet view is Forma-aware at all, and that it stays inert for a shape with no claim
+     * on it.
      */
     @Test
     void theNaturalWeaponViewIsFormaAwareButInertForAShapeThatClaimsNothing() {
@@ -150,6 +152,23 @@ class FormStateTest {
 
         assertEquals(own, sheet.getNaturalWeapons(),
                 "Forma Monstruosa names no Arma Natural, so it takes and gives nothing");
+    }
+
+    /**
+     * The third: how much of the holder's race is silenced. Entering a shape no Talento of theirs
+     * claims suppresses nothing — the answer for the Górgona shapes, Draconato on a non-holder,
+     * and every Forma reached through the bare mutator.
+     */
+    @Test
+    void theRacialSuppressionViewIsInertWithoutATalentoClaimingTheShape() {
+        CharacterSheet sheet = sheetOf(gorgona());
+
+        assertEquals(RacialTraitSuppression.NONE, sheet.getRacialTraitSuppression());
+
+        sheet.enterForm(FormType.MONSTRUOSA);
+
+        assertEquals(RacialTraitSuppression.NONE, sheet.getRacialTraitSuppression(),
+                "a Górgona's own cursed shape abandons no racial trait");
     }
 
     /**

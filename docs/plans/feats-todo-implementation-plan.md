@@ -342,12 +342,43 @@ Atributo).
   no sheet, and a three-Rodada Forma raising max PV would need those totals recomputed per Rodada,
   which this core deliberately does not do. Same limit `VampiricoFeat#DOM_DE_MIRCALLA` has always
   had, and the test pins both halves of it.
-- **Still open:** a **Multiplicador de PV** uplift in force only while transformed (its figure
-  scales per Título Desperto like the rest of that sentence — a *permanent* per-Título multiplier
-  is already ordinary, `OrquicoFeat#TERRA_NAS_VEIAS`; what is missing is sheet reach, since
-  `getLifeMultiplier` takes a `Character`); and **suppression of racial traits** ("abandonando
-  seus traços raciais", which occurs in exactly two Talentos — `DRACONATO` and `ANCIENTEFORME` —
-  and in neither is built).
+- **Still open, and now the only one:** a **Multiplicador de PV** uplift in force only while
+  transformed (its figure scales per Título Desperto like the rest of that sentence — a
+  *permanent* per-Título multiplier is already ordinary, `OrquicoFeat#TERRA_NAS_VEIAS`; what is
+  missing is sheet reach, since `getLifeMultiplier` takes a `Character`).
+- **Suppression of racial traits — done, as a four-rung ladder.** `RacialTraitSuppression`
+  (`NONE` → `NATURAL_WEAPONS_ONLY` → `PHYSICAL` → `ALL`), declared by
+  `Feat#resolveRacialTraitSuppression` and folded by `CombatantSheet#getRacialTraitSuppression()`,
+  the one question every racial aggregation asks. `DRACONATO`/`ANCIENTEFORME` take `ALL`;
+  `MonstruosoFeat#MIMETIZAR_FORMA_HUMANA` takes `PHYSICAL` (its first real clause);
+  `METAMORFOSE_DRACULEA`'s weapon swap **was folded in** as `NATURAL_WEAPONS_ONLY` — which is why
+  there are four rungs and not three. **Mapping Dracúlea to `PHYSICAL` was this plan's first
+  sketch and was wrong**: its text never says "abandonando traços raciais", so that would have
+  newly suppressed its holder's RC, anatomy immunities and racial size on the strength of a
+  reading already flagged as debatable. Only the `Race` term of a trait is silenced — a
+  Talento-granted RC or Arma Natural survives even `ALL`, which is the mechanism's likeliest bug
+  and has its own test. Creature type is never suppressed and must not be: Mimetizar's own
+  Pré-requisito is `requiredCreatureType`, so silencing it would make the Talento retroactively
+  ineligible for its own holder.
+  ⚠️ Base Categoria de Tamanho under `PHYSICAL` is an **inference** — the clause enumerates
+  appendages ("escamas, chifres, garras") and never stature.
+  Partial reach on the two `ALL`-only traits (racial Habilidades, racial Atributo bonuses): both
+  need a sheet, so they land on the roll path plus the Defesa/Movimento/Dano sheet overloads and
+  not on PV/PM/Conjuração — the documented limit, to be cited per caller rather than per
+  mechanism.
+- **The audit found the Atributo half was blocked by information loss, not sheet reach** — the
+  opposite of what the docs claimed. `CharacterCreationServiceImpl` merged the race's *fixed*
+  bonus with the player's *chosen* allocation into one `AttributeValue#racialBonus` int, so
+  nothing downstream could tell which part was racial. Now `fixedRacialBonus` +
+  `chosenRacialBonus`, with `getRacialBonus()` reporting the sum so every reader (notably
+  `FeatRequirements`' "recebe Bônus Racial") is untouched. Worth doing on its own terms: that
+  provenance was simply being discarded.
+- **`MIMETIZAR_FORMA_HUMANA` still has no activation transaction**, and it is not a small gap:
+  "Monstruosos precisam utilizar 2PD … Feéricos utilizam 2PM" prices one ability differently per
+  `CreatureType`, and `ActiveAbility`'s cost methods take no arguments. `FormaActiveAbility` does
+  not fit either (3PA + 3PD, a 3-Rodada Duração, a Descanso Longo gate — none stated here). The
+  shape is entered through the bare `enterForm` mutator meanwhile, as every Forma that no
+  `ActiveAbility` grants already is.
 - **Arma Natural swap — done, by deriving rather than swapping.** `Feat#getGrantedNaturalWeapons(
   Character, CombatantSheet)` lets a worn shape contribute its own and
   `Feat#replacesNaturalWeaponsWhileInForm` lets it replace the holder's, both aggregated by the new
@@ -398,13 +429,15 @@ Atributo).
 Defesas/size/Carisma/Foco one — every half of both Talentos except Ancienteforme's PV multiplier
 and both texts' "abandonando seus traços raciais".
 
-**The remaining deltas share one root cause** worth naming before attacking them: each needs
-*sheet*-scoped state to reach a *`Character`*-level aggregate. That was true of all four, and is
-how two of them were closed — `getNaturalWeapons` and `getEquipment` each grew a sheet-aware twin
-beside the Forma-blind original rather than being made to mutate. The same move is available to
-the two left: `getEffectiveAttributeTotal` (the PV multiplier) and `getRacialAbilities`
-(suppression). One architectural problem wearing four hats, not four separate features — and the
-hat is now a known shape.
+**The deltas shared one root cause**, and naming it is what closed three of them: each needed
+*sheet*-scoped state to reach a *`Character`*-level aggregate, and the answer every time was a
+**sheet-aware twin beside the Forma-blind original** rather than a mutation —
+`CombatantSheet#getNaturalWeapons()`, `getRacialTraitSuppression()`,
+`SkillCompetencyAbility.allFor(Character, CombatantSheet)` and
+`Character#getEffectiveAttributeTotal(domain, CombatantSheet)`. The same move is available to the
+one left (`HitPointsService#getLifeMultiplier`, for the PV multiplier). One architectural problem
+wearing four hats, not four separate features — and the hat is now a known shape with a house
+pattern to match.
 
 **Original plan text follows.**
 

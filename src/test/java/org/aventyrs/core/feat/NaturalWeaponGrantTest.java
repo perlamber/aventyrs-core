@@ -91,9 +91,9 @@ class NaturalWeaponGrantTest {
 
     /**
      * {@code Character#getNaturalWeapons()} is the <b>Forma-blind</b> view and stays that way: it
-     * is what the character has out of any shape. A Forma can add to it and even replace it
-     * outright ({@code MetamorfoseDraculeaFeat}), but only through the sheet twin — this method
-     * has no sheet to ask and must never grow one.
+     * is what the character has out of any shape. A Forma can add to it and even suppress it
+     * outright ({@code RacialTraitSuppression}), but only through the sheet twin — this method has
+     * no sheet to ask and must never grow one.
      *
      * <p>Pinned here because the swap was implemented by <em>deriving</em> rather than by writing
      * to the character. An implementation that swapped the list on transforming would show up as

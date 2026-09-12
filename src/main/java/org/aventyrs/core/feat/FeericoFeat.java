@@ -16,6 +16,8 @@ import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.skill.Skill;
 import org.aventyrs.core.skill.SkillTrait;
 import org.aventyrs.core.skill.SkillType;
+import org.aventyrs.core.race.RacialTraitSuppression;
+import org.aventyrs.core.sheet.CombatantSheet;
 
 /**
  * Talentos Feéricos — the largest racial tree, spanning wings, tree-bonded Dríades, Pixies,
@@ -203,8 +205,10 @@ public enum FeericoFeat implements Feat {
     // TODO: the "Multiplicador de PV aumenta em +2 para cada Título" half is not — max PV is
     //  derived from Character#getEffectiveAttributeTotal and the LIFE_MULTIPLIER scan, neither of
     //  which sees the sheet, and this core does not recompute PV per Rodada.
-    // TODO: "abandona seus traços raciais" needs the form to suppress racial traits, which nothing
-    //  can do; and "Nascidos da Floresta permanecem +2 Rodadas" is a per-race Duração branch
+    // "Abandonando seus traços raciais" is real: RacialTraitSuppression.ALL while the Forma
+    // holds. Only the Race term of each trait goes, and the Habilidade/Atributo halves carry the
+    // same sheet-reach limit noted above (the Perícia-roll path, not PV/PM/Conjuração).
+    // TODO: "Nascidos da Floresta permanecem +2 Rodadas" is a per-race Duração branch
     //  FormaActiveAbility keeps room for (its Duração is resolved, not constant) but does not yet
     //  take — NascidoDaFloresta is a Race, and the ability sees the Character, so this one is
     //  cheap once someone wants it.
@@ -231,6 +235,15 @@ public enum FeericoFeat implements Feat {
         @Override
         public Optional<ActiveAbility> resolveActiveAbility() {
             return Optional.of(transformation);
+        }
+
+        /** "Abandonando seus traços raciais" — while an Anciente, and only then. */
+        @Override
+        public RacialTraitSuppression resolveRacialTraitSuppression(final Character character,
+                                                                    final CombatantSheet sheet) {
+            return sheet != null && sheet.isInForm(FormType.ANCIENTE)
+                    ? RacialTraitSuppression.ALL
+                    : RacialTraitSuppression.NONE;
         }
     },
 

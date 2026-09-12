@@ -16,6 +16,8 @@ import org.aventyrs.core.race.NascidoDoDragao;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.skill.AttackSource;
 import org.aventyrs.core.skill.SkillType;
+import org.aventyrs.core.race.RacialTraitSuppression;
+import org.aventyrs.core.sheet.CombatantSheet;
 
 /**
  * Talentos Dracônicos — the Nascido do Dragão's own tree, and the ruleset's route to the
@@ -178,9 +180,14 @@ public enum DraconicoFeat implements Feat {
     // lands on a Perícia roll governed by that Atributo and nowhere else, since PV/PM/Conjuração
     // read Character#getEffectiveAttributeTotal, which has no sheet. The Categoria de Tamanho
     // half has no such limit — CharacterSizeService gained a sheet-taking overload for it.
-    // TODO: "abandonando quaisquer traços raciais" needs the form to *suppress* the holder's
-    //  racial traits, which nothing can do — Race#getRacialAbilities() is read live on every roll
-    //  with no way to suspend it.
+    // "Abandonando quaisquer traços raciais existente" is real: RacialTraitSuppression.ALL while
+    // the Forma holds, so the holder's Armas Naturais, anatomy (RC + Efeito Crítico immunities),
+    // base Categoria de Tamanho, Habilidades Raciais and racial Atributo bonuses all fall silent.
+    // A dwarf Draconato is human-sized *before* the "+2 para cada Título" lands on top.
+    // Only the Race term goes — a Talento-granted RC or Arma Natural is not racial and survives.
+    // Partial reach on the Habilidade and Atributo halves, and it is the mechanism's limit rather
+    // than this Talento's: both need a CombatantSheet to see the Forma, so they land on the
+    // Perícia-roll path (plus the Defesa/Movimento scans) and not on PV/PM/Conjuração.
     DRACONATO(
             "Temporariamente você pode mudar sua forma física, se transformando em um dragão "
                     + "bípede, abandonando quaisquer traços raciais existente. Transformar-se em "
@@ -201,6 +208,15 @@ public enum DraconicoFeat implements Feat {
         @Override
         public Optional<ActiveAbility> resolveActiveAbility() {
             return Optional.of(transformation);
+        }
+
+        /** "Abandonando quaisquer traços raciais existente" — while a Draconato, and only then. */
+        @Override
+        public RacialTraitSuppression resolveRacialTraitSuppression(final Character character,
+                                                                    final CombatantSheet sheet) {
+            return sheet != null && sheet.isInForm(FormType.DRACONATO)
+                    ? RacialTraitSuppression.ALL
+                    : RacialTraitSuppression.NONE;
         }
     };
 

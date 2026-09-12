@@ -61,11 +61,14 @@ mechanism.
   `getGrantedNaturalWeapons(Character[, CombatantSheet])` (`NaturalWeapon`s — the short form feeds
   `Character#getNaturalWeapons()`, the Forma-blind "out of any shape" view; the **longer form**
   feeds `CombatantSheet#getNaturalWeapons()` and is what a per-Forma grant overrides, leaving the
-  short one empty — `MetamorfoseDraculeaFeat`), `replacesNaturalWeaponsWhileInForm(Character,
-  CombatantSheet)` (whether that grant *replaces* the holder's own rather than joining them; a
-  separate hook from an empty grant list because "grants none" and "grants none **and** cancels
-  everyone else's" are different answers — Névoa needs the second, and it is what lets
-  `canAttackWith` refuse every Arma Natural),
+  short one empty — `MetamorfoseDraculeaFeat`), `resolveRacialTraitSuppression(Character,
+  CombatantSheet)` → `RacialTraitSuppression` (how much of the holder's `Race` this Talento
+  silences — a four-rung ladder `NONE`/`NATURAL_WEAPONS_ONLY`/`PHYSICAL`/`ALL`, folded across held
+  Talentos by `CombatantSheet#getRacialTraitSuppression()` and consulted by every racial
+  aggregation. Only the `Race` term of a trait goes — a Talento-granted RC or Arma Natural
+  survives even `ALL` — and creature type is never suppressed. "Replacement" is *suppress + grant*
+  composed, so there is no separate replacement hook: `FormaMetamorfica#NEVOA` suppresses and
+  grants nothing, which is what makes `canAttackWith` refuse every Arma Natural),
   `resolveLifeStealBonus(Character[, CombatantSheet])` (Roubo de Vida amplification —
   `LifeStealService`, `VampiricoFeat#SEDE_DE_SANGUE`; the longer form is for a Forma-gated
   figure, `FormaMetamorfica#MORCEGO_ATROZ`), `resolveAdditionalTargets(SkillType, Character)` (how many

@@ -15,6 +15,8 @@ import org.aventyrs.core.skill.AttackSource;
 import org.aventyrs.core.skill.SkillType;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.title.TitleArchetype;
+import org.aventyrs.core.race.RacialTraitSuppression;
+import org.aventyrs.core.sheet.FormType;
 
 /**
  * Talentos Monstruosos — the open tree any Monstruoso race can draw on, from unusual anatomy to
@@ -231,9 +233,26 @@ public enum MonstruosoFeat implements Feat {
      * because the source document prints it under the Monstruoso heading. Its Pré-requisito
      * covers both populations, and only the Monstruoso branch is enforced (next note).
      */
-    // TODO: needs an appearance/form state — the same missing piece Gorgona's own forms,
-    //  DraconicoFeat#DRACONATO and HomemFera's Forma Híbrida are all blocked on, plus a way to
-    //  suppress physical racial traits while it holds.
+    // "Perde características raciais físicas, como escamas, chifres, garras" is real:
+    // RacialTraitSuppression.PHYSICAL while its holder is in FormType.HUMANA, so their racial
+    // Armas Naturais, anatomy (RC + Efeito Crítico immunities) and base Categoria de Tamanho fall
+    // silent while their Habilidades Raciais and Atributo bonuses do not — a Gnomo passing for
+    // human has no horns to show but is no less clever for it.
+    // ⚠️ The base Categoria de Tamanho is an *inference*: the clause enumerates appendages and
+    // never mentions stature, so it is suppressed on the strength of "assumindo uma forma humana
+    // comum". See RacialTraitSuppression#PHYSICAL — it is the one trait on that rung the text
+    // does not name.
+    // Creature type is deliberately NOT suppressed: this constant's own Pré-requisito is
+    // requiredCreatureType(MONSTRUOSO|FEERICO), so silencing it would make the Talento
+    // retroactively ineligible for its own holder. Looking human is not being human.
+    // TODO: no activation transaction — "Monstruosos precisam utilizar 2PD para ativar este
+    //  efeito, personagens Feéricos utilizam 2PM" prices the same ability differently per
+    //  CreatureType, and ActiveAbility#getDeterminationPointCost/getMagicPointCost take no
+    //  arguments, so one ability cannot answer both. FormaActiveAbility does not fit either (it
+    //  hardcodes 3PA + 3PD, a 3-Rodada Duração and a Descanso Longo reactivation gate, none of
+    //  which this clause states). Until a per-holder cost exists, the shape is entered through
+    //  the bare CombatantSheet#enterForm mutator — a caller's call, as every Forma that no
+    //  ActiveAbility grants already is — and the suppression above applies from there.
     // The disjunctive Pré-requisito is real — "Monstruoso com 1 Título Desperto, ou Feérico" —
     // two FeatRequirements#anyOf branches, each carrying its own Título count.
     MIMETIZAR_FORMA_HUMANA(
@@ -251,7 +270,16 @@ public enum MonstruosoFeat implements Feat {
                     .alternative(FeatRequirements.builder()
                             .requiredCreatureType(CreatureType.FEERICO)
                             .build())
-                    .build()),
+                    .build()) {
+        /** "Você perde características raciais físicas" — while wearing the human shape only. */
+        @Override
+        public RacialTraitSuppression resolveRacialTraitSuppression(final Character character,
+                                                                    final CombatantSheet sheet) {
+            return sheet != null && sheet.isInForm(FormType.HUMANA)
+                    ? RacialTraitSuppression.PHYSICAL
+                    : RacialTraitSuppression.NONE;
+        }
+    },
 
     /**
      * "Você recebe Bônus de +1 em rolagens de danos de suas Armas Naturais, este Bônus aumenta

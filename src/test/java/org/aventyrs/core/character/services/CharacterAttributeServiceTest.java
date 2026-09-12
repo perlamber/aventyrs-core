@@ -39,7 +39,7 @@ class CharacterAttributeServiceTest {
 
     @Test
     void upgradeBaseIncreasesBaseByOnePreservingOtherComponents() throws IllegalOperationException {
-        AttributeValue value = AttributeValue.builder().domain(AttributeDomain.VIGOR).base(2).racialBonus(1).variable(1).build();
+        AttributeValue value = AttributeValue.builder().domain(AttributeDomain.VIGOR).base(2).fixedRacialBonus(1).variable(1).build();
         CharacterSheet sheet = sheetWithExperience(BigDecimal.valueOf(10));
 
         AttributeValue upgraded = attributeService.upgradeBase(value, sheet);

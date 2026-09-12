@@ -112,6 +112,9 @@ class CharacterCreationServiceTest {
 
         assertEquals(1, attributes.getVigor().getRacialBonus());
         assertEquals(0, attributes.getStrength().getRacialBonus());
+        // Provenance: what the race dictated lands in the fixed half and nowhere else.
+        assertEquals(1, attributes.getVigor().getFixedRacialBonus());
+        assertEquals(0, attributes.getVigor().getChosenRacialBonus());
     }
 
     @Test
@@ -126,6 +129,10 @@ class CharacterCreationServiceTest {
 
         assertEquals(1, attributes.getDexterity().getRacialBonus());
         assertEquals(0, attributes.getInstinct().getRacialBonus());
+        // And what its player chose lands in the chosen half — the two are no longer merged, so
+        // a consumer can tell a dictated bonus from a directed one.
+        assertEquals(1, attributes.getDexterity().getChosenRacialBonus());
+        assertEquals(0, attributes.getDexterity().getFixedRacialBonus());
     }
 
     @Test

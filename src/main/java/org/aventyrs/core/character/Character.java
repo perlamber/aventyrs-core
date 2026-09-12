@@ -243,8 +243,35 @@ public class Character {
      * CombatantSheet} this method has no access to — that limitation is unchanged.
      */
     public int getEffectiveAttributeTotal(final AttributeDomain domain) {
-        return attributes.getAttribute(domain).getTotal()
+        return getEffectiveAttributeTotal(domain, null);
+    }
+
+    /**
+     * The same total, less whatever a Forma suppressing this character's race takes off it —
+     * "abandonando seus traços raciais" reaches the racial half of an Atributo
+     * ({@link AttributeValue#getRacialBonus()}, both the dictated and the player-directed
+     * portion, which is why {@link AttributeValue} keeps them apart).
+     *
+     * <p><b>The reach is partial, and deliberately so.</b> Only callers holding a {@link
+     * org.aventyrs.core.sheet.CombatantSheet} can see a Forma at all, so the suppression lands on
+     * the Perícia-roll path and nowhere else: PV/PM/PD, Conjuração, Rest recovery and {@code
+     * ItemRequirements} all read the sheet-less overload and keep the racial bonus. That is the
+     * same documented limit a round-scoped {@code <ATTR>_BONUS} {@code TemporaryBonus} has — a
+     * transformation lasting three Rodadas would otherwise need max PV recomputed per Rodada,
+     * which this core does not do. Cite the specific caller in a TODO, not "the mechanism".
+     *
+     * @param sheet the holder's sheet, or {@code null} for "no Forma in force" — which is what
+     *              every {@link Character}-only caller passes
+     */
+    public int getEffectiveAttributeTotal(final AttributeDomain domain,
+                                          final org.aventyrs.core.sheet.CombatantSheet sheet) {
+        AttributeValue attribute = attributes.getAttribute(domain);
+        int total = attribute.getTotal()
                 + feats.stream().mapToInt(feat -> feat.resolveAttributeBonus(domain, this)).sum();
+        if (sheet != null && sheet.getRacialTraitSuppression().suppressesInnateTraits()) {
+            total -= attribute.getRacialBonus();
+        }
+        return total;
     }
 
     /** Habilidades de Competência acquired from trained Perícias (e.g. ArtesCompetencyAbility). */

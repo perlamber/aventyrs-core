@@ -5,6 +5,7 @@ import lombok.NonNull;
 import org.aventyrs.core.ability.ActiveAbility;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.item.NaturalWeapon;
+import org.aventyrs.core.race.RacialTraitSuppression;
 import org.aventyrs.core.race.Vampiro;
 import org.aventyrs.core.race.Vampiro.VampiroLineage;
 import org.aventyrs.core.scene.SceneContext;
@@ -171,13 +172,23 @@ public final class MetamorfoseDraculeaFeat extends AbstractFeat {
      * FormaMetamorfica} for the two counts on which the source argues otherwise, and why it is
      * read this way regardless.
      *
-     * <p>True for <em>every</em> worn row including Névoa, which is the point: Névoa grants no
-     * weapon and cancels the rest, leaving a holder who can strike with nothing.
+     * <p><b>{@link RacialTraitSuppression#NATURAL_WEAPONS_ONLY}, and that rung exists for this
+     * clause.</b> Metamorfose Dracúlea's text never says "abandonando traços raciais" — that is
+     * {@code DraconicoFeat#DRACONATO} and {@code FeericoFeat#ANCIENTEFORME}. Reading "são
+     * substituídas" as also dropping the holder's Resistência a Críticos, their anatomy
+     * immunities or their racial size would be an invention layered on a reading that is already
+     * debatable, so the ladder has a rung that stops at weapons rather than promoting this clause
+     * to {@link RacialTraitSuppression#PHYSICAL}.
+     *
+     * <p>Declared for <em>every</em> worn row including Névoa, which is the point: Névoa grants no
+     * weapon and suppresses the rest, leaving a holder who can strike with nothing.
      */
     @Override
-    public boolean replacesNaturalWeaponsWhileInForm(final Character character,
-                                                      final CombatantSheet sheet) {
-        return wornForma(sheet) != null;
+    public RacialTraitSuppression resolveRacialTraitSuppression(final Character character,
+                                                                final CombatantSheet sheet) {
+        return wornForma(sheet) == null
+                ? RacialTraitSuppression.NONE
+                : RacialTraitSuppression.NATURAL_WEAPONS_ONLY;
     }
 
     /**
