@@ -2,6 +2,7 @@ package org.aventyrs.core.ability;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.aventyrs.core.action.Manoeuvre;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.modifier.Modifier;
 import org.aventyrs.core.modifier.ModifierType;
@@ -38,10 +39,56 @@ public enum DexterityAbility implements AttributeAbility {
             return movementIndex == 0 ? FIRST_MOVEMENT_BONUS : 0;
         }
     },
-    //TODO bonus no ataque corpo a corpo e mecanica de investida.
+    /**
+     * <b>Fully real</b>, through the four Investida hooks this constant is the sole consumer of.
+     * Every clause of it is scoped to the holder's Investidas, including the Vantagem: the
+     * sentence it shares with "o redutor <i>padrão</i> de -2 em suas Defesas" is naming that
+     * manoeuvre's own miss penalty, so the whole of "adicionalmente…" hangs off the same subject
+     * as the two clauses before it. A blanket Vantagem on every Ataque Corpo-a-Corpo would also
+     * make this the single strongest melee Habilidade in the catalog, which its Pré-requisito-free
+     * placement does not suggest.
+     *
+     * <ul>
+     *   <li>"não provocam Reações" → {@link #exemptsFromMovementReactions}, read by {@code
+     *   MovementReactionService}. <b>Exact, and it removes a real opportunity</b> — the general
+     *   rule (a drawn melee weapon in reach) is resolved; what is still missing is anything that
+     *   <i>fires</i> a Reação, so nothing yet acts on either answer.</li>
+     *   <li>"o triplo … ao invés do dobro" → {@link #resolveChargeMovementMultiplierIncrease},
+     *   which is +1 on {@code ChargeService#BASE_MOVEMENT_MULTIPLIER}. This clause is also what
+     *   documents that baseline: the constant is read off here, not invented.</li>
+     *   <li>"Vantagem em suas jogadas de Ataque Corpo-a-Corpo" → {@link #resolveManoeuvreRollBonus},
+     *   a flat {@code Skill#ADVANTAGE_BONUS}.</li>
+     *   <li>"não recebe o redutor padrão de -2" → {@link #waivesChargeMissDefensePenalty}.</li>
+     * </ul>
+     */
     IMPLACAVEL("Suas investidas não provocam Reações de outros personagens na cena e você pode percorrer até o " +
             "triplo do seu Movimento Base, ao invés do dobro. Adicionalmente você recebe Vantagem em suas jogadas " +
-            "de Ataque Corpo-a-Corpo; quando malsucedido, você não recebe o redutor padrão de -2 em suas Defesas."),
+            "de Ataque Corpo-a-Corpo; quando malsucedido, você não recebe o redutor padrão de -2 em suas Defesas.") {
+
+        /** "Suas investidas não provocam Reações" — that manoeuvre alone, not every movement. */
+        @Override
+        public boolean exemptsFromMovementReactions(final Manoeuvre manoeuvre) {
+            return manoeuvre == Manoeuvre.INVESTIDA;
+        }
+
+        /** Triplo instead of dobro: exactly one more multiple of Movimento Base. */
+        @Override
+        public int resolveChargeMovementMultiplierIncrease() {
+            return CHARGE_MOVEMENT_MULTIPLIER_BONUS;
+        }
+
+        @Override
+        public int resolveManoeuvreRollBonus(final Manoeuvre manoeuvre, final SkillType skillType) {
+            return manoeuvre == Manoeuvre.INVESTIDA && skillType == SkillType.ATAQUE_CORPO_A_CORPO
+                    ? Skill.ADVANTAGE_BONUS
+                    : 0;
+        }
+
+        @Override
+        public boolean waivesChargeMissDefensePenalty() {
+            return true;
+        }
+    },
 
     APRESSADO("Em turnos de Rodadas pares você recebe Bônus Variável de +1PA.") {
         /**
@@ -104,6 +151,12 @@ public enum DexterityAbility implements AttributeAbility {
 
     /** PASSOS_LONGOS's own stated "+2UD" on the Rodada's first movement. */
     private static final int FIRST_MOVEMENT_BONUS = 2;
+
+    /**
+     * IMPLACAVEL's "triplo … ao invés do dobro" — one more multiple of Movimento Base on top of
+     * {@code ChargeService#BASE_MOVEMENT_MULTIPLIER}, never a UD figure.
+     */
+    private static final int CHARGE_MOVEMENT_MULTIPLIER_BONUS = 1;
 
     private final String description;
 

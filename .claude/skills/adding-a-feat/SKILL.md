@@ -99,6 +99,15 @@ mechanism.
   nothing" and "says no" stay distinct, the same shape `resolveTitleAcquisitionPermission` uses),
   `resolveMagicReduction(Character)` (RM — Resistência à Magias, the magic-damage twin of
   `resolveDamageReduction`; reaches only a hit typed `DamageType.MAGICO`, see `damage-and-combat`),
+  `resolveSimultaneousRegenerationLimit(Character)` (how many Regeneração Reativa effects may run
+  at once — `TrollFeat#REGENERACAO_REATIVA_SUPERIOR`'s "se tornam cumulativos"; 0 means "raises no
+  ceiling", and the floor of 1 — a Blessing from a given source replaces its predecessor rather
+  than stacking — is applied by the ability that reads it. **A hook named for one trait is read by
+  that trait**: `TrollsRacialAbility#REGENERACAO_REATIVA` scans for this one, so it cannot widen an
+  unrelated Blessing. Follow that pattern for any Talento that buffs another trait's effect. Note the *trigger* is not a `Feat` hook at
+  all: a damage-triggered clause lives on a `SkillCompetencyAbility`
+  (`resolveDamageTakenBlessings`), and a Talento that hands one over does it through
+  `getGrantedSkillTraits`, as `FeralFeat#BENCAO_DE_MAPINGUARI` does),
   `resolveCriticalResistance(Character, SceneContext[, CombatantSheet])` (RC — a *defender-side* narrowing of
   whoever attacks the holder, totalled with the `Race` grant and any `TemporaryBonus` by
   `CombatantSheet#getTotalCriticalResistance`; ⚠️ its `sceneContext` is the **attacker's**
@@ -149,8 +158,10 @@ constants, nor of every `AttributeAbility`. `SkillType` already carries an `exce
 registry rather than a one-off list on the constant. Several hooks now have a
   trailing `CombatantSheet holder` overload that falls through to the sheet-less form
   (`resolveSkillRollBonus`, `resolveDefenseBonus`, `resolveDamageReduction`,
-  `resolveCriticalMarginIncrease`) — override it for a clause reading held `Condição`s or the
-  per-Rodada/per-Cena action log. `resolveDamageBonus` has a trailing `int targetCount` overload
+  `resolveCriticalMarginIncrease`) — override it for a clause reading held `Condição`s, the
+  per-Rodada/per-Cena action log, an active `Regeneration`
+  (`CombatantSheet#hasActiveRegeneration()`), or how many attacks have already landed this Rodada
+  (`getAttacksSufferedThisRound()` — `TrollFeat#REGENERACAO_REATIVA_INVERNAL` reads both). `resolveDamageBonus` has a trailing `int targetCount` overload
   on the same defaulting terms, for a clause conditioned on how many targets the one dano roll
   covers (`ARTE_FLUIDA`'s "enquanto houver mais de um alvo … Desvantagem em rolagens de Danos");
   `0` there means no target was named, never "one". The "keep it on the tree enum until a

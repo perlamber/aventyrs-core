@@ -1,5 +1,6 @@
 package org.aventyrs.core.skill;
 
+import org.aventyrs.core.action.Manoeuvre;
 import org.aventyrs.core.sheet.ActionCost;
 import org.aventyrs.core.sheet.IllegalOperationException;
 
@@ -48,6 +49,16 @@ import static org.aventyrs.core.util.TranslatableMessages.INVALID_SKILL_ROLL;
  * AssassinoFeat#SAQUE_RELAMPAGO}). It is carried so the caller can build a {@code
  * org.aventyrs.core.sheet.CombatantAction} for the per-Rodada log and so a cost-gated Talento
  * can see it. {@code null} means "caller didn't say".
+ *
+ * <p>{@code manoeuvre} is optional roll-metadata on the same terms — <b>which named manoeuvre
+ * this roll is the attack half of</b> (see {@link Manoeuvre}), {@code null} for an ordinary
+ * attack. It rides here rather than on {@code org.aventyrs.core.combat.DeliveredAttack} for one
+ * concrete reason: {@code AttackDelivery} hands this object to the longest {@code applyTo}, so a
+ * marker here reaches the bonus maths on <em>both</em> the delivery path and the direct
+ * skill-roll path, where a field on the request would reach only the first. Unlike {@code
+ * actionCost} it <em>is</em> read by that maths — {@code AbstractSkillInteraction} adds an
+ * Investida's flat dano bonus and scans {@code AttributeAbility#resolveManoeuvreRollBonus} off it
+ * — because a manoeuvre changes what the action <em>is</em>, not merely what it cost.
  */
 public class SkillRoll {
     private static final int EXPECTED_DICE_COUNT = 3;
@@ -64,6 +75,7 @@ public class SkillRoll {
     private final SkillTrait requestedAbility;
     private final Integer targetValue;
     private final ActionCost actionCost;
+    private final Manoeuvre manoeuvre;
 
     public SkillRoll(final List<Integer> dice) {
         this(dice, null, null, null);
@@ -87,6 +99,15 @@ public class SkillRoll {
 
     public SkillRoll(final List<Integer> dice, final SkillTrait requestedAbility, final Integer targetValue,
                      final ActionCost actionCost) {
+        this(dice, requestedAbility, targetValue, actionCost, null);
+    }
+
+    /**
+     * The canonical form, naming the {@link Manoeuvre} this roll is the attack half of. Every
+     * shorter constructor delegates down to it with a {@code null} manoeuvre — an ordinary attack.
+     */
+    public SkillRoll(final List<Integer> dice, final SkillTrait requestedAbility, final Integer targetValue,
+                     final ActionCost actionCost, final Manoeuvre manoeuvre) {
         if (dice.size() != EXPECTED_DICE_COUNT) {
             throw new IllegalOperationException(INVALID_SKILL_ROLL);
         }
@@ -99,6 +120,7 @@ public class SkillRoll {
         this.requestedAbility = requestedAbility;
         this.targetValue = targetValue;
         this.actionCost = actionCost;
+        this.manoeuvre = manoeuvre;
     }
 
     /**
@@ -124,6 +146,14 @@ public class SkillRoll {
      */
     public ActionCost getActionCost() {
         return actionCost;
+    }
+
+    /**
+     * The named manoeuvre this roll is the attack half of, or {@code null} for an ordinary
+     * attack — never "not an Investida". See this class's own javadoc for why it rides the roll.
+     */
+    public Manoeuvre getManoeuvre() {
+        return manoeuvre;
     }
 
     /** The sum of all 3 dice — what gets added to the Perícia's own bonus and compared against a GD. */

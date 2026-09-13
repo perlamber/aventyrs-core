@@ -6,6 +6,7 @@ import org.aventyrs.core.character.SizeCategory;
 import org.aventyrs.core.effect.CriticalEffectType;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.DlcRuleset;
+import org.aventyrs.core.skill.SkillCompetencyAbility;
 
 import java.util.List;
 import java.util.Map;
@@ -13,9 +14,19 @@ import java.util.Set;
 
 /**
  * Defines what the Trolls race can do under each rule-set — a stateless race, like {@code
- * Anao}/{@code Elfo}. Four of its traits are mechanically real today:
+ * Anao}/{@code Elfo}. Five of its traits are mechanically real today:
  *
  * <ul>
+ *   <li><b>{@link #getRacialAbilities()}</b> — Regeneração Reativa, as {@link
+ *   TrollsRacialAbility#REGENERACAO_REATIVA}. Taking damage from a hostile source starts a {@code
+ *   org.aventyrs.core.sheet.Regeneration}: 2PV recovered on each of the Troll's own Turns, for as
+ *   many Rodadas as their Vigor, and never more in total than the damage that triggered it. {@code
+ *   DamageService#notifyDamageTaken} resolves it by scanning {@code
+ *   SkillCompetencyAbility#allFor}, so the Característica reaches combat with no per-race wiring —
+ *   and is silenced by a Forma abandoning the holder's racial traits with none either. "Efeito não
+ *   cumulativo" is the effect's own ceiling of one instance, which {@code
+ *   TrollFeat#REGENERACAO_REATIVA_SUPERIOR} raises. See {@code DamageService#notifyDamageTaken}
+ *   for how far "de fontes inimigas" is honoured.</li>
  *   <li><b>{@link #getFixedAttributeBonuses()}</b> — +2 Força.</li>
  *   <li><b>{@link #getCreatureType()}</b> — {@link CreatureType#MONSTRUOSO}.</li>
  *   <li><b>{@link #getCriticalEffectImmunities()}</b> — the enumerable half of Anatomia Vegetal:
@@ -60,14 +71,6 @@ import java.util.Set;
  *   Atributo map that is real today, whereas every clause distinguishing the two Trolls is
  *   blocked on the same missing vulnerability mechanism. Add the enum with the mechanism, not
  *   ahead of it.</li>
- *   <li><b>Regeneração Reativa</b> (after taking damage from an enemy source, recover 2PV per
- *   Rodada on the Troll's own Turn, for Vigor Rodadas, capped at the damage taken and
- *   non-cumulative) — {@code TemporaryEffect} and the Turn lifecycle could carry the recovery,
- *   but nothing triggers off <i>being damaged</i>: {@code DamageService#applyDamage} reports a
- *   figure and mutates the sheet, with no hook for the victim to react (the same direction {@code
- *   DamageService} has never modeled — see CLAUDE.md's "Reactive/retaliation damage" row, of
- *   which this is the healing counterpart). "De fontes inimigas" additionally needs the damage to
- *   name its source, which {@code applyDamage} does accept but never records.</li>
  *   <li><b>Sono de Pedra</b> (while asleep, damage taken is halved, and the Troll wakes only to
  *   damage exceeding its Vigor in PV; +2PV extra per Descanso Longo ou Superior) — sleep is a
  *   state nothing tracks (the same "no Fadiga/asfixia" gap CLAUDE.md names), so the {@code
@@ -88,9 +91,10 @@ import java.util.Set;
  *   creation, same gap as every other race's free Talentos.</li>
  * </ul>
  *
- * <p>None of the Características above fit {@code SkillCompetencyAbility}'s shape — the immunity
- * list is not a roll modifier at all and has its own hook — so {@link #getRacialAbilities()} is
- * left at {@link Race}'s own empty default.
+ * <p>{@link #getRacialAbilities()} carries Regeneração Reativa alone. The immunity list is not a
+ * roll-shaped contribution at all and keeps its own hook, and every remaining Característica is
+ * blocked on a missing system rather than on where it is declared — see {@link
+ * TrollsRacialAbility}'s own javadoc.
  *
  * <p>Tendência is deliberately left unconstrained, same treatment as every other race —
  * "normalmente Neutros" is advisory, not a hard rule.
@@ -122,6 +126,17 @@ public class Troll implements Race {
     @Override
     public int getCriticalResistance() {
         return CombatantSheet.CRITICAL_RESISTANCE_INSTANCE;
+    }
+
+    /**
+     * Regeneração Reativa — the one Característica of this race that is a per-roll-shaped
+     * contribution, so it is a {@link TrollsRacialAbility} constant like any other Habilidade
+     * Racial rather than a bespoke {@link Race} hook. See that enum for why the other four
+     * Características are not beside it.
+     */
+    @Override
+    public List<SkillCompetencyAbility> getRacialAbilities() {
+        return List.of(TrollsRacialAbility.REGENERACAO_REATIVA);
     }
 
     @Override

@@ -498,11 +498,21 @@ engine reports amounts and legality, the caller/UI applies position, mirroring t
 `difficultyReduction` "computed, reported unapplied" precedent.
 
 - **Forced movement** — knockback / "empurrado NUD" / Reposicionar (amount + direction reported).
-- **Investida** (charge) as a distinct action with its own movement allowance.
-- **Movement-provokes-Reação** + suppression of it ("seu movimento não provoca Reações").
-- **Per-manoeuvre movement allowance** (distinct from the per-PA figure).
+- ~~**Investida** (charge) as a distinct action with its own movement allowance.~~ **Done** —
+  `org.aventyrs.core.action.Manoeuvre` + `ChargeService`/`ChargeResult`, with the attack itself
+  still going through `AttackDelivery` carrying `Manoeuvre.INVESTIDA` on its `SkillRoll`. Lands
+  `DexterityAbility#IMPLACAVEL` in full and `MobilidadeFeat#INVESTIDA_AQUATICA`'s second clause.
+- ~~**Movement-provokes-Reação**~~ **half done** — `MovementReactionService#getProvokedReactors`
+  resolves *who* may react (drawn melee weapon, mover within their reach; Ataque à Distância never)
+  and `AttributeAbility#exemptsFromMovementReactions` suppresses it. What remains is **firing** a
+  Reação and tracking one as spent, which is what still makes every exemption clause exempt from
+  nothing that happens.
+- **Per-manoeuvre movement allowance** — `ChargeService#getMovementAllowance` is the shape; still
+  needed for Reposicionar and the Movimento Acrobático.
 - **Distance moved this Turn / last Turn** — extend `consumeMovementThisRound` to record a
-  distance and survive a Turn boundary (today it resets at `startTurn`).
+  distance and survive a Turn boundary (today it resets at `startTurn`). Also what
+  `NaturalWeapon#CHIFRES_PODEROSOS`'s "atacar após se mover em direção ao alvo" needs, plus a
+  *direction*.
 - Lands: `MobilidadeFeat` (Investida ×3, Reposicionar, exempt-from-Reação ×2, "moved this/last
   Turn" halves), `EscudeiroFeat` (×3), `CavalariaFeat` (partial), `ArtesMarciaisFeat` manoeuvre
   Vantagens, `ArtesMarciaisFeat#DOMINAR_ARTE_MARCIAL_*` Agarrar/Empurrar/Derrubar — **~12**.

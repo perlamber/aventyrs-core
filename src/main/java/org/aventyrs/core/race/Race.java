@@ -144,6 +144,7 @@ public interface Race {
      */
     default int getCriticalResistance() { return 0; }
 
+
     /**
      * Cost in XP to learn a new Feat
      *

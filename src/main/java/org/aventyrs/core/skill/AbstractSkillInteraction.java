@@ -2,6 +2,7 @@ package org.aventyrs.core.skill;
 
 import org.aventyrs.core.ability.AttributeAbility;
 import org.aventyrs.core.ability.PeritoTeoricoAbility;
+import org.aventyrs.core.action.Manoeuvre;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterSkill;
@@ -10,6 +11,7 @@ import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.character.SizeCategory;
 import org.aventyrs.core.character.services.CharacterSizeService;
 import org.aventyrs.core.character.services.CharacterSizeServiceImpl;
+import org.aventyrs.core.character.services.ChargeService;
 import org.aventyrs.core.character.services.HitPointsService;
 import org.aventyrs.core.character.services.HitPointsServiceImpl;
 import org.aventyrs.core.character.services.CharacterSkillService;
@@ -340,6 +342,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
         bonus += sumEgoAdvantageSkillSpecificRollBonuses(character.getEgoAdvantages().values(), sceneContext, target);
         bonus += sizeCategoryRollBonus(characterSizeService.getEffectiveSizeCategory(target));
         bonus += sumAttributeDomainRollBonuses(character.getAttributeAbilities(), attributeDomain, character);
+        bonus += sumManoeuvreRollBonuses(character.getAttributeAbilities(), skillRoll);
         if (skillRoll != null && target.isFirstRollOfTurnFor(attributeDomain)) {
             bonus += sumFirstRollOfTurnBonuses(character.getAttributeAbilities(), attributeDomain);
         }
@@ -362,7 +365,8 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                 .governingAttributeDomain(skillRoll != null ? attributeDomain : null);
 
         if (skillType.isAttackSkill()) {
-            sumDamageBonus(target, sceneContext, null, attackSource, targetCount).ifPresent(result::damageBonus);
+            sumDamageBonus(target, sceneContext, null, attackSource, targetCount, skillRoll)
+                    .ifPresent(result::damageBonus);
         }
 
         if (skillRoll != null) {
@@ -414,7 +418,8 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
             }
         }
 
-        return applyAttackTargetBonuses(result.build(), target, sceneContext, attackTarget, attackSource, targetCount);
+        return applyAttackTargetBonuses(result.build(), target, sceneContext, attackTarget, attackSource, targetCount,
+                skillRoll);
     }
 
     /**
@@ -428,7 +433,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
      * after the fact: neither feeds anything the main body already consumed. A non-attack skill
      * or a {@code null} attackTarget returns result untouched.
      */
-    private InteractionResult applyAttackTargetBonuses(final InteractionResult built, final CombatantSheet target, final SceneContext sceneContext, final CombatantSheet attackTarget, final AttackSource attackSource, final int targetCount) {
+    private InteractionResult applyAttackTargetBonuses(final InteractionResult built, final CombatantSheet target, final SceneContext sceneContext, final CombatantSheet attackTarget, final AttackSource attackSource, final int targetCount, final SkillRoll skillRoll) {
         InteractionResult result = built;
         if (!skillType.isAttackSkill() || attackTarget == null) {
             return result;
@@ -438,7 +443,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
         // Recomputed rather than added to what the main body already put there: the same four
         // sources are scanned again, now with the real attackTarget, so a target-conditioned
         // bonus (FRIEZA) joins the sum instead of the whole total being replaced by it.
-        Optional<DamageBonus> damageBonus = sumDamageBonus(target, sceneContext, attackTarget, attackSource, targetCount);
+        Optional<DamageBonus> damageBonus = sumDamageBonus(target, sceneContext, attackTarget, attackSource, targetCount, skillRoll);
         if (damageBonus.isPresent()) {
             result = result.toBuilder().damageBonus(damageBonus.get()).build();
         }
@@ -765,6 +770,9 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
      *   <li>{@link #resolveMeleeStrengthDamage} — the base Ataque Corpo-a-Corpo rule's half-Força
      *   term. Not a held trait like the four above but a property of the Perícia itself, which is
      *   why it hangs off no {@code resolve*} scan.</li>
+     *   <li>{@link #resolveChargeDamage} — what an Investida adds to the dano roll it is the attack
+     *   half of. A property of the <i>manoeuvre</i> rather than of the Perícia, but held by nobody
+     *   either way, so it sits beside the Força term and hangs off no scan for the same reason.</li>
      * </ul>
      *
      * <p>Only ever called for a Perícia de Ataque. attackTarget is {@code null} on the main-body
@@ -773,7 +781,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
      */
     private Optional<DamageBonus> sumDamageBonus(final CombatantSheet target, final SceneContext sceneContext,
                                                 final CombatantSheet attackTarget, final AttackSource attackSource,
-                                                final int targetCount) {
+                                                final int targetCount, final SkillRoll skillRoll) {
         Character character = target.getCharacter();
         List<DamageBonus> typed = new ArrayList<>();
         allSkillCompetencyAbilities(target).stream()
@@ -791,12 +799,58 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                 .forEach(typed::add);
         int flat = target.getTemporaryBonus(ModifierType.DAMAGE_ROLL_BONUS)
                 + target.getConditionBonus(ModifierType.DAMAGE_ROLL_BONUS, sceneContext)
-                + resolveMeleeStrengthDamage(target);
+                + resolveMeleeStrengthDamage(target)
+                + resolveChargeDamage(skillRoll);
         if (attackTarget != null) {
             // Outward-facing: what the *victim's* own Condições hand the attacker (Flanqueado).
             flat += attackTarget.getAttackerDamageBonusFromConditions(sceneContext);
         }
         return DamageBonus.total(typed, flat);
+    }
+
+    /**
+     * What an Investida adds to the dano roll of the attack it is the attack half of — {@code
+     * ChargeService#HIT_DAMAGE_BONUS}, and 0 for every ordinary attack.
+     *
+     * <p><b>It hangs off no {@code resolve*} hook, deliberately</b>, and for the same reason
+     * {@link #resolveMeleeStrengthDamage} doesn't: every other contributor to a {@code DamageBonus}
+     * is something the attacker <i>holds</i> — a Habilidade, a Vantagem, a Talento, a Condição —
+     * whereas this is true of anyone who charges. There is nothing to scan and no interface to
+     * widen. Don't go looking for the trait that grants it.
+     *
+     * <p><b>No "did it hit" test.</b> The clause reads "se acertar, seus danos aumentam em +2", but
+     * a {@code DamageBonus} only ever reaches a dano roll and {@code
+     * org.aventyrs.core.combat.AttackDelivery} only builds one inside its own {@code if (hit)}. A
+     * condition here would duplicate a decision the pipeline has already made — and would be
+     * unanswerable on the direct skill-roll path, which compares against no Defesa at all.
+     *
+     * <p>Scoped to Ataque Corpo-a-Corpo: an Investida is a melee manoeuvre, and {@code
+     * ChargeService} refuses to declare one with anything else. The check is repeated here rather
+     * than assumed because a caller can hand any {@code SkillRoll} to any Interaction directly,
+     * without the service ever being consulted.
+     */
+    private int resolveChargeDamage(final SkillRoll skillRoll) {
+        boolean charging = skillRoll != null && skillRoll.getManoeuvre() == Manoeuvre.INVESTIDA;
+        return charging && skillType == SkillType.ATAQUE_CORPO_A_CORPO
+                ? ChargeService.HIT_DAMAGE_BONUS
+                : 0;
+    }
+
+    /**
+     * Every held Habilidade de Atributo's bonus to the roll of an attack made as part of a named
+     * manoeuvre — {@code DexterityAbility#IMPLACAVEL}'s Vantagem on its holder's Investidas.
+     *
+     * <p>Passes {@code skillRoll.getManoeuvre()} straight through, {@code null} included, so an
+     * override sees "an ordinary attack" as the distinct third state it is. A {@code null}
+     * skillRoll — the bonuses-only preview path — is likewise no manoeuvre: nothing has been
+     * declared yet.
+     */
+    private int sumManoeuvreRollBonuses(final Collection<AttributeAbility> attributeAbilities,
+                                        final SkillRoll skillRoll) {
+        Manoeuvre manoeuvre = skillRoll == null ? null : skillRoll.getManoeuvre();
+        return attributeAbilities.stream()
+                .mapToInt(ability -> ability.resolveManoeuvreRollBonus(manoeuvre, skillType))
+                .sum();
     }
 
     /**

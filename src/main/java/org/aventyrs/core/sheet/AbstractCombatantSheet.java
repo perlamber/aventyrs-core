@@ -18,6 +18,7 @@ import org.aventyrs.core.item.Weapon;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.race.RacialTraitSuppression;
 import org.aventyrs.core.scene.Range;
+import org.aventyrs.core.skill.SkillCompetencyAbility;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.rest.RestType;
 
@@ -181,6 +182,9 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
 
     /** Movements taken since this Rodada began — see {@link #consumeMovementThisRound()}. */
     private int movementsTakenThisRound = 0;
+
+    /** Attacks landed on this combatant since this Rodada began — see {@link #recordAttackSuffered()}. */
+    private int attacksSufferedThisRound = 0;
 
     /** Whether a weapon was drawn since this Turn began — see {@link #drawWeapon(Weapon)}. */
     private boolean drewWeaponThisTurn = false;
@@ -601,16 +605,57 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
      * Sangramento's own immediate PV loss goes through {@link #applyDamage} before this is called
      * for its ongoing half.
      *
-     * <p>When {@code effect.isCumulative()} is false (e.g. {@link Withering}), any existing
+     * <p>Trims by {@link TemporaryEffect#maximumSimultaneous()} over the same grant — same concrete
+     * kind and same {@link TemporaryEffect#stackingKey()}. At the usual ceiling of 1 that drops
+     * every match, so when {@code effect.isCumulative()} is false (e.g. {@link Withering}) any existing
      * instance of the same concrete type is removed first — reapplying replaces it rather than
      * stacking a second one alongside.
      */
     @Override
     public void applyEffect(final TemporaryEffect effect) {
-        if (!effect.isCumulative()) {
-            temporaryEffects.removeIf(existing -> existing.getClass() == effect.getClass());
+        int ceiling = effect.maximumSimultaneous();
+        if (ceiling < TemporaryEffect.UNLIMITED_SIMULTANEOUS) {
+            // Drop the oldest of the same grant until this one fits under the ceiling. "The same
+            // grant" is the concrete kind plus TemporaryEffect#stackingKey(), so one trait
+            // re-triggering replaces (and thereby renews) its own effect while leaving another
+            // trait's — and its own other bonuses — alone. At a ceiling of 1 that drops every
+            // match, which is exactly what a non-cumulative effect has always done.
+            List<TemporaryEffect> sameGrant = temporaryEffects.stream()
+                    .filter(existing -> existing.getClass() == effect.getClass())
+                    .filter(existing -> java.util.Objects.equals(existing.stackingKey(), effect.stackingKey()))
+                    .toList();
+            for (int i = 0; i <= sameGrant.size() - ceiling; i++) {
+                temporaryEffects.remove(sameGrant.get(i));
+            }
         }
         temporaryEffects.add(effect);
+    }
+
+    /**
+     * Grants blessing to this combatant and returns the effect it became — the one path a {@link
+     * Blessing} takes to reach a sheet, so the same-source rule and the {@link
+     * ModifierType#REGENERATION} special case are applied in exactly one place. See {@link
+     * TemporaryBonus} for what a source buys and {@link TemporaryBonus#from} for the conversion.
+     *
+     * <p>How many of that same grant may run at once arrives <em>on</em> the Blessing, stated by
+     * whoever resolved it. This method applies a Blessing; it never decides anything about one.
+     */
+    @Override
+    public TemporaryBonus grantBlessing(final Blessing blessing) {
+        TemporaryBonus bonus = TemporaryBonus.from(blessing);
+        applyEffect(bonus);
+        return bonus;
+    }
+
+    @Override
+    public int recordAttackSuffered() {
+        return ++attacksSufferedThisRound;
+    }
+
+    @Override
+    public boolean hasActiveRegeneration() {
+        return temporaryEffects.stream()
+                .anyMatch(effect -> effect instanceof Regeneration && !effect.isExpired());
     }
 
     /**
@@ -673,7 +718,9 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
      */
     @Override
     public void tickTemporaryEffects() {
-        temporaryEffects.forEach(effect -> effect.applyRoundEffect(this));
+        // Over a snapshot: a per-Rodada effect may itself change the list — a Regeneration heals,
+        // and healing clears every active Bleeding — which would otherwise fault this iteration.
+        List.copyOf(temporaryEffects).forEach(effect -> effect.applyRoundEffect(this));
         temporaryEffects.forEach(TemporaryEffect::tick);
         List<Condition> decaying = temporaryEffects.stream()
                 .filter(effect -> effect instanceof Condition)
@@ -765,6 +812,7 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     public void startNewRound() {
         actionsThisRound.clear();
         actionCountAtTurnStart = 0;
+        attacksSufferedThisRound = 0;
         applyScheduledEgoGrants();
         tickCooldowns();
     }
@@ -842,6 +890,7 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         actionsThisCena.clear();
         actionsThisRound.clear();
         actionCountAtTurnStart = 0;
+        attacksSufferedThisRound = 0;
         drewWeaponThisScene = false;
         combatStarted = false;
     }
@@ -862,7 +911,7 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         List<Blessing> granted = new ArrayList<>();
         for (Feat feat : getCharacter().getFeats()) {
             for (Blessing blessing : feat.resolveCombatStartBlessings(getCharacter())) {
-                grantTemporaryBonus(blessing.getModifierType(), blessing.getValue(), blessing.getRounds());
+                grantBlessing(blessing);
                 granted.add(blessing);
             }
         }

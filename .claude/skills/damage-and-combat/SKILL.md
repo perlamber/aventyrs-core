@@ -1,6 +1,6 @@
 ---
 name: damage-and-combat
-description: This skill should be used for any work on combat resolution, damage, or the sheet type hierarchy — `AttackDelivery`/`AttackReceiver` (the two mirrored entry points), `DamageBase`/`DamageBaseService` (the odometer scale, `getDamageBase(Character, Weapon|SkillType)`), `AttackRangeService`/`Weapon#getRange`/`Range#increasedBy`/`Feat#resolveAttackRangeIncrease` (an attack's maximum distance from the Weapon or Spell, widened by Talentos — `ArtilhariaFeat#TIRO_LONGO`), `DamageService` (RD/RA/half-damage mitigation order, `calculateFinalDamage`, `applyDamage`), the melee half-Força dano term (`AbstractSkillInteraction#resolveMeleeStrengthDamage`, `StrengthAbility#DESTRUIDOR_DE_MUROS`, `AttributeAbility#upgradesFirstMeleeAttackOfRoundStrengthScaling`), multi-target attacks (`AttackTargetingService`/`Feat#resolveAdditionalTargets`/`DeliveredAttack#additionalTargets`/`DamageInteraction#halvingDamage` — `ArtesMarciaisFeat#DOMINAR_ARTE_MARCIAL_ARTE_FLUIDA`), `HitPointsService#getStatus`/`getMaxHitPoints` and `CharacterStatus` being derived-not-stored, ally-facing RA scans (`resolveAllyAbsoluteDamageReduction`, `sumAllyGrantedAbsoluteDamageReduction`), `SceneContext`-conditioned RA/half-damage hooks, `CombatantSheet` vs `CharacterSheet` vs `MonsterSheet`, `lifeMultiplier`/`ModifierType.HIT_POINTS`, or `CriticalEffect`. Also use it when asked why a `DamageBase` scale-up isn't a `DamageBonus`, why monsters can't level up, why `CharacterStatus` isn't stored, why an attack's range isn't a character stat, why RA is scanned rather than granted, why this core enforces how many targets an attack has but not which ones, or why the melee Força term hangs off no `resolve*` hook and doesn't follow an Atributo substitution.
+description: This skill should be used for any work on combat resolution, damage, or the sheet type hierarchy — `AttackDelivery`/`AttackReceiver` (the two mirrored entry points), `DamageBase`/`DamageBaseService` (the odometer scale, `getDamageBase(Character, Weapon|SkillType)`), `AttackRangeService`/`Weapon#getRange`/`Range#increasedBy`/`Feat#resolveAttackRangeIncrease` (an attack's maximum distance from the Weapon or Spell, widened by Talentos — `ArtilhariaFeat#TIRO_LONGO`), `DamageService` (RD/RA/half-damage mitigation order, `calculateFinalDamage`, `applyDamage`), the melee half-Força dano term (`AbstractSkillInteraction#resolveMeleeStrengthDamage`, `StrengthAbility#DESTRUIDOR_DE_MUROS`, `AttributeAbility#upgradesFirstMeleeAttackOfRoundStrengthScaling`), multi-target attacks (`AttackTargetingService`/`Feat#resolveAdditionalTargets`/`DeliveredAttack#additionalTargets`/`DamageInteraction#halvingDamage` — `ArtesMarciaisFeat#DOMINAR_ARTE_MARCIAL_ARTE_FLUIDA`), `HitPointsService#getStatus`/`getMaxHitPoints` and `CharacterStatus` being derived-not-stored, ally-facing RA scans (`resolveAllyAbsoluteDamageReduction`, `sumAllyGrantedAbsoluteDamageReduction`), `SceneContext`-conditioned RA/half-damage hooks, `CombatantSheet` vs `CharacterSheet` vs `MonsterSheet`, `lifeMultiplier`/`ModifierType.HIT_POINTS`, or `CriticalEffect`. Also covers the **Investida** and movement-provoked Reações — `Manoeuvre`, `SkillRoll#getManoeuvre`, `ChargeService`/`ChargeResult` (its 3PA cost, its ×2 Movimento Base allowance, the drawn-weapon gate, the +2 on a hit and the -2 Defesas on a miss) and `MovementReactionService#getProvokedReactors` (who may react to a movement, and why nothing fires a Reação). Also use it when asked why a `DamageBase` scale-up isn't a `DamageBonus`, why monsters can't level up, why `CharacterStatus` isn't stored, why an attack's range isn't a character stat, why RA is scanned rather than granted, why this core enforces how many targets an attack has but not which ones, why the melee Força term hangs off no `resolve*` hook and doesn't follow an Atributo substitution, or why a charge's movement allowance is a total distance when every other movement figure is per Ponto de Ação.
 ---
 
 # Damage, combat resolution, and the sheet hierarchy
@@ -174,6 +174,78 @@ met" — never as "one target".
 `ModifierType.HALF_DAMAGE`/`EgoAdvantage#resolveHalfDamage` sources. So it still applies last —
 after RD and RA — and two half-damage sources never quarter. The caller feeds the *same* dano
 figure to every chain; the halving happens inside.
+
+## The Investida — a manoeuvre, not a second pipeline
+
+An Investida bundles a movement with an Ataque Corpo-a-Corpo. **No document under `docs/rules/`
+defines it** — the nearest thing is `magias.txt`'s Bote Inesperado deferring to "os critérios
+padrões" — so every figure carries its provenance on `ChargeService`: 3PA is authored, the ×2
+allowance is *read off* `DexterityAbility#IMPLACAVEL`'s "o triplo … ao invés do dobro", and the -2
+is confirmed by that same clause calling it "o redutor **padrão**".
+
+**The charge does not have its own attack path, and that is the whole design.** `ChargeService
+#begin` claims the movement and answers four questions on a `ChargeResult`; the caller then builds
+an ordinary `DeliveredAttack` whose `SkillRoll` carries `Manoeuvre.INVESTIDA` and the resolved
+`ActionCost`, and runs it through `AttackDelivery` unchanged. A charge therefore picks up every
+Talento, Condição, Forma and Efeito Crítico clause the normal path already resolves, instead of a
+parallel pipeline having to re-earn all of them.
+
+| Half of the manoeuvre | Where it lives | Why there |
+| --- | --- | --- |
+| cost (3PA, `Feat#resolveChargeActionPointReduction`) | `ChargeService#getActionPointCost` | reported, never deducted — no PA economy |
+| allowance (×2 Movimento Base) | `ChargeService#getMovementAllowance` | needs `MovementService` plus a multiplier |
+| **+2 on a hit** | `AbstractSkillInteraction#resolveChargeDamage` | a property of the manoeuvre, held by nobody |
+| **-2 Defesas on a miss** | `ChargeService#applyOutcome` | `AttackDelivery` applies nothing, ever |
+| who may react | `MovementReactionService` | the rule is general to *movement* |
+| RD during the movement | `ChargeResult` (unapplied) | the window is shorter than a `TemporaryBonus` |
+
+- **`Manoeuvre` rides the `SkillRoll`**, beside `ActionCost`, and lives in `org.aventyrs.core.action`
+  rather than `skill` because it names an action both halves must read. Putting it on
+  `DeliveredAttack` would reach `AttackDelivery` and not the direct `applyTo` path; widening the
+  `applyTo` cascade was rejected outright (see the multi-target section — that cascade is at its
+  limit). `null` is "an ordinary attack", never "not a charge".
+- **The +2 hangs off no `resolve*` hook**, exactly like the melee half-Força term two sections up
+  and for the identical reason: every other `DamageBonus` contributor is something the attacker
+  *holds*, while this is true of anyone who charges. Don't go looking for the trait that grants it.
+- **It needs no "did it hit" test.** A `DamageBonus` only ever reaches a dano roll, and
+  `AttackDelivery` only builds the chain carrying one inside `if (hit)`. A conditional would
+  duplicate a decision already made — and be unanswerable on the direct skill-roll path, which
+  compares against no Defesa at all.
+- **The miss penalty is a *sourced* `Blessing`**, not `grantTemporaryBonus`. A sourceless bonus
+  stacks without limit, so two failed charges would reach -4; with a source, `applyEffect` trims by
+  (source, `ModifierType`) and the second renews the window instead. Negative-valued, which
+  `DefenseServiceImpl` handles — it sums `DEFESAS` additively and clamps nothing, the same way
+  `ConditionType.DESPREVENIDO` delivers its own -2. Deliberately *not* modelled as applying
+  `DESPREVENIDO`: that condition carries implications (Flanqueado/Caído/Cego confer it) the clause
+  does not name.
+- **Melee is the `SkillType`, never the `ItemCategory`** — which is what lets an Arma Natural charge
+  (Guampo's Chifres Majestosos, the Empalador's Favor both require it). A `null` weapon is an Ataque
+  Desarmado and charges fine.
+- **The weapon must already be drawn — a gate, not a price.** `WeaponDrawService` is deliberately
+  not consulted. The test is membership of `getEquipment()` rather than `treatsAsNaturalWeapon`,
+  which exempts a body part for the right reason (nothing to draw) while keeping a *reclassified*
+  ordinary weapon (`DOMINAR_ARTE_MARCIAL_FERROADA_ESMAGADORA`) needing to be in hand.
+- **The allowance is a total distance**, the one exception to `MovementService`'s per-Ponto-de-Ação
+  rule, because a charge is one fixed-cost action. Don't add it to a Movimento Base.
+
+### Movement provokes Reações — the trigger is built, the Reação is not
+
+`MovementReactionService#getProvokedReactors(mover, sceneContext, manoeuvre)`: an enemy threatens
+if they hold a **drawn** melee weapon — or an Arma Natural, which cannot be sheathed — whose
+`AttackRangeService` band covers the distance to the mover. Ataque à Distância never threatens.
+
+- **Drawn, not equipped**, per "'Utilizando uma arma' means *drawn*". Read natural weapons through
+  `CombatantSheet#getNaturalWeapons()` so a Forma is reflected.
+- **The band form of `getEffectiveRange` is right here** — this is an `isWithin` question, not a
+  measurement, and a `SceneContext` holds bands anyway.
+- **The mover's own `SceneContext` is the correct snapshot**, unlike the attacker's snapshot
+  `resolveCriticalResistance` is warned about: distance between two combatants is mutual.
+- **Nothing fires a Reação.** `ReactionsService` computes a maximum and nothing tracks spent ones,
+  so the count is deliberately not consulted and the caller adjudicates. A clause exempting a
+  movement is still exempt from nothing that *happens* — cite that, not "no mechanism exists".
+- Exemption is `AttributeAbility#exemptsFromMovementReactions(Manoeuvre)`. **No `Feat` twin yet**:
+  `MOVIMENTO_ACROBATICO` is scoped to Reposicionar and `CONSCIENCIA_DEFENSIVA` to a movement's first
+  2UD, neither of which this core has.
 
 ### Efeito Crítico immunity — `CriticalEffect#applicableTo`
 
@@ -509,6 +581,84 @@ real caller has a sheet by then. The sheet-less `calculateFinalDamage` overload 
 `computeTotalAbsoluteDamageReduction(Character, CharacterSheet target, SceneContext)` helper
 instead.
 
+### Reacting to a hit — `CombatantSheet#notifyDamageTaken`
+
+Damage used to be a one-way street: `applyDamage` mutated the sheet and the victim never got a
+turn. It does now, for the *victim's own* traits — not for damage travelling back the other way,
+which is still missing.
+
+`DamageService#notifyDamageTaken(target, finalDamage, source, sceneContext)` is called from
+exactly **two** places, and they are the two that deliver an attack's damage:
+`DamageServiceImpl#applyDamage` and `DamageInteraction#applyTo` (which splits mitigation from
+application and so has to fire it explicitly). It lives on the *service*, not the sheet: a
+reaction is a rules resolution like mitigation itself, and `org.aventyrs.core.sheet` holds state
+rather than orchestrating. Everything else that removes PV — `Bleeding`'s
+per-Rodada tick, `Withering`, an `ActiveAbility`'s `getHitPointCost` — goes through the bare
+`CombatantSheet#applyDamage(int)` and fires nothing. **When you add a new way to lose PV, that
+choice is the decision to make**: is this an attack landing, or an effect draining?
+
+Two things happen there:
+
+- **`getAttacksSufferedThisRound()` advances** — every call, including a hit fully absorbed by
+  RD. It is the defence-side twin of the roll-action log, reset by `startNewRound()`, and it is
+  what a "somente ao primeiro ataque sofrido a cada Rodada" clause reads
+  (`TrollFeat#REGENERACAO_REATIVA_INVERNAL`, through
+  `Feat#resolveDamageReduction(Character, CombatantSheet)`). The count advances *after* the hit's
+  own mitigation was computed, so the attack being mitigated still sees zero. A
+  `calculateFinalDamage` preview never advances it.
+- **Every held ability's damage-taken `Blessing`s are granted** —
+  `SkillCompetencyAbility#resolveDamageTakenBlessings(holder, finalDamage)`, scanned across
+  `SkillCompetencyAbility.allFor(character, sheet)`. **The ability states what it grants; the
+  service only applies it**, so a new damage-triggered clause is written entirely on its own
+  constant. That includes the stacking ceiling: an ability whose effect another Talento buffs
+  scans its holder's Talentos for that buff *itself* and puts the answer on the Blessing.
+  `DamageServiceImpl` resolves nothing — it used to compute one ceiling per damage event and hand
+  it to every ability in the scan, which would have let a Troll Talento widen an unrelated
+  ability's Blessing. **A trigger consumer applies, it does not resolve.** Regeneração Reativa is the one consumer, and is a *Habilidade Racial* like any other
+  (`TrollsRacialAbility#REGENERACAO_REATIVA`) rather than a hook on `Race` and `Feat`: `allFor`
+  already unifies the born-with / acquired / Talento-granted sources, deduplicates them, and drops
+  the racial term under a Forma that abandons its holder's traços raciais.
+
+### A Blessing renews, it does not stack
+
+`CombatantSheet#grantBlessing(Blessing[, maximumSimultaneous])` is the one path a `Blessing` takes
+to reach a sheet — `Scene#applyInitiativeBlessings`, `startCombat()` and `notifyDamageTaken` all go
+through it — and it is where two rules live:
+
+- **Same source, same `ModifierType` ⇒ replace, don't add.** The resulting `TemporaryBonus` carries
+  `Blessing#getSource()`, and `applyEffect` trims by (concrete class, `TemporaryEffect#stackingKey()`),
+  where a bonus's key is source + type. Replacing is what renews the duration. **The type is part
+  of the key on purpose**: one trait may grant several bonuses at once — `AnaoFeat#VIGOR_DO_INVERNO`
+  hands its holder RD *and* Resistência a Críticos — and keying on source alone made the second
+  evict the first. The sourceless `grantTemporaryBonus(type, value, rounds)` path is unchanged and
+  still stacks without limit, because without a source there is nothing to call "the same grant".
+- **`ModifierType.REGENERATION` becomes a `Regeneration`**, the one type whose `TemporaryBonus`
+  *acts* each Rodada rather than contributing to a stat. The branch is in `TemporaryBonus#from`,
+  the single point a Blessing turns into a held effect, so no granting site knows about it.
+
+`Regeneration` is `Bleeding` turned around, plus one thing no other `TemporaryBonus` has: a
+**total budget**, `Blessing#getTotalLimit()`. "Não pode superar os danos sofridos" caps what the
+whole effect ever heals at the damage that started it, so it stops the moment either the budget or
+the Rodada count runs out — and it spends the budget by what the sheet *actually* recovered, so a
+holder at full PV or one whose healing is prevented spends none. A `null` limit means no cap.
+
+`TemporaryEffect#maximumSimultaneous()` is the ceiling: a boolean cannot say "up to 1+Títulos at
+once", so it is a number — derived from `isCumulative()` by default (which `Withering`, `Condition`
+and `FormEffect` still rely on), 1 for any sourced bonus, and raised by whatever the granting
+ability states. It rides on the `Blessing` (`getMaximumSimultaneous()`, honoured for **every**
+`ModifierType`, not just `REGENERATION`) because the ability granting a Blessing is precisely the
+one that knows which traits may lift its own ceiling.
+
+Two gotchas worth knowing before you add a second reaction:
+
+- **`tickTemporaryEffects` iterates a snapshot** for the `applyRoundEffect` pass, because
+  `Regeneration` heals and healing clears every active `Bleeding` — a per-Rodada effect that
+  mutates the effect list would otherwise fault its own iteration.
+- **"De fontes inimigas" is approximated.** The `SceneContext` in hand at the damage site may be
+  either party's snapshot (`AttackDelivery` hands out a chain the *caller* invokes), so it cannot
+  be asked whose ally the attacker is. A hit arriving through an attack path counts as hostile
+  unless `source` is the victim's own sheet; friendly fire currently triggers regeneration.
+
 ## Reference files to read first
 
 - `src/main/java/org/aventyrs/core/combat/AttackDelivery.java` / `AttackReceiver.java`
@@ -531,9 +681,21 @@ instead.
   `DeliveredAttackTargetResult.java`, `Feat#resolveAdditionalTargets`,
   `DamageInteraction#halvingDamage` — multi-target resolution
   (`MultiTargetAttackTest.java`, `AttackTargetingServiceImplTest.java`).
+- `src/main/java/org/aventyrs/core/action/Manoeuvre.java`,
+  `src/main/java/org/aventyrs/core/character/services/ChargeService.java` / `ChargeServiceImpl.java`
+  / `ChargeResult.java`, `MovementReactionService.java` / `Impl` — the Investida
+  (`ChargeServiceImplTest.java`, `MovementReactionServiceImplTest.java`,
+  `src/test/java/org/aventyrs/core/combat/ChargeAttackTest.java`);
+  `AbstractSkillInteraction#resolveChargeDamage`, `DexterityAbility#IMPLACAVEL`,
+  `MobilidadeFeat#INVESTIDA_AQUATICA`/`INVESTIDA_SELVAGEM`.
 - `src/main/java/org/aventyrs/core/character/services/HitPointsService.java`
   (`HitPointsServiceTest.java`) — `getStatus`, `getMaxHitPoints`.
 - `src/main/java/org/aventyrs/core/character/CharacterStatus.java`.
 - `src/main/java/org/aventyrs/core/sheet/CombatantSheet.java` /
   `AbstractCombatantSheet.java` / `src/main/java/org/aventyrs/core/monster/MonsterSheet.java`
   (`MonsterSheetTest.java`).
+- `src/main/java/org/aventyrs/core/sheet/Regeneration.java` /
+  `TemporaryEffect.java` (`maximumSimultaneous`), `CombatantSheet#notifyDamageTaken`,
+  `TrollsRacialAbility`, `SkillCompetencyAbility#resolveDamageTakenBlessings`,
+  `DamageService#notifyDamageTaken`, `Blessing#getTotalLimit`, `TrollFeat` — the damage-taken trigger
+  (`ReactiveRegenerationTest.java`).

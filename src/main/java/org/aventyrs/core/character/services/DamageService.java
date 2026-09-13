@@ -6,6 +6,9 @@ import org.aventyrs.core.character.DamageDescriptor;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.CombatantSheet;
+import org.aventyrs.core.sheet.TemporaryBonus;
+
+import java.util.List;
 
 /**
  * Computes and applies damage mitigation. Two independent flat reductions exist — RD
@@ -199,4 +202,38 @@ public interface DamageService {
     int applyDamage(CombatantSheet characterSheet, SceneContext sceneContext,
                     DamageDescriptor damageDescriptor, CombatantSheet source,
                     int rawDamage, boolean ignoreDamageReduction);
+
+    /**
+     * Fires target's own reactions to a hit that has just landed on them, and records the hit
+     * against {@link CombatantSheet#getAttacksSufferedThisRound()}.
+     *
+     * <p><b>This is the damage-taken trigger, and it is consumed here rather than on the sheet</b>
+     * — a reaction is a rules resolution like mitigation itself, and keeping it in this service
+     * leaves {@code org.aventyrs.core.sheet} holding state rather than orchestrating. Every held
+     * {@code SkillCompetencyAbility#resolveDamageTakenBlessings} is scanned and each {@link
+     * org.aventyrs.core.sheet.Blessing} granted, so an ability declares <em>what</em> it grants and
+     * this method only applies it — including the stacking ceiling, which rides on the Blessing.
+     * <b>A trigger consumer applies; it does not resolve.</b> A second damage-triggered clause
+     * needs no change here.
+     *
+     * <p>Called by the two paths that actually deliver an attack's damage: {@link
+     * #applyDamage(CombatantSheet, SceneContext, DamageType, CombatantSheet, int, boolean)} itself,
+     * and {@code org.aventyrs.core.effect.DamageInteraction}, which splits mitigation from
+     * application and so calls it explicitly. Every other way PV are lost — an ongoing {@code
+     * Bleeding}, an {@code ActiveAbility}'s own PV cost — goes through {@code
+     * CombatantSheet#applyDamage} directly and deliberately triggers nothing.
+     *
+     * <p>Nothing is granted when finalDamage is zero: an attack turned aside by RD gives a Troll
+     * nothing to regenerate from. Such an attack was still <i>suffered</i>, and is still counted.
+     *
+     * <p><b>"De fontes inimigas" is approximated.</b> A hit arriving through an attack path counts
+     * as hostile unless source is target itself: the {@link SceneContext} in hand at the damage
+     * site may be either party's snapshot, so it cannot be asked whose ally the attacker is —
+     * which means friendly fire currently triggers a reaction too. source may be {@code null} (an
+     * unattributed hit), and reads as hostile.
+     *
+     * @return the effects this hit started, empty when it started none
+     */
+    List<TemporaryBonus> notifyDamageTaken(CombatantSheet target, int finalDamage,
+                                           CombatantSheet source, SceneContext sceneContext);
 }

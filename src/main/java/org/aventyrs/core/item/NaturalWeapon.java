@@ -120,8 +120,13 @@ public enum NaturalWeapon implements ItemTemplate, Weapon {
      * Adjacente, Requisito Força 3.
      *
      * <p><b>Favor</b> ("Dano em investidas aumenta +1d6") and the <b>Efeito Adicional</b>
-     * ("Atacar após se mover em direção ao alvo aumenta o dano em +1") are unmodeled: Investida
-     * is an unmodelled manoeuvre (CLAUDE.md's Movimento Base row) and this core rolls no dice.
+     * ("Atacar após se mover em direção ao alvo aumenta o dano em +1") are still unmodeled, but
+     * no longer for the same reason: an Investida <i>is</i> a modelled manoeuvre now ({@code
+     * ChargeService}, {@code Manoeuvre#INVESTIDA}), and this weapon can be charged with, since
+     * {@code ChargeService} gates on the Perícia rather than the {@code ItemCategory}. What blocks
+     * each clause now is narrower — the Favor needs a <b>granted die</b>, which this core has no
+     * way to express (it rolls none, and a +1d6 is not a {@code DamageBase} scale-up); the Efeito
+     * Adicional needs a movement's <b>direction</b>, which nothing records.
      */
     CHIFRES_PODEROSOS(
             "Chifres Poderosos",

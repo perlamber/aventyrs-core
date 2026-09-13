@@ -34,6 +34,22 @@ public class TranslatableMessages {
 
     /** A held Condição forbids getting a weapon into your hands at all — Devorado. */
     public static final String WEAPON_DRAW_PREVENTED = "WEAPON_DRAW_PREVENTED";
+
+    /**
+     * A manoeuvre needs the weapon already in hand and this one is carried but sheathed. An
+     * Investida bundles a movement with an attack and prices neither a draw nor a moment to make
+     * one — see {@code ChargeService}.
+     */
+    public static final String WEAPON_NOT_DRAWN = "WEAPON_NOT_DRAWN";
+
+    /** An Investida was declared with something that is not swung as an Ataque Corpo-a-Corpo. */
+    public static final String CHARGE_REQUIRES_MELEE_WEAPON = "CHARGE_REQUIRES_MELEE_WEAPON";
+
+    /** An Investida was declared by a combatant a held Condição forbids moving — Agarrado/Imobilizado. */
+    public static final String CHARGE_MOVEMENT_PREVENTED = "CHARGE_MOVEMENT_PREVENTED";
+
+    /** The attacker cannot presently attack with this weapon at all — a Forma suppressing it. */
+    public static final String CANNOT_ATTACK_WITH_WEAPON = "CANNOT_ATTACK_WITH_WEAPON";
     public static final String NOT_ENOUGH_ACTION_POINTS = "NOT_ENOUGH_ACTION_POINTS";
     public static final String NOT_ENOUGH_MAGIC_POINTS = "NOT_ENOUGH_MAGIC_POINTS";
 

@@ -11,11 +11,14 @@ import org.aventyrs.core.modifier.ModifierResolverImpl;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.scene.Range;
 import org.aventyrs.core.scene.SceneContext;
+import org.aventyrs.core.sheet.Blessing;
 import org.aventyrs.core.sheet.CombatantSheet;
+import org.aventyrs.core.sheet.TemporaryBonus;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
 import org.aventyrs.core.skill.SkillExcellency;
 import org.aventyrs.core.skill.SkillType;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -325,7 +328,31 @@ public class DamageServiceImpl implements DamageService {
             characterSheet.getCharacter().getEquipment().forEach(
                     item -> item.notifyFinalDamageTaken(finalDamage, sceneContext));
         }
+        // The victim's own turn to react. Deliberately after the PV come off, and after the
+        // mitigation above has already read getAttacksSufferedThisRound(), so a "primeiro ataque
+        // sofrido" clause still sees zero for the attack it is mitigating.
+        notifyDamageTaken(characterSheet, finalDamage, source, sceneContext);
         return totalDamageTaken;
+    }
+
+    @Override
+    public List<TemporaryBonus> notifyDamageTaken(final CombatantSheet target, final int finalDamage,
+                                                  final CombatantSheet source, final SceneContext sceneContext) {
+        target.recordAttackSuffered();
+        if (finalDamage <= 0 || source == target) {
+            return List.of();
+        }
+        Character character = target.getCharacter();
+        // The sheet-taking allFor is what drops a Habilidade Racial under a Forma abandoning its
+        // holder's traços raciais, and what stops a holder who came by the same ability twice
+        // reacting twice.
+        List<TemporaryBonus> granted = new ArrayList<>();
+        for (SkillCompetencyAbility ability : SkillCompetencyAbility.allFor(character, target)) {
+            for (Blessing blessing : ability.resolveDamageTakenBlessings(target, finalDamage)) {
+                granted.add(target.grantBlessing(blessing));
+            }
+        }
+        return granted;
     }
 
     private int sumEgoAdvantageAbsoluteDamageReduction(final Character character, final SceneContext sceneContext) {

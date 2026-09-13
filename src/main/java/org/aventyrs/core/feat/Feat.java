@@ -1164,6 +1164,28 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     }
 
     /**
+     * How many Regeneração Reativa effects this Talento lets its holder carry at once — {@code
+     * TrollFeat#REGENERACAO_REATIVA_SUPERIOR}'s "se tornam cumulativos, podendo somar uma
+     * quantidade de efeitos simultâneos igual 1+ número de Títulos Aventyr Despertos", and the
+     * only consumer. Zero by default, meaning "this Talento raises no ceiling"; the
+     * Característica's own "Efeito não cumulativo" floor of 1 is applied by {@code
+     * TrollsRacialAbility#REGENERACAO_REATIVA}, so a Talento never has to restate it.
+     *
+     * <p><b>Read only by the trait it names.</b> This hook is scanned by that Habilidade Racial
+     * and by nothing else — in particular not by {@code DamageService#notifyDamageTaken}, which
+     * applies whatever Blessings the abilities hand it and resolves nothing. A generic consumer
+     * scanning a regeneration-specific hook would raise the ceiling of every unrelated
+     * damage-taken Blessing it granted in the same pass.
+     *
+     * <p>A number rather than a boolean because the clause is a count — see {@code
+     * org.aventyrs.core.sheet.TemporaryEffect#maximumSimultaneous()} for how the ceiling is
+     * enforced when a new instance arrives.
+     */
+    default int resolveSimultaneousRegenerationLimit(final Character character) {
+        return 0;
+    }
+
+    /**
      * {@link ItemCategory}s this Talento's holder can never wear or wield — a <b>permanent</b>
      * restriction on the equipment list itself, not a Forma's temporary one. {@code
      * DraconicoFeat#ASAS_DE_DRAGAO}'s "o impede de usar Equipamentos do tipo Capa" is the case:
@@ -1372,6 +1394,44 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      * unconditional "+NUD ao Movimento Base" belongs on {@link #resolveMovementIncrease}.
      */
     default int resolveRoundMovementIncrease(int movementIndex, Character character) {
+        return 0;
+    }
+
+    /**
+     * How many Pontos de Ação this Talento shaves off the cost of an Investida — {@code
+     * MobilidadeFeat#INVESTIDA_AQUATICA}'s "o Tempo de Ação de investidas sempre reduzidos em
+     * -1PA" is 1. Summed by {@code
+     * org.aventyrs.core.character.services.ChargeService#getActionPointCost} across {@code
+     * Character#getFeats()}, which then floors the result at 1: {@code
+     * org.aventyrs.core.sheet.ActionCost} refuses a Pontos-de-Ação cost of 0, and no authored
+     * clause asks for a free Investida.
+     *
+     * <p><b>A reduction, stated positively</b> — return the number of points saved, not a negative
+     * cost. Zero by default.
+     *
+     * <p>This is the Investida's <em>own</em> price, not a Perícia roll's: a clause reducing the
+     * Tempo de Ação of an ordinary attack has no hook at all, since this core runs no Pontos de
+     * Ação economy and {@code ActionPointsService} only computes maximums.
+     */
+    default int resolveChargeActionPointReduction(final Character character) {
+        return 0;
+    }
+
+    /**
+     * Redução de Dano this Talento grants its holder <b>for the duration of an Investida's
+     * movement</b> — {@code MobilidadeFeat#INVESTIDA_SELVAGEM}'s "durante o movimento da investida
+     * você recebe Redução de Danos Sofridos igual ao número de Títulos Aventyrs que você possuir".
+     * Summed by {@code ChargeService#getMovementDamageReduction} across {@code
+     * Character#getFeats()}; zero by default.
+     *
+     * <p><b>Reported, never granted</b>, and that is the point of it being its own hook rather
+     * than {@link #resolveDamageReduction}. "Durante o movimento" is a window shorter than a
+     * Rodada, which is the shortest thing a {@code TemporaryBonus} can last — granting one would
+     * keep protecting the charger after the charge had landed. It therefore rides {@code
+     * ChargeResult#unappliedMovementDamageReduction} as exact, unapplied data, the same discipline
+     * {@code AttackDelivery}'s {@code unappliedDifficultyReduction} follows.
+     */
+    default int resolveChargeMovementDamageReduction(final Character character) {
         return 0;
     }
 

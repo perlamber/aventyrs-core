@@ -215,6 +215,49 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
 
     int getTemporaryBonus(ModifierType type);
 
+    // --- Reacting to damage -------------------------------------------------------------------
+
+    /**
+     * Records that an attack has just landed on this combatant, advancing {@link
+     * #getAttacksSufferedThisRound()}. Called by {@code DamageService#notifyDamageTaken}, which is
+     * where a damage-taken reaction is resolved — this method only counts.
+     *
+     * @return the number of attacks suffered this Rodada, including this one
+     */
+    int recordAttackSuffered();
+
+    /** Whether a {@link Regeneration} is currently running on this combatant. */
+    boolean hasActiveRegeneration();
+
+    /**
+     * How many attacks have landed on this combatant since the Rodada began — every {@link
+     * #recordAttackSuffered()} call, including one whose damage was fully mitigated. Zero means the
+     * next attack is this Rodada's first, which is what {@code
+     * TrollFeat#REGENERACAO_REATIVA_INVERNAL}'s "aplicável somente ao primeiro ataque sofrido a
+     * cada Rodada" reads: the count is advanced <em>after</em> the hit's own mitigation is
+     * computed, so the first attack still sees zero.
+     *
+     * <p>Reset by {@link #startNewRound()}, the same boundary {@link #getActionsThisRound()} uses;
+     * without a live {@code Scene} it simply stays at whatever the client left it, exactly as the
+     * action log does. Counts hits, not rolls — a preview through {@code
+     * DamageService#calculateFinalDamage} never advances it.
+     */
+    int getAttacksSufferedThisRound();
+
+    /**
+     * Grants blessing to this combatant, returning the effect it became — the one path a {@link
+     * Blessing} takes to reach a sheet. Two things happen here and nowhere else: a {@link
+     * ModifierType#REGENERATION} Blessing becomes a {@link Regeneration} rather than a plain bonus,
+     * and the resulting {@link TemporaryBonus} carries {@link Blessing#getSource()}, which is what
+     * makes a second grant from the same source and type <em>replace</em> the first — renewing its
+     * duration instead of stacking a second copy.
+     *
+     * <p>How many of that same grant may run at once arrives <em>on</em> the Blessing ({@link
+     * Blessing#getMaximumSimultaneous()}), stated by whoever resolved it. This method applies a
+     * Blessing; it never decides anything about one.
+     */
+    TemporaryBonus grantBlessing(Blessing blessing);
+
     // --- Condições / Malefícios ---------------------------------------------------------------
 
     /**
