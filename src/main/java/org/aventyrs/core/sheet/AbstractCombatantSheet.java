@@ -29,6 +29,7 @@ import java.util.HashSet;
 import java.util.stream.Stream;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -272,6 +273,16 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
             temporaryEffects.removeIf(effect -> effect instanceof Bleeding);
         }
         return hitPoints.recover(amount);
+    }
+
+    /**
+     * Interrupts every ongoing {@link Bleeding} without healing — see {@link
+     * CombatantSheet#stopBleeding()} for why this is separate from the interruption {@link #heal}
+     * performs as a side effect of recovering PV.
+     */
+    @Override
+    public boolean stopBleeding() {
+        return temporaryEffects.removeIf(effect -> effect instanceof Bleeding);
     }
 
     /**
@@ -1045,6 +1056,20 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     @Override
     public boolean hasCondition(final ConditionType conditionType, final SceneContext sceneContext) {
         return activeConditionOrigins(sceneContext).containsKey(conditionType);
+    }
+
+    /**
+     * Reads straight off the held conditions rather than through {@link #activeConditionOrigins} —
+     * that map is keyed by {@link ConditionType} and would hand back a {@link Condition}, losing
+     * exactly the subclass this is being asked for. Nothing implies Escondido, so there is no
+     * implication to miss by going direct.
+     */
+    @Override
+    public Optional<Hidden> getHidden() {
+        return heldConditions()
+                .filter(Hidden.class::isInstance)
+                .map(Hidden.class::cast)
+                .findFirst();
     }
 
     /**

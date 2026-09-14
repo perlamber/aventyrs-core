@@ -114,6 +114,11 @@ mechanism.
   snapshot, so read only Scene-wide facts from it — never proximity; the longest overload adds the
   holder's own sheet, which is how a clause gated "enquanto em sua Forma X" reads
   `CombatantSheet#isInForm`),
+  `movesWhileHidden(Character)` (whether the holder keeps `ConditionType#ESCONDIDO` through a
+  movement — `MobilidadeFeat#MOVIMENTO_FURTIVO`, asked by `HidingService#reveals`; a boolean, not
+  a distance, for the same reason `drawsWeaponAsFreeAction` is one — the clause permits the act
+  outright — and it excuses only `RevealTrigger#MOVEMENT`, never an attack or a roll aimed at
+  someone else),
   `resolveSizeCategoryOverride(Character)` → `SizeCategory` (an absolute *set* — "sua Categoria
   de Tamanho muda para -2", `GnomoFeat#DUENDE`) and `resolveSizeCategoryIncrease(Character)` (the
   *shift* twin — "aumenta em +1", `GiganteFeat#GIGANTE_DO_CLA_EMPUSA`); `CharacterSizeService`

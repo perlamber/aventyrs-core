@@ -7,7 +7,11 @@ import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterAttributes;
 import org.aventyrs.core.character.DamageType;
 import org.aventyrs.core.character.fixture.CharacterFixture;
+import org.aventyrs.core.effect.DefensiveEffect;
+import org.aventyrs.core.effect.HealingEffect;
+import org.aventyrs.core.effect.SpellEffect;
 import org.aventyrs.core.magic.catalog.IraDeVulcanoSpell;
+import org.aventyrs.core.magic.catalog.VidaSpell;
 import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.CombatantAction;
 import org.aventyrs.core.sheet.CombatantSheet;
@@ -27,6 +31,8 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -320,5 +326,50 @@ class SpellCastingServiceImplTest {
                         AreaOfEffect.circle(Range.DISTANCIA_CURTA));
             }
         };
+    }
+
+    // ---------- resolveEffect ----------
+
+    private final SpellCastingService effectService = new SpellCastingServiceImpl();
+
+    @Test
+    void resolveEffectIsEmptyForAMagiaWhoseEfeitoThisCoreCannotExpress() {
+        assertTrue(effectService.resolveEffect(new TestSpell(), false).isEmpty());
+    }
+
+    @Test
+    void aHealingMagiaResolvesToAHealingEffect() {
+        SpellEffect effect = effectService.resolveEffect(VidaSpell.REVIGORAR, false).orElseThrow();
+
+        assertInstanceOf(HealingEffect.class, effect);
+        assertSame(VidaSpell.REVIGORAR, effect.getSpell());
+    }
+
+    @Test
+    void aCleansingMagiaResolvesToADefensiveEffect() {
+        SpellEffect effect = effectService.resolveEffect(VidaSpell.EXORCIZAR, false).orElseThrow();
+
+        assertInstanceOf(DefensiveEffect.class, effect);
+        assertSame(VidaSpell.EXORCIZAR, effect.getSpell());
+    }
+
+    @Test
+    void castingAHealingMagiaReportsItsEffectWithoutApplyingIt() {
+        Scene scene = sceneWithCaster();
+        sheet.applyDamage(30);
+
+        SpellCastingResult result = new SpellCastingServiceImpl().castSpell(SpellCastRequest.builder()
+                .caster(sheet)
+                .spell(VidaSpell.REVIGORAR)
+                .scene(scene)
+                .sceneContext(scene.buildContext(sheet, Map.of()))
+                .build());
+
+        assertNotNull(result.getSpellEffect());
+        // Report-only: this core resolves no target GD, so it cannot know the cast landed.
+        assertEquals(30, sheet.getDamageTaken());
+
+        sheet.receiveInteraction(result.getSpellEffect());
+        assertTrue(sheet.getDamageTaken() < 30, "the caller running it is what heals");
     }
 }

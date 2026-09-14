@@ -203,14 +203,22 @@ public enum MobilidadeFeat implements Feat {
     /**
      * "Você pode se mover enquanto furtivo, mas seu Movimento Base é reduzido à metade", the
      * halving falling away at 7 Graduações em Furtividade.
+     *
+     * <p><b>The permission is real</b> — through {@link Feat#movesWhileHidden}, which {@code
+     * HidingService#reveals} asks before letting {@code RevealTrigger#MOVEMENT} end a
+     * concealment. Its holder moves and stays Escondido; everyone else's movement gives them away.
+     *
+     * <p>The <b>price</b> is not. Halving Movimento Base is the gap catalog's "Multiplicative
+     * stages" row — {@code MovementService} sums additively with no halving stage, and a {@code
+     * MOVEMENT_HALVED} {@code ModifierType} is explicitly not the fix. So this Talento currently
+     * grants its benefit and charges nothing for it, which over-grants; the 7-Graduação clause
+     * that <i>removes</i> the price is the half that is accidentally correct.
      */
-    // TODO: halving Movimento is the gap catalog's "Multiplicative stages" row — MovementService
-    //  sums additively with no halving stage, and a MOVEMENT_HALVED constant is explicitly not
-    //  the fix.
-    // TODO: "enquanto furtivo" is now ConditionType.ESCONDIDO, but a held trait cannot see its
-    //  holder's Condições — Feat#resolveMovementIncrease takes a Character, and a Condition lives
-    //  on the CombatantSheet, which no Feat hook receives. Halving has no mechanism either (gap
-    //  catalog, "Multiplicative stages"); don't add a MOVEMENT_HALVED constant.
+    // TODO: the "reduzido à metade" price needs the multiplicative-stage mechanism
+    //  (MovementService sums additively). Gating it would additionally need "enquanto furtivo" to
+    //  be visible from a movement hook — Feat#resolveMovementIncrease takes a Character, and the
+    //  Condição lives on the CombatantSheet; Feat#movesWhileHidden is asked by HidingService,
+    //  which holds the sheet, but resolveMovementIncrease has no such overload.
     MOVIMENTO_FURTIVO(
             "Você pode se mover enquanto furtivo, mas seu Movimento Base é reduzido à metade. Se "
                     + "você possuir 7 ou mais Graduações em Furtividade este Talento não mais "
@@ -218,7 +226,12 @@ public enum MobilidadeFeat implements Feat {
             () -> FeatRequirements.builder()
                     .requiredSkillType(SkillType.FURTIVIDADE)
                     .requiredSkillGraduation(2)
-                    .build()),
+                    .build()) {
+        @Override
+        public boolean movesWhileHidden(final Character character) {
+            return true;
+        }
+    },
 
     /**
      * "Rolagens de Perícia de Ataque realizadas imediatamente após ser bem-sucedido em rolagens de

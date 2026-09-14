@@ -10,6 +10,7 @@ import org.aventyrs.core.skill.SkillExcellency;
 import org.aventyrs.core.skill.artes.ArtesExcellency;
 
 import java.util.List;
+import java.util.Set;
 
 import lombok.Builder;
 import lombok.Getter;
@@ -154,6 +155,17 @@ public class InteractionResult {
 
     /** Which {@link ResourceType} {@link #resourceGainValue} was restored to. */
     ResourceType resourceGainType;
+
+    /**
+     * The Malefícios this Interaction actually lifted — {@code
+     * org.aventyrs.core.effect.ConditionCleansingEffect}'s "remover todos os Malefícios Maldição,
+     * Doença e Possessão de seu alvo". Only the ones the target was genuinely under: a Magia may
+     * name more than it finds, and cleansing nothing is a real outcome rather than an error.
+     *
+     * <p>{@code null} for an Interaction that lifts no conditions, empty for one that tried and
+     * found none — the same applicable-but-none distinction {@link #blessings} draws.
+     */
+    Set<ConditionType> liftedConditions;
 
     /**
      * How many temporary Ego points this Interaction drained — e.g. {@code

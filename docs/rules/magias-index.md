@@ -651,15 +651,25 @@ compute it yet" position, but it is worth being precise about which half is whic
 Real today: the rung and its PM cost, the acquisition gates (`Spell#isEligible` runs against real
 trees now), the category tags, and every descriptor as data a UI can print.
 
-Blocked, with the gap named per constant: essentially every *effect*. The recurring blockers, in
-rough order of how many Magias they hold up:
+**The Vida tree is the exception, and is fully wired** — both ramificações apply for real through
+`org.aventyrs.core.effect.SpellEffect`. Its healing branch authors a `SpellHealing` (a `RestType`
+tier, or a full recovery) resolved by `SpellHealingEffect`; its cleansing branch authors
+`cleansedConditions` lifted by `ConditionCleansingEffect`. `ConditionType.POSSESSAO` was added for
+*Exorcizar*, from the Fantasma's *Possessão Furiosa* text below — it is absent from
+`condicoes-e-maleficios-.txt`. What remains blocked there is narrow and per-constant: *Corpo
+Fechado*'s Malefício **immunity** (removal works), the once-per-Descanso-Longo limit on *Aliviar a
+Dor*, and every Efeito Alternativo.
+
+Blocked, with the gap named per constant: essentially every other *effect*. The recurring
+blockers, in rough order of how many Magias they hold up:
 
 | blocker | Magias affected |
 | --- | --- |
 | No damage-type breakdown or elemental resistance/immunity | most of the 11 Elemental trees |
 | Área de Efeito footprint resolution | every area Magia (~35) |
 | Round-scoped Attribute bonuses | the whole Polimorfismo tree |
-| Malefício classification (Maldição/Doença/Possessão) | Morte and Vida's Alternativo branch |
+| Malefício classification (Maldição/Doença/Possessão) | Morte — **no longer Vida**, whose Alternativo branch now lifts real `ConditionType`s |
+| Per-condition immunity (refusing a *future* Malefício) | Vida's *Corpo Fechado* |
 | Owned/produced item copy | the whole Artesão tree |
 | Concentração's two-phase transition | 20 Magias — see above |
 | Pontos de Ação ceilings and non-zero floors | the whole Tempo tree |

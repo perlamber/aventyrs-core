@@ -23,9 +23,17 @@ import org.aventyrs.core.skill.SkillType;
  * here, and every one reads the <em>target's</em> Vigor rather than the caster's. Nothing resolves
  * it; which Attribute is authored data, and a caller with the target's sheet would multiply.
  *
- * <p>Healing itself is real ({@code CombatantSheet#heal}), which makes this one of the few trees
- * whose principal effect is not blocked outright. What is missing is the per-Rodada drip: nothing
- * applies a recurring recovery, only {@code TemporaryEffect}s that damage.
+ * <p>Healing itself is real ({@code CombatantSheet#heal}), and so is the per-Rodada drip these six
+ * all describe: {@code org.aventyrs.core.sheet.Regeneration} is a {@code TemporaryBonus} that
+ * heals on each of its holder's Turns, bounded by a Rodada count and an optional total budget.
+ * This tree is therefore <b>unblocked but unwired</b> — unlike {@code VidaSpell}, no constant here
+ * authors a {@code SpellHealing} yet, so nothing resolves one into a {@code
+ * org.aventyrs.core.effect.HealingEffect}.
+ *
+ * <p>Two things a wiring pass would have to add, since {@code SpellHealing} holds neither: the
+ * <b>recurring</b> figure beside the instant one (every rung here is "recupera X PV, depois disso
+ * recupera +N PV por Rodada"), and the {@code DurationKind#TARGET_ATTRIBUTE} duration above as the
+ * Regeneration's Rodada count.
  */
 public enum RegeneracaoSpell implements AuthoredSpell {
 

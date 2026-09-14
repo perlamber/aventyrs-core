@@ -114,6 +114,7 @@ public class TranslatableMessages {
     public static final String SPELL_PREREQUISITE_NOT_MET = "SPELL_PREREQUISITE_NOT_MET";
     public static final String INVALID_SPELL_CAST_TARGET = "INVALID_SPELL_CAST_TARGET";
     public static final String INVALID_SPELL_DAMAGE = "INVALID_SPELL_DAMAGE";
+    public static final String INVALID_SPELL_HEALING = "INVALID_SPELL_HEALING";
     public static final String INVALID_MIMETIZED_SPELL = "INVALID_MIMETIZED_SPELL";
     public static final String MIMETIZED_SPELL_NOT_HELD = "MIMETIZED_SPELL_NOT_HELD";
 

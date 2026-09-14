@@ -6,9 +6,12 @@ import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.scene.Range;
 import org.aventyrs.core.skill.Skill;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * The Condições de Personagem a combatant can be under. The catalogue entry for a condition,
@@ -18,15 +21,20 @@ import java.util.Map;
  *
  * <p><b>Malefícios are the harmful majority, not the whole enum.</b> A Condição is just a state
  * a combatant is in; most of the authored ones make things harder, but {@link #ESCONDIDO} is a
- * state a character puts <i>themselves</i> in and benefits from. Nothing here is typed by which
- * it is — no {@code isHarmful()} flag — because nothing asks: a clause names the condition it
- * cares about.
+ * state a character puts <i>themselves</i> in and benefits from. Almost every clause names the
+ * condition it cares about and so needs no such distinction — but {@code VidaSpell#CORPO_FECHADO}
+ * removes "todos os Malefícios", which is the one clause that asks, so {@link #isMaleficio()}
+ * answers it. Default {@code true}, overridden only where a constant is not a Malefício.
  *
  * <p>Authored from {@code docs/rules/condicoes-e-maleficios-.txt}, whose title covers only the
  * Malefícios. Three notes on that source: Caído is listed twice, and the fuller of the two
  * entries is the one modelled (it adds a Dano Corpo-a-Corpo malus the shorter one omits);
  * "Envenado" is a typo for {@link #ENVENENADO}; and {@link #ESCONDIDO} is not in it at all,
  * being a Condição rather than a Malefício.
+ *
+ * <p>{@link #POSSESSAO} is a second entry that source does not list, but for the opposite reason:
+ * it <i>is</i> a Malefício — three Magias name it as one — and is authored from the only text
+ * that describes it, in {@code docs/rules/magias.txt}. See its own javadoc.
  *
  * <p>Two things the rules text calls Malefícios are deliberately <b>not</b> constants here,
  * because they are other kinds of thing this core already models: <b>Coma</b> is {@code
@@ -368,14 +376,72 @@ public enum ConditionType {
     //  Furtividade roll can fail and this core has no roll-resolution-vs-GD engine to know
     //  whether it succeeded, so a caller applies it. Nothing lifts it either — being seen,
     //  attacking, or moving into the open would all end it, none of which is modelled.
-    ESCONDIDO("Estado de ocultação obtido ao utilizar a Perícia Furtividade."),
+    /**
+     * "Estado de ocultação obtido ao utilizar a Perícia Furtividade."
+     *
+     * <p><b>The one condition with a magnitude</b>, and so the one held as a subclass: {@link
+     * Hidden} carries the Furtividade total an observer's Atenção must reach, plus whoever has
+     * already reached it. Applied and lifted through {@code
+     * org.aventyrs.core.character.services.HidingService}, never by hand — {@code
+     * new Condition(ESCONDIDO, …)} would be a concealment nobody can see through, since it carries
+     * no value.
+     *
+     * <p>No {@link ConditionEffect}s and no implications: being hidden taxes nothing and confers
+     * nothing on its own. What it is <i>worth</i> belongs to whichever trait says so — {@code
+     * AssassinoFeat#ESCUDO_DE_SOMBRAS}'s +3 às Defesas e RDS reads this condition off the sheet
+     * for itself.
+     */
+    ESCONDIDO("Estado de ocultação obtido ao utilizar a Perícia Furtividade.") {
+        /** The one constant here that is not a Malefício — its holder chose it and benefits from it. */
+        @Override
+        public boolean isMaleficio() {
+            return false;
+        }
+    },
 
     /** "Alvo sofre redutores conforme especificado no efeito." */
     // TODO: entirely open-ended — "conforme especificado no efeito" means the maluses live on
     //  whatever inflicted this, so there is nothing fixed to author here. Same missing Selvagem
     //  immunity classification as ENVENENADO.
     DOENTE("Alvo sofre redutores conforme especificado no efeito. Personagens imunes a efeitos "
-            + "Selvagens também são imunes a este efeito.");
+            + "Selvagens também são imunes a este efeito."),
+
+    /**
+     * Being possessed — a Malefício named by {@code VidaSpell#EXORCIZAR}'s "remover todos os
+     * Malefícios Maldição, Doença e Possessão" and by {@code VidaSpell#CORPO_FECHADO}.
+     *
+     * <p><b>Not authored from {@code docs/rules/condicoes-e-maleficios-.txt}</b>, which does not
+     * list it — the same exception {@link #ESCONDIDO} is, and worth stating for the same reason.
+     * Its description is transcribed from the only place the ruleset actually describes the
+     * effect: the Fantasma's Corrente de Efeitos <i>Possessão Furiosa</i> in {@code
+     * docs/rules/magias.txt} ("efeito de possessão"), corroborated by that document's own
+     * "Personagens Possuídos, efeitos que encerram possessões os liberta" — which is exactly what
+     * {@code CombatantSheet#removeCondition} does here.
+     *
+     * <p>Its two prohibitions are modelled on {@link #SILENCIO}, which forbids the same pair.
+     * "São beneficiados por efeitos ativos ou passivos" needs nothing: a bonus a possessed
+     * character holds keeps applying, which is already the default.
+     */
+    // TODO: "sempre ataca o aliado mais próximo" is forced attack targeting — the possessed
+    //  character still acts, but chooses nothing. See CLAUDE.md's "Forced attack targeting /
+    //  interception" gap; nothing redirects a target mid-resolution, and this core does no
+    //  geometry to find "o mais próximo" either.
+    // TODO: "Magias que não sejam Raciais" over-prohibits. preventsSpellCasting() is blanket and
+    //  nothing classifies a Magia as Racial, so a possessed character is currently refused every
+    //  cast rather than all but their racial ones. The prohibition is real; its exemption is not.
+    POSSESSAO("O alvo é possuído por 2 Rodadas e sempre ataca o aliado mais próximo. Personagens "
+            + "possuídos desta forma não podem Conjurar Magias que não sejam Raciais ou ativar "
+            + "Habilidades Aventyr, mas são beneficiados por efeitos ativos ou passivos.") {
+        @Override
+        public boolean preventsAbilityActivation() {
+            return true;
+        }
+
+        @Override
+        public boolean preventsSpellCasting() {
+            return true;
+        }
+    };
 
     /**
      * An implication that always holds, with no proximity scope — {@link Map#of} rejects a null
@@ -405,6 +471,28 @@ public enum ConditionType {
      * shared class cannot vary the compile-time-fixed {@code ModifierType} of an annotation.
      */
     public record ConditionEffect(ModifierType type, int value, Range within) {
+    }
+
+    /**
+     * Whether this is a Malefício — a state inflicted on its holder — rather than one they chose.
+     * {@code true} for everything but {@link #ESCONDIDO}.
+     *
+     * <p>Exists for the single clause that asks about the category instead of naming its members:
+     * {@code VidaSpell#CORPO_FECHADO}'s "todos os Malefícios removidos". Read it through {@link
+     * #maleficios()} rather than filtering by hand.
+     */
+    public boolean isMaleficio() {
+        return true;
+    }
+
+    /**
+     * Every Malefício — what "todos os Malefícios" means, kept here so a new constant joins it
+     * automatically and a clause never has to enumerate the enum.
+     */
+    public static Set<ConditionType> maleficios() {
+        return Arrays.stream(values())
+                .filter(ConditionType::isMaleficio)
+                .collect(Collectors.toUnmodifiableSet());
     }
 
     /** Typed numeric maluses this condition imposes. Empty unless a constant overrides it. */

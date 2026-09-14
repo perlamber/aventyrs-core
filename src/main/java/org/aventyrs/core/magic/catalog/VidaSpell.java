@@ -6,12 +6,17 @@ import org.aventyrs.core.magic.AuthoredSpell;
 import org.aventyrs.core.magic.BranchLevel;
 import org.aventyrs.core.magic.SpellData;
 import org.aventyrs.core.magic.SpellDuration;
+import org.aventyrs.core.magic.SpellHealing;
 import org.aventyrs.core.magic.SpellTargeting;
 import org.aventyrs.core.magic.SpellTree;
+import org.aventyrs.core.rest.RestType;
 import org.aventyrs.core.scene.AreaOfEffect;
 import org.aventyrs.core.scene.Range;
+import org.aventyrs.core.sheet.ConditionType;
 import org.aventyrs.core.skill.DifficultyLevel;
 import org.aventyrs.core.skill.SkillType;
+
+import java.util.Set;
 
 /**
  * VIDA (Natural/Divina) — nine Magias, the catalog's joint-largest tree, diverging at Broto into a
@@ -20,26 +25,43 @@ import org.aventyrs.core.skill.SkillType;
  * <p>Eight of its nine are {@code Pessoal ou Toque} and eight are Instantânea, which makes it the
  * most uniform tree in the catalog after Regeneração.
  *
- * <h2>Recovery is expressed as a Descanso, which is a mechanism this core has</h2>
+ * <h2>The first tree whose effects actually apply</h2>
  *
- * Five of these Magias heal by naming a rest tier — "como se passasse por um Descanso Longo",
- * "Descanso Mínimo", "Descanso Total" — rather than a number of PV. {@code RestService#applyRest}
- * and {@code RestType} are real, so the amounts these describe are already computable; what is
- * missing is a way for a Magia to <em>invoke</em> a rest on a target without the rest actually
- * happening ("Este é um efeito similar a Descanso e não substitui Descansos reais").
+ * Both ramificações are wired, each through one parameterized {@code
+ * org.aventyrs.core.effect.SpellEffect} that deepens rung by rung rather than a class per Magia —
+ * see {@code SpellHealingEffect} and {@code ConditionCleansingEffect}. A caller gets one back on
+ * {@code SpellCastingResult#getSpellEffect()} and runs it when it judges the cast landed.
  *
- * <p>The cleansing branch is blocked further back: every rung of it removes a Malefício by kind
- * (Doença, Veneno, Maldição, Possessão), and no Malefício classification exists at all.
+ * <p><b>Recovery is expressed as a Descanso, which is a mechanism this core has.</b> Five of these
+ * Magias heal by naming a rest tier — "como se passasse por um Descanso Longo", "Descanso Mínimo",
+ * "Descanso Total" — rather than a number of PV, and {@link org.aventyrs.core.rest.RestType} has
+ * exactly those tiers. {@code SpellHealing} is the authored column; the effect reads {@code
+ * RestService#getRecoveredHitPoints} against the <em>target's</em> Vigor and applies it with a bare
+ * {@code CombatantSheet#heal}, never {@code RestService#applyRest} — "Este é um efeito similar a
+ * Descanso e não substitui Descansos reais", and a real Rest would also restore PM/PD and settle
+ * pending Ego recoveries.
+ *
+ * <p><b>The cleansing branch removes {@code ConditionType}s.</b> Doença, Veneno and Maldição were
+ * already authored; {@link org.aventyrs.core.sheet.ConditionType#POSSESSAO} was added for
+ * {@link #EXORCIZAR}, from the only rules text that describes it. What stays missing is narrower
+ * than "no Malefício classification": nothing can make a target <em>immune</em> to a future one,
+ * which is the second half of {@link #CORPO_FECHADO}.
  */
 public enum VidaSpell implements AuthoredSpell {
 
     /**
-     * "Interrompe qualquer efeito de Sangramento" is the one clause in this tree that is fully
-     * expressible: {@code Sangramento} is a real {@code CriticalEffect} and {@code
-     * CombatantSheet#heal} already clears it. TODO the rest is not — the once-per-Descanso-Longo
-     * limit is per-target effect history, and the Efeito Alternativo defers damage to the
-     * following Rodada, which nothing in {@code DamageService} can postpone.
+     * The tree's trunk, and the one Magia here whose recovery is <em>conditional</em>: the
+     * bleeding is stopped, or — "ao invés disso" — the target is healed, never both. Carried by
+     * {@code HealingCondition#ONLY_IF_NOT_BLEEDING} and applied through {@code
+     * CombatantSheet#stopBleeding()}, which interrupts a {@code Sangramento} without healing;
+     * {@code heal} clears one too, but only as a consequence of PV coming back, which is the
+     * opposite of what this clause says.
      */
+    // TODO: "só afeta o alvo 1 vez, voltando a afetá-lo somente após ele passar por um Descanso
+    //  Longo" is per-target effect history, which no sheet records — the same limit {@code
+    //  RegeneracaoSpell#REGENERACAO} states and is blocked on.
+    // TODO: the Efeito Alternativo defers a hit's PV loss to the following Rodada, which nothing
+    //  in {@code DamageService} can postpone.
     ALIVIAR_A_DOR(SpellData.builder()
             .name("Aliviar a Dor")
             .branchLevel(BranchLevel.SEMENTE)
@@ -53,6 +75,7 @@ public enum VidaSpell implements AuthoredSpell {
                     + "Este é um efeito similar a Descanso e não substitui Descansos reais. "
                     + "O efeito de cura desta magia só afeta o alvo 1 vez, voltando a afetá-lo somente após ele "
                     + "passar por um Descanso Longo.")
+            .healing(SpellHealing.restEquivalent(RestType.MINIMO).onlyIfNotBleeding())
             .secondaryEffectDescription("Procrastinar Ferimento: Como uma Reação você pode fazer com os PV que você, "
                     + "ou um aliado em Distância Curta, perderia em decorrência de um ataque sejam perdidos apenas "
                     + "no Rodada seguinte. Corrente de Efeitos - Estancar: Se o dano sofrido fosse causar efeitos de "
@@ -76,6 +99,7 @@ public enum VidaSpell implements AuthoredSpell {
             .primaryEffectDescription("Você pode fazer com que um alvo recupere PV como se passasse por um Descanso "
                     + "Longo. "
                     + "Este é um efeito similar a Descanso e não substitui Descansos reais.")
+            .healing(SpellHealing.restEquivalent(RestType.LONGO))
             .effectChainDescription("Sobrecura: O alvo desta magia adicionalmente recupera +1d6+Metade do Foco PV.")
             .secondaryEffectDescription("Benção Bifurcada: Você pode curar até 2 alvos ao mesmo tempo. O GD da "
                     + "Conjuração muda pra Médio, se bem-sucedido ambos os alvos recuperam PV como se passassem por "
@@ -93,7 +117,16 @@ public enum VidaSpell implements AuthoredSpell {
      * {@link #REMOVER_MALDICAO} and {@code AnulacaoSpell#IDENTIFICACAO}; {@code
      * getCastingDifficultyLevel()} is {@code null} for all three and {@code
      * getCastingDifficultyAgainst} answers instead.
+     *
+     * <p>The cleansing branch's first rung, lifting {@link ConditionType#DOENTE} and {@link
+     * ConditionType#ENVENENADO} for real.
      */
+    // TODO: "Apenas doenças de origem mundana, não mágica" is unenforced — a Condição records
+    //  what it is and who applied it, never whether its origin was magical, so this currently
+    //  lifts a magical Doença too.
+    // TODO: its Corrente takes the Malefício onto the caster instead of dispelling it, then moves
+    //  it on. Transfer needs a condition to be lifted from one sheet and applied to another
+    //  carrying its remaining duration, and nothing copies a Condição between sheets.
     TOQUE_CURATIVO(SpellData.builder()
             .name("Toque Curativo")
             .branchLevel(BranchLevel.BROTO)
@@ -104,6 +137,7 @@ public enum VidaSpell implements AuthoredSpell {
             .description("Você poder curar doenças e remover venenos ao toque.")
             .primaryEffectDescription("Com seu toque você pode remover os Malefícios Doença e Venenos de um alvo. "
                     + "Apenas doenças de origem mundana, não mágica, pode ser removida desta forma.")
+            .cleansedConditions(Set.of(ConditionType.DOENTE, ConditionType.ENVENENADO))
             .effectChainDescription("Transferir Doenças e Venenos: Quando for bem-sucedido em usar Toque Curativo, "
                     + "você pode escolher tomar para si o Malefício, ao invés de dissipá-lo, e então transferir para "
                     + "um novo alvo. "
@@ -131,6 +165,7 @@ public enum VidaSpell implements AuthoredSpell {
             .primaryEffectDescription("Você pode fazer com que uma criatura tocada recupere PV como se passasse por "
                     + "um Descanso Total. "
                     + "Este é um efeito similar a Descanso e não substitui Descansos reais.")
+            .healing(SpellHealing.restEquivalent(RestType.TOTAL))
             .effectChainDescription("Sobrecura.")
             .secondaryEffectDescription("Cura em Massa: Ao invés de afetar um único alvo você pode fazer com que "
                     + "você e todos os outros personagens à até 2m de você recuperem PV como se passassem por "
@@ -159,13 +194,24 @@ public enum VidaSpell implements AuthoredSpell {
             .primaryEffectDescription("Conforme descrição, seu toque com esta magia é capaz de encerrar os efeitos "
                     + "de maldições. "
                     + "Maldições provenientes de Habilidades Monstruosas ou Aventyrs são de Grau Muito Difícil.")
+            .cleansedConditions(Set.of(ConditionType.AMALDICOADO))
             .criticalEffectType(CriticalEffectType.IMUNIZAR)
             .duration(SpellDuration.INSTANTANEA)
             .targeting(SpellTargeting.PESSOAL)
             .alternateTargeting(SpellTargeting.TOQUE)
             .build()),
 
-    /** The one Magia of this tree that is not {@code Pessoal ou Toque} — an area centred on the caster, healing friend and foe alike at different rates. */
+    /**
+     * The one Magia of this tree that is not {@code Pessoal ou Toque} — an area centred on the
+     * caster, healing friend and foe alike at different rates. The halving is real ({@code
+     * SpellHealing#halvedForHostiles()}), but <em>which</em> targets are hostile is the caller's:
+     * a Magia of this shape needs one effect per combatant in the footprint.
+     */
+    // TODO: nothing resolves the Área de Efeito into a set of combatants — see CLAUDE.md's
+    //  "Area de Efeito" gap. The caller picks the targets and builds an effect for each via
+    //  {@code SpellCastingService#resolveEffect(spell, hostileTarget)}.
+    // TODO: the Efeito Alternativo recovers PM and PD too, at a different rest tier per group,
+    //  and exempts the caster. {@code SpellHealing} holds one tier and PV only.
     NOVA_REJUVENESCEDORA(SpellData.builder()
             .name("Nova Rejuvenescedora")
             .branchLevel(BranchLevel.EMERGENTE)
@@ -179,6 +225,7 @@ public enum VidaSpell implements AuthoredSpell {
                     + "e recupera PV de todas as criaturas no alcance da magia como se passassem por um Descanso "
                     + "Longo. "
                     + "Inimigos do conjurador recuperam apenas metade desta quantidade de PV.")
+            .healing(SpellHealing.restEquivalent(RestType.LONGO).halvingForHostiles())
             .effectChainDescription("Sobrecura.")
             .secondaryEffectDescription("Fonte da Juventude: Sua onda de energia curativa recupera PV, PM e PD de "
                     + "todas as criaturas afetadas, mas não recupera o conjurador, como se passassem por um descanso "
@@ -189,7 +236,18 @@ public enum VidaSpell implements AuthoredSpell {
             .targeting(SpellTargeting.areaDeEfeito(AreaOfEffect.circle(Range.DISTANCIA_CURTA)))
             .build()),
 
-    /** Its Corrente turns an expelled summon against whoever called it — the forced-targeting gap, plus the Possessão classification that does not exist. */
+    /**
+     * The Magia that {@link ConditionType#POSSESSAO} was authored for: it is the only clause in
+     * the ruleset that names Maldição, Doença and Possessão as three Malefícios of one kind, and
+     * the first two already had constants. All three are lifted for real.
+     *
+     * <p>Note its Descrição promises more than its Efeito — "doenças mundanas <em>ou mágicas</em>",
+     * where {@link #TOQUE_CURATIVO} is limited to mundane ones. Since neither a Condição's origin
+     * nor that limit is modelled, the widening is currently invisible either way.
+     */
+    // TODO: its Corrente turns an expelled summon against whoever called it — CLAUDE.md's "Forced
+    //  attack targeting / interception" gap, and it additionally needs a summon to remember which
+    //  Conjurador raised it, which SummonedMonsterTemplate does not record.
     EXORCIZAR(SpellData.builder()
             .name("Exorcizar")
             .branchLevel(BranchLevel.EMERGENTE)
@@ -200,6 +258,8 @@ public enum VidaSpell implements AuthoredSpell {
             .description("Ao toque você pode remover maldições, doenças mundanas ou mágicas, e findar possessões.")
             .primaryEffectDescription("Tocar uma criatura com esta magia o permite remover todos os Malefícios "
                     + "Maldição, Doença e Possessão de seu alvo.")
+            .cleansedConditions(Set.of(ConditionType.AMALDICOADO, ConditionType.DOENTE,
+                    ConditionType.POSSESSAO))
             .effectChainDescription("Barganha Negra: Ao invés de apenas expulsar o possuidor você pode fazer com que "
                     + "a criatura expulsa, apenas no caso de ter sido invocada por outro conjurador, tente possuir "
                     + "aquele que a invocou.")
@@ -209,7 +269,14 @@ public enum VidaSpell implements AuthoredSpell {
             .alternateTargeting(SpellTargeting.TOQUE)
             .build()),
 
-    /** "recupera todos os PV perdidos" is a full heal, which {@code CombatantSheet#heal} can already express exactly — one of the few effects in this catalog that needs no new mechanism. */
+    /**
+     * "recupera todos os PV perdidos" is a full heal, which {@code CombatantSheet#heal} expresses
+     * exactly — the branch's top rung, and the one recovery here that names no Descanso tier.
+     */
+    // TODO: the Efeito Alternativo's extra targets are gated on adjacency to the caster *or to a
+    //  creature already healed by this cast* — pairwise geometry between two combatants who are
+    //  both not the roller, which a SceneContext cannot answer. Its +3PM per extra target has no
+    //  mechanism either: nothing spends PM per target.
     BENCAO_DA_LUZ(SpellData.builder()
             .name("Benção da Luz")
             .branchLevel(BranchLevel.FLORESCENTE)
@@ -219,6 +286,7 @@ public enum VidaSpell implements AuthoredSpell {
             .castingDifficultyLevel(DifficultyLevel.UNLIKELY)
             .description("Você pode recuperar totalmente uma criatura ferida.")
             .primaryEffectDescription("Seu toque recupera todos os PV perdidos da criatura tocada.")
+            .healing(SpellHealing.FULL_RECOVERY)
             .secondaryEffectDescription("Corrente Abençoada: Você pode afetar criaturas adicionais com esta magia, "
                     + "desde que elas estejam adjacentes a você ou a uma criatura curada por esta magia. Para cada "
                     + "criatura adicional é necessário o uso de +3PM.")
@@ -232,7 +300,16 @@ public enum VidaSpell implements AuthoredSpell {
      * The second of only two self-only Concentração Magias in the catalog — but only when cast at
      * {@code Pessoal}; its other reach is Toque, in which case it sustains an effect on somebody
      * else's sheet like the other seventeen. The other is {@code PiromanciaSpell#LUZ_DE_VELA}.
+     *
+     * <p>The only clause in the ruleset that names the whole category rather than its members,
+     * which is what {@link ConditionType#maleficios()} exists for — every Condição but Escondido,
+     * and a new constant joins it with no change here.
      */
+    // TODO: only the first half applies. "Se torna imune à Malefícios enquanto estiver sob efeito
+    //  de Corpo Fechado" needs per-condition immunity — nothing can refuse an applyCondition — and
+    //  it would have to last this Magia's Concentração + 2 Rodadas rather than happening at once.
+    //  Removal is real; refusing a future Malefício is not. See CLAUDE.md's Malefício-
+    //  classification gap, item (c).
     CORPO_FECHADO(SpellData.builder()
             .name("Corpo Fechado")
             .branchLevel(BranchLevel.FLORESCENTE)
@@ -243,6 +320,7 @@ public enum VidaSpell implements AuthoredSpell {
             .description("Encerra malefícios e impede o alvo de ser afetado por novos malefícios.")
             .primaryEffectDescription("O alvo desta magia tem todos os Malefícios removidos, este personagem também "
                     + "se torna imune à Malefícios enquanto estiver sofre efeito de Corpo Fechado.")
+            .cleansedConditions(ConditionType.maleficios())
             .criticalEffectType(CriticalEffectType.AMENIZAR)
             .duration(SpellDuration.concentracaoMais(2))
             .targeting(SpellTargeting.PESSOAL)

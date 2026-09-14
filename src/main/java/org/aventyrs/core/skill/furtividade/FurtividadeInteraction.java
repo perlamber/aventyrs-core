@@ -10,9 +10,14 @@ import org.aventyrs.core.skill.SkillType;
  * FurtividadeSpecialization}) the roll is for doesn't change {@code skillRollBonus}/{@code
  * difficultyReduction} — a held one can still be requested via {@code
  * SkillRoll#getRequestedAbility()}, switching {@code reachedDifficultyLevel} to expert
- * thresholds. The rules text also has an opposed Atenção roll identify a hidden character; that
- * resolution is left to a layer above this core, same as every other cross-character contest. See {@link
- * AbstractSkillInteraction} for how the roll bonus/difficultyReduction are actually computed.
+ * thresholds. See {@link AbstractSkillInteraction} for how the roll bonus/difficultyReduction are
+ * actually computed.
+ *
+ * <p><b>Hiding on this roll is modelled</b>, one layer up: a caller hands this roll's total to
+ * {@code org.aventyrs.core.character.services.HidingService#hide}, which turns it into the Grau de
+ * Dificuldade every would-be observer's Atenção roll is then made against. The opposed contest is
+ * resolved there and not here — this Interaction computes one character's roll, as every
+ * Interaction does, and knows nothing about who is looking.
  */
 public class FurtividadeInteraction extends AbstractSkillInteraction {
 

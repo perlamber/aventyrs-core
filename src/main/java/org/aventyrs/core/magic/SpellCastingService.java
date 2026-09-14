@@ -1,5 +1,6 @@
 package org.aventyrs.core.magic;
 
+import org.aventyrs.core.effect.SpellEffect;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.Interaction;
 
@@ -50,4 +51,26 @@ public interface SpellCastingService {
      * on {@link SpellCastingResult#getPrimaryDamage()}.
      */
     Optional<ResolvedSpellDamage> resolvePrimaryDamage(Spell spell, CombatantSheet caster);
+
+    /**
+     * {@code spell}'s {@code Efeito:} line as an applicable {@link SpellEffect}, or {@link
+     * Optional#empty()} for a Magia whose effect this core cannot yet express — which is still
+     * most of the catalog.
+     *
+     * <p>Built from the Magia's own authored columns: a {@link Spell#getHealing()} becomes a
+     * {@code SpellHealingEffect}, a non-empty {@link Spell#getCleansedConditions()} a {@code
+     * ConditionCleansingEffect}. Both are parameterized by that data rather than chosen per
+     * constant, which is what lets one class serve a whole ramificação as it deepens.
+     *
+     * <p><b>Nothing is applied.</b> Like {@link #resolvePrimaryDamage} this is a pure read;
+     * {@link #castSpell(SpellCastRequest)} calls it and puts the effect on {@link
+     * SpellCastingResult#getSpellEffect()} for the caller to run through {@code
+     * CombatantSheet#receiveInteraction} when it decides the cast landed. This core resolves no
+     * target GD, so it is in no position to decide that itself.
+     *
+     * <p>{@code hostileTarget} answers Nova Rejuvenescedora's "Inimigos do conjurador recuperam
+     * apenas metade" — the caller's to say, since resolving an Área de Efeito footprint into a set
+     * of combatants is not something this core does.
+     */
+    Optional<SpellEffect> resolveEffect(Spell spell, boolean hostileTarget);
 }

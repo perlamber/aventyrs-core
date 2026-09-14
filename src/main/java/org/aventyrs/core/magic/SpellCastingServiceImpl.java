@@ -2,6 +2,11 @@ package org.aventyrs.core.magic;
 
 import org.aventyrs.core.ability.AttributeAbility;
 import org.aventyrs.core.character.AttributeDomain;
+import org.aventyrs.core.effect.ConditionCleansingEffect;
+import org.aventyrs.core.effect.SpellEffect;
+import org.aventyrs.core.effect.SpellHealingEffect;
+import org.aventyrs.core.rest.RestService;
+import org.aventyrs.core.rest.RestServiceImpl;
 import org.aventyrs.core.sheet.CombatantAction;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.Interaction;
@@ -22,6 +27,9 @@ public class SpellCastingServiceImpl implements SpellCastingService {
     private final AbstractSkillInteraction dominioDoManaContextInteraction;
     private final SpellDurationService spellDurationService;
 
+    /** Supplies a healing Magia's "como se passasse por um Descanso X" figure — see {@link SpellHealing}. */
+    private final RestService restService;
+
     public SpellCastingServiceImpl() {
         this(new DominioDoManaInteraction(), new SpellDurationServiceImpl());
     }
@@ -32,13 +40,21 @@ public class SpellCastingServiceImpl implements SpellCastingService {
                 ? interaction
                 : new DominioDoManaInteraction();
         this.spellDurationService = new SpellDurationServiceImpl();
+        this.restService = new RestServiceImpl();
     }
 
     public SpellCastingServiceImpl(final AbstractSkillInteraction dominioDoManaInteraction,
                                    final SpellDurationService spellDurationService) {
+        this(dominioDoManaInteraction, spellDurationService, new RestServiceImpl());
+    }
+
+    public SpellCastingServiceImpl(final AbstractSkillInteraction dominioDoManaInteraction,
+                                   final SpellDurationService spellDurationService,
+                                   final RestService restService) {
         this.dominioDoManaInteraction = dominioDoManaInteraction;
         this.dominioDoManaContextInteraction = dominioDoManaInteraction;
         this.spellDurationService = spellDurationService;
+        this.restService = restService;
     }
 
     @Override
@@ -61,8 +77,44 @@ public class SpellCastingServiceImpl implements SpellCastingService {
                 .durationInRounds(durationInRounds.isPresent() ? durationInRounds.getAsInt() : null)
                 .areaSpellEffect(areaSpellEffect)
                 .primaryDamage(resolvePrimaryDamage(request.getSpell(), request.getCaster()).orElse(null))
+                .spellEffect(resolveEffect(request.getSpell(), isHostileTarget(request)).orElse(null))
                 .recordedAction(recordedAction(request, deliveryResult))
                 .build();
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Healing is checked before cleansing because no authored Magia does both — a branch either
+     * restores PV or lifts Malefícios. Should one ever do both, this is the line that has to
+     * become a chain rather than a choice.
+     */
+    @Override
+    public Optional<SpellEffect> resolveEffect(final Spell spell, final boolean hostileTarget) {
+        Optional<SpellHealing> healing = spell.getHealing();
+        if (healing.isPresent()) {
+            return Optional.of(new SpellHealingEffect(spell, healing.get(), hostileTarget, restService));
+        }
+        if (!spell.getCleansedConditions().isEmpty()) {
+            return Optional.of(new ConditionCleansingEffect(spell, spell.getCleansedConditions()));
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Whether the request's single named target counts as an enemy of the caster, for a Magia that
+     * gives hostiles less ({@code VidaSpell#NOVA_REJUVENESCEDORA}). Read off the caster's own
+     * {@code SceneContext}, the only sub-group information in reach.
+     *
+     * <p>A cast with no named target is not hostile: an Área de Efeito names none, and its real
+     * per-target answer is the caller's to give — this core resolves no footprint, so it builds
+     * the effect for the primary target alone and a caller sweeping an area constructs its own
+     * per target via {@link #resolveEffect}.
+     */
+    private boolean isHostileTarget(final SpellCastRequest request) {
+        return request.getCombatantTarget() != null
+                && request.getSceneContext() != null
+                && request.getSceneContext().getEnemies().contains(request.getCombatantTarget());
     }
 
     @Override

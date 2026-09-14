@@ -2,6 +2,7 @@ package org.aventyrs.core.magic;
 
 import lombok.Builder;
 import lombok.Getter;
+import org.aventyrs.core.effect.SpellEffect;
 import org.aventyrs.core.scene.ActiveAreaSpellEffect;
 import org.aventyrs.core.sheet.CombatantAction;
 import org.aventyrs.core.sheet.InteractionResult;
@@ -26,6 +27,27 @@ public class SpellCastingResult {
      * the type/element for mitigation. See {@link SpellCastingService#resolvePrimaryDamage}.
      */
     ResolvedSpellDamage primaryDamage;
+
+    /**
+     * The Magia's {@code Efeito:} line as a ready-to-apply {@link SpellEffect} — {@code null} when
+     * the Magia authors none this core can express yet. See {@link
+     * SpellCastingService#resolveEffect}.
+     *
+     * <p><b>Report-only, like {@link #primaryDamage} and {@link #recordedAction}.</b> The effect
+     * mutates a sheet when run, but {@code castSpell} never runs it: this core resolves no target
+     * GD, so it cannot tell whether the cast landed. The caller decides, then drives it:
+     *
+     * <pre>{@code
+     * InteractionResult r = target.receiveInteraction(result.getSpellEffect());
+     * while (r.getNextInteraction() != null) {
+     *     r = target.receiveInteraction(r.getNextInteraction());
+     * }
+     * }</pre>
+     *
+     * <p>A Corrente de Efeitos the caller judged triggered is chained on first, with {@code
+     * AbstractEffect#chainInto} — {@code Sobrecura} is the one this tree needs.
+     */
+    SpellEffect spellEffect;
 
     /**
      * The cast bundled as a ready-to-file {@link CombatantAction} — the delivering Perícia, the

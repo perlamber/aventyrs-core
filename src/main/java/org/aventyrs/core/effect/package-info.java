@@ -80,7 +80,49 @@
  * above, it isn't gated on a {@code CriticalResult} at construction: its own rules text
  * has no Maior/Menor split, and it's triggered as a Corrente de Efeitos rather than a
  * critical-hit-only consequence.
- * Several abilities/races are still blocked on a Corrente de Efeitos of their own — {@code
+ * A second concrete {@code EffectChain}, {@link org.aventyrs.core.effect.Sobrecura}, is the
+ * bonus recovery three Magias of Vida's healing branch name ("+1d6+Metade do Foco PV"); like
+ * {@code Definhar} it isn't gated on a {@code CriticalResult}, and like every dice figure in
+ * this core its d6 arrives already rolled from the caller.
+ *
+ * <h2>Spell Effects — the third category</h2>
+ *
+ * {@link org.aventyrs.core.effect.SpellEffect} is a Magia's own {@code Efeito:} line made
+ * executable, sitting beside {@code CriticalEffect} and {@code EffectChain} under {@code Effect}.
+ * Where those two are named by what <em>triggered</em> them, a Spell Effect is named by what
+ * produced it, and its four subcategories divide by what it <em>does</em>: {@link
+ * org.aventyrs.core.effect.OffensiveEffect} (damage, debuffs), {@link
+ * org.aventyrs.core.effect.DefensiveEffect} (buffs, cleansing), {@link
+ * org.aventyrs.core.effect.HealingEffect} and {@link
+ * org.aventyrs.core.effect.InvocationEffect}.
+ *
+ * <p>Two are concrete, and both are <b>parameterized by authored data rather than subclassed per
+ * Magia</b> — the Magias of a ramificação share one effect that deepens as the tree climbs, so
+ * one class serves a whole branch:
+ *
+ * <ul>
+ *   <li>{@link org.aventyrs.core.effect.SpellHealingEffect} — built from a {@code
+ *   org.aventyrs.core.magic.SpellHealing}, it restores as much as a Descanso of the named tier
+ *   would ({@code RestService#getRecoveredHitPoints}, read against the <em>target's</em> Vigor)
+ *   without being one, or every lost PV outright. Vida's principal branch is its whole catalog,
+ *   from Descanso Mínimo at Semente to a full recovery at Florescente.</li>
+ *   <li>{@link org.aventyrs.core.effect.ConditionCleansingEffect} — lifts the {@code
+ *   ConditionType}s a Magia names. Vida's alternativo branch is its whole catalog.</li>
+ * </ul>
+ *
+ * <p>{@code OffensiveEffect} and {@code InvocationEffect} have none: the first because no branch
+ * needing one is wired yet (both its halves — {@code SpellDamage} and {@code applyCondition} —
+ * already exist), the second because {@code Spell} has no column pointing at a {@code
+ * MonsterTemplate} for a conjured creature to be built from.
+ *
+ * <p><b>A Spell Effect applies for real, but nothing fires one.</b> {@code
+ * SpellCastingService#resolveEffect} builds it and {@code SpellCastingResult#getSpellEffect()}
+ * hands it back; the service never runs it, because this core resolves no target GD and so
+ * cannot tell whether the cast landed. The caller decides, then drives it through the same drain
+ * loop above — chaining a Corrente on first with {@code AbstractEffect#chainInto} if it judges
+ * one triggered. Same boundary as every other stage here.
+ *
+ * <p>Several abilities/races are still blocked on a Corrente de Efeitos of their own — {@code
  * org.aventyrs.core.ego.AutocontroleAdvantage#RESOLUTO} (a Defesas-comparison threshold
  * on a Corrente de Efeitos — the Defesas system exists now, so what RESOLUTO still lacks is a
  * concrete Corrente whose text needs that comparison), {@code

@@ -4,11 +4,13 @@ import org.aventyrs.core.ability.AttributeAbility;
 import org.aventyrs.core.ability.MagiaAlternativaAbility;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.effect.CriticalEffectType;
+import org.aventyrs.core.sheet.ConditionType;
 import org.aventyrs.core.skill.AttackSource;
 import org.aventyrs.core.skill.DifficultyLevel;
 import org.aventyrs.core.skill.SkillType;
 
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * A Magia. It is an {@link AttackSource}: casting one at somebody is an attack delivered by
@@ -121,6 +123,30 @@ public interface Spell extends AttackSource {
      */
     default Optional<SpellDamage> getPrimaryDamage() {
         return Optional.empty();
+    }
+
+    /**
+     * The structured recovery of the {@code Efeito:} line, or {@link Optional#empty()} when the
+     * Magia restores no Pontos de Vida — see {@link SpellHealing}. Turned into an applicable
+     * {@code org.aventyrs.core.effect.HealingEffect} by {@code SpellCastingService#resolveEffect}.
+     * Defaults to empty; an {@link AuthoredSpell} reads it off {@link SpellData#getHealing()}.
+     */
+    default Optional<SpellHealing> getHealing() {
+        return Optional.empty();
+    }
+
+    /**
+     * The Malefícios this Magia lifts from its target, empty for a Magia that lifts none. Turned
+     * into an applicable {@code org.aventyrs.core.effect.DefensiveEffect} by {@code
+     * SpellCastingService#resolveEffect}.
+     *
+     * <p>A {@code ConditionType} set rather than prose because removal is one of the few
+     * Malefício operations this core can already perform for real ({@code
+     * CombatantSheet#removeCondition}). Refusing a <i>future</i> Malefício is not — see {@code
+     * VidaSpell#CORPO_FECHADO}.
+     */
+    default Set<ConditionType> getCleansedConditions() {
+        return Set.of();
     }
 
     /**

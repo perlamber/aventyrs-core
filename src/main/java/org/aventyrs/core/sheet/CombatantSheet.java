@@ -12,6 +12,7 @@ import org.aventyrs.core.rest.RestType;
 import org.aventyrs.core.scene.SceneContext;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -77,6 +78,21 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
 
     /** Heals accumulated damage, interrupting any ongoing {@link Bleeding}. */
     int heal(int amount);
+
+    /**
+     * Interrupts every ongoing {@link Bleeding} <b>without healing</b>, returning whether there
+     * was any to interrupt.
+     *
+     * <p>{@link #heal} already clears a Bleeding, but only as a consequence of PV coming back.
+     * This is the clause that stops the bleeding <i>instead</i> — {@code VidaSpell#ALIVIAR_A_DOR}'s
+     * "Interrompe qualquer efeito de Sangramento sofrido pelo alvo, se ele não estiver sob
+     * sangramento, ao invés disso essa magia cura o alvo", where the two are alternatives and the
+     * answer to "was it bleeding?" decides which happens.
+     *
+     * <p>Unlike {@link #heal} it is not refused by Feridas Dolorosas: that condition forbids
+     * recovering Pontos de Vida, and stopping a bleed recovers none.
+     */
+    boolean stopBleeding();
 
     int getShieldPoints();
 
@@ -281,6 +297,19 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
 
     /** Whether conditionType is in force, directly or by implication. */
     boolean hasCondition(ConditionType conditionType, SceneContext sceneContext);
+
+    /**
+     * The {@link Hidden} this combatant is holding, or empty when they are not Escondido — the
+     * one condition with a magnitude, so the one that needs reaching as an instance rather than
+     * as a {@link ConditionType}. It carries the Furtividade total an observer has to beat and
+     * the observers that already have.
+     *
+     * <p>Takes no {@code SceneContext}, unlike {@link #hasCondition}: nothing implies Escondido,
+     * so there is no implication graph to walk, and the value is the same wherever it is read
+     * from. Which observers it is <i>currently</i> hiding from is {@code
+     * HidingService#isHiddenFrom}'s question, and that one does need the Scene.
+     */
+    Optional<Hidden> getHidden();
 
     /**
      * The summed numeric malus every active condition contributes toward modifierType — the

@@ -1105,6 +1105,24 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     }
 
     /**
+     * Whether this Talento lets its holder move <b>without leaving {@code
+     * ConditionType#ESCONDIDO}</b> — {@code MobilidadeFeat#MOVIMENTO_FURTIVO}'s "você pode se
+     * mover enquanto furtivo". False by default: moving normally gives a hidden character away.
+     *
+     * <p>Resolved by {@code HidingService#reveals}, which asks every held Talento and excuses the
+     * movement if any says yes. A boolean rather than a distance, for the same reason {@link
+     * #drawsWeaponAsFreeAction} is one: the clause permits the act outright, and this core records
+     * that a combatant moved without recording how far.
+     *
+     * <p>It excuses <b>only</b> {@code RevealTrigger#MOVEMENT}. The same Talento's other half —
+     * the Movimento Base halving it charges for the privilege — is a separate, still-unbuilt
+     * mechanism; see that constant.
+     */
+    default boolean movesWhileHidden(final Character character) {
+        return false;
+    }
+
+    /**
      * Flat, unconditional Redução de Danos (RD, also written RDS — Redução de Danos Sofridos)
      * this Talento grants — summed by {@code DamageServiceImpl#getTotalDamageReduction} across
      * {@code Character#getFeats()}, alongside the usual three-source {@code
