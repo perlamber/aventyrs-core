@@ -8,6 +8,7 @@ import org.aventyrs.core.character.Character;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import org.aventyrs.core.effect.CriticalEffect;
 import org.aventyrs.core.effect.EffectChain;
 import org.aventyrs.core.sheet.ActionCost;
@@ -26,6 +27,7 @@ import org.aventyrs.core.character.SizeCategory;
 import org.aventyrs.core.item.Item;
 import org.aventyrs.core.item.ItemCategory;
 import org.aventyrs.core.item.NaturalWeapon;
+import org.aventyrs.core.race.RacialTraitSuppression;
 import org.aventyrs.core.item.RegaliaGrade;
 import org.aventyrs.core.item.Weapon;
 import org.aventyrs.core.magic.Spell;
@@ -420,6 +422,26 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      * {@code Feat} overload has: an existing overrider keeps working untouched, and a constant
      * overriding <em>this</em> one must return its own unconditional value too if it has one.
      */
+    /**
+     * The longest form, adding the <b>actor's own</b> {@link CombatantSheet} — not the target's,
+     * which {@code attackTarget} already carries. What a dano clause conditioned on the attacker's
+     * live state needs: held {@code Condição}s, the per-Rodada log, and the Forma they are in
+     * ({@code BestialFeat#METAMORFOSE_SELVAGEM}'s "Vantagem em suas rolagens de Dano com armas
+     * naturais" applies only while transformed).
+     *
+     * <p><b>Defaults to the {@code targetCount} form</b>, like every other overload here.
+     * {@code holder} is {@code null} whenever the caller has only a {@code Character}, which an
+     * override must read as "condition not met". This is the dano twin of {@code
+     * resolveSkillRollBonus}'s own {@code AttackSource} + {@code holder} overload — the two
+     * halves of a clause that grants Vantagem on both rolls need the same reach.
+     */
+    default Optional<DamageBonus> resolveDamageBonus(final SkillType attackingSkillType, final SceneContext sceneContext,
+                                                      final CombatantSheet attackTarget, final Character actor,
+                                                      final AttackSource attackSource, final int targetCount,
+                                                      final CombatantSheet holder) {
+        return resolveDamageBonus(attackingSkillType, sceneContext, attackTarget, actor, attackSource, targetCount);
+    }
+
     default Optional<DamageBonus> resolveDamageBonus(final SkillType attackingSkillType, final SceneContext sceneContext,
                                                       final CombatantSheet attackTarget, final Character actor,
                                                       final AttackSource attackSource, final int targetCount) {
@@ -762,6 +784,40 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      * this <b>must return a stable singleton</b> (an enum-constant field) — {@code
      * ActiveAbilityService#activate} identifies the held ability by reference.
      */
+    /**
+     * Every choice this Talento makes its holder pick when acquiring it, or empty — the answer for
+     * most of the catalog — when it grants whatever it grants outright.
+     *
+     * <p><b>A non-empty answer means the bare catalog constant is not grantable</b>: {@code
+     * FeatService#grantFeat} refuses it and demands the acquired, choice-carrying form instead
+     * ({@code FocoEmPericiaFeat}, {@code MetamorfoseDraculeaFeat}, …). That is what makes the
+     * requirement impossible to miss rather than merely documented, and it is why a client can
+     * walk the whole catalog asking this one question rather than knowing which constants are
+     * special — see {@link FeatChoice}.
+     *
+     * <p>Each choice's options are already filtered for holder, so a client never reimplements a
+     * Talento's own rules to present it. A Talento asking for more than one thing returns more
+     * than one {@code FeatChoice}; none in the catalog does yet, but the shape allows it.
+     */
+    default List<FeatChoice<?>> resolveRequiredChoices(final Character holder) {
+        return List.of();
+    }
+
+    /**
+     * Every {@link ActiveAbility} this Talento grants — the plural form, for a Talento that hands
+     * over <b>several</b> at once. {@code VampiricoFeat#METAMORFOSE_DRACULEA} is what this exists
+     * for: the player picks two Formas Metamórficas (one for a Dampiro, four for a Rakshasa) and
+     * each is separately activatable, so a single {@code Optional} could not carry them.
+     *
+     * <p><b>Defaults to {@link #resolveActiveAbility()}</b>, so every existing overrider keeps
+     * working untouched — override <em>this</em> one only when there is genuinely more than one.
+     * The stable-singleton rule applies to each element for the same reason it applies to the
+     * singular form: {@code ActiveAbilityService#activate} matches a held ability by {@code ==}.
+     */
+    default List<ActiveAbility> resolveActiveAbilities() {
+        return resolveActiveAbility().stream().toList();
+    }
+
     default Optional<ActiveAbility> resolveActiveAbility() {
         return Optional.empty();
     }
@@ -780,6 +836,19 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      */
     default int resolveLifeStealBonus(final Character character) {
         return 0;
+    }
+
+    /**
+     * The same figure for a holder <b>whose current Forma is visible</b> — {@code
+     * FormaMetamorfica#MORCEGO_ATROZ}'s "Roubo de Vida aumentado em +2", which is worth nothing
+     * until its holder is actually a bat.
+     *
+     * <p><b>Defaults *down* to {@link #resolveLifeStealBonus(Character)}</b>, the {@code Feat}
+     * convention — every existing override sits on the shorter form and is untouched. A {@code
+     * null} sheet reads as "no Forma in force".
+     */
+    default int resolveLifeStealBonus(final Character character, final CombatantSheet sheet) {
+        return resolveLifeStealBonus(character);
     }
 
     /**
@@ -928,15 +997,65 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      * character strike with unarmed". Empty by default.
      *
      * <p>Same default-empty-list shape as {@link #resolveExtraCriticalEffects} / {@link
-     * #resolveDefeatBlessings}, and takes {@code character} for the same reason every {@code
-     * Feat} hook does — a future clause could scale the grant off holder state, though none does
-     * yet. A granted Arma Natural needs no possession gate on the attack path: {@code
-     * DamageBaseService} takes the {@link Weapon} as a parameter and never looks it up, and
-     * {@link Character#treatsAsNaturalWeapon(Weapon)} already recognises any {@link
+     * #resolveDefeatBlessings}. A granted Arma Natural needs no possession gate on the attack
+     * path: {@code DamageBaseService} takes the {@link Weapon} as a parameter and never looks it
+     * up, and {@link Character#treatsAsNaturalWeapon(Weapon)} already recognises any {@link
      * ItemCategory#NATURAL_WEAPON} weapon.
+     *
+     * <p><b>This is the sheet-less form — "what does this Talento grant out of any Forma".</b> A
+     * grant that depends on the shape its holder is currently wearing overrides {@link
+     * #getGrantedNaturalWeapons(Character, CombatantSheet)} instead, and leaves this one empty.
      */
     default List<NaturalWeapon> getGrantedNaturalWeapons(final Character character) {
         return List.of();
+    }
+
+    /**
+     * The Armas Naturais this Talento grants a holder <b>whose current Forma is visible</b> —
+     * {@code MetamorfoseDraculeaFeat}'s per-shape swap, where a Vampiro in Serpente Espinhosa
+     * fights with the Cauda Constritora the table's ARMA NATURAL column names for that row.
+     * Aggregated by {@code CombatantSheet#getNaturalWeapons()}; {@code Character#getNaturalWeapons()}
+     * reads only the shorter form, since a {@link Character} has no shape to be in.
+     *
+     * <p><b>Defaults *down* to {@link #getGrantedNaturalWeapons(Character)}</b>, the {@code Feat}
+     * convention rather than the cascading one used elsewhere in this core — see {@link
+     * #resolveCriticalResistance(Character, SceneContext, CombatantSheet)} for the sibling pair.
+     * Every existing override sits on the shorter form and keeps working untouched.
+     *
+     * @param sheet the holder's sheet, or {@code null} on a {@link Character}-only path, which
+     *              reads as "no Forma in force" and falls through to the shorter form
+     */
+    default List<NaturalWeapon> getGrantedNaturalWeapons(final Character character,
+                                                         final CombatantSheet sheet) {
+        return getGrantedNaturalWeapons(character);
+    }
+
+    /**
+     * How much of its holder's {@link org.aventyrs.core.race.Race} this Talento temporarily
+     * silences — the "abandonando seus traços raciais" family, plus the narrower clauses that
+     * drop only part of a body. {@link RacialTraitSuppression#NONE} by default, which is every
+     * Talento but three; see that enum for the ladder, which rung each clause sits on, and what
+     * no rung ever touches.
+     *
+     * <p>Folded across every held Talento by {@code CombatantSheet#getRacialTraitSuppression()},
+     * which is the single question every aggregation asks. Suppression drops exactly the {@code
+     * Race} term of a trait: a Talento-granted Resistência a Críticos, or a round-scoped {@code
+     * TemporaryBonus}, survives even {@link RacialTraitSuppression#ALL}.
+     *
+     * <p><b>Separate from returning an empty {@link #getGrantedNaturalWeapons(Character,
+     * CombatantSheet)}</b>, because "grants none" and "grants none <b>and</b> cancels the
+     * holder's own" are different answers — {@code FormaMetamorfica#NEVOA} needs the second.
+     * A Forma-granting Talento therefore states both halves independently: what the shape
+     * suppresses here, and what it hands over there. "Replacement" is those two composed, which
+     * is why there is no third hook for it.
+     *
+     * <p>Takes the {@code sheet} because every consumer is Forma-gated and a {@link Character}
+     * cannot see which shape it is wearing; {@code null} reads as "no Forma in force", so a
+     * {@code Character}-only path is never suppressed.
+     */
+    default RacialTraitSuppression resolveRacialTraitSuppression(final Character character,
+                                                                 final CombatantSheet sheet) {
+        return RacialTraitSuppression.NONE;
     }
 
     /**
@@ -982,6 +1101,24 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      * WeaponDrawService#getDrawCost}, which takes the cheapest answer across every held Talento.
      */
     default boolean drawsWeaponAsFreeAction(final Character character) {
+        return false;
+    }
+
+    /**
+     * Whether this Talento lets its holder move <b>without leaving {@code
+     * ConditionType#ESCONDIDO}</b> — {@code MobilidadeFeat#MOVIMENTO_FURTIVO}'s "você pode se
+     * mover enquanto furtivo". False by default: moving normally gives a hidden character away.
+     *
+     * <p>Resolved by {@code HidingService#reveals}, which asks every held Talento and excuses the
+     * movement if any says yes. A boolean rather than a distance, for the same reason {@link
+     * #drawsWeaponAsFreeAction} is one: the clause permits the act outright, and this core records
+     * that a combatant moved without recording how far.
+     *
+     * <p>It excuses <b>only</b> {@code RevealTrigger#MOVEMENT}. The same Talento's other half —
+     * the Movimento Base halving it charges for the privilege — is a separate, still-unbuilt
+     * mechanism; see that constant.
+     */
+    default boolean movesWhileHidden(final Character character) {
         return false;
     }
 
@@ -1042,6 +1179,50 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      */
     default int resolveMagicReduction(final Character character) {
         return 0;
+    }
+
+    /**
+     * How many Regeneração Reativa effects this Talento lets its holder carry at once — {@code
+     * TrollFeat#REGENERACAO_REATIVA_SUPERIOR}'s "se tornam cumulativos, podendo somar uma
+     * quantidade de efeitos simultâneos igual 1+ número de Títulos Aventyr Despertos", and the
+     * only consumer. Zero by default, meaning "this Talento raises no ceiling"; the
+     * Característica's own "Efeito não cumulativo" floor of 1 is applied by {@code
+     * TrollsRacialAbility#REGENERACAO_REATIVA}, so a Talento never has to restate it.
+     *
+     * <p><b>Read only by the trait it names.</b> This hook is scanned by that Habilidade Racial
+     * and by nothing else — in particular not by {@code DamageService#notifyDamageTaken}, which
+     * applies whatever Blessings the abilities hand it and resolves nothing. A generic consumer
+     * scanning a regeneration-specific hook would raise the ceiling of every unrelated
+     * damage-taken Blessing it granted in the same pass.
+     *
+     * <p>A number rather than a boolean because the clause is a count — see {@code
+     * org.aventyrs.core.sheet.TemporaryEffect#maximumSimultaneous()} for how the ceiling is
+     * enforced when a new instance arrives.
+     */
+    default int resolveSimultaneousRegenerationLimit(final Character character) {
+        return 0;
+    }
+
+    /**
+     * {@link ItemCategory}s this Talento's holder can never wear or wield — a <b>permanent</b>
+     * restriction on the equipment list itself, not a Forma's temporary one. {@code
+     * DraconicoFeat#ASAS_DE_DRAGAO}'s "o impede de usar Equipamentos do tipo Capa" is the case:
+     * wings that big leave no room for a cloak, whatever the character is doing. Empty by default.
+     *
+     * <p>Enforced by {@code CharacterSheet#equip}/{@code canEquip}/{@code
+     * validateEquipmentLoadout} alongside the slot and two-hand rules, so a forbidden category is
+     * refused at the moment of equipping rather than quietly ignored later. {@code
+     * validateEquipmentLoadout} additionally catches a loadout assembled around the restriction —
+     * a Capa worn before the Talento was taken, or staged through the builder.
+     *
+     * <p><b>Distinct from a Forma's {@code FormEquipmentPolicy}</b>, and deliberately not merged
+     * with it: that one is temporary, keyed on the shape its holder is currently in, and answers
+     * "can I use this right now" at {@code CombatantSheet#canAttackWith}. This one answers "may
+     * this ever be on my body", and the two are different questions with different lifetimes — a
+     * Vampiro in wolf shape still <em>owns</em> the sword they cannot swing.
+     */
+    default Set<ItemCategory> getForbiddenEquipmentCategories(final Character character) {
+        return Set.of();
     }
 
     /**
@@ -1199,6 +1380,21 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     }
 
     /**
+     * The longer form of the Movimento Base grant, adding the holder's own {@link CombatantSheet}
+     * — what a clause scoped "enquanto transformado" needs, since the Forma lives on the sheet
+     * ({@code BestialFeat#METAMORFOSE_SELVAGEM}'s "+2UD enquanto transformado em animal").
+     *
+     * <p><b>Defaults to the sheet-less form</b>, the same relationship every other {@code Feat}
+     * overload here uses, so existing overriders keep working. Read only by {@code
+     * MovementService#getMovementBase(CombatantSheet)}; the {@code Character}-only entry point
+     * structurally cannot reach it, and {@code holder} is {@code null} there — which every
+     * override must read as "condition not met".
+     */
+    default int resolveMovementIncrease(final Character character, final CombatantSheet holder) {
+        return resolveMovementIncrease(character);
+    }
+
+    /**
      * Extra Movimento Base, in UD, this Talento grants on one specific movement of the Rodada —
      * for a clause scoped to <i>which</i> movement it is, e.g. {@code
      * MobilidadeFeat#VELOCISTA}'s "aumenta cumulativamente em +1UD para cada outro movimento
@@ -1216,6 +1412,44 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      * unconditional "+NUD ao Movimento Base" belongs on {@link #resolveMovementIncrease}.
      */
     default int resolveRoundMovementIncrease(int movementIndex, Character character) {
+        return 0;
+    }
+
+    /**
+     * How many Pontos de Ação this Talento shaves off the cost of an Investida — {@code
+     * MobilidadeFeat#INVESTIDA_AQUATICA}'s "o Tempo de Ação de investidas sempre reduzidos em
+     * -1PA" is 1. Summed by {@code
+     * org.aventyrs.core.character.services.ChargeService#getActionPointCost} across {@code
+     * Character#getFeats()}, which then floors the result at 1: {@code
+     * org.aventyrs.core.sheet.ActionCost} refuses a Pontos-de-Ação cost of 0, and no authored
+     * clause asks for a free Investida.
+     *
+     * <p><b>A reduction, stated positively</b> — return the number of points saved, not a negative
+     * cost. Zero by default.
+     *
+     * <p>This is the Investida's <em>own</em> price, not a Perícia roll's: a clause reducing the
+     * Tempo de Ação of an ordinary attack has no hook at all, since this core runs no Pontos de
+     * Ação economy and {@code ActionPointsService} only computes maximums.
+     */
+    default int resolveChargeActionPointReduction(final Character character) {
+        return 0;
+    }
+
+    /**
+     * Redução de Dano this Talento grants its holder <b>for the duration of an Investida's
+     * movement</b> — {@code MobilidadeFeat#INVESTIDA_SELVAGEM}'s "durante o movimento da investida
+     * você recebe Redução de Danos Sofridos igual ao número de Títulos Aventyrs que você possuir".
+     * Summed by {@code ChargeService#getMovementDamageReduction} across {@code
+     * Character#getFeats()}; zero by default.
+     *
+     * <p><b>Reported, never granted</b>, and that is the point of it being its own hook rather
+     * than {@link #resolveDamageReduction}. "Durante o movimento" is a window shorter than a
+     * Rodada, which is the shortest thing a {@code TemporaryBonus} can last — granting one would
+     * keep protecting the charger after the charge had landed. It therefore rides {@code
+     * ChargeResult#unappliedMovementDamageReduction} as exact, unapplied data, the same discipline
+     * {@code AttackDelivery}'s {@code unappliedDifficultyReduction} follows.
+     */
+    default int resolveChargeMovementDamageReduction(final Character character) {
         return 0;
     }
 
@@ -1294,6 +1528,27 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      */
     default int resolveLifeMultiplierIncrease(final Character character) {
         return 0;
+    }
+
+    /**
+     * The same figure for a holder <b>whose current Forma is visible</b> — {@code
+     * FormaMetamorfica#CAVALO_DE_CHIFRES}'s "Multiplicador de PV +1", which is worth nothing
+     * until its holder is actually a horned horse.
+     *
+     * <p><b>Defaults *down* to {@link #resolveLifeMultiplierIncrease(Character)}</b>, the {@code
+     * Feat} convention — every existing override sits on the shorter form and is untouched, and a
+     * permanent multiplier ({@code OrquicoFeat#TERRA_NAS_VEIAS}) keeps reaching the sheet-less
+     * path that PV creation and a {@code Character}-only caller read.
+     *
+     * <p><b>Every Forma-scoped multiplier goes through here</b>, including {@code
+     * FeericoFeat#ANCIENTEFORME}'s per-Título "+2" — which its own {@code FormaActiveAbility}
+     * could have granted as a {@code LIFE_MULTIPLIER} {@code TemporaryBonus} alongside the
+     * Defesas and Categoria halves of the same sentence, and deliberately does not. A countdown
+     * is tied to itself rather than to the shape: leaving early through {@code enterForm(null)}
+     * would keep the uplift, and still being transformed when it lapsed would lose it.
+     */
+    default int resolveLifeMultiplierIncrease(final Character character, final CombatantSheet sheet) {
+        return resolveLifeMultiplierIncrease(character);
     }
 
     private static int graduationOf(final Character character, final SkillType skillType) {

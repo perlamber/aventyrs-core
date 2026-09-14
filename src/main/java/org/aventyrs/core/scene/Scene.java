@@ -490,9 +490,14 @@ public class Scene {
         activeBlessings = List.of();
     }
 
+    /**
+     * Routed through {@link CombatantSheet#grantBlessing} rather than building the {@link
+     * TemporaryBonus} here, so an initiative Blessing carries its source and obeys the same
+     * "one grant per source, re-granting renews it" rule as every other Blessing. The returned
+     * instance is what {@link #grantedBlessings} tracks, which keeps revocation precise.
+     */
     private void grantBlessing(final CombatantSheet sheet, final Blessing blessing) {
-        TemporaryBonus bonus = new TemporaryBonus(blessing.getModifierType(), blessing.getValue(), blessing.getRounds());
-        sheet.applyEffect(bonus);
+        TemporaryBonus bonus = sheet.grantBlessing(blessing);
         grantedBlessings.computeIfAbsent(sheet, key -> new ArrayList<>()).add(bonus);
     }
 

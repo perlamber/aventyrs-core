@@ -3,8 +3,11 @@ package org.aventyrs.core.magic;
 import lombok.Builder;
 import lombok.Getter;
 import org.aventyrs.core.effect.CriticalEffectType;
+import org.aventyrs.core.sheet.ConditionType;
 import org.aventyrs.core.skill.DifficultyLevel;
 import org.aventyrs.core.skill.SkillType;
+
+import java.util.Set;
 
 /**
  * One Magia's authored rules-text block, in builder form — the shape the whole catalog is
@@ -75,6 +78,21 @@ public class SpellData {
      * modelled (positional, delayed, falloff-only) — see {@link SpellDamage}.
      */
     private final SpellDamage primaryDamage;
+
+    /**
+     * The structured recovery of {@link #primaryEffectDescription}, or {@code null} for a Magia
+     * that restores no Pontos de Vida — see {@link SpellHealing}. The healing twin of {@link
+     * #primaryDamage}, and a Magia may author neither, but never both.
+     */
+    private final SpellHealing healing;
+
+    /**
+     * The Malefícios {@link #primaryEffectDescription} lifts — empty for a Magia that lifts none,
+     * which is every one but {@code Vida}'s alternativo branch today. Defaulted rather than left
+     * {@code null} because a caller iterates it, unlike the nullable descriptor lines around it.
+     */
+    @Builder.Default
+    private final Set<ConditionType> cleansedConditions = Set.of();
 
     /** {@code Efeito Alternativo – ‹name›:}, or {@code null}. */
     private final String secondaryEffectDescription;

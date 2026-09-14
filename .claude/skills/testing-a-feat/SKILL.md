@@ -144,6 +144,38 @@ scaling term from a constant.
 Never assert on a TODO'd clause's intended-but-unbuilt effect, and never weaken an assertion to
 accommodate one.
 
+## 5b. A Talento with an acquisition-time choice needs a **discrimination**
+
+A choice-carrying Talento (the hand-written `AbstractFeat` subclasses — `FocoEmPericiaFeat`,
+`EspecialistaEmArmaFeat`, `AcertoCriticoAprimoradoFeat`, `TerrenoPrediletoFeat`,
+`AdotadoPorSylphFeat`, `SaqueRelampagoFeat`, `ArmamentoDraconicoFeat`,
+`ConselheiroDeGuerraYmirianoFeat`, `AtiradorPerfeitoFeat`) is only half-tested by a before/after
+delta: that shows the bonus exists, not that the **choice** is what decided it. Three layers, and
+none of them substitutes for another:
+
+1. **The instance carries the pick** — `catalogEntry()` still returns the enum constant, the
+   `getChosen*` accessor holds what was passed, and `of(null)` is refused. That is all the
+   per-feat `<Feat>Test` file should hold. **Never assert the effect by calling `resolveX(...)`
+   there**: a hook returning `ADVANTAGE_BONUS` proves nothing about whether `AbstractSkillInteraction`
+   ever reaches it with the `AttackSource` the choice discriminates on.
+2. **The effect, through the Interaction** — `SkillType.X.newInteraction().applyTo(sheet, …)`,
+   asserted as *the chosen case minus the unchosen case*, on a character who acquired the Talento
+   through `FeatService#grantFeat`. Both arms of the comparison must come from the same sheet, or
+   a second holder differing only in the pick — that is what makes it a discrimination rather
+   than a bonus sighting. `GeneralFeatEffectIntegrationTest` / `RacialFeatEffectIntegrationTest`
+   are where these live.
+3. **The effect, through `AttackDelivery`, whenever the clause can touch an attack** — because
+   the `AttackSource` most choices discriminate on has to survive
+   `DeliveredAttack` → `AttackDelivery#resolve` → the hook, and nothing at layer 2 proves it
+   does. Read it off `getAttackTotal()` / `getMargin()` / `getCriticalResult()`; pass the choice
+   in as `DeliveredAttack.builder().attackSource(…)`, and a distance-scoped one as
+   `.sceneContext(…)`. `ChoiceFeatAttackDeliveryTest` is the worked example.
+
+Layer 3 applies more widely than it looks: `FocoEmPericiaFeat`'s chosen Perícia may itself *be* a
+Perícia de Ataque, and `ConselheiroDeGuerraYmirianoFeat`'s chosen `StrengthAbility` may be
+`DESTRUIDOR_DE_MUROS`, which moves a dano roll. Ask what the choice could be, not what the
+Talento's tree is called.
+
 ## 6. Race-scoped cost: `<Race>FeatCostTest`
 
 A `Race` that overrides `Race#getNewFeatCost(FeatCategory)` changes what every Talento of a
@@ -184,6 +216,9 @@ to point the test at it.
 - [ ] Scaling terms tested at two points.
 - [ ] Controls: the neighbouring stat, every other constant at zero, gap-blocked constants
       changing nothing.
+- [ ] Acquisition-time choice: the pick is carried; the effect is a chosen-minus-unchosen
+      discrimination through the Interaction; and through `AttackDelivery` if it can touch an
+      attack.
 - [ ] XP: the exact cost is spent; a rejected grant leaves the wallet untouched.
 - [ ] `<Race>FeatCostTest` if a Race discounts this Talento's category.
 
@@ -197,6 +232,9 @@ to point the test at it.
 - `src/test/java/org/aventyrs/core/feat/MetamagicoFeatIntegrationTest.java` — one objective test
   per real clause across four different consuming services, plus the
   "a gap-blocked Talento changes nothing" control.
+- `src/test/java/org/aventyrs/core/feat/ChoiceFeatAttackDeliveryTest.java` — step 5b layer 3:
+  every attack-affecting acquisition choice, each written as the same attack with only the
+  choice (or only the weapon it was spent on) changed.
 - `src/test/java/org/aventyrs/core/feat/MetamagicoFeatTest.java` — the second layer: formula
   edge cases (rounding down, untrained reads as 0) and the every-other-constant-is-zero loops.
 - `src/test/java/org/aventyrs/core/character/services/FeatServiceImplTest.java` — the

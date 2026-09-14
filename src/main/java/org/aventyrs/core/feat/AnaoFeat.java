@@ -2,6 +2,7 @@ package org.aventyrs.core.feat;
 
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.ability.StrengthAbility;
 import org.aventyrs.core.character.DefenseType;
 import org.aventyrs.core.character.SizeCategory;
 import org.aventyrs.core.character.services.DamageService;
@@ -131,7 +132,17 @@ public enum AnaoFeat implements Feat {
             FeatRequirements.builder()
                     .attributeDomain(AttributeDomain.GNOSE)
                     .requiredAttributeValue(5)
-                    .build()),
+                    .build()) {
+        /**
+         * "1 Habilidade de Força (que você cumpra os requisitos)" — every Habilidade de Força is
+         * offered; the requisito is checked by {@code ConselheiroDeGuerraYmirianoFeat#of}, not by
+         * narrowing the list, since it gates the Atributo rather than any one ability.
+         */
+        @Override
+        public List<FeatChoice<?>> resolveRequiredChoices(final Character holder) {
+            return List.of(FeatChoice.ofOne(StrengthAbility.class, List.of(StrengthAbility.values())));
+        }
+    },
 
     /**
      * "Você recebe os benefícios de Abatedores de Gigantes contra qualquer alvo que não seja

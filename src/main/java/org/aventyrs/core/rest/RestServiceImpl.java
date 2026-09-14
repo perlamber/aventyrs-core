@@ -39,6 +39,9 @@ public class RestServiceImpl implements RestService {
         characterSheet.recoverMagicPoints(getRecoveredMagicPoints(character, restType));
         characterSheet.recoverDeterminationPoints(getRecoveredDeterminationPoints(character, restType));
         characterSheet.applyPendingEgoRecoveries(restType);
+        // Frees every ability whose Resfriamento was measured in Descansos rather than Rodadas —
+        // "não poderá ser reativado até que passe por um Descanso Longo".
+        characterSheet.clearRestCooldowns(restType);
     }
 
     /**

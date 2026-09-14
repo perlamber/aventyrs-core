@@ -22,6 +22,19 @@ public interface ActiveAbility {
     int getMagicPointCost();
 
     /**
+     * Pontos de Determinação spent to trigger this ability's activated state — 0 for most
+     * abilities. Entering a Forma is what needs it: "Transformar-se em um Draconato requer 3PA +
+     * 3PD", {@code BestialFeat#METAMORFOSE_SELVAGEM}'s "gastar 2PD".
+     *
+     * <p>Checked and spent exactly like the PM cost, against {@code
+     * DeterminationPointsService}. Unlike {@link #getHitPointCost()} there is no self-fatal
+     * guard: running out of Determinação is not a way to die.
+     */
+    default int getDeterminationPointCost() {
+        return 0;
+    }
+
+    /**
      * Pontos de Vida spent to trigger this ability's activated state — 0 for most abilities; a
      * Poder Vampírico "consome 3PV cada". {@code ActiveAbilityService#activate} refuses to let
      * the holder spend down to 0 or below.
@@ -32,6 +45,26 @@ public interface ActiveAbility {
 
     /** How many Rodadas the activated state lasts once triggered. */
     int getDurationInRounds();
+
+    /**
+     * The same Duração, or {@code null} for a state that <b>never lapses on its own</b> — one the
+     * holder stays in until they end it. Defaults to {@link #getDurationInRounds()}, so every
+     * ability with a stated Duração needs no override.
+     *
+     * <p>{@code BestialFeat#METAMORFOSE_SELVAGEM} is why this exists: its clause prices the
+     * transformation and lists what it grants "enquanto este Talento estiver ativo" but states no
+     * Duração at all, unlike every other transformation in the catalog (Draconato 3 Rodadas,
+     * Ancienteforme 3, a Poder Vampírico 2). Read as a toggle rather than an omission — the same
+     * shape {@code Gorgona}'s Monstros em pele de Fada takes, and the shape two {@code FeralFeat}
+     * Talentos assume when they <em>remove</em> the Duração from a transformation.
+     *
+     * <p>Mirrors {@code TemporaryEffect}'s own {@code null remainingRounds}, which is what
+     * ultimately carries it — so an open-ended Forma's {@code FormEffect} simply never expires,
+     * and {@code CombatantSheet#enterForm(null)} is the way back.
+     */
+    default Integer resolveDurationInRounds() {
+        return getDurationInRounds();
+    }
 
     /**
      * Resfriamento — how many Rodadas must pass after this ability is activated before it may be
@@ -51,6 +84,37 @@ public interface ActiveAbility {
      */
     default int getCooldownRounds() {
         return 0;
+    }
+
+    /**
+     * A Resfriamento measured in <b>Descansos</b> rather than Rodadas — "este Efeito não poderá
+     * ser reativado até que passe por um Descanso Longo" ({@code DraconicoFeat#DRACONATO},
+     * {@code FeericoFeat#ANCIENTEFORME}). The tier of Descanso that clears it; {@code null},
+     * the default, means no such gate.
+     *
+     * <p>Independent of {@link #getCooldownRounds()}, and an ability may state both — they are
+     * different units, not two spellings of one thing, and {@code ActiveAbilityService#activate}
+     * refuses while <em>either</em> is owing. Cleared by {@code RestService#applyRest} at that
+     * tier <b>or stronger</b> ({@code RestType#isAtLeast}), so a Descanso Total also frees an
+     * ability waiting on a Longo.
+     */
+    default org.aventyrs.core.rest.RestType getReactivationRest() {
+        return null;
+    }
+
+    /**
+     * The {@link org.aventyrs.core.sheet.FormType} activating this ability puts its holder into
+     * — {@code null}, the default, for every ability that is a bonus rather than a shape.
+     *
+     * <p>When set, {@code ActiveAbilityService#activate} additionally refuses if the holder's own
+     * Talentos forbid that shape ({@code CombatantSheet#canTakeForm}), enters it, and applies a
+     * {@code FormEffect} that returns them to their own shape when the Duração lapses. That
+     * expiry is the one place in this core where leaving a Forma is <em>not</em> a caller's call:
+     * a Forma entered through a transaction with a stated Duração ends on its own, while one
+     * entered through the bare {@code CombatantSheet#enterForm} mutator is the caller's to undo.
+     */
+    default org.aventyrs.core.sheet.FormType resolveGrantedForm(final Character character) {
+        return null;
     }
 
     /**

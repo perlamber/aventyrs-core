@@ -70,7 +70,7 @@ class ItemRequirementsTest {
                         .strength(AttributeValue.builder()
                                 .domain(AttributeDomain.STRENGTH)
                                 .base(base)
-                                .racialBonus(racialBonus)
+                                .fixedRacialBonus(racialBonus)
                                 .variable(variable)
                                 .build())
                         .build())

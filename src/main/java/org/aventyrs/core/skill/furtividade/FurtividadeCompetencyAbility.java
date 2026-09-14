@@ -13,10 +13,14 @@ import java.util.Optional;
  * #LADINO_TEORICO} is real — its Atributo Base substitution rides the mechanism {@link
  * SkillCompetencyAbility#getSubstituteAttributeDomain()} provides. Each of the rest needs a
  * system this core doesn't have yet (a specialization-scoped action gate, a GD-*increase*
- * expression, an observation-state flag, or weapon/trap damage); see each constant's TODO. The
- * hidden state itself now exists — {@code ConditionType#ESCONDIDO} — but no {@code
- * SkillCompetencyAbility} hook receives the {@code CombatantSheet} a Condição is held on, so the
- * two constants that read it still cannot.
+ * expression, an observation-state flag, or weapon/trap damage); see each constant's TODO.
+ *
+ * <p><b>Hiding itself is modelled</b> — {@code
+ * org.aventyrs.core.character.services.HidingService} turns a Furtividade total into {@code
+ * ConditionType#ESCONDIDO}, resolves each observer's Atenção against it and gives the hider away
+ * when they attack, move or roll against someone. What still blocks the two constants gated on
+ * <i>being</i> hidden is narrower: no {@code SkillCompetencyAbility} hook receives the {@code
+ * CombatantSheet} a Condição is held on, so a Habilidade cannot read its own holder's state.
  */
 @Getter
 @AllArgsConstructor
@@ -49,9 +53,11 @@ public enum FurtividadeCompetencyAbility implements SkillCompetencyAbility {
             "enquanto estiver Furtivo."),
 
     // TODO: lifts the "can't hide while observed" restriction described in Furtividade's own
-    // rules text, at +1 GD — that base restriction itself isn't modeled anywhere (no
-    // visibility/observation-state system exists), and this too is a GD *increase*, which
-    // getDifficultyReduction() can't express.
+    // rules text, at +1 GD. The restriction still isn't modeled: HidingService#isHiddenFrom
+    // answers who is fooled by an *existing* concealment, which is not the same question as
+    // whether anyone currently has eyes on you — HidingService#hide accepts any roll and the
+    // Narrador adjudicates, so there is nothing here to be exempt from. This is also a GD
+    // *increase*, which getDifficultyReduction() can't express.
     AGORA_ESTOU_AGORA_NAO_ESTOU("Você pode fazer rolagens de Furtividade mesmo quando " +
             "observado (GD aumentado em +1 nível)."),
 

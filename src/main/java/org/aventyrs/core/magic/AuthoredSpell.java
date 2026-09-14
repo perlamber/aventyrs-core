@@ -1,10 +1,12 @@
 package org.aventyrs.core.magic;
 
 import org.aventyrs.core.effect.CriticalEffectType;
+import org.aventyrs.core.sheet.ConditionType;
 import org.aventyrs.core.skill.DifficultyLevel;
 import org.aventyrs.core.skill.SkillType;
 
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * A {@link Spell} backed by a {@link SpellData} block — the whole of the per-tree delegation,
@@ -95,6 +97,16 @@ public interface AuthoredSpell extends Spell {
     @Override
     default Optional<SpellDamage> getPrimaryDamage() {
         return Optional.ofNullable(getData().getPrimaryDamage());
+    }
+
+    @Override
+    default Optional<SpellHealing> getHealing() {
+        return Optional.ofNullable(getData().getHealing());
+    }
+
+    @Override
+    default Set<ConditionType> getCleansedConditions() {
+        return getData().getCleansedConditions();
     }
 
     @Override

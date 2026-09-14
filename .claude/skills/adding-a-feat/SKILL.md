@@ -58,9 +58,24 @@ mechanism.
   to a critical hit — `AttackDelivery` scans it, `AssassinoFeat#ABRIR_FERIDAS`), and
   `resolveDefeatBlessings(attacker, defeated, viaCriticalHit)` (`Blessing`s the moment one of the
   holder's attacks drops a foe — `DefeatBlessingService`, caller-driven),
-  `getGrantedNaturalWeapons(Character)` (`NaturalWeapon`s — `Character#getNaturalWeapons()`),
-  `resolveLifeStealBonus(Character)` (Roubo de Vida amplification — `LifeStealService`,
-  `VampiricoFeat#SEDE_DE_SANGUE`), `resolveAdditionalTargets(SkillType, Character)` (how many
+  `getGrantedNaturalWeapons(Character[, CombatantSheet])` (`NaturalWeapon`s — the short form feeds
+  `Character#getNaturalWeapons()`, the Forma-blind "out of any shape" view; the **longer form**
+  feeds `CombatantSheet#getNaturalWeapons()` and is what a per-Forma grant overrides, leaving the
+  short one empty — `MetamorfoseDraculeaFeat`), `resolveRacialTraitSuppression(Character,
+  CombatantSheet)` → `RacialTraitSuppression` (how much of the holder's `Race` this Talento
+  silences — a four-rung ladder `NONE`/`NATURAL_WEAPONS_ONLY`/`PHYSICAL`/`ALL`, folded across held
+  Talentos by `CombatantSheet#getRacialTraitSuppression()` and consulted by every racial
+  aggregation. Only the `Race` term of a trait goes — a Talento-granted RC or Arma Natural
+  survives even `ALL` — and creature type is never suppressed. "Replacement" is *suppress + grant*
+  composed, so there is no separate replacement hook: `FormaMetamorfica#NEVOA` suppresses and
+  grants nothing, which is what makes `canAttackWith` refuse every Arma Natural),
+  `resolveLifeMultiplierIncrease(Character[, CombatantSheet])` (Multiplicador de PV — the longer
+  form is for a Forma-scoped one, and **every Forma-scoped multiplier must use it** rather than a
+  `LIFE_MULTIPLIER` `TemporaryBonus`: a countdown is tied to itself, not to the shape, so it would
+  survive an early `enterForm(null)`. `FeericoFeat#ANCIENTEFORME`, `FormaMetamorfica#CAVALO_DE_CHIFRES`),
+  `resolveLifeStealBonus(Character[, CombatantSheet])` (Roubo de Vida amplification —
+  `LifeStealService`, `VampiricoFeat#SEDE_DE_SANGUE`; the longer form is for a Forma-gated
+  figure, `FormaMetamorfica#MORCEGO_ATROZ`), `resolveAdditionalTargets(SkillType, Character)` (how many
   targets beyond the primary one attack may name — `AttackTargetingService`,
   `ArtesMarciaisFeat#DOMINAR_ARTE_MARCIAL_ARTE_FLUIDA`; the hook answers *how many*, never *which*
   — adjacency is the caller's, see `damage-and-combat`), `resolveAttributeBonus(AttributeDomain, Character)` (a flat
@@ -75,17 +90,35 @@ mechanism.
   text routinely offers a choice between them in one clause; folded into
   `SkillCompetencyAbility#allFor` and `Character#getSpecializations(SkillType)`, so both reach the
   roll path unchanged — `HerancaBestialFeat`, `AdotadoPorSylphFeat`, `ChosenSkillTraitsFeat`), and
+  `getForbiddenEquipmentCategories(Character)` (a whole `ItemCategory` the holder may never wear —
+  `DraconicoFeat#ASAS_DE_DRAGAO`'s Capa; **permanent**, enforced on the equipment list by
+  `CharacterSheet#equip`/`canEquip`/`validateEquipmentLoadout`, and not to be confused with a
+  Forma's temporary `FormEquipmentPolicy`, which answers "can I use this right now" instead),
   `resolveFormAccess(FormType, Character)` → `FormAccess` (whether this Talento forbids a Forma or
   locks its holder into one — `CombatantSheet#canTakeForm` combines them; three-valued, so "says
   nothing" and "says no" stay distinct, the same shape `resolveTitleAcquisitionPermission` uses),
   `resolveMagicReduction(Character)` (RM — Resistência à Magias, the magic-damage twin of
   `resolveDamageReduction`; reaches only a hit typed `DamageType.MAGICO`, see `damage-and-combat`),
+  `resolveSimultaneousRegenerationLimit(Character)` (how many Regeneração Reativa effects may run
+  at once — `TrollFeat#REGENERACAO_REATIVA_SUPERIOR`'s "se tornam cumulativos"; 0 means "raises no
+  ceiling", and the floor of 1 — a Blessing from a given source replaces its predecessor rather
+  than stacking — is applied by the ability that reads it. **A hook named for one trait is read by
+  that trait**: `TrollsRacialAbility#REGENERACAO_REATIVA` scans for this one, so it cannot widen an
+  unrelated Blessing. Follow that pattern for any Talento that buffs another trait's effect. Note the *trigger* is not a `Feat` hook at
+  all: a damage-triggered clause lives on a `SkillCompetencyAbility`
+  (`resolveDamageTakenBlessings`), and a Talento that hands one over does it through
+  `getGrantedSkillTraits`, as `FeralFeat#BENCAO_DE_MAPINGUARI` does),
   `resolveCriticalResistance(Character, SceneContext[, CombatantSheet])` (RC — a *defender-side* narrowing of
   whoever attacks the holder, totalled with the `Race` grant and any `TemporaryBonus` by
   `CombatantSheet#getTotalCriticalResistance`; ⚠️ its `sceneContext` is the **attacker's**
   snapshot, so read only Scene-wide facts from it — never proximity; the longest overload adds the
   holder's own sheet, which is how a clause gated "enquanto em sua Forma X" reads
   `CombatantSheet#isInForm`),
+  `movesWhileHidden(Character)` (whether the holder keeps `ConditionType#ESCONDIDO` through a
+  movement — `MobilidadeFeat#MOVIMENTO_FURTIVO`, asked by `HidingService#reveals`; a boolean, not
+  a distance, for the same reason `drawsWeaponAsFreeAction` is one — the clause permits the act
+  outright — and it excuses only `RevealTrigger#MOVEMENT`, never an attack or a roll aimed at
+  someone else),
   `resolveSizeCategoryOverride(Character)` → `SizeCategory` (an absolute *set* — "sua Categoria
   de Tamanho muda para -2", `GnomoFeat#DUENDE`) and `resolveSizeCategoryIncrease(Character)` (the
   *shift* twin — "aumenta em +1", `GiganteFeat#GIGANTE_DO_CLA_EMPUSA`); `CharacterSizeService`
@@ -100,11 +133,40 @@ mechanism.
   after the activation has succeeded; it burns down at the Rodada boundary, never the Turn one.
   **When later Talentos restate a figure rather than adding to it** ("Barreiras Mágicas criadas por
   você *agora concedem* +3", then +5), grant the ability from the *first* rung alone and have it
-  read the holder's held rungs — one better ability, not three stacking ones. Several hooks now have a
+  read the holder's held rungs — one better ability, not three stacking ones. **A Talento granting
+  *several* activatable things overrides the plural `resolveActiveAbilities()` instead** (it
+  defaults to the singular) — `MetamorfoseDraculeaFeat`, where each chosen Forma Metamórfica is its
+  own shape and `activate` matches by `==`, so "which shape" must be part of the ability's
+  identity.
+
+⚠️ **Any Talento with an acquisition choice must advertise it**, or no client can discover it.
+Override `resolveRequiredChoices(Character)` → `List<FeatChoice<?>>`, each
+`FeatChoice<T>(Class<T> type, int picks, List<T> options)` carrying the type token a caller routes
+on, how many must be picked, and the options **already filtered for that holder** — so a client
+never reimplements a Talento's own rules to present its choice. `FeatService#grantFeat` then
+**refuses the bare catalog constant** (`FEAT_REQUIRES_CHOICE`), which matters because a
+choice-carrying Talento's effect usually lives *entirely* on its acquired form: granting the
+constant plain costs XP and does nothing.
+
+Two rules when writing one:
+- **Offer the real values.** For an `ActiveAbility` choice, offer the **same singletons** the
+  acquired form will hold — `activate` matches by `==`, so what the client is shown must be what
+  it picks (`FormaMetamorfica#getTransformation`).
+- **Filter, don't validate-later.** Narrow `options` by the holder's own rules (`Rakshasa` → no
+  Névoa); keep the acquired form's factory validating too, as the belt to that braces.
+
+**Four acquired forms still cannot declare their choice** — `AdotadoPorSylphFeat`,
+`HerancaBestialFeat`, `ChosenSkillTraitsFeat`, `HabilidadeDeAtributoEscolhidaFeat` — because
+nothing indexes their options: there is no registry of a Perícia's own competency/specialization
+constants, nor of every `AttributeAbility`. `SkillType` already carries an `excellencyClass` and
+`AttributeDomain` could carry an ability class the same way, so both are mirror-additions. Add the
+registry rather than a one-off list on the constant. Several hooks now have a
   trailing `CombatantSheet holder` overload that falls through to the sheet-less form
   (`resolveSkillRollBonus`, `resolveDefenseBonus`, `resolveDamageReduction`,
-  `resolveCriticalMarginIncrease`) — override it for a clause reading held `Condição`s or the
-  per-Rodada/per-Cena action log. `resolveDamageBonus` has a trailing `int targetCount` overload
+  `resolveCriticalMarginIncrease`) — override it for a clause reading held `Condição`s, the
+  per-Rodada/per-Cena action log, an active `Regeneration`
+  (`CombatantSheet#hasActiveRegeneration()`), or how many attacks have already landed this Rodada
+  (`getAttacksSufferedThisRound()` — `TrollFeat#REGENERACAO_REATIVA_INVERNAL` reads both). `resolveDamageBonus` has a trailing `int targetCount` overload
   on the same defaulting terms, for a clause conditioned on how many targets the one dano roll
   covers (`ARTE_FLUIDA`'s "enquanto houver mais de um alvo … Desvantagem em rolagens de Danos");
   `0` there means no target was named, never "one". The "keep it on the tree enum until a

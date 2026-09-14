@@ -17,8 +17,10 @@ public class LifeStealServiceImpl implements LifeStealService {
         int bonus = character.getAttributeAbilities().stream()
                 .mapToInt(AttributeAbility::resolveLifeStealBonus)
                 .sum();
+        // The sheet-aware form, so a Forma-gated amplifier (Morcego Atroz's "+2") can see the shape
+        // its holder is wearing. Defaults down to the Character-only form for every other Talento.
         bonus += character.getFeats().stream()
-                .mapToInt(feat -> feat.resolveLifeStealBonus(character))
+                .mapToInt(feat -> feat.resolveLifeStealBonus(character, characterSheet))
                 .sum();
         return base + bonus;
     }

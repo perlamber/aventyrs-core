@@ -11,10 +11,14 @@ import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.effect.CriticalEffectType;
 import org.aventyrs.core.feat.Feat;
 import org.aventyrs.core.item.Item;
+import org.aventyrs.core.item.ItemCategory;
 import org.aventyrs.core.item.ItemWeightClass;
+import org.aventyrs.core.item.NaturalWeapon;
 import org.aventyrs.core.item.Weapon;
 import org.aventyrs.core.modifier.ModifierType;
+import org.aventyrs.core.race.RacialTraitSuppression;
 import org.aventyrs.core.scene.Range;
+import org.aventyrs.core.skill.SkillCompetencyAbility;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.rest.RestType;
 
@@ -25,6 +29,7 @@ import java.util.HashSet;
 import java.util.stream.Stream;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -156,6 +161,14 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     @Getter(AccessLevel.NONE)
     private FormType currentForm;
 
+    /**
+     * Abilities that cannot be used again until a Descanso of the recorded tier — the other half
+     * of Resfriamento, kept apart from {@link #cooldowns} because a Descanso is not a number of
+     * Rodadas. Identity-keyed for the same reason.
+     */
+    @Getter(AccessLevel.NONE)
+    private final Map<ActiveAbility, RestType> restCooldowns = new java.util.IdentityHashMap<>();
+
     /** Every roll-action taken since this Rodada began — see {@link #recordAction}. */
     @Getter(AccessLevel.NONE)
     private final List<CombatantAction> actionsThisRound = new ArrayList<>();
@@ -170,6 +183,9 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
 
     /** Movements taken since this Rodada began — see {@link #consumeMovementThisRound()}. */
     private int movementsTakenThisRound = 0;
+
+    /** Attacks landed on this combatant since this Rodada began — see {@link #recordAttackSuffered()}. */
+    private int attacksSufferedThisRound = 0;
 
     /** Whether a weapon was drawn since this Turn began — see {@link #drawWeapon(Weapon)}. */
     private boolean drewWeaponThisTurn = false;
@@ -257,6 +273,16 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
             temporaryEffects.removeIf(effect -> effect instanceof Bleeding);
         }
         return hitPoints.recover(amount);
+    }
+
+    /**
+     * Interrupts every ongoing {@link Bleeding} without healing — see {@link
+     * CombatantSheet#stopBleeding()} for why this is separate from the interruption {@link #heal}
+     * performs as a side effect of recovering PV.
+     */
+    @Override
+    public boolean stopBleeding() {
+        return temporaryEffects.removeIf(effect -> effect instanceof Bleeding);
     }
 
     /**
@@ -590,16 +616,57 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
      * Sangramento's own immediate PV loss goes through {@link #applyDamage} before this is called
      * for its ongoing half.
      *
-     * <p>When {@code effect.isCumulative()} is false (e.g. {@link Withering}), any existing
+     * <p>Trims by {@link TemporaryEffect#maximumSimultaneous()} over the same grant — same concrete
+     * kind and same {@link TemporaryEffect#stackingKey()}. At the usual ceiling of 1 that drops
+     * every match, so when {@code effect.isCumulative()} is false (e.g. {@link Withering}) any existing
      * instance of the same concrete type is removed first — reapplying replaces it rather than
      * stacking a second one alongside.
      */
     @Override
     public void applyEffect(final TemporaryEffect effect) {
-        if (!effect.isCumulative()) {
-            temporaryEffects.removeIf(existing -> existing.getClass() == effect.getClass());
+        int ceiling = effect.maximumSimultaneous();
+        if (ceiling < TemporaryEffect.UNLIMITED_SIMULTANEOUS) {
+            // Drop the oldest of the same grant until this one fits under the ceiling. "The same
+            // grant" is the concrete kind plus TemporaryEffect#stackingKey(), so one trait
+            // re-triggering replaces (and thereby renews) its own effect while leaving another
+            // trait's — and its own other bonuses — alone. At a ceiling of 1 that drops every
+            // match, which is exactly what a non-cumulative effect has always done.
+            List<TemporaryEffect> sameGrant = temporaryEffects.stream()
+                    .filter(existing -> existing.getClass() == effect.getClass())
+                    .filter(existing -> java.util.Objects.equals(existing.stackingKey(), effect.stackingKey()))
+                    .toList();
+            for (int i = 0; i <= sameGrant.size() - ceiling; i++) {
+                temporaryEffects.remove(sameGrant.get(i));
+            }
         }
         temporaryEffects.add(effect);
+    }
+
+    /**
+     * Grants blessing to this combatant and returns the effect it became — the one path a {@link
+     * Blessing} takes to reach a sheet, so the same-source rule and the {@link
+     * ModifierType#REGENERATION} special case are applied in exactly one place. See {@link
+     * TemporaryBonus} for what a source buys and {@link TemporaryBonus#from} for the conversion.
+     *
+     * <p>How many of that same grant may run at once arrives <em>on</em> the Blessing, stated by
+     * whoever resolved it. This method applies a Blessing; it never decides anything about one.
+     */
+    @Override
+    public TemporaryBonus grantBlessing(final Blessing blessing) {
+        TemporaryBonus bonus = TemporaryBonus.from(blessing);
+        applyEffect(bonus);
+        return bonus;
+    }
+
+    @Override
+    public int recordAttackSuffered() {
+        return ++attacksSufferedThisRound;
+    }
+
+    @Override
+    public boolean hasActiveRegeneration() {
+        return temporaryEffects.stream()
+                .anyMatch(effect -> effect instanceof Regeneration && !effect.isExpired());
     }
 
     /**
@@ -662,7 +729,9 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
      */
     @Override
     public void tickTemporaryEffects() {
-        temporaryEffects.forEach(effect -> effect.applyRoundEffect(this));
+        // Over a snapshot: a per-Rodada effect may itself change the list — a Regeneration heals,
+        // and healing clears every active Bleeding — which would otherwise fault this iteration.
+        List.copyOf(temporaryEffects).forEach(effect -> effect.applyRoundEffect(this));
         temporaryEffects.forEach(TemporaryEffect::tick);
         List<Condition> decaying = temporaryEffects.stream()
                 .filter(effect -> effect instanceof Condition)
@@ -670,7 +739,14 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
                 .filter(TemporaryEffect::isExpired)
                 .filter(condition -> condition.getType().getDecaysTo() != null)
                 .toList();
+        // A lapsing Forma must put its holder back into their own shape before it is swept out —
+        // the same "an expiring effect that must *do* something" case a decaying Condition gets.
+        boolean formLapsed = temporaryEffects.stream()
+                .anyMatch(effect -> effect instanceof FormEffect && effect.isExpired());
         temporaryEffects.removeIf(TemporaryEffect::isExpired);
+        if (formLapsed) {
+            enterForm(null);
+        }
         // "Ao fim da duração alvo se torna Assustado" — the fear ladder steps down rather than
         // simply ending, so a decaying Condition is replaced by its successor at the moment it
         // expires, carrying the same origin and that successor's own stated duration. Applied
@@ -695,6 +771,12 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
      */
     @Override
     public Set<CriticalEffectType> getCriticalEffectImmunities() {
+        // Half of the anatomy pair, and so silenced from PHYSICAL upward: a Troll passing for
+        // human has no vegetal anatomy to shrug a Sangramento off with. Empty rather than a
+        // filtered set, since the Race is the only source there is.
+        if (getRacialTraitSuppression().suppressesPhysicalTraits()) {
+            return Set.of();
+        }
         return getCharacter().getRace().getCriticalEffectImmunities();
     }
 
@@ -741,6 +823,7 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     public void startNewRound() {
         actionsThisRound.clear();
         actionCountAtTurnStart = 0;
+        attacksSufferedThisRound = 0;
         applyScheduledEgoGrants();
         tickCooldowns();
     }
@@ -777,6 +860,26 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         return cooldowns.getOrDefault(ability, 0);
     }
 
+    @Override
+    public void startRestCooldown(final ActiveAbility ability, final RestType restType) {
+        if (restType == null) {
+            restCooldowns.remove(ability);
+            return;
+        }
+        restCooldowns.put(ability, restType);
+    }
+
+    @Override
+    public boolean isAwaitingRest(final ActiveAbility ability) {
+        return restCooldowns.containsKey(ability);
+    }
+
+    /** A Descanso frees everything waiting on its own tier or a weaker one. */
+    @Override
+    public void clearRestCooldowns(final RestType restType) {
+        restCooldowns.values().removeIf(required -> restType.isAtLeast(required));
+    }
+
     /**
      * Delivers every {@link DelayedEgoGrant} scheduled during the Rodada just ended, and clears
      * them — the "na Rodada seguinte" half of {@code GnoseAbility#ESTABILIDADE_EMOCIONAL}.
@@ -798,6 +901,7 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         actionsThisCena.clear();
         actionsThisRound.clear();
         actionCountAtTurnStart = 0;
+        attacksSufferedThisRound = 0;
         drewWeaponThisScene = false;
         combatStarted = false;
     }
@@ -818,7 +922,7 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         List<Blessing> granted = new ArrayList<>();
         for (Feat feat : getCharacter().getFeats()) {
             for (Blessing blessing : feat.resolveCombatStartBlessings(getCharacter())) {
-                grantTemporaryBonus(blessing.getModifierType(), blessing.getValue(), blessing.getRounds());
+                grantBlessing(blessing);
                 granted.add(blessing);
             }
         }
@@ -955,6 +1059,20 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     }
 
     /**
+     * Reads straight off the held conditions rather than through {@link #activeConditionOrigins} —
+     * that map is keyed by {@link ConditionType} and would hand back a {@link Condition}, losing
+     * exactly the subclass this is being asked for. Nothing implies Escondido, so there is no
+     * implication to miss by going direct.
+     */
+    @Override
+    public Optional<Hidden> getHidden() {
+        return heldConditions()
+                .filter(Hidden.class::isInstance)
+                .map(Hidden.class::cast)
+                .findFirst();
+    }
+
+    /**
      * Sums each active condition's effects <b>once</b>, resolving any proximity scope against the
      * origin of whichever held Condition put it in force — so an implied condition brings its
      * numbers with it (Caído really does cost 2 Defesas through the Desprevenido it confers)
@@ -1019,13 +1137,114 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         return getCharacter().getEquipment().stream().noneMatch(item -> item instanceof Weapon);
     }
 
+    /**
+     * A {@code null} weapon is an Ataque Desarmado and always allowed — a punch is not a weapon
+     * there is anything to suppress. Otherwise three things can refuse: a held Condição
+     * restricting attacks to light weapons (Devorado), the Forma's equipment policy ("armas não
+     * podem ser utilizadas" while metamorphosed), and a Forma that <em>replaces</em> its holder's
+     * Armas Naturais, which refuses every one outside the replacement set.
+     *
+     * <p><b>The Arma Natural exemption is possession-blind unless a Forma replaces.</b> By default
+     * this asks {@code Character#treatsAsNaturalWeapon}, which tests the category and never the
+     * holder's list — matching {@code Character#getNaturalWeapons()}'s "no possession gate" note,
+     * and what keeps a Bestial in Forma Animal able to name any Arma Natural. Only a shape that
+     * declares a replacement ({@code Feat#resolveRacialTraitSuppression}) narrows it to
+     * {@link #getNaturalWeapons()}, which is how Névoa's "é incapaz de causar danos" refuses
+     * everything: it grants none and cancels the rest.
+     */
     @Override
     public boolean canAttackWith(final Weapon weapon) {
         if (weapon == null) {
             return true;
         }
+        if (currentForm != null && !currentForm.getEquipmentPolicy().permitsWeapons()
+                && !isUsableNaturalWeaponInCurrentForm(weapon)
+                && !(currentForm.permitsOneHandedWeapons() && !isTwoHanded(weapon))) {
+            return false;
+        }
         return !anyConditionPrevents(null, ConditionType::restrictsAttacksToLightWeapons)
                 || weapon.getEffectiveWeightClass() == ItemWeightClass.LIGHT;
+    }
+
+    /**
+     * Whether weapon is an Arma Natural this combatant may currently strike with. A Forma that
+     * replaces narrows the question from "is this an Arma Natural at all" to "is it one of
+     * <i>mine</i>"; every other shape keeps the category-only answer.
+     */
+    private boolean isUsableNaturalWeaponInCurrentForm(final Weapon weapon) {
+        if (getRacialTraitSuppression().suppressesNaturalWeapons()) {
+            return weapon instanceof NaturalWeapon natural
+                    && getNaturalWeapons().contains(natural);
+        }
+        return getCharacter().treatsAsNaturalWeapon(weapon);
+    }
+
+    /**
+     * The two-hand inference {@code CharacterSheet}'s loadout budget applies, restated here rather
+     * than shared: {@code equipamentos.txt} gives no weapon a hands column, so handedness comes
+     * from {@link ItemWeightClass} plus category. Read only by {@link
+     * FormType#permitsOneHandedWeapons()}'s one consumer (Lobo Dentes-de-Sabre).
+     *
+     * <p>Reads the <b>authored</b> {@code getWeightClass()} rather than {@code
+     * getEffectiveWeightClass()}, matching {@code CharacterSheet#isTwoHanded} exactly. Two
+     * reasons, and the second is why this is not a shortcut: a weapon whose weight class was never
+     * authored makes the effective form throw, and more importantly the two methods must agree —
+     * a weapon that takes two hands in the loadout budget but one hand here would be incoherent.
+     */
+    private static boolean isTwoHanded(final Weapon weapon) {
+        return weapon.getCategory() == ItemCategory.BOW
+                || weapon.getCategory() == ItemCategory.CROSSBOW
+                || weapon.getWeightClass() == ItemWeightClass.MEDIUM
+                || weapon.getWeightClass() == ItemWeightClass.HEAVY;
+    }
+
+    /**
+     * How much of this combatant's {@code Race} is currently silenced — the strongest rung any
+     * held Talento declares through {@code Feat#resolveRacialTraitSuppression}. The single
+     * question every racial aggregation on this sheet asks; see {@link RacialTraitSuppression}
+     * for the ladder and for what no rung ever touches.
+     *
+     * <p>Short-circuits to {@link RacialTraitSuppression#NONE} out of any Forma. Every clause in
+     * the catalog is Forma-gated, and it saves walking the Talento list on the overwhelmingly
+     * common path — but it is also the reason a future clause suppressing traits <em>without</em>
+     * a Forma would need this guard lifted rather than just a new rung.
+     */
+    @Override
+    public RacialTraitSuppression getRacialTraitSuppression() {
+        if (currentForm == null) {
+            return RacialTraitSuppression.NONE;
+        }
+        Character character = getCharacter();
+        RacialTraitSuppression total = RacialTraitSuppression.NONE;
+        for (Feat feat : character.getFeats()) {
+            total = RacialTraitSuppression.strongest(total,
+                    feat.resolveRacialTraitSuppression(character, this));
+        }
+        return total;
+    }
+
+    /**
+     * Two sources, with the racial one droppable — the same shape as {@link
+     * #getTotalCriticalResistance}, which also combines the Race's contribution with a per-{@code
+     * Feat} hook taking {@code this}.
+     *
+     * <p>The Talento term is deliberately read through the <b>sheet-aware</b> hook, which defaults
+     * down to the sheet-less one, so it carries both an ordinary grant ({@code
+     * ArmamentoDraconicoFeat}'s picked pair) and a Forma's own ({@code FormaMetamorfica}'s ARMA
+     * NATURAL column) in one pass. Suppression removes only the {@code Race} term: a Talento
+     * granting claws is not a racial trait, and keeps them in any shape.
+     */
+    @Override
+    public List<NaturalWeapon> getNaturalWeapons() {
+        Character character = getCharacter();
+        Stream<NaturalWeapon> fromFeats = character.getFeats().stream()
+                .flatMap(feat -> feat.getGrantedNaturalWeapons(character, this).stream());
+        if (getRacialTraitSuppression().suppressesNaturalWeapons() || character.getRace() == null) {
+            return fromFeats.distinct().toList();
+        }
+        return Stream.concat(character.getRace().getGrantedNaturalWeapons().stream(), fromFeats)
+                .distinct()
+                .toList();
     }
 
     @Override
@@ -1048,10 +1267,17 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
      * <p>Additive because RC instances stack: each is a separate -2, the same way two sources of
      * RD sum. The subtraction itself, and the floor on it, live on the attacker's crit path — see
      * {@link CombatantSheet#getTotalCriticalResistance}.
+     *
+     * <p><b>Only the Raça term is suppressible</b> (the other half of the anatomy pair, so from
+     * {@link RacialTraitSuppression#PHYSICAL} upward). The Talento and {@code TemporaryBonus}
+     * terms are not racial traits and survive every rung — {@code AnaoFeat#VIGOR_DO_INVERNO}'s
+     * combat-start grant is still owed to a transformed holder.
      */
     @Override
     public int getTotalCriticalResistance(final SceneContext sceneContext) {
-        int total = getCharacter().getRace().getCriticalResistance();
+        int total = getRacialTraitSuppression().suppressesPhysicalTraits()
+                ? 0
+                : getCharacter().getRace().getCriticalResistance();
         total += getCharacter().getFeats().stream()
                 .mapToInt(feat -> feat.resolveCriticalResistance(getCharacter(), sceneContext, this))
                 .sum();

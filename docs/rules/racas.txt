@@ -1,0 +1,1052 @@
+CATEGORIAS DE TAMANHO
+O Humanos, maioria entre as criaturas, são as referências das medidas de tamanho.
+Categoria de tamanho é relativamente diferente de altura, personagens de diferentes alturas podem pertencer a mesma categoria de tamanho, porém a categoria de tamanho dita a altura máxima que um personagem pode ter.
+Como referências o tamanho dos Humanos é base, a categoria zero. Uma criatura de categoria de tamanho igual a zero tem entre 1,5 metros e 2 metros, altura média de 1,75 metros. 
+Cada categoria de tamanho aumenta ou diminui os valores de altura das criaturas em determinada porcentagem, desta forma uma criatura de categoria +1, que tem modificador de +50%, tem a altura mínima de 2,2 metros e máxima de 3 metros, altura média de aproximadamente 2,6 metros.
+Seguindo o mesmo raciocínio, uma criatura de categoria -1, cujo modificador é de -30%, teria altura máxima de 1,4 metros, altura mínima de 1 metro, altura média de 1,2 metros.
+As categorias de tamanho também influenciam na capacidade de carga das criaturas, em seu deslocamento base por PA, na distância percorrida ao se reposicionar, alcance, rolagens de ataque, modificadores em DF, DM, Atenção e Furtividade, conforme tabela abaixo:
+
+CATEGORIA
+Altura Mínima
+Altura Máxima
+Alcance
+Ataque
+E Dano
+Defesas
+Movimento
+Furtiv. e Atenção
+-4
+0,1m
+0,4
+1UD
+-2
++2
+1UD
++2
+-3
+0,4m
+0,7
+1UD
+-2
++2
+1UD
++2
+-2
+0,7m
+1m
+1UD
+-1
++1
+2UD
++1
+-1
+1m
+1,4m
+1UD
+-1
++1
+3UD
++1
+0
+1,5m
+2m
+1UD
++0
++0
+4UD
++0
++1
+2,2m
+3m
+1UD
++1
+-1
+5UD
+-1
++2
+3,3m
+4,5m
+2UD
++1
+-1
+6UD
+-1
++3
+4,8m
+7,2m
+2UD
++2
+-2
+7UD
+-2
++4
+7,2m
+10,1m
+3UD
++2
+-2
+8UD
+-2
+
+
+O Tamanho das criaturas influencia a maioria de suas ações, seja na forma de alcance de ataques, rolagem de dano, velocidade de deslocamento, e na rolagem de algumas perícias.
+Para determinar a distância que uma criatura pode efetuar suas rolagens de ataque considere o valor apresentado no próprio equipamento e some, ou subtraia, metade de sua categoria de tamanho (arredondado para baixo). Ataques corpo-a-corpo nunca tem o alcance reduzido a menor que 1UD.
+O tamanho também influencia na chance de acerto dos ataques e dano causado por cada criatura, assim como no cálculo de distância, metade do valor da categoria de tamanho (arredondado para baixo) pode ser adicionado as rolagens de ataque e dano de cada criatura. Estes modificadores também devem ser considerados em manobras de combate.
+As defesas de cada criatura também podem ser influenciadas pelo tamanho, criaturas menores são difíceis de acertar, e é difícil precisar seu ponto vital, enquanto criaturas grandes são alvos mais fáceis. Criaturas de Categoria de Tamanho inferior a zero ganham metade (arredondado para cima) de sua categoria, positivamente, em sua Defesa Física (DF) e Defesa Mágica (DM). Desta forma criaturas de Categoria de Tamanho -2 recebem +1 em DF e DM.
+Ainda sobre as defesas o contrário também é válido, criaturas com Categoria de Tamanho igual ou superior a +1 recebem redutores proporcionais em suas defesas. Uma criatura com tamanho +2, por exemplo, recebe redutor de -1 em DF e DM.
+O tamanho também influencia na capacidade de uma criatura se esconder ou se camuflar, quanto menor for uma criatura, maior será sua facilidade em conseguir esconderijo ou ocultar sua presença. Usando os mesmos cálculos das defesas, criaturas de Tamanho inferior a zero recebem metade de seu tamanho (arredondado pra cima) positivamente em suas rolagens de ‘Furtividade’ e ‘Atenção’, enquanto criaturas de Tamanho superior a zero recebem em formas de redutores. Desta forma uma criatura de tamanho +2 sofre redutor de -1 em suas rolagens de ‘Furtividade’ e ‘Atenção’, enquanto uma criatura de tamanho -2 receberia bônus de +1 nas mesmas perícias.
+Criaturas maiores também se deslocam mais rápido, seus longos passos garantes vantagem natural em sua movimentação, enquanto as menores precisam se esforçar mais para percorrer a mesma distância. Cada criatura adiciona, ou subtrai, sua categoria de tamanho ao seu movimento por PA, mínimo 1m. Uma criatura te Categoria de Tamanho zero pode se mover até 4m por PA.
+
+Humanoides
+Módulo Básico
+Anões
+A raça predominante do Norte, mas presente em todo o continente, os anões são uma raça guerreira. Rígidos, apegados as tradições, de pavio frequentemente curto e um jeito direto demais, que lhes garantem a fama de brutos ou deseducados.
+Acreditam que foram criados por Ymir a partir de uma montanha, para dominar outras montanhas, por isso fazem dela sua morada e lutam por elas como se lutassem pela própria vida, no começo por questões que consideravam divinas, depois por se tornar tradição, um modo de vida.
+Os Anões tiveram que lutar por suas terras e vida desde sua criação, confrontando seus irmãos Gigantes, assim como os Trolls e outros monstros e raças viventes nas montanhas ou nas terras gélidas, e as constantes batalhas deram a este povo um estranho senso de união, sempre dispostos a trabalhar juntos quando o objetivo for derrubar um inimigo.
+Em sua história estes pequenos humanoides guerrearam contra a maior parte dos povos, as batalhas mais memoráveis foram contra os Gigantes na Segunda Era, contra outros Anões, e por fim contra os Eldurianos na Grande Guerra Santa, mas mesmo com tantos conflitos não possuem nenhuma raça declarada inimiga, o que para eles não necessariamente significa conviver pacificamente.
+Divididos em grupos ou clãs, normalmente ficam nas montanhas, lapidando estruturas nas rochas, sempre em posição que lhes concedam vantagem natural em eventuais conflitos, ou garantindo privilegiados pontos de observação e vigília de seus territórios. Quando decidem viver em grandes cidades frequentemente escolhem conviver nas mesmas vilas, bairros ou vizinhanças, e tratam aquela região como se fossem suas, propagando sua cultura, tradição e modo de viver.
+Suas longas eras vivendo em meio as pedras, cavernas e montanhas, deram aos Anões uma capacidade quase sobrenatural de criar coisas com elas, e ferramentas para trabalhar com elas, por isso também são vistos como grandes artesões.
+Enquanto Aventureiros costumam ser combatentes de linha de frente, protegendo os aliados, atuando como guerreiros ou devotos, frequentemente ambos, principalmente de seu criador, o Poderoso Ymir.
+Jogando com Anões 
+Atributos: Criados para sobreviver às situações adversas, possuem um corpo naturalmente resistente, capacidade esta ampliada pela sua longevidade, uma ampla capacidade de aprendizado e sua cultura de passagem de conhecimento às novas gerações. 
+Recebem bônus Racial de +1 em Vigor e Gnose.
+Categoria de Tamanho: Seres de baixa estatura, possuem Categoria de Tamanho -1.
+Idiomas: A raça possuí a própria língua, o idioma Anão, mas também são fluentes em um segundo idioma, conforme seu Antecedente. Durante a criação do personagem, os jogadores podem escolher trocar quaisquer dos idiomas anteriores por Continental, a língua comum.
+Longevidade: Depois dos Elfos e dos Gigantes, os Anões são as raças mais longevas do continente, vivendo em média 300 anos humanos.
+Perícias e Talentos: Os caçulas de Ymir são resistentes e resilientes, capazes de sobreviver em praticamente qualquer ambiente e campo de batalha. Subestimar a baixa estatura dos anões é um erro fatal. 
+Recebem gratuitamente um talento de Sobrevivência ou Destino. 
+Anões são ótimos ferreiros e construtores, sua cultura inclui treinamento a todos os membros em Profissão, com uma Especialização adicional escolhida entre Alvenaria e Carpintaria ou Metalurgia.
+Tendência: Os Anões são uma raça guerreira, mas também são muito honrados, leais as tradições, as suas famílias, tribos e reinos. Os padrões da raça permitem que tenham quaisquer tendências, mas raramente assumem tendências extremistas como Samaritano ou Destruidor.
+
+Características Raciais
+	•	Visão no Escuro: Quando foram criados, os Gigantes dominavam os reinos terra acima, por isso foram forçados a viverem no subterrâneo. Mesmo não sendo mais a única realidade da raça, este evento os permitiu desenvolver a capacidade de enxergar no escuro de forma monocromática.
+	•	Filhos da Montanha: Enquanto em montanhas ou cavernas os anões recebem vantagem nas rolagens de Conhecimentos, na especialização Natureza.
+	•	Abatedores de Gigantes: Os primeiros rivais dos Anões foram seus irmãos Gigantes, e seus primeiros inimigos foram os Ogros e os Trolls que viviam nas cavernas e nas galerias subterrâneas. Acostumados a lutar com inimigos muito maiores, os Anões recebem vantagem nas rolagens de Ataque contra criaturas que pertençam a 2 ou mais Categorias de Tamanho superiores. 
+	•	Pequenos Gigantes: Anões que possuam Vigor Base 3 ou mais recebem uma Habilidade de Atributo adicional, escolhida entre Sangue de Gigante ou Sobre-humano. 
+
+
+Elfos
+Descendentes das Fadas e dos Guardiões, uma extinta raça também chamada de Os Que Já Foram ou Primeiros Homens, os Elfos são criaturas humanoides em muito parecidas com os humanos.
+Diferenciados por seus traços finos, esguios e refinados, olhos estreitos e orelhas pontudas, são as raças de maior expectativa de vida conhecida, facilmente vivendo por mais de meio milênio.
+As histórias dizem que os Guardiões eram elementais que migraram para Tellus na intenção de assegurar os domínios do Deus Elemental qual serviam, e protegiam suas criações, e os Elfos herdaram este nobre objetivo.
+Os Elfos estão dentre as maiores populações. Presentes nos desertos, nas montanhas, nos oceanos e, principalmente, nos bosques e florestas.
+Aqueles que descendem dos elementais da água ainda hoje vivem em reinos submersos e cidades costeiras, já os netos de Sylph vivem em locais de grande altitude juntos aos pássaros, os Avianos e as demais criaturas habitantes das nuvens.
+A maioria dos Elfos vivem em terra firme, fazem parte da população de todos os reinos, também são regentes de um dos mais prósperos reinos do Continente.
+Amantes das artes, e com grande afinidade com a magia, dificilmente se envolvem com as inovações tecnológicas, exceto os mecanismos Ark’anos, unir magia as utilidades do dia a dia os intrigam. Costumam ser apegados as tradições, são frequentemente estudiosos, racionais e de poucas palavras, e mesmo assim são os responsáveis por algumas das mais famosas canções e peças de arte.
+Quando necessário pegar em armas normalmente evitam o combate corpo-a-corpo, seu estilo de vida os permitiu desenvolver técnicas únicas de Artilharia, e sua afinidade natural com a magia os permitem manter distância de criaturas hostis. 
+
+Jogando com personagens Élficos
+Atributos: Após tantas gerações dedicadas aos estudos, as artes, a magia e à artilharia, os Elfos iniciam o jogo com +1 ponto Racial em Destreza, também recebem +1 ponto Racial adicional escolhido entre os atributos Foco ou Gnose.
+Categoria de Tamanho: Elfos normalmente são pouco mais altos que os Humanos, mas apenas alguns centímetros, também pertencem a Categoria de Tamanho 0.
+Idiomas: Possuem seu próprio idioma, o Élfico, mas também são fluentes no idioma de seu reino natal ou no idioma Continental. 
+Longevidade: Elfos são as criaturas humanoides mais longevas do Continente, vivendo por mais de meio milênio, existem registros de alguns que superaram os 800 anos. Diferentes das outras raças, os Elfos se desenvolvem lentamente, retendo um corpo infantil seus 20 anos e uma aparência bastante jovem – como um adolescente humano – até os 100 anos. Embora amadureçam em ritmo próximo ao comum são considerados adultos por seus iguais apenas após seu primeiro século de vida.
+Perícias e Talentos: O apego as tradições dos Elfos frequentemente os inibem de desenvolver novas habilidades, ao invés disso são incentivados a dar sequência no aperfeiçoamento dos trabalhos de seus ancestrais. Elfos iniciam o jogo com 1 Talento adicional, escolhido entre Talentos Raciais Élficos e 1 Talento adicional escolhido entre Élfico, Arqueirismo, Duelista ou Metamágico. 
+Também recebem uma Especialização adicional em Perícia, escolhida entre Conhecimentos (restrito à Metamágico ou Natureza), Foco ou em uma das Perícias de Ataque.
+Tendência: Normalmente são bondosos ou neutros, as tradições de preservação a vida normalmente os mantem em caminhos pacíficos.
+
+Características Raciais
+	•	Origem mística: Personagens Elfos iniciam o jogo com uma Habilidade de Competência de Conhecimentos ou Domínio do Mana, à sua escolha, mas apenas se forem treinados nestas Perícias; 
+	•	Visão no escuro: Elfos conseguem enxergar na ausência de luz, mas em preto e branco;
+	•	Linhagem Feérica: Elfos recebem Bônus Racial +2 em DM, este Bônus muda para +5 para resistir aos efeitos de Encantamentos;
+	•	Sentidos Absolutos: Os sentidos dos Elfos são superdesenvolvidos, principalmente seus olhos e ouvidos, garantindo Vantagem em suas todas as rolagens de Atenção.
+Conexão com o Mana: Para um Elfo, assim como seus ancestrais Feéricos, adquirir novos Talentos Metamágicos custam apenas 2.5 EXP, ao invés de 3 EXP.
+
+Gigantes
+Há muita discussão sobre quais Deuses foram responsáveis pela criação das raças, e quais delas são frutos da miscigenação, mas ninguém tem dúvida das origens dos Gigantes, os primogênitos de Ymir.
+Uma das mais antigas raças do Continente, seres de vida longa, muita honra e grande força, a raça mais alta dentre os humanoides.
+Em sua longa história já foram conquistadores, senhores de todo o Norte, mas o avanço das outras civilizações, das magias e tecnologias, reduziu sua influência, em certo período quase foram extintos, salvo por uma aliança feito com seus antigos inimigos e irmãos, os Anões.
+De poucas palavras, carrancudos e de humor duvidoso, vivem misturados as demais criaturas, mas nem sempre pacificamente, sua personalidade forte e orgulho dificulta a criação de laços.
+Existem poucos gigantes atualmente, a maioria vive nas grandes comunidades nortenhas, mas ainda existem vilas bárbaras de gigantes nas longínquas montanhas do Grande Norte, nestes rústicos lugares a fúria e a paixão que nutriam no passado ainda vive.
+Raramente se apegam a magia, quando o fazem é em devoção aos deuses, também possuem certa dificuldade em manejar os “frágeis” objetos tecnológicos, normalmente preferindo trabalhos braçais e pegar em armas, e nada é mais temido no campo de batalha que um gigante furioso.
+Jogando com Gigantes
+Atributos: Extremamente fortes e resistentes, os gigantes começam o jogo com +2 pontos Raciais nos Atributos Força e Vigor.
+Categoria de Tamanho: Gigantes são as maiores criaturas humanoides do Continente, possuem categoria de tamanho +2.
+Idiomas: Falam uma variação da língua anã, o dialeto Ymiriano, que mistura o antigo idioma dos gigantes – uma língua morta - ao tradicional idioma Anão. Também falam um idioma adicional, conforme seu Antecedente.
+Longevidade: A segunda raça de criatura mais longeva do Continente, podem viver até 500 anos.
+Perícias e Talentos: Os Gigantes, apesar de muito inteligentes, não se adaptaram bem as mudanças trazidas pelo tempo, seu tamanho enorme os atrapalha, as vezes impedem, na tentativa de executar muitas das tarefas atualmente vistas como comuns, por isso não recebem Talentos ou Perícias adicionais.
+Tendência: O gigantes são normalmente neutros, mas podem ter alinhamentos bondosos ou malignos, normalmente seguindo a tendência comum das pessoas em sua companhia. 
+
+Características Raciais
+	•	Constituição Ymiriana: Talentos de Sobrevivência custam 2 EXP para os Gigantes, ao invés de 3 EXP;
+	•	Tamanho é Documento: Gigantes nunca perdem Bônus em Defesas por consequência de sua Categoria de Tamanho;
+	•	Rigidez Ymiriana: Gigantes recebem Resistência à Danos (RD) para resistir à ataques feitos por personagens que pertençam a 2 ou mais Categorias de Tamanho inferiores.
+	•	Tudo é Frágil: Ataques de Gigantes efetuados contra personagens de Categorias de Tamanhos inferiores à sua causam 1 ponto de dano aos itens defensivos do alvo, também recebem Vantagem nas rolagens de Dano sempre que o alvo for um objeto, construtos ou construção.
+	•	Cuidado para não Quebrar: Personagens Gigantes, enquanto adjacentes à aliados que pertençam a 2 ou mais Categorias de Tamanho inferiores, sofrem desvantagem em suas rolagens de perícia físicas (baseadas em Força ou Destreza), devido a precaução para não esmagar um aliado acidentalmente.
+
+
+Humanos
+A raça mais numerosa do mundo de Tellus.
+Com uma biologia e mentalidade que os permite se adaptar rapidamente aos diferentes climas, regiões e culturas, os humanos rapidamente se espalharam pelo mundo, e se misturaram as demais raças do Continente.
+Apesar de seus números, os humanos vivem pouco, comparado a algumas raças mais antigas, mas sua biologia permite o rápido aumento populacional, e com seu ímpeto e ambição natural, aprenderam com as demais raças muitos dos seus ofícios, além de terem criados diversos outros, e as principais tecnologias existentes.
+A capacidade de se adaptar é a principal característica dos humanos.
+O ambiente em que vivem moldam os humanos, há aqueles de peles claras e pelos grossos, caucasianos, vivendo no norte, junto aos gigantes e anões, os de pele negra, nas regiões quentes e áridas, os pardos nas regiões tropicais. Sua altura também pode variar muito, podem ser encontrados humanos adultos com cerca de 1,5 metros e outros com pouco mais de 2 metros de altura.
+Suas culturas também são distintas em cada região, seja por incorporarem costumes das outras raças que lá vivem, ou devido as experiências vivenciadas, independente da cultura costumam ser sociáveis, amistosos e competitivos.
+
+Jogando com personagens Humanos
+Atributos:  Os Humanos, maioria no mundo, são considerados referência do que é fisicamente comum, por isso não recebem pontos de atributos adicionais.
+Categoria de Tamanho: Assim como nos Atributos, os Humanos são as referências de tamanho entre as Raças, por isso são considerados a Categoria de Tamanho 0.
+Idiomas: Todos falam a língua comum, o idioma Continental, e um idioma adicional, conforme seu Antecedente de Origem.
+Longevidade: Membros da raça vivem em média por 80 anos.
+Perícias e Talentos: Os humanos, devido a sua versatilidade natural, adquirem toda forma de Títulos, se especializam em quaisquer Perícias e são capazes de desenvolver a maioria dos Talentos. 
+Personagens Humanos começam o jogo com 2 Talentos Gerais e recebem uma Especialização adicional em até 2 Perícias Treinadas.
+Tendência: Normalmente possuem Tendência de alinhamento Bondoso ou Neutro, mas suas experiências podem corrompê-los, e levando-os aos alinhamentos malignos.
+
+Características Raciais
+	•	Aprendizado Rápido: Durante a criação do Personagem podem escolher duas Perícias Treinadas, adquirir a Segunda e Terceira Graduação destas perícias custam 0.5EXP a menos.
+	•	Adaptação: Novos Talentos custam apenas 2.5 EXP, ao invés de 3 EXP.
+	•	Ofício hereditário: Personagens que escolham Conhecimentos ou Profissões entre suas Perícias iniciais durante a criação do personagem podem escolher uma Especialização adicional ou Habilidade de Competência destas Perícias.
+	•	Prodígios: Recebem uma Habilidade de Competência de uma de suas Perícias escolhidas durante a criação do Personagem.
+
+
+Pequenino
+Uma pequena raça humanoide do sul, composta por amantes das terras tropicais, festas e fanfarras.
+Os Pequeninos normalmente vivem em regiões tropicais, em comunidades pequenas e agitadas, mas as vezes se aventuram pelas grandes cidades do Continente.
+Recebem este nome devido ao seu tamanho diminuto e porte físico modesto, frequentemente sendo mais baixos que os anões.
+De aparência lembram roedores humanoides, com pernas fortes e pés cumpridos. Possuem dentes incisivos protuberantes, olhos vivos e quase sempre apresentam um carisma que muito lembra o das crianças humanas, animadas, levadas e curiosas.
+São pacíficos e costumam evitar conflitos o máximo possível, preferem festejar com os inimigos e resolver conflitos com comilança e música, mas não são covardes, estão acostumados a lidar com criaturas maiores que eles, e quando a paz não é uma opção, são temíveis e mortais. 
+Possuem destreza e agilidade maior que a maioria das raças, são excelentes com trabalhos manuais, e, assim como os humanos, possuem uma curiosidade natural que os levam a aprender um pouco de tudo.
+Juntamente aos Humanos, são as raças mais propensas a serem aventureiras e a desbravarem o mundo, qualquer oportunidade de descobrir coisas novas é algo muito convidativo para eles, mas evitam o norte, o clima frio os afasta.
+Jogando com personagens Pequeninos
+Atributos: A agilidade natural é uma das principais características desta raça, todos os seus membros recebem +1 ponto racial em Destreza. Os machos desta raça recebem também +1 ponto racial em Instinto, enquanto as fêmeas recebem +1 ponto racial adicional em Carisma.
+Categoria de Tamanho: A menor dentre as raças humanoides, os pequeninos são de Categoria de Tamanho -1.
+Idiomas: Os pequeninos falam dois idiomas. De acordo com a tribo, normalmente nos países do sul, falam Tom Menor, uma língua de ritmo cantado e que não possui forma alfabeto escrito, nos países do centro e norte do Continente falam uma variação do idioma Anão, o dialeto Pequenino. Também falam a língua Continental e um idioma adicional, conforme seus Antecedentes.
+Longevidade: De longevidade próximas aos humanos, Pequeninos vivem em média 70 anos.
+Perícias e Talentos: Os Pequeninos são muito curiosos e aprendem rapidamente qualquer coisa, mas raramente se especializam em algo, sendo mais propensos a dispersarem ao descobrirem algo novo. Personagens Pequeninos iniciam o jogo com 1 Talento Geral e recebem 2 Especializações adicionais divididas entre 2 Perícias à sua escolha.
+Tendência: São frequentemente bondosos, e são raros os membros neutros nessa raça. Indivíduos malignos, se existirem, são inimagináveis.
+
+Características Raciais
+	•	Aprendizado Rápido: Durante a criação do Personagem podem escolher duas Perícias Treinadas, adquirir a Segunda e Terceira Graduação destas perícias custam 0.5EXP a menos.
+	•	Adaptação: Novos talentos custam apenas 2.5 EXP, ao invés de 3 EXP;
+	•	Ligeiro: Pequeninos são pequenos, mas se movem rápido, recebem +2UD adicionais em seu Movimento Base;
+	•	Sempre Veloz: Seus pés grandes, e suas pernas fortes adaptadas à movimentos rápidos e constantes permitem que, enquanto em terra, Pequeninos nunca sofrem de redução de movimento devido terreno difícil.
+Distraído e Motivado: Pequeninos se entediam rapidamente e sempre procuram fazer coisas diferentes, sofrendo Desvantagem em rolagens de Perícias usadas em Rodadas consecutivas, no entanto, em cada turno, recebem Vantagem a partir da segunda rolagem Perícia que efetuam, mas apenas quando esta são de Perícias diferentes das roladas anteriormente.
+
+O Grande Continente
+Gnomos
+A mais jovem dentre todas as raças, estes descendentes de Gaea nasceram das misturas de raças Feéricas e pequenos humanoides, principalmente Anões.
+Os caçulas da linhagem de Gaea são conhecidos pela sua grande afinidade com magias e tecnologias, facilidade em aprender e um eterno sorriso.
+Por aparência, os Gnomos são humanoides pequeninos e que, por vezes, apresentam alguma caraterística Feérica, como o tamanho diminuto das Pixies, as asas de Borboleta ou Libélula, e uma a conexão extraordinária com a natureza. De baixa estatura, poderiam facilmente se passar por Anões não fosse a baixa resistência e bom humor. 
+Estes jovens híbridos de Fadas são, dentre seus semelhantes, os que melhor se adaptaram ao progresso, a curiosidade herdada de seus antepassados, somada a sua inteligência, os levaram as grandes capitais, as fábricas, academias e aos grandes inventos. 
+Amigos e rivais dos Goblins, as duas raças são pioneiras em invenções malucas, de funcionamento confuso e eficiência duvidosa, mas, graças a uma de suas ideias explosivas, o Império pode desenvolver sua poderosa tecnologia a vapor, que após ser refinada pelos cientistas da academia vermelha quase permitiu que os Eldurianos dominassem o Grande Continente.
+
+Jogando com Gnomos
+Atributos: Sociais, divertidos e conhecem as palavras certas para se aproximar das pessoas, principalmente quando querem aprender algo delas, ou precisam de um patrono para suas invenções. Recebem bônus Racial de +1 em Carisma.
+Também possuem boa destreza e afinidade com magias, por isso recebem bônus Racial de +1 em Destreza ou Foco, a escolha do jogador.
+
+Categoria de Tamanho: Quando suas raízes Feéricas não estão em evidência é muito fácil confundir um Gnomo e um Anão, pequeninos e rechonchudos, possuem Categoria de Tamanho -1.
+
+Idiomas: São fluentes na língua Continental e Arcano (dialeto Feérico).
+
+Longevidade: Não é só em aparência que os Gnomos lembram Anões, a expectativa de vida de ambas as raças é bem parecida, vivem em média 250 anos.
+
+Perícias e Talentos: Os Gnomos são estudantes por natureza, sempre conectados ao saber. Recebem uma Especialização adicional em até 3 Perícias diferentes.
+
+Tendência: Ambiciosos, normalmente são Neutros, não se importam muito com quem são seus patronos e possíveis professores, mas costumam utilizar seus conhecimentos e inventos em favor do bem comum.
+
+Características Raciais
+	•	Domínio de Conhecimento: Iniciam o jogo com uma Habilidades de Competência de cada uma de suas três Perícias Treinadas por benefício Racial
+	•	Aprendizado Rápido: Adquirir a segunda e terceira graduação de suas duas Perícias Treinadas por benefício Racial custam 0.5 exp a menos
+	•	Sangue de Fada: Gnomos podem adquirir 1 único Talento Feérico, adquirir este Talento após a criação do Personagem custa 2.5EXP, ao invés de 3EXP.
+	•	Mente Veloz, Sorriso Veloz: Tão ágeis em fazer amizades quanto em criar coisas novas, os Gnomos recebem Vantagem na primeira rolagem de Perícia baseada em Carisma que efetuam a cada Cena.
+Criatividade Superior: Gnomos são extremamente criativos e inteligentes, frequentemente desenvolvendo novas tecnologias ou recursos, por isso, quando treinados em Profissões, recebem uma Especialização ou uma Habilidade de Competência adicional.
+
+Tesouros de Grurton
+Orcs
+Criados por Epona, estes descendentes dos Elementais da Terra estão entre os povos mais antigos de Tellus.
+Com uma cultura rica e espiritualizada, as civilizações Órquicas ostentam grandes pirâmides ocultas em meio as montanhas e sofisticadas construções adornadas com as maiores preciosidades que podem ser extraídas da terra, como ouro e pedras preciosas.
+O forte vínculo com Epona é o componente mais expressivo da cultura deste povo, que prega a retidão, o laço com os ancestrais elementais, a fé e a harmonia com o ambiente onde vivem.
+Embora antigos, pacíficos e organizados, a história dos Orcs foi marcada pela guerra com outras raças de Grurton, principalmente contra ferozes Gnolls, em função deste histórico sangrento, se tornaram mestres na arte da guerra, desenvolvendo artes combativas sofisticadas.
+Embora vivam num mesmo lugar a gerações os Orcs são filhos de Epona, deusa dos viajantes, por isso é comum se tornarem aventureiros quando a oportunidade lhes surge, normalmente atuando como guerreiros, conselheiros e conjuradores espiritualizados, nestas condições frequentemente Despertam como Aventyrs Totêmicos Vix, Receptáculos, Artes Divinas e Espiritualistas da Guerra, mas podem Despertar quaisquer outros Títulos, conforme suas próprias experiências.
+
+Jogando com Orcs
+Atributos: Resistente como seus antepassados Elementais, recebem Bônus Racial de +2 Vigor.
+Categoria de Tamanho: Embora grandes e robustos, ainda pertencem a Categoria de Tamanho +0
+Idiomas: Todos os Orcs falam Órquico e um idioma adicional baseado em seu Antecedente, mas devido ao contato com o povo do Continente alguns aprenderam idiomas do além-mar, podendo trocar um destes idiomas pelo Continental.
+Longevidade: Embora muito duráveis, a expectativa de vida dos Orcs é curta, vivendo em média 50 anos.
+Talentos e Perícias: Sua resistência natural somada aos treinamentos que são expostos, garantem aos Orcs 1 Talento adicional, escolhido entre os Talentos de Sobrevivência.
+Também recebem 1 Especialização adicional em até 2 Perícias.
+Tendência: Podem assumir quaisquer tendências, mas são majoritariamente Neutros.
+
+Características Raciais
+	•	Vigor de Epona: Recebem +1 Multiplicador de PV e reduzem em -1 todo Dano Físico Sofrido
+	•	Força Tectônica: Orcs recebem uma Habilidade de Força adicional ao alcançarem Força Base 3
+	•	Placitude Térrea: Orcs recuperam 1 ponto temporário de Autocontrole adicional a cada sessão de jogo
+	•	Herança Celeste: Magias Elementais: Terra ou Sagrada conjuradas por um Orc tem seus efeitos de Cura, de aumento de Defesas ou Reduções de Danos Sofridos aumentados em +1 para cada Título Aventyr Desperto.
+	•	Agnação Ancestral: em um ritual fora de cenas de combate podem gastar 3PM para se conectar aos seus ancestrais Elementais da Terra para conseguirem conselhos, reduzindo em -1 nível o GD de uma rolagem de perícia (são considerados treinados e especialistas nesta rolagem, mesmo que não sejam).
+
+
+O Olho de Deus
+Homúnculos (pendente)
+
+
+Feéricos
+Módulo Básico
+Bestiais
+Talvez a raça mais misteriosa de Tellus, cuja origem só existe em rumores e especulações. A ideia mais aceita é que, em um passado distante, uma tribo druídica fez usos de rituais proibidos, pactos e magias antigas para adquirir e controlar poderes da natureza, transformando a eles e aos seus seus descendentes numa nova raça.
+Rumores a parte, os Bestiais são humanoides inteligentes e selvagens, majoritariamente devota do druidismo e presente em todos os cantos do continente, sempre que viajam para um novo território seu corpo muda, adquirindo características dos animais que ali vivem, uma forma de adaptação ou evolução constante.
+Raramente se interessam pelas cidades e suas tecnologias, alheios ao progresso, preferem a pacata vida selvagem.
+Possuem grande afinidade com a magia Natural, mas também costumam ser capazes de manipular outras formas de mana, sua capacidade de adaptação física permite que tenham bom desempenho independente das tarefas que se dediquem. Nobres frequentemente tentam incluir algum bestial em sua fileira de homens, mas é muito difícil atraí-los, pois não costumam ter interesse em ouro e nos luxos da vida moderna.
+O conceito de bem e mal não se aplicam a maioria dos Bestiais, como animais, evitam interações desnecessárias com outras criaturas, na maioria das vezes agem em prol da defesa do próprio território ou família. Ainda assim as vezes se tornam aventureiros, tem ótima relação com as fadas, elfos, pequeninos e outras raças apegadas a natureza, muitas vezes viajam o mundo na boa companhia deles.
+
+Jogando com Bestiais 
+Atributo: Os Bestiais não possuem Bônus Raciais em Atributos, mas quando adquirem um novo Talento Racial também podem receber um ponto de Atributo adicional, conforme a descrição.
+Categoria de Tamanho: Exceto por sua habilidade quimérica, Bestiais são muito similares aos humanos, também possuem Categoria de Tamanho 0.
+Idiomas: Os Bestiais falam a língua Silvestre, um idioma rústico e tão selvagem quanto eles, também falam um idioma adicional, de Antecedente. Durante a criação do personagem, os jogadores podem escolher trocar quaisquer dos idiomas anteriores por Arcano (dialeto Feérico) ou Élfico.
+Longevidade: De vida pouco mais curta que os Humanos, vivem em média 60 anos.
+Perícias e Talentos: Os Bestiais são capazes de se adaptar rapidamente as mais diversas situações enquanto junto a natureza. Sua adaptabilidade lhes concede um Talento Bestial e um Talento adicional escolhido entre Talentos Gerais ou Talentos Bestiais.
+Tendência: Os Bestiais são quase sempre Neutros, como os animais na natureza, e raramente assumem um Alinhamento de Tendência diferente.
+
+Características Raciais
+	•	Corpo quimérico: Os Bestiais podem, ao custo de 2PD, copiar as características de animais da fauna local após tocá-los, adaptando-se assim ao clima e efeitos da flora da região. Também recebem Vantagem nas rolagens de ‘Atenção’ e ‘Furtividade’, em ambientes selvagens (não urbanos), e em ‘Conhecimento’, na especialização Natureza. PD gastos desta forma não são recuperados enquanto o Bestial desejar reter estas características;
+	•	Falar com animais: Os Bestiais podem se comunicar com animais da mesma forma que se comunicam com outros personagens, limitados a inteligência de cada animal, para isso devem utilizar 2PD. Esta habilidade dura por toda uma Cena; 
+	•	Inocência selvagem: A falta de malícia social dos Bestiais lhes concede Desvantagem nas rolagens de Persuasão (exceto para intimidação) e Atenção (exceto para resistir a intimidação), no entanto recebem Vantagem em testes de Persuasão para Intimidação e em Atenção para resistir a Intimidações; 
+	•	Despertar Monstruoso: Bestiais que possuam 2 ou mais Talentos Bestiais tem seu tipo de criatura alterado de Feérico para Monstruoso, desta forma podem adquirir talentos Monstruosos. Após se tornarem Monstruosos os Bestiais não podem adquirir novos talentos Feéricos.
+Ego Primitivo: Criaturas desta raça estão conectadas aos seus impulsos mais primitivos, por isso não sofrem perda de Autocontrole em decorrência de habilidades de seus inimigos.
+
+Fadas e Fúrias
+Não existe consenso sobre a criação das Fadas e Fúrias, é certo que de elas são algumas das mais criaturas antigas de Tellus, mas não há registro confiável se são filhas de Gaea ou Sylph, ou de ambas, independente da resposta quase todas veneram a Flora.
+Há também um forte vínculo destas criaturas com a natureza, uma forma de relação simbiótica, onde elas protegem as florestas e em troca extraem dela seus poderes mágicos.
+As Fúrias eram Fadas originalmente, de certa forma ainda são, o que as difere é o aspecto da natureza qual se associam. As Fadas são ligadas a vida, ao crescimento e florescer primaveril, enquanto as Fúrias extraem seu poder da predação, da decomposição e da queda outonal.
+Há também uma sutil diferença entre os tipos que poucos sabem ou notam. Quando elas possuem asas, as Fadas possuem asas largas e coloridas, como das borboletas, enquanto as Fúrias possuem asas duplas, como das libélulas.
+Todas as Fadas e Fúrias são fêmeas, possuem aparências humanoides de diferentes tipos e formas e são consideradas mães das florestas. O mais próximo de machos da espécie são os seres conhecidos como Sátiros, mas são tantas as diferenças entre eles que podem facilmente ser classificados com raças distintas.
+As comunidades feéricas, nomes dados aos grupos de raças ligados as Fadas, exceto as Fúrias, costumam seralegres e convidativos, algumas dezenas de indivíduos em cada florestas, principalmente ao Sul do Continente, nas regiões de clima tropical, mas podem ser encontradas em qualquer lugar que haja natureza viva e vegetação abundante.
+Normalmente se reproduzem em contato com os Sátiros ou com machos de qualquer outra raça feérica ou humanoide, ou mesmo de forma assexuada. 
+A reprodução assexuada só é possível uma vez em toda a vida de uma Fada, onde dividem sua própria alma e infundem a fração retirada em uma semente. Da plantação desta semente nascerá uma árvore, e do interior do primeiro fruto desta árvore nascerá um novo ser. Embora similares as Fúrias não são capazes de se reproduzir desta forma.
+Fadas e Fúrias normalmente não se relacionam, mantendo distância entre os grupos e frequentemente travam disputas mortais por territórios. As Fúrias são criaturas pouco sociais, raramente se misturam com outras raças e mantém pequenas comunidades matriarcais, com uma líder espiritual e grupos de amazonas. 
+Em compensação a falta de capacidade de reprodução assexuada e da falta de contato com outras raças, as Fúrias normalmente sequestram e enfeitiçam viajantes, forçando-os a cópula, e depois abandonam suas vítimas, alguns grupos mais extremos chegam a assassinar seus parceiros após o ato.
+Também é possível encontrar Fadas e Fúrias vivendo no fundo dos mares e rios, principalmente quando próximos as florestas, estas são chamadas Sirenídeas.
+
+Jogando com Fadas e Fúrias 
+Atributo: Fadas e Fúrias são criaturas naturalmente sociais, estão sempre em contato com outras raças devido à boa fé ou por interesses não tão gentis, por isso recebem +1 ponto Racial em Carisma. Sua natureza mágica também lhes garante +1 ponto Racial em Foco.
+Categoria de Tamanho: Há diversos tipos de fadas e fúrias e poucos padrões entre elas. A Categoria de Tamanho destas criaturas varia entre -1 e 0, escolhido durante a criação do personagem. Há também fadas e fúrias de Categoria -3, mas apenas quando pertencentes a linhagem das Pixies
+Idiomas: Tanto as Fadas quanto as Fúrias são fluentes nos idiomas Arcano (dialeto Feérico), Continental e no idioma referido em seu Antecedente.
+Longevidade: Fadas e Fúrias são seres de vida curta, exceto quando passam pelos ritos das Dríades. Normalmente vivem cerca de 40 anos, mas em aparência nunca envelhecem. Quando passam pelo rito das Dríades, enquanto mantiverem seus votos com a natureza, podem viver para sempre.
+Perícias e Talentos: Todas as Fadas e Fúrias recebem um Talento adicional, escolhido entre os Talentos Feéricos. Este talento indica a linhagem do personagem dentro da raça.
+Também recebem Treinamento em Conhecimentos, com uma Especialização adicional escolhida entre Metamágico ou Natureza, e em uma Perícia adicional escolhida entre Domínio do Mana, Persuasão ou Furtividade. Adicionalmente recebem uma Especialização adicional da Perícias escolhida ou uma Habilidade de Competência de cada uma destas Perícias Raciais.
+Tendência: Os Fadas são frequentemente bondosas, amistosas e sociáveis, as Fúrias por outro lado frequentemente assumem tendências de alinhamento malignos ou neutro.
+
+Características Raciais
+	•	Feromônio Encantador: Fadas e Fúrias podem exalar feromônios atraentes aos humanoides, e de outras raças feéricas, do sexo masculino, para isso podem utilizar 1PD (em uma Ação Livre) para receber Vantagem em rolagens de Persuasão ou Artes, realizada contra alvos em Distância Curta, durante 1 Rodada. Esta característica é um efeito de Encantamento.;
+	•	Natureza Mágica: Fadas podem mimetizar a magia ‘Piscar’ ao custo de 2PD, mesmo que não as conheçam. Fúrias, ao invés disso, são capazes de mimetizar ‘Transformação Monstruosa’, também ao custo de 2PD, mas limitadas a raças fêmeas Humanoides de Categoria de Tamanho 0 ou inferior;
+	•	Magia Natural: Fadas e Fúrias capazes de conjurar magias gastam 0.5 EXP a menos para aprenderem magias adicionais do tipo Natural;
+	•	Conexão com o Mana: Novos Talentos Metamágicos custam apenas 2.5 EXP, ao invés de 3 EXP, para as Fadas e Fúrias. 
+	•	Imunidade a Encantamentos: A cultura das Fadas e Fúrias giram em torno de magias e encantamentos, por isso recebem Bônus Racial de +2 em DM e são imunes aos efeitos diretos de Encantamentos, mas ainda podem ser alvos de efeitos indiretos (como sofrer danos de armas encantadas).
+O Grande Continente
+Górgonas
+Aquelas que já foram Fadas. Quando a rainha das Fadas decidiu se casar com Vel'Dorah, O Dragão Rastejante, para proteger seu povo, ao invés de lutar, a Ninfa Górgon virou as costas para sua criadora, vendo o sacrifício dela com um ato de fraqueza. Incapaz de abaixar a cabeça e jurar fidelidade a um inimigo tão maligno, juntou-se à Medusa, Esteno e Euríale, que concordavam com sua forma de pensar, e juntas abandonaram a Floresta do Juramento, rumando às florestas selvagens ao leste.
+As quatro Fadas, e aquelas que as seguiram, quando se afastaram das terras hoje chamada Veldora, viram sua pele endurecer, tornando-se escamas, seus cabelos começaram a cair e de suas cabeças nasceram serpentes, seus dentes se tornaram presas e suas asas caíram.
+Uma maldição lançada pela Deusa das Fadas, acreditaram, as mais belas criaturas de Tellus transformadas em monstruosidades.
+O desespero pairou sobre as que já foram Fadas, passaram a se esconder na escuridão para que não fossem vistas pelas outras raças, tinham vergonha do que haviam se tornado, e medo de como seriam vistas ou tratadas. 
+Numa noite sem luar, na escuridão da caverna eu chamavam de lar, ouviram então um místico sussurrar, todas ao mesmo tempo, uma voz dizendo que as acolheria, que as guiaria, que as transformaria... a voz de Lacerto, Deus dos Monstros, dos Predadores, dos Caçadores, o filho caído de Gaea.
+Lacerto as seduziu, usou do desespero delas, e as convenceu a invadir a estrela derrubada, lar dos caçulas de Ymir. Se elas libertassem seu Avatar, preso nas catacumbas do templo oculto, ele daria a ela glórias, e uma magia maior do que aquela que antes tiveram.
+O massacre causado pelas que já foram Fadas naquele templo marcou a raça para sempre, a liderança de Górgon levou a extinção dos primos dos Anões, e a libertação do corpo do Monstro Original.
+Lacerto cumpriu parte de suas promessas. Batizou as então seguidoras de Górgon de Górgonas, e deu poderes grandiosos a elas. Seus olhos agora petrificavam os desavisados, seus corpos foram fortalecidos, recuperaram alguns de seus dons Feéricos, mas não sua lendária beleza e a glória de outrora.
+Algumas se enfureceram com as mentiras do Primeiro Caçador, se despediram de Górgon, e escolheram buscar novos caminhos pelo vasto mundo de Tellus.
+Em função destes eventos as florestas selvagens do leste passaram a ser chamadas Perdição de Górgon, que por séculos foi o lar das Górgonas. Recentemente a atual Rainha das Górgonas conseguiram livrar Aquelas que já foram Fadas de uma parcela de sua maldição, recuperando seus belos traços e graça feérica, mas todas as Górgonas que vivem na perdição de Górgon morreram misteriosamente.
+
+Jogando com Górgonas
+Atributos: A benção de Lacerto sobre estas criaturas feéricas lhes deram corpos fortes, e sua herança resgatada dos tempos antigos fazem delas criaturas de beleza exótica e frequentemente sociais. Recebem Bônus Racial de +1 em Força e Carisma.
+
+Categoria de Tamanho: As seguidoras de Górgon passaram anos em contato com Elfos e Humanos, raças predominantes no sudeste do Grande Continente, e herdaram deles a Categoria de Tamanho 0.
+
+Idiomas: Muitas Górgonas passaram a viajar o mundo após a saída da Vel’dorah, por isso Continental é o idioma mais comum entre elas, mas também podem ser fluentes na língua Élfica ou Arcano (dialeto Feérico), a escolha do jogador.
+
+Longevidade: A vida de uma Górgona é mais longa que da maioria das Fadas, mas ainda assim mais curta que a maioria das Raças, vivem em média 50 anos.
+
+Perícias e Talentos: Górgonas recebem um Talentos adicional, escolhidos entre Talentos Monstruosos ou Talento Raciais.
+
+Tendência: Por anos as Górgonas se sentiram traídas pela Rainha das Fadas e por Lacerto, por isso muitos membros da Raça não se dão bem com indivíduos destes grupos, mas são neutras a maioria das outras raças, desde que não sejam tratadas como monstros.
+
+Características Raciais
+	•	Abandonadas pelos Deuses: Aquelas que já foram Fadas estão sempre sob efeito da maldição divina que criou a raça, por isso Magias e Habilidades que sejam fortalecidas por maldições sempre afetam as Górgonas com seus efeitos ampliados.
+	•	Imunidade a Encantamentos: Um dos poderes recuperados recentemente pela raça, as Górgonas são imunes aos efeitos diretos de Encantamentos, mas ainda podem ser afetadas por efeitos indiretos (como sofrer danos de armas encantadas).
+	•	Monstros em pele de Fada: Górgonas podem alternar entra uma aparência comum, com características Humanoides e Feéricas, de grande beleza, e sua forma amaldiçoada de Monstro, para mudar de forma devem utilizar 2PA e 2PM. Enquanto na forma de Monstro sua pele é coberta por escamas encantadas e seus cabelos se tornam serpentes e seus dentes se transformam em Presas Longas (Arma Natural).
+Enquanto na forma Feérica às Górgonas recebem Bônus Racial de +1 em Carisma e RM, quando alternam para a Forma Monstruosa recebem Bônus de +1 em Força e RD. 
+	•	Olhar de Lacerto: Uma das dádivas de Lacerto, as Górgonas utilizar 2PA e 1PD para enfraquecer ou petrificar seus alvos. Esta ação exige uma rolagem de Ataque Corpo-a-Corpo, em até Distância Muito Curta, efetuada contra a DM do alvo, o alvo sofre 1d6+Metade do Carisma pontos de Dano Mágico Elemental: Terra e sofre redutor de 2PA por 2 Rodadas.Enquanto na forma Monstruosa o Olhar de Lacerto recebe a Corrente de Efeitos – Olhar Petrificador: O dano aumenta em +1d6 e o alvo é petrificado por 2 Rodadas, sendo incapaz de realizar ações. Caso o dano do Olhar de Lacerto reduza os PV do alvo à zero ou menos ele é petrificado permanentemente. A petrificação é um efeito de Encantamento. Cada tentativa de petrificar um mesmo alvo tem a GD aumentada em +1 nível.
+	•	Visão no Escuro: O longo período vivendo no subterrâneo permitiu que as Górgonas desenvolvessem a capacidade de ver no escuro.
+
+
+Império das Profundezas
+Sátiros
+"Filhos das Dríades com os Primeiros Homens", assim são chamados os Sátiros pelos estudiosos da Grande Academia Arcana de Vastara.
+Pequenos humanoides de sangue Feérico, pequenos chifres e penas caprinas, alegria contagiante e sorriso fácil, estas são as formas mais comuns de se descrever estas antigas criaturas.
+Sátiros são um dos raros seres Feéricos pertencentes exclusivamente ao sexo masculino, e são famosos por serem galanteadores e namoradeiros, gostam de festas, músicas, badernas e não costumam perder oportunidades de pregar peças, principalmente se isso chamar, de alguma forma, a atenção feminina.
+Raramente se distanciam das florestas, mas, por motivos incertos, dificilmente vivem em comunidades feéricas, normalmente fazem moradas próximos às vilas Bestiais, Élficas, Humanas e Pequeninas, principalmente esta última, onde uma festa só termina para dar lugar a uma nova.
+Quando se tornam aventureiros, assim como suas primas Fadas e Fúrias, são motivados pela curiosidade, raramente por dinheiro e fama.
+
+Jogando com Sátiros
+Atributos: Bom Vivants e selvagens, os Sátiros são muito conectados a natureza e a todas as formas de vida, recebem Bônus Racial de +1 em Instinto e Carisma.
+
+Categoria de Tamanho: São pouca coisa menores que os Humanos, mas a diferença é o suficiente para defini-los como seres de Categoria de Tamanho -1.
+
+Idiomas: O hábito de se comunicar com todos por onde passam levam os Sátiros a aprenderem rapidamente a língua comum, o idioma Continental, adicionalmente costumam ser fluentes nos idiomas Arcano (dialeto Feérico) ou Silvestre, a sua escolha.
+
+Longevidade: Como os Humanos, costumam viver em média por 80 anos.
+
+Perícias e Talentos: Como criaturas Feéricas recebem 1 Talento Feérico (exceto Pixie e Asas) adicional, também recebem Treinamento em Conhecimentos, com uma Especialização adicional escolhida entre Natureza ou Metamágico, e uma Especialização de Perícia adicional, escolhida entre Artes, Furtividade ou Persuasão (apenas quando treinado).
+
+Tendência: Sociais e sem inimigos declarados, exceto alguns pais descontentes de belas donzelas, os Sátiros são normalmente Bondosos ou Neutros.
+
+Características Raciais
+	•	Feromônio Encantador: Sátiros podem exalar feromônios atraentes aos humanoides do sexo feminino, para isso podem utilizar 1PD para receber vantagem em sua próxima rolagens de Persuasão contra alvos adjacentes, esta característica é um efeito de Encantamento;
+	•	Natureza Mágica: Podem mimetizar a magia ‘Aliado da Natureza’ ao custo de 2PD, mesmo que não conheçam esta magia;
+	•	Herança Druídica: A primeira Magia do tipo Natural conjurada a cada Turno Par custa -1PM ou -1PD a menos para ser Conjurada, nestes Turnos o Tempo de Conjuração é reduzido em -1PA;
+	•	Falar com Animais: Os Bestiais podem se comunicar com animais da mesma forma que se comunicam com outros personagens, limitados a inteligência de cada animal, para isso devem utilizar 2PD. Esta habilidade dura por toda uma Cena.
+
+
+Estados Federados
+Yokais (pendente)
+Mestiços
+O Grande Continente
+Meio-Elfos (Humanoide)
+Mestiços, filhos de Elfos com membros de outras Raças Humanoides, os meio-elfos são conhecidos por suas orelhas pontudas, agilidade incomum e pela falta de um lugar para chamar de seu.
+Os elfos raramente se unem as outras raças matrimonialmente, por isso os meio-elfos são raros e, por vezes, exóticos.
+Os meio-elfos não são vistos pela comunidade élfica como guardiões adequados para a natureza, em função de sua vida – na visão deles – curta demais, ao mesmo tempo que são “elfos demais” para se sentirem adotados por outras culturas, por isso vivem inquietos, na constante busca de um lugar para chamar de seu, o que frequentemente os leva aos caminhos da aventura, percorrendo o mundo, descobrindo lugares, conhecendo pessoas e lutando por algum renome.
+
+Jogando com Meio-Elfos
+Atributos: Ágeis e graciosos, meios-elfos recebem Bônus Racial de +1 em Destreza.
+
+Categoria de Tamanho: Os meio-elfos não herdam o tamanho de seus pais elfos, mas sim de seu parente não-élfico, possuindo a mesma Categoria de Tamanho que eles.
+
+Idiomas: Meios-Elfos são normalmente criados em um conflito de culturas, visto as fortes tradições élficas, mas raramente crescem no meio élfico, por isso falam os idiomas raciais de ambos os seus pais.
+
+Longevidade: Herdeiros parciais da longevidade élfica, os meio-elfos vivem até um século a mais que seus parentes não-élficos.
+
+Perícias e Talentos: Refletindo sua linhagem élfica, os Meio-Elfos iniciam o jogo com um Talento adicional, escolhido entre os Talentos Élficos.
+Adicionalmente, caso seus parentes não-élficos recebam Talentos adicionais, os Meio-Elfos também recebem até o máximo de 1 Talento adicional do mesmo tipo. 
+Um Meio-Elfo nunca pode possuir mais de um Talento Élfico do tipo Guardião.
+Caso a raça de seus parentes não-élficos receba Especializações ou Habilidades de Competência adicionais em Perícias você também recebe este benefício, mas limitado ao máximo de até uma Especialização ou Habilidade de Competência adicional.
+Tendência: Sociais e sem inimigos declarados e sem aliados explícitos, os Meio-Elfos são normalmente Neutros.
+
+Características Raciais
+	•	Mestiço Humanoide: Durante a criação do personagem você deve escolher uma raça Humanoide que não seja mestiça, você recebe 2 Características Raciais aleatórias da raça escolhida;
+	•	Aptidão Mágica Além-Élfica: Por razões ainda inexplicadas, os meio-elfos tem uma conexão mais forte com o Mana que a maioria Elfos, por isso seu multiplicador de PM é aumentado em +1.
+	•	Atributo Herdado: Caso a raça de seus parentes não-élficos receba Atributos raciais adicionais, você poderá escolher um dos Atributos bônus daquela raça para adquirir bônus Racial de +1.
+	•	Provar Seu Valor: Os Meio-Elfos estão sempre tentando encontrar seu lugar ao sol e sempre que podem se esforçam ao máximo para isso. Uma vez por sessão de jogo, com Duração de apenas por 1 Cena, você pode aumentar seu valor de Iniciativa em +2.
+	•	Conexão com o Mana: Assim como seus parentes Elfos e seus ancestrais Feéricos, adquirir novos Talentos Metamágicos custam apenas 2.5 EXP, ao invés de 3 EXP.
+
+
+Panteão de Tellus
+Agástias (Elemental: Eletricidade ou Magma)
+Descendentes dos Elementais inventores, Tesla ou Vulcano, os incomuns Agástias são sempre sábios e frequentemente se tornam inventores inovadores, os que descendem do Vulcão costumam revolucionar as tecnologias bélicas, os nascidos do Trovão se tornam mestres na criação de tecnologias civis mais diversas, mas as vezes seus papéis se invertem.
+Embora de nascimento mais comum, respeitando suas raridades, no Império, onde suas divindades elementais são mais cultuadas, podem se apresentar em quaisquer lugares e, independentemente de seu local de nascimento raramente se prendem em um único lugar, sendo viajantes naturais em sua sede sobrenatural pelo aprendizado.
+A aparência dos Agástias é bem variada, sendo quase resumidas a cor de seus olhos e cabelos, os Filhos do Magma costumam ter olhos avermelhados e cabelos ruivos, enquanto as Crias do Trovão têm olhos azulados e cabelos esbranquiçados ou também azulados, mas quando tem boas ideias ou estão desenvolvendo algo que os cativa seu elemento natural pode fugir pelo seu corpo, revelando sua natureza divina.
+Agástias são sempre devotos de sua divindade criadora.
+
+Jogando com Agástias
+Atributos: Sábios, criativos e com uma eterna sede por novos conhecimentos, os Agástias recebem Bônus Racial de +2 em Gnose, caso a raça de seus parentes mortais receba Gnose como um Atributo Racial este valor aumenta para +3. 
+Os descendentes de Vulcano, chamados Agástias Vulcanos, costumam ter olhos para a tecnologia bélica e acreditam ser a matriz do progresso, raramente se afeiçoando ao Arcanismo, por isso recebem Redutor Racial de -1 em Foco (até o mínimo de 1). 
+Aqueles que descendem de Tesla, chamados Agástias Trovejantes, são mais pacíficos e voltados aos livros, não excluindo nenhum recurso no desenvolvimento de suas obras, sofrendo então Redutor Racial -1 em Força (mínimo 1).
+
+Categoria de Tamanho: Os Agástias herdam a Categoria de Tamanho de suas contrapartes mortais.
+
+Idiomas: Sempre criados dentre os mortais, falam os mesmos idiomas de seus pais terrenos.
+
+Longevidade: A expectativa de vida de um Agástia normalmente é similar à de seus parentes não-elementais.
+
+Perícias e Talentos: Recebem 2 Talentos adicionais, o primeiro deles escolhido entre os Talentos de Especialista. Caso seus parentes não-elementais recebam Talentos Raciais, você poderá substituir este Talento de Especialista por um Talento Racial do tipo especificado. 
+O segundo Talento adicional deve ser escolhido dentre os Talentos Elementais.
+Agástias são sempre treinados em Conhecimentos, e recebem Cosmologia como uma Especialização adicional.
+
+Tendência: Comumente são Neutros, entendendo que bem e mal são dentes necessários na engrenagem do progresso.
+
+Características Raciais
+	•	Mestiço Mortal: Durante a criação do personagem você deve escolher uma raça Feérica, Humanoide ou Monstruosa que não seja mestiça, você recebe 2 Características Raciais aleatórias da raça escolhida. Para critérios de pré-requisitos, Agástias podem ser considerados Feéricos, Humanoides ou Monstruosos, conforme sua metade não-elemental;
+	•	Físico Mortal: Caso a raça de seus parentes mortais recebam Atributos Raciais adicionais, você não receberá estes pontos de Atributo, ao invés disso poderá escolher uma Habilidade de Atributo de cada Atributo Racial.
+	•	Engenhosidade Divinal: Sempre que criar novos itens e Equipamentos, você pode escolher reduzir a GD em -1 Nível ou reduzir o tempo de criação do item pela metade.
+	•	Especialistas Naturais: O custo de EXP para adquirir novos Talentos de Especialista são reduzidos em 0.5EXP, adquirir graduação na Perícia Conhecimentos e Profissão até a terceira Graduação também tem seu custo de EXP reduzido em 0.5EXP. 
+Magia é Ciência: O entendimento de que magias é uma ciência exata resumida a números e fórmulas faz com que os Agástias aprendam magias mais rapidamente, quando se interessam por isso. O custo de EXP para aprender novas magias é reduzido em 0.5EXP.
+
+Aquans (Elemental: Água)
+Descendentes diretos de Undine ou de Haloi, os Aquan são os filhos dos Elementais da Água com devotos das Deus dos Rios e Mares.
+Os Aquan possuem pouco ou nenhum pelo corporal, são sempre de tipo físico ectomorfo e excelentes nadadores, apaixonados pelas águas e pela vida aquática.
+Sempre devotos de Undine e Haloi, pois assim como seus parentes elementais, definham e morrem, se tornam água lenta e dolorosamente e então evaporam, quando abandonam o vínculo com sua criadora.
+Embora raros, há mais chance de encontrá-los na proa de um barco ou nas proximidades de um mar ou rio do que no meio do continente.
+No que se refere ao comportamento, costumam ser imprevisíveis, de humor que varia do brando ao tempestuoso, extremamente amáveis, mas que um mero vento pode torná-los violentos e caóticos.
+São sempre criados por seus parentes mortais, mas algo sempre os leva para a proximidade das águas, como um desejo intrínseco de tornar-se um seu elemento criador.
+
+Jogando com Aquans
+Atributos: Aquan são muito hábeis, principalmente dentro da água, mas mesmo em terra seca sua Destreza se destaca dos demais, pois recebem Bônus Racial de +2, caso a raça de seus parentes mortais receba Destreza como um Atributo Racial este valor aumenta para +3. 
+Em contrapartida seu corpo rígido e pesado é lento e pouco ágil, sofrendo Redutor Racial de -1 em Vigor (até o mínimo de 1).
+
+Categoria de Tamanho: Aquan tem por referência de tamanho a Raça de seus parentes mortais.
+
+Idiomas: Sempre criados dentre os mortais, falam os mesmos idiomas de seus pais terrenos.
+
+Longevidade: A expectativa de vida de um Aquan é longa, podendo ser até 50% maior do que a de seus parentes não-elementais.
+
+Perícias e Talentos: Recebem 2 Talentos adicionais, um deles escolhido entre os Talentos de Mobilidade. Caso seus parentes não-elementais recebam Talentos Raciais, você poderá substituir este Talento de Mobilidade por um Talento Racial do tipo especificado.
+O segundo Talento adicional deve ser escolhido dentre os Talentos Elementais.
+Aquans são sempre treinados em Conhecimentos, e recebem Cosmologia como uma Especialização adicional.
+
+Tendência: Imprevisíveis como são, podem assumir qualquer Tendência, mas normalmente são Neutros.
+
+Características Raciais
+	•	Mestiço Mortal: Durante a criação do personagem você deve escolher uma raça Feérica, Humanoide ou Monstruosa que não seja mestiça, você recebe 2 Características Raciais aleatórias da raça escolhida. Para critérios de pré-requisitos, Aquans podem ser considerados Feéricos, Humanoides ou Monstruosos, conforme sua metade não-elemental;
+	•	Físico Mortal: Caso a raça de seus parentes mortais recebam Atributos Raciais adicionais, você não receberá estes pontos de Atributo, ao invés disso poderá escolher uma Habilidade de Atributo de cada Atributo Racial.
+	•	Corpo Maleável: Aquans possuem um corpo maleável como água que os formam, não se restringindo as limitações físicas comuns. Utilizando de uma Ação Livre e ao custo de 1PD, podem substituir Força por Destreza, e vice-versa, em rolagens de Perícia e Dano por 1 Rodadas, se estiverem nas águas de um rio, mar ou lago, a Duração aumenta para 2 Rodadas;
+	•	Água é Vida: Efeitos de Cura, incluindo Descansos, permitem que os Aquan recuperem +2PV. Além disso podem Mimetizar a magia Regeneração Maior ao custo de 2PD.
+	•	Dependência Aquática: Enquanto em contato com rios, mares e lagos o multiplicador de PV de um Aquan aumenta em +1, recebem Movimento Base de Natação e seu Movimento Base aumenta em +2UD, enquanto fora destes locais seu multiplicador de PV é reduzido em -1.
+
+
+Colossos (Elemental: Terra)
+Colossos são filhos dos Elementais da Terra com mortais, sendo netos de Epona.
+Assim como todos os Mestiços Elementais, os Colossos são extremamente raros, mas quando ocorrem é na união de um adepto de fé inabalável em Epona e um Elemental que tenha sido atraído por esta santa troca de energia.
+Os Colossos sempre são devotos de Epona, a desconexão com sua herança divina elemental os faz adoecer e perecer, assim como seus pais Elementais.
+O nome desta raça foi dado em função de suas características físicas, corpos massivos, altos para os padrões de sua metade racial mortal e donos de uma paciência que beira o sobrenatural.
+Normalmente se tornam clérigos ou guerreiros sagrados de Epona e passam toda a sua vida em templos ou outros solos sagrados, mas as vezes sua vocação os leva a viajar pelo mundo, pregando sua fé como missionários ou aventureiros devotos.
+
+Jogando com Colossos
+Atributos: Com corpos massivos e resistentes, Colossos recebem Bônus Racial de +2 em Vigor, caso a raça de seus parentes mortais receba Vigor como um Atributo Racial este valor aumenta para +3. 
+Em contrapartida seu corpo rígido e pesado é lento e pouco ágil, sofrendo Redutor Racial de -1 em Destreza (até o mínimo de 1).
+
+Categoria de Tamanho: Colossos tem por referência de tamanho a Raça de seus parentes mortais, tendo sua Categoria de Tamanho igual à de sua contraparte mortal +1.
+
+Idiomas: Sempre criados dentre os mortais, falam os mesmos idiomas de seus pais terrenos.
+
+Longevidade: A expectativa de vida de um Colosso é a mesma de seus parentes não-elementais.
+
+Perícias e Talentos: Recebem 2 Talentos adicionais, um deles escolhido entre os Talentos de Sobrevivência. Caso seus parentes não-elementais recebam Talentos Raciais, você poderá substituir este Talento de Sobrevivência por um Talento Racial do tipo especificado. O segundo Talento adicional deve ser escolhido dentre os Talentos Elementais.
+Colossos são sempre treinados em Conhecimentos, e recebem Cosmologia como uma Especialização adicional.
+Tendência: Normalmente são Neutros e justos, como a deusa que servem.
+
+Características Raciais
+	•	Mestiço Mortal: Durante a criação do personagem você deve escolher uma raça Feérica, Humanoide ou Monstruosa que não seja mestiça, você recebe 2 Características Raciais aleatórias da raça escolhida. Para critérios de pré-requisitos, Colossos podem ser considerados Feéricos, Humanoides ou Monstruosos, conforme sua metade não-elemental;
+	•	Físico Mortal: Caso a raça de seus parentes mortais recebam Atributos Raciais adicionais, você não receberá estes pontos de Atributo, ao invés disso poderá escolher uma Habilidade de Atributo de cada Atributo Racial.
+	•	Lentos, Grades e Pesados: Colossos são grandes, lentos e pesados, o Movimento Base deles é reduzido em -2UD comparado ao Movimento Base dos membros de sua contraparte mortal, por serem grandes, pesados e desajeitados demais não podem ser treinamentos em Dirigir e Cavalgar;
+	•	Placidez de Epona: Donos de temperamentos rígidas como pedra, os Elementais da Terra são donos de grande Autocontrole. Os Colossos herdaram esta característica, por isso recuperam 1 ponto temporário de Autocontrole adicional por sessão de jogo;
+	•	Resistente ao AEther: Em função da rigidez de seus corpos, Colossos recebem +1 Multiplicador de PV e o dano que sofrem é reduzido em 1, mas sofrem de grande dificuldade em se conectar com o Mana, tendo seu Multiplicador de PM reduzido em -1.
+
+
+Dólos (Elemental: Vento)
+Ágeis, espertos e frequentemente traquinas, excelentes comunicadores e mestres na arte da enganação e manipulação, assim são os filhos do Silfos, os Elementais do Ar e dos Ventos.
+De corpos diminutos e franzinos que os fazem parecer frágeis, parece que sua capacidade de mentir começa em sua aparência, pois são muito hábeis e suas ações normalmente dispensam a força.
+Dólos são criaturas sociais, como sua Deusa Sylph e normalmente ambiciosas, possuem uma moral duvidosa e pouco senso de compromisso, exceto quando há interesse próprio em jogo.
+São sempre criados quando algum Elemental do Ar se afeiçoa com um Mortal, um ato que raramente ocorre em um Templo, o ar está por toda a parte e os Silfos veem tudo, sendo mais comum que a união ocorra em locais de apostas, bebedeiras e guildas não tão fiéis as leis.
+
+Jogando com Dólos
+Atributos: Um Dólos é sempre controlador, interesseiro e manipulador e brincalhão, raramente – talvez nunca – consegue resistir a estes impulsos, por isso recebe Bônus Racial de +2 em Carisma, caso a raça de seus parentes mortais receba Carisma como um Atributo Racial este valor aumenta para +3. 
+Felizmente para o mundo, eles são mais frágeis que a própria língua, a preferência por embates mentais e verbais é em parte consequência da fragilidade de seus corpos, pois recebem Redutor Racial de -1 em Vigor (até o mínimo de 1). 
+
+Categoria de Tamanho: Os Dólos são normalmente menores que seus parentes mundanos, a sua Categoria de Tamanho é igual a de seus parentes não-elementais -1.
+
+Idiomas: Sempre criados dentre os mortais, falam os mesmos idiomas de seus pais terrenos.
+
+Longevidade: A expectativa de vida de um Dólos normalmente é similar à de seus parentes não-elementais.
+
+Perícias e Talentos: Os Dólos instintivamente sabem que nem tudo pode ser resolvido na conversa e que são frágeis demais para um embate físico, por isso recebem 1 Talentos adicional, escolhido entre os Talentos de Assassino. Caso seus parentes não-elementais recebam Talentos Raciais, você poderá substituir este Talento de Assassino por um Talento Racial do tipo especificado. O segundo Talento adicional deve ser escolhido dentre os Talentos Elementais. Adicionalmente recebem 1 Talento Elemental.
+Dólos são sempre treinados em Persuasão ou Conhecimentos, à sua escolha, caso escolham Conhecimentos recebem Cosmologia como uma Especialização adicional.
+
+Tendência: Focados em seus próprios interesses, normalmente estão entre alinhamentos Neutros e Malignos.
+
+Características Raciais
+	•	Mestiço Mortal: Durante a criação do personagem você deve escolher uma raça Feérica, Humanoide ou Monstruosa que não seja mestiça, você recebe 2 Características Raciais aleatórias da raça escolhida. Para critérios de pré-requisitos, Dólos podem ser considerados Feéricos, Humanoides ou Monstruosos, conforme sua metade não-elemental;
+	•	Físico Mortal: Caso a raça de seus parentes mortais recebam Atributos Raciais adicionais, você não receberá estes pontos de Atributo, ao invés disso poderá escolher uma Habilidade de Atributo de cada Atributo Racial.
+	•	Como o Vento: Dólos são velozes no mover-se, o Movimento Base deles é aumentado em +2UD. Também são capazes de andar no ar, recebendo Movimento Base de Voo, ativar esta habilidade requer o uso de 1PA e 3PD, em cenas estressantes, como os combates, a Duração deste efeito é reduzida para 1d6+Carisma Rodadas.
+	•	Saúde Forte em Corpo Frágil: O Multiplicador de PV dos Dólos é reduzido em -1, devido a fragilidade de seus corpos, mas sobrenaturalmente são resistentes a doenças mundanas, nunca sendo afetados por elas. 
+Forma do Vendaval: Dólos podem ficar fisicamente intocáveis por um breve período, num estado quase imaterial. Ativar esta Habilidade requer o uso de 1PA e 3PD, este efeito dura por 1 Rodada e, enquanto na Forma do Vendaval, são incapazes de utilizar quaisquer Perícias (exceto Atenção e Conhecimentos), mas se tornam imunes a ataques e habilidades que não causem danos ou efeito mágicos. Magias ainda afetam os Dólos na Forma do Venda normalmente.
+
+Flaminídeos (Elemental: Fogo)
+Embora ainda muito raros, os mais comuns dentre os descendentes dos Elementais.
+Os Flaminídeos foram peças chaves durante a Guerra Santa Elduriana, servindo como ases em conflitos estratégicos, principalmente como membros dos Inquisidores Vermelhos, caçando os supostos hereges como sua chama ardente.
+No Império surgiram de duas formas distintas, uma delas espontânea, quando um Elemental Ardente se uniu a um mortal de grande fé, ou através de rituais que invocavam elementais, uma prática proibida, mas que fora apenas mais dentre os pecados das divisões extremistas ao longo da guerra.
+Visualmente os Flaminídeos possuem tons de pele escuros ou acobreados e olhos em tom avermelhados ou amarelados, quando Despertam seus Títulos e usam suas Habilidades, as vezes seus olhos e cabelos se transformam em chamas.
+Na grande maioria das vezes os Flaminídeos são criados dentro das igrejas Eldurianas, mesmo após a guerra e todos aqueles que foram criados de maneira criminosa foram acolhidos e tratados de maneira justa, mas as vezes surgem alguns nas ruas do Império ou mundo a fora, livres para viverem suas ambições, guiadas por um senso sobrenatural de justiça, conforme ensina sua fé inabalável em Surt’Eldur, divindade qual são obrigados a seguir, ou perecem se tornando cinzas, como ocorre com todos os Elementais do Fogo ao se afastarem de seu criador.
+
+Jogando com Flaminídeos
+Atributos: Com um faro para a justiça e sentidos que lhes alertam de quais perigos, Flaminídeos acreditam que serem guiados pelo Deus Juiz e confiam em seu instinto, por isso recebem Bônus Racial de +2 em Instinto, caso a raça de seus parentes mortais receba Instinto como um Atributo Racial este valor aumenta para +3. 
+Em contrapartida a proibição Elduriana de utilizar a grande maioria das magias limita a capacidade natural de se conectarem ao Mana fazendo com que sofram Redutor Racial de -1 em Foco (até o mínimo de 1).
+
+Categoria de Tamanho: Flaminídeos tem por referência de tamanho a Raça de seus parentes mortais.
+
+Idiomas: Sempre criados dentre os mortais, falam os mesmos idiomas de seus pais terrenos.
+
+Longevidade: A expectativa de vida de um Flaminídeos é similar à de seus parentes não-elementais.
+
+Perícias e Talentos: Superprotetores, justos e raramente atacam primeiro, os descendentes dos Elementais das Chamas recebem 1 Talentos adicional, escolhido entre os Talentos de Escudeiro. Caso seus parentes não-elementais recebam Talentos Raciais, você poderá substituir este Talento de Escudeiro por um Talento Racial do tipo especificado. O segundo Talento adicional deve ser escolhido dentre os Talentos Elementais. Adicionalmente recebem também um Talento Elemental.
+Flaminídeos são sempre treinados em Conhecimentos, e recebem Cosmologia como uma Especialização adicional.
+
+Tendência: Justos e pacientes, na grande maioria das vezes seguem alinhamentos Bondosos.
+
+Características Raciais
+	•	Mestiço Mortal: Durante a criação do personagem você deve escolher uma raça Feérica, Humanoide ou Monstruosa que não seja mestiça, você recebe 2 Características Raciais aleatórias da raça escolhida. Para critérios de pré-requisitos, Flaminídeos podem ser considerados Feéricos, Humanoides ou Monstruosos, conforme sua metade não-elemental;
+	•	Físico Mortal: Caso a raça de seus parentes mortais recebam Atributos Raciais adicionais, você não receberá estes pontos de Atributo, ao invés disso poderá escolher uma Habilidade de Atributo de cada Atributo Racial.
+	•	Conjuração Limitada: Flaminídeos nunca desobedecem às ordens de Surt’Eldur, por isso são incapazes de conjurar magias que não sejam Divinas, Elementais (apenas Fogo, Eletricidade e Magma) ou Primordiais;
+	•	Chamas da Justiça: Flaminídeos lutam por sua visão de justiça e uma interpretação pessoal ou religiosa da proteção dos mais fracos, por isso recebem Vantagem em todas as suas rolagens de Perícias contra Monstros e personagens de alinhamentos Malignos.
+	•	Aventyr Incandescente: Ativar Habilidades de Título tem uma chance de ascender sua herança Elemental, sempre que ativar uma Habilidade que tenha Custo você poderá adicionalmente rola 1d6, resultados 5 ou 6 fazem com que seus cabelos ou olhos se tornem chamas vivas e uma aura incandescente o cerque por 2 Rodadas, você e aliados adjacentes recuperam 2PV, adicionalmente seus ataques contra Monstros e personagens Malignos tem a Margem Crítica Menor aumentada em +1 número e seus Acertos Críticos recebem a Corrente de Efeitos – Aventyr Incandescente: Este ataque recebe adicionalmente o Efeito Crítico Inflamar, PV perdidos por este ataque só podem ser recuperados com Descansos.
+
+
+Invernais (Elemental: Gelo)
+De extrema raridade, como todos os Mestiços Elementais, os Invernais nascem da união de um guerreiro adepto de Ymir e um Elemental que tenha sido atraído por seu ímpeto e coragem.
+Sempre devotos de Ymir, uma vez que a desconexão com sua herança divina elemental os faz adoecer e perecer, assim como seus pais Elementais, normalmente são guerreiros violentos e implacáveis, que vivem e morrem em busca de constantes combates.
+Normalmente não possuem apegos a famílias e tradições, entrar para exércitos ou se tornar aventureiro é o mais comum dentre os Invernais, pois desta forma garantem sempre estar em condição de testar sua força e fé.
+
+Jogando com Invernais
+Atributos: Extremamente fortes, Invernais iniciam o jogo com Bônus Racial de +2 em Força, caso a raça de seus parentes mortais receba Força como um Atributo Racial este valor aumenta para +3. 
+Em contrapartida seu humor instável e sua preferência em estar em meio a natureza aquática aos companheiros os coloca em posição pouco social, por isso sofrem Redutor Racial de -1 em Carisma (até o mínimo de 1).
+
+Categoria de Tamanho: Invernais tem por referência de tamanho a Raça de seus parentes mortais, tendo sua Categoria de Tamanho igual à de sua contraparte mortal +1.
+
+Idiomas: Sempre criados dentre os mortais, falam os mesmos idiomas de seus pais terrenos.
+
+Longevidade: A expectativa de vida de um Invernal é normalmente curta, constantemente encontrando seu fim na lâmina da espada de um oponente em um combate que poderia ser evitado, mas quando chegam a velhice vivem tanto quanto seus parentes não-elementais.
+
+Perícias e Talentos: Recebem 2 Talentos adicionais, um deles escolhido entre os Talentos de Duelista. Caso seus parentes não-elementais recebam Talentos Raciais, você poderá substituir este Talento de Duelista por um Talento Racial do tipo especificado. O segundo Talento adicional deve ser escolhido dentre os Talentos Elementais.
+Invernais são sempre treinados em Conhecimentos, e recebem Cosmologia como uma Especialização adicional.
+
+Tendência: Normalmente são Malignos, frequentemente incitando conflitos e resolvendo problemas com força-bruta.
+
+Características Raciais
+	•	Mestiço Mortal: Durante a criação do personagem você deve escolher uma raça Feérica, Humanoide ou Monstruosa que não seja mestiça, você recebe 2 Características Raciais aleatórias da raça escolhida. Para critérios de pré-requisitos, Invernais podem ser considerados Feéricos, Humanoides ou Monstruosos, conforme sua metade não-elemental;
+	•	Físico Mortal: Caso a raça de seus parentes mortais recebam Atributos Raciais adicionais, você não receberá estes pontos de Atributo, ao invés disso poderá escolher uma Habilidade de Atributo de cada Atributo Racial.
+	•	Carisma Ymiriano: Seu primeiro ataque de cada um de seus Turnos recebem a Corrente de Efeitos – Carisma Ymiriano: Inimigos atingidos por este ataque se sente obrigado a atacá-lo por 1 Rodada. Este é um Efeito de Encantamento e não afeta um mesmo alvo 2 vezes na mesma Cena.
+	•	Armamento Gélido: Ao custo de 2PA e 2PD você pode fazer com que qualquer arma em suas mãos, ou suas armas naturais, se tornem Obras Primas com Material Especial: Gelo Verdadeiro, este efeito dura por 3 Rodadas. 
+	•	Resistência ao Divino: Os Elementais do Frio são seres de pura força e brutalidade, por isso as bençãos da Luz Primordial têm dificuldades em alcançá-los. Efeitos que permitiram aos Invernais recuperarem PV são reduzidos em -2 (mínimo 1), exceto Descansos verdadeiros e Roubo de Vida.
+
+
+Nascidos da Escuridão (pendente)
+
+Nascidos da Floresta (Feérico)
+A maioria das raças Feéricas, quando cruzadas com outras raças, dão à luz a indivíduos da mesma raça Feérica, mas em raras ocasiões nascem seres mestiços.
+Os Nascidos da Florestas herdam as características de seus parentes não-feéricos, mas se destacam pela presença de cabelos e olhos de cores incomuns e as vezes da presença de cipós, galhos, folhas, algas e flores mistos aos seus pelos corporais, em alguns casos raros possuem peles rígidas como cascas de árvores ou corais, conforme seu tipo de herança.
+Na extrema maioria das vezes os Nascidos da Floresta vivem com seus parentes feéricos e são tratados como iguais por seu povo, mas por vezes vivem junto aos seus parentes não-feéricos em outras terras ou se tornam aventureiros, viajando pelo mundo.
+
+Jogando com Nascidos da Floresta
+Atributos: De grande beleza e com uma aura que emite a tranquilidade da natureza, os Nascidos da Florestas iniciam o jogo com Bônus Racial de +1 em Carisma. Como seres místicos que são, também recebem Bônus Racial de +1 em Foco.
+
+Categoria de Tamanho: Os Nascidos da Floresta herdam a Categoria de Tamanho de seus parentes não-feéricos.
+
+Idiomas: Normalmente criados dentre as fadas, costumam falar o idioma Arcano (dialeto Feérico), mas quando criados por seus parentes não-feéricos podem herdar os idiomas deles, à sua escolha.
+
+Longevidade: Seres de vida curta, costumam viver menos de meio século.
+
+Perícias e Talentos: Recebem 2 Talentos adicionais, escolhidos entre Talentos Metamágicos, Talentos Feéricos ou Talentos Elementais.
+Exclusivamente para cumprirem pré-requisitos de Talentos, Nascidos da Florestas são considerados Elementais, do tipo Elemental Selvagem (composto por qualquer combinação de madeira, plantas, flores, partes de animais ou outras referências à natureza).
+Caso a Raça de seus parentes não-feéricos receba Especializações ou Habilidades de Competência adicionais em Perícias você também recebe este benefício, mas limitado ao máximo de até uma Especialização ou Habilidade de Competência adicional.
+
+Tendência: Normalmente são Neutros ou Bondosos, assumindo alinhamentos malignos apenas quando passam por experiências traumáticas o bastante para deturpar sua natureza pacífica.
+
+Características Raciais
+	•	Mestiço Humanoide: Durante a criação do personagem você deve escolher uma raça Humanoide que não seja mestiça, você recebe 2 Características Raciais aleatórias da raça escolhida;
+	•	Físico Mortal: Caso a raça de seu parente não-Feérico receba Atributos Raciais adicionais, você não receberá estes pontos de Atributo, ao invés disso poderá escolher uma Habilidade de Atributo de cada Atributo Racial.
+	•	Feromônio Encantador de Humanoides: Nascidos da Florestas são mais atraentes e tem facilidades de interagir com personagens humanoides. Sempre que quiserem podem utilizar 2PD (em uma Ação Livre) para reduzir o GD (em -1 nível) de suas rolagens de Persuasão ou Artes, realizada contra alvos em Distância Curta, por 1 Rodada. Esta característica é um efeito de Encantamento;
+	•	Conexão com o Mana: Aprender novos Talentos Metamágicos custam apenas 2.5 EXP, ao invés de 3 EXP. 
+	•	Domínio da Natureza: Magias conjuradas pelos Nascidos da Natureza são consideradas Magias Naturais em adição aos seus tipos (exceto magias Primordiais e Umbrais) e custam 0.5 EXP a menos para serem aprendidas. Magias Umbrais são consideradas antinaturais e impossíveis de serem aprendidas;
+Imunidade a Magias: Nascidos da Florestas tem uma resistência a magia maior de que seus parentes Feéricos, sendo imunes não só a encantamentos, mas a maioria das magias, apenas magias Primordiais e Umbrais os afetam.  Mesmo com a imunidade a magia ainda podem ser alvos de efeitos indiretos de magias, como armas encantadas e habilidades de efeitos mágicos (exceto Encantamentos, pois são imunes a todas as fontes).
+
+Nascidos da Luz (pendente)
+
+Nascidos da Magia (pendente)
+
+Nascidos da Umbra (pendente)
+
+Dragões de Drak’arya
+Nascidos do Dragão (Dracônico)
+Grandes, fortes, de pele escamada e um dom natural pra Magias, estas são as palavras perfeitas para definir um Nascido do Dragão.
+Donos de uma beleza exótica (e questionável), os também chamados filhos do dragão fisicamente são uma misto da raça de seus pais não-dracônicos com características reptilianas ou Dracônicas, como garras e presas, couro ou escama, as vezes Caudas, asas e chifres, também são grandalhões e fortes, mas amadurecem lentamente levando o dobro do tempo para atingirem a maturidade.
+Criaturas extremamente raras, normalmente nascem de mães mortais, fecundadas por um capricho, luxo ou propósito, raramente por afeição verdadeira. Quando nascidos de mães Dragoas quase sempre são abandonados à própria sorte ou devorados por seus irmãos após eclodirem de seus ovos, raramente recebendo atenção. Em ambos os casos, salvo improváveis exceções, ou vivem com os não-dragões ou a própria sorte.
+Dentre os “povos comuns” normalmente são bem-vistos, suas capacidades físicas e mágicas – que para os padrões Dracônicos são baixos – são vistos como incrivelmente altos, também são considerados presentes divinos, por serem indivíduos conectados diretamente aos Planos Elementais.
+
+Jogando com Nascidos do Dragão
+Atributos: Donos de um corpo forte e uma capacidade mágica notável, recebem Bônus Racial de +1 em Força e Foco.
+
+Categoria de Tamanho: Os Nascidos do Dragão são maiores que seus pais não-dragões, estando uma Categoria de Tamanho acima deles.
+
+Idiomas: Normalmente criados dentre o “povo comum”, costumam falar o mesmo idioma de seus pais. Nos casos raros em que são criados por Dragões podem aprender o Dracônico.
+
+Longevidade: Seres de vida longa, vivem três vezes mais que seus pais não-dracônicos, mas demoram o dobro do tempo para alcançarem a maturidade.
+
+Perícias e Talentos: Recebem 2 Talentos adicionais, que podem ser escolhidos entre Talentos Dracônicos, Talentos Monstruosos ou Talentos Mestiços.
+
+Tendência: Nascidos do Dragão podem ser de quaisquer tendências, variando conforme sua criação, aqueles que foram criados em meios urbanos tendem a ser neutros ou bondosos, mas os que cresceram em meios selvagens ou nos covis dracônicos tendem a serem neutros ou malignos.
+
+Características Raciais
+	•	Mestiço Humanoide: Durante a criação do personagem você deve escolher uma raça Humanoide que não seja mestiça, você recebe 2 Características Raciais aleatórias da raça escolhida;
+	•	Atributo Herdado: Caso a raça de seus parentes não-dracônicos receba Atributos raciais adicionais, você poderá escolher um dos Atributos bônus daquela raça para adquirir bônus Racial de +1.
+	•	Armadura Dracônica: Seu corpo é rígido como couro de Dragão e sua saúde inabalável, seu Multiplicador de PV é aumentado em +1.
+	•	Escamas Cromática: Você possui escamas e pele resistentes ao Elemento base do Dragão qual você descende, escolha um dos 8 Elementos para descender, você adquire Resistência Elemental (RE) ao Elemento escolhido e vulnerabilidade ao Elemento oposto. 
+Elemento Base (Resistência)
+Vulnerabilidade
+Fogo
+Água
+Magma
+Gelo
+Terra
+Ar
+Natural
+Eletricidade
+Água
+Fogo
+Gelo
+Magma
+Vento
+Terra
+Eletricidade
+Natural
+
+	•	Magia Dracônica: Os Dragões e suas crias são seres naturalmente mágicos e conectados ao Plano de origem de sua divindade criadora, por isso podem Mimetizar Magias Elementais de seu tipo utilizando PD em substituição aos PM, magias conjuradas desta forma não podem ter seus custos reduzidos por Talentos e Habilidades diversas. Todos os Nascidos do Dragão são capazes de mimetizar Magias Elementais do tipo Semente e Broto, quando Despertam um Título Aventyr se tornam capazes de conjurar Mudas, ao se tornarem GranAventyrs com 2 Títulos podem Mimetizar Emergentes e ao Despertarem seu terceiro Título Mimetizam Magias Florescentes.
+
+
+Monstruosos
+Módulo Básico
+Avianos
+Pouco numerosos, os Avianos podem ser encontrado em qualquer parte do continente, evitando apenas o Império, devido a sua hostilidade com raças não humanoides, ainda assim por vezes são encontrados em suas vilas distantes e áreas rurais.
+Com sua aparência que lembra pássaros humanoides, suas asas longas e cultura migratória, não costumam formar moradas em lugar algum, sempre voando para onde os ventos lhes levar, alguns alegam orgulhosamente conhecer terras além do Grande Continente.
+Apesar de serem considerados monstros, normalmente são alegres e amistosos, adeptos das canções e histórias, e costumam tentar deixar marcas positiva pelos lugares que passa, deixando portas abertas para voltar, ou para que seus iguais também possam ali frequentar.
+Costumam ser solitários ou viver em pequenos bandos, não possuem uma nação conhecida ou nada do gênero, mas existem rumores que estes filhos de Sylph possuem terras próprias nos céus, num país desconhecido ao longe, mas quando questionados costumam desconversar sem responder, alimentando as dúvidas.
+Tornar-se aventureiros é comum entre os membros da raça, seus costumes migratórios e curiosidade natural é todo o combustível que precisam para ir a lugares nunca visitados, para enfrentar situações adversas que eventualmente transformarão em histórias nas tavernas e praças.
+
+Jogando com Avianos 
+Atributos: Existem 2 subtipos de Avianos, chamados Rapinantes e Correnuvens. Os jogadores devem escolher um deles no momento da criação do personagem, feita a escolha não é possível alterá-la.
+Todos Avianos recebem Bônus Racial de +1 em Destreza.
+Os Rapinantes são mais fortes e raramente possuem bicos, são donos de corpos esguios, feições humanas e uma estrutura física que favorece voos curtos e rápidos. Recebem Bônus Racial de +1 em Força, enquanto voando se Movimento Base aumenta em +2UD. 
+Os Correnuvens frequentemente possuem bicos e tem corpos mais resistentes, capazes de voar por horas sem parar, alguns conseguem voar por dias sem precisar voltar ao solo, voando mesmo durante o sono. Recebem Bônus Racial de +1 em Vigor, enquanto voando seu Movimento Base aumenta em +1UD.
+Categoria de Tamanho: Os Avianos possuem estatura similar a dos humanos, por isso possuem Categoria de Tamanho 0.
+Idiomas: Normalmente se comunicam em dialeto próprio, chamado dialeto Aviano, uma variação fonética do idioma Silvestre, mas que possui seu próprio padrão de escrita. Também falam Continental e um idioma adicional, de acordo com seu Antecedente.
+Longevidade: Pouco mais longevos que os Humanos, os Avianos vivem em média 100 anos.
+Perícias e Talentos: Avianos, como uma raça nômade, estão presentes em quase todos os reinos do Grande Continente, talvez do mundo. O contato com tantas raças e culturas os levaram a adquirir diversas habilidades, iniciando o jogo com 1 Talento Geral adicional e recebem uma Especialização adicional e uma Habilidade de Competência em até uma mesma Perícia treinada.
+Além disso também recebem Ossos Ocos como Talento adicional.
+Tendência: Avianos costumam ser Neutros, mas aqueles que passam mais tempos nas cidades junto as outras raças podem assumir quaisquer tendências.
+
+Características Raciais
+	•	Braços Alados: Avianos tem asas no lugar dos braços e os utilizam para voar livremente. No fim de cada asa há uma mão pouco desenvolvida, capaz de realizar as mais diversas ações, mas ambas são consideradas membros inábeis para rolagens de Perícia. Voar em Cenas de Combate ou outras situações de estresse exige o uso de 1PD, a capacidade de voo poderá ser usada por 1d6+Metade da Destreza Rodadas, quando encerrada a duração retornam ao solo lentamente, de forma segura.
+	•	Pés Hábeis e Poderosos: Compensando a pouca destreza manual, os Avianos podem segurar itens com seus pés, enquanto voando – ou em firme apoio – podem realizar com eles ações que normalmente exigiriam rolagens de perícias manuais. 
+	•	Garras Afiadas: Os pés dos Avianos não são apenas hábeis, também são fortes e possuem unhas rígidas e afiadas. Os pés dos Avianos são considerados Armas Naturais Garras Afiadas.
+	•	Visão Além do Alcance: Os olhos dos Avianos são superdesenvolvidos, permitem enxergarem a grandes de distâncias com grande clareza de detalhes, o que lhes concedem Vantagem em rolagens de Atenção para percepções visuais, também possuem Visão no Escuro, enxergando de forma monocromática na ausência de luz. 
+
+
+Goblins
+Talvez os menos selvagens de todos os seres monstruosos. Astutos, traiçoeiros e medrosos são as palavras que melhor definem estas pequenas criaturas.
+Os Goblins possuem ciência de sua falta de força e fragilidade comparado aos outros monstros, mas compensam isso com uma grande inteligência e a força dos números, enquanto nos ermos sempre atacam de maneira coordenada, frequentemente utilizando cercos, armas e armadilhas.
+Quando as grandes cidades começaram a se levantar a migração dos Goblins para elas foi natural, mesmo sendo malvistos devido ao histórico da raça eles se sujeitaram as mais diversas situações para conseguirem os direitos de se juntar ao progresso, hoje dominam a maioria das tecnologias e técnicas de combate sorrateiro.
+Dominar as tecnologias é um termo forte, enquanto selvagem já tinham suas próprias criações, e agora junto as sociedades modernas insistem em tentar estar um passo à frente, dano seu toque “goblínico” a tudo que tocam, o que normalmente resulta em avanço ou em uma explosão.
+O combate astuto e planejado ainda vive no sangue dos Goblins, mesmo com acesso a bons equipamentos e à possíveis treinamentos militares, preferente formas sorrateiras de lutar, usando técnicas furtivas, talvez até covardes.
+Esta personalidade dos Goblins permitiu que alcançassem o status de cidadão em quase todos os reinos do Continente, exceções são o Império Elduriano e as montanhas do Norte, mas se seus costumes excêntricos e a notável cobiça faz com que membros de todas as outras raças mantenham sempre os olhos abertos perto deles.
+
+Jogando com Goblins 
+Atributos: A esperteza dos Goblins lhes permite desenvolver todo tipo de habilidade, física ou mágica, por isso recebem +1 ponto Racial de Foco ou Gnose, a escolha do jogador. Também recebem +1 ponto Racial em Destreza, devido a sua habilidade natural.
+Categoria de Tamanho: A menor raça monstruosa inteligente, os Goblins possuem Categoria de Tamanho -1.
+Idiomas: Goblinóide é a língua nativa dos Goblins, mas também podem falar um idioma adicional, conforme Antecedente. 
+Longevidade: A Raças de vida mais curta e desenvolvimento mais rápido. Goblins atingem a maioridade aos 12 anos, e vivem em média 35 anos.
+Perícias e Talentos: Há um ditado que diz: - “se algo pode ser aprendido e um Goblin viver o bastante, ele vai aprender, tentar aperfeiçoar e então morrer com a explosão resultante”.
+Goblins são frágeis, mas habilidosos e espertos, recebem uma Especialização ou Habilidade de Competência em até duas Perícias, sendo Furtividade e 1 Perícia qualquer a escolha do jogador. Além disso também recebem 1 Talento adicional, escolhido entre Talentos de Mobilidade, Talento de Perito ou Talento de Assassino.
+Tendência: Os Goblins podem possuir quaisquer tendências, mas é improvável encontrar um Samaritano entre eles. Sua esperteza é acompanhada por uma certa malícia, e uma dose de covardia que os impedem de se sacrificar por outros.
+
+Características Raciais
+	•	Visão no Escuro: Por serem criaturas de hábitos noturnos os Goblins desenvolveram a capacidade de enxergar – de forma monocromática – no escuro;
+	•	Aprendizado Rápido: Durante a criação do Personagem podem escolher duas Perícias Treinadas, adquirir a Segunda e Terceira Graduação destas perícias custam 0.5EXP a menos.
+	•	Autodesconfiança em Combate: Após tantas batalhas perdidas contra outros monstros e humanoides os Goblins deixaram de acreditar em sua proficiência em combate individual, acreditando apenas em números e ferramentas. Enquanto em combate, se não houver nenhum aliado que possa ajudá-los, seja por estarem sozinhos, por estarem distantes (Distância Média ou Superior) ou inconscientes, os Goblins recebem o Malefício Abalado e Desvantagem em suas rolagens de Danos; 
+	•	Poder dos Números: Enquanto próximo de seus aliados (Distância Curta ou inferior), recebem Vantagens em suas rolagens de Perícias, se pelo menos um destes aliados for outro Goblin recebem também vantagem em suas rolagens de dano. 
+Criatividade Superior: Goblins são criativos e inventivos, compensando sua falta de força e coragem com uma mente forte, por isso, quando treinados em Profissões recebem uma Especialização ou uma Habilidade de Competência adicional.
+
+Ogros
+Comuns nas regiões quentes e tribais, mas as vezes são encontradas no subterrâneo de regiões mais frias. Os Ogros podem ser encontrados em quase reino, mas não possuem reinos ou cidades próprias, reclamam territórios apenas enquanto selvagens, onde vivem em pequenas tribos regidas pelo exemplar mais forte, com certa frequência um Aventyrs.
+Os Ogros são criaturas grandes, fortes e resistentes, mas de desenvolvimento intelectual lento, demoram a amadurecer comparado a maioria das outras raças, o que lhes garantiu a má fama de estúpidos, mas a verdade é que um Ogro adulto pode ser tão sábio quanto os membros de outras raças. Também são pouco numerosos, seus costumes brutais e sua Fome Insaciável – que muitas vezes os tornam canibais – os levam a conflitos diversos com seus iguais e com outras raças, tornando a mortalidade entre seus membros muito altas.
+O costume de devorar quase qualquer criatura que possam derrotar muitas vezes levou doenças e maldições as tribos, matando comunidades inteiras devido a sua medicina defasada e a falta de afinidade com magias curativas.
+Uma prova da existência da sabedoria ôgrica foi o reconhecimento do progresso, do entendimento que no futuro a força não será mais tudo o que importa, mas que neste momento sua força ainda é valorizada, seja para trabalhos braçais, para os coliseus, ou para o crescente submundo urbano. Este entendimento, principalmente o último exemplo, levou muitos exemplares a migrarem para as cidades humanoides, contraditoriamente os mesmos Ogros que migraram para as cidades não costumam se dar bem com a tecnologia, principalmente por as acharem “frágeis demais para se lidar”.
+Quanto mais ao sul do Continente estiver, maior a possibilidade de encontrar um Ogro numa cidade, mas ainda assim, comparado as outras raças, estes números são poucos, normalmente são expulsos devido as suas características raciais, e um número muito grande deles são apegados a lei do mais forte e a vida selvagem e desregrada. Ogros que tentam se aproximar do progresso acabam sendo seres solitários, dificilmente se enturmam com seres não monstruosos e seus irmãos selvagens os consideram traidores dos únicos costumes que realmente importa, a dominação pela força e pelo medo.
+Em tribos mistas e pequenos vilarejos é comum que Ogros assumam posições de liderança, mas nas grandes cidades suas capacidades são subestimadas, normalmente vivendo nas periferias junto a outras raças monstruosas, principalmente junto aos Goblins, frequentemente servido de guarda-costas destes pequenos e sorrateiros indivíduos.
+São raros os Ogros que desenvolvem poderes arcanos, curiosamente estes poucos indivíduos são supervalorizados em seu meio, mesmo sendo uma tribo a favor da dominação física, por questões desconhecidas eles temem e respeitam a magia. Ogros capazes de conjurar magias são conhecidos como Ogri-Magi (lê-se: ôgri maguí).
+Ainda sobre sua distribuição geográfica, são criaturas raras no centro do Grande Continente devido as incursões Eldurianas, que dizimou grande parte dos monstros e seres monstruosos que viviam em seu território, não são tão comuns no Norte, devido aos constantes conflitos com os filhos de Ymir.
+
+Jogando com Ogros 
+Atributo: “Aptidão física”, estas são as melhores palavras para descrever estes seres. Ogros recebem +2 pontos Raciais em Força e +1 ponto Racial em Destreza; ou +1 ponto em Força e +2 em Destreza.
+Categoria de Tamanho: Grandes e imponentes, os Ogros pertencem a Categoria +1.
+Idiomas: Possuem seu próprio idioma, o idioma ôgrico, também falam o idioma especificado em seu Antecedente.
+Longevidade: De amadurecimento rápido e longevos, os Ogros são considerados adultos aos 12 anos e podem viver até 100 anos, mas devido aos seus hábitos e natureza raramente vivem mais que um Goblin.
+Perícias e Talentos: A falta de interesse da raça em adquirir novas habilidades, e o apego pela lei do mais forte, fez com que os Ogros não adquirissem novas Perícias, por outro lado este mesmo costume garantiu aos mesmos certos Talentos. Ogros iniciam o jogo com 1 talento adicional, escolhido entre Talentos Monstruosos ou Talentos de Sobrevivência.
+Tendência: Ogros podem possuir quaisquer Alinhamentos de Tendência. Os que vivem em cidades normalmente são Neutros, por outro lado, os mais selvagens normalmente são de Alinhamentos de Tendência Malignos. São raros os Bondosos dentre eles.
+
+Características Raciais
+	•	Visão no Escuro: Caçadores de hábitos noturnos e diurnos, Ogros desenvolveram a capacidade de enxergar – de forma monocromática – no escuro;
+	•	Lei do Mais Forte: Adquirir Treinamento ou Graduação – até a terceira graduação – em Perícias baseadas em Atributos que não sejam Força ou Destreza custa 0.5 EXP a mais. Adquirir graduações em Perícias Treinadas baseadas no atributo Força, até a quinta graduação, custam 0.5 EXP a menos.
+	•	Carnívoros Insaciáveis: Ogros são exclusivamente carnívoros e estão sempre com fome, precisam se alimentar no dobro da frequência de outras criaturas, e sempre em quantidades anormais para um ser de seu tamanho (o dobro da porção).
+	•	Mordida Poderosa: Ogros podem atacar seus oponentes com ataques de mordidas, membros desta raça possuem Presas Longas como arma natural. 
+	•	Bocarra: A boca imensa destas criaturas, somadas a sua Fome Insaciável, os tornam capazes de engolir quase qualquer coisa, incluindo seres Vivos. 
+Antes de efetuar um ataque de mordida podem escolher aumentar o Tempo de Ação em +1PA e utilizar 1PD, se o fizer recebem Vantagem neste ataque e a Corrente de Efeitos – Devorar Inteiro: O alvo deste ataque é engolido. Personagens engolidos desta forma sofrem 1+Metade do Vigor do Ogro pontos de dano a cada Rodada e para se soltarem precisam causar danos (dobro do vigor do Ogro) até serem regurgitados. Apenas personagens de Categorias de Tamanho Inferior ao Ogro podem ser alvo desta Corrente de Efeitos.
+O número máximo de personagens que podem ser devorados desta forma é baseado no Vigor do Ogro, devorar personagens de uma Categoria de Tamanho inferior ocupada dois pontos de Vigor, personagens de duas ou mais Categorias de Tamanho inferiores ocupam apenas um ponto de Vigor, desta forma – por exemplo – um Ogro com Vigor 3 pode devorar um Humano (Categoria 0) e um Goblin (Categoria -1), ou três Pequeninos (Categoria -1). Digerir um personagem leva uma quantidade de horas igual ao dobro da quantidade de Vigor ocupada.Caso seja necessário é possível regurgitar um personagem devorado ao tempo de 1PA para cada hora que o personagem está em seu estomago.
+
+O Grande Continente
+Guampos
+Os gloriosos filhos de Epona. Lendas dizem que a Mãe Terra, ao ver que os dragões haviam se tornado ambiciosos, que seguiam mais suas próprias motivações e desejos do que suas obrigações divinas, criou os Guampos, para garantir que os ensinamentos sobre o equilíbrio das forças fossem levados as futuras gerações.
+Os contos antigos dizem ainda que todos os Deuses apoiaram Epona em sua decisão, e abençoaram a raça, e os ensinaram, tornando-os Portadores das Verdades, como são chamados.
+Guampos são criaturas de corpo forte e resistente, uma benção da Deusa dos Viajantes, para que pudessem enfrentar todos os desafios naturais de Tellus, para que pudessem levar em segurança sua sabedoria aos povos mais distantes.
+Sua aparência é a de um humanoide grande e peludo, com cascos no lugar dos pés, cabeça bovídea e olhar sério e afiado, mas normalmente são tranquilos, pacíficos e solícitos, são a única raça monstruosa bem quista no Império Elduriano, apesar de também sofrerem certo preconceito dos mais tradicionalista. A maioria dos Eldurianos acredita que os únicos que conhecem a justiça de Eldur na mesma proporção que a Santa Igreja são os Eruditos Guampos.
+As tradições desta raça nunca os levaram na direção de criar um reino próprio, suas moradas são normalmente temporárias, duram apenas o suficiente para aprender algo novo, ou ensinar tudo aquilo que sabem. Tal postura levou os Guampos a neutralidade com todas as raças do Grande Continente, mas criou uma certa rivalidade com os Dragões, que veem neles como potenciais usurpadores de seu sagrado posto.
+Jogando com Guampos
+Atributos: Apesar do corpo grande e vigoroso, o verdadeiro atributo desta raça é seu alto conhecimento e senso de propósito. Personagens Guampos recebem Bônus Racial de +1 em Gnose e Instinto.
+
+Categoria de Tamanho: Pouco maiores que os humanos, os Portadores das Verdades pertencem a Categoria de Tamanho +1.
+
+Idiomas: Como criaturas errantes, Guampos consideram Continental, a língua de todos os povos, como seu idioma natural.
+
+Longevidade: Guampos vivem bastante, se comparado a média humana, mas seu tempo de vida é curta quando comparado as raças antigas. A expectativa de vida de um Guampo é em média de 150 anos.
+
+Perícias e Talentos: O conhecimento, a magia e o vigor são as principais marcas dos Guampos. Personagens desta raça são sempre treinados em Conhecimentos, com as Especializações Cosmologia e Metamágico (ambas), também recebem uma Habilidade de Competência desta Perícia. 
+Também recebem um Talento de Sobrevivência ou um Talento Metamágico, à sua escolha.
+
+Características Raciais
+	•	Benção Divina: Por terem sido tocados por todos os Deuses Elementais, Guampos possuem Resistência Elemental a todos os Elementos, e normalmente pouco se incomodam com as diferenças climáticas. Como parte da benção recebidas, a primeira Magia Elemental conjurada em Rodadas Pares custa -1PM a menos (mínimo 1PM);
+	•	Vigor de Epona: Guampos recebem +1 Multiplicador de PV e reduzem em -1 todo dano sofrido;
+	•	Chifres Majestosos: Chifres dos Guampos nunca param de crescer, o chifre revela a idade do personagem, grandes chifres para eles indicam muita sabedoria adquirida. Também podem usar o chifre como Arma Natural Chifres Poderosos. Investidas usando os chifres causam +1d6 pontos de dano adicionais;
+	•	Memória Eidética: Foram criados para serem portadores de conhecimentos, professores e guias das raças, por isso nunca esquecem algo que tenham aprendido.
+Senso de Direção Apurado: Os Portadores das Verdades sempre conseguem identificar o Norte, combinado a sua Memória Eidética, nunca se perdem em labirintos, naturais ou mágicos, sempre reconhecendo caminhos que já percorreram.
+
+Indômitos
+Assim são chamados os membros das raças felinas Apedemak, Bastet e Sacmis, cujo reino foi dizimado pelo Império Elduriano em sua Guerra Santa.
+Antes da Grande Guerra estas criaturas viviam em terras à sudeste do Império, num reino florestal que fazia fronteira com Ofiussa e Vastara.
+Pouco numerosos, eram conhecidos como guerreiros tribais ferozes e bairristas, defendiam seu "território de caça", como chamavam seu reino, com uma força destruidora.
+Implacáveis e destemidos, nunca haviam perdido uma batalha em seu território, até a chegada do Império com suas poderosas máquinas modernas, incendiando as florestas, e reduzindo os felinos à quase extinção.
+A maioria dos sobreviventes destas raças são os que abandonaram seus costumes e terras, e orgulho, fugindo para Ofiussa e Vastara, ou para a não tão distante Vel’dorah, mas não antes de matarem milhares de Soldados Eldurianos. A fúria que apresentaram em suas batalhas deixaram uma marca profunda no orgulho Elduriano, e lhes renderam a alcunha de Indômitos, como são agora conhecidos.
+Antes de sua queda viviam em comunhão com a natureza, em sociedades tribais e xamânicas, cultuando Gaea, deusa da Natureza, Lacerto, Deus dos Caçadores e Predadores, e a Escuridão Primordial, que na visão deles representava a noite, a lua, e cada estrela no céu era um antepassado falecido em ato de bravura.
+As raças felinas viviam em comunidades matriarcais, e as chefes das tribos herdavam o nome da fundadora de seu povo e raça. Lendas dizem que as primeiras representantes destas raças foram criadas pela própria Gaea, para serem esposas de seu primogênito, e os membros atuais da raça são filhos de Lacerto. 
+As três raças possuem poucas diferenças visíveis, conviviam pacificamente e era comum que um membro de uma raça vivesse junto a outra, de modo a dividir seus conhecimentos e equalizar suas forças, porém não era aceitável que tivessem descendentes híbridos, os chamados Impuros. Estas crianças eram expulsas das tribos, para viverem a própria sorte, e seus pais eram punidos, muitas vezes com a morte.
+Os Apedemaks são conhecidos por seu tom de pelo alaranjado escuro e pele parda, e ostentam grandes cabeleiras que lembram jubas. Seus membros eram conhecidos por serem fortes guerreiros.
+Os Bastets possuem pele e pelos negros como a noite, de corpo ágil e certa afinidade com a magia, frequentemente eram responsáveis pela proteção das tribos. 
+Sacmises possuem pelos claros alaranjados ou brancos com listras ou manchas negras em formas variadas, e possuem sempre pele clara. Apesar de ferozes como seus irmãos, eram conhecidos como estudiosos, portadores das verdades e curandeiros.
+Hoje, sem um lugar para chamar de lar, podem ser encontrados em quase qualquer reino que não o Império, devido ao seu forte rancor.
+
+Jogando com Indômitos 
+Atributos: Como uma raça na linha tênue entre um ser monstruoso e um monstro verdadeiro, a força bruta é sua característica mais notável, todos os Indômitos recebem Bônus Racial de +1 em Força.
+Além disso cada raça possuí diferenças físicas que os tornam únicos, Apedemaks recebem Bônus Racial de +1 em Instinto, Bastets +1 em Foco e os Sacmises +1 em Gnose.
+Os raros Impuros, quando sobrevivem até a vida adulta, recebem Bônus Racial de +1 em Força (para um total de Força +2) e Vigor +1. Também sofrem penalidade Racial de -1 em Autocontrole. Impuros são temidos por serem monstros incontroláveis, de humor instável e força sem igual.
+
+Categoria de Tamanho: O corpo poderoso destas criaturas frequentemente os faz parecer maiores do que realmente são, à primeira vista parecem enormes, mas na verdade são de tamanho similar ao dos humanos, possuindo Categoria de Tamanho 0.
+
+Idiomas: Os felinos sempre viveram junto a floresta, e falam a língua dela. Todos os Indômitos falam a língua Silvestre, e após serem expulsos de seu lar, a maioria se tornou fluente no idioma Continental, a língua comum.
+
+Longevidade: Assim como os Humanos vivem em média 80 anos, mas, desde que perderam suas terras, raramente chegam a terceira idade.
+
+Perícias e Talentos: Todas as raças Indômitas são raças guerreiras, são treinados para lutar e caçar desde a infância, por isso recebem treinamento em Ataque Corpo-a-Corpo como perícia adicional, adicionalmente recebem uma Habilidade de Competência nesta Perícia.
+Além destas Perícias os descendentes de Bastet recebem treinamento em Furtividade, os da tribo Sacmis recebem treinamento em Conhecimentos ou em Medicina e Cura (a escolha do jogador), e os filhos de Apedemak recebem treinamento em Esquiva e Aparar. Os Impuros recebem treinamento em Atletismo, a necessidade de correr, escalar e nadar, dentre outras atividades, é algo comum na vida dos que não tem para onde voltar. Todas as Perícias adicionais tribais recebem uma Especialização adicional.
+Também recebem 1 Talento adicional, escolhido entre Sobrevivência e Monstruoso.
+
+Características Raciais
+	•	Ímpeto do Caçador: Na primeira rodada de combate os Indômitos têm seu Movimento Base aumentado em +2m
+	•	Visão no Escuro: Seres das raças felinas podem enxergar no escuro, em preto e branco, a uma distância de até 8m.
+	•	Garras Afiadas: Possuem Garras Afiadas como armas naturais.
+	•	Ferocidade de Lacerto: Combates longos conectam os felinos aos instintos destrutivos, a partir do quarto turno de combate os Apedemaks, Bastets e Sacmises recebem Resistência a Danos (RD), Vantagem em rolagens de Ataque Corpo-a-Corpo e Danos, se tornam incapazes de criar estratégias complexas e atacam sempre o personagem mais próximo, podendo ignorar este alvo apenas se ele for um Indômito aliado. Neste estado também não conseguem usar Perícias que exijam concentração. Impuros são afetados por estas características no terceiro turno de combate e atacam o alvo mais próximo mesmo que ele também seja outro Indômito. É possível gastar um ponto temporário de Autocontrole para evitar ou finalizar a Ferocidade de Lacerto.
+	•	Monstros em Potencial: Os Felinos Indômitos são seres que vivem na linha tênue entre um ser monstruoso e um monstro verdadeiro, sempre que adquirem um Talento monstruoso se distanciam mais da racionalidade, se tornando mais agressivos e selvagens. Apedemaks, Bastets e Sacmises deixam de serem considerados Monstruosos para se tornarem Monstros após adquirirem 3 Talentos Monstruosos, Impuros são considerados Monstros após 2 Talentos Monstruosos. Para cada dois Talentos Monstruosos que adquirem os Indômitos adiantam em 1 Rodada os efeitos de Ferocidade de Lacerto.
+
+
+Lâmias
+Ofiussa, cujo nome significa País das Serpentes, foi assim nomeado por ser o antigo território das Lâmias. Os primeiros Ofís, Povo das Serpentes, por gerações serviram as Lâmias como divindades, e viveram sob sua proteção, até que um de seus antigos líderes enlouqueceu, e tentou envenenar seus súditos, conseguindo matar a todos que viviam na antiga capital Ofí e adjacências, mas antes que conseguisse levar sua loucura as outras partes do reino seus súditos se revoltaram, levaram armas contra seus antigos senhores, tomados pelo luto e pela fúria, levando as Lâmias a aparente extinção.
+Pouco se sabe sobre a origem destas criaturas, rumores dizem que estavam na terra desde a chegada dos primeiros homens, mesmo raças antigas como os Anões, Gigantes e Elfos listam as Lâmias como membros das primeiras raças, antigos provérbios dizem serem criaturas da Era dos Dragões.
+Apesar da trágica história que culminou com a quase extinção da raça, as Lâmias são criaturas pacíficas e justas, apaixonadas pelas artes e música, e dividem com as fadas o posto de criadores das Magias Naturais.
+Após sua aparente extinção as Lâmias se refugiaram nas montanhas, vivendo em seu interior, na cordilheira que separa Ofiussa do Império, e da antiga Floresta dos Indômitos, sendo este último um dos poucos povos que mantiveram contato e relação.
+Agora, após séculos reclusos, as Lâmias estão deixando suas terras, retornando a superfície, e finalmente explorando o novo mundo, um mundo que não as conhece ou reconhece.
+Jogando com Lâmias 
+Atributos: Artistas e Artesões Mágicos, assim eram conhecidas as Lâmias em seu glorioso passado e estes títulos são os que melhores descrevem os Atributos da raça, que recebem Bônus Racial de +1 Carisma e Bônus Racial de +1 em Gnose ou Foco, a escolha do Jogador. 
+
+Categoria de Tamanho: O dorso das Lâmias é pouco menor e mais esguio do que a média humana, mas sua alta Cauda os deixa em altura similar a das criaturas médias, por isso são consideradas de Categoria de Tamanho 0.
+
+Idiomas: Devido aos séculos de reclusão as Lâmias perderam qualquer vínculo com os idiomas exteriores e raramente falam outros idiomas. O idioma falado por esta raça é o Dracônico Verdadeiro, dialeto das Serpes, e por vezes falam o idioma Continental, de Ofiussa.
+
+Longevidade: Lâmias são seres de vida longa, atingem a maturidade com cerca de 20 anos, e possuem até 200 anos como expectativa de vida.
+
+Perícias e Talentos: Como artistas e artesões as Lâmias recebem adicionalmente treinamento em uma Perícia baseada em Carisma ou Conhecimentos, a escolha do jogador, também recebem uma Especialização adicional ou Habilidade de Competência da Perícia escolhida.  
+Adicionalmente recebem 1 Talento adicional.
+
+Características Raciais
+	•	Magia Forte, Corpo Frágil: O multiplicador de PM das Lâmias é aumentado em +1, mas o multiplicador de PV é reduzido em -1;
+	•	Visão no Escuro: Lâmias podem enxergar no escuro, em preto e branco, a uma distância de até 8m;
+	•	Cauda Serpentina: Possuem Cauda no lugar das pernas, por isso não podem utilizar botas e itens que normalmente seriam usados nas pernas ou pés, mas são ágeis, seu Movimento Base é de 5UD. Por serem criaturas rastejantes nunca recebem a condição Caído e podem usar a Cauda como Arma Natural, escolhido na criação do personagem entre Cauda Constritora e Cauda Chicote;
+	•	Sentidos Aguçados: Os tempos no subterrâneo afiaram ainda mais os sentidos do povo serpente, que recebem Vantagem em rolagens de Atenção;
+Camuflagem: Lâmias desenvolveram a capacidade de se misturar ao ambiente enquanto estavam reclusas do mundo, recebendo Vantagem em rolagens de Furtividade.
+
+
+Tesouros de Grurton
+Gnolls (pendente)
+
+Trolls
+Jogando com Trolls
+Atributos: Bônus Racial de +2 Força
+Categoria de Tamanho: +0 à +2 (conforme idade)
+Idiomas: Silvestre + Antecedente, Trolls da Floresta podem trocar por Arcano (dialeto Feérico) e Trolls do Inverno podem trocar pelo idioma Anão (dialeto Ymiriano)
+Longevidade: Média 200 anos
+Talentos e Perícias: 2 Talentos Sobrevivência.
+Tendência: Normalmente Neutros
+
+Características Raciais
+	•	Anatomia Vegetal: Recebem Resistência à Críticos, além disso são imunes aos efeitos críticos Atordoante, Ferida Profunda e Sangramento.
+Como fraquezas, os Trolls do Inverno são também vulneráveis à dano Elemental: Natural e os Trolls da Florestas são vulneráveis à dano Elemental: Gelo, todos os Trolls adicionalmente são vulneráveis a danos Elementais: Fogo e recuperam danos sofridos por estes Elementos apenas com Descansos Verdadeiros.
+Trolls também são imunes a efeitos de Roubo de Vida de personagens que não tenham Anatomia Vegetal.
+	•	Regeneração Reativa: Após sofrer danos de fontes inimigas recuperam 2PV por Rodada (em seus Turnos) por uma quantidade de Rodadas igual ao próprio Vigor. A quantidade de PV recuperados desta forma não pode superar os danos sofridos (Efeito não cumulativo).
+	•	Sono de Pedra: Enquanto dormem os trolls se transformam em pedras, camuflando-se ao ambiente. Enquanto dormindo danos sofridos pelos trolls são reduzidos à metade (efeito de meio-dano) e não acordam a menos que sofram danos superiores ao seu valor de Vigor em PV, não sendo possível despertá-los de outras formas até que completem um Descanso Longo. Trolls também recuperam +2PV adicionais a cada Descanso Longo ou Superior.
+	•	Crescimento Constante: Os Trolls crescem até o fim de suas vidas, Trolls jovens (até 120 anos) pertencem a Categoria de Tamanho 0, Adultos (até 180) alcançam a Categoria +1, Anciões (idade superior a 180 anos) alcançam a Categoria +2.
+	•	Visão no Escuro.
+
+
+Sombras da Umbra
+Homens-Fera
+Os Homens-Feras são humanoides que cultuavam Gaea e seus filhos e que foram escolhidos pela Mãe Natureza para proteger o ambiente natural e seu equilíbrio, seus membros representam a necessidade da natureza responder ao chamado progresso, que devastam as florestas, limitando o habitat dos animais e monstros, das criaturas monstruosas e dos seres feéricos.
+Sofrendo grandes dificuldades em cumprir seu propósito os Homens-Feras fizeram pactos com os Senhores da Umbra, tendo acesso ao poder obscuro que permite que alguns de seus membros se transformem em criaturas monstruosas similares aos animais e monstros que protegem. 
+Alguns consideram este dom uma benção, enquanto outros uma maldição, deixada pelos erros de seus antepassados. Não é possível discernir quais membros de uma tribo, família ou clã receberam a herança feral e a capacidade de se transforarem em animais e monstros híbridos de animais, seus membros escolhidos de forma que beira o aleatório entre os descendentes das diversas tribos indígenas humanoides, élficas e feéricas que cultuavam os diferentes aspectos da Mãe Natureza.
+Todos os membros desta raça nascem e crescem como membros de uma raça humanoide e despertam próximo da idade adulta como Homens-Feras, sempre na presença da lua cheia, onde se tornam criaturas incontroláveis, tomados pelo espírito animal e monstruoso que se manifestaram em seus corpos. 
+Aqueles que vivem em tribos tradicionais são guiados pelo seu povo, tendo uma recepção pacífica e entendem a transformação como uma benção, mas aqueles que vivem longe das tribos, em meios urbanos tem transformações caóticas, frequentemente ferindo pessoas próximas em suas primeiras transformações e sendo tratados como monstros, por isso consideram a transformação uma maldição.
+Independente da sua visão da transformação em Homem-Fera, todos entendem e assimilam seu propósito, como eternos herdeiros da vontade da Natureza, lutando pelo equilíbrio do mundo natural e do civilizado, e dos sombrios interesses da Umbra.
+Os Homens-Feras, em sua criação, foram abençoados/amaldiçoados com seis diferentes espíritos animais monstruosos, cada um baseado em animal de sua região, que os dividem em seis diferentes sub-raças, sendo:
+	•	Licantropos, do Espírito do Lobo da Montanha.
+	•	Centauros, do Espírito do Pesadelo.
+	•	Ictocentauros, do Espírito do Dragão Cavalo Marinho.
+	•	Kitsunes, do Espírito da Raposa de Nove Caudas.
+	•	Quiropteras, do Espírito do Morcego Vampiro Gigante.
+	•	Wemic, do Espírito do Leão Dentes-de-Sabre.
+	•	Tornat, do Espírito do Urso Trovão da Nevasca Interminável.
+Os Licantropos são os mais comuns dentre os Homens-Fera, tendo representantes em todos os cantos do mundo e cujos poderes de transformação foram cedidos pelo Chamas Negras. Tão breve adquirem a capacidade de se transformar podem se tornar lobos, quando Despertam seu primeiro Título Aventyr se tornam capazes de se transformarem em Lobisomens, uma forma hibrida entre o lobo e o humanoide que já foram, mas o verdadeiro poder dessa raça se manifesta quando Despertam como GranAventyr e são tocados por Lacerto, adquirindo a forma monstruosa de Lobo da Montanha, um tipo de lobisomem muito mais poderoso e animalesco.
+Os Centauros podem ser encontrados tanto no Grande Continente como em Grurton e receberam as habilidades de transformação dO Decapitado. Tem por primeira forma a de um enorme e poderoso cavalo negro, alguns com crina de fogo ou chifres. Ao Despertarem como Aventyr podem se assumir sua forma mais famosa, hibrida de homem e cavalo, quando se tornam GranAventyr podem se transformar em Pesadelos, seja como um enorme cavalo negro de 6 Patas, com chifres e crina, ou como um híbrido de corpo massivo, pelugem negra espessa e grandes chifres.
+Ictocentauros são mais presentes em ilhas e regiões litorâneas, capazes de se transformar em enormes cavalos marinhos com escamas de dragão, seus poderes vem do Senhor Umbral Coruja Afogada. Como Aventyr sua forma hibrida tem a parte inferior de cavalo marinho e a parte superior de humanoide com escamas. A forma monstruosa Desperta como GrandAventyr tem a parte superior de um Cavalo e a inferior de um Cavalo Marinho ou um corpo de 3 segmentos, divididos entre um corpo marinho, de cavalo e humanoide.
+Kitsunes, exclusivos dos Estados Federados, conseguem se transformar em raposas de múltiplas caudas e seus poderes advém do Dragão Negro Ying Lung. Enquanto sua forma hibrida é de quase idêntica a sua forma humanoide, mas com caudas, presas e orelhas de raposa. Em sua forma monstruosa voltam a se transformar em raposa, mas em uma versão enorme, com nove caudas e presas longas.
+Assim como os Licantropos, os Quirópteras estão presentes em todos os cantos do mundo, mas são pouco numerosos e normalmente cuidam das montanhas e complexos de cavernas.  Sua forma animal é uma dádiva do Muitos Olhos, que lhes permite transformar em um grande morcego, sua forma hibrida mistura elementos de sua forma animal e humanoide, mas sempre ostentando seu enorme par de asas. Sua forma monstruosa é a de um morcego enorme de presas longas, retendo algumas características humanoides, porém com seus atributos animalescos muito mais acentuados, tornando impossível identificar o ser que antes fora.
+Os Wemics são nativos de Grurton, onde são reconhecidos como ferozes caçadores e protetores da savana. Seus poderes metamórficos têm sua origem na Serpente-Devora-Mundos e os transformam em leões. Em sua forma hibrida misturam elementos humanoides e leoninos, com sua juba, garras e presas em destaque. Enquanto em sua forma monstruosa tem a parte inferior de seu corpo a de um leão, com todas as suas quatro patas, mas com a parte de cima do corpo de traços humanoides sutis, sendo similares aos centauros em certos aspectos.
+Por último temos os Tornat, presentes apenas em locais de frio extremo, principalmente no Grande Norte e nos Estados Federados. Tocados pelo Tece-Mortes, são os mais cruéis dentre os Homens-Feras, atacando quaisquer um que adentre seus territórios, mesmo quando não trazem quaisquer males. Em sua forma animal se transformam em um poderoso urso, sua forma híbrida pouco trás de suas características humanoides, parecendo mais com um urso enorme com características humanoides vantajosas selecionadas, como permanecer de pé e seus polegares opositores. Sua forma final é de um grande urso coberto de gelo e neve, sempre parcialmente coberto por uma névoa gélida que exala de seu corpo.
+
+
+Jogando com Homens-Fera
+Atributos: Os sentidos e intuição dos Homens-Fera são bastante aguçados, o que lhes garante Bônus Racial de +1 em Instinto.
+Além disso também recebem bônus variáveis em suas formas transformadas em diferentes Atributos, sendo: Bônus Variável de +1 em um Atributo a escolha do jogador (conforme lista do tipo de Fera) em sua forma animal, Bônus Variável de +1 em ambos os Atributos de seu tipo de Fera em sua forma Híbrida, então por fim Bônus Variável de +2 em ambos os Atributos de seu tipo de Fera em sua forma Monstruosa.
+TIPO DE FERA
+BÔNUS EM ATRIBUTO
+Lobisomens
+Carisma e Força
+Centauros
+Destreza e Vigor
+Ictocentauros
+Foco e Vigor
+Kitsune
+Carisma e Foco
+Quiróptera
+Carisma e Destreza
+Wemic
+Força e Destreza
+Tornat
+Força e Foco
+
+Categoria de Tamanho: +0, aumenta em +1 na Forma Animal e Hibrida, então em +2 na Forma Monstruosa
+Idiomas: Escolhida entre Continental, Arcano (dialeto Feérico), Silvestre ou Élfico (conforme a raça de origem) + Antecedente
+Longevidade: Média 80 anos (triplo para os criados entre os Elfos)
+Talentos e Perícias: 1 Talento escolhido entre Talentos Gerais (quando criados entre humanos), Élfico (quando criado dentre os elfos), Feéricos (quando criado dentre as raças Feéricas) + 1 Talento de Sobrevivência.
+Sempre são treinados em Ataque Corpo-a-Corpo e Atenção, onde recebem Primal e Sentidos Apurados como especializações adicionais (não é possível mudar estas escolhas).
+Tendência: Normalmente Neutros
+
+Características Raciais
+	•	Forma Hibrida: Ao tempo de 3PA e ao custo de 3PM podem mudar de Forma entre Humanoide, Animal, Híbrido (apenas Aventyrs) ou Monstruosas (apenas GranAventyr) - Duração 2 + Metade do Instinto Rodadas, a Duração aumenta em +Metade do Vigor Rodadas durante a noite e então é dobrada se for uma noite de Lua Cheia.
+	•	Fortalecimento Feral - O Movimento Base aumenta em +1UD (dobro transformados) e enquanto transformados recebem os seguintes armamentos naturais
+TIPO DE FERA
+ARMAMENTOS NATURAIS
+Lobisomens
+Presas Longas e Pelugem Protetora
+Centauros
+Patas Martelos e Pelugem Protetora
+Ictocentauros
+Patas Martelos e Pela Escamosa
+Kitsune
+Presas Longas e Pelugem Protetora
+Quiróptera
+Presas Longas
+Wemic
+Presas Longas e Garras Afiadas
+Tornat
+Presas Longas, Garras Afiadas e Pelugem Protetora
+
+	•	Escravos da Devoção: São obrigados a seguirem os dogmas de Gaea, Flora ou Lacerto e ordens de seu patrono Umbral (que em sua sabedoria sempre manipulam os Homens-Feras em ações que não se desalinhem a vontade natural) quando se afastam dos caminhos destas divindades perdem suas características raciais (exceto Monstro Interior).
+	•	Monstro Interior: São afetados por armas de prata como se fossem monstros, danos sofridos por armas de prata ou fogo só podem ser recuperados com Efeitos de Descansos (reduzido à metade se não for um Descanso Verdadeiro).
+
+
+O Olho de Deus
+Povo-Espíritos (pendente)
+
+Dragões de Drak’arya
+Kobolds (pendente)
+
+
+
+Renascidos
+Morte e Renascimento
+Aswang (pendente)
+
+Draugr (pendente)
+
+Iluminados (pendente)
+
+Vampiros
+Um termo comum entre diversos mortos-vivos, cuja característica comum é o gosto e a necessidade pelo sangue dos vivos.
+São divididos em sete sub-raças: Asanbosam, Baobhan Sith, Dampiros, Nosferatus, Rakshasas, Strigoi e Vlokoslavs.
+Todos os Renascidos são criaturas raras e de população baixa, com os Vampiros não é diferente e, dentre eles, os mais famosos são os Nosferatu, que representam a esmagadora maioria dos Vampiros existentes.
+Nosferatus são sempre Humanoides, costumam se multiplicar pouco para dificultar serem encontrados por caçadores – principalmente Eldurianos – e podem ser de qualquer sexo e idade, mas os de aparências mais jovens são os mais comuns, devido às restrições no ritual de transformação dos vivos neste tipo de Vampiro. Apenas pessoas castas, que não tenham perdido a pureza de seus corpos em vida, podem se transformar em Nosferatus.
+O rito de transformação em Nosferatu consiste em drenar todo o sangue da vítima, até a última gota, então alimentar o corpo recém falecido com Sangue Nosferatu e energia Profana. O alvo se levantará com sede de sangue e irá atacar o humanoide mais próximo dele para se alimentar, se a primeira vítima deste novo morto-vivo também for um casto, após se alimentar ele se tornará um Vampiro, mas se pelo menos um dos dois, o alvo ou seu primeiro alimento, não for casto, ele se tornará um Carniçal.
+Os Asanbosam e as Baobhan são grosseiramente chamados de versões Monstruosas e Feéricas dos Nosferatu. A errônea comparação se dá pela falta destes tipos de seres dentre os Nosferatu.
+Asanbosam são Monstros ou personagens Monstruosos transformados em Vampiros, eles não só bebem o sangue, mas também se fartam da carne de suas vítimas. O ritual de criação dos Asanbosam é parecido em alguns aspectos com o dos Nosferatus, o sangue da vítima também precisa ser drenado, mas não completamente, e apenas o coração da vítima deve ser devorado, então substituído pelo coração do próprio Asanbosam que está criando prole. Sem um coração o Asanbosam mais velho ficará enfraquecido, até se alimentar o bastante para regenerar o órgão, e o jovem vampiro criado normalmente irá dividir seus primeiros banquetes com seu mestre até que ele se recupere.
+As Baobhan Sith (ou simplesmente Baobhan, ou Sith) são Fadas e Fúrias transformadas em vampiros após terem seu sangue drenado e serem oferecidas a entidades obscuras, normalmente Abissais ou Umbrais (exceto o Muitos-Olhos e seus servos), enquanto banhadas no sangue de outras Baobhan ao som de cantigas cerimoniais. Por conta destes ritos as Baobhan Sith são consideradas as Bruxas Verdadeiras.
+Dampiros são os filhos dos Asanbosam, Baobhan ou Nosferatus com mortais, são os mais raros tipos de Vampiros existentes, possuem suas forças, mas não as suas fraquezas, mas são incapazes de criar outros vampiros.
+Os Rakshasas, assim como as Baobhan são criadas por rituais, mas ainda em vida, sem a necessidade de serem mortas e terem seu sangue drenado antecipadamente, o próprio rito converte a vida em não vida num processo excruciante e que pode levar dias, se não morrerem antes do fim do rito eles são presenteados com a imortalidade. Na esmagadora maioria das vezes os Rakshasas encontrados são mulheres, por muito tempo acreditava-se que apenas elas podiam fazer os rituais, mas hoje sabe que existem alguns poucos homens dentre elas. Membros de qualquer raça podem se tornar Rakshasas, mas apenas se forem verdadeiros devotos de Lacerto, dispostos a trocarem sua humanidade por monstruosidade.
+Os Strigoi são também chamados Vampiros Artificiais, também criados a partir de rituais, mas usando apenas do Arcanismo, da Magia comum, o entendimento milenar e secreto criado utilizando Mana, Sangue Nosferatu, runas Rakshasas e encantos (canções) das Baobhan Sith. Os Strigoi pertencem todos uma mesma seita, são extremamente organizados e possuem um rigor hierárquico que ligam todos a um mestre em comum.
+Vlokoslavs são servos da Umbra, mais especificamente do Muitos-Olhos, são marcados pela existência de um terceiro olho e do uso de vestes sobrenaturalmente brancas, que parecem nunca se sujar, exceto pelo sangue de suas vítimas. Os Vlokoslavs são criados a partir de acordos com o Muitos-Olhos e recebem missões dadas diretamente por ele, devem sempre ofertar parte do sangue que consomem e consideram a servidão esporádica um preço barato para alcançar a imortalidade.
+Mesmo conhecendo os ritos de criação, o dom de criar novos Vampiros é algo possuído por poucos membros das raças Vampíricas, por isso a maioria deles não é capaz de se multiplicar, a grande maioria deles são sujeitos a obediência quase absoluta ao seu criador ou superior até romperem seus Laços de Sangue, nome dado ao ato do Vampiro alcançar a sua “maturidade”.
+
+TIPO DE VAMPIRO
+RAÇAS POSSÍVEIS
+Asanbosam
+Monstros e Monstruosos
+Baobhan Sith
+Fadas, Fúrias e Górgonas
+Dampiro
+Todas
+Nosferatu
+Humanoides
+Rakshasa
+Todas
+Strigoi
+Todas
+Vlokoslav
+Todas
+
+
+Jogando com Vampiros 
+Atributos: O pós-vida traz grandes melhorias ao corpo e mente dos vampiros, cada tipo sendo aprimorado de uma forma singular, sendo: 
+	•	Asanbosam: Vigor +1
+	•	Baobhan Sith: Carisma +1
+	•	Dampiro: Destreza +1
+	•	Nosferatu: Força +1
+	•	Rakshasa: Instinto +1
+	•	Strigoi: Foco +1
+	•	Vlokoslav: Gnose +1
+
+
+Categoria de Tamanho: A transformação em Vampiro não altera o tamanho dos personagens, por isso eles permanecem nas mesma Categoria de Tamanho de sua raça anterior.
+
+Idiomas: Os ritos de transformação não trazem idiomas adicionais aos vampiros.
+
+Longevidade: Com exceção dos Dampiros, os Vampiros são virtualmente imortais, incapazes de morrer por idade, encontrando a morte final apenas em função de danos sofridos. Os Dampiros são únicos tipos de Vampiros capazes de nascer, envelhecer e morrer naturalmente, mas vivem em média três vezes mais que os membros mortais de sua raça viva.
+
+Perícias e Talentos: A transformação em Vampiro costuma apagar certos traços raciais e podem despertar Poderes Vampíricos, por isso Vampiros começam com 1 Talento adicional, escolhido entre Talentos Raciais (conforme sua raça original) ou Talentos Vampíricos.
+Vampiros não recebem Perícias adicionais.
+
+Características Raciais
+	•	Mestiço Mortal: Durante a criação do personagem você deve escolher uma raça Feérica, Humanoide ou Monstruosa que não seja mestiça, você recebe 2 Características Raciais aleatórias da raça escolhida. Para critérios de pré-requisitos, Vampiros podem ser considerados Feéricos, Humanoides ou Monstruosos, conforme sua raça em vida.
+	•	Atributo Herdado: Após a transformação em Vampiro você ainda retém algumas características passadas. Caso sua raça anterior receba Atributos Raciais adicionais, você poderá escolher um dos Atributos bônus daquela raça para adquirir bônus Racial de +1.
+	•	Sangue, Poder e Dependência: Vampiros precisam de Sangue para continuar vivo e usam sangue para ativar seus poderes. Personagens desta Raça perdem 3PV por dia, se não descansarem por pelo menos um Descanso Longo o total de PV perdidos é dobrado. Ativar Poderes Vampíricos requer uma Ação Livre, duram por 2 Rodadas e consomem 3PV cada. Pontos de Vida perdidos destas formas podem ser recuperados exclusivamente com Roubo de Vida. 
+Como meios de conseguir acessar o sangue de suas vítimas a maioria desenvolve Armas Naturais, enquanto atacando com suas Armas Naturais adquiridas nesta Característica recebem Roubo de Vida 1.
+TIPO DE VAMPIRO
+ARMAS NATURAIS
+Asanbosam
+Presas Longas
+Baobhan Sith
+Garras Afiadas
+Dampiro
+Presas Longas
+Nosferatu
+Presas Longas
+Rakshasa
+Presas Longas e Garras Afiadas
+Strigoi
+Garras Afiadas
+Vlokoslav
+Garras Afiadas
+
+	•	Anatomia de Morto-Vivo: Os Vampiros, assim como todos os Mortos-Vivos, não precisam dormir ou respirar e não podem recuperar PV com magias Divinas e são imunes a efeitos Naturais, ao invés disso são curados com Magia Profana. Magias Profanas não causam nenhum dano aos mortos, ao invés disso os curam em 1d6+Metade do Vigor do Vampiro. 
+	•	Vulnerabilidade Vampírica: Todos os Vampiros possuem algumas fraquezas em comum, além da dependência do sangue, são enfraquecidos (alguns destruídos) em contato com a luz do sol. Dampiros, Strigoi, Vlokoslav são enfraquecidos com a luz solar, sofrendo Redutor de -2 Multiplicadores de PV na presença do sol. Asanbosam, Baobhan Sith, Rakshasas e Nosferatus perdem 1 Multiplicador de PV por Rodada quanto em contato com a luz solar, quando o Multiplicador se torna zero são destruídos (caso consigam se proteger da luz solar recuperam um Multiplicador de PV perdidos desta forma a cada Descanso Longo). 
+Também são Vulneráveis a armas feitas de Dyospiros e desprezados por Surt’Eldur, sendo também Vulneráveis ao Fogo.
+	•	Falsos Descansos: Com exceção dos Dampiros, Vampiros não recuperam PV com Descansos. Dampiros conseguem recuperar PV com Descansos, mas a o valor recuperado é reduzido à metade.
+
+

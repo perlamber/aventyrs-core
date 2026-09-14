@@ -143,6 +143,11 @@ public class DamageInteraction implements Interaction<CombatantSheet> {
                                       final Interaction<CombatantSheet> nextInteraction) {
         int finalDamage = damageService.calculateFinalDamage(target, sceneContext, damageType, source, rawDamage, ignoreDamageReduction, halfDamage);
         target.applyDamage(finalDamage);
+        // Mitigation and application are split here rather than run through
+        // DamageService#applyDamage (see this method's javadoc), so the victim's own damage-taken
+        // reactions have to be fired explicitly — this is the attack path, and skipping it would
+        // leave Regeneração Reativa triggering on every path but the real one.
+        damageService.notifyDamageTaken(target, finalDamage, source, sceneContext);
 
         InteractionResult.InteractionResultBuilder result = InteractionResult.builder()
                 .resultStatus(hitPointsService.getStatus(target))

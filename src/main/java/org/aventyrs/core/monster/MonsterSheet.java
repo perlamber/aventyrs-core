@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.NonNull;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.DefenseType;
+import org.aventyrs.core.character.services.HidingService;
 import org.aventyrs.core.effect.CriticalEffectType;
 import org.aventyrs.core.sheet.AbstractCombatantSheet;
 import org.aventyrs.core.sheet.CharacterSheet;
@@ -59,6 +60,14 @@ public class MonsterSheet extends AbstractCombatantSheet {
     private final int attackBonus;
 
     /**
+     * The fixed Atenção value it presents to anyone hiding from it — the fifth authored number,
+     * and the same "a foe never rolls" principle as the other four. Read by {@code
+     * org.aventyrs.core.character.services.HidingService#resolveDetection} in place of an Atenção
+     * roll. See {@link MonsterTemplate#getPerception()}.
+     */
+    private final int perception;
+
+    /**
      * Whether this foe is a Morto-Vivo — see {@link MonsterTemplate#isUndead()} for what this
      * narrow flag does and does not claim to model.
      */
@@ -77,7 +86,7 @@ public class MonsterSheet extends AbstractCombatantSheet {
     private final Player player;
 
     private MonsterSheet(final Character character, final Player player, final int physicalDefense, final int magicDefense,
-                         final DifficultyLevel attackDifficulty, final int attackBonus,
+                         final DifficultyLevel attackDifficulty, final int attackBonus, final int perception,
                          final boolean undead, final Set<CriticalEffectType> criticalEffectImmunities) {
         super(character);
         this.player = player;
@@ -85,12 +94,14 @@ public class MonsterSheet extends AbstractCombatantSheet {
         this.magicDefense = magicDefense;
         this.attackDifficulty = attackDifficulty;
         this.attackBonus = attackBonus;
+        this.perception = perception;
         this.undead = undead;
         this.criticalEffectImmunities = Set.copyOf(criticalEffectImmunities);
     }
 
     /**
-     * A foe assembled from its four combat numbers alone — ordinary anatomy, no immunities. The
+     * A foe assembled from its four combat numbers alone — ordinary anatomy, no immunities, and
+     * {@link HidingService#DEFAULT_MONSTER_PERCEPTION} for an eye nobody thought about. The
      * overload to reach for when hand-building a sheet in a test or a caller that has the
      * numbers but no template.
      */
@@ -98,7 +109,7 @@ public class MonsterSheet extends AbstractCombatantSheet {
                                   final int physicalDefense, final int magicDefense,
                                   @NonNull final DifficultyLevel attackDifficulty, final int attackBonus) {
         return new MonsterSheet(character, player, physicalDefense, magicDefense, attackDifficulty, attackBonus,
-                false, Set.of());
+                HidingService.DEFAULT_MONSTER_PERCEPTION, false, Set.of());
     }
 
     /**
@@ -124,7 +135,7 @@ public class MonsterSheet extends AbstractCombatantSheet {
      */
     public static MonsterSheet of(@NonNull final Character character, @NonNull final Player player, @NonNull final MonsterTemplate template) {
         return new MonsterSheet(character, player, template.getPhysicalDefense(), template.getMagicDefense(),
-                template.getAttackDifficulty(), template.getAttackBonus(),
+                template.getAttackDifficulty(), template.getAttackBonus(), template.getPerception(),
                 template.isUndead(), template.getCriticalEffectImmunities());
     }
 

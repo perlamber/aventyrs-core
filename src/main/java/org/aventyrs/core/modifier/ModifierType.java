@@ -32,6 +32,17 @@ package org.aventyrs.core.modifier;
 public enum ModifierType {
     LIFE_MULTIPLIER,
     HIT_POINTS,
+
+    /**
+     * PV recovered on each of the holder's own Turns while a timed effect runs — Regeneração
+     * Reativa. Unlike every other constant here it is not a total anything sums: a {@code
+     * TemporaryBonus} of this type <em>acts</em> once per Rodada rather than contributing to a
+     * stat, which is what {@code org.aventyrs.core.sheet.Regeneration} is for. Nothing reads it
+     * through {@code CombatantSheet#getTemporaryBonus}, and a reader that did would be asking the
+     * wrong question — "how much do I regenerate per Rodada" is only meaningful per effect,
+     * since several may run at once with separate budgets.
+     */
+    REGENERATION,
     SIZE_CATEGORY,
     MANA_MULTIPLIER,
     DETERMINATION_MULTIPLIER,

@@ -9,6 +9,7 @@ import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.SizeCategory;
 import org.aventyrs.core.effect.CriticalEffectType;
 import org.aventyrs.core.character.services.DeterminationPointsService;
+import org.aventyrs.core.character.services.HidingService;
 import org.aventyrs.core.character.services.HitPointsService;
 import org.aventyrs.core.character.services.MagicPointsService;
 import org.aventyrs.core.item.Item;
@@ -99,6 +100,10 @@ public class AbstractMonsterTemplate implements MonsterTemplate {
     private final DifficultyLevel attackDifficulty = DifficultyLevel.MEDIUM;
 
     private final int attackBonus;
+
+    /** Its flat Atenção against a hidden character — see {@link MonsterTemplate#getPerception()}. */
+    @Builder.Default
+    private final int perception = HidingService.DEFAULT_MONSTER_PERCEPTION;
 
     @Builder.Default
     private final int lifeMultiplier = HitPointsService.DEFAULT_LIFE_MULTIPLIER;

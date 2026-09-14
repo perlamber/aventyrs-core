@@ -34,6 +34,22 @@ public class TranslatableMessages {
 
     /** A held Condição forbids getting a weapon into your hands at all — Devorado. */
     public static final String WEAPON_DRAW_PREVENTED = "WEAPON_DRAW_PREVENTED";
+
+    /**
+     * A manoeuvre needs the weapon already in hand and this one is carried but sheathed. An
+     * Investida bundles a movement with an attack and prices neither a draw nor a moment to make
+     * one — see {@code ChargeService}.
+     */
+    public static final String WEAPON_NOT_DRAWN = "WEAPON_NOT_DRAWN";
+
+    /** An Investida was declared with something that is not swung as an Ataque Corpo-a-Corpo. */
+    public static final String CHARGE_REQUIRES_MELEE_WEAPON = "CHARGE_REQUIRES_MELEE_WEAPON";
+
+    /** An Investida was declared by a combatant a held Condição forbids moving — Agarrado/Imobilizado. */
+    public static final String CHARGE_MOVEMENT_PREVENTED = "CHARGE_MOVEMENT_PREVENTED";
+
+    /** The attacker cannot presently attack with this weapon at all — a Forma suppressing it. */
+    public static final String CANNOT_ATTACK_WITH_WEAPON = "CANNOT_ATTACK_WITH_WEAPON";
     public static final String NOT_ENOUGH_ACTION_POINTS = "NOT_ENOUGH_ACTION_POINTS";
     public static final String NOT_ENOUGH_MAGIC_POINTS = "NOT_ENOUGH_MAGIC_POINTS";
 
@@ -51,6 +67,21 @@ public class TranslatableMessages {
     public static final String TITLE_ABILITY_PREREQUISITE_NOT_MET = "TITLE_ABILITY_PREREQUISITE_NOT_MET";
     public static final String TITLE_ACQUISITION_PREVENTED = "TITLE_ACQUISITION_PREVENTED";
     public static final String FEAT_PREREQUISITE_NOT_MET = "FEAT_PREREQUISITE_NOT_MET";
+
+    /**
+     * The bare catalog constant of a Talento whose acquisition requires the player to choose
+     * something was passed to {@code FeatService#grantFeat} — see {@code
+     * Feat#resolveRequiredChoices}. Grant the acquired, choice-carrying form instead.
+     */
+    public static final String FEAT_REQUIRES_CHOICE = "FEAT_REQUIRES_CHOICE";
+
+    /**
+     * A held Talento forbids that whole kind of Equipamento — {@code
+     * Feat#getForbiddenEquipmentCategories}, as {@code DraconicoFeat#ASAS_DE_DRAGAO} does for a
+     * Capa. A permanent restriction on the equipment list, distinct from a Forma's temporary
+     * {@code FormEquipmentPolicy}.
+     */
+    public static final String EQUIPMENT_CATEGORY_FORBIDDEN = "EQUIPMENT_CATEGORY_FORBIDDEN";
     /**
      * The Habilidade de Força chosen for {@code AnaoFeat#CONSELHEIRO_DE_GUERRA_YMIRIANO} —
      * "1 Habilidade de Força (que você cumpra os requisitos)" — was picked by a character with
@@ -83,6 +114,7 @@ public class TranslatableMessages {
     public static final String SPELL_PREREQUISITE_NOT_MET = "SPELL_PREREQUISITE_NOT_MET";
     public static final String INVALID_SPELL_CAST_TARGET = "INVALID_SPELL_CAST_TARGET";
     public static final String INVALID_SPELL_DAMAGE = "INVALID_SPELL_DAMAGE";
+    public static final String INVALID_SPELL_HEALING = "INVALID_SPELL_HEALING";
     public static final String INVALID_MIMETIZED_SPELL = "INVALID_MIMETIZED_SPELL";
     public static final String MIMETIZED_SPELL_NOT_HELD = "MIMETIZED_SPELL_NOT_HELD";
 
@@ -98,6 +130,15 @@ public class TranslatableMessages {
      * {@link #ABILITY_ACTIVATION_PREVENTED}, which is a Condição forbidding activation outright.
      */
     public static final String ABILITY_ON_COOLDOWN = "ABILITY_ON_COOLDOWN";
+
+    /** An activated ability's Pontos de Determinação cost exceeds what the holder has left. */
+    public static final String NOT_ENOUGH_DETERMINATION_POINTS = "NOT_ENOUGH_DETERMINATION_POINTS";
+
+    /**
+     * The Forma an ability would put its holder into is one their own Talentos refuse — see
+     * {@code CombatantSheet#canTakeForm} and {@code Feat#resolveFormAccess}.
+     */
+    public static final String FORM_NOT_AVAILABLE = "FORM_NOT_AVAILABLE";
 
     /** The crafter doesn't hold the Especialização de Profissão a given kind of item needs. */
     public static final String CRAFTING_TRADE_NOT_HELD = "CRAFTING_TRADE_NOT_HELD";

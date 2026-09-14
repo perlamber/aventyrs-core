@@ -10,6 +10,8 @@ import org.aventyrs.core.feat.ArtesMarciaisFeat;
 import org.aventyrs.core.feat.AbstractFeat;
 import org.aventyrs.core.feat.DestinoFeat;
 import org.aventyrs.core.feat.Feat;
+import org.aventyrs.core.feat.FeatChoice;
+import org.aventyrs.core.feat.FeatCatalog;
 import org.aventyrs.core.feat.MetamagicoFeat;
 import org.aventyrs.core.feat.FeatCategory;
 import org.aventyrs.core.feat.FeatRequirements;
@@ -32,6 +34,7 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class FeatServiceImplTest {
@@ -180,18 +183,61 @@ class FeatServiceImplTest {
 
     /**
      * The sheet-taking listing is exactly what {@link FeatService#grantFeat} will accept — it
-     * tests the same clauses against the same sheet, so nothing it offers can be refused.
+     * tests the same clauses against the same sheet — <b>once any required choice has been
+     * made</b>. A Talento that asks the player to choose something is offered by the listing but
+     * refused as the bare constant, which is the whole point of {@code
+     * Feat#resolveRequiredChoices}: the client must present the choice and grant the acquired
+     * form instead.
      */
     @Test
-    void everyAvailableFeatIsActuallyGrantable() {
+    void everyAvailableChoicelessFeatIsActuallyGrantable() {
         Character character = characterMeetingArtistaMarcialRequirements();
         CharacterSheet sheet = sheetWithExperience(character, BigDecimal.valueOf(100));
 
         for (Feat feat : List.copyOf(featService.getAvailableFeats(character, sheet))) {
-            featService.grantFeat(character, sheet, feat);
+            if (feat.resolveRequiredChoices(character).isEmpty()) {
+                featService.grantFeat(character, sheet, feat);
+            }
         }
 
         assertTrue(character.getFeats().contains(ArtesMarciaisFeat.ARTISTA_MARCIAL));
+    }
+
+    /**
+     * And the other half of that invariant, across the whole catalog: <b>every</b> Talento that
+     * declares a choice refuses its own bare constant. Before this, twelve of the thirteen
+     * choice-carrying Talentos could be granted plain — costing XP and, for one like {@code
+     * FOCO_EM_PERICIA} whose entire effect lives on the choice class, doing nothing at all.
+     */
+    @Test
+    void everyChoiceRequiringTalentoRefusesItsBareConstant() {
+        Character character = characterMeetingArtistaMarcialRequirements();
+        CharacterSheet sheet = sheetWithExperience(character, BigDecimal.valueOf(1000));
+        List<Feat> withChoices = FeatCatalog.all().stream()
+                .filter(feat -> !feat.resolveRequiredChoices(character).isEmpty())
+                .toList();
+
+        assertFalse(withChoices.isEmpty(), "the catalog should declare some choices");
+        for (Feat feat : withChoices) {
+            assertThrows(IllegalOperationException.class,
+                    () -> featService.grantFeat(character, sheet, feat),
+                    feat + " should refuse its bare constant");
+        }
+    }
+
+    /** A declared choice is never empty or zero-pick — an option list nobody can satisfy is a bug. */
+    @Test
+    void everyDeclaredChoiceIsSatisfiable() {
+        Character character = characterMeetingArtistaMarcialRequirements();
+
+        for (Feat feat : FeatCatalog.all()) {
+            for (FeatChoice<?> choice : feat.resolveRequiredChoices(character)) {
+                assertTrue(choice.picks() > 0, feat + " declares a choice of zero picks");
+                assertTrue(choice.options().size() >= choice.picks(),
+                        feat + " offers fewer options than it demands picks");
+                assertNotNull(choice.type(), feat + " declares a choice with no type token");
+            }
+        }
     }
 
     /**

@@ -6,7 +6,8 @@ import lombok.Getter;
  * A CombatantSheet-held effect that counts down in Rodadas and expires once its
  * remaining Rodadas run out — the shared shape behind {@link TemporaryBonus} (a
  * bonus/malus granted by another Character's action), {@link Bleeding} (Sangramento's own
- * ongoing PV loss), and {@link ManaDrain} (Purga-Mana's own ongoing PM loss). Registered
+ * ongoing PV loss), {@link ManaDrain} (Purga-Mana's own ongoing PM loss) and {@link
+ * Regeneration} (Regeneração Reativa's ongoing PV recovery). Registered
  * via {@link CombatantSheet#applyEffect(TemporaryEffect)} (or the {@link
  * TemporaryBonus}-specific {@link CombatantSheet#grantTemporaryBonus} convenience);
  * {@link CombatantSheet#tickTemporaryEffects()} — called once per Rodada by {@link
@@ -25,6 +26,10 @@ import lombok.Getter;
  */
 @Getter
 public abstract class TemporaryEffect {
+
+    /** {@link #maximumSimultaneous()}'s "no ceiling at all" answer. */
+    static final int UNLIMITED_SIMULTANEOUS = Integer.MAX_VALUE;
+
     private Integer remainingRounds;
 
     protected TemporaryEffect(final Integer remainingRounds) {
@@ -45,6 +50,37 @@ public abstract class TemporaryEffect {
      */
     boolean isCumulative() {
         return true;
+    }
+
+    /**
+     * How many instances of this concrete kind may be active on one {@link CombatantSheet} at
+     * once — the same question {@link #isCumulative()} asks, answered as a number rather than a
+     * flag, and derived from it by default so no existing effect changes behaviour: a cumulative
+     * one is {@link #UNLIMITED_SIMULTANEOUS}, a non-cumulative one exactly 1.
+     *
+     * <p>Two overriders. {@link TemporaryBonus} returns 1 once it carries a source, which is the
+     * "a Blessing does not accumulate with another from the same source, it renews it" rule; {@link
+     * Regeneration} returns a ceiling that is neither 1 nor unbounded, since {@code
+     * TrollFeat#REGENERACAO_REATIVA_SUPERIOR} raises it to "1+ número de Títulos Aventyr
+     * Despertos". {@link CombatantSheet#applyEffect} trims the oldest of the same grant — same
+     * concrete kind, same {@link #stackingKey()} — until the new one fits.
+     */
+    int maximumSimultaneous() {
+        return isCumulative() ? UNLIMITED_SIMULTANEOUS : 1;
+    }
+
+    /**
+     * What makes two of these "the same grant" for {@link CombatantSheet#applyEffect}'s ceiling —
+     * compared alongside the concrete class, so only effects agreeing on both displace each other.
+     * {@code null} by default, which is every effect whose kind alone identifies it.
+     *
+     * <p>{@link TemporaryBonus} overrides it with source <em>and</em> {@link
+     * org.aventyrs.core.modifier.ModifierType}, because one trait may grant several different
+     * bonuses at once and they must not evict one another: {@code AnaoFeat#VIGOR_DO_INVERNO} hands
+     * its holder RD and Resistência a Críticos in the same breath.
+     */
+    Object stackingKey() {
+        return null;
     }
 
     /** Counts down one Rodada; a no-op for an open-ended effect. */

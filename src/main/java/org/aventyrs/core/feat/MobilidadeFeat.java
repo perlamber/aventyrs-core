@@ -21,7 +21,18 @@ import java.util.function.Supplier;
  * isn't recorded is a movement's <i>distance</i> or its <i>direction</i> — so "após se mover por
  * uma Distância Curta" and "para se aproximar de inimigos" remain untestable — nor whether a
  * character moved in a <i>previous</i> Turn, since the counter resets at each Turn's start.
- * Investidas and Reposicionar are likewise unmodelled manoeuvres.
+ * <b>Reposicionar</b> is still an unmodelled manoeuvre: it has no cost, no allowance and no
+ * {@code org.aventyrs.core.action.Manoeuvre} constant, which is what {@link #MOVIMENTO_RAPIDO} and
+ * {@link #MOVIMENTO_ACROBATICO} are still waiting on.
+ *
+ * <p><b>The Investida is modelled now</b> — {@code
+ * org.aventyrs.core.character.services.ChargeService} prices and gates it and {@code
+ * Manoeuvre#INVESTIDA} marks the attack it carries — which makes {@link #INVESTIDA_AQUATICA}'s
+ * second clause real and {@link #INVESTIDA_SELVAGEM}'s Redução de Danos computable. Movement
+ * provoking Reações is modelled too, as far as it can be: {@code
+ * org.aventyrs.core.character.services.MovementReactionService} resolves <i>who</i> may react, but
+ * nothing in this core fires a Reação, so a clause exempting a movement from provoking them still
+ * exempts its holder from nothing that happens.
  */
 public enum MobilidadeFeat implements Feat {
 
@@ -192,14 +203,22 @@ public enum MobilidadeFeat implements Feat {
     /**
      * "Você pode se mover enquanto furtivo, mas seu Movimento Base é reduzido à metade", the
      * halving falling away at 7 Graduações em Furtividade.
+     *
+     * <p><b>The permission is real</b> — through {@link Feat#movesWhileHidden}, which {@code
+     * HidingService#reveals} asks before letting {@code RevealTrigger#MOVEMENT} end a
+     * concealment. Its holder moves and stays Escondido; everyone else's movement gives them away.
+     *
+     * <p>The <b>price</b> is not. Halving Movimento Base is the gap catalog's "Multiplicative
+     * stages" row — {@code MovementService} sums additively with no halving stage, and a {@code
+     * MOVEMENT_HALVED} {@code ModifierType} is explicitly not the fix. So this Talento currently
+     * grants its benefit and charges nothing for it, which over-grants; the 7-Graduação clause
+     * that <i>removes</i> the price is the half that is accidentally correct.
      */
-    // TODO: halving Movimento is the gap catalog's "Multiplicative stages" row — MovementService
-    //  sums additively with no halving stage, and a MOVEMENT_HALVED constant is explicitly not
-    //  the fix.
-    // TODO: "enquanto furtivo" is now ConditionType.ESCONDIDO, but a held trait cannot see its
-    //  holder's Condições — Feat#resolveMovementIncrease takes a Character, and a Condition lives
-    //  on the CombatantSheet, which no Feat hook receives. Halving has no mechanism either (gap
-    //  catalog, "Multiplicative stages"); don't add a MOVEMENT_HALVED constant.
+    // TODO: the "reduzido à metade" price needs the multiplicative-stage mechanism
+    //  (MovementService sums additively). Gating it would additionally need "enquanto furtivo" to
+    //  be visible from a movement hook — Feat#resolveMovementIncrease takes a Character, and the
+    //  Condição lives on the CombatantSheet; Feat#movesWhileHidden is asked by HidingService,
+    //  which holds the sheet, but resolveMovementIncrease has no such overload.
     MOVIMENTO_FURTIVO(
             "Você pode se mover enquanto furtivo, mas seu Movimento Base é reduzido à metade. Se "
                     + "você possuir 7 ou mais Graduações em Furtividade este Talento não mais "
@@ -207,17 +226,37 @@ public enum MobilidadeFeat implements Feat {
             () -> FeatRequirements.builder()
                     .requiredSkillType(SkillType.FURTIVIDADE)
                     .requiredSkillGraduation(2)
-                    .build()),
+                    .build()) {
+        @Override
+        public boolean movesWhileHidden(final Character character) {
+            return true;
+        }
+    },
 
     /**
      * "Rolagens de Perícia de Ataque realizadas imediatamente após ser bem-sucedido em rolagens de
      * Atletismo para Natação tem o Tempo de Ação reduzido em -1PA."
      */
-    // TODO: this core does not track what a roll was *for*, so "Atletismo para Natação" cannot be
+    /**
+     * <p><b>The second clause is real</b> — "o Tempo de Ação de investidas sempre reduzidos em
+     * -1PA", through {@link Feat#resolveChargeActionPointReduction}, which {@code
+     * ChargeService#getActionPointCost} subtracts from its 3PA baseline.
+     *
+     * <p>⚠️ <b>Granted unconditionally, which over-grants.</b> The clause is gated on the holder
+     * possessing a <i>Movimento Base de Natação</i>, a sub-stat this core deliberately does not
+     * model (see {@code AtletismoCompetencyAbility#ANFIBIO}) — so there is nothing to test and the
+     * reduction applies to every Investida. The alternative was to grant nothing at all, which
+     * would leave the Talento's one expressible clause inert; narrowing it correctly is what the
+     * sub-stat would buy.
+     */
+    // TODO: the first clause — "rolagens de Perícia de Ataque realizadas imediatamente após ser
+    //  bem-sucedido em rolagens de Atletismo para Natação" — needs two things this core lacks:
+    //  it does not track what a roll was *for*, so "Atletismo para Natação" cannot be
     //  distinguished from any other Atletismo roll, and no roll's outcome feeds the next one's
     //  cost.
     // TODO: Movimento Base de Natação is a separate sub-stat deliberately not wired to
-    //  ModifierType.MOVEMENT (see AtletismoCompetencyAbility#ANFIBIO).
+    //  ModifierType.MOVEMENT (see AtletismoCompetencyAbility#ANFIBIO) — it is what would narrow
+    //  the second clause to the swimmers it is written for. See the javadoc above.
     // TODO: its Pré-requisito names a required Especialização (Triatleta); FeatRequirements
     //  models a Habilidade de Competência but not a SkillSpecialization.
     INVESTIDA_AQUATICA(
@@ -228,7 +267,12 @@ public enum MobilidadeFeat implements Feat {
             () -> FeatRequirements.builder()
                     .requiredSkillType(SkillType.ATLETISMO)
                     .requiredSkillGraduation(4)
-                    .build()),
+                    .build()) {
+        @Override
+        public int resolveChargeActionPointReduction(final Character character) {
+            return CHARGE_ACTION_POINT_REDUCTION;
+        }
+    },
 
     /**
      * "Você pode fazer uma acrobacia para se mover de forma segura pelo cenário, sem provocar
@@ -237,10 +281,13 @@ public enum MobilidadeFeat implements Feat {
      * <p>The source prints "3 Talentos de Mobilidade" under {@code Descrição} with the
      * Pré-requisito line left empty; read as the Pré-requisito.
      */
-    // TODO: movement provoking Reações does not exist, so a movement exempt from provoking them
-    //  is exempt from nothing (gap catalog, "Movement-triggered Reações").
-    // TODO: a distinct per-manoeuvre movement allowance has no representation — see
-    //  MOVIMENTO_RAPIDO.
+    // TODO: "sem provocar Reações" needs two things. Reposicionar is not a Manoeuvre constant, so
+    //  there is nothing for AttributeAbility#exemptsFromMovementReactions to be scoped to (and no
+    //  Feat twin of that hook exists yet, deliberately — this would be its first consumer); and
+    //  nothing *fires* a Reação, so an exemption still exempts its holder from nothing that
+    //  happens. MovementReactionService resolves who may react, which is the half that is built.
+    // TODO: a distinct per-manoeuvre movement allowance has no representation for Reposicionar —
+    //  see MOVIMENTO_RAPIDO. ChargeService#getMovementAllowance is the shape it would take.
     MOVIMENTO_ACROBATICO(
             "Apenas uma vez por Rodada e apenas quando puder fazer uma Ação de Reposicionar, você "
                     + "pode fazer uma acrobacia para se mover de forma segura pelo cenário, sem "
@@ -252,9 +299,21 @@ public enum MobilidadeFeat implements Feat {
                     .requiredFeatCategoryCount(3)
                     .build()),
 
-    /** "Suas Investidas recebem Área de Efeito – Explosão." */
-    // TODO: an Investida is an unmodelled manoeuvre, and applying an Área de Efeito to one needs
-    //  the footprint resolution the gap catalog's "Area de Efeito" row records as missing.
+    /**
+     * "Suas Investidas recebem Área de Efeito – Explosão. Durante o movimento da investida você
+     * recebe Redução de Danos Sofridos igual ao número de Títulos Aventyrs que você possuir."
+     *
+     * <p><b>The second clause is computed for real</b> — {@link
+     * Feat#resolveChargeMovementDamageReduction}, one point of RD per Título Aventyr held (a Título
+     * is "Desperto" simply by being held, per {@code InstinctAbility#SENTIR_A_INTENCAO}'s own
+     * reading of that phrase). <b>Reported, not applied</b>: "durante o movimento da investida" is
+     * a window shorter than a Rodada, the shortest a {@code TemporaryBonus} can last, so it rides
+     * {@code ChargeResult#unappliedMovementDamageReduction} rather than being granted onto the
+     * sheet where it would outlive the charge.
+     */
+    // TODO: the Área de Efeito clause needs the footprint resolution the gap catalog's "Area de
+    //  Efeito" row records as missing — an Investida is a modelled manoeuvre now
+    //  (ChargeService), but nothing turns an AreaOfEffect into a set of targets.
     INVESTIDA_SELVAGEM(
             "Suas Investidas recebem Área de Efeito – Explosão. Durante o movimento da investida "
                     + "você recebe Redução de Danos Sofridos igual ao número de Títulos Aventyrs "
@@ -264,16 +323,20 @@ public enum MobilidadeFeat implements Feat {
                     .requiredSkillGraduation(7)
                     .requiredFeatCategory(FeatCategory.MOBILIDADE)
                     .requiredFeatCategoryCount(3)
-                    .build()),
+                    .build()) {
+        @Override
+        public int resolveChargeMovementDamageReduction(final Character character) {
+            return character.getAllTitles().size();
+        }
+    },
 
     /**
      * "Se em sua Investida Selvagem você causar danos à 3 ou mais inimigos você recebe Bônus em
      * Defesas igual à 1 + quantidade de Títulos Aventyr Bruto Despertos."
      */
-    // TODO: builds on INVESTIDA_SELVAGEM, which is itself unbuilt, and additionally needs the
-    //  count of targets an area attack actually damaged.
-    // TODO: mutually exclusive with INVESTIDA_SELVAGEM_LUNAR, which FeatRequirements cannot
-    //  express — every set clause is combined with and.
+    // TODO: builds on INVESTIDA_SELVAGEM's Área de Efeito half, which is still unbuilt, and
+    //  additionally needs the count of targets an area attack actually damaged. The Investida
+    //  itself is modelled now (ChargeService); the explosion it is measured over is not.
     INVESTIDA_SELVAGEM_SOLAR(
             "Se em sua Investida Selvagem você causar danos à 3 ou mais inimigos você recebe Bônus "
                     + "em Defesas igual à 1 + quantidade de Títulos Aventyr Bruto Despertos, "
@@ -292,8 +355,9 @@ public enum MobilidadeFeat implements Feat {
      * "Se em sua Investida Selvagem você causar danos à 3 ou mais inimigos, você recebe Roubo de
      * Vida igual à 1 + quantidade de Títulos Aventyr Bruto Despertos."
      */
-    // TODO: same blockers as INVESTIDA_SELVAGEM_SOLAR. LifeStealService exists, but no Feat hook
-    //  grants Roubo de Vida and nothing scopes it to a Duração in Rodadas.
+    // TODO: same blocker as INVESTIDA_SELVAGEM_SOLAR — the Área de Efeito half of
+    //  INVESTIDA_SELVAGEM, and the count of enemies it damaged. Additionally, nothing scopes a
+    //  Roubo de Vida grant to a Duração in Rodadas: Feat#resolveGrantedLifeSteal is permanent.
     INVESTIDA_SELVAGEM_LUNAR(
             "Se em sua Investida Selvagem você causar danos à 3 ou mais inimigos, você recebe "
                     + "Roubo de Vida igual à 1 + quantidade de Títulos Aventyr Bruto Despertos, "
@@ -319,6 +383,9 @@ public enum MobilidadeFeat implements Feat {
     private static Feat investidaSelvagemLunar() {
         return INVESTIDA_SELVAGEM_LUNAR;
     }
+
+    /** INVESTIDA_AQUATICA's own stated "-1PA" on the Tempo de Ação of an Investida. */
+    private static final int CHARGE_ACTION_POINT_REDUCTION = 1;
 
     private final String description;
     /**

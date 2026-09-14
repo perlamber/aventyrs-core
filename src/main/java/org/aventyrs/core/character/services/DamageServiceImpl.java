@@ -11,11 +11,14 @@ import org.aventyrs.core.modifier.ModifierResolverImpl;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.scene.Range;
 import org.aventyrs.core.scene.SceneContext;
+import org.aventyrs.core.sheet.Blessing;
 import org.aventyrs.core.sheet.CombatantSheet;
+import org.aventyrs.core.sheet.TemporaryBonus;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
 import org.aventyrs.core.skill.SkillExcellency;
 import org.aventyrs.core.skill.SkillType;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -86,7 +89,7 @@ public class DamageServiceImpl implements DamageService {
     private int getTotalDamageReduction(final CombatantSheet target, final DamageType damageType,
                                         final DamageDescriptor damageDescriptor, final CombatantSheet source) {
         Character character = target.getCharacter();
-        int total = sumAcrossSources(character, ModifierType.DAMAGE_REDUCTION);
+        int total = sumAcrossSources(character, ModifierType.DAMAGE_REDUCTION, target);
         total += sumEquipmentDamageReduction(character, target);
         total += sumEquipmentDamageReduction(character, damageDescriptor);
         total += sumFeatDamageReduction(character, target);
@@ -148,7 +151,7 @@ public class DamageServiceImpl implements DamageService {
     @Override
     public int getTotalMagicReduction(final CombatantSheet target) {
         Character character = target.getCharacter();
-        int total = sumAcrossSources(character, ModifierType.MAGIC_REDUCTION);
+        int total = sumAcrossSources(character, ModifierType.MAGIC_REDUCTION, target);
         total += sumEquipmentMagicReduction(character);
         for (Feat feat : character.getFeats()) {
             total += feat.resolveMagicReduction(character);
@@ -178,7 +181,7 @@ public class DamageServiceImpl implements DamageService {
     }
 
     private int computeTotalAbsoluteDamageReduction(final Character character, final CombatantSheet target, final SceneContext sceneContext) {
-        int total = sumAcrossSources(character, ModifierType.ABSOLUTE_DAMAGE_REDUCTION);
+        int total = sumAcrossSources(character, ModifierType.ABSOLUTE_DAMAGE_REDUCTION, target);
         total += sumEgoAdvantageAbsoluteDamageReduction(character, sceneContext);
         total += sumTitleAbilityAbsoluteDamageReduction(character, target, sceneContext);
         total += sumAllyGrantedAbsoluteDamageReduction(target, sceneContext);
@@ -263,7 +266,7 @@ public class DamageServiceImpl implements DamageService {
                                     final int rawDamage, final boolean ignoreDamageReduction,
                                     final boolean attackHalvesDamage) {
         final boolean halfDamage = attackHalvesDamage
-                || sumAcrossSources(character, ModifierType.HALF_DAMAGE) > 0
+                || sumAcrossSources(character, ModifierType.HALF_DAMAGE, target) > 0
                 || character.getEgoAdvantages().values().stream()
                         .anyMatch(advantage -> advantage.resolveHalfDamage(sceneContext));
         int reduction = target != null
@@ -325,7 +328,31 @@ public class DamageServiceImpl implements DamageService {
             characterSheet.getCharacter().getEquipment().forEach(
                     item -> item.notifyFinalDamageTaken(finalDamage, sceneContext));
         }
+        // The victim's own turn to react. Deliberately after the PV come off, and after the
+        // mitigation above has already read getAttacksSufferedThisRound(), so a "primeiro ataque
+        // sofrido" clause still sees zero for the attack it is mitigating.
+        notifyDamageTaken(characterSheet, finalDamage, source, sceneContext);
         return totalDamageTaken;
+    }
+
+    @Override
+    public List<TemporaryBonus> notifyDamageTaken(final CombatantSheet target, final int finalDamage,
+                                                  final CombatantSheet source, final SceneContext sceneContext) {
+        target.recordAttackSuffered();
+        if (finalDamage <= 0 || source == target) {
+            return List.of();
+        }
+        Character character = target.getCharacter();
+        // The sheet-taking allFor is what drops a Habilidade Racial under a Forma abandoning its
+        // holder's traços raciais, and what stops a holder who came by the same ability twice
+        // reacting twice.
+        List<TemporaryBonus> granted = new ArrayList<>();
+        for (SkillCompetencyAbility ability : SkillCompetencyAbility.allFor(character, target)) {
+            for (Blessing blessing : ability.resolveDamageTakenBlessings(target, finalDamage)) {
+                granted.add(target.grantBlessing(blessing));
+            }
+        }
+        return granted;
     }
 
     private int sumEgoAdvantageAbsoluteDamageReduction(final Character character, final SceneContext sceneContext) {
@@ -366,8 +393,18 @@ public class DamageServiceImpl implements DamageService {
      * em -1 todo dano sofrido", is the first racial ability to grant either).
      */
     private int sumAcrossSources(final Character character, final ModifierType modifierType) {
+        return sumAcrossSources(character, modifierType, null);
+    }
+
+    /**
+     * The same scan, with sheet supplied so a Forma suppressing its holder's race drops the
+     * Habilidades Raciais from it. Nullable: the {@link Character}-only public overloads pass
+     * {@code null} and so never suppress, which is this mechanism's documented reach.
+     */
+    private int sumAcrossSources(final Character character, final ModifierType modifierType,
+                                 final CombatantSheet sheet) {
         int total = modifierResolver.sumModifiers(character.getAttributeAbilities(), modifierType);
-        total += modifierResolver.sumModifiers(SkillCompetencyAbility.allFor(character), modifierType);
+        total += modifierResolver.sumModifiers(SkillCompetencyAbility.allFor(character, sheet), modifierType);
         for (Map.Entry<SkillType, CharacterSkill> entry : character.getSkills().entrySet()) {
             int graduationValue = entry.getValue().getGraduation().getGraduationValue();
             List<SkillExcellency> unlockedExcellencies = SkillExcellency.unlockedBy(

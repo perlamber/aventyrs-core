@@ -183,8 +183,62 @@ form of an `Efeito:` line like *"Causa 2d6+Metade do Foco pontos de Dano Mágico
   Menor/Maior, Torrente Vulcânica, Ira de Vulcano's primary wave) and three `PiromanciaSpell`
   entries (Hálito de Eldur, Bola de Fogo Elduriana, Olhar de Eldur). What `SpellDamage` does
   **not** hold, and stays prose on the constant: distance falloff ("-2 por UD"), a recurring "a
-  cada Rodada" cadence, a delayed second wave, damage to someone other than the cast target, and
-  every *healing* effect. Extend it Magia-by-Magia as a real consumer needs each.
+  cada Rodada" cadence, a delayed second wave, and damage to someone other than the cast target.
+  Extend it Magia-by-Magia as a real consumer needs each. **Healing is no longer on that list** —
+  it has a column of its own, `SpellHealing`; see the next section.
+
+### A Magia's effect — `SpellEffect` and its four categories
+
+A Magia's `Efeito:` line becomes executable through **`org.aventyrs.core.effect.SpellEffect`**, a
+third category under the pre-existing `Effect` root beside `CriticalEffect` and `EffectChain` —
+**not a hierarchy of its own**. `Effect extends Interaction<CombatantSheet>`, so a concrete Spell
+Effect plugs into `receiveInteraction` with zero other code touched, and `AbstractEffect` supplies
+`chainInto`/`reportChain` free. Its four subcategories divide by what the effect *does*:
+`OffensiveEffect` (damage, debuffs), `DefensiveEffect` (buffs, cleansing), `HealingEffect`,
+`InvocationEffect`.
+
+- **One shape per ramificação, parameterized by rung — never a class per Magia.** The Magias of a
+  branch share an effect that deepens as the tree climbs, so a concrete Spell Effect is built from
+  authored columns rather than subclassed per constant. `SpellHealingEffect` covers the whole of
+  Vida's principal branch (Descanso Mínimo at Semente → full recovery at Florescente);
+  `ConditionCleansingEffect` covers its alternativo one. **Adding a rung is authoring data, not
+  writing a class** — reach for a new class only when a branch's *shape* differs, not its depth.
+- **Two authored columns feed them**, both on `SpellData` with `Spell`/`AuthoredSpell` delegates,
+  wired exactly like `primaryDamage`: **`healing`** (a `SpellHealing`) and **`cleansedConditions`**
+  (a `Set<ConditionType>`, `@Builder.Default` empty because callers iterate it).
+- **`SpellHealing` states a Descanso tier, not dice.** Every healing Magia reads "recupera PV como
+  se passasse por um Descanso Mínimo/Longo/Total", and `RestType` carries those four tiers. Either
+  a `restEquivalent` tier **or** `fullRecovery` — both or neither throws `INVALID_SPELL_HEALING`,
+  the same cross-field validation `SpellDamage` and `SpellTargeting` apply. Plus
+  `halvedForHostiles` (Nova Rejuvenescedora) and a `HealingCondition` gate
+  (`ONLY_IF_NOT_BLEEDING`, Aliviar a Dor's "ao invés disso").
+- ⚠️ **The amount reads the *target's* Vigor, not the caster's** — "faça com que *um alvo* recupere
+  PV como se *passasse* por um Descanso" names the recipient, the same reading
+  `SpellDuration.targetAttribute` takes. This is the one place a Magia's magnitude is not the
+  Conjurador's own; a Foco term (`Sobrecura`) still is.
+- **It heals as much as a Descanso, and is not one.** The effect calls `RestService
+  #getRecoveredHitPoints` then a bare `CombatantSheet#heal` — **never `RestService#applyRest`**,
+  because "Este é um efeito similar a Descanso e não substitui Descansos reais", and a real Rest
+  also restores PM/PD, settles every `PendingEgoRecovery` and clears rest cooldowns. Going through
+  `heal` also gets Feridas Dolorosas' refusal and Sangramento's interruption for free.
+- **The effect applies; the caller drives it.** `SpellCastingService#resolveEffect(spell,
+  hostileTarget)` builds it and `SpellCastingResult#getSpellEffect()` reports it — `castSpell`
+  never runs it, since this core resolves no target GD and so cannot tell the cast landed. Same
+  report-only restraint as `getPrimaryDamage()`/`getRecordedAction()`. A Corrente the caller judged
+  triggered is chained on first (`Sobrecura`).
+- **Which targets are hostile, and who is in an area, stay the caller's.** No footprint resolution
+  exists, so `castSpell` builds the effect for the primary target alone (deriving hostility from
+  the caster's own `SceneContext#getEnemies`); a caller sweeping an area calls `resolveEffect` per
+  combatant.
+- **`ConditionType.POSSESSAO` was added for `EXORCIZAR`** — not in
+  `docs/rules/condicoes-e-maleficios-.txt`, authored from the Fantasma's *Possessão Furiosa*
+  Corrente in `magias.txt`, modelled on `SILENCIO`. And **`ConditionType#isMaleficio()`/
+  `maleficios()`** were added for `CORPO_FECHADO`'s "todos os Malefícios" — the first clause to ask
+  about the category instead of naming its members. Everything but `ESCONDIDO`.
+- **Still inert:** `OffensiveEffect` (no wired branch needs one; both halves already exist) and
+  `InvocationEffect` (`Spell` has no `MonsterTemplate` column). `CORPO_FECHADO`'s Malefício
+  *immunity* half needs per-condition immunity, which does not exist. The Regeneração tree is
+  unblocked but unwired — `SpellHealing` would need a recurring figure beside the instant one.
 
 ### Four columns the catalog forced into existence
 
@@ -360,5 +414,10 @@ the example that originally justified building it.
 - `src/main/java/org/aventyrs/core/magic/SpellDamage.java` / `FocusScaling.java` /
   `ResolvedSpellDamage.java` (`SpellDamageTest.java`) — the primary-damage model;
   `AttributeAbility#upgradesFirstSpellOfRoundFocusScaling` / `FocusAbility#MAGIA_PODEROSA`.
+- `src/main/java/org/aventyrs/core/magic/SpellHealing.java` / `HealingCondition.java`
+  (`SpellHealingTest.java`) — the healing column; `org.aventyrs.core.effect/SpellEffect.java` +
+  `HealingEffect`/`DefensiveEffect`/`OffensiveEffect`/`InvocationEffect`, and the concrete
+  `SpellHealingEffect.java` / `ConditionCleansingEffect.java` / `Sobrecura.java` with their tests.
+  Read `org.aventyrs.core.effect/package-info.java` first — it is the pipeline's narrative.
 - `docs/rules/magias-index.md` — the source-of-truth survey; `docs/rules/magias.txt` — the raw
   rules text.

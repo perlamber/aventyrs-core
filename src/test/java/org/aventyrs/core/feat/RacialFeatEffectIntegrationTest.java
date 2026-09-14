@@ -991,6 +991,31 @@ class RacialFeatEffectIntegrationTest {
         return skillType.newInteraction().applyTo(sheet, sceneContext, null).getSkillRollBonus();
     }
 
+    /**
+     * {@code FeericoFeat.ADOTADO_POR_SYLPH} via {@link AdotadoPorSylphFeat} — "Você recebe … e
+     * Vantagem em suas rolagens" on <em>each</em> Perícia chosen at acquisition, and on nothing
+     * else. The multi-pick case: the choice is a set, so the Vantagem has to land on every member.
+     */
+    @Test
+    void adotadoPorSylphGrantsVantagemOnEveryChosenPericiaAndNoOther() throws IllegalOperationException {
+        Character satiro = character().race(new Satiro()).build();
+        // "Você pode escolher uma desta Perícias para cada Título Aventyr Desperto" — and the
+        // Pré-requisito asks for one Desperto, so two Títulos buy the two picks made below.
+        satiro.grantTitle(new Santo(List.of(), List.of()), TitleSlot.PRIMARY);
+        satiro.grantTitle(new Santo(List.of(), List.of()), TitleSlot.SECONDARY);
+        CharacterSheet sheet = CharacterSheet.of(satiro, new Player());
+        int artesBefore = rollBonusIn(sheet, SkillType.ARTES, null);
+        int atencaoBefore = rollBonusIn(sheet, SkillType.ATTENTION, null);
+        int persuasaoBefore = rollBonusIn(sheet, SkillType.PERSUASAO, null);
+
+        acquire(satiro, AdotadoPorSylphFeat.of(SkillType.ARTES, SkillType.ATTENTION));
+
+        assertEquals(artesBefore + Skill.ADVANTAGE_BONUS, rollBonusIn(sheet, SkillType.ARTES, null));
+        assertEquals(atencaoBefore + Skill.ADVANTAGE_BONUS, rollBonusIn(sheet, SkillType.ATTENTION, null));
+        assertEquals(persuasaoBefore, rollBonusIn(sheet, SkillType.PERSUASAO, null),
+                "Persuasão was on the menu but was not picked");
+    }
+
     @Test
     void guardiaoDosBosquesGrantsVantagemOnItsFourScopesWhileInAForest() throws IllegalOperationException {
         Character elfo = character().race(new Elfo()).build();

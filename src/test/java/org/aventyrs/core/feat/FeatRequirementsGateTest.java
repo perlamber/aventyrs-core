@@ -284,7 +284,7 @@ class FeatRequirementsGateTest {
         assertTrue(feat.isEligible(character()
                 .attributes(CharacterAttributes.builder()
                         .strength(AttributeValue.builder()
-                                .domain(AttributeDomain.STRENGTH).base(5).racialBonus(1).build())
+                                .domain(AttributeDomain.STRENGTH).base(5).fixedRacialBonus(1).build())
                         .build())
                 .build()));
     }

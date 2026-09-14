@@ -10,6 +10,7 @@ import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.character.SizeCategory;
 import org.aventyrs.core.action.ActionPointsService;
 import org.aventyrs.core.character.services.DeterminationPointsService;
+import org.aventyrs.core.character.services.HidingService;
 import org.aventyrs.core.character.services.HitPointsService;
 import org.aventyrs.core.character.services.MagicPointsService;
 import org.aventyrs.core.effect.CriticalEffectType;
@@ -103,6 +104,22 @@ public interface MonsterTemplate {
 
     /** A flat modifier on top of {@link #getAttackDifficulty()}'s threshold. */
     int getAttackBonus();
+
+    /**
+     * The fixed Atenção value this creature presents when someone tries to hide from it — the
+     * total a player would have rolled, authored instead of rolled for exactly the reason the
+     * four combat numbers above are: <b>a foe never rolls</b>. {@code
+     * org.aventyrs.core.character.services.HidingService#resolveDetection} reads this in place of
+     * an Atenção roll and compares it to the hider's Furtividade total.
+     *
+     * <p>Defaults to {@link HidingService#DEFAULT_MONSTER_PERCEPTION}, which is itself an
+     * inference — see that constant. A creature meant to be hard or easy to sneak past authors its
+     * own; {@link #getSkillGraduations()}'s Atenção entry is deliberately <i>not</i> consulted,
+     * since nothing about a foe is derived from its Perícias.
+     */
+    default int getPerception() {
+        return HidingService.DEFAULT_MONSTER_PERCEPTION;
+    }
 
     /**
      * Its Pontos de Ação. Authored like the four combat numbers and for the same reason — a stat

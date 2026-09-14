@@ -63,17 +63,76 @@ import org.aventyrs.core.modifier.ModifierType;
  */
 @Getter
 public class Blessing {
+
+    /**
+     * What {@link #getMaximumSimultaneous()} is for every Blessing whose own rules text says
+     * nothing about stacking — one, which is the ordinary "a trait re-triggering renews its own
+     * effect rather than adding a second". Named rather than inlined so the meaning the older
+     * constructors hand their callers is greppable.
+     */
+    public static final int DEFAULT_MAXIMUM_SIMULTANEOUS = 1;
+
     private final ModifierType modifierType;
     private final int value;
     private final int rounds;
     private final TargetScope scope;
     private final String source;
 
+    /**
+     * A ceiling on everything this Blessing may deliver over its whole life, or {@code null} for
+     * the usual Blessing — which simply presents its {@link #getValue()} every Rodada until the
+     * count runs out, with no running total to bound.
+     *
+     * <p>Only a Blessing that <em>acts</em> each Rodada rather than contributing to a stat can
+     * need one, and Regeneração Reativa is the case: "a quantidade de PV recuperados desta forma
+     * não pode superar os danos sofridos" caps the <em>sum</em> of its healing at the damage that
+     * triggered it, which neither {@link #getValue()} nor {@link #getRounds()} can express (2PV a
+     * Rodada over 3 Rodadas must still stop at 3 total when 3 was the damage). Enforced by
+     * {@link Regeneration}, not by whoever grants the Blessing.
+     */
+    private final Integer totalLimit;
+
+    /**
+     * How many instances of this grant its recipient may hold at once — {@link
+     * #DEFAULT_MAXIMUM_SIMULTANEOUS} for every Blessing but one, since {@link
+     * org.aventyrs.core.sheet.TemporaryBonus} already refuses to accumulate with another from the
+     * same source and type, replacing it and thereby renewing its duration. Regeneração Reativa's
+     * "Efeito não cumulativo" is exactly that default; {@code
+     * TrollFeat#REGENERACAO_REATIVA_SUPERIOR}'s "se tornam cumulativos, podendo somar uma
+     * quantidade de efeitos simultâneos igual 1+ número de Títulos Aventyr Despertos" is what
+     * raises it.
+     *
+     * <p><b>A column here, resolved by whoever grants the Blessing.</b> This used to be a
+     * parameter of {@code CombatantSheet#grantBlessing} instead, on the grounds that the trait
+     * lifting the ceiling is not the trait that granted the Blessing — which conflated <i>who
+     * resolves the number</i> with <i>what the number describes</i>. The ability granting a
+     * Blessing is precisely the one that knows which traits may lift its own ceiling, so it scans
+     * for them and states the answer here (see {@code TrollsRacialAbility#REGENERACAO_REATIVA});
+     * a generic consumer guessing on its behalf would hand a regeneration-specific figure to every
+     * unrelated Blessing it happened to be applying in the same pass.
+     *
+     * <p>Unlike {@link #getTotalLimit()}, which is structurally meaningful only for a Blessing that
+     * <i>acts</i> each Rodada, this column is honoured for every {@link ModifierType}.
+     */
+    private final int maximumSimultaneous;
+
     public Blessing(final ModifierType modifierType, final int value, final int rounds, final TargetScope scope, final String source) {
+        this(modifierType, value, rounds, scope, source, null);
+    }
+
+    public Blessing(final ModifierType modifierType, final int value, final int rounds, final TargetScope scope,
+                    final String source, final Integer totalLimit) {
+        this(modifierType, value, rounds, scope, source, totalLimit, DEFAULT_MAXIMUM_SIMULTANEOUS);
+    }
+
+    public Blessing(final ModifierType modifierType, final int value, final int rounds, final TargetScope scope,
+                    final String source, final Integer totalLimit, final int maximumSimultaneous) {
         this.modifierType = modifierType;
         this.value = value;
         this.rounds = rounds;
         this.scope = scope;
         this.source = source;
+        this.totalLimit = totalLimit;
+        this.maximumSimultaneous = maximumSimultaneous;
     }
 }

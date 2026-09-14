@@ -12,6 +12,7 @@ import org.aventyrs.core.rest.RestType;
 import org.aventyrs.core.scene.SceneContext;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -77,6 +78,21 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
 
     /** Heals accumulated damage, interrupting any ongoing {@link Bleeding}. */
     int heal(int amount);
+
+    /**
+     * Interrupts every ongoing {@link Bleeding} <b>without healing</b>, returning whether there
+     * was any to interrupt.
+     *
+     * <p>{@link #heal} already clears a Bleeding, but only as a consequence of PV coming back.
+     * This is the clause that stops the bleeding <i>instead</i> — {@code VidaSpell#ALIVIAR_A_DOR}'s
+     * "Interrompe qualquer efeito de Sangramento sofrido pelo alvo, se ele não estiver sob
+     * sangramento, ao invés disso essa magia cura o alvo", where the two are alternatives and the
+     * answer to "was it bleeding?" decides which happens.
+     *
+     * <p>Unlike {@link #heal} it is not refused by Feridas Dolorosas: that condition forbids
+     * recovering Pontos de Vida, and stopping a bleed recovers none.
+     */
+    boolean stopBleeding();
 
     int getShieldPoints();
 
@@ -215,6 +231,49 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
 
     int getTemporaryBonus(ModifierType type);
 
+    // --- Reacting to damage -------------------------------------------------------------------
+
+    /**
+     * Records that an attack has just landed on this combatant, advancing {@link
+     * #getAttacksSufferedThisRound()}. Called by {@code DamageService#notifyDamageTaken}, which is
+     * where a damage-taken reaction is resolved — this method only counts.
+     *
+     * @return the number of attacks suffered this Rodada, including this one
+     */
+    int recordAttackSuffered();
+
+    /** Whether a {@link Regeneration} is currently running on this combatant. */
+    boolean hasActiveRegeneration();
+
+    /**
+     * How many attacks have landed on this combatant since the Rodada began — every {@link
+     * #recordAttackSuffered()} call, including one whose damage was fully mitigated. Zero means the
+     * next attack is this Rodada's first, which is what {@code
+     * TrollFeat#REGENERACAO_REATIVA_INVERNAL}'s "aplicável somente ao primeiro ataque sofrido a
+     * cada Rodada" reads: the count is advanced <em>after</em> the hit's own mitigation is
+     * computed, so the first attack still sees zero.
+     *
+     * <p>Reset by {@link #startNewRound()}, the same boundary {@link #getActionsThisRound()} uses;
+     * without a live {@code Scene} it simply stays at whatever the client left it, exactly as the
+     * action log does. Counts hits, not rolls — a preview through {@code
+     * DamageService#calculateFinalDamage} never advances it.
+     */
+    int getAttacksSufferedThisRound();
+
+    /**
+     * Grants blessing to this combatant, returning the effect it became — the one path a {@link
+     * Blessing} takes to reach a sheet. Two things happen here and nowhere else: a {@link
+     * ModifierType#REGENERATION} Blessing becomes a {@link Regeneration} rather than a plain bonus,
+     * and the resulting {@link TemporaryBonus} carries {@link Blessing#getSource()}, which is what
+     * makes a second grant from the same source and type <em>replace</em> the first — renewing its
+     * duration instead of stacking a second copy.
+     *
+     * <p>How many of that same grant may run at once arrives <em>on</em> the Blessing ({@link
+     * Blessing#getMaximumSimultaneous()}), stated by whoever resolved it. This method applies a
+     * Blessing; it never decides anything about one.
+     */
+    TemporaryBonus grantBlessing(Blessing blessing);
+
     // --- Condições / Malefícios ---------------------------------------------------------------
 
     /**
@@ -238,6 +297,19 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
 
     /** Whether conditionType is in force, directly or by implication. */
     boolean hasCondition(ConditionType conditionType, SceneContext sceneContext);
+
+    /**
+     * The {@link Hidden} this combatant is holding, or empty when they are not Escondido — the
+     * one condition with a magnitude, so the one that needs reaching as an instance rather than
+     * as a {@link ConditionType}. It carries the Furtividade total an observer has to beat and
+     * the observers that already have.
+     *
+     * <p>Takes no {@code SceneContext}, unlike {@link #hasCondition}: nothing implies Escondido,
+     * so there is no implication graph to walk, and the value is the same wherever it is read
+     * from. Which observers it is <i>currently</i> hiding from is {@code
+     * HidingService#isHiddenFrom}'s question, and that one does need the Scene.
+     */
+    Optional<Hidden> getHidden();
 
     /**
      * The summed numeric malus every active condition contributes toward modifierType — the
@@ -302,15 +374,67 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
 
     /**
      * Whether this combatant may currently attack with weapon — {@code null} meaning an Ataque
-     * Desarmado, which is always allowed. False only while a held condition restricts them to
-     * light weapons ({@link ConditionType#restrictsAttacksToLightWeapons()} — Devorado, where a
-     * greatsword cannot be brought to bear inside a creature but a dagger still can).
+     * Desarmado, which is always allowed. False in three cases:
+     *
+     * <ul>
+     *   <li>a held condition restricts them to light weapons ({@link
+     *   ConditionType#restrictsAttacksToLightWeapons()} — Devorado, where a greatsword cannot be
+     *   brought to bear inside a creature but a dagger still can);</li>
+     *   <li>their current Forma suppresses weapons ({@link FormType#getEquipmentPolicy()}) and
+     *   this is one — Armas Naturais are exempt, and {@link FormType#permitsOneHandedWeapons()}
+     *   exempts one-handed weapons too on the one shape that claws them back;</li>
+     *   <li>their current Forma <b>replaces</b> their Armas Naturais and this is not one of the
+     *   replacements ({@link #getNaturalWeapons()}) — a Vampiro in Névoa can use none at all.</li>
+     * </ul>
      *
      * <p>A question, not a gate: nothing in this core refuses an attack made with a weapon this
      * returns {@code false} for, because there is no validation point between choosing an attack
      * and resolving one. A caller deciding which attacks to present asks this.
      */
     boolean canAttackWith(Weapon weapon);
+
+    /**
+     * The Armas Naturais this combatant can strike with <b>right now</b> — the sheet-aware twin of
+     * {@code Character#getNaturalWeapons()}, and the one to read whenever a sheet is in hand.
+     *
+     * <p>The two differ only while a Forma is worn. {@code
+     * Feat#getGrantedNaturalWeapons(Character, CombatantSheet)} lets a shape contribute its own
+     * ({@code FormaMetamorfica}'s ARMA NATURAL column — Cauda Constritora for a Serpente
+     * Espinhosa), and {@code Feat#resolveRacialTraitSuppression} lets it <b>silence</b> what
+     * its holder otherwise has, so a Nosferatu in that shape loses their lineage's Presas Longas
+     * for the duration and a Vampiro in Névoa is left with nothing. Out of any Forma, and for
+     * every shape no Talento claims, this is exactly the {@code Character} view.
+     *
+     * <p><b>Derived, never stored.</b> Nothing is written on transforming and nothing is restored
+     * on changing back — which is what makes it correct across all three ways a Forma ends (a
+     * {@code FormEffect} lapsing, {@code #enterForm(null)}, and a second Forma displacing the
+     * first). A swap-the-list implementation would need an undo on each.
+     *
+     * <p><b>The list a UI offers, not a check the roll enforces</b> — the same standing as {@code
+     * Character#getNaturalWeapons()}. {@code DamageBaseService} takes the {@link Weapon} as a
+     * parameter and never looks it up. {@link #canAttackWith(Weapon)} is the one place it is
+     * consulted, and that is itself a question rather than a gate.
+     */
+    java.util.List<org.aventyrs.core.item.NaturalWeapon> getNaturalWeapons();
+
+    /**
+     * How much of this combatant's {@code Race} is temporarily silenced — the strongest rung any
+     * held Talento declares through {@code Feat#resolveRacialTraitSuppression}, folded into one
+     * answer. "Abandonando seus traços raciais" and its narrower cousins.
+     *
+     * <p><b>The single question every racial aggregation asks</b>, so a new suppressible trait is
+     * wired by consulting this rather than by growing another mechanism. Read by {@link
+     * #getNaturalWeapons()}, {@link #getCriticalEffectImmunities()}, {@link
+     * #getTotalCriticalResistance(org.aventyrs.core.scene.SceneContext)}, {@code
+     * CharacterSizeService} and {@code SkillCompetencyAbility#allFor} — see {@link
+     * org.aventyrs.core.race.RacialTraitSuppression} for the ladder, which trait each rung
+     * reaches, and the traits no rung ever touches (creature type above all).
+     *
+     * <p>Suppression removes the <b>racial term only</b>. Every trait it reaches is aggregated
+     * from more than one source, and a Talento-granted or round-scoped contribution to the same
+     * stat survives untouched.
+     */
+    org.aventyrs.core.race.RacialTraitSuppression getRacialTraitSuppression();
 
     /**
      * The flat dano-roll bonus this combatant's conditions grant to <b>whoever attacks them</b> —
@@ -425,6 +549,32 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
      * Rodada-measured Resfriamento must not ride the Turn-end countdown.
      */
     int getRemainingCooldown(ActiveAbility ability);
+
+    /**
+     * Records that ability cannot be used again until a Descanso of restType's tier — the
+     * "não poderá ser reativado até que passe por um Descanso Longo" gate, a different unit from
+     * the Rodada count above and tracked separately for that reason.
+     */
+    void startRestCooldown(ActiveAbility ability, RestType restType);
+
+    /** Whether ability is still waiting on a Descanso before it can be used again. */
+    boolean isAwaitingRest(ActiveAbility ability);
+
+    /**
+     * Clears every rest-gated Resfriamento a Descanso of restType satisfies — that tier
+     * <b>or stronger</b>, so a Descanso Total frees an ability waiting on a Longo. Called by
+     * {@code RestService#applyRest}.
+     */
+    void clearRestCooldowns(RestType restType);
+
+    /**
+     * Whether ability is unavailable for either reason — Rodadas still owed, or a Descanso still
+     * pending. What {@code ActiveAbilityService#activate} asks; the two queries above are for a
+     * caller that needs to say <em>why</em>.
+     */
+    default boolean isOnCooldown(ActiveAbility ability) {
+        return getRemainingCooldown(ability) > 0 || isAwaitingRest(ability);
+    }
 
     int getTotalLifeSteal();
 

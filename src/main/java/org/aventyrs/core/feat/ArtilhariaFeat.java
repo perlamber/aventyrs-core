@@ -3,6 +3,7 @@ package org.aventyrs.core.feat;
 import java.util.Optional;
 
 import org.aventyrs.core.character.Character;
+import java.util.List;
 import org.aventyrs.core.character.DamageBonus;
 import org.aventyrs.core.character.DamageType;
 import org.aventyrs.core.item.AttackMethod;
@@ -56,7 +57,13 @@ public enum ArtilhariaFeat implements Feat {
             FeatRequirements.builder()
                     .requiredSkillType(SkillType.ATAQUE_A_DISTANCIA)
                     .requiredSkillGraduation(2)
-                    .build()),
+                    .build()) {
+        /** The same "tipo de arma, armas naturais ou magias ofensivas" pick its Duelista twin makes. */
+        @Override
+        public List<FeatChoice<?>> resolveRequiredChoices(final Character holder) {
+            return List.of(FeatChoice.ofOne(AttackMethod.class, List.of(AttackMethod.values())));
+        }
+    },
 
     /**
      * "Sempre que utilizar o talento 'Atirador Perfeito' você recebe também vantagem nas rolagens

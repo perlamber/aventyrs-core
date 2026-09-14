@@ -3,6 +3,10 @@ package org.aventyrs.core.feat;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.race.HomemFera;
+import org.aventyrs.core.race.TrollsRacialAbility;
+import org.aventyrs.core.skill.SkillTrait;
+
+import java.util.List;
 
 /**
  * Talentos Ferais — the Homem-Fera's tree, split cleanly in two: three Talentos that graft a
@@ -62,15 +66,23 @@ public enum FeralFeat implements Feat {
      * (Trolls)."
      */
     /**
-     * The Vigor +1 is <b>real</b>, through {@link Feat#resolveAttributeBonus}.
+     * Both halves are <b>real</b>: the Vigor +1 through {@link Feat#resolveAttributeBonus}, and
+     * Regeneração Reativa through {@link Feat#getGrantedSkillTraits} — the clause says "adquire a
+     * Habilidade Racial Regeneração Reativa (Trolls)", so this hands over {@code
+     * TrollsRacialAbility#REGENERACAO_REATIVA} itself rather than restating it. {@code
+     * SkillCompetencyAbility#allFor} then picks it up exactly as it does a Troll's own, and a
+     * Homem-Fera gets the whole cycle — Vigor Rodadas, total capped at the damage that triggered
+     * it, one instance at a time.
+     *
+     * <p><b>The quoted figure below is corrected to 2PV.</b> {@code docs/rules/talentos.txt} prints
+     * 1PV in its transcription of the Característica while {@code docs/rules/racas.txt} gives the
+     * Troll 2PV; since this Talento's own instruction is to acquire <i>that</i> ability, the
+     * transcription is the half that was wrong, and the description here states what the holder
+     * actually gets rather than repeating the slip.
      */
-    // TODO: Regeneração Reativa is unbuilt — nothing triggers off taking damage, which is the
-    //  healing counterpart of CLAUDE.md's "Reactive/retaliation damage" row. Note this Talento
-    //  grants the Troll version at 1PV per Rodada rather than the 2PV Troll's own Característica
-    //  states; the weaker figure is transcribed as written.
     BENCAO_DE_MAPINGUARI(
             "Você recebe Bônus Racial de +1 em Vigor e adquire a Habilidade Racial Regeneração "
-                    + "Reativa (Trolls): após sofrer danos de fontes inimigas recupera 1PV por "
+                    + "Reativa (Trolls): após sofrer danos de fontes inimigas recupera 2PV por "
                     + "Rodada (em seus Turnos) por uma quantidade de Rodadas igual ao próprio "
                     + "Vigor. A quantidade de PV recuperados desta forma não pode superar os danos "
                     + "sofridos (Efeito não cumulativo).",
@@ -82,6 +94,11 @@ public enum FeralFeat implements Feat {
         @Override
         public int resolveAttributeBonus(final AttributeDomain domain, final Character character) {
             return domain == AttributeDomain.VIGOR ? FERAL_ATTRIBUTE_BONUS : 0;
+        }
+
+        @Override
+        public List<SkillTrait> getGrantedSkillTraits(final Character character) {
+            return List.of(TrollsRacialAbility.REGENERACAO_REATIVA);
         }
     },
 

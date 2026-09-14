@@ -36,7 +36,7 @@ public class DefenseServiceImpl implements DefenseService {
 
     @Override
     public int getTotalDefense(final Character character, final DefenseType defenseType, final SceneContext sceneContext) {
-        return sumAbilityModifiers(character, defenseType) + sumEquipment(character, defenseType, sceneContext)
+        return sumAbilityModifiers(character, defenseType, null) + sumEquipment(character, defenseType, sceneContext)
                 + sumFeats(character, defenseType, sceneContext);
     }
 
@@ -54,7 +54,7 @@ public class DefenseServiceImpl implements DefenseService {
     @Override
     public int getTotalDefense(final CombatantSheet target, final DefenseType defenseType,
                                final SceneContext sceneContext, final DamageDescriptor damageDescriptor) {
-        return sumAbilityModifiers(target.getCharacter(), defenseType)
+        return sumAbilityModifiers(target.getCharacter(), defenseType, target)
                 + sumEquipment(target, defenseType, sceneContext, damageDescriptor)
                 + sumFeats(target.getCharacter(), defenseType, sceneContext, target)
                 + target.getTemporaryBonus(ModifierType.DEFESAS)
@@ -70,10 +70,15 @@ public class DefenseServiceImpl implements DefenseService {
      * each source summed for both {@link ModifierType#DEFESAS} and defenseType's own scoped
      * type. Uses {@link SkillCompetencyAbility#allFor} so a racial ability granting a Defesa
      * counts identically to an acquired one.
+     *
+     * <p>sheet is nullable, and is the only way a Forma suppressing its holder's race can drop
+     * the racial abilities from this scan — the {@link Character}-taking public overloads pass
+     * {@code null} and so never suppress.
      */
-    private int sumAbilityModifiers(final Character character, final DefenseType defenseType) {
+    private int sumAbilityModifiers(final Character character, final DefenseType defenseType,
+                                    final CombatantSheet sheet) {
         int total = sumBothTypes(character.getAttributeAbilities(), defenseType);
-        total += sumBothTypes(SkillCompetencyAbility.allFor(character), defenseType);
+        total += sumBothTypes(SkillCompetencyAbility.allFor(character, sheet), defenseType);
         for (Map.Entry<SkillType, CharacterSkill> entry : character.getSkills().entrySet()) {
             int graduationValue = entry.getValue().getGraduation().getGraduationValue();
             List<SkillExcellency> unlockedExcellencies = SkillExcellency.unlockedBy(

@@ -355,6 +355,34 @@ public interface SkillCompetencyAbility extends SkillTrait {
     }
 
     /**
+     * The {@link Blessing}s this ability grants its holder the moment they take damage from a
+     * hostile source — the "ao sofrer danos" trigger, declared by the ability itself and consumed
+     * by {@code DamageService#notifyDamageTaken}. Empty by default.
+     *
+     * <p>{@code TrollsRacialAbility#REGENERACAO_REATIVA} is the only consumer today, and the hook
+     * is shaped for the next one rather than for it: an ability states <em>what it grants</em> as
+     * an ordinary Blessing — <b>including how many of it may run at once</b>, {@code
+     * Blessing#getMaximumSimultaneous()}, which means an ability whose effect another Talento
+     * buffs scans for that buff here rather than leaving a generic consumer to guess — and the
+     * damage path applies it, so a second damage-triggered clause needs no change to {@code
+     * DamageService} at all. That is also why this returns Blessings
+     * rather than a bare PV figure — a trigger that granted, say, a Rodada of RD would be the same
+     * hook with a different {@link org.aventyrs.core.modifier.ModifierType}.
+     *
+     * <p>Scanned across {@link #allFor(Character, CombatantSheet)}, which is what makes the three
+     * ways of coming by a Habilidade Racial — born with it, acquired, or handed over by a Talento's
+     * {@code Feat#getGrantedSkillTraits} ({@code FeralFeat#BENCAO_DE_MAPINGUARI}) — one question
+     * with one deduplicated answer, and what silences it under a Forma abandoning the holder's
+     * racial traits.
+     *
+     * @param holder      the combatant that was hit — their own sheet, never the attacker's
+     * @param finalDamage what actually reached their PV, after mitigation; always positive here
+     */
+    default List<Blessing> resolveDamageTakenBlessings(final CombatantSheet holder, final int finalDamage) {
+        return List.of();
+    }
+
+    /**
      * <b>Three</b> sources: {@code character.getSkillCompetencyAbilities()} (acquired), {@code
      * character.getRace().getRacialAbilities()} (fixed per race — see CLAUDE.md's "Racial
      * Abilities reuse SkillCompetencyAbility" section), and every held Talento's {@code
@@ -370,9 +398,39 @@ public interface SkillCompetencyAbility extends SkillTrait {
      * it count twice, since several consumers <em>sum</em> across this list.
      */
     static List<SkillCompetencyAbility> allFor(final Character character) {
+        return allFor(character, null);
+    }
+
+    /**
+     * The same three sources, with the <b>racial</b> one droppable — a holder whose Forma
+     * suppresses their whole race ("abandonando seus traços raciais") loses their Habilidades
+     * Raciais for its duration, while the acquired and Talento-granted sources stay put.
+     *
+     * <p><b>Read this form wherever a {@code CombatantSheet} is in hand.</b> The sheet-less
+     * {@link #allFor(Character)} delegates here with {@code null} and so can never suppress,
+     * which is exactly how far the mechanism reaches. Routed (they hold a sheet):
+     * {@code AbstractSkillInteraction}'s roll/dano scans, {@code DefenseServiceImpl}'s
+     * sheet-taking overloads, {@code MovementServiceImpl#getMovementBase(CombatantSheet, int)},
+     * and {@code DamageServiceImpl}'s RD/RM/RA/Meio-Dano sheet paths. <b>Not</b> routed, by
+     * construction rather than oversight — each takes only a {@link Character}:
+     * {@code HitPointsServiceImpl}, {@code DamageBaseServiceImpl}, {@code
+     * SkillGraduationServiceImpl}, {@code EquipmentCraftingServiceImpl}/{@code ItemForgery},
+     * {@code EsquivaEApararInteraction#armorCategoryPenalty}, the {@code Character}-only
+     * Defesa/Movimento/Dano overloads, and {@code Feat}'s possession check (deliberately: whether
+     * a trait was ever <em>acquired</em> is not a question a Forma answers).
+     *
+     * <p>That is the same documented partial reach a round-scoped Atributo bonus has (CLAUDE.md's
+     * Forma row) — so a suppression TODO should cite the specific caller, never "the mechanism".
+     */
+    static List<SkillCompetencyAbility> allFor(final Character character,
+                                               final org.aventyrs.core.sheet.CombatantSheet sheet) {
+        boolean racialSuppressed = sheet != null
+                && sheet.getRacialTraitSuppression().suppressesInnateTraits();
         return Stream.of(
                         character.getSkillCompetencyAbilities().stream(),
-                        character.getRace().getRacialAbilities().stream(),
+                        racialSuppressed
+                                ? Stream.<SkillCompetencyAbility>empty()
+                                : character.getRace().getRacialAbilities().stream(),
                         character.getFeats().stream()
                                 .flatMap(feat -> feat.getGrantedSkillTraits(character).stream())
                                 .filter(SkillCompetencyAbility.class::isInstance)

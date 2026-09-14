@@ -1,7 +1,12 @@
 package org.aventyrs.core.feat;
 
+import java.util.List;
+import java.util.Optional;
+
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.sheet.FormType;
+import org.aventyrs.core.ability.ActiveAbility;
 import org.aventyrs.core.character.SizeCategory;
 import org.aventyrs.core.race.Aviano;
 import org.aventyrs.core.race.Bestial;
@@ -11,6 +16,8 @@ import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.skill.Skill;
 import org.aventyrs.core.skill.SkillTrait;
 import org.aventyrs.core.skill.SkillType;
+import org.aventyrs.core.race.RacialTraitSuppression;
+import org.aventyrs.core.sheet.CombatantSheet;
 
 /**
  * Talentos Feéricos — the largest racial tree, spanning wings, tree-bonded Dríades, Pixies,
@@ -189,11 +196,24 @@ public enum FeericoFeat implements Feat {
      * "Temporariamente você pode mudar sua forma física, se transformando em um Anciente, uma
      * árvore viva, abandonando seus traços raciais."
      */
-    // TODO: needs a form state — the same missing piece DraconicoFeat#DRACONATO and HomemFera's
-    //  Forma Híbrida are blocked on, including the same "abandona seus traços raciais"
-    //  suppression that Race#getRacialAbilities() cannot be suspended for.
-    // TODO: "Nascidos da Floresta permanecem +2 Rodadas" would be a per-race Duração branch, and
-    //  "não pode ser reativado até um Descanso Longo" a per-Descanso activation counter.
+    // The transformation itself is real — FormaActiveAbility, the same template DRACONATO uses:
+    // 3PA + 3PD to enter FormType.ANCIENTE for 3 Rodadas, gated on a Descanso Longo before it can
+    // be used again (ActiveAbility#getReactivationRest).
+    // The per-Título Defesas (+2), Categoria de Tamanho (+2) and Carisma/Foco (+1) uplifts are
+    // granted, as round-scoped TemporaryBonuses lasting the Duração — the Atributo half with the
+    // usual partial reach (a Perícia roll governed by it, not PV/PM/Conjuração).
+    // The "Multiplicador de PV aumenta em +2 para cada Título" half is real too, as a
+    // LIFE_MULTIPLIER TemporaryBonus read by HitPointsService#getMaxHitPoints(Character,
+    // CombatantSheet) — so a transformed Anciente's max PV genuinely rises and falls back when
+    // the Duração lapses. Damage on the sheet is not re-scaled, so current PV follows the max;
+    // see that method for what the fall-back can do to a holder damaged while transformed.
+    // "Abandonando seus traços raciais" is real: RacialTraitSuppression.ALL while the Forma
+    // holds. Only the Race term of each trait goes, and the Habilidade/Atributo halves carry the
+    // same sheet-reach limit noted above (the Perícia-roll path, not PV/PM/Conjuração).
+    // TODO: "Nascidos da Floresta permanecem +2 Rodadas" is a per-race Duração branch
+    //  FormaActiveAbility keeps room for (its Duração is resolved, not constant) but does not yet
+    //  take — NascidoDaFloresta is a Race, and the ability sees the Character, so this one is
+    //  cheap once someone wants it.
     ANCIENTEFORME(
             "Temporariamente você pode mudar sua forma física, se transformando em um Anciente, "
                     + "uma árvore viva, abandonando seus traços raciais. Transformar-se em um "
@@ -206,7 +226,44 @@ public enum FeericoFeat implements Feat {
             FeatRequirements.builder()
                     .requiredFeat(DRIADE)
                     .requiredAwakenedTitles(1)
-                    .build()),
+                    .build()) {
+        private final ActiveAbility transformation =
+                new FormaActiveAbility(this, FormType.ANCIENTE,
+                        // "suas Defesas e Multiplicador de PV, Categoria de Tamanho aumentam em
+                        // +2, enquanto seu Carisma e Foco aumentam em +1" — per Título Desperto.
+                        new FormaActiveAbility.Uplift(2, 2, 1,
+                                List.of(AttributeDomain.CHARISMA, AttributeDomain.FOCUS)));
+
+        @Override
+        public Optional<ActiveAbility> resolveActiveAbility() {
+            return Optional.of(transformation);
+        }
+
+        /** "Abandonando seus traços raciais" — while an Anciente, and only then. */
+        @Override
+        public RacialTraitSuppression resolveRacialTraitSuppression(final Character character,
+                                                                    final CombatantSheet sheet) {
+            return sheet != null && sheet.isInForm(FormType.ANCIENTE)
+                    ? RacialTraitSuppression.ALL
+                    : RacialTraitSuppression.NONE;
+        }
+
+        /**
+         * "Para cada Título Aventyr Desperto … Multiplicador de PV … aumenta em +2."
+         *
+         * <p>Resolved from the worn Forma rather than granted as a {@code TemporaryBonus} beside
+         * it, unlike the Defesas/Categoria/Atributo halves of the same sentence. A countdown is
+         * tied to itself, not to the shape: a holder leaving early through {@code
+         * enterForm(null)} would keep the uplift, and one still transformed when it lapsed would
+         * lose it. Max PV is too visible a number to let drift apart from the shape granting it.
+         */
+        @Override
+        public int resolveLifeMultiplierIncrease(final Character character, final CombatantSheet sheet) {
+            return sheet != null && sheet.isInForm(FormType.ANCIENTE)
+                    ? ANCIENTE_LIFE_MULTIPLIER_PER_TITLE * character.getAllTitles().size()
+                    : 0;
+        }
+    },
 
     /**
      * "Personagens com este Talento recebem Bônus Racial de +1 em Vigor e Vantagem nas rolagens
@@ -320,6 +377,9 @@ public enum FeericoFeat implements Feat {
 
     /** The "+1 Bônus Racial" NINFA and SIRENIDEO each grant for their fixed Atributo. */
     private static final int FEERICO_ATTRIBUTE_BONUS = 1;
+
+    /** {@link #ANCIENTEFORME}'s "Multiplicador de PV … aumenta em +2" — per Título Desperto. */
+    private static final int ANCIENTE_LIFE_MULTIPLIER_PER_TITLE = 2;
 
     private final String description;
     private final FeatRequirements featRequirements;

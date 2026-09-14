@@ -1,12 +1,12 @@
 ---
 name: building-a-foe
-description: This skill should be used when the user asks to "add a new monster", "build a foe", "create a monster/inimigo/criatura", "add a stat block", "add an archetype to GenericMonster", "make a boss/bruiser/caster enemy", or gives a monster's stat block (its Atributos, Perícias, DF/DM, GD de ataque, Categoria de Tamanho). Walks through picking between AbstractMonsterTemplate's fill-in-the-form path and GenericMonster's ready archetypes, authoring the four combat numbers, tuning bulk via lifeMultiplier, and the spawn-independence trap — mirroring org.aventyrs.core.monster as the reference implementation.
+description: This skill should be used when the user asks to "add a new monster", "build a foe", "create a monster/inimigo/criatura", "add a stat block", "add an archetype to GenericMonster", "make a boss/bruiser/caster enemy", or gives a monster's stat block (its Atributos, Perícias, DF/DM, GD de ataque, Categoria de Tamanho). Walks through picking between AbstractMonsterTemplate's fill-in-the-form path and GenericMonster's ready archetypes, authoring the five stat-block numbers, tuning bulk via lifeMultiplier, and the spawn-independence trap — mirroring org.aventyrs.core.monster as the reference implementation.
 ---
 
 # Building a foe
 
 A foe lives in `org.aventyrs.core.monster`. It is an ordinary `Character` — Attributes,
-Perícias, abilities and equipment — wrapped in a `MonsterSheet` that adds the four numbers a
+Perícias, abilities and equipment — wrapped in a `MonsterSheet` that adds the five numbers a
 creature presents *because it never rolls*.
 
 **There is no `Monster extends Character`, and there must not be.** The stat-carrying half was
@@ -35,9 +35,10 @@ that enum.
 stand-in with a signature trait isn't generic any more. If your new archetype wants one, it's an
 `AbstractMonsterTemplate`.
 
-## 1. Author the four combat numbers
+## 1. Author the five numbers
 
-`MonsterSheet` adds exactly four fields to the shared sheet behaviour:
+`MonsterSheet` adds exactly five fields to the shared sheet behaviour — four for the exchange of
+blows, one for being snuck past:
 
 | Field | Meaning |
 | --- | --- |
@@ -45,6 +46,13 @@ stand-in with a signature trait isn't generic any more. If your new archetype wa
 | `magicDefense` (DM) | the same, for a magical attack |
 | `attackDifficulty` | the `DifficultyLevel` (GD) its own attacks present to a defender's Esquiva e Aparar roll |
 | `attackBonus` | a flat modifier on top of that GD's threshold |
+| `perception` | the flat Atenção it opposes to a hidden character, read by `HidingService#resolveDetection` in place of a roll |
+
+`perception` defaults to `HidingService.DEFAULT_MONSTER_PERCEPTION` (14, itself an inference —
+no stat block in `docs/rules/` carries an Atenção column), so a foe nobody thought about is
+neither blind nor uncanny. Author one when the creature is meant to be either. It is **not**
+derived from the foe's own Atenção Graduação, for the same reason DF is not derived from its
+Destreza.
 
 **These are authored, not derived, and that's the central design decision.** A stat block says
 what a Goblin's DF *is*; it isn't recomputed from its Destreza and Graduação the way a player's
@@ -55,7 +63,8 @@ deliberately** — don't add validation, and don't try to compute DF from Destre
 The player always rolls, so the direction of an exchange decides which pair is consulted — see
 `AttackReceiver` (foe attacks: contributes `attackDifficulty` + `attackBonus`) and
 `AttackDelivery` (player attacks: contributes a flat DF or DM). `MonsterSheet#getDefense`
-selects the right column.
+selects the right column. `perception` is consulted by `HidingService` on the same principle:
+the hiding player rolled, the foe presents a number.
 
 ## 2. Fill in the form
 
@@ -230,10 +239,11 @@ damage/shield/effect/turn-lifecycle tests per monster.
   constants, and `spawn()`.
 - `org.aventyrs.core.monster.AbstractMonsterTemplate` — the form.
 - `org.aventyrs.core.monster.GenericMonster` — the five archetypes and how a tier scales as one dial.
-- `org.aventyrs.core.monster.MonsterSheet` — the four numbers and `getDefense`.
+- `org.aventyrs.core.monster.MonsterSheet` — the five numbers and `getDefense`.
 - `org.aventyrs.core.monster.SummonedMonsterTemplate` / `org.aventyrs.core.monster.summon.Zumbi` —
   the summon path, and the worked example of tier clauses.
 - `org.aventyrs.core.effect.CriticalEffectType` / `CriticalEffect#applicableTo` — immunities.
 - `org.aventyrs.core.monster.package-info` — the consumer-facing overview; keep it current if the
   spawning API changes shape.
-- `org.aventyrs.core.combat.AttackReceiver`/`AttackDelivery` — where the four numbers are consumed.
+- `org.aventyrs.core.combat.AttackReceiver`/`AttackDelivery` — where the four combat numbers are
+  consumed; `org.aventyrs.core.character.services.HidingService` for `perception`.

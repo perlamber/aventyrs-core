@@ -67,7 +67,7 @@ class SkillGraduationServiceImplTest {
         CharacterSkill ataqueCorpoACorpoSkill = CharacterSkillFixture.blank(CharacterSkillFixture.ATAQUE_CORPO_A_CORPO_1).build();
         Character character = CharacterFixture.blank(CharacterFixture.BLANK)
                 .attributes(CharacterAttributes.builder()
-                        .strength(AttributeValue.builder().domain(AttributeDomain.STRENGTH).base(2).racialBonus(10).variable(10).build())
+                        .strength(AttributeValue.builder().domain(AttributeDomain.STRENGTH).base(2).fixedRacialBonus(10).variable(10).build())
                         .build())
                 .skill(SkillType.ATAQUE_CORPO_A_CORPO, ataqueCorpoACorpoSkill)
                 .build();

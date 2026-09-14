@@ -283,11 +283,13 @@ exist. What's missing is **Resfriamento (cooldown)** and the authoring of specif
 
 ---
 
-## Phase 5 — Form state system  ⭐ largest single unlock — **slice 1 of 3 DONE**
+## Phase 5 — Form state system  ⭐ largest single unlock — **DONE (slices 1–3)**
 
 The plan estimated 3–5 sessions, and that was right: the Forma is not one mechanism but a state
 plus five independent deltas. Split into slices so each lands whole rather than half-building all
-of it. **Slice 1 (the state and the gate) is done**; slices 2 and 3 are scoped below.
+of it. **All three slices are done** — the state and the gate, entering one, and the five deltas
+a Forma carries. What is still TODO'd inside this phase is per-clause rather than per-mechanism:
+see the slice-3 notes for which Habilidade is blocked on which missing system.
 
 ### Slice 1 — the state and the gate ✅
 `sheet.FormType` (8 authored shapes) + `CombatantSheet#getCurrentForm()`/`enterForm`/`isInForm`.
@@ -309,18 +311,149 @@ form-gated Resistência a Críticos on both `#PROTECAO_DO_DEUS_DOS_MONSTROS` and
 `#PROTECAO_DA_RAINHA_DAS_FADAS` — which needed a new `CombatantSheet`-taking overload of
 `Feat#resolveCriticalResistance`, since the Forma lives on the sheet.
 
-### Slice 2 — entering a Forma as a transaction (not started)
-Reuses Phase 4's `ActiveAbility` cycle, which already handles cost/gates/effects/Resfriamento. Two
-pieces are missing from it: a **Pontos de Determinação cost** (Draconato and Ancienteforme cost
-3PA+3PD, Metamorfose Selvagem 2PD — `ActiveAbility` has PA/PM/PV only), and an **"until a Descanso
-Longo" Resfriamento**, which is a different unit from the Rodada count `getCooldownRounds()` holds.
-Plus a `TemporaryEffect` that clears the Forma when the Duração lapses — nothing expires one today.
+### Slice 2 — entering a Forma as a transaction ✅
+Reused Phase 4's `ActiveAbility` cycle rather than building a parallel one. Three pieces added to
+it: `getDeterminationPointCost()` (Formas are priced in **PD**, which `ActiveAbility` had no field
+for), `getReactivationRest()` → a `RestType` (a Resfriamento measured in **Descansos**, its own
+ledger, cleared by `RestService#applyRest` at that tier *or stronger*), and `resolveGrantedForm()`.
+`activate` now refuses while **either** cooldown is owing, refuses a shape the holder's Talentos
+forbid, enters it, and applies a `FormEffect` that returns them to their own shape as the Duração
+lapses — the one place leaving a Forma is not a caller's call.
 
-### Slice 3 — what a Forma actually *does* (not started)
-Five independent deltas, each its own missing mechanism, listed on the CLAUDE.md Forma row: a
-round-scoped **Atributo** bonus; a **`SizeCategory`** shift from a `TemporaryBonus`; **equipment
-restrictions**; **suppression of racial traits**; and the per-Forma **Arma Natural** swap. Several
-overlap other phases — the Atributo one is the same gap `VampiricoFeat#DOM_DE_MIRCALLA` cites.
+`FormaActiveAbility` is one class for both Talentos written to the same template (3PA + 3PD, 3
+Rodadas, not again until a Descanso Longo): **landed `DraconicoFeat#DRACONATO` and
+`FeericoFeat#ANCIENTEFORME`** — the transformation, its cost, its Duração and its gate, all real.
+Their stat deltas are slice 3, and each constant now says so.
+
+`BestialFeat#METAMORFOSE_SELVAGEM` (2PD) was left: its text states no Duração and its whole payload
+is deltas plus an equipment restriction, so entering the shape alone would land nothing.
+
+### Slice 3 — what a Forma actually *does* — **two of five done**
+`FormaActiveAbility` grants its uplift as round-scoped `TemporaryBonus`es lasting the Duração,
+through `FormaActiveAbility.Uplift` — a per-Título figure per kind, because Draconato and
+Ancienteforme disagree on more than one number (+2 to everything, versus +2 size/Defesas but +1
+Atributo).
+
+- **`SizeCategory` shift — done.** `CharacterSizeService` gained a `CombatantSheet` overload
+  reading `getTemporaryBonus(SIZE_CATEGORY)` on top of the two existing shift sources; the roll
+  path routes through it. The `Character`-only overload structurally cannot see it, the same split
+  the aggregate PA/Reações/RD reads already carry.
+- **Round-scoped Atributo bonus — done, with the mechanism's own documented limit.** An
+  `<ATTR>_BONUS` `TemporaryBonus` reaches a Perícia roll governed by that Atributo and nothing
+  else. Not a shortcut: PV/PM/PD/Conjuração read `Character#getEffectiveAttributeTotal`, which has
+  no sheet, and a three-Rodada Forma raising max PV would need those totals recomputed per Rodada,
+  which this core deliberately does not do. Same limit `VampiricoFeat#DOM_DE_MIRCALLA` has always
+  had, and the test pins both halves of it.
+- **Multiplicador de PV uplift — done. Phase 5 slice 3 is closed.**
+  `HitPointsService#getLifeMultiplier(Character, CombatantSheet)` and
+  `getMaxHitPoints(Character, CombatantSheet)` are the sheet-aware twins, summing every Talento's
+  `Feat#resolveLifeMultiplierIncrease(Character, CombatantSheet)`; `ANCIENTEFORME` (+2 per Título)
+  and `FormaMetamorfica#CAVALO_DE_CHIFRES` (+1 flat) are the consumers. `getCurrentHitPoints` and
+  `getStatus(CombatantSheet)` route through it — both already held a sheet, which is why the
+  change reached the whole PV path without touching a caller.
+  **Resolved from the Forma, not scheduled as a `TemporaryBonus`** — and the test found that the
+  hard way: a first cut granted Ancienteforme's uplift the way `FormaActiveAbility` grants the
+  Defesas/Categoria halves of the same sentence, and
+  `currentHitPointsFollowTheMaximumUpAndBackDown` failed because a countdown survives an early
+  `enterForm(null)`. CLAUDE.md already stated the rule ("a bonus lasting *while transformed*
+  should be resolved from the Forma") and the first cut violated it; the three existing
+  `TemporaryBonus` halves survive only because their Duração and the Forma's are the same figure.
+  ⚠️ **Max PV moves and current PV follows** — damage is not re-scaled, so a character damaged
+  while transformed can drop a `CharacterStatus` tier when the shape ends. A derivation, not a
+  transcription: the rules say nothing about accumulated damage when a multiplier falls back, and
+  re-scaling or clamping are equally inventable, so neither was invented.
+- **Suppression of racial traits — done, as a four-rung ladder.** `RacialTraitSuppression`
+  (`NONE` → `NATURAL_WEAPONS_ONLY` → `PHYSICAL` → `ALL`), declared by
+  `Feat#resolveRacialTraitSuppression` and folded by `CombatantSheet#getRacialTraitSuppression()`,
+  the one question every racial aggregation asks. `DRACONATO`/`ANCIENTEFORME` take `ALL`;
+  `MonstruosoFeat#MIMETIZAR_FORMA_HUMANA` takes `PHYSICAL` (its first real clause);
+  `METAMORFOSE_DRACULEA`'s weapon swap **was folded in** as `NATURAL_WEAPONS_ONLY` — which is why
+  there are four rungs and not three. **Mapping Dracúlea to `PHYSICAL` was this plan's first
+  sketch and was wrong**: its text never says "abandonando traços raciais", so that would have
+  newly suppressed its holder's RC, anatomy immunities and racial size on the strength of a
+  reading already flagged as debatable. Only the `Race` term of a trait is silenced — a
+  Talento-granted RC or Arma Natural survives even `ALL`, which is the mechanism's likeliest bug
+  and has its own test. Creature type is never suppressed and must not be: Mimetizar's own
+  Pré-requisito is `requiredCreatureType`, so silencing it would make the Talento retroactively
+  ineligible for its own holder.
+  ⚠️ Base Categoria de Tamanho under `PHYSICAL` is an **inference** — the clause enumerates
+  appendages ("escamas, chifres, garras") and never stature.
+  Partial reach on the two `ALL`-only traits (racial Habilidades, racial Atributo bonuses): both
+  need a sheet, so they land on the roll path plus the Defesa/Movimento/Dano sheet overloads and
+  not on PV/PM/Conjuração — the documented limit, to be cited per caller rather than per
+  mechanism.
+- **The audit found the Atributo half was blocked by information loss, not sheet reach** — the
+  opposite of what the docs claimed. `CharacterCreationServiceImpl` merged the race's *fixed*
+  bonus with the player's *chosen* allocation into one `AttributeValue#racialBonus` int, so
+  nothing downstream could tell which part was racial. Now `fixedRacialBonus` +
+  `chosenRacialBonus`, with `getRacialBonus()` reporting the sum so every reader (notably
+  `FeatRequirements`' "recebe Bônus Racial") is untouched. Worth doing on its own terms: that
+  provenance was simply being discarded.
+- **`MIMETIZAR_FORMA_HUMANA` still has no activation transaction**, and it is not a small gap:
+  "Monstruosos precisam utilizar 2PD … Feéricos utilizam 2PM" prices one ability differently per
+  `CreatureType`, and `ActiveAbility`'s cost methods take no arguments. `FormaActiveAbility` does
+  not fit either (3PA + 3PD, a 3-Rodada Duração, a Descanso Longo gate — none stated here). The
+  shape is entered through the bare `enterForm` mutator meanwhile, as every Forma that no
+  `ActiveAbility` grants already is.
+- **Arma Natural swap — done, by deriving rather than swapping.** `Feat#getGrantedNaturalWeapons(
+  Character, CombatantSheet)` lets a worn shape contribute its own and
+  `Feat#resolveRacialTraitSuppression` silences the holder's own, both aggregated by the new
+  **`CombatantSheet#getNaturalWeapons()`**; `Character#getNaturalWeapons()` stays Forma-blind.
+  **The rejected alternative was mutating the equipment/weapon list on transforming** — it needs a
+  matching restore on all three ways out of a Forma (a `FormEffect` lapsing, `enterForm(null)`, a
+  second Forma displacing the first), and any path that forgets silently eats the character's
+  gear. Deriving needs no undo, which is the same reasoning `FormEquipmentPolicy` already followed.
+  ⚠️ **The *replacement* is a reading, not a transcription**: "armas não podem ser utilizadas, são
+  substituídas por armas naturais" takes *armas* as the subject of "são substituídas", so the text
+  arguably replaces only weapons; it is read as also cancelling the holder's own Armas Naturais
+  because the shapes are whole animals. `FormaMetamorfica`'s javadoc carries the counter-argument.
+  Névoa's empty list closes half of "é incapaz de causar danos" for free.
+- **Three of the six HABILIDADE rows landed with it** — Aranha's Furtividade Vantagem, Lobo's
+  Perícias de Ataque Vantagem, Morcego's Roubo de Vida +2 (which needed a
+  `resolveLifeStealBonus(Character, CombatantSheet)` overload). The other three are blocked on
+  *different* systems and each constant now says which, rather than sharing one blanket TODO.
+- **Fixed a test that asserted the opposite of the rules.** Lobo Dentes-de-Sabre's row ends "pode
+  empunhar armas de uma mão com as presas", but `MetamorfoseDraculeaTest` transformed into Lobo
+  specifically and asserted a one-handed sword was refused. The clawback is now
+  `FormType#permitsOneHandedWeapons()`, the general-suppression test was repointed at Morcego, and
+  Lobo has its own test covering both halves.
+- **Equipment restrictions — done for the weapons half.** `FormType#getEquipmentPolicy()` returns
+  a `FormEquipmentPolicy`, since the rules give two different answers: `WEAPONS_SUPPRESSED` (the
+  Metamorfose Dracúlea shapes — defensive items keep working) and `ALL_SUPPRESSED` (Metamorfose
+  Selvagem). `CombatantSheet#canAttackWith` is the consumer, exempting Armas Naturais.
+  `ANIMAL` is `ALL_SUPPRESSED`, which `HomemFera`'s Animal rung inherits (flagged — its text is
+  not in this repo). `ASAS_DE_DRAGAO`'s permanent Capa ban is a different shape and stays out.
+- **`BestialFeat#METAMORFOSE_SELVAGEM` landed whole** — 2PD into `FormType.ANIMAL`, with every
+  clause resolved *from the Forma* rather than scheduled as a countdown (+2UD Movimento, +2
+  Defesas, Vantagem em Ataque e Dano com Armas Naturais, and all equipment suppressed). That
+  needed `CombatantSheet holder` overloads on `Feat#resolveMovementIncrease` and
+  `resolveDamageBonus`, so all four halves of one clause read the same Forma.
+  ⚠️ **Its Duração is a reading, not a transcription**: the clause states none, so the shape is a
+  toggle (`ActiveAbility#resolveDurationInRounds()` → `null`). Every other transformation in the
+  catalog states a figure; `MetamorfoseSelvagemTest#theShapeNeverLapsesOnItsOwn` is where a later
+  source correction would land.
+- **`VampiricoFeat#METAMORFOSE_DRACULEA` landed** — the tree's most elaborate constant.
+  `FormaMetamorfica` is the six-row table (Arma Natural + Habilidade, feat-scoped since the shapes
+  belong to this Talento); `MetamorfoseDraculeaFeat` records the acquisition-time choice and
+  validates both lineage rules (Dampiro 1 / Rakshasa 4 / otherwise 2, no Névoa for a Rakshasa);
+  each chosen Forma is separately activatable as a Poder Vampírico. That needed a **plural
+  `Feat#resolveActiveAbilities`** hook — a single `Optional` cannot carry four, and `activate`
+  matches by `==`, so "which shape" has to be part of each ability's identity. The plural hook is
+  the reusable piece for the next Talento wanting choosable Formas.
+
+**Landed on top of slice 2:** `DRACONATO`'s size/Força/Foco uplift and `ANCIENTEFORME`'s
+Defesas/size/Carisma/Foco one — every half of both Talentos except Ancienteforme's PV multiplier
+and both texts' "abandonando seus traços raciais".
+
+**The deltas shared one root cause**, and naming it is what closed three of them: each needed
+*sheet*-scoped state to reach a *`Character`*-level aggregate, and the answer every time was a
+**sheet-aware twin beside the Forma-blind original** rather than a mutation —
+`CombatantSheet#getNaturalWeapons()`, `getRacialTraitSuppression()`,
+`SkillCompetencyAbility.allFor(Character, CombatantSheet)` and
+`Character#getEffectiveAttributeTotal(domain, CombatantSheet)`. The same move is available to the
+one left (`HitPointsService#getLifeMultiplier`, for the PV multiplier). One architectural problem
+wearing four hats, not four separate features — and the hat is now a known shape with a house
+pattern to match.
 
 **Original plan text follows.**
 
@@ -365,11 +498,21 @@ engine reports amounts and legality, the caller/UI applies position, mirroring t
 `difficultyReduction` "computed, reported unapplied" precedent.
 
 - **Forced movement** — knockback / "empurrado NUD" / Reposicionar (amount + direction reported).
-- **Investida** (charge) as a distinct action with its own movement allowance.
-- **Movement-provokes-Reação** + suppression of it ("seu movimento não provoca Reações").
-- **Per-manoeuvre movement allowance** (distinct from the per-PA figure).
+- ~~**Investida** (charge) as a distinct action with its own movement allowance.~~ **Done** —
+  `org.aventyrs.core.action.Manoeuvre` + `ChargeService`/`ChargeResult`, with the attack itself
+  still going through `AttackDelivery` carrying `Manoeuvre.INVESTIDA` on its `SkillRoll`. Lands
+  `DexterityAbility#IMPLACAVEL` in full and `MobilidadeFeat#INVESTIDA_AQUATICA`'s second clause.
+- ~~**Movement-provokes-Reação**~~ **half done** — `MovementReactionService#getProvokedReactors`
+  resolves *who* may react (drawn melee weapon, mover within their reach; Ataque à Distância never)
+  and `AttributeAbility#exemptsFromMovementReactions` suppresses it. What remains is **firing** a
+  Reação and tracking one as spent, which is what still makes every exemption clause exempt from
+  nothing that happens.
+- **Per-manoeuvre movement allowance** — `ChargeService#getMovementAllowance` is the shape; still
+  needed for Reposicionar and the Movimento Acrobático.
 - **Distance moved this Turn / last Turn** — extend `consumeMovementThisRound` to record a
-  distance and survive a Turn boundary (today it resets at `startTurn`).
+  distance and survive a Turn boundary (today it resets at `startTurn`). Also what
+  `NaturalWeapon#CHIFRES_PODEROSOS`'s "atacar após se mover em direção ao alvo" needs, plus a
+  *direction*.
 - Lands: `MobilidadeFeat` (Investida ×3, Reposicionar, exempt-from-Reação ×2, "moved this/last
   Turn" halves), `EscudeiroFeat` (×3), `CavalariaFeat` (partial), `ArtesMarciaisFeat` manoeuvre
   Vantagens, `ArtesMarciaisFeat#DOMINAR_ARTE_MARCIAL_*` Agarrar/Empurrar/Derrubar — **~12**.

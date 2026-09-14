@@ -15,6 +15,25 @@ public interface HitPointsService {
     int getLifeMultiplier(Character character);
 
     /**
+     * The same multiplier, plus whatever a Forma adds to it for as long as it is worn — the
+     * "Multiplicador de PV aumenta em +2 para cada Título Aventyr Desperto" half of {@code
+     * FeericoFeat#ANCIENTEFORME}, and {@code FormaMetamorfica#CAVALO_DE_CHIFRES}'s flat +1.
+     *
+     * <p>Both clauses arrive the same way: every held Talento's {@code
+     * Feat#resolveLifeMultiplierIncrease(Character, CombatantSheet)}, resolved <em>from</em> the
+     * worn Forma. Deliberately <b>not</b> a round-scoped {@code TemporaryBonus}, even though
+     * {@code FormaActiveAbility} grants the Defesas and Categoria halves of Ancienteforme's very
+     * sentence that way: a countdown is tied to itself rather than to the shape, so a holder
+     * leaving early through {@code enterForm(null)} would keep the uplift and one still
+     * transformed when it lapsed would lose it. Max PV is too visible a number to let drift apart
+     * from the shape that granted it.
+     *
+     * <p><b>Read this wherever a sheet is in hand.</b> {@link #getLifeMultiplier(Character)} is
+     * the Forma-blind figure — what the character is worth out of any shape — and stays that way.
+     */
+    int getLifeMultiplier(Character character, CombatantSheet characterSheet);
+
+    /**
      * Every flat {@link org.aventyrs.core.modifier.ModifierType#HIT_POINTS} bonus the character
      * holds — the "recebe Bônus Mágico de +NPV" shape, whose amount its rules text states
      * outright rather than deriving from Vigor.
@@ -38,6 +57,28 @@ public interface HitPointsService {
      * Life Multiplier, plus {@link #getHitPointsBonus}.
      */
     int getMaxHitPoints(Character character);
+
+    /**
+     * The maximum a combatant currently has, Forma included — {@link
+     * #getLifeMultiplier(Character, CombatantSheet)} in place of the Forma-blind multiplier, and
+     * the sheet-aware Vigor total, so a shape that suppresses its holder's race takes the racial
+     * Vigor off their PV too.
+     *
+     * <p><b>Max PV moves while transformed, and current PV follows it.</b> Damage is stored on
+     * the sheet and is not re-scaled, so current PV is still {@code max - damageTaken}: entering
+     * a Forma that raises the multiplier widens the headroom, and leaving it narrows it again. A
+     * character who took damage while transformed can therefore drop a {@code CharacterStatus}
+     * tier the moment the Duração lapses.
+     *
+     * <p>⚠️ That consequence is a <b>derivation, not a transcription</b> — the rules text states
+     * what the multiplier becomes and says nothing about what happens to accumulated damage when
+     * it falls back. The alternatives (re-scaling damage proportionally, or clamping the drop so
+     * a Forma can never kill its holder) are equally inventable, so none is invented here: the
+     * arithmetic is the plain one and the question is left visible. Nothing is written on
+     * transforming, which is the same reason the Arma Natural swap and racial-trait suppression
+     * are derived rather than mutated.
+     */
+    int getMaxHitPoints(Character character, CombatantSheet characterSheet);
 
     /**
      * Current Hit Points: the maximum minus the damage accumulated on the character's sheet,

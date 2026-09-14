@@ -1,5 +1,6 @@
 package org.aventyrs.core.ability;
 
+import org.aventyrs.core.action.Manoeuvre;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.DamageType;
@@ -421,5 +422,71 @@ public interface AttributeAbility {
      */
     default int resolveDamageReduction(DamageType damageType, CombatantSheet source, CombatantSheet target) {
         return 0;
+    }
+
+    /**
+     * A bonus to the Perícia roll of an attack made as part of a named {@link Manoeuvre} — e.g.
+     * {@link DexterityAbility#IMPLACAVEL}'s "você recebe Vantagem em suas jogadas de Ataque
+     * Corpo-a-Corpo", whose surrounding clauses scope it to the holder's Investidas. Summed by
+     * {@code org.aventyrs.core.skill.AbstractSkillInteraction} across {@code
+     * Character#getAttributeAbilities()}, off {@code SkillRoll#getManoeuvre()}.
+     *
+     * <p>manoeuvre is {@code null} for an ordinary attack, which every override must read as
+     * "condition not met" — a manoeuvre-scoped bonus that leaked onto plain attacks would be the
+     * opposite of what its rules text says. skillType is the Perícia actually being rolled, so a
+     * clause naming one ({@code IMPLACAVEL}'s Corpo-a-Corpo) narrows on it rather than trusting
+     * the manoeuvre to imply it.
+     *
+     * <p>Vantagem is a flat {@code Skill#ADVANTAGE_BONUS} (+2) here as everywhere else, never a
+     * reroll. Zero by default. There is deliberately <b>no {@code Feat} twin</b> — no Talento
+     * states a manoeuvre-scoped roll bonus; add one with its first consumer.
+     */
+    default int resolveManoeuvreRollBonus(Manoeuvre manoeuvre, SkillType skillType) {
+        return 0;
+    }
+
+    /**
+     * How much further than the baseline an Investida of this ability's holder may travel, as a
+     * <b>multiplier increase</b> on Movimento Base — {@link DexterityAbility#IMPLACAVEL}'s "você
+     * pode percorrer até o triplo do seu Movimento Base, ao invés do dobro" is exactly 1, lifting
+     * {@code ChargeService#BASE_MOVEMENT_MULTIPLIER}'s 2 to 3.
+     *
+     * <p>A multiplier rather than a UD figure because that is the shape the rules state it in, and
+     * because the two are not interchangeable: the charge allowance is Movimento Base times this,
+     * so the same clause is worth more to a larger or faster charger. It is <b>not</b> a {@code
+     * ModifierType#MOVEMENT} bonus — that widens what one Ponto de Ação buys on every movement,
+     * which this does not touch. Summed by {@code ChargeService#getMovementAllowance}; zero by
+     * default.
+     */
+    default int resolveChargeMovementMultiplierIncrease() {
+        return 0;
+    }
+
+    /**
+     * Whether this ability exempts its holder's movement from provoking Reações — {@link
+     * DexterityAbility#IMPLACAVEL}'s "suas investidas não provocam Reações de outros personagens
+     * na cena", which is scoped to the Investida and to nothing else.
+     *
+     * <p>manoeuvre is the manoeuvre being performed, {@code null} for an ordinary movement. An
+     * override that exempts only one manoeuvre must therefore test it: returning {@code true}
+     * unconditionally would exempt every walk its holder ever takes. Read by {@code
+     * MovementReactionService#getProvokedReactors}; {@code false} by default.
+     */
+    default boolean exemptsFromMovementReactions(Manoeuvre manoeuvre) {
+        return false;
+    }
+
+    /**
+     * Whether this ability spares its holder the Redutor an Investida normally inflicts on its
+     * own charger when the attack misses — {@link DexterityAbility#IMPLACAVEL}'s "quando
+     * malsucedido, você não recebe o redutor padrão de -2 em suas Defesas".
+     *
+     * <p>It waives the penalty outright rather than reducing it, so it is a boolean and not a
+     * figure; the word "padrão" in that clause is also what identifies the -2 as the manoeuvre's
+     * own baseline rather than something this Habilidade invented. Read by {@code
+     * ChargeService#applyOutcome}; {@code false} by default.
+     */
+    default boolean waivesChargeMissDefensePenalty() {
+        return false;
     }
 }

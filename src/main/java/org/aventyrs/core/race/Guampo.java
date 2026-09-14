@@ -43,12 +43,13 @@ import java.util.Map;
  *   all: it rolls the delivery Perícia and Domínio do Mana and spends nothing, so there is no
  *   figure to reduce, no "first cast this Rodada" counter, and no floor to clamp to.</li>
  *   <li><b>Chifres Majestosos</b> (Chifres Poderosos as an Arma Natural; investidas deal +1d6
- *   dano) — the Arma Natural half is the usual two-markers-missing gap (no weapon catalog,
- *   nothing marks a weapon as natural). The dano half needs an "investida"/charge classification
- *   that nothing models, and is expressed as a <i>die</i> rather than a flat figure, which {@code
- *   DamageBonus} cannot hold — this core never rolls dice, so a +1d6 has no representation
- *   distinct from the {@code DamageBase} scale, and Dano Base and a dano bonus deliberately never
- *   merge.</li>
+ *   dano) — the Arma Natural half needs {@code Race#getGrantedNaturalWeapons()} overridden on this
+ *   race, which is buildable now that {@code NaturalWeapon#CHIFRES_PODEROSOS} is authored. The
+ *   charge classification the dano half used to cite is <b>no longer missing</b>: {@code
+ *   Manoeuvre#INVESTIDA} names it and {@code ChargeService} gates on the Perícia, so a Guampo may
+ *   charge with their horns. What still blocks it is the <i>die</i>: a +1d6 is not a flat figure,
+ *   {@code DamageBonus} cannot hold one, this core never rolls dice, and Dano Base and a dano
+ *   bonus deliberately never merge — so there is no representation for a granted die at all.</li>
  *   <li><b>Memória Eidética</b> (never forgets anything learned) and <b>Senso de Direção
  *   Apurado</b> (always identifies North; never lost in a labyrinth, natural or magical) — both
  *   are narrative guarantees rather than roll modifiers: neither grants Vantagem nor reduces a

@@ -28,8 +28,14 @@ public class CharacterCreationServiceImpl implements CharacterCreationService {
         final CharacterAttributes.CharacterAttributesBuilder builder = CharacterAttributes.builder();
         for (AttributeDomain domain : AttributeDomain.values()) {
             int base = 1 + basePointAllocation.getOrDefault(domain, 0);
-            int racialBonus = fixedBonuses.getOrDefault(domain, 0) + chosenRacialBonusAllocation.getOrDefault(domain, 0);
-            assignAttribute(builder, domain, AttributeValue.builder().domain(domain).base(base).racialBonus(racialBonus).build());
+            // Kept apart rather than summed: which half the race dictated and which half its
+            // player directed is information nothing downstream can recover from a total, and
+            // racial-trait suppression needs it. AttributeValue#getRacialBonus() still reports
+            // the sum for every reader that only wants "how much of this is racial".
+            assignAttribute(builder, domain, AttributeValue.builder().domain(domain).base(base)
+                    .fixedRacialBonus(fixedBonuses.getOrDefault(domain, 0))
+                    .chosenRacialBonus(chosenRacialBonusAllocation.getOrDefault(domain, 0))
+                    .build());
         }
         return builder.build();
     }

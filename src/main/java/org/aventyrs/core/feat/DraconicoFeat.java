@@ -3,13 +3,21 @@ package org.aventyrs.core.feat;
 import java.util.List;
 
 import org.aventyrs.core.character.AttributeDomain;
+import java.util.Optional;
+
+import org.aventyrs.core.ability.ActiveAbility;
+import org.aventyrs.core.sheet.FormType;
 import org.aventyrs.core.character.Character;
+import java.util.Set;
+import org.aventyrs.core.item.ItemCategory;
 import org.aventyrs.core.character.DefenseType;
 import org.aventyrs.core.item.NaturalWeapon;
 import org.aventyrs.core.race.NascidoDoDragao;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.skill.AttackSource;
 import org.aventyrs.core.skill.SkillType;
+import org.aventyrs.core.race.RacialTraitSuppression;
+import org.aventyrs.core.sheet.CombatantSheet;
 
 /**
  * Talentos Dracônicos — the Nascido do Dragão's own tree, and the ruleset's route to the
@@ -22,9 +30,9 @@ import org.aventyrs.core.skill.SkillType;
  * Margem Crítica Menor" applies for real, scoped to a Sopro attack. What is still blocked hangs
  * off <b>no flight or form state</b> (recorded on {@code NascidoDoDragao} itself), the missing
  * <b>elemental damage type</b> and this core rolling <b>no dice</b> (the "+1d6 … para cada
- * Título Aventyr Desperto" riders), and the missing <b>equipment restriction</b> mechanism
- * ({@link #ASAS_DE_DRAGAO}'s Capa clause). {@link #ASAS_DE_DRAGAO}'s +2 Defesas is unconditional
- * because the wings are always there, and real.
+ * Título Aventyr Desperto" riders). {@link #ASAS_DE_DRAGAO} is fully real: its +2 Defesas is
+ * unconditional because the wings are always there, and so is the Capa restriction that pays for
+ * it — a permanent {@code Feat#getForbiddenEquipmentCategories} entry the equipment list enforces.
  *
  * <p><b>"Recém-criados" is not modelled.</b> Two constants restrict themselves to a Nascido do
  * Dragão "recém-criado", i.e. acquirable only at character creation. Nothing anywhere tracks
@@ -50,7 +58,14 @@ public enum DraconicoFeat implements Feat {
                     + "Longas. Você possui as Armas Naturais escolhidas.",
             FeatRequirements.builder()
                     .requiredRace(NascidoDoDragao.class)
-                    .build()),
+                    .build()) {
+        /** "Escolha duas armas entre: Chifres Poderosos, Cauda Chicote, Garras Afiadas e Presas Longas." */
+        @Override
+        public List<FeatChoice<?>> resolveRequiredChoices(final Character holder) {
+            return List.of(new FeatChoice<>(NaturalWeapon.class, 2,
+                    List.copyOf(ArmamentoDraconicoFeat.ALLOWED_CHOICES)));
+        }
+    },
 
     /**
      * "Você tem asas e possui Movimento Base de Voo… Asas de Dragão são extremamente grandes,
@@ -65,9 +80,10 @@ public enum DraconicoFeat implements Feat {
     // TODO: the flight half needs a flight state and a Movimento Base de Voo, neither of which
     //  exists — see Aviano's own Braços Alados. Note the PD cost, its per-Título reduction and
     //  the 1d6 + metade do Vigor Duração are all exact figures with nothing to apply them to.
-    // TODO: "impede de usar Equipamentos do tipo Capa" needs an equipment *restriction*
-    //  mechanism. Character#equip validates nothing (ItemCategory.CLOAK exists, but no rule
-    //  anywhere refuses an item), so the malus that pays for this bonus is currently free.
+    // "Impede de usar Equipamentos do tipo Capa" is real — a permanent
+    // Feat#getForbiddenEquipmentCategories entry, refused by CharacterSheet#equip/canEquip and
+    // caught on an already-assembled loadout by validateEquipmentLoadout. So the malus that pays
+    // for the +2 Defesas is no longer free.
     ASAS_DE_DRAGAO(
             "Você tem asas e possui Movimento Base de Voo. Iniciar uma ação de voo em situações "
                     + "estressantes, como as Cenas de Combate, exige o uso de 4PD. Este Custo é "
@@ -81,6 +97,15 @@ public enum DraconicoFeat implements Feat {
         @Override
         public int resolveDefenseBonus(final DefenseType defenseType, final Character character) {
             return ASAS_DEFENSE_BONUS;
+        }
+
+        /**
+         * "Mas o impede de usar Equipamentos do tipo Capa." Permanent: the wings are always
+         * there, which is the same reason the Defesas bonus above is unconditional.
+         */
+        @Override
+        public Set<ItemCategory> getForbiddenEquipmentCategories(final Character character) {
+            return Set.of(ItemCategory.CLOAK);
         }
     },
 
@@ -145,13 +170,24 @@ public enum DraconicoFeat implements Feat {
      * "Temporariamente você pode mudar sua forma física, se transformando em um dragão bípede,
      * abandonando quaisquer traços raciais existente."
      */
-    // TODO: needs a form state — the same missing piece HomemFera's own Forma Híbrida is blocked
-    //  on, here with the extra requirement that the form *suppresses* the holder's racial traits,
-    //  which nothing can do (Race#getRacialAbilities() is read live on every roll with no way to
-    //  suspend it).
-    // TODO: "não poderá ser reativado até que passe por um Descanso Longo" needs a
-    //  once-per-Descanso activation counter; CharacterSheet tracks Round-scoped TemporaryEffects,
-    //  not activations, and RestService clears nothing of the kind.
+    // The transformation itself is real — FormaActiveAbility, triggered through
+    // ActiveAbilityService#activate: 3PA + 3PD to enter FormType.DRACONATO for 3 Rodadas, with the
+    // "não poderá ser reativado até que passe por um Descanso Longo" gate enforced through
+    // ActiveAbility#getReactivationRest (cleared by RestService#applyRest).
+    // The "+2 Categoria de Tamanho, Força e Foco para cada Título" is granted too, as
+    // round-scoped TemporaryBonuses lasting exactly the Duração. Partial reach on the Atributo
+    // half, and that is the mechanism's own limit rather than this Talento's: an <ATTR>_BONUS
+    // lands on a Perícia roll governed by that Atributo and nowhere else, since PV/PM/Conjuração
+    // read Character#getEffectiveAttributeTotal, which has no sheet. The Categoria de Tamanho
+    // half has no such limit — CharacterSizeService gained a sheet-taking overload for it.
+    // "Abandonando quaisquer traços raciais existente" is real: RacialTraitSuppression.ALL while
+    // the Forma holds, so the holder's Armas Naturais, anatomy (RC + Efeito Crítico immunities),
+    // base Categoria de Tamanho, Habilidades Raciais and racial Atributo bonuses all fall silent.
+    // A dwarf Draconato is human-sized *before* the "+2 para cada Título" lands on top.
+    // Only the Race term goes — a Talento-granted RC or Arma Natural is not racial and survives.
+    // Partial reach on the Habilidade and Atributo halves, and it is the mechanism's limit rather
+    // than this Talento's: both need a CombatantSheet to see the Forma, so they land on the
+    // Perícia-roll path (plus the Defesa/Movimento scans) and not on PV/PM/Conjuração.
     DRACONATO(
             "Temporariamente você pode mudar sua forma física, se transformando em um dragão "
                     + "bípede, abandonando quaisquer traços raciais existente. Transformar-se em "
@@ -162,7 +198,28 @@ public enum DraconicoFeat implements Feat {
             FeatRequirements.builder()
                     .requiredRace(NascidoDoDragao.class)
                     .requiredAwakenedTitles(1)
-                    .build());
+                    .build()) {
+        private final ActiveAbility transformation =
+                new FormaActiveAbility(this, FormType.DRACONATO,
+                        // "sua Categoria de Tamanho, Força e Foco aumentam em +2 para cada
+                        // Título" — no Defesas and no Multiplicador de PV, unlike Ancienteforme.
+                        new FormaActiveAbility.Uplift(2, 0, 2,
+                                List.of(AttributeDomain.STRENGTH, AttributeDomain.FOCUS)));
+
+        @Override
+        public Optional<ActiveAbility> resolveActiveAbility() {
+            return Optional.of(transformation);
+        }
+
+        /** "Abandonando quaisquer traços raciais existente" — while a Draconato, and only then. */
+        @Override
+        public RacialTraitSuppression resolveRacialTraitSuppression(final Character character,
+                                                                    final CombatantSheet sheet) {
+            return sheet != null && sheet.isInForm(FormType.DRACONATO)
+                    ? RacialTraitSuppression.ALL
+                    : RacialTraitSuppression.NONE;
+        }
+    };
 
     private static final int ASAS_DEFENSE_BONUS = 2;
     private static final int SOPRO_CRITICAL_MARGIN_INCREASE = 1;

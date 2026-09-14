@@ -2,6 +2,7 @@ package org.aventyrs.core.feat;
 
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.character.TitleSlot;
 
 /**
  * Talentos de Destino — what a character is, rather than what they can do: how enemies read
@@ -15,10 +16,16 @@ import org.aventyrs.core.character.Character;
  * has no expression at all.
  *
  * <p>The second is the <b>Despertar timeline</b>. Half the Aventyr-tier constants here delay,
- * accelerate, or forgo awakening a Título, and trade on how many remain un-awakened. This core
- * models a Título as simply held or not (see {@code FeatRequirements#requiredAwakenedTitles});
- * there is no un-awakened Título to count, no EXP threshold at which one awakens, and no game
- * session for "ao fim da primeira sessão" to name.
+ * accelerate, or forgo awakening a Título, and trade on <i>when</i> one awakens. This core models
+ * a Título as simply held or not (see {@code FeatRequirements#requiredAwakenedTitles}); there is
+ * no EXP threshold at which one awakens, and no game session for "ao fim da primeira sessão" to
+ * name.
+ *
+ * <p><b>Counting the un-awakened ones is <i>not</i> part of that gap</b>, and used to be filed
+ * under it by mistake. A Character has exactly three {@link TitleSlot}s, so "cada Título ainda não
+ * Desperto" is three minus the held ones — arithmetic available today, with no timeline involved.
+ * That is what makes {@link #ABDICADOR}'s PV/PM multiplier real while the rest of its sentence
+ * still waits.
  */
 public enum DestinoFeat implements Feat {
 
@@ -203,9 +210,14 @@ public enum DestinoFeat implements Feat {
      * "Você pode escolher atrasar seu Despertar de Títulos, recebendo seus benefícios apenas
      * quando quiser e se quiser."
      */
-    // TODO: the whole Despertar timeline is missing — see this enum's own javadoc. Every figure
-    //  here multiplies by "Títulos ainda não Despertos", a count that cannot exist while a
-    //  Título is either held or absent.
+    // The "Títulos ainda não Despertos" multiplicand is *not* a blocker — see ABDICADOR below and
+    // this enum's own javadoc: it is three TitleSlots minus the held ones, countable today. What
+    // this constant still needs is the other half of each figure, "+1 para cada 15EXP": EXP total
+    // lives on CharacterSheet, and while resolveSkillRollBonus does have a sheet-taking overload
+    // now, resolveDamageReduction/resolveCriticalMarginIncrease would each need the same reach for
+    // the RDS and Margem Crítica figures — so the Talento would land in pieces rather than whole.
+    // TODO: the four figures (Perícia roll, Danos, RDS, Margem Crítica Menor) therefore stay
+    //  ungranted together, per this tree's grant-it-whole-or-not-at-all rule.
     // TODO: "deve ser adquirido antes de Despertar seus Títulos" is an ordering constraint
     //  FeatRequirements cannot express.
     ATRASAR_DESPERTAR(
@@ -217,17 +229,40 @@ public enum DestinoFeat implements Feat {
                     + "deve ser adquirido antes de Despertar seus Títulos.",
             FeatRequirements.builder().build()),
 
-    /** "Você não Desperta Títulos Aventyr, mantendo suas Centelhas inertes indefinidamente." */
-    // TODO: same missing Despertar timeline as ATRASAR_DESPERTAR. The PV/PM multiplier uplift is
-    //  otherwise expressible (ModifierType#LIFE_MULTIPLIER/MANA_MULTIPLIER), but its multiplicand
-    //  is the un-awakened Título count.
+    /**
+     * "Você não Desperta Títulos Aventyr, mantendo suas Centelhas inertes indefinidamente."
+     *
+     * <p><b>The multiplier sentence is real</b>: "+1 [de Multiplicador de PV e PM] para cada
+     * Título ainda não Desperto", through {@link Feat#resolveLifeMultiplierIncrease} and {@link
+     * Feat#resolveManaMultiplierIncrease}. A Título "ainda não Desperto" is an <b>unfilled {@link
+     * TitleSlot}</b> — a Character has exactly three, so the multiplicand is simply the three
+     * minus however many are held. That reading is what makes this the one clause of the Despertar
+     * cluster that needs no timeline: it counts slots, not events.
+     *
+     * <p>It is the catalog's only multiplier that moves <em>inversely</em> with Títulos — every
+     * other one grows as they awaken ({@code OrquicoFeat#TERRA_NAS_VEIAS}), which is exactly the
+     * trade this Talento is written to make.
+     */
+    // TODO: "Os Benefícios de Atrasar Despertar são dobrados" is still blocked — ATRASAR_DESPERTAR
+    //  itself is unbuilt (the Despertar timeline), so there are no benefits to double. Only the
+    //  multiplier sentence lands; the two are separate clauses and should not be conflated again.
     ABDICADOR(
             "Você não Desperta Títulos Aventyr, mantendo suas Centelhas inertes indefinidamente. "
                     + "Os Benefícios de Atrasar Despertar são dobrados e seu Multiplicador de PV e "
                     + "PM aumentam em +1 para cada Título ainda não Desperto.",
             FeatRequirements.builder()
                     .requiredFeat(ATRASAR_DESPERTAR)
-                    .build()),
+                    .build()) {
+        @Override
+        public int resolveLifeMultiplierIncrease(final Character character) {
+            return unawakenedTitles(character);
+        }
+
+        @Override
+        public int resolveManaMultiplierIncrease(final Character character) {
+            return unawakenedTitles(character);
+        }
+    },
 
     /**
      * "Você recebe Bônus Racial de +2 em todos os Atributos para cada Centelha que você não possua
@@ -282,6 +317,15 @@ public enum DestinoFeat implements Feat {
             FeatRequirements.builder()
                     .requiredFeat(DESPERTAR_ANTECIPADO)
                     .build());
+
+    /**
+     * Títulos Aventyr this character has <b>not</b> awakened — the three {@link TitleSlot}s minus
+     * the filled ones. What {@link #ABDICADOR}'s "para cada Título ainda não Desperto" multiplies
+     * by; see that constant for why an empty slot is the right reading.
+     */
+    private static int unawakenedTitles(final Character character) {
+        return TitleSlot.values().length - character.getAllTitles().size();
+    }
 
     private final String description;
     private final FeatRequirements featRequirements;

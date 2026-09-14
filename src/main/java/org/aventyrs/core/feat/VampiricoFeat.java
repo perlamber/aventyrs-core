@@ -28,7 +28,8 @@ import java.util.Optional;
  * 3PV and applies the buff as {@code TemporaryBonus}es/a {@code LifeSteal} for the Duração.
  * {@link #PODER_VAMPIRICO_DURADOURO} extends that Duração by one Rodada per Título Aventyr.
  *
- * <p>Still blocked: {@link #METAMORFOSE_DRACULEA} (form state), {@link #PRESENCA_DE_CARMILLA}
+ * <p>{@link #METAMORFOSE_DRACULEA} is real too, and the tree's most elaborate constant — see
+ * {@link MetamorfoseDraculeaFeat} and {@link FormaMetamorfica}. Still blocked: {@link #PRESENCA_DE_CARMILLA}
  * (a per-Rodada effect needs the Scene's neighbours and their PV, which {@code
  * TemporaryEffect#applyRoundEffect(CombatantSheet)} cannot see), {@link #LACOS_ROMPIDOS}/{@link
  * #MESTRE_VAMPIRO}'s target-scoped Vantagem / Laços-de-Sangue relation / gerar Prole, and {@link
@@ -78,18 +79,33 @@ public enum VampiricoFeat implements Feat {
      * "Você adquire a capacidade de se transformar em animais ou névoa… Escolha 2 Formas
      * Metamórficas."
      */
-    // TODO: needs a form state — the same missing piece DraconicoFeat#DRACONATO, HomemFera's
-    //  Forma Híbrida and Gorgona's own forms are blocked on. The Poder Vampírico activation
-    //  mechanism (now built) does NOT cover this: a Forma is a persistent alternate shape that
-    //  swaps weapons and racial traits, not a timed TemporaryBonus.
-    // TODO: the choice of two Formas from a table of six could be recorded now (a choice-carrying
-    //  AbstractFeat subclass — see ArmamentoDraconicoFeat for the Set shape), and each Forma's
-    //  Arma Natural has a catalog entry (NaturalWeapon). But each Forma also grants its own
-    //  ability — a Movimento Base Vertical/de Voo, a Multiplicador de PV, a Corrente de Efeitos,
-    //  physical-damage immunity — each separately blocked, and all gated on the form state.
-    // TODO: "Dampiros escolhem 1, Rakshasa escolhem 4" — Vampiro.VampiroLineage has DAMPIRO/RAKSHASA,
-    //  so the per-lineage count is expressible; the form state each Forma needs is the blocker.
+    // Real, through MetamorfoseDraculeaFeat — the acquired form recording which Formas were
+    // chosen, with both lineage rules validated (Dampiro 1 / Rakshasa 4 / otherwise 2, and no
+    // Névoa for a Rakshasa). Each chosen Forma is separately activatable as a Poder Vampírico
+    // (Ação Livre, 3PV, 2 Rodadas) through Feat#resolveActiveAbilities — the plural hook this
+    // Talento is the reason for — and entering one suppresses weapons while leaving defensive
+    // items working, which is this clause's own equipment rule (FormType#getEquipmentPolicy).
+    // Each row's ARMA NATURAL column is granted for real now, through
+    // MetamorfoseDraculeaFeat#getGrantedNaturalWeapons(Character, CombatantSheet) and read off
+    // CombatantSheet#getNaturalWeapons() — and it *replaces* the holder's own while the shape is
+    // worn. That replacement is a reading rather than a transcription; FormaMetamorfica's javadoc
+    // carries the two counts on which the source argues the other way.
+    // Three of the six HABILIDADE entries are live too: Aranha's Furtividade Vantagem, Lobo's
+    // Perícias de Ataque Vantagem (plus its one-handed-weapon clawback, FormType
+    // #permitsOneHandedWeapons) and Morcego's Roubo de Vida +2.
+    // TODO: the other HABILIDADE entries are authored text granted by nothing, each blocked on its
+    //  own missing system rather than one shared gap — see the per-constant TODOs on
+    //  FormaMetamorfica, which name them individually (a Movimento Base sub-stat for Vertical/Voo,
+    //  a per-movement Terreno Difícil cost, the Multiplicador de PV's sheet reach, damage-type
+    //  immunity, and a concrete Corrente de Efeitos over an inert ConditionType#ENVENENADO).
+    // TODO: Névoa's "é incapaz de causar danos" is only half closed. Emptying its Armas Naturais
+    //  stops the weapon path, but nothing stops a damaging Magia, and canAttackWith(null) — an
+    //  Ataque Desarmado — stays unconditionally true. A blanket damage prohibition exists nowhere.
     METAMORFOSE_DRACULEA(
+            // NOTE: the source reads "armas não podem seu [sic] utilizadas, são substituídas por
+            // armas naturais" — two comma-joined clauses. The "seu"→"ser" typo is repaired and an
+            // "e" inserted for readability; the grammar matters, since whether "são substituídas"
+            // takes *armas* as its subject is exactly what FormaMetamorfica's reading turns on.
             "Você adquire a capacidade de se transformar em animais ou névoa; enquanto usando "
                     + "metamorfose seus Equipamentos se adaptam ao seu corpo, itens defensivos "
                     + "continuam concedendo seus benefícios, armas não podem ser utilizadas e são "
@@ -97,7 +113,22 @@ public enum VampiricoFeat implements Feat {
                     + "Gigante, Cavalo de Chifres, Lobo Dentes-de-Sabre, Morcego Atroz, Névoa e "
                     + "Serpente Espinhosa (Dampiros podem escolher apenas 1, Rakshasa podem "
                     + "escolher 4, mas não podem se transformar em Névoa).",
-            FeatRequirements.builder().requiredRace(Vampiro.class).build()),
+            FeatRequirements.builder().requiredRace(Vampiro.class).build()) {
+        /**
+         * "Escolha 2 Formas Metamórficas … (Dampiros podem escolher apenas 1, Rakshasa podem
+         * escolher 4, mas não podem se transformar em Névoa)" — advertised so a client can
+         * discover the choice from the catalog constant itself, and so {@code
+         * FeatService#grantFeat} refuses this constant taken plain.
+         */
+        @Override
+        public java.util.List<FeatChoice<?>> resolveRequiredChoices(final Character holder) {
+            return java.util.List.of(new FeatChoice<>(ActiveAbility.class,
+                    MetamorfoseDraculeaFeat.choicesFor(holder),
+                    FormaMetamorfica.availableTo(holder).stream()
+                            .map(FormaMetamorfica::getTransformation)
+                            .toList()));
+        }
+    },
 
     /**
      * "Você recebe Bônus Racial de +1 em Carisma e Instinto. Estes Bônus aumentam em +1 para cada
