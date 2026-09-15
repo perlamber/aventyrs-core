@@ -1,6 +1,7 @@
 package org.aventyrs.core.magic;
 
 import org.aventyrs.core.effect.SpellEffect;
+import org.aventyrs.core.effect.SpellEffectContext;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.Interaction;
 
@@ -68,9 +69,19 @@ public interface SpellCastingService {
      * CombatantSheet#receiveInteraction} when it decides the cast landed. This core resolves no
      * target GD, so it is in no position to decide that itself.
      *
-     * <p>{@code hostileTarget} answers Nova Rejuvenescedora's "Inimigos do conjurador recuperam
-     * apenas metade" — the caller's to say, since resolving an Área de Efeito footprint into a set
-     * of combatants is not something this core does.
+     * <p>{@code context} carries the per-cast facts a Magia's own columns cannot — today just
+     * whether the target is hostile, which answers Nova Rejuvenescedora's "Inimigos do conjurador
+     * recuperam apenas metade". The caller's to say, since resolving an Área de Efeito footprint
+     * into a set of combatants is not something this core does.
+     *
+     * <p>{@code spell} is whichever version is being cast — which is also what settles <em>which
+     * effect</em>, since a Magia and its {@code Efeito Alternativo} carry separate effect columns.
+     * {@link #castSpell(SpellCastRequest)} resolves that from {@code
+     * SpellCastRequest#isUseAlternateVersion()} before calling here.
+     *
+     * <p>A delegate: the construction itself lives in {@link
+     * org.aventyrs.core.effect.SpellEffectFactory}, so this service holds no effect-building
+     * collaborator of its own and a new effect category needs no change here.
      */
-    Optional<SpellEffect> resolveEffect(Spell spell, boolean hostileTarget);
+    Optional<SpellEffect> resolveEffect(Spell spell, SpellEffectContext context);
 }

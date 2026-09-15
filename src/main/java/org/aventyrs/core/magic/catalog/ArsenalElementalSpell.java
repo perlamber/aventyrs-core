@@ -4,6 +4,7 @@ import org.aventyrs.core.effect.CriticalEffectType;
 import org.aventyrs.core.magic.ActivationTime;
 import org.aventyrs.core.magic.AuthoredSpell;
 import org.aventyrs.core.magic.BranchLevel;
+import org.aventyrs.core.magic.SpellAlternateEffect;
 import org.aventyrs.core.magic.SpellData;
 import org.aventyrs.core.magic.SpellDuration;
 import org.aventyrs.core.magic.SpellTargeting;
@@ -58,6 +59,7 @@ public enum ArsenalElementalSpell implements AuthoredSpell {
                     + "afetado por Habilidades de Foco, Talentos e Habilidades de Títulos Aventyr.")
             .secondaryEffectDescription("Proteção Elemental: Ao invés de causar dano você pode receber Bônus "
                     + "Elemental de +Metade do Foco em suas Defesas.")
+            .alternateEffect(SpellAlternateEffect.named("Proteção Elemental"))
             .criticalEffectType(CriticalEffectType.CATACLISMO)
             .duration(SpellDuration.INSTANTANEA)
             .targeting(SpellTargeting.PESSOAL)
@@ -82,6 +84,7 @@ public enum ArsenalElementalSpell implements AuthoredSpell {
             .secondaryEffectDescription("Distribuição: Você pode trocar a vantagem recebida em ataque ou dano de "
                     + "Armas por um bônus de +1 em rolagens de ataque e dano, Armaduras e Escudos podem dividir os "
                     + "bônus defensivos, concedendo Bônus de +1 às Defesas.")
+            .alternateEffect(SpellAlternateEffect.named("Distribuição"))
             .criticalEffectType(CriticalEffectType.FORTALECER)
             .duration(SpellDuration.rodadas(3))
             .targeting(SpellTargeting.TOQUE)
@@ -111,6 +114,7 @@ public enum ArsenalElementalSpell implements AuthoredSpell {
                     + "todas as armas que ela utilizar receberão os benefícios de Arma Elemental, assim como seus "
                     + "ataques desarmados. Afetar Personagens ao invés de Armas é menos eficiente, reduzindo a "
                     + "duração da magia pela metade.")
+            .alternateEffect(SpellAlternateEffect.named("Natureza Impetuosa"))
             .criticalEffectType(CriticalEffectType.CATACLISMO)
             .duration(SpellDuration.rodadas(3))
             .targeting(SpellTargeting.TOQUE)

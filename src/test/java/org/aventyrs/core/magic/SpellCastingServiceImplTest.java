@@ -9,6 +9,7 @@ import org.aventyrs.core.character.DamageType;
 import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.effect.DefensiveEffect;
 import org.aventyrs.core.effect.HealingEffect;
+import org.aventyrs.core.effect.SpellEffectContext;
 import org.aventyrs.core.effect.SpellEffect;
 import org.aventyrs.core.magic.catalog.IraDeVulcanoSpell;
 import org.aventyrs.core.magic.catalog.VidaSpell;
@@ -334,12 +335,12 @@ class SpellCastingServiceImplTest {
 
     @Test
     void resolveEffectIsEmptyForAMagiaWhoseEfeitoThisCoreCannotExpress() {
-        assertTrue(effectService.resolveEffect(new TestSpell(), false).isEmpty());
+        assertTrue(effectService.resolveEffect(new TestSpell(), SpellEffectContext.FRIENDLY).isEmpty());
     }
 
     @Test
     void aHealingMagiaResolvesToAHealingEffect() {
-        SpellEffect effect = effectService.resolveEffect(VidaSpell.REVIGORAR, false).orElseThrow();
+        SpellEffect effect = effectService.resolveEffect(VidaSpell.REVIGORAR, SpellEffectContext.FRIENDLY).orElseThrow();
 
         assertInstanceOf(HealingEffect.class, effect);
         assertSame(VidaSpell.REVIGORAR, effect.getSpell());
@@ -347,7 +348,7 @@ class SpellCastingServiceImplTest {
 
     @Test
     void aCleansingMagiaResolvesToADefensiveEffect() {
-        SpellEffect effect = effectService.resolveEffect(VidaSpell.EXORCIZAR, false).orElseThrow();
+        SpellEffect effect = effectService.resolveEffect(VidaSpell.EXORCIZAR, SpellEffectContext.FRIENDLY).orElseThrow();
 
         assertInstanceOf(DefensiveEffect.class, effect);
         assertSame(VidaSpell.EXORCIZAR, effect.getSpell());
@@ -372,4 +373,104 @@ class SpellCastingServiceImplTest {
         sheet.receiveInteraction(result.getSpellEffect());
         assertTrue(sheet.getDamageTaken() < 30, "the caller running it is what heals");
     }
+
+    /**
+     * An Efeito Alternativo goes through {@code resolveEffect} with no special handling at all —
+     * it is a {@link Spell}, so the service never learns it is a second version.
+     */
+    @Test
+    void aSecondVersionResolvesItsOwnEffectThroughTheSamePath() {
+        Spell bencaoBifurcada = VidaSpell.REVIGORAR.getAlternateVersion().orElseThrow();
+
+        SpellEffect effect = effectService.resolveEffect(bencaoBifurcada, SpellEffectContext.FRIENDLY).orElseThrow();
+
+        assertInstanceOf(HealingEffect.class, effect);
+        assertSame(bencaoBifurcada, effect.getSpell());
+        assertEquals("Benção Bifurcada", effect.getSpell().getName());
+    }
+
+    @Test
+    void castingASecondVersionUsesItsOwnActivationAndReach() {
+        Spell procrastinar = VidaSpell.ALIVIAR_A_DOR.getAlternateVersion().orElseThrow();
+        Scene scene = sceneWithCaster();
+        CharacterSheet ally = CharacterSheet.of(
+                CharacterFixture.blank(CharacterFixture.BLANK).build(), new Player());
+        scene.addParticipant(ally, 1);
+
+        SpellCastingResult result = new SpellCastingServiceImpl().castSpell(SpellCastRequest.builder()
+                .caster(sheet)
+                .spell(procrastinar)
+                .scene(scene)
+                .sceneContext(scene.buildContext(sheet, Map.of()))
+                .combatantTarget(ally)
+                .build());
+
+        // A Reação where the parent costs 2PA, and a ranged target where the parent is Pessoal —
+        // the cast would have been refused as INVALID_SPELL_CAST_TARGET under the parent's reach.
+        assertEquals(ActivationTime.REACAO, procrastinar.getActivationTime());
+        assertNotNull(result.getDeliveryResult());
+    }
+
+    // ---------- the request's two selectors ----------
+
+    /**
+     * The version is resolved before the request is validated — which this proves, because the
+     * cast names a combatant target that the <em>parent</em>'s Pessoal reach would refuse outright
+     * with {@code INVALID_SPELL_CAST_TARGET}. Only Procrastinar Ferimento's own Distância Curta
+     * permits it.
+     */
+    @Test
+    void useAlternateVersionCastsTheSecondVersionAndValidatesItsOwnReach() {
+        Scene scene = sceneWithCaster();
+        CharacterSheet ally = CharacterSheet.of(
+                CharacterFixture.blank(CharacterFixture.BLANK).build(), new Player());
+        scene.addParticipant(ally, 1);
+
+        SpellCastingResult result = new SpellCastingServiceImpl().castSpell(SpellCastRequest.builder()
+                .caster(sheet)
+                .spell(VidaSpell.ALIVIAR_A_DOR)
+                .useAlternateVersion(true)
+                .scene(scene)
+                .sceneContext(scene.buildContext(sheet, Map.of()))
+                .combatantTarget(ally)
+                .build());
+
+        Spell recorded = (Spell) result.getRecordedAction().attackSource();
+        assertEquals("Procrastinar Ferimento", recorded.getName());
+        assertTrue(recorded.isAlternateVersion());
+    }
+
+    @Test
+    void castingTheBaseVersionWithACombatantTargetIsStillRefused() {
+        Scene scene = sceneWithCaster();
+        CharacterSheet ally = CharacterSheet.of(
+                CharacterFixture.blank(CharacterFixture.BLANK).build(), new Player());
+        scene.addParticipant(ally, 1);
+
+        // Aliviar a Dor's own reach is Pessoal — the control for the test above.
+        assertThrows(org.aventyrs.core.sheet.IllegalOperationException.class,
+                () -> new SpellCastingServiceImpl().castSpell(SpellCastRequest.builder()
+                        .caster(sheet)
+                        .spell(VidaSpell.ALIVIAR_A_DOR)
+                        .scene(scene)
+                        .sceneContext(scene.buildContext(sheet, Map.of()))
+                        .combatantTarget(ally)
+                        .build()));
+    }
+
+    @Test
+    void askingForASecondVersionOfAMagiaThatHasNoneIsRefused() {
+        Scene scene = sceneWithCaster();
+
+        assertThrows(org.aventyrs.core.sheet.IllegalOperationException.class,
+                () -> new SpellCastingServiceImpl().castSpell(SpellCastRequest.builder()
+                        .caster(sheet)
+                        .spell(VidaSpell.CORPO_FECHADO)
+                        .useAlternateVersion(true)
+                        .scene(scene)
+                        .sceneContext(scene.buildContext(sheet, Map.of()))
+                        .build()));
+    }
+
+
 }

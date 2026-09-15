@@ -17,14 +17,23 @@ import static org.aventyrs.core.util.TranslatableMessages.INVALID_SPELL_ACTIVATI
  * <p>{@link #actionPoints()} is the count for {@link ActivationType#PONTOS_DE_ACAO} and
  * {@code 0} for the other two, enforced by the canonical constructor.
  *
- * <h2>The conditional case is authored as its base cost</h2>
+ * <h2>An Efeito Alternativo may state its own, and that <em>is</em> modelled</h2>
+ *
+ * Seven of the catalog's 64 second versions override their parent's activation, and they run in
+ * <b>both</b> directions: {@code VidaSpell#ALIVIAR_A_DOR}'s <i>Procrastinar Ferimento</i> turns
+ * 2PA into a Reação, while {@code PolimorfismoSpell#REARRANJO_CORPORAL}'s and {@code
+ * RegeneracaoSpell#ESCARNIO_DE_HALOI}'s alternates trade a Reação back for Pontos de Ação. That
+ * is carried by {@link SpellAlternateEffect#activationTime()} and applied by {@link
+ * AlternateSpellVersion} — so an alternate activation is a real, replaceable column rather than
+ * prose.
+ *
+ * <h2>The Graduação-gated case is still authored as its base cost</h2>
  *
  * One Magia reads "2PA, pode ser conjurado como Reação por personagens com Domínio do Mana 5 ou
- * superior ao custo de 3PM" — a Graduação-gated <em>alternative</em> activation that also
- * changes the Mana cost. Nothing here models an alternative: it is authored as its plain {@code
- * pa(2)} and the condition stays in the Magia's own prose, the same restraint every other
- * unimplementable clause in this catalog gets. Modelling it would mean a second {@code
- * ActivationTime} plus a Graduação threshold plus a PM override, for exactly one consumer.
+ * superior ao custo de 3PM". That is <b>not</b> an Efeito Alternativo — it is a threshold on the
+ * caster, not a second version of the Magia — so the mechanism above does not reach it: it is
+ * authored as its plain {@code pa(2)} with the condition in the Magia's own prose. Modelling it
+ * would still mean a Graduação threshold plus a PM override, for exactly one consumer.
  */
 public record ActivationTime(ActivationType type, int actionPoints) {
 

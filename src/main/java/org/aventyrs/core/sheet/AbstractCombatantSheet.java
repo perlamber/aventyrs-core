@@ -134,6 +134,10 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     @Getter(AccessLevel.NONE)
     private final List<DelayedEgoGrant> scheduledEgoGrants = new ArrayList<>();
 
+    /** Already-mitigated damage landing at the start of this sheet's next Rodada — see {@link PostponedDamage}. */
+    @Getter(AccessLevel.NONE)
+    private final List<PostponedDamage> postponedDamage = new ArrayList<>();
+
     /**
      * Every once-per-game-session marker already claimed — see {@link #consumeOncePerSession}.
      * {@code transient} on purpose, and that is the whole session model: a session is this
@@ -283,6 +287,18 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     @Override
     public boolean stopBleeding() {
         return temporaryEffects.removeIf(effect -> effect instanceof Bleeding);
+    }
+
+    /**
+     * Registers already-mitigated damage to land at the next Rodada boundary; {@link
+     * #startNewRound()} delivers it. Doesn't touch Pontos de Vida itself, the same "register now,
+     * resolve at the boundary" shape {@link #scheduleTemporaryEgoPointGrant} has.
+     */
+    @Override
+    public void schedulePostponedDamage(final int amount, final CombatantSheet source) {
+        if (amount > 0) {
+            postponedDamage.add(new PostponedDamage(amount, source));
+        }
     }
 
     /**
@@ -825,7 +841,25 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         actionCountAtTurnStart = 0;
         attacksSufferedThisRound = 0;
         applyScheduledEgoGrants();
+        applyPostponedDamage();
         tickCooldowns();
+    }
+
+    /**
+     * Delivers every {@link PostponedDamage} scheduled during the Rodada just ended, and clears
+     * them — the "perdidos apenas na Rodada seguinte" half of {@code Procrastinar Ferimento}.
+     * Private for the same reason {@link #applyScheduledEgoGrants} is: damage is registered
+     * through {@link #schedulePostponedDamage} and lands at the one Rodada boundary, never on
+     * demand.
+     *
+     * <p>Goes through {@link #applyDamage} rather than {@code DamageService}: the mitigation ran
+     * when the hit resolved, so this is the bare PV loss, and it fires no damage-taken reaction —
+     * that already fired at resolution.
+     */
+    private void applyPostponedDamage() {
+        List<PostponedDamage> due = List.copyOf(postponedDamage);
+        postponedDamage.clear();
+        due.forEach(damage -> applyDamage(damage.getAmount()));
     }
 
     /**

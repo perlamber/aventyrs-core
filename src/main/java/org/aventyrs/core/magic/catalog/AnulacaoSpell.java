@@ -4,6 +4,7 @@ import org.aventyrs.core.effect.CriticalEffectType;
 import org.aventyrs.core.magic.ActivationTime;
 import org.aventyrs.core.magic.AuthoredSpell;
 import org.aventyrs.core.magic.BranchLevel;
+import org.aventyrs.core.magic.SpellAlternateEffect;
 import org.aventyrs.core.magic.SpellData;
 import org.aventyrs.core.magic.SpellDuration;
 import org.aventyrs.core.magic.SpellTargeting;
@@ -58,6 +59,7 @@ public enum AnulacaoSpell implements AuthoredSpell {
                     + "invés de ativar os efeitos da magia as duas se anularão. Se a magia em questão for "
                     + "permanente, ao invés disso ela ficará inerte por uma quantidade de rodadas igual ao ‘Domínio "
                     + "do Mana’ do conjurador.")
+            .alternateEffect(SpellAlternateEffect.named("Anulação Arcana"))
             .criticalEffectType(CriticalEffectType.PREVENIR)
             .duration(SpellDuration.INSTANTANEA)
             .targeting(SpellTargeting.TOQUE)

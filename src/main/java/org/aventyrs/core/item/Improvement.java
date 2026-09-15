@@ -38,10 +38,18 @@ public interface Improvement {
         return 0;
     }
 
+    /**
+     * The Ataque column both Aprimoramento tables print. <b>Read by nothing yet</b> — applying it
+     * needs a roll pass scoped to the weapon the attack was actually delivered with, and {@code
+     * AbstractSkillInteraction#sumEquipmentRollBonuses} scans the whole loadout indiscriminately,
+     * so routing it through {@code ModifierType.ATAQUE_*_ROLL_BONUS} would let a sheathed weapon's
+     * Obra-Prima sharpen a swing made with something else. Exact, authored data meanwhile.
+     */
     default int getAttackBonus() {
         return 0;
     }
 
+    /** The Danos column both Aprimoramento tables print — see {@link #getAttackBonus()}. */
     default int getDamageBonus() {
         return 0;
     }
@@ -119,18 +127,23 @@ public interface Improvement {
 
     /**
      * Whether this enhancement stops its weapon being knocked out of its wielder's hands —
-     * the "Não pode ser desarmado" Característica Adicional (Manopla de Segurança, an
-     * Aprimoramento de Obra-Prima Ofensiva). False by default.
-     *
-     * <p>No constant overrides it yet: the offensive Obra-Prima/Aprimoramento catalogues are not
-     * authored (only the defensive ones are), so this is the hook {@code Weapon#isDisarmable()}
-     * consults, waiting on the catalogue rather than on a mechanism.
+     * the "Não pode ser desarmado" Característica Adicional of {@link
+     * OffensiveImprovement#MANOPLA_DE_SEGURANCA}, the one constant that states it. False by
+     * default, and what {@code Weapon#isDisarmable()} consults.
      */
     default boolean preventsDisarming() {
         return false;
     }
 
-    /** How many Dano Base scale-ups this improvement grants when weapon is the attack source. */
+    /**
+     * How many Dano Base scale-ups this improvement grants when weapon is the attack source.
+     *
+     * <p><b>An offensive entry is only ever asked about its own host.</b> "Dano Base da Arma
+     * aumenta em +1" means the weapon the Aprimoramento is fitted to, and {@code
+     * Item#resolveEnhancementDamageBaseIncrease} enforces that before delegating here. A defensive
+     * entry is asked about every weapon its wearer swings, which is what {@link
+     * DefensiveImprovement#BENCAO_SELVAGEM}'s Armas Naturais clause needs.
+     */
     default int resolveDamageBaseIncrease(final Weapon weapon, final Character character) {
         return 0;
     }

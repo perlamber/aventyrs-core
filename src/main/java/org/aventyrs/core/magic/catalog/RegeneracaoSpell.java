@@ -6,6 +6,7 @@ import org.aventyrs.core.magic.ActivationTime;
 import org.aventyrs.core.magic.AuthoredSpell;
 import org.aventyrs.core.magic.BranchLevel;
 import org.aventyrs.core.magic.DurationUnit;
+import org.aventyrs.core.magic.SpellAlternateEffect;
 import org.aventyrs.core.magic.SpellData;
 import org.aventyrs.core.magic.SpellDuration;
 import org.aventyrs.core.magic.SpellTargeting;
@@ -63,6 +64,7 @@ public enum RegeneracaoSpell implements AuthoredSpell {
                     + "+1PV por Rodada.")
             .secondaryEffectDescription("Regeneração em Massa: Até 2 personagens adjacentes recuperam Metade do Foco "
                     + "PV, depois disso recuperam +2PV por Rodada.")
+            .alternateEffect(SpellAlternateEffect.named("Regeneração em Massa"))
             .criticalEffectType(CriticalEffectType.POTENCIALIZAR)
             .duration(SpellDuration.targetAttribute(AttributeDomain.VIGOR, DurationUnit.RODADA))
             .targeting(SpellTargeting.TOQUE)
@@ -88,6 +90,16 @@ public enum RegeneracaoSpell implements AuthoredSpell {
                     + "recupera 2PV por uma quantidade de Rodadas igual ao dano causado ou regenera um membro "
                     + "amputado. Esta magia possui a Corrente de Efeitos – Sangue Sugas: Esta magia recebe Oferenda "
                     + "Maldita como Efeito Crítico adicional.")
+            // TODO: its Corrente grants "Oferenda Maldita como Efeito Crítico *adicional*" — an
+            //  addition, where criticalEffectType is a single replaceable column. Left unauthored
+            //  rather than overwriting Potencializar with it.
+            .alternateEffect(SpellAlternateEffect.builder()
+                    .name("Vingança de Haloi")
+                    .attackSkillType(SkillType.ATAQUE_CORPO_A_CORPO)
+                    .castingDifficultyFlooredByTargetMagicDefense(true)
+                    .effectChainDescription("Sangue Sugas: Esta magia recebe Oferenda Maldita como Efeito Crítico "
+                            + "adicional.")
+                    .build())
             .criticalEffectType(CriticalEffectType.POTENCIALIZAR)
             .duration(SpellDuration.targetAttribute(AttributeDomain.VIGOR, DurationUnit.RODADA))
             .targeting(SpellTargeting.TOQUE)
@@ -109,6 +121,7 @@ public enum RegeneracaoSpell implements AuthoredSpell {
             .secondaryEffectDescription("Marionete de Undine: O alvo desta magia retorna a vida com metade dos seus "
                     + "PV e recupera 3PV por Rodada, mas deve fazer um favor a deusa Undine (acordado entre o "
                     + "narrador e o jogador cujo personagem foi ressuscitado).")
+            .alternateEffect(SpellAlternateEffect.named("Marionete de Undine"))
             .criticalEffectType(CriticalEffectType.POTENCIALIZAR)
             .duration(SpellDuration.targetAttribute(AttributeDomain.VIGOR, DurationUnit.RODADA))
             .targeting(SpellTargeting.TOQUE)
@@ -138,6 +151,14 @@ public enum RegeneracaoSpell implements AuthoredSpell {
                     + "efeito de cura. Enquanto revividos recebem Vantagem em suas rolagens de Perícias de Ataque e "
                     + "Dano. Ao fim da Duração desta magia a vida do alvo é invertida, valores de PV positivos "
                     + "remanescentes se tornam negativos, valores negativos se tornam positivos.")
+            // The second Reação-to-PA conversion in the catalog; its parent is cast as a Reação.
+            // ⚠️ Its own sentence names "Retorno dos Afogados", a Magia that appears nowhere as a
+            // rung in this document — transcribed as printed, and treated as naming this very
+            // alternate. See the tree's javadoc.
+            .alternateEffect(SpellAlternateEffect.builder()
+                    .name("Paradoxo do Afogado")
+                    .activationTime(ActivationTime.pa(3))
+                    .build())
             .criticalEffectType(CriticalEffectType.POTENCIALIZAR)
             .duration(SpellDuration.targetAttribute(AttributeDomain.VIGOR, DurationUnit.RODADA))
             .targeting(SpellTargeting.TOQUE)
@@ -158,6 +179,7 @@ public enum RegeneracaoSpell implements AuthoredSpell {
                     + "magia.")
             .secondaryEffectDescription("Ressurreição em Massa: Você pode fazer com que todos os personagens mortos "
                     + "em Distância Curta retornam a vida com Metade do Foco PV.")
+            .alternateEffect(SpellAlternateEffect.named("Ressurreição em Massa"))
             .criticalEffectType(CriticalEffectType.POTENCIALIZAR)
             .duration(SpellDuration.targetAttribute(AttributeDomain.VIGOR, DurationUnit.RODADA))
             .targeting(SpellTargeting.TOQUE)

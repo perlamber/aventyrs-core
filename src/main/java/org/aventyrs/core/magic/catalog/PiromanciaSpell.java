@@ -7,6 +7,7 @@ import org.aventyrs.core.magic.BranchLevel;
 import org.aventyrs.core.magic.DurationUnit;
 import org.aventyrs.core.magic.ElementalType;
 import org.aventyrs.core.magic.SpellDamage;
+import org.aventyrs.core.magic.SpellAlternateEffect;
 import org.aventyrs.core.magic.SpellData;
 import org.aventyrs.core.magic.SpellDuration;
 import org.aventyrs.core.magic.SpellTargeting;
@@ -82,6 +83,15 @@ public enum PiromanciaSpell implements AuthoredSpell {
                     + "conjurada sobre uma arma. Ataques com arma tocada devem ser realizados contra DM, recebem "
                     + "vantagem na rolagem de dano e tipo de dano causado muda para Dano Mágico Elemental: Fogo, "
                     + "recebe Efeito Crítico: inflamar.")
+            // "recebe Efeito Crítico: inflamar" replaces Potencializar rather than adding to it —
+            // the parent's own Efeito states Inflamar is "um Efeito Crítico adicional", and this
+            // version does not repeat that wording.
+            .alternateEffect(SpellAlternateEffect.builder()
+                    .name("Armamento Elduriano")
+                    .targeting(SpellTargeting.TOQUE)
+                    .criticalEffectType(CriticalEffectType.INFLAMAR)
+                    .castingDifficultyFlooredByTargetMagicDefense(true)
+                    .build())
             .criticalEffectType(CriticalEffectType.POTENCIALIZAR)
             .duration(SpellDuration.rodadas(3))
             .targeting(SpellTargeting.PESSOAL)
@@ -115,6 +125,18 @@ public enum PiromanciaSpell implements AuthoredSpell {
                     + "Médio ou DM do Alvo (Maior) e o alcance para Alvo Único – Distância Curta. Sempre que o alvo "
                     + "da Maldição Ignis for alvo de outras magias, Broto ou Superiores, ele adicionalmente perderá "
                     + "1PV. O alvo também recebe a Malefício Amaldiçoado.")
+            // Its GD restates the parent's tier and adds the DM floor the parent lacks; the reach
+            // narrows from a dual Toque/Pessoal to a single ranged one, so alternateTargeting drops.
+            .alternateEffect(SpellAlternateEffect.builder()
+                    .name("Maldição Ignis")
+                    .attackSkillType(SkillType.ATAQUE_A_DISTANCIA)
+                    .castingDifficultyLevel(DifficultyLevel.MEDIUM)
+                    .castingDifficultyFlooredByTargetMagicDefense(true)
+                    .targeting(SpellTargeting.distancia(Range.DISTANCIA_CURTA))
+                    .build())
+            // TODO: "O alvo também recebe a Malefício Amaldiçoado" *inflicts* a ConditionType.
+            //  Only cleansing has a column — nothing here applies one, and CLAUDE.md's Malefício
+            //  gap records that no attack or Magia path affects a target's Condições automatically.
             .criticalEffectType(CriticalEffectType.INFLAMAR)
             .duration(SpellDuration.concentracaoMais(2))
             .targeting(SpellTargeting.TOQUE)
@@ -139,6 +161,13 @@ public enum PiromanciaSpell implements AuthoredSpell {
             .secondaryEffectDescription("Cuspe de Salamandra: O Alcance desta magia muda para Alvo Único Distante – "
                     + "Distância Média e o dano muda para 2d6+Metade do Foco, este dano é reduzido em 1 para cada "
                     + "2UD entre você e o alvo.")
+            // A cone emanation becomes a single ranged target, and the damage doubles its dice.
+            // Its own "-1 para cada 2UD" falloff stays prose, like its parent's.
+            .alternateEffect(SpellAlternateEffect.builder()
+                    .name("Cuspe de Salamandra")
+                    .targeting(SpellTargeting.distancia(Range.DISTANCIA_MEDIA))
+                    .primaryDamage(SpellDamage.halfFocusElemental(2, ElementalType.FOGO))
+                    .build())
             .criticalEffectType(CriticalEffectType.INFLAMAR)
             .duration(SpellDuration.INSTANTANEA)
             .targeting(SpellTargeting.areaDeEfeito(AreaOfEffect.cone(Range.DISTANCIA_CURTA)))
@@ -189,6 +218,7 @@ public enum PiromanciaSpell implements AuthoredSpell {
                     + "aberto. Dos céus caem diversas pedras incandescentes. Um alvo Ao Alcance dos Olhos e todos os "
                     + "personagens à Distância Longa dele sofrem 1d6+Metade do Foco pontos de Dano. Objetos em posse "
                     + "dos personagens afetados sofrem metade deste dano.")
+            .alternateEffect(SpellAlternateEffect.named("Chuva de Meteoros"))
             .criticalEffectType(CriticalEffectType.INFLAMAR)
             .duration(SpellDuration.INSTANTANEA)
             .targeting(SpellTargeting.distancia(Range.DISTANCIA_MEDIA))
@@ -215,6 +245,7 @@ public enum PiromanciaSpell implements AuthoredSpell {
                     + "pontos de vida curados - pelo alvo principal - com esta magia.")
             .secondaryEffectDescription("Chuva Boros: Com alcance pessoal e apenas em local aberto, uma chuva de "
                     + "fogo cai no local, recuperando 3d6+Metade do Foco PV e de todos os personagens adjacentes.")
+            .alternateEffect(SpellAlternateEffect.named("Chuva Boros"))
             .criticalEffectType(CriticalEffectType.AMENIZAR)
             .duration(SpellDuration.INSTANTANEA)
             .targeting(SpellTargeting.distancia(Range.DISTANCIA_CURTA))

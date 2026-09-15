@@ -11,6 +11,7 @@ import java.math.BigDecimal;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static org.aventyrs.core.util.TranslatableMessages.SPELL_ALTERNATE_VERSION_NOT_GRANTABLE;
 import static org.aventyrs.core.util.TranslatableMessages.SPELL_PREREQUISITE_NOT_MET;
 
 public class SpellServiceImpl implements SpellService {
@@ -50,6 +51,13 @@ public class SpellServiceImpl implements SpellService {
     @Override
     public Spell grantSpell(final Character character, final CharacterSheet characterSheet,
                             final Spell spell) throws IllegalOperationException {
+        // An Efeito Alternativo comes free with its parent — "um personagem que aprenda a versão
+        // base automaticamente aprende sua segunda versão". Granting one would spend experience on
+        // a Magia already known and, since it reports its parent's rung, would also satisfy the
+        // climb gate for the next one.
+        if (spell.isAlternateVersion()) {
+            throw new IllegalOperationException(SPELL_ALTERNATE_VERSION_NOT_GRANTABLE);
+        }
         if (!spell.isEligible(character, getMaxBranchLevel(character))) {
             throw new IllegalOperationException(SPELL_PREREQUISITE_NOT_MET);
         }

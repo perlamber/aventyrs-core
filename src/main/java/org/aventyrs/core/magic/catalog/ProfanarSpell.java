@@ -4,6 +4,7 @@ import org.aventyrs.core.effect.CriticalEffectType;
 import org.aventyrs.core.magic.ActivationTime;
 import org.aventyrs.core.magic.AuthoredSpell;
 import org.aventyrs.core.magic.BranchLevel;
+import org.aventyrs.core.magic.SpellAlternateEffect;
 import org.aventyrs.core.magic.SpellData;
 import org.aventyrs.core.magic.SpellDuration;
 import org.aventyrs.core.magic.SpellTargeting;
@@ -53,6 +54,7 @@ public enum ProfanarSpell implements AuthoredSpell {
             .secondaryEffectDescription("Arrancar a Alma: O personagem tocado por esta magia morre instantaneamente "
                     + "e você recupera 3PV. "
                     + "Apenas personagens vivos e que possuam 0 ou menos PV podem ser alvo deste efeito.")
+            .alternateEffect(SpellAlternateEffect.named("Arrancar a Alma"))
             .criticalEffectType(CriticalEffectType.AMALDICOAR)
             .duration(SpellDuration.INSTANTANEA)
             .targeting(SpellTargeting.TOQUE)
@@ -243,6 +245,7 @@ public enum ProfanarSpell implements AuthoredSpell {
             .secondaryEffectDescription("Regresso ao Equilíbrio: Uma vez no Abismo o conjurador pode abrir um portal "
                     + "para retornar ao Plano Material invocando uma nova lâmina e se flagelando com ela, "
                     + "sacrificando metade dos seus PV atuais.")
+            .alternateEffect(SpellAlternateEffect.named("Regresso ao Equilíbrio"))
             .criticalEffectType(CriticalEffectType.POTENCIALIZAR)
             .duration(SpellDuration.rodadas(3))
             .targeting(SpellTargeting.PESSOAL)

@@ -4,6 +4,7 @@ import org.aventyrs.core.effect.CriticalEffectType;
 import org.aventyrs.core.magic.ActivationTime;
 import org.aventyrs.core.magic.AuthoredSpell;
 import org.aventyrs.core.magic.BranchLevel;
+import org.aventyrs.core.magic.SpellAlternateEffect;
 import org.aventyrs.core.magic.SpellData;
 import org.aventyrs.core.magic.SpellDuration;
 import org.aventyrs.core.magic.SpellTargeting;
@@ -50,6 +51,7 @@ public enum OcultacaoSpell implements AuthoredSpell {
                     + "O Alcance muda para Área de Efeito – Cone Curto se tiver Foco 5 ou superior.")
             .secondaryEffectDescription("Visão/Som Fantasma: O alvo escuta sons ou enxerga vultos vindo de espaços "
                     + "vazios, as distâncias são limitadas ao alcance da magia.")
+            .alternateEffect(SpellAlternateEffect.named("Visão/Som Fantasma"))
             .criticalEffectType(CriticalEffectType.PREVENIR)
             .duration(SpellDuration.INSTANTANEA)
             .targeting(SpellTargeting.distancia(Range.DISTANCIA_CURTA))
@@ -75,6 +77,12 @@ public enum OcultacaoSpell implements AuthoredSpell {
             .secondaryEffectDescription("Ocultação em Massa: Você pode ocultar criaturas além de você se a sombra "
                     + "for grande o bastante, se o fizer o Custo de Conjuração aumenta em +2PM para cada outro "
                     + "personagem além de você e a GD muda para Difícil.")
+            // TODO: "+2PM para cada outro personagem" is a per-target cost; manaCost holds one
+            //  figure, so only the GD shift is authored.
+            .alternateEffect(SpellAlternateEffect.builder()
+                    .name("Ocultação em Massa")
+                    .castingDifficultyLevel(DifficultyLevel.HARD)
+                    .build())
             .criticalEffectType(CriticalEffectType.GUILHOTINA)
             .duration(SpellDuration.minutos(2))
             .targeting(SpellTargeting.PESSOAL)
@@ -119,6 +127,7 @@ public enum OcultacaoSpell implements AuthoredSpell {
                     + "2 Graduações em ' Domínio do Mana '.")
             .secondaryEffectDescription("Purgar Sombra: Você pode fazer desaparecer por completo a sombra de uma "
                     + "criatura ou objeto.")
+            .alternateEffect(SpellAlternateEffect.named("Purgar Sombra"))
             .criticalEffectType(CriticalEffectType.POTENCIALIZAR)
             .duration(SpellDuration.minutos(1))
             .targeting(SpellTargeting.areaDeEfeito(AreaOfEffect.circle(Range.DISTANCIA_CURTA)))
@@ -154,6 +163,17 @@ public enum OcultacaoSpell implements AuthoredSpell {
                     + "para sua frente, personagens invisíveis dentro da área, por qualquer tipo de efeito de "
                     + "invisibilidade, se torna visível. Corrente de Efeitos – Roubar Invisibilidade: Você se torna "
                     + "invisível por uma quantidade de Rodadas igual ao número de alvos afetados")
+            // "o GD se torna igual à DM do alvo" is the bare-floor form: no tier of its own, which
+            // is what a null castingDifficultyLevel plus the floor flag already spells elsewhere.
+            // TODO: its reach is "um cone de energia com alcance de 4m", stated in metres — no
+            //  Range band expresses that, so the targeting override is left inherited.
+            .alternateEffect(SpellAlternateEffect.builder()
+                    .name("Purgar Invisibilidade")
+                    .attackSkillType(SkillType.ATAQUE_A_DISTANCIA)
+                    .castingDifficultyFlooredByTargetMagicDefense(true)
+                    .effectChainDescription("Roubar Invisibilidade: Você se torna invisível por uma quantidade de "
+                            + "Rodadas igual ao número de alvos afetados")
+                    .build())
             .criticalEffectType(CriticalEffectType.POTENCIALIZAR)
             .duration(SpellDuration.rodadas(3))
             .targeting(SpellTargeting.PESSOAL)
@@ -184,6 +204,13 @@ public enum OcultacaoSpell implements AuthoredSpell {
                     + "por quem estiver do lado de fora. A Duração da Magia muda para Concentração + Foco Horas, se "
                     + "qualquer personagem em seu interior realizar ações ofensivas contra personagens no exterior a "
                     + "magia é encerrada imediatamente.")
+            // Its Duração override stays unauthored — see this constant's own javadoc: "Concentração
+            // + Foco Horas" is the catalog's only caster-scaled duration, and SpellDuration has no
+            // Attribute-scaled form denominated in hours.
+            .alternateEffect(SpellAlternateEffect.builder()
+                    .name("Refúgio Invisível")
+                    .targeting(SpellTargeting.TOQUE)
+                    .build())
             .criticalEffectType(CriticalEffectType.POTENCIALIZAR)
             .duration(SpellDuration.minutos(2))
             .targeting(SpellTargeting.areaDeEfeito(AreaOfEffect.circle(Range.DISTANCIA_CURTA)))
@@ -212,6 +239,20 @@ public enum OcultacaoSpell implements AuthoredSpell {
                     + "efeito não cumulativo), por 2 Rodadas. "
                     + "Realizar um Ataque Sombrio não cancela efeitos de Invisibilidade ou de Rastejar nas Sombras, "
                     + "mas reduz a Duração destes efeitos em 1 Rodada, exceto quando o alvo estiver Amaldiçoado.")
+            // TODO: its damage is stated twice over, 3d6 at Corpo-a-Corpo and 2d6 à Distância —
+            //  one SpellDamage cannot hold a figure that varies by the range it was delivered at,
+            //  so neither is authored rather than silently picking one.
+            // TODO: its reach is "à até 4m", in metres — no Range band expresses it.
+            // TODO: "Efeito Crítico muda para Oferenda Sombria" names an Efeito Crítico the
+            //  ruleset's own Efeitos Críticos section does not define — it lists Oferenda *Maldita*
+            //  and no Sombria. Left unauthored rather than inventing a CriticalEffectType or
+            //  silently substituting the Maldita one; this is a source-document inconsistency.
+            .alternateEffect(SpellAlternateEffect.builder()
+                    .name("Ataque Sombrio")
+                    .effectChainDescription("Maldição Sombria: O alvo deste ataque tem sua Margem para Falhas "
+                            + "Críticas Menores aumenta em 2 números (rolagens 6 ou menos, efeito não cumulativo), "
+                            + "por 2 Rodadas.")
+                    .build())
             .criticalEffectType(CriticalEffectType.POTENCIALIZAR)
             .duration(SpellDuration.rodadas(3))
             .targeting(SpellTargeting.PESSOAL)

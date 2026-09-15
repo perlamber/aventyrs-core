@@ -8,7 +8,7 @@ import org.aventyrs.core.item.Item;
 import org.aventyrs.core.item.ItemForgery;
 import org.aventyrs.core.item.ItemSpecification;
 import org.aventyrs.core.item.RegaliaDonation;
-import org.aventyrs.core.item.ItemMasterpiece;
+import org.aventyrs.core.item.Masterpiece;
 import org.aventyrs.core.item.ItemRarity;
 import org.aventyrs.core.item.ItemTemplate;
 import org.aventyrs.core.item.RegaliaGrade;
@@ -114,7 +114,7 @@ public class EquipmentCraftingServiceImpl implements EquipmentCraftingService {
 
     @Override
     public Item forge(final Character crafter, final ProfissaoSpecialization trade,
-                      final ItemTemplate template, final ItemMasterpiece masterpiece)
+                      final ItemTemplate template, final Masterpiece masterpiece)
             throws IllegalOperationException {
         return forge(crafter, trade, ItemSpecification.builder().base(template).masterpiece(masterpiece).build(),
                 null);

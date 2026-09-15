@@ -43,6 +43,27 @@ public interface Masterpiece {
     }
 
     /**
+     * The Ataque column of the "Obras-Primas Ofensivas" table. Absent from the Defensivas table
+     * entirely — {@link DefensiveMasterpiece} authors {@code DF | DM | Conjuração | Requisitos}
+     * and nothing else — so this is 0 for every defensive entry by construction rather than by
+     * coincidence.
+     *
+     * <p><b>Read by nothing yet</b>, exactly like {@link Improvement#getAttackBonus()}: applying it
+     * needs a roll pass scoped to the weapon the attack was actually delivered with, and {@code
+     * AbstractSkillInteraction#sumEquipmentRollBonuses} scans the whole loadout indiscriminately.
+     * Exact, authored data in the meantime, per CLAUDE.md's "can't apply it yet doesn't mean can't
+     * compute it yet".
+     */
+    default int getAttackBonus() {
+        return 0;
+    }
+
+    /** The Danos column of the "Obras-Primas Ofensivas" table — see {@link #getAttackBonus()}. */
+    default int getDamageBonus() {
+        return 0;
+    }
+
+    /**
      * This masterpiece's current contribution to one Defesa. "Muda para" entries override their
      * own base column here rather than stacking a second bonus onto it.
      */
@@ -57,19 +78,40 @@ public interface Masterpiece {
 
     /**
      * Whether this enhancement stops its weapon being knocked out of its wielder's hands —
-     * the "Não pode ser desarmado" Característica Adicional (Manopla de Segurança, an
-     * Aprimoramento de Obra-Prima Ofensiva). False by default.
+     * the "Não pode ser desarmado" Característica Adicional. False by default.
      *
-     * <p>No constant overrides it yet: the offensive Obra-Prima/Aprimoramento catalogues are not
-     * authored (only the defensive ones are), so this is the hook {@code Weapon#isDisarmable()}
-     * consults, waiting on the catalogue rather than on a mechanism.
+     * <p>No <em>Obra-Prima</em> states it; the one constant that does is an Aprimoramento
+     * ({@link OffensiveImprovement#MANOPLA_DE_SEGURANCA}, through {@link
+     * Improvement#preventsDisarming()}). Declared on both halves so {@code Weapon#isDisarmable()}
+     * asks one question of whatever is fitted, rather than knowing which layer the clause lives in.
      */
     default boolean preventsDisarming() {
         return false;
     }
 
-    /** How many Dano Base scale-ups this masterpiece grants when weapon is the attack source. */
+    /**
+     * How many Dano Base scale-ups this masterpiece grants when weapon is the attack source.
+     *
+     * <p><b>An offensive entry is only ever asked about its own host.</b> "Dano Base da Arma
+     * aumenta em +1" means the weapon the Obra-Prima is fitted to, and {@code
+     * Item#resolveEnhancementDamageBaseIncrease} enforces that before delegating here — so an
+     * override need not (and cannot) compare the two itself. A defensive entry is asked about every
+     * weapon its wearer swings, which is what {@link DefensiveImprovement#BENCAO_SELVAGEM}'s Armas
+     * Naturais clause needs.
+     */
     default int resolveDamageBaseIncrease(final Weapon weapon, final Character character) {
+        return 0;
+    }
+
+    /**
+     * The number of Rodadas this masterpiece adds to the given Magia's resolved Duração — the twin
+     * of {@link Improvement#resolveDurationIncreaseInRounds}, added for {@link
+     * OffensiveMasterpiece#PODEROSA}'s "Magias tem … Duração +1". Read by {@code
+     * org.aventyrs.core.magic.SpellDurationService}, through {@code
+     * Item#resolveEnhancementDurationIncreaseInRounds}.
+     */
+    default int resolveDurationIncreaseInRounds(final org.aventyrs.core.magic.Spell spell,
+                                                final Character character) {
         return 0;
     }
 

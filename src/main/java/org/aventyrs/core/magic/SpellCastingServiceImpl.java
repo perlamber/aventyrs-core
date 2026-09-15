@@ -2,12 +2,11 @@ package org.aventyrs.core.magic;
 
 import org.aventyrs.core.ability.AttributeAbility;
 import org.aventyrs.core.character.AttributeDomain;
-import org.aventyrs.core.effect.ConditionCleansingEffect;
 import org.aventyrs.core.effect.SpellEffect;
-import org.aventyrs.core.effect.SpellHealingEffect;
-import org.aventyrs.core.rest.RestService;
-import org.aventyrs.core.rest.RestServiceImpl;
+import org.aventyrs.core.effect.SpellEffectContext;
+import org.aventyrs.core.effect.SpellEffectFactory;
 import org.aventyrs.core.sheet.CombatantAction;
+import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.Interaction;
 import org.aventyrs.core.sheet.InteractionResult;
@@ -19,6 +18,7 @@ import java.util.Optional;
 import java.util.OptionalInt;
 
 import static org.aventyrs.core.util.TranslatableMessages.INVALID_SPELL_CAST_TARGET;
+import static org.aventyrs.core.util.TranslatableMessages.NO_ALTERNATE_SPELL_VERSION;
 import static org.aventyrs.core.util.TranslatableMessages.SPELL_CASTING_PREVENTED;
 
 public class SpellCastingServiceImpl implements SpellCastingService {
@@ -26,9 +26,6 @@ public class SpellCastingServiceImpl implements SpellCastingService {
     private final Interaction<CombatantSheet> dominioDoManaInteraction;
     private final AbstractSkillInteraction dominioDoManaContextInteraction;
     private final SpellDurationService spellDurationService;
-
-    /** Supplies a healing Magia's "como se passasse por um Descanso X" figure — see {@link SpellHealing}. */
-    private final RestService restService;
 
     public SpellCastingServiceImpl() {
         this(new DominioDoManaInteraction(), new SpellDurationServiceImpl());
@@ -40,65 +37,64 @@ public class SpellCastingServiceImpl implements SpellCastingService {
                 ? interaction
                 : new DominioDoManaInteraction();
         this.spellDurationService = new SpellDurationServiceImpl();
-        this.restService = new RestServiceImpl();
     }
 
     public SpellCastingServiceImpl(final AbstractSkillInteraction dominioDoManaInteraction,
                                    final SpellDurationService spellDurationService) {
-        this(dominioDoManaInteraction, spellDurationService, new RestServiceImpl());
-    }
-
-    public SpellCastingServiceImpl(final AbstractSkillInteraction dominioDoManaInteraction,
-                                   final SpellDurationService spellDurationService,
-                                   final RestService restService) {
         this.dominioDoManaInteraction = dominioDoManaInteraction;
         this.dominioDoManaContextInteraction = dominioDoManaInteraction;
         this.spellDurationService = spellDurationService;
-        this.restService = restService;
     }
 
     @Override
     public SpellCastingResult castSpell(final SpellCastRequest request) {
-        validateRequest(request);
+        // The version is resolved first, and everything downstream uses it: an Efeito Alternativo
+        // may state its own Alcance, so validating the request against the base version's reach
+        // would refuse a cast the second version permits (Procrastinar Ferimento is Distância
+        // Curta where Aliviar a Dor is Pessoal).
+        Spell spell = resolveVersion(request);
+        validateRequest(request, spell);
 
-        InteractionResult deliveryResult = request.getSpell().getAttackSkillType().newInteraction()
+        InteractionResult deliveryResult = spell.getAttackSkillType().newInteraction()
                 .applyTo(request.getCaster(), request.getSceneContext(), null, request.getCombatantTarget(),
-                        request.getSpell());
+                        spell);
         InteractionResult dominioDoManaResult = dominioDoManaContextInteraction.applyTo(request.getCaster(),
                 request.getSceneContext());
-        OptionalInt durationInRounds = spellDurationService.resolveDurationInRounds(request.getSpell(),
+        OptionalInt durationInRounds = spellDurationService.resolveDurationInRounds(spell,
                 request.getCaster().getCharacter(),
                 request.getCombatantTarget() == null ? null : request.getCombatantTarget().getCharacter());
-        ActiveAreaSpellEffect areaSpellEffect = registerAreaSpellEffect(request, durationInRounds);
+        ActiveAreaSpellEffect areaSpellEffect = registerAreaSpellEffect(request, spell, durationInRounds);
 
         return SpellCastingResult.builder()
                 .deliveryResult(deliveryResult)
                 .dominioDoManaResult(dominioDoManaResult)
                 .durationInRounds(durationInRounds.isPresent() ? durationInRounds.getAsInt() : null)
                 .areaSpellEffect(areaSpellEffect)
-                .primaryDamage(resolvePrimaryDamage(request.getSpell(), request.getCaster()).orElse(null))
-                .spellEffect(resolveEffect(request.getSpell(), isHostileTarget(request)).orElse(null))
-                .recordedAction(recordedAction(request, deliveryResult))
+                .primaryDamage(resolvePrimaryDamage(spell, request.getCaster()).orElse(null))
+                .spellEffect(resolveEffect(spell, SpellEffectContext.of(isHostileTarget(request)))
+                        .orElse(null))
+                .recordedAction(recordedAction(request, spell, deliveryResult))
                 .build();
     }
 
     /**
-     * {@inheritDoc}
+     * The version this request casts — the Magia's {@code Efeito Alternativo} when it asked for
+     * one, otherwise the Magia itself.
      *
-     * <p>Healing is checked before cleansing because no authored Magia does both — a branch either
-     * restores PV or lifts Malefícios. Should one ever do both, this is the line that has to
-     * become a chain rather than a choice.
+     * @throws IllegalOperationException when the request asks for a second version of a Magia that
+     *                                   has none
      */
+    private Spell resolveVersion(final SpellCastRequest request) {
+        if (!request.isUseAlternateVersion()) {
+            return request.getSpell();
+        }
+        return request.getSpell().getAlternateVersion()
+                .orElseThrow(() -> new IllegalOperationException(NO_ALTERNATE_SPELL_VERSION));
+    }
+
     @Override
-    public Optional<SpellEffect> resolveEffect(final Spell spell, final boolean hostileTarget) {
-        Optional<SpellHealing> healing = spell.getHealing();
-        if (healing.isPresent()) {
-            return Optional.of(new SpellHealingEffect(spell, healing.get(), hostileTarget, restService));
-        }
-        if (!spell.getCleansedConditions().isEmpty()) {
-            return Optional.of(new ConditionCleansingEffect(spell, spell.getCleansedConditions()));
-        }
-        return Optional.empty();
+    public Optional<SpellEffect> resolveEffect(final Spell spell, final SpellEffectContext context) {
+        return SpellEffectFactory.create(spell, context);
     }
 
     /**
@@ -150,11 +146,12 @@ public class SpellCastingServiceImpl implements SpellCastingService {
      * supplied to {@code castSpell}, so the governing domain and verdict stay unset. Not recorded
      * here — the caller files it via {@code scene.recordAction(caster, action)}.
      */
-    private CombatantAction recordedAction(final SpellCastRequest request, final InteractionResult deliveryResult) {
+    private CombatantAction recordedAction(final SpellCastRequest request, final Spell spell,
+                                           final InteractionResult deliveryResult) {
         return new CombatantAction(
-                request.getSpell().getAttackSkillType(),
+                spell.getAttackSkillType(),
                 deliveryResult.getGoverningAttributeDomain(),
-                request.getSpell(),
+                spell,
                 null,
                 request.getScene().getCurrentRound(),
                 null);
@@ -175,7 +172,11 @@ public class SpellCastingServiceImpl implements SpellCastingService {
                 .build();
     }
 
-    private void validateRequest(final SpellCastRequest request) {
+    /**
+     * @param spell the version actually being cast — see {@link #resolveVersion}. Its own Alcance
+     *              is what the target shape below is judged against, never the base version's.
+     */
+    private void validateRequest(final SpellCastRequest request, final Spell spell) {
         // Silêncio: "não podem Conjurar Magias". Refused rather than resolved-and-discarded,
         // since casting spends Pontos de Mana — the caster must not pay for a Magia that
         // cannot happen.
@@ -188,7 +189,7 @@ public class SpellCastingServiceImpl implements SpellCastingService {
             throw new org.aventyrs.core.sheet.IllegalOperationException(INVALID_SPELL_CAST_TARGET);
         }
 
-        SpellTargeting targeting = request.getSpell().getTargeting();
+        SpellTargeting targeting = spell.getTargeting();
         boolean hasCombatantTarget = request.getCombatantTarget() != null;
         boolean hasPositionTarget = request.getPositionTarget() != null;
         boolean validTarget = switch (targeting.reach()) {
@@ -202,14 +203,14 @@ public class SpellCastingServiceImpl implements SpellCastingService {
         }
     }
 
-    private ActiveAreaSpellEffect registerAreaSpellEffect(final SpellCastRequest request,
+    private ActiveAreaSpellEffect registerAreaSpellEffect(final SpellCastRequest request, final Spell spell,
                                                            final OptionalInt durationInRounds) {
-        if (!request.getSpell().getTargeting().isAreaOfEffect()
+        if (!spell.getTargeting().isAreaOfEffect()
                 || durationInRounds.isEmpty()
-                || durationInRounds.getAsInt() == 0 && !request.getSpell().getDuration().concentration()) {
+                || durationInRounds.getAsInt() == 0 && !spell.getDuration().concentration()) {
             return null;
         }
-        ActiveAreaSpellEffect effect = new ActiveAreaSpellEffect(request.getSpell(), request.getCaster(),
+        ActiveAreaSpellEffect effect = new ActiveAreaSpellEffect(spell, request.getCaster(),
                 request.getPositionTarget(), durationInRounds.getAsInt());
         request.getScene().addAreaSpellEffect(effect);
         return effect;

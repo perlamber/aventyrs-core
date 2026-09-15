@@ -49,13 +49,16 @@ public class ItemSpecification {
     private final ItemTemplate base;
 
     /**
-     * The Obra-Prima this copy is fabricated as, or {@code null} for an ordinary piece. Typed as
-     * {@link ItemMasterpiece} — the fitted wrapper carrying its creation choices — rather than
-     * the wider {@link Masterpiece}, because only the wrapper knows its catalog definition, and
-     * that definition's {@link ItemRarity} is what sets the Profissão Graduação a crafter needs
-     * to fit it ({@link ItemForgery#validate()}).
+     * The Obra-Prima this copy is fabricated as, or {@code null} for an ordinary piece — either an
+     * {@link OffensiveMasterpiece} constant directly, or the {@link ItemMasterpiece} wrapper that
+     * carries a defensive entry's creation choices.
+     *
+     * <p>Typed as the wide {@link Masterpiece} since the offensive catalog landed: the narrower
+     * {@code ItemMasterpiece} was justified by needing the catalog definition's {@link ItemRarity}
+     * for the Profissão Graduação check ({@link ItemForgery#validate()}), and that Raridade is a
+     * column of {@code Masterpiece} itself, which the wrapper only ever delegated.
      */
-    private final ItemMasterpiece masterpiece;
+    private final Masterpiece masterpiece;
 
     /**
      * The Aprimoramentos fitted during fabrication, in order. Capped by the base's Categoria de

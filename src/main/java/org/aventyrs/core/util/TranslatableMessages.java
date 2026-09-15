@@ -115,6 +115,17 @@ public class TranslatableMessages {
     public static final String INVALID_SPELL_CAST_TARGET = "INVALID_SPELL_CAST_TARGET";
     public static final String INVALID_SPELL_DAMAGE = "INVALID_SPELL_DAMAGE";
     public static final String INVALID_SPELL_HEALING = "INVALID_SPELL_HEALING";
+    public static final String INVALID_SPELL_ALTERNATE_EFFECT = "INVALID_SPELL_ALTERNATE_EFFECT";
+
+    /**
+     * An {@code Efeito Alternativo} was passed to {@code SpellService#grantSpell}. It is learned
+     * free with its parent — "um personagem que aprenda a versão base automaticamente aprende sua
+     * segunda versão" — so granting one would charge experience for a Magia already known.
+     */
+    public static final String SPELL_ALTERNATE_VERSION_NOT_GRANTABLE = "SPELL_ALTERNATE_VERSION_NOT_GRANTABLE";
+
+    /** A cast asked for a Magia's Efeito Alternativo, and that Magia has none. */
+    public static final String NO_ALTERNATE_SPELL_VERSION = "NO_ALTERNATE_SPELL_VERSION";
     public static final String INVALID_MIMETIZED_SPELL = "INVALID_MIMETIZED_SPELL";
     public static final String MIMETIZED_SPELL_NOT_HELD = "MIMETIZED_SPELL_NOT_HELD";
 

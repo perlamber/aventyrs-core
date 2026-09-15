@@ -4,6 +4,7 @@ import org.aventyrs.core.effect.CriticalEffectType;
 import org.aventyrs.core.magic.ActivationTime;
 import org.aventyrs.core.magic.AuthoredSpell;
 import org.aventyrs.core.magic.BranchLevel;
+import org.aventyrs.core.magic.SpellAlternateEffect;
 import org.aventyrs.core.magic.SpellData;
 import org.aventyrs.core.magic.SpellDuration;
 import org.aventyrs.core.magic.SpellTargeting;
@@ -72,6 +73,10 @@ public enum TempoSpell implements AuthoredSpell {
                     + "Personagem afetados por Reduzir Passos tem seu Movimento Base reduzido em -2UD. Esta magia "
                     + "não afeta objetos e construtos, e nunca reduz o Movimento Base de um personagem a menos que "
                     + "2UD.")
+            .alternateEffect(SpellAlternateEffect.builder()
+                    .name("Reduzir Passos")
+                    .attackSkillType(SkillType.ATAQUE_A_DISTANCIA)
+                    .build())
             .criticalEffectType(CriticalEffectType.POTENCIALIZAR)
             .duration(SpellDuration.rodadas(1))
             .targeting(SpellTargeting.distancia(Range.DISTANCIA_CURTA))
@@ -90,6 +95,7 @@ public enum TempoSpell implements AuthoredSpell {
                     + "Esta magia não permite ao alvo superar o limite de 5PA e anula os efeitos de Raízes nos Pés.")
             .secondaryEffectDescription("Aprimorar Condução: O movimento de um veículo ou animal de montaria é "
                     + "aumentado em 50%.")
+            .alternateEffect(SpellAlternateEffect.named("Aprimorar Condução"))
             .criticalEffectType(CriticalEffectType.POTENCIALIZAR)
             .duration(SpellDuration.rodadas(3))
             .targeting(SpellTargeting.PESSOAL)
@@ -112,6 +118,12 @@ public enum TempoSpell implements AuthoredSpell {
             .secondaryEffectDescription("Retardar Condução: O Alcance desta magia muda para Alvos Distantes – Cone "
                     + "Curto e a Duração é reduzida para 1 Rodada. Veículos e Montarias afetadas tem seu "
                     + "deslocamento reduzido à metade.")
+            // TODO: "Alvos Distantes – Cone Curto" is an emanation the parent does not have; only its
+            //  Duração override is authored.
+            .alternateEffect(SpellAlternateEffect.builder()
+                    .name("Retardar Condução")
+                    .duration(SpellDuration.rodadas(1))
+                    .build())
             .criticalEffectType(CriticalEffectType.POTENCIALIZAR)
             .duration(SpellDuration.rodadas(3))
             .targeting(SpellTargeting.distancia(Range.DISTANCIA_MEDIA))
@@ -129,6 +141,9 @@ public enum TempoSpell implements AuthoredSpell {
             .secondaryEffectDescription("Aceleração em Massa: O alcance desta magia muda para Pessoal e Adjacente. O "
                     + "conjurador e aliados adjacentes adquirem +1PA. Conjurar a magia desta forma exige o uso de +1 "
                     + "PM para cada criatura adjacente afetada.")
+            // TODO: "O alcance desta magia muda para Pessoal e Adjacente" is a *dual* reach, and a
+            //  SpellTargeting holds exactly one SpellReach by design.
+            .alternateEffect(SpellAlternateEffect.named("Aceleração em Massa"))
             .criticalEffectType(CriticalEffectType.POTENCIALIZAR)
             .duration(SpellDuration.rodadas(3))
             .targeting(SpellTargeting.PESSOAL)
@@ -151,6 +166,8 @@ public enum TempoSpell implements AuthoredSpell {
                     + "Esta magia nunca reduz o total de PA do alvo a menos que 2PA.")
             .secondaryEffectDescription("Lentidão em Massa: O Alcance desta magia muda para Alvo Distante - cone de "
                     + "até 6 metros, criaturas afetadas sofrem redutor de -1PA.")
+            // TODO: "cone de até 6 metros" states its reach in metres — no Range band expresses it.
+            .alternateEffect(SpellAlternateEffect.named("Lentidão em Massa"))
             .criticalEffectType(CriticalEffectType.POTENCIALIZAR)
             .duration(SpellDuration.rodadas(3))
             .targeting(SpellTargeting.distancia(Range.DISTANCIA_CURTA))
@@ -177,6 +194,10 @@ public enum TempoSpell implements AuthoredSpell {
                     + "área imediatamente deixam de receber seus efeitos.")
             .secondaryEffectDescription("Entrelaçamento Temporal: A Duração da Conjuração muda para Concentração +1 "
                     + "Rodada. Você e seus aliados recebem temporariamente +2PA.")
+            .alternateEffect(SpellAlternateEffect.builder()
+                    .name("Entrelaçamento Temporal")
+                    .duration(SpellDuration.concentracaoMais(1))
+                    .build())
             .criticalEffectType(CriticalEffectType.POTENCIALIZAR)
             .duration(SpellDuration.rodadas(2))
             .targeting(SpellTargeting.areaDeEfeito(Range.DISTANCIA_MEDIA,
@@ -210,6 +231,10 @@ public enum TempoSpell implements AuthoredSpell {
                     + "não tem seu tempo reduzido enquanto o alvo está fora do tempo. "
                     + "Você não pode afetar um mesmo personagem com Prisão Temporal até que você passe por um "
                     + "Descanso Longo.")
+            .alternateEffect(SpellAlternateEffect.builder()
+                    .name("Prisão Temporal")
+                    .targeting(SpellTargeting.TOQUE)
+                    .build())
             .criticalEffectType(CriticalEffectType.AMENIZAR)
             .duration(SpellDuration.INSTANTANEA)
             .targeting(SpellTargeting.PESSOAL)

@@ -214,7 +214,7 @@ public final class ItemForgery {
      *
      * @return this forgery, so decisions can be chained
      */
-    public ItemForgery setMasterpiece(final ItemMasterpiece masterpiece) {
+    public ItemForgery setMasterpiece(final Masterpiece masterpiece) {
         specification = specification.toBuilder().masterpiece(masterpiece).build();
         recalculateTotalValue();
         return this;
@@ -431,11 +431,11 @@ public final class ItemForgery {
     }
 
     private void requireMasterpieceSkill() throws IllegalOperationException {
-        ItemMasterpiece masterpiece = specification.getMasterpiece();
+        Masterpiece masterpiece = specification.getMasterpiece();
         if (masterpiece == null) {
             return;
         }
-        int required = masterpiece.getDefinition().getRarity().getMinimumMasterpieceGraduation();
+        int required = masterpiece.getRarity().getMinimumMasterpieceGraduation();
         CharacterSkill profissao = crafter.getSkills().get(SkillType.PROFISSAO);
         int graduation = profissao == null ? 0 : profissao.getGraduation().getGraduationValue();
         if (graduation < required) {

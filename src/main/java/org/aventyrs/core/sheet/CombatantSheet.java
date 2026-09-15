@@ -94,6 +94,16 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
      */
     boolean stopBleeding();
 
+    /**
+     * Registers a {@link PostponedDamage} — Pontos de Vida this combatant loses at the start of
+     * their <em>next</em> Rodada instead of now, delivered by {@link #startNewRound()}. Several
+     * postponed in one Rodada all land together at that boundary.
+     *
+     * <p>Takes damage that is <b>already mitigated</b>: the hit resolved normally and only its PV
+     * loss was deferred, so re-running RD/RA a Rodada later would apply them twice.
+     */
+    void schedulePostponedDamage(int amount, CombatantSheet source);
+
     int getShieldPoints();
 
     int addShield(int amount);

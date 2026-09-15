@@ -128,7 +128,9 @@ public interface Spell extends AttackSource {
     /**
      * The structured recovery of the {@code Efeito:} line, or {@link Optional#empty()} when the
      * Magia restores no Pontos de Vida — see {@link SpellHealing}. Turned into an applicable
-     * {@code org.aventyrs.core.effect.HealingEffect} by {@code SpellCastingService#resolveEffect}.
+     * {@code org.aventyrs.core.effect.HealingEffect} by {@code
+     * org.aventyrs.core.effect.HealingEffectBuilder}, the contributor {@code
+     * org.aventyrs.core.effect.SpellEffectKind#HEALING} carries.
      * Defaults to empty; an {@link AuthoredSpell} reads it off {@link SpellData#getHealing()}.
      */
     default Optional<SpellHealing> getHealing() {
@@ -138,7 +140,8 @@ public interface Spell extends AttackSource {
     /**
      * The Malefícios this Magia lifts from its target, empty for a Magia that lifts none. Turned
      * into an applicable {@code org.aventyrs.core.effect.DefensiveEffect} by {@code
-     * SpellCastingService#resolveEffect}.
+     * org.aventyrs.core.effect.ConditionCleansingEffectBuilder}, the contributor {@code
+     * org.aventyrs.core.effect.SpellEffectKind#DEFENSIVE} carries.
      *
      * <p>A {@code ConditionType} set rather than prose because removal is one of the few
      * Malefício operations this core can already perform for real ({@code
@@ -157,6 +160,33 @@ public interface Spell extends AttackSource {
      */
     default String getSecondaryEffectDescription() {
         return null;
+    }
+
+    /**
+     * This Magia's {@code Efeito Alternativo} as a {@link Spell} in its own right — its own name,
+     * {@code Efeito:} and whichever descriptor columns it overrides, inheriting the rest. {@link
+     * Optional#empty()} for the 81 that have none, and always empty on an alternate itself.
+     *
+     * <p><b>Derived, never granted.</b> "Um personagem que aprenda a versão base automaticamente
+     * aprende sua segunda versão" ({@code magias.txt:29}), so this is a view of a Magia already
+     * held rather than a separate acquisition — which is why it is reachable from the parent
+     * instead of being a catalog entry, and why {@code SpellService#grantSpell} refuses one.
+     *
+     * @see AlternateSpellVersion
+     */
+    default Optional<Spell> getAlternateVersion() {
+        return Optional.empty();
+    }
+
+    /**
+     * Whether this is a Magia's second version rather than a Magia. {@code false} for every
+     * catalog constant; {@code true} only for {@link AlternateSpellVersion}.
+     *
+     * <p>What {@code SpellService#grantSpell} tests: an alternate costs no experience and occupies
+     * no rung of its own, so acquiring one directly would charge for a Magia already known.
+     */
+    default boolean isAlternateVersion() {
+        return false;
     }
 
     /**

@@ -187,6 +187,42 @@ form of an `Efeito:` line like *"Causa 2d6+Metade do Foco pontos de Dano Mágico
   Extend it Magia-by-Magia as a real consumer needs each. **Healing is no longer on that list** —
   it has a column of its own, `SpellHealing`; see the next section.
 
+### A Magia's second version — `Efeito Alternativo`
+
+**An Efeito Alternativo is a second version of the same Magia, never a second Magia.** The ruleset
+is explicit — *"um personagem que aprenda a versão base automaticamente aprende sua segunda
+versão"* (`magias.txt:29`) — and the same preamble makes it a branch-long concern: one ramificação
+*"foca na evolução dos Efeitos Alternativos"* (L30), which is what `BranchRole.ALTERNATIVO` names.
+
+- **Never author one as its own catalog constant.** It would charge XP in `SpellService#grantSpell`,
+  count as a climb-gate foothold, and change `SpellCatalog.all().size()`. `grantSpell` refuses one
+  outright (`SPELL_ALTERNATE_VERSION_NOT_GRANTABLE`, tested against `Spell#isAlternateVersion()`).
+- **`SpellAlternateEffect` is a delta; `AlternateSpellVersion` applies it.** Every field null means
+  "inherited". The decorator `implements Spell`, which is the whole payoff — `castSpell`,
+  `resolveEffect`, `SpellHealingEffect`, `SpellDurationService` all work on a second version with
+  no change, because none of them can tell it is one.
+- **64 of 145 have one, and 40 override at least one parent column** — Alcance, Duração, GD,
+  Tempo de Ativação, Perícia Chave, Efeito Crítico, plus PM cost. Eight override three or more.
+  A prose string cannot represent that; this is why the column exists.
+- **Overrides run both directions.** Two alternates convert a Reação *back* to Pontos de Ação, so
+  `activationTime` is fully replaceable, not a one-way widening.
+- **`suppressesCriticalEffect` is separate from `criticalEffectType`** — a null type already means
+  "inherited" and cannot also mean "this version receives none" (Transporte's *Portal de Fuga*).
+  `castingDifficultyFlooredByTargetMagicDefense` is a boxed `Boolean` for the same tri-state reason.
+- **`getAlternateTargeting()` empties once the delta overrides `getTargeting()`.** ⚠️ That column is
+  the parent's dual `Alcance: Pessoal ou Toque` line and has **nothing** to do with an Efeito
+  Alternativo despite the name — don't conflate them.
+- **The prose is not duplicated.** `SpellAlternateEffect` carries the *name* only; the alternate's
+  own `Efeito:` is the parent's `secondaryEffectDescription`, read through the decorator.
+- **Author an override only where it maps to a real type.** Reaches stated in metres or dice
+  formulas ("até 4m", "cone de até 6 metros", "2d6*100 UD") have no `Range` band; a Duração stated
+  *relative* to the parent ("reduzida à metade") has no absolute figure. Both stay prose + TODO.
+- **Two source defects to know**: the document heads one alternate `Efeito Alternativa` (Hálito de
+  Eldur's), which a naive grep misses — the real count is 64, not 63; and Ocultação's *Ataque
+  Sombrio* names an Efeito Crítico ("Oferenda Sombria") that the Efeitos Críticos section does not
+  define, left unauthored rather than substituted.
+- `SpellCatalogTest` pins that every transcribed Efeito Alternativo is wired and no other is.
+
 ### A Magia's effect — `SpellEffect` and its four categories
 
 A Magia's `Efeito:` line becomes executable through **`org.aventyrs.core.effect.SpellEffect`**, a
@@ -221,15 +257,35 @@ Effect plugs into `receiveInteraction` with zero other code touched, and `Abstra
   because "Este é um efeito similar a Descanso e não substitui Descansos reais", and a real Rest
   also restores PM/PD, settles every `PendingEgoRecovery` and clears rest cooldowns. Going through
   `heal` also gets Feridas Dolorosas' refusal and Sangramento's interruption for free.
+- **`SpellEffectFactory` builds them, and a new category touches nothing else.**
+  `SpellEffectKind` carries a `Supplier<SpellEffectBuilder>` per category — the same
+  one-constant-carries-its-own-lookup idiom `SkillType` uses for `interactionFactory` — and the
+  factory is the thin facade over it that `SkillInteractionFactory` is over `newInteraction()`.
+  **Adding `OFFENSIVE`/`INVOCATION` is a builder class plus a supplier; `SpellCastingServiceImpl`
+  needs no edit.** Each builder reads **one authored column** and answers empty otherwise, which is
+  what keeps this keyed on data rather than on a registry of effect types.
+- ⚠️ **There is no "which effect" selector, and there must not be one.** A Magia and its Efeito
+  Alternativo are two separate `Spell`s carrying separate effect columns, so choosing the version
+  *is* choosing the effect — `useAlternateVersion` answers it, and each version authors at most
+  one effect. `SpellEffectFactoryTest#noVersionAuthorsMoreThanOneEffect` pins that across every
+  Magia **and** every second version, so an authoring mistake stops the build rather than a cast.
+  Don't reintroduce a kind parameter or a runtime ambiguity throw; the invariant is the design.
 - **The effect applies; the caller drives it.** `SpellCastingService#resolveEffect(spell,
-  hostileTarget)` builds it and `SpellCastingResult#getSpellEffect()` reports it — `castSpell`
-  never runs it, since this core resolves no target GD and so cannot tell the cast landed. Same
-  report-only restraint as `getPrimaryDamage()`/`getRecordedAction()`. A Corrente the caller judged
-  triggered is chained on first (`Sobrecura`).
+  context)` delegates to the factory and `SpellCastingResult#getSpellEffect()` reports it —
+  `castSpell` never runs it, since this core resolves no target GD and so cannot tell the cast
+  landed. Same report-only restraint as `getPrimaryDamage()`/`getRecordedAction()`. A Corrente the
+  caller judged triggered is chained on first (`Sobrecura`), which is also why the factory returns
+  a single effect rather than a pre-composed chain — `chainInto` *replaces* a successor.
+- **A `SpellCastRequest` chooses one thing the Magia does not fix**: `useAlternateVersion` — cast
+  the Efeito Alternativo, with the service resolving `getAlternateVersion()` itself. ⚠️ **The
+  version is resolved *before* validation**, so a second version's own Alcance is what the target
+  shape is judged against — Procrastinar Ferimento is Distância Curta where its parent is Pessoal,
+  and validating the parent's reach would refuse a legal cast. It is also what the delivery roll,
+  Duração, damage, effect and `recordedAction` all read.
 - **Which targets are hostile, and who is in an area, stay the caller's.** No footprint resolution
   exists, so `castSpell` builds the effect for the primary target alone (deriving hostility from
-  the caster's own `SceneContext#getEnemies`); a caller sweeping an area calls `resolveEffect` per
-  combatant.
+  the caster's own `SceneContext#getEnemies` into a `SpellEffectContext`); a caller sweeping an
+  area calls `SpellEffectFactory.create` per combatant.
 - **`ConditionType.POSSESSAO` was added for `EXORCIZAR`** — not in
   `docs/rules/condicoes-e-maleficios-.txt`, authored from the Fantasma's *Possessão Furiosa*
   Corrente in `magias.txt`, modelled on `SILENCIO`. And **`ConditionType#isMaleficio()`/
@@ -419,5 +475,9 @@ the example that originally justified building it.
   `HealingEffect`/`DefensiveEffect`/`OffensiveEffect`/`InvocationEffect`, and the concrete
   `SpellHealingEffect.java` / `ConditionCleansingEffect.java` / `Sobrecura.java` with their tests.
   Read `org.aventyrs.core.effect/package-info.java` first — it is the pipeline's narrative.
+- `org.aventyrs.core.effect/SpellEffectFactory.java` / `SpellEffectKind.java` /
+  `SpellEffectBuilder.java` / `SpellEffectContext.java` and the two `*EffectBuilder`s
+  (`SpellEffectFactoryTest`, `SpellEffectKindTest`, `SpellEffectBuilderTest`) — how a Magia's
+  columns become an effect, and the one place to touch when adding a category.
 - `docs/rules/magias-index.md` — the source-of-truth survey; `docs/rules/magias.txt` — the raw
   rules text.

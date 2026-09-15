@@ -3,7 +3,7 @@ package org.aventyrs.core.character.services;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.item.Improvement;
 import org.aventyrs.core.item.Item;
-import org.aventyrs.core.item.ItemMasterpiece;
+import org.aventyrs.core.item.Masterpiece;
 import org.aventyrs.core.item.ItemRarity;
 import org.aventyrs.core.item.ItemTemplate;
 import org.aventyrs.core.item.ItemForgery;
@@ -179,7 +179,7 @@ public interface EquipmentCraftingService {
      * @param masterpiece the Obra-Prima to fabricate it as, or {@code null} for an ordinary item
      */
     Item forge(Character crafter, ProfissaoSpecialization trade, ItemTemplate template,
-               ItemMasterpiece masterpiece) throws IllegalOperationException;
+               Masterpiece masterpiece) throws IllegalOperationException;
 
     /**
      * Forges whatever specification describes on crafter's behalf — the general form, and the one

@@ -2,6 +2,7 @@ package org.aventyrs.core.item;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Stream;
 
 import org.aventyrs.core.sheet.IllegalOperationException;
 
@@ -26,9 +27,9 @@ import static org.aventyrs.core.util.TranslatableMessages.STORE_RARITY_NOT_PURCH
  *
  * <p><b>Obra-Primas and Aprimoramentos are offered too.</b> Since a store copy can be forged as
  * an Obra-Prima with Aprimoramentos, the store also lists which of each it carries — again the
- * whole authored catalog ({@link DefensiveMasterpiece} / {@link DefensiveImprovement}, the only
- * ones authored so far — the offensive catalogs don't exist yet), capped by the same {@link
- * #getMaxRarity()} ceiling. {@link #offers(ItemSpecification)} enforces that ceiling on every
+ * whole authored catalog, both the defensive ({@link DefensiveMasterpiece} / {@link
+ * DefensiveImprovement}) and the offensive ({@link OffensiveMasterpiece} / {@link
+ * OffensiveImprovement}) halves, capped by the same {@link #getMaxRarity()} ceiling. {@link #offers(ItemSpecification)} enforces that ceiling on every
  * part of a requested copy, not just its base.
  */
 public class ItemStore {
@@ -59,24 +60,32 @@ public class ItemStore {
     }
 
     /**
-     * Every Obra-Prima a copy bought here can be forged as — the whole {@link
-     * DefensiveMasterpiece} catalog (the only one authored), no rarer than {@link
+     * Every Obra-Prima a copy bought here can be forged as — both authored catalogs ({@link
+     * DefensiveMasterpiece} then {@link OffensiveMasterpiece}), no rarer than {@link
      * #getMaxRarity()}.
+     *
+     * <p>One list rather than two accessors: a store's stock is a rarity question, not a
+     * defensive/offensive one, and which of the two an entry can actually be fitted to is already
+     * enforced where it belongs ({@code AbstractItem#setMasterpiece}).
      */
-    public List<DefensiveMasterpiece> getOfferedMasterpieces() {
-        return Arrays.stream(DefensiveMasterpiece.values())
+    public List<Masterpiece> getOfferedMasterpieces() {
+        return Stream.concat(Arrays.stream(DefensiveMasterpiece.values()),
+                        Arrays.stream(OffensiveMasterpiece.values()))
                 .filter(masterpiece -> masterpiece.getRarity().isAtMost(maxRarity))
+                .map(Masterpiece.class::cast)
                 .toList();
     }
 
     /**
-     * Every Aprimoramento a copy bought here can have fitted — the whole {@link
-     * DefensiveImprovement} catalog (the only one authored), no rarer than {@link
+     * Every Aprimoramento a copy bought here can have fitted — both authored catalogs ({@link
+     * DefensiveImprovement} then {@link OffensiveImprovement}), no rarer than {@link
      * #getMaxRarity()}.
      */
-    public List<DefensiveImprovement> getOfferedImprovements() {
-        return Arrays.stream(DefensiveImprovement.values())
+    public List<Improvement> getOfferedImprovements() {
+        return Stream.concat(Arrays.stream(DefensiveImprovement.values()),
+                        Arrays.stream(OffensiveImprovement.values()))
                 .filter(improvement -> improvement.getRarity().isAtMost(maxRarity))
+                .map(Improvement.class::cast)
                 .toList();
     }
 
@@ -88,7 +97,7 @@ public class ItemStore {
     }
 
     /** Whether this store carries masterpiece — no rarer than {@link #getMaxRarity()}. */
-    public boolean offers(final DefensiveMasterpiece masterpiece) {
+    public boolean offers(final Masterpiece masterpiece) {
         return masterpiece != null && masterpiece.getRarity().isAtMost(maxRarity);
     }
 
@@ -106,7 +115,7 @@ public class ItemStore {
         return spec != null
                 && !spec.isRegalia()
                 && offers(spec.getBase())
-                && (spec.getMasterpiece() == null || offers(spec.getMasterpiece().getDefinition()))
+                && (spec.getMasterpiece() == null || offers(spec.getMasterpiece()))
                 && spec.getImprovements().stream().allMatch(this::offers);
     }
 }

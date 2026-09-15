@@ -315,9 +315,21 @@ public interface Item {
         return 0;
     }
 
-    /** Dano Base scale-ups this item grants when weapon is the attack source. */
+    /**
+     * Dano Base scale-ups this item grants when weapon is the attack source.
+     *
+     * <p><b>An offensive enhancement raises only its own host's Dano Base.</b> An Obra-Prima or
+     * Aprimoramento Ofensivo is fitted to one weapon and its clause says so — {@link
+     * OffensiveMasterpiece#BRUTAL}'s "Dano Base da <i>Arma</i> aumenta em +1" — so a Brutal adaga
+     * in the same loadout must not sharpen the espada actually being swung. {@code
+     * DamageBaseService} scans the whole of {@code Character#getEquipment()}, which is right for a
+     * <em>defensive</em> host: {@link DefensiveImprovement#BENCAO_SELVAGEM} is an armour
+     * Aprimoramento and its Armas Naturais clause is about its wearer, not about the armour. The
+     * split is therefore made here, by the host's own {@link #getType()}, rather than pushed into
+     * every offensive constant — none of which is handed the item it is fitted to.
+     */
     default int resolveEnhancementDamageBaseIncrease(final Weapon weapon, final Character character) {
-        if (isDestroyed()) {
+        if (isDestroyed() || (getType() == ItemType.OFFENSIVE && this != weapon)) {
             return 0;
         }
         int masterpieceBonus = getMasterpiece() == null ? 0
@@ -339,12 +351,23 @@ public interface Item {
     }
 
     /**
-     * The Rodadas this item's fitted Aprimoramentos add to spell's resolved Duração — the entry
-     * point {@code org.aventyrs.core.magic.SpellDurationService} scans equipment through, so a
-     * destroyed item stops extending a Duração without that service knowing about destruction.
+     * The Rodadas this item's fitted Obra-Prima and Aprimoramentos add to spell's resolved Duração
+     * — the entry point {@code org.aventyrs.core.magic.SpellDurationService} scans equipment
+     * through, so a destroyed item stops extending a Duração without that service knowing about
+     * destruction.
+     *
+     * <p>Not host-scoped the way {@link #resolveEnhancementDamageBaseIncrease} is: a Magia is not
+     * cast <em>with</em> one particular item, so an enhancement lengthening its wielder's Durações
+     * ({@link OffensiveMasterpiece#PODEROSA}, {@link DefensiveImprovement#ENCANTADORA}) does so
+     * whatever else is carried.
      */
     default int resolveEnhancementDurationIncreaseInRounds(final Spell spell, final Character character) {
-        return isDestroyed() ? 0 : getImprovements().stream()
+        if (isDestroyed()) {
+            return 0;
+        }
+        int masterpieceBonus = getMasterpiece() == null ? 0
+                : getMasterpiece().resolveDurationIncreaseInRounds(spell, character);
+        return masterpieceBonus + getImprovements().stream()
                 .mapToInt(improvement -> improvement.resolveDurationIncreaseInRounds(spell, character))
                 .sum();
     }
