@@ -5,6 +5,10 @@ import lombok.Getter;
 import lombok.NonNull;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.feat.FeatCategory;
+import org.aventyrs.core.feat.FeatPool;
+import org.aventyrs.core.feat.MonstruosoFeat;
+import org.aventyrs.core.feat.StartingFeatSlot;
 import org.aventyrs.core.sheet.DlcRuleset;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
 
@@ -68,11 +72,10 @@ import java.util.Map;
  *   Language/Idioma concept exists" gap as every other race.</li>
  *   <li><b>Longevidade</b> (~100 anos) — same "no age/lifespan concept" gap as every other race.</li>
  *   <li><b>1 Talento Geral adicional + Ossos Ocos como Talento adicional + uma Especialização e
- *   uma Habilidade de Competência em até uma mesma Perícia treinada</b> — {@link Race} has no hook
- *   to grant a {@code Feat} at creation nor to grant starting Perícia training/abilities, same gap
- *   as every other race's free Talentos/Especializações. Ossos Ocos is additionally not a Talento
- *   the {@code org.aventyrs.core.feat} catalog authors yet ({@code FeatCategory#AVIANO} has no
- *   enum), so there would be nothing to grant even with a hook.</li>
+ *   uma Habilidade de Competência em até uma mesma Perícia treinada</b> — both Talentos are built
+ *   ({@link #getStartingFeatSlots()}); Ossos Ocos is {@code MonstruosoFeat#OSSOS_OCOS}, offered as a
+ *   single-option slot. The Perícia half is the same "no hook for granting starting Perícia
+ *   training" gap as every other race.</li>
  * </ul>
  *
  * <p>Tendência is deliberately left unconstrained, same treatment as every other race —
@@ -128,5 +131,12 @@ public class Aviano implements Race {
     @Override
     public List<SkillCompetencyAbility> getRacialAbilities() {
         return List.of(AvianosRacialAbility.VISAO_ALEM_DO_ALCANCE);
+    }
+
+    @Override
+    public List<StartingFeatSlot> getStartingFeatSlots() {
+        return List.of(
+                StartingFeatSlot.race(FeatPool.Categories.ofType(FeatCategory.Type.GERAL)),
+                StartingFeatSlot.race(FeatPool.Named.of(MonstruosoFeat.OSSOS_OCOS)));
     }
 }

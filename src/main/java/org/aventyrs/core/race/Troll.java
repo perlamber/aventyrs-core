@@ -4,6 +4,8 @@ import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.SizeCategory;
 import org.aventyrs.core.effect.CriticalEffectType;
+import org.aventyrs.core.feat.FeatCategory;
+import org.aventyrs.core.feat.StartingFeatSlot;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.DlcRuleset;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
@@ -87,8 +89,7 @@ import java.util.Set;
  *   linhagem) — same "no Language/Idioma concept exists" gap as every other race.</li>
  *   <li><b>Longevidade</b> (~200 anos) — same "no age/lifespan concept" gap as every other
  *   race.</li>
- *   <li><b>2 Talentos de Sobrevivência</b> — {@link Race} has no hook to grant a {@code Feat} at
- *   creation, same gap as every other race's free Talentos.</li>
+ *   <li><b>2 Talentos de Sobrevivência</b> — built: {@link #getStartingFeatSlots()}.</li>
  * </ul>
  *
  * <p>{@link #getRacialAbilities()} carries Regeneração Reativa alone. The immunity list is not a
@@ -142,5 +143,10 @@ public class Troll implements Race {
     @Override
     public Character.CharacterBuilder generateEmptyCharacter(final List<DlcRuleset> dlcRulesetList) {
         return Character.builder().sizeCategory(getBaseSizeCategory());
+    }
+
+    @Override
+    public List<StartingFeatSlot> getStartingFeatSlots() {
+        return List.of(StartingFeatSlot.race(FeatCategory.SOBREVIVENCIA), StartingFeatSlot.race(FeatCategory.SOBREVIVENCIA));
     }
 }

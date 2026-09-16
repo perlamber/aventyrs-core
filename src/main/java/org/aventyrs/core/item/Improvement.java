@@ -8,8 +8,14 @@ import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.skill.SkillType;
 
 /**
- * A permanent enhancement that can be applied to a unique item instance. Each item may carry at
- * most one improvement, stored per-copy rather than in the catalog template.
+ * A permanent enhancement that can be applied to a unique item instance, stored per-copy rather
+ * than in the catalog template. A copy carries up to {@code
+ * ItemWeightClass#getMaximumImprovements()} of them ({@code Item#getImprovements()}).
+ *
+ * <p>Two authored catalogs, one per Aprimoramento list in {@code docs/rules/equipamentos.txt}:
+ * {@link DefensiveImprovement} (fitted through the {@link ItemImprovement} wrapper, which holds
+ * its creation-time choices) and {@link OffensiveImprovement} (fitted bare — no offensive entry
+ * has a choice this core can read).
  */
 public interface Improvement {
     String getName();
@@ -24,9 +30,9 @@ public interface Improvement {
 
     /**
      * Which column of the "Preços de Aprimoramentos" table this one is priced from — Armas for
-     * an Aprimoramento Ofensivo, Armaduras for a Defensivo. Abstract rather than defaulted on
-     * purpose: a silent default would price the unauthored offensive catalog off the armour
-     * column, and the two differ at Comum, Raro and Épico.
+     * an Aprimoramento Ofensivo ({@link OffensiveImprovement}), Armaduras for a Defensivo ({@link
+     * DefensiveImprovement}). Abstract rather than defaulted on purpose: a silent default would
+     * have priced one catalog off the other's column, and the two differ at Comum, Raro and Épico.
      */
     EnhancementPriceCategory getPriceCategory();
 

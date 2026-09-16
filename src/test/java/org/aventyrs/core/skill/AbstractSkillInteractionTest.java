@@ -33,6 +33,12 @@ import org.aventyrs.core.skill.artes.ArtesSpecialization;
 import org.aventyrs.core.skill.ataqueadistancia.AtaqueADistanciaInteraction;
 import org.aventyrs.core.skill.ataquecorpoacorpo.AtaqueCorpoACorpoCompetencyAbility;
 import org.aventyrs.core.skill.ataquecorpoacorpo.AtaqueCorpoACorpoInteraction;
+import org.aventyrs.core.skill.ataquecorpoacorpo.AtaqueCorpoACorpoSpecialization;
+import org.aventyrs.core.character.DamageBase;
+import org.aventyrs.core.item.AbstractWeapon;
+import org.aventyrs.core.item.ItemCategory;
+import org.aventyrs.core.item.ItemWeightClass;
+import org.aventyrs.core.item.Weapon;
 import org.aventyrs.core.skill.attention.AttentionCompetencyAbility;
 import org.aventyrs.core.skill.attention.AttentionInteraction;
 import org.aventyrs.core.skill.attention.AttentionSpecialization;
@@ -333,6 +339,61 @@ class AbstractSkillInteractionTest {
 
         assertEquals(DifficultyLevel.EASY, plainResult.getReachedDifficultyLevel());
         assertEquals(DifficultyLevel.MEDIUM, expertResult.getReachedDifficultyLevel());
+    }
+
+    private static Weapon meleeWeapon(final ItemCategory category, final ItemWeightClass weightClass) {
+        return AbstractWeapon.builder().name(category.name()).category(category).weightClass(weightClass)
+                .damageBase(DamageBase.of(1, 1)).skillType(SkillType.ATAQUE_CORPO_A_CORPO).build();
+    }
+
+    private CharacterSheet meleeSheetHoldingSpecializations(final SkillSpecialization... specializations) {
+        CharacterSkill meleeSkill = CharacterSkillFixture.blank(CharacterSkillFixture.ATAQUE_CORPO_A_CORPO_1)
+                .specializations(List.of(specializations))
+                .build();
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .skill(SkillType.ATAQUE_CORPO_A_CORPO, meleeSkill)
+                .build();
+        return CharacterSheet.of(character, new Player());
+    }
+
+    /** The weapon decides the Especialização ({@link AttackSpecializations#requiredFor}): a held
+     * Infantaria Pesada cannot be requested for a swing with a light blade. */
+    @Test
+    void applyToRefusesAHeldAttackSpecializationTheAttackSourceDoesNotFit() {
+        CharacterSheet sheet = meleeSheetHoldingSpecializations(
+                AtaqueCorpoACorpoSpecialization.INFANTARIA_LEVE, AtaqueCorpoACorpoSpecialization.INFANTARIA_PESADA);
+        SkillRoll skillRoll = new SkillRoll(List.of(2, 3, 4), AtaqueCorpoACorpoSpecialization.INFANTARIA_PESADA);
+        Weapon dagger = meleeWeapon(ItemCategory.LIGHT_BLADE, ItemWeightClass.LIGHT);
+        AtaqueCorpoACorpoInteraction melee = new AtaqueCorpoACorpoInteraction();
+
+        assertThrows(IllegalOperationException.class, () -> melee.applyTo(sheet, null, skillRoll, null, dagger));
+    }
+
+    /** The matching Especialização is accepted and judged as an expert roll; the same dice rolled
+     * plainly with the same weapon reach the base tier. */
+    @Test
+    void applyToAcceptsTheAttackSpecializationTheAttackSourceFitsAsAnExpertRoll() {
+        CharacterSheet sheet = meleeSheetHoldingSpecializations(AtaqueCorpoACorpoSpecialization.INFANTARIA_LEVE);
+        Weapon dagger = meleeWeapon(ItemCategory.LIGHT_BLADE, ItemWeightClass.LIGHT);
+        AtaqueCorpoACorpoInteraction melee = new AtaqueCorpoACorpoInteraction();
+
+        InteractionResult plain = melee.applyTo(sheet, null, new SkillRoll(List.of(6, 5, 5)), null, dagger);
+        InteractionResult expert = melee.applyTo(sheet, null,
+                new SkillRoll(List.of(6, 5, 5), AtaqueCorpoACorpoSpecialization.INFANTARIA_LEVE), null, dagger);
+
+        assertEquals(DifficultyLevel.reachedBy(plain.getSkillRollBonus() + 16).orElse(null),
+                plain.getReachedDifficultyLevel());
+        assertEquals(DifficultyLevel.reachedByAsExpert(expert.getSkillRollBonus() + 16).orElse(null),
+                expert.getReachedDifficultyLevel());
+    }
+
+    /** Without an attackSource the fit can't be judged, so only "held" is checked — as before. */
+    @Test
+    void applyToWithNoAttackSourceKeepsTheHeldOnlyCheckForAnAttackSpecialization() {
+        CharacterSheet sheet = meleeSheetHoldingSpecializations(AtaqueCorpoACorpoSpecialization.INFANTARIA_PESADA);
+        SkillRoll skillRoll = new SkillRoll(List.of(2, 3, 4), AtaqueCorpoACorpoSpecialization.INFANTARIA_PESADA);
+
+        assertNotNull(new AtaqueCorpoACorpoInteraction().applyTo(sheet, null, skillRoll));
     }
 
     private CharacterSheet attentionSheetHoldingAttributeAbility(final AttributeAbility... abilities) {

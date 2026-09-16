@@ -58,7 +58,7 @@ table before writing a line:
 | A conditional roll bonus / Vantagem | **Real** — a `*RacialAbility` constant, see step 3 |
 | **Idiomas** | Gap — no Language/Idioma concept exists anywhere in this core |
 | **Longevidade / idade** | Gap — no age/lifespan concept on `Character` or `Race` |
-| **Talento gratuito** | Gap — `Race` has no hook to grant a `Feat` at creation |
+| **Talento gratuito** / "Perícias e Talentos: recebem N Talentos …" | **Real** — `getStartingFeatSlots()` → one `StartingFeatSlot` per Talento, *on top of* the two General slots every character gets (never repeat those). Each slot is a union of `FeatPool`s: `Categories.of(…)`/`ofType(GERAL|RACIAL)` (`.excluding(…)` for "exceto X"), `Named.of(…)` for a Talento named outright (Aviano's Ossos Ocos), `EspecialistaTagged` for "Talentos de Especialista", and `RacialOf(race, trees)` when a racial Talento's Raça clause must be judged against *another* race (Vampiro's life-race). A Mestiço Elemental wraps its substitutable slot in `withParentRacialSubstitute(…)`. |
 | **Treinamento/Especialização em Perícia inicial** | Gap — `Race` has no hook for granting starting Perícia training; `CharacterCreationServiceImpl` allocates only Attributes/Egos |
 | **Uma Habilidade de Competência/Atributo extra** | Gap — "grant an extra acquisition slot" has no shape (`Elfo`'s Origem Mística, `Anao`' Pequenos Gigantes) |
 | **Visão no Escuro / sentidos** | Gap — no vision/senses concept |
@@ -122,6 +122,11 @@ Two shape rules that are easy to get wrong:
   baseline — "não recebem pontos de atributos adicionais", "Categoria de Tamanho 0". That's a
   match to the rules text, not an oversight, and `Human`'s javadoc says so explicitly. Say so
   in yours too when it applies.
+
+**Starting Talentos are data, not grants.** `getStartingFeatSlots()` only *describes* the slots;
+`CharacterCreationService#getStartingFeatOptions`/`grantStartingFeats` list and grant them free of
+XP. If the tree depends on a per-character fact the rules make the player choose (Homem-Fera's
+upbringing), add a required constructor argument for it — see `HomemFera.Criacao`.
 
 For a choosable-attribute race, `getChoosableAttributeBonusPoints()` and
 `getChoosableAttributes()` only mean anything together — `CharacterCreationServiceImpl

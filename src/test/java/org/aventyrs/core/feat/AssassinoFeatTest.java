@@ -515,6 +515,17 @@ class AssassinoFeatTest {
 
     @Test
     void acertoCriticoArcanoNeedsTheMagiasChoiceOfAcertoCriticoAprimorado() throws IllegalOperationException {
+        Character weaponChoice = saqueRelampagoHolder();
+        weaponChoice.grantFeat(AcertoCriticoAprimoradoFeat.of(AttackMethod.LIGHT_BLADE));
+        assertFalse(AssassinoFeat.ACERTO_CRITICO_ARCANO.isEligible(weaponChoice), "chose a weapon, not Magias");
+
+        Character magiasChoice = saqueRelampagoHolder();
+        magiasChoice.grantFeat(AcertoCriticoAprimoradoFeat.of(AttackMethod.OFFENSIVE_MAGIC));
+        assertTrue(AssassinoFeat.ACERTO_CRITICO_ARCANO.isEligible(magiasChoice));
+    }
+
+    /** Destreza 3, holding SAQUE_RAPIDO and SAQUE_RELAMPAGO (weapons) — both acquired legally. */
+    private Character saqueRelampagoHolder() throws IllegalOperationException {
         Character character = character()
                 .attributes(CharacterAttributes.builder()
                         .dexterity(AttributeValue.builder().domain(AttributeDomain.DEXTERITY).base(3).build())
@@ -524,13 +535,7 @@ class AssassinoFeatTest {
         sheet.accumulateExperience(BigDecimal.valueOf(100));
         featService.grantFeat(character, sheet, AssassinoFeat.SAQUE_RAPIDO);
         featService.grantFeat(character, sheet, SaqueRelampagoFeat.of(WeaponOrSpellChoice.WEAPONS));
-
-        character.grantFeat(AcertoCriticoAprimoradoFeat.of(AttackMethod.LIGHT_BLADE));
-        assertFalse(AssassinoFeat.ACERTO_CRITICO_ARCANO.isEligible(character), "chose a weapon, not Magias");
-
-        character.getFeats().removeIf(AcertoCriticoAprimoradoFeat.class::isInstance);
-        character.grantFeat(AcertoCriticoAprimoradoFeat.of(AttackMethod.OFFENSIVE_MAGIC));
-        assertTrue(AssassinoFeat.ACERTO_CRITICO_ARCANO.isEligible(character));
+        return character;
     }
 
     // ---------- SAQUE_RELAMPAGO's Vantagem rider (WEAPONS branch) ----------

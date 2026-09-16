@@ -2,6 +2,8 @@ package org.aventyrs.core.magic;
 
 import org.aventyrs.core.ability.AttributeAbility;
 import org.aventyrs.core.character.AttributeDomain;
+import org.aventyrs.core.character.Character;
+import org.aventyrs.core.skill.DifficultyLevel;
 import org.aventyrs.core.effect.SpellEffect;
 import org.aventyrs.core.effect.SpellEffectContext;
 import org.aventyrs.core.effect.SpellEffectFactory;
@@ -22,6 +24,9 @@ import static org.aventyrs.core.util.TranslatableMessages.NO_ALTERNATE_SPELL_VER
 import static org.aventyrs.core.util.TranslatableMessages.SPELL_CASTING_PREVENTED;
 
 public class SpellCastingServiceImpl implements SpellCastingService {
+
+    /** The floor a reduced Tempo de Ativação stops at. */
+    private static final int MINIMUM_ACTION_POINTS = 1;
 
     private final Interaction<CombatantSheet> dominioDoManaInteraction;
     private final AbstractSkillInteraction dominioDoManaContextInteraction;
@@ -64,10 +69,17 @@ public class SpellCastingServiceImpl implements SpellCastingService {
                 request.getCaster().getCharacter(),
                 request.getCombatantTarget() == null ? null : request.getCombatantTarget().getCharacter());
         ActiveAreaSpellEffect areaSpellEffect = registerAreaSpellEffect(request, spell, durationInRounds);
+        int castingDifficultyReduction = resolveCastingDifficultyReduction(spell, request.getCaster());
+        DifficultyLevel authoredDifficulty = spell.getCastingDifficultyLevel();
 
         return SpellCastingResult.builder()
                 .deliveryResult(deliveryResult)
                 .dominioDoManaResult(dominioDoManaResult)
+                .castingDifficultyReduction(castingDifficultyReduction)
+                .castingDifficultyLevel(authoredDifficulty == null ? null
+                        : authoredDifficulty.easier(castingDifficultyReduction))
+                .activationTime(resolveActivationTime(spell, request.getCaster(),
+                        request.getScene().getCurrentRound()))
                 .durationInRounds(durationInRounds.isPresent() ? durationInRounds.getAsInt() : null)
                 .areaSpellEffect(areaSpellEffect)
                 .primaryDamage(resolvePrimaryDamage(spell, request.getCaster()).orElse(null))
@@ -116,6 +128,32 @@ public class SpellCastingServiceImpl implements SpellCastingService {
     @Override
     public Optional<ResolvedSpellDamage> resolvePrimaryDamage(final Spell spell, final CombatantSheet caster) {
         return spell.getPrimaryDamage().map(damage -> resolve(damage, caster));
+    }
+
+    @Override
+    public int resolveCastingDifficultyReduction(final Spell spell, final CombatantSheet caster) {
+        Character character = caster.getCharacter();
+        return character.getFeats().stream()
+                .mapToInt(feat -> feat.resolveCastingDifficultyReduction(spell, character))
+                .sum();
+    }
+
+    @Override
+    public ActivationTime resolveActivationTime(final Spell spell, final CombatantSheet caster,
+                                                final int currentRound) {
+        ActivationTime authored = spell.getActivationTime();
+        if (authored == null || authored.type() != ActivationType.PONTOS_DE_ACAO) {
+            return authored;
+        }
+        Character character = caster.getCharacter();
+        int reduction = character.getFeats().stream()
+                .mapToInt(feat -> feat.resolveCastingActionPointReduction(spell, character, currentRound,
+                        caster.getActionsThisRound()))
+                .sum();
+        // "(mínimo 1PA)", as MetamagicoFeat#PROCRASTINAR_CONJURACAO states — and an
+        // ActivationTime of 0PA is not constructible anyway.
+        return reduction <= 0 ? authored
+                : ActivationTime.pa(Math.max(MINIMUM_ACTION_POINTS, authored.actionPoints() - reduction));
     }
 
     private ResolvedSpellDamage resolve(final SpellDamage damage, final CombatantSheet caster) {

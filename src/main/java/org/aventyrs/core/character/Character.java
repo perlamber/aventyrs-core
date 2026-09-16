@@ -148,7 +148,7 @@ public class Character {
     public List<AttributeAbility> getAttributeAbilities() {
         return Stream.concat(
                         attributeAbilities.stream(),
-                        feats.stream().flatMap(feat -> feat.getGrantedAttributeAbilities(this).stream()))
+                        getFeats().stream().flatMap(feat -> feat.getGrantedAttributeAbilities(this).stream()))
                 .distinct()
                 .toList();
     }
@@ -171,7 +171,7 @@ public class Character {
         return Stream.concat(
                         characterSkill == null ? Stream.<SkillSpecialization>empty()
                                 : characterSkill.getSpecializations().stream(),
-                        feats.stream()
+                        getFeats().stream()
                                 .flatMap(feat -> feat.getGrantedSkillTraits(this).stream())
                                 .filter(SkillSpecialization.class::isInstance)
                                 .map(SkillSpecialization.class::cast)
@@ -188,13 +188,13 @@ public class Character {
     public Set<org.aventyrs.core.race.CreatureType> getPrerequisiteCreatureTypes() {
         return Stream.concat(
                         Stream.of(race.getPrerequisiteCreatureType()),
-                        feats.stream().flatMap(feat -> feat.getGrantedPrerequisiteCreatureTypes(this).stream()))
+                        getFeats().stream().flatMap(feat -> feat.getGrantedPrerequisiteCreatureTypes(this).stream()))
                 .collect(java.util.stream.Collectors.toUnmodifiableSet());
     }
 
     /** Whether a racial trait or held Talento lets this character breathe underwater. */
     public boolean canBreatheUnderwater() {
-        return feats.stream().anyMatch(feat -> feat.allowsUnderwaterBreathing(this));
+        return getFeats().stream().anyMatch(feat -> feat.allowsUnderwaterBreathing(this));
     }
 
     /**
@@ -224,7 +224,7 @@ public class Character {
     public List<ActiveAbility> getActiveAbilities() {
         return Stream.concat(
                         activeAbilities.stream(),
-                        feats.stream().flatMap(feat -> feat.resolveActiveAbilities().stream()))
+                        getFeats().stream().flatMap(feat -> feat.resolveActiveAbilities().stream()))
                 .toList();
     }
 
@@ -267,7 +267,7 @@ public class Character {
                                           final org.aventyrs.core.sheet.CombatantSheet sheet) {
         AttributeValue attribute = attributes.getAttribute(domain);
         int total = attribute.getTotal()
-                + feats.stream().mapToInt(feat -> feat.resolveAttributeBonus(domain, this)).sum();
+                + getFeats().stream().mapToInt(feat -> feat.resolveAttributeBonus(domain, this)).sum();
         if (sheet != null && sheet.getRacialTraitSuppression().suppressesInnateTraits()) {
             total -= attribute.getRacialBonus();
         }
@@ -572,7 +572,7 @@ public class Character {
             return false;
         }
         return weapon.getCategory() == ItemCategory.NATURAL_WEAPON
-                || feats.stream().anyMatch(feat -> feat.reclassifiesAsNaturalWeapon(weapon, this));
+                || getFeats().stream().anyMatch(feat -> feat.reclassifiesAsNaturalWeapon(weapon, this));
     }
 
     /**
@@ -595,7 +595,7 @@ public class Character {
     // overload: it is what a Character is, not what a combatant currently looks like.
     public List<NaturalWeapon> getNaturalWeapons() {
         return Stream.concat(
-                        feats.stream().flatMap(feat -> feat.getGrantedNaturalWeapons(this).stream()),
+                        getFeats().stream().flatMap(feat -> feat.getGrantedNaturalWeapons(this).stream()),
                         race == null ? Stream.empty() : race.getGrantedNaturalWeapons().stream())
                 .distinct()
                 .toList();
@@ -603,6 +603,24 @@ public class Character {
 
     public void grantFeat(@NonNull final Feat feat) {
         feats.add(feat);
+    }
+
+    /**
+     * Every Talento this character holds: the ones acquired into {@link #feats}, plus every
+     * Talento a held one grants outright through {@link Feat#getGrantedFeats} ({@code
+     * ExcepcionalidadeFeat}'s chosen Talento Racial). Live aggregation, mirroring {@link
+     * #getAttributeAbilities()}, so every effect scan <em>and</em> every prerequisite check sees
+     * a granted Talento as held, with no service change.
+     *
+     * <p><b>Read-only</b>, unlike the field behind it — acquire through {@link #grantFeat}.
+     * Deduplicated, so a Talento both acquired and granted appears once.
+     */
+    public List<Feat> getFeats() {
+        return Stream.concat(
+                        feats.stream(),
+                        feats.stream().flatMap(feat -> feat.getGrantedFeats(this).stream()))
+                .distinct()
+                .toList();
     }
 
     /**

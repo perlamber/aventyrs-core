@@ -3,6 +3,10 @@ package org.aventyrs.core.race;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.SizeCategory;
+import org.aventyrs.core.feat.FeatCategory;
+import org.aventyrs.core.feat.FeatPool;
+import org.aventyrs.core.feat.FeericoFeat;
+import org.aventyrs.core.feat.StartingFeatSlot;
 import org.aventyrs.core.sheet.DlcRuleset;
 
 import java.util.List;
@@ -19,11 +23,8 @@ import java.util.Map;
  *   jogador) — same "no Language/Idioma concept exists" gap as every other race.</li>
  *   <li><b>Longevidade</b> (~80 anos, como os Humanos) — same "no age/lifespan concept" gap as
  *   every other race; purely narrative today.</li>
- *   <li><b>1 Talento Feérico adicional</b> (exceto Pixie e Asas) — same "no Feat catalog, no
- *   {@code Character.feats} list" gap as every other race's free Talentos; the "exceto Pixie e
- *   Asas" exclusion would, even once a Feat catalog exists, be an unenforced prerequisite same
- *   as every other "Requer N Graduações"-style clause this codebase deliberately leaves
- *   unvalidated.</li>
+ *   <li><b>1 Talento Feérico adicional</b> (exceto Pixie e Asas) — built: {@link
+ *   #getStartingFeatSlots()}, the exclusion included.</li>
  *   <li><b>Treinamento em Conhecimentos</b> (+ Especialização adicional em Natureza ou
  *   Metamágico) <b>+ Especialização de Perícia adicional</b> (Artes, Furtividade ou Persuasão,
  *   apenas quando treinado) — same shape and gap as {@code Fada}'s/{@code Furia}'s own
@@ -103,4 +104,8 @@ public class Satiro implements Race {
         return Character.builder().sizeCategory(getBaseSizeCategory());
     }
 
+    @Override
+    public List<StartingFeatSlot> getStartingFeatSlots() {
+        return List.of(StartingFeatSlot.race(FeatPool.Categories.of(FeatCategory.FEERICO).excluding(FeericoFeat.PIXIE, FeericoFeat.ASAS)));
+    }
 }

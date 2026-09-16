@@ -31,9 +31,23 @@ public class FeatServiceImpl implements FeatService {
         int cost = character.getRace().getNewFeatCost(feat.getFeatCategory());
         characterSheet.useExperience(BigDecimal.valueOf(cost));
 
+        acquire(character, feat);
+        return feat;
+    }
+
+    /**
+     * Grants an already-validated, already-paid-for feat along with its one-time acquisition
+     * side-effects — shared with {@code CharacterCreationServiceImpl#grantStartingFeats}, whose
+     * Talentos are free but otherwise acquired exactly like these.
+     */
+    static void acquire(final Character character, final Feat feat) {
         character.grantFeat(feat);
         feat.getGrantedMimetizedSpells(character).forEach(character::grantMimetizedSpell);
-        return feat;
+        // A Talento granted outright by this one (Excepcionalidade's chosen Talento Racial) is
+        // held from here on, so its own one-time acquisition side-effect runs now too.
+        for (Feat granted : feat.getGrantedFeats(character)) {
+            granted.getGrantedMimetizedSpells(character).forEach(character::grantMimetizedSpell);
+        }
     }
 
     @Override

@@ -3,6 +3,8 @@ package org.aventyrs.core.race;
 import lombok.NonNull;
 import org.aventyrs.core.ability.AttributeAbility;
 import org.aventyrs.core.character.AttributeDomain;
+import org.aventyrs.core.feat.FeatCategory;
+import org.aventyrs.core.feat.StartingFeatSlot;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
 
 import java.util.List;
@@ -23,10 +25,9 @@ import java.util.Map;
  * <ul>
  *   <li><b>Idiomas/Longevidade</b> (idiomas do parente mortal; ~50% mais longevo) — same "no
  *   Language/age concept" gaps as every other race.</li>
- *   <li><b>2 Talentos adicionais</b> (Mobilidade, substituível por Talento Racial do parente se
- *   houver; + 1 Talento Elemental) — same "no Feat catalog" gap as every other race;
- *   "Mobilidade"/"Elemental" map to {@link org.aventyrs.core.feat.FeatCategory#MOBILIDADE}/{@link
- *   org.aventyrs.core.feat.FeatCategory#ELEMENTAL} directly.</li>
+ *   <li><b>2 Talentos adicionais</b> (Mobilidade, substituível por Talento Racial do parente se houver;
+ *   + 1 Talento Elemental) — built: {@link #getStartingFeatSlots()}, the substitution through
+ *   {@link AbstractMesticoRace#withParentRacialSubstitute}.</li>
  *   <li><b>Treinamento em Conhecimentos + Especialização Cosmologia</b> — {@code
  *   ConhecimentosSpecialization.COSMOLOGIA} already exists as data, blocked only on {@link
  *   Race}'s usual "no hook for granting starting Perícia training" gap.</li>
@@ -78,5 +79,12 @@ public class Aquan extends AbstractMesticoRace {
     @Override
     protected int getSizeCategoryOffset() {
         return 0;
+    }
+
+    @Override
+    public List<StartingFeatSlot> getStartingFeatSlots() {
+        return List.of(
+                withParentRacialSubstitute(StartingFeatSlot.race(FeatCategory.MOBILIDADE)),
+                StartingFeatSlot.race(FeatCategory.ELEMENTAL));
     }
 }

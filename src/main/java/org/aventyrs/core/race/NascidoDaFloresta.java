@@ -3,6 +3,8 @@ package org.aventyrs.core.race;
 import lombok.NonNull;
 import org.aventyrs.core.ability.AttributeAbility;
 import org.aventyrs.core.character.AttributeDomain;
+import org.aventyrs.core.feat.FeatCategory;
+import org.aventyrs.core.feat.StartingFeatSlot;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
 
@@ -45,10 +47,9 @@ import static org.aventyrs.core.util.TranslatableMessages.INVALID_PARENT_RACE;
  *   — same "no Language/Idioma concept exists" gap as every other race.</li>
  *   <li><b>Longevidade</b> ("vida curta, menos de meio século") — same "no age/lifespan concept"
  *   gap as every other race; purely narrative today.</li>
- *   <li><b>2 Talentos adicionais</b> (Metamágicos, Feéricos ou Elementais) — same "no Feat
- *   catalog, no {@code Character.feats} list, no hook for granting extra Talento slots" gap as
- *   every other race's free Talentos; {@code FeatCategory#METAMAGICO}/{@code #FEERICO}/{@code
- *   #ELEMENTAL} already exist as categories to eventually restrict the grant to.</li>
+ *   <li><b>2 Talentos adicionais</b> (Metamágicos, Feéricos ou Elementais) — built: {@link
+ *   #getStartingFeatSlots()}. No parent substitution: unlike the other five Mestiços Elementais,
+ *   this clause names none.</li>
  *   <li><b>Considerados Elementais para pré-requisitos de Talentos</b> — an unenforced-
  *   prerequisite classification, same restraint this codebase already applies to every "Requer N
  *   Graduações"-style clause; nothing to build even once a Feat catalog exists, since
@@ -127,5 +128,12 @@ public class NascidoDaFloresta extends AbstractMesticoRace {
     @Override
     protected int getSizeCategoryOffset() {
         return SIZE_CATEGORY_OFFSET;
+    }
+
+    @Override
+    public List<StartingFeatSlot> getStartingFeatSlots() {
+        return List.of(
+                StartingFeatSlot.race(FeatCategory.METAMAGICO, FeatCategory.FEERICO, FeatCategory.ELEMENTAL),
+                StartingFeatSlot.race(FeatCategory.METAMAGICO, FeatCategory.FEERICO, FeatCategory.ELEMENTAL));
     }
 }

@@ -24,9 +24,10 @@ public interface Masterpiece {
 
     /**
      * Which column of the "Preços de Obras-Primas" table this one is priced from — Armas for an
-     * Obra-Prima Ofensiva, Armaduras for a Defensiva. Abstract rather than defaulted on purpose:
-     * a silent default would price the unauthored offensive catalog off the armour column, and
-     * the two differ at every tier but Incomum and Mítico.
+     * Obra-Prima Ofensiva ({@link OffensiveMasterpiece}), Armaduras for a Defensiva ({@link
+     * DefensiveMasterpiece}). Abstract rather than defaulted on purpose: a silent default would
+     * have priced one catalog off the other's column, and the two differ at every tier but Incomum
+     * and Mítico.
      */
     EnhancementPriceCategory getPriceCategory();
 

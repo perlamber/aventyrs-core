@@ -27,7 +27,7 @@ public enum HeavyBladeItem implements ItemTemplate, Weapon {
      * Adicionais Nenhum.
      */
     ESPADA_BASTARDA_OU_KODACHI(
-            "Espada Bastarda ou Kodachi",
+            "Espada Bastarda",
             "",
             ItemWeightClass.MEDIUM,
             ItemRarity.RARE,
@@ -44,7 +44,7 @@ public enum HeavyBladeItem implements ItemTemplate, Weapon {
      * <p><b>Favor</b> "Dano Base muda para 2d6" — prose (no Favor-driven Dano Base reader).
      */
     ESPADA_LONGA_OU_KATANA(
-            "Espada Longa ou Katana",
+            "Espada Longa",
             "",
             ItemWeightClass.HEAVY,
             ItemRarity.UNCOMMON,
@@ -140,7 +140,7 @@ public enum HeavyBladeItem implements ItemTemplate, Weapon {
      * <p><b>Favor</b> "Dano Base muda para 2d6+1" — prose (no Favor-driven Dano Base reader).
      */
     MONTANTE_OU_ODACHI(
-            "Montante ou Odachi",
+            "Montante",
             "",
             ItemWeightClass.HEAVY,
             ItemRarity.RARE,

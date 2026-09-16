@@ -7,6 +7,9 @@ import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.character.DamageBonus;
+import org.aventyrs.core.character.DamageBonusBreakdown;
+import org.aventyrs.core.character.DamageContribution;
+import org.aventyrs.core.character.DamageContributionSource;
 import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.character.SizeCategory;
 import org.aventyrs.core.character.services.CharacterSizeService;
@@ -299,7 +302,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
         Character character = target.getCharacter();
         CharacterSkill characterSkill = findCharacterSkill(character);
         if (skillRoll != null) {
-            validateRequestedTrait(character, characterSkill, skillRoll.getRequestedAbility());
+            validateRequestedTrait(character, characterSkill, skillRoll.getRequestedAbility(), attackSource);
         }
         int graduationValue = characterSkill.getGraduation().getGraduationValue();
         List<SkillCompetencyAbility> skillCompetencyAbilities = allSkillCompetencyAbilities(target);
@@ -365,8 +368,9 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                 .governingAttributeDomain(skillRoll != null ? attributeDomain : null);
 
         if (skillType.isAttackSkill()) {
-            sumDamageBonus(target, sceneContext, null, attackSource, targetCount, skillRoll)
-                    .ifPresent(result::damageBonus);
+            DamageSum damage = sumDamageBonus(target, sceneContext, null, attackSource, targetCount, skillRoll);
+            damage.bonus().ifPresent(damageBonus ->
+                    result.damageBonus(damageBonus).damageBonusBreakdown(damage.breakdown()));
         }
 
         if (skillRoll != null) {
@@ -443,9 +447,14 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
         // Recomputed rather than added to what the main body already put there: the same four
         // sources are scanned again, now with the real attackTarget, so a target-conditioned
         // bonus (FRIEZA) joins the sum instead of the whole total being replaced by it.
-        Optional<DamageBonus> damageBonus = sumDamageBonus(target, sceneContext, attackTarget, attackSource, targetCount, skillRoll);
-        if (damageBonus.isPresent()) {
-            result = result.toBuilder().damageBonus(damageBonus.get()).build();
+        DamageSum damage = sumDamageBonus(target, sceneContext, attackTarget, attackSource, targetCount, skillRoll);
+        if (damage.bonus().isPresent()) {
+            // Both together, always: a breakdown that didn't move with its total would be a lie
+            // about the number beside it.
+            result = result.toBuilder()
+                    .damageBonus(damage.bonus().get())
+                    .damageBonusBreakdown(damage.breakdown())
+                    .build();
         }
 
         int attackRollBonus = abilities.stream()
@@ -475,8 +484,14 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
      * fit for whatever the roll is being used for narratively; that judgment stays with the
      * caller, the same restraint this codebase already applies everywhere it doesn't track what
      * a roll is *for*.
+     *
+     * <p><b>The one exception is an Especialização de Ataque with a named attackSource.</b> There
+     * the fit is not narrative: the weapon (or Magia) decides which Especialização the roll is
+     * made with ({@link AttackSpecializations#requiredFor}), so requesting any other one — held or
+     * not — is refused the same way. A {@code null} attackSource (the 3-arg {@code applyTo}, or a
+     * caller that didn't say) keeps the old, held-only check.
      */
-    private void validateRequestedTrait(final Character character, final CharacterSkill characterSkill, final SkillTrait requestedTrait) {
+    private void validateRequestedTrait(final Character character, final CharacterSkill characterSkill, final SkillTrait requestedTrait, final AttackSource attackSource) {
         if (requestedTrait == null) {
             return;
         }
@@ -489,6 +504,11 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
             held = false;
         }
         if (!requestedTrait.matchesSkillType(skillType) || !held) {
+            throw new IllegalOperationException(REQUIRED_SKILL_TRAIT_NOT_HELD);
+        }
+        if (requestedTrait instanceof SkillSpecialization specialization && skillType.isAttackSkill()
+                && attackSource != null
+                && !AttackSpecializations.requiredFor(attackSource, character).equals(Optional.of(specialization))) {
             throw new IllegalOperationException(REQUIRED_SKILL_TRAIT_NOT_HELD);
         }
     }
@@ -779,33 +799,65 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
      * pass and real on the {@link #applyAttackTargetBonuses} one, so a target-conditioned bonus
      * simply doesn't contribute until there is a target to test.
      */
-    private Optional<DamageBonus> sumDamageBonus(final CombatantSheet target, final SceneContext sceneContext,
+    private DamageSum sumDamageBonus(final CombatantSheet target, final SceneContext sceneContext,
                                                 final CombatantSheet attackTarget, final AttackSource attackSource,
                                                 final int targetCount, final SkillRoll skillRoll) {
         Character character = target.getCharacter();
         List<DamageBonus> typed = new ArrayList<>();
+        List<DamageContribution> contributions = new ArrayList<>();
         allSkillCompetencyAbilities(target).stream()
                 .map(ability -> ability.resolveDamageBonus(skillType, sceneContext, attackTarget, character))
                 .flatMap(Optional::stream)
-                .forEach(typed::add);
+                .forEach(bonus -> addTyped(typed, contributions, DamageContributionSource.SKILL_COMPETENCY_ABILITY, bonus));
         character.getEgoAdvantages().values().stream()
                 .map(advantage -> advantage.resolveDamageBonus(sceneContext))
                 .flatMap(Optional::stream)
-                .forEach(typed::add);
+                .forEach(bonus -> addTyped(typed, contributions, DamageContributionSource.EGO_ADVANTAGE, bonus));
         character.getFeats().stream()
                 .map(feat -> feat.resolveDamageBonus(skillType, sceneContext, attackTarget, character,
                         attackSource, targetCount, target))
                 .flatMap(Optional::stream)
-                .forEach(typed::add);
-        int flat = target.getTemporaryBonus(ModifierType.DAMAGE_ROLL_BONUS)
-                + target.getConditionBonus(ModifierType.DAMAGE_ROLL_BONUS, sceneContext)
-                + resolveMeleeStrengthDamage(target)
-                + resolveChargeDamage(skillRoll);
-        if (attackTarget != null) {
-            // Outward-facing: what the *victim's* own Condições hand the attacker (Flanqueado).
-            flat += attackTarget.getAttackerDamageBonusFromConditions(sceneContext);
+                .forEach(bonus -> addTyped(typed, contributions, DamageContributionSource.FEAT, bonus));
+
+        // Each flat source is now named as it is summed, rather than disappearing into one int:
+        // the arithmetic is identical, the provenance is what is new.
+        int temporary = addFlat(contributions, DamageContributionSource.TEMPORARY_BONUS,
+                target.getTemporaryBonus(ModifierType.DAMAGE_ROLL_BONUS));
+        int condition = addFlat(contributions, DamageContributionSource.CONDITION,
+                target.getConditionBonus(ModifierType.DAMAGE_ROLL_BONUS, sceneContext));
+        int meiaForca = addFlat(contributions, DamageContributionSource.MEIA_FORCA,
+                resolveMeleeStrengthDamage(target));
+        int manoeuvre = addFlat(contributions, DamageContributionSource.MANOEUVRE,
+                resolveChargeDamage(skillRoll));
+        // Outward-facing: what the *victim's* own Condições hand the attacker (Flanqueado).
+        int targetCondition = attackTarget == null ? 0
+                : addFlat(contributions, DamageContributionSource.TARGET_CONDITION,
+                        attackTarget.getAttackerDamageBonusFromConditions(sceneContext));
+
+        int flat = temporary + condition + meiaForca + manoeuvre + targetCondition;
+        return new DamageSum(DamageBonus.total(typed, flat), new DamageBonusBreakdown(contributions));
+    }
+
+    /** One typed contributor: summed as before, and named in the breakdown. */
+    private static void addTyped(final List<DamageBonus> typed, final List<DamageContribution> contributions,
+                                 final DamageContributionSource source, final DamageBonus bonus) {
+        typed.add(bonus);
+        addFlat(contributions, source, bonus.getValue());
+    }
+
+    /** Records value under source unless it is 0 — a source that contributed nothing is left out,
+     * never listed as a zero — and returns it, so the caller's own sum reads unchanged. */
+    private static int addFlat(final List<DamageContribution> contributions,
+                               final DamageContributionSource source, final int value) {
+        if (value != 0) {
+            contributions.add(new DamageContribution(source, value));
         }
-        return DamageBonus.total(typed, flat);
+        return value;
+    }
+
+    /** The dano bonus and the named parts it is made of, built together so they cannot disagree —
+     * see {@link DamageBonusBreakdown}'s invariant. */
+    private record DamageSum(Optional<DamageBonus> bonus, DamageBonusBreakdown breakdown) {
     }
 
     /**

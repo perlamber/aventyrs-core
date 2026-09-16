@@ -415,6 +415,17 @@ computes both rolls' bonuses without resolving success/failure for either. It *d
 `SpellCastingResult#getPrimaryDamage()` for a Magia that authors a `SpellDamage` (see "A Magia's
 primary damage" above) — deterministic part resolved, dice left to the caller, nothing applied.
 
+It also reports **two Talento-adjusted cast figures**, both report-only:
+`getCastingDifficultyLevel()` — the Magia's authored GD da Conjuração eased by the summed
+`Feat#resolveCastingDifficultyReduction(Spell, Character)` (with `getCastingDifficultyReduction()`
+beside it, since a Magia with no fixed tier still has a reduction to report) — and
+`getActivationTime()`, the Tempo de Ativação less the summed
+`Feat#resolveCastingActionPointReduction(Spell, Character, currentRound, actionsThisRound)`,
+applied only to a PA activation and floored at 1PA. Both hooks are Magia-scoped rather than
+Perícia-scoped, which is why neither goes through `Feat#resolveDifficultyReduction`.
+`DestinoFeat#ARCANISMO_DRUIDICO` is the consumer. `currentRound` is the Scene's **0-based**
+counter, so a clause about "Rodadas Ímpares" (1st, 3rd…) tests `currentRound % 2 == 0`.
+
 `castSpell(SpellCastRequest)` also bundles the cast as a ready `CombatantAction` on
 `SpellCastingResult#getRecordedAction()` — the delivering Perícia, the `Spell` as `attackSource`,
 and `turnNumber` from `request.getScene().getCurrentRound()`. Partial: no roll is handed to

@@ -127,6 +127,15 @@ public class InteractionResult {
     DamageBonus damageBonus;
 
     /**
+     * The named parts {@link #damageBonus} is made of — {@code null} exactly when that is, and
+     * always summing to it (see {@link org.aventyrs.core.character.DamageBonusBreakdown}'s
+     * invariant). Carried so a caller can <em>explain</em> the bonus — "half your Força +2, an
+     * Investida +2" — rather than showing one figure whose provenance nothing can recover. Nothing
+     * in this core reads it: it exists for the UI and API layers that report a dano roll.
+     */
+    org.aventyrs.core.character.DamageBonusBreakdown damageBonusBreakdown;
+
+    /**
      * The amount of {@link #resourceLossType} this Interaction drained — e.g. a {@code
      * org.aventyrs.core.effect.DamageInteraction}'s post-mitigation Hit Point damage (see
      * {@code org.aventyrs.core.character.services.DamageService#calculateFinalDamage}),

@@ -2,6 +2,9 @@ package org.aventyrs.core.race;
 
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.feat.FeatCategory;
+import org.aventyrs.core.feat.FeatPool;
+import org.aventyrs.core.feat.StartingFeatSlot;
 import org.aventyrs.core.sheet.DlcRuleset;
 
 import java.util.List;
@@ -20,13 +23,9 @@ import java.util.Map;
  *   same "no Language/Idioma concept exists" gap as every other race.</li>
  *   <li><b>Longevidade</b> (~50 anos) — same "no age/lifespan concept" gap as every other race;
  *   purely narrative today.</li>
- *   <li><b>1 Talento adicional</b> (Monstruoso ou Racial) — same "no Feat catalog, no {@code
- *   Character.feats} list" gap as every other race's free Talentos; unlike most races' own
- *   version of this trait, the rules text here doesn't name one fixed category but a choice
- *   between {@code org.aventyrs.core.feat.FeatCategory#MONSTRUOSO} and "Talentos Raciais" in
- *   general (every {@code Type.RACIAL} constant — {@code MONSTRUOSO}/{@code FEERICO}/{@code
- *   ELFICO}/{@code BESTIAL} — not one specific one), which doesn't change the underlying gap
- *   but is flagged rather than silently narrowed to a guess.</li>
+ *   <li><b>1 Talento adicional</b> (Monstruoso ou Racial) — built: {@link #getStartingFeatSlots()}.
+ *   "Talentos Raciais" is every {@code FeatCategory.Type#RACIAL} tree, which already includes
+ *   {@code MONSTRUOSO}; each is still gated by its own race prerequisites.</li>
  * </ul>
  *
  * <p>None of this race's four Características Raciais fit {@code SkillCompetencyAbility}'s
@@ -122,4 +121,8 @@ public class Gorgona implements Race {
         return Character.builder();
     }
 
+    @Override
+    public List<StartingFeatSlot> getStartingFeatSlots() {
+        return List.of(StartingFeatSlot.race(FeatPool.Categories.ofType(FeatCategory.Type.RACIAL)));
+    }
 }

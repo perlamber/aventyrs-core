@@ -113,8 +113,9 @@ class PowerStoneTest {
 
     @Test
     void danoBaseEfeitoOfensivoReachesDamageBaseServiceThroughAWeaponHost() {
-        // A weapon cannot take the Encaixe Aprimoramento yet, so the socket is builder-set here
-        // (a Builder-bypassable invariant); the Efeito Ofensivo still flows with no rewiring.
+        // The socket is builder-set here (a Builder-bypassable invariant) so this test covers the
+        // Efeito Ofensivo alone; OffensiveImprovement.ENCAIXE is the validated path, covered by
+        // OffensiveImprovementTest.
         AbstractWeapon blade = AbstractWeapon.builder()
                 .name("Lâmina Umbral")
                 .category(ItemCategory.LIGHT_BLADE)

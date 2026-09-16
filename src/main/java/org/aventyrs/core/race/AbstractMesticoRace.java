@@ -5,10 +5,14 @@ import lombok.NonNull;
 import org.aventyrs.core.ability.AttributeAbility;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.feat.FeatCategory;
+import org.aventyrs.core.feat.FeatPool;
+import org.aventyrs.core.feat.StartingFeatSlot;
 import org.aventyrs.core.sheet.DlcRuleset;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
 
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -53,6 +57,15 @@ import static org.aventyrs.core.util.TranslatableMessages.INVALID_PARENT_RACE;
  * design never copies them verbatim (only the "+2 vs +3" conditional check on the Mestiço's own
  * attribute pair reads the parent's map); the clause likely presumes a broader mestiçagem
  * baseline rule not present in this text.
+ *
+ * <h2>Talentos iniciais — {@link #withParentRacialSubstitute}</h2>
+ * Five of the six (all but Nascidos da Floresta, which extends this class but whose clause names
+ * no substitution) grant a first Talento from a named General tree that "Caso seus parentes
+ * não-elementais recebam Talentos Raciais, você poderá substituir […] por um Talento Racial do
+ * tipo especificado". "Do tipo especificado" is read as <i>the racial trees the parent's own
+ * {@link #getStartingFeatSlots()} draw from</i> — an Anão parent (Sobrevivência/Destino, both
+ * General) offers no substitute, an Elfo parent offers Élfico — judged against the parent race
+ * ({@link FeatPool.RacialOf}), since a Mestiço is never an instance of its parent's class.
  */
 @Getter
 public abstract class AbstractMesticoRace implements Race {
@@ -93,6 +106,20 @@ public abstract class AbstractMesticoRace implements Race {
     /** Whether {@code parentRace} grants a racial bonus on this Atributo — the "+2, ou +3" check. */
     protected boolean parentGrants(final AttributeDomain domain) {
         return parentRace.getFixedAttributeBonuses().containsKey(domain);
+    }
+
+    /**
+     * slot, widened by the parent race's racial trees when it has any — see the class javadoc's
+     * "Talentos iniciais". slot unchanged when the parent's grant is General-only or absent.
+     */
+    protected StartingFeatSlot withParentRacialSubstitute(final StartingFeatSlot slot) {
+        final Set<FeatCategory> parentRacialTrees = EnumSet.noneOf(FeatCategory.class);
+        parentRace.getStartingFeatSlots().stream()
+                .flatMap(parentSlot -> parentSlot.pools().stream())
+                .flatMap(pool -> pool.categories().stream())
+                .filter(category -> category.getType() == FeatCategory.Type.RACIAL)
+                .forEach(parentRacialTrees::add);
+        return parentRacialTrees.isEmpty() ? slot : slot.or(new FeatPool.RacialOf(parentRace, parentRacialTrees));
     }
 
     @Override

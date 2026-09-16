@@ -3,6 +3,8 @@ package org.aventyrs.core.race;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.SizeCategory;
+import org.aventyrs.core.feat.FeatCategory;
+import org.aventyrs.core.feat.StartingFeatSlot;
 import org.aventyrs.core.sheet.DlcRuleset;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
 
@@ -49,11 +51,11 @@ import java.util.Set;
  *   concept exists" gap as every other race.</li>
  *   <li><b>Longevidade</b> (maioridade aos 12, ~35 anos) — same "no age/lifespan concept" gap as
  *   every other race; purely narrative today.</li>
- *   <li><b>Uma Especialização ou Habilidade de Competência em até duas Perícias (Furtividade e
- *   uma qualquer) + 1 Talento adicional</b> (entre {@code
- *   org.aventyrs.core.feat.FeatCategory#MOBILIDADE}, {@code #PERITO} and {@code #ASSASSINO}) —
- *   {@link Race} has no hook to grant starting Perícia training/abilities nor a {@code Feat} at
- *   creation, same gap as every other race's free Talentos/Especializações.</li>
+ *   <li><b>Uma Especialização ou Habilidade de Competência em até duas Perícias (Furtividade e uma
+ *   qualquer) + 1 Talento adicional</b> (entre {@code
+ *   org.aventyrs.core.feat.FeatCategory#MOBILIDADE}, {@code #PERITO} and {@code #ASSASSINO}) — the
+ *   Talento is built ({@link #getStartingFeatSlots()}); the Perícia half is the same "{@link Race}
+ *   has no hook to grant starting Perícia training/abilities" gap as every other race.</li>
  * </ul>
  *
  * <p>Tendência is deliberately left unconstrained, same treatment as every other race — "é
@@ -95,5 +97,10 @@ public class Goblin implements Race {
     @Override
     public List<SkillCompetencyAbility> getRacialAbilities() {
         return List.of(GoblinsRacialAbility.PODER_DOS_NUMEROS, GoblinsRacialAbility.AUTODESCONFIANCA_EM_COMBATE);
+    }
+
+    @Override
+    public List<StartingFeatSlot> getStartingFeatSlots() {
+        return List.of(StartingFeatSlot.race(FeatCategory.MOBILIDADE, FeatCategory.PERITO, FeatCategory.ASSASSINO));
     }
 }

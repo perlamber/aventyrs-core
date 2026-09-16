@@ -5,6 +5,9 @@ import lombok.Getter;
 import lombok.NonNull;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.feat.FeatCategory;
+import org.aventyrs.core.feat.FeatPool;
+import org.aventyrs.core.feat.StartingFeatSlot;
 import org.aventyrs.core.sheet.DlcRuleset;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
 
@@ -75,12 +78,10 @@ import java.util.Set;
  *   <li><b>Longevidade</b> (~80 anos, o triplo para os criados entre os Elfos) — same "no
  *   age/lifespan concept" gap as every other race.</li>
  *   <li><b>Treinamento em Ataque Corpo-a-Corpo e Atenção com as Especializações Primal e Sentidos
- *   Apurados, mais 2 Talentos</b> — {@link Race} has no hook to grant starting Perícia
- *   training/abilities nor a {@code Feat} at creation, same gap as every other race's free
- *   Talentos/Especializações. Which Talento category the first one draws from depends on the
- *   upbringing ({@code FeatCategory#AVENTYR}-style Gerais among humans, {@code #ELFICO} among
- *   elves, {@code #FEERICO} among feéricos), a further per-character variation with nowhere to
- *   live.</li>
+ *   Apurados, mais 2 Talentos</b> — the Talentos are built ({@link #getStartingFeatSlots()}): one
+ *   from the tree the {@link Criacao} dictates, plus one Talento de Sobrevivência. The Perícia half
+ *   is the same "{@link Race} has no hook to grant starting Perícia training/abilities" gap as
+ *   every other race.</li>
  * </ul>
  *
  * <p>Tendência is deliberately left unconstrained, same treatment as every other race —
@@ -137,10 +138,39 @@ public class HomemFera implements Race {
         private final Set<AttributeDomain> attributePair;
     }
 
-    private final EspiritoAnimal espiritoAnimal;
+    /**
+     * Where the Homem-Fera was raised — "1 Talento escolhido entre Talentos Gerais (quando
+     * criados entre humanos), Élfico (quando criado dentre os elfos), Feéricos (quando criado
+     * dentre as raças Feéricas)". A creation-time choice the rules make for every Homem-Fera,
+     * so it is required. Only the starting Talento reads it today; the same upbringing also
+     * decides Idiomas and Longevidade, neither of which this core models.
+     */
+    public enum Criacao {
+        /** Criado entre humanos — a Talento Geral. */
+        HUMANOS(FeatPool.Categories.ofType(FeatCategory.Type.GERAL)),
+        /** Criado dentre os elfos — a Talento Élfico. */
+        ELFOS(FeatPool.Categories.of(FeatCategory.ELFICO)),
+        /** Criado dentre as raças Feéricas — a Talento Feérico. */
+        FEERICOS(FeatPool.Categories.of(FeatCategory.FEERICO));
 
-    public HomemFera(@NonNull final EspiritoAnimal espiritoAnimal) {
+        private final FeatPool startingFeatPool;
+
+        Criacao(final FeatPool startingFeatPool) {
+            this.startingFeatPool = startingFeatPool;
+        }
+
+        /** The upbringing-dependent one of a Homem-Fera's two starting Talentos. */
+        public StartingFeatSlot getStartingFeatSlot() {
+            return StartingFeatSlot.race(startingFeatPool);
+        }
+    }
+
+    private final EspiritoAnimal espiritoAnimal;
+    private final Criacao criacao;
+
+    public HomemFera(@NonNull final EspiritoAnimal espiritoAnimal, @NonNull final Criacao criacao) {
         this.espiritoAnimal = espiritoAnimal;
+        this.criacao = criacao;
     }
 
     @Override
@@ -166,5 +196,10 @@ public class HomemFera implements Race {
     @Override
     public List<SkillCompetencyAbility> getRacialAbilities() {
         return List.of(HomensFeraRacialAbility.FORTALECIMENTO_FERAL);
+    }
+
+    @Override
+    public List<StartingFeatSlot> getStartingFeatSlots() {
+        return List.of(criacao.getStartingFeatSlot(), StartingFeatSlot.race(FeatCategory.SOBREVIVENCIA));
     }
 }

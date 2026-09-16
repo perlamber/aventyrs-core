@@ -73,6 +73,12 @@ public enum ArtificeFeat implements Feat {
         public RegaliaGrade itsAllowedToCraftRegalia(final Character holder) {
             return holder.possessesRegalia(RegaliaGrade.MENOR) ? RegaliaGrade.MENOR : null;
         }
+
+        /** Header: (Geral/Artífice/Especialista). */
+        @Override
+        public boolean isEspecialistaTagged() {
+            return true;
+        }
     },
 
     /**
@@ -100,6 +106,12 @@ public enum ArtificeFeat implements Feat {
         @Override
         public RegaliaGrade itsAllowedToCraftRegalia(final Character holder) {
             return holder.possessesRegalia(RegaliaGrade.SUPERIOR) ? RegaliaGrade.SUPERIOR : null;
+        }
+
+        /** Header: (Geral/Artífice/Especialista). */
+        @Override
+        public boolean isEspecialistaTagged() {
+            return true;
         }
     },
 
@@ -132,6 +144,12 @@ public enum ArtificeFeat implements Feat {
         @Override
         public RegaliaGrade itsAllowedToCraftRegalia(final Character holder) {
             return holder.possessesRegalia(RegaliaGrade.DIVINA) ? RegaliaGrade.DIVINA : null;
+        }
+
+        /** Header: (Geral/Artífice/Especialista). */
+        @Override
+        public boolean isEspecialistaTagged() {
+            return true;
         }
     };
 

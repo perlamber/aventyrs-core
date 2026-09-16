@@ -806,7 +806,7 @@ class RacialFeatEffectIntegrationTest {
     }
 
     private static Character homemFeraWithTitle() {
-        Character character = character().race(new HomemFera(HomemFera.EspiritoAnimal.LICANTROPO))
+        Character character = character().race(new HomemFera(HomemFera.EspiritoAnimal.LICANTROPO, HomemFera.Criacao.HUMANOS))
                 .attributes(CharacterAttributes.builder()
                         .strength(AttributeValue.builder().domain(AttributeDomain.STRENGTH).base(3).build())
                         .dexterity(AttributeValue.builder().domain(AttributeDomain.DEXTERITY).base(3).build())

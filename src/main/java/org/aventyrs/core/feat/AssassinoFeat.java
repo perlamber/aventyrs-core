@@ -535,6 +535,12 @@ public enum AssassinoFeat implements Feat {
                     && graduationOf(character, SkillType.PROFISSAO) >= TECH_PROFISSAO_GRADUATION
                     && holdsSpecialization(character, ProfissaoSpecialization.MECANICA);
         }
+
+        /** Header: (Aventyr/Especialista/Assassino). */
+        @Override
+        public boolean isEspecialistaTagged() {
+            return true;
+        }
     },
 
     /**

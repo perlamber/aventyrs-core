@@ -80,6 +80,18 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     }
 
     /**
+     * Whether this Talento's rules-text header carries the {@code Especialista} tag — {@code
+     * Especialista Tecnológico (Aventyr/Especialista/Assassino)}. That tag is not a {@link
+     * FeatCategory} (see its javadoc), but Agástias' "Talentos de Especialista" starting grant
+     * draws from exactly the Talentos wearing it, which is the one consumer ({@code
+     * FeatPool.EspecialistaTagged}). A narrow boolean rather than a set of header tags until a
+     * second tag earns a reader.
+     */
+    default boolean isEspecialistaTagged() {
+        return false;
+    }
+
+    /**
      * Whether character currently satisfies every prerequisite named in {@link
      * #getFeatRequirements()} — an Attribute's base reaching {@code requiredAttributeValue}
      * (skipped when {@code attributeDomain} is unset), a Perícia's Graduação reaching {@code
@@ -139,6 +151,20 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      */
     default boolean isEligible(final Character character, final CharacterSheet sheet) {
         return satisfies(getFeatRequirements(), character, sheet);
+    }
+
+    /**
+     * Whether character satisfies this Talento's requirements <b>once every Raça clause is
+     * dropped</b> — see {@link FeatRequirements#withoutRaceClauses()}. Added for {@code
+     * DestinoFeat#EXCEPCIONALIDADE}'s "um Talento Racial que você cumpra todos os demais
+     * requisitos, além da Raça".
+     *
+     * <p>Tests the data clauses only, and so bypasses an {@link #isEligible(Character,
+     * CharacterSheet)} override. The one such override on a racial tree, {@code ElficoFeat}'s
+     * Guardião cap, is itself a per-race allowance, so ignoring it is the same reading.
+     */
+    default boolean isEligibleRegardlessOfRace(final Character character, final CharacterSheet sheet) {
+        return satisfies(getFeatRequirements().withoutRaceClauses(), character, sheet);
     }
 
     /**
@@ -586,11 +612,47 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      * <p><b>Only for an unconditional reduction on a named Perícia.</b> Most Talentos that
      * mention a GD do not qualify, and each says so on its own constant: one scoped to a
      * narrative purpose ("para criar equipamento"), one bought with a resource ("gastar 2PD
-     * para reduzir"), one scoped to a single roll of a Turn, and one on a Conjuração roll that
-     * {@code SpellCastingService} does not resolve at all. This hook exists because several
+     * para reduzir"), one scoped to a single roll of a Turn, and one on a Magia's Conjuração GD,
+     * which is {@link #resolveCastingDifficultyReduction}'s. This hook exists because several
      * racial trees state the plain, unconditional form.
      */
     default int resolveDifficultyReduction(final SkillType skillType, final Character character) {
+        return 0;
+    }
+
+    /**
+     * How many níveis this Talento takes off the <b>GD da Conjuração</b> of spell — the Magia's
+     * own authored tier ({@code Spell#getCastingDifficultyLevel()}), which the Domínio do Mana
+     * roll is made against. Summed by {@code SpellCastingService#resolveCastingDifficultyReduction}
+     * across {@code Character#getFeats()} and reported, with the eased tier, on {@code
+     * SpellCastingResult}. Positive = easier. Zero by default.
+     *
+     * <p>Its own hook rather than {@link #resolveDifficultyReduction}, which reaches every roll of
+     * one Perícia: a Conjuração clause is scoped to <em>which Magia</em> is being cast ({@code
+     * DestinoFeat#ARCANISMO_DRUIDICO}'s "suas Magias Naturais"), and only the casting service knows
+     * that. Report-only, like the rest of the cast — nothing compares a roll against the GD.
+     */
+    default int resolveCastingDifficultyReduction(final Spell spell, final Character character) {
+        return 0;
+    }
+
+    /**
+     * How many Pontos de Ação this Talento takes off spell's <b>Tempo de Ativação</b> for this
+     * cast — summed by {@code SpellCastingService#resolveActivationTime}, which reduces only a
+     * PA-activated Magia (a Reação or Ação Livre has no PA to take) and floors the result at 1PA.
+     * Reported as {@code SpellCastingResult#getActivationTime()}; this core spends no PA. Zero by
+     * default.
+     *
+     * <p>Deliberately raw, the {@link #resolveAttackCostDifficultyReduction} shape: the Scene's
+     * 0-based currentRound and the caster's actionsThisRound are passed through rather than a
+     * pre-computed "first Magia of the Rodada", because the predicate filters that history by a
+     * Talento-specific scope ({@code DestinoFeat#ARCANISMO_DRUIDICO}'s "primeira Magia
+     * <b>Natural</b> … em Rodadas Ímpares"). actionsThisRound only sees casts the caller filed
+     * through {@code Scene#recordAction}.
+     */
+    default int resolveCastingActionPointReduction(final Spell spell, final Character character,
+                                                   final int currentRound,
+                                                   final List<CombatantAction> actionsThisRound) {
         return 0;
     }
 
@@ -800,6 +862,22 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      * than one {@code FeatChoice}; none in the catalog does yet, but the shape allows it.
      */
     default List<FeatChoice<?>> resolveRequiredChoices(final Character holder) {
+        return List.of();
+    }
+
+    /**
+     * Other Talentos this one grants its holder outright — folded live into {@code
+     * Character#getFeats()}, so a granted Talento is <b>held</b> in every sense: each of its
+     * effect hooks applies, and it counts for other Talentos' {@code requiredFeats}/{@code
+     * forbiddenFeats}/category-count prerequisites and for {@code FeatCatalog#availableFor}'s
+     * "already held" filter. {@code ExcepcionalidadeFeat} (the chosen Talento Racial) is the
+     * consumer. Empty by default.
+     *
+     * <p><b>Must not read {@code character.getFeats()}</b> — that view is what calls this, so doing
+     * so recurses. Return the recorded Talento directly. Resolved one level deep: a granted Talento's
+     * own grants are not followed, since no authored Talento grants one that grants another.
+     */
+    default List<Feat> getGrantedFeats(final Character character) {
         return List.of();
     }
 
@@ -1361,6 +1439,20 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      * Zero by default.
      */
     default int resolveRestMagicPointsBonus(final RestType restType, final Character character) {
+        return 0;
+    }
+
+    /**
+     * Extra Pontos de Determinação this Talento recovers on a Descanso of restType — summed by
+     * {@code org.aventyrs.core.rest.RestService#getRecoveredDeterminationPoints} across {@code
+     * Character#getFeats()}, alongside {@code AttributeAbility#resolveRestDeterminationPointsBonus}'s
+     * own scan.
+     *
+     * <p>The Determinação twin of {@link #resolveRestMagicPointsBonus}, added for {@code
+     * DestinoFeat#CORACAO_DE_FERRO_DO_DESTINO}'s "+2PD, e então +1PD para cada Título Aventyr que
+     * tenha Desperto" — which is why it takes the character too. Zero by default.
+     */
+    default int resolveRestDeterminationPointsBonus(final RestType restType, final Character character) {
         return 0;
     }
 

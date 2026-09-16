@@ -103,7 +103,8 @@ public enum PowerStoneType {
     /**
      * Esfera de AEther (Primordial). "Foco +1" (no attribute hook), magic-damage and
      * Encantamento-Duração halving, and an offensive clause gated on "anexo apenas à Artefatos de
-     * Conjuração" — which need the offensive Encaixe that does not exist yet. Blocked whole.
+     * Conjuração" — a subsection of the Armas catalog that is not authored (the {@link
+     * OffensiveImprovement#ENCAIXE} that lets a weapon host a stone at all now is). Blocked whole.
      */
     ESFERA_DE_AETHER("Esfera de AEther", "Primordial",
             "Foco +1",

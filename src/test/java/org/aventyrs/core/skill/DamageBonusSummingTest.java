@@ -2,6 +2,8 @@ package org.aventyrs.core.skill;
 
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.DamageBonus;
+import org.aventyrs.core.character.DamageBonusBreakdown;
+import org.aventyrs.core.character.DamageContributionSource;
 import org.aventyrs.core.character.DamageType;
 import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.character.services.HitPointsServiceImpl;
@@ -58,6 +60,36 @@ class DamageBonusSummingTest {
 
     private DamageBonus meleeDamageBonus(final CharacterSheet roller, final SceneContext context) {
         return new AtaqueCorpoACorpoInteraction().applyTo(roller, context, null).getDamageBonus();
+    }
+
+    // ---------- the breakdown that explains the sum ----------
+
+    /**
+     * Every source that contributed is named once, and the parts sum to the single {@code
+     * DamageBonus} beside them — the {@link DamageBonusBreakdown} invariant, asserted on a roll
+     * with more than one contributor so the summing and the naming are checked together.
+     */
+    @Test
+    void theBreakdownNamesEverySourceAndSumsToTheBonus() {
+        CharacterSheet roller = sheet();
+        roller.grantTemporaryBonus(ModifierType.DAMAGE_ROLL_BONUS, 2, 1);
+        InteractionResult result = new AtaqueCorpoACorpoInteraction().applyTo(roller, null, null);
+
+        DamageBonusBreakdown breakdown = result.getDamageBonusBreakdown();
+        assertEquals(result.getDamageBonus().getValue(), breakdown.total());
+        assertEquals(2, breakdown.valueOf(DamageContributionSource.TEMPORARY_BONUS));
+        assertTrue(breakdown.contributions().stream()
+                        .noneMatch(contribution -> contribution.value() == 0),
+                "a source that contributed nothing must be left out, never listed as a zero");
+    }
+
+    /** No bonus, no breakdown — the two stay null together. */
+    @Test
+    void aRollWithNoDanoBonusCarriesNoBreakdown() {
+        InteractionResult result = new AtletismoInteraction().applyTo(sheet(), null, null);
+
+        assertNull(result.getDamageBonus());
+        assertNull(result.getDamageBonusBreakdown());
     }
 
     // ---------- DamageBonus.total, the summing rule itself ----------

@@ -175,7 +175,7 @@ import java.util.Set;
  *                                  than a flat list of whole alternatives. Nesting is checked
  *                                  recursively, so a branch may carry its own {@code anyOf}.
  */
-@Builder
+@Builder(toBuilder = true)
 public record FeatRequirements (
         AttributeDomain attributeDomain,
         int requiredAttributeValue,
@@ -207,5 +207,24 @@ public record FeatRequirements (
 ) {
     public FeatRequirements {
         requiredAlignments = requiredAlignments == null ? Set.of() : Set.copyOf(requiredAlignments);
+    }
+
+    /**
+     * These requirements with every clause about the holder's <b>Raça</b> dropped — {@code
+     * requiredRace}, {@code forbiddenRace} and {@code requiredCreatureType} — including inside
+     * each {@code anyOf} branch. What {@code DestinoFeat#EXCEPCIONALIDADE}'s "cumpra todos os
+     * demais requisitos, além da Raça" tests a Talento Racial against.
+     *
+     * <p>{@code requiredAnyRacialAttributeValue} is deliberately kept: it asks about an Atributo
+     * receiving a Bônus Racial, not about which race the holder is.
+     */
+    public FeatRequirements withoutRaceClauses() {
+        return toBuilder()
+                .requiredRace(null)
+                .forbiddenRace(null)
+                .requiredCreatureType(null)
+                .clearAnyOf()
+                .anyOf(anyOf.stream().map(FeatRequirements::withoutRaceClauses).toList())
+                .build();
     }
 }

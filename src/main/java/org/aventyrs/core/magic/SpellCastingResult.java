@@ -17,6 +17,28 @@ import org.aventyrs.core.sheet.InteractionResult;
 public class SpellCastingResult {
     InteractionResult deliveryResult;
     InteractionResult dominioDoManaResult;
+
+    /**
+     * How many níveis the caster's Talentos take off this version's GD da Conjuração — see {@link
+     * SpellCastingService#resolveCastingDifficultyReduction}. 0 on the legacy overload.
+     */
+    int castingDifficultyReduction;
+
+    /**
+     * The GD da Conjuração the Domínio do Mana roll is made against: the authored {@code
+     * Spell#getCastingDifficultyLevel()} eased by {@link #castingDifficultyReduction}. {@code null}
+     * when the Magia states no fixed tier. Report-only — nothing compares a roll against it, and
+     * an "ou DM do Alvo (maior)" floor is still the caller's to apply on top.
+     */
+    org.aventyrs.core.skill.DifficultyLevel castingDifficultyLevel;
+
+    /**
+     * This version's Tempo de Ativação as the caster pays it on this cast — the authored figure
+     * after any Talento reduction, see {@link SpellCastingService#resolveActivationTime}. Reported,
+     * not spent. {@code null} on the legacy overload.
+     */
+    ActivationTime activationTime;
+
     Integer durationInRounds;
     ActiveAreaSpellEffect areaSpellEffect;
 

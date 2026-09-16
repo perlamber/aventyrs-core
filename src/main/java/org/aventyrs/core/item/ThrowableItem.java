@@ -39,7 +39,7 @@ public enum ThrowableItem implements ItemTemplate, Weapon {
      * "Vendido em kits de 6 unidades" is inventory-packaging flavour.
      */
     DARDOS_E_SHUKENS(
-            "Dardos e Shukens",
+            "Shukens",
             "",
             ItemWeightClass.LIGHT,
             ItemRarity.COMMON,

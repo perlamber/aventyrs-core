@@ -6,6 +6,8 @@ import lombok.NonNull;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.SizeCategory;
+import org.aventyrs.core.feat.FeatCategory;
+import org.aventyrs.core.feat.StartingFeatSlot;
 import org.aventyrs.core.sheet.DlcRuleset;
 
 import java.util.List;
@@ -62,11 +64,10 @@ import java.util.Map;
  *   as every other race.</li>
  *   <li><b>Longevidade</b> (adultos aos 12, até 100 anos) — same "no age/lifespan concept" gap as
  *   every other race; purely narrative today.</li>
- *   <li><b>1 Talento adicional</b> (entre {@code org.aventyrs.core.feat.FeatCategory#MONSTRUOSO}
- *   and {@code #SOBREVIVENCIA}) — {@link Race} has no hook to grant a {@code Feat} at creation,
- *   same gap as every other race's free Talentos. The rules text explicitly grants <i>no</i> extra
- *   Perícia ("fez com que os Ogros não adquirissem novas Perícias"), which needs no override at
- *   all — same no-op as {@code Gigantes}' "Perícias e Talentos: nenhum".</li>
+ *   <li><b>1 Talento adicional</b> (entre {@code org.aventyrs.core.feat.FeatCategory#MONSTRUOSO} and
+ *   {@code #SOBREVIVENCIA}) — built: {@link #getStartingFeatSlots()}. The rules text explicitly
+ *   grants <i>no</i> extra Perícia ("fez com que os Ogros não adquirissem novas Perícias"), which
+ *   needs no override at all — same no-op as {@code Gigantes}' "Perícias e Talentos: nenhum".</li>
  * </ul>
  *
  * <p>None of the six Características Raciais above fit {@code SkillCompetencyAbility}'s shape, so
@@ -120,5 +121,10 @@ public class Ogro implements Race {
     @Override
     public Character.CharacterBuilder generateEmptyCharacter(final List<DlcRuleset> dlcRulesetList) {
         return Character.builder().sizeCategory(getBaseSizeCategory());
+    }
+
+    @Override
+    public List<StartingFeatSlot> getStartingFeatSlots() {
+        return List.of(StartingFeatSlot.race(FeatCategory.MONSTRUOSO, FeatCategory.SOBREVIVENCIA));
     }
 }

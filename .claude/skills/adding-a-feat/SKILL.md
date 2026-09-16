@@ -53,7 +53,9 @@ mechanism.
   `SpellService#getAcquisitionCost`, which also sums the `Race` twin; the waiver is wired ahead
   of `MetamagicoFeat#ARCANISTA`'s choice class, the discount alongside
   `ElementalFeat#ARCANISMO_ELEMENTAL`), `resolveDefenseBonus(DefenseType, Character)`,
-  `resolveManaMultiplierIncrease`/`resolveRestMagicPointsBonus(RestType, Character)`, the
+  `resolveManaMultiplierIncrease`/`resolveRestMagicPointsBonus(RestType, Character)`, their
+  Determinação twins `resolveDeterminationMultiplierIncrease`/
+  `resolveRestDeterminationPointsBonus(RestType, Character)`, the
   movement/action-point ones, `resolveExtraCriticalEffects(...)` (Efeitos Críticos a Talento adds
   to a critical hit — `AttackDelivery` scans it, `AssassinoFeat#ABRIR_FERIDAS`), and
   `resolveDefeatBlessings(attacker, defeated, viaCriticalHit)` (`Blessing`s the moment one of the
@@ -82,6 +84,8 @@ mechanism.
   permanent Atributo grant, summed by `Character#getEffectiveAttributeTotal` which every
   Atributo-*total* reader now calls — PV/PM/PD, Conjuração, Rest, Defesa, `ItemRequirements`, the
   melee ½-Força term; `VampiricoFeat#MESTRE_VAMPIRO`, `ConselheiroDeGuerraYmirianoFeat`),
+  `getGrantedFeats(Character)` (a whole Talento granted outright and held, prerequisites
+  included — `ExcepcionalidadeFeat`; must never read `getFeats()`, which calls it),
   `getGrantedAttributeAbilities(Character)` (a Habilidade de Atributo handed to the
   holder free — folded into `Character#getAttributeAbilities()` past the `AttributeAbilityService`
   slot economy, passive/`resolve*` hooks only; `ConselheiroDeGuerraYmirianoFeat`,

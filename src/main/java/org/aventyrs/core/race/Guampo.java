@@ -4,6 +4,8 @@ import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.SizeCategory;
 import org.aventyrs.core.character.services.HitPointsService;
+import org.aventyrs.core.feat.FeatCategory;
+import org.aventyrs.core.feat.StartingFeatSlot;
 import org.aventyrs.core.sheet.DlcRuleset;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
 
@@ -61,12 +63,12 @@ import java.util.Map;
  *   exists" gap as every other race.</li>
  *   <li><b>Longevidade</b> (~150 anos) — same "no age/lifespan concept" gap as every other race;
  *   purely narrative today.</li>
- *   <li><b>Treinamento em Conhecimentos com as Especializações Cosmologia e Metamágico, uma
- *   Habilidade de Competência dessa Perícia, e um Talento de Sobrevivência ou Metamágico</b> —
- *   {@link Race} has no hook to grant starting Perícia training/abilities nor a {@code Feat} at
- *   creation, same gap as every other race's free Talentos/Especializações. Both Especializações
+ *   <li><b>Treinamento em Conhecimentos com as Especializações Cosmologia e Metamágico, uma Habilidade
+ *   de Competência dessa Perícia, e um Talento de Sobrevivência ou Metamágico</b> — the Talento is
+ *   built ({@link #getStartingFeatSlots()}); the Perícia half is the same "{@link Race} has no hook
+ *   to grant starting Perícia training/abilities" gap as every other race. Both Especializações
  *   named do exist as {@code ConhecimentosSpecialization} constants, so only the granting hook is
- *   missing here, not the vocabulary.</li>
+ *   missing there, not the vocabulary.</li>
  * </ul>
  *
  * <p>Tendência is deliberately left unconstrained, same treatment as every other race.
@@ -100,5 +102,10 @@ public class Guampo implements Race {
     @Override
     public List<SkillCompetencyAbility> getRacialAbilities() {
         return List.of(GuamposRacialAbility.VIGOR_DE_EPONA);
+    }
+
+    @Override
+    public List<StartingFeatSlot> getStartingFeatSlots() {
+        return List.of(StartingFeatSlot.race(FeatCategory.SOBREVIVENCIA, FeatCategory.METAMAGICO));
     }
 }

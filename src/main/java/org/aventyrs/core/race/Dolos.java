@@ -3,6 +3,8 @@ package org.aventyrs.core.race;
 import lombok.NonNull;
 import org.aventyrs.core.ability.AttributeAbility;
 import org.aventyrs.core.character.AttributeDomain;
+import org.aventyrs.core.feat.FeatCategory;
+import org.aventyrs.core.feat.StartingFeatSlot;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
 
 import java.util.List;
@@ -22,15 +24,12 @@ import java.util.Map;
  * <ul>
  *   <li><b>Idiomas/Longevidade</b> (idiomas do parente mortal; mesma expectativa de vida) — same
  *   "no Language/age concept" gaps as every other race.</li>
- *   <li><b>Talentos</b> (Assassino, substituível por Talento Racial do parente se houver; +1
- *   Talento Elemental) — same "no Feat catalog" gap; "Assassino"/"Elemental" map to {@link
- *   org.aventyrs.core.feat.FeatCategory#ASSASSINO}/{@link
- *   org.aventyrs.core.feat.FeatCategory#ELEMENTAL} directly. The source text's own wording
- *   ("O segundo Talento adicional deve ser escolhido dentre os Talentos Elementais.
- *   Adicionalmente recebem 1 Talento Elemental") reads as citing a Talento Elemental twice —
- *   flagged as an apparent redundancy in the rules text, not resolved by guessing which one is
- *   correct (same "get the source text before modeling" discipline {@code Gnomo}'s own
- *   "duas vs. três Perícias" inconsistency already applies).</li>
+ *   <li><b>Talentos</b> (Assassino, substituível por Talento Racial do parente se houver; um segundo
+ *   Talento Elemental; "Adicionalmente recebem 1 Talento Elemental") — built: {@link
+ *   #getStartingFeatSlots()}, the substitution through {@link
+ *   AbstractMesticoRace#withParentRacialSubstitute}. ⚠️ <b>A reading, not a certainty:</b> the text
+ *   cites a Talento Elemental twice, and both are granted — three slots in all. If the second
+ *   mention is a restatement, drop the last slot.</li>
  *   <li><b>Treinamento em Persuasão OU Conhecimentos</b> (+ Especialização Cosmologia se
  *   Conhecimentos escolhido) — same "no hook for granting starting Perícia training" gap as
  *   every other race, compounded here by a creation-time choice between *which* Perícia to
@@ -87,5 +86,13 @@ public class Dolos extends AbstractMesticoRace {
     @Override
     protected int getSizeCategoryOffset() {
         return SIZE_CATEGORY_OFFSET;
+    }
+
+    @Override
+    public List<StartingFeatSlot> getStartingFeatSlots() {
+        return List.of(
+                withParentRacialSubstitute(StartingFeatSlot.race(FeatCategory.ASSASSINO)),
+                StartingFeatSlot.race(FeatCategory.ELEMENTAL),
+                StartingFeatSlot.race(FeatCategory.ELEMENTAL));
     }
 }

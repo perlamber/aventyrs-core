@@ -4,9 +4,14 @@ import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.CharacterAttributes;
 import org.aventyrs.core.character.CharacterEgos;
 import org.aventyrs.core.character.EgoDomain;
+import org.aventyrs.core.character.Character;
+import org.aventyrs.core.feat.Feat;
+import org.aventyrs.core.feat.StartingFeatSlot;
 import org.aventyrs.core.race.Race;
+import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.IllegalOperationException;
 
+import java.util.List;
 import java.util.Map;
 
 public interface CharacterCreationService {
@@ -25,6 +30,9 @@ public interface CharacterCreationService {
      * per domain.
      */
     int EGO_ADVANTAGE_MIN_BASE = 3;
+
+    /** How many General Talentos every character starts with, before anything its Raça grants. */
+    int DEFAULT_GENERAL_FEAT_SLOTS = 2;
 
     /**
      * Resolves a character's starting {@link CharacterAttributes} from the player's choices.
@@ -70,4 +78,49 @@ public interface CharacterCreationService {
      * over {@code EgoDomain} rather than one field/method per domain.
      */
     boolean isEgoAdvantageAvailable(EgoDomain domain, CharacterEgos egos);
+
+    /**
+     * Every Talento character picks at creation, in order: {@value #DEFAULT_GENERAL_FEAT_SLOTS}
+     * General slots, then {@link Race#getStartingFeatSlots()}. The order is the one {@link
+     * #grantStartingFeats} matches picks against.
+     */
+    List<StartingFeatSlot> getStartingFeatSlots(Race race);
+
+    /**
+     * Every authored Talento character may put in slot right now — admitted by the slot, eligible
+     * for character as the slot judges it, and not already held. Sheet-less, so the Fama and
+     * EXP-total prerequisites are skipped rather than failed; see the overload.
+     *
+     * <p>Picks can unlock one another (a {@code requiredFeat}), so a client that grants picks
+     * one by one should ask again after each.
+     */
+    default List<Feat> getStartingFeatOptions(final Character character, final StartingFeatSlot slot) {
+        return getStartingFeatOptions(character, slot, null);
+    }
+
+    /** The same list, with sheet's Fama and EXP-total prerequisites enforced when sheet is given. */
+    List<Feat> getStartingFeatOptions(Character character, StartingFeatSlot slot, CharacterSheet sheet);
+
+    /**
+     * Grants picks free of XP, {@code picks.get(i)} filling {@code
+     * getStartingFeatSlots(character.getRace()).get(i)}. Each pick is checked against the
+     * character as the earlier picks left it, so a later pick may require an earlier one. A
+     * choice-carrying Talento is passed in its acquired form, as with {@link
+     * FeatService#grantFeat}.
+     *
+     * <p>Not atomic: picks before a refused one stay granted, the same as calling {@code
+     * FeatService#grantFeat} in a loop. Validate with {@link #getStartingFeatOptions} first to
+     * avoid a partial grant.
+     *
+     * @throws IllegalOperationException {@code INVALID_STARTING_FEAT_SELECTION} if picks doesn't
+     *                                   have one entry per slot or a pick isn't among its slot's
+     *                                   options; {@code FEAT_REQUIRES_CHOICE} if a pick is a bare
+     *                                   constant that needs a choice
+     */
+    default void grantStartingFeats(final Character character, final List<Feat> picks) throws IllegalOperationException {
+        grantStartingFeats(character, picks, null);
+    }
+
+    /** The same grant, with sheet's Fama and EXP-total prerequisites enforced when sheet is given. No XP is spent. */
+    void grantStartingFeats(Character character, List<Feat> picks, CharacterSheet sheet) throws IllegalOperationException;
 }

@@ -31,7 +31,7 @@ public enum LightBladeItem implements ItemTemplate, Weapon {
      * (see {@code Weapon#getSkillType()}); the thrown mode has no expression.
      */
     ADAGA_KUNAI_OU_SEAX(
-            "Adaga, Kunai ou Seax",
+            "Adaga",
             "",
             ItemWeightClass.LIGHT,
             ItemRarity.COMMON,
@@ -47,7 +47,7 @@ public enum LightBladeItem implements ItemTemplate, Weapon {
      * Adicionais Nenhum.
      */
     ESPADA_CURTA_OU_WAKIZASHI(
-            "Espada Curta ou Wakizashi",
+            "Espada Curta",
             "",
             ItemWeightClass.LIGHT,
             ItemRarity.COMMON,
@@ -56,6 +56,7 @@ public enum LightBladeItem implements ItemTemplate, Weapon {
             CriticalEffectType.DILACERAR,
             17,
             null),
+
 
     /**
      * Espada Gancho ou Sai (Leve/Raro) — Preço 13. Dano 1d6+1, Tipo Perfurante, Efeito Crítico
@@ -68,7 +69,7 @@ public enum LightBladeItem implements ItemTemplate, Weapon {
      * so it is modeled as a Favor with {@code requirements = null}.
      */
     ESPADA_GANCHO_OU_SAI(
-            "Espada Gancho ou Sai",
+            "Espada Gancho",
             "",
             ItemWeightClass.LIGHT,
             ItemRarity.RARE,

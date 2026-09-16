@@ -1,6 +1,9 @@
 package org.aventyrs.core.race;
 
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.feat.FeatCategory;
+import org.aventyrs.core.feat.FeatPool;
+import org.aventyrs.core.feat.StartingFeatSlot;
 import org.aventyrs.core.sheet.DlcRuleset;
 
 import java.util.List;
@@ -24,12 +27,8 @@ import java.util.List;
  *   race.</li>
  *   <li><b>Longevidade</b> (~60 anos) — same "no age/lifespan concept" gap as every other race;
  *   purely narrative today.</li>
- *   <li><b>1 Talento Bestial + 1 Talento adicional</b> (Geral ou Bestial) — same "no Feat
- *   catalog, no {@code Character.feats} list, {@link Race} has no hook for granting starting
- *   Perícia training" gap as every other race's free Talentos; {@code
- *   org.aventyrs.core.feat.FeatCategory#BESTIAL} already exists as a category (alongside
- *   {@code #MONSTRUOSO}/{@code #FEERICO}/{@code #ELFICO}), but {@code
- *   org.aventyrs.core.feat.Feat} still has no catalog of concrete named Feats within it.</li>
+ *   <li><b>1 Talento Bestial + 1 Talento adicional</b> (Geral ou Bestial) — built: {@link
+ *   #getStartingFeatSlots()}.</li>
  *   <li><b>Corpo Quimérico</b> (spend 2PD, after touching a local animal, to copy its traits —
  *   retained for as long as desired — granting Vantagem on Atenção/Furtividade rolls in
  *   ambientes selvagens/não urbanos, and on Conhecimento na especialização Natureza) — spending
@@ -105,4 +104,10 @@ public class Bestial implements Race {
         return Character.builder();
     }
 
+    @Override
+    public List<StartingFeatSlot> getStartingFeatSlots() {
+        return List.of(
+                StartingFeatSlot.race(FeatCategory.BESTIAL),
+                StartingFeatSlot.race(FeatPool.Categories.ofType(FeatCategory.Type.GERAL), FeatPool.Categories.of(FeatCategory.BESTIAL)));
+    }
 }

@@ -17,9 +17,10 @@ import java.util.UUID;
  * mirroring {@code org.aventyrs.core.feat.AbstractFeat}'s identical role alongside {@code
  * org.aventyrs.core.feat.ArtesMarciaisFeat}.
  *
- * <p>An item built through this has no Dano Base and cannot be swung — see {@link
- * AbstractWeapon} for the {@link Weapon} counterpart, which extends this class and adds that
- * one column.
+ * <p>An item built through {@code builder()} directly has no Dano Base and cannot be swung — see
+ * {@link AbstractWeapon} for the {@link Weapon} counterpart, which extends this class and adds that
+ * one column. {@link #builderFromTemplate} is the exception, and builds one of those whenever the
+ * template it is handed is itself a {@code Weapon}.
  *
  * <p>Nothing here validates the values it's handed: like every other builder in this codebase
  * (see CLAUDE.md's note on {@code AttributeValue.builder()}), it's a data holder, not a
@@ -78,7 +79,7 @@ public class AbstractItem implements Item {
      * (damage, Obra-Prima, Aprimoramentos, Pedra do Poder) is deliberately not carried over.
      */
     public static AbstractItemBuilder<?, ?> builderFromTemplate(final ItemTemplate template) {
-        return AbstractItem.builder()
+        return baseBuilderFor(template)
                 .template(template)
                 .name(template.getName())
                 .description(template.getDescription())
@@ -91,6 +92,34 @@ public class AbstractItem implements Item {
                 .hardness(template.getHardness())
                 .castingBonus(template.getCastingBonus())
                 .favor(template.getFavor());
+    }
+
+    /**
+     * The right builder for template's own kind — an {@link AbstractWeapon} one when the template
+     * <em>is</em> a {@link Weapon}, and a plain {@link AbstractItem} one otherwise.
+     *
+     * <p><b>Why this exists.</b> A forged copy of a catalog Arma has to keep being an Arma. Built
+     * through {@code AbstractItem.builder()} it would come back as a bare {@code AbstractItem}:
+     * {@code instanceof Weapon} false, so nothing could draw it ({@code Character#drawWeapon} takes
+     * a {@code Weapon}), no Perícia de Ataque could name it as its {@code AttackSource}, and {@code
+     * DamageBaseService} could not be handed it at all — a bought sword that could not be swung.
+     * The three weapon columns are copied off the template here for the same reason every other
+     * column is: the copy is the template's copy.
+     *
+     * <p><b>Not carried:</b> {@link Weapon#getCriticalEffect()} and {@link
+     * Weapon#getLesserCriticalMargin()}. {@code AbstractWeapon} has no field for either — they are
+     * interface defaults — so a forged copy reports the defaults rather than its catalog entry's
+     * authored Efeito Crítico. Nothing reads those two yet (see {@code Weapon}'s own javadoc);
+     * they need fields on {@code AbstractWeapon} before a forged copy can keep them.
+     */
+    private static AbstractItemBuilder<?, ?> baseBuilderFor(final ItemTemplate template) {
+        if (!(template instanceof Weapon weapon)) {
+            return AbstractItem.builder();
+        }
+        return AbstractWeapon.builder()
+                .damageBase(weapon.getDamageBase())
+                .skillType(weapon.getSkillType())
+                .range(weapon.getRange());
     }
 
     public static AbstractItem fromTemplate(final ItemTemplate template) {

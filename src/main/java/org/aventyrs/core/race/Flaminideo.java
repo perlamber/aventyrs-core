@@ -3,6 +3,8 @@ package org.aventyrs.core.race;
 import lombok.NonNull;
 import org.aventyrs.core.ability.AttributeAbility;
 import org.aventyrs.core.character.AttributeDomain;
+import org.aventyrs.core.feat.FeatCategory;
+import org.aventyrs.core.feat.StartingFeatSlot;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
 
 import java.util.List;
@@ -22,11 +24,10 @@ import java.util.Map;
  * <ul>
  *   <li><b>Idiomas/Longevidade</b> (idiomas do parente mortal; mesma expectativa de vida) — same
  *   "no Language/age concept" gaps as every other race.</li>
- *   <li><b>Talentos</b> (Escudeiro, substituível por Talento Racial do parente se houver; +1
- *   Talento Elemental) — same "no Feat catalog" gap; "Escudeiro"/"Elemental" map to {@link
- *   org.aventyrs.core.feat.FeatCategory#ESCUDEIRO}/{@link
- *   org.aventyrs.core.feat.FeatCategory#ELEMENTAL} directly. Same apparent "Talento Elemental"
- *   cited twice redundancy as {@code Dolos}' own text.</li>
+ *   <li><b>Talentos</b> (Escudeiro, substituível por Talento Racial do parente se houver; um segundo
+ *   Talento Elemental; "Adicionalmente recebem também um Talento Elemental") — built: {@link
+ *   #getStartingFeatSlots()}, the substitution through {@link
+ *   AbstractMesticoRace#withParentRacialSubstitute}. ⚠️ Same three-slot reading as {@code Dolos}.</li>
  *   <li><b>Treinamento em Conhecimentos + Especialização Cosmologia</b> — same "no hook for
  *   granting starting Perícia training" gap as every other race.</li>
  *   <li><b>Conjuração Limitada</b> (só pode conjurar magias Divinas, Elementais de Fogo/
@@ -78,5 +79,13 @@ public class Flaminideo extends AbstractMesticoRace {
     @Override
     protected int getSizeCategoryOffset() {
         return 0;
+    }
+
+    @Override
+    public List<StartingFeatSlot> getStartingFeatSlots() {
+        return List.of(
+                withParentRacialSubstitute(StartingFeatSlot.race(FeatCategory.ESCUDEIRO)),
+                StartingFeatSlot.race(FeatCategory.ELEMENTAL),
+                StartingFeatSlot.race(FeatCategory.ELEMENTAL));
     }
 }

@@ -6,6 +6,8 @@ import org.aventyrs.core.ability.AttributeAbility;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.feat.FeatCategory;
+import org.aventyrs.core.feat.FeatPool;
+import org.aventyrs.core.feat.StartingFeatSlot;
 import org.aventyrs.core.magic.Spell;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
 
@@ -36,12 +38,11 @@ import java.util.Map;
  * <ul>
  *   <li><b>Idiomas/Longevidade</b> (idiomas do parente mortal; mesma expectativa de vida) — same
  *   "no Language/age concept" gaps as every other race.</li>
- *   <li><b>2 Talentos adicionais</b> (Especialista, substituível por Talento Racial do parente
- *   se houver; +1 Talento Elemental) — same "no Feat catalog" gap as every other race;
- *   "Especialista" has no exact-name match in {@link FeatCategory} — closest is {@link
- *   FeatCategory#PERITO}, an inference, not confirmed (flagged rather than guessed, same "get
- *   the source text before modeling" discipline {@code Range}'s own history taught this
- *   codebase); "Elemental" maps to {@link FeatCategory#ELEMENTAL} directly.</li>
+ *   <li><b>2 Talentos adicionais</b> (Especialista, substituível por Talento Racial do parente se
+ *   houver; +1 Talento Elemental) — built: {@link #getStartingFeatSlots()}. "Talentos de
+ *   Especialista" are the Talentos whose header carries the {@code Especialista} tag ({@code
+ *   Feat#isEspecialistaTagged()}), not a {@link FeatCategory}; the substitution is {@link
+ *   AbstractMesticoRace#withParentRacialSubstitute}.</li>
  *   <li><b>Treinamento em Conhecimentos + Especialização Cosmologia</b> — same "no hook for
  *   granting starting Perícia training" gap as every other race.</li>
  *   <li><b>Engenhosidade Divinal</b> (ao criar itens/Equipamentos: -1 GD ou metade do tempo de
@@ -108,5 +109,12 @@ public class Agastias extends AbstractMesticoRace {
     @Override
     public BigDecimal resolveSpellAcquisitionCostReduction(final Character character, final Spell spell) {
         return MAGIA_E_CIENCIA_DISCOUNT;
+    }
+
+    @Override
+    public List<StartingFeatSlot> getStartingFeatSlots() {
+        return List.of(
+                withParentRacialSubstitute(StartingFeatSlot.race(new FeatPool.EspecialistaTagged())),
+                StartingFeatSlot.race(FeatCategory.ELEMENTAL));
     }
 }

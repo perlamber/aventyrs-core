@@ -54,6 +54,21 @@ public interface SpellCastingService {
     Optional<ResolvedSpellDamage> resolvePrimaryDamage(Spell spell, CombatantSheet caster);
 
     /**
+     * How many níveis caster's held Talentos take off spell's GD da Conjuração — the summed {@code
+     * Feat#resolveCastingDifficultyReduction}. {@link #castSpell(SpellCastRequest)} reports it, and
+     * the Magia's authored tier eased by it, on {@link SpellCastingResult}. A pure read.
+     */
+    int resolveCastingDifficultyReduction(Spell spell, CombatantSheet caster);
+
+    /**
+     * spell's Tempo de Ativação as caster would pay it right now, in the Scene's 0-based
+     * currentRound: the authored {@link Spell#getActivationTime()}, less the summed {@code
+     * Feat#resolveCastingActionPointReduction} when it is a Pontos de Ação cost, never below 1PA.
+     * A Reação or Ação Livre is returned unchanged. A pure read — nothing is spent.
+     */
+    ActivationTime resolveActivationTime(Spell spell, CombatantSheet caster, int currentRound);
+
+    /**
      * {@code spell}'s {@code Efeito:} line as an applicable {@link SpellEffect}, or {@link
      * Optional#empty()} for a Magia whose effect this core cannot yet express — which is still
      * most of the catalog.

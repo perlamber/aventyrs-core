@@ -76,6 +76,13 @@ public class TranslatableMessages {
     public static final String FEAT_REQUIRES_CHOICE = "FEAT_REQUIRES_CHOICE";
 
     /**
+     * A creation-time Talento selection doesn't fit the character's starting slots — the wrong
+     * number of picks, or a pick its slot doesn't offer. See {@code
+     * CharacterCreationService#grantStartingFeats}.
+     */
+    public static final String INVALID_STARTING_FEAT_SELECTION = "INVALID_STARTING_FEAT_SELECTION";
+
+    /**
      * A held Talento forbids that whole kind of Equipamento — {@code
      * Feat#getForbiddenEquipmentCategories}, as {@code DraconicoFeat#ASAS_DE_DRAGAO} does for a
      * Capa. A permanent restriction on the equipment list, distinct from a Forma's temporary
@@ -99,6 +106,13 @@ public class TranslatableMessages {
      * #CONSELHEIRO_STRENGTH_ABILITY_REQUIREMENT_NOT_MET}, which names Força outright.
      */
     public static final String CHOSEN_ATTRIBUTE_ABILITY_REQUIREMENT_NOT_MET = "CHOSEN_ATTRIBUTE_ABILITY_REQUIREMENT_NOT_MET";
+
+    /**
+     * The Talento picked for {@code DestinoFeat#EXCEPCIONALIDADE} is not one it offers the holder:
+     * not a Talento Racial, already held, or its requirements other than Raça are unmet — see
+     * {@code ExcepcionalidadeFeat#optionsFor}.
+     */
+    public static final String EXCEPCIONALIDADE_CHOICE_NOT_ELIGIBLE = "EXCEPCIONALIDADE_CHOICE_NOT_ELIGIBLE";
     public static final String NOT_AN_ATTACK_SKILL = "NOT_AN_ATTACK_SKILL";
 
     /**

@@ -2,6 +2,8 @@ package org.aventyrs.core.race;
 
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.feat.FeatCategory;
+import org.aventyrs.core.feat.StartingFeatSlot;
 import org.aventyrs.core.sheet.DlcRuleset;
 
 import java.util.List;
@@ -22,10 +24,10 @@ import java.util.Map;
  *   Continental) — same "no Language/Idioma concept exists" gap as every other race.</li>
  *   <li><b>Longevidade</b> (~50 anos) — same "no age/lifespan concept" gap as every other
  *   race; purely narrative today.</li>
- *   <li><b>1 Talento adicional</b> (entre os Talentos de Sobrevivência) <b>+ 1 Especialização
- *   adicional em até 2 Perícias</b> — same "no Feat catalog, no {@code Character.feats} list,
- *   {@link Race} has no hook for granting starting Perícia training" gap as every other
- *   race's free Talentos/Especializações.</li>
+ *   <li><b>1 Talento adicional</b> (entre os Talentos de Sobrevivência) <b>+ 1 Especialização adicional
+ *   em até 2 Perícias</b> — the Talento is built ({@link #getStartingFeatSlots()}); the
+ *   Especialização is the same "{@link Race} has no hook for granting starting Perícia training"
+ *   gap as every other race.</li>
  *   <li><b>Vigor de Epona</b> (+1 Multiplicador de PV; -1 todo Dano Físico Sofrido) — both
  *   halves would otherwise be plain {@code AttributeAbility} methods today (the PV-multiplier
  *   half a flat {@code @Modifier(ModifierType.LIFE_MULTIPLIER)}, exactly {@code
@@ -96,5 +98,10 @@ public class Orc implements Race {
     @Override
     public Character.CharacterBuilder generateEmptyCharacter(final List<DlcRuleset> dlcRulesetList) {
         return Character.builder();
+    }
+
+    @Override
+    public List<StartingFeatSlot> getStartingFeatSlots() {
+        return List.of(StartingFeatSlot.race(FeatCategory.SOBREVIVENCIA));
     }
 }

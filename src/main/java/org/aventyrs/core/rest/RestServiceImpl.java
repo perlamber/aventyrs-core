@@ -30,7 +30,10 @@ public class RestServiceImpl implements RestService {
         int bonus = character.getAttributeAbilities().stream()
                 .mapToInt(ability -> ability.resolveRestDeterminationPointsBonus(restType))
                 .sum();
-        return recovered(character.getEffectiveAttributeTotal(AttributeDomain.INSTINCT), restType) + bonus;
+        int featBonus = character.getFeats().stream()
+                .mapToInt(feat -> feat.resolveRestDeterminationPointsBonus(restType, character))
+                .sum();
+        return recovered(character.getEffectiveAttributeTotal(AttributeDomain.INSTINCT), restType) + bonus + featBonus;
     }
 
     @Override
