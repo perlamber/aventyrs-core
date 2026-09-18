@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.character.CriticalDamage;
 import org.aventyrs.core.magic.Spell;
 import org.aventyrs.core.modifier.ModifierType;
 
@@ -77,25 +78,23 @@ public enum OffensiveMasterpiece implements Masterpiece {
     PODEROSA("Poderosa", ItemRarity.RARE, 0, 0, 0, 0, 1, requirements(AttributeDomain.FOCUS, 3),
             "Magias de Dano ou Cura, Corrente de Efeitos – Foco: Efeito +2.",
             "Magias tem Dano e Cura +1, Duração +1."),
-    // TODO: needs a Margem Crítica hook on an enhancement (no Masterpiece/Improvement one exists —
-    // AbstractSkillInteraction#sumCriticalMarginIncrease scans Habilidades and Talentos only) and a
-    // Monstro classification of the attack's *target*, which no enhancement hook is handed.
+    // TODO: the Margem Crítica hook now exists (resolveCriticalMarginIncrease), but this clause also
+    // needs a Monstro classification of the attack's *target*, which no enhancement hook is handed.
     BANHADA_EM_PRATA("Banhada em Prata", ItemRarity.UNCOMMON, 0, 0, 1, 1, 1,
             requirements(AttributeDomain.GNOSE, 3),
             "Margem Crítica Menor aumentada em +2 contra Monstros.",
             "Benefícios desta Obra-Prima são aplicados apenas em ataques, Conjurações de Magias e efeitos rolados contra Monstros."),
-    // TODO: needs the same Margem Crítica hook as BANHADA_EM_PRATA, plus which Defesa pool the
-    // attack was rolled against (an enhancement is never told), and "ignora RM" — no mechanism
-    // bypasses a mitigation stage (see DamageService).
+    // TODO: needs which Defesa pool the attack was rolled against (an enhancement is never told),
+    // and "ignora RM" — no mechanism bypasses a mitigation stage (see DamageService).
     BANHADA_EM_OURO("Banhada em Ouro", ItemRarity.RARE, 0, 0, 1, 0, 1, requirements(AttributeDomain.FOCUS, 3),
             "Margem Crítica Menor de Ataques rolados contra a DM aumentada em +1.",
             "Primeiro Ataque da Rodada ignora RM."),
     MAGISTRAL("Magistral", ItemRarity.RARE, 0, 0, 1, 0, 0,
             requirements(AttributeDomain.STRENGTH, 3, AttributeDomain.DEXTERITY, 3),
             "Dano Base da Arma aumenta em +1.", null),
-    // TODO: this ruleset models no Acerto Crítico Maior margin at all (see CLAUDE.md's Resistência
-    // a Críticos row), and a Menor one needs the enhancement Margem Crítica hook BANHADA_EM_PRATA
-    // cites.
+    // The Característica Adicional's "Margem Crítica Menor +1" is real — resolveCriticalMarginIncrease.
+    // TODO: the Favor's "Margem Crítica Maior +1" is not: this ruleset models no Acerto Crítico
+    // Maior margin at all (see CLAUDE.md's Resistência a Críticos row).
     DECISIVA("Decisiva", ItemRarity.UNCOMMON, 0, 0, 0, 0, 0, requirements(AttributeDomain.DEXTERITY, 5),
             "Margem Crítica Maior +1.", "Margem Crítica Menor +1."),
     // TODO: an attack cannot be redirected to roll against the target's DM instead of their DF
@@ -118,8 +117,8 @@ public enum OffensiveMasterpiece implements Masterpiece {
             requirements(AttributeDomain.STRENGTH, 3),
             "Corrente de Efeitos – Gelo Verdadeiro: Dano +3.",
             "Dano causado é Físico Elemental: Gelo."),
-    // TODO: a critical hit's dano contribution is not modelled at all — see CLAUDE.md's "A critical
-    // hit grants Vantagem em Danos" bullet — and a Menor margin needs BANHADA_EM_PRATA's hook.
+    // Both halves are real now: the Favor's "Danos Críticos +3" through resolveCriticalDamage, the
+    // Característica Adicional's "Margem Crítica Menor +1" through resolveCriticalMarginIncrease.
     MITRAL("Material Especial - Mitral", ItemRarity.EPIC, 0, 0, 1, 0, 0,
             requirements(AttributeDomain.DEXTERITY, 3),
             "Danos Críticos aumentam em +3.", "Margem Crítica Menor +1."),
@@ -143,6 +142,9 @@ public enum OffensiveMasterpiece implements Masterpiece {
             requirements(AttributeDomain.CHARISMA, 5),
             "Apenas quando em acordo, a arma conta como um Subordinado de tipo determinado em sua confecção.",
             "Este item está vivo e é senciente, pode se comunicar telepaticamente com seu usuário e costuma ajudar seu portador quando seus objetivos estão alinhados.");
+
+    /** Mitral's Favor: "Danos Críticos aumentam em +3". */
+    private static final int MITRAL_CRITICAL_DAMAGE_BONUS = 3;
 
     private final String name;
     private final ItemRarity rarity;
@@ -197,6 +199,42 @@ public enum OffensiveMasterpiece implements Masterpiece {
             return 1;
         }
         return (this == BRUTAL || this == MAGISTRAL) && requirements.isMetBy(character) ? 1 : 0;
+    }
+
+    /**
+     * "Margem Crítica Menor +1", on the two constants that say it — each lowering by one the 3d6
+     * total an Acerto Crítico Menor with this weapon has to reach ({@code SkillRoll
+     * #getCriticalResult(int, int)}).
+     *
+     * <p><b>Ungated.</b> On both Decisiva and Mitral the clause is the Característica Adicional,
+     * not the Favor, so it applies to whoever swings the weapon — the same split {@link
+     * #resolveDamageBaseIncrease} makes for Adamantina. What each one's <em>Favor</em> says is a
+     * different figure and is not this: Decisiva's is a Margem Crítica <b>Maior</b> and Mitral's is
+     * its crit dano (see {@link #resolveCriticalDamage}).
+     *
+     * <p>Only ever asked about the weapon this Obra-Prima is fitted to, enforced by {@code
+     * Item#resolveEnhancementCriticalMarginIncrease}.
+     */
+    // TODO: Decisiva's Favor, "Margem Crítica Maior +1", is not expressible — this ruleset models no
+    //  Acerto Crítico Maior margin at all (it is fixed at three 6s; see CLAUDE.md's Resistência a
+    //  Críticos row).
+    @Override
+    public int resolveCriticalMarginIncrease(final Weapon weapon, final Character character) {
+        return this == DECISIVA || this == MITRAL ? 1 : 0;
+    }
+
+    /**
+     * Mitral's "Danos Críticos aumentam em +3" — a Favor, so it is gated on {@link
+     * #getRequirements()}, unlike the Margem Crítica Menor clause above.
+     */
+    // TODO: Banhada em Prata's and Banhada em Ouro's Margem Crítica Menor clauses are still
+    //  unexpressible: one needs the attack target's Monstro classification and the other which
+    //  Defesa the attack was rolled against, and an enhancement hook is handed neither.
+    @Override
+    public CriticalDamage resolveCriticalDamage(final Weapon weapon, final Character character) {
+        return this == MITRAL && requirements.isMetBy(character)
+                ? CriticalDamage.ofFlat(MITRAL_CRITICAL_DAMAGE_BONUS)
+                : CriticalDamage.NONE;
     }
 
     @Override

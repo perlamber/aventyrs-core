@@ -69,10 +69,11 @@ class CriticalResistanceTest {
         return CharacterSheet.of(character, new Player());
     }
 
-    /** The margin-widened attack, resolved against defender. */
+    /** The margin-widened attack, resolved against defender — a total of 16, which crits only
+     * while the attacker's +1 número stands (17 → 16) and not once RC cancels it. */
     private static CriticalResult attack(final CharacterSheet attacker, final CombatantSheet defender) {
         InteractionResult result = new AtaqueCorpoACorpoInteraction()
-                .applyTo(attacker, null, new SkillRoll(List.of(6, 5, 2)), defender, null);
+                .applyTo(attacker, null, new SkillRoll(List.of(6, 6, 4)), defender, null);
         return result.getCriticalResult();
     }
 

@@ -62,7 +62,8 @@ public final class FeatCatalog {
 
     /**
      * Every authored Talento character currently satisfies the prerequisites for and does not
-     * already hold — the "which Talentos can I pick?" list.
+     * already hold — the "which Talentos can I pick?" list. A creation-only Talento ({@link
+     * Feat#isAcquirableOnlyAtCreation()}) is never listed; starting slots have their own listing.
      *
      * <p>Eligibility only; it says nothing about whether the XP can be afforded. See {@code
      * FeatService#getAffordableFeats} for that, and {@code FeatService#getAvailableFeats} for the
@@ -81,6 +82,7 @@ public final class FeatCatalog {
      */
     public static List<Feat> availableFor(final Character character, final CharacterSheet sheet) {
         return ALL.stream()
+                .filter(feat -> !feat.isAcquirableOnlyAtCreation())
                 .filter(feat -> character.getFeats().stream()
                         .noneMatch(held -> held.catalogEntry() == feat))
                 .filter(feat -> feat.isEligible(character, sheet))

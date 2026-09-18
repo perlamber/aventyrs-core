@@ -88,9 +88,10 @@ public enum MonstruosoFeat implements Feat {
     },
 
     /** "Você é imune a Efeitos Críticos Menores. Sua resistência às Correntes de Efeitos aumenta em +2." */
-    // TODO: severity-keyed immunity — see ANATOMIA_INCOMUM. Note this is the one clause in the
-    //  catalog that would be *fully* served by widening CriticalEffect#applicableTo to consider
-    //  severity, since unlike its prerequisite it needs no per-Cena counter.
+    // The immunity is real as of 0.0.43: CriticalEffect#applicableTo now keys on severity as well
+    // as on CriticalEffectType, and drops the whole chain of a Menor critical against a holder.
+    // Unconditional, needing neither a Scene nor a per-Cena counter — which is exactly why this
+    // clause, and not ANATOMIA_INCOMUM's, is the one that fits the widened filter.
     // TODO: "resistência às Correntes de Efeitos" is a stat this core does not compute —
     //  EffectChainService resolves whether a Corrente triggers, with nothing to resist it by.
     ANATOMIA_UNICA(
@@ -98,7 +99,12 @@ public enum MonstruosoFeat implements Feat {
                     + "aumenta em +2.",
             FeatRequirements.builder()
                     .requiredFeat(ANATOMIA_INCOMUM)
-                    .build()),
+                    .build()) {
+        @Override
+        public boolean ignoresMinorCriticalEffects() {
+            return true;
+        }
+    },
 
     /**
      * "Você adquire Bônus Racial de +1 em Gnose ou Instinto, a sua escolha, mas sofre desvantagem

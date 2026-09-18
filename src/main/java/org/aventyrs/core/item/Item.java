@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.aventyrs.core.ability.ItemActiveAbility;
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.character.CriticalDamage;
 import org.aventyrs.core.character.DamageDescriptor;
 import org.aventyrs.core.magic.Spell;
 import org.aventyrs.core.modifier.ModifierType;
@@ -54,8 +55,9 @@ import org.aventyrs.core.modifier.ModifierType;
  * </ul>
  * The values themselves are real, exact data all the same — the same "can't apply it yet
  * doesn't mean can't compute it yet" discipline this codebase applies to {@code Santo
- * #getDefesasBonus}. DF/DM are what that discipline eventually pays off: they were exact data
- * with nothing to read them for several revisions before {@code DefenseService} existed.
+ * #resolveBaseDefesasBonus}. DF/DM are what that discipline eventually pays off: they were exact
+ * data with nothing to read them for several revisions before {@code DefenseService} existed, and
+ * Santo's own Defesas formulas waited even longer before anything could reach them.
  *
  * <p>The {@link ItemFavor} is the exception that *does* land on already-real machinery: its
  * bonuses are {@link ModifierType}-typed {@link ItemBonus}es, so a Favor granting RD (e.g.
@@ -340,6 +342,45 @@ public interface Item {
         int powerStoneBonus = getPowerStone() == null ? 0
                 : getPowerStone().resolveDamageBaseIncrease(weapon, getType());
         return masterpieceBonus + improvementBonus + powerStoneBonus;
+    }
+
+    /**
+     * Margem Crítica Menor "números" this item's fitted enhancements grant when weapon is the
+     * attack source — each one lowering the 3d6 total an Acerto Crítico Menor has to reach, summed
+     * by {@code AbstractSkillInteraction} alongside the Habilidade and Talento grants.
+     *
+     * <p>Host-scoped exactly as {@link #resolveEnhancementDamageBaseIncrease} is, and for the same
+     * reason: {@link OffensiveMasterpiece#DECISIVA}'s "Margem Crítica Menor +1" is a property of
+     * the weapon it is fitted to, so a Decisiva adaga must not sharpen the espada being swung.
+     */
+    default int resolveEnhancementCriticalMarginIncrease(final Weapon weapon, final Character character) {
+        if (isDestroyed() || (getType() == ItemType.OFFENSIVE && this != weapon)) {
+            return 0;
+        }
+        int masterpieceBonus = getMasterpiece() == null ? 0
+                : getMasterpiece().resolveCriticalMarginIncrease(weapon, character);
+        return masterpieceBonus + getImprovements().stream()
+                .mapToInt(improvement -> improvement.resolveCriticalMarginIncrease(weapon, character))
+                .sum();
+    }
+
+    /**
+     * What this item's fitted enhancements add to the dano roll of a critical hit made with weapon
+     * — {@link OffensiveImprovement#CRUEL}'s "Danos Críticos +2", {@link
+     * OffensiveMasterpiece#MITRAL}'s "+3" — summed by {@code AbstractSkillInteraction} into the
+     * {@link org.aventyrs.core.character.CriticalDamage} it reports.
+     *
+     * <p>Host-scoped like the two hooks above: a Cruel adaga sharpens no other weapon's crit.
+     */
+    default CriticalDamage resolveEnhancementCriticalDamage(final Weapon weapon, final Character character) {
+        if (isDestroyed() || (getType() == ItemType.OFFENSIVE && this != weapon)) {
+            return CriticalDamage.NONE;
+        }
+        CriticalDamage masterpiece = getMasterpiece() == null ? CriticalDamage.NONE
+                : getMasterpiece().resolveCriticalDamage(weapon, character);
+        return getImprovements().stream()
+                .map(improvement -> improvement.resolveCriticalDamage(weapon, character))
+                .reduce(masterpiece, CriticalDamage::plus);
     }
 
     /** This item's fitted enhancement reduction for one fully-classified incoming damage instance. */

@@ -9,6 +9,7 @@ import org.aventyrs.core.sheet.IllegalOperationException;
 import java.math.BigDecimal;
 import java.util.List;
 
+import static org.aventyrs.core.util.TranslatableMessages.FEAT_ONLY_AT_CREATION;
 import static org.aventyrs.core.util.TranslatableMessages.FEAT_PREREQUISITE_NOT_MET;
 import static org.aventyrs.core.util.TranslatableMessages.FEAT_REQUIRES_CHOICE;
 
@@ -16,6 +17,9 @@ public class FeatServiceImpl implements FeatService {
 
     @Override
     public Feat grantFeat(final Character character, final CharacterSheet characterSheet, final Feat feat) throws IllegalOperationException {
+        if (feat.catalogEntry().isAcquirableOnlyAtCreation()) {
+            throw new IllegalOperationException(FEAT_ONLY_AT_CREATION);
+        }
         if (!feat.isEligible(character, characterSheet)) {
             throw new IllegalOperationException(FEAT_PREREQUISITE_NOT_MET);
         }

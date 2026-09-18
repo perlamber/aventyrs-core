@@ -1,38 +1,40 @@
 package org.aventyrs.core.title.santo;
 
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.character.services.DeterminationPointsService;
+import org.aventyrs.core.character.services.DeterminationPointsServiceImpl;
 import org.aventyrs.core.character.services.HitPointsService;
 import org.aventyrs.core.character.services.HitPointsServiceImpl;
 import org.aventyrs.core.rest.RestService;
 import org.aventyrs.core.rest.RestServiceImpl;
-import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.CombatantSheet;
-import org.aventyrs.core.sheet.Interaction;
+import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.InteractionResult;
 import org.aventyrs.core.sheet.ResourceType;
+import org.aventyrs.core.title.AbstractTitleAbilityInteraction;
+import org.aventyrs.core.title.TitleAbilityActivationRequest;
+
+import static org.aventyrs.core.util.TranslatableMessages.TITLE_ABILITY_CHOICE_REQUIRED;
 
 /**
- * Abençoado pela Luz's own touch-heal-or-cure effect — mirrors an ordinary Perícia's
- * {@code <Skill>Interaction} shape (an {@link Interaction}&lt;{@link CombatantSheet}&gt;
- * computing an {@link InteractionResult}) minus anything Perícia-roll-specific: no {@code
- * skillRollBonus}, no dice, no {@code SkillRoll} parameter at all — this is a direct effect on
- * {@code target} (the touched character), not a Perícia test. Activated via {@link
- * Santo#activateAbencoadoPelaLuz}, which validates the actor actually holds this
- * Especialização before delegating here — this class itself doesn't check that, the same way
- * a {@code <Skill>Interaction} doesn't re-check the trained-Skill lookup its caller already
- * resolved.
+ * Abençoado pela Luz's own touch-heal-or-cure effect — an {@link AbstractTitleAbilityInteraction},
+ * so the shared gates run and the activator's 1PD are paid first. It acts on the request's
+ * {@link TitleAbilityActivationRequest#getEffectiveTarget() target} (the touched character — the
+ * activator themself when none is named), and the player picks the branch through the request's
+ * {@link Branch} choice. Activated via {@code AventyrTitle#activateAbility} (or {@link
+ * Santo#activateAbencoadoPelaLuz}), which checks the Especialização is held first.
  *
- * <p>{@code sceneContext} isn't consulted by this ability's own rules text (it names no
- * Scene-conditioned fact) but is still accepted, for the same reason every Interaction in this
- * core does: consistency with the established cascading shape, and so a future Título ability
- * that *does* need one doesn't need a differently-shaped entry point.
- *
- * <p>This is a single, hand-written class, not yet a generalized "Título ability activation"
- * base class — mirrors {@code AbstractSkillInteraction}'s own history (built only once
- * multiple Perícias needed the identical shape). Only one Título ability effect is real enough
- * to activate today; extract a shared base once a second one needs the same cascade.
+ * <p>No Perícia roll is involved — no {@code skillRollBonus}, no dice: this is a direct effect.
  */
-public class AbencoadoPelaLuzInteraction implements Interaction<CombatantSheet> {
+public class AbencoadoPelaLuzInteraction extends AbstractTitleAbilityInteraction {
+
+    /** The two things Abençoado pela Luz can do with one touch. */
+    public enum Branch {
+        /** Heal the target as if they'd taken a Descanso Curto. */
+        HEAL,
+        /** Remove a Malefício — still inert, see {@link #resolve}. */
+        REMOVE_MALEFICIO
+    }
 
     private final RestService restService;
     private final HitPointsService hitPointsService;
@@ -46,32 +48,39 @@ public class AbencoadoPelaLuzInteraction implements Interaction<CombatantSheet> 
     }
 
     public AbencoadoPelaLuzInteraction(final RestService restService, final HitPointsService hitPointsService) {
+        this(restService, hitPointsService, new DeterminationPointsServiceImpl());
+    }
+
+    public AbencoadoPelaLuzInteraction(final RestService restService, final HitPointsService hitPointsService,
+                                       final DeterminationPointsService determinationPointsService) {
+        super(SantoSpecialization.ABENCOADO_PELA_LUZ, determinationPointsService);
         this.restService = restService;
         this.hitPointsService = hitPointsService;
     }
 
     /**
-     * Safe no-op default (mirrors {@code DamageInteraction#applyTo(CombatantSheet)}'s own
-     * "insufficient information given" shape) — {@code chooseHeal} genuinely needs a real
-     * choice to mean anything, so the bare 1-arg form (the only one {@code
-     * CombatantSheet#receiveInteraction} can call) picks neither branch rather than guessing.
+     * The branch is the player's call and there is no safe default between a heal and a cure, so
+     * an activation without one is refused before its PD are spent.
      */
     @Override
-    public InteractionResult applyTo(final CombatantSheet target) {
-        return applyTo(target, null, false);
+    protected void validate(final TitleAbilityActivationRequest request) {
+        if (request.getChoice(Branch.class).isEmpty()) {
+            throw new IllegalOperationException(TITLE_ABILITY_CHOICE_REQUIRED);
+        }
     }
 
     /**
-     * chooseHeal picks between Abençoado pela Luz's two branches: {@code true} heals target as
-     * if they'd taken a Descanso Curto — real, via {@link SantoSpecialization
-     * #resolveShortRestHealAmount} — reported as a {@link InteractionResult#getResourceGainValue()}/
-     * {@link InteractionResult#getResourceGainType()} pair. {@code false} attempts to remove a
-     * Malefício — still TODO'd (see that same method's own javadoc for the missing
-     * classification) — so this branch applies nothing and reports an inert result.
+     * {@link Branch#HEAL} heals the target as if they'd taken a Descanso Curto — real, via {@link
+     * SantoSpecialization#resolveShortRestHealAmount} — reported as a {@link
+     * InteractionResult#getResourceGainValue()}/{@link InteractionResult#getResourceGainType()}
+     * pair. {@link Branch#REMOVE_MALEFICIO} is still TODO'd (see that same method's own javadoc for
+     * the missing classification), so it applies nothing and reports an inert result — the PD are
+     * still paid, since the activation itself did happen.
      */
-    public InteractionResult applyTo(final CombatantSheet target, final SceneContext sceneContext, final boolean chooseHeal) {
-        Character character = target.getCharacter();
-        if (!chooseHeal) {
+    @Override
+    protected InteractionResult resolve(final TitleAbilityActivationRequest request, final int determinationPoints) {
+        CombatantSheet target = request.getEffectiveTarget();
+        if (request.getChoice(Branch.class).orElseThrow() != Branch.HEAL) {
             // TODO: Malefício removal — see SantoSpecialization#resolveShortRestHealAmount's
             // own citation for the missing Malefício/Encantamento/Maldição/Doença
             // classification this branch needs before it can do anything real.
@@ -79,6 +88,7 @@ public class AbencoadoPelaLuzInteraction implements Interaction<CombatantSheet> 
                     .resultStatus(hitPointsService.getStatus(target))
                     .build();
         }
+        Character character = target.getCharacter();
         int healed = SantoSpecialization.ABENCOADO_PELA_LUZ.resolveShortRestHealAmount(character, restService);
         target.heal(healed);
         return InteractionResult.builder()

@@ -1,6 +1,8 @@
 package org.aventyrs.core.title.santo;
 
 import org.aventyrs.core.title.AventyrTitle;
+import org.aventyrs.core.sheet.ActionCost;
+import org.aventyrs.core.title.PDCost;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -34,40 +36,33 @@ class AbencoadoPelaLuzAbilityTest {
 
     @Test
     void orgulhoEldurianoReportsItsMinimumVariableCost() {
-        assertEquals(1, AbencoadoPelaLuzAbility.ORGULHO_ELDURIANO.getPDCost());
-        assertEquals(2, AbencoadoPelaLuzAbility.ORGULHO_ELDURIANO.getActionPointCost());
-        assertFalse(AbencoadoPelaLuzAbility.ORGULHO_ELDURIANO.isReactionActivation());
-        assertFalse(AbencoadoPelaLuzAbility.ORGULHO_ELDURIANO.isFreeActionActivation());
+        assertEquals(PDCost.variable(1), AbencoadoPelaLuzAbility.ORGULHO_ELDURIANO.getPDCost());
+        assertEquals(ActionCost.ofActionPoints(2), AbencoadoPelaLuzAbility.ORGULHO_ELDURIANO.getActionPointCost());
     }
 
     @Test
     void gritoDeGuerraVulcanoHasTheRightActivationCost() {
-        assertEquals(3, AbencoadoPelaLuzAbility.GRITO_DE_GUERRA_VULCANO.getPDCost());
-        assertEquals(1, AbencoadoPelaLuzAbility.GRITO_DE_GUERRA_VULCANO.getActionPointCost());
-        assertFalse(AbencoadoPelaLuzAbility.GRITO_DE_GUERRA_VULCANO.isReactionActivation());
-        assertFalse(AbencoadoPelaLuzAbility.GRITO_DE_GUERRA_VULCANO.isFreeActionActivation());
+        assertEquals(PDCost.fixed(3), AbencoadoPelaLuzAbility.GRITO_DE_GUERRA_VULCANO.getPDCost());
+        assertEquals(ActionCost.ofActionPoints(1), AbencoadoPelaLuzAbility.GRITO_DE_GUERRA_VULCANO.getActionPointCost());
     }
 
     @Test
     void peleRochosaDeEponaHasTheRightActivationCost() {
-        assertEquals(2, AbencoadoPelaLuzAbility.PELE_ROCHOSA_DE_EPONA.getPDCost());
-        assertEquals(2, AbencoadoPelaLuzAbility.PELE_ROCHOSA_DE_EPONA.getActionPointCost());
-        assertFalse(AbencoadoPelaLuzAbility.PELE_ROCHOSA_DE_EPONA.isReactionActivation());
-        assertFalse(AbencoadoPelaLuzAbility.PELE_ROCHOSA_DE_EPONA.isFreeActionActivation());
+        assertEquals(PDCost.fixed(2), AbencoadoPelaLuzAbility.PELE_ROCHOSA_DE_EPONA.getPDCost());
+        assertEquals(ActionCost.ofActionPoints(2), AbencoadoPelaLuzAbility.PELE_ROCHOSA_DE_EPONA.getActionPointCost());
     }
 
     @Test
     void gloriaRelampejanteDeTeslaIsAFreeActionActivation() {
-        assertEquals(2, AbencoadoPelaLuzAbility.GLORIA_RELAMPEJANTE_DE_TESLA.getPDCost());
-        assertEquals(0, AbencoadoPelaLuzAbility.GLORIA_RELAMPEJANTE_DE_TESLA.getActionPointCost());
-        assertFalse(AbencoadoPelaLuzAbility.GLORIA_RELAMPEJANTE_DE_TESLA.isReactionActivation());
-        assertTrue(AbencoadoPelaLuzAbility.GLORIA_RELAMPEJANTE_DE_TESLA.isFreeActionActivation());
+        assertEquals(PDCost.fixed(2), AbencoadoPelaLuzAbility.GLORIA_RELAMPEJANTE_DE_TESLA.getPDCost());
+        assertEquals(ActionCost.FREE_ACTION, AbencoadoPelaLuzAbility.GLORIA_RELAMPEJANTE_DE_TESLA.getActionPointCost());
     }
 
     @Test
     void noAbilityIsPassive() {
-        // All four have an explicit activation (PA, or Ação Livre for GLORIA_RELAMPEJANTE_DE_TESLA
-        // despite its 0 actionPointCost) — none is "Custo de Ativação: Nenhum, habilidade passiva".
+        // All four have an explicit activation (PA, or Ação Livre for GLORIA_RELAMPEJANTE_DE_TESLA,
+        // which spends no PA but is still player-triggered) — none is "Custo de Ativação: Nenhum,
+        // habilidade passiva".
         for (AbencoadoPelaLuzAbility ability : AbencoadoPelaLuzAbility.values()) {
             assertFalse(ability.isPassive());
         }
@@ -140,15 +135,15 @@ class AbencoadoPelaLuzAbilityTest {
         assertTrue(AbencoadoPelaLuzAbility.GLORIA_RELAMPEJANTE_DE_TESLA.isEligible(title));
     }
 
-    // Only GRITO_DE_GUERRA_VULCANO has a real, activatable Interaction — its own Vantagem/
-    // Defesas Blessings are reported by GritoDeGuerraVulcanoInteraction (see Santo
-    // #activateGritoDeGuerraVulcano). The other three constants are still fully TODO'd, so
-    // getInteractionClass() has nothing real to point to for them yet.
+    // Three of the four are activatable through AventyrTitle#activateAbility. Only
+    // PELE_ROCHOSA_DE_EPONA has nothing to point to: its RA is grantable now, but the first-hit
+    // negation that gates it has no mechanism (see the constant's own comment).
     @Test
-    void onlyGritoDeGuerraVulcanoReportsAnInteractionClass() {
-        assertEquals(Optional.empty(), AbencoadoPelaLuzAbility.ORGULHO_ELDURIANO.getInteractionClass());
+    void onlyTheActivatableAbilitiesReportAnInteractionClass() {
+        assertEquals(Optional.of(OrgulhoEldurianoInteraction.class), AbencoadoPelaLuzAbility.ORGULHO_ELDURIANO.getInteractionClass());
         assertEquals(Optional.of(GritoDeGuerraVulcanoInteraction.class), AbencoadoPelaLuzAbility.GRITO_DE_GUERRA_VULCANO.getInteractionClass());
         assertEquals(Optional.empty(), AbencoadoPelaLuzAbility.PELE_ROCHOSA_DE_EPONA.getInteractionClass());
-        assertEquals(Optional.empty(), AbencoadoPelaLuzAbility.GLORIA_RELAMPEJANTE_DE_TESLA.getInteractionClass());
+        assertEquals(Optional.of(GloriaRelampejanteDeTeslaInteraction.class),
+                AbencoadoPelaLuzAbility.GLORIA_RELAMPEJANTE_DE_TESLA.getInteractionClass());
     }
 }

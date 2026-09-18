@@ -11,6 +11,7 @@ import org.aventyrs.core.character.DefenseType;
 import org.aventyrs.core.character.services.EquipmentCraftingServiceImpl;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.race.CreatureType;
+import org.aventyrs.core.sheet.ActionCost;
 import org.aventyrs.core.sheet.TemporaryBonus;
 import org.aventyrs.core.sheet.TemporaryEffect;
 import org.aventyrs.core.sheet.IllegalOperationException;
@@ -566,7 +567,7 @@ class ItemForgeryTest {
     private static ItemActiveAbility testAbility() {
         return new ItemActiveAbility() {
             @Override public String getDescription() { return "Uma habilidade de teste."; }
-            @Override public int getActionPointCost() { return 1; }
+            @Override public ActionCost getActionPointCost() { return ActionCost.ofActionPoints(1); }
             @Override public int getMagicPointCost() { return 0; }
             @Override public int getDurationInRounds() { return 1; }
             @Override public TemporaryEffect resolveEffect(final Character character) {

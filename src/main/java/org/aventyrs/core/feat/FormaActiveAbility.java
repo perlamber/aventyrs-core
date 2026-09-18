@@ -4,6 +4,7 @@ import lombok.Getter;
 import org.aventyrs.core.ability.ActiveAbility;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.rest.RestType;
+import org.aventyrs.core.sheet.ActionCost;
 import org.aventyrs.core.sheet.FormType;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.modifier.ModifierType;
@@ -36,7 +37,7 @@ import java.util.List;
 final class FormaActiveAbility implements ActiveAbility {
 
     /** "requer 3PA + 3PD" — identical on both Talentos. */
-    private static final int ACTION_POINT_COST = 3;
+    private static final ActionCost ACTION_POINT_COST = ActionCost.ofActionPoints(3);
     private static final int DETERMINATION_POINT_COST = 3;
 
     /** "A Duração … é de 3 Rodadas" / "dura por apenas 3 Rodadas". */
@@ -80,7 +81,7 @@ final class FormaActiveAbility implements ActiveAbility {
     }
 
     @Override
-    public int getActionPointCost() {
+    public ActionCost getActionPointCost() {
         return ACTION_POINT_COST;
     }
 

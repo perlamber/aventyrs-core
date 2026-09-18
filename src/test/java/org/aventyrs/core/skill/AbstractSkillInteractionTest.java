@@ -570,15 +570,15 @@ class AbstractSkillInteractionTest {
      * Ataque à Distância during a Cena de Combate's early Rounds — exercised end-to-end through
      * {@link AtaqueADistanciaInteraction} (this ability's own Perícia) to prove {@code
      * AbstractSkillInteraction#sumCriticalMarginIncrease} actually reaches {@code
-     * SkillRoll#getCriticalResult(int)}, not just {@code DexterityAbilityTest}'s own
-     * isolated {@code resolveCriticalMarginIncrease} coverage. 6+5+2 has only one 6 — not
-     * Acerto Crítico Menor at margin 0 — but with the +1 margin this ability grants in Round 1,
-     * the 5 now counts alongside the 6 for the qualifying pair.
+     * SkillRoll#getCriticalResult(int, int)}, not just {@code DexterityAbilityTest}'s own
+     * isolated {@code resolveCriticalMarginIncrease} coverage. A total of 16 falls short of the
+     * default Margem Crítica Menor of 17 — but the +1 this ability grants in Round 1 lowers the
+     * margin to exactly 16.
      */
     @Test
     void applyToWidensAcertoCriticoMenorViaLetalidadeProgressivaDuringCombat() {
         CharacterSheet sheet = sheetHoldingLetalidadeProgressiva();
-        SkillRoll roll = new SkillRoll(List.of(6, 5, 2));
+        SkillRoll roll = new SkillRoll(List.of(6, 6, 4));
         SceneContext combatRoundOne = new SceneContext(List.of(), List.of(), Map.of(), null, true, 1, false);
 
         InteractionResult withoutContext = new AtaqueADistanciaInteraction().applyTo(sheet, null, roll);
@@ -598,13 +598,13 @@ class AbstractSkillInteractionTest {
     /**
      * {@code AtaqueCorpoACorpoCompetencyAbility#ATAQUE_PRECISO} widens Acerto Crítico Menor's
      * margin by +1 with no condition at all — so unlike {@code LETALIDADE_PROGRESSIVA} above it
-     * applies with no {@code SceneContext}. 6+5+2 has a single 6 (not Acerto Crítico Menor at
-     * margin 0); at margin 1 the 5 counts alongside it for the qualifying pair.
+     * applies with no {@code SceneContext}. A total of 16 is one short of the default margin of
+     * 17; at +1 número the margin is exactly 16.
      */
     @Test
     void applyToWidensAcertoCriticoMenorViaAtaquePrecisoWithNoScene() {
         CharacterSheet sheet = sheetHoldingAtaquePreciso();
-        SkillRoll roll = new SkillRoll(List.of(6, 5, 2));
+        SkillRoll roll = new SkillRoll(List.of(6, 6, 4));
 
         InteractionResult result = new AtaqueCorpoACorpoInteraction().applyTo(sheet, null, roll);
 
@@ -615,7 +615,7 @@ class AbstractSkillInteractionTest {
     @Test
     void ataquePrecisoDoesNotWidenAnotherPericiasMargin() {
         CharacterSheet sheet = sheetHoldingAtaquePreciso();
-        SkillRoll roll = new SkillRoll(List.of(6, 5, 2));
+        SkillRoll roll = new SkillRoll(List.of(6, 6, 4));
 
         InteractionResult result = new AtaqueADistanciaInteraction().applyTo(sheet, null, roll);
 
@@ -625,13 +625,13 @@ class AbstractSkillInteractionTest {
     /**
      * The attack target's own Resistência a Críticos ({@code ModifierType.CRITICAL_RESISTANCE},
      * as {@code AnaoFeat#VIGOR_DO_INVERNO} grants) narrows the attacker's Margem Crítica Menor
-     * back. 6+5+2 crits at Ataque Preciso's +1 margin; one RC instance (-2) more than cancels it,
-     * leaving a single 6 — no crit.
+     * back. A total of 16 crits at Ataque Preciso's +1 margin (17 → 16); one RC instance (-2) more
+     * than cancels that widening, leaving the margin at its unwidened 17 — no crit.
      */
     @Test
     void applyToSubtractsTheAttackTargetsCriticalResistanceFromTheMargin() {
         CharacterSheet sheet = sheetHoldingAtaquePreciso();
-        SkillRoll roll = new SkillRoll(List.of(6, 5, 2));
+        SkillRoll roll = new SkillRoll(List.of(6, 6, 4));
 
         CharacterSheet defender = CharacterSheet.of(CharacterFixture.blank(CharacterFixture.BLANK).build(), new Player());
         InteractionResult withoutResistance = new AtaqueCorpoACorpoInteraction()
@@ -658,15 +658,15 @@ class AbstractSkillInteractionTest {
      * ArtesAprimorarComArteAbility}'s "Margem Crítica Menor" branch) are meant to be additive —
      * exercised together, through the ATLETISMO-flavored {@code GangUpBonusInteraction} above,
      * to prove {@code sumCriticalMarginIncrease} actually sums across sources rather than only
-     * ever picking up one. 3+3+1 needs a margin of at least 4 to read as Acerto Crítico Menor
-     * (widening the qualifying face down to 2, so both 3s count): ACE alone only grants its
-     * +3 outside a Cena de Combate for a non-Ataque skill (ATLETISMO qualifies), and Artes'
-     * branch alone only grants +1 — neither alone reaches 4, but together they do.
+     * ever picking up one. A total of 14 needs a widening of at least 3 to read as Acerto Crítico
+     * Menor (17 → 14): ACE alone only grants its +3 outside a Cena de Combate for a non-Ataque
+     * skill (ATLETISMO qualifies) — and only reaches it with no SceneContext at all to prove it is
+     * conditional — while Artes' branch alone grants +1, so the two together clear it.
      */
     @Test
     void applyToSumsCriticalMarginIncreaseAcrossAllThreeAbilitySources() {
         CharacterSheet sheet = sheetHoldingAceAndArtesMarginSources();
-        SkillRoll roll = new SkillRoll(List.of(3, 3, 1));
+        SkillRoll roll = new SkillRoll(List.of(6, 5, 3));
         SceneContext nonCombatContext = new SceneContext(List.of(), List.of(), Map.of(), null, false, 0, false);
 
         InteractionResult withoutContext = interaction.applyTo(sheet, null, roll);

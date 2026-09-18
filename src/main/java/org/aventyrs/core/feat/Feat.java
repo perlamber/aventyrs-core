@@ -18,7 +18,10 @@ import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.FormType;
 import org.aventyrs.core.sheet.FormAccess;
+import org.aventyrs.core.sheet.PendingAcquisition;
 import org.aventyrs.core.skill.CriticalResult;
+import org.aventyrs.core.skill.SkillRoll;
+import org.aventyrs.core.character.CriticalDamage;
 import org.aventyrs.core.character.DamageBonus;
 import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.character.AttributeValue;
@@ -835,6 +838,44 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     }
 
     /**
+     * What this Talento adds to the dano roll of an attack its holder lands as a critical —
+     * {@code ArtilhariaFeat#MIRA_MORTAL}'s "+1d6 de dano adicional". {@link CriticalDamage#NONE} by
+     * default, and only called when {@code criticalResult} is an Acerto Crítico and {@code
+     * attackSkill.isAttackSkill()}, so an override never has to test either.
+     *
+     * <p>Summed by {@code AbstractSkillInteraction#sumCriticalDamage} on top of the baseline
+     * Vantagem em Danos that every crit grants — see {@link CriticalDamage} for the baseline and
+     * for why a granted die is not a {@code DamageBonus}. A clause that <em>replaces</em> that
+     * baseline instead of adding to it says so through {@link
+     * #replacesBaselineCriticalAdvantage(SkillType, AttackSource, Character)}.
+     *
+     * <p>{@code skillRoll} is the attack roll itself, for a clause scoped to <b>how</b> the attack
+     * was made: {@code SkillRoll#getActivatedFeats()} is what makes Mira Mortal's "usando o talento
+     * ‘Mira Impecável’" expressible, and {@code getManoeuvre()}/{@code getActionCost()} are in
+     * reach for the same kind of clause. {@code null} whenever the caller stated no roll.
+     */
+    default CriticalDamage resolveCriticalDamage(final SkillType attackSkill, final SceneContext sceneContext,
+                                                 final Character character, final AttackSource attackSource,
+                                                 final CriticalResult criticalResult, final SkillRoll skillRoll) {
+        return CriticalDamage.NONE;
+    }
+
+    /**
+     * Whether this Talento <b>replaces</b> the baseline Vantagem em Danos a critical hit grants
+     * with whatever {@link #resolveCriticalDamage} returns, rather than adding to it — {@code
+     * AssassinoFeat#VIOLENCIA_DESCOMUNAL}'s "Você não recebe Vantagem em Danos em seus Acertos
+     * Críticos, ao invés disso recebe Bônus de +1d6". False by default.
+     *
+     * <p>Held separately from the grant itself because the two answers are independent: a Talento
+     * can add a die and leave the +2 standing (Mira Mortal), or swap the +2 for one. One holder
+     * saying so drops the baseline for that attack, however many other sources add to it.
+     */
+    default boolean replacesBaselineCriticalAdvantage(final SkillType attackSkill, final AttackSource attackSource,
+                                                      final Character character) {
+        return false;
+    }
+
+    /**
      * The {@link ActiveAbility} this Talento grants its holder — a Poder Vampírico (see {@code
      * org.aventyrs.core.feat.PoderVampiricoActiveAbility}), triggered through {@code
      * org.aventyrs.core.character.services.ActiveAbilityService#activate}. Empty by default.
@@ -862,6 +903,26 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      * than one {@code FeatChoice}; none in the catalog does yet, but the shape allows it.
      */
     default List<FeatChoice<?>> resolveRequiredChoices(final Character holder) {
+        return List.of();
+    }
+
+    /**
+     * Whether this Talento can be taken only while the character is being created ("Apenas
+     * personagens recém-criados") — through {@code CharacterCreationService#grantStartingFeats},
+     * never {@code FeatService#grantFeat}, and never listed by {@link FeatCatalog#availableFor}.
+     * Asked of the catalog constant, so a choice-carrying form needn't repeat it.
+     */
+    default boolean isAcquirableOnlyAtCreation() {
+        return false;
+    }
+
+    /**
+     * What this Talento still owes its holder at the end of a game session — empty by default, and
+     * empty again once it has been granted. {@code CharacterSheet#applySessionEndAcquisitions}
+     * collects and performs these. See {@link PendingAcquisition} for why this is derived rather
+     * than stored.
+     */
+    default List<PendingAcquisition> resolveSessionEndAcquisitions(final Character character) {
         return List.of();
     }
 
@@ -1333,6 +1394,27 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      */
     default int resolveCriticalResistance(final Character character, final SceneContext sceneContext) {
         return 0;
+    }
+
+    /**
+     * Whether this Talento makes its holder <b>immune to Efeitos Críticos Menores</b> outright —
+     * {@code MonstruosoFeat#ANATOMIA_UNICA}'s "Você é imune a Efeitos Críticos Menores", the only
+     * one today. {@code false} by default.
+     *
+     * <p>Distinct from {@link #resolveCriticalResistance}, which narrows the <i>Margem</i> at which
+     * an attack crits at all; this vetoes the Efeito a Menor critical would have inflicted, through
+     * {@code CriticalEffect#applicableTo}. Distinct too from {@code
+     * Race#getCriticalEffectImmunities()}, which keys on <i>which</i> effect rather than on
+     * severity — a Troll's vegetal anatomy shrugs off Sangramento specifically, whatever its
+     * severity, while this shrugs off every Menor one whatever it is.
+     *
+     * <p>Unconditional, so it takes nothing: no {@code Character}, no {@code SceneContext}. The one
+     * clause that would need a condition — {@code ANATOMIA_INCOMUM}'s "o primeiro Efeito Crítico
+     * Menor ... em cada Cena de Combate" — needs a per-Cena counter nothing tracks, and is
+     * deliberately left unexpressed rather than approximated by this hook.
+     */
+    default boolean ignoresMinorCriticalEffects() {
+        return false;
     }
 
     /**

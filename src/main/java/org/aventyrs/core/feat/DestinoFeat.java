@@ -10,6 +10,7 @@ import org.aventyrs.core.magic.Spell;
 import org.aventyrs.core.magic.SpellTree;
 import org.aventyrs.core.rest.RestType;
 import org.aventyrs.core.sheet.CombatantAction;
+import org.aventyrs.core.title.AventyrTitle;
 
 import java.util.List;
 
@@ -27,9 +28,10 @@ import java.util.List;
  *
  * <p>The second is the <b>Despertar timeline</b>. Half the Aventyr-tier constants here delay,
  * accelerate, or forgo awakening a Título, and trade on <i>when</i> one awakens. This core models
- * a Título as simply held or not (see {@code FeatRequirements#requiredAwakenedTitles}); there is
- * no EXP threshold at which one awakens, and no game session for "ao fim da primeira sessão" to
- * name.
+ * a Título as simply held or not (see {@code FeatRequirements#requiredAwakenedTitles}), and there
+ * is no EXP threshold at which one awakens. A session end is the one moment that exists: {@link
+ * #DESPERTAR_ANTECIPADO} awakens its Título then, through {@code
+ * CharacterSheet#applySessionEndAcquisitions}.
  *
  * <p><b>Counting the un-awakened ones is <i>not</i> part of that gap</b>, and used to be filed
  * under it by mistake. A Character has exactly three {@link TitleSlot}s, so "cada Título ainda não
@@ -355,14 +357,30 @@ public enum DestinoFeat implements Feat {
                     .requiredAwakenedTitles(1)
                     .build()),
 
-    /** "Seu personagem desperta seu Título Primário ao fim da primeira sessão de Jogo." */
-    // TODO: needs both the Despertar timeline and a game-session concept — the gap catalog
-    //  records that no session state exists, only a consumer-triggered recovery call.
-    // TODO: "Apenas personagens recém-criados" is a creation-time-only restriction with no
-    //  representation.
+    /**
+     * "Seu personagem desperta seu Título Primário ao fim da primeira sessão de Jogo." Pré-requisito:
+     * "Apenas personagens recém-criados".
+     *
+     * <p><b>Real.</b> The player picks the Título when taking the Talento ({@link
+     * DespertarAntecipadoFeat}, offered by {@link #resolveRequiredChoices}), and {@code
+     * CharacterSheet#applySessionEndAcquisitions} awakens it into the Título Primário slot when
+     * the session ends. "Recém-criados" is {@link #isAcquirableOnlyAtCreation()}: only a starting
+     * Talento slot can take it.
+     */
     DESPERTAR_ANTECIPADO(
             "Seu personagem desperta seu Título Primário ao fim da primeira sessão de Jogo.",
-            FeatRequirements.builder().build()),
+            FeatRequirements.builder().build()) {
+        /** "seu Título Primário" — which one; see DespertarAntecipadoFeat#optionsFor. */
+        @Override
+        public List<FeatChoice<?>> resolveRequiredChoices(final Character holder) {
+            return List.of(FeatChoice.ofOne(AventyrTitle.class, DespertarAntecipadoFeat.optionsFor(holder)));
+        }
+
+        @Override
+        public boolean isAcquirableOnlyAtCreation() {
+            return true;
+        }
+    },
 
     /** "Você desperta seu Título Secundário ao atingir a marca de 23EXP." */
     // TODO: same missing Despertar timeline; and the EXP threshold is a CharacterSheet value

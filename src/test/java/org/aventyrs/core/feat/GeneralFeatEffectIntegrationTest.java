@@ -303,10 +303,15 @@ class GeneralFeatEffectIntegrationTest {
     @Test
     void defesaDeMaosLimpasGrowsByOnePerTituloAventyrDesperto() throws IllegalOperationException {
         Character character = unarmedMartialArtist();
+        // The Título is granted *before* the baseline is taken, so what this measures is the
+        // Talento's own "+1 por Título Aventyr Desperto" and nothing else. Holding a Santo is no
+        // longer Defesas-neutral: its own Despertar base effect grants +2 as well (see
+        // AventyrTitle#resolveBaseDefesasBonus), which would otherwise land in this delta and make
+        // the Talento look like it scaled twice as fast.
+        character.grantTitle(new Santo(List.of(), List.of()), TitleSlot.PRIMARY);
         int before = defenseService.getTotalDefense(character, DefenseType.PHYSICAL);
 
         acquire(character, ArtesMarciaisFeat.ARTISTA_MARCIAL, ArtesMarciaisFeat.DEFESA_DE_MAOS_LIMPAS);
-        character.grantTitle(new Santo(List.of(), List.of()), TitleSlot.PRIMARY);
 
         assertEquals(before + 3, defenseService.getTotalDefense(character, DefenseType.PHYSICAL));
     }
@@ -464,7 +469,7 @@ class GeneralFeatEffectIntegrationTest {
 
     /**
      * TIGRE E SERPENTE's flat "+1 número" to the Margem Crítica of an Ataque Corpo-a-Corpo: a
-     * roll of two 5s reads as a critical only once the margin is widened, and only for melee.
+     * total of 16 reads as a critical only once the margin is widened to it, and only for melee.
      */
     @Test
     void tigreESerpenteWidensTheMeleeCriticalMarginByOne() throws IllegalOperationException {
@@ -476,7 +481,7 @@ class GeneralFeatEffectIntegrationTest {
                 .primaryTitle(new Santo(List.of(), List.of()))
                 .build();
         CharacterSheet sheet = CharacterSheet.of(character, new Player());
-        SkillRoll twoFives = new SkillRoll(List.of(5, 5, 1));
+        SkillRoll twoFives = new SkillRoll(List.of(6, 6, 4));
 
         assertEquals(CriticalResult.NONE, SkillType.ATAQUE_CORPO_A_CORPO.newInteraction()
                 .applyTo(sheet, null, twoFives).getCriticalResult());
@@ -605,7 +610,7 @@ class GeneralFeatEffectIntegrationTest {
         CharacterSheet sheet = CharacterSheet.of(character, new Player());
         Weapon lightBlade = weapon(ItemCategory.LIGHT_BLADE);
         Weapon heavyBlade = weapon(ItemCategory.HEAVY_BLADE);
-        SkillRoll fives = new SkillRoll(List.of(5, 5, 1));
+        SkillRoll fives = new SkillRoll(List.of(6, 6, 4));
 
         acquire(character, EspecialistaEmArmaFeat.of(AttackMethod.LIGHT_BLADE),
                 DuelistaFeat.DOMINAR_ARMAS, DuelistaFeat.MAESTRIA_EM_ARMA);
@@ -807,9 +812,9 @@ class GeneralFeatEffectIntegrationTest {
         int meleeBefore = rollBonus(sheet, SkillType.ATAQUE_CORPO_A_CORPO, desert);
         int atletismoBefore = rollBonus(sheet, SkillType.ATLETISMO, forest);
         int danoBefore = meleeDanoBonus(sheet, forest);
-        // A pair of 5s: NONE at margin 0, ACERTO_CRITICO_MENOR once MESTRE_DE_CACA's +1 widens
-        // the qualifying face from 6 down to 5.
-        SkillRoll roll = new SkillRoll(List.of(5, 5, 2));
+        // A total of 16: NONE at the default margin of 17, ACERTO_CRITICO_MENOR once
+        // MESTRE_DE_CACA's +1 número lowers the margin to 16.
+        SkillRoll roll = new SkillRoll(List.of(6, 6, 4));
 
         acquire(character, TerrenoPrediletoFeat.of(TerrainType.FOREST), SobrevivenciaFeat.MESTRE_DE_CACA);
 
@@ -906,7 +911,9 @@ class GeneralFeatEffectIntegrationTest {
                         trained(new org.aventyrs.core.skill.ataqueadistancia.AtaqueADistancia(), 2))
                 .build();
         CharacterSheet sheet = CharacterSheet.of(character, new Player());
-        SkillRoll fives = new SkillRoll(List.of(5, 5, 1));
+        // A total of 16 — one short of the default Margem Crítica Menor of 17, so it crits only
+        // where this Talento's +1 número applies.
+        SkillRoll fives = new SkillRoll(List.of(6, 6, 4));
         Weapon bow = weapon(ItemCategory.BOW);
 
         acquire(character, AcertoCriticoAprimoradoFeat.of(AttackMethod.OFFENSIVE_MAGIC));
@@ -932,14 +939,14 @@ class GeneralFeatEffectIntegrationTest {
 
     /**
      * "+2 na Margem Crítica de todas as suas rolagens de Perícias", excluding Perícias de Ataque
-     * and Esquiva e Aparar. 4+4+2 is no critical at margin 0; widening by 2 lowers the qualifying
-     * face to 4, so the pair of 4s now reads as Acerto Crítico Menor.
+     * and Esquiva e Aparar. A total of 15 is no critical at the default margin of 17; widening by
+     * 2 lowers the margin to exactly 15.
      */
     @Test
     void controleDaSituacaoWidensTheMargemCriticaOfAnOrdinaryPericia() throws IllegalOperationException {
         Character character = character().build();
         CharacterSheet sheet = CharacterSheet.of(character, new Player());
-        SkillRoll roll = new SkillRoll(List.of(4, 4, 2));
+        SkillRoll roll = new SkillRoll(List.of(6, 5, 4));
         assertEquals(CriticalResult.NONE, criticalOf(sheet, SkillType.ATLETISMO, roll));
 
         acquire(character, PeritoFeat.CONTROLE_DA_SITUACAO);
@@ -952,7 +959,7 @@ class GeneralFeatEffectIntegrationTest {
     void controleDaSituacaoExcludesAtaqueAndEsquivaEAparar() throws IllegalOperationException {
         Character character = character().build();
         CharacterSheet sheet = CharacterSheet.of(character, new Player());
-        SkillRoll roll = new SkillRoll(List.of(4, 4, 2));
+        SkillRoll roll = new SkillRoll(List.of(6, 5, 4));
 
         acquire(character, PeritoFeat.CONTROLE_DA_SITUACAO);
 

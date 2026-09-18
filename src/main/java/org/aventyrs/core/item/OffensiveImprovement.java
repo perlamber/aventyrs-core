@@ -1,6 +1,7 @@
 package org.aventyrs.core.item;
 
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.character.CriticalDamage;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.skill.Skill;
 import org.aventyrs.core.skill.SkillType;
@@ -24,7 +25,8 @@ import lombok.Getter;
  *
  * <p><b>What is live.</b> Guarda Mãos' and Benção de Proteção's DF/DM reach {@code DefenseService};
  * Oculta's Vantagem reaches the Furtividade roll; Benção Ymiriana's "Dano Base da Arma aumenta em
- * +1" reaches {@code DamageBaseService}; Manopla de Segurança's "Não pode ser desarmado" is what
+ * +1" reaches {@code DamageBaseService}; Cruel's "Danos Críticos" reaches a crit's dano roll
+ * ({@link Improvement#resolveCriticalDamage}); Manopla de Segurança's "Não pode ser desarmado" is what
  * {@code Weapon#isDisarmable()} has been waiting for; Encaixe is what lets {@code
  * AbstractItem#setPowerStone} socket a Pedra do Poder into a <em>weapon</em>; and every constant
  * prices off the Armas column ({@link EnhancementPriceCategory#WEAPON}).
@@ -47,10 +49,23 @@ public enum OffensiveImprovement implements Improvement {
     // DefensiveMasterpiece#BANHADA_EM_OURO and OffensiveMasterpiece#PODEROSA are blocked on.
     ARCANISTA("Arcanista", ItemRarity.RARE, 0, 0, 0, 0, 1,
             "Cura e Danos Mágicos +1.", null),
-    // TODO: a critical hit's contribution to the dano roll is not modelled at all — see CLAUDE.md's
-    // "A critical hit grants Vantagem em Danos" bullet. Both halves wait on the same thing.
     CRUEL("Cruel", ItemRarity.COMMON, 0, 0, 0, 0, 0,
-            "Bônus em Danos Críticos muda para +3.", "Danos Críticos +2."),
+            "Bônus em Danos Críticos muda para +3.", "Danos Críticos +2.") {
+        /**
+         * <b>+3, not +2+3.</b> The Favor "muda para" its own Característica Adicional rather than
+         * stacking with it — the same net-effect reading {@code OffensiveMasterpiece#PRECISA}'s two
+         * clauses got — and an Aprimoramento's Favor has no Requisitos column to gate it (see
+         * {@link #OCULTA}, granted just as unconditionally), so the higher figure is simply what
+         * this one is worth.
+         *
+         * <p>Only ever asked about the weapon it is fitted to: {@code
+         * Item#resolveEnhancementCriticalDamage} enforces that, as it does for Dano Base.
+         */
+        @Override
+        public CriticalDamage resolveCriticalDamage(final Weapon weapon, final Character character) {
+            return CriticalDamage.ofFlat(3);
+        }
+    },
     // The enabler for a Pedra do Poder on a weapon — the offensive twin of
     // DefensiveImprovement#ENCAIXE, and what AbstractItem#setPowerStone checks for an offensive
     // host. A stone in a weapon selects its Efeito Ofensivo (PowerStone#resolveBonus reads

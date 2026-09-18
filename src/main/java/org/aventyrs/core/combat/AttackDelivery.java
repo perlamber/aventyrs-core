@@ -138,8 +138,14 @@ public class AttackDelivery {
      * requiredTotal} are still reported — for every target, so a caller can show a player what
      * they need to roll against each of them.
      *
-     * @throws IllegalOperationException if {@code attackSkill} isn't a Perícia de Ataque, or if
-     *         the attack names more targets than the attacker's Talentos entitle them to
+     * <p>A provoking Aura in {@code scene} is judged against the primary {@code defender}: a bound
+     * attacker owing its first attack to the Aura's holder is refused, and one that already paid
+     * it takes {@code Skill#DISADVANTAGE_MALUS} on {@code attackTotal} against anyone else.
+     *
+     * @throws IllegalOperationException if {@code attackSkill} isn't a Perícia de Ataque, if
+     *         the attack names more targets than the attacker's Talentos entitle them to, or
+     *         ({@code FORCED_ATTACK_TARGET_REQUIRED}) if an Aura requires it to target the
+     *         holder first
      */
     public DeliveredAttackResult resolve(@NonNull final DeliveredAttack attack) {
         if (!attack.getAttackSkill().isAttackSkill()) {
@@ -152,6 +158,8 @@ public class AttackDelivery {
             throw new IllegalOperationException(TOO_MANY_ATTACK_TARGETS);
         }
         CombatantSheet defender = attack.getDefender();
+        int auraPenalty = AuraTargeting.resolvePenalty(attack.getScene(), attack.getAttacker(), defender,
+                attack.isForcedTargetUnavailable());
         SkillRoll attackRoll = attack.getAttackRoll();
 
         List<CombatantSheet> extraTargets = additionalTargets.stream().map(AttackTarget::defender).toList();
@@ -160,12 +168,13 @@ public class AttackDelivery {
                         attack.getAttackSource(), extraTargets);
 
         int requiredTotal = attack.getDefenseValue();
-        int attackTotal = attackResult.getSkillRollBonus()
+        int attackTotal = attackResult.getSkillRollBonus() + auraPenalty
                 + (attackRoll == null ? 0 : attackRoll.getTotal());
 
         DeliveredAttackResult.DeliveredAttackResultBuilder result = DeliveredAttackResult.builder()
                 .attackTotal(attackTotal)
                 .requiredTotal(requiredTotal)
+                .auraPenalty(auraPenalty)
                 .unappliedDifficultyReduction(attackResult.getDifficultyReduction());
 
         if (attackRoll == null) {
@@ -287,7 +296,8 @@ public class AttackDelivery {
             stages.addAll(effectChainsGrantedByFeats(attack));
         }
         if (criticalEffectTriggered) {
-            stages.addAll(CriticalEffect.applicableTo(defender, allCriticalEffects(attack, criticalResult)));
+            stages.addAll(CriticalEffect.applicableTo(defender, allCriticalEffects(attack, criticalResult),
+                    criticalResult, attack.getSceneContext()));
         }
 
         Interaction<CombatantSheet> next = null;

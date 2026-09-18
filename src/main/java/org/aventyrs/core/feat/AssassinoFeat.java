@@ -23,10 +23,12 @@ import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.character.services.HitPointsServiceImpl;
 import org.aventyrs.core.character.services.HitPointsService;
 import org.aventyrs.core.character.DamageType;
+import org.aventyrs.core.character.CriticalDamage;
 import org.aventyrs.core.character.DamageBonus;
 import org.aventyrs.core.item.AttackMethod;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.skill.AttackSource;
+import org.aventyrs.core.skill.SkillRoll;
 import org.aventyrs.core.skill.SkillTrait;
 import org.aventyrs.core.skill.SkillType;
 
@@ -35,7 +37,7 @@ import org.aventyrs.core.skill.SkillType;
  *
  * <p>The Margem Crítica hook ({@code Feat#resolveCriticalMarginIncrease}, with a {@code
  * CombatantSheet} overload for a clause that reads the action log) widens the Margem Crítica
- * <b>Menor</b> only — {@code SkillRoll#getCriticalResult(int)} applies its margin to that tier,
+ * <b>Menor</b> only — {@code SkillRoll#getCriticalResult(int, int)} applies its margin to that tier,
  * while Acerto Crítico Maior needs a literal triple-6, so a clause that also names the Maior tier
  * gets its Menor half and nothing for the Maior one; a Maior widening would need its own explicit
  * mechanism.
@@ -481,8 +483,11 @@ public enum AssassinoFeat implements Feat {
      * — this core never tracks a movement's direction — so the grant is unconditional movement,
      * documented as wider than the clause.
      *
-     * <p>The "+1d6 ao invés de Vantagem em Danos Críticos" half is not modelled: there is no
-     * "Vantagem em Danos on an Acerto Crítico" baseline for it to replace.
+     * <p><b>The "+1d6 ao invés de Vantagem em Danos Críticos" half is real too</b>, now that the
+     * baseline it replaces exists: {@link Feat#replacesBaselineCriticalAdvantage} drops the crit's
+     * flat Vantagem em Danos and {@link Feat#resolveCriticalDamage} grants the die in its place
+     * (see {@code org.aventyrs.core.character.CriticalDamage} — this is the clause that proves the
+     * baseline is +2 and no die).
      */
     VIOLENCIA_DESCOMUNAL(
             "Você não recebe Vantagem em Danos em seus Acertos Críticos, ao invés disso recebe "
@@ -505,6 +510,24 @@ public enum AssassinoFeat implements Feat {
             return List.of(new Blessing(ModifierType.MOVEMENT, (int) (2 * brutoTitles), TURN_SCOPED_ROUNDS,
                     TargetScope.SELF, name()));
         }
+
+        /** "Você não recebe Vantagem em Danos em seus Acertos Críticos" — the baseline is dropped
+         * for every critical this holder lands, with whatever weapon and by whatever Perícia. */
+        @Override
+        public boolean replacesBaselineCriticalAdvantage(final SkillType attackSkill,
+                                                         final AttackSource attackSource,
+                                                         final Character character) {
+            return true;
+        }
+
+        /** "…ao invés disso recebe Bônus de +1d6." Other grants still add on top of this one — a
+         * Mira Mortal holder loses the +2 and rolls both dice. */
+        @Override
+        public CriticalDamage resolveCriticalDamage(final SkillType attackSkill, final SceneContext sceneContext,
+                                                    final Character character, final AttackSource attackSource,
+                                                    final CriticalResult criticalResult, final SkillRoll skillRoll) {
+            return CriticalDamage.ofDice(1);
+        }
     },
 
     /**
@@ -515,10 +538,11 @@ public enum AssassinoFeat implements Feat {
      * Graduação floor ("4 Graduações em Profissão") and the required Especialização Mecânica on
      * top of the {@code FeatRequirements} Ataque Corpo-a-Corpo gate.
      *
-     * <p><b>The two effect halves are not granted:</b> no Arma Tecnológica classification exists
-     * ({@code ItemCategory} carries no such value, and no weapon catalogue is authored), so a
-     * Dano Base bonus would hit every weapon; and a bonus to <i>critical</i> damage specifically
-     * has no hook.
+     * <p><b>Neither effect half is granted</b>, both for the same one reason: no Arma Tecnológica
+     * classification exists ({@code ItemCategory} carries no such value, and no weapon catalogue is
+     * authored), so either bonus would land on every weapon its holder swings. The crit half would
+     * otherwise be expressible now — {@link Feat#resolveCriticalDamage} is handed the {@code
+     * AttackSource} it would have to test.
      */
     ESPECIALISTA_TECNOLOGICO(
             "O Dano Base de suas Armas Tecnológicas aumenta em +1. Você recebe Bônus de +3 em "

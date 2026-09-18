@@ -59,7 +59,21 @@ public class TemporaryBonus extends TemporaryEffect {
         this(type, value, remainingRounds, source, Blessing.DEFAULT_MAXIMUM_SIMULTANEOUS);
     }
 
-    public TemporaryBonus(final ModifierType type, final int value, final int remainingRounds,
+    /**
+     * A bonus that <b>never expires from ticking</b> — {@code remainingRounds} {@code null}, the
+     * open-ended shape {@link TemporaryEffect} already models. It lasts until whoever granted it
+     * takes it away with {@link CombatantSheet#removeEffect}, which makes it the right shape for a
+     * grant whose lifetime is a *condition* rather than a countdown: an Aura's bonus ends when the
+     * recipient stops being in range, and would be wrong to let expire on its own beforehand.
+     *
+     * <p>Sourced deliberately — a caller that grants one owns revoking it, and the source is what
+     * lets a second grant of the same Aura replace rather than stack with the first.
+     */
+    public static TemporaryBonus openEnded(final ModifierType type, final int value, final String source) {
+        return new TemporaryBonus(type, value, null, source, Blessing.DEFAULT_MAXIMUM_SIMULTANEOUS);
+    }
+
+    public TemporaryBonus(final ModifierType type, final int value, final Integer remainingRounds,
                           final String source, final int maximumSimultaneous) {
         super(remainingRounds);
         this.type = type;

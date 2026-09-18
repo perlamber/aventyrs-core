@@ -12,13 +12,18 @@ public class TitleAcquisitionServiceImpl implements TitleAcquisitionService {
     @Override
     public AventyrTitle grantTitle(final Character character, final AventyrTitle title, final TitleSlot slot)
             throws IllegalOperationException {
-        TitleAcquisitionPermission permission = character.getFeats().stream()
-                .map(feat -> feat.resolveTitleAcquisitionPermission(title.getIdentity(), character))
-                .reduce(TitleAcquisitionPermission.NO_OPINION, TitleAcquisitionPermission::merge);
-        if (permission == TitleAcquisitionPermission.PROHIBIT) {
+        if (!isPermitted(character, title)) {
             throw new IllegalOperationException(TITLE_ACQUISITION_PREVENTED);
         }
         character.grantTitle(title, slot);
         return title;
+    }
+
+    @Override
+    public boolean isPermitted(final Character character, final AventyrTitle title) {
+        TitleAcquisitionPermission permission = character.getFeats().stream()
+                .map(feat -> feat.resolveTitleAcquisitionPermission(title.getIdentity(), character))
+                .reduce(TitleAcquisitionPermission.NO_OPINION, TitleAcquisitionPermission::merge);
+        return permission != TitleAcquisitionPermission.PROHIBIT;
     }
 }

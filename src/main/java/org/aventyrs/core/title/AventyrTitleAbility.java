@@ -2,7 +2,11 @@ package org.aventyrs.core.title;
 
 import java.util.Optional;
 
+import org.aventyrs.core.action.ReactionContext;
+import org.aventyrs.core.action.ReactionTrigger;
 import org.aventyrs.core.scene.SceneContext;
+import org.aventyrs.core.scene.Teleportation;
+import org.aventyrs.core.sheet.ActionCost;
 import org.aventyrs.core.sheet.Interaction;
 
 /**
@@ -39,43 +43,83 @@ public interface AventyrTitleAbility {
     }
 
     /**
-     * Custo de Ativação in PD (Pontos de Determinação) — 0 for a no-cost passive, or for an
-     * {@link AventyrTitleSpecialization} with no activation cost of its own (the common case
-     * for a purely descriptive Especialização).
+     * Custo de Ativação in PD (Pontos de Determinação) — {@link PDCost#NONE} for a no-cost
+     * passive, or for an {@link AventyrTitleSpecialization} with no activation cost of its own
+     * (the common case for a purely descriptive Especialização). A {@link PDCost.Variable} cost
+     * is chosen by the activating player at or above its minimum.
      */
-    default int getPDCost() {
-        return 0;
+    default PDCost getPDCost() {
+        return PDCost.NONE;
     }
 
-    /** Custo de Ativação in PA (Pontos de Ação) — 0 for a passive or a Reação-only activation. */
-    default int getActionPointCost() {
-        return 0;
-    }
-
-    /** Whether this ability's Tempo de Ativação is "Reação" rather than a PA cost. */
-    default boolean isReactionActivation() {
-        return false;
-    }
-
-    /** Whether this ability's Tempo de Ativação is "Ação Livre" rather than a PA cost. */
-    default boolean isFreeActionActivation() {
-        return false;
+    /**
+     * The Tempo de Ativação — {@link ActionCost#NONE} for a passive, {@code
+     * ActionCost.ofActionPoints(n)} for "Tempo de Ativação: NPA", {@link ActionCost#REACTION} for
+     * "Reação", {@link ActionCost#FREE_ACTION} for "Ação Livre", or {@code ActionCost.dynamic(min)}
+     * for a Variável one.
+     *
+     * <p>This was three separate members until {@code ActionCost} grew to hold all of them: an
+     * {@code int} plus an {@code isReactionActivation()}/{@code isFreeActionActivation()} pair,
+     * awkward enough that {@code AbencoadoPelaLuzAbility#GLORIA_RELAMPEJANTE_DE_TESLA} needed an
+     * anonymous class body to say "Ação Livre" on an enum with no field for it.
+     *
+     * <p>Reported, never deducted — {@code AbstractTitleAbilityInteraction} reads only the {@link
+     * #getPDCost()}, the same restraint every other cost in this core keeps.
+     */
+    default ActionCost getActionPointCost() {
+        return ActionCost.NONE;
     }
 
     /**
      * Whether this Habilidade/Suprema is passive (always active, no player-triggered
      * activation) as opposed to something the holder spends a resource/action to do. Derived
-     * from the existing activation-cost data rather than a separate stored flag: a nonzero
-     * {@link #getActionPointCost()}, or an explicit {@link #isReactionActivation()}/
-     * {@link #isFreeActionActivation()} (both still real player-triggered activations, even
-     * though their own actionPointCost is 0), all count as active. Confirmed against every
-     * currently-modeled Habilidade/Suprema: this formula picks out exactly the ones whose own
-     * rules text says "Custo de Ativação: Nenhum, habilidade passiva" (e.g. Bastião dos
-     * Necessitados, Protetor da Vida e da Morte) and no others — it does not need a PD-cost
-     * check, since no current constant combines a real PDCost with zero PA/Reação/Ação Livre.
+     * from the activation cost rather than a separate stored flag: exactly the constants whose
+     * own rules text says "Custo de Ativação: Nenhum, habilidade passiva" (e.g. Bastião dos
+     * Necessitados, Protetor da Vida e da Morte) name {@link ActionCost#NONE} and no others.
+     * A Reação and an Ação Livre are real player-triggered activations, and say so in their own
+     * {@link ActionCost.Kind} rather than needing to be excluded by hand here. It does not need a
+     * PD-cost check, since no current constant combines a real PDCost with a {@link
+     * ActionCost#NONE} Tempo de Ativação.
      */
     default boolean isPassive() {
-        return getActionPointCost() == 0 && !isReactionActivation() && !isFreeActionActivation();
+        return getActionPointCost().kind() == ActionCost.Kind.NONE;
+    }
+
+    /**
+     * What this ability reacts <em>to</em> — {@code null}, the default, for everything that is not
+     * a Reação. Only meaningful alongside a {@link ActionCost#REACTION} {@link
+     * #getActionPointCost()}: the cost says "this is a Reação", this says which event offers it,
+     * and {@code ReactionOptionsService} needs both to put it in front of a player.
+     */
+    default ReactionTrigger getReactionTrigger() {
+        return null;
+    }
+
+    /**
+     * Whether this Reação's own rules text is satisfied by what just happened — the per-ability
+     * half of availability, after {@code ReactionOptionsService} has matched the {@link
+     * #getReactionTrigger()}. {@code true} by default, so a Reação with nothing further to say
+     * needs no override; {@code SantoAbility#GUARDA_VIDAS} overrides it to check the threatened
+     * ally is actually an ally and actually within its {@link #resolveTeleportation()} reach.
+     *
+     * <p>This is an <b>availability</b> question, not an affordability one — whether the reactor
+     * has a Reação and the PD to spend is the service's business, and an unaffordable option is
+     * still returned. Nor is it the activation's own {@code validate}: the {@code
+     * AbstractTitleAbilityInteraction} re-checks what it needs when the player actually commits,
+     * since a list is a snapshot and the world moves.
+     */
+    default boolean isReactionAvailable(ReactionContext context) {
+        return true;
+    }
+
+    /**
+     * How far activating this ability teleports its holder, or {@code null} — the default, and
+     * every ability that moves nobody. A client reads this to offer the destination; this core
+     * neither picks one nor applies it, since it holds no positions at all. See {@link
+     * Teleportation}.
+     */
+    default Teleportation resolveTeleportation() {
+        return null;
     }
 
     /**

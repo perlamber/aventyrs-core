@@ -1,6 +1,8 @@
 package org.aventyrs.core.title.santo;
 
 import org.aventyrs.core.character.AttributeDomain;
+import org.aventyrs.core.sheet.ActionCost;
+import org.aventyrs.core.title.PDCost;
 import org.aventyrs.core.character.AttributeValue;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterAttributes;
@@ -45,37 +47,33 @@ class AbracadoPelaEscuridaoAbilityTest {
 
     @Test
     void sacrificioYmirianoHasNoFixedPdCostOnlyAVariablePvOne() {
-        assertEquals(0, AbracadoPelaEscuridaoAbility.SACRIFICIO_YMIRIANO.getPDCost());
-        assertEquals(1, AbracadoPelaEscuridaoAbility.SACRIFICIO_YMIRIANO.getActionPointCost());
-        assertFalse(AbracadoPelaEscuridaoAbility.SACRIFICIO_YMIRIANO.isReactionActivation());
-        assertFalse(AbracadoPelaEscuridaoAbility.SACRIFICIO_YMIRIANO.isFreeActionActivation());
+        assertEquals(PDCost.fixed(0), AbracadoPelaEscuridaoAbility.SACRIFICIO_YMIRIANO.getPDCost());
+        assertEquals(ActionCost.ofActionPoints(1), AbracadoPelaEscuridaoAbility.SACRIFICIO_YMIRIANO.getActionPointCost());
     }
 
     @Test
     void espinhosDeGaeaHasNoFixedPdCostOnlyAVariablePvOne() {
-        assertEquals(0, AbracadoPelaEscuridaoAbility.ESPINHOS_DE_GAEA.getPDCost());
-        assertEquals(2, AbracadoPelaEscuridaoAbility.ESPINHOS_DE_GAEA.getActionPointCost());
+        assertEquals(PDCost.fixed(0), AbracadoPelaEscuridaoAbility.ESPINHOS_DE_GAEA.getPDCost());
+        assertEquals(ActionCost.ofActionPoints(2), AbracadoPelaEscuridaoAbility.ESPINHOS_DE_GAEA.getActionPointCost());
     }
 
     @Test
     void placidezDeUndineRancorDeHaloiHasAFixedActivationCost() {
-        assertEquals(2, AbracadoPelaEscuridaoAbility.PLACIDEZ_DE_UNDINE_RANCOR_DE_HALOI.getPDCost());
-        assertEquals(3, AbracadoPelaEscuridaoAbility.PLACIDEZ_DE_UNDINE_RANCOR_DE_HALOI.getActionPointCost());
-        assertFalse(AbracadoPelaEscuridaoAbility.PLACIDEZ_DE_UNDINE_RANCOR_DE_HALOI.isFreeActionActivation());
+        assertEquals(PDCost.fixed(2), AbracadoPelaEscuridaoAbility.PLACIDEZ_DE_UNDINE_RANCOR_DE_HALOI.getPDCost());
+        assertEquals(ActionCost.ofActionPoints(3), AbracadoPelaEscuridaoAbility.PLACIDEZ_DE_UNDINE_RANCOR_DE_HALOI.getActionPointCost());
     }
 
     @Test
     void furorDeSylphIsAFreeActionActivation() {
-        assertEquals(2, AbracadoPelaEscuridaoAbility.FUROR_DE_SYLPH.getPDCost());
-        assertEquals(0, AbracadoPelaEscuridaoAbility.FUROR_DE_SYLPH.getActionPointCost());
-        assertFalse(AbracadoPelaEscuridaoAbility.FUROR_DE_SYLPH.isReactionActivation());
-        assertTrue(AbracadoPelaEscuridaoAbility.FUROR_DE_SYLPH.isFreeActionActivation());
+        assertEquals(PDCost.fixed(2), AbracadoPelaEscuridaoAbility.FUROR_DE_SYLPH.getPDCost());
+        assertEquals(ActionCost.FREE_ACTION, AbracadoPelaEscuridaoAbility.FUROR_DE_SYLPH.getActionPointCost());
     }
 
     @Test
     void noAbilityIsPassive() {
-        // All four have an explicit activation (PA, or Ação Livre for FUROR_DE_SYLPH despite
-        // its 0 actionPointCost) — none is "Custo de Ativação: Nenhum, habilidade passiva".
+        // All four have an explicit activation (PA, or Ação Livre for FUROR_DE_SYLPH, which
+        // spends no PA but is still player-triggered) — none is "Custo de Ativação: Nenhum,
+        // habilidade passiva".
         for (AbracadoPelaEscuridaoAbility ability : AbracadoPelaEscuridaoAbility.values()) {
             assertFalse(ability.isPassive());
         }
@@ -197,13 +195,16 @@ class AbracadoPelaEscuridaoAbilityTest {
         assertTrue(AbracadoPelaEscuridaoAbility.FUROR_DE_SYLPH.isEligible(title));
     }
 
-    // Every constant here still has its granted effect fully TODO'd (only the PV-cost/duration/
-    // count formulas are real — see the resolve* tests above), so none has a real Interaction
-    // to activate yet.
+    // Only SACRIFICIO_YMIRIANO is activatable: ESPINHOS_DE_GAEA's whole benefit is retaliation
+    // damage, FUROR_DE_SYLPH's +1PA has no Duração in Rodadas to be granted for, and
+    // PLACIDEZ_DE_UNDINE_RANCOR_DE_HALOI needs "this one delivered attack" scoping.
     @Test
-    void noAbilityReportsAnInteractionClassYet() {
-        for (AbracadoPelaEscuridaoAbility ability : AbracadoPelaEscuridaoAbility.values()) {
-            assertEquals(Optional.empty(), ability.getInteractionClass());
-        }
+    void onlySacrificioYmirianoReportsAnInteractionClass() {
+        assertEquals(Optional.of(SacrificioYmirianoInteraction.class),
+                AbracadoPelaEscuridaoAbility.SACRIFICIO_YMIRIANO.getInteractionClass());
+        assertEquals(Optional.empty(), AbracadoPelaEscuridaoAbility.ESPINHOS_DE_GAEA.getInteractionClass());
+        assertEquals(Optional.empty(),
+                AbracadoPelaEscuridaoAbility.PLACIDEZ_DE_UNDINE_RANCOR_DE_HALOI.getInteractionClass());
+        assertEquals(Optional.empty(), AbracadoPelaEscuridaoAbility.FUROR_DE_SYLPH.getInteractionClass());
     }
 }

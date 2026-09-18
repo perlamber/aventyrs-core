@@ -1,11 +1,13 @@
 package org.aventyrs.core.title.santo;
 
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.title.PDCost;
 import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.rest.RestService;
 import org.aventyrs.core.rest.RestServiceImpl;
 import org.aventyrs.core.rest.RestType;
 import org.junit.jupiter.api.BeforeEach;
+import org.aventyrs.core.sheet.ActionCost;
 import org.junit.jupiter.api.Test;
 
 import java.util.Optional;
@@ -37,16 +39,17 @@ class SantoSpecializationTest {
 
     @Test
     void abencoadoPelaLuzHasTheRightActivationCost() {
-        assertEquals(1, SantoSpecialization.ABENCOADO_PELA_LUZ.getPDCost());
-        assertEquals(2, SantoSpecialization.ABENCOADO_PELA_LUZ.getActionPointCost());
+        assertEquals(PDCost.fixed(1), SantoSpecialization.ABENCOADO_PELA_LUZ.getPDCost());
+        assertEquals(ActionCost.ofActionPoints(2), SantoSpecialization.ABENCOADO_PELA_LUZ.getActionPointCost());
     }
 
     // "Custo de Ativação: Variável" refers to Fúria dos Deuses' own PV cost, not a PD/PA cost
-    // — genuinely 0/0, not merely unmodeled. See this enum's own comment on the constant.
+    // — genuinely none of either, not merely unmodeled. See this enum's own comment on the
+    // constant, and its isPassive() override, which is why ActionCost.NONE doesn't make it passive.
     @Test
     void abracadoPelaEscuridaoHasNoFixedActivationCost() {
-        assertEquals(0, SantoSpecialization.ABRACADO_PELA_ESCURIDAO.getPDCost());
-        assertEquals(0, SantoSpecialization.ABRACADO_PELA_ESCURIDAO.getActionPointCost());
+        assertEquals(PDCost.fixed(0), SantoSpecialization.ABRACADO_PELA_ESCURIDAO.getPDCost());
+        assertEquals(ActionCost.NONE, SantoSpecialization.ABRACADO_PELA_ESCURIDAO.getActionPointCost());
     }
 
     @Test

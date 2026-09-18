@@ -30,7 +30,11 @@ conventions" — especially **the three-source scan** — apply throughout.
   `DEFAULT_*` shape) — the only difference between the two is *when* they may be spent (a
   Reação only in response to someone else's action; an Ação Livre also on the character's own
   Turn), which is a game-flow/Scene-timing concern this library doesn't enforce, not a
-  computation difference. Don't build a distinct aggregation shape for a new counter just
+  computation difference. Since 0.0.42 both totals *are* consulted for real:
+  `ActiveAbilityService#activate` checks an ability whose `ActionCost` is a `REACTION` or a
+  `FREE_ACTION` against the matching counter instead of against Pontos de Ação. It is still only
+  an "entitled to any at all" check — nothing counts one as **spent** — so don't read that
+  wiring as a pool. Don't build a distinct aggregation shape for a new counter just
   because it's spent under different narrative conditions — reuse this same pattern.
 - Whenever a new fixed counter field is added to `Character` here, it must also be added to
   `CharacterFixture`'s `BLANK` template `Rule` (see the comment on `loadCharacterTemplates` —

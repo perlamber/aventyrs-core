@@ -15,6 +15,13 @@ public class TranslatableMessages {
     public static final String SCENE_ALREADY_IN_COMBAT = "SCENE_ALREADY_IN_COMBAT";
     public static final String INVALID_SKILL_ROLL = "INVALID_SKILL_ROLL";
     public static final String INVALID_ACTION_COST = "INVALID_ACTION_COST";
+
+    /**
+     * A {@code ActionCost.Kind#DYNAMIC} cost — a price whose amount the activating player still
+     * chooses — was asked what it spent, or was filed on a {@code CombatantAction}. Resolve it
+     * against the chosen amount first ({@code ActionCost#resolve}).
+     */
+    public static final String UNRESOLVED_ACTION_COST = "UNRESOLVED_ACTION_COST";
     public static final String INVALID_DIE_ROLL = "INVALID_DIE_ROLL";
     public static final String REQUIRED_SKILL_TRAIT_NOT_HELD = "REQUIRED_SKILL_TRAIT_NOT_HELD";
     public static final String UNKNOWN_SKILL_TYPE = "UNKNOWN_SKILL_TYPE";
@@ -51,6 +58,16 @@ public class TranslatableMessages {
     /** The attacker cannot presently attack with this weapon at all — a Forma suppressing it. */
     public static final String CANNOT_ATTACK_WITH_WEAPON = "CANNOT_ATTACK_WITH_WEAPON";
     public static final String NOT_ENOUGH_ACTION_POINTS = "NOT_ENOUGH_ACTION_POINTS";
+
+    /**
+     * An ability taken as a Reação was activated by a holder entitled to none — see {@code
+     * ReactionsService}. Nothing here counts a Reação as <em>spent</em>, so this is "entitled to
+     * any at all", not a live pool.
+     */
+    public static final String NOT_ENOUGH_REACTIONS = "NOT_ENOUGH_REACTIONS";
+
+    /** An ability taken as an Ação Livre was activated by a holder entitled to none — see {@code FreeActionsService}. */
+    public static final String NOT_ENOUGH_FREE_ACTIONS = "NOT_ENOUGH_FREE_ACTIONS";
     public static final String NOT_ENOUGH_MAGIC_POINTS = "NOT_ENOUGH_MAGIC_POINTS";
 
     /** An activated ability's Pontos de Vida cost exceeds what the holder can safely spend. */
@@ -61,6 +78,20 @@ public class TranslatableMessages {
     public static final String INVALID_DAMAGE_TYPE_ELEMENT_PAIRING = "INVALID_DAMAGE_TYPE_ELEMENT_PAIRING";
     public static final String INVALID_DAMAGE_BASE = "INVALID_DAMAGE_BASE";
     public static final String REQUIRED_TITLE_TRAIT_NOT_HELD = "REQUIRED_TITLE_TRAIT_NOT_HELD";
+    /** The Título trait names no {@code AbstractTitleAbilityInteraction} — it is passive, or its activation isn't built. */
+    public static final String TITLE_ABILITY_NOT_ACTIVATABLE = "TITLE_ABILITY_NOT_ACTIVATABLE";
+    /** The Título activation acts on the live Scene, and the request named none. */
+    public static final String TITLE_ABILITY_REQUIRES_SCENE = "TITLE_ABILITY_REQUIRES_SCENE";
+    /** The Título activation needs the player's choice between its branches, and the request made none. */
+    public static final String TITLE_ABILITY_CHOICE_REQUIRED = "TITLE_ABILITY_CHOICE_REQUIRED";
+    /** The Título activation acts on somebody else, and the request named no target (or named the activator). */
+    public static final String TITLE_ABILITY_REQUIRES_TARGET = "TITLE_ABILITY_REQUIRES_TARGET";
+    /** A teleportation was declared to somewhere further than the ability's own reach — see {@code Teleportation}. */
+    public static final String TELEPORT_TARGET_OUT_OF_RANGE = "TELEPORT_TARGET_OUT_OF_RANGE";
+    /** The Título activation blesses an Armadura or Escudo, and the activator is using neither. */
+    public static final String TITLE_ABILITY_REQUIRES_ARMOR_OR_SHIELD = "TITLE_ABILITY_REQUIRES_ARMOR_OR_SHIELD";
+    /** The Título ability has already been activated as many times as it may be this Turno. */
+    public static final String TITLE_ABILITY_ACTIVATION_LIMIT_REACHED = "TITLE_ABILITY_ACTIVATION_LIMIT_REACHED";
     public static final String REQUIRED_ATTRIBUTE_ABILITY_NOT_HELD = "REQUIRED_ATTRIBUTE_ABILITY_NOT_HELD";
     public static final String TITLE_NOT_HELD = "TITLE_NOT_HELD";
     public static final String EXTRA_SUPREMA_ALREADY_GRANTED = "EXTRA_SUPREMA_ALREADY_GRANTED";
@@ -81,6 +112,19 @@ public class TranslatableMessages {
      * CharacterCreationService#grantStartingFeats}.
      */
     public static final String INVALID_STARTING_FEAT_SELECTION = "INVALID_STARTING_FEAT_SELECTION";
+
+    /**
+     * A Talento only a newly created character may take ("Apenas personagens recém-criados") was
+     * passed to {@code FeatService#grantFeat} — see {@code Feat#isAcquirableOnlyAtCreation}. Take
+     * it in a starting slot instead.
+     */
+    public static final String FEAT_ONLY_AT_CREATION = "FEAT_ONLY_AT_CREATION";
+
+    /**
+     * The Título picked for {@code DestinoFeat#DESPERTAR_ANTECIPADO} is not one the holder may
+     * take — see {@code DespertarAntecipadoFeat#optionsFor}.
+     */
+    public static final String DESPERTAR_ANTECIPADO_CHOICE_NOT_ELIGIBLE = "DESPERTAR_ANTECIPADO_CHOICE_NOT_ELIGIBLE";
 
     /**
      * A held Talento forbids that whole kind of Equipamento — {@code
@@ -120,6 +164,8 @@ public class TranslatableMessages {
      * AttackTargetingService#getMaximumTargets}.
      */
     public static final String TOO_MANY_ATTACK_TARGETS = "TOO_MANY_ATTACK_TARGETS";
+    /** A provoking Aura binds the attacker, and its first attack this Rodada must target the Aura's holder. */
+    public static final String FORCED_ATTACK_TARGET_REQUIRED = "FORCED_ATTACK_TARGET_REQUIRED";
     public static final String INVALID_AREA_OF_EFFECT = "INVALID_AREA_OF_EFFECT";
     public static final String INVALID_SPELL_TARGETING = "INVALID_SPELL_TARGETING";
     public static final String INVALID_SPELL_TREE = "INVALID_SPELL_TREE";
@@ -158,6 +204,8 @@ public class TranslatableMessages {
 
     /** An activated ability's Pontos de Determinação cost exceeds what the holder has left. */
     public static final String NOT_ENOUGH_DETERMINATION_POINTS = "NOT_ENOUGH_DETERMINATION_POINTS";
+    /** The PD offered for an activation isn't an amount its {@code PDCost} accepts. */
+    public static final String INVALID_PD_AMOUNT = "INVALID_PD_AMOUNT";
 
     /**
      * The Forma an ability would put its holder into is one their own Talentos refuse — see
@@ -235,4 +283,22 @@ public class TranslatableMessages {
      * takes both.
      */
     public static final String NOT_ENOUGH_HANDS = "NOT_ENOUGH_HANDS";
+
+    /**
+     * A participant tried to progress (Talento, Graduação, Título, Especialização, Habilidade,
+     * Atributo) while their Campanha has a Sessão in progress.
+     */
+    public static final String PROGRESSION_LOCKED_DURING_SESSION = "PROGRESSION_LOCKED_DURING_SESSION";
+
+    /** A Sessão was asked to move to a status its lifecycle doesn't allow (CREATED → ONGOING → ENDED only). */
+    public static final String INVALID_SESSION_TRANSITION = "INVALID_SESSION_TRANSITION";
+
+    /** A Sessão cannot start while another Sessão of the same Campanha is ONGOING. */
+    public static final String SESSION_ALREADY_ONGOING = "SESSION_ALREADY_ONGOING";
+
+    /** A new Sessão cannot be created while another is still CREATED or ONGOING. */
+    public static final String SESSION_ALREADY_OPEN = "SESSION_ALREADY_OPEN";
+
+    /** No Sessão with the requested number exists in the Campanha. */
+    public static final String SESSION_NOT_FOUND = "SESSION_NOT_FOUND";
 }

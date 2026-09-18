@@ -1,6 +1,7 @@
 package org.aventyrs.core.ability;
 
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.sheet.ActionCost;
 import org.aventyrs.core.sheet.TemporaryEffect;
 
 import java.util.List;
@@ -15,8 +16,14 @@ import java.util.List;
 public interface ActiveAbility {
     String getDescription();
 
-    /** Pontos de Ação spent to trigger this ability's activated state — 0 for an Ação Livre. */
-    int getActionPointCost();
+    /**
+     * The Tempo de Ativação — what triggering this ability's activated state costs: {@code
+     * ActionCost.ofActionPoints(n)} for a PA price, {@link ActionCost#FREE_ACTION} for an Ação
+     * Livre, {@link ActionCost#REACTION} for a Reação, or {@code ActionCost.dynamic(min)} for a
+     * Variável one. {@code ActiveAbilityService#activate} checks each against the matching
+     * entitlement.
+     */
+    ActionCost getActionPointCost();
 
     /** Pontos de Magia spent to trigger this ability's activated state. */
     int getMagicPointCost();

@@ -4,6 +4,7 @@ import org.aventyrs.core.ability.ActiveAbility;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.skill.Skill;
+import org.aventyrs.core.sheet.ActionCost;
 import org.aventyrs.core.sheet.LifeSteal;
 import org.aventyrs.core.sheet.TemporaryBonus;
 import org.aventyrs.core.sheet.TemporaryEffect;
@@ -14,7 +15,7 @@ import java.util.Optional;
 /**
  * The {@link ActiveAbility} a Poder Vampírico grants — one class, parameterized by which {@link
  * VampiricoFeat} constant it belongs to, because the six Poderes share every cost and Duração:
- * an <b>Ação Livre</b> ({@link #getActionPointCost()} == 0), no Pontos de Magia, <b>3PV</b>
+ * an <b>Ação Livre</b> ({@link #getActionPointCost()} is {@code ActionCost.FREE_ACTION}), no Pontos de Magia, <b>3PV</b>
  * ({@code Vampiro}'s Sangue, Poder e Dependência: "consomem 3PV cada"), and a base <b>2 Rodadas</b>
  * ({@link #BASE_DURATION_IN_ROUNDS}) extended by one Rodada per Título Aventyr while {@link
  * VampiricoFeat#PODER_VAMPIRICO_DURADOURO} is held.
@@ -52,8 +53,8 @@ final class PoderVampiricoActiveAbility implements ActiveAbility {
 
     /** Ação Livre — no Pontos de Ação. */
     @Override
-    public int getActionPointCost() {
-        return 0;
+    public ActionCost getActionPointCost() {
+        return ActionCost.FREE_ACTION;
     }
 
     @Override

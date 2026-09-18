@@ -170,30 +170,31 @@ class ChoiceFeatAttackDeliveryTest {
     // ---------- AcertoCriticoAprimoradoFeat: Margem Crítica with the chosen weapon type ----------
 
     /**
-     * "Sua Margem Crítica Menor com o tipo de arma escolhida … é aumentada em +1." 5+5+1 is not a
-     * crit at the baseline margin; widened by one, the pair of 5s qualifies. Asserted on the
-     * delivered attack's own {@code CriticalResult}, which is what drives the Efeito Crítico chain.
+     * "Sua Margem Crítica Menor com o tipo de arma escolhida … é aumentada em +1." A total of 16
+     * falls one short of the baseline margin of 17; widened by one, it lands exactly on it.
+     * Asserted on the delivered attack's own {@code CriticalResult}, which is what drives the
+     * Efeito Crítico chain.
      */
     @Test
     void acertoCriticoAprimoradoWidensTheMarginOnlyForTheChosenWeapon() throws IllegalOperationException {
         Character character = duelist();
         CharacterSheet attacker = acquire(character, AcertoCriticoAprimoradoFeat.of(AttackMethod.LIGHT_BLADE));
-        SkillRoll fives = new SkillRoll(List.of(5, 5, 1));
+        SkillRoll sixteen = new SkillRoll(List.of(6, 6, 4));
 
         assertEquals(CriticalResult.ACERTO_CRITICO_MENOR,
-                deliver(attacker, LIGHT_BLADE, fives).getCriticalResult());
+                deliver(attacker, LIGHT_BLADE, sixteen).getCriticalResult());
         assertEquals(CriticalResult.NONE,
-                deliver(attacker, HEAVY_BLADE, fives).getCriticalResult());
+                deliver(attacker, HEAVY_BLADE, sixteen).getCriticalResult());
     }
 
     /** Without the Talento at all, neither weapon crits on that roll — the margin is the Talento's. */
     @Test
     void withoutTheTalentoNeitherWeaponCrits() {
         CharacterSheet attacker = fundedSheet(duelist());
-        SkillRoll fives = new SkillRoll(List.of(5, 5, 1));
+        SkillRoll sixteen = new SkillRoll(List.of(6, 6, 4));
 
-        assertEquals(CriticalResult.NONE, deliver(attacker, LIGHT_BLADE, fives).getCriticalResult());
-        assertEquals(CriticalResult.NONE, deliver(attacker, HEAVY_BLADE, fives).getCriticalResult());
+        assertEquals(CriticalResult.NONE, deliver(attacker, LIGHT_BLADE, sixteen).getCriticalResult());
+        assertEquals(CriticalResult.NONE, deliver(attacker, HEAVY_BLADE, sixteen).getCriticalResult());
     }
 
     // ---------- AtiradorPerfeitoFeat: the chosen method, at the required distance ----------

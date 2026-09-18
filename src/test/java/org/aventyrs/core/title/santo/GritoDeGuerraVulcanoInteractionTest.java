@@ -2,6 +2,8 @@ package org.aventyrs.core.title.santo;
 
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.fixture.CharacterFixture;
+import org.aventyrs.core.character.services.DeterminationPointsService;
+import org.aventyrs.core.character.services.DeterminationPointsServiceImpl;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.sheet.Blessing;
 import org.aventyrs.core.sheet.CharacterSheet;
@@ -76,6 +78,18 @@ class GritoDeGuerraVulcanoInteractionTest {
         InteractionResult result = interaction.applyTo(newSheet(), null);
 
         assertEquals(3, result.getBlessings().size());
+    }
+
+    @Test
+    void activationSpendsTheStatedThreePd() {
+        CharacterSheet actor = newSheet();
+        DeterminationPointsService pd = new DeterminationPointsServiceImpl();
+        int before = pd.getCurrentDeterminationPoints(actor.getCharacter(), actor);
+
+        InteractionResult result = interaction.applyTo(actor);
+
+        assertEquals(3, result.getDeterminationPointsSpent());
+        assertEquals(before - 3, pd.getCurrentDeterminationPoints(actor.getCharacter(), actor));
     }
 
     @Test

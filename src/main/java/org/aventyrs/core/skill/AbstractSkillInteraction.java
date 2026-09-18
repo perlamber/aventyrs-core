@@ -6,6 +6,7 @@ import org.aventyrs.core.action.Manoeuvre;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterSkill;
+import org.aventyrs.core.character.CriticalDamage;
 import org.aventyrs.core.character.DamageBonus;
 import org.aventyrs.core.character.DamageBonusBreakdown;
 import org.aventyrs.core.character.DamageContribution;
@@ -15,6 +16,8 @@ import org.aventyrs.core.character.SizeCategory;
 import org.aventyrs.core.character.services.CharacterSizeService;
 import org.aventyrs.core.character.services.CharacterSizeServiceImpl;
 import org.aventyrs.core.character.services.ChargeService;
+import org.aventyrs.core.character.services.CriticalService;
+import org.aventyrs.core.character.services.CriticalServiceImpl;
 import org.aventyrs.core.character.services.HitPointsService;
 import org.aventyrs.core.character.services.HitPointsServiceImpl;
 import org.aventyrs.core.character.services.CharacterSkillService;
@@ -25,6 +28,7 @@ import org.aventyrs.core.modifier.ModifierResolver;
 import org.aventyrs.core.modifier.ModifierResolverImpl;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.item.Item;
+import org.aventyrs.core.item.Weapon;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.ActionCost;
 import org.aventyrs.core.sheet.Blessing;
@@ -146,6 +150,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
     private final ModifierResolver modifierResolver;
     private final CharacterSizeService characterSizeService;
     private final HitPointsService hitPointsService;
+    private final CriticalService criticalService = new CriticalServiceImpl();
 
     protected AbstractSkillInteraction(final SkillType skillType) {
         this(skillType, new CharacterSkillServiceImpl(), new ModifierResolverImpl());
@@ -378,7 +383,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
             Optional<DifficultyLevel> reached = expert
                     ? DifficultyLevel.reachedByAsExpert(bonus + skillRoll.getTotal())
                     : DifficultyLevel.reachedBy(bonus + skillRoll.getTotal());
-            int criticalMarginIncrease = sumCriticalMarginIncrease(target, skillCompetencyAbilities, sceneContext, attackSource);
+            int criticalMarginIncrease = sumCriticalMarginIncrease(target, sceneContext, attackSource);
             // Resistência a Críticos — the attack target's own RC narrows this roller's Margem
             // Crítica Menor back: its Raça's and its Talentos' standing grants plus any
             // round-scoped Blessing (AnaoFeat#VIGOR_DO_INVERNO), all summed by the target's own
@@ -389,7 +394,8 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
             // See ModifierType.CRITICAL_RESISTANCE for the RC pieces still not expressible.
             criticalMarginIncrease -= attackTarget == null ? 0
                     : attackTarget.getTotalCriticalResistance(sceneContext);
-            CriticalResult criticalResult = skillRoll.getCriticalResult(criticalMarginIncrease);
+            CriticalResult criticalResult = skillRoll.getCriticalResult(criticalMarginIncrease,
+                    lesserCriticalMargin(attackSource));
             result.reachedDifficultyLevel(reached.orElse(null))
                     .criticalResult(criticalResult);
             resolveOutcome(bonus + skillRoll.getTotal(), skillRoll.getTargetValue(), difficultyReduction,
@@ -407,6 +413,16 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                     });
 
             if (criticalResult.isCriticalSuccess()) {
+                // What the crit adds to its own dano roll — reported on its own field rather than
+                // folded into the DamageBonus above, so no caller can add the same +2 twice, and
+                // because a granted die has no room in a DamageBonus at all (see CriticalDamage).
+                if (skillType.isAttackSkill()) {
+                    CriticalDamage criticalDamage = sumCriticalDamage(target, sceneContext, attackSource,
+                            criticalResult, skillRoll);
+                    if (!criticalDamage.isNone()) {
+                        result.criticalDamage(criticalDamage);
+                    }
+                }
                 List<EgoDomain> egoGainDomains = new ArrayList<>();
                 for (AttributeAbility ability : character.getAttributeAbilities()) {
                     for (EgoDomain domain : ability.resolveCriticalSuccessEgoGain(criticalResult)) {
@@ -744,33 +760,41 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
     }
 
     /**
-     * Sums {@code resolveCriticalMarginIncrease} across all three ability sources this class
-     * already scans for everything else — {@code character.getAttributeAbilities()} (e.g.
-     * {@code DexterityAbility#LETALIDADE_PROGRESSIVA}), skillCompetencyAbilities (acquired plus
-     * racial — e.g. {@code ArtesAprimorarComArteAbility}'s "Margem Crítica Menor" branch), and
-     * {@code character.getEgoAdvantages()} (e.g. {@code SorteAdvantage#ACE}) — additively, the
-     * same convention every other {@code skillRollBonus}-adjacent sum here already uses. Fed
-     * into {@link SkillRoll#getCriticalResult(int)} only when skillRoll is non-{@code null}; safe
-     * to call unconditionally otherwise since sceneContext being {@code null} is already handled
-     * by every override the same way {@link #sumEgoAdvantageRollBonuses} already relies on.
+     * Every "+1 número" of Margem Crítica Menor widening this roller currently has — the four
+     * ability/trait scans plus the wielded weapon's fitted enhancements — delegated whole to
+     * {@link CriticalService}, so what a sheet screen previews and what this roll applies are one
+     * implementation. skillCompetencyAbilities is resolved there the same way it is here ({@code
+     * SkillCompetencyAbility#allFor}, acquired plus racial).
+     *
+     * <p>The target's Resistência a Críticos is subtracted by the caller rather than here, so the
+     * floor lands after it — see {@link #applyTo(CombatantSheet, SceneContext, SkillRoll)}.
      */
-    private int sumCriticalMarginIncrease(final CombatantSheet holder, final List<SkillCompetencyAbility> skillCompetencyAbilities, final SceneContext sceneContext, final AttackSource attackSource) {
-        Character character = holder.getCharacter();
-        int total = character.getAttributeAbilities().stream()
-                .mapToInt(ability -> ability.resolveCriticalMarginIncrease(skillType, sceneContext))
-                .sum();
-        total += skillCompetencyAbilities.stream()
-                .mapToInt(ability -> ability.resolveCriticalMarginIncrease(skillType, sceneContext))
-                .sum();
-        total += character.getEgoAdvantages().values().stream()
-                .mapToInt(advantage -> advantage.resolveCriticalMarginIncrease(skillType, sceneContext))
-                .sum();
-        // Talentos are outside every ModifierResolver scan, so they get an explicit fourth pass —
-        // the same shape sumFeatRollBonuses/sumFeatDifficultyReductions already use.
-        total += character.getFeats().stream()
-                .mapToInt(feat -> feat.resolveCriticalMarginIncrease(skillType, sceneContext, character, attackSource, holder))
-                .sum();
-        return total;
+    private int sumCriticalMarginIncrease(final CombatantSheet holder, final SceneContext sceneContext,
+                                          final AttackSource attackSource) {
+        return criticalService.sumCriticalMarginIncrease(holder, skillType, attackSource, sceneContext);
+    }
+
+    /**
+     * The Margem Crítica Menor this attack is rolled against before any widening — the weapon's own
+     * authored number, or {@link org.aventyrs.core.item.Weapon#DEFAULT_LESSER_CRITICAL_MARGIN} for
+     * an attack made with anything else. {@link CriticalService}'s answer, not a second copy.
+     */
+    private int lesserCriticalMargin(final AttackSource attackSource) {
+        return criticalService.getBaseLesserCriticalMargin(attackSource);
+    }
+
+    /**
+     * Everything this critical hit adds to its own dano roll — the baseline Vantagem em Danos, the
+     * holder's Talento grants and the wielded weapon's enhancements, one of which may replace the
+     * baseline rather than add to it. {@link CriticalService}'s answer; see {@link CriticalDamage}.
+     *
+     * <p>Only called for a Perícia de Ataque whose roll was a critical success.
+     */
+    private CriticalDamage sumCriticalDamage(final CombatantSheet holder, final SceneContext sceneContext,
+                                             final AttackSource attackSource, final CriticalResult criticalResult,
+                                             final SkillRoll skillRoll) {
+        return criticalService.getCriticalDamage(holder, skillType, attackSource, criticalResult, skillRoll,
+                sceneContext);
     }
 
     /**

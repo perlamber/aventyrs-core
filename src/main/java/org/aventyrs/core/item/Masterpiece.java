@@ -1,6 +1,7 @@
 package org.aventyrs.core.item;
 
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.character.CriticalDamage;
 import org.aventyrs.core.character.DefenseType;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.skill.SkillType;
@@ -102,6 +103,26 @@ public interface Masterpiece {
      */
     default int resolveDamageBaseIncrease(final Weapon weapon, final Character character) {
         return 0;
+    }
+
+    /**
+     * Margem Crítica Menor "números" this masterpiece grants when weapon is the attack source —
+     * each lowering the 3d6 total an Acerto Crítico Menor has to reach ({@link
+     * OffensiveMasterpiece#DECISIVA}, {@link OffensiveMasterpiece#MITRAL}). Host-scoped by {@code
+     * Item#resolveEnhancementCriticalMarginIncrease} on the same terms as {@link
+     * #resolveDamageBaseIncrease}.
+     */
+    default int resolveCriticalMarginIncrease(final Weapon weapon, final Character character) {
+        return 0;
+    }
+
+    /**
+     * What this masterpiece adds to the dano roll of a critical hit made with weapon — {@link
+     * OffensiveMasterpiece#MITRAL}'s "Danos Críticos aumentam em +3". Host-scoped by {@code
+     * Item#resolveEnhancementCriticalDamage}, again like {@link #resolveDamageBaseIncrease}.
+     */
+    default CriticalDamage resolveCriticalDamage(final Weapon weapon, final Character character) {
+        return CriticalDamage.NONE;
     }
 
     /**

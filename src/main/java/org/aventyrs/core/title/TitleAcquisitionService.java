@@ -16,4 +16,10 @@ public interface TitleAcquisitionService {
      */
     AventyrTitle grantTitle(Character character, AventyrTitle title, TitleSlot slot)
             throws IllegalOperationException;
+
+    /**
+     * Whether character's held Talentos let them acquire title — the non-throwing form of {@link
+     * #grantTitle}'s check, for a caller deciding what to offer.
+     */
+    boolean isPermitted(Character character, AventyrTitle title);
 }

@@ -1,8 +1,15 @@
 package org.aventyrs.core.title;
 
+import org.aventyrs.core.scene.SceneContext;
+import org.aventyrs.core.sheet.IllegalOperationException;
+import org.aventyrs.core.sheet.InteractionResult;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
+
+import static org.aventyrs.core.util.TranslatableMessages.REQUIRED_TITLE_TRAIT_NOT_HELD;
+import static org.aventyrs.core.util.TranslatableMessages.TITLE_ABILITY_NOT_ACTIVATABLE;
 
 /**
  * A held instance of one Título Aventyr (e.g. {@code org.aventyrs.core.title.santo.Santo}) —
@@ -72,6 +79,68 @@ public interface AventyrTitle {
         return null;
     }
 
+    /**
+     * Defesas this Título's Efeito Base grants its own holder right now — the mechanical half of
+     * {@link #getBaseEffectDescription()}, e.g. Santo's Despertar "+2 em suas Defesas, esse Bônus
+     * aumenta em +1 para cada aliado adjacente, Especializações e Supremas que você possua".
+     *
+     * <p>Broad {@code ModifierType.DEFESAS}-shaped: "suas Defesas" is plural, so what this returns
+     * applies to DF and DM alike and {@code DefenseService} adds it once whichever is asked for.
+     *
+     * <p><b>Scanned, never granted.</b> {@code DefenseServiceImpl} sums this at the moment a
+     * Defesa is calculated, so a bonus that varies with who is standing next to the holder is
+     * correct by construction as characters move — nothing to grant, revoke or persist. Same
+     * discipline {@link AventyrTitleAbility#resolveAllyAbsoluteDamageReduction} documents for RA.
+     *
+     * <p>{@code sceneContext} is the holder's own, and {@code null} reads as "no adjacent allies"
+     * rather than as an error. Zero by default; only override on a Título whose base effect
+     * actually grants Defesas.
+     */
+    default int resolveBaseDefesasBonus(SceneContext sceneContext) {
+        return 0;
+    }
+
+    /**
+     * Defesas this Título's Efeito Base grants <b>each adjacent ally</b>, and only while it is held
+     * as the holder's Título Primário — e.g. Santo's "aliados adjacentes a você recebem Bônus em
+     * Defesas iguais à metade dos Bônus que você receber em função do Efeito Base deste Título".
+     * The per-ally amount, not a total.
+     *
+     * <p><b>This method does not know whether it is the Primário</b>, and deliberately so: that is
+     * structural, a fact about which of {@code Character}'s three slots holds this instance (see
+     * this interface's own javadoc on why a self-reported {@code isPrimaryTitle()} was removed).
+     * {@code AbstractCombatantSheet#resolveProjectedAuras} reads {@code
+     * Character#getPrimaryTitle()} and only consults this on the Título it finds there.
+     *
+     * <p><b>Granted, not scanned</b> — the one place this core does the opposite of {@link
+     * #resolveBaseDefesasBonus}. The figure derives from the <i>holder's</i> own adjacency, which a
+     * scan running from the recipient cannot see: it would count the recipient's neighbours and
+     * silently undercount the holder's. Resolved holder-side into a real Aura instead, granted and
+     * revoked by {@code Scene#refreshProjectedAuras}.
+     *
+     * <p>{@code sceneContext} is the holder's own; {@code null} reads as "no adjacent allies".
+     * Zero by default.
+     */
+    default int resolvePrimaryTitleAllyDefesasBonus(SceneContext sceneContext) {
+        return 0;
+    }
+
+    /**
+     * How many Rodadas of each Cena de Combate this Título's Efeito Base lets its holder ignore
+     * Efeitos Críticos <b>Menores</b> for — Santo's Despertar "Nas primeiras Rodadas de cada Cena
+     * de Combate você Ignora Efeitos Críticos Menores dos ataques de seus inimigos, esta Habilidade
+     * tem por Duração 1 Rodada para cada Especialização e Suprema de Santo que possuir".
+     *
+     * <p>A count, not a boolean, because the window is what the rules text scales: {@code
+     * AbstractCombatantSheet#ignoresMinorCriticalEffects} passes it to {@link
+     * SceneContext#isWithinFirstCombatRounds(int)}, the established idiom for a "nas primeiras
+     * Rodadas" clause. Zero — the default — therefore reads as "never", which is exactly right for
+     * a Santo holding no Especialização or Suprema at all.
+     */
+    default int resolveMinorCriticalImmunityRounds() {
+        return 0;
+    }
+
     List<AventyrTitleSpecialization> getSpecializations();
 
     List<AventyrTitleAbility> getAbilities();
@@ -109,5 +178,35 @@ public interface AventyrTitle {
                 getSpecializations().stream().map(AventyrTitleAbility.class::cast),
                 getAbilities().stream()
         ).toList();
+    }
+
+    /**
+     * Activates one of this Título's traits — the single entry point for any activated Habilidade,
+     * Suprema or Especialização. Checks ability is actually held (among {@link #getAbilities()} or
+     * {@link #getSpecializations()}), builds the {@link AbstractTitleAbilityInteraction} its
+     * catalog constant names in {@code interactionClass} through that class's no-argument
+     * constructor, and runs {@link AbstractTitleAbilityInteraction#activate}, which gates, pays and
+     * resolves it.
+     *
+     * @throws org.aventyrs.core.sheet.IllegalOperationException {@code
+     *         REQUIRED_TITLE_TRAIT_NOT_HELD} if ability isn't held, {@code
+     *         TITLE_ABILITY_NOT_ACTIVATABLE} if it names no activation, or anything {@code
+     *         activate} throws
+     */
+    default InteractionResult activateAbility(final AventyrTitleAbility ability,
+                                              final TitleAbilityActivationRequest request) {
+        if (!getAllAbilities().contains(ability)) {
+            throw new IllegalOperationException(REQUIRED_TITLE_TRAIT_NOT_HELD);
+        }
+        Class<?> interactionClass = ability.getInteractionClass()
+                .filter(AbstractTitleAbilityInteraction.class::isAssignableFrom)
+                .orElseThrow(() -> new IllegalOperationException(TITLE_ABILITY_NOT_ACTIVATABLE));
+        AbstractTitleAbilityInteraction interaction;
+        try {
+            interaction = (AbstractTitleAbilityInteraction) interactionClass.getDeclaredConstructor().newInstance();
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException("Cannot instantiate " + interactionClass.getName(), e);
+        }
+        return interaction.activate(request);
     }
 }

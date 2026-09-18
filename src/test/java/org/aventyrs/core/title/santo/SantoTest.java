@@ -70,7 +70,7 @@ class SantoTest {
     void ignoreCriticalEffectDurationIsZeroWithNoSpecializationsOrSupremas() {
         Santo santo = new Santo(List.of(), List.of());
 
-        assertEquals(0, santo.getIgnoreCriticalEffectDurationInRounds());
+        assertEquals(0, santo.resolveMinorCriticalImmunityRounds());
     }
 
     @Test
@@ -80,7 +80,7 @@ class SantoTest {
         // not count.
         Santo santo = new Santo(List.of(), List.of(SantoAbility.BASTIAO_DOS_NECESSITADOS, SantoAbility.GUARDA_VIDAS));
 
-        assertEquals(1, santo.getIgnoreCriticalEffectDurationInRounds());
+        assertEquals(1, santo.resolveMinorCriticalImmunityRounds());
     }
 
     @Test
@@ -129,14 +129,14 @@ class SantoTest {
     void defesasBonusIsTwoWithNoAdjacentAlliesOrSpecializationsOrSupremas() {
         Santo santo = new Santo(List.of(), List.of());
 
-        assertEquals(2, santo.getDefesasBonus(null));
+        assertEquals(2, santo.resolveBaseDefesasBonus(null));
     }
 
     @Test
     void defesasBonusTreatsANullSceneContextAsNoAdjacentAllies() {
         Santo santo = new Santo(List.of(SantoSpecialization.ABENCOADO_PELA_LUZ), List.of());
 
-        assertEquals(3, santo.getDefesasBonus(null));
+        assertEquals(3, santo.resolveBaseDefesasBonus(null));
     }
 
     @Test
@@ -148,7 +148,7 @@ class SantoTest {
         SceneContext sceneContext = new SceneContext(List.of(adjacentAlly), List.of(), Map.of(adjacentAlly, Range.ADJACENTE));
 
         // Base 2 + 1 adjacent ally + (1 Especialização + 1 Suprema [GUARDA_VIDAS]) = 5.
-        assertEquals(5, santo.getDefesasBonus(sceneContext));
+        assertEquals(5, santo.resolveBaseDefesasBonus(sceneContext));
     }
 
     @Test
@@ -157,7 +157,7 @@ class SantoTest {
         CharacterSheet farAlly = newAdjacentAllySheet();
         SceneContext sceneContext = new SceneContext(List.of(farAlly), List.of(), Map.of(farAlly, Range.DISTANCIA_CURTA));
 
-        assertEquals(2, santo.getDefesasBonus(sceneContext));
+        assertEquals(2, santo.resolveBaseDefesasBonus(sceneContext));
     }
 
     @Test
@@ -168,8 +168,8 @@ class SantoTest {
         CharacterSheet adjacentAlly = newAdjacentAllySheet();
         SceneContext sceneContext = new SceneContext(List.of(adjacentAlly), List.of(), Map.of(adjacentAlly, Range.ADJACENTE));
 
-        // getDefesasBonus == 5 here (see the test above), half rounded down == 2.
-        assertEquals(2, santo.getPrimaryTitleAllyDefesasBonus(sceneContext));
+        // resolveBaseDefesasBonus == 5 here (see the test above), half rounded down == 2.
+        assertEquals(2, santo.resolvePrimaryTitleAllyDefesasBonus(sceneContext));
     }
 
     @Test
@@ -177,7 +177,7 @@ class SantoTest {
         Santo santo = new Santo(List.of(), List.of());
         CharacterSheet target = newAdjacentAllySheet();
 
-        assertThrows(IllegalOperationException.class, () -> santo.activateAbencoadoPelaLuz(target, null, true));
+        assertThrows(IllegalOperationException.class, () -> santo.activateAbencoadoPelaLuz(newAdjacentAllySheet(), target, null, true));
     }
 
     @Test
@@ -186,7 +186,7 @@ class SantoTest {
         CharacterSheet target = newAdjacentAllySheet();
         target.applyDamage(1000);
 
-        InteractionResult result = santo.activateAbencoadoPelaLuz(target, null, true);
+        InteractionResult result = santo.activateAbencoadoPelaLuz(newAdjacentAllySheet(), target, null, true);
 
         assertNotNull(result.getResourceGainValue());
         assertEquals(1000 - result.getResourceGainValue(), target.getDamageTaken());

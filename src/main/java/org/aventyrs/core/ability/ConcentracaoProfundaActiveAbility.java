@@ -3,6 +3,7 @@ package org.aventyrs.core.ability;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.modifier.ModifierType;
+import org.aventyrs.core.sheet.ActionCost;
 import org.aventyrs.core.sheet.TemporaryBonus;
 import org.aventyrs.core.sheet.TemporaryEffect;
 
@@ -21,8 +22,8 @@ public class ConcentracaoProfundaActiveAbility implements ActiveAbility {
     }
 
     @Override
-    public int getActionPointCost() {
-        return 1;
+    public ActionCost getActionPointCost() {
+        return ActionCost.ofActionPoints(1);
     }
 
     @Override

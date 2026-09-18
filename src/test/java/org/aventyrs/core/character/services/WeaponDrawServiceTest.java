@@ -73,7 +73,7 @@ class WeaponDrawServiceTest {
     void drawingCostsOneActionPointByDefault() {
         ActionCost cost = weaponDrawService.getDrawCost(carrying(dagger()).getCharacter());
 
-        assertEquals(ActionCost.Kind.ACTION_POINTS, cost.kind());
+        assertEquals(ActionCost.Kind.FIXED, cost.kind());
         assertEquals(1, cost.actionPoints());
         assertEquals(WeaponDrawService.DEFAULT_DRAW_COST, cost);
     }
