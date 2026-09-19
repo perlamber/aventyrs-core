@@ -156,6 +156,21 @@ public interface AventyrTitle {
     void grantAbility(AventyrTitleAbility ability);
 
     /**
+     * Adds specialization to this Título's own held Especializações — the mutator backing a
+     * post-acquisition grant, exactly as {@link #grantAbility} does for a Habilidade/Suprema.
+     *
+     * <p><b>Separate from {@link #grantAbility} deliberately.</b> An
+     * {@link AventyrTitleSpecialization} <i>is</i> an {@link AventyrTitleAbility} (it extends that
+     * interface), so a single mutator would compile and silently do the wrong thing: the
+     * Especialização would land in the Habilidade list, where {@link #getSpecializations()} would
+     * never report it. That matters beyond tidiness — {@code
+     * AventyrTitleAbility#getRequiredSpecializations} counts what that method returns, so a
+     * misfiled Especialização would leave every "Requer 1 Especialização" Habilidade unacquirable.
+     * {@code TitleAbilityService#grantTitleAbility} is what routes each kind to its own mutator.
+     */
+    void grantSpecialization(AventyrTitleSpecialization specialization);
+
+    /**
      * Especializações plus Supremas held, combined — pure arithmetic over the two methods
      * above, kept as a shared default so any Título whose own rules text scales off this same
      * count (as Santo's Despertar duration does) doesn't need to re-derive the formula.

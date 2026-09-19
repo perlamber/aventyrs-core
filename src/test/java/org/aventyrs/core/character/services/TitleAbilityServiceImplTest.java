@@ -10,6 +10,7 @@ import org.aventyrs.core.sheet.Interaction;
 import org.aventyrs.core.sheet.Player;
 import org.aventyrs.core.title.AventyrTitle;
 import org.aventyrs.core.title.AventyrTitleAbility;
+import org.aventyrs.core.title.AventyrTitleSpecialization;
 import org.aventyrs.core.title.santo.AbencoadoPelaLuzAbility;
 import org.aventyrs.core.title.santo.Santo;
 import org.aventyrs.core.title.santo.SantoAbility;
@@ -44,6 +45,20 @@ class TitleAbilityServiceImplTest {
         @Override
         public boolean isSupreme() {
             return true;
+        }
+
+        @Override
+        public Optional<Class<? extends Interaction>> getInteractionClass() {
+            return Optional.empty();
+        }
+    }
+
+    /** An Especialização from no catalog Santo knows — what {@code Santo#grantSpecialization}
+     *  refuses. */
+    private static class ForeignSpecialization implements AventyrTitleSpecialization {
+        @Override
+        public String getDescription() {
+            return "Test-only Especialização belonging to another Título.";
         }
 
         @Override
@@ -133,6 +148,70 @@ class TitleAbilityServiceImplTest {
         // PROTECAO_UNGIDA requires 1 Especialização; title has none yet.
         assertThrows(IllegalOperationException.class,
                 () -> titleAbilityService.grantTitleAbility(character, sheet, title, SantoAbility.PROTECAO_UNGIDA));
+    }
+
+    /**
+     * An Especialização goes into the Especialização list, not the Habilidade one. It shares the
+     * {@link AventyrTitleAbility} interface with a Habilidade, so a single mutator would compile
+     * and silently misfile it — and every "Requer N Especializações" prerequisite counts exactly
+     * what {@code getSpecializations()} returns, so the misfiling would be invisible until an
+     * ability that should have become acquirable didn't.
+     */
+    @Test
+    void grantTitleAbilityFilesAnEspecializacaoUnderSpecializations() throws IllegalOperationException {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK).build();
+        CharacterSheet sheet = sheetWithExperience(character, BigDecimal.ZERO);
+        AventyrTitle title = new Santo(List.of(), List.of());
+        character.grantTitle(title, TitleSlot.PRIMARY);
+
+        titleAbilityService.grantTitleAbility(character, sheet, title, SantoSpecialization.ABENCOADO_PELA_LUZ);
+
+        assertEquals(List.of(SantoSpecialization.ABENCOADO_PELA_LUZ), title.getSpecializations());
+        assertEquals(List.of(), title.getAbilities());
+    }
+
+    /** The point of filing it correctly: it satisfies the "Requer 1 Especialização" prerequisite
+     * that every one of Santo's own Habilidades names, which nothing else can. */
+    @Test
+    void anAcquiredEspecializacaoUnlocksAHabilidadeThatRequiresOne() throws IllegalOperationException {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK).build();
+        CharacterSheet sheet = sheetWithExperience(character, BigDecimal.ZERO);
+        AventyrTitle title = new Santo(List.of(), List.of());
+        character.grantTitle(title, TitleSlot.PRIMARY);
+        assertThrows(IllegalOperationException.class,
+                () -> titleAbilityService.grantTitleAbility(character, sheet, title, SantoAbility.PROTECAO_UNGIDA));
+
+        titleAbilityService.grantTitleAbility(character, sheet, title, SantoSpecialization.ABENCOADO_PELA_LUZ);
+        titleAbilityService.grantTitleAbility(character, sheet, title, SantoAbility.PROTECAO_UNGIDA);
+
+        assertEquals(List.of(SantoAbility.PROTECAO_UNGIDA), title.getAbilities());
+    }
+
+    /** An Especialização is not a Suprema, so it never touches the Suprema allotment. */
+    @Test
+    void acquiringAnEspecializacaoDoesNotSpendASupremaSlot() throws IllegalOperationException {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK).build();
+        CharacterSheet sheet = sheetWithExperience(character, BigDecimal.ZERO);
+        AventyrTitle title = new Santo(List.of(), List.of());
+        character.grantTitle(title, TitleSlot.PRIMARY);
+
+        titleAbilityService.grantTitleAbility(character, sheet, title, SantoSpecialization.ABENCOADO_PELA_LUZ);
+
+        assertEquals(1, titleAbilityService.getAvailableSupremaSlots(character, title));
+    }
+
+    /** "Apenas 'Santos' podem adquirir esta especialização" — a constant from some other Título's
+     * catalog is refused rather than stored, where it would inflate Despertar's own arithmetic. */
+    @Test
+    void santoRefusesAnEspecializacaoFromAnotherTitlesCatalog() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK).build();
+        CharacterSheet sheet = sheetWithExperience(character, BigDecimal.ZERO);
+        AventyrTitle title = new Santo(List.of(), List.of());
+        character.grantTitle(title, TitleSlot.PRIMARY);
+
+        assertThrows(IllegalOperationException.class,
+                () -> titleAbilityService.grantTitleAbility(character, sheet, title, new ForeignSpecialization()));
+        assertEquals(List.of(), title.getSpecializations());
     }
 
     @Test

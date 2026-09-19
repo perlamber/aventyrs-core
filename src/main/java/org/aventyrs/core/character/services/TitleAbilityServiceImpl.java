@@ -6,6 +6,7 @@ import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.title.AventyrTitle;
 import org.aventyrs.core.title.AventyrTitleAbility;
+import org.aventyrs.core.title.AventyrTitleSpecialization;
 
 import static org.aventyrs.core.util.TranslatableMessages.EXTRA_SUPREMA_ALREADY_GRANTED;
 import static org.aventyrs.core.util.TranslatableMessages.REQUIRED_ATTRIBUTE_ABILITY_NOT_HELD;
@@ -44,7 +45,15 @@ public class TitleAbilityServiceImpl implements TitleAbilityService {
             character.selectCentelhaSuperior();
         }
 
-        title.grantAbility(ability);
+        // Each kind to its own list. An Especialização is an AventyrTitleAbility too, so handing
+        // it to grantAbility would compile and quietly misfile it — out of getSpecializations(),
+        // and therefore out of every "Requer N Especializações" count. See
+        // AventyrTitle#grantSpecialization.
+        if (ability instanceof AventyrTitleSpecialization specialization) {
+            title.grantSpecialization(specialization);
+        } else {
+            title.grantAbility(ability);
+        }
         return ability;
     }
 

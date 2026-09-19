@@ -1,8 +1,5 @@
 package org.aventyrs.core.title.santo;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-
 import java.util.Optional;
 
 import org.aventyrs.core.character.AttributeDomain;
@@ -12,8 +9,10 @@ import org.aventyrs.core.sheet.Interaction;
 import org.aventyrs.core.title.AventyrTitleAbility;
 import org.aventyrs.core.title.AventyrTitleSpecialization;
 import org.aventyrs.core.title.PDCost;
-
 import static org.aventyrs.core.title.PDCost.fixed;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 /**
  * The Habilidades/Suprema gated on holding the {@link SantoSpecialization#ABRACADO_PELA_ESCURIDAO}
@@ -73,6 +72,7 @@ public enum AbracadoPelaEscuridaoAbility implements AventyrTitleAbility {
     // Deliberately left unwired rather than given an Interaction that charges the PV for nothing:
     // its entire benefit *is* the retaliation, so an activation would be a pure cost. The PV cost
     // and the Duração formula below stay real, tested data a caller can read.
+    // TODO
     ESPINHOS_DE_GAEA(
             "Para ativar esta Habilidade você deve gastar qualquer quantidade de PV (mínimo " +
             "1), a Duração desta Habilidade é igual a 1+ metade dos PV gastos (mínimo 1 " +
@@ -97,6 +97,7 @@ public enum AbracadoPelaEscuridaoAbility implements AventyrTitleAbility {
     // Efeitos (Oferenda Maldita as an additional Efeito Crítico) is the same unbuilt system
     // AutocontroleAdvantage#RESOLUTO already cites. "Imunes a ela por 2 Rodadas" needs a
     // per-ability, per-target, Round-scoped immunity tracker, which doesn't exist anywhere.
+    // TODO: Implement the active Ability
     PLACIDEZ_DE_UNDINE_RANCOR_DE_HALOI(
             "Como parte da ativação desta Habilidade você deve desferir um ataque com sua " +
             "Arma, sua Margem Crítica Menor para este ataque aumenta em +2 números. Para " +

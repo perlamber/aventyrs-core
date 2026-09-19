@@ -58,6 +58,7 @@ class FeatRequirementsGateTest {
         @Override public List<AventyrTitleSpecialization> getSpecializations() { return List.of(); }
         @Override public List<AventyrTitleAbility> getAbilities() { return List.of(); }
         @Override public void grantAbility(final AventyrTitleAbility ability) { }
+        @Override public void grantSpecialization(final AventyrTitleSpecialization specialization) { }
     }
 
     private static Character.CharacterBuilder character() {

@@ -16,6 +16,8 @@ import org.aventyrs.core.title.TitleArchetype;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.aventyrs.core.util.TranslatableMessages.TITLE_ABILITY_PREREQUISITE_NOT_MET;
+
 /**
  * Santo — "os guerreiros divinos", the first concrete Título Aventyr modeled in this core. See
  * CLAUDE.md's "Adding a new Título" section for the general shape this class follows.
@@ -52,7 +54,7 @@ public class Santo implements AventyrTitle {
      */
     public Santo(@NonNull final List<SantoSpecialization> specializations,
                  @NonNull final List<AventyrTitleAbility> abilities) {
-        this.specializations = specializations;
+        this.specializations = new ArrayList<>(specializations);
         this.abilities = new ArrayList<>(abilities);
     }
 
@@ -94,6 +96,21 @@ public class Santo implements AventyrTitle {
     @Override
     public void grantAbility(final AventyrTitleAbility ability) {
         abilities.add(ability);
+    }
+
+    /**
+     * Santo's Especializações are its own two-constant catalog, so anything else is not one of
+     * this Título's to hold — refused rather than stored, since a foreign constant would be
+     * counted by {@link #getSpecializationAndSupremaCount()} and would inflate Despertar's own
+     * Defesas and Duração arithmetic. This is the enforced half of each constant's own "Apenas
+     * 'Santos' podem adquirir esta especialização" line.
+     */
+    @Override
+    public void grantSpecialization(final AventyrTitleSpecialization specialization) {
+        if (!(specialization instanceof SantoSpecialization santoSpecialization)) {
+            throw new IllegalOperationException(TITLE_ABILITY_PREREQUISITE_NOT_MET);
+        }
+        specializations.add(santoSpecialization);
     }
 
     /**

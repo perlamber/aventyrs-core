@@ -85,7 +85,17 @@ Habilidades/Supremas — don't duplicate that work here.
   `adding-a-title-specialization`) is a different Java enum than `<Title>Ability`, so the
   narrower type compiles but can never actually hold one; `Santo`'s own field needed retrofitting
   from `List<SantoAbility>` once a gated ability needed validating against it — get this right
-  from the start instead. Delegates `getName()`/`getBaseEffectDescription()`
+  from the start instead. **Store both lists as mutable defensive copies** (`new ArrayList<>(...)`)
+  — `grantAbility` and `grantSpecialization` append to them after construction, and `List.of(...)`
+  (the common case at a call site) rejects that. Implement **both** mutators, each into its own
+  list: an `AventyrTitleSpecialization` *is* an `AventyrTitleAbility`, so routing one through
+  `grantAbility` compiles and quietly misfiles it out of `getSpecializations()` — and every
+  "Requer N Especializações" prerequisite counts exactly what that method returns.
+  `grantSpecialization` should refuse a constant from another Título's catalog
+  (`TITLE_ABILITY_PREREQUISITE_NOT_MET`), which is the enforced half of each constant's own
+  "Apenas '<Títulos>' podem adquirir esta especialização" line — a foreign constant would be
+  counted by `getSpecializationAndSupremaCount()` and inflate the base effect's own arithmetic.
+  Delegates `getName()`/`getBaseEffectDescription()`
   to its own fields/constants (there's no separate catalog constant to delegate to, since only
   one concrete class exists per Título family). Override `getPrimaryTitleBonusDescription()`
   too if step 1 found a "Se este for seu Título Primário" clause (default `null` if not — not
@@ -106,10 +116,14 @@ Habilidades/Supremas — don't duplicate that work here.
   #getRequiredSpecializations()`/`#getRequiredOtherAbilities()` for free via Lombok's
   `@Getter` (matching the interface method names exactly, the same way the existing `PDCost`
   field already overrides `getPDCost()`); both default to 0 if the rules text names neither.
-  `#getRequiredOtherAbilities()` only ever counts sibling constants of this *same* enum
-  (`<Title>Ability`, never a `<Specialization>Ability` from a different catalog, even though
-  both end up in the same held `AventyrTitle#getAbilities()` list) — see `SantoAbility`'s own
-  four constants (1 Especialização apiece; 0/2/2/4 outras Habilidades) for the worked example.
+  `#getRequiredOtherAbilities()` on a `<Title>Ability` counts **every** Habilidade the Título
+  holds — its own constants *and* the ones a held Especialização brought — because the clause
+  names the Título ("2 outras Habilidades **de Santo**"), and a Habilidade an Especialização
+  brought is a Habilidade de Santo too. That is what `#getRequiredOtherAbilitiesScope()` returning
+  empty means, and it is the default here, since a `<Title>Ability` names no Especialização.
+  See `SantoAbility`'s own four constants (1 Especialização apiece; 0/2/2/4 outras Habilidades)
+  for the worked example. (A `<Specialization>Ability`'s clause names *its* Especialização
+  instead and is scoped to it — see that skill.)
   Don't add a `getRequiredSpecialization()` override here — that's for one *specific*, named
   Especialização, which never applies to this Título-level enum (see the
   `adding-a-title-specialization` skill's own step 4 instead).

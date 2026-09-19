@@ -115,13 +115,28 @@ class AbencoadoPelaLuzAbilityTest {
         assertFalse(AbencoadoPelaLuzAbility.GLORIA_RELAMPEJANTE_DE_TESLA.isEligible(title));
     }
 
+    /**
+     * The narrow reading, and the reason the scope is per-constant rather than global: this
+     * constant's clause names one <i>Especialização</i> ("2 Habilidades de 'Abençoado pela Luz'"),
+     * unlike {@code SantoAbility}'s, which names the Título and counts every Habilidade held.
+     * A Título-level Habilidade is not a Habilidade de 'Abençoado pela Luz' and must not count.
+     */
     @Test
-    void isEligibleForGloriaRelampejanteDeTeslaIgnoresAbilitiesFromASiblingCatalog() {
-        // 2 SantoAbility Habilidades held, but none from this same AbencoadoPelaLuzAbility
-        // catalog — "outras Habilidades de 'Abençoado pela Luz'" must not count them.
+    void isEligibleForGloriaRelampejanteDeTeslaIgnoresHabilidadesNotGatedOnItsEspecializacao() {
         AventyrTitle title = new Santo(
                 List.of(SantoSpecialization.ABENCOADO_PELA_LUZ),
                 List.of(SantoAbility.PROTECAO_UNGIDA, SantoAbility.BASTIAO_DOS_NECESSITADOS));
+
+        assertFalse(AbencoadoPelaLuzAbility.GLORIA_RELAMPEJANTE_DE_TESLA.isEligible(title));
+    }
+
+    /** Nor does one gated on the *other* Especialização — "de 'Abençoado pela Luz'" is specific. */
+    @Test
+    void isEligibleForGloriaRelampejanteDeTeslaIgnoresTheOtherEspecializacaosHabilidades() {
+        AventyrTitle title = new Santo(
+                List.of(SantoSpecialization.ABENCOADO_PELA_LUZ, SantoSpecialization.ABRACADO_PELA_ESCURIDAO),
+                List.of(AbracadoPelaEscuridaoAbility.ESPINHOS_DE_GAEA,
+                        AbracadoPelaEscuridaoAbility.FUROR_DE_SYLPH));
 
         assertFalse(AbencoadoPelaLuzAbility.GLORIA_RELAMPEJANTE_DE_TESLA.isEligible(title));
     }

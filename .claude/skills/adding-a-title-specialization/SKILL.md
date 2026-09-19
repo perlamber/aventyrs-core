@@ -211,11 +211,15 @@ own worked example (`AbencoadoPelaLuzAbility`) surfaces that are easy to miss:
 - **Add a `requiredOtherAbilities` (int) field for a "Requer N outras Habilidades de
   '<Especialização name>'" clause** — overrides `AventyrTitleAbility
   #getRequiredOtherAbilities()`, 0 by default for constants with no such clause. This count is
-  automatically scoped to **only sibling constants of this same `<Specialization>Ability`
-  enum** — `isEligible` never counts the Título's own `<Title>Ability` constants (or a
-  *different* Especialização's own gated catalog) toward it, even though all of them end up in
-  the same held `AventyrTitle#getAbilities()` list — see `GLORIA_RELAMPEJANTE_DE_TESLA`'s own
-  "2" for the worked example.
+  automatically scoped to **Habilidades gated on this same named Especialização** — via
+  `#getRequiredOtherAbilitiesScope()`, which defaults to the constant's own
+  `getRequiredSpecialization()`, so setting that field (above) is all this needs. `isEligible`
+  never counts the Título's own `<Title>Ability` constants (which name no Especialização) or a
+  *different* Especialização's gated ones toward it, even though all of them end up in the same
+  held `AventyrTitle#getAbilities()` list — see `GLORIA_RELAMPEJANTE_DE_TESLA`'s own "2" for the
+  worked example. Note the asymmetry, which is the rules text's own: a `<Title>Ability`'s clause
+  names the Título and counts *everything* held, this one names an Especialização and counts only
+  its own.
 - **An ability can be individually close to real even when nothing wires it end-to-end yet —
   and once it is, wire it per step 3 above rather than leaving it TODO'd.** Before writing "no
   system exists for X," check whether the *value* is already fully expressible as a `Blessing`
@@ -272,10 +276,11 @@ own worked example (`AbencoadoPelaLuzAbility`) surfaces that are easy to miss:
   `isEligible(AventyrTitle)` rejects a title without the Especialização for every constant,
   accepts a no-other-abilities constant once the Especialização alone is held, and — the case
   most worth a dedicated test — rejects/accepts the "N outras Habilidades" constant based on
-  how many *sibling* constants of this same catalog are held, while a title holding that many
-  Habilidades from the **Título's own `<Title>Ability` catalog instead** (not this one) still
-  rejects it — see `AbencoadoPelaLuzAbilityTest
-  #isEligibleForGloriaRelampejanteDeTeslaIgnoresAbilitiesFromASiblingCatalog`/
+  how many Habilidades gated on *this same* Especialização are held, while a title holding that
+  many from the **Título's own `<Title>Ability` catalog instead** (or from the other
+  Especialização) still rejects it — see `AbencoadoPelaLuzAbilityTest
+  #isEligibleForGloriaRelampejanteDeTeslaIgnoresHabilidadesNotGatedOnItsEspecializacao`/
+  `#isEligibleForGloriaRelampejanteDeTeslaIgnoresTheOtherEspecializacaosHabilidades`/
   `#isEligibleAcceptsGloriaRelampejanteDeTeslaOnceEnoughSiblingAbilitiesAreHeld` for the shape.
 - `<Specialization>InteractionTest` (new file, only if step 3 applied) — each real branch's
   actual effect (e.g. heal amount matches the formula it delegates to, not a hardcoded number),
