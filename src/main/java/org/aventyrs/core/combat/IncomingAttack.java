@@ -90,6 +90,14 @@ public class IncomingAttack {
     private final CombatantSheet attacker;
 
     /**
+     * The caller's word that the holder of a provoking Aura binding {@link #attacker} is not a valid
+     * target right now (out of reach, hidden, …) — which this core can't judge — so this attack
+     * may go elsewhere. {@code false} by default: a bound attacker's first attack each Rodada is
+     * refused unless it targets the holder. See {@code org.aventyrs.core.scene.ActiveAura}.
+     */
+    private final boolean forcedTargetUnavailable;
+
+    /**
      * The Efeitos Críticos this attack inflicts <i>if</i> the defense roll comes up a critical
      * failure — caller-constructed, because this core has no way to know which one a given
      * weapon or Magia carries (Sangramento? ManaPurge? RealExecution?), the same restraint

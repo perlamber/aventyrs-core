@@ -185,6 +185,15 @@ public class DamageServiceImpl implements DamageService {
         total += sumEgoAdvantageAbsoluteDamageReduction(character, sceneContext);
         total += sumTitleAbilityAbsoluteDamageReduction(character, target, sceneContext);
         total += sumAllyGrantedAbsoluteDamageReduction(target, sceneContext);
+        // A *timed* RA grant — an activated ability handing its holder RA for N Rodadas
+        // (AbencoadoPelaLuzAbility#GLORIA_RELAMPEJANTE_DE_TESLA). Deliberately a second
+        // consumption branch beside the continuously-scanned passives above: every other source
+        // here answers "what does this character always have", and none of them can express "for
+        // the next Rodada". Only reachable with a sheet in hand, so the Character-only overloads
+        // still never see it.
+        if (target != null) {
+            total += target.getTemporaryBonus(ModifierType.ABSOLUTE_DAMAGE_REDUCTION);
+        }
         return Math.max(0, total);
     }
 
@@ -267,6 +276,12 @@ public class DamageServiceImpl implements DamageService {
                                     final boolean attackHalvesDamage) {
         final boolean halfDamage = attackHalvesDamage
                 || sumAcrossSources(character, ModifierType.HALF_DAMAGE, target) > 0
+                // A timed Meio-Dano grant (SantoAbility#PROTECAO_UNGIDA's 3 Rodadas), the
+                // TemporaryBonus twin of the passive scan above and of the timed RA branch in
+                // computeTotalAbsoluteDamageReduction. Read as a boolean like every other
+                // HALF_DAMAGE source — any positive value means "yes", never a magnitude — so two
+                // sources still halve exactly once, and still last.
+                || (target != null && target.getTemporaryBonus(ModifierType.HALF_DAMAGE) > 0)
                 || character.getEgoAdvantages().values().stream()
                         .anyMatch(advantage -> advantage.resolveHalfDamage(sceneContext));
         int reduction = target != null

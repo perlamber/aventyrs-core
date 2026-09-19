@@ -27,12 +27,53 @@
  * AventyrTitle}; "is this the character's Título Primário" is answered by
  * {@code character.getPrimaryTitle() == title}, not by asking the instance.
  *
+ * <p>{@link org.aventyrs.core.title.TitleAcquisitionService#grantTitle} is the validated grant
+ * (a held Talento may prohibit a Título), and {@code #isPermitted} is the same check without the
+ * grant. {@link org.aventyrs.core.title.TitleCatalog#all()} lists one fresh instance of every
+ * Título family. A Título owed for later is a {@link org.aventyrs.core.title.TitleAwakening},
+ * granted by {@code CharacterSheet#applySessionEndAcquisitions()}.
+ *
+ * <h2>Activating a Título trait</h2>
+ *
+ * Every activated Habilidade, Suprema or Especialização goes through one entry point, {@link
+ * org.aventyrs.core.title.AventyrTitle#activateAbility}: it checks the trait is held, builds the
+ * {@link org.aventyrs.core.title.AbstractTitleAbilityInteraction} the trait's catalog constant
+ * names in {@code interactionClass}, and runs it. That base refuses under Silêncio, checks the
+ * PD amount against the trait's {@link org.aventyrs.core.title.PDCost} and the activator's
+ * current PD, runs the trait's own checks, and only then spends the PD and resolves the effect —
+ * so a refused activation costs nothing. The PD paid comes back on {@code
+ * InteractionResult#getDeterminationPointsSpent()}; the PA/Reação/Ação Livre cost is reported by
+ * the trait and never deducted.
+ *
+ * <pre>{@code
+ * InteractionResult result = santo.activateAbility(AbencoadoPelaLuzAbility.ORGULHO_ELDURIANO,
+ *         TitleAbilityActivationRequest.builder()
+ *                 .activator(holderSheet)
+ *                 .scene(scene)                        // this trait registers an Aura
+ *                 .sceneContext(holderContext)         // binds foes already in range
+ *                 .determinationPoints(3)              // Variável: the player's pick; 3 Rodadas
+ *                 .build());
+ *
+ * santo.activateAbility(SantoSpecialization.ABENCOADO_PELA_LUZ,
+ *         TitleAbilityActivationRequest.builder()
+ *                 .activator(holderSheet)
+ *                 .target(allySheet)                   // omitted = the activator
+ *                 .choice(AbencoadoPelaLuzInteraction.Branch.HEAL)
+ *                 .build());                           // Fixed 1PD: no amount needed
+ * }</pre>
+ *
+ * <p>What each trait needs from the request is its own call — a missing Scene or choice is
+ * refused with {@code TITLE_ABILITY_REQUIRES_SCENE}/{@code TITLE_ABILITY_CHOICE_REQUIRED}. A
+ * trait whose effect is reported rather than applied (Grito de Guerra Vulcano's {@code
+ * Blessing}s) still leaves granting them to the caller.
+ *
  * <h2>Adding a new Título</h2>
  *
  * A concrete Título's classes live together in their own subpackage,
  * {@code org.aventyrs.core.title.<titlename>} (e.g. {@link org.aventyrs.core.title.santo}) —
  * mirroring {@code org.aventyrs.core.skill.<skillname>}'s one-subpackage-per-catalog
- * convention. See the project's {@code CLAUDE.md} "Adding a new Título" section (and the
+ * convention. Add it to {@link org.aventyrs.core.title.TitleCatalog} too, or no Talento will
+ * offer it. See the project's {@code CLAUDE.md} "Adding a new Título" section (and the
  * {@code adding-a-title} Claude Code skill) for the full checklist; {@code Santo} is the
  * worked reference example.
  */

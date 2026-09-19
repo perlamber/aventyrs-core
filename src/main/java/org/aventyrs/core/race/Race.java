@@ -5,6 +5,7 @@ import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.SizeCategory;
 import org.aventyrs.core.effect.CriticalEffectType;
 import org.aventyrs.core.feat.FeatCategory;
+import org.aventyrs.core.feat.StartingFeatSlot;
 import org.aventyrs.core.item.NaturalWeapon;
 import org.aventyrs.core.magic.Spell;
 import org.aventyrs.core.sheet.CombatantSheet;
@@ -152,6 +153,19 @@ public interface Race {
      * @return int Cost to learn a new Feat based on this character's spec
      */
     public default int getNewFeatCost(FeatCategory featCategory){ return BASE_NEW_FEAT_COST;}
+
+    /**
+     * The Talentos this race's "Perícias e Talentos" clause grants at creation, one {@link
+     * StartingFeatSlot} per Talento — <em>on top of</em> the General Talentos every character
+     * starts with ({@code CharacterCreationService#DEFAULT_GENERAL_FEAT_SLOTS}), which are not
+     * repeated here. Empty by default ({@code Gigantes}' "não recebem Talentos adicionais").
+     *
+     * <p>Data only: {@code CharacterCreationService#getStartingFeatOptions} lists what fits a slot
+     * and {@code #grantStartingFeats} grants the picks free of XP. Like {@link #getNewFeatCost},
+     * part of the XP economy and therefore <b>never suppressed</b> by {@link
+     * RacialTraitSuppression}.
+     */
+    default List<StartingFeatSlot> getStartingFeatSlots() { return List.of(); }
 
     /**
      * Cost in XP to learn a new Skill

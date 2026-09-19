@@ -4,6 +4,7 @@ import org.aventyrs.core.effect.CriticalEffectType;
 import org.aventyrs.core.magic.ActivationTime;
 import org.aventyrs.core.magic.AuthoredSpell;
 import org.aventyrs.core.magic.BranchLevel;
+import org.aventyrs.core.magic.SpellAlternateEffect;
 import org.aventyrs.core.magic.SpellData;
 import org.aventyrs.core.magic.SpellDuration;
 import org.aventyrs.core.magic.SpellTargeting;
@@ -50,6 +51,7 @@ public enum VooSpell implements AuthoredSpell {
             .secondaryEffectDescription("Queda Sincronizada: Conjurada sobre si mesmo, o conjurador pode fazer com "
                     + "que outros personagens e objetos em queda caiam na mesma velocidade que você. Apenas "
                     + "personagens com 5 ou mais Graduações em Conhecimentos podem Conjurar este efeito.")
+            .alternateEffect(SpellAlternateEffect.named("Queda Sincronizada"))
             .criticalEffectType(CriticalEffectType.AMENIZAR)
             .duration(SpellDuration.CONCENTRACAO)
             .targeting(SpellTargeting.distancia(Range.DISTANCIA_CURTA))
@@ -71,6 +73,7 @@ public enum VooSpell implements AuthoredSpell {
             .secondaryEffectDescription("Poltergeist: Você pode fazer com que um objeto em Distância Curta levite "
                     + "verticalmente, até uma altura máxima igual a metade de seu Foco. Apenas objetos que não "
                     + "estejam sob posse ou guarda de outros personagens podem ser afetada por esta magia.")
+            .alternateEffect(SpellAlternateEffect.named("Poltergeist"))
             .criticalEffectType(CriticalEffectType.AMENIZAR)
             .duration(SpellDuration.concentracaoMais(1))
             .targeting(SpellTargeting.TOQUE)
@@ -94,6 +97,9 @@ public enum VooSpell implements AuthoredSpell {
             .secondaryEffectDescription("Prisão de Ar: Ao invés de cair, o alvo fica preso no ar, imóvel, incapaz de "
                     + "se mover ou de pousar. Indefeso, o alvo também sofre penalidade de -2 em DF e DM. "
                     + "Este efeito alternativo reduz a duração desta magia pela metade.")
+            // TODO: "reduz a duração desta magia pela metade" is relative to its parent — see
+            //  SpellAlternateEffect on why a relative Duração cannot be an override.
+            .alternateEffect(SpellAlternateEffect.named("Prisão de Ar"))
             .criticalEffectType(CriticalEffectType.PREVENIR)
             .duration(SpellDuration.concentracaoMais(1))
             .targeting(SpellTargeting.distancia(Range.DISTANCIA_MEDIA))
@@ -131,6 +137,11 @@ public enum VooSpell implements AuthoredSpell {
             .secondaryEffectDescription("Transferir o Dom: Você pode transferir uma habilidade de voo ou levitação "
                     + "adquirida com esta magia para outros personagens ao toque, esta ação exige o uso de 2PA e "
                     + "dispensa o uso de PM.")
+            .alternateEffect(SpellAlternateEffect.builder()
+                    .name("Transferir o Dom")
+                    .activationTime(ActivationTime.pa(2))
+                    .manaCost(0)
+                    .build())
             .criticalEffectType(CriticalEffectType.PREVENIR)
             .duration(SpellDuration.rodadas(3))
             .targeting(SpellTargeting.distancia(Range.DISTANCIA_MEDIA))
@@ -189,6 +200,7 @@ public enum VooSpell implements AuthoredSpell {
                     + "se fossem afetadas por Voo Livre.")
             .secondaryEffectDescription("Inverter Gravidade: Você pode inverter a gravidade da área, fazendo "
                     + "criaturas e objetos \"caírem para cima\", até a altura máxima de Metade do Foco UD.")
+            .alternateEffect(SpellAlternateEffect.named("Inverter Gravidade"))
             .criticalEffectType(CriticalEffectType.GUILHOTINA)
             .duration(SpellDuration.rodadas(2))
             .targeting(SpellTargeting.areaDeEfeito(AreaOfEffect.circle(Range.DISTANCIA_LONGA)))

@@ -4,6 +4,7 @@ import org.aventyrs.core.effect.CriticalEffectType;
 import org.aventyrs.core.magic.ActivationTime;
 import org.aventyrs.core.magic.AuthoredSpell;
 import org.aventyrs.core.magic.BranchLevel;
+import org.aventyrs.core.magic.SpellAlternateEffect;
 import org.aventyrs.core.magic.SpellData;
 import org.aventyrs.core.magic.SpellDuration;
 import org.aventyrs.core.magic.SpellTargeting;
@@ -97,6 +98,7 @@ public enum MorteSpell implements AuthoredSpell {
                     + "sofre metade do dano que causar. Este efeito aplica a Corrente de Efeitos – Veneno Sombrio "
                     + "mesmo que não supere a DM do alvo em 5, também recebe adicionalmente a Corrente de Efeitos – "
                     + "Perdição Arcana: Esta magia recebe Roubo de Mana 1, e o alvo perde 1PM.")
+            .alternateEffect(SpellAlternateEffect.named("Estigma"))
             .criticalEffectType(CriticalEffectType.OFERENDA_MALDITA)
             .duration(SpellDuration.INSTANTANEA)
             .targeting(SpellTargeting.TOQUE)

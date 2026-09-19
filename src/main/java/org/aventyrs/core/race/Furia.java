@@ -2,6 +2,8 @@ package org.aventyrs.core.race;
 
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.feat.FeatCategory;
+import org.aventyrs.core.feat.StartingFeatSlot;
 import org.aventyrs.core.sheet.DlcRuleset;
 
 import java.util.List;
@@ -89,4 +91,9 @@ public class Furia implements Race {
         return Character.builder();
     }
 
+    /** "Todas as Fadas e Fúrias recebem um Talento adicional, escolhido entre os Talentos Feéricos." */
+    @Override
+    public List<StartingFeatSlot> getStartingFeatSlots() {
+        return List.of(StartingFeatSlot.race(FeatCategory.FEERICO));
+    }
 }

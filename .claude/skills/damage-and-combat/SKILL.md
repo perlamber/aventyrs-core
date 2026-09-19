@@ -120,6 +120,20 @@ Rodada" clause reads back).
   roll there is the defender's Esquiva e Aparar, and this core models nothing about what the
   *foe* swung.
 
+### A provoking Aura constrains the target — `AuraTargeting`
+
+Both entry points run one shared, package-private gate (`combat.AuraTargeting#resolvePenalty`)
+when the request carries a live `scene` **and** an `attacker`: an attacker bound by a
+`scene.ActiveAura` whose first attack of the Rodada isn't aimed at the Aura's holder is refused
+(`FORCED_ATTACK_TARGET_REQUIRED`), unless the request sets `forcedTargetUnavailable` — "você não
+for um alvo válido" is the caller's judgement. After that attack, later ones against anyone else
+carry `Skill#DISADVANTAGE_MALUS`, applied where each direction keeps its number: `requiredTotal`
+on `AttackReceiver` (the foe's GD drops) and `attackTotal` on `AttackDelivery` (so it reaches
+every additional target of that one roll too). Both report it as `getAuraPenalty()`. The gate
+judges only the primary `defender`, and learns the holder was attacked only through
+`Scene#recordAttack` — `resolve` stays report-only. See the `scene-context-and-positioning`
+skill for binding.
+
 ### One attack, several targets
 
 `ArtesMarciaisFeat#DOMINAR_ARTE_MARCIAL_ARTE_FLUIDA`'s "seus ataques afetam um alvo adicional" is
@@ -448,6 +462,13 @@ Pessoal/Toque/Planar/caster-centred reach that names no placed distance).
 
 ## Damage mitigation — `DamageService`
 
+**Two stages also have a timed source, and both need a `CombatantSheet`.** RA sums
+`getTemporaryBonus(ABSOLUTE_DAMAGE_REDUCTION)` on top of its four passive sources
+(`AbencoadoPelaLuzAbility#GLORIA_RELAMPEJANTE_DE_TESLA`), and the Meio-Dano stage ORs in
+`getTemporaryBonus(HALF_DAMAGE)` (`SantoAbility#PROTECAO_UNGIDA`) — read as a flag, so two sources
+still halve exactly once and the halving still lands last. The `Character`-only overloads see
+neither: they have no sheet to ask.
+
 Three layers of mitigation, in a fixed order:
 
 1. **RD (Redução de Dano)** and **RA (Redução Absoluta)** — two independent flat reductions,
@@ -555,9 +576,27 @@ persistence obligation for a value that is pure derivation. Scanned at the momen
 damage is calculated, the answer is correct by construction as characters move in and out of
 range. `BastiaoDosNecessitadosTest#theGrantIsWithheldOnceTheAllyIsNoLongerAdjacent` pins this.
 
-The second consumer that would justify generalizing this shape is Santo's Despertar (the same
-thing for Defesas), which additionally needs `Santo#getDefesasBonus(SceneContext)` promoted from
-the concrete class to the interface first. Build it when that lands.
+### The exception: when the figure reads the *holder's* situation
+
+Scanning works here because the value derives from the **recipient's** own situation — Bastião's
+clause is a PV comparison, and the recipient's own `SceneContext` answers it.
+
+It does **not** work when the value derives from the **holder's**. Santo's Título-Primário clause
+("aliados adjacentes recebem metade do seu Bônus do Efeito Base") is half of a figure that counts
+*the holder's* adjacent allies. A scan running from the recipient sees only its own neighbours, so
+with two allies beside the Santo it would hand each of them half of the wrong number. Resolving
+holder-side is the only way to get it right, and a holder-side resolution has nowhere to put its
+answer except onto the recipient — so that one is **granted**, as a `scene.ProjectedAura`
+(`CombatantSheet#resolveProjectedAuras`) that `Scene#refreshProjectedAuras` grants and revokes
+against a per-holder ledger, the same revoke-then-regrant shape `Scene#applyInitiativeBlessings`
+already uses. The revocation obligation is real and `Scene` carries it, including on
+`removeParticipant` in both directions; the bonus is `TemporaryBonus.openEnded` so no Rodada
+countdown expires it early. `ProjectedAuraTest#theAmountIsTheHoldersAdjacencyNotTheRecipients` pins
+the difference.
+
+**Choose by asking whose adjacency the number reads**, not by preference: recipient's → scan,
+holder's → Aura. And note the Aura, being a grant, is caller-driven — this core watches nothing, so
+a consumer calls `refreshProjectedAuras` after any movement or teleportation.
 
 ### RA/half-damage conditioned on `SceneContext`
 

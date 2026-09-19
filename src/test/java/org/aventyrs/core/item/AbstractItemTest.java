@@ -3,6 +3,7 @@ package org.aventyrs.core.item;
 import org.aventyrs.core.ability.ItemActiveAbility;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.modifier.ModifierType;
+import org.aventyrs.core.sheet.ActionCost;
 import org.aventyrs.core.sheet.TemporaryEffect;
 import org.junit.jupiter.api.Test;
 
@@ -105,8 +106,8 @@ class AbstractItemTest {
             }
 
             @Override
-            public int getActionPointCost() {
-                return 1;
+            public ActionCost getActionPointCost() {
+                return ActionCost.ofActionPoints(1);
             }
 
             @Override
@@ -168,8 +169,8 @@ class AbstractItemTest {
             }
 
             @Override
-            public int getActionPointCost() {
-                return 0;
+            public ActionCost getActionPointCost() {
+                return ActionCost.FREE_ACTION;
             }
 
             @Override

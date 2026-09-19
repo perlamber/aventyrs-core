@@ -8,8 +8,12 @@ import java.util.Optional;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.rest.RestService;
 import org.aventyrs.core.rest.RestType;
+import org.aventyrs.core.sheet.ActionCost;
 import org.aventyrs.core.sheet.Interaction;
 import org.aventyrs.core.title.AventyrTitleSpecialization;
+import org.aventyrs.core.title.PDCost;
+
+import static org.aventyrs.core.title.PDCost.fixed;
 
 /**
  * Santo's own catalog of Especializações — exactly two per Título (per this codebase's
@@ -35,12 +39,11 @@ public enum SantoSpecialization implements AventyrTitleSpecialization {
             "Seu toque tem capacidades curativas, ao tocar outro personagem você pode " +
             "escolher entre fazer com que ele recupere PV como se passasse por um Descanso " +
             "Curto, ou Remover um Malefício, escolhido entre Doença, Encantamento ou Maldição.",
-            1, 2, Optional.of(AbencoadoPelaLuzInteraction.class)){
-        // The inherited isPassive() formula (actionPointCost==0 && !reaction && !freeAction)
-        // would misclassify this as passive — its 0/0 PD/PA reflects "cost is entirely PV,
-        // not PD/PA" (see the constant's own comment above), not "no cost at all". Fúria dos
-        // Deuses is a genuine per-attack active choice, so this overrides the default instead
-        // of letting the derived formula guess wrong.
+            fixed(1), ActionCost.ofActionPoints(2), Optional.of(AbencoadoPelaLuzInteraction.class)) {
+        // "Custo de Ativação: 1PD, Tempo de Ativação: 2PA" — the inherited isPassive() already
+        // answers false off that 2PA cost. Kept as an explicit override because this constant's
+        // activeness is a fact about its rules text, not something to re-derive if the formula
+        // moves again. (Its twin below overrides for a different reason — see there.)
         @Override
         public boolean isPassive() {
             return false;
@@ -71,12 +74,12 @@ public enum SantoSpecialization implements AventyrTitleSpecialization {
             "Maior: O dano deste ataque aumenta +1d6. Pontos de Vida perdidos desta forma só " +
             "podem ser recuperados com Descansos ou Roubo de Vida, mas não com efeitos " +
             "similares a Descansos.",
-            0, 0, Optional.empty()) {
-        // The inherited isPassive() formula (actionPointCost==0 && !reaction && !freeAction)
-        // would misclassify this as passive — its 0/0 PD/PA reflects "cost is entirely PV,
-        // not PD/PA" (see the constant's own comment above), not "no cost at all". Fúria dos
-        // Deuses is a genuine per-attack active choice, so this overrides the default instead
-        // of letting the derived formula guess wrong.
+            fixed(0), ActionCost.NONE, Optional.empty()) {
+        // The inherited isPassive() formula (a NONE Tempo de Ativação) would misclassify this
+        // as passive — its ActionCost.NONE reflects "cost is entirely PV, not PD/PA" (see the
+        // constant's own comment above), not "no cost at all". Fúria dos Deuses is a genuine
+        // per-attack active choice, so this overrides the default instead of letting the
+        // derived formula guess wrong.
         @Override
         public boolean isPassive() {
             return false;
@@ -84,8 +87,8 @@ public enum SantoSpecialization implements AventyrTitleSpecialization {
     };
 
     private final String description;
-    private final int PDCost;
-    private final int actionPointCost;
+    private final PDCost PDCost;
+    private final ActionCost actionPointCost;
     private final Optional<Class<? extends Interaction>> interactionClass;
 
     /**

@@ -1,6 +1,7 @@
 package org.aventyrs.core.item;
 
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.character.CriticalDamage;
 import org.aventyrs.core.character.DefenseType;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.skill.SkillType;
@@ -24,9 +25,10 @@ public interface Masterpiece {
 
     /**
      * Which column of the "Preços de Obras-Primas" table this one is priced from — Armas for an
-     * Obra-Prima Ofensiva, Armaduras for a Defensiva. Abstract rather than defaulted on purpose:
-     * a silent default would price the unauthored offensive catalog off the armour column, and
-     * the two differ at every tier but Incomum and Mítico.
+     * Obra-Prima Ofensiva ({@link OffensiveMasterpiece}), Armaduras for a Defensiva ({@link
+     * DefensiveMasterpiece}). Abstract rather than defaulted on purpose: a silent default would
+     * have priced one catalog off the other's column, and the two differ at every tier but Incomum
+     * and Mítico.
      */
     EnhancementPriceCategory getPriceCategory();
 
@@ -39,6 +41,27 @@ public interface Masterpiece {
     }
 
     default int getCastingBonus() {
+        return 0;
+    }
+
+    /**
+     * The Ataque column of the "Obras-Primas Ofensivas" table. Absent from the Defensivas table
+     * entirely — {@link DefensiveMasterpiece} authors {@code DF | DM | Conjuração | Requisitos}
+     * and nothing else — so this is 0 for every defensive entry by construction rather than by
+     * coincidence.
+     *
+     * <p><b>Read by nothing yet</b>, exactly like {@link Improvement#getAttackBonus()}: applying it
+     * needs a roll pass scoped to the weapon the attack was actually delivered with, and {@code
+     * AbstractSkillInteraction#sumEquipmentRollBonuses} scans the whole loadout indiscriminately.
+     * Exact, authored data in the meantime, per CLAUDE.md's "can't apply it yet doesn't mean can't
+     * compute it yet".
+     */
+    default int getAttackBonus() {
+        return 0;
+    }
+
+    /** The Danos column of the "Obras-Primas Ofensivas" table — see {@link #getAttackBonus()}. */
+    default int getDamageBonus() {
         return 0;
     }
 
@@ -57,19 +80,60 @@ public interface Masterpiece {
 
     /**
      * Whether this enhancement stops its weapon being knocked out of its wielder's hands —
-     * the "Não pode ser desarmado" Característica Adicional (Manopla de Segurança, an
-     * Aprimoramento de Obra-Prima Ofensiva). False by default.
+     * the "Não pode ser desarmado" Característica Adicional. False by default.
      *
-     * <p>No constant overrides it yet: the offensive Obra-Prima/Aprimoramento catalogues are not
-     * authored (only the defensive ones are), so this is the hook {@code Weapon#isDisarmable()}
-     * consults, waiting on the catalogue rather than on a mechanism.
+     * <p>No <em>Obra-Prima</em> states it; the one constant that does is an Aprimoramento
+     * ({@link OffensiveImprovement#MANOPLA_DE_SEGURANCA}, through {@link
+     * Improvement#preventsDisarming()}). Declared on both halves so {@code Weapon#isDisarmable()}
+     * asks one question of whatever is fitted, rather than knowing which layer the clause lives in.
      */
     default boolean preventsDisarming() {
         return false;
     }
 
-    /** How many Dano Base scale-ups this masterpiece grants when weapon is the attack source. */
+    /**
+     * How many Dano Base scale-ups this masterpiece grants when weapon is the attack source.
+     *
+     * <p><b>An offensive entry is only ever asked about its own host.</b> "Dano Base da Arma
+     * aumenta em +1" means the weapon the Obra-Prima is fitted to, and {@code
+     * Item#resolveEnhancementDamageBaseIncrease} enforces that before delegating here — so an
+     * override need not (and cannot) compare the two itself. A defensive entry is asked about every
+     * weapon its wearer swings, which is what {@link DefensiveImprovement#BENCAO_SELVAGEM}'s Armas
+     * Naturais clause needs.
+     */
     default int resolveDamageBaseIncrease(final Weapon weapon, final Character character) {
+        return 0;
+    }
+
+    /**
+     * Margem Crítica Menor "números" this masterpiece grants when weapon is the attack source —
+     * each lowering the 3d6 total an Acerto Crítico Menor has to reach ({@link
+     * OffensiveMasterpiece#DECISIVA}, {@link OffensiveMasterpiece#MITRAL}). Host-scoped by {@code
+     * Item#resolveEnhancementCriticalMarginIncrease} on the same terms as {@link
+     * #resolveDamageBaseIncrease}.
+     */
+    default int resolveCriticalMarginIncrease(final Weapon weapon, final Character character) {
+        return 0;
+    }
+
+    /**
+     * What this masterpiece adds to the dano roll of a critical hit made with weapon — {@link
+     * OffensiveMasterpiece#MITRAL}'s "Danos Críticos aumentam em +3". Host-scoped by {@code
+     * Item#resolveEnhancementCriticalDamage}, again like {@link #resolveDamageBaseIncrease}.
+     */
+    default CriticalDamage resolveCriticalDamage(final Weapon weapon, final Character character) {
+        return CriticalDamage.NONE;
+    }
+
+    /**
+     * The number of Rodadas this masterpiece adds to the given Magia's resolved Duração — the twin
+     * of {@link Improvement#resolveDurationIncreaseInRounds}, added for {@link
+     * OffensiveMasterpiece#PODEROSA}'s "Magias tem … Duração +1". Read by {@code
+     * org.aventyrs.core.magic.SpellDurationService}, through {@code
+     * Item#resolveEnhancementDurationIncreaseInRounds}.
+     */
+    default int resolveDurationIncreaseInRounds(final org.aventyrs.core.magic.Spell spell,
+                                                final Character character) {
         return 0;
     }
 

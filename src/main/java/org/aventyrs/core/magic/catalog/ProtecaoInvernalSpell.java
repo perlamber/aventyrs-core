@@ -4,6 +4,7 @@ import org.aventyrs.core.effect.CriticalEffectType;
 import org.aventyrs.core.magic.ActivationTime;
 import org.aventyrs.core.magic.AuthoredSpell;
 import org.aventyrs.core.magic.BranchLevel;
+import org.aventyrs.core.magic.SpellAlternateEffect;
 import org.aventyrs.core.magic.SpellData;
 import org.aventyrs.core.magic.SpellDuration;
 import org.aventyrs.core.magic.SpellTargeting;
@@ -158,6 +159,9 @@ public enum ProtecaoInvernalSpell implements AuthoredSpell {
                     + "Elemental: Gelo a cada Rodada.")
             .secondaryEffectDescription("Exílio Invernal: a Redoma Invernal é criada ao redor de um único "
                     + "personagem, se este personagem for um hostil a Duração é reduzido à metade.")
+            // TODO: "se este personagem for um hostil a Duração é reduzida à metade" is both relative to
+            //  the parent and conditional on the target; SpellDuration expresses neither.
+            .alternateEffect(SpellAlternateEffect.named("Exílio Invernal"))
             .criticalEffectType(CriticalEffectType.POTENCIALIZAR)
             .duration(SpellDuration.rodadas(3))
             .targeting(SpellTargeting.areaDeEfeito(AreaOfEffect.circle(Range.DISTANCIA_MEDIA)))

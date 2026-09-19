@@ -53,8 +53,10 @@ onto `getBaseEffectDescription()` (see step 2 and `Santo`'s own
   (see step 2's own note below for the exact fields/mechanism). Parse it into two numbers: how
   many Especializações (almost always "1," not caring which of the Título's two), and how many
   *other* Título-level Habilidades/Supremas ("outras Habilidades de `<Title>`").
-- Its Custo de Ativação — in PD (Pontos de Determinação), PA (Pontos de Ação), "Reação", or
-  "Ação Livre".
+- Its Custo de Ativação — in PD (Pontos de Determinação), and its Tempo de Ativação in PA
+  (Pontos de Ação), "Reação", "Ação Livre" or "Variável". The PD half is a `title.PDCost`; the
+  action half is a `sheet.ActionCost` (`ofActionPoints(n)` / `REACTION` / `FREE_ACTION` /
+  `dynamic(min)` / `NONE` for a passive) — neither is an `int`.
 - Whether it's a Habilidade or a Suprema (the top tier — `TitleAbilityService
   #getAvailableSupremaSlots`/`#grantTitleAbility` enforce the normal one-per-Título-Aventyr
   allotment, plus one more while `InstinctAbility#CENTELHA_SUPERIOR`'s own one-time extra grant
@@ -83,7 +85,17 @@ Habilidades/Supremas — don't duplicate that work here.
   `adding-a-title-specialization`) is a different Java enum than `<Title>Ability`, so the
   narrower type compiles but can never actually hold one; `Santo`'s own field needed retrofitting
   from `List<SantoAbility>` once a gated ability needed validating against it — get this right
-  from the start instead. Delegates `getName()`/`getBaseEffectDescription()`
+  from the start instead. **Store both lists as mutable defensive copies** (`new ArrayList<>(...)`)
+  — `grantAbility` and `grantSpecialization` append to them after construction, and `List.of(...)`
+  (the common case at a call site) rejects that. Implement **both** mutators, each into its own
+  list: an `AventyrTitleSpecialization` *is* an `AventyrTitleAbility`, so routing one through
+  `grantAbility` compiles and quietly misfiles it out of `getSpecializations()` — and every
+  "Requer N Especializações" prerequisite counts exactly what that method returns.
+  `grantSpecialization` should refuse a constant from another Título's catalog
+  (`TITLE_ABILITY_PREREQUISITE_NOT_MET`), which is the enforced half of each constant's own
+  "Apenas '<Títulos>' podem adquirir esta especialização" line — a foreign constant would be
+  counted by `getSpecializationAndSupremaCount()` and inflate the base effect's own arithmetic.
+  Delegates `getName()`/`getBaseEffectDescription()`
   to its own fields/constants (there's no separate catalog constant to delegate to, since only
   one concrete class exists per Título family). Override `getPrimaryTitleBonusDescription()`
   too if step 1 found a "Se este for seu Título Primário" clause (default `null` if not — not
@@ -104,10 +116,14 @@ Habilidades/Supremas — don't duplicate that work here.
   #getRequiredSpecializations()`/`#getRequiredOtherAbilities()` for free via Lombok's
   `@Getter` (matching the interface method names exactly, the same way the existing `PDCost`
   field already overrides `getPDCost()`); both default to 0 if the rules text names neither.
-  `#getRequiredOtherAbilities()` only ever counts sibling constants of this *same* enum
-  (`<Title>Ability`, never a `<Specialization>Ability` from a different catalog, even though
-  both end up in the same held `AventyrTitle#getAbilities()` list) — see `SantoAbility`'s own
-  four constants (1 Especialização apiece; 0/2/2/4 outras Habilidades) for the worked example.
+  `#getRequiredOtherAbilities()` on a `<Title>Ability` counts **every** Habilidade the Título
+  holds — its own constants *and* the ones a held Especialização brought — because the clause
+  names the Título ("2 outras Habilidades **de Santo**"), and a Habilidade an Especialização
+  brought is a Habilidade de Santo too. That is what `#getRequiredOtherAbilitiesScope()` returning
+  empty means, and it is the default here, since a `<Title>Ability` names no Especialização.
+  See `SantoAbility`'s own four constants (1 Especialização apiece; 0/2/2/4 outras Habilidades)
+  for the worked example. (A `<Specialization>Ability`'s clause names *its* Especialização
+  instead and is scoped to it — see that skill.)
   Don't add a `getRequiredSpecialization()` override here — that's for one *specific*, named
   Especialização, which never applies to this Título-level enum (see the
   `adding-a-title-specialization` skill's own step 4 instead).
@@ -120,27 +136,30 @@ possua") is exactly the same kind of "classify real-now vs. TODO'd" decision.
 
 For each Habilidade/Suprema, decide real-now vs. TODO'd:
 - **Real now**: pure arithmetic over already-real data (e.g. `Santo
-  #getIgnoreCriticalEffectDurationInRounds` — a duration formula with no automatic caller yet,
-  built ahead of one the same way `ArtesAprimorarComArteAbility#getBaseDamageBonus` was), or
+  #resolveMinorCriticalImmunityRounds` — a duration formula written years before anything read it,
+  built ahead of a caller the same way `ArtesAprimorarComArteAbility#getBaseDamageBonus` was), or
   expressible via an existing hook (e.g. `AventyrTitleAbility#resolveAbsoluteDamageReduction`,
   the shape `SantoAbility.BASTIAO_DOS_NECESSITADOS` uses). **"Can't apply it yet" (the stat/
   system it scales doesn't exist) doesn't mean "can't compute it yet"** — `Santo
-  #getDefesasBonus(SceneContext)`/`#getPrimaryTitleAllyDefesasBonus(SceneContext)` compute
-  Despertar's Defesas bonus (and its Título-Primário half-share) for real, even though Defesas
-  itself is entirely TODO'd — the arithmetic needs no missing system, only the *application*
-  of the result does. TODO the application, not the formula, and say exactly which of the two
-  in the TODO comment.
+  #resolveBaseDefesasBonus(SceneContext)`/`#resolvePrimaryTitleAllyDefesasBonus(SceneContext)`
+  computed Despertar's Defesas bonus (and its Título-Primário half-share) for real long before
+  anything could consume them, and were wired up untouched once the hooks existed — the arithmetic
+  needed no missing system, only the *application* of the result did. TODO the application, not the
+  formula, and say exactly which of the two in the TODO comment. **Re-check a TODO before trusting
+  it**: two of Santo's three named blockers had gone stale by the time anyone returned to them,
+  because the mechanism had been built for someone else in the meantime.
 - **TODO'd**: cite the *specific* missing system. Check CLAUDE.md's existing gap catalog before
   assuming a new gap:
-  - **Defesas** — no stat/service exists anywhere (`race/Gigantes.java`/`race/Elfo.java`
-    already cite this for DF/DM).
+  - **Defesas** — built (`DefenseService`/`DefenseType`), and a Título's own base effect is one
+    of the sources it scans. Don't cite it as missing.
   - **Item/Equipamento** — `org.aventyrs.core.item.ItemInteraction` is still a bare stub.
   - **Encantamento/Maldição classification** — no such tag exists anywhere (`Withering`'s own
     citation).
-  - **Cross-character continuously-recomputed passive grants** — every existing cross-character
-    bonus mechanism is either an explicit roll-time grant (`DOM_BARDICO`) or an
-    initiative-win-triggered `InitiativeBlessing`; nothing supports "my always-on passive
-    continuously grants a bonus to a nearby Character with no trigger event."
+  - **Cross-character continuously-recomputed passive grants** — built, in two shapes, and which
+    one you want depends on whose situation the number reads. Recipient's → scan it
+    (`resolveAllyAbsoluteDamageReduction`). Holder's → project a `scene.ProjectedAura` and let
+    `Scene#refreshProjectedAuras` grant and revoke it (Santo's Título-Primário half). See the
+    `damage-and-combat` skill, "Ally-facing passive grants are scanned, not granted".
   - Positioning/teleportation, attack-redirection, floor-at-1PV, locked HP pools — also
     confirmed absent; see `SantoAbility`'s own TODOs for the exact wording style to match.
 
@@ -149,7 +168,9 @@ is to model real data now and defer the mechanic honestly.
 
 **Once a Título-level Habilidade/Suprema has at least one clause expressible as a real
 `Blessing` (or a direct single-target mutation) and is Active (`isPassive() == false`), give
-it its own `<X>Interaction`/`Santo#activate<X>` pair** — the same rule
+it its own `<X>Interaction extends title.AbstractTitleAbilityInteraction`** (reached through
+`AventyrTitle#activateAbility`; a `Santo#activate<X>` convenience is optional and only ever a
+one-line delegate) — the same rule
 `adding-a-title-specialization`'s own step 3 applies to a specialization's gated abilities,
 generalized to the Título's own top-level ones too. "Real" means "expressible," not "has an
 actual consumer" — a brand-new `ModifierType` with no reader yet still counts, as long as
@@ -158,11 +179,13 @@ nothing else already consumes it a different way (see step 3's own citation of
 for the distinction). No `SantoAbility` constant qualifies yet (all still fully TODO'd) — this
 is a pointer for later, not new code to write now — but check
 `AbencoadoPelaLuzInteraction`/`GritoDeGuerraVulcanoInteraction` (single-target-direct-mutation
-vs. self-plus-allies-report-only-via-`Blessing` shapes) before assuming a new shape is needed
-once one does. **Once a constant does get wired, go back and set its own `interactionClass`
-field to `Optional.of(<X>Interaction.class)`** — see step 2's own note; leaving it at
-`Optional.empty()` after wiring a real activation would make the constant's declared bond lie
-about what it activates.
+vs. self-plus-allies-report-only-via-`Blessing` shapes) and `OrgulhoEldurianoInteraction`
+(Scene-registered, Variável-cost) before assuming a new shape is needed once one does. The base
+class already does Silêncio, the `PDCost` check, affordability and the PD spend — the subclass
+writes only `resolve` (and `validate` if it needs a Scene, target or choice); see
+`adding-a-title-specialization` step 3. **Once a constant does get wired, set its own
+`interactionClass` field to `Optional.of(<X>Interaction.class)`** — `activateAbility` reads it,
+so leaving it empty makes the activation unreachable.
 
 ## 4. Wire `Character`
 
@@ -171,6 +194,10 @@ Grant via `character.grantTitle(new <Title>(...), TitleSlot.PRIMARY)` (or `SECON
 plain nullable Título fields (`primaryTitle`/`secondaryTitle`/`tertiaryTitle`), not a list —
 `TitleSlot` (`org.aventyrs.core.character`) names which one. Use `character.getAllTitles()`
 when a scanning service needs every held Título regardless of slot (see section 0).
+
+**Register the new family in `org.aventyrs.core.title.TitleCatalog#all()`** (one fresh, empty
+instance). That list is what `DespertarAntecipadoFeat#optionsFor` offers, so a Título left out
+of it can never be picked for Despertar Antecipado.
 
 ## 5. Extend a scanning service only when truly needed
 
@@ -237,9 +264,12 @@ to two). Don't build Especialização content as part of *this* skill.
 - `src/main/java/org/aventyrs/core/ego/InitiativeAdvantage.java` (`TORRE_EM_MOVIMENTO`) and
   `src/main/java/org/aventyrs/core/character/services/DamageServiceImpl.java` — the
   explicit-`SceneContext`-scan shape for a condition a no-arg `@Modifier` can't express.
-- `src/main/java/org/aventyrs/core/title/santo/AbencoadoPelaLuzInteraction.java` and
-  `GritoDeGuerraVulcanoInteraction.java` — the two `<X>Interaction` shapes (single-target
-  direct mutation, self-plus-allies `Blessing` reporting) a real Título-level ability would
-  follow once one exists.
+- `src/main/java/org/aventyrs/core/title/AbstractTitleAbilityInteraction.java` and
+  `TitleAbilityActivationRequest.java` — the shared activation base (gates + PD payment) and its
+  request; `AventyrTitle#activateAbility` is the entry point.
+- `src/main/java/org/aventyrs/core/title/santo/AbencoadoPelaLuzInteraction.java`,
+  `GritoDeGuerraVulcanoInteraction.java` and `OrgulhoEldurianoInteraction.java` — the three
+  subclasses (single-target direct mutation, self-plus-allies `Blessing` reporting, a
+  Scene-registered Aura scaled by a Variável cost).
 - `src/main/java/org/aventyrs/core/sheet/Blessing.java` — the shared value object a
   self-plus-allies grant reports.

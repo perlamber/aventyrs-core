@@ -115,12 +115,33 @@
  * already exist), the second because {@code Spell} has no column pointing at a {@code
  * MonsterTemplate} for a conjured creature to be built from.
  *
+ * <p><b>How one gets built, and how a category is added.</b> {@link
+ * org.aventyrs.core.effect.SpellEffectFactory} is the entry point, and it holds no mapping of its
+ * own: {@link org.aventyrs.core.effect.SpellEffectKind} carries a supplier of each category's
+ * {@link org.aventyrs.core.effect.SpellEffectBuilder}, and each builder reads <em>one authored
+ * column</em> of the Magia, answering empty when that column is absent. So <b>adding a category
+ * is a builder class plus a supplier on its constant — nothing else changes</b>, and in particular
+ * {@code SpellCastingServiceImpl} needs no edit. That is the same
+ * one-constant-carries-its-own-lookup shape {@code org.aventyrs.core.skill.SkillType} uses for
+ * {@code interactionFactory}, with {@code SpellEffectFactory} as the thin facade {@code
+ * SkillInteractionFactory} is over it.
+ *
+ * <p>Keyed on the Magia's <em>columns</em> rather than on a registry of effect classes, which is
+ * what keeps it consistent with {@link org.aventyrs.core.effect.Effect}'s promise above: nothing
+ * enumerates effect types, and no new {@code Effect} has to enlist anywhere to be applicable.
+ *
+ * <p><b>There is no "which effect" selector, because the version is one.</b> A Magia and its
+ * {@code Efeito Alternativo} are two separate {@code Spell}s, each carrying its own effect
+ * columns, so {@code SpellCastRequest#isUseAlternateVersion()} already answers it; each version
+ * then authors at most one effect, which {@code SpellEffectFactoryTest} pins across the whole
+ * catalog. An authoring mistake there stops the build rather than a cast.
+ *
  * <p><b>A Spell Effect applies for real, but nothing fires one.</b> {@code
- * SpellCastingService#resolveEffect} builds it and {@code SpellCastingResult#getSpellEffect()}
- * hands it back; the service never runs it, because this core resolves no target GD and so
- * cannot tell whether the cast landed. The caller decides, then drives it through the same drain
- * loop above — chaining a Corrente on first with {@code AbstractEffect#chainInto} if it judges
- * one triggered. Same boundary as every other stage here.
+ * SpellCastingService#resolveEffect} delegates to that factory and {@code
+ * SpellCastingResult#getSpellEffect()} hands the result back; the service never runs it, because
+ * this core resolves no target GD and so cannot tell whether the cast landed. The caller decides,
+ * then drives it through the same drain loop above — chaining a Corrente on first with {@code
+ * AbstractEffect#chainInto} if it judges one triggered. Same boundary as every other stage here.
  *
  * <p>Several abilities/races are still blocked on a Corrente de Efeitos of their own — {@code
  * org.aventyrs.core.ego.AutocontroleAdvantage#RESOLUTO} (a Defesas-comparison threshold

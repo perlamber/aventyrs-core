@@ -200,8 +200,9 @@ and the Habilidade pick are separate acts, so `of(SkillType...)` records the fir
 
 **Deliberately not built:** a blanket forward from `AbstractFeat` to `catalogEntry()` — a
 choice-carrying form replaces its constant rather than decorating it, and a blanket forward would
-make it impossible to drop a clause on purpose. **Still missing:** a free **Talento** slot
-("escolha um Talento Racial"), and a **`Race`** hook for any of these — `Anao`'s Pequenos Gigantes
+make it impossible to drop a clause on purpose. A free **Talento** slot ("escolha um Talento Racial") is
+**done** — `Feat#getGrantedFeats` folded into `Character#getFeats()`, via `ExcepcionalidadeFeat`.
+**Still missing:** a **`Race`** hook for any of these — `Anao`'s Pequenos Gigantes
 and `Elfo`'s Origem Mística are the same shape but `Feat` is the only granting path.
 `HumanoFeat#APRENDIZADO_RAPIDO_E_CONTINUO` stays blocked on a different gap: which Perícias
 Aprendizado Rápido benefits is a creation-time choice nothing records.
@@ -591,7 +592,9 @@ Deep, narrow-consumer systems — do last.
 - **Centelha** — a possess/lack resource (also a Regalia-crafting gate today adjudicated by GM).
 - **Laços-de-Sangue** — master/progeny relation between Vampiros; **gerar Prole** (creating a
   `Character` at runtime).
-- **PD-equivalent rest recovery** — a Determinação twin of `resolveRestMagicPointsBonus`.
+- ~~**PD-equivalent rest recovery**~~ — **done**: `Feat#resolveRestDeterminationPointsBonus`,
+  summed by `RestService#getRecoveredDeterminationPoints`; `DestinoFeat#CORACAO_DE_FERRO_DO_DESTINO`
+  is fully real through it.
 - **Favoritismo** — unmodelled social mechanic.
 - Lands: `DestinoFeat` (whole tree ~10), `VampiricoFeat` (×5), parts of `DraconicoFeat` /
   `AventyrTitle`.

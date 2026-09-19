@@ -134,8 +134,26 @@
  *   An area can be described ({@code org.aventyrs.core.scene.AreaOfEffect}), but nothing resolves
  *   it into a set of targets, and neither entry point classifies an incoming attack as an area
  *   one — so {@code EsquivaEApararCompetencyAbility#EVASAO} still has no flag to scope its Defesa
- *   bonus to. Forced targeting/interception and reactive damage remain missing outright, cited by
+ *   bonus to. Interception and reactive damage remain missing outright, cited by
  *   {@code SantoAbility#GUARDA_VIDAS} among others.</li>
  * </ul>
+ *
+ * <h2>Provoking Auras — the one targeting rule enforced here</h2>
+ *
+ * When a request names both a live {@code scene} and an {@code attacker}, both entry points
+ * consult the Scene's {@code org.aventyrs.core.scene.ActiveAura}s ({@code
+ * AbencoadoPelaLuzAbility#ORGULHO_ELDURIANO}). An attacker the Aura has bound must spend its
+ * first attack each Rodada on the Aura's holder — anything else throws {@code
+ * FORCED_ATTACK_TARGET_REQUIRED}, unless the caller sets {@code forcedTargetUnavailable} because
+ * the holder isn't a valid target right now (a judgement this core can't make). Once it has
+ * attacked the holder, its later attacks that Rodada against anyone else carry {@code
+ * Skill#DISADVANTAGE_MALUS}: on {@code AttackReceiver} it lowers {@code requiredTotal} (the foe's
+ * GD), on {@code AttackDelivery} it lowers {@code attackTotal} (for every target of that one
+ * roll). Both results report it as {@code getAuraPenalty()}. Only the primary {@code defender}
+ * is judged.
+ *
+ * <p>The Aura learns that the holder was attacked from the caller, not from {@code resolve}:
+ * alongside {@code Scene#recordAction}, file {@code scene.recordAttack(attacker, defender)}.
+ * Binding is the caller's step too — {@code Scene#refreshAura} after any movement.
  */
 package org.aventyrs.core.combat;

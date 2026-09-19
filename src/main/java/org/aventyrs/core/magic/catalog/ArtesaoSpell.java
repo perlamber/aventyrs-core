@@ -4,6 +4,7 @@ import org.aventyrs.core.effect.CriticalEffectType;
 import org.aventyrs.core.magic.ActivationTime;
 import org.aventyrs.core.magic.AuthoredSpell;
 import org.aventyrs.core.magic.BranchLevel;
+import org.aventyrs.core.magic.SpellAlternateEffect;
 import org.aventyrs.core.magic.SpellData;
 import org.aventyrs.core.magic.SpellDuration;
 import org.aventyrs.core.magic.SpellTargeting;
@@ -49,6 +50,7 @@ public enum ArtesaoSpell implements AuthoredSpell {
             .secondaryEffectDescription("Ataque Letal: Em substituição aos efeitos padrões a arma tocada tem a "
                     + "Margem Crítica Menor aumentada em +2 números. Assim como Ataque Certeiro também recebe a "
                     + "Corrente de Efeitos – Graça da Guerra.")
+            .alternateEffect(SpellAlternateEffect.named("Ataque Letal"))
             .criticalEffectType(CriticalEffectType.FORTALECER)
             .duration(SpellDuration.rodadas(1))
             .targeting(SpellTargeting.TOQUE)
@@ -75,6 +77,7 @@ public enum ArtesaoSpell implements AuthoredSpell {
             .secondaryEffectDescription("Reforjar: Você pode mudar o tipo de Obra-Prima de um equipamento por outro "
                     + "de usa escolha, o novo tipo deverá pertencer a uma raridade um nível superior. Apenas "
                     + "Obras-Primas naturais podem ser alvo deste Efeito.")
+            .alternateEffect(SpellAlternateEffect.named("Reforjar"))
             .criticalEffectType(CriticalEffectType.FORTALECER)
             .duration(SpellDuration.rodadas(3))
             .targeting(SpellTargeting.TOQUE)
@@ -126,6 +129,7 @@ public enum ArtesaoSpell implements AuthoredSpell {
                     + "efeito também pode receber os benefícios de Dádiva do Deus da Guerra. Itens invocados desta "
                     + "forma utilizam PM ao invés de Carga. Conjurar este efeito exige 10 graduações em Domínio do "
                     + "Mana.")
+            .alternateEffect(SpellAlternateEffect.named("Forja do Progresso"))
             .criticalEffectType(CriticalEffectType.FORTALECER)
             .duration(SpellDuration.rodadas(3))
             .targeting(SpellTargeting.PESSOAL)
@@ -178,6 +182,7 @@ public enum ArtesaoSpell implements AuthoredSpell {
             .secondaryEffectDescription("Arsenal de Gilgamesh: Um equipamento seu e de cada aliado adjacente se "
                     + "transforma em uma Regalia Provisória, você pode escolher os benefícios de cada item "
                     + "individualmente.")
+            .alternateEffect(SpellAlternateEffect.named("Arsenal de Gilgamesh"))
             .criticalEffectType(CriticalEffectType.FORTALECER)
             .duration(SpellDuration.rodadas(3))
             .targeting(SpellTargeting.TOQUE)

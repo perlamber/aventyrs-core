@@ -4,13 +4,19 @@ import lombok.Getter;
 import lombok.NonNull;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.feat.FeatCategory;
+import org.aventyrs.core.feat.FeatPool;
+import org.aventyrs.core.feat.StartingFeatSlot;
 import org.aventyrs.core.sheet.DlcRuleset;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
 
+import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.aventyrs.core.util.TranslatableMessages.INVALID_INHERITED_RACIAL_ABILITIES;
 import static org.aventyrs.core.util.TranslatableMessages.INVALID_PARENT_RACE;
@@ -60,11 +66,12 @@ import static org.aventyrs.core.util.TranslatableMessages.INVALID_PARENT_RACE;
  *   exists" gap as every other race.</li>
  *   <li><b>Longevidade</b> (até um século a mais que o parente não-élfico) — same "no
  *   age/lifespan concept" gap as every other race; purely narrative today.</li>
- *   <li><b>1 Talento Élfico adicional</b> + <b>até 1 Talento adicional do mesmo tipo que o
- *   parente não-élfico recebe</b> (nunca mais de um Talento Élfico do tipo Guardião) — same "no
- *   Feat catalog, no {@code Character.feats} list" gap as every other race's free Talentos;
- *   "Talento Élfico do tipo Guardião" doesn't match any named Talento this core has data for
- *   either.</li>
+ *   <li><b>1 Talento Élfico adicional</b> + <b>até 1 Talento adicional do mesmo tipo que o parente
+ *   não-élfico recebe</b> (nunca mais de um Talento Élfico do tipo Guardião) — built: {@link
+ *   #getStartingFeatSlots()}; the Guardião cap is {@code ElficoFeat#isEligible}'s. The parent's
+ *   slot is offered as the union of every pool the parent's own grant draws from, its racial trees
+ *   judged against the parent ({@code FeatPool.RacialOf}); a parent pool's excluded constants do
+ *   not survive onto that racial half.</li>
  *   <li><b>Especialização/Habilidade de Competência adicional</b> (se o parente não-élfico
  *   receber alguma, limitado a 1) — same "{@link Race} has no hook for granting starting
  *   Perícia training" gap as every other race's free Especializações.</li>
@@ -146,5 +153,46 @@ public class MeioElfo implements Race {
     @Override
     public List<SkillCompetencyAbility> getRacialAbilities() {
         return inheritedRacialAbilities;
+    }
+
+    /**
+     * One Talento Élfico, plus — when parentRace's own grant has any — one more drawn from
+     * everything that grant draws from. See the class javadoc.
+     */
+    @Override
+    public List<StartingFeatSlot> getStartingFeatSlots() {
+        final StartingFeatSlot elfico = StartingFeatSlot.race(FeatCategory.ELFICO);
+        final List<StartingFeatSlot> parentSlots = parentRace.getStartingFeatSlots();
+        if (parentSlots.isEmpty()) {
+            return List.of(elfico);
+        }
+        return List.of(elfico, new StartingFeatSlot(StartingFeatSlot.Source.RACE, parentPools(parentSlots)));
+    }
+
+    /**
+     * Every pool parentSlots draw from, with each racial tree re-judged against parentRace — a
+     * Meio-Elfo is never an instance of its non-elven parent's class, so the plain check would
+     * refuse those Talentos on their Raça clause alone.
+     */
+    private List<FeatPool> parentPools(final List<StartingFeatSlot> parentSlots) {
+        final List<FeatPool> pools = new ArrayList<>();
+        final Set<FeatCategory> racialTrees = EnumSet.noneOf(FeatCategory.class);
+        parentSlots.stream().flatMap(slot -> slot.pools().stream()).distinct().forEach(pool -> {
+            if (pool instanceof FeatPool.Categories categories) {
+                final Set<FeatCategory> generalTrees = EnumSet.noneOf(FeatCategory.class);
+                for (FeatCategory category : categories.categories()) {
+                    (category.getType() == FeatCategory.Type.RACIAL ? racialTrees : generalTrees).add(category);
+                }
+                if (!generalTrees.isEmpty()) {
+                    pools.add(new FeatPool.Categories(generalTrees, categories.excluded()));
+                }
+            } else {
+                pools.add(pool);
+            }
+        });
+        if (!racialTrees.isEmpty()) {
+            pools.add(new FeatPool.RacialOf(parentRace, racialTrees));
+        }
+        return pools;
     }
 }

@@ -241,7 +241,7 @@ missing behind it.
 | `GD da Conjuração:` | `getCastingDifficultyLevel()` + 2 flags | exact — see below |
 | `Descrição:` | `getDescription()` | exact |
 | `Efeito:` | `getPrimaryEffectDescription()` | exact |
-| `Efeito Alternativo –` (63×) | `getSecondaryEffectDescription()` | exact |
+| `Efeito Alternativo –` (**64×**) | `getSecondaryEffectDescription()` + `getAlternateVersion()` | exact — see below |
 | `Corrente de Efeitos –` (60×) | `getEffectChainDescription()` | exact — prose, not an enum |
 | `Efeito Crítico:` | `getCriticalEffectType()` | exact — 3 blanks stay `null` |
 | `Perícia Chave para Conjuração:` | `getAttackSkillType()` | exact — 2 blanks stay `null` |
@@ -250,6 +250,39 @@ missing behind it.
 | `Tempo de Ativação:`/`Tempo de Conjuração:` | `getActivationTime()` | exact |
 | category tag | `getPrimaryType()`/`getSecondaryType()` | delegates to the tree |
 | category tag's `Elemental: X` | `SpellTree#getElementalType()` | exact — `ElementalType` |
+
+### An `Efeito Alternativo` is a second version of the Magia, and 40 of them override columns
+
+The preamble settles what it is: *"um personagem que aprenda a versão base automaticamente aprende
+sua segunda versão"* (L29), and one ramificação *"foca na evolução dos Efeitos Alternativos"*
+(L30). So it is **never a separate Magia** — a constant of its own would cost experience, satisfy
+the climb gate, and change the catalog's 145. It is `SpellData#alternateEffect`
+(a `SpellAlternateEffect` delta) surfaced as `Spell#getAlternateVersion()`, an
+`AlternateSpellVersion` that inherits every column the delta does not set.
+
+**The count is 64, not 63.** The document heads one of them `Efeito Alternativa` — feminine, a
+typo — at L1174 (Piromancia's *Hálito de Eldur* → *Cuspe de Salamandra*). A grep for
+`Efeito Alternativo` misses it. The other spelling variants in the file (`Efeitos Alternativos`
+×2 at L29/L30, `Corrente de Efeitos Alternativa` at L1298) are not alternate headers.
+
+**40 of the 64 override at least one parent descriptor column**, and 8 override three or more:
+
+| column | count | notable |
+| --- | --- | --- |
+| Alcance | 7 explicit + 13 in prose | metres and UD formulas are unauthorable — no `Range` band |
+| Duração | 10 | several are *relative* ("reduzida à metade") and so unauthorable |
+| GD da Conjuração | 7 | 4 of 5 Perícia flips carry a GD change in the same sentence |
+| Tempo de Ativação | 7 | **runs both directions** — 2 convert a Reação back to PA |
+| Perícia Chave | 5 | always Domínio do Mana → an attack Perícia |
+| Efeito Crítico | 4 | one *suppresses* it (`Portal de Fuga`), which needs its own flag |
+| Custo em PM | several | per-target figures ("+2PM para cada") are unauthorable |
+
+Ten alternates declare a Corrente de Efeitos of their own; two more only *reference* the parent's.
+
+**A second source defect worth recording**: Ocultação's *Ataque Sombrio* reads "Efeito Crítico muda
+para Oferenda Sombria", but the Efeitos Críticos section defines no *Oferenda Sombria* — only
+*Oferenda Maldita*. Left unauthored rather than substituted. (Regeneração's *Paradoxo do Afogado*
+naming a nonexistent "Retorno dos Afogados" is the third, already noted above.)
 
 ### `MagicType` was missing two constants — both added
 

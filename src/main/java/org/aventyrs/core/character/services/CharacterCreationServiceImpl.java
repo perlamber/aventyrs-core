@@ -6,14 +6,24 @@ import org.aventyrs.core.character.CharacterAttributes;
 import org.aventyrs.core.character.CharacterEgos;
 import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.character.EgoValue;
+import org.aventyrs.core.character.Character;
+import org.aventyrs.core.feat.Feat;
+import org.aventyrs.core.feat.FeatCatalog;
+import org.aventyrs.core.feat.StartingFeatSlot;
 import org.aventyrs.core.race.Race;
+import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.IllegalOperationException;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
+import static org.aventyrs.core.util.TranslatableMessages.FEAT_REQUIRES_CHOICE;
 import static org.aventyrs.core.util.TranslatableMessages.INVALID_ATTRIBUTE_POINT_ALLOCATION;
 import static org.aventyrs.core.util.TranslatableMessages.INVALID_EGO_POINT_ALLOCATION;
 import static org.aventyrs.core.util.TranslatableMessages.INVALID_RACIAL_BONUS_ALLOCATION;
+import static org.aventyrs.core.util.TranslatableMessages.INVALID_STARTING_FEAT_SELECTION;
 
 public class CharacterCreationServiceImpl implements CharacterCreationService {
 
@@ -108,6 +118,41 @@ public class CharacterCreationServiceImpl implements CharacterCreationService {
             case RECURSOS -> builder.recursos(value);
             case SORTE -> builder.sorte(value);
             case INICIATIVA -> builder.iniciativa(value);
+        }
+    }
+
+    @Override
+    public List<StartingFeatSlot> getStartingFeatSlots(final Race race) {
+        final List<StartingFeatSlot> slots = new ArrayList<>(
+                Collections.nCopies(DEFAULT_GENERAL_FEAT_SLOTS, StartingFeatSlot.defaultGeneral()));
+        slots.addAll(race.getStartingFeatSlots());
+        return List.copyOf(slots);
+    }
+
+    @Override
+    public List<Feat> getStartingFeatOptions(final Character character, final StartingFeatSlot slot, final CharacterSheet sheet) {
+        return FeatCatalog.all().stream()
+                .filter(feat -> character.getFeats().stream().noneMatch(held -> held.catalogEntry() == feat))
+                .filter(feat -> slot.accepts(feat, character, sheet))
+                .toList();
+    }
+
+    @Override
+    public void grantStartingFeats(final Character character, final List<Feat> picks, final CharacterSheet sheet) throws IllegalOperationException {
+        final List<StartingFeatSlot> slots = getStartingFeatSlots(character.getRace());
+        if (picks.size() != slots.size()) {
+            throw new IllegalOperationException(INVALID_STARTING_FEAT_SELECTION);
+        }
+        for (int i = 0; i < slots.size(); i++) {
+            final Feat pick = picks.get(i);
+            if (!getStartingFeatOptions(character, slots.get(i), sheet).contains(pick.catalogEntry())) {
+                throw new IllegalOperationException(INVALID_STARTING_FEAT_SELECTION);
+            }
+            // Same guard as FeatServiceImpl#grantFeat: a bare choice-carrying constant does nothing.
+            if (pick == pick.catalogEntry() && !pick.resolveRequiredChoices(character).isEmpty()) {
+                throw new IllegalOperationException(FEAT_REQUIRES_CHOICE);
+            }
+            FeatServiceImpl.acquire(character, pick);
         }
     }
 }

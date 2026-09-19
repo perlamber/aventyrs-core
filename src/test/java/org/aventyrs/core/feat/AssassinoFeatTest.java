@@ -140,14 +140,15 @@ class AssassinoFeatTest {
         return target;
     }
 
-    /** Two 5s: a critical once the Margem Crítica Menor is widened by 1, a plain result otherwise. */
-    private static SkillRoll twoFives() {
-        return new SkillRoll(List.of(5, 5, 1));
+    /** A total of 16: a critical once the Margem Crítica Menor is widened by 1 (17 → 16), a plain
+     * result at the default margin. */
+    private static SkillRoll oneShortOfTheDefaultMargin() {
+        return new SkillRoll(List.of(6, 6, 4));
     }
 
     private static CriticalResult meleeCriticalAgainst(final CharacterSheet attacker, final CombatantSheet target) {
         return SkillType.ATAQUE_CORPO_A_CORPO.newInteraction()
-                .applyTo(attacker, opposedBy(target), twoFives())
+                .applyTo(attacker, opposedBy(target), oneShortOfTheDefaultMargin())
                 .getCriticalResult();
     }
 
@@ -515,6 +516,17 @@ class AssassinoFeatTest {
 
     @Test
     void acertoCriticoArcanoNeedsTheMagiasChoiceOfAcertoCriticoAprimorado() throws IllegalOperationException {
+        Character weaponChoice = saqueRelampagoHolder();
+        weaponChoice.grantFeat(AcertoCriticoAprimoradoFeat.of(AttackMethod.LIGHT_BLADE));
+        assertFalse(AssassinoFeat.ACERTO_CRITICO_ARCANO.isEligible(weaponChoice), "chose a weapon, not Magias");
+
+        Character magiasChoice = saqueRelampagoHolder();
+        magiasChoice.grantFeat(AcertoCriticoAprimoradoFeat.of(AttackMethod.OFFENSIVE_MAGIC));
+        assertTrue(AssassinoFeat.ACERTO_CRITICO_ARCANO.isEligible(magiasChoice));
+    }
+
+    /** Destreza 3, holding SAQUE_RAPIDO and SAQUE_RELAMPAGO (weapons) — both acquired legally. */
+    private Character saqueRelampagoHolder() throws IllegalOperationException {
         Character character = character()
                 .attributes(CharacterAttributes.builder()
                         .dexterity(AttributeValue.builder().domain(AttributeDomain.DEXTERITY).base(3).build())
@@ -524,13 +536,7 @@ class AssassinoFeatTest {
         sheet.accumulateExperience(BigDecimal.valueOf(100));
         featService.grantFeat(character, sheet, AssassinoFeat.SAQUE_RAPIDO);
         featService.grantFeat(character, sheet, SaqueRelampagoFeat.of(WeaponOrSpellChoice.WEAPONS));
-
-        character.grantFeat(AcertoCriticoAprimoradoFeat.of(AttackMethod.LIGHT_BLADE));
-        assertFalse(AssassinoFeat.ACERTO_CRITICO_ARCANO.isEligible(character), "chose a weapon, not Magias");
-
-        character.getFeats().removeIf(AcertoCriticoAprimoradoFeat.class::isInstance);
-        character.grantFeat(AcertoCriticoAprimoradoFeat.of(AttackMethod.OFFENSIVE_MAGIC));
-        assertTrue(AssassinoFeat.ACERTO_CRITICO_ARCANO.isEligible(character));
+        return character;
     }
 
     // ---------- SAQUE_RELAMPAGO's Vantagem rider (WEAPONS branch) ----------
@@ -590,9 +596,10 @@ class AssassinoFeatTest {
         sheet.startTurn(0);
         sheet.drawWeapon(dagger);
 
-        // 4+4+1: two dice at >=4 — a critical only once the Menor margin is widened by 2.
+        // A total of 14 — a critical only once the Menor margin is widened to 14 or lower, which
+        // takes Acerto Crítico Aprimorado's +1 and this Talento's +2 together.
         CriticalResult opener = SkillType.ATAQUE_CORPO_A_CORPO.newInteraction()
-                .applyTo(sheet, opposedBy(healthyTarget()), new SkillRoll(List.of(4, 4, 1)), null, dagger)
+                .applyTo(sheet, opposedBy(healthyTarget()), new SkillRoll(List.of(6, 4, 4)), null, dagger)
                 .getCriticalResult();
 
         assertEquals(CriticalResult.ACERTO_CRITICO_MENOR, opener);

@@ -4,6 +4,8 @@ import org.aventyrs.core.effect.CriticalEffectType;
 import org.aventyrs.core.magic.ActivationTime;
 import org.aventyrs.core.magic.AuthoredSpell;
 import org.aventyrs.core.magic.BranchLevel;
+import org.aventyrs.core.magic.SpellAlternateEffect;
+import org.aventyrs.core.magic.SpellDamage;
 import org.aventyrs.core.magic.SpellData;
 import org.aventyrs.core.magic.SpellDuration;
 import org.aventyrs.core.magic.SpellTargeting;
@@ -53,6 +55,7 @@ public enum ReanimarSpell implements AuthoredSpell {
             .secondaryEffectDescription("Sacrifício Mortis: O conjurador pode pegar a essência de um servo "
                     + "Morto-Vivo voluntário, o destruindo no processo. Se o fizer criará um portal maior e mais "
                     + "denso, capaz de maximizar os dados de dano da magia que passar por ela.")
+            .alternateEffect(SpellAlternateEffect.named("Sacrifício Mortis"))
             .duration(SpellDuration.UNTIL_END_OF_TURN)
             .targeting(SpellTargeting.distancia(Range.ADJACENTE))
             .build()),
@@ -85,6 +88,7 @@ public enum ReanimarSpell implements AuthoredSpell {
                     + "é reanimado como um Subordinado do tipo Cavaleiro ou Torre. Conjurar a magia desta forma lhe "
                     + "concede a Corrente de Efeitos – Escudeiro Cadavérico: O morto-vivo gerado conta como um "
                     + "Subordinado Prodigioso nas 2 primeiras Rodadas de Efeito desta magia.")
+            .alternateEffect(SpellAlternateEffect.named("Servo Cadavérico"))
             .duration(SpellDuration.concentracaoMais(2))
             .targeting(SpellTargeting.TOQUE)
             .build()),
@@ -113,6 +117,16 @@ public enum ReanimarSpell implements AuthoredSpell {
             .secondaryEffectDescription("Necrofagia: A Perícia Chave para conjurar esta magia muda para Ataque "
                     + "Corpo-a-Corpo e a GD para DM do Alvo. O Morto-Vivo tocado sofre 2d6+Metade do Foco pontos de "
                     + "Dano, você recupera uma quantidade de PV igual a metade do dano causado.")
+            // The Perícia flip that turns a heal into a rolled attack, and it takes the GD with it:
+            // "a GD para DM do Alvo" is the bare-floor form — no tier, just the floor flag.
+            // TODO: "você recupera PV igual a metade do dano causado" is Roubo de Vida scaled off
+            //  this hit; LifeStealService amplifies an active effect and grants none from nothing.
+            .alternateEffect(SpellAlternateEffect.builder()
+                    .name("Necrofagia")
+                    .attackSkillType(SkillType.ATAQUE_CORPO_A_CORPO)
+                    .castingDifficultyFlooredByTargetMagicDefense(true)
+                    .primaryDamage(SpellDamage.halfFocusMagical(2))
+                    .build())
             .criticalEffectType(CriticalEffectType.AMENIZAR)
             .duration(SpellDuration.INSTANTANEA)
             .targeting(SpellTargeting.TOQUE)
@@ -142,6 +156,7 @@ public enum ReanimarSpell implements AuthoredSpell {
                     + "menos. "
                     + "Os PM adicionais utilizados para conjurar essa magia são recuperados apenas se este "
                     + "Morto-Vivo for destruído e somente após você passar por um Descanso Longo.")
+            .alternateEffect(SpellAlternateEffect.named("Açougueiro"))
             .criticalEffectType(CriticalEffectType.POTENCIALIZAR)
             .duration(SpellDuration.concentracaoMais(2))
             .targeting(SpellTargeting.TOQUE)
@@ -267,6 +282,7 @@ public enum ReanimarSpell implements AuthoredSpell {
                     + "profano. A cada Rodada, adicionalmente à criatura invocada aleatoriamente, um zumbi será "
                     + "invocado. Você não possui controle de nenhum morto-vivo invocado desta forma e eles sempre "
                     + "atacar o personagem vivo mais próximo do jazigo.")
+            .alternateEffect(SpellAlternateEffect.named("Horda Faminta"))
             .criticalEffectType(CriticalEffectType.PREVENIR)
             .duration(SpellDuration.rodadas(3))
             .targeting(SpellTargeting.areaDeEfeito(Range.ADJACENTE,

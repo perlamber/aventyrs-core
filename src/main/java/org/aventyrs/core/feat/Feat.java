@@ -18,7 +18,10 @@ import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.FormType;
 import org.aventyrs.core.sheet.FormAccess;
+import org.aventyrs.core.sheet.PendingAcquisition;
 import org.aventyrs.core.skill.CriticalResult;
+import org.aventyrs.core.skill.SkillRoll;
+import org.aventyrs.core.character.CriticalDamage;
 import org.aventyrs.core.character.DamageBonus;
 import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.character.AttributeValue;
@@ -77,6 +80,18 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      */
     default Feat catalogEntry() {
         return this;
+    }
+
+    /**
+     * Whether this Talento's rules-text header carries the {@code Especialista} tag — {@code
+     * Especialista Tecnológico (Aventyr/Especialista/Assassino)}. That tag is not a {@link
+     * FeatCategory} (see its javadoc), but Agástias' "Talentos de Especialista" starting grant
+     * draws from exactly the Talentos wearing it, which is the one consumer ({@code
+     * FeatPool.EspecialistaTagged}). A narrow boolean rather than a set of header tags until a
+     * second tag earns a reader.
+     */
+    default boolean isEspecialistaTagged() {
+        return false;
     }
 
     /**
@@ -139,6 +154,20 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      */
     default boolean isEligible(final Character character, final CharacterSheet sheet) {
         return satisfies(getFeatRequirements(), character, sheet);
+    }
+
+    /**
+     * Whether character satisfies this Talento's requirements <b>once every Raça clause is
+     * dropped</b> — see {@link FeatRequirements#withoutRaceClauses()}. Added for {@code
+     * DestinoFeat#EXCEPCIONALIDADE}'s "um Talento Racial que você cumpra todos os demais
+     * requisitos, além da Raça".
+     *
+     * <p>Tests the data clauses only, and so bypasses an {@link #isEligible(Character,
+     * CharacterSheet)} override. The one such override on a racial tree, {@code ElficoFeat}'s
+     * Guardião cap, is itself a per-race allowance, so ignoring it is the same reading.
+     */
+    default boolean isEligibleRegardlessOfRace(final Character character, final CharacterSheet sheet) {
+        return satisfies(getFeatRequirements().withoutRaceClauses(), character, sheet);
     }
 
     /**
@@ -586,11 +615,47 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      * <p><b>Only for an unconditional reduction on a named Perícia.</b> Most Talentos that
      * mention a GD do not qualify, and each says so on its own constant: one scoped to a
      * narrative purpose ("para criar equipamento"), one bought with a resource ("gastar 2PD
-     * para reduzir"), one scoped to a single roll of a Turn, and one on a Conjuração roll that
-     * {@code SpellCastingService} does not resolve at all. This hook exists because several
+     * para reduzir"), one scoped to a single roll of a Turn, and one on a Magia's Conjuração GD,
+     * which is {@link #resolveCastingDifficultyReduction}'s. This hook exists because several
      * racial trees state the plain, unconditional form.
      */
     default int resolveDifficultyReduction(final SkillType skillType, final Character character) {
+        return 0;
+    }
+
+    /**
+     * How many níveis this Talento takes off the <b>GD da Conjuração</b> of spell — the Magia's
+     * own authored tier ({@code Spell#getCastingDifficultyLevel()}), which the Domínio do Mana
+     * roll is made against. Summed by {@code SpellCastingService#resolveCastingDifficultyReduction}
+     * across {@code Character#getFeats()} and reported, with the eased tier, on {@code
+     * SpellCastingResult}. Positive = easier. Zero by default.
+     *
+     * <p>Its own hook rather than {@link #resolveDifficultyReduction}, which reaches every roll of
+     * one Perícia: a Conjuração clause is scoped to <em>which Magia</em> is being cast ({@code
+     * DestinoFeat#ARCANISMO_DRUIDICO}'s "suas Magias Naturais"), and only the casting service knows
+     * that. Report-only, like the rest of the cast — nothing compares a roll against the GD.
+     */
+    default int resolveCastingDifficultyReduction(final Spell spell, final Character character) {
+        return 0;
+    }
+
+    /**
+     * How many Pontos de Ação this Talento takes off spell's <b>Tempo de Ativação</b> for this
+     * cast — summed by {@code SpellCastingService#resolveActivationTime}, which reduces only a
+     * PA-activated Magia (a Reação or Ação Livre has no PA to take) and floors the result at 1PA.
+     * Reported as {@code SpellCastingResult#getActivationTime()}; this core spends no PA. Zero by
+     * default.
+     *
+     * <p>Deliberately raw, the {@link #resolveAttackCostDifficultyReduction} shape: the Scene's
+     * 0-based currentRound and the caster's actionsThisRound are passed through rather than a
+     * pre-computed "first Magia of the Rodada", because the predicate filters that history by a
+     * Talento-specific scope ({@code DestinoFeat#ARCANISMO_DRUIDICO}'s "primeira Magia
+     * <b>Natural</b> … em Rodadas Ímpares"). actionsThisRound only sees casts the caller filed
+     * through {@code Scene#recordAction}.
+     */
+    default int resolveCastingActionPointReduction(final Spell spell, final Character character,
+                                                   final int currentRound,
+                                                   final List<CombatantAction> actionsThisRound) {
         return 0;
     }
 
@@ -773,6 +838,44 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     }
 
     /**
+     * What this Talento adds to the dano roll of an attack its holder lands as a critical —
+     * {@code ArtilhariaFeat#MIRA_MORTAL}'s "+1d6 de dano adicional". {@link CriticalDamage#NONE} by
+     * default, and only called when {@code criticalResult} is an Acerto Crítico and {@code
+     * attackSkill.isAttackSkill()}, so an override never has to test either.
+     *
+     * <p>Summed by {@code AbstractSkillInteraction#sumCriticalDamage} on top of the baseline
+     * Vantagem em Danos that every crit grants — see {@link CriticalDamage} for the baseline and
+     * for why a granted die is not a {@code DamageBonus}. A clause that <em>replaces</em> that
+     * baseline instead of adding to it says so through {@link
+     * #replacesBaselineCriticalAdvantage(SkillType, AttackSource, Character)}.
+     *
+     * <p>{@code skillRoll} is the attack roll itself, for a clause scoped to <b>how</b> the attack
+     * was made: {@code SkillRoll#getActivatedFeats()} is what makes Mira Mortal's "usando o talento
+     * ‘Mira Impecável’" expressible, and {@code getManoeuvre()}/{@code getActionCost()} are in
+     * reach for the same kind of clause. {@code null} whenever the caller stated no roll.
+     */
+    default CriticalDamage resolveCriticalDamage(final SkillType attackSkill, final SceneContext sceneContext,
+                                                 final Character character, final AttackSource attackSource,
+                                                 final CriticalResult criticalResult, final SkillRoll skillRoll) {
+        return CriticalDamage.NONE;
+    }
+
+    /**
+     * Whether this Talento <b>replaces</b> the baseline Vantagem em Danos a critical hit grants
+     * with whatever {@link #resolveCriticalDamage} returns, rather than adding to it — {@code
+     * AssassinoFeat#VIOLENCIA_DESCOMUNAL}'s "Você não recebe Vantagem em Danos em seus Acertos
+     * Críticos, ao invés disso recebe Bônus de +1d6". False by default.
+     *
+     * <p>Held separately from the grant itself because the two answers are independent: a Talento
+     * can add a die and leave the +2 standing (Mira Mortal), or swap the +2 for one. One holder
+     * saying so drops the baseline for that attack, however many other sources add to it.
+     */
+    default boolean replacesBaselineCriticalAdvantage(final SkillType attackSkill, final AttackSource attackSource,
+                                                      final Character character) {
+        return false;
+    }
+
+    /**
      * The {@link ActiveAbility} this Talento grants its holder — a Poder Vampírico (see {@code
      * org.aventyrs.core.feat.PoderVampiricoActiveAbility}), triggered through {@code
      * org.aventyrs.core.character.services.ActiveAbilityService#activate}. Empty by default.
@@ -800,6 +903,42 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      * than one {@code FeatChoice}; none in the catalog does yet, but the shape allows it.
      */
     default List<FeatChoice<?>> resolveRequiredChoices(final Character holder) {
+        return List.of();
+    }
+
+    /**
+     * Whether this Talento can be taken only while the character is being created ("Apenas
+     * personagens recém-criados") — through {@code CharacterCreationService#grantStartingFeats},
+     * never {@code FeatService#grantFeat}, and never listed by {@link FeatCatalog#availableFor}.
+     * Asked of the catalog constant, so a choice-carrying form needn't repeat it.
+     */
+    default boolean isAcquirableOnlyAtCreation() {
+        return false;
+    }
+
+    /**
+     * What this Talento still owes its holder at the end of a game session — empty by default, and
+     * empty again once it has been granted. {@code CharacterSheet#applySessionEndAcquisitions}
+     * collects and performs these. See {@link PendingAcquisition} for why this is derived rather
+     * than stored.
+     */
+    default List<PendingAcquisition> resolveSessionEndAcquisitions(final Character character) {
+        return List.of();
+    }
+
+    /**
+     * Other Talentos this one grants its holder outright — folded live into {@code
+     * Character#getFeats()}, so a granted Talento is <b>held</b> in every sense: each of its
+     * effect hooks applies, and it counts for other Talentos' {@code requiredFeats}/{@code
+     * forbiddenFeats}/category-count prerequisites and for {@code FeatCatalog#availableFor}'s
+     * "already held" filter. {@code ExcepcionalidadeFeat} (the chosen Talento Racial) is the
+     * consumer. Empty by default.
+     *
+     * <p><b>Must not read {@code character.getFeats()}</b> — that view is what calls this, so doing
+     * so recurses. Return the recorded Talento directly. Resolved one level deep: a granted Talento's
+     * own grants are not followed, since no authored Talento grants one that grants another.
+     */
+    default List<Feat> getGrantedFeats(final Character character) {
         return List.of();
     }
 
@@ -1258,6 +1397,27 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     }
 
     /**
+     * Whether this Talento makes its holder <b>immune to Efeitos Críticos Menores</b> outright —
+     * {@code MonstruosoFeat#ANATOMIA_UNICA}'s "Você é imune a Efeitos Críticos Menores", the only
+     * one today. {@code false} by default.
+     *
+     * <p>Distinct from {@link #resolveCriticalResistance}, which narrows the <i>Margem</i> at which
+     * an attack crits at all; this vetoes the Efeito a Menor critical would have inflicted, through
+     * {@code CriticalEffect#applicableTo}. Distinct too from {@code
+     * Race#getCriticalEffectImmunities()}, which keys on <i>which</i> effect rather than on
+     * severity — a Troll's vegetal anatomy shrugs off Sangramento specifically, whatever its
+     * severity, while this shrugs off every Menor one whatever it is.
+     *
+     * <p>Unconditional, so it takes nothing: no {@code Character}, no {@code SceneContext}. The one
+     * clause that would need a condition — {@code ANATOMIA_INCOMUM}'s "o primeiro Efeito Crítico
+     * Menor ... em cada Cena de Combate" — needs a per-Cena counter nothing tracks, and is
+     * deliberately left unexpressed rather than approximated by this hook.
+     */
+    default boolean ignoresMinorCriticalEffects() {
+        return false;
+    }
+
+    /**
      * The longer form of the RC grant, adding the holder's own {@link CombatantSheet} — what a
      * clause scoped "enquanto em sua Forma Monstruosa" needs, since the Forma lives on the sheet
      * ({@code CombatantSheet#isInForm}). {@code GorgonaFeat}'s two Proteções are what this exists
@@ -1361,6 +1521,20 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      * Zero by default.
      */
     default int resolveRestMagicPointsBonus(final RestType restType, final Character character) {
+        return 0;
+    }
+
+    /**
+     * Extra Pontos de Determinação this Talento recovers on a Descanso of restType — summed by
+     * {@code org.aventyrs.core.rest.RestService#getRecoveredDeterminationPoints} across {@code
+     * Character#getFeats()}, alongside {@code AttributeAbility#resolveRestDeterminationPointsBonus}'s
+     * own scan.
+     *
+     * <p>The Determinação twin of {@link #resolveRestMagicPointsBonus}, added for {@code
+     * DestinoFeat#CORACAO_DE_FERRO_DO_DESTINO}'s "+2PD, e então +1PD para cada Título Aventyr que
+     * tenha Desperto" — which is why it takes the character too. Zero by default.
+     */
+    default int resolveRestDeterminationPointsBonus(final RestType restType, final Character character) {
         return 0;
     }
 

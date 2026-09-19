@@ -571,4 +571,51 @@ class DamageServiceImplTest {
         // ...but the Character-only overload has no sheet to read it from.
         assertEquals(0, damageService.getTotalDamageReduction(character));
     }
+
+    // --- Timed RA and timed Meio-Dano (AbencoadoPelaLuzAbility#GLORIA_RELAMPEJANTE_DE_TESLA,
+    // SantoAbility#PROTECAO_UNGIDA) ---------------------------------------------------------
+
+    @Test
+    void aRoundScopedAbsoluteDamageReductionBonusIsSummedOnTheSheetPath() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK).build();
+        CharacterSheet target = CharacterSheet.of(character, new Player());
+        target.grantTemporaryBonus(ModifierType.ABSOLUTE_DAMAGE_REDUCTION, 2, 1);
+
+        assertEquals(2, damageService.getTotalAbsoluteDamageReduction(target, null));
+        assertEquals(10 - 2, damageService.calculateFinalDamage(target, null, (DamageType) null, null, 10, false));
+        // ...but the Character-only overload has no sheet to read it from.
+        assertEquals(0, damageService.getTotalAbsoluteDamageReduction(character));
+    }
+
+    @Test
+    void aTimedAbsoluteDamageReductionBonusAddsToAPassiveOne() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .skillCompetencyAbility(new AbsoluteDamageReductionAbility())
+                .build();
+        CharacterSheet target = CharacterSheet.of(character, new Player());
+        int passiveOnly = damageService.getTotalAbsoluteDamageReduction(target, null);
+        target.grantTemporaryBonus(ModifierType.ABSOLUTE_DAMAGE_REDUCTION, 2, 1);
+
+        assertEquals(passiveOnly + 2, damageService.getTotalAbsoluteDamageReduction(target, null));
+    }
+
+    @Test
+    void aRoundScopedHalfDamageBonusHalvesAfterFlatReduction() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK).build();
+        CharacterSheet target = CharacterSheet.of(character, new Player());
+        target.grantTemporaryBonus(ModifierType.HALF_DAMAGE, 1, 3);
+
+        assertEquals(5, damageService.calculateFinalDamage(target, null, (DamageType) null, null, 10, false));
+    }
+
+    @Test
+    void aRoundScopedHalfDamageBonusAppliesAfterRaAndOnlyOnce() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK).build();
+        CharacterSheet target = CharacterSheet.of(character, new Player());
+        target.grantTemporaryBonus(ModifierType.ABSOLUTE_DAMAGE_REDUCTION, 2, 1);
+        target.grantTemporaryBonus(ModifierType.HALF_DAMAGE, 1, 3);
+
+        // (10 - 2) / 2 — the halving lands last, and a second HALF_DAMAGE source wouldn't quarter it.
+        assertEquals(4, damageService.calculateFinalDamage(target, null, (DamageType) null, null, 10, false));
+    }
 }

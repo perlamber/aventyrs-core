@@ -106,6 +106,14 @@ public class DeliveredAttack {
     private final AttackSource attackSource;
 
     /**
+     * The caller's word that the holder of a provoking Aura binding {@link #attacker} is not a valid
+     * target right now (out of reach, hidden, …) — which this core can't judge — so this attack
+     * may go elsewhere. {@code false} by default: a bound attacker's first attack each Rodada is
+     * refused unless it targets the holder. See {@code org.aventyrs.core.scene.ActiveAura}.
+     */
+    private final boolean forcedTargetUnavailable;
+
+    /**
      * Targets this attack affects <b>beyond</b> {@link #defender}, each with their own Defesa —
      * empty for every ordinary attack. What {@code
      * ArtesMarciaisFeat#DOMINAR_ARTE_MARCIAL_ARTE_FLUIDA}'s "seus ataques afetam um alvo

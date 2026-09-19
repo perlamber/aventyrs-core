@@ -3,6 +3,8 @@ package org.aventyrs.core.race;
 import lombok.NonNull;
 import org.aventyrs.core.ability.AttributeAbility;
 import org.aventyrs.core.character.AttributeDomain;
+import org.aventyrs.core.feat.FeatCategory;
+import org.aventyrs.core.feat.StartingFeatSlot;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
 
 import java.util.List;
@@ -24,10 +26,9 @@ import java.util.Map;
  *   ao parente) — same "no Language/age concept" gaps as every other race; the "curta até a
  *   velhice" clause would also need combat-death tracking this core doesn't have, purely
  *   narrative today either way.</li>
- *   <li><b>2 Talentos adicionais</b> (Duelista, substituível por Talento Racial do parente se
- *   houver; +1 Talento Elemental) — same "no Feat catalog" gap; "Duelista"/"Elemental" map to
- *   {@link org.aventyrs.core.feat.FeatCategory#DUELISTA}/{@link
- *   org.aventyrs.core.feat.FeatCategory#ELEMENTAL} directly.</li>
+ *   <li><b>2 Talentos adicionais</b> (Duelista, substituível por Talento Racial do parente se houver;
+ *   +1 Talento Elemental) — built: {@link #getStartingFeatSlots()}, the substitution through {@link
+ *   AbstractMesticoRace#withParentRacialSubstitute}.</li>
  *   <li><b>Treinamento em Conhecimentos + Especialização Cosmologia</b> — same "no hook for
  *   granting starting Perícia training" gap as every other race.</li>
  *   <li><b>Carisma Ymiriano</b> (primeiro ataque de cada Turno recebe Corrente de Efeitos
@@ -74,5 +75,12 @@ public class Invernal extends AbstractMesticoRace {
     @Override
     protected int getSizeCategoryOffset() {
         return SIZE_CATEGORY_OFFSET;
+    }
+
+    @Override
+    public List<StartingFeatSlot> getStartingFeatSlots() {
+        return List.of(
+                withParentRacialSubstitute(StartingFeatSlot.race(FeatCategory.DUELISTA)),
+                StartingFeatSlot.race(FeatCategory.ELEMENTAL));
     }
 }

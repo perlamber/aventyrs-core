@@ -3,6 +3,8 @@ package org.aventyrs.core.race;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.SizeCategory;
+import org.aventyrs.core.feat.FeatCategory;
+import org.aventyrs.core.feat.StartingFeatSlot;
 import org.aventyrs.core.sheet.DlcRuleset;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
 
@@ -23,11 +25,7 @@ import java.util.Map;
  *   Language/Idioma concept exists anywhere in this core.</li>
  *   <li><b>Longevidade</b> (~300 anos) — no age/lifespan concept exists on {@link Character}
  *   or {@link Race}; purely narrative today.</li>
- *   <li><b>Talento gratuito</b> (Sobrevivência ou Destino) — {@code
- *   org.aventyrs.core.feat.FeatCategory#SOBREVIVENCIA}/{@code #DESTINO} exist as categories,
- *   but {@code org.aventyrs.core.feat.Feat} has no catalog of concrete named Feats within a
- *   category to grant one of (it's just a bare {@code featCategory} field), and {@link
- *   Character} has no {@code feats} list to hold one in the first place.</li>
+ *   <li><b>Talento gratuito</b> (Sobrevivência ou Destino) — built: {@link #getStartingFeatSlots()}.</li>
  *   <li><b>Treinamento em Profissão</b>, with an extra Especialização chosen between {@code
  *   org.aventyrs.core.skill.profissao.ProfissaoSpecialization#ALVENARIA_E_CARPINTARIA} and
  *   {@code #METALURGIA} — the Perícia/Especialização vocabulary this needs already exists, but
@@ -77,5 +75,10 @@ public class Anao implements Race {
     @Override
     public List<SkillCompetencyAbility> getRacialAbilities() {
         return List.of(AnoesRacialAbility.ABATEDORES_DE_GIGANTES, AnoesRacialAbility.FILHOS_DA_MONTANHA);
+    }
+
+    @Override
+    public List<StartingFeatSlot> getStartingFeatSlots() {
+        return List.of(StartingFeatSlot.race(FeatCategory.SOBREVIVENCIA, FeatCategory.DESTINO));
     }
 }

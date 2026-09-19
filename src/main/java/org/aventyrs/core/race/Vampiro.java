@@ -6,6 +6,9 @@ import lombok.NonNull;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.SizeCategory;
+import org.aventyrs.core.feat.FeatCategory;
+import org.aventyrs.core.feat.FeatPool;
+import org.aventyrs.core.feat.StartingFeatSlot;
 import org.aventyrs.core.item.NaturalWeapon;
 import org.aventyrs.core.sheet.DlcRuleset;
 import org.aventyrs.core.sheet.IllegalOperationException;
@@ -83,9 +86,11 @@ import static org.aventyrs.core.util.TranslatableMessages.INVALID_PARENT_RACE;
  *   {@code VampiricoFeat#SEDE_DE_SANGUE}/{@code ARMAMENTO_DE_ORLOK} cite.</li>
  *   <li><b>Falsos Descansos</b> (Vampiros não recuperam PV com Descansos; Dampiros recuperam
  *   metade) — {@code RestService} has no race hook to suppress or halve recovery.</li>
- *   <li><b>1 Talento adicional</b> (Racial da raça em vida ou Vampírico) — {@code Race} has no
- *   hook to grant a {@code Feat} at creation, the same gap every other race's free Talentos hit.
- *   "Vampiros não recebem Perícias adicionais" needs nothing — it is the baseline.</li>
+ *   <li><b>1 Talento adicional</b> (Racial da raça em vida ou Vampírico) — built: {@link
+ *   #getStartingFeatSlots()}. "Conforme sua raça original" judges the racial Talentos' Raça clauses
+ *   against {@link #getParentRace()} ({@code FeatPool.RacialOf}), since a Vampiro is never an
+ *   instance of its life-race. "Vampiros não recebem Perícias adicionais" needs nothing — it is the
+ *   baseline.</li>
  *   <li><b>Idiomas / Longevidade</b> — the standard "no Language/Idioma concept" and "no
  *   age/lifespan concept" gaps; the Dampiro's mortality and ~3× lifespan are narrative only.</li>
  * </ul>
@@ -211,5 +216,10 @@ public class Vampiro implements Race {
     @Override
     public List<NaturalWeapon> getGrantedNaturalWeapons() {
         return List.copyOf(EnumSet.copyOf(lineage.getNaturalWeapons()));
+    }
+
+    @Override
+    public List<StartingFeatSlot> getStartingFeatSlots() {
+        return List.of(StartingFeatSlot.race(FeatPool.Categories.of(FeatCategory.VAMPIRICO), FeatPool.RacialOf.anyTree(parentRace)));
     }
 }

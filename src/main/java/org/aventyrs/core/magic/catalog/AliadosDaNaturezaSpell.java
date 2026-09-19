@@ -4,6 +4,7 @@ import org.aventyrs.core.effect.CriticalEffectType;
 import org.aventyrs.core.magic.ActivationTime;
 import org.aventyrs.core.magic.AuthoredSpell;
 import org.aventyrs.core.magic.BranchLevel;
+import org.aventyrs.core.magic.SpellAlternateEffect;
 import org.aventyrs.core.magic.SpellData;
 import org.aventyrs.core.magic.SpellDuration;
 import org.aventyrs.core.magic.SpellTargeting;
@@ -53,6 +54,9 @@ public enum AliadosDaNaturezaSpell implements AuthoredSpell {
                     + "instinto natural pode fazer com que ele se volte contra você após a Duração da magia.")
             .secondaryEffectDescription("Falsa Matilha: A Duração da magia é reduzida à metade. O animal tocado se "
                     + "torna um Subordinado Prodigioso.")
+            // TODO: "A Duração da magia é reduzida à metade" is relative to its parent; SpellDuration
+            //  holds an absolute figure, not a modifier of the column it overrides.
+            .alternateEffect(SpellAlternateEffect.named("Falsa Matilha"))
             .criticalEffectType(CriticalEffectType.POTENCIALIZAR)
             .duration(SpellDuration.rodadas(3))
             .targeting(SpellTargeting.TOQUE)
@@ -86,6 +90,7 @@ public enum AliadosDaNaturezaSpell implements AuthoredSpell {
             .secondaryEffectDescription("Predador Regional: Você pode aumentar o Custo de Conjuração em +1PM, se o "
                     + "fizer o animal invocado será um forte exemplar da sua espécie, recebendo +2 Graduações em "
                     + "suas Perícias e Vigor +1.")
+            .alternateEffect(SpellAlternateEffect.named("Predador Regional"))
             .criticalEffectType(CriticalEffectType.POTENCIALIZAR)
             .duration(SpellDuration.rodadas(3))
             .targeting(SpellTargeting.distancia(Range.ADJACENTE))
@@ -187,6 +192,7 @@ public enum AliadosDaNaturezaSpell implements AuthoredSpell {
             .secondaryEffectDescription("Laboratório de Lacerto: Ao invés de invocar um monstro com as qualidades do "
                     + "Orgulho de Lacerto, invoca simultaneamente 2 Experimentos de Lacerto, este efeito não é "
                     + "cumulativo com a magia Orgulho de Lacerto.")
+            .alternateEffect(SpellAlternateEffect.named("Laboratório de Lacerto"))
             .criticalEffectType(CriticalEffectType.POTENCIALIZAR)
             .duration(SpellDuration.concentracaoMais(2))
             .targeting(SpellTargeting.distancia(Range.ADJACENTE))

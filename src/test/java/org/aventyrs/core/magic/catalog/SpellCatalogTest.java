@@ -133,6 +133,46 @@ class SpellCatalogTest {
     }
 
     /**
+     * Every {@code Efeito Alternativo} the document states is wired, and only those. Wiring one is
+     * a separate step from transcribing its prose and forgetting it fails <em>silently</em> — the
+     * second version simply stops being offered — which is the same hazard this class's per-tree
+     * counts exist to catch for Magias themselves.
+     *
+     * <p>64, not 63: the document heads one of them {@code Efeito Alternativa} (Hálito de Eldur's
+     * <i>Cuspe de Salamandra</i>), a spelling variant that a naive grep misses.
+     */
+    @Test
+    void everyEfeitoAlternativoIsWiredToASecondVersion() {
+        List<Spell> withProse = SpellCatalog.all().stream()
+                .filter(spell -> spell.getSecondaryEffectDescription() != null)
+                .toList();
+
+        assertEquals(64, withProse.size(), "the document's Efeito Alternativo count");
+        withProse.forEach(spell -> assertTrue(spell.getAlternateVersion().isPresent(),
+                spell.getName() + " transcribes an Efeito Alternativo but wires no second version"));
+
+        SpellCatalog.all().stream()
+                .filter(spell -> spell.getSecondaryEffectDescription() == null)
+                .forEach(spell -> assertTrue(spell.getAlternateVersion().isEmpty(),
+                        spell.getName() + " wires a second version it has no prose for"));
+    }
+
+    /** A second version is named, is marked as one, and reports its parent's own rung and tree. */
+    @Test
+    void everySecondVersionIsNamedAndSitsAtItsParentsRung() {
+        SpellCatalog.all().forEach(parent -> parent.getAlternateVersion().ifPresent(alternate -> {
+            assertNotNull(alternate.getName(), parent.getName() + "'s second version has no name");
+            assertFalse(alternate.getName().isBlank(),
+                    parent.getName() + "'s second version has a blank name");
+            assertTrue(alternate.isAlternateVersion());
+            assertSame(parent.getBranchLevel(), alternate.getBranchLevel());
+            assertSame(parent.getTree(), alternate.getTree());
+            assertNotNull(alternate.getPrimaryEffectDescription(),
+                    alternate.getName() + " has no Efeito of its own");
+        }));
+    }
+
+    /**
      * The nine descriptors the source document leaves blank in its otherwise-complete first
      * section — transcribed as {@code null} rather than guessed at. Pinned so that filling one in
      * later is a deliberate change rather than an accident, and so the count cannot quietly grow.

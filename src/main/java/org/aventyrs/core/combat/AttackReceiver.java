@@ -117,7 +117,8 @@ public class AttackReceiver {
      *   difficultyReduction} — that value is denominated in <i>níveis</i>, which is exactly what
      *   {@link DifficultyLevel#easier} takes.</li>
      *   <li>Derives the threshold from that tier's {@code baseValue} plus the attack's flat
-     *   bonus, and compares — a tie is a successful defense.</li>
+     *   bonus, and compares — a tie is a successful defense. A provoking Aura's malus lowers
+     *   that threshold when a bound attacker turns on someone other than the Aura's holder.</li>
      *   <li>On a hit, works out which Efeitos the margin and the critical result each trigger,
      *   and assembles them into one chain behind a {@link DamageInteraction}.</li>
      * </ol>
@@ -126,9 +127,15 @@ public class AttackReceiver {
      * stays {@code null} — but {@code defenseTotal} (the bonuses alone) and {@code requiredTotal}
      * are still reported, so a caller can show a player what they need to roll without
      * committing to an outcome.
+     *
+     * @throws org.aventyrs.core.sheet.IllegalOperationException ({@code
+     *         FORCED_ATTACK_TARGET_REQUIRED}) if a provoking Aura in {@code scene} requires {@code
+     *         attacker} to attack its holder first, and this attack targets someone else
      */
     public IncomingAttackResult resolve(@NonNull final IncomingAttack attack) {
         CombatantSheet defender = attack.getDefender();
+        int auraPenalty = AuraTargeting.resolvePenalty(attack.getScene(), attack.getAttacker(), defender,
+                attack.isForcedTargetUnavailable());
         SkillRoll defenseRoll = attack.getDefenseRoll();
 
         InteractionResult defenseResult = esquivaEApararInteraction.applyTo(
@@ -137,13 +144,14 @@ public class AttackReceiver {
 
         DifficultyLevel effectiveDifficultyLevel =
                 attack.getDifficultyLevel().easier(defenseResult.getDifficultyReduction());
-        int requiredTotal = effectiveDifficultyLevel.getBaseValue() + attack.getAttackBonus();
+        int requiredTotal = effectiveDifficultyLevel.getBaseValue() + attack.getAttackBonus() + auraPenalty;
         int defenseTotal = defenseResult.getSkillRollBonus()
                 + (defenseRoll == null ? 0 : defenseRoll.getTotal());
 
         IncomingAttackResult.IncomingAttackResultBuilder result = IncomingAttackResult.builder()
                 .defenseTotal(defenseTotal)
                 .requiredTotal(requiredTotal)
+                .auraPenalty(auraPenalty)
                 .effectiveDifficultyLevel(effectiveDifficultyLevel);
 
         if (defenseRoll == null) {
@@ -159,7 +167,7 @@ public class AttackReceiver {
 
         if (!defended) {
             defenseResult = defenseResult.toBuilder()
-                    .nextInteraction(buildChain(attack, criticalEffectTriggered, effectChainTriggered))
+                    .nextInteraction(buildChain(attack, criticalEffectTriggered, effectChainTriggered, criticalResult))
                     .build();
         }
 
@@ -209,17 +217,22 @@ public class AttackReceiver {
      *
      * <p>The Efeitos Críticos are filtered through {@link CriticalEffect#applicableTo} first, so
      * one the defender's anatomy is immune to never reaches the chain — see that method for why
-     * the filter is shared between both directions rather than written here twice.
+     * the filter is shared between both directions rather than written here twice. criticalResult
+     * goes with them: on this path an Efeito Crítico fires off the defender's own Falha Crítica,
+     * so a {@code FALHA_CRITICA_MENOR} is what "Efeito Crítico Menor" means here, and a severity-
+     * keyed immunity needs to see it.
      */
     private Interaction<CombatantSheet> buildChain(final IncomingAttack attack,
                                                     final boolean criticalEffectTriggered,
-                                                    final boolean effectChainTriggered) {
+                                                    final boolean effectChainTriggered,
+                                                    final CriticalResult criticalResult) {
         List<Effect> stages = new ArrayList<>();
         if (effectChainTriggered) {
             stages.addAll(attack.getEffectChains());
         }
         if (criticalEffectTriggered) {
-            stages.addAll(CriticalEffect.applicableTo(attack.getDefender(), attack.getCriticalEffects()));
+            stages.addAll(CriticalEffect.applicableTo(attack.getDefender(), attack.getCriticalEffects(),
+                    criticalResult, attack.getSceneContext()));
         }
 
         Interaction<CombatantSheet> next = null;

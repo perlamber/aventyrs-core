@@ -3,6 +3,7 @@ package org.aventyrs.core.sheet;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.skill.AttackSource;
 import org.aventyrs.core.skill.SkillType;
+import org.aventyrs.core.util.TranslatableMessages;
 
 /**
  * One action a combatant took this Rodada — appended to {@link CombatantSheet#getActionsThisRound()}
@@ -30,7 +31,9 @@ import org.aventyrs.core.skill.SkillType;
  *                       only {@code SAQUE_RELAMPAGO} reads it (a ranged weapon and a ranged spell
  *                       share {@link SkillType#ATAQUE_A_DISTANCIA}, so {@code skill} alone can't
  *                       tell its chosen Armas/Magias apart).
- * @param cost           what the action cost — see {@link ActionCost}.
+ * @param cost           what the action cost — see {@link ActionCost}. A {@code Kind#DYNAMIC} one is
+ *                       refused: this log records payments, and a Variável cost is a price whose
+ *                       amount the player still chooses. {@code ActionCost#resolve} it first.
  * @param turnNumber     the Rodada this action was taken in (the value {@code Scene#getCurrentRound()}
  *                       reported), carried for the API's own history.
  * @param outcome        the roll's verdict, or {@code null} — see {@link ActionOutcome}.
@@ -38,4 +41,10 @@ import org.aventyrs.core.skill.SkillType;
 public record CombatantAction(SkillType skill, AttributeDomain governingDomain,
                               AttackSource attackSource, ActionCost cost,
                               int turnNumber, ActionOutcome outcome) {
+
+    public CombatantAction {
+        if (cost != null && cost.isDynamic()) {
+            throw new IllegalOperationException(TranslatableMessages.UNRESOLVED_ACTION_COST);
+        }
+    }
 }

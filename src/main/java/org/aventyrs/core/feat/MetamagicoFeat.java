@@ -222,14 +222,12 @@ public enum MetamagicoFeat implements Feat {
                     .requiredFeat(MetamagicoFeat.ARCANISTA_EXPERIENTE)
                     .build()),
 
-    // TODO: the casting-time reduction has a column to read now — Spell#getActivationTime()
-    // (ActivationTime.actionPoints()) — but nothing resolves an *effective* cast cost from it:
-    // SpellCastingService#castSpell rolls the delivery Perícia and Domínio do Mana and spends
-    // nothing, so there is no PA figure to reduce or floor at 1PA — the same missing cost step
-    // Guampo's Benção Divina javadoc cites. The Desvantagem half has a constant ready
+    // TODO: an effective cast cost exists now — SpellCastingResult#getActivationTime(), reduced by
+    // Feat#resolveCastingActionPointReduction and floored at 1PA (DestinoFeat#ARCANISMO_DRUIDICO is
+    // its consumer) — but this trade is opt-in per cast, and SpellCastRequest carries no per-cast
+    // choice for a held Talento to read. The Desvantagem half has a constant ready
     // (Skill#DISADVANTAGE_MALUS) but no way to scope it to "this one cast", nor to Dano/Cura rolls
-    // specifically; and the trade is opt-in per cast, which is a per-activation choice this core
-    // has no shape for.
+    // specifically.
     CONJURACAO_RAPIDA(
             "Você pode optar por receber Desvantagem nas rolagens de Perícia de Conjuração, Dano "
                     + "e Cura mágica de uma magia. Se o fizer o tempo de conjuração da desta magia será "
@@ -266,15 +264,14 @@ public enum MetamagicoFeat implements Feat {
                     .requiredSkillGraduation(7)
                     .build()),
 
-    // TODO: the -1PA reduction reads Spell#getActivationTime() for its base now, but is blocked
-    // on the same missing cost step CONJURACAO_RAPIDA cites — SpellCastingService#castSpell spends
-    // no PA, so there is nothing to reduce or floor at 1PA (the gap Guampo's javadoc cites).
+    // TODO: the -1PA (mínimo 1PA) has somewhere to land now — Feat#resolveCastingActionPointReduction
+    // into SpellCastingResult#getActivationTime(), which only ever reduces a PA-activated Magia, so
+    // "não afeta magias conjuradas como Ação Livre ou Reação" comes with it — but the delay is
+    // opt-in per cast ("pode fazer com que"), the same missing per-cast choice CONJURACAO_RAPIDA
+    // cites, and granting the reduction unconditionally would hand it out without the delay.
     // TODO: "iniciem seu efeito 1 Rodada após a conjuração" needs a delayed-effect mechanism.
     // TemporaryEffect counts a Round-scoped effect *down* toward expiry; nothing schedules one to
     // *begin* later, and CharacterSheet#startTurn — the natural trigger — is still a no-op.
-    // TODO: "não afeta magias conjuradas como Ação Livre ou Reação" can't be expressed: nothing
-    // classifies how a Magia was activated. Same shape as the missing "this one delivered attack"
-    // scoping.
     // Note: the targeting half — a long-range or area Magia having its direction/target point
     // fixed at cast time, and landing there whether or not a valid target remains — is the first
     // real consumer for the per-cast aim that AreaOfEffect deliberately does not carry (see its

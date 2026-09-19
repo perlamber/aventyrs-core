@@ -2,6 +2,7 @@ package org.aventyrs.core.title.santo;
 
 import lombok.NonNull;
 import org.aventyrs.core.scene.Range;
+import org.aventyrs.core.scene.Scene;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.IllegalOperationException;
@@ -9,12 +10,13 @@ import org.aventyrs.core.sheet.InteractionResult;
 import org.aventyrs.core.title.AventyrTitle;
 import org.aventyrs.core.title.AventyrTitleAbility;
 import org.aventyrs.core.title.AventyrTitleSpecialization;
+import org.aventyrs.core.title.TitleAbilityActivationRequest;
 import org.aventyrs.core.title.TitleArchetype;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.aventyrs.core.util.TranslatableMessages.REQUIRED_TITLE_TRAIT_NOT_HELD;
+import static org.aventyrs.core.util.TranslatableMessages.TITLE_ABILITY_PREREQUISITE_NOT_MET;
 
 /**
  * Santo — "os guerreiros divinos", the first concrete Título Aventyr modeled in this core. See
@@ -52,7 +54,7 @@ public class Santo implements AventyrTitle {
      */
     public Santo(@NonNull final List<SantoSpecialization> specializations,
                  @NonNull final List<AventyrTitleAbility> abilities) {
-        this.specializations = specializations;
+        this.specializations = new ArrayList<>(specializations);
         this.abilities = new ArrayList<>(abilities);
     }
 
@@ -97,14 +99,30 @@ public class Santo implements AventyrTitle {
     }
 
     /**
+     * Santo's Especializações are its own two-constant catalog, so anything else is not one of
+     * this Título's to hold — refused rather than stored, since a foreign constant would be
+     * counted by {@link #getSpecializationAndSupremaCount()} and would inflate Despertar's own
+     * Defesas and Duração arithmetic. This is the enforced half of each constant's own "Apenas
+     * 'Santos' podem adquirir esta especialização" line.
+     */
+    @Override
+    public void grantSpecialization(final AventyrTitleSpecialization specialization) {
+        if (!(specialization instanceof SantoSpecialization santoSpecialization)) {
+            throw new IllegalOperationException(TITLE_ABILITY_PREREQUISITE_NOT_MET);
+        }
+        specializations.add(santoSpecialization);
+    }
+
+    /**
      * Despertar's "esta Habilidade tem por Duração 1 Rodada para cada Especialização e Suprema
      * de Santo que possuir" clause — real, tested arithmetic over
-     * {@link AventyrTitle#getSpecializationAndSupremaCount()}, exposed ahead of a consumer the
-     * same way {@code ArtesAprimorarComArteAbility#getBaseDamageBonus} was: it needs no
-     * missing system of its own to compute, even though nothing can consume it yet (see the
-     * TODO below for why).
+     * {@link AventyrTitle#getSpecializationAndSupremaCount()}, and the window {@code
+     * AbstractCombatantSheet#ignoresMinorCriticalEffects} hands to {@link
+     * SceneContext#isWithinFirstCombatRounds(int)} — so a Santo holding nothing yet returns 0 and
+     * ignores nothing, which is the clause read literally rather than a special case.
      */
-    public int getIgnoreCriticalEffectDurationInRounds() {
+    @Override
+    public int resolveMinorCriticalImmunityRounds() {
         return getSpecializationAndSupremaCount();
     }
 
@@ -112,14 +130,22 @@ public class Santo implements AventyrTitle {
      * Despertar's "Bônus de +2 em suas Defesas, esse Bônus aumenta em +1 para cada aliado
      * adjacente, Especializações e Supremas que você possua" clause — real, tested arithmetic,
      * same "build the formula ahead of the missing system" reasoning as {@link
-     * #getIgnoreCriticalEffectDurationInRounds()}: {@code sceneContext} supplies the adjacent-ally
+     * #resolveMinorCriticalImmunityRounds()}: {@code sceneContext} supplies the adjacent-ally
      * count via {@link SceneContext#countAlliesWithin(Range)}, {@link
-     * AventyrTitle#getSpecializationAndSupremaCount()} the rest, and neither needs a Defesas
-     * stat to exist in order to be computed — only to be *applied* (see the TODO below).
-     * {@code null} sceneContext is treated as "no adjacent allies," same restraint every other
+     * AventyrTitle#getSpecializationAndSupremaCount()} the rest. Summed by {@code
+     * DefenseServiceImpl} at the moment a Defesa is calculated, so it tracks who is standing
+     * beside the Santo with nothing to grant or revoke.
+     *
+     * <p><b>Continuous, not windowed.</b> The Duração sentence above belongs to the
+     * crit-ignoring clause ("esta Habilidade"); "Você <i>também</i> recebe" starts a new one. A
+     * Santo with no Especialização or Suprema has a 0-Rodada window, so reading the Defesas half
+     * as windowed too would leave a freshly-Desperto Santo with no base effect whatsoever.
+     *
+     * <p>{@code null} sceneContext is treated as "no adjacent allies," same restraint every other
      * Scene-conditioned {@code resolve*}/formula method in this core already applies.
      */
-    public int getDefesasBonus(final SceneContext sceneContext) {
+    @Override
+    public int resolveBaseDefesasBonus(final SceneContext sceneContext) {
         int adjacentAllyCount = sceneContext == null ? 0 : sceneContext.countAlliesWithin(Range.ADJACENTE);
         return BASE_DEFESAS_BONUS + adjacentAllyCount + getSpecializationAndSupremaCount();
     }
@@ -127,85 +153,95 @@ public class Santo implements AventyrTitle {
     /**
      * The Título-Primário clause's "Bônus em Defesas iguais à metade dos Bônus que você
      * receber em função do Efeito Base deste Título" — half of {@link
-     * #getDefesasBonus(SceneContext)}, rounded down (integer division), matching this core's
+     * #resolveBaseDefesasBonus(SceneContext)}, rounded down (integer division), matching this core's
      * established half-rounds-down convention (see {@code DamageService}'s own half-damage
-     * step). Real arithmetic, same caveat as {@link #getDefesasBonus(SceneContext)}: computing
-     * *how much* is not the missing piece — see the TODO below for what actually is. This is
-     * the per-ally amount, not a total; a caller grants it to each adjacent ally individually
-     * once both the Defesas stat and the granting mechanism below exist.
+     * step). The per-ally amount, not a total.
+     *
+     * <p>Unlike {@link #resolveBaseDefesasBonus(SceneContext)} this one is <b>granted</b>, by
+     * {@code Scene#refreshProjectedAuras} from an Aura {@code AbstractCombatantSheet
+     * #resolveProjectedAuras} projects — see {@link
+     * AventyrTitle#resolvePrimaryTitleAllyDefesasBonus} for why the direction flips here: the
+     * figure is the <i>holder's</i> adjacency, which a scan running from the recipient cannot
+     * see.
      */
-    public int getPrimaryTitleAllyDefesasBonus(final SceneContext sceneContext) {
-        return getDefesasBonus(sceneContext) / 2;
+    @Override
+    public int resolvePrimaryTitleAllyDefesasBonus(final SceneContext sceneContext) {
+        return resolveBaseDefesasBonus(sceneContext) / 2;
     }
 
     /**
-     * Activates Abençoado pela Luz's own touch-heal-or-cure effect against target — the entry
-     * point a caller actually invokes to trigger it, since holding the raw {@code
-     * SantoSpecialization.ABENCOADO_PELA_LUZ} constant alone (via {@link #getSpecializations()})
-     * gave no way to actually *do* anything with it. Validates this Santo instance actually
-     * holds the Especialização first (mirroring {@code AbstractSkillInteraction
-     * #validateRequestedTrait}'s own "must actually be held" check), then delegates the real
-     * computation to {@link AbencoadoPelaLuzInteraction} — this instance doesn't compute the
-     * effect itself.
+     * Activates Abençoado pela Luz: activator pays its 1PD and touches target, who is healed (
+     * chooseHeal) or has a Malefício removed (still inert) — see {@link
+     * AbencoadoPelaLuzInteraction}. A thin delegate to {@link #activateAbility}, which checks this
+     * Santo actually holds the Especialização first.
      *
-     * <p>Deliberately a method on {@code Santo}, not a static/standalone call directly against
-     * {@code SantoSpecialization.ABENCOADO_PELA_LUZ}: this Título instance is what actually
-     * knows which Especializações/Habilidades are held (needed by {@link #getDefesasBonus}/
-     * {@link #getIgnoreCriticalEffectDurationInRounds}, and by any future ability whose own
-     * effect scales the same way), and is the natural place to resolve "is this held at all"
-     * before an activation proceeds — the same reasoning applies to "is this the holder's
-     * Título Primário" for a *future* ability that needs it (this one doesn't — Abençoado pela
-     * Luz's own touch effect has no Primário-conditioned clause — so no such parameter is
-     * threaded through here; a caller resolves that fact via {@code
-     * Character#getPrimaryTitle() == santoInstance} and passes it explicitly whenever an
-     * ability that actually needs it is built).
+     * <p>Deliberately reached through this Santo instance rather than the raw {@code
+     * SantoSpecialization.ABENCOADO_PELA_LUZ} constant: the held Título is what knows which
+     * Especializações/Habilidades are held, and the natural place for any future
+     * Primário-conditioned clause (a caller resolves that via {@code Character#getPrimaryTitle()
+     * == santoInstance} and passes it explicitly once an ability needs it).
      *
-     * @throws IllegalOperationException if this Santo instance doesn't hold Abençoado pela Luz
+     * @throws IllegalOperationException if this Santo instance doesn't hold Abençoado pela Luz, or
+     *                                    any of the activation's gates refuses
      */
-    public InteractionResult activateAbencoadoPelaLuz(final CombatantSheet target, final SceneContext sceneContext, final boolean chooseHeal) {
-        if (!specializations.contains(SantoSpecialization.ABENCOADO_PELA_LUZ)) {
-            throw new IllegalOperationException(REQUIRED_TITLE_TRAIT_NOT_HELD);
-        }
-        return new AbencoadoPelaLuzInteraction().applyTo(target, sceneContext, chooseHeal);
+    public InteractionResult activateAbencoadoPelaLuz(final CombatantSheet activator, final CombatantSheet target,
+                                                      final SceneContext sceneContext, final boolean chooseHeal) {
+        return activateAbility(SantoSpecialization.ABENCOADO_PELA_LUZ, TitleAbilityActivationRequest.builder()
+                .activator(activator)
+                .target(target)
+                .sceneContext(sceneContext)
+                .choice(chooseHeal ? AbencoadoPelaLuzInteraction.Branch.HEAL
+                        : AbencoadoPelaLuzInteraction.Branch.REMOVE_MALEFICIO)
+                .build());
     }
 
     /**
-     * Activates Grito de Guerra Vulcano — returns every {@link
-     * org.aventyrs.core.sheet.Blessing} its own rules text grants (Vantagem toward both Perícias
-     * de Ataque, plus +2 Defesas) via {@link InteractionResult#getBlessings()}; see {@link
-     * GritoDeGuerraVulcanoInteraction}'s own class javadoc for why the Defesas one is still
-     * inert (no consuming Defesas stat/service exists yet) despite being reported here for real.
-     * This method itself doesn't apply anything — resolving actor plus adjacent allies and
-     * calling {@code CombatantSheet#grantTemporaryBonus} on each is the caller's job, the same
-     * "compute what, caller applies who" shape {@code ArtesCompetencyAbility#DOM_BARDICO} already
-     * established. Validates this Santo instance actually holds {@link
-     * AbencoadoPelaLuzAbility#GRITO_DE_GUERRA_VULCANO} first, same "must actually be held" shape
-     * as {@link #activateAbencoadoPelaLuz}.
+     * Activates Grito de Guerra Vulcano — actor pays its 3PD, and every {@link
+     * org.aventyrs.core.sheet.Blessing} its rules text grants (Vantagem toward both Perícias de
+     * Ataque, plus +2 Defesas) comes back via {@link InteractionResult#getBlessings()} for the
+     * caller to grant to actor and their adjacent allies — see {@link
+     * GritoDeGuerraVulcanoInteraction}. A thin delegate to {@link #activateAbility}.
      *
-     * @throws IllegalOperationException if this Santo instance doesn't hold Grito de Guerra Vulcano
+     * @throws IllegalOperationException if this Santo instance doesn't hold Grito de Guerra Vulcano,
+     *                                    or any of the activation's gates refuses
      */
     public InteractionResult activateGritoDeGuerraVulcano(final CombatantSheet actor, final SceneContext sceneContext) {
-        if (!abilities.contains(AbencoadoPelaLuzAbility.GRITO_DE_GUERRA_VULCANO)) {
-            throw new IllegalOperationException(REQUIRED_TITLE_TRAIT_NOT_HELD);
-        }
-        return new GritoDeGuerraVulcanoInteraction().applyTo(actor, sceneContext);
+        return activateAbility(AbencoadoPelaLuzAbility.GRITO_DE_GUERRA_VULCANO, TitleAbilityActivationRequest.builder()
+                .activator(actor)
+                .sceneContext(sceneContext)
+                .build());
     }
 
-    // TODO: three genuinely separate gaps stand between the real formulas above and Despertar
-    // actually doing anything:
-    // (1) "Ignora Efeitos Críticos Menores" itself is unimplemented — this core's
-    // CriticalResult/CriticalEffect machinery has no veto/downgrade point at all; every
-    // CriticalEffect is constructed only after a caller has already decided a crit landed.
-    // (2) The Defesas stat itself now EXISTS (character.services/DefenseService, reading
-    // ModifierType.DEFESAS/PHYSICAL_DEFENSE/MAGIC_DEFENSE), so this is no longer what blocks the
-    // self bonus — what's missing is narrower: DefenseService scans abilities, equipment and the
-    // sheet's TemporaryBonus pool, but not a Título's own hook, and getDefesasBonus is a method
-    // on this concrete class rather than on AventyrTitleAbility (unlike the RA hook DamageService
-    // does scan). Wiring it means either promoting it to the interface or granting its result as
-    // a DEFESAS-typed TemporaryBonus at the moment Despertar activates.
-    // (3) The ally-shared half additionally needs this core's still-missing
-    // "continuously-recomputed cross-character passive grant" mechanism (see
-    // SantoAbility#BASTIAO_DOS_NECESSITADOS's own TODO for the identical gap) — even once
-    // Defesas exists, something still has to decide *when* to grant each adjacent ally their
-    // share and keep it current as allies move in and out of range.
+    /**
+     * Activates Orgulho Elduriano — holder spends pdSpent PD (its cost is {@code
+     * PDCost.variable(1)}) and a provoking Aura is registered on scene for that many Rodadas; see
+     * {@link OrgulhoEldurianoInteraction}. A thin delegate to {@link #activateAbility}; the Aura is
+     * read back from {@link Scene#getActiveAuras()}.
+     *
+     * @param holderContext the holder's current distances, to bind foes already in range — or
+     *                      {@code null} to leave that to a later {@link Scene#refreshAura} call
+     * @throws IllegalOperationException if this Santo instance doesn't hold Orgulho Elduriano, or
+     *                                    any of the activation's gates refuses
+     */
+    public InteractionResult activateOrgulhoElduriano(final CombatantSheet holder, final Scene scene, final int pdSpent,
+                                                      final SceneContext holderContext) {
+        return activateAbility(AbencoadoPelaLuzAbility.ORGULHO_ELDURIANO, TitleAbilityActivationRequest.builder()
+                .activator(holder)
+                .scene(scene)
+                .sceneContext(holderContext)
+                .determinationPoints(pdSpent)
+                .build());
+    }
+
+    // Despertar is wired as of 0.0.43 — all three clauses, each through its own mechanism:
+    // (1) "Ignora Efeitos Críticos Menores" -> resolveMinorCriticalImmunityRounds, read by
+    // AbstractCombatantSheet#ignoresMinorCriticalEffects against
+    // SceneContext#isWithinFirstCombatRounds, and enforced by CriticalEffect#applicableTo — the
+    // single place an Efeito Crítico is filtered out, now keyed on severity as well as type.
+    // (2) The self Defesas bonus -> resolveBaseDefesasBonus, summed by DefenseServiceImpl.
+    // (3) The ally half -> resolvePrimaryTitleAllyDefesasBonus, projected as a ProjectedAura and
+    // granted/revoked by Scene#refreshProjectedAuras.
+    // What remains is a caller's duty, not a missing mechanism: this core does no geometry, so
+    // refreshProjectedAuras must be called after any movement or teleportation — the same
+    // contract Scene#refreshAura and Teleportation already document.
 }

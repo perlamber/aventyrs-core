@@ -44,9 +44,12 @@ constant owes is those two, both abstract on purpose. Only `ItemActiveAbility#ge
 still returns 0 — author it the moment its rules text gives one a Preço. A copy holds a
 `List<Improvement>` capped 1/2/3 by
 `ItemWeightClass`, fitted via `AbstractItem#addImprovement` (`getImprovement()` is a deprecated
-first-or-null shim). Still unmodeled and not to be built speculatively: a PE economy for
-*production* (a self-forge reports its cost, only a purchase spends), the offensive
-Obra-Prima/Aprimoramento catalogs.
+first-or-null shim). All four catalogs are authored — `DefensiveMasterpiece`/`DefensiveImprovement`
+(fitted through the `ItemMasterpiece`/`ItemImprovement` wrappers, which carry their creation-time
+choices) and `OffensiveMasterpiece`/`OffensiveImprovement` (fitted bare, no wrapper). Still
+unmodeled and not to be built speculatively: a PE economy for *production* (a self-forge reports
+its cost, only a purchase spends), and a roll pass scoped to the weapon an attack was delivered
+with, which is what the Ataque/Danos columns on both enhancement interfaces wait on.
 
 **Inventory, however, is real** — `Character#equipment` (worn/wielded) and
 `AbstractCombatantSheet#inventory` (carried, including a foe's loot). Both are mutable

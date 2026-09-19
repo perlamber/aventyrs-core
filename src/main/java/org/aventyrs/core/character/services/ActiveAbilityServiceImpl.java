@@ -4,6 +4,7 @@ import org.aventyrs.core.ability.ActiveAbility;
 import org.aventyrs.core.action.ActionPointsService;
 import org.aventyrs.core.action.ActionPointsServiceImpl;
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.sheet.ActionCost;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.FormEffect;
@@ -14,6 +15,8 @@ import static org.aventyrs.core.util.TranslatableMessages.ABILITY_ACTIVATION_PRE
 import static org.aventyrs.core.util.TranslatableMessages.ABILITY_ON_COOLDOWN;
 import static org.aventyrs.core.util.TranslatableMessages.ACTIVE_ABILITY_NOT_HELD;
 import static org.aventyrs.core.util.TranslatableMessages.NOT_ENOUGH_ACTION_POINTS;
+import static org.aventyrs.core.util.TranslatableMessages.NOT_ENOUGH_REACTIONS;
+import static org.aventyrs.core.util.TranslatableMessages.NOT_ENOUGH_FREE_ACTIONS;
 import static org.aventyrs.core.util.TranslatableMessages.NOT_ENOUGH_HIT_POINTS;
 import static org.aventyrs.core.util.TranslatableMessages.NOT_ENOUGH_DETERMINATION_POINTS;
 import static org.aventyrs.core.util.TranslatableMessages.NOT_ENOUGH_MAGIC_POINTS;
@@ -24,6 +27,8 @@ public class ActiveAbilityServiceImpl implements ActiveAbilityService {
     private final ActionPointsService actionPointsService;
     private final MagicPointsService magicPointsService;
     private final HitPointsService hitPointsService;
+    private final ReactionsService reactionsService;
+    private final FreeActionsService freeActionsService;
     private final DeterminationPointsService determinationPointsService = new DeterminationPointsServiceImpl();
 
     public ActiveAbilityServiceImpl() {
@@ -36,9 +41,23 @@ public class ActiveAbilityServiceImpl implements ActiveAbilityService {
 
     public ActiveAbilityServiceImpl(final ActionPointsService actionPointsService, final MagicPointsService magicPointsService,
                                     final HitPointsService hitPointsService) {
+        this(actionPointsService, magicPointsService, hitPointsService,
+                new ReactionsServiceImpl(), new FreeActionsServiceImpl());
+    }
+
+    /**
+     * The full form — the Reação and Ação Livre counters joined the gate when {@code ActionCost}
+     * became the Tempo de Ativação type, so an ability priced in either is checked against the
+     * right entitlement instead of against Pontos de Ação it never spends.
+     */
+    public ActiveAbilityServiceImpl(final ActionPointsService actionPointsService, final MagicPointsService magicPointsService,
+                                    final HitPointsService hitPointsService, final ReactionsService reactionsService,
+                                    final FreeActionsService freeActionsService) {
         this.actionPointsService = actionPointsService;
         this.magicPointsService = magicPointsService;
         this.hitPointsService = hitPointsService;
+        this.reactionsService = reactionsService;
+        this.freeActionsService = freeActionsService;
     }
 
     @Override
@@ -65,12 +84,7 @@ public class ActiveAbilityServiceImpl implements ActiveAbilityService {
         if (grantedForm != null && !characterSheet.canTakeForm(grantedForm)) {
             throw new IllegalOperationException(FORM_NOT_AVAILABLE);
         }
-        // The sheet overload, not the Character one: activating an ability is combat-facing, and
-        // the sheet is what carries a granted ACTION_POINTS TemporaryBonus. No SceneContext is
-        // threaded through this call yet, so ESTRATEGISTA's combat malus reads as out-of-combat.
-        if (actionPointsService.getMaxActionPoints(characterSheet, turnNumber) < ability.getActionPointCost()) {
-            throw new IllegalOperationException(NOT_ENOUGH_ACTION_POINTS);
-        }
+        checkActionCost(characterSheet, ability.getActionPointCost(), turnNumber);
         if (magicPointsService.getCurrentMagicPoints(character, characterSheet) < ability.getMagicPointCost()) {
             throw new IllegalOperationException(NOT_ENOUGH_MAGIC_POINTS);
         }
@@ -106,5 +120,44 @@ public class ActiveAbilityServiceImpl implements ActiveAbilityService {
         // happened, so it must not lock the ability out.
         characterSheet.startCooldown(ability, ability.getCooldownRounds());
         characterSheet.startRestCooldown(ability, ability.getReactivationRest());
+    }
+
+    /**
+     * Refuses an activation its holder isn't entitled to pay for, each Tempo de Ativação against
+     * its own counter: Pontos de Ação for a FIXED/DYNAMIC cost (a DYNAMIC one against its
+     * minimum — the most the player could then choose is the caller's business), a Reação for a
+     * REACTION, an Ação Livre for a FREE_ACTION, and nothing at all for a passive.
+     *
+     * <p>All three are <b>"entitled to any at all"</b> checks, not live pools: this core keeps no
+     * spent-this-Turn ledger for any of them, the same "reported, not deducted" stance {@code
+     * ActionCost} and {@code WeaponDrawService} take. A holder with one Reação who has already
+     * used it this Rodada still passes here.
+     *
+     * <p>The sheet overloads, not the Character ones: activating an ability is combat-facing, and
+     * the sheet is what carries a granted ACTION_POINTS/REACTIONS/FREE_ACTIONS TemporaryBonus. No
+     * SceneContext is threaded through this call yet, so ESTRATEGISTA's combat malus reads as
+     * out-of-combat.
+     */
+    private void checkActionCost(final CombatantSheet characterSheet, final ActionCost cost, final int turnNumber) {
+        switch (cost.kind()) {
+            case FIXED, DYNAMIC -> {
+                if (actionPointsService.getMaxActionPoints(characterSheet, turnNumber) < cost.minimum()) {
+                    throw new IllegalOperationException(NOT_ENOUGH_ACTION_POINTS);
+                }
+            }
+            case REACTION -> {
+                if (reactionsService.getTotalReactions(characterSheet, turnNumber) < 1) {
+                    throw new IllegalOperationException(NOT_ENOUGH_REACTIONS);
+                }
+            }
+            case FREE_ACTION -> {
+                if (freeActionsService.getTotalFreeActions(characterSheet, turnNumber) < 1) {
+                    throw new IllegalOperationException(NOT_ENOUGH_FREE_ACTIONS);
+                }
+            }
+            case NONE -> {
+                // A passive has nothing to pay. Activating one is odd but not this gate's refusal.
+            }
+        }
     }
 }

@@ -2,7 +2,11 @@ package org.aventyrs.core.title;
 
 import java.util.Optional;
 
+import org.aventyrs.core.action.ReactionContext;
+import org.aventyrs.core.action.ReactionTrigger;
 import org.aventyrs.core.scene.SceneContext;
+import org.aventyrs.core.scene.Teleportation;
+import org.aventyrs.core.sheet.ActionCost;
 import org.aventyrs.core.sheet.Interaction;
 
 /**
@@ -39,43 +43,83 @@ public interface AventyrTitleAbility {
     }
 
     /**
-     * Custo de Ativação in PD (Pontos de Determinação) — 0 for a no-cost passive, or for an
-     * {@link AventyrTitleSpecialization} with no activation cost of its own (the common case
-     * for a purely descriptive Especialização).
+     * Custo de Ativação in PD (Pontos de Determinação) — {@link PDCost#NONE} for a no-cost
+     * passive, or for an {@link AventyrTitleSpecialization} with no activation cost of its own
+     * (the common case for a purely descriptive Especialização). A {@link PDCost.Variable} cost
+     * is chosen by the activating player at or above its minimum.
      */
-    default int getPDCost() {
-        return 0;
+    default PDCost getPDCost() {
+        return PDCost.NONE;
     }
 
-    /** Custo de Ativação in PA (Pontos de Ação) — 0 for a passive or a Reação-only activation. */
-    default int getActionPointCost() {
-        return 0;
-    }
-
-    /** Whether this ability's Tempo de Ativação is "Reação" rather than a PA cost. */
-    default boolean isReactionActivation() {
-        return false;
-    }
-
-    /** Whether this ability's Tempo de Ativação is "Ação Livre" rather than a PA cost. */
-    default boolean isFreeActionActivation() {
-        return false;
+    /**
+     * The Tempo de Ativação — {@link ActionCost#NONE} for a passive, {@code
+     * ActionCost.ofActionPoints(n)} for "Tempo de Ativação: NPA", {@link ActionCost#REACTION} for
+     * "Reação", {@link ActionCost#FREE_ACTION} for "Ação Livre", or {@code ActionCost.dynamic(min)}
+     * for a Variável one.
+     *
+     * <p>This was three separate members until {@code ActionCost} grew to hold all of them: an
+     * {@code int} plus an {@code isReactionActivation()}/{@code isFreeActionActivation()} pair,
+     * awkward enough that {@code AbencoadoPelaLuzAbility#GLORIA_RELAMPEJANTE_DE_TESLA} needed an
+     * anonymous class body to say "Ação Livre" on an enum with no field for it.
+     *
+     * <p>Reported, never deducted — {@code AbstractTitleAbilityInteraction} reads only the {@link
+     * #getPDCost()}, the same restraint every other cost in this core keeps.
+     */
+    default ActionCost getActionPointCost() {
+        return ActionCost.NONE;
     }
 
     /**
      * Whether this Habilidade/Suprema is passive (always active, no player-triggered
      * activation) as opposed to something the holder spends a resource/action to do. Derived
-     * from the existing activation-cost data rather than a separate stored flag: a nonzero
-     * {@link #getActionPointCost()}, or an explicit {@link #isReactionActivation()}/
-     * {@link #isFreeActionActivation()} (both still real player-triggered activations, even
-     * though their own actionPointCost is 0), all count as active. Confirmed against every
-     * currently-modeled Habilidade/Suprema: this formula picks out exactly the ones whose own
-     * rules text says "Custo de Ativação: Nenhum, habilidade passiva" (e.g. Bastião dos
-     * Necessitados, Protetor da Vida e da Morte) and no others — it does not need a PD-cost
-     * check, since no current constant combines a real PDCost with zero PA/Reação/Ação Livre.
+     * from the activation cost rather than a separate stored flag: exactly the constants whose
+     * own rules text says "Custo de Ativação: Nenhum, habilidade passiva" (e.g. Bastião dos
+     * Necessitados, Protetor da Vida e da Morte) name {@link ActionCost#NONE} and no others.
+     * A Reação and an Ação Livre are real player-triggered activations, and say so in their own
+     * {@link ActionCost.Kind} rather than needing to be excluded by hand here. It does not need a
+     * PD-cost check, since no current constant combines a real PDCost with a {@link
+     * ActionCost#NONE} Tempo de Ativação.
      */
     default boolean isPassive() {
-        return getActionPointCost() == 0 && !isReactionActivation() && !isFreeActionActivation();
+        return getActionPointCost().kind() == ActionCost.Kind.NONE;
+    }
+
+    /**
+     * What this ability reacts <em>to</em> — {@code null}, the default, for everything that is not
+     * a Reação. Only meaningful alongside a {@link ActionCost#REACTION} {@link
+     * #getActionPointCost()}: the cost says "this is a Reação", this says which event offers it,
+     * and {@code ReactionOptionsService} needs both to put it in front of a player.
+     */
+    default ReactionTrigger getReactionTrigger() {
+        return null;
+    }
+
+    /**
+     * Whether this Reação's own rules text is satisfied by what just happened — the per-ability
+     * half of availability, after {@code ReactionOptionsService} has matched the {@link
+     * #getReactionTrigger()}. {@code true} by default, so a Reação with nothing further to say
+     * needs no override; {@code SantoAbility#GUARDA_VIDAS} overrides it to check the threatened
+     * ally is actually an ally and actually within its {@link #resolveTeleportation()} reach.
+     *
+     * <p>This is an <b>availability</b> question, not an affordability one — whether the reactor
+     * has a Reação and the PD to spend is the service's business, and an unaffordable option is
+     * still returned. Nor is it the activation's own {@code validate}: the {@code
+     * AbstractTitleAbilityInteraction} re-checks what it needs when the player actually commits,
+     * since a list is a snapshot and the world moves.
+     */
+    default boolean isReactionAvailable(ReactionContext context) {
+        return true;
+    }
+
+    /**
+     * How far activating this ability teleports its holder, or {@code null} — the default, and
+     * every ability that moves nobody. A client reads this to offer the destination; this core
+     * neither picks one nor applies it, since it holds no positions at all. See {@link
+     * Teleportation}.
+     */
+    default Teleportation resolveTeleportation() {
+        return null;
     }
 
     /**
@@ -157,23 +201,50 @@ public interface AventyrTitleAbility {
     }
 
     /**
-     * How many <b>other</b> Habilidades/Supremas from this <i>same catalog</i> — the same
-     * concrete {@code AventyrTitleAbility} enum this constant itself belongs to, e.g. {@code
-     * AbencoadoPelaLuzAbility#GLORIA_RELAMPEJANTE_DE_TESLA}'s own "Requer 2 Habilidades de
-     * 'Abençoado pela Luz'" counting only sibling {@code AbencoadoPelaLuzAbility} constants,
-     * never {@code SantoAbility} ones even though both live in the same held {@code
-     * AventyrTitle#getAbilities()} list — must already be held before this ability can be
-     * acquired. "Outras" (the rules text's own wording) excludes this ability itself, so
-     * checking this against title's own current per-catalog count (taken <i>before</i> this
-     * ability is added) already gets that exclusion for free. {@code 0} by default; only
-     * override on a constant whose rules text names one. Doesn't distinguish Habilidade from
-     * Suprema when counting — every "Requer N outras Habilidades" clause modeled so far never
-     * separately counts held Supremas, so a held Suprema from the same catalog counts toward
-     * this too, same as {@code AventyrTitle#getSpecializationAndSupremaCount()} already treats
+     * How many <b>other</b> Habilidades/Supremas must already be held before this ability can be
+     * acquired — {@link #getRequiredOtherAbilitiesScope()} says which ones count. "Outras" (the
+     * rules text's own wording) excludes this ability itself. {@code 0} by default; only override
+     * on a constant whose rules text names one. Doesn't distinguish Habilidade from Suprema when
+     * counting — no "Requer N outras Habilidades" clause modeled so far counts held Supremas
+     * separately, same as {@code AventyrTitle#getSpecializationAndSupremaCount()} already treats
      * both uniformly for Despertar's own duration/Defesas formulas.
      */
     default int getRequiredOtherAbilities() {
         return 0;
+    }
+
+    /**
+     * Which Habilidades {@link #getRequiredOtherAbilities()} counts: those gated on the
+     * Especialização this names, or — {@code Optional.empty()} — <b>every</b> Habilidade the
+     * Título holds, whichever Especialização (if any) each one came from.
+     *
+     * <p>The two readings are both real, and the rules text is what distinguishes them:
+     * <ul>
+     *   <li>{@code SantoAbility#GUARDA_VIDAS}'s "Requer 1 Especialização e 2 outras Habilidades
+     *       <b>de Santo</b>" names the <i>Título</i>. Every Habilidade the Santo holds is a
+     *       Habilidade de Santo — its own top-level ones and the ones an Especialização brought
+     *       alike — so all of them count. This is the empty case, and the default.</li>
+     *   <li>{@code AbencoadoPelaLuzAbility#GLORIA_RELAMPEJANTE_DE_TESLA}'s "Requer 2 Habilidades
+     *       <b>de 'Abençoado pela Luz'</b>" names one <i>Especialização</i>, so only Habilidades
+     *       gated on that one count.</li>
+     * </ul>
+     *
+     * <p><b>Defaults to {@link #getRequiredSpecialization()}</b>, which gets both catalogs right
+     * with nothing to declare per constant: a {@code <Specialization>Ability} constant is by
+     * definition gated on its own Especialização and its "Requer N Habilidades" clause names that
+     * same Especialização, while a {@code <Title>Ability} constant names no Especialização at all
+     * and its clause names the Título. Override only where a constant's text disagrees with that
+     * — e.g. a Título-level Habilidade whose clause names one Especialização, or a gated one whose
+     * clause names the Título at large.
+     *
+     * <p>An earlier version scoped this by <i>Java enum</i> instead — same catalog class as the
+     * constant itself. That read {@code SantoAbility}'s clause wrongly: a Santo holding one
+     * Especialização and two of its gated Habilidades satisfies "2 outras Habilidades de Santo" in
+     * the rules, but counted 0 under that rule and could never acquire Guarda-Vidas or Bastião dos
+     * Necessitados at all.
+     */
+    default Optional<AventyrTitleSpecialization> getRequiredOtherAbilitiesScope() {
+        return getRequiredSpecialization();
     }
 
     /**
@@ -185,15 +256,12 @@ public interface AventyrTitleAbility {
      * itself" shape. The Especialização half prefers {@link #getRequiredSpecialization()}
      * (containment against title's own {@link AventyrTitle#getSpecializations()}) when present,
      * falling back to {@link #getRequiredSpecializations()}'s bare count otherwise. The
-     * other-Habilidades half only counts title's held abilities belonging to this same concrete
-     * catalog — matched via {@link Enum#getDeclaringClass()} where the ability is an {@code
-     * Enum} (a constant-specific class body, e.g. {@code SantoAbility#BASTIAO_DOS_NECESSITADOS}'s
-     * own anonymous override, would otherwise report a different {@code Class} per constant
-     * than its sibling constants with no body, which {@code getClass()} alone can't see past),
-     * or plain {@link Object#getClass()} for a non-enum implementor (e.g. a test double) —
-     * see {@link #isSameCatalog}. {@code true} by default (no prerequisite); a constant
-     * overriding any of the three hooks above is automatically checked here without needing its
-     * own {@code isEligible} override too. Checked by {@code
+     * other-Habilidades half counts whichever of title's held abilities {@link
+     * #getRequiredOtherAbilitiesScope()} admits — every one of them, or only those gated on one
+     * named Especialização — and never this ability itself, which is what the rules text's own
+     * "outras" means. {@code true} by default (no prerequisite); a constant overriding any of the
+     * hooks above is automatically checked here without needing its own {@code isEligible}
+     * override too. Checked by {@code
      * org.aventyrs.core.character.services.TitleAbilityService#grantTitleAbility} before
      * granting.
      */
@@ -201,23 +269,12 @@ public interface AventyrTitleAbility {
         boolean specializationSatisfied = getRequiredSpecialization()
                 .map(required -> title.getSpecializations().contains(required))
                 .orElseGet(() -> title.getSpecializations().size() >= getRequiredSpecializations());
-        long sameCatalogAbilityCount = title.getAbilities().stream()
-                .filter(held -> isSameCatalog(held, this))
+        Optional<AventyrTitleSpecialization> scope = getRequiredOtherAbilitiesScope();
+        long otherAbilityCount = title.getAbilities().stream()
+                .filter(held -> held != this)
+                .filter(held -> scope.isEmpty() || scope.equals(held.getRequiredSpecialization()))
                 .count();
-        return specializationSatisfied && sameCatalogAbilityCount >= getRequiredOtherAbilities();
-    }
-
-    /**
-     * Whether one and other belong to the same concrete {@code AventyrTitleAbility} catalog —
-     * see {@link #isEligible}'s own javadoc for why a plain {@code getClass()} comparison isn't
-     * safe here.
-     */
-    private static boolean isSameCatalog(final AventyrTitleAbility one, final AventyrTitleAbility other) {
-        return catalogOf(one) == catalogOf(other);
-    }
-
-    private static Class<?> catalogOf(final AventyrTitleAbility ability) {
-        return ability instanceof Enum<?> enumConstant ? enumConstant.getDeclaringClass() : ability.getClass();
+        return specializationSatisfied && otherAbilityCount >= getRequiredOtherAbilities();
     }
 
     public Optional<Class <? extends Interaction>> getInteractionClass();

@@ -202,6 +202,28 @@ class SpellHealingEffectTest {
     }
 
     @Test
+    void bencaoBifurcadaHealsAMinimumRestWhereItsParentHealsALong() {
+        CharacterSheet sheet = newSheet();
+        sheet.applyDamage(100);
+        Spell bencaoBifurcada = VidaSpell.REVIGORAR.getAlternateVersion().orElseThrow();
+
+        cast(sheet, bencaoBifurcada);
+
+        assertEquals(restAmount(sheet, RestType.MINIMO), 100 - sheet.getDamageTaken());
+    }
+
+    @Test
+    void curaEmMassaHealsAMinimumRest() {
+        CharacterSheet sheet = newSheet();
+        sheet.applyDamage(100);
+        Spell curaEmMassa = VidaSpell.REVIGORAR_MAIOR.getAlternateVersion().orElseThrow();
+
+        cast(sheet, curaEmMassa);
+
+        assertEquals(restAmount(sheet, RestType.MINIMO), 100 - sheet.getDamageTaken());
+    }
+
+    @Test
     void theDescriptionIsTheMagiasOwnEfeitoLine() {
         SpellHealingEffect effect = new SpellHealingEffect(VidaSpell.REVIGORAR,
                 VidaSpell.REVIGORAR.getHealing().orElseThrow());

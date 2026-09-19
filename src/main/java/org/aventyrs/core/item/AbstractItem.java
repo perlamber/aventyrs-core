@@ -1,6 +1,7 @@
 package org.aventyrs.core.item;
 
 import org.aventyrs.core.ability.ItemActiveAbility;
+import org.aventyrs.core.skill.SkillType;
 
 import lombok.Builder;
 import lombok.Getter;
@@ -16,9 +17,10 @@ import java.util.UUID;
  * mirroring {@code org.aventyrs.core.feat.AbstractFeat}'s identical role alongside {@code
  * org.aventyrs.core.feat.ArtesMarciaisFeat}.
  *
- * <p>An item built through this has no Dano Base and cannot be swung — see {@link
- * AbstractWeapon} for the {@link Weapon} counterpart, which extends this class and adds that
- * one column.
+ * <p>An item built through {@code builder()} directly has no Dano Base and cannot be swung — see
+ * {@link AbstractWeapon} for the {@link Weapon} counterpart, which extends this class and adds that
+ * one column. {@link #builderFromTemplate} is the exception, and builds one of those whenever the
+ * template it is handed is itself a {@code Weapon}.
  *
  * <p>Nothing here validates the values it's handed: like every other builder in this codebase
  * (see CLAUDE.md's note on {@code AttributeValue.builder()}), it's a data holder, not a
@@ -77,7 +79,7 @@ public class AbstractItem implements Item {
      * (damage, Obra-Prima, Aprimoramentos, Pedra do Poder) is deliberately not carried over.
      */
     public static AbstractItemBuilder<?, ?> builderFromTemplate(final ItemTemplate template) {
-        return AbstractItem.builder()
+        return baseBuilderFor(template)
                 .template(template)
                 .name(template.getName())
                 .description(template.getDescription())
@@ -90,6 +92,34 @@ public class AbstractItem implements Item {
                 .hardness(template.getHardness())
                 .castingBonus(template.getCastingBonus())
                 .favor(template.getFavor());
+    }
+
+    /**
+     * The right builder for template's own kind — an {@link AbstractWeapon} one when the template
+     * <em>is</em> a {@link Weapon}, and a plain {@link AbstractItem} one otherwise.
+     *
+     * <p><b>Why this exists.</b> A forged copy of a catalog Arma has to keep being an Arma. Built
+     * through {@code AbstractItem.builder()} it would come back as a bare {@code AbstractItem}:
+     * {@code instanceof Weapon} false, so nothing could draw it ({@code Character#drawWeapon} takes
+     * a {@code Weapon}), no Perícia de Ataque could name it as its {@code AttackSource}, and {@code
+     * DamageBaseService} could not be handed it at all — a bought sword that could not be swung.
+     * The three weapon columns are copied off the template here for the same reason every other
+     * column is: the copy is the template's copy.
+     *
+     * <p><b>Not carried:</b> {@link Weapon#getCriticalEffect()} and {@link
+     * Weapon#getLesserCriticalMargin()}. {@code AbstractWeapon} has no field for either — they are
+     * interface defaults — so a forged copy reports the defaults rather than its catalog entry's
+     * authored Efeito Crítico. Nothing reads those two yet (see {@code Weapon}'s own javadoc);
+     * they need fields on {@code AbstractWeapon} before a forged copy can keep them.
+     */
+    private static AbstractItemBuilder<?, ?> baseBuilderFor(final ItemTemplate template) {
+        if (!(template instanceof Weapon weapon)) {
+            return AbstractItem.builder();
+        }
+        return AbstractWeapon.builder()
+                .damageBase(weapon.getDamageBase())
+                .skillType(weapon.getSkillType())
+                .range(weapon.getRange());
     }
 
     public static AbstractItem fromTemplate(final ItemTemplate template) {
@@ -105,12 +135,26 @@ public class AbstractItem implements Item {
         this.damageTaken = damageTaken;
     }
 
+    /**
+     * Fits this copy's single Obra-Prima.
+     *
+     * <p>A {@link DefensiveMasterpiece} is refused bare because its entries carry creation-time
+     * choices a copy must remember ({@code MAGISTRAL}'s Defesa, {@code SOB_MEDIDA}'s Reação/Ação
+     * Livre) — {@link ItemMasterpiece} is the wrapper that holds them. {@link OffensiveMasterpiece}
+     * needs no such wrapper and is fitted directly: no offensive entry has a choice this core can
+     * read (Ossos de Monstro's Habilidade and Espírito Umbral's Subordinado are both blocked on
+     * systems that don't exist), so a wrapper would carry nothing but a second name for the enum.
+     */
     public void setMasterpiece(final Masterpiece masterpiece) {
         if (masterpiece instanceof DefensiveMasterpiece) {
             throw new IllegalArgumentException("Use ItemMasterpiece to fit a defensive masterpiece.");
         }
         if (masterpiece instanceof ItemMasterpiece && category != null && category.getType() != ItemType.DEFENSIVE) {
             throw new IllegalArgumentException("A defensive masterpiece requires a defensive item.");
+        }
+        if (masterpiece instanceof OffensiveMasterpiece && category != null
+                && category.getType() != ItemType.OFFENSIVE) {
+            throw new IllegalArgumentException("An offensive masterpiece requires an offensive item.");
         }
         if (masterpiece instanceof ItemMasterpiece itemMasterpiece
                 && itemMasterpiece.getDefinition() == DefensiveMasterpiece.DYOSPIROS
@@ -153,6 +197,21 @@ public class AbstractItem implements Item {
                 throw new IllegalArgumentException("Camada de Reforço uses the shield variant only on shields.");
             }
         }
+        if (improvement instanceof OffensiveImprovement offensive) {
+            if (category != null && category.getType() != ItemType.OFFENSIVE) {
+                throw new IllegalArgumentException("An offensive improvement requires an offensive item.");
+            }
+            // The two constants whose Características Adicionais say "Apenas …" outright. Machado
+            // Anexo and Baioneta only *make sense* on a ranged weapon but never say "Apenas", so
+            // they get no gate — catalogs and builders here are data holders, not gatekeepers.
+            if (offensive == OffensiveImprovement.CORRENTE_COM_PESO && weightClass != ItemWeightClass.LIGHT) {
+                throw new IllegalArgumentException("Corrente com Peso requires a light weapon.");
+            }
+            if (offensive == OffensiveImprovement.PENTE_ALONGADO
+                    && (!(this instanceof Weapon weapon) || weapon.getSkillType() != SkillType.ATAQUE_A_DISTANCIA)) {
+                throw new IllegalArgumentException("Pente Alongado requires a ranged weapon.");
+            }
+        }
         if (improvements == null) {
             improvements = new ArrayList<>();
         }
@@ -160,17 +219,23 @@ public class AbstractItem implements Item {
     }
 
     /**
-     * Sockets a Pedra do Poder into this item. Requires the Encaixe Aprimoramento
-     * ({@link DefensiveImprovement#ENCAIXE}) already fitted — "permite encaixe de Pedra do
-     * Poder" — so an armor or shield only, until an offensive Encaixe exists. Same
-     * guard-on-the-setter style as {@link #addImprovement}/{@link #setMasterpiece}; the
+     * Sockets a Pedra do Poder into this item. Requires an Encaixe Aprimoramento already fitted —
+     * "permite encaixe de Pedra do Poder" — in either flavour: {@link
+     * DefensiveImprovement#ENCAIXE} (an Armadura or Escudo, which that constant's own text
+     * restricts it to) or {@link OffensiveImprovement#ENCAIXE} (a weapon). The offensive half is
+     * what finally reaches a stone's <em>Efeito Ofensivo</em> mode, which {@code
+     * PowerStone#resolveBonus} selects from {@link Item#getType()} and nothing could previously
+     * host.
+     *
+     * <p>Same guard-on-the-setter style as {@link #addImprovement}/{@link #setMasterpiece}; the
      * {@code @SuperBuilder}'s {@code powerStone(...)} bypasses it, per CLAUDE.md's
      * "Builder-bypassable invariants".
      */
     public void setPowerStone(final PowerStone powerStone) {
         boolean encaixeFitted = improvements != null && improvements.stream()
-                .anyMatch(fitted -> fitted instanceof ItemImprovement itemImprovement
-                        && itemImprovement.getDefinition() == DefensiveImprovement.ENCAIXE);
+                .anyMatch(fitted -> fitted == OffensiveImprovement.ENCAIXE
+                        || (fitted instanceof ItemImprovement itemImprovement
+                        && itemImprovement.getDefinition() == DefensiveImprovement.ENCAIXE));
         if (powerStone != null && !encaixeFitted) {
             throw new IllegalArgumentException(
                     "A Pedra do Poder requires the Encaixe Aprimoramento fitted to its host item.");

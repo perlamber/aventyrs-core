@@ -1,12 +1,14 @@
 package org.aventyrs.core.scene;
 
 import org.aventyrs.core.item.ItemStore;
+import org.aventyrs.core.rest.RestType;
 import org.aventyrs.core.sheet.Blessing;
 import org.aventyrs.core.sheet.CombatantAction;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.TargetScope;
 import org.aventyrs.core.sheet.TemporaryBonus;
+import org.aventyrs.core.skill.Skill;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -16,6 +18,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -148,6 +151,14 @@ public class Scene {
     private final List<InitiativeEntry> pendingEntries = new ArrayList<>();
     private final Map<CombatantSheet, List<TemporaryBonus>> grantedBlessings = new HashMap<>();
     private final List<ActiveAreaSpellEffect> activeAreaSpellEffects = new ArrayList<>();
+    private final List<ActiveAura> activeAuras = new ArrayList<>();
+
+    /**
+     * What each holder's passive Auras are currently granting, keyed by holder — the ledger {@link
+     * #refreshProjectedAuras} revokes against, the same shape and for the same reason as {@link
+     * #grantedBlessings}.
+     */
+    private final Map<CombatantSheet, List<ProjectedAuraGrant>> projectedAuraBonuses = new HashMap<>();
     private final List<SceneAction> actionHistory = new ArrayList<>();
     private final Map<Direction, UUID> connections = new EnumMap<>(Direction.class);
 
@@ -226,6 +237,27 @@ public class Scene {
             }
         }
         return getParticipantsInInitiativeOrder();
+    }
+
+    /**
+     * Adds characterSheet and immediately resolves its passive Auras from distances — "who is near
+     * me as I arrive", the Scene-entry half of {@link #refreshProjectedAuras}. The overload to
+     * prefer whenever the caller knows where the joiner is standing.
+     *
+     * <p>distances is the <b>joiner's own</b> map, the same shape {@link #buildContext} takes, and
+     * resolves only the Auras the <i>joiner</i> projects outward. Auras its new neighbours project
+     * onto <i>it</i> are a separate question this cannot answer: their amounts depend on each
+     * neighbour's own adjacency, which only that neighbour's context carries. A joiner arriving is
+     * exactly the kind of change that alters those, so the caller refreshes each affected
+     * neighbour too — the same per-holder contract every other movement follows.
+     *
+     * @return the CombatantSheets in Iniciativa order after this addition
+     */
+    public List<CombatantSheet> addParticipant(final CombatantSheet characterSheet, final int initiativeValue,
+                                               final UUID group, final Map<CombatantSheet, Range> distances) {
+        List<CombatantSheet> order = addParticipant(characterSheet, initiativeValue, group);
+        refreshProjectedAuras(characterSheet, buildContext(characterSheet, distances));
+        return order;
     }
 
     /**
@@ -643,6 +675,171 @@ public class Scene {
     }
 
     /**
+     * Registers a provoking Aura one of this Scene's participants just activated. Nobody is
+     * bound yet — call {@link #refreshAura} with the holder's distances straight after, so foes
+     * already in range are caught.
+     */
+    public void addAura(final ActiveAura aura) {
+        activeAuras.add(aura);
+    }
+
+    /** Auras currently active in this Scene. */
+    public List<ActiveAura> getActiveAuras() {
+        return List.copyOf(activeAuras);
+    }
+
+    /**
+     * Re-resolves every passive Aura holder projects onto its neighbours, granting it to whoever is
+     * now in range and revoking it from whoever is not — see {@link ProjectedAura}. Returns the
+     * allies holding one of holder's auras afterwards.
+     *
+     * <p>Revoke-then-grant against {@link #projectedAuraBonuses}, exactly as {@link
+     * #applyInitiativeBlessings} works against {@link #grantedBlessings}: what an earlier call gave
+     * is removed by reference through {@link CombatantSheet#removeEffect}, so an unrelated {@code
+     * DEFESAS} bonus from another source is never disturbed, and the new set is granted fresh.
+     * Calling it twice in a row changes nothing.
+     *
+     * <p><b>holderContext must be the holder's own.</b> That is the whole reason this is a grant
+     * rather than a scan: Santo's ally bonus is half of a figure that counts the <i>holder's</i>
+     * adjacent allies, which a scan running from a recipient could not see. Resolving here, with
+     * the holder's own distances in hand, is the only way the number comes out right.
+     *
+     * <p>The granted bonuses are <b>open-ended</b> ({@link TemporaryBonus#openEnded}) — they do not
+     * tick away at the Rodada boundary, because what ends them is leaving range, not time passing.
+     * Only this method and {@link #removeParticipant} take them away.
+     *
+     * <p><b>Caller-driven, like {@link #refreshAura}.</b> This core does no geometry and nothing
+     * here watches for movement, so a caller invokes this after any movement or teleportation —
+     * the holder's or a neighbour's, since adjacency is mutual. {@link #addParticipant} calls it
+     * for a combatant joining the Scene, which is the one moment this class can see for itself.
+     *
+     * @throws IllegalOperationException if holder was never added to this Scene
+     */
+    public List<CombatantSheet> refreshProjectedAuras(final CombatantSheet holder, final SceneContext holderContext) {
+        List<CombatantSheet> allies = getAllies(holder);
+        revokeProjectedAuras(holder);
+        if (holderContext == null) {
+            return List.of();
+        }
+        List<CombatantSheet> covered = new ArrayList<>();
+        for (ProjectedAura aura : holder.resolveProjectedAuras(holderContext)) {
+            for (CombatantSheet ally : allies) {
+                Range distance = holderContext.getDistanceTo(ally);
+                if (distance == null || !distance.isWithin(aura.radius())) {
+                    continue;
+                }
+                TemporaryBonus bonus = TemporaryBonus.openEnded(aura.modifierType(), aura.value(), aura.source());
+                ally.applyEffect(bonus);
+                projectedAuraBonuses.computeIfAbsent(holder, key -> new ArrayList<>())
+                        .add(new ProjectedAuraGrant(ally, bonus));
+                covered.add(ally);
+            }
+        }
+        return covered;
+    }
+
+    /** Takes back every bonus holder's auras are currently granting, and forgets them. */
+    private void revokeProjectedAuras(final CombatantSheet holder) {
+        List<ProjectedAuraGrant> granted = projectedAuraBonuses.remove(holder);
+        if (granted != null) {
+            granted.forEach(grant -> grant.recipient().removeEffect(grant.bonus()));
+        }
+    }
+
+    /**
+     * Takes back every bonus any holder's auras are granting to recipient — what a combatant
+     * leaving the Scene needs, since the grant lives on their sheet and nothing else would clear
+     * an open-ended one.
+     */
+    private void revokeProjectedAurasTo(final CombatantSheet recipient) {
+        projectedAuraBonuses.values().forEach(grants -> grants.removeIf(grant -> {
+            if (!grant.recipient().getId().equals(recipient.getId())) {
+                return false;
+            }
+            grant.recipient().removeEffect(grant.bonus());
+            return true;
+        }));
+    }
+
+    /** One live Aura grant, kept so {@link #revokeProjectedAuras} can undo precisely it. */
+    private record ProjectedAuraGrant(CombatantSheet recipient, TemporaryBonus bonus) {
+    }
+
+    /**
+     * Binds every foe newly within range of holder's active Auras, and returns them. A foe is
+     * anyone in {@link #getEnemies(CombatantSheet)} whose distance in holderContext is within
+     * the Aura's radius, who isn't bound already, and whom the Aura's source hasn't affected
+     * since their last Descanso Longo ({@link CombatantSheet#isAffectedUntilRest}). Binding
+     * marks them for that Descanso too.
+     *
+     * <p>This core does no geometry, so the caller calls this after any movement — the holder's
+     * or a foe's, since distance is mutual — with a context built from the holder's own
+     * position (e.g. {@link #buildContext}). A foe who leaves range stays bound; one who was
+     * never in range is untouched.
+     *
+     * @throws IllegalOperationException if holder was never added to this Scene
+     */
+    public List<CombatantSheet> refreshAura(final CombatantSheet holder, final SceneContext holderContext) {
+        List<CombatantSheet> enemies = getEnemies(holder);
+        List<CombatantSheet> newlyBound = new ArrayList<>();
+        for (ActiveAura aura : activeAuras) {
+            if (!aura.isHeldBy(holder)) {
+                continue;
+            }
+            for (CombatantSheet enemy : enemies) {
+                Range distance = holderContext.getDistanceTo(enemy);
+                if (distance == null || !distance.isWithin(aura.getRadius())
+                        || aura.isBound(enemy.getId()) || enemy.isAffectedUntilRest(aura.getSource())) {
+                    continue;
+                }
+                aura.bind(enemy.getId());
+                enemy.markAffectedUntilRest(aura.getSource(), RestType.LONGO);
+                newlyBound.add(enemy);
+            }
+        }
+        return newlyBound;
+    }
+
+    /**
+     * The combatant attacker must aim its next attack at, if any — the holder of an active Aura
+     * binding attacker that attacker hasn't attacked yet this Rodada. Empty once it has, or when
+     * nothing binds it.
+     *
+     * <p><b>Simplification:</b> with two Auras binding the same attacker, the first one
+     * registered wins; the rules text doesn't say which provocation takes precedence.
+     */
+    public Optional<CombatantSheet> getForcedAttackTarget(final CombatantSheet attacker) {
+        return activeAuras.stream()
+                .filter(aura -> aura.isBound(attacker.getId()))
+                .filter(aura -> !aura.hasAttackedHolderIn(attacker.getId(), currentRound))
+                .map(ActiveAura::getHolder)
+                .findFirst();
+    }
+
+    /**
+     * The malus on attacker's attack against defender that an Aura imposes — {@link
+     * Skill#DISADVANTAGE_MALUS} when an Aura binds attacker, attacker has already attacked
+     * that Aura's holder this Rodada, and defender is someone else; 0 otherwise. Not stacked
+     * across Auras: Desvantagem is one flat malus.
+     */
+    public int getAuraAttackPenalty(final CombatantSheet attacker, final CombatantSheet defender) {
+        boolean penalized = activeAuras.stream()
+                .anyMatch(aura -> aura.isBound(attacker.getId())
+                        && aura.hasAttackedHolderIn(attacker.getId(), currentRound)
+                        && !aura.isHeldBy(defender));
+        return penalized ? Skill.DISADVANTAGE_MALUS : 0;
+    }
+
+    /**
+     * Records that attacker attacked defender in this Rodada, for the Auras to read. Filed by
+     * the caller beside {@link #recordAction}, since a {@link CombatantAction} names no target
+     * and {@code AttackDelivery}/{@code AttackReceiver} stay report-only.
+     */
+    public void recordAttack(final CombatantSheet attacker, final CombatantSheet defender) {
+        activeAuras.forEach(aura -> aura.recordAttack(attacker.getId(), defender.getId(), currentRound));
+    }
+
+    /**
      * Records an action combatant took in this Scene: appends it to this Scene's permanent
      * {@link #getActionHistory() history} — kept for the client to display, never cleared —
      * and downstreams it to combatant's own per-Rodada and per-Cena logs via {@link
@@ -719,7 +916,8 @@ public class Scene {
      * (the same {@link CombatantSheet#removeEffect} call {@link #applyInitiativeBlessings} would
      * have made later), so {@link #grantedBlessings} never keeps tracking a sheet that is no
      * longer here — which would otherwise leave {@link #isGroupBlessed} answering for a group
-     * whose only tracked member has left.
+     * whose only tracked member has left. Every {@link ActiveAura} characterSheet holds ends
+     * with them.
      * @return whether characterSheet was actually in this Scene
      */
     public boolean removeParticipant(final CombatantSheet characterSheet) {
@@ -743,6 +941,12 @@ public class Scene {
         }
 
         if (removed) {
+            activeAuras.removeIf(aura -> aura.isHeldBy(characterSheet));
+            // Both directions: the Auras this combatant was projecting stop, and whatever anyone
+            // else's Aura was granting them comes off the sheet they are leaving with. An
+            // open-ended bonus has no countdown to clear it, so missing either would strand it.
+            revokeProjectedAuras(characterSheet);
+            revokeProjectedAurasTo(characterSheet);
             grantedBlessings.entrySet().removeIf(entry -> {
                 if (!entry.getKey().getId().equals(characterSheet.getId())) {
                     return false;
@@ -781,6 +985,8 @@ public class Scene {
     private void startNewRound() {
         activeAreaSpellEffects.forEach(ActiveAreaSpellEffect::tick);
         activeAreaSpellEffects.removeIf(ActiveAreaSpellEffect::isExpired);
+        activeAuras.forEach(ActiveAura::tick);
+        activeAuras.removeIf(ActiveAura::isExpired);
         activeEntries.addAll(pendingEntries);
         pendingEntries.clear();
         activeEntries.sort(Comparator.comparingInt(InitiativeEntry::getEffectiveInitiativeValue).reversed());

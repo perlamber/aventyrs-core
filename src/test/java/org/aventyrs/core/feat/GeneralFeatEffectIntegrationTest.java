@@ -14,6 +14,9 @@ import org.aventyrs.core.item.AbstractWeapon;
 import org.aventyrs.core.item.AttackMethod;
 import org.aventyrs.core.item.ItemCategory;
 import org.aventyrs.core.item.Weapon;
+import org.aventyrs.core.rest.RestService;
+import org.aventyrs.core.rest.RestServiceImpl;
+import org.aventyrs.core.rest.RestType;
 import org.aventyrs.core.scene.Range;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.scene.TerrainType;
@@ -50,12 +53,16 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * The clauses of the general Talento trees that are mechanically <b>real</b>, each tested by the
@@ -74,6 +81,7 @@ class GeneralFeatEffectIntegrationTest {
     private final HitPointsService hitPointsService = new HitPointsServiceImpl();
     private final DeterminationPointsService determinationPointsService = new DeterminationPointsServiceImpl();
     private final DefenseService defenseService = new DefenseServiceImpl();
+    private final RestService restService = new RestServiceImpl();
     private final org.aventyrs.core.character.services.AttackTargetingService attackTargetingService =
             new org.aventyrs.core.character.services.AttackTargetingServiceImpl();
 
@@ -172,6 +180,112 @@ class GeneralFeatEffectIntegrationTest {
         assertEquals(before + 1, determinationPointsService.getDeterminationMultiplier(character));
     }
 
+    // ---------- Excepcionalidade: a Talento Racial granted whole ----------
+
+    /** Meets EXCEPCIONALIDADE's own "1 Título Aventyr e 2 Talentos de Destino", at Vigor 3. */
+    private Character exceptionalHuman() throws IllegalOperationException {
+        Character character = character()
+                .attributes(CharacterAttributes.builder()
+                        .vigor(AttributeValue.builder().domain(AttributeDomain.VIGOR).base(3).build())
+                        .build())
+                .build();
+        character.grantTitle(new Santo(List.of(), List.of()), TitleSlot.PRIMARY);
+        acquire(character, DestinoFeat.CORACAO_DE_FERRO_DO_DESTINO, DestinoFeat.ATRASAR_DESPERTAR);
+        return character;
+    }
+
+    @Test
+    void excepcionalidadeGrantsTheChosenTalentoRaciaisEffectToACharacterOfAnotherRace()
+            throws IllegalOperationException {
+        Character character = exceptionalHuman();
+        int before = hitPointsService.getLifeMultiplier(character);
+        // The control: a Humano cannot reach TERRA_NAS_VEIAS by the ordinary route.
+        assertThrows(IllegalOperationException.class, () -> acquire(character, OrquicoFeat.TERRA_NAS_VEIAS));
+
+        acquire(character, ExcepcionalidadeFeat.of(character, OrquicoFeat.TERRA_NAS_VEIAS));
+
+        // "+1 para cada Título Aventyr desperto", and this character has one.
+        assertEquals(before + 1, hitPointsService.getLifeMultiplier(character));
+        assertTrue(character.getFeats().contains(OrquicoFeat.TERRA_NAS_VEIAS));
+    }
+
+    @Test
+    void excepcionalidadeChargesOnlyItsOwnXp() throws IllegalOperationException {
+        Character character = exceptionalHuman();
+        CharacterSheet sheet = fundedSheet(character);
+        BigDecimal before = sheet.getUnUsedExperience();
+
+        featService.grantFeat(character, sheet, ExcepcionalidadeFeat.of(character, OrquicoFeat.TERRA_NAS_VEIAS));
+
+        assertEquals(before.subtract(BigDecimal.valueOf(character.getRace().getNewFeatCost(FeatCategory.DESTINO))),
+                sheet.getUnUsedExperience());
+    }
+
+    /** Granted whole, so it counts as held: ETERNO_VIAJANTE's only gates are CORACAO_ALADO and a Título. */
+    @Test
+    void theChosenTalentoOpensTheNextRungOfItsTree() throws IllegalOperationException {
+        Character character = exceptionalHuman();
+        assertFalse(AvianoFeat.ETERNO_VIAJANTE.isEligible(character));
+
+        acquire(character, ExcepcionalidadeFeat.of(character, AvianoFeat.CORACAO_ALADO));
+        acquire(character, AvianoFeat.ETERNO_VIAJANTE);
+
+        assertTrue(character.getFeats().contains(AvianoFeat.ETERNO_VIAJANTE));
+    }
+
+    // ---------- Recuperação em Descanso ----------
+
+    /** "a cada Descanso você recupera +2PD" — every Descanso, whatever its type. */
+    @Test
+    void coracaoDeFerroRecoversTwoExtraDeterminationPointsOnEveryKindOfDescanso() throws IllegalOperationException {
+        Character character = character().build();
+        Map<RestType, Integer> before = new EnumMap<>(RestType.class);
+        for (RestType restType : RestType.values()) {
+            before.put(restType, restService.getRecoveredDeterminationPoints(character, restType));
+        }
+
+        acquire(character, DestinoFeat.CORACAO_DE_FERRO_DO_DESTINO);
+
+        for (RestType restType : RestType.values()) {
+            assertEquals(before.get(restType) + 2, restService.getRecoveredDeterminationPoints(character, restType),
+                    restType.name());
+        }
+    }
+
+    /** "e então +1PD para cada Título Aventyr que tenha Desperto" — the second point on the scale. */
+    @Test
+    void coracaoDeFerroRecoversOneMoreDeterminationPointPerTituloDesperto() throws IllegalOperationException {
+        Character character = character().build();
+        character.grantTitle(new Santo(List.of(), List.of()), TitleSlot.PRIMARY);
+        int before = restService.getRecoveredDeterminationPoints(character, RestType.LONGO);
+
+        acquire(character, DestinoFeat.CORACAO_DE_FERRO_DO_DESTINO);
+
+        assertEquals(before + 3, restService.getRecoveredDeterminationPoints(character, RestType.LONGO));
+    }
+
+    @Test
+    void coracaoDeFerroLeavesHitPointAndManaRecoveryAlone() throws IllegalOperationException {
+        Character character = character().build();
+        int hitPoints = restService.getRecoveredHitPoints(character, RestType.LONGO);
+        int magicPoints = restService.getRecoveredMagicPoints(character, RestType.LONGO);
+
+        acquire(character, DestinoFeat.CORACAO_DE_FERRO_DO_DESTINO);
+
+        assertEquals(hitPoints, restService.getRecoveredHitPoints(character, RestType.LONGO));
+        assertEquals(magicPoints, restService.getRecoveredMagicPoints(character, RestType.LONGO));
+    }
+
+    @Test
+    void noOtherDestinoTalentoTouchesDeterminationRecovery() {
+        Character any = character().build();
+        for (DestinoFeat feat : DestinoFeat.values()) {
+            if (feat != DestinoFeat.CORACAO_DE_FERRO_DO_DESTINO) {
+                assertEquals(0, feat.resolveRestDeterminationPointsBonus(RestType.LONGO, any), feat.name());
+            }
+        }
+    }
+
     // ---------- Defesas ----------
 
     @Test
@@ -189,10 +303,15 @@ class GeneralFeatEffectIntegrationTest {
     @Test
     void defesaDeMaosLimpasGrowsByOnePerTituloAventyrDesperto() throws IllegalOperationException {
         Character character = unarmedMartialArtist();
+        // The Título is granted *before* the baseline is taken, so what this measures is the
+        // Talento's own "+1 por Título Aventyr Desperto" and nothing else. Holding a Santo is no
+        // longer Defesas-neutral: its own Despertar base effect grants +2 as well (see
+        // AventyrTitle#resolveBaseDefesasBonus), which would otherwise land in this delta and make
+        // the Talento look like it scaled twice as fast.
+        character.grantTitle(new Santo(List.of(), List.of()), TitleSlot.PRIMARY);
         int before = defenseService.getTotalDefense(character, DefenseType.PHYSICAL);
 
         acquire(character, ArtesMarciaisFeat.ARTISTA_MARCIAL, ArtesMarciaisFeat.DEFESA_DE_MAOS_LIMPAS);
-        character.grantTitle(new Santo(List.of(), List.of()), TitleSlot.PRIMARY);
 
         assertEquals(before + 3, defenseService.getTotalDefense(character, DefenseType.PHYSICAL));
     }
@@ -350,7 +469,7 @@ class GeneralFeatEffectIntegrationTest {
 
     /**
      * TIGRE E SERPENTE's flat "+1 número" to the Margem Crítica of an Ataque Corpo-a-Corpo: a
-     * roll of two 5s reads as a critical only once the margin is widened, and only for melee.
+     * total of 16 reads as a critical only once the margin is widened to it, and only for melee.
      */
     @Test
     void tigreESerpenteWidensTheMeleeCriticalMarginByOne() throws IllegalOperationException {
@@ -362,7 +481,7 @@ class GeneralFeatEffectIntegrationTest {
                 .primaryTitle(new Santo(List.of(), List.of()))
                 .build();
         CharacterSheet sheet = CharacterSheet.of(character, new Player());
-        SkillRoll twoFives = new SkillRoll(List.of(5, 5, 1));
+        SkillRoll twoFives = new SkillRoll(List.of(6, 6, 4));
 
         assertEquals(CriticalResult.NONE, SkillType.ATAQUE_CORPO_A_CORPO.newInteraction()
                 .applyTo(sheet, null, twoFives).getCriticalResult());
@@ -491,7 +610,7 @@ class GeneralFeatEffectIntegrationTest {
         CharacterSheet sheet = CharacterSheet.of(character, new Player());
         Weapon lightBlade = weapon(ItemCategory.LIGHT_BLADE);
         Weapon heavyBlade = weapon(ItemCategory.HEAVY_BLADE);
-        SkillRoll fives = new SkillRoll(List.of(5, 5, 1));
+        SkillRoll fives = new SkillRoll(List.of(6, 6, 4));
 
         acquire(character, EspecialistaEmArmaFeat.of(AttackMethod.LIGHT_BLADE),
                 DuelistaFeat.DOMINAR_ARMAS, DuelistaFeat.MAESTRIA_EM_ARMA);
@@ -693,9 +812,9 @@ class GeneralFeatEffectIntegrationTest {
         int meleeBefore = rollBonus(sheet, SkillType.ATAQUE_CORPO_A_CORPO, desert);
         int atletismoBefore = rollBonus(sheet, SkillType.ATLETISMO, forest);
         int danoBefore = meleeDanoBonus(sheet, forest);
-        // A pair of 5s: NONE at margin 0, ACERTO_CRITICO_MENOR once MESTRE_DE_CACA's +1 widens
-        // the qualifying face from 6 down to 5.
-        SkillRoll roll = new SkillRoll(List.of(5, 5, 2));
+        // A total of 16: NONE at the default margin of 17, ACERTO_CRITICO_MENOR once
+        // MESTRE_DE_CACA's +1 número lowers the margin to 16.
+        SkillRoll roll = new SkillRoll(List.of(6, 6, 4));
 
         acquire(character, TerrenoPrediletoFeat.of(TerrainType.FOREST), SobrevivenciaFeat.MESTRE_DE_CACA);
 
@@ -792,7 +911,9 @@ class GeneralFeatEffectIntegrationTest {
                         trained(new org.aventyrs.core.skill.ataqueadistancia.AtaqueADistancia(), 2))
                 .build();
         CharacterSheet sheet = CharacterSheet.of(character, new Player());
-        SkillRoll fives = new SkillRoll(List.of(5, 5, 1));
+        // A total of 16 — one short of the default Margem Crítica Menor of 17, so it crits only
+        // where this Talento's +1 número applies.
+        SkillRoll fives = new SkillRoll(List.of(6, 6, 4));
         Weapon bow = weapon(ItemCategory.BOW);
 
         acquire(character, AcertoCriticoAprimoradoFeat.of(AttackMethod.OFFENSIVE_MAGIC));
@@ -818,14 +939,14 @@ class GeneralFeatEffectIntegrationTest {
 
     /**
      * "+2 na Margem Crítica de todas as suas rolagens de Perícias", excluding Perícias de Ataque
-     * and Esquiva e Aparar. 4+4+2 is no critical at margin 0; widening by 2 lowers the qualifying
-     * face to 4, so the pair of 4s now reads as Acerto Crítico Menor.
+     * and Esquiva e Aparar. A total of 15 is no critical at the default margin of 17; widening by
+     * 2 lowers the margin to exactly 15.
      */
     @Test
     void controleDaSituacaoWidensTheMargemCriticaOfAnOrdinaryPericia() throws IllegalOperationException {
         Character character = character().build();
         CharacterSheet sheet = CharacterSheet.of(character, new Player());
-        SkillRoll roll = new SkillRoll(List.of(4, 4, 2));
+        SkillRoll roll = new SkillRoll(List.of(6, 5, 4));
         assertEquals(CriticalResult.NONE, criticalOf(sheet, SkillType.ATLETISMO, roll));
 
         acquire(character, PeritoFeat.CONTROLE_DA_SITUACAO);
@@ -838,7 +959,7 @@ class GeneralFeatEffectIntegrationTest {
     void controleDaSituacaoExcludesAtaqueAndEsquivaEAparar() throws IllegalOperationException {
         Character character = character().build();
         CharacterSheet sheet = CharacterSheet.of(character, new Player());
-        SkillRoll roll = new SkillRoll(List.of(4, 4, 2));
+        SkillRoll roll = new SkillRoll(List.of(6, 5, 4));
 
         acquire(character, PeritoFeat.CONTROLE_DA_SITUACAO);
 

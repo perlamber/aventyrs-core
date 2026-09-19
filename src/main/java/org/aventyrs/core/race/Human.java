@@ -1,6 +1,9 @@
 package org.aventyrs.core.race;
 
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.feat.FeatCategory;
+import org.aventyrs.core.feat.FeatPool;
+import org.aventyrs.core.feat.StartingFeatSlot;
 import org.aventyrs.core.sheet.DlcRuleset;
 
 import java.util.List;
@@ -19,10 +22,10 @@ import java.util.List;
  *   Idioma concept exists" gap as every other race.</li>
  *   <li><b>Longevidade</b> (~80 anos) — same "no age/lifespan concept" gap as every other
  *   race; purely narrative today.</li>
- *   <li><b>2 Talentos Gerais + uma Especialização adicional em até 2 Perícias Treinadas</b> —
- *   same "no Feat catalog, no {@code Character.feats} list, {@link Race} has no hook for
- *   granting starting Perícia training" gap as every other race's free Talentos/
- *   Especializações.</li>
+ *   <li><b>2 Talentos Gerais + uma Especialização adicional em até 2 Perícias Treinadas</b> — the
+ *   Talentos are built ({@link #getStartingFeatSlots()}), and are <i>on top of</i> the two General
+ *   Talentos every character starts with, for four in all. The Especialização half is the same
+ *   "{@link Race} has no hook for granting starting Perícia training" gap as every other race.</li>
  *   <li><b>Aprendizado Rápido</b> (2 Perícias chosen at creation get their 2nd/3rd Graduação
  *   upgrade at -0.5 EXP) — {@code
  *   org.aventyrs.core.character.services.SkillGraduationService#getUpgradeCost} takes no
@@ -64,4 +67,10 @@ public class Human implements Race {
         return Character.builder();
     }
 
+    @Override
+    public List<StartingFeatSlot> getStartingFeatSlots() {
+        return List.of(
+                StartingFeatSlot.race(FeatPool.Categories.ofType(FeatCategory.Type.GERAL)),
+                StartingFeatSlot.race(FeatPool.Categories.ofType(FeatCategory.Type.GERAL)));
+    }
 }

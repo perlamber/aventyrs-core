@@ -2,6 +2,8 @@ package org.aventyrs.core.race;
 
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.feat.FeatCategory;
+import org.aventyrs.core.feat.StartingFeatSlot;
 import org.aventyrs.core.sheet.DlcRuleset;
 
 import java.util.List;
@@ -35,11 +37,9 @@ import java.util.Map;
  *   concept" gap as every other race, compounded here by a conditional-immortality-via-a-rite
  *   concept ("enquanto mantiverem seus votos") this core has no equivalent state machine for at
  *   all; purely narrative today.</li>
- *   <li><b>1 Talento Feérico adicional</b> (determines the character's linhagem within the
- *   race) — same "no Feat catalog, no {@code Character.feats} list" gap as every other race's
- *   free Talentos; {@code org.aventyrs.core.feat.FeatCategory#FEERICO} already exists as a
- *   category (alongside {@code #MONSTRUOSO}/{@code #ELFICO}/{@code #BESTIAL}), but {@code
- *   org.aventyrs.core.feat.Feat} still has no catalog of concrete named Feats within it.</li>
+ *   <li><b>1 Talento Feérico adicional</b> (determines the character's linhagem within the race) —
+ *   built: {@link #getStartingFeatSlots()}. The linhagem it determines is still not read back by
+ *   anything (see Categoria de Tamanho above).</li>
  *   <li><b>Treinamento em Conhecimentos</b> (+ Especialização adicional em Metamágico ou
  *   Natureza) <b>e em uma Perícia adicional</b> (Domínio do Mana, Persuasão ou Furtividade)
  *   <b>+ Especialização adicional na Perícia escolhida, ou uma Habilidade de Competência de
@@ -83,4 +83,8 @@ public class Fada implements Race {
         return Character.builder();
     }
 
+    @Override
+    public List<StartingFeatSlot> getStartingFeatSlots() {
+        return List.of(StartingFeatSlot.race(FeatCategory.FEERICO));
+    }
 }

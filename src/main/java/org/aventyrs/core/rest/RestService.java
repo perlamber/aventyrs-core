@@ -20,7 +20,14 @@ public interface RestService {
      */
     int getRecoveredMagicPoints(Character character, RestType restType);
 
-    /** PD recovered: Instinto's total value times the Rest's Attribute multiplier. */
+    /**
+     * PD recovered: Instinto's total value times the Rest's Attribute multiplier, plus any
+     * {@link org.aventyrs.core.ability.AttributeAbility#resolveRestDeterminationPointsBonus} bonus
+     * across {@code character.getAttributeAbilities()} and any {@link
+     * org.aventyrs.core.feat.Feat#resolveRestDeterminationPointsBonus} bonus (e.g. {@code
+     * DestinoFeat#CORACAO_DE_FERRO_DO_DESTINO}'s +2PD plus one per Título Desperto) across {@code
+     * character.getFeats()}.
+     */
     int getRecoveredDeterminationPoints(Character character, RestType restType);
 
     /**

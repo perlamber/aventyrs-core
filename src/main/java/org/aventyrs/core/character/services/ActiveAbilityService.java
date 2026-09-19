@@ -15,15 +15,18 @@ public interface ActiveAbilityService {
      *
      * <p>Validates, in order: that character actually holds ability (present in
      * {@link Character#getActiveAbilities()}, by reference — the same instance granted at
-     * acquisition, not just an equal one); that character can afford its
-     * {@link ActiveAbility#getActionPointCost()} on turnNumber (via {@code
-     * ActionPointsService#getMaxActionPoints(CombatantSheet, int)} — the {@code CombatantSheet}
-     * overload, so a granted {@code ModifierType.ACTION_POINTS} {@code TemporaryBonus} counts,
-     * mirroring the Turn-max comparison {@link
+     * acquisition, not just an equal one); that character is entitled to its
+     * {@link ActiveAbility#getActionPointCost()} on turnNumber — each Tempo de Ativação against
+     * its own counter, a PA price via {@code
+     * ActionPointsService#getMaxActionPoints(CombatantSheet, int)}, a Reação via {@code
+     * ReactionsService#getTotalReactions} and an Ação Livre via {@code
+     * FreeActionsService#getTotalFreeActions} (the {@code CombatantSheet} overloads throughout, so
+     * a granted {@code ModifierType.ACTION_POINTS}/{@code REACTIONS}/{@code FREE_ACTIONS} {@code
+     * TemporaryBonus} counts, mirroring the Turn-max comparison {@link
      * org.aventyrs.core.action.ActionPointsService#canAffordSkillRoll} already uses for a
      * Perícia roll's own PA cost;
-     * this core still has no persisted "PA already spent this Turn" pool, so this checks the
-     * Turn's max, not a running spent total); that characterSheet currently has enough Magic
+     * this core still has no persisted "already spent this Turn" pool for any of the three, so
+     * these check the Turn's max, not a running spent total); that characterSheet currently has enough Magic
      * Points (via {@link MagicPointsService#getCurrentMagicPoints}) to afford its {@link
      * ActiveAbility#getMagicPointCost()}; and, when {@link ActiveAbility#getHitPointCost()} is
      * positive, that spending it would not drop the holder to 0 PV or below (a Poder Vampírico

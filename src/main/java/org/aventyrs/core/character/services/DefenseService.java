@@ -44,11 +44,20 @@ import org.aventyrs.core.sheet.CombatantSheet;
  * for the standard "-2 em suas Defesas" penalty {@code org.aventyrs.core.ability.DexterityAbility}
  * cites.
  *
- * <p>Deliberately <b>not</b> scanned: {@code org.aventyrs.core.title.santo.Santo
- * #getDefesasBonus(SceneContext)}. That's a hook on one concrete Título class rather than on the
- * {@code AventyrTitleAbility} interface (unlike the RA hook {@code DamageService} does scan), and
- * its own javadoc names a second missing piece anyway — <i>when</i> each adjacent ally receives
- * it. Wiring it is its own change.
+ * <p>A fourth source joined the three above in 0.0.43: <b>every held Título's own Efeito Base</b>,
+ * via {@code AventyrTitle#resolveBaseDefesasBonus(SceneContext)} — Santo's Despertar "+2 em suas
+ * Defesas, esse Bônus aumenta em +1 para cada aliado adjacente". Broad {@code DEFESAS}-shaped, so
+ * it lands on DF and DM alike, and summed on <i>both</i> the {@link Character} and {@link
+ * CombatantSheet} paths, which do not cascade.
+ *
+ * <p>Its Título-<b>Primário</b> counterpart ("aliados adjacentes a você recebem Bônus em Defesas
+ * iguais à metade") is deliberately <b>not</b> scanned here, and is the one cross-character bonus
+ * in this core that is granted rather than scanned. The figure derives from the <i>holder's</i>
+ * adjacency; a scan running from the recipient would count the recipient's neighbours instead and
+ * silently undercount. It is resolved holder-side into an Aura ({@code
+ * AbstractCombatantSheet#resolveProjectedAuras}) and granted/revoked by {@code
+ * Scene#refreshProjectedAuras}, reaching this service as an ordinary {@code DEFESAS}
+ * {@code TemporaryBonus} on the recipient's sheet.
  */
 public interface DefenseService {
 

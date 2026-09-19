@@ -52,14 +52,14 @@ class HomensFeraRacialAbilityTest {
         int baseline = movementService.getMovementBase(characterOf(new Human()));
 
         assertEquals(baseline + 1,
-                movementService.getMovementBase(characterOf(new HomemFera(HomemFera.EspiritoAnimal.LICANTROPO))));
+                movementService.getMovementBase(characterOf(new HomemFera(HomemFera.EspiritoAnimal.LICANTROPO, HomemFera.Criacao.HUMANOS))));
     }
 
     @Test
     void everySpiritGrantsTheSameMovimentoBase() {
         int expected = movementService.getMovementBase(characterOf(new Human())) + 1;
         for (HomemFera.EspiritoAnimal espirito : HomemFera.EspiritoAnimal.values()) {
-            assertEquals(expected, movementService.getMovementBase(characterOf(new HomemFera(espirito))));
+            assertEquals(expected, movementService.getMovementBase(characterOf(new HomemFera(espirito, HomemFera.Criacao.HUMANOS))));
         }
     }
 }

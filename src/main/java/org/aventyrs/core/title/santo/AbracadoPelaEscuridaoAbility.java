@@ -1,15 +1,18 @@
 package org.aventyrs.core.title.santo;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-
 import java.util.Optional;
 
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.sheet.ActionCost;
 import org.aventyrs.core.sheet.Interaction;
 import org.aventyrs.core.title.AventyrTitleAbility;
 import org.aventyrs.core.title.AventyrTitleSpecialization;
+import org.aventyrs.core.title.PDCost;
+import static org.aventyrs.core.title.PDCost.fixed;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 /**
  * The Habilidades/Suprema gated on holding the {@link SantoSpecialization#ABRACADO_PELA_ESCURIDAO}
@@ -26,22 +29,20 @@ import org.aventyrs.core.title.AventyrTitleSpecialization;
 public enum AbracadoPelaEscuridaoAbility implements AventyrTitleAbility {
 
     // Requer Especialização 'Abraçado pela Escuridão' — enforced (see class javadoc).
-    // "Custo de Ativação: Variável" is the
-    // PV cost below (equal to Vigor), not a PD cost — PDCost is genuinely 0, not merely
-    // unmodeled. The "gastar PV igual ao seu Vigor" half is real — see
-    // #resolveVigorPvCost below, since Vigor's total is already a plain, real value
-    // (character.getAttributes().getVigor().getTotal()). Everything the spent PV buys is
-    // fully TODO'd, three separate gaps: (1) "+2 em Força" (then +3 if activated twice in the
-    // same Turn) is a *temporary*, Round-scoped bonus to an Attribute's own total — unlike
-    // every other stat this core tracks (Reações, PA, RD/RA, skill rolls, ...), Attributes are
-    // never summed via ModifierType/CombatantSheet#getTemporaryBonus at all
-    // (AttributeValue only has base/racialBonus/variable, all permanent) — no mechanism for a
-    // temporary Attribute bonus exists anywhere in this core; (2) "ativada duas vezes no mesmo
-    // Turno" needs a per-ability, within-Turn activation-count tracker, which doesn't exist
-    // (CombatantSheet tracks Round-scoped TemporaryEffects, not a same-Turn activation
-    // counter); (3) the Categoria de Tamanho +1 half could in principle reuse
-    // ModifierType.SIZE_CATEGORY, but still needs (1) and (2) solved first to know *when* to
-    // grant it. The "recuperados com Descansos Verdadeiros ou Roubo de Vida" clause needs the
+    // "Custo de Ativação: Variável" is the PV cost (equal to Vigor), not a PD cost — PDCost is
+    // genuinely 0, not merely unmodeled. Real now through SacrificioYmirianoInteraction, and all
+    // three gaps the old comment here listed have since closed: the PV cost is paid by
+    // AbstractTitleAbilityInteraction#resolveHitPointCost off #resolveVigorPvCost below; "+2 em
+    // Força" is a Round-scoped AttributeDomain#getBonusModifierType() TemporaryBonus, which
+    // AbstractSkillInteraction reads on a Força-governed roll (so the reach is the roll path only —
+    // not PV/PM/PD, and not the melee ½-Força dano term, both of which read
+    // Character#getEffectiveAttributeTotal and have no sheet); "ativada duas vezes no mesmo Turno"
+    // is CombatantSheet#countActivationsThisTurn, cleared by startTurn, which also enforces the
+    // "até duas vezes" limit; and the Categoria de Tamanho +1 is a ModifierType.SIZE_CATEGORY
+    // bonus read by CharacterSizeService#getEffectiveSizeCategory(CombatantSheet). "Seu efeito é
+    // cumulativo" needs no accumulation of its own: a Blessing from the same source replaces its
+    // predecessor, which is exactly "o Bônus em Força muda para +3".
+    // The "recuperados com Descansos Verdadeiros ou Roubo de Vida" clause needs the
     // same "locked, Rest/Roubo-de-Vida-only" HP-loss subtype SantoAbility
     // #PROTETOR_DA_VIDA_E_DA_MORTE's own TODO cites — "Descanso Verdadeiro" itself maps onto
     // this codebase's own RestType.LONGO-or-higher tiers, the same inference
@@ -55,7 +56,8 @@ public enum AbracadoPelaEscuridaoAbility implements AventyrTitleAbility {
             "Bônus em Força muda para +3, sua Categoria de Tamanho é aumentada em +1 e a " +
             "Duração do efeito aumenta para 3 Rodadas. Pontos de Vida perdidos desta forma " +
             "só podem ser recuperados com Descansos Verdadeiros ou Roubo de Vida.",
-            false, 0, 1, false, Optional.empty(), Optional.of(SantoSpecialization.ABRACADO_PELA_ESCURIDAO), 0),
+            false, fixed(0), ActionCost.ofActionPoints(1), Optional.of(SacrificioYmirianoInteraction.class),
+            Optional.of(SantoSpecialization.ABRACADO_PELA_ESCURIDAO), 0),
 
     // Requer Especialização 'Abraçado pela Escuridão' — enforced (see class javadoc).
     // "Custo de Ativação: Variável" is the
@@ -67,13 +69,17 @@ public enum AbracadoPelaEscuridaoAbility implements AventyrTitleAbility {
     // target" mechanism at all (DamageService only ever computes damage *to* a target *from*
     // an attacker, never the reverse), and "+1d6 pontos de Dano" on a successful attack needs
     // this core's "never rolls dice" boundary crossed, which it deliberately never does.
+    // Deliberately left unwired rather than given an Interaction that charges the PV for nothing:
+    // its entire benefit *is* the retaliation, so an activation would be a pure cost. The PV cost
+    // and the Duração formula below stay real, tested data a caller can read.
+    // TODO
     ESPINHOS_DE_GAEA(
             "Para ativar esta Habilidade você deve gastar qualquer quantidade de PV (mínimo " +
             "1), a Duração desta Habilidade é igual a 1+ metade dos PV gastos (mínimo 1 " +
             "Rodada). Enquanto protegido pelos Espinhos de Gaea, personagens que te atacarem " +
             "corpo-a-corpo sofrem 2 pontos de Dano Mágico Elemental: Natural, se o ataque " +
             "for bem-sucedido o atacante sofrerá +1d6 pontos de Dano.",
-            false, 0, 2, false, Optional.empty(), Optional.of(SantoSpecialization.ABRACADO_PELA_ESCURIDAO), 0),
+            false, fixed(0), ActionCost.ofActionPoints(2), Optional.empty(), Optional.of(SantoSpecialization.ABRACADO_PELA_ESCURIDAO), 0),
 
     // Requer Especialização 'Abraçado pela Escuridão' — enforced (see class javadoc). Fixed
     // cost (2PD/3PA — not "Variável" like its siblings), so that data is real; the effect is
@@ -91,6 +97,7 @@ public enum AbracadoPelaEscuridaoAbility implements AventyrTitleAbility {
     // Efeitos (Oferenda Maldita as an additional Efeito Crítico) is the same unbuilt system
     // AutocontroleAdvantage#RESOLUTO already cites. "Imunes a ela por 2 Rodadas" needs a
     // per-ability, per-target, Round-scoped immunity tracker, which doesn't exist anywhere.
+    // TODO: Implement the active Ability
     PLACIDEZ_DE_UNDINE_RANCOR_DE_HALOI(
             "Como parte da ativação desta Habilidade você deve desferir um ataque com sua " +
             "Arma, sua Margem Crítica Menor para este ataque aumenta em +2 números. Para " +
@@ -98,7 +105,7 @@ public enum AbracadoPelaEscuridaoAbility implements AventyrTitleAbility {
             "1 e a Corrente de Efeitos – Rancor de Haloi: Este ataque recebe Oferenda " +
             "Maldita como um Efeito Crítico adicional. Inimigos que tenham sofrido danos " +
             "desta Habilidade se tornam imunes a ela por 2 Rodadas.",
-            false, 2, 3, false, Optional.empty(), Optional.of(SantoSpecialization.ABRACADO_PELA_ESCURIDAO), 0),
+            false, fixed(2), ActionCost.ofActionPoints(3), Optional.empty(), Optional.of(SantoSpecialization.ABRACADO_PELA_ESCURIDAO), 0),
 
     // Requer 2 Habilidades de 'Abraçado pela Escuridão' — enforced (see class javadoc; same
     // "its own comment never repeats the base Especialização requirement, but the class-level
@@ -125,6 +132,12 @@ public enum AbracadoPelaEscuridaoAbility implements AventyrTitleAbility {
     // core's "never rolls dice" boundary, the identical pair SantoSpecialization
     // #ABRACADO_PELA_ESCURIDAO's own Fúria dos Deuses Maior TODO cites. The locked-HP-pool
     // clause is the same gap as every other "Descansos ou Roubo de Vida" citation above.
+    // Left unwired for a reason worth stating precisely: the +1PA half is now *grantable* (see
+    // AbencoadoPelaLuzAbility#GLORIA_RELAMPEJANTE_DE_TESLA), but this clause names no Duração in
+    // Rodadas at all — what it scopes the bonus to is a *count of enhanced attacks*
+    // (#resolveEnhancedAttackCountFromPvSpent), and a TemporaryBonus only ever counts down in
+    // Rodadas. Picking a Rodada figure would be inventing one, so the blocker is the scope here,
+    // not the mechanism.
     FUROR_DE_SYLPH(
             "Para ativar esta Habilidade você deve gastar uma quantidade de pontos de vida " +
             "igual ao seu Vigor. Você recebe Bônus de +1PA e seus ataques recebem o " +
@@ -133,18 +146,12 @@ public enum AbracadoPelaEscuridaoAbility implements AventyrTitleAbility {
             "trás e você pode se Reposicionar. O Furor de Sylph aprimora uma quantidade de " +
             "ataques igual à 1+ metade dos PV gastos com esta Habilidade, PV perdidos desta " +
             "forma só podem ser recuperados com Descansos ou Roubo de Vida.",
-            true, 2, 0, false, Optional.empty(), Optional.of(SantoSpecialization.ABRACADO_PELA_ESCURIDAO), 2) {
-        @Override
-        public boolean isFreeActionActivation() {
-            return true;
-        }
-    };
+            true, fixed(2), ActionCost.FREE_ACTION, Optional.empty(), Optional.of(SantoSpecialization.ABRACADO_PELA_ESCURIDAO), 2);
 
     private final String description;
     private final boolean supreme;
-    private final int PDCost;
-    private final int actionPointCost;
-    private final boolean reactionActivation;
+    private final PDCost PDCost;
+    private final ActionCost actionPointCost;
     private final Optional<Class<? extends Interaction>> interactionClass;
     private final Optional<AventyrTitleSpecialization> requiredSpecialization;
     private final int requiredOtherAbilities;

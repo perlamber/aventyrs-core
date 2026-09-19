@@ -1,6 +1,7 @@
 package org.aventyrs.core.item;
 
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.character.CriticalDamage;
 import org.aventyrs.core.character.DamageDescriptor;
 import org.aventyrs.core.character.DefenseType;
 import org.aventyrs.core.magic.Spell;
@@ -8,8 +9,14 @@ import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.skill.SkillType;
 
 /**
- * A permanent enhancement that can be applied to a unique item instance. Each item may carry at
- * most one improvement, stored per-copy rather than in the catalog template.
+ * A permanent enhancement that can be applied to a unique item instance, stored per-copy rather
+ * than in the catalog template. A copy carries up to {@code
+ * ItemWeightClass#getMaximumImprovements()} of them ({@code Item#getImprovements()}).
+ *
+ * <p>Two authored catalogs, one per Aprimoramento list in {@code docs/rules/equipamentos.txt}:
+ * {@link DefensiveImprovement} (fitted through the {@link ItemImprovement} wrapper, which holds
+ * its creation-time choices) and {@link OffensiveImprovement} (fitted bare — no offensive entry
+ * has a choice this core can read).
  */
 public interface Improvement {
     String getName();
@@ -24,9 +31,9 @@ public interface Improvement {
 
     /**
      * Which column of the "Preços de Aprimoramentos" table this one is priced from — Armas for
-     * an Aprimoramento Ofensivo, Armaduras for a Defensivo. Abstract rather than defaulted on
-     * purpose: a silent default would price the unauthored offensive catalog off the armour
-     * column, and the two differ at Comum, Raro and Épico.
+     * an Aprimoramento Ofensivo ({@link OffensiveImprovement}), Armaduras for a Defensivo ({@link
+     * DefensiveImprovement}). Abstract rather than defaulted on purpose: a silent default would
+     * have priced one catalog off the other's column, and the two differ at Comum, Raro and Épico.
      */
     EnhancementPriceCategory getPriceCategory();
 
@@ -38,10 +45,18 @@ public interface Improvement {
         return 0;
     }
 
+    /**
+     * The Ataque column both Aprimoramento tables print. <b>Read by nothing yet</b> — applying it
+     * needs a roll pass scoped to the weapon the attack was actually delivered with, and {@code
+     * AbstractSkillInteraction#sumEquipmentRollBonuses} scans the whole loadout indiscriminately,
+     * so routing it through {@code ModifierType.ATAQUE_*_ROLL_BONUS} would let a sheathed weapon's
+     * Obra-Prima sharpen a swing made with something else. Exact, authored data meanwhile.
+     */
     default int getAttackBonus() {
         return 0;
     }
 
+    /** The Danos column both Aprimoramento tables print — see {@link #getAttackBonus()}. */
     default int getDamageBonus() {
         return 0;
     }
@@ -119,20 +134,44 @@ public interface Improvement {
 
     /**
      * Whether this enhancement stops its weapon being knocked out of its wielder's hands —
-     * the "Não pode ser desarmado" Característica Adicional (Manopla de Segurança, an
-     * Aprimoramento de Obra-Prima Ofensiva). False by default.
-     *
-     * <p>No constant overrides it yet: the offensive Obra-Prima/Aprimoramento catalogues are not
-     * authored (only the defensive ones are), so this is the hook {@code Weapon#isDisarmable()}
-     * consults, waiting on the catalogue rather than on a mechanism.
+     * the "Não pode ser desarmado" Característica Adicional of {@link
+     * OffensiveImprovement#MANOPLA_DE_SEGURANCA}, the one constant that states it. False by
+     * default, and what {@code Weapon#isDisarmable()} consults.
      */
     default boolean preventsDisarming() {
         return false;
     }
 
-    /** How many Dano Base scale-ups this improvement grants when weapon is the attack source. */
+    /**
+     * How many Dano Base scale-ups this improvement grants when weapon is the attack source.
+     *
+     * <p><b>An offensive entry is only ever asked about its own host.</b> "Dano Base da Arma
+     * aumenta em +1" means the weapon the Aprimoramento is fitted to, and {@code
+     * Item#resolveEnhancementDamageBaseIncrease} enforces that before delegating here. A defensive
+     * entry is asked about every weapon its wearer swings, which is what {@link
+     * DefensiveImprovement#BENCAO_SELVAGEM}'s Armas Naturais clause needs.
+     */
     default int resolveDamageBaseIncrease(final Weapon weapon, final Character character) {
         return 0;
+    }
+
+    /**
+     * Margem Crítica Menor "números" this improvement grants when weapon is the attack source —
+     * each lowering the 3d6 total an Acerto Crítico Menor has to reach. Host-scoped by {@code
+     * Item#resolveEnhancementCriticalMarginIncrease} on the same terms as {@link
+     * #resolveDamageBaseIncrease}.
+     */
+    default int resolveCriticalMarginIncrease(final Weapon weapon, final Character character) {
+        return 0;
+    }
+
+    /**
+     * What this improvement adds to the dano roll of a critical hit made with weapon — {@link
+     * OffensiveImprovement#CRUEL}'s "Danos Críticos +2". Host-scoped by {@code
+     * Item#resolveEnhancementCriticalDamage}, again like {@link #resolveDamageBaseIncrease}.
+     */
+    default CriticalDamage resolveCriticalDamage(final Weapon weapon, final Character character) {
+        return CriticalDamage.NONE;
     }
 
     /** This improvement's damage reduction for one fully-classified incoming damage instance. */

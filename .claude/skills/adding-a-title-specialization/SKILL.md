@@ -33,14 +33,17 @@ this same `<Specialization>Ability` catalog — see step 4's own note).
 ## 2. Model the Especialização itself
 
 Add a constant to the existing `<Title>Specialization` enum (created by `adding-a-title`):
-description, `PDCost`/`actionPointCost` fields if it has a real Custo de Ativação (0/0
-otherwise — `AventyrTitleSpecialization`'s cost hooks, inherited from `AventyrTitleAbility`,
-default to 0, so a purely descriptive Especialização needs no override at all). **"Custo de
-Ativação: Variável" can mean the PD/PA fields are genuinely 0** — not merely "not yet
-modeled" — when the real cost is entirely PV, chosen per-use rather than fixed (see
-`ABRACADO_PELA_ESCURIDAO`'s own comment: its "Variável" cost is Fúria dos Deuses' 3-or-4 PV,
-not a PD amount at all). Say so explicitly in the constant's own comment so a later reader
-doesn't mistake 0 for an oversight.
+description, `PDCost`/`actionPointCost` fields if it has a real Custo de Ativação
+(`PDCost.NONE`/`ActionCost.NONE` otherwise — `AventyrTitleSpecialization`'s cost hooks,
+inherited from `AventyrTitleAbility`, default to exactly those, so a purely descriptive
+Especialização needs no override at all). The Tempo de Ativação is an **`ActionCost`**:
+`ActionCost.ofActionPoints(n)`, `ActionCost.FREE_ACTION`, `ActionCost.REACTION`,
+`ActionCost.dynamic(min)` for a Variável one, or `ActionCost.NONE`. **"Custo de Ativação:
+Variável" can mean the PD/PA fields are genuinely none** — not merely "not yet modeled" — when
+the real cost is entirely PV, chosen per-use rather than fixed (see `ABRACADO_PELA_ESCURIDAO`'s
+own comment: its "Variável" cost is Fúria dos Deuses' 3-or-4 PV, not a PD amount at all, and
+*not* an `ActionCost.dynamic` either, which is a Variável count of **PA**). Say so explicitly in
+the constant's own comment so a later reader doesn't mistake `NONE` for an oversight.
 
 Also set the constructor's `interactionClass` field (`Optional<Class<? extends Interaction>>`
 — `AventyrTitleAbility#getInteractionClass()` is abstract, so every constant must answer it,
@@ -53,10 +56,10 @@ once step 3 does. This field is the declared, checkable bond between the constan
 **`AventyrTitleSpecialization extends AventyrTitleAbility`** — a Título trait with a real
 activation cost is an Active Ability whether it's an Especialização or a Habilidade/Suprema,
 so every constant here already gets `isSupreme()` (defaults `false`, never applicable),
-`isReactionActivation()`/`isFreeActionActivation()`, and `isPassive()` for free. **Check
-`isPassive()`'s derived result before leaving it alone**: it's `getActionPointCost() == 0 &&
-!isReactionActivation() && !isFreeActionActivation()`, which can't tell "genuinely no cost"
-apart from "0 PD/PA but a real cost expressed some other way" — see `ABRACADO_PELA_ESCURIDAO`'s
+`getActionPointCost()`, and `isPassive()` for free. **Check `isPassive()`'s derived result
+before leaving it alone**: it's `getActionPointCost().kind() == ActionCost.Kind.NONE`, which
+can't tell "genuinely no cost" apart from "no PD/PA but a real cost expressed some other way" —
+see `ABRACADO_PELA_ESCURIDAO`'s
 own override (its cost is entirely PV-based, so the derived formula would wrongly call it
 passive) for the pattern to follow whenever a Especialização's real Custo de Ativação isn't
 expressible through PD/PA/Reação/Ação Livre.
@@ -117,11 +120,19 @@ expressible first, and don't skip it just because *some* clause is still TODO'd:
   at once, since DOM_BARDICO only ever grants one. Check which shape actually matches (direct
   mutation of one known recipient, vs. reporting one-or-more blessings for a caller to apply to
   a resolved-later recipient set) before copying either pattern.
-- In both cases: `<X>Interaction implements Interaction<CharacterSheet>` (same subpackage),
-  the same cascading-overload shape `AbstractSkillInteraction` established (safe-default 1-arg
-  `applyTo(CharacterSheet)`, a longer overload with the real logic, `SceneContext` accepted
-  even if this ability's own text doesn't condition on it) but with **no `SkillRoll`, no
-  `skillRollBonus`, no dice** — this isn't a Perícia test. If a direct-mutation effect restores
+- In every case: `<X>Interaction extends title.AbstractTitleAbilityInteraction` (same
+  subpackage), with a **no-argument constructor** that passes its catalog constant to `super`.
+  The base owns everything but the effect — Silêncio, the PD amount against the constant's
+  `PDCost` (a `Variável` one needs `TitleAbilityActivationRequest#determinationPoints`), PD
+  affordability, then your `validate(request)` hook, then the PD spend — all before anything
+  changes, so a refused activation is free. You implement `resolve(request, determinationPoints)`
+  (the PD actually spent — what a Variável ability scales by) and, when the ability needs more
+  than an activator, override `validate` to refuse a request missing it (a Scene —
+  `OrgulhoEldurianoInteraction`; a branch choice — `AbencoadoPelaLuzInteraction`). Read the
+  recipient from `request.getEffectiveTarget()` (the activator unless a `target` was named), and
+  a player's pick between branches from `request.getChoice(YourEnum.class)` — never add a
+  per-ability field to the request. PA/Reação/Ação Livre stay reported by the constant, never
+  deducted. **No `SkillRoll`, no `skillRollBonus`, no dice** — this isn't a Perícia test. If a direct-mutation effect restores
   a resource (a heal, not a drain), report it via `InteractionResult#getResourceGainValue()`/
   `getResourceGainType()` — the mirror of the existing `resourceLossValue`/`resourceLossType`
   — don't reuse the loss fields with a negative number. For a self-plus-allies grant, each
@@ -130,47 +141,48 @@ expressible first, and don't skip it just because *some* clause is still TODO'd:
   #getAlliesWithin(Range)` (returns a real `List<CharacterSheet>`, not just a count) plus the
   actor itself, then calls `CharacterSheet#grantTemporaryBonus` on each; this class never needs
   to resolve or touch a `CharacterSheet` other than the actor's own `resultStatus`.
+- **A PV cost is the base's job too** — override `resolveHitPointCost(request)` when the trait's
+  "Custo de Ativação: Variável" is paid in PV rather than PD (`SACRIFICIO_YMIRIANO`, via
+  `AbracadoPelaEscuridaoAbility#resolveVigorPvCost`). The base refuses a self-fatal cost, spends it
+  as plain damage, and reports it as `resourceLossValue`/`resourceLossType`.
+- **"Ativada duas vezes no mesmo Turno" has a counter** — `CombatantSheet#countActivationsThisTurn`,
+  which the base advances before `resolve`, so your `resolve` sees its own activation counted and
+  `validate` can refuse one past the trait's own limit.
 - **"Mechanically real" is judged per clause, not per ability — and now means "expressible as
   a grantable `Blessing`," not "has an actual consumer."** A clause whose value/duration/scope
   is fully known can still get a real `Blessing`, even when nothing reads that `ModifierType`
   yet, **as long as no other consumption pathway for it already exists to conflict with** — see
   `GritoDeGuerraVulcanoInteraction`'s own class javadoc: its "+2 em Defesas" clause is reported
-  as a real, new `ModifierType.DEFESAS`-typed `Blessing`, mirroring `ModifierType
-  .ACTION_POINTS`'s own already-grantable-but-inert precedent, because Defesas has *no*
-  consumption pathway at all yet (no stat/service exists), so there's nothing for a future
-  reader to reconcile against. **This does *not* extend to a `ModifierType` that already has a
-  working, different consumption pathway** — `GLORIA_RELAMPEJANTE_DE_TESLA`'s RA half uses the
-  identical self-plus-allies recipient shape but stays genuinely TODO'd, not reported as a
-  `Blessing`: `ABSOLUTE_DAMAGE_REDUCTION` is already consumed for real, just via the
-  reflection-based ability scan / `AventyrTitleAbility#resolveAbsoluteDamageReduction`, never
-  via `CharacterSheet#getTemporaryBonus` — granting a `TemporaryBonus` of that type would be
-  provably inert forever unless `DamageServiceImpl` deliberately grows a second, new
-  consumption branch just for it, a real design decision this skill doesn't get to make on its
-  own, unlike Defesas's genuinely-empty slate. Check whether a `ModifierType` already has
-  *some* working consumer before assuming "not consumed via `getTemporaryBonus` yet" always
-  means "safe to report as a `Blessing` anyway."
-- Add the actual entry point as a method on `<Title>.java` (e.g. `Santo
-  #activateAbencoadoPelaLuz`/`#activateGritoDeGuerraVulcano`), not a static/standalone call
-  against the bare enum constant — validate the Título instance actually holds this trait first
-  (mirroring `AbstractSkillInteraction#validateRequestedTrait`'s "must actually be held" check;
-  throw `IllegalOperationException`/`REQUIRED_TITLE_TRAIT_NOT_HELD`), then delegate to the
-  Interaction. The Título instance is where this belongs because it's what actually knows which
-  Especializações/Habilidades are held — the same data its own scaling formulas (step 2 of
+  as a real `ModifierType.DEFESAS`-typed `Blessing`, and `DefenseService` reads it now.
+  **RA and Meio-Dano used to be the counter-example here and no longer are**: `DamageServiceImpl`
+  reads a sheet-held `ABSOLUTE_DAMAGE_REDUCTION` and `HALF_DAMAGE` `TemporaryBonus` beside its
+  passive scans, added for `GLORIA_RELAMPEJANTE_DE_TESLA` and `PROTECAO_UNGIDA`, so both are real
+  grants today. The underlying caution still holds for anything else: before reporting a
+  `Blessing`, check whether that `ModifierType` has a **sheet-reading** consumer, since one
+  consumed only through a reflection-based ability scan would be inert — and adding a second
+  consumption branch to a service is a design decision to raise, not to assume.
+- The entry point is **`AventyrTitle#activateAbility(constant, request)`** — already there
+  for every Título: it checks the instance holds the trait (`REQUIRED_TITLE_TRAIT_NOT_HELD`),
+  builds the class the constant names in `interactionClass` (`TITLE_ABILITY_NOT_ACTIVATABLE`
+  if none), and runs it. A convenience method on `<Title>.java` (e.g. `Santo
+  #activateAbencoadoPelaLuz`/`#activateGritoDeGuerraVulcano`/`#activateOrgulhoElduriano`) is
+  optional and must stay a **one-line delegate** building the request — never a second held
+  check or a direct `new <X>Interaction()`. The Título instance is where activation belongs
+  because it's what actually knows which Especializações/Habilidades are held — the same data its own scaling formulas (step 2 of
   `adding-a-title`) already need — and where a *future* ability needing "is this held as the
   Título Primário" would resolve that fact too (a caller-supplied fact, resolved via
   `Character#getPrimaryTitle() == titleInstance` — never self-derived on the instance).
 - **Passive abilities never get one** — no activation exists to model for `isPassive() ==
   true`; they're reached via continuous scanning instead (e.g. `DamageServiceImpl`'s
   Título-ability RA scan).
-- **Once the `<X>Interaction` exists, go back and set the constant's own `interactionClass`
-  field to `Optional.of(<X>Interaction.class)`** (see step 2's own note) — don't leave it at
-  `Optional.empty()` after wiring a real activation; that would make the constant's own
-  declared bond lie about what it activates.
-- Two real shapes exist today (single-target, self-plus-resolved-allies) — still hand-written,
-  one-off classes, not a shared base, mirroring `AbstractSkillInteraction`'s own extraction
-  history (only extracted once multiple Perícias needed the identical shape). Don't extract a
-  shared "Título ability activation" base until a *third* real activation needs a cascade
-  identical to one of the two that already exist.
+- **Once the `<X>Interaction` exists, set the constant's own `interactionClass` field to
+  `Optional.of(<X>Interaction.class)`** (see step 2's own note) — it is no longer just
+  documentation: `activateAbility` reads it, so an activation left at `Optional.empty()` is
+  unreachable through the generic entry point.
+- Three shapes sit on the base today: single-target mutation (`AbencoadoPelaLuzInteraction`),
+  self-plus-allies Blessings reported for the caller (`GritoDeGuerraVulcanoInteraction`), and a
+  Scene-registered effect scaled by a Variável cost (`OrgulhoEldurianoInteraction`). Pick the
+  closest as a template; the gates and payment are never reimplemented.
 
 ## 4. Model its gated Habilidades/Supremas
 
@@ -199,11 +211,15 @@ own worked example (`AbencoadoPelaLuzAbility`) surfaces that are easy to miss:
 - **Add a `requiredOtherAbilities` (int) field for a "Requer N outras Habilidades de
   '<Especialização name>'" clause** — overrides `AventyrTitleAbility
   #getRequiredOtherAbilities()`, 0 by default for constants with no such clause. This count is
-  automatically scoped to **only sibling constants of this same `<Specialization>Ability`
-  enum** — `isEligible` never counts the Título's own `<Title>Ability` constants (or a
-  *different* Especialização's own gated catalog) toward it, even though all of them end up in
-  the same held `AventyrTitle#getAbilities()` list — see `GLORIA_RELAMPEJANTE_DE_TESLA`'s own
-  "2" for the worked example.
+  automatically scoped to **Habilidades gated on this same named Especialização** — via
+  `#getRequiredOtherAbilitiesScope()`, which defaults to the constant's own
+  `getRequiredSpecialization()`, so setting that field (above) is all this needs. `isEligible`
+  never counts the Título's own `<Title>Ability` constants (which name no Especialização) or a
+  *different* Especialização's gated ones toward it, even though all of them end up in the same
+  held `AventyrTitle#getAbilities()` list — see `GLORIA_RELAMPEJANTE_DE_TESLA`'s own "2" for the
+  worked example. Note the asymmetry, which is the rules text's own: a `<Title>Ability`'s clause
+  names the Título and counts *everything* held, this one names an Especialização and counts only
+  its own.
 - **An ability can be individually close to real even when nothing wires it end-to-end yet —
   and once it is, wire it per step 3 above rather than leaving it TODO'd.** Before writing "no
   system exists for X," check whether the *value* is already fully expressible as a `Blessing`
@@ -223,19 +239,21 @@ own worked example (`AbencoadoPelaLuzAbility`) surfaces that are easy to miss:
   `CharacterSheet#getTemporaryBonus` — reporting a `Blessing` of that type would be provably
   inert forever, not merely "not wired yet," so it doesn't qualify the same way Defesas's
   genuinely-empty slate does.
-- **"Custo de Ativação: Variável (mínimo NPD)"** — `getPDCost()` has no way to represent a
-  variable cost, only a floor; report the stated minimum and note the "Variável" nuance in the
-  constant's own comment (see `ORGULHO_ELDURIANO`).
-- **"Tempo de Ativação: Ação Livre"** maps to `AventyrTitleAbility#isFreeActionActivation()`
-  (added alongside `isReactionActivation()` specifically for this) — override it via an
+- **PD cost is a `title.PDCost`, not an int** — `fixed(n)` for "Custo de Ativação: NPD",
+  `variable(n)` for "Variável (mínimo NPD)" (see `ORGULHO_ELDURIANO`, whose spent amount sets its
+  Duração). Import both factories statically: inside an enum whose field is named `PDCost`, the
+  qualified `PDCost.fixed(…)` resolves `PDCost` to that instance field and won't compile. The type
+  only says which amounts are legal (`accepts`); the activation checks affordability and spends.
+- **"Tempo de Ativação: Ação Livre"** maps to `ActionCost.FREE_ACTION`, passed as the
+  constant's own `actionPointCost` constructor argument — override it via an
   anonymous per-constant body the same way `isSupreme()`/`getPDCost()` are set through the
   constructor (see `GLORIA_RELAMPEJANTE_DE_TESLA`).
 - **Don't add a separate passive/active flag** — `AventyrTitleAbility#isPassive()` is already
-  derived from `getActionPointCost()`/`isReactionActivation()`/`isFreeActionActivation()`, so a
-  new constant needs no extra data for this; just make sure a genuinely no-cost, no-Reação,
-  no-Ação-Livre constant really is "Custo de Ativação: Nenhum, habilidade passiva" in its own
-  rules text before leaving all three at their defaults (Reação/Ação Livre still count as
-  active despite 0 PA).
+  derived from `getActionPointCost()` alone (it is `ActionCost.NONE`), so a new constant needs no
+  extra data for this; just make sure a constant left at `ActionCost.NONE` really is "Custo de
+  Ativação: Nenhum, habilidade passiva" in its own rules text. A Reação and an Ação Livre are
+  real player-triggered activations and say so in their own `ActionCost.Kind`, so they are never
+  passive — which is the whole reason `NONE` is a distinct kind from `FREE_ACTION`.
 
 ## 5. Write tests
 
@@ -247,8 +265,8 @@ own worked example (`AbencoadoPelaLuzAbility`) surfaces that are easy to miss:
   `SantoSpecializationTest#resolveShortRestHealAmountMatchesRestServicesOwnShortRestFormula`).
   Update the "how many constants exist so far" count test.
 - `<Specialization>AbilityTest` (new file) — same shape as `<Title>AbilityTest`: non-blank
-  descriptions, expected count, `isSupreme()`/cost/`isReactionActivation()`/
-  `isFreeActionActivation()` identity per constant, any wired `resolve*` hook's behavior, and
+  descriptions, expected count, `isSupreme()` and both costs (`getPDCost()` and the
+  `ActionCost`) per constant, any wired `resolve*` hook's behavior, and
   `getInteractionClass()` per constant — `Optional.of(<X>Interaction.class)` for the one(s)
   step 3 wired for real, `Optional.empty()` for every other, still-TODO'd constant (see
   `AbencoadoPelaLuzAbilityTest#onlyGritoDeGuerraVulcanoReportsAnInteractionClass`). **Also
@@ -258,10 +276,11 @@ own worked example (`AbencoadoPelaLuzAbility`) surfaces that are easy to miss:
   `isEligible(AventyrTitle)` rejects a title without the Especialização for every constant,
   accepts a no-other-abilities constant once the Especialização alone is held, and — the case
   most worth a dedicated test — rejects/accepts the "N outras Habilidades" constant based on
-  how many *sibling* constants of this same catalog are held, while a title holding that many
-  Habilidades from the **Título's own `<Title>Ability` catalog instead** (not this one) still
-  rejects it — see `AbencoadoPelaLuzAbilityTest
-  #isEligibleForGloriaRelampejanteDeTeslaIgnoresAbilitiesFromASiblingCatalog`/
+  how many Habilidades gated on *this same* Especialização are held, while a title holding that
+  many from the **Título's own `<Title>Ability` catalog instead** (or from the other
+  Especialização) still rejects it — see `AbencoadoPelaLuzAbilityTest
+  #isEligibleForGloriaRelampejanteDeTeslaIgnoresHabilidadesNotGatedOnItsEspecializacao`/
+  `#isEligibleForGloriaRelampejanteDeTeslaIgnoresTheOtherEspecializacaosHabilidades`/
   `#isEligibleAcceptsGloriaRelampejanteDeTeslaOnceEnoughSiblingAbilitiesAreHeld` for the shape.
 - `<Specialization>InteractionTest` (new file, only if step 3 applied) — each real branch's
   actual effect (e.g. heal amount matches the formula it delegates to, not a hardcoded number),

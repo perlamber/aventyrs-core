@@ -5,6 +5,8 @@ import lombok.Getter;
 import lombok.NonNull;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.feat.FeatCategory;
+import org.aventyrs.core.feat.StartingFeatSlot;
 import org.aventyrs.core.sheet.DlcRuleset;
 import org.aventyrs.core.skill.SkillType;
 
@@ -77,11 +79,11 @@ import java.util.Map;
  *   <li><b>Idiomas</b> (Silvestre + Continental) — same "no Language/Idioma concept exists" gap
  *   as every other race.</li>
  *   <li><b>Longevidade</b> (~80 anos) — same "no age/lifespan concept" gap as every other race.</li>
- *   <li><b>Treinamento adicional em Ataque Corpo-a-Corpo com uma Habilidade de Competência, mais
- *   a Perícia tribal com uma Especialização adicional, mais 1 Talento</b> (Sobrevivência ou
- *   Monstruoso) — {@link Race} has no hook to grant starting Perícia training/abilities nor a
- *   {@code Feat} at creation. The per-tribe Perícia is recorded on each {@link Tribo} constant
- *   even so, since it is exact authored data waiting only on the hook.</li>
+ *   <li><b>Treinamento adicional em Ataque Corpo-a-Corpo com uma Habilidade de Competência, mais a
+ *   Perícia tribal com uma Especialização adicional, mais 1 Talento</b> (Sobrevivência ou
+ *   Monstruoso) — the Talento is built ({@link #getStartingFeatSlots()}); {@link Race} still has no
+ *   hook to grant starting Perícia training/abilities. The per-tribe Perícia is recorded on each
+ *   {@link Tribo} constant even so, since it is exact authored data waiting only on the hook.</li>
  * </ul>
  *
  * <p>Tendência is deliberately left unconstrained, same treatment as every other race.
@@ -158,5 +160,10 @@ public class Indomito implements Race {
     @Override
     public Character.CharacterBuilder generateEmptyCharacter(final List<DlcRuleset> dlcRulesetList) {
         return Character.builder();
+    }
+
+    @Override
+    public List<StartingFeatSlot> getStartingFeatSlots() {
+        return List.of(StartingFeatSlot.race(FeatCategory.SOBREVIVENCIA, FeatCategory.MONSTRUOSO));
     }
 }

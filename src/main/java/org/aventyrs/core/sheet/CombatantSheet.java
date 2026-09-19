@@ -9,6 +9,7 @@ import org.aventyrs.core.item.Item;
 import org.aventyrs.core.item.Weapon;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.rest.RestType;
+import org.aventyrs.core.scene.ProjectedAura;
 import org.aventyrs.core.scene.SceneContext;
 
 import java.util.List;
@@ -93,6 +94,16 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
      * recovering Pontos de Vida, and stopping a bleed recovers none.
      */
     boolean stopBleeding();
+
+    /**
+     * Registers a {@link PostponedDamage} — Pontos de Vida this combatant loses at the start of
+     * their <em>next</em> Rodada instead of now, delivered by {@link #startNewRound()}. Several
+     * postponed in one Rodada all land together at that boundary.
+     *
+     * <p>Takes damage that is <b>already mitigated</b>: the hit resolved normally and only its PV
+     * loss was deferred, so re-running RD/RA a Rodada later would apply them twice.
+     */
+    void schedulePostponedDamage(int amount, CombatantSheet source);
 
     int getShieldPoints();
 
@@ -259,6 +270,21 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
      * DamageService#calculateFinalDamage} never advances it.
      */
     int getAttacksSufferedThisRound();
+
+    /**
+     * Records one successful activation of source in this combatant's current Turn — called by
+     * {@code title.AbstractTitleAbilityInteraction#activate} once the costs are paid, so a refused
+     * activation is never counted.
+     */
+    void recordAbilityActivation(Object source);
+
+    /**
+     * How many times source has been activated in this Turn — what "se ativada duas vezes no mesmo
+     * Turno" reads ({@code AbracadoPelaEscuridaoAbility#SACRIFICIO_YMIRIANO}). Cleared by {@link
+     * #startTurn(int)}, so with no live {@code Scene} driving Turns the count simply keeps rising,
+     * the same fallback the action log has.
+     */
+    int countActivationsThisTurn(Object source);
 
     /**
      * Grants blessing to this combatant, returning the effect it became — the one path a {@link
@@ -561,8 +587,20 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
     boolean isAwaitingRest(ActiveAbility ability);
 
     /**
+     * Records that source has affected this combatant and may not affect them again until a
+     * Descanso of restType's tier — the target-side "não afeta os mesmos personagens mais de uma
+     * vez" gate ({@code AbencoadoPelaLuzAbility#ORGULHO_ELDURIANO}). A {@code null} restType
+     * clears the mark.
+     */
+    void markAffectedUntilRest(Object source, RestType restType);
+
+    /** Whether source has already affected this combatant and is still waiting on a Descanso. */
+    boolean isAffectedUntilRest(Object source);
+
+    /**
      * Clears every rest-gated Resfriamento a Descanso of restType satisfies — that tier
-     * <b>or stronger</b>, so a Descanso Total frees an ability waiting on a Longo. Called by
+     * <b>or stronger</b>, so a Descanso Total frees an ability waiting on a Longo — along with
+     * every {@link #markAffectedUntilRest} mark of that tier or weaker. Called by
      * {@code RestService#applyRest}.
      */
     void clearRestCooldowns(RestType restType);
@@ -593,6 +631,40 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
      * is not monster-only even though only a monster overrides it right now.
      */
     Set<CriticalEffectType> getCriticalEffectImmunities();
+
+    /**
+     * Whether this combatant ignores Efeitos Críticos <b>Menores</b> right now — the severity-keyed
+     * counterpart to {@link #getCriticalEffectImmunities()}, which keys on <i>which</i> effect.
+     * {@code org.aventyrs.core.effect.CriticalEffect#applicableTo} drops the whole chain of a Menor
+     * critical when this holds.
+     *
+     * <p>Two sources answer it: a held Título's Efeito Base for its first Rodadas of a Cena de
+     * Combate ({@code AventyrTitle#resolveMinorCriticalImmunityRounds}, Santo's Despertar) and a
+     * held Talento unconditionally ({@code Feat#ignoresMinorCriticalEffects}, {@code
+     * MonstruosoFeat#ANATOMIA_UNICA}).
+     *
+     * <p>{@code sceneContext} supplies the Rodada; a {@code null} one simply means no
+     * Rodada-windowed source can apply, leaving the unconditional ones to answer — "cannot tell"
+     * withholds the timed immunity rather than granting it.
+     */
+    boolean ignoresMinorCriticalEffects(SceneContext sceneContext);
+
+    /**
+     * The passive Auras this combatant projects onto the allies around them right now — see {@link
+     * org.aventyrs.core.scene.ProjectedAura}. Empty for almost everyone; Santo's Título-Primário
+     * clause is the live one.
+     *
+     * <p><b>It describes what is projected; it does not target.</b> A sheet holds no reference back
+     * to its {@code Scene} — deliberately, throughout this core — so it cannot enumerate who is
+     * nearby. {@code ownContext} is here only to <i>compute the amount</i>, which for Santo depends
+     * on how many allies are adjacent to the holder. Deciding who receives it, granting it and
+     * revoking it are all {@code Scene#refreshProjectedAuras}'s job.
+     *
+     * <p>{@code ownContext} is this combatant's own, never a recipient's — that is the entire point
+     * of resolving holder-side (see {@code ProjectedAura}). {@code null} reads as "no adjacent
+     * allies", the usual restraint.
+     */
+    List<ProjectedAura> resolveProjectedAuras(SceneContext ownContext);
 
     // --- Turn lifecycle -----------------------------------------------------------------------
 

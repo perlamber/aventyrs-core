@@ -4,6 +4,7 @@ import org.aventyrs.core.effect.CriticalEffectType;
 import org.aventyrs.core.magic.ActivationTime;
 import org.aventyrs.core.magic.AuthoredSpell;
 import org.aventyrs.core.magic.BranchLevel;
+import org.aventyrs.core.magic.SpellAlternateEffect;
 import org.aventyrs.core.magic.SpellData;
 import org.aventyrs.core.magic.SpellDuration;
 import org.aventyrs.core.magic.SpellTargeting;
@@ -85,6 +86,7 @@ public enum DominioPrimordialSpell implements AuthoredSpell {
                     + "Distância superior a Curta. "
                     + "Conjuradores com 5 graduações em ‘Conhecimento Metamágico’ criam 2 projéteis adicionais, com "
                     + "10 graduações o total de projéteis muda para 2d6.")
+            .alternateEffect(SpellAlternateEffect.named("Artilharia Primordial"))
             .criticalEffectType(CriticalEffectType.EXECUCAO_REAL)
             .duration(SpellDuration.INSTANTANEA)
             .targeting(SpellTargeting.distancia(Range.AO_ALCANCE_DOS_OLHOS))
@@ -114,6 +116,9 @@ public enum DominioPrimordialSpell implements AuthoredSpell {
             .secondaryEffectDescription("Barricada Primordial: O conjurador pode escolher cobrir uma área maior com "
                     + "sua Égide Primordial, para cada UD adicional a Duração desta magia é reduzida em 1 Rodada. É "
                     + "possível fazer proteções curvas ou coberturas superiores desta forma.")
+            // TODO: its Duração shrinks by 1 Rodada per extra UD covered — a duration that varies with a
+            //  per-cast choice, which no authored column holds.
+            .alternateEffect(SpellAlternateEffect.named("Barricada Primordial"))
             .criticalEffectType(CriticalEffectType.POTENCIALIZAR)
             .duration(SpellDuration.rodadas(3))
             .targeting(SpellTargeting.distancia(Range.ADJACENTE))
@@ -151,6 +156,10 @@ public enum DominioPrimordialSpell implements AuthoredSpell {
                     + "em -1 para cada UD entre você e os alvos, personagens atingidos em Distância Curta são "
                     + "empurrados 1UD para trás. "
                     + "Após conjurar Nova Primordial a Duração da Proteção Primordial é imediatamente encerrada.")
+            .alternateEffect(SpellAlternateEffect.builder()
+                    .name("Nova Primordial")
+                    .activationTime(ActivationTime.ACAO_LIVRE)
+                    .build())
             .criticalEffectType(CriticalEffectType.POTENCIALIZAR)
             .duration(SpellDuration.rodadas(3))
             .targeting(SpellTargeting.PESSOAL)

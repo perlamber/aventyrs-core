@@ -3,6 +3,8 @@ package org.aventyrs.core.race;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.SizeCategory;
+import org.aventyrs.core.feat.FeatCategory;
+import org.aventyrs.core.feat.StartingFeatSlot;
 import org.aventyrs.core.sheet.DlcRuleset;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
 
@@ -28,15 +30,10 @@ import java.util.Set;
  *   concept exists" gap as {@code Anao}.</li>
  *   <li><b>Longevidade</b> (500+ anos, slow physical/social maturing) — same "no age/lifespan
  *   concept" gap as {@code Anao}; purely narrative today.</li>
- *   <li><b>1 Talento Racial Élfico + 1 Talento</b> (chosen among Élfico, Arqueirismo — this
- *   rules text's own naming doesn't match any existing {@code
- *   org.aventyrs.core.feat.FeatCategory} constant; the race's own earlier flavor text says
- *   "técnicas únicas de Artilharia" instead, so this may be the same category under a
- *   different name in this revision of the text, but that's an inference, not confirmed —
- *   flagging it rather than guessing silently, the same "get the source text before modeling"
- *   lesson {@code Range}'s own history already taught this codebase — Duelista or
- *   Metamágico) — same "no Feat catalog, no {@code Character.feats} list" gap as Anões' free
- *   Talento.</li>
+ *   <li><b>1 Talento Racial Élfico + 1 Talento</b> (Élfico, Arqueirismo, Duelista ou Metamágico) —
+ *   built: {@link #getStartingFeatSlots()}. ⚠️ <b>Arqueirismo is read as {@code
+ *   FeatCategory#ARTILHARIA}</b>, an inference: no Arqueirismo tree exists in talentos.txt, and the
+ *   race's own flavor text says "técnicas únicas de Artilharia".</li>
  *   <li><b>Especialização adicional em Perícia</b> (Conhecimentos restrito a Metamágico ou
  *   Natureza, "Foco", ou uma Perícia de Ataque) — same "{@link Race} has no hook for granting
  *   starting Perícia training" gap as Anões' Profissão training; "Foco" here doesn't match any
@@ -103,5 +100,12 @@ public class Elfo implements Race {
     @Override
     public List<SkillCompetencyAbility> getRacialAbilities() {
         return List.of(ElfosRacialAbility.SENTIDOS_ABSOLUTOS);
+    }
+
+    @Override
+    public List<StartingFeatSlot> getStartingFeatSlots() {
+        return List.of(
+                StartingFeatSlot.race(FeatCategory.ELFICO),
+                StartingFeatSlot.race(FeatCategory.ELFICO, FeatCategory.ARTILHARIA, FeatCategory.DUELISTA, FeatCategory.METAMAGICO));
     }
 }

@@ -9,6 +9,7 @@ import org.aventyrs.core.feat.FeatRequirements;
 import org.aventyrs.core.magic.BranchLevel;
 import org.aventyrs.core.magic.Spell;
 import org.aventyrs.core.magic.TestSpell;
+import org.aventyrs.core.magic.catalog.VidaSpell;
 import org.aventyrs.core.magic.TestSpellBranch;
 import org.aventyrs.core.magic.TestSpellTree;
 import org.aventyrs.core.sheet.CharacterSheet;
@@ -252,6 +253,25 @@ class SpellServiceImplTest {
         spellService.grantSpell(character, sheet, MUDA_A); // rung cost 2, minus the 1 discount
 
         assertEquals(0, BigDecimal.valueOf(99).compareTo(sheet.getUnUsedExperience()));
+    }
+
+    /**
+     * "Um personagem que aprenda a versão base automaticamente aprende sua segunda versão" — so an
+     * Efeito Alternativo is never acquired, and granting one would charge experience for a Magia
+     * already known. It reports its parent's rung, so it would also satisfy the climb gate for the
+     * next one.
+     */
+    @Test
+    void grantSpellRefusesASecondVersionAndSpendsNothing() {
+        Character character = character(List.of(capRaisingFeat(1)), VidaSpell.ALIVIAR_A_DOR);
+        CharacterSheet sheet = sheetFor(character);
+        Spell secondVersion = VidaSpell.ALIVIAR_A_DOR.getAlternateVersion().orElseThrow();
+
+        assertThrows(IllegalOperationException.class,
+                () -> spellService.grantSpell(character, sheet, secondVersion));
+
+        assertEquals(List.of(VidaSpell.ALIVIAR_A_DOR), character.getSpells());
+        assertEquals(0, BigDecimal.valueOf(100).compareTo(sheet.getUnUsedExperience()));
     }
 
     @Test

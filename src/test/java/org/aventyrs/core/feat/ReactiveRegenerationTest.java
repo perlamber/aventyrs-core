@@ -323,7 +323,7 @@ class ReactiveRegenerationTest {
     @Test
     void bencaoDeMapinguariGrantsTheCaracteristicaToSomeoneNotBornWithIt() throws IllegalOperationException {
         Character homemFera = character()
-                .race(new HomemFera(HomemFera.EspiritoAnimal.LICANTROPO))
+                .race(new HomemFera(HomemFera.EspiritoAnimal.LICANTROPO, HomemFera.Criacao.HUMANOS))
                 .attributes(vigor(3))
                 .build();
         CharacterSheet before = sheetFor(homemFera);

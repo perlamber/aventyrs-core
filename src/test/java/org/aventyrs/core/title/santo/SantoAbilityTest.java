@@ -1,6 +1,8 @@
 package org.aventyrs.core.title.santo;
 
 import org.aventyrs.core.character.services.DamageService;
+import org.aventyrs.core.sheet.ActionCost;
+import org.aventyrs.core.title.PDCost;
 import org.aventyrs.core.title.AventyrTitle;
 import org.junit.jupiter.api.Test;
 
@@ -35,30 +37,26 @@ class SantoAbilityTest {
 
     @Test
     void protecaoUngidaHasTheRightActivationCost() {
-        assertEquals(3, SantoAbility.PROTECAO_UNGIDA.getPDCost());
-        assertEquals(2, SantoAbility.PROTECAO_UNGIDA.getActionPointCost());
-        assertFalse(SantoAbility.PROTECAO_UNGIDA.isReactionActivation());
+        assertEquals(PDCost.fixed(3), SantoAbility.PROTECAO_UNGIDA.getPDCost());
+        assertEquals(ActionCost.ofActionPoints(2), SantoAbility.PROTECAO_UNGIDA.getActionPointCost());
     }
 
     @Test
     void bastiaoDosNecessitadosHasNoActivationCost() {
-        assertEquals(0, SantoAbility.BASTIAO_DOS_NECESSITADOS.getPDCost());
-        assertEquals(0, SantoAbility.BASTIAO_DOS_NECESSITADOS.getActionPointCost());
-        assertFalse(SantoAbility.BASTIAO_DOS_NECESSITADOS.isReactionActivation());
+        assertEquals(PDCost.fixed(0), SantoAbility.BASTIAO_DOS_NECESSITADOS.getPDCost());
+        assertEquals(ActionCost.NONE, SantoAbility.BASTIAO_DOS_NECESSITADOS.getActionPointCost());
     }
 
     @Test
     void guardaVidasHasTheRightActivationCost() {
-        assertEquals(2, SantoAbility.GUARDA_VIDAS.getPDCost());
-        assertEquals(0, SantoAbility.GUARDA_VIDAS.getActionPointCost());
-        assertTrue(SantoAbility.GUARDA_VIDAS.isReactionActivation());
+        assertEquals(PDCost.fixed(2), SantoAbility.GUARDA_VIDAS.getPDCost());
+        assertEquals(ActionCost.REACTION, SantoAbility.GUARDA_VIDAS.getActionPointCost());
     }
 
     @Test
     void protetorDaVidaEDaMorteHasNoActivationCost() {
-        assertEquals(0, SantoAbility.PROTETOR_DA_VIDA_E_DA_MORTE.getPDCost());
-        assertEquals(0, SantoAbility.PROTETOR_DA_VIDA_E_DA_MORTE.getActionPointCost());
-        assertFalse(SantoAbility.PROTETOR_DA_VIDA_E_DA_MORTE.isReactionActivation());
+        assertEquals(PDCost.fixed(0), SantoAbility.PROTETOR_DA_VIDA_E_DA_MORTE.getPDCost());
+        assertEquals(ActionCost.NONE, SantoAbility.PROTETOR_DA_VIDA_E_DA_MORTE.getActionPointCost());
     }
 
     @Test
@@ -134,13 +132,78 @@ class SantoAbilityTest {
         assertTrue(SantoAbility.BASTIAO_DOS_NECESSITADOS.isEligible(title));
     }
 
-    // No SantoAbility constant has a real, activatable Interaction yet — every Título-level
-    // Habilidade/Suprema in this catalog is still fully TODO'd (see each constant's own
-    // comment), so getInteractionClass() has nothing real to point to for any of them today.
+    /**
+     * "Requer 1 Especialização e <b>2 outras Habilidades de Santo</b>" names the *Título*, so
+     * every Habilidade the Santo holds counts — including ones an Especialização brought. They
+     * are Habilidades de Santo too; that is what holding the Especialização means.
+     *
+     * <p>Regression: these were counted per Java enum, so a Santo whose two Habilidades both came
+     * from an Especialização counted 0 and could never acquire Bastião dos Necessitados or
+     * Guarda-Vidas at all — the two were simply missing from everything that offers acquirable
+     * abilities, with nothing to say why.
+     */
     @Test
-    void noAbilityReportsAnInteractionClassYet() {
-        for (SantoAbility ability : SantoAbility.values()) {
-            assertEquals(Optional.empty(), ability.getInteractionClass());
-        }
+    void isEligibleCountsEspecializacaoGatedHabilidadesTowardOutrasHabilidadesDeSanto() {
+        AventyrTitle title = new Santo(
+                List.of(SantoSpecialization.ABENCOADO_PELA_LUZ),
+                List.of(AbencoadoPelaLuzAbility.ORGULHO_ELDURIANO,
+                        AbencoadoPelaLuzAbility.PELE_ROCHOSA_DE_EPONA));
+
+        assertTrue(SantoAbility.BASTIAO_DOS_NECESSITADOS.isEligible(title));
+        assertTrue(SantoAbility.GUARDA_VIDAS.isEligible(title));
+    }
+
+    /** The two sources are interchangeable, not merely additive-when-same-kind: one Habilidade de
+     * Santo plus one an Especialização brought is still two Habilidades de Santo. */
+    @Test
+    void isEligibleMixesTitleLevelAndEspecializacaoGatedHabilidadesInTheSameCount() {
+        AventyrTitle title = new Santo(
+                List.of(SantoSpecialization.ABENCOADO_PELA_LUZ),
+                List.of(SantoAbility.PROTECAO_UNGIDA, AbencoadoPelaLuzAbility.ORGULHO_ELDURIANO));
+
+        assertTrue(SantoAbility.BASTIAO_DOS_NECESSITADOS.isEligible(title));
+    }
+
+    /** "Outras" excludes the ability itself, so a held Habilidade never counts toward its own
+     * prerequisite. */
+    @Test
+    void isEligibleDoesNotCountTheAbilityItselfTowardItsOwnPrerequisite() {
+        AventyrTitle title = new Santo(
+                List.of(SantoSpecialization.ABENCOADO_PELA_LUZ),
+                List.of(SantoAbility.PROTECAO_UNGIDA, SantoAbility.BASTIAO_DOS_NECESSITADOS));
+
+        assertFalse(SantoAbility.BASTIAO_DOS_NECESSITADOS.isEligible(title),
+                "1 other Habilidade held, not 2 — its own entry must not pad the count");
+    }
+
+    /** Protetor da Vida e da Morte wants 4, and the same mixed count applies. */
+    @Test
+    void isEligibleAppliesTheSameMixedCountToTheFourAbilitySuprema() {
+        AventyrTitle title = new Santo(
+                List.of(SantoSpecialization.ABENCOADO_PELA_LUZ),
+                List.of(SantoAbility.PROTECAO_UNGIDA, SantoAbility.BASTIAO_DOS_NECESSITADOS,
+                        AbencoadoPelaLuzAbility.ORGULHO_ELDURIANO));
+        assertFalse(SantoAbility.PROTETOR_DA_VIDA_E_DA_MORTE.isEligible(title), "3 held, 4 required");
+
+        AventyrTitle withFour = new Santo(
+                List.of(SantoSpecialization.ABENCOADO_PELA_LUZ),
+                List.of(SantoAbility.PROTECAO_UNGIDA, SantoAbility.BASTIAO_DOS_NECESSITADOS,
+                        AbencoadoPelaLuzAbility.ORGULHO_ELDURIANO,
+                        AbencoadoPelaLuzAbility.PELE_ROCHOSA_DE_EPONA));
+
+        assertTrue(SantoAbility.PROTETOR_DA_VIDA_E_DA_MORTE.isEligible(withFour));
+    }
+
+    // getInteractionClass() is what AventyrTitle#activateAbility reflects on, so naming one is
+    // exactly the claim "this Habilidade can actually be activated". Two constants make it.
+    @Test
+    void theTwoActivatedAbilitiesReportAnInteractionClass() {
+        assertEquals(Optional.of(ProtecaoUngidaInteraction.class), SantoAbility.PROTECAO_UNGIDA.getInteractionClass());
+        assertEquals(Optional.of(GuardaVidasInteraction.class), SantoAbility.GUARDA_VIDAS.getInteractionClass());
+        // The other two are passive — scanned where they apply, never activated, so there is
+        // nothing for an Interaction to do. (PROTETOR_DA_VIDA_E_DA_MORTE is additionally still
+        // blocked on a damage-redirect and a locked-PV pool; see its own comment.)
+        assertEquals(Optional.empty(), SantoAbility.BASTIAO_DOS_NECESSITADOS.getInteractionClass());
+        assertEquals(Optional.empty(), SantoAbility.PROTETOR_DA_VIDA_E_DA_MORTE.getInteractionClass());
     }
 }

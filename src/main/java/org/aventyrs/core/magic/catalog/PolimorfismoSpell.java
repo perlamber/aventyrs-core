@@ -4,6 +4,7 @@ import org.aventyrs.core.effect.CriticalEffectType;
 import org.aventyrs.core.magic.ActivationTime;
 import org.aventyrs.core.magic.AuthoredSpell;
 import org.aventyrs.core.magic.BranchLevel;
+import org.aventyrs.core.magic.SpellAlternateEffect;
 import org.aventyrs.core.magic.SpellData;
 import org.aventyrs.core.magic.SpellDuration;
 import org.aventyrs.core.magic.SpellTargeting;
@@ -59,6 +60,14 @@ public enum PolimorfismoSpell implements AuthoredSpell {
                     + "duas vezes, até que o alvo passe por seu próximo descanso.")
             .secondaryEffectDescription("Rearranjo Estendido: Ao invés de Reação, o tempo de execução da magia muda "
                     + "para 1PA. Se o fizer a duração da magia muda para 1 rodada.")
+            // The Reação-to-PA direction: this parent is one of the catalog's five Reação Magias,
+            // and its second version trades that back for a Ponto de Ação. Which is why an
+            // ActivationTime override has to be fully replaceable rather than a one-way widening.
+            .alternateEffect(SpellAlternateEffect.builder()
+                    .name("Rearranjo Estendido")
+                    .activationTime(ActivationTime.pa(1))
+                    .duration(SpellDuration.rodadas(1))
+                    .build())
             .criticalEffectType(CriticalEffectType.POTENCIALIZAR)
             .duration(SpellDuration.INSTANTANEA)
             .targeting(SpellTargeting.distancia(Range.DISTANCIA_CURTA))
@@ -165,6 +174,13 @@ public enum PolimorfismoSpell implements AuthoredSpell {
             .secondaryEffectDescription("Aura do Encolhimento: O Alcance desta magia é alterado para Pessoal, a GD "
                     + "para Difícil e a Duração aumentada para +2 Minutos. Você e até dois aliados adjacentes tem a "
                     + "Categoria de Tamanho reduzida em -2.")
+            // Narrows a dual Pessoal/Toque reach to Pessoal alone, so alternateTargeting drops.
+            .alternateEffect(SpellAlternateEffect.builder()
+                    .name("Aura do Encolhimento")
+                    .targeting(SpellTargeting.PESSOAL)
+                    .castingDifficultyLevel(DifficultyLevel.HARD)
+                    .duration(SpellDuration.minutos(2))
+                    .build())
             .criticalEffectType(CriticalEffectType.DILACERAR)
             .duration(SpellDuration.rodadas(3))
             .targeting(SpellTargeting.PESSOAL)
@@ -186,6 +202,7 @@ public enum PolimorfismoSpell implements AuthoredSpell {
             .secondaryEffectDescription("Armada Ôgrica: Você e mais dois aliados adjacentes, recebem os benefícios "
                     + "de Ogrificar. Os bônus concedidos podem ser escolhidos individualmente, este efeito não ativa "
                     + "a Corrente de Efeitos – Gigantecer.")
+            .alternateEffect(SpellAlternateEffect.named("Armada Ôgrica"))
             .criticalEffectType(CriticalEffectType.AMENIZAR)
             .duration(SpellDuration.rodadas(3))
             .targeting(SpellTargeting.PESSOAL)

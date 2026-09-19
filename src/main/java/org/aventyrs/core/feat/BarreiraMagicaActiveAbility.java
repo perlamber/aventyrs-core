@@ -3,6 +3,7 @@ package org.aventyrs.core.feat;
 import org.aventyrs.core.ability.ActiveAbility;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.modifier.ModifierType;
+import org.aventyrs.core.sheet.ActionCost;
 import org.aventyrs.core.sheet.TemporaryBonus;
 import org.aventyrs.core.sheet.TemporaryEffect;
 
@@ -33,7 +34,7 @@ final class BarreiraMagicaActiveAbility implements ActiveAbility {
     /** "+5" — Desafiador da Realidade, replacing it again. */
     private static final int DESAFIADOR_DEFESAS_BONUS = 5;
 
-    private static final int ACTION_POINT_COST = 1;
+    private static final ActionCost ACTION_POINT_COST = ActionCost.ofActionPoints(1);
     private static final int MAGIC_POINT_COST = 3;
     private static final int DURATION_IN_ROUNDS = 2;
     private static final int COOLDOWN_IN_ROUNDS = 1;
@@ -44,7 +45,7 @@ final class BarreiraMagicaActiveAbility implements ActiveAbility {
     }
 
     @Override
-    public int getActionPointCost() {
+    public ActionCost getActionPointCost() {
         return ACTION_POINT_COST;
     }
 

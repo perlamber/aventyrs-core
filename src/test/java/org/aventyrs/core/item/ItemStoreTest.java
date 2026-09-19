@@ -44,19 +44,25 @@ class ItemStoreTest {
     }
 
     @Test
-    void offeredMasterpiecesAndImprovementsAreTheDefensiveCatalogUpToTheCeiling() {
+    void offeredMasterpiecesAndImprovementsAreBothAuthoredCatalogsUpToTheCeiling() {
         ItemStore store = new ItemStore(ItemRarity.RARE);
 
         assertEquals(
-                java.util.Arrays.stream(DefensiveMasterpiece.values())
+                java.util.stream.Stream.concat(
+                                java.util.Arrays.stream(DefensiveMasterpiece.values()),
+                                java.util.Arrays.stream(OffensiveMasterpiece.values()))
                         .filter(masterpiece -> masterpiece.getRarity().isAtMost(ItemRarity.RARE))
                         .toList(),
                 store.getOfferedMasterpieces());
         assertTrue(store.getOfferedMasterpieces().contains(DefensiveMasterpiece.REFORCADA)); // Comum
         assertFalse(store.getOfferedMasterpieces().contains(DefensiveMasterpiece.MITRAL));   // Épico
+        assertTrue(store.getOfferedMasterpieces().contains(OffensiveMasterpiece.PRECISA));   // Comum
+        assertFalse(store.getOfferedMasterpieces().contains(OffensiveMasterpiece.MITRAL));   // Épico
 
         assertTrue(store.getOfferedImprovements().contains(DefensiveImprovement.RESISTENTE)); // Comum
         assertFalse(store.getOfferedImprovements().contains(DefensiveImprovement.ENCAIXE));   // Épico
+        assertTrue(store.getOfferedImprovements().contains(OffensiveImprovement.GUARDA_MAOS)); // Comum
+        assertFalse(store.getOfferedImprovements().contains(OffensiveImprovement.ENCAIXE));    // Épico
     }
 
     @Test
@@ -67,6 +73,10 @@ class ItemStoreTest {
         assertFalse(store.offers(DefensiveMasterpiece.MITRAL));
         assertTrue(store.offers(DefensiveImprovement.RESISTENTE));
         assertFalse(store.offers(DefensiveImprovement.ENCAIXE));
+        assertTrue(store.offers(OffensiveMasterpiece.BRUTAL));
+        assertFalse(store.offers(OffensiveMasterpiece.DENTE_DE_DRAGAO));
+        assertTrue(store.offers(OffensiveImprovement.MANOPLA_DE_SEGURANCA));
+        assertFalse(store.offers(OffensiveImprovement.SOLVE_VIDAS));
     }
 
     @Test

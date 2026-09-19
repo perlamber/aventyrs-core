@@ -37,7 +37,8 @@ public class DefenseServiceImpl implements DefenseService {
     @Override
     public int getTotalDefense(final Character character, final DefenseType defenseType, final SceneContext sceneContext) {
         return sumAbilityModifiers(character, defenseType, null) + sumEquipment(character, defenseType, sceneContext)
-                + sumFeats(character, defenseType, sceneContext);
+                + sumFeats(character, defenseType, sceneContext)
+                + sumTitleBaseDefesas(character, sceneContext);
     }
 
     @Override
@@ -57,12 +58,39 @@ public class DefenseServiceImpl implements DefenseService {
         return sumAbilityModifiers(target.getCharacter(), defenseType, target)
                 + sumEquipment(target, defenseType, sceneContext, damageDescriptor)
                 + sumFeats(target.getCharacter(), defenseType, sceneContext, target)
+                + sumTitleBaseDefesas(target.getCharacter(), sceneContext)
                 + target.getTemporaryBonus(ModifierType.DEFESAS)
                 + target.getTemporaryBonus(defenseType.getModifierType())
                 // Desprevenido's -2 Defesas, and anything conferring it (Caído, Flanqueado,
                 // Cego, or the fear ladder while close enough to its origin).
                 + target.getConditionBonus(ModifierType.DEFESAS, sceneContext)
                 + target.getConditionBonus(defenseType.getModifierType(), sceneContext);
+    }
+
+    /**
+     * Defesas every held Título's own Efeito Base grants its holder — Santo's Despertar "+2 em
+     * suas Defesas, esse Bônus aumenta em +1 para cada aliado adjacente, Especializações e
+     * Supremas que você possua" ({@link org.aventyrs.core.title.AventyrTitle
+     * #resolveBaseDefesasBonus}).
+     *
+     * <p>Broad, never scoped: a base effect's "suas Defesas" is plural, so the figure lands on DF
+     * and DM alike and is added once whichever {@code defenseType} was asked for — which is why
+     * this takes none.
+     *
+     * <p>Called from both the {@link Character} and {@link CombatantSheet} paths: those two
+     * deliberately do not cascade (they answer different questions, per CLAUDE.md), so a source
+     * added to one only would silently appear on half the callers.
+     *
+     * <p>Scanned rather than granted, so a bonus that changes as allies move is right by
+     * construction. The Título-<i>Primário</i> half is the deliberate exception — it derives from
+     * the holder's adjacency rather than the recipient's, so it cannot be scanned from here and is
+     * granted as a real Aura by {@code Scene#refreshProjectedAuras} instead, arriving in the
+     * {@code getTemporaryBonus(DEFESAS)} term below.
+     */
+    private int sumTitleBaseDefesas(final Character character, final SceneContext sceneContext) {
+        return character.getAllTitles().stream()
+                .mapToInt(title -> title.resolveBaseDefesasBonus(sceneContext))
+                .sum();
     }
 
     /**

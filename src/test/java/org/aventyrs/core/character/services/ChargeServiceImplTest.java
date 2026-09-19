@@ -101,7 +101,7 @@ class ChargeServiceImplTest {
     void anInvestidaCostsThreeActionPointsByDefault() {
         ActionCost cost = chargeService.getActionPointCost(character().build());
 
-        assertEquals(ActionCost.Kind.ACTION_POINTS, cost.kind());
+        assertEquals(ActionCost.Kind.FIXED, cost.kind());
         assertEquals(ChargeService.BASE_ACTION_POINT_COST, cost.actionPoints());
         assertEquals(3, cost.actionPoints());
     }

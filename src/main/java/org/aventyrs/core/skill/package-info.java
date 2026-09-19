@@ -102,6 +102,23 @@
  * is resolved against that tier's easier {@link org.aventyrs.core.skill.DifficultyLevel#getExpertValue()}
  * threshold instead of its {@link org.aventyrs.core.skill.DifficultyLevel#getBaseValue()}.
  *
+ * <h2>Attacks start from the weapon</h2>
+ *
+ * A Perícia de Ataque roll is not chosen by the player: the {@link org.aventyrs.core.skill.AttackSource}
+ * decides it. The Perícia is {@link org.aventyrs.core.skill.AttackSource#getAttackSkillType()}, and
+ * the Especialização is {@link org.aventyrs.core.skill.AttackSpecializations#heldFor} — pass it as the
+ * {@code requestedAbility} when present, and roll plainly when empty:
+ *
+ * <pre>{@code
+ * Optional<SkillSpecialization> specialization = AttackSpecializations.heldFor(weapon, character);
+ * SkillRoll roll = new SkillRoll(dice, specialization.orElse(null));
+ * // DeliveredAttack.builder().attackSkill(weapon.getSkillType()).attackSource(weapon).attackRoll(roll)...
+ * }</pre>
+ *
+ * Requesting an Especialização de Ataque the named {@code attackSource} doesn't fit is rejected
+ * with an {@link org.aventyrs.core.sheet.IllegalOperationException}, exactly like one the character
+ * doesn't hold.
+ *
  * <h2>What this library computes — and what it leaves to the caller</h2>
  *
  * {@code skillRollBonus} already folds in everything this core knows about: the trained

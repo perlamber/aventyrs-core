@@ -6,12 +6,18 @@ import org.aventyrs.core.action.Manoeuvre;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterSkill;
+import org.aventyrs.core.character.CriticalDamage;
 import org.aventyrs.core.character.DamageBonus;
+import org.aventyrs.core.character.DamageBonusBreakdown;
+import org.aventyrs.core.character.DamageContribution;
+import org.aventyrs.core.character.DamageContributionSource;
 import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.character.SizeCategory;
 import org.aventyrs.core.character.services.CharacterSizeService;
 import org.aventyrs.core.character.services.CharacterSizeServiceImpl;
 import org.aventyrs.core.character.services.ChargeService;
+import org.aventyrs.core.character.services.CriticalService;
+import org.aventyrs.core.character.services.CriticalServiceImpl;
 import org.aventyrs.core.character.services.HitPointsService;
 import org.aventyrs.core.character.services.HitPointsServiceImpl;
 import org.aventyrs.core.character.services.CharacterSkillService;
@@ -22,6 +28,7 @@ import org.aventyrs.core.modifier.ModifierResolver;
 import org.aventyrs.core.modifier.ModifierResolverImpl;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.item.Item;
+import org.aventyrs.core.item.Weapon;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.ActionCost;
 import org.aventyrs.core.sheet.Blessing;
@@ -143,6 +150,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
     private final ModifierResolver modifierResolver;
     private final CharacterSizeService characterSizeService;
     private final HitPointsService hitPointsService;
+    private final CriticalService criticalService = new CriticalServiceImpl();
 
     protected AbstractSkillInteraction(final SkillType skillType) {
         this(skillType, new CharacterSkillServiceImpl(), new ModifierResolverImpl());
@@ -299,7 +307,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
         Character character = target.getCharacter();
         CharacterSkill characterSkill = findCharacterSkill(character);
         if (skillRoll != null) {
-            validateRequestedTrait(character, characterSkill, skillRoll.getRequestedAbility());
+            validateRequestedTrait(character, characterSkill, skillRoll.getRequestedAbility(), attackSource);
         }
         int graduationValue = characterSkill.getGraduation().getGraduationValue();
         List<SkillCompetencyAbility> skillCompetencyAbilities = allSkillCompetencyAbilities(target);
@@ -365,8 +373,9 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                 .governingAttributeDomain(skillRoll != null ? attributeDomain : null);
 
         if (skillType.isAttackSkill()) {
-            sumDamageBonus(target, sceneContext, null, attackSource, targetCount, skillRoll)
-                    .ifPresent(result::damageBonus);
+            DamageSum damage = sumDamageBonus(target, sceneContext, null, attackSource, targetCount, skillRoll);
+            damage.bonus().ifPresent(damageBonus ->
+                    result.damageBonus(damageBonus).damageBonusBreakdown(damage.breakdown()));
         }
 
         if (skillRoll != null) {
@@ -374,7 +383,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
             Optional<DifficultyLevel> reached = expert
                     ? DifficultyLevel.reachedByAsExpert(bonus + skillRoll.getTotal())
                     : DifficultyLevel.reachedBy(bonus + skillRoll.getTotal());
-            int criticalMarginIncrease = sumCriticalMarginIncrease(target, skillCompetencyAbilities, sceneContext, attackSource);
+            int criticalMarginIncrease = sumCriticalMarginIncrease(target, sceneContext, attackSource);
             // Resistência a Críticos — the attack target's own RC narrows this roller's Margem
             // Crítica Menor back: its Raça's and its Talentos' standing grants plus any
             // round-scoped Blessing (AnaoFeat#VIGOR_DO_INVERNO), all summed by the target's own
@@ -385,7 +394,8 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
             // See ModifierType.CRITICAL_RESISTANCE for the RC pieces still not expressible.
             criticalMarginIncrease -= attackTarget == null ? 0
                     : attackTarget.getTotalCriticalResistance(sceneContext);
-            CriticalResult criticalResult = skillRoll.getCriticalResult(criticalMarginIncrease);
+            CriticalResult criticalResult = skillRoll.getCriticalResult(criticalMarginIncrease,
+                    lesserCriticalMargin(attackSource));
             result.reachedDifficultyLevel(reached.orElse(null))
                     .criticalResult(criticalResult);
             resolveOutcome(bonus + skillRoll.getTotal(), skillRoll.getTargetValue(), difficultyReduction,
@@ -403,6 +413,16 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                     });
 
             if (criticalResult.isCriticalSuccess()) {
+                // What the crit adds to its own dano roll — reported on its own field rather than
+                // folded into the DamageBonus above, so no caller can add the same +2 twice, and
+                // because a granted die has no room in a DamageBonus at all (see CriticalDamage).
+                if (skillType.isAttackSkill()) {
+                    CriticalDamage criticalDamage = sumCriticalDamage(target, sceneContext, attackSource,
+                            criticalResult, skillRoll);
+                    if (!criticalDamage.isNone()) {
+                        result.criticalDamage(criticalDamage);
+                    }
+                }
                 List<EgoDomain> egoGainDomains = new ArrayList<>();
                 for (AttributeAbility ability : character.getAttributeAbilities()) {
                     for (EgoDomain domain : ability.resolveCriticalSuccessEgoGain(criticalResult)) {
@@ -443,9 +463,14 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
         // Recomputed rather than added to what the main body already put there: the same four
         // sources are scanned again, now with the real attackTarget, so a target-conditioned
         // bonus (FRIEZA) joins the sum instead of the whole total being replaced by it.
-        Optional<DamageBonus> damageBonus = sumDamageBonus(target, sceneContext, attackTarget, attackSource, targetCount, skillRoll);
-        if (damageBonus.isPresent()) {
-            result = result.toBuilder().damageBonus(damageBonus.get()).build();
+        DamageSum damage = sumDamageBonus(target, sceneContext, attackTarget, attackSource, targetCount, skillRoll);
+        if (damage.bonus().isPresent()) {
+            // Both together, always: a breakdown that didn't move with its total would be a lie
+            // about the number beside it.
+            result = result.toBuilder()
+                    .damageBonus(damage.bonus().get())
+                    .damageBonusBreakdown(damage.breakdown())
+                    .build();
         }
 
         int attackRollBonus = abilities.stream()
@@ -475,8 +500,14 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
      * fit for whatever the roll is being used for narratively; that judgment stays with the
      * caller, the same restraint this codebase already applies everywhere it doesn't track what
      * a roll is *for*.
+     *
+     * <p><b>The one exception is an Especialização de Ataque with a named attackSource.</b> There
+     * the fit is not narrative: the weapon (or Magia) decides which Especialização the roll is
+     * made with ({@link AttackSpecializations#requiredFor}), so requesting any other one — held or
+     * not — is refused the same way. A {@code null} attackSource (the 3-arg {@code applyTo}, or a
+     * caller that didn't say) keeps the old, held-only check.
      */
-    private void validateRequestedTrait(final Character character, final CharacterSkill characterSkill, final SkillTrait requestedTrait) {
+    private void validateRequestedTrait(final Character character, final CharacterSkill characterSkill, final SkillTrait requestedTrait, final AttackSource attackSource) {
         if (requestedTrait == null) {
             return;
         }
@@ -489,6 +520,11 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
             held = false;
         }
         if (!requestedTrait.matchesSkillType(skillType) || !held) {
+            throw new IllegalOperationException(REQUIRED_SKILL_TRAIT_NOT_HELD);
+        }
+        if (requestedTrait instanceof SkillSpecialization specialization && skillType.isAttackSkill()
+                && attackSource != null
+                && !AttackSpecializations.requiredFor(attackSource, character).equals(Optional.of(specialization))) {
             throw new IllegalOperationException(REQUIRED_SKILL_TRAIT_NOT_HELD);
         }
     }
@@ -724,33 +760,41 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
     }
 
     /**
-     * Sums {@code resolveCriticalMarginIncrease} across all three ability sources this class
-     * already scans for everything else — {@code character.getAttributeAbilities()} (e.g.
-     * {@code DexterityAbility#LETALIDADE_PROGRESSIVA}), skillCompetencyAbilities (acquired plus
-     * racial — e.g. {@code ArtesAprimorarComArteAbility}'s "Margem Crítica Menor" branch), and
-     * {@code character.getEgoAdvantages()} (e.g. {@code SorteAdvantage#ACE}) — additively, the
-     * same convention every other {@code skillRollBonus}-adjacent sum here already uses. Fed
-     * into {@link SkillRoll#getCriticalResult(int)} only when skillRoll is non-{@code null}; safe
-     * to call unconditionally otherwise since sceneContext being {@code null} is already handled
-     * by every override the same way {@link #sumEgoAdvantageRollBonuses} already relies on.
+     * Every "+1 número" of Margem Crítica Menor widening this roller currently has — the four
+     * ability/trait scans plus the wielded weapon's fitted enhancements — delegated whole to
+     * {@link CriticalService}, so what a sheet screen previews and what this roll applies are one
+     * implementation. skillCompetencyAbilities is resolved there the same way it is here ({@code
+     * SkillCompetencyAbility#allFor}, acquired plus racial).
+     *
+     * <p>The target's Resistência a Críticos is subtracted by the caller rather than here, so the
+     * floor lands after it — see {@link #applyTo(CombatantSheet, SceneContext, SkillRoll)}.
      */
-    private int sumCriticalMarginIncrease(final CombatantSheet holder, final List<SkillCompetencyAbility> skillCompetencyAbilities, final SceneContext sceneContext, final AttackSource attackSource) {
-        Character character = holder.getCharacter();
-        int total = character.getAttributeAbilities().stream()
-                .mapToInt(ability -> ability.resolveCriticalMarginIncrease(skillType, sceneContext))
-                .sum();
-        total += skillCompetencyAbilities.stream()
-                .mapToInt(ability -> ability.resolveCriticalMarginIncrease(skillType, sceneContext))
-                .sum();
-        total += character.getEgoAdvantages().values().stream()
-                .mapToInt(advantage -> advantage.resolveCriticalMarginIncrease(skillType, sceneContext))
-                .sum();
-        // Talentos are outside every ModifierResolver scan, so they get an explicit fourth pass —
-        // the same shape sumFeatRollBonuses/sumFeatDifficultyReductions already use.
-        total += character.getFeats().stream()
-                .mapToInt(feat -> feat.resolveCriticalMarginIncrease(skillType, sceneContext, character, attackSource, holder))
-                .sum();
-        return total;
+    private int sumCriticalMarginIncrease(final CombatantSheet holder, final SceneContext sceneContext,
+                                          final AttackSource attackSource) {
+        return criticalService.sumCriticalMarginIncrease(holder, skillType, attackSource, sceneContext);
+    }
+
+    /**
+     * The Margem Crítica Menor this attack is rolled against before any widening — the weapon's own
+     * authored number, or {@link org.aventyrs.core.item.Weapon#DEFAULT_LESSER_CRITICAL_MARGIN} for
+     * an attack made with anything else. {@link CriticalService}'s answer, not a second copy.
+     */
+    private int lesserCriticalMargin(final AttackSource attackSource) {
+        return criticalService.getBaseLesserCriticalMargin(attackSource);
+    }
+
+    /**
+     * Everything this critical hit adds to its own dano roll — the baseline Vantagem em Danos, the
+     * holder's Talento grants and the wielded weapon's enhancements, one of which may replace the
+     * baseline rather than add to it. {@link CriticalService}'s answer; see {@link CriticalDamage}.
+     *
+     * <p>Only called for a Perícia de Ataque whose roll was a critical success.
+     */
+    private CriticalDamage sumCriticalDamage(final CombatantSheet holder, final SceneContext sceneContext,
+                                             final AttackSource attackSource, final CriticalResult criticalResult,
+                                             final SkillRoll skillRoll) {
+        return criticalService.getCriticalDamage(holder, skillType, attackSource, criticalResult, skillRoll,
+                sceneContext);
     }
 
     /**
@@ -779,33 +823,65 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
      * pass and real on the {@link #applyAttackTargetBonuses} one, so a target-conditioned bonus
      * simply doesn't contribute until there is a target to test.
      */
-    private Optional<DamageBonus> sumDamageBonus(final CombatantSheet target, final SceneContext sceneContext,
+    private DamageSum sumDamageBonus(final CombatantSheet target, final SceneContext sceneContext,
                                                 final CombatantSheet attackTarget, final AttackSource attackSource,
                                                 final int targetCount, final SkillRoll skillRoll) {
         Character character = target.getCharacter();
         List<DamageBonus> typed = new ArrayList<>();
+        List<DamageContribution> contributions = new ArrayList<>();
         allSkillCompetencyAbilities(target).stream()
                 .map(ability -> ability.resolveDamageBonus(skillType, sceneContext, attackTarget, character))
                 .flatMap(Optional::stream)
-                .forEach(typed::add);
+                .forEach(bonus -> addTyped(typed, contributions, DamageContributionSource.SKILL_COMPETENCY_ABILITY, bonus));
         character.getEgoAdvantages().values().stream()
                 .map(advantage -> advantage.resolveDamageBonus(sceneContext))
                 .flatMap(Optional::stream)
-                .forEach(typed::add);
+                .forEach(bonus -> addTyped(typed, contributions, DamageContributionSource.EGO_ADVANTAGE, bonus));
         character.getFeats().stream()
                 .map(feat -> feat.resolveDamageBonus(skillType, sceneContext, attackTarget, character,
                         attackSource, targetCount, target))
                 .flatMap(Optional::stream)
-                .forEach(typed::add);
-        int flat = target.getTemporaryBonus(ModifierType.DAMAGE_ROLL_BONUS)
-                + target.getConditionBonus(ModifierType.DAMAGE_ROLL_BONUS, sceneContext)
-                + resolveMeleeStrengthDamage(target)
-                + resolveChargeDamage(skillRoll);
-        if (attackTarget != null) {
-            // Outward-facing: what the *victim's* own Condições hand the attacker (Flanqueado).
-            flat += attackTarget.getAttackerDamageBonusFromConditions(sceneContext);
+                .forEach(bonus -> addTyped(typed, contributions, DamageContributionSource.FEAT, bonus));
+
+        // Each flat source is now named as it is summed, rather than disappearing into one int:
+        // the arithmetic is identical, the provenance is what is new.
+        int temporary = addFlat(contributions, DamageContributionSource.TEMPORARY_BONUS,
+                target.getTemporaryBonus(ModifierType.DAMAGE_ROLL_BONUS));
+        int condition = addFlat(contributions, DamageContributionSource.CONDITION,
+                target.getConditionBonus(ModifierType.DAMAGE_ROLL_BONUS, sceneContext));
+        int meiaForca = addFlat(contributions, DamageContributionSource.MEIA_FORCA,
+                resolveMeleeStrengthDamage(target));
+        int manoeuvre = addFlat(contributions, DamageContributionSource.MANOEUVRE,
+                resolveChargeDamage(skillRoll));
+        // Outward-facing: what the *victim's* own Condições hand the attacker (Flanqueado).
+        int targetCondition = attackTarget == null ? 0
+                : addFlat(contributions, DamageContributionSource.TARGET_CONDITION,
+                        attackTarget.getAttackerDamageBonusFromConditions(sceneContext));
+
+        int flat = temporary + condition + meiaForca + manoeuvre + targetCondition;
+        return new DamageSum(DamageBonus.total(typed, flat), new DamageBonusBreakdown(contributions));
+    }
+
+    /** One typed contributor: summed as before, and named in the breakdown. */
+    private static void addTyped(final List<DamageBonus> typed, final List<DamageContribution> contributions,
+                                 final DamageContributionSource source, final DamageBonus bonus) {
+        typed.add(bonus);
+        addFlat(contributions, source, bonus.getValue());
+    }
+
+    /** Records value under source unless it is 0 — a source that contributed nothing is left out,
+     * never listed as a zero — and returns it, so the caller's own sum reads unchanged. */
+    private static int addFlat(final List<DamageContribution> contributions,
+                               final DamageContributionSource source, final int value) {
+        if (value != 0) {
+            contributions.add(new DamageContribution(source, value));
         }
-        return DamageBonus.total(typed, flat);
+        return value;
+    }
+
+    /** The dano bonus and the named parts it is made of, built together so they cannot disagree —
+     * see {@link DamageBonusBreakdown}'s invariant. */
+    private record DamageSum(Optional<DamageBonus> bonus, DamageBonusBreakdown breakdown) {
     }
 
     /**

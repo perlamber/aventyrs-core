@@ -4,13 +4,16 @@ import java.util.Optional;
 
 import org.aventyrs.core.character.Character;
 import java.util.List;
+import org.aventyrs.core.character.CriticalDamage;
 import org.aventyrs.core.character.DamageBonus;
 import org.aventyrs.core.character.DamageType;
 import org.aventyrs.core.item.AttackMethod;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.skill.AttackSource;
+import org.aventyrs.core.skill.CriticalResult;
 import org.aventyrs.core.skill.Skill;
+import org.aventyrs.core.skill.SkillRoll;
 import org.aventyrs.core.skill.SkillType;
 
 /**
@@ -124,7 +127,7 @@ public enum ArtilhariaFeat implements Feat {
     // TODO: the "+1 passo adicional (total +2 níveis) sempre que efetuar ataques utilizando dos
     //  benefícios de 'Mira Impecável'" half needs the gap catalog's "this one delivered attack"
     //  scoping — no per-attack hook is scoped to "an attack made by activating another Talento"
-    //  (same blocker as ABATER_A_CACA / MIRA_MORTAL).
+    //  (same blocker as ABATER_A_CACA; MIRA_MORTAL's half of it is solved — see its own comment).
     TIRO_LONGO(
             "A distância máxima de seus ataques à Distância, físicos e Mágicos, aumentam em +1 "
                     + "nível. Sempre que efetuar ataques utilizando dos benefícios do Talento "
@@ -157,7 +160,9 @@ public enum ArtilhariaFeat implements Feat {
                     .build()),
 
     /** "Sempre que tiver um Acerto Crítico usando o talento 'Mira Impecável' você causa +1d6 de dano adicional." */
-    // TODO: scoped to "this one delivered attack" made with another Talento — see ABATER_A_CACA.
+    // Real: the "usando o talento 'Mira Impecável'" scoping that ABATER_A_CACA still waits on is
+    // expressible now — SkillRoll#getActivatedFeats() is the roller's statement of which Talentos
+    // they spent on this one roll (see that class's own javadoc).
     // Both required Talentos are enforced now — FeatRequirements#requiredFeats is a set, so a
     // Pré-requisito naming two (here one from this tree and one from AssassinoFeat) needs no
     // choosing between them.
@@ -167,7 +172,25 @@ public enum ArtilhariaFeat implements Feat {
             FeatRequirements.builder()
                     .requiredFeat(MIRA_IMPECAVEL)
                     .requiredFeat(AssassinoFeat.ACERTO_CRITICO_APRIMORADO)
-                    .build()),
+                    .build()) {
+        /**
+         * The die <b>adds</b> to the crit's baseline Vantagem em Danos rather than replacing it
+         * (unlike {@code AssassinoFeat#VIOLENCIA_DESCOMUNAL}): the clause reads "causa +1d6 de dano
+         * adicional", with no "ao invés disso". A 1d6 weapon therefore rolls 2d6, +2, on such a crit.
+         *
+         * <p>Granted only when this attack actually <em>used</em> {@link #MIRA_IMPECAVEL} — holding
+         * it and paying its +1PA to reroll the lowest die are different facts, and the clause names
+         * the second. The caller states that on the roll; a roll that states nothing gets nothing,
+         * rather than the benefit by default.
+         */
+        @Override
+        public CriticalDamage resolveCriticalDamage(final SkillType attackSkill, final SceneContext sceneContext,
+                                                    final Character character, final AttackSource attackSource,
+                                                    final CriticalResult criticalResult, final SkillRoll skillRoll) {
+            return skillRoll != null && skillRoll.activated(MIRA_IMPECAVEL)
+                    ? CriticalDamage.ofDice(1) : CriticalDamage.NONE;
+        }
+    },
 
     /**
      * "Uma vez por Rodada, em seu Turno, você pode disparar um projétil adicional em seus ataques,

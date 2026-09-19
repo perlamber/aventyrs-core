@@ -1,5 +1,6 @@
 package org.aventyrs.core.effect;
 
+import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.skill.CriticalResult;
@@ -51,8 +52,41 @@ public interface CriticalEffect extends Effect {
      */
     static List<CriticalEffect> applicableTo(final CombatantSheet target,
                                              final List<CriticalEffect> effects) {
+        return applicableTo(target, effects, null, null);
+    }
+
+    /**
+     * The same filter, plus the two facts a <b>severity</b>-keyed immunity needs: which critical
+     * inflicted these, and when. The shorter overload delegates here with {@code null}s, the usual
+     * cascading-overload shape, so a caller that knows neither is unaffected.
+     *
+     * <h2>Two kinds of immunity, filtered in one place</h2>
+     *
+     * Type immunity asks "which effect is this" and drops effects one at a time — a Zumbi shrugging
+     * off Sangramento. <b>Severity</b> immunity asks "how big was the critical" and drops the whole
+     * chain at once, because "Efeito Crítico Menor" names the critical that caused them rather than
+     * anything about the effects themselves. {@code MonstruosoFeat#ANATOMIA_UNICA} ("imune a
+     * Efeitos Críticos Menores") and Santo's Despertar ("nas primeiras Rodadas ... Ignora Efeitos
+     * Críticos Menores") are the two clauses, and {@code
+     * CombatantSheet#ignoresMinorCriticalEffects} resolves both.
+     *
+     * <p>It stays here with type immunity rather than moving to either attack orchestrator for the
+     * reason above: both are facts about the victim, identical whichever direction of the exchange
+     * is running, and {@link CriticalResult#isMinor()} covers the attacker's {@code
+     * ACERTO_CRITICO_MENOR} and the defender's own {@code FALHA_CRITICA_MENOR} alike.
+     *
+     * <p>A {@code null} criticalResult means the caller didn't say, and no severity rule is applied
+     * — never "assume Menor". A {@code null} sceneContext leaves a Rodada-windowed immunity unable
+     * to confirm it applies, so it withholds; an unconditional one still answers.
+     */
+    static List<CriticalEffect> applicableTo(final CombatantSheet target, final List<CriticalEffect> effects,
+                                             final CriticalResult criticalResult, final SceneContext sceneContext) {
         if (target == null || effects == null || effects.isEmpty()) {
             return effects == null ? List.of() : effects;
+        }
+        if (criticalResult != null && criticalResult.isMinor()
+                && target.ignoresMinorCriticalEffects(sceneContext)) {
+            return List.of();
         }
         return effects.stream()
                 .filter(effect -> !target.getCriticalEffectImmunities().contains(effect.getType()))

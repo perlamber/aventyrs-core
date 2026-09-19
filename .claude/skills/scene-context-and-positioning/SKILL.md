@@ -204,6 +204,27 @@ same split `next()` has with `CombatantSheet#startNewRound()`. The orchestrators
 `CombatantSheet` reference (not just the id), the precedent `grantedBlessings`/
 `activeAreaSpellEffects` set for a `Scene`-owned collection.
 
+## Provoking Auras — `Scene#addAura` / `refreshAura`
+
+A `scene.ActiveAura` is a Scene-held effect centred on one participant, the same kind of
+Scene-owned collection as `activeAreaSpellEffects`: ticked and expired in `startNewRound()`, and
+dropped by `removeParticipant` when its holder leaves. It is deliberately **concrete** — the
+provocation Aura of `AbencoadoPelaLuzAbility#ORGULHO_ELDURIANO` — and not a generic aura
+framework (see "build for the second real consumer").
+
+- **Binding is caller-driven.** No participant carries a position, so after any movement the
+  caller calls `refreshAura(holder, holderContext)` with a context built from the holder's own
+  distances (`buildContext`). It binds every member of `getEnemies(holder)` within the radius who
+  isn't bound yet and isn't `CombatantSheet#isAffectedUntilRest(source)`, and marks each one for a
+  Descanso Longo. A bound foe **stays bound** after leaving range, for the Aura's whole Duração.
+- **Reads:** `getForcedAttackTarget(attacker)` (the holder, until the attacker has attacked them
+  this Rodada; with two Auras, the first registered wins) and `getAuraAttackPenalty(attacker,
+  defender)` (`Skill#DISADVANTAGE_MALUS` after that attack, against anyone but the holder).
+  "This Rodada" is `currentRound`, so it resets at the combat wrap in `next()`.
+- **Write:** `recordAttack(attacker, defender)`, filed by the caller beside `recordAction` —
+  `CombatantAction` names no target. `AttackDelivery`/`AttackReceiver` consume the two reads; see
+  the `damage-and-combat` skill.
+
 ## Blessings granted on winning initiative — the `Scene`-internal facts
 
 Adding an initiative-win `Blessing` is the `granting-a-blessing` skill's job. Two

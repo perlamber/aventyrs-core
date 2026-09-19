@@ -3,6 +3,7 @@ package org.aventyrs.core.feat;
 import lombok.Getter;
 import org.aventyrs.core.ability.ActiveAbility;
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.sheet.ActionCost;
 import org.aventyrs.core.sheet.FormType;
 import org.aventyrs.core.sheet.TemporaryEffect;
 
@@ -49,8 +50,8 @@ final class MetamorfoseActiveAbility implements ActiveAbility {
 
     /** Ação Livre, like every Poder Vampírico. */
     @Override
-    public int getActionPointCost() {
-        return 0;
+    public ActionCost getActionPointCost() {
+        return ActionCost.FREE_ACTION;
     }
 
     @Override

@@ -4,6 +4,7 @@ import org.aventyrs.core.effect.CriticalEffectType;
 import org.aventyrs.core.magic.ActivationTime;
 import org.aventyrs.core.magic.AuthoredSpell;
 import org.aventyrs.core.magic.BranchLevel;
+import org.aventyrs.core.magic.SpellAlternateEffect;
 import org.aventyrs.core.magic.SpellData;
 import org.aventyrs.core.magic.SpellDuration;
 import org.aventyrs.core.magic.SpellTargeting;
@@ -43,6 +44,10 @@ public enum TransporteSpell implements AuthoredSpell {
                     + "funcionamento similar à Magia de Rua, ao conjurar esta magia você não escolhe o destino "
                     + "temporário do objeto, ele aparecerá em um local aleatório em Distância Média e não retornará "
                     + "para suas mãos.")
+            .alternateEffect(SpellAlternateEffect.builder()
+                    .name("Desaparecimento Caótico")
+                    .duration(SpellDuration.INSTANTANEA)
+                    .build())
             .criticalEffectType(CriticalEffectType.POTENCIALIZAR)
             .duration(SpellDuration.rodadas(2))
             .targeting(SpellTargeting.TOQUE)
@@ -107,6 +112,10 @@ public enum TransporteSpell implements AuthoredSpell {
             .secondaryEffectDescription("Piscar Longínquo: O tempo de Conjuração muda para 1PA, você pode se "
                     + "teletransportar para um local aleatório, em 2d6*100 UD, na direção escolhida. Você sempre "
                     + "surge em solo firme e nunca em espaços ocupados por objetos ou outros personagens.")
+            .alternateEffect(SpellAlternateEffect.builder()
+                    .name("Piscar Longínquo")
+                    .activationTime(ActivationTime.pa(1))
+                    .build())
             .criticalEffectType(CriticalEffectType.POTENCIALIZAR)
             .duration(SpellDuration.INSTANTANEA)
             .targeting(SpellTargeting.PESSOAL)
@@ -126,6 +135,7 @@ public enum TransporteSpell implements AuthoredSpell {
                     + "sofrido por fontes não Primordiais ou Regalias.")
             .secondaryEffectDescription("Transporte Alado: O número máximo de pessoas no veículo é reduzido para 2, "
                     + "o meio de transporte invocado recebe Movimento Base de Voo.")
+            .alternateEffect(SpellAlternateEffect.named("Transporte Alado"))
             .criticalEffectType(CriticalEffectType.POTENCIALIZAR)
             .duration(SpellDuration.concentracaoMais(1))
             .targeting(SpellTargeting.distancia(Range.ADJACENTE))
@@ -146,6 +156,12 @@ public enum TransporteSpell implements AuthoredSpell {
             .secondaryEffectDescription("Portal de Fuga: O Tempo de Conjuração desta magia muda para 2PA e a Duração "
                     + "para 1 Rodada. Ao invés do efeito padrão, o destino do portal passa a ser um local aleatório "
                     + "à até 3d6*1000 UD. Portal da Fuga não recebe os benefícios de Efeitos Críticos.")
+            .alternateEffect(SpellAlternateEffect.builder()
+                    .name("Portal de Fuga")
+                    .activationTime(ActivationTime.pa(2))
+                    .duration(SpellDuration.rodadas(1))
+                    .suppressesCriticalEffect(true)
+                    .build())
             .criticalEffectType(CriticalEffectType.POTENCIALIZAR)
             .duration(SpellDuration.rodadas(3))
             .targeting(SpellTargeting.PLANAR)
@@ -186,6 +202,7 @@ public enum TransporteSpell implements AuthoredSpell {
                     + "este local, caso contrário o portal levará à um local aleatório do Plano especificado.")
             .secondaryEffectDescription("Retorno à Tellus: Permite abrir um portal de volta para o plano material, "
                     + "este efeito pode ser gerado apenas quando estiver em um Plano Elemental.")
+            .alternateEffect(SpellAlternateEffect.named("Retorno à Tellus"))
             .criticalEffectType(CriticalEffectType.POTENCIALIZAR)
             .duration(SpellDuration.rodadas(2))
             .targeting(SpellTargeting.PLANAR)

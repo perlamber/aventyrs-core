@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class HomemFeraTest {
 
-    private final HomemFera licantropo = new HomemFera(HomemFera.EspiritoAnimal.LICANTROPO);
+    private final HomemFera licantropo = new HomemFera(HomemFera.EspiritoAnimal.LICANTROPO, HomemFera.Criacao.HUMANOS);
 
     @Test
     void generateEmptyCharacterLeavesTheDefaultZeroSizeCategory() {
@@ -46,7 +46,7 @@ class HomemFeraTest {
     void hasAFixedInstinctRacialBonusWhicheverSpiritManifested() {
         for (HomemFera.EspiritoAnimal espirito : HomemFera.EspiritoAnimal.values()) {
             assertEquals(Map.of(AttributeDomain.INSTINCT, 1),
-                    new HomemFera(espirito).getFixedAttributeBonuses());
+                    new HomemFera(espirito, HomemFera.Criacao.HUMANOS).getFixedAttributeBonuses());
         }
     }
 

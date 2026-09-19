@@ -17,7 +17,9 @@ import org.aventyrs.core.item.NaturalWeapon;
 import org.aventyrs.core.item.Weapon;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.race.RacialTraitSuppression;
+import org.aventyrs.core.scene.ProjectedAura;
 import org.aventyrs.core.scene.Range;
+import org.aventyrs.core.title.AventyrTitle;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.rest.RestType;
@@ -25,6 +27,7 @@ import org.aventyrs.core.rest.RestType;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.stream.Stream;
 import java.util.List;
@@ -134,6 +137,10 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     @Getter(AccessLevel.NONE)
     private final List<DelayedEgoGrant> scheduledEgoGrants = new ArrayList<>();
 
+    /** Already-mitigated damage landing at the start of this sheet's next Rodada — see {@link PostponedDamage}. */
+    @Getter(AccessLevel.NONE)
+    private final List<PostponedDamage> postponedDamage = new ArrayList<>();
+
     /**
      * Every once-per-game-session marker already claimed — see {@link #consumeOncePerSession}.
      * {@code transient} on purpose, and that is the whole session model: a session is this
@@ -168,6 +175,24 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
      */
     @Getter(AccessLevel.NONE)
     private final Map<ActiveAbility, RestType> restCooldowns = new java.util.IdentityHashMap<>();
+
+    /**
+     * Sources that have already affected this combatant and may not again until a Descanso of
+     * the recorded tier — the target-side twin of {@link #restCooldowns}, for "não afeta os
+     * mesmos personagens mais de uma vez, até que eles passem por um Descanso Longo". Keyed by
+     * the source object itself (an enum constant), and cleared by the same {@link
+     * #clearRestCooldowns}.
+     */
+    @Getter(AccessLevel.NONE)
+    private final Map<Object, RestType> restImmunities = new HashMap<>();
+
+    /**
+     * How many times each ability has been activated in the current Turn — see {@link
+     * #recordAbilityActivation}. Cleared by {@link #startTurn(int)}, which is what makes it a
+     * per-Turn count rather than a running total.
+     */
+    @Getter(AccessLevel.NONE)
+    private final Map<Object, Integer> activationsThisTurn = new HashMap<>();
 
     /** Every roll-action taken since this Rodada began — see {@link #recordAction}. */
     @Getter(AccessLevel.NONE)
@@ -283,6 +308,18 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     @Override
     public boolean stopBleeding() {
         return temporaryEffects.removeIf(effect -> effect instanceof Bleeding);
+    }
+
+    /**
+     * Registers already-mitigated damage to land at the next Rodada boundary; {@link
+     * #startNewRound()} delivers it. Doesn't touch Pontos de Vida itself, the same "register now,
+     * resolve at the boundary" shape {@link #scheduleTemporaryEgoPointGrant} has.
+     */
+    @Override
+    public void schedulePostponedDamage(final int amount, final CombatantSheet source) {
+        if (amount > 0) {
+            postponedDamage.add(new PostponedDamage(amount, source));
+        }
     }
 
     /**
@@ -781,6 +818,43 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     }
 
     /**
+     * Held Títulos first, then held Talentos — see {@link CombatantSheet#ignoresMinorCriticalEffects}.
+     * The Título half is Rodada-windowed and so needs a {@code sceneContext}; the Talento half is
+     * unconditional and answers either way, which is why a {@code null} context doesn't short-circuit
+     * the whole method.
+     */
+    @Override
+    public boolean ignoresMinorCriticalEffects(final SceneContext sceneContext) {
+        boolean withinTitleWindow = sceneContext != null && getCharacter().getAllTitles().stream()
+                .anyMatch(title -> sceneContext.isWithinFirstCombatRounds(title.resolveMinorCriticalImmunityRounds()));
+        return withinTitleWindow
+                || getCharacter().getFeats().stream().anyMatch(Feat::ignoresMinorCriticalEffects);
+    }
+
+    /**
+     * Santo's Título-Primário clause is the only Aura projected today — see {@link
+     * CombatantSheet#resolveProjectedAuras}.
+     *
+     * <p>Read off {@code Character#getPrimaryTitle()} specifically, not {@code getAllTitles()}:
+     * "Se este for seu Título Primário" is answered by which slot holds the instance, the
+     * structural fact {@code AventyrTitle}'s own javadoc insists on over a self-reported flag. A
+     * Santo in the Secundário or Terciário slot projects nothing.
+     */
+    @Override
+    public List<ProjectedAura> resolveProjectedAuras(final SceneContext ownContext) {
+        AventyrTitle primaryTitle = getCharacter().getPrimaryTitle();
+        if (primaryTitle == null) {
+            return List.of();
+        }
+        int allyBonus = primaryTitle.resolvePrimaryTitleAllyDefesasBonus(ownContext);
+        if (allyBonus == 0) {
+            return List.of();
+        }
+        return List.of(new ProjectedAura(ModifierType.DEFESAS, allyBonus, Range.ADJACENTE,
+                primaryTitle.getName()));
+    }
+
+    /**
      * Ends this combatant's Turn. Currently just advances its {@link TemporaryEffect}s by one
      * Rodada — each participant has one Turn per Rodada, so ticking once per Turn-end is exactly
      * "once per Rodada" from this sheet's perspective. Expected to grow as more per-Turn
@@ -810,6 +884,17 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         movementsTakenThisRound = 0;
         actionCountAtTurnStart = actionsThisRound.size();
         drewWeaponThisTurn = false;
+        activationsThisTurn.clear();
+    }
+
+    @Override
+    public void recordAbilityActivation(final Object source) {
+        activationsThisTurn.merge(source, 1, Integer::sum);
+    }
+
+    @Override
+    public int countActivationsThisTurn(final Object source) {
+        return activationsThisTurn.getOrDefault(source, 0);
     }
 
     /**
@@ -825,7 +910,25 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         actionCountAtTurnStart = 0;
         attacksSufferedThisRound = 0;
         applyScheduledEgoGrants();
+        applyPostponedDamage();
         tickCooldowns();
+    }
+
+    /**
+     * Delivers every {@link PostponedDamage} scheduled during the Rodada just ended, and clears
+     * them — the "perdidos apenas na Rodada seguinte" half of {@code Procrastinar Ferimento}.
+     * Private for the same reason {@link #applyScheduledEgoGrants} is: damage is registered
+     * through {@link #schedulePostponedDamage} and lands at the one Rodada boundary, never on
+     * demand.
+     *
+     * <p>Goes through {@link #applyDamage} rather than {@code DamageService}: the mitigation ran
+     * when the hit resolved, so this is the bare PV loss, and it fires no damage-taken reaction —
+     * that already fired at resolution.
+     */
+    private void applyPostponedDamage() {
+        List<PostponedDamage> due = List.copyOf(postponedDamage);
+        postponedDamage.clear();
+        due.forEach(damage -> applyDamage(damage.getAmount()));
     }
 
     /**
@@ -874,10 +977,25 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         return restCooldowns.containsKey(ability);
     }
 
+    @Override
+    public void markAffectedUntilRest(final Object source, final RestType restType) {
+        if (restType == null) {
+            restImmunities.remove(source);
+            return;
+        }
+        restImmunities.put(source, restType);
+    }
+
+    @Override
+    public boolean isAffectedUntilRest(final Object source) {
+        return restImmunities.containsKey(source);
+    }
+
     /** A Descanso frees everything waiting on its own tier or a weaker one. */
     @Override
     public void clearRestCooldowns(final RestType restType) {
         restCooldowns.values().removeIf(required -> restType.isAtLeast(required));
+        restImmunities.values().removeIf(required -> restType.isAtLeast(required));
     }
 
     /**

@@ -123,15 +123,18 @@ Improvement/Masterpiece layer) and are **stale**. The current shape:
   `resolveBonus`, `resolveDamageBaseIncrease`, `resolveDamageReduction`,
   `resolveDurationIncreaseInRounds`, `onFinalDamageTaken`, weight/hardness deltas).
   `ItemImprovement` / `ItemMasterpiece` are the per-copy wrappers holding creation-time choices
-  (`camadaDeReforco`, `bencaoElemental`, `magistral`, `sobMedida`).
+  (`camadaDeReforco`, `bencaoElemental`, `magistral`, `sobMedida`) — **defensive only**: the
+  offensive catalogs have no choice this core can read, so they are fitted bare.
 
-### Authored (7 of the 12 source subsections)
+### Authored (9 of the 12 source subsections)
 
 | source subsection | code | n | note |
 | --- | --- | --- | --- |
 | Armaduras | `ArmorItem` | 8 / 8 | the reference catalog; `ArmorItemTest` pins the count |
 | Obras-Primas Defensivas | `DefensiveMasterpiece` | 15 / 15 | `DefensiveMasterpieceTest` pins 15 |
 | Aprimoramentos de Obras-Primas Defensivas | `DefensiveImprovement` | 17 / 17 | `DefensiveImprovementTest` pins 17 |
+| Obras-Primas Ofensivas | `OffensiveMasterpiece` | 17 / 17 | fitted bare (no wrapper); `OffensiveMasterpieceTest` pins 17 |
+| Aprimoramentos de Obras-Primas Ofensivas | `OffensiveImprovement` | 18 / 18 | fitted bare; `OffensiveImprovementTest` pins 18 |
 | Tipos de Pedras do Poder | `PowerStoneType` | 17 / 17 | tri-modal (base + defensivo/ofensivo by host `ItemType`); `PowerStoneCatalogTest` pins the counts |
 | Qualidades de Pedra (Jolda/Joia/Relíquia/AEthernum) | `PowerStoneQuality` | 4 / 4 | Preço + Cargas/Resfriamento/Vinculação/Duração — authored-inert, no consumer |
 | Obras-Primas de Pedras do Poder | `PowerStoneMasterpiece` | 5 / 5 | charge-economy deltas folded by `PowerStone` |
@@ -139,8 +142,9 @@ Improvement/Masterpiece layer) and are **stale**. The current shape:
 
 **Pedras do Poder — what's live vs authored-inert.** A `PowerStone` is a per-copy fitted
 instance (`PowerStoneType` + `PowerStoneQuality` + optional masterpiece/improvement), socketed
-via `AbstractItem#setPowerStone`, which requires `DefensiveImprovement.ENCAIXE` fitted — so an
-armor/shield only until an offensive Encaixe exists. Its passive mode effects fold into the same
+via `AbstractItem#setPowerStone`, which requires an `ENCAIXE` Aprimoramento fitted — either
+`DefensiveImprovement.ENCAIXE` (armor/shield) or `OffensiveImprovement.ENCAIXE` (a weapon, the
+host that selects a stone's *Efeito Ofensivo* mode). Its passive mode effects fold into the same
 `Item` enhancement aggregation the Masterpiece/Improvement use (`resolvePowerStoneBonus`), so
 they reach `DefenseService`/`DamageService`/`MovementService`/`DamageBaseService` with no service
 change bar one: `MovementServiceImpl` gained the equipment `MOVEMENT` pass it lacked.
@@ -178,10 +182,6 @@ change bar one: `MovementServiceImpl` gained the equipment `MOVEMENT` pass it la
   have no `ItemCategory` (not a clean fit for `CLUB`/`GLOVES`).
 - **12 Equipamentos Naturais** — `ItemCategory.NATURAL_WEAPON` exists; `Arma de Sopro` (breath
   weapon, Cone area) and the five Defesas Naturais have no category.
-- **17 Obras-Primas Ofensivas + 18 Aprimoramentos Ofensivos** — no `OffensiveMasterpiece` /
-  `OffensiveImprovement`. `Masterpiece`/`Improvement` were built defensive-first; the offensive
-  halves are the obvious second consumer. `OffensiveImprovement.ENCAIXE` is also what would
-  unblock socketing a Pedra do Poder into a weapon.
 - **Equipamentos Tecnológicos** — stub in the source too.
 
 ### Mechanisms already built that an unwritten catalog would flow into
@@ -195,7 +195,11 @@ No wiring needed — these all scan `character.getEquipment()`:
   `resolveEnhancementBonus(DAMAGE_REDUCTION)` plus `resolveEnhancementDamageReduction` per
   equipped item.
 - **Dano Base scale-ups** — `DamageBaseServiceImpl` sums `resolveEnhancementDamageBaseIncrease`
-  (weapon-source).
+  (weapon-source). An **offensive** enhancement contributes only when the item scanned *is* the
+  weapon being swung ("Dano Base da *Arma*"); a defensive one contributes whatever is held. The
+  split lives in `Item#resolveEnhancementDamageBaseIncrease`, keyed on the host's `getType()`.
+- **Disarming** — `Weapon#isDisarmable()` reads `preventsDisarming()` on both enhancement halves;
+  `OffensiveImprovement.MANOPLA_DE_SEGURANCA` is its one consumer.
 - **Perícia roll bonus** — `AbstractSkillInteraction` sums
   `resolveEnhancementBonus(skillType.getRollBonusType(), skillType, …)`.
 - **Reações / Ações Livres** — `ReactionsServiceImpl` / `FreeActionsServiceImpl` sum
@@ -203,7 +207,9 @@ No wiring needed — these all scan `character.getEquipment()`:
 - **Movimento** — `MovementServiceImpl` sums `resolveEnhancementBonus(MOVEMENT)` per equipped
   item (added with the Pedra do Poder work — it was the one `resolveEnhancement*` consumer
   missing).
-- **Spell Duração** — `SpellDurationServiceImpl` sums `resolveEnhancementDurationIncreaseInRounds`.
+- **Spell Duração** — `SpellDurationServiceImpl` sums `resolveEnhancementDurationIncreaseInRounds`,
+  which folds the fitted Obra-Prima as well as the Aprimoramentos (`OffensiveMasterpiece.PODEROSA`).
+  Not host-scoped: a Magia is cast with no one weapon.
 - **Pedra do Poder** — folded into `resolveEnhancementBonus` /
   `resolveEnhancementDamageBaseIncrease` / `getEffectiveDefenseBonus` via
   `Item#resolvePowerStoneBonus(type)`, so all of the above pick it up.

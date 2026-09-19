@@ -37,6 +37,9 @@ public class DamageInteraction implements Interaction<CombatantSheet> {
     private Interaction<CombatantSheet> nextInteraction;
     private boolean halfDamage;
 
+    /** Whether this hit's PV loss lands at the next Rodada boundary — see {@link #postponing()}. */
+    private boolean postponed;
+
     public DamageInteraction() {
         this(new DamageServiceImpl());
     }
@@ -80,6 +83,27 @@ public class DamageInteraction implements Interaction<CombatantSheet> {
      */
     public DamageInteraction halvingDamage() {
         this.halfDamage = true;
+        return this;
+    }
+
+    /**
+     * Marks this hit's Pontos de Vida as lost at the start of the target's <b>next Rodada</b>
+     * rather than now — {@code VidaSpell#ALIVIAR_A_DOR}'s Efeito Alternativo <i>Procrastinar
+     * Ferimento</i>. A fluent setter for the same reason {@link #halvingDamage} is one: the chain
+     * is assembled up front, so anything its head needs to know must be attachable to it.
+     *
+     * <p><b>Deferred, not cancelled, and this distinction is load-bearing.</b> Everything except
+     * the PV loss happens on schedule: the mitigated figure is still reported as {@code
+     * resourceLossValue}, the damage-taken trigger still fires, and the chain is still forwarded.
+     * Zeroing the figure instead would trip this stage's own {@code finalDamage > 0} gate and
+     * silently swallow every Corrente and Efeito Crítico the hit triggered — not just the
+     * Sangramento that <i>Estancar</i> is meant to stop.
+     *
+     * <p>The damage is handed to {@link CombatantSheet#schedulePostponedDamage} already mitigated,
+     * so the Rodada boundary applies it raw and the target's RD is not charged twice.
+     */
+    public DamageInteraction postponing() {
+        this.postponed = true;
         return this;
     }
 
@@ -142,7 +166,13 @@ public class DamageInteraction implements Interaction<CombatantSheet> {
                                       final int rawDamage, final boolean ignoreDamageReduction,
                                       final Interaction<CombatantSheet> nextInteraction) {
         int finalDamage = damageService.calculateFinalDamage(target, sceneContext, damageType, source, rawDamage, ignoreDamageReduction, halfDamage);
-        target.applyDamage(finalDamage);
+        // Procrastinar Ferimento: the PV are lost at the next Rodada boundary instead of now. The
+        // figure below stays the honest one — everything but the loss itself happens on schedule.
+        if (postponed) {
+            target.schedulePostponedDamage(finalDamage, source);
+        } else {
+            target.applyDamage(finalDamage);
+        }
         // Mitigation and application are split here rather than run through
         // DamageService#applyDamage (see this method's javadoc), so the victim's own damage-taken
         // reactions have to be fired explicitly — this is the attack path, and skipping it would

@@ -44,6 +44,13 @@ public class IncomingAttackResult {
     private final int requiredTotal;
 
     /**
+     * The provoking-Aura malus already included in {@link #requiredTotal} (it lowers the GD, easing the defence) — {@code Skill#DISADVANTAGE_MALUS} when a
+     * bound attacker, having attacked the Aura's holder this Rodada, attacks someone else; 0
+     * otherwise. Reported so a UI can show where the difference came from.
+     */
+    private final int auraPenalty;
+
+    /**
      * {@link IncomingAttack#getDifficultyLevel()} after the defender's own {@code
      * difficultyReduction} made it easier — the tier {@link #requiredTotal} is derived from.
      */

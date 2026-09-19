@@ -6,6 +6,8 @@ import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.SizeCategory;
 import org.aventyrs.core.character.services.HitPointsService;
+import org.aventyrs.core.feat.FeatCategory;
+import org.aventyrs.core.feat.StartingFeatSlot;
 import org.aventyrs.core.magic.ElementalType;
 import org.aventyrs.core.sheet.DlcRuleset;
 import org.aventyrs.core.sheet.IllegalOperationException;
@@ -87,10 +89,7 @@ import static org.aventyrs.core.util.TranslatableMessages.INVALID_PARENT_RACE;
  *   maturidade) — same "no age/lifespan concept" gap as every other race; purely narrative
  *   today.</li>
  *   <li><b>2 Talentos adicionais</b> (entre {@code org.aventyrs.core.feat.FeatCategory#DRACONICO},
- *   {@code #MONSTRUOSO} and {@code #MESTICO}) — all three categories exist and the Talento catalog
- *   is real now, but {@link Race} has no hook to grant a {@code Feat} at creation ({@code
- *   FeatService#grantFeat} spends XP and validates prerequisites, which a free racial grant does
- *   neither of), same gap as every other race's free Talentos.</li>
+ *   {@code #MONSTRUOSO} and {@code #MESTICO}) — built: {@link #getStartingFeatSlots()}.</li>
  * </ul>
  *
  * <p>Tendência is deliberately left unconstrained, same treatment as every other race — the rules
@@ -209,5 +208,12 @@ public class NascidoDoDragao implements Race {
     @Override
     public List<SkillCompetencyAbility> getRacialAbilities() {
         return inheritedRacialAbilities;
+    }
+
+    @Override
+    public List<StartingFeatSlot> getStartingFeatSlots() {
+        return List.of(
+                StartingFeatSlot.race(FeatCategory.DRACONICO, FeatCategory.MONSTRUOSO, FeatCategory.MESTICO),
+                StartingFeatSlot.race(FeatCategory.DRACONICO, FeatCategory.MONSTRUOSO, FeatCategory.MESTICO));
     }
 }

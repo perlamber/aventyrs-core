@@ -2,6 +2,7 @@ package org.aventyrs.core.feat;
 
 import org.aventyrs.core.ability.ActiveAbility;
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.sheet.ActionCost;
 import org.aventyrs.core.sheet.FormType;
 import org.aventyrs.core.sheet.TemporaryEffect;
 
@@ -34,10 +35,10 @@ final class MetamorfoseSelvagemActiveAbility implements ActiveAbility {
         return BestialFeat.METAMORFOSE_SELVAGEM.getDescription();
     }
 
-    /** No Tempo de Ação is stated, so none is charged. */
+    /** No Tempo de Ação is stated, so none is charged — read as an Ação Livre. */
     @Override
-    public int getActionPointCost() {
-        return 0;
+    public ActionCost getActionPointCost() {
+        return ActionCost.FREE_ACTION;
     }
 
     @Override

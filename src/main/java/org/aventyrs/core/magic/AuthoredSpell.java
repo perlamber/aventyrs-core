@@ -114,6 +114,17 @@ public interface AuthoredSpell extends Spell {
         return getData().getSecondaryEffectDescription();
     }
 
+    /**
+     * Wraps this Magia's authored {@link SpellAlternateEffect} into an {@link
+     * AlternateSpellVersion}. A new instance per call, like every other derived view here — it
+     * holds no state of its own, only this Magia and its delta.
+     */
+    @Override
+    default Optional<Spell> getAlternateVersion() {
+        return Optional.ofNullable(getData().getAlternateEffect())
+                .map(alternate -> new AlternateSpellVersion(this, alternate));
+    }
+
     @Override
     default String getEffectChainDescription() {
         return getData().getEffectChainDescription();

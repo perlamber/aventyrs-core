@@ -37,6 +37,13 @@ public class DeliveredAttackResult {
     private final int requiredTotal;
 
     /**
+     * The provoking-Aura malus already included in {@link #attackTotal}, and so in every additional target's comparison too — {@code Skill#DISADVANTAGE_MALUS} when a
+     * bound attacker, having attacked the Aura's holder this Rodada, attacks someone else; 0
+     * otherwise. Reported so a UI can show where the difference came from.
+     */
+    private final int auraPenalty;
+
+    /**
      * By how much the attack beat the Defesa — {@code attackTotal - requiredTotal}, so zero or
      * positive on a hit. What {@link #effectChainTriggered} is judged against. {@code null}
      * without an {@code attackRoll}.

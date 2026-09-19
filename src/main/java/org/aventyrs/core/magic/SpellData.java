@@ -97,6 +97,18 @@ public class SpellData {
     /** {@code Efeito Alternativo – ‹name›:}, or {@code null}. */
     private final String secondaryEffectDescription;
 
+    /**
+     * The structured half of {@link #secondaryEffectDescription} — the descriptor columns this
+     * Magia's second version <em>overrides</em>, and the effect columns it carries. {@code null}
+     * for a Magia with no {@code Efeito Alternativo} at all.
+     *
+     * <p>Paired with the prose above rather than replacing it: the prose stays the verbatim
+     * transcription (and is what {@link AlternateSpellVersion} reports as the alternate's own
+     * {@code Efeito:}), while this holds only what maps to a real type. See {@link
+     * SpellAlternateEffect}.
+     */
+    private final SpellAlternateEffect alternateEffect;
+
     /** {@code Corrente de Efeitos – ‹name›:}, or {@code null}. */
     private final String effectChainDescription;
 

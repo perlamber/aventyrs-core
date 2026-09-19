@@ -6,6 +6,8 @@ import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.AttributeValue;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterAttributes;
+import org.aventyrs.core.character.DamageBonusBreakdown;
+import org.aventyrs.core.character.DamageContributionSource;
 import org.aventyrs.core.character.DamageType;
 import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.modifier.ModifierType;
@@ -60,6 +62,52 @@ class MeleeStrengthDamageTest {
     /** An attack already taken this Rodada, which is what spends DESTRUIDOR_DE_MUROS's upgrade. */
     private static void recordAnAttack(final CharacterSheet sheet, final SkillType skill) {
         sheet.recordAction(new CombatantAction(skill, AttributeDomain.STRENGTH, null, null, 0, null));
+    }
+
+    private static InteractionResult meleeResult(final CharacterSheet roller) {
+        return new AtaqueCorpoACorpoInteraction().applyTo(roller, null, null);
+    }
+
+    // ---------- the breakdown names the term ----------
+
+    /** The whole point of {@link DamageBonusBreakdown}: the half-Força term is visible as its own
+     * named part, not merely folded into a total nothing can explain. */
+    @Test
+    void theBreakdownNamesTheHalfForcaTerm() {
+        InteractionResult result = meleeResult(brawler(6));
+
+        assertEquals(3, result.getDamageBonusBreakdown().valueOf(DamageContributionSource.MEIA_FORCA));
+        assertEquals(1, result.getDamageBonusBreakdown().contributions().size(), "nothing else contributed");
+    }
+
+    /** The invariant the two are built together to keep. */
+    @Test
+    void theBreakdownAlwaysSumsToTheBonusItExplains() {
+        CharacterSheet roller = brawler(6);
+        roller.grantTemporaryBonus(ModifierType.DAMAGE_ROLL_BONUS, 2, 1);
+        InteractionResult result = meleeResult(roller);
+
+        assertEquals(result.getDamageBonus().getValue(), result.getDamageBonusBreakdown().total());
+        assertEquals(3, result.getDamageBonusBreakdown().valueOf(DamageContributionSource.MEIA_FORCA));
+        assertEquals(2, result.getDamageBonusBreakdown().valueOf(DamageContributionSource.TEMPORARY_BONUS));
+    }
+
+    @Test
+    void destruidorDeMurosIsNamedAtItsFullForca() {
+        assertEquals(6, meleeResult(brawler(6, StrengthAbility.DESTRUIDOR_DE_MUROS))
+                .getDamageBonusBreakdown().valueOf(DamageContributionSource.MEIA_FORCA));
+    }
+
+    /** No bonus at all means no breakdown either — the same "nothing to report" contract. */
+    @Test
+    void forcaZeroReportsNoBreakdownEither() {
+        assertNull(meleeResult(brawler(0)).getDamageBonusBreakdown());
+    }
+
+    @Test
+    void aRangedAttackNamesNoForcaPart() {
+        assertNull(new AtaqueADistanciaInteraction().applyTo(brawler(6), null, null)
+                .getDamageBonusBreakdown());
     }
 
     // ---------- the base half-Força term ----------

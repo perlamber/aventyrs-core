@@ -806,7 +806,7 @@ class RacialFeatEffectIntegrationTest {
     }
 
     private static Character homemFeraWithTitle() {
-        Character character = character().race(new HomemFera(HomemFera.EspiritoAnimal.LICANTROPO))
+        Character character = character().race(new HomemFera(HomemFera.EspiritoAnimal.LICANTROPO, HomemFera.Criacao.HUMANOS))
                 .attributes(CharacterAttributes.builder()
                         .strength(AttributeValue.builder().domain(AttributeDomain.STRENGTH).base(3).build())
                         .dexterity(AttributeValue.builder().domain(AttributeDomain.DEXTERITY).base(3).build())
@@ -1112,7 +1112,9 @@ class RacialFeatEffectIntegrationTest {
                 .build();
         elfo.grantTitle(new Santo(List.of(), List.of()), TitleSlot.PRIMARY);
         CharacterSheet sheet = CharacterSheet.of(elfo, new Player());
-        SkillRoll twoFours = new SkillRoll(List.of(4, 4, 1));
+        // A total of 15 — two números below the default margin of 17, which is what one Título
+        // Desperto's +2 buys.
+        SkillRoll twoFours = new SkillRoll(List.of(6, 5, 4));
 
         acquire(elfo, ElficoFeat.SENTIDOS_ABSOLUTOS);
 
@@ -1248,6 +1250,7 @@ class RacialFeatEffectIntegrationTest {
         @Override public List<AventyrTitleSpecialization> getSpecializations() { return List.of(); }
         @Override public List<AventyrTitleAbility> getAbilities() { return List.of(); }
         @Override public void grantAbility(final AventyrTitleAbility ability) { }
+        @Override public void grantSpecialization(final AventyrTitleSpecialization specialization) { }
     }
 
     private static Character anaoBrutoWithVigor(final int vigorBase) {
@@ -1355,14 +1358,14 @@ class RacialFeatEffectIntegrationTest {
     /**
      * The Margem Crítica half is stricter than the Vantagem half — "maiores que você", not
      * merely "não menor" — so an equal-sized target gets the roll bonus but not the widened
-     * margin. Two 5s only read as a critical once the margin is widened by 2.
+     * margin. A total of 15 only reads as a critical once the margin is widened by 2 (17 → 15).
      */
     @Test
     void gloriaYmirianaWidensTheCriticalMarginOnlyAgainstLargerTargets() throws IllegalOperationException {
         Character anao = anaoBrutoWithVigor(4);
         CharacterSheet self = CharacterSheet.of(anao, new Player());
         acquire(anao, AnaoFeat.GLORIA_YMIRIANA);
-        SkillRoll twoFives = new SkillRoll(List.of(5, 5, 1));
+        SkillRoll twoFives = new SkillRoll(List.of(6, 5, 4));
 
         assertEquals(CriticalResult.ACERTO_CRITICO_MENOR,
                 SkillType.ATAQUE_CORPO_A_CORPO.newInteraction()

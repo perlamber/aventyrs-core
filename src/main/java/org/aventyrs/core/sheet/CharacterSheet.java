@@ -114,6 +114,35 @@ public class CharacterSheet extends AbstractCombatantSheet {
         return famaNegativa += amount;
     }
 
+    // --- Fim de sessão ------------------------------------------------------------------------
+
+    /**
+     * Grants everything this character was owed "ao fim da sessão" — every {@link
+     * PendingAcquisition} a held Talento reports through {@code
+     * Feat#resolveSessionEndAcquisitions}, such as {@code DestinoFeat#DESPERTAR_ANTECIPADO}'s
+     * Título Primário.
+     *
+     * <p><b>The caller calls this when a session ends</b>, once per participant — after {@code
+     * Campaign#endSession}, which knows participants only by id and so cannot call it. Only
+     * the caller knows a session ended; this core stores no session state.
+     *
+     * <p>Safe to call again: an acquisition stops being reported once granted, so a repeated call
+     * grants only what is still owed. The list of owed acquisitions is taken before any is granted.
+     * They are granted in order, and one that throws stops the rest, but those already granted
+     * stay granted.
+     *
+     * @return the acquisitions granted by this call, in order — empty when nothing was owed
+     * @throws IllegalOperationException if an owed acquisition can no longer be granted
+     */
+    public List<PendingAcquisition> applySessionEndAcquisitions() throws IllegalOperationException {
+        Character character = getCharacter();
+        List<PendingAcquisition> owed = character.getFeats().stream()
+                .flatMap(feat -> feat.resolveSessionEndAcquisitions(character).stream())
+                .toList();
+        owed.forEach(acquisition -> acquisition.acquire(this));
+        return owed;
+    }
+
     // --- Equipamento: quantos Itens de cada tipo um personagem pode usar de uma vez -----------
 
     /**

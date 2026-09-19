@@ -2,7 +2,17 @@ package org.aventyrs.core.feat;
 
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.character.Deity;
 import org.aventyrs.core.character.TitleSlot;
+import org.aventyrs.core.magic.ElementalType;
+import org.aventyrs.core.magic.MagicType;
+import org.aventyrs.core.magic.Spell;
+import org.aventyrs.core.magic.SpellTree;
+import org.aventyrs.core.rest.RestType;
+import org.aventyrs.core.sheet.CombatantAction;
+import org.aventyrs.core.title.AventyrTitle;
+
+import java.util.List;
 
 /**
  * Talentos de Destino — what a character is, rather than what they can do: how enemies read
@@ -11,15 +21,17 @@ import org.aventyrs.core.character.TitleSlot;
  * <p>Two blockers dominate — one of them now half-lifted. The first is <b>granting another
  * trait</b>: five constants here hand out a Habilidade de Atributo, a Vantagem de Ego, or another
  * Talento outright. The three that grant a <b>Habilidade de Atributo</b> are real now, through
- * {@link HabilidadeDeAtributoEscolhidaFeat}. The other two are not: a Vantagem de Ego is chosen
- * once at character creation and never awarded later, and "treat me as holding another Talento"
- * has no expression at all.
+ * {@link HabilidadeDeAtributoEscolhidaFeat}. {@link #EXCEPCIONALIDADE}'s Talento Racial is real
+ * too, through {@link ExcepcionalidadeFeat}, which grants the chosen Talento whole. Only {@link
+ * #AUTOCONHECIMENTO} is not: a Vantagem de Ego is chosen once at character creation and never
+ * awarded later.
  *
  * <p>The second is the <b>Despertar timeline</b>. Half the Aventyr-tier constants here delay,
  * accelerate, or forgo awakening a Título, and trade on <i>when</i> one awakens. This core models
- * a Título as simply held or not (see {@code FeatRequirements#requiredAwakenedTitles}); there is
- * no EXP threshold at which one awakens, and no game session for "ao fim da primeira sessão" to
- * name.
+ * a Título as simply held or not (see {@code FeatRequirements#requiredAwakenedTitles}), and there
+ * is no EXP threshold at which one awakens. A session end is the one moment that exists: {@link
+ * #DESPERTAR_ANTECIPADO} awakens its Título then, through {@code
+ * CharacterSheet#applySessionEndAcquisitions}.
  *
  * <p><b>Counting the un-awakened ones is <i>not</i> part of that gap</b>, and used to be filed
  * under it by mistake. A Character has exactly three {@link TitleSlot}s, so "cada Título ainda não
@@ -33,9 +45,14 @@ public enum DestinoFeat implements Feat {
      * "Sua força de vontade permitiu desenvolver-se mais que a maioria, seu multiplicador de PD
      * aumenta em +1."
      *
-     * <p><b>The multiplier half is real</b>, through {@link
+     * <p><b>Both halves are real.</b> The multiplier, through {@link
      * Feat#resolveDeterminationMultiplierIncrease} — an unconditional, permanent uplift consumed
-     * by {@code DeterminationPointsService}. That hook was added for this constant.
+     * by {@code DeterminationPointsService}. The Descanso recovery, through {@link
+     * Feat#resolveRestDeterminationPointsBonus}, summed by {@code
+     * RestService#getRecoveredDeterminationPoints}: "a cada Descanso" is every Descanso whatever
+     * its type, and a Título Aventyr is "Desperto" simply by being held — the same reading {@code
+     * MetamagicoFeat#MENTE_EXPANDIDA}'s identical PM clause takes. Both hooks were added for this
+     * constant.
      *
      * <p>The rules text names this Talento "Coração de Ferro", the same as the unrelated {@code
      * DuelistaFeat#CORACAO_DE_FERRO} in another tree. The constant here is suffixed {@code
@@ -45,9 +62,6 @@ public enum DestinoFeat implements Feat {
      * load back as whichever a reader indexes first. Display text comes from {@link
      * #getDescription()}, never from the constant name, so the suffix is invisible to a player.
      */
-    // TODO: the Descanso recovery half needs a PD equivalent of resolveRestMagicPointsBonus —
-    //  RestService recovers PD but scans no Talento hook for it. The figure itself is computable
-    //  (2 + getAllTitles().size()).
     CORACAO_DE_FERRO_DO_DESTINO(
             "Sua força de vontade permitiu desenvolver-se mais que a maioria, seu multiplicador de "
                     + "PD aumenta em +1. Sua recuperação de PD também aumenta, a cada Descanso "
@@ -57,6 +71,11 @@ public enum DestinoFeat implements Feat {
         @Override
         public int resolveDeterminationMultiplierIncrease(final Character character) {
             return 1;
+        }
+
+        @Override
+        public int resolveRestDeterminationPointsBonus(final RestType restType, final Character character) {
+            return BASE_REST_DETERMINATION_RECOVERY + character.getAllTitles().size();
         }
     },
 
@@ -158,8 +177,12 @@ public enum DestinoFeat implements Feat {
                     .build()),
 
     /** "Escolha um Talento Racial que você cumpra todos os demais requisitos, além da Raça." */
-    // TODO: grants another Talento's benefits without granting the Talento — nothing expresses
-    //  "treat me as holding X", and the racial trees are not yet authored.
+    // Real, through ExcepcionalidadeFeat — the acquired form recording the chosen Talento Racial
+    // and granting it whole via Feat#getGrantedFeats, so it is held for effects and prerequisites
+    // alike. "Além da Raça" is Feat#isEligibleRegardlessOfRace.
+    // "só pode ser adquirido por personagens que passem longos períodos de convivência com
+    //  … membros da raça de referência" is a backstory condition — nothing records a character's
+    //  upbringing, so it is left to the Narrador.
     EXCEPCIONALIDADE(
             "Escolha um Talento Racial que você cumpra todos os demais requisitos, além da Raça. "
                     + "Você recebe os benefícios do Talento escolhido. Este Talento só pode ser "
@@ -169,23 +192,57 @@ public enum DestinoFeat implements Feat {
                     .requiredAwakenedTitles(1)
                     .requiredFeatCategory(FeatCategory.DESTINO)
                     .requiredFeatCategoryCount(2)
-                    .build()),
+                    .build()) {
+        /** "Escolha um Talento Racial" — see ExcepcionalidadeFeat#optionsFor. */
+        @Override
+        public List<FeatChoice<?>> resolveRequiredChoices(final Character holder) {
+            return List.of(FeatChoice.ofOne(Feat.class, ExcepcionalidadeFeat.optionsFor(holder)));
+        }
+    },
 
     /**
-     * "A GD para Conjurar suas Magias Naturais é reduzida em -1 Nível."
+     * "A GD para Conjurar suas Magias Naturais é reduzida em -1 Nível. Se você tiver pelo menos 1
+     * Título Aventyr Desperto, o Tempo de Conjuração da primeira Magia Natural que conjurar em
+     * Rodadas Ímpares é reduzido em -1PA."
+     *
+     * <p><b>Both halves are real, as report-only figures on {@code SpellCastingResult}</b> — the
+     * eased GD da Conjuração through {@link Feat#resolveCastingDifficultyReduction}, and the
+     * reduced Tempo de Ativação through {@link Feat#resolveCastingActionPointReduction}. Nothing
+     * compares a roll against the GD or spends the PA, exactly as for every other cast figure.
      */
-    // TODO: Feat#resolveDifficultyReduction is real, but it is summed by
-    //  AbstractSkillInteraction on a Perícia roll — a Conjuração GD is a different question, and
-    //  SpellCastingService does not resolve either roll's target GD at all yet.
-    // TODO: scoped to Magias of one MagicType — note the enum's NATURAL constant is itself in
-    //  question (see CLAUDE.md's MagiaAlternativaAbility warning).
-    // TODO: its Pré-requisito names 'Escolhido de Gaea', a Talento de Devoção, which is excluded
-    //  from this catalog — so it is left unset and this is wrongly open.
+    // "Magias Naturais" takes both of the source document's uses of Natural — a tree tagged
+    // MagicType.NATURAL (Aliados da Natureza, Polimorfismo, Vida) or an Elemental: Natural one
+    // (none authored) — since MagicType itself declines to pick a side.
+    // "Rodadas Ímpares" counts from 1, as the table does — the first, third, fifth Rodada — which
+    // is Scene#getCurrentRound() 0, 2, 4, that counter being 0-based.
+    // "A primeira Magia Natural" reads the caster's per-Rodada action log, so an earlier cast
+    // counts only once the caller filed its SpellCastingResult#getRecordedAction().
+    // TODO: its Pré-requisito is 'Escolhido de Gaea', a Talento de Devoção, excluded from this
+    //  catalog (no Adepto/Fiel/Fundamentalista tier exists). That Talento's own Pré-requisito,
+    //  Devoto de Gaea, is enforced in its place — looser than the text, never stricter.
     ARCANISMO_DRUIDICO(
             "A GD para Conjurar suas Magias Naturais é reduzida em -1 Nível. Se você tiver pelo "
                     + "menos 1 Título Aventyr Desperto, o Tempo de Conjuração da primeira Magia "
                     + "Natural que conjurar em Rodadas Ímpares é reduzido em -1PA.",
-            FeatRequirements.builder().build()),
+            FeatRequirements.builder()
+                    .requiredDeity(Deity.GAEA)
+                    .build()) {
+        @Override
+        public int resolveCastingDifficultyReduction(final Spell spell, final Character character) {
+            return isMagiaNatural(spell) ? 1 : 0;
+        }
+
+        @Override
+        public int resolveCastingActionPointReduction(final Spell spell, final Character character,
+                                                      final int currentRound,
+                                                      final List<CombatantAction> actionsThisRound) {
+            boolean oddRodada = currentRound % 2 == 0;
+            boolean firstNaturalOfRodada = actionsThisRound.stream()
+                    .noneMatch(action -> action.attackSource() instanceof Spell cast && isMagiaNatural(cast));
+            return !character.getAllTitles().isEmpty() && isMagiaNatural(spell) && oddRodada
+                    && firstNaturalOfRodada ? 1 : 0;
+        }
+    },
 
     /**
      * "Escolha uma Perícia, você recebe os benefícios de Favoritismo da Perícia quando efetuada em
@@ -300,14 +357,30 @@ public enum DestinoFeat implements Feat {
                     .requiredAwakenedTitles(1)
                     .build()),
 
-    /** "Seu personagem desperta seu Título Primário ao fim da primeira sessão de Jogo." */
-    // TODO: needs both the Despertar timeline and a game-session concept — the gap catalog
-    //  records that no session state exists, only a consumer-triggered recovery call.
-    // TODO: "Apenas personagens recém-criados" is a creation-time-only restriction with no
-    //  representation.
+    /**
+     * "Seu personagem desperta seu Título Primário ao fim da primeira sessão de Jogo." Pré-requisito:
+     * "Apenas personagens recém-criados".
+     *
+     * <p><b>Real.</b> The player picks the Título when taking the Talento ({@link
+     * DespertarAntecipadoFeat}, offered by {@link #resolveRequiredChoices}), and {@code
+     * CharacterSheet#applySessionEndAcquisitions} awakens it into the Título Primário slot when
+     * the session ends. "Recém-criados" is {@link #isAcquirableOnlyAtCreation()}: only a starting
+     * Talento slot can take it.
+     */
     DESPERTAR_ANTECIPADO(
             "Seu personagem desperta seu Título Primário ao fim da primeira sessão de Jogo.",
-            FeatRequirements.builder().build()),
+            FeatRequirements.builder().build()) {
+        /** "seu Título Primário" — which one; see DespertarAntecipadoFeat#optionsFor. */
+        @Override
+        public List<FeatChoice<?>> resolveRequiredChoices(final Character holder) {
+            return List.of(FeatChoice.ofOne(AventyrTitle.class, DespertarAntecipadoFeat.optionsFor(holder)));
+        }
+
+        @Override
+        public boolean isAcquirableOnlyAtCreation() {
+            return true;
+        }
+    },
 
     /** "Você desperta seu Título Secundário ao atingir a marca de 23EXP." */
     // TODO: same missing Despertar timeline; and the EXP threshold is a CharacterSheet value
@@ -318,6 +391,9 @@ public enum DestinoFeat implements Feat {
                     .requiredFeat(DESPERTAR_ANTECIPADO)
                     .build());
 
+    /** CORACAO_DE_FERRO_DO_DESTINO's flat "+2PD" per Descanso, before the per-Título term. */
+    private static final int BASE_REST_DETERMINATION_RECOVERY = 2;
+
     /**
      * Títulos Aventyr this character has <b>not</b> awakened — the three {@link TitleSlot}s minus
      * the filled ones. What {@link #ABDICADOR}'s "para cada Título ainda não Desperto" multiplies
@@ -325,6 +401,16 @@ public enum DestinoFeat implements Feat {
      */
     private static int unawakenedTitles(final Character character) {
         return TitleSlot.values().length - character.getAllTitles().size();
+    }
+
+    /**
+     * Whether spell is a "Magia Natural" for {@link #ARCANISMO_DRUIDICO} — its tree carries {@link
+     * MagicType#NATURAL} as either half of its tag, or is {@code Elemental: Natural}.
+     */
+    private static boolean isMagiaNatural(final Spell spell) {
+        SpellTree tree = spell.getTree();
+        return tree != null && (tree.hasMagicType(MagicType.NATURAL)
+                || tree.getElementalType().filter(ElementalType.NATURAL::equals).isPresent());
     }
 
     private final String description;

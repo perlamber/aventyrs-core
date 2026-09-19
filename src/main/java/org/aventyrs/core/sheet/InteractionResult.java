@@ -26,6 +26,20 @@ public class InteractionResult {
     Interactable nextInteractable;
     CharacterStatus resultStatus;
 
+    /**
+     * Who becomes the target of the attack that triggered this activation, in place of whoever it
+     * was aimed at — {@code null} for everything that is not an interception, which is everything
+     * but {@code SantoAbility#GUARDA_VIDAS} today.
+     *
+     * <p>Reported, not applied, and it has nothing to apply to yet: this is a Reação taken
+     * <b>before the defender rolls</b>, so the caller has not built its {@code
+     * IncomingAttack}/{@code DeliveredAttack} at this point and simply names this combatant as the
+     * defender when it does. {@code AttackDelivery}/{@code AttackReceiver} are untouched by
+     * interception and never learn a Reação occurred — the attack they resolve is an ordinary one
+     * against this sheet.
+     */
+    CombatantSheet redirectedAttackTarget;
+
     /** The Perícia roll bonus computed by a skill-test Interaction (e.g. AttentionInteraction). */
     Integer skillRollBonus;
 
@@ -127,6 +141,29 @@ public class InteractionResult {
     DamageBonus damageBonus;
 
     /**
+     * What this roll's Acerto Crítico adds to the dano roll it is about to deliver — the baseline
+     * Vantagem em Danos plus whatever the roller's Talentos and the wielded weapon's enhancements
+     * grant (see {@link org.aventyrs.core.character.CriticalDamage}). {@code null} on every roll
+     * that was not a critical success, and on one whose sources happened to grant nothing at all,
+     * same stays-{@code null}-when-not-applicable convention as every other field here.
+     *
+     * <p><b>Separate from {@link #damageBonus}, and never double-counted into it</b>: a caller
+     * rolls {@code extraDice} further d6, adds {@code flatBonus}, and adds the {@code damageBonus}
+     * exactly once on top. A granted die could not live in a {@code DamageBonus} anyway — that is
+     * a flat number.
+     */
+    org.aventyrs.core.character.CriticalDamage criticalDamage;
+
+    /**
+     * The named parts {@link #damageBonus} is made of — {@code null} exactly when that is, and
+     * always summing to it (see {@link org.aventyrs.core.character.DamageBonusBreakdown}'s
+     * invariant). Carried so a caller can <em>explain</em> the bonus — "half your Força +2, an
+     * Investida +2" — rather than showing one figure whose provenance nothing can recover. Nothing
+     * in this core reads it: it exists for the UI and API layers that report a dano roll.
+     */
+    org.aventyrs.core.character.DamageBonusBreakdown damageBonusBreakdown;
+
+    /**
      * The amount of {@link #resourceLossType} this Interaction drained — e.g. a {@code
      * org.aventyrs.core.effect.DamageInteraction}'s post-mitigation Hit Point damage (see
      * {@code org.aventyrs.core.character.services.DamageService#calculateFinalDamage}),
@@ -140,6 +177,15 @@ public class InteractionResult {
 
     /** Which {@link ResourceType} {@link #resourceLossValue} was lost from. */
     ResourceType resourceLossType;
+
+    /**
+     * PD the <i>activator</i> paid for this Interaction — set by {@code
+     * org.aventyrs.core.title.AbstractTitleAbilityInteraction#activate}, {@code null} for every
+     * Interaction that isn't a paid Título activation. Kept apart from {@link #resourceLossValue},
+     * which describes the Interaction's <i>target</i>: a touch ability heals one combatant while
+     * another pays for it.
+     */
+    Integer determinationPointsSpent;
 
     /**
      * The amount of {@link #resourceGainType} this Interaction restored — e.g. {@code

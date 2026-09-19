@@ -8,19 +8,23 @@ package org.aventyrs.core.skill;
  * not a Falha Crítica Menor; this was a real bug in an earlier version of {@link
  * SkillRoll#getCriticalResult()}, which checked only "two dice show 1", fixed by checking the
  * roll's total instead). Symmetrically, three 6s is an Acerto Crítico Maior — but Acerto
- * Crítico Menor is *not* fixed at "6+6+5" the way Falha Crítica Menor is fixed at 1+1+2:
- * abilities like {@code AtaqueCorpoACorpoCompetencyAbility#ATAQUE_PRECISO} widen its margin
- * (e.g. 5s counting alongside 6s), so {@link SkillRoll#getCriticalResult(int)} takes the
- * combined widening as a parameter instead of using a fixed threshold — see that method's own
- * javadoc for how the two matching dice are found once the required face value is lowered.
- * That widening has several real sources now: {@code ATAQUE_PRECISO} itself, {@link
+ * Crítico Menor is *not* fixed at one combination the way Falha Crítica Menor is fixed at
+ * 1+1+2: it is a <b>Margem Crítica Menor</b>, the 3d6 total a roll has to reach — the number
+ * the Armas table prints beside each weapon's Efeito Crítico ({@code Sangramento (17)}, a
+ * Florete's {@code (16)}) — and an ability widens it by lowering that total, so {@link
+ * SkillRoll#getCriticalResult(int, int)} takes the weapon's own margin and the combined
+ * widening as its two parameters. That widening has several real sources: {@code
+ * AtaqueCorpoACorpoCompetencyAbility#ATAQUE_PRECISO}, {@link
  * org.aventyrs.core.ability.DexterityAbility#LETALIDADE_PROGRESSIVA}, {@link
- * org.aventyrs.core.ego.SorteAdvantage#ACE}, and {@code
- * org.aventyrs.core.skill.artes.ArtesAprimorarComArteAbility}'s "Margem Crítica Menor" branch.
+ * org.aventyrs.core.ego.SorteAdvantage#ACE}, {@code
+ * org.aventyrs.core.skill.artes.ArtesAprimorarComArteAbility}'s "Margem Crítica Menor" branch,
+ * and the wielded weapon's own Obras-Primas ({@code OffensiveMasterpiece#DECISIVA}/{@code
+ * #MITRAL}).
  *
- * <p>Abilities like {@code ATAQUE_PRECISO} above are also expected to eventually widen which
- * face values count toward a Menor result on the *dano* side, not just this roll's own
- * critical detection — nothing consumes that half yet.
+ * <p>What a critical success adds to the <em>dano</em> roll is {@link
+ * org.aventyrs.core.character.CriticalDamage} — the baseline Vantagem em Danos plus whatever
+ * the attacker's Talentos and the weapon's Aprimoramentos grant, summed alongside the {@code
+ * DamageBonus} rather than folded into it.
  */
 public enum CriticalResult {
     NONE,
@@ -48,5 +52,22 @@ public enum CriticalResult {
      */
     public boolean isCriticalFailure() {
         return this == FALHA_CRITICA_MENOR || this == FALHA_CRITICA_MAIOR;
+    }
+
+    /**
+     * Whether this is a <b>Menor</b> critical rather than a Maior one — the other axis this enum
+     * carries, crossing {@link #isCriticalSuccess()}/{@link #isCriticalFailure()} rather than
+     * refining either. An "Efeito Crítico Menor" is one a Menor critical inflicted, and that can
+     * arrive from either direction: an {@link #ACERTO_CRITICO_MENOR} on the attacker's roll
+     * ({@code AttackDelivery}), or a {@link #FALHA_CRITICA_MENOR} on the defender's own
+     * ({@code AttackReceiver}). Both are covered here, which is what lets one filter serve both
+     * halves of an exchange.
+     *
+     * <p>Read by {@code CriticalEffect#applicableTo} for the clauses keyed on severity rather than
+     * on which effect landed — {@code MonstruosoFeat#ANATOMIA_UNICA}'s "imune a Efeitos Críticos
+     * Menores" and Santo's Despertar.
+     */
+    public boolean isMinor() {
+        return this == ACERTO_CRITICO_MENOR || this == FALHA_CRITICA_MENOR;
     }
 }

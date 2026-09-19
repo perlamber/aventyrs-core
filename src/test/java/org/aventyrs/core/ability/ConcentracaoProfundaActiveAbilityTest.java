@@ -11,6 +11,7 @@ import org.aventyrs.core.race.Human;
 import org.aventyrs.core.sheet.Player;
 import org.aventyrs.core.sheet.TemporaryBonus;
 import org.aventyrs.core.sheet.TemporaryEffect;
+import org.aventyrs.core.sheet.ActionCost;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -23,7 +24,7 @@ class ConcentracaoProfundaActiveAbilityTest {
 
     @Test
     void costsOnePontoDeAcao() {
-        assertEquals(1, ability.getActionPointCost());
+        assertEquals(ActionCost.ofActionPoints(1), ability.getActionPointCost());
     }
 
     @Test
