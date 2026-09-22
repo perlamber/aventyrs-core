@@ -3,6 +3,7 @@ package org.aventyrs.core.title.santo;
 import org.aventyrs.core.character.services.DeterminationPointsService;
 import org.aventyrs.core.character.services.DeterminationPointsServiceImpl;
 import org.aventyrs.core.modifier.ModifierType;
+import org.aventyrs.core.scene.Range;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.character.services.HitPointsService;
 import org.aventyrs.core.character.services.HitPointsServiceImpl;
@@ -37,6 +38,14 @@ public class GritoDeGuerraVulcanoInteraction extends AbstractTitleAbilityInterac
 
     private static final int VANTAGEM_ROUNDS = 2;
     private static final int DEFESAS_BONUS = 3;
+
+    /**
+     * "a você e seus aliados adjacentes" — the radius a caller sweeps for this ability's own
+     * {@link TargetScope#SELF_AND_ALLIES} Blessings, published for the same reason {@code
+     * GloriaRelampejanteDeTeslaInteraction#ALLY_RANGE} is: this core resolves no recipients, so the
+     * figure a caller needs must come from here rather than be retyped client-side and drift.
+     */
+    public static final Range ALLY_RANGE = Range.ADJACENTE;
 
     private final HitPointsService hitPointsService;
 

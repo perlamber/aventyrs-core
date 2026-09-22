@@ -103,6 +103,43 @@ class ActiveAuraTest {
         assertFalse(farFoe.isAffectedUntilRest(SOURCE));
     }
 
+    /**
+     * A budget spends itself on the <b>nearest</b> foes, not on whoever rolled initiative first.
+     *
+     * <p>"2PD para 1 único inimigo, então de +1PD para cada inimigo alvo adicional" means an Aura
+     * routinely cannot catch everyone standing in its radius, and then the order decides who walks
+     * free. {@link Scene#getEnemies} returns initiative order, which is arbitrary with respect to
+     * distance — so this taunted whoever happened to act earlier. A provocation that skips the foe
+     * standing over you to taunt one at the far edge of Distância Curta is indefensible; the one
+     * who misses out must be the furthest.
+     *
+     * <p>The fixture is deliberately adversarial: {@code closeFoe} is registered with <em>lower</em>
+     * initiative than {@code distantFoe}, so it comes second in {@code getEnemies}. Passing this by
+     * accident is therefore impossible — before the sort, the distant foe was caught.
+     */
+    @Test
+    void aBudgetedAuraCatchesTheNearestFoeRatherThanTheFirstInInitiative() {
+        CharacterSheet distantFoe = newSheet();
+        CharacterSheet closeFoe = newSheet();
+        scene.addParticipant(distantFoe, 18, foes);
+        scene.addParticipant(closeFoe, 2, foes);
+
+        // One binding only — the whole point is which foe it is spent on.
+        scene.addAura(new ActiveAura(holder, SOURCE, Range.DISTANCIA_CURTA, 3, 1));
+
+        Map<CombatantSheet, Range> distances = new HashMap<>();
+        // Both are inside the radius, so the radius filter cannot be what decides.
+        distances.put(distantFoe, Range.DISTANCIA_CURTA);
+        distances.put(closeFoe, Range.ADJACENTE);
+
+        List<CombatantSheet> bound = scene.refreshAura(holder, holderContext(distances));
+
+        assertEquals(List.of(closeFoe), bound, "the budget buys the nearest foe");
+        assertTrue(closeFoe.getForcedTargeting().isPresent());
+        assertFalse(distantFoe.getForcedTargeting().isPresent(),
+                "the furthest foe is the one left untaunted when the PD run out");
+    }
+
     @Test
     void aFoeIsBoundOnlyOnce() {
         activate(3);

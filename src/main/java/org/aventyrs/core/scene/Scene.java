@@ -792,7 +792,20 @@ public class Scene {
      * @throws IllegalOperationException if holder was never added to this Scene
      */
     public List<CombatantSheet> refreshAura(final CombatantSheet holder, final SceneContext holderContext) {
-        List<CombatantSheet> enemies = getEnemies(holder);
+        // Nearest first. An Aura with a budget ("2PD para 1 único inimigo, então de +1PD para cada
+        // inimigo alvo adicional") stops catching once it is full, so the order decides *who* it
+        // caught — and initiative order, which getEnemies returns, is arbitrary with respect to the
+        // radius. A provocation that skipped the foe standing over you to taunt one at the far edge
+        // of Distância Curta would be indefensible; the one who misses out should be the furthest.
+        // Range is ordered nearest-to-farthest by declaration, so its natural order is the metric.
+        // Sorting is stable, so foes sharing a band keep their initiative order between them, and
+        // a foe whose distance is unknown sorts last rather than being dropped — it is still
+        // refused below, where "cannot tell" already reads as no.
+        List<CombatantSheet> enemies = new ArrayList<>(getEnemies(holder));
+        enemies.sort(Comparator.comparing(enemy -> {
+            Range distance = holderContext.getDistanceTo(enemy);
+            return distance == null ? Integer.MAX_VALUE : distance.ordinal();
+        }));
         List<CombatantSheet> newlyBound = new ArrayList<>();
         for (ActiveAura aura : activeAuras) {
             if (!aura.isHeldBy(holder)) {
