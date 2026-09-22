@@ -19,9 +19,13 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
- * Bastião dos Necessitados' ally-facing half — "Aliados adjacentes, apenas aqueles com menos PV
- * que você, recebem RA" — resolved by scanning the damaged character's own adjacent allies for
- * holders, rather than by anyone granting them a {@code TemporaryBonus}.
+ * Bastião dos Necessitados' ally-facing half — "Seus aliados, que tenham menos quantidade de PV
+ * atuais que você, recebem RDS igual a 1+ Metade das Habilidades de Santo que você possuir" —
+ * resolved by scanning the damaged character's own adjacent allies for holders, rather than by
+ * anyone granting them a {@code TemporaryBonus}.
+ *
+ * <p><b>RDS is RD</b>, not RA, so these read {@code getTotalDamageReduction}. V19 also gave the
+ * figure a formula, so the holder is built with a stated number of Habilidades throughout.
  *
  * <p>{@link #theGrantIsWithheldOnceTheAllyIsNoLongerAdjacent} is the test that pins the design:
  * nothing is revoked anywhere in it, and no code runs between the two assertions except building
@@ -45,11 +49,26 @@ class BastiaoDosNecessitadosTest {
         return CharacterSheet.of(CharacterFixture.blank(CharacterFixture.BLANK).build(), new Player());
     }
 
-    /** A sheet whose owner holds Santo with Bastião dos Necessitados in their primary slot. */
+    /**
+     * A sheet whose owner holds Santo with Bastião dos Necessitados plus two more Habilidades —
+     * 3 in all, so "1+ Metade das Habilidades" is 2 outward and half of that, 1, inward. Chosen so
+     * both halves are non-zero and distinguishable from each other.
+     */
     private CharacterSheet bastiaoHolderSheet() {
         Character character = CharacterFixture.blank(CharacterFixture.BLANK).build();
-        character.grantTitle(new Santo(List.of(), List.of(SantoAbility.BASTIAO_DOS_NECESSITADOS)), TitleSlot.PRIMARY);
+        character.grantTitle(new Santo(List.of(), List.of(SantoAbility.BASTIAO_DOS_NECESSITADOS,
+                SantoAbility.PROTECAO_UNGIDA, SantoAbility.GUARDA_VIDAS)), TitleSlot.PRIMARY);
         return CharacterSheet.of(character, new Player());
+    }
+
+    /** "1+ Metade das Habilidades de Santo que você possuir", for the 3-Habilidade holder above. */
+    private static final int GRANTED_RDS = 2;
+
+    /** "metade do valor capaz de fornecer". */
+    private static final int SELF_RDS = GRANTED_RDS / 2;
+
+    private int damageReduction(final CombatantSheet target, final SceneContext context) {
+        return damageService.getTotalDamageReduction(target, null, null, context);
     }
 
     /** A context for whoever is taking the damage, with ally placed at the given band. */
@@ -58,15 +77,12 @@ class BastiaoDosNecessitadosTest {
     }
 
     @Test
-    void adjacentAllyWithBastiaoGrantsAbsoluteDamageReductionToALowerPvAlly() {
+    void adjacentAllyWithBastiaoGrantsDamageReductionToALowerPvAlly() {
         CharacterSheet holder = bastiaoHolderSheet();
         CharacterSheet wounded = plainSheet();
         wounded.applyDamage(5);
 
-        int reduction = damageService.getTotalAbsoluteDamageReduction(
-                wounded, contextWithAllyAt(holder, Range.ADJACENTE));
-
-        assertEquals(DamageService.DEFAULT_DAMAGE_REDUCTION, reduction);
+        assertEquals(GRANTED_RDS, damageReduction(wounded, contextWithAllyAt(holder, Range.ADJACENTE)));
     }
 
     /**
@@ -79,11 +95,9 @@ class BastiaoDosNecessitadosTest {
         CharacterSheet wounded = plainSheet();
         wounded.applyDamage(5);
 
-        assertEquals(DamageService.DEFAULT_DAMAGE_REDUCTION, damageService.getTotalAbsoluteDamageReduction(
-                wounded, contextWithAllyAt(holder, Range.ADJACENTE)));
+        assertEquals(GRANTED_RDS, damageReduction(wounded, contextWithAllyAt(holder, Range.ADJACENTE)));
 
-        assertEquals(0, damageService.getTotalAbsoluteDamageReduction(
-                wounded, contextWithAllyAt(holder, Range.DISTANCIA_CURTA)));
+        assertEquals(0, damageReduction(wounded, contextWithAllyAt(holder, Range.DISTANCIA_CURTA)));
     }
 
     /** "apenas aqueles com menos PV que você" — a healthier ally is not covered. */
@@ -93,10 +107,7 @@ class BastiaoDosNecessitadosTest {
         holder.applyDamage(5);
         CharacterSheet healthier = plainSheet();
 
-        int reduction = damageService.getTotalAbsoluteDamageReduction(
-                healthier, contextWithAllyAt(holder, Range.ADJACENTE));
-
-        assertEquals(0, reduction);
+        assertEquals(0, damageReduction(healthier, contextWithAllyAt(holder, Range.ADJACENTE)));
     }
 
     /** Equal PV is not "menos PV", so neither direction of the clause fires. */
@@ -107,10 +118,7 @@ class BastiaoDosNecessitadosTest {
         CharacterSheet equallyWounded = plainSheet();
         equallyWounded.applyDamage(5);
 
-        int reduction = damageService.getTotalAbsoluteDamageReduction(
-                equallyWounded, contextWithAllyAt(holder, Range.ADJACENTE));
-
-        assertEquals(0, reduction);
+        assertEquals(0, damageReduction(equallyWounded, contextWithAllyAt(holder, Range.ADJACENTE)));
     }
 
     /**
@@ -124,15 +132,15 @@ class BastiaoDosNecessitadosTest {
         CharacterSheet woundedHolder = bastiaoHolderSheet();
         woundedHolder.applyDamage(5);
 
-        // The wounded one has an adjacent ally on higher PV: its self-facing half is inert,
-        // but the healthier neighbour's ally-facing half covers it.
-        assertEquals(DamageService.DEFAULT_DAMAGE_REDUCTION, damageService.getTotalAbsoluteDamageReduction(
-                woundedHolder, contextWithAllyAt(healthierHolder, Range.ADJACENTE)));
+        // The wounded one has an adjacent ally on higher PV: its self-facing half is inert
+        // (it is protecting nobody), but the healthier neighbour's ally-facing half covers it.
+        assertEquals(GRANTED_RDS, damageReduction(woundedHolder,
+                contextWithAllyAt(healthierHolder, Range.ADJACENTE)));
 
-        // The healthier one has an adjacent ally on lower PV: its own self-facing half fires,
-        // while the wounded neighbour grants it nothing outward. Both hooks, one total each.
-        assertEquals(DamageService.DEFAULT_DAMAGE_REDUCTION, damageService.getTotalAbsoluteDamageReduction(
-                healthierHolder, contextWithAllyAt(woundedHolder, Range.ADJACENTE)));
+        // The healthier one has an adjacent ally on lower PV: its own self-facing half fires at
+        // half the outward figure, while the wounded neighbour grants it nothing outward.
+        assertEquals(SELF_RDS, damageReduction(healthierHolder,
+                contextWithAllyAt(woundedHolder, Range.ADJACENTE)));
     }
 
     /** An ally holding no Título at all grants nothing, adjacency notwithstanding. */
@@ -142,8 +150,7 @@ class BastiaoDosNecessitadosTest {
         CharacterSheet wounded = plainSheet();
         wounded.applyDamage(5);
 
-        assertEquals(0, damageService.getTotalAbsoluteDamageReduction(
-                wounded, contextWithAllyAt(plainAlly, Range.ADJACENTE)));
+        assertEquals(0, damageReduction(wounded, contextWithAllyAt(plainAlly, Range.ADJACENTE)));
     }
 
     /**
@@ -156,7 +163,7 @@ class BastiaoDosNecessitadosTest {
         CharacterSheet wounded = plainSheet();
         wounded.applyDamage(5);
 
-        assertEquals(0, damageService.getTotalAbsoluteDamageReduction(wounded, null));
+        assertEquals(0, damageReduction(wounded, null));
     }
 
     /** Sanity-check the PV arithmetic the tiers above depend on. */

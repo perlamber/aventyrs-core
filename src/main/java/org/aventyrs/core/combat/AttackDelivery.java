@@ -158,8 +158,9 @@ public class AttackDelivery {
             throw new IllegalOperationException(TOO_MANY_ATTACK_TARGETS);
         }
         CombatantSheet defender = attack.getDefender();
-        int auraPenalty = AuraTargeting.resolvePenalty(attack.getScene(), attack.getAttacker(), defender,
-                attack.isForcedTargetUnavailable());
+        boolean auraHalvesDamage = AuraTargeting.resolveHalvesDamage(attack.getScene(), attack.getAttacker(),
+                defender, attack.isForcedTargetUnavailable());
+        Retaliation retaliation = RetaliationResolver.resolve(defender, attack.getAttackSkill());
         SkillRoll attackRoll = attack.getAttackRoll();
 
         List<CombatantSheet> extraTargets = additionalTargets.stream().map(AttackTarget::defender).toList();
@@ -168,13 +169,14 @@ public class AttackDelivery {
                         attack.getAttackSource(), extraTargets);
 
         int requiredTotal = attack.getDefenseValue();
-        int attackTotal = attackResult.getSkillRollBonus() + auraPenalty
+        int attackTotal = attackResult.getSkillRollBonus()
                 + (attackRoll == null ? 0 : attackRoll.getTotal());
 
         DeliveredAttackResult.DeliveredAttackResultBuilder result = DeliveredAttackResult.builder()
                 .attackTotal(attackTotal)
                 .requiredTotal(requiredTotal)
-                .auraPenalty(auraPenalty)
+                .auraHalvesDamage(auraHalvesDamage)
+                .retaliation(retaliation)
                 .unappliedDifficultyReduction(attackResult.getDifficultyReduction());
 
         if (attackRoll == null) {
@@ -195,7 +197,7 @@ public class AttackDelivery {
         if (hit) {
             attackResult = attackResult.toBuilder()
                     .nextInteraction(buildChain(attack, defender, criticalResult, criticalEffectTriggered,
-                            effectChainTriggered, false))
+                            effectChainTriggered, auraHalvesDamage))
                     .build();
         }
 
@@ -241,8 +243,10 @@ public class AttackDelivery {
      * threshold, and the chain built for them.
      *
      * <p>Its chain head is marked {@code halvingDamage()} — "os danos no alvo adicional são
-     * reduzidos à metade". The Efeitos Críticos are filtered against this defender's own anatomy,
-     * so an immunity of theirs applies to them alone.
+     * reduzidos à metade" — unconditionally, so a provoking Aura's own Meio-Dano adds nothing here
+     * and is not passed in: Meio-Dano is a flag, and halving twice is still halving once. The
+     * Efeitos Críticos are filtered against this defender's own anatomy, so an immunity of theirs
+     * applies to them alone.
      */
     private DeliveredAttackTargetResult resolveAdditionalTarget(final DeliveredAttack attack, final AttackTarget target,
                                                                  final int attackTotal, final CriticalResult criticalResult) {
@@ -280,9 +284,11 @@ public class AttackDelivery {
      * parameter rather than read off attack, because a multi-target attack builds one chain per
      * target and each is filtered against its <em>own</em> anatomy.
      *
-     * <p>halfDamage marks the head {@code DamageInteraction} as dealing Meio-Dano — set for an
-     * additional target and never for the primary one. The stages behind it are unaffected: the
-     * halving belongs to the damage, not to the Efeitos it triggers.
+     * <p>halfDamage marks the head {@code DamageInteraction} as dealing Meio-Dano — set for every
+     * additional target, and for <em>any</em> target when a provoking Aura binds the attacker
+     * elsewhere ({@code AbencoadoPelaLuzAbility#ORGULHO_ELDURIANO}). Read as a flag, so the two
+     * sources coinciding still halve exactly once rather than quartering. The stages behind it are
+     * unaffected: the halving belongs to the damage, not to the Efeitos it triggers.
      */
     private Interaction<CombatantSheet> buildChain(final DeliveredAttack attack,
                                                     final CombatantSheet defender,

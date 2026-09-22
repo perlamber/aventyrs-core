@@ -5,54 +5,70 @@ import lombok.NonNull;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.title.AventyrTitleAbility;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.UUID;
-
 /**
  * A provoking Aura centred on its holder and registered on a {@link Scene} — the shape of
- * {@code AbencoadoPelaLuzAbility#ORGULHO_ELDURIANO}: every combatant outside the holder's
- * sub-group that comes within {@link #radius} while it lasts becomes <i>bound</i>, must spend
- * its first attack of each Rodada on the holder, and takes {@code Skill#DISADVANTAGE_MALUS} on
- * any later attack that Rodada against someone else. Like {@link ActiveAreaSpellEffect}, it
- * lives on the Scene rather than on one sheet, and counts down at the Rodada boundary.
+ * {@code AbencoadoPelaLuzAbility#ORGULHO_ELDURIANO}. It is an <b>emitter</b>: while it lasts, a
+ * combatant outside the holder's sub-group who comes within {@link #radius} is caught, and what
+ * they are handed is an Encantamento of their own ({@code sheet.ForcedTargeting}) compelling them
+ * to spend their first attack of each Rodada on the holder.
+ *
+ * <p><b>The Aura holds no per-target state.</b> Who is compelled, whether they have paid their
+ * attack this Rodada, and how much longer it lasts for them are all facts about the <i>enemy</i>,
+ * carried on their own sheet — which is what lets their immunity and their own Duração modifiers
+ * decide what landed. This class knows only what it emits and how many it may still catch.
  *
  * <p>Deliberately concrete: it is the provocation Aura, not a generic one. What an Aura
  * <i>does</i> is not abstracted until a second one exists.
  *
- * <p>Binding is caller-driven ({@link Scene#refreshAura}), since this core does no geometry, and
- * a bound combatant stays bound for the Aura's whole duration even after leaving range. Bound
- * combatants are tracked by sheet id together with the last Rodada each attacked the holder
- * ({@link #NEVER}) — which is everything both halves of the rule read.
+ * <p>Catching is caller-driven ({@link Scene#refreshAura}), since this core does no geometry — a
+ * foe entering through movement or a teleport is caught on the next refresh. A foe who then leaves
+ * range keeps the Encantamento they were given: it is theirs now, and it counts down on their
+ * sheet.
+ *
+ * <p>Two independent lifetimes, and both are real: {@link #remainingRounds} is how long the Aura
+ * keeps catching people, while {@link #effectDurationInRounds} is how long each catch lasts for
+ * whoever it caught. A foe caught late gets a full Duração rather than the Aura's remainder.
  */
 @Getter
 public class ActiveAura {
 
-    /** The "has not attacked the holder yet" value in {@link #lastRoundAttackedHolder}. */
-    static final int NEVER = -1;
-
     private final CombatantSheet holder;
     private final AventyrTitleAbility source;
     private final Range radius;
+
+    /** How many combatants this Aura may catch in total — what the PD spent bought. */
+    private final int maxTargets;
+
+    /** The Duração each caught foe's own Encantamento starts with. */
+    private final int effectDurationInRounds;
+
+    private int boundCount;
+
     private int remainingRounds;
 
-    @Getter(lombok.AccessLevel.NONE)
-    private final Map<UUID, Integer> lastRoundAttackedHolder = new LinkedHashMap<>();
-
     public ActiveAura(@NonNull final CombatantSheet holder, @NonNull final AventyrTitleAbility source,
-                      @NonNull final Range radius, final int durationInRounds) {
+                      @NonNull final Range radius, final int durationInRounds, final int maxTargets) {
         if (durationInRounds < 1) {
             throw new IllegalArgumentException("An Aura must last at least one Rodada: " + durationInRounds);
+        }
+        if (maxTargets < 1) {
+            throw new IllegalArgumentException("An Aura must be able to catch at least one foe: " + maxTargets);
         }
         this.holder = holder;
         this.source = source;
         this.radius = radius;
+        this.maxTargets = maxTargets;
+        // The two lifetimes are the same figure today — Orgulho Elduriano's one Duração both
+        // keeps the Aura catching and sets what each catch is worth. Kept apart because they
+        // answer different questions and a foe caught late gets a *full* effect, not the Aura's
+        // remainder; a clause stating them separately needs only a second constructor.
+        this.effectDurationInRounds = durationInRounds;
         this.remainingRounds = durationInRounds;
     }
 
-    /** Whether the combatant with this sheet id is bound by this Aura. */
-    public boolean isBound(final UUID combatantId) {
-        return lastRoundAttackedHolder.containsKey(combatantId);
+    /** Whether this Aura has already caught everyone the PD spent on it paid for. */
+    boolean isFull() {
+        return boundCount >= maxTargets;
     }
 
     /** Whether combatant is this Aura's holder, matched by sheet id. */
@@ -60,21 +76,12 @@ public class ActiveAura {
         return holder.getId().equals(combatant.getId());
     }
 
-    /** Whether the bound combatant has already attacked the holder in round. */
-    boolean hasAttackedHolderIn(final UUID combatantId, final int round) {
-        return lastRoundAttackedHolder.getOrDefault(combatantId, NEVER) == round;
-    }
-
-    /** Binds the combatant with this sheet id; a no-op if already bound. */
-    void bind(final UUID combatantId) {
-        lastRoundAttackedHolder.putIfAbsent(combatantId, NEVER);
-    }
-
-    /** Notes that a bound attacker attacked the holder in round; any other attack is ignored. */
-    void recordAttack(final UUID attackerId, final UUID defenderId, final int round) {
-        if (isBound(attackerId) && holder.getId().equals(defenderId)) {
-            lastRoundAttackedHolder.put(attackerId, round);
-        }
+    /**
+     * Notes that one more foe was really caught. Only a catch that <em>landed</em> is counted — an
+     * immune foe costs the Aura nothing, since it never took hold of them.
+     */
+    void recordBinding() {
+        boundCount++;
     }
 
     /** Advances this Aura by one Scene Rodada. */

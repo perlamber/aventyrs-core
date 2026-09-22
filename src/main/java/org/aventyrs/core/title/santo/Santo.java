@@ -114,16 +114,20 @@ public class Santo implements AventyrTitle {
     }
 
     /**
-     * Despertar's "esta Habilidade tem por Duração 1 Rodada para cada Especialização e Suprema
-     * de Santo que possuir" clause — real, tested arithmetic over
+     * Despertar's "A Duração deste Efeito é de 1+ número de Especializações e Supremas de Santo
+     * que possuir em Rodadas" clause — real, tested arithmetic over
      * {@link AventyrTitle#getSpecializationAndSupremaCount()}, and the window {@code
      * AbstractCombatantSheet#ignoresMinorCriticalEffects} hands to {@link
-     * SceneContext#isWithinFirstCombatRounds(int)} — so a Santo holding nothing yet returns 0 and
-     * ignores nothing, which is the clause read literally rather than a special case.
+     * SceneContext#isWithinFirstCombatRounds(int)}.
+     *
+     * <p><b>The floor is 1, not 0.</b> V19 reads "1+ número de …", so a freshly Desperto Santo
+     * holding no Especialização still ignores Efeitos Críticos Menores for the first Rodada of
+     * each Cena de Combate — the previous revision's wording ("1 Rodada para cada …") gave them
+     * none at all, which is the one behavioural difference here.
      */
     @Override
     public int resolveMinorCriticalImmunityRounds() {
-        return getSpecializationAndSupremaCount();
+        return 1 + getSpecializationAndSupremaCount();
     }
 
     /**

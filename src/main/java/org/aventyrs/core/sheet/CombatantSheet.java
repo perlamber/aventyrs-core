@@ -279,12 +279,87 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
     void recordAbilityActivation(Object source);
 
     /**
-     * How many times source has been activated in this Turn — what "se ativada duas vezes no mesmo
-     * Turno" reads ({@code AbracadoPelaEscuridaoAbility#SACRIFICIO_YMIRIANO}). Cleared by {@link
-     * #startTurn(int)}, so with no live {@code Scene} driving Turns the count simply keeps rising,
-     * the same fallback the action log has.
+     * How many times source has been activated in this Turn. Cleared by {@link #startTurn(int)},
+     * so with no live {@code Scene} driving Turns the count simply keeps rising, the same fallback
+     * the action log has.
+     *
+     * <p><b>Nothing reads this today.</b> It was built for Sacrifício Ymiriano's "se ativada duas
+     * vezes no mesmo Turno", a clause V19 removed; the mechanism is kept because it is the only
+     * per-Turn activation count there is, but don't cite that constant for it.
      */
     int countActivationsThisTurn(Object source);
+
+    /**
+     * Grants source a budget of further attacks to enhance — the carrier for a bonus scoped to a
+     * <b>count of attacks</b> rather than to a Duração in Rodadas, which is what {@code
+     * AbracadoPelaEscuridaoAbility#FUROR_DE_SYLPH} needs ("aprimora uma quantidade de ataques
+     * igual à 1+ metade dos PV gastos", naming no Rodadas at all).
+     *
+     * <p>Deliberately not a {@link TemporaryBonus}: one only ever counts down in Rodadas, so
+     * expressing this as one would mean inventing a Duração the rules never state. Nothing clears
+     * these at a Rodada or Turn boundary either — they last until spent.
+     *
+     * <p><b>Replaces rather than accumulates</b>, the same way a {@link Blessing} from one source
+     * replaces its predecessor: re-activating restates how many attacks are enhanced.
+     * A count of zero or less is ignored.
+     */
+    void grantEnhancedAttacks(Object source, int count);
+
+    /**
+     * The {@link PeleDePedra} currently held, if any — the one {@link TemporaryEffect} the damage
+     * pipeline consults by type rather than by summing a {@code ModifierType}, because neither of
+     * its halves (an outright negation, then a figure that changes after every hit) can be
+     * expressed as a stat. See that class for why.
+     */
+    Optional<PeleDePedra> getPeleDePedra();
+
+    /**
+     * Which kinds of Equipamento are currently Ungido, if any — see {@link Ungido}. Read to answer
+     * "Enquanto utilizar uma Armadura e um Escudo Ungido ao mesmo tempo"; the Meio-Dano the
+     * blessing grants is an ordinary {@code HALF_DAMAGE} bonus and is not read from here.
+     */
+    Optional<Ungido> getUngido();
+
+    /**
+     * Offers an {@link Enchantment} to this combatant, returning whether it took hold.
+     *
+     * <p><b>The single door every Efeito de Encantamento comes through</b>, and the one place its
+     * tag does any work. Whoever casts one builds it and offers it here; everything that decides
+     * what actually lands is a fact about <em>this</em> combatant, never about the caster:
+     *
+     * <ul>
+     *   <li><b>Immunity</b> — {@code Character#isImmuneToEnchantments()} (Fada, Fúria, Górgona,
+     *       unless a Talento strips it) refuses it outright, and this returns {@code false}.
+     *       "Efeitos diretos" is exactly what this door is; an enchanted weapon's damage never
+     *       arrives here, so the indirect half of those clauses needs nothing.</li>
+     *   <li><b>Duração</b> — a harmful one is halved while this combatant wears both an Armadura
+     *       and an Escudo Ungido ({@link Ungido#blessesBoth()}), which is {@code
+     *       SantoAbility#PROTECAO_UNGIDA}'s "a Duração de efeitos nocivos de Encantamentos e
+     *       Maldições são reduzidas pela metade". Halved at application, so it is this
+     *       combatant's own protection deciding, and an open-ended Encantamento is untouched.</li>
+     * </ul>
+     *
+     * <p>Everything else is {@link #applyEffect}: the effect still counts down, stacks and expires
+     * exactly as its own kind says.
+     */
+    <T extends TemporaryEffect & Enchantment> boolean applyEnchantment(T enchantment);
+
+    /**
+     * The {@link ForcedTargeting} compelling this combatant right now, if any — what {@code
+     * AbencoadoPelaLuzAbility#ORGULHO_ELDURIANO}'s Aura laid on them. Read by the attack
+     * orchestrators to refuse an attack aimed away from whoever cast it.
+     */
+    Optional<ForcedTargeting> getForcedTargeting();
+
+    /** How many attacks source still has left to enhance; 0 when it has none. */
+    int getRemainingEnhancedAttacks(Object source);
+
+    /**
+     * Spends one of source's enhanced attacks, returning whether there was one to spend. The
+     * caller calls this as it resolves an attack it means to enhance — like every other per-attack
+     * step in this core, nothing fires it automatically.
+     */
+    boolean consumeEnhancedAttack(Object source);
 
     /**
      * Grants blessing to this combatant, returning the effect it became — the one path a {@link

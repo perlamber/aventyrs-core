@@ -5,7 +5,6 @@ import lombok.Getter;
 
 import java.util.Optional;
 
-import org.aventyrs.core.character.services.DamageService;
 import org.aventyrs.core.action.ReactionContext;
 import org.aventyrs.core.action.ReactionTrigger;
 import org.aventyrs.core.scene.Range;
@@ -14,10 +13,12 @@ import org.aventyrs.core.scene.Teleportation;
 import org.aventyrs.core.sheet.ActionCost;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.Interaction;
+import org.aventyrs.core.title.AventyrTitle;
 import org.aventyrs.core.title.AventyrTitleAbility;
 import org.aventyrs.core.title.PDCost;
 
 import static org.aventyrs.core.title.PDCost.fixed;
+import static org.aventyrs.core.title.PDCost.variable;
 
 /**
  * Santo's own catalog of Habilidades/Supremas — see each constant's own comment for which
@@ -42,34 +43,62 @@ public enum SantoAbility implements AventyrTitleAbility {
     // harmful Encantamentos/Maldições needs two things this core lacks — an Encantamento/Maldição
     // classification of a held effect (no such tag exists; see Withering's own citation) and a
     // public duration mutator (TemporaryEffect#tick only ever decrements by 1, package-private).
+    // V19's second mode is real: "Se possuir quaisquer Suprema de Santo você poderá, ao custo de
+    // 3PA e 3PD, ungir uma Armadura e Escudo simultaneamente" — hence variable(2) rather than a
+    // fixed cost, the player naming which mode they pay for. ProtecaoUngidaInteraction#validate
+    // refuses 3PD without a Suprema, refuses more than 3, and refuses the dual mode to someone not
+    // wearing both. **A Variável cost makes the amount mandatory** (AbstractTitleAbilityInteraction
+    // #resolveDeterminationPoints refuses one with no amount named), which is the deliberate guard
+    // a two-mode ability wants: there is no safe default between blessing one item and two.
+    // Which *kinds* are blessed is recorded now, as a sheet.Ungido effect — that is what makes
+    // "Enquanto utilizar uma Armadura e um Escudo Ungido ao mesmo tempo" answerable at all. Which
+    // *copy* is blessed still is not, and still does not matter.
+    // V19 also lowered the base cost from 3PD to 2PD.
     PROTECAO_UNGIDA(
             "Abençoa um item do tipo Armadura ou Escudo que você esteja utilizando por 3 " +
             "Rodadas. Enquanto estiver usando pelo menos um item Abençoado todo o dano que " +
-            "seria causado a você é reduzido à metade. Se utilizar uma Armadura e um Escudo " +
-            "Ungido ao mesmo tempo a Duração de efeitos nocivos de Encantamentos e Maldições " +
-            "são reduzidas pela metade.",
-            false, fixed(3), ActionCost.ofActionPoints(2), Optional.of(ProtecaoUngidaInteraction.class), 1, 0),
+            "seria causado a você é reduzido à metade. Enquanto utilizar uma Armadura e um " +
+            "Escudo Ungido ao mesmo tempo a Duração de efeitos nocivos de Encantamentos e " +
+            "Maldições são reduzidas pela metade. Se possuir quaisquer Suprema de Santo você " +
+            "poderá, ao custo de 3PA e 3PD, ungir uma Armadura e Escudo simultaneamente.",
+            false, variable(2), ActionCost.ofActionPoints(2), Optional.of(ProtecaoUngidaInteraction.class), 1, 0),
 
     // Requer 1 Especialização e 2 outras habilidades de Santo — enforced (see class javadoc).
-    // Both halves are real. The self-facing one ("Você recebe RA...") resolves through
-    // #resolveAbsoluteDamageReduction; the ally-facing one ("Aliados adjacentes ... recebem
-    // RA") through #resolveAllyAbsoluteDamageReduction, which DamageServiceImpl reaches by
-    // scanning the target's own adjacent allies for holders rather than by granting anything —
-    // see that hook's javadoc for why a continuous proximity buff must not be a TemporaryBonus.
+    // Both halves are real. The ally-facing one ("Seus aliados ... recebem RDS igual a 1+ Metade
+    // das Habilidades de Santo que você possuir") resolves through #resolveAllyDamageReduction,
+    // which DamageServiceImpl reaches by scanning the target's own adjacent allies for holders
+    // rather than by granting anything — see that hook's javadoc for why a continuous proximity
+    // buff must not be a TemporaryBonus. The self-facing one ("Enquanto estiver protegendo ao
+    // menos 1 aliado você recebe RDS igual a metade do valor capaz de fornecer") resolves through
+    // #resolveDamageReduction, and is literally half of what the outward half grants — so it reads
+    // the same formula rather than restating a figure.
     // The two booleans are the same PV comparison in opposite directions, both resolved by
-    // DamageServiceImpl.
+    // DamageServiceImpl; "protegendo ao menos 1 aliado" *is* hasLowerPvAdjacentAlly, since an
+    // adjacent ally with lower PV is exactly one this Habilidade is protecting.
+    // V19 changed the stat and gave it a formula: the previous revision granted a bare RA instance
+    // in both directions. RDS is RD (ModifierType.DAMAGE_REDUCTION), not RA — see GorgonaFeat's
+    // own "RDS *is* RD" note — so this constant no longer touches the RA hooks at all.
     BASTIAO_DOS_NECESSITADOS(
-            "Você recebe RA enquanto estiver adjacente à um aliado com menos PV que você. " +
-            "Aliados adjacentes, apenas aqueles com menos PV que você, recebem RA.",
+            "Seus aliados, que tenham menos quantidade de PV atuais que você, recebem RDS " +
+            "igual a 1+ Metade das Habilidades de Santo que você possuir. Apenas aliados " +
+            "adjacentes recebem este benefício. Enquanto estiver protegendo ao menos 1 aliado " +
+            "você recebe RDS igual a metade do valor capaz de fornecer.",
             false, fixed(0), ActionCost.NONE, Optional.empty(), 1, 2) {
         @Override
-        public int resolveAbsoluteDamageReduction(final SceneContext sceneContext, final boolean hasLowerPvAdjacentAlly) {
-            return hasLowerPvAdjacentAlly ? DamageService.DEFAULT_DAMAGE_REDUCTION : 0;
+        public int resolveAllyDamageReduction(final SceneContext sceneContext, final AventyrTitle holder,
+                                              final boolean allyHasLowerPv) {
+            return allyHasLowerPv ? grantedDamageReduction(holder) : 0;
         }
 
         @Override
-        public int resolveAllyAbsoluteDamageReduction(final SceneContext sceneContext, final boolean allyHasLowerPv) {
-            return allyHasLowerPv ? DamageService.DEFAULT_DAMAGE_REDUCTION : 0;
+        public int resolveDamageReduction(final SceneContext sceneContext, final AventyrTitle holder,
+                                          final boolean hasLowerPvAdjacentAlly) {
+            return hasLowerPvAdjacentAlly ? grantedDamageReduction(holder) / 2 : 0;
+        }
+
+        /** "RDS igual a 1+ Metade das Habilidades de Santo que você possuir." */
+        private int grantedDamageReduction(final AventyrTitle holder) {
+            return holder == null ? 0 : 1 + holder.getAbilities().size() / 2;
         }
     },
 
@@ -91,7 +120,7 @@ public enum SantoAbility implements AventyrTitleAbility {
             "tornando o alvo do ataque em seu lugar. O ataque ainda deve superar as suas " +
             "Defesas para lhe infligir danos. Esta Habilidade pode ser ativada apenas quando " +
             "um aliado for alvo de um ataque.",
-            true, fixed(2), ActionCost.REACTION, Optional.of(GuardaVidasInteraction.class), 1, 2) {
+            true, fixed(3), ActionCost.REACTION, Optional.of(GuardaVidasInteraction.class), 1, 2) {
         @Override
         public ReactionTrigger getReactionTrigger() {
             return ReactionTrigger.ALLY_TARGETED_BY_ATTACK;
@@ -132,8 +161,8 @@ public enum SantoAbility implements AventyrTitleAbility {
             "Enquanto você estiver consciente, os PV de seus aliados em Distância Curta não " +
             "podem ser reduzidos à menos que 1PV. Todo o dano que seria causado aos seus " +
             "aliados, que reduziram os PV deles para zero ou menos é causado a você, pontos " +
-            "de vida perdidos desta maneira só podem ser recuperados com Descansos ou Roubo " +
-            "de Vida.",
+            "de vida perdidos desta maneira só podem ser recuperados com Descansos " +
+            "Verdadeiros ou Roubo de Vida.",
             true, fixed(0), ActionCost.NONE, Optional.empty(), 1, 4);
 
     private final String description;

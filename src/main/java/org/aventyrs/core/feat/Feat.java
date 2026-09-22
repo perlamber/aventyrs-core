@@ -1392,6 +1392,20 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      * would answer about the attacker. {@code null} whenever there is no active Scene, which
      * every override must read as "condition not met".
      */
+    /**
+     * Whether this Talento strips its holder of their Raça's Imunidade a Encantamentos — {@code
+     * GorgonaFeat#MARCA_DA_MALDICAO}'s "não possui a Característica Racial Imunidade a
+     * Encantamentos".
+     *
+     * <p>A <b>per-trait</b> suppression, deliberately not folded into {@code
+     * RacialTraitSuppression}: that ladder silences whole categories of racial trait for a Forma,
+     * while this names one Característica and is permanent. Read by {@code
+     * Character#isImmuneToEnchantments()}.
+     */
+    default boolean suppressesEnchantmentImmunity() {
+        return false;
+    }
+
     default int resolveCriticalResistance(final Character character, final SceneContext sceneContext) {
         return 0;
     }

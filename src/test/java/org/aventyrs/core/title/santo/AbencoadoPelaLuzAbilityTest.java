@@ -30,31 +30,31 @@ class AbencoadoPelaLuzAbilityTest {
     void onlyGloriaRelampejanteDeTeslaReportsIsSupremeTrue() {
         assertFalse(AbencoadoPelaLuzAbility.ORGULHO_ELDURIANO.isSupreme());
         assertFalse(AbencoadoPelaLuzAbility.GRITO_DE_GUERRA_VULCANO.isSupreme());
-        assertFalse(AbencoadoPelaLuzAbility.PELE_ROCHOSA_DE_EPONA.isSupreme());
+        assertFalse(AbencoadoPelaLuzAbility.CORPO_INDESTRUTIVEL_DE_EPONA.isSupreme());
         assertTrue(AbencoadoPelaLuzAbility.GLORIA_RELAMPEJANTE_DE_TESLA.isSupreme());
     }
 
     @Test
     void orgulhoEldurianoReportsItsMinimumVariableCost() {
-        assertEquals(PDCost.variable(1), AbencoadoPelaLuzAbility.ORGULHO_ELDURIANO.getPDCost());
-        assertEquals(ActionCost.ofActionPoints(2), AbencoadoPelaLuzAbility.ORGULHO_ELDURIANO.getActionPointCost());
+        assertEquals(PDCost.variable(2), AbencoadoPelaLuzAbility.ORGULHO_ELDURIANO.getPDCost());
+        assertEquals(ActionCost.ofActionPoints(3), AbencoadoPelaLuzAbility.ORGULHO_ELDURIANO.getActionPointCost());
     }
 
     @Test
     void gritoDeGuerraVulcanoHasTheRightActivationCost() {
-        assertEquals(PDCost.fixed(3), AbencoadoPelaLuzAbility.GRITO_DE_GUERRA_VULCANO.getPDCost());
+        assertEquals(PDCost.fixed(2), AbencoadoPelaLuzAbility.GRITO_DE_GUERRA_VULCANO.getPDCost());
         assertEquals(ActionCost.ofActionPoints(1), AbencoadoPelaLuzAbility.GRITO_DE_GUERRA_VULCANO.getActionPointCost());
     }
 
     @Test
-    void peleRochosaDeEponaHasTheRightActivationCost() {
-        assertEquals(PDCost.fixed(2), AbencoadoPelaLuzAbility.PELE_ROCHOSA_DE_EPONA.getPDCost());
-        assertEquals(ActionCost.ofActionPoints(2), AbencoadoPelaLuzAbility.PELE_ROCHOSA_DE_EPONA.getActionPointCost());
+    void corpoIndestrutivelDeEponaHasTheRightActivationCost() {
+        assertEquals(PDCost.fixed(4), AbencoadoPelaLuzAbility.CORPO_INDESTRUTIVEL_DE_EPONA.getPDCost());
+        assertEquals(ActionCost.ofActionPoints(1), AbencoadoPelaLuzAbility.CORPO_INDESTRUTIVEL_DE_EPONA.getActionPointCost());
     }
 
     @Test
     void gloriaRelampejanteDeTeslaIsAFreeActionActivation() {
-        assertEquals(PDCost.fixed(2), AbencoadoPelaLuzAbility.GLORIA_RELAMPEJANTE_DE_TESLA.getPDCost());
+        assertEquals(PDCost.fixed(3), AbencoadoPelaLuzAbility.GLORIA_RELAMPEJANTE_DE_TESLA.getPDCost());
         assertEquals(ActionCost.FREE_ACTION, AbencoadoPelaLuzAbility.GLORIA_RELAMPEJANTE_DE_TESLA.getActionPointCost());
     }
 
@@ -86,7 +86,7 @@ class AbencoadoPelaLuzAbilityTest {
     void onlyGloriaRelampejanteDeTeslaRequiresOtherAbilities() {
         assertEquals(0, AbencoadoPelaLuzAbility.ORGULHO_ELDURIANO.getRequiredOtherAbilities());
         assertEquals(0, AbencoadoPelaLuzAbility.GRITO_DE_GUERRA_VULCANO.getRequiredOtherAbilities());
-        assertEquals(0, AbencoadoPelaLuzAbility.PELE_ROCHOSA_DE_EPONA.getRequiredOtherAbilities());
+        assertEquals(0, AbencoadoPelaLuzAbility.CORPO_INDESTRUTIVEL_DE_EPONA.getRequiredOtherAbilities());
         assertEquals(2, AbencoadoPelaLuzAbility.GLORIA_RELAMPEJANTE_DE_TESLA.getRequiredOtherAbilities());
     }
 
@@ -135,7 +135,7 @@ class AbencoadoPelaLuzAbilityTest {
     void isEligibleForGloriaRelampejanteDeTeslaIgnoresTheOtherEspecializacaosHabilidades() {
         AventyrTitle title = new Santo(
                 List.of(SantoSpecialization.ABENCOADO_PELA_LUZ, SantoSpecialization.ABRACADO_PELA_ESCURIDAO),
-                List.of(AbracadoPelaEscuridaoAbility.ESPINHOS_DE_GAEA,
+                List.of(AbracadoPelaEscuridaoAbility.ESPINHOS_VENENOS_DE_GAEA,
                         AbracadoPelaEscuridaoAbility.FUROR_DE_SYLPH));
 
         assertFalse(AbencoadoPelaLuzAbility.GLORIA_RELAMPEJANTE_DE_TESLA.isEligible(title));
@@ -145,19 +145,20 @@ class AbencoadoPelaLuzAbilityTest {
     void isEligibleAcceptsGloriaRelampejanteDeTeslaOnceEnoughSiblingAbilitiesAreHeld() {
         AventyrTitle title = new Santo(
                 List.of(SantoSpecialization.ABENCOADO_PELA_LUZ),
-                List.of(AbencoadoPelaLuzAbility.ORGULHO_ELDURIANO, AbencoadoPelaLuzAbility.PELE_ROCHOSA_DE_EPONA));
+                List.of(AbencoadoPelaLuzAbility.ORGULHO_ELDURIANO, AbencoadoPelaLuzAbility.CORPO_INDESTRUTIVEL_DE_EPONA));
 
         assertTrue(AbencoadoPelaLuzAbility.GLORIA_RELAMPEJANTE_DE_TESLA.isEligible(title));
     }
 
     // Three of the four are activatable through AventyrTitle#activateAbility. Only
-    // PELE_ROCHOSA_DE_EPONA has nothing to point to: its RA is grantable now, but the first-hit
+    // CORPO_INDESTRUTIVEL_DE_EPONA has nothing to point to: its RA is grantable now, but the first-hit
     // negation that gates it has no mechanism (see the constant's own comment).
     @Test
     void onlyTheActivatableAbilitiesReportAnInteractionClass() {
         assertEquals(Optional.of(OrgulhoEldurianoInteraction.class), AbencoadoPelaLuzAbility.ORGULHO_ELDURIANO.getInteractionClass());
         assertEquals(Optional.of(GritoDeGuerraVulcanoInteraction.class), AbencoadoPelaLuzAbility.GRITO_DE_GUERRA_VULCANO.getInteractionClass());
-        assertEquals(Optional.empty(), AbencoadoPelaLuzAbility.PELE_ROCHOSA_DE_EPONA.getInteractionClass());
+        assertEquals(Optional.of(CorpoIndestrutivelDeEponaInteraction.class),
+                AbencoadoPelaLuzAbility.CORPO_INDESTRUTIVEL_DE_EPONA.getInteractionClass());
         assertEquals(Optional.of(GloriaRelampejanteDeTeslaInteraction.class),
                 AbencoadoPelaLuzAbility.GLORIA_RELAMPEJANTE_DE_TESLA.getInteractionClass());
     }

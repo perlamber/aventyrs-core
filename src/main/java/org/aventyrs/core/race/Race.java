@@ -145,6 +145,23 @@ public interface Race {
      */
     default int getCriticalResistance() { return 0; }
 
+    /**
+     * Whether this Raça is immune to the <b>direct</b> effects of Encantamentos — Fada, Fúria and
+     * Górgona's shared "são imunes aos efeitos diretos de Encantamentos, mas ainda podem ser alvos
+     * de efeitos indiretos (como sofrer danos de armas encantadas)".
+     *
+     * <p><b>Direct only.</b> What this refuses is an {@link org.aventyrs.core.sheet.Enchantment}
+     * landing on the holder — {@code CombatantSheet#applyEnchantment} is the one reader. Damage
+     * from an enchanted weapon is not an Encantamento effect and never reaches here, so the
+     * indirect half of the clause needs nothing: it is already the default.
+     *
+     * <p>A Talento can take it away ({@code Feat#suppressesEnchantmentImmunity}) — {@code
+     * GorgonaFeat#MARCA_DA_MALDICAO}'s "não possui a Característica Racial Imunidade a
+     * Encantamentos" — so read it through {@code Character#isImmuneToEnchantments()} rather than
+     * calling this directly.
+     */
+    default boolean isImmuneToEnchantments() { return false; }
+
 
     /**
      * Cost in XP to learn a new Feat

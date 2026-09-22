@@ -1,5 +1,6 @@
 package org.aventyrs.core.title.santo;
 
+import org.aventyrs.core.character.TitleSlot;
 import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.IllegalOperationException;
@@ -58,13 +59,18 @@ class TitleAbilityActivationEntryPointTest {
         InteractionResult result = santo.activateAbility(AbencoadoPelaLuzAbility.GRITO_DE_GUERRA_VULCANO, selfRequest());
 
         assertEquals(3, result.getBlessings().size());
-        assertEquals(3, result.getDeterminationPointsSpent());
+        assertEquals(2, result.getDeterminationPointsSpent());
     }
 
+    /**
+     * The Especialização is PV-priced under V19, and its heal counts the toucher's own Habilidades
+     * — so the Título has to be on the activator's Character, not merely in a local variable.
+     */
     @Test
     void aHeldEspecializacaoRunsItsOwnInteraction() {
         Santo santo = new Santo(List.of(SantoSpecialization.ABENCOADO_PELA_LUZ), List.of());
-        actor.applyDamage(1000);
+        actor.getCharacter().grantTitle(santo, TitleSlot.PRIMARY);
+        actor.applyDamage(8);
 
         InteractionResult result = santo.activateAbility(SantoSpecialization.ABENCOADO_PELA_LUZ,
                 TitleAbilityActivationRequest.builder()
@@ -72,7 +78,10 @@ class TitleAbilityActivationEntryPointTest {
                         .choice(AbencoadoPelaLuzInteraction.Branch.HEAL)
                         .build());
 
-        assertEquals(1, result.getDeterminationPointsSpent());
-        assertEquals(1000 - result.getResourceGainValue(), actor.getDamageTaken());
+        assertEquals(0, result.getDeterminationPointsSpent());
+        assertEquals(AbencoadoPelaLuzInteraction.TOUCH_HIT_POINT_COST, result.getResourceLossValue());
+        assertEquals(SantoSpecialization.BASE_TOUCH_HEAL, result.getResourceGainValue());
+        assertEquals(8 + AbencoadoPelaLuzInteraction.TOUCH_HIT_POINT_COST - result.getResourceGainValue(),
+                actor.getDamageTaken());
     }
 }

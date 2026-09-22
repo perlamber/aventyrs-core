@@ -20,11 +20,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.aventyrs.core.util.TranslatableMessages.NOT_ENOUGH_HIT_POINTS;
-import static org.aventyrs.core.util.TranslatableMessages.TITLE_ABILITY_ACTIVATION_LIMIT_REACHED;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-/** Sacrifício Ymiriano — PV equal to Vigor buys +2 Força, or +3 and a size step when doubled. */
+/**
+ * Sacrifício Ymiriano — PV equal to Vigor buys a Força bonus equal to that same Vigor, plus
+ * Categoria de Tamanho +2, for 1 Rodada.
+ */
 class SacrificioYmirianoInteractionTest {
 
     private final SacrificioYmirianoInteraction interaction = new SacrificioYmirianoInteraction();
@@ -53,79 +55,65 @@ class SacrificioYmirianoInteractionTest {
     }
 
     @Test
-    void theFirstActivationCostsVigorPvAndGrantsTwoStrengthForTwoRodadas() {
+    void itCostsVigorInPvAndGrantsThatSameVigorAsForca() {
         InteractionResult result = interaction.applyTo(holder);
 
         assertEquals(2, result.getResourceLossValue());
         assertEquals(ResourceType.HIT_POINTS, result.getResourceLossType());
         assertEquals(2, holder.getDamageTaken());
         assertEquals(0, result.getDeterminationPointsSpent());
-        assertEquals(SacrificioYmirianoInteraction.STRENGTH_BONUS, strengthBonus(holder));
+        assertEquals(2, strengthBonus(holder));
+    }
+
+    /** The price and the benefit are the same figure, so a bigger Vigor moves both together. */
+    @Test
+    void aHigherVigorRaisesBothTheCostAndTheForcaBonus() {
+        CharacterSheet burly = holderWithVigor(5);
+
+        InteractionResult result = interaction.applyTo(burly);
+
+        assertEquals(5, result.getResourceLossValue());
+        assertEquals(5, strengthBonus(burly));
+    }
+
+    @Test
+    void itRaisesTheCategoriaDeTamanhoByTwo() {
+        SizeCategory baseSize = characterSizeService.getEffectiveSizeCategory(holder);
+
+        interaction.applyTo(holder);
+
+        assertEquals(SacrificioYmirianoInteraction.SIZE_CATEGORY_INCREASE,
+                holder.getTemporaryBonus(ModifierType.SIZE_CATEGORY));
+        assertEquals(baseSize.ordinal() + SacrificioYmirianoInteraction.SIZE_CATEGORY_INCREASE,
+                characterSizeService.getEffectiveSizeCategory(holder).ordinal());
+    }
+
+    @Test
+    void bothGrantsLapseAfterOneRodada() {
+        interaction.applyTo(holder);
+
+        holder.finishTurn();
+
+        assertEquals(0, strengthBonus(holder));
         assertEquals(0, holder.getTemporaryBonus(ModifierType.SIZE_CATEGORY));
     }
 
+    /**
+     * V19 dropped the previous revision's "até duas vezes / seu efeito é cumulativo" clause, so a
+     * repeat is now an ordinary re-activation: same source, so the Blessing replaces its
+     * predecessor and renews the Duração rather than stacking to +4.
+     */
     @Test
-    void theStrengthBonusLapsesAfterTwoRodadas() {
-        interaction.applyTo(holder);
-
-        holder.finishTurn();
-        assertEquals(SacrificioYmirianoInteraction.STRENGTH_BONUS, strengthBonus(holder));
-        holder.finishTurn();
-
-        assertEquals(0, strengthBonus(holder));
-    }
-
-    @Test
-    void aSecondActivationInTheSameTurnUpgradesTheBonusRatherThanStacking() {
-        SizeCategory baseSize = characterSizeService.getEffectiveSizeCategory(holder);
+    void aSecondActivationReplacesRatherThanStacksAndIsNotRefused() {
         interaction.applyTo(holder);
 
         interaction.applyTo(holder);
 
-        // "o Bônus em Força muda para +3" — 3, never 2 + 3.
-        assertEquals(SacrificioYmirianoInteraction.UPGRADED_STRENGTH_BONUS, strengthBonus(holder));
+        assertEquals(2, strengthBonus(holder));
         assertEquals(SacrificioYmirianoInteraction.SIZE_CATEGORY_INCREASE,
                 holder.getTemporaryBonus(ModifierType.SIZE_CATEGORY));
-        assertEquals(baseSize.ordinal() + 1, characterSizeService.getEffectiveSizeCategory(holder).ordinal());
+        // Paid for twice all the same — the PV cost is per activation.
         assertEquals(4, holder.getDamageTaken());
-    }
-
-    @Test
-    void theUpgradedBonusLastsThreeRodadas() {
-        interaction.applyTo(holder);
-        interaction.applyTo(holder);
-
-        for (int rodada = 0; rodada < SacrificioYmirianoInteraction.UPGRADED_DURATION_IN_ROUNDS; rodada++) {
-            assertEquals(SacrificioYmirianoInteraction.UPGRADED_STRENGTH_BONUS, strengthBonus(holder));
-            holder.finishTurn();
-        }
-
-        assertEquals(0, strengthBonus(holder));
-    }
-
-    @Test
-    void aThirdActivationInTheSameTurnIsRefusedAndCostsNothing() {
-        interaction.applyTo(holder);
-        interaction.applyTo(holder);
-        int damageTaken = holder.getDamageTaken();
-
-        IllegalOperationException refused = assertThrows(IllegalOperationException.class,
-                () -> interaction.applyTo(holder));
-
-        assertEquals(TITLE_ABILITY_ACTIVATION_LIMIT_REACHED, refused.getMessage());
-        assertEquals(damageTaken, holder.getDamageTaken());
-        assertEquals(SacrificioYmirianoInteraction.UPGRADED_STRENGTH_BONUS, strengthBonus(holder));
-    }
-
-    @Test
-    void aNewTurnAllowsItAgainAtTheLowerFigure() {
-        interaction.applyTo(holder);
-        interaction.applyTo(holder);
-
-        holder.startTurn(1);
-        interaction.applyTo(holder);
-
-        assertEquals(SacrificioYmirianoInteraction.STRENGTH_BONUS, strengthBonus(holder));
     }
 
     @Test
@@ -151,6 +139,6 @@ class SacrificioYmirianoInteractionTest {
         interaction.applyTo(holder);
 
         assertEquals(toLeaveThreeHitPoints + 2, holder.getDamageTaken());
-        assertEquals(SacrificioYmirianoInteraction.STRENGTH_BONUS, strengthBonus(holder));
+        assertEquals(2, strengthBonus(holder));
     }
 }

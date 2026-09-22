@@ -18,7 +18,7 @@ import java.util.List;
 
 /**
  * Grito de Guerra Vulcano's own activation — an {@link AbstractTitleAbilityInteraction}, so the
- * shared gates run and its 3PD are paid first. Its effect is <b>reported, not applied</b>: every
+ * shared gates run and its 2PD are paid first. Its effect is <b>reported, not applied</b>: every
  * grant goes out via {@link InteractionResult#getBlessings()} — this ability's own rules text grants
  * "a você e seus aliados adjacentes," the same self-plus-allies shape {@code
  * ArtesCompetencyAbility#DOM_BARDICO} already reports this way, just with more than one {@link
@@ -29,14 +29,14 @@ import java.util.List;
  * Santo#activateGritoDeGuerraVulcano}), which checks the Habilidade is held first.
  *
  * <p>Every clause of this ability's own rules text is reported as a real {@link Blessing},
- * including the "+2 em Defesas" one ({@link ModifierType#DEFESAS}): {@code
+ * including the "+3 em Defesas" one ({@link ModifierType#DEFESAS}): {@code
  * character.services.DefenseService} sums every active {@code DEFESAS}-typed {@code
  * TemporaryBonus}, so that grant lands for real once a caller applies it.
  */
 public class GritoDeGuerraVulcanoInteraction extends AbstractTitleAbilityInteraction {
 
     private static final int VANTAGEM_ROUNDS = 2;
-    private static final int DEFESAS_BONUS = 2;
+    private static final int DEFESAS_BONUS = 3;
 
     private final HitPointsService hitPointsService;
 

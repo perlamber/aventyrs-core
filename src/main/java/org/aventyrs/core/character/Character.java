@@ -553,6 +553,21 @@ public class Character {
      * javadoc).
      */
     /**
+     * Whether this character is immune to the direct effects of Encantamentos — their Raça's own
+     * {@link org.aventyrs.core.race.Race#isImmuneToEnchantments()}, unless a held Talento strips
+     * it ({@link org.aventyrs.core.feat.Feat#suppressesEnchantmentImmunity()}).
+     *
+     * <p><b>Read this, never the Raça directly</b>, the same way {@link #treatsAsNaturalWeapon}
+     * is the single view over a reclassification: a suppressing Talento has to be visible to every
+     * clause that asks.
+     */
+    public boolean isImmuneToEnchantments() {
+        return getRace() != null
+                && getRace().isImmuneToEnchantments()
+                && getFeats().stream().noneMatch(Feat::suppressesEnchantmentImmunity);
+    }
+
+    /**
      * Whether this character counts weapon as an <b>Arma Natural</b> — the single view every
      * Arma-Natural clause consults, rather than each testing {@code ItemCategory.NATURAL_WEAPON}
      * for itself.

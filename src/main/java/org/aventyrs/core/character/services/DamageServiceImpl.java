@@ -13,6 +13,7 @@ import org.aventyrs.core.scene.Range;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.Blessing;
 import org.aventyrs.core.sheet.CombatantSheet;
+import org.aventyrs.core.sheet.PeleDePedra;
 import org.aventyrs.core.sheet.TemporaryBonus;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
 import org.aventyrs.core.skill.SkillExcellency;
@@ -76,24 +77,37 @@ public class DamageServiceImpl implements DamageService {
 
     @Override
     public int getTotalDamageReduction(final CombatantSheet target, final DamageType damageType, final CombatantSheet source) {
-        return getTotalDamageReduction(target, damageType, null, source);
+        return getTotalDamageReduction(target, damageType, null, source, null);
     }
 
     @Override
     public int getTotalDamageReduction(final CombatantSheet target, final DamageDescriptor damageDescriptor,
                                        final CombatantSheet source) {
         return getTotalDamageReduction(target,
-                damageDescriptor == null ? null : damageDescriptor.damageType(), damageDescriptor, source);
+                damageDescriptor == null ? null : damageDescriptor.damageType(), damageDescriptor, source, null);
+    }
+
+    @Override
+    public int getTotalDamageReduction(final CombatantSheet target, final DamageType damageType,
+                                       final CombatantSheet source, final SceneContext sceneContext) {
+        return getTotalDamageReduction(target, damageType, null, source, sceneContext);
     }
 
     private int getTotalDamageReduction(final CombatantSheet target, final DamageType damageType,
-                                        final DamageDescriptor damageDescriptor, final CombatantSheet source) {
+                                        final DamageDescriptor damageDescriptor, final CombatantSheet source,
+                                        final SceneContext sceneContext) {
         Character character = target.getCharacter();
         int total = sumAcrossSources(character, ModifierType.DAMAGE_REDUCTION, target);
         total += sumEquipmentDamageReduction(character, target);
         total += sumEquipmentDamageReduction(character, damageDescriptor);
         total += sumFeatDamageReduction(character, target);
         total += sumAttributeAbilityDamageReduction(character, target, damageType, source);
+        // The two Título-ability RDS scans, mirroring the RA pair in
+        // computeTotalAbsoluteDamageReduction. Both need a SceneContext (their clauses are
+        // adjacency-scoped), so a caller holding none — every Character-only entry point, and the
+        // public overloads above — simply gets zero from them rather than a wrong answer.
+        total += sumTitleAbilityDamageReduction(character, target, sceneContext);
+        total += sumAllyGrantedDamageReduction(target, sceneContext);
         // A round-scoped RD grant — a Blessing/TemporaryBonus, as AnaoFeat#VIGOR_DO_INVERNO
         // hands its holder at combat start. Only reachable on this CombatantSheet-taking path;
         // the Character-only overload above has no sheet to ask, the same limitation the
@@ -289,7 +303,7 @@ public class DamageServiceImpl implements DamageService {
                 : computeTotalAbsoluteDamageReduction(character, null, sceneContext);
         if (!ignoreDamageReduction) {
             reduction += target != null
-                    ? getTotalDamageReduction(target, damageType, damageDescriptor, source)
+                    ? getTotalDamageReduction(target, damageType, damageDescriptor, source, sceneContext)
                     : getTotalDamageReduction(character);
             // RM joins RD only for damage the caller actually classified as Mágico — "caller
             // didn't say" (null) is not "this was magic". Grouped under the same
@@ -302,8 +316,29 @@ public class DamageServiceImpl implements DamageService {
                 reduction += getTotalMagicReduction(target);
             }
         }
+        // Pele de Pedra sits *outside* the RD sum on purpose: its first hit is an outright
+        // negation rather than a figure, and afterwards its figure changes after every hit. See
+        // sheet.PeleDePedra. It is read last, so "o primeiro ataque que lhe causaria Danos" is
+        // judged against what the ordinary mitigation already left — an attack that RD/RA had
+        // fully turned aside never spends the negation.
+        PeleDePedra stone = target == null ? null : target.getPeleDePedra().orElse(null);
+        if (stone != null && !ignoreDamageReduction) {
+            reduction += stone.getEffectiveDamageReduction();
+        }
         int afterFlatReduction = Math.max(0, rawDamage - reduction);
         int finalDamage = halfDamage ? afterFlatReduction / 2 : afterFlatReduction;
+        if (stone != null && finalDamage > 0 && !ignoreDamageReduction) {
+            // "que lhe causaria Danos" — only a hit that really would have hurt spends the stone.
+            // Spending it here, in the *computation*, is deliberate: DamageInteraction splits
+            // mitigation from application and never calls applyDamage, so a hook placed only in
+            // the latter would miss every real attack. calculateFinalDamage is therefore not a
+            // pure query while a Pele de Pedra is held, which is the price of the clause.
+            boolean negated = stone.negatesNextHit();
+            stone.absorb();
+            if (negated) {
+                return 0;
+            }
+        }
         return Math.max(0, finalDamage);
     }
 
@@ -382,6 +417,52 @@ public class DamageServiceImpl implements DamageService {
                 .flatMap(title -> title.getAllAbilities().stream())
                 .mapToInt(ability -> ability.resolveAbsoluteDamageReduction(sceneContext, hasLowerPvAdjacentAlly))
                 .sum();
+    }
+
+    /**
+     * RDS a target's own always-on Título abilities grant it — the RD twin of {@link
+     * #sumTitleAbilityAbsoluteDamageReduction}, for {@code SantoAbility#BASTIAO_DOS_NECESSITADOS}'s
+     * "Enquanto estiver protegendo ao menos 1 aliado você recebe RDS" half.
+     *
+     * <p>The granting {@code AventyrTitle} is passed to the hook because the figure is a fact
+     * about the holder's own Título ("1+ Metade das Habilidades de Santo que você possuir") and an
+     * enum constant has no holder — see {@code AventyrTitleAbility#resolveDamageReduction}.
+     */
+    private int sumTitleAbilityDamageReduction(final Character character, final CombatantSheet target,
+                                               final SceneContext sceneContext) {
+        if (sceneContext == null) {
+            return 0;
+        }
+        boolean hasLowerPvAdjacentAlly = hasAdjacentAllyWithLowerCurrentHitPoints(character, target, sceneContext);
+        return character.getAllTitles().stream()
+                .mapToInt(title -> title.getAllAbilities().stream()
+                        .mapToInt(ability -> ability.resolveDamageReduction(sceneContext, title, hasLowerPvAdjacentAlly))
+                        .sum())
+                .sum();
+    }
+
+    /**
+     * RDS granted <i>to</i> target by an adjacent ally's own always-on Título ability — the RD twin
+     * of {@link #sumAllyGrantedAbsoluteDamageReduction}, and the outward half of {@code
+     * SantoAbility#BASTIAO_DOS_NECESSITADOS}. Everything that javadoc says about direction,
+     * sceneContext ownership and why nothing is granted or stored applies here unchanged.
+     */
+    private int sumAllyGrantedDamageReduction(final CombatantSheet target, final SceneContext sceneContext) {
+        if (target == null || sceneContext == null) {
+            return 0;
+        }
+        int targetCurrentHitPoints = hitPointsService.getCurrentHitPoints(target.getCharacter(), target);
+        int total = 0;
+        for (CombatantSheet ally : sceneContext.getAlliesWithin(Range.ADJACENTE)) {
+            boolean allyHasLowerPv =
+                    targetCurrentHitPoints < hitPointsService.getCurrentHitPoints(ally.getCharacter(), ally);
+            total += ally.getCharacter().getAllTitles().stream()
+                    .mapToInt(title -> title.getAllAbilities().stream()
+                            .mapToInt(ability -> ability.resolveAllyDamageReduction(sceneContext, title, allyHasLowerPv))
+                            .sum())
+                    .sum();
+        }
+        return total;
     }
 
     private boolean hasAdjacentAllyWithLowerCurrentHitPoints(final Character character, final CombatantSheet target, final SceneContext sceneContext) {

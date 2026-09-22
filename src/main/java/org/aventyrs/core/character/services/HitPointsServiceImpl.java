@@ -35,7 +35,14 @@ public class HitPointsServiceImpl implements HitPointsService {
         for (Feat feat : character.getFeats()) {
             bonus += feat.resolveLifeMultiplierIncrease(character, characterSheet);
         }
-        return character.getLifeMultiplier() + bonus;
+        if (characterSheet != null) {
+            // A held Malefício can lower it — ConditionType#ENVENENADO's "-1 Multiplicador de
+            // Pontos de Vida". Only reachable with a sheet, like every other condition read; the
+            // Character-only overload has nowhere to look. Floored at 1 so a stack of Malefícios
+            // can never drive a creature's PV to zero by arithmetic alone.
+            bonus += characterSheet.getConditionBonus(ModifierType.LIFE_MULTIPLIER, null);
+        }
+        return Math.max(1, character.getLifeMultiplier() + bonus);
     }
 
     @Override

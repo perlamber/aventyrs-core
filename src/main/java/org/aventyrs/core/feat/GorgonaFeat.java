@@ -46,9 +46,12 @@ public enum GorgonaFeat implements Feat {
     // TODO: "sempre considerado Amaldiçoado" now has a classification to name
     //  (ConditionType.AMALDICOADO, appliable open-ended with a null duration), but nothing applies
     //  a Condition from a held Talento — Feat has no condition hook, and "sempre" is a standing
-    //  state rather than a triggered one. Losing Imunidade a Encantamentos additionally needs a
-    //  mechanism for a Talento to *suppress* a Característica Racial — Race#getRacialAbilities()
-    //  is read live with no way to suspend it — and no Encantamento condition is authored.
+    //  state rather than a triggered one.
+    // "não possui a Característica Racial Imunidade a Encantamentos" is real now, through
+    // Feat#suppressesEnchantmentImmunity — a per-trait suppression rather than a rung of
+    // RacialTraitSuppression, since that ladder silences categories for a Forma while this names
+    // one Característica permanently. Character#isImmuneToEnchantments() is the view that folds
+    // the two together.
     MARCA_DA_MALDICAO(
             "Você está sempre em sua forma monstruosa e é incapaz de alternar para a forma "
                     + "humanoide. O Alcance de seu Olhar de Lacerto aumenta para Distância Curta e "
@@ -61,6 +64,12 @@ public enum GorgonaFeat implements Feat {
                     .requiredRace(Gorgona.class)
                     .forbiddenFeat(acolhidaPorFlora())
                     .build()) {
+        /** "não possui a Característica Racial Imunidade a Encantamentos." */
+        @Override
+        public boolean suppressesEnchantmentImmunity() {
+            return true;
+        }
+
         @Override
         public FormAccess resolveFormAccess(final FormType form, final Character character) {
             return form == FormType.MONSTRUOSA ? FormAccess.REQUIRED : FormAccess.NO_OPINION;

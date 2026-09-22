@@ -134,8 +134,8 @@ public class AttackReceiver {
      */
     public IncomingAttackResult resolve(@NonNull final IncomingAttack attack) {
         CombatantSheet defender = attack.getDefender();
-        int auraPenalty = AuraTargeting.resolvePenalty(attack.getScene(), attack.getAttacker(), defender,
-                attack.isForcedTargetUnavailable());
+        boolean auraHalvesDamage = AuraTargeting.resolveHalvesDamage(attack.getScene(), attack.getAttacker(),
+                defender, attack.isForcedTargetUnavailable());
         SkillRoll defenseRoll = attack.getDefenseRoll();
 
         InteractionResult defenseResult = esquivaEApararInteraction.applyTo(
@@ -144,14 +144,15 @@ public class AttackReceiver {
 
         DifficultyLevel effectiveDifficultyLevel =
                 attack.getDifficultyLevel().easier(defenseResult.getDifficultyReduction());
-        int requiredTotal = effectiveDifficultyLevel.getBaseValue() + attack.getAttackBonus() + auraPenalty;
+        int requiredTotal = effectiveDifficultyLevel.getBaseValue() + attack.getAttackBonus();
         int defenseTotal = defenseResult.getSkillRollBonus()
                 + (defenseRoll == null ? 0 : defenseRoll.getTotal());
 
         IncomingAttackResult.IncomingAttackResultBuilder result = IncomingAttackResult.builder()
                 .defenseTotal(defenseTotal)
                 .requiredTotal(requiredTotal)
-                .auraPenalty(auraPenalty)
+                .auraHalvesDamage(auraHalvesDamage)
+                .retaliation(RetaliationResolver.resolve(defender, SkillType.ATAQUE_CORPO_A_CORPO))
                 .effectiveDifficultyLevel(effectiveDifficultyLevel);
 
         if (defenseRoll == null) {
@@ -167,7 +168,8 @@ public class AttackReceiver {
 
         if (!defended) {
             defenseResult = defenseResult.toBuilder()
-                    .nextInteraction(buildChain(attack, criticalEffectTriggered, effectChainTriggered, criticalResult))
+                    .nextInteraction(buildChain(attack, criticalEffectTriggered, effectChainTriggered,
+                            criticalResult, auraHalvesDamage))
                     .build();
         }
 
@@ -225,7 +227,8 @@ public class AttackReceiver {
     private Interaction<CombatantSheet> buildChain(final IncomingAttack attack,
                                                     final boolean criticalEffectTriggered,
                                                     final boolean effectChainTriggered,
-                                                    final CriticalResult criticalResult) {
+                                                    final CriticalResult criticalResult,
+                                                    final boolean halfDamage) {
         List<Effect> stages = new ArrayList<>();
         if (effectChainTriggered) {
             stages.addAll(attack.getEffectChains());
@@ -239,6 +242,7 @@ public class AttackReceiver {
         for (int i = stages.size() - 1; i >= 0; i--) {
             next = stages.get(i).chainInto(next);
         }
-        return new DamageInteraction(damageService).chainInto(next);
+        DamageInteraction head = new DamageInteraction(damageService);
+        return (halfDamage ? head.halvingDamage() : head).chainInto(next);
     }
 }

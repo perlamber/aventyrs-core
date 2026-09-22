@@ -44,11 +44,22 @@ public class IncomingAttackResult {
     private final int requiredTotal;
 
     /**
-     * The provoking-Aura malus already included in {@link #requiredTotal} (it lowers the GD, easing the defence) — {@code Skill#DISADVANTAGE_MALUS} when a
-     * bound attacker, having attacked the Aura's holder this Rodada, attacks someone else; 0
-     * otherwise. Reported so a UI can show where the difference came from.
+     * Whether a provoking Aura makes this attack deal Meio-Dano — {@code true} when a bound
+     * attacker, having already attacked the Aura's holder this Rodada, attacks someone else
+     * ({@code AbencoadoPelaLuzAbility#ORGULHO_ELDURIANO}).
+     *
+     * <p><b>Applied, not merely reported</b>: when true the chain head is marked {@code
+     * DamageInteraction#halvingDamage()}. It does <em>not</em> touch {@link #requiredTotal} — V19
+     * moved this penalty off the roll and onto the damage.
      */
-    private final int auraPenalty;
+    private final boolean auraHalvesDamage;
+
+    /**
+     * What the defender's thorns deal back to the attacker, or {@code null} when nothing does —
+     * see {@link Retaliation}, which carries the whole calculation. <b>Reported, never dealt</b>:
+     * this core sends damage only one way, so the caller applies it against the attacker's sheet.
+     */
+    private final Retaliation retaliation;
 
     /**
      * {@link IncomingAttack#getDifficultyLevel()} after the defender's own {@code

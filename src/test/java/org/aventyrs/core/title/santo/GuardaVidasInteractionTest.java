@@ -66,13 +66,13 @@ class GuardaVidasInteractionTest {
     }
 
     @Test
-    void activatingSpendsExactlyTwoDeterminationPoints() {
+    void activatingSpendsExactlyThreeDeterminationPoints() {
         int before = currentPd();
 
         InteractionResult result = interaction.activate(interceptingFor(ally, Range.DISTANCIA_CURTA));
 
-        assertEquals(2, result.getDeterminationPointsSpent());
-        assertEquals(before - 2, currentPd());
+        assertEquals(3, result.getDeterminationPointsSpent());
+        assertEquals(before - 3, currentPd());
     }
 
     @Test

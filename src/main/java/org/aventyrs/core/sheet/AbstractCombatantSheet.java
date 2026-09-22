@@ -194,6 +194,20 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     @Getter(AccessLevel.NONE)
     private final Map<Object, Integer> activationsThisTurn = new HashMap<>();
 
+    /**
+     * How many further attacks each source has left to enhance — the carrier for a grant scoped to
+     * a <b>count of attacks</b> rather than to a Duração in Rodadas ({@code
+     * AbracadoPelaEscuridaoAbility#FUROR_DE_SYLPH}: "aprimora uma quantidade de ataques igual à 1+
+     * metade dos PV gastos", which names no Rodadas at all).
+     *
+     * <p>Deliberately <b>not</b> a {@link TemporaryBonus}: those only ever count down in Rodadas,
+     * so expressing this as one would have meant inventing a Duração the rules do not state. It is
+     * likewise not cleared at any Rodada or Turn boundary — the charges last until they are spent,
+     * which is exactly what the clause says.
+     */
+    @Getter(AccessLevel.NONE)
+    private final Map<Object, Integer> enhancedAttacksRemaining = new HashMap<>();
+
     /** Every roll-action taken since this Rodada began — see {@link #recordAction}. */
     @Getter(AccessLevel.NONE)
     private final List<CombatantAction> actionsThisRound = new ArrayList<>();
@@ -897,6 +911,35 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         return activationsThisTurn.getOrDefault(source, 0);
     }
 
+    @Override
+    public void grantEnhancedAttacks(final Object source, final int count) {
+        if (count <= 0) {
+            return;
+        }
+        // Replaces rather than accumulates, the same way a Blessing from one source replaces its
+        // predecessor: re-activating restates how many attacks are enhanced, it does not bank them.
+        enhancedAttacksRemaining.put(source, count);
+    }
+
+    @Override
+    public int getRemainingEnhancedAttacks(final Object source) {
+        return enhancedAttacksRemaining.getOrDefault(source, 0);
+    }
+
+    @Override
+    public boolean consumeEnhancedAttack(final Object source) {
+        int remaining = getRemainingEnhancedAttacks(source);
+        if (remaining <= 0) {
+            return false;
+        }
+        if (remaining == 1) {
+            enhancedAttacksRemaining.remove(source);
+        } else {
+            enhancedAttacksRemaining.put(source, remaining - 1);
+        }
+        return true;
+    }
+
     /**
      * Begins a new Rodada: clears the action log and resets the per-Turn marker. Called by
      * {@code Scene#next()} on every active participant at the Rodada wrap; without a live {@code
@@ -1182,6 +1225,58 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
      * exactly the subclass this is being asked for. Nothing implies Escondido, so there is no
      * implication to miss by going direct.
      */
+    @Override
+    public <T extends TemporaryEffect & Enchantment> boolean applyEnchantment(final T enchantment) {
+        if (getCharacter() != null && getCharacter().isImmuneToEnchantments()) {
+            return false;
+        }
+        applyEffect(halvedIfWarded(enchantment));
+        return true;
+    }
+
+    /**
+     * Halves a harmful Encantamento's Duração when this combatant is warded by an Armadura and an
+     * Escudo Ungido at once. Rounded up, so a 1-Rodada effect still lands for a Rodada rather than
+     * vanishing — halving a Duração shortens it, and the rules nowhere let it remove one outright.
+     * An open-ended Encantamento has no Duração to halve.
+     */
+    private <T extends TemporaryEffect & Enchantment> TemporaryEffect halvedIfWarded(final T enchantment) {
+        Integer rounds = enchantment.getRemainingRounds();
+        boolean warded = getUngido().map(Ungido::blessesBoth).orElse(false);
+        if (!warded || !enchantment.isHarmful() || rounds == null) {
+            return enchantment;
+        }
+        enchantment.shortenTo(Math.max(1, (rounds + 1) / 2));
+        return enchantment;
+    }
+
+    @Override
+    public Optional<ForcedTargeting> getForcedTargeting() {
+        return temporaryEffects.stream()
+                .filter(ForcedTargeting.class::isInstance)
+                .map(ForcedTargeting.class::cast)
+                .filter(effect -> !effect.isExpired())
+                .findFirst();
+    }
+
+    @Override
+    public Optional<Ungido> getUngido() {
+        return temporaryEffects.stream()
+                .filter(Ungido.class::isInstance)
+                .map(Ungido.class::cast)
+                .filter(effect -> !effect.isExpired())
+                .findFirst();
+    }
+
+    @Override
+    public Optional<PeleDePedra> getPeleDePedra() {
+        return temporaryEffects.stream()
+                .filter(PeleDePedra.class::isInstance)
+                .map(PeleDePedra.class::cast)
+                .filter(effect -> !effect.isExpired())
+                .findFirst();
+    }
+
     @Override
     public Optional<Hidden> getHidden() {
         return heldConditions()

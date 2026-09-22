@@ -353,15 +353,39 @@ public enum ConditionType {
         }
     },
 
-    /** "Alvo perde Multiplicador de Bônus Base, conforme especificado no efeito." */
-    // TODO: "Multiplicador de Bônus Base" is a stat this core does not have — the phrase appears
-    //  nowhere else except AssassinoFeat's own TODO'd "Roubo de Bônus Base". Until it exists
-    //  there is nothing to reduce. "Conforme especificado no efeito" additionally means the
-    //  amount lives on whatever inflicted this, not on the condition.
+    /**
+     * "Alvo perde Multiplicador de Bônus Base, conforme especificado no efeito."
+     *
+     * <p>Real as of the V19 Santo pass, through the one effect that states an amount: Espinhos
+     * Venenos de Gaea's "perdem -1 Multiplicador de Pontos de Vida (Malefício Veneno) por 2
+     * Rodadas". {@code HitPointsService#getLifeMultiplier(Character, CombatantSheet)} reads it, so
+     * a poisoned character's maximum PV really does fall.
+     *
+     * <p>⚠️ <b>The catalogue's own wording and the effect's disagree.</b> This entry says
+     * "Multiplicador de <i>Bônus Base</i>", a stat that exists nowhere in this ruleset; Espinhos
+     * says "Multiplicador de <i>Pontos de Vida</i>", which is {@code
+     * Character#getLifeMultiplier}. The concrete clause is taken as authoritative over the
+     * catalogue's summary — but confirm against the core rulebook, because if some other Veneno
+     * effect really does mean a different multiplier, the malus belongs on whatever inflicts it
+     * rather than here.
+     *
+     * <p>Max PV moves and current PV follows: nothing re-scales damage already taken, so a
+     * poisoned character can drop a {@code CharacterStatus} tier and climb back when it lapses —
+     * the same derivation the Forma PV uplift already documents.
+     */
+    // TODO: "conforme especificado no efeito" means the amount properly lives on whatever
+    //  inflicted this. -1 is hard-coded here because every authored Veneno effect states -1; a
+    //  second one stating otherwise turns this into a magnitude on the Condition, the way
+    //  sheet.Hidden already carries one.
     // TODO: "Personagens imunes a efeitos Selvagens também são imunes" needs an effect-source
     //  classification (Selvagem) and a per-condition immunity check, neither of which exists.
     ENVENENADO("Alvo perde Multiplicador de Bônus Base, conforme especificado no efeito. "
-            + "Personagens imunes a efeitos Selvagens também são imunes a este efeito."),
+            + "Personagens imunes a efeitos Selvagens também são imunes a este efeito.") {
+        @Override
+        public List<ConditionEffect> getEffects() {
+            return List.of(new ConditionEffect(ModifierType.LIFE_MULTIPLIER, -1, null));
+        }
+    },
 
     /**
      * The hidden state a character enters by using Furtividade — a Condição rather than a

@@ -97,6 +97,18 @@ public enum ModifierType {
      */
     MAGIC_REDUCTION,
     HALF_DAMAGE,
+    /**
+     * Retaliação — damage an attacker takes for attacking this combatant in melee, the one
+     * outward-facing damage figure in this enum ({@code
+     * AbracadoPelaEscuridaoAbility#ESPINHOS_VENENOS_DE_GAEA}: "causam danos aos personagens que
+     * lhe atacarem Corpo-a-Corpo, Vigor pontos de Dano Físico Elemental: Natural").
+     *
+     * <p>Held as a round-scoped {@code TemporaryBonus} on the <em>defender</em>, because the
+     * clause is a timed state its holder enters. The attack orchestrators read it off the defender
+     * and <b>report</b> it on their result; nothing here deals it, since this core computes damage
+     * only ever to a target from an attacker and the caller is what closes that loop.
+     */
+    RETALIATION_DAMAGE,
     ABSOLUTE_DAMAGE_REDUCTION,
     /**
      * Resistência à Críticos (RC) — a <b>defender-side</b> reduction of the Margem Crítica an

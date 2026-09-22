@@ -8,6 +8,7 @@ import org.aventyrs.core.skill.CriticalResult;
 import org.aventyrs.core.skill.DifficultyLevel;
 import org.aventyrs.core.skill.SkillExcellency;
 import org.aventyrs.core.skill.artes.ArtesExcellency;
+import org.aventyrs.core.title.EmpoweredAttack;
 
 import java.util.List;
 import java.util.Set;
@@ -39,6 +40,19 @@ public class InteractionResult {
      * against this sheet.
      */
     CombatantSheet redirectedAttackTarget;
+
+    /**
+     * What the <b>one</b> attack this activation requires gains — see {@link
+     * org.aventyrs.core.title.EmpoweredAttack}, whose javadoc carries the reasoning. {@code null}
+     * for every Interaction that doesn't empower an attack, which is everything but {@code
+     * AbracadoPelaEscuridaoAbility#PLACIDEZ_DE_UNDINE_RANCOR_DE_HALOI} today — the same
+     * stays-{@code null}-when-not-applicable convention as every other field here.
+     *
+     * <p>Reported, not applied, and for the same reason {@link #redirectedAttackTarget} is: the
+     * activation resolves <b>before</b> the attack is built, so the caller folds these figures into
+     * the {@code SkillRoll}/{@code DeliveredAttack} it then constructs.
+     */
+    EmpoweredAttack empoweredAttack;
 
     /** The Perícia roll bonus computed by a skill-test Interaction (e.g. AttentionInteraction). */
     Integer skillRollBonus;
