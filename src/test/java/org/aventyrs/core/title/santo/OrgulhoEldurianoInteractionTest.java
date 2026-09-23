@@ -99,14 +99,14 @@ class OrgulhoEldurianoInteractionTest {
         int before = currentPd();
 
         assertRefused(TITLE_ABILITY_REQUIRES_SCENE, () -> new OrgulhoEldurianoInteraction().activate(
-                TitleAbilityActivationRequest.builder().activator(holder).determinationPoints(1).build()));
+                TitleAbilityActivationRequest.builder().activator(holder).determinationPoints(2).build()));
 
         assertEquals(before, currentPd());
     }
 
     @Test
     void aSuppliedContextBindsFoesAlreadyInRange() {
-        santo.activateOrgulhoElduriano(holder, scene, 1,
+        santo.activateOrgulhoElduriano(holder, scene, 2,
                 scene.buildContext(holder, Map.of(foe, Range.DISTANCIA_MUITO_CURTA)));
 
         assertEquals(Optional.of(holder), scene.getForcedAttackTarget(foe));
@@ -137,7 +137,7 @@ class OrgulhoEldurianoInteractionTest {
     void silencioRefusesTheActivation() {
         holder.applyCondition(new Condition(ConditionType.SILENCIO, 1));
 
-        assertRefused(ABILITY_ACTIVATION_PREVENTED, () -> santo.activateOrgulhoElduriano(holder, scene, 1, null));
+        assertRefused(ABILITY_ACTIVATION_PREVENTED, () -> santo.activateOrgulhoElduriano(holder, scene, 2, null));
         assertEquals(List.of(), scene.getActiveAuras());
     }
 
@@ -145,6 +145,6 @@ class OrgulhoEldurianoInteractionTest {
     void aSantoWithoutTheHabilidadeIsRefused() {
         Santo without = new Santo(List.of(SantoSpecialization.ABENCOADO_PELA_LUZ), List.of());
 
-        assertRefused(REQUIRED_TITLE_TRAIT_NOT_HELD, () -> without.activateOrgulhoElduriano(holder, scene, 1, null));
+        assertRefused(REQUIRED_TITLE_TRAIT_NOT_HELD, () -> without.activateOrgulhoElduriano(holder, scene, 2, null));
     }
 }

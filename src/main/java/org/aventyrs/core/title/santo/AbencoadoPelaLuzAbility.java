@@ -42,60 +42,70 @@ public enum AbencoadoPelaLuzAbility implements AventyrTitleAbility {
     // vez, até que eles passem por um Descanso Longo". AttackDelivery/AttackReceiver then refuse
     // a bound attacker's first attack of the Rodada unless it targets the holder (the caller
     // passes forcedTargetUnavailable when "você não for um alvo válido", which this core can't
-    // judge), and apply Skill#DISADVANTAGE_MALUS to its later attacks that Rodada against anyone
-    // else — once the caller files Scene#recordAttack. Still TODO:
-    // - the Desvantagem is applied to *attack* rolls only; "todas as suas Rolagens de Perícias
-    //   contra os novos alvos" also covers non-attack rolls, and nothing tracks what those are for;
+    // judge), and apply Meio-Dano to its later attacks that Rodada against anyone else — once the
+    // caller files Scene#recordAttack.
+    // V19 changed two things here, and both are now modeled more precisely than before: the
+    // penalty on those later attacks is "os danos causados serão reduzidos à metade (efeito de
+    // Meio-Dano)", not the previous revision's Desvantagem on every Perícia roll — which retires
+    // that whole TODO, since Meio-Dano is a real, first-class stage (DamageService
+    // #calculateFinalDamage's halfDamage flag, OR'd in so two sources never quarter). And the PD
+    // spent now buys *targets* ("2PD para 1 único inimigo, então +1PD para cada inimigo alvo
+    // adicional") rather than Rodadas, the Duração being a flat 2 — see ActiveAura#getMaxTargets
+    // and OrgulhoEldurianoInteraction. Still TODO:
     // - "Efeito de Encantamento" is unmodeled (see SantoSpecialization#ABENCOADO_PELA_LUZ's own
     //   TODO — nothing tracks which Encantamentos affect a combatant);
     // - "Área de Efeito": the Aura isn't classified as one for EsquivaEApararCompetencyAbility
     //   #EVASAO-style clauses (no incoming effect carries that flag).
     ORGULHO_ELDURIANO(
             "Todos os inimigos em Distância Curta são obrigados a desferir o primeiro ataque " +
-            "efetuada no Turno deles em você, podendo escolher outros alvos apenas se você " +
-            "não for um alvo válido. Após te atacarem, caso seus inimigos escolham outros " +
-            "alvos para seus ataques conseguintes realizados na mesma Rodada, eles sofrerão " +
-            "Desvantagem em todas as suas Rolagens de Perícias contra os novos alvos. Esta " +
-            "Habilidade não afeta os mesmos personagens mais de uma vez, até que eles passem " +
-            "por um Descanso Longo, e tem como Duração uma quantidade de Rodadas igual a " +
-            "quantidade de PD usados em sua ativação. Esta Habilidade é um Efeito de " +
-            "encantamento e sempre afeta os alvos em sua Área de Efeito.",
-            false, variable(1), ActionCost.ofActionPoints(2), Optional.of(OrgulhoEldurianoInteraction.class),
+            "efetuada em cada Rodada em você, podendo escolher outros alvos apenas se você " +
+            "não for um alvo válido. Quando atacarem outros alvos (com ataques adicionais ou " +
+            "por você não estar disponível) os danos causados serão reduzidos à metade " +
+            "(efeito de Meio-Dano). Esta Habilidade não afeta os mesmos personagens mais de " +
+            "uma vez, até que eles passem por um Descanso Longo. O Custo desta Habilidade é " +
+            "de 2PD para 1 único inimigo, então de +1PD para cada inimigo alvo adicional. " +
+            "Esta Habilidade é um Efeito de Encantamento, sempre afeta os alvos em sua Área " +
+            "de Efeito e tem Duração de 2 Rodadas.",
+            false, variable(2), ActionCost.ofActionPoints(3), Optional.of(OrgulhoEldurianoInteraction.class),
             Optional.of(SantoSpecialization.ABENCOADO_PELA_LUZ), 0),
 
-    // Requer Especialização 'Abençoado pela Luz' — enforced (see class javadoc). Otherwise,
-    // two separate halves, only one still TODO'd.
-    // The "Vantagem em rolagens de Perícias de Ataque" half is real, via
-    // GritoDeGuerraVulcanoInteraction (Santo#activateGritoDeGuerraVulcano is the entry point):
+    // Requer Especialização 'Abençoado pela Luz' — enforced (see class javadoc). Both halves are
+    // real, via GritoDeGuerraVulcanoInteraction (Santo#activateGritoDeGuerraVulcano is the entry
+    // point), which reports all three Blessings for the caller to grant.
     // Vantagem is just Skill.ADVANTAGE_BONUS (CLAUDE.md's "Vantagem is a flat +2 bonus"
     // section), ModifierType.ATAQUE_A_DISTANCIA_ROLL_BONUS/ATAQUE_CORPO_A_CORPO_ROLL_BONUS are
     // already summed by AbstractSkillInteraction via CombatantSheet#getTemporaryBonus, and
     // SceneContext#getAlliesWithin(Range.ADJACENTE) resolves "self + aliados adjacentes" as an
-    // actual List<CombatantSheet> to grant CombatantSheet#grantTemporaryBonus to directly. The
-    // "+2 em Defesas" half stays TODO'd — the Defesas stat itself now exists, so what's left is
-    // granting it: this is an activated, target-scoped bonus, so it wants a DEFESAS-typed
-    // Blessing at activation rather than a passive @Modifier (see
-    // Santo's own TODO) — see GritoDeGuerraVulcanoInteraction's own class javadoc for the
-    // current split.
+    // actual List<CombatantSheet> for the caller to grant to. The Defesas half is a DEFESAS-typed
+    // Blessing granted at activation rather than a passive @Modifier, since it is activated and
+    // target-scoped; DefenseService reads it like any other DEFESAS source.
+    // V19 raised the Defesas figure from +2 to +3 and lowered the cost from 3PD to 2PD.
     GRITO_DE_GUERRA_VULCANO(
-            "Você e seus aliados adjacentes recebem Bônus de +2 em Defesas e Vantagem em " +
+            "Você e seus aliados adjacentes recebem Bônus de +3 em Defesas e Vantagem em " +
             "rolagens de Perícias de Ataque por 2 Rodadas.",
-            false, fixed(3), ActionCost.ofActionPoints(1), Optional.of(GritoDeGuerraVulcanoInteraction.class),
+            false, fixed(2), ActionCost.ofActionPoints(1), Optional.of(GritoDeGuerraVulcanoInteraction.class),
             Optional.of(SantoSpecialization.ABENCOADO_PELA_LUZ), 0),
 
-    // Requer Especialização 'Abençoado pela Luz' — enforced (see class javadoc). Otherwise still
-    // TODO'd, and now for one reason rather than two: *granting* RA for N Rodadas is expressible
-    // since DamageServiceImpl reads a timed ABSOLUTE_DAMAGE_REDUCTION bonus (see
-    // GLORIA_RELAMPEJANTE_DE_TESLA), but this clause's RA is conditioned on "após" the first
-    // attack having already been negated, and the negation itself has no mechanism: DamageService
-    // computes each hit independently, with no "the next hit against this target is free" state to
-    // consult, and nothing tracks whether a one-time negation has already fired. Granting the RA
-    // unconditionally for the full 2 Rodadas would misrepresent the text, so this stays unwired
-    // until the negation exists.
-    PELE_ROCHOSA_DE_EPONA(
-            "Sua pele é transformada em pedra por 2 Rodadas. O primeiro ataque que lhe " +
-            "causaria Danos é reduzido à zero, após isso você recebe RA.",
-            false, fixed(2), ActionCost.ofActionPoints(2), Optional.empty(), Optional.of(SantoSpecialization.ABENCOADO_PELA_LUZ), 0),
+    // Requer Especialização 'Abençoado pela Luz' — enforced (see class javadoc).
+    // Real now through CorpoIndestrutivelDeEponaInteraction, which registers a sheet.PeleDePedra —
+    // a TemporaryEffect rather than a Blessing, because neither half of this clause is a stat:
+    // the first damaging hit is *negated* (no ModifierType expresses "reduce to zero") and what
+    // follows is a figure that changes after every hit (a TemporaryBonus holds one figure for its
+    // whole Duração). DamageServiceImpl consults it by type, the one place it does so.
+    // "O primeiro ataque que lhe *causaria* Danos" is honoured by reading the stone last, after
+    // RD/RA/Meio-Dano: a blow those already turned aside never spends the negation.
+    // RDS is RD (ModifierType.DAMAGE_REDUCTION), not RA — see GorgonaFeat's own note — so the
+    // decaying 5/3/1 lands on the same total every other RD source does.
+    // V19 renamed this Habilidade (was "Pele Rochosa de Epona"), raised the cost from 2PD to 4PD,
+    // lowered the Tempo de Ativação from 2PA to 1PA, halved the Duração to 1 Rodada, and replaced
+    // the previous revision's bare "você recebe RA" with the decaying RDS 5.
+    CORPO_INDESTRUTIVEL_DE_EPONA(
+            "Sua pele é transformada em pedra por 1 Rodada. O primeiro ataque que lhe " +
+            "causaria Danos é reduzido à zero, após isso você recebe RDS 5. A Redução de " +
+            "Danos Sofridos é reduzida em -2 para cada dano sofrido.",
+            false, fixed(4), ActionCost.ofActionPoints(1),
+            Optional.of(CorpoIndestrutivelDeEponaInteraction.class),
+            Optional.of(SantoSpecialization.ABENCOADO_PELA_LUZ), 0),
 
     // Requer 2 Habilidades de 'Abençoado pela Luz' — enforced (see class javadoc). Its own
     // comment never repeats "Requer Especialização 'Abençoado pela Luz'" the way its three
@@ -104,19 +114,20 @@ public enum AbencoadoPelaLuzAbility implements AventyrTitleAbility {
     // from this catalog without already holding it — so getRequiredSpecialization() is set
     // here too, for consistency with that reading; flagged as an inference from the class-wide
     // statement, not text repeated on this specific constant, same "flag it, don't silently
-    // assume" discipline this codebase applies elsewhere. Otherwise fully TODO'd, two separate
-    // Fully real now, through GloriaRelampejanteDeTeslaInteraction, which reports both halves as
-    // SELF_AND_ALLIES Blessings for the caller to grant to self + SceneContext#getAlliesWithin(
-    // Range.DISTANCIA_CURTA). Both land: +1PA via ActionPointsServiceImpl#getMaxActionPoints's
+    // assume" discipline this codebase applies elsewhere.
+    // Fully real, through GloriaRelampejanteDeTeslaInteraction, which reports the grant as a
+    // SELF_AND_ALLIES Blessing for the caller to grant to self + SceneContext#getAlliesWithin(
+    // Range.DISTANCIA_CURTA). It lands via ActionPointsServiceImpl#getMaxActionPoints's
     // CombatantSheet-taking overloads (a caller reading PA through the Character-only overload
-    // still won't see it — that overload has no sheet to ask), and RA via DamageServiceImpl's
-    // timed-RA branch, which reads CombatantSheet#getTemporaryBonus(ABSOLUTE_DAMAGE_REDUCTION)
-    // beside the continuously-scanned passives. That branch was added *for* this clause: the
-    // older comment here correctly said RA had no TemporaryBonus path, which is no longer true.
-    // A numberless "recebem RA" is one instance, DamageService.DEFAULT_DAMAGE_REDUCTION.
+    // still won't see it — that overload has no sheet to ask).
+    // V19 raised the cost from 2PD to 3PD and the grant from +1PA to +2PA, and — note for anyone
+    // re-reading the history here — dropped the "e RA" half entirely. This clause grants no
+    // Redução Absoluta at all now, so the timed-RA branch in DamageServiceImpl that was added for
+    // it is left with AbencoadoPelaLuzAbility no longer among its consumers (it stays real and
+    // used: see AbracadoPelaEscuridao's own citations and CLAUDE.md's timed-RA row).
     GLORIA_RELAMPEJANTE_DE_TESLA(
-            "Você e seus aliados em Distância Curta recebem Bônus de +1PA e RA por 1 Rodada.",
-            true, fixed(2), ActionCost.FREE_ACTION, Optional.of(GloriaRelampejanteDeTeslaInteraction.class),
+            "Você e seus aliados em Distância Curta recebem Bônus de +2PA por 1 Rodada.",
+            true, fixed(3), ActionCost.FREE_ACTION, Optional.of(GloriaRelampejanteDeTeslaInteraction.class),
             Optional.of(SantoSpecialization.ABENCOADO_PELA_LUZ), 2);
 
     private final String description;

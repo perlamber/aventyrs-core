@@ -34,7 +34,21 @@ public class MagicPointsServiceImpl implements MagicPointsService {
     }
 
     @Override
+    public int getManaMultiplier(final Character character, final CombatantSheet sheet) {
+        if (sheet == null) {
+            return getManaMultiplier(character);
+        }
+        return Math.max(1, getManaMultiplier(character) + sheet.getTemporaryBonus(ModifierType.MANA_MULTIPLIER));
+    }
+
+    @Override
+    public int getMaxMagicPoints(final Character character, final CombatantSheet sheet) {
+        return BASE_MAGIC_POINTS
+                + character.getEffectiveAttributeTotal(AttributeDomain.FOCUS) * getManaMultiplier(character, sheet);
+    }
+
+    @Override
     public int getCurrentMagicPoints(final Character character, final CombatantSheet characterSheet) {
-        return Math.max(0, getMaxMagicPoints(character) - characterSheet.getManaSpent());
+        return Math.max(0, getMaxMagicPoints(character, characterSheet) - characterSheet.getManaSpent());
     }
 }

@@ -5,6 +5,7 @@ import java.util.Optional;
 import org.aventyrs.core.action.ReactionContext;
 import org.aventyrs.core.action.ReactionTrigger;
 import org.aventyrs.core.scene.SceneContext;
+import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.scene.Teleportation;
 import org.aventyrs.core.sheet.ActionCost;
 import org.aventyrs.core.sheet.Interaction;
@@ -50,6 +51,17 @@ public interface AventyrTitleAbility {
      */
     default PDCost getPDCost() {
         return PDCost.NONE;
+    }
+
+    /**
+     * Custo de Ativação in temporary Ego points — Gigante Enfurecido's "1 Ponto Temporário de
+     * Autocontrole". {@link EgoCost#NONE} by default: every other trait pays in PD alone. This is the
+     * <em>stated</em> cost a client shows and affords; an activation whose price grows with the
+     * options chosen (Frenesi's Especializações, Cataclismo's elements) resolves the real figure in
+     * its own {@code AbstractTitleAbilityInteraction#resolveEgoCost}.
+     */
+    default EgoCost getEgoCost() {
+        return EgoCost.NONE;
     }
 
     /**
@@ -168,6 +180,75 @@ public interface AventyrTitleAbility {
     }
 
     /**
+     * RDS (Redução de Danos Sofridos) this Habilidade de Título grants its own holder right now —
+     * the RD twin of {@link #resolveAbsoluteDamageReduction}, and the hook Santo's Bastião dos
+     * Necessitados uses under V19 ("Enquanto estiver protegendo ao menos 1 aliado você recebe RDS
+     * igual a metade do valor capaz de fornecer").
+     *
+     * <p><b>RDS is RD, not RA</b> — {@code ModifierType#DAMAGE_REDUCTION}; see {@code
+     * GorgonaFeat}'s own "the source text is redundant: RDS <i>is</i> RD" note. The RA pair above
+     * stays for clauses that really do name Redução Absoluta, and is not deprecated by this one:
+     * the two mitigate at different stages, RA being the one an attack can never ignore.
+     *
+     * <p>Takes the granting {@link AventyrTitle} as well, which the RA pair does not need: a value
+     * like "1+ Metade das Habilidades de Santo que você possuir" is a fact about the <em>holder's
+     * own Título</em>, and an enum constant has no holder. {@code DamageServiceImpl} has the
+     * {@code AventyrTitle} in hand at both call sites, so it passes it rather than making every
+     * constant re-derive it. {@code hasLowerPvAdjacentAlly} is resolved by that same caller, for
+     * the reason {@link #resolveAbsoluteDamageReduction}'s own javadoc gives.
+     *
+     * <p>Zero by default; only override on a constant whose rules text grants RDS to its holder.
+     */
+    default int resolveDamageReduction(SceneContext sceneContext, AventyrTitle holder,
+                                       boolean hasLowerPvAdjacentAlly) {
+        return 0;
+    }
+
+    /**
+     * RDS this Habilidade de Título grants right now to an <i>adjacent ally</i> — the RD twin of
+     * {@link #resolveAllyAbsoluteDamageReduction}, and the outward half of Santo's Bastião dos
+     * Necessitados under V19 ("Seus aliados, que tenham menos quantidade de PV atuais que você,
+     * recebem RDS igual a 1+ Metade das Habilidades de Santo que você possuir. Apenas aliados
+     * adjacentes recebem este benefício").
+     *
+     * <p><b>Scanned, never granted</b>, for exactly the reasoning {@link
+     * #resolveAllyAbsoluteDamageReduction}'s javadoc sets out at length: a granted bonus would be
+     * a snapshot needing revocation the moment either character moved, and recomputing at the
+     * moment the recipient's damage is calculated is correct by construction instead.
+     *
+     * <p>Note the two directions read different things: {@code allyHasLowerPv} is the
+     * <em>recipient's</em> PV comparison, while {@code holder} is the <em>granter's</em> Título —
+     * which is precisely why the Título has to be passed rather than inferred from whoever is
+     * taking the damage.
+     *
+     * <p>Zero by default; only override on a constant whose rules text grants RDS to someone other
+     * than its holder.
+     */
+    default int resolveAllyDamageReduction(SceneContext sceneContext, AventyrTitle holder,
+                                           boolean allyHasLowerPv) {
+        return 0;
+    }
+
+    /**
+     * Pontos de Ação this Habilidade de Título adds to its holder's maximum right now — scanned by
+     * {@code ActionPointsServiceImpl} beside the {@code ModifierType#ACTION_POINTS} sources.
+     *
+     * <p><b>Scanned rather than granted</b>, and that is the whole point: {@code
+     * AbracadoPelaEscuridaoAbility#FUROR_DE_SYLPH}'s "+1PA" lasts while it still has attacks left
+     * to enhance ({@code CombatantSheet#getRemainingEnhancedAttacks}), which is a budget rather
+     * than a Duração. A {@link org.aventyrs.core.sheet.TemporaryBonus} only counts down in
+     * Rodadas, so granting it would have meant inventing a Duração the clause never states;
+     * recomputing from the budget is correct by construction as it is spent, and needs no revoke.
+     * Same reasoning {@link #resolveAllyDamageReduction} gives for its own scan.
+     *
+     * <p>Zero by default; needs the holder's sheet, so a {@code Character}-only caller never sees
+     * it — the same limitation the aggregate PA/Reações/Ações Livres reads already carry.
+     */
+    default int resolveActionPointBonus(CombatantSheet holder) {
+        return 0;
+    }
+
+    /**
      * How many Especializações of this same Título title must already hold before this
      * ability can be acquired, <b>not caring which ones</b> — e.g. {@code
      * SantoAbility#GUARDA_VIDAS}'s own "Requer 1 Especialização e 2 outras Habilidades de
@@ -275,6 +356,16 @@ public interface AventyrTitleAbility {
                 .filter(held -> scope.isEmpty() || scope.equals(held.getRequiredSpecialization()))
                 .count();
         return specializationSatisfied && otherAbilityCount >= getRequiredOtherAbilities();
+    }
+
+    /**
+     * {@link #isEligible(AventyrTitle)} for a prerequisite that also names something the
+     * <em>character</em> holds beyond the Título — Frenesi Arcano's "Especialização 'Titã
+     * Enlouquecido' e o talento 'Arcanista'". Checked by {@code TitleAbilityService#grantTitleAbility};
+     * delegates to the Título-only check by default.
+     */
+    default boolean isEligible(AventyrTitle title, org.aventyrs.core.character.Character character) {
+        return isEligible(title);
     }
 
     public Optional<Class <? extends Interaction>> getInteractionClass();

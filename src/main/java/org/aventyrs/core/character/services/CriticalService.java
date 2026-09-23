@@ -72,6 +72,38 @@ public interface CriticalService {
      * ({@code ArtilhariaFeat#MIRA_MORTAL} reads {@code SkillRoll#activated}); {@code null} when
      * nothing has been rolled yet, which such a clause reads as "not activated".
      */
+    /**
+     * How far the target's resistances push an attacker's Margem Crítica <b>Menor</b> back, in
+     * "números": its Resistência a Críticos total ({@code CombatantSheet#getTotalCriticalResistance},
+     * −2 per instance) plus Resistência Absoluta's "reduzida em -1" when the target holds any RA
+     * ("não se acumula entre instâncias"). 0 for a {@code null} target.
+     */
+    int getLesserCriticalResistance(CombatantSheet target, SceneContext sceneContext);
+
+    /**
+     * Every "Margem Crítica Maior +N" the holder has for this roll, summed — the Maior twin of
+     * {@link #sumCriticalMarginIncrease}: held Títulos (Campeão da Taverna) and the wielded weapon's
+     * fitted Obra-Prima (Decisiva's Favor).
+     */
+    int sumMajorCriticalMarginIncrease(CombatantSheet holder, SkillType skillType, AttackSource attackSource,
+                                       SceneContext sceneContext);
+
+    /**
+     * How far the target's resistances push an attacker's Margem Crítica <b>Maior</b> back: −1 per
+     * Resistência a Críticos instance and −1 once for holding any Resistência Absoluta, per {@code
+     * docs/rules/defesas-e-resistencias.txt}. 0 for a {@code null} target.
+     */
+    int getMajorCriticalResistance(CombatantSheet target, SceneContext sceneContext);
+
+    /**
+     * The 3d6 total an Acerto Crítico <b>Maior</b> needs for this roll — {@code
+     * Weapon#DEFAULT_MAJOR_CRITICAL_MARGIN} (18, three 6s) lowered by {@link
+     * #sumMajorCriticalMarginIncrease}, with the target's {@link #getMajorCriticalResistance}
+     * cancelling widening but never pushing past 18 ("até o mínimo de 18").
+     */
+    int getMajorCriticalMargin(CombatantSheet holder, SkillType skillType, AttackSource attackSource,
+                               SceneContext sceneContext, CombatantSheet target);
+
     CriticalDamage getCriticalDamage(CombatantSheet holder, SkillType skillType, AttackSource attackSource,
                                      CriticalResult criticalResult, SkillRoll skillRoll, SceneContext sceneContext);
 }

@@ -1,15 +1,13 @@
 package org.aventyrs.core.title.santo;
 
-import org.aventyrs.core.character.Character;
-import org.aventyrs.core.title.PDCost;
 import org.aventyrs.core.character.fixture.CharacterFixture;
-import org.aventyrs.core.rest.RestService;
-import org.aventyrs.core.rest.RestServiceImpl;
-import org.aventyrs.core.rest.RestType;
+import org.aventyrs.core.title.AventyrTitle;
+import org.aventyrs.core.title.PDCost;
 import org.junit.jupiter.api.BeforeEach;
 import org.aventyrs.core.sheet.ActionCost;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -17,7 +15,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 
 class SantoSpecializationTest {
 
-    private final RestService restService = new RestServiceImpl();
 
     @BeforeEach
     void setup() {
@@ -39,7 +36,7 @@ class SantoSpecializationTest {
 
     @Test
     void abencoadoPelaLuzHasTheRightActivationCost() {
-        assertEquals(PDCost.fixed(1), SantoSpecialization.ABENCOADO_PELA_LUZ.getPDCost());
+        assertEquals(PDCost.fixed(0), SantoSpecialization.ABENCOADO_PELA_LUZ.getPDCost());
         assertEquals(ActionCost.ofActionPoints(2), SantoSpecialization.ABENCOADO_PELA_LUZ.getActionPointCost());
     }
 
@@ -52,20 +49,42 @@ class SantoSpecializationTest {
         assertEquals(ActionCost.NONE, SantoSpecialization.ABRACADO_PELA_ESCURIDAO.getActionPointCost());
     }
 
+    /** "recupere 3+ Quantidade de Habilidades de Abençoado pela Luz PV" — 3 with none held. */
     @Test
-    void resolveShortRestHealAmountMatchesRestServicesOwnShortRestFormula() {
-        Character character = CharacterFixture.blank(CharacterFixture.BLANK).build();
+    void resolveTouchHealAmountIsTheBaseAloneWithNoGatedHabilidadesHeld() {
+        AventyrTitle title = new Santo(List.of(SantoSpecialization.ABENCOADO_PELA_LUZ), List.of());
 
-        int expected = restService.getRecoveredHitPoints(character, RestType.CURTO);
-
-        assertEquals(expected, SantoSpecialization.ABENCOADO_PELA_LUZ.resolveShortRestHealAmount(character, restService));
+        assertEquals(SantoSpecialization.BASE_TOUCH_HEAL,
+                SantoSpecialization.ABENCOADO_PELA_LUZ.resolveTouchHealAmount(title));
     }
 
     @Test
-    void resolveShortRestHealAmountDoesNotApplyToAbracadoPelaEscuridao() {
-        Character character = CharacterFixture.blank(CharacterFixture.BLANK).build();
+    void resolveTouchHealAmountCountsEveryHabilidadeGatedOnThisEspecializacao() {
+        AventyrTitle title = new Santo(
+                List.of(SantoSpecialization.ABENCOADO_PELA_LUZ),
+                List.of(AbencoadoPelaLuzAbility.ORGULHO_ELDURIANO,
+                        AbencoadoPelaLuzAbility.GRITO_DE_GUERRA_VULCANO));
 
-        assertEquals(0, SantoSpecialization.ABRACADO_PELA_ESCURIDAO.resolveShortRestHealAmount(character, restService));
+        assertEquals(SantoSpecialization.BASE_TOUCH_HEAL + 2,
+                SantoSpecialization.ABENCOADO_PELA_LUZ.resolveTouchHealAmount(title));
+    }
+
+    /** "de Abençoado pela Luz" — a Habilidade from Santo's own catalog is not one of them. */
+    @Test
+    void resolveTouchHealAmountIgnoresHabilidadesFromASiblingCatalog() {
+        AventyrTitle title = new Santo(
+                List.of(SantoSpecialization.ABENCOADO_PELA_LUZ),
+                List.of(SantoAbility.PROTECAO_UNGIDA));
+
+        assertEquals(SantoSpecialization.BASE_TOUCH_HEAL,
+                SantoSpecialization.ABENCOADO_PELA_LUZ.resolveTouchHealAmount(title));
+    }
+
+    @Test
+    void resolveTouchHealAmountDoesNotApplyToAbracadoPelaEscuridao() {
+        AventyrTitle title = new Santo(List.of(SantoSpecialization.ABRACADO_PELA_ESCURIDAO), List.of());
+
+        assertEquals(0, SantoSpecialization.ABRACADO_PELA_ESCURIDAO.resolveTouchHealAmount(title));
     }
 
     // AventyrTitleSpecialization now extends AventyrTitleAbility — a Título trait with a real
@@ -94,8 +113,9 @@ class SantoSpecializationTest {
     // AbencoadoPelaLuzInteraction (see Santo#activateAbencoadoPelaLuz). ABRACADO_PELA_ESCURIDAO's
     // own Fúria dos Deuses effect is still fully TODO'd, so it has no Interaction to point to yet.
     @Test
-    void onlyAbencoadoPelaLuzReportsAnInteractionClass() {
+    void bothEspecializacoesReportAnInteractionClass() {
         assertEquals(Optional.of(AbencoadoPelaLuzInteraction.class), SantoSpecialization.ABENCOADO_PELA_LUZ.getInteractionClass());
-        assertEquals(Optional.empty(), SantoSpecialization.ABRACADO_PELA_ESCURIDAO.getInteractionClass());
+        assertEquals(Optional.of(FuriaDosDeusesInteraction.class),
+                SantoSpecialization.ABRACADO_PELA_ESCURIDAO.getInteractionClass());
     }
 }

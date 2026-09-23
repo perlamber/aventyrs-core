@@ -7,6 +7,7 @@ import org.aventyrs.core.character.services.HitPointsService;
 import org.aventyrs.core.character.services.HitPointsServiceImpl;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.CombatantSheet;
+import org.aventyrs.core.sheet.DamageReceipt;
 import org.aventyrs.core.sheet.Interaction;
 import org.aventyrs.core.sheet.InteractionResult;
 import org.aventyrs.core.sheet.ResourceType;
@@ -178,6 +179,9 @@ public class DamageInteraction implements Interaction<CombatantSheet> {
         // reactions have to be fired explicitly — this is the attack path, and skipping it would
         // leave Regeneração Reativa triggering on every path but the real one.
         damageService.notifyDamageTaken(target, finalDamage, source, sceneContext);
+        // What an Efeito Crítico further down this chain reads as "o dano deste ataque" —
+        // Cataclismo's elemental half, Estilhaçador's half for the items, Oferenda Maldita's steal.
+        target.recordDamageReceived(new DamageReceipt(finalDamage, damageType, source));
 
         InteractionResult.InteractionResultBuilder result = InteractionResult.builder()
                 .resultStatus(hitPointsService.getStatus(target))

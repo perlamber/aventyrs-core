@@ -5,7 +5,10 @@ import lombok.Getter;
 import org.aventyrs.core.effect.SpellEffect;
 import org.aventyrs.core.scene.ActiveAreaSpellEffect;
 import org.aventyrs.core.sheet.CombatantAction;
+import org.aventyrs.core.sheet.AreaDamage;
 import org.aventyrs.core.sheet.InteractionResult;
+
+import java.util.List;
 
 /**
  * The outcome of {@link SpellCastingService#castSpell} — the two rolls a Magia's casting
@@ -85,4 +88,21 @@ public class SpellCastingResult {
      * the caller files it with {@code scene.recordAction(caster, action)}.
      */
     CombatantAction recordedAction;
+
+    /**
+     * Whether a Magia that would otherwise simply land must first overcome the target's DM — Fanático
+     * de Cyt's "Magias Conjuradas por terceiros sempre contam como magias hostis, mesmo as magias
+     * benéficas … devem superar sua DM para lhe afetar". {@code null}/false for an ordinary cast.
+     */
+    Boolean mustOvercomeMagicDefense;
+
+    /** The Frenesi Arcano option this cast spent, or {@code null}. */
+    SpellEmpowerment empowerment;
+
+    /**
+     * Extra damage this cast deals around its caster — Cataclismo Elemental's "suas Magias de
+     * Duração instantânea … causam, como efeito adicional, dano Mágico Elemental" — reported for the
+     * caller to apply. {@code null} when there is none.
+     */
+    List<AreaDamage> areaDamage;
 }

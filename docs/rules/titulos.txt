@@ -1,0 +1,1125 @@
+Centelha Abençoada
+Módulo Básico
+(MB) Bruxo
+Despertar – Contrato com Além
+Bruxos são servos ou devotos de seres poderosos e que não possuem o status de Deus. Além dos Deuses existem muitos seres poderosos e influentes no universo, indivíduos de diversos alinhamentos e com seus próprios objetivos.
+Despertam como Bruxos personagens que firmem contratos ou vínculos com alguma entidade de grande poder - como Apóstolos e Senhores Umbrais - e que tenham decidido lhe conceder parte de seus dons e servos para o cumprimento de um objetivo maior, ou como prêmio por seu favor ou devoção.
+
+Os poderes de um Bruxo
+[Efeito Base]
+Custo de Ativação: Nenhum, Efeito Passivo
+Tempo de Ativação: 0 PA, sempre ativa
+Descrição: Você aprende um Misticismo à sua escolha.
+“Misticismos são Árvores de Magia aprendidas com o Título Bruxo a partir de suas Habilidades e Supremas, cuja progressão é baseada no número de Habilidades de Bruxo um personagem possui, ao invés de se basear na Perícia ‘Conhecimentos’ ou Talentos. Misticismos usam PD para a Conjuração, ao invés de PM.”
+Quando aprende um Misticismo o personagem é capaz de conjurar a Magia Semente da Árvore escolhida, ou especificada nas Habilidades deste Título, ao custo de 0 PD.
+Personagens que possuam pelo menos 2 Habilidades quaisquer de Bruxo são capazes de conjurar as magias Broto de todos seus Misticismos, ao custo de 1PD cada. Com 5 Habilidades de Bruxo são capazes de conjurar as Magias do tipo Muda, ao custo de 2PD cada, então com 7 Habilidades de Bruxo, ao custo de 3PD, são capazes de conjurar Magias Emergentes.
+Bruxos normalmente são incapazes de conjurar Misticismos Florescentes.
+
+Primeiro Despertar – O Grande Bruxo
+Se Bruxo for seu Título Primário, uma vez por Rodada você pode escolher substituir o Custo do Misticismo que você conjurar de PD por PV. 
+A quantidade de PV necessária para conjurações é igual 1+ à quantidade de PD que seria utilizada. 
+Pontos de Vida perdidos desta forma são recuperados apenas em Descansos Verdadeiros.
+
+Habilidades Gerais
+Habilidade – Familiar Maior
+Pré-requisitos: Requer 1 Especialização de 'Bruxo'
+Custo de Ativação: 1 ponto permanente de Ego, a escolha do jogador.
+Tempo de Ativação: Ritual, 1 dia.
+Descrição: Ativar esta habilidade exige um Ritual de 1 dia, envolvendo sacrifícios materiais ou pessoais, fortalecendo o vínculo do Bruxo com a Entidade ou Divindade que ele tem por Patrono.
+Ao fim dos ritos uma criatura sobrenatural, normalmente um pequeno Animal Elemental, Abissal ou Celestial, passará a acompanhar o personagem pelo resto de sua vida, o auxiliando nas mais diversas atividades, e o aconselhando.
+Um Familiar Maior possui Categoria de Tamanho -4, é considerada uma Invocação, não é capaz de lutar e nunca se afasta mais do que ‘Quantidade de Habilidades de Bruxo’ UD de você.
+Familiares Maiores são Subordinado e podem ter quaisquer tipos, definido na invocação (a escolha não pode ser alterada).
+
+Habilidade – Invocação Maior
+Pré-requisitos: Requer 1 Especialização de 'Bruxo' e outras 2 Habilidades de Bruxo
+Custo de Ativação: Variável
+Tempo de Ativação: Variável
+Descrição: Você pode aumentar o Tempo de Conjuração de uma magia de invocação em +1PA, se o fizer a invocação terá seu Multiplicador de PV aumentados em +3.
+Você pode aumentar o Custo de Conjuração em 2PD, se o fizer a invocação receberá Bônus de +4 em Força ou Destreza, à sua escolha.
+Ambos os Efeitos são cumulativos, Invocações Maiores beneficiadas por ambos os efeitos adicionalmente são imunes a efeitos de Encantamentos Nocivos e Maldições.
+Você ou seus aliados, enquanto adjacentes à uma Invocação Maior, recebem RM.
+
+Suprema – Invocação Dupla
+Pré-requisitos: requer 'Invocação Maior'
+Custo de Ativação: requer 6 Habilidades de Bruxo
+Tempo de Ativação: 0 PA, sempre ativa
+Descrição: Você aprende um novo Misticismo de Invocação, à sua escolha.
+Você pode aumentar o custo de conjuração de uma magia de invocação em +2PA, se o fizer a magia invocará uma criatura adicional do mesmo tipo e com as mesmas habilidades e bônus, mas a Duração da magia é reduzida à metade.
+Esta Suprema permite invocar múltiplas criaturas mesmo quando a descrição da Magia disser que apenas uma pode ser invocada, custos de Concentração – se houver – também são duplicados.
+
+Suprema – Pacto de Conjuração
+Pré-requisitos: requer 8 Habilidades de Bruxo
+Custo de Ativação: Nenhum, Efeito Passivo
+Tempo de Ativação: 0 PA, sempre ativa
+Descrição: Você aprende um novo Misticismo que não seja de Invocação, à sua escolha.
+Escolha 2 de seus Misticismos, você é capaz de conjurar magias Florescentes dos Misticismos escolhidos ao Custo de 5PD.
+
+Especialização – Iluminado
+Pré-requisitos: apenas ‘Bruxos’ podem adquirir esta especialização
+Custo de Ativação: Nenhum, habilidade passiva
+Tempo de Ativação: 0 PA, sempre ativa
+Descrição: Você aprende um novo Misticismo à sua escolha.
+As Rolagens de Perícias de Ataque de suas invocações têm a GD reduzida em -1 nível.
+
+Habilidade – Benção do Vento do Leste
+Pré-requisitos: Especialização ‘Iluminado’
+Custo de Ativação: Nenhum, habilidade passiva
+Tempo de Ativação: 0 PA, sempre ativa
+Descrição: Você aprende um novo Misticismo, escolhido entre magias do tipo Elemental: Ar ou Divina.
+Suas invocações podem utilizar 3PA para criarem asas mágicas, após isso recebem Movimento Base de Voo por 1d6 Rodadas, a Duração do voo aumenta em +1 Rodada para cada 2 Habilidades ou Suprema de Iluminado que você possuir.
+
+Habilidade – Benção do Mar do Sul
+Pré-requisitos: Especialização ‘Iluminado’
+Custo de Ativação: Nenhum, habilidade passiva
+Tempo de Ativação: 0 PA, sempre ativa
+Descrição: Você aprende um novo Misticismo, escolhido entre magias do tipo Elemental: Água ou Divina.
+Suas invocações são capazes de regenerar as próprias feridas, curando 2PV no final de cada Rodada, a regeneração aumenta em +1PV para cada 2 Habilidades ou Suprema de Iluminado que possuir.
+
+Habilidade– Maldição do Pântano do Sudeste
+Pré-requisitos: Especialização ‘Iluminado’
+Custo de Ativação: Nenhum, habilidade passiva
+Tempo de Ativação: 0 PA, sempre ativa
+Descrição: Você aprende um novo Misticismo, escolhido entre magias do tipo Elemental: Natural ou Divina.
+Suas invocações são maiores, em tamanho, que o normal. A Categoria de Tamanho de suas invocações é aumentada em +2, então em +1 para cada duas Habilidades ou Suprema de Iluminado que você possuir.
+
+Suprema – Maldição da Nevasca do Sudoeste
+Pré-requisitos: 2 Habilidades de ‘Iluminado’
+Custo de Ativação: Nenhum, habilidade passiva
+Tempo de Ativação: 0 PA, sempre ativa
+Descrição: Você aprende um novo Misticismo, escolhido entre magias do tipo Elemental: Gelo ou Divina.
+Apenas em cenários de céu aberto, ao realizar uma invocação você pode substituir a rolagem de Domínio do Mana convencional por uma rolagem de Ataque à Distância – Distância Média e Área de Efeito – Adjacências (contra GD ou DM dos Alvos, o que for maior), se o fizer um cometa cairá dos céus sobre os alvos, infligindo 1d6 pontos de dano Mágico Elemental: Gelo, o dano aumenta em +2 para cada Habilidade de Iluminado que possuir.
+Após a queda do meteoro a camada de gelo explode e de seu interior surge a invocação.
+Criaturas invocadas desta forma emitem uma Aura Profana, personagens adjacentes (exceto você) sofrem 3 Pontos de Danos Mágicos Profanos no início de cada Rodada.
+
+Especialização – Oráculo Abissal
+Pré-requisitos: apenas ‘Bruxos’ podem adquirir esta especialização
+Custo de Ativação: Nenhum, habilidade passiva
+Tempo de Ativação: 0 PA, sempre ativa
+Descrição: Você aprende um novo Misticismo à sua escolha.
+A GD das rolagens de Defesas de suas Invocações é reduzida em -1 nível.
+
+Habilidade – Maldição das Chamas do Norte
+Pré-requisitos: Especialização ‘Oráculo Abissal’
+Custo de Ativação: Nenhum, habilidade passiva
+Tempo de Ativação: 0 PA, sempre ativa
+Descrição: Você aprende um novo Misticismo, escolhido entre magias do tipo Elemental: Fogo ou Profana.
+Rolagens de Ataque de suas invocações são efetuadas contra a DM de seus alvos, o tipo de dano causado muda para Dano Mágico Elemental: Fogo, inimigos imunes a fogo ainda sofrem metade dos danos.
+Como efeito adicional o ataque de suas invocações recebe a Corrente de Efeitos – Fogo Vivo: Este ataque aplica o Efeito Crítico Menor de Inflamar.
+
+Habilidade – Maldição do Deserto do Oeste
+Pré-requisitos: Especialização ‘Oráculo Abissal’
+Custo de Ativação: Nenhum, habilidade passiva
+Tempo de Ativação: 0 PA, sempre ativa
+Descrição: Você aprende um novo Misticismo, escolhido entre magias do tipo Elemental: Terra ou Profana.
+Suas invocações recebem RDS 2, a Redução de Danos Sofridos aumenta em +1 para cada Habilidades ou Suprema de Oráculo Abissal que você possuir.
+
+Habilidade – Benção dos Vulcões do Noroeste
+Pré-requisitos: Especialização ‘Oráculo Abissal’
+Custo de Ativação: Nenhum, habilidade passiva
+Tempo de Ativação: 0 PA, sempre ativa
+Descrição: Você aprende um novo Misticismo, escolhido entre magias do tipo Elemental: Magma ou Profana.
+Suas invocações recebem Cataclismo como Efeito Crítico adicional em seus ataques, também recebem +1d6 de Dano Físico Elemental: Magma em suas rolagens de Dano Crítico.
+A Margem Crítica Menor dos ataques de suas invocações é aumentada em +1, então em +1 para cada 2 Habilidades ou Suprema de Oráculo Abissal que você possuir.
+
+Suprema – Benção dos Raios do Nordeste
+Pré-requisitos: 2 Habilidades de Oráculo Abissal
+Custo de Ativação: Nenhum, habilidade passiva
+Tempo de Ativação: 0 PA, sempre ativa
+Descrição: Você aprende um novo Misticismo, escolhido entre magias do tipo Elemental: Eletricidade ou Profana.
+Suas invocações surgem com efeitos relampejantes, infligindo 1d6 pontos de Dano Mágico Elemental: Eletricidade aos inimigos adjacentes e todos os seus equipamentos (efeito não cumulativo, caso múltiplas invocações afetem um mesmo personagem).
+Criaturas invocadas desta forma podem agir no Turno em que foram invocadas e recebem +2PA, adicionalmente seus ataques infligem danos adicionais igual ao número de Habilidades de Oráculo Abissal que você possuir e causam danos Sagrados em substituição a quaisquer danos Elementais.
+
+(MB) Curandeiro
+Despertar – Bem Maior
+Devotos fiéis dos Deuses, Curandeiros são aqueles que devotam sua vida em ajudar e proteger os vulneráveis. Despertam como Curandeiros apenas personagens que possuam uma crença religiosa e que, devido a elas, dedicam suas vidas a cura e proteção.
+
+Os dons de um Curandeiro
+[Efeito Base]
+Custo de Ativação: Nenhum
+Tempo de Ativação: 3PA
+Descrição: Você recebe Vantagem nas rolagens de ‘Medicina e Cura’.
+Você pode realizar uma rolagem de ‘Medicina e Cura’, com GD Difícil, em um alvo ferido, se for bem-sucedido o alvo recupera PV como se passasse por um Descanso Curto, se Ativada fora de combate esta Habilidade pode receber a Corrente de Efeitos – Beijo de Boros: o Alvo recupera PV como se passasse por um Descanso Longo.
+Você não pode afetar um mesmo personagem desta forma até que você passe por um Descanso Longo, mesmo que você não tenha sido bem-sucedido em sua primeira tentativa.
+
+Primeiro Despertar – Domínio da Cura
+Se Curandeiro for seu Título Primário você pode utilizar Medicina e Cura em substituição à Domínio do Mana para quaisquer efeitos (incluindo Magias, Habilidades de Títulos e Talentos).
+
+Habilidades Gerais
+Habilidade – Curandeiro Veloz
+Pré-requisitos: Requer 1 Especialização de 'Curandeiro'
+Custo de Ativação: 2PD
+Tempo de Ativação: Ação Livre
+Descrição: Esta Habilidade pode ser ativada apenas 1 vez a cada Rodada.
+O Tempo de Ativação próxima Habilidade ativa de Curandeiro ou sua próxima Conjuração de Magias Naturais ou Divinas tem seu Tempo de Ação ou de Conjuração reduzido em -2PA.
+Apenas Magias e Habilidades que permitam que outros personagens recuperarem PV podem ser afetadas por esta Habilidade.
+
+Habilidade – Levantar os Caídos
+Pré-requisitos: Requer 1 Especialização de 'Curandeiro' e outras 2 Habilidades de Curandeiro
+Custo de Ativação: Nenhum, habilidade passiva
+Tempo de Ativação: 0 PA, sempre ativa
+Descrição: Suas Magias e Habilidades de Curandeiro que permitam a recuperação de PV ignoram as Reduções de Cura do estado de Coma, mas apenas quando adquiridos na mesma Cena.
+
+Suprema – Curar os Mortos
+Pré-requisitos: requer 'Levantar os Caídos'
+Custo de Ativação: 2PD
+Tempo de Ativação: +1PA
+Descrição: Você pode afetar com Magias Divinas e Naturais, ou Habilidades de Curandeiro, personagens que tenham morrido em até uma quantidade de Rodadas igual à metade de suas Graduações em Medicina e Cura, personagens curados desta forma podem retornar à vida se tiverem PV suficientes.
+
+Suprema – Benção de Boros
+Pré-requisitos: requer 'Levantar os Caídos'
+Custo de Ativação: Nenhum, habilidade passiva
+Tempo de Ativação: +1PA
+Descrição: Você pode Ativar Habilidades de Curandeiro ou Conjurar Magias que permitam personagens recuperar PV, incluindo em você mesmo, mesmo que você esteja inconsciente ou morto. Enquanto nestes estados suas Magias e Habilidades de Curandeiros custam o dobro de PM e PD.
+Este efeito pode ser utilizado por uma quantidade de Rodadas igual à metade das suas Graduações em Medicina e Cura.
+
+Especialização – Médico de Guerra
+Pré-requisitos: apenas ‘Curandeiros’ podem adquirir esta especialização
+Custo de Ativação: Nenhum, habilidade passiva
+Tempo de Ativação: 0 PA, sempre ativa
+Descrição: Os efeitos de recuperação de PV aumentam em +2.
+
+Habilidade – Tratamento Furtivo
+Pré-requisitos: Especialização ‘Médico de Guerra’
+Custo de Ativação: Nenhum, habilidade passiva
+Tempo de Ativação: 0PA, sempre ativa
+Descrição: Seus efeitos que permitam recuperar PV de seus aliados não permitem Reações de seus inimigos.
+
+Habilidade – Cura Protetora
+Pré-requisitos: Especialização ‘Médico de Guerra’
+Custo de Ativação: 2PD
+Tempo de Ativação: +1PA
+Descrição: Suas Magias (Broto ou superior) e Habilidades de Curandeiro, em adição a quaisquer efeitos de recuperação de PV também concedem a você e ao alvo Bônus de +4 em suas Defesas por 1 Rodada, efeito não cumulativo.
+
+Habilidade – Encanto Regenerativo
+Pré-requisitos: Especialização ‘Médico de Guerra’
+Custo de Ativação: 2PD
+Tempo de Ativação: +1PA
+Descrição: Suas Magias e Efeitos de Encantamentos lançados sobre um personagem aliado adicionalmente recuperam Vigor PV do alvo.
+Esta Habilidade deve ser utilizada em conjunto com a Conjuração ou Ativação do Efeito.
+
+Suprema – Doutor de Eldur
+Pré-requisitos: Requer 2 Habilidades de ‘Médico de Guerra’
+Custo de Ativação: Nenhum, habilidade passiva
+Tempo de Ativação: 0 PA, sempre ativa
+Descrição: Sempre que descansar, seus Descansos contam como uma Categoria superior.
+O Tempo de Ativação Habilidades de Médico de Guerra e de Conjuração de Magias que permitam a recuperação de PV tem seu Tempo de Ação reduzidos permanentemente em -1PA.
+
+Especialização – Mártir Altruísta
+Pré-requisitos: apenas ‘Curandeiros’ podem adquirir esta especialização
+Custo de Ativação: Nenhum, habilidade passiva
+Tempo de Ativação: 0 PA, sempre ativa
+Descrição: O GD de suas magias que permitem que outros personagens recuperarem PV é reduzido em -1 Nível.
+
+Habilidade – Transferir Vitalidade
+Pré-requisitos: Especialização ‘Mártir Altruísta’
+Custo de Ativação: Nenhum, habilidade passiva
+Tempo de Ativação: 0 PA, sempre ativa
+Descrição: Você pode utilizar PV em substituição à PM e PD para ativar Habilidades de Curandeiro ou conjurar Magias Divinas e Naturais de único alvo, mas apenas quando os alvos forem personagens aliados.
+PV perdidos desta forma podem ser recuperados apenas com Descansos Verdadeiros.
+
+Habilidade – Transferir Determinação
+Pré-requisitos: Especialização ‘Mártir Altruísta’
+Custo de Ativação: 1PD
+Tempo de Ativação: 3PA
+Descrição: Para ativar esta Habilidade você deve escolher entre transferir qualquer quantidade de PD que você possua, ou temporariamente 1 de seus Pontos de Autocontrole, para um aliado, a transferência é realizada ao toque.
+Pontos de Autocontrole transferidos desta forma são perdidos ou devolvidos se não forem utilizados até o fim da Cena.
+
+Habilidade – Transferir Essência
+Pré-requisitos: Especialização ‘Mártir Altruísta’
+Custo de Ativação: 1PD
+Tempo de Ativação: 3PA
+Descrição: Para ativar esta Habilidade você deve escolher entre transferir qualquer quantidade de PM que você possua, ou temporariamente 1 de seus Pontos de Sorte, para um aliado, a transferência é realizada ao toque.
+Pontos de Sorte transferidos desta forma são perdidos ou devolvidos se não forem utilizados até o fim da Cena.
+
+Suprema – Transferir Rancor
+Pré-requisitos: Requer 2 Habilidades de ‘Mártir Altruísta’
+Custo de Ativação: Nenhum, habilidade passiva
+Tempo de Ativação: 0 PA, sempre ativa
+Descrição: Após você sofrer Danos de inimigos, a GD das Rolagens de Perícia de Ataque e Domínio do Mana de todos os seus aliados presentes na Cena são reduzidas em -1 Nível, adicionalmente os ataques deles causam +1d6 pontos de danos.
+Estes efeitos são cumulativos, mas duram apenas 1 Rodada.
+Esta Habilidade não é ativada em Cenas de Combate em que você causou Danos a outros personagens.
+
+(MB) Santo
+Despertar - Guerreiros Divinos
+Despertam como Santos apenas guerreiros e defensores devotos dos Deuses, que seguem seus dogmas e que defendem com seu corpo, alma, armadura e arma as verdades que acreditam. Alguns personagens também podem ser abençoados com a Centelha dos Santos para o cumprimento de um dever sagrado.
+As Bençãos de um Santo
+[Efeito Base]
+Custo de Ativação: Nenhum, Efeito Passivo
+Tempo de Ativação: 0 PA, sempre ativa
+Descrição: Você recebe Bônus de +2 em suas Defesas, esse Bônus aumenta em +1 para cada aliado adjacente, Especializações e Supremas que você possua.
+Adicionalmente, nas primeiras Rodadas de cada Cena de Combate, você Ignora Efeitos Críticos Menores dos ataques de seus inimigos. A Duração deste Efeito é de 1+ número de Especializações e Supremas de Santo que possuir em Rodadas.
+
+Primeiro Despertar – Resoluto
+Personagens Despertos como Santos Primários concedem Bônus Defensivos aos seus aliados adjacentes, as melhorias nas Defesas de seus aliados são iguais à metade dos Bônus que você receber em função do Efeito Base deste Título.
+
+Habilidades Gerais
+Habilidade – Proteção Ungida
+Pré-requisitos: Requer 1 Especialização de 'Santo'
+Custo de Ativação: 2PD
+Tempo de Ativação: 2PA
+Descrição: Abençoa um item do tipo Armadura ou Escudo que você esteja utilizando por 3 Rodadas.
+Enquanto estiver usando pelo menos um item Abençoado todo o dano que seria causado a você é reduzido à metade.
+Enquanto utilizar uma Armadura e um Escudo Ungido ao mesmo tempo a Duração de efeitos nocivos de Encantamentos e Maldições são reduzidas pela metade.
+Se possuir quaisquer Suprema de Santo você poderá, ao custo de 3PA e 3PD, ungir uma Armadura e Escudo simultaneamente.
+
+Habilidade – Bastião dos Necessitados
+Pré-requisitos: Requer 1 Especialização e 2 outras 2 habilidades de ‘Santo’
+Custo de Ativação: Nenhum, habilidade passiva
+Tempo de Ativação: 0 PA, sempre ativa
+Descrição: Seus aliados, que tenham menos quantidade de PV atuais que você, recebem RDS igual a 1+ Metade das Habilidades de Santo que você possuir.
+Apenas aliados adjacentes recebem este benefício.
+Enquanto estiver protegendo ao menos 1 aliado você recebe RDS igual a metade do valor capaz de fornecer.
+
+Suprema – Guarda Vidas
+Pré-requisitos: Requer 1 Especialização e 2 outras Habilidades de ‘Santo’
+Custo de Ativação: 3PD
+Tempo de Ativação: Reação
+Descrição: Você pode se teletransportar para a frente de um aliado em Distância Curta, se tornando o alvo do ataque em seu lugar.
+O ataque ainda deve superar as suas Defesas para lhe infligir danos.
+Esta Habilidade pode ser ativada apenas quando um aliado for alvo de um ataque.
+
+Suprema – Protetor da Vida e da Morte
+Pré-requisitos: Requer 1 Especialização e 4 outras Habilidades de ‘Santo’
+Custo de Ativação: Nenhum, habilidade passiva
+Tempo de Ativação: 0 PA, sempre ativa
+Descrição: Enquanto você estiver consciente, os PV de seus aliados em Distância Curta não podem ser reduzidos à menos que 1PV.
+Todo o dano que seria causado aos seus aliados, que reduziram os PV deles para zero ou menos é causado a você, pontos de vida perdidos desta maneira só podem ser recuperados com Descansos Verdadeiros ou Roubo de Vida.
+
+Especialização – Abençoado pela Luz
+Pré-requisitos: apenas ‘Santos’ podem adquirir esta especialização
+Custo de Ativação: 3PV
+Tempo de Ativação: 2PA
+Descrição: Seu toque tem capacidades curativas, ao tocar outro personagem você pode escolher entre fazer com que ele recupere 3+ Quantidade de Habilidades de Abençoado pela Luz PV, ou Remover um Malefício, escolhido entre Doença, Encantamento, Maldição ou Veneno.
+Pontos de Vida utilizados para ativar esta Habilidade só podem ser recuperados com Descansos Verdadeiros.
+
+Habilidade – Orgulho Elduriano
+Pré-requisitos: Especialização ‘Abençoado pela Luz’
+Custo de Ativação: Variável
+Tempo de Ativação: 3PA
+Descrição: Todos os inimigos em Distância Curta são obrigados a desferir o primeiro ataque efetuada em cada Rodada em você, podendo escolher outros alvos apenas se você não for um alvo válido. Quando atacarem outros alvos (com ataques adicionais ou por você não estar disponível) os danos causados serão reduzidos à metade (efeito de Meio-Dano).
+Esta Habilidade não afeta os mesmos personagens mais de uma vez, até que eles passem por um Descanso Longo.
+O Custo desta Habilidade é de 2PD para 1 único inimigo, então de +1PD para cada inimigo alvo adicional.
+Esta Habilidade é um Efeito de Encantamento, sempre afeta os alvos em sua Área de Efeito e tem Duração de 2 Rodadas.
+
+Habilidade – Grito de Guerra Vulcano
+Pré-requisitos: Especialização ‘Abençoado pela Luz’
+Custo de Ativação: 2PD
+Tempo de Ativação: 1PA
+Descrição: Você e seus aliados adjacentes recebem Bônus de +3 em Defesas e Vantagem em rolagens de Perícias de Ataque por 2 Rodadas.
+
+Habilidade – Corpo Indestrutível de Epona
+Pré-requisitos: Especialização ‘Abençoado pela Luz’
+Custo de Ativação: 4PD
+Tempo de Ativação: 1PA
+Descrição: Sua pele é transformada em pedra por 1 Rodada.
+O primeiro ataque que lhe causaria Danos é reduzido à zero, após isso você recebe RDS 5. A Redução de Danos Sofridos é reduzida em -2 para cada dano sofrido.
+
+Suprema – Glória Relampejante de Tesla
+Pré-requisitos: Requer 2 Habilidades de ‘Abençoado pela Luz’
+Custo de Ativação: 3PD
+Tempo de Ativação: Ação Livre
+Descrição: Você e seus aliados em Distância Curta recebem Bônus de +2PA por 1 Rodada.
+
+Especialização – Abraçado pela Escuridão
+Pré-requisitos: apenas ‘Santos’ podem adquirir esta especialização
+Custo de Ativação: Variável.
+Tempo de Ativação: 0PA, Sempre ativo
+Descrição: Sempre que realizar um ataque você pode ativar Fúria dos Deuses.
+Fúria dos Deuses - Sempre que realizar um ataque você pode pagar o Custo de 1PV, 3PV ou 5PV.
+Se utilizar 1PV você recebe Vantagem na rolagem de Perícia de Ataque, se utilizar 3PV reduz a GD da Rolagem de Perícia de Ataque em -1 Nível, ao utilizar 5PV, adicionalmente à redução de GD, seu ataque recebe a Corrente de Efeito – Fúria dos Deuses Maior: O dano deste ataque aumenta 1d6+Vigor.
+Pontos de Vida perdidos desta forma só podem ser recuperados com Descansos Verdadeiros ou efeitos de Roubo de Vida.
+
+Habilidade – Sacrifício Ymiriano
+Pré-requisitos: Especialização ‘Abraçado pela Escuridão’
+Custo de Ativação: Variável
+Tempo de Ativação: 1PA
+Descrição: O Custo de Ativação desta Habilidade é igual ao seu próprio Vigor em PV.
+Você recebe Bônus Variável de Força igual ao seu Vigor e sua Categoria de Tamanho aumenta em +2 por 1 Rodada.
+Enquanto Sacrifício Ymiriano estiver ativo a Margem Crítica Menor de seus ataques direcionados à inimigos que tenham infligido danos aos seus aliados aumenta em +2.
+Pontos de Vida perdidos desta forma só podem ser recuperados com Descansos Verdadeiros ou Roubo de Vida.
+
+Habilidade – Espinhos Venenos de Gaea
+Pré-requisitos: Especialização ‘Abraçado pela Escuridão’
+Custo de Ativação: Variável
+Tempo de Ativação: 2PA
+Descrição: O Custo de Ativação desta Habilidade é igual ao seu próprio Vigor em PV.
+Enquanto ativo os Espinhos Venenos de Gaea causam danos aos personagens que lhe atacarem Corpo-a-Corpo, Vigor pontos de Dano Físico Elemental: Natural. Personagem que lhe infligirem danos adicionalmente perdem -1 Multiplicador de Pontos de Vida (Malefício Veneno) por 2 Rodadas.
+Duração do Efeito: 2 Rodadas.
+
+Habilidade – Placidez de Undine, Rancor de Haloi
+Pré-requisitos: Especialização ‘Abraçado pela Escuridão’
+Custo de Ativação: 2PD
+Tempo de Ativação: 3PA
+Descrição: Como parte da ativação desta Habilidade você deve desferir um ataque físico, sua Margem Crítica Menor para este ataque aumenta em +2 números. Este ataque você recebe Roubo de Vida 3, Roubo de Determinação 2 e a Corrente de Efeitos – Rancor de Haloi: Este ataque recebe Oferenda Maldita como um Efeito Crítico adicional.
+Inimigos que tenham sofrido danos desta Habilidade se tornam imunes a ela por 2 Rodadas.
+
+Suprema – Furor de Sylph
+Pré-requisitos: Requer 2 Habilidades de ‘Abraçado pela Escuridão’
+Custo de Ativação: 2PD
+Tempo de Ativação: Ação Livre
+Descrição: Para ativar esta Habilidade você deve gastar uma quantidade de pontos de vida igual ao seu Vigor.
+Você recebe Bônus de +1PA e seus ataques recebem o Aprimoramento de Obra-Prima Alcance Estendido e a Corrente de Efeitos – Furor de Sylph: O dano de seu ataque aumenta em +1d6 e seu alvo é empurrado 1UD para trás e você pode se Reposicionar. O Furor de Sylph aprimora uma quantidade de ataques igual à 1+ metade dos PV gastos com esta Habilidade, PV perdidos desta forma só podem ser recuperados com Descansos ou Roubo de Vida.
+
+O Grande Continente
+(GC) Arte Divina
+Despertar: Abençoados pelos deuses com o dom da arte, da motivação e da inspiração. Artes Divinas são frequentemente vistos com Bon-vivants, festeiros e musicais, mas nos momentos críticos também são aqueles que animam o grupo, que não deixam seus aliados desistirem, que possuem uma história ou canção para tudo. Despertam este Títulos personagens conectados as artes e que acreditam que suas obras podem motivar as pessoas e mudar o mundo.
+[Efeito Base]
+Custo de Ativação: Nenhum, Efeito Passivo
+Descrição: Ao adquirir este Título você pode optar por utilizar Artes em substituição à Conhecimentos: Metamágico para todo e quaisquer efeitos relacionados a magias, incluindo Habilidades de outros Títulos e Talentos.
+Habilidades de Arte Divina podem ser ativadas apenas uma vez a cada Rodada, mas podem ser utilizadas em conjunto. Ativar uma Habilidade de Arte Divina requer 2PA, +1PA adicional para cada Habilidade de Arte Divina utilizada em conjunto.
+Aventyrs com este Título inspiram seus aliados, ou desmotivam os inimigos, com sua arte (como cantos, danças, histórias, rimas, piadas etc), fazem isso ao ativarem suas Habilidades ou durante suas conjurações de magias, alterando as palavras que formam seus arcanismos sem perder a conexão com o Mana. Após conjurar uma Magia, ou ativar uma Habilidade de Arte Divina, você e seus aliados em Distância Curta recebem Vantagem na próxima rolagem que Perícia que efetuarem. Este efeito dura apenas 1 Rodada e não é cumulativo.
+Se este for seu Título Primário a primeira Habilidades de Arte Divina que ativar a cada Rodada tem o Tempo de Ativação reduzido em -1PA.
+
+Habilidades Gerais
+Habilidade – Show Mágico
+Pré-requisitos: Requer 1 Especialização de 'Arte Divina' e outras 2 Habilidades de 'Arte Divina'
+Custo de Ativação: Variável
+Descrição: A primeira magia que conjurar tem seus Efeitos de Danos, Curas ou Duração, aumentada em +1 para cada Especialização e Suprema de Arte Divina que você possuir.
+Improviso Artístico - Como efeito adicional da Conjuração da Magia você pode fazer um Improviso Artístico, ativando efeitos secundários de uma de suas Habilidades de Arte Divina e somando novos efeitos à magia conjurada.
+Improvisos Arcanos possuem Área de Efeito – Distância Curta.
+Esta Habilidade pode ser ativada apenas uma vez por Rodada, mas pode desencadear um conjunto de efeitos.
+Custos de Conjuração aumentam em +2PM, então em +1PA para cada efeito de Habilidade que adicionar à magia além do primeiro.
+
+Habilidade – Conhecimento Bárdico
+Pré-requisitos: Requer 1 Especialização de 'Arte Divina'
+Custo de Ativação: Nenhum, habilidade passiva
+Tempo de Ativação: 0 PA, sempre ativa
+Descrição: Escolha uma Perícia em que é treinado, você recebe Vantagem nas rolagens da perícia escolhida.
+Para cada 2 outras Habilidades de 'Arte Divina' que possuir você poderá escolher uma Perícia adicional.
+
+Suprema – Concerto Arcano
+Pré-requisitos: Requer 1 ‘Show Mágico' e 4 Habilidades de 'Arte Divina'
+Custo de Ativação: Nenhum, habilidade passiva
+Tempo de Ativação: 0 PA, sempre ativa
+Descrição: Você pode ativar Improviso Artístico até duas vezes na mesma Rodada.
+
+Suprema – Polímata
+Pré-requisitos: Requer 1 ‘Conhecimento Bárdico' e 4 Habilidades de 'Arte Divina'
+Custo de Ativação: Nenhum, habilidade passiva
+Tempo de Ativação: 0 PA, sempre ativa
+Descrição: Você aprende uma Habilidade de Competência e uma nova Especialização de cada perícia escolhida em Conhecimento Bárdico.
+
+Especialização – Menestrel dos Louros da Vitória
+Pré-requisitos: apenas ‘Artes Divinas’ podem adquirir esta especialização
+Custo de Ativação: Nenhum, habilidade passiva
+Descrição: Você nunca recebe a Condição Desprevenido.
+Você e seus aliados afetados por suas Habilidades de Menestrel dos Louros da Vitória recebem Bônus de +1 em suas Defesas, este Bônus aumenta em +1 para cada duas Habilidade ou Suprema de Menestrel dos Louros da Vitória que você possuir, a Duração deste efeito é de 1 Rodada.
+
+Habilidade – Melodia Revigorante
+Pré-requisitos: Especialização ‘Menestrel dos Louros da Vitória’
+Custo de Ativação: 2PD
+Descrição: Você e seus aliados que estejam em Distância Curta recuperam 1d6+Metade do Carisma PV.
+Aliados adjacentes cujo PV atual seja igual ou inferior ao seu valor de Carisma curam +1d6PV adicionais.
+Improviso Artístico - Você e seus aliados em Distância Curta recuperam uma quantidade de PV igual à Metade do seu Carisma.
+Crescendo Impetuoso - A quantidade de PV curados aumenta em +1d6.
+
+Habilidade – Ária da Proteção
+Pré-requisitos: Especialização ‘Menestrel dos Louros da Vitória’
+Custo de Ativação: 2PD
+Descrição: Ao longo de 1 Rodada, todo primeiro dano sofrido por você e seus aliados em Distância Curta são reduzidos à metade (Efeito de Meio-Dano).
+Aliados adjacentes cujo PV atual seja igual ou inferior ao seu valor de Carisma não podem ter seus PV reduzido a menos que zero pelo ataque enfraquecido por este Efeito (mínimo de 1PV).
+Esta Habilidade por ser Ativada como Reação, mas seu Custo é dobrado e a Duração reduzida para Instantâneo.
+Improviso Artístico: Você e seus aliados recebem RD por 1 Rodada.
+Crescendo Impetuoso: Você e seus aliados se tornam imunes a Correntes de Efeito e Efeitos Críticos Menores por 1 Rodada.
+
+Habilidade – Hino da Glória
+Pré-requisitos: Especialização ‘Menestrel dos Louros da Vitória’
+Custo de Ativação: 2PD
+Descrição: A Margem Crítica Menor de seus ataques e dos seus aliados em Distância Curta é aumentada em +2 Números por 1 Rodada, aliados adjacentes cujo PV atual seja igual ou inferior ao seu valor de Carisma recebem Prevenir como um Efeito Crítico adicional.
+Improviso Artístico: Você e seus aliados recebem Vantagem em sua próxima rolagem de Danos (físico ou mágico). Este efeito é encerrado se nenhum ataque for realizado em até 1 rodada.
+Crescendo Impetuoso: Somados aos efeitos comuns de Hino da Glória, o dano Crítico dos personagens afetados é aumentado em +1d6.
+
+Suprema – Crescendo Impetuoso
+Pré-requisitos: Requer 2 Habilidades de ‘Menestrel dos Louros da Vitória’
+Custo de Ativação: Nenhum, habilidade passiva
+Descrição: A primeira Habilidade de Menestrel dos Louros da Vitória que você ativar a cada Rodada recebe os benefícios de Crescendo Impetuoso.
+Não é possível desencadear um mesmo Crescendo Impetuoso em Rodadas consecutivas.
+
+Especialização – Dramaturgo do Campo de Batalha
+Pré-requisitos: apenas ‘Artes Divinas’ podem adquirir esta especialização
+Custo de Ativação: Nenhum, habilidade passiva
+Descrição: Você nunca recebe a Condição Abalado.
+Inimigos afetados por suas Habilidades de Dramaturgo do Campo de Batalha sofrem redutor de -1 em suas Defesas, este redutor aumenta em -1 para cada Habilidade ou Suprema de Dramaturgo do Campo de Batalha que você possua. A Duração deste efeito é 1 Rodada.
+
+Habilidade – Coreografia da Aflição
+Pré-requisitos: Especialização ‘Dramaturgo do Campo de Batalha’
+Custo de Ativação: 3PD
+Descrição: Personagem inimigos em Distância Curta sofrem 1d6+Metade do Carisma Pontos de Dano Mágico Profano.
+ Inimigos adjacentes que possuam mais da metade de seus PV sofrem +1d6 pontos de dano adicionais.
+O dano desta Habilidade é reduzido em 2 para cada inimigo afetado, mínimo 1 ponto de dano.
+Improviso Artístico: Inimigos sofrem danos igual à Metade do seu Carisma.
+Este dano é reduzido em 1 para cada inimigo afetado, mínimo 1 ponto de dano.
+Drama da Perdição: O total de danos causado aos inimigos afetados aumenta em +1d6.
+
+Habilidade – Agito Cruel
+Pré-requisitos: Especialização ‘Dramaturgo do Campo de Batalha’
+Custo de Ativação: 2PD
+Descrição: Inimigos em Distância Curta são Amaldiçoados e recebem Punição Divina Maior por 1 Rodada.
+“Punição Divina Maior - personagens que causem danos a outros personagens sofrem Danos Mágicos Profano igual a própria Força e não poderão ser afetados por efeitos de cura. Efeitos não cumulativo.”
+Improviso Artístico: Inimigos são Amaldiçoados e recebem Punição Divina Menor por 1 Rodada.
+“Punição Divina Menor – personagens que causem danos a outros personagens sofrerão Dano Mágico Profano igual à metade da própria Força e tem seus Efeitos de Cura reduzidos à metade. Estes efeitos não são cumulativos.”
+Drama da Perdição: A GD para evitar os Ataques dos personagens afetados por Punição Divina Maior é reduzida em -1 nível.
+
+Habilidade – Folia Enfraquecedora
+Pré-requisitos: Especialização ‘Dramaturgo do Campo de Batalha’
+Custo de Ativação: 2PD
+Descrição: Inimigos afetados por Folia Enfraquecedora não podem causar Acertos Críticos Menores e sofrem Desvantagem em rolagens de Dano e Efeitos de Magia por 1 Rodada.
+Inimigos adjacentes que possuam mais da metade de seus PV, em adição aos efeitos supramencionados, tem seu Dano Base reduzido em -1d6 (mínimo de 1d6).
+Improviso Artístico: Inimigos sofrem Desvantagem em rolagens de Danos por 1 Rodada.
+Drama da Perdição: Adicionalmente aos Efeitos de Folia Enfraquecedora, personagens afetados não podem receber benefícios de Subordinados.
+
+Suprema – Drama da Perdição
+Pré-requisitos: Requer 2 Habilidades de ‘Dramaturgo do Campo de Batalha’
+Custo de Ativação: Nenhum, habilidade passiva
+Descrição: A primeira Habilidade de Dramaturgo do Campo de Batalha que você ativar a cada Rodada recebe os benefícios de Drama da Perdição.
+Não é possível desencadear um mesmo Drama da Perdição em Rodadas consecutivas.
+
+Panteão de Tellus
+(PT) Fervoroso
+Despertar: Apenas devotos fiéis de uma Divindade podem despertar como um dos Fervorosos guerreiros dos deuses.
+[Efeito Base]
+Custo de Ativação: 1 Ponto Temporário de Autocontrole
+Tempo de Ativação: 3PA
+Descrição: Você recebe uma Benção Divina conforme o tipo de divindade que você segue.
+	•	Benção Primordial – Você serve a Luz Primordial (ou Morpheus) ou a Escuridão Profunda (ou Tykhé) e pode invocar seu poder, aumentado seu Foco em 1+ a quantidade de especializações de Fervoroso.
+	•	Benção Elemental – Você serve a uma Divindade Elemental e pode invocar sua fúria, aumentando sua Força em 1+ a quantidade de especializações de Fervoroso.
+	•	Benção Umbral – Você serve a um Senhor Umbral e pode se cobrir com sua agilidade, aumentado sua Destreza em 1+ a quantidade de especializações de Fervoroso.
+	•	Benção Vazia – Você serve aos deuses do vazio e pode invocar sua resiliência, aumentando seu Vigor em 1+ a quantidade de especializações de Fervoroso.
+As Bençãos Divinas permanecem ativas por uma quantidade de Rodadas igual 2+ metade de seu valor de Carisma.
+Pontos Temporários de Autocontrole gastos para ativar a Benção Divina são recuperados após um Descanso Longo Verdadeiro ou superior.
+Se Fervoroso for seu Título Primário, ao ativar Benção Divina você recebe +1PA por 2 Rodadas (não cumulativo e apenas uma vez por Cena).
+
+Habilidades Gerais
+Habilidade – Conjuração Milagrosa
+Pré-requisitos: Requer 1 Especialização de Fervoroso
+Custo de Ativação: 1PD + Variável (PM conforme nível da magia)
+Tempo de Ativação: Variável, conforme magia.
+Descrição: Você pode Conjurar magias dos tipos Semente e Broto dos tipos de sua Divindade. Se tiver ao menos uma Suprema de Fervoroso você também pode conjurar magia do tipo Muda.
+DIVINDADE	TIPO DE MAGIA
+Luz Primordial ou Morpheus	Divina
+Escuridão Profunda ou Tykhé	Profana
+Deuses Elementais	Elemental (conforme elemento da divindade)
+Senhores Umbrais	Umbral
+Deuses do Vazio	Temporal
+
+É preciso usar Pontos de Magia (PM) para conjurar as magias. Conjurações feitas desta forma podem ser afetadas por Talentos Metamágicos, Especializações e Habilidades de Competência da Perícia Domínio do Mana, Habilidade de Atributo de Foco e Habilidades de Títulos Arcanos.
+
+Habilidade – Aura Milagrosa
+Pré-requisitos: Requer 1 Especialização de Fervoroso
+Custo de Ativação: Nenhum, efeito passivo
+Tempo de Ativação: 0PA, sempre ativa
+Descrição: Enquanto Benção Divina estiver ativa, baseado na divindade que você serve, você e seus aliados em Distância Curta recebem um dos seguintes benefícios:
+DIVINDADE	EFEITO DA AURA
+Luz Primordial, Morpheus, Surt’Eldur, Undine e Haloi, Epona e Gaea	Defesas +1 e recuperam 2PV no início da Rodada
+Escuridão Profunda, Tykhé, Ymir, Senhores Umbrais e Deuses do Vazio	Bônus de +1 em Danos e Roubo de Vida 1
+Tykhé, Tesla, Vulcano, Sylph	Conjuração +1, Dano e Cura Mágica +1
+
+Suprema – Evolução Milagrosa
+Pré-requisitos: Requer 2 Habilidades de Fervoroso
+Custo de Ativação: Nenhum, efeito passivo
+Tempo de Ativação: 0PA, sempre ativa
+Descrição:
+Enquanto Benção Divina estiver ativa você recebe +1 Multiplicador de PV e seu tipo de personagem muda para um tipo similar ao da Divindade que você serve.
+DIVINDADE	TIPO DE PERSONAGEM	QUALIDADES M
+Luz Primordial ou Morpheus	Celestial	Efeitos de Habilidades e Magias de Cura aumentados em +2, Curas recebidas +1d6.
+Escuridão Profunda ou Tykhé	Abissal	Danos causados são Profano em substituição ao seu tipo Base e Roubo de Vida 1.
+Deuses Elementais	Elemental	Imunidade ao Elemento, Aura elemental que causa 2 pontos de danos por Rodada (adjacências).
+Senhores Umbrais	Sombra	Imunidade a Efeitos Críticos Menores, seus Acertos Críticos aplicam Amaldiçoado ao alvo e seus Danos Críticos aumentam em +1d6.
+Deuses do Vazio	Cria do Vazio	Defesas +3 e Vantagem em rolagens de Perícias de Ataque.
+
+Suprema – Recompensa Milagrosa
+Pré-requisitos: Requer 2 Habilidades de Fervoroso
+Custo de Ativação: Nenhum, efeito passivo
+Tempo de Ativação: 0PA, sempre ativa
+Descrição: Você recebe permanentemente +1 Ponto de Ação (PA).
+Você também recebe 2 Pontos de Egos, que podem ser alocados ou divididos – à sua maneira – em Egos a sua escolha.
+
+Especialização – Bastião das Tradições
+Pré-requisitos: apenas Fervorosos podem adquirir esta especialização
+Custo de Ativação: +1 Ponto Temporário de Autocontrole
+Tempo de Ativação: 0PA
+Descrição: Você recebe metade do seu valor de Carisma como Bônus Variável em suas Defesas.
+Este efeito deve ser ativo simultaneamente a ativação da Benção Divina.
+ Pontos de Autocontrole usados para ativar Bastião das Tradições são recuperados ao fim da Cena (apenas se o personagem estiver consciente, com 1 ou mais PV).
+
+Habilidade – Liderar os Fiéis
+Pré-requisitos: Especialização Bastião das Tradições
+Custo de Ativação: 2PD
+Tempo de Ativação: 3PA
+Descrição: Os efeitos de Bastião das Tradições se tornam uma Aura e pode afetar aliados em até Distância Curta.
+Seus Aliados devotos da mesma divindade que você recebem os benefícios integrais de Bastião das Tradições, aliados devotos de outras divindades recebem apenas metade dos benefícios.
+
+Habilidade – Superação pela Fé
+Pré-requisitos: Especialização Bastião das Tradições
+Custo de Ativação: 2PD
+Tempo de Ativação: Reação
+Descrição: Sua fé lhe permite ignorar os efeitos de um Efeito Crítico Menor, Corrente de Efeitos de um ataque (Físico ou Mágico) ou de uma Habilidade (de Título Aventyr ou Monstruosa).
+
+Habilidade – Resistência do Mártir
+Pré-requisitos: Especialização Bastião das Tradições
+Custo de Ativação: 2PD
+Tempo de Ativação: Reação
+Descrição: Você pode ignorar uma quantidade de pontos de danos igual ao seu valor total de Carisma.
+A cada Cena de Combate esta Habilidade pode ser ativada apenas uma vez para cada inimigo presente nela.
+
+Suprema – Bastião dos Indefesos
+Pré-requisitos: Requer 2 Habilidades de Bastião das Tradições
+Custo de Ativação: Nenhum, efeito passivo
+Tempo de Ativação: 0PA, sempre ativa
+Descrição: No início de cada Cena de Combate você é considerado alvo prioritário para ataques de todos os inimigos em Distância Média.
+“Alvos Prioritários são sempre alvos primários de ataques, mas apenas quando houver viabilidade, se algum efeito impedir o atacante de te atacar ele poderá atacar livremente outros personagens.”
+Esta Habilidade é um efeito de Encantamento, tem Duração de 3 Rodadas e afeta quaisquer inimigos que entre em sua Área de Efeito.
+
+Especialização – Executor da Fé
+Pré-requisitos: Apenas Fervorosos podem adquirir esta especialização
+Custo de Ativação: +1 Ponto Temporário de Autocontrole
+Tempo de Ativação: 0PA
+Descrição: Você recebe metade do seu valor de Carisma como Bônus Variável em rolagens de Perícias de Ataque e Domínio do Mana.
+Este efeito deve ser ativo simultaneamente a ativação da Benção Divina, Pontos de Autocontrole usados para ativar Executor da Fé são recuperados ao fim da Cena (apenas se o personagem estiver consciente, com 1 ou mais PV).
+
+Habilidade – Executar os Hereges
+Pré-requisitos: Especialização Executor da Fé
+Custo de Ativação: Nenhum, efeito passivo
+Tempo de Ativação: 0PA, sempre ativa
+Descrição: Metade do Valor de Carisma como Dano adicional em rolagens de Danos Críticos.
+Esta Habilidade não afeta alvos de ataques que sejam devotos da mesma divindade que você.
+
+Habilidade – Flagelo do Mártir
+Pré-requisitos: Especialização Executor da Fé
+Custo de Ativação: 3PD
+Tempo de Ativação: 1PA
+Descrição: Seus ataques físicos e mágicos infligem danos adicionais iguais à metade do seu valor de Carisma a você e ao alvo.
+Esta Habilidade tem Duração de 2 Rodadas, danos causados a você por esta Habilidade não podem ser reduzidos.
+Sempre que você derrotar um inimigo (reduzindo os PV dele à zero ou menos) pela primeira vez em cada Cena de Combate usando ataques carregados com Flagelo do Mártir seu Multiplicador de PV aumenta em +1 até o final da Cena (efeito Cumulativo).
+
+Habilidade – Presença Divina
+Pré-requisitos: Especialização Executor da Fé
+Custo de Ativação: 3PD
+Tempo de Ativação: Reação
+Descrição: Quando um inimigo lhe causar danos ele sofrerá uma quantidade de danos igual à metade do seu Carisma e recebem o Malefício Presença Divina.
+“Malefício: Presença Divina – A cada Rodada este personagem sofre 2 pontos de danos Mágicos Primordiais, este dano é causado apenas se o personagem estiver em Distância Muito Curta do Fervoroso. Personagens que se rendam ao Fervoroso, arrependidos de sua agressão deixam de ser sofrer estes danos.”
+
+Suprema – Avatar Combatente
+Pré-requisitos: Requer 2 Habilidades de Executor da Fé
+Custo de Ativação: 1 Ponto Temporário de Autocontrole
+Tempo de Ativação: 2PA
+Descrição: Você recebe Bônus Variável em Força ou Destreza, e Carisma, igual à quantidade de Habilidades de Executor da Fé que possuir.
+No início de cada Rodada você e seus aliados adjacentes recuperam uma quantidade de PV igual à metade do seu valor de Carisma.
+Avatar Combatente pode ser ativado apenas uma vez por Cena de Combate e apenas se você estiver sob efeito de Benção Divina - Duração de 3 Rodadas.
+Pontos de Autocontrole gastos para ativar Avatar Combatente são recuperados apenas após derrotar (reduzindo PV à zero ou menos) um personagem cuja devoção seja em uma Divindade diferente da sua.
+
+(PT) Receptáculo
+Desperta: Apenas personagens de grande fé nas Divindades Primordiais, a Luz ou a Escuridão, podem Despertar como Receptáculos.
+[Efeito Base]
+Custo de Ativação: 3PD
+Tempo de Ativação: 3PA
+Descrição: Através da meditação você é capaz de invocar e suportar a presença de um espírito Abissal, Celestial ou Elemental em seu corpo tornando-se um receptáculo, enquanto aberto a encarnações seu corpo e mente se tornam mais afiados e seus sentidos mais aguçados.
+Efeito Ativo – Corpo Vazio: Você recebe Bônus Variável de +1 em 3 diferentes Atributos, exceto Carisma, escolhidos aleatoriamente (3 rolagens de 1d6).
+Valor da Rolagem	Atributo Bônus
+1	Força
+2	Destreza
+3	Vigor
+4	Gnose
+5	Instinto
+6	Foco
+
+A Duração deste efeito é igual à 2+ Carisma Rodadas.
+Se Receptáculo for seu Título Primário você recebe Vantagem na primeira rolagem de Perícia efetuada a cada Turno, apenas Perícias baseadas em Atributos aprimorados por Corpo Vazio recebem este Benefício.
+
+Habilidades Gerais
+Suprema – Vazio de Luz e Sombra
+Pré-requisitos: Requer 1 Especialização e 4 Habilidades de Receptáculo
+Custo de Ativação: Nenhum, habilidade passiva
+Tempo de Ativação: 0 PA, sempre ativa
+Descrição: Você pode ter ambas as Especializações de Receptáculo
+
+Suprema – Invocar Soldado Elemental
+Pré-requisitos: Requer 1 Especialização e 1 Habilidade de Receptáculo
+Custo de Ativação: 4PD
+Tempo de Ativação: 3PA
+Descrição: Enquanto estiver com alguma Especialização ativa você pode invocar um Elemental para lhe ajudar, apenas Elementais de elementos que você possua uma Habilidade de Encarnação podem ser invocados desta forma.
+Soldado Elemental - Atributos e Perícias
+	•	Força 3, Destreza 3, Vigor 3, Gnose 3, Instinto 3, Foco 3, Carisma 3
+	•	Ataque Corpo-a-Corpo [Primal] +4
+	•	Atenção [Sentidos Apurados] +4
+	•	Conhecimentos [Cosmologia, Natureza, Viajante Planar] +4
+	•	Esquiva e Aparar [Guerreiro Natural] +4
+	•	Furtividade [Maestria da Ocultação] +4
+Características Especiais:
+	•	Capazes de conjurar Magias Elementais do tipo Muda ou Inferior
+	•	Imunidade a danos de seu próprio Elemento
+	•	Vulnerabilidade a danos do Elemento oposto
+	•	Bônus Base de +1 em Atributos para cada duas Habilidade de Receptáculo
+	•	Graduações adicionais em Perícias +2 para cada Habilidade de Receptáculo (Graduações máximas igual ao dobro dos Atributos)
+	•	Bônus Racial de +3 em Defesas para cada 2 Habilidades de Receptáculo
+	•	Categoria de Tamanho +1 para cada 2 Habilidades de Receptáculo
+	•	Elementais que possuam Vigor 5 ou superior causam 1+Metade do Vigor Pontos de Dano Físico Elemental em todos os personagens adjacentes, danos aumentam em +1d6 com Vigor 7.
+	•	Elementais que possuam Força 5 ou superior a Margem Crítica Menor de Perícias de Ataque muda para 15, com Força 7 a Margem Crítica Menor muda para 13.
+	•	Elementais que possuam Graduações 5 ou superior reduzem a GD das rolagens de Perícias em -1 Nível, com Graduação 14 podem reduzir a GD das rolagens em até -2 Níveis.
+	•	Possuem Habilidades e formas de Movimentos adicionais conforme seu tipo
+Outras Informações:
+	•	Categoria de Tamanho -2.
+	•	Possuem 3 Pontos de Ação (PA).
+	•	25PV (Multiplicador de PV x5) e Defesas +5.
+	•	Danos de Ataques 2d6+1 (Base 0+ Metade da Força, Efeito Crítico Cataclismo).
+
+Tipo	Vulnerabilidade	Movimento Extra	Habilidade
+Fogo	Água	Voo	Atacantes sofrem Instinto pontos de Dano Físico Elemental
+Magma	Gelo	Vertical	Danos Críticos +3, primeiro ataque da Rodada +1d6
+Terra	Ar	Vertical	Danos sofridos reduzidos em -2, armas de atacantes sofrem 2+ Metade do Vigor pontos de danos
+Natureza	Eletricidade	Vertical e Natação	Ataques Corrente de Efeitos – Corrosão: equipamentos defensivos sofrem 1d6 pontos de danos
+Água	Fogo	Natação	Regeneram 1d6PV por Rodada, causam danos adicionais igual a metade da vida recuperada
+Gelo	Magma	Natação	Primeiro ataque da Rodada causa +1d6 pontos de dano e possui Área de Efeito – Explosão
+Ar	Terra	Voo	Se mover na direção do elemental conta como Terreno Difícil, Ataques Corrente de Efeitos – Empurrar e Recuar: Ataques empurram o alvo 1UD para trás ou o Elemental se move 1UD para trás
+Eletricidade	Natural	Voo	+2PA e podem agir no mesmo Turno em que são invocados.
+
+Elementais invocados com esta Habilidade te auxiliam por apenas 3 Rodadas e não podem utilizar equipamentos.
+
+Suprema – Convocar Daemons
+Pré-requisitos: Requer 1 Especialização e 2 Habilidades de Receptáculo
+Custo de Ativação: Variável
+Tempo de Ativação: 3PA
+Descrição: Daemons são espíritos Elementais que agem como conselheiros, dando dicas, informações ou guiando o Receptáculo em Cenas de Combate.
+Você recebe até 4 diferentes Subordinados, escolhidos aleatoriamente (4 rolagens de 1d6).
+Valor da Rolagem	Tipo de Subordinado
+1	Bispo
+2	Cavaleiro
+3	Peão
+4	Rainha
+5	Rei
+6	Torre
+
+O Custo de Ativação é de 1PD+ 1PD para cada Daemon invocado (desta forma invocar 1 Daemon tem o custo de 2PD, 2 Daemons custam 3PD e assim sucessivamente).
+Daemons invocados te auxiliam durante 1 Rodada para cada Habilidades de Receptáculo que você possuir.
+
+Suprema – Receptáculo Perfeito
+Pré-requisitos: Requer 1 Especialização e 2 Habilidades de Receptáculo
+Custo de Ativação: Nenhum, habilidade passiva
+Tempo de Ativação: 0 PA, sempre ativa
+Descrição:
+Os efeitos de Recuperação de Pontos de Vida de Coração Celeste aumentam em +1, então em +1 para cada 2 Habilidades de Coração Celeste que você possuir.
+Os efeitos de Roubo de Pontos de Vida de Olho do Abismo aumentam em +1, então em +1 para cada 2 Habilidades de Olho do Abismo que você possuir.
+
+Especialização – Olho do Abismo
+Pré-requisitos: apenas Receptáculos podem adquirir esta especialização
+Custo de Ativação: Nenhum, habilidade passiva
+Tempo de Ativação: 0 PA, sempre ativa
+Descrição: Quando você Ativar Corpo Vazio você incorpora um espírito Abissal e, para efeitos de Magias e Habilidades, você é considerado um personagem Abissal.
+Fisiologia Abissal – Você é imune a maldições, seus ataques recebem Roubo de Vida 1 e aplicam o Malefício Amaldiçoado em seus alvos por 2 Rodadas, personagens amaldiçoados desta forma tem seu Multiplicador de PV reduzido em -1 (não cumulativo).
+Enquanto em forma Abissal as Habilidades de Olho do Abismo permitem que você transforme seu lado Abissal em um tipo Elemental criado e abençoado pela Escuridão Profunda, substituindo temporariamente suas características por Fisiologia Elemental.
+Fisiologia Elemental – Você é imune ao um tipo de Elemento (conforme Elemental) e seus ataques se tornam Físico Elemental em substituição e recebem Cataclismo como Efeito Crítico adicional.
+Um mesmo personagem não pode adquirir as Especializações Olho do Abismo e Coração Celeste.
+
+Habilidade – Encarnação do Leviatã (Água)
+Pré-requisitos: Especialização Olho do Abismo
+Custo de Ativação: 1PD
+Tempo de Ativação: 1PA
+Descrição: Você perde sua Fisiologia Abissal por 2 Rodadas e recebe Fisiologia Elemental: Água.
+Seus ataques contra personagens Amaldiçoados recebem Alcance Estendido como Aprimoramento de Obra-Prima adicional e Roubo de Bônus Base 1.
+
+Habilidade – Encarnação da Intriga (Ar)
+Pré-requisitos: Especialização Olho do Abismo
+Custo de Ativação: 2PD
+Tempo de Ativação: 1PA
+Descrição: Você perde sua Fisiologia Abissal por 2 Rodadas e recebe Fisiologia Elemental:Ar.
+Seu Movimento Base aumenta em +2UD e ataques contra personagens Amaldiçoados recebem a Corrente de Efeitos – Deslocamento: Você pode se distanciar 1UD do alvo, o alvo então atacará - em seu próximo Turno - o personagem mais próximo dele (efeito de Encantamento).
+
+Habilidade – Encarnação de Pán (Natural)
+Pré-requisitos: Especialização Olho do Abismo
+Custo de Ativação: 2PD
+Tempo de Ativação: 1PA
+Descrição: Você perde sua Fisiologia Abissal por 2 Rodadas e recebe Fisiologia Elemental: Natural.
+Você se transforma em uma planta antropomórfica e seus movimentos se tornam rígidos e lentos, o que o torna incapaz de realizar ataques físicos. Em compensação os ataques de seus aliados em Distância Curta contra alvos amaldiçoados são rolados contra DM, causam Dano Mágico Elemental: Natural e recebem a corrente de Efeitos – Corrosão: Todos os Equipamentos Defensivos do alvo sofrem 1d6 pontos de Dano Mágico Elemental: Natural.
+Armas Corpo-a-Corpo de Inimigos, quando te atacam, são afetadas por sua seiva corrosiva, sofrendo 2d6 pontos de Dano Mágico Elemental: Natural, se o ataque for Crítico a arma sofre +1d6 pontos de danos.
+
+Habilidade – Encarnação de Cyt (Gelo)
+Pré-requisitos: Especialização Olho do Abismo
+Custo de Ativação: 1PD
+Tempo de Ativação: 1PA
+Descrição: Você perde sua Fisiologia Abissal por 2 Rodadas e recebe Fisiologia Elemental: Gelo.
+Você recebe +3 de Bônus de Força e Categoria de Tamanho, seus ataques contra alvos de Categorias de Tamanho inferiores recebem Área de Efeito – Explosão.
+
+Especialização – Coração Celeste
+Pré-requisitos: apenas Receptáculos podem adquirir esta especialização
+Custo de Ativação: Nenhum, habilidade passiva
+Tempo de Ativação: 0 PA, sempre ativa
+Descrição: Quando você Ativar Corpo Vazio você incorpora um espírito Celestial e, para efeitos de Magias e Habilidades, você é considerado um personagem Celestial.
+Fisiologia Celestial – Você emite uma Aura chamada Aura Celeste, Seus aliados adjacentes recuperam 3PV a cada Rodada, você recupera PV iguais à metade deste valor, e todos se tornam imunes aos Malefícios Abalado, Assustado e Apavorado.
+Enquanto em forma Celestial as Habilidades de Coração Celeste permitem que você transforme seu lado Celestial em um tipo Elemental criado e abençoado pela Luz Primordial, substituindo temporariamente suas características por Fisiologia Elemental.
+Fisiologia Elemental – Você é imune ao um tipo de Elemento (conforme Elemental) e seus ataques se tornam Físico Elemental em substituição e recebem Cataclismo como Efeito Crítico adicional
+Um mesmo personagem não pode adquirir as Especializações Olho do Abismo e Coração Celeste.
+
+Habilidade – Encarnação de Ahó (Terra)
+Pré-requisitos: Especialização Coração Celeste
+Custo de Ativação: 2PD
+Tempo de Ativação: 1PA
+Descrição: Você perde sua Fisiologia Celestial por 2 Rodadas e recebe Fisiologia Elemental: Terra.
+Você emite uma Aura Elemental Térrea que enrijece a sua pele e a de seus aliados.
+Você recebe Bônus de +2 em Defesas.
+Aliados em Distância Curta recebem Bônus de +5 em Defesas, este Bônus são reduzidos em -1 para cada UD entre vocês.
+Aliados que foram efetivamente curados pela Aura Celeste nas últimas 2 Rodadas adicionalmente recebem RA.
+
+Habilidade – Encarnação de Amaterasu (Fogo)
+Pré-requisitos: Especialização Coração Celeste
+Custo de Ativação: 1PD
+Tempo de Ativação: 1PA
+Descrição: Você perde sua Fisiologia Celestial por 2 Rodadas e recebe Fisiologia Elemental: Fogo.
+Você emite uma Aura Elemental Incandescente que fortalece o seu espírito e o de seus aliados.
+Você e seus aliados se tornam imunes a Malefícios de Encantamentos, Maldições e efeitos de Possessão.
+Personagens de Tendências Malignas que atacarem seus aliados que foram efetivamente curados pela Aura Celeste nas últimas 2 Rodadas sofrem 2d6 pontos de Dano Mágico Elemental: Fogo.
+
+Habilidade – Encarnação de Ma’Curie (Eletricidade)
+Pré-requisitos: Especialização Coração Celeste
+Custo de Ativação: 3PD
+Tempo de Ativação: Ação Livre
+Descrição: Você perde sua Fisiologia Celestial por 2 Rodadas e recebe Fisiologia Elemental: Eletricidade.
+Você emite uma Aura Elemental Relampejante capaz de acelerar ações e reações.
+Você e seus aliados recebem +1PA e uma Reação adicional.
+Aliados que foram efetivamente curados pela Aura Celeste nas últimas 2 Rodadas adicionalmente recebem +1PA.
+
+Habilidade – Encarnação de Hefestos (Magma)
+Pré-requisitos: Especialização Coração Celeste
+Custo de Ativação: 1PD
+Tempo de Ativação: 1PA
+Descrição: Você perde sua Fisiologia Celestial por 2 Rodadas e recebe Fisiologia Elemental: Magma.
+Você emite uma Aura Elemental Metálica capaz de fortalecer e aprimorar armas.
+A Margem Crítica de suas Armas aumenta +2, enquanto isso a Margem Crítica das armas de seus Aliados aumenta em +5, mas os benefícios são reduzidos em -1 para cada UD entre vocês.
+Armas de aliados que foram efetivamente curados pela Aura Celeste nas últimas 2 Rodadas adicionalmente recebem Guilhotina como Efeito Crítico adicional.
+
+Império das Profundezas
+Estados Federados
+(EF) Onmiyoji
+Personagens que vivem suas vidas em função da devoção.
+Guias Espirituais, Padres, Clérigos, Monges, dentre outros, mas apenas aqueles que se colocam a inteira disposição de sua fé e do serviço divino podem ocasionalmente serem tocados pelos deuses, então sendo Despertos como Onmiyoji.
+Uma vez que sua centelha seja Desperta, os Onmiyoji vivem suas vidas e sonhos na fina camada entre o mundo dos homens e dos espíritos.
+Despertar: Apenas personagens que devotem sua vida às suas crenças e as missões deíficas podem se tornar Onmiyoji.
+As Qualidades de um Onmiyoji
+[Efeito Base]
+Custo de Ativação: Nenhum, Efeito Passivo
+Tempo de Ativação: 0 PA, sempre ativa
+Descrição: Onmiyojis vivem de sua devoção e tem comprometida parte de sua força de vontade para quesitos particulares, por isso perdem metade do sua quantidade de Pontos de Determinação (PD), este valor "perdido" é atualizado de forma recorrente, se atualizando sempre a quantidade de total de PD for alterada.
+Juntamente à perda de parte dos Pontos de Determinação, recebem uma característica única chamada Pontos de Fé, para cada PD perdido o Onmiyoji recebe dois Pontos de Fé.
+Pontos de Fé (PF) podem ser utilizados para criar Amuletos Mágicos, que podem ser representados por pedras, papéis, terços e contas, ou quaisquer pequenos objetos abençoados com seus poderes. Estes objetos são destruídos quando ativados.
+Amuletos Mágicos podem armazenar Magias ou Efeitos de Habilidades de Onmiyoji, sua criação exige um ritual de 5 minutos cada.
+Como Onmiyoji você é capaz de criar Amuletos Mágicos de todas as Árvores de Magias Divinas, Primordiais, Profanas e Temporais, mas apenas do tipo Semente. Ao adquirir 2 Habilidades de Onmiyoji você se torna capaz de criar amuletos de Brotos, com 4 Habilidades ou Supremas pode criar amuletos de Mudas, com 7 Habilidades ou Supremas é capaz de criar amuletos de Emergentes e, por fim, com 10 Habilidades ou Supremas se torna capaz de criar amuletos de magias Florescentes.
+Além do tempo do rito de criação dos Amuletos Mágicos, é preciso depositar Pontos de Fé para abençoar o objeto.
+	•	Magias Sementes e Brotos:1PF
+	•	Magias Mudas: 2PF
+	•	Magias Emergentes e Florescentes: 3PF
+	•	Habilidades de Onmiyoji: Variável, conforme descrição
+O Tempo de Ativação de um Amuleto Mágico é de 2PA
+Magias Florescentes são poderosas demais para um único amuleto, sendo divididas em 2 Amuletos Mágicos que precisam ser criados e ativados simultaneamente, dobrando seu tempo de criação e ativação.
+Os Amuletos Mágicos recebem Bônus de Conjuração e melhorias de Efeitos provenientes de equipamentos, também duram até serem liberados, ativados ou se seu criador ficar inconsciente (com zero ou menos PV).
+Os Pontos de Fé (PF) utilizados são recuperados a cada Descanso Longo, mas não é possível recuperar os pontos depositados em amuletos ainda não utilizados ou liberados.
+
+Primeiro Despertar: Onmiyojis Primários tem o Multiplicador de PD aumentado em +1.
+
+Tesouros de Grurton
+(TG) Andarilho Selvagem
+(TG) Totêmico Vix
+O Olho de Deus
+Dragões de Drak’arya
+(DD) Xamã
+Morte e Renascimento
+
+Centelha Arcana
+Módulo Básico
+(MB) Mago
+(MB) Mestre dos Grimórios
+(MB) Necromante
+O Grande Continente
+Panteão de Tellus
+Império das Profundezas
+Estados Federados
+Tesouros de Grurton
+(TG) Magus das Cores
+O Olho de Deus
+Dragões de Drak’arya
+(DD) Auramante
+(DD) Evocador de Esferas
+(DD) Protetor Arcano
+Morte e Renascimento
+(MR) Sanguenomante
+
+Centelha Bruta
+Módulo Básico
+(MB) Espiritualista da Guerra
+
+(MB) Gigante Enfurecido
+Despertar: Paixão, raiva e instinto. Despertam como Gigantes Enfurecidos personagens combatentes furiosos e que se sintam implacáveis, que avancem destemidos contra seus oponentes e confiam sua vida aos seus instintos e emoções.
+Custo de Ativação: 1 Ponto Temporário de Autocontrole
+Tempo de Ativação: 2PA
+Descrição: Você pode entrar em um estado de Frenesi profundo, se o fizer você adquire temporariamente Bônus Variável de +2 em 'Força' e 'Iniciativa'.
+Esta Habilidade permanece ativa por uma quantidade de Rodadas igual 2+ Metade do seu 'Vigor' e não pode ser interrompida voluntariamente, enquanto em Frenesi você não pode utilizar Perícias que exijam contração ou raciocínio, você também perde a capacidade de Conjurar ou Mimetizar Magias.
+Pontos de Autocontrole perdidos durante o 'Frenesi' são recuperados 1 a cada 2 horas passadas fora deste estado, caso a 'Autocontrole' chegue a zero você perde a capacidade de distinguir inimigos e aliados (nunca sofrendo outros efeitos de Autocontrole nulo), sempre atacando a criatura mais próxima de você.
+Se este for o seu título primário seu 'Frenesi' tem a duração aumentada em +2 Rodadas.
+
+Habilidade - Prolongar descontrole
+Pré-requisitos: Requer 1 Especialização de 'Gigante Enfurecido'
+Custo de Ativação: 2PD
+Tempo de Ativação: 2PA
+Descrição: Você pode aumentar a duração de seu Frenesi em +2 Rodadas.
+Esta Habilidade só pode ser ativada durante o efeito de Frenesi do Gigante Enfurecido.
+
+Habilidade - Uno com a Ira
+Pré-requisitos: Requer 'Prolongar Descontrole' e outras 2 Habilidades de 'Gigante Enfurecido'
+Custo de Ativação: Nenhum
+Tempo de Ativação: 0PA, Efeito Passivo
+Descrição: Os 2 primeiros pontos temporários de 'Autocontrole' que utilizar para ativar efeitos de Frenesi são recuperados após 2 Rodadas, mas apenas se seu Frenesi ainda estiver ativo e você estiver consciente.
+Você agora pode encerrar seu Frenesi voluntariamente, mas encerra-lo de antecipadamente te deixa física e mentalmente exausto, fazendo-o sofrer Desvantagem em rolagens de Perícias e Danos até que passe por um Descanso Curto Verdadeiro.
+
+Suprema - Frenesi Esmeralda
+Pré-requisitos: requer 'Uno com a Ira'
+Custo de Ativação: Sempre Ativo
+Tempo de Ativação: 0PA, Efeito Passivo
+Descrição: Você consegue entrar num estado de Frenesi ainda mais profundo, se tornando mais forte, incontrolável, irracional e imprudente.
+Enquanto em Frenesi você pode ativar esta Suprema, se o fizer você Bônus de +2 em Força, Vantagem em Rolagens de Atenção e Conjuração de Magias Ofensivas (que inflijam danos em seus alvos), seu Movimento Base aumenta em +2UD, mas você sofre Redutor de -4 em Defesas.
+
+Suprema – Frenesi Reativo
+Pré-requisitos: Requer 3 Habilidades de 'Gigante Enfurecido'
+Custo de Ativação: +1 ponto temporário de 'Autocontrole'
+Tempo de Ativação: Reação
+Descrição: Você pode iniciar seu Frenesi em resposta às ações inimigas, mas apenas se você for alvo de um ataque bem-sucedido.
+Você pode ativar qualquer número de Especializações, Habilidades e Supremas de Gigante Enfurecido nesta mesma Reação, desde que possa pagar seus Custos de Ativação.
+
+Especialização - Titã Enlouquecido
+Pré-requisitos: apenas ‘Gigantes Enfurecidos’ podem adquirir esta especialização
+Custo de Ativação: +1 Ponto temporário de Autocontrole
+Tempo de Ativação: +1PA
+Descrição: Esta Habilidade deve ser ativada em conjunto a o Frenesi do Gigante Enfurecido.
+Enquanto em Frenesi sua Categoria de Tamanho e seu Multiplicador de PV aumentam ambos em +1.
+Quando iniciar um Frenesi com esta Habilidade ativa você não perde totalmente a capacidade de raciocínio, se tornando apto a realizar ações que exijam concentração, como Conjurar Magias e usar Perícias diversas, porém ainda tem inclinações violentas e comportamentos impulsivo.
+Conjurar Magias e utilizar Perícias baseadas em Gnose tem o tempo de ação aumentado em +1PA.
+
+Habilidade – Gritos de Guerra
+Pré-requisitos: Especialização ‘Titã Enlouquecido’
+Custo de Ativação: 3PD
+Tempo de Ativação: 1PA
+Descrição: Enquanto estiver em Frenesi você pode dar Gritos de Guerra que motivam seus aliados ou atormentam seus inimigos. Ao ativar esta Habilidade escolha um dos efeitos abaixo:
+	•	Grito de Desdenho: Todo o dano causado a você e aos seus aliados, que estejam em Distância Média, é reduzido à metade durante 1 Rodadas;
+	•	Grito Espinhoso: Inimigos em Distância Curta sofrem 1d6 + Metade de seus Multiplicador de PV pontos de Dano Físico Primordial, este dano é dobrado em inimigos adjacentes;
+	•	Grito Inspirador: Aliados em Distância Curta recebem os mesmos efeitos de seus Frenesis ativos, exceto Gritos de Guerra, por 1 Rodada.
+Não é possível ativar Gritos de Guerra mais de uma vez na mesma Rodada.
+
+Habilidade - Frenesi Arcano
+Pré-requisitos: Especialização ‘Titã Enlouquecido’ e o talento ‘Arcanista’
+Custo de Ativação: +3PA
+Tempo de Ativação: Variável, conforme magia.
+Descrição: Você pode aumentar o Dano Base de suas magias em +1d6, então magias capazes de infligir 3d6 pontos de dano são maximizadas.
+Alternativamente você pode aumentar a Duração de seus Encantamentos e Maldições em +2 Rodadas.
+Frenesi Arcano pode ser ativado apenas uma vez a cada Rodada e apenas enquanto Titã Enlouquecido estiver Ativo.
+
+Habilidade – Colosso Enfurecido
+Pré-requisitos: Especialização ‘Titã Enlouquecido’
+Custo de Ativação: Nenhum, habilidade passiva
+Tempo de Ativação: 0 PA, sempre ativo
+Descrição: Enquanto Titã Enlouquecido estiver ativo sua Categoria de Tamanho aumenta em +1 (para um total de +2) e seus Multiplicadores de PD e PM aumentam em +1.
+
+Suprema - Cataclismo Elemental
+Pré-requisitos: 2 Habilidades de Titã Enlouquecido
+Custo de Ativação: +1 Ponto temporário de Autocontrole
+Tempo de Ativação: Variável
+Descrição: Ao ativar esta Suprema você precisa escolher entre causar danos Elementais (Fogo, Lava, Terra, Água, Frio/Gelo, Vento/Som, Eletricidade e Selvagem). Para cada tipo de dano escolhido Tempo de Ativação desta Suprema aumenta em +1PA.
+Enquanto Cataclismo Elemental estiver ativo suas Magias de Duração instantânea e Gritos de Guerra causam, como efeito adicional, dano Mágico Elemental igual ao número de Elementos escolhido a todos os personagens em Distância Curta, este dano é dobrado em personagens adjacentes. Você também recebe RE para resistir a todos os Elementos escolhidos.
+
+Especialização – Berserker
+Pré-requisitos: apenas ‘Gigantes Enfurecidos’ podem adquirir esta especialização
+Custo de Ativação: +1 Ponto temporário de Autocontrole
+Tempo de Ativação: +1PA
+Descrição: Esta Habilidade deve ser ativada em conjunto a o Frenesi do Gigante Enfurecido.
+Você recebe Bônus de +1 em Força e sua Margem Crítica Menor aumenta em +1 número.
+Sempre que for alvo de um ataque bem-sucedido e sofrer danos você recebe Redutor de -2 em suas Defesas e Bônus de +1 em Força.
+A cada Cena esta habilidade pode ser ativada apenas 1 vez para cada inimigo atacante.
+
+Habilidade – Retaliação Furiosa
+Pré-requisitos: Especialização ‘Berserker’
+Custo de Ativação: Nenhum
+Tempo de Ativação: Reação.
+Descrição: Sempre que um Personagem Inimigo adjacente atacar outros personagens que não você, você se sentirá desprezado e irritado.
+Você pode desferir um ataque contra estes inimigos, o dano causado será 1d6+Metade da Força, independente da arma que esteja utilizando. Se seus PV forem menores ou iguais a zero este dano muda para 2d6+Força integral.
+Este Habilidade só pode ser ativada apenas 1 vez por Rodada para cada inimigo, mesmo que você possua outras Reações disponíveis.
+
+Habilidade - Frenesi Assustador
+Pré-requisitos: Especialização ‘Berserker’
+Custo de Ativação: 2PD
+Tempo de Ativação: Nenhum
+Descrição: Esta Habilidade só pode ser ativada ao derrotar um inimigo (reduzindo seus PV à zero ou menos) ou após desferir um Acerto Crítico, mas é limitada a uma Ativação por Rodada.
+Inimigos em Distância Curta com valores de 'Autocontrole' maiores do que o seu ficam assustados com sua presença e recebem a Condição Abalado por 2 Rodadas (Efeito de Encantamento), ativações posteriores do Frenesi Assustador podem progredir a Condição para Assustado e Apavorado, renovando a Duração da Condição.
+Enquanto seus PV forem menores ou iguais a zero os inimigos Abalados, Assustados e Apavorados se tornam incapazes de desferir Efeitos Críticos Menores e não podem desencadear Correntes de Efeitos.
+
+Habilidade – Desprezar Danos
+Pré-requisitos: Especialização ‘Berserker’
+Custo de Ativação: Nenhum, habilidade passiva
+Tempo de Ativação: 0 PA, sempre ativo
+Descrição: Enquanto estiver em Frenesi você recebe RA.
+Enquanto seus PV forem menores ou iguais à zero, você reduz danos (Efeito de Meio-Dano) e Efeitos de Cura (exceto Roubo de Vida) pela metade.
+
+Suprema: Fanático de Cyt
+Pré-requisitos: 2 Habilidades de ‘Berserker’
+Custo de Ativação: Variável
+Tempo de Ativação: Reação
+Descrição: Enquanto estiver em Frenesi, se um ataque ou efeito for reduzir seus PV para zero ou menos você pode gastar temporariamente todos os seus pontos de Autocontrole atuais (mínimo 1), se o fizer você ficará com 1PV.
+Você recebe Roubo de Vida igual à quantidade de Pontos de Autocontrole utilizados e não poderá morrer em decorrência de PV negativos enquanto seu Frenesi estiver ativo e seu Autocontrole continuar zerado.
+Neste estado você vê todos os outros personagens como inimigos, sem exceções, sempre atacando quem estiver mais próximo de você. Magias Conjuradas por terceiros sempre contam como magias hostis, mesmo as magias benéficas - como as de cura - devem superar sua DM para lhe afetar.
+
+(MB) Regenerador
+O Grande Continente
+(GC) Mestre das Armas
+(GC) Mestre de Montaria
+Panteão de Tellus
+Império das Profundezas
+Estados Federados
+(EF) Deus-Espada
+
+(EF) Senhor da Briga
+Despertar: Um Título antigo, que já fora comum em tempos passados, mas hoje é bastante raro. Senhores da Briga são Despertos colocando seu corpo a prova, lutando e colocando sua vida em risco contra feras selvagens, monstros e oponentes armados utilizando apenas as armas que a natureza lhes deu e objetos do próprio cenário. O corpo de um Senhor da Briga e o ambiente – assim como os objetos dispostos nele - são considerados as únicas armas que ele precisa, apenas aqueles que entendem isso a abdicam do uso de armas podem Despertar este Título.
+Custo de Ativação: Nenhum, Efeito Passivo
+Tempo de Ativação: 0 PA, sempre ativa
+Descrição: Você nunca recebe Desvantagens em rolagens de Perícias de Ataques com Armas Naturais.
+Você nunca recebe Desvantagens em rolagens de Defesas por estar sem nenhum Equipamento Defensivo.
+Se Senhor da Briga for seu Título Primário o Dano Base de seus ataques com Armas Naturais aumentam em +1, suas Defesas aumentam em +2 enquanto estiver armado apenas com suas Armas Naturais.
+
+Habilidade – Finalização
+Pré-requisitos: Requer 1 Especialização de Senhor da Briga
+Custo de Ativação: 1PD
+Tempo de Ativação: 1PA
+Descrição: Nesta Rodada, ataques bem-sucedidos com Armas Naturais recebem a Corrente de Efeitos – Finalização: se este ataque não for um Acerto Crítico este ataque aplica o Efeito Crítico Menor de sua Arma Natural, se este ataque for uma Acerto Crítico o Efeito Crítico será aplicado uma vez adicional.
+Apenas Efeitos Críticos Naturais das Armas Naturais são afetados por esta Habilidade, Efeitos Críticos adicionais não são desencadeados.
+
+Habilidade – Chamar pra Briga
+Pré-requisitos: Requer 1 Especialização de Senhor da Briga
+Custo de Ativação: Nenhum, habilidade passiva
+Tempo de Ativação: 0 PA, sempre ativa
+Descrição: Personagens que sofram com seus ataques bem-sucedidos, apenas quando efetuados por Armas Naturais, por 2 Rodadas seguidas se sentem provocados, sendo obrigados a te atacar pelas próximas 2 Rodadas.
+Apenas personagens armados são afetados por Chamar pra Briga, este é um efeito de Encantamento e não afeta um mesmo alvo duas vezes mesma Cena.
+
+Suprema – Punho de Ferro
+Pré-requisitos: Requer 1 Especialização e 2 Habilidades de Senhor da Briga
+Custo de Ativação: Nenhum, habilidade passiva
+Tempo de Ativação: 0 PA, sempre ativa
+Descrição: O Tempo de Ação de seu primeiro ataque com Armas Naturais em cada Rodada Ímpar é reduzido em -1PA. Esta redução de Tempo de Ação pode afetar Habilidades de Senhor da Briga.
+O dano do primeiro ataque com Armas Naturais em cada Rodada Par é aumentado em +1d6.
+
+Suprema – Campeão da Taverna
+Pré-requisitos: Requer 1 Especialização de Senhor da Briga
+Custo de Ativação: Nenhum, habilidade passiva
+Tempo de Ativação: 0 PA, sempre ativa
+Descrição: A Margem Crítica Menor e Maior de suas Armas Naturais aumenta em +1.
+Seu Dano Crítico Menor aumenta em +2, enquanto seu Dano Crítico Maior aumenta em +1d6.
+Sempre que desencadear um Acerto Crítico, suas Defesas aumentam em +1 até o final da Cena.
+
+Especialização – Punho Inigualável
+Pré-requisitos: apenas Senhores da Briga podem adquirir esta especialização
+Custo de Ativação: Nenhum, habilidade passiva
+Tempo de Ativação: 0 PA, sempre ativa
+Descrição: Seus ataques com Armas Naturais recebem Guilhotina como Efeito Crítico Adicional e tem a Margem Crítica Menor aumentada em +2 números.
+
+Habilidade – Impacto Elemental
+Pré-requisitos: Especialização Punho Inigualável
+Custo de Ativação: 1PD
+Tempo de Ativação: 2PA
+Descrição: Escolha um Elemento entre Fogo, Magma, Terra, Água, Gelo, Ar, Eletricidade ou Natural, depois de escolhido não é possível mudar o Elemento.
+Você recebe Vantagem em suas rolagens de Perícia de Ataque com Armas Naturais e o tipo de dano causado muda para Dano Físico Elemental do tipo escolhido.
+A Duração de Impacto Elemental é igual à 2+ o número de outras Habilidades e Supremas de Punho Inigualável que você possuir, a Habilidade é cancelada ao final da Cena mesmo se ainda houver quantidade de ataques disponíveis.
+	•	Grande Mestre das Brigas: Enquanto Impacto Elemental estiver ativo seus ataques com Armas Naturais são rolados contra a DM de seus alvos, causam danos mágicos e seu Efeito Crítico é alterado para Cataclismo.
+
+Habilidade – Rolamento Ofensivo
+Pré-requisitos: Especialização Punho Inigualável
+Custo de Ativação: 1PD
+Tempo de Ativação: Ação Livre
+Descrição: Você pode rolar 2UD em direção a um inimigo em Distância Curta.
+Você recebe Bônus de +3 em suas Defesas para resistir aos ataques do inimigo que você se aproximou por 1 Rodada.
+	•	Grande Mestre das Brigas: A distância de seu Rolamento Ofensivo muda para 3UD e você recebe Vantagem em rolagens de Perícia de Ataque com Armas Naturais por 1 Rodada.
+
+Habilidade – Agarrar e Derrubar
+Pré-requisitos: Especialização Punho Inigualável
+Custo de Ativação: 2PD
+Tempo de Ativação: 3PA
+Descrição: Sua especialidade é derrubar seus oponentes para ampliar suas vantagens em combate.
+Como parte da Ativação desta Habilidade você deve fazer um ataque com uma de suas Armas Naturais, você recebe Vantagem nesta rolagem de Perícia. Como efeito adicional este ataque recebe a Corrente de Efeitos – Agarrar e Derrubar: O Alvo do seu ataque adicionalmente é derrubado, recebendo a condição Caído. Apenas personagens com até o máximo duas Categorias de Tamanho superior à sua podem ser alvos desta Corrente de Efeitos.
+	•	Grande Mestre das Brigas: Uma vez por Rodada você pode desferir um ataque com Arma Natural contra um alvo Caído como Ação Livre.
+
+Suprema – Grande Mestre das Brigas
+Pré-requisitos: Requer 2 Habilidades de Punho Inigualável
+Custo de Ativação: Nenhum
+Tempo de Ativação: Sempre Ativo
+Descrição:
+Suas Habilidades de Punho Inigualável recebem os benefícios de Grande Mestre das Brigas.
+
+Especialização – Fantasma do Ringue
+Pré-requisitos: apenas Senhores da Briga podem adquirir esta especialização
+Custo de Ativação: 2PD
+Tempo de Ativação: 2PA
+Descrição:
+Efeito Passivo: Você recebe Bônus de +1 em suas Defesas.
+Efeito Ativo – Defesa Fantasma: Os Bônus Defensivos de Fantasma do Ringue aumentam em +1 enquanto você estiver armado apenas com suas Armas Naturais. Os Bônus Defensivos de Fantasma do Ringue aumentam em +3 enquanto você não utilizar Equipamentos Defensivos (exceto Defesas Naturais).
+Suas rolagens de Defesas tem a Margem Crítica Menor aumentada em +2 números e recebem Ímpeto Defensivo como Efeito Crítico adicional.
+
+Habilidade – Cruz de Sangue
+Pré-requisitos: Especialização Fantasma do Ringue
+Custo de Ativação: 2PD
+Tempo de Ativação: Reação
+Descrição: Cruz de Sangue só pode ser ativada quando você for o alvo único de um ataque corpo-a-corpo e apenas enquanto o alvo estiver dentro de seu alcance de ataque.
+Por 1 Rodada você sofre redutor em suas Defesas igual à metade de sua Destreza, então aumenta sua Margem Crítica Menor de Defesas e Ataque Corpo-a-Corpo com Armas naturais em +2.
+Suas rolagens de Defesas recebem Contra-atacante como um Efeito Crítico adicional, sempre que falhar em uma rolagem de Defesas para resistir a um ataque que cumpra os requisitos de Cruz de Sangue você poderá desferir um contra-ataque contra o agressor, os danos deste ataque aumentam em +1d6.
+	•	Malícia de Valentão: Você recebe RDS2 para enquanto Cruz de Sangue estiver ativa.
+
+Habilidade – Fingir Fraquezas
+Pré-requisitos: Especialização Fantasma do Ringue
+Custo de Ativação: Variável
+Tempo de Ativação: 1PA
+Descrição: Esta Habilidade pode ser ativa apenas se você estiver desarmado (exceto armas naturais). Os inimigos acreditam que, por estar desarmado, você também está desguarnecido e indefeso, este é um efeito de Encantamento.
+Você recebe Bônus de 1+ Número de Inimigos em Distância Muito Curta em suas Defesas, o Custo de Ativação desta Habilidade é igual a este valor.
+Inimigos inteligentes afetados por Fingir Fraquezas vão sempre desferir o primeiro ataque das próximas 2 Rodadas contra você, após este período os alvos não poderão ser afetados por esta Habilidade novamente até passarem por um Descanso.
+	•	Malícia de Valentão: Você recebe Vantagem em suas rolagens de Ataque e Danos contra alvos encantados por Fingir Fraquezas.
+
+Habilidade – Entre as Pernas
+Pré-requisitos: Especialização Fantasma do Ringue
+Custo de Ativação: Nenhum, habilidade passiva
+Tempo de Ativação: 0 PA, sempre ativa
+Descrição: Você pode trespassar por espaços ocupados por inimigos, estes espaços contam como Terrenos Difíceis.
+Você pode permanecer em um mesmo espaço ocupado por inimigo se a Categoria de Tamanho dele for superior à sua. Você recebe Bônus de +1 em Defesas para cada ponto de Categoria de Tamanho que o adversário tiver além do seu.
+	•	Malícia de Valentão: Você pode ocupar o mesmo espaço que qualquer outro personagem, independentemente de qual a Categoria de Tamanho dele, enquanto o fizer sua Margem Crítica Menor Defensiva aumenta em +2.
+
+Suprema – Malícia de Valentão
+Pré-requisitos: Requer 2 Habilidades de Fantasma do Ringue
+Custo de Ativação: Nenhum, habilidade passiva
+Tempo de Ativação: 0 PA, sempre ativa
+Descrição: Suas Habilidades de Fantasma do Ringue recebem o efeito adicional Malícia de Valentão.
+
+Tesouros de Grurton
+O Olho de Deus
+(OD) Sibilo
+Dragões de Drak’arya
+Morte e Renascimento
+(MR) Arauto da Dor
+
+Centelha Especialista
+Módulo Básico
+(MB) Artífice
+(MB) Flagelo
+(MB) Mestre da Manipulação
+O Grande Continente
+Panteão de Tellus
+(PT) Alma-Imperador
+Império das Profundezas
+(IP) Improvisador
+(IP) Lobo-do-Mar
+Estados Federados
+(EF) Armadilheiro
+Tesouros de Grurton
+O Olho de Deus
+Dragões de Drak’arya
+(DD) Vigarista Arcano
+Morte e Renascimento
+
+Fagulha Vazia
+O Olho de Deus
+(OD) Nulificador
+(OD) Impostor
+(OD) Psiônico
+
+Lampejo Umbral
+Sombras da Umbra
+(SU) Tomado pela Umbra
+(SU) Vingador Umbral (pendente)

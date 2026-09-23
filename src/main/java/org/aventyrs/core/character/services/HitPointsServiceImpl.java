@@ -35,7 +35,16 @@ public class HitPointsServiceImpl implements HitPointsService {
         for (Feat feat : character.getFeats()) {
             bonus += feat.resolveLifeMultiplierIncrease(character, characterSheet);
         }
-        return character.getLifeMultiplier() + bonus;
+        if (characterSheet != null) {
+            // A held Malefício can lower it — ConditionType#ENVENENADO's "-1 Multiplicador de
+            // Pontos de Vida". Only reachable with a sheet, like every other condition read; the
+            // Character-only overload has nowhere to look. Floored at 1 so a stack of Malefícios
+            // can never drive a creature's PV to zero by arithmetic alone.
+            bonus += characterSheet.getConditionBonus(ModifierType.LIFE_MULTIPLIER, null);
+            // And a held timed/combat-scoped loss — Ferida Profunda's "perde 3 Multiplicadores de PV".
+            bonus += characterSheet.getTemporaryBonus(ModifierType.LIFE_MULTIPLIER);
+        }
+        return Math.max(1, character.getLifeMultiplier() + bonus);
     }
 
     @Override
@@ -89,6 +98,12 @@ public class HitPointsServiceImpl implements HitPointsService {
     @Override
     public CharacterStatus getStatus(final CombatantSheet characterSheet) {
         int maxHitPoints = getMaxHitPoints(characterSheet.getCharacter(), characterSheet);
-        return getStatus(maxHitPoints - characterSheet.getDamageTaken(), maxHitPoints);
+        CharacterStatus status = getStatus(maxHitPoints - characterSheet.getDamageTaken(), maxHitPoints);
+        // Fanático de Cyt: "não poderá morrer em decorrência de PV negativos enquanto seu Frenesi
+        // estiver ativo e seu Autocontrole continuar zerado" — the PV keep falling, death does not come.
+        if (status == CharacterStatus.DEAD && characterSheet.cannotDieFromNegativeHitPoints()) {
+            return CharacterStatus.COMMA;
+        }
+        return status;
     }
 }

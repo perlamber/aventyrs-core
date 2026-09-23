@@ -32,6 +32,8 @@ import java.util.UUID;
 
 import static org.aventyrs.core.util.TranslatableMessages.FORCED_ATTACK_TARGET_REQUIRED;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
@@ -40,6 +42,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  * its later attacks that Rodada against anyone else take Desvantagem.
  */
 class ProvokingAuraAttackTest {
+
+    /** Generous by default: these tests are about the penalty, not about the PD budget. */
+    private static final int MAX_TARGETS = 99;
 
     private final AttackReceiver attackReceiver = new AttackReceiver();
     private final AttackDelivery attackDelivery = new AttackDelivery();
@@ -81,7 +86,7 @@ class ProvokingAuraAttackTest {
     /** Joins attacker to its own hostile group and binds it to the holder's Aura. */
     private void bind(final CombatantSheet attacker) {
         scene.addParticipant(attacker, 10, UUID.randomUUID());
-        scene.addAura(new ActiveAura(holder, AbencoadoPelaLuzAbility.ORGULHO_ELDURIANO, Range.DISTANCIA_CURTA, 3));
+        scene.addAura(new ActiveAura(holder, AbencoadoPelaLuzAbility.ORGULHO_ELDURIANO, Range.DISTANCIA_CURTA, 3, MAX_TARGETS));
         scene.refreshAura(holder, scene.buildContext(holder, Map.of(attacker, Range.ADJACENTE)));
     }
 
@@ -123,7 +128,7 @@ class ProvokingAuraAttackTest {
 
         IncomingAttackResult result = attackReceiver.resolve(monsterAttack(capanga, holder).build());
 
-        assertEquals(0, result.getAuraPenalty());
+        assertFalse(result.isAuraHalvesDamage());
         assertEquals(DifficultyLevel.MEDIUM.getBaseValue(), result.getRequiredTotal());
     }
 
@@ -136,31 +141,35 @@ class ProvokingAuraAttackTest {
                 .forcedTargetUnavailable(true)
                 .build());
 
-        assertEquals(0, result.getAuraPenalty());
+        assertFalse(result.isAuraHalvesDamage());
     }
 
+    /**
+     * V19 moved the penalty off the roll and onto the damage: the GD is untouched, and what
+     * changes is that the hit deals Meio-Dano.
+     */
     @Test
-    void afterAttackingTheHolderAMonstersGdAgainstOthersDropsByTwo() {
+    void afterAttackingTheHolderAMonstersLaterAttacksOnOthersDealHalfDamage() {
         MonsterSheet capanga = GenericMonster.CAPANGA.spawn(new Player());
         bind(capanga);
         scene.recordAttack(capanga, holder);
 
         IncomingAttackResult result = attackReceiver.resolve(monsterAttack(capanga, ally).build());
 
-        assertEquals(Skill.DISADVANTAGE_MALUS, result.getAuraPenalty());
-        assertEquals(DifficultyLevel.MEDIUM.getBaseValue() + Skill.DISADVANTAGE_MALUS, result.getRequiredTotal());
+        assertTrue(result.isAuraHalvesDamage());
+        assertEquals(DifficultyLevel.MEDIUM.getBaseValue(), result.getRequiredTotal());
     }
 
     @Test
     void anUnboundOrSceneLessAttackIsUntouched() {
         MonsterSheet capanga = GenericMonster.CAPANGA.spawn(new Player());
         scene.addParticipant(capanga, 10, UUID.randomUUID());
-        scene.addAura(new ActiveAura(holder, AbencoadoPelaLuzAbility.ORGULHO_ELDURIANO, Range.DISTANCIA_CURTA, 3));
+        scene.addAura(new ActiveAura(holder, AbencoadoPelaLuzAbility.ORGULHO_ELDURIANO, Range.DISTANCIA_CURTA, 3, MAX_TARGETS));
 
-        assertEquals(0, attackReceiver.resolve(monsterAttack(capanga, ally).build()).getAuraPenalty());
+        assertFalse(attackReceiver.resolve(monsterAttack(capanga, ally).build()).isAuraHalvesDamage());
         bind(capanga);
-        assertEquals(0, attackReceiver.resolve(monsterAttack(capanga, ally).scene(null).build()).getAuraPenalty());
-        assertEquals(0, attackReceiver.resolve(monsterAttack(capanga, ally).attacker(null).build()).getAuraPenalty());
+        assertFalse(attackReceiver.resolve(monsterAttack(capanga, ally).scene(null).build()).isAuraHalvesDamage());
+        assertFalse(attackReceiver.resolve(monsterAttack(capanga, ally).attacker(null).build()).isAuraHalvesDamage());
     }
 
     @Test
@@ -173,8 +182,9 @@ class ProvokingAuraAttackTest {
         assertEquals(FORCED_ATTACK_TARGET_REQUIRED, refused.getMessage());
     }
 
+    /** The attack roll itself is unaffected now — only the damage the hit deals is. */
     @Test
-    void afterAttackingTheHolderACharactersRollAgainstOthersTakesDesvantagem() {
+    void afterAttackingTheHolderACharactersLaterAttacksOnOthersDealHalfDamage() {
         CharacterSheet rival = hero();
         bind(rival);
         int unpenalizedTotal = attackDelivery.resolve(heroAttack(rival, holder).build()).getAttackTotal();
@@ -182,7 +192,7 @@ class ProvokingAuraAttackTest {
 
         DeliveredAttackResult result = attackDelivery.resolve(heroAttack(rival, ally).build());
 
-        assertEquals(Skill.DISADVANTAGE_MALUS, result.getAuraPenalty());
-        assertEquals(unpenalizedTotal + Skill.DISADVANTAGE_MALUS, result.getAttackTotal());
+        assertTrue(result.isAuraHalvesDamage());
+        assertEquals(unpenalizedTotal, result.getAttackTotal());
     }
 }

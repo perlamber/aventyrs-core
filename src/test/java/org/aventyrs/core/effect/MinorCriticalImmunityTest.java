@@ -64,7 +64,7 @@ class MinorCriticalImmunityTest {
         return CharacterSheet.of(character, new Player());
     }
 
-    /** A Santo whose Especialização + Suprema give Despertar a 2-Rodada window. */
+    /** A Santo whose Especialização + Suprema give Despertar a 3-Rodada window (1 + 2). */
     private CharacterSheet santoSheet() {
         Character character = CharacterFixture.blank(CharacterFixture.BLANK).build();
         character.grantTitle(new Santo(List.of(SantoSpecialization.ABENCOADO_PELA_LUZ),
@@ -140,33 +140,35 @@ class MinorCriticalImmunityTest {
 
     // --- The windowed source: Santo's Despertar -----------------------------------------------
 
-    /** "Nas primeiras Rodadas de cada Cena de Combate", 1 Rodada per Especialização and Suprema. */
+    /** "Nas primeiras Rodadas de cada Cena de Combate", 1 + Especializações e Supremas. */
     @Test
     void despertarIgnoresMinorCriticalsInsideItsWindow() {
         CombatantSheet santo = santoSheet();
 
         assertTrue(santo.ignoresMinorCriticalEffects(combatRound(santo, 1)));
         assertTrue(santo.ignoresMinorCriticalEffects(combatRound(santo, 2)));
+        assertTrue(santo.ignoresMinorCriticalEffects(combatRound(santo, 3)));
     }
 
     @Test
     void despertarStopsIgnoringOnceTheWindowHasPassed() {
         CombatantSheet santo = santoSheet();
 
-        assertFalse(santo.ignoresMinorCriticalEffects(combatRound(santo, 3)));
+        assertFalse(santo.ignoresMinorCriticalEffects(combatRound(santo, 4)));
     }
 
     /**
-     * A Santo holding no Especialização or Suprema has a 0-Rodada window and ignores nothing — the
-     * clause read literally, not a special case.
+     * V19's "1+ número de Especializações e Supremas" gives even a bare Santo a 1-Rodada window —
+     * the clause read literally, not a special case. The previous revision gave them none.
      */
     @Test
-    void aBareSantoIgnoresNothing() {
+    void aBareSantoStillIgnoresForTheFirstRodada() {
         Character character = CharacterFixture.blank(CharacterFixture.BLANK).build();
         character.grantTitle(new Santo(List.of(), List.of()), TitleSlot.PRIMARY);
         CombatantSheet bareSanto = CharacterSheet.of(character, new Player());
 
-        assertFalse(bareSanto.ignoresMinorCriticalEffects(combatRound(bareSanto, 1)));
+        assertTrue(bareSanto.ignoresMinorCriticalEffects(combatRound(bareSanto, 1)));
+        assertFalse(bareSanto.ignoresMinorCriticalEffects(combatRound(bareSanto, 2)));
     }
 
     /** A Rodada-windowed immunity cannot confirm it applies without a Scene, so it withholds. */
@@ -229,7 +231,7 @@ class MinorCriticalImmunityTest {
     @Test
     void theSameAttackLandsOnceDespertarsWindowHasPassed() {
         CombatantSheet santo = santoSheet();
-        SceneContext pastWindow = combatRound(santo, 3);
+        SceneContext pastWindow = combatRound(santo, 4);
         CriticalEffect bleed = new Sangramento(CriticalResult.ACERTO_CRITICO_MENOR);
 
         DeliveredAttackResult result = new AttackDelivery().resolve(DeliveredAttack.builder()

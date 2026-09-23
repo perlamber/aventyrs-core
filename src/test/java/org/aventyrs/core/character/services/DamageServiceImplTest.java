@@ -427,11 +427,20 @@ class DamageServiceImplTest {
         assertEquals(9, sheet.getDamageTaken());
     }
 
+    /**
+     * Three Habilidades de Santo, so Bastião's "1+ Metade das Habilidades" is 2 outward and half
+     * of that, 1, inward — both non-zero and distinguishable. With only Bastião itself held the
+     * self-facing half would round to 0 and prove nothing.
+     */
     private Character characterWithBastiaoDosNecessitados() {
         Character character = CharacterFixture.blank(CharacterFixture.BLANK).build();
-        character.grantTitle(new Santo(List.of(), List.of(SantoAbility.BASTIAO_DOS_NECESSITADOS)), TitleSlot.PRIMARY);
+        character.grantTitle(new Santo(List.of(), List.of(SantoAbility.BASTIAO_DOS_NECESSITADOS,
+                SantoAbility.PROTECAO_UNGIDA, SantoAbility.GUARDA_VIDAS)), TitleSlot.PRIMARY);
         return character;
     }
+
+    /** Bastião's self-facing RDS for {@link #characterWithBastiaoDosNecessitados()}. */
+    private static final int BASTIAO_SELF_RDS = 1;
 
     private CharacterSheet allySheetWithDamageTaken(final int damageTaken) {
         Character allyCharacter = CharacterFixture.blank(CharacterFixture.BLANK).build();
@@ -443,34 +452,35 @@ class DamageServiceImplTest {
     }
 
     @Test
-    void selfFacingAbsoluteDamageReductionAppliesWhenAnAdjacentAllyHasLowerCurrentHitPoints() {
+    void selfFacingDamageReductionAppliesWhenAnAdjacentAllyHasLowerCurrentHitPoints() {
         Character holder = characterWithBastiaoDosNecessitados();
         CharacterSheet holderSheet = CharacterSheet.of(holder, new Player());
         CharacterSheet allySheet = allySheetWithDamageTaken(5);
         SceneContext sceneContext = new SceneContext(List.of(allySheet), List.of(), Map.of(allySheet, Range.ADJACENTE));
 
-        assertEquals(DamageService.DEFAULT_DAMAGE_REDUCTION, damageService.getTotalAbsoluteDamageReduction(holderSheet, sceneContext));
+        assertEquals(BASTIAO_SELF_RDS,
+                damageService.getTotalDamageReduction(holderSheet, null, null, sceneContext));
     }
 
     @Test
-    void selfFacingAbsoluteDamageReductionDoesNotApplyWhenTheAdjacentAllyHasMoreHitPoints() {
+    void selfFacingDamageReductionDoesNotApplyWhenTheAdjacentAllyHasMoreHitPoints() {
         Character holder = characterWithBastiaoDosNecessitados();
         CharacterSheet holderSheet = CharacterSheet.of(holder, new Player());
         holderSheet.applyDamage(3);
         CharacterSheet allySheet = allySheetWithDamageTaken(0);
         SceneContext sceneContext = new SceneContext(List.of(allySheet), List.of(), Map.of(allySheet, Range.ADJACENTE));
 
-        assertEquals(0, damageService.getTotalAbsoluteDamageReduction(holderSheet, sceneContext));
+        assertEquals(0, damageService.getTotalDamageReduction(holderSheet, null, null, sceneContext));
     }
 
     @Test
-    void selfFacingAbsoluteDamageReductionDoesNotApplyWhenTheLowerPvAllyIsNotAdjacent() {
+    void selfFacingDamageReductionDoesNotApplyWhenTheLowerPvAllyIsNotAdjacent() {
         Character holder = characterWithBastiaoDosNecessitados();
         CharacterSheet holderSheet = CharacterSheet.of(holder, new Player());
         CharacterSheet allySheet = allySheetWithDamageTaken(5);
         SceneContext sceneContext = new SceneContext(List.of(allySheet), List.of(), Map.of(allySheet, Range.DISTANCIA_CURTA));
 
-        assertEquals(0, damageService.getTotalAbsoluteDamageReduction(holderSheet, sceneContext));
+        assertEquals(0, damageService.getTotalDamageReduction(holderSheet, null, null, sceneContext));
     }
 
     @Test
@@ -480,20 +490,20 @@ class DamageServiceImplTest {
         SceneContext sceneContext = new SceneContext(List.of(allySheet), List.of(), Map.of(allySheet, Range.ADJACENTE));
 
         // The sheet-less calculateFinalDamage overload has no CharacterSheet in hand — Bastião's
-        // own PV comparison can't be resolved at all, so its RA doesn't reduce the raw damage.
+        // own PV comparison can't be resolved at all, so its RDS doesn't reduce the raw damage.
         assertEquals(10, damageService.calculateFinalDamage(holder, sceneContext, 10, false));
     }
 
     @Test
-    void selfFacingAbsoluteDamageReductionDoesNotApplyWithoutASceneContext() {
+    void selfFacingDamageReductionDoesNotApplyWithoutASceneContext() {
         Character holder = characterWithBastiaoDosNecessitados();
         CharacterSheet holderSheet = CharacterSheet.of(holder, new Player());
 
-        assertEquals(0, damageService.getTotalAbsoluteDamageReduction(holderSheet, null));
+        assertEquals(0, damageService.getTotalDamageReduction(holderSheet, null, null, null));
     }
 
     @Test
-    void calculateFinalDamageAppliesBastiaoDosNecessitadosSelfFacingAbsoluteDamageReduction() {
+    void calculateFinalDamageAppliesBastiaoDosNecessitadosSelfFacingDamageReduction() {
         Character holder = characterWithBastiaoDosNecessitados();
         CharacterSheet holderSheet = CharacterSheet.of(holder, new Player());
         CharacterSheet allySheet = allySheetWithDamageTaken(5);
@@ -502,22 +512,34 @@ class DamageServiceImplTest {
         int finalDamage = damageService.calculateFinalDamage(
                 holderSheet, sceneContext, (DamageType) null, null, 10, false);
 
-        assertEquals(10 - DamageService.DEFAULT_DAMAGE_REDUCTION, finalDamage);
+        assertEquals(10 - BASTIAO_SELF_RDS, finalDamage);
     }
 
+    /**
+     * Since V19 these are two different stats — Torre em Movimento grants RA, Bastião RDS (= RD) —
+     * so they no longer sum into one total. They still both come off the same hit, which is what
+     * {@code calculateFinalDamage} is for.
+     */
     @Test
-    void bastiaoDosNecessitadosCombinesAdditivelyWithTorreEmMovimento() {
+    void bastiaoDosNecessitadosAndTorreEmMovimentoBothComeOffTheSameHit() {
         Character holder = CharacterFixture.blank(CharacterFixture.BLANK)
                 .egoAdvantage(EgoDomain.INICIATIVA, InitiativeAdvantage.TORRE_EM_MOVIMENTO)
                 .build();
-        holder.grantTitle(new Santo(List.of(), List.of(SantoAbility.BASTIAO_DOS_NECESSITADOS)), TitleSlot.PRIMARY);
+        holder.grantTitle(new Santo(List.of(), List.of(SantoAbility.BASTIAO_DOS_NECESSITADOS,
+                SantoAbility.PROTECAO_UNGIDA, SantoAbility.GUARDA_VIDAS)), TitleSlot.PRIMARY);
         CharacterSheet holderSheet = CharacterSheet.of(holder, new Player());
         CharacterSheet allySheet = allySheetWithDamageTaken(5);
         SceneContext sceneContext = new SceneContext(List.of(allySheet), List.of(), Map.of(allySheet, Range.ADJACENTE),
                 null, true, 1, false);
 
-        assertEquals(DamageService.DEFAULT_DAMAGE_REDUCTION * 2,
+        // Torre's RA alone in the RA total; Bastião's RDS alone in the RD total.
+        assertEquals(DamageService.DEFAULT_DAMAGE_REDUCTION,
                 damageService.getTotalAbsoluteDamageReduction(holderSheet, sceneContext));
+        assertEquals(BASTIAO_SELF_RDS,
+                damageService.getTotalDamageReduction(holderSheet, null, null, sceneContext));
+        // Both subtract from one incoming hit.
+        assertEquals(10 - DamageService.DEFAULT_DAMAGE_REDUCTION - BASTIAO_SELF_RDS,
+                damageService.calculateFinalDamage(holderSheet, sceneContext, (DamageType) null, null, 10, false));
     }
 
     // ---------------------------------------------------------------------------------------

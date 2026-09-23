@@ -44,4 +44,16 @@ public interface RestService {
      * recovery in here.
      */
     void applyRest(Character character, CharacterSheet characterSheet, RestType restType);
+
+    /**
+     * {@link #applyRest(Character, CharacterSheet, RestType)}, saying whether the rest is a
+     * <b>Descanso Verdadeiro</b> — a real rest the GM grants, as opposed to a Magia whose effect is
+     * "como se passasse por um Descanso". A true one additionally lifts every effect waiting on one
+     * ({@code CombatantSheet#applyEffectUntilTrueRest}): Uno com a Ira's exhaustion lasts "até que
+     * passe por um Descanso Curto Verdadeiro".
+     *
+     * <p>A rest's length in hours is the caller's to pass separately ({@code
+     * CombatantSheet#passHours}): the rules state none per tier.
+     */
+    void applyRest(Character character, CharacterSheet characterSheet, RestType restType, boolean verdadeiro);
 }

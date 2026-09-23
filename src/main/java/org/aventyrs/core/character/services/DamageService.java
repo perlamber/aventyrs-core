@@ -67,6 +67,21 @@ public interface DamageService {
     int getTotalDamageReduction(CombatantSheet target, DamageDescriptor damageDescriptor, CombatantSheet source);
 
     /**
+     * Scene-aware RD calculation — everything the overloads above sum, <b>plus</b> the two
+     * Título-ability RDS scans ({@code AventyrTitleAbility#resolveDamageReduction} and {@code
+     * #resolveAllyDamageReduction}, which is how {@code SantoAbility#BASTIAO_DOS_NECESSITADOS}
+     * reaches a target).
+     *
+     * <p>Those two clauses are adjacency-scoped, so they need a {@link SceneContext} — the target's
+     * own, the same assumption the RA scans make. The sheet-and-type overloads above delegate here
+     * with {@code null} and therefore never see them; that is a real limitation of a caller holding
+     * no context, not a bug. {@code calculateFinalDamage} passes its own context through, so an
+     * ordinary attack picks them up.
+     */
+    int getTotalDamageReduction(CombatantSheet target, DamageType damageType, CombatantSheet source,
+                                SceneContext sceneContext);
+
+    /**
      * Total RM — Resistência à Magias, the magic-damage counterpart of RD. Summed from the same
      * five sources {@link #getTotalDamageReduction(CombatantSheet, DamageType, CombatantSheet)}
      * uses: the three-source {@code @Modifier} scan of {@link ModifierType#MAGIC_REDUCTION}, every
@@ -234,6 +249,13 @@ public interface DamageService {
      *
      * @return the effects this hit started, empty when it started none
      */
+    /**
+     * Whether finalDamage (already mitigated) would take target from above 0 PV to 0 or below — the
+     * moment a "se um ataque ou efeito for reduzir seus PV para zero ou menos" Reação is offered
+     * ({@code ReactionTrigger#SELF_WOULD_DROP_TO_ZERO_HP}), before the caller applies it.
+     */
+    boolean wouldDropToZeroOrBelow(CombatantSheet target, int finalDamage);
+
     List<TemporaryBonus> notifyDamageTaken(CombatantSheet target, int finalDamage,
                                            CombatantSheet source, SceneContext sceneContext);
 }

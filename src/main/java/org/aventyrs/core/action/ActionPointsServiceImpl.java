@@ -42,8 +42,22 @@ public class ActionPointsServiceImpl implements ActionPointsService {
     public int getMaxActionPoints(final CombatantSheet sheet, final int turnNumber, final SceneContext sceneContext) {
         Character character = sheet.getCharacter();
         int baseline = actionPointsBeforeProfile(character, turnNumber)
-                + sheet.getTemporaryBonus(ModifierType.ACTION_POINTS);
+                + sheet.getTemporaryBonus(ModifierType.ACTION_POINTS)
+                + sumTitleAbilityActionPointBonus(sheet);
         return Math.max(0, character.getActionProfile().adjustActionPoints(baseline, turnNumber, sceneContext));
+    }
+
+    /**
+     * PA a held Título ability adds right now — {@code AbracadoPelaEscuridaoAbility#FUROR_DE_SYLPH}
+     * while it still has attacks left to enhance. Scanned rather than granted; see {@code
+     * AventyrTitleAbility#resolveActionPointBonus} for why a budget cannot be a TemporaryBonus.
+     * Only reachable with a sheet in hand, so the Character-only overload never sees it.
+     */
+    private int sumTitleAbilityActionPointBonus(final CombatantSheet sheet) {
+        return sheet.getCharacter().getAllTitles().stream()
+                .flatMap(title -> title.getAllAbilities().stream())
+                .mapToInt(ability -> ability.resolveActionPointBonus(sheet))
+                .sum();
     }
 
     /**

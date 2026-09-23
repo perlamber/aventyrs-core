@@ -8,6 +8,8 @@ import org.aventyrs.core.feat.Feat;
 import org.aventyrs.core.item.Item;
 import org.aventyrs.core.item.Weapon;
 import org.aventyrs.core.scene.SceneContext;
+import org.aventyrs.core.modifier.ModifierType;
+import org.aventyrs.core.sheet.AttackerGuard;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.skill.AttackSource;
 import org.aventyrs.core.skill.CriticalResult;
@@ -15,6 +17,7 @@ import org.aventyrs.core.skill.Skill;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
 import org.aventyrs.core.skill.SkillRoll;
 import org.aventyrs.core.skill.SkillType;
+import org.aventyrs.core.title.AventyrTitle;
 
 /**
  * The one implementation of both figures — {@code AbstractSkillInteraction} resolves a roll's
@@ -23,14 +26,73 @@ import org.aventyrs.core.skill.SkillType;
  */
 public class CriticalServiceImpl implements CriticalService {
 
+    private final DamageService damageService;
+
+    public CriticalServiceImpl() {
+        this(new DamageServiceImpl());
+    }
+
+    public CriticalServiceImpl(final DamageService damageService) {
+        this.damageService = damageService;
+    }
+
     @Override
     public int getLesserCriticalMargin(final CombatantSheet holder, final SkillType skillType,
                                        final AttackSource attackSource, final SceneContext sceneContext,
                                        final CombatantSheet target) {
         int margin = getBaseLesserCriticalMargin(attackSource);
         int widening = sumCriticalMarginIncrease(holder, skillType, attackSource, sceneContext);
-        widening -= target == null ? 0 : target.getTotalCriticalResistance(sceneContext);
+        widening -= getLesserCriticalResistance(target, sceneContext);
         return margin - Math.max(0, widening);
+    }
+
+    @Override
+    public int getLesserCriticalResistance(final CombatantSheet target, final SceneContext sceneContext) {
+        if (target == null) {
+            return 0;
+        }
+        return target.getTotalCriticalResistance(sceneContext) + absoluteResistanceStep(target, sceneContext);
+    }
+
+    @Override
+    public int sumMajorCriticalMarginIncrease(final CombatantSheet holder, final SkillType skillType,
+                                              final AttackSource attackSource, final SceneContext sceneContext) {
+        Character character = holder.getCharacter();
+        int total = character.getAllTitles().stream()
+                .mapToInt(title -> title.resolveMajorCriticalMarginIncrease(skillType, attackSource, holder))
+                .sum();
+        if (attackSource instanceof Weapon weapon) {
+            total += character.getEquipment().stream()
+                    .mapToInt(item -> item.resolveEnhancementMajorCriticalMarginIncrease(weapon, character))
+                    .sum();
+        }
+        return total;
+    }
+
+    @Override
+    public int getMajorCriticalResistance(final CombatantSheet target, final SceneContext sceneContext) {
+        if (target == null) {
+            return 0;
+        }
+        return target.getTotalCriticalResistance(sceneContext) / CombatantSheet.CRITICAL_RESISTANCE_INSTANCE
+                + absoluteResistanceStep(target, sceneContext);
+    }
+
+    @Override
+    public int getMajorCriticalMargin(final CombatantSheet holder, final SkillType skillType,
+                                      final AttackSource attackSource, final SceneContext sceneContext,
+                                      final CombatantSheet target) {
+        int widening = sumMajorCriticalMarginIncrease(holder, skillType, attackSource, sceneContext)
+                - getMajorCriticalResistance(target, sceneContext);
+        return Weapon.DEFAULT_MAJOR_CRITICAL_MARGIN - Math.max(0, widening);
+    }
+
+    /**
+     * Resistência Absoluta's crit clauses — "A Margem Crítica Menor/Maior dos ataques sofridos é
+     * reduzida em -1 … (não se acumula entre instâncias)": one step for holding any RA at all.
+     */
+    private int absoluteResistanceStep(final CombatantSheet target, final SceneContext sceneContext) {
+        return damageService.getTotalAbsoluteDamageReduction(target, sceneContext) > 0 ? 1 : 0;
     }
 
     /**
@@ -79,6 +141,20 @@ public class CriticalServiceImpl implements CriticalService {
                     .mapToInt(item -> item.resolveEnhancementCriticalMarginIncrease(weapon, character))
                     .sum();
         }
+        // And a sixth for the held Títulos (Senhor da Briga's natural-weapon and Defesa margins).
+        total += character.getAllTitles().stream()
+                .mapToInt(title -> title.resolveCriticalMarginIncrease(skillType, attackSource, holder))
+                .sum();
+        // Timed widening on the sheet — Guilhotina's cumulative "+N números".
+        total += holder.getTemporaryBonus(ModifierType.LESSER_CRITICAL_MARGIN);
+        // A defence roll against an attacker this holder guards against — Provocar's "Sua Margem
+        // Crítica Menor para resistir a este próximo ataque aumenta". The attacker is the defence
+        // roll's opposed character.
+        if (skillType == SkillType.ESQUIVA_E_APARAR && sceneContext != null) {
+            total += holder.getGuardsAgainst(sceneContext.getOpposedCharacter()).stream()
+                    .mapToInt(AttackerGuard::getCriticalMarginIncrease)
+                    .sum();
+        }
         return total;
     }
 
@@ -103,6 +179,9 @@ public class CriticalServiceImpl implements CriticalService {
             for (Item item : character.getEquipment()) {
                 total = total.plus(item.resolveEnhancementCriticalDamage(weapon, character));
             }
+        }
+        for (AventyrTitle title : character.getAllTitles()) {
+            total = total.plus(title.resolveCriticalDamage(skillType, attackSource, criticalResult, holder));
         }
         return total;
     }

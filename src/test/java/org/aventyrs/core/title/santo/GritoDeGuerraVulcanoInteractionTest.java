@@ -70,7 +70,7 @@ class GritoDeGuerraVulcanoInteractionTest {
     void reportsTheDefesasBlessingEvenThoughNothingConsumesItYet() {
         InteractionResult result = interaction.applyTo(newSheet());
 
-        assertTrue(hasBlessing(result.getBlessings(), ModifierType.DEFESAS, 2, 2));
+        assertTrue(hasBlessing(result.getBlessings(), ModifierType.DEFESAS, 3, 2));
     }
 
     @Test
@@ -81,15 +81,15 @@ class GritoDeGuerraVulcanoInteractionTest {
     }
 
     @Test
-    void activationSpendsTheStatedThreePd() {
+    void activationSpendsTheStatedTwoPd() {
         CharacterSheet actor = newSheet();
         DeterminationPointsService pd = new DeterminationPointsServiceImpl();
         int before = pd.getCurrentDeterminationPoints(actor.getCharacter(), actor);
 
         InteractionResult result = interaction.applyTo(actor);
 
-        assertEquals(3, result.getDeterminationPointsSpent());
-        assertEquals(before - 3, pd.getCurrentDeterminationPoints(actor.getCharacter(), actor));
+        assertEquals(2, result.getDeterminationPointsSpent());
+        assertEquals(before - 2, pd.getCurrentDeterminationPoints(actor.getCharacter(), actor));
     }
 
     @Test

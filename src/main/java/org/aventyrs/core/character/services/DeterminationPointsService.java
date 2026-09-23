@@ -20,6 +20,16 @@ public interface DeterminationPointsService {
     int getMaxDeterminationPoints(Character character);
 
     /**
+     * {@link #getDeterminationMultiplier(Character)} plus what sheet holds for a while — a {@code
+     * DETERMINATION_MULTIPLIER} {@code TemporaryBonus} (Faísca de Determinação Maior's +1 / −1).
+     * Floored at 1. {@code null} sheet is the Character-only figure.
+     */
+    int getDeterminationMultiplier(Character character, CombatantSheet sheet);
+
+    /** {@link #getMaxDeterminationPoints(Character)} off the sheet-aware multiplier. */
+    int getMaxDeterminationPoints(Character character, CombatantSheet sheet);
+
+    /**
      * Current Determination Points: the maximum minus the Determination Points spent on the
      * character's sheet, never below zero.
      */

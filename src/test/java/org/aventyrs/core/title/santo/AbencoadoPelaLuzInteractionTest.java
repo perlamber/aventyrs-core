@@ -2,9 +2,6 @@ package org.aventyrs.core.title.santo;
 
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.fixture.CharacterFixture;
-import org.aventyrs.core.rest.RestService;
-import org.aventyrs.core.rest.RestServiceImpl;
-import org.aventyrs.core.rest.RestType;
 import org.aventyrs.core.character.services.DeterminationPointsService;
 import org.aventyrs.core.character.services.DeterminationPointsServiceImpl;
 import org.aventyrs.core.sheet.CharacterSheet;
@@ -13,9 +10,12 @@ import org.aventyrs.core.sheet.InteractionResult;
 import org.aventyrs.core.sheet.Player;
 import org.aventyrs.core.sheet.ResourceType;
 import org.aventyrs.core.title.TitleAbilityActivationRequest;
+import org.aventyrs.core.character.TitleSlot;
 import org.junit.jupiter.api.BeforeEach;
 import org.aventyrs.core.character.CharacterStatus;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.aventyrs.core.util.TranslatableMessages.TITLE_ABILITY_CHOICE_REQUIRED;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -24,9 +24,16 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class AbencoadoPelaLuzInteractionTest {
 
-    private final RestService restService = new RestServiceImpl();
     private final DeterminationPointsService determinationPointsService = new DeterminationPointsServiceImpl();
-    private final AbencoadoPelaLuzInteraction interaction = new AbencoadoPelaLuzInteraction(restService);
+    private final AbencoadoPelaLuzInteraction interaction = new AbencoadoPelaLuzInteraction();
+
+    /** The heal counts the toucher's own Habilidades, so an activator needs a real Santo. */
+    private CharacterSheet santoSheet(final AbencoadoPelaLuzAbility... gatedAbilities) {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK).build();
+        character.grantTitle(new Santo(List.of(SantoSpecialization.ABENCOADO_PELA_LUZ), List.of(gatedAbilities)),
+                TitleSlot.PRIMARY);
+        return CharacterSheet.of(character, new Player());
+    }
 
     @BeforeEach
     void setup() {
@@ -59,30 +66,40 @@ class AbencoadoPelaLuzInteractionTest {
     }
 
     @Test
-    void choosingHealRestoresTheRestServicesOwnShortRestAmount() {
+    void choosingHealRestoresTheBaseAmountWhenTheSantoHoldsNoGatedHabilidade() {
         CharacterSheet target = damagedTargetSheet(1000);
-        int expectedHeal = restService.getRecoveredHitPoints(target.getCharacter(), RestType.CURTO);
 
-        InteractionResult result = touch(activatorSheet(), target, AbencoadoPelaLuzInteraction.Branch.HEAL);
+        InteractionResult result = touch(santoSheet(), target, AbencoadoPelaLuzInteraction.Branch.HEAL);
 
-        assertEquals(expectedHeal, result.getResourceGainValue());
+        assertEquals(SantoSpecialization.BASE_TOUCH_HEAL, result.getResourceGainValue());
         assertEquals(ResourceType.HIT_POINTS, result.getResourceGainType());
-        assertEquals(1000 - expectedHeal, target.getDamageTaken());
+        assertEquals(1000 - SantoSpecialization.BASE_TOUCH_HEAL, target.getDamageTaken());
+    }
+
+    /** "3+ Quantidade de Habilidades de Abençoado pela Luz" — the *toucher's* count, not the target's. */
+    @Test
+    void theHealGrowsWithTheTouchersOwnGatedHabilidades() {
+        CharacterSheet target = damagedTargetSheet(1000);
+        CharacterSheet activator = santoSheet(AbencoadoPelaLuzAbility.ORGULHO_ELDURIANO,
+                AbencoadoPelaLuzAbility.GRITO_DE_GUERRA_VULCANO);
+
+        InteractionResult result = touch(activator, target, AbencoadoPelaLuzInteraction.Branch.HEAL);
+
+        assertEquals(SantoSpecialization.BASE_TOUCH_HEAL + 2, result.getResourceGainValue());
     }
 
     /**
      * The heal has to move the reported tier, not merely be reported alongside a stale one.
-     * A BLANK target has 14 max PV and Vigor 1, so a Descanso Curto restores exactly 1: at 10
-     * damage it sits on 4 PV ({@code LOW_LIFE}), and the single restored point carries it to 5
-     * — just past {@code MEDIUM_LIFE}'s one-third threshold. Before status was derived this
-     * reported the pre-heal tier, since {@code CombatantSheet#heal} refreshed nothing.
+     * A BLANK target has 14 max PV, so at 12 damage it sits on 2 PV ({@code LOW_LIFE}); the base
+     * 3 PV restored carry it to 5 — just past {@code MEDIUM_LIFE}'s one-third threshold. Before
+     * status was derived this reported the pre-heal tier, since {@code CombatantSheet#heal}
+     * refreshed nothing.
      */
     @Test
     void choosingHealReportsThePostHealStatusNotThePreHealOne() {
-        CharacterSheet target = damagedTargetSheet(10);
-        assertEquals(1, restService.getRecoveredHitPoints(target.getCharacter(), RestType.CURTO));
+        CharacterSheet target = damagedTargetSheet(12);
 
-        InteractionResult result = touch(activatorSheet(), target, AbencoadoPelaLuzInteraction.Branch.HEAL);
+        InteractionResult result = touch(santoSheet(), target, AbencoadoPelaLuzInteraction.Branch.HEAL);
 
         assertEquals(9, target.getDamageTaken());
         assertEquals(CharacterStatus.MEDIUM_LIFE, result.getResultStatus());
@@ -99,42 +116,48 @@ class AbencoadoPelaLuzInteractionTest {
         assertEquals(5, target.getDamageTaken());
     }
 
+    /** V19 prices this Especialização in PV, not PD: 3PV off the toucher, no PD at all. */
     @Test
-    void theActivatorPaysOnePdAndOnlyTheTargetIsHealed() {
-        CharacterSheet activator = damagedTargetSheet(5);
+    void theActivatorPaysThreePvAndOnlyTheTargetIsHealed() {
+        CharacterSheet activator = santoSheet();
         CharacterSheet target = damagedTargetSheet(1000);
         int pdBefore = currentPd(activator);
 
         InteractionResult result = touch(activator, target, AbencoadoPelaLuzInteraction.Branch.HEAL);
 
-        assertEquals(1, result.getDeterminationPointsSpent());
-        assertEquals(pdBefore - 1, currentPd(activator));
-        assertEquals(5, activator.getDamageTaken());
+        assertEquals(0, result.getDeterminationPointsSpent());
+        assertEquals(pdBefore, currentPd(activator));
+        assertEquals(AbencoadoPelaLuzInteraction.TOUCH_HIT_POINT_COST, result.getResourceLossValue());
+        assertEquals(ResourceType.HIT_POINTS, result.getResourceLossType());
+        assertEquals(AbencoadoPelaLuzInteraction.TOUCH_HIT_POINT_COST, activator.getDamageTaken());
         assertEquals(1000 - result.getResourceGainValue(), target.getDamageTaken());
     }
 
+    /** Touching yourself still costs the 3PV, so the net change is the heal minus that cost. */
     @Test
     void withNoTargetTheActivatorTouchesThemself() {
-        CharacterSheet activator = damagedTargetSheet(1000);
+        // Not a near-death figure: the 3PV cost is refused outright if paying it would reach 0.
+        CharacterSheet activator = santoSheet();
+        activator.applyDamage(8);
 
         InteractionResult result = interaction.activate(TitleAbilityActivationRequest.builder()
                 .activator(activator)
                 .choice(AbencoadoPelaLuzInteraction.Branch.HEAL)
                 .build());
 
-        assertEquals(1000 - result.getResourceGainValue(), activator.getDamageTaken());
+        assertEquals(8 + AbencoadoPelaLuzInteraction.TOUCH_HIT_POINT_COST - result.getResourceGainValue(),
+                activator.getDamageTaken());
     }
 
     @Test
     void anActivationWithoutABranchIsRefusedAndCostsNothing() {
-        CharacterSheet target = damagedTargetSheet(5);
-        int pdBefore = currentPd(target);
+        CharacterSheet activator = santoSheet();
+        activator.applyDamage(5);
 
         IllegalOperationException refused = assertThrows(IllegalOperationException.class,
-                () -> interaction.applyTo(target));
+                () -> interaction.applyTo(activator));
 
         assertEquals(TITLE_ABILITY_CHOICE_REQUIRED, refused.getMessage());
-        assertEquals(pdBefore, currentPd(target));
-        assertEquals(5, target.getDamageTaken());
+        assertEquals(5, activator.getDamageTaken());
     }
 }

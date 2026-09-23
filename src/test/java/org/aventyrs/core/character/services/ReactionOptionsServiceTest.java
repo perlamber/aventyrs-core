@@ -52,7 +52,7 @@ class ReactionOptionsServiceTest {
         ReactionOption option = options.get(0);
         assertEquals(SantoAbility.GUARDA_VIDAS, option.ability());
         assertEquals(ActionCost.REACTION, option.cost());
-        assertEquals(PDCost.fixed(2), option.determinationCost());
+        assertEquals(PDCost.fixed(3), option.determinationCost());
         assertEquals(Teleportation.of(Range.DISTANCIA_CURTA), option.teleportation());
         assertTrue(option.affordable());
     }

@@ -5,6 +5,7 @@ import java.util.Optional;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.sheet.ActionCost;
+import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.Interaction;
 import org.aventyrs.core.title.AventyrTitleAbility;
 import org.aventyrs.core.title.AventyrTitleSpecialization;
@@ -30,18 +31,22 @@ public enum AbracadoPelaEscuridaoAbility implements AventyrTitleAbility {
 
     // Requer Especialização 'Abraçado pela Escuridão' — enforced (see class javadoc).
     // "Custo de Ativação: Variável" is the PV cost (equal to Vigor), not a PD cost — PDCost is
-    // genuinely 0, not merely unmodeled. Real now through SacrificioYmirianoInteraction, and all
-    // three gaps the old comment here listed have since closed: the PV cost is paid by
-    // AbstractTitleAbilityInteraction#resolveHitPointCost off #resolveVigorPvCost below; "+2 em
-    // Força" is a Round-scoped AttributeDomain#getBonusModifierType() TemporaryBonus, which
-    // AbstractSkillInteraction reads on a Força-governed roll (so the reach is the roll path only —
-    // not PV/PM/PD, and not the melee ½-Força dano term, both of which read
-    // Character#getEffectiveAttributeTotal and have no sheet); "ativada duas vezes no mesmo Turno"
-    // is CombatantSheet#countActivationsThisTurn, cleared by startTurn, which also enforces the
-    // "até duas vezes" limit; and the Categoria de Tamanho +1 is a ModifierType.SIZE_CATEGORY
-    // bonus read by CharacterSizeService#getEffectiveSizeCategory(CombatantSheet). "Seu efeito é
-    // cumulativo" needs no accumulation of its own: a Blessing from the same source replaces its
-    // predecessor, which is exactly "o Bônus em Força muda para +3".
+    // genuinely 0, not merely unmodeled. Real through SacrificioYmirianoInteraction: the PV cost is
+    // paid by AbstractTitleAbilityInteraction#resolveHitPointCost off #resolveVigorPvCost below;
+    // the Força bonus is a Round-scoped AttributeDomain#getBonusModifierType() TemporaryBonus,
+    // which reaches a Força-governed roll and, since 0.0.51, every sheet-holding
+    // Character#getEffectiveAttributeTotal reader too (the melee ½-Força dano term among them); and
+    // the Categoria de Tamanho +2 is a
+    // ModifierType.SIZE_CATEGORY bonus read by CharacterSizeService#getEffectiveSizeCategory(
+    // CombatantSheet). Both figures are now Vigor-scaled rather than flat, and the Duração is a
+    // flat 1 Rodada — V19 dropped the whole "ativada até duas vezes / no mesmo Turno / seu efeito é
+    // cumulativo" clause the previous revision had, so nothing here counts activations any more.
+    // TODO: "a Margem Crítica Menor de seus ataques direcionados à inimigos que tenham infligido
+    //  danos aos seus aliados aumenta em +2" — nothing tracks *who damaged an ally*. Scene
+    //  #recordAttack(attacker, defender) records that an attack was declared, not that it landed,
+    //  and there is no ally-scoped variant of it; a per-attacker "has harmed my group" ledger would
+    //  be the missing piece. Not the same gap as the Margem Crítica arithmetic itself, which is
+    //  real (AbstractSkillInteraction#sumCriticalMarginIncrease).
     // The "recuperados com Descansos Verdadeiros ou Roubo de Vida" clause needs the
     // same "locked, Rest/Roubo-de-Vida-only" HP-loss subtype SantoAbility
     // #PROTETOR_DA_VIDA_E_DA_MORTE's own TODO cites — "Descanso Verdadeiro" itself maps onto
@@ -49,95 +54,91 @@ public enum AbracadoPelaEscuridaoAbility implements AventyrTitleAbility {
     // VigorAbility#METABOLISMO_RAPIDO/FocusAbility#CANALIZADOR_DE_MANA already establish, so
     // that half of the phrase isn't itself a new gap.
     SACRIFICIO_YMIRIANO(
-            "Para ativar esta Habilidade você deve gastar uma quantidade de pontos de vida " +
-            "igual ao seu Vigor, se o fizer você recebe Bônus Variável de +2 em Força por 2 " +
-            "Rodadas. Esta Habilidade pode ser ativada até duas vezes, seu efeito é " +
-            "cumulativo. Se Sacrifício Ymiriano for ativada duas vezes no mesmo Turno o " +
-            "Bônus em Força muda para +3, sua Categoria de Tamanho é aumentada em +1 e a " +
-            "Duração do efeito aumenta para 3 Rodadas. Pontos de Vida perdidos desta forma " +
-            "só podem ser recuperados com Descansos Verdadeiros ou Roubo de Vida.",
+            "O Custo de Ativação desta Habilidade é igual ao seu próprio Vigor em PV. Você " +
+            "recebe Bônus Variável de Força igual ao seu Vigor e sua Categoria de Tamanho " +
+            "aumenta em +2 por 1 Rodada. Enquanto Sacrifício Ymiriano estiver ativo a Margem " +
+            "Crítica Menor de seus ataques direcionados à inimigos que tenham infligido danos " +
+            "aos seus aliados aumenta em +2. Pontos de Vida perdidos desta forma só podem ser " +
+            "recuperados com Descansos Verdadeiros ou Roubo de Vida.",
             false, fixed(0), ActionCost.ofActionPoints(1), Optional.of(SacrificioYmirianoInteraction.class),
             Optional.of(SantoSpecialization.ABRACADO_PELA_ESCURIDAO), 0),
 
     // Requer Especialização 'Abraçado pela Escuridão' — enforced (see class javadoc).
-    // "Custo de Ativação: Variável" is the
-    // "qualquer quantidade de PV (mínimo 1)" spent below, not a PD cost — PDCost is genuinely
-    // 0. The Duração formula ("1 + metade dos PV gastos, mínimo 1 Rodada") is real — see
-    // #resolveDurationFromPvSpent below, pure arithmetic over the player's own chosen PV
-    // amount, no missing system needed. The protective effect itself is fully TODO'd: this
-    // core has no "attacker takes reactive/retaliation damage for attacking a protected
-    // target" mechanism at all (DamageService only ever computes damage *to* a target *from*
-    // an attacker, never the reverse), and "+1d6 pontos de Dano" on a successful attack needs
-    // this core's "never rolls dice" boundary crossed, which it deliberately never does.
-    // Deliberately left unwired rather than given an Interaction that charges the PV for nothing:
-    // its entire benefit *is* the retaliation, so an activation would be a pure cost. The PV cost
-    // and the Duração formula below stay real, tested data a caller can read.
-    // TODO
-    ESPINHOS_DE_GAEA(
-            "Para ativar esta Habilidade você deve gastar qualquer quantidade de PV (mínimo " +
-            "1), a Duração desta Habilidade é igual a 1+ metade dos PV gastos (mínimo 1 " +
-            "Rodada). Enquanto protegido pelos Espinhos de Gaea, personagens que te atacarem " +
-            "corpo-a-corpo sofrem 2 pontos de Dano Mágico Elemental: Natural, se o ataque " +
-            "for bem-sucedido o atacante sofrerá +1d6 pontos de Dano.",
-            false, fixed(0), ActionCost.ofActionPoints(2), Optional.empty(), Optional.of(SantoSpecialization.ABRACADO_PELA_ESCURIDAO), 0),
+    // "Custo de Ativação: Variável" is the PV cost (equal to Vigor, shared with
+    // SACRIFICIO_YMIRIANO and FUROR_DE_SYLPH via #resolveVigorPvCost), not a PD cost — PDCost is
+    // genuinely 0. V19 replaced the previous revision's player-chosen PV amount and its
+    // "1 + metade dos PV gastos" Duração with a Vigor cost and a flat 2 Rodadas, so no PV-scaled
+    // arithmetic remains on this constant.
+    // Real now through EspinhosVenenosDeGaeaInteraction. The thorns are modelled as a *state*
+    // rather than a listener: the activation grants a round-scoped ModifierType.RETALIATION_DAMAGE
+    // Blessing worth the holder's Vigor, and AttackDelivery/AttackReceiver read it off the
+    // defender on any Ataque Corpo-a-Corpo and report a combat.Retaliation. That fits existing
+    // machinery exactly, the Duração being 2 Rodadas — which is what a TemporaryBonus counts.
+    // The damage is *reported, never dealt*: this core computes damage only to a target from an
+    // attacker, so the caller applies it against the attacker's own sheet — where the attacker's
+    // RD/RA can judge it like any other incoming hit, which is where it belongs anyway.
+    // The Malefício Veneno half is real too: ConditionType.ENVENENADO now carries a
+    // ModifierType.LIFE_MULTIPLIER -1, read by HitPointsService#getLifeMultiplier(Character,
+    // CombatantSheet), so an attacker who takes it really does lose maximum PV. ⚠️ That entry's
+    // own catalogue wording says "Multiplicador de Bônus Base" and this clause says
+    // "Multiplicador de Pontos de Vida" — the concrete clause is taken as authoritative; see
+    // ConditionType#ENVENENADO's own note.
+    // "Atacarem", not "acertarem": the thorns are reported whether or not the attack landed, and
+    // only the Veneno half is conditional on damage actually being dealt.
+    ESPINHOS_VENENOS_DE_GAEA(
+            "O Custo de Ativação desta Habilidade é igual ao seu próprio Vigor em PV. " +
+            "Enquanto ativo os Espinhos Venenos de Gaea causam danos aos personagens que lhe " +
+            "atacarem Corpo-a-Corpo, Vigor pontos de Dano Físico Elemental: Natural. " +
+            "Personagem que lhe infligirem danos adicionalmente perdem -1 Multiplicador de " +
+            "Pontos de Vida (Malefício Veneno) por 2 Rodadas. Duração do Efeito: 2 Rodadas.",
+            false, fixed(0), ActionCost.ofActionPoints(2), Optional.of(EspinhosVenenosDeGaeaInteraction.class),
+            Optional.of(SantoSpecialization.ABRACADO_PELA_ESCURIDAO), 0),
 
     // Requer Especialização 'Abraçado pela Escuridão' — enforced (see class javadoc). Fixed
-    // cost (2PD/3PA — not "Variável" like its siblings), so that data is real; the effect is
-    // otherwise fully TODO'd. "Sua Margem
-    // Crítica Menor... aumenta em +2" and the Roubo de Vida/Mana/Determinação amounts are all
-    // scoped to "este ataque" specifically — the one attack delivered *as part of* this
-    // Habilidade's own activation — not a standing bonus to every future roll, so this doesn't
-    // fit AventyrTitleAbility#resolveAbsoluteDamageReduction's shape (built for continuously
-    // scanned passives) or any existing per-roll resolve* hook; this core's roll-resolution
-    // machinery (AbstractSkillInteraction/SkillRoll) computes bonuses for *any* roll of a given
-    // skill type, with no concept of "the one attack being performed right now as part of
-    // activating a different ability." Roubo de Mana/Roubo de Determinação don't exist at all
-    // (only Roubo de Vida does, via LifeStealService — see FocusAbility's own "needs a Roubo
-    // de Mana effect to exist in the first place" citation for the identical gap). Corrente de
-    // Efeitos (Oferenda Maldita as an additional Efeito Crítico) is the same unbuilt system
-    // AutocontroleAdvantage#RESOLUTO already cites. "Imunes a ela por 2 Rodadas" needs a
-    // per-ability, per-target, Round-scoped immunity tracker, which doesn't exist anywhere.
-    // TODO: Implement the active Ability
+    // cost (2PD/3PA — not "Variável" like its siblings). Real through
+    // PlacidezDeUndineRancorDeHaloiInteraction, which *reports* what the one attack gets rather
+    // than applying anything: the activation happens before that attack exists, so the caller
+    // builds it with the report in hand — the same ordering that makes SantoAbility#GUARDA_VIDAS
+    // work without touching AttackDelivery. See that Interaction's own javadoc for why the Margem
+    // Crítica and the Roubo de Vida are reported rather than granted, and for what is still
+    // missing (Roubo de Determinação, and the per-target 2-Rodada immunity).
+    // V19 removed the previous revision's "Roubo de Mana 2" clause entirely and raised Roubo de
+    // Determinação from 1 to 2, so the old comment's Roubo-de-Mana citation no longer applies.
     PLACIDEZ_DE_UNDINE_RANCOR_DE_HALOI(
-            "Como parte da ativação desta Habilidade você deve desferir um ataque com sua " +
-            "Arma, sua Margem Crítica Menor para este ataque aumenta em +2 números. Para " +
-            "este ataque você recebe Roubo de Vida 3, Roubo de Mana 2, Roubo de Determinação " +
-            "1 e a Corrente de Efeitos – Rancor de Haloi: Este ataque recebe Oferenda " +
-            "Maldita como um Efeito Crítico adicional. Inimigos que tenham sofrido danos " +
-            "desta Habilidade se tornam imunes a ela por 2 Rodadas.",
-            false, fixed(2), ActionCost.ofActionPoints(3), Optional.empty(), Optional.of(SantoSpecialization.ABRACADO_PELA_ESCURIDAO), 0),
+            "Como parte da ativação desta Habilidade você deve desferir um ataque físico, sua " +
+            "Margem Crítica Menor para este ataque aumenta em +2 números. Este ataque você " +
+            "recebe Roubo de Vida 3, Roubo de Determinação 2 e a Corrente de Efeitos – Rancor " +
+            "de Haloi: Este ataque recebe Oferenda Maldita como um Efeito Crítico adicional. " +
+            "Inimigos que tenham sofrido danos desta Habilidade se tornam imunes a ela por 2 " +
+            "Rodadas.",
+            false, fixed(2), ActionCost.ofActionPoints(3),
+            Optional.of(PlacidezDeUndineRancorDeHaloiInteraction.class),
+            Optional.of(SantoSpecialization.ABRACADO_PELA_ESCURIDAO), 0),
 
     // Requer 2 Habilidades de 'Abraçado pela Escuridão' — enforced (see class javadoc; same
     // "its own comment never repeats the base Especialização requirement, but the class-level
     // javadoc already states every constant here needs it, and 2 sibling Habilidades implies
     // it anyway" inference AbencoadoPelaLuzAbility#GLORIA_RELAMPEJANTE_DE_TESLA's own comment
-    // documents). Same "Custo de Ativação:
-    // Variável" nuance as SACRIFICIO_YMIRIANO — the PV cost equals Vigor's total, real via
-    // #resolveVigorPvCost (shared with that constant); PDCost(2) is the separate, fixed PD
-    // cost the rules text does state. The "aprimora uma quantidade de ataques igual à 1+
-    // metade dos PV gastos" count is likewise real — see #resolveEnhancedAttackCountFromPvSpent
-    // below, sharing its "1 + metade" formula shape with ESPINHOS_DE_GAEA's own Duração
-    // (same arithmetic, different meaning — attack count here, not Rodadas). Everything the
-    // spent PV/PD actually buys is still TODO'd, but no longer all for the same reason: the
-    // +1PA half's mechanism now exists — ActionPointsServiceImpl#getMaxActionPoints's
-    // CombatantSheet-taking overloads read CombatantSheet#getTemporaryBonus(
-    // ModifierType.ACTION_POINTS) for real, so a Round-scoped grant lands (see
-    // AbencoadoPelaLuzAbility#GLORIA_RELAMPEJANTE_DE_TESLA's own comment); what's left there is
-    // wiring an Interaction that reports the Blessing, not a missing system; "Aprimoramento de Obra-Prima Alcance Estendido" needs the still-missing
-    // Item/Equipamento entity (Raridade, Obra-Prima tiers, Aprimoramentos — the identical gap
-    // ResourcesAdvantage#BARGANHISTA/HERANCA_FAMILIAR already cite); "empurrado 1UD... pode se
-    // Reposicionar" needs a forced-movement/positioning mechanism this core has never modeled
-    // (this core "never does geometry" — see Range's own javadoc); and the Corrente de
-    // Efeitos + "+1d6" dano clause needs both the unbuilt Corrente de Efeitos system and this
-    // core's "never rolls dice" boundary, the identical pair SantoSpecialization
-    // #ABRACADO_PELA_ESCURIDAO's own Fúria dos Deuses Maior TODO cites. The locked-HP-pool
-    // clause is the same gap as every other "Descansos ou Roubo de Vida" citation above.
-    // Left unwired for a reason worth stating precisely: the +1PA half is now *grantable* (see
-    // AbencoadoPelaLuzAbility#GLORIA_RELAMPEJANTE_DE_TESLA), but this clause names no Duração in
-    // Rodadas at all — what it scopes the bonus to is a *count of enhanced attacks*
-    // (#resolveEnhancedAttackCountFromPvSpent), and a TemporaryBonus only ever counts down in
-    // Rodadas. Picking a Rodada figure would be inventing one, so the blocker is the scope here,
-    // not the mechanism.
+    // documents). Same "Custo de Ativação: Variável" nuance as SACRIFICIO_YMIRIANO — the PV cost
+    // equals Vigor's total, real via #resolveVigorPvCost; PDCost(2) is the separate, fixed PD cost
+    // the rules text does state.
+    // Real now through FurorDeSylphInteraction. What used to block it was that everything here is
+    // scoped to a *count of attacks* (#resolveEnhancedAttackCountFromPvSpent) and the clause names
+    // no Duração in Rodadas, while a TemporaryBonus only ever counts down in Rodadas. That is what
+    // CombatantSheet#grantEnhancedAttacks now carries: a budget, spent per attack, cleared by
+    // nothing. The +1PA rides on the same budget via AventyrTitleAbility#resolveActionPointBonus,
+    // scanned by ActionPointsServiceImpl rather than granted — so it lasts exactly as long as the
+    // attacks do.
+    // Still TODO, and none of these is this clause's own gap:
+    // - "o Aprimoramento de Obra-Prima Alcance Estendido" — no such entry exists in the
+    //   Obra-Prima/Aprimoramento catalogue (OffensiveMasterpiece/OffensiveImprovement);
+    // - "seu alvo é empurrado 1UD para trás e você pode se Reposicionar" — forced movement and the
+    //   Reposicionar manoeuvre, in a core that does no geometry;
+    // - "+1d6" of dano — reportable in principle (FuriaDosDeusesInteraction does exactly that),
+    //   but this is an Ação Livre funding *several* later attacks rather than empowering one named
+    //   attack, so there is no single attack to report it onto.
+    // The locked-HP-pool clause is the same gap as every other "Descansos ou Roubo de Vida"
+    // citation above.
     FUROR_DE_SYLPH(
             "Para ativar esta Habilidade você deve gastar uma quantidade de pontos de vida " +
             "igual ao seu Vigor. Você recebe Bônus de +1PA e seus ataques recebem o " +
@@ -146,7 +147,16 @@ public enum AbracadoPelaEscuridaoAbility implements AventyrTitleAbility {
             "trás e você pode se Reposicionar. O Furor de Sylph aprimora uma quantidade de " +
             "ataques igual à 1+ metade dos PV gastos com esta Habilidade, PV perdidos desta " +
             "forma só podem ser recuperados com Descansos ou Roubo de Vida.",
-            true, fixed(2), ActionCost.FREE_ACTION, Optional.empty(), Optional.of(SantoSpecialization.ABRACADO_PELA_ESCURIDAO), 2);
+            true, fixed(2), ActionCost.FREE_ACTION, Optional.of(FurorDeSylphInteraction.class),
+            Optional.of(SantoSpecialization.ABRACADO_PELA_ESCURIDAO), 2) {
+        /** "Você recebe Bônus de +1PA", for as long as enhanced attacks remain unspent. */
+        @Override
+        public int resolveActionPointBonus(final CombatantSheet holder) {
+            return holder != null && holder.getRemainingEnhancedAttacks(this) > 0
+                    ? FurorDeSylphInteraction.ACTION_POINT_BONUS
+                    : 0;
+        }
+    };
 
     private final String description;
     private final boolean supreme;
@@ -157,48 +167,38 @@ public enum AbracadoPelaEscuridaoAbility implements AventyrTitleAbility {
     private final int requiredOtherAbilities;
 
     /**
-     * The "gastar uma quantidade de pontos de vida igual ao seu Vigor" cost shared by
-     * {@code SACRIFICIO_YMIRIANO} and {@code FUROR_DE_SYLPH} — real, tested: Vigor's total is
-     * already a plain value this core computes everywhere else
+     * The "O Custo de Ativação desta Habilidade é igual ao seu próprio Vigor em PV" cost shared by
+     * {@code SACRIFICIO_YMIRIANO}, {@code ESPINHOS_VENENOS_DE_GAEA} and {@code FUROR_DE_SYLPH} —
+     * real, tested: Vigor's total is already a plain value this core computes everywhere else
      * ({@code character.getEffectiveAttributeTotal(AttributeDomain.VIGOR)}), so this needs no
-     * missing system of its own, even though what the spent PV actually buys is TODO'd on both
-     * constants. Returns 0 for the other two constants, rather than throwing, so a caller
-     * never needs to guard on which constant it's holding.
+     * missing system of its own, even though what the spent PV buys is still TODO'd on two of the
+     * three. Under V19 this is the cost of every constant here <em>except</em> {@code
+     * PLACIDEZ_DE_UNDINE_RANCOR_DE_HALOI}, which is PD-priced; it returns 0 for that one rather
+     * than throwing, so a caller never needs to guard on which constant it's holding.
      */
     public int resolveVigorPvCost(final Character character) {
-        if (this != SACRIFICIO_YMIRIANO && this != FUROR_DE_SYLPH) {
+        if (this == PLACIDEZ_DE_UNDINE_RANCOR_DE_HALOI) {
             return 0;
         }
         return character.getEffectiveAttributeTotal(AttributeDomain.VIGOR);
     }
 
     /**
-     * Espinhos de Gaea's own "a Duração desta Habilidade é igual a 1+ metade dos PV gastos
-     * (mínimo 1 Rodada)" — pure arithmetic over the player's own chosen PV amount, real and
-     * tested. Returns 0 for every other constant.
-     */
-    public int resolveDurationFromPvSpent(final int pvSpent) {
-        if (this != ESPINHOS_DE_GAEA) {
-            return 0;
-        }
-        return onePlusHalfPvSpent(pvSpent);
-    }
-
-    /**
      * Furor de Sylph's own "aprimora uma quantidade de ataques igual à 1+ metade dos PV
-     * gastos com esta Habilidade" — the identical "1 + metade" arithmetic shape as
-     * {@link #resolveDurationFromPvSpent}, but a distinct method since it means something
-     * different here (a count of enhanced attacks, not a Duração in Rodadas). Returns 0 for
-     * every other constant.
+     * gastos com esta Habilidade" — a <em>count of enhanced attacks</em>, never a Duração in
+     * Rodadas, which is exactly why that constant stays unwired: a {@code TemporaryBonus} only
+     * ever counts down in Rodadas, and this clause names none. Real, tested arithmetic all the
+     * same. Returns 0 for every other constant.
+     *
+     * <p>Under V19 this is the only PV-scaled formula left here — {@code
+     * ESPINHOS_VENENOS_DE_GAEA}'s Duração is now a flat 2 Rodadas rather than the previous
+     * revision's "1 + metade dos PV gastos", so the twin this method used to share its shape with
+     * is gone.
      */
     public int resolveEnhancedAttackCountFromPvSpent(final int pvSpent) {
         if (this != FUROR_DE_SYLPH) {
             return 0;
         }
-        return onePlusHalfPvSpent(pvSpent);
-    }
-
-    private static int onePlusHalfPvSpent(final int pvSpent) {
         return Math.max(1, 1 + pvSpent / 2);
     }
 }

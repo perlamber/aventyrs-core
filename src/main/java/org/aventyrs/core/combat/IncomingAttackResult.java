@@ -1,7 +1,11 @@
 package org.aventyrs.core.combat;
 
+import org.aventyrs.core.effect.DefensiveCriticalEffect;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.Singular;
+
+import java.util.List;
 import org.aventyrs.core.sheet.CombatantAction;
 import org.aventyrs.core.sheet.InteractionResult;
 import org.aventyrs.core.skill.CriticalResult;
@@ -44,11 +48,22 @@ public class IncomingAttackResult {
     private final int requiredTotal;
 
     /**
-     * The provoking-Aura malus already included in {@link #requiredTotal} (it lowers the GD, easing the defence) — {@code Skill#DISADVANTAGE_MALUS} when a
-     * bound attacker, having attacked the Aura's holder this Rodada, attacks someone else; 0
-     * otherwise. Reported so a UI can show where the difference came from.
+     * Whether a provoking Aura makes this attack deal Meio-Dano — {@code true} when a bound
+     * attacker, having already attacked the Aura's holder this Rodada, attacks someone else
+     * ({@code AbencoadoPelaLuzAbility#ORGULHO_ELDURIANO}).
+     *
+     * <p><b>Applied, not merely reported</b>: when true the chain head is marked {@code
+     * DamageInteraction#halvingDamage()}. It does <em>not</em> touch {@link #requiredTotal} — V19
+     * moved this penalty off the roll and onto the damage.
      */
-    private final int auraPenalty;
+    private final boolean auraHalvesDamage;
+
+    /**
+     * What the defender's thorns deal back to the attacker, or {@code null} when nothing does —
+     * see {@link Retaliation}, which carries the whole calculation. <b>Reported, never dealt</b>:
+     * this core sends damage only one way, so the caller applies it against the attacker's sheet.
+     */
+    private final Retaliation retaliation;
 
     /**
      * {@link IncomingAttack#getDifficultyLevel()} after the defender's own {@code
@@ -103,4 +118,23 @@ public class IncomingAttackResult {
      * with no Scene).
      */
     private final CombatantAction recordedAction;
+
+    /**
+     * The Efeitos Críticos Defensivos the defender's own Acerto Crítico triggered — one per worn
+     * Armadura/Escudo ("seus efeitos são cumulativos"), Liberdade de Ação for a defender wearing
+     * neither, plus any a held Título adds. Built, <b>not applied</b>: call {@code
+     * DefensiveCriticalEffect#apply()} on each, which acts on both sheets and reports what is left
+     * (a push, a move, a counter-attack, a quick cast). Empty unless the defence held with a
+     * critical success.
+     */
+    @Singular
+    private final List<DefensiveCriticalEffect> defensiveCriticalEffects;
+
+    /**
+     * Efeitos Críticos — offensive or defensive — this exchange should have triggered but could not
+     * build: no {@code DiceRoller} for a dice-bearing one, no mechanism (Desmembrar), or no attacker
+     * named for a defensive one to act on.
+     */
+    @Singular("unappliedCriticalEffect")
+    private final List<Enum<?>> unappliedCriticalEffects;
 }

@@ -99,6 +99,23 @@ import java.util.Map;
 public class Gorgona implements Race {
 
     /**
+     * "Imunidade a Encantamentos" — Górgonas "são imunes aos efeitos diretos de Encantamentos, mas
+     * ainda podem ser alvos de efeitos indiretos (como sofrer danos de armas encantadas)".
+     *
+     * <p>Real through {@code CombatantSheet#applyEnchantment}, which is precisely the "efeitos
+     * diretos" door: an {@code sheet.Enchantment} offered to this Raça never takes hold. The
+     * indirect half needs nothing — an enchanted weapon's damage is ordinary damage and never
+     * comes through that door.
+     *
+     * <p>The +2 Bônus Racial em DM this trait also grants is a separate, still-unauthored half;
+     * see this class's own javadoc.
+     */
+    @Override
+    public boolean isImmuneToEnchantments() {
+        return true;
+    }
+
+    /**
      * A judgment call, not a confirmed classification: Górgonas were originally Fadas, are
      * described as having "recuperando... graça feérica" recently, and the race's own "1
      * Talento adicional" trait offers Monstruoso *or* Talento Racial as alternatives (implying

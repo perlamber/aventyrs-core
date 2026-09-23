@@ -35,5 +35,9 @@ public enum DamageContributionSource {
     TARGET_CONDITION,
 
     /** What a named manoeuvre adds to the dano roll it is the attack half of — an Investida's +2. */
-    MANOEUVRE
+    MANOEUVRE,
+
+    /** A held Título's {@code AventyrTitle#resolveDamageRollBonus} — e.g. Malícia de Valentão's
+     * "Vantagem em … Danos contra alvos encantados por Fingir Fraquezas". */
+    TITLE
 }

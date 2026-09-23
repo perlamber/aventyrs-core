@@ -30,20 +30,20 @@ package org.aventyrs.core.effect;
  * {@code CriticalEffect#applicableTo} must never filter one. Merging the two enums would offer
  * every stat block nine immunities that cannot mean anything.
  *
- * <p>These are <b>identities, not implementations</b>: no class produces one and nothing consumes
- * one yet, exactly as most of {@link CriticalEffectType} is. Several need mechanisms this core
- * does not have — forced movement, forced targeting and reactive damage (per-copy item Dureza is
- * built now: see {@code Item#applyDamage}, which Repelir e Suprimir/Retorno de Danos would call) —
- * so authoring the identity now is the "can't apply it yet doesn't mean can't compute it yet"
- * discipline, not a claim that the effect works.
+ * <p><b>All nine are built</b> (0.0.49) as {@link DefensiveCriticalEffect}: {@code AttackReceiver}
+ * reports one per worn Armadura/Escudo ({@link DefensiveCriticalEffects#grantedTo}) when a Defesa
+ * roll comes up an Acerto Crítico, and the caller applies each. What needs geometry or a second
+ * action (a push, a free move, the counter-attack, the quick cast) comes back on {@link
+ * DefensiveCriticalOutcome} for the caller; see {@link DefensiveCriticalEffect}'s own TODOs.
  *
  * <h2>Only Armaduras and Escudos grant these</h2>
  *
  * "outros equipamentos Defensivos não concedem este tipo de benefício" (L55), which is why
  * {@code ArmorItem#getDefensiveCriticalEffect()} is a column on that enum rather than on {@code
  * Item} — the same reason {@code getDamageBase()} lives on {@code Weapon} and not on every
- * pauldron. The source also assigns one to each of six Escudos and five Defesas Naturais,
- * neither of which this core models yet.
+ * pauldron — a forged copy answers for its template ({@code AbstractItem#getDefensiveCriticalEffect}).
+ * "Corpo Exposto" (no Armadura or Escudo) grants Liberdade de Ação; the four other Defesas Naturais
+ * rows wait on a natural-defence model.
  */
 public enum DefensiveCriticalEffectType {
 

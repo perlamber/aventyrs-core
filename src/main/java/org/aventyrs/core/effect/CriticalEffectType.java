@@ -20,21 +20,18 @@ package org.aventyrs.core.effect;
  * "can't apply it yet doesn't mean can't compute it yet" discipline an unread {@code ItemBonus}
  * column follows.
  *
- * <h2>This is the complete Efeitos Críticos Ofensivos list; most have no class behind them</h2>
+ * <h2>This is the complete Efeitos Críticos Ofensivos list</h2>
  *
  * All 23 constants are the authored catalog in {@code docs/rules/efeitos-criticos.txt}
  * ("Lista de Efeitos Críticos Ofensivos", L120–214), transcribed in full rather than as-needed.
  * Doing it piecemeal is what left a Magia catalog naming 14 of these able to reference only 3.
  *
- * <ul>
- *   <li><b>Implemented</b> — {@link #SANGRAMENTO} ({@link Sangramento}), {@link #PURGA_DE_MANA}
- *   ({@link ManaPurge}), {@link #PRIMOR} ({@link Primor}), {@link #SABOTAGEM} ({@link Sabotage}),
- *   {@link #EXECUCAO_REAL} ({@link RealExecution}).</li>
- *   <li><b>Named only</b> — the other 18. Nothing produces these yet; they exist so an immunity
- *   to them can be authored, so a Magia can name the one it applies, and so that whoever builds
- *   one has the constant waiting. A caller cannot currently construct an effect reporting one of
- *   these types, which is why filtering on them is a no-op today rather than an error.</li>
- * </ul>
+ * <p><b>All but one are built</b> (0.0.49): {@link CriticalEffects#create} turns every constant
+ * into its effect except {@link #DESMEMBRAR}, which needs a body with limbs this core does not
+ * model. {@link #SABOTAGEM} is built but inert (no technological item exists) and {@link
+ * #POTENCIALIZAR} computes its figure without a running Magia Duração to extend. {@code
+ * AttackDelivery}/{@code AttackReceiver} build them from a weapon's or Magia's own column, a
+ * Título's additions and a request's {@code additionalCriticalEffectTypes}.
  *
  * <p>Each constant carries its own Maior/Menor rules text verbatim, since that text is what a
  * future implementation must satisfy and it lives in a document this core does not ship.

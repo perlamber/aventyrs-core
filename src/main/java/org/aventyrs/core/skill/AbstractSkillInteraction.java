@@ -45,6 +45,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
+import static org.aventyrs.core.util.TranslatableMessages.SKILL_USE_PREVENTED;
 import static org.aventyrs.core.skill.Skill.UNTRAINED_PENALTY;
 import static org.aventyrs.core.util.TranslatableMessages.REQUIRED_SKILL_TRAIT_NOT_HELD;
 
@@ -316,6 +317,11 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
         AttributeDomain peritoTeoricoDomain = PeritoTeoricoAbility.resolveAttributeDomain(character.getAttributeAbilities(), skillType, naturalDomain);
         AttributeDomain attributeDomain = SkillCompetencyAbility.resolveAttributeDomain(
                 skillCompetencyAbilities, skillType, peritoTeoricoDomain, attackSource);
+        // Frenesi: "não pode utilizar Perícias que exijam concentração ou raciocínio". Refused before
+        // anything is computed, on the Atributo the roll is actually made with.
+        if (target.isSkillUsePrevented(skillType, attributeDomain)) {
+            throw new IllegalOperationException(SKILL_USE_PREVENTED);
+        }
 
         int bonus = characterSkillService.getValueForRoll(characterSkill, character.getAttributes(), character.getRace(), attributeDomain);
         // "Abandonando seus traços raciais" — the racial half of the governing Atributo goes for
@@ -392,10 +398,13 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
             // baseline. The sceneContext handed over is this *attacker's* snapshot, the only one
             // in reach; see Feat#resolveCriticalResistance for what an override may read from it.
             // See ModifierType.CRITICAL_RESISTANCE for the RC pieces still not expressible.
-            criticalMarginIncrease -= attackTarget == null ? 0
-                    : attackTarget.getTotalCriticalResistance(sceneContext);
+            criticalMarginIncrease -= criticalService.getLesserCriticalResistance(attackTarget, sceneContext);
+            // The Maior margin is its own axis: 18 (three 6s) lowered by "Margem Crítica Maior +N"
+            // and pushed back by the target's RC/RA, never past 18.
+            int majorCriticalMargin = criticalService.getMajorCriticalMargin(target, skillType, attackSource,
+                    sceneContext, attackTarget);
             CriticalResult criticalResult = skillRoll.getCriticalResult(criticalMarginIncrease,
-                    lesserCriticalMargin(attackSource));
+                    lesserCriticalMargin(attackSource), majorCriticalMargin);
             result.reachedDifficultyLevel(reached.orElse(null))
                     .criticalResult(criticalResult);
             resolveOutcome(bonus + skillRoll.getTotal(), skillRoll.getTargetValue(), difficultyReduction,
@@ -477,6 +486,12 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                 .map(ability -> ability.resolveAttackRollBonus(target, attackTarget))
                 .flatMap(Optional::stream)
                 .mapToInt(Integer::intValue)
+                .sum();
+        // Held Títulos — a Vantagem scoped to the weapon, the target, or a budget of attacks the
+        // holder still has (Senhor da Briga's Impacto Elemental and Agarrar e Derrubar).
+        attackRollBonus += target.getCharacter().getAllTitles().stream()
+                .mapToInt(title -> title.resolveAttackRollBonus(skillType, attackSource, target, attackTarget,
+                        sceneContext))
                 .sum();
         if (attackRollBonus != 0) {
             result = result.toBuilder().skillRollBonus(result.getSkillRollBonus() + attackRollBonus).build();
@@ -853,12 +868,17 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                 resolveMeleeStrengthDamage(target));
         int manoeuvre = addFlat(contributions, DamageContributionSource.MANOEUVRE,
                 resolveChargeDamage(skillRoll));
+        int title = addFlat(contributions, DamageContributionSource.TITLE,
+                character.getAllTitles().stream()
+                        .mapToInt(held -> held.resolveDamageRollBonus(skillType, attackSource, target, attackTarget,
+                                sceneContext))
+                        .sum());
         // Outward-facing: what the *victim's* own Condições hand the attacker (Flanqueado).
         int targetCondition = attackTarget == null ? 0
                 : addFlat(contributions, DamageContributionSource.TARGET_CONDITION,
                         attackTarget.getAttackerDamageBonusFromConditions(sceneContext));
 
-        int flat = temporary + condition + meiaForca + manoeuvre + targetCondition;
+        int flat = temporary + condition + meiaForca + manoeuvre + title + targetCondition;
         return new DamageSum(DamageBonus.total(typed, flat), new DamageBonusBreakdown(contributions));
     }
 
@@ -960,12 +980,11 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
      * text names Força specifically. Two statements about two different numbers, so a finesse
      * swordsman rolls on Destreza and still adds half their Força.
      *
-     * <p>Reads {@code Character#getEffectiveAttributeTotal(STRENGTH)} — the permanent value (base
-     * + racial + variable) plus any permanent {@code Feat#resolveAttributeBonus} grant, exactly
-     * as every other Atributo-total reader now does. A round-scoped {@code
-     * ModifierType#STRENGTH_BONUS} {@code TemporaryBonus} still does <b>not</b> reach it: that is
-     * read only on a Perícia roll governed by Força (see CLAUDE.md), and a dano roll is not that
-     * roll.
+     * <p>Reads {@code Character#getEffectiveAttributeTotal(STRENGTH, attacker)} — the permanent
+     * value (base + racial + variable) plus any permanent {@code Feat#resolveAttributeBonus} grant
+     * and the sheet's round-scoped {@code ModifierType#STRENGTH_BONUS} (a Bônus Variável: Frenesi's
+     * +2, Sacrifício Ymiriano's Força igual ao Vigor), exactly as every other Atributo-total reader
+     * holding a sheet does.
      */
     private int resolveMeleeStrengthDamage(final CombatantSheet attacker) {
         if (skillType != SkillType.ATAQUE_CORPO_A_CORPO) {

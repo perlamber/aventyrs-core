@@ -3,6 +3,7 @@ package org.aventyrs.core.title.santo;
 import org.aventyrs.core.character.services.DeterminationPointsService;
 import org.aventyrs.core.character.services.DeterminationPointsServiceImpl;
 import org.aventyrs.core.modifier.ModifierType;
+import org.aventyrs.core.scene.Range;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.character.services.HitPointsService;
 import org.aventyrs.core.character.services.HitPointsServiceImpl;
@@ -18,7 +19,7 @@ import java.util.List;
 
 /**
  * Grito de Guerra Vulcano's own activation — an {@link AbstractTitleAbilityInteraction}, so the
- * shared gates run and its 3PD are paid first. Its effect is <b>reported, not applied</b>: every
+ * shared gates run and its 2PD are paid first. Its effect is <b>reported, not applied</b>: every
  * grant goes out via {@link InteractionResult#getBlessings()} — this ability's own rules text grants
  * "a você e seus aliados adjacentes," the same self-plus-allies shape {@code
  * ArtesCompetencyAbility#DOM_BARDICO} already reports this way, just with more than one {@link
@@ -29,14 +30,22 @@ import java.util.List;
  * Santo#activateGritoDeGuerraVulcano}), which checks the Habilidade is held first.
  *
  * <p>Every clause of this ability's own rules text is reported as a real {@link Blessing},
- * including the "+2 em Defesas" one ({@link ModifierType#DEFESAS}): {@code
+ * including the "+3 em Defesas" one ({@link ModifierType#DEFESAS}): {@code
  * character.services.DefenseService} sums every active {@code DEFESAS}-typed {@code
  * TemporaryBonus}, so that grant lands for real once a caller applies it.
  */
 public class GritoDeGuerraVulcanoInteraction extends AbstractTitleAbilityInteraction {
 
     private static final int VANTAGEM_ROUNDS = 2;
-    private static final int DEFESAS_BONUS = 2;
+    private static final int DEFESAS_BONUS = 3;
+
+    /**
+     * "a você e seus aliados adjacentes" — the radius a caller sweeps for this ability's own
+     * {@link TargetScope#SELF_AND_ALLIES} Blessings, published for the same reason {@code
+     * GloriaRelampejanteDeTeslaInteraction#ALLY_RANGE} is: this core resolves no recipients, so the
+     * figure a caller needs must come from here rather than be retyped client-side and drift.
+     */
+    public static final Range ALLY_RANGE = Range.ADJACENTE;
 
     private final HitPointsService hitPointsService;
 

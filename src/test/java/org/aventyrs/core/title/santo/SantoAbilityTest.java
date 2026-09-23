@@ -37,7 +37,7 @@ class SantoAbilityTest {
 
     @Test
     void protecaoUngidaHasTheRightActivationCost() {
-        assertEquals(PDCost.fixed(3), SantoAbility.PROTECAO_UNGIDA.getPDCost());
+        assertEquals(PDCost.variable(2), SantoAbility.PROTECAO_UNGIDA.getPDCost());
         assertEquals(ActionCost.ofActionPoints(2), SantoAbility.PROTECAO_UNGIDA.getActionPointCost());
     }
 
@@ -49,7 +49,7 @@ class SantoAbilityTest {
 
     @Test
     void guardaVidasHasTheRightActivationCost() {
-        assertEquals(PDCost.fixed(2), SantoAbility.GUARDA_VIDAS.getPDCost());
+        assertEquals(PDCost.fixed(3), SantoAbility.GUARDA_VIDAS.getPDCost());
         assertEquals(ActionCost.REACTION, SantoAbility.GUARDA_VIDAS.getActionPointCost());
     }
 
@@ -69,19 +69,35 @@ class SantoAbilityTest {
     }
 
     @Test
-    void bastiaoDosNecessitadosGrantsAbsoluteDamageReductionOnlyWhenALowerPvAdjacentAllyExists() {
-        assertEquals(DamageService.DEFAULT_DAMAGE_REDUCTION, SantoAbility.BASTIAO_DOS_NECESSITADOS.resolveAbsoluteDamageReduction(null, true));
-        assertEquals(0, SantoAbility.BASTIAO_DOS_NECESSITADOS.resolveAbsoluteDamageReduction(null, false));
+    void bastiaoDosNecessitadosGrantsDamageReductionOnlyWhenALowerPvAdjacentAllyExists() {
+        // 3 Habilidades: "1+ Metade" is 2 outward, and half of that, 1, inward.
+        AventyrTitle holder = new Santo(List.of(), List.of(SantoAbility.BASTIAO_DOS_NECESSITADOS,
+                SantoAbility.PROTECAO_UNGIDA, SantoAbility.GUARDA_VIDAS));
+
+        assertEquals(2, SantoAbility.BASTIAO_DOS_NECESSITADOS.resolveAllyDamageReduction(null, holder, true));
+        assertEquals(0, SantoAbility.BASTIAO_DOS_NECESSITADOS.resolveAllyDamageReduction(null, holder, false));
+        assertEquals(1, SantoAbility.BASTIAO_DOS_NECESSITADOS.resolveDamageReduction(null, holder, true));
+        assertEquals(0, SantoAbility.BASTIAO_DOS_NECESSITADOS.resolveDamageReduction(null, holder, false));
+    }
+
+    /** V19 moved this clause off RA entirely — no Santo Habilidade grants Redução Absoluta now. */
+    @Test
+    void noAbilityGrantsAbsoluteDamageReductionRegardlessOfTheCondition() {
+        for (SantoAbility ability : SantoAbility.values()) {
+            assertEquals(0, ability.resolveAbsoluteDamageReduction(null, true));
+            assertEquals(0, ability.resolveAbsoluteDamageReduction(null, false));
+        }
     }
 
     @Test
-    void everyOtherAbilityGrantsNoAbsoluteDamageReductionRegardlessOfTheCondition() {
+    void everyOtherAbilityGrantsNoDamageReductionRegardlessOfTheCondition() {
+        AventyrTitle holder = new Santo(List.of(), List.of(SantoAbility.values()));
         for (SantoAbility ability : SantoAbility.values()) {
             if (ability == SantoAbility.BASTIAO_DOS_NECESSITADOS) {
                 continue;
             }
-            assertEquals(0, ability.resolveAbsoluteDamageReduction(null, true));
-            assertEquals(0, ability.resolveAbsoluteDamageReduction(null, false));
+            assertEquals(0, ability.resolveDamageReduction(null, holder, true));
+            assertEquals(0, ability.resolveAllyDamageReduction(null, holder, true));
         }
     }
 
@@ -147,7 +163,7 @@ class SantoAbilityTest {
         AventyrTitle title = new Santo(
                 List.of(SantoSpecialization.ABENCOADO_PELA_LUZ),
                 List.of(AbencoadoPelaLuzAbility.ORGULHO_ELDURIANO,
-                        AbencoadoPelaLuzAbility.PELE_ROCHOSA_DE_EPONA));
+                        AbencoadoPelaLuzAbility.CORPO_INDESTRUTIVEL_DE_EPONA));
 
         assertTrue(SantoAbility.BASTIAO_DOS_NECESSITADOS.isEligible(title));
         assertTrue(SantoAbility.GUARDA_VIDAS.isEligible(title));
@@ -189,7 +205,7 @@ class SantoAbilityTest {
                 List.of(SantoSpecialization.ABENCOADO_PELA_LUZ),
                 List.of(SantoAbility.PROTECAO_UNGIDA, SantoAbility.BASTIAO_DOS_NECESSITADOS,
                         AbencoadoPelaLuzAbility.ORGULHO_ELDURIANO,
-                        AbencoadoPelaLuzAbility.PELE_ROCHOSA_DE_EPONA));
+                        AbencoadoPelaLuzAbility.CORPO_INDESTRUTIVEL_DE_EPONA));
 
         assertTrue(SantoAbility.PROTETOR_DA_VIDA_E_DA_MORTE.isEligible(withFour));
     }

@@ -8,6 +8,7 @@ import org.aventyrs.core.skill.CriticalResult;
 import org.aventyrs.core.skill.DifficultyLevel;
 import org.aventyrs.core.skill.SkillExcellency;
 import org.aventyrs.core.skill.artes.ArtesExcellency;
+import org.aventyrs.core.title.EmpoweredAttack;
 
 import java.util.List;
 import java.util.Set;
@@ -39,6 +40,29 @@ public class InteractionResult {
      * against this sheet.
      */
     CombatantSheet redirectedAttackTarget;
+
+    /**
+     * What the <b>one</b> attack this activation requires gains — see {@link
+     * org.aventyrs.core.title.EmpoweredAttack}, whose javadoc carries the reasoning. {@code null}
+     * for every Interaction that doesn't empower an attack, which is everything but {@code
+     * AbracadoPelaEscuridaoAbility#PLACIDEZ_DE_UNDINE_RANCOR_DE_HALOI} today — the same
+     * stays-{@code null}-when-not-applicable convention as every other field here.
+     *
+     * <p>Reported, not applied, and for the same reason {@link #redirectedAttackTarget} is: the
+     * activation resolves <b>before</b> the attack is built, so the caller folds these figures into
+     * the {@code SkillRoll}/{@code DeliveredAttack} it then constructs.
+     */
+    EmpoweredAttack empoweredAttack;
+
+    /**
+     * How far, in UD, this activation lets its activator move <b>toward the activation's target</b>
+     * — {@code PunhoInigualavelAbility#ROLAMENTO_OFENSIVO}'s "Você pode rolar 2UD em direção a um
+     * inimigo". Reported, never applied: this core holds no positions, so the caller moves the
+     * token and rebuilds its {@code SceneContext}, exactly as it applies a {@code
+     * org.aventyrs.core.scene.Teleportation}. {@code null} for every Interaction that grants no
+     * movement.
+     */
+    Integer movementTowardTarget;
 
     /** The Perícia roll bonus computed by a skill-test Interaction (e.g. AttentionInteraction). */
     Integer skillRollBonus;
@@ -87,6 +111,27 @@ public class InteractionResult {
      * three simultaneous ones.
      */
     List<Blessing> blessings;
+
+    /**
+     * Damage an area effect deals, one entry per character hit — {@code null} for every result that
+     * deals none. Reported for the caller to apply; see {@link AreaDamage}.
+     */
+    List<AreaDamage> areaDamage;
+
+    /**
+     * Conditions this activation cast on other characters — Frenesi Assustador's fear — already
+     * applied to the sheets in hand, reported so a caller can deliver each to the client that owns
+     * the real one. {@code null} when none.
+     */
+    List<InflictedCondition> inflictedConditions;
+
+    /**
+     * An inspired Frenesi this activation handed out — Grito Inspirador's copy — and who received it.
+     * Applied to the sheets in hand; reported for the same reason as {@link #inflictedConditions}.
+     */
+    Frenzy grantedFrenzy;
+
+    List<CombatantSheet> frenzyRecipients;
 
     /**
      * The highest GD this roll reached — {@code null} unless the Interaction was given a

@@ -158,8 +158,9 @@ public class AttackDelivery {
             throw new IllegalOperationException(TOO_MANY_ATTACK_TARGETS);
         }
         CombatantSheet defender = attack.getDefender();
-        int auraPenalty = AuraTargeting.resolvePenalty(attack.getScene(), attack.getAttacker(), defender,
-                attack.isForcedTargetUnavailable());
+        boolean auraHalvesDamage = AuraTargeting.resolveHalvesDamage(attack.getScene(), attack.getAttacker(),
+                defender, attack.isForcedTargetUnavailable());
+        Retaliation retaliation = RetaliationResolver.resolve(defender, attack.getAttackSkill());
         SkillRoll attackRoll = attack.getAttackRoll();
 
         List<CombatantSheet> extraTargets = additionalTargets.stream().map(AttackTarget::defender).toList();
@@ -168,13 +169,14 @@ public class AttackDelivery {
                         attack.getAttackSource(), extraTargets);
 
         int requiredTotal = attack.getDefenseValue();
-        int attackTotal = attackResult.getSkillRollBonus() + auraPenalty
+        int attackTotal = attackResult.getSkillRollBonus()
                 + (attackRoll == null ? 0 : attackRoll.getTotal());
 
         DeliveredAttackResult.DeliveredAttackResultBuilder result = DeliveredAttackResult.builder()
                 .attackTotal(attackTotal)
                 .requiredTotal(requiredTotal)
-                .auraPenalty(auraPenalty)
+                .auraHalvesDamage(auraHalvesDamage)
+                .retaliation(retaliation)
                 .unappliedDifficultyReduction(attackResult.getDifficultyReduction());
 
         if (attackRoll == null) {
@@ -188,19 +190,29 @@ public class AttackDelivery {
         int margin = attackTotal - requiredTotal;
         boolean hit = margin >= 0;
         CriticalResult criticalResult = attackResult.getCriticalResult();
-        boolean criticalEffectTriggered = hit && criticalResult != null && criticalResult.isCriticalSuccess();
-        boolean effectChainTriggered = hit
+        // Frenesi Assustador: a fear-struck attacker "se tornam incapazes de desferir Efeitos Críticos
+        // Menores e não podem desencadear Correntes de Efeitos" while the Gigante who cast it is down.
+        boolean suppressed = attack.getAttacker().isMinorCriticalAndChainSuppressed();
+        boolean criticalEffectTriggered = hit && criticalResult != null && criticalResult.isCriticalSuccess()
+                && !(suppressed && criticalResult.isMinor());
+        boolean effectChainTriggered = hit && !suppressed
                 && margin >= effectChainService.getRequiredMargin(defender.getCharacter());
 
         if (hit) {
             attackResult = attackResult.toBuilder()
                     .nextInteraction(buildChain(attack, defender, criticalResult, criticalEffectTriggered,
-                            effectChainTriggered, false))
+                            effectChainTriggered, auraHalvesDamage))
                     .build();
         }
 
         for (AttackTarget target : additionalTargets) {
             result.additionalTargetResult(resolveAdditionalTarget(attack, target, attackTotal, criticalResult));
+        }
+
+        if (hit) {
+            result.unappliedCriticalEffects(CriticalEffectResolver.resolve(attack.getAttacker(),
+                    attack.getAttackSource(), attack.getAttackSkill(), criticalEffectTriggered ? criticalResult : null,
+                    true, attack.getAdditionalCriticalEffectTypes(), attack.getDiceRoller(), false).unapplied());
         }
 
         return result.attackResult(attackResult)
@@ -241,16 +253,20 @@ public class AttackDelivery {
      * threshold, and the chain built for them.
      *
      * <p>Its chain head is marked {@code halvingDamage()} — "os danos no alvo adicional são
-     * reduzidos à metade". The Efeitos Críticos are filtered against this defender's own anatomy,
-     * so an immunity of theirs applies to them alone.
+     * reduzidos à metade" — unconditionally, so a provoking Aura's own Meio-Dano adds nothing here
+     * and is not passed in: Meio-Dano is a flag, and halving twice is still halving once. The
+     * Efeitos Críticos are filtered against this defender's own anatomy, so an immunity of theirs
+     * applies to them alone.
      */
     private DeliveredAttackTargetResult resolveAdditionalTarget(final DeliveredAttack attack, final AttackTarget target,
                                                                  final int attackTotal, final CriticalResult criticalResult) {
         CombatantSheet defender = target.defender();
         int margin = attackTotal - target.defenseValue();
         boolean hit = margin >= 0;
-        boolean criticalEffectTriggered = hit && criticalResult != null && criticalResult.isCriticalSuccess();
-        boolean effectChainTriggered = hit
+        boolean suppressed = attack.getAttacker().isMinorCriticalAndChainSuppressed();
+        boolean criticalEffectTriggered = hit && criticalResult != null && criticalResult.isCriticalSuccess()
+                && !(suppressed && criticalResult.isMinor());
+        boolean effectChainTriggered = hit && !suppressed
                 && margin >= effectChainService.getRequiredMargin(defender.getCharacter());
 
         return DeliveredAttackTargetResult.builder()
@@ -280,9 +296,11 @@ public class AttackDelivery {
      * parameter rather than read off attack, because a multi-target attack builds one chain per
      * target and each is filtered against its <em>own</em> anatomy.
      *
-     * <p>halfDamage marks the head {@code DamageInteraction} as dealing Meio-Dano — set for an
-     * additional target and never for the primary one. The stages behind it are unaffected: the
-     * halving belongs to the damage, not to the Efeitos it triggers.
+     * <p>halfDamage marks the head {@code DamageInteraction} as dealing Meio-Dano — set for every
+     * additional target, and for <em>any</em> target when a provoking Aura binds the attacker
+     * elsewhere ({@code AbencoadoPelaLuzAbility#ORGULHO_ELDURIANO}). Read as a flag, so the two
+     * sources coinciding still halve exactly once rather than quartering. The stages behind it are
+     * unaffected: the halving belongs to the damage, not to the Efeitos it triggers.
      */
     private Interaction<CombatantSheet> buildChain(final DeliveredAttack attack,
                                                     final CombatantSheet defender,
@@ -298,6 +316,12 @@ public class AttackDelivery {
         if (criticalEffectTriggered) {
             stages.addAll(CriticalEffect.applicableTo(defender, allCriticalEffects(attack, criticalResult),
                     criticalResult, attack.getSceneContext()));
+        } else {
+            // Finalização: a hit that is not critical still applies the Arma Natural's own Efeito
+            // Crítico Menor — filtered at Menor, so an anatomy immune to Menores shrugs it off.
+            stages.addAll(CriticalEffect.applicableTo(defender,
+                    typedCriticalEffects(attack, criticalResult, false).effects(),
+                    CriticalResult.ACERTO_CRITICO_MENOR, attack.getSceneContext()));
         }
 
         Interaction<CombatantSheet> next = null;
@@ -320,7 +344,21 @@ public class AttackDelivery {
         attack.getAttacker().getCharacter().getFeats().forEach(feat ->
                 effects.addAll(feat.resolveExtraCriticalEffects(attack.getAttacker().getCharacter(),
                         attack.getAttackSkill(), attack.getAttackSource(), criticalResult)));
+        effects.addAll(typedCriticalEffects(attack, criticalResult, true).effects());
         return effects;
+    }
+
+    /**
+     * The Efeitos Críticos this attack carries by identity — its source's own, the attacker's
+     * Títulos', the request's — built through {@link CriticalEffectResolver}. critical selects
+     * whether this is the critical hit's set or a plain hit's (Finalização's Menor repetitions).
+     */
+    private CriticalEffectResolver.Resolved typedCriticalEffects(final DeliveredAttack attack,
+                                                                 final CriticalResult criticalResult,
+                                                                 final boolean critical) {
+        return CriticalEffectResolver.resolve(attack.getAttacker(), attack.getAttackSource(), attack.getAttackSkill(),
+                critical ? criticalResult : null, true, attack.getAdditionalCriticalEffectTypes(),
+                attack.getDiceRoller());
     }
 
     private List<EffectChain> effectChainsGrantedByFeats(final DeliveredAttack attack) {

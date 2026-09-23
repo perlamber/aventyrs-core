@@ -25,6 +25,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /** The provoking Aura registered on a {@link Scene} — Orgulho Elduriano's shape. */
 class ActiveAuraTest {
 
+    /** Generous by default: these tests are about binding rules, not about the PD budget. */
+    private static final int MAX_TARGETS = 99;
+
     private static final AbencoadoPelaLuzAbility SOURCE = AbencoadoPelaLuzAbility.ORGULHO_ELDURIANO;
 
     private final UUID party = UUID.randomUUID();
@@ -60,7 +63,7 @@ class ActiveAuraTest {
     }
 
     private ActiveAura activate(final int rounds) {
-        ActiveAura aura = new ActiveAura(holder, SOURCE, Range.DISTANCIA_CURTA, rounds);
+        ActiveAura aura = new ActiveAura(holder, SOURCE, Range.DISTANCIA_CURTA, rounds, MAX_TARGETS);
         scene.addAura(aura);
         return aura;
     }
@@ -93,11 +96,48 @@ class ActiveAuraTest {
         List<CombatantSheet> bound = scene.refreshAura(holder, holderContext(standardDistances()));
 
         assertEquals(List.of(nearFoe), bound);
-        assertTrue(aura.isBound(nearFoe.getId()));
-        assertFalse(aura.isBound(farFoe.getId()));
-        assertFalse(aura.isBound(ally.getId()));
+        assertTrue(nearFoe.getForcedTargeting().isPresent());
+        assertFalse(farFoe.getForcedTargeting().isPresent());
+        assertFalse(ally.getForcedTargeting().isPresent());
         assertTrue(nearFoe.isAffectedUntilRest(SOURCE));
         assertFalse(farFoe.isAffectedUntilRest(SOURCE));
+    }
+
+    /**
+     * A budget spends itself on the <b>nearest</b> foes, not on whoever rolled initiative first.
+     *
+     * <p>"2PD para 1 único inimigo, então de +1PD para cada inimigo alvo adicional" means an Aura
+     * routinely cannot catch everyone standing in its radius, and then the order decides who walks
+     * free. {@link Scene#getEnemies} returns initiative order, which is arbitrary with respect to
+     * distance — so this taunted whoever happened to act earlier. A provocation that skips the foe
+     * standing over you to taunt one at the far edge of Distância Curta is indefensible; the one
+     * who misses out must be the furthest.
+     *
+     * <p>The fixture is deliberately adversarial: {@code closeFoe} is registered with <em>lower</em>
+     * initiative than {@code distantFoe}, so it comes second in {@code getEnemies}. Passing this by
+     * accident is therefore impossible — before the sort, the distant foe was caught.
+     */
+    @Test
+    void aBudgetedAuraCatchesTheNearestFoeRatherThanTheFirstInInitiative() {
+        CharacterSheet distantFoe = newSheet();
+        CharacterSheet closeFoe = newSheet();
+        scene.addParticipant(distantFoe, 18, foes);
+        scene.addParticipant(closeFoe, 2, foes);
+
+        // One binding only — the whole point is which foe it is spent on.
+        scene.addAura(new ActiveAura(holder, SOURCE, Range.DISTANCIA_CURTA, 3, 1));
+
+        Map<CombatantSheet, Range> distances = new HashMap<>();
+        // Both are inside the radius, so the radius filter cannot be what decides.
+        distances.put(distantFoe, Range.DISTANCIA_CURTA);
+        distances.put(closeFoe, Range.ADJACENTE);
+
+        List<CombatantSheet> bound = scene.refreshAura(holder, holderContext(distances));
+
+        assertEquals(List.of(closeFoe), bound, "the budget buys the nearest foe");
+        assertTrue(closeFoe.getForcedTargeting().isPresent());
+        assertFalse(distantFoe.getForcedTargeting().isPresent(),
+                "the furthest foe is the one left untaunted when the PD run out");
     }
 
     @Test
@@ -117,7 +157,7 @@ class ActiveAuraTest {
         moved.put(farFoe, Range.DISTANCIA_MUITO_CURTA);
 
         assertEquals(List.of(farFoe), scene.refreshAura(holder, holderContext(moved)));
-        assertTrue(aura.isBound(farFoe.getId()));
+        assertTrue(farFoe.getForcedTargeting().isPresent());
     }
 
     @Test
@@ -129,7 +169,7 @@ class ActiveAuraTest {
         moved.put(nearFoe, Range.DISTANCIA_LONGA);
         scene.refreshAura(holder, holderContext(moved));
 
-        assertTrue(aura.isBound(nearFoe.getId()));
+        assertTrue(nearFoe.getForcedTargeting().isPresent());
         assertEquals(Optional.of(holder), scene.getForcedAttackTarget(nearFoe));
     }
 
@@ -139,7 +179,7 @@ class ActiveAuraTest {
         ActiveAura aura = activate(3);
 
         assertEquals(List.of(), scene.refreshAura(holder, holderContext(standardDistances())));
-        assertFalse(aura.isBound(nearFoe.getId()));
+        assertFalse(nearFoe.getForcedTargeting().isPresent());
 
         nearFoe.clearRestCooldowns(RestType.CURTO);
         assertTrue(nearFoe.isAffectedUntilRest(SOURCE));
@@ -190,15 +230,15 @@ class ActiveAuraTest {
         activate(3);
         scene.refreshAura(holder, holderContext(standardDistances()));
 
-        assertEquals(0, scene.getAuraAttackPenalty(nearFoe, ally));
+        assertFalse(scene.auraHalvesDamage(nearFoe, ally));
 
         scene.recordAttack(nearFoe, holder);
-        assertEquals(Skill.DISADVANTAGE_MALUS, scene.getAuraAttackPenalty(nearFoe, ally));
-        assertEquals(0, scene.getAuraAttackPenalty(nearFoe, holder));
-        assertEquals(0, scene.getAuraAttackPenalty(farFoe, ally));
+        assertTrue(scene.auraHalvesDamage(nearFoe, ally));
+        assertFalse(scene.auraHalvesDamage(nearFoe, holder));
+        assertFalse(scene.auraHalvesDamage(farFoe, ally));
 
         finishRound();
-        assertEquals(0, scene.getAuraAttackPenalty(nearFoe, ally));
+        assertFalse(scene.auraHalvesDamage(nearFoe, ally));
     }
 
     @Test
@@ -237,6 +277,53 @@ class ActiveAuraTest {
 
     @Test
     void anAuraMustLastAtLeastOneRodada() {
-        assertThrows(IllegalArgumentException.class, () -> new ActiveAura(holder, SOURCE, Range.DISTANCIA_CURTA, 0));
+        assertThrows(IllegalArgumentException.class, () -> new ActiveAura(holder, SOURCE, Range.DISTANCIA_CURTA, 0, MAX_TARGETS));
+    }
+
+    // --- The Aura casts an Encantamento; the recipient decides what lands ----------------------
+
+    private CharacterSheet foeOfRace(final org.aventyrs.core.race.Race race) {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK).race(race).build();
+        CharacterSheet sheet = CharacterSheet.of(character, new Player());
+        scene.addParticipant(sheet, 8, foes);
+        return sheet;
+    }
+
+    /**
+     * "Imunidade a Encantamentos" resolved entirely by the recipient — the Aura offers, the Fada
+     * takes nothing, and the Aura's budget is untouched because it never caught them.
+     */
+    @Test
+    void anImmuneFoeIsNeitherBoundNorCountedAgainstTheBudget() {
+        CharacterSheet fada = foeOfRace(new org.aventyrs.core.race.Fada());
+        ActiveAura aura = new ActiveAura(holder, SOURCE, Range.DISTANCIA_CURTA, 2, 1);
+        scene.addAura(aura);
+        Map<CombatantSheet, Range> distances = standardDistances();
+        distances.put(fada, Range.ADJACENTE);
+
+        List<CombatantSheet> bound = scene.refreshAura(holder, holderContext(distances));
+
+        assertFalse(fada.getForcedTargeting().isPresent());
+        assertFalse(bound.contains(fada));
+        // The budget of 1 went to the foe it really caught, not to the one it bounced off.
+        assertEquals(List.of(nearFoe), bound);
+    }
+
+    /** Each caught foe counts down their own Duração, so a late catch gets a full one. */
+    @Test
+    void aFoeCaughtLaterStartsTheirOwnFullDuracao() {
+        startCombat();
+        activate(3);
+        scene.refreshAura(holder, holderContext(standardDistances()));
+        assertEquals(3, nearFoe.getForcedTargeting().orElseThrow().getRemainingRounds());
+
+        finishRound();
+
+        Map<CombatantSheet, Range> closedIn = standardDistances();
+        closedIn.put(farFoe, Range.DISTANCIA_CURTA);
+        scene.refreshAura(holder, holderContext(closedIn));
+
+        assertEquals(3, farFoe.getForcedTargeting().orElseThrow().getRemainingRounds());
+        assertEquals(2, nearFoe.getForcedTargeting().orElseThrow().getRemainingRounds());
     }
 }

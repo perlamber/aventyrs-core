@@ -1,8 +1,15 @@
 package org.aventyrs.core.title;
 
+import org.aventyrs.core.character.Character;
+import org.aventyrs.core.character.CriticalDamage;
+import org.aventyrs.core.item.Weapon;
 import org.aventyrs.core.scene.SceneContext;
+import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.InteractionResult;
+import org.aventyrs.core.skill.AttackSource;
+import org.aventyrs.core.skill.CriticalResult;
+import org.aventyrs.core.skill.SkillType;
 
 import java.util.List;
 import java.util.Optional;
@@ -98,6 +105,143 @@ public interface AventyrTitle {
      */
     default int resolveBaseDefesasBonus(SceneContext sceneContext) {
         return 0;
+    }
+
+    /**
+     * {@link #resolveBaseDefesasBonus(SceneContext)} for a Título whose Defesas depend on its
+     * holder — what they hold in hand, what they wear, their own combat-scoped state — or on
+     * being held as the Título Primário. {@code DefenseServiceImpl} calls this form; it delegates
+     * to the short one by default, so a Título reading only its {@code SceneContext} (Santo)
+     * overrides that one and needs nothing here.
+     *
+     * @param holder  who holds this Título — never {@code null} from {@code DefenseServiceImpl}
+     * @param sheet   the holder's live sheet, or {@code null} on a {@code Character}-only path,
+     *                which reads as "no combat-scoped state"
+     * @param primary whether this instance sits in {@code Character#getPrimaryTitle()} — resolved
+     *                by the caller, never self-reported (see this interface's javadoc)
+     */
+    default int resolveBaseDefesasBonus(final SceneContext sceneContext, final Character holder,
+                                        final CombatantSheet sheet, final boolean primary) {
+        return resolveBaseDefesasBonus(sceneContext);
+    }
+
+    /**
+     * How many steps this Título scales up weapon's Dano Base for its holder — "o Dano Base de
+     * seus ataques com Armas Naturais aumentam em +1". Summed by {@code DamageBaseServiceImpl}
+     * beside the Talento/Perícia/equipment/Excelência scale-ups. {@code weapon} is {@code null}
+     * on the unarmed-by-Perícia path. Zero by default.
+     *
+     * @param primary whether this instance is the holder's Título Primário
+     */
+    default int resolveDamageBaseIncrease(final Character holder, final Weapon weapon, final boolean primary) {
+        return 0;
+    }
+
+    /**
+     * How many <i>números</i> this Título widens holder's Margem Crítica Menor by on a roll of
+     * skillType made with attackSource — summed by {@code CriticalServiceImpl
+     * #sumCriticalMarginIncrease} beside every other source, so it reaches an attack and a Defesa
+     * roll alike. Zero by default.
+     */
+    default int resolveCriticalMarginIncrease(final SkillType skillType, final AttackSource attackSource,
+                                              final CombatantSheet holder) {
+        return 0;
+    }
+
+    /**
+     * How many <i>números</i> this Título widens holder's Margem Crítica <b>Maior</b> by on a roll
+     * of skillType made with attackSource — Campeão da Taverna's "A Margem Crítica … Maior de suas
+     * Armas Naturais aumenta em +1". Summed by {@code CriticalServiceImpl
+     * #sumMajorCriticalMarginIncrease}. Zero by default.
+     */
+    default int resolveMajorCriticalMarginIncrease(final SkillType skillType, final AttackSource attackSource,
+                                                   final CombatantSheet holder) {
+        return 0;
+    }
+
+    /**
+     * Efeitos Críticos this Título adds to holder's critical hits with attackSource, <em>on top of</em>
+     * the attack source's own — Punho Inigualável's "recebem Guilhotina como Efeito Crítico
+     * Adicional". Built and applied by {@code AttackDelivery}. Empty by default.
+     */
+    default List<org.aventyrs.core.effect.CriticalEffectType> resolveAdditionalCriticalEffects(
+            final SkillType skillType, final AttackSource attackSource, final CombatantSheet holder) {
+        return List.of();
+    }
+
+    /**
+     * How many <em>extra</em> times holder's attack with attackSource applies its own natural Efeito
+     * Crítico — Finalização's Corrente: "se este ataque não for um Acerto Crítico este ataque aplica o
+     * Efeito Crítico Menor de sua Arma Natural, se este ataque for uma Acerto Crítico o Efeito Crítico
+     * será aplicado uma vez adicional". {@code AttackDelivery} applies the natural effect this many
+     * more times on a critical hit, and this many times (at Menor) on any other hit. 0 by default.
+     */
+    default int resolveExtraNaturalCriticalEffectApplications(final CombatantSheet holder,
+                                                              final AttackSource attackSource) {
+        return 0;
+    }
+
+    /**
+     * Efeitos Críticos Defensivos this Título adds to holder's Defesa Acertos Críticos, beside the
+     * ones the worn Armadura/Escudo grant — Fantasma do Ringue's Ímpeto Defensivo, Cruz de Sangue's
+     * Contra-atacante. Empty by default.
+     */
+    default List<org.aventyrs.core.effect.DefensiveCriticalEffectType> resolveAdditionalDefensiveCriticalEffects(
+            final CombatantSheet holder) {
+        return List.of();
+    }
+
+    /**
+     * What this Título adds to the Dano Crítico of a critical hit with attackSource — summed by
+     * {@code CriticalServiceImpl#getCriticalDamage} on top of the baseline Vantagem.
+     * {@link CriticalDamage#NONE} by default.
+     */
+    default CriticalDamage resolveCriticalDamage(final SkillType skillType, final AttackSource attackSource,
+                                                 final CriticalResult criticalResult, final CombatantSheet holder) {
+        return CriticalDamage.NONE;
+    }
+
+    /**
+     * A bonus this Título gives holder's attack roll against attackTarget — a Vantagem scoped to
+     * what the attack is made with, whom it is made against, or a budget of attacks the holder
+     * still has. Summed by {@code AbstractSkillInteraction} on its attack-target pass, so only an
+     * attack with a named target sees it. Zero by default.
+     */
+    default int resolveAttackRollBonus(final SkillType skillType, final AttackSource attackSource,
+                                       final CombatantSheet holder, final CombatantSheet attackTarget,
+                                       final SceneContext sceneContext) {
+        return 0;
+    }
+
+    /**
+     * A flat addition this Título makes to holder's dano roll against attackTarget — "Vantagem
+     * em … Danos" is a flat +2 here as everywhere. Summed into the same {@code DamageBonus} as
+     * every other source, named {@code DamageContributionSource#TITLE}. Zero by default.
+     */
+    default int resolveDamageRollBonus(final SkillType skillType, final AttackSource attackSource,
+                                       final CombatantSheet holder, final CombatantSheet attackTarget,
+                                       final SceneContext sceneContext) {
+        return 0;
+    }
+
+    /**
+     * What this Título changes about the attack holder is about to build that this core cannot
+     * apply itself — dice it never rolls, a PA price it never charges, a Defesa and a
+     * damage type the caller chooses. See {@link TitleAttackModifiers#resolve}, the one query a
+     * caller makes. {@link TitleAttackModifiers#NONE} by default.
+     */
+    default TitleAttackModifiers resolveAttackModifiers(final CombatantSheet holder, final AttackSource attackSource,
+                                                        final CombatantSheet attackTarget,
+                                                        final SceneContext sceneContext) {
+        return TitleAttackModifiers.NONE;
+    }
+
+    /**
+     * Spends whatever budget of attacks this Título's traits hold that an attack with
+     * attackSource uses up — see {@link TitleAttackModifiers#consumeCharges}. Called by the
+     * caller <b>after</b> the attack resolves, since the roll reads the budget. No-op by default.
+     */
+    default void consumeAttackCharges(final CombatantSheet holder, final AttackSource attackSource) {
     }
 
     /**

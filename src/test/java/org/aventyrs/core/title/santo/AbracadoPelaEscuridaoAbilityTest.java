@@ -40,7 +40,7 @@ class AbracadoPelaEscuridaoAbilityTest {
     @Test
     void onlyFurorDeSylphReportsIsSupremeTrue() {
         assertFalse(AbracadoPelaEscuridaoAbility.SACRIFICIO_YMIRIANO.isSupreme());
-        assertFalse(AbracadoPelaEscuridaoAbility.ESPINHOS_DE_GAEA.isSupreme());
+        assertFalse(AbracadoPelaEscuridaoAbility.ESPINHOS_VENENOS_DE_GAEA.isSupreme());
         assertFalse(AbracadoPelaEscuridaoAbility.PLACIDEZ_DE_UNDINE_RANCOR_DE_HALOI.isSupreme());
         assertTrue(AbracadoPelaEscuridaoAbility.FUROR_DE_SYLPH.isSupreme());
     }
@@ -52,9 +52,9 @@ class AbracadoPelaEscuridaoAbilityTest {
     }
 
     @Test
-    void espinhosDeGaeaHasNoFixedPdCostOnlyAVariablePvOne() {
-        assertEquals(PDCost.fixed(0), AbracadoPelaEscuridaoAbility.ESPINHOS_DE_GAEA.getPDCost());
-        assertEquals(ActionCost.ofActionPoints(2), AbracadoPelaEscuridaoAbility.ESPINHOS_DE_GAEA.getActionPointCost());
+    void espinhosVenenosDeGaeaHasNoFixedPdCostOnlyAVariablePvOne() {
+        assertEquals(PDCost.fixed(0), AbracadoPelaEscuridaoAbility.ESPINHOS_VENENOS_DE_GAEA.getPDCost());
+        assertEquals(ActionCost.ofActionPoints(2), AbracadoPelaEscuridaoAbility.ESPINHOS_VENENOS_DE_GAEA.getActionPointCost());
     }
 
     @Test
@@ -101,26 +101,20 @@ class AbracadoPelaEscuridaoAbilityTest {
         assertEquals(3, AbracadoPelaEscuridaoAbility.FUROR_DE_SYLPH.resolveVigorPvCost(character));
     }
 
+    /** V19 prices Espinhos Venenos de Gaea in Vigor PV too, like its two siblings. */
     @Test
-    void resolveVigorPvCostDoesNotApplyToTheOtherTwoConstants() {
+    void resolveVigorPvCostMatchesVigorsOwnTotalForEspinhosVenenosDeGaea() {
         Character character = characterWithVigor(5);
 
-        assertEquals(0, AbracadoPelaEscuridaoAbility.ESPINHOS_DE_GAEA.resolveVigorPvCost(character));
+        assertEquals(5, AbracadoPelaEscuridaoAbility.ESPINHOS_VENENOS_DE_GAEA.resolveVigorPvCost(character));
+    }
+
+    /** Placidez is the one PD-priced constant here, so it charges no PV at all. */
+    @Test
+    void resolveVigorPvCostDoesNotApplyToPlacidez() {
+        Character character = characterWithVigor(5);
+
         assertEquals(0, AbracadoPelaEscuridaoAbility.PLACIDEZ_DE_UNDINE_RANCOR_DE_HALOI.resolveVigorPvCost(character));
-    }
-
-    @Test
-    void resolveDurationFromPvSpentMatchesEspinhosDeGaeasOwnFormula() {
-        assertEquals(1, AbracadoPelaEscuridaoAbility.ESPINHOS_DE_GAEA.resolveDurationFromPvSpent(1));
-        assertEquals(2, AbracadoPelaEscuridaoAbility.ESPINHOS_DE_GAEA.resolveDurationFromPvSpent(2));
-        assertEquals(4, AbracadoPelaEscuridaoAbility.ESPINHOS_DE_GAEA.resolveDurationFromPvSpent(6));
-    }
-
-    @Test
-    void resolveDurationFromPvSpentDoesNotApplyToTheOtherThreeConstants() {
-        assertEquals(0, AbracadoPelaEscuridaoAbility.SACRIFICIO_YMIRIANO.resolveDurationFromPvSpent(6));
-        assertEquals(0, AbracadoPelaEscuridaoAbility.PLACIDEZ_DE_UNDINE_RANCOR_DE_HALOI.resolveDurationFromPvSpent(6));
-        assertEquals(0, AbracadoPelaEscuridaoAbility.FUROR_DE_SYLPH.resolveDurationFromPvSpent(6));
     }
 
     @Test
@@ -133,7 +127,7 @@ class AbracadoPelaEscuridaoAbilityTest {
     @Test
     void resolveEnhancedAttackCountFromPvSpentDoesNotApplyToTheOtherThreeConstants() {
         assertEquals(0, AbracadoPelaEscuridaoAbility.SACRIFICIO_YMIRIANO.resolveEnhancedAttackCountFromPvSpent(6));
-        assertEquals(0, AbracadoPelaEscuridaoAbility.ESPINHOS_DE_GAEA.resolveEnhancedAttackCountFromPvSpent(6));
+        assertEquals(0, AbracadoPelaEscuridaoAbility.ESPINHOS_VENENOS_DE_GAEA.resolveEnhancedAttackCountFromPvSpent(6));
         assertEquals(0, AbracadoPelaEscuridaoAbility.PLACIDEZ_DE_UNDINE_RANCOR_DE_HALOI.resolveEnhancedAttackCountFromPvSpent(6));
     }
 
@@ -154,7 +148,7 @@ class AbracadoPelaEscuridaoAbilityTest {
     @Test
     void onlyFurorDeSylphRequiresOtherAbilities() {
         assertEquals(0, AbracadoPelaEscuridaoAbility.SACRIFICIO_YMIRIANO.getRequiredOtherAbilities());
-        assertEquals(0, AbracadoPelaEscuridaoAbility.ESPINHOS_DE_GAEA.getRequiredOtherAbilities());
+        assertEquals(0, AbracadoPelaEscuridaoAbility.ESPINHOS_VENENOS_DE_GAEA.getRequiredOtherAbilities());
         assertEquals(0, AbracadoPelaEscuridaoAbility.PLACIDEZ_DE_UNDINE_RANCOR_DE_HALOI.getRequiredOtherAbilities());
         assertEquals(2, AbracadoPelaEscuridaoAbility.FUROR_DE_SYLPH.getRequiredOtherAbilities());
     }
@@ -190,21 +184,21 @@ class AbracadoPelaEscuridaoAbilityTest {
     void isEligibleAcceptsFurorDeSylphOnceEnoughSiblingAbilitiesAreHeld() {
         AventyrTitle title = new Santo(
                 List.of(SantoSpecialization.ABRACADO_PELA_ESCURIDAO),
-                List.of(AbracadoPelaEscuridaoAbility.SACRIFICIO_YMIRIANO, AbracadoPelaEscuridaoAbility.ESPINHOS_DE_GAEA));
+                List.of(AbracadoPelaEscuridaoAbility.SACRIFICIO_YMIRIANO, AbracadoPelaEscuridaoAbility.ESPINHOS_VENENOS_DE_GAEA));
 
         assertTrue(AbracadoPelaEscuridaoAbility.FUROR_DE_SYLPH.isEligible(title));
     }
 
-    // Only SACRIFICIO_YMIRIANO is activatable: ESPINHOS_DE_GAEA's whole benefit is retaliation
-    // damage, FUROR_DE_SYLPH's +1PA has no Duração in Rodadas to be granted for, and
-    // PLACIDEZ_DE_UNDINE_RANCOR_DE_HALOI needs "this one delivered attack" scoping.
+    /** All four are activatable now — each pays its own cost and reports or applies its effect. */
     @Test
-    void onlySacrificioYmirianoReportsAnInteractionClass() {
+    void everyConstantReportsItsOwnInteractionClass() {
         assertEquals(Optional.of(SacrificioYmirianoInteraction.class),
                 AbracadoPelaEscuridaoAbility.SACRIFICIO_YMIRIANO.getInteractionClass());
-        assertEquals(Optional.empty(), AbracadoPelaEscuridaoAbility.ESPINHOS_DE_GAEA.getInteractionClass());
-        assertEquals(Optional.empty(),
+        assertEquals(Optional.of(EspinhosVenenosDeGaeaInteraction.class),
+                AbracadoPelaEscuridaoAbility.ESPINHOS_VENENOS_DE_GAEA.getInteractionClass());
+        assertEquals(Optional.of(PlacidezDeUndineRancorDeHaloiInteraction.class),
                 AbracadoPelaEscuridaoAbility.PLACIDEZ_DE_UNDINE_RANCOR_DE_HALOI.getInteractionClass());
-        assertEquals(Optional.empty(), AbracadoPelaEscuridaoAbility.FUROR_DE_SYLPH.getInteractionClass());
+        assertEquals(Optional.of(FurorDeSylphInteraction.class),
+                AbracadoPelaEscuridaoAbility.FUROR_DE_SYLPH.getInteractionClass());
     }
 }

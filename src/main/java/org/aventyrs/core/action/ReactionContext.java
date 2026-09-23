@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.NonNull;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.CombatantSheet;
+import org.aventyrs.core.skill.SkillType;
 
 /**
  * Everything the question "what can this combatant react with right now" needs, bundled — the
@@ -41,6 +42,22 @@ public class ReactionContext {
     /** Who caused the trigger, when that is a combatant — the attacker. {@code null} otherwise. */
     private final CombatantSheet attacker;
 
+    /** The Perícia of the attack behind the trigger, when there is one. {@code null} otherwise. */
+    private final SkillType attackSkill;
+
+    /**
+     * Whether the attack behind the trigger names the reactor as its <b>only</b> target — false
+     * for a multi-target attack. {@code true} by default, since an ordinary attack has one.
+     */
+    @Builder.Default
+    private final boolean soleTarget = true;
+
     /** The Rodada this is happening in, for the counters that vary by Turn. */
     private final int turnNumber;
+
+    /**
+     * The already-mitigated damage about to land, for {@link ReactionTrigger#SELF_WOULD_DROP_TO_ZERO_HP};
+     * {@code null} for every other trigger.
+     */
+    private final Integer pendingDamage;
 }

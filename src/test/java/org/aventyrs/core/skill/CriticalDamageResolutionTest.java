@@ -89,6 +89,31 @@ class CriticalDamageResolutionTest {
         assertEquals(CriticalResult.ACERTO_CRITICO_MENOR, meleeCritical(sheet, SIXTEEN, decisiva));
     }
 
+    /** Decisiva's Favor, "Margem Crítica Maior +1" — gated on Destreza 5, so 17 becomes a Maior. */
+    @Test
+    void decisivasFavorWidensTheMaiorMarginForAWielderMeetingItsRequisitos() {
+        AbstractWeapon decisiva = weapon(ItemCategory.HEAVY_BLADE);
+        decisiva.setMasterpiece(OffensiveMasterpiece.DECISIVA);
+
+        assertEquals(CriticalResult.ACERTO_CRITICO_MAIOR,
+                meleeCritical(sheetWielding(Map.of(AttributeDomain.DEXTERITY, 5), decisiva), List.of(6, 6, 5), decisiva));
+        assertEquals(CriticalResult.ACERTO_CRITICO_MENOR,
+                meleeCritical(sheetWielding(decisiva), List.of(6, 6, 5), decisiva));
+    }
+
+    /** Resistência Absoluta: "A Margem Crítica Menor/Maior dos ataques sofridos é reduzida em -1". */
+    @Test
+    void resistenciaAbsolutaPushesBothMarginsBackByOne() {
+        CharacterSheet target = sheetWielding();
+        target.applyEffect(new org.aventyrs.core.sheet.TemporaryBonus(
+                org.aventyrs.core.modifier.ModifierType.ABSOLUTE_DAMAGE_REDUCTION, 2, 3));
+        org.aventyrs.core.character.services.CriticalService service =
+                new org.aventyrs.core.character.services.CriticalServiceImpl();
+
+        assertEquals(1, service.getLesserCriticalResistance(target, null));
+        assertEquals(1, service.getMajorCriticalResistance(target, null));
+    }
+
     /** …and only its own: the other weapon in the same loadout keeps the default margin. */
     @Test
     void decisivaWidensNoOtherWeaponInTheSameLoadout() {

@@ -71,14 +71,16 @@ class SantoIntegrationTest {
                 List.of(SantoAbility.BASTIAO_DOS_NECESSITADOS, SantoAbility.GUARDA_VIDAS));
 
         // BASTIAO_DOS_NECESSITADOS is a Habilidade (doesn't count), GUARDA_VIDAS is a Suprema
-        // (counts) — 0 Especializações + 1 Suprema.
-        assertEquals(1, santo.resolveMinorCriticalImmunityRounds());
+        // (counts) — V19's "1+ número de Especializações e Supremas" is 1 + (0 + 1).
+        assertEquals(2, santo.resolveMinorCriticalImmunityRounds());
     }
 
     @Test
     void damageServiceImplPicksUpBastiaoDosNecessitadosThroughAFullApplyDamageCall() {
+        // 3 Habilidades, so Bastião's self-facing RDS is half of "1+ Metade das Habilidades" = 1.
         Character holder = CharacterFixture.blank(CharacterFixture.BLANK).build();
-        holder.grantTitle(new Santo(List.of(), List.of(SantoAbility.BASTIAO_DOS_NECESSITADOS)), TitleSlot.PRIMARY);
+        holder.grantTitle(new Santo(List.of(), List.of(SantoAbility.BASTIAO_DOS_NECESSITADOS,
+                SantoAbility.PROTECAO_UNGIDA, SantoAbility.GUARDA_VIDAS)), TitleSlot.PRIMARY);
         CharacterSheet holderSheet = CharacterSheet.of(holder, new Player());
 
         Character allyCharacter = CharacterFixture.blank(CharacterFixture.BLANK).build();
@@ -89,8 +91,8 @@ class SantoIntegrationTest {
 
         int totalDamageTaken = damageService.applyDamage(holderSheet, sceneContext, 10, false);
 
-        assertEquals(10 - DamageService.DEFAULT_DAMAGE_REDUCTION, totalDamageTaken);
-        assertEquals(10 - DamageService.DEFAULT_DAMAGE_REDUCTION, holderSheet.getDamageTaken());
+        assertEquals(9, totalDamageTaken);
+        assertEquals(9, holderSheet.getDamageTaken());
     }
 
     /**
@@ -136,7 +138,7 @@ class SantoIntegrationTest {
                         .build());
 
         assertSame(santoSheet, reaction.getRedirectedAttackTarget());
-        assertEquals(pdBefore - 2, determinationPointsService.getCurrentDeterminationPoints(santoCharacter, santoSheet));
+        assertEquals(pdBefore - 3, determinationPointsService.getCurrentDeterminationPoints(santoCharacter, santoSheet));
 
         // 3. The attack is built naming the redirected target, and resolved as any other attack —
         // "o ataque ainda deve superar as suas Defesas" holds because these are the Santo's.

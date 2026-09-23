@@ -1,5 +1,6 @@
 package org.aventyrs.core.combat;
 
+import org.aventyrs.core.effect.CriticalEffectType;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Singular;
@@ -37,11 +38,23 @@ public class DeliveredAttackResult {
     private final int requiredTotal;
 
     /**
-     * The provoking-Aura malus already included in {@link #attackTotal}, and so in every additional target's comparison too — {@code Skill#DISADVANTAGE_MALUS} when a
-     * bound attacker, having attacked the Aura's holder this Rodada, attacks someone else; 0
-     * otherwise. Reported so a UI can show where the difference came from.
+     * Whether a provoking Aura makes this attack deal Meio-Dano — {@code true} when a bound
+     * attacker, having already attacked the Aura's holder this Rodada, attacks someone else
+     * ({@code AbencoadoPelaLuzAbility#ORGULHO_ELDURIANO}).
+     *
+     * <p><b>Applied, not merely reported</b>: when true the primary target's chain head is marked
+     * {@code DamageInteraction#halvingDamage()}, exactly as an additional target's always is. It is
+     * surfaced here so a UI can show where the reduction came from. It does <em>not</em> touch
+     * {@link #attackTotal} — V19 moved this penalty off the roll and onto the damage.
      */
-    private final int auraPenalty;
+    private final boolean auraHalvesDamage;
+
+    /**
+     * What the defender's thorns deal back to the attacker, or {@code null} when nothing does —
+     * see {@link Retaliation}, which carries the whole calculation. <b>Reported, never dealt</b>:
+     * this core sends damage only one way, so the caller applies it against the attacker's sheet.
+     */
+    private final Retaliation retaliation;
 
     /**
      * By how much the attack beat the Defesa — {@code attackTotal - requiredTotal}, so zero or
@@ -98,4 +111,12 @@ public class DeliveredAttackResult {
      */
     @Singular
     private final List<DeliveredAttackTargetResult> additionalTargetResults;
+
+    /**
+     * Efeitos Críticos this attack should have applied by identity but could not be built — no
+     * {@code DiceRoller} for a dice-bearing one, or no mechanism at all (Desmembrar). Empty on an
+     * attack that triggered none. For the caller to adjudicate, never silently dropped.
+     */
+    @Singular("unappliedCriticalEffect")
+    private final List<CriticalEffectType> unappliedCriticalEffects;
 }

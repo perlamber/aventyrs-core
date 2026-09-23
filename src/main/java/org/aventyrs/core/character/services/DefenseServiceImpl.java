@@ -9,6 +9,7 @@ import org.aventyrs.core.item.Item;
 import org.aventyrs.core.modifier.ModifierResolver;
 import org.aventyrs.core.modifier.ModifierResolverImpl;
 import org.aventyrs.core.modifier.ModifierType;
+import org.aventyrs.core.sheet.AttackerGuard;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
 import org.aventyrs.core.skill.SkillExcellency;
@@ -38,7 +39,7 @@ public class DefenseServiceImpl implements DefenseService {
     public int getTotalDefense(final Character character, final DefenseType defenseType, final SceneContext sceneContext) {
         return sumAbilityModifiers(character, defenseType, null) + sumEquipment(character, defenseType, sceneContext)
                 + sumFeats(character, defenseType, sceneContext)
-                + sumTitleBaseDefesas(character, sceneContext);
+                + sumTitleBaseDefesas(character, sceneContext, null);
     }
 
     @Override
@@ -58,13 +59,29 @@ public class DefenseServiceImpl implements DefenseService {
         return sumAbilityModifiers(target.getCharacter(), defenseType, target)
                 + sumEquipment(target, defenseType, sceneContext, damageDescriptor)
                 + sumFeats(target.getCharacter(), defenseType, sceneContext, target)
-                + sumTitleBaseDefesas(target.getCharacter(), sceneContext)
+                + sumTitleBaseDefesas(target.getCharacter(), sceneContext, target)
                 + target.getTemporaryBonus(ModifierType.DEFESAS)
                 + target.getTemporaryBonus(defenseType.getModifierType())
                 // Desprevenido's -2 Defesas, and anything conferring it (Caído, Flanqueado,
                 // Cego, or the fear ladder while close enough to its origin).
                 + target.getConditionBonus(ModifierType.DEFESAS, sceneContext)
-                + target.getConditionBonus(defenseType.getModifierType(), sceneContext);
+                + target.getConditionBonus(defenseType.getModifierType(), sceneContext)
+                + sumGuardsAgainstOpponent(target, sceneContext);
+    }
+
+    /**
+     * Defesas this target holds against <b>one attacker</b> — {@code sheet.AttackerGuard}s
+     * (Prevenir, Ímpeto Defensivo Menor, Rolamento Ofensivo) matched against the defence roll's
+     * {@code SceneContext#getOpposedCharacter()}, which is the attacker on a defence roll. No
+     * context, or none naming an opponent, sees none — "cannot tell" withholds.
+     */
+    private int sumGuardsAgainstOpponent(final CombatantSheet target, final SceneContext sceneContext) {
+        if (sceneContext == null) {
+            return 0;
+        }
+        return target.getGuardsAgainst(sceneContext.getOpposedCharacter()).stream()
+                .mapToInt(AttackerGuard::getDefesasBonus)
+                .sum();
     }
 
     /**
@@ -87,9 +104,11 @@ public class DefenseServiceImpl implements DefenseService {
      * granted as a real Aura by {@code Scene#refreshProjectedAuras} instead, arriving in the
      * {@code getTemporaryBonus(DEFESAS)} term below.
      */
-    private int sumTitleBaseDefesas(final Character character, final SceneContext sceneContext) {
+    private int sumTitleBaseDefesas(final Character character, final SceneContext sceneContext,
+                                    final CombatantSheet sheet) {
         return character.getAllTitles().stream()
-                .mapToInt(title -> title.resolveBaseDefesasBonus(sceneContext))
+                .mapToInt(title -> title.resolveBaseDefesasBonus(sceneContext, character, sheet,
+                        character.getPrimaryTitle() == title))
                 .sum();
     }
 

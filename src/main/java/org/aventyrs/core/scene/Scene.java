@@ -5,6 +5,7 @@ import org.aventyrs.core.rest.RestType;
 import org.aventyrs.core.sheet.Blessing;
 import org.aventyrs.core.sheet.CombatantAction;
 import org.aventyrs.core.sheet.CombatantSheet;
+import org.aventyrs.core.sheet.ForcedTargeting;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.TargetScope;
 import org.aventyrs.core.sheet.TemporaryBonus;
@@ -29,6 +30,7 @@ import static org.aventyrs.core.util.TranslatableMessages.INITIATIVE_NOT_WON;
 import static org.aventyrs.core.util.TranslatableMessages.INVALID_TURN_CURSOR;
 import static org.aventyrs.core.util.TranslatableMessages.NO_PARTICIPANTS_IN_SCENE;
 import static org.aventyrs.core.util.TranslatableMessages.SCENE_ALREADY_IN_COMBAT;
+import static org.aventyrs.core.util.TranslatableMessages.SCENE_NOT_IN_COMBAT;
 
 /**
  * A Cena: the scope many rules key off (e.g. "uma vez a cada Cena", "ao longo da Cena").
@@ -588,6 +590,25 @@ public class Scene {
     }
 
     /**
+     * Combat ends in this Scene — the mirror of {@link #startCombat()}, and the GM's "encerrar
+     * combate". Turns {@link #isCombatScene()} off, puts {@link #getCurrentRound()} back to 0 (a
+     * later combat counts its Rodadas afresh, the same way a Scene that never fought stays on 0),
+     * and calls {@link CombatantSheet#endCombat()} on every participant, which drops whatever
+     * each holds "até o final da Cena".
+     *
+     * @throws IllegalOperationException ({@code SCENE_NOT_IN_COMBAT}) if this Scene is not a Cena
+     *                                    de Combate
+     */
+    public void endCombat() {
+        if (!combatScene) {
+            throw new IllegalOperationException(SCENE_NOT_IN_COMBAT);
+        }
+        combatScene = false;
+        currentRound = 0;
+        allEntries().forEach(entry -> entry.getCombatantSheet().endCombat());
+    }
+
+    /**
      * Which Round this Scene is currently on. 0-based: 0 is the first Round, same
      * convention as the turnNumber used across {@code ActionPointsService}.
      */
@@ -772,6 +793,17 @@ public class Scene {
      * since their last Descanso Longo ({@link CombatantSheet#isAffectedUntilRest}). Binding
      * marks them for that Descanso too.
      *
+     * <p><b>An Aura binds at most as many foes as its PD paid for</b> ({@code
+     * ActiveAura#getMaxTargets()}); once full it binds no one else, even on a later refresh. Which
+     * foes fill those slots is therefore first-come, in {@link #getEnemies(CombatantSheet)} order —
+     * the rules name no priority, and this core has no way to rank them.
+     *
+     * <p><b>What binding actually does is cast an Encantamento.</b> Each caught foe receives a
+     * {@code sheet.ForcedTargeting} through {@code CombatantSheet#applyEnchantment}, so their own
+     * immunity and their own Duração modifiers decide what lands — an immune foe takes nothing,
+     * does not count against the Aura's budget, and is not returned. They are still marked
+     * against a Descanso Longo either way: the Aura reached them, whatever their skin did with it.
+     *
      * <p>This core does no geometry, so the caller calls this after any movement — the holder's
      * or a foe's, since distance is mutual — with a context built from the holder's own
      * position (e.g. {@link #buildContext}). A foe who leaves range stays bound; one who was
@@ -780,21 +812,44 @@ public class Scene {
      * @throws IllegalOperationException if holder was never added to this Scene
      */
     public List<CombatantSheet> refreshAura(final CombatantSheet holder, final SceneContext holderContext) {
-        List<CombatantSheet> enemies = getEnemies(holder);
+        // Nearest first. An Aura with a budget ("2PD para 1 único inimigo, então de +1PD para cada
+        // inimigo alvo adicional") stops catching once it is full, so the order decides *who* it
+        // caught — and initiative order, which getEnemies returns, is arbitrary with respect to the
+        // radius. A provocation that skipped the foe standing over you to taunt one at the far edge
+        // of Distância Curta would be indefensible; the one who misses out should be the furthest.
+        // Range is ordered nearest-to-farthest by declaration, so its natural order is the metric.
+        // Sorting is stable, so foes sharing a band keep their initiative order between them, and
+        // a foe whose distance is unknown sorts last rather than being dropped — it is still
+        // refused below, where "cannot tell" already reads as no.
+        List<CombatantSheet> enemies = new ArrayList<>(getEnemies(holder));
+        enemies.sort(Comparator.comparing(enemy -> {
+            Range distance = holderContext.getDistanceTo(enemy);
+            return distance == null ? Integer.MAX_VALUE : distance.ordinal();
+        }));
         List<CombatantSheet> newlyBound = new ArrayList<>();
         for (ActiveAura aura : activeAuras) {
             if (!aura.isHeldBy(holder)) {
                 continue;
             }
             for (CombatantSheet enemy : enemies) {
+                if (aura.isFull()) {
+                    break;
+                }
                 Range distance = holderContext.getDistanceTo(enemy);
                 if (distance == null || !distance.isWithin(aura.getRadius())
-                        || aura.isBound(enemy.getId()) || enemy.isAffectedUntilRest(aura.getSource())) {
+                        || enemy.getForcedTargeting().isPresent()
+                        || enemy.isAffectedUntilRest(aura.getSource())) {
                     continue;
                 }
-                aura.bind(enemy.getId());
+                // The Aura casts; the enemy's own sheet decides what lands. An immune foe takes
+                // nothing and is not counted against the Aura's budget — it never caught them.
+                boolean took = enemy.applyEnchantment(
+                        new ForcedTargeting(aura.getHolder(), aura.getEffectDurationInRounds()));
                 enemy.markAffectedUntilRest(aura.getSource(), RestType.LONGO);
-                newlyBound.add(enemy);
+                if (took) {
+                    aura.recordBinding();
+                    newlyBound.add(enemy);
+                }
             }
         }
         return newlyBound;
@@ -805,29 +860,20 @@ public class Scene {
      * binding attacker that attacker hasn't attacked yet this Rodada. Empty once it has, or when
      * nothing binds it.
      *
-     * <p><b>Simplification:</b> with two Auras binding the same attacker, the first one
-     * registered wins; the rules text doesn't say which provocation takes precedence.
+     * <p>Read off the attacker's <b>own</b> {@code sheet.ForcedTargeting}, not from this Scene's
+     * Aura list: the Encantamento lives on whoever it binds. A combatant carries at most one, so
+     * competing provocations are resolved where the effect is applied, not here.
      */
     public Optional<CombatantSheet> getForcedAttackTarget(final CombatantSheet attacker) {
-        return activeAuras.stream()
-                .filter(aura -> aura.isBound(attacker.getId()))
-                .filter(aura -> !aura.hasAttackedHolderIn(attacker.getId(), currentRound))
-                .map(ActiveAura::getHolder)
-                .findFirst();
+        return attacker.getForcedTargeting()
+                .filter(compulsion -> !compulsion.hasAttackedEnchanterIn(currentRound))
+                .map(ForcedTargeting::getEnchanter);
     }
 
-    /**
-     * The malus on attacker's attack against defender that an Aura imposes — {@link
-     * Skill#DISADVANTAGE_MALUS} when an Aura binds attacker, attacker has already attacked
-     * that Aura's holder this Rodada, and defender is someone else; 0 otherwise. Not stacked
-     * across Auras: Desvantagem is one flat malus.
-     */
-    public int getAuraAttackPenalty(final CombatantSheet attacker, final CombatantSheet defender) {
-        boolean penalized = activeAuras.stream()
-                .anyMatch(aura -> aura.isBound(attacker.getId())
-                        && aura.hasAttackedHolderIn(attacker.getId(), currentRound)
-                        && !aura.isHeldBy(defender));
-        return penalized ? Skill.DISADVANTAGE_MALUS : 0;
+    public boolean auraHalvesDamage(final CombatantSheet attacker, final CombatantSheet defender) {
+        return attacker.getForcedTargeting()
+                .map(compulsion -> compulsion.halvesDamageAgainst(defender, currentRound))
+                .orElse(false);
     }
 
     /**
@@ -836,7 +882,7 @@ public class Scene {
      * and {@code AttackDelivery}/{@code AttackReceiver} stay report-only.
      */
     public void recordAttack(final CombatantSheet attacker, final CombatantSheet defender) {
-        activeAuras.forEach(aura -> aura.recordAttack(attacker.getId(), defender.getId(), currentRound));
+        attacker.getForcedTargeting().ifPresent(compulsion -> compulsion.recordAttack(defender, currentRound));
     }
 
     /**
@@ -942,6 +988,11 @@ public class Scene {
 
         if (removed) {
             activeAuras.removeIf(aura -> aura.isHeldBy(characterSheet));
+            // The Encantamentos this combatant's Aura cast are lifted with it. They live on the
+            // foes who took them, so nothing else would clear them — and a compulsion to attack
+            // somebody who has left the Scene is no compulsion at all: there is nobody left to be
+            // provoked by. Deliberate, and the one place a ForcedTargeting ends early.
+            liftForcedTargetingCastBy(characterSheet);
             // Both directions: the Auras this combatant was projecting stop, and whatever anyone
             // else's Aura was granting them comes off the sheet they are leaving with. An
             // open-ended bonus has no countdown to clear it, so missing either would strand it.
@@ -956,6 +1007,21 @@ public class Scene {
             });
         }
         return removed;
+    }
+
+    /**
+     * Lifts every {@code sheet.ForcedTargeting} enchanter cast, from whoever is still here.
+     * Called when they leave the Scene; see {@link #removeParticipant} for why.
+     */
+    private void liftForcedTargetingCastBy(final CombatantSheet enchanter) {
+        List<InitiativeEntry> everyone = new ArrayList<>(activeEntries);
+        everyone.addAll(pendingEntries);
+        for (InitiativeEntry entry : everyone) {
+            CombatantSheet combatant = entry.getCombatantSheet();
+            combatant.getForcedTargeting()
+                    .filter(compulsion -> compulsion.getEnchanter().getId().equals(enchanter.getId()))
+                    .ifPresent(combatant::removeEffect);
+        }
     }
 
     /** Position of characterSheet in entries by {@link CombatantSheet#getId()}, or {@code -1}. */

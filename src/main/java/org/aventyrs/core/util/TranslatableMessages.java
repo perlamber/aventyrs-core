@@ -13,6 +13,8 @@ public class TranslatableMessages {
     public static final String CHARACTER_SHEET_NOT_IN_SCENE = "CHARACTER_SHEET_NOT_IN_SCENE";
     public static final String INVALID_TURN_CURSOR = "INVALID_TURN_CURSOR";
     public static final String SCENE_ALREADY_IN_COMBAT = "SCENE_ALREADY_IN_COMBAT";
+    /** {@code Scene#endCombat()} was asked of a Scene that is not a Cena de Combate. */
+    public static final String SCENE_NOT_IN_COMBAT = "SCENE_NOT_IN_COMBAT";
     public static final String INVALID_SKILL_ROLL = "INVALID_SKILL_ROLL";
     public static final String INVALID_ACTION_COST = "INVALID_ACTION_COST";
 
@@ -92,6 +94,12 @@ public class TranslatableMessages {
     public static final String TITLE_ABILITY_REQUIRES_ARMOR_OR_SHIELD = "TITLE_ABILITY_REQUIRES_ARMOR_OR_SHIELD";
     /** The Título ability has already been activated as many times as it may be this Turno. */
     public static final String TITLE_ABILITY_ACTIVATION_LIMIT_REACHED = "TITLE_ABILITY_ACTIVATION_LIMIT_REACHED";
+    /** The Título choice was already made and "depois de escolhido não é possível mudar" — or the pick is not one of the offered options. */
+    public static final String TITLE_ABILITY_CHOICE_LOCKED = "TITLE_ABILITY_CHOICE_LOCKED";
+    /** The Título activation needs its activator armed with nothing but Armas Naturais, and a weapon is drawn. */
+    public static final String TITLE_ABILITY_REQUIRES_NATURAL_WEAPONS_ONLY = "TITLE_ABILITY_REQUIRES_NATURAL_WEAPONS_ONLY";
+    /** The Título activation's target is not an enemy within the distance the ability names. */
+    public static final String TITLE_ABILITY_TARGET_OUT_OF_RANGE = "TITLE_ABILITY_TARGET_OUT_OF_RANGE";
     public static final String REQUIRED_ATTRIBUTE_ABILITY_NOT_HELD = "REQUIRED_ATTRIBUTE_ABILITY_NOT_HELD";
     public static final String TITLE_NOT_HELD = "TITLE_NOT_HELD";
     public static final String EXTRA_SUPREMA_ALREADY_GRANTED = "EXTRA_SUPREMA_ALREADY_GRANTED";
@@ -301,4 +309,28 @@ public class TranslatableMessages {
 
     /** No Sessão with the requested number exists in the Campanha. */
     public static final String SESSION_NOT_FOUND = "SESSION_NOT_FOUND";
+
+    /** An activated ability's temporary Ego cost (e.g. "1 Ponto Temporário de Autocontrole") exceeds what the holder has. */
+    public static final String NOT_ENOUGH_EGO_POINTS = "NOT_ENOUGH_EGO_POINTS";
+
+    /** The actor is in a state that forbids this Perícia — Frenesi's "Perícias que exijam concentração ou raciocínio". */
+    public static final String SKILL_USE_PREVENTED = "SKILL_USE_PREVENTED";
+
+    /** The trait "só pode ser ativada durante o efeito de Frenesi", and its activator is not in Frenesi. */
+    public static final String FRENZY_REQUIRED = "FRENZY_REQUIRED";
+
+    /** Frenesi was started while one is already running. */
+    public static final String FRENZY_ALREADY_ACTIVE = "FRENZY_ALREADY_ACTIVE";
+
+    /** Frenesi "não pode ser interrompida voluntariamente" without Uno com a Ira. */
+    public static final String FRENZY_CANNOT_END_VOLUNTARILY = "FRENZY_CANNOT_END_VOLUNTARILY";
+
+    /** The trait needs Titã Enlouquecido active in the current Frenesi. */
+    public static final String TITA_ENLOUQUECIDO_REQUIRED = "TITA_ENLOUQUECIDO_REQUIRED";
+
+    /** A beneficial Magia from someone else failed to overcome a target treating every Magia as hostile. */
+    public static final String SPELL_RESISTED_AS_HOSTILE = "SPELL_RESISTED_AS_HOSTILE";
+
+    /** The trait's own trigger has not happened — Frenesi Assustador's "ao derrotar um inimigo … ou após desferir um Acerto Crítico". */
+    public static final String TITLE_ABILITY_TRIGGER_NOT_MET = "TITLE_ABILITY_TRIGGER_NOT_MET";
 }

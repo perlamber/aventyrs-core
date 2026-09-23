@@ -67,10 +67,12 @@ class SantoTest {
     }
 
     @Test
-    void ignoreCriticalEffectDurationIsZeroWithNoSpecializationsOrSupremas() {
+    void ignoreCriticalEffectDurationIsOneWithNoSpecializationsOrSupremas() {
+        // V19 reads "1+ número de Especializações e Supremas", so a bare Santo still ignores
+        // Efeitos Críticos Menores for the first Rodada — the previous revision gave them none.
         Santo santo = new Santo(List.of(), List.of());
 
-        assertEquals(0, santo.resolveMinorCriticalImmunityRounds());
+        assertEquals(1, santo.resolveMinorCriticalImmunityRounds());
     }
 
     @Test
@@ -80,7 +82,7 @@ class SantoTest {
         // not count.
         Santo santo = new Santo(List.of(), List.of(SantoAbility.BASTIAO_DOS_NECESSITADOS, SantoAbility.GUARDA_VIDAS));
 
-        assertEquals(1, santo.resolveMinorCriticalImmunityRounds());
+        assertEquals(2, santo.resolveMinorCriticalImmunityRounds());
     }
 
     @Test
