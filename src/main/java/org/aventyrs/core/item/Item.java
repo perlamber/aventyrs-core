@@ -1,5 +1,6 @@
 package org.aventyrs.core.item;
 
+import org.aventyrs.core.effect.DefensiveCriticalEffectType;
 import java.util.List;
 
 import org.aventyrs.core.ability.ItemActiveAbility;
@@ -353,6 +354,28 @@ public interface Item {
      * reason: {@link OffensiveMasterpiece#DECISIVA}'s "Margem Crítica Menor +1" is a property of
      * the weapon it is fitted to, so a Decisiva adaga must not sharpen the espada being swung.
      */
+    /**
+     * The Efeito Crítico Defensivo this item grants its wearer on a Defesa's Acerto Crítico —
+     * "Apenas Armaduras e Escudos recebem Efeitos Críticos Defensivos". {@code null} by default;
+     * {@link CriticallyDefensiveItem} catalog entries answer it, and a copy answers for its template.
+     */
+    default DefensiveCriticalEffectType getDefensiveCriticalEffect() {
+        return null;
+    }
+
+    /**
+     * Margem Crítica <b>Maior</b> "números" this item's fitted Obra-Prima grants when weapon is the
+     * attack source — the twin of {@link #resolveEnhancementCriticalMarginIncrease}, host-scoped
+     * and wreck-gated on the same terms. Only a masterpiece names one ({@code
+     * OffensiveMasterpiece#DECISIVA}); no Aprimoramento does.
+     */
+    default int resolveEnhancementMajorCriticalMarginIncrease(final Weapon weapon, final Character character) {
+        if (isDestroyed() || (getType() == ItemType.OFFENSIVE && this != weapon) || getMasterpiece() == null) {
+            return 0;
+        }
+        return getMasterpiece().resolveMajorCriticalMarginIncrease(weapon, character);
+    }
+
     default int resolveEnhancementCriticalMarginIncrease(final Weapon weapon, final Character character) {
         if (isDestroyed() || (getType() == ItemType.OFFENSIVE && this != weapon)) {
             return 0;

@@ -35,9 +35,8 @@ public enum PunhoInigualavelAbility implements AventyrTitleAbility {
     // element (SenhorDaBriga#resolveAttackModifiers); the caller spends one per attack through
     // TitleAttackModifiers#consumeCharges. Grande Mestre das Brigas: rolled against DM (a
     // DefenseType.MAGIC the caller rolls against) and typed Dano Mágico of the element.
-    // TODO Grande Mestre's "seu Efeito Crítico é alterado para Cataclismo" is reported as
-    // TitleAttackModifiers#criticalEffectOverride, but CriticalEffectType.CATACLISMO has no class and
-    // no weapon's own Efeito Crítico is applied either, so nothing changes at the table yet.
+    // Grande Mestre's "seu Efeito Crítico é alterado para Cataclismo" is real (0.0.49): the override
+    // replaces the Arma Natural's own Efeito Crítico when AttackDelivery builds it.
     IMPACTO_ELEMENTAL(
             "Escolha um Elemento entre Fogo, Magma, Terra, Água, Gelo, Ar, Eletricidade ou Natural, " +
             "depois de escolhido não é possível mudar o Elemento. Você recebe Vantagem em suas rolagens " +
@@ -53,13 +52,12 @@ public enum PunhoInigualavelAbility implements AventyrTitleAbility {
 
     // Requer Especialização Punho Inigualável. Real through RolamentoOfensivoInteraction: requires a
     // target enemy at Distância Curta (the activator's own SceneContext), and reports how far the
-    // roll carries (InteractionResult#getTeleportation — 2UD, 3UD under Grande Mestre) for the
+    // roll carries (InteractionResult#getMovementTowardTarget — 2UD, 3UD under Grande Mestre) for the
     // caller to move the token, since this core does no geometry. Grande Mestre's "Vantagem em
     // rolagens de Perícia de Ataque com Armas Naturais por 1 Rodada" is a one-Rodada
     // CombatantSheet#openActivationWindow read by SenhorDaBriga#resolveAttackRollBonus.
-    // TODO "Bônus de +3 em suas Defesas para resistir aos ataques do inimigo que você se aproximou":
-    // a Defesa bonus scoped to one attacker has no carrier — a Blessing reaches every attack alike,
-    // and DefenseService never learns who is attacking.
+    // "Bônus de +3 em suas Defesas para resistir aos ataques do inimigo que você se aproximou" is real
+    // (0.0.49): an AttackerGuard against the target, read against the defence roll's opposed character.
     ROLAMENTO_OFENSIVO(
             "Você pode rolar 2UD em direção a um inimigo em Distância Curta. Você recebe Bônus de +3 em " +
             "suas Defesas para resistir aos ataques do inimigo que você se aproximou por 1 Rodada. " +

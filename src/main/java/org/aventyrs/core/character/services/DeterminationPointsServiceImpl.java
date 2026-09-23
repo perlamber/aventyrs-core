@@ -37,7 +37,22 @@ public class DeterminationPointsServiceImpl implements DeterminationPointsServic
     }
 
     @Override
+    public int getDeterminationMultiplier(final Character character, final CombatantSheet sheet) {
+        if (sheet == null) {
+            return getDeterminationMultiplier(character);
+        }
+        return Math.max(1, getDeterminationMultiplier(character)
+                + sheet.getTemporaryBonus(ModifierType.DETERMINATION_MULTIPLIER));
+    }
+
+    @Override
+    public int getMaxDeterminationPoints(final Character character, final CombatantSheet sheet) {
+        return BASE_DETERMINATION_POINTS
+                + character.getEffectiveAttributeTotal(AttributeDomain.INSTINCT) * getDeterminationMultiplier(character, sheet);
+    }
+
+    @Override
     public int getCurrentDeterminationPoints(final Character character, final CombatantSheet characterSheet) {
-        return Math.max(0, getMaxDeterminationPoints(character) - characterSheet.getDeterminationSpent());
+        return Math.max(0, getMaxDeterminationPoints(character, characterSheet) - characterSheet.getDeterminationSpent());
     }
 }

@@ -1,5 +1,6 @@
 package org.aventyrs.core.title.senhordabriga;
 
+import org.aventyrs.core.effect.DefensiveCriticalEffectType;
 import lombok.NonNull;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CriticalDamage;
@@ -321,6 +322,52 @@ public class SenhorDaBriga implements AventyrTitle {
             }
         }
         return total;
+    }
+
+    /** Campeão da Taverna: "A Margem Crítica … Maior de suas Armas Naturais aumenta em +1". */
+    @Override
+    public int resolveMajorCriticalMarginIncrease(final SkillType skillType, final AttackSource attackSource,
+                                                  final CombatantSheet holder) {
+        return holder != null && skillType != null && skillType.isAttackSkill()
+                && holds(SenhorDaBrigaAbility.CAMPEAO_DA_TAVERNA) && isNaturalWeaponAttack(holder, attackSource)
+                ? CAMPEAO_MARGIN : 0;
+    }
+
+    /** Punho Inigualável: "Seus ataques com Armas Naturais recebem Guilhotina como Efeito Crítico Adicional". */
+    @Override
+    public List<CriticalEffectType> resolveAdditionalCriticalEffects(final SkillType skillType,
+                                                                     final AttackSource attackSource,
+                                                                     final CombatantSheet holder) {
+        return holder != null && holds(SenhorDaBrigaSpecialization.PUNHO_INIGUALAVEL)
+                && isNaturalWeaponAttack(holder, attackSource)
+                ? List.of(CriticalEffectType.GUILHOTINA) : List.of();
+    }
+
+    /**
+     * Finalização's Corrente, while its Rodada lasts: one extra application of the Arma Natural's
+     * own Efeito Crítico — at Menor on a hit that isn't critical, once more on one that is.
+     */
+    @Override
+    public int resolveExtraNaturalCriticalEffectApplications(final CombatantSheet holder,
+                                                             final AttackSource attackSource) {
+        return holder != null && isFinalizacaoActive(holder) && isNaturalWeaponAttack(holder, attackSource) ? 1 : 0;
+    }
+
+    /**
+     * Fantasma do Ringue's "recebem Ímpeto Defensivo como Efeito Crítico adicional", and Cruz de
+     * Sangue's "Suas rolagens de Defesas recebem Contra-atacante como um Efeito Crítico adicional"
+     * while its Rodada lasts.
+     */
+    @Override
+    public List<DefensiveCriticalEffectType> resolveAdditionalDefensiveCriticalEffects(final CombatantSheet holder) {
+        List<DefensiveCriticalEffectType> added = new ArrayList<>();
+        if (holds(SenhorDaBrigaSpecialization.FANTASMA_DO_RINGUE)) {
+            added.add(DefensiveCriticalEffectType.IMPETO_DEFENSIVO);
+        }
+        if (holder != null && holder.hasActivationWindow(FantasmaDoRingueAbility.CRUZ_DE_SANGUE)) {
+            added.add(DefensiveCriticalEffectType.CONTRA_ATACANTE);
+        }
+        return added;
     }
 
     @Override

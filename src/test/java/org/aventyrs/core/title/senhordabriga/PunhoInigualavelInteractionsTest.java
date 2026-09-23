@@ -5,6 +5,8 @@ import org.aventyrs.core.character.DamageType;
 import org.aventyrs.core.character.DefenseType;
 import org.aventyrs.core.character.SizeCategory;
 import org.aventyrs.core.character.services.CharacterSizeService;
+import org.aventyrs.core.character.services.DefenseService;
+import org.aventyrs.core.character.services.DefenseServiceImpl;
 import org.aventyrs.core.combat.AttackDelivery;
 import org.aventyrs.core.combat.DeliveredAttack;
 import org.aventyrs.core.combat.DeliveredAttackResult;
@@ -16,6 +18,7 @@ import org.aventyrs.core.monster.GenericMonster;
 import org.aventyrs.core.monster.MonsterSheet;
 import org.aventyrs.core.scene.Range;
 import org.aventyrs.core.scene.Scene;
+import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.ConditionType;
@@ -232,6 +235,62 @@ class PunhoInigualavelInteractionsTest {
 
         assertEquals(RolamentoOfensivoInteraction.DISTANCE, result.getMovementTowardTarget());
         assertFalse(holder.hasActivationWindow(PunhoInigualavelAbility.ROLAMENTO_OFENSIVO));
+    }
+
+    @Test
+    void rolamentoOfensivoGuardsAgainstTheApproachedEnemyOnly() {
+        SenhorDaBriga title = punho(PunhoInigualavelAbility.ROLAMENTO_OFENSIVO);
+        CharacterSheet holder = SenhorDaBrigaFixtures.holder(title);
+        CharacterSheet approached = SenhorDaBrigaFixtures.combatant();
+        CharacterSheet bystander = SenhorDaBrigaFixtures.combatant();
+        DefenseService defenseService = new DefenseServiceImpl();
+        int againstApproached = defenseService.getTotalDefense(holder, DefenseType.PHYSICAL, defending(approached));
+        int againstBystander = defenseService.getTotalDefense(holder, DefenseType.PHYSICAL, defending(bystander));
+
+        title.activateAbility(PunhoInigualavelAbility.ROLAMENTO_OFENSIVO,
+                TitleAbilityActivationRequest.builder().activator(holder).target(approached)
+                        .sceneContext(SenhorDaBrigaFixtures.context(0, Map.of(approached, Range.DISTANCIA_CURTA)))
+                        .build());
+
+        assertEquals(againstApproached + RolamentoOfensivoInteraction.APPROACHED_ENEMY_DEFESAS,
+                defenseService.getTotalDefense(holder, DefenseType.PHYSICAL, defending(approached)));
+        assertEquals(againstBystander,
+                defenseService.getTotalDefense(holder, DefenseType.PHYSICAL, defending(bystander)));
+    }
+
+    @Test
+    void rolamentoOfensivoLastsUntilTheActivatorsNextTurnBegins() {
+        SenhorDaBriga title = punho(PunhoInigualavelAbility.ROLAMENTO_OFENSIVO,
+                PunhoInigualavelAbility.AGARRAR_E_DERRUBAR, PunhoInigualavelAbility.GRANDE_MESTRE_DAS_BRIGAS);
+        CharacterSheet holder = SenhorDaBrigaFixtures.holder(title);
+        CharacterSheet approached = SenhorDaBrigaFixtures.combatant();
+        DefenseService defenseService = new DefenseServiceImpl();
+        int unguarded = defenseService.getTotalDefense(holder, DefenseType.PHYSICAL, defending(approached));
+        int guarded = unguarded + RolamentoOfensivoInteraction.APPROACHED_ENEMY_DEFESAS;
+
+        // Rodada 4: rolled on the activator's own Turn.
+        holder.startTurn(4);
+        title.activateAbility(PunhoInigualavelAbility.ROLAMENTO_OFENSIVO,
+                TitleAbilityActivationRequest.builder().activator(holder).target(approached)
+                        .sceneContext(SenhorDaBrigaFixtures.context(4, Map.of(approached, Range.DISTANCIA_CURTA)))
+                        .build());
+        holder.finishTurn();
+
+        // The approached enemy's Turn, and a Rodada boundary: both clauses still hold.
+        holder.startNewRound();
+        assertEquals(guarded, defenseService.getTotalDefense(holder, DefenseType.PHYSICAL, defending(approached)));
+        assertTrue(holder.hasActivationWindow(PunhoInigualavelAbility.ROLAMENTO_OFENSIVO));
+
+        // Rodada 5: the activator's Turn begins, and both end.
+        holder.startTurn(5);
+        assertEquals(unguarded, defenseService.getTotalDefense(holder, DefenseType.PHYSICAL, defending(approached)));
+        assertFalse(holder.hasActivationWindow(PunhoInigualavelAbility.ROLAMENTO_OFENSIVO));
+    }
+
+    /** A defence roll's context: the attacker named as the opposed character, as a caller builds it. */
+    private static SceneContext defending(final CombatantSheet attacker) {
+        return new SceneContext(List.of(), List.of(attacker), Map.of(attacker, Range.ADJACENTE), null, true, 0, false,
+                attacker);
     }
 
     @Test

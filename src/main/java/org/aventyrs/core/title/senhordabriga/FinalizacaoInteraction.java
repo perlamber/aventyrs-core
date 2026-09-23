@@ -13,9 +13,10 @@ import org.aventyrs.core.title.TitleAbilityActivationRequest;
  * recebem a Corrente de Efeitos – Finalização". Opens a one-Rodada activation window on the
  * activator, which {@link SenhorDaBriga#isFinalizacaoActive} reads.
  *
- * <p>TODO what the window enables — applying the Arma Natural's own Efeito Crítico Menor on a
- * non-crit hit, or once more on a crit — is blocked on the weapon's Efeito Crítico being read by
- * any attack path at all; see {@link SenhorDaBrigaAbility#FINALIZACAO}'s comment.
+ * <p>What the window enables is applied by {@code AttackDelivery}/{@code AttackReceiver}: while it
+ * is open, {@link SenhorDaBriga#resolveExtraNaturalCriticalEffectApplications} asks for one extra
+ * application of the Arma Natural's own Efeito Crítico — at Menor on a hit that isn't critical, once
+ * more on one that is.
  */
 public class FinalizacaoInteraction extends AbstractTitleAbilityInteraction {
 

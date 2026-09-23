@@ -1,5 +1,9 @@
 package org.aventyrs.core.combat;
 
+import org.aventyrs.core.skill.SkillType;
+import org.aventyrs.core.skill.AttackSource;
+import org.aventyrs.core.util.DiceRoller;
+import org.aventyrs.core.effect.CriticalEffectType;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NonNull;
@@ -119,4 +123,31 @@ public class IncomingAttack {
      */
     @Singular
     private final List<EffectChain> effectChains;
+
+    /**
+     * What the attacker struck with — a weapon or a Magia — when the caller knows. Its own Efeito
+     * Crítico is applied on the attacker's critical ({@link CriticalEffectResolver}), and an
+     * Efeito Crítico Defensivo that damages the attacker's weapon (Repelir e Suprimir, Retorno de
+     * Danos) reaches it. {@code null} for a foe whose stat block names no weapon.
+     */
+    private final AttackSource attackSource;
+
+    /**
+     * Which Perícia de Ataque the attack was — Retorno de Danos reaches only a melee attacker, and
+     * Cruz de Sangue's Reação only answers one. {@code null} when the caller didn't say.
+     */
+    private final SkillType attackSkill;
+
+    /**
+     * Efeitos Críticos this attack carries by identity, beside {@link #attackSource}'s own — a foe
+     * stat block's authored Efeito Crítico, for one. Built at resolution with {@link #diceRoller}.
+     */
+    @Singular
+    private final List<CriticalEffectType> additionalCriticalEffectTypes;
+
+    /**
+     * Where the Efeitos Críticos' and the Efeitos Críticos Defensivos' own dice come from. {@code
+     * null} leaves every dice-bearing one unbuilt, reported rather than invented.
+     */
+    private final DiceRoller diceRoller;
 }

@@ -1,5 +1,6 @@
 package org.aventyrs.core.sheet;
 
+import lombok.AccessLevel;
 import lombok.Getter;
 
 /**
@@ -13,6 +14,11 @@ import lombok.Getter;
  * {@link CombatantSheet#tickTemporaryEffects()} — called once per Rodada by {@link
  * CombatantSheet#finishTurn()} — advances every held one by one Rodada and discards any
  * that expire as a result.
+ *
+ * <p>One {@linkplain #countsDownAtTurnStart() counting down at Turn start} is instead advanced by
+ * {@link CombatantSheet#startTurn(int)}: "por 1 Rodada" on something done on the holder's own Turn
+ * lasts until their Turn begins in the next Rodada (table ruling) — ticked at Turn end, it would
+ * lapse before anyone else acted.
  *
  * <p>{@code remainingRounds} is {@code null} for an open-ended effect — one that never
  * expires from ticking alone (see {@link Bleeding}'s own javadoc for why Sangramento
@@ -32,8 +38,25 @@ public abstract class TemporaryEffect {
 
     private Integer remainingRounds;
 
+    @Getter(AccessLevel.NONE)
+    private final boolean countsDownAtTurnStart;
+
     protected TemporaryEffect(final Integer remainingRounds) {
+        this(remainingRounds, false);
+    }
+
+    protected TemporaryEffect(final Integer remainingRounds, final boolean countsDownAtTurnStart) {
         this.remainingRounds = remainingRounds;
+        this.countsDownAtTurnStart = countsDownAtTurnStart;
+    }
+
+    /**
+     * Whether this effect counts down at the start of its holder's Turn rather than at its end —
+     * advanced by {@link CombatantSheet#startTurn(int)}, skipped by {@link
+     * CombatantSheet#tickTemporaryEffects()}.
+     */
+    public boolean countsDownAtTurnStart() {
+        return countsDownAtTurnStart;
     }
 
     /**

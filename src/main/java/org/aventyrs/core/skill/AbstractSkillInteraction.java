@@ -392,10 +392,13 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
             // baseline. The sceneContext handed over is this *attacker's* snapshot, the only one
             // in reach; see Feat#resolveCriticalResistance for what an override may read from it.
             // See ModifierType.CRITICAL_RESISTANCE for the RC pieces still not expressible.
-            criticalMarginIncrease -= attackTarget == null ? 0
-                    : attackTarget.getTotalCriticalResistance(sceneContext);
+            criticalMarginIncrease -= criticalService.getLesserCriticalResistance(attackTarget, sceneContext);
+            // The Maior margin is its own axis: 18 (three 6s) lowered by "Margem Crítica Maior +N"
+            // and pushed back by the target's RC/RA, never past 18.
+            int majorCriticalMargin = criticalService.getMajorCriticalMargin(target, skillType, attackSource,
+                    sceneContext, attackTarget);
             CriticalResult criticalResult = skillRoll.getCriticalResult(criticalMarginIncrease,
-                    lesserCriticalMargin(attackSource));
+                    lesserCriticalMargin(attackSource), majorCriticalMargin);
             result.reachedDifficultyLevel(reached.orElse(null))
                     .criticalResult(criticalResult);
             resolveOutcome(bonus + skillRoll.getTotal(), skillRoll.getTargetValue(), difficultyReduction,

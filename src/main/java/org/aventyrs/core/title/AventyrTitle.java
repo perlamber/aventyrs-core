@@ -149,6 +149,49 @@ public interface AventyrTitle {
     }
 
     /**
+     * How many <i>números</i> this Título widens holder's Margem Crítica <b>Maior</b> by on a roll
+     * of skillType made with attackSource — Campeão da Taverna's "A Margem Crítica … Maior de suas
+     * Armas Naturais aumenta em +1". Summed by {@code CriticalServiceImpl
+     * #sumMajorCriticalMarginIncrease}. Zero by default.
+     */
+    default int resolveMajorCriticalMarginIncrease(final SkillType skillType, final AttackSource attackSource,
+                                                   final CombatantSheet holder) {
+        return 0;
+    }
+
+    /**
+     * Efeitos Críticos this Título adds to holder's critical hits with attackSource, <em>on top of</em>
+     * the attack source's own — Punho Inigualável's "recebem Guilhotina como Efeito Crítico
+     * Adicional". Built and applied by {@code AttackDelivery}. Empty by default.
+     */
+    default List<org.aventyrs.core.effect.CriticalEffectType> resolveAdditionalCriticalEffects(
+            final SkillType skillType, final AttackSource attackSource, final CombatantSheet holder) {
+        return List.of();
+    }
+
+    /**
+     * How many <em>extra</em> times holder's attack with attackSource applies its own natural Efeito
+     * Crítico — Finalização's Corrente: "se este ataque não for um Acerto Crítico este ataque aplica o
+     * Efeito Crítico Menor de sua Arma Natural, se este ataque for uma Acerto Crítico o Efeito Crítico
+     * será aplicado uma vez adicional". {@code AttackDelivery} applies the natural effect this many
+     * more times on a critical hit, and this many times (at Menor) on any other hit. 0 by default.
+     */
+    default int resolveExtraNaturalCriticalEffectApplications(final CombatantSheet holder,
+                                                              final AttackSource attackSource) {
+        return 0;
+    }
+
+    /**
+     * Efeitos Críticos Defensivos this Título adds to holder's Defesa Acertos Críticos, beside the
+     * ones the worn Armadura/Escudo grant — Fantasma do Ringue's Ímpeto Defensivo, Cruz de Sangue's
+     * Contra-atacante. Empty by default.
+     */
+    default List<org.aventyrs.core.effect.DefensiveCriticalEffectType> resolveAdditionalDefensiveCriticalEffects(
+            final CombatantSheet holder) {
+        return List.of();
+    }
+
+    /**
      * What this Título adds to the Dano Crítico of a critical hit with attackSource — summed by
      * {@code CriticalServiceImpl#getCriticalDamage} on top of the baseline Vantagem.
      * {@link CriticalDamage#NONE} by default.

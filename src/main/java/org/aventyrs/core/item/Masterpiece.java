@@ -117,6 +117,15 @@ public interface Masterpiece {
     }
 
     /**
+     * Margem Crítica <b>Maior</b> "números" this masterpiece grants when weapon is the attack
+     * source — {@link OffensiveMasterpiece#DECISIVA}'s Favor. Host-scoped by {@code
+     * Item#resolveEnhancementMajorCriticalMarginIncrease} exactly as the Menor twin is.
+     */
+    default int resolveMajorCriticalMarginIncrease(final Weapon weapon, final Character character) {
+        return 0;
+    }
+
+    /**
      * What this masterpiece adds to the dano roll of a critical hit made with weapon — {@link
      * OffensiveMasterpiece#MITRAL}'s "Danos Críticos aumentam em +3". Host-scoped by {@code
      * Item#resolveEnhancementCriticalDamage}, again like {@link #resolveDamageBaseIncrease}.

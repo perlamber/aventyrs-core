@@ -1,7 +1,11 @@
 package org.aventyrs.core.combat;
 
+import org.aventyrs.core.effect.DefensiveCriticalEffect;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.Singular;
+
+import java.util.List;
 import org.aventyrs.core.sheet.CombatantAction;
 import org.aventyrs.core.sheet.InteractionResult;
 import org.aventyrs.core.skill.CriticalResult;
@@ -114,4 +118,23 @@ public class IncomingAttackResult {
      * with no Scene).
      */
     private final CombatantAction recordedAction;
+
+    /**
+     * The Efeitos Críticos Defensivos the defender's own Acerto Crítico triggered — one per worn
+     * Armadura/Escudo ("seus efeitos são cumulativos"), Liberdade de Ação for a defender wearing
+     * neither, plus any a held Título adds. Built, <b>not applied</b>: call {@code
+     * DefensiveCriticalEffect#apply()} on each, which acts on both sheets and reports what is left
+     * (a push, a move, a counter-attack, a quick cast). Empty unless the defence held with a
+     * critical success.
+     */
+    @Singular
+    private final List<DefensiveCriticalEffect> defensiveCriticalEffects;
+
+    /**
+     * Efeitos Críticos — offensive or defensive — this exchange should have triggered but could not
+     * build: no {@code DiceRoller} for a dice-bearing one, no mechanism (Desmembrar), or no attacker
+     * named for a defensive one to act on.
+     */
+    @Singular("unappliedCriticalEffect")
+    private final List<Enum<?>> unappliedCriticalEffects;
 }

@@ -1,5 +1,6 @@
 package org.aventyrs.core.sheet;
 
+import org.aventyrs.core.util.DiceRoller;
 import org.aventyrs.core.ability.ActiveAbility;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
@@ -830,6 +831,56 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
      * #getRemainingEnhancedAttacks}/{@link #consumeEnhancedAttack}.
      */
     void grantEnhancedAttacksForCombat(Object source, int count);
+
+    /**
+     * Applies effect and ends it when the combat does ({@link #endCombat()}), whatever its own
+     * Duração says — "até o final da Cena" for an effect a {@code TemporaryBonus} countdown cannot
+     * express (Ferida Profunda Maior's Feridas Dolorosas). Pass an open-ended effect for one that
+     * should last exactly that long.
+     */
+    void applyEffectUntilCombatEnds(TemporaryEffect effect);
+
+    /**
+     * Applies effect and ends it at this combatant's next Descanso of at least restType — "até que
+     * ele passe por um Descanso" (Choque de AEther Maior's attacker penalty, Dilacerar's lost
+     * Atributo point). Lifted by {@link #clearRestCooldowns}.
+     */
+    void applyEffectUntilRest(TemporaryEffect effect, RestType restType);
+
+    /**
+     * Records the hit this combatant just took on the attack path — called by {@code
+     * DamageInteraction} once the PV come off, before any Efeito Crítico behind it in the chain
+     * runs, which is what lets one read "o dano deste ataque". Cleared by {@link #startNewScene()}.
+     */
+    void recordDamageReceived(DamageReceipt receipt);
+
+    /** The last hit {@link #recordDamageReceived} recorded, if any. */
+    Optional<DamageReceipt> getLastDamageReceived();
+
+    /** Every live {@link AttackerGuard} this combatant holds against attacker — empty for {@code null}. */
+    List<AttackerGuard> getGuardsAgainst(CombatantSheet attacker);
+
+    /** Whether an {@link EnchantmentWard} (Imunizar) is in force. */
+    boolean isWardedAgainstEnchantments();
+
+    /** The fire burning this combatant (Inflamar), if any. */
+    Optional<Burning> getBurning();
+
+    /**
+     * Puts out the fire — the caller has spent {@link Burning#getExtinguishActionPoints()} PA on it
+     * (reported, never charged here). Returns what was put out, empty if nothing burned.
+     */
+    Optional<Burning> extinguish();
+
+    /** The weapon stuck in this combatant (Empalar), if any. */
+    Optional<Impalement> getImpalement();
+
+    /**
+     * Pulls the stuck weapon out: the removal's own dice come off as bare PV loss ("não pode ser
+     * reduzido por efeitos de redução"). The PA for it are the caller's to charge, per {@link
+     * Impalement}'s two costs. Returns the damage taken, 0 when nothing was stuck.
+     */
+    int removeImpalement(DiceRoller dice);
 
     /**
      * Opens source's window for rounds Rodadas — a trait whose effect is "Nesta Rodada …" or

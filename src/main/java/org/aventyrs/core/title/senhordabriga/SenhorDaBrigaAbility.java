@@ -28,11 +28,11 @@ public enum SenhorDaBrigaAbility implements AventyrTitleAbility {
     // Requer 1 Especialização de Senhor da Briga. Real through FinalizacaoInteraction: the 1PD buys
     // a one-Rodada CombatantSheet#openActivationWindow, which is the "Nesta Rodada" the clause
     // scopes itself to, readable through SenhorDaBriga#isFinalizacaoActive.
-    // TODO the Corrente itself — "este ataque aplica o Efeito Crítico Menor de sua Arma Natural" on a
-    // non-crit hit, and one extra application on a crit — has nothing to apply: Weapon
-    // #getCriticalEffect() is read by no attack path, and of the Armas Naturais' own effects
-    // (Atordoante, Dilacerar, Empalar, Estilhaçador, Cataclismo, Sangramento) only Sangramento has a
-    // CriticalEffect class.
+    // The Corrente is real too (0.0.49): while the window is open, SenhorDaBriga
+    // #resolveExtraNaturalCriticalEffectApplications asks AttackDelivery/AttackReceiver for one extra
+    // application of the Arma Natural's own Efeito Crítico — at Menor on a hit that isn't critical,
+    // once more on one that is. "Efeitos Críticos adicionais não são desencadeados" holds by
+    // construction: only the natural effect is repeated.
     FINALIZACAO(
             "Nesta Rodada, ataques bem-sucedidos com Armas Naturais recebem a Corrente de Efeitos – " +
             "Finalização: se este ataque não for um Acerto Crítico este ataque aplica o Efeito Crítico " +
@@ -77,8 +77,8 @@ public enum SenhorDaBrigaAbility implements AventyrTitleAbility {
     // reports each crit through SenhorDaBriga#recordCriticalHit, which advances a combat-scoped
     // counter that SenhorDaBriga#resolveBaseDefesasBonus reads, so the bonus stacks one per crit and
     // lapses at Scene#endCombat (the table's ruling, 2026-09-22).
-    // TODO "A Margem Crítica … Maior de suas Armas Naturais aumenta em +1": an Acerto Crítico Maior
-    // is always three 6s in this core, so it has no margin to widen.
+    // Real since 0.0.49 too: "A Margem Crítica … Maior de suas Armas Naturais aumenta em +1" —
+    // SenhorDaBriga#resolveMajorCriticalMarginIncrease, the Maior margin now being real (18 → 17).
     CAMPEAO_DA_TAVERNA(
             "A Margem Crítica Menor e Maior de suas Armas Naturais aumenta em +1. Seu Dano Crítico " +
             "Menor aumenta em +2, enquanto seu Dano Crítico Maior aumenta em +1d6. Sempre que " +

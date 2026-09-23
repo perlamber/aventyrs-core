@@ -1,5 +1,9 @@
 package org.aventyrs.core.combat;
 
+import org.aventyrs.core.sheet.AttackerGuard;
+import org.aventyrs.core.effect.DefensiveCriticalEffects;
+import org.aventyrs.core.effect.DefensiveCriticalEffectType;
+import org.aventyrs.core.effect.DefensiveCriticalEffect;
 import lombok.NonNull;
 import org.aventyrs.core.character.services.DamageService;
 import org.aventyrs.core.character.services.DamageServiceImpl;
@@ -160,7 +164,9 @@ public class AttackReceiver {
         }
 
         int margin = requiredTotal - defenseTotal;
-        boolean defended = margin <= 0;
+        // Ímpeto Defensivo Maior: "se torna imune aos ataques dele por 1 Rodada".
+        boolean immune = defender.getGuardsAgainst(attack.getAttacker()).stream().anyMatch(AttackerGuard::isImmune);
+        boolean defended = margin <= 0 || immune;
         CriticalResult criticalResult = defenseResult.getCriticalResult();
         boolean criticalEffectTriggered = !defended && criticalResult != null && criticalResult.isCriticalFailure();
         boolean effectChainTriggered = !defended
@@ -171,6 +177,18 @@ public class AttackReceiver {
                     .nextInteraction(buildChain(attack, criticalEffectTriggered, effectChainTriggered,
                             criticalResult, auraHalvesDamage))
                     .build();
+            result.unappliedCriticalEffects(CriticalEffectResolver.resolve(attack.getAttacker(),
+                    attack.getAttackSource(), attack.getAttackSkill(), criticalEffectTriggered ? criticalResult : null,
+                    true, attack.getAdditionalCriticalEffectTypes(), attack.getDiceRoller(), false).unapplied());
+        } else if (criticalResult != null && criticalResult.isCriticalSuccess() && !immune) {
+            // "Efeitos Críticos Defensivos substituem as falhas críticas inimigas em caso de Sucesso
+            // Crítico nas rolagens de Defesas" — built for the caller to apply.
+            for (DefensiveCriticalEffectType type : DefensiveCriticalEffects.grantedTo(defender)) {
+                DefensiveCriticalEffect.of(type, defender, attack.getAttacker(), criticalResult,
+                                attack.getAttackSkill(), attack.getAttackSource(), attack.getDiceRoller())
+                        .ifPresentOrElse(result::defensiveCriticalEffect,
+                                () -> result.unappliedCriticalEffect(type));
+            }
         }
 
         return result.defenseResult(defenseResult)
@@ -234,8 +252,18 @@ public class AttackReceiver {
             stages.addAll(attack.getEffectChains());
         }
         if (criticalEffectTriggered) {
-            stages.addAll(CriticalEffect.applicableTo(attack.getDefender(), attack.getCriticalEffects(),
+            List<CriticalEffect> effects = new ArrayList<>(attack.getCriticalEffects());
+            effects.addAll(CriticalEffectResolver.resolve(attack.getAttacker(), attack.getAttackSource(),
+                    attack.getAttackSkill(), criticalResult, true, attack.getAdditionalCriticalEffectTypes(),
+                    attack.getDiceRoller()).effects());
+            stages.addAll(CriticalEffect.applicableTo(attack.getDefender(), effects,
                     criticalResult, attack.getSceneContext()));
+        } else {
+            // Finalização on this side too: a non-critical hit applies the natural weapon's Menor.
+            stages.addAll(CriticalEffect.applicableTo(attack.getDefender(),
+                    CriticalEffectResolver.resolve(attack.getAttacker(), attack.getAttackSource(),
+                            attack.getAttackSkill(), null, true, List.of(), attack.getDiceRoller()).effects(),
+                    CriticalResult.FALHA_CRITICA_MENOR, attack.getSceneContext()));
         }
 
         Interaction<CombatantSheet> next = null;

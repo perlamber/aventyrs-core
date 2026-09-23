@@ -1,5 +1,7 @@
 package org.aventyrs.core.title.senhordabriga;
 
+import org.aventyrs.core.sheet.ActivationWindow;
+import org.aventyrs.core.sheet.AttackerGuard;
 import org.aventyrs.core.character.services.DeterminationPointsService;
 import org.aventyrs.core.character.services.DeterminationPointsServiceImpl;
 import org.aventyrs.core.character.services.HitPointsService;
@@ -27,8 +29,10 @@ import static org.aventyrs.core.util.TranslatableMessages.TITLE_ABILITY_TARGET_O
  * #GRANDE_MESTRE_DISTANCE} and opens a one-Rodada window granting Vantagem on Arma Natural attacks
  * ({@link SenhorDaBriga#resolveAttackRollBonus}).
  *
- * <p>TODO the "+3 em suas Defesas para resistir aos ataques do inimigo que você se aproximou" — see
- * {@link PunhoInigualavelAbility#ROLAMENTO_OFENSIVO}.
+ * <p>"Bônus de +3 em suas Defesas para resistir aos ataques do inimigo que você se aproximou por 1
+ * Rodada" is an {@code AttackerGuard} on the activator against the target. Both "por 1 Rodada"
+ * clauses last until the activator's Turn begins in the next Rodada (table ruling, 2026-09-23):
+ * counted down at Turn end, they would lapse before the approached enemy ever acted.
  */
 public class RolamentoOfensivoInteraction extends AbstractTitleAbilityInteraction {
 
@@ -41,8 +45,8 @@ public class RolamentoOfensivoInteraction extends AbstractTitleAbilityInteractio
     /** Grande Mestre das Brigas: "A distância de seu Rolamento Ofensivo muda para 3UD". */
     public static final int GRANDE_MESTRE_DISTANCE = 3;
 
-    /** Grande Mestre das Brigas: "Vantagem … por 1 Rodada". */
-    static final int GRANDE_MESTRE_VANTAGEM_ROUNDS = 1;
+    /** "Bônus de +3 em suas Defesas para resistir aos ataques do inimigo que você se aproximou". */
+    static final int APPROACHED_ENEMY_DEFESAS = 3;
 
     private final HitPointsService hitPointsService = new HitPointsServiceImpl();
 
@@ -72,8 +76,12 @@ public class RolamentoOfensivoInteraction extends AbstractTitleAbilityInteractio
     protected InteractionResult resolve(final TitleAbilityActivationRequest request, final int determinationPoints) {
         CombatantSheet activator = request.getActivator();
         boolean grandeMestre = SenhorDaBriga.requireHeldBy(activator).holdsGrandeMestreDasBrigas();
+        // "Bônus de +3 em suas Defesas para resistir aos ataques do inimigo que você se aproximou por
+        // 1 Rodada" — a guard against that one enemy, read off the defence roll's opposed character.
+        activator.applyEffect(AttackerGuard.defesasUntilNextTurn(request.getTarget(), APPROACHED_ENEMY_DEFESAS));
         if (grandeMestre) {
-            activator.openActivationWindow(PunhoInigualavelAbility.ROLAMENTO_OFENSIVO, GRANDE_MESTRE_VANTAGEM_ROUNDS);
+            // Grande Mestre das Brigas: "Vantagem … por 1 Rodada", under the same reading.
+            activator.applyEffect(new ActivationWindow(PunhoInigualavelAbility.ROLAMENTO_OFENSIVO, 1, true));
         }
         return InteractionResult.builder()
                 .resultStatus(hitPointsService.getStatus(activator))

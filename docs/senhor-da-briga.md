@@ -42,7 +42,7 @@ What it **can't** apply comes back on `TitleAttackModifiers`:
 | `defenseType()` | when non-null, roll against **that** Defesa (Impacto GM: `MAGIC`) |
 | `damageDescriptor()` | when non-null, type the damage with it |
 | `effectChains()` | add to `DeliveredAttack#effectChains` |
-| `criticalEffectOverride()` | informational — no weapon crit is applied yet (see TODOs) |
+| `criticalEffectOverride()` | informational — `AttackDelivery` applies it itself |
 
 **Armas Naturais** always means `Character#treatsAsNaturalWeapon(weapon)`. Pass
 `NaturalWeapon.ATAQUE_DESARMADO` as the attack source for a punch — an attack naming no weapon at
@@ -58,7 +58,7 @@ all is *not* a natural-weapon attack.
 | **Título Primário** | passive | — | — | nothing — scanned |
 | **Punho Inigualável** *(Esp.)* | passive | — | — | nothing — scanned |
 | **Fantasma do Ringue** *(Esp.)* | passive | — | — | nothing — scanned |
-| Finalização | 1 | 1 | — | nothing (effect TODO) |
+| Finalização | 1 | 1 | — | pass a `DiceRoller` on the attacks it repeats |
 | Chamar pra Briga | passive | — | — | call `resolveChamarPraBriga` after each hit; mirror the `ForcedTargeting` |
 | Punho de Ferro *(Sup.)* | passive | — | — | fold `TitleAttackModifiers` |
 | Campeão da Taverna *(Sup.)* | passive | — | — | call `recordCriticalHit` on each crit; GM ends combat |
@@ -90,19 +90,21 @@ Natural nor for defending without Equipamento Defensivo, so there is nothing to 
 
 ### Punho Inigualável *(Especialização, passive)*
 Margem Crítica Menor **+2** with Armas Naturais.
-> **TODO** Guilhotina as an additional Efeito Crítico — `CriticalEffectType.GUILHOTINA` has no class.
+Guilhotina rides every natural-weapon critical as an additional Efeito Crítico (0.0.49) —
+the **attacker** gains Vantagem and a cumulative Margem Crítica Menor widening.
 
 ### Fantasma do Ringue *(Especialização, passive)*
 **Table ruling (2026-09-22):** the printed "2PD / 2PA, Efeito Ativo" is read as a *conditional
 passive*. Defesas **+1** always, **+1** more while armed only with natural weapons, **+3** more
 while wearing no Equipamento Defensivo (read as cumulative — up to +5). Defesa rolls (Esquiva e
 Aparar) get Margem Crítica Menor **+2**.
-> **TODO** Ímpeto Defensivo — identity only.
+Ímpeto Defensivo joins the worn gear's Efeitos Críticos Defensivos (0.0.49).
 
 ### Finalização — `FinalizacaoInteraction`
 **1PD, 1PA.** Opens a one-Rodada window, `SenhorDaBriga#isFinalizacaoActive(sheet)`.
-> **TODO** the Corrente does nothing yet: no attack path reads `Weapon#getCriticalEffect()`, and of
-> the Armas Naturais' own effects only Sangramento has a class.
+While it is open, `AttackDelivery` applies the Arma Natural's own Efeito Crítico once more on a
+critical, and at Menor on a plain hit (0.0.49) — pass a `DiceRoller`, since several natural effects
+throw dice.
 
 ### Chamar pra Briga *(passive)*
 After a hit, call:
@@ -125,7 +127,7 @@ odd Rodada (0-based round 0, 2, …) → `actionPointReduction` 1; even → `ext
 Margem Crítica Menor +1; Dano Crítico Menor +2 / Maior +1d6 (both scanned). For "suas Defesas
 aumentam em +1 até o final da Cena", call `senhor.recordCriticalHit(sheet)` on every crit the
 holder lands: it **stacks** one per crit and lapses at `Scene#endCombat()` (table ruling).
-> **TODO** Margem Crítica **Maior** — a Maior is always three 6s here.
+Its Margem Crítica **Maior** +1 is real too (0.0.49): 17 becomes an Acerto Crítico Maior.
 
 ### Impacto Elemental — `ImpactoElementalInteraction`
 **1PD, 2PA.** The element is chosen **once**, on the Título:
@@ -136,7 +138,7 @@ three-argument constructor. Activating without one → `TITLE_ABILITY_CHOICE_REQ
 Grants a **combat-scoped budget** of `2 + other Punho Inigualável traits` attacks. While it lasts,
 each Arma Natural attack gets Vantagem (in the roll) and `FISICO_ELEMENTAL(element)`. Under Grande
 Mestre: `defenseType = MAGIC`, `DamageType.ELEMENTAL(element)` — ⚠️ *a reading*: "causam danos
-mágicos" while keeping the element, which `MAGICO` cannot carry — and `CATACLISMO` (inert).
+mágicos" while keeping the element, which `MAGICO` cannot carry — and `CATACLISMO` replacing the weapon's own Efeito Crítico (0.0.49).
 `consumeCharges` spends one per **natural-weapon** attack; `Scene#endCombat` drops the rest.
 
 ### Rolamento Ofensivo — `RolamentoOfensivoInteraction`
@@ -144,7 +146,10 @@ mágicos" while keeping the element, which `MAGICO` cannot carry — and `CATACL
 (`TITLE_ABILITY_REQUIRES_TARGET` / `TITLE_ABILITY_TARGET_OUT_OF_RANGE`). Returns
 `InteractionResult#getMovementTowardTarget()` — 2UD, 3UD under Grande Mestre — which **you apply**.
 Grande Mestre also opens a one-Rodada Vantagem on natural attacks.
-> **TODO** "+3 Defesas contra o inimigo que você se aproximou" — no attacker-scoped Defesa exists.
+It also guards the activator (+3 Defesas) against that enemy — an `AttackerGuard`,
+read when the defence roll's `SceneContext` names the enemy as its opposed character.
+**Table ruling (2026-09-23):** both "por 1 Rodada" clauses last until the activator's Turn begins
+in the next Rodada (0.0.50 — counted down at Turn start, `TemporaryEffect#countsDownAtTurnStart`).
 
 ### Agarrar e Derrubar — `AgarrarEDerrubarInteraction`
 **2PD, 3PA.** Grants a one-attack budget. The next **Arma Natural** attack gets Vantagem in the
@@ -162,8 +167,9 @@ Corpo-a-Corpo, as sole target, attacker **adjacent**. For 1 Rodada, applied to t
 Defesas −½ Destreza; Margem +2 on Defesas and natural melee; Malícia → RDS 2. It also grants one
 counter-attack charge, whose **+1d6** shows up in `TitleAttackModifiers`. When the Defesa fails,
 **offer** that counter-attack against the aggressor.
-> **TODO** Contra-atacante — identity only. There is no "Defesa failed" trigger, so offering the
-> counter-attack is the caller's.
+While active, Contra-atacante joins the Efeitos Críticos Defensivos (0.0.49) — its counter-attack
+comes back on `DefensiveCriticalOutcome#counterAttack()`. There is still no "Defesa failed" trigger,
+so offering the ordinary counter-attack is the caller's.
 
 ### Fingir Fraquezas — `FingirFraquezasInteraction`
 **Variável PD, 1PA.** The PD **must equal** `FingirFraquezasInteraction.resolveCost(sceneContext)`

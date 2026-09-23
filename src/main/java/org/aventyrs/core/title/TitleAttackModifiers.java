@@ -28,8 +28,7 @@ import java.util.List;
  *       against on {@code DeliveredAttack} and types the damage it deals;</li>
  *   <li>{@link #effectChains} — a {@code DeliveredAttack}'s Correntes are caller-supplied;</li>
  *   <li>{@link #criticalEffectOverride} — an Efeito Crítico the attack's own weapon effect is
- *       replaced with. Reported for completeness: no weapon's own Efeito Crítico is applied by
- *       this core yet, and the ones named here have no class.</li>
+ *       replaced with. Informational: {@code AttackDelivery} applies it itself.</li>
  * </ul>
  *
  * <p>Every field is inert at 0/{@code null}/empty. {@link #resolve} is the one query a caller

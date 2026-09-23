@@ -41,6 +41,8 @@ public class HitPointsServiceImpl implements HitPointsService {
             // Character-only overload has nowhere to look. Floored at 1 so a stack of Malefícios
             // can never drive a creature's PV to zero by arithmetic alone.
             bonus += characterSheet.getConditionBonus(ModifierType.LIFE_MULTIPLIER, null);
+            // And a held timed/combat-scoped loss — Ferida Profunda's "perde 3 Multiplicadores de PV".
+            bonus += characterSheet.getTemporaryBonus(ModifierType.LIFE_MULTIPLIER);
         }
         return Math.max(1, character.getLifeMultiplier() + bonus);
     }

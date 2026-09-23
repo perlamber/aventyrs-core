@@ -205,6 +205,12 @@ public class AttackDelivery {
             result.additionalTargetResult(resolveAdditionalTarget(attack, target, attackTotal, criticalResult));
         }
 
+        if (hit) {
+            result.unappliedCriticalEffects(CriticalEffectResolver.resolve(attack.getAttacker(),
+                    attack.getAttackSource(), attack.getAttackSkill(), criticalEffectTriggered ? criticalResult : null,
+                    true, attack.getAdditionalCriticalEffectTypes(), attack.getDiceRoller(), false).unapplied());
+        }
+
         return result.attackResult(attackResult)
                 .margin(margin)
                 .hit(hit)
@@ -304,6 +310,12 @@ public class AttackDelivery {
         if (criticalEffectTriggered) {
             stages.addAll(CriticalEffect.applicableTo(defender, allCriticalEffects(attack, criticalResult),
                     criticalResult, attack.getSceneContext()));
+        } else {
+            // Finalização: a hit that is not critical still applies the Arma Natural's own Efeito
+            // Crítico Menor — filtered at Menor, so an anatomy immune to Menores shrugs it off.
+            stages.addAll(CriticalEffect.applicableTo(defender,
+                    typedCriticalEffects(attack, criticalResult, false).effects(),
+                    CriticalResult.ACERTO_CRITICO_MENOR, attack.getSceneContext()));
         }
 
         Interaction<CombatantSheet> next = null;
@@ -326,7 +338,21 @@ public class AttackDelivery {
         attack.getAttacker().getCharacter().getFeats().forEach(feat ->
                 effects.addAll(feat.resolveExtraCriticalEffects(attack.getAttacker().getCharacter(),
                         attack.getAttackSkill(), attack.getAttackSource(), criticalResult)));
+        effects.addAll(typedCriticalEffects(attack, criticalResult, true).effects());
         return effects;
+    }
+
+    /**
+     * The Efeitos Críticos this attack carries by identity — its source's own, the attacker's
+     * Títulos', the request's — built through {@link CriticalEffectResolver}. critical selects
+     * whether this is the critical hit's set or a plain hit's (Finalização's Menor repetitions).
+     */
+    private CriticalEffectResolver.Resolved typedCriticalEffects(final DeliveredAttack attack,
+                                                                 final CriticalResult criticalResult,
+                                                                 final boolean critical) {
+        return CriticalEffectResolver.resolve(attack.getAttacker(), attack.getAttackSource(), attack.getAttackSkill(),
+                critical ? criticalResult : null, true, attack.getAdditionalCriticalEffectTypes(),
+                attack.getDiceRoller());
     }
 
     private List<EffectChain> effectChainsGrantedByFeats(final DeliveredAttack attack) {

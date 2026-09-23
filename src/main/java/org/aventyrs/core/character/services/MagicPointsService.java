@@ -21,6 +21,16 @@ public interface MagicPointsService {
     int getMaxMagicPoints(Character character);
 
     /**
+     * {@link #getManaMultiplier(Character)} plus what sheet holds for a while — a {@code
+     * MANA_MULTIPLIER} {@code TemporaryBonus} (Choque de AEther Maior's +1 / −1). Floored at 1.
+     * {@code null} sheet is the Character-only figure.
+     */
+    int getManaMultiplier(Character character, CombatantSheet sheet);
+
+    /** {@link #getMaxMagicPoints(Character)} off the sheet-aware multiplier. */
+    int getMaxMagicPoints(Character character, CombatantSheet sheet);
+
+    /**
      * Current Magic Points: the maximum minus the Magic Points spent on the character's
      * sheet, never below zero.
      */

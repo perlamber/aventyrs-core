@@ -23,6 +23,7 @@ import org.aventyrs.core.title.AventyrTitle;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.rest.RestType;
+import org.aventyrs.core.util.DiceRoller;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -220,6 +221,18 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     @Getter(AccessLevel.NONE)
     private final Set<Object> affectedThisCombat = new HashSet<>();
 
+    /** Effects that end with the combat — see {@link #applyEffectUntilCombatEnds}. */
+    @Getter(AccessLevel.NONE)
+    private final List<TemporaryEffect> combatScopedEffects = new ArrayList<>();
+
+    /** Effects that end at a Descanso of at least their tier — see {@link #applyEffectUntilRest}. */
+    @Getter(AccessLevel.NONE)
+    private final Map<TemporaryEffect, RestType> restScopedEffects = new java.util.IdentityHashMap<>();
+
+    /** The last hit taken on the attack path — see {@link #recordDamageReceived}. */
+    @Getter(AccessLevel.NONE)
+    private DamageReceipt lastDamageReceived;
+
     /** Rodadas in which this combatant hit each target with an Arma Natural, keyed by target id. */
     @Getter(AccessLevel.NONE)
     private final Map<UUID, Set<Integer>> naturalWeaponHits = new HashMap<>();
@@ -325,9 +338,20 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
             return getDamageTaken();
         }
         if (amount > 0) {
-            temporaryEffects.removeIf(effect -> effect instanceof Bleeding);
+            // "Efeitos de cura interrompem a perda de PV/PM/PD por rodada" — Sangramento's,
+            // Purga-Mana's and Excruciante's clauses say it alike.
+            temporaryEffects.removeIf(effect -> effect instanceof Bleeding || effect instanceof ManaDrain
+                    || effect instanceof DeterminationDrain);
         }
-        return hitPoints.recover(amount);
+        // Ferida Profunda Menor: "Efeitos de cura são reduzidos à metade por 2 Rodadas (cumulativo)".
+        long halvings = temporaryEffects.stream()
+                .filter(effect -> effect instanceof HalvedHealing && !effect.isExpired())
+                .count();
+        int recovered = amount;
+        for (long i = 0; i < halvings; i++) {
+            recovered /= 2;
+        }
+        return hitPoints.recover(recovered);
     }
 
     /**
@@ -798,8 +822,12 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     public void tickTemporaryEffects() {
         // Over a snapshot: a per-Rodada effect may itself change the list — a Regeneration heals,
         // and healing clears every active Bleeding — which would otherwise fault this iteration.
-        List.copyOf(temporaryEffects).forEach(effect -> effect.applyRoundEffect(this));
-        temporaryEffects.forEach(TemporaryEffect::tick);
+        // One counting down at Turn start is startTurn's to advance, never this pass's.
+        List<TemporaryEffect> ticking = temporaryEffects.stream()
+                .filter(effect -> !effect.countsDownAtTurnStart())
+                .toList();
+        ticking.forEach(effect -> effect.applyRoundEffect(this));
+        ticking.forEach(TemporaryEffect::tick);
         List<Condition> decaying = temporaryEffects.stream()
                 .filter(effect -> effect instanceof Condition)
                 .map(effect -> (Condition) effect)
@@ -915,6 +943,9 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         actionCountAtTurnStart = actionsThisRound.size();
         drewWeaponThisTurn = false;
         activationsThisTurn.clear();
+        // "Por 1 Rodada" from the holder's own Turn lasts until this one begins (table ruling).
+        temporaryEffects.stream().filter(TemporaryEffect::countsDownAtTurnStart).forEach(TemporaryEffect::tick);
+        temporaryEffects.removeIf(effect -> effect.countsDownAtTurnStart() && effect.isExpired());
     }
 
     @Override
@@ -1056,6 +1087,13 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     /** A Descanso frees everything waiting on its own tier or a weaker one. */
     @Override
     public void clearRestCooldowns(final RestType restType) {
+        restScopedEffects.entrySet().removeIf(entry -> {
+            if (restType.isAtLeast(entry.getValue())) {
+                temporaryEffects.remove(entry.getKey());
+                return true;
+            }
+            return false;
+        });
         restCooldowns.values().removeIf(required -> restType.isAtLeast(required));
         restImmunities.values().removeIf(required -> restType.isAtLeast(required));
     }
@@ -1084,6 +1122,7 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         attacksSufferedThisRound = 0;
         drewWeaponThisScene = false;
         combatStarted = false;
+        lastDamageReceived = null;
         clearCombatScopedState();
     }
 
@@ -1118,6 +1157,8 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
 
     /** Everything {@link #endCombat()} drops — also dropped by {@link #startNewScene()}. */
     private void clearCombatScopedState() {
+        combatScopedEffects.forEach(temporaryEffects::remove);
+        combatScopedEffects.clear();
         combatScopedEnhancements.forEach(enhancedAttacksRemaining::remove);
         combatScopedEnhancements.clear();
         combatCounters.clear();
@@ -1152,6 +1193,79 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         }
         grantEnhancedAttacks(source, count);
         combatScopedEnhancements.add(source);
+    }
+
+    @Override
+    public void applyEffectUntilCombatEnds(final TemporaryEffect effect) {
+        applyEffect(effect);
+        combatScopedEffects.add(effect);
+    }
+
+    @Override
+    public void applyEffectUntilRest(final TemporaryEffect effect, final RestType restType) {
+        applyEffect(effect);
+        restScopedEffects.put(effect, restType);
+    }
+
+    @Override
+    public void recordDamageReceived(final DamageReceipt receipt) {
+        this.lastDamageReceived = receipt;
+    }
+
+    @Override
+    public Optional<DamageReceipt> getLastDamageReceived() {
+        return Optional.ofNullable(lastDamageReceived);
+    }
+
+    @Override
+    public List<AttackerGuard> getGuardsAgainst(final CombatantSheet attacker) {
+        return temporaryEffects.stream()
+                .filter(AttackerGuard.class::isInstance)
+                .map(AttackerGuard.class::cast)
+                .filter(guard -> !guard.isExpired() && guard.isAgainst(attacker))
+                .toList();
+    }
+
+    @Override
+    public boolean isWardedAgainstEnchantments() {
+        return temporaryEffects.stream().anyMatch(effect -> effect instanceof EnchantmentWard && !effect.isExpired());
+    }
+
+    @Override
+    public Optional<Burning> getBurning() {
+        return temporaryEffects.stream()
+                .filter(Burning.class::isInstance)
+                .map(Burning.class::cast)
+                .filter(effect -> !effect.isExpired())
+                .findFirst();
+    }
+
+    @Override
+    public Optional<Burning> extinguish() {
+        Optional<Burning> burning = getBurning();
+        burning.ifPresent(temporaryEffects::remove);
+        return burning;
+    }
+
+    @Override
+    public Optional<Impalement> getImpalement() {
+        return temporaryEffects.stream()
+                .filter(Impalement.class::isInstance)
+                .map(Impalement.class::cast)
+                .findFirst();
+    }
+
+    @Override
+    public int removeImpalement(final DiceRoller dice) {
+        Optional<Impalement> impalement = getImpalement();
+        if (impalement.isEmpty()) {
+            return 0;
+        }
+        temporaryEffects.remove(impalement.get());
+        // "este dano não pode ser reduzido por efeitos de redução" — the bare PV loss.
+        int damage = dice.rollD6(impalement.get().getRemovalDice());
+        applyDamage(damage);
+        return damage;
     }
 
     @Override
@@ -1245,6 +1359,10 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
      */
     @Override
     public void applyCondition(final Condition condition) {
+        // Imunizar: "imune a … maldições" — Amaldiçoado is the Maldição this core names as a Condição.
+        if (condition.getType() == ConditionType.AMALDICOADO && isWardedAgainstEnchantments()) {
+            return;
+        }
         removeCondition(condition.getType());
         temporaryEffects.add(condition);
     }
@@ -1317,6 +1435,10 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     @Override
     public <T extends TemporaryEffect & Enchantment> boolean applyEnchantment(final T enchantment) {
         if (getCharacter() != null && getCharacter().isImmuneToEnchantments()) {
+            return false;
+        }
+        // Imunizar: "imune a encantamentos nocivos" — a beneficial one still lands.
+        if (enchantment.isHarmful() && isWardedAgainstEnchantments()) {
             return false;
         }
         applyEffect(halvedIfWarded(enchantment));

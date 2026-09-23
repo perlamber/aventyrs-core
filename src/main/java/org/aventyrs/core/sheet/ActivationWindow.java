@@ -20,7 +20,12 @@ public class ActivationWindow extends TemporaryEffect {
     private final Object source;
 
     public ActivationWindow(@NonNull final Object source, final int rounds) {
-        super(rounds);
+        this(source, rounds, false);
+    }
+
+    /** With countsDownAtTurnStart, closes as its holder's Turn begins rather than as it ends. */
+    public ActivationWindow(@NonNull final Object source, final int rounds, final boolean countsDownAtTurnStart) {
+        super(rounds, countsDownAtTurnStart);
         this.source = source;
     }
 

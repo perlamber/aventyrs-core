@@ -9,6 +9,7 @@ import org.aventyrs.core.item.Item;
 import org.aventyrs.core.modifier.ModifierResolver;
 import org.aventyrs.core.modifier.ModifierResolverImpl;
 import org.aventyrs.core.modifier.ModifierType;
+import org.aventyrs.core.sheet.AttackerGuard;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
 import org.aventyrs.core.skill.SkillExcellency;
@@ -64,7 +65,23 @@ public class DefenseServiceImpl implements DefenseService {
                 // Desprevenido's -2 Defesas, and anything conferring it (Caído, Flanqueado,
                 // Cego, or the fear ladder while close enough to its origin).
                 + target.getConditionBonus(ModifierType.DEFESAS, sceneContext)
-                + target.getConditionBonus(defenseType.getModifierType(), sceneContext);
+                + target.getConditionBonus(defenseType.getModifierType(), sceneContext)
+                + sumGuardsAgainstOpponent(target, sceneContext);
+    }
+
+    /**
+     * Defesas this target holds against <b>one attacker</b> — {@code sheet.AttackerGuard}s
+     * (Prevenir, Ímpeto Defensivo Menor, Rolamento Ofensivo) matched against the defence roll's
+     * {@code SceneContext#getOpposedCharacter()}, which is the attacker on a defence roll. No
+     * context, or none naming an opponent, sees none — "cannot tell" withholds.
+     */
+    private int sumGuardsAgainstOpponent(final CombatantSheet target, final SceneContext sceneContext) {
+        if (sceneContext == null) {
+            return 0;
+        }
+        return target.getGuardsAgainst(sceneContext.getOpposedCharacter()).stream()
+                .mapToInt(AttackerGuard::getDefesasBonus)
+                .sum();
     }
 
     /**

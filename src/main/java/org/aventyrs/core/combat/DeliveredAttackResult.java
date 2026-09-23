@@ -1,5 +1,6 @@
 package org.aventyrs.core.combat;
 
+import org.aventyrs.core.effect.CriticalEffectType;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Singular;
@@ -110,4 +111,12 @@ public class DeliveredAttackResult {
      */
     @Singular
     private final List<DeliveredAttackTargetResult> additionalTargetResults;
+
+    /**
+     * Efeitos Críticos this attack should have applied by identity but could not be built — no
+     * {@code DiceRoller} for a dice-bearing one, or no mechanism at all (Desmembrar). Empty on an
+     * attack that triggered none. For the caller to adjudicate, never silently dropped.
+     */
+    @Singular("unappliedCriticalEffect")
+    private final List<CriticalEffectType> unappliedCriticalEffects;
 }

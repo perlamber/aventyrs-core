@@ -41,6 +41,14 @@ public interface Weapon extends Item, AttackSource {
     int DEFAULT_LESSER_CRITICAL_MARGIN = 17;
 
     /**
+     * The Margem Crítica <b>Maior</b> every weapon (and every roll made without one) is on — the
+     * 3d6 total 18, which only three 6s reach. Widened by "Margem Crítica Maior +N" clauses
+     * ({@code OffensiveMasterpiece#DECISIVA}'s Favor) and pushed back by Resistência a Críticos,
+     * never past this figure; see {@code SkillRoll#getCriticalResult(int, int, int)}.
+     */
+    int DEFAULT_MAJOR_CRITICAL_MARGIN = 18;
+
+    /**
      * The Dano Base this weapon deals — the starting row of {@link DamageBase}'s scale that its
      * wielder's own "+N Dano Base" grants are applied on top of, by {@code
      * org.aventyrs.core.character.services.DamageBaseService}.
@@ -129,22 +137,10 @@ public interface Weapon extends Item, AttackSource {
     }
 
     /**
-     * The Efeito Crítico Ofensivo this weapon inflicts on a critical hit — the "Efeito Crítico"
-     * column of its stat table (Sangramento for an adaga, Empalar for a lança, …) — or {@code
-     * null} for a weapon whose column names none this core catalogs. The Arcos and Bestas are
-     * the {@code null} case: their column reads "Projétil", which is not an entry in {@link
-     * CriticalEffectType} (nor anywhere in {@code docs/rules/efeitos-criticos.txt}) — the same
-     * kind of source-row defect {@code equipamentos-index.md} flags for the Zarabatanas.
-     *
-     * <p><b>Nothing reads this yet.</b> {@code AttackDelivery} resolves an Acerto Crítico from
-     * the caller-supplied list plus {@code Feat#resolveExtraCriticalEffects}, never from the
-     * Weapon. It is authored regardless — the same "can't apply it yet doesn't mean can't
-     * compute it yet" discipline that has {@link CriticalEffectType} transcribing 18 effects
-     * with no class behind them. Add the weapon→crit scan with its first real reader; until
-     * then this and {@link #getLesserCriticalMargin()} are exact, unread data.
-     *
-     * <p>Defaults to {@code null} so {@link AbstractWeapon} (and any one-off) need not state
-     * one; the catalog enums override it.
+     * This weapon's own Efeito Crítico — the name its stat table prints ("Sangramento (17)"). Applied
+     * on a critical hit by {@code AttackDelivery}/{@code AttackReceiver} (built by {@code
+     * CriticalEffects}), and repeated by Finalização. {@code null} for a weapon naming none; a forged
+     * copy carries its template's ({@code AbstractWeapon#getCriticalEffect}).
      */
     default CriticalEffectType getCriticalEffect() {
         return null;

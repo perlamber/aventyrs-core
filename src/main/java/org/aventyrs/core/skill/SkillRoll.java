@@ -248,15 +248,33 @@ public class SkillRoll {
      * Maior are each fixed at one exact dice combination in this ruleset's own text, and all three
      * are checked first — so three 6s stays Acerto Crítico <b>Maior</b> however wide the Menor
      * margin is, and a Falha Crítica is never overturned by one. A clause that widens Acerto
-     * Crítico <em>Maior</em> is a separate, explicit mechanism — it does not ride this margin, and
-     * none is authored yet.
+     * Crítico <em>Maior</em> is a separate margin — see the three-argument overload.
      */
     public CriticalResult getCriticalResult(final int criticalMarginIncrease, final int lesserCriticalMargin) {
+        return getCriticalResult(criticalMarginIncrease, lesserCriticalMargin, Weapon.DEFAULT_MAJOR_CRITICAL_MARGIN);
+    }
+
+    /**
+     * {@link #getCriticalResult(int, int)} with the <b>Margem Crítica Maior</b> stated too — the 3d6
+     * total an Acerto Crítico Maior has to reach. {@link Weapon#DEFAULT_MAJOR_CRITICAL_MARGIN} (18)
+     * is exactly "three 6s", so the two-argument form is unchanged; a "Margem Crítica Maior +1"
+     * (Decisiva's Favor, Campeão da Taverna) lowers it to 17, and the target's Resistência a
+     * Críticos pushes it back up, never past 18 ("até o mínimo de 18"). Both are resolved by
+     * {@code CriticalService#getMajorCriticalMargin} before this is called.
+     *
+     * <p>Order is unchanged in spirit: the Falha Crítica Maior (three 1s) is still checked first
+     * and can never be overturned; a total reaching the Maior margin is then an Acerto Crítico
+     * Maior <em>before</em> the Menor margin is consulted, so a widened Maior outranks a Menor it
+     * overlaps. The Maior margin is floored at the same {@code MIN_TOTAL} the Menor is, so no
+     * widening makes a Falha Crítica Menor into a critical success.
+     */
+    public CriticalResult getCriticalResult(final int criticalMarginIncrease, final int lesserCriticalMargin,
+                                            final int majorCriticalMargin) {
         int total = getTotal();
         if (total == MAJOR_CRITICAL_FAILURE_TOTAL) {
             return CriticalResult.FALHA_CRITICA_MAIOR;
         }
-        if (countFace(MAX_FACE_VALUE) == EXPECTED_DICE_COUNT) {
+        if (total >= Math.max(MIN_TOTAL, majorCriticalMargin)) {
             return CriticalResult.ACERTO_CRITICO_MAIOR;
         }
         if (total == MINOR_CRITICAL_FAILURE_TOTAL) {
@@ -267,9 +285,5 @@ public class SkillRoll {
             return CriticalResult.ACERTO_CRITICO_MENOR;
         }
         return CriticalResult.NONE;
-    }
-
-    private int countFace(final int face) {
-        return (int) dice.stream().filter(rolled -> rolled == face).count();
     }
 }

@@ -1,5 +1,6 @@
 package org.aventyrs.core.item;
 
+import org.aventyrs.core.effect.DefensiveCriticalEffectType;
 import org.aventyrs.core.ability.ItemActiveAbility;
 import org.aventyrs.core.skill.SkillType;
 
@@ -106,11 +107,9 @@ public class AbstractItem implements Item {
      * The three weapon columns are copied off the template here for the same reason every other
      * column is: the copy is the template's copy.
      *
-     * <p><b>Not carried:</b> {@link Weapon#getCriticalEffect()} and {@link
-     * Weapon#getLesserCriticalMargin()}. {@code AbstractWeapon} has no field for either — they are
-     * interface defaults — so a forged copy reports the defaults rather than its catalog entry's
-     * authored Efeito Crítico. Nothing reads those two yet (see {@code Weapon}'s own javadoc);
-     * they need fields on {@code AbstractWeapon} before a forged copy can keep them.
+     * <p>Its Efeito Crítico and Margem Crítica Menor columns are carried too: both are read now
+     * ({@code AttackDelivery} applies the weapon's own Efeito Crítico, {@code CriticalServiceImpl}
+     * its margin), so a copy reporting the interface defaults would crit like a club.
      */
     private static AbstractItemBuilder<?, ?> baseBuilderFor(final ItemTemplate template) {
         if (!(template instanceof Weapon weapon)) {
@@ -119,7 +118,18 @@ public class AbstractItem implements Item {
         return AbstractWeapon.builder()
                 .damageBase(weapon.getDamageBase())
                 .skillType(weapon.getSkillType())
-                .range(weapon.getRange());
+                .range(weapon.getRange())
+                .criticalEffect(weapon.getCriticalEffect())
+                .lesserCriticalMargin(weapon.getLesserCriticalMargin());
+    }
+
+    /**
+     * The Efeito Crítico Defensivo this copy grants its wearer — its catalog entry's, when that is an
+     * Armadura or Escudo ({@link CriticallyDefensiveItem}); {@code null} for anything else.
+     */
+    @Override
+    public DefensiveCriticalEffectType getDefensiveCriticalEffect() {
+        return template instanceof CriticallyDefensiveItem defensive ? defensive.getDefensiveCriticalEffect() : null;
     }
 
     public static AbstractItem fromTemplate(final ItemTemplate template) {

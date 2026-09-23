@@ -1,5 +1,6 @@
 package org.aventyrs.core.item;
 
+import org.aventyrs.core.effect.CriticalEffectType;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NonNull;
@@ -47,4 +48,15 @@ public class AbstractWeapon extends AbstractItem implements Weapon {
 
     @Builder.Default
     private Range range = Range.ADJACENTE;
+
+    /**
+     * This copy's own Efeito Crítico — its catalog entry's, carried by {@code
+     * AbstractItem#builderFromTemplate} so a forged or bought blade keeps the "Sangramento" its
+     * column prints. {@code null} for a one-off weapon that names none.
+     */
+    private CriticalEffectType criticalEffect;
+
+    /** This copy's own Margem Crítica Menor — its catalog entry's, carried the same way. */
+    @Builder.Default
+    private int lesserCriticalMargin = Weapon.DEFAULT_LESSER_CRITICAL_MARGIN;
 }

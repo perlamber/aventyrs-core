@@ -25,8 +25,8 @@ public enum SenhorDaBrigaSpecialization implements AventyrTitleSpecialization {
     // SenhorDaBriga#grantSpecialization. "Custo de Ativação: Nenhum, habilidade passiva". Real:
     // "tem a Margem Crítica Menor aumentada em +2 números" with Armas Naturais, through
     // SenhorDaBriga#resolveCriticalMarginIncrease (CriticalServiceImpl's Título scan).
-    // TODO "recebem Guilhotina como Efeito Crítico Adicional": CriticalEffectType.GUILHOTINA is an
-    // identity only — no CriticalEffect class applies it, so there is nothing to add to an attack.
+    // "recebem Guilhotina como Efeito Crítico Adicional" is real (0.0.49):
+    // SenhorDaBriga#resolveAdditionalCriticalEffects adds GUILHOTINA to every natural-weapon critical.
     PUNHO_INIGUALAVEL(
             "Seus ataques com Armas Naturais recebem Guilhotina como Efeito Crítico Adicional e tem a " +
             "Margem Crítica Menor aumentada em +2 números.",
@@ -43,8 +43,8 @@ public enum SenhorDaBrigaSpecialization implements AventyrTitleSpecialization {
     // clauses being written as successive increases of the same "Bônus Defensivos". "Suas rolagens
     // de Defesas tem a Margem Crítica Menor aumentada em +2 números" is real through
     // SenhorDaBriga#resolveCriticalMarginIncrease on Esquiva e Aparar, the Perícia a Defesa rolls.
-    // TODO "recebem Ímpeto Defensivo como Efeito Crítico adicional": DefensiveCriticalEffectType
-    // .IMPETO_DEFENSIVO is an identity only — nothing applies a defensive Efeito Crítico.
+    // "recebem Ímpeto Defensivo como Efeito Crítico adicional" is real (0.0.49):
+    // SenhorDaBriga#resolveAdditionalDefensiveCriticalEffects, applied on a Defesa's Acerto Crítico.
     FANTASMA_DO_RINGUE(
             "Efeito Passivo: Você recebe Bônus de +1 em suas Defesas. Defesa Fantasma: Os Bônus " +
             "Defensivos de Fantasma do Ringue aumentam em +1 enquanto você estiver armado apenas com " +

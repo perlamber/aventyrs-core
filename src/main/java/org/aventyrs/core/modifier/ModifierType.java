@@ -130,8 +130,9 @@ public enum ModifierType {
      * before {@code SkillRoll#getCriticalResult(int)}, so it also reaches {@code
      * org.aventyrs.core.combat.AttackDelivery}, which routes through that same interaction. Not
      * read on the {@code org.aventyrs.core.combat.AttackReceiver} mirror (the attacker rolls
-     * nothing there). The "-1 à Margem Crítica Maior" clause has no expression — this ruleset
-     * models no Acerto Crítico Maior margin at all — and the "até o mínimo de 17" floor is
+     * nothing there). The "-1 à Margem Crítica Maior" clause is real as of 0.0.49: each instance
+     * pushes the attacker's Margem Crítica <b>Maior</b> back by one, never past 18 ({@code
+     * CriticalService#getMajorCriticalResistance}). The "até o mínimo de 17" floor is
      * approximated as "cannot push the attacker below their own baseline margin" (a net negative
      * widening is floored at 0 by {@code getCriticalResult}). No "não-PRIMORDIAL" scoping either;
      * the crit path carries no PRIMORDIAL marker.
@@ -143,6 +144,15 @@ public enum ModifierType {
      * catalog asks for.
      */
     CRITICAL_RESISTANCE,
+
+    /**
+     * A round-scoped widening of the holder's own Margem Crítica <b>Menor</b>, in "números" — the
+     * timed half of {@code effect.Guilhotina}'s "a Margem Crítica Menor dos seus ataques aumenta em
+     * +2 números (efeitos cumulativos)". Read off the sheet by {@code
+     * CriticalServiceImpl#sumCriticalMarginIncrease} for every attack roll, beside the standing
+     * grants. Margem Crítica has no other {@code ModifierType}: every standing source is a hook.
+     */
+    LESSER_CRITICAL_MARGIN,
     DEFESAS,
     PHYSICAL_DEFENSE,
     MAGIC_DEFENSE,

@@ -93,8 +93,7 @@ public enum OffensiveMasterpiece implements Masterpiece {
             requirements(AttributeDomain.STRENGTH, 3, AttributeDomain.DEXTERITY, 3),
             "Dano Base da Arma aumenta em +1.", null),
     // The Característica Adicional's "Margem Crítica Menor +1" is real — resolveCriticalMarginIncrease.
-    // TODO: the Favor's "Margem Crítica Maior +1" is not: this ruleset models no Acerto Crítico
-    // Maior margin at all (see CLAUDE.md's Resistência a Críticos row).
+    // The Favor's "Margem Crítica Maior +1" is real too — resolveMajorCriticalMarginIncrease.
     DECISIVA("Decisiva", ItemRarity.UNCOMMON, 0, 0, 0, 0, 0, requirements(AttributeDomain.DEXTERITY, 5),
             "Margem Crítica Maior +1.", "Margem Crítica Menor +1."),
     // TODO: an attack cannot be redirected to roll against the target's DM instead of their DF
@@ -215,12 +214,18 @@ public enum OffensiveMasterpiece implements Masterpiece {
      * <p>Only ever asked about the weapon this Obra-Prima is fitted to, enforced by {@code
      * Item#resolveEnhancementCriticalMarginIncrease}.
      */
-    // TODO: Decisiva's Favor, "Margem Crítica Maior +1", is not expressible — this ruleset models no
-    //  Acerto Crítico Maior margin at all (it is fixed at three 6s; see CLAUDE.md's Resistência a
-    //  Críticos row).
     @Override
     public int resolveCriticalMarginIncrease(final Weapon weapon, final Character character) {
         return this == DECISIVA || this == MITRAL ? 1 : 0;
+    }
+
+    /**
+     * Decisiva's Favor, "Margem Crítica Maior +1" — a Favor, so gated on {@link #getRequirements()}
+     * (Destreza 5), unlike its ungated Menor Característica Adicional above.
+     */
+    @Override
+    public int resolveMajorCriticalMarginIncrease(final Weapon weapon, final Character character) {
+        return this == DECISIVA && requirements.isMetBy(character) ? 1 : 0;
     }
 
     /**

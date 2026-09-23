@@ -1,5 +1,7 @@
 package org.aventyrs.core.combat;
 
+import org.aventyrs.core.util.DiceRoller;
+import org.aventyrs.core.effect.CriticalEffectType;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NonNull;
@@ -148,6 +150,22 @@ public class DeliveredAttack {
      */
     @Singular
     private final List<EffectChain> effectChains;
+
+    /**
+     * Efeitos Críticos this attack carries <b>by identity</b>, on top of the attack source's own and
+     * the attacker's Títulos' — an activation's {@code EmpoweredAttack#additionalCriticalEffect}
+     * (Placidez de Undine's Oferenda Maldita), folded in by the caller. Built by {@code
+     * CriticalEffects} at resolution, with {@link #diceRoller}'s dice.
+     */
+    @Singular
+    private final List<CriticalEffectType> additionalCriticalEffectTypes;
+
+    /**
+     * Where the Efeitos Críticos' own dice come from — Amaldiçoar's 1d6 Rodadas, Oferenda Maldita's
+     * Roubo de Vida. {@code null} leaves every dice-bearing effect unbuilt, reported on {@link
+     * DeliveredAttackResult#getUnappliedCriticalEffects()}: this core never rolls.
+     */
+    private final DiceRoller diceRoller;
 
     /**
      * A {@link DeliveredAttackBuilder} with defender and {@link #defenseValue} already filled from
