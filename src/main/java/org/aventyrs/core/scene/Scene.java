@@ -30,6 +30,7 @@ import static org.aventyrs.core.util.TranslatableMessages.INITIATIVE_NOT_WON;
 import static org.aventyrs.core.util.TranslatableMessages.INVALID_TURN_CURSOR;
 import static org.aventyrs.core.util.TranslatableMessages.NO_PARTICIPANTS_IN_SCENE;
 import static org.aventyrs.core.util.TranslatableMessages.SCENE_ALREADY_IN_COMBAT;
+import static org.aventyrs.core.util.TranslatableMessages.SCENE_NOT_IN_COMBAT;
 
 /**
  * A Cena: the scope many rules key off (e.g. "uma vez a cada Cena", "ao longo da Cena").
@@ -586,6 +587,25 @@ public class Scene {
         CombatantSheet active = activeEntries.get(currentIndex).getCombatantSheet();
         active.startTurn(currentRound);
         return active;
+    }
+
+    /**
+     * Combat ends in this Scene — the mirror of {@link #startCombat()}, and the GM's "encerrar
+     * combate". Turns {@link #isCombatScene()} off, puts {@link #getCurrentRound()} back to 0 (a
+     * later combat counts its Rodadas afresh, the same way a Scene that never fought stays on 0),
+     * and calls {@link CombatantSheet#endCombat()} on every participant, which drops whatever
+     * each holds "até o final da Cena".
+     *
+     * @throws IllegalOperationException ({@code SCENE_NOT_IN_COMBAT}) if this Scene is not a Cena
+     *                                    de Combate
+     */
+    public void endCombat() {
+        if (!combatScene) {
+            throw new IllegalOperationException(SCENE_NOT_IN_COMBAT);
+        }
+        combatScene = false;
+        currentRound = 0;
+        allEntries().forEach(entry -> entry.getCombatantSheet().endCombat());
     }
 
     /**

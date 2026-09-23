@@ -67,6 +67,27 @@
  * trait whose effect is reported rather than applied (Grito de Guerra Vulcano's {@code
  * Blessing}s) still leaves granting them to the caller.
  *
+ * <h2>Around every attack: {@link org.aventyrs.core.title.TitleAttackModifiers}</h2>
+ *
+ * A held Título can also shape its holder's attacks without being activated — {@code
+ * SenhorDaBriga}'s natural-weapon clauses. Everything that lands inside a roll is applied by this
+ * core's own scans ({@code AventyrTitle#resolveCriticalMarginIncrease}/{@code
+ * #resolveCriticalDamage}/{@code #resolveDamageBaseIncrease}/{@code #resolveAttackRollBonus}/
+ * {@code #resolveDamageRollBonus}/the holder-aware {@code #resolveBaseDefesasBonus}). What a caller
+ * must apply comes back from one query before the attack is built, and one call after it:
+ *
+ * <pre>{@code
+ * TitleAttackModifiers mods = TitleAttackModifiers.resolve(attackerSheet, weapon, defenderSheet, context);
+ * // roll mods.extraDamageDice() more d6, lower the PA price by mods.actionPointReduction(),
+ * // roll against mods.defenseType() and type the damage mods.damageDescriptor() when non-null,
+ * // and add mods.effectChains() to the DeliveredAttack
+ * DeliveredAttackResult result = attackDelivery.resolve(request.build());
+ * TitleAttackModifiers.consumeCharges(attackerSheet, weapon);   // after — the roll read the budget
+ * }</pre>
+ *
+ * <p>Combat-scoped grants ("até o final da Cena") end at {@code Scene#endCombat()}, which the GM
+ * calls; a caller rebuilding a Scene from persistence sets the flag with {@code setCombatScene}.
+ *
  * <h2>Adding a new Título</h2>
  *
  * A concrete Título's classes live together in their own subpackage,
@@ -75,6 +96,6 @@
  * convention. Add it to {@link org.aventyrs.core.title.TitleCatalog} too, or no Talento will
  * offer it. See the project's {@code CLAUDE.md} "Adding a new Título" section (and the
  * {@code adding-a-title} Claude Code skill) for the full checklist; {@code Santo} is the
- * worked reference example.
+ * worked reference example for activations, {@code SenhorDaBriga} for passives reaching the attack.
  */
 package org.aventyrs.core.title;

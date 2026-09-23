@@ -208,6 +208,22 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     @Getter(AccessLevel.NONE)
     private final Map<Object, Integer> enhancedAttacksRemaining = new HashMap<>();
 
+    /** Which budgets in {@link #enhancedAttacksRemaining} lapse at {@link #endCombat()}. */
+    @Getter(AccessLevel.NONE)
+    private final Set<Object> combatScopedEnhancements = new HashSet<>();
+
+    /** Combat-scoped counters — see {@link #incrementCombatCounter}. */
+    @Getter(AccessLevel.NONE)
+    private final Map<Object, Integer> combatCounters = new HashMap<>();
+
+    /** Sources that have affected this combatant this combat — see {@link #markAffectedThisCombat}. */
+    @Getter(AccessLevel.NONE)
+    private final Set<Object> affectedThisCombat = new HashSet<>();
+
+    /** Rodadas in which this combatant hit each target with an Arma Natural, keyed by target id. */
+    @Getter(AccessLevel.NONE)
+    private final Map<UUID, Set<Integer>> naturalWeaponHits = new HashMap<>();
+
     /** Every roll-action taken since this Rodada began — see {@link #recordAction}. */
     @Getter(AccessLevel.NONE)
     private final List<CombatantAction> actionsThisRound = new ArrayList<>();
@@ -918,7 +934,10 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         }
         // Replaces rather than accumulates, the same way a Blessing from one source replaces its
         // predecessor: re-activating restates how many attacks are enhanced, it does not bank them.
+        // A plain grant also restates *how long* it lasts, so it sheds any combat scope a previous
+        // grantEnhancedAttacksForCombat gave the same source.
         enhancedAttacksRemaining.put(source, count);
+        combatScopedEnhancements.remove(source);
     }
 
     @Override
@@ -1065,6 +1084,7 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         attacksSufferedThisRound = 0;
         drewWeaponThisScene = false;
         combatStarted = false;
+        clearCombatScopedState();
     }
 
     /**
@@ -1088,6 +1108,75 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
             }
         }
         return granted;
+    }
+
+    @Override
+    public void endCombat() {
+        combatStarted = false;
+        clearCombatScopedState();
+    }
+
+    /** Everything {@link #endCombat()} drops — also dropped by {@link #startNewScene()}. */
+    private void clearCombatScopedState() {
+        combatScopedEnhancements.forEach(enhancedAttacksRemaining::remove);
+        combatScopedEnhancements.clear();
+        combatCounters.clear();
+        affectedThisCombat.clear();
+        naturalWeaponHits.clear();
+    }
+
+    @Override
+    public int incrementCombatCounter(final Object source) {
+        return combatCounters.merge(source, 1, Integer::sum);
+    }
+
+    @Override
+    public int getCombatCounter(final Object source) {
+        return combatCounters.getOrDefault(source, 0);
+    }
+
+    @Override
+    public void markAffectedThisCombat(final Object source) {
+        affectedThisCombat.add(source);
+    }
+
+    @Override
+    public boolean isAffectedThisCombat(final Object source) {
+        return affectedThisCombat.contains(source);
+    }
+
+    @Override
+    public void grantEnhancedAttacksForCombat(final Object source, final int count) {
+        if (count <= 0) {
+            return;
+        }
+        grantEnhancedAttacks(source, count);
+        combatScopedEnhancements.add(source);
+    }
+
+    @Override
+    public void openActivationWindow(final Object source, final int rounds) {
+        applyEffect(new ActivationWindow(source, rounds));
+    }
+
+    @Override
+    public boolean hasActivationWindow(final Object source) {
+        return temporaryEffects.stream()
+                .filter(ActivationWindow.class::isInstance)
+                .map(ActivationWindow.class::cast)
+                .filter(window -> !window.isExpired())
+                .anyMatch(window -> window.getSource().equals(source));
+    }
+
+    @Override
+    public void recordNaturalWeaponHit(final CombatantSheet target, final int round) {
+        naturalWeaponHits.computeIfAbsent(target.getId(), id -> new HashSet<>()).add(round);
+    }
+
+    @Override
+    public boolean hasHitWithNaturalWeaponInConsecutiveRounds(final CombatantSheet target, final int round) {
+        Set<Integer> rounds = naturalWeaponHits.getOrDefault(target.getId(), Set.of());
+        return rounds.contains(round) && rounds.contains(round - 1);
     }
 
     /**

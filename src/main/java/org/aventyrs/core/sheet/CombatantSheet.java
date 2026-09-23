@@ -790,6 +790,72 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
     List<Blessing> startCombat();
 
     /**
+     * Combat ends here — the mirror of {@link #startCombat()}, and what "até o final da Cena" /
+     * "ao final da Cena" means for a combat-scoped grant. Drops everything combat-scoped: every
+     * {@link #incrementCombatCounter counter}, the {@link #markAffectedThisCombat per-combat
+     * ledger}, every budget granted through {@link #grantEnhancedAttacksForCombat}, and the
+     * {@link #recordNaturalWeaponHit natural-weapon hit ledger}; and re-arms {@link
+     * #startCombat()} so a later combat in the same Cena fires its triggers again.
+     *
+     * <p>{@code Scene#endCombat()} calls this on every participant. A budget granted through the
+     * plain {@link #grantEnhancedAttacks} survives, since its clause names no end at all.
+     */
+    void endCombat();
+
+    /**
+     * Advances source's combat-scoped counter by one and returns the new value — a figure that
+     * accumulates for as long as a combat lasts ("Sempre que desencadear um Acerto Crítico, suas
+     * Defesas aumentam em +1 até o final da Cena"). Cleared only by {@link #endCombat()} and
+     * {@link #startNewScene()}.
+     */
+    int incrementCombatCounter(Object source);
+
+    /** source's combat-scoped counter — 0 when never advanced this combat. */
+    int getCombatCounter(Object source);
+
+    /**
+     * Marks source as having affected this combatant during the current combat — the "não afeta
+     * um mesmo alvo duas vezes na mesma Cena" twin of {@link #markAffectedUntilRest}. Cleared by
+     * {@link #endCombat()} and {@link #startNewScene()}.
+     */
+    void markAffectedThisCombat(Object source);
+
+    /** Whether source has already affected this combatant during the current combat. */
+    boolean isAffectedThisCombat(Object source);
+
+    /**
+     * {@link #grantEnhancedAttacks} for a budget that also lapses when combat ends — "a
+     * Habilidade é cancelada ao final da Cena mesmo se ainda houver quantidade de ataques
+     * disponíveis". Replaces like its twin; read and spent through the same {@link
+     * #getRemainingEnhancedAttacks}/{@link #consumeEnhancedAttack}.
+     */
+    void grantEnhancedAttacksForCombat(Object source, int count);
+
+    /**
+     * Opens source's window for rounds Rodadas — a trait whose effect is "Nesta Rodada …" or
+     * "Por 1 Rodada …" but which grants no stat a {@link Blessing} could carry, only a state other
+     * clauses ask about. Re-opening renews rather than stacks.
+     */
+    void openActivationWindow(Object source, int rounds);
+
+    /** Whether source's window, opened by {@link #openActivationWindow}, is still open. */
+    boolean hasActivationWindow(Object source);
+
+    /**
+     * Records that this combatant landed a hit on target with an Arma Natural in round — the
+     * attacker-side ledger "sofram com seus ataques bem-sucedidos, apenas quando efetuados por
+     * Armas Naturais, por 2 Rodadas seguidas" reads. Kept on the <b>attacker</b> because that is
+     * the sheet a caller always owns. Cleared by {@link #endCombat()} and {@link #startNewScene()}.
+     */
+    void recordNaturalWeaponHit(CombatantSheet target, int round);
+
+    /**
+     * Whether this combatant has hit target with an Arma Natural in both round and the Rodada
+     * before it — see {@link #recordNaturalWeaponHit}.
+     */
+    boolean hasHitWithNaturalWeaponInConsecutiveRounds(CombatantSheet target, int round);
+
+    /**
      * Appends an action this combatant took this Rodada — see {@link CombatantAction}. The API
      * calls this <b>explicitly</b> after resolving a roll (or an {@code AttackDelivery}/{@code
      * AttackReceiver} exchange); it is never a side effect of {@code

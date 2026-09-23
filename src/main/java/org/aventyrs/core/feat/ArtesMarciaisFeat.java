@@ -100,7 +100,7 @@ public enum ArtesMarciaisFeat implements Feat {
                     .build()) {
         @Override
         public int resolveDefenseBonus(final DefenseType defenseType, final Character character) {
-            return wieldsANonNaturalWeapon(character) ? 0 : BASE_DEFENSE_BONUS + character.getAllTitles().size();
+            return character.isArmedOnlyWithNaturalWeapons() ? BASE_DEFENSE_BONUS + character.getAllTitles().size() : 0;
         }
     },
 
@@ -127,7 +127,7 @@ public enum ArtesMarciaisFeat implements Feat {
      *
      * <p>Both gates read the same two facts, and both hooks check them, so the Talento can never
      * grant the extra target without also charging the Desvantagem: "não estiver utilizando
-     * nenhuma arma, exceto Armas Naturais" is {@link #wieldsANonNaturalWeapon} (drawn weapons, not
+     * nenhuma arma, exceto Armas Naturais" is {@code Character#isArmedOnlyWithNaturalWeapons} (drawn weapons, not
      * merely carried ones — see that method), and "nenhum item do tipo Escudo" is {@link
      * #wieldsAShield}. The mutual-exclusion Pré-requisito is enforced by this enum's {@code
      * isEligible} override.
@@ -243,7 +243,7 @@ public enum ArtesMarciaisFeat implements Feat {
         @Override
         public Optional<DamageBonus> resolveDamageBonus(final SkillType attackingSkillType, final SceneContext sceneContext,
                                                          final CombatantSheet attackTarget, final Character actor) {
-            if (attackingSkillType != SkillType.ATAQUE_CORPO_A_CORPO || wieldsANonNaturalWeapon(actor)) {
+            if (attackingSkillType != SkillType.ATAQUE_CORPO_A_CORPO || !actor.isArmedOnlyWithNaturalWeapons()) {
                 return Optional.empty();
             }
             return Optional.of(new DamageBonus(Skill.ADVANTAGE_BONUS, DamageType.FISICO));
@@ -368,7 +368,7 @@ public enum ArtesMarciaisFeat implements Feat {
      * Desvantagem can never disagree about whether the Talento is currently active.
      */
     private static boolean arteFluidaApplies(final Character character) {
-        return !wieldsANonNaturalWeapon(character) && !wieldsAShield(character);
+        return character.isArmedOnlyWithNaturalWeapons() && !wieldsAShield(character);
     }
 
     /**
@@ -377,26 +377,12 @@ public enum ArtesMarciaisFeat implements Feat {
      * #DOMINAR_ARTE_MARCIAL_FERROADA_ESMAGADORA} share.
      *
      * <p>Reads {@code Character#getEquipment()}, not {@code getDrawnWeapons()}, unlike {@link
-     * #wieldsANonNaturalWeapon}: a Escudo is not a {@link Weapon}, so it has no drawn/sheathed
+     * Character#isArmedOnlyWithNaturalWeapons}: a Escudo is not a {@link Weapon}, so it has no drawn/sheathed
      * state to consult — being equipped <em>is</em> carrying it on the arm.
      */
     private static boolean wieldsAShield(final Character character) {
         return character.getEquipment().stream()
                 .anyMatch(item -> item.getCategory() == ItemCategory.SHIELD);
-    }
-
-    /**
-     * Whether character is wielding any {@link Weapon} that is <b>not</b> an Arma Natural for
-     * them — the "não estiver utilizando nenhuma arma, exceto Armas Naturais" gate {@link
-     * #DEFESA_DE_MAOS_LIMPAS} and {@link #DOMINAR_ARTE_MARCIAL_IMPACTO_ROCHOSO} share.
-     *
-     * <p>Reads {@code Character#getDrawnWeapons()}, not {@code getEquipment()}: "utilizando" is
-     * <b>in hand</b>, so a blade sheathed on the belt costs a martial artist nothing. A weapon
-     * must be drawn to be used, and drawing one is itself an action.
-     */
-    private static boolean wieldsANonNaturalWeapon(final Character character) {
-        return character.getDrawnWeapons().stream()
-                .anyMatch(weapon -> !character.treatsAsNaturalWeapon(weapon));
     }
 
     private final String description;

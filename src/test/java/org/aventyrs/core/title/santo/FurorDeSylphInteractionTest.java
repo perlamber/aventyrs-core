@@ -116,4 +116,15 @@ class FurorDeSylphInteractionTest {
         assertEquals(0, AbracadoPelaEscuridaoAbility.FUROR_DE_SYLPH.resolveActionPointBonus(holder));
         assertEquals(0, AbracadoPelaEscuridaoAbility.FUROR_DE_SYLPH.resolveActionPointBonus(null));
     }
+
+    /** The caller's one generic charge call spends Furor de Sylph's budget on any attack. */
+    @Test
+    void titleAttackModifiersConsumeChargesSpendsOneFurorCharge() {
+        interaction.applyTo(holder);
+        int before = remaining();
+
+        org.aventyrs.core.title.TitleAttackModifiers.consumeCharges(holder, null);
+
+        assertEquals(before - 1, remaining());
+    }
 }

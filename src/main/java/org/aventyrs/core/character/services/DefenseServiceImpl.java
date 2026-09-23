@@ -38,7 +38,7 @@ public class DefenseServiceImpl implements DefenseService {
     public int getTotalDefense(final Character character, final DefenseType defenseType, final SceneContext sceneContext) {
         return sumAbilityModifiers(character, defenseType, null) + sumEquipment(character, defenseType, sceneContext)
                 + sumFeats(character, defenseType, sceneContext)
-                + sumTitleBaseDefesas(character, sceneContext);
+                + sumTitleBaseDefesas(character, sceneContext, null);
     }
 
     @Override
@@ -58,7 +58,7 @@ public class DefenseServiceImpl implements DefenseService {
         return sumAbilityModifiers(target.getCharacter(), defenseType, target)
                 + sumEquipment(target, defenseType, sceneContext, damageDescriptor)
                 + sumFeats(target.getCharacter(), defenseType, sceneContext, target)
-                + sumTitleBaseDefesas(target.getCharacter(), sceneContext)
+                + sumTitleBaseDefesas(target.getCharacter(), sceneContext, target)
                 + target.getTemporaryBonus(ModifierType.DEFESAS)
                 + target.getTemporaryBonus(defenseType.getModifierType())
                 // Desprevenido's -2 Defesas, and anything conferring it (Caído, Flanqueado,
@@ -87,9 +87,11 @@ public class DefenseServiceImpl implements DefenseService {
      * granted as a real Aura by {@code Scene#refreshProjectedAuras} instead, arriving in the
      * {@code getTemporaryBonus(DEFESAS)} term below.
      */
-    private int sumTitleBaseDefesas(final Character character, final SceneContext sceneContext) {
+    private int sumTitleBaseDefesas(final Character character, final SceneContext sceneContext,
+                                    final CombatantSheet sheet) {
         return character.getAllTitles().stream()
-                .mapToInt(title -> title.resolveBaseDefesasBonus(sceneContext))
+                .mapToInt(title -> title.resolveBaseDefesasBonus(sceneContext, character, sheet,
+                        character.getPrimaryTitle() == title))
                 .sum();
     }
 

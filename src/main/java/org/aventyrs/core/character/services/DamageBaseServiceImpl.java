@@ -39,6 +39,13 @@ public class DamageBaseServiceImpl implements DamageBaseService {
                     .mapToInt(item -> item.resolveEnhancementDamageBaseIncrease(weapon, character))
                     .sum();
         }
+        // A held Título's own clause ("Se Senhor da Briga for seu Título Primário o Dano Base de
+        // seus ataques com Armas Naturais aumentam em +1"), told whether it sits in the Primário
+        // slot — a structural fact about Character, never self-reported by the Título.
+        scaleUps += character.getAllTitles().stream()
+                .mapToInt(title -> title.resolveDamageBaseIncrease(character, weapon,
+                        character.getPrimaryTitle() == title))
+                .sum();
 
         return scaleUps + sumAttackingSkillExcellencies(character, attackingSkill);
     }

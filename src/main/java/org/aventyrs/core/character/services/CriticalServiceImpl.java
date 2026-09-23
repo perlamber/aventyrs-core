@@ -15,6 +15,7 @@ import org.aventyrs.core.skill.Skill;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
 import org.aventyrs.core.skill.SkillRoll;
 import org.aventyrs.core.skill.SkillType;
+import org.aventyrs.core.title.AventyrTitle;
 
 /**
  * The one implementation of both figures — {@code AbstractSkillInteraction} resolves a roll's
@@ -79,6 +80,10 @@ public class CriticalServiceImpl implements CriticalService {
                     .mapToInt(item -> item.resolveEnhancementCriticalMarginIncrease(weapon, character))
                     .sum();
         }
+        // And a sixth for the held Títulos (Senhor da Briga's natural-weapon and Defesa margins).
+        total += character.getAllTitles().stream()
+                .mapToInt(title -> title.resolveCriticalMarginIncrease(skillType, attackSource, holder))
+                .sum();
         return total;
     }
 
@@ -103,6 +108,9 @@ public class CriticalServiceImpl implements CriticalService {
             for (Item item : character.getEquipment()) {
                 total = total.plus(item.resolveEnhancementCriticalDamage(weapon, character));
             }
+        }
+        for (AventyrTitle title : character.getAllTitles()) {
+            total = total.plus(title.resolveCriticalDamage(skillType, attackSource, criticalResult, holder));
         }
         return total;
     }

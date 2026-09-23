@@ -13,6 +13,8 @@ public class TranslatableMessages {
     public static final String CHARACTER_SHEET_NOT_IN_SCENE = "CHARACTER_SHEET_NOT_IN_SCENE";
     public static final String INVALID_TURN_CURSOR = "INVALID_TURN_CURSOR";
     public static final String SCENE_ALREADY_IN_COMBAT = "SCENE_ALREADY_IN_COMBAT";
+    /** {@code Scene#endCombat()} was asked of a Scene that is not a Cena de Combate. */
+    public static final String SCENE_NOT_IN_COMBAT = "SCENE_NOT_IN_COMBAT";
     public static final String INVALID_SKILL_ROLL = "INVALID_SKILL_ROLL";
     public static final String INVALID_ACTION_COST = "INVALID_ACTION_COST";
 
@@ -92,6 +94,12 @@ public class TranslatableMessages {
     public static final String TITLE_ABILITY_REQUIRES_ARMOR_OR_SHIELD = "TITLE_ABILITY_REQUIRES_ARMOR_OR_SHIELD";
     /** The Título ability has already been activated as many times as it may be this Turno. */
     public static final String TITLE_ABILITY_ACTIVATION_LIMIT_REACHED = "TITLE_ABILITY_ACTIVATION_LIMIT_REACHED";
+    /** The Título choice was already made and "depois de escolhido não é possível mudar" — or the pick is not one of the offered options. */
+    public static final String TITLE_ABILITY_CHOICE_LOCKED = "TITLE_ABILITY_CHOICE_LOCKED";
+    /** The Título activation needs its activator armed with nothing but Armas Naturais, and a weapon is drawn. */
+    public static final String TITLE_ABILITY_REQUIRES_NATURAL_WEAPONS_ONLY = "TITLE_ABILITY_REQUIRES_NATURAL_WEAPONS_ONLY";
+    /** The Título activation's target is not an enemy within the distance the ability names. */
+    public static final String TITLE_ABILITY_TARGET_OUT_OF_RANGE = "TITLE_ABILITY_TARGET_OUT_OF_RANGE";
     public static final String REQUIRED_ATTRIBUTE_ABILITY_NOT_HELD = "REQUIRED_ATTRIBUTE_ABILITY_NOT_HELD";
     public static final String TITLE_NOT_HELD = "TITLE_NOT_HELD";
     public static final String EXTRA_SUPREMA_ALREADY_GRANTED = "EXTRA_SUPREMA_ALREADY_GRANTED";

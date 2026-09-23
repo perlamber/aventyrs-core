@@ -21,6 +21,7 @@ import org.aventyrs.core.ego.EgoAdvantage;
 import org.aventyrs.core.feat.Feat;
 import org.aventyrs.core.item.Item;
 import org.aventyrs.core.item.ItemCategory;
+import org.aventyrs.core.item.ItemType;
 import org.aventyrs.core.item.NaturalWeapon;
 import org.aventyrs.core.item.RegaliaGrade;
 import org.aventyrs.core.item.Weapon;
@@ -698,6 +699,28 @@ public class Character {
     /** Whether this character has any weapon in hand — "está utilizando uma arma". */
     public boolean isWieldingAWeapon() {
         return !drawnWeapons.isEmpty();
+    }
+
+    /**
+     * Whether every weapon in this character's hand is an Arma Natural for them — "armado apenas
+     * com suas Armas Naturais", "não estiver utilizando nenhuma arma, exceto Armas Naturais". True
+     * with nothing drawn at all: an Arma Natural is never drawn, it is named per attack.
+     *
+     * <p>Reads {@link #getDrawnWeapons()}, not {@link #getEquipment()}: "utilizando" is <b>in
+     * hand</b>, so a blade sheathed on the belt costs a martial artist nothing. Promoted from
+     * {@code ArtesMarciaisFeat} once {@code SenhorDaBriga} needed the identical gate.
+     */
+    public boolean isArmedOnlyWithNaturalWeapons() {
+        return drawnWeapons.stream().allMatch(this::treatsAsNaturalWeapon);
+    }
+
+    /**
+     * Whether this character has any Equipamento Defensivo equipped — an item whose {@link
+     * ItemCategory} is {@link ItemType#DEFENSIVE} (Armadura, Escudo, Elmo, Botas, Capa, Manoplas).
+     * Defesas Naturais are not items at all, so "exceto Defesas Naturais" needs no exclusion here.
+     */
+    public boolean usesDefensiveEquipment() {
+        return equipment.stream().anyMatch(item -> item.getCategory().getType() == ItemType.DEFENSIVE);
     }
 
     /**

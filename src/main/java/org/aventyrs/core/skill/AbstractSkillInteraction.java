@@ -478,6 +478,12 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                 .flatMap(Optional::stream)
                 .mapToInt(Integer::intValue)
                 .sum();
+        // Held Títulos — a Vantagem scoped to the weapon, the target, or a budget of attacks the
+        // holder still has (Senhor da Briga's Impacto Elemental and Agarrar e Derrubar).
+        attackRollBonus += target.getCharacter().getAllTitles().stream()
+                .mapToInt(title -> title.resolveAttackRollBonus(skillType, attackSource, target, attackTarget,
+                        sceneContext))
+                .sum();
         if (attackRollBonus != 0) {
             result = result.toBuilder().skillRollBonus(result.getSkillRollBonus() + attackRollBonus).build();
         }
@@ -853,12 +859,17 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                 resolveMeleeStrengthDamage(target));
         int manoeuvre = addFlat(contributions, DamageContributionSource.MANOEUVRE,
                 resolveChargeDamage(skillRoll));
+        int title = addFlat(contributions, DamageContributionSource.TITLE,
+                character.getAllTitles().stream()
+                        .mapToInt(held -> held.resolveDamageRollBonus(skillType, attackSource, target, attackTarget,
+                                sceneContext))
+                        .sum());
         // Outward-facing: what the *victim's* own Condições hand the attacker (Flanqueado).
         int targetCondition = attackTarget == null ? 0
                 : addFlat(contributions, DamageContributionSource.TARGET_CONDITION,
                         attackTarget.getAttackerDamageBonusFromConditions(sceneContext));
 
-        int flat = temporary + condition + meiaForca + manoeuvre + targetCondition;
+        int flat = temporary + condition + meiaForca + manoeuvre + title + targetCondition;
         return new DamageSum(DamageBonus.total(typed, flat), new DamageBonusBreakdown(contributions));
     }
 

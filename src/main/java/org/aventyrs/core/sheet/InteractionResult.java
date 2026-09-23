@@ -54,6 +54,16 @@ public class InteractionResult {
      */
     EmpoweredAttack empoweredAttack;
 
+    /**
+     * How far, in UD, this activation lets its activator move <b>toward the activation's target</b>
+     * — {@code PunhoInigualavelAbility#ROLAMENTO_OFENSIVO}'s "Você pode rolar 2UD em direção a um
+     * inimigo". Reported, never applied: this core holds no positions, so the caller moves the
+     * token and rebuilds its {@code SceneContext}, exactly as it applies a {@code
+     * org.aventyrs.core.scene.Teleportation}. {@code null} for every Interaction that grants no
+     * movement.
+     */
+    Integer movementTowardTarget;
+
     /** The Perícia roll bonus computed by a skill-test Interaction (e.g. AttentionInteraction). */
     Integer skillRollBonus;
 

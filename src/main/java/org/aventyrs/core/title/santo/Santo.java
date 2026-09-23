@@ -7,6 +7,7 @@ import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.InteractionResult;
+import org.aventyrs.core.skill.AttackSource;
 import org.aventyrs.core.title.AventyrTitle;
 import org.aventyrs.core.title.AventyrTitleAbility;
 import org.aventyrs.core.title.AventyrTitleSpecialization;
@@ -235,6 +236,17 @@ public class Santo implements AventyrTitle {
                 .sceneContext(holderContext)
                 .determinationPoints(pdSpent)
                 .build());
+    }
+
+    /**
+     * Furor de Sylph's budget is spent by any attack — "seus ataques recebem" names no weapon —
+     * so the caller's one {@code TitleAttackModifiers#consumeCharges} call covers it too.
+     */
+    @Override
+    public void consumeAttackCharges(final CombatantSheet holder, final AttackSource attackSource) {
+        if (holder != null) {
+            holder.consumeEnhancedAttack(AbracadoPelaEscuridaoAbility.FUROR_DE_SYLPH);
+        }
     }
 
     // Despertar is wired as of 0.0.43 — all three clauses, each through its own mechanism:
