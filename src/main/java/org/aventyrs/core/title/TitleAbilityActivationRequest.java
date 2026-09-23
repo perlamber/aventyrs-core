@@ -7,7 +7,12 @@ import org.aventyrs.core.scene.Scene;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.CombatantSheet;
 
+import org.aventyrs.core.util.DiceRoller;
+
+import java.util.Collection;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Everything one Título ability activation needs, bundled — the request half of {@link
@@ -50,6 +55,21 @@ public class TitleAbilityActivationRequest {
     @Getter(lombok.AccessLevel.NONE)
     private final Object choice;
 
+    /**
+     * Several picks at once, for an ability whose rules text lets the player choose any number of
+     * options — Cataclismo Elemental's elements, the Especializações activated "em conjunto" with a
+     * Frenesi. Read through {@link #getChoices(Class)}; {@link #choice} stays the single-pick field.
+     */
+    @Getter(lombok.AccessLevel.NONE)
+    private final Collection<?> choices;
+
+    /**
+     * The caller's dice, for an activation that rolls — a Grito Espinhoso's "1d6", the d6 a
+     * Vantagem de Ego reacting to an Ego cost needs. {@code null} when the caller supplies none;
+     * this core never rolls on its own.
+     */
+    private final DiceRoller diceRoller;
+
     /** {@link #target}, or the activator when none was named. */
     public CombatantSheet getEffectiveTarget() {
         return target == null ? activator : target;
@@ -58,5 +78,14 @@ public class TitleAbilityActivationRequest {
     /** The {@link #choice}, if one was made and it is of type. */
     public <T> Optional<T> getChoice(final Class<T> type) {
         return type.isInstance(choice) ? Optional.of(type.cast(choice)) : Optional.empty();
+    }
+
+    /** Every one of {@link #choices} that is of type — empty when none were made. */
+    public <T> Set<T> getChoices(final Class<T> type) {
+        if (choices == null) {
+            return Set.of();
+        }
+        return choices.stream().filter(type::isInstance).map(type::cast)
+                .collect(Collectors.toUnmodifiableSet());
     }
 }

@@ -54,6 +54,15 @@ public class Condition extends TemporaryEffect {
     }
 
     /**
+     * What this Condition becomes as it expires into next — "Ao fim da duração alvo se torna
+     * Assustado". A plain Condition of the same origin by default; a subclass whose origin carries
+     * meaning ({@link FrightfulCondition}) stays itself.
+     */
+    Condition decayed(final ConditionType next, final int rounds) {
+        return new Condition(next, rounds, source);
+    }
+
+    /**
      * The value this condition contributes toward modifierType right now, given sceneContext —
      * summing every {@link ConditionType.ConditionEffect} of that type whose own proximity scope
      * is currently satisfied. 0 when none is.

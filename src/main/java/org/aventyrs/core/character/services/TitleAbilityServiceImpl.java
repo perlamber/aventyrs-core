@@ -30,7 +30,7 @@ public class TitleAbilityServiceImpl implements TitleAbilityService {
         if (!character.getAllTitles().contains(title)) {
             throw new IllegalOperationException(TITLE_NOT_HELD);
         }
-        if (!ability.isEligible(title)) {
+        if (!ability.isEligible(title, character)) {
             throw new IllegalOperationException(TITLE_ABILITY_PREREQUISITE_NOT_MET);
         }
 

@@ -54,6 +54,17 @@ public interface AventyrTitleAbility {
     }
 
     /**
+     * Custo de Ativação in temporary Ego points — Gigante Enfurecido's "1 Ponto Temporário de
+     * Autocontrole". {@link EgoCost#NONE} by default: every other trait pays in PD alone. This is the
+     * <em>stated</em> cost a client shows and affords; an activation whose price grows with the
+     * options chosen (Frenesi's Especializações, Cataclismo's elements) resolves the real figure in
+     * its own {@code AbstractTitleAbilityInteraction#resolveEgoCost}.
+     */
+    default EgoCost getEgoCost() {
+        return EgoCost.NONE;
+    }
+
+    /**
      * The Tempo de Ativação — {@link ActionCost#NONE} for a passive, {@code
      * ActionCost.ofActionPoints(n)} for "Tempo de Ativação: NPA", {@link ActionCost#REACTION} for
      * "Reação", {@link ActionCost#FREE_ACTION} for "Ação Livre", or {@code ActionCost.dynamic(min)}
@@ -345,6 +356,16 @@ public interface AventyrTitleAbility {
                 .filter(held -> scope.isEmpty() || scope.equals(held.getRequiredSpecialization()))
                 .count();
         return specializationSatisfied && otherAbilityCount >= getRequiredOtherAbilities();
+    }
+
+    /**
+     * {@link #isEligible(AventyrTitle)} for a prerequisite that also names something the
+     * <em>character</em> holds beyond the Título — Frenesi Arcano's "Especialização 'Titã
+     * Enlouquecido' e o talento 'Arcanista'". Checked by {@code TitleAbilityService#grantTitleAbility};
+     * delegates to the Título-only check by default.
+     */
+    default boolean isEligible(AventyrTitle title, org.aventyrs.core.character.Character character) {
+        return isEligible(title);
     }
 
     public Optional<Class <? extends Interaction>> getInteractionClass();

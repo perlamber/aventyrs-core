@@ -49,10 +49,28 @@ public record TitleAttackModifiers(int extraDamageDice,
                                    DefenseType defenseType,
                                    DamageDescriptor damageDescriptor,
                                    CriticalEffectType criticalEffectOverride,
-                                   List<EffectChain> effectChains) {
+                                   List<EffectChain> effectChains,
+                                   DamageOverride damageOverride) {
+
+    /**
+     * An attack whose dano is fixed by a Título "independente da arma que esteja utilizando" —
+     * Retaliação Furiosa's "1d6+Metade da Força … Se seus PV forem menores ou iguais a zero este dano
+     * muda para 2d6+Força integral". The caller rolls dice d6 and adds flat <b>instead of</b> the
+     * weapon's own dano; everything else about the attack stands.
+     */
+    public record DamageOverride(int dice, int flat) {
+    }
+
+    /** Every field but {@link #damageOverride()} — what a Título that never fixes an attack's dano builds. */
+    public TitleAttackModifiers(final int extraDamageDice, final int actionPointReduction, final DefenseType defenseType,
+                                final DamageDescriptor damageDescriptor, final CriticalEffectType criticalEffectOverride,
+                                final List<EffectChain> effectChains) {
+        this(extraDamageDice, actionPointReduction, defenseType, damageDescriptor, criticalEffectOverride,
+                effectChains, null);
+    }
 
     /** Nothing changed. */
-    public static final TitleAttackModifiers NONE = new TitleAttackModifiers(0, 0, null, null, null, List.of());
+    public static final TitleAttackModifiers NONE = new TitleAttackModifiers(0, 0, null, null, null, List.of(), null);
 
     public TitleAttackModifiers {
         effectChains = effectChains == null ? List.of() : List.copyOf(effectChains);
@@ -61,7 +79,8 @@ public record TitleAttackModifiers(int extraDamageDice,
     /** Whether this changes nothing at all. */
     public boolean isNone() {
         return extraDamageDice == 0 && actionPointReduction == 0 && defenseType == null
-                && damageDescriptor == null && criticalEffectOverride == null && effectChains.isEmpty();
+                && damageDescriptor == null && criticalEffectOverride == null && effectChains.isEmpty()
+                && damageOverride == null;
     }
 
     /**
@@ -78,7 +97,8 @@ public record TitleAttackModifiers(int extraDamageDice,
                 defenseType != null ? defenseType : other.defenseType,
                 damageDescriptor != null ? damageDescriptor : other.damageDescriptor,
                 criticalEffectOverride != null ? criticalEffectOverride : other.criticalEffectOverride,
-                chains);
+                chains,
+                damageOverride != null ? damageOverride : other.damageOverride);
     }
 
     /**

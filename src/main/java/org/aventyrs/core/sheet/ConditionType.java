@@ -481,6 +481,22 @@ public enum ConditionType {
     /** "Condição permanece ativa por 2 Rodadas" — the fear ladder's stated default. */
     public static final int DEFAULT_FEAR_DURATION_IN_ROUNDS = 2;
 
+    /**
+     * The next rung of the fear ladder after current — Frenesi Assustador's "ativações posteriores do
+     * Frenesi Assustador podem progredir a Condição para Assustado e Apavorado". {@code null} (no
+     * fear yet) starts at Abalado; Apavorado is the top and stays there.
+     */
+    public static ConditionType escalateFear(final ConditionType current) {
+        if (current == null) {
+            return ABALADO;
+        }
+        return switch (current) {
+            case ABALADO -> ASSUSTADO;
+            case ASSUSTADO, APAVORADO -> APAVORADO;
+            default -> throw new IllegalArgumentException("Not a fear rung: " + current);
+        };
+    }
+
     private final String description;
 
     /**

@@ -24,5 +24,26 @@ public enum ReactionTrigger {
      * the attacker stands within reach, are the trait's own questions, read off {@link
      * ReactionContext}.
      */
-    SELF_TARGETED_BY_MELEE_ATTACK
+    SELF_TARGETED_BY_MELEE_ATTACK,
+
+    /**
+     * The reactor was just hit by a successful attack — its Defesa failed. Frenesi Reativo: "Você pode
+     * iniciar seu Frenesi em resposta às ações inimigas, mas apenas se você for alvo de um ataque
+     * bem-sucedido". Offered after the Defesa, before the next action.
+     */
+    SELF_HIT_BY_SUCCESSFUL_ATTACK,
+
+    /**
+     * An enemy adjacent to the reactor attacked someone else — Retaliação Furiosa: "Sempre que um
+     * Personagem Inimigo adjacente atacar outros personagens que não você". {@code ReactionContext
+     * #getAttacker()} is that enemy.
+     */
+    ADJACENT_ENEMY_ATTACKS_OTHER,
+
+    /**
+     * Damage about to land would take the reactor from above 0 PV to 0 or below — Fanático de Cyt:
+     * "se um ataque ou efeito for reduzir seus PV para zero ou menos". Offered <em>before</em> the
+     * damage is applied; {@code ReactionContext#getPendingDamage()} carries it.
+     */
+    SELF_WOULD_DROP_TO_ZERO_HP
 }

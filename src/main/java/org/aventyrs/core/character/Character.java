@@ -239,9 +239,8 @@ public class Character {
      * slot count, {@code FeatRequirements}/{@code CharacterAttributeService} — deliberately do
      * not, since those gate on what the character personally invested.
      *
-     * <p>Round-scoped {@code ModifierType.<ATTR>_BONUS} {@code TemporaryBonus}es are still read
-     * only on the Perícia-roll path ({@code AbstractSkillInteraction}), which needs a {@code
-     * CombatantSheet} this method has no access to — that limitation is unchanged.
+     * <p>Round-scoped {@code ModifierType.<ATTR>_BONUS} {@code TemporaryBonus}es need a {@code
+     * CombatantSheet}, so only the sheet-taking overload below adds them.
      */
     public int getEffectiveAttributeTotal(final AttributeDomain domain) {
         return getEffectiveAttributeTotal(domain, null);
@@ -253,13 +252,9 @@ public class Character {
      * ({@link AttributeValue#getRacialBonus()}, both the dictated and the player-directed
      * portion, which is why {@link AttributeValue} keeps them apart).
      *
-     * <p><b>The reach is partial, and deliberately so.</b> Only callers holding a {@link
-     * org.aventyrs.core.sheet.CombatantSheet} can see a Forma at all, so the suppression lands on
-     * the Perícia-roll path and nowhere else: PV/PM/PD, Conjuração, Rest recovery and {@code
-     * ItemRequirements} all read the sheet-less overload and keep the racial bonus. That is the
-     * same documented limit a round-scoped {@code <ATTR>_BONUS} {@code TemporaryBonus} has — a
-     * transformation lasting three Rodadas would otherwise need max PV recomputed per Rodada,
-     * which this core does not do. Cite the specific caller in a TODO, not "the mechanism".
+     * <p>Also adds the sheet's round-scoped {@code <ATTR>_BONUS} (a Bônus Variável), so every
+     * sheet-holding reader of a total — the melee Força dano term, the PV maximum — sees a Frenesi
+     * or a Sacrifício Ymiriano. Callers holding no sheet keep the permanent total.
      *
      * @param sheet the holder's sheet, or {@code null} for "no Forma in force" — which is what
      *              every {@link Character}-only caller passes
@@ -271,6 +266,13 @@ public class Character {
                 + getFeats().stream().mapToInt(feat -> feat.resolveAttributeBonus(domain, this)).sum();
         if (sheet != null && sheet.getRacialTraitSuppression().suppressesInnateTraits()) {
             total -= attribute.getRacialBonus();
+        }
+        // A Bônus Variável held on the sheet — Frenesi's "+2 em 'Força'", Sacrifício Ymiriano's Força
+        // igual ao Vigor — is part of the Atributo for everything that reads its total: the melee
+        // "Metade da Força" dano term and a Vigor-scaled PV maximum alike. The Perícia-roll path adds
+        // it separately (it reads the raw attributes), so it never double-counts.
+        if (sheet != null) {
+            total += sheet.getTemporaryBonus(domain.getBonusModifierType());
         }
         return total;
     }

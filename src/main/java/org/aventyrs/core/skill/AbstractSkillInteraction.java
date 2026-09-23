@@ -45,6 +45,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
+import static org.aventyrs.core.util.TranslatableMessages.SKILL_USE_PREVENTED;
 import static org.aventyrs.core.skill.Skill.UNTRAINED_PENALTY;
 import static org.aventyrs.core.util.TranslatableMessages.REQUIRED_SKILL_TRAIT_NOT_HELD;
 
@@ -316,6 +317,11 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
         AttributeDomain peritoTeoricoDomain = PeritoTeoricoAbility.resolveAttributeDomain(character.getAttributeAbilities(), skillType, naturalDomain);
         AttributeDomain attributeDomain = SkillCompetencyAbility.resolveAttributeDomain(
                 skillCompetencyAbilities, skillType, peritoTeoricoDomain, attackSource);
+        // Frenesi: "não pode utilizar Perícias que exijam concentração ou raciocínio". Refused before
+        // anything is computed, on the Atributo the roll is actually made with.
+        if (target.isSkillUsePrevented(skillType, attributeDomain)) {
+            throw new IllegalOperationException(SKILL_USE_PREVENTED);
+        }
 
         int bonus = characterSkillService.getValueForRoll(characterSkill, character.getAttributes(), character.getRace(), attributeDomain);
         // "Abandonando seus traços raciais" — the racial half of the governing Atributo goes for
@@ -974,12 +980,11 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
      * text names Força specifically. Two statements about two different numbers, so a finesse
      * swordsman rolls on Destreza and still adds half their Força.
      *
-     * <p>Reads {@code Character#getEffectiveAttributeTotal(STRENGTH)} — the permanent value (base
-     * + racial + variable) plus any permanent {@code Feat#resolveAttributeBonus} grant, exactly
-     * as every other Atributo-total reader now does. A round-scoped {@code
-     * ModifierType#STRENGTH_BONUS} {@code TemporaryBonus} still does <b>not</b> reach it: that is
-     * read only on a Perícia roll governed by Força (see CLAUDE.md), and a dano roll is not that
-     * roll.
+     * <p>Reads {@code Character#getEffectiveAttributeTotal(STRENGTH, attacker)} — the permanent
+     * value (base + racial + variable) plus any permanent {@code Feat#resolveAttributeBonus} grant
+     * and the sheet's round-scoped {@code ModifierType#STRENGTH_BONUS} (a Bônus Variável: Frenesi's
+     * +2, Sacrifício Ymiriano's Força igual ao Vigor), exactly as every other Atributo-total reader
+     * holding a sheet does.
      */
     private int resolveMeleeStrengthDamage(final CombatantSheet attacker) {
         if (skillType != SkillType.ATAQUE_CORPO_A_CORPO) {

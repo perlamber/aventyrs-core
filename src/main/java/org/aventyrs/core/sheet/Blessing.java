@@ -116,6 +116,22 @@ public class Blessing {
      */
     private final int maximumSimultaneous;
 
+    /**
+     * How far from its granter a {@link TargetScope#SELF_AND_ALLIES}/{@link TargetScope#ALLIES}
+     * Blessing reaches, when the resolving trait states it — Grito de Desdenho's "aliados, que estejam
+     * em Distância Média". {@code null} for a Blessing whose reach the caller already knows per trait.
+     * Set through {@link #reaching}.
+     */
+    private org.aventyrs.core.scene.Range reach;
+
+    /**
+     * Whether the bonus this becomes counts down at its holder's Turn <em>start</em> — "durante 1
+     * Rodadas" granted on the granter's own Turn, which ticked at Turn end would lapse before anyone
+     * else acted (the table ruling {@link TemporaryEffect#countsDownAtTurnStart()} records). Set through
+     * {@link #countingDownAtTurnStart()}.
+     */
+    private boolean countsDownAtTurnStart;
+
     public Blessing(final ModifierType modifierType, final int value, final int rounds, final TargetScope scope, final String source) {
         this(modifierType, value, rounds, scope, source, null);
     }
@@ -134,5 +150,17 @@ public class Blessing {
         this.source = source;
         this.totalLimit = totalLimit;
         this.maximumSimultaneous = maximumSimultaneous;
+    }
+
+    /** This Blessing, counting down at its holder's Turn start; returns itself. */
+    public Blessing countingDownAtTurnStart() {
+        this.countsDownAtTurnStart = true;
+        return this;
+    }
+
+    /** This Blessing, stating how far it reaches; returns itself. */
+    public Blessing reaching(final org.aventyrs.core.scene.Range range) {
+        this.reach = range;
+        return this;
     }
 }

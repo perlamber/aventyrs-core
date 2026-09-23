@@ -12,6 +12,8 @@ import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.rest.RestType;
 import org.aventyrs.core.scene.ProjectedAura;
 import org.aventyrs.core.scene.SceneContext;
+import org.aventyrs.core.magic.ElementalType;
+import org.aventyrs.core.skill.SkillType;
 
 import java.util.List;
 import java.util.Optional;
@@ -980,4 +982,147 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
      * separate {@link #recordAction}/{@link #getActionsThisRound()} log instead.)
      */
     int consumeMovementThisRound();
+
+    // --- Frenesi (Gigante Enfurecido) ---------------------------------------------------------
+
+    /**
+     * The {@link Frenzy} whose effects this combatant is under — their own Frenesi if one is
+     * running, otherwise a Grito Inspirador copy they received. One at most: the two never add up,
+     * or an ally Gigante inspired by another would count the same bonuses twice.
+     */
+    Optional<Frenzy> getFrenzy();
+
+    /** This combatant's own Frenesi — never an inspired copy. */
+    Optional<Frenzy> getOwnFrenzy();
+
+    /**
+     * Starts frenzy on this combatant: an own Frenesi, or an ally's inspired copy (which replaces
+     * any earlier copy).
+     *
+     * @throws IllegalOperationException {@code FRENZY_ALREADY_ACTIVE} for an own Frenesi while one runs
+     */
+    void startFrenzy(Frenzy frenzy);
+
+    /** Ends this combatant's own Frenesi, if one is running; {@code true} if it did. */
+    boolean endFrenzy();
+
+    /**
+     * Whether this combatant is compelled to attack the nearest creature — Frenesi's "caso a
+     * 'Autocontrole' chegue a zero você perde a capacidade de distinguir inimigos e aliados … sempre
+     * atacando a criatura mais próxima de você". Core only reports it: it holds no positions, so which
+     * creature is nearest is the caller's geometry.
+     */
+    boolean isCompelledToAttackNearest();
+
+    /**
+     * Whether this combatant sees every other character as an enemy — the same state as {@link
+     * #isCompelledToAttackNearest()}, named for the callers asking "may I treat them as an ally".
+     */
+    boolean treatsEveryoneAsEnemy();
+
+    /**
+     * Fanático de Cyt: "não poderá morrer em decorrência de PV negativos enquanto seu Frenesi estiver
+     * ativo e seu Autocontrole continuar zerado". Read by {@code HitPointsService#getStatus}, which then
+     * stops at Coma.
+     */
+    boolean cannotDieFromNegativeHitPoints();
+
+    /**
+     * Fanático de Cyt: "Magias Conjuradas por terceiros sempre contam como magias hostis, mesmo as
+     * magias benéficas … devem superar sua DM para lhe afetar".
+     */
+    boolean treatsBeneficialSpellsAsHostile();
+
+    /**
+     * Whether a Perícia of skillType, rolled on governing, is forbidden right now — Frenesi's "não
+     * pode utilizar Perícias que exijam concentração ou raciocínio": those governed by Gnose, and
+     * Domínio do Mana, the Perícia a Magia is cast with.
+     */
+    boolean isSkillUsePrevented(SkillType skillType, AttributeDomain governing);
+
+    /**
+     * Extra PA a concentration action costs right now — Titã Enlouquecido's "Conjurar Magias e
+     * utilizar Perícias baseadas em Gnose tem o tempo de ação aumentado em +1PA". Reported, never
+     * charged, like every other PA in this core.
+     */
+    int getConcentrationActionPointSurcharge();
+
+    /** How many instances of RE this combatant holds against element right now (Cataclismo Elemental). */
+    int getElementalResistanceInstances(ElementalType element);
+
+    /**
+     * Heals amount as Roubo de Vida — {@link #heal} for a source that the halving clauses exempt:
+     * Desprezar Danos's "reduz … Efeitos de Cura (exceto Roubo de Vida) pela metade".
+     */
+    int healFromLifeSteal(int amount);
+
+    /** Whether this combatant's current PV are 0 or below — the "PV menores ou iguais a zero" clauses. */
+    boolean isAtOrBelowZeroHitPoints();
+
+    /**
+     * Whether this combatant, as an <em>attacker</em>, can neither deal Efeitos Críticos Menores nor
+     * trigger Correntes de Efeitos — Frenesi Assustador's fear, while the Gigante who cast it is at
+     * 0 PV or below.
+     */
+    boolean isMinorCriticalAndChainSuppressed();
+
+    /**
+     * The next damage this combatant takes leaves them at currentHitPoints at the least — Fanático de
+     * Cyt's "se um ataque ou efeito for reduzir seus PV para zero ou menos … você ficará com 1PV",
+     * activated as a Reação <em>before</em> the hit lands. One-shot: consumed by the next damage.
+     */
+    void floorNextDamageAt(int currentHitPoints);
+
+    // --- Passagem de tempo e Descanso Verdadeiro ----------------------------------------------
+
+    /**
+     * Schedules grant, delivered by {@link #startNewRound()} once its Rodadas pass — the general form
+     * of {@link #scheduleTemporaryEgoPointGrant(EgoDomain, Object, int)}.
+     */
+    void scheduleTemporaryEgoPointGrant(DelayedEgoGrant grant);
+
+    /**
+     * Owes points temporary domain points back, one every hoursPerPoint hours of in-game time —
+     * Frenesi's "Pontos de Autocontrole perdidos durante o 'Frenesi' são recuperados 1 a cada 2 horas
+     * passadas fora deste estado". Delivered by {@link #passHours}; never while an own Frenesi runs.
+     */
+    void oweHourlyEgoRecovery(EgoDomain domain, int points, int hoursPerPoint);
+
+    /** Every hourly debt still owed, banked hours included — for a caller persisting the sheet. */
+    List<HourlyEgoRecovery> getHourlyEgoRecoveries();
+
+    /** Restores a persisted hourly debt exactly, banked hours included. */
+    void restoreHourlyEgoRecovery(HourlyEgoRecovery recovery);
+
+    /**
+     * Whether an {@link Exhaustion} is on this sheet — Uno com a Ira's early end, waiting for a
+     * Descanso Curto Verdadeiro. For a caller persisting the sheet; restore it with {@link
+     * #applyEffectUntilTrueRest}({@code new Exhaustion(source)}, {@code RestType.CURTO}).
+     */
+    boolean isExhausted();
+
+    /** Temporary domain points still owed back by the hour. */
+    int getOwedHourlyEgoRecovery(EgoDomain domain);
+
+    /**
+     * Clears up to points of domain's hourly debt without recovering them — the points came back some
+     * other way first (Uno com a Ira's "recuperados após 2 Rodadas").
+     */
+    void settleHourlyEgoRecovery(EgoDomain domain, int points);
+
+    /**
+     * hours of in-game time pass for this combatant — the GM's "Passar tempo", and the length of a
+     * Descanso. Every Rodada-counted state ends (hours are far longer than any Duração in Rodadas),
+     * then whatever is owed by the hour comes back.
+     */
+    void passHours(int hours);
+
+    /**
+     * Registers effect to last until a <em>Descanso Verdadeiro</em> of at least restType — one the
+     * GM grants, never a Magia emulating a rest. {@link #completeTrueRest} lifts it.
+     */
+    void applyEffectUntilTrueRest(TemporaryEffect effect, RestType restType);
+
+    /** A Descanso Verdadeiro of restType was completed: lifts every effect waiting on one. */
+    void completeTrueRest(RestType restType);
 }

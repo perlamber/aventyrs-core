@@ -3,6 +3,9 @@ package org.aventyrs.core.title;
 import lombok.Getter;
 import lombok.NonNull;
 import org.aventyrs.core.character.services.DeterminationPointsService;
+import org.aventyrs.core.character.services.EgoPointsService;
+import org.aventyrs.core.character.services.EgoPointsServiceImpl;
+import org.aventyrs.core.sheet.EgoPointType;
 import org.aventyrs.core.character.services.DeterminationPointsServiceImpl;
 import org.aventyrs.core.character.services.HitPointsService;
 import org.aventyrs.core.character.services.HitPointsServiceImpl;
@@ -15,6 +18,7 @@ import org.aventyrs.core.sheet.ResourceType;
 import static org.aventyrs.core.util.TranslatableMessages.ABILITY_ACTIVATION_PREVENTED;
 import static org.aventyrs.core.util.TranslatableMessages.INVALID_PD_AMOUNT;
 import static org.aventyrs.core.util.TranslatableMessages.NOT_ENOUGH_DETERMINATION_POINTS;
+import static org.aventyrs.core.util.TranslatableMessages.NOT_ENOUGH_EGO_POINTS;
 import static org.aventyrs.core.util.TranslatableMessages.NOT_ENOUGH_HIT_POINTS;
 
 /**
@@ -27,8 +31,8 @@ import static org.aventyrs.core.util.TranslatableMessages.NOT_ENOUGH_HIT_POINTS;
  * <p>{@link #activate} runs the gates in the order {@code ActiveAbilityServiceImpl#activate} does,
  * <b>all before anything is spent</b>, so a refused activation costs nothing: Silêncio, the PD
  * amount against the ability's {@link PDCost}, PD affordability, the PV cost a trait may charge
- * instead ({@link #resolveHitPointCost} — refused when paying it would be self-fatal), then the
- * ability's own {@link #validate}. Only then are the costs spent, the activation counted on the
+ * instead ({@link #resolveHitPointCost} — refused when paying it would be self-fatal), the
+ * temporary Ego cost ({@link #resolveEgoCost}), then the ability's own {@link #validate}. Only then are the costs spent, the activation counted on the
  * activator's sheet ({@code CombatantSheet#recordAbilityActivation}, so a trait's own {@code
  * countActivationsThisTurn} includes the activation in progress) and the effect resolved. Whether the ability is actually
  * held is {@link AventyrTitle#activateAbility}'s check, not this class's — the Título is what
@@ -45,6 +49,7 @@ public abstract class AbstractTitleAbilityInteraction implements Interaction<Com
     private final AventyrTitleAbility ability;
     private final DeterminationPointsService determinationPointsService;
     private final HitPointsService hitPointsService = new HitPointsServiceImpl();
+    private final EgoPointsService egoPointsService = new EgoPointsServiceImpl();
 
     protected AbstractTitleAbilityInteraction(@NonNull final AventyrTitleAbility ability,
                                               @NonNull final DeterminationPointsService determinationPointsService) {
@@ -88,6 +93,10 @@ public abstract class AbstractTitleAbilityInteraction implements Interaction<Com
                 && hitPointsService.getCurrentHitPoints(activator.getCharacter(), activator) <= hitPoints) {
             throw new IllegalOperationException(NOT_ENOUGH_HIT_POINTS);
         }
+        EgoCost egoCost = resolveEgoCost(request);
+        if (!egoCost.isFree() && activator.getTemporaryEgoPoints(egoCost.domain()) < egoCost.points()) {
+            throw new IllegalOperationException(NOT_ENOUGH_EGO_POINTS);
+        }
         validate(request);
 
         if (determinationPoints > 0) {
@@ -97,6 +106,9 @@ public abstract class AbstractTitleAbilityInteraction implements Interaction<Com
             // The bare sheet mutator, not DamageService: a self-inflicted activation cost is not an
             // attack, so no RD/RA/Meio-Dano stage applies to it.
             activator.applyDamage(hitPoints);
+        }
+        if (!egoCost.isFree()) {
+            spendEgo(request, egoCost);
         }
         activator.recordAbilityActivation(ability);
 
@@ -124,6 +136,41 @@ public abstract class AbstractTitleAbilityInteraction implements Interaction<Com
      */
     protected int resolveHitPointCost(final TitleAbilityActivationRequest request) {
         return 0;
+    }
+
+    /**
+     * Temporary Ego points this activation costs — the ability's stated {@link
+     * AventyrTitleAbility#getEgoCost()} by default. Override where the price depends on the request:
+     * Frenesi's "+1 ponto temporário de Autocontrole" per Especialização activated alongside it.
+     * Checked before {@link #validate} and spent with the other costs, so a refusal costs nothing.
+     */
+    protected EgoCost resolveEgoCost(final TitleAbilityActivationRequest request) {
+        return ability.getEgoCost();
+    }
+
+    /**
+     * Called once the Ego cost is spent, with what was actually paid — for an ability whose state
+     * keeps a ledger of it (Frenesi's "Pontos de Autocontrole perdidos durante o Frenesi"). No-op by
+     * default.
+     */
+    protected void onEgoSpent(final TitleAbilityActivationRequest request, final EgoCost paid) {
+    }
+
+    /**
+     * Pays cost as a deliberate use, through {@code EgoPointsService#useEgoPointsForEffect}, so the
+     * holder's Vantagem de Ego reacts to it (Determinação Heroica's "+1d6PV, PM e PD"). That Vantagem
+     * needs a rolled d6, which comes off the request's {@link TitleAbilityActivationRequest#getDiceRoller()};
+     * without one the points are spent plainly and no Vantagem fires — this core never invents a die.
+     */
+    private void spendEgo(final TitleAbilityActivationRequest request, final EgoCost cost) {
+        CombatantSheet activator = request.getActivator();
+        if (request.getDiceRoller() != null) {
+            egoPointsService.useEgoPointsForEffect(activator, cost.domain(), EgoPointType.TEMPORARY, cost.points(),
+                    request.getDiceRoller().rollD6());
+        } else {
+            activator.spendEgoPoints(cost.domain(), EgoPointType.TEMPORARY, cost.points());
+        }
+        onEgoSpent(request, cost);
     }
 
     /**

@@ -98,6 +98,12 @@ public class HitPointsServiceImpl implements HitPointsService {
     @Override
     public CharacterStatus getStatus(final CombatantSheet characterSheet) {
         int maxHitPoints = getMaxHitPoints(characterSheet.getCharacter(), characterSheet);
-        return getStatus(maxHitPoints - characterSheet.getDamageTaken(), maxHitPoints);
+        CharacterStatus status = getStatus(maxHitPoints - characterSheet.getDamageTaken(), maxHitPoints);
+        // Fanático de Cyt: "não poderá morrer em decorrência de PV negativos enquanto seu Frenesi
+        // estiver ativo e seu Autocontrole continuar zerado" — the PV keep falling, death does not come.
+        if (status == CharacterStatus.DEAD && characterSheet.cannotDieFromNegativeHitPoints()) {
+            return CharacterStatus.COMMA;
+        }
+        return status;
     }
 }

@@ -249,6 +249,13 @@ public interface DamageService {
      *
      * @return the effects this hit started, empty when it started none
      */
+    /**
+     * Whether finalDamage (already mitigated) would take target from above 0 PV to 0 or below — the
+     * moment a "se um ataque ou efeito for reduzir seus PV para zero ou menos" Reação is offered
+     * ({@code ReactionTrigger#SELF_WOULD_DROP_TO_ZERO_HP}), before the caller applies it.
+     */
+    boolean wouldDropToZeroOrBelow(CombatantSheet target, int finalDamage);
+
     List<TemporaryBonus> notifyDamageTaken(CombatantSheet target, int finalDamage,
                                            CombatantSheet source, SceneContext sceneContext);
 }

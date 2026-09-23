@@ -25,6 +25,9 @@ import java.util.Map;
 
 public class DamageServiceImpl implements DamageService {
 
+    /** RE: "Cada instância reduz Danos Elementais Físicos e Mágicos em -2". */
+    static final int ELEMENTAL_RESISTANCE_PER_INSTANCE = 2;
+
     private final ModifierResolver modifierResolver;
     private final HitPointsService hitPointsService;
 
@@ -100,6 +103,12 @@ public class DamageServiceImpl implements DamageService {
         int total = sumAcrossSources(character, ModifierType.DAMAGE_REDUCTION, target);
         total += sumEquipmentDamageReduction(character, target);
         total += sumEquipmentDamageReduction(character, damageDescriptor);
+        // RE held on the sheet against this hit's element — Cataclismo Elemental's "RE para resistir a
+        // todos os Elementos escolhidos": "Cada instância reduz Danos Elementais Físicos e Mágicos em -2".
+        if (damageDescriptor != null && damageDescriptor.elementalType() != null) {
+            total += ELEMENTAL_RESISTANCE_PER_INSTANCE
+                    * target.getElementalResistanceInstances(damageDescriptor.elementalType());
+        }
         total += sumFeatDamageReduction(character, target);
         total += sumAttributeAbilityDamageReduction(character, target, damageType, source);
         // The two Título-ability RDS scans, mirroring the RA pair in
@@ -383,6 +392,12 @@ public class DamageServiceImpl implements DamageService {
         // sofrido" clause still sees zero for the attack it is mitigating.
         notifyDamageTaken(characterSheet, finalDamage, source, sceneContext);
         return totalDamageTaken;
+    }
+
+    @Override
+    public boolean wouldDropToZeroOrBelow(final CombatantSheet target, final int finalDamage) {
+        int current = hitPointsService.getMaxHitPoints(target.getCharacter(), target) - target.getDamageTaken();
+        return current > 0 && current - Math.max(0, finalDamage - target.getShieldPoints()) <= 0;
     }
 
     @Override

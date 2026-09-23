@@ -113,6 +113,27 @@ public class InteractionResult {
     List<Blessing> blessings;
 
     /**
+     * Damage an area effect deals, one entry per character hit — {@code null} for every result that
+     * deals none. Reported for the caller to apply; see {@link AreaDamage}.
+     */
+    List<AreaDamage> areaDamage;
+
+    /**
+     * Conditions this activation cast on other characters — Frenesi Assustador's fear — already
+     * applied to the sheets in hand, reported so a caller can deliver each to the client that owns
+     * the real one. {@code null} when none.
+     */
+    List<InflictedCondition> inflictedConditions;
+
+    /**
+     * An inspired Frenesi this activation handed out — Grito Inspirador's copy — and who received it.
+     * Applied to the sheets in hand; reported for the same reason as {@link #inflictedConditions}.
+     */
+    Frenzy grantedFrenzy;
+
+    List<CombatantSheet> frenzyRecipients;
+
+    /**
      * The highest GD this roll reached — {@code null} unless the Interaction was given a
      * {@code org.aventyrs.core.skill.SkillRoll} to compute it from (see {@code
      * AbstractSkillInteraction#applyTo(CombatantSheet, org.aventyrs.core.scene.SceneContext,

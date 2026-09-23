@@ -34,9 +34,9 @@ public enum AbracadoPelaEscuridaoAbility implements AventyrTitleAbility {
     // genuinely 0, not merely unmodeled. Real through SacrificioYmirianoInteraction: the PV cost is
     // paid by AbstractTitleAbilityInteraction#resolveHitPointCost off #resolveVigorPvCost below;
     // the Força bonus is a Round-scoped AttributeDomain#getBonusModifierType() TemporaryBonus,
-    // which AbstractSkillInteraction reads on a Força-governed roll (so the reach is the roll path
-    // only — not PV/PM/PD, and not the melee ½-Força dano term, both of which read
-    // Character#getEffectiveAttributeTotal and have no sheet); and the Categoria de Tamanho +2 is a
+    // which reaches a Força-governed roll and, since 0.0.51, every sheet-holding
+    // Character#getEffectiveAttributeTotal reader too (the melee ½-Força dano term among them); and
+    // the Categoria de Tamanho +2 is a
     // ModifierType.SIZE_CATEGORY bonus read by CharacterSizeService#getEffectiveSizeCategory(
     // CombatantSheet). Both figures are now Vigor-scaled rather than flat, and the Duração is a
     // flat 1 Rodada — V19 dropped the whole "ativada até duas vezes / no mesmo Turno / seu efeito é

@@ -309,4 +309,28 @@ public class TranslatableMessages {
 
     /** No Sessão with the requested number exists in the Campanha. */
     public static final String SESSION_NOT_FOUND = "SESSION_NOT_FOUND";
+
+    /** An activated ability's temporary Ego cost (e.g. "1 Ponto Temporário de Autocontrole") exceeds what the holder has. */
+    public static final String NOT_ENOUGH_EGO_POINTS = "NOT_ENOUGH_EGO_POINTS";
+
+    /** The actor is in a state that forbids this Perícia — Frenesi's "Perícias que exijam concentração ou raciocínio". */
+    public static final String SKILL_USE_PREVENTED = "SKILL_USE_PREVENTED";
+
+    /** The trait "só pode ser ativada durante o efeito de Frenesi", and its activator is not in Frenesi. */
+    public static final String FRENZY_REQUIRED = "FRENZY_REQUIRED";
+
+    /** Frenesi was started while one is already running. */
+    public static final String FRENZY_ALREADY_ACTIVE = "FRENZY_ALREADY_ACTIVE";
+
+    /** Frenesi "não pode ser interrompida voluntariamente" without Uno com a Ira. */
+    public static final String FRENZY_CANNOT_END_VOLUNTARILY = "FRENZY_CANNOT_END_VOLUNTARILY";
+
+    /** The trait needs Titã Enlouquecido active in the current Frenesi. */
+    public static final String TITA_ENLOUQUECIDO_REQUIRED = "TITA_ENLOUQUECIDO_REQUIRED";
+
+    /** A beneficial Magia from someone else failed to overcome a target treating every Magia as hostile. */
+    public static final String SPELL_RESISTED_AS_HOSTILE = "SPELL_RESISTED_AS_HOSTILE";
+
+    /** The trait's own trigger has not happened — Frenesi Assustador's "ao derrotar um inimigo … ou após desferir um Acerto Crítico". */
+    public static final String TITLE_ABILITY_TRIGGER_NOT_MET = "TITLE_ABILITY_TRIGGER_NOT_MET";
 }

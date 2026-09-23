@@ -54,4 +54,10 @@ public class ReactionContext {
 
     /** The Rodada this is happening in, for the counters that vary by Turn. */
     private final int turnNumber;
+
+    /**
+     * The already-mitigated damage about to land, for {@link ReactionTrigger#SELF_WOULD_DROP_TO_ZERO_HP};
+     * {@code null} for every other trigger.
+     */
+    private final Integer pendingDamage;
 }

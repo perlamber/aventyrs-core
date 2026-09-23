@@ -38,6 +38,12 @@ public class RestServiceImpl implements RestService {
 
     @Override
     public void applyRest(final Character character, final CharacterSheet characterSheet, final RestType restType) {
+        applyRest(character, characterSheet, restType, false);
+    }
+
+    @Override
+    public void applyRest(final Character character, final CharacterSheet characterSheet, final RestType restType,
+                          final boolean verdadeiro) {
         characterSheet.heal(getRecoveredHitPoints(character, restType));
         characterSheet.recoverMagicPoints(getRecoveredMagicPoints(character, restType));
         characterSheet.recoverDeterminationPoints(getRecoveredDeterminationPoints(character, restType));
@@ -45,6 +51,9 @@ public class RestServiceImpl implements RestService {
         // Frees every ability whose Resfriamento was measured in Descansos rather than Rodadas —
         // "não poderá ser reativado até que passe por um Descanso Longo".
         characterSheet.clearRestCooldowns(restType);
+        if (verdadeiro) {
+            characterSheet.completeTrueRest(restType);
+        }
     }
 
     /**

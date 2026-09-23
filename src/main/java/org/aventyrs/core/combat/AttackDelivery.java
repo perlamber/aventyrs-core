@@ -190,8 +190,12 @@ public class AttackDelivery {
         int margin = attackTotal - requiredTotal;
         boolean hit = margin >= 0;
         CriticalResult criticalResult = attackResult.getCriticalResult();
-        boolean criticalEffectTriggered = hit && criticalResult != null && criticalResult.isCriticalSuccess();
-        boolean effectChainTriggered = hit
+        // Frenesi Assustador: a fear-struck attacker "se tornam incapazes de desferir Efeitos Críticos
+        // Menores e não podem desencadear Correntes de Efeitos" while the Gigante who cast it is down.
+        boolean suppressed = attack.getAttacker().isMinorCriticalAndChainSuppressed();
+        boolean criticalEffectTriggered = hit && criticalResult != null && criticalResult.isCriticalSuccess()
+                && !(suppressed && criticalResult.isMinor());
+        boolean effectChainTriggered = hit && !suppressed
                 && margin >= effectChainService.getRequiredMargin(defender.getCharacter());
 
         if (hit) {
@@ -259,8 +263,10 @@ public class AttackDelivery {
         CombatantSheet defender = target.defender();
         int margin = attackTotal - target.defenseValue();
         boolean hit = margin >= 0;
-        boolean criticalEffectTriggered = hit && criticalResult != null && criticalResult.isCriticalSuccess();
-        boolean effectChainTriggered = hit
+        boolean suppressed = attack.getAttacker().isMinorCriticalAndChainSuppressed();
+        boolean criticalEffectTriggered = hit && criticalResult != null && criticalResult.isCriticalSuccess()
+                && !(suppressed && criticalResult.isMinor());
+        boolean effectChainTriggered = hit && !suppressed
                 && margin >= effectChainService.getRequiredMargin(defender.getCharacter());
 
         return DeliveredAttackTargetResult.builder()

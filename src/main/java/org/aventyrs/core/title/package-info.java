@@ -96,6 +96,9 @@
  * convention. Add it to {@link org.aventyrs.core.title.TitleCatalog} too, or no Talento will
  * offer it. See the project's {@code CLAUDE.md} "Adding a new Título" section (and the
  * {@code adding-a-title} Claude Code skill) for the full checklist; {@code Santo} is the
- * worked reference example for activations, {@code SenhorDaBriga} for passives reaching the attack.
+ * worked reference example for activations, {@code SenhorDaBriga} for passives reaching the attack,
+ * {@code GiganteEnfurecido} for a timed self-state ({@code sheet.Frenzy}) paid in Autocontrole
+ * ({@link org.aventyrs.core.title.EgoCost}) whose Especializações are modes of one activation
+ * ({@code TitleAbilityActivationRequest#getChoices}).
  */
 package org.aventyrs.core.title;

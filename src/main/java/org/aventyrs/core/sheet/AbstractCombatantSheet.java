@@ -24,6 +24,9 @@ import org.aventyrs.core.skill.SkillCompetencyAbility;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.rest.RestType;
 import org.aventyrs.core.util.DiceRoller;
+import org.aventyrs.core.character.services.HitPointsServiceImpl;
+import org.aventyrs.core.magic.ElementalType;
+import org.aventyrs.core.skill.SkillType;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -137,6 +140,15 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     /** Temporary Ego points owed at the start of this sheet's next Rodada — see {@link DelayedEgoGrant}. */
     @Getter(AccessLevel.NONE)
     private final List<DelayedEgoGrant> scheduledEgoGrants = new ArrayList<>();
+
+    /** Temporary Ego points owed back by the hour — see {@link #oweHourlyEgoRecovery}. */
+    private final List<HourlyEgoRecovery> hourlyEgoRecoveries = new ArrayList<>();
+
+    /** Effects lifted only by a Descanso Verdadeiro — see {@link #applyEffectUntilTrueRest}. */
+    private final Map<TemporaryEffect, RestType> trueRestScopedEffects = new java.util.IdentityHashMap<>();
+
+    /** Fanático de Cyt's "você ficará com 1PV", waiting for the hit it answers — see {@link #floorNextDamageAt}. */
+    private Integer nextDamageFloor;
 
     /** Already-mitigated damage landing at the start of this sheet's next Rodada — see {@link PostponedDamage}. */
     @Getter(AccessLevel.NONE)
@@ -312,7 +324,17 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
             shieldPoints -= absorbed;
             remaining -= absorbed;
         }
+        if (nextDamageFloor != null && remaining > 0) {
+            int current = new HitPointsServiceImpl().getMaxHitPoints(character, this) - getDamageTaken();
+            remaining = Math.max(0, Math.min(remaining, current - nextDamageFloor));
+            nextDamageFloor = null;
+        }
         return hitPoints.spend(remaining);
+    }
+
+    @Override
+    public void floorNextDamageAt(final int currentHitPoints) {
+        nextDamageFloor = currentHitPoints;
     }
 
     /**
@@ -332,6 +354,15 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
      */
     @Override
     public int heal(final int amount) {
+        return heal(amount, false);
+    }
+
+    @Override
+    public int healFromLifeSteal(final int amount) {
+        return heal(amount, true);
+    }
+
+    private int heal(final int amount, final boolean lifeSteal) {
         // Feridas Dolorosas: "não pode ser curado e nem regenerar pontos de vida". Refused
         // outright rather than reduced to 0 healing, so a Sangramento isn't cleared either.
         if (isHealingPrevented()) {
@@ -349,6 +380,11 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
                 .count();
         int recovered = amount;
         for (long i = 0; i < halvings; i++) {
+            recovered /= 2;
+        }
+        // Desprezar Danos: "Enquanto seus PV forem menores ou iguais à zero, você reduz … Efeitos de
+        // Cura (exceto Roubo de Vida) pela metade".
+        if (!lifeSteal && scornsDamageNow()) {
             recovered /= 2;
         }
         return hitPoints.recover(recovered);
@@ -600,6 +636,11 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         scheduledEgoGrants.add(new DelayedEgoGrant(domain, source, amount));
     }
 
+    @Override
+    public void scheduleTemporaryEgoPointGrant(@NonNull final DelayedEgoGrant grant) {
+        scheduledEgoGrants.add(grant);
+    }
+
     /**
      * Registers a {@link PendingEgoRecovery} — e.g. {@code org.aventyrs.core.effect.Primor}'s
      * promise that the temporary Ego points it just spent come back at the next qualifying Rest.
@@ -787,13 +828,26 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     /** The sum of every currently-active (non-expired) {@link TemporaryBonus} of type. */
     @Override
     public int getTemporaryBonus(final ModifierType type) {
-        return temporaryEffects.stream()
+        int total = temporaryEffects.stream()
                 .filter(effect -> effect instanceof TemporaryBonus)
                 .map(effect -> (TemporaryBonus) effect)
                 .filter(bonus -> !bonus.isExpired())
                 .filter(bonus -> bonus.getType() == type)
                 .mapToInt(TemporaryBonus::getValue)
                 .sum();
+        // A Frenesi's numbers (see Frenzy): every timed-bonus reader sees them with nothing of its own.
+        total += getFrenzy().map(frenzy -> frenzy.bonusFor(type)).orElse(0);
+        // Desprezar Danos's Meio-Dano only holds "Enquanto seus PV forem menores ou iguais à zero",
+        // so it is judged here, live, rather than stored on the Frenzy.
+        if (type == ModifierType.HALF_DAMAGE && scornsDamageNow()) {
+            total += 1;
+        }
+        total += temporaryEffects.stream()
+                .filter(effect -> effect instanceof Exhaustion && !effect.isExpired())
+                .findFirst()
+                .map(effect -> ((Exhaustion) effect).bonusFor(type))
+                .orElse(0);
+        return total;
     }
 
     /**
@@ -846,10 +900,9 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         // simply ending, so a decaying Condition is replaced by its successor at the moment it
         // expires, carrying the same origin and that successor's own stated duration. Applied
         // after the removal sweep so the successor isn't swept out in the same pass.
-        decaying.forEach(condition -> applyCondition(new Condition(
+        decaying.forEach(condition -> applyCondition(condition.decayed(
                 condition.getType().getDecaysTo(),
-                ConditionType.DEFAULT_FEAR_DURATION_IN_ROUNDS,
-                condition.getSource())));
+                ConditionType.DEFAULT_FEAR_DURATION_IN_ROUNDS)));
     }
 
     /**
@@ -1105,9 +1158,21 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
      * at the one Rodada boundary, never on demand.
      */
     private void applyScheduledEgoGrants() {
-        List<DelayedEgoGrant> due = List.copyOf(scheduledEgoGrants);
-        scheduledEgoGrants.clear();
-        due.forEach(grant -> grantTemporaryEgoPoints(grant.getDomain(), grant.getSource(), grant.getValue()));
+        List<DelayedEgoGrant> due = scheduledEgoGrants.stream().filter(DelayedEgoGrant::advance).toList();
+        scheduledEgoGrants.removeAll(due);
+        for (DelayedEgoGrant grant : due) {
+            // "mas apenas se seu Frenesi ainda estiver ativo e você estiver consciente" — a grant
+            // whose condition lapsed is dropped, not delayed further.
+            if (!grant.getGuard().test(this)) {
+                continue;
+            }
+            if (grant.isRecovery()) {
+                int recovered = recoverTemporaryEgoPoints(grant.getDomain(), grant.getValue());
+                settleHourlyEgoRecovery(grant.getDomain(), recovered);
+            } else {
+                grantTemporaryEgoPoints(grant.getDomain(), grant.getSource(), grant.getValue());
+            }
+        }
     }
 
     /**
@@ -1787,6 +1852,202 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
 
     @Override
     public boolean isSpellCastingPrevented(final SceneContext sceneContext) {
-        return anyConditionPrevents(sceneContext, ConditionType::preventsSpellCasting);
+        return anyConditionPrevents(sceneContext, ConditionType::preventsSpellCasting)
+                // Frenesi: "você também perde a capacidade de Conjurar ou Mimetizar Magias".
+                || getFrenzy().map(Frenzy::isConcentrationBlocked).orElse(false);
+    }
+
+    // --- Frenesi (Gigante Enfurecido) ---------------------------------------------------------
+
+    @Override
+    public Optional<Frenzy> getFrenzy() {
+        Optional<Frenzy> own = getOwnFrenzy();
+        return own.isPresent() ? own : activeFrenzies().filter(Frenzy::isInspired).findFirst();
+    }
+
+    @Override
+    public Optional<Frenzy> getOwnFrenzy() {
+        return activeFrenzies().filter(frenzy -> !frenzy.isInspired()).findFirst();
+    }
+
+    private Stream<Frenzy> activeFrenzies() {
+        return temporaryEffects.stream()
+                .filter(Frenzy.class::isInstance)
+                .map(Frenzy.class::cast)
+                .filter(frenzy -> !frenzy.isExpired());
+    }
+
+    @Override
+    public void startFrenzy(@NonNull final Frenzy frenzy) {
+        if (!frenzy.isInspired() && getOwnFrenzy().isPresent()) {
+            throw new IllegalOperationException(org.aventyrs.core.util.TranslatableMessages.FRENZY_ALREADY_ACTIVE);
+        }
+        applyEffect(frenzy);
+    }
+
+    @Override
+    public boolean endFrenzy() {
+        return temporaryEffects.removeIf(effect -> effect instanceof Frenzy frenzy && !frenzy.isInspired());
+    }
+
+    @Override
+    public boolean isCompelledToAttackNearest() {
+        return getOwnFrenzy().isPresent() && getTemporaryEgoPoints(EgoDomain.AUTOCONTROLE) == 0;
+    }
+
+    @Override
+    public boolean treatsEveryoneAsEnemy() {
+        return isCompelledToAttackNearest();
+    }
+
+    @Override
+    public boolean cannotDieFromNegativeHitPoints() {
+        return getOwnFrenzy().map(Frenzy::isFanatic).orElse(false)
+                && getTemporaryEgoPoints(EgoDomain.AUTOCONTROLE) == 0;
+    }
+
+    @Override
+    public boolean treatsBeneficialSpellsAsHostile() {
+        return cannotDieFromNegativeHitPoints();
+    }
+
+    @Override
+    public boolean isSkillUsePrevented(final SkillType skillType, final AttributeDomain governing) {
+        return isConcentrationAction(skillType, governing)
+                && getFrenzy().map(Frenzy::isConcentrationBlocked).orElse(false);
+    }
+
+    /** Gnose-based Perícias and Domínio do Mana — what "exijam concentração ou raciocínio" covers. */
+    private static boolean isConcentrationAction(final SkillType skillType, final AttributeDomain governing) {
+        return governing == AttributeDomain.GNOSE || skillType == SkillType.DOMINIO_DO_MANA;
+    }
+
+    @Override
+    public int getConcentrationActionPointSurcharge() {
+        return getFrenzy()
+                .filter(frenzy -> frenzy.hasMode(FrenzyMode.TITA_ENLOUQUECIDO) && !frenzy.isConcentrationBlocked())
+                .map(frenzy -> 1)
+                .orElse(0);
+    }
+
+    @Override
+    public int getElementalResistanceInstances(final ElementalType element) {
+        return getFrenzy().filter(frenzy -> frenzy.getCataclysmElements().contains(element)).map(frenzy -> 1).orElse(0);
+    }
+
+    @Override
+    public boolean isAtOrBelowZeroHitPoints() {
+        return new HitPointsServiceImpl().getMaxHitPoints(character, this) - getDamageTaken() <= 0;
+    }
+
+    /** Desprezar Danos's "Enquanto seus PV forem menores ou iguais à zero" half, right now. */
+    private boolean scornsDamageNow() {
+        return getFrenzy().map(Frenzy::isScornsDamage).orElse(false) && isAtOrBelowZeroHitPoints();
+    }
+
+    @Override
+    public boolean isMinorCriticalAndChainSuppressed() {
+        return heldConditions()
+                .filter(FrightfulCondition.class::isInstance)
+                .map(Condition::getSource)
+                .anyMatch(enchanter -> enchanter != null && enchanter.isAtOrBelowZeroHitPoints());
+    }
+
+    // --- Passagem de tempo e Descanso Verdadeiro ----------------------------------------------
+
+    @Override
+    public void oweHourlyEgoRecovery(@NonNull final EgoDomain domain, final int points, final int hoursPerPoint) {
+        if (points <= 0) {
+            return;
+        }
+        hourlyEgoRecoveries.stream()
+                .filter(owed -> owed.domain() == domain && owed.hoursPerPoint() == hoursPerPoint)
+                .findFirst()
+                .ifPresentOrElse(owed -> hourlyEgoRecoveries.set(hourlyEgoRecoveries.indexOf(owed),
+                                owed.withPoints(owed.points() + points)),
+                        () -> hourlyEgoRecoveries.add(new HourlyEgoRecovery(domain, points, hoursPerPoint, 0)));
+    }
+
+    @Override
+    public List<HourlyEgoRecovery> getHourlyEgoRecoveries() {
+        return List.copyOf(hourlyEgoRecoveries);
+    }
+
+    @Override
+    public void restoreHourlyEgoRecovery(@NonNull final HourlyEgoRecovery recovery) {
+        if (recovery.points() > 0) {
+            hourlyEgoRecoveries.add(recovery);
+        }
+    }
+
+    @Override
+    public boolean isExhausted() {
+        return temporaryEffects.stream().anyMatch(effect -> effect instanceof Exhaustion && !effect.isExpired());
+    }
+
+    @Override
+    public int getOwedHourlyEgoRecovery(final EgoDomain domain) {
+        return hourlyEgoRecoveries.stream().filter(owed -> owed.domain() == domain)
+                .mapToInt(HourlyEgoRecovery::points).sum();
+    }
+
+    @Override
+    public void settleHourlyEgoRecovery(final EgoDomain domain, final int points) {
+        int remaining = points;
+        for (int i = 0; i < hourlyEgoRecoveries.size() && remaining > 0; i++) {
+            HourlyEgoRecovery owed = hourlyEgoRecoveries.get(i);
+            if (owed.domain() != domain) {
+                continue;
+            }
+            int settled = Math.min(owed.points(), remaining);
+            remaining -= settled;
+            hourlyEgoRecoveries.set(i, owed.withPoints(owed.points() - settled));
+        }
+        hourlyEgoRecoveries.removeIf(owed -> owed.points() <= 0);
+    }
+
+    /**
+     * Ends every Rodada-counted state first — an hour outlasts any Duração in Rodadas, a Frenesi
+     * included, so the hours that follow are all "fora deste estado" — then delivers what the hours
+     * owe. Open-ended effects and those waiting on a Descanso stay: time alone does not lift them.
+     */
+    @Override
+    public void passHours(final int hours) {
+        if (hours <= 0) {
+            return;
+        }
+        temporaryEffects.removeIf(effect -> effect.getRemainingRounds() != null
+                && !restScopedEffects.containsKey(effect)
+                && !trueRestScopedEffects.containsKey(effect));
+        List<HourlyEgoRecovery> updated = new ArrayList<>();
+        for (HourlyEgoRecovery owed : hourlyEgoRecoveries) {
+            int banked = owed.bankedHours() + hours;
+            int due = Math.min(owed.points(), banked / owed.hoursPerPoint());
+            recoverTemporaryEgoPoints(owed.domain(), due);
+            HourlyEgoRecovery rest = new HourlyEgoRecovery(owed.domain(), owed.points() - due,
+                    owed.hoursPerPoint(), banked - due * owed.hoursPerPoint());
+            if (rest.points() > 0) {
+                updated.add(rest);
+            }
+        }
+        hourlyEgoRecoveries.clear();
+        hourlyEgoRecoveries.addAll(updated);
+    }
+
+    @Override
+    public void applyEffectUntilTrueRest(@NonNull final TemporaryEffect effect, @NonNull final RestType restType) {
+        applyEffect(effect);
+        trueRestScopedEffects.put(effect, restType);
+    }
+
+    @Override
+    public void completeTrueRest(@NonNull final RestType restType) {
+        trueRestScopedEffects.entrySet().removeIf(entry -> {
+            if (restType.isAtLeast(entry.getValue())) {
+                temporaryEffects.remove(entry.getKey());
+                return true;
+            }
+            return false;
+        });
     }
 }

@@ -1,5 +1,8 @@
 package org.aventyrs.core.magic;
 
+import org.aventyrs.core.skill.Skill;
+import org.aventyrs.core.sheet.FrenzyMode;
+import org.aventyrs.core.sheet.AreaDamage;
 import org.aventyrs.core.ability.AttributeAbility;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
@@ -24,6 +27,9 @@ import static org.aventyrs.core.util.TranslatableMessages.NO_ALTERNATE_SPELL_VER
 import static org.aventyrs.core.util.TranslatableMessages.SPELL_CASTING_PREVENTED;
 
 public class SpellCastingServiceImpl implements SpellCastingService {
+
+    /** The highest face a d6 shows — what a maximised die deals. */
+    private static final int MAXIMUM_D6_FACE = 6;
 
     /** The floor a reduced Tempo de Ativação stops at. */
     private static final int MINIMUM_ACTION_POINTS = 1;
@@ -63,11 +69,14 @@ public class SpellCastingServiceImpl implements SpellCastingService {
         InteractionResult deliveryResult = spell.getAttackSkillType().newInteraction()
                 .applyTo(request.getCaster(), request.getSceneContext(), null, request.getCombatantTarget(),
                         spell);
-        InteractionResult dominioDoManaResult = dominioDoManaContextInteraction.applyTo(request.getCaster(),
-                request.getSceneContext());
-        OptionalInt durationInRounds = spellDurationService.resolveDurationInRounds(spell,
+        InteractionResult dominioDoManaResult = withOffensiveCastingAdvantage(
+                dominioDoManaContextInteraction.applyTo(request.getCaster(), request.getSceneContext()),
+                request.getCaster(), spell);
+        SpellEmpowerment empowerment = consumeEmpowerment(request.getCaster());
+        OptionalInt durationInRounds = extendDuration(spellDurationService.resolveDurationInRounds(spell,
                 request.getCaster().getCharacter(),
-                request.getCombatantTarget() == null ? null : request.getCombatantTarget().getCharacter());
+                request.getCombatantTarget() == null ? null : request.getCombatantTarget().getCharacter()),
+                spell, empowerment);
         ActiveAreaSpellEffect areaSpellEffect = registerAreaSpellEffect(request, spell, durationInRounds);
         int castingDifficultyReduction = resolveCastingDifficultyReduction(spell, request.getCaster());
         DifficultyLevel authoredDifficulty = spell.getCastingDifficultyLevel();
@@ -78,11 +87,17 @@ public class SpellCastingServiceImpl implements SpellCastingService {
                 .castingDifficultyReduction(castingDifficultyReduction)
                 .castingDifficultyLevel(authoredDifficulty == null ? null
                         : authoredDifficulty.easier(castingDifficultyReduction))
-                .activationTime(resolveActivationTime(spell, request.getCaster(),
-                        request.getScene().getCurrentRound()))
+                .activationTime(surcharged(resolveActivationTime(spell, request.getCaster(),
+                        request.getScene().getCurrentRound()), empowerment))
                 .durationInRounds(durationInRounds.isPresent() ? durationInRounds.getAsInt() : null)
                 .areaSpellEffect(areaSpellEffect)
-                .primaryDamage(resolvePrimaryDamage(spell, request.getCaster()).orElse(null))
+                .primaryDamage(resolvePrimaryDamage(spell, request.getCaster())
+                        .map(damage -> empowered(damage, empowerment)).orElse(null))
+                .empowerment(empowerment)
+                .mustOvercomeMagicDefense(mustOvercomeMagicDefense(request))
+                .areaDamage(spell.getDuration() != null && spell.getDuration().kind() == DurationKind.INSTANTANEA
+                        ? AreaDamage.cataclysm(request.getCaster(), request.getSceneContext())
+                        : null)
                 .spellEffect(resolveEffect(spell, SpellEffectContext.of(isHostileTarget(request)))
                         .orElse(null))
                 .recordedAction(recordedAction(request, spell, deliveryResult))
@@ -121,8 +136,79 @@ public class SpellCastingServiceImpl implements SpellCastingService {
      */
     private boolean isHostileTarget(final SpellCastRequest request) {
         return request.getCombatantTarget() != null
-                && request.getSceneContext() != null
-                && request.getSceneContext().getEnemies().contains(request.getCombatantTarget());
+                && (request.getSceneContext() != null
+                        && request.getSceneContext().getEnemies().contains(request.getCombatantTarget())
+                    || mustOvercomeMagicDefense(request));
+    }
+
+    /**
+     * Fanático de Cyt: a Magia cast on the Fanático by anyone else counts as hostile, and a
+     * beneficial one must overcome their DM to land — so the caller rolls it as an attack against DM.
+     */
+    private static boolean mustOvercomeMagicDefense(final SpellCastRequest request) {
+        CombatantSheet target = request.getCombatantTarget();
+        return target != null && target != request.getCaster() && target.treatsBeneficialSpellsAsHostile();
+    }
+
+    /**
+     * Frenesi Esmeralda: "Vantagem em Rolagens de … Conjuração de Magias Ofensivas (que inflijam danos
+     * em seus alvos)" — the flat +{@value Skill#ADVANTAGE_BONUS} on the Domínio do Mana roll of a Magia
+     * that deals damage.
+     */
+    private static InteractionResult withOffensiveCastingAdvantage(final InteractionResult dominioDoMana,
+                                                                   final CombatantSheet caster, final Spell spell) {
+        boolean esmeralda = caster.getFrenzy().map(frenzy -> frenzy.hasMode(FrenzyMode.FRENESI_ESMERALDA))
+                .orElse(false);
+        if (!esmeralda || spell.getPrimaryDamage().isEmpty() || dominioDoMana.getSkillRollBonus() == null) {
+            return dominioDoMana;
+        }
+        return dominioDoMana.toBuilder()
+                .skillRollBonus(dominioDoMana.getSkillRollBonus() + Skill.ADVANTAGE_BONUS)
+                .build();
+    }
+
+    /** Spends a pending Frenesi Arcano option, if the caster holds one. */
+    private static SpellEmpowerment consumeEmpowerment(final CombatantSheet caster) {
+        for (SpellEmpowerment empowerment : SpellEmpowerment.values()) {
+            if (caster.consumeEnhancedAttack(empowerment)) {
+                return empowerment;
+            }
+        }
+        return null;
+    }
+
+    /** Frenesi Arcano (Duração): "+2 Rodadas" on an Encantamento or Maldição with a Duração in Rodadas. */
+    private static OptionalInt extendDuration(final OptionalInt rounds, final Spell spell,
+                                              final SpellEmpowerment empowerment) {
+        boolean enchantmentOrCurse = spell.getPrimaryType() == MagicType.ENCANTAMENTO
+                || spell.getPrimaryType() == MagicType.MALDICAO
+                || spell.getSecondaryType() == MagicType.ENCANTAMENTO
+                || spell.getSecondaryType() == MagicType.MALDICAO;
+        if (empowerment != SpellEmpowerment.DURACAO || !enchantmentOrCurse || rounds.isEmpty()) {
+            return rounds;
+        }
+        return OptionalInt.of(rounds.getAsInt() + SpellEmpowerment.DURATION_BONUS);
+    }
+
+    /** Frenesi Arcano (Dano): +1d6, or the dice maximised once that would pass 3d6. */
+    private static ResolvedSpellDamage empowered(final ResolvedSpellDamage damage, final SpellEmpowerment empowerment) {
+        if (empowerment != SpellEmpowerment.DANO) {
+            return damage;
+        }
+        if (damage.diceCount() + 1 <= SpellEmpowerment.MAXIMUM_DICE) {
+            return new ResolvedSpellDamage(damage.deterministicAmount(), damage.diceCount() + 1,
+                    damage.damageType(), damage.elementalType(), damage.focusFullyApplied());
+        }
+        return new ResolvedSpellDamage(damage.deterministicAmount() + damage.diceCount() * MAXIMUM_D6_FACE, 0,
+                damage.damageType(), damage.elementalType(), damage.focusFullyApplied());
+    }
+
+    /** The cast's Tempo de Ativação plus Frenesi Arcano's "+3PA", when this cast spends it. */
+    private static ActivationTime surcharged(final ActivationTime time, final SpellEmpowerment empowerment) {
+        if (empowerment == null || time == null || time.type() != ActivationType.PONTOS_DE_ACAO) {
+            return time;
+        }
+        return ActivationTime.pa(time.actionPoints() + SpellEmpowerment.ACTION_POINT_SURCHARGE);
     }
 
     @Override
@@ -152,8 +238,11 @@ public class SpellCastingServiceImpl implements SpellCastingService {
                 .sum();
         // "(mínimo 1PA)", as MetamagicoFeat#PROCRASTINAR_CONJURACAO states — and an
         // ActivationTime of 0PA is not constructible anyway.
-        return reduction <= 0 ? authored
+        ActivationTime reduced = reduction <= 0 ? authored
                 : ActivationTime.pa(Math.max(MINIMUM_ACTION_POINTS, authored.actionPoints() - reduction));
+        // Titã Enlouquecido: "Conjurar Magias … tem o tempo de ação aumentado em +1PA".
+        int surcharge = caster.getConcentrationActionPointSurcharge();
+        return surcharge == 0 ? reduced : ActivationTime.pa(reduced.actionPoints() + surcharge);
     }
 
     private ResolvedSpellDamage resolve(final SpellDamage damage, final CombatantSheet caster) {

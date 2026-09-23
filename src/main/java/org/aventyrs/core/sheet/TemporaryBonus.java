@@ -75,7 +75,12 @@ public class TemporaryBonus extends TemporaryEffect {
 
     public TemporaryBonus(final ModifierType type, final int value, final Integer remainingRounds,
                           final String source, final int maximumSimultaneous) {
-        super(remainingRounds);
+        this(type, value, remainingRounds, source, maximumSimultaneous, false);
+    }
+
+    private TemporaryBonus(final ModifierType type, final int value, final Integer remainingRounds,
+                           final String source, final int maximumSimultaneous, final boolean countsDownAtTurnStart) {
+        super(remainingRounds, countsDownAtTurnStart);
         this.type = type;
         this.value = value;
         this.source = source;
@@ -95,7 +100,8 @@ public class TemporaryBonus extends TemporaryEffect {
                     blessing.getTotalLimit(), blessing.getSource(), blessing.getMaximumSimultaneous());
         }
         return new TemporaryBonus(blessing.getModifierType(), blessing.getValue(),
-                blessing.getRounds(), blessing.getSource(), blessing.getMaximumSimultaneous());
+                blessing.getRounds(), blessing.getSource(), blessing.getMaximumSimultaneous(),
+                blessing.isCountsDownAtTurnStart());
     }
 
     @Override

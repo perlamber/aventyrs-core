@@ -38,7 +38,15 @@ Especializações and their gated abilities.
   `getAvailableSupremaSlots` reports how many more a Título may receive, and `grantTitleAbility`
   enforces it on that one entry point, but constructing an `AventyrTitle` directly with more is
   still unchecked.
-- **Two reference Títulos, two shapes.** `Santo` is activation-heavy (Blessings, Auras, reported
+- **Three reference Títulos, three shapes.** The third, `GiganteEnfurecido`, is **state-driven**:
+  its Despertar is an *activated* trait (`GiganteEnfurecidoDespertar#FRENESI`, always held via
+  `getAllAbilities()` but never in `getAbilities()`, so it counts toward no prerequisite) that starts
+  a `sheet.Frenzy`. The Frenzy carries its numbers as bonuses that `CombatantSheet#getTemporaryBonus`
+  folds in, so every existing reader sees them; its drawbacks are flags the sheet's restriction
+  queries read. Costs in Ego points go through `EgoCost`/`resolveEgoCost`/`onEgoSpent`; an
+  Especialização "ativada em conjunto" is a mode chosen through `getChoices`, not its own activation.
+  See `docs/gigante-enfurecido.md`.
+- **Two earlier reference shapes.** `Santo` is activation-heavy (Blessings, Auras, reported
   `EmpoweredAttack`s). `SenhorDaBriga` is passive-heavy and reaches the **attack itself** through the
   Título scans on `AventyrTitle` (`resolveCriticalMarginIncrease`, `resolveCriticalDamage`,
   `resolveDamageBaseIncrease`, `resolveAttackRollBonus`, `resolveDamageRollBonus`, the holder-aware
