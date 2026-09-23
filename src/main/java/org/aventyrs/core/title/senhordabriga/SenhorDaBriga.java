@@ -167,9 +167,9 @@ public class SenhorDaBriga implements AventyrTitle {
      * with an Arma Natural, nor for rolling a Defesa without Equipamento Defensivo, so there is
      * nothing to be exempt from.
      *
-     * <p>TODO the "Armas Improvisadas" half: no such weapon exists here — nothing marks a table leg
-     * as a weapon. And no Desvantagem is tagged as one (a malus is just a signed −2), so if a
-     * source is ever added, exempting a holder from it needs that tag first.
+     * <p>The "Armas Improvisadas" half is <b>deliberately ignored</b> (table ruling, 2026-09-23): no
+     * Habilidade creates an improvised weapon any more — the Especialização that did made room for
+     * Fantasma do Ringue — so the clause names something no character can wield. Not a TODO.
      */
     @Override
     public String getBaseEffectDescription() {

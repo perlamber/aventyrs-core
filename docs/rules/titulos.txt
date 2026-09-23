@@ -975,7 +975,7 @@ Estados Federados
 Despertar: Um Título antigo, que já fora comum em tempos passados, mas hoje é bastante raro. Senhores da Briga são Despertos colocando seu corpo a prova, lutando e colocando sua vida em risco contra feras selvagens, monstros e oponentes armados utilizando apenas as armas que a natureza lhes deu e objetos do próprio cenário. O corpo de um Senhor da Briga e o ambiente – assim como os objetos dispostos nele - são considerados as únicas armas que ele precisa, apenas aqueles que entendem isso a abdicam do uso de armas podem Despertar este Título.
 Custo de Ativação: Nenhum, Efeito Passivo
 Tempo de Ativação: 0 PA, sempre ativa
-Descrição: Você nunca recebe Desvantagens em rolagens de Perícias de Ataques com Armas Naturais ou com Armas Improvisadas.
+Descrição: Você nunca recebe Desvantagens em rolagens de Perícias de Ataques com Armas Naturais.
 Você nunca recebe Desvantagens em rolagens de Defesas por estar sem nenhum Equipamento Defensivo.
 Se Senhor da Briga for seu Título Primário o Dano Base de seus ataques com Armas Naturais aumentam em +1, suas Defesas aumentam em +2 enquanto estiver armado apenas com suas Armas Naturais.
 

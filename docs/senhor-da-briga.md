@@ -78,8 +78,8 @@ all is *not* a natural-weapon attack.
 ### Despertar
 Both clauses hold **vacuously**: this core imposes no Desvantagem for attacking with an Arma
 Natural nor for defending without Equipamento Defensivo, so there is nothing to be exempt from.
-> **TODO** Armas Improvisadas don't exist, and a Desvantagem isn't tagged as one (it is a signed
-> −2), so a future source would need that tag before it could be suppressed.
+The **Armas Improvisadas** half is ignored (table ruling, 2026-09-23): no Habilidade creates an
+improvised weapon any more — the Especialização that did was replaced by Fantasma do Ringue. Not a TODO.
 
 ### Título Primário
 `Character#getPrimaryTitle() == title` is resolved by the services, never self-reported:
