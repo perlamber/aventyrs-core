@@ -7,6 +7,8 @@ import org.aventyrs.core.character.CriticalDamage;
 import org.aventyrs.core.character.DamageDescriptor;
 import org.aventyrs.core.character.DamageType;
 import org.aventyrs.core.character.DefenseType;
+import org.aventyrs.core.character.services.CharacterSizeService;
+import org.aventyrs.core.character.services.CharacterSizeServiceImpl;
 import org.aventyrs.core.effect.AgarrarEDerrubar;
 import org.aventyrs.core.effect.CriticalEffectType;
 import org.aventyrs.core.effect.EffectChain;
@@ -83,6 +85,14 @@ public class SenhorDaBriga implements AventyrTitle {
     static final int CAMPEAO_MARGIN = 1;
     /** Fantasma do Ringue, "Suas rolagens de Defesas tem a Margem Crítica Menor aumentada em +2". */
     static final int FANTASMA_DEFENSE_MARGIN = 2;
+
+    /** Entre as Pernas: "+1 em Defesas para cada ponto de Categoria de Tamanho que o adversário tiver além do seu". */
+    static final int ENTRE_AS_PERNAS_DEFESAS_PER_CATEGORY = 1;
+
+    /** Entre as Pernas under Malícia de Valentão: "sua Margem Crítica Menor Defensiva aumenta em +2". */
+    static final int MALICIA_SHARED_SPACE_DEFENSE_MARGIN = 2;
+
+    private static final CharacterSizeService SIZES = new CharacterSizeServiceImpl();
     /** Cruz de Sangue, "aumenta sua Margem Crítica Menor de Defesas e Ataque Corpo-a-Corpo … em +2". */
     static final int CRUZ_DE_SANGUE_MARGIN = 2;
     /** Campeão da Taverna, "Seu Dano Crítico Menor aumenta em +2". */
@@ -286,12 +296,73 @@ public class SenhorDaBriga implements AventyrTitle {
         if (sheet != null && holds(SenhorDaBrigaAbility.CAMPEAO_DA_TAVERNA)) {
             total += sheet.getCombatCounter(SenhorDaBrigaAbility.CAMPEAO_DA_TAVERNA);
         }
+        if (sheet != null && holds(FantasmaDoRingueAbility.ENTRE_AS_PERNAS)) {
+            total += entreAsPernasDefesas(sheet, sceneContext);
+        }
         return total;
+    }
+
+    /**
+     * Entre as Pernas: "+1 em Defesas para cada ponto de Categoria de Tamanho que o adversário
+     * tiver além do seu", for each enemy whose space the holder shares — read off the holder's own
+     * {@code EnvironmentalState#sharingSpaceWith}, which the caller resolves (no positions here).
+     * Effective sizes on both sides, so a Forma's Categoria shift counts.
+     */
+    private static int entreAsPernasDefesas(final CombatantSheet sheet, final SceneContext sceneContext) {
+        if (sceneContext == null || sceneContext.getEnvironmentalState().sharingSpaceWith().isEmpty()) {
+            return 0;
+        }
+        int mine = SIZES.getEffectiveSizeCategory(sheet).getCategory();
+        return sceneContext.getEnemies().stream()
+                .filter(enemy -> sceneContext.getEnvironmentalState().isSharingSpaceWith(enemy.getId()))
+                .mapToInt(enemy -> Math.max(0, SIZES.getEffectiveSizeCategory(enemy).getCategory() - mine))
+                .sum() * ENTRE_AS_PERNAS_DEFESAS_PER_CATEGORY;
+    }
+
+    /** Entre as Pernas: "Você pode trespassar por espaços ocupados por inimigos". */
+    @Override
+    public boolean passesThroughEnemySpaces() {
+        return holds(FantasmaDoRingueAbility.ENTRE_AS_PERNAS);
+    }
+
+    /**
+     * Entre as Pernas: "permanecer em um mesmo espaço ocupado por inimigo se a Categoria de Tamanho
+     * dele for superior à sua" — or, under Malícia de Valentão, "o mesmo espaço que qualquer outro
+     * personagem, independentemente de qual a Categoria de Tamanho dele".
+     */
+    @Override
+    public boolean mayShareSpaceWith(final CombatantSheet holder, final CombatantSheet occupant,
+                                     final boolean occupantIsEnemy) {
+        if (holder == null || occupant == null || !holds(FantasmaDoRingueAbility.ENTRE_AS_PERNAS)) {
+            return false;
+        }
+        if (holdsMaliciaDeValentao()) {
+            return true;
+        }
+        return occupantIsEnemy && SIZES.getEffectiveSizeCategory(occupant).getCategory()
+                > SIZES.getEffectiveSizeCategory(holder).getCategory();
     }
 
     @Override
     public int resolveDamageBaseIncrease(final Character holder, final Weapon weapon, final boolean primary) {
         return primary && holder != null && holder.treatsAsNaturalWeapon(weapon) ? PRIMARY_DAMAGE_BASE_INCREASE : 0;
+    }
+
+    /**
+     * The margins below, plus Entre as Pernas under Malícia de Valentão: "enquanto o fizer [ocupar
+     * o mesmo espaço que outro personagem] sua Margem Crítica Menor Defensiva aumenta em +2" —
+     * judged off the roll's {@code EnvironmentalState#sharingSpaceWith}.
+     */
+    @Override
+    public int resolveCriticalMarginIncrease(final SkillType skillType, final AttackSource attackSource,
+                                             final CombatantSheet holder, final SceneContext sceneContext) {
+        int total = resolveCriticalMarginIncrease(skillType, attackSource, holder);
+        if (skillType == SkillType.ESQUIVA_E_APARAR && holder != null && sceneContext != null
+                && holds(FantasmaDoRingueAbility.ENTRE_AS_PERNAS) && holdsMaliciaDeValentao()
+                && !sceneContext.getEnvironmentalState().sharingSpaceWith().isEmpty()) {
+            total += MALICIA_SHARED_SPACE_DEFENSE_MARGIN;
+        }
+        return total;
     }
 
     @Override

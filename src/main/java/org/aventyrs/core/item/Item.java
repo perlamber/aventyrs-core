@@ -282,6 +282,16 @@ public interface Item {
      * item with none, or a destroyed one. The stone selects its Efeito Defensivo or Efeito
      * Ofensivo from {@link #getType()}; its Efeito Base always applies.
      */
+    /**
+     * Whether this copy lets its bearer ignore Terreno Difícil — today only a socketed {@link
+     * PowerStoneType#RUTILO_SUBTERRANEO}'s Efeito Base ("seus movimentos ignoram Terreno
+     * Difícil"). Gated on destruction like every other benefit here. Read by {@code
+     * MovementTerrainService#ignoresDifficultTerrain} over the worn equipment.
+     */
+    default boolean ignoresDifficultTerrain() {
+        return getPowerStone() != null && !isDestroyed() && getPowerStone().getType().ignoresDifficultTerrain();
+    }
+
     default int resolvePowerStoneBonus(final ModifierType modifierType) {
         return getPowerStone() == null || isDestroyed() ? 0
                 : getPowerStone().resolveBonus(modifierType, getType());

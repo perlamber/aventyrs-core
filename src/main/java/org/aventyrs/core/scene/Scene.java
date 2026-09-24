@@ -328,8 +328,21 @@ public class Scene {
      */
     public SceneContext buildContext(final CombatantSheet characterSheet, final Map<CombatantSheet, Range> distances,
                                       final CombatantSheet opposedCharacter) {
+        return buildContext(characterSheet, distances, opposedCharacter, EnvironmentalState.ORDINARY);
+    }
+
+    /**
+     * The longest form, also carrying the actor's {@link EnvironmentalState} — what a caller that
+     * knows where characterSheet stands passes, so Terreno Difícil and a shared space (both
+     * positional, so caller-resolved) reach the rules. {@code null} reads as {@link
+     * EnvironmentalState#ORDINARY}.
+     * @throws IllegalOperationException if characterSheet was never added to this Scene
+     */
+    public SceneContext buildContext(final CombatantSheet characterSheet, final Map<CombatantSheet, Range> distances,
+                                      final CombatantSheet opposedCharacter,
+                                      final EnvironmentalState environmentalState) {
         return new SceneContext(getAllies(characterSheet), getEnemies(characterSheet), distances, terrainType,
-                combatScene, currentRound, wonInitiative(characterSheet), opposedCharacter, id);
+                combatScene, currentRound, wonInitiative(characterSheet), opposedCharacter, id, environmentalState);
     }
 
     /**

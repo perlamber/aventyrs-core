@@ -1,5 +1,6 @@
 package org.aventyrs.core.character.services;
 
+import org.aventyrs.core.monster.SkillDifficulty;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.AttributeValue;
 import org.aventyrs.core.character.CharacterAttributes;
@@ -80,7 +81,8 @@ class HidingServiceImplTest {
         return AbstractMonsterTemplate.builder()
                 .name("Sentinela")
                 .physicalDefense(13).magicDefense(11)
-                .perception(perception)
+                .skillDifficulty(SkillType.ATTENTION, SkillDifficulty.of(DifficultyLevel.VERY_EASY,
+                        perception - DifficultyLevel.VERY_EASY.getBaseValue()))
                 .build()
                 .spawn(new Player());
     }
@@ -390,15 +392,19 @@ class HidingServiceImplTest {
     }
 
     @Test
-    void aFoeWithNoAuthoredPerceptionUsesTheDefault() {
-        assertEquals(HidingService.DEFAULT_MONSTER_PERCEPTION,
+    void aFoeWithNoAuthoredAtencaoSpotsAtItsGeneralGd() {
+        assertEquals(SkillDifficulty.DEFAULT.getValue(),
                 AbstractMonsterTemplate.builder().name("Anônimo").build().getPerception());
 
         CharacterSheet hider = combatant();
-        MonsterSheet foe = AbstractMonsterTemplate.builder().name("Anônimo").build().spawn(new Player());
-        hidingService.hide(hider, HidingService.DEFAULT_MONSTER_PERCEPTION);
+        MonsterSheet foe = AbstractMonsterTemplate.builder().name("Anônimo")
+                .generalDifficulty(SkillDifficulty.of(DifficultyLevel.HARD, 1))
+                .build().spawn(new Player());
+        hidingService.hide(hider, 24);
 
         assertTrue(hidingService.resolveDetection(hider, foe, null, against(foe)));
+        hidingService.hide(hider, 25);
+        assertFalse(hidingService.resolveDetection(hider, foe, null, against(foe)));
     }
 
     /** The archetypes rise together, and their eyes rise with them. */

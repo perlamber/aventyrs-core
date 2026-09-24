@@ -33,8 +33,8 @@ import org.aventyrs.core.title.TitleAbilityActivationRequest;
  *
  * <p>TODO the per-attack half is still three separate gaps, and none of them is this clause's:
  * "o Aprimoramento de Obra-Prima <i>Alcance Estendido</i>" is not in the Obra-Prima catalogue at
- * all; "seu alvo é empurrado 1UD para trás e você pode se Reposicionar" needs forced movement and
- * a Reposicionar manoeuvre, in a core that does no geometry; and "+1d6" of dano would be reportable
+ * all; "seu alvo é empurrado 1UD para trás e você pode se Reposicionar" needs forced movement (the
+ * Reposicionar is modelled — {@code RepositionService} — the push is not); and "+1d6" of dano would be reportable
  * (see {@code FuriaDosDeusesInteraction}, which does exactly that) but belongs on the attack the
  * caller builds, which this activation — an Ação Livre taken once for several later attacks — is
  * not adjacent to. That last one is the difference from Fúria dos Deuses and Placidez: those

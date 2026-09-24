@@ -66,8 +66,8 @@ public enum FormaMetamorfica {
      * by {@code HitPointsService#getMaxHitPoints(Character, CombatantSheet)}, so a Cavalo de
      * Chifres is genuinely harder to kill while it is one.
      *
-     * <p>TODO: "Ignora Terreno Difícil" — {@code TerrainType} describes a whole Scene, not a
-     *  per-movement cost there is anything to ignore.
+     * <p>"Ignora Terreno Difícil" is real too, Forma-gated, through {@code
+     * Feat#ignoresDifficultTerrain(Character, CombatantSheet)}.
      */
     CAVALO_DE_CHIFRES(FormType.CAVALO_DE_CHIFRES, NaturalWeapon.CHIFRES_PODEROSOS,
             "Ignora Terreno Difícil e Multiplicador de PV +1."),

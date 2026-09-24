@@ -51,8 +51,8 @@ import java.util.Map;
  *   bonus sources included, unlike {@link SizeCategory#getMovementPerActionPoint()} alone),
  *   but Pequenino still has no {@code *RacialAbility} catalog constant to carry Ligeiro's
  *   +2UD through it (see CLAUDE.md's "Not every race needs a RacialAbility catalog" — none of
- *   this race's traits fit that shape yet), and there's still no terrain-difficulty concept
- *   for Sempre Veloz to cancel.</li>
+ *   this race's traits fit that shape yet). <b>Sempre Veloz is real</b> —
+ *   {@link #ignoresDifficultTerrainOnLand()}, read by {@code MovementTerrainService}.</li>
  *   <li><b>Distraído e Motivado</b> (Desvantagem on a Perícia rolled in consecutive Rodadas;
  *   Vantagem from the 2nd roll of a Turn on, but only when it's a different Perícia than any
  *   rolled earlier that Turn) — needs this core to remember *which Perícias were already
@@ -85,6 +85,12 @@ public class Pequenino implements Race {
     @Override
     public SizeCategory getBaseSizeCategory() {
         return SizeCategory.MINUS_ONE;
+    }
+
+    /** Sempre Veloz: "nunca sofrem a redução de movimento" of Terreno Difícil while on land. */
+    @Override
+    public boolean ignoresDifficultTerrainOnLand() {
+        return true;
     }
 
     @Override

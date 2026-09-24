@@ -10,14 +10,12 @@ import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.character.SizeCategory;
 import org.aventyrs.core.action.ActionPointsService;
 import org.aventyrs.core.character.services.DeterminationPointsService;
-import org.aventyrs.core.character.services.HidingService;
 import org.aventyrs.core.character.services.HitPointsService;
 import org.aventyrs.core.character.services.MagicPointsService;
 import org.aventyrs.core.effect.CriticalEffectType;
 import org.aventyrs.core.item.Item;
 import org.aventyrs.core.race.Monstruoso;
 import org.aventyrs.core.sheet.Player;
-import org.aventyrs.core.skill.DifficultyLevel;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
 import org.aventyrs.core.skill.SkillGraduation;
 import org.aventyrs.core.skill.SkillSpecialization;
@@ -46,9 +44,11 @@ import java.util.Set;
  *
  * <h2>Why the numbers are authored rather than derived</h2>
  *
- * A foe never rolls, so its Defesas and the Grau de Dificuldade its attacks present are fixed
- * values — and they're written on the stat block, not recomputed from its Destreza and
- * Graduações the way a player's defence roll is. That keeps a stat block readable and tunable by
+ * A foe never rolls, so its Defesas and the Grau de Dificuldade it presents on each Perícia are
+ * fixed values — and they're written on the stat block, not recomputed from its Destreza and
+ * Graduações the way a player's defence roll is. The GDs are one per Perícia it knows ({@link
+ * #getSkillDifficulties()}) plus a general one for everything else ({@link
+ * #getGeneralDifficulty()}). That keeps a stat block readable and tunable by
  * hand, at the cost of the numbers being free to drift from the foe's Attributes; nothing here
  * checks them against each other, deliberately.
  *
@@ -99,26 +99,50 @@ public interface MonsterTemplate {
     /** Its DM: the same, for a magical attack. */
     int getMagicDefense();
 
-    /** The GD its own attacks present to a defender's Esquiva e Aparar roll. */
-    DifficultyLevel getAttackDifficulty();
-
-    /** A flat modifier on top of {@link #getAttackDifficulty()}'s threshold. */
-    int getAttackBonus();
+    /**
+     * The GD it presents on any Perícia its stat block names no GD for — "a general GD for other
+     * tasks". What a foe never authored anything for rolls against: its attacks when it has no
+     * attack entry, its Atenção against a hider, its Furtividade against a watcher.
+     *
+     * <p>{@link #getSkillDifficulties()} overrides it Perícia by Perícia; {@link
+     * #getSkillDifficulty(SkillType)} is the one lookup every consumer goes through.
+     */
+    SkillDifficulty getGeneralDifficulty();
 
     /**
-     * The fixed Atenção value this creature presents when someone tries to hide from it — the
-     * total a player would have rolled, authored instead of rolled for exactly the reason the
-     * four combat numbers above are: <b>a foe never rolls</b>. {@code
-     * org.aventyrs.core.character.services.HidingService#resolveDetection} reads this in place of
-     * an Atenção roll and compares it to the hider's Furtividade total.
+     * The GD it presents on each Perícia it knows — the Perícias whose GD its stat block states
+     * outright. A Perícia absent from this map falls back to {@link #getGeneralDifficulty()}.
      *
-     * <p>Defaults to {@link HidingService#DEFAULT_MONSTER_PERCEPTION}, which is itself an
-     * inference — see that constant. A creature meant to be hard or easy to sneak past authors its
-     * own; {@link #getSkillGraduations()}'s Atenção entry is deliberately <i>not</i> consulted,
-     * since nothing about a foe is derived from its Perícias.
+     * <p>Keyed separately from {@link #getSkillGraduations()} on purpose: the GD is authored, not
+     * derived from a Graduação, exactly as its Defesas are not derived from its Destreza — see this
+     * interface's own javadoc. An entry here needs no Graduação and a Graduação needs no entry.
+     */
+    default Map<SkillType, SkillDifficulty> getSkillDifficulties() {
+        return Map.of();
+    }
+
+    /**
+     * The GD it presents on skillType — its own entry in {@link #getSkillDifficulties()}, or
+     * {@link #getGeneralDifficulty()} when it has none. An attack presents {@code
+     * getSkillDifficulty(ATAQUE_CORPO_A_CORPO)} (or {@code ATAQUE_A_DISTANCIA}) to a defender's
+     * Esquiva e Aparar roll, {@link SkillType#FURTIVIDADE} is how well it hides, and {@link
+     * SkillType#ATTENTION}, flattened, is {@link #getPerception()}.
+     */
+    default SkillDifficulty getSkillDifficulty(@NonNull final SkillType skillType) {
+        return getSkillDifficulties().getOrDefault(skillType, getGeneralDifficulty());
+    }
+
+    /**
+     * The fixed Atenção value this creature presents when someone tries to hide from it — its
+     * {@link SkillType#ATTENTION} GD ({@link #getSkillDifficulty(SkillType)}) flattened by {@link
+     * SkillDifficulty#getValue()}. {@code
+     * org.aventyrs.core.character.services.HidingService#resolveDetection} reads this in place of
+     * an Atenção roll and compares it to the hider's concealment: <b>a foe never rolls</b>.
+     *
+     * <p>A foe that authored no Atenção entry spots at its general GD, Médio's 18 by default.
      */
     default int getPerception() {
-        return HidingService.DEFAULT_MONSTER_PERCEPTION;
+        return getSkillDifficulty(SkillType.ATTENTION).getValue();
     }
 
     /**

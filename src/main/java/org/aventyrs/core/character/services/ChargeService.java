@@ -135,8 +135,23 @@ public interface ChargeService {
      * is an Ataque Desarmado and is a legitimate charge.
      *
      * <p>Never throws — {@link #begin} is the form that does, and both read the same refusals.
+     * The context-less form cannot see where the charger stands, so it never refuses for Terreno
+     * Difícil; prefer {@link #canCharge(CombatantSheet, Weapon, SceneContext)}.
      */
-    boolean canCharge(CombatantSheet sheet, Weapon weapon);
+    default boolean canCharge(CombatantSheet sheet, Weapon weapon) {
+        return canCharge(sheet, weapon, null);
+    }
+
+    /**
+     * {@link #canCharge(CombatantSheet, Weapon)} judged from where the charger stands:
+     * sceneContext's {@code EnvironmentalState#inDifficultTerrain()} refuses it ({@code
+     * CHARGE_IN_DIFFICULT_TERRAIN}). A {@code null} context reads as ordinary ground.
+     *
+     * <p>Only the starting space is judged here. "Não é possível em Terreno Difícil" also forbids a
+     * path <em>entering</em> one, and the path is the caller's: route the charge with {@code
+     * StepRules#avoidingDifficultTerrain()}.
+     */
+    boolean canCharge(CombatantSheet sheet, Weapon weapon, SceneContext sceneContext);
 
     /**
      * Declares the Investida: claims the movement on sheet and reports everything resolved about
@@ -149,8 +164,10 @@ public interface ChargeService {
      *         it is carried but sheathed ({@code WEAPON_NOT_DRAWN}), not theirs at all
      *         ({@code WEAPON_NOT_CARRIED}), not swung as an Ataque Corpo-a-Corpo
      *         ({@code CHARGE_REQUIRES_MELEE_WEAPON}), unusable in their current Forma
-     *         ({@code CANNOT_ATTACK_WITH_WEAPON}), or they are forbidden to move
-     *         ({@code CHARGE_MOVEMENT_PREVENTED})
+     *         ({@code CANNOT_ATTACK_WITH_WEAPON}), they are forbidden to move
+     *         ({@code CHARGE_MOVEMENT_PREVENTED}), already Reposicionaram this Turn
+     *         ({@code CHARGE_AFTER_REPOSITION} — see {@code RepositionService}), or they stand in Terreno Difícil
+     *         ({@code CHARGE_IN_DIFFICULT_TERRAIN})
      */
     ChargeResult begin(CombatantSheet sheet, Weapon weapon, SceneContext sceneContext);
 

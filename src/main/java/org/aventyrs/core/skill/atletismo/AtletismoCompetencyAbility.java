@@ -23,7 +23,8 @@ public enum AtletismoCompetencyAbility implements SkillCompetencyAbility {
     ALPINISTA_VELOZ("Você recebe Movimento Base Vertical."),
 
     // TODO: once per Cena, ignore Terreno Difícil, gaining an additional use at the 5th and
-    // 10th Graduação — needs a Terreno Difícil/terrain system, a Cena-scoped usage-limiting
+    // 10th Graduação — the Terreno Difícil cost is real (MovementTerrainService), but this is a
+    // spent use rather than a passive, so it needs a Cena-scoped usage-limiting
     // mechanism, and a graduation-crossing-a-threshold trigger for the extra uses (same gap
     // as ArtesExcellency.FOCADO/LENDA's Fama trigger), none of which exist yet.
     SALTO_PODEROSO("Uma vez por Cena você pode ignorar Terreno Difícil, novos usos desta " +

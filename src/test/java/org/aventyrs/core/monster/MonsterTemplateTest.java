@@ -44,8 +44,44 @@ class MonsterTemplateTest {
                 .sizeCategory(SizeCategory.PLUS_TWO)
                 .physicalDefense(19)
                 .magicDefense(13)
-                .attackDifficulty(DifficultyLevel.HARD)
-                .attackBonus(3);
+                .skillDifficulty(SkillType.ATAQUE_CORPO_A_CORPO, SkillDifficulty.of(DifficultyLevel.HARD, 3))
+                .skillDifficulty(SkillType.ATTENTION, SkillDifficulty.of(DifficultyLevel.EASY, 1));
+    }
+
+    @Test
+    void aPericiaWithNoGdOfItsOwnFallsBackToTheGeneralGd() {
+        MonsterSheet troll = troll()
+                .generalDifficulty(SkillDifficulty.of(DifficultyLevel.EASY, 2))
+                .build().spawn(new Player());
+
+        assertEquals(SkillDifficulty.of(DifficultyLevel.HARD, 3), troll.getSkillDifficulty(SkillType.ATAQUE_CORPO_A_CORPO));
+        assertEquals(SkillDifficulty.of(DifficultyLevel.EASY, 2), troll.getSkillDifficulty(SkillType.FURTIVIDADE));
+        assertEquals(SkillDifficulty.of(DifficultyLevel.EASY, 2), troll.getSkillDifficulty(SkillType.ATAQUE_A_DISTANCIA));
+        assertEquals(16, troll.getSkillDifficulty(SkillType.FURTIVIDADE).getValue());
+    }
+
+    @Test
+    void anUnauthoredFoePresentsMedioOnEveryPericia() {
+        MonsterSheet blank = AbstractMonsterTemplate.builder().name("Anônimo").build().spawn(new Player());
+
+        for (SkillType skillType : SkillType.values()) {
+            assertEquals(SkillDifficulty.DEFAULT, blank.getSkillDifficulty(skillType));
+        }
+        assertEquals(DifficultyLevel.MEDIUM.getBaseValue(), blank.getPerception());
+    }
+
+    /** 0.0.54 moved the attack GD to the general GD and the flat perception to an Atenção entry —
+     * every archetype must still present exactly the numbers it did before. */
+    @Test
+    void theGenericArchetypesKeepTheirPreviousNumbers() {
+        assertEquals(SkillDifficulty.of(DifficultyLevel.EASY, 0), GenericMonster.CAPANGA.getSkillDifficulty(SkillType.ATAQUE_CORPO_A_CORPO));
+        assertEquals(SkillDifficulty.of(DifficultyLevel.EASY, 1), GenericMonster.ATIRADOR.getSkillDifficulty(SkillType.ATAQUE_A_DISTANCIA));
+        assertEquals(SkillDifficulty.of(DifficultyLevel.VERY_HARD, 4), GenericMonster.ABERRACAO.getSkillDifficulty(SkillType.ATAQUE_CORPO_A_CORPO));
+        assertEquals(12, GenericMonster.CAPANGA.getPerception());
+        assertEquals(13, GenericMonster.ATIRADOR.getPerception());
+        assertEquals(14, GenericMonster.BRUTAMONTES.getPerception());
+        assertEquals(16, GenericMonster.CONJURADOR.getPerception());
+        assertEquals(24, GenericMonster.ABERRACAO.getPerception());
     }
 
     @Test
@@ -54,8 +90,8 @@ class MonsterTemplateTest {
 
         assertEquals(19, troll.getPhysicalDefense());
         assertEquals(13, troll.getMagicDefense());
-        assertEquals(DifficultyLevel.HARD, troll.getAttackDifficulty());
-        assertEquals(3, troll.getAttackBonus());
+        assertEquals(SkillDifficulty.of(DifficultyLevel.HARD, 3), troll.getSkillDifficulty(SkillType.ATAQUE_CORPO_A_CORPO));
+        assertEquals(15, troll.getPerception());
         assertEquals(19, troll.getDefense(DefenseType.PHYSICAL));
         assertEquals(13, troll.getDefense(DefenseType.MAGIC));
     }
@@ -144,7 +180,7 @@ class MonsterTemplateTest {
 
         assertEquals("Aberração", aberracao.getCharacter().getName());
         assertEquals(24, aberracao.getPhysicalDefense());
-        assertEquals(DifficultyLevel.VERY_HARD, aberracao.getAttackDifficulty());
+        assertEquals(DifficultyLevel.VERY_HARD, aberracao.getSkillDifficulty(SkillType.ATAQUE_CORPO_A_CORPO).level());
         assertEquals(14, aberracao.getCharacter().getSkills()
                 .get(SkillType.ATAQUE_CORPO_A_CORPO).getGraduation().getGraduationValue());
         assertEquals(HitPointsService.BASE_HIT_POINTS + 12 * 8,

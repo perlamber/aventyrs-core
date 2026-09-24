@@ -40,7 +40,8 @@
  *         .skillGraduation(SkillType.ATAQUE_CORPO_A_CORPO, 12)
  *         .sizeCategory(SizeCategory.PLUS_TWO)
  *         .physicalDefense(19).magicDefense(13)
- *         .attackDifficulty(DifficultyLevel.HARD).attackBonus(3)
+ *         .skillDifficulty(SkillType.ATAQUE_CORPO_A_CORPO, SkillDifficulty.of(DifficultyLevel.HARD, 3))
+ *         .generalDifficulty(SkillDifficulty.of(DifficultyLevel.MEDIUM, 0))   // every other Perícia
  *         .lifeMultiplier(7)                            // bulk without inflating Vigor
  *         .build()
  *         .spawn(gm);
@@ -66,19 +67,27 @@
  * resource pools, its own {@code SkillGraduation} instances (which are mutable, so sharing them
  * would let one monster's growth raise another's).
  *
- * <h2>The four authored numbers</h2>
+ * <h2>The authored numbers: two Defesas and a GD per Perícia</h2>
  *
  * A foe never rolls, so it contributes fixed values in both directions of an exchange:
  * {@code physicalDefense}/{@code magicDefense} are what a player's Ataque roll must beat (see
- * {@code org.aventyrs.core.combat.AttackDelivery}), and {@code attackDifficulty}/{@code
- * attackBonus} are what its own attacks present to a player's Esquiva e Aparar roll (see
- * {@code org.aventyrs.core.combat.AttackReceiver}).
+ * {@code org.aventyrs.core.combat.AttackDelivery}), and a {@link
+ * org.aventyrs.core.monster.SkillDifficulty} — a tier plus a flat bonus — is what it presents on
+ * every Perícia it uses in place of a roll. {@code getSkillDifficulties()} holds one per Perícia
+ * it knows, and {@code getGeneralDifficulty()} answers for everything else, so {@code
+ * getSkillDifficulty(SkillType)} never comes back empty. Its attacks present {@code
+ * getSkillDifficulty(ATAQUE_CORPO_A_CORPO)} (or {@code ATAQUE_A_DISTANCIA}) to a player's Esquiva
+ * e Aparar roll (see {@code org.aventyrs.core.combat.AttackReceiver}); its Atenção GD, flattened,
+ * is {@code getPerception()}, what a hider's concealment is compared against (see {@code
+ * org.aventyrs.core.character.services.HidingService}); and its Furtividade GD is how well it
+ * hides. <i>(Before 0.0.54 a foe had a single attack GD and a separate flat perception; the
+ * former is now the general GD.)</i>
  *
  * <p>They're <b>authored on the stat block, not derived</b> from the foe's Perícias. That keeps a
  * stat block readable and tunable by hand; the cost is that nothing checks the numbers against
  * the Attributes behind them, deliberately.
  *
- * <h2>Beyond the four numbers: what else a stat block may author</h2>
+ * <h2>Beyond those numbers: what else a stat block may author</h2>
  *
  * Four further hooks on {@link org.aventyrs.core.monster.MonsterTemplate}, all defaulted, so a
  * foe that says nothing about them behaves exactly as before:

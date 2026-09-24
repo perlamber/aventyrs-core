@@ -57,6 +57,30 @@ public class TranslatableMessages {
     /** An Investida was declared by a combatant a held Condição forbids moving — Agarrado/Imobilizado. */
     public static final String CHARGE_MOVEMENT_PREVENTED = "CHARGE_MOVEMENT_PREVENTED";
 
+    /** An Investida was declared from Terreno Difícil, or along a path entering it. */
+    public static final String CHARGE_IN_DIFFICULT_TERRAIN = "CHARGE_IN_DIFFICULT_TERRAIN";
+
+    /**
+     * An Investida was declared by a combatant who already Reposicionou this Turn — a Reposicionar
+     * and spending Pontos de Ação moving exclude each other (table ruling).
+     */
+    public static final String CHARGE_AFTER_REPOSITION = "CHARGE_AFTER_REPOSITION";
+
+    /** A Reposicionar was declared by a combatant a held Condição forbids moving. */
+    public static final String REPOSITION_MOVEMENT_PREVENTED = "REPOSITION_MOVEMENT_PREVENTED";
+
+    /** A Reposicionar was declared with no Ação Livre to spend on it. */
+    public static final String REPOSITION_REQUIRES_FREE_ACTION = "REPOSITION_REQUIRES_FREE_ACTION";
+
+    /** A Reposicionar was declared from Terreno Difícil, or toward a hex that is. */
+    public static final String REPOSITION_IN_DIFFICULT_TERRAIN = "REPOSITION_IN_DIFFICULT_TERRAIN";
+
+    /**
+     * A Reposicionar was declared by a combatant who already spent Pontos de Ação moving this Turn
+     * (an Investida included) — the two exclude each other (table ruling).
+     */
+    public static final String REPOSITION_AFTER_MOVEMENT = "REPOSITION_AFTER_MOVEMENT";
+
     /** The attacker cannot presently attack with this weapon at all — a Forma suppressing it. */
     public static final String CANNOT_ATTACK_WITH_WEAPON = "CANNOT_ATTACK_WITH_WEAPON";
     public static final String NOT_ENOUGH_ACTION_POINTS = "NOT_ENOUGH_ACTION_POINTS";

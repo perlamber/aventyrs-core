@@ -369,6 +369,17 @@ public interface AttributeAbility {
     }
 
     /**
+     * Whether the movement at movementIndex (0-based, the Rodada's first is 0) ignores Terreno
+     * Difícil — pays 1UD per hex where it would pay {@code
+     * MovementTerrainService#DIFFICULT_TERRAIN_COST}. Read by {@code
+     * MovementTerrainService#ignoresDifficultTerrain}; {@code false} by default. {@link
+     * StrengthAbility#MOVIMENTO_LIVRE} is the consumer.
+     */
+    default boolean ignoresDifficultTerrain(int movementIndex) {
+        return false;
+    }
+
+    /**
      * A bonus toward this Perícia's own roll ({@code skillRollBonus}), granted on <b>every</b>
      * roll currently governed by rolledDomain — unlike {@link #resolveFirstRollOfTurnBonus},
      * not limited to the first such roll each Turn — e.g. {@link

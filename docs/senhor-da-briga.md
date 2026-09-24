@@ -68,7 +68,7 @@ all is *not* a natural-weapon attack.
 | Grande Mestre das Brigas *(Sup.)* | passive | — | — | offer the free attack vs Caído (`grantsFreeAttackAgainstFallen`) |
 | Cruz de Sangue | 2 | Reação | — | list it on `SELF_TARGETED_BY_MELEE_ATTACK`; offer the counter-attack on a failed Defesa |
 | Fingir Fraquezas | **= 1 + foes at Muito Curta** | 1 | `sceneContext`, `determinationPoints` = `resolveCost(ctx)` | mirror each foe's `ForcedTargeting` |
-| Entre as Pernas | passive | — | — | — *(TODO: no occupancy)* |
+| Entre as Pernas | passive | — | — | route movement through `MovementTerrainService#stepRules`; fill `EnvironmentalState#sharingSpaceWith` |
 | Malícia de Valentão *(Sup.)* | passive | — | — | nothing — scanned |
 
 ---
@@ -182,8 +182,20 @@ this way (scanned).
 > **TODO** "Inimigos inteligentes" — no intelligence classification; pass a context without the
 > beasts if the table wants the distinction.
 
-### Entre as Pernas / Grande Mestre / Malícia de Valentão
-Flags. Entre as Pernas is entirely TODO (no occupancy model).
+### Entre as Pernas *(passive, 0.0.53)*
+Positions are the caller's; the rules are here.
+- **Trespassing:** `SenhorDaBriga#passesThroughEnemySpaces` makes an enemy's space passable in the
+  holder's `StepRules`, and difficult (2UD — see `MovementTerrainService`).
+- **Stopping:** `#mayShareSpaceWith` lets the holder end a movement in a **larger** enemy's space
+  (effective sizes, so a Forma counts); under Malícia de Valentão, anyone's, at any size.
+- **Defesas:** +1 per Categoria de Tamanho each shared-space enemy has over the holder, read in
+  `resolveBaseDefesasBonus` off the holder's `EnvironmentalState#sharingSpaceWith` — so **fill it**
+  when building the holder's context (defence rolls included).
+- **Malícia de Valentão:** +2 Margem Crítica Menor on Esquiva e Aparar while sharing a space
+  (`resolveCriticalMarginIncrease`'s `SceneContext` overload).
+
+### Grande Mestre / Malícia de Valentão
+Flags.
 
 ---
 

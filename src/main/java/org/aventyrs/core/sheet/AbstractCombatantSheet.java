@@ -264,6 +264,9 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     /** Movements taken since this Rodada began — see {@link #consumeMovementThisRound()}. */
     private int movementsTakenThisRound = 0;
 
+    /** Reposicionar declared since this Rodada began — see {@link #consumeRepositionThisRound()}. */
+    private int repositionsTakenThisRound = 0;
+
     /** Attacks landed on this combatant since this Rodada began — see {@link #recordAttackSuffered()}. */
     private int attacksSufferedThisRound = 0;
 
@@ -993,6 +996,7 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     @Override
     public void startTurn(final int turnNumber) {
         movementsTakenThisRound = 0;
+        repositionsTakenThisRound = 0;
         actionCountAtTurnStart = actionsThisRound.size();
         drewWeaponThisTurn = false;
         activationsThisTurn.clear();
@@ -1413,6 +1417,17 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     @Override
     public int consumeMovementThisRound() {
         return movementsTakenThisRound++;
+    }
+
+    @Override
+    public int getRepositionsTakenThisRound() {
+        return repositionsTakenThisRound;
+    }
+
+    /** Reset by {@link #startTurn}, per-Rodada for the same reason {@link #consumeMovementThisRound()} is. */
+    @Override
+    public int consumeRepositionThisRound() {
+        return repositionsTakenThisRound++;
     }
     // --- Condições / Malefícios ---------------------------------------------------------------
 

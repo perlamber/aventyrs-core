@@ -149,6 +149,37 @@ public interface AventyrTitle {
     }
 
     /**
+     * {@link #resolveCriticalMarginIncrease(SkillType, AttackSource, CombatantSheet)} with the
+     * roll's {@code SceneContext} — what a margin conditioned on where the holder stands needs
+     * (Entre as Pernas' Malícia de Valentão, read off {@code EnvironmentalState#sharingSpaceWith}).
+     * {@code CriticalServiceImpl} calls this form; it delegates to the short one by default.
+     */
+    default int resolveCriticalMarginIncrease(final SkillType skillType, final AttackSource attackSource,
+                                              final CombatantSheet holder, final SceneContext sceneContext) {
+        return resolveCriticalMarginIncrease(skillType, attackSource, holder);
+    }
+
+    /**
+     * Whether this Título lets its holder move <em>through</em> spaces enemies occupy — which then
+     * count as Terreno Difícil. Read by {@code MovementTerrainService#stepRules}; {@code false} by
+     * default. Senhor da Briga's Entre as Pernas.
+     */
+    default boolean passesThroughEnemySpaces() {
+        return false;
+    }
+
+    /**
+     * Whether holder may end a movement in the space occupant stands in. occupantIsEnemy is the
+     * mover's own reading of the Scene. Read by {@code MovementTerrainService#stepRules}; {@code
+     * false} by default. Senhor da Briga's Entre as Pernas (a larger enemy) and Malícia de Valentão
+     * (anyone).
+     */
+    default boolean mayShareSpaceWith(final CombatantSheet holder, final CombatantSheet occupant,
+                                      final boolean occupantIsEnemy) {
+        return false;
+    }
+
+    /**
      * How many <i>números</i> this Título widens holder's Margem Crítica <b>Maior</b> by on a roll
      * of skillType made with attackSource — Campeão da Taverna's "A Margem Crítica … Maior de suas
      * Armas Naturais aumenta em +1". Summed by {@code CriticalServiceImpl

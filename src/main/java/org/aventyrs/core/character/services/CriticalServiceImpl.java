@@ -143,7 +143,7 @@ public class CriticalServiceImpl implements CriticalService {
         }
         // And a sixth for the held Títulos (Senhor da Briga's natural-weapon and Defesa margins).
         total += character.getAllTitles().stream()
-                .mapToInt(title -> title.resolveCriticalMarginIncrease(skillType, attackSource, holder))
+                .mapToInt(title -> title.resolveCriticalMarginIncrease(skillType, attackSource, holder, sceneContext))
                 .sum();
         // Timed widening on the sheet — Guilhotina's cumulative "+N números".
         total += holder.getTemporaryBonus(ModifierType.LESSER_CRITICAL_MARGIN);

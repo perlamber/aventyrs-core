@@ -54,6 +54,12 @@ public enum ModifierType {
     INITIATIVE,
     MOVEMENT,
     /**
+     * UD added to the distance of a Reposicionar ({@code RepositionService}) — not to Movimento
+     * Base, which a Reposicionar never reads. The Sandálhas do Corredor's "Distância da ação
+     * Reposicionar-se aumenta em +1UD".
+     */
+    REPOSITION_DISTANCE,
+    /**
      * A flat modifier to a <b>dano roll</b> — not to a Perícia roll, and not damage reduction.
      * Its counterpart on the roll side is {@code SKILL_ROLL_BONUS}: "Vantagem em rolagens de
      * Dano" is the same flat +2 that Vantagem is anywhere else (see {@code Skill#ADVANTAGE_BONUS}),

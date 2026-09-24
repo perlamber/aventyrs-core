@@ -97,8 +97,12 @@ class ZumbiTest {
     @Test
     void theConjuradorsManaGraduationBecomesAnAttackBonus() {
         // The threshold a defender's Esquiva e Aparar roll must clear: AttackReceiver's direction.
-        assertEquals(0, Zumbi.summonedBy(0).spawn(new Player()).getAttackBonus());
-        assertEquals(3, Zumbi.summonedBy(3).spawn(new Player()).getAttackBonus());
+        assertEquals(0, attackBonusOf(Zumbi.summonedBy(0).spawn(new Player())));
+        assertEquals(3, attackBonusOf(Zumbi.summonedBy(3).spawn(new Player())));
+        assertEquals(3, Zumbi.summonedBy(3).spawn(new Player())
+                .getSkillDifficulty(SkillType.ATAQUE_A_DISTANCIA).bonus());
+        // "Bônus em Perícia de Ataque" — nothing but an attack gets it.
+        assertEquals(0, Zumbi.summonedBy(3).spawn(new Player()).getSkillDifficulty(SkillType.ATTENTION).bonus());
 
         // And the Zumbi's own Ataque roll: the ability's @Modifier, resolved off the instance.
         MonsterSheet plain = Zumbi.summonedBy(0).spawn(new Player());
@@ -215,7 +219,7 @@ class ZumbiTest {
     void spawnFromASummonerReadsTheirDominioDoManaGraduation() {
         Zumbi template = Zumbi.builder().build();
 
-        assertEquals(7, template.spawn(conjuradorWithGraduation(7), new Player()).getAttackBonus());
+        assertEquals(7, attackBonusOf(template.spawn(conjuradorWithGraduation(7), new Player())));
         assertEquals(20 + ZumbiAbility.ENCANTAMENTO_HIT_POINTS,
                 hitPointsService.getMaxHitPoints(template.spawn(conjuradorWithGraduation(4), new Player()).getCharacter()));
     }
@@ -225,10 +229,10 @@ class ZumbiTest {
         Zumbi template = Zumbi.builder().build();
         Character untrained = CharacterFixture.blank(CharacterFixture.BLANK).build();
 
-        assertEquals(0, template.spawn(untrained, new Player()).getAttackBonus());
+        assertEquals(0, attackBonusOf(template.spawn(untrained, new Player())));
         assertEquals(20, hitPointsService.getMaxHitPoints(template.spawn(untrained, new Player()).getCharacter()));
         // Identical to the no-Conjurador case, which is the point of 0 being a real value.
-        assertEquals(template.spawn(new Player()).getAttackBonus(), template.spawn(untrained, new Player()).getAttackBonus());
+        assertEquals(attackBonusOf(template.spawn(new Player())), attackBonusOf(template.spawn(untrained, new Player())));
     }
 
     @Test
@@ -263,7 +267,13 @@ class ZumbiTest {
 
     @Test
     void theAttackDifficultyItPresentsIsAuthored() {
-        assertEquals(DifficultyLevel.EASY, Zumbi.builder().build().spawn(new Player()).getAttackDifficulty());
+        MonsterSheet zumbi = Zumbi.builder().build().spawn(new Player());
+        assertEquals(DifficultyLevel.EASY, zumbi.getSkillDifficulty(SkillType.ATAQUE_CORPO_A_CORPO).level());
+        assertEquals(DifficultyLevel.EASY, zumbi.getGeneralDifficulty().level());
+    }
+
+    private static int attackBonusOf(final MonsterSheet zumbi) {
+        return zumbi.getSkillDifficulty(SkillType.ATAQUE_CORPO_A_CORPO).bonus();
     }
 
     @Test

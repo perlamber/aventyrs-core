@@ -162,6 +162,14 @@ public interface Race {
      */
     default boolean isImmuneToEnchantments() { return false; }
 
+    /**
+     * Whether this race never loses movement to Terreno Difícil while on land — {@code
+     * Pequenino}'s Sempre Veloz. Withheld while flying or at least half submerged, which {@code
+     * MovementTerrainService#ignoresDifficultTerrain} reads off the actor's {@code
+     * EnvironmentalState}.
+     */
+    default boolean ignoresDifficultTerrainOnLand() { return false; }
+
 
     /**
      * Cost in XP to learn a new Feat

@@ -1,12 +1,12 @@
 ---
 name: building-a-foe
-description: This skill should be used when the user asks to "add a new monster", "build a foe", "create a monster/inimigo/criatura", "add a stat block", "add an archetype to GenericMonster", "make a boss/bruiser/caster enemy", or gives a monster's stat block (its Atributos, Perícias, DF/DM, GD de ataque, Categoria de Tamanho). Walks through picking between AbstractMonsterTemplate's fill-in-the-form path and GenericMonster's ready archetypes, authoring the five stat-block numbers, tuning bulk via lifeMultiplier, and the spawn-independence trap — mirroring org.aventyrs.core.monster as the reference implementation.
+description: This skill should be used when the user asks to "add a new monster", "build a foe", "create a monster/inimigo/criatura", "add a stat block", "add an archetype to GenericMonster", "make a boss/bruiser/caster enemy", or gives a monster's stat block (its Atributos, Perícias, DF/DM, GDs per Perícia, Categoria de Tamanho). Walks through picking between AbstractMonsterTemplate's fill-in-the-form path and GenericMonster's ready archetypes, authoring the Defesas and per-Perícia GDs, tuning bulk via lifeMultiplier, and the spawn-independence trap — mirroring org.aventyrs.core.monster as the reference implementation.
 ---
 
 # Building a foe
 
 A foe lives in `org.aventyrs.core.monster`. It is an ordinary `Character` — Attributes,
-Perícias, abilities and equipment — wrapped in a `MonsterSheet` that adds the five numbers a
+Perícias, abilities and equipment — wrapped in a `MonsterSheet` that adds the numbers a
 creature presents *because it never rolls*.
 
 **There is no `Monster extends Character`, and there must not be.** The stat-carrying half was
@@ -35,24 +35,27 @@ that enum.
 stand-in with a signature trait isn't generic any more. If your new archetype wants one, it's an
 `AbstractMonsterTemplate`.
 
-## 1. Author the five numbers
+## 1. Author the numbers: two Defesas and a GD per Perícia
 
-`MonsterSheet` adds exactly five fields to the shared sheet behaviour — four for the exchange of
-blows, one for being snuck past:
+`MonsterSheet` adds the Defesas and the GDs to the shared sheet behaviour:
 
 | Field | Meaning |
 | --- | --- |
 | `physicalDefense` (DF) | the target number a player's Ataque roll must reach to land a physical attack |
 | `magicDefense` (DM) | the same, for a magical attack |
-| `attackDifficulty` | the `DifficultyLevel` (GD) its own attacks present to a defender's Esquiva e Aparar roll |
-| `attackBonus` | a flat modifier on top of that GD's threshold |
-| `perception` | the flat Atenção it opposes to a hidden character, read by `HidingService#resolveDetection` in place of a roll |
+| `skillDifficulties` | a `SkillDifficulty` (a `DifficultyLevel` plus a flat bonus) per Perícia the foe *knows* |
+| `generalDifficulty` | the `SkillDifficulty` for every Perícia with no entry above — defaults to `SkillDifficulty.DEFAULT`, Médio +0 |
 
-`perception` defaults to `HidingService.DEFAULT_MONSTER_PERCEPTION` (14, itself an inference —
-no stat block in `docs/rules/` carries an Atenção column), so a foe nobody thought about is
-neither blind nor uncanny. Author one when the creature is meant to be either. It is **not**
-derived from the foe's own Atenção Graduação, for the same reason DF is not derived from its
-Destreza.
+`getSkillDifficulty(SkillType)` is the one lookup: the Perícia's own entry, else the general GD.
+Every consumer reads a foe's "roll" through it — an attack presents
+`getSkillDifficulty(ATAQUE_CORPO_A_CORPO)`/`ATAQUE_A_DISTANCIA` to a defender's Esquiva e Aparar;
+`getPerception()` is the `ATTENTION` GD flattened (`SkillDifficulty#getValue()` = base + bonus),
+read by `HidingService#resolveDetection` in place of an Atenção roll; the `FURTIVIDADE` GD is how
+well it hides. *(Before 0.0.54 there were `attackDifficulty`/`attackBonus` — attacks only — and a
+separate flat `perception`; the former became the general GD.)*
+
+A GD entry is **not** derived from the foe's Graduação in that Perícia, for the same reason DF is
+not derived from its Destreza — an entry needs no Graduação and a Graduação needs no entry.
 
 **These are authored, not derived, and that's the central design decision.** A stat block says
 what a Goblin's DF *is*; it isn't recomputed from its Destreza and Graduação the way a player's
@@ -61,9 +64,9 @@ being free to drift from the Attributes behind them. **Nothing checks them again
 deliberately** — don't add validation, and don't try to compute DF from Destreza.
 
 The player always rolls, so the direction of an exchange decides which pair is consulted — see
-`AttackReceiver` (foe attacks: contributes `attackDifficulty` + `attackBonus`) and
+`AttackReceiver` (foe attacks: contributes the attack Perícia's `SkillDifficulty`) and
 `AttackDelivery` (player attacks: contributes a flat DF or DM). `MonsterSheet#getDefense`
-selects the right column. `perception` is consulted by `HidingService` on the same principle:
+selects the right column. `getPerception()` is consulted by `HidingService` on the same principle:
 the hiding player rolled, the foe presents a number.
 
 ## 2. Fill in the form
@@ -79,8 +82,9 @@ MonsterTemplate goblin = AbstractMonsterTemplate.builder()
         .sizeCategory(SizeCategory.MINUS_ONE)
         .physicalDefense(12)
         .magicDefense(11)
-        .attackDifficulty(DifficultyLevel.EASY)
-        .attackBonus(1)
+        .skillDifficulty(SkillType.ATAQUE_A_DISTANCIA, SkillDifficulty.of(DifficultyLevel.EASY, 1))
+        .skillDifficulty(SkillType.FURTIVIDADE, SkillDifficulty.of(DifficultyLevel.MEDIUM, 2))
+        .generalDifficulty(SkillDifficulty.of(DifficultyLevel.EASY, 0))
         .build();
 ```
 
@@ -112,7 +116,7 @@ implementation). Enforced by `CriticalEffect#applicableTo`, which both `AttackDe
 javadoc whether anything implements it.
 
 Only `name` is `@NonNull`. Everything else has a sensible default — `sizeCategory` is
-`SizeCategory.ZERO`, `attackDifficulty` is `DifficultyLevel.MEDIUM`, the three multipliers take
+`SizeCategory.ZERO`, `generalDifficulty` is Médio +0, the three multipliers take
 their `*Service.DEFAULT_*` constants, and the defences default to 0. **An Attribute omitted from
 the map keeps `AttributeValue`'s own default** rather than becoming 0, so list only what the stat
 block states.
@@ -168,7 +172,7 @@ Three rules for the tier clauses:
   varies. See `ZumbiAbility`.
 - **Check whether a clause needs two consumers.** "Bônus em Perícia de Ataque" raises the
   creature's own Ataque roll (a `@Modifier` on the ability) *and* the threshold its attack presents
-  when a defender rolls (the template's `getAttackBonus()`). One clause, both directions.
+  when a defender rolls (the template's attack-Perícia `getSkillDifficulties()` entries). One clause, both directions.
 
 A flat "+NPV" clause is `@Modifier(ModifierType.HIT_POINTS)`, **not** a `lifeMultiplier` uplift —
 a stated amount expressed as a multiplier only lands right at one specific Vigor.
@@ -239,7 +243,7 @@ damage/shield/effect/turn-lifecycle tests per monster.
   constants, and `spawn()`.
 - `org.aventyrs.core.monster.AbstractMonsterTemplate` — the form.
 - `org.aventyrs.core.monster.GenericMonster` — the five archetypes and how a tier scales as one dial.
-- `org.aventyrs.core.monster.MonsterSheet` — the five numbers and `getDefense`.
+- `org.aventyrs.core.monster.MonsterSheet` — the Defesas, the per-Perícia GDs and `getDefense`.
 - `org.aventyrs.core.monster.SummonedMonsterTemplate` / `org.aventyrs.core.monster.summon.Zumbi` —
   the summon path, and the worked example of tier clauses.
 - `org.aventyrs.core.effect.CriticalEffectType` / `CriticalEffect#applicableTo` — immunities.

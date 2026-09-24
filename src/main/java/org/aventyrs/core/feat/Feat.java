@@ -1583,6 +1583,17 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     }
 
     /**
+     * Whether this Talento lets its holder ignore Terreno Difícil — every hex costing 1UD. Takes
+     * the holder's sheet so a Forma-scoped clause can read the worn shape; {@code holder} may be
+     * {@code null}, which reads as "condition not met". Read by {@code
+     * MovementTerrainService#ignoresDifficultTerrain}; {@code false} by default. {@code
+     * MetamorfoseDraculeaFeat}'s Cavalo de Chifres is the consumer.
+     */
+    default boolean ignoresDifficultTerrain(final Character character, final CombatantSheet holder) {
+        return false;
+    }
+
+    /**
      * Extra Movimento Base, in UD, this Talento grants on one specific movement of the Rodada —
      * for a clause scoped to <i>which</i> movement it is, e.g. {@code
      * MobilidadeFeat#VELOCISTA}'s "aumenta cumulativamente em +1UD para cada outro movimento
@@ -1600,6 +1611,19 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      * unconditional "+NUD ao Movimento Base" belongs on {@link #resolveMovementIncrease}.
      */
     default int resolveRoundMovementIncrease(int movementIndex, Character character) {
+        return 0;
+    }
+
+    /**
+     * UD this Talento adds to a Reposicionar — summed by {@code
+     * org.aventyrs.core.character.services.RepositionService#getDistance} across {@code
+     * Character#getFeats()} on top of {@code RepositionService#DISTANCE_UD}. currentRound is the
+     * 0-based Rodada (so an odd value is a table "Rodada Par"); repositionIndex the 0-based index
+     * of this Reposicionar within it ({@code CombatantSheet#getRepositionsTakenThisRound()}). Zero
+     * by default.
+     */
+    default int resolveRepositionDistanceIncrease(final int currentRound, final int repositionIndex,
+                                                  final Character character) {
         return 0;
     }
 

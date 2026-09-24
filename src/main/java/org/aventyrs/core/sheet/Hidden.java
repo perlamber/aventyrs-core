@@ -23,8 +23,8 @@ import java.util.UUID;
  * <h2>A tier and a flat bonus, not a bare number</h2>
  *
  * <p>A GD in this game is a {@link DifficultyLevel} with a modifier on it, and that is how one is
- * held here: {@link #getDifficultyLevel()} plus {@link #getBonus()}, exactly the pair {@code
- * MonsterSheet#getAttackDifficulty()}/{@code getAttackBonus()} already presents to a defender.
+ * held here: {@link #getDifficultyLevel()} plus {@link #getBonus()}, exactly the pair a {@code
+ * org.aventyrs.core.monster.SkillDifficulty} holds for each Perícia a foe presents a GD on.
  * {@link #getConcealmentValue()} flattens it the way this core flattens every other GD — {@link
  * DifficultyLevel#getBaseValue()} plus the bonus, the same arithmetic {@code
  * AttackReceiver#resolve} and {@code SkillRoll#against} do — and {@link

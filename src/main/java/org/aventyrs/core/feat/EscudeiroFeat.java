@@ -86,8 +86,8 @@ public enum EscudeiroFeat implements Feat {
      */
     // TODO: "se você não se mover em seu Turno" needs movement actually spent this Turn to be
     //  tracked; MovementService computes an allowance per Ponto de Ação and records no spend.
-    // TODO: the Gigante/Anão Reposicionar exception needs a forced-movement/positioning concept
-    //  (gap catalog, "Forced movement / positioning").
+    // TODO: the Gigante/Anão Reposicionar exception needs to know the Rodada's only movement was a
+    //  Reposicionar — RepositionService claims no movement and records nothing.
     DEFESA_TARTARUGA(
             "Se você não se mover em seu Turno e estiver empunhando um escudo que você seja "
                     + "especialista, você recebe um Bônus de +2 em suas Defesas por 1 Rodada. "
