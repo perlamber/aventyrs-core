@@ -237,4 +237,10 @@ public final class MetamorfoseDraculeaFeat extends AbstractFeat {
         return wornForma(sheet) == FormaMetamorfica.CAVALO_DE_CHIFRES
                 ? CAVALO_LIFE_MULTIPLIER_BONUS : 0;
     }
+
+    /** Cavalo de Chifres: "Ignora Terreno Difícil", while the shape is worn. */
+    @Override
+    public boolean ignoresDifficultTerrain(final Character character, final CombatantSheet sheet) {
+        return wornForma(sheet) == FormaMetamorfica.CAVALO_DE_CHIFRES;
+    }
 }

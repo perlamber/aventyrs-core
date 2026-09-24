@@ -188,9 +188,9 @@ public enum PowerStoneType {
 
     /**
      * Rútilo Subterrâneo (Elemental: Terra). Base "Defesas +2" ({@link ModifierType#DEFESAS} 2)
-     * and "Vantagem nas Rolagens de Atletismo" (flat advantage) are real. Ignoring Terreno
-     * Difícil, the defensive weapon-damage / RE clause, and the object-scoped damage advantage /
-     * elemental typing are blocked.
+     * and "Vantagem nas Rolagens de Atletismo" (flat advantage) are real, and so is ignoring
+     * Terreno Difícil ({@link #ignoresDifficultTerrain()}). The defensive weapon-damage / RE clause,
+     * and the object-scoped damage advantage / elemental typing are blocked.
      */
     RUTILO_SUBTERRANEO("Rútilo Subterrâneo", "Elemental: Terra",
             "Defesas +2, Vantagem nas Rolagens de Atletismo e seus movimentos ignoram Terreno Difícil.",
@@ -200,7 +200,12 @@ public enum PowerStoneType {
                     + "em adição aos seus tipos.",
             List.of(new ItemBonus(ModifierType.DEFESAS, 2),
                     new ItemBonus(ModifierType.ATLETISMO_ROLL_BONUS, Skill.ADVANTAGE_BONUS)),
-            List.of(), List.of()),
+            List.of(), List.of()) {
+        @Override
+        public boolean ignoresDifficultTerrain() {
+            return true;
+        }
+    },
 
     /**
      * Sodalita Gélida (Elemental: Gelo). "Força +1", an RE/first-instance clause, and an
@@ -291,6 +296,14 @@ public enum PowerStoneType {
      */
     public int resolveDamageBaseIncrease(final Weapon weapon, final ItemType hostType) {
         return 0;
+    }
+
+    /**
+     * Whether this stone's Efeito Base lets its bearer ignore Terreno Difícil, whatever the host.
+     * {@code false} for every stone but {@link #RUTILO_SUBTERRANEO}.
+     */
+    public boolean ignoresDifficultTerrain() {
+        return false;
     }
 
     private static int sumMatching(final List<ItemBonus> bonuses, final ModifierType modifierType) {

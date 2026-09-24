@@ -69,9 +69,9 @@ public enum EsquivaEApararCompetencyAbility implements SkillCompetencyAbility {
 
     // TODO: once per Rodada, after taking damage from an enemy attack, spend a Reação to
     // perform a "Reposicionar" action — needs a damage-triggers-a-Reação-opportunity
-    // mechanic, a once-per-Rodada usage-limiting mechanism, and a defined "Reposicionar"
-    // action type (this codebase only tracks generic PA/Ação Livre/Reação counters, not a
-    // catalog of distinct named actions), none of which exist yet.
+    // mechanic and a once-per-Rodada usage-limiting mechanism. Reposicionar itself is modelled
+    // now (Manoeuvre#REPOSICIONAR, RepositionService), priced as an Ação Livre — this would buy
+    // it with a Reação instead.
     RECUO_RAPIDO("Apenas uma vez por Rodada e após sofrer danos de um ataque inimigo, como " +
             "Reação você pode usar uma ação de Reposicionar.");
 

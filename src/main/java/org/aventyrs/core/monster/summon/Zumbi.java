@@ -9,6 +9,7 @@ import org.aventyrs.core.character.SizeCategory;
 import org.aventyrs.core.effect.CriticalEffectType;
 import org.aventyrs.core.item.Item;
 import org.aventyrs.core.monster.MonsterSheet;
+import org.aventyrs.core.monster.SkillDifficulty;
 import org.aventyrs.core.monster.SummonedMonsterTemplate;
 import org.aventyrs.core.sheet.LifeSteal;
 import org.aventyrs.core.sheet.Player;
@@ -47,8 +48,8 @@ import java.util.Set;
  * The body's Categoria de Tamanho is the animator's choice, clamped to {@link #MIN_SIZE_CATEGORY}
  * …{@link #MAX_SIZE_CATEGORY} ("igual à do corpo usado (mínimo -2, máximo +2)"). Everything the
  * Conjurador's Graduação changes is folded in here at build time rather than patched onto the
- * sheet afterwards — Força by {@link #getAttributeBases()}, the attack bonus by {@link
- * #getAttackBonus()}, and the roll-facing clauses by the single {@link ZumbiAbility} instance.
+ * sheet afterwards — Força by {@link #getAttributeBases()}, the attack GD by {@link
+ * #getSkillDifficulties()}, and the roll-facing clauses by the single {@link ZumbiAbility} instance.
  * The one exception is Roubo de Vida, which is a {@code TemporaryEffect} on the sheet rather than
  * anything on the {@code Character}, so {@link #spawn()} applies it after the sheet exists.
  *
@@ -225,25 +226,33 @@ public class Zumbi implements SummonedMonsterTemplate {
     }
 
     /**
-     * The GD a Zumbi's own attacks present to a defender's Esquiva e Aparar roll. Authored, like
-     * every foe's — see {@code MonsterTemplate}. Its stat block states no GD, so this is the
-     * catalogue default for a creature this weak rather than a number read off the text.
+     * The GD a Zumbi presents on anything but an attack. Authored, like every foe's — see {@code
+     * MonsterTemplate}. Its stat block states no GD, so this is the catalogue default for a
+     * creature this weak rather than a number read off the text.
      */
     @Override
-    public DifficultyLevel getAttackDifficulty() {
-        return DifficultyLevel.EASY;
+    public SkillDifficulty getGeneralDifficulty() {
+        return SkillDifficulty.of(DifficultyLevel.EASY, 0);
     }
 
     /**
      * "Recebem Bônus em Perícia de Ataque igual à quantidade de Graduações em Domínio do Mana de
-     * seu Conjurador" — applied here as well as on {@link ZumbiAbility}, and deliberately so.
-     * The two feed opposite directions of an exchange: the ability's {@code @Modifier} raises the
-     * Zumbi's own Ataque roll, while this raises the threshold its attack presents when the
-     * <i>defender</i> rolls (see {@code AttackReceiver}). One clause, two consumers.
+     * seu Conjurador" — applied here to the GD of each Perícia de Ataque as well as on {@link
+     * ZumbiAbility}, and deliberately so. The two feed opposite directions of an exchange: the
+     * ability's {@code @Modifier} raises the Zumbi's own Ataque roll, while this raises the
+     * threshold its attack presents when the <i>defender</i> rolls (see {@code AttackReceiver}).
+     * One clause, two consumers. Every other Perícia keeps {@link #getGeneralDifficulty()}.
      */
     @Override
-    public int getAttackBonus() {
-        return Math.max(0, conjuradorManaGraduation);
+    public Map<SkillType, SkillDifficulty> getSkillDifficulties() {
+        SkillDifficulty attack = SkillDifficulty.of(DifficultyLevel.EASY, Math.max(0, conjuradorManaGraduation));
+        Map<SkillType, SkillDifficulty> difficulties = new EnumMap<>(SkillType.class);
+        for (SkillType skillType : SkillType.values()) {
+            if (skillType.isAttackSkill()) {
+                difficulties.put(skillType, attack);
+            }
+        }
+        return difficulties;
     }
 
     @Override

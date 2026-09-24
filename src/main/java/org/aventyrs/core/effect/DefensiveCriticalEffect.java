@@ -53,7 +53,8 @@ import java.util.Set;
  * the resistances all exempt it ("não-PRIMORDIAIS").
  *
  * <p>TODO, each blocked on its own: Liberdade de Ação Maior's "Movimentos do atacante são
- * considerados em Terreno Difícil" (no per-movement Terreno); Repelir e Suprimir Maior's "a arma se
+ * considerados em Terreno Difícil" (per-hex Terreno Difícil exists, but nothing makes every hex
+ * difficult <em>for one mover</em>, and the attacker's sheet is the caller's stand-in); Repelir e Suprimir Maior's "a arma se
  * torna inutilizável por 1 Rodada" and Menor's "+1PA to attacks of the same type" (no per-weapon
  * usability flag, no per-attack-type PA price); Retorno de Danos' "projéteis são destruídos e não
  * aplicam áreas de efeitos" (no projectile or Área de Efeito resolution).

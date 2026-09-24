@@ -18,7 +18,7 @@ import org.aventyrs.core.skill.SkillType;
  *
  * <p><b>The GD is a tier plus a flat bonus</b>, not a bare number — {@link Hidden} holds the
  * {@link DifficultyLevel} the Furtividade roll reached and the excess over it, the same pair a foe
- * already presents with {@code MonsterTemplate#getAttackDifficulty()}/{@code getAttackBonus()}.
+ * already presents on every Perícia as a {@code org.aventyrs.core.monster.SkillDifficulty}.
  * That is what lets the two Especializações of this contest — {@code
  * FurtividadeSpecialization#MAESTRIA_DA_OCULTACAO} hiding, {@code
  * AttentionSpecialization#SENTIDOS_APURADOS} watching — each be worth what an Especialização is
@@ -60,16 +60,6 @@ import org.aventyrs.core.skill.SkillType;
  * </ul>
  */
 public interface HidingService {
-
-    /**
-     * What a foe with nothing authored spots at — {@link DifficultyLevel#EASY}'s threshold.
-     *
-     * <p><b>Inferred, not authored.</b> No stat block in {@code docs/rules/} carries an Atenção
-     * column. 14 is where an unremarkable creature's own Atenção roll would land on average (3d6
-     * averages 10.5, plus a modest Atributo and Graduação), so a foe nobody thought about is
-     * neither blind nor uncannily sharp. A creature meant to be either authors its own figure.
-     */
-    int DEFAULT_MONSTER_PERCEPTION = 14;
 
     /**
      * Hides hider on a Furtividade roll made <b>without</b> a matching Especialização — {@link

@@ -983,6 +983,22 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
      */
     int consumeMovementThisRound();
 
+    /**
+     * How many Reposicionar this combatant has already declared this Rodada — 0 before the first,
+     * so it doubles as the 0-based index of the next one. Kept apart from {@link
+     * #getMovementsTakenThisRound()}: a Reposicionar is not a movement bought with Pontos de Ação.
+     * The two exclude each other within a Turn (table ruling): while either is non-zero the other
+     * is refused — see {@code RepositionService}.
+     */
+    int getRepositionsTakenThisRound();
+
+    /**
+     * Records a Reposicionar as declared, returning its own 0-based index within this Rodada —
+     * what {@code MobilidadeFeat#MOVIMENTO_RAPIDO}'s "sua primeira ação para Reposicionar-se"
+     * reads. Called by {@code RepositionService#begin}.
+     */
+    int consumeRepositionThisRound();
+
     // --- Frenesi (Gigante Enfurecido) ---------------------------------------------------------
 
     /**

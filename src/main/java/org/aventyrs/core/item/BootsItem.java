@@ -14,8 +14,9 @@ import lombok.Getter;
  * Efeitos Críticos Defensivos".
  *
  * <p>Most Botas Favores name a movement axis this core does not model separately — vertical /
- * climbing / swimming distance, the Reposicionar manoeuvre, or "which Rodada is this". Those
- * clauses stay in the Favor's {@code description} / {@code additionalEffects}. What <i>is</i>
+ * climbing / swimming distance, the Reposicionar distance, or "which Rodada is this". Those
+ * clauses stay in the Favor's {@code description} / {@code additionalEffects} — all but the
+ * Reposicionar distance, now a {@link ModifierType#REPOSITION_DISTANCE} bonus. What <i>is</i>
  * expressible is a flat {@link ModifierType#MOVEMENT} bump (per Ponto de Ação, per CLAUDE.md's
  * "every movement figure is per Ponto de Ação"), now that {@code MovementServiceImpl} scans an
  * item's Favor for it, and a Vantagem on a whole named Perícia.
@@ -99,8 +100,8 @@ public enum BootsItem implements ItemTemplate {
 
     /**
      * Sandálhas do Corredor (Leve/Incomum). The Favor's "Distância da ação Reposicionar-se
-     * aumenta em +1UD" has no expression — Reposicionar is an unmodelled manoeuvre (CLAUDE.md
-     * "Forced movement / positioning"). The Efeito Adicional's "Movimento Base (terrestre) +2UD"
+     * aumenta em +1UD" is a {@link ModifierType#REPOSITION_DISTANCE} 1, summed by {@code
+     * RepositionService#getDistance}. The Efeito Adicional's "Movimento Base (terrestre) +2UD"
      * is a plain {@link ModifierType#MOVEMENT} 2: this core's Movimento Base is already the
      * ground figure, with no per-medium split, so "terrestre" adds nothing to narrow.
      */
@@ -113,6 +114,7 @@ public enum BootsItem implements ItemTemplate {
             ItemFavor.builder()
                     .description("Distância da ação Reposicionar-se aumenta em +1UD.")
                     .requirements(new ItemRequirements(AttributeDomain.DEXTERITY, 3))
+                    .bonus(new ItemBonus(ModifierType.REPOSITION_DISTANCE, 1))
                     .bonus(new ItemBonus(ModifierType.MOVEMENT, 2))
                     .build()),
 

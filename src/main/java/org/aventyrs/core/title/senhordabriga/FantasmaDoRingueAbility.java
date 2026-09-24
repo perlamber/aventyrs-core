@@ -100,11 +100,11 @@ public enum FantasmaDoRingueAbility implements AventyrTitleAbility {
             false, variable(1), ActionCost.ofActionPoints(1), Optional.of(FingirFraquezasInteraction.class),
             Optional.of(SenhorDaBrigaSpecialization.FANTASMA_DO_RINGUE), 0),
 
-    // Requer Especialização Fantasma do Ringue. Passive.
-    // TODO the whole clause needs occupancy, which this core does not model: trespassing enemy-held
-    // spaces as Terreno Difícil (TerrainType is Scene-wide, never per-hex), sharing a space with a
-    // larger character, and the per-Categoria Defesas bonus that sharing grants. Malícia de
-    // Valentão's upgrade is blocked on the same.
+    // Requer Especialização Fantasma do Ringue. Passive, and all of it real (0.0.53), with the
+    // positions the caller's: SenhorDaBriga#passesThroughEnemySpaces / #mayShareSpaceWith shape a
+    // mover's StepRules (MovementTerrainService — an enemy's space costs Terreno Difícil), and the
+    // Defesas per Categoria and Malícia's +2 Defensive margin are read off the holder's
+    // EnvironmentalState#sharingSpaceWith.
     ENTRE_AS_PERNAS(
             "Você pode trespassar por espaços ocupados por inimigos, estes espaços contam como Terrenos " +
             "Difíceis. Você pode permanecer em um mesmo espaço ocupado por inimigo se a Categoria de " +

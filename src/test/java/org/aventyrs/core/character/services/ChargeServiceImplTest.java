@@ -20,6 +20,9 @@ import org.aventyrs.core.sheet.Condition;
 import org.aventyrs.core.sheet.ConditionType;
 import org.aventyrs.core.sheet.FormType;
 import org.aventyrs.core.sheet.IllegalOperationException;
+import org.aventyrs.core.scene.EnvironmentalState;
+import org.aventyrs.core.scene.SceneContext;
+import org.aventyrs.core.util.TranslatableMessages;
 import org.aventyrs.core.sheet.Player;
 import org.aventyrs.core.skill.SkillGraduation;
 import org.aventyrs.core.skill.SkillType;
@@ -29,6 +32,9 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -182,6 +188,47 @@ class ChargeServiceImplTest {
     }
 
     // ---------- the gates ----------
+
+    @Test
+    void anInvestidaIsRefusedFromTerrenoDificil() {
+        Weapon sword = sword();
+        CharacterSheet sheet = wielding(sword);
+        SceneContext inDifficult = new SceneContext(List.of(), List.of(), Map.of(), null, true, 0, false, null, null,
+                EnvironmentalState.ORDINARY.withPosition(true, Set.of()));
+
+        assertTrue(chargeService.canCharge(sheet, sword));
+        assertFalse(chargeService.canCharge(sheet, sword, inDifficult));
+        IllegalOperationException refused = assertThrows(IllegalOperationException.class,
+                () -> chargeService.begin(sheet, sword, inDifficult));
+        assertEquals(TranslatableMessages.CHARGE_IN_DIFFICULT_TERRAIN, refused.getMessage());
+        assertEquals(0, sheet.getMovementsTakenThisRound(), "a refused charge claims no movement");
+    }
+
+    /** Reposicionar and spending Pontos de Ação moving exclude each other within a Turn (table ruling). */
+    @Test
+    void anInvestidaIsRefusedAfterAReposicionar() {
+        Weapon sword = sword();
+        CharacterSheet sheet = wielding(sword);
+
+        new RepositionServiceImpl().begin(sheet, 1, null);
+
+        assertFalse(chargeService.canCharge(sheet, sword));
+        IllegalOperationException refused = assertThrows(IllegalOperationException.class,
+                () -> chargeService.begin(sheet, sword, null));
+        assertEquals(TranslatableMessages.CHARGE_AFTER_REPOSITION, refused.getMessage());
+        assertEquals(0, sheet.getMovementsTakenThisRound(), "a refused charge claims no movement");
+    }
+
+    @Test
+    void aNewTurnLiftsTheReposicionarsBarOnCharging() {
+        Weapon sword = sword();
+        CharacterSheet sheet = wielding(sword);
+        new RepositionServiceImpl().begin(sheet, 1, null);
+
+        sheet.startTurn(2);
+
+        assertTrue(chargeService.canCharge(sheet, sword));
+    }
 
     @Test
     void aDrawnMeleeWeaponMayCharge() {

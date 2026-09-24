@@ -16,12 +16,10 @@ package org.aventyrs.core.action;
  * targetValue} and {@code actionCost} keep: "the caller didn't name a manoeuvre" is a different
  * answer from "the caller named a different one".
  *
- * <p><b>One constant, deliberately.</b> The catalog names other manoeuvres — <i>Reposicionar</i>
- * ({@code MobilidadeFeat#MOVIMENTO_RAPIDO}, {@code EscudeiroFeat#DEFESA_TARTARUGA}, {@code
- * BootsItem}'s Sandálhas do Corredor) and the <i>Movimento Acrobático</i> ({@code
- * MobilidadeFeat#MOVIMENTO_ACROBATICO}) — but nothing else about either is modelled: neither has
- * a cost, an allowance or a distance in this core, so a constant for one would be a name with no
- * mechanism behind it. Add each with the rest of its own machinery, not ahead of it.
+ * <p><b>Each constant arrives with its machinery.</b> The catalog names one more manoeuvre — the
+ * <i>Movimento Acrobático</i> ({@code MobilidadeFeat#MOVIMENTO_ACROBATICO}) — but nothing about it
+ * is modelled: no cost, allowance or distance, so a constant for it would be a name with no
+ * mechanism behind it. Add it with the rest of its own machinery, not ahead of it.
  */
 public enum Manoeuvre {
 
@@ -35,5 +33,12 @@ public enum Manoeuvre {
      * ChargeService} for which of its figures are authored and which are read off the constants
      * that reference it.
      */
-    INVESTIDA
+    INVESTIDA,
+
+    /**
+     * Reposicionar — a 1UD step bought as an Ação Livre ({@code RepositionService}). It provokes no
+     * movement Reações and is refused in Terreno Difícil. Table ruling (2026-09-23): no document
+     * under {@code docs/rules/} defines it; they only name it.
+     */
+    REPOSICIONAR
 }

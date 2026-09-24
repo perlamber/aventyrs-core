@@ -30,8 +30,8 @@ import java.util.Map;
  * these are stand-ins, and a foe with a name and a story belongs in {@link
  * AbstractMonsterTemplate} or a catalog of its own.
  *
- * <p>The numbers rise together across the tiers (Attributes, Graduações, Defesas, attack GD and
- * how sharp an eye each has for a hidden character),
+ * <p>The numbers rise together across the tiers (Attributes, Graduações, Defesas, the general GD
+ * and the Atenção GD — how sharp an eye each has for a hidden character),
  * so a tier is a single dial rather than five. They're authored, not derived — see {@link
  * MonsterTemplate}.
  *
@@ -47,25 +47,29 @@ public enum GenericMonster implements MonsterTemplate {
     CAPANGA("Capanga",
             Map.of(AttributeDomain.VIGOR, 2, AttributeDomain.STRENGTH, 3, AttributeDomain.DEXTERITY, 2),
             Map.of(SkillType.ATAQUE_CORPO_A_CORPO, 3, SkillType.ESQUIVA_E_APARAR, 2),
-            SizeCategory.ZERO, 13, 11, DifficultyLevel.EASY, 0, 12, 4),
+            SizeCategory.ZERO, 13, 11, SkillDifficulty.of(DifficultyLevel.EASY, 0),
+            SkillDifficulty.of(DifficultyLevel.VERY_EASY, 0), 4),
 
     /** A low-tier ranged attacker, fragile up close. */
     ATIRADOR("Atirador",
             Map.of(AttributeDomain.VIGOR, 2, AttributeDomain.DEXTERITY, 4, AttributeDomain.FOCUS, 2),
             Map.of(SkillType.ATAQUE_A_DISTANCIA, 4, SkillType.ESQUIVA_E_APARAR, 3),
-            SizeCategory.ZERO, 12, 11, DifficultyLevel.EASY, 1, 13, 3),
+            SizeCategory.ZERO, 12, 11, SkillDifficulty.of(DifficultyLevel.EASY, 1),
+            SkillDifficulty.of(DifficultyLevel.VERY_EASY, 1), 3),
 
     /** A mid-tier bruiser: slow, heavily armoured, hits hard. */
     BRUTAMONTES("Brutamontes",
             Map.of(AttributeDomain.VIGOR, 6, AttributeDomain.STRENGTH, 6, AttributeDomain.DEXTERITY, 1),
             Map.of(SkillType.ATAQUE_CORPO_A_CORPO, 7, SkillType.ESQUIVA_E_APARAR, 2),
-            SizeCategory.PLUS_ONE, 17, 12, DifficultyLevel.MEDIUM, 2, 14, 6),
+            SizeCategory.PLUS_ONE, 17, 12, SkillDifficulty.of(DifficultyLevel.MEDIUM, 2),
+            SkillDifficulty.of(DifficultyLevel.EASY, 0), 6),
 
     /** A mid-tier caster — poor Defesa Física, strong Defesa Mágica. */
     CONJURADOR("Conjurador",
             Map.of(AttributeDomain.VIGOR, 3, AttributeDomain.GNOSE, 6, AttributeDomain.FOCUS, 5),
             Map.of(SkillType.DOMINIO_DO_MANA, 7, SkillType.ATAQUE_A_DISTANCIA, 4, SkillType.ESQUIVA_E_APARAR, 3),
-            SizeCategory.ZERO, 13, 19, DifficultyLevel.MEDIUM, 3, 16, 4),
+            SizeCategory.ZERO, 13, 19, SkillDifficulty.of(DifficultyLevel.MEDIUM, 3),
+            SkillDifficulty.of(DifficultyLevel.EASY, 2), 4),
 
     /**
      * A high-tier horror meant to end a session. Its Vigor of 12 and Graduação of 14 are both
@@ -76,7 +80,8 @@ public enum GenericMonster implements MonsterTemplate {
     ABERRACAO("Aberração",
             Map.of(AttributeDomain.VIGOR, 12, AttributeDomain.STRENGTH, 10, AttributeDomain.INSTINCT, 8),
             Map.of(SkillType.ATAQUE_CORPO_A_CORPO, 14, SkillType.ESQUIVA_E_APARAR, 9, SkillType.ATTENTION, 8),
-            SizeCategory.PLUS_THREE, 24, 22, DifficultyLevel.VERY_HARD, 4, 24, 8);
+            SizeCategory.PLUS_THREE, 24, 22, SkillDifficulty.of(DifficultyLevel.VERY_HARD, 4),
+            SkillDifficulty.of(DifficultyLevel.HARD, 1), 8);
 
     private final String name;
     private final Map<AttributeDomain, Integer> attributeBases;
@@ -84,18 +89,25 @@ public enum GenericMonster implements MonsterTemplate {
     private final SizeCategory sizeCategory;
     private final int physicalDefense;
     private final int magicDefense;
-    private final DifficultyLevel attackDifficulty;
-    private final int attackBonus;
+    /**
+     * The GD it presents on every Perícia but Atenção — what its attacks present to a defender's
+     * Esquiva e Aparar roll, and what it hides at. See {@link MonsterTemplate#getGeneralDifficulty()}.
+     */
+    private final SkillDifficulty generalDifficulty;
 
     /**
-     * The flat Atenção each tier presents to a hidden character — a sixth number on the same
-     * single dial as the other five, rising with the tier rather than with the Atenção Graduação
-     * the constants happen to carry. Authored, like everything else here; see {@link
-     * MonsterTemplate#getPerception()}.
+     * The Atenção GD each tier presents to a hidden character — the one Perícia every archetype
+     * names a GD for, on the same single dial as the rest, rising with the tier rather than with
+     * the Atenção Graduação the constants happen to carry. See {@link MonsterTemplate#getPerception()}.
      */
-    private final int perception;
+    private final SkillDifficulty attentionDifficulty;
 
     private final int lifeMultiplier;
+
+    @Override
+    public Map<SkillType, SkillDifficulty> getSkillDifficulties() {
+        return Map.of(SkillType.ATTENTION, attentionDifficulty);
+    }
 
     @Override
     public List<AttributeAbility> getAttributeAbilities() {

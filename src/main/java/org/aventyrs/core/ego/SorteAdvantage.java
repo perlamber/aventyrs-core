@@ -65,11 +65,11 @@ public enum SorteAdvantage implements EgoAdvantage {
      * <p><strong>Both qualifiers are no-ops in this core today, not omissions.</strong> "Não
      * provoca Reações" would exempt this movement from a movement-triggers-Reação mechanism that
      * does not exist (the identical gap POSICIONAMENTO_ESTRATEGICO's own Reação-suppression half
-     * is still TODO'd on), and "ignora terrenos difíceis" would exempt it from a per-movement
-     * terreno difícil cost that does not exist either — {@code TerrainType} describes a whole
-     * Scene, not a square. Being exempt from nothing costs nothing, so a plain +2UD is presently
-     * an exact model of this clause; the two qualifiers become real the day either system lands,
-     * and this constant will need revisiting then.
+     * is still TODO'd on). "Ignora terrenos difíceis" now has a cost to be exempt from ({@code
+     * MovementTerrainService}, 2UD per hex) but still no expression: the 2UD is granted as a
+     * {@code MOVEMENT} bonus folded into Movimento Base, so nothing can tell which UD of a path are
+     * these. TODO: it needs the move granted as its own movement (a per-movement ignore, as {@code
+     * StrengthAbility#MOVIMENTO_LIVRE} has) rather than as a Movimento Base bump.
      *
      * <p>The grant lasts {@value #MOVEMENT_ROUNDS} Rodada — the shortest a {@code TemporaryBonus}
      * can express — where the rules text says "imediatamente". This core has no one-shot movement

@@ -233,7 +233,7 @@ class AttackDeliveryTest {
                 .egoAdvantage(EgoDomain.AUTOCONTROLE, AutocontroleAdvantage.RESOLUTO)
                 .build();
         MonsterSheet resolute = MonsterSheet.of(resoluteMonster, plain.getPlayer(), plain.getPhysicalDefense(),
-                plain.getMagicDefense(), plain.getAttackDifficulty(), plain.getAttackBonus());
+                plain.getMagicDefense(), plain.getGeneralDifficulty(), plain.getSkillDifficulties());
         SkillRoll roll = new SkillRoll(List.of(2, 2, 2));
 
         assertTrue(attackDelivery.resolve(attackOn(plain, attacker(6, 6))

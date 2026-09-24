@@ -17,6 +17,8 @@ import org.aventyrs.core.sheet.TemporaryBonus;
 import org.aventyrs.core.skill.SkillType;
 
 import static org.aventyrs.core.util.TranslatableMessages.CANNOT_ATTACK_WITH_WEAPON;
+import static org.aventyrs.core.util.TranslatableMessages.CHARGE_AFTER_REPOSITION;
+import static org.aventyrs.core.util.TranslatableMessages.CHARGE_IN_DIFFICULT_TERRAIN;
 import static org.aventyrs.core.util.TranslatableMessages.CHARGE_MOVEMENT_PREVENTED;
 import static org.aventyrs.core.util.TranslatableMessages.CHARGE_REQUIRES_MELEE_WEAPON;
 import static org.aventyrs.core.util.TranslatableMessages.WEAPON_NOT_CARRIED;
@@ -62,14 +64,15 @@ public class ChargeServiceImpl implements ChargeService {
     }
 
     @Override
-    public boolean canCharge(@NonNull final CombatantSheet sheet, final Weapon weapon) {
-        return refusalFor(sheet, weapon) == null;
+    public boolean canCharge(@NonNull final CombatantSheet sheet, final Weapon weapon,
+                             final SceneContext sceneContext) {
+        return refusalFor(sheet, weapon, sceneContext) == null;
     }
 
     @Override
     public ChargeResult begin(@NonNull final CombatantSheet sheet, final Weapon weapon,
                                final SceneContext sceneContext) {
-        String refusal = refusalFor(sheet, weapon);
+        String refusal = refusalFor(sheet, weapon, sceneContext);
         if (refusal != null) {
             throw new IllegalOperationException(refusal);
         }
@@ -112,7 +115,7 @@ public class ChargeServiceImpl implements ChargeService {
      * {@code DamageBaseService} already reads {@code weapon == null} as exactly that. It still has
      * to clear the Forma and movement gates below.
      */
-    private String refusalFor(final CombatantSheet sheet, final Weapon weapon) {
+    private String refusalFor(final CombatantSheet sheet, final Weapon weapon, final SceneContext sceneContext) {
         Character character = sheet.getCharacter();
         if (weapon != null) {
             // "The weapon must already be in hand" — an Investida bundles a movement with an
@@ -145,6 +148,16 @@ public class ChargeServiceImpl implements ChargeService {
         // prohibition itself is what lets the refusal say why.
         if (sheet.isMovementPrevented(null)) {
             return CHARGE_MOVEMENT_PREVENTED;
+        }
+        // An Investida is a movement bought with Pontos de Ação, which a Reposicionar already taken
+        // this Turn forbids (table ruling) — RepositionService refuses the converse.
+        if (sheet.getRepositionsTakenThisRound() > 0) {
+            return CHARGE_AFTER_REPOSITION;
+        }
+        // "Investidas não são possíveis em Terreno Difícil" (table ruling, 2026-09-23) — the
+        // starting space here; a path entering one is the caller's to refuse.
+        if (sceneContext != null && sceneContext.getEnvironmentalState().inDifficultTerrain()) {
+            return CHARGE_IN_DIFFICULT_TERRAIN;
         }
         return null;
     }

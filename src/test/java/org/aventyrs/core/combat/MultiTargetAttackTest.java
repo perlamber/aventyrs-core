@@ -98,7 +98,7 @@ class MultiTargetAttackTest {
     private static MonsterSheet foeWithPhysicalDefense(final int physicalDefense) {
         MonsterSheet plain = GenericMonster.CAPANGA.spawn(new Player());
         return MonsterSheet.of(plain.getCharacter(), plain.getPlayer(), physicalDefense,
-                plain.getMagicDefense(), plain.getAttackDifficulty(), plain.getAttackBonus());
+                plain.getMagicDefense(), plain.getGeneralDifficulty(), plain.getSkillDifficulties());
     }
 
     private DeliveredAttack.DeliveredAttackBuilder attack(final CharacterSheet attacker, final MonsterSheet primary) {

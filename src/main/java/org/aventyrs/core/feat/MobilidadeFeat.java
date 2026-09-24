@@ -21,9 +21,9 @@ import java.util.function.Supplier;
  * isn't recorded is a movement's <i>distance</i> or its <i>direction</i> — so "após se mover por
  * uma Distância Curta" and "para se aproximar de inimigos" remain untestable — nor whether a
  * character moved in a <i>previous</i> Turn, since the counter resets at each Turn's start.
- * <b>Reposicionar</b> is still an unmodelled manoeuvre: it has no cost, no allowance and no
- * {@code org.aventyrs.core.action.Manoeuvre} constant, which is what {@link #MOVIMENTO_RAPIDO} and
- * {@link #MOVIMENTO_ACROBATICO} are still waiting on.
+ * <b>Reposicionar</b> is modelled ({@code Manoeuvre#REPOSICIONAR}, {@code RepositionService}: 1UD,
+ * Ação Livre, no Reações — a table ruling), widened by {@link Feat#resolveRepositionDistanceIncrease},
+ * which is how {@link #MOVIMENTO_RAPIDO}'s Rodadas Pares half lands.
  *
  * <p><b>The Investida is modelled now</b> — {@code
  * org.aventyrs.core.character.services.ChargeService} prices and gates it and {@code
@@ -40,13 +40,10 @@ public enum MobilidadeFeat implements Feat {
      * "Seu Movimento Base aumenta em +2UD, em Rodadas Pares a distância de sua primeira ação para
      * Reposicionar-se aumenta em +1UD."
      *
-     * <p><b>The first half is real</b> — an unconditional "+NUD ao Movimento Base", which is
-     * exactly the shape {@code ModifierType.MOVEMENT} means (see {@code MovementService}).
+     * <p><b>Both halves are real.</b> The first is an unconditional "+NUD ao Movimento Base",
+     * exactly the shape {@code ModifierType.MOVEMENT} means (see {@code MovementService}); the
+     * second is {@link #resolveRepositionDistanceIncrease}, read by {@code RepositionService}.
      */
-    // TODO: the Rodadas Pares half needs Reposicionar as a distinct action with its own
-    //  distance; this core has one Movimento Base figure and no per-manoeuvre allowance. The
-    //  "primeira ação" half alone would now be expressible (Feat#resolveRoundMovementIncrease,
-    //  movementIndex 0), but not the Reposicionar scoping that narrows it.
     MOVIMENTO_RAPIDO(
             "Seu Movimento Base aumenta em +2UD, em Rodadas Pares a distância de sua primeira ação "
                     + "para Reposicionar-se aumenta em +1UD.",
@@ -54,6 +51,17 @@ public enum MobilidadeFeat implements Feat {
         @Override
         public int resolveMovementIncrease(final Character character) {
             return 2;
+        }
+
+        /**
+         * "Em Rodadas Pares a distância de sua primeira ação para Reposicionar-se aumenta em +1UD"
+         * — the table counts Rodadas from 1 and this core from 0, so a table Rodada Par is an odd
+         * currentRound.
+         */
+        @Override
+        public int resolveRepositionDistanceIncrease(final int currentRound, final int repositionIndex,
+                                                     final Character character) {
+            return currentRound % 2 == 1 && repositionIndex == 0 ? 1 : 0;
         }
     },
 
@@ -281,13 +289,10 @@ public enum MobilidadeFeat implements Feat {
      * <p>The source prints "3 Talentos de Mobilidade" under {@code Descrição} with the
      * Pré-requisito line left empty; read as the Pré-requisito.
      */
-    // TODO: "sem provocar Reações" needs two things. Reposicionar is not a Manoeuvre constant, so
-    //  there is nothing for AttributeAbility#exemptsFromMovementReactions to be scoped to (and no
-    //  Feat twin of that hook exists yet, deliberately — this would be its first consumer); and
-    //  nothing *fires* a Reação, so an exemption still exempts its holder from nothing that
-    //  happens. MovementReactionService resolves who may react, which is the half that is built.
-    // TODO: a distinct per-manoeuvre movement allowance has no representation for Reposicionar —
-    //  see MOVIMENTO_RAPIDO. ChargeService#getMovementAllowance is the shape it would take.
+    // TODO: the Movimento Acrobático is its own manoeuvre (Metade da Destreza UD, +2UD per Título),
+    //  gated on being able to Reposicionar (RepositionService#canReposition) — no Manoeuvre
+    //  constant or allowance for it yet. "Sem provocar Reações" still exempts from nothing that
+    //  happens: nothing fires a Reação.
     MOVIMENTO_ACROBATICO(
             "Apenas uma vez por Rodada e apenas quando puder fazer uma Ação de Reposicionar, você "
                     + "pode fazer uma acrobacia para se mover de forma segura pelo cenário, sem "

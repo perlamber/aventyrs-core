@@ -17,10 +17,12 @@ behaviour exactly once:
 
 - **`CharacterSheet`** — a player character. Adds `player`, the experience wallet
   (`totalExperience`/`unUsedExperience`/`useExperience`/`accumulateExperience`) and Fama.
-- **`MonsterSheet`** (`org.aventyrs.core.monster`) — a foe. Adds the four authored stat-block
+- **`MonsterSheet`** (`org.aventyrs.core.monster`) — a foe. Adds the authored stat-block
   numbers a foe presents *because it never rolls*: `physicalDefense`/`magicDefense` (what a
-  player's Ataque roll must beat) and `attackDifficulty`/`attackBonus` (what its own attacks
-  present to a player's Esquiva e Aparar roll).
+  player's Ataque roll must beat) and a `SkillDifficulty` (tier + bonus) per Perícia —
+  `getSkillDifficulty(SkillType)`, a per-Perícia entry or the general GD. Its attacks present
+  `getSkillDifficulty(ATAQUE_CORPO_A_CORPO)` (or `ATAQUE_A_DISTANCIA`) to a player's Esquiva e
+  Aparar roll.
 
 Everything else — damage, shields, Mana/Determinação, temporary Ego points, `TemporaryEffect`s,
 inventory, the Turn lifecycle, `receiveInteraction` — is on the shared half and behaves

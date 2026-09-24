@@ -145,8 +145,9 @@ public enum AnulacaoSpell implements AuthoredSpell {
      * TODO "seus danos não são considerados nem físicos e nem mágicos, por isso seus danos não
      * podem ser reduzidos ou evitados por efeitos" is unmitigable damage, which {@code
      * DamageService} cannot express: {@code ignoreDamageReduction} skips RD but never RA, and
-     * nothing skips both plus half-damage. TODO it also leaves behind a Terreno Difícil, and
-     * {@code TerrainType} describes a whole Scene rather than a patch of one.
+     * nothing skips both plus half-damage. TODO it also leaves behind a Terreno Difícil: per-hex
+     * Terreno Difícil exists now ({@code MovementMap}), but nothing resolves this area into hexes
+     * (the Área de Efeito footprint gap), so the caller would have to mark them.
      */
     BOMBA_DE_AETHER_MENOR(SpellData.builder()
             .name("Bomba de AEther Menor")

@@ -48,11 +48,15 @@ public class MovementReactionServiceImpl implements MovementReactionService {
      *
      * <p>There is no {@code Feat} pass. No Talento states a movement-Reação exemption that is
      * expressible yet: {@code MobilidadeFeat#MOVIMENTO_ACROBATICO}'s "sem provocar Reações" is
-     * scoped to the Reposicionar manoeuvre, which is not a {@link Manoeuvre} constant, and {@code
+     * scoped to the Reposicionar manoeuvre, which provokes nothing anyway, and {@code
      * ActionProfile#CONSCIENCIA_DEFENSIVA}'s is scoped to a movement's first 2UD, a distance
      * nothing records. Add the pass with the first clause that can actually use it.
      */
     private boolean isExempt(final Character mover, final Manoeuvre manoeuvre) {
+        // A Reposicionar never provokes: the manoeuvre's own rule, held by nobody.
+        if (manoeuvre == Manoeuvre.REPOSICIONAR) {
+            return true;
+        }
         return mover.getAttributeAbilities().stream()
                 .anyMatch((AttributeAbility ability) -> ability.exemptsFromMovementReactions(manoeuvre));
     }

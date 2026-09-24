@@ -132,8 +132,8 @@ public enum AbracadoPelaEscuridaoAbility implements AventyrTitleAbility {
     // Still TODO, and none of these is this clause's own gap:
     // - "o Aprimoramento de Obra-Prima Alcance Estendido" — no such entry exists in the
     //   Obra-Prima/Aprimoramento catalogue (OffensiveMasterpiece/OffensiveImprovement);
-    // - "seu alvo é empurrado 1UD para trás e você pode se Reposicionar" — forced movement and the
-    //   Reposicionar manoeuvre, in a core that does no geometry;
+    // - "seu alvo é empurrado 1UD para trás e você pode se Reposicionar" — forced movement (the
+    //   Reposicionar itself is RepositionService now);
     // - "+1d6" of dano — reportable in principle (FuriaDosDeusesInteraction does exactly that),
     //   but this is an Ação Livre funding *several* later attacks rather than empowering one named
     //   attack, so there is no single attack to report it onto.

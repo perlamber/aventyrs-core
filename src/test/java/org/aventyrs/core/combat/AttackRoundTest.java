@@ -96,8 +96,8 @@ class AttackRoundTest {
         IncomingAttackResult inbound = attackReceiver.resolve(IncomingAttack.builder()
                 .defender(hero)
                 .attacker(brute)
-                .difficultyLevel(brute.getAttackDifficulty())
-                .attackBonus(brute.getAttackBonus())
+                .difficultyLevel(brute.getSkillDifficulty(SkillType.ATAQUE_CORPO_A_CORPO).level())
+                .attackBonus(brute.getSkillDifficulty(SkillType.ATAQUE_CORPO_A_CORPO).bonus())
                 .defenseType(DefenseType.PHYSICAL)
                 .defenseRoll(new SkillRoll(List.of(1, 1, 3)))
                 .build());
@@ -133,7 +133,8 @@ class AttackRoundTest {
 
         IncomingAttackResult inbound = attackReceiver.resolve(IncomingAttack.builder()
                 .defender(hero).attacker(brute)
-                .difficultyLevel(brute.getAttackDifficulty()).attackBonus(brute.getAttackBonus())
+                .difficultyLevel(brute.getSkillDifficulty(SkillType.ATAQUE_CORPO_A_CORPO).level())
+                .attackBonus(brute.getSkillDifficulty(SkillType.ATAQUE_CORPO_A_CORPO).bonus())
                 .defenseType(DefenseType.PHYSICAL).scene(scene)
                 .defenseRoll(new SkillRoll(List.of(1, 1, 3)))
                 .build());

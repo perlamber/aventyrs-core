@@ -26,8 +26,18 @@ public enum StrengthAbility implements AttributeAbility {
         }
     },
 
+    /**
+     * The moving half is real: the Rodada's first movement (index 0, one Ponto de Ação's worth)
+     * ignores Terreno Difícil, judged per movement by {@code MovementTerrainService}. Escalar and
+     * nadar have no movement channel of their own here.
+     */
     MOVIMENTO_LIVRE("O primeiro Ponto de Ação (PA) que utilizar em cada Rodada para mover-se, escalar ou nadar " +
-            "ignora efeitos de Terreno Difícil."),
+            "ignora efeitos de Terreno Difícil.") {
+        @Override
+        public boolean ignoresDifficultTerrain(final int movementIndex) {
+            return movementIndex == 0;
+        }
+    },
 
     SUBJUGAR("Você recebe Vantagem em suas rolagens de Ataque Corpo-a-corpo para Agarrar, Derrubar ou Empurrar " +
             "outros personagens. Você recebe Vantagem em rolagens de Dano para atacar personagens caídos ou " +

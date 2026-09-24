@@ -9,11 +9,9 @@ import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.SizeCategory;
 import org.aventyrs.core.effect.CriticalEffectType;
 import org.aventyrs.core.character.services.DeterminationPointsService;
-import org.aventyrs.core.character.services.HidingService;
 import org.aventyrs.core.character.services.HitPointsService;
 import org.aventyrs.core.character.services.MagicPointsService;
 import org.aventyrs.core.item.Item;
-import org.aventyrs.core.skill.DifficultyLevel;
 import org.aventyrs.core.action.ActionPointsService;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
 import org.aventyrs.core.skill.SkillSpecialization;
@@ -37,8 +35,8 @@ import java.util.Set;
  *         .sizeCategory(SizeCategory.PLUS_TWO)
  *         .physicalDefense(19)
  *         .magicDefense(13)
- *         .attackDifficulty(DifficultyLevel.HARD)
- *         .attackBonus(3)
+ *         .skillDifficulty(SkillType.ATAQUE_CORPO_A_CORPO, SkillDifficulty.of(DifficultyLevel.HARD, 3))
+ *         .skillDifficulty(SkillType.ATTENTION, SkillDifficulty.of(DifficultyLevel.EASY, 0))
  *         .lifeMultiplier(7)
  *         .build()
  *         .spawn(gm);
@@ -95,15 +93,17 @@ public class AbstractMonsterTemplate implements MonsterTemplate {
 
     private final int magicDefense;
 
+    /** Its GD on every Perícia without an entry below — see {@link MonsterTemplate#getGeneralDifficulty()}. */
     @Builder.Default
     @NonNull
-    private final DifficultyLevel attackDifficulty = DifficultyLevel.MEDIUM;
+    private final SkillDifficulty generalDifficulty = SkillDifficulty.DEFAULT;
 
-    private final int attackBonus;
-
-    /** Its flat Atenção against a hidden character — see {@link MonsterTemplate#getPerception()}. */
-    @Builder.Default
-    private final int perception = HidingService.DEFAULT_MONSTER_PERCEPTION;
+    /**
+     * Its GD per Perícia it knows — builder call {@code .skillDifficulty(TYPE, SkillDifficulty.of(…))}.
+     * See {@link MonsterTemplate#getSkillDifficulties()}.
+     */
+    @Singular("skillDifficulty")
+    private final Map<SkillType, SkillDifficulty> skillDifficulties;
 
     @Builder.Default
     private final int lifeMultiplier = HitPointsService.DEFAULT_LIFE_MULTIPLIER;
