@@ -357,4 +357,10 @@ public class TranslatableMessages {
 
     /** The trait's own trigger has not happened — Frenesi Assustador's "ao derrotar um inimigo … ou após desferir um Acerto Crítico". */
     public static final String TITLE_ABILITY_TRIGGER_NOT_MET = "TITLE_ABILITY_TRIGGER_NOT_MET";
+
+    /** A Saquear named a combatant who is not among the looter's enemies. */
+    public static final String LOOT_TARGET_NOT_AN_ENEMY = "LOOT_TARGET_NOT_AN_ENEMY";
+
+    /** A Saquear named a foe whose PV are still above zero. */
+    public static final String LOOT_TARGET_NOT_DEFEATED = "LOOT_TARGET_NOT_DEFEATED";
 }

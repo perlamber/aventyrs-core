@@ -50,8 +50,10 @@ public class MovementTerrainServiceImpl implements MovementTerrainService {
         return new StepRules() {
             @Override
             public boolean canPass(final GridPosition hex) {
+                // A defeated foe blocks nobody: its space is Terreno Difícil instead (isDifficult).
                 return map.occupantsOf(hex, mover).stream()
-                        .allMatch(occupant -> !enemies.contains(occupant.getId()) || passesEnemies);
+                        .allMatch(occupant -> !enemies.contains(occupant.getId()) || passesEnemies
+                                || map.isDefeated(occupant));
             }
 
             @Override
@@ -63,8 +65,9 @@ public class MovementTerrainServiceImpl implements MovementTerrainService {
 
             @Override
             public boolean isDifficult(final GridPosition hex) {
-                return map.isDifficultTerrain(hex) || (passesEnemies && map.occupantsOf(hex, mover).stream()
-                        .anyMatch(occupant -> enemies.contains(occupant.getId())));
+                return map.isDifficultTerrain(hex) || map.occupantsOf(hex, mover).stream()
+                        .filter(occupant -> enemies.contains(occupant.getId()))
+                        .anyMatch(occupant -> passesEnemies || map.isDefeated(occupant));
             }
 
             @Override
