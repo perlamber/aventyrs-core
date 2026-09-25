@@ -17,6 +17,7 @@ import org.aventyrs.core.skill.SkillType;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.Set;
 import java.util.UUID;
 
@@ -80,8 +81,72 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
     /** Applies curse damage, which drains life directly and bypasses Shield points. */
     int applyCurseDamage(int amount);
 
-    /** Heals accumulated damage, interrupting any ongoing {@link Bleeding}. */
+    /**
+     * Heals accumulated damage, interrupting any ongoing {@link Bleeding} — <b>unsourced</b>, so
+     * exempt from the fallen-character limits {@link #heal(int, HealingSource)} applies. Reserved
+     * for a recovery no rule limits; every heal effect the rules name goes through the sourced form.
+     */
     int heal(int amount);
+
+    /**
+     * Heals amount as source — {@link #heal(int)} plus the limits the rules put on healing the
+     * fallen:
+     *
+     * <ul>
+     *   <li><b>Coma</b> ({@code CharacterStatus#COMMA}): at most {@link #COMA_HEAL_CAP} PV from each
+     *       distinct {@link HealingSource#key()} for as long as the Coma lasts — a key already used
+     *       recovers nothing (and interrupts no Bleeding). A {@link HealingSource#repeatableInComa()}
+     *       source (a real Descanso) is capped the same, but may heal again.</li>
+     *   <li><b>Dead</b> ({@code CharacterStatus#DEAD}): refused outright, unless one of the healer's
+     *       Títulos claims the revival ({@code AventyrTitle#claimRevival}) and the target is not
+     *       {@link #isBeyondRevival()}. A permitted heal is not capped: whoever it lifts above
+     *       negative max PV is alive again, in Coma.</li>
+     * </ul>
+     *
+     * <p>A healer's Título may lift the Coma cap for its own heals ({@code
+     * AventyrTitle#bypassesComaHealingCap}). The limit is judged on the status <i>before</i> the
+     * heal, so the heal that revives someone is not the one the Coma cap trims.
+     *
+     * @return int remaining damage accumulated
+     */
+    int heal(int amount, HealingSource source);
+
+    /** The most PV one heal effect gives a character in Coma — "curas limitadas a 1PV". */
+    int COMA_HEAL_CAP = 1;
+
+    /**
+     * Whether this combatant's current Coma began in the current Cena — Levantar os Caídos'
+     * "apenas quando adquiridos na mesma Cena". {@code false} whenever it is not in Coma.
+     */
+    boolean hasEnteredComaThisScene();
+
+    /**
+     * How many Rodadas ago this combatant died, empty while alive — Curar os Mortos' "personagens
+     * que tenham morrido em até N Rodadas". Counted by {@link #startNewRound()} and closed by
+     * {@link #startNewScene()}: a death from an earlier Cena is outside every such window.
+     */
+    OptionalInt getRoundsSinceDeath();
+
+    /**
+     * Marks this combatant as one no heal may ever revive — {@code RealExecution}'s "não poderá ser
+     * ressuscitado". Permanent: nothing clears it.
+     */
+    void markBeyondRevival();
+
+    /** Whether {@link #markBeyondRevival()} was ever called on this combatant. */
+    boolean isBeyondRevival();
+
+    /**
+     * Banks one revival permission from source — each Curar os Mortos activation is one heal that
+     * may reach the dead. Charges from one source stack; {@link #startNewScene()} drops them.
+     */
+    void grantRevivalCharge(Object source);
+
+    /** Revival charges banked from source that no heal has spent yet. */
+    int getRevivalCharges(Object source);
+
+    /** Spends one charge from source, returning whether there was one. */
+    boolean consumeRevivalCharge(Object source);
 
     /**
      * Interrupts every ongoing {@link Bleeding} <b>without healing</b>, returning whether there

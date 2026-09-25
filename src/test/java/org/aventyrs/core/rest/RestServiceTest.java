@@ -207,4 +207,34 @@ class RestServiceTest {
 
         assertEquals(ceiling - 2, sheet.getTemporaryEgoPoints(EgoDomain.SORTE));
     }
+
+    /**
+     * A real Descanso in Coma heals 1PV — and, unlike every other heal effect, may do so again on the
+     * next one, as often as the Narrador grants a Descanso. Max PV 22, so 43 damage sits at -21 PV.
+     */
+    @Test
+    void aRestInComaHealsOnePvEachTime() {
+        Character character = exampleCharacter();
+        CharacterSheet sheet = CharacterSheet.of(character, new Player());
+        sheet.applyDamage(43);
+        assertEquals(CharacterStatus.COMMA, hitPointsService.getStatus(sheet));
+
+        restService.applyRest(character, sheet, RestType.LONGO);
+        restService.applyRest(character, sheet, RestType.LONGO);
+
+        assertEquals(41, sheet.getDamageTaken());
+    }
+
+    /** No Descanso brings the dead back. */
+    @Test
+    void aRestReachesNoOneDead() {
+        Character character = exampleCharacter();
+        CharacterSheet sheet = CharacterSheet.of(character, new Player());
+        sheet.applyDamage(44);
+        assertEquals(CharacterStatus.DEAD, hitPointsService.getStatus(sheet));
+
+        restService.applyRest(character, sheet, RestType.TOTAL);
+
+        assertEquals(44, sheet.getDamageTaken());
+    }
 }

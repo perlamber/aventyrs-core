@@ -63,11 +63,9 @@
  * fully real — it guarantees {@code CharacterStatus#DEAD} (the closest thing this core
  * computes to "destroyed") unconditionally on Acerto Crítico Maior, or conditionally on
  * Menor (only when the target's current Hit Points are already at or below double their
- * Vigor); its own rules text's "não poderá ser ressuscitado" clause has nothing to
- * attach to, though — no resurrection mechanic exists anywhere in this core to block, so
- * that half is reported only as intent, via {@code resultStatus} being {@code
- * CharacterStatus#DEAD} — no separate boolean flag, since {@code resultStatus} already
- * carries this same outcome — not actually enforced. All
+ * Vigor); its own rules text's "não poderá ser ressuscitado" clause is enforced too — the
+ * destroyed target is marked {@code CombatantSheet#markBeyondRevival()}, and no heal,
+ * however permitted, reaches it again. All
  * five share the "reject anything that isn't an Acerto Crítico" constructor validation,
  * living once on {@link org.aventyrs.core.effect.CriticalEffect#validateCriticalHit}
  * rather than duplicated per implementation. {@link org.aventyrs.core.effect.EffectChain}

@@ -8,6 +8,7 @@ import org.aventyrs.core.sheet.Blessing;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.EgoPointSpend;
 import org.aventyrs.core.sheet.EgoPointType;
+import org.aventyrs.core.sheet.HealingSource;
 import org.aventyrs.core.sheet.IllegalOperationException;
 
 import java.util.List;
@@ -75,7 +76,8 @@ public class EgoPointsServiceImpl implements EgoPointsService {
         EgoPointSpend spend = sheet.spendEgoPoints(domain, type, amount);
         int recovered = getSpendRecovery(sheet.getCharacter(), spend, rolledValue);
         if (recovered > 0) {
-            sheet.heal(recovered);
+            // Only the PV half is a heal effect the fallen-character limits reach.
+            sheet.heal(recovered, HealingSource.egoSpend(sheet.getCharacter().getEgoAdvantage(domain), sheet));
             sheet.recoverMagicPoints(recovered);
             sheet.recoverDeterminationPoints(recovered);
         }

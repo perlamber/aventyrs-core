@@ -66,7 +66,7 @@ public class Regeneration extends TemporaryBonus {
             return;
         }
         int damageBefore = sheet.getDamageTaken();
-        int damageAfter = sheet.heal(offered);
+        int damageAfter = sheet.heal(offered, HealingSource.regeneration(this));
         if (remainingRecovery != null) {
             remainingRecovery -= damageBefore - damageAfter;
         }

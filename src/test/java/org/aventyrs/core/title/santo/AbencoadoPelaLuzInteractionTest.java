@@ -67,19 +67,19 @@ class AbencoadoPelaLuzInteractionTest {
 
     @Test
     void choosingHealRestoresTheBaseAmountWhenTheSantoHoldsNoGatedHabilidade() {
-        CharacterSheet target = damagedTargetSheet(1000);
+        CharacterSheet target = damagedTargetSheet(10);
 
         InteractionResult result = touch(santoSheet(), target, AbencoadoPelaLuzInteraction.Branch.HEAL);
 
         assertEquals(SantoSpecialization.BASE_TOUCH_HEAL, result.getResourceGainValue());
         assertEquals(ResourceType.HIT_POINTS, result.getResourceGainType());
-        assertEquals(1000 - SantoSpecialization.BASE_TOUCH_HEAL, target.getDamageTaken());
+        assertEquals(10 - SantoSpecialization.BASE_TOUCH_HEAL, target.getDamageTaken());
     }
 
     /** "3+ Quantidade de Habilidades de Abençoado pela Luz" — the *toucher's* count, not the target's. */
     @Test
     void theHealGrowsWithTheTouchersOwnGatedHabilidades() {
-        CharacterSheet target = damagedTargetSheet(1000);
+        CharacterSheet target = damagedTargetSheet(10);
         CharacterSheet activator = santoSheet(AbencoadoPelaLuzAbility.ORGULHO_ELDURIANO,
                 AbencoadoPelaLuzAbility.GRITO_DE_GUERRA_VULCANO);
 
@@ -120,7 +120,7 @@ class AbencoadoPelaLuzInteractionTest {
     @Test
     void theActivatorPaysThreePvAndOnlyTheTargetIsHealed() {
         CharacterSheet activator = santoSheet();
-        CharacterSheet target = damagedTargetSheet(1000);
+        CharacterSheet target = damagedTargetSheet(10);
         int pdBefore = currentPd(activator);
 
         InteractionResult result = touch(activator, target, AbencoadoPelaLuzInteraction.Branch.HEAL);
@@ -130,7 +130,7 @@ class AbencoadoPelaLuzInteractionTest {
         assertEquals(AbencoadoPelaLuzInteraction.TOUCH_HIT_POINT_COST, result.getResourceLossValue());
         assertEquals(ResourceType.HIT_POINTS, result.getResourceLossType());
         assertEquals(AbencoadoPelaLuzInteraction.TOUCH_HIT_POINT_COST, activator.getDamageTaken());
-        assertEquals(1000 - result.getResourceGainValue(), target.getDamageTaken());
+        assertEquals(10 - result.getResourceGainValue(), target.getDamageTaken());
     }
 
     /** Touching yourself still costs the 3PV, so the net change is the heal minus that cost. */
@@ -159,5 +159,19 @@ class AbencoadoPelaLuzInteractionTest {
 
         assertEquals(TITLE_ABILITY_CHOICE_REQUIRED, refused.getMessage());
         assertEquals(5, activator.getDamageTaken());
+    }
+
+    /** Sourced as the Especialização, so a target in Coma gets 1PV of it — and that is what is reported. */
+    @Test
+    void aTargetInComaGetsOnePvAndTheReportSaysSo() {
+        CharacterSheet probe = damagedTargetSheet(0);
+        int max = new org.aventyrs.core.character.services.HitPointsServiceImpl()
+                .getMaxHitPoints(probe.getCharacter(), probe);
+        CharacterSheet target = damagedTargetSheet(2 * max - 1);
+
+        InteractionResult result = touch(santoSheet(), target, AbencoadoPelaLuzInteraction.Branch.HEAL);
+
+        assertEquals(1, result.getResourceGainValue());
+        assertEquals(2 * max - 2, target.getDamageTaken());
     }
 }

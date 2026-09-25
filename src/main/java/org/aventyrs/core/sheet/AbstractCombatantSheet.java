@@ -7,6 +7,7 @@ import org.aventyrs.core.ability.AttributeAbility;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.ability.ActiveAbility;
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.character.CharacterStatus;
 import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.effect.CriticalEffectType;
 import org.aventyrs.core.feat.Feat;
@@ -37,6 +38,7 @@ import java.util.stream.Stream;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.Set;
 import java.util.UUID;
 
@@ -279,6 +281,14 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     /** Whether {@link #startCombat()} has already fired this Cena — its idempotency guard, re-armed by {@link #startNewScene()}. */
     private boolean combatStarted = false;
 
+    /** When this combatant entered Coma or died, and which heal effects its Coma has used — see {@link #heal(int, HealingSource)}. */
+    @Getter(AccessLevel.NONE)
+    private final FallenHealingLedger fallenHealing = new FallenHealingLedger();
+
+    /** Curar os Mortos charges banked per source — see {@link #grantRevivalCharge(Object)}. */
+    @Getter(AccessLevel.NONE)
+    private final Map<Object, Integer> revivalCharges = new HashMap<>();
+
     protected AbstractCombatantSheet(@NonNull final Character character) {
         this.character = character;
     }
@@ -332,7 +342,9 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
             remaining = Math.max(0, Math.min(remaining, current - nextDamageFloor));
             nextDamageFloor = null;
         }
-        return hitPoints.spend(remaining);
+        int damageTaken = hitPoints.spend(remaining);
+        observeStatus();
+        return damageTaken;
     }
 
     @Override
@@ -346,30 +358,53 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
      */
     @Override
     public int applyCurseDamage(final int amount) {
-        return hitPoints.spend(amount);
+        int damageTaken = hitPoints.spend(amount);
+        observeStatus();
+        return damageTaken;
     }
 
     /**
      * Heals accumulated damage — the same recovery a Rest applies to PV. Also interrupts every
      * active {@link Bleeding} (Sangramento's own "Efeitos de cura interrompem a perda de PV por
      * rodada"); the immediate PV already lost stays lost, only the ongoing drain stops.
+     * Unsourced, so the fallen-character limits of {@link #heal(int, HealingSource)} don't apply.
      * @return int remaining damage accumulated
      */
     @Override
     public int heal(final int amount) {
-        return heal(amount, false);
+        return heal(amount, null, false);
+    }
+
+    @Override
+    public int heal(final int amount, @NonNull final HealingSource source) {
+        return heal(amount, source, false);
     }
 
     @Override
     public int healFromLifeSteal(final int amount) {
-        return heal(amount, true);
+        return heal(amount, null, true);
     }
 
-    private int heal(final int amount, final boolean lifeSteal) {
+    private int heal(final int amount, final HealingSource source, final boolean lifeSteal) {
         // Feridas Dolorosas: "não pode ser curado e nem regenerar pontos de vida". Refused
         // outright rather than reduced to 0 healing, so a Sangramento isn't cleared either.
         if (isHealingPrevented()) {
             return getDamageTaken();
+        }
+        // Healing the fallen — judged on the status *before* the heal, so the heal that revives
+        // someone is not the one the Coma cap trims. Refusals below leave any Sangramento running,
+        // the same as Feridas Dolorosas: no cure landed to interrupt it.
+        CharacterStatus status = observeStatus();
+        boolean comaCapped = false;
+        if (source != null && status == CharacterStatus.DEAD
+                && (fallenHealing.isBeyondRevival() || !healerClaimsRevival(source))) {
+            return getDamageTaken();
+        }
+        if (source != null && status == CharacterStatus.COMMA && !healerBypassesComaCap(source)) {
+            if (!source.repeatableInComa() && fallenHealing.hasUsedInComa(source.key())) {
+                return getDamageTaken();
+            }
+            comaCapped = true;
         }
         if (amount > 0) {
             // "Efeitos de cura interrompem a perda de PV/PM/PD por rodada" — Sangramento's,
@@ -390,7 +425,86 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         if (!lifeSteal && scornsDamageNow()) {
             recovered /= 2;
         }
-        return hitPoints.recover(recovered);
+        if (comaCapped) {
+            recovered = Math.min(recovered, COMA_HEAL_CAP);
+            // A heal that recovered nothing (halved away) has not used its effect up.
+            if (recovered > 0 && !source.repeatableInComa()) {
+                fallenHealing.recordComaHeal(source.key());
+            }
+        }
+        int damageTaken = hitPoints.recover(recovered);
+        observeStatus();
+        return damageTaken;
+    }
+
+    /** Whether any of the healer's Títulos lifts the Coma cap for source — Levantar os Caídos. */
+    private boolean healerBypassesComaCap(final HealingSource source) {
+        return source.healer() != null && source.healer().getCharacter().getAllTitles().stream()
+                .anyMatch(title -> title.bypassesComaHealingCap(source, this));
+    }
+
+    /** Whether one of the healer's Títulos claims (and pays for) reaching this dead combatant — Curar os Mortos. */
+    private boolean healerClaimsRevival(final HealingSource source) {
+        return source.healer() != null && source.healer().getCharacter().getAllTitles().stream()
+                .anyMatch(title -> title.claimRevival(source, this));
+    }
+
+    /**
+     * Derives this combatant's {@link CharacterStatus} now and records it on the ledger. Reaches
+     * into {@link HitPointsServiceImpl} the same way {@link #isAtOrBelowZeroHitPoints()} does: the
+     * maximum needs its Vigor/Life-Multiplier scan, and asking every caller to pass the status in
+     * would spread the rule across every heal site.
+     */
+    private CharacterStatus observeStatus() {
+        CharacterStatus status = new HitPointsServiceImpl().getStatus(this);
+        fallenHealing.observe(status);
+        return status;
+    }
+
+    @Override
+    public boolean hasEnteredComaThisScene() {
+        observeStatus();
+        return fallenHealing.hasEnteredComaThisScene();
+    }
+
+    @Override
+    public OptionalInt getRoundsSinceDeath() {
+        observeStatus();
+        return fallenHealing.getRoundsSinceDeath();
+    }
+
+    @Override
+    public void markBeyondRevival() {
+        fallenHealing.markBeyondRevival();
+    }
+
+    @Override
+    public boolean isBeyondRevival() {
+        return fallenHealing.isBeyondRevival();
+    }
+
+    @Override
+    public void grantRevivalCharge(@NonNull final Object source) {
+        revivalCharges.merge(source, 1, Integer::sum);
+    }
+
+    @Override
+    public int getRevivalCharges(final Object source) {
+        return revivalCharges.getOrDefault(source, 0);
+    }
+
+    @Override
+    public boolean consumeRevivalCharge(final Object source) {
+        int charges = getRevivalCharges(source);
+        if (charges <= 0) {
+            return false;
+        }
+        if (charges == 1) {
+            revivalCharges.remove(source);
+        } else {
+            revivalCharges.put(source, charges - 1);
+        }
+        return true;
     }
 
     /**
@@ -1062,6 +1176,8 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         applyScheduledEgoGrants();
         applyPostponedDamage();
         tickCooldowns();
+        observeStatus();
+        fallenHealing.tickRound();
     }
 
     /**
@@ -1193,6 +1309,9 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         combatStarted = false;
         lastDamageReceived = null;
         clearCombatScopedState();
+        observeStatus();
+        fallenHealing.startNewScene();
+        revivalCharges.clear();
     }
 
     /**

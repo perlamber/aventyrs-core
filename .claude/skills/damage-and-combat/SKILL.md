@@ -559,6 +559,53 @@ the `Character` as a side effect at all.
 A consumer may still **persist** a tier of its own alongside its stored damage (aventyrs-api
 does). That is a boundary denormalization with no core field behind it.
 
+### Healing the fallen — the Coma cap and the Dead gate (0.0.57)
+
+The rules limit healing on fallen characters:
+- A character in Coma recovers at most **1PV from each distinct heal effect**, as a total for the
+  whole time they are in Coma.
+- A dead character is reached by **no** heal unless an Ability says so.
+
+`CombatantSheet#heal(int, HealingSource)` enforces both. `sheet.HealingSource` says which effect a heal
+is (its `key`, whether it is `repeatableInComa`, the `healer`, the `spell` or `titleAbility`).
+Callers pass the source through its factories:
+- `spell` is keyed by *name*;
+- `spellChain` shares its Magia's key, so a Corrente is one effect with its Magia;
+- `rest` is the one repeatable source: 1PV per real Descanso;
+- `regeneration` keys by the instance, so one Regeneração budget is one effect;
+- `titleAbility` and `egoSpend`.
+
+**Judged before the heal.** The tier is read *before* recovering. A heal that revives someone is
+judged against `DEAD`, so it is not the one the Coma cap trims.
+
+**Refusals leave a Sangramento running**, the same as Feridas Dolorosas: no cure landed. This covers
+a dead target, and a used key in Coma.
+
+**The Títulos that bend it are the healer's, never the target's.** `heal` scans
+`source.healer().getCharacter().getAllTitles()` for `AventyrTitle#bypassesComaHealingCap` and
+`#claimRevival`. The second is a *claim*, not a query: it spends what the permission costs (a Curar
+os Mortos charge, `CombatantSheet#consumeRevivalCharge`). `isBeyondRevival()` (set by
+`RealExecution`) outranks every claim. See `docs/curandeiro.md`.
+
+**Transitions are bookkept, the tier is still derived.** `sheet.FallenHealingLedger`
+(package-private, owned by `AbstractCombatantSheet`) records only *when* things happened:
+- the Coma's used keys (cleared on entering or leaving Coma);
+- whether the Coma began in this Cena (`hasEnteredComaThisScene`);
+- Rodadas since death (`getRoundsSinceDeath`);
+- the permanent beyond-revival mark.
+
+It is fed a freshly derived status after every `applyDamage`/`applyCurseDamage`/`heal`, at the start
+of every `heal`, and at `startNewRound`/`startNewScene`. So a transition with no PV change (a Forma
+or Frenesi ending) is seen late, not missed. A new Cena closes the death window; the used keys
+survive it.
+
+**Exempt:** the unsourced `heal(int)` and `healFromLifeSteal`. Every heal the rules name goes through
+the sourced overload.
+
+**Test gotcha:** a `CharacterFixture.blank` character has **14** max PV, so 28 damage is DEAD and
+21–27 is Coma. A test of heal *arithmetic* must keep its target alive (`lifeMultiplier(200)`, or
+smaller figures), or the heal is refused.
+
 ### Ally-facing passive grants are scanned, not granted
 
 An ability whose rules text buffs *someone else* continuously — Santo's Bastião dos Necessitados,
@@ -731,6 +778,9 @@ Two gotchas worth knowing before you add a second reaction:
   `MobilidadeFeat#INVESTIDA_AQUATICA`/`INVESTIDA_SELVAGEM`.
 - `src/main/java/org/aventyrs/core/character/services/HitPointsService.java`
   (`HitPointsServiceTest.java`) — `getStatus`, `getMaxHitPoints`.
+- `src/main/java/org/aventyrs/core/sheet/HealingSource.java` / `FallenHealingLedger.java`,
+  `AbstractCombatantSheet#heal(int, HealingSource, boolean)` — the fallen-healing limits
+  (`FallenHealingTest.java`, `title/curandeiro/CurandeiroIntegrationTest.java`).
 - `src/main/java/org/aventyrs/core/character/CharacterStatus.java`.
 - `src/main/java/org/aventyrs/core/sheet/CombatantSheet.java` /
   `AbstractCombatantSheet.java` / `src/main/java/org/aventyrs/core/monster/MonsterSheet.java`
