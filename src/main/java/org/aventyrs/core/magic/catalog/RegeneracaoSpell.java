@@ -105,7 +105,16 @@ public enum RegeneracaoSpell implements AuthoredSpell {
             .targeting(SpellTargeting.TOQUE)
             .build()),
 
-    /** TODO resurrection needs a state past {@code CharacterStatus}' bottom tier to return from, and nothing reverses DEAD. */
+    /**
+     * TODO resurrection — reversing DEAD is real now ({@code CombatantSheet#heal(int, HealingSource)} lets a
+     * permitted heal lift a dead target back above negative max PV), and "mortos nas últimas N Rodadas" is
+     * readable through {@code CombatantSheet#getRoundsSinceDeath()}. Still missing: this tree authors no
+     * {@code SpellHealing}; "retorna à vida com Metade do Foco PV" <i>sets</i> PV to a value rather than
+     * healing an amount, which needs a revive-to-PV mutator; the permission is the Magia's own, and {@code
+     * HealingSource} carries no intrinsic revival permission (only a healer's Título can grant one today);
+     * and "voluntários" is narrative. Regeneração is Encantamento/Elemental, so Curar os Mortos does not
+     * reach it either.
+     */
     RESSURREICAO(SpellData.builder()
             .name("Ressurreição")
             .branchLevel(BranchLevel.EMERGENTE)
@@ -164,7 +173,12 @@ public enum RegeneracaoSpell implements AuthoredSpell {
             .targeting(SpellTargeting.TOQUE)
             .build()),
 
-    /** The convergence rung — resurrection with no time limit at all, where Ressurreição has one. */
+    /**
+     * The convergence rung — resurrection with no time limit at all, where Ressurreição has one.
+     * TODO blocked on the same pieces as {@link #RESSURREICAO} (no authored heal, no revive-to-PV
+     * mutator, no intrinsic revival permission); its Ressurreição em Massa additionally needs an Área
+     * de Efeito footprint resolved.
+     */
     RENASCIMENTO_NAS_AGUAS(SpellData.builder()
             .name("Renascimento nas Águas")
             .branchLevel(BranchLevel.FLORESCENTE)

@@ -7,6 +7,7 @@ import org.aventyrs.core.magic.SpellHealing;
 import org.aventyrs.core.rest.RestService;
 import org.aventyrs.core.rest.RestServiceImpl;
 import org.aventyrs.core.sheet.CombatantSheet;
+import org.aventyrs.core.sheet.HealingSource;
 import org.aventyrs.core.sheet.InteractionResult;
 import org.aventyrs.core.sheet.ResourceType;
 
@@ -32,9 +33,12 @@ import org.aventyrs.core.sheet.ResourceType;
  * substitui Descansos reais", and a real Rest also restores PM and PD, settles every {@code
  * PendingEgoRecovery} and clears rest cooldowns.
  *
- * <p>Two behaviours come free from going through {@code heal} rather than touching the pool
- * directly: Feridas Dolorosas refuses the recovery outright, and any ongoing {@code Bleeding} is
- * interrupted.
+ * <p>Three behaviours come free from going through {@code heal} rather than touching the pool
+ * directly: Feridas Dolorosas refuses the recovery outright, any ongoing {@code Bleeding} is
+ * interrupted, and — since the heal is sourced as this Magia ({@link HealingSource#spell}) — a
+ * target in Coma recovers at most 1PV from it and a dead one nothing, unless the caster's Títulos
+ * say otherwise. That last needs the {@link #caster}; an effect built without one heals the
+ * fallen as if no Título could help.
  *
  * <p><b>Whether the target is hostile is the caller's to say.</b> Nova Rejuvenescedora's "Inimigos
  * do conjurador recuperam apenas metade desta quantidade de PV" needs an Área de Efeito footprint
@@ -49,6 +53,7 @@ public class SpellHealingEffect extends AbstractEffect implements HealingEffect 
     private final SpellHealing healing;
     private final boolean hostileTarget;
     private final RestService restService;
+    private final CombatantSheet caster;
 
     public SpellHealingEffect(final Spell spell, final SpellHealing healing) {
         this(spell, healing, false, new RestServiceImpl());
@@ -61,10 +66,21 @@ public class SpellHealingEffect extends AbstractEffect implements HealingEffect 
 
     public SpellHealingEffect(final Spell spell, final SpellHealing healing,
                               final boolean hostileTarget, final RestService restService) {
+        this(spell, healing, hostileTarget, restService, null);
+    }
+
+    /**
+     * @param caster who cast the Magia, or {@code null} — whose Títulos may lift the limits on
+     *               healing a target in Coma or dead
+     */
+    public SpellHealingEffect(final Spell spell, final SpellHealing healing,
+                              final boolean hostileTarget, final RestService restService,
+                              final CombatantSheet caster) {
         this.spell = spell;
         this.healing = healing;
         this.hostileTarget = hostileTarget;
         this.restService = restService;
+        this.caster = caster;
     }
 
     @Override
@@ -82,7 +98,7 @@ public class SpellHealingEffect extends AbstractEffect implements HealingEffect 
         }
 
         int damageBefore = target.getDamageTaken();
-        target.heal(resolveAmount(target, damageBefore));
+        target.heal(resolveAmount(target, damageBefore), HealingSource.spell(spell, caster));
         int recovered = damageBefore - target.getDamageTaken();
 
         return reportChain(InteractionResult.builder()

@@ -37,8 +37,12 @@ class SpellHealingEffectTest {
         CharacterFixture.loadTemplates();
     }
 
+    /**
+     * A blank character sturdy enough that the damage these tests deal leaves it alive and out of
+     * Coma — what is under test is the heal's arithmetic, not the limits on healing the fallen.
+     */
     private CharacterSheet newSheet() {
-        Character character = CharacterFixture.blank(CharacterFixture.BLANK).build();
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK).lifeMultiplier(200).build();
         return CharacterSheet.of(character, new Player());
     }
 

@@ -146,6 +146,26 @@ class MovementTerrainServiceTest {
     }
 
     @Test
+    void aDefeatedFoeIsPassableTerrenoDificilButNotAPlaceToStop() {
+        CharacterSheet mover = sheet(character().build());
+        CharacterSheet fallen = sheet(character().build());
+        CharacterSheet fallenAlly = sheet(character().build());
+        GridPosition allyHex = new GridPosition(5, 5);
+        MovementMap map = new MovementMap(10, 10, Set.of(),
+                Map.of(HEX, List.of(fallen), allyHex, List.of(fallenAlly)),
+                Set.of(fallen.getId(), fallenAlly.getId()));
+
+        StepRules rules = service.stepRules(mover, map, enemiesContext(fallen), 0);
+
+        assertTrue(rules.canPass(HEX));
+        assertFalse(rules.canStop(HEX));
+        assertTrue(rules.isDifficult(HEX));
+        assertEquals(MovementTerrainService.DIFFICULT_TERRAIN_COST, rules.enterCost(HEX));
+        assertFalse(rules.isDifficult(allyHex), "only a fallen foe becomes Terreno Difícil");
+        assertFalse(rules.avoidingDifficultTerrain().canPass(HEX), "an Investida cannot cross a fallen foe");
+    }
+
+    @Test
     void theMoversOwnSpaceIsNeverOccupiedAgainstThem() {
         CharacterSheet mover = sheet(character().build());
         MovementMap map = new MovementMap(10, 10, Set.of(), Map.of(HEX, List.of(mover)));

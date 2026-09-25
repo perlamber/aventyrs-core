@@ -3,6 +3,7 @@ package org.aventyrs.core.rest;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.sheet.CharacterSheet;
+import org.aventyrs.core.sheet.HealingSource;
 
 public class RestServiceImpl implements RestService {
 
@@ -44,7 +45,8 @@ public class RestServiceImpl implements RestService {
     @Override
     public void applyRest(final Character character, final CharacterSheet characterSheet, final RestType restType,
                           final boolean verdadeiro) {
-        characterSheet.heal(getRecoveredHitPoints(character, restType));
+        // A real Descanso is the one heal repeatable in Coma — 1PV each time — and reaches no one dead.
+        characterSheet.heal(getRecoveredHitPoints(character, restType), HealingSource.rest(restType));
         characterSheet.recoverMagicPoints(getRecoveredMagicPoints(character, restType));
         characterSheet.recoverDeterminationPoints(getRecoveredDeterminationPoints(character, restType));
         characterSheet.applyPendingEgoRecoveries(restType);

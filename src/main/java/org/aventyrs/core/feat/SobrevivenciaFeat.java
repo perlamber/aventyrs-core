@@ -298,7 +298,10 @@ public enum SobrevivenciaFeat implements Feat {
     //  it a Malefício, it is a tier of the PV ladder, so ConditionType has no entry for it and
     //  should not gain one. CharacterStatus is derived from current PV on every call, so
     //  FALLEN/COMMA/DEAD cannot be suspended: there is no stored tier to override, and nothing
-    //  gates acting on status. That one gap blocks both halves of this clause.
+    //  gates acting on status. That one gap blocks both halves of this clause. (Coma does have one real
+    //  effect now — CombatantSheet#heal(int, HealingSource) caps each heal effect at 1PV — and
+    //  "não é afetado pelo Malefício Coma" would suspend that too; but the tier is still derived, so
+    //  there is still nothing to suspend it through.)
     // TODO: capping PA at 2 in a way effects cannot raise needs a ceiling stage;
     //  ActionPointsService sums additively and clamps only at 0. Blocked twice over, and the
     //  ceiling is the lesser half: this is the catalog's *only* PA-ceiling clause and it is

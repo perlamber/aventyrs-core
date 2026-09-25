@@ -577,8 +577,9 @@ class ReactiveRegenerationTest {
                 .build();
     }
 
+    /** Sturdy enough that no hit here drops it into Coma, where a Regeneração heals only 1PV. */
     private static Character troll(final int vigorBase) {
-        return character().race(new Troll()).attributes(vigor(vigorBase)).build();
+        return character().race(new Troll()).attributes(vigor(vigorBase)).lifeMultiplier(20).build();
     }
 
     private static void grantTitle(final Character character) {

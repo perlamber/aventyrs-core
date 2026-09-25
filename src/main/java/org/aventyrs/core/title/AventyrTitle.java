@@ -5,6 +5,7 @@ import org.aventyrs.core.character.CriticalDamage;
 import org.aventyrs.core.item.Weapon;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.CombatantSheet;
+import org.aventyrs.core.sheet.HealingSource;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.InteractionResult;
 import org.aventyrs.core.skill.AttackSource;
@@ -265,6 +266,26 @@ public interface AventyrTitle {
                                                         final CombatantSheet attackTarget,
                                                         final SceneContext sceneContext) {
         return TitleAttackModifiers.NONE;
+    }
+
+    /**
+     * Whether source — a heal its holder is making, since only the healer's Títulos are asked —
+     * ignores the Coma cap on target ({@link CombatantSheet#COMA_HEAL_CAP} per heal effect).
+     * Curandeiro's Levantar os Caídos. {@code false} by default.
+     */
+    default boolean bypassesComaHealingCap(final HealingSource source, final CombatantSheet target) {
+        return false;
+    }
+
+    /**
+     * Whether source may reach target although target is dead — and, when it may, spends whatever
+     * the permission costs (a Curar os Mortos charge), which is why this is a claim rather than a
+     * query: {@link CombatantSheet#heal(int, HealingSource)} calls it once, at the moment the heal
+     * lands. Only the healer's Títulos are asked. {@code false} by default: "personagens mortos só
+     * podem retornar à vida se uma Habilidade assim disser".
+     */
+    default boolean claimRevival(final HealingSource source, final CombatantSheet target) {
+        return false;
     }
 
     /**

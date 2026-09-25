@@ -357,7 +357,8 @@ class SpellCastingServiceImplTest {
     @Test
     void castingAHealingMagiaReportsItsEffectWithoutApplyingIt() {
         Scene scene = sceneWithCaster();
-        sheet.applyDamage(30);
+        // Short of Coma, so the heal lands in full rather than at the 1PV a fallen target gets.
+        sheet.applyDamage(10);
 
         SpellCastingResult result = new SpellCastingServiceImpl().castSpell(SpellCastRequest.builder()
                 .caster(sheet)
@@ -368,10 +369,10 @@ class SpellCastingServiceImplTest {
 
         assertNotNull(result.getSpellEffect());
         // Report-only: this core resolves no target GD, so it cannot know the cast landed.
-        assertEquals(30, sheet.getDamageTaken());
+        assertEquals(10, sheet.getDamageTaken());
 
         sheet.receiveInteraction(result.getSpellEffect());
-        assertTrue(sheet.getDamageTaken() < 30, "the caller running it is what heals");
+        assertTrue(sheet.getDamageTaken() < 10, "the caller running it is what heals");
     }
 
     /**

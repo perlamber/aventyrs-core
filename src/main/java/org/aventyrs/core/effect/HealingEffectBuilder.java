@@ -30,6 +30,7 @@ public class HealingEffectBuilder implements SpellEffectBuilder {
     @Override
     public Optional<SpellEffect> build(final Spell spell, final SpellEffectContext context) {
         return spell.getHealing()
-                .map(healing -> new SpellHealingEffect(spell, healing, context.hostileTarget(), restService));
+                .map(healing -> new SpellHealingEffect(spell, healing, context.hostileTarget(), restService,
+                        context.caster()));
     }
 }

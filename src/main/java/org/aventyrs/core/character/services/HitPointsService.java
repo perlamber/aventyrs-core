@@ -126,7 +126,10 @@ public interface HitPointsService {
      * both halves of the input and would read more naturally — because {@code
      * org.aventyrs.core.sheet} does not depend on {@code org.aventyrs.core.character.services},
      * and resolving a maximum needs {@link #getMaxHitPoints}'s Vigor/Life-Multiplier scan.
-     * Putting it on the sheet would invert that dependency. The shape to compare it against is
+     * Putting it on the sheet would invert that dependency. (The rule is not absolute:
+     * {@code AbstractCombatantSheet} does call {@code HitPointsServiceImpl} directly — for the
+     * next-damage floor, {@code isAtOrBelowZeroHitPoints}, and the fallen-healing limits of
+     * {@code heal(int, HealingSource)}, which must know the tier at the moment a heal lands.) The shape to compare it against is
      * {@link #getCurrentHitPoints} above, its sheet-taking sibling — not the "cascading
      * overload" convention, which delegates from a longer signature down to a shorter one; this
      * delegates the other way, up to the pure tier function.

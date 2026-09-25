@@ -7,6 +7,7 @@ import org.aventyrs.core.item.Item;
 import org.aventyrs.core.item.ItemCategory;
 import org.aventyrs.core.item.ItemWeightClass;
 import org.aventyrs.core.item.Weapon;
+import org.aventyrs.core.scene.SceneContext;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -179,6 +180,23 @@ public class CharacterSheet extends AbstractCombatantSheet {
             throw new IllegalOperationException(violation);
         }
         getCharacter().equip(item);
+    }
+
+    /**
+     * What putting one item on costs mid-combat: 1 Ponto de Ação per item. <b>Authored by the table
+     * (2026-09-24)</b> along with the Saquear rule ({@code LootService}), so a piece taken from the
+     * Campanha's bag in combat is not worn for free.
+     */
+    public static final ActionCost EQUIP_COST_IN_COMBAT = ActionCost.ofActionPoints(1);
+
+    /**
+     * What {@link #equip(Item)} costs in context: {@link #EQUIP_COST_IN_COMBAT} in a Cena de
+     * Combate, {@link ActionCost#NONE} otherwise ({@code null} counts as otherwise). Like every
+     * other price here, it is reported, not deducted; {@link #equip(Item)} itself stays unpriced.
+     * Taking an item off is never priced.
+     */
+    public static ActionCost getEquipCost(final SceneContext context) {
+        return context != null && context.isCombatScene() ? EQUIP_COST_IN_COMBAT : ActionCost.NONE;
     }
 
     /**

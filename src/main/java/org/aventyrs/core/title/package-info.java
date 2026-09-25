@@ -99,6 +99,10 @@
  * worked reference example for activations, {@code SenhorDaBriga} for passives reaching the attack,
  * {@code GiganteEnfurecido} for a timed self-state ({@code sheet.Frenzy}) paid in Autocontrole
  * ({@link org.aventyrs.core.title.EgoCost}) whose Especializações are modes of one activation
- * ({@code TitleAbilityActivationRequest#getChoices}).
+ * ({@code TitleAbilityActivationRequest#getChoices}), and {@code Curandeiro} for a Título that bends the
+ * limits on healing the fallen ({@link org.aventyrs.core.title.AventyrTitle#bypassesComaHealingCap},
+ * {@link org.aventyrs.core.title.AventyrTitle#claimRevival}) — asked of the <b>healer's</b> Títulos by
+ * {@code CombatantSheet#heal(int, HealingSource)}; pass the caster wherever a heal is built, or the
+ * hooks never see it (see {@code docs/curandeiro.md}).
  */
 package org.aventyrs.core.title;

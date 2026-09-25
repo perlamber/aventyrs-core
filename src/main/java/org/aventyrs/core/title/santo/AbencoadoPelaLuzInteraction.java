@@ -5,6 +5,7 @@ import org.aventyrs.core.character.services.DeterminationPointsServiceImpl;
 import org.aventyrs.core.character.services.HitPointsService;
 import org.aventyrs.core.character.services.HitPointsServiceImpl;
 import org.aventyrs.core.sheet.CombatantSheet;
+import org.aventyrs.core.sheet.HealingSource;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.InteractionResult;
 import org.aventyrs.core.sheet.ResourceType;
@@ -103,10 +104,14 @@ public class AbencoadoPelaLuzInteraction extends AbstractTitleAbilityInteraction
         }
         int healed = SantoSpecialization.ABENCOADO_PELA_LUZ
                 .resolveTouchHealAmount(grantingTitleOf(request.getActivator()));
-        target.heal(healed);
+        // Sourced as this Especialização, so a target in Coma gets at most 1PV of it and a dead one
+        // none; what is reported is what actually landed, not what the touch offered.
+        int damageBefore = target.getDamageTaken();
+        target.heal(healed, HealingSource.titleAbility(SantoSpecialization.ABENCOADO_PELA_LUZ,
+                request.getActivator()));
         return InteractionResult.builder()
                 .resultStatus(hitPointsService.getStatus(target))
-                .resourceGainValue(healed)
+                .resourceGainValue(damageBefore - target.getDamageTaken())
                 .resourceGainType(ResourceType.HIT_POINTS)
                 .build();
     }

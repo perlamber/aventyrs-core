@@ -4,6 +4,7 @@ import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.services.HitPointsService;
 import org.aventyrs.core.sheet.CombatantSheet;
+import org.aventyrs.core.sheet.HealingSource;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.InteractionResult;
 import org.aventyrs.core.skill.CriticalResult;
@@ -44,15 +45,11 @@ import org.aventyrs.core.skill.CriticalResult;
  * resolved from the sheet's own post-{@code applyCurseDamage} damage rather than from
  * anything stored.
  *
- * <p>The other half of its own rules text — "não poderá ser ressuscitado" — has nothing
- * in this core to attach to: there is no resurrection mechanic anywhere in this codebase
- * to block (confirmed by search). Unlike {@link Sabotage}'s gap (a whole missing entity
- * to eventually build against), there's no unbuilt system *here* to even cite a TODO
- * against — permanence is simply documented intent for a caller/Narrador to honor, not
- * something {@link #applyTo} can enforce today; a CombatantSheet reported as {@code DEAD}
- * here is still, mechanically, just a CombatantSheet at that status, indistinguishable
- * from any other route to {@code DEAD} — the caller/Narrador is expected to know this
- * Interaction is the one that requires honoring the permanence.
+ * <p>The other half of its own rules text — "não poderá ser ressuscitado" — is enforced:
+ * a destroyed target is {@link CombatantSheet#markBeyondRevival() marked beyond revival},
+ * permanently, so {@link CombatantSheet#heal(int, HealingSource)} refuses it even a heal a
+ * Título would otherwise let reach the dead (Curar os Mortos). The mark is what tells this
+ * death apart from any other route to {@code DEAD}; the status alone cannot.
  *
  * <p>Its severity is determined directly by the {@link CriticalResult} that triggered
  * it, not picked by hand; any other {@code CriticalResult} — a plain roll, or either
@@ -103,6 +100,7 @@ public class RealExecution extends AbstractEffect implements CriticalEffect {
 
         if (destroyed) {
             target.applyCurseDamage(LETHAL_DAMAGE_MULTIPLIER * maxHitPoints);
+            target.markBeyondRevival();
         }
 
         return reportChain(InteractionResult.builder()

@@ -98,7 +98,7 @@ public class SpellCastingServiceImpl implements SpellCastingService {
                 .areaDamage(spell.getDuration() != null && spell.getDuration().kind() == DurationKind.INSTANTANEA
                         ? AreaDamage.cataclysm(request.getCaster(), request.getSceneContext())
                         : null)
-                .spellEffect(resolveEffect(spell, SpellEffectContext.of(isHostileTarget(request)))
+                .spellEffect(resolveEffect(spell, SpellEffectContext.of(isHostileTarget(request), request.getCaster()))
                         .orElse(null))
                 .recordedAction(recordedAction(request, spell, deliveryResult))
                 .build();

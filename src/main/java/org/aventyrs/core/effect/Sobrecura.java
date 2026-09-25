@@ -3,7 +3,9 @@ package org.aventyrs.core.effect;
 import lombok.Getter;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.magic.Spell;
 import org.aventyrs.core.sheet.CombatantSheet;
+import org.aventyrs.core.sheet.HealingSource;
 import org.aventyrs.core.sheet.InteractionResult;
 import org.aventyrs.core.sheet.ResourceType;
 
@@ -36,12 +38,20 @@ import org.aventyrs.core.sheet.ResourceType;
  * a margin, not by a critical. Nothing fires it automatically — {@link EffectChainService#hits}
  * computes that margin, and Sobrecura is the first Corrente whose own text gives a caller a
  * reason to ask.
+ *
+ * <p><b>One heal effect with its Magia.</b> A Corrente is part of the Magia it rides on, so for a
+ * target in Coma — "1PV de cada efeito de cura diferente" — Revigorar and its Sobrecura are one
+ * effect ({@link HealingSource#spellChain}): together they give 1PV, not 2. That needs the parent
+ * Magia and the casting sheet; built with {@link #Sobrecura(Character, int)} it has neither, and is
+ * keyed by this class alone.
  */
 @Getter
 public class Sobrecura extends AbstractEffect implements EffectChain {
 
     private final Character caster;
     private final int rolledDice;
+    private final CombatantSheet casterSheet;
+    private final Spell parentSpell;
 
     /**
      * @param caster     the Conjurador, whose Foco supplies the deterministic half
@@ -50,6 +60,21 @@ public class Sobrecura extends AbstractEffect implements EffectChain {
     public Sobrecura(final Character caster, final int rolledDice) {
         this.caster = caster;
         this.rolledDice = rolledDice;
+        this.casterSheet = null;
+        this.parentSpell = null;
+    }
+
+    /**
+     * @param casterSheet the Conjurador's sheet — its Foco supplies the deterministic half, and its
+     *                    Títulos may lift the limits on healing the fallen
+     * @param parentSpell the Magia this Corrente rides on, whose heal effect it shares
+     * @param rolledDice  the already-rolled 1d6
+     */
+    public Sobrecura(final CombatantSheet casterSheet, final Spell parentSpell, final int rolledDice) {
+        this.caster = casterSheet.getCharacter();
+        this.rolledDice = rolledDice;
+        this.casterSheet = casterSheet;
+        this.parentSpell = parentSpell;
     }
 
     @Override
@@ -65,7 +90,7 @@ public class Sobrecura extends AbstractEffect implements EffectChain {
     @Override
     public InteractionResult applyTo(final CombatantSheet target) {
         int damageBefore = target.getDamageTaken();
-        target.heal(getRecovery());
+        target.heal(getRecovery(), HealingSource.spellChain(Sobrecura.class, parentSpell, casterSheet));
 
         return reportChain(InteractionResult.builder()
                 .resultStatus(resolveStatus(target))
