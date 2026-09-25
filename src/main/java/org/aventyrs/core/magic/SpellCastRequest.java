@@ -49,4 +49,13 @@ public class SpellCastRequest {
      * authors, with no selector of its own.
      */
     private final boolean useAlternateVersion;
+
+    /**
+     * Whether the caster pays this Magia's PM in PV instead — Mártir Altruísta's Transferir
+     * Vitalidade, refused ({@code HIT_POINT_PAYMENT_NOT_PERMITTED}) unless a held Título permits it
+     * for this Magia and target. Like the PM, the PV is <b>reported</b>, not taken: {@link
+     * SpellCastingResult#getVitalityCost()}, which the caller pays through {@code
+     * CombatantSheet#payWithVitality}.
+     */
+    private final boolean payManaWithHitPoints;
 }

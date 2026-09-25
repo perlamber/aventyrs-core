@@ -46,12 +46,21 @@ Especializações and their gated abilities.
   queries read. Costs in Ego points go through `EgoCost`/`resolveEgoCost`/`onEgoSpent`; an
   Especialização "ativada em conjunto" is a mode chosen through `getChoices`, not its own activation.
   See `docs/gigante-enfurecido.md`.
-- **A fourth, minimal one: `Curandeiro` bends a rule through a heal-policy hook.** Levantar os
-  Caídos and Curar os Mortos are `AventyrTitle#bypassesComaHealingCap`/`#claimRevival`, asked of the
-  **healer's** Títulos by `CombatantSheet#heal(int, HealingSource)`. `claimRevival` spends what the
-  permission costs (a revival charge banked by `CurarOsMortosInteraction`). The rest of the Título is
-  authored with TODOs: a scaffold that makes two Abilities real is a legitimate shape. See
-  `docs/curandeiro.md`.
+- **A fourth: `Curandeiro`, the heal-and-cost shape.** Its traits reach healing, casting and costs
+  through `AventyrTitle` hooks asked of the **healer's/caster's/activator's** Títulos:
+  - `bypassesComaHealingCap` / `claimRevival` / `resolveHealingBonus`, asked by
+    `CombatantSheet#heal(int, HealingSource)`;
+  - `resolveCasting*` / `resolveManaCostMultiplier` / `permitsHitPointPayment`, asked by
+    `SpellCastingService`;
+  - `resolveActivationActionPointReduction` / `resolveDeterminationCostMultiplier` /
+    `permitsHitPointPayment`, asked by `AbstractTitleAbilityInteraction`;
+  - `resolveSkillRollBonus` / `resolveSkillSubstitute`, asked by skill rolls and
+    `Character#getEffectiveSkill`;
+  - `upgradesRests` and `resolveDamageTakenAllyBlessings`.
+
+  **Pure `resolve*` queries are paired with `consume*` spends** (Curandeiro Veloz's charge), the same
+  split as `resolveAttackModifiers` / `consumeAttackCharges`. A "next X" discount or permission is a
+  single-use charge (`CombatantSheet#grantCharge`), never a Rodada window. See `docs/curandeiro.md`.
 - **Two earlier reference shapes.** `Santo` is activation-heavy (Blessings, Auras, reported
   `EmpoweredAttack`s). `SenhorDaBriga` is passive-heavy and reaches the **attack itself** through the
   Título scans on `AventyrTitle` (`resolveCriticalMarginIncrease`, `resolveCriticalDamage`,

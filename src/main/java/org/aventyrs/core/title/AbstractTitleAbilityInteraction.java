@@ -9,6 +9,7 @@ import org.aventyrs.core.sheet.EgoPointType;
 import org.aventyrs.core.character.services.DeterminationPointsServiceImpl;
 import org.aventyrs.core.character.services.HitPointsService;
 import org.aventyrs.core.character.services.HitPointsServiceImpl;
+import org.aventyrs.core.sheet.ActionCost;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.Interaction;
@@ -16,6 +17,7 @@ import org.aventyrs.core.sheet.InteractionResult;
 import org.aventyrs.core.sheet.ResourceType;
 
 import static org.aventyrs.core.util.TranslatableMessages.ABILITY_ACTIVATION_PREVENTED;
+import static org.aventyrs.core.util.TranslatableMessages.HIT_POINT_PAYMENT_NOT_PERMITTED;
 import static org.aventyrs.core.util.TranslatableMessages.INVALID_PD_AMOUNT;
 import static org.aventyrs.core.util.TranslatableMessages.NOT_ENOUGH_DETERMINATION_POINTS;
 import static org.aventyrs.core.util.TranslatableMessages.NOT_ENOUGH_EGO_POINTS;
@@ -81,7 +83,22 @@ public abstract class AbstractTitleAbilityInteraction implements Interaction<Com
         if (activator.isAbilityActivationPrevented(request.getSceneContext())) {
             throw new IllegalOperationException(ABILITY_ACTIVATION_PREVENTED);
         }
-        int determinationPoints = resolveDeterminationPoints(request);
+        // What the activation buys is judged on the base figure — a subclass reading "PD spent" to
+        // size its effect must not be handed a multiplied price.
+        int basePoints = resolveDeterminationPoints(request);
+        // Benção de Boros: "custam o dobro de PM e PD" while fallen — the activator's Títulos say.
+        int determinationPoints = basePoints * determinationCostMultiplier(activator);
+        // Transferir Vitalidade: the PD paid in PV instead, locked until a Descanso Verdadeiro.
+        int vitality = 0;
+        if (determinationPoints > 0
+                && request.getChoices(TitleCostPayment.class).contains(TitleCostPayment.HIT_POINTS)) {
+            if (activator.getCharacter().getAllTitles().stream().noneMatch(title ->
+                    title.permitsHitPointPayment(ability, activator, request.getEffectiveTarget()))) {
+                throw new IllegalOperationException(HIT_POINT_PAYMENT_NOT_PERMITTED);
+            }
+            vitality = determinationPoints;
+            determinationPoints = 0;
+        }
         if (determinationPointsService.getCurrentDeterminationPoints(activator.getCharacter(), activator)
                 < determinationPoints) {
             throw new IllegalOperationException(NOT_ENOUGH_DETERMINATION_POINTS);
@@ -89,8 +106,8 @@ public abstract class AbstractTitleAbilityInteraction implements Interaction<Com
         // A PV cost can never be paid down to 0 PV — the same refusal ActiveAbilityService applies
         // to a Poder Vampírico's "consomem 3PV cada".
         int hitPoints = resolveHitPointCost(request);
-        if (hitPoints > 0
-                && hitPointsService.getCurrentHitPoints(activator.getCharacter(), activator) <= hitPoints) {
+        if (hitPoints + vitality > 0 && hitPointsService.getCurrentHitPoints(activator.getCharacter(), activator)
+                <= hitPoints + vitality) {
             throw new IllegalOperationException(NOT_ENOUGH_HIT_POINTS);
         }
         EgoCost egoCost = resolveEgoCost(request);
@@ -107,17 +124,46 @@ public abstract class AbstractTitleAbilityInteraction implements Interaction<Com
             // attack, so no RD/RA/Meio-Dano stage applies to it.
             activator.applyDamage(hitPoints);
         }
+        if (vitality > 0) {
+            activator.payWithVitality(vitality);
+        }
         if (!egoCost.isFree()) {
             spendEgo(request, egoCost);
         }
         activator.recordAbilityActivation(ability);
+        ActionCost actionCost = resolveReportedActionCost(activator);
+        activator.getCharacter().getAllTitles().forEach(title -> title.consumeActivationCharges(ability, activator));
 
-        InteractionResult.InteractionResultBuilder result = resolve(request, determinationPoints).toBuilder()
-                .determinationPointsSpent(determinationPoints);
-        if (hitPoints > 0) {
-            result.resourceLossValue(hitPoints).resourceLossType(ResourceType.HIT_POINTS);
+        InteractionResult.InteractionResultBuilder result = resolve(request, basePoints).toBuilder()
+                .determinationPointsSpent(determinationPoints)
+                .actionPointCost(actionCost);
+        if (hitPoints + vitality > 0) {
+            result.resourceLossValue(hitPoints + vitality).resourceLossType(ResourceType.HIT_POINTS);
         }
         return result.build();
+    }
+
+    /** The product of every held Título's PD multiplier for this activation — 1 when none applies. */
+    private int determinationCostMultiplier(final CombatantSheet activator) {
+        return activator.getCharacter().getAllTitles().stream()
+                .mapToInt(title -> title.resolveDeterminationCostMultiplier(ability, activator))
+                .reduce(1, (a, b) -> a * b);
+    }
+
+    /**
+     * The trait's own Tempo de Ativação, less every PA the activator's Títulos take off it (Curandeiro
+     * Veloz, Doutor de Eldur) — only a fixed PA price shrinks, and never below 1PA, the floor
+     * {@code SpellCastingService} keeps for a Magia too.
+     */
+    private ActionCost resolveReportedActionCost(final CombatantSheet activator) {
+        ActionCost authored = ability.getActionPointCost();
+        if (authored == null || authored.kind() != ActionCost.Kind.FIXED) {
+            return authored;
+        }
+        int reduction = activator.getCharacter().getAllTitles().stream()
+                .mapToInt(title -> title.resolveActivationActionPointReduction(ability, activator))
+                .sum();
+        return reduction <= 0 ? authored : ActionCost.ofActionPoints(Math.max(1, authored.actionPoints() - reduction));
     }
 
     /**

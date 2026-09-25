@@ -43,8 +43,17 @@ public class RestServiceImpl implements RestService {
     }
 
     @Override
-    public void applyRest(final Character character, final CharacterSheet characterSheet, final RestType restType,
+    public void applyRest(final Character character, final CharacterSheet characterSheet, final RestType taken,
                           final boolean verdadeiro) {
+        // Doutor de Eldur: "Sempre que descansar, seus Descansos contam como uma Categoria superior" —
+        // everything below reads the upgraded category, recovery and cooldowns alike.
+        RestType restType = character.getAllTitles().stream().anyMatch(title -> title.upgradesRests())
+                ? taken.oneCategoryHigher()
+                : taken;
+        if (verdadeiro) {
+            // Transferir Vitalidade's PV "podem ser recuperados apenas com Descansos Verdadeiros".
+            characterSheet.releaseVitalityLock();
+        }
         // A real Descanso is the one heal repeatable in Coma — 1PV each time — and reaches no one dead.
         characterSheet.heal(getRecoveredHitPoints(character, restType), HealingSource.rest(restType));
         characterSheet.recoverMagicPoints(getRecoveredMagicPoints(character, restType));

@@ -33,6 +33,9 @@ class FallenHealingLedger {
 
     private boolean beyondRevival;
 
+    /** Rodadas since PV first reached 0 or below, or {@code null} while above it. */
+    private Integer roundsSinceFallen;
+
     /**
      * Records now as the current status. Entering Coma (from above <i>or</i> from Dead, when a
      * revival lands) opens a fresh Coma with no heal effects used and marks it as begun in this
@@ -47,6 +50,12 @@ class FallenHealingLedger {
         } else {
             comaHealKeys.clear();
             comaEnteredThisScene = false;
+        }
+        boolean fallen = now == CharacterStatus.FALLEN || now == CharacterStatus.COMMA || now == CharacterStatus.DEAD;
+        if (!fallen) {
+            roundsSinceFallen = null;
+        } else if (roundsSinceFallen == null) {
+            roundsSinceFallen = 0;
         }
         if (now == CharacterStatus.DEAD) {
             if (observed != CharacterStatus.DEAD) {
@@ -79,6 +88,13 @@ class FallenHealingLedger {
         if (roundsSinceDeath != null) {
             roundsSinceDeath++;
         }
+        if (roundsSinceFallen != null) {
+            roundsSinceFallen++;
+        }
+    }
+
+    OptionalInt getRoundsSinceFallen() {
+        return roundsSinceFallen == null ? OptionalInt.empty() : OptionalInt.of(roundsSinceFallen);
     }
 
     /**

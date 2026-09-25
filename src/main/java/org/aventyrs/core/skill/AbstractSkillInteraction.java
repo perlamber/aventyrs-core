@@ -306,7 +306,12 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
         int targetCount = (attackTarget == null ? 0 : 1)
                 + (additionalTargets == null ? 0 : additionalTargets.size());
         Character character = target.getCharacter();
-        CharacterSkill characterSkill = findCharacterSkill(character);
+        // Domínio da Cura: a Título may let another Perícia stand in for this one, whichever has the
+        // higher Graduação. Not when the roll names one of this Perícia's own traits — those belong
+        // to it, and the stand-in holds none of them.
+        CharacterSkill characterSkill = skillRoll != null && skillRoll.getRequestedAbility() != null
+                ? findCharacterSkill(character)
+                : character.getEffectiveSkill(skillType).orElseGet(() -> findCharacterSkill(character));
         if (skillRoll != null) {
             validateRequestedTrait(character, characterSkill, skillRoll.getRequestedAbility(), attackSource);
         }
@@ -350,6 +355,10 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
         bonus += target.getConditionBonus(ModifierType.SKILL_ROLL_BONUS, sceneContext);
         bonus += target.getConditionBonus(skillType.getRollBonusType(), sceneContext);
         bonus += sumEquipmentRollBonuses(character);
+        // Curandeiro's Despertar: "Vantagem nas rolagens de 'Medicina e Cura'".
+        bonus += character.getAllTitles().stream()
+                .mapToInt(title -> title.resolveSkillRollBonus(skillType, target))
+                .sum();
         bonus += sumConditionalRollBonuses(skillCompetencyAbilities, sceneContext, skillRoll);
         bonus += sumFeatRollBonuses(target, sceneContext, skillRoll, attackSource);
         bonus += sumEgoAdvantageRollBonuses(character.getEgoAdvantages().values(), sceneContext);
@@ -367,6 +376,10 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                 .sum();
         difficultyReduction += sumAttributeDomainDifficultyReductions(character.getAttributeAbilities(), attributeDomain, character);
         difficultyReduction += sumFeatDifficultyReductions(character);
+        // Transferir Rancor: "-1 Nível" on Perícia de Ataque and Domínio do Mana rolls, cumulative.
+        if (skillType.isAttackSkill() || skillType == SkillType.DOMINIO_DO_MANA) {
+            difficultyReduction += target.getTemporaryBonus(ModifierType.ATTACK_AND_CONJURATION_DIFFICULTY_REDUCTION);
+        }
         if (skillRoll != null) {
             difficultyReduction += sumFeatAttackCostDifficultyReductions(character, sceneContext, attackSource,
                     skillRoll.getActionCost(), target.getActionsThisRound());
@@ -382,6 +395,11 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
             DamageSum damage = sumDamageBonus(target, sceneContext, null, attackSource, targetCount, skillRoll);
             damage.bonus().ifPresent(damageBonus ->
                     result.damageBonus(damageBonus).damageBonusBreakdown(damage.breakdown()));
+            // Transferir Rancor's "+1d6 pontos de danos" per stack — reported for the caller to roll.
+            int extraDice = target.getTemporaryBonus(ModifierType.EXTRA_DAMAGE_DICE);
+            if (extraDice > 0) {
+                result.extraDamageDice(extraDice);
+            }
         }
 
         if (skillRoll != null) {

@@ -32,7 +32,7 @@ public class CurarOsMortosInteraction extends AbstractTitleAbilityInteraction {
 
     @Override
     protected InteractionResult resolve(final TitleAbilityActivationRequest request, final int determinationPoints) {
-        request.getActivator().grantRevivalCharge(CurandeiroAbility.CURAR_OS_MORTOS);
+        request.getActivator().grantCharge(CurandeiroAbility.CURAR_OS_MORTOS);
         return InteractionResult.builder()
                 .resultStatus(hitPointsService.getStatus(request.getActivator()))
                 .build();

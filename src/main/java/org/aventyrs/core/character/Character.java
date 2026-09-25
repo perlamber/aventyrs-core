@@ -806,6 +806,33 @@ public class Character {
                 .toList();
     }
 
+    /**
+     * The {@link CharacterSkill} this character uses for skillType <i>as an effect</i> — its own,
+     * or a Perícia a held Título lets it use in its place ({@link AventyrTitle#resolveSkillSubstitute},
+     * Curandeiro's Domínio da Cura), whichever has the higher Graduação. Empty when neither is trained.
+     * Not for prerequisites: "Requer N Graduações" still reads the Perícia itself.
+     */
+    public java.util.Optional<CharacterSkill> getEffectiveSkill(final SkillType skillType) {
+        CharacterSkill best = skills == null ? null : skills.get(skillType);
+        for (AventyrTitle title : getAllTitles()) {
+            java.util.Optional<SkillType> substitute = title.resolveSkillSubstitute(skillType, title == primaryTitle);
+            if (substitute.isEmpty() || skills == null) {
+                continue;
+            }
+            CharacterSkill candidate = skills.get(substitute.get());
+            if (candidate != null && (best == null || candidate.getGraduation().getGraduationValue()
+                    > best.getGraduation().getGraduationValue())) {
+                best = candidate;
+            }
+        }
+        return java.util.Optional.ofNullable(best);
+    }
+
+    /** {@link #getEffectiveSkill}'s Graduação, or 0 when untrained. */
+    public int getEffectiveGraduation(final SkillType skillType) {
+        return getEffectiveSkill(skillType).map(skill -> skill.getGraduation().getGraduationValue()).orElse(0);
+    }
+
     public enum Sexo {
         MASCULINO,
         FEMININO

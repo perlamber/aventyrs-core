@@ -137,16 +137,53 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
     boolean isBeyondRevival();
 
     /**
-     * Banks one revival permission from source — each Curar os Mortos activation is one heal that
-     * may reach the dead. Charges from one source stack; {@link #startNewScene()} drops them.
+     * Banks one single-use charge from source — a permission or discount an activation buys for
+     * the next thing it applies to: a Curar os Mortos heal that may reach the dead, a Curandeiro
+     * Veloz -2PA. Charges from one source stack; {@link #startNewScene()} drops them. Unlike
+     * {@link #grantEnhancedAttacks}, which restates a budget, each call adds one.
      */
-    void grantRevivalCharge(Object source);
+    void grantCharge(Object source);
 
-    /** Revival charges banked from source that no heal has spent yet. */
-    int getRevivalCharges(Object source);
+    /** Charges banked from source that nothing has spent yet. */
+    int getCharges(Object source);
 
     /** Spends one charge from source, returning whether there was one. */
-    boolean consumeRevivalCharge(Object source);
+    boolean consumeCharge(Object source);
+
+    /**
+     * How many Rodadas ago this combatant's PV reached 0 or below, empty while above — Benção de
+     * Boros' window. Counted by {@link #startNewRound()}; unlike {@link #getRoundsSinceDeath()} a new
+     * Cena does not close it.
+     */
+    OptionalInt getRoundsSinceFallen();
+
+    /**
+     * Pays amount in PV that only a Descanso Verdadeiro recovers — Transferir Vitalidade's "PV
+     * perdidos desta forma podem ser recuperados apenas com Descansos Verdadeiros". Applied like
+     * any self-inflicted cost (no mitigation), then locked: no heal recovers damage below {@link
+     * #getLockedDamage()} until {@link #releaseVitalityLock()}.
+     */
+    void payWithVitality(int amount);
+
+    /** The part of {@link #getDamageTaken()} only a Descanso Verdadeiro recovers. */
+    int getLockedDamage();
+
+    /** Unlocks every PV {@link #payWithVitality} locked — called by a Descanso Verdadeiro. */
+    void releaseVitalityLock();
+
+    /**
+     * Lends this combatant 1 temporary Ego point of domain from lender, who has already paid it —
+     * Transferir Determinação/Essência. Settled at {@link #startNewScene()}: an unused loaned point
+     * goes back to lender ("devolvidos"); a used one is simply gone ("perdidos"). "Unused" is read as
+     * this combatant's temporary points not having fallen since the loan landed.
+     */
+    void receiveEgoLoan(EgoDomain domain, CombatantSheet lender);
+
+    /** Records that this combatant dealt damage in the current Cena — cleared by {@link #startNewScene()}. */
+    void recordDamageDealt();
+
+    /** Whether {@link #recordDamageDealt()} was called since the Cena began — Transferir Rancor's exclusion. */
+    boolean hasDealtDamageThisScene();
 
     /**
      * Interrupts every ongoing {@link Bleeding} <b>without healing</b>, returning whether there

@@ -230,6 +230,19 @@ public class InteractionResult {
      * which describes the Interaction's <i>target</i>: a touch ability heals one combatant while
      * another pays for it.
      */
+    /**
+     * What a Título activation costs in action, after every reduction its activator's Títulos
+     * apply (Curandeiro Veloz, Doutor de Eldur) — reported, never deducted, like every PA in this
+     * core. {@code null} outside a Título activation.
+     */
+    org.aventyrs.core.sheet.ActionCost actionPointCost;
+
+    /**
+     * Extra d6s this attack's dano roll gains ({@code ModifierType#EXTRA_DAMAGE_DICE}), for the caller
+     * to roll — {@code null} when there are none or the roll is not an attack.
+     */
+    Integer extraDamageDice;
+
     Integer determinationPointsSpent;
 
     /**

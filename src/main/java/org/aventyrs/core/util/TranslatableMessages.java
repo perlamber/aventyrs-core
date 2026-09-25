@@ -128,6 +128,18 @@ public class TranslatableMessages {
     public static final String TITLE_NOT_HELD = "TITLE_NOT_HELD";
     public static final String EXTRA_SUPREMA_ALREADY_GRANTED = "EXTRA_SUPREMA_ALREADY_GRANTED";
     public static final String TITLE_ABILITY_PREREQUISITE_NOT_MET = "TITLE_ABILITY_PREREQUISITE_NOT_MET";
+    /** An activation or cast asked to pay in PV, and no held Título lets it (Transferir Vitalidade). */
+    public static final String HIT_POINT_PAYMENT_NOT_PERMITTED = "HIT_POINT_PAYMENT_NOT_PERMITTED";
+    /** A Título trait whose clause limits it to once per Rodada was activated again this Rodada. */
+    public static final String TITLE_ABILITY_ALREADY_USED_THIS_ROUND = "TITLE_ABILITY_ALREADY_USED_THIS_ROUND";
+    /** A Título activation needs a target other than its activator and was given none. */
+    public static final String TITLE_ABILITY_TARGET_REQUIRED = "TITLE_ABILITY_TARGET_REQUIRED";
+    /** A Curandeiro heal was aimed at a target it cannot affect again until the Curandeiro's Descanso Longo. */
+    public static final String TARGET_ALREADY_AFFECTED_UNTIL_REST = "TARGET_ALREADY_AFFECTED_UNTIL_REST";
+    /** A Título trait that needs a wounded target was aimed at one with no damage. */
+    public static final String TARGET_NOT_WOUNDED = "TARGET_NOT_WOUNDED";
+    /** A Título activation's choice combination is not allowed in the current situation. */
+    public static final String TITLE_ABILITY_CHOICE_NOT_PERMITTED = "TITLE_ABILITY_CHOICE_NOT_PERMITTED";
     public static final String TITLE_ACQUISITION_PREVENTED = "TITLE_ACQUISITION_PREVENTED";
     public static final String FEAT_PREREQUISITE_NOT_MET = "FEAT_PREREQUISITE_NOT_MET";
 

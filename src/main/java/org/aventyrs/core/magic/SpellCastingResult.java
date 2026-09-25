@@ -98,6 +98,16 @@ public class SpellCastingResult {
 
     /** The Frenesi Arcano option this cast spent, or {@code null}. */
     SpellEmpowerment empowerment;
+    /**
+     * The PM this cast costs — the Magia's own figure times every held Título's multiplier (Benção
+     * de Boros' "o dobro de PM"). Reported, never spent, like the PA; 0 when paid in PV instead.
+     */
+    int manaCost;
+    /**
+     * PV the caster pays in place of {@link #manaCost} (Transferir Vitalidade), for the caller to
+     * apply through {@code CombatantSheet#payWithVitality}. 0 unless the request asked for it.
+     */
+    int vitalityCost;
 
     /**
      * Extra damage this cast deals around its caster — Cataclismo Elemental's "suas Magias de

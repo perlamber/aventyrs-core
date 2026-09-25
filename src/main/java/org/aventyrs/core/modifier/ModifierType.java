@@ -72,6 +72,18 @@ public enum ModifierType {
      * grant <i>typed</i> extra damage keep returning a {@code DamageBonus} instead; both are
      * summed together by {@code AbstractSkillInteraction}.
      */
+    /**
+     * Níveis of GD reduction on Perícia de Ataque and Domínio do Mana rolls — Mártir Altruísta's
+     * Transferir Rancor, granted to allies as a sourceless, cumulative 1-Rodada bonus. Read by
+     * {@code AbstractSkillInteraction} beside every other difficulty reduction.
+     */
+    ATTACK_AND_CONJURATION_DIFFICULTY_REDUCTION,
+    /**
+     * Extra d6s on the holder's dano rolls — Transferir Rancor's "+1d6 pontos de danos". This core
+     * rolls no dice, so {@code AbstractSkillInteraction} only <i>reports</i> the count on an attack
+     * roll ({@code InteractionResult#getExtraDamageDice()}) for the caller to throw.
+     */
+    EXTRA_DAMAGE_DICE,
     DAMAGE_ROLL_BONUS,
     DAMAGE_REDUCTION,
     /**

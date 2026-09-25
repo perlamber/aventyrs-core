@@ -583,8 +583,10 @@ a dead target, and a used key in Coma.
 
 **The Títulos that bend it are the healer's, never the target's.** `heal` scans
 `source.healer().getCharacter().getAllTitles()` for `AventyrTitle#bypassesComaHealingCap` and
-`#claimRevival`. The second is a *claim*, not a query: it spends what the permission costs (a Curar
-os Mortos charge, `CombatantSheet#consumeRevivalCharge`). `isBeyondRevival()` (set by
+`#claimRevival`, and adds `#resolveHealingBonus` (Médico de Guerra's +2) to what the heal offers.
+The second is a *claim*, not a query: it spends what the permission costs (a Curar os Mortos charge,
+`CombatantSheet#consumeCharge`). No heal recovers damage locked by `payWithVitality`; only a
+Descanso Verdadeiro releases it. `isBeyondRevival()` (set by
 `RealExecution`) outranks every claim. See `docs/curandeiro.md`.
 
 **Transitions are bookkept, the tier is still derived.** `sheet.FallenHealingLedger`

@@ -285,9 +285,25 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     @Getter(AccessLevel.NONE)
     private final FallenHealingLedger fallenHealing = new FallenHealingLedger();
 
-    /** Curar os Mortos charges banked per source — see {@link #grantRevivalCharge(Object)}. */
+    /** Single-use charges banked per source — see {@link #grantCharge(Object)}. */
     @Getter(AccessLevel.NONE)
-    private final Map<Object, Integer> revivalCharges = new HashMap<>();
+    private final Map<Object, Integer> charges = new HashMap<>();
+
+    /** Damage only a Descanso Verdadeiro recovers — see {@link #payWithVitality(int)}. */
+    @Getter(AccessLevel.NONE)
+    private int lockedDamage;
+
+    /** Temporary Ego points lent to this combatant, settled at {@link #startNewScene()}. */
+    @Getter(AccessLevel.NONE)
+    private final List<EgoLoan> egoLoans = new ArrayList<>();
+
+    /** Whether this combatant dealt damage in the current Cena — see {@link #recordDamageDealt()}. */
+    @Getter(AccessLevel.NONE)
+    private boolean dealtDamageThisScene;
+
+    /** One lent point: its own ceiling source, who lent it, and this pool's level once it landed. */
+    private record EgoLoan(EgoDomain domain, CombatantSheet lender, Object source, int remainingAfterLoan) {
+    }
 
     protected AbstractCombatantSheet(@NonNull final Character character) {
         this.character = character;
@@ -406,7 +422,10 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
             }
             comaCapped = true;
         }
-        if (amount > 0) {
+        // Médico de Guerra: "Os efeitos de recuperação de PV aumentam em +2" — the healer's Títulos
+        // add to what the heal offers before anything halves or caps it.
+        int offered = amount + healerHealingBonus(source);
+        if (offered > 0) {
             // "Efeitos de cura interrompem a perda de PV/PM/PD por rodada" — Sangramento's,
             // Purga-Mana's and Excruciante's clauses say it alike.
             temporaryEffects.removeIf(effect -> effect instanceof Bleeding || effect instanceof ManaDrain
@@ -416,7 +435,7 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         long halvings = temporaryEffects.stream()
                 .filter(effect -> effect instanceof HalvedHealing && !effect.isExpired())
                 .count();
-        int recovered = amount;
+        int recovered = offered;
         for (long i = 0; i < halvings; i++) {
             recovered /= 2;
         }
@@ -432,19 +451,43 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
                 fallenHealing.recordComaHeal(source.key());
             }
         }
+        // Transferir Vitalidade: PV paid that way come back only with a Descanso Verdadeiro.
+        recovered = Math.max(0, Math.min(recovered, getDamageTaken() - lockedDamage));
         int damageTaken = hitPoints.recover(recovered);
         observeStatus();
         return damageTaken;
     }
 
+    /** What the healer's Títulos add to source — 0 for an unsourced or healer-less heal. */
+    private int healerHealingBonus(final HealingSource source) {
+        if (source != null && source.relayed() != null) {
+            return source.relayed().healingBonus();
+        }
+        if (source == null || source.healer() == null) {
+            return 0;
+        }
+        return source.healer().getCharacter().getAllTitles().stream()
+                .mapToInt(title -> title.resolveHealingBonus(source, this))
+                .sum();
+    }
+
     /** Whether any of the healer's Títulos lifts the Coma cap for source — Levantar os Caídos. */
     private boolean healerBypassesComaCap(final HealingSource source) {
+        if (source.relayed() != null) {
+            return source.relayed().bypassesComaCapInThisScene() && hasEnteredComaThisScene();
+        }
         return source.healer() != null && source.healer().getCharacter().getAllTitles().stream()
                 .anyMatch(title -> title.bypassesComaHealingCap(source, this));
     }
 
     /** Whether one of the healer's Títulos claims (and pays for) reaching this dead combatant — Curar os Mortos. */
     private boolean healerClaimsRevival(final HealingSource source) {
+        if (source.relayed() != null) {
+            // Already paid for on the healer's side; only the target-side window is judged here.
+            Integer window = source.relayed().revivalWindowRounds();
+            OptionalInt rounds = getRoundsSinceDeath();
+            return window != null && rounds.isPresent() && rounds.getAsInt() <= window;
+        }
         return source.healer() != null && source.healer().getCharacter().getAllTitles().stream()
                 .anyMatch(title -> title.claimRevival(source, this));
     }
@@ -484,27 +527,88 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     }
 
     @Override
-    public void grantRevivalCharge(@NonNull final Object source) {
-        revivalCharges.merge(source, 1, Integer::sum);
+    public void grantCharge(@NonNull final Object source) {
+        charges.merge(source, 1, Integer::sum);
     }
 
     @Override
-    public int getRevivalCharges(final Object source) {
-        return revivalCharges.getOrDefault(source, 0);
+    public int getCharges(final Object source) {
+        return charges.getOrDefault(source, 0);
     }
 
     @Override
-    public boolean consumeRevivalCharge(final Object source) {
-        int charges = getRevivalCharges(source);
-        if (charges <= 0) {
+    public boolean consumeCharge(final Object source) {
+        int banked = getCharges(source);
+        if (banked <= 0) {
             return false;
         }
-        if (charges == 1) {
-            revivalCharges.remove(source);
+        if (banked == 1) {
+            charges.remove(source);
         } else {
-            revivalCharges.put(source, charges - 1);
+            charges.put(source, banked - 1);
         }
         return true;
+    }
+
+    @Override
+    public OptionalInt getRoundsSinceFallen() {
+        observeStatus();
+        return fallenHealing.getRoundsSinceFallen();
+    }
+
+    @Override
+    public void payWithVitality(final int amount) {
+        if (amount <= 0) {
+            return;
+        }
+        applyDamage(amount);
+        lockedDamage += amount;
+    }
+
+    @Override
+    public int getLockedDamage() {
+        return Math.min(lockedDamage, getDamageTaken());
+    }
+
+    @Override
+    public void releaseVitalityLock() {
+        lockedDamage = 0;
+    }
+
+    @Override
+    public void receiveEgoLoan(@NonNull final EgoDomain domain, @NonNull final CombatantSheet lender) {
+        Object source = new Object();
+        grantTemporaryEgoPoints(domain, source, 1);
+        egoLoans.add(new EgoLoan(domain, lender, source, getTemporaryEgoPoints(domain)));
+    }
+
+    /**
+     * Settles every Ego loan at the end of its Cena. The loaned ceiling is withdrawn either way; an
+     * unused point (this pool no lower than when it landed) is handed back to its lender, while a
+     * used one is gone — and withdrawing its ceiling must not cost this combatant a point of its own,
+     * so the spend it paid for is refunded here.
+     */
+    private void settleEgoLoans() {
+        for (EgoLoan loan : egoLoans) {
+            boolean unused = getTemporaryEgoPoints(loan.domain()) >= loan.remainingAfterLoan();
+            egoPoints.get(loan.domain()).revokeTemporaryBonus(loan.source());
+            if (unused) {
+                loan.lender().recoverTemporaryEgoPoints(loan.domain(), 1);
+            } else {
+                recoverTemporaryEgoPoints(loan.domain(), 1);
+            }
+        }
+        egoLoans.clear();
+    }
+
+    @Override
+    public void recordDamageDealt() {
+        dealtDamageThisScene = true;
+    }
+
+    @Override
+    public boolean hasDealtDamageThisScene() {
+        return dealtDamageThisScene;
     }
 
     /**
@@ -1311,7 +1415,9 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         clearCombatScopedState();
         observeStatus();
         fallenHealing.startNewScene();
-        revivalCharges.clear();
+        charges.clear();
+        settleEgoLoans();
+        dealtDamageThisScene = false;
     }
 
     /**

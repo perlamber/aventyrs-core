@@ -1,7 +1,6 @@
 package org.aventyrs.core.monster;
 
 import org.aventyrs.core.character.Character;
-import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.sheet.Player;
 import org.aventyrs.core.skill.SkillType;
 
@@ -75,7 +74,7 @@ public interface SummonedMonsterTemplate extends MonsterTemplate {
         if (conjurador == null) {
             return 0;
         }
-        CharacterSkill dominioDoMana = conjurador.getSkills().get(SkillType.DOMINIO_DO_MANA);
-        return dominioDoMana == null ? 0 : dominioDoMana.getGraduation().getGraduationValue();
+        // An effect of the Graduação, so a Título's stand-in counts (Curandeiro's Domínio da Cura).
+        return conjurador.getEffectiveGraduation(SkillType.DOMINIO_DO_MANA);
     }
 }

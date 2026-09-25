@@ -21,4 +21,10 @@ public enum RestType {
     public boolean isAtLeast(final RestType minimum) {
         return this.ordinal() >= minimum.ordinal();
     }
+
+    /** The next category up — "contam como uma Categoria superior" (Doutor de Eldur). TOTAL stays TOTAL. */
+    public RestType oneCategoryHigher() {
+        RestType[] types = values();
+        return types[Math.min(types.length - 1, ordinal() + 1)];
+    }
 }

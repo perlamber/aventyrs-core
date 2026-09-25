@@ -278,6 +278,24 @@ public interface AventyrTitle {
     }
 
     /**
+     * The target-independent half of {@link #bypassesComaHealingCap}: whether this Título would lift
+     * the Coma cap for source on a Coma begun in the current Cena. What {@code HealingSource#relay}
+     * carries to a target on another client. {@code false} by default.
+     */
+    default boolean grantsComaHealingBypass(final HealingSource source) {
+        return false;
+    }
+
+    /**
+     * The target-independent half of {@link #claimRevival}: claims — and pays for — a revival
+     * permission for source, returning how many Rodadas since death it reaches, or empty when this
+     * Título grants none. Used by {@code HealingSource#relay} for a dead target on another client.
+     */
+    default java.util.OptionalInt claimRevivalWindow(final HealingSource source) {
+        return java.util.OptionalInt.empty();
+    }
+
+    /**
      * Whether source may reach target although target is dead — and, when it may, spends whatever
      * the permission costs (a Curar os Mortos charge), which is why this is a claim rather than a
      * query: {@link CombatantSheet#heal(int, HealingSource)} calls it once, at the moment the heal
@@ -286,6 +304,124 @@ public interface AventyrTitle {
      */
     default boolean claimRevival(final HealingSource source, final CombatantSheet target) {
         return false;
+    }
+
+    /**
+     * What this Título adds to its holder's roll of skillType — Curandeiro's Despertar Vantagem on
+     * Medicina e Cura. Summed by {@code AbstractSkillInteraction} into every roll of that Perícia,
+     * attack or not. Zero by default.
+     */
+    default int resolveSkillRollBonus(final SkillType skillType, final CombatantSheet holder) {
+        return 0;
+    }
+
+    /**
+     * A Perícia this Título lets its holder use in place of skillType for any <i>effect</i> —
+     * Curandeiro's Domínio da Cura (Medicina e Cura for Domínio do Mana, Título Primário only).
+     * {@code Character#getEffectiveSkill} takes whichever of the two has the higher Graduação.
+     * Empty by default.
+     *
+     * @param primary whether this instance is the holder's Título Primário
+     */
+    default Optional<SkillType> resolveSkillSubstitute(final SkillType skillType, final boolean primary) {
+        return Optional.empty();
+    }
+
+    /**
+     * PV this Título adds to a heal its holder makes — Médico de Guerra's "Os efeitos de recuperação
+     * de PV aumentam em +2". Asked of the healer's Títulos by {@code CombatantSheet#heal(int,
+     * HealingSource)}, before any halving or the Coma cap. Zero by default.
+     */
+    default int resolveHealingBonus(final HealingSource source, final CombatantSheet target) {
+        return 0;
+    }
+
+    /**
+     * Níveis this Título eases the casting GD of spell for its holder — Mártir Altruísta's healing
+     * Magias. Summed by {@code SpellCastingService#resolveCastingDifficultyReduction}. Zero by default.
+     */
+    default int resolveCastingDifficultyReduction(final org.aventyrs.core.magic.Spell spell,
+                                                  final CombatantSheet caster) {
+        return 0;
+    }
+
+    /**
+     * PA this Título takes off casting spell — Curandeiro Veloz's banked -2PA, Doutor de Eldur's
+     * permanent -1PA. Summed by {@code SpellCastingService#resolveActivationTime}, which keeps its
+     * "mínimo 1PA" floor. A pure query: the budget is spent by {@link #consumeCastingCharges}.
+     */
+    default int resolveCastingActionPointReduction(final org.aventyrs.core.magic.Spell spell,
+                                                   final CombatantSheet caster) {
+        return 0;
+    }
+
+    /** Spends what a cast of spell used up of {@link #resolveCastingActionPointReduction}. No-op by default. */
+    default void consumeCastingCharges(final org.aventyrs.core.magic.Spell spell, final CombatantSheet caster) {
+    }
+
+    /**
+     * PA this Título takes off activating ability — the Habilidade twin of {@link
+     * #resolveCastingActionPointReduction}. Applied to the {@code actionPointCost} an activation
+     * reports; spent by {@link #consumeActivationCharges}. Zero by default.
+     */
+    default int resolveActivationActionPointReduction(final AventyrTitleAbility ability,
+                                                      final CombatantSheet activator) {
+        return 0;
+    }
+
+    /** Spends what activating ability used up of {@link #resolveActivationActionPointReduction}. No-op by default. */
+    default void consumeActivationCharges(final AventyrTitleAbility ability, final CombatantSheet activator) {
+    }
+
+    /**
+     * What this Título multiplies ability's PD cost by for activator right now — Benção de Boros'
+     * "custam o dobro de PM e PD" while fallen. 1 by default; the multipliers of several Títulos
+     * multiply together.
+     */
+    default int resolveDeterminationCostMultiplier(final AventyrTitleAbility ability,
+                                                   final CombatantSheet activator) {
+        return 1;
+    }
+
+    /** The PM twin of {@link #resolveDeterminationCostMultiplier}, for casting spell. 1 by default. */
+    default int resolveManaCostMultiplier(final org.aventyrs.core.magic.Spell spell, final CombatantSheet caster) {
+        return 1;
+    }
+
+    /**
+     * Whether activator may pay ability's PD in PV instead, on target — Mártir Altruísta's
+     * Transferir Vitalidade. The PV so paid is locked ({@code CombatantSheet#payWithVitality}):
+     * only a Descanso Verdadeiro recovers it. {@code false} by default.
+     */
+    default boolean permitsHitPointPayment(final AventyrTitleAbility ability, final CombatantSheet activator,
+                                           final CombatantSheet target) {
+        return false;
+    }
+
+    /** The spell twin of {@link #permitsHitPointPayment(AventyrTitleAbility, CombatantSheet, CombatantSheet)}, for its PM. */
+    default boolean permitsHitPointPayment(final org.aventyrs.core.magic.Spell spell, final CombatantSheet caster,
+                                           final CombatantSheet target) {
+        return false;
+    }
+
+    /**
+     * Whether the holder's Descansos count as one category higher — Doutor de Eldur. Read by {@code
+     * RestService#applyRest}. {@code false} by default.
+     */
+    default boolean upgradesRests() {
+        return false;
+    }
+
+    /**
+     * Blessings this Título grants the holder's <b>allies</b> when the holder takes damage from
+     * source — Mártir Altruísta's Transferir Rancor. Granted by {@code DamageService#notifyDamageTaken}
+     * to every ally it can resolve. Empty by default.
+     */
+    default List<org.aventyrs.core.sheet.Blessing> resolveDamageTakenAllyBlessings(final CombatantSheet holder,
+                                                                                  final int finalDamage,
+                                                                                  final CombatantSheet source,
+                                                                                  final SceneContext sceneContext) {
+        return List.of();
     }
 
     /**

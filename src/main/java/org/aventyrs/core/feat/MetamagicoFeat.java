@@ -108,7 +108,8 @@ public enum MetamagicoFeat implements Feat {
         @Override
         public int resolveDefenseBonus(final DefenseType defenseType, final Character character) {
             return defenseType == DefenseType.MAGIC
-                    ? graduationOf(character, SkillType.DOMINIO_DO_MANA) / 2
+                    // An effect, so it reads the Perícia a Título may stand in for it (Domínio da Cura).
+                    ? character.getEffectiveGraduation(SkillType.DOMINIO_DO_MANA) / 2
                     : 0;
         }
     },

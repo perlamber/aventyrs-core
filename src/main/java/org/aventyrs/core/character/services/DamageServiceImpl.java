@@ -407,6 +407,11 @@ public class DamageServiceImpl implements DamageService {
         if (finalDamage <= 0 || source == target) {
             return List.of();
         }
+        if (source != null) {
+            // Transferir Rancor's "não é ativada em Cenas de Combate em que você causou Danos".
+            source.recordDamageDealt();
+            grantAllyBlessings(target, finalDamage, source, sceneContext);
+        }
         Character character = target.getCharacter();
         // The sheet-taking allFor is what drops a Habilidade Racial under a Forma abandoning its
         // holder's traços raciais, and what stops a holder who came by the same ability twice
@@ -418,6 +423,37 @@ public class DamageServiceImpl implements DamageService {
             }
         }
         return granted;
+    }
+
+    /**
+     * Grants what target's Títulos give its <b>allies</b> for the damage it just took (Transferir
+     * Rancor). The {@code SceneContext} at a damage site may be either party's snapshot, so the
+     * victim's side is resolved from whichever it is: the victim's own (the attacker among its
+     * enemies) lists its allies directly; the attacker's lists them among its enemies, the victim
+     * excluded. A context that is neither, or none, reaches nobody.
+     */
+    private void grantAllyBlessings(final CombatantSheet target, final int finalDamage, final CombatantSheet source,
+                                    final SceneContext sceneContext) {
+        if (sceneContext == null) {
+            return;
+        }
+        List<CombatantSheet> allies;
+        if (sceneContext.getEnemies().contains(source)) {
+            allies = sceneContext.getAllies();
+        } else if (sceneContext.getEnemies().contains(target)) {
+            allies = sceneContext.getEnemies().stream().filter(sheet -> sheet != target).toList();
+        } else {
+            return;
+        }
+        for (org.aventyrs.core.title.AventyrTitle title : target.getCharacter().getAllTitles()) {
+            for (Blessing blessing : title.resolveDamageTakenAllyBlessings(target, finalDamage, source, sceneContext)) {
+                for (CombatantSheet ally : allies) {
+                    if (ally != target) {
+                        ally.grantBlessing(blessing);
+                    }
+                }
+            }
+        }
     }
 
     private int sumEgoAdvantageAbsoluteDamageReduction(final Character character, final SceneContext sceneContext) {

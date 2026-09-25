@@ -144,6 +144,12 @@ class EgoPointPool {
         return sumTemporaryBonuses();
     }
 
+    /** Withdraws source's ceiling contribution, returning what it was (0 if none). */
+    int revokeTemporaryBonus(final Object source) {
+        Integer previous = temporaryBonusContributions.remove(source);
+        return previous == null ? 0 : previous;
+    }
+
     private int sumTemporaryBonuses() {
         return temporaryBonusContributions.values().stream().mapToInt(Integer::intValue).sum();
     }
