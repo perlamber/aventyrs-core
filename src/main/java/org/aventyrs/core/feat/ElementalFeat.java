@@ -25,8 +25,9 @@ import org.aventyrs.core.sheet.CombatantSheet;
  * would be the first thing to add before any of this tree can work. The tables also list an
  * "Elemental da Madeira" (Natural) that has no race class at all.
  *
- * <p>No constant carries a mechanical effect. Every one of them is blocked on the same missing
- * system, which is the single highest-value thing outstanding for the racial catalog:
+ * <p>Only {@link #TRANSFORMACAO_ELEMENTAL}'s Resistência a Críticos carries a mechanical effect.
+ * Every other clause is blocked on the same missing system, which is the single highest-value
+ * thing outstanding for the racial catalog:
  * <b>Resistência and Vulnerabilidade Elemental do not exist</b>. {@code DamageType} has no
  * elemental breakdown feeding RD/RA, nothing nullifies a damage type outright, and nothing
  * amplifies one either — the same gap {@code NascidoDoDragao}'s Escamas Cromática, {@code
@@ -39,10 +40,9 @@ public enum ElementalFeat implements Feat {
      * outra arma ao toque, o Dano Base da Arma escolhida aumenta em +2 e o tipo de dano causado
      * muda para Físico Elemental por 2 Rodadas."
      */
-    // TODO: an activated ability — ActiveAbilityService#activate enters a timed state (with a
-    //  Resfriamento now) for a PA/PM/PV cost, but ActiveAbility has no Pontos de Determinação
-    //  cost field, which this clause's "2PD" needs. Deliberately not added: the clause is blocked
-    //  on the two TODOs below regardless, so a PD cost would have no reachable consumer.
+    // The activation itself would fit ActiveAbility as it stands — 1PA, a 2PD cost
+    // (ActiveAbility#getDeterminationPointCost, added for the Formas) and a 2-Rodada Duração. It
+    // is not authored because every effect it would apply is blocked below.
     // TODO: the Dano Base uplift is scoped to one *chosen weapon* for 2 Rodadas.
     //  Feat#resolveDamageBaseIncrease is unconditional and sees neither the weapon nor a
     //  duration, so granting it there would raise every attack the holder ever makes, forever.
@@ -161,14 +161,13 @@ public enum ElementalFeat implements Feat {
      * causa danos mágicos."
      */
     // TODO: gated on an active Gana, which cannot be activated.
-    // TODO: two further blockers — redirecting an Ataque roll to
-    //  compare against DM instead of DF is not expressible, since a foe's Defesa is an authored
-    //  number nothing compares a roll against yet; and "seu primeiro ataque em cada Rodada" is
-    //  the "this one delivered attack" scoping gap. The Margem Crítica itself is no longer a
-    //  blocker — Feat#resolveCriticalMarginIncrease is real (see PeritoFeat#CONTROLE_DA_SITUACAO)
-    //  — but it cannot be scoped to one attack of the Rodada.
-    // TODO: Corrente de Efeitos – Explosão Cataclísmica is not among the 13 EffectChainService
-    //  resolves.
+    // TODO: redirecting the Ataque roll to the target's DM instead of DF — the defender's Defesa
+    //  type is the caller's pick (DeliveredAttack#defenseType), and no Talento hook can change it.
+    //  "Seu primeiro ataque em cada Rodada" is not a blocker: the sheet-aware
+    //  resolveCriticalMarginIncrease plus isFirstAttackRollOfTurn/the action log already express
+    //  it (AssassinoFeat#ACERTO_CRITICO_RELAMPAGO). "Causa danos mágicos" is the damage-retyping
+    //  gap (plan Phase D).
+    // TODO: Corrente de Efeitos – Explosão Cataclísmica is not an authored EffectChain.
     GOLPE_CATACLISMICO(
             "Seu primeiro ataque em cada Rodada, enquanto estiver com Gana Elemental ativo, tem a "
                     + "Margem Crítica Menor aumentada em +1, tem sua Rolagem efetuada contra a DM "

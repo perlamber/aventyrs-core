@@ -62,6 +62,21 @@ public class MonstrousActiveAbility implements ActiveAbility {
     @Singular
     private final List<Supplier<TemporaryEffect>> effects;
 
+    /**
+     * The dice this active rolls ("Recupera 3d6PV"), or {@code null}. Declared, never rolled here:
+     * the caller rolls and activates through {@code ActiveAbilityService#activate(…, List faces)}.
+     */
+    private final org.aventyrs.core.character.Dice dice;
+
+    /** A clause that must hold to activate ("Apenas enquanto voando"), or {@code null} for none. */
+    private final java.util.function.Predicate<org.aventyrs.core.sheet.CombatantSheet> usableWhen;
+
+    /** What activating does beyond its effects — landing, lifting Condições — or {@code null}. */
+    private final java.util.function.Consumer<org.aventyrs.core.sheet.CombatantSheet> onActivated;
+
+    /** What the rolled total does to the activator — a heal, typically. Ignored without {@link #dice}. */
+    private final java.util.function.ObjIntConsumer<org.aventyrs.core.sheet.CombatantSheet> onRolled;
+
     @Override
     public int getMagicPointCost() {
         return 0;
@@ -79,6 +94,30 @@ public class MonstrousActiveAbility implements ActiveAbility {
     @Override
     public TemporaryEffect resolveEffect(final Character character) {
         return effects.isEmpty() ? null : effects.get(0).get();
+    }
+
+    @Override
+    public boolean isUsableBy(final org.aventyrs.core.sheet.CombatantSheet activator) {
+        return usableWhen == null || usableWhen.test(activator);
+    }
+
+    @Override
+    public void applyOnActivation(final org.aventyrs.core.sheet.CombatantSheet activator) {
+        if (onActivated != null) {
+            onActivated.accept(activator);
+        }
+    }
+
+    @Override
+    public org.aventyrs.core.character.Dice getDice() {
+        return dice;
+    }
+
+    @Override
+    public void applyRolled(final org.aventyrs.core.sheet.CombatantSheet activator, final int rolledTotal) {
+        if (onRolled != null) {
+            onRolled.accept(activator, rolledTotal);
+        }
     }
 
     @Override

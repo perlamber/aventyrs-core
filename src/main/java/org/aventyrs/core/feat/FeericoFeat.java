@@ -53,9 +53,10 @@ public enum FeericoFeat implements Feat {
     // The disjunctive Pré-requisito is real now — "apenas Avianos e Bestiais, OU personagens
     // recém-criados de raça Feérica" — as three FeatRequirements#anyOf branches, so an Aviano or
     // Bestial is no longer wrongly refused.
-    // TODO: the Feérico branch is still missing its "recém-criados" half — nothing records when a
-    //  character was created or that they are freshly made, so that branch stays open to any
-    //  Feérico. Looser than written, in the direction this catalog always errs.
+    // TODO: the Feérico branch is still missing its "recém-criados" half. Feat
+    //  #isAcquirableOnlyAtCreation is all-or-nothing, so it cannot restrict one anyOf branch
+    //  without also closing the Aviano/Bestial ones. The branch stays open to any Feérico —
+    //  looser than written, in the direction this catalog always errs.
     ASAS(
             "Você tem asas e possui Movimento Base de Voo. Enquanto voando seu Movimento Base "
                     + "aumenta em +2UD. Iniciar uma ação de voo em situações estressantes, como as "
@@ -124,6 +125,12 @@ public enum FeericoFeat implements Feat {
             FeatRequirements.builder()
                     .requiredCreatureType(CreatureType.FEERICO)
                     .build()) {
+        /** "Apenas … recém-criados" — only a starting Talento slot can take it. */
+        @Override
+        public boolean isAcquirableOnlyAtCreation() {
+            return true;
+        }
+
         @Override
         public SizeCategory resolveSizeCategoryOverride(final Character character) {
             return SizeCategory.MINUS_THREE;
@@ -287,6 +294,12 @@ public enum FeericoFeat implements Feat {
                     .requiredCreatureType(CreatureType.FEERICO)
                     .forbiddenFeat(PIXIE)
                     .build()) {
+        /** "Apenas … recém-criados" — only a starting Talento slot can take it. */
+        @Override
+        public boolean isAcquirableOnlyAtCreation() {
+            return true;
+        }
+
         @Override
         public int resolveAttributeBonus(final AttributeDomain domain, final Character character) {
             return domain == AttributeDomain.VIGOR ? FEERICO_ATTRIBUTE_BONUS : 0;
@@ -339,6 +352,12 @@ public enum FeericoFeat implements Feat {
             FeatRequirements.builder()
                     .requiredRace(Satiro.class)
                     .build()) {
+        /** "Apenas … recém-criados" — only a starting Talento slot can take it. */
+        @Override
+        public boolean isAcquirableOnlyAtCreation() {
+            return true;
+        }
+
         @Override
         public int resolveSkillRollBonus(final SkillType skillType, final SceneContext sceneContext,
                                           final SkillTrait requestedAbility, final Character character) {
@@ -362,6 +381,12 @@ public enum FeericoFeat implements Feat {
             FeatRequirements.builder()
                     .requiredRace(Satiro.class)
                     .build()) {
+        /** "Apenas … recém-criados" — only a starting Talento slot can take it. */
+        @Override
+        public boolean isAcquirableOnlyAtCreation() {
+            return true;
+        }
+
         @Override
         public SizeCategory resolveSizeCategoryOverride(final Character character) {
             return SizeCategory.ZERO;

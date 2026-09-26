@@ -253,6 +253,12 @@ public class TranslatableMessages {
     public static final String ABILITY_ON_COOLDOWN = "ABILITY_ON_COOLDOWN";
     /** A Regular monster has used its two Efeitos de Ego this Cena — see {@code MonsterSheet#checkEgoEffectAvailable}. */
     public static final String MONSTER_EGO_EFFECTS_EXHAUSTED = "MONSTER_EGO_EFFECTS_EXHAUSTED";
+    /** {@code CombatantSheet#resolveDiceRoll} was handed an id no {@code RecurringDice} is waiting on. */
+    public static final String PENDING_DICE_ROLL_NOT_FOUND = "PENDING_DICE_ROLL_NOT_FOUND";
+    /** An Efeito Ativo that declares dice was activated without its rolled faces. */
+    public static final String ACTIVE_ABILITY_DICE_REQUIRED = "ACTIVE_ABILITY_DICE_REQUIRED";
+    /** An Efeito Ativo whose own clause refuses it right now ("Apenas enquanto voando"). */
+    public static final String ACTIVE_ABILITY_CONDITION_NOT_MET = "ACTIVE_ABILITY_CONDITION_NOT_MET";
 
     /** An activated ability's Pontos de Determinação cost exceeds what the holder has left. */
     public static final String NOT_ENOUGH_DETERMINATION_POINTS = "NOT_ENOUGH_DETERMINATION_POINTS";

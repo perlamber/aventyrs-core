@@ -148,8 +148,10 @@ The list below used to be headed "still cannot express". Every shape on it is no
 
 ### What a Pré-requisito still cannot say
 
-- **"Personagens recém-criados"** — nothing records when a Talento was acquired or that a
-  character is freshly made. Affects `FeericoFeat#PIXIE`/`#SIRENIDEO`, `PeritoFeat#TREINADO_EM_PERICIAS`.
+- **"Recém-criados" as one branch of a disjunction** — the whole-Talento case is
+  `Feat#isAcquirableOnlyAtCreation` (17 Talentos, pinned by `PrerequisiteSweepTest`), but it is
+  all-or-nothing. `FeericoFeat#ASAS` ("Avianos e Bestiais, ou … recém-criados de raça Feérica")
+  and `PeritoFeat#TREINADO_EM_PERICIAS` ("recém-criados ou Graduação 4 em 3 Perícias") stay open.
 - **A second Perícia Graduação** — `requiredSkillType`/`requiredSkillGraduation` is one pair;
   `AssassinoFeat#ESPECIALISTA_TECNOLOGICO` names two and keeps an `isEligible` override.
 - **A held Talento's own recorded *choice*** — "apenas personagens que não escolheram Magias
@@ -413,8 +415,8 @@ olfato"), and the hook is for scopes this core can express.
   Profissão roll; only the first is real, because the second is scoped to "para criar
   equipamento" and this core does not track what a roll is *for*. Pinned in
   `RacialFeatEffectIntegrationTest`.
-- **"Recém-criado" is dropped.** Four Talentos so far restrict themselves to a character at
-  creation. Nothing records when a Talento was acquired, so only the race clause is enforced.
+- **"Recém-criado" is enforced** (0.0.61): `Feat#isAcquirableOnlyAtCreation`, so `FeatService
+  #grantFeat` refuses the Talento and only a starting slot takes it.
 - **"Apenas personagens Mestiços" is inexpressible.** `requiredRace` is a `Class` tested with
   `isInstance`, and there is no common Mestiço supertype — `AbstractMesticoRace` covers only the
   six Elementais, while `MeioElfo`/`NascidoDoDragao` implement `Race` directly. One Talento needs

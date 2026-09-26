@@ -137,10 +137,20 @@ class RacialFeatEffectIntegrationTest {
         return sheet;
     }
 
+    /**
+     * The real acquisition path for each feat in turn. A creation-only Talento ("recém-criados")
+     * is taken in a starting Talento slot instead: the Pré-requisito is still checked, and no XP
+     * is spent.
+     */
     private void acquire(final Character character, final Feat... feats) throws IllegalOperationException {
         CharacterSheet sheet = fundedSheet(character);
         for (Feat feat : feats) {
-            featService.grantFeat(character, sheet, feat);
+            if (feat.catalogEntry().isAcquirableOnlyAtCreation()) {
+                assertTrue(feat.isEligible(character, sheet), String.valueOf(feat));
+                character.grantFeat(feat);
+            } else {
+                featService.grantFeat(character, sheet, feat);
+            }
         }
     }
 

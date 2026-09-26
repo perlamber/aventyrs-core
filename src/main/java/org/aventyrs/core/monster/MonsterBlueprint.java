@@ -20,7 +20,9 @@ import org.aventyrs.core.effect.CriticalEffectType;
 import org.aventyrs.core.ego.EgoAdvantage;
 import org.aventyrs.core.feat.Feat;
 import org.aventyrs.core.item.Item;
+import org.aventyrs.core.monster.model.AbilityContext;
 import org.aventyrs.core.monster.model.MonsterModel;
+import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.Player;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
 import org.aventyrs.core.skill.SkillGraduation;
@@ -181,22 +183,67 @@ public class MonsterBlueprint {
         return progressionUpgrades.getOrDefault(skill, 0);
     }
 
+    /**
+     * The context selection's hooks answer against: this blueprint's Categoria, its picks, and
+     * whether it is the first held Habilidade to name its {@code sharedTraitKey()} (so a shared
+     * trait is granted once).
+     */
+    public AbilityContext contextFor(@NonNull final MonstrousAbilitySelection selection) {
+        String key = selection.ability().sharedTraitKey();
+        boolean owns = true;
+        if (key != null) {
+            for (MonstrousAbilitySelection held : abilities) {
+                if (held == selection) {
+                    break;
+                }
+                if (key.equals(held.ability().sharedTraitKey())) {
+                    owns = false;
+                    break;
+                }
+            }
+        }
+        return new AbilityContext(getCategory(), selection.choices(), owns);
+    }
+
     /** Each held Habilidade, resolved at this blueprint's Categoria. */
     public List<MonstrousAbilityGrant> resolveGrants() {
         MonsterCategory category = getCategory();
         return abilities.stream()
-                .map(selection -> new MonstrousAbilityGrant(selection.ability(), category, selection.choice()))
+                .map(selection -> new MonstrousAbilityGrant(selection.ability(), contextFor(selection)))
                 .toList();
     }
 
     /** A fresh, independent monster with a new identity — see {@link MonsterTemplate#spawn(Player)}. */
     public MonsterSheet spawn(@NonNull final Player gm) {
-        return MonsterSheet.of(buildCharacter(), gm, this);
+        MonsterSheet sheet = MonsterSheet.of(buildCharacter(), gm, this);
+        applyStandingEffects(sheet);
+        return sheet;
     }
 
     /** {@link #spawn(Player)} with a known id — the persistence-restore path. */
     public MonsterSheet spawn(@NonNull final Player gm, @NonNull final UUID id) {
-        return MonsterSheet.of(buildCharacter(), gm, this, id);
+        MonsterSheet sheet = MonsterSheet.of(buildCharacter(), gm, this, id);
+        applyStandingEffects(sheet);
+        return sheet;
+    }
+
+    /**
+     * Puts on sheet what its Habilidades hold from the first Rodada — a standing Regeneração, a
+     * Roubo de Vida ({@link MonstrousAbility#resolveStandingEffects}) — and takes off for one that
+     * never lands. {@link #spawn} already calls it; call it yourself only on a sheet built from
+     * {@link #buildCharacter()} some other way (a client wrapping the {@code Character} in a {@code
+     * CharacterSheet}). Fresh effects every call, so call it once per sheet.
+     */
+    public void applyStandingEffects(@NonNull final CombatantSheet sheet) {
+        MonsterCategory category = getCategory();
+        for (MonstrousAbilitySelection selection : abilities) {
+            selection.ability().resolveStandingEffects(contextFor(selection), sheet.getCharacter())
+                    .forEach(sheet::applyEffect);
+        }
+        if (sheet.isFlying()) {
+            // A holder that keepsFlying() is airborne from the start — apply what flight grants it.
+            sheet.setFlying(true);
+        }
     }
 
     /**
@@ -241,11 +288,20 @@ public class MonsterBlueprint {
 
         List<ActiveAbility> actives = new ArrayList<>();
         for (MonstrousAbilitySelection selection : abilities) {
-            actives.addAll(selection.ability().resolveActiveAbilities(category, selection.choice()));
+            actives.addAll(selection.ability().resolveActiveAbilities(contextFor(selection)));
         }
         attributeAbilities.forEach(ability -> ability.resolveActiveAbility().ifPresent(actives::add));
 
-        return Character.builder()
+        List<Feat> allFeats = new ArrayList<>(feats);
+        for (MonstrousAbilitySelection selection : abilities) {
+            for (Feat granted : selection.ability().resolveGrantedFeats(contextFor(selection))) {
+                if (!allFeats.contains(granted)) {
+                    allFeats.add(granted);
+                }
+            }
+        }
+
+        Character character = Character.builder()
                 .name(name)
                 .race(MonsterTemplate.MONSTER_RACE)
                 .attributes(attributes.build())
@@ -258,13 +314,23 @@ public class MonsterBlueprint {
                 .skillCompetencyAbilities(skillCompetencyAbilities)
                 .activeAbilities(actives)
                 .equipment(new ArrayList<>(equipment))
-                .feats(new ArrayList<>(feats))
+                .feats(allFeats)
                 .sizeCategory(sizeCategory)
                 .resourceFormula(ResourceFormula.MONSTER)
                 .lifeMultiplier(MonsterRules.lifeMultiplier(this))
                 .manaMultiplier(MonsterRules.manaMultiplier(this))
                 .determinationMultiplier(MonsterRules.determinationMultiplier(this))
                 .build();
+        // "Aprende 2 Árvores de Magia" — the raw mutator, like every grant here: the monster's own
+        // spell budget is its Habilidade's, not SpellService's (which takes a CharacterSheet).
+        for (MonstrousAbilitySelection selection : abilities) {
+            for (org.aventyrs.core.magic.Spell spell : selection.ability().resolveGrantedSpells(contextFor(selection))) {
+                if (!character.getSpells().contains(spell)) {
+                    character.grantSpell(spell);
+                }
+            }
+        }
+        return character;
     }
 
     private static CharacterAttributes.CharacterAttributesBuilder assign(

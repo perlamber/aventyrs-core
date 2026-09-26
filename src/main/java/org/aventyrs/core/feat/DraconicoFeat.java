@@ -34,11 +34,9 @@ import org.aventyrs.core.sheet.CombatantSheet;
  * unconditional because the wings are always there, and so is the Capa restriction that pays for
  * it — a permanent {@code Feat#getForbiddenEquipmentCategories} entry the equipment list enforces.
  *
- * <p><b>"Recém-criados" is not modelled.</b> Two constants restrict themselves to a Nascido do
- * Dragão "recém-criado", i.e. acquirable only at character creation. Nothing anywhere tracks
- * when a Talento was acquired, so that half of their Pré-requisito is dropped and only the race
- * clause is enforced — the gate is looser than the text, never stricter, the same direction
- * every other unexpressible clause in this catalog errs in.
+ * <p><b>"Recém-criados" is real.</b> {@link #ARMAMENTO_DRACONICO} and {@link #ASAS_DE_DRAGAO} are
+ * restricted to a Nascido do Dragão "recém-criado", which {@code Feat#isAcquirableOnlyAtCreation}
+ * enforces: {@code FeatService#grantFeat} refuses them and only a starting Talento slot takes them.
  */
 public enum DraconicoFeat implements Feat {
 
@@ -59,6 +57,12 @@ public enum DraconicoFeat implements Feat {
             FeatRequirements.builder()
                     .requiredRace(NascidoDoDragao.class)
                     .build()) {
+        /** "Apenas … recém-criados" — only a starting Talento slot can take it. */
+        @Override
+        public boolean isAcquirableOnlyAtCreation() {
+            return true;
+        }
+
         /** "Escolha duas armas entre: Chifres Poderosos, Cauda Chicote, Garras Afiadas e Presas Longas." */
         @Override
         public List<FeatChoice<?>> resolveRequiredChoices(final Character holder) {
@@ -94,6 +98,12 @@ public enum DraconicoFeat implements Feat {
             FeatRequirements.builder()
                     .requiredRace(NascidoDoDragao.class)
                     .build()) {
+        /** "Apenas … recém-criados" — only a starting Talento slot can take it. */
+        @Override
+        public boolean isAcquirableOnlyAtCreation() {
+            return true;
+        }
+
         @Override
         public int resolveDefenseBonus(final DefenseType defenseType, final Character character) {
             return ASAS_DEFENSE_BONUS;

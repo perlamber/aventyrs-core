@@ -137,8 +137,6 @@ public enum OrquicoFeat implements Feat {
     // TODO: recurring area damage on a following Rodada needs both Área de Efeito resolution and
     //  a delayed-effect mechanism — TemporaryEffect ticks a countdown on its holder's own sheet,
     //  it cannot re-damage a set of other combatants standing in a remembered footprint.
-    // TODO: "apenas uma vez a cada Rodada" needs a per-Rodada activation counter, which
-    //  CharacterSheet does not track.
     TREMOR_RESIDUAL(
             "Na Rodada após utilizar Tremor, como uma Ação Livre e ao Custo de 1PM, você pode "
                     + "fazer tremer a Área de Efeito, causando Danos Físico Primordial igual a "

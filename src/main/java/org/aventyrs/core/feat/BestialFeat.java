@@ -271,8 +271,8 @@ public enum BestialFeat implements Feat {
     // TODO: Ferocidade de Lacerto is unbuilt — Indomito's own javadoc records why it is withheld
     //  rather than approximated, and this Talento mimics it, so it inherits every blocker.
     // TODO: the Autocontrole spend is expressible (EgoPointsService#useEgoPointsForEffect), but
-    //  there is no effect for it to buy, and no per-Cena activation counter for "apenas uma vez a
-    //  cada Cena de Combate" — CharacterSheet counts Rodadas via TemporaryEffect, not activations.
+    //  there is no effect for it to buy. ("Apenas uma vez a cada Cena de Combate" is not the
+    //  blocker — getActionsThisCena/startNewScene give a Cena boundary.)
     // TODO: "+1d6 pontos de dano adicionais" to Armas Naturais — the Arma Natural concept now
     //  exists (NaturalWeapon), but this core rolls no dice, and the bonus applies only while
     //  Mimetizando a Ferocidade de Lacerto, a form/state nothing tracks.

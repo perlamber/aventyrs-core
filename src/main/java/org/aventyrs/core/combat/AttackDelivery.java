@@ -210,6 +210,9 @@ public class AttackDelivery {
         }
 
         if (hit) {
+            result.onHitRetaliations(RetaliationResolver.resolveOnHit(defender, attack.getAttacker(),
+                    attack.getAttackSkill(), attack.getAttackSource(),
+                    criticalResult != null && criticalResult.isCriticalSuccess()));
             result.unappliedCriticalEffects(CriticalEffectResolver.resolve(attack.getAttacker(),
                     attack.getAttackSource(), attack.getAttackSkill(), criticalEffectTriggered ? criticalResult : null,
                     true, attack.getAdditionalCriticalEffectTypes(), attack.getDiceRoller(), false).unapplied());

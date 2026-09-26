@@ -62,6 +62,23 @@ public class ActiveAbilityServiceImpl implements ActiveAbilityService {
 
     @Override
     public void activate(final Character character, final CombatantSheet characterSheet, final ActiveAbility ability, final int turnNumber) throws IllegalOperationException {
+        // One that rolls cannot be activated without its dice — this core never rolls them itself.
+        if (ability.getDice() != null) {
+            throw new IllegalOperationException(org.aventyrs.core.util.TranslatableMessages.ACTIVE_ABILITY_DICE_REQUIRED);
+        }
+        activate(character, characterSheet, ability, turnNumber, (Integer) null);
+    }
+
+    @Override
+    public void activate(final Character character, final CombatantSheet characterSheet, final ActiveAbility ability,
+                         final int turnNumber, final java.util.List<Integer> faces) throws IllegalOperationException {
+        // The faces are checked before a single gate or cost: a wrong roll must refuse cleanly.
+        Integer rolled = ability.getDice() == null ? null : ability.getDice().total(faces == null ? java.util.List.of() : faces);
+        activate(character, characterSheet, ability, turnNumber, rolled);
+    }
+
+    private void activate(final Character character, final CombatantSheet characterSheet, final ActiveAbility ability,
+                          final int turnNumber, final Integer rolledTotal) throws IllegalOperationException {
         if (character.getActiveAbilities().stream().noneMatch(held -> held == ability)) {
             throw new IllegalOperationException(ACTIVE_ABILITY_NOT_HELD);
         }
@@ -76,6 +93,10 @@ public class ActiveAbilityServiceImpl implements ActiveAbilityService {
         // activation costs nothing. Neither is burned down here.
         if (characterSheet.isOnCooldown(ability)) {
             throw new IllegalOperationException(ABILITY_ON_COOLDOWN);
+        }
+        // Its own clause ("Apenas enquanto voando"), before a single point is spent.
+        if (!ability.isUsableBy(characterSheet)) {
+            throw new IllegalOperationException(org.aventyrs.core.util.TranslatableMessages.ACTIVE_ABILITY_CONDITION_NOT_MET);
         }
         // A Forma the holder's own Talentos refuse is refused here too — Marca da Maldição locks
         // its holder into one shape, Acolhida por Flora forbids another. Checked before the cost
@@ -118,6 +139,10 @@ public class ActiveAbilityServiceImpl implements ActiveAbilityService {
         }
         // Started only once everything above has succeeded — an activation that threw never
         // happened, so it must not lock the ability out.
+        ability.applyOnActivation(characterSheet);
+        if (rolledTotal != null) {
+            ability.applyRolled(characterSheet, rolledTotal);
+        }
         characterSheet.startCooldown(ability, ability.getCooldownRounds());
         characterSheet.startRestCooldown(ability, ability.getReactivationRest());
     }

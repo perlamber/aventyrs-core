@@ -1169,6 +1169,65 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
     int getElementalResistanceInstances(ElementalType element);
 
     /**
+     * Whether a hit of this kind reaches this combatant halved — a Meio-Dano limited to a {@code
+     * DamageScope}, held by an {@code AttributeAbility} or a timed {@link DamageScopeEffect}.
+     * {@code DamageServiceImpl} ORs it with every other Meio-Dano source, so it still halves once.
+     */
+    boolean halvesDamage(org.aventyrs.core.character.DamageType damageType,
+                         org.aventyrs.core.character.DamageDescriptor descriptor);
+
+    /** Whether a hit of this kind deals this combatant nothing at all. */
+    boolean isImmuneToDamage(org.aventyrs.core.character.DamageType damageType,
+                             org.aventyrs.core.character.DamageDescriptor descriptor);
+
+    /**
+     * Whether this combatant is <i>vulnerável</i> to a hit of this kind. Reported, never applied: no
+     * rules text sizes a Vulnerabilidade, so the damage is unchanged — see {@code
+     * AttributeAbility#isVulnerableToDamage}.
+     */
+    boolean isVulnerableToDamage(org.aventyrs.core.character.DamageType damageType,
+                                 org.aventyrs.core.character.DamageDescriptor descriptor);
+
+    /** Whether a Condição of this type never takes hold on this combatant — {@link #applyCondition} skips it. */
+    boolean isImmuneToCondition(ConditionType conditionType);
+
+    /**
+     * Whether this combatant is in flight — set by the caller or an Efeito Ativo ({@link
+     * #setFlying}), or always, for a holder whose Habilidade {@code keepsFlying()}. Every "enquanto
+     * voando" clause reads it. There is still no flight <i>movement</i> stat.
+     */
+    boolean isFlying();
+
+    /**
+     * Takes off or lands. Taking off applies every held Habilidade's {@code
+     * resolveWhileFlyingEffects()}; landing lifts exactly those. A holder that {@code keepsFlying()}
+     * cannot land — the call is ignored.
+     */
+    void setFlying(boolean flying);
+
+    /** Queues dice a {@link RecurringDice} owes — see {@link PendingDiceRoll}. */
+    void queuePendingDiceRoll(PendingDiceRoll roll);
+
+    /** Every roll waiting for the caller's dice, oldest first. */
+    List<PendingDiceRoll> getPendingDiceRolls();
+
+    /**
+     * Applies a pending roll with the faces the caller rolled — heals, or deals damage through
+     * {@code DamageService} (so RD, RE and immunities reach it) — and removes it.
+     *
+     * @return the PV actually healed, or the damage actually taken
+     * @throws IllegalOperationException {@code PENDING_DICE_ROLL_NOT_FOUND} for an id not pending,
+     *                                   {@code INVALID_DIE_ROLL} for the wrong number of faces
+     */
+    int resolveDiceRoll(UUID pendingRollId, List<Integer> faces);
+
+    /** Lifts every held effect a trait named {@code source} granted — a timed bonus, a scoped Meio-Dano, a recurring roll. */
+    void removeEffectsFrom(String source);
+
+    /** Steps up the GD ladder every held {@link SkillDifficultyShift} grants skill right now. */
+    int getSkillDifficultyShift(org.aventyrs.core.skill.SkillType skill);
+
+    /**
      * Heals amount as Roubo de Vida — {@link #heal} for a source that the halving clauses exempt:
      * Desprezar Danos's "reduz … Efeitos de Cura (exceto Roubo de Vida) pela metade".
      */

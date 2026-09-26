@@ -22,6 +22,7 @@ import org.aventyrs.core.monster.MonsterCategory;
 import org.aventyrs.core.monster.MonsterSheet;
 import org.aventyrs.core.monster.MonstrousAbilitySelection;
 import org.aventyrs.core.monster.SampleMonster;
+import org.aventyrs.core.monster.model.AbilityContext;
 import org.aventyrs.core.monster.model.MonstrousActiveAbility;
 import org.aventyrs.core.sheet.ActionCost;
 import org.aventyrs.core.sheet.IllegalOperationException;
@@ -52,8 +53,12 @@ class CireneiaAbilityTest {
     private final InitiativeService initiative = new InitiativeServiceImpl();
     private final MovementService movement = new MovementServiceImpl();
 
+    private static AbilityContext picked(final MonsterCategory category, final String bonus) {
+        return AbilityContext.of(category, Map.of(CireneiaAbility.BONUS_CHOICE, List.of(bonus)));
+    }
+
     private static MonstrousActiveAbility only(final CireneiaAbility ability, final MonsterCategory category) {
-        List<ActiveAbility> actives = ability.resolveActiveAbilities(category, null);
+        List<ActiveAbility> actives = ability.resolveActiveAbilities(AbilityContext.of(category));
         assertEquals(1, actives.size());
         return (MonstrousActiveAbility) actives.get(0);
     }
@@ -77,8 +82,8 @@ class CireneiaAbilityTest {
 
     @Test
     void atributosAprimoradosGrantsBonusRacialDeDestrezaThatGrowsAtPredador() {
-        assertEquals(Map.of(AttributeDomain.DEXTERITY, 2), CireneiaAbility.ATRIBUTOS_APRIMORADOS.resolveRacialAttributeBonuses(DEVIANTE, null));
-        assertEquals(Map.of(AttributeDomain.DEXTERITY, 4), CireneiaAbility.ATRIBUTOS_APRIMORADOS.resolveRacialAttributeBonuses(PREDADOR, null));
+        assertEquals(Map.of(AttributeDomain.DEXTERITY, 2), CireneiaAbility.ATRIBUTOS_APRIMORADOS.resolveRacialAttributeBonuses(AbilityContext.of(DEVIANTE)));
+        assertEquals(Map.of(AttributeDomain.DEXTERITY, 4), CireneiaAbility.ATRIBUTOS_APRIMORADOS.resolveRacialAttributeBonuses(AbilityContext.of(PREDADOR)));
     }
 
     @Test
@@ -122,11 +127,11 @@ class CireneiaAbilityTest {
     @Test
     void movimentoAprimoradoRaisesMovimentoAndIniciativaByCategoria() {
         CireneiaAbility ability = CireneiaAbility.MOVIMENTO_APRIMORADO;
-        assertEquals(3, ability.resolveModifier(ModifierType.MOVEMENT, PRESA, null));
-        assertEquals(5, ability.resolveModifier(ModifierType.MOVEMENT, APEX, null));
-        assertEquals(0, ability.resolveModifier(ModifierType.INITIATIVE, PRESA, null));
-        assertEquals(2, ability.resolveModifier(ModifierType.INITIATIVE, DEVIANTE, null));
-        assertEquals(4, ability.resolveModifier(ModifierType.INITIATIVE, APEX, null));
+        assertEquals(3, ability.resolveModifier(ModifierType.MOVEMENT, AbilityContext.of(PRESA)));
+        assertEquals(5, ability.resolveModifier(ModifierType.MOVEMENT, AbilityContext.of(APEX)));
+        assertEquals(0, ability.resolveModifier(ModifierType.INITIATIVE, AbilityContext.of(PRESA)));
+        assertEquals(2, ability.resolveModifier(ModifierType.INITIATIVE, AbilityContext.of(DEVIANTE)));
+        assertEquals(4, ability.resolveModifier(ModifierType.INITIATIVE, AbilityContext.of(APEX)));
     }
 
     @Test
@@ -140,10 +145,10 @@ class CireneiaAbilityTest {
     @Test
     void investidasGetVantagemAndAlwaysHitFromPredador() {
         CireneiaAbility ability = CireneiaAbility.MOVIMENTO_APRIMORADO;
-        assertEquals(Skill.ADVANTAGE_BONUS, ability.resolveChargeAttackBonus(PRESA));
-        assertEquals(Skill.ADVANTAGE_BONUS, ability.resolveChargeDamageBonus(PRESA));
-        assertFalse(ability.chargesAlwaysHit(DEVIANTE));
-        assertTrue(ability.chargesAlwaysHit(PREDADOR));
+        assertEquals(Skill.ADVANTAGE_BONUS, ability.resolveChargeAttackBonus(AbilityContext.of(PRESA)));
+        assertEquals(Skill.ADVANTAGE_BONUS, ability.resolveChargeDamageBonus(AbilityContext.of(PRESA)));
+        assertFalse(ability.chargesAlwaysHit(AbilityContext.of(DEVIANTE)));
+        assertTrue(ability.chargesAlwaysHit(AbilityContext.of(PREDADOR)));
     }
 
     @Test
@@ -161,8 +166,8 @@ class CireneiaAbilityTest {
 
     @Test
     void celeridadeAddsPaAndOneMoreAtApex() {
-        assertEquals(1, CireneiaAbility.CELERIDADE.resolveModifier(ModifierType.ACTION_POINTS, DEVIANTE, null));
-        assertEquals(2, CireneiaAbility.CELERIDADE.resolveModifier(ModifierType.ACTION_POINTS, APEX, null));
+        assertEquals(1, CireneiaAbility.CELERIDADE.resolveModifier(ModifierType.ACTION_POINTS, AbilityContext.of(DEVIANTE)));
+        assertEquals(2, CireneiaAbility.CELERIDADE.resolveModifier(ModifierType.ACTION_POINTS, AbilityContext.of(APEX)));
         assertEquals(actionPoints.getMaxActionPoints(bare(), 1) + 1, actionPoints.getMaxActionPoints(pantera(), 1));
     }
 
@@ -191,14 +196,14 @@ class CireneiaAbilityTest {
     void relampejanteGrantsThePickThenTheOtherThenThePickAgain() {
         CireneiaAbility ability = CireneiaAbility.RELAMPEJANTE;
         String reaction = CireneiaAbility.REACTION_CHOICE;
-        assertEquals(1, ability.resolveModifier(ModifierType.REACTIONS, DEVIANTE, reaction));
-        assertEquals(0, ability.resolveModifier(ModifierType.FREE_ACTIONS, DEVIANTE, reaction));
-        assertEquals(1, ability.resolveModifier(ModifierType.FREE_ACTIONS, PREDADOR, reaction));
-        assertEquals(2, ability.resolveModifier(ModifierType.REACTIONS, APEX, reaction));
+        assertEquals(1, ability.resolveModifier(ModifierType.REACTIONS, picked(DEVIANTE, reaction)));
+        assertEquals(0, ability.resolveModifier(ModifierType.FREE_ACTIONS, picked(DEVIANTE, reaction)));
+        assertEquals(1, ability.resolveModifier(ModifierType.FREE_ACTIONS, picked(PREDADOR, reaction)));
+        assertEquals(2, ability.resolveModifier(ModifierType.REACTIONS, picked(APEX, reaction)));
 
         String free = CireneiaAbility.FREE_ACTION_CHOICE;
-        assertEquals(1, ability.resolveModifier(ModifierType.FREE_ACTIONS, DEVIANTE, free));
-        assertEquals(0, ability.resolveModifier(ModifierType.REACTIONS, DEVIANTE, free));
+        assertEquals(1, ability.resolveModifier(ModifierType.FREE_ACTIONS, picked(DEVIANTE, free)));
+        assertEquals(0, ability.resolveModifier(ModifierType.REACTIONS, picked(DEVIANTE, free)));
     }
 
     @Test
@@ -214,8 +219,8 @@ class CireneiaAbilityTest {
     @Test
     void liberdadeSelvagemStepsOnlyDestrezaPericias() {
         CireneiaAbility ability = CireneiaAbility.LIBERDADE_SELVAGEM;
-        assertEquals(1, ability.resolveSkillLevelShift(SkillType.FURTIVIDADE, AttributeDomain.DEXTERITY, PREDADOR));
-        assertEquals(0, ability.resolveSkillLevelShift(SkillType.ATAQUE_CORPO_A_CORPO, AttributeDomain.STRENGTH, PREDADOR));
+        assertEquals(1, ability.resolveSkillLevelShift(SkillType.FURTIVIDADE, AttributeDomain.DEXTERITY, AbilityContext.of(PREDADOR)));
+        assertEquals(0, ability.resolveSkillLevelShift(SkillType.ATAQUE_CORPO_A_CORPO, AttributeDomain.STRENGTH, AbilityContext.of(PREDADOR)));
     }
 
     @Test
@@ -245,8 +250,8 @@ class CireneiaAbilityTest {
 
     @Test
     void ofuscarBecomesPassiveAtAbominacaoSoItHasNoActive() {
-        assertEquals(1, CireneiaAbility.OFUSCAR.resolveActiveAbilities(APEX, null).size());
-        assertEquals(List.of(), CireneiaAbility.OFUSCAR.resolveActiveAbilities(ABOMINACAO, null));
+        assertEquals(1, CireneiaAbility.OFUSCAR.resolveActiveAbilities(AbilityContext.of(APEX)).size());
+        assertEquals(List.of(), CireneiaAbility.OFUSCAR.resolveActiveAbilities(AbilityContext.of(ABOMINACAO)));
     }
 
     @Test

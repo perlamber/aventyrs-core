@@ -1,7 +1,10 @@
 package org.aventyrs.core.feat;
 
+import org.aventyrs.core.character.AttributeDomain;
+import org.aventyrs.core.character.Character;
 import org.aventyrs.core.race.Human;
 
+import java.util.List;
 import java.util.function.Supplier;
 
 /**
@@ -66,16 +69,12 @@ public enum HumanoFeat implements Feat {
      * "Escolha um Atributo, você recebe Bônus Racial de +1 no Atributo Escolhido. Ao Despertar
      * seu segundo Título Aventyr você recebe uma Habilidade do Atributo escolhido."
      */
-    // TODO: the Atributo-bonus and free-Habilidade halves are both mechanically expressible now —
-    //  Feat#resolveAttributeBonus (reaching every Atributo-total reader via
-    //  Character#getEffectiveAttributeTotal) and Feat#getGrantedAttributeAbilities, both real
-    //  through AnaoFeat#CONSELHEIRO_DE_GUERRA_YMIRIANO / ConselheiroDeGuerraYmirianoFeat. What
-    //  still blocks this one: (a) *which* Atributo is a per-acquisition choice, so it needs its
-    //  own choice-carrying AbstractFeat subclass (the FocoEmPericiaFeat shape) whose
-    //  resolveAttributeBonus/getGrantedAttributeAbilities branch on the picked AttributeDomain;
-    //  (b) the free Habilidade is gated on Despertar a *second* Título — this core has no
-    //  second-Título trigger, so the grant can't be withheld until then. Both are this Talento's
-    //  own work, not a missing shared mechanism.
+    // The Atributo half is real, through AtributoRacialEscolhidoFeat (any Atributo).
+    // TODO: the free Habilidade on Despertar a second Título. Withholding it until then is
+    //  derivable (Character#getAllTitles().size() >= 2 inside getGrantedAttributeAbilities), but
+    //  *which* Habilidade is a second pick made at that moment, not at acquisition, and nothing
+    //  records a later pick on an already-granted Talento. Feat#resolveSessionEndAcquisitions is
+    //  the closest shape, but it owes a fixed acquisition, not a choice.
     LIMIAR_DA_EVOLUCAO(
             "Juntamente ao seu Título Aventyr você desperta o sangue dos Primeiros Homens em seu "
                     + "corpo. Escolha uma Atributo, você recebe Bônus Racial de +1 no Atributo "
@@ -86,7 +85,12 @@ public enum HumanoFeat implements Feat {
                     .requiredRace(Human.class)
                     .forbiddenFeat(APRENDIZADO_RAPIDO_E_CONTINUO)
                     .requiredAwakenedTitles(1)
-                    .build());
+                    .build()) {
+        @Override
+        public List<FeatChoice<?>> resolveRequiredChoices(final Character holder) {
+            return List.of(FeatChoice.ofOne(AttributeDomain.class, List.of(AttributeDomain.values())));
+        }
+    };
 
     /**
      * {@link #LIMIAR_DA_EVOLUCAO}, reached through a method rather than named directly: Java

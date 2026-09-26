@@ -59,13 +59,30 @@ class MonsterModelTest {
         assertEquals(Optional.empty(), MonsterModel.ALMA_ELEMENTAL.findAbility("CELERIDADE"));
     }
 
+    /** A status is only honest if it explains itself: PARTIAL and TABLE_ONLY name what's missing, APPLIED names nothing. */
     @Test
-    void onlyCireneiaHasImplementedHabilidades() {
+    void everyStatusExplainsWhatIsNotApplied() {
         for (MonsterModel model : MonsterModel.values()) {
-            boolean anyImplemented = model.getAbilities().stream().anyMatch(MonstrousAbility::isImplemented);
-            assertEquals(model == MonsterModel.ABENCOADO_DE_CIRENEIA, anyImplemented, model.name());
+            for (MonstrousAbility ability : model.getAbilities()) {
+                ImplementationStatus status = ability.getImplementationStatus();
+                String note = ability.getUnappliedNote();
+                if (status == ImplementationStatus.APPLIED) {
+                    assertEquals(null, note, ability.name());
+                } else {
+                    assertTrue(note != null && !note.isBlank(), ability.name() + " is " + status + " with no note");
+                }
+            }
         }
-        assertFalse(CireneiaAbility.OFUSCAR.isImplemented());
-        assertFalse(CireneiaAbility.PREFERIDO_DE_CIRENEIA.isImplemented());
+    }
+
+    @Test
+    void noModeloIsLeftTableOnly() {
+        for (MonsterModel model : MonsterModel.values()) {
+            long applied = model.getAbilities().stream()
+                    .filter(ability -> ability.getImplementationStatus() != ImplementationStatus.TABLE_ONLY)
+                    .count();
+            assertTrue(applied >= 6, model.name() + " applies only " + applied + " Habilidades");
+        }
+        assertEquals(ImplementationStatus.TABLE_ONLY, CireneiaAbility.PREFERIDO_DE_CIRENEIA.getImplementationStatus());
     }
 }

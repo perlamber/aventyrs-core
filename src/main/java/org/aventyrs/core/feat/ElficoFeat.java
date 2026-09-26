@@ -76,6 +76,12 @@ public enum ElficoFeat implements Feat {
                     + "magia 'Cativar Animal' ao custo de 2PD. Guardiões dos Bosques não podem "
                     + "adquirir o título Bruxo.",
             FeatRequirements.builder().build()) {
+        /** "Apenas … recém-criados" — only a starting Talento slot can take it. */
+        @Override
+        public boolean isAcquirableOnlyAtCreation() {
+            return true;
+        }
+
         @Override
         public int resolveSkillRollBonus(final SkillType skillType, final SceneContext sceneContext,
                                           final SkillTrait requestedAbility, final Character character) {
@@ -114,6 +120,12 @@ public enum ElficoFeat implements Feat {
                     + "Undine' ao custo de 2PD. Guardiões das Dunas não podem adquirir o título "
                     + "Bruxo.",
             FeatRequirements.builder().build()) {
+        /** "Apenas … recém-criados" — only a starting Talento slot can take it. */
+        @Override
+        public boolean isAcquirableOnlyAtCreation() {
+            return true;
+        }
+
         @Override
         public int resolveSkillRollBonus(final SkillType skillType, final SceneContext sceneContext,
                                           final SkillTrait requestedAbility, final Character character) {
@@ -145,6 +157,12 @@ public enum ElficoFeat implements Feat {
                     + "magia 'Voo' em você mesmo, com Tempo de Conjuração de 1PA e Duração de 2 "
                     + "Rodadas, ao custo de 3PD.",
             FeatRequirements.builder().build()) {
+        /** "Apenas … recém-criados" — only a starting Talento slot can take it. */
+        @Override
+        public boolean isAcquirableOnlyAtCreation() {
+            return true;
+        }
+
         @Override
         public int resolveSkillRollBonus(final SkillType skillType, final SceneContext sceneContext,
                                           final SkillTrait requestedAbility, final Character character) {
@@ -187,6 +205,12 @@ public enum ElficoFeat implements Feat {
                     + "referente a vida e hábitos marinhos. Também podem mimetizar a magia "
                     + "'Regeneração', ao custo de 2PD.",
             FeatRequirements.builder().build()) {
+        /** "Apenas … recém-criados" — only a starting Talento slot can take it. */
+        @Override
+        public boolean isAcquirableOnlyAtCreation() {
+            return true;
+        }
+
         @Override
         public int resolveSkillRollBonus(final SkillType skillType, final SceneContext sceneContext,
                                           final SkillTrait requestedAbility, final Character character) {

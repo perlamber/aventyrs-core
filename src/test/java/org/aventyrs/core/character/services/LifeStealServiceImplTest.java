@@ -127,7 +127,8 @@ class LifeStealServiceImplTest {
         sheet.accumulateExperience(BigDecimal.valueOf(100));
         FeatService featService = new FeatServiceImpl();
 
-        featService.grantFeat(character, sheet, ElficoFeat.GUARDIAO_DOS_BOSQUES);
+        // A Guardião is taken at creation ("recém-criados"), so it arrives through the plain mutator.
+        character.grantFeat(ElficoFeat.GUARDIAO_DOS_BOSQUES);
         featService.grantFeat(character, sheet, ElficoFeat.CORRUPTOR_SOMBRIO);
 
         assertEquals(1, lifeStealService.getTotalLifeSteal(character, sheet));

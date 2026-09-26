@@ -500,4 +500,87 @@ public interface AttributeAbility {
     default boolean waivesChargeMissDefensePenalty() {
         return false;
     }
+
+    // ---- Anatomy and resistance hooks --------------------------------------------------------
+    //
+    // Added for the Habilidades Monstruosas (see org.aventyrs.core.monster.MonstrousAbilityGrant),
+    // and read by AbstractCombatantSheet / DamageServiceImpl for every combatant alike — a foe the
+    // client plays through a CharacterSheet is covered as much as a MonsterSheet. Each defaults to
+    // "nothing", so no existing Habilidade de Atributo changes.
+
+    /** Instances of Resistência Elemental (RE) against element — each worth {@code -2}. */
+    default int resolveElementalResistanceInstances(final org.aventyrs.core.magic.ElementalType element) {
+        return 0;
+    }
+
+    /** Whether a hit of this kind is reduced to half — a Meio-Dano limited to a {@code DamageScope}. */
+    default boolean halvesDamage(final org.aventyrs.core.character.DamageType damageType,
+                                 final org.aventyrs.core.character.DamageDescriptor descriptor) {
+        return false;
+    }
+
+    /** Whether a hit of this kind deals nothing at all — "Imunidade ao Elemento escolhido". */
+    default boolean isImmuneToDamage(final org.aventyrs.core.character.DamageType damageType,
+                                     final org.aventyrs.core.character.DamageDescriptor descriptor) {
+        return false;
+    }
+
+    /**
+     * Whether this holder is <i>vulnerável</i> to a hit of this kind. Reported only: no rules text
+     * gives a Vulnerabilidade a number (racas.txt and criacao-de-monstros.txt name it, never size
+     * it), so {@code DamageServiceImpl} does not change the damage — see {@code
+     * CombatantSheet#isVulnerableToDamage}.
+     */
+    default boolean isVulnerableToDamage(final org.aventyrs.core.character.DamageType damageType,
+                                         final org.aventyrs.core.character.DamageDescriptor descriptor) {
+        return false;
+    }
+
+    /** Efeitos Críticos this Habilidade makes its holder shrug off. */
+    default Set<org.aventyrs.core.effect.CriticalEffectType> resolveCriticalEffectImmunities() {
+        return Set.of();
+    }
+
+    /** Standing Resistência a Críticos — the value {@code CombatantSheet#getTotalCriticalResistance} sums (2 per instance). */
+    default int resolveCriticalResistance() {
+        return 0;
+    }
+
+    /** "Imunidade à Críticos Menores". */
+    default boolean ignoresMinorCriticalEffects() {
+        return false;
+    }
+
+    /** Whether a {@code Condição} of this type never takes hold on the holder. */
+    default boolean isImmuneToCondition(final org.aventyrs.core.sheet.ConditionType conditionType) {
+        return false;
+    }
+
+    /** Armas Naturais this Habilidade grants its holder — read by {@code Character#getNaturalWeapons()}. */
+    default List<org.aventyrs.core.item.NaturalWeapon> getGrantedNaturalWeapons() {
+        return List.of();
+    }
+
+    /** Whether the holder is always in flight — "O Movimento Base de Voo está sempre ativo". */
+    default boolean keepsFlying() {
+        return false;
+    }
+
+    /**
+     * What the holder gains while it is in flight ("Bônus Racial de +5 em Defesas enquanto voando")
+     * — applied by {@code CombatantSheet#setFlying(true)} and lifted when it lands. Fresh instances
+     * each call: a {@code TemporaryEffect} is mutable.
+     */
+    default List<org.aventyrs.core.sheet.TemporaryEffect> resolveWhileFlyingEffects() {
+        return List.of();
+    }
+
+    /**
+     * Effects the holder gains after taking finalDamage (&gt; 0) — "Após sofrer danos recupera 1d6PV
+     * durante 2 Rodadas". Applied to the holder by {@code DamageService#notifyDamageTaken}.
+     */
+    default List<org.aventyrs.core.sheet.TemporaryEffect> resolveDamageTakenEffects(
+            final org.aventyrs.core.sheet.CombatantSheet holder, final int finalDamage) {
+        return List.of();
+    }
 }

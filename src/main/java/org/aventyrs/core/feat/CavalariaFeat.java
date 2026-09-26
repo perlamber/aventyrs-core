@@ -96,8 +96,8 @@ public enum CavalariaFeat implements Feat {
      */
     // TODO: needs a montaria/veículo concept. Note this changes what an action *costs*, not how
     //  many Ações Livres the character has — FreeActionsService is the wrong hook for it.
-    // TODO: "apenas uma vez a cada Rodada" needs a per-Rodada activation counter; CharacterSheet
-    //  tracks Round-scoped TemporaryEffects, not activation counts.
+    //  ("Apenas uma vez a cada Rodada" needs no new counter once mounting is an action: the
+    //  Rodada's action log, CombatantSheet#getActionsThisRound, can answer it.)
     MONTAR_E_DESMONTAR_INSTANTANEO(
             "Você pode Montar ou Desmontar de sua montaria, ou entrar e sair de um veículo, como "
                     + "Ação Livre. Você também pode Desmontar de sua Montaria como Reação. Este "

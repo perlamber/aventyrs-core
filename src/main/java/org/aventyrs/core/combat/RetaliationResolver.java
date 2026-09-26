@@ -1,12 +1,17 @@
 package org.aventyrs.core.combat;
 
+import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.DamageDescriptor;
 import org.aventyrs.core.character.DamageType;
 import org.aventyrs.core.magic.ElementalType;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.ConditionType;
+import org.aventyrs.core.skill.AttackSource;
 import org.aventyrs.core.skill.SkillType;
+
+import java.util.List;
+import java.util.Objects;
 
 /**
  * The retaliation rule both {@link AttackDelivery} and {@link AttackReceiver} apply, written once:
@@ -49,5 +54,24 @@ final class RetaliationResolver {
             return null;
         }
         return new Retaliation(damage, DESCRIPTOR, CONDITION_ON_DAMAGE, CONDITION_ROUNDS);
+    }
+
+    /**
+     * What defender's Talentos deal back to an attacker whose melee attack <b>landed</b>, each
+     * one's own {@code Feat#resolveRetaliation}. Empty for an Ataque à Distância, and whenever no
+     * held Talento answers. The caller asks only once the hit is known, so a miss never reaches here.
+     */
+    static List<Retaliation> resolveOnHit(final CombatantSheet defender, final CombatantSheet attacker,
+                                          final SkillType attackSkill, final AttackSource attackSource,
+                                          final boolean criticalHit) {
+        if (defender == null || attackSkill != SkillType.ATAQUE_CORPO_A_CORPO) {
+            return List.of();
+        }
+        Character holder = defender.getCharacter();
+        Character attackerCharacter = attacker == null ? null : attacker.getCharacter();
+        return holder.getFeats().stream()
+                .map(feat -> feat.resolveRetaliation(holder, attackSource, attackerCharacter, criticalHit))
+                .filter(Objects::nonNull)
+                .toList();
     }
 }

@@ -3,6 +3,7 @@ package org.aventyrs.core.feat;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.skill.SkillType;
+import org.aventyrs.core.skill.atletismo.AtletismoSpecialization;
 
 import java.util.function.Supplier;
 
@@ -265,8 +266,7 @@ public enum MobilidadeFeat implements Feat {
     // TODO: Movimento Base de Natação is a separate sub-stat deliberately not wired to
     //  ModifierType.MOVEMENT (see AtletismoCompetencyAbility#ANFIBIO) — it is what would narrow
     //  the second clause to the swimmers it is written for. See the javadoc above.
-    // TODO: its Pré-requisito names a required Especialização (Triatleta); FeatRequirements
-    //  models a Habilidade de Competência but not a SkillSpecialization.
+    // The Especialização Triatleta Pré-requisito is real — FeatRequirements#requiredSkillTraits.
     INVESTIDA_AQUATICA(
             "Em combate, rolagens de Perícia de Ataque realizadas imediatamente após ser "
                     + "bem-sucedido em rolagens de Atletismo para Natação tem o Tempo de Ação "
@@ -275,6 +275,7 @@ public enum MobilidadeFeat implements Feat {
             () -> FeatRequirements.builder()
                     .requiredSkillType(SkillType.ATLETISMO)
                     .requiredSkillGraduation(4)
+                    .requiredSkillTrait(AtletismoSpecialization.TRI_ATLETA)
                     .build()) {
         @Override
         public int resolveChargeActionPointReduction(final Character character) {

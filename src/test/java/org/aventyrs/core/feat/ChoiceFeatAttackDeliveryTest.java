@@ -103,10 +103,19 @@ class ChoiceFeatAttackDeliveryTest {
         return sheet;
     }
 
-    /** The real acquisition path — the Pré-requisito checked, the XP paid, the choice named. */
+    /**
+     * The real acquisition path — the Pré-requisito checked, the XP paid, the choice named. A
+     * creation-only Talento ("recém-criados") is taken in a starting Talento slot instead: the
+     * Pré-requisito is still checked, and no XP is spent.
+     */
     private CharacterSheet acquire(final Character character, final Feat feat) throws IllegalOperationException {
         CharacterSheet sheet = fundedSheet(character);
-        featService.grantFeat(character, sheet, feat);
+        if (feat.catalogEntry().isAcquirableOnlyAtCreation()) {
+            assertTrue(feat.isEligible(character, sheet), String.valueOf(feat));
+            character.grantFeat(feat);
+        } else {
+            featService.grantFeat(character, sheet, feat);
+        }
         return sheet;
     }
 

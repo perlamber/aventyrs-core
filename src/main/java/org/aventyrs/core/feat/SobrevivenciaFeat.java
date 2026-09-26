@@ -5,6 +5,11 @@ import org.aventyrs.core.character.Character;
 import java.util.List;
 import org.aventyrs.core.character.DamageBonus;
 import org.aventyrs.core.character.DamageType;
+import org.aventyrs.core.character.DefenseType;
+import org.aventyrs.core.character.services.DamageService;
+import org.aventyrs.core.character.services.HitPointsService;
+import org.aventyrs.core.character.services.HitPointsServiceImpl;
+import org.aventyrs.core.item.ItemWeightClass;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.scene.TerrainType;
 import org.aventyrs.core.sheet.CombatantSheet;
@@ -38,9 +43,10 @@ public enum SobrevivenciaFeat implements Feat {
      * an unconditional, permanent uplift consumed by {@code HitPointsService}. That hook was
      * added for this constant.
      */
-    // TODO: the conditional RD half needs a Feat RD hook that can see the holder's current PV;
-    //  DamageService sums ModifierType.DAMAGE_REDUCTION from three ability sources, none of which
-    //  is Talentos, and a no-arg @Modifier could not read live PV anyway.
+    // The RD half is real too, through the sheet-aware resolveDamageReduction: current PV at or
+    // below the holder's Multiplicador de PV (both from HitPointsService, sheet-aware, so a Forma
+    // or Envenenado moves the threshold). ⚠️ "Você recebe RD" states no figure, so it grants
+    // DamageService#DEFAULT_DAMAGE_REDUCTION, the same reading AnaoFeat#VIGOR_DO_INVERNO takes.
     VITALIDADE(
             "Você é mais resistente que o normal, seu Multiplicador de Pontos de Vida aumenta em "
                     + "+1. Enquanto sua quantidade de PV atuais for igual ou inferior ao seu valor "
@@ -53,18 +59,26 @@ public enum SobrevivenciaFeat implements Feat {
         public int resolveLifeMultiplierIncrease(final Character character) {
             return 1;
         }
+
+        @Override
+        public int resolveDamageReduction(final Character character, final CombatantSheet holder) {
+            if (holder == null) {
+                return 0;
+            }
+            HitPointsService hitPointsService = new HitPointsServiceImpl();
+            return hitPointsService.getCurrentHitPoints(character, holder)
+                    <= hitPointsService.getLifeMultiplier(character, holder)
+                    ? DamageService.DEFAULT_DAMAGE_REDUCTION : 0;
+        }
     },
 
     /**
      * "Escolha um tipo de armadura entre Leve, Média ou Pesada. Você recebe bônus de +1 em suas
      * Defesas enquanto utilizar uma armadura do tipo escolhido", rising to +5 at 10 Graduações.
      *
-     * <p>The ladder is plain arithmetic {@link Feat#resolveDefenseBonus} could compute.
+     * <p><b>Real</b>, through {@link EspecialistaEmArmadurasFeat} — the acquired form recording
+     * the chosen {@code ItemWeightClass}, granted in place of this constant.
      */
-    // TODO: ArmorItem exists but nothing marks an equipped Item as Leve/Média/Pesada in a way a
-    //  Talento can test — ItemWeightClass is an Item column with no consumer — and the chosen
-    //  type is an unrecorded acquisition-time choice. Granting unconditionally would hand the
-    //  bonus to a character wearing nothing.
     ESPECIALISTA_EM_ARMADURAS(
             "Escolha um tipo de armadura entre Leve, Média ou Pesada. Você recebe bônus de +1 em "
                     + "suas Defesas enquanto utilizar uma armadura do tipo escolhido. Os bônus "
@@ -74,15 +88,21 @@ public enum SobrevivenciaFeat implements Feat {
             FeatRequirements.builder()
                     .requiredSkillType(SkillType.ESQUIVA_E_APARAR)
                     .requiredSkillGraduation(2)
-                    .build()),
+                    .build()) {
+        @Override
+        public List<FeatChoice<?>> resolveRequiredChoices(final Character holder) {
+            return List.of(FeatChoice.ofOne(ItemWeightClass.class, List.of(ItemWeightClass.values())));
+        }
+    },
 
     /**
      * "Os Bônus em Defesas concedidos por Especialista em Armaduras se aplicam a qualquer armadura
      * que vestir, adicionalmente você recebe bônus de +2 em suas Defesas enquanto estiver vestindo
      * uma armadura da categoria que você se especializou."
      */
-    // TODO: widens ESPECIALISTA_EM_ARMADURAS, which is itself unbuilt; the +2 half still needs the
-    //  armour category comparison that blocks it.
+    // Real. The widening lives on EspecialistaEmArmadurasFeat, which checks for this constant;
+    // the +2 is this constant's own, while wearing the chosen tier (EspecialistaEmArmadurasFeat
+    // #chosenBy). Held without Especialista's choice recorded, the +2 has no tier and grants nothing.
     DOMINAR_ARMADURAS(
             "Os Bônus em Defesas concedidos por Especialista em Armaduras se aplicam a qualquer "
                     + "armadura que vestir, adicionalmente você recebe bônus de +2 em suas Defesas "
@@ -92,7 +112,15 @@ public enum SobrevivenciaFeat implements Feat {
                     .requiredSkillType(SkillType.ESQUIVA_E_APARAR)
                     .requiredSkillGraduation(4)
                     .requiredFeat(ESPECIALISTA_EM_ARMADURAS)
-                    .build()),
+                    .build()) {
+        @Override
+        public int resolveDefenseBonus(final DefenseType defenseType, final Character character) {
+            return EspecialistaEmArmadurasFeat.chosenBy(character)
+                    .filter(weight -> EspecialistaEmArmadurasFeat.wearsArmorOf(character, weight))
+                    .map(weight -> DOMINAR_ARMADURAS_DEFENSE_BONUS)
+                    .orElse(0);
+        }
+    },
 
     /**
      * "Se algum efeito iniciado por outro personagem for reduzir seus PV à 0 ou menos, ao invés
@@ -160,7 +188,9 @@ public enum SobrevivenciaFeat implements Feat {
      * through {@link Feat#resolveDamageBonus}, untyped so it flattens to {@code FISICO} in {@code
      * DamageBonus#total}, the established reading of "Vantagem em rolagens de Dano".
      */
-    // TODO: granting a Corrente de Efeitos – Oprimir has no hook on the attack path.
+    // TODO: Corrente de Efeitos – Oprimir — Feat#resolveEffectChains is the hook (see ElficoFeat
+    //  #CORRUPTOR_SOMBRIO), but Oprimir is not an authored EffectChain. The terrain scope has no
+    //  SceneContext on that hook either.
     MESTRE_DE_CACA(
             "Sua Margem Crítica Menor aumenta em +1 número, então você recebe Vantagem em rolagens "
                     + "de Perícias de Ataque e Danos enquanto no terreno escolhido. Nestes "
@@ -257,7 +287,9 @@ public enum SobrevivenciaFeat implements Feat {
      * many attacks as the holder has Títulos.
      */
     // TODO: Meio-Dano exists as a DamageService flag, but nothing scopes it to the first N hits
-    //  of a Cena — that needs damage instances to be counted per Cena, which nothing tracks.
+    //  of a Cena. CombatantSheet#getAttacksSufferedThisRound counts hits per Rodada only, and
+    //  resets at startNewRound. It needs a per-Cena count (cleared by startNewScene) read by
+    //  DamageServiceImpl's Meio-Dano stage.
     DURO_DE_FERIR(
             "Os primeiros Danos que você sofrer a cada Cena de Combate são reduzidos à metade. A "
                     + "quantidade de ataques que você pode reduzir danos desta forma é igual a "
@@ -307,8 +339,9 @@ public enum SobrevivenciaFeat implements Feat {
     //  ceiling is the lesser half: this is the catalog's *only* PA-ceiling clause and it is
     //  gated on "enquanto Permanecer Consciente estiver ativo", so a ceiling stage built today
     //  would have nothing that could ever switch it on. Build it with the active state above.
-    // TODO: disjunctive Pré-requisitos on both halves (Vigor *ou* Instinto 5; Duro de Ferir *ou*
-    //  Duro de Matar); modelled as the Vigor and Duro de Ferir branches.
+    // Both disjunctive Pré-requisitos are real. "Vigor ou Instinto 5" is two FeatRequirements
+    // #anyOf branches. "Duro de Ferir ou Duro de Matar" reduces to Duro de Matar alone, since
+    // DURO_DE_FERIR itself requires DURO_DE_MATAR.
     PERMANECER_CONSCIENTE(
             "Após ter seus PV reduzidos à zero ou menos você ainda pode agir por uma quantidade de "
                     + "Rodadas igual a 1 + quantidade de Títulos Aventyrs que possuir. Você não é "
@@ -316,14 +349,23 @@ public enum SobrevivenciaFeat implements Feat {
                     + "Consciente estiver ativo, seus PA são reduzidos à 2 e não podem ser "
                     + "aumentados por efeitos.",
             FeatRequirements.builder()
-                    .attributeDomain(AttributeDomain.VIGOR)
-                    .requiredAttributeValue(5)
-                    .requiredFeat(DURO_DE_FERIR)
+                    .alternative(FeatRequirements.builder()
+                            .attributeDomain(AttributeDomain.VIGOR)
+                            .requiredAttributeValue(5)
+                            .build())
+                    .alternative(FeatRequirements.builder()
+                            .attributeDomain(AttributeDomain.INSTINCT)
+                            .requiredAttributeValue(5)
+                            .build())
+                    .requiredFeat(DURO_DE_MATAR)
                     .requiredAwakenedTitles(1)
                     .build());
 
     /** MESTRE_DE_CACA's own stated "+1 número" to the Margem Crítica Menor. */
     private static final int MESTRE_DE_CACA_MARGIN_INCREASE = 1;
+
+    /** DOMINAR_ARMADURAS' own "bônus de +2 em suas Defesas" in the chosen armour tier. */
+    private static final int DOMINAR_ARMADURAS_DEFENSE_BONUS = 2;
 
     /**
      * Whether character holds {@link TerrenoPrediletoFeat} and sceneContext is currently that

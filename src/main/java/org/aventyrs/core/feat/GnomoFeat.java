@@ -45,6 +45,12 @@ public enum GnomoFeat implements Feat {
             FeatRequirements.builder()
                     .requiredRace(Gnomo.class)
                     .build()) {
+        /** "Apenas … recém-criados" — only a starting Talento slot can take it. */
+        @Override
+        public boolean isAcquirableOnlyAtCreation() {
+            return true;
+        }
+
         @Override
         public SizeCategory resolveSizeCategoryOverride(final Character character) {
             return SizeCategory.MINUS_TWO;
@@ -98,9 +104,9 @@ public enum GnomoFeat implements Feat {
     // builders-aren't-gatekeepers restraint.
     // TODO: the active half needs a temporary *ability* grant, which is a different mechanism
     //  from TemporaryBonus — that carries a ModifierType and a value, not a trait. Nothing can
-    //  add a SkillCompetencyAbility to a character for a limited time. It also needs a
-    //  per-Cena activation counter, which CharacterSheet does not track (it counts Rodadas via
-    //  TemporaryEffect, not activations, and has no notion of a Cena boundary).
+    //  add a SkillCompetencyAbility to a character for a limited time. (Its once-per-Cena limit
+    //  is not the blocker: CombatantSheet#getActionsThisCena and startNewScene give a Cena
+    //  boundary to count against.)
     MIMETIZAR_COMPETENCIA(
             "Efeito Passivo – Você adquire uma Habilidade de Competência de uma Perícia Treinada "
                     + "qual tenha pelo menos 2 Graduações. Efeito Ativo – Apenas uma vez por Cena, "

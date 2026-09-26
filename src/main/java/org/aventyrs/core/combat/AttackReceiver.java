@@ -177,6 +177,10 @@ public class AttackReceiver {
                     .nextInteraction(buildChain(attack, criticalEffectTriggered, effectChainTriggered,
                             criticalResult, auraHalvesDamage))
                     .build();
+            // An unstated Perícia is read as melee here, the same default the thorns above take.
+            result.onHitRetaliations(RetaliationResolver.resolveOnHit(defender, attack.getAttacker(),
+                    attack.getAttackSkill() == null ? SkillType.ATAQUE_CORPO_A_CORPO : attack.getAttackSkill(),
+                    attack.getAttackSource(), criticalResult != null && criticalResult.isCriticalFailure()));
             result.unappliedCriticalEffects(CriticalEffectResolver.resolve(attack.getAttacker(),
                     attack.getAttackSource(), attack.getAttackSkill(), criticalEffectTriggered ? criticalResult : null,
                     true, attack.getAdditionalCriticalEffectTypes(), attack.getDiceRoller(), false).unapplied());

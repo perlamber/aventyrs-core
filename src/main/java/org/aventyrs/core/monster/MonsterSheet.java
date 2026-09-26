@@ -316,9 +316,16 @@ public class MonsterSheet extends AbstractCombatantSheet {
         return getSkillDifficulty(SkillType.ATTENTION).getValue();
     }
 
+    /**
+     * The anatomy the stat block or blueprint states, plus whatever its held Habilidades grant
+     * (Anatomia Vegetal, Ascenção …) — the latter read through {@code AbstractCombatantSheet}, whose
+     * Raça half is empty for the {@code Monstruoso} race.
+     */
     @Override
     public Set<CriticalEffectType> getCriticalEffectImmunities() {
-        return criticalEffectImmunities;
+        Set<CriticalEffectType> all = new java.util.HashSet<>(criticalEffectImmunities);
+        all.addAll(super.getCriticalEffectImmunities());
+        return Set.copyOf(all);
     }
 
     /**

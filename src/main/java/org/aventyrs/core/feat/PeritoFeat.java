@@ -8,6 +8,8 @@ import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.skill.Skill;
 import org.aventyrs.core.skill.SkillTrait;
 import org.aventyrs.core.skill.SkillType;
+import org.aventyrs.core.skill.atletismo.AtletismoCompetencyAbility;
+import org.aventyrs.core.skill.atletismo.AtletismoSpecialization;
 
 /**
  * Talentos de Perito — depth in a chosen Perícia rather than breadth.
@@ -272,8 +274,10 @@ public enum PeritoFeat implements Feat {
     // three must come from Perícias the holder is trained in is not validated (the usual
     // builders-aren't-gatekeepers restraint). Elfo's Origem Mística and Anão's Pequenos Gigantes
     // are the same shape and still wait on a Race hook — Feat is the only granting path.
-    // TODO: "Personagens recém-criados" is a creation-time-only restriction with no
-    //  representation; FeatRequirements has no notion of when a Talento may be taken.
+    // TODO: "Personagens recém-criados ou Graduação 4 em 3 diferentes Perícias" — both branches
+    //  are missing. Feat#isAcquirableOnlyAtCreation is all-or-nothing, so it cannot be one
+    //  branch of a disjunction, and FeatRequirements cannot count Graduações across several
+    //  Perícias (see MAESTRIA_EM_PERICIA). The gate is open to anyone.
     TREINADO_EM_PERICIAS(
             "Escolha 3 Perícias que você possua Treinamento. Você pode escolher uma Especialização "
                     + "ou Habilidade de Competência de cada uma destas Perícias.",
@@ -351,20 +355,23 @@ public enum PeritoFeat implements Feat {
     /** "Você pode respirar na água por um curto período, ao custo de 1PD por Rodada." */
     // TODO: nothing tracks breathing (gap catalog, "Fadiga/asfixia"), so there is no drowning to
     //  be exempt from. The PD cost is spendable, but nothing would be bought with it.
-    // TODO: its Pré-requisito names an Especialização (Pulmão de Aço) alongside the Habilidade de
-    //  Competência; only the Habilidade is expressible.
+    // The Pré-requisito is real in full: Treinamento em Atletismo, the Especialização Pulmão de Aço
+    // and the Habilidade de Competência Anfíbio (FeatRequirements#requiredSkillTraits takes both).
     CRIANCA_DO_MAR(
             "Você pode respirar na água por um curto período, ao custo de 1PD por Rodada.",
             FeatRequirements.builder()
                     .requiredSkillType(SkillType.ATLETISMO)
                     .requiredSkillGraduation(1)
+                    .requiredSkillTrait(AtletismoSpecialization.PULMAO_DE_ACO)
+                    .requiredSkillTrait(AtletismoCompetencyAbility.ANFIBIO)
                     .build()),
 
     /** "Você é capaz de se mover e grudar em paredes e tetos, ao custo de 1PD por Rodada." */
     // TODO: climbing/vertical movement is a separate sub-stat deliberately not wired to
     //  ModifierType.MOVEMENT (see AtletismoCompetencyAbility#ALPINISTA_VELOZ), and this core
     //  never does geometry, so surfaces and orientation have no representation.
-    // TODO: Especialização Pré-requisito — see CRIANCA_DO_MAR.
+    // The Pré-requisito is real in full: Treinamento em Atletismo, the Especialização
+    // Levantamento de Peso and the Habilidade de Competência Alpinista Veloz.
     REI_DA_MONTANHA(
             "Como insetos, você é capaz de se mover e grudar em paredes e tetos, incluindo "
                     + "superfícies lisas e movimentos de cabeça para baixo, ao custo de 1PD por "
@@ -372,6 +379,8 @@ public enum PeritoFeat implements Feat {
             FeatRequirements.builder()
                     .requiredSkillType(SkillType.ATLETISMO)
                     .requiredSkillGraduation(1)
+                    .requiredSkillTrait(AtletismoSpecialization.LEVANTAMENTO_DE_PESO)
+                    .requiredSkillTrait(AtletismoCompetencyAbility.ALPINISTA_VELOZ)
                     .build());
 
     /** CONTROLE_DA_SITUACAO's own stated "+2" to the Margem Crítica. */

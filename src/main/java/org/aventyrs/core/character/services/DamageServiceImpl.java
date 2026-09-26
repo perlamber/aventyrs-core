@@ -297,7 +297,15 @@ public class DamageServiceImpl implements DamageService {
                                     final CombatantSheet source,
                                     final int rawDamage, final boolean ignoreDamageReduction,
                                     final boolean attackHalvesDamage) {
+        // An immunity ("Imunidade ao Elemento escolhido") is judged before anything else: there is
+        // nothing left for RD, RA or a Meio-Dano to act on, and no Pele de Pedra is spent on it.
+        if (target != null && target.isImmuneToDamage(damageType, damageDescriptor)) {
+            return 0;
+        }
         final boolean halfDamage = attackHalvesDamage
+                // A Meio-Dano limited to a DamageScope (an element, physical or magic damage only),
+                // held by a Habilidade or a timed DamageScopeEffect.
+                || (target != null && target.halvesDamage(damageType, damageDescriptor))
                 || sumAcrossSources(character, ModifierType.HALF_DAMAGE, target) > 0
                 // A timed Meio-Dano grant (SantoAbility#PROTECAO_UNGIDA's 3 Rodadas), the
                 // TemporaryBonus twin of the passive scan above and of the timed RA branch in
@@ -421,6 +429,10 @@ public class DamageServiceImpl implements DamageService {
             for (Blessing blessing : ability.resolveDamageTakenBlessings(target, finalDamage)) {
                 granted.add(target.grantBlessing(blessing));
             }
+        }
+        // A held Habilidade's own reaction to being hurt (Adaptação Milagrosa's 1d6 regeneration).
+        for (org.aventyrs.core.ability.AttributeAbility ability : character.getAttributeAbilities()) {
+            ability.resolveDamageTakenEffects(target, finalDamage).forEach(target::applyEffect);
         }
         return granted;
     }

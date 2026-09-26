@@ -337,8 +337,11 @@ public enum DestinoFeat implements Feat {
                     .build()),
 
     /** "Você pode reduzir o Tempo de Ativação de suas Habilidades de Título em -1PA." */
-    // TODO: a Habilidade de Título's activation cost is not modelled — AventyrTitleAbility
-    //  reports whether it is passive, not what activating it costs.
+    // TODO: the price is modelled now — AventyrTitleAbility#getActionPointCost/#getPDCost, paid by
+    //  AbstractTitleAbilityInteraction#activate — but nothing lets a Talento adjust it. The
+    //  activation reads only the ability's own declared cost, and "você pode reduzir … em -1PA"
+    //  is an opt-in per activation that the activation request has no field for. ("Uma vez a cada
+    //  Rodada" would then be CombatantSheet#countActivationsThisTurn / the action log.)
     ACELERAR_HABILIDADE(
             "Você pode reduzir o Tempo de Ativação de suas Habilidades de Título em -1PA, acelerar "
                     + "Habilidades aumenta o Custo de Ativação da Habilidade em +2PD. Este efeito "
@@ -348,8 +351,8 @@ public enum DestinoFeat implements Feat {
                     .build()),
 
     /** "Durante a Ativação de uma Habilidade você pode aumentar seu Custo em +2PD, se o fizer a Duração da Habilidade é aumentada em +2 Unidades." */
-    // TODO: same missing activation cost as ACELERAR_HABILIDADE, and a Habilidade's Duração is
-    //  likewise not a modelled value.
+    // TODO: same missing opt-in cost adjustment as ACELERAR_HABILIDADE. A Habilidade de Título's
+    //  Duração is also not a declared value: each Interaction hard-codes its own.
     CENTELHA_DURADOURA(
             "Durante a Ativação de uma Habilidade você pode aumentar seu Custo em +2PD, se o fizer "
                     + "a Duração da Habilidade é aumentada em +2 Unidades.",

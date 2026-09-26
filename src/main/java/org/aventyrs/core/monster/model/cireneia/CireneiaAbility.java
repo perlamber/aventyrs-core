@@ -5,6 +5,9 @@ import org.aventyrs.core.ability.ActiveAbility;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.monster.MonsterCategory;
+import org.aventyrs.core.monster.model.AbilityContext;
+import org.aventyrs.core.monster.model.ChoiceSpec;
+import org.aventyrs.core.monster.model.ImplementationStatus;
 import org.aventyrs.core.monster.model.MonsterModel;
 import org.aventyrs.core.monster.model.MonstrousAbility;
 import org.aventyrs.core.monster.model.MonstrousActiveAbility;
@@ -56,15 +59,14 @@ public enum CireneiaAbility implements MonstrousAbility {
                     + "Aprimoramentos dos Apex\n"
                     + "• Impulso - Bônus de Destreza muda para +6.") {
         @Override
-        public Map<AttributeDomain, Integer> resolveRacialAttributeBonuses(final MonsterCategory category,
-                                                                            final String choice) {
-            return Map.of(AttributeDomain.DEXTERITY, category.isAtLeast(PREDADOR) ? 4 : 2);
+        public Map<AttributeDomain, Integer> resolveRacialAttributeBonuses(final AbilityContext context) {
+            return Map.of(AttributeDomain.DEXTERITY, context.isAtLeast(PREDADOR) ? 4 : 2);
         }
 
         @Override
-        public List<ActiveAbility> resolveActiveAbilities(final MonsterCategory category, final String choice) {
-            int bonus = category.isAtLeast(APEX) ? 6 : 3;
-            int duration = category.isAtLeast(DEVIANTE) ? 5 : 3;
+        public List<ActiveAbility> resolveActiveAbilities(final AbilityContext context) {
+            int bonus = context.isAtLeast(APEX) ? 6 : 3;
+            int duration = context.isAtLeast(DEVIANTE) ? 5 : 3;
             return List.of(MonstrousActiveAbility.builder()
                     .name("Impulso")
                     .description("Apenas uma vez por Cena, com Duração de " + duration
@@ -88,31 +90,31 @@ public enum CireneiaAbility implements MonstrousAbility {
                     + "Aprimoramentos dos Apex\n"
                     + "• Movimento Base +2, Inciativa +2.") {
         @Override
-        public int resolveModifier(final ModifierType type, final MonsterCategory category, final String choice) {
+        public int resolveModifier(final ModifierType type, final AbilityContext context) {
             return switch (type) {
-                case MOVEMENT -> category.isAtLeast(APEX) ? 5 : 3;
-                case INITIATIVE -> (category.isAtLeast(DEVIANTE) ? 2 : 0) + (category.isAtLeast(APEX) ? 2 : 0);
+                case MOVEMENT -> context.isAtLeast(APEX) ? 5 : 3;
+                case INITIATIVE -> (context.isAtLeast(DEVIANTE) ? 2 : 0) + (context.isAtLeast(APEX) ? 2 : 0);
                 default -> 0;
             };
         }
 
         @Override
-        public int resolveChargeAttackBonus(final MonsterCategory category) {
+        public int resolveChargeAttackBonus(final AbilityContext context) {
             return Skill.ADVANTAGE_BONUS;
         }
 
         @Override
-        public int resolveChargeDamageBonus(final MonsterCategory category) {
+        public int resolveChargeDamageBonus(final AbilityContext context) {
             return Skill.ADVANTAGE_BONUS;
         }
 
         @Override
-        public boolean chargesAlwaysHit(final MonsterCategory category) {
-            return category.isAtLeast(PREDADOR);
+        public boolean chargesAlwaysHit(final AbilityContext context) {
+            return context.isAtLeast(PREDADOR);
         }
 
         @Override
-        public List<ActiveAbility> resolveActiveAbilities(final MonsterCategory category, final String choice) {
+        public List<ActiveAbility> resolveActiveAbilities(final AbilityContext context) {
             return List.of(MonstrousActiveAbility.builder()
                     .name("Aceleração")
                     .description("Iniciativa +5 por 2 Rodadas.")
@@ -134,17 +136,17 @@ public enum CireneiaAbility implements MonstrousAbility {
                     + "• PA +1\n"
                     + "• Celeridade Mór – Custo muda para 2PD.") {
         @Override
-        public int resolveModifier(final ModifierType type, final MonsterCategory category, final String choice) {
+        public int resolveModifier(final ModifierType type, final AbilityContext context) {
             if (type != ModifierType.ACTION_POINTS) {
                 return 0;
             }
-            return category.isAtLeast(APEX) ? 2 : 1;
+            return context.isAtLeast(APEX) ? 2 : 1;
         }
 
         @Override
-        public List<ActiveAbility> resolveActiveAbilities(final MonsterCategory category, final String choice) {
-            int cooldown = category.isAtLeast(PREDADOR) ? 1 : 2;
-            int cost = category.isAtLeast(APEX) ? 2 : 3;
+        public List<ActiveAbility> resolveActiveAbilities(final AbilityContext context) {
+            int cooldown = context.isAtLeast(PREDADOR) ? 1 : 2;
+            int cost = context.isAtLeast(APEX) ? 2 : 3;
             return List.of(MonstrousActiveAbility.builder()
                     .name("Celeridade Mór")
                     .description("PA +2 neste Turno. Resfriamento " + cooldown + ".")
@@ -164,19 +166,19 @@ public enum CireneiaAbility implements MonstrousAbility {
                     + "Aprimoramentos dos Apex\n"
                     + "• +1 Reação ou +1 Ação Livre.") {
         @Override
-        public List<String> getChoiceOptions() {
-            return List.of(REACTION_CHOICE, FREE_ACTION_CHOICE);
+        public List<ChoiceSpec> getChoiceSpecs(final MonsterCategory category) {
+            return List.of(ChoiceSpec.one(BONUS_CHOICE, List.of(REACTION_CHOICE, FREE_ACTION_CHOICE)));
         }
 
         @Override
-        public int resolveModifier(final ModifierType type, final MonsterCategory category, final String choice) {
-            ModifierType chosen = FREE_ACTION_CHOICE.equals(choice) ? ModifierType.FREE_ACTIONS : ModifierType.REACTIONS;
+        public int resolveModifier(final ModifierType type, final AbilityContext context) {
+            ModifierType chosen = FREE_ACTION_CHOICE.equals(context.pick(BONUS_CHOICE)) ? ModifierType.FREE_ACTIONS : ModifierType.REACTIONS;
             ModifierType other = chosen == ModifierType.REACTIONS ? ModifierType.FREE_ACTIONS : ModifierType.REACTIONS;
             int total = 0;
             if (type == chosen) {
-                total += 1 + (category.isAtLeast(APEX) ? 1 : 0);
+                total += 1 + (context.isAtLeast(APEX) ? 1 : 0);
             }
-            if (type == other && category.isAtLeast(PREDADOR)) {
+            if (type == other && context.isAtLeast(PREDADOR)) {
                 total += 1;
             }
             return total;
@@ -192,7 +194,7 @@ public enum CireneiaAbility implements MonstrousAbility {
                     + "• Sonido – Tempo de Ativação muda para Desprezível, Custo muda para 0PD.") {
         @Override
         public int resolveSkillLevelShift(final SkillType skill, final AttributeDomain governingAttribute,
-                                          final MonsterCategory category) {
+                                          final AbilityContext context) {
             return governingAttribute == AttributeDomain.DEXTERITY ? 1 : 0;
         }
 
@@ -203,15 +205,15 @@ public enum CireneiaAbility implements MonstrousAbility {
          * Abominação it becomes "Desprezível" and free.
          */
         @Override
-        public List<ActiveAbility> resolveActiveAbilities(final MonsterCategory category, final String choice) {
-            boolean abomination = category.isAtLeast(MonsterCategory.ABOMINACAO);
+        public List<ActiveAbility> resolveActiveAbilities(final AbilityContext context) {
+            boolean abomination = context.isAtLeast(MonsterCategory.ABOMINACAO);
             return List.of(MonstrousActiveAbility.builder()
                     .name("Sonido")
                     .description("Deve ser ativado juntamente com outra ação; esta ação não permite Reações.")
                     .actionPointCost(abomination ? ActionCost.NONE : ActionCost.ofActionPoints(1))
                     .determinationPointCost(abomination ? 0 : 2)
                     .durationInRounds(1)
-                    .cooldownRounds(category.isAtLeast(APEX) ? 1 : 2)
+                    .cooldownRounds(context.isAtLeast(APEX) ? 1 : 2)
                     .build());
         }
     },
@@ -232,14 +234,11 @@ public enum CireneiaAbility implements MonstrousAbility {
                     + "• Ofuscar – Duração muda para 1 Rodada e adicionalmente afeta as Defesas contra os ataques Corpo-a-Corpo.\n"
                     + "Aprimoramentos das Abominações\n"
                     + "• Ofuscar – Se torna um efeito Passivo, sempre ativo.") {
-        @Override
-        public boolean isImplemented() {
-            return false;
-        }
+
 
         @Override
-        public List<ActiveAbility> resolveActiveAbilities(final MonsterCategory category, final String choice) {
-            if (category.isAtLeast(MonsterCategory.ABOMINACAO)) {
+        public List<ActiveAbility> resolveActiveAbilities(final AbilityContext context) {
+            if (context.isAtLeast(MonsterCategory.ABOMINACAO)) {
                 return List.of();
             }
             return List.of(MonstrousActiveAbility.builder()
@@ -266,7 +265,7 @@ public enum CireneiaAbility implements MonstrousAbility {
                     + "Aprimoramentos das Abominações\n"
                     + "• Ofuscar – Se torna um efeito Passivo, sempre ativo.") {
         @Override
-        public List<ActiveAbility> resolveActiveAbilities(final MonsterCategory category, final String choice) {
+        public List<ActiveAbility> resolveActiveAbilities(final AbilityContext context) {
             return List.of(MonstrousActiveAbility.builder()
                     .name("Aura do Paradoxo")
                     .description("Enquanto houver pelo menos 1 personagem em Distância Curta sem Aura do Paradoxo, "
@@ -290,10 +289,13 @@ public enum CireneiaAbility implements MonstrousAbility {
                     + "Aprimoramentos das Abominações\n"
                     + "• Área de Efeito muda para Distância Longa e pode ser utilizado para pungar efeitos Temporais e Planares de personagens Apex, mas não de outra Abominações.") {
         @Override
-        public boolean isImplemented() {
-            return false;
+        public ImplementationStatus getImplementationStatus() {
+            return ImplementationStatus.TABLE_ONLY;
         }
     };
+
+    /** {@link #RELAMPEJANTE}'s one {@link ChoiceSpec}: which counter the passive raises. */
+    public static final String BONUS_CHOICE = "bonus";
 
     /** {@link #RELAMPEJANTE}'s pick: the extra Reação. */
     public static final String REACTION_CHOICE = "REACTIONS";
@@ -319,8 +321,24 @@ public enum CireneiaAbility implements MonstrousAbility {
         return MonsterModel.ABENCOADO_DE_CIRENEIA;
     }
 
+    /** APPLIED when every clause is, PARTIAL when {@link #getUnappliedNote()} names one that isn't. */
     @Override
-    public boolean isImplemented() {
-        return true;
+    public ImplementationStatus getImplementationStatus() {
+        return getUnappliedNote() == null ? ImplementationStatus.APPLIED : ImplementationStatus.PARTIAL;
+    }
+
+    @Override
+    public String getUnappliedNote() {
+        return switch (this) {
+            case MOVIMENTO_APRIMORADO -> "Vantagem and \"sempre acertam\" on an Investida are computed, not applied: "
+                    + "IncomingAttack has no Investida flag.";
+            case LIBERDADE_SELVAGEM -> "Sonido's \"não permite Reações\": no action records whether it may be reacted to.";
+            case OFUSCAR -> "The Corrente de Efeitos Ofuscar and the -2 Resistência à Correntes de Efeitos: no Corrente "
+                    + "reaches a target, and Resistência à Correntes de Efeitos has no number.";
+            case AURA_DO_PARADOXO -> "Only the monster's own +2PA: the range condition and the -2PA on everyone else "
+                    + "are geometry.";
+            case PREFERIDO_DE_CIRENEIA -> "No Efeito is tagged Temporal or Planar, so there is nothing to redirect.";
+            default -> null;
+        };
     }
 }

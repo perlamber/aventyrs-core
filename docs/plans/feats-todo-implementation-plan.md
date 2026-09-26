@@ -6,6 +6,51 @@ mechanics** catalogued in `CLAUDE.md` ("Missing systems — the gap catalog"). T
 the work by that mechanic, orders the groups by dependency and return-on-effort, and says which
 constants each group lands.
 
+## Status — re-based 2026-09-26
+
+Phases 1–5 are done (below). The engine grew a lot after this plan was written (0.0.42–0.0.58):
+the hex grid, Terreno Difícil, Reposicionar and Investida (most of Phase 7); `Retaliation` and
+`AuraTargeting` (part of Phase 9); the action log and per-ability activation count; a Escudo
+catalog; `anyOf`, Especialização prerequisites and `isAcquirableOnlyAtCreation`. The open work is
+re-ordered as:
+
+| Order | Phase | Was | State |
+| --- | --- | --- | --- |
+| A | Stale-TODO sweep | Phase 0 | **First pass done (0.0.61)** — 312 → 286 TODO lines; see `0.061.CHANGELOG.md` |
+| B | Small hooks with ≥2 consumers | new | open — list below |
+| C | Flight / swim / climb axes | Phase 6 | open |
+| D | Damage types | Phase 8 | open |
+| E | Área de Efeito, outward damage, reverse retaliation | Phase 9 (+ rest of 7) | open |
+| F | Spellcasting extensions | Phase 10 | open |
+| I | Racial traits that Talentos extend | new | open |
+| H | Título / Destino / Vampiro | Phase 12 | open |
+| G | Montaria / veículo | Phase 11 | open, lowest priority |
+
+**Phase B candidates** (each already has two or more consumers):
+- A `Feat` Iniciativa hook — `MobilidadeFeat#INICIATIVA_APRIMORADA`, `#LIDERAR_O_AVANCO`,
+  `EscudeiroFeat#ESCUDO_VELOZ` (whose Escudo condition is testable now).
+- A permanent Ego point from a Talento — `MobilidadeFeat#SE_MOVER_E_ATACAR`,
+  `SobrevivenciaFeat#SORTE_DE_MOSES`, `#DETERMINACAO_DE_MOSES`.
+- A held trait suppressing a Condição or an implied one — `ArtesMarciaisFeat#…SUBMISSAO`,
+  `DuelistaFeat#COMBATER_AS_CEGAS`, `MonstruosoFeat#FEROCIDADE`, `VidaSpell#CORPO_FECHADO`.
+- A Reação ledger (spent this Rodada) — every "exempt from Reação" clause, `EscudeiroFeat#MESTRE_ESCUDEIRO`.
+
+**Found during the Phase A sweep**, each with a single consumer so far — revisit when a second
+appears:
+- A per-cast opt-in on `SpellCastRequest`, like `SkillRoll#getActivatedFeats` —
+  `MetamagicoFeat#CONJURACAO_RAPIDA` and `#PROCRASTINAR_CONJURACAO` (two, so Phase F material).
+- A sheet-aware `Feat` PA hook — `PequeninoFeat#HIPERATIVIDADE` (derivable from the action log).
+- An end-of-Turn `Feat` trigger — `EscudeiroFeat#DEFESA_TARTARUGA`.
+- A per-Cena count of hits suffered — `SobrevivenciaFeat#DURO_DE_FERIR`.
+- A Talento adjusting a Título activation's price — `DestinoFeat#ACELERAR_HABILIDADE`,
+  `#CENTELHA_DURADOURA` (two: Phase H).
+- `SkillRoll` handed to `CriticalService#sumCriticalMarginIncrease` — `ArtesMarciaisFeat#…TIGRE_E_SERPENTE`.
+- An element column on the six Mestiço Elemental races — gates the whole `ElementalFeat` tree (Phase D prelude).
+- `HomemFera`'s Forma Híbrida as an `ActiveAbility`, plus a `Race` active-ability hook — `FeralFeat`
+  ×3 (Phase I).
+- Missing authored Correntes (only `Definhar`/`Sobrecura` exist): Rugido, Oprimir, Golpe
+  Trovejante, Ferida Infecciosa, Enrijecer Musculatura, Explosão Cataclísmica.
+
 ## How to read this
 
 - A **phase** builds one or a few related mechanics, then wires *every* constant that was only
@@ -22,7 +67,7 @@ constants each group lands.
 
 ---
 
-## Phase 0 — Stale-TODO reconciliation sweep
+## Phase 0 — Stale-TODO reconciliation sweep — **first pass done (0.0.61)**
 
 **No new mechanics.** Several hooks named as "missing" in TODO prose already exist; the memory
 note *"Stale TODOs"* and `CLAUDE.md`'s TODO-discipline bullet both call this out. Walk every

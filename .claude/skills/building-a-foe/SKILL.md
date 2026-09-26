@@ -61,32 +61,45 @@ validate — an over-budget monster still plays, like the builder-bypassable `Ch
 Atributo/GD ceilings are `MonsterKind#bonusMaximumAttribute`/`bonusMaximumSkillSteps`. Change them
 there.
 
-## 2. Implementing a Modelo — follow `CireneiaAbility`
+## 2. Implementing or extending a Modelo
 
-Every Modelo is an enum implementing `MonstrousAbility`, one constant per Habilidade, linked from
-`MonsterModel` by a `Supplier` of `values()` (a direct array would deadlock the two enums' class
-init). Five Modelos are **catalog-only** (`isImplemented() == false`): name, tier and rules text,
-generated from the rules file. To build one:
+All six Modelos are implemented, each an enum implementing `MonstrousAbility` (`CireneiaAbility`,
+`AlmaElementalAbility`, `AspectoHumanoideAbility`, `MutanteMonstruosoAbility`, `BestaAladaAbility`,
+`BrotosDeMapinguariAbility`), linked from `MonsterModel` by a `Supplier` of `values()`. Every hook
+takes an **`AbilityContext`** — the holder's Categoria plus its picks — so gate each
+Aprimoramento with `context.isAtLeast(…)`.
 
-1. Override the hooks on each constant, **gating every Aprimoramento with
-   `category.isAtLeast(…)`** — a held Habilidade grows with its holder; nothing is re-acquired.
-   - `resolveModifier(type, category, choice)` — a permanent number on a `ModifierType`. It
-     reaches every service through `MonstrousAbilityGrant`, an `AttributeAbility` adapter with one
-     `@Modifier` method per supported type. **If your `ModifierType` isn't there, add its method**
-     — `ModifierResolverImpl` indexes *declared* methods only.
-   - `resolveRacialAttributeBonuses` — "Bônus Racial de X +N", folded into the Atributo's racial
-     half at spawn.
-   - `resolveSkillLevelShift` — "Perícias baseadas em X GD +1".
-   - `resolveActiveAbilities` — build `MonstrousActiveAbility`s (price, PD, Duração,
-     Resfriamento, `Supplier<TemporaryEffect>`s). **Suppliers, because a `TemporaryEffect` ticks
-     down and must be fresh per activation.** "Uma vez por Cena" is `cooldownRounds(ONCE_PER_SCENE)`,
-     cleared by `MonsterSheet#beginScene`.
-   - A choice ("+1 Reação ou +1 Ação Livre", "Escolha um Elemento") lists its options in
-     `getChoiceOptions()`; the pick is a plain string on `MonstrousAbilitySelection`.
-2. Override `isImplemented()` to `true` on the enum, and back to `false` on any constant whose
-   effect this core genuinely can't land — with a TODO naming the missing system (see the
-   "Habilidades Monstruosas" gap row in `CLAUDE.md`).
-3. A monster never rolls: "Vantagem nas rolagens de Ataque" becomes +2 on the GD it presents.
+- **Picks** are `getChoiceSpecs(category)` → `ChoiceSpec(id, options, count)`; the count may grow
+  with the Categoria. The picks travel as `Map<String, List<String>>` on
+  `MonstrousAbilitySelection`; read them with `context.pick(id[, Enum.class])`/`picks(…)`.
+  `MonsterRules.validate` checks each spec's count, options and distinctness.
+- **Numbers** reach the stat services through `MonstrousAbilityGrant` (an `AttributeAbility`):
+  `resolveModifier` for `@Modifier` types (add a method there for a new `ModifierType` —
+  `ModifierResolverImpl` only indexes *declared* methods), and forwarded anatomy hooks: RE,
+  scoped Meio-Dano / immunity / vulnerability (`DamageScope`), Efeitos Críticos, Resistência a
+  Críticos, Condição immunity, Armas Naturais, flight, damage-taken effects. Those hooks live on
+  `AttributeAbility` and are read by `AbstractCombatantSheet`/`DamageServiceImpl`, so they work on
+  any sheet — including a client that wraps the monster's `Character` in a `CharacterSheet`.
+- **Build-time grants**: `resolveStandingEffects` (open-ended `Regeneration.openEnded`, `LifeSteal`,
+  `RecurringDice`), `resolveGrantedSpells`, `resolveGrantedFeats`, `resolveBonusFeatSlots`,
+  `resolveAllowedFeatCategories`. `MonsterBlueprint#applyStandingEffects` applies the standing ones;
+  `spawn` calls it, and so must any caller building its own sheet from `buildCharacter()`.
+- **Actives** are `MonstrousActiveAbility`s: price, Duração, Resfriamento (`ONCE_PER_SCENE`), effects
+  as `Supplier<TemporaryEffect>` (fresh per activation), `usableWhen` (a precondition checked before
+  any cost), `onActivated` (landing, lifting Condições), and **dice**.
+- **Dice: the caller rolls, core applies.** Never add a random source. An active declaring `dice(…)`
+  must be activated through `ActiveAbilityService#activate(…, List<Integer> faces)`; the faces are
+  validated before any cost, and `onRolled` receives the total. A per-Rodada roll is a
+  `RecurringDice`: it queues a `PendingDiceRoll` each Rodada, and the caller hands the faces to
+  `CombatantSheet#resolveDiceRoll`, which heals or damages through `DamageService`.
+- **Flight** is `CombatantSheet#isFlying()`/`setFlying(boolean)`; "enquanto voando" clauses are
+  `resolveWhileFlyingEffects`, applied on take-off and lifted on landing; `keepsFlying` never lands.
+- **A trait two Habilidades share** (Anatomia Vegetal) names a `sharedTraitKey()`; only the first
+  holder gets `context.ownsSharedTraits()` — grant the non-idempotent parts (Bônus Racial, RC) only then.
+- **Timed GD steps** are `SkillDifficultyShift` effects, read by `MonsterRules`' live GD path.
+- **Status**: derive it from the note (`getUnappliedNote() == null ? APPLIED : PARTIAL`), and write a
+  note for every clause you leave out, naming the system that's missing. `MonsterModelTest` fails a
+  non-APPLIED Habilidade with no note.
 
 ## 3. The fixed-stat-block path
 
@@ -130,7 +143,9 @@ builds its own.
   `twoSpawnsFromOneBlueprintAreFullyIndependent`. See `MonsterRulesTest`, `MonsterBlueprintTest`.
 - A Modelo: each Habilidade at each tier boundary its Aprimoramentos name, plus one test driving
   an active through `ActiveAbilityServiceImpl` and reading the result from the real service. See
-  `CireneiaAbilityTest`.
+  `CireneiaAbilityTest` and the five sibling `*AbilityTest`s, built on `monster.model.MonsterTestKit`
+  (`spawn(gp, selections…)`, `held(sheet, name)`, `finalDamage(sheet, type, element)`).
+- The shared pieces: `MonsterExtensionsTest` (dice, scoped mitigation, pick validation).
 - `MonsterModelTest` sweeps the catalog (8 Habilidades each, two Presa, back-links) — a new
   Modelo is picked up automatically.
 - Keep `SampleMonster` legal: `MonsterRulesTest#everySampleIsLegal`.

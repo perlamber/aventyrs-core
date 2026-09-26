@@ -621,9 +621,12 @@ public class Character {
     // wherever one is in hand. This method deliberately stays Forma-blind rather than growing an
     // overload: it is what a Character is, not what a combatant currently looks like.
     public List<NaturalWeapon> getNaturalWeapons() {
-        return Stream.concat(
+        return Stream.of(
                         getFeats().stream().flatMap(feat -> feat.getGrantedNaturalWeapons(this).stream()),
-                        race == null ? Stream.empty() : race.getGrantedNaturalWeapons().stream())
+                        race == null ? Stream.<NaturalWeapon>empty() : race.getGrantedNaturalWeapons().stream(),
+                        // A Habilidade Monstruosa's Arma Natural ("Escolha uma Arma Natural").
+                        getAttributeAbilities().stream().flatMap(ability -> ability.getGrantedNaturalWeapons().stream()))
+                .flatMap(stream -> stream)
                 .distinct()
                 .toList();
     }

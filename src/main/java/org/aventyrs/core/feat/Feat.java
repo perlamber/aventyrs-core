@@ -1,5 +1,6 @@
 package org.aventyrs.core.feat;
 
+import org.aventyrs.core.combat.Retaliation;
 import org.aventyrs.core.ability.ActiveAbility;
 import org.aventyrs.core.ability.AttributeAbility;
 import org.aventyrs.core.character.AttributeDomain;
@@ -854,6 +855,32 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     default List<EffectChain> resolveEffectChains(final Character attacker, final SkillType attackSkill,
                                                   final AttackSource attackSource) {
         return List.of();
+    }
+
+    /**
+     * What this Talento deals back to someone who just landed a melee attack on its holder, or
+     * {@code null} when it deals nothing. {@code DuelistaFeat#CORACAO_DE_FERRO} ("Sempre que um
+     * atacante Corpo-a-Corpo lhe infligir danos físicos ele também sofre 1 ponto de Dano Físico")
+     * and {@code MonstruosoFeat#SANGUE_ACIDO} are the consumers.
+     *
+     * <p>Scanned by {@code RetaliationResolver#resolveOnHit} only for an Ataque Corpo-a-Corpo that
+     * <b>landed</b>, so an override tests neither. That is the difference from the thorns a
+     * {@code ModifierType#RETALIATION_DAMAGE} bonus grants, which answer "atacarem" and are
+     * reported hit or miss. ⚠️ "Lhe infligir danos" is read as the hit landing: whether mitigation
+     * later absorbed all of it is decided after this report, so the caller skips the retaliation
+     * when the hit dealt nothing.
+     *
+     * <p><b>Reported, never dealt</b>, like every {@code Retaliation}: the caller applies it
+     * against the attacker's own sheet, so the attacker's own RD judges it.
+     *
+     * @param holder       the defender holding this Talento
+     * @param attackSource what the attacker struck with, or {@code null} when the caller didn't say
+     * @param attacker     the attacker, or {@code null} when unknown
+     * @param criticalHit  whether the attack was the attacker's Acerto Crítico
+     */
+    default Retaliation resolveRetaliation(final Character holder, final AttackSource attackSource,
+                                           final Character attacker, final boolean criticalHit) {
+        return null;
     }
 
     /**

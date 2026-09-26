@@ -63,6 +63,9 @@ mechanism.
   to a critical hit — `AttackDelivery` scans it, `AssassinoFeat#ABRIR_FERIDAS`), and
   `resolveDefeatBlessings(attacker, defeated, viaCriticalHit)` (`Blessing`s the moment one of the
   holder's attacks drops a foe — `DefeatBlessingService`, caller-driven),
+  `resolveRetaliation(holder, attackSource, attacker, criticalHit)` (a `Retaliation` dealt back to
+  whoever *landed* a melee attack on the holder — reported on `getOnHitRetaliations()`, never
+  dealt; `DuelistaFeat#CORACAO_DE_FERRO`, `MonstruosoFeat#SANGUE_ACIDO`),
   `getGrantedNaturalWeapons(Character[, CombatantSheet])` (`NaturalWeapon`s — the short form feeds
   `Character#getNaturalWeapons()`, the Forma-blind "out of any shape" view; the **longer form**
   feeds `CombatantSheet#getNaturalWeapons()` and is what a per-Forma grant overrides, leaving the
@@ -250,8 +253,12 @@ lifts it. `PequeninoFeat`/`HumanoFeat`/`GiganteFeat`/`GorgonaFeat`/`MobilidadeFe
 A pair whose text runs one way only (`FeericoFeat#SIRENIDEO` forbids `PIXIE`, not the reverse)
 needs neither, since a backward reference is legal.
 
-**What a Pré-requisito still cannot say**, and what to do instead: "personagens recém-criados"
-(nothing records creation time); a *second* Perícia Graduação (the pair is singular); a constraint
+**"Apenas … recém-criados"** is `isAcquirableOnlyAtCreation()` returning true — asked of the
+catalog constant, so a choice-carrying form needn't repeat it. It is all-or-nothing, so it cannot
+be one branch of a disjunction.
+
+**What a Pré-requisito still cannot say**, and what to do instead: "recém-criados" as one branch
+of an `anyOf`; a *second* Perícia Graduação (the pair is singular); a constraint
 on another held Talento's recorded *choice*; a cap on how many of a family may be held at once.
 The last three are `isEligible(Character, CharacterSheet)` overrides — override **that** form,
 not the 1-arg one, or `grantFeat` will not reach your check.

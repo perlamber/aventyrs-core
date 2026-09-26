@@ -99,6 +99,15 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     @Getter(AccessLevel.NONE)
     private final List<TemporaryEffect> temporaryEffects = new ArrayList<>();
 
+    /** Whether the caller or an Efeito Ativo put this combatant in the air — see {@link #isFlying()}. */
+    private boolean flying;
+
+    /** The effects taking off applied, lifted by identity on landing — see {@link #setFlying}. */
+    private final List<TemporaryEffect> flightEffects = new ArrayList<>();
+
+    /** Dice a {@link RecurringDice} owes, waiting for the caller to roll them. */
+    private final List<PendingDiceRoll> pendingDiceRolls = new ArrayList<>();
+
     /**
      * The Itens this sheet's {@link #getCharacter()} owns but currently isn't wearing/wielding —
      * where an {@link Item} lands the moment it's bought (or otherwise acquired), via {@link
@@ -1143,10 +1152,15 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         // Half of the anatomy pair, and so silenced from PHYSICAL upward: a Troll passing for
         // human has no vegetal anatomy to shrug a Sangramento off with. Empty rather than a
         // filtered set, since the Race is the only source there is.
+        // A held Habilidade's immunities (Anatomia Vegetal, Fisiologia Estranha …) are not racial
+        // traits, so they survive a suppression the Raça's own do not.
+        Set<CriticalEffectType> fromAbilities = new HashSet<>();
+        getCharacter().getAttributeAbilities().forEach(ability -> fromAbilities.addAll(ability.resolveCriticalEffectImmunities()));
         if (getRacialTraitSuppression().suppressesPhysicalTraits()) {
-            return Set.of();
+            return Set.copyOf(fromAbilities);
         }
-        return getCharacter().getRace().getCriticalEffectImmunities();
+        fromAbilities.addAll(getCharacter().getRace().getCriticalEffectImmunities());
+        return Set.copyOf(fromAbilities);
     }
 
     /**
@@ -1160,7 +1174,8 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         boolean withinTitleWindow = sceneContext != null && getCharacter().getAllTitles().stream()
                 .anyMatch(title -> sceneContext.isWithinFirstCombatRounds(title.resolveMinorCriticalImmunityRounds()));
         return withinTitleWindow
-                || getCharacter().getFeats().stream().anyMatch(Feat::ignoresMinorCriticalEffects);
+                || getCharacter().getFeats().stream().anyMatch(Feat::ignoresMinorCriticalEffects)
+                || getCharacter().getAttributeAbilities().stream().anyMatch(AttributeAbility::ignoresMinorCriticalEffects);
     }
 
     /**
@@ -1668,6 +1683,11 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         if (condition.getType() == ConditionType.AMALDICOADO && isWardedAgainstEnchantments()) {
             return;
         }
+        // "Não pode ser agarrado, empurrado ou derrubado", "imunes a efeitos de Medo" — a held
+        // Habilidade that refuses this Condição outright.
+        if (isImmuneToCondition(condition.getType())) {
+            return;
+        }
         removeCondition(condition.getType());
         temporaryEffects.add(condition);
     }
@@ -1966,8 +1986,10 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     @Override
     public List<NaturalWeapon> getNaturalWeapons() {
         Character character = getCharacter();
-        Stream<NaturalWeapon> fromFeats = character.getFeats().stream()
-                .flatMap(feat -> feat.getGrantedNaturalWeapons(character, this).stream());
+        Stream<NaturalWeapon> fromFeats = Stream.concat(
+                character.getFeats().stream().flatMap(feat -> feat.getGrantedNaturalWeapons(character, this).stream()),
+                // A Habilidade Monstruosa's Arma Natural — not a racial trait, so not suppressible either.
+                character.getAttributeAbilities().stream().flatMap(ability -> ability.getGrantedNaturalWeapons().stream()));
         if (getRacialTraitSuppression().suppressesNaturalWeapons() || character.getRace() == null) {
             return fromFeats.distinct().toList();
         }
@@ -2009,6 +2031,9 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
                 : getCharacter().getRace().getCriticalResistance();
         total += getCharacter().getFeats().stream()
                 .mapToInt(feat -> feat.resolveCriticalResistance(getCharacter(), sceneContext, this))
+                .sum();
+        total += getCharacter().getAttributeAbilities().stream()
+                .mapToInt(AttributeAbility::resolveCriticalResistance)
                 .sum();
         return total + getTemporaryBonus(ModifierType.CRITICAL_RESISTANCE);
     }
@@ -2172,7 +2197,111 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
 
     @Override
     public int getElementalResistanceInstances(final ElementalType element) {
-        return getFrenzy().filter(frenzy -> frenzy.getCataclysmElements().contains(element)).map(frenzy -> 1).orElse(0);
+        int fromFrenzy = getFrenzy().filter(frenzy -> frenzy.getCataclysmElements().contains(element)).map(frenzy -> 1).orElse(0);
+        return fromFrenzy + getCharacter().getAttributeAbilities().stream()
+                .mapToInt(ability -> ability.resolveElementalResistanceInstances(element))
+                .sum();
+    }
+
+    @Override
+    public boolean halvesDamage(final org.aventyrs.core.character.DamageType damageType,
+                                final org.aventyrs.core.character.DamageDescriptor descriptor) {
+        return getCharacter().getAttributeAbilities().stream().anyMatch(ability -> ability.halvesDamage(damageType, descriptor))
+                || temporaryEffects.stream().anyMatch(effect -> effect instanceof DamageScopeEffect scoped
+                        && scoped.covers(DamageScopeEffect.Kind.HALVES, damageType, descriptor));
+    }
+
+    @Override
+    public boolean isImmuneToDamage(final org.aventyrs.core.character.DamageType damageType,
+                                    final org.aventyrs.core.character.DamageDescriptor descriptor) {
+        return getCharacter().getAttributeAbilities().stream().anyMatch(ability -> ability.isImmuneToDamage(damageType, descriptor))
+                || temporaryEffects.stream().anyMatch(effect -> effect instanceof DamageScopeEffect scoped
+                        && scoped.covers(DamageScopeEffect.Kind.IMMUNE, damageType, descriptor));
+    }
+
+    @Override
+    public boolean isVulnerableToDamage(final org.aventyrs.core.character.DamageType damageType,
+                                       final org.aventyrs.core.character.DamageDescriptor descriptor) {
+        return getCharacter().getAttributeAbilities().stream()
+                .anyMatch(ability -> ability.isVulnerableToDamage(damageType, descriptor));
+    }
+
+    @Override
+    public boolean isImmuneToCondition(final ConditionType conditionType) {
+        return getCharacter().getAttributeAbilities().stream().anyMatch(ability -> ability.isImmuneToCondition(conditionType));
+    }
+
+    @Override
+    public boolean isFlying() {
+        return flying || getCharacter().getAttributeAbilities().stream().anyMatch(AttributeAbility::keepsFlying);
+    }
+
+    @Override
+    public void setFlying(final boolean takeOff) {
+        boolean permanent = getCharacter().getAttributeAbilities().stream().anyMatch(AttributeAbility::keepsFlying);
+        if (!takeOff && permanent) {
+            return;
+        }
+        flightEffects.forEach(applied -> temporaryEffects.removeIf(effect -> effect == applied));
+        flightEffects.clear();
+        this.flying = takeOff;
+        if (takeOff) {
+            for (AttributeAbility ability : getCharacter().getAttributeAbilities()) {
+                for (TemporaryEffect effect : ability.resolveWhileFlyingEffects()) {
+                    applyEffect(effect);
+                    flightEffects.add(effect);
+                }
+            }
+        }
+    }
+
+    @Override
+    public void queuePendingDiceRoll(final PendingDiceRoll roll) {
+        pendingDiceRolls.add(roll);
+    }
+
+    @Override
+    public List<PendingDiceRoll> getPendingDiceRolls() {
+        return List.copyOf(pendingDiceRolls);
+    }
+
+    @Override
+    public int resolveDiceRoll(final UUID pendingRollId, final List<Integer> faces) {
+        PendingDiceRoll pending = pendingDiceRolls.stream()
+                .filter(roll -> roll.id().equals(pendingRollId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalOperationException(
+                        org.aventyrs.core.util.TranslatableMessages.PENDING_DICE_ROLL_NOT_FOUND));
+        int total = Math.max(0, pending.dice().total(faces));
+        pendingDiceRolls.remove(pending);
+        if (pending.kind() == RecurringDice.Kind.HEAL) {
+            int before = getDamageTaken();
+            heal(total, new HealingSource(pending.source() == null ? pending : pending.source(), true, null, null, null));
+            return before - getDamageTaken();
+        }
+        int before = getDamageTaken();
+        new org.aventyrs.core.character.services.DamageServiceImpl()
+                .applyDamage(this, null, pending.descriptor(), null, total, false);
+        return getDamageTaken() - before;
+    }
+
+    @Override
+    public void removeEffectsFrom(final String source) {
+        if (source == null) {
+            return;
+        }
+        temporaryEffects.removeIf(effect -> (effect instanceof TemporaryBonus bonus && source.equals(bonus.getSource()))
+                || (effect instanceof DamageScopeEffect scoped && source.equals(scoped.getSource()))
+                || (effect instanceof RecurringDice dice && source.equals(dice.getSource()))
+                || (effect instanceof SkillDifficultyShift shift && source.equals(shift.getSource())));
+    }
+
+    @Override
+    public int getSkillDifficultyShift(final org.aventyrs.core.skill.SkillType skill) {
+        return temporaryEffects.stream()
+                .filter(effect -> effect instanceof SkillDifficultyShift)
+                .mapToInt(effect -> ((SkillDifficultyShift) effect).stepsFor(skill))
+                .sum();
     }
 
     @Override

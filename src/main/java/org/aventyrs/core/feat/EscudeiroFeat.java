@@ -1,19 +1,25 @@
 package org.aventyrs.core.feat;
 
+import org.aventyrs.core.character.Character;
+import org.aventyrs.core.character.DefenseType;
+import org.aventyrs.core.item.ShieldItem;
+import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.skill.SkillType;
+
+import java.util.List;
 
 /**
  * Talentos de Escudeiro — fighting with, and behind, a shield.
  *
- * <p>One blocker runs through the entire tree and is not repeated on every constant: <b>nothing
- * classifies an {@code Item} as a Escudo</b>. {@code ItemCategory} has no such value, and {@code
- * Weapon} is the only Item subtype, so "enquanto estiver utilizando um item do tipo Escudo" —
- * the condition almost every constant here turns on — cannot be tested. The weight tiers these
- * Talentos distinguish (Leve/Médio/Pesado/de Corpo) would additionally need {@code
- * ItemWeightClass} to reach a shield, and the Bônus Defensivos they halve or forgo need per-copy
- * item state the gap catalog's "Owned/produced item copy" row records as missing.
+ * <p><b>A Escudo is classifiable now</b>: {@code ItemCategory#SHIELD} and the {@link ShieldItem}
+ * catalog carry the kind and the weight tier (Leve/Médio/Pesado — Escudo de Corpo is {@link
+ * ShieldItem#ESCUDO_DE_CORPO}), and an equipped copy knows its catalog entry ({@code
+ * AbstractItem#getTemplate()}). {@link #ESPECIALISTA_EM_ESCUDO} is real through that.
  *
- * <p>Per-constant TODOs name only what is <em>additional</em> to that.
+ * <p>One blocker still runs through half the tree: <b>a Escudo is not a {@code Weapon}</b>, so
+ * the "Ataque com Escudo" that {@link #ATACAR_COM_ESCUDOS} creates and five other constants build
+ * on has no {@code DamageBase}, no attacking Perícia and nothing an {@code AttackSource} could
+ * name. Per-constant TODOs name only what is <em>additional</em> to that.
  */
 public enum EscudeiroFeat implements Feat {
 
@@ -21,12 +27,12 @@ public enum EscudeiroFeat implements Feat {
      * "Sempre que iniciar um combate com um Escudo de Categoria Média ou Pesada em mãos, sua
      * iniciativa aumenta em +2."
      *
-     * <p>The one constant here whose <em>effect</em> is already expressible — {@code
-     * ModifierType.INITIATIVE} is summed by {@code InitiativeService} — but {@code Feat} is not
-     * among the three sources it scans, and the shield condition is untestable regardless.
+     * <p>The shield condition is testable now — an equipped {@link ShieldItem} of {@code
+     * ItemWeightClass#MEDIUM} or {@code HEAVY}. The effect is not.
      */
     // TODO: InitiativeService scans attributeAbilities/skillCompetencyAbilities/excellencies, not
-    //  character.getFeats(); a Talento cannot grant Iniciativa today.
+    //  character.getFeats(); a Talento cannot grant Iniciativa today (plan Phase B, Feat
+    //  initiative hook).
     ESCUDO_VELOZ(
             "Sempre que iniciar um combate com um Escudo de Categoria Média ou Pesada em mãos, sua "
                     + "iniciativa aumenta em +2.",
@@ -36,14 +42,10 @@ public enum EscudeiroFeat implements Feat {
      * "Você recebe +1 em suas Defesas enquanto utilizar um item escolhido do tipo 'Escudo'",
      * rising to +2 at 4 Graduações em Esquiva e Aparar and +3 at 7.
      *
-     * <p>The graduation ladder itself is plain arithmetic a {@code resolveDefenseBonus} override
-     * could compute; only the shield condition blocks it, and granting unconditionally would
-     * hand the bonus to a character carrying nothing.
+     * <p><b>Real</b>, through {@link EspecialistaEmEscudoFeat} — the acquired form recording the
+     * chosen {@link ShieldItem}, granted in place of this constant. The bonus holds while a copy
+     * of that Escudo is equipped.
      */
-    // TODO: the choice is "um item escolhido do tipo Escudo" — a specific Item, but no Escudo
-    //  item catalog is authored (only ArmorItem), so there is nothing to pick. Gating on any
-    //  equipped ItemCategory.SHIELD would be looser than the text. The choice-carrying
-    //  AbstractFeat mechanism (see FocoEmPericiaFeat) is not the blocker.
     ESPECIALISTA_EM_ESCUDO(
             "Você recebe +1 em suas Defesas enquanto utilizar um item escolhido do tipo ‘Escudo’. "
                     + "Escolha um item do tipo ‘Escudo’, se tiver 4 ou mais graduações em ‘Esquiva "
@@ -52,7 +54,12 @@ public enum EscudeiroFeat implements Feat {
             FeatRequirements.builder()
                     .requiredSkillType(SkillType.ESQUIVA_E_APARAR)
                     .requiredSkillGraduation(1)
-                    .build()),
+                    .build()) {
+        @Override
+        public List<FeatChoice<?>> resolveRequiredChoices(final Character holder) {
+            return List.of(FeatChoice.ofOne(ShieldItem.class, List.of(ShieldItem.values())));
+        }
+    },
 
     /**
      * "Você pode usar seu escudo para atacar, se o fizer você perde metade dos bônus em Defesas
@@ -61,12 +68,12 @@ public enum EscudeiroFeat implements Feat {
      */
     // TODO: a shield is not a Weapon, so it has no DamageBase and no attacking SkillType — the
     //  three authored figures (Leve 1d6+1, Médio 1d6+2, Pesado 1d6+3) are exactly DamageBase.of
-    //  values, but there is no shield item to hang them on.
+    //  values keyed by ShieldItem#getWeightClass, but nothing lets a ShieldItem be swung.
     // TODO: an attack roll built from half a Graduação plus the item's own Defesa bonuses is a
     //  bespoke formula no Interaction can express; AbstractSkillInteraction reads the Perícia's
     //  own governing Attribute and Graduação.
-    // TODO: "Margem Crítica Menor 17" is an absolute margin, not an increase — SkillRoll widens
-    //  from the die faces and has no notion of a threshold number.
+    // TODO: "Margem Crítica Menor 17" and "Sucesso Crítico: Atordoante" are Weapon columns
+    //  (getLesserCriticalMargin/getCriticalEffect) — they land for free once a shield can be one.
     ATACAR_COM_ESCUDOS(
             "Você pode usar seu escudo para atacar, se o fizer você perde metade dos bônus em "
                     + "Defesas concedidos por ele até o início de seu próximo turno. Rolagens de "
@@ -84,10 +91,11 @@ public enum EscudeiroFeat implements Feat {
      * "Se você não se mover em seu Turno e estiver empunhando um escudo que você seja
      * especialista, você recebe um Bônus de +2 em suas Defesas por 1 Rodada."
      */
-    // TODO: "se você não se mover em seu Turno" needs movement actually spent this Turn to be
-    //  tracked; MovementService computes an allowance per Ponto de Ação and records no spend.
-    // TODO: the Gigante/Anão Reposicionar exception needs to know the Rodada's only movement was a
-    //  Reposicionar — RepositionService claims no movement and records nothing.
+    // TODO: both facts it reads exist now — CombatantSheet#getMovementsTakenThisRound /
+    //  getRepositionsTakenThisRound (reset at startTurn), and "um escudo que você seja
+    //  especialista" via EspecialistaEmEscudoFeat#isUsingChosenShield. What is missing is the
+    //  moment: the +2 is earned when the Turn *ends* without movement and lasts 1 Rodada, and
+    //  Feat has no end-of-Turn trigger to grant a Blessing from.
     DEFESA_TARTARUGA(
             "Se você não se mover em seu Turno e estiver empunhando um escudo que você seja "
                     + "especialista, você recebe um Bônus de +2 em suas Defesas por 1 Rodada. "
@@ -152,11 +160,10 @@ public enum EscudeiroFeat implements Feat {
      * "Você não perde Bônus Defensivo ao atacar com Escudos", plus +2 Margem Crítica Menor and a
      * Corrente de Efeitos on criticals.
      */
-    // TODO: Feat#resolveCriticalMarginIncrease is real (see PeritoFeat#CONTROLE_DA_SITUACAO), but
-    //  this bonus is scoped to "ataques com Escudos" — nothing marks a Escudo as the thing swung,
-    //  so granting it would widen every attack roll. (It names the Menor tier, which is all the
-    //  hook touches anyway — see AssassinoFeat's enum javadoc.)
-    // TODO: granting a Corrente de Efeitos to a critical has no hook on the attack path.
+    // TODO: Feat#resolveCriticalMarginIncrease takes the AttackSource, but an Ataque com Escudo
+    //  has none — a Escudo is not a Weapon (see the enum javadoc).
+    // TODO: Corrente de Efeitos – Rugido — Feat#resolveEffectChains is the hook, but Rugido is not
+    //  an authored EffectChain, and the hook adds to every landed attack rather than to criticals.
     ARTE_DO_ESCUDO_ATACANTE(
             "Você não perde Bônus Defensivo ao atacar com Escudos. Seus ataques com Escudos feitos "
                     + "em seus Turnos tem a Margem Crítica Menor aumentada em +2 números e seus "
@@ -200,10 +207,10 @@ public enum EscudeiroFeat implements Feat {
      * "Enquanto portar um Escudo de Corpo e não efetuar ataques você reduz danos sofridos à zero",
      * for 1 + the holder's Título count many attacks.
      */
-    // TODO: nullifying damage outright is a further stage than RD/RA — the gap catalog's
-    //  "Damage-type-scoped mitigation, and damage-type immunity" row records that no immunity
-    //  mechanism of any kind exists.
-    // TODO: "não efetuar ataques" needs attacks made this Turn to be tracked.
+    // TODO: both conditions are readable now — Escudo de Corpo is ShieldItem#ESCUDO_DE_CORPO, and
+    //  "não efetuar ataques" is CombatantSheet#hasActedOffensivelyThisRound. What is missing is
+    //  the effect: reducing a hit to zero for a budget of 1 + Títulos attacks. That needs a
+    //  per-hit consult in DamageServiceImpl like sheet.PeleDePedra's, not a stat.
     CRIAR_REFUGIO(
             "Enquanto portar um Escudo de Corpo e não efetuar ataques você reduz danos sofridos à "
                     + "zero. O número de ataques que podem ser reduzidos à zero desta forma é "
@@ -220,14 +227,24 @@ public enum EscudeiroFeat implements Feat {
      */
     // TODO: "possuir Asas" is a Pré-requisito naming another Talento/racial trait not yet
     //  authored, so it is left unset and this is wrongly open to wingless characters.
-    // TODO: flight has no representation, so "não estiver voando" cannot be tested.
+    // The +2 Defesas is real, read off EnvironmentalState#flying on the holder's SceneContext —
+    // a null context (no Scene to ask) grants nothing, per the "cannot tell" rule.
+    // TODO: "suas Asas são consideradas itens do tipo Escudo" — every Escudo clause reads the
+    //  equipment list, and Asas are no Item.
     ASAS_ADAMANTINAS(
             "Você recebe Bônus de +2 em suas Defesas enquanto não estiver utilizando suas asas "
                     + "para voar. Para efeitos diversos, como Talentos e Habilidades, suas Asas "
                     + "são consideradas itens do tipo Escudo enquanto você não estiver voando.",
             FeatRequirements.builder()
                     .requiredAwakenedTitles(1)
-                    .build()),
+                    .build()) {
+        @Override
+        public int resolveDefenseBonus(final DefenseType defenseType, final Character character,
+                                        final SceneContext sceneContext) {
+            return sceneContext != null && !sceneContext.getEnvironmentalState().flying()
+                    ? ASAS_ADAMANTINAS_DEFENSE_BONUS : 0;
+        }
+    },
 
     /**
      * "Você não é beneficiado por RA, RD e RM, ao invés disso você recebe Bônus de +1 em Defesas
@@ -247,6 +264,9 @@ public enum EscudeiroFeat implements Feat {
                     .requiredFeatCategory(FeatCategory.ESCUDEIRO)
                     .requiredFeatCategoryCount(3)
                     .build());
+
+    /** ASAS_ADAMANTINAS' "Bônus de +2 em suas Defesas" while not flying. */
+    private static final int ASAS_ADAMANTINAS_DEFENSE_BONUS = 2;
 
     private final String description;
     private final FeatRequirements featRequirements;

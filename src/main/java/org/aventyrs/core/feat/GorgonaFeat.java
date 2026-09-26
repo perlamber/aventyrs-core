@@ -41,8 +41,8 @@ public enum GorgonaFeat implements Feat {
     // refusing every other shape and the holder's own besides.
     // TODO: Olhar de Lacerto is itself unbuilt (Gorgona's javadoc calls it the densest gap of any
     //  racial trait catalogued), so widening its Alcance widens nothing.
-    // TODO: Corrente de Efeitos is an unbuilt system, and "Enrijecer Musculatura" is not among
-    //  the 13 EffectChainService resolves.
+    // TODO: Corrente de Efeitos – Enrijecer Musculatura — Feat#resolveEffectChains is the hook,
+    //  but Enrijecer Musculatura is not an authored EffectChain (only Definhar and Sobrecura are).
     // TODO: "sempre considerado Amaldiçoado" now has a classification to name
     //  (ConditionType.AMALDICOADO, appliable open-ended with a null duration), but nothing applies
     //  a Condition from a held Talento — Feat has no condition hook, and "sempre" is a standing
@@ -64,6 +64,12 @@ public enum GorgonaFeat implements Feat {
                     .requiredRace(Gorgona.class)
                     .forbiddenFeat(acolhidaPorFlora())
                     .build()) {
+        /** "Apenas … recém-criados" — only a starting Talento slot can take it. */
+        @Override
+        public boolean isAcquirableOnlyAtCreation() {
+            return true;
+        }
+
         /** "não possui a Característica Racial Imunidade a Encantamentos." */
         @Override
         public boolean suppressesEnchantmentImmunity() {
@@ -97,6 +103,12 @@ public enum GorgonaFeat implements Feat {
                     .requiredRace(Gorgona.class)
                     .forbiddenFeat(GorgonaFeat.MARCA_DA_MALDICAO)
                     .build()) {
+        /** "Apenas … recém-criados" — only a starting Talento slot can take it. */
+        @Override
+        public boolean isAcquirableOnlyAtCreation() {
+            return true;
+        }
+
         @Override
         public FormAccess resolveFormAccess(final FormType form, final Character character) {
             return form == FormType.MONSTRUOSA ? FormAccess.FORBIDDEN : FormAccess.NO_OPINION;

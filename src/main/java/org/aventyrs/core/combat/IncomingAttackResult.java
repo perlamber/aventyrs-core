@@ -66,6 +66,16 @@ public class IncomingAttackResult {
     private final Retaliation retaliation;
 
     /**
+     * What the defender's Talentos deal back because this attack <b>landed</b> — {@code
+     * Feat#resolveRetaliation}, one {@link Retaliation} per answering Talento. Empty on a miss, on
+     * an Ataque à Distância, and without a roll. <b>Reported, never dealt</b>, like {@link
+     * #retaliation}; skip it when mitigation left the hit dealing nothing ("lhe infligir danos").
+     */
+    @Singular
+    private final List<Retaliation> onHitRetaliations;
+
+
+    /**
      * {@link IncomingAttack#getDifficultyLevel()} after the defender's own {@code
      * difficultyReduction} made it easier — the tier {@link #requiredTotal} is derived from.
      */

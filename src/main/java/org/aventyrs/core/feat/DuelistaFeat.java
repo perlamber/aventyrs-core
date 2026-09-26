@@ -2,16 +2,24 @@ package org.aventyrs.core.feat;
 
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.character.CriticalDamage;
+import org.aventyrs.core.character.DamageDescriptor;
+import org.aventyrs.core.character.DamageType;
+import org.aventyrs.core.character.DefenseType;
+import org.aventyrs.core.skill.CriticalResult;
 import java.util.List;
+import org.aventyrs.core.combat.Retaliation;
 import org.aventyrs.core.item.AttackMethod;
 import org.aventyrs.core.scene.Range;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.skill.AttackSource;
 import org.aventyrs.core.skill.Skill;
+import org.aventyrs.core.skill.SkillRoll;
 import org.aventyrs.core.skill.SkillTrait;
 import org.aventyrs.core.skill.SkillType;
 
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -150,12 +158,14 @@ public enum DuelistaFeat implements Feat {
      * "Você recebe um bônus de +1 em DF enquanto estiver empunhando 2 armas", scaling to +3/+5 by
      * Graduação em Ataque Corpo-a-Corpo.
      *
-     * <p>The ladder is plain arithmetic {@link Feat#resolveDefenseBonus} could compute, and it is
-     * correctly scoped to {@code DefenseType#PHYSICAL}; only the wielding condition blocks it.
+     * <p><b>Real within one Rodada.</b> "Empunhando 2 armas" means two drawn weapons ({@code
+     * Character#getDrawnWeapons()}). Whether either one attacked is read from the Rodada's action
+     * log, matching each action's {@code AttackSource} against the drawn weapons. It needs a sheet,
+     * so the {@code Character}-only overloads grant nothing.
      */
-    // TODO: nothing marks two weapons as simultaneously wielded — see the enum's own javadoc.
-    //  Granting unconditionally would hand a Defesa bonus to a character carrying nothing.
-    // TODO: the reduction-to-zero clause needs attacks made this Turn to be tracked.
+    // TODO: "reduzidos à zero por 1 Rodada" should also carry into the next Rodada, but the
+    //  action log clears at the Rodada wrap and nothing records that both weapons attacked
+    //  last Rodada. Only the Rodada in which both attacked is zeroed.
     DEFESA_COM_2_ARMAS(
             "Você recebe um bônus de +1 em DF enquanto estiver empunhando 2 armas, e bônus "
                     + "cumulativo de +2 em DF (para um total de +3) se não utilizar nenhuma de "
@@ -168,7 +178,31 @@ public enum DuelistaFeat implements Feat {
                     .requiredSkillType(SkillType.ESQUIVA_E_APARAR)
                     .requiredSkillGraduation(3)
                     .requiredFeat(COMBATER_COM_2_ARMAS)
-                    .build()),
+                    .build()) {
+        @Override
+        public int resolveDefenseBonus(final DefenseType defenseType, final Character character,
+                                        final SceneContext sceneContext, final CombatantSheet holder) {
+            if (defenseType != DefenseType.PHYSICAL || holder == null
+                    || character.getDrawnWeapons().size() < 2) {
+                return 0;
+            }
+            int graduation = character.getEffectiveGraduation(SkillType.ATAQUE_CORPO_A_CORPO);
+            int wielding = graduation >= 7 ? 3 : graduation >= 4 ? 2 : 1;
+            long drawnWeaponsThatAttacked = holder.getActionsThisRound().stream()
+                    .map(action -> action.attackSource())
+                    .filter(Objects::nonNull)
+                    .filter(source -> character.getDrawnWeapons().contains(source))
+                    .distinct()
+                    .count();
+            if (drawnWeaponsThatAttacked == 0) {
+                return wielding + TWO_WEAPON_DEFENSE_IDLE_BONUS;
+            }
+            if (drawnWeaponsThatAttacked >= 2 && graduation < TWO_WEAPON_DEFENSE_KEEPS_BONUS_GRADUATION) {
+                return 0;
+            }
+            return wielding;
+        }
+    },
 
     /**
      * "Você recebe Vantagem em todas as suas rolagens de ataque feitas com qualquer arma ou se
@@ -215,7 +249,9 @@ public enum DuelistaFeat implements Feat {
      * SceneContext, Character, AttackSource)} takes exactly the {@link AttackSource} the match
      * needs.
      */
-    // TODO: granting a Corrente de Efeitos has no hook on the attack path.
+    // TODO: Corrente de Efeitos – Golpe Trovejante — Feat#resolveEffectChains is the hook (see
+    //  ElficoFeat#CORRUPTOR_SOMBRIO), and it receives the AttackSource the "método escolhido"
+    //  scope needs; but Golpe Trovejante is not an authored EffectChain.
     MAESTRIA_EM_ARMA(
             "Enquanto estiver utilizando o método escolhido para atacar no Talento ‘Especialista "
                     + "em Arma’, seus ataques possuem a Margem Crítica Menor aumentada em +1 e "
@@ -297,8 +333,8 @@ public enum DuelistaFeat implements Feat {
                     .build()),
 
     /** "Ao realizar um ataque com uma Arma ou Ataque Desarmado seu tipo de ataque muda para Área de Efeito – Explosão." */
-    // TODO: needs Área de Efeito footprint resolution (gap catalog, "Area de Efeito"), and a
-    //  per-Rodada activation counter.
+    // TODO: needs Área de Efeito footprint resolution (gap catalog, "Area de Efeito"). "Apenas
+    //  uma vez por Rodada" is then the Rodada's action log to answer (getActionsThisRound).
     ATAQUE_GIRATORIO(
             "Apenas uma vez por Rodada, ao realizar um ataque com uma Arma ou Ataque Desarmado seu "
                     + "tipo de ataque muda para Área de Efeito – Explosão.",
@@ -322,13 +358,10 @@ public enum DuelistaFeat implements Feat {
                     .build()),
 
     /** "Seu segundo ataque contra um mesmo alvo na mesma Rodada tem a Margem Crítica Menor aumentada em +2 números." */
-    // TODO: Feat#resolveCriticalMarginIncrease is real and names the Menor tier this clause
-    //  wants; what blocks it is "segundo ataque contra um
-    //  mesmo alvo" needs per-target attack counting within a Rodada, which nothing tracks.
-    // TODO: the critical dano half (Metade da Gnose) is computable, and Feat#resolveDamageBonus
-    //  exists, but it carries no CriticalResult — this core models no crit-to-dano pathway at all
-    //  (CLAUDE.md's crit-damage bullet: "a crit currently changes the dano roll not at all"), so a
-    //  dano bonus scoped to "seus Acertos Críticos" has nowhere to attach.
+    // The critical dano half is real: Metade da Gnose as a flat CriticalDamage, which
+    // AbstractSkillInteraction adds only on an Acerto Crítico.
+    // TODO: "segundo ataque contra um mesmo alvo" needs attacks counted per target within a
+    //  Rodada. CombatantAction records no target, so the action log cannot answer it.
     EXPLORAR_PONTOS_FRACOS(
             "Seu segundo ataque contra um mesmo alvo na mesma Rodada tem a Margem Crítica Menor "
                     + "aumentada em +2 números. Seus Acertos Críticos causam Metade da Gnose como "
@@ -337,7 +370,14 @@ public enum DuelistaFeat implements Feat {
                     .requiredSkillType(SkillType.ATAQUE_CORPO_A_CORPO)
                     .requiredSkillGraduation(4)
                     .requiredAwakenedTitles(1)
-                    .build()),
+                    .build()) {
+        @Override
+        public CriticalDamage resolveCriticalDamage(final SkillType attackSkill, final SceneContext sceneContext,
+                                                    final Character character, final AttackSource attackSource,
+                                                    final CriticalResult criticalResult, final SkillRoll skillRoll) {
+            return CriticalDamage.ofFlat(character.getEffectiveAttributeTotal(AttributeDomain.GNOSE) / 2);
+        }
+    },
 
     /** "O dano adicional de Metade da Gnose não pode ser curado, exceto por Descansos Verdadeiros e Roubo de Vida." */
     // TODO: builds on EXPLORAR_PONTOS_FRACOS, and needs damage that resists healing — CombatantSheet
@@ -385,10 +425,11 @@ public enum DuelistaFeat implements Feat {
      * <p>One of the five Talentos with no Pré-requisito line; "Vigor 5" is printed as its
      * Pré-requisito and is modelled as such.
      */
-    // The Resistência à Críticos half is real: one instance, unconditional (see
-    // CombatantSheet#CRITICAL_RESISTANCE_INSTANCE — the clause states no figure).
-    // TODO: retaliation damage does not exist — DamageService only computes damage *to* a target
-    //  *from* an attacker, never the reverse (gap catalog, "Reactive/retaliation damage").
+    // Both halves are real. Resistência à Críticos: one instance, unconditional (see
+    // CombatantSheet#CRITICAL_RESISTANCE_INSTANCE — the clause states no figure). The
+    // retaliation: Feat#resolveRetaliation, reported on a landed melee hit and dealt by the caller.
+    // ⚠️ "danos físicos" is read as any landed melee hit — nothing types a melee attack as
+    // non-physical today.
     // Keeps the unsuffixed name of the two Talentos the rules both call "Coração de Ferro";
     // DestinoFeat's is CORACAO_DE_FERRO_DO_DESTINO. See that constant for why they cannot share
     // one name: a Feat's name() is its persisted identity.
@@ -404,10 +445,29 @@ public enum DuelistaFeat implements Feat {
         public int resolveCriticalResistance(final Character character, final SceneContext sceneContext) {
             return CombatantSheet.CRITICAL_RESISTANCE_INSTANCE;
         }
+
+        @Override
+        public Retaliation resolveRetaliation(final Character holder, final AttackSource attackSource,
+                                              final Character attacker, final boolean criticalHit) {
+            return new Retaliation(criticalHit ? CORACAO_DE_FERRO_CRITICAL_RETALIATION : CORACAO_DE_FERRO_RETALIATION,
+                    new DamageDescriptor(DamageType.FISICO), null, 0);
+        }
     };
 
     /** MAESTRIA_EM_ARMA's own stated "+1" to the Margem Crítica Menor. */
     private static final int MAESTRIA_EM_ARMA_MARGIN_INCREASE = 1;
+
+    /** CORACAO_DE_FERRO's "1 ponto de Dano Físico" on an ordinary hit. */
+    private static final int CORACAO_DE_FERRO_RETALIATION = 1;
+
+    /** CORACAO_DE_FERRO's "3 pontos de Danos Físicos" when the hit was an Acerto Crítico. */
+    private static final int CORACAO_DE_FERRO_CRITICAL_RETALIATION = 3;
+
+    /** DEFESA_COM_2_ARMAS' cumulative "+2" while neither weapon has attacked. */
+    private static final int TWO_WEAPON_DEFENSE_IDLE_BONUS = 2;
+
+    /** DEFESA_COM_2_ARMAS' "a menos que você tenha 10 Graduações". */
+    private static final int TWO_WEAPON_DEFENSE_KEEPS_BONUS_GRADUATION = 10;
 
     private final String description;
     private final FeatRequirements featRequirements;

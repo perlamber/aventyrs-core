@@ -12,6 +12,8 @@ import org.aventyrs.core.character.services.DeterminationPointsService;
 import org.aventyrs.core.feat.Feat;
 import org.aventyrs.core.feat.FeatCategory;
 import org.aventyrs.core.modifier.ModifierType;
+import org.aventyrs.core.monster.model.AbilityContext;
+import org.aventyrs.core.monster.model.ChoiceSpec;
 import org.aventyrs.core.monster.model.MonsterModel;
 import org.aventyrs.core.monster.model.MonstrousAbility;
 import org.aventyrs.core.sheet.CombatantSheet;
@@ -127,7 +129,10 @@ public final class MonsterRules {
         return Math.max(0, blueprint.getPowerDegree()) / SKILL_UPGRADE_POWER_DEGREE_STEP;
     }
 
-    /** One Talento per GP+5; an Exemplar two more, and one more per GP+6. */
+    /**
+     * One Talento per GP+5; an Exemplar two more, and one more per GP+6; plus any slot a held
+     * Habilidade adds ("Recebe um Talento Geral ou Monstruoso adicional").
+     */
     public static int featBudget(@NonNull final MonsterBlueprint blueprint) {
         int powerDegree = Math.max(0, blueprint.getPowerDegree());
         MonsterKind kind = blueprint.getKind();
@@ -135,7 +140,30 @@ public final class MonsterRules {
         if (kind.getExtraFeatPowerDegreeStep() > 0) {
             budget += powerDegree / kind.getExtraFeatPowerDegreeStep();
         }
+        MonsterCategory category = blueprint.getCategory();
+        for (MonstrousAbilitySelection selection : blueprint.getAbilities()) {
+            budget += selection.ability().resolveBonusFeatSlots(blueprint.contextFor(selection));
+        }
         return budget;
+    }
+
+    /**
+     * The Talento categories a monster may take: Gerais, Monstruosos, and whatever a held Habilidade
+     * opens ("um Talento Racial da raça escolhida"). Talentos a Habilidade grants outright are not
+     * counted against the budget and are never in the blueprint's own list.
+     */
+    public static Set<FeatCategory> allowedFeatCategories(@NonNull final MonsterBlueprint blueprint) {
+        Set<FeatCategory> allowed = new HashSet<>();
+        for (FeatCategory category : FeatCategory.values()) {
+            if (category.getType() == FeatCategory.Type.GERAL || category == FeatCategory.MONSTRUOSO) {
+                allowed.add(category);
+            }
+        }
+        MonsterCategory category = blueprint.getCategory();
+        for (MonstrousAbilitySelection selection : blueprint.getAbilities()) {
+            allowed.addAll(selection.ability().resolveAllowedFeatCategories(blueprint.contextFor(selection)));
+        }
+        return allowed;
     }
 
     /** Ego points to allocate — the Categoria's running total plus one per GP+10. */
@@ -203,13 +231,7 @@ public final class MonsterRules {
             if (!category.isAtLeast(ability.getTier())) {
                 violations.add(MonsterViolation.of(ABILITY_TIER_TOO_HIGH, ability.name()));
             }
-            List<String> options = ability.getChoiceOptions();
-            String choice = selection.choice();
-            // List.of().contains(null) throws, so a null choice is answered before the lookup.
-            boolean choiceValid = options.isEmpty() ? choice == null : choice != null && options.contains(choice);
-            if (!choiceValid) {
-                violations.add(MonsterViolation.of(INVALID_ABILITY_CHOICE, ability.name()));
-            }
+            validateChoices(selection, category, violations);
         }
         for (MonsterModel model : seenModels) {
             boolean hasStarting = seenAbilities.stream()
@@ -221,6 +243,33 @@ public final class MonsterRules {
         int budget = abilityBudget(blueprint);
         if (blueprint.getAbilities().size() > budget) {
             violations.add(MonsterViolation.of(TOO_MANY_ABILITIES, null, blueprint.getAbilities().size(), budget));
+        }
+    }
+
+    /**
+     * Every spec the Habilidade asks at category takes exactly its count of distinct picks, each one
+     * of its options; a pick under a spec it doesn't ask is refused too. {@code actual}/{@code limit}
+     * report the picks made against the count asked.
+     */
+    private static void validateChoices(final MonstrousAbilitySelection selection, final MonsterCategory category,
+                                        final List<MonsterViolation> violations) {
+        MonstrousAbility ability = selection.ability();
+        List<ChoiceSpec> specs = ability.getChoiceSpecs(category);
+        Set<String> asked = new HashSet<>();
+        for (ChoiceSpec spec : specs) {
+            asked.add(spec.id());
+            List<String> picks = selection.choices().getOrDefault(spec.id(), List.of());
+            boolean valid = picks.size() == spec.count()
+                    && new HashSet<>(picks).size() == picks.size()
+                    && spec.options().containsAll(picks);
+            if (!valid) {
+                violations.add(MonsterViolation.of(INVALID_ABILITY_CHOICE, ability.name(), picks.size(), spec.count()));
+            }
+        }
+        for (String id : selection.choices().keySet()) {
+            if (!asked.contains(id) && !selection.choices().get(id).isEmpty()) {
+                violations.add(MonsterViolation.of(INVALID_ABILITY_CHOICE, ability.name(), selection.choices().get(id).size(), 0));
+            }
         }
     }
 
@@ -254,9 +303,9 @@ public final class MonsterRules {
     }
 
     private static void validateFeats(final MonsterBlueprint blueprint, final List<MonsterViolation> violations) {
+        Set<FeatCategory> allowed = allowedFeatCategories(blueprint);
         for (Feat feat : blueprint.getFeats()) {
-            FeatCategory category = feat.getFeatCategory();
-            if (category.getType() != FeatCategory.Type.GERAL && category != FeatCategory.MONSTRUOSO) {
+            if (!allowed.contains(feat.getFeatCategory())) {
                 violations.add(MonsterViolation.of(FEAT_NOT_ALLOWED, feat.toString()));
             }
         }
@@ -312,7 +361,7 @@ public final class MonsterRules {
         MonsterCategory category = blueprint.getCategory();
         int granted = 0;
         for (MonstrousAbilitySelection selection : blueprint.getAbilities()) {
-            granted += selection.ability().resolveRacialAttributeBonuses(category, selection.choice()).getOrDefault(domain, 0);
+            granted += selection.ability().resolveRacialAttributeBonuses(blueprint.contextFor(selection)).getOrDefault(domain, 0);
         }
         int ceiling = category.getMaximumAttribute() + blueprint.getKind().getBonusMaximumAttribute();
         int base = blueprint.getAttributeBase(domain);
@@ -356,7 +405,15 @@ public final class MonsterRules {
                                                   @NonNull final Character character, final CombatantSheet sheet) {
         AttributeDomain domain = governingAttribute(skill);
         int attribute = domain == null ? 0 : character.getEffectiveAttributeTotal(domain, sheet);
-        return skillDifficulty(blueprint, skill, attribute);
+        SkillDifficulty atRest = skillDifficulty(blueprint, skill, attribute);
+        if (sheet == null) {
+            return atRest;
+        }
+        // What the sheet holds right now: a timed GD shift (Mimetizar Competência) and timed roll
+        // bonuses (Domínio dos Céus' "+2 enquanto voando") — a foe's roll bonus is its GD's bonus.
+        int steps = sheet.getSkillDifficultyShift(skill);
+        int bonus = sheet.getTemporaryBonus(skill.getRollBonusType()) + sheet.getTemporaryBonus(ModifierType.SKILL_ROLL_BONUS);
+        return SkillDifficulty.of(atRest.level().shift(steps), atRest.bonus() + bonus);
     }
 
     private static SkillDifficulty skillDifficulty(final MonsterBlueprint blueprint, final SkillType skill,
@@ -379,9 +436,10 @@ public final class MonsterRules {
         int abilityBonus = 0;
         for (MonstrousAbilitySelection selection : blueprint.getAbilities()) {
             MonstrousAbility ability = selection.ability();
-            abilitySteps += ability.resolveSkillLevelShift(skill, domain, category);
-            abilityBonus += ability.resolveModifier(skill.getRollBonusType(), category, selection.choice())
-                    + ability.resolveModifier(ModifierType.SKILL_ROLL_BONUS, category, selection.choice());
+            AbilityContext context = blueprint.contextFor(selection);
+            abilitySteps += ability.resolveSkillLevelShift(skill, domain, context);
+            abilityBonus += ability.resolveModifier(skill.getRollBonusType(), context)
+                    + ability.resolveModifier(ModifierType.SKILL_ROLL_BONUS, context);
         }
         MonsterAdjustments adjustments = blueprint.getAdjustments();
         level = level.shift(abilitySteps + adjustments.getSkillLevelShift(skill));

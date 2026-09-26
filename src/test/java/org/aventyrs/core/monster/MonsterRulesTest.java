@@ -60,7 +60,8 @@ class MonsterRulesTest {
     @Test
     void anExemplarTakesTwoExtraTalentosAndOneMorePerSixGp() {
         MonsterBlueprint exemplar = goblin().powerDegree(12).kind(MonsterKind.EXEMPLAR).build();
-        assertEquals(12 / 5 + 2 + 12 / 6, MonsterRules.featBudget(exemplar));
+        // + Corpo Humanoide's own slot
+        assertEquals(12 / 5 + 2 + 12 / 6 + 1, MonsterRules.featBudget(exemplar));
     }
 
     @Test
@@ -200,8 +201,9 @@ class MonsterRulesTest {
 
     @Test
     void talentosAreCappedAndMustBeGeralOrMonstruoso() {
+        // GP 4: no GP+5 slot, only Corpo Humanoide's — two Talentos is one too many
         MonsterBlueprint tooMany = goblin().powerDegree(4).clearProgressionUpgrades()
-                .feat(MonstruosoFeat.values()[0]).build();
+                .feat(MonstruosoFeat.values()[0]).feat(MonstruosoFeat.values()[1]).build();
         assertTrue(codes(tooMany).contains(Code.TOO_MANY_FEATS));
 
         MonsterBlueprint monstruoso = goblin().feat(MonstruosoFeat.values()[0]).build();
@@ -248,7 +250,8 @@ class MonsterRulesTest {
     @Test
     void anUntrainedPericiaPresentsTheBaseGdPlusHalfItsAttribute() {
         MonsterBlueprint goblin = goblin().build();
-        assertEquals(SkillDifficulty.of(DifficultyLevel.VERY_EASY, 0), MonsterRules.skillDifficulty(goblin, SkillType.PERSUASAO));
+        // Carisma 1 + Máscara Social's Bônus Racial 2 = 3, half of it 1
+        assertEquals(SkillDifficulty.of(DifficultyLevel.VERY_EASY, 1), MonsterRules.skillDifficulty(goblin, SkillType.PERSUASAO));
     }
 
     @Test

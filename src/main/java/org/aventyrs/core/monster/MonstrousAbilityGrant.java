@@ -5,29 +5,39 @@ import lombok.Getter;
 import lombok.NonNull;
 import org.aventyrs.core.ability.AttributeAbility;
 import org.aventyrs.core.character.AttributeDomain;
+import org.aventyrs.core.character.DamageDescriptor;
+import org.aventyrs.core.character.DamageType;
+import org.aventyrs.core.effect.CriticalEffectType;
+import org.aventyrs.core.item.NaturalWeapon;
+import org.aventyrs.core.magic.ElementalType;
 import org.aventyrs.core.modifier.Modifier;
 import org.aventyrs.core.modifier.ModifierType;
+import org.aventyrs.core.monster.model.AbilityContext;
 import org.aventyrs.core.monster.model.MonstrousAbility;
+import org.aventyrs.core.scene.SceneContext;
+import org.aventyrs.core.sheet.ConditionType;
+import org.aventyrs.core.sheet.TemporaryEffect;
+import org.aventyrs.core.skill.SkillType;
+
+import java.util.List;
+import java.util.Set;
 
 /**
- * A held {@link MonstrousAbility}, resolved at its holder's Categoria and dressed as an {@link
- * AttributeAbility} — the adapter that lets a Habilidade Monstruosa reach every aggregated stat
- * with no service knowing monsters exist.
+ * A held {@link MonstrousAbility}, resolved against its holder's {@link AbilityContext} and dressed
+ * as an {@link AttributeAbility} — the adapter that lets a Habilidade Monstruosa reach every
+ * aggregated stat with no service knowing monsters exist.
  *
- * <p>{@code ActionPointsService}, {@code InitiativeService}, {@code MovementService}, {@code
- * ReactionsService}, {@code FreeActionsService}, {@code DefenseService} and the three pool services
- * all already sum {@code @Modifier}s across {@code Character#getAttributeAbilities()}. A {@code
- * @Modifier} method takes no arguments, so the Categoria and the choice are captured here, per
- * instance — the pattern {@code ZumbiAbility} uses for its tiers — and each method delegates to
- * {@link MonstrousAbility#resolveModifier}. {@code ModifierResolverImpl} indexes declared methods
- * only, which is why they live on this concrete class and not on an interface.
+ * <p>The stat services sum {@code @Modifier}s across {@code Character#getAttributeAbilities()}; a
+ * {@code @Modifier} method takes no arguments, so the context is captured here per instance — the
+ * pattern {@code ZumbiAbility} uses for its tiers — and each method delegates to {@link
+ * MonstrousAbility#resolveModifier}. {@code ModifierResolverImpl} indexes declared methods only,
+ * which is why they live on this concrete class. The anatomy hooks ({@code AttributeAbility}'s RE,
+ * Meio-Dano, immunities, Armas Naturais, flight …) are forwarded the same way, and read by {@code
+ * AbstractCombatantSheet}/{@code DamageServiceImpl} for any combatant.
  *
- * <p>{@link #hitPoints()} also carries the flat "+2PV" every Habilidade Monstruosa grants its
- * holder ("Para cada Habilidade Monstruosa que possuir ele recebe Bônus de +2PV") — including the
- * catalog-only ones, whose effects are otherwise not applied.
- *
- * <p>A {@link ModifierType} missing from the list below is one no implemented Habilidade grants
- * yet; add its method when one does.
+ * <p>{@link #hitPoints()} also carries the flat "+2PV" every Habilidade Monstruosa grants its holder
+ * ("Para cada Habilidade Monstruosa que possuir ele recebe Bônus de +2PV") — including the
+ * table-only ones, whose effects are otherwise not applied.
  */
 @Getter
 @EqualsAndHashCode
@@ -40,19 +50,19 @@ public class MonstrousAbilityGrant implements AttributeAbility {
     private final MonstrousAbility ability;
 
     @NonNull
-    private final MonsterCategory category;
+    private final AbilityContext context;
 
-    private final String choice;
-
-    public MonstrousAbilityGrant(@NonNull final MonstrousAbility ability, @NonNull final MonsterCategory category,
-                                 final String choice) {
+    public MonstrousAbilityGrant(@NonNull final MonstrousAbility ability, @NonNull final AbilityContext context) {
         this.ability = ability;
-        this.category = category;
-        this.choice = choice;
+        this.context = context;
+    }
+
+    public MonsterCategory getCategory() {
+        return context.category();
     }
 
     private int resolve(final ModifierType type) {
-        return ability.resolveModifier(type, category, choice);
+        return ability.resolveModifier(type, context);
     }
 
     @Modifier(ModifierType.HIT_POINTS)
@@ -125,9 +135,87 @@ public class MonstrousAbilityGrant implements AttributeAbility {
         return resolve(ModifierType.MAGIC_REDUCTION);
     }
 
-    @Modifier(ModifierType.CRITICAL_RESISTANCE)
-    int criticalResistance() {
-        return resolve(ModifierType.CRITICAL_RESISTANCE);
+    @Modifier(ModifierType.ABSOLUTE_DAMAGE_REDUCTION)
+    int absoluteDamageReduction() {
+        return resolve(ModifierType.ABSOLUTE_DAMAGE_REDUCTION);
+    }
+
+    @Modifier(ModifierType.HALF_DAMAGE)
+    int halfDamage() {
+        return resolve(ModifierType.HALF_DAMAGE);
+    }
+
+    @Modifier(ModifierType.SIZE_CATEGORY)
+    int sizeCategory() {
+        return resolve(ModifierType.SIZE_CATEGORY);
+    }
+
+    // ---- Forwarded AttributeAbility hooks --------------------------------------------------------
+
+    @Override
+    public int resolveCriticalMarginIncrease(final SkillType skillType, final SceneContext sceneContext) {
+        return ability.resolveCriticalMarginIncrease(skillType, context);
+    }
+
+    @Override
+    public int resolveElementalResistanceInstances(final ElementalType element) {
+        return ability.resolveElementalResistanceInstances(element, context);
+    }
+
+    @Override
+    public boolean halvesDamage(final DamageType damageType, final DamageDescriptor descriptor) {
+        return ability.halvesDamage(damageType, descriptor, context);
+    }
+
+    @Override
+    public boolean isImmuneToDamage(final DamageType damageType, final DamageDescriptor descriptor) {
+        return ability.isImmuneToDamage(damageType, descriptor, context);
+    }
+
+    @Override
+    public boolean isVulnerableToDamage(final DamageType damageType, final DamageDescriptor descriptor) {
+        return ability.isVulnerableToDamage(damageType, descriptor, context);
+    }
+
+    @Override
+    public Set<CriticalEffectType> resolveCriticalEffectImmunities() {
+        return ability.resolveCriticalEffectImmunities(context);
+    }
+
+    @Override
+    public int resolveCriticalResistance() {
+        return ability.resolveCriticalResistance(context);
+    }
+
+    @Override
+    public boolean ignoresMinorCriticalEffects() {
+        return ability.ignoresMinorCriticalEffects(context);
+    }
+
+    @Override
+    public boolean isImmuneToCondition(final ConditionType conditionType) {
+        return ability.isImmuneToCondition(conditionType, context);
+    }
+
+    @Override
+    public List<NaturalWeapon> getGrantedNaturalWeapons() {
+        return ability.resolveNaturalWeapons(context);
+    }
+
+    @Override
+    public List<TemporaryEffect> resolveDamageTakenEffects(final org.aventyrs.core.sheet.CombatantSheet holder,
+                                                           final int finalDamage) {
+        return ability.resolveDamageTakenEffects(finalDamage, context);
+    }
+
+    @Override
+    public boolean keepsFlying() {
+        return ability.keepsFlying(context);
+    }
+
+    @Override
+    public List<TemporaryEffect> resolveWhileFlyingEffects() {
+        return ability.resolveWhileFlyingEffects(context);
     }
 
     /**

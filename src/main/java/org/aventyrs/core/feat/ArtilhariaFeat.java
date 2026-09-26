@@ -149,8 +149,8 @@ public enum ArtilhariaFeat implements Feat {
      * mesma arma em desvantagem ao custo de 1PA."
      */
     // TODO: granting an extra attack is not expressible — an attack is initiated by a caller,
-    //  never by a resolution.
-    // TODO: "apenas uma vez por Rodada" needs a per-Rodada activation counter.
+    //  never by a resolution. ("Apenas uma vez por Rodada" would then be the action log's to
+    //  answer — CombatantSheet#getActionsThisRound — and needs nothing new.)
     TIRO_RAPIDO(
             "Após fazer um ataque com uma arma à distância você pode fazer um ataque adicional com "
                     + "a mesma arma em desvantagem ao custo de 1PA. Este talento pode ser "

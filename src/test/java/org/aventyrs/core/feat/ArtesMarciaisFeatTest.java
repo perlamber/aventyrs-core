@@ -14,6 +14,10 @@ import org.aventyrs.core.character.services.FeatServiceImpl;
 import org.aventyrs.core.item.AbstractWeapon;
 import org.aventyrs.core.item.ItemCategory;
 import org.aventyrs.core.item.Weapon;
+import org.aventyrs.core.character.DefenseType;
+import org.aventyrs.core.character.services.DefenseServiceImpl;
+import org.aventyrs.core.sheet.Condition;
+import org.aventyrs.core.sheet.ConditionType;
 import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.Player;
@@ -334,5 +338,28 @@ class ArtesMarciaisFeatTest {
 
         // ARTISTA_MARCIAL is Arte Marcial but not a Dominar style — still eligible.
         assertTrue(ArtesMarciaisFeat.ARTISTA_MARCIAL.isEligible(character));
+    }
+
+    // ---------- DOMINAR_ARTE_MARCIAL_SUBMISSAO ----------
+
+    private static int physicalDefense(final List<Feat> feats, final boolean prone) {
+        CharacterSheet sheet = CharacterSheet.of(character().feats(new ArrayList<>(feats)).build(), new Player());
+        if (prone) {
+            sheet.applyCondition(new Condition(ConditionType.CAIDO, 2, null));
+        }
+        return new DefenseServiceImpl().getTotalDefense(sheet, DefenseType.PHYSICAL);
+    }
+
+    /** "Enquanto estiver caído você recebe Bônus de +2 em sua DF" — judged against the same prone body without it. */
+    @Test
+    void submissaoGrantsTwoPhysicalDefenseWhileProne() {
+        assertEquals(physicalDefense(List.of(), true) + 2,
+                physicalDefense(List.of(ArtesMarciaisFeat.DOMINAR_ARTE_MARCIAL_SUBMISSAO), true));
+    }
+
+    @Test
+    void submissaoGrantsNothingOnYourFeet() {
+        assertEquals(physicalDefense(List.of(), false),
+                physicalDefense(List.of(ArtesMarciaisFeat.DOMINAR_ARTE_MARCIAL_SUBMISSAO), false));
     }
 }

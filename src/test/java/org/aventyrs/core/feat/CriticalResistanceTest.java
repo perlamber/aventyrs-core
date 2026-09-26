@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Resistência a Críticos as a <b>standing</b> value — what a combatant's Raça ({@code
@@ -87,17 +88,17 @@ class CriticalResistanceTest {
 
     /**
      * {@code MonstruosoFeat#ANATOMIA_INCOMUM} — "Você recebe Resistência a Críticos", stating no
-     * figure, so exactly one instance. Its only Pré-requisito is "apenas personagens
-     * não-humanos", so it is acquired for real here — on an Elfo, which is not one, and which
-     * grants no RC of its own to muddle the total — through {@code FeatService#grantFeat} rather
-     * than the plain mutator.
+     * figure, so exactly one instance. Its Pré-requisito is "apenas personagens não-humanos
+     * recém-criados" — checked here on an Elfo, which is not human and grants no RC of its own to
+     * muddle the total — and a creation-only Talento is taken in a starting slot, so it arrives
+     * through the plain mutator once its eligibility is confirmed.
      */
     @Test
     void anatomiaIncomumNarrowsAnAttackersCriticalMargin() throws IllegalOperationException {
         Character defender = character().race(new Elfo()).build();
         CharacterSheet sheet = sheetOf(defender);
-        sheet.accumulateExperience(BigDecimal.valueOf(100));
-        featService.grantFeat(defender, sheet, MonstruosoFeat.ANATOMIA_INCOMUM);
+        assertTrue(MonstruosoFeat.ANATOMIA_INCOMUM.isEligible(defender, sheet));
+        defender.grantFeat(MonstruosoFeat.ANATOMIA_INCOMUM);
 
         assertEquals(CombatantSheet.CRITICAL_RESISTANCE_INSTANCE, sheet.getTotalCriticalResistance(null));
         assertEquals(CriticalResult.NONE, attack(precisAttacker(), sheet));
