@@ -132,6 +132,11 @@ public abstract class AbstractTitleAbilityInteraction implements Interaction<Com
         }
         activator.recordAbilityActivation(ability);
         ActionCost actionCost = resolveReportedActionCost(activator);
+        // Recorded, not gated: this request carries no turn number for the ActionProfile's
+        // adjustment. ReactionOptionsService already stops offering a Reação none remain for.
+        if (actionCost != null && actionCost.kind() == ActionCost.Kind.REACTION) {
+            activator.spendReaction();
+        }
         activator.getCharacter().getAllTitles().forEach(title -> title.consumeActivationCharges(ability, activator));
 
         InteractionResult.InteractionResultBuilder result = resolve(request, basePoints).toBuilder()

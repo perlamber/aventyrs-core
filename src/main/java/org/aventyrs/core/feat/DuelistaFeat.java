@@ -13,6 +13,7 @@ import org.aventyrs.core.item.AttackMethod;
 import org.aventyrs.core.scene.Range;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.CombatantSheet;
+import org.aventyrs.core.sheet.ConditionType;
 import org.aventyrs.core.skill.AttackSource;
 import org.aventyrs.core.skill.Skill;
 import org.aventyrs.core.skill.SkillRoll;
@@ -294,11 +295,12 @@ public enum DuelistaFeat implements Feat {
                     .build()),
 
     /** "Enquanto estiver cego ou privado de seus sentidos visuais você não fica Desprevenido em função destas condições." */
-    // TODO: ConditionType.CEGO and DESPREVENIDO both exist now, and CEGO confers DESPREVENIDO for
-    //  real — what this clause needs is the opposite: a way for a held trait to *suppress* an
-    //  implied condition (the same gap ArtesMarciaisFeat#DOMINAR_ARTE_MARCIAL_SUBMISSAO cites).
-    //  The 1d6 half of CEGO is unbuilt besides, so "não precisa efetuar rolagens de 1d6" would be
-    //  exempt from nothing.
+    // Two halves are real. "Não fica Desprevenido em função destas condições" is
+    // Feat#suppressesImpliedCondition vetoing Cego → Desprevenido. Its price, "rolagens de
+    // Perícias feitas às cegas recebem Desvantagem", is a Desvantagem on every Perícia roll made
+    // while Cego (sheet-aware resolveSkillRollBonus).
+    // TODO: "não precisa efetuar rolagens de 1d6" — Cego's 1d6 sub-roll is unbuilt (gap catalog,
+    //  "Malefício classification" (d)), so there is nothing to be exempt from.
     COMBATER_AS_CEGAS(
             "Enquanto estiver cego ou privado de seus sentidos visuais você não fica Desprevenido "
                     + "em função destas condições e não precisa efetuar rolagens de 1d6 para "
@@ -310,7 +312,20 @@ public enum DuelistaFeat implements Feat {
                     .requiredAttributeValue(3)
                     .requiredSkillType(SkillType.ATAQUE_CORPO_A_CORPO)
                     .requiredSkillGraduation(4)
-                    .build()),
+                    .build()) {
+        @Override
+        public boolean suppressesImpliedCondition(final ConditionType implier, final ConditionType implied) {
+            return implier == ConditionType.CEGO && implied == ConditionType.DESPREVENIDO;
+        }
+
+        @Override
+        public int resolveSkillRollBonus(final SkillType skillType, final SceneContext sceneContext,
+                                          final SkillTrait requestedAbility, final Character character,
+                                          final AttackSource attackSource, final CombatantSheet holder) {
+            return holder != null && holder.hasCondition(ConditionType.CEGO, sceneContext)
+                    ? Skill.DISADVANTAGE_MALUS : 0;
+        }
+    },
 
     /**
      * "Você pode adicionar metade do seu valor de Vigor à sua rolagem de danos físicos

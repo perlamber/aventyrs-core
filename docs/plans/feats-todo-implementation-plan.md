@@ -17,7 +17,7 @@ re-ordered as:
 | Order | Phase | Was | State |
 | --- | --- | --- | --- |
 | A | Stale-TODO sweep | Phase 0 | **First pass done (0.0.61)** — 312 → 286 TODO lines; see `0.061.CHANGELOG.md` |
-| B | Small hooks with ≥2 consumers | new | open — list below |
+| B | Small hooks with ≥2 consumers | new | **Done (0.0.62)** — all four below; see `0.062.CHANGELOG.md` |
 | C | Flight / swim / climb axes | Phase 6 | open |
 | D | Damage types | Phase 8 | open |
 | E | Área de Efeito, outward damage, reverse retaliation | Phase 9 (+ rest of 7) | open |
@@ -26,7 +26,7 @@ re-ordered as:
 | H | Título / Destino / Vampiro | Phase 12 | open |
 | G | Montaria / veículo | Phase 11 | open, lowest priority |
 
-**Phase B candidates** (each already has two or more consumers):
+**Phase B** (each had two or more consumers) — all four built in 0.0.62:
 - A `Feat` Iniciativa hook — `MobilidadeFeat#INICIATIVA_APRIMORADA`, `#LIDERAR_O_AVANCO`,
   `EscudeiroFeat#ESCUDO_VELOZ` (whose Escudo condition is testable now).
 - A permanent Ego point from a Talento — `MobilidadeFeat#SE_MOVER_E_ATACAR`,

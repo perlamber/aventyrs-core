@@ -6,6 +6,7 @@ import java.util.List;
 import org.aventyrs.core.character.DamageBonus;
 import org.aventyrs.core.character.DamageType;
 import org.aventyrs.core.character.DefenseType;
+import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.character.services.DamageService;
 import org.aventyrs.core.character.services.HitPointsService;
 import org.aventyrs.core.character.services.HitPointsServiceImpl;
@@ -253,8 +254,7 @@ public enum SobrevivenciaFeat implements Feat {
      * menor que seu valor de 'Vigor', usos e perdas de 'Sorte' que seriam permanentes ao invés
      * disso são temporárias."
      */
-    // TODO: a permanent Ego point is granted through CharacterEgos#withVariableBonus, reached only
-    //  by AttributeAbility#resolvePermanentEgoGain — Feat has no equivalent hook.
+    // The permanent point is real, through Feat#resolveEgoBonus (Character#getEffectiveEgoTotal).
     // TODO: redirecting a permanent Ego spend to the temporary pool has no representation:
     //  spendEgoPoints names its pool at the call site and deliberately has no fallback between
     //  the two (see CLAUDE.md's "Spending names its pool").
@@ -268,10 +268,16 @@ public enum SobrevivenciaFeat implements Feat {
                     .requiredAnyAttributeValue(5)
                     .requiredFeatCategory(FeatCategory.DESTINO)
                     .requiredFeatCategoryCount(1)
-                    .build()),
+                    .build()) {
+        @Override
+        public int resolveEgoBonus(final EgoDomain domain, final Character character) {
+            return domain == EgoDomain.SORTE ? 1 : 0;
+        }
+    },
 
     /** As {@link #SORTE_DE_MOSES}, for Autocontrole. */
-    // TODO: same missing permanent-Ego-grant and pool-redirection as SORTE_DE_MOSES.
+    // The permanent point is real, through Feat#resolveEgoBonus.
+    // TODO: the same pool redirection SORTE_DE_MOSES is missing.
     DETERMINACAO_DE_MOSES(
             "Você adquire 1 ponto permanente de ‘Autocontrole’. Enquanto seus PV estiverem iguais "
                     + "ou menores que seu valor de ‘Vigor’, usos e perdas de ‘Autocontrole’ que "
@@ -280,7 +286,12 @@ public enum SobrevivenciaFeat implements Feat {
                     .attributeDomain(AttributeDomain.INSTINCT)
                     .requiredAttributeValue(4)
                     .requiredFeat(DURO_DE_MATAR)
-                    .build()),
+                    .build()) {
+        @Override
+        public int resolveEgoBonus(final EgoDomain domain, final Character character) {
+            return domain == EgoDomain.AUTOCONTROLE ? 1 : 0;
+        }
+    },
 
     /**
      * "Os primeiros Danos que você sofrer a cada Cena de Combate são reduzidos à metade", for as

@@ -346,6 +346,9 @@ class ArtesMarciaisFeatTest {
         CharacterSheet sheet = CharacterSheet.of(character().feats(new ArrayList<>(feats)).build(), new Player());
         if (prone) {
             sheet.applyCondition(new Condition(ConditionType.CAIDO, 2, null));
+            // Held directly as well, so Submissão's veto of Caído → Desprevenido (tested in
+            // ImpliedConditionSuppressionTest) leaves the −2 on both sides and only the DF shows.
+            sheet.applyCondition(new Condition(ConditionType.DESPREVENIDO, 2, null));
         }
         return new DefenseServiceImpl().getTotalDefense(sheet, DefenseType.PHYSICAL);
     }

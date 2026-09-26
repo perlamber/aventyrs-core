@@ -1,10 +1,12 @@
 package org.aventyrs.core.character.services;
 
+import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.modifier.ModifierResolver;
 import org.aventyrs.core.modifier.ModifierResolverImpl;
 import org.aventyrs.core.modifier.ModifierType;
+import org.aventyrs.core.skill.SkillCompetencyAbility;
 import org.aventyrs.core.skill.SkillExcellency;
 import org.aventyrs.core.skill.SkillType;
 
@@ -25,15 +27,16 @@ public class InitiativeServiceImpl implements InitiativeService {
 
     @Override
     public int getTotalInitiative(final Character character) {
-        int total = character.getEgos().getIniciativa().getTotal();
+        int total = character.getEffectiveEgoTotal(EgoDomain.INICIATIVA);
         total += modifierResolver.sumModifiers(character.getAttributeAbilities(), ModifierType.INITIATIVE);
-        total += modifierResolver.sumModifiers(character.getSkillCompetencyAbilities(), ModifierType.INITIATIVE);
+        total += modifierResolver.sumModifiers(SkillCompetencyAbility.allFor(character), ModifierType.INITIATIVE);
         for (Map.Entry<SkillType, CharacterSkill> entry : character.getSkills().entrySet()) {
             int graduationValue = entry.getValue().getGraduation().getGraduationValue();
             List<SkillExcellency> unlockedExcellencies = SkillExcellency.unlockedBy(
                     entry.getKey().getExcellencyClass(), graduationValue);
             total += modifierResolver.sumModifiers(unlockedExcellencies, ModifierType.INITIATIVE);
         }
+        total += character.getFeats().stream().mapToInt(feat -> feat.resolveInitiativeBonus(character)).sum();
         return total;
     }
 }

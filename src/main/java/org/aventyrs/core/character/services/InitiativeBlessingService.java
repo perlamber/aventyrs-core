@@ -12,11 +12,12 @@ public interface InitiativeBlessingService {
      * initiative for its group — concatenates {@code character.getEgoAdvantages().values()},
      * {@code character.getAttributeAbilities()}, and {@code
      * org.aventyrs.core.skill.SkillCompetencyAbility#allFor(character)} (acquired <b>and</b>
-     * racial), flat-mapping each through its own {@code resolveInitiativeBlessings()} — the
-     * exact three sources named "Advantages, Abilities and Competency." Deliberately does
+     * racial), and {@code character.getFeats()} ({@code MobilidadeFeat#LIDERAR_O_AVANCO}),
+     * flat-mapping each through its own {@code resolveInitiativeBlessings()} — the three sources
+     * named "Advantages, Abilities and Competency", plus Talentos. Deliberately does
      * <b>not</b> also scan unlocked {@code SkillExcellency} tiers the way {@link
      * ReactionsService}/{@link MovementService}'s flat {@code @Modifier} aggregation does —
-     * this is a narrower, three-source scan by design, not an oversight.
+     * this is a narrower scan by design, not an oversight.
      *
      * <p>A pure function over character's own data — this doesn't grant, revoke, or otherwise
      * mutate anything; {@code org.aventyrs.core.scene.Scene#applyInitiativeBlessings} is the

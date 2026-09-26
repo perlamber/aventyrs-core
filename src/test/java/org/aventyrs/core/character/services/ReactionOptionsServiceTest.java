@@ -160,6 +160,24 @@ class ReactionOptionsServiceTest {
         assertFalse(options.get(0).affordable());
     }
 
+    /** The gap-catalog case: a Santo who already reacted this Rodada is no longer offered a second. */
+    @Test
+    void aSantoWhoAlreadySpentTheirReacaoIsReportedAsUnableToAfford() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .reactions(1)
+                .build();
+        character.grantTitle(new Santo(List.of(), List.of(SantoAbility.GUARDA_VIDAS)), TitleSlot.PRIMARY);
+        CombatantSheet santo = CharacterSheet.of(character, new Player());
+        CombatantSheet ally = plainSheet();
+        santo.spendReaction();
+
+        List<ReactionOption> options = reactionOptionsService.getAvailableReactions(
+                allyAttacked(santo, ally, Range.DISTANCIA_CURTA));
+
+        assertEquals(1, options.size());
+        assertFalse(options.get(0).affordable());
+    }
+
     private ReactionContext allyAttacked(final CombatantSheet reactor, final CombatantSheet ally,
                                          final Range distance) {
         return ReactionContext.builder()

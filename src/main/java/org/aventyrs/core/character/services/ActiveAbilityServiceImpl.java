@@ -145,6 +145,9 @@ public class ActiveAbilityServiceImpl implements ActiveAbilityService {
         }
         characterSheet.startCooldown(ability, ability.getCooldownRounds());
         characterSheet.startRestCooldown(ability, ability.getReactivationRest());
+        if (ability.getActionPointCost().kind() == ActionCost.Kind.REACTION) {
+            characterSheet.spendReaction();
+        }
     }
 
     /**
@@ -153,10 +156,11 @@ public class ActiveAbilityServiceImpl implements ActiveAbilityService {
      * minimum — the most the player could then choose is the caller's business), a Reação for a
      * REACTION, an Ação Livre for a FREE_ACTION, and nothing at all for a passive.
      *
-     * <p>All three are <b>"entitled to any at all"</b> checks, not live pools: this core keeps no
-     * spent-this-Turn ledger for any of them, the same "reported, not deducted" stance {@code
-     * ActionCost} and {@code WeaponDrawService} take. A holder with one Reação who has already
-     * used it this Rodada still passes here.
+     * <p>The Reação is a <b>live pool</b>: {@code ReactionsService#getRemainingReactions} subtracts
+     * the Rodada's spent Reações, and a successful activation spends one. Pontos de Ação and Ações
+     * Livres are still <b>"entitled to any at all"</b> checks — this core keeps no spent ledger for
+     * them, the same "reported, not deducted" stance {@code ActionCost} and {@code
+     * WeaponDrawService} take.
      *
      * <p>The sheet overloads, not the Character ones: activating an ability is combat-facing, and
      * the sheet is what carries a granted ACTION_POINTS/REACTIONS/FREE_ACTIONS TemporaryBonus. No
@@ -171,7 +175,7 @@ public class ActiveAbilityServiceImpl implements ActiveAbilityService {
                 }
             }
             case REACTION -> {
-                if (reactionsService.getTotalReactions(characterSheet, turnNumber) < 1) {
+                if (reactionsService.getRemainingReactions(characterSheet, turnNumber) < 1) {
                     throw new IllegalOperationException(NOT_ENOUGH_REACTIONS);
                 }
             }

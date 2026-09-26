@@ -33,7 +33,7 @@ public class ReactionOptionsServiceImpl implements ReactionOptionsService {
         }
         CombatantSheet reactor = context.getReactor();
         // Resolved once, not per option: both are facts about the reactor, not about the ability.
-        boolean hasReaction = reactionsService.getTotalReactions(
+        boolean hasReaction = reactionsService.getRemainingReactions(
                 reactor, context.getTurnNumber(), context.getReactorContext()) >= 1;
         int availableDeterminationPoints = determinationPointsService.getCurrentDeterminationPoints(
                 reactor.getCharacter(), reactor);

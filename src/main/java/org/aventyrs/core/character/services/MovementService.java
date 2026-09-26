@@ -30,9 +30,8 @@ public interface MovementService {
      * #getEffectiveSizeCategory}, so a size-shifting ability like Sangue de Gigante is already
      * reflected) plus any {@link org.aventyrs.core.modifier.ModifierType#MOVEMENT} bonus found
      * on attributeAbilities, skillCompetencyAbilities (acquired <b>and</b> racial — see {@link
-     * org.aventyrs.core.skill.SkillCompetencyAbility#allFor}; unlike {@link ReactionsService}/
-     * {@link InitiativeService}, which predate that fix and still only scan the acquired list,
-     * this newer service starts from the corrected combined one), or the unlocked {@link
+     * org.aventyrs.core.skill.SkillCompetencyAbility#allFor}, as {@link ReactionsService} and
+     * {@link InitiativeService} now do too), or the unlocked {@link
      * SkillExcellency} tiers of every trained Perícia. Never negative — like Reações/Ações
      * Livres/RD/RA, this is a spendable-resource-like budget, not a signed comparative value
      * like Iniciativa.

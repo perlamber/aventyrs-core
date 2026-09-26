@@ -254,16 +254,13 @@ public enum ArtesMarciaisFeat implements Feat {
     /**
      * "Você não é considerado Desprevenido enquanto estiver Caído" — the grappling style.
      */
-    // TODO: ConditionType.CAIDO and DESPREVENIDO both exist now, and CAIDO confers DESPREVENIDO
-    //  for real — what this clause needs is the opposite: a way for a held trait to *suppress* an
-    //  implied condition. Nothing can veto an implication (ConditionType#getImplied is read live,
-    //  the same shape Race#getRacialAbilities has and the same gap GorgonaFeat#MARCA_DA_MALDICAO
-    //  cites for losing Imunidade a Encantamentos).
+    // "Não é considerado Desprevenido enquanto estiver Caído" is real: Feat#suppressesImpliedCondition
+    // vetoes the Caído → Desprevenido implication, so a Desprevenido applied directly still lands.
     // TODO: Agarrar/Empurrar/Derrubar are manoeuvres with no representation, so a Vantagem
     //  scoped to them cannot be expressed (this core does not track what a roll is *for*).
     // The "+2 em sua DF" enquanto Caído is real, through the sheet-aware resolveDefenseBonus.
-    // TODO: "pode realizar uma Reação adicional" — ReactionsService scans no Talento, and a
-    //  Reação is never counted as spent anyway. "Pode se levantar como Ação Livre" — standing up
+    // TODO: "pode realizar uma Reação adicional" — ReactionsService scans no Talento. (The Reação
+    //  ledger exists now, so an extra one would be spendable.) "Pode se levantar como Ação Livre" — standing up
     //  is no priced action in this core. "Não sofre Desvantagens … com Armas Naturais ou
     //  Desarmado" would cancel a malus, which nothing models.
     DOMINAR_ARTE_MARCIAL_SUBMISSAO(
@@ -283,6 +280,11 @@ public enum ArtesMarciaisFeat implements Feat {
                                         final SceneContext sceneContext, final CombatantSheet holder) {
             return defenseType == DefenseType.PHYSICAL && holder != null
                     && holder.hasCondition(ConditionType.CAIDO, sceneContext) ? SUBMISSAO_PRONE_DEFENSE_BONUS : 0;
+        }
+
+        @Override
+        public boolean suppressesImpliedCondition(final ConditionType implier, final ConditionType implied) {
+            return implier == ConditionType.CAIDO && implied == ConditionType.DESPREVENIDO;
         }
     },
 

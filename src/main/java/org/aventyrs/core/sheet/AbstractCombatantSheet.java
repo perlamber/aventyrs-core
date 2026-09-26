@@ -281,6 +281,9 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     /** Attacks landed on this combatant since this Rodada began — see {@link #recordAttackSuffered()}. */
     private int attacksSufferedThisRound = 0;
 
+    /** See {@link CombatantSheet#getReactionsSpentThisRound()}. */
+    private int reactionsSpentThisRound = 0;
+
     /** Whether a weapon was drawn since this Turn began — see {@link #drawWeapon(Weapon)}. */
     private boolean drewWeaponThisTurn = false;
 
@@ -690,14 +693,14 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
      * dependency here.
      *
      * <p><strong>Not to be confused with {@code InitiativeService#getTotalInitiative}</strong>,
-     * which reads this same {@code EgoValue.getTotal()} but then adds a {@code
+     * which reads this same {@code Character#getEffectiveEgoTotal} but then adds a {@code
      * ModifierType.INITIATIVE} three-source sum, because Iniciativa doubles as a turn-order stat.
      * A {@code TemporaryBonus(INITIATIVE, +2, 2)} must never widen how many Iniciativa
      * <em>points</em> a combatant can spend. This asymmetry is the likeliest future misreading of
      * the two.
      */
     private int getPermanentEgoMax(final EgoDomain domain) {
-        return character.getEgos().getEgo(domain).getTotal();
+        return character.getEffectiveEgoTotal(domain);
     }
 
     /**
@@ -1026,6 +1029,16 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     }
 
     @Override
+    public int getReactionsSpentThisRound() {
+        return reactionsSpentThisRound;
+    }
+
+    @Override
+    public void spendReaction() {
+        reactionsSpentThisRound++;
+    }
+
+    @Override
     public boolean hasActiveRegeneration() {
         return temporaryEffects.stream()
                 .anyMatch(effect -> effect instanceof Regeneration && !effect.isExpired());
@@ -1292,6 +1305,7 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         actionsThisRound.clear();
         actionCountAtTurnStart = 0;
         attacksSufferedThisRound = 0;
+        reactionsSpentThisRound = 0;
         applyScheduledEgoGrants();
         applyPostponedDamage();
         tickCooldowns();
@@ -1424,6 +1438,7 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         actionsThisRound.clear();
         actionCountAtTurnStart = 0;
         attacksSufferedThisRound = 0;
+        reactionsSpentThisRound = 0;
         drewWeaponThisScene = false;
         combatStarted = false;
         lastDamageReceived = null;
@@ -1740,10 +1755,20 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
             return;
         }
         type.getImplied().forEach((implied, within) -> {
-            if (held.appliesWithin(within, sceneContext)) {
+            if (held.appliesWithin(within, sceneContext) && !isImplicationSuppressed(type, implied)) {
                 collectConditions(held, implied, sceneContext, active);
             }
         });
+    }
+
+    /**
+     * Whether a held Talento vetoes implier conferring implied — {@code
+     * Feat#suppressesImpliedCondition}. Only the implication is vetoed: the same condition applied
+     * directly, or conferred by a different implier, still lands.
+     */
+    private boolean isImplicationSuppressed(final ConditionType implier, final ConditionType implied) {
+        return getCharacter() != null && getCharacter().getFeats().stream()
+                .anyMatch(feat -> feat.suppressesImpliedCondition(implier, implied));
     }
 
     @Override

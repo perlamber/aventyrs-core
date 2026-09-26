@@ -377,6 +377,20 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
     int getAttacksSufferedThisRound();
 
     /**
+     * How many Reações this combatant has spent so far this Rodada — the ledger {@code
+     * ReactionsService#getRemainingReactions} subtracts from the total. Advanced by {@link
+     * #spendReaction()}, reset by {@link #startNewRound()} and {@link #startNewScene()}.
+     */
+    int getReactionsSpentThisRound();
+
+    /**
+     * Records one Reação spent. {@code ActiveAbilityService#activate} and a Título activation
+     * with a {@code REACTION} cost call it themselves. A caller resolving any other Reação — an
+     * attack provoked by movement, a Defesa taken as a Reação — calls it for that one.
+     */
+    void spendReaction();
+
+    /**
      * Records one successful activation of source in this combatant's current Turn — called by
      * {@code title.AbstractTitleAbilityInteraction#activate} once the costs are paid, so a refused
      * activation is never counted.

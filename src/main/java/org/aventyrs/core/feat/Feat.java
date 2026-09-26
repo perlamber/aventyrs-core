@@ -1,5 +1,7 @@
 package org.aventyrs.core.feat;
 
+import org.aventyrs.core.sheet.ConditionType;
+import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.combat.Retaliation;
 import org.aventyrs.core.ability.ActiveAbility;
 import org.aventyrs.core.ability.AttributeAbility;
@@ -1072,15 +1074,33 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      * FeatRequirements}, {@code CharacterAttributeService#upgradeBase} — which gate on invested
      * base. Zero by default.
      *
-     * <p>Only for a <b>fixed</b> Atributo. A clause of the "escolha um Atributo" shape needs an
-     * acquisition-time-choice subclass whose override branches on the picked {@link
-     * AttributeDomain} — {@code HumanoFeat#LIMIAR_DA_EVOLUCAO}'s own work, still unbuilt.
+     * <p>Only for a <b>fixed</b> Atributo. A clause of the "escolha um Atributo" shape grants
+     * {@code AtributoRacialEscolhidoFeat} in place of the constant ({@code HumanoFeat
+     * #LIMIAR_DA_EVOLUCAO}, {@code MonstruosoFeat#ALFA}).
      *
      * <p>For a <b>round-scoped</b> Atributo bonus (a Poder Vampírico like {@code DOM_DE_MIRCALLA})
      * grant a {@code TemporaryBonus} of {@code domain.getBonusModifierType()} instead — that path
      * is still read only by {@code AbstractSkillInteraction} on the Perícia-roll path.
      */
     default int resolveAttributeBonus(final AttributeDomain domain, final Character character) {
+        return 0;
+    }
+
+    /**
+     * Permanent points this Talento adds to one of its holder's Egos — "Você adquire 1 ponto
+     * permanente de Sorte" ({@code SobrevivenciaFeat#SORTE_DE_MOSES}, {@code #DETERMINACAO_DE_MOSES},
+     * {@code MobilidadeFeat#INICIATIVA_APRIMORADA}). Summed by {@code
+     * Character#getEffectiveEgoTotal}, which every reader of an Ego <i>total</i> calls: the
+     * permanent pool ceiling, Iniciativa, the Recursos-scaled Fama. {@code EgoValue#getBase()}
+     * readers ({@code FeatRequirements}' Ego ceilings) deliberately do not, the same split {@link
+     * #resolveAttributeBonus} keeps. Zero by default.
+     *
+     * <p>Derived rather than written into {@code EgoValue#getVariable()}, unlike {@code
+     * AttributeAbility#resolvePermanentEgoGain}, so a Talento granted through {@link
+     * #getGrantedFeats} or held in an acquired form counts, and a Talento removed takes its point
+     * with it.
+     */
+    default int resolveEgoBonus(final EgoDomain domain, final Character character) {
         return 0;
     }
 
@@ -1452,6 +1472,19 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      * every override must read as "condition not met".
      */
     /**
+     * Whether this Talento stops implier from conferring implied on its holder — "você não é
+     * considerado Desprevenido enquanto estiver Caído" ({@code ArtesMarciaisFeat
+     * #DOMINAR_ARTE_MARCIAL_SUBMISSAO}), "não fica Desprevenido em função destas condições" ({@code
+     * DuelistaFeat#COMBATER_AS_CEGAS}). Consulted edge by edge by {@code
+     * CombatantSheet#getActiveConditions}, so only that one implication is vetoed: the same
+     * condition applied directly, or implied by a different condition, still lands. False by
+     * default.
+     */
+    default boolean suppressesImpliedCondition(final ConditionType implier, final ConditionType implied) {
+        return false;
+    }
+
+    /**
      * Whether this Talento strips its holder of their Raça's Imunidade a Encantamentos — {@code
      * GorgonaFeat#MARCA_DA_MALDICAO}'s "não possui a Característica Racial Imunidade a
      * Encantamentos".
@@ -1758,6 +1791,28 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      */
     default int resolveSizeCategoryIncrease(final Character character) {
         return 0;
+    }
+
+    /**
+     * A flat bonus this Talento adds to its holder's Iniciativa, summed by {@code
+     * InitiativeService#getTotalInitiative} beside the three-source {@code ModifierType#INITIATIVE}
+     * scan. {@code EscudeiroFeat#ESCUDO_VELOZ} (+2 with a Médio or Pesado Escudo) and {@code
+     * MobilidadeFeat#PORTA_ESTANDARTE} (half Destreza or Carisma) are the consumers. Zero by
+     * default. Read at the moment Iniciativa is rolled, so an equipment condition is judged then.
+     */
+    default int resolveInitiativeBonus(final Character character) {
+        return 0;
+    }
+
+    /**
+     * {@code Blessing}s this Talento grants its holder for winning a rolagem de Iniciativa — the
+     * {@code EgoAdvantage#resolveInitiativeBlessings} shape, scanned by {@code
+     * InitiativeBlessingService} beside the other three sources and applied by {@code
+     * Scene#applyInitiativeBlessings}. {@code MobilidadeFeat#LIDERAR_O_AVANCO} is the consumer.
+     * Empty by default.
+     */
+    default List<Blessing> resolveInitiativeBlessings() {
+        return List.of();
     }
 
     /**

@@ -2,6 +2,8 @@ package org.aventyrs.core.feat;
 
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.DefenseType;
+import org.aventyrs.core.item.ItemCategory;
+import org.aventyrs.core.item.ItemWeightClass;
 import org.aventyrs.core.item.ShieldItem;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.skill.SkillType;
@@ -27,16 +29,23 @@ public enum EscudeiroFeat implements Feat {
      * "Sempre que iniciar um combate com um Escudo de Categoria Média ou Pesada em mãos, sua
      * iniciativa aumenta em +2."
      *
-     * <p>The shield condition is testable now — an equipped {@link ShieldItem} of {@code
-     * ItemWeightClass#MEDIUM} or {@code HEAVY}. The effect is not.
+     * <p><b>Real</b>, through {@link Feat#resolveInitiativeBonus}: an equipped {@code
+     * ItemCategory#SHIELD} whose authored weight is {@code ItemWeightClass#MEDIUM} or {@code
+     * HEAVY}. Iniciativa is read when it is rolled, so "ao iniciar um combate" is judged then.
      */
-    // TODO: InitiativeService scans attributeAbilities/skillCompetencyAbilities/excellencies, not
-    //  character.getFeats(); a Talento cannot grant Iniciativa today (plan Phase B, Feat
-    //  initiative hook).
     ESCUDO_VELOZ(
             "Sempre que iniciar um combate com um Escudo de Categoria Média ou Pesada em mãos, sua "
                     + "iniciativa aumenta em +2.",
-            FeatRequirements.builder().build()),
+            FeatRequirements.builder().build()) {
+        @Override
+        public int resolveInitiativeBonus(final Character character) {
+            boolean heavyShield = character.getEquipment().stream()
+                    .anyMatch(item -> item.getCategory() == ItemCategory.SHIELD
+                            && (item.getWeightClass() == ItemWeightClass.MEDIUM
+                            || item.getWeightClass() == ItemWeightClass.HEAVY));
+            return heavyShield ? ESCUDO_VELOZ_INITIATIVE_BONUS : 0;
+        }
+    },
 
     /**
      * "Você recebe +1 em suas Defesas enquanto utilizar um item escolhido do tipo 'Escudo'",
@@ -264,6 +273,9 @@ public enum EscudeiroFeat implements Feat {
                     .requiredFeatCategory(FeatCategory.ESCUDEIRO)
                     .requiredFeatCategoryCount(3)
                     .build());
+
+    /** ESCUDO_VELOZ's "sua iniciativa aumenta em +2". */
+    private static final int ESCUDO_VELOZ_INITIATIVE_BONUS = 2;
 
     /** ASAS_ADAMANTINAS' "Bônus de +2 em suas Defesas" while not flying. */
     private static final int ASAS_ADAMANTINAS_DEFENSE_BONUS = 2;

@@ -97,7 +97,7 @@ public class MoralHerdadaAbility implements EgoAdvantage {
      *         after this grant
      */
     public int applyStartingFama(final Character character, final CharacterSheet characterSheet) {
-        int amount = character.getEgos().getRecursos().getTotal();
+        int amount = character.getEffectiveEgoTotal(EgoDomain.RECURSOS);
         return famaChoice == FamaChoice.POSITIVA
                 ? characterSheet.increaseFamaPositiva(amount)
                 : characterSheet.increaseFamaNegativa(amount);

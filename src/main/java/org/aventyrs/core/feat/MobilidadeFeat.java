@@ -2,9 +2,14 @@ package org.aventyrs.core.feat;
 
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.character.EgoDomain;
+import org.aventyrs.core.modifier.ModifierType;
+import org.aventyrs.core.sheet.Blessing;
+import org.aventyrs.core.sheet.TargetScope;
 import org.aventyrs.core.skill.SkillType;
 import org.aventyrs.core.skill.atletismo.AtletismoSpecialization;
 
+import java.util.List;
 import java.util.function.Supplier;
 
 /**
@@ -153,40 +158,52 @@ public enum MobilidadeFeat implements Feat {
      * "Você adquire 1 ponto permanente de Iniciativa e então, se sua Iniciativa se tornar 4 ou
      * mais, você adquire uma Vantagem de Iniciativa."
      */
-    // TODO: a permanent Ego point is granted through CharacterEgos#withVariableBonus, reached
-    //  only by AttributeAbility#resolvePermanentEgoGain — Feat has no equivalent hook, and
-    //  adding one means deciding whether a Talento may raise an EgoDomain at all.
+    // The permanent point is real, through Feat#resolveEgoBonus (Character#getEffectiveEgoTotal).
     // TODO: granting a Vantagem de Ego is not expressible — a Vantagem is chosen once at
     //  character creation (CharacterCreationService), never awarded later.
     INICIATIVA_APRIMORADA(
             "Você adquire 1 ponto permanente de Iniciativa e então, se sua Iniciativa se tornar 4 "
                     + "ou mais, você adquire uma Vantagem de Iniciativa.",
-            () -> FeatRequirements.builder().build()),
+            () -> FeatRequirements.builder().build()) {
+        @Override
+        public int resolveEgoBonus(final EgoDomain domain, final Character character) {
+            return domain == EgoDomain.INICIATIVA ? 1 : 0;
+        }
+    },
 
     /**
      * "Sempre que ganhar uma rolagem de Iniciativa, nas 2 primeiras Rodadas de cada Cena de
      * Combate você adquire +2PA (não cumulativo)."
      *
-     * <p>Both conditions have resolvers — {@code Scene#wonInitiative} and {@code
-     * SceneContext#isWithinFirstCombatRounds(2)} — and the grant is a {@code Blessing} of {@code
-     * ModifierType.ACTION_POINTS}, which {@code Scene#applyInitiativeBlessings} already applies.
+     * <p><b>Real</b>: a {@code Blessing} of {@code ModifierType.ACTION_POINTS} (+2, 2 Rodadas,
+     * self) from {@link Feat#resolveInitiativeBlessings}, resolved by {@code
+     * InitiativeBlessingService} and granted by {@code Scene#applyInitiativeBlessings} to whoever
+     * won. "Não cumulativo" is the sourced Blessing's own rule: a second grant from the same
+     * Talento renews rather than stacks.
      */
-    // TODO: resolveInitiativeBlessings lives on EgoAdvantage/AttributeAbility/
-    //  SkillCompetencyAbility, and InitiativeBlessingService scans exactly those three — Feat is
-    //  not among them. Promoting it there would make this constant real.
     LIDERAR_O_AVANCO(
             "Sempre que ganhar uma rolagem de Iniciativa, nas 2 primeiras Rodadas de cada Cena de "
                     + "Combate você adquire +2PA (não cumulativo).",
             () -> FeatRequirements.builder()
                     .requiredFeat(INICIATIVA_APRIMORADA)
-                    .build()),
+                    .build()) {
+        @Override
+        public List<Blessing> resolveInitiativeBlessings() {
+            return List.of(new Blessing(ModifierType.ACTION_POINTS, LIDERAR_O_AVANCO_ACTION_POINTS,
+                    LIDERAR_O_AVANCO_ROUNDS, TargetScope.SELF, name()));
+        }
+    },
 
     /**
      * "Você pode adicionar Metade de seu valor de Destreza ou do valor de Carisma, a sua escolha,
      * às suas rolagens de Iniciativa."
      */
-    // TODO: same missing Feat initiative hook as LIDERAR_O_AVANCO, and the ally-facing half needs
-    //  cross-character grants at initiative time plus direction-scoped movement.
+    // The Iniciativa half is real, through Feat#resolveInitiativeBonus. ⚠️ "a sua escolha" is read
+    // as the higher of half Destreza and half Carisma: the choice is made per roll, and nothing
+    // would pick the lower one.
+    // TODO: the PA and Movimento half needs "apenas se você for o primeiro a agir" (turn-order
+    //  position, which Scene resolves for nobody), a grant to allies at initiative time that
+    //  depends on the holder's position, and direction-scoped movement ("em direção a").
     // The disjunctive Pré-requisito is real — "Destreza 3 *ou* Carisma 3"; the required Talento
     // is common to both branches, so it stays on the outer group.
     PORTA_ESTANDARTE(
@@ -207,7 +224,13 @@ public enum MobilidadeFeat implements Feat {
                             .attributeDomain(AttributeDomain.CHARISMA)
                             .requiredAttributeValue(3)
                             .build())
-                    .build()),
+                    .build()) {
+        @Override
+        public int resolveInitiativeBonus(final Character character) {
+            return Math.max(character.getEffectiveAttributeTotal(AttributeDomain.DEXTERITY),
+                    character.getEffectiveAttributeTotal(AttributeDomain.CHARISMA)) / 2;
+        }
+    },
 
     /**
      * "Você pode se mover enquanto furtivo, mas seu Movimento Base é reduzido à metade", the
@@ -392,6 +415,12 @@ public enum MobilidadeFeat implements Feat {
 
     /** INVESTIDA_AQUATICA's own stated "-1PA" on the Tempo de Ação of an Investida. */
     private static final int CHARGE_ACTION_POINT_REDUCTION = 1;
+
+    /** LIDERAR_O_AVANCO's "+2PA". */
+    private static final int LIDERAR_O_AVANCO_ACTION_POINTS = 2;
+
+    /** LIDERAR_O_AVANCO's "nas 2 primeiras Rodadas". */
+    private static final int LIDERAR_O_AVANCO_ROUNDS = 2;
 
     private final String description;
     /**

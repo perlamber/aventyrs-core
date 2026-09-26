@@ -7,6 +7,7 @@ import org.aventyrs.core.modifier.ModifierResolverImpl;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.CombatantSheet;
+import org.aventyrs.core.skill.SkillCompetencyAbility;
 import org.aventyrs.core.skill.SkillExcellency;
 import org.aventyrs.core.skill.SkillType;
 import org.aventyrs.core.item.Item;
@@ -51,7 +52,7 @@ public class ReactionsServiceImpl implements ReactionsService {
     private int permanentReactions(final Character character) {
         int total = character.getReactions();
         total += modifierResolver.sumModifiers(character.getAttributeAbilities(), ModifierType.REACTIONS);
-        total += modifierResolver.sumModifiers(character.getSkillCompetencyAbilities(), ModifierType.REACTIONS);
+        total += modifierResolver.sumModifiers(SkillCompetencyAbility.allFor(character), ModifierType.REACTIONS);
         for (Map.Entry<SkillType, CharacterSkill> entry : character.getSkills().entrySet()) {
             int graduationValue = entry.getValue().getGraduation().getGraduationValue();
             List<SkillExcellency> unlockedExcellencies = SkillExcellency.unlockedBy(

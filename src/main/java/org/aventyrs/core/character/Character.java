@@ -230,6 +230,17 @@ public class Character {
     }
 
     /**
+     * The Ego total every reader of an Ego <i>total</i> should use: {@code EgoValue#getTotal()}
+     * (base + variable) plus every held Talento's {@code Feat#resolveEgoBonus}. The permanent Ego
+     * pool ceiling, {@code InitiativeService} and {@code MoralHerdadaAbility}'s Fama read this.
+     * {@code EgoValue#getBase()} readers — {@code FeatRequirements}' Ego ceilings — do not.
+     */
+    public int getEffectiveEgoTotal(final EgoDomain domain) {
+        return egos.getEgo(domain).getTotal()
+                + getFeats().stream().mapToInt(feat -> feat.resolveEgoBonus(domain, this)).sum();
+    }
+
+    /**
      * This character's effective total for domain — {@link AttributeValue#getTotal()} (base +
      * racial + variable, already resolved on {@link #attributes}) plus every held Talento's
      * {@link Feat#resolveAttributeBonus} grant ({@code
