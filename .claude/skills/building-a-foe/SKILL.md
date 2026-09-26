@@ -1,253 +1,147 @@
 ---
 name: building-a-foe
-description: This skill should be used when the user asks to "add a new monster", "build a foe", "create a monster/inimigo/criatura", "add a stat block", "add an archetype to GenericMonster", "make a boss/bruiser/caster enemy", or gives a monster's stat block (its Atributos, Perícias, DF/DM, GDs per Perícia, Categoria de Tamanho). Walks through picking between AbstractMonsterTemplate's fill-in-the-form path and GenericMonster's ready archetypes, authoring the Defesas and per-Perícia GDs, tuning bulk via lifeMultiplier, and the spawn-independence trap — mirroring org.aventyrs.core.monster as the reference implementation.
+description: This skill should be used when the user asks to "add a new monster", "build a foe", "create a monster/inimigo/criatura", "add a Modelo", "implement a Habilidade Monstruosa", "add a sample monster", "make a boss/bruiser/caster enemy", mentions Grau de Poder / Categoria (Presa, Deviante, Predador, Apex, Abominação) / Exemplar, or gives a monster's stat block. Walks through the rules-built path (MonsterBlueprint + MonsterRules, from docs/rules/criacao-de-monstros.txt), implementing a Modelo's Habilidades Monstruosas the way CireneiaAbility does, the fixed-stat-block path kept for summons, and the spawn-independence trap — mirroring org.aventyrs.core.monster as the reference implementation.
 ---
 
 # Building a foe
 
 A foe lives in `org.aventyrs.core.monster`. It is an ordinary `Character` — Attributes,
 Perícias, abilities and equipment — wrapped in a `MonsterSheet` that adds the numbers a
-creature presents *because it never rolls*.
+creature presents *because it never rolls*: a GD per Perícia and two Defesas.
 
-**There is no `Monster extends Character`, and there must not be.** The stat-carrying half was
-never player-specific: a foe's `Character` has `race` set to the single catch-all `Monstruoso`
-and `player` left `null` (that field is nullable for exactly this reason, and nothing in main
-source reads it).
+**There is no `Monster extends Character`, and there must not be.** A foe's `Character` has
+`race` set to the single catch-all `Monstruoso` and `player` left `null`.
 
 ## 0. Pick the path
 
-Two, mirroring the `Item`/`AbstractItem`/`ArmorItem` split this codebase already uses:
-
 | Path | When | Shape |
 | --- | --- | --- |
-| `AbstractMonsterTemplate` | A **designed** foe — it has a name, a story, a signature trait | `@Builder`; the builder *is* the form |
-| `GenericMonster` | **A generic monster on-scene** — the Narrador needs an opponent now, not a designed one | enum catalog of ready archetypes |
-| `SummonedMonsterTemplate` | An **invocação** — its numbers depend on who summoned it | its own class in `monster.summon`, e.g. `Zumbi` |
+| `MonsterBlueprint` | **Any monster a Mestre authors.** The default. | `@Builder` of *choices*; `MonsterRules` derives every number |
+| `SummonedMonsterTemplate` | An **invocação** — its numbers follow its Conjurador, not a Grau de Poder | its own class in `monster.summon`, e.g. `Zumbi` |
+| `AbstractMonsterTemplate` | A **fixed stat block** outside the creation rules, or a hand-built test foe | `@Builder` of authored DF/DM/GDs |
 
-If the user hands you a named creature with abilities or equipment, that's
-`AbstractMonsterTemplate`. Only add a `GenericMonster` constant for a genuinely role-shaped
-stand-in — and note the existing five are **deliberately unnamed as species**: they're picked by
-what the fight needs (something that swings, something at range, something that casts, something
-that ends a session), not by monster fiction. A foe with a name and a story does not belong in
-that enum.
+`SampleMonster` holds legal worked blueprints (a Presa and a Predador). The old five
+`GenericMonster` archetypes now live **in test sources only** (same package), because dozens of
+combat tests use them as known DF/DM targets — don't move them back to main.
 
-**`GenericMonster` constants carry no abilities and no equipment**, on purpose — a generic
-stand-in with a signature trait isn't generic any more. If your new archetype wants one, it's an
-`AbstractMonsterTemplate`.
+## 1. The rules-built path — `MonsterBlueprint`
 
-## 1. Author the numbers: two Defesas and a GD per Perícia
+Source of truth: `docs/rules/criacao-de-monstros.txt`. A blueprint holds what the Mestre
+**chooses**; `MonsterRules` derives the rest, and `MonsterSheet` asks `MonsterRules` for every
+number **live** (a Destreza an Impulso raised raises the GDs it governs).
 
-`MonsterSheet` adds the Defesas and the GDs to the shared sheet behaviour:
-
-| Field | Meaning |
+| Choice | Derived |
 | --- | --- |
-| `physicalDefense` (DF) | the target number a player's Ataque roll must reach to land a physical attack |
-| `magicDefense` (DM) | the same, for a magical attack |
-| `skillDifficulties` | a `SkillDifficulty` (a `DifficultyLevel` plus a flat bonus) per Perícia the foe *knows* |
-| `generalDifficulty` | the `SkillDifficulty` for every Perícia with no entry above — defaults to `SkillDifficulty.DEFAULT`, Médio +0 |
+| `powerDegree` | `MonsterCategory` (never chosen — `forPowerDegree`), its ceilings, ×PV, PA/Ego bonuses, every budget |
+| `kind` (`REGULAR`/`EXEMPLAR`) | base GD (Muito Fácil / Fácil), extra Talentos, Exemplar-only traits, the Ego-effect cap |
+| `attributeBases` | 10 points above base 1, max 5; Bônus Racial from Habilidades, trimmed to the Categoria's cap |
+| `trainedSkills`, `gnoseUpgrades`, `progressionUpgrades` | each Perícia's `SkillDifficulty` — **there are no Graduações** |
+| `models`, `abilities` | Habilidades Monstruosas' passives, actives, GD steps; +2PV each |
+| `feats`, `egoAllocation` | Talentos Gerais/Monstruosos; Egos base 2 + allocation |
+| `adjustments` (`MonsterAdjustments`) | the Mestre's signed deltas, applied last, **never validated** |
 
-`getSkillDifficulty(SkillType)` is the one lookup: the Perícia's own entry, else the general GD.
-Every consumer reads a foe's "roll" through it — an attack presents
-`getSkillDifficulty(ATAQUE_CORPO_A_CORPO)`/`ATAQUE_A_DISTANCIA` to a defender's Esquiva e Aparar;
-`getPerception()` is the `ATTENTION` GD flattened (`SkillDifficulty#getValue()` = base + bonus),
-read by `HidingService#resolveDetection` in place of an Atenção roll; the `FURTIVIDADE` GD is how
-well it hides. *(Before 0.0.54 there were `attackDifficulty`/`attackBonus` — attacks only — and a
-separate flat `perception`; the former became the general GD.)*
+**A Perícia's GD** (see `MonsterRules` javadoc): base level → +1 Gnose upgrade, +1 per GP upgrade
+(trained only) → clamp to the Categoria's "GD Máximo" (Exemplar +1) → Habilidade steps and the
+Mestre's steps (these go *past* the clamp) → bonus = ⌊governing Atributo / 2⌋ + Habilidade roll
+bonuses + the Mestre's.
 
-A GD entry is **not** derived from the foe's Graduação in that Perícia, for the same reason DF is
-not derived from its Destreza — an entry needs no Graduação and a Graduação needs no entry.
+**Defesas** = the Esquiva e Aparar GD's value + `DefenseService#getTotalDefense(sheet, type)`
+(equipment, Habilidades, temporary bonuses, Condições) + the Mestre's. DF and DM share the base.
 
-**These are authored, not derived, and that's the central design decision.** A stat block says
-what a Goblin's DF *is*; it isn't recomputed from its Destreza and Graduação the way a player's
-defence roll is. That keeps a stat block readable and tunable by hand, at the cost of the numbers
-being free to drift from the Attributes behind them. **Nothing checks them against each other,
-deliberately** — don't add validation, and don't try to compute DF from Destreza.
+**PV/PD/PM** use `ResourceFormula.MONSTER` on the `Character`: PV = 20 + Vigor × Categoria
+multiplier (+2 per Habilidade via `MonstrousAbilityGrant`); PD = PV/2 + Instinto × 3; PM = PV/2 +
+Foco × 2. The three pool services branch on the formula, so their `Character`-only overloads
+agree with the sheet ones.
 
-The player always rolls, so the direction of an exchange decides which pair is consulted — see
-`AttackReceiver` (foe attacks: contributes the attack Perícia's `SkillDifficulty`) and
-`AttackDelivery` (player attacks: contributes a flat DF or DM). `MonsterSheet#getDefense`
-selects the right column. `getPerception()` is consulted by `HidingService` on the same principle:
-the hiding player rolled, the foe presents a number.
+**Validation returns, never throws.** `MonsterRules.validate` gives a `List<MonsterViolation>`
+(code + subject + actual/limit) so an editor shows every problem at once. `spawn` doesn't
+validate — an over-budget monster still plays, like the builder-bypassable `Character`.
 
-## 2. Fill in the form
+**Open readings** are named constants, not scattered literals: an Exemplar's unstated extra
+Atributo/GD ceilings are `MonsterKind#bonusMaximumAttribute`/`bonusMaximumSkillSteps`. Change them
+there.
 
-```java
-MonsterTemplate goblin = AbstractMonsterTemplate.builder()
-        .name("Goblin Batedor")
-        .attributeBase(AttributeDomain.DEXTERITY, 4)
-        .attributeBase(AttributeDomain.VIGOR, 2)
-        .skillGraduation(SkillType.ATAQUE_A_DISTANCIA, 4)
-        .skillGraduation(SkillType.ESQUIVA_E_APARAR, 3)
-        .equipmentItem(ArmorItem.ROUPA_PESADA)
-        .sizeCategory(SizeCategory.MINUS_ONE)
-        .physicalDefense(12)
-        .magicDefense(11)
-        .skillDifficulty(SkillType.ATAQUE_A_DISTANCIA, SkillDifficulty.of(DifficultyLevel.EASY, 1))
-        .skillDifficulty(SkillType.FURTIVIDADE, SkillDifficulty.of(DifficultyLevel.MEDIUM, 2))
-        .generalDifficulty(SkillDifficulty.of(DifficultyLevel.EASY, 0))
-        .build();
-```
+## 2. Implementing a Modelo — follow `CireneiaAbility`
 
-Note the `@Singular` names, which are not the plural field names: `attributeBase`,
-`skillGraduation`, `equipmentItem`, plus plain `attributeAbility`/`skillCompetencyAbility`.
+Every Modelo is an enum implementing `MonstrousAbility`, one constant per Habilidade, linked from
+`MonsterModel` by a `Supplier` of `values()` (a direct array would deadlock the two enums' class
+init). Five Modelos are **catalog-only** (`isImplemented() == false`): name, tier and rules text,
+generated from the rules file. To build one:
 
-### The optional hooks
+1. Override the hooks on each constant, **gating every Aprimoramento with
+   `category.isAtLeast(…)`** — a held Habilidade grows with its holder; nothing is re-acquired.
+   - `resolveModifier(type, category, choice)` — a permanent number on a `ModifierType`. It
+     reaches every service through `MonstrousAbilityGrant`, an `AttributeAbility` adapter with one
+     `@Modifier` method per supported type. **If your `ModifierType` isn't there, add its method**
+     — `ModifierResolverImpl` indexes *declared* methods only.
+   - `resolveRacialAttributeBonuses` — "Bônus Racial de X +N", folded into the Atributo's racial
+     half at spawn.
+   - `resolveSkillLevelShift` — "Perícias baseadas em X GD +1".
+   - `resolveActiveAbilities` — build `MonstrousActiveAbility`s (price, PD, Duração,
+     Resfriamento, `Supplier<TemporaryEffect>`s). **Suppliers, because a `TemporaryEffect` ticks
+     down and must be fresh per activation.** "Uma vez por Cena" is `cooldownRounds(ONCE_PER_SCENE)`,
+     cleared by `MonsterSheet#beginScene`.
+   - A choice ("+1 Reação ou +1 Ação Livre", "Escolha um Elemento") lists its options in
+     `getChoiceOptions()`; the pick is a plain string on `MonstrousAbilitySelection`.
+2. Override `isImplemented()` to `true` on the enum, and back to `false` on any constant whose
+   effect this core genuinely can't land — with a TODO naming the missing system (see the
+   "Habilidades Monstruosas" gap row in `CLAUDE.md`).
+3. A monster never rolls: "Vantagem nas rolagens de Ataque" becomes +2 on the GD it presents.
 
-Four more, all defaulted — only reach for one when the rules text actually states it:
+## 3. The fixed-stat-block path
 
-| Hook | Rules text it answers |
-| --- | --- |
-| `.actionPoints(2)` | "Possuem 2 Pontos de Ação (PA)". Without it a foe gets the standard 3. |
-| `.skillSpecialization(TYPE, List.of(…))` | the bracketed tag, `Ataque Corpo-a-Corpo [Primal]` |
-| `.undead(true)` | Anatomia de Morto-Vivo. See below. |
-| `.criticalEffectImmunity(CriticalEffectType.SANGRAMENTO)` | "Imunes aos Efeitos Críticos …" |
+`AbstractMonsterTemplate`'s builder states DF/DM, a general GD and per-Perícia GDs directly;
+`MonsterSheet#getBlueprint()` is empty and every getter returns the authored number. Only reach
+for it for summons or tests. Its optional hooks (`actionPoints`, `skillSpecialization`,
+`undead`, `criticalEffectImmunity`) still apply; `undead` and the immunities exist on
+`MonsterBlueprint` too.
 
-**`isUndead()` is the only vitality classification this core has, and it is narrow on purpose.**
-`CreatureType` has HUMANOIDE/FEERICO/MONSTRUOSO and nothing about being alive, so "contra
-personagens vivos" is resolved as "not a foe that declared itself Morto-Vivo". That's exact for
-every combatant this core can build — a `CharacterSheet` is always living — but don't reach for it
-as a general anatomy tag. A construct or elemental that should count as non-living without being a
-Morto-Vivo needs the real thing on `Character`, which doesn't exist.
+**`isUndead()` is narrow on purpose** — the only vitality classification this core has. Don't
+reach for it as a general anatomy tag. **Immunities are named by `CriticalEffectType`**, enforced
+by `CriticalEffect#applicableTo` in both directions of an exchange.
 
-**Immunities are named by `CriticalEffectType`, not by class**, precisely so a stat block can
-resist an Efeito Crítico this core hasn't built (four of the five a Zumbi resists have no
-implementation). Enforced by `CriticalEffect#applicableTo`, which both `AttackDelivery` and
-`AttackReceiver` route through — one filter, both directions. If you add a constant, say in its
-javadoc whether anything implements it.
+For a summon: the parameter is a plain `int` (the Conjurador's Graduação), tier clauses fold in
+at build time via `withConjurador(int)`, and tiered numbers need an instance-based ability — see
+`Zumbi`/`ZumbiAbility`.
 
-Only `name` is `@NonNull`. Everything else has a sensible default — `sizeCategory` is
-`SizeCategory.ZERO`, `generalDifficulty` is Médio +0, the three multipliers take
-their `*Service.DEFAULT_*` constants, and the defences default to 0. **An Attribute omitted from
-the map keeps `AttributeValue`'s own default** rather than becoming 0, so list only what the stat
-block states.
+## 4. Everything else is already shared — don't re-implement it
 
-### Attributes and Graduações are uncapped, by construction
+`MonsterSheet` and `CharacterSheet` both extend `AbstractCombatantSheet`: damage, shields,
+Mana/Determinação, Ego points, `TemporaryEffect`s, cooldowns, inventory (loot), the Turn
+lifecycle. Type combat-facing signatures as `CombatantSheet`. The XP-spending services take a
+`CharacterSheet`, so a monster can't reach them — no guard needed.
 
-A player's Attribute `base` caps at 5 and a Graduação at twice the governing Attribute's base.
-A foe is exempt from both — and this needed **no exception mechanism at all**: those caps are
-enforced only on the XP-spending services (`CharacterAttributeService#upgradeBase`,
-`SkillGraduationService#upgradeGraduation`), which take a `CharacterSheet`. A `MonsterSheet`
-isn't one, so a monster can't reach either entry point. `GenericMonster.ABERRACAO`'s Vigor 12
-and Graduação 14 are both far past any player ceiling and need nothing special.
+Monster-only state on `MonsterSheet`: the Regular's two-Efeitos-de-Ego-per-Cena counter
+(`checkEgoEffectAvailable`/`recordEgoEffectUse`, enforced by `EgoPointsService#useEgoPointsForEffect`)
+and `beginScene()`, which resets it and the once-per-Cena actives.
 
-If you find yourself wanting a guard or an `isMonster()` flag: **there isn't one, and the
-compiler is the enforcement.** `MonsterSheetTest` asserts this reflectively, because writing it
-as `monster instanceof CharacterSheet` doesn't compile — which is the point.
+## 5. The spawn-independence trap
 
-### Tune bulk with `lifeMultiplier`, not Vigor
+`spawn()` must return a **fully independent** foe each call. `MonsterBlueprint#buildCharacter`
+builds new skills, feat/equipment lists and **new `MonstrousActiveAbility` instances** every call —
+`ActiveAbilityService` and the cooldown map key actives by identity, so sharing one would let one
+foe's Resfriamento lock another's. For a template: `SkillGraduation` is mutable, so each spawn
+builds its own.
 
-`lifeMultiplier`/`manaMultiplier`/`determinationMultiplier` are `Character` fields. Reach for
-`lifeMultiplier` when a foe should be *tanky* — inflating Vigor instead would raise every
-Vigor-governed roll along with its PV. `ABERRACAO` pays for its bulk with a `lifeMultiplier` of
-8 rather than yet more Vigor. They're not monster-only; a GM house rule uses them the same way.
+## 6. Write tests
 
-## 2b. If it's a summon
-
-A creature whose stat block reads "se você possuir N ou mais Graduações em Domínio do Mana"
-implements `SummonedMonsterTemplate` and gets **its own class** in `org.aventyrs.core.monster
-.summon` — `Zumbi` is the reference. Not a `GenericMonster` constant, and usually not an
-`AbstractMonsterTemplate` either: it carries per-instance choices (the Conjurador's Graduação, and
-often one of its own like a Zumbi's corpse size) that a constant can't hold.
-
-**The parameter is a plain `int`, never a summoner entity.** Every clause of this shape keys off
-one number, so that number is the parameter. `0` means nobody summoned it — the Narrador placed it
-for narrative reasons, or typed a number into a form — and is a real value, not a null stand-in.
-
-```java
-MonsterSheet raised  = Zumbi.builder().build().spawn(necromancer);  // reads their DdM Graduação
-MonsterSheet fromGm  = Zumbi.summonedBy(7).spawn();                 // a number off a form
-MonsterSheet loose   = Zumbi.builder().build().spawn();             // the inherited no-arg spawn
-```
-
-Three rules for the tier clauses:
-
-- **Fold them in at build time, don't patch the sheet.** `withConjurador(int)` returns a *copy*;
-  `spawn()` then reads the already-adjusted numbers. The Attributes, the ability and the authored
-  attack bonus are all read off the template before the `Character` exists, so there is no "after"
-  to patch. The exception is anything that lives on the *sheet* rather than the `Character` — a
-  `LifeSteal`, a `TemporaryEffect` — which an overridden `spawn()` applies once the sheet is built.
-- **Tiered numbers need an instance-based ability**, following `ArtesAprimorarComArteAbility`:
-  `ModifierResolver` invokes `@Modifier` methods *on the source instance*, so a no-arg annotated
-  method can return an instance field. The `ModifierType` stays compile-time-fixed; only the value
-  varies. See `ZumbiAbility`.
-- **Check whether a clause needs two consumers.** "Bônus em Perícia de Ataque" raises the
-  creature's own Ataque roll (a `@Modifier` on the ability) *and* the threshold its attack presents
-  when a defender rolls (the template's attack-Perícia `getSkillDifficulties()` entries). One clause, both directions.
-
-A flat "+NPV" clause is `@Modifier(ModifierType.HIT_POINTS)`, **not** a `lifeMultiplier` uplift —
-a stated amount expressed as a multiplier only lands right at one specific Vigor.
-
-## 3. Everything else is already shared — don't re-implement it
-
-`MonsterSheet` and `CharacterSheet` both extend `AbstractCombatantSheet`, which holds every
-shared behaviour exactly once: damage, shields, Mana/Determinação, temporary Ego points,
-`TemporaryEffect`s, inventory (a foe's loot), the Turn lifecycle, and `receiveInteraction`.
-
-Consequences worth knowing before you write anything foe-specific:
-
-- **Equipment works with no wiring.** `DefenseServiceImpl.sumEquipment` and `DamageServiceImpl`
-  scan `character.getEquipment()` for DF/DM and RD identically for both sheet kinds, Favores
-  included.
-- **Ego points are on the shared half**, despite reading as player-facing — `Primor` applies to a
-  *target*, so leaving them off would break it against a foe.
-- **Type combat-facing signatures as `CombatantSheet`**, never `CharacterSheet`. The only things
-  that should still name `CharacterSheet` are the four XP-spending services plus
-  `MoralHerdadaAbility#applyStartingFama` and `RestService#applyRest`.
-
-## 4. The spawn-independence trap
-
-`spawn()` returns a **fully independent** `MonsterSheet` each call — its own identity, its own
-resource pools, its own mutable state — so spawning one template twice gives two foes that can
-be damaged separately.
-
-That independence needs care in exactly one place: **`SkillGraduation` is mutable and
-`CharacterSkill#increaseGraduation` mutates it in place**, so each spawn builds its own
-`SkillGraduation` instances rather than sharing the template's. Sharing one across spawns would
-let one foe's growth raise another's. Equipment and ability lists *are* safe to share — those
-are catalog constants — though `spawn()` still copies the equipment list, since
-`Character#equipment` is a mutable inventory.
-
-If you override `spawn()` (rarely needed), preserve this. The default implementation on
-`MonsterTemplate` already does everything correctly for both paths.
-
-## 5. Write tests
-
-Follow `MonsterTemplateTest`:
-
-- `spawnCarriesTheStatBlockOntoTheSheet` — every authored number reaches the sheet.
-- `spawnBuildsACharacterWithTheMonsterRaceAndNoPlayer` — `Monstruoso`, `player == null`.
-- `aSpawnedMonstersAttributesAndGraduacoesAreUncapped` — a value past the player ceiling survives.
-- `twoSpawnsFromOneTemplateAreFullyIndependent` — damage one, assert the other is untouched, and
-  raise one's Graduação, asserting the other's is unchanged. **Always write this one** for a new
-  template shape; it's the regression guard for step 4.
-- `theLifeMultiplierDecouplesPvFromVigor` — if the foe uses one.
-- `anEquippedItemReachesTheSharedScanningServices` — if the foe carries equipment.
-- `anAttributeOmittedFromTheTemplateKeepsItsDefault`.
-
-For a summon, add on top: one test per tier boundary *and its control* (Graduação 3 vs 4, 6 vs 7,
-9 vs 10 — the off-by-one is the whole risk), that `withConjurador` leaves the original template
-untouched, that a Conjurador untrained in Domínio do Mana yields the untiered baseline identical to
-`spawn()`, and that anything applied to the *sheet* (a `LifeSteal`) is per-spawn rather than shared.
-See `ZumbiTest`.
-
-For a new `GenericMonster` constant, extend `everyGenericMonsterSpawnsWithoutError` (it sweeps
-`values()`, so it picks the constant up automatically) and add a `aGenericMonsterSpawnsReadyToUse`
--style assertion if the tier introduces something new.
-
-Behaviour shared with a player sheet is already covered by `MonsterSheetTest` — don't duplicate
-damage/shield/effect/turn-lifecycle tests per monster.
+- Blueprint: validation per violation code, the GD ladder (clamp, Exemplar, untrained, steps past
+  the ceiling), PV/PD/PM through the real services, DF with equipment and adjustments,
+  `twoSpawnsFromOneBlueprintAreFullyIndependent`. See `MonsterRulesTest`, `MonsterBlueprintTest`.
+- A Modelo: each Habilidade at each tier boundary its Aprimoramentos name, plus one test driving
+  an active through `ActiveAbilityServiceImpl` and reading the result from the real service. See
+  `CireneiaAbilityTest`.
+- `MonsterModelTest` sweeps the catalog (8 Habilidades each, two Presa, back-links) — a new
+  Modelo is picked up automatically.
+- Keep `SampleMonster` legal: `MonsterRulesTest#everySampleIsLegal`.
 
 ## Reference files to read first
 
-- `org.aventyrs.core.monster.MonsterTemplate` — the interface, the two `*_RACE`/`DEFAULT_*`
-  constants, and `spawn()`.
-- `org.aventyrs.core.monster.AbstractMonsterTemplate` — the form.
-- `org.aventyrs.core.monster.GenericMonster` — the five archetypes and how a tier scales as one dial.
-- `org.aventyrs.core.monster.MonsterSheet` — the Defesas, the per-Perícia GDs and `getDefense`.
-- `org.aventyrs.core.monster.SummonedMonsterTemplate` / `org.aventyrs.core.monster.summon.Zumbi` —
-  the summon path, and the worked example of tier clauses.
-- `org.aventyrs.core.effect.CriticalEffectType` / `CriticalEffect#applicableTo` — immunities.
-- `org.aventyrs.core.monster.package-info` — the consumer-facing overview; keep it current if the
-  spawning API changes shape.
-- `org.aventyrs.core.combat.AttackReceiver`/`AttackDelivery` — where the four combat numbers are
-  consumed; `org.aventyrs.core.character.services.HidingService` for `perception`.
+- `docs/rules/criacao-de-monstros.txt` — the rules.
+- `monster/MonsterBlueprint`, `MonsterRules`, `MonsterCategory`, `MonsterKind`,
+  `MonsterAdjustments`, `MonsterViolation`, `SampleMonster`.
+- `monster/model/MonsterModel`, `MonstrousAbility`, `MonstrousActiveAbility`,
+  `monster/MonstrousAbilityGrant`, and `monster/model/cireneia/CireneiaAbility` — the worked Modelo.
+- `monster/MonsterSheet` — the two paths behind one set of getters; `beginScene`.
+- `character/ResourceFormula` and the three pool services.
+- `monster/MonsterTemplate`, `AbstractMonsterTemplate`, `SummonedMonsterTemplate`, `summon/Zumbi` — fixed stat blocks.

@@ -30,24 +30,41 @@
  *
  * <h2>Building one</h2>
  *
- * Two paths, mirroring the {@code Item}/{@code AbstractItem}/{@code ArmorItem} split:
+ * <b>By the rules</b> — {@code docs/rules/criacao-de-monstros.txt} — is the path for any monster a
+ * Mestre authors. A {@link org.aventyrs.core.monster.MonsterBlueprint} holds the <i>choices</i> (Grau
+ * de Poder, Regular or Exemplar, Atributos, trained Perícias and their upgrades, Modelos and
+ * Habilidades Monstruosas, Talentos, Egos) and {@link org.aventyrs.core.monster.MonsterRules} derives
+ * every number from them — the Categoria and its ceilings, each Perícia's GD, the Defesas, PA, the
+ * PV/PD/PM formula — and validates the budgets:
  *
  * <pre>{@code
- * // Fill in the form — a unique foe worth designing.
+ * MonsterBlueprint pantera = MonsterBlueprint.builder()
+ *         .name("Pantera de Cireneia")
+ *         .powerDegree(30)                                   // → Predador
+ *         .attributeBase(AttributeDomain.DEXTERITY, 5)        // 10 points above base 1, max 5
+ *         .trainedSkill(SkillType.ESQUIVA_E_APARAR)
+ *         .gnoseUpgrade(SkillType.ESQUIVA_E_APARAR)
+ *         .progressionUpgrade(SkillType.ESQUIVA_E_APARAR, 2)
+ *         .model(MonsterModel.ABENCOADO_DE_CIRENEIA)
+ *         .ability(MonstrousAbilitySelection.of(CireneiaAbility.ATRIBUTOS_APRIMORADOS))
+ *         .build();
+ * List<MonsterViolation> problems = MonsterRules.validate(pantera);   // empty when legal
+ * MonsterSheet sheet = pantera.spawn(gm);
+ * }</pre>
+ *
+ * <p>{@link org.aventyrs.core.monster.SampleMonster} holds worked, legal examples.
+ *
+ * <p><b>A fixed stat block</b> — {@link org.aventyrs.core.monster.AbstractMonsterTemplate} — states
+ * its Defesas and GDs outright instead. It is kept for summons (whose numbers come from their
+ * Conjurador, not from these rules) and for hand-built foes in tests:
+ *
+ * <pre>{@code
  * MonsterSheet troll = AbstractMonsterTemplate.builder()
  *         .name("Troll da Ponte Velha")
- *         .attributeBase(AttributeDomain.VIGOR, 9)      // past MAX_ATTRIBUTE_BASE, deliberately
- *         .skillGraduation(SkillType.ATAQUE_CORPO_A_CORPO, 12)
- *         .sizeCategory(SizeCategory.PLUS_TWO)
  *         .physicalDefense(19).magicDefense(13)
  *         .skillDifficulty(SkillType.ATAQUE_CORPO_A_CORPO, SkillDifficulty.of(DifficultyLevel.HARD, 3))
- *         .generalDifficulty(SkillDifficulty.of(DifficultyLevel.MEDIUM, 0))   // every other Perícia
- *         .lifeMultiplier(7)                            // bulk without inflating Vigor
  *         .build()
  *         .spawn(gm);
- *
- * // Or grab a generic one on-scene.
- * MonsterSheet thug = GenericMonster.CAPANGA.spawn(gm);
  * }</pre>
  *
  * <p>A creature whose numbers depend on <b>who summoned it</b> takes a third path:
@@ -83,11 +100,11 @@
  * hides. <i>(Before 0.0.54 a foe had a single attack GD and a separate flat perception; the
  * former is now the general GD.)</i>
  *
- * <p>They're <b>authored on the stat block, not derived</b> from the foe's Perícias. That keeps a
- * stat block readable and tunable by hand; the cost is that nothing checks the numbers against
- * the Attributes behind them, deliberately.
+ * <p>On a rules-built foe they're <b>derived, live</b>, by {@link
+ * org.aventyrs.core.monster.MonsterRules}; on a fixed stat block they're authored and never
+ * recomputed. {@code MonsterSheet} answers both through the same getters.
  *
- * <h2>Beyond those numbers: what else a stat block may author</h2>
+ * <h2>Beyond those numbers: what else a fixed stat block may author</h2>
  *
  * Four further hooks on {@link org.aventyrs.core.monster.MonsterTemplate}, all defaulted, so a
  * foe that says nothing about them behaves exactly as before:
@@ -108,8 +125,9 @@
  * <h2>Race</h2>
  *
  * Every foe carries the single {@code org.aventyrs.core.race.Monstruoso} race, which is
- * deliberately empty. A player race is heritage and carries innate traits; a monster's traits are
- * authored per stat block, so there's no per-family race to invent. Supply them through the
- * template's own ability lists — they land on {@code Character} and are scanned identically.
+ * deliberately empty. A player race is heritage and carries innate traits; a monster's traits come
+ * from its Modelos and Habilidades Monstruosas (or, on a fixed stat block, its own ability lists),
+ * so there's no per-family race to invent. They land on {@code Character} and are scanned
+ * identically.
  */
 package org.aventyrs.core.monster;

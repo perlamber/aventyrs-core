@@ -4,6 +4,7 @@ import lombok.NonNull;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.ego.EgoAdvantage;
+import org.aventyrs.core.monster.MonsterSheet;
 import org.aventyrs.core.sheet.Blessing;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.EgoPointSpend;
@@ -73,7 +74,16 @@ public class EgoPointsServiceImpl implements EgoPointsService {
     public EgoPointSpend useEgoPointsForEffect(final CombatantSheet sheet, final EgoDomain domain,
                                                final EgoPointType type, final int amount,
                                                final int rolledValue) {
+        // "Monstros comuns podem utilizar no máximo dois Efeitos de Ego por Cena" — refused before a
+        // point is spent, counted only once the spend went through.
+        MonsterSheet monster = sheet instanceof MonsterSheet foe ? foe : null;
+        if (monster != null) {
+            monster.checkEgoEffectAvailable();
+        }
         EgoPointSpend spend = sheet.spendEgoPoints(domain, type, amount);
+        if (monster != null) {
+            monster.recordEgoEffectUse();
+        }
         int recovered = getSpendRecovery(sheet.getCharacter(), spend, rolledValue);
         if (recovered > 0) {
             // Only the PV half is a heal effect the fallen-character limits reach.

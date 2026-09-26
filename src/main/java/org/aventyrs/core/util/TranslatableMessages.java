@@ -216,6 +216,12 @@ public class TranslatableMessages {
     public static final String INVALID_SPELL_DURATION = "INVALID_SPELL_DURATION";
     public static final String INVALID_SPELL_ACTIVATION = "INVALID_SPELL_ACTIVATION";
     public static final String SPELL_PREREQUISITE_NOT_MET = "SPELL_PREREQUISITE_NOT_MET";
+
+    /**
+     * A Magia would open an Árvore de Magia the Conjurador does not know yet, and every Árvore
+     * their Talentos allow ({@code SpellService#getKnownTreeCapacity}) is already known.
+     */
+    public static final String SPELL_TREE_CAPACITY_REACHED = "SPELL_TREE_CAPACITY_REACHED";
     public static final String INVALID_SPELL_CAST_TARGET = "INVALID_SPELL_CAST_TARGET";
     public static final String INVALID_SPELL_DAMAGE = "INVALID_SPELL_DAMAGE";
     public static final String INVALID_SPELL_HEALING = "INVALID_SPELL_HEALING";
@@ -245,6 +251,8 @@ public class TranslatableMessages {
      * {@link #ABILITY_ACTIVATION_PREVENTED}, which is a Condição forbidding activation outright.
      */
     public static final String ABILITY_ON_COOLDOWN = "ABILITY_ON_COOLDOWN";
+    /** A Regular monster has used its two Efeitos de Ego this Cena — see {@code MonsterSheet#checkEgoEffectAvailable}. */
+    public static final String MONSTER_EGO_EFFECTS_EXHAUSTED = "MONSTER_EGO_EFFECTS_EXHAUSTED";
 
     /** An activated ability's Pontos de Determinação cost exceeds what the holder has left. */
     public static final String NOT_ENOUGH_DETERMINATION_POINTS = "NOT_ENOUGH_DETERMINATION_POINTS";

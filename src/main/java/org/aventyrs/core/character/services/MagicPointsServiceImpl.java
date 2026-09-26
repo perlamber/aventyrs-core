@@ -11,12 +11,16 @@ public class MagicPointsServiceImpl implements MagicPointsService {
 
     private final ModifierResolver modifierResolver;
 
+    /** Only consulted for a {@link org.aventyrs.core.character.ResourceFormula#MONSTER} creature. */
+    private final HitPointsService hitPointsService;
+
     public MagicPointsServiceImpl() {
         this(new ModifierResolverImpl());
     }
 
     public MagicPointsServiceImpl(final ModifierResolver modifierResolver) {
         this.modifierResolver = modifierResolver;
+        this.hitPointsService = new HitPointsServiceImpl(modifierResolver);
     }
 
     @Override
@@ -30,7 +34,8 @@ public class MagicPointsServiceImpl implements MagicPointsService {
 
     @Override
     public int getMaxMagicPoints(final Character character) {
-        return BASE_MAGIC_POINTS + character.getEffectiveAttributeTotal(AttributeDomain.FOCUS) * getManaMultiplier(character);
+        return basePoints(character, null)
+                + character.getEffectiveAttributeTotal(AttributeDomain.FOCUS) * getManaMultiplier(character);
     }
 
     @Override
@@ -43,12 +48,23 @@ public class MagicPointsServiceImpl implements MagicPointsService {
 
     @Override
     public int getMaxMagicPoints(final Character character, final CombatantSheet sheet) {
-        return BASE_MAGIC_POINTS
+        return basePoints(character, sheet)
                 + character.getEffectiveAttributeTotal(AttributeDomain.FOCUS) * getManaMultiplier(character, sheet);
     }
 
     @Override
     public int getCurrentMagicPoints(final Character character, final CombatantSheet characterSheet) {
         return Math.max(0, getMaxMagicPoints(character, characterSheet) - characterSheet.getManaSpent());
+    }
+
+    /**
+     * The flat part of the pool — {@value #BASE_MAGIC_POINTS} for a character, "Metade dos PV"
+     * for a monster (see {@link org.aventyrs.core.character.ResourceFormula}).
+     */
+    private int basePoints(final Character character, final CombatantSheet sheet) {
+        if (character.getResourceFormula().derivesLesserPoolsFromHitPoints()) {
+            return hitPointsService.getMaxHitPoints(character, sheet) / 2;
+        }
+        return BASE_MAGIC_POINTS;
     }
 }

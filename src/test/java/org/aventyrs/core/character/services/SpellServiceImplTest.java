@@ -7,8 +7,11 @@ import org.aventyrs.core.feat.Feat;
 import org.aventyrs.core.feat.FeatCategory;
 import org.aventyrs.core.feat.FeatRequirements;
 import org.aventyrs.core.magic.BranchLevel;
+import org.aventyrs.core.magic.FreeSpellPick;
 import org.aventyrs.core.magic.Spell;
 import org.aventyrs.core.magic.TestSpell;
+import org.aventyrs.core.magic.catalog.MagicTree;
+import org.aventyrs.core.magic.catalog.PiromanciaSpell;
 import org.aventyrs.core.magic.catalog.VidaSpell;
 import org.aventyrs.core.magic.TestSpellBranch;
 import org.aventyrs.core.magic.TestSpellTree;
@@ -22,9 +25,11 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -170,7 +175,7 @@ class SpellServiceImplTest {
 
     @Test
     void grantSpellAddsTheSpellWhenEveryGatePasses() {
-        Character character = character(List.of());
+        Character character = character(List.of(treeSlotsFeat(1)));
 
         spellService.grantSpell(character, sheetFor(character), TRUNK_SEMENTE);
 
@@ -227,7 +232,7 @@ class SpellServiceImplTest {
 
     @Test
     void aSementeCostsNothing() {
-        Character character = character(List.of());
+        Character character = character(List.of(treeSlotsFeat(1)));
         CharacterSheet sheet = brokeSheetFor(character);
 
         spellService.grantSpell(character, sheet, TRUNK_SEMENTE);
@@ -311,5 +316,186 @@ class SpellServiceImplTest {
                 return spell == TRUNK_BROTO;
             }
         };
+    }
+
+    // ---------- Árvores conhecidas — the slot gate ----------
+
+    /** A stand-in for ARCANISTA's "conhece N Árvores": capacity only. */
+    private static Feat treeSlotsFeat(final int slots) {
+        return new AbstractFeat(FeatCategory.METAMAGICO, "Knows " + slots + " trees.",
+                FeatRequirements.builder().build()) {
+            @Override
+            public int resolveKnownTreeCapacity(final Character character) {
+                return slots;
+            }
+        };
+    }
+
+    /** A stand-in for a ladder rung: raises the cap by rungs and owes picks free Magias at rung. */
+    private static Feat freePicksFeat(final int rungs, final BranchLevel rung, final int picks) {
+        return new AbstractFeat(FeatCategory.METAMAGICO, "Owes " + picks + " at " + rung + ".",
+                FeatRequirements.builder().build()) {
+            @Override
+            public int resolveBranchLevelIncrease(final Character character) {
+                return rungs;
+            }
+
+            @Override
+            public List<FreeSpellPick> resolveFreeSpellPicks(final Character character) {
+                return List.of(new FreeSpellPick(rung, picks));
+            }
+        };
+    }
+
+    @Test
+    void withoutATreeSlotNoSpellCanBeLearned() {
+        Character character = character(List.of());
+        CharacterSheet sheet = sheetFor(character);
+
+        IllegalOperationException refused = assertThrows(IllegalOperationException.class,
+                () -> spellService.grantSpell(character, sheet, TRUNK_SEMENTE));
+
+        assertEquals("SPELL_TREE_CAPACITY_REACHED", refused.getMessage());
+        assertEquals(List.of(), character.getSpells());
+    }
+
+    @Test
+    void aFullSetOfTreesRefusesANewTreeButNotAKnownOne() {
+        Character character = character(List.of(treeSlotsFeat(1), capRaisingFeat(1)), TRUNK_SEMENTE);
+
+        assertThrows(IllegalOperationException.class,
+                () -> spellService.grantSpell(character, sheetFor(character), LINEAR_SEMENTE));
+        spellService.grantSpell(character, sheetFor(character), TRUNK_BROTO);
+
+        assertEquals(List.of(TRUNK_SEMENTE, TRUNK_BROTO), character.getSpells());
+    }
+
+    @Test
+    void openTreeSlotsAreTheCapacityLessTheKnownTrees() {
+        Character character = character(List.of(treeSlotsFeat(2), treeSlotsFeat(1)), TRUNK_SEMENTE);
+
+        assertEquals(3, spellService.getKnownTreeCapacity(character));
+        assertEquals(2, spellService.getOpenTreeSlots(character));
+    }
+
+    @Test
+    void openTreeSlotsNeverGoNegative() {
+        Character character = character(List.of(treeSlotsFeat(1)), TRUNK_SEMENTE, LINEAR_SEMENTE);
+
+        assertEquals(0, spellService.getOpenTreeSlots(character));
+        assertEquals(List.of(), spellService.getLearnableTrees(character));
+    }
+
+    @Test
+    void learnableTreesAreEveryCatalogTreeNotYetKnown() {
+        Character character = character(List.of(treeSlotsFeat(2)), VidaSpell.ALIVIAR_A_DOR);
+
+        List<?> learnable = spellService.getLearnableTrees(character);
+
+        assertEquals(MagicTree.values().length - 1, learnable.size());
+        assertFalse(learnable.contains(MagicTree.VIDA));
+    }
+
+    @Test
+    void learnTreeGrantsItsSementeFree() {
+        Character character = character(List.of(treeSlotsFeat(1)));
+        CharacterSheet sheet = brokeSheetFor(character);
+
+        List<Spell> learned = spellService.learnTree(character, sheet, MagicTree.VIDA);
+
+        assertEquals(1, learned.size());
+        assertEquals(BranchLevel.SEMENTE, learned.get(0).getBranchLevel());
+        assertEquals(learned, character.getSpells());
+    }
+
+    @Test
+    void learnTreeRefusesWithNoSlotAndChangesNothing() {
+        Character character = character(List.of());
+
+        assertThrows(IllegalOperationException.class,
+                () -> spellService.learnTree(character, sheetFor(character), MagicTree.VIDA));
+
+        assertEquals(List.of(), character.getSpells());
+    }
+
+    @Test
+    void learnTreeRefusesATreeAlreadyKnown() {
+        Character character = character(List.of(treeSlotsFeat(3)), VidaSpell.ALIVIAR_A_DOR);
+
+        assertThrows(IllegalOperationException.class,
+                () -> spellService.learnTree(character, sheetFor(character), MagicTree.VIDA));
+    }
+
+    // ---------- the free rung picks ----------
+
+    @Test
+    void nothingIsOwedWithoutAFreePickTalento() {
+        assertEquals(Map.of(), spellService.getOwedFreeSpells(character(List.of(capRaisingFeat(1)))));
+    }
+
+    @Test
+    void owedPicksShrinkAsDistinctTreesHoldTheRung() {
+        Character none = character(List.of(freePicksFeat(1, BranchLevel.BROTO, 2)), TRUNK_SEMENTE);
+        Character one = character(List.of(freePicksFeat(1, BranchLevel.BROTO, 2)), TRUNK_SEMENTE, TRUNK_BROTO);
+
+        assertEquals(Map.of(BranchLevel.BROTO, 2), spellService.getOwedFreeSpells(none));
+        assertEquals(Map.of(BranchLevel.BROTO, 1), spellService.getOwedFreeSpells(one));
+    }
+
+    @Test
+    void theFirstBrotoOfATreeIsFreeWhilePicksAreOwed() {
+        Character character = character(List.of(freePicksFeat(1, BranchLevel.BROTO, 2)), TRUNK_SEMENTE);
+        CharacterSheet sheet = brokeSheetFor(character);
+
+        spellService.grantSpell(character, sheet, TRUNK_BROTO);
+
+        assertTrue(character.getSpells().contains(TRUNK_BROTO));
+        assertEquals(0, BigDecimal.ZERO.compareTo(sheet.getUnUsedExperience()));
+    }
+
+    @Test
+    void onceThePicksAreSpentTheRungCostsItsPrice() {
+        Character character = character(List.of(freePicksFeat(1, BranchLevel.BROTO, 1)),
+                TRUNK_SEMENTE, TRUNK_BROTO, VidaSpell.ALIVIAR_A_DOR);
+
+        assertEquals(Map.of(), spellService.getOwedFreeSpells(character));
+        assertEquals(0, BigDecimal.ONE.compareTo(spellService.getAcquisitionCost(character, VidaSpell.REVIGORAR)));
+    }
+
+    @Test
+    void aSecondBrotoInTheSameTreeIsNeverAFreePick() {
+        Character character = character(List.of(freePicksFeat(1, BranchLevel.BROTO, 2)),
+                TRUNK_SEMENTE, TRUNK_BROTO);
+
+        assertEquals(Map.of(BranchLevel.BROTO, 1), spellService.getOwedFreeSpells(character));
+        assertEquals(0, BigDecimal.ONE.compareTo(spellService.getAcquisitionCost(character,
+                TestSpell.at(TestSpellTree.DIVERGING, BranchLevel.BROTO, null))));
+    }
+
+    @Test
+    void aDivergingTreeOffersBothRamificacoesAsFreeOptions() {
+        Character character = character(List.of(freePicksFeat(1, BranchLevel.BROTO, 2)), PiromanciaSpell.LUZ_DE_VELA);
+
+        List<Spell> options = spellService.getFreeSpellOptions(character, BranchLevel.BROTO);
+
+        assertEquals(2, options.size());
+        assertEquals(2, options.stream().map(Spell::getBranch).distinct().count());
+    }
+
+    @Test
+    void takingOneRamificacaoRemovesTheTreeFromTheOptions() {
+        Character character = character(List.of(freePicksFeat(1, BranchLevel.BROTO, 2)), PiromanciaSpell.LUZ_DE_VELA);
+        Spell eldur = spellService.getFreeSpellOptions(character, BranchLevel.BROTO).get(0);
+
+        spellService.grantSpell(character, brokeSheetFor(character), eldur);
+
+        assertEquals(List.of(), spellService.getFreeSpellOptions(character, BranchLevel.BROTO));
+    }
+
+    @Test
+    void noOptionsAreOfferedForARungNothingIsOwedAt() {
+        Character character = character(List.of(capRaisingFeat(1)), PiromanciaSpell.LUZ_DE_VELA);
+
+        assertEquals(List.of(), spellService.getFreeSpellOptions(character, BranchLevel.BROTO));
     }
 }

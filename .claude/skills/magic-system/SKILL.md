@@ -90,8 +90,8 @@ All three must hold, the same combine-every-prerequisite shape as `Feat#isEligib
   SEMENTE-is-free is an inference. It's a `BigDecimal` (like `SkillGraduationService`'s cost), so
   a fractional discount is representable. `getAcquisitionCost(character, spell)` is where every
   adjustment lands: **`Feat#grantsFreeSpellAcquisition`** waives it outright (a Magia a held
-  Talento hands out — `MetamagicoFeat#ARCANISTA`'s chosen Sementes/Brotos, wired ahead of its
-  choice class), and otherwise **`Feat#resolveSpellAcquisitionCostReduction` +
+  Talento names — no catalog consumer), **a free ladder pick** waives it too (see "Árvores
+  conhecidas and the free picks" below), and otherwise **`Feat#resolveSpellAcquisitionCostReduction` +
   `Race#resolveSpellAcquisitionCostReduction`** are summed off the base and floored at zero —
   `Agastias`'s "Magia é Ciência" (−0.5 EXP, unscoped) is the live consumer; `ElementalFeat
   #ARCANISMO_ELEMENTAL` and the `Furia`/`NascidoDaFloresta` "Natural" clauses are the pending
@@ -100,6 +100,24 @@ All three must hold, the same combine-every-prerequisite shape as `Feat#isEligib
   i.e. the Árvores the Conjurador *conhece* (holding any one Magia of a tree is knowing it, since
   the climb gate makes the first one a SEMENTE). Derived, never stored — same discipline as the
   branch resolution. What `MetamagicoFeat#ARCANISTA`'s "conhece N Árvores de Magia" reads.
+- **Árvores conhecidas and the free picks — ARCANISTA, wired (0.0.58).** Two `Feat` hooks, and
+  **no choice class and no stored picks**, for the same reason there is no "chosen branch" field:
+  - `Feat#resolveKnownTreeCapacity` → `SpellService#getKnownTreeCapacity`/`getOpenTreeSlots`.
+    `ARCANISTA` answers the **Conhecimentos roll value** (Graduação + Gnose via
+    `CharacterSkillService#getValueForRoll`; table ruling 2026-09-25), resolved live, so a raised
+    Graduação opens a slot. `grantSpell` refuses a Magia of an unknown Árvore with no slot open
+    (`SPELL_TREE_CAPACITY_REACHED`) — **nothing but ARCANISTA opens Árvores**, so a character
+    without it learns no Magia. Mimetized Magias (`APTIDAO_MAGICA_AMPLA`) are a separate list and
+    ungated. `learnTree(character, sheet, tree)` opens one and grants its Semente.
+  - `Feat#resolveFreeSpellPicks` → `List<FreeSpellPick(rung, picks)>` — 2 at the rung each ladder
+    Talento unlocks. `getOwedFreeSpells` is picks minus **distinct Árvores already holding that
+    rung**, so the first two such Magias from different Árvores are free
+    (`getAcquisitionCost` waives exactly those), and `getFreeSpellOptions(character, rung)` lists
+    what may fill one. In a tree diverging at that rung both ramificações are offered, so **the
+    pick is the branch choice**; deeper rungs follow the branch by the ordinary gates ("sempre
+    do mesmo ramo da magia de nível anterior").
+  - A UI prompts on both whenever either is non-zero — after a Talento grant, and after a raised
+    Graduação is saved.
 - `MagiaAlternativaAbility` (`org.aventyrs.core.ability`) is one `AttributeAbility` constant per
   `MagicType` — pattern 3 in the `ability-acquisition-and-substitution` skill, mirroring
   `PeritoTeoricoAbility` exactly. Grant the constant, not `FocusAbility.MAGIA_ALTERNATIVA`,

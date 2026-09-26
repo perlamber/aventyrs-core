@@ -9,6 +9,7 @@ import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.IllegalOperationException;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -68,11 +69,64 @@ public interface SpellService {
     Set<SpellTree> getKnownTrees(Character character);
 
     /**
+     * How many Árvores de Magia character may conhecer — the summed {@link
+     * Feat#resolveKnownTreeCapacity} across {@code character.getFeats()}. {@code
+     * MetamagicoFeat#ARCANISTA} is the only source ("uma quantidade de árvores de magia igual ao
+     * seu Conhecimento Metamágico"), and it grows with the Graduação, so this is resolved on
+     * every call rather than fixed when the Talento was acquired.
+     */
+    int getKnownTreeCapacity(Character character);
+
+    /**
+     * {@link #getKnownTreeCapacity} minus {@link #getKnownTrees}, floored at zero — how many
+     * new Árvores character may still open with {@link #learnTree}. A UI prompts for these; a
+     * raised Graduação opens one ("Ao adquirir novas graduações novas Árvores de Magia também
+     * podem ser escolhidas").
+     */
+    int getOpenTreeSlots(Character character);
+
+    /**
+     * Every catalog Árvore character could open right now: every {@code MagicTree} not already
+     * known, or empty when {@link #getOpenTreeSlots} is zero.
+     */
+    List<SpellTree> getLearnableTrees(Character character);
+
+    /**
+     * Opens tree for character — "você conhece estas árvores de magias e sabe utilizar todas
+     * as magias do tipo Semente" — granting every {@link BranchLevel#SEMENTE} of it through
+     * {@link #grantSpell}, and returns them. Throws {@code SPELL_TREE_CAPACITY_REACHED} when no
+     * slot is open, and {@code SPELL_PREREQUISITE_NOT_MET} when tree is already known; mutates
+     * nothing either way.
+     */
+    List<Spell> learnTree(Character character, CharacterSheet characterSheet, SpellTree tree)
+            throws IllegalOperationException;
+
+    /**
+     * Per rung, how many free Magias character is still owed: the summed {@link
+     * Feat#resolveFreeSpellPicks} for that rung, minus the number of distinct Árvores in which
+     * character already holds a Magia of it, floored at zero. Rungs owing nothing are absent.
+     * Derived from {@code getSpells()}, never stored — spending a pick is simply holding one
+     * more Árvore's Magia at that rung.
+     */
+    Map<BranchLevel, Integer> getOwedFreeSpells(Character character);
+
+    /**
+     * The catalog Magias of rung that character could take as a free pick now: nothing owed
+     * at rung means none; otherwise every non-alternate Magia of rung that passes {@link
+     * Spell#isEligible} under {@link #getMaxBranchLevel}, from an Árvore holding no Magia of
+     * rung yet. In an Árvore that diverges at rung both ramificações' Magias are offered, so
+     * picking one <em>is</em> choosing the branch.
+     */
+    List<Spell> getFreeSpellOptions(Character character, BranchLevel rung);
+
+    /**
      * The XP {@link #grantSpell} will spend to give character spell:
      *
      * <ol>
      *   <li>{@link BigDecimal#ZERO} if a held Talento grants this Magia outright ({@link
-     *       Feat#grantsFreeSpellAcquisition}) — checked first, short-circuits the rest;</li>
+     *       Feat#grantsFreeSpellAcquisition}), or if it would spend one of {@link
+     *       #getOwedFreeSpells}' picks — its rung is owed and its Árvore holds no Magia of that
+     *       rung yet. Checked first, short-circuits the rest;</li>
      *   <li>otherwise the rung's {@link #ACQUISITION_EXPERIENCE_COST}, minus every discount the
      *       character has — each held Talento's {@link
      *       Feat#resolveSpellAcquisitionCostReduction} plus the Race's {@code
@@ -90,7 +144,9 @@ public interface SpellService {
      * Grants spell to character after checking all three of {@link Spell#isEligible}'s gates
      * against the cap resolved by {@link #getMaxBranchLevel}, then spending {@link
      * #getAcquisitionCost} from characterSheet. Throws {@link IllegalOperationException} and
-     * mutates nothing if a gate fails ({@code SPELL_PREREQUISITE_NOT_MET}) or characterSheet
+     * mutates nothing if a gate fails ({@code SPELL_PREREQUISITE_NOT_MET}), if spell's Árvore
+     * is not yet known and {@link #getOpenTreeSlots} is zero ({@code SPELL_TREE_CAPACITY_REACHED}),
+     * or characterSheet
      * cannot afford the cost ({@code NOT_ENOUGH_EXPERIENCE}). Same validate-then-spend-then-mutate
      * order as {@code FeatService#grantFeat}.
      */

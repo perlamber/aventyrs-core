@@ -46,9 +46,9 @@ import java.util.Set;
  * ever reach, and neither needs a special mechanism to allow. See {@link MonsterTemplate}'s own
  * javadoc for why.
  *
- * <p>This is the {@code AbstractItem} of the monster world — the caller-supplied, non-cataloged
- * variant sitting alongside {@link GenericMonster}'s fixed catalog. A foe that recurs across a
- * campaign is better off as a catalog constant; this is for the ones that don't.
+ * <p>A fixed stat block: nothing here is derived or validated. An authored monster should be a
+ * {@link MonsterBlueprint}, which builds these numbers from {@code criacao-de-monstros.txt}; this
+ * form stays for stat blocks outside those rules and for hand-built foes in tests.
  */
 @Getter
 @Builder

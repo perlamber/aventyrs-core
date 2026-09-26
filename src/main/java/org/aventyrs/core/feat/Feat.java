@@ -33,6 +33,7 @@ import org.aventyrs.core.item.NaturalWeapon;
 import org.aventyrs.core.race.RacialTraitSuppression;
 import org.aventyrs.core.item.RegaliaGrade;
 import org.aventyrs.core.item.Weapon;
+import org.aventyrs.core.magic.FreeSpellPick;
 import org.aventyrs.core.magic.Spell;
 import org.aventyrs.core.magic.MimetizedSpell;
 import org.aventyrs.core.rest.RestType;
@@ -690,17 +691,14 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     /**
      * Whether this Talento hands spell to character <b>for free</b> as part of its own authored
      * benefit, so {@code org.aventyrs.core.character.services.SpellService#grantSpell} spends no
-     * XP for it — {@code MetamagicoFeat#ARCANISTA}'s automatically-learned Sementes and its two
-     * chosen trees' Brotos ("suas magias do tipo Semente são automaticamente aprendidas", "você
-     * aprende a conjurar as Magias Brotos destas árvores"). Consulted by {@code
+     * XP for it. Consulted by {@code
      * SpellService#getAcquisitionCost}, and a UI pricing Magia acquisition must apply the same
      * waiver so its numbers match what {@code grantSpell} will actually charge.
      *
-     * <p>False by default. Wired <b>ahead of its first real consumer</b>: ARCANISTA is still a
-     * plain enum constant, and expressing "the trees I picked" needs the acquisition-time-choice
-     * class it does not have yet (see the {@code adding-a-feat} skill) — the same way {@link
-     * #resolveBranchLevelIncrease} and its {@code SpellService} scan were wired before {@code
-     * MetamagicoFeat} existed.
+     * <p>False by default, and no catalog Talento overrides it: the {@code MetamagicoFeat} ladder
+     * turned out to need no "trees I picked" record, and waives its picks through {@link
+     * #resolveFreeSpellPicks} instead. This stays the hook for a Talento naming one specific Magia
+     * it hands out.
      */
     default boolean grantsFreeSpellAcquisition(final Character character, final Spell spell) {
         return false;
@@ -749,6 +747,40 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      */
     default int resolveBranchLevelIncrease(final Character character) {
         return 0;
+    }
+
+    /**
+     * How many Árvores de Magia this Talento lets its holder <b>conhecer</b> — {@code
+     * MetamagicoFeat#ARCANISTA}'s "Escolha uma quantidade de árvores de magia igual ao seu
+     * Conhecimento Metamágico". Summed by {@code SpellService#getKnownTreeCapacity} across {@code
+     * Character#getFeats()}; {@code SpellService#grantSpell} refuses a Magia of a not-yet-known
+     * Árvore once {@code getKnownTrees} has reached it, so a Conjurador only ever opens as many
+     * Árvores as their Talentos allow.
+     *
+     * <p>Zero by default — and nothing else in the ruleset grants one, so a character without
+     * ARCANISTA learns no Magia at all. Other routes to a Magia ({@code APTIDAO_MAGICA_AMPLA}'s
+     * mimetizar) are {@code MimetizedSpell}s, a separate list this cap does not govern. Same
+     * default-hook shape as {@link #resolveBranchLevelIncrease}.
+     */
+    default int resolveKnownTreeCapacity(final Character character) {
+        return 0;
+    }
+
+    /**
+     * The free Magia picks this Talento owes its holder, one {@link FreeSpellPick} per
+     * rung — the {@code MetamagicoFeat} ladder's
+     * "Escolha 2 Árvores de Magia que você conheça [...], você aprende a conjurar as magias do
+     * tipo Broto/Muda/Emergente/Florescente destas árvores". Summed per rung by {@code
+     * SpellService#getOwedFreeSpells}.
+     *
+     * <p>What is owed is <b>derived, never stored</b>: a pick is spent by holding a Magia of that
+     * rung in one more distinct Árvore, so the first {@code picks} Magias of the rung, each from a
+     * different Árvore, are the free ones and {@code SpellService#getAcquisitionCost} waives
+     * them. No record of "which trees I chose" exists to disagree with {@code getSpells()} — the
+     * same discipline as the branch gate. Empty by default.
+     */
+    default List<FreeSpellPick> resolveFreeSpellPicks(final Character character) {
+        return List.of();
     }
 
     /**

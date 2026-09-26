@@ -50,9 +50,12 @@ mechanism.
   `magic-system` skill), `grantsFreeSpellAcquisition(Character, Spell)` /
   `resolveSpellAcquisitionCostReduction(Character, Spell)` → `BigDecimal` (a Talento that hands a
   Magia to its holder free, or discounts the XP price — both fed to
-  `SpellService#getAcquisitionCost`, which also sums the `Race` twin; the waiver is wired ahead
-  of `MetamagicoFeat#ARCANISTA`'s choice class, the discount alongside
-  `ElementalFeat#ARCANISMO_ELEMENTAL`), `resolveDefenseBonus(DefenseType, Character)`,
+  `SpellService#getAcquisitionCost`, which also sums the `Race` twin; the waiver still has no
+  catalog consumer, the discount sits alongside `ElementalFeat#ARCANISMO_ELEMENTAL`),
+  `resolveKnownTreeCapacity` (how many Árvores the holder may conhecer — `ARCANISTA` alone) and
+  `resolveFreeSpellPicks` → `List<FreeSpellPick>` (the ladder's "Escolha 2 Árvores [...] você
+  aprende as magias do tipo X" — **no choice class**: what is owed is derived from the spell
+  list, see the `magic-system` skill), `resolveDefenseBonus(DefenseType, Character)`,
   `resolveManaMultiplierIncrease`/`resolveRestMagicPointsBonus(RestType, Character)`, their
   Determinação twins `resolveDeterminationMultiplierIncrease`/
   `resolveRestDeterminationPointsBonus(RestType, Character)`, the

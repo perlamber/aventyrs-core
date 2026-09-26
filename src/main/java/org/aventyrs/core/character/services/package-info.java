@@ -98,18 +98,42 @@
  * CombatantSheet sheet = CombatantSheet.of(character, player);
  * }</pre>
  *
+ * <h2>Árvores de Magia, after the starting Talentos</h2>
+ *
+ * A character whose starting Talentos include {@code MetamagicoFeat#ARCANISTA} owes two more
+ * picks, and they come <b>last</b>, because both depend on everything before them: the number
+ * of Árvores is the Conhecimentos roll value (Graduação + Gnose), and the Brotos depend on the
+ * Árvores. Nothing records them apart from the Magias themselves — replay them through {@link
+ * org.aventyrs.core.character.services.SpellService} on the assembled {@code Character}:
+ *
+ * <pre>{@code
+ * SpellService spells = new SpellServiceImpl();
+ * CharacterSheet sheet = CharacterSheet.of(character, player);  // 0 XP is enough: all free
+ * for (SpellTree tree : chosenTrees) {                          // up to getOpenTreeSlots
+ *     spells.learnTree(character, sheet, tree);                 // grants its Semente
+ * }
+ * for (Spell broto : chosenBrotos) {                            // from getFreeSpellOptions(BROTO)
+ *     spells.grantSpell(character, sheet, broto);               // the two free picks
+ * }
+ * }</pre>
+ *
+ * Picking one of a diverging Árvore's two Brotos <em>is</em> choosing its ramificação. The same
+ * two questions ({@code getOpenTreeSlots}, {@code getOwedFreeSpells}) stay live after creation: a
+ * raised Conhecimentos Graduação opens another Árvore, and each later ladder rung owes two more
+ * picks at the rung it unlocks.
+ *
  * <h2>Creating a foe instead</h2>
  *
  * None of the above applies to a monster. It has no player, allocates no points, picks no
  * Vantagens de Ego and no {@code ActionProfile} of its own (it carries {@code
  * MonsterTemplate.DEFAULT_ACTION_PROFILE}, the one profile that adjusts none of the three
- * counters, unless its stat block says otherwise) — its stats are authored whole, on a stat block,
- * and its Attributes and Perícias are subject to none of the ceilings step 2 enforces. Build one
- * through {@code org.aventyrs.core.monster.MonsterTemplate} instead:
+ * counters, unless its stat block says otherwise) — its stats come from {@code
+ * criacao-de-monstros.txt}'s own budgets and ceilings, not the ones step 2 enforces. Build one
+ * through {@code org.aventyrs.core.monster.MonsterBlueprint} instead:
  *
  * <pre>{@code
- * MonsterSheet thug = GenericMonster.CAPANGA.spawn(gm);          // a generic foe, on-scene
- * MonsterSheet boss = AbstractMonsterTemplate.builder()...     // a designed one
+ * MonsterSheet goblin = SampleMonster.GOBLIN_SELVAGEM.get().spawn(gm);   // built by the rules
+ * MonsterSheet boss = MonsterBlueprint.builder()...                   // a designed one
  *         .build().spawn(gm);
  * }</pre>
  *
@@ -119,7 +143,7 @@
  * FeatService#grantFeat}, {@code TitleAbilityService#grantTitleAbility} and {@code
  * SpellService#grantSpell} all take a {@code CharacterSheet} because that is where experience
  * lives, and a {@code MonsterSheet} isn't one. ({@code grantSpell} spends {@code
- * SpellService#getAcquisitionCost} — the Magia's rung cost, waived by a Talento that grants it —
+ * SpellService#getAcquisitionCost} — the Magia's rung cost, waived by a Talento's free pick —
  * so a foe can't climb an Árvore de Magia either.)
  * That's a compile-time guarantee, not a runtime check — see {@code
  * org.aventyrs.core.sheet.CombatantSheet}.

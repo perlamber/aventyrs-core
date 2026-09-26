@@ -12,12 +12,16 @@ public class DeterminationPointsServiceImpl implements DeterminationPointsServic
 
     private final ModifierResolver modifierResolver;
 
+    /** Only consulted for a {@link org.aventyrs.core.character.ResourceFormula#MONSTER} creature. */
+    private final HitPointsService hitPointsService;
+
     public DeterminationPointsServiceImpl() {
         this(new ModifierResolverImpl());
     }
 
     public DeterminationPointsServiceImpl(final ModifierResolver modifierResolver) {
         this.modifierResolver = modifierResolver;
+        this.hitPointsService = new HitPointsServiceImpl(modifierResolver);
     }
 
     @Override
@@ -33,7 +37,8 @@ public class DeterminationPointsServiceImpl implements DeterminationPointsServic
 
     @Override
     public int getMaxDeterminationPoints(final Character character) {
-        return BASE_DETERMINATION_POINTS + character.getEffectiveAttributeTotal(AttributeDomain.INSTINCT) * getDeterminationMultiplier(character);
+        return basePoints(character, null)
+                + character.getEffectiveAttributeTotal(AttributeDomain.INSTINCT) * getDeterminationMultiplier(character);
     }
 
     @Override
@@ -47,12 +52,23 @@ public class DeterminationPointsServiceImpl implements DeterminationPointsServic
 
     @Override
     public int getMaxDeterminationPoints(final Character character, final CombatantSheet sheet) {
-        return BASE_DETERMINATION_POINTS
+        return basePoints(character, sheet)
                 + character.getEffectiveAttributeTotal(AttributeDomain.INSTINCT) * getDeterminationMultiplier(character, sheet);
     }
 
     @Override
     public int getCurrentDeterminationPoints(final Character character, final CombatantSheet characterSheet) {
         return Math.max(0, getMaxDeterminationPoints(character, characterSheet) - characterSheet.getDeterminationSpent());
+    }
+
+    /**
+     * The flat part of the pool — {@value #BASE_DETERMINATION_POINTS} for a character, "Metade dos
+     * PV" for a monster (see {@link org.aventyrs.core.character.ResourceFormula}).
+     */
+    private int basePoints(final Character character, final CombatantSheet sheet) {
+        if (character.getResourceFormula().derivesLesserPoolsFromHitPoints()) {
+            return hitPointsService.getMaxHitPoints(character, sheet) / 2;
+        }
+        return BASE_DETERMINATION_POINTS;
     }
 }

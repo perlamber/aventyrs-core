@@ -5,10 +5,14 @@ import org.aventyrs.core.ability.ActiveAbility;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.character.DefenseType;
+import org.aventyrs.core.character.services.CharacterSkillService;
+import org.aventyrs.core.character.services.CharacterSkillServiceImpl;
 import org.aventyrs.core.magic.BranchLevel;
+import org.aventyrs.core.magic.FreeSpellPick;
 import org.aventyrs.core.rest.RestType;
 import org.aventyrs.core.skill.SkillType;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -42,40 +46,45 @@ import java.util.function.Supplier;
  * now, and {@code SpellService#grantSpell} spends them for real, so the cost half of these
  * clauses is live: with the cap raised (by the same rung), a further Broto/Muda/… from an Árvore
  * the Conjurador already conhece goes through the ordinary climb/branch gates at exactly that
- * price. What the ladder does <em>not</em> yet do is hand out the initial Sementes/Brotos of the
- * chosen trees for free — that is {@link #ARCANISTA}'s own TODO (it needs an
- * acquisition-time-choice class to record the picks and override {@code
- * Feat#grantsFreeSpellAcquisition}).
+ * price.
+ *
+ * <h2>The free picks, and the Árvores conhecidas</h2>
+ *
+ * The "Escolha 2 Árvores [...], você aprende a conjurar as magias do tipo X destas árvores" half
+ * of each rung is {@code Feat#resolveFreeSpellPicks} — two picks of the rung it unlocks — and
+ * {@link #ARCANISTA}'s "Escolha uma quantidade de árvores de magia igual ao seu Conhecimento
+ * Metamágico" is {@code Feat#resolveKnownTreeCapacity}. <b>Neither records a choice.</b> The
+ * trees a Conjurador conhece and the ramificação they took are already derived from {@code
+ * Character#getSpells()}, so "the 2 trees I chose" is simply the first two Árvores holding a Magia
+ * of that rung, and {@code SpellService#getAcquisitionCost} waives exactly those. A separate
+ * choice record could only disagree with the spell list — the same reason the branch gate keeps
+ * no "chosen branch" field. The caller picks through {@code SpellService#learnTree}/{@code
+ * #getFreeSpellOptions}/{@code #grantSpell}, and picking one of a diverging Árvore's two Magias
+ * <em>is</em> choosing its ramificação.
  *
  * <h2>What "Conhecimento: Metamágico" costs this catalog</h2>
  *
  * Most of these Talentos require training or Graduações in <i>Conhecimento: Metamágico</i>, which
  * in this core is {@code ConhecimentosSpecialization#METAMAGICO} — a <b>Especialização</b> of
- * {@link SkillType#CONHECIMENTOS}, not a {@code SkillType} of its own. {@link FeatRequirements}
- * has no Especialização field, so every such prerequisite is modeled as the Graduação floor on
- * Conhecimentos alone and <b>under-constrains</b>: a character trained in Conhecimentos without
- * the Metamágico Especialização passes. Widening {@code FeatRequirements} with a
- * {@code SkillSpecialization} field would close this for every Talento at once.
+ * {@link SkillType#CONHECIMENTOS}, not a {@code SkillType} of its own. Every such prerequisite is
+ * modeled as the Graduação floor on Conhecimentos alone and <b>under-constrains</b>: a character
+ * trained in Conhecimentos without the Metamágico Especialização passes. {@code
+ * FeatRequirements#requiredSkillTraits} can express the Especialização now ({@code
+ * SobrevivenciaFeat} uses it); adding it here is a separate decision, since it would tighten
+ * every character already holding these Talentos.
  *
  * <p>{@link #ARCANISTA} loses more than that — its Pré-requisito names <b>two</b> Perícias
  * (Conhecimento: Metamágico <i>and</i> Domínio do Mana) and {@code FeatRequirements} holds one
  * {@code requiredSkillType}, so only the Conhecimentos half is enforced.
  */
 public enum MetamagicoFeat implements Feat {
-    // Real: the first rung of the cap ladder (Semente + Broto), and the DM bonus, which is
-    // unconditional ("permanentemente") and pure arithmetic off Domínio do Mana's Graduação.
-    //
-    // TODO: "conhece N Árvores de Magia" (N = Graduações em Conhecimento Metamágico), with every
-    // Semente of uma Árvore conhecida learned automatically, and 2 chosen Árvores whose Brotos it
-    // can cast. The foundation is in place now: SpellService#getKnownTrees derives the "Árvores
-    // conhecidas" set from the spell list, SpellService#grantSpell spends the per-rung
-    // SpellService.ACQUISITION_EXPERIENCE_COST (1/2/3/5 for Broto/Muda/Emergente/Florescente),
-    // and Feat#grantsFreeSpellAcquisition waives that cost for a Magia a Talento hands out. Still
-    // missing: (1) this Talento is a plain enum constant with nowhere to record the N chosen
-    // trees / the 2 Broto trees — it needs the acquisition-time-choice class the adding-a-feat
-    // skill describes, which is also where grantsFreeSpellAcquisition gets a real override; (2)
-    // no auto-learning path — grantSpell is still the only way a Magia enters the spell list and
-    // every call is deliberate, so "automaticamente aprendidas" has no loop to run.
+    // Real: the first rung of the cap ladder (Semente + Broto); the DM bonus, which is
+    // unconditional ("permanentemente") and pure arithmetic off Domínio do Mana's Graduação; the
+    // Árvores conhecidas — as many as Conhecimento Metamágico, resolved live so a raised Graduação
+    // opens another (SpellService#getOpenTreeSlots), each opened by SpellService#learnTree with
+    // its Semente — and the 2 free Brotos, one per Árvore (see the class javadoc).
+    // Ruling (table, 2026-09-25): "Conhecimento Metamágico" is the Conhecimentos roll value,
+    // Graduação + Gnose, not the Graduação alone.
     // TODO: "RM para resistir aos efeitos de Magias que você conheça" — RM is real now
     // (Feat#resolveMagicReduction), but that hook is for an *unconditional* grant and this one
     // is scoped: it needs an incoming effect to be classified as a specific Magia, which nothing
@@ -102,6 +111,17 @@ public enum MetamagicoFeat implements Feat {
         @Override
         public int resolveBranchLevelIncrease(final Character character) {
             return ONE_RUNG;
+        }
+
+        /** "Escolha uma quantidade de árvores de magia igual ao seu Conhecimento Metamágico". */
+        @Override
+        public int resolveKnownTreeCapacity(final Character character) {
+            return conhecimentoMetamagico(character);
+        }
+
+        @Override
+        public List<FreeSpellPick> resolveFreeSpellPicks(final Character character) {
+            return List.of(new FreeSpellPick(BranchLevel.BROTO, FREE_PICKS_PER_RUNG));
         }
 
         /** "Bônus em sua DM igual a metade de suas Graduações em Domínio do Mana", rounded down. */
@@ -151,6 +171,11 @@ public enum MetamagicoFeat implements Feat {
         }
 
         @Override
+        public List<FreeSpellPick> resolveFreeSpellPicks(final Character character) {
+            return List.of(new FreeSpellPick(BranchLevel.MUDA, FREE_PICKS_PER_RUNG));
+        }
+
+        @Override
         public Optional<ActiveAbility> resolveActiveAbility() {
             return Optional.of(barreiraMagica);
         }
@@ -184,6 +209,11 @@ public enum MetamagicoFeat implements Feat {
         public int resolveBranchLevelIncrease(final Character character) {
             return ONE_RUNG;
         }
+
+        @Override
+        public List<FreeSpellPick> resolveFreeSpellPicks(final Character character) {
+            return List.of(new FreeSpellPick(BranchLevel.EMERGENTE, FREE_PICKS_PER_RUNG));
+        }
     },
 
     // Real: the top rung of the cap ladder (Florescente).
@@ -208,6 +238,11 @@ public enum MetamagicoFeat implements Feat {
         @Override
         public int resolveBranchLevelIncrease(final Character character) {
             return ONE_RUNG;
+        }
+
+        @Override
+        public List<FreeSpellPick> resolveFreeSpellPicks(final Character character) {
+            return List.of(new FreeSpellPick(BranchLevel.FLORESCENTE, FREE_PICKS_PER_RUNG));
         }
     },
 
@@ -395,6 +430,11 @@ public enum MetamagicoFeat implements Feat {
     /** One rung of {@link BranchLevel}'s ladder — what each cap-raising Talento grants. */
     private static final int ONE_RUNG = 1;
 
+    /** "Escolha 2 Árvores de Magia" — the free picks every cap-ladder rung hands out. */
+    private static final int FREE_PICKS_PER_RUNG = 2;
+
+    private static final CharacterSkillService CHARACTER_SKILL_SERVICE = new CharacterSkillServiceImpl();
+
     /** "Treinamento em" a Perícia — the lowest Graduação that counts as trained. */
     private static final int TRAINED = 1;
 
@@ -432,6 +472,19 @@ public enum MetamagicoFeat implements Feat {
     @Override
     public FeatRequirements getFeatRequirements() {
         return featRequirements.get();
+    }
+
+    /**
+     * Conhecimento Metamágico as ARCANISTA counts it: the Conhecimentos roll value — Graduação
+     * plus the Gnose total — or zero when the Perícia is untrained. The Especialização carries no
+     * Graduação of its own, so the Perícia's is the only one there is.
+     */
+    static int conhecimentoMetamagico(final Character character) {
+        CharacterSkill conhecimentos = character.getSkills().get(SkillType.CONHECIMENTOS);
+        if (conhecimentos == null || conhecimentos.getGraduation().getGraduationValue() < TRAINED) {
+            return 0;
+        }
+        return CHARACTER_SKILL_SERVICE.getValueForRoll(conhecimentos, character.getAttributes(), character.getRace());
     }
 
     private static int graduationOf(final Character character, final SkillType skillType) {

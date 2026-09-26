@@ -493,6 +493,15 @@ public class Character {
     protected SizeCategory sizeCategory = SizeCategory.ZERO;
 
     /**
+     * Which formula builds this creature's PV/PD/PM — {@link ResourceFormula#CHARACTER} for every
+     * player character, {@link ResourceFormula#MONSTER} for a foe built by {@code
+     * org.aventyrs.core.monster.MonsterBlueprint}. See {@link ResourceFormula}.
+     */
+    @Builder.Default
+    protected ResourceFormula resourceFormula = ResourceFormula.CHARACTER;
+
+
+    /**
      * The character's own fixed Reação counter — what they have when no external influence
      * (abilities'/competencies'/excellencies' {@link org.aventyrs.core.modifier.ModifierType#REACTIONS}
      * bonus) applies. {@value ReactionsService#DEFAULT_REACTIONS} by default, lowered to 0 or

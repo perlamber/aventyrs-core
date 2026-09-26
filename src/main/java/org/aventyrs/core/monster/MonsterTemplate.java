@@ -30,7 +30,12 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * A foe's stat block, and the thing that turns it into a playable {@link MonsterSheet}.
+ * A <b>fixed</b> stat block — Defesas and GDs stated outright — and the thing that turns it into a
+ * playable {@link MonsterSheet}.
+ *
+ * <p>Since 0.0.59 an authored monster is built by the rules instead, through {@link
+ * MonsterBlueprint}, which derives these numbers. A fixed stat block remains for what those rules
+ * don't cover: summons (their numbers follow the Conjurador) and hand-built foes in tests.
  *
  * <p>Two ways to get one, mirroring the {@code Item}/{@code AbstractItem}/{@code ArmorItem} split
  * this codebase already uses for catalogs:
@@ -38,8 +43,7 @@ import java.util.Set;
  * <ul>
  *   <li>{@link AbstractMonsterTemplate} — <b>fill in the form</b> for a unique monster. Its
  *   builder <i>is</i> the form: name it, set its Attributes, give it Perícias, done.</li>
- *   <li>{@link GenericMonster} — <b>a generic monster on-scene</b>, when a Narrador needs an
- *   opponent right now and not a designed one. Ready archetypes at a few threat tiers.</li>
+ *   <li>{@link SummonedMonsterTemplate} — an invocação, whose numbers come from its Conjurador.</li>
  * </ul>
  *
  * <h2>Why the numbers are authored rather than derived</h2>

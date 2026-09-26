@@ -1,7 +1,5 @@
 package org.aventyrs.core.monster;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 import org.aventyrs.core.ability.AttributeAbility;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.SizeCategory;
@@ -14,7 +12,12 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * <b>A generic monster, on-scene.</b> Ready-made {@link MonsterTemplate}s for when a Narrador
+ * <b>Test fixture.</b> These five fixed stat blocks shipped in the library until 0.0.59, when
+ * rules-built monsters ({@link MonsterBlueprint}) replaced hand-authored presets. They stay here
+ * because dozens of combat tests use them as a known DF/DM/GD target; nothing in main source
+ * reads them.
+ *
+ * <p><b>A generic monster, on-scene.</b> Ready-made {@link MonsterTemplate}s for when a Narrador
  * needs an opponent immediately and doesn't want to design one — the counterpart to {@link
  * AbstractMonsterTemplate}'s fill-in-the-form path.
  *
@@ -39,8 +42,6 @@ import java.util.Map;
  * isn't generic any more. Add those through {@link AbstractMonsterTemplate} when a fight needs
  * them.
  */
-@Getter
-@AllArgsConstructor
 public enum GenericMonster implements MonsterTemplate {
 
     /** A low-tier melee thug — the body in a room full of them. */
@@ -103,6 +104,61 @@ public enum GenericMonster implements MonsterTemplate {
     private final SkillDifficulty attentionDifficulty;
 
     private final int lifeMultiplier;
+
+    GenericMonster(final String name, final Map<AttributeDomain, Integer> attributeBases,
+                   final Map<SkillType, Integer> skillGraduations, final SizeCategory sizeCategory,
+                   final int physicalDefense, final int magicDefense, final SkillDifficulty generalDifficulty,
+                   final SkillDifficulty attentionDifficulty, final int lifeMultiplier) {
+        this.name = name;
+        this.attributeBases = attributeBases;
+        this.skillGraduations = skillGraduations;
+        this.sizeCategory = sizeCategory;
+        this.physicalDefense = physicalDefense;
+        this.magicDefense = magicDefense;
+        this.generalDifficulty = generalDifficulty;
+        this.attentionDifficulty = attentionDifficulty;
+        this.lifeMultiplier = lifeMultiplier;
+    }
+
+    @Override
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public Map<AttributeDomain, Integer> getAttributeBases() {
+        return attributeBases;
+    }
+
+    @Override
+    public Map<SkillType, Integer> getSkillGraduations() {
+        return skillGraduations;
+    }
+
+    @Override
+    public SizeCategory getSizeCategory() {
+        return sizeCategory;
+    }
+
+    @Override
+    public int getPhysicalDefense() {
+        return physicalDefense;
+    }
+
+    @Override
+    public int getMagicDefense() {
+        return magicDefense;
+    }
+
+    @Override
+    public SkillDifficulty getGeneralDifficulty() {
+        return generalDifficulty;
+    }
+
+    @Override
+    public int getLifeMultiplier() {
+        return lifeMultiplier;
+    }
 
     @Override
     public Map<SkillType, SkillDifficulty> getSkillDifficulties() {

@@ -35,13 +35,12 @@ import java.util.Set;
  * MonsterSheet shambler = Zumbi.builder().build().spawn(gm);                          // purely narrative
  * }</pre>
  *
- * <h2>A class, not a {@code GenericMonster} constant</h2>
+ * <h2>A fixed stat block, not a {@code MonsterBlueprint}</h2>
  *
- * Two reasons, either sufficient. It has a name and a story, which {@code GenericMonster}'s own
- * javadoc excludes from that enum ("a foe with a name and a story belongs in {@code
- * AbstractMonsterTemplate} or a catalog of its own"). And it carries <b>two</b> per-instance
- * choices an enum constant cannot hold: the Conjurador's Graduação, and the Categoria de Tamanho
- * of the corpse being animated.
+ * Its numbers come from the Magia that raises it and the Conjurador's Graduação, not from {@code
+ * criacao-de-monstros.txt}'s Grau de Poder — so it states them outright rather than deriving them.
+ * And it carries <b>two</b> per-instance choices a catalog constant cannot hold: the Conjurador's
+ * Graduação, and the Categoria de Tamanho of the corpse being animated.
  *
  * <h2>What varies, and what doesn't</h2>
  *
