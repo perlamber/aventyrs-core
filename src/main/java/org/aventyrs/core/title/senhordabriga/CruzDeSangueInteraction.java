@@ -67,7 +67,7 @@ public class CruzDeSangueInteraction extends AbstractTitleAbilityInteraction {
             blessings.add(new Blessing(ModifierType.DEFESAS, -penalty, ROUNDS, TargetScope.SELF, source));
         }
         if (SenhorDaBriga.requireHeldBy(activator).holdsMaliciaDeValentao()) {
-            blessings.add(new Blessing(ModifierType.DAMAGE_REDUCTION, MALICIA_DAMAGE_REDUCTION, ROUNDS,
+            blessings.add(new Blessing(ModifierType.DAMAGE_TAKEN_REDUCTION, MALICIA_DAMAGE_REDUCTION, ROUNDS,
                     TargetScope.SELF, source));
         }
         blessings.forEach(activator::grantBlessing);

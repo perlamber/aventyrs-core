@@ -481,8 +481,14 @@ Three layers of mitigation, in a fixed order:
    "caller didn't say", not "this was magic"). Same five sources as RD — the `@Modifier` scan of
    `ModifierType.MAGIC_REDUCTION`, equipped items, `Feat#resolveMagicReduction`, and a
    `TemporaryBonus` — and skipped by the same `ignoreDamageReduction` flag (an inference; the
-   rules name only RA as un-ignorable). **RD is still type-blind**, so a MAGICO hit currently
-   takes RD *and* RM; narrowing RD is the damage-type system, not this.
+   rules name only RA as un-ignorable).
+1c. **Each reduction reaches only its own types (0.0.64)**: RD plain `FISICO` (or untyped), RDS
+   (`DAMAGE_TAKEN_REDUCTION`, `DamageService#getTotalDamageTakenReduction`) everything but
+   `PRIMORDIAL`, RM `MAGICO`, RE the resisted element, RA everything. A numberless "recebe RDS" is
+   `DAMAGE_TAKEN_REDUCTION_INSTANCE` (1). **Never author an "RDS" clause as RD** — they reach
+   different hits and differ in size. Immunity, scoped Meio-Dano and RE have Talento hooks
+   (`Feat#isImmuneToDamage`/`#halvesDamage`/`#resolveElementalResistanceInstances`), and a
+   Talento can retype an attack (`Feat#resolveDamageRetype` → `InteractionResult#getRetypedDamage()`).
 2. **Half damage** — applied *last*, after RD/RA, via the `halfDamage` flag. Rounds down.
 3. **Shield points** — absorbed inside `CharacterSheet#applyDamage` itself, after
    `DamageService` computed the post-mitigation amount.
@@ -493,8 +499,8 @@ mutate, so `getCharacter()` always suffices (unlike `RestService.applyRest`, whi
 needs both — see the `attribute-graduation-progression` skill).
 
 An ability granting RD *or* RA without a number in its rules text uses
-`DamageService.DEFAULT_DAMAGE_REDUCTION` (+2); only deviate when the text states one (e.g.
-`APRIMORAR_COM_ARTE`'s "+1 RDS"). A *round-scoped* RD grant (a `Blessing`/`TemporaryBonus` of
+`DamageService.DEFAULT_DAMAGE_REDUCTION` (+2), and RDS `DAMAGE_TAKEN_REDUCTION_INSTANCE` (+1); only
+deviate when the text states one (e.g. `APRIMORAR_COM_ARTE`'s "+1 RDS"). A *round-scoped* RD grant (a `Blessing`/`TemporaryBonus` of
 `ModifierType.DAMAGE_REDUCTION` — `AnaoFeat#VIGOR_DO_INVERNO`'s combat-start grant) is summed
 only on the `CombatantSheet` overloads of `getTotalDamageReduction`, not the `Character`-only
 one, which has no sheet to read `getTemporaryBonus` from.

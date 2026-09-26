@@ -1,5 +1,6 @@
 package org.aventyrs.core.race;
 
+import org.aventyrs.core.magic.ElementalType;
 import lombok.Getter;
 import lombok.NonNull;
 import org.aventyrs.core.ability.AttributeAbility;
@@ -93,6 +94,12 @@ public class Agastias extends AbstractMesticoRace {
         int primaryBonus = parentGrants(PRIMARY_ATTRIBUTE) ? PRIMARY_BONUS_WHEN_PARENT_GRANTS_IT : PRIMARY_BONUS;
         AttributeDomain reducedAttribute = linhagem == Linhagem.VULCANO ? AttributeDomain.FOCUS : AttributeDomain.STRENGTH;
         return Map.of(PRIMARY_ATTRIBUTE, primaryBonus, reducedAttribute, REDUCED_BONUS);
+    }
+
+    /** The Talentos Elementais' table: Agástia Trovejante → Eletricidade, Agástia Vulcano → Magma. */
+    @Override
+    public ElementalType getElement() {
+        return linhagem == Linhagem.TROVEJANTE ? ElementalType.ELETRICIDADE : ElementalType.MAGMA;
     }
 
     @Override

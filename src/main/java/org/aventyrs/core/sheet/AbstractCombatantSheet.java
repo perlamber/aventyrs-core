@@ -2225,6 +2225,9 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         int fromFrenzy = getFrenzy().filter(frenzy -> frenzy.getCataclysmElements().contains(element)).map(frenzy -> 1).orElse(0);
         return fromFrenzy + getCharacter().getAttributeAbilities().stream()
                 .mapToInt(ability -> ability.resolveElementalResistanceInstances(element))
+                .sum()
+                + getCharacter().getFeats().stream()
+                .mapToInt(feat -> feat.resolveElementalResistanceInstances(element, getCharacter(), this))
                 .sum();
     }
 
@@ -2232,6 +2235,8 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     public boolean halvesDamage(final org.aventyrs.core.character.DamageType damageType,
                                 final org.aventyrs.core.character.DamageDescriptor descriptor) {
         return getCharacter().getAttributeAbilities().stream().anyMatch(ability -> ability.halvesDamage(damageType, descriptor))
+                || getCharacter().getFeats().stream()
+                        .anyMatch(feat -> feat.halvesDamage(damageType, descriptor, getCharacter(), this))
                 || temporaryEffects.stream().anyMatch(effect -> effect instanceof DamageScopeEffect scoped
                         && scoped.covers(DamageScopeEffect.Kind.HALVES, damageType, descriptor));
     }
@@ -2240,6 +2245,8 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     public boolean isImmuneToDamage(final org.aventyrs.core.character.DamageType damageType,
                                     final org.aventyrs.core.character.DamageDescriptor descriptor) {
         return getCharacter().getAttributeAbilities().stream().anyMatch(ability -> ability.isImmuneToDamage(damageType, descriptor))
+                || getCharacter().getFeats().stream()
+                        .anyMatch(feat -> feat.isImmuneToDamage(damageType, descriptor, getCharacter(), this))
                 || temporaryEffects.stream().anyMatch(effect -> effect instanceof DamageScopeEffect scoped
                         && scoped.covers(DamageScopeEffect.Kind.IMMUNE, damageType, descriptor));
     }

@@ -38,9 +38,8 @@ import static org.aventyrs.core.monster.model.MonstrousTraits.bonus;
 /**
  * The Habilidades Monstruosas of the Modelo Mutante Monstruoso — {@code criacao-de-monstros.txt}.
  *
- * <p>Built the way {@code CireneiaAbility} is. RDS is carried as plain RD of 1 per instance ("Cada
- * instância reduz … em -1") — this core has no separate RDS stat, and the rules' only difference
- * (RDS also reaches Mágico damage) is lost to RD's own type-blindness here.
+ * <p>Built the way {@code CireneiaAbility} is. RDS is {@code ModifierType#DAMAGE_TAKEN_REDUCTION} at
+ * 1 per instance ("Cada instância reduz … em -1"), so it reaches Mágico damage too.
  */
 @Getter
 public enum MutanteMonstruosoAbility implements MonstrousAbility {
@@ -57,7 +56,7 @@ public enum MutanteMonstruosoAbility implements MonstrousAbility {
                     + "• Fisiologia Estranha – Imunidade à Críticos Menores e Correntes de Efeitos.") {
         @Override
         public int resolveModifier(final ModifierType type, final AbilityContext context) {
-            return type == ModifierType.DAMAGE_REDUCTION ? MonstrousTraits.RDS_INSTANCE : 0;
+            return type == ModifierType.DAMAGE_TAKEN_REDUCTION ? MonstrousTraits.RDS_INSTANCE : 0;
         }
 
         @Override
@@ -187,7 +186,7 @@ public enum MutanteMonstruosoAbility implements MonstrousAbility {
                     .determinationPointCost(3)
                     .durationInRounds(duration)
                     .cooldownRounds(context.isAtLeast(PREDADOR) ? 2 : 3)
-                    .effect(bonus(ModifierType.DAMAGE_REDUCTION, MonstrousTraits.RDS_INSTANCE, duration, "Adaptabilidade"))
+                    .effect(bonus(ModifierType.DAMAGE_TAKEN_REDUCTION, MonstrousTraits.RDS_INSTANCE, duration, "Adaptabilidade"))
                     .effect(bonus(ModifierType.LIFE_MULTIPLIER, lifeMultiplier, duration, "Adaptabilidade"))
                     .build());
         }
@@ -336,7 +335,7 @@ public enum MutanteMonstruosoAbility implements MonstrousAbility {
                     + "• Adaptação Milagrosa – recebe RA, Resistência à Críticos e Resistência à Corrente de Efeitos +2 enquanto ativo.") {
         @Override
         public int resolveModifier(final ModifierType type, final AbilityContext context) {
-            return type == ModifierType.DAMAGE_REDUCTION ? MonstrousTraits.RDS_INSTANCE : 0;
+            return type == ModifierType.DAMAGE_TAKEN_REDUCTION ? MonstrousTraits.RDS_INSTANCE : 0;
         }
 
         @Override

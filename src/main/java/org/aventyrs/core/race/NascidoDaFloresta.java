@@ -1,5 +1,6 @@
 package org.aventyrs.core.race;
 
+import org.aventyrs.core.magic.ElementalType;
 import lombok.NonNull;
 import org.aventyrs.core.ability.AttributeAbility;
 import org.aventyrs.core.character.AttributeDomain;
@@ -123,6 +124,12 @@ public class NascidoDaFloresta extends AbstractMesticoRace {
     @Override
     public Map<AttributeDomain, Integer> getFixedAttributeBonuses() {
         return Map.of(AttributeDomain.CHARISMA, 1, AttributeDomain.FOCUS, 1);
+    }
+
+    /** The Talentos Elementais' table: Elemental da Madeira → Natural. */
+    @Override
+    public ElementalType getElement() {
+        return ElementalType.NATURAL;
     }
 
     @Override

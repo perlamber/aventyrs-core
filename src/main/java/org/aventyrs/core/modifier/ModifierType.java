@@ -94,7 +94,18 @@ public enum ModifierType {
      */
     EXTRA_DAMAGE_DICE,
     DAMAGE_ROLL_BONUS,
+    /**
+     * RD — Resistência à Danos: "Cada instância reduz o Dano Físico não-PRIMORDIAL e não-ELEMENTAL
+     * em -2". Applied only to a {@code DamageType#FISICO} hit (or one the caller left untyped).
+     */
     DAMAGE_REDUCTION,
+    /**
+     * RDS — Redução de Danos Sofridos: "Cada instância reduz os Danos não-PRIMORDIAIS de ordens
+     * Físicas e Mágicas em -1". Applied to every hit but a {@code DamageType#PRIMORDIAL} one. A
+     * clause naming RDS with no figure grants one instance ({@code
+     * DamageService#DAMAGE_TAKEN_REDUCTION_INSTANCE}). Before 0.0.64 this was folded into RD.
+     */
+    DAMAGE_TAKEN_REDUCTION,
     /**
      * Resistência à Magias (RM) — the magic-damage counterpart of {@link #DAMAGE_REDUCTION}. Per
      * {@code docs/rules/defesas-e-resistencias.txt} each instance reduces Dano Mágico
@@ -110,12 +121,8 @@ public enum ModifierType {
      * what most callers still pass) gets none of it, since "caller didn't say" is not "this was
      * magic".
      *
-     * <p><b>RD is still type-blind, so magic damage is currently over-mitigated.</b> The rules
-     * give RD only to Dano Físico não-PRIMORDIAL e não-ELEMENTAL, but {@code
-     * getTotalDamageReduction} applies it whatever the type — so a hit typed {@code MAGICO} takes
-     * RD <em>and</em> RM today. Narrowing RD belongs to the damage-type system (CLAUDE.md's
-     * "Damage-type-scoped mitigation" row), not here; this constant only closes the missing
-     * resistance, not the over-broad one.
+     * <p>Since 0.0.64 RD no longer reaches a magic hit (it is plain-physical only), so a hit typed
+     * {@code MAGICO} takes RDS and RM, never RD.
      *
      * <p>Resistência Elemental (RE) is the third sibling in that rules block and has no constant:
      * nothing in the catalog grants a plain RE that isn't also scoped to one {@code

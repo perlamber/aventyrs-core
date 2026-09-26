@@ -104,7 +104,8 @@ class BrotosDeMapinguariAbilityTest {
 
         activeAbilities.activate(broto.getCharacter(), broto, held(broto, "Raízes Longas"), 1);
         assertEquals(4, finalDamage(broto, DamageType.FISICO, null), "(10-2)/2");
-        assertEquals(8, finalDamage(broto, DamageType.MAGICO, null), "RD only; the Meio-Dano is physical");
+        assertEquals(10, finalDamage(broto, DamageType.MAGICO, null),
+                "RD reaches only physical damage, and so does this Meio-Dano");
         broto.tickTemporaryEffects();
         assertEquals(2, broto.getPendingDiceRolls().get(0).dice().count());
     }

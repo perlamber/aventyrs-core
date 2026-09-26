@@ -1,5 +1,17 @@
 package org.aventyrs.core.feat;
 
+import java.util.Optional;
+import org.aventyrs.core.skill.SkillType;
+import org.aventyrs.core.skill.AttackSource;
+import org.aventyrs.core.sheet.CombatantSheet;
+import org.aventyrs.core.scene.SceneContext;
+import org.aventyrs.core.magic.Spell;
+import org.aventyrs.core.magic.MagicType;
+import org.aventyrs.core.magic.ElementalType;
+import org.aventyrs.core.item.Weapon;
+import org.aventyrs.core.character.DamageType;
+import org.aventyrs.core.character.DamageDescriptor;
+import org.aventyrs.core.character.DamageBonus;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.Deity;
@@ -67,15 +79,14 @@ public enum OrquicoFeat implements Feat {
      * substituição aos seus tipos… Você pode adicionar Metade do Vigor às suas rolagens de danos
      * físicos."
      */
-    // TODO: re-typing an attack's dano is not expressible — DamageType is a classification a
-    //  caller supplies per hit, and nothing lets a held trait *override* what an attack deals.
-    //  DamageBonus can carry ELEMENTAL + ElementalType.TERRA, but that types a bonus, not the attack.
-    // TODO: the "+Metade do Vigor às rolagens de danos físicos" half — Feat#resolveDamageBonus now
-    //  exists and the amount is computable, but the clause is opt-in ("você pode adicionar") and
-    //  entangled with the unbuilt retyping (the whole point is that Elemental: Terra damage stays
-    //  physical), so wiring the +½Vigor alone would apply it to attacks the retyping never touched.
-    // TODO: the Magia half additionally needs a Magia's own damage type, which Spell has no
-    //  column for at all.
+    // Three halves real. The retyping is Feat#resolveDamageRetype, reported on the attack roll:
+    // a Weapon (an Arma Natural included) deals Físico Elemental: Terra; a Divina or Elemental:
+    // Terra Magia delivered as an attack deals Físico. The "+Metade do Vigor às rolagens de danos
+    // físicos" is a dano bonus on those weapon attacks. ⚠️ "Você pode adicionar" is read as always
+    // taken, since it costs nothing.
+    // TODO: "se um efeito puder alterar a natureza dos seus danos para mágico ela deixará de
+    //  fazê-lo" — a precedence over other retyping; this retype is simply the first held
+    //  Talento's, and no Talento retypes to Mágico today.
     PALADINO_DE_EPONA(
             "Seus ataques com Armas e Armas Naturais causam danos Físicos Elementais: Terra em "
                     + "substituição aos seus tipos. Suas Magias, apenas Divinas e Elementais: "
@@ -89,7 +100,30 @@ public enum OrquicoFeat implements Feat {
                     .attributeDomain(AttributeDomain.VIGOR)
                     .requiredAttributeValue(5)
                     .requiredAwakenedTitles(1)
-                    .build()),
+                    .build()) {
+        @Override
+        public DamageDescriptor resolveDamageRetype(final Character attacker, final SkillType attackSkill,
+                                                    final AttackSource attackSource) {
+            if (attackSource instanceof Weapon) {
+                return new DamageDescriptor(DamageType.FISICO_ELEMENTAL, ElementalType.TERRA);
+            }
+            if (attackSource instanceof Spell spell && (spell.getTree().hasMagicType(MagicType.DIVINA)
+                    || spell.getTree().getElementalType().filter(el -> el == ElementalType.TERRA).isPresent())) {
+                return new DamageDescriptor(DamageType.FISICO);
+            }
+            return null;
+        }
+
+        @Override
+        public Optional<DamageBonus> resolveDamageBonus(final SkillType attackingSkillType, final SceneContext sceneContext,
+                                                         final CombatantSheet attackTarget, final Character actor,
+                                                         final AttackSource attackSource) {
+            return attackSource instanceof Weapon
+                    ? Optional.of(new DamageBonus(actor.getEffectiveAttributeTotal(AttributeDomain.VIGOR) / 2,
+                            DamageType.FISICO))
+                    : Optional.empty();
+        }
+    },
 
     /**
      * An Efeito Ativo plus an Efeito Passivo. The <b>passive</b> half is real: "Se tiver 2

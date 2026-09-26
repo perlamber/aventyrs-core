@@ -358,11 +358,11 @@ class AssassinoFeatTest {
     void escudoDeSombrasGrantsThreeRdsWhileEscondido() throws IllegalOperationException {
         DamageService damageService = new DamageServiceImpl();
         CharacterSheet sheet = shadowAssassin();
-        int before = damageService.getTotalDamageReduction(sheet, DamageType.FISICO, null);
+        int before = damageService.getTotalDamageTakenReduction(sheet, null);
 
         sheet.applyCondition(new Condition(ConditionType.ESCONDIDO, null));
 
-        assertEquals(before + 3, damageService.getTotalDamageReduction(sheet, DamageType.FISICO, null));
+        assertEquals(before + 3, damageService.getTotalDamageTakenReduction(sheet, null));
     }
 
     /** Out in the open it grants nothing — and neither does a Character-only caller with no sheet. */

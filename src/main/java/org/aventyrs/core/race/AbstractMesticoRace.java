@@ -1,5 +1,6 @@
 package org.aventyrs.core.race;
 
+import org.aventyrs.core.magic.ElementalType;
 import lombok.Getter;
 import lombok.NonNull;
 import org.aventyrs.core.ability.AttributeAbility;
@@ -152,4 +153,10 @@ public abstract class AbstractMesticoRace implements Race {
      * for Agástias/Aquan/Flaminídeo, +1 for Colosso/Invernal, -1 for Dólos.
      */
     protected abstract int getSizeCategoryOffset();
+
+    /**
+     * "Seu elemento" — the element the Talentos Elementais' RAÇA→ELEMENTO tables assign this race
+     * (Gana Elemental, Resistência Elemental). Read by {@code ElementalFeat}.
+     */
+    public abstract ElementalType getElement();
 }

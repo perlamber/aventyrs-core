@@ -1,5 +1,11 @@
 package org.aventyrs.core.feat;
 
+import org.aventyrs.core.skill.SkillType;
+import org.aventyrs.core.skill.AttackSource;
+import org.aventyrs.core.magic.ElementalType;
+import org.aventyrs.core.item.Weapon;
+import org.aventyrs.core.character.DamageType;
+import org.aventyrs.core.character.DamageDescriptor;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.race.HomemFera;
@@ -113,10 +119,8 @@ public enum FeralFeat implements Feat {
     /**
      * The Força +1 is <b>real</b>, through {@link Feat#resolveAttributeBonus}.
      */
-    // TODO: re-typing an attack's dano is not expressible — DamageType is a classification a
-    //  caller supplies per hit, and nothing lets a held trait override what an attack deals.
-    //  Same gap OrquicoFeat#PALADINO_DE_EPONA cites (plan Phase D). The Armas Naturais to re-type
-    //  do exist now (Character#treatsAsNaturalWeapon).
+    // The retyping is real: an attack with a Weapon the holder treats as an Arma Natural deals
+    // Físico Elemental: Natural (Feat#resolveDamageRetype, reported on the attack roll).
     // TODO: Corrente de Efeitos – Ferida Infecciosa — Feat#resolveEffectChains is the hook (see
     //  ElficoFeat#CORRUPTOR_SOMBRIO), but Ferida Infecciosa is not an authored EffectChain.
     DESPREZO_NATURAL(
@@ -128,6 +132,14 @@ public enum FeralFeat implements Feat {
                     .attributeDomain(AttributeDomain.STRENGTH)
                     .requiredAttributeValue(3)
                     .build()) {
+        @Override
+        public DamageDescriptor resolveDamageRetype(final Character attacker, final SkillType attackSkill,
+                                                    final AttackSource attackSource) {
+            return attackSource instanceof Weapon weapon && attacker.treatsAsNaturalWeapon(weapon)
+                    ? new DamageDescriptor(DamageType.FISICO_ELEMENTAL, ElementalType.NATURAL)
+                    : null;
+        }
+
         @Override
         public int resolveAttributeBonus(final AttributeDomain domain, final Character character) {
             return domain == AttributeDomain.STRENGTH ? FERAL_ATTRIBUTE_BONUS : 0;

@@ -119,11 +119,10 @@ public enum GorgonaFeat implements Feat {
      * "Você recebe RDS e RD, enquanto em sua Forma Monstruosa você recebe Resistência à
      * Críticos." The RD half is real.
      *
-     * <p><b>The source text is redundant here</b> — RDS <i>is</i> RD (Redução de Danos Sofridos;
-     * see {@code ArtesCompetencyAbility}'s own "+1 RDS"), so "RDS e RD" names one stat twice.
-     * Read as a single grant rather than doubled, and since the clause states no figure it uses
-     * {@code DamageService#DEFAULT_DAMAGE_REDUCTION}, the convention for an RD clause with no
-     * number in its rules text.
+     * <p>"RDS e RD" names two different reductions: RD ({@code
+     * DamageService#DEFAULT_DAMAGE_REDUCTION}, one instance's -2, plain physical damage only) and
+     * RDS ({@code DamageService#DAMAGE_TAKEN_REDUCTION_INSTANCE}, one instance's -1, every
+     * non-Primordial hit). Before 0.0.64 the two were one stat and this read as a single grant.
      */
     // All three halves real now: RD unconditionally, and the Resistência a Críticos while in
     // Forma Monstruosa — the form gate reads CombatantSheet#isInForm through
@@ -144,6 +143,11 @@ public enum GorgonaFeat implements Feat {
             return DamageService.DEFAULT_DAMAGE_REDUCTION;
         }
 
+        @Override
+        public int resolveDamageTakenReduction(final Character character) {
+            return DamageService.DAMAGE_TAKEN_REDUCTION_INSTANCE;
+        }
+
         /** "Enquanto em sua Forma Monstruosa você recebe Resistência à Críticos." */
         @Override
         public int resolveCriticalResistance(final Character character, final SceneContext sceneContext,
@@ -157,8 +161,7 @@ public enum GorgonaFeat implements Feat {
      * "Você recebe RDS e RM, enquanto em sua forma Feérica você recebe Resistência a Críticos."
      * <b>Both the RDS and the RM halves are real</b>, and both unconditional — only the
      * Resistência a Críticos is form-gated. RM ({@code ModifierType#MAGIC_REDUCTION}, resolved by
-     * {@code DamageService#getTotalMagicReduction}) reduces Dano Mágico the way RDS reduces
-     * physical, so this Talento is once again the equal of its Monstros twin, as written.
+     * {@code DamageService#getTotalMagicReduction}) reduces Dano Mágico; RDS reaches both orders.
      */
     // All three halves real now, the same way its twin's are — the Resistência a Críticos gated
     // on Forma Feérica.
@@ -172,9 +175,10 @@ public enum GorgonaFeat implements Feat {
                     .attributeDomain(AttributeDomain.CHARISMA)
                     .requiredAttributeValue(4)
                     .build()) {
+        /** "Você recebe RDS" with no figure — one instance. */
         @Override
-        public int resolveDamageReduction(final Character character) {
-            return DamageService.DEFAULT_DAMAGE_REDUCTION;
+        public int resolveDamageTakenReduction(final Character character) {
+            return DamageService.DAMAGE_TAKEN_REDUCTION_INSTANCE;
         }
 
         @Override

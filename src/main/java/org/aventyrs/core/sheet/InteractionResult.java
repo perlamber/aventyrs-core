@@ -200,6 +200,14 @@ public class InteractionResult {
     org.aventyrs.core.character.CriticalDamage criticalDamage;
 
     /**
+     * The damage type the roller's Talentos make this attack deal in place of its own — {@code
+     * Feat#resolveDamageRetype}. {@code null} when none does. The caller passes it to {@code
+     * DamageService}/{@code DamageInteraction} instead of the attack's authored type, so the
+     * target's RD/RDS/RM/RE and immunities judge the retyped hit.
+     */
+    org.aventyrs.core.character.DamageDescriptor retypedDamage;
+
+    /**
      * The named parts {@link #damageBonus} is made of — {@code null} exactly when that is, and
      * always summing to it (see {@link org.aventyrs.core.character.DamageBonusBreakdown}'s
      * invariant). Carried so a caller can <em>explain</em> the bonus — "half your Força +2, an

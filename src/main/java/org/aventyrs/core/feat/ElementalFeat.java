@@ -1,5 +1,13 @@
 package org.aventyrs.core.feat;
 
+import java.util.Optional;
+import java.math.BigDecimal;
+import org.aventyrs.core.magic.Spell;
+import org.aventyrs.core.magic.MagicType;
+import org.aventyrs.core.magic.ElementalType;
+import org.aventyrs.core.character.DamageType;
+import org.aventyrs.core.character.DamageScope;
+import org.aventyrs.core.character.DamageDescriptor;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.services.DamageService;
 import org.aventyrs.core.race.AbstractMesticoRace;
@@ -25,9 +33,11 @@ import org.aventyrs.core.sheet.CombatantSheet;
  * would be the first thing to add before any of this tree can work. The tables also list an
  * "Elemental da Madeira" (Natural) that has no race class at all.
  *
- * <p>Only {@link #TRANSFORMACAO_ELEMENTAL}'s Resistência a Críticos carries a mechanical effect.
- * Every other clause is blocked on the same missing system, which is the single highest-value
- * thing outstanding for the racial catalog:
+ * <p><b>"Seu elemento" is readable now</b> — {@code AbstractMesticoRace#getElement()}, the column
+ * both tables assign — so the resistance ladder is real: {@link #RESISTENCIA_ELEMENTAL}'s RE,
+ * {@link #RESISTENCIA_ELEMENTAL_SUPERIOR}'s Meio-Dano, {@link #IMUNIDADE_ELEMENTAL}'s immunity, and
+ * {@link #ARCANISMO_ELEMENTAL}'s EXP discount, plus {@link #TRANSFORMACAO_ELEMENTAL}'s RDS and
+ * Resistência a Críticos. The paragraph below predates that and is kept for its history:
  * <b>Resistência and Vulnerabilidade Elemental do not exist</b>. {@code DamageType} has no
  * elemental breakdown feeding RD/RA, nothing nullifies a damage type outright, and nothing
  * amplifies one either — the same gap {@code NascidoDoDragao}'s Escamas Cromática, {@code
@@ -61,17 +71,12 @@ public enum ElementalFeat implements Feat {
      * de dano e cura tem seus efeitos numéricos aumentados em +2, suas Magias de Encantamento
      * com este elemento tem a Duração aumentada em +1 Rodada."
      */
-    // TODO: the EXP discount now has both a figure and a hook — SpellService#grantSpell spends
-    //  SpellService.ACQUISITION_EXPERIENCE_COST (BigDecimal, so 0.5 fits) and getAcquisitionCost
-    //  sums Feat#resolveSpellAcquisitionCostReduction. What still blocks it is the scope: "magias
-    //  Elementais de seu elemento" needs both a per-Magia Elemental type (Spell has getPrimaryType/
-    //  getSecondaryType, so "Elemental" is checkable) AND "seu elemento", which has no column to
-    //  read (class javadoc) — so this constant can't yet tell which Elemental Magias qualify.
-    // TODO: "efeitos numéricos aumentados em +2" — a few Magias now carry a structured
+    // The EXP discount is real: 0.5 off a Magia whose Árvore is Elemental of the holder's element
+    // (AbstractMesticoRace#getElement; an Árvore of every element, ElementalType.TODOS, counts).
+    // TODO: "efeitos numéricos aumentados em +2" — a few Magias carry a structured
     //  Spell#getPrimaryDamage() (SpellDamage), resolved by SpellCastingService#resolvePrimaryDamage,
-    //  so a flat +2 to the deterministic amount would have somewhere to land. Still blocked: no
-    //  hook on that resolution for a Feat to contribute to, healing has no column at all, and the
-    //  "de seu elemento" scope is the same missing element column the EXP half cites.
+    //  but no hook on that resolution lets a Feat contribute, and healing has no column at all
+    //  (plan Phase F).
     // TODO: the Duração uplift would modify SpellDuration, which is authored per Magia and read
     //  as a constant; nothing resolves a Magia's Duração against its caster.
     ARCANISMO_ELEMENTAL(
@@ -81,50 +86,75 @@ public enum ElementalFeat implements Feat {
                     + "+1 Rodada.",
             FeatRequirements.builder()
                     .requiredFeat(GANA_ELEMENTAL)
-                    .build()),
+                    .build()) {
+        @Override
+        public BigDecimal resolveSpellAcquisitionCostReduction(final Character character, final Spell spell) {
+            Optional<ElementalType> own = elementOf(character);
+            Optional<ElementalType> spellElement = spell.getTree().getElementalType();
+            boolean ownElement = own.isPresent() && spell.getTree().hasMagicType(MagicType.ELEMENTAL)
+                    && spellElement.filter(el -> el == own.get() || el == ElementalType.TODOS).isPresent();
+            return ownElement ? ARCANISMO_EXPERIENCE_DISCOUNT : BigDecimal.ZERO;
+        }
+    },
 
     /**
      * "Conforme seu Elemento, você reduz o primeiro dano Elemental de cada Cena à metade (efeito
      * de Meio-Dano), então recebe Resistência Elemental (RE) para resistir aos efeitos Elementais
      * posteriores."
      */
-    // TODO: RE does not exist, and damage-type-scoped mitigation does not either — see the class
-    //  javadoc. Note the Meio-Dano half has a real mechanism (DamageService's halfDamage flag),
-    //  but it cannot be reached: the flag is per-calculation, and scoping it to "the first
-    //  Elemental damage of each Cena" needs both a damage type on the incoming hit and a
-    //  per-Cena counter, neither of which exists.
+    // The RE is real: one instance against the holder's own element (AbstractMesticoRace
+    // #getElement), summed by CombatantSheet#getElementalResistanceInstances. ⚠️ It applies from the
+    // first hit, where the text halves the first hit of each Cena and grants RE only "para resistir
+    // aos efeitos Elementais posteriores".
+    // TODO: the first-hit-of-each-Cena Meio-Dano — nothing counts elemental hits suffered per Cena
+    //  (getAttacksSufferedThisRound is per Rodada and blind to type).
     RESISTENCIA_ELEMENTAL(
             "Conforme seu Elemento, você reduz o primeiro dano Elemental de cada Cena à metade "
                     + "(efeito de Meio-Dano), então recebe Resistência Elemental (RE) para "
                     + "resistir aos efeitos Elementais posteriores.",
             FeatRequirements.builder()
                     .requiredRace(AbstractMesticoRace.class)
-                    .build()),
+                    .build()) {
+        @Override
+        public int resolveElementalResistanceInstances(final ElementalType element, final Character character,
+                                                        final CombatantSheet holder) {
+            return elementOf(character).filter(own -> own == element).isPresent() ? 1 : 0;
+        }
+    },
 
     /**
      * "A cada Cena você pode reduzir a zero o primeiro dano elemental do elemento qual você é
      * resistente, danos posteriores são reduzidos à metade."
      */
-    // TODO: same missing RE and damage-type scoping as its prerequisite, plus the same per-Cena
-    //  counter. Reducing damage *to zero* is additionally a nullification stage beyond RD/RA —
-    //  CLAUDE.md's "damage-type immunity" gap — which EscudeiroFeat already cites.
+    // "Danos posteriores são reduzidos à metade" is real: a Meio-Dano scoped to the holder's own
+    // element (Feat#halvesDamage, DamageScope#element).
+    // TODO: "reduzir a zero o primeiro dano elemental" of each Cena — the zeroing stage exists
+    //  (Feat#isImmuneToDamage), but nothing counts elemental hits per Cena to pick out the first.
+    //  So the first hit is halved like the rest.
     RESISTENCIA_ELEMENTAL_SUPERIOR(
             "A cada Cena você pode reduzir a zero o primeiro dano elemental do elemento qual você "
                     + "é resistente, danos posteriores são reduzidos à metade.",
             FeatRequirements.builder()
                     .requiredFeat(RESISTENCIA_ELEMENTAL)
-                    .build()),
+                    .build()) {
+        @Override
+        public boolean halvesDamage(final DamageType damageType, final DamageDescriptor descriptor,
+                                    final Character character, final CombatantSheet holder) {
+            return elementOf(character).map(own -> DamageScope.element(own).matches(damageType, descriptor))
+                    .orElse(false);
+        }
+    },
 
     /**
      * "Como uma Reação você pode fazer com que seu corpo seja coberto pelo seu elemento…
      * Personagens adjacentes que te causarem danos enquanto seu corpo estiver coberto sofrem 2
      * pontos de Dano Físico Elemental."
      */
-    // TODO: this is retaliation damage — CLAUDE.md's "Reactive/retaliation damage" row.
-    //  DamageService only ever computes damage *to* a target *from* an attacker, never the
-    //  reverse, and nothing lets a victim respond to having been hit.
-    // TODO: spending a Reação to enter a Turn-scoped state has no mechanism either; Reações are
-    //  a counter (ReactionsService), with nothing that spends one.
+    // TODO: the retaliation itself would fit Feat#resolveRetaliation (reported on a landed melee
+    //  hit), and a Reação can be spent now (CombatantSheet#spendReaction); what is missing is the
+    //  state it gates on — "coberto pelo seu elemento" for one Turn, entered as a Reação. An
+    //  ActiveAbility with a REACTION cost could enter it, but no Turn-scoped state carries the
+    //  Talento's own retaliation while it lasts.
     REPARACAO_ELEMENTAL(
             "Como uma Reação você pode fazer com que seu corpo seja coberto pelo seu elemento ou "
                     + "de espinhos elementais, este efeito tem por Duração apenas o Turno em que "
@@ -179,16 +209,21 @@ public enum ElementalFeat implements Feat {
                     .build()),
 
     /** "Você se torna imune ao elemento que você adquiriu resistência." */
-    // TODO: damage-type immunity is a further stage beyond RD/RA and does not exist in any form —
-    //  CLAUDE.md's "Damage-type-scoped mitigation, and damage-type immunity" row. The one
-    //  immunity mechanism this core has is CriticalEffectType, which names Efeitos Críticos, not
-    //  damage types.
+    // Real: immunity to hits of the holder's own element (Feat#isImmuneToDamage), judged before
+    // every reduction.
     IMUNIDADE_ELEMENTAL(
             "Você se torna imune ao elemento que você adquiriu resistência.",
             FeatRequirements.builder()
                     .requiredFeat(RESISTENCIA_ELEMENTAL_SUPERIOR)
                     .requiredAwakenedTitles(1)
-                    .build()),
+                    .build()) {
+        @Override
+        public boolean isImmuneToDamage(final DamageType damageType, final DamageDescriptor descriptor,
+                                        final Character character, final CombatantSheet holder) {
+            return elementOf(character).map(own -> DamageScope.element(own).matches(damageType, descriptor))
+                    .orElse(false);
+        }
+    },
 
     /**
      * "Você se transforma em um ser Elemental completo. Você recebe RDS e Resistência a Críticos.
@@ -217,9 +252,10 @@ public enum ElementalFeat implements Feat {
                     .requiredFeat(REPARACAO_ELEMENTAL)
                     .requiredAwakenedTitles(2)
                     .build()) {
+        /** "Você recebe RDS" with no figure — one instance. */
         @Override
-        public int resolveDamageReduction(final Character character) {
-            return DamageService.DEFAULT_DAMAGE_REDUCTION;
+        public int resolveDamageTakenReduction(final Character character) {
+            return DamageService.DAMAGE_TAKEN_REDUCTION_INSTANCE;
         }
 
         @Override
@@ -227,6 +263,15 @@ public enum ElementalFeat implements Feat {
             return CombatantSheet.CRITICAL_RESISTANCE_INSTANCE;
         }
     };
+
+    /** ARCANISMO_ELEMENTAL's "custa 0.5EXP a menos". */
+    private static final BigDecimal ARCANISMO_EXPERIENCE_DISCOUNT = new BigDecimal("0.5");
+
+    /** "Seu elemento" — the holder's race's own, when it is one of the Raças Elementais. */
+    private static Optional<ElementalType> elementOf(final Character character) {
+        return character.getRace() instanceof AbstractMesticoRace elemental
+                ? Optional.ofNullable(elemental.getElement()) : Optional.empty();
+    }
 
     private final String description;
     private final FeatRequirements featRequirements;

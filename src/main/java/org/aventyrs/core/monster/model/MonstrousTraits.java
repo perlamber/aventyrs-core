@@ -36,7 +36,7 @@ public final class MonstrousTraits {
     /** One instance of RD/RM/RA — "Cada instância reduz … em -2". */
     public static final int REDUCTION_INSTANCE = 2;
 
-    /** One instance of RDS — "Cada instância reduz … em -1", carried as plain RD. */
+    /** One instance of RDS — "Cada instância reduz … em -1", carried as {@code ModifierType#DAMAGE_TAKEN_REDUCTION}. */
     public static final int RDS_INSTANCE = 1;
 
     private MonstrousTraits() {

@@ -44,12 +44,12 @@ public class ArtesAprimorarComArteAbility implements SkillCompetencyAbility {
 
     /**
      * The "Esquiva e Aparar - Redução de Danos Sofridos (RDS) +1" branch — picked up by
-     * {@code DamageService.getTotalDamageReduction}'s normal competency scan. Unlike the
+     * {@code DamageService#getTotalDamageTakenReduction}'s normal competency scan. Unlike the
      * other two branches below, this one is unconditionally active once chosen (RD/RA apply
      * regardless of which Perícia a hit came from), so it fits the existing
      * {@code @Modifier}/{@code ModifierResolver} machinery directly.
      */
-    @Modifier(ModifierType.DAMAGE_REDUCTION)
+    @Modifier(ModifierType.DAMAGE_TAKEN_REDUCTION)
     int damageReduction() {
         return chosenSkill == SkillType.ESQUIVA_E_APARAR ? BENEFIT_BONUS : 0;
     }

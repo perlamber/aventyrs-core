@@ -68,8 +68,9 @@ import static org.aventyrs.core.util.TranslatableMessages.INVALID_PARENT_RACE;
  *   1d6+metade do Vigor instead of damaging; "imunes a efeitos Naturais") — the "Fadiga/asfixia,
  *   and healing inversion" gap (nothing tracks sleep/breath, and {@code CombatantSheet#heal} has
  *   no hook to redirect a recovery into damage or vice-versa), the missing Divine-vs-Profana
- *   magic-source distinction, and the missing damage-type immunity (no way to nullify "Natural"
- *   damage). {@code RENASCIDO} exists as the tag those systems will key on; none reads it yet.</li>
+ *   magic-source distinction, and a Raça's immunity (the stage exists — {@code
+ *   CombatantSheet#isImmuneToDamage} — but only Habilidades, Talentos and timed effects feed it,
+ *   never a {@code Race}). {@code RENASCIDO} exists as the tag those systems will key on; none reads it yet.</li>
  *   <li><b>Vulnerabilidade Vampírica</b> (enfraquecidos/destruídos pela luz do sol — a -2 or
  *   per-Rodada -1 to the Multiplicador de PV; Vulneráveis a Dyospiros e ao Fogo) — no
  *   time-of-day/sunlight state, no round-scoped Multiplicador de PV reduction ({@code

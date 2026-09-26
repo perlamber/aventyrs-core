@@ -36,7 +36,7 @@ public enum FantasmaDoRingueAbility implements AventyrTitleAbility {
     // SenhorDaBriga#resolveCriticalMarginIncrease reads — Margem Crítica has no ModifierType a
     // Blessing could carry); and the counter-attack's "+1d6" — a one-attack budget whose die
     // SenhorDaBriga#resolveAttackModifiers reports. Malícia de Valentão: RDS 2 for the same Rodada, a
-    // DAMAGE_REDUCTION Blessing (RDS is RD).
+    // DAMAGE_TAKEN_REDUCTION (RDS) Blessing.
     // "recebem Contra-atacante como um Efeito Crítico adicional" is real (0.0.49): while the window
     // is open, SenhorDaBriga#resolveAdditionalDefensiveCriticalEffects adds CONTRA_ATACANTE.
     // TODO the counter-attack itself is offered by the caller — this core has no "Defesa failed"

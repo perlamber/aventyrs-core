@@ -262,7 +262,7 @@ class ReactiveRegenerationTest {
      * only while Regeneração Reativa is running, and only to the Rodada's first incoming attack.
      */
     @Test
-    void invernalGrantsDamageReductionOnlyWhileRegeneratingAndOnlyOnTheRodadasFirstAttack()
+    void invernalGrantsRdsOnlyWhileRegeneratingAndOnlyOnTheRodadasFirstAttack()
             throws IllegalOperationException {
         Character troll = troll(3);
         grantTitle(troll);
@@ -270,18 +270,18 @@ class ReactiveRegenerationTest {
         CharacterSheet sheet = sheetFor(troll);
 
         // Not regenerating yet — nothing granted.
-        assertEquals(0, damageService.getTotalDamageReduction(sheet, (DamageType) null, null));
+        assertEquals(0, damageService.getTotalDamageTakenReduction(sheet, null));
 
         damageService.applyDamage(sheet, 20, true);
         // Regenerating now, but this Rodada's first attack has already been suffered.
-        assertEquals(0, damageService.getTotalDamageReduction(sheet, (DamageType) null, null));
+        assertEquals(0, damageService.getTotalDamageTakenReduction(sheet, null));
 
         sheet.startNewRound();
         // 1 + one Título Desperto.
-        assertEquals(2, damageService.getTotalDamageReduction(sheet, (DamageType) null, null));
+        assertEquals(2, damageService.getTotalDamageTakenReduction(sheet, null));
 
         damageService.applyDamage(sheet, 20, true);
-        assertEquals(0, damageService.getTotalDamageReduction(sheet, (DamageType) null, null));
+        assertEquals(0, damageService.getTotalDamageTakenReduction(sheet, null));
     }
 
     /** That RDS reaches a real hit: the Rodada's first attack lands for less. */

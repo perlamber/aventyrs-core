@@ -102,9 +102,9 @@ public enum FormaMetamorfica {
      *  Desarmado is still permitted ({@code canAttackWith(null)} is unconditionally true — a
      *  punch is not a weapon to suppress). A blanket "deals no damage" prohibition exists nowhere
      *  in this core.
-     * <p>TODO: "Imune a dano físico (exceto fogo e armas de Dyospiros)" needs damage-type
-     *  immunity, which does not exist at any strength — {@code DamageService} has RD and RM but no
-     *  nullifying stage, and no per-{@code ElementalType} carve-out to hang the fogo exception on.
+     * <p>"Imune a dano físico (exceto fogo …)" is real, Forma-gated ({@code
+     * MetamorfoseDraculeaFeat#isImmuneToDamage}). ⚠️ The "armas de Dyospiros" exception is not: a
+     * hit names no weapon, so a Dyospiros blade is refused like any other.
      */
     NEVOA(FormType.NEVOA, null,
             "Imune a dano físico (exceto fogo e armas de Dyospiros), mas é incapaz de causar danos."),

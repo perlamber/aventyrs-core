@@ -192,7 +192,7 @@ public enum BrotosDeMapinguariAbility implements MonstrousAbility {
             return switch (type) {
                 case SIZE_CATEGORY -> 1;
                 case DEFESAS -> 3;
-                case DAMAGE_REDUCTION -> MonstrousTraits.RDS_INSTANCE;
+                case DAMAGE_TAKEN_REDUCTION -> MonstrousTraits.RDS_INSTANCE;
                 default -> 0;
             };
         }

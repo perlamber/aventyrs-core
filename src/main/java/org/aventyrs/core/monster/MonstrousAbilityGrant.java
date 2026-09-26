@@ -130,6 +130,11 @@ public class MonstrousAbilityGrant implements AttributeAbility {
         return resolve(ModifierType.DAMAGE_REDUCTION);
     }
 
+    @Modifier(ModifierType.DAMAGE_TAKEN_REDUCTION)
+    int damageTakenReduction() {
+        return resolve(ModifierType.DAMAGE_TAKEN_REDUCTION);
+    }
+
     @Modifier(ModifierType.MAGIC_REDUCTION)
     int magicReduction() {
         return resolve(ModifierType.MAGIC_REDUCTION);

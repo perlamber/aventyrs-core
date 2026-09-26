@@ -141,7 +141,7 @@ public enum TrollFeat implements Feat {
                     .requiredFeat(REGENERACAO_REATIVA_SUPERIOR)
                     .build()) {
         @Override
-        public int resolveDamageReduction(final Character character, final CombatantSheet holder) {
+        public int resolveDamageTakenReduction(final Character character, final CombatantSheet holder) {
             if (holder == null || !holder.hasActiveRegeneration()
                     || holder.getAttacksSufferedThisRound() > 0) {
                 return 0;

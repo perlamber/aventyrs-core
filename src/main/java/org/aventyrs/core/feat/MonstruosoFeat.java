@@ -223,8 +223,9 @@ public enum MonstruosoFeat implements Feat {
             return defenseType == DefenseType.PHYSICAL ? PELE_RIJA_BONUS : 0;
         }
 
+        /** "+2 em … RDS" — Redução de Danos Sofridos, which also reaches magical hits. */
         @Override
-        public int resolveDamageReduction(final Character character) {
+        public int resolveDamageTakenReduction(final Character character) {
             return PELE_RIJA_BONUS;
         }
     },

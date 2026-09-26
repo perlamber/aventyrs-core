@@ -1,5 +1,6 @@
 package org.aventyrs.core.race;
 
+import org.aventyrs.core.magic.ElementalType;
 import lombok.NonNull;
 import org.aventyrs.core.ability.AttributeAbility;
 import org.aventyrs.core.character.AttributeDomain;
@@ -70,6 +71,12 @@ public class Invernal extends AbstractMesticoRace {
     public Map<AttributeDomain, Integer> getFixedAttributeBonuses() {
         int primaryBonus = parentGrants(PRIMARY_ATTRIBUTE) ? PRIMARY_BONUS_WHEN_PARENT_GRANTS_IT : PRIMARY_BONUS;
         return Map.of(PRIMARY_ATTRIBUTE, primaryBonus, REDUCED_ATTRIBUTE, REDUCED_BONUS);
+    }
+
+    /** The Talentos Elementais' table: Invernal → Gelo. */
+    @Override
+    public ElementalType getElement() {
+        return ElementalType.GELO;
     }
 
     @Override

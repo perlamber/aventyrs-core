@@ -392,6 +392,11 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                 .governingAttributeDomain(skillRoll != null ? attributeDomain : null);
 
         if (skillType.isAttackSkill()) {
+            target.getCharacter().getFeats().stream()
+                    .map(feat -> feat.resolveDamageRetype(target.getCharacter(), skillType, attackSource))
+                    .filter(java.util.Objects::nonNull)
+                    .findFirst()
+                    .ifPresent(result::retypedDamage);
             DamageSum damage = sumDamageBonus(target, sceneContext, null, attackSource, targetCount, skillRoll);
             damage.bonus().ifPresent(damageBonus ->
                     result.damageBonus(damageBonus).damageBonusBreakdown(damage.breakdown()));

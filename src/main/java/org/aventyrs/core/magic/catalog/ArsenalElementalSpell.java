@@ -158,9 +158,10 @@ public enum ArsenalElementalSpell implements AuthoredSpell {
             .build()),
 
     /**
-     * TODO "Você se torna imune ao elemento escolhido" is damage-type immunity, of which this core
-     * has no mechanism of any kind, and "Resistência Elemental a todos os outros Elementos" is
-     * damage-type-scoped mitigation, which RD/RA resolve without any notion of damage type.
+     * TODO "Você se torna imune ao elemento escolhido" and "Resistência Elemental a todos os outros
+     * Elementos" both have a mechanism now — a timed {@code sheet.DamageScopeEffect} (IMMUNE, scoped
+     * to one element) and RE instances on the sheet — but this Magia's effect grants neither, and
+     * the element is a per-cast choice nothing records.
      */
     ARMADURA_ELEMENTAL(SpellData.builder()
             .name("Armadura Elemental")

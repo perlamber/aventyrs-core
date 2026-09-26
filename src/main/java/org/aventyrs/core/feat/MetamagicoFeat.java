@@ -410,10 +410,9 @@ public enum MetamagicoFeat implements Feat {
                     .build()),
 
     // TODO: same mimetizar gap as the rest of the Aptidão ladder, now at FLORESCENTE depth.
-    // TODO: the immunity half is a further stage than any mitigation this core has — the gap
-    // catalog records that no damage-nullifying mechanism of any kind exists — and it is
-    // additionally scoped to "Magias que você é capaz de conjurar", the same unexpressible scope
-    // ARTESAO_DE_BARREIRAS and APTIDAO_MAGICA_AMPLA both cite for their own DM bonuses.
+    // TODO: the immunity half — the stage exists (Feat#isImmuneToDamage), but it is scoped to
+    // "Magias que você é capaz de conjurar", and an incoming hit's DamageDescriptor names no
+    // Magia: the same scope ARTESAO_DE_BARREIRAS and APTIDAO_MAGICA_AMPLA cite for their DM bonuses.
     // TODO: "enquanto tiver ao menos 10PD em sua reserva de Bônus Bases" reads a Determinação
     // reserve threshold; PD is spendable but no hook conditions an effect on how much remains.
     APTIDAO_MAGICA_DRACONICA(

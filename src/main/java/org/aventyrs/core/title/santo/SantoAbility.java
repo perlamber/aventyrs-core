@@ -76,8 +76,8 @@ public enum SantoAbility implements AventyrTitleAbility {
     // DamageServiceImpl; "protegendo ao menos 1 aliado" *is* hasLowerPvAdjacentAlly, since an
     // adjacent ally with lower PV is exactly one this Habilidade is protecting.
     // V19 changed the stat and gave it a formula: the previous revision granted a bare RA instance
-    // in both directions. RDS is RD (ModifierType.DAMAGE_REDUCTION), not RA — see GorgonaFeat's
-    // own "RDS *is* RD" note — so this constant no longer touches the RA hooks at all.
+    // in both directions. The stat is RDS — summed into DamageService#getTotalDamageTakenReduction,
+    // which reaches physical and magical hits — so this constant no longer touches the RA hooks.
     BASTIAO_DOS_NECESSITADOS(
             "Seus aliados, que tenham menos quantidade de PV atuais que você, recebem RDS " +
             "igual a 1+ Metade das Habilidades de Santo que você possuir. Apenas aliados " +

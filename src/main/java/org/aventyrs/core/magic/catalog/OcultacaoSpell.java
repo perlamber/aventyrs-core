@@ -216,7 +216,7 @@ public enum OcultacaoSpell implements AuthoredSpell {
             .targeting(SpellTargeting.areaDeEfeito(AreaOfEffect.circle(Range.DISTANCIA_CURTA)))
             .build()),
 
-    /** "se torna imune a Dano Físico, mas ainda pode sofrer danos mágicos" is damage-type immunity, of which this core has no mechanism at all. */
+    /** TODO "se torna imune a Dano Físico, mas ainda pode sofrer danos mágicos" — a timed {@code sheet.DamageScopeEffect} (IMMUNE, {@code DamageScope#PHYSICAL}) is the mechanism, but this Magia's effect does not grant one. */
     RASTEJAR_NAS_SOMBRAS(SpellData.builder()
             .name("Rastejar nas Sombras")
             .branchLevel(BranchLevel.EMERGENTE)

@@ -96,32 +96,71 @@ public class DamageServiceImpl implements DamageService {
         return getTotalDamageReduction(target, damageType, null, source, sceneContext);
     }
 
+    /**
+     * The public RD figure: RD proper plus the RE this hit's element meets — the shape the public
+     * overloads have always reported. {@link #computeFinalDamage} applies the two pieces
+     * separately, because RD reaches only plain physical damage and RE only elemental damage.
+     * sceneContext is unused since 0.0.64, when the Título RDS scans moved to {@link
+     * #getTotalDamageTakenReduction(CombatantSheet, SceneContext)}.
+     */
     private int getTotalDamageReduction(final CombatantSheet target, final DamageType damageType,
                                         final DamageDescriptor damageDescriptor, final CombatantSheet source,
                                         final SceneContext sceneContext) {
+        return Math.max(0, damageReductionOnly(target, damageType, source)
+                + elementalResistance(target, damageDescriptor));
+    }
+
+    /** RD proper — "reduz o Dano Físico não-PRIMORDIAL e não-ELEMENTAL em -2" — from every source. */
+    private int damageReductionOnly(final CombatantSheet target, final DamageType damageType,
+                                    final CombatantSheet source) {
         Character character = target.getCharacter();
         int total = sumAcrossSources(character, ModifierType.DAMAGE_REDUCTION, target);
         total += sumEquipmentDamageReduction(character, target);
-        total += sumEquipmentDamageReduction(character, damageDescriptor);
-        // RE held on the sheet against this hit's element — Cataclismo Elemental's "RE para resistir a
-        // todos os Elementos escolhidos": "Cada instância reduz Danos Elementais Físicos e Mágicos em -2".
-        if (damageDescriptor != null && damageDescriptor.elementalType() != null) {
-            total += ELEMENTAL_RESISTANCE_PER_INSTANCE
-                    * target.getElementalResistanceInstances(damageDescriptor.elementalType());
-        }
         total += sumFeatDamageReduction(character, target);
         total += sumAttributeAbilityDamageReduction(character, target, damageType, source);
-        // The two Título-ability RDS scans, mirroring the RA pair in
-        // computeTotalAbsoluteDamageReduction. Both need a SceneContext (their clauses are
-        // adjacency-scoped), so a caller holding none — every Character-only entry point, and the
-        // public overloads above — simply gets zero from them rather than a wrong answer.
-        total += sumTitleAbilityDamageReduction(character, target, sceneContext);
-        total += sumAllyGrantedDamageReduction(target, sceneContext);
         // A round-scoped RD grant — a Blessing/TemporaryBonus, as AnaoFeat#VIGOR_DO_INVERNO
         // hands its holder at combat start. Only reachable on this CombatantSheet-taking path;
         // the Character-only overload above has no sheet to ask, the same limitation the
         // aggregate ACTION_POINTS/REACTIONS/FREE_ACTIONS reads already carry.
         total += target.getTemporaryBonus(ModifierType.DAMAGE_REDUCTION);
+        return total;
+    }
+
+    /**
+     * RE against this hit's element — "Cada instância reduz Danos Elementais Físicos e Mágicos em
+     * -2": the instances held on the sheet (Cataclismo Elemental, a Habilidade, a Talento) and an
+     * equipped item's element-scoped resistance. 0 for a hit with no element.
+     */
+    private int elementalResistance(final CombatantSheet target, final DamageDescriptor damageDescriptor) {
+        if (damageDescriptor == null || damageDescriptor.elementalType() == null) {
+            return 0;
+        }
+        return ELEMENTAL_RESISTANCE_PER_INSTANCE * target.getElementalResistanceInstances(damageDescriptor.elementalType())
+                + sumEquipmentDamageReduction(target.getCharacter(), damageDescriptor);
+    }
+
+    @Override
+    public int getTotalDamageTakenReduction(final Character character) {
+        int total = sumAcrossSources(character, ModifierType.DAMAGE_TAKEN_REDUCTION);
+        for (Feat feat : character.getFeats()) {
+            total += feat.resolveDamageTakenReduction(character, null);
+        }
+        return Math.max(0, total);
+    }
+
+    @Override
+    public int getTotalDamageTakenReduction(final CombatantSheet target, final SceneContext sceneContext) {
+        Character character = target.getCharacter();
+        int total = sumAcrossSources(character, ModifierType.DAMAGE_TAKEN_REDUCTION, target);
+        for (Feat feat : character.getFeats()) {
+            total += feat.resolveDamageTakenReduction(character, target);
+        }
+        // The two Título-ability RDS scans, mirroring the RA pair in
+        // computeTotalAbsoluteDamageReduction. Both need a SceneContext (their clauses are
+        // adjacency-scoped), so a caller holding none simply gets zero from them.
+        total += sumTitleAbilityDamageReduction(character, target, sceneContext);
+        total += sumAllyGrantedDamageReduction(target, sceneContext);
+        total += target.getTemporaryBonus(ModifierType.DAMAGE_TAKEN_REDUCTION);
         return Math.max(0, total);
     }
 
@@ -319,18 +358,26 @@ public class DamageServiceImpl implements DamageService {
                 ? getTotalAbsoluteDamageReduction(target, sceneContext)
                 : computeTotalAbsoluteDamageReduction(character, null, sceneContext);
         if (!ignoreDamageReduction) {
-            reduction += target != null
-                    ? getTotalDamageReduction(target, damageType, damageDescriptor, source, sceneContext)
-                    : getTotalDamageReduction(character);
-            // RM joins RD only for damage the caller actually classified as Mágico — "caller
-            // didn't say" (null) is not "this was magic". Grouped under the same
-            // ignoreDamageReduction flag as RD: the rules name RA as the reduction that can
-            // never be ignored and say nothing either way about RM, so an attack that bypasses
-            // mitigation is taken to bypass whichever of the two applies. That is an inference.
-            // Note RD itself is still type-blind, so a MAGICO hit currently takes both — see
-            // ModifierType#MAGIC_REDUCTION.
-            if (damageType == DamageType.MAGICO && target != null) {
-                reduction += getTotalMagicReduction(target);
+            // Each reduction reaches only the damage its rules text names (defesas-e-resistencias):
+            // RD plain physical, RDS anything but Primordial, RM magical, RE elemental. An untyped
+            // hit ("caller didn't say") is treated as plain physical, as it always was. All four
+            // sit under the same ignoreDamageReduction flag: the rules name RA as the reduction
+            // that can never be ignored and say nothing either way about the others — an inference.
+            DamageType effectiveType = damageDescriptor != null ? damageDescriptor.damageType() : damageType;
+            boolean plainPhysical = effectiveType == null || effectiveType == DamageType.FISICO;
+            if (target != null) {
+                if (plainPhysical) {
+                    reduction += Math.max(0, damageReductionOnly(target, damageType, source));
+                }
+                if (effectiveType != DamageType.PRIMORDIAL) {
+                    reduction += getTotalDamageTakenReduction(target, sceneContext);
+                }
+                if (effectiveType == DamageType.MAGICO) {
+                    reduction += getTotalMagicReduction(target);
+                }
+                reduction += elementalResistance(target, damageDescriptor);
+            } else {
+                reduction += getTotalDamageReduction(character) + getTotalDamageTakenReduction(character);
             }
         }
         // Pele de Pedra sits *outside* the RD sum on purpose: its first hit is an outright
@@ -338,7 +385,10 @@ public class DamageServiceImpl implements DamageService {
         // sheet.PeleDePedra. It is read last, so "o primeiro ataque que lhe causaria Danos" is
         // judged against what the ordinary mitigation already left — an attack that RD/RA had
         // fully turned aside never spends the negation.
-        PeleDePedra stone = target == null ? null : target.getPeleDePedra().orElse(null);
+        // "RDS 5" — an RDS, so it never reaches Primordial damage.
+        DamageType hitType = damageDescriptor != null ? damageDescriptor.damageType() : damageType;
+        PeleDePedra stone = target == null || hitType == DamageType.PRIMORDIAL
+                ? null : target.getPeleDePedra().orElse(null);
         if (stone != null && !ignoreDamageReduction) {
             reduction += stone.getEffectiveDamageReduction();
         }

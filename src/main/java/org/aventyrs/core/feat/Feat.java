@@ -1,5 +1,8 @@
 package org.aventyrs.core.feat;
 
+import org.aventyrs.core.magic.ElementalType;
+import org.aventyrs.core.character.DamageType;
+import org.aventyrs.core.character.DamageDescriptor;
 import org.aventyrs.core.character.MovementMode;
 import org.aventyrs.core.sheet.ConditionType;
 import org.aventyrs.core.character.EgoDomain;
@@ -850,6 +853,22 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     }
 
     /**
+     * The damage type this Talento makes an attack deal instead of its own — "Seus ataques com
+     * Armas e Armas Naturais causam danos Físicos Elementais: Terra em substituição aos seus tipos"
+     * ({@code OrquicoFeat#PALADINO_DE_EPONA}), "o Tipo de Dano base de suas Armas Naturais mudam para
+     * Físico Elemental: Natural" ({@code FeralFeat#DESPREZO_NATURAL}). {@code null} by default.
+     *
+     * <p><b>Reported, not applied</b>: a hit's type is always the caller's to supply when it
+     * applies damage, so {@code AbstractSkillInteraction} reports the first held Talento's answer
+     * on {@code InteractionResult#getRetypedDamage()}, and the caller uses it in place of the
+     * attack's own type.
+     */
+    default DamageDescriptor resolveDamageRetype(final Character attacker, final SkillType attackSkill,
+                                                 final AttackSource attackSource) {
+        return null;
+    }
+
+    /**
      * Correntes de Efeito this Talento adds to each attack made by its holder — {@code
      * ElficoFeat#CORRUPTOR_SOMBRIO}'s Definhar. Empty by default. {@code AttackDelivery} combines
      * these with the attack's caller-supplied chains and applies them only when the shared
@@ -1377,6 +1396,58 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      */
     default int resolveDamageReduction(final Character character, final CombatantSheet holder) {
         return resolveDamageReduction(character);
+    }
+
+    /**
+     * RDS (Redução de Danos Sofridos) this Talento grants — "Você recebe Bônus Racial de +2 em DF e
+     * RDS" ({@code MonstruosoFeat#PELE_RIJA}). Kept apart from {@link #resolveDamageReduction}
+     * because the two reach different hits: RD only plain physical damage, RDS every
+     * non-Primordial hit, physical or magical. A numberless "recebe RDS" grants {@code
+     * DamageService#DAMAGE_TAKEN_REDUCTION_INSTANCE}. Zero by default.
+     */
+    default int resolveDamageTakenReduction(final Character character) {
+        return 0;
+    }
+
+    /**
+     * The sheet-aware form, for an RDS scoped to the holder's live state ({@code
+     * AssassinoFeat#ESCUDO_DE_SOMBRAS} while Escondido). Defaults to the sheet-less form; {@code
+     * null} reads as "condition not met".
+     */
+    default int resolveDamageTakenReduction(final Character character, final CombatantSheet holder) {
+        return resolveDamageTakenReduction(character);
+    }
+
+    /**
+     * Instances of Resistência Elemental (RE) this Talento grants against element — each worth
+     * -2 against a hit of that element, physical or magical ({@code ElementalFeat
+     * #RESISTENCIA_ELEMENTAL}'s "RE para seu elemento"). Summed by {@code
+     * CombatantSheet#getElementalResistanceInstances}, beside the {@code AttributeAbility} twin.
+     * holder may be {@code null}. Zero by default.
+     */
+    default int resolveElementalResistanceInstances(final ElementalType element, final Character character,
+                                                    final CombatantSheet holder) {
+        return 0;
+    }
+
+    /**
+     * Whether a hit of this kind reaches its holder halved — a Meio-Dano limited to a {@code
+     * DamageScope}. Read by {@code CombatantSheet#halvesDamage}. False by default.
+     */
+    default boolean halvesDamage(final DamageType damageType, final DamageDescriptor descriptor,
+                                 final Character character, final CombatantSheet holder) {
+        return false;
+    }
+
+    /**
+     * Whether a hit of this kind deals its holder nothing at all — "Imunidade ao Elemento
+     * escolhido", "imune a dano físico". Judged before every reduction ({@code
+     * DamageServiceImpl#computeFinalDamage}). holder is the holder's sheet, for an immunity scoped
+     * to a worn Forma. False by default.
+     */
+    default boolean isImmuneToDamage(final DamageType damageType, final DamageDescriptor descriptor,
+                                     final Character character, final CombatantSheet holder) {
+        return false;
     }
 
     /**
