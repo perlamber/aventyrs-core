@@ -18,7 +18,7 @@ re-ordered as:
 | --- | --- | --- | --- |
 | A | Stale-TODO sweep | Phase 0 | **First pass done (0.0.61)** — 312 → 286 TODO lines; see `0.061.CHANGELOG.md` |
 | B | Small hooks with ≥2 consumers | new | **Done (0.0.62)** — all four below; see `0.062.CHANGELOG.md` |
-| C | Flight / swim / climb axes | Phase 6 | open |
+| C | Flight / swim / climb axes | Phase 6 | **Done (0.0.63)** — `MovementMode`; flying as a timed state still open; see `0.063.CHANGELOG.md` |
 | D | Damage types | Phase 8 | open |
 | E | Área de Efeito, outward damage, reverse retaliation | Phase 9 (+ rest of 7) | open |
 | F | Spellcasting extensions | Phase 10 | open |

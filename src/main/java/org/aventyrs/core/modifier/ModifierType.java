@@ -54,6 +54,15 @@ public enum ModifierType {
     INITIATIVE,
     MOVEMENT,
     /**
+     * UD added to a Movimento Base de Voo / de Natação / Vertical — never to land Movimento, and
+     * only when the holder possesses that mode ({@code MovementService#getMovementBase(
+     * CombatantSheet, MovementMode)}). An item's Favor carries them: the Botas de Escalada, the
+     * Nadadeiras Deciembranas.
+     */
+    FLIGHT_MOVEMENT,
+    SWIM_MOVEMENT,
+    CLIMB_MOVEMENT,
+    /**
      * UD added to the distance of a Reposicionar ({@code RepositionService}) — not to Movimento
      * Base, which a Reposicionar never reads. The Sandálhas do Corredor's "Distância da ação
      * Reposicionar-se aumenta em +1UD".

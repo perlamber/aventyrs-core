@@ -1,5 +1,6 @@
 package org.aventyrs.core.feat;
 
+import org.aventyrs.core.character.MovementMode;
 import org.aventyrs.core.sheet.ConditionType;
 import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.combat.Retaliation;
@@ -1656,6 +1657,40 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      * +NUD" shape.
      */
     default int resolveMovementIncrease(final Character character) {
+        return 0;
+    }
+
+    /**
+     * Whether this Talento gives its holder mode — "Você tem asas e possui Movimento Base de Voo"
+     * ({@code DraconicoFeat#ASAS_DE_DRAGAO}, {@code FeericoFeat#ASAS}), "Movimento Base de
+     * Natação" ({@code BestialFeat#HERANCA_ANFIBIA}). holder is the holder's sheet for a mode
+     * scoped to a worn Forma ({@code MetamorfoseDraculeaFeat}), or {@code null} when the caller
+     * has only a {@code Character} — read as "not in any Forma". Never asked about {@code LAND},
+     * which everyone has. False by default.
+     */
+    default boolean grantsMovementMode(final MovementMode mode, final Character character,
+                                       final CombatantSheet holder) {
+        return false;
+    }
+
+    /**
+     * An absolute Movimento Base for mode, replacing the figure it would otherwise start from —
+     * "Movimento Base de Voo 8UD" ({@code FeericoFeat#PIXIE}), "em terra seu Movimento Base é
+     * reduzido para apenas 2UD" ({@code FeericoFeat#SIRENIDEO}). For {@code LAND} it replaces the
+     * Categoria de Tamanho figure; every other bonus still adds on top. {@code null} by default.
+     * A figure for a non-land mode also grants that mode.
+     */
+    default Integer resolveMovementBaseOverride(final MovementMode mode, final Character character) {
+        return null;
+    }
+
+    /**
+     * UD this Talento adds to its holder's Movimento Base in mode, when they have it — "Seu
+     * Movimento Base de Voo aumenta em +2UD para cada Título" ({@code AvianoFeat#CORACAO_ALADO}),
+     * "é reduzido em -3UD" ({@code AvianoFeat#BRACOS_LIVRES}). Never asked about {@code LAND}:
+     * that is {@link #resolveMovementIncrease}. Zero by default.
+     */
+    default int resolveModeMovementIncrease(final MovementMode mode, final Character character) {
         return 0;
     }
 

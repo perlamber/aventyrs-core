@@ -27,6 +27,7 @@ import org.aventyrs.core.sheet.Player;
 import org.aventyrs.core.skill.SkillGraduation;
 import org.aventyrs.core.skill.SkillType;
 import org.aventyrs.core.skill.atletismo.Atletismo;
+import org.aventyrs.core.skill.atletismo.AtletismoCompetencyAbility;
 import org.aventyrs.core.skill.atletismo.AtletismoSpecialization;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -128,6 +129,8 @@ class ChargeServiceImplTest {
                         .graduation(SkillGraduation.builder().graduationValue(4).build())
                         .specializations(List.of(AtletismoSpecialization.TRI_ATLETA))
                         .build())
+                // "Personagens que possuam Movimento Base de Natação" — Anfíbio grants one.
+                .skillCompetencyAbilities(new java.util.ArrayList<>(List.of(AtletismoCompetencyAbility.ANFIBIO)))
                 .build();
         CharacterSheet sheet = sheetOf(swimmer);
         sheet.accumulateExperience(BigDecimal.valueOf(100));

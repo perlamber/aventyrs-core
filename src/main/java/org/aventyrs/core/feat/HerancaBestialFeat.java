@@ -1,5 +1,7 @@
 package org.aventyrs.core.feat;
 
+import org.aventyrs.core.sheet.CombatantSheet;
+import org.aventyrs.core.character.MovementMode;
 import lombok.Getter;
 import lombok.NonNull;
 import org.aventyrs.core.character.AttributeDomain;
@@ -28,7 +30,8 @@ import java.util.Optional;
  * <p><b>The delegation is explicit and deliberately short.</b> Replacing the constant in {@code
  * getFeats()} would otherwise drop the effects the constant itself overrides, so the two that
  * exist are forwarded by hand: {@link #resolveAttributeBonus} (every Herança's "+1 de bônus
- * racial") and {@link #getGrantedNaturalWeapons} (Bovídea/Canina/Felina's). {@code AbstractFeat}
+ * racial"), {@link #getGrantedNaturalWeapons} (Bovídea/Canina/Felina's) and {@link
+ * #grantsMovementMode} (Anfíbia/Aviana/Reptiliana's). {@code AbstractFeat}
  * deliberately does <em>not</em> forward everything to {@link #catalogEntry()} — a choice-carrying
  * form replaces its constant rather than decorating it, and a blanket forward would make it
  * impossible to <i>drop</i> a clause. Add a line here if a Herança ever grows a third hook.
@@ -85,5 +88,12 @@ public final class HerancaBestialFeat extends AbstractFeat {
     @Override
     public List<NaturalWeapon> getGrantedNaturalWeapons(final Character character) {
         return heranca.getGrantedNaturalWeapons(character);
+    }
+
+    /** Forwarded — Anfíbia's Natação, Aviana's Voo, Reptiliana's Vertical. */
+    @Override
+    public boolean grantsMovementMode(final MovementMode mode, final Character character,
+                                      final CombatantSheet holder) {
+        return heranca.grantsMovementMode(mode, character, holder);
     }
 }

@@ -1,5 +1,6 @@
 package org.aventyrs.core.skill.atletismo;
 
+import org.aventyrs.core.character.MovementMode;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.aventyrs.core.character.AttributeDomain;
@@ -17,10 +18,13 @@ import java.util.Optional;
 @AllArgsConstructor
 public enum AtletismoCompetencyAbility implements SkillCompetencyAbility {
 
-    // TODO: grants Movimento Base Vertical — the general terrestrial Movimento Base stat
-    // now exists (MovementService), but this is a different sub-stat (climbing specifically)
-    // that stat doesn't track — no vertical-movement/terrain system exists yet.
-    ALPINISTA_VELOZ("Você recebe Movimento Base Vertical."),
+    // Real — grants MovementMode.CLIMB, read by MovementService#hasMovementMode.
+    ALPINISTA_VELOZ("Você recebe Movimento Base Vertical.") {
+        @Override
+        public boolean grantsMovementMode(final MovementMode mode) {
+            return mode == MovementMode.CLIMB;
+        }
+    },
 
     // TODO: once per Cena, ignore Terreno Difícil, gaining an additional use at the 5th and
     // 10th Graduação — the Terreno Difícil cost is real (MovementTerrainService), but this is a
@@ -30,9 +34,13 @@ public enum AtletismoCompetencyAbility implements SkillCompetencyAbility {
     SALTO_PODEROSO("Uma vez por Cena você pode ignorar Terreno Difícil, novos usos desta " +
             "Habilidade são adquiridos ao alcançar a 5ª e 10ª Graduação."),
 
-    // TODO: grants Movimento Base de Natação — same story as ALPINISTA_VELOZ: the general
-    // Movimento Base stat exists now, but swimming is a different sub-stat it doesn't track.
-    ANFIBIO("Você recebe Movimento Base de Natação."),
+    // Real — grants MovementMode.SWIM.
+    ANFIBIO("Você recebe Movimento Base de Natação.") {
+        @Override
+        public boolean grantsMovementMode(final MovementMode mode) {
+            return mode == MovementMode.SWIM;
+        }
+    },
 
     // Substitutes Força for Destreza — see SkillCompetencyAbility.getSubstituteAttributeDomain().
     ACROBATA("Você pode substituir o Atributo Base desta perícia por Destreza.") {

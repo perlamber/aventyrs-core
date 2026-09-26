@@ -13,10 +13,10 @@ import lombok.Getter;
  * <p>Botas are <b>not</b> {@link CriticallyDefensiveItem}: "apenas Armaduras e Escudos recebem
  * Efeitos Críticos Defensivos".
  *
- * <p>Most Botas Favores name a movement axis this core does not model separately — vertical /
- * climbing / swimming distance, the Reposicionar distance, or "which Rodada is this". Those
- * clauses stay in the Favor's {@code description} / {@code additionalEffects} — all but the
- * Reposicionar distance, now a {@link ModifierType#REPOSITION_DISTANCE} bonus. What <i>is</i>
+ * <p>Several Botas Favores name a movement axis other than land Movimento — vertical / climbing /
+ * swimming distance, the Reposicionar distance. Each is its own {@code ModifierType} now ({@link
+ * ModifierType#CLIMB_MOVEMENT}, {@link ModifierType#SWIM_MOVEMENT}, {@link
+ * ModifierType#REPOSITION_DISTANCE}); "which Rodada is this" stays in the {@code description}. What <i>is</i>
  * expressible is a flat {@link ModifierType#MOVEMENT} bump (per Ponto de Ação, per CLAUDE.md's
  * "every movement figure is per Ponto de Ação"), now that {@code MovementServiceImpl} scans an
  * item's Favor for it, and a Vantagem on a whole named Perícia.
@@ -45,11 +45,11 @@ public enum BootsItem implements ItemTemplate {
                     .build()),
 
     /**
-     * Botinas de Escalada (Leve/Incomum). Neither clause is expressible: the Favor's Movimento
-     * Base Vertical / de escalada is a movement axis this core does not separate from ground
-     * movement, and the Efeito Adicional's "Vantagem nas rolagens de Atletismo para Escalar" is
-     * purpose-scoped ("para Escalar"), which CLAUDE.md's "never tracks what a roll is for" rules
-     * out — a Vantagem on all of Atletismo would over-grant.
+     * Botinas de Escalada (Leve/Incomum). The Favor is real: +2UD on the Movimento Base Vertical
+     * ({@code ModifierType#CLIMB_MOVEMENT}). ⚠️ "Aumentam" is read as raising a figure the wearer
+     * already has, so it adds nothing for someone with no {@code MovementMode#CLIMB}. The Efeito
+     * Adicional's "Vantagem nas rolagens de Atletismo para Escalar" is purpose-scoped ("para
+     * Escalar"), which CLAUDE.md's "never tracks what a roll is for" rules out.
      */
     BOTINAS_DE_ESCALADA(
             "Botinas de Escalada",
@@ -60,6 +60,7 @@ public enum BootsItem implements ItemTemplate {
             ItemFavor.builder()
                     .description("Movimento Base Vertical e de escalada aumentam em +2UD.")
                     .requirements(new ItemRequirements(AttributeDomain.STRENGTH, 3))
+                    .bonus(new ItemBonus(ModifierType.CLIMB_MOVEMENT, 2))
                     .additionalEffects("Vantagem nas rolagens de Atletismo para Escalar.")
                     .build()),
 
@@ -82,9 +83,10 @@ public enum BootsItem implements ItemTemplate {
                     .build()),
 
     /**
-     * Nadadeiras Deciembranas (Leve/Raro). Movimento Base de Natação is a movement axis this
-     * core does not model, and "Vantagem nas rolagens de Atletismo para Natação" is
-     * purpose-scoped — both stay as text.
+     * Nadadeiras Deciembranas (Leve/Raro). The Favor is real: +2UD on the Movimento Base de
+     * Natação ({@code ModifierType#SWIM_MOVEMENT}), for a wearer who has one — the same reading as
+     * the Botinas de Escalada. "Vantagem nas rolagens de Atletismo para Natação" is purpose-scoped
+     * and stays as text.
      */
     NADADEIRAS_DECIEMBRANAS(
             "Nadadeiras Deciembranas",
@@ -95,6 +97,7 @@ public enum BootsItem implements ItemTemplate {
             ItemFavor.builder()
                     .description("Movimento Base de Natação +2UD.")
                     .requirements(new ItemRequirements(AttributeDomain.STRENGTH, 3))
+                    .bonus(new ItemBonus(ModifierType.SWIM_MOVEMENT, 2))
                     .additionalEffects("Vantagem nas rolagens de Atletismo para Natação.")
                     .build()),
 

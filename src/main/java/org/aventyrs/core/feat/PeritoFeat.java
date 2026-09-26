@@ -367,9 +367,10 @@ public enum PeritoFeat implements Feat {
                     .build()),
 
     /** "Você é capaz de se mover e grudar em paredes e tetos, ao custo de 1PD por Rodada." */
-    // TODO: climbing/vertical movement is a separate sub-stat deliberately not wired to
-    //  ModifierType.MOVEMENT (see AtletismoCompetencyAbility#ALPINISTA_VELOZ), and this core
-    //  never does geometry, so surfaces and orientation have no representation.
+    // TODO: the Movimento Base Vertical exists (MovementMode.CLIMB, which this Talento's own
+    //  Pré-requisito Alpinista Veloz already grants), so what this adds is "grudar em paredes e
+    //  tetos … de cabeça para baixo" for 1PD per Rodada — surfaces and orientation are geometry
+    //  this core never does, and a per-Rodada upkeep cost has no carrier.
     // The Pré-requisito is real in full: Treinamento em Atletismo, the Especialização
     // Levantamento de Peso and the Habilidade de Competência Alpinista Veloz.
     REI_DA_MONTANHA(

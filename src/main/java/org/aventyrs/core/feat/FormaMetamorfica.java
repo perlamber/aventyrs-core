@@ -40,7 +40,8 @@ import org.aventyrs.core.sheet.FormType;
  * This is emphatically <b>not</b> the racial-trait-suppression gap being closed: it cancels Armas
  * Naturais only, only while the shape is worn, and only for this Talento.
  *
- * <p><b>The HABILIDADE column is four-sixths live.</b> {@link #ARANHA_GIGANTE}'s Furtividade
+ * <p><b>The HABILIDADE column is four-sixths live</b> (and the two movement modes in it are real
+ * too — see {@link #ARANHA_GIGANTE}, {@link #MORCEGO_ATROZ}). {@link #ARANHA_GIGANTE}'s Furtividade
  * Vantagem, {@link #LOBO_DENTES_DE_SABRE}'s Perícias de Ataque Vantagem, {@link
  * #MORCEGO_ATROZ}'s "Roubo de Vida +2" and {@link #CAVALO_DE_CHIFRES}'s "Multiplicador de PV +1"
  * are granted for real, Forma-gated. The rest are authored text granted by nothing, each blocked
@@ -53,9 +54,8 @@ public enum FormaMetamorfica {
     /**
      * The Furtividade half is granted for real, Forma-gated.
      *
-     * <p>TODO: "Movimento Base Vertical" needs a movement sub-stat this core does not have —
-     *  {@code MovementService} resolves one undifferentiated Movimento Base, with no vertical or
-     *  flight channel to raise.
+     * <p>"Movimento Base Vertical" is real too, Forma-gated ({@code MovementMode#CLIMB}, through
+     * {@code MetamorfoseDraculeaFeat#grantsMovementMode}).
      */
     ARANHA_GIGANTE(FormType.ARANHA_GIGANTE, NaturalWeapon.PRESAS_LONGAS,
             "Movimento Base Vertical e Vantagem em Furtividade."),
@@ -87,9 +87,7 @@ public enum FormaMetamorfica {
      * figure in this core it only amplifies an already-active {@code LifeSteal}, never grants one
      * from nothing.
      *
-     * <p>TODO: "Movimento Base de Voo" needs the flight sub-stat {@code Aviano}/{@code
-     * DraconicoFeat#ASAS_DE_DRAGAO}/{@code FeericoFeat} all cite — the same missing channel as
-     * {@link #ARANHA_GIGANTE}'s Vertical.
+     * <p>"Movimento Base de Voo" is real too, Forma-gated ({@code MovementMode#FLIGHT}).
      */
     MORCEGO_ATROZ(FormType.MORCEGO_ATROZ, NaturalWeapon.PRESAS_LONGAS,
             "Movimento Base de Voo e Roubo de Vida aumentado em +2."),

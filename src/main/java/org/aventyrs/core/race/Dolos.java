@@ -38,9 +38,9 @@ import java.util.Map;
  *   1d6+Carisma Rodadas normalmente ou 1 Rodada em cenas estressantes) — {@code
  *   MovementService} now aggregates a real "Movimento Base" stat (same fix {@code Pequenino}'s
  *   own Ligeiro/Sempre Veloz cites), but Dolos still has no {@code *RacialAbility} catalog
- *   constant to carry the flat +2UD through it, flight is a different sub-stat that stat
- *   doesn't track (same gap {@code AtletismoCompetencyAbility.ALPINISTA_VELOZ}/{@code ANFIBIO}
- *   cite for climbing/swimming), and this whole clause still has no activated-ability-outside-
+ *   constant to carry the flat +2UD through it; the Movimento Base de Voo exists ({@code
+ *   MovementMode#FLIGHT}) but here it is granted by an activation for a Duração, and a mode is
+ *   possessed, never switched on for Rodadas; and this whole clause still has no activated-ability-outside-
  *   a-roll trigger (same gap {@code Aquan}'s own Corpo Maleável cites) — this core also
  *   deliberately never rolls its own dice (the "1d6" duration is a caller's job, per the
  *   {@code skill} package-info) nor distinguishes a "cena estressante" from any other.</li>

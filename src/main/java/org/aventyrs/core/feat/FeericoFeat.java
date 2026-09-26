@@ -1,5 +1,6 @@
 package org.aventyrs.core.feat;
 
+import org.aventyrs.core.character.MovementMode;
 import java.util.List;
 import java.util.Optional;
 
@@ -48,8 +49,12 @@ public enum FeericoFeat implements Feat {
      * "Você tem asas e possui Movimento Base de Voo. Enquanto voando seu Movimento Base aumenta
      * em +2UD."
      */
-    // TODO: needs a flight state and a Movimento Base de Voo, which is a different sub-stat from
-    //  ordinary Movimento Base — see Aviano's Braços Alados and BestialFeat's class javadoc.
+    // The Movimento Base de Voo is real, and so is the +2UD: ⚠️ "enquanto voando seu Movimento Base
+    // aumenta em +2UD" is read as the flight axis (the Movimento used while flying), not as land
+    // Movimento, since this core does not know when the holder is flying except through the
+    // caller's EnvironmentalState.
+    // TODO: flying as a timed state — the 3PD/3PM cost, its per-Título reduction and the 1d6 +
+    //  metade do Vigor Duração — is not modelled.
     // The disjunctive Pré-requisito is real now — "apenas Avianos e Bestiais, OU personagens
     // recém-criados de raça Feérica" — as three FeatRequirements#anyOf branches, so an Aviano or
     // Bestial is no longer wrongly refused.
@@ -69,7 +74,18 @@ public enum FeericoFeat implements Feat {
                     .alternative(FeatRequirements.builder()
                             .requiredCreatureType(CreatureType.FEERICO)
                             .build())
-                    .build()),
+                    .build()) {
+        @Override
+        public boolean grantsMovementMode(final MovementMode mode, final Character character,
+                                          final CombatantSheet holder) {
+            return mode == MovementMode.FLIGHT;
+        }
+
+        @Override
+        public int resolveModeMovementIncrease(final MovementMode mode, final Character character) {
+            return mode == MovementMode.FLIGHT ? ASAS_FLIGHT_BONUS : 0;
+        }
+    },
 
     /** "O Custo de Ativação do Efeito de Voo é reduzido em -1PM." */
     // TODO: adjusts the Custo and Duração of a flight effect. The generic activation transaction
@@ -112,8 +128,9 @@ public enum FeericoFeat implements Feat {
      * "Sua categoria de tamanho muda para -3, você tem asas e Movimento Base de Voo 8UD."
      */
     // The Categoria de Tamanho set is real, through Feat#resolveSizeCategoryOverride.
-    // TODO: flight does not exist — no Movimento Base de Voo sub-stat, so the wings and the 8UD
-    //  have nothing to land on, and neither does the PM cost or the Duração that pays for them.
+    // "Movimento Base de Voo 8UD" is real, an absolute figure (Feat#resolveMovementBaseOverride).
+    // TODO: flying as a timed state — the 2PM cost and the 2d6 + metade do Carisma Duração — is
+    //  not modelled.
     // TODO: gated at FEERICO where the text says "apenas Fadas e Fúrias" — looser than written,
     //  see the class javadoc. The exclusion runs one way only, exactly as the rules text writes
     //  it: Sirenídeo forbids Pixie, Pixie forbids nothing.
@@ -125,6 +142,11 @@ public enum FeericoFeat implements Feat {
             FeatRequirements.builder()
                     .requiredCreatureType(CreatureType.FEERICO)
                     .build()) {
+        @Override
+        public Integer resolveMovementBaseOverride(final MovementMode mode, final Character character) {
+            return mode == MovementMode.FLIGHT ? PIXIE_FLIGHT_MOVEMENT : null;
+        }
+
         /** "Apenas … recém-criados" — only a starting Talento slot can take it. */
         @Override
         public boolean isAcquirableOnlyAtCreation() {
@@ -279,10 +301,9 @@ public enum FeericoFeat implements Feat {
      * reader via {@code Character#getEffectiveAttributeTotal}), the Vantagem through {@link
      * Feat#resolveSkillRollBonus}.
      */
-    // TODO: Movimento Base de Natação 6UD and a *reduced* land Movimento of 2UD are both absolute
-    //  sets rather than the increment resolveMovementIncrease expresses, and swim movement is a
-    //  separate sub-stat. Withheld together so the Talento is neither better nor worse than
-    //  written.
+    // Both movement figures are real, as absolute ones (Feat#resolveMovementBaseOverride):
+    // Natação 6UD, and land Movimento set to 2UD before every bonus.
+    // TODO: breathing underwater has no state to toggle (gap catalog, "Fadiga/asfixia").
     // TODO: gated at FEERICO where the text says "apenas Fadas e Fúrias" — see the class javadoc.
     SIRENIDEO(
             "A parte inferior de teu corpo, no lugar das pernas, é similar ao de uma criatura "
@@ -294,6 +315,15 @@ public enum FeericoFeat implements Feat {
                     .requiredCreatureType(CreatureType.FEERICO)
                     .forbiddenFeat(PIXIE)
                     .build()) {
+        @Override
+        public Integer resolveMovementBaseOverride(final MovementMode mode, final Character character) {
+            return switch (mode) {
+                case SWIM -> SIRENIDEO_SWIM_MOVEMENT;
+                case LAND -> SIRENIDEO_LAND_MOVEMENT;
+                default -> null;
+            };
+        }
+
         /** "Apenas … recém-criados" — only a starting Talento slot can take it. */
         @Override
         public boolean isAcquirableOnlyAtCreation() {
@@ -405,6 +435,18 @@ public enum FeericoFeat implements Feat {
 
     /** {@link #ANCIENTEFORME}'s "Multiplicador de PV … aumenta em +2" — per Título Desperto. */
     private static final int ANCIENTE_LIFE_MULTIPLIER_PER_TITLE = 2;
+
+    /** ASAS' "Enquanto voando seu Movimento Base aumenta em +2UD". */
+    private static final int ASAS_FLIGHT_BONUS = 2;
+
+    /** PIXIE's "Movimento Base de Voo 8UD". */
+    private static final int PIXIE_FLIGHT_MOVEMENT = 8;
+
+    /** SIRENIDEO's "Movimento Base de Natação 6UD". */
+    private static final int SIRENIDEO_SWIM_MOVEMENT = 6;
+
+    /** SIRENIDEO's "em terra seu Movimento Base é reduzido para apenas 2UD". */
+    private static final int SIRENIDEO_LAND_MOVEMENT = 2;
 
     private final String description;
     private final FeatRequirements featRequirements;

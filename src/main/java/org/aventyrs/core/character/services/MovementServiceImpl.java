@@ -2,6 +2,7 @@ package org.aventyrs.core.character.services;
 
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterSkill;
+import org.aventyrs.core.character.MovementMode;
 import org.aventyrs.core.character.SizeCategory;
 import org.aventyrs.core.ability.AttributeAbility;
 import org.aventyrs.core.sheet.CombatantSheet;
@@ -83,7 +84,9 @@ public class MovementServiceImpl implements MovementService {
     @Override
     public int getMovementBase(final Character character) {
         SizeCategory effectiveSize = characterSizeService.getEffectiveSizeCategory(character);
-        int total = effectiveSize.getMovementPerActionPoint();
+        // "Em terra seu Movimento Base é reduzido para apenas 2UD" replaces the size figure; every
+        // bonus below still adds on top, the same order the Categoria de Tamanho override follows.
+        int total = landOverride(character).orElse(effectiveSize.getMovementPerActionPoint());
 
         List<SkillCompetencyAbility> skillCompetencyAbilities = SkillCompetencyAbility.allFor(character);
         total += modifierResolver.sumModifiers(character.getAttributeAbilities(), ModifierType.MOVEMENT);
@@ -107,5 +110,73 @@ public class MovementServiceImpl implements MovementService {
             total += item.resolveEnhancementBonus(ModifierType.MOVEMENT, null, character);
         }
         return Math.max(0, total);
+    }
+
+    @Override
+    public boolean hasMovementMode(final CombatantSheet sheet, final MovementMode mode) {
+        if (mode == MovementMode.LAND) {
+            return true;
+        }
+        Character character = sheet.getCharacter();
+        boolean racial = character.getRace() != null && character.getRace().grantsMovementMode(mode)
+                && !sheet.getRacialTraitSuppression().suppressesPhysicalTraits();
+        return racial
+                || character.getFeats().stream().anyMatch(feat -> feat.grantsMovementMode(mode, character, sheet)
+                        || feat.resolveMovementBaseOverride(mode, character) != null)
+                || SkillCompetencyAbility.allFor(character, sheet).stream()
+                        .anyMatch(ability -> ability.grantsMovementMode(mode));
+    }
+
+    @Override
+    public boolean hasMovementMode(final Character character, final MovementMode mode) {
+        if (mode == MovementMode.LAND) {
+            return true;
+        }
+        return character.getRace() != null && character.getRace().grantsMovementMode(mode)
+                || character.getFeats().stream().anyMatch(feat -> feat.grantsMovementMode(mode, character, null)
+                        || feat.resolveMovementBaseOverride(mode, character) != null)
+                || SkillCompetencyAbility.allFor(character).stream()
+                        .anyMatch(ability -> ability.grantsMovementMode(mode));
+    }
+
+    @Override
+    public int getMovementBase(final CombatantSheet sheet, final MovementMode mode) {
+        if (mode == MovementMode.LAND) {
+            return getMovementBase(sheet);
+        }
+        if (!hasMovementMode(sheet, mode) || sheet.isMovementPrevented(null)) {
+            return 0;
+        }
+        Character character = sheet.getCharacter();
+        int total = character.getFeats().stream()
+                .map(feat -> feat.resolveMovementBaseOverride(mode, character))
+                .filter(java.util.Objects::nonNull)
+                .max(Integer::compare)
+                .orElseGet(() -> getMovementBase(sheet));
+        for (Feat feat : character.getFeats()) {
+            total += feat.resolveModeMovementIncrease(mode, character);
+        }
+        if (character.getRace() != null && !sheet.getRacialTraitSuppression().suppressesPhysicalTraits()) {
+            total += character.getRace().resolveModeMovementIncrease(mode);
+        }
+        ModifierType itemBonus = switch (mode) {
+            case FLIGHT -> ModifierType.FLIGHT_MOVEMENT;
+            case SWIM -> ModifierType.SWIM_MOVEMENT;
+            case CLIMB -> ModifierType.CLIMB_MOVEMENT;
+            case LAND -> throw new IllegalStateException("LAND is resolved above");
+        };
+        for (Item item : character.getEquipment()) {
+            total += item.resolveFavorBonus(itemBonus, character);
+            total += item.resolveEnhancementBonus(itemBonus, null, character);
+        }
+        return Math.max(0, total);
+    }
+
+    /** The smallest absolute land figure a held Talento states, if any. */
+    private java.util.Optional<Integer> landOverride(final Character character) {
+        return character.getFeats().stream()
+                .map(feat -> feat.resolveMovementBaseOverride(MovementMode.LAND, character))
+                .filter(java.util.Objects::nonNull)
+                .min(Integer::compare);
     }
 }

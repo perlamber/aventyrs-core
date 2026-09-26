@@ -158,6 +158,14 @@ constant and deliberately kept, since a one-shot movement allowance is a mechani
 doesn't have and granting nothing would be further from the clause. Check which of the two
 shapes a new grant is before reaching for `ModifierType.MOVEMENT`.
 
+**Movement modes.** Land Movimento is one of four `MovementMode`s. FLIGHT/SWIM/CLIMB are
+*possessed or not* (`MovementService#hasMovementMode`) and resolved by `getMovementBase(sheet,
+mode)`: a Talento's absolute figure (`Feat#resolveMovementBaseOverride`) or, ⚠️ by inference, the
+land figure, plus `resolveModeMovementIncrease` (Feat, Race) and the item `FLIGHT_MOVEMENT`/
+`SWIM_MOVEMENT`/`CLIMB_MOVEMENT` bonuses. **Never route a Voo/Natação/Vertical clause through
+`ModifierType#MOVEMENT`** — that raises ground movement. Whether someone is flying *now* is the
+caller's `EnvironmentalState#flying`.
+
 **Three axes, three homes.** An unconditional "+NUD ao Movimento Base" is a plain
 `@Modifier(ModifierType.MOVEMENT)` method. A Round-*window* clause ("nas duas primeiras Rodadas
 de cada Cena de Combate") is a `TemporaryBonus`/`Blessing`. A clause scoped to *which movement of

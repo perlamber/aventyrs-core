@@ -1,5 +1,6 @@
 package org.aventyrs.core.race;
 
+import org.aventyrs.core.character.MovementMode;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.SizeCategory;
@@ -161,6 +162,25 @@ public interface Race {
      * calling this directly.
      */
     default boolean isImmuneToEnchantments() { return false; }
+
+    /**
+     * Whether this Raça gives its members mode — {@code Aviano}'s Braços Alados ("os utilizam para
+     * voar livremente"). Silenced while a Forma suppresses the holder's physical racial traits
+     * ({@code RacialTraitSuppression#suppressesPhysicalTraits}). False by default.
+     */
+    default boolean grantsMovementMode(final MovementMode mode) {
+        return false;
+    }
+
+    /**
+     * UD this Raça adds to its members' Movimento Base in mode — {@code Aviano}'s "enquanto voando
+     * seu Movimento Base aumenta em +2UD" (Rapinante) / "+1UD" (Correnuvens), read as the flight
+     * axis. Silenced with {@link #grantsMovementMode} under physical-trait suppression. Never asked
+     * about {@code LAND}. Zero by default.
+     */
+    default int resolveModeMovementIncrease(final MovementMode mode) {
+        return 0;
+    }
 
     /**
      * Whether this race never loses movement to Terreno Difícil while on land — {@code

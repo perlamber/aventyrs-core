@@ -1,5 +1,7 @@
 package org.aventyrs.core.feat;
 
+import org.aventyrs.core.character.services.MovementServiceImpl;
+import org.aventyrs.core.character.MovementMode;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.EgoDomain;
@@ -274,21 +276,15 @@ public enum MobilidadeFeat implements Feat {
      * -1PA", through {@link Feat#resolveChargeActionPointReduction}, which {@code
      * ChargeService#getActionPointCost} subtracts from its 3PA baseline.
      *
-     * <p>⚠️ <b>Granted unconditionally, which over-grants.</b> The clause is gated on the holder
-     * possessing a <i>Movimento Base de Natação</i>, a sub-stat this core deliberately does not
-     * model (see {@code AtletismoCompetencyAbility#ANFIBIO}) — so there is nothing to test and the
-     * reduction applies to every Investida. The alternative was to grant nothing at all, which
-     * would leave the Talento's one expressible clause inert; narrowing it correctly is what the
-     * sub-stat would buy.
+     * <p>Only for a holder who possesses a Movimento Base de Natação — {@code
+     * MovementService#hasMovementMode(Character, MovementMode)}, Forma-blind since this hook has
+     * no sheet. (Before 0.0.63 it was granted to everyone, the mode being unmodelled.)
      */
     // TODO: the first clause — "rolagens de Perícia de Ataque realizadas imediatamente após ser
     //  bem-sucedido em rolagens de Atletismo para Natação" — needs two things this core lacks:
     //  it does not track what a roll was *for*, so "Atletismo para Natação" cannot be
     //  distinguished from any other Atletismo roll, and no roll's outcome feeds the next one's
     //  cost.
-    // TODO: Movimento Base de Natação is a separate sub-stat deliberately not wired to
-    //  ModifierType.MOVEMENT (see AtletismoCompetencyAbility#ANFIBIO) — it is what would narrow
-    //  the second clause to the swimmers it is written for. See the javadoc above.
     // The Especialização Triatleta Pré-requisito is real — FeatRequirements#requiredSkillTraits.
     INVESTIDA_AQUATICA(
             "Em combate, rolagens de Perícia de Ataque realizadas imediatamente após ser "
@@ -302,7 +298,8 @@ public enum MobilidadeFeat implements Feat {
                     .build()) {
         @Override
         public int resolveChargeActionPointReduction(final Character character) {
-            return CHARGE_ACTION_POINT_REDUCTION;
+            return new MovementServiceImpl().hasMovementMode(character, MovementMode.SWIM)
+                    ? CHARGE_ACTION_POINT_REDUCTION : 0;
         }
     },
 

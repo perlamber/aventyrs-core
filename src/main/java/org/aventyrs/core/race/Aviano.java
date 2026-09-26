@@ -1,5 +1,6 @@
 package org.aventyrs.core.race;
 
+import org.aventyrs.core.character.MovementMode;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;
@@ -42,17 +43,15 @@ import java.util.Map;
  * core doesn't have yet:
  *
  * <ul>
- *   <li><b>Movimento Base while flying</b> (+2UD for a Rapinante, +1UD for a Correnuvens) — the
- *   amount is exact and {@code ModifierType#MOVEMENT} is real, but the <i>condition</i> isn't:
- *   flight is a state this core has no concept of, and a no-arg {@code @Modifier} could not read
- *   it even if it did (see CLAUDE.md's "A no-arg @Modifier method can't see context"). Granting
- *   it flat would raise every Aviano's ground Movimento Base, which the clause plainly doesn't —
- *   unlike {@code HomensFeraRacialAbility#FORTALECIMENTO_FERAL}, whose +1UD half genuinely is
- *   unconditional. So this one is withheld entirely rather than over-granted.</li>
+ *   <li><b>Movimento Base while flying</b> (+2UD for a Rapinante, +1UD for a Correnuvens) — <b>real</b>,
+ *   on the flight axis ({@link #resolveModeMovementIncrease}): ⚠️ "enquanto voando seu Movimento
+ *   Base aumenta" is read as the Movimento Base de Voo, the figure used while flying, never as
+ *   ground movement.</li>
  *   <li><b>Braços Alados</b> (asas in place of arms; both hands count as "membros inábeis para
  *   rolagens de Perícia"; flying in a Cena de Combate costs 1PD and lasts 1d6 + metade da Destreza
- *   Rodadas) — three separate missing pieces: no limb/anatomy concept to mark a member inábil and
- *   no per-Perícia penalty keyed on one, the same missing flight state as above, and no
+ *   Rodadas) — the flight itself is <b>real</b> ({@link #grantsMovementMode}); still missing: no
+ *   limb/anatomy concept to mark a member inábil and no per-Perícia penalty keyed on one, flying
+ *   as a timed state (whether an Aviano is flying is the caller's {@code EnvironmentalState}), and no
  *   "spend a resource to enter a timed state" transaction (Pontos de Determinação are spent
  *   through {@code CombatantSheet}, but nothing converts a spend into a {@code TemporaryEffect}
  *   the way this needs — the same gap {@code Gorgona}'s Monstros em pele de Fada cites). This
@@ -90,27 +89,45 @@ public class Aviano implements Race {
      * Agastias.Linhagem}'s own shape — the choice space is small, fixed at compile time, and
      * meaningless outside this race.
      *
-     * <p>The flight-Movimento figure each subtype's rules text names is deliberately <b>not</b> a
-     * field here: it would be authored data no caller can reach, since the flight state that
-     * gates it doesn't exist (see this class's own javadoc). Add it alongside the mechanism.
+     * <p>Each carries the flight-Movimento figure its rules text names, read by {@link
+     * Aviano#resolveModeMovementIncrease}.
      */
     @Getter
     @AllArgsConstructor
     public enum Subtipo {
 
         /** "Mais fortes e raramente possuem bicos... favorece voos curtos e rápidos." */
-        RAPINANTE(AttributeDomain.STRENGTH),
+        RAPINANTE(AttributeDomain.STRENGTH, 2),
 
         /** "Corpos mais resistentes, capazes de voar por horas sem parar." */
-        CORRENUVENS(AttributeDomain.VIGOR);
+        CORRENUVENS(AttributeDomain.VIGOR, 1);
 
         private final AttributeDomain attributeBonus;
+
+        /** "Enquanto voando seu Movimento Base aumenta em +NUD". */
+        private final int flightMovementBonus;
     }
 
     private final Subtipo subtipo;
 
     public Aviano(@NonNull final Subtipo subtipo) {
         this.subtipo = subtipo;
+    }
+
+    /**
+     * Braços Alados — "os utilizam para voar livremente". The Movimento Base de Voo is real; the
+     * 1PD activation in a Cena de Combate and its 1d6 + metade da Destreza Duração are not (whether
+     * the Aviano is flying right now is the caller's {@code EnvironmentalState#flying}).
+     */
+    @Override
+    public boolean grantsMovementMode(final MovementMode mode) {
+        return mode == MovementMode.FLIGHT;
+    }
+
+    /** The subtype's "enquanto voando seu Movimento Base aumenta em +2UD/+1UD". */
+    @Override
+    public int resolveModeMovementIncrease(final MovementMode mode) {
+        return mode == MovementMode.FLIGHT ? subtipo.getFlightMovementBonus() : 0;
     }
 
     @Override

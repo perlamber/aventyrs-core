@@ -90,15 +90,18 @@ class BootsItemTest {
                 .resolveFavorBonus(ModifierType.FURTIVIDADE_ROLL_BONUS, character));
     }
 
-    /** The vertical/climb axis, the swim axis and the Reposicionar manoeuvre are all unmodelled. */
+    /**
+     * The climb and swim Favores land on their own movement axis and never on land Movimento — see
+     * {@code MovementModeTest} for the axis resolving them.
+     */
     @Test
-    void grantsNoBonusForItsUnmodelledMovementAxisClauses() {
+    void climbAndSwimFavoresLandOnTheirOwnAxisOnly() {
         Character strong = characterWithBase(AttributeDomain.STRENGTH, 3);
 
+        assertEquals(2, BootsItem.BOTINAS_DE_ESCALADA.resolveFavorBonus(ModifierType.CLIMB_MOVEMENT, strong));
+        assertEquals(2, BootsItem.NADADEIRAS_DECIEMBRANAS.resolveFavorBonus(ModifierType.SWIM_MOVEMENT, strong));
         assertEquals(0, BootsItem.BOTINAS_DE_ESCALADA.resolveFavorBonus(ModifierType.MOVEMENT, strong));
         assertEquals(0, BootsItem.NADADEIRAS_DECIEMBRANAS.resolveFavorBonus(ModifierType.MOVEMENT, strong));
-        assertTrue(BootsItem.BOTINAS_DE_ESCALADA.getFavor().getBonuses().isEmpty());
-        assertTrue(BootsItem.NADADEIRAS_DECIEMBRANAS.getFavor().getBonuses().isEmpty());
     }
 
     /** The DF/DM columns are real even though the "enquanto em movimento" Favor is not. */

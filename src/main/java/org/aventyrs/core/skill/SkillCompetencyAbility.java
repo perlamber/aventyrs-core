@@ -1,5 +1,6 @@
 package org.aventyrs.core.skill;
 
+import org.aventyrs.core.character.MovementMode;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.DamageBonus;
@@ -196,6 +197,16 @@ public interface SkillCompetencyAbility extends SkillTrait {
      */
     default List<Blessing> resolveInitiativeBlessings() {
         return List.of();
+    }
+
+    /**
+     * Whether this Habilidade de Competência gives its holder mode — {@code
+     * AtletismoCompetencyAbility#ANFIBIO} ("Você recebe Movimento Base de Natação") and {@code
+     * #ALPINISTA_VELOZ} (Vertical). Read by {@code MovementService#hasMovementMode}. False by
+     * default.
+     */
+    default boolean grantsMovementMode(final MovementMode mode) {
+        return false;
     }
 
     /**

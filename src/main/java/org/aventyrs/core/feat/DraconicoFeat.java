@@ -1,5 +1,6 @@
 package org.aventyrs.core.feat;
 
+import org.aventyrs.core.character.MovementMode;
 import java.util.List;
 
 import org.aventyrs.core.character.AttributeDomain;
@@ -28,7 +29,7 @@ import org.aventyrs.core.sheet.CombatantSheet;
  * ArmamentoDraconicoFeat}) and {@link #SOPRO_DE_DRAGAO} grant entries of the {@link NaturalWeapon}
  * catalog, surfaced by {@code Character#getNaturalWeapons()}, and {@link #SOPRO_DE_DRAGAO}'s "+1
  * Margem Crítica Menor" applies for real, scoped to a Sopro attack. What is still blocked hangs
- * off <b>no flight or form state</b> (recorded on {@code NascidoDoDragao} itself), the missing
+ * off <b>flying as a timed state</b> (the Movimento Base de Voo itself is real), the missing
  * <b>elemental damage type</b> and this core rolling <b>no dice</b> (the "+1d6 … para cada
  * Título Aventyr Desperto" riders). {@link #ASAS_DE_DRAGAO} is fully real: its +2 Defesas is
  * unconditional because the wings are always there, and so is the Capa restriction that pays for
@@ -81,9 +82,10 @@ public enum DraconicoFeat implements Feat {
      * transformed into, so the bonus applies whether or not the holder is flying. It covers
      * <b>both</b> DF and DM — the text says "suas Defesas", the broad form.
      */
-    // TODO: the flight half needs a flight state and a Movimento Base de Voo, neither of which
-    //  exists — see Aviano's own Braços Alados. Note the PD cost, its per-Título reduction and
-    //  the 1d6 + metade do Vigor Duração are all exact figures with nothing to apply them to.
+    // The Movimento Base de Voo is real (Feat#grantsMovementMode).
+    // TODO: flying as a timed state — the PD cost, its per-Título reduction and the 1d6 + metade
+    //  do Vigor Duração — is not modelled; whether the holder is flying is the caller's
+    //  EnvironmentalState#flying.
     // "Impede de usar Equipamentos do tipo Capa" is real — a permanent
     // Feat#getForbiddenEquipmentCategories entry, refused by CharacterSheet#equip/canEquip and
     // caught on an already-assembled loadout by validateEquipmentLoadout. So the malus that pays
@@ -98,6 +100,12 @@ public enum DraconicoFeat implements Feat {
             FeatRequirements.builder()
                     .requiredRace(NascidoDoDragao.class)
                     .build()) {
+        @Override
+        public boolean grantsMovementMode(final MovementMode mode, final Character character,
+                                          final CombatantSheet holder) {
+            return mode == MovementMode.FLIGHT;
+        }
+
         /** "Apenas … recém-criados" — only a starting Talento slot can take it. */
         @Override
         public boolean isAcquirableOnlyAtCreation() {

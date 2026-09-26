@@ -234,7 +234,7 @@ public enum PolimorfismoSpell implements AuthoredSpell {
             .targeting(SpellTargeting.distancia(Range.DISTANCIA_MUITO_CURTA))
             .build()),
 
-    /** TODO its Corrente grants a Movimento Base de Voo equal to the target's ground speed; vertical/flight movement is a different sub-stat from {@code ModifierType#MOVEMENT}. */
+    /** TODO its Corrente grants a Movimento Base de Voo equal to the target's ground speed — the figure MovementService already falls back to — but a Magia's timed effect cannot grant a {@code MovementMode}. */
     DRACONECER(SpellData.builder()
             .name("Dracônecer")
             .branchLevel(BranchLevel.FLORESCENTE)

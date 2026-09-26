@@ -143,12 +143,11 @@ public enum ElficoFeat implements Feat {
      * "Enquanto estiver em locais de grande altitude, ou voando, você recebe vantagem em rolagens
      * nas Perícias de Ataque, em 'Empatia Selvagem', 'Conhecimentos: Natureza' e 'Furtividade'."
      */
-    // TODO: withheld, unlike its two siblings, because its condition is not a TerrainType.
-    //  "Locais de grande altitude" is not MOUNTAIN — a mountain Scene is not necessarily at
-    //  altitude and vice versa — and "ou voando" needs the flight state Aviano's Braços Alados
-    //  records as missing. Mapping it to MOUNTAIN would grant the bonus in caves-and-crags Scenes
-    //  the clause does not cover and withhold it while flying, which it does. Granting nothing is
-    //  the honest reading until either state exists.
+    // The Vantagem is real: EnvironmentalState#altitude HIGH or #flying, both read off the
+    // holder's SceneContext (deliberately not TerrainType.MOUNTAIN — a mountain Scene is not
+    // necessarily at altitude, and vice versa).
+    // TODO: "mimetizar a magia 'Voo'" — mimetizar has no casting path (plan Phase F), and a Magia
+    //  cannot grant a MovementMode.
     GUARDIAO_DAS_NUVENS(
             "Você possui pele em tom acinzentado e um corpo adaptado ao frio das Montanhas. "
                     + "Enquanto estiver em locais de grande altitude, ou voando, você recebe "

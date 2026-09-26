@@ -1,5 +1,6 @@
 package org.aventyrs.core.feat;
 
+import org.aventyrs.core.character.MovementMode;
 import lombok.Getter;
 import lombok.NonNull;
 import org.aventyrs.core.ability.ActiveAbility;
@@ -242,5 +243,14 @@ public final class MetamorfoseDraculeaFeat extends AbstractFeat {
     @Override
     public boolean ignoresDifficultTerrain(final Character character, final CombatantSheet sheet) {
         return wornForma(sheet) == FormaMetamorfica.CAVALO_DE_CHIFRES;
+    }
+
+    /** Aranha Gigante's "Movimento Base Vertical", Morcego Atroz's "Movimento Base de Voo" — while worn. */
+    @Override
+    public boolean grantsMovementMode(final MovementMode mode, final Character character,
+                                      final CombatantSheet holder) {
+        FormaMetamorfica worn = wornForma(holder);
+        return worn == FormaMetamorfica.ARANHA_GIGANTE && mode == MovementMode.CLIMB
+                || worn == FormaMetamorfica.MORCEGO_ATROZ && mode == MovementMode.FLIGHT;
     }
 }
