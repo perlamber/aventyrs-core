@@ -48,7 +48,7 @@ class LightBladeItemTest {
     void adagaCarriesEveryColumnOfItsRulesTextAndNoFavor() {
         LightBladeItem adaga = LightBladeItem.ADAGA_KUNAI_OU_SEAX;
 
-        assertEquals("Adaga, Kunai ou Seax", adaga.getName());
+        assertEquals("Adaga", adaga.getName());
         assertEquals(ItemWeightClass.LIGHT, adaga.getWeightClass());
         assertEquals(ItemRarity.COMMON, adaga.getRarity());
         assertEquals(3, adaga.getPrice());

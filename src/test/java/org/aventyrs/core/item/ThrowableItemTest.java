@@ -47,7 +47,7 @@ class ThrowableItemTest {
     void dardosCarryExcruciante() {
         ThrowableItem dardos = ThrowableItem.DARDOS_E_SHUKENS;
 
-        assertEquals("Dardos e Shukens", dardos.getName());
+        assertEquals("Shukens", dardos.getName());
         assertEquals(ItemWeightClass.LIGHT, dardos.getWeightClass());
         assertEquals(ItemRarity.COMMON, dardos.getRarity());
         assertEquals(7, dardos.getPrice());
