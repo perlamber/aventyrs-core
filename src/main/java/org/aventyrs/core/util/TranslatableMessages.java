@@ -240,6 +240,16 @@ public class TranslatableMessages {
     public static final String NO_ALTERNATE_SPELL_VERSION = "NO_ALTERNATE_SPELL_VERSION";
     public static final String INVALID_MIMETIZED_SPELL = "INVALID_MIMETIZED_SPELL";
     public static final String MIMETIZED_SPELL_NOT_HELD = "MIMETIZED_SPELL_NOT_HELD";
+    /** The mimetized Magia may only be cast in a Forma the caster is not in. */
+    public static final String MIMETIZED_SPELL_FORM_REQUIRED = "MIMETIZED_SPELL_FORM_REQUIRED";
+    /** The caster holds no Talento that lets them store a Magia. */
+    public static final String SPELL_STORAGE_NOT_GRANTED = "SPELL_STORAGE_NOT_GRANTED";
+    /** Storing this Magia would exceed what the caster's Talentos let them hold (count or rung). */
+    public static final String SPELL_STORAGE_FULL = "SPELL_STORAGE_FULL";
+    /** The caster is not holding that Magia back. */
+    public static final String STORED_SPELL_NOT_HELD = "STORED_SPELL_NOT_HELD";
+    /** A stored Magia may not be released with that action. */
+    public static final String STORED_SPELL_RELEASE_COST_NOT_PERMITTED = "STORED_SPELL_RELEASE_COST_NOT_PERMITTED";
 
     /** The caster is under a Condição that forbids Conjurar Magias — Silêncio. */
     public static final String SPELL_CASTING_PREVENTED = "SPELL_CASTING_PREVENTED";

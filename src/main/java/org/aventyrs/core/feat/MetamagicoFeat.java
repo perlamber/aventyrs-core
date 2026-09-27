@@ -7,11 +7,19 @@ import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.character.DefenseType;
 import org.aventyrs.core.character.services.CharacterSkillService;
 import org.aventyrs.core.character.services.CharacterSkillServiceImpl;
+import org.aventyrs.core.magic.ActivationType;
 import org.aventyrs.core.magic.BranchLevel;
 import org.aventyrs.core.magic.FreeSpellPick;
+import org.aventyrs.core.magic.Spell;
+import org.aventyrs.core.magic.catalog.MagicTree;
 import org.aventyrs.core.rest.RestType;
+import org.aventyrs.core.scene.SceneContext;
+import org.aventyrs.core.sheet.CombatantAction;
+import org.aventyrs.core.sheet.CombatantSheet;
+import org.aventyrs.core.skill.Skill;
 import org.aventyrs.core.skill.SkillType;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -258,12 +266,10 @@ public enum MetamagicoFeat implements Feat {
                     .requiredFeat(MetamagicoFeat.ARCANISTA_EXPERIENTE)
                     .build()),
 
-    // TODO: an effective cast cost exists now — SpellCastingResult#getActivationTime(), reduced by
-    // Feat#resolveCastingActionPointReduction and floored at 1PA (DestinoFeat#ARCANISMO_DRUIDICO is
-    // its consumer) — but this trade is opt-in per cast, and SpellCastRequest carries no per-cast
-    // choice for a held Talento to read. The Desvantagem half has a constant ready
-    // (Skill#DISADVANTAGE_MALUS) but no way to scope it to "this one cast", nor to Dano/Cura rolls
-    // specifically.
+    // Real when the caster opts in on SpellCastRequest#activatedFeats: -1PA off the cast
+    // (floored at 1PA, PA casts only), and Desvantagem on its Conjuração roll and its damage
+    // (Feat#resolveCastingRollBonus).
+    // TODO: "e Cura mágica" — a Magia's healing has no resolved figure on SpellCastingResult.
     CONJURACAO_RAPIDA(
             "Você pode optar por receber Desvantagem nas rolagens de Perícia de Conjuração, Dano "
                     + "e Cura mágica de uma magia. Se o fizer o tempo de conjuração da desta magia será "
@@ -271,11 +277,30 @@ public enum MetamagicoFeat implements Feat {
             () -> FeatRequirements.builder()
                     .requiredSkillType(SkillType.DOMINIO_DO_MANA)
                     .requiredSkillGraduation(4)
-                    .build()),
+                    .build()) {
+        @Override
+        public int resolveCastingActionPointReduction(final Spell spell, final Character character,
+                                                      final int currentRound,
+                                                      final List<CombatantAction> actionsThisRound,
+                                                      final java.util.Set<Feat> activatedFeats) {
+            return activatedFeats.contains(this) ? 1 : 0;
+        }
 
-    // TODO: entirely unbuilt. Storing a cast Magia to release later as an Ação Livre needs a
-    // "held charge" slot on CharacterSheet that nothing resembles today, plus a dissipation
-    // trigger on the next Descanso — RestService applies recovery but fires no such hook.
+        @Override
+        public int resolveCastingRollBonus(final Spell spell, final Character character,
+                                           final java.util.Set<Feat> activatedFeats) {
+            return activatedFeats.contains(this) ? Skill.DISADVANTAGE_MALUS : 0;
+        }
+
+        @Override
+        public int resolveSpellDamageBonus(final Spell spell, final Character character,
+                                           final java.util.Set<Feat> activatedFeats) {
+            return activatedFeats.contains(this) ? Skill.DISADVANTAGE_MALUS : 0;
+        }
+    },
+
+    // Real, through magic.SpellStorageService: one Semente or Broto held on the sheet
+    // (CombatantSheet#getStoredSpells), released as an Ação Livre, dissipated at the next Descanso.
     ARMAZENAR_MAGIA(
             "Você pode conjurar e \"guardar\" uma Magia do Tipo Semente ou Broto para soltá-la "
                     + "como uma Ação Livre posteriormente. Apenas uma magia pode ser armazenada desta forma "
@@ -285,11 +310,8 @@ public enum MetamagicoFeat implements Feat {
                     .requiredFeat(MetamagicoFeat.CONJURACAO_RAPIDA)
                     .build()),
 
-    // TODO: same missing Magia-storage mechanism as ARMAZENAR_MAGIA — a cast Magia has nowhere to
-    // be held between casting and release, and Spell carries no activation-cost column for
-    // "descarregar como Ação Livre ou Reação" to set.
-    // Note the storage capacity is expressed in BranchLevel terms (two SEMENTE/BROTO, or one
-    // MUDA), which BranchLevel#isAtLeast already compares — only the store itself is missing.
+    // Real, through magic.SpellStorageService: two Sementes/Brotos or one Muda, released as an Ação
+    // Livre or a Reação (the Reação spent on the sheet's ledger).
     ARMAZENAR_MAGIA_SUPERIOR(
             "Você pode conjurar e \"guardar\" uma Magia do Tipo Semente ou Broto adicional (para um "
                     + "total de 2 Magias armazenadas) ou armazenar uma única magia do tipo Muda. Você pode "
@@ -300,14 +322,10 @@ public enum MetamagicoFeat implements Feat {
                     .requiredSkillGraduation(7)
                     .build()),
 
-    // TODO: the -1PA (mínimo 1PA) has somewhere to land now — Feat#resolveCastingActionPointReduction
-    // into SpellCastingResult#getActivationTime(), which only ever reduces a PA-activated Magia, so
-    // "não afeta magias conjuradas como Ação Livre ou Reação" comes with it — but the delay is
-    // opt-in per cast ("pode fazer com que"), the same missing per-cast choice CONJURACAO_RAPIDA
-    // cites, and granting the reduction unconditionally would hand it out without the delay.
-    // TODO: "iniciem seu efeito 1 Rodada após a conjuração" needs a delayed-effect mechanism.
-    // TemporaryEffect counts a Round-scoped effect *down* toward expiry; nothing schedules one to
-    // *begin* later, and CharacterSheet#startTurn — the natural trigger — is still a no-op.
+    // Real when the caster opts in on SpellCastRequest#activatedFeats, for a PA-activated Magia
+    // only ("não afeta magias conjuradas como Ação Livre ou Reação"): -1PA (floored at 1PA), and
+    // SpellCastingResult#getEffectDelayRounds reports 1. ⚠️ The delay is reported, not scheduled:
+    // the caller holds the effect back a Rodada.
     // Note: the targeting half — a long-range or area Magia having its direction/target point
     // fixed at cast time, and landing there whether or not a valid target remains — is the first
     // real consumer for the per-cast aim that AreaOfEffect deliberately does not carry (see its
@@ -323,11 +341,26 @@ public enum MetamagicoFeat implements Feat {
                     + "alvo válido.",
             () -> FeatRequirements.builder()
                     .requiredFeat(MetamagicoFeat.CONJURACAO_RAPIDA)
-                    .build()),
+                    .build()) {
+        @Override
+        public int resolveCastingActionPointReduction(final Spell spell, final Character character,
+                                                      final int currentRound,
+                                                      final List<CombatantAction> actionsThisRound,
+                                                      final java.util.Set<Feat> activatedFeats) {
+            return activatedFeats.contains(this) ? 1 : 0;
+        }
 
-    // TODO: mimetizar is its own acquisition-less casting path — casting a Magia you never
-    // learned, paid for in PD instead of PM. Nothing models a Magia a character can cast but has
-    // not acquired, and no cast path takes an alternative currency.
+        @Override
+        public int resolveCastEffectDelayRounds(final Spell spell, final Character character,
+                                                final java.util.Set<Feat> activatedFeats) {
+            boolean paCast = spell.getActivationTime() != null
+                    && spell.getActivationTime().type() == ActivationType.PONTOS_DE_ACAO;
+            return activatedFeats.contains(this) && paCast ? 1 : 0;
+        }
+    },
+
+    // The mimicry is real, through ArvoresMimetizadasFeat: two chosen Árvores, their Semente
+    // (free) and their Broto at 2PD.
     // TODO: "+3 em DM para resistir aos efeitos de magias que seja capaz de conjurar" — scoped to
     // what is being resisted, which nothing classifies (same blocker as EVASAO's Área de Efeito
     // scoping). Deliberately NOT granted as an unconditional DM bonus, which would over-apply to
@@ -342,11 +375,16 @@ public enum MetamagicoFeat implements Feat {
                     .requiredAttributeValue(4)
                     .requiredSkillType(SkillType.DOMINIO_DO_MANA)
                     .requiredSkillGraduation(MetamagicoFeat.TRAINED)
-                    .build()),
+                    .build()) {
+        @Override
+        public List<FeatChoice<?>> resolveRequiredChoices(final Character holder) {
+            return List.of(new FeatChoice<>(MagicTree.class, 2, Arrays.asList(MagicTree.values())));
+        }
+    },
 
-    // TODO: same mimetizar gap as APTIDAO_MAGICA_AMPLA, and the same scoped-DM gap — the +5 here
-    // replaces that Talento's +3 rather than stacking, which is itself unexpressible until the
-    // scope exists.
+    // The mimicry is real, through MagiasMimetizadasEscolhidasFeat: the chosen Mudas of Ampla's
+    // Árvores, at 3PD each.
+    // TODO: the scoped-DM gap APTIDAO_MAGICA_AMPLA cites — the +5 replaces that Talento's +3.
     APTIDAO_MAGICA_ASSOMBROSA(
             "Escolha uma magia Muda de cada Árvore de Magia conhecida através do talento 'Aptidão "
                     + "Mágica Ampla', você é capaz de mimetizar as magias escolhidas ao custo de 3PD cada. "
@@ -355,12 +393,18 @@ public enum MetamagicoFeat implements Feat {
                     .requiredFeat(MetamagicoFeat.APTIDAO_MAGICA_AMPLA)
                     .requiredSkillType(SkillType.DOMINIO_DO_MANA)
                     .requiredSkillGraduation(4)
-                    .build()),
+                    .build()) {
+        @Override
+        public List<FeatChoice<?>> resolveRequiredChoices(final Character holder) {
+            List<Spell> options = MagiasMimetizadasEscolhidasFeat.optionsFor(holder, BranchLevel.MUDA);
+            int picks = ArvoresMimetizadasFeat.chosenBy(holder, APTIDAO_MAGICA_AMPLA).map(java.util.Set::size).orElse(0);
+            return options.isEmpty() ? List.of() : List.of(new FeatChoice<>(Spell.class, Math.min(picks, options.size()), options));
+        }
+    },
 
-    // TODO: same mimetizar gap. The GD reduction is scoped the same way ARTESAO_DE_BARREIRAS'
-    // is. Note this one also requires already knowing a Muda "de seu ramo" — that half IS
-    // expressible against Spell#isEligible's branch gate, but only once Árvores are authored and
-    // the mimetizar choice has somewhere to live.
+    // The mimicry is real, through MagiasMimetizadasEscolhidasFeat: the chosen Emergentes of
+    // Ampla's Árvores, at 5PD. ⚠️ "Que você conheça uma Muda de seu ramo" is not validated on the pick.
+    // TODO: the GD reduction is scoped the same way ARTESAO_DE_BARREIRAS' is.
     APTIDAO_MAGICA_SUPREMA(
             "Escolha uma magia Emergente de cada Árvore de Magia conhecida através do talento "
                     + "'Aptidão Mágica Ampla', e que você seja conheça uma Muda de seu ramo, você é capaz de "
@@ -370,7 +414,14 @@ public enum MetamagicoFeat implements Feat {
                     .requiredFeat(MetamagicoFeat.APTIDAO_MAGICA_ASSOMBROSA)
                     .requiredSkillType(SkillType.DOMINIO_DO_MANA)
                     .requiredSkillGraduation(7)
-                    .build()),
+                    .build()) {
+        @Override
+        public List<FeatChoice<?>> resolveRequiredChoices(final Character holder) {
+            List<Spell> options = MagiasMimetizadasEscolhidasFeat.optionsFor(holder, BranchLevel.EMERGENTE);
+            int picks = ArvoresMimetizadasFeat.chosenBy(holder, APTIDAO_MAGICA_AMPLA).map(java.util.Set::size).orElse(0);
+            return options.isEmpty() ? List.of() : List.of(new FeatChoice<>(Spell.class, Math.min(picks, options.size()), options));
+        }
+    },
 
     // Real, both halves: the Mana Multiplier increase is summed by MagicPointsService
     // #getManaMultiplier, and the Descanso recovery by RestService#getRecoveredMagicPoints. The
@@ -397,19 +448,25 @@ public enum MetamagicoFeat implements Feat {
         }
     },
 
-    // TODO: no Mana cost is ever resolved through a service — Spell#getManaCost() (delegating to
-    // BranchLevel#getManaCost) is authored data read by nobody, SpellCastingService#castSpell
-    // spends no PM (the gap Guampo's javadoc cites), and no Talento Metamágico activation spends
-    // PM either (see the Barreira gap). A -1PM floor-1 reduction has no calculation to sit in
-    // front of.
+    // The Magia half is real: -1PM off SpellCastingResult#getManaCost (Feat#resolveManaCostReduction,
+    // floored at 1).
+    // TODO: "ativar efeitos de Talentos Metamágicos" — BarreiraMagicaActiveAbility's 3PM is an
+    //  ActiveAbility cost, which no Talento can reduce.
     ENGENHEIRO_DO_MANA(
             "O Custo de Mana para Conjurar Magias e ativar efeitos de Talentos Metamágicos é "
                     + "reduzido em -1PM (mínimo 1PM).",
             () -> FeatRequirements.builder()
                     .requiredFeat(MetamagicoFeat.MENTE_EXPANDIDA)
-                    .build()),
+                    .build()) {
+        @Override
+        public int resolveManaCostReduction(final Spell spell, final CombatantSheet caster,
+                                            final CombatantSheet target, final SceneContext casterContext) {
+            return 1;
+        }
+    },
 
-    // TODO: same mimetizar gap as the rest of the Aptidão ladder, now at FLORESCENTE depth.
+    // The mimicry is real, through MagiasMimetizadasEscolhidasFeat: one chosen Florescente of Ampla's
+    // Árvores, at 5PD.
     // TODO: the immunity half — the stage exists (Feat#isImmuneToDamage), but it is scoped to
     // "Magias que você é capaz de conjurar", and an incoming hit's DamageDescriptor names no
     // Magia: the same scope ARTESAO_DE_BARREIRAS and APTIDAO_MAGICA_AMPLA cite for their DM bonuses.
@@ -424,7 +481,14 @@ public enum MetamagicoFeat implements Feat {
                     .requiredFeat(MetamagicoFeat.APTIDAO_MAGICA_SUPREMA)
                     .requiredSkillType(SkillType.DOMINIO_DO_MANA)
                     .requiredSkillGraduation(9)
-                    .build());
+                    .build()) {
+        @Override
+        public List<FeatChoice<?>> resolveRequiredChoices(final Character holder) {
+            List<Spell> options = MagiasMimetizadasEscolhidasFeat.optionsFor(holder, BranchLevel.FLORESCENTE);
+            int picks = 1;
+            return options.isEmpty() ? List.of() : List.of(new FeatChoice<>(Spell.class, Math.min(picks, options.size()), options));
+        }
+    };
 
     /** One rung of {@link BranchLevel}'s ladder — what each cap-raising Talento grants. */
     private static final int ONE_RUNG = 1;

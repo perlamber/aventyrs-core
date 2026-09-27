@@ -36,14 +36,11 @@ import java.util.Map;
  * <p>Everything else needs a system this core doesn't have yet:
  * <ul>
  *   <li><b>Benção Divina</b> (Resistência Elemental to every Elemento; the first Magia Elemental
- *   cast on an even Rodada costs -1PM, minimum 1PM) — two independent gaps. RE is not a stat this
- *   core computes at all, the same one {@code NascidoDoDragao}'s Escamas Cromática cites (and
- *   here it needs no element chosen, which makes the missing mechanism the <i>whole</i> of the
- *   clause). The PM discount has all three of its inputs available — {@code Spell#getManaCost},
- *   {@code SceneContext#getCurrentRound}, and the Magia's own {@code
- *   SpellTree#getElementalType()} — but {@code SpellCastingService#castSpell} has no cost step at
- *   all: it rolls the delivery Perícia and Domínio do Mana and spends nothing, so there is no
- *   figure to reduce, no "first cast this Rodada" counter, and no floor to clamp to.</li>
+ *   cast on an even Rodada costs -1PM, minimum 1PM) — both halves have their mechanism now, only
+ *   not on a {@code Race}: RE instances are summed by {@code CombatantSheet#getElementalResistanceInstances}
+ *   (fed by Habilidades and Talentos, not a Raça), and the Mana cost is resolved and reducible
+ *   ({@code Feat#resolveManaCostReduction}, floored at 1) with the Rodada's casts in the action
+ *   log — but a Raça has neither hook.</li>
  *   <li><b>Chifres Majestosos</b> (Chifres Poderosos as an Arma Natural; investidas deal +1d6
  *   dano) — the Arma Natural half needs {@code Race#getGrantedNaturalWeapons()} overridden on this
  *   race, which is buildable now that {@code NaturalWeapon#CHIFRES_PODEROSOS} is authored. The

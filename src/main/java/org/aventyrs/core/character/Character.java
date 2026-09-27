@@ -674,6 +674,18 @@ public class Character {
         spells.add(spell);
     }
 
+    /**
+     * Every Magia this character may mimetize: the ones stored at acquisition ({@link
+     * #grantMimetizedSpell}) plus what each held Talento grants <b>right now</b> ({@code
+     * Feat#getGrantedMimetizedSpells}), deduplicated by value. The live half is what lets a grant
+     * grow after acquisition — "Ao Despertar seu primeiro Título poderá conjurar as magias Broto".
+     */
+    public List<MimetizedSpell> getMimetizedSpells() {
+        java.util.LinkedHashSet<MimetizedSpell> all = new java.util.LinkedHashSet<>(mimetizedSpells);
+        getFeats().forEach(feat -> all.addAll(feat.getGrantedMimetizedSpells(this)));
+        return List.copyOf(all);
+    }
+
     /** Adds a Talento-granted mimetized Magia without making it a learned {@link Spell}. */
     public void grantMimetizedSpell(@NonNull final MimetizedSpell spell) {
         mimetizedSpells.add(spell);

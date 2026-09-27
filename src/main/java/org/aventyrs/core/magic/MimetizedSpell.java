@@ -1,7 +1,9 @@
 package org.aventyrs.core.magic;
 
 import lombok.Builder;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import org.aventyrs.core.sheet.FormType;
 import org.aventyrs.core.sheet.IllegalOperationException;
 
 import static org.aventyrs.core.util.TranslatableMessages.INVALID_MIMETIZED_SPELL;
@@ -22,6 +24,7 @@ import static org.aventyrs.core.util.TranslatableMessages.INVALID_MIMETIZED_SPEL
  * #determinationPointCost} before resolving the catalog spell's effect.
  */
 @Getter
+@EqualsAndHashCode
 public final class MimetizedSpell {
 
     private final Spell spell;
@@ -30,11 +33,24 @@ public final class MimetizedSpell {
     private final SpellDuration durationOverride;
     private final boolean selfOnly;
 
+    /**
+     * The Forma the caster must be in to mimetize this Magia, or {@code null} — "Magias das Árvores
+     * escolhidas só podem ser Mimetizadas enquanto em sua forma Feérica" ({@code
+     * GorgonaFeat#ABENCOADA_PELO_CONCLAVE}). Checked by {@code MimetizedSpellCastingService}.
+     */
+    private final FormType requiredForm;
+
+    /**
+     * Value equality, since 0.0.66: a Talento whose grant is derived live ({@code
+     * Character#getMimetizedSpells}) hands out a fresh instance on every call, and the cast
+     * service recognises a held Magia by {@code contains}. A cost of 0 is valid — a Semente costs
+     * 0 PM, so "PD em substituição aos PM" makes it free.
+     */
     @Builder
     public MimetizedSpell(final Spell spell, final int determinationPointCost,
                           final ActivationTime activationTimeOverride, final SpellDuration durationOverride,
-                          final boolean selfOnly) {
-        if (spell == null || determinationPointCost <= 0) {
+                          final boolean selfOnly, final FormType requiredForm) {
+        if (spell == null || determinationPointCost < 0) {
             throw new IllegalOperationException(INVALID_MIMETIZED_SPELL);
         }
         this.spell = spell;
@@ -42,6 +58,7 @@ public final class MimetizedSpell {
         this.activationTimeOverride = activationTimeOverride;
         this.durationOverride = durationOverride;
         this.selfOnly = selfOnly;
+        this.requiredForm = requiredForm;
     }
 
     /** The effective activation time: the mimicry override, or the catalog spell's authored one. */

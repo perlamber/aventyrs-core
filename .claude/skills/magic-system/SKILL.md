@@ -475,6 +475,28 @@ toward this specific extension point — a reminder that these cross-references 
 re-checking whenever a cited skill gets revised, and that a piece of infrastructure can outlive
 the example that originally justified building it.
 
+## Mimetizar, cost, opt-ins and storage (0.0.66)
+
+- **Mimetizar** is `MimetizedSpell` (a catalog `Spell` + a PD cost + optional overrides and a
+  `requiredForm`), cast by `MimetizedSpellCastingService` — never `SpellCastingService`, so it never
+  satisfies an Árvore's gates. `Character#getMimetizedSpells()` is **live**: the list stored at
+  acquisition plus every held Talento's current `Feat#getGrantedMimetizedSpells`, deduplicated by
+  value (`MimetizedSpell` has value equality), so a rung gated on a Título appears when it is
+  Desperto. A cost of 0 is valid (a Semente costs 0 PM). Chosen Árvores live on
+  `ArvoresMimetizadasFeat` (Alma Feérica, Abençoada pelo Conclave, Aptidão Mágica Ampla), chosen
+  Magias on `MagiasMimetizadasEscolhidasFeat` (the rest of the Aptidão ladder).
+- **Mana cost** is resolved (reported, never spent): `Spell#getManaCost` × the Títulos'
+  multiplier − every `Feat#resolveManaCostReduction`, floored at 1 unless it was free
+  (Engenheiro do Mana; the Fada/Fúria twins, allegiance read from the caster's `SceneContext`).
+- **Per-cast opt-ins**: `SpellCastRequest#activatedFeats` — a longer
+  `Feat#resolveCastingActionPointReduction` overload, `#resolveCastingRollBonus` (the Conjuração
+  roll), `#resolveSpellDamageBonus` (the resolved damage), `#resolveCastEffectDelayRounds` (reported
+  on `SpellCastingResult#getEffectDelayRounds`). `Feat#resolveSpellDurationIncrease` extends a
+  Duração beside an item's.
+- **Storage**: `SpellStorageService` holds a cast `SpellCastingResult` on the sheet
+  (`CombatantSheet#getStoredSpells`) for Armazenar Magia (1 Semente/Broto) or its Superior (2, or
+  one Muda; releasable as a Reação too); every held Magia dissipates at the next Descanso.
+
 ## Reference files to read first
 
 - `src/main/java/org/aventyrs/core/magic/Spell.java` — the interface every Magia implements;

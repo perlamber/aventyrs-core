@@ -384,6 +384,20 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
     int getReactionsSpentThisRound();
 
     /**
+     * The Magias this combatant cast and is holding back ({@code MetamagicoFeat#ARMAZENAR_MAGIA}),
+     * oldest first — an unmodifiable view. Stored and released through {@code
+     * magic.SpellStorageService}; every one dissipates at the next Descanso ({@link
+     * #clearRestCooldowns}).
+     */
+    List<org.aventyrs.core.magic.StoredSpell> getStoredSpells();
+
+    /** Holds spell back — the unvalidating mutator beneath {@code SpellStorageService#store}. */
+    void storeSpell(org.aventyrs.core.magic.StoredSpell spell);
+
+    /** Drops spell from the held Magias; whether it was there. */
+    boolean removeStoredSpell(org.aventyrs.core.magic.StoredSpell spell);
+
+    /**
      * Records one Reação spent. {@code ActiveAbilityService#activate} and a Título activation
      * with a {@code REACTION} cost call it themselves. A caller resolving any other Reação — an
      * attack provoked by movement, a Defesa taken as a Reação — calls it for that one.

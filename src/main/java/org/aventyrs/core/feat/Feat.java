@@ -649,6 +649,21 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     }
 
     /**
+     * PM this Talento takes off the Mana cost of casting spell — "O Custo de Mana para Conjurar
+     * Magias … é reduzido em -1PM" ({@code MetamagicoFeat#ENGENHEIRO_DO_MANA}), "Conjurar Magias
+     * Divinas e Naturais em personagens aliados ou neutros custam 1PM … à menos" ({@code
+     * FadasFeat#ASPECTO_DA_BONDADE_NATURAL}, {@code FuriasFeat}'s twin). Summed by {@code
+     * SpellCastingService} after the Títulos' multiplier, and the result floors at 1 — every
+     * clause says "mínimo 1" — unless the Magia was free to begin with. target is the cast's
+     * {@code combatantTarget} and casterContext the caster's snapshot, for an allegiance-scoped
+     * clause; either may be {@code null}, read as "cannot tell". Zero by default.
+     */
+    default int resolveManaCostReduction(final Spell spell, final CombatantSheet caster, final CombatantSheet target,
+                                         final SceneContext casterContext) {
+        return 0;
+    }
+
+    /**
      * How many Pontos de Ação this Talento takes off spell's <b>Tempo de Ativação</b> for this
      * cast — summed by {@code SpellCastingService#resolveActivationTime}, which reduces only a
      * PA-activated Magia (a Reação or Ação Livre has no PA to take) and floors the result at 1PA.
@@ -665,6 +680,61 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     default int resolveCastingActionPointReduction(final Spell spell, final Character character,
                                                    final int currentRound,
                                                    final List<CombatantAction> actionsThisRound) {
+        return 0;
+    }
+
+    /**
+     * The longer form, adding the Talentos the caster opted into for this cast ({@code
+     * SpellCastRequest#getActivatedFeats}) — what an opt-in trade needs ({@code
+     * MetamagicoFeat#CONJURACAO_RAPIDA}, {@code #PROCRASTINAR_CONJURACAO}). Defaults to the shorter
+     * form, so every existing override keeps working.
+     */
+    default int resolveCastingActionPointReduction(final Spell spell, final Character character,
+                                                   final int currentRound,
+                                                   final List<CombatantAction> actionsThisRound,
+                                                   final java.util.Set<Feat> activatedFeats) {
+        return resolveCastingActionPointReduction(spell, character, currentRound, actionsThisRound);
+    }
+
+    /**
+     * A bonus (or, negative, a malus) this Talento puts on the cast's Conjuração roll ({@code
+     * SpellCastingResult#getDominioDoManaResult}) — {@code MetamagicoFeat#CONJURACAO_RAPIDA}'s
+     * opt-in Desvantagem, {@code GorgonaFeat#MARCA_DA_MALDICAO}'s "+2 em Conjuração … de suas Magias
+     * Naturais". Zero by default.
+     */
+    default int resolveCastingRollBonus(final Spell spell, final Character character,
+                                        final java.util.Set<Feat> activatedFeats) {
+        return 0;
+    }
+
+    /**
+     * A bonus (or malus) this Talento puts on the cast's resolved damage ({@code
+     * SpellCastingResult#getPrimaryDamage}'s deterministic amount) — {@code
+     * ElementalFeat#ARCANISMO_ELEMENTAL}'s "+2", Marca da Maldição's "+2 … Danos", Conjuração
+     * Rápida's Desvantagem. Zero by default.
+     */
+    default int resolveSpellDamageBonus(final Spell spell, final Character character,
+                                        final java.util.Set<Feat> activatedFeats) {
+        return 0;
+    }
+
+    /**
+     * Rodadas this Talento adds to the Duração of a Magia its holder casts — {@code
+     * ElementalFeat#ARCANISMO_ELEMENTAL}'s "suas Magias de Encantamento com este elemento tem a
+     * Duração aumentada em +1 Rodada". Summed by {@code SpellDurationService} beside an item's
+     * enhancement, and applied only to an extendable Duração. Zero by default.
+     */
+    default int resolveSpellDurationIncrease(final Spell spell, final Character character) {
+        return 0;
+    }
+
+    /**
+     * Rodadas this Talento delays the cast's effect — {@code MetamagicoFeat#PROCRASTINAR_CONJURACAO}.
+     * The largest answer is reported on {@code SpellCastingResult#getEffectDelayRounds()}. Zero by
+     * default.
+     */
+    default int resolveCastEffectDelayRounds(final Spell spell, final Character character,
+                                             final java.util.Set<Feat> activatedFeats) {
         return 0;
     }
 

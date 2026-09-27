@@ -21,7 +21,7 @@ re-ordered as:
 | C | Flight / swim / climb axes | Phase 6 | **Done (0.0.63)** — `MovementMode`; flying as a timed state still open; see `0.063.CHANGELOG.md` |
 | D | Damage types | Phase 8 | **Done (0.0.64)** — RD/RDS/RM/RE scoped, RDS split out, Talento immunity/RE hooks, retyping, race element; Corte/Perfuração/Impacto skipped (no Talento consumer); see `0.064.CHANGELOG.md` |
 | E | Área de Efeito, outward damage, reverse retaliation | Phase 9 (+ rest of 7) | **Done (0.0.65)** — footprints, area attacks, Evasão, `Retaliation#dealTo`; outward Turn damage left for a second consumer; see `0.065.CHANGELOG.md` |
-| F | Spellcasting extensions | Phase 10 | open |
+| F | Spellcasting extensions | Phase 10 | **Done (0.0.66)** — mimetizar choices + live grant, Mana-cost reduction, per-cast opt-ins, cast bonuses, storage; see `0.066.CHANGELOG.md` |
 | I | Racial traits that Talentos extend | new | open |
 | H | Título / Destino / Vampiro | Phase 12 | open |
 | G | Montaria / veículo | Phase 11 | open, lowest priority |

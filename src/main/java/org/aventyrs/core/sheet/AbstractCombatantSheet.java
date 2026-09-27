@@ -284,6 +284,9 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     /** See {@link CombatantSheet#getReactionsSpentThisRound()}. */
     private int reactionsSpentThisRound = 0;
 
+    /** See {@link CombatantSheet#getStoredSpells()}. */
+    private final List<org.aventyrs.core.magic.StoredSpell> storedSpells = new ArrayList<>();
+
     /** Whether a weapon was drawn since this Turn began — see {@link #drawWeapon(Weapon)}. */
     private boolean drewWeaponThisTurn = false;
 
@@ -1039,6 +1042,21 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     }
 
     @Override
+    public List<org.aventyrs.core.magic.StoredSpell> getStoredSpells() {
+        return List.copyOf(storedSpells);
+    }
+
+    @Override
+    public void storeSpell(final org.aventyrs.core.magic.StoredSpell spell) {
+        storedSpells.add(spell);
+    }
+
+    @Override
+    public boolean removeStoredSpell(final org.aventyrs.core.magic.StoredSpell spell) {
+        return storedSpells.remove(spell);
+    }
+
+    @Override
     public boolean hasActiveRegeneration() {
         return temporaryEffects.stream()
                 .anyMatch(effect -> effect instanceof Regeneration && !effect.isExpired());
@@ -1402,6 +1420,9 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         });
         restCooldowns.values().removeIf(required -> restType.isAtLeast(required));
         restImmunities.values().removeIf(required -> restType.isAtLeast(required));
+        // Armazenar Magia: "será automaticamente dissipada se não for utilizada até seu próximo
+        // Descanso" — any Descanso.
+        storedSpells.clear();
     }
 
     /**

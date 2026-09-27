@@ -115,4 +115,12 @@ public class SpellCastingResult {
      * caller to apply. {@code null} when there is none.
      */
     List<AreaDamage> areaDamage;
+
+    /**
+     * How many Rodadas after the cast the Magia's effect begins — "Você pode fazer com que suas
+     * magias iniciem seu efeito 1 Rodada após a conjuração" ({@code
+     * MetamagicoFeat#PROCRASTINAR_CONJURACAO}, opted into on {@code SpellCastRequest}). 0 for an
+     * ordinary cast. <b>Reported, not scheduled</b>: the caller holds the effect back.
+     */
+    private final int effectDelayRounds;
 }

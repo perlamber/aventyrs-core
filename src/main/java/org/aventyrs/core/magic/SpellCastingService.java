@@ -69,6 +69,13 @@ public interface SpellCastingService {
     ActivationTime resolveActivationTime(Spell spell, CombatantSheet caster, int currentRound);
 
     /**
+     * {@link #resolveActivationTime(Spell, CombatantSheet, int)} for a cast whose caster opted into
+     * activatedFeats ({@code SpellCastRequest#getActivatedFeats}).
+     */
+    ActivationTime resolveActivationTime(Spell spell, CombatantSheet caster, int currentRound,
+                                         java.util.Set<org.aventyrs.core.feat.Feat> activatedFeats);
+
+    /**
      * {@code spell}'s {@code Efeito:} line as an applicable {@link SpellEffect}, or {@link
      * Optional#empty()} for a Magia whose effect this core cannot yet express — which is still
      * most of the catalog.

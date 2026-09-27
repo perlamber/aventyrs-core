@@ -1,9 +1,14 @@
 package org.aventyrs.core.feat;
 
+import java.util.List;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.DefenseType;
 import org.aventyrs.core.character.SizeCategory;
+import org.aventyrs.core.magic.BranchLevel;
+import org.aventyrs.core.magic.MagicType;
+import org.aventyrs.core.magic.MimetizedSpell;
+import org.aventyrs.core.magic.catalog.MagicTree;
 import org.aventyrs.core.race.Gnomo;
 import org.aventyrs.core.skill.SkillType;
 
@@ -32,10 +37,10 @@ public enum GnomoFeat implements Feat {
     // ModifierType.SIZE_CATEGORY expresses. Stated as the value it is, not as the one step down
     // from Gnomo's own MINUS_ONE it happens to equal today: a later race-size change must not
     // silently move a Duende.
-    // TODO: Mimetizar has no mechanism — SpellCastingService cannot cast a Magia the caster does
-    //  not know, and there is no per-Descanso use counter for the "1 + Títulos Despertos" limit.
-    //  Same gap NascidoDoDragao's own Magia Dracônica cites. "Que não sejam Profanas" would
-    //  additionally need a Magia classification MagicType does not carry.
+    // The mimicry is real: every Semente of every Árvore that is not Profana (MagicType.PROFANA),
+    // free — a Semente costs 0 PM (getGrantedMimetizedSpells, derived live).
+    // TODO: "o número de vezes que você pode mimetizar uma mesma Semente é igual à 1 + Títulos",
+    //  renewed each Descanso Longo Verdadeiro — nothing counts casts of one mimetized Magia.
     DUENDE(
             "Sua Categoria de Tamanho muda para -2, você recebe Bônus de +1 na DM e você pode "
                     + "Mimetizar Sementes, que não sejam Profanas, de qualquer Árvore de Magias. "
@@ -45,6 +50,16 @@ public enum GnomoFeat implements Feat {
             FeatRequirements.builder()
                     .requiredRace(Gnomo.class)
                     .build()) {
+        @Override
+        public List<MimetizedSpell> getGrantedMimetizedSpells(final Character character) {
+            return java.util.Arrays.stream(MagicTree.values())
+                    .filter(tree -> !tree.hasMagicType(MagicType.PROFANA))
+                    .flatMap(tree -> tree.getSpells().stream())
+                    .filter(spell -> spell.getBranchLevel() == BranchLevel.SEMENTE)
+                    .map(spell -> MimetizedSpell.builder().spell(spell).determinationPointCost(0).build())
+                    .toList();
+        }
+
         /** "Apenas … recém-criados" — only a starting Talento slot can take it. */
         @Override
         public boolean isAcquirableOnlyAtCreation() {

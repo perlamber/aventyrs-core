@@ -3,6 +3,7 @@ package org.aventyrs.core.magic;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.Singular;
 import org.aventyrs.core.scene.Scene;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.scene.grid.GridPosition;
@@ -58,4 +59,19 @@ public class SpellCastRequest {
      * CombatantSheet#payWithVitality}.
      */
     private final boolean payManaWithHitPoints;
+
+    /**
+     * The Talentos the caster opts into for this one cast — "Você pode optar por…" ({@code
+     * MetamagicoFeat#CONJURACAO_RAPIDA}), "Você pode fazer com que suas magias…" ({@code
+     * MetamagicoFeat#PROCRASTINAR_CONJURACAO}). The {@code SkillRoll#getActivatedFeats} twin for a
+     * cast. Naming a Talento the caster does not hold does nothing: each hook checks its own
+     * constant.
+     */
+    @Singular
+    private final java.util.Set<org.aventyrs.core.feat.Feat> activatedFeats;
+
+    /** Whether the caster opted into feat for this cast. */
+    public boolean activated(final org.aventyrs.core.feat.Feat feat) {
+        return activatedFeats.contains(feat);
+    }
 }

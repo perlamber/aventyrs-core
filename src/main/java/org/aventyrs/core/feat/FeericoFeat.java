@@ -9,6 +9,8 @@ import org.aventyrs.core.character.Character;
 import org.aventyrs.core.sheet.FormType;
 import org.aventyrs.core.ability.ActiveAbility;
 import org.aventyrs.core.character.SizeCategory;
+import org.aventyrs.core.magic.BranchLevel;
+import org.aventyrs.core.magic.MimetizedSpell;
 import org.aventyrs.core.race.Aviano;
 import org.aventyrs.core.race.Bestial;
 import org.aventyrs.core.race.CreatureType;
@@ -189,11 +191,9 @@ public enum FeericoFeat implements Feat {
      * "Você pode Mimetizar Magias Naturais, do tipo Broto, ao custo de 2PD. Esta ação pode ser
      * efetuada mesmo que você não conheça as magias e não cumpra com seus pré-requisitos."
      */
-    // TODO: mimetizar has no mechanism — SpellCastingService cannot cast a Magia the caster does
-    //  not know, and there is no cost step to redirect from PM to PD. Note this constant states
-    //  the mimicry contract most explicitly of any in the catalog ("mesmo que você não conheça as
-    //  magias e não cumpra com seus pré-requisitos"), which is worth reading first if the
-    //  mechanism is ever built.
+    // Real: every Broto of every Árvore Natural, mimetized at 2PD (getGrantedMimetizedSpells,
+    // derived live) — "mesmo que você não conheça as magias e não cumpra com seus pré-requisitos",
+    // which is exactly what a MimetizedSpell is.
     ESPIRITO_DA_FLORESTA(
             "Você pode Mimetizar Magias Naturais, do tipo Broto, ao custo de 2PD. Esta ação pode "
                     + "ser efetuada mesmo que você não conheça as magias e não cumpra com seus "
@@ -201,7 +201,16 @@ public enum FeericoFeat implements Feat {
             FeatRequirements.builder()
                     .requiredCreatureType(CreatureType.FEERICO)
                     .requiredAwakenedTitles(1)
-                    .build()),
+                    .build()) {
+        @Override
+        public List<MimetizedSpell> getGrantedMimetizedSpells(final Character character) {
+            return ArvoresMimetizadasFeat.naturalTrees().stream()
+                    .flatMap(tree -> tree.getSpells().stream())
+                    .filter(spell -> spell.getBranchLevel() == BranchLevel.BROTO)
+                    .map(spell -> MimetizedSpell.builder().spell(spell).determinationPointCost(ESPIRITO_BROTO_COST).build())
+                    .toList();
+        }
+    },
 
     /**
      * "Sempre que outros personagens conjurarem magias em Distância Curta você irá identificá-los
@@ -435,6 +444,9 @@ public enum FeericoFeat implements Feat {
 
     /** {@link #ANCIENTEFORME}'s "Multiplicador de PV … aumenta em +2" — per Título Desperto. */
     private static final int ANCIENTE_LIFE_MULTIPLIER_PER_TITLE = 2;
+
+    /** ESPIRITO_DA_FLORESTA's "Mimetizar Magias Naturais, do tipo Broto, ao custo de 2PD". */
+    private static final int ESPIRITO_BROTO_COST = 2;
 
     /** ASAS' "Enquanto voando seu Movimento Base aumenta em +2UD". */
     private static final int ASAS_FLIGHT_BONUS = 2;

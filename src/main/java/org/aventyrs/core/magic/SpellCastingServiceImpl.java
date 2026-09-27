@@ -82,11 +82,26 @@ public class SpellCastingServiceImpl implements SpellCastingService {
         int castingDifficultyReduction = resolveCastingDifficultyReduction(spell, request.getCaster());
         DifficultyLevel authoredDifficulty = spell.getCastingDifficultyLevel();
         ActivationTime activationTime = surcharged(resolveActivationTime(spell, request.getCaster(),
-                request.getScene().getCurrentRound()), empowerment);
+                request.getScene().getCurrentRound(), request.getActivatedFeats()), empowerment);
+        Character casterCharacter = request.getCaster().getCharacter();
+        int castingRollBonus = casterCharacter.getFeats().stream()
+                .mapToInt(feat -> feat.resolveCastingRollBonus(spell, casterCharacter, request.getActivatedFeats()))
+                .sum();
+        if (castingRollBonus != 0 && dominioDoManaResult.getSkillRollBonus() != null) {
+            dominioDoManaResult = dominioDoManaResult.toBuilder()
+                    .skillRollBonus(dominioDoManaResult.getSkillRollBonus() + castingRollBonus)
+                    .build();
+        }
+        int spellDamageBonus = casterCharacter.getFeats().stream()
+                .mapToInt(feat -> feat.resolveSpellDamageBonus(spell, casterCharacter, request.getActivatedFeats()))
+                .sum();
+        int effectDelayRounds = casterCharacter.getFeats().stream()
+                .mapToInt(feat -> feat.resolveCastEffectDelayRounds(spell, casterCharacter, request.getActivatedFeats()))
+                .max().orElse(0);
         // Curandeiro Veloz's banked -2PA is spent by the cast it discounted.
         request.getCaster().getCharacter().getAllTitles()
                 .forEach(title -> title.consumeCastingCharges(spell, request.getCaster()));
-        int manaCost = resolveManaCost(spell, request.getCaster());
+        int manaCost = resolveManaCost(spell, request);
         int vitalityCost = 0;
         if (request.isPayManaWithHitPoints()) {
             vitalityCost = manaCost;
@@ -105,7 +120,12 @@ public class SpellCastingServiceImpl implements SpellCastingService {
                 .durationInRounds(durationInRounds.isPresent() ? durationInRounds.getAsInt() : null)
                 .areaSpellEffect(areaSpellEffect)
                 .primaryDamage(resolvePrimaryDamage(spell, request.getCaster())
-                        .map(damage -> empowered(damage, empowerment)).orElse(null))
+                        .map(damage -> empowered(damage, empowerment))
+                        .map(damage -> spellDamageBonus == 0 ? damage : new ResolvedSpellDamage(
+                                damage.deterministicAmount() + spellDamageBonus, damage.diceCount(),
+                                damage.damageType(), damage.elementalType(), damage.focusFullyApplied()))
+                        .orElse(null))
+                .effectDelayRounds(effectDelayRounds)
                 .empowerment(empowerment)
                 .mustOvercomeMagicDefense(mustOvercomeMagicDefense(request))
                 .areaDamage(spell.getDuration() != null && spell.getDuration().kind() == DurationKind.INSTANTANEA
@@ -241,17 +261,37 @@ public class SpellCastingServiceImpl implements SpellCastingService {
                 .sum();
     }
 
-    /** spell's PM, multiplied by every held Título's multiplier — Benção de Boros doubles it while fallen. */
-    private static int resolveManaCost(final Spell spell, final CombatantSheet caster) {
+    /**
+     * spell's PM, multiplied by every held Título's multiplier — Benção de Boros doubles it while
+     * fallen — less every held Talento's {@code Feat#resolveManaCostReduction}, floored at 1 ("mínimo
+     * 1PM") unless the Magia cost nothing to begin with.
+     */
+    private static int resolveManaCost(final Spell spell, final SpellCastRequest request) {
+        CombatantSheet caster = request.getCaster();
         int multiplier = caster.getCharacter().getAllTitles().stream()
                 .mapToInt(title -> title.resolveManaCostMultiplier(spell, caster))
                 .reduce(1, (a, b) -> a * b);
-        return spell.getManaCost() * multiplier;
+        int cost = spell.getManaCost() * multiplier;
+        int reduction = caster.getCharacter().getFeats().stream()
+                .mapToInt(feat -> feat.resolveManaCostReduction(spell, caster, request.getCombatantTarget(),
+                        request.getSceneContext()))
+                .sum();
+        return cost <= 0 || reduction <= 0 ? cost : Math.max(MINIMUM_REDUCED_MANA_COST, cost - reduction);
     }
+
+    /** Every Mana-cost reduction clause's "(mínimo 1PM)". */
+    private static final int MINIMUM_REDUCED_MANA_COST = 1;
 
     @Override
     public ActivationTime resolveActivationTime(final Spell spell, final CombatantSheet caster,
                                                 final int currentRound) {
+        return resolveActivationTime(spell, caster, currentRound, java.util.Set.of());
+    }
+
+    @Override
+    public ActivationTime resolveActivationTime(final Spell spell, final CombatantSheet caster,
+                                                final int currentRound,
+                                                final java.util.Set<org.aventyrs.core.feat.Feat> activatedFeats) {
         ActivationTime authored = spell.getActivationTime();
         if (authored == null || authored.type() != ActivationType.PONTOS_DE_ACAO) {
             return authored;
@@ -259,7 +299,7 @@ public class SpellCastingServiceImpl implements SpellCastingService {
         Character character = caster.getCharacter();
         int reduction = character.getFeats().stream()
                 .mapToInt(feat -> feat.resolveCastingActionPointReduction(spell, character, currentRound,
-                        caster.getActionsThisRound()))
+                        caster.getActionsThisRound(), activatedFeats))
                 .sum()
                 // Curandeiro Veloz (a banked charge) and Doutor de Eldur (permanent) — pure reads;
                 // castSpell spends the charge.

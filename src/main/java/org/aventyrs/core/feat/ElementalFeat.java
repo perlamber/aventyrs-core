@@ -73,12 +73,11 @@ public enum ElementalFeat implements Feat {
      */
     // The EXP discount is real: 0.5 off a Magia whose Árvore is Elemental of the holder's element
     // (AbstractMesticoRace#getElement; an Árvore of every element, ElementalType.TODOS, counts).
-    // TODO: "efeitos numéricos aumentados em +2" — a few Magias carry a structured
-    //  Spell#getPrimaryDamage() (SpellDamage), resolved by SpellCastingService#resolvePrimaryDamage,
-    //  but no hook on that resolution lets a Feat contribute, and healing has no column at all
-    //  (plan Phase F).
-    // TODO: the Duração uplift would modify SpellDuration, which is authored per Magia and read
-    //  as a constant; nothing resolves a Magia's Duração against its caster.
+    // "Suas Magias Elementais de dano … tem seus efeitos numéricos aumentados em +2" is real
+    // (Feat#resolveSpellDamageBonus), for an Elemental Magia of the holder's element.
+    // TODO: "e cura" — a Magia's healing has no resolved figure on SpellCastingResult.
+    // "Suas Magias de Encantamento com este elemento tem a Duração aumentada em +1 Rodada" is real
+    // (Feat#resolveSpellDurationIncrease, summed by SpellDurationService on an extendable Duração).
     ARCANISMO_ELEMENTAL(
             "Aprender magias Elementais de seu elemento custa 0.5EXP a menos. Suas Magias "
                     + "Elementais de dano e cura tem seus efeitos numéricos aumentados em +2, "
@@ -87,6 +86,17 @@ public enum ElementalFeat implements Feat {
             FeatRequirements.builder()
                     .requiredFeat(GANA_ELEMENTAL)
                     .build()) {
+        @Override
+        public int resolveSpellDamageBonus(final Spell spell, final Character character,
+                                           final java.util.Set<Feat> activatedFeats) {
+            return ofOwnElement(spell, character, MagicType.ELEMENTAL) ? ARCANISMO_NUMERIC_BONUS : 0;
+        }
+
+        @Override
+        public int resolveSpellDurationIncrease(final Spell spell, final Character character) {
+            return ofOwnElement(spell, character, MagicType.ENCANTAMENTO) ? ARCANISMO_DURATION_BONUS : 0;
+        }
+
         @Override
         public BigDecimal resolveSpellAcquisitionCostReduction(final Character character, final Spell spell) {
             Optional<ElementalType> own = elementOf(character);
@@ -266,6 +276,19 @@ public enum ElementalFeat implements Feat {
 
     /** ARCANISMO_ELEMENTAL's "custa 0.5EXP a menos". */
     private static final BigDecimal ARCANISMO_EXPERIENCE_DISCOUNT = new BigDecimal("0.5");
+
+    /** ARCANISMO_ELEMENTAL's "efeitos numéricos aumentados em +2". */
+    private static final int ARCANISMO_NUMERIC_BONUS = 2;
+
+    /** ARCANISMO_ELEMENTAL's "Duração aumentada em +1 Rodada". */
+    private static final int ARCANISMO_DURATION_BONUS = 1;
+
+    /** Whether spell's Árvore carries type and the holder's own element (an all-element Árvore counts). */
+    private static boolean ofOwnElement(final Spell spell, final Character character, final MagicType type) {
+        Optional<ElementalType> own = elementOf(character);
+        return own.isPresent() && spell.getTree().hasMagicType(type)
+                && spell.getTree().getElementalType().filter(el -> el == own.get() || el == ElementalType.TODOS).isPresent();
+    }
 
     /** "Seu elemento" — the holder's race's own, when it is one of the Raças Elementais. */
     private static Optional<ElementalType> elementOf(final Character character) {

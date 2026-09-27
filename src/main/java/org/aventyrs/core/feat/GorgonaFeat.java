@@ -1,8 +1,11 @@
 package org.aventyrs.core.feat;
 
+import java.util.List;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.services.DamageService;
+import org.aventyrs.core.magic.Spell;
+import org.aventyrs.core.magic.catalog.MagicTree;
 import org.aventyrs.core.race.Gorgona;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.scene.SceneContext;
@@ -64,6 +67,18 @@ public enum GorgonaFeat implements Feat {
                     .requiredRace(Gorgona.class)
                     .forbiddenFeat(acolhidaPorFlora())
                     .build()) {
+        @Override
+        public int resolveCastingRollBonus(final Spell spell, final Character character,
+                                           final java.util.Set<Feat> activatedFeats) {
+            return spell.getTree() instanceof MagicTree tree && ArvoresMimetizadasFeat.isNatural(tree) ? MARCA_NATURAL_BONUS : 0;
+        }
+
+        @Override
+        public int resolveSpellDamageBonus(final Spell spell, final Character character,
+                                           final java.util.Set<Feat> activatedFeats) {
+            return spell.getTree() instanceof MagicTree tree && ArvoresMimetizadasFeat.isNatural(tree) ? MARCA_NATURAL_BONUS : 0;
+        }
+
         /** "Apenas … recém-criados" — only a starting Talento slot can take it. */
         @Override
         public boolean isAcquirableOnlyAtCreation() {
@@ -89,10 +104,9 @@ public enum GorgonaFeat implements Feat {
     // exact mirror of MARCA_DA_MALDICAO's lock.
     // TODO: suppressing Abandonadas pelos Deuses and substituting Feromônio Encantador both need
     //  a Talento to replace a Característica Racial, which nothing can do.
-    // TODO: "+2 em Conjuração, Danos e Curas de suas Magias Naturais" needs a Magia to have
-    //  numeric effects — Spell has no damage or healing column — and a conjuração bonus hook,
-    //  which SpellCastingService has never had (see its own javadoc: the ability that once
-    //  justified building it was dropped in a rules revision).
+    // "+2 em Conjuração, Danos … de suas Magias Naturais" is real (Feat#resolveCastingRollBonus,
+    // #resolveSpellDamageBonus) for a Magia of a Natural Árvore.
+    // TODO: "e Curas" — a Magia's healing has no resolved figure on SpellCastingResult.
     ACOLHIDA_POR_FLORA(
             "Você está completamente liberta da maldição e não pode acessar a forma monstruosa. "
                     + "Você não possui a Característica Racial Abandonada pelos Deuses, ao invés "
@@ -238,10 +252,9 @@ public enum GorgonaFeat implements Feat {
      * "Escolha duas Árvores de Magia Natural, você pode Mimetizar as magias Semente das Árvores
      * escolhidas."
      */
-    // TODO: mimetizar has no mechanism, spending PD in place of PM has no cost step to redirect,
-    //  and the whole effect is form-gated. (The two chosen Árvores could be recorded now — a
-    //  choice-carrying AbstractFeat subclass, see FocoEmPericiaFeat — but mimetizar is the
-    //  blocker.)
+    // The mimicry is real, through ArvoresMimetizadasFeat: two chosen Árvores Naturais — their
+    // Semente, their Broto at 2PD with one Título Desperto, their Muda at 3PD with two — each
+    // castable only in Forma Feérica (MimetizedSpell#requiredForm).
     ABENCOADA_PELO_CONCLAVE(
             "Você pode adquirir Talentos Feéricos. Escolha duas Árvores de Magia Natural, você "
                     + "pode Mimetizar as magias Semente das Árvores escolhidas. Ao Despertar seu "
@@ -252,7 +265,12 @@ public enum GorgonaFeat implements Feat {
             () -> FeatRequirements.builder()
                     .requiredRace(Gorgona.class)
                     .requiredAwakenedTitles(1)
-                    .build());
+                    .build()) {
+        @Override
+        public List<FeatChoice<?>> resolveRequiredChoices(final Character holder) {
+            return List.of(new FeatChoice<>(MagicTree.class, 2, ArvoresMimetizadasFeat.naturalTrees()));
+        }
+    };
 
     /**
      * {@link #ACOLHIDA_POR_FLORA}, reached through a method rather than named directly: Java forbids
@@ -277,6 +295,9 @@ public enum GorgonaFeat implements Feat {
     private static Feat protecaoDaRainhaDasFadas() {
         return PROTECAO_DA_RAINHA_DAS_FADAS;
     }
+
+    /** MARCA_DA_MALDICAO's "+2 em Conjuração, Danos e Curas de suas Magias Naturais". */
+    private static final int MARCA_NATURAL_BONUS = 2;
 
     private final String description;
     /**

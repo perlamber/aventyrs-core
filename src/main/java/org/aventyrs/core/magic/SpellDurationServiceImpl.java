@@ -18,6 +18,7 @@ public class SpellDurationServiceImpl implements SpellDurationService {
         }
         int improvementIncrease = isExtendable(spell.getDuration())
                 ? sumImprovementDurationIncreases(spell, caster)
+                        + caster.getFeats().stream().mapToInt(feat -> feat.resolveSpellDurationIncrease(spell, caster)).sum()
                 : 0;
         return OptionalInt.of(durationInRounds.getAsInt() + improvementIncrease);
     }
