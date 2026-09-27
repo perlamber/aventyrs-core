@@ -208,6 +208,8 @@ public class TranslatableMessages {
      * AttackTargetingService#getMaximumTargets}.
      */
     public static final String TOO_MANY_ATTACK_TARGETS = "TOO_MANY_ATTACK_TARGETS";
+    /** The attack declares an Área de Efeito that neither the attacker's Talentos nor its source grants. */
+    public static final String AREA_OF_EFFECT_NOT_GRANTED = "AREA_OF_EFFECT_NOT_GRANTED";
     /** A provoking Aura binds the attacker, and its first attack this Rodada must target the Aura's holder. */
     public static final String FORCED_ATTACK_TARGET_REQUIRED = "FORCED_ATTACK_TARGET_REQUIRED";
     public static final String INVALID_AREA_OF_EFFECT = "INVALID_AREA_OF_EFFECT";

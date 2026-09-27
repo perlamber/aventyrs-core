@@ -143,9 +143,9 @@ public class SpellCastingServiceImpl implements SpellCastingService {
      * {@code SceneContext}, the only sub-group information in reach.
      *
      * <p>A cast with no named target is not hostile: an Área de Efeito names none, and its real
-     * per-target answer is the caller's to give — this core resolves no footprint, so it builds
-     * the effect for the primary target alone and a caller sweeping an area constructs its own
-     * per target via {@link #resolveEffect}.
+     * per-target answer is the caller's to give — it resolves the footprint with {@code
+     * scene.grid.AreaFootprint} and builds each occupant's effect via {@link #resolveEffect}; this
+     * builds the effect for the primary target alone.
      */
     private boolean isHostileTarget(final SpellCastRequest request) {
         return request.getCombatantTarget() != null

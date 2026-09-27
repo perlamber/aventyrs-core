@@ -167,11 +167,10 @@ public enum DraconicoFeat implements Feat {
      */
     // TODO: triggered by "usar seu Sopro de Dragão" — SOPRO_DE_DRAGAO grants the Arma de Sopro
     //  now, but nothing models the act of attacking with it as an event this can fire from.
-    // TODO: recurring damage to everyone adjacent at the start of each of the holder's Turns is
-    //  an outward, area-shaped effect nothing models: DamageService only ever computes damage
-    //  *to* one target *from* an attacker, CharacterSheet#startTurn is still a no-op with no
-    //  hook to fire from, and Área de Efeito has no footprint resolution (CLAUDE.md's "Area de
-    //  Efeito" row, part (a)).
+    // TODO: recurring damage to everyone adjacent at the start of each of the holder's Turns —
+    //  the footprint exists now (scene.grid.AreaFootprint), but no hook lets a Talento report
+    //  outward damage at a Turn boundary. Build it with TrollFeat#REGENERACAO_REATIVA_ESPINHOSA,
+    //  the other consumer, once this one's Sopro-use trigger exists.
     AURA_DRACONICA(
             "Após usar seu Sopro de Dragão você emana uma aura de energia que te acompanhada por "
                     + "2 Rodadas. Durante a ativação da aura e no início de cada um dos seus "

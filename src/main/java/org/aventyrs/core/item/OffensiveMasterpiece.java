@@ -121,9 +121,9 @@ public enum OffensiveMasterpiece implements Masterpiece {
     MITRAL("Material Especial - Mitral", ItemRarity.EPIC, 0, 0, 1, 0, 0,
             requirements(AttributeDomain.DEXTERITY, 3),
             "Danos Críticos aumentam em +3.", "Margem Crítica Menor +1."),
-    // TODO: no EffectChain exists; turning one delivered attack into an Área de Efeito needs the
-    // footprint resolution CLAUDE.md's "Área de Efeito" row describes; and the damage type is
-    // DYOSPIROS' gap again.
+    // TODO: no EffectChain exists (a Corrente, so it lands only past the Corrente threshold, after
+    // the attack is resolved — too late for DeliveredAttack#areaOfEffect, which is declared up
+    // front); and the damage type is DYOSPIROS' gap again.
     DENTE_DE_DRAGAO("Material Especial - Dente de Dragão", ItemRarity.MYTHIC, 0, 0, 1, 1, 1,
             requirements(AttributeDomain.DEXTERITY, 3),
             "Corrente de Efeitos – Fúria Dracônica: Área de Efeito – Explosão.",

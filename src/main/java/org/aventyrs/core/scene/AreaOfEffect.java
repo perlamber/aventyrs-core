@@ -37,9 +37,8 @@ import static org.aventyrs.core.util.TranslatableMessages.INVALID_AREA_OF_EFFECT
  *
  * This is the footprint's <em>size and form only</em>. It says nothing about where the area sits
  * (that's {@code org.aventyrs.core.magic.SpellTargeting}'s {@code range}), which direction an
- * emanation points (chosen per use, by whoever aims it), which hexes are actually covered (no
- * footprint resolution exists — see the class-level note on {@code
- * org.aventyrs.core.scene.grid.GridPosition}'s package), or who inside it is spared.
+ * emanation points (chosen per use, by whoever aims it), which hexes are actually covered (that
+ * is {@code org.aventyrs.core.scene.grid.AreaFootprint}), or who inside it is spared.
  *
  * <p>It is deliberately not magic-specific: {@code
  * org.aventyrs.core.skill.esquivaeaparar.EsquivaEApararCompetencyAbility#EVASAO} and {@code
@@ -51,6 +50,14 @@ public record AreaOfEffect(AreaShape shape, int unidadesDeDistancia) {
 
     /** The smallest area anything can cover — a footprint of zero UD isn't an area at all. */
     public static final int MIN_UNIDADES_DE_DISTANCIA = 1;
+
+    /**
+     * What "seu tipo de ataque muda para Área de Efeito – Explosão" covers when an <em>attack</em>
+     * becomes one (Ataque Giratório, Investida Selvagem, Tremor): a 1 UD burst centred on the
+     * attack's target — the target and everyone adjacent to it. Table ruling (2026-09-26): the rules
+     * size no such Explosão.
+     */
+    public static final AreaOfEffect ATTACK_EXPLOSION = new AreaOfEffect(AreaShape.EXPLOSAO, 1);
 
     /**
      * Validates the authored footprint, a genuine system boundary — the same treatment {@code

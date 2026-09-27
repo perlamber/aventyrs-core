@@ -2,6 +2,7 @@ package org.aventyrs.core.skill.esquivaeaparar;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.aventyrs.core.character.Character;
 import org.aventyrs.core.modifier.Modifier;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
@@ -23,18 +24,17 @@ public enum EsquivaEApararCompetencyAbility implements SkillCompetencyAbility {
             "rolagens mesmo enquanto utilizando Equipamentos de Categoria Natural Média, e " +
             "metade quando equipados com Equipamentos Naturalmente Pesados."),
 
-    // TODO: +3 Defesas scoped to resisting Área de Efeito attacks specifically, rising to +5
-    // once 7 Graduações are reached. The Defesas half is no longer what blocks this —
-    // ModifierType.PHYSICAL_DEFENSE/MAGIC_DEFENSE and DefenseService are real now, so a flat
-    // Defesa bonus is expressible. Two blockers remain: (1) an Área de Efeito can now be
-    // *described* (scene.AreaOfEffect, reachable from Spell#getTargeting()), but nothing marks
-    // an *incoming* attack as an area one — AttackReceiver carries no such classification — so
-    // there is still no flag for DefenseService to scope this bonus to; and (2) it's a
-    // graduation-tiered scaling bonus (same shape as
-    // DominioDoManaCompetencyAbility.LETALIDADE_ARCANA) — @Modifier supports only a fixed value
-    // per constant and can't read the holder's own graduation to pick +3 vs +5.
+    // Real: +3 (+5 at 7 Graduações em Esquiva e Aparar) on the Defesa roll against an incoming
+    // attack flagged IncomingAttack#isAreaOfEffect, added by AttackReceiver.
+    // TODO: "e efeitos com Área de Efeito" — a non-attack area effect (a Magia's) reaches no
+    //  Defesa roll this core resolves.
     EVASAO("Defesas +3 para resistir à ataques e efeitos com Área de Efeito, benefício muda " +
-            "para +5 ao alcançar 7 Graduações."),
+            "para +5 ao alcançar 7 Graduações.") {
+        @Override
+        public int resolveAreaOfEffectDefenseBonus(final Character holder) {
+            return holder.getEffectiveGraduation(SkillType.ESQUIVA_E_APARAR) >= 7 ? 5 : 3;
+        }
+    },
 
     // Note: scoped to rolls made specifically in response to a Reação-triggering effect, but
     // this codebase doesn't track what a roll is *for* (same simplification as

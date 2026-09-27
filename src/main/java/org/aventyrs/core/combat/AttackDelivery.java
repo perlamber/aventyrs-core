@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.aventyrs.core.util.TranslatableMessages.NOT_AN_ATTACK_SKILL;
+import static org.aventyrs.core.util.TranslatableMessages.AREA_OF_EFFECT_NOT_GRANTED;
 import static org.aventyrs.core.util.TranslatableMessages.TOO_MANY_ATTACK_TARGETS;
 
 /**
@@ -152,10 +153,22 @@ public class AttackDelivery {
             throw new IllegalOperationException(NOT_AN_ATTACK_SKILL);
         }
         List<AttackTarget> additionalTargets = attack.getAdditionalTargets();
-        int declaredTargets = 1 + additionalTargets.size();
-        if (declaredTargets > attackTargetingService.getMaximumTargets(
-                attack.getAttacker().getCharacter(), attack.getAttackSkill())) {
-            throw new IllegalOperationException(TOO_MANY_ATTACK_TARGETS);
+        if (attack.getAreaOfEffect() != null) {
+            // An area attack names whoever stands in its footprint — no count to enforce — but the
+            // area itself must be one the attacker's Talentos grant for this attack.
+            boolean granted = attackTargetingService.resolveAttackArea(attack.getAttacker().getCharacter(),
+                            attack.getAttackSkill(), attack.getAttackSource(), attack.getAttackRoll())
+                    .filter(attack.getAreaOfEffect()::equals)
+                    .isPresent();
+            if (!granted) {
+                throw new IllegalOperationException(AREA_OF_EFFECT_NOT_GRANTED);
+            }
+        } else {
+            int declaredTargets = 1 + additionalTargets.size();
+            if (declaredTargets > attackTargetingService.getMaximumTargets(
+                    attack.getAttacker().getCharacter(), attack.getAttackSkill())) {
+                throw new IllegalOperationException(TOO_MANY_ATTACK_TARGETS);
+            }
         }
         CombatantSheet defender = attack.getDefender();
         boolean auraHalvesDamage = AuraTargeting.resolveHalvesDamage(attack.getScene(), attack.getAttacker(),
@@ -280,7 +293,10 @@ public class AttackDelivery {
                 .criticalEffectTriggered(criticalEffectTriggered)
                 .effectChainTriggered(effectChainTriggered)
                 .nextInteraction(hit
-                        ? buildChain(attack, defender, criticalResult, criticalEffectTriggered, effectChainTriggered, true)
+                        ? buildChain(attack, defender, criticalResult, criticalEffectTriggered, effectChainTriggered,
+                                // An additional target of a multi-target attack takes Meio-Dano; one
+                                // caught in an Área de Efeito takes the hit in full.
+                                attack.getAreaOfEffect() == null)
                         : null)
                 .build();
     }

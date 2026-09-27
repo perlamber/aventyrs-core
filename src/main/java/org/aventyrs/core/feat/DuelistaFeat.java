@@ -10,6 +10,8 @@ import org.aventyrs.core.skill.CriticalResult;
 import java.util.List;
 import org.aventyrs.core.combat.Retaliation;
 import org.aventyrs.core.item.AttackMethod;
+import org.aventyrs.core.magic.Spell;
+import org.aventyrs.core.scene.AreaOfEffect;
 import org.aventyrs.core.scene.Range;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.CombatantSheet;
@@ -348,8 +350,12 @@ public enum DuelistaFeat implements Feat {
                     .build()),
 
     /** "Ao realizar um ataque com uma Arma ou Ataque Desarmado seu tipo de ataque muda para Área de Efeito – Explosão." */
-    // TODO: needs Área de Efeito footprint resolution (gap catalog, "Area de Efeito"). "Apenas
-    //  uma vez por Rodada" is then the Rodada's action log to answer (getActionsThisRound).
+    // Real when the roll names it (SkillRoll#activated): an attack with a Weapon or an Ataque
+    // Desarmado — anything but a Magia — becomes an AreaOfEffect#ATTACK_EXPLOSION
+    // (Feat#resolveAttackArea).
+    // TODO: "apenas uma vez por Rodada" — a CombatantAction records no activated Talento, so the
+    //  Rodada's action log cannot tell whether Ataque Giratório was already used; the caller
+    //  must not name it twice.
     ATAQUE_GIRATORIO(
             "Apenas uma vez por Rodada, ao realizar um ataque com uma Arma ou Ataque Desarmado seu "
                     + "tipo de ataque muda para Área de Efeito – Explosão.",
@@ -357,7 +363,14 @@ public enum DuelistaFeat implements Feat {
                     .requiredAwakenedTitles(1)
                     .requiredFeatCategory(FeatCategory.DUELISTA)
                     .requiredFeatCategoryCount(4)
-                    .build()),
+                    .build()) {
+        @Override
+        public AreaOfEffect resolveAttackArea(final Character attacker, final SkillType attackSkill,
+                                              final AttackSource attackSource, final SkillRoll skillRoll) {
+            return skillRoll != null && skillRoll.activated(ATAQUE_GIRATORIO) && !(attackSource instanceof Spell)
+                    ? AreaOfEffect.ATTACK_EXPLOSION : null;
+        }
+    },
 
     /** "Após ser bem-sucedido em um Ataque Rápido você pode fazer imediatamente um Ataque Concentrado ao custo de 1PA." */
     // TODO: chains two Talentos that are both unbuilt, and granting an extra attack is not

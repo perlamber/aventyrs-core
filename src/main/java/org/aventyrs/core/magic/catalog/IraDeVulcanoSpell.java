@@ -23,7 +23,8 @@ import org.aventyrs.core.skill.SkillType;
  * catalog's only two {@code Área de Efeito - Penetrante} entries. A Penetrante radiates from the
  * caster like a {@code LINHA}, so it is an emanation and may carry no placement {@code Range};
  * what its Broto's Corrente adds ("Permite atingir um terceiro alvo") is the piercing count, which
- * only means something once footprint resolution exists.
+ * only means something to a caller sweeping the line ({@code scene.grid.AreaFootprint} returns the
+ * whole line; how many of its occupants a Penetrante reaches is not modelled).
  *
  * <p>Every rung but Forma de Magma reads "ou DM do Alvo (Maior)", making this the tree with the
  * highest proportion of GD floors in the catalog.

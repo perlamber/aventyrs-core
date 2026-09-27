@@ -27,7 +27,6 @@ import org.aventyrs.core.sheet.FormType;
 import org.aventyrs.core.sheet.FormAccess;
 import org.aventyrs.core.sheet.PendingAcquisition;
 import org.aventyrs.core.skill.CriticalResult;
-import org.aventyrs.core.skill.SkillRoll;
 import org.aventyrs.core.character.CriticalDamage;
 import org.aventyrs.core.character.DamageBonus;
 import org.aventyrs.core.character.CharacterSkill;
@@ -44,9 +43,11 @@ import org.aventyrs.core.magic.FreeSpellPick;
 import org.aventyrs.core.magic.Spell;
 import org.aventyrs.core.magic.MimetizedSpell;
 import org.aventyrs.core.rest.RestType;
+import org.aventyrs.core.scene.AreaOfEffect;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.skill.AttackSource;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
+import org.aventyrs.core.skill.SkillRoll;
 import org.aventyrs.core.skill.SkillTrait;
 import org.aventyrs.core.skill.SkillType;
 import org.aventyrs.core.title.TitleArchetype;
@@ -850,6 +851,22 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     default boolean resolveAutomaticSuccess(final SkillType skillType, final int targetValue,
                                             final SceneContext sceneContext, final Character character) {
         return false;
+    }
+
+    /**
+     * The Área de Efeito this Talento turns the holder's attack into — "seu tipo de ataque muda para
+     * Área de Efeito – Explosão" ({@code DuelistaFeat#ATAQUE_GIRATORIO} when the roll names it,
+     * {@code MobilidadeFeat#INVESTIDA_SELVAGEM} on an Investida). {@code null} by default.
+     *
+     * <p>Asked <b>before</b> the attack is built, through {@code
+     * AttackTargetingService#resolveAttackArea}: the caller resolves the footprint ({@code
+     * scene.grid.AreaFootprint}) around the target and names everyone in it as the attack's
+     * targets, and {@code AttackDelivery} refuses a declared area the attacker is not entitled to.
+     * skillRoll is the roll about to be made — its activated Talentos and {@code Manoeuvre}.
+     */
+    default AreaOfEffect resolveAttackArea(final Character attacker, final SkillType attackSkill,
+                                           final AttackSource attackSource, final SkillRoll skillRoll) {
+        return null;
     }
 
     /**

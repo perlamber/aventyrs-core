@@ -1,7 +1,12 @@
 package org.aventyrs.core.character.services;
 
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.scene.AreaOfEffect;
+import org.aventyrs.core.skill.AttackSource;
+import org.aventyrs.core.skill.SkillRoll;
 import org.aventyrs.core.skill.SkillType;
+
+import java.util.Optional;
 
 /**
  * Resolves how many combatants one attack may affect — the one target every attack has, plus
@@ -48,4 +53,12 @@ public interface AttackTargetingService {
      * is where a roll is refused for not being an attack.
      */
     int getMaximumTargets(Character attacker, SkillType attackSkill);
+
+    /**
+     * The Área de Efeito attacker's Talentos turn this attack into ({@code Feat#resolveAttackArea}),
+     * or empty — asked before the attack is built, so the caller can name the footprint's occupants
+     * as its targets and declare the area on {@code DeliveredAttack#areaOfEffect}.
+     */
+    Optional<AreaOfEffect> resolveAttackArea(Character attacker, SkillType attackSkill, AttackSource attackSource,
+                                             SkillRoll skillRoll);
 }

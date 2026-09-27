@@ -150,7 +150,8 @@ public class AttackReceiver {
                 attack.getDifficultyLevel().easier(defenseResult.getDifficultyReduction());
         int requiredTotal = effectiveDifficultyLevel.getBaseValue() + attack.getAttackBonus();
         int defenseTotal = defenseResult.getSkillRollBonus()
-                + (defenseRoll == null ? 0 : defenseRoll.getTotal());
+                + (defenseRoll == null ? 0 : defenseRoll.getTotal())
+                + (attack.isAreaOfEffect() ? areaOfEffectDefenseBonus(defender) : 0);
 
         IncomingAttackResult.IncomingAttackResultBuilder result = IncomingAttackResult.builder()
                 .defenseTotal(defenseTotal)
@@ -276,5 +277,12 @@ public class AttackReceiver {
         }
         DamageInteraction head = new DamageInteraction(damageService);
         return (halfDamage ? head.halvingDamage() : head).chainInto(next);
+    }
+
+    /** Every held Habilidade de Competência's Defesa against an Área de Efeito (Evasão). */
+    private static int areaOfEffectDefenseBonus(final CombatantSheet defender) {
+        return org.aventyrs.core.skill.SkillCompetencyAbility.allFor(defender.getCharacter(), defender).stream()
+                .mapToInt(ability -> ability.resolveAreaOfEffectDefenseBonus(defender.getCharacter()))
+                .sum();
     }
 }

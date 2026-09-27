@@ -139,6 +139,14 @@ public class IncomingAttack {
     private final SkillType attackSkill;
 
     /**
+     * Whether this attack is an Área de Efeito one — what {@code
+     * EsquivaEApararCompetencyAbility#EVASAO}'s "Defesas +3 para resistir à ataques e efeitos com
+     * Área de Efeito" answers to, through {@code SkillCompetencyAbility#resolveAreaOfEffectDefenseBonus}.
+     * {@code false} by default: the caller's word, like {@link #attackSkill}.
+     */
+    private final boolean areaOfEffect;
+
+    /**
      * Efeitos Críticos this attack carries by identity, beside {@link #attackSource}'s own — a foe
      * stat block's authored Efeito Crítico, for one. Built at resolution with {@link #diceRoller}.
      */

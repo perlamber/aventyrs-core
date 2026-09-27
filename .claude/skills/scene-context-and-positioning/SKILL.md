@@ -180,6 +180,16 @@ tracks, so it can just ask.
   `Withering` all apply at Turn-*end*) — so its wiring has no test yet; add one alongside
   whatever first overrides a start-of-Turn hook.
 
+## Área de Efeito footprints — `scene.grid.AreaFootprint`
+
+`AreaFootprint#covering(area, origin, aim, columns, rows)` turns an `AreaOfEffect` into hexes: a
+CIRCULO/EXPLOSAO disc around `origin`, a LINHA/PENETRANTE line from `origin` toward `aim` (origin
+excluded), a CONE — ⚠️ a 60° wedge, an inference — toward `aim`. `#occupants(hexes, MovementMap,
+excluded)` lists who stands inside, less `excluded` (the caster of a Magia). Positions stay the
+caller's: it supplies origin, aim and the `MovementMap`. An attack's "Área de Efeito – Explosão"
+is `AreaOfEffect#ATTACK_EXPLOSION` (1 UD on the target — table ruling); see the `damage-and-combat`
+skill for delivering an area attack.
+
 ## Scene action history — `Scene#recordAction`
 
 A `Scene` keeps a **permanent combat log** the client renders: `Scene#getActionHistory()`

@@ -1,13 +1,17 @@
 package org.aventyrs.core.feat;
 
+import org.aventyrs.core.action.Manoeuvre;
 import org.aventyrs.core.character.services.MovementServiceImpl;
 import org.aventyrs.core.character.MovementMode;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.modifier.ModifierType;
+import org.aventyrs.core.scene.AreaOfEffect;
 import org.aventyrs.core.sheet.Blessing;
 import org.aventyrs.core.sheet.TargetScope;
+import org.aventyrs.core.skill.AttackSource;
+import org.aventyrs.core.skill.SkillRoll;
 import org.aventyrs.core.skill.SkillType;
 import org.aventyrs.core.skill.atletismo.AtletismoSpecialization;
 
@@ -337,9 +341,9 @@ public enum MobilidadeFeat implements Feat {
      * {@code ChargeResult#unappliedMovementDamageReduction} rather than being granted onto the
      * sheet where it would outlive the charge.
      */
-    // TODO: the Área de Efeito clause needs the footprint resolution the gap catalog's "Area de
-    //  Efeito" row records as missing — an Investida is a modelled manoeuvre now
-    //  (ChargeService), but nothing turns an AreaOfEffect into a set of targets.
+    // The Área de Efeito clause is real: an attack whose SkillRoll carries Manoeuvre.INVESTIDA is
+    // an AreaOfEffect#ATTACK_EXPLOSION (Feat#resolveAttackArea), which AttackDelivery accepts on a
+    // DeliveredAttack naming the footprint's occupants (scene.grid.AreaFootprint).
     INVESTIDA_SELVAGEM(
             "Suas Investidas recebem Área de Efeito – Explosão. Durante o movimento da investida "
                     + "você recebe Redução de Danos Sofridos igual ao número de Títulos Aventyrs "
@@ -351,6 +355,13 @@ public enum MobilidadeFeat implements Feat {
                     .requiredFeatCategoryCount(3)
                     .build()) {
         @Override
+        public AreaOfEffect resolveAttackArea(final Character attacker, final SkillType attackSkill,
+                                              final AttackSource attackSource, final SkillRoll skillRoll) {
+            return skillRoll != null && skillRoll.getManoeuvre() == Manoeuvre.INVESTIDA
+                    ? AreaOfEffect.ATTACK_EXPLOSION : null;
+        }
+
+        @Override
         public int resolveChargeMovementDamageReduction(final Character character) {
             return character.getAllTitles().size();
         }
@@ -360,9 +371,9 @@ public enum MobilidadeFeat implements Feat {
      * "Se em sua Investida Selvagem você causar danos à 3 ou mais inimigos você recebe Bônus em
      * Defesas igual à 1 + quantidade de Títulos Aventyr Bruto Despertos."
      */
-    // TODO: builds on INVESTIDA_SELVAGEM's Área de Efeito half, which is still unbuilt, and
-    //  additionally needs the count of targets an area attack actually damaged. The Investida
-    //  itself is modelled now (ChargeService); the explosion it is measured over is not.
+    // TODO: the explosion is real now (INVESTIDA_SELVAGEM), but "causar danos à 3 ou mais inimigos"
+    //  is known only after the caller applies each target's damage chain — AttackDelivery reports
+    //  who was hit, not who was hurt, and nothing grants a Blessing off the count afterwards.
     INVESTIDA_SELVAGEM_SOLAR(
             "Se em sua Investida Selvagem você causar danos à 3 ou mais inimigos você recebe Bônus "
                     + "em Defesas igual à 1 + quantidade de Títulos Aventyr Bruto Despertos, "
@@ -381,9 +392,9 @@ public enum MobilidadeFeat implements Feat {
      * "Se em sua Investida Selvagem você causar danos à 3 ou mais inimigos, você recebe Roubo de
      * Vida igual à 1 + quantidade de Títulos Aventyr Bruto Despertos."
      */
-    // TODO: same blocker as INVESTIDA_SELVAGEM_SOLAR — the Área de Efeito half of
-    //  INVESTIDA_SELVAGEM, and the count of enemies it damaged. Additionally, nothing scopes a
-    //  Roubo de Vida grant to a Duração in Rodadas: Feat#resolveGrantedLifeSteal is permanent.
+    // TODO: same blocker as INVESTIDA_SELVAGEM_SOLAR — the count of enemies the explosion
+    //  damaged. Additionally, nothing scopes a Roubo de Vida grant to a Duração in Rodadas:
+    //  Feat#resolveGrantedLifeSteal is permanent.
     INVESTIDA_SELVAGEM_LUNAR(
             "Se em sua Investida Selvagem você causar danos à 3 ou mais inimigos, você recebe "
                     + "Roubo de Vida igual à 1 + quantidade de Títulos Aventyr Bruto Despertos, "

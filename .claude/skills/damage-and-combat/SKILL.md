@@ -505,6 +505,14 @@ deviate when the text states one (e.g. `APRIMORAR_COM_ARTE`'s "+1 RDS"). A *roun
 only on the `CombatantSheet` overloads of `getTotalDamageReduction`, not the `Character`-only
 one, which has no sheet to read `getTemporaryBonus` from.
 
+**Area attacks (0.0.65).** Ask `AttackTargetingService#resolveAttackArea` before building the
+attack (`Feat#resolveAttackArea` — Ataque Giratório, Investida Selvagem). When it answers, resolve
+the footprint around the target with `scene.grid.AreaFootprint`, name its occupants as
+`additionalTargets`, and set `DeliveredAttack#areaOfEffect`: the target cap no longer applies and
+the others take **full** damage. An undeclared-for area is refused (`AREA_OF_EFFECT_NOT_GRANTED`).
+On the receiving side, `IncomingAttack#areaOfEffect` lets Evasão's Defesa apply. A reported
+`Retaliation` is dealt with `Retaliation#dealTo`.
+
 **Resistência a Críticos (RC)** — a *defender-side* narrowing of an attacker's Margem Crítica
 Menor. `AbstractSkillInteraction` subtracts the attack target's
 `getTotalCriticalResistance(sceneContext)` from the summed `criticalMarginIncrease` before

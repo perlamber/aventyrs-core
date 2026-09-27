@@ -200,6 +200,16 @@ public interface SkillCompetencyAbility extends SkillTrait {
     }
 
     /**
+     * A bonus to the holder's Defesa roll against an attack that is an Área de Efeito — {@code
+     * EsquivaEApararCompetencyAbility#EVASAO}. Added by {@code AttackReceiver} only when {@code
+     * IncomingAttack#isAreaOfEffect()}. Takes the holder so a Graduação-tiered figure can read it.
+     * Zero by default.
+     */
+    default int resolveAreaOfEffectDefenseBonus(final org.aventyrs.core.character.Character holder) {
+        return 0;
+    }
+
+    /**
      * Whether this Habilidade de Competência gives its holder mode — {@code
      * AtletismoCompetencyAbility#ANFIBIO} ("Você recebe Movimento Base de Natação") and {@code
      * #ALPINISTA_VELOZ} (Vertical). Read by {@code MovementService#hasMovementMode}. False by
