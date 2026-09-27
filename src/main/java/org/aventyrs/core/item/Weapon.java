@@ -63,6 +63,16 @@ public interface Weapon extends Item, AttackSource {
      * #getDamageBase()} stays the authored column, so a repair mechanism would restore it
      * untouched.
      */
+    /**
+     * The Dano Base this weapon has instead while its wielder rides — {@link
+     * SpearItem#ALABARDA_OU_NAGINATA}'s "Dano Base muda para 2d6 quando utilizada enquanto montando um
+     * animal ou dirigindo". {@code null} (the default) for a weapon without such a clause. Read by
+     * {@code DamageBaseService#getDamageBase(CombatantSheet, Weapon)}.
+     */
+    default DamageBase getMountedDamageBase() {
+        return null;
+    }
+
     default DamageBase getEffectiveDamageBase() {
         return isDestroyed() ? DamageBase.UNARMED : getDamageBase();
     }

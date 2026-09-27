@@ -168,6 +168,17 @@ Defesa:
 | Efeitos Críticos | filtered against its anatomy | filtered against **its** anatomy |
 | chain head | plain `DamageInteraction` | `DamageInteraction#halvingDamage()` |
 
+**The primary can be halved too** (0.0.69): when a held Talento's `Feat#halvesEveryTargetDamage`
+answers true (`CavalariaFeat#ATAQUE_EM_ARCO`, "em cada alvo"), `AttackDelivery` marks the primary's
+chain head `halvingDamage()` as well and reports `DeliveredAttackResult#isEveryTargetHalved`; it is
+OR'd with the Aura's flag, so the two never quarter. The target cap is counted from the attacker's
+**sheet** and attack source (`AttackTargetingService#getMaximumTargets(CombatantSheet, SkillType,
+AttackSource)`), so a Talento gated on riding or on "apenas ataques físicos" can widen it.
+
+**Riding changes the Dano Base of some weapons**: `DamageBaseService#getDamageBase(CombatantSheet,
+Weapon)` swaps in `Weapon#getMountedDamageBase()` while the wielder `isRiding()` (the Alabarda's 2d6),
+before the scale-ups — the `Character` overload never sees it.
+
 **The extra targets are a trailing parameter, not a widened `attackTarget`.**
 `AbstractSkillInteraction`'s longest `applyTo` is now `(target, sceneContext, skillRoll,
 attackTarget, attackSource, List<CombatantSheet> additionalTargets)`. `attackTarget` stays the

@@ -166,13 +166,16 @@ public class AttackDelivery {
         } else {
             int declaredTargets = 1 + additionalTargets.size();
             if (declaredTargets > attackTargetingService.getMaximumTargets(
-                    attack.getAttacker().getCharacter(), attack.getAttackSkill())) {
+                    attack.getAttacker(), attack.getAttackSkill(), attack.getAttackSource())) {
                 throw new IllegalOperationException(TOO_MANY_ATTACK_TARGETS);
             }
         }
         CombatantSheet defender = attack.getDefender();
         boolean auraHalvesDamage = AuraTargeting.resolveHalvesDamage(attack.getScene(), attack.getAttacker(),
                 defender, attack.isForcedTargetUnavailable());
+        // Ataque em Arco: "o valor dos danos causados em cada alvo é igual a metade" — the primary too.
+        boolean everyTargetHalved = attack.getAreaOfEffect() == null && attackTargetingService.halvesEveryTarget(
+                attack.getAttacker(), attack.getAttackSkill(), attack.getAttackSource(), additionalTargets.size());
         Retaliation retaliation = RetaliationResolver.resolve(defender, attack.getAttackSkill());
         SkillRoll attackRoll = attack.getAttackRoll();
 
@@ -189,6 +192,7 @@ public class AttackDelivery {
                 .attackTotal(attackTotal)
                 .requiredTotal(requiredTotal)
                 .auraHalvesDamage(auraHalvesDamage)
+                .everyTargetHalved(everyTargetHalved)
                 .retaliation(retaliation)
                 .unappliedDifficultyReduction(attackResult.getDifficultyReduction());
 
@@ -214,7 +218,7 @@ public class AttackDelivery {
         if (hit) {
             attackResult = attackResult.toBuilder()
                     .nextInteraction(buildChain(attack, defender, criticalResult, criticalEffectTriggered,
-                            effectChainTriggered, auraHalvesDamage))
+                            effectChainTriggered, auraHalvesDamage || everyTargetHalved))
                     .build();
         }
 

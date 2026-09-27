@@ -50,6 +50,13 @@ public class DeliveredAttackResult {
     private final boolean auraHalvesDamage;
 
     /**
+     * Whether a Talento halved the damage on every target, the primary included — {@code
+     * CavalariaFeat#ATAQUE_EM_ARCO}. Applied, like {@link #auraHalvesDamage}, by marking the primary's
+     * chain head {@code halvingDamage()}; the two are read as one flag, so they never quarter.
+     */
+    private final boolean everyTargetHalved;
+
+    /**
      * What the defender's thorns deal back to the attacker, or {@code null} when nothing does —
      * see {@link Retaliation}, which carries the whole calculation. <b>Reported, never dealt</b>:
      * this core sends damage only one way, so the caller applies it against the attacker's sheet.

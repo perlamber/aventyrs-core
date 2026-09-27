@@ -460,4 +460,15 @@ public interface SkillCompetencyAbility extends SkillTrait {
                 .distinct()
                 .toList();
     }
+
+    /**
+     * A bonus (or, negative, a malus) this ability puts on its holder's Perícia roll governed by
+     * domain — the Atributo the roll is actually made with. {@code DirigirECavalgarCompetencyAbility
+     * #GINETE}'s "Desvantagem em todas as rolagens de Perícias baseadas em Força e Destreza feitas
+     * nestas condições" (while {@code CombatantSheet#isRiding()}). The twin of {@code
+     * Race#resolveGoverningAttributeRollBonus}; 0 by default.
+     */
+    default int resolveGoverningAttributeRollBonus(final AttributeDomain domain, final CombatantSheet holder) {
+        return 0;
+    }
 }

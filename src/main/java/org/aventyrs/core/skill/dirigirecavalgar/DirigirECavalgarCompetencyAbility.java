@@ -2,8 +2,11 @@ package org.aventyrs.core.skill.dirigirecavalgar;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.aventyrs.core.character.AttributeDomain;
+import org.aventyrs.core.feat.CavalariaFeat;
 import org.aventyrs.core.modifier.Modifier;
 import org.aventyrs.core.modifier.ModifierType;
+import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.skill.Skill;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
 import org.aventyrs.core.skill.SkillType;
@@ -34,14 +37,24 @@ public enum DirigirECavalgarCompetencyAbility implements SkillCompetencyAbility 
     MANUTENCAO_VEICULAR("Em substituição à Profissão: Mecânica, você pode usar esta " +
             "perícia para fazer manutenções simples em veículos."),
 
-    // TODO: removes the "can't use other Perícias while riding/driving" restriction, but
-    // applies Desvantagem to Força/Destreza-based Perícia rolls made under those conditions
-    // — this codebase doesn't model the base "no Perícias while mounted/driving" restriction
-    // at all yet, nor does it track "is this roll happening while riding/driving" context, so
-    // neither the restriction being lifted nor the conditional Desvantagem can be expressed.
+    // Real. The base restriction is CombatantSheet#isSkillUsePrevented (every Perícia but Dirigir e
+    // Cavalgar is refused while riding), which this ability lifts; in exchange its holder takes a
+    // Desvantagem on every roll governed by Força or Destreza while riding — turned into a Vantagem
+    // by CavalariaFeat#GRANDE_GINETE ("ao invés disso recebe Vantagem").
     GINETE("A restrição de não usar outras Perícias enquanto dirigindo um veículo ou " +
             "cavalgando um animal é retirada, porém você sofre Desvantagem em todas as " +
-            "rolagens de Perícias baseadas em Força e Destreza feitas nestas condições."),
+            "rolagens de Perícias baseadas em Força e Destreza feitas nestas condições.") {
+        @Override
+        public int resolveGoverningAttributeRollBonus(final AttributeDomain domain, final CombatantSheet holder) {
+            if (holder == null || !holder.isRiding()
+                    || (domain != AttributeDomain.STRENGTH && domain != AttributeDomain.DEXTERITY)) {
+                return 0;
+            }
+            boolean grandeGinete = holder.getCharacter().getFeats().stream()
+                    .anyMatch(feat -> feat.catalogEntry() == CavalariaFeat.GRANDE_GINETE);
+            return grandeGinete ? Skill.ADVANTAGE_BONUS : Skill.DISADVANTAGE_MALUS;
+        }
+    },
 
     // TODO: automatic success is expressible now (SkillCompetencyAbility#resolveAutomaticSuccess,
     // see AttentionCompetencyAbility.PERCEPCAO_DE_FOXM), but "enquanto não estiver sob grande

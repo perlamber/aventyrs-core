@@ -1135,6 +1135,22 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
      */
     boolean hasActiveEffect(Class<? extends TemporaryEffect> type);
 
+    // --- Montaria e veículo -------------------------------------------------------------------
+
+    /** What this combatant is riding or driving, if anything — see {@link Riding}. */
+    Optional<Riding> getRiding();
+
+    /** Whether this combatant is montado ou dirigindo. */
+    default boolean isRiding() {
+        return getRiding().isPresent();
+    }
+
+    /** Sets what this combatant rides — the unvalidating mutator beneath {@code MountService#mount}. */
+    void startRiding(Riding riding);
+
+    /** Clears it — beneath {@code MountService#dismount}; {@code true} if they were riding. */
+    boolean stopRiding();
+
     // --- Bocarra (Ogro) ------------------------------------------------------------------------
 
     /**

@@ -32,7 +32,7 @@ public enum SpearItem implements ItemTemplate, Weapon {
      * <p><b>Favor</b> "Alcance Base muda para Muito Curto e Margem Crítica Menor muda para 16"
      * — prose (neither an item-granted Range nor crit-margin shift has a reader). <b>Efeitos
      * Adicionais</b> "Dano Base muda para 2d6 quando utilizada enquanto montando um animal ou
-     * dirigindo" — no montaria concept.
+     * dirigindo" is real: {@link #getMountedDamageBase()}, read while the wielder {@code isRiding()}.
      */
     ALABARDA_OU_NAGINATA(
             "Alabarda ou Naginata",
@@ -50,7 +50,12 @@ public enum SpearItem implements ItemTemplate, Weapon {
                     .requirements(new ItemRequirements(AttributeDomain.STRENGTH, 4, AttributeDomain.DEXTERITY))
                     .additionalEffects("Dano Base muda para 2d6 quando utilizada enquanto "
                             + "montando um animal ou dirigindo.")
-                    .build()),
+                    .build()) {
+        @Override
+        public DamageBase getMountedDamageBase() {
+            return DamageBase.of(2, 0);
+        }
+    },
 
     /**
      * Javelin (Média/Comum) — Preço 9. Dano 1d6+1, Tipo Perfurante, Efeito Crítico Ferida

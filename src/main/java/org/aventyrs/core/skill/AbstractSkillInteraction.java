@@ -380,6 +380,9 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
         bonus += sumEgoAdvantageSkillSpecificRollBonuses(character.getEgoAdvantages().values(), sceneContext, target);
         bonus += sizeCategoryRollBonus(characterSizeService.getEffectiveSizeCategory(target));
         bonus += sumAttributeDomainRollBonuses(character.getAttributeAbilities(), attributeDomain, character);
+        for (SkillCompetencyAbility ability : skillCompetencyAbilities) {
+            bonus += ability.resolveGoverningAttributeRollBonus(attributeDomain, target);
+        }
         if (character.getRace() != null && !target.getRacialTraitSuppression().suppressesPhysicalTraits()) {
             bonus += character.getRace().resolveGoverningAttributeRollBonus(attributeDomain, target, sceneContext,
                     sheet -> characterSizeService.getEffectiveSizeCategory(sheet).getCategory());

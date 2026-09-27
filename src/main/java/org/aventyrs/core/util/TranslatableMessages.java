@@ -437,4 +437,13 @@ public class TranslatableMessages {
 
     /** Gerar Prole was asked of a character who is not a Vampiro Mestre (or is a Dampiro). */
     public static final String PROGENY_NOT_PERMITTED = "PROGENY_NOT_PERMITTED";
+
+    /** A combatant already riding tried to mount again. */
+    public static final String ALREADY_RIDING = "ALREADY_RIDING";
+
+    /** A combatant not riding tried to dismount. */
+    public static final String NOT_RIDING = "NOT_RIDING";
+
+    /** Desmontar como Reação without Montar e Desmontar Instantâneo, or with it already used. */
+    public static final String MOUNT_REACTION_NOT_PERMITTED = "MOUNT_REACTION_NOT_PERMITTED";
 }

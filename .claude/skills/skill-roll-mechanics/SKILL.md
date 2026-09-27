@@ -207,6 +207,16 @@ attack-method-scoped `Feat` one. `Feat#resolveSkillRollBonus` grew the same trai
 `AttackSource` cascading overload, summed by `sumFeatRollBonuses`. Its still-unconsumed
 differently-shaped neighbour is `ArtesAprimorarComArteAbility#getCriticalMarginReduction`.
 
+## Refused and governing-Atributo-scoped rolls
+
+`CombatantSheet#isSkillUsePrevented(skillType, governing)` is the one veto on a roll
+(`SKILL_USE_PREVENTED`), asked on the Atributo the roll is actually made with: a Frenesi's
+concentration block, and — since 0.0.69 — riding, which refuses every Perícia but Dirigir e Cavalgar
+unless the rider holds `DirigirECavalgarCompetencyAbility#GINETE`. A bonus scoped to "Perícias
+baseadas em <Atributo>" goes through `resolveGoverningAttributeRollBonus`, which exists on both
+`Race` (Cuidado para não Quebrar) and `SkillCompetencyAbility` (Ginete's Desvantagem, a Vantagem with
+`CavalariaFeat#GRANDE_GINETE`) and receives the resolved governing Atributo, substitutions included.
+
 ## Reference files to read first
 
 - `src/main/java/org/aventyrs/core/skill/AbstractSkillInteraction.java`

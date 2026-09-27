@@ -527,6 +527,28 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
         return 0;
     }
 
+    /**
+     * {@link #resolveAdditionalTargets(SkillType, Character)} seeing the attacker's sheet and what the
+     * attack is made with — what a state- or source-gated clause needs ({@code
+     * CavalariaFeat#ATAQUE_EM_ARCO}'s "enquanto estiver montado ou dirigindo" and "apenas ataques
+     * físicos"). Defaults to the shorter form; a {@code null} sheet reads as "condition not met".
+     */
+    default int resolveAdditionalTargets(final SkillType attackingSkillType, final Character character,
+                                         final CombatantSheet attacker, final AttackSource attackSource) {
+        return resolveAdditionalTargets(attackingSkillType, character);
+    }
+
+    /**
+     * Whether this Talento halves the damage on <b>every</b> target of the attack, the primary
+     * included — {@code CavalariaFeat#ATAQUE_EM_ARCO}'s "o valor dos danos causados em cada alvo é igual
+     * a metade do valor rolado". Asked by {@code AttackDelivery} with the number of additional targets
+     * declared; an additional target is halved regardless. False by default.
+     */
+    default boolean halvesEveryTargetDamage(final SkillType attackingSkillType, final AttackSource attackSource,
+                                            final CombatantSheet attacker, final int additionalTargets) {
+        return false;
+    }
+
     default int resolveDamageBaseIncrease(final Character character, final Weapon weapon) {
         return 0;
     }

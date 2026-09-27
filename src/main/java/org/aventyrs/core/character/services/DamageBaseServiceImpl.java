@@ -4,7 +4,9 @@ import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterSkill;
 import lombok.NonNull;
 import org.aventyrs.core.character.DamageBase;
+import org.aventyrs.core.item.AbstractItem;
 import org.aventyrs.core.item.Weapon;
+import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
 import org.aventyrs.core.skill.SkillExcellency;
 import org.aventyrs.core.skill.SkillType;
@@ -26,6 +28,22 @@ public class DamageBaseServiceImpl implements DamageBaseService {
      * {@link DamageBaseService}'s own javadoc for the three sources and why the Excelência one
      * is scoped to the attacking Perícia alone.
      */
+    @Override
+    public DamageBase getDamageBase(@NonNull final CombatantSheet wielder, @NonNull final Weapon weapon) {
+        DamageBase mounted = wielder.isRiding() && !weapon.isDestroyed() ? mountedDamageBase(weapon) : null;
+        DamageBase base = mounted != null ? mounted : weapon.getEffectiveDamageBase();
+        return base.scaledUp(sumScaleUps(wielder.getCharacter(), weapon.getSkillType(), weapon));
+    }
+
+    /** The weapon's mounted Dano Base — its own, or a forged copy's template's. */
+    private static DamageBase mountedDamageBase(final Weapon weapon) {
+        DamageBase own = weapon.getMountedDamageBase();
+        if (own == null && weapon instanceof AbstractItem copy && copy.getTemplate() instanceof Weapon template) {
+            return template.getMountedDamageBase();
+        }
+        return own;
+    }
+
     private int sumScaleUps(final Character character, final SkillType attackingSkill, final Weapon weapon) {
         int scaleUps = character.getFeats().stream()
                 .mapToInt(feat -> feat.resolveDamageBaseIncrease(character, weapon))

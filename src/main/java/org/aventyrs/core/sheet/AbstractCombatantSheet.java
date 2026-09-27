@@ -28,6 +28,7 @@ import org.aventyrs.core.util.DiceRoller;
 import org.aventyrs.core.character.services.HitPointsServiceImpl;
 import org.aventyrs.core.magic.ElementalType;
 import org.aventyrs.core.skill.SkillType;
+import org.aventyrs.core.skill.dirigirecavalgar.DirigirECavalgarCompetencyAbility;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -243,6 +244,10 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     /** Sources that have affected this combatant this combat — see {@link #markAffectedThisCombat}. */
     @Getter(AccessLevel.NONE)
     private final Set<Object> affectedThisCombat = new HashSet<>();
+
+    /** What this combatant rides — see {@link #getRiding}. */
+    @Getter(AccessLevel.NONE)
+    private Riding riding;
 
     /** Bocarra's swallowed victims — see {@link #getDevouredVictims}. */
     @Getter(AccessLevel.NONE)
@@ -2177,6 +2182,23 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     // --- Frenesi (Gigante Enfurecido) ---------------------------------------------------------
 
     @Override
+    public Optional<Riding> getRiding() {
+        return Optional.ofNullable(riding);
+    }
+
+    @Override
+    public void startRiding(@NonNull final Riding riding) {
+        this.riding = riding;
+    }
+
+    @Override
+    public boolean stopRiding() {
+        boolean wasRiding = riding != null;
+        riding = null;
+        return wasRiding;
+    }
+
+    @Override
     public boolean hasActiveEffect(@NonNull final Class<? extends TemporaryEffect> type) {
         return temporaryEffects.stream().anyMatch(effect -> type.isInstance(effect) && !effect.isExpired());
     }
@@ -2273,8 +2295,19 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
 
     @Override
     public boolean isSkillUsePrevented(final SkillType skillType, final AttributeDomain governing) {
-        return isConcentrationAction(skillType, governing)
-                && getFrenzy().map(Frenzy::isConcentrationBlocked).orElse(false);
+        return (isConcentrationAction(skillType, governing)
+                && getFrenzy().map(Frenzy::isConcentrationBlocked).orElse(false))
+                || isPreventedWhileRiding(skillType);
+    }
+
+    /**
+     * "A restrição de não usar outras Perícias enquanto dirigindo um veículo ou cavalgando um animal"
+     * — every Perícia but Dirigir e Cavalgar is refused while riding, unless the rider holds {@code
+     * DirigirECavalgarCompetencyAbility#GINETE}, which lifts it (for a Desvantagem it resolves itself).
+     */
+    private boolean isPreventedWhileRiding(final SkillType skillType) {
+        return isRiding() && skillType != SkillType.DIRIGIR_E_CAVALGAR && getCharacter() != null
+                && !SkillCompetencyAbility.allFor(getCharacter(), this).contains(DirigirECavalgarCompetencyAbility.GINETE);
     }
 
     /** Gnose-based Perícias and Domínio do Mana — what "exijam concentração ou raciocínio" covers. */
