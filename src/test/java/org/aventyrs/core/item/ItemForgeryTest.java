@@ -575,4 +575,44 @@ class ItemForgeryTest {
             }
         };
     }
+
+    // ---------- Centelhas (Phase H) ----------
+
+    private static Character donor() {
+        return CharacterFixture.blank(CharacterFixture.BLANK).build();
+    }
+
+    @Test
+    void aNamedDonorGivesOneCentelhaToAMenor() throws IllegalOperationException {
+        Character crafter = crafter(7, RegaliaGrade.MENOR, ArtificeFeat.ARTESAO_DE_REGALIAS_MENOR);
+        Character donor = donor();
+
+        ItemForgery.by(crafter, ProfissaoSpecialization.JOALHERIA,
+                ItemSpecification.regalia(base(), RegaliaGrade.MENOR), RegaliaDonation.willingDonor(donor)).forge();
+
+        assertEquals(Character.CENTELHAS - 1, donor.getCentelhas());
+    }
+
+    @Test
+    void aNamedDonorGivesEveryCentelhaToASuperior() throws IllegalOperationException {
+        Character crafter = crafter(10, RegaliaGrade.SUPERIOR, ArtificeFeat.ARTESAO_DE_REGALIAS_SUPERIORES);
+        Character donor = donor();
+
+        ItemForgery.by(crafter, ProfissaoSpecialization.JOALHERIA,
+                ItemSpecification.regalia(base(), RegaliaGrade.SUPERIOR), RegaliaDonation.willingDonor(donor)).forge();
+
+        assertEquals(0, donor.getCentelhas());
+    }
+
+    @Test
+    void aDonorWithNoCentelhaLeftIsRefused() {
+        Character crafter = crafter(7, RegaliaGrade.MENOR, ArtificeFeat.ARTESAO_DE_REGALIAS_MENOR);
+        Character donor = donor();
+        donor.sacrificeCentelhas(Character.CENTELHAS);
+
+        IllegalOperationException refused = assertThrows(IllegalOperationException.class, () -> ItemForgery.by(crafter,
+                ProfissaoSpecialization.JOALHERIA, ItemSpecification.regalia(base(), RegaliaGrade.MENOR),
+                RegaliaDonation.willingDonor(donor)).forge());
+        assertEquals("REGALIA_DONOR_LACKS_CENTELHA", refused.getMessage());
+    }
 }

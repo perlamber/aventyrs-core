@@ -161,6 +161,7 @@ class DevourServiceTest {
 
         assertTrue(digestion.killed());
         assertEquals(CharacterStatus.DEAD, hitPointsService.getStatus(goblin));
+        assertEquals(5 - ogre.getDamageTaken(), digestion.hitPointsRecovered());
         assertTrue(digestion.hitPointsRecovered() >= 1);
         assertTrue(ogre.getDevouredVictims().isEmpty());
         assertEquals(1, service.declareBite(ogre).lifeSteal());

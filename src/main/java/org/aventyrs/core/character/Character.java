@@ -89,6 +89,18 @@ public class Character {
      */
     protected Deity deity;
 
+    /** A character's Centelhas at the start — one for each {@link TitleSlot} a Título may awaken into. */
+    public static final int CENTELHAS = TitleSlot.values().length;
+
+    /**
+     * The Centelhas this character still has — the sparks their Títulos Aventyr awaken from. {@value
+     * #CENTELHAS} by default; a Regalia forge's donor sacrifices one or all of them ({@link
+     * #sacrificeCentelhas}). Read by {@code DestinoFeat#FRAGMENTO_DA_ENCARNACAO_DE_GILGAMESH} ("para
+     * cada Centelha que você não possua") and its Pré-requisito.
+     */
+    @Builder.Default
+    protected int centelhas = CENTELHAS;
+
     /**
      * The Perícias Treinadas an Aprendizado Rápido race chose at creation — "podem escolher duas
      * Perícias Treinadas, adquirir a Segunda e Terceira Graduação destas perícias custam 0.5EXP a
@@ -567,6 +579,16 @@ public class Character {
      * Grants title into slot — see {@link #primaryTitle}'s own javadoc for why this is a real
      * mutator. Overwrites whatever (if anything) already occupied that slot.
      */
+    /**
+     * Sacrifices up to count Centelhas — a Regalia donor's "sacrifique voluntariamente uma de suas
+     * Centelhas" (or all of them). Returns how many were actually given; never below zero.
+     */
+    public int sacrificeCentelhas(final int count) {
+        int given = Math.max(0, Math.min(count, centelhas));
+        centelhas -= given;
+        return given;
+    }
+
     public void grantTitle(@NonNull final AventyrTitle title, @NonNull final TitleSlot slot) {
         switch (slot) {
             case PRIMARY -> primaryTitle = title;

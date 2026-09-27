@@ -240,6 +240,13 @@ three):
   `CharacterSheet`, so only `isEligible(Character, CharacterSheet)` tests them; the sheet-less
   overload skips them, which keeps a preview listing looser than the real gate rather than
   stricter. `FeatService#grantFeat` always passes the sheet.
+- **"Adquirido antes de Despertar"** → `maximumAwakenedTitles(0)`; **"não possuir uma ou mais
+  Centelhas"** → `maximumCentelhas(Character.CENTELHAS - 1)` (0.0.68). Both are ordinary
+  acquisition-time ceilings — no Despertar timeline is needed.
+- **A clause no field says** ("2 outros Talentos de Poderes Vampíricos") → override
+  `isEligible(Character, CharacterSheet)` and AND your count with
+  `Feat.meetsRequirements(getFeatRequirements(), character, sheet)`, as
+  `VampiricoFeat#PODER_VAMPIRICO_DURADOURO` does.
 - **A disjunction** ("Destreza 3 e Saque Rápido, *ou* Foco 5") → one `.alternative(...)` per
   branch, each a nested `FeatRequirements`. At least one branch must hold **on top of** every
   clause set on the outer record, so anything common to all branches is written once, outside.
@@ -336,6 +343,14 @@ overridden per constant that needs it, defaulting to zero/no-op on every other c
 identical hook. This mirrors `SkillCompetencyAbility`'s own default-method-plus-override shape,
 just scoped one level narrower (per-tree-enum instead of interface-wide) until a second real
 consumer earns the wider scope.
+
+**A clause scoped to the opponent** ("efetuadas contra outros Vampiros") reads
+`SceneContext#getOpposedCharacter()` in `resolveSkillRollBonus` or the context-taking
+`resolveDifficultyReduction(SkillType, Character, SceneContext)`; a `null` context or opponent is
+"not met". **An opt-in cost on a Habilidade de Título** ("você pode aumentar seu Custo em +2PD")
+is `TitleAbilityActivationRequest#activatedFeats` plus `resolveTitleActivationSurcharge` /
+`resolveTitleActivationActionPointReduction` / `resolveTitleAbilityDurationIncrease`, with a
+use limit in `permitsTitleActivationOptIn` (`DestinoFeat#ACELERAR_HABILIDADE`).
 
 **A Talento that widens a racial trait** reads that trait's own service or hook rather than
 getting a new `Feat` hook, when only that trait's service would ever ask: the `OgricoFeat` tree is

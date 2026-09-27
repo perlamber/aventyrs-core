@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import static org.aventyrs.core.util.TranslatableMessages.INVALID_INHERITED_RACIAL_ABILITIES;
 import static org.aventyrs.core.util.TranslatableMessages.INVALID_PARENT_RACE;
@@ -147,6 +148,13 @@ public class Vampiro implements Race {
     private final Race parentRace;
     private final AttributeDomain chosenInheritedAttribute;
     private final List<SkillCompetencyAbility> inheritedRacialAbilities;
+    /**
+     * The master whose blood made this Vampiro — the Laços-de-Sangue ("não precisando mais obedecer
+     * ao seu mestre"), or {@code null} when none is recorded. Set by {@code BloodBondService#sire}
+     * for a Prole; read through {@code BloodBondService#getMaster}, which {@code
+     * VampiricoFeat#LACOS_ROMPIDOS} severs.
+     */
+    private final UUID sireId;
 
     public Vampiro(@NonNull final VampiroLineage lineage, @NonNull final Race parentRace) {
         this(lineage, parentRace, null, List.of());
@@ -155,6 +163,13 @@ public class Vampiro implements Race {
     public Vampiro(@NonNull final VampiroLineage lineage, @NonNull final Race parentRace,
                    final AttributeDomain chosenInheritedAttribute,
                    @NonNull final List<SkillCompetencyAbility> inheritedRacialAbilities) {
+        this(lineage, parentRace, chosenInheritedAttribute, inheritedRacialAbilities, null);
+    }
+
+    /** The full form, naming the master of a Prole ({@link #getSireId()}). */
+    public Vampiro(@NonNull final VampiroLineage lineage, @NonNull final Race parentRace,
+                   final AttributeDomain chosenInheritedAttribute,
+                   @NonNull final List<SkillCompetencyAbility> inheritedRacialAbilities, final UUID sireId) {
         if (parentRace.isMestico() || !lineage.getAllowedParentTypes().contains(parentRace.getCreatureType())) {
             throw new IllegalOperationException(INVALID_PARENT_RACE);
         }
@@ -170,6 +185,7 @@ public class Vampiro implements Race {
         this.parentRace = parentRace;
         this.chosenInheritedAttribute = chosenInheritedAttribute;
         this.inheritedRacialAbilities = inheritedRacialAbilities;
+        this.sireId = sireId;
     }
 
     /** {@link CreatureType#RENASCIDO} — a Vampiro <em>is</em> a Morto-Vivo. See {@link #getPrerequisiteCreatureType()}. */

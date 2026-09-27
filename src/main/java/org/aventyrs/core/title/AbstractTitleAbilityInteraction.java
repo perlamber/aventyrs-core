@@ -9,6 +9,7 @@ import org.aventyrs.core.sheet.EgoPointType;
 import org.aventyrs.core.character.services.DeterminationPointsServiceImpl;
 import org.aventyrs.core.character.services.HitPointsService;
 import org.aventyrs.core.character.services.HitPointsServiceImpl;
+import org.aventyrs.core.feat.Feat;
 import org.aventyrs.core.sheet.ActionCost;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.IllegalOperationException;
@@ -16,12 +17,15 @@ import org.aventyrs.core.sheet.Interaction;
 import org.aventyrs.core.sheet.InteractionResult;
 import org.aventyrs.core.sheet.ResourceType;
 
+import java.util.List;
+
 import static org.aventyrs.core.util.TranslatableMessages.ABILITY_ACTIVATION_PREVENTED;
 import static org.aventyrs.core.util.TranslatableMessages.HIT_POINT_PAYMENT_NOT_PERMITTED;
 import static org.aventyrs.core.util.TranslatableMessages.INVALID_PD_AMOUNT;
 import static org.aventyrs.core.util.TranslatableMessages.NOT_ENOUGH_DETERMINATION_POINTS;
 import static org.aventyrs.core.util.TranslatableMessages.NOT_ENOUGH_EGO_POINTS;
 import static org.aventyrs.core.util.TranslatableMessages.NOT_ENOUGH_HIT_POINTS;
+import static org.aventyrs.core.util.TranslatableMessages.TITLE_ACTIVATION_OPT_IN_EXHAUSTED;
 
 /**
  * The shared activation of a Título ability — what every activated Habilidade, Suprema or
@@ -87,7 +91,17 @@ public abstract class AbstractTitleAbilityInteraction implements Interaction<Com
         // size its effect must not be handed a multiplied price.
         int basePoints = resolveDeterminationPoints(request);
         // Benção de Boros: "custam o dobro de PM e PD" while fallen — the activator's Títulos say.
-        int determinationPoints = basePoints * determinationCostMultiplier(activator);
+        List<Feat> optIns = optedInFeats(request);
+        for (Feat optIn : optIns) {
+            if (!optIn.permitsTitleActivationOptIn(activator)) {
+                throw new IllegalOperationException(TITLE_ACTIVATION_OPT_IN_EXHAUSTED);
+            }
+        }
+        // Acelerar Habilidade/Centelha Duradoura: "+2PD" on top of the price, never sizing the effect.
+        int surcharge = optIns.stream()
+                .mapToInt(feat -> feat.resolveTitleActivationSurcharge(ability, activator, request.getActivatedFeats()))
+                .sum();
+        int determinationPoints = (basePoints + surcharge) * determinationCostMultiplier(activator);
         // Transferir Vitalidade: the PD paid in PV instead, locked until a Descanso Verdadeiro.
         int vitality = 0;
         if (determinationPoints > 0
@@ -131,7 +145,11 @@ public abstract class AbstractTitleAbilityInteraction implements Interaction<Com
             spendEgo(request, egoCost);
         }
         activator.recordAbilityActivation(ability);
-        ActionCost actionCost = resolveReportedActionCost(activator);
+        optIns.forEach(activator::recordAbilityActivation);
+        int optInActionPointReduction = optIns.stream()
+                .mapToInt(feat -> feat.resolveTitleActivationActionPointReduction(ability, activator, request.getActivatedFeats()))
+                .sum();
+        ActionCost actionCost = resolveReportedActionCost(activator, optInActionPointReduction);
         // Recorded, not gated: this request carries no turn number for the ActionProfile's
         // adjustment. ReactionOptionsService already stops offering a Reação none remain for.
         if (actionCost != null && actionCost.kind() == ActionCost.Kind.REACTION) {
@@ -142,10 +160,24 @@ public abstract class AbstractTitleAbilityInteraction implements Interaction<Com
         InteractionResult.InteractionResultBuilder result = resolve(request, basePoints).toBuilder()
                 .determinationPointsSpent(determinationPoints)
                 .actionPointCost(actionCost);
+        int durationIncrease = optIns.stream()
+                .mapToInt(feat -> feat.resolveTitleAbilityDurationIncrease(ability, activator, request.getActivatedFeats()))
+                .sum();
+        if (durationIncrease > 0) {
+            result.titleAbilityDurationIncrease(durationIncrease);
+        }
         if (hitPoints + vitality > 0) {
             result.resourceLossValue(hitPoints + vitality).resourceLossType(ResourceType.HIT_POINTS);
         }
         return result.build();
+    }
+
+    /** The held Talentos the request opts into — compared by catalog entry, so an acquired form counts. */
+    private static List<Feat> optedInFeats(final TitleAbilityActivationRequest request) {
+        return request.getActivator().getCharacter().getFeats().stream()
+                .filter(held -> request.getActivatedFeats().contains(held.catalogEntry())
+                        || request.getActivatedFeats().contains(held))
+                .toList();
     }
 
     /** The product of every held Título's PD multiplier for this activation — 1 when none applies. */
@@ -160,12 +192,12 @@ public abstract class AbstractTitleAbilityInteraction implements Interaction<Com
      * Veloz, Doutor de Eldur) — only a fixed PA price shrinks, and never below 1PA, the floor
      * {@code SpellCastingService} keeps for a Magia too.
      */
-    private ActionCost resolveReportedActionCost(final CombatantSheet activator) {
+    private ActionCost resolveReportedActionCost(final CombatantSheet activator, final int optInReduction) {
         ActionCost authored = ability.getActionPointCost();
         if (authored == null || authored.kind() != ActionCost.Kind.FIXED) {
             return authored;
         }
-        int reduction = activator.getCharacter().getAllTitles().stream()
+        int reduction = optInReduction + activator.getCharacter().getAllTitles().stream()
                 .mapToInt(title -> title.resolveActivationActionPointReduction(ability, activator))
                 .sum();
         return reduction <= 0 ? authored : ActionCost.ofActionPoints(Math.max(1, authored.actionPoints() - reduction));

@@ -1129,6 +1129,12 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
      */
     int consumeRepositionThisRound();
 
+    /**
+     * Whether an unexpired {@link TemporaryEffect} of type is running on this combatant — for a marker
+     * effect whose presence is the whole fact ({@link CarmillaPresence}).
+     */
+    boolean hasActiveEffect(Class<? extends TemporaryEffect> type);
+
     // --- Bocarra (Ogro) ------------------------------------------------------------------------
 
     /**

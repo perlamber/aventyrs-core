@@ -6,6 +6,12 @@ import java.math.BigDecimal;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.race.Vampiro;
+import org.aventyrs.core.scene.SceneContext;
+import org.aventyrs.core.sheet.CharacterSheet;
+import org.aventyrs.core.sheet.CombatantSheet;
+import org.aventyrs.core.skill.Skill;
+import org.aventyrs.core.skill.SkillTrait;
+import org.aventyrs.core.skill.SkillType;
 
 import java.util.Optional;
 
@@ -179,18 +185,23 @@ public enum VampiricoFeat implements Feat {
      * "A cada Rodada você recupera 1PV para cada personagem vivo em Distância Muito Curta que
      * esteja ferido."
      */
-    // TODO: the Poder Vampírico activation mechanism is built, but this one still cannot be
-    //  expressed: its per-Rodada recovery counts qualifying nearby combatants, and the only
-    //  per-Rodada hook — TemporaryEffect#applyRoundEffect(CombatantSheet) — gets the holder's
-    //  sheet alone, never the Scene's neighbours or their PV. "vivo" also needs the living/undead
-    //  classification this core still lacks behaviourally (CreatureType.RENASCIDO exists but
-    //  nothing keys "is this alive" off it).
+    // Real. Activating it (3PV, Ação Livre, the Poderes' Duração) holds a sheet.CarmillaPresence, and
+    // VampiricPresenceService#drain — called at the holder's Turn start — recovers 1PV per wounded,
+    // living combatant within Muito Curta, one band wider per Título. ⚠️ "Vivo" is anyone whose Raça is
+    // not RENASCIDO; a foe without a Raça counts as living.
     PRESENCA_DE_CARMILLA(
             "Você é capaz de roubar sangue dos vivos próximos a você. A cada Rodada você recupera "
                     + "1PV para cada personagem vivo em Distância Muito Curta que esteja ferido "
                     + "(que tenha perdido 1 ou mais PV), este é um efeito de Roubo de Vida. A "
                     + "Distância aumenta em +1 nível para cada Título Aventyr que você possuir.",
-            FeatRequirements.builder().requiredRace(Vampiro.class).build()),
+            FeatRequirements.builder().requiredRace(Vampiro.class).build()) {
+        private final ActiveAbility ability = new PoderVampiricoActiveAbility(this);
+
+        @Override
+        public Optional<ActiveAbility> resolveActiveAbility() {
+            return Optional.of(ability);
+        }
+    },
 
     /**
      * "A Duração de seus Poderes Vampíricos aumenta para 2 Rodadas."
@@ -203,36 +214,40 @@ public enum VampiricoFeat implements Feat {
      * para 2 Rodadas", is redundant with the race Característica (which already sets the base to
      * 2) — a source inconsistency, resolved toward the more specific text.
      */
-    // TODO: its requiredFeatCategory counts every Talento of this tree, where the text says "de
-    //  Poderes Vampíricos" — the six constants whose name carries that prefix. Laços Rompidos,
-    //  Mestre Vampiro and this constant itself are not Poderes, so the gate is looser than
-    //  written; FeatCategory is one level coarser than the clause needs, and there is no finer
-    //  "Poder Vampírico" sub-tag mechanism.
+    // "2 outros Talentos de Poderes Vampíricos" is exact: isEligible counts the held Poderes
+    // (isPoderVampirico — the eight whose heading reads "Poder Vampírico –"), not the whole tree.
     PODER_VAMPIRICO_DURADOURO(
             "A Duração de seus Poderes Vampíricos aumenta para 2 Rodadas. Adicionalmente a "
                     + "Duração de seus Poderes aumentam em +1 Rodada para cada Título Aventyr que "
                     + "você possuir.",
             FeatRequirements.builder()
                     .requiredRace(Vampiro.class)
-                    .requiredFeatCategory(FeatCategory.VAMPIRICO)
-                    .requiredFeatCategoryCount(2)
-                    .build()),
+                    .build()) {
+        @Override
+        public boolean isEligible(final Character character, final CharacterSheet sheet) {
+            long otherPoderes = character.getFeats().stream()
+                    .map(Feat::catalogEntry)
+                    .filter(held -> held instanceof VampiricoFeat vampirico && vampirico.isPoderVampirico())
+                    .distinct()
+                    .count();
+            return Feat.meetsRequirements(getFeatRequirements(), character, sheet)
+                    && otherPoderes >= DURADOURO_REQUIRED_PODERES;
+        }
+    },
 
     /**
      * "Desfaz os Laços-de-Sangue… Vantagem em rolagens de Perícias baseadas em Carisma e Atenção
      * efetuadas contra outros Vampiros."
      */
-    // TODO: this is not a Poder Vampírico (no Duração), so the activation mechanism does not
-    //  apply. The Vantagem is scoped two ways this core cannot express at once — by AttributeDomain
-    //  ("baseadas em Carisma e Atenção", where Atenção is a Perícia rather than an Atributo, an
-    //  inconsistency in the source) and by the *target* being a Vampiro, which
-    //  resolveSkillRollBonus carries no opponent for.
+    // The Vantagem is real: a roll opposed by another Vampiro (SceneContext#getOpposedCharacter) on a
+    // Perícia whose own Atributo is Carisma, or on Atenção — ⚠️ "baseadas em Carisma e Atenção" names
+    // a Perícia beside an Atributo, read as either. MESTRE_VAMPIRO widens it to any opponent.
     // The Pré-requisito is fully enforced now — "EXP total ≥ 15 ou 1 Título Aventyr Desperto",
     // two FeatRequirements#anyOf branches, with the Raça common to both on the outer group. The
     // EXP branch reads CharacterSheet#getTotalExperience through Feat#isEligible's sheet-taking
     // overload; a sheet-less preview skips it and falls back to the Título branch alone.
-    // TODO: Laços-de-Sangue — a master-and-progeny relation between Vampiros — has no
-    //  representation, so there is nothing to undo.
+    // The Laços-de-Sangue are real: Vampiro#getSireId records the master, and BloodBondService#getMaster
+    // answers "no master" once this Talento is held.
     LACOS_ROMPIDOS(
             "Desfaz os Laços-de-Sangue, não precisando mais obedecer ao seu mestre. Vantagem em "
                     + "rolagens de Perícias baseadas em Carisma e Atenção efetuadas contra outros "
@@ -245,7 +260,18 @@ public enum VampiricoFeat implements Feat {
                     .alternative(FeatRequirements.builder()
                             .requiredAwakenedTitles(1)
                             .build())
-                    .build()),
+                    .build()) {
+        @Override
+        public int resolveSkillRollBonus(final SkillType skillType, final SceneContext sceneContext,
+                                         final SkillTrait requestedAbility, final Character character) {
+            CombatantSheet opponent = sceneContext == null ? null : sceneContext.getOpposedCharacter();
+            if (opponent == null || !isCharismaOrAttention(skillType)) {
+                return 0;
+            }
+            boolean mestre = character.getFeats().stream().anyMatch(feat -> feat.catalogEntry() == MESTRE_VAMPIRO);
+            return mestre || isVampiro(opponent) ? Skill.ADVANTAGE_BONUS : 0;
+        }
+    },
 
     /**
      * "Você chega no ponto evolutivo mais alto da sua raça… Você agora pode gerar Prole, criando
@@ -257,11 +283,10 @@ public enum VampiricoFeat implements Feat {
      * Atributo (Força for a Nosferatu, Carisma for a Baobhan, …). <b>Partial reach</b>, per that
      * hook's javadoc — the +1 lands on a Perícia roll governed by that Atributo, not on HP/PM/etc.
      */
-    // TODO: widening Laços Rompidos' Vantagem to every target, and adding a GD reduction against
-    //  Vampiros specifically, both need the target-scoping that clause already lacks — and
-    //  resolveDifficultyReduction carries no opponent either.
-    // TODO: gerar Prole needs the Laços-de-Sangue relation, and creating another Character is
-    //  outside anything this core models.
+    // Real: LACOS_ROMPIDOS' Vantagem reaches any opponent while this is held, and the GD eases one
+    // nível on those rolls against another Vampiro (the SceneContext-taking resolveDifficultyReduction).
+    // "Gerar Prole" is BloodBondService#sire, which builds the progeny's Vampiro Raça naming this
+    // master; creating the Character around it stays the caller's.
     // Its own disjunction is enforced too — "2 Títulos Aventyr Despertos ou EXP total ≥ 30" —
     // with the Raça and the required Talento common to both branches.
     MESTRE_VAMPIRO(
@@ -286,6 +311,13 @@ public enum VampiricoFeat implements Feat {
             return character.getRace() instanceof Vampiro vampiro
                     && vampiro.getLineage().getBonusAttribute() == domain
                     ? MESTRE_VAMPIRO_ATTRIBUTE_BONUS : 0;
+        }
+
+        @Override
+        public int resolveDifficultyReduction(final SkillType skillType, final Character character,
+                                              final SceneContext sceneContext) {
+            CombatantSheet opponent = sceneContext == null ? null : sceneContext.getOpposedCharacter();
+            return opponent != null && isVampiro(opponent) && isCharismaOrAttention(skillType) ? 1 : 0;
         }
     },
 
@@ -335,6 +367,32 @@ public enum VampiricoFeat implements Feat {
     };
 
     private static final int MESTRE_VAMPIRO_ATTRIBUTE_BONUS = 1;
+
+    /** Poder Vampírico Duradouro: "2 outros Talentos de Poderes Vampíricos". */
+    private static final int DURADOURO_REQUIRED_PODERES = 2;
+
+    /**
+     * Whether this is a Poder Vampírico — a Talento whose heading reads "Poder Vampírico –", the ones
+     * {@link #PODER_VAMPIRICO_DURADOURO} counts and lengthens. {@link #LACOS_ROMPIDOS}, {@link
+     * #MESTRE_VAMPIRO} and Duradouro itself are not.
+     */
+    public boolean isPoderVampirico() {
+        return switch (this) {
+            case ABOMINACAO, ARMAMENTO_DE_ORLOK, METAMORFOSE_DRACULEA, DOM_DE_MIRCALLA, OSTEOMANCIA,
+                 PRESENCA_DE_CARMILLA, CELERIDADE_VAMPIRICA, SEDE_DE_SANGUE -> true;
+            default -> false;
+        };
+    }
+
+    /** "Perícias baseadas em Carisma e Atenção": a Perícia whose own Atributo is Carisma, or Atenção. */
+    private static boolean isCharismaOrAttention(final SkillType skillType) {
+        return skillType == SkillType.ATTENTION
+                || skillType.newSkillInstance().getAttributeDomain() == AttributeDomain.CHARISMA;
+    }
+
+    private static boolean isVampiro(final CombatantSheet sheet) {
+        return sheet.getCharacter() != null && sheet.getCharacter().getRace() instanceof Vampiro;
+    }
 
     private final String description;
     private final FeatRequirements featRequirements;

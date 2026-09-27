@@ -198,6 +198,13 @@ For each Habilidade/Suprema, decide real-now vs. TODO'd:
 Never build the missing system just to close a TODO — this codebase's established discipline
 is to model real data now and defer the mechanic honestly.
 
+**Talentos can adjust any activation** (0.0.68): `AbstractTitleAbilityInteraction#activate` asks
+the held Talentos the request opts into (`TitleAbilityActivationRequest#activatedFeats`) for a PD
+surcharge (paid on top, never passed to `resolve` as the effect's PD), a PA reduction on a fixed
+Tempo de Ativação, and a Duração increase it reports on
+`InteractionResult#getTitleAbilityDurationIncrease` — so an Interaction that hard-codes its Duração
+should add that figure when the caller hands it on.
+
 **Once a Título-level Habilidade/Suprema has at least one clause expressible as a real
 `Blessing` (or a direct single-target mutation) and is Active (`isPassive() == false`), give
 it its own `<X>Interaction extends title.AbstractTitleAbilityInteraction`** (reached through

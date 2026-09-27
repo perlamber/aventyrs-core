@@ -394,7 +394,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                 .mapToInt(SkillCompetencyAbility::getDifficultyReduction)
                 .sum();
         difficultyReduction += sumAttributeDomainDifficultyReductions(character.getAttributeAbilities(), attributeDomain, character);
-        difficultyReduction += sumFeatDifficultyReductions(character);
+        difficultyReduction += sumFeatDifficultyReductions(character, sceneContext);
         if (counselled) {
             difficultyReduction += AncestralCounselService.DIFFICULTY_REDUCTION;
         }
@@ -634,9 +634,9 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
      * an explicit pass here — the same shape {@code DefenseServiceImpl}/{@code
      * MovementServiceImpl} already use for their own {@code Feat} hooks.
      */
-    private int sumFeatDifficultyReductions(final Character character) {
+    private int sumFeatDifficultyReductions(final Character character, final SceneContext sceneContext) {
         return character.getFeats().stream()
-                .mapToInt(feat -> feat.resolveDifficultyReduction(skillType, character))
+                .mapToInt(feat -> feat.resolveDifficultyReduction(skillType, character, sceneContext))
                 .sum();
     }
 

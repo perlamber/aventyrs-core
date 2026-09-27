@@ -3,6 +3,8 @@ package org.aventyrs.core.title;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.Singular;
+import org.aventyrs.core.feat.Feat;
 import org.aventyrs.core.scene.Scene;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.CombatantSheet;
@@ -28,6 +30,14 @@ public class TitleAbilityActivationRequest {
     /** Who activates the ability — and pays its PD. */
     @NonNull
     private final CombatantSheet activator;
+
+    /**
+     * The Talentos the activator opts into for this one activation — {@code
+     * DestinoFeat#ACELERAR_HABILIDADE}'s "-1PA … +2PD", {@code DestinoFeat#CENTELHA_DURADOURA}'s "+2PD
+     * … Duração +2". Only held Talentos are asked, so naming one not held does nothing.
+     */
+    @Singular
+    private final Set<Feat> activatedFeats;
 
     /**
      * Who the ability acts on, for a targeted one (Abençoado pela Luz's touch). {@code null}

@@ -195,7 +195,12 @@ public class DevourServiceImpl implements DevourService {
     }
 
     private static int heal(final CombatantSheet ogre, final int amount) {
-        return amount > 0 ? ogre.heal(amount, new HealingSource(OgricoFeat.DEVORATRIZ, true, ogre, null, null)) : 0;
+        if (amount <= 0) {
+            return 0;
+        }
+        int before = ogre.getDamageTaken();
+        ogre.heal(amount, new HealingSource(OgricoFeat.DEVORATRIZ, true, ogre, null, null));
+        return before - ogre.getDamageTaken();
     }
 
     private static boolean holds(final Character character, final Feat talento) {

@@ -23,7 +23,7 @@ re-ordered as:
 | E | Área de Efeito, outward damage, reverse retaliation | Phase 9 (+ rest of 7) | **Done (0.0.65)** — footprints, area attacks, Evasão, `Retaliation#dealTo`; outward Turn damage left for a second consumer; see `0.065.CHANGELOG.md` |
 | F | Spellcasting extensions | Phase 10 | **Done (0.0.66)** — mimetizar choices + live grant, Mana-cost reduction, per-cast opt-ins, cast bonuses, storage; see `0.066.CHANGELOG.md` |
 | I | Racial traits Talentos extend | new | **Done (0.0.67)** — Ferocidade de Lacerto, Bocarra, Agnação Ancestral, Aprendizado Rápido, Olhar de Lacerto, Cuidado para não Quebrar; HomemFera Forma Híbrida left open; see `0.067.CHANGELOG.md` |
-| H | Título / Destino / Vampiro | Phase 12 | open |
+| H | Título / Destino / Vampiro | Phase 12 | **Done (0.0.68)** — acquisition ceilings in place of a timeline, Atrasar Despertar/Abdicador figures, Centelhas (count + Regalia loss), Título activation opt-ins, Laços-de-Sangue and Prole, Presença de Carmilla; Favoritismo lacks rules text; see `0.068.CHANGELOG.md` |
 | G | Montaria / veículo | Phase 11 | open, lowest priority |
 
 **Phase B** (each had two or more consumers) — all four built in 0.0.62:

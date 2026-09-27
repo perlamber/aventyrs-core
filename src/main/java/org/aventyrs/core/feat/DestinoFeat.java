@@ -2,6 +2,8 @@ package org.aventyrs.core.feat;
 
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.character.DamageBonus;
+import org.aventyrs.core.character.DamageType;
 import org.aventyrs.core.character.Deity;
 import org.aventyrs.core.character.TitleSlot;
 import org.aventyrs.core.magic.ElementalType;
@@ -9,10 +11,21 @@ import org.aventyrs.core.magic.MagicType;
 import org.aventyrs.core.magic.Spell;
 import org.aventyrs.core.magic.SpellTree;
 import org.aventyrs.core.rest.RestType;
+import org.aventyrs.core.scene.SceneContext;
+import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.CombatantAction;
+import org.aventyrs.core.sheet.CombatantSheet;
+import org.aventyrs.core.skill.AttackSource;
+import org.aventyrs.core.skill.SkillTrait;
+import org.aventyrs.core.skill.SkillType;
 import org.aventyrs.core.title.AventyrTitle;
+import org.aventyrs.core.title.AventyrTitleAbility;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 /**
  * Talentos de Destino — what a character is, rather than what they can do: how enemies read
@@ -26,18 +39,18 @@ import java.util.List;
  * #AUTOCONHECIMENTO} is not: a Vantagem de Ego is chosen once at character creation and never
  * awarded later.
  *
- * <p>The second is the <b>Despertar timeline</b>. Half the Aventyr-tier constants here delay,
- * accelerate, or forgo awakening a Título, and trade on <i>when</i> one awakens. This core models
- * a Título as simply held or not (see {@code FeatRequirements#requiredAwakenedTitles}), and there
- * is no EXP threshold at which one awakens. A session end is the one moment that exists: {@link
- * #DESPERTAR_ANTECIPADO} awakens its Título then, through {@code
- * CharacterSheet#applySessionEndAcquisitions}.
+ * <p>The second was the <b>Despertar timeline</b>, and it turned out to need no timeline at all.
+ * "Adquirido antes de Despertar" is a ceiling checked at acquisition ({@code
+ * FeatRequirements#maximumAwakenedTitles}); an EXP mark is read off the sheet when session-end
+ * acquisitions are performed ({@link #DESPERTAR_ANTECIPADO}, {@link
+ * #CENTELHA_GRAN_AVENTYR_ANTECIPADA}, through {@code CharacterSheet#applySessionEndAcquisitions});
+ * and a character's Centelhas are a count ({@code Character#getCentelhas()}).
  *
  * <p><b>Counting the un-awakened ones is <i>not</i> part of that gap</b>, and used to be filed
  * under it by mistake. A Character has exactly three {@link TitleSlot}s, so "cada Título ainda não
  * Desperto" is three minus the held ones — arithmetic available today, with no timeline involved.
- * That is what makes {@link #ABDICADOR}'s PV/PM multiplier real while the rest of its sentence
- * still waits.
+ * That is what {@link #ATRASAR_DESPERTAR}'s figures and {@link #ABDICADOR}'s PV/PM multiplier
+ * multiply by.
  */
 public enum DestinoFeat implements Feat {
 
@@ -248,8 +261,10 @@ public enum DestinoFeat implements Feat {
      * "Escolha uma Perícia, você recebe os benefícios de Favoritismo da Perícia quando efetuada em
      * disputa contra um oponente que o reconheça."
      */
-    // TODO: Favoritismo is an unmodelled mechanic, and "um oponente que o reconheça" needs
-    //  recognition between characters, which nothing tracks.
+    // TODO: "os benefícios de Favoritismo da Perícia" are defined in no rules document in this repo
+    //  (docs/rules has no Favoritismo entry beyond this Talento), so there is nothing to grant; and
+    //  "um oponente que o reconheça" additionally needs recognition between characters, which
+    //  nothing tracks. Obtain the Favoritismo rules before building this.
     // "Fama 15" is enforced now: Feat#isEligible has a CharacterSheet-taking overload, which
     // FeatService#grantFeat calls. Read as *either* Fama reaching 15 — the rules text says plain
     // "Fama" while this core splits it Positiva/Negativa, and Favoritismo is about being
@@ -267,16 +282,10 @@ public enum DestinoFeat implements Feat {
      * "Você pode escolher atrasar seu Despertar de Títulos, recebendo seus benefícios apenas
      * quando quiser e se quiser."
      */
-    // The "Títulos ainda não Despertos" multiplicand is *not* a blocker — see ABDICADOR below and
-    // this enum's own javadoc: it is three TitleSlots minus the held ones, countable today. What
-    // this constant still needs is the other half of each figure, "+1 para cada 15EXP": EXP total
-    // lives on CharacterSheet, and while resolveSkillRollBonus does have a sheet-taking overload
-    // now, resolveDamageReduction/resolveCriticalMarginIncrease would each need the same reach for
-    // the RDS and Margem Crítica figures — so the Talento would land in pieces rather than whole.
-    // TODO: the four figures (Perícia roll, Danos, RDS, Margem Crítica Menor) therefore stay
-    //  ungranted together, per this tree's grant-it-whole-or-not-at-all rule.
-    // TODO: "deve ser adquirido antes de Despertar seus Títulos" is an ordering constraint
-    //  FeatRequirements cannot express.
+    // Real. Each of the four figures is (1 + 1 per 15 EXP total) × Títulos not yet Desperto, doubled
+    // with ABDICADOR: a bonus to every Perícia roll and dano roll, RDS, and a Margem Crítica Menor
+    // widening. All four read the holder's sheet for the EXP; without a CharacterSheet they are 0.
+    // "Deve ser adquirido antes de Despertar seus Títulos" is FeatRequirements#maximumAwakenedTitles(0).
     ATRASAR_DESPERTAR(
             "Você pode escolher atrasar seu Despertar de Títulos, recebendo seus benefícios apenas "
                     + "quando quiser e se quiser. Você recebe Bônus de +1 em Rolagens de Perícias e "
@@ -284,7 +293,37 @@ public enum DestinoFeat implements Feat {
                     + "em rolagens de Perícias, estes benefícios aumentam em +1 para cada 15EXP e "
                     + "são multiplicados pelo número de Títulos ainda não Despertos. Este Talento "
                     + "deve ser adquirido antes de Despertar seus Títulos.",
-            FeatRequirements.builder().build()),
+            FeatRequirements.builder()
+                    .maximumAwakenedTitles(0)
+                    .build()) {
+        @Override
+        public int resolveSkillRollBonus(final SkillType skillType, final SceneContext sceneContext,
+                                         final SkillTrait requestedAbility, final Character character,
+                                         final AttackSource attackSource, final CombatantSheet holder) {
+            return delayedAwakeningFigure(character, holder);
+        }
+
+        @Override
+        public Optional<DamageBonus> resolveDamageBonus(final SkillType attackingSkillType, final SceneContext sceneContext,
+                                                        final CombatantSheet attackTarget, final Character actor,
+                                                        final AttackSource attackSource, final int targetCount,
+                                                        final CombatantSheet holder) {
+            int figure = delayedAwakeningFigure(actor, holder);
+            return figure > 0 ? Optional.of(new DamageBonus(figure, DamageType.FISICO)) : Optional.empty();
+        }
+
+        @Override
+        public int resolveDamageTakenReduction(final Character character, final CombatantSheet holder) {
+            return delayedAwakeningFigure(character, holder);
+        }
+
+        @Override
+        public int resolveCriticalMarginIncrease(final SkillType skillType, final SceneContext sceneContext,
+                                                 final Character character, final AttackSource attackSource,
+                                                 final CombatantSheet holder) {
+            return delayedAwakeningFigure(character, holder);
+        }
+    },
 
     /**
      * "Você não Desperta Títulos Aventyr, mantendo suas Centelhas inertes indefinidamente."
@@ -300,9 +339,11 @@ public enum DestinoFeat implements Feat {
      * other one grows as they awaken ({@code OrquicoFeat#TERRA_NAS_VEIAS}), which is exactly the
      * trade this Talento is written to make.
      */
-    // TODO: "Os Benefícios de Atrasar Despertar são dobrados" is still blocked — ATRASAR_DESPERTAR
-    //  itself is unbuilt (the Despertar timeline), so there are no benefits to double. Only the
-    //  multiplier sentence lands; the two are separate clauses and should not be conflated again.
+    // "Os Benefícios de Atrasar Despertar são dobrados" is real too: ATRASAR_DESPERTAR's figure
+    // doubles while this is held (delayedAwakeningFigure).
+    // TODO: "Você não Desperta Títulos Aventyr" is a prohibition nothing enforces —
+    //  Character#grantTitle and TitleAwakening award a Título unconditionally; the Talento only makes
+    //  awakening one a bad trade.
     ABDICADOR(
             "Você não Desperta Títulos Aventyr, mantendo suas Centelhas inertes indefinidamente. "
                     + "Os Benefícios de Atrasar Despertar são dobrados e seu Multiplicador de PV e "
@@ -325,40 +366,78 @@ public enum DestinoFeat implements Feat {
      * "Você recebe Bônus Racial de +2 em todos os Atributos para cada Centelha que você não possua
      * ou voluntariamente não Despertar."
      */
-    // TODO: a Centelha is not modelled — nothing represents a character possessing or lacking
-    //  one (its *sacrifice* is now a caller assertion, RegaliaDonation, which is enough for the
-    //  ArtificeFeat tree but not for this "para cada Centelha que você não possua" count).
-    // TODO: disjunctive Pré-requisito (the Talento *ou* lacking a Centelha).
+    // Real. The count is the Centelhas not possessed (Character.CENTELHAS minus getCentelhas()),
+    // plus — for a holder of ATRASAR_DESPERTAR, whose delay is the voluntary one — the possessed
+    // ones not yet Desperto. ⚠️ Without Atrasar Despertar an un-awakened Centelha is read as not yet
+    // awakened rather than voluntarily withheld. The Pré-requisito's disjunction is enforced: Atrasar
+    // Despertar, or at most CENTELHAS - 1 Centelhas.
     FRAGMENTO_DA_ENCARNACAO_DE_GILGAMESH(
             "Você recebe Bônus Racial de +2 em todos os Atributos para cada Centelha que você não "
                     + "possua ou voluntariamente não Despertar.",
             FeatRequirements.builder()
-                    .requiredFeat(ATRASAR_DESPERTAR)
-                    .build()),
+                    .alternative(FeatRequirements.builder().requiredFeat(ATRASAR_DESPERTAR).build())
+                    .alternative(FeatRequirements.builder().maximumCentelhas(Character.CENTELHAS - 1).build())
+                    .build()) {
+        @Override
+        public int resolveAttributeBonus(final AttributeDomain domain, final Character character) {
+            return GILGAMESH_ATTRIBUTE_BONUS * forgoneCentelhas(character);
+        }
+    },
 
     /** "Você pode reduzir o Tempo de Ativação de suas Habilidades de Título em -1PA." */
-    // TODO: the price is modelled now — AventyrTitleAbility#getActionPointCost/#getPDCost, paid by
-    //  AbstractTitleAbilityInteraction#activate — but nothing lets a Talento adjust it. The
-    //  activation reads only the ability's own declared cost, and "você pode reduzir … em -1PA"
-    //  is an opt-in per activation that the activation request has no field for. ("Uma vez a cada
-    //  Rodada" would then be CombatantSheet#countActivationsThisTurn / the action log.)
+    // Real, as an opt-in: name it on TitleAbilityActivationRequest#activatedFeats and the activation
+    // takes 1PA off a fixed Tempo de Ativação (never below 1PA) for +2PD. "Uma vez a cada Rodada" is
+    // one use per Turn (CombatantSheet#countActivationsThisTurn); a second is refused.
+    // TODO: "apenas em seu Turno" is not checked — the request does not say whose Turn it is.
     ACELERAR_HABILIDADE(
             "Você pode reduzir o Tempo de Ativação de suas Habilidades de Título em -1PA, acelerar "
                     + "Habilidades aumenta o Custo de Ativação da Habilidade em +2PD. Este efeito "
                     + "pode ser ativado apenas uma vez a cada Rodada e apenas em seu Turno.",
             FeatRequirements.builder()
                     .requiredAwakenedTitles(1)
-                    .build()),
+                    .build()) {
+        @Override
+        public int resolveTitleActivationSurcharge(final AventyrTitleAbility ability, final CombatantSheet activator,
+                                                   final Set<Feat> activatedFeats) {
+            return TITLE_OPT_IN_SURCHARGE;
+        }
+
+        @Override
+        public int resolveTitleActivationActionPointReduction(final AventyrTitleAbility ability,
+                                                             final CombatantSheet activator,
+                                                             final Set<Feat> activatedFeats) {
+            return 1;
+        }
+
+        @Override
+        public boolean permitsTitleActivationOptIn(final CombatantSheet activator) {
+            return activator.countActivationsThisTurn(this) == 0;
+        }
+    },
 
     /** "Durante a Ativação de uma Habilidade você pode aumentar seu Custo em +2PD, se o fizer a Duração da Habilidade é aumentada em +2 Unidades." */
-    // TODO: same missing opt-in cost adjustment as ACELERAR_HABILIDADE. A Habilidade de Título's
-    //  Duração is also not a declared value: each Interaction hard-codes its own.
+    // Real, as an opt-in (TitleAbilityActivationRequest#activatedFeats): +2PD, and +2 Unidades of
+    // Duração reported on InteractionResult#getTitleAbilityDurationIncrease.
+    // TODO: the Duração itself is not extended here — each Habilidade's Interaction hard-codes its
+    //  own, so the caller applies the reported +2.
     CENTELHA_DURADOURA(
             "Durante a Ativação de uma Habilidade você pode aumentar seu Custo em +2PD, se o fizer "
                     + "a Duração da Habilidade é aumentada em +2 Unidades.",
             FeatRequirements.builder()
                     .requiredAwakenedTitles(1)
-                    .build()),
+                    .build()) {
+        @Override
+        public int resolveTitleActivationSurcharge(final AventyrTitleAbility ability, final CombatantSheet activator,
+                                                   final Set<Feat> activatedFeats) {
+            return TITLE_OPT_IN_SURCHARGE;
+        }
+
+        @Override
+        public int resolveTitleAbilityDurationIncrease(final AventyrTitleAbility ability, final CombatantSheet activator,
+                                                       final Set<Feat> activatedFeats) {
+            return CENTELHA_DURADOURA_INCREASE;
+        }
+    },
 
     /**
      * "Seu personagem desperta seu Título Primário ao fim da primeira sessão de Jogo." Pré-requisito:
@@ -386,16 +465,61 @@ public enum DestinoFeat implements Feat {
     },
 
     /** "Você desperta seu Título Secundário ao atingir a marca de 23EXP." */
-    // TODO: same missing Despertar timeline; and the EXP threshold is a CharacterSheet value
-    //  Feat#isEligible cannot reach — see FAVORITISMO_MAIOR.
+    // Real, through CentelhaGranAventyrAntecipadaFeat: the Secundário picked on acquisition is
+    // awakened at the first reported session end once the Primário is filled and total EXP reaches 23.
     CENTELHA_GRAN_AVENTYR_ANTECIPADA(
             "Você desperta seu Título Secundário ao atingir a marca de 23EXP.",
             FeatRequirements.builder()
                     .requiredFeat(DESPERTAR_ANTECIPADO)
-                    .build());
+                    .build()) {
+        /** "seu Título Secundário" — which one; see CentelhaGranAventyrAntecipadaFeat#optionsFor. */
+        @Override
+        public List<FeatChoice<?>> resolveRequiredChoices(final Character holder) {
+            return List.of(FeatChoice.ofOne(AventyrTitle.class, CentelhaGranAventyrAntecipadaFeat.optionsFor(holder)));
+        }
+    };
 
     /** CORACAO_DE_FERRO_DO_DESTINO's flat "+2PD" per Descanso, before the per-Título term. */
     private static final int BASE_REST_DETERMINATION_RECOVERY = 2;
+
+    /** Acelerar Habilidade's and Centelha Duradoura's "+2PD". */
+    private static final int TITLE_OPT_IN_SURCHARGE = 2;
+
+    /** Centelha Duradoura: "a Duração da Habilidade é aumentada em +2 Unidades". */
+    private static final int CENTELHA_DURADOURA_INCREASE = 2;
+
+    /** Fragmento da Encarnação de Gilgamesh: "+2 em todos os Atributos para cada Centelha". */
+    private static final int GILGAMESH_ATTRIBUTE_BONUS = 2;
+
+    /** Atrasar Despertar: "aumentam em +1 para cada 15EXP". */
+    private static final BigDecimal DELAYED_AWAKENING_EXPERIENCE_STEP = BigDecimal.valueOf(15);
+
+    /**
+     * {@link #ATRASAR_DESPERTAR}'s figure: 1, +1 per 15 EXP total, times the Títulos not yet Desperto
+     * — doubled for a holder of {@link #ABDICADOR}. 0 without a {@code CharacterSheet} to read the EXP
+     * from.
+     */
+    private static int delayedAwakeningFigure(final Character character, final CombatantSheet holder) {
+        if (character == null || !(holder instanceof CharacterSheet sheet)) {
+            return 0;
+        }
+        int perTitle = 1 + sheet.getTotalExperience()
+                .divide(DELAYED_AWAKENING_EXPERIENCE_STEP, 0, RoundingMode.FLOOR).intValue();
+        int figure = perTitle * unawakenedTitles(character);
+        boolean abdicador = character.getFeats().stream().anyMatch(feat -> feat.catalogEntry() == ABDICADOR);
+        return abdicador ? 2 * figure : figure;
+    }
+
+    /**
+     * {@link #FRAGMENTO_DA_ENCARNACAO_DE_GILGAMESH}'s count: Centelhas not possessed, plus — while the
+     * holder delays through {@link #ATRASAR_DESPERTAR} — possessed ones not yet Desperto.
+     */
+    private static int forgoneCentelhas(final Character character) {
+        int missing = Math.max(0, Character.CENTELHAS - character.getCentelhas());
+        boolean delaying = character.getFeats().stream().anyMatch(feat -> feat.catalogEntry() == ATRASAR_DESPERTAR);
+        int withheld = delaying ? Math.max(0, character.getCentelhas() - character.getAllTitles().size()) : 0;
+        return missing + withheld;
+    }
 
     /**
      * Títulos Aventyr this character has <b>not</b> awakened — the three {@link TitleSlot}s minus

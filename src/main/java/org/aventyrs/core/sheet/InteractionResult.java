@@ -131,6 +131,13 @@ public class InteractionResult {
      */
     Frenzy grantedFrenzy;
 
+    /**
+     * Unidades of Duração the activator's opted-in Talentos add to this Habilidade de Título — {@code
+     * DestinoFeat#CENTELHA_DURADOURA}'s "+2". Reported for the caller to extend: each Habilidade's
+     * Duração is its own Interaction's. {@code null} when none.
+     */
+    Integer titleAbilityDurationIncrease;
+
     List<CombatantSheet> frenzyRecipients;
 
     /**

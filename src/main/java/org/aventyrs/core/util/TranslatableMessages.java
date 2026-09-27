@@ -428,4 +428,13 @@ public class TranslatableMessages {
 
     /** Olhar de Lacerto was declared by a combatant without the Característica. */
     public static final String OLHAR_DE_LACERTO_NOT_HELD = "OLHAR_DE_LACERTO_NOT_HELD";
+
+    /** A named Regalia donor has no Centelha left to sacrifice. */
+    public static final String REGALIA_DONOR_LACKS_CENTELHA = "REGALIA_DONOR_LACKS_CENTELHA";
+
+    /** A Talento opted into for a Título activation has no use left right now (Acelerar Habilidade's once per Rodada). */
+    public static final String TITLE_ACTIVATION_OPT_IN_EXHAUSTED = "TITLE_ACTIVATION_OPT_IN_EXHAUSTED";
+
+    /** Gerar Prole was asked of a character who is not a Vampiro Mestre (or is a Dampiro). */
+    public static final String PROGENY_NOT_PERMITTED = "PROGENY_NOT_PERMITTED";
 }

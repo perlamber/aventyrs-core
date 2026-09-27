@@ -51,6 +51,7 @@ import org.aventyrs.core.skill.SkillCompetencyAbility;
 import org.aventyrs.core.skill.SkillRoll;
 import org.aventyrs.core.skill.SkillTrait;
 import org.aventyrs.core.skill.SkillType;
+import org.aventyrs.core.title.AventyrTitleAbility;
 import org.aventyrs.core.title.TitleArchetype;
 import org.aventyrs.core.title.TitleIdentity;
 
@@ -167,6 +168,17 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     }
 
     /**
+     * Whether character (and sheet) satisfy requirements — the check {@link #isEligible(Character,
+     * CharacterSheet)} runs, for an override that adds a clause no {@link FeatRequirements} field
+     * says ({@code VampiricoFeat#PODER_VAMPIRICO_DURADOURO}'s "2 outros Talentos de Poderes
+     * Vampíricos") and must still run the data clauses.
+     */
+    static boolean meetsRequirements(final FeatRequirements requirements, final Character character,
+                                     final CharacterSheet sheet) {
+        return satisfies(requirements, character, sheet);
+    }
+
+    /**
      * Whether character satisfies this Talento's requirements <b>once every Raça clause is
      * dropped</b> — see {@link FeatRequirements#withoutRaceClauses()}. Added for {@code
      * DestinoFeat#EXCEPCIONALIDADE}'s "um Talento Racial que você cumpra todos os demais
@@ -251,6 +263,12 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
         boolean experienceSatisfied = requirements.requiredTotalExperience() == null || sheet == null
                 || sheet.getTotalExperience().compareTo(requirements.requiredTotalExperience()) >= 0;
 
+        boolean awakenedTitlesCeilingSatisfied = requirements.maximumAwakenedTitles() == null
+                || character.getAllTitles().size() <= requirements.maximumAwakenedTitles();
+
+        boolean centelhasCeilingSatisfied = requirements.maximumCentelhas() == null
+                || character.getCentelhas() <= requirements.maximumCentelhas();
+
         boolean disjunctionSatisfied = requirements.anyOf().isEmpty()
                 || requirements.anyOf().stream().anyMatch(branch -> satisfies(branch, character, sheet));
 
@@ -259,7 +277,8 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
                 && skillSatisfied && featSatisfied && noForbiddenFeatHeld && traitsSatisfied
                 && titlesSatisfied && raceSatisfied && raceNotForbidden && creatureTypeSatisfied
                 && deitySatisfied && categoryCountSatisfied && regaliaCraftHistorySatisfied
-                && alignmentSatisfied && fameSatisfied && experienceSatisfied && disjunctionSatisfied;
+                && alignmentSatisfied && fameSatisfied && experienceSatisfied && awakenedTitlesCeilingSatisfied
+                && centelhasCeilingSatisfied && disjunctionSatisfied;
     }
 
     /**
@@ -631,6 +650,18 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      */
     default int resolveDifficultyReduction(final SkillType skillType, final Character character) {
         return 0;
+    }
+
+    /**
+     * {@link #resolveDifficultyReduction(SkillType, Character)} seeing the roller's {@link
+     * SceneContext} — what a clause scoped to the <em>opponent</em> needs ({@code
+     * VampiricoFeat#MESTRE_VAMPIRO}'s "quando efetuadas contra outros Vampiros a GD é reduzida em -1
+     * Nível", read off {@code SceneContext#getOpposedCharacter()}). Defaults to the shorter form; a
+     * {@code null} context reads as "condition not met".
+     */
+    default int resolveDifficultyReduction(final SkillType skillType, final Character character,
+                                           final SceneContext sceneContext) {
+        return resolveDifficultyReduction(skillType, character);
     }
 
     /**
@@ -1093,6 +1124,17 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      */
     default List<PendingAcquisition> resolveSessionEndAcquisitions(final Character character) {
         return List.of();
+    }
+
+    /**
+     * {@link #resolveSessionEndAcquisitions(Character)} with the holder's sheet — what an acquisition
+     * owed at an EXP mark needs ({@code DestinoFeat#CENTELHA_GRAN_AVENTYR_ANTECIPADA}'s "ao atingir a
+     * marca de 23EXP"). Defaults to the sheet-less form, per this interface's convention. {@code
+     * CharacterSheet#applySessionEndAcquisitions} calls this one.
+     */
+    default List<PendingAcquisition> resolveSessionEndAcquisitions(final Character character,
+                                                                   final org.aventyrs.core.sheet.CharacterSheet sheet) {
+        return resolveSessionEndAcquisitions(character);
     }
 
     /**
@@ -1614,6 +1656,44 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      */
     default boolean suppressesImpliedCondition(final ConditionType implier, final ConditionType implied) {
         return false;
+    }
+
+    /**
+     * PD this Talento adds to a Habilidade de Título's activation when opted into — {@code
+     * DestinoFeat#ACELERAR_HABILIDADE}'s and {@code #CENTELHA_DURADOURA}'s "+2PD". Paid on top of the
+     * ability's own cost, never sizing its effect. Asked of held Talentos only; 0 by default.
+     */
+    default int resolveTitleActivationSurcharge(final AventyrTitleAbility ability, final CombatantSheet activator,
+                                                final Set<Feat> activatedFeats) {
+        return 0;
+    }
+
+    /** PA this Talento takes off a Habilidade de Título's fixed Tempo de Ativação when opted into. 0 by default. */
+    default int resolveTitleActivationActionPointReduction(final AventyrTitleAbility ability,
+                                                          final CombatantSheet activator,
+                                                          final Set<Feat> activatedFeats) {
+        return 0;
+    }
+
+    /**
+     * Unidades of Duração this Talento adds to a Habilidade de Título when opted into — {@code
+     * DestinoFeat#CENTELHA_DURADOURA}'s "+2". Reported on {@code
+     * InteractionResult#getTitleAbilityDurationIncrease()}: each Habilidade's Duração is its own
+     * Interaction's, so the caller extends it. 0 by default.
+     */
+    default int resolveTitleAbilityDurationIncrease(final AventyrTitleAbility ability, final CombatantSheet activator,
+                                                    final Set<Feat> activatedFeats) {
+        return 0;
+    }
+
+    /**
+     * Whether this Talento may be opted into for an activation right now — {@code
+     * DestinoFeat#ACELERAR_HABILIDADE}'s "apenas uma vez a cada Rodada". Asked only when it is opted
+     * into; a refusal refuses the activation ({@code TITLE_ACTIVATION_OPT_IN_EXHAUSTED}). True by
+     * default.
+     */
+    default boolean permitsTitleActivationOptIn(final CombatantSheet activator) {
+        return true;
     }
 
     /**

@@ -189,8 +189,9 @@ class GeneralFeatEffectIntegrationTest {
                         .vigor(AttributeValue.builder().domain(AttributeDomain.VIGOR).base(3).build())
                         .build())
                 .build();
-        character.grantTitle(new Santo(List.of(), List.of()), TitleSlot.PRIMARY);
+        // Atrasar Despertar "deve ser adquirido antes de Despertar seus Títulos" — so before the Título.
         acquire(character, DestinoFeat.CORACAO_DE_FERRO_DO_DESTINO, DestinoFeat.ATRASAR_DESPERTAR);
+        character.grantTitle(new Santo(List.of(), List.of()), TitleSlot.PRIMARY);
         return character;
     }
 

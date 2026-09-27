@@ -2177,6 +2177,11 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     // --- Frenesi (Gigante Enfurecido) ---------------------------------------------------------
 
     @Override
+    public boolean hasActiveEffect(@NonNull final Class<? extends TemporaryEffect> type) {
+        return temporaryEffects.stream().anyMatch(effect -> type.isInstance(effect) && !effect.isExpired());
+    }
+
+    @Override
     public List<CombatantSheet> getDevouredVictims() {
         return List.copyOf(devouredVictims);
     }
