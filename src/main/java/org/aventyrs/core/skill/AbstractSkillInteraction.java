@@ -13,6 +13,7 @@ import org.aventyrs.core.character.DamageContribution;
 import org.aventyrs.core.character.DamageContributionSource;
 import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.character.SizeCategory;
+import org.aventyrs.core.character.services.AncestralCounselService;
 import org.aventyrs.core.character.services.CharacterSizeService;
 import org.aventyrs.core.character.services.CharacterSizeServiceImpl;
 import org.aventyrs.core.character.services.ChargeService;
@@ -47,6 +48,7 @@ import java.util.Optional;
 
 import static org.aventyrs.core.util.TranslatableMessages.SKILL_USE_PREVENTED;
 import static org.aventyrs.core.skill.Skill.UNTRAINED_PENALTY;
+import static org.aventyrs.core.util.TranslatableMessages.ANCESTRAL_COUNSEL_NOT_BANKED;
 import static org.aventyrs.core.util.TranslatableMessages.REQUIRED_SKILL_TRAIT_NOT_HELD;
 
 /**
@@ -316,6 +318,16 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
             validateRequestedTrait(character, characterSkill, skillRoll.getRequestedAbility(), attackSource);
         }
         int graduationValue = characterSkill.getGraduation().getGraduationValue();
+        // Agnação Ancestral: "são considerados treinados e especialistas nesta rolagem" — the untrained
+        // penalty goes (⚠️ read as 0 Graduações), the roll decomposes as an Especialista's, and the GD
+        // eases one nível below. Needs a banked counsel; the caller spends it after the roll.
+        boolean counselled = skillRoll != null && skillRoll.isCounselled();
+        if (counselled) {
+            if (target.getCharges(AncestralCounselService.COUNSEL) == 0) {
+                throw new IllegalOperationException(ANCESTRAL_COUNSEL_NOT_BANKED);
+            }
+            graduationValue = Math.max(0, graduationValue);
+        }
         List<SkillCompetencyAbility> skillCompetencyAbilities = allSkillCompetencyAbilities(target);
 
         AttributeDomain naturalDomain = characterSkill.getSkill().getAttributeDomain();
@@ -329,6 +341,9 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
         }
 
         int bonus = characterSkillService.getValueForRoll(characterSkill, character.getAttributes(), character.getRace(), attributeDomain);
+        if (counselled) {
+            bonus += graduationValue - characterSkill.getGraduation().getGraduationValue();
+        }
         // "Abandonando seus traços raciais" — the racial half of the governing Atributo goes for
         // as long as the Forma holds. Subtracted here rather than routed through
         // Character#getEffectiveAttributeTotal(domain, sheet): getValueForRoll reads the raw
@@ -365,6 +380,10 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
         bonus += sumEgoAdvantageSkillSpecificRollBonuses(character.getEgoAdvantages().values(), sceneContext, target);
         bonus += sizeCategoryRollBonus(characterSizeService.getEffectiveSizeCategory(target));
         bonus += sumAttributeDomainRollBonuses(character.getAttributeAbilities(), attributeDomain, character);
+        if (character.getRace() != null && !target.getRacialTraitSuppression().suppressesPhysicalTraits()) {
+            bonus += character.getRace().resolveGoverningAttributeRollBonus(attributeDomain, target, sceneContext,
+                    sheet -> characterSizeService.getEffectiveSizeCategory(sheet).getCategory());
+        }
         bonus += sumManoeuvreRollBonuses(character.getAttributeAbilities(), skillRoll);
         if (skillRoll != null && target.isFirstRollOfTurnFor(attributeDomain)) {
             bonus += sumFirstRollOfTurnBonuses(character.getAttributeAbilities(), attributeDomain);
@@ -376,6 +395,9 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                 .sum();
         difficultyReduction += sumAttributeDomainDifficultyReductions(character.getAttributeAbilities(), attributeDomain, character);
         difficultyReduction += sumFeatDifficultyReductions(character);
+        if (counselled) {
+            difficultyReduction += AncestralCounselService.DIFFICULTY_REDUCTION;
+        }
         // Transferir Rancor: "-1 Nível" on Perícia de Ataque and Domínio do Mana rolls, cumulative.
         if (skillType.isAttackSkill() || skillType == SkillType.DOMINIO_DO_MANA) {
             difficultyReduction += target.getTemporaryBonus(ModifierType.ATTACK_AND_CONJURATION_DIFFICULTY_REDUCTION);
@@ -402,13 +424,17 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                     result.damageBonus(damageBonus).damageBonusBreakdown(damage.breakdown()));
             // Transferir Rancor's "+1d6 pontos de danos" per stack — reported for the caller to roll.
             int extraDice = target.getTemporaryBonus(ModifierType.EXTRA_DAMAGE_DICE);
+            // Aceitar a Lacerto's "+1d6" on Armas Naturais while the Ferocidade is mimicked.
+            extraDice += target.getLacertoFerocities().stream()
+                    .mapToInt(ferocity -> ferocity.extraDamageDiceFor(target.getCharacter(), attackSource))
+                    .max().orElse(0);
             if (extraDice > 0) {
                 result.extraDamageDice(extraDice);
             }
         }
 
         if (skillRoll != null) {
-            boolean expert = skillRoll.getRequestedAbility() instanceof SkillSpecialization;
+            boolean expert = counselled || skillRoll.getRequestedAbility() instanceof SkillSpecialization;
             Optional<DifficultyLevel> reached = expert
                     ? DifficultyLevel.reachedByAsExpert(bonus + skillRoll.getTotal())
                     : DifficultyLevel.reachedBy(bonus + skillRoll.getTotal());

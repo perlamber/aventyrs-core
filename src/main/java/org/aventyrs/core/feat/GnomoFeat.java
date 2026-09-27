@@ -82,17 +82,20 @@ public enum GnomoFeat implements Feat {
      * Benefícios de Aprendizado Rápido até a sétima Graduação."
      */
     // The free Habilidade de Competência is real, recorded on ChosenSkillTraitsFeat.
-    // TODO: Aprendizado Rápido is itself unbuilt — Gnomo's own javadoc records it, and so do
-    //  Human's and Pequenino's: SkillGraduationService#getUpgradeCost takes no Race and has no
-    //  notion of a per-race discount, and nothing records which Perícias were chosen for it. A
-    //  Talento extending its reach has nothing to extend.
+    // The extension is real: resolveQuickLearningMaxGraduation carries Aprendizado Rápido's
+    // discount to the seventh Graduação (SkillGraduationService#getUpgradeCost(Character, SkillType)).
     SABICHAO(
             "Você aprende uma Habilidade de Competência de uma Perícia treinada. Você estende os "
                     + "Benefícios de Aprendizado Rápido até a sétima Graduação.",
             FeatRequirements.builder()
                     .attributeDomain(AttributeDomain.GNOSE)
                     .requiredAttributeValue(4)
-                    .build()),
+                    .build()) {
+        @Override
+        public Integer resolveQuickLearningMaxGraduation(final Character character) {
+            return EXTENDED_QUICK_LEARNING_GRADUATION;
+        }
+    },
 
     /**
      * "A GD de suas rolagens de Profissão é reduzida em -1 nível." Real — unconditional, one
@@ -135,6 +138,9 @@ public enum GnomoFeat implements Feat {
 
     private static final int DUENDE_MAGIC_DEFENSE_BONUS = 1;
     private static final int PROFISSAO_DIFFICULTY_REDUCTION = 1;
+
+    /** Sabichão: "Você estende os Benefícios de Aprendizado Rápido até a sétima Graduação." */
+    private static final int EXTENDED_QUICK_LEARNING_GRADUATION = 7;
 
     private final String description;
     private final FeatRequirements featRequirements;

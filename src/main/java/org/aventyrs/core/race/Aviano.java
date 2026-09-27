@@ -1,15 +1,16 @@
 package org.aventyrs.core.race;
 
-import org.aventyrs.core.character.MovementMode;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.character.MovementMode;
 import org.aventyrs.core.feat.FeatCategory;
 import org.aventyrs.core.feat.FeatPool;
 import org.aventyrs.core.feat.MonstruosoFeat;
 import org.aventyrs.core.feat.StartingFeatSlot;
+import org.aventyrs.core.item.NaturalWeapon;
 import org.aventyrs.core.sheet.DlcRuleset;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
 
@@ -24,7 +25,8 @@ import java.util.Map;
  * {@code AcquiredChoice} (the choice feeds this object's own {@link #getFixedAttributeBonuses()}).
  * It is <b>not</b> a Mestiço: nothing about it picks a parent {@link Race}.
  *
- * <p>Three of this race's traits are mechanically real today:
+ * <p>Garras Afiadas is real — the feet count as that Arma Natural ({@link
+ * #getGrantedNaturalWeapons()}). Three more of this race's traits are mechanically real today:
  * <ul>
  *   <li><b>{@link #getFixedAttributeBonuses()}</b> — +1 Destreza for every Aviano, plus the
  *   chosen {@link Subtipo}'s own: +1 Força for a {@link Subtipo#RAPINANTE}, +1 Vigor for a
@@ -59,11 +61,6 @@ import java.util.Map;
  *   <li><b>Pés Hábeis e Poderosos</b> (holding items and performing manual actions with the feet)
  *   — the flip side of Braços Alados' penalty, so it is blocked on the same missing limb concept;
  *   with neither modeled, the pair currently nets out to no mechanical effect at all.</li>
- *   <li><b>Garras Afiadas</b> (the feet count as the Arma Natural "Garras Afiadas") — {@code
- *   org.aventyrs.core.item.Weapon} exists, but no weapon <i>catalog</i> does (only {@code
- *   ArmorItem} is authored), and nothing marks a weapon as an Arma Natural in the first place —
- *   the same two-markers-missing gap CLAUDE.md's "Classifying an attack as Desarmado/Arma
- *   Natural" row names.</li>
  *   <li><b>Visão no Escuro</b> — no vision/senses concept exists in this core, same gap {@code
  *   Anao}'s/{@code Elfo}'s own already cite. Carried in {@link
  *   AvianosRacialAbility#VISAO_ALEM_DO_ALCANCE}'s description text rather than dropped.</li>
@@ -148,6 +145,12 @@ public class Aviano implements Race {
     @Override
     public List<SkillCompetencyAbility> getRacialAbilities() {
         return List.of(AvianosRacialAbility.VISAO_ALEM_DO_ALCANCE);
+    }
+
+    /** Garras Afiadas: "Os pés dos Avianos são considerados Armas Naturais Garras Afiadas." */
+    @Override
+    public List<NaturalWeapon> getGrantedNaturalWeapons() {
+        return List.of(NaturalWeapon.GARRAS_AFIADAS);
     }
 
     @Override

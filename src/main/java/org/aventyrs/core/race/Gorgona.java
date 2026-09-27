@@ -56,30 +56,14 @@ import java.util.Map;
  *   Item/Equipamento entity for the Arma
  *   Natural itself (same gap {@code Gigantes}' own Tudo é Frágil and {@code
  *   ProfissaoCompetencyAbility#FORJA_VULCANA} cite).</li>
- *   <li><b>Olhar de Lacerto</b> (spend 2PA + 1PD for an Ataque Corpo-a-Corpo roll, em até
- *   Distância Muito Curta, against the target's DM, dealing 1d6+metade do Carisma Dano Mágico
- *   Elemental: Terra and a -2PA malus for 2 Rodadas; in Monstruosa form, gains the Corrente de
- *   Efeitos "Olhar Petrificador" — +1d6 dano, 2 Rodadas de petrificação, permanent
- *   petrification if it reduces the target to 0 PV or less, GD +1 nível per repeat attempt
- *   against the same target) — the single densest gap of any racial trait catalogued so far:
- *   {@code AtaqueCorpoACorpoInteraction} has no {@code attackTarget}-style parameter the way
- *   {@code AtaqueADistanciaInteraction} does (same "melee side isn't wired" gap CLAUDE.md's
- *   Abatedores de Gigantes section already flags), a target's DM lookup is "left to a layer
- *   above this core" (same as {@code Elfo}'s Linhagem Feérica), this core deliberately never
- *   rolls its own dice (the 1d6 itself is a caller's job, per the {@code skill} package-info) —
- *   {@link org.aventyrs.core.character.DamageType#ELEMENTAL} paired with {@link
- *   org.aventyrs.core.character.Element#TERRA} can now classify the dano itself as "Dano
- *   Mágico Elemental: Terra", but that alone doesn't unblock this trait given every other gap
- *   listed here — a temporary malus *inflicted on
- *   the target's* Pontos de Ação has no equivalent of {@code CombatantSheet
- *   #grantTemporaryBonus} (that mechanism only ever grants a bonus, self- or ally-side, never a
- *   malus on an opponent), Corrente de Efeitos is an entirely unbuilt system (same gap {@code
- *   AutocontroleAdvantage#RESOLUTO} already cites), the petrification's Encantamento
- *   classification needs the same missing piece as Imunidade a Encantamentos above, and the
- *   "GD aumentada em +1 nível por tentativa" clause needs a GD-*increase* expression and a
- *   per-target attempt counter, neither of which exist (this exact "GD-increase expression" gap
- *   is called out generically in CLAUDE.md's Range/SceneContext section, still with no concrete
- *   ability implementing it).</li>
+ *   <li><b>Olhar de Lacerto</b>'s leftovers — the gaze itself is real ({@link OlharDeLacerto}, the
+ *   attack source, and {@code OlharDeLacertoService}: 2PA reported, 1PD paid, an Ataque
+ *   Corpo-a-Corpo against the DM for 1d6 + metade do Carisma Dano Mágico Elemental: Terra, -2PA
+ *   for 2 Rodadas on a hit, and in Forma Monstruosa the Olhar Petrificador's +1d6 and a {@code
+ *   sheet.Petrification} Encantamento, permanent at 0 PV, with each attempt's GD rise counted per
+ *   target). ⚠️ That count is per combat, a reading. What remains: petrification does not refuse
+ *   Perícia rolls (no condition can veto a roll), and the GD rise is reported for the caller, since
+ *   a foe's Defesa is a caller-supplied number.</li>
  *   <li><b>Visão no Escuro</b> — no vision/senses concept exists in this core, same gap {@code
  *   Anao}'s/{@code Elfo}'s own Visão no Escuro already cite.</li>
  * </ul>

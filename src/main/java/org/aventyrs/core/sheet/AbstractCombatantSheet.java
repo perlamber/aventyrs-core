@@ -244,6 +244,10 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     @Getter(AccessLevel.NONE)
     private final Set<Object> affectedThisCombat = new HashSet<>();
 
+    /** Bocarra's swallowed victims — see {@link #getDevouredVictims}. */
+    @Getter(AccessLevel.NONE)
+    private final List<CombatantSheet> devouredVictims = new ArrayList<>();
+
     /** Effects that end with the combat — see {@link #applyEffectUntilCombatEnds}. */
     @Getter(AccessLevel.NONE)
     private final List<TemporaryEffect> combatScopedEffects = new ArrayList<>();
@@ -1098,6 +1102,8 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
                 .sum();
         // A Frenesi's numbers (see Frenzy): every timed-bonus reader sees them with nothing of its own.
         total += getFrenzy().map(frenzy -> frenzy.bonusFor(type)).orElse(0);
+        // Ferocidade de Lacerto — the natural state and a mimicked copy grant the same numbers once.
+        total += getLacertoFerocities().stream().findFirst().map(ferocity -> ferocity.bonusFor(type)).orElse(0);
         // Desprezar Danos's Meio-Dano only holds "Enquanto seus PV forem menores ou iguais à zero",
         // so it is judged here, live, rather than stored on the Frenzy.
         if (type == ModifierType.HALF_DAMAGE && scornsDamageNow()) {
@@ -2169,6 +2175,44 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     }
 
     // --- Frenesi (Gigante Enfurecido) ---------------------------------------------------------
+
+    @Override
+    public List<CombatantSheet> getDevouredVictims() {
+        return List.copyOf(devouredVictims);
+    }
+
+    @Override
+    public void addDevouredVictim(@NonNull final CombatantSheet victim) {
+        devouredVictims.add(victim);
+    }
+
+    @Override
+    public boolean removeDevouredVictim(final CombatantSheet victim) {
+        return devouredVictims.remove(victim);
+    }
+
+    @Override
+    public Optional<Devoured> getDevoured() {
+        return temporaryEffects.stream()
+                .filter(Devoured.class::isInstance)
+                .map(Devoured.class::cast)
+                .filter(devoured -> !devoured.isExpired())
+                .findFirst();
+    }
+
+    @Override
+    public List<LacertoFerocity> getLacertoFerocities() {
+        return temporaryEffects.stream()
+                .filter(LacertoFerocity.class::isInstance)
+                .map(LacertoFerocity.class::cast)
+                .filter(ferocity -> !ferocity.isExpired())
+                .toList();
+    }
+
+    @Override
+    public boolean endNaturalLacertoFerocity() {
+        return temporaryEffects.removeIf(effect -> effect instanceof LacertoFerocity ferocity && !ferocity.isMimicked());
+    }
 
     @Override
     public Optional<Frenzy> getFrenzy() {

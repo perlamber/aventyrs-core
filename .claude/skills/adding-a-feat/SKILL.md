@@ -337,6 +337,14 @@ identical hook. This mirrors `SkillCompetencyAbility`'s own default-method-plus-
 just scoped one level narrower (per-tree-enum instead of interface-wide) until a second real
 consumer earns the wider scope.
 
+**A Talento that widens a racial trait** reads that trait's own service or hook rather than
+getting a new `Feat` hook, when only that trait's service would ever ask: the `OgricoFeat` tree is
+read by catalog entry inside `DevourService`, `BestialFeat#ACEITAR_A_LACERTO` inside
+`LacertoFerocityService#mimic`. A hook earns its place on `Feat` when two trees need it —
+`resolveLacertoFerocityRound`/`preventsEnteringLacertoFerocity` (Górgona, Indômito),
+`resolveQuickLearningMaxGraduation` (Gnomo, Humano). A clause scoped to a racial *attack* matches
+its `AttackSource` (`attackSource == OlharDeLacerto.INSTANCE`) in the existing overloads.
+
 If the bonus is a flat Vantagem-style +2, or a roll-scoped bonus rather than a Dano Base one,
 check whether it fits an existing hook first (`Feat` currently has none of
 `SkillCompetencyAbility`'s roll-scoped `resolve*` hooks — if a Talento needs one, that's a

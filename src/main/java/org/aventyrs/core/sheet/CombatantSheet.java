@@ -1129,6 +1129,39 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
      */
     int consumeRepositionThisRound();
 
+    // --- Bocarra (Ogro) ------------------------------------------------------------------------
+
+    /**
+     * The combatants this one has swallowed and still holds — Bocarra's Devorar Inteiro, each
+     * carrying a {@link Devoured} naming this sheet as its captor. Kept in step by {@code
+     * DevourService}; the two mutators below are its and validate nothing.
+     */
+    List<CombatantSheet> getDevouredVictims();
+
+    void addDevouredVictim(CombatantSheet victim);
+
+    boolean removeDevouredVictim(CombatantSheet victim);
+
+    /** The {@link Devoured} this combatant is held by, if swallowed. */
+    Optional<Devoured> getDevoured();
+
+    // --- Ferocidade de Lacerto (Indômito) -----------------------------------------------------
+
+    /**
+     * Every {@link LacertoFerocity} this combatant is under — the natural state, a mimicked copy
+     * ({@code BestialFeat#ACEITAR_A_LACERTO}), or both. Its bonuses count once however many are
+     * held. Entered and ended through {@code LacertoFerocityService}.
+     */
+    List<LacertoFerocity> getLacertoFerocities();
+
+    /** Whether any {@link LacertoFerocity} is running on this combatant. */
+    default boolean isFerocious() {
+        return !getLacertoFerocities().isEmpty();
+    }
+
+    /** Ends the natural Ferocidade de Lacerto, if running — never a mimicked copy; {@code true} if it did. */
+    boolean endNaturalLacertoFerocity();
+
     // --- Frenesi (Gigante Enfurecido) ---------------------------------------------------------
 
     /**

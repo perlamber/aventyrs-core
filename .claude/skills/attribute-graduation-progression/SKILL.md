@@ -36,6 +36,12 @@ invariants** — apply.
   Graduação (e.g. 6→7 costs 3.5 — a `BigDecimal`, genuinely fractional, not rounded) — a
   different formula from Attributes, so don't share `getUpgradeCost` logic between the two
   services or assume one mirrors the other's numbers.
+- **Aprendizado Rápido discounts a Graduação** (0.0.67). `getUpgradeCost(CharacterSkill)` is the
+  race-less base; `getUpgradeCost(Character, SkillType)` is what `upgradeGraduation` spends, and
+  takes `QUICK_LEARNING_DISCOUNT` (0.5) off when the Raça `hasQuickLearning()`, the Perícia is in
+  `Character#getQuickLearningSkills()` (a creation-time pick), and the target Graduação is from 2
+  up to 3 — or the highest `Feat#resolveQuickLearningMaxGraduation` (Sabichão 7, Aprendizado
+  Rápido e Contínuo 5/7). Price a Graduação through the `Character` overload whenever you have one.
 - Both `upgradeBase`/`upgradeGraduation` take the Character's data (`AttributeValue`/
   `CharacterSkill` in one, `Character` in the other) *and* a separate `CharacterSheet`
   parameter, mirroring `RestService.applyRest(Character, CharacterSheet, ...)`'s existing

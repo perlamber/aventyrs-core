@@ -8,14 +8,11 @@ import java.util.List;
 import java.util.function.Supplier;
 
 /**
- * Talentos Humanos — all three about the Humano's defining Característica, <b>Aprendizado
- * Rápido</b>, and all three blocked on it.
- *
- * <p>{@code Human}'s own javadoc records why it is unbuilt, and nothing here changes that:
- * {@code SkillGraduationService#getUpgradeCost} takes no {@code Race} and has no notion of a
- * per-race discount, and nothing records <i>which</i> Perícias a character chose at creation for
- * the discount to scope itself to. Two of these Talentos extend how far that discount reaches
- * and the third replaces it outright, so none has anything to act on.
+ * Talentos Humanos — each shaped around the Humano's defining Característica, <b>Aprendizado
+ * Rápido</b>, now real: {@code Race#hasQuickLearning}, the Perícias recorded on {@code
+ * Character#getQuickLearningSkills()}, and the discount in {@code
+ * SkillGraduationService#getUpgradeCost(Character, SkillType)}. {@link #APRENDIZADO_RAPIDO_E_CONTINUO}
+ * extends it; the other two rewrite other schedules and stay blocked on their own TODOs.
  *
  * <p><b>The mutual exclusion between {@link #APRENDIZADO_RAPIDO_E_CONTINUO} and {@link
  * #LIMIAR_DA_EVOLUCAO} is enforced.</b> "Um mesmo personagem não pode adquirir" both is an
@@ -29,8 +26,8 @@ public enum HumanoFeat implements Feat {
      * "Sua Habilidade Aprendizado Rápido te beneficia até a quinta Graduação em Perícia, após
      * Despertar um Título Aventyr você estende os benefícios até a sétima."
      */
-    // TODO: Aprendizado Rápido is unbuilt — see the class javadoc. This Talento only widens the
-    //  Graduação range the discount covers, so there is nothing to widen.
+    // The widening is real: resolveQuickLearningMaxGraduation carries Aprendizado Rápido to the
+    // fifth Graduação, the seventh once a Título is Desperto.
     // TODO: the second-Título clause grants an Especialização or Habilidade de Competência per
     //  benefited Perícia — the "grant an extra acquisition slot" gap, here in bulk and with a
     //  per-Perícia choice between two kinds of slot.
@@ -46,7 +43,12 @@ public enum HumanoFeat implements Feat {
             () -> FeatRequirements.builder()
                     .requiredRace(Human.class)
                     .forbiddenFeat(limiarDaEvolucao())
-                    .build()),
+                    .build()) {
+        @Override
+        public Integer resolveQuickLearningMaxGraduation(final Character character) {
+            return character.getAllTitles().isEmpty() ? CONTINUO_GRADUATION : CONTINUO_AWAKENED_GRADUATION;
+        }
+    },
 
     /**
      * "Você adquire novas Habilidades de Competência ou Especializações de Perícias com 3, 5, 7 e
@@ -102,6 +104,12 @@ public enum HumanoFeat implements Feat {
     private static Feat limiarDaEvolucao() {
         return LIMIAR_DA_EVOLUCAO;
     }
+
+    /** Aprendizado Rápido e Contínuo: "te beneficia até a quinta Graduação"… */
+    private static final int CONTINUO_GRADUATION = 5;
+
+    /** …"após Despertar um Título Aventyr você estende os benefícios de Aprendizado até a sétima". */
+    private static final int CONTINUO_AWAKENED_GRADUATION = 7;
 
     private final String description;
     /**

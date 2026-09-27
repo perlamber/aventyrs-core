@@ -41,13 +41,32 @@ public class SkillGraduationServiceImpl implements SkillGraduationService {
     }
 
     @Override
+    public BigDecimal getUpgradeCost(final Character character, final SkillType skillType) {
+        CharacterSkill characterSkill = character.getSkills().get(skillType);
+        BigDecimal cost = getUpgradeCost(characterSkill);
+        int targetGraduation = characterSkill.getGraduation().getGraduationValue() + 1;
+        boolean quickLearning = character.getRace() != null && character.getRace().hasQuickLearning()
+                && character.getQuickLearningSkills().contains(skillType)
+                && targetGraduation >= QUICK_LEARNING_FIRST_GRADUATION
+                && targetGraduation <= quickLearningMaxGraduation(character);
+        return quickLearning ? cost.subtract(QUICK_LEARNING_DISCOUNT) : cost;
+    }
+
+    private static int quickLearningMaxGraduation(final Character character) {
+        return character.getFeats().stream()
+                .map(feat -> feat.resolveQuickLearningMaxGraduation(character))
+                .filter(java.util.Objects::nonNull)
+                .reduce(QUICK_LEARNING_MAX_GRADUATION, Math::max);
+    }
+
+    @Override
     public CharacterSkill upgradeGraduation(final Character character, final CharacterSheet characterSheet, final SkillType skillType) throws IllegalOperationException {
         CharacterSkill characterSkill = character.getSkills().get(skillType);
         int targetGraduation = characterSkill.getGraduation().getGraduationValue() + 1;
         if (targetGraduation > getMaxGraduation(character, skillType)) {
             throw new IllegalOperationException(SKILL_GRADUATION_AT_MAXIMUM);
         }
-        characterSheet.useExperience(getUpgradeCost(characterSkill));
+        characterSheet.useExperience(getUpgradeCost(character, skillType));
         characterSkill.increaseGraduation(1);
         return characterSkill;
     }

@@ -401,4 +401,31 @@ public class TranslatableMessages {
 
     /** A Saquear named a foe whose PV are still above zero. */
     public static final String LOOT_TARGET_NOT_DEFEATED = "LOOT_TARGET_NOT_DEFEATED";
+
+    /** A Ferocidade de Lacerto was declined by a combatant with no such Característica. */
+    public static final String LACERTO_FEROCITY_NOT_HELD = "LACERTO_FEROCITY_NOT_HELD";
+
+    /** Aceitar a Lacerto was used by a combatant who does not hold it. */
+    public static final String LACERTO_FEROCITY_MIMIC_NOT_GRANTED = "LACERTO_FEROCITY_MIMIC_NOT_GRANTED";
+
+    /** Aceitar a Lacerto was used outside combat or before its third Rodada. */
+    public static final String LACERTO_FEROCITY_MIMIC_TOO_EARLY = "LACERTO_FEROCITY_MIMIC_TOO_EARLY";
+
+    /** Aceitar a Lacerto was used a second time in the same Cena de Combate. */
+    public static final String LACERTO_FEROCITY_MIMIC_ALREADY_USED = "LACERTO_FEROCITY_MIMIC_ALREADY_USED";
+
+    /** A Bocarra bite was declared by a combatant without the Característica. */
+    public static final String BOCARRA_NOT_HELD = "BOCARRA_NOT_HELD";
+
+    /** A roll was made with Agnação Ancestral by a combatant who banked no counsel. */
+    public static final String ANCESTRAL_COUNSEL_NOT_BANKED = "ANCESTRAL_COUNSEL_NOT_BANKED";
+
+    /** Agnação Ancestral was performed by a combatant without the Característica. */
+    public static final String ANCESTRAL_COUNSEL_NOT_HELD = "ANCESTRAL_COUNSEL_NOT_HELD";
+
+    /** Agnação Ancestral was performed during a Cena de Combate. */
+    public static final String ANCESTRAL_COUNSEL_IN_COMBAT = "ANCESTRAL_COUNSEL_IN_COMBAT";
+
+    /** Olhar de Lacerto was declared by a combatant without the Característica. */
+    public static final String OLHAR_DE_LACERTO_NOT_HELD = "OLHAR_DE_LACERTO_NOT_HELD";
 }

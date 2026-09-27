@@ -281,17 +281,14 @@ public enum BestialFeat implements Feat {
      * "A partir da terceira Rodada de Cenas de Combate… você pode gastar temporariamente 1 ponto
      * de Autocontrole e Mimetizar os Efeitos da Ferocidade de Lacerto por Instinto Rodadas."
      *
-     * <p>Its Pré-requisito — three or more Talentos Bestiais — is real and enforced, so the tree's
-     * own ladder works even though nothing it climbs to does.
+     * <p>Its Pré-requisito — three or more Talentos Bestiais — is real and enforced.
      */
-    // TODO: Ferocidade de Lacerto is unbuilt — Indomito's own javadoc records why it is withheld
-    //  rather than approximated, and this Talento mimics it, so it inherits every blocker.
-    // TODO: the Autocontrole spend is expressible (EgoPointsService#useEgoPointsForEffect), but
-    //  there is no effect for it to buy. ("Apenas uma vez a cada Cena de Combate" is not the
-    //  blocker — getActionsThisCena/startNewScene give a Cena boundary.)
-    // TODO: "+1d6 pontos de dano adicionais" to Armas Naturais — the Arma Natural concept now
-    //  exists (NaturalWeapon), but this core rolls no dice, and the bonus applies only while
-    //  Mimetizando a Ferocidade de Lacerto, a form/state nothing tracks.
+    // Real through LacertoFerocityService#mimic: from the third combat Rodada, 1 temporary
+    // Autocontrole buys a mimicked LacertoFerocity for Instinto Rodadas, once per combat. It grants
+    // the same RD and Vantagens, and its "+1d6" on Armas Naturais is reported on
+    // InteractionResult#getExtraDamageDice for the caller to throw. The Ação Livre is the caller's.
+    // TODO: the Ferocidade's forced targeting and concentration block are mimicked too, and stay
+    //  unbuilt for the reasons Indomito's javadoc gives.
     ACEITAR_A_LACERTO(
             "A partir da terceira Rodada de Cenas de Combate, como uma Ação Livre, você pode "
                     + "gastar temporariamente 1 ponto de Autocontrole e Mimetizar os Efeitos da "

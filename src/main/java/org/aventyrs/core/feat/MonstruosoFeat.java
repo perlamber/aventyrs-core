@@ -356,8 +356,8 @@ public enum MonstruosoFeat implements Feat {
      * {@code AbstractSkillInteraction} now hands the delivery channel. Untyped, so it flattens to
      * {@code FISICO} in {@code DamageBonus#total}, the established reading of "+N em rolagens de
      * Danos". {@code SELVAGERIA} later converts this into a Dano Base increase — the same
-     * exclusive-conversion shape as {@code AtaqueCorpoACorpoCompetencyAbility#BRUTALIDADE} — but
-     * that half stays blocked on the Ferocidade Característica Racial having no representation.
+     * exclusive-conversion shape as {@code AtaqueCorpoACorpoCompetencyAbility#BRUTALIDADE} — so
+     * this bonus is empty once {@code SELVAGERIA} is held.
      */
     FEROCIDADE(
             "Você recebe Bônus de +1 em rolagens de danos de suas Armas Naturais, este Bônus "
@@ -371,10 +371,11 @@ public enum MonstruosoFeat implements Feat {
         public Optional<DamageBonus> resolveDamageBonus(final SkillType attackingSkillType, final SceneContext sceneContext,
                                                          final CombatantSheet attackTarget, final Character actor,
                                                          final AttackSource attackSource) {
-            if (actor == null || !(attackSource instanceof Weapon weapon) || !actor.treatsAsNaturalWeapon(weapon)) {
+            if (actor == null || !(attackSource instanceof Weapon weapon) || !actor.treatsAsNaturalWeapon(weapon)
+                    || actor.getFeats().contains(SELVAGERIA)) {
                 return Optional.empty();
             }
-            return Optional.of(new DamageBonus(FEROCIDADE_BASE_BONUS + actor.getAllTitles().size(), DamageType.FISICO));
+            return Optional.of(new DamageBonus(ferocidadeBonus(actor), DamageType.FISICO));
         }
     },
 
@@ -407,10 +408,11 @@ public enum MonstruosoFeat implements Feat {
      * the per-character view that also catches a Talento-reclassified weapon, so a wielded blade
      * or an Ataque Desarmado (a {@code null} weapon) gets nothing.
      */
-    // TODO: "os Bônus de Ferocidade são convertidos em Dano Base" stays unbuilt — Ferocidade
-    //  (the Característica Racial) has no representation, and this is a *conversion* of the
-    //  FEROCIDADE Talento's own dano bonus (now real), not that bonus itself. Model it on
-    //  AtaqueCorpoACorpoCompetencyAbility#BRUTALIDADE's exclusive-conversion shape once it exists.
+    // "Os Bônus … concedidos por Ferocidade" are the FEROCIDADE Talento's (its Pré-requisito), not
+    // the Ferocidade de Lacerto, which grants a Vantagem rather than a Bônus. The conversion is
+    // exclusive, as BRUTALIDADE's is: FEROCIDADE stops granting its flat bonus once this is held,
+    // and the same figure is added to the Dano Base. ⚠️ One step of Dano Base per point of bonus is
+    // BRUTALIDADE's own rate, read across; this clause states none.
     SELVAGERIA(
             "O Dano Base de todas as suas Armas Naturais aumenta em +1. Os Bônus em danos "
                     + "concedidos por Ferocidade são convertidos em Aumento de Dano Base.",
@@ -421,11 +423,19 @@ public enum MonstruosoFeat implements Feat {
                     .build()) {
         @Override
         public int resolveDamageBaseIncrease(final Character character, final Weapon weapon) {
-            return character.treatsAsNaturalWeapon(weapon) ? 1 : 0;
+            if (!character.treatsAsNaturalWeapon(weapon)) {
+                return 0;
+            }
+            return 1 + (character.getFeats().contains(FEROCIDADE) ? ferocidadeBonus(character) : 0);
         }
     };
 
     private static final int PELE_RIJA_BONUS = 2;
+
+    /** FEROCIDADE's "+1 … aumenta cumulativamente em +1 para cada Título Aventyr … Desperto". */
+    private static int ferocidadeBonus(final Character character) {
+        return FEROCIDADE_BASE_BONUS + character.getAllTitles().size();
+    }
 
     /** DUAS_CABECAS' "Gnose ou Instinto" — and the pair CERBERO grants the other half of. */
     private static final List<AttributeDomain> DUAS_CABECAS_OPTIONS =

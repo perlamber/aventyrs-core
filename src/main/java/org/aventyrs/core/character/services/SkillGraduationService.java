@@ -32,9 +32,26 @@ public interface SkillGraduationService {
      */
     BigDecimal getUpgradeCost(CharacterSkill currentSkill);
 
+    /** Aprendizado Rápido: "custam 0.5EXP a menos". */
+    BigDecimal QUICK_LEARNING_DISCOUNT = new BigDecimal("0.5");
+
+    /** Aprendizado Rápido reaches "a Segunda e Terceira Graduação" — from the second… */
+    int QUICK_LEARNING_FIRST_GRADUATION = 2;
+
+    /** …to the third, unless a Talento extends it ({@code Feat#resolveQuickLearningMaxGraduation}). */
+    int QUICK_LEARNING_MAX_GRADUATION = 3;
+
+    /**
+     * {@link #getUpgradeCost(CharacterSkill)} for character's skillType, less Aprendizado Rápido's
+     * 0.5 EXP when their Raça has it ({@code Race#hasQuickLearning}), skillType is one they recorded
+     * for it ({@code Character#getQuickLearningSkills()}), and the target Graduação is from the second
+     * up to the highest their Raça and Talentos reach. What {@link #upgradeGraduation} spends.
+     */
+    BigDecimal getUpgradeCost(Character character, SkillType skillType);
+
     /**
      * Raises character's CharacterSkill for skillType by one point, spending
-     * {@link #getUpgradeCost} from characterSheet's unused experience — this is a
+     * {@link #getUpgradeCost(Character, SkillType)} from characterSheet's unused experience — this is a
      * Character-progression action, so it can only happen in the context of a
      * {@link CharacterSheet}.
      *

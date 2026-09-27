@@ -8,6 +8,7 @@ import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.SizeCategory;
 import org.aventyrs.core.feat.FeatCategory;
 import org.aventyrs.core.feat.StartingFeatSlot;
+import org.aventyrs.core.item.NaturalWeapon;
 import org.aventyrs.core.sheet.DlcRuleset;
 
 import java.util.List;
@@ -26,11 +27,18 @@ import java.util.Map;
  * "the choice space is small and fixed at compile time" reasoning CLAUDE.md's third
  * acquisition-choice pattern describes.
  *
- * <p>Three of this race's traits are mechanically real today: {@link
+ * <p>Three of this race's traits are plain data: {@link
  * #getFixedAttributeBonuses()}, {@link #getCreatureType()} ({@link CreatureType#MONSTRUOSO}) and
  * {@link #getBaseSizeCategory()}/{@link #generateEmptyCharacter} ({@link SizeCategory#PLUS_ONE},
- * "grandes e imponentes"). Everything else needs a system this core doesn't have yet:
+ * "grandes e imponentes").
  *
+ * <p><b>Mordida Poderosa</b> is real — Presas Longas, through {@link #getGrantedNaturalWeapons()}
+ * — and so is <b>Bocarra</b>, the bite it upgrades: {@code DevourService} pays its 1PD, reports the
+ * +1PA and the Vantagem, and carries the Corrente de Efeitos Devorar Inteiro ({@code
+ * effect.DevorarInteiro}), with the stomach capacity, the digestion damage and escape, and the
+ * digestion hours all computed. Digestion time is reported only — this core has no clock in hours.
+ *
+ * <p>Everything else needs a system this core doesn't have yet:
  * <ul>
  *   <li><b>Lei do Mais Forte</b> (Graduações em Perícias não baseadas em Força ou Destreza custam
  *   +0.5 EXP até a terceira; Perícias baseadas em Força custam -0.5 EXP até a quinta) — two
@@ -38,27 +46,14 @@ import java.util.Map;
  *   SkillGraduationService#getUpgradeCost} takes no {@link Race} at all and so has no notion of a
  *   race-specific discount (the same gap {@code Human}'s/{@code Goblin}'s Aprendizado Rápido
  *   cite), and the discount is scoped by the Perícia's governing {@link AttributeDomain} rather
- *   than by a named Perícia — the same "scoped by AttributeDomain, which nothing supports"
- *   shape {@code Gigantes}' Cuidado para não Quebrar already flags, here on the cost side. The
+ *   than by a named Perícia — {@code Race#resolveGoverningAttributeRollBonus} scopes a roll by
+ *   its governing Atributo now ({@code Gigantes}' Cuidado para não Quebrar), but nothing does so on
+ *   the cost side. The
  *   0.5 itself is representable: Graduação cost is already a {@code BigDecimal}, unlike {@link
  *   #getNewFeatCost}'s {@code int}.</li>
  *   <li><b>Carnívoros Insaciáveis</b> (must eat twice as often, in double portions) — nothing in
  *   this core tracks food, hunger or upkeep of any kind; the same "no Fadiga/asfixia" family of
  *   gap. Purely narrative today.</li>
- *   <li><b>Mordida Poderosa</b> (Presas Longas as an Arma Natural) — no weapon catalog is
- *   authored (only {@code ArmorItem}) and nothing marks a weapon as an Arma Natural, the
- *   two-markers-missing gap CLAUDE.md's "Classifying an attack as Desarmado/Arma Natural" row
- *   names.</li>
- *   <li><b>Bocarra</b> (+1PA and 1PD before a bite attack buys Vantagem plus the Corrente de
- *   Efeitos "Devorar Inteiro": the target is swallowed, takes 1 + metade do Vigor do Ogro per
- *   Rodada, and escapes by dealing double the Ogro's Vigor in damage from inside; capacity and
- *   digestion time both scale off Vigor and the victim's Categoria de Tamanho) — the densest gap
- *   of this race by far. Corrente de Efeitos is an entirely unbuilt system ({@code
- *   EffectChainService} resolves the shared 13-entry catalog, and "Devorar Inteiro" is not one of
- *   them), "a creature is inside another creature" is a containment relation nothing models,
- *   paying extra PA to upgrade a single attack is the "this one delivered attack" scoping gap,
- *   and the per-Rodada damage would need a {@code TemporaryEffect} owned by the <i>swallower</i>
- *   rather than the victim.</li>
  *   <li><b>Visão no Escuro</b> — no vision/senses concept exists in this core.</li>
  *   <li><b>Idiomas</b> (ôgrico + o do Antecedente) — same "no Language/Idioma concept exists" gap
  *   as every other race.</li>
@@ -121,6 +116,12 @@ public class Ogro implements Race {
     @Override
     public Character.CharacterBuilder generateEmptyCharacter(final List<DlcRuleset> dlcRulesetList) {
         return Character.builder().sizeCategory(getBaseSizeCategory());
+    }
+
+    /** Mordida Poderosa: "Possuem Presas Longas como armas naturais." */
+    @Override
+    public List<NaturalWeapon> getGrantedNaturalWeapons() {
+        return List.of(NaturalWeapon.PRESAS_LONGAS);
     }
 
     @Override

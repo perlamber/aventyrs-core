@@ -55,9 +55,9 @@ import org.aventyrs.core.scene.Range;
  * <p><b>No ability or equipment source yet</b>, each deliberately absent rather than forgotten:
  * <ul>
  *   <li>no {@code SkillCompetencyAbility}/{@code AttributeAbility} range hook — no constant on
- *   either states an unconditional "+N níveis de distância" clause today (the closest, {@code
- *   GorgonaFeat#MARCA_DA_MALDICAO}'s Olhar de Lacerto reach, is blocked on the ability itself
- *   being unbuilt), so the hook is added with its first real consumer;</li>
+ *   either states an unconditional "+N níveis de distância" clause today ({@code
+ *   GorgonaFeat#MARCA_DA_MALDICAO}'s Olhar de Lacerto reach is a {@code Feat} one, read by {@code
+ *   OlharDeLacertoService}), so the hook is added with its first real consumer;</li>
  *   <li>no equipment scan. {@code org.aventyrs.core.item.OffensiveImprovement#ALCANCE_ESTENDIDO} is
  *   authored now, but its "Distância de Ataque aumenta +1UD" is the <b>wrong unit</b> for the
  *   widening this service applies: {@code Feat#resolveAttackRangeIncrease} counts whole {@link

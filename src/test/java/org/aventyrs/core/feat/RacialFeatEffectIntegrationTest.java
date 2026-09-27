@@ -1458,11 +1458,11 @@ class RacialFeatEffectIntegrationTest {
     }
 
     /**
-     * Cabelo Serpentino is withheld whole: its Desvantagem em Persuasão is expressible today, but
-     * the Vantagem that pays for it is scoped to the unbuilt Olhar de Lacerto.
+     * Cabelo Serpentino's two halves land together now that Olhar de Lacerto is an attack source:
+     * a Desvantagem on Persuasão, paid for by the gaze's Vantagem (see OlharDeLacertoServiceTest).
      */
     @Test
-    void cabeloSerpentinoAppliesNoMalusWithoutItsPairedBonus() throws IllegalOperationException {
+    void cabeloSerpentinoCostsADesvantagemOnPersuasao() throws IllegalOperationException {
         Character gorgona = character().race(new Gorgona()).build();
         gorgona.grantTitle(new Santo(List.of(), List.of()), TitleSlot.PRIMARY);
         CharacterSheet sheet = CharacterSheet.of(gorgona, new Player());
@@ -1470,7 +1470,7 @@ class RacialFeatEffectIntegrationTest {
 
         acquire(gorgona, GorgonaFeat.CABELO_SERPENTINO);
 
-        assertEquals(before, rollBonusIn(sheet, SkillType.PERSUASAO, null));
+        assertEquals(before + Skill.DISADVANTAGE_MALUS, rollBonusIn(sheet, SkillType.PERSUASAO, null));
     }
 
     // ---------- Monstruoso ----------

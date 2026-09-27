@@ -4,10 +4,16 @@ import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.SizeCategory;
 import org.aventyrs.core.feat.FeatCategory;
+import org.aventyrs.core.feat.GiganteFeat;
+import org.aventyrs.core.scene.Range;
+import org.aventyrs.core.scene.SceneContext;
+import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.DlcRuleset;
+import org.aventyrs.core.skill.Skill;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.ToIntFunction;
 
 /**
  * Defines what the Gigantes race can do under each rule-set. Three of this race's traits are
@@ -48,21 +54,13 @@ import java.util.Map;
  *   a Character). The *shape* of the Vantagem-on-dano half would otherwise fit {@code
  *   SkillCompetencyAbility#resolveDamageBonus} (see {@code AtaqueADistanciaCompetencyAbility
  *   #FRIEZA}), once that classification exists.</li>
- *   <li><b>Cuidado para não Quebrar</b> (Desvantagem on Força/Destreza-based Perícia rolls
- *   while adjacent to an ally 2+ Categorias de Tamanho smaller) — unlike {@code
- *   AnoesRacialAbility#ABATEDORES_DE_GIGANTES}, this isn't scoped to one {@code SkillType}; it
- *   applies to *every* Perícia whose governing {@link AttributeDomain} is Força or Destreza
- *   (Atletismo, Ataque Corpo-a-Corpo, Ataque à Distância, Esquiva e Aparar, Dirigir e
- *   Cavalgar, …), which doesn't fit {@code SkillCompetencyAbility#getSkillType()}'s
- *   one-fixed-SkillType-per-constant shape at all — this needs a mechanism scoped by {@code
- *   AttributeDomain} instead, which doesn't exist. The adjacency/size-comparison condition
- *   itself would be expressible today via {@code SceneContext#getAllies()}/{@code
- *   #getDistanceTo} (no {@code attackTarget}-style parameter needed, since it only reasons
- *   about the acting Character's own known allies) — it's specifically the "which Perícias
- *   does this apply to" scoping that's missing, not the proximity check.</li>
  * </ul>
  *
- * <p>None of the four racial traits above fit {@code SkillCompetencyAbility}'s shape well
+ * <p><b>Cuidado para não Quebrar is real</b> ({@link #resolveGoverningAttributeRollBonus}): a
+ * Desvantagem on every Perícia roll governed by Força or Destreza while an ally two or more
+ * Categorias de Tamanho smaller is adjacent, lifted by {@code GiganteFeat#ZELO_PELOS_FRAGEIS}.
+ *
+ * <p>None of the racial traits above fit {@code SkillCompetencyAbility}'s shape well
  * enough today to catalog in a {@code GigantesRacialAbility} enum (unlike {@code Anao}/
  * {@code Elfos}) — two aren't roll-conditioned at all (Tamanho é Documento, Rigidez Ymiriana),
  * one needs a target classification this core can't make (Tudo é Frágil), and one spans
@@ -76,6 +74,29 @@ import java.util.Map;
 public class Gigantes implements Race {
 
     private static final int SOBREVIVENCIA_FEAT_COST = 2;
+
+    /**
+     * Cuidado para não Quebrar: "enquanto adjacentes à aliados que pertençam a 2 ou mais Categorias de
+     * Tamanho inferiores, sofrem desvantagem em suas rolagens de perícia físicas (baseadas em Força ou
+     * Destreza)" — none with {@code GiganteFeat#ZELO_PELOS_FRAGEIS}, which "não te concede mais
+     * quaisquer Desvantagens".
+     */
+    @Override
+    public int resolveGoverningAttributeRollBonus(final AttributeDomain domain, final CombatantSheet holder,
+                                                  final SceneContext holderContext,
+                                                  final ToIntFunction<CombatantSheet> sizeCategoryOf) {
+        if ((domain != AttributeDomain.STRENGTH && domain != AttributeDomain.DEXTERITY) || holderContext == null
+                || holder.getCharacter().getFeats().contains(GiganteFeat.ZELO_PELOS_FRAGEIS)) {
+            return 0;
+        }
+        int ownSize = sizeCategoryOf.applyAsInt(holder);
+        boolean fragileAllyAdjacent = holderContext.getAlliesWithin(Range.ADJACENTE).stream()
+                .anyMatch(ally -> ownSize - sizeCategoryOf.applyAsInt(ally) >= FRAGILE_SIZE_GAP);
+        return fragileAllyAdjacent ? Skill.DISADVANTAGE_MALUS : 0;
+    }
+
+    /** "2 ou mais Categorias de Tamanho inferiores." */
+    private static final int FRAGILE_SIZE_GAP = 2;
 
     @Override
     public CreatureType getCreatureType() {

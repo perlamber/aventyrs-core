@@ -465,6 +465,39 @@ public enum ConditionType {
         public boolean preventsSpellCasting() {
             return true;
         }
+    },
+
+    /**
+     * Petrificação — Olhar de Lacerto's Olhar Petrificador: "o alvo é petrificado por 2 Rodadas,
+     * sendo incapaz de realizar ações … A petrificação é um efeito de Encantamento." Not in the
+     * Malefícios source and not a Malefício ({@link #isMaleficio()}): it is an Encantamento, held as
+     * a {@link Petrification} applied through {@code CombatantSheet#applyEnchantment}. Open-ended
+     * when "permanentemente".
+     */
+    // TODO: "incapaz de realizar ações" also covers Perícia rolls and attacks, but nothing lets a
+    //  held condition refuse a roll (IMOBILIZADO's TODO) — only movement, activation and casting
+    //  are refused.
+    PETRIFICADO("O alvo é petrificado, sendo incapaz de realizar ações. A petrificação é um efeito "
+            + "de Encantamento.") {
+        @Override
+        public boolean preventsMovement() {
+            return true;
+        }
+
+        @Override
+        public boolean preventsAbilityActivation() {
+            return true;
+        }
+
+        @Override
+        public boolean preventsSpellCasting() {
+            return true;
+        }
+
+        @Override
+        public boolean isMaleficio() {
+            return false;
+        }
     };
 
     /**

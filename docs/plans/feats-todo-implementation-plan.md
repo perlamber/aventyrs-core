@@ -22,7 +22,7 @@ re-ordered as:
 | D | Damage types | Phase 8 | **Done (0.0.64)** — RD/RDS/RM/RE scoped, RDS split out, Talento immunity/RE hooks, retyping, race element; Corte/Perfuração/Impacto skipped (no Talento consumer); see `0.064.CHANGELOG.md` |
 | E | Área de Efeito, outward damage, reverse retaliation | Phase 9 (+ rest of 7) | **Done (0.0.65)** — footprints, area attacks, Evasão, `Retaliation#dealTo`; outward Turn damage left for a second consumer; see `0.065.CHANGELOG.md` |
 | F | Spellcasting extensions | Phase 10 | **Done (0.0.66)** — mimetizar choices + live grant, Mana-cost reduction, per-cast opt-ins, cast bonuses, storage; see `0.066.CHANGELOG.md` |
-| I | Racial traits that Talentos extend | new | open |
+| I | Racial traits Talentos extend | new | **Done (0.0.67)** — Ferocidade de Lacerto, Bocarra, Agnação Ancestral, Aprendizado Rápido, Olhar de Lacerto, Cuidado para não Quebrar; HomemFera Forma Híbrida left open; see `0.067.CHANGELOG.md` |
 | H | Título / Destino / Vampiro | Phase 12 | open |
 | G | Montaria / veículo | Phase 11 | open, lowest priority |
 

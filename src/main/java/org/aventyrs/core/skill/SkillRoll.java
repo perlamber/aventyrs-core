@@ -98,6 +98,7 @@ public class SkillRoll {
     private final ActionCost actionCost;
     private final Manoeuvre manoeuvre;
     private final Set<Feat> activatedFeats;
+    private final boolean counselled;
 
     public SkillRoll(final List<Integer> dice) {
         this(dice, null, null, null);
@@ -139,6 +140,12 @@ public class SkillRoll {
      */
     public SkillRoll(final List<Integer> dice, final SkillTrait requestedAbility, final Integer targetValue,
                      final ActionCost actionCost, final Manoeuvre manoeuvre, final Set<Feat> activatedFeats) {
+        this(dice, requestedAbility, targetValue, actionCost, manoeuvre, activatedFeats, false);
+    }
+
+    private SkillRoll(final List<Integer> dice, final SkillTrait requestedAbility, final Integer targetValue,
+                      final ActionCost actionCost, final Manoeuvre manoeuvre, final Set<Feat> activatedFeats,
+                      final boolean counselled) {
         if (dice.size() != EXPECTED_DICE_COUNT) {
             throw new IllegalOperationException(INVALID_SKILL_ROLL);
         }
@@ -153,6 +160,21 @@ public class SkillRoll {
         this.actionCost = actionCost;
         this.manoeuvre = manoeuvre;
         this.activatedFeats = activatedFeats == null ? Set.of() : Set.copyOf(activatedFeats);
+        this.counselled = counselled;
+    }
+
+    /**
+     * This roll, made with an Orc's Agnação Ancestral — "reduzindo em -1 nível o GD de uma rolagem
+     * de perícia (são considerados treinados e especialistas nesta rolagem, mesmo que não sejam)".
+     * Resolving it requires a counsel the roller banked through {@code AncestralCounselService}.
+     */
+    public SkillRoll counselled() {
+        return new SkillRoll(dice, requestedAbility, targetValue, actionCost, manoeuvre, activatedFeats, true);
+    }
+
+    /** Whether this roll is made with Agnação Ancestral — see {@link #counselled()}. */
+    public boolean isCounselled() {
+        return counselled;
     }
 
     /**

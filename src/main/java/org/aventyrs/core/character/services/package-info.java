@@ -63,7 +63,11 @@
  *       sensible {@code @Builder.Default} and rarely needs overriding at creation. {@code
  *       sexo} ({@link org.aventyrs.core.character.Character.Sexo}) is the one exception with
  *       no default at all — {@code null} unless set, since no eligibility/validation logic
- *       for it exists here (unlike, say, step 4's Vantagens de Ego).</li>
+ *       for it exists here (unlike, say, step 4's Vantagens de Ego). {@code
+ *       quickLearningSkills} is the one creation-time pick a race asks for here: an Aprendizado
+ *       Rápido race ({@code Race#hasQuickLearning()} — Humano, Pequenino, Gnomo, Goblin) names its
+ *       two Perícias Treinadas, whose 2nd and 3rd Graduação then cost 0.5 EXP less
+ *       ({@code SkillGraduationService#getUpgradeCost(Character, SkillType)}). Empty by default.</li>
  * </ol>
  *
  * <pre>{@code
@@ -85,7 +89,8 @@
  *         .alignment(Alignment.NEUTRAL)
  *         .attributes(attributes)
  *         .egos(egos)
- *         .actionProfile(ActionProfile.REFLEXOS_RAPIDOS);
+ *         .actionProfile(ActionProfile.REFLEXOS_RAPIDOS)
+ *         .quickLearningSkills(Set.of(SkillType.ATTENTION, SkillType.ATLETISMO)); // Aprendizado Rápido
  *
  * if (creation.isEgoAdvantageAvailable(EgoDomain.AUTOCONTROLE, egos)) {
  *     builder.egoAdvantage(EgoDomain.AUTOCONTROLE, AutocontroleAdvantage.RESOLUTO); // player's choice

@@ -16,6 +16,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
 import org.aventyrs.core.effect.CriticalEffect;
 import org.aventyrs.core.effect.EffectChain;
 import org.aventyrs.core.sheet.ActionCost;
@@ -1603,6 +1604,66 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     }
 
     /**
+     * Whether this Talento stops implier from conferring implied on its holder — "você não é
+     * considerado Desprevenido enquanto estiver Caído" ({@code ArtesMarciaisFeat
+     * #DOMINAR_ARTE_MARCIAL_SUBMISSAO}), "não fica Desprevenido em função destas condições" ({@code
+     * DuelistaFeat#COMBATER_AS_CEGAS}). Consulted edge by edge by {@code
+     * CombatantSheet#getActiveConditions}, so only that one implication is vetoed: the same
+     * condition applied directly, or implied by a different condition, still lands. False by
+     * default.
+     */
+    default boolean suppressesImpliedCondition(final ConditionType implier, final ConditionType implied) {
+        return false;
+    }
+
+    /**
+     * The highest Graduação this Talento extends its holder's Aprendizado Rápido to — {@code
+     * GnomoFeat#SABICHAO}'s "até a sétima Graduação", {@code HumanoFeat#APRENDIZADO_RAPIDO_E_CONTINUO}'s
+     * fifth, or seventh with a Título Desperto. {@code null} by default; {@code
+     * SkillGraduationService} takes the highest of these and the Raça's own third.
+     */
+    default Integer resolveQuickLearningMaxGraduation(final Character character) {
+        return null;
+    }
+
+    /**
+     * The combat Rodada from which this Talento puts its holder in Ferocidade de Lacerto — {@code
+     * GorgonaFeat#ACEITAR_A_SELVAGERIA}'s "recebe a Habilidade Racial Ferocidade de Lacerto … como
+     * se fosse um Impuro". {@code null} by default; {@code LacertoFerocityService} takes the
+     * earliest of this and the Raça's own {@code Race#resolveLacertoFerocityRound}.
+     */
+    default Integer resolveLacertoFerocityRound(final Character character) {
+        return null;
+    }
+
+    /**
+     * Whether this Talento keeps its holder from <em>entering</em> Ferocidade de Lacerto right now —
+     * {@code IndomitoFeat#RENEGAR_A_LACERTO}'s "não entra … enquanto tiver aliados vivos e
+     * conscientes, com 1 ou mais PV, em Distância Curta". standing answers "has 1 or more PV" for
+     * a combatant, since that needs {@code HitPointsService}, which a constant cannot reach.
+     * {@code holderContext} is the holder's own snapshot; {@code null} reads as "cannot tell", so
+     * nothing is prevented. False by default.
+     */
+    default boolean preventsEnteringLacertoFerocity(final Character holder, final SceneContext holderContext,
+                                                    final Predicate<CombatantSheet> standing) {
+        return false;
+    }
+
+    /**
+     * Whether this Talento strips its holder of their Raça's Imunidade a Encantamentos — {@code
+     * GorgonaFeat#MARCA_DA_MALDICAO}'s "não possui a Característica Racial Imunidade a
+     * Encantamentos".
+     *
+     * <p>A <b>per-trait</b> suppression, deliberately not folded into {@code
+     * RacialTraitSuppression}: that ladder silences whole categories of racial trait for a Forma,
+     * while this names one Característica and is permanent. Read by {@code
+     * Character#isImmuneToEnchantments()}.
+     */
+    default boolean suppressesEnchantmentImmunity() {
+        return false;
+    }
+
+    /**
      * Resistência a Críticos (RC) this Talento grants its holder — a <b>defender-side</b> value,
      * summed by {@code org.aventyrs.core.sheet.AbstractCombatantSheet#getTotalCriticalResistance}
      * alongside the holder's Raça grant and any round-scoped {@code
@@ -1630,33 +1691,6 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      * would answer about the attacker. {@code null} whenever there is no active Scene, which
      * every override must read as "condition not met".
      */
-    /**
-     * Whether this Talento stops implier from conferring implied on its holder — "você não é
-     * considerado Desprevenido enquanto estiver Caído" ({@code ArtesMarciaisFeat
-     * #DOMINAR_ARTE_MARCIAL_SUBMISSAO}), "não fica Desprevenido em função destas condições" ({@code
-     * DuelistaFeat#COMBATER_AS_CEGAS}). Consulted edge by edge by {@code
-     * CombatantSheet#getActiveConditions}, so only that one implication is vetoed: the same
-     * condition applied directly, or implied by a different condition, still lands. False by
-     * default.
-     */
-    default boolean suppressesImpliedCondition(final ConditionType implier, final ConditionType implied) {
-        return false;
-    }
-
-    /**
-     * Whether this Talento strips its holder of their Raça's Imunidade a Encantamentos — {@code
-     * GorgonaFeat#MARCA_DA_MALDICAO}'s "não possui a Característica Racial Imunidade a
-     * Encantamentos".
-     *
-     * <p>A <b>per-trait</b> suppression, deliberately not folded into {@code
-     * RacialTraitSuppression}: that ladder silences whole categories of racial trait for a Forma,
-     * while this names one Característica and is permanent. Read by {@code
-     * Character#isImmuneToEnchantments()}.
-     */
-    default boolean suppressesEnchantmentImmunity() {
-        return false;
-    }
-
     default int resolveCriticalResistance(final Character character, final SceneContext sceneContext) {
         return 0;
     }

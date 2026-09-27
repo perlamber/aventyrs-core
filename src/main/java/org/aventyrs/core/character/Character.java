@@ -89,6 +89,16 @@ public class Character {
      */
     protected Deity deity;
 
+    /**
+     * The Perícias Treinadas an Aprendizado Rápido race chose at creation — "podem escolher duas
+     * Perícias Treinadas, adquirir a Segunda e Terceira Graduação destas perícias custam 0.5EXP a
+     * menos" ({@code Race#hasQuickLearning}). Read by {@code SkillGraduationService#getUpgradeCost(
+     * Character, SkillType)}. Empty by default; neither the count of two nor the Perícias being
+     * trained is validated, the usual builders-aren't-gatekeepers restraint.
+     */
+    @Builder.Default
+    protected Set<SkillType> quickLearningSkills = Set.of();
+
     /** Tendência de alinhamento, used by Talento prerequisites such as Corruptor Sombrio's. */
     @Builder.Default
     protected Alignment alignment = Alignment.NEUTRAL;

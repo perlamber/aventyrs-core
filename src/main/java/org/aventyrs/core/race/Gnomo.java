@@ -17,6 +17,12 @@ import java.util.Set;
  * and {@link #generateEmptyCharacter} seeding {@link SizeCategory#MINUS_ONE} — everything else
  * needs a system this core doesn't have yet:
  *
+ * <p><b>Aprendizado Rápido is real</b> ({@link #hasQuickLearning()}): the Perícias recorded on {@code
+ * Character#getQuickLearningSkills()} take 0.5 EXP off their 2nd and 3rd Graduação, through {@code
+ * SkillGraduationService#getUpgradeCost(Character, SkillType)}. ⚠️ This text says <i>duas</i> Perícias, while
+ * Gnomos' own "Perícias e Talentos"/Domínio de Conhecimento grant benefits across <i>três</i> — an
+ * inconsistency in the source, not resolved here; nothing validates the count anyway.
+ *
  * <ul>
  *   <li><b>Idiomas</b> (Continental + Arcano/dialeto Feérico) — same "no Language/Idioma
  *   concept exists" gap as every other race.</li>
@@ -31,14 +37,6 @@ import java.util.Set;
  *   acquisition slot), here three slots at once, tied to whichever 3 Perícias were chosen for
  *   the Especialização benefit — compounding the "no persisted record of creation-time Perícia
  *   choices" gap those already cite.</li>
- *   <li><b>Aprendizado Rápido</b> ("duas Perícias Treinadas por benefício Racial" get their
- *   2nd/3rd Graduação upgrade at -0.5 EXP) — same gap as Humanos'/{@code Pequenino}'s own
- *   Aprendizado Rápido ({@code SkillGraduationService#getUpgradeCost} takes no {@link Race},
- *   no persisted creation-time Perícia-pair choice exists). Worth flagging on its own: this
- *   text says *duas* (two) Perícias, while Gnomos' own "Perícias e Talentos"/Domínio de
- *   Conhecimento above grant benefits across *três* (three) — an inconsistency in the source
- *   text itself, not resolved here; whichever count is correct, the underlying gap is
- *   identical either way.</li>
  *   <li><b>Sangue de Fada</b> (may acquire exactly 1 Talento Feérico; doing so after creation
  *   costs 2.5 EXP instead of 3) — three separate gaps at once: {@link
  *   #getNewFeatCost(org.aventyrs.core.feat.FeatCategory)} returns a plain {@code int}, the
@@ -94,6 +92,12 @@ public class Gnomo implements Race {
     @Override
     public SizeCategory getBaseSizeCategory() {
         return SizeCategory.MINUS_ONE;
+    }
+
+    /** Aprendizado Rápido — see {@link Race#hasQuickLearning()}. */
+    @Override
+    public boolean hasQuickLearning() {
+        return true;
     }
 
     @Override
