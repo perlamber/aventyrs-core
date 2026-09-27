@@ -149,6 +149,20 @@ mechanism.
   own shape and `activate` matches by `==`, so "which shape" must be part of the ability's
   identity.
 
+**A Talento the player opts into on one roll is *activated*, not held** (0.0.70, the `DuelistaFeat`
+tree is the reference): the caller names it in `SkillRoll#getActivatedFeats()`, and the constant
+reads `skillRoll.activated(this)` in the `SkillRoll`-taking longest forms of
+`resolveSkillRollBonus`/`resolveDamageBonus`. Gate each use with `permitsActivation(skillType,
+roll, source, holder)` — its Perícia, "uma vez por Rodada/Turno"
+(`holder.countFeatActivationsThisRound/ThisTurn(this)`), or the attack it must follow
+(`holder.getActionsThisTurn()`); `AbstractSkillInteraction` refuses what it denies. Its price goes on
+`resolveAttackActionPointOverride`/`resolveAttackActionPointAdjustment`, summed by
+`ActionPointsService#getAttackCost`; a reroll on `grantsLowestDieReroll`; a dano-roll die on
+`resolveExtraDamageDice`; a dano reroll on `resolveDamageLowestDieRerolls`; a Meio-Dano on
+`halvesAttackDamage`; a self-inflicted, Descanso-Verdadeiro-only cost on
+`resolveLockedSelfDamageOnHit`. **Never wire an opt-in as an unconditional bonus** — that skips its
+price.
+
 ⚠️ **Any Talento with an acquisition choice must advertise it**, or no client can discover it.
 Override `resolveRequiredChoices(Character)` → `List<FeatChoice<?>>`, each
 `FeatChoice<T>(Class<T> type, int picks, List<T> options)` carrying the type token a caller routes

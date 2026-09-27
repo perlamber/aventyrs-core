@@ -30,8 +30,8 @@ public enum ArtilhariaFeat implements Feat {
      * "Você pode aumentar seu tempo de disparo em +1PA quando atacar utilizando a perícia 'ataque
      * à distância', se o fizer poderá rolar novamente o dado de menor valor em sua rolagem."
      */
-    // TODO: rerolling one die of a SkillRoll has no representation — this core never rolls dice,
-    //  and SkillRoll arrives already resolved, so a reroll must be the caller's own step.
+    // Real (core 0.0.70): the ranged twin of DuelistaFeat#LUTADOR_NATO — activated on an Ataque à
+    // Distância, it makes SkillRoll#rerollingLowestDie legal and adds 1PA to the attack's price.
     // TODO: "Treinamento em Ataque-à-distância", with no number, is read as Graduação 1.
     MIRA_IMPECAVEL(
             "Você pode aumentar seu tempo de disparo em +1PA quando atacar utilizando a perícia "
@@ -41,7 +41,25 @@ public enum ArtilhariaFeat implements Feat {
             FeatRequirements.builder()
                     .requiredSkillType(SkillType.ATAQUE_A_DISTANCIA)
                     .requiredSkillGraduation(1)
-                    .build()),
+                    .build()) {
+        @Override
+        public boolean permitsActivation(final SkillType skillType, final SkillRoll skillRoll,
+                                         final AttackSource attackSource, final CombatantSheet holder) {
+            return skillType == SkillType.ATAQUE_A_DISTANCIA;
+        }
+
+        @Override
+        public boolean grantsLowestDieReroll(final SkillType skillType) {
+            return skillType == SkillType.ATAQUE_A_DISTANCIA;
+        }
+
+        @Override
+        public int resolveAttackActionPointAdjustment(final SkillType skillType, final AttackSource attackSource,
+                                                      final CombatantSheet attacker,
+                                                      final java.util.Set<Feat> activatedFeats) {
+            return skillType == SkillType.ATAQUE_A_DISTANCIA && activatedFeats.contains(this) ? 1 : 0;
+        }
+    },
 
     /**
      * "Escolha um tipo de arma de Ataque a Distância ou de Arremesso, você recebe Vantagem nas

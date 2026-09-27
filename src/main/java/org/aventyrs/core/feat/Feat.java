@@ -500,6 +500,109 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
         return resolveDamageBonus(attackingSkillType, sceneContext, attackTarget, actor, attackSource, targetCount);
     }
 
+    /**
+     * The longest form, adding the attack roll — the dano half of a clause the holder <b>opts
+     * into</b> on one attack ({@code SkillRoll#activated(Feat)}): Ataque Concentrado's Vantagem,
+     * Ataque Rápido's Desvantagem, Força Excessiva's "metade do seu valor de Vigor". The twin of the
+     * {@code SkillRoll}-taking {@link #resolveSkillRollBonus(SkillType, SceneContext, SkillTrait,
+     * Character, AttackSource, CombatantSheet, SkillRoll)}: a trade between the two rolls needs the
+     * same reach on both. Defaults to the sheet-taking form; a {@code null} roll activates nothing.
+     */
+    default Optional<DamageBonus> resolveDamageBonus(final SkillType attackingSkillType, final SceneContext sceneContext,
+                                                      final CombatantSheet attackTarget, final Character actor,
+                                                      final AttackSource attackSource, final int targetCount,
+                                                      final CombatantSheet holder, final SkillRoll skillRoll) {
+        return resolveDamageBonus(attackingSkillType, sceneContext, attackTarget, actor, attackSource, targetCount,
+                holder);
+    }
+
+    /**
+     * Extra d6s this Talento adds to the dano roll of an attack — {@code DuelistaFeat#ATAQUE_CONCENTRADO}'s
+     * "Se utilizar este Talento ao mesmo tempo que Lutador Nato, ao invés da Vantagem na rolagem de
+     * Dano, seu dano aumenta em +1d6". Summed onto {@code InteractionResult#getExtraDamageDice()}
+     * beside Transferir Rancor's, for the caller to throw. Zero by default.
+     */
+    default int resolveExtraDamageDice(final SkillType attackSkill, final AttackSource attackSource,
+                                       final CombatantSheet holder, final SkillRoll skillRoll) {
+        return 0;
+    }
+
+    /**
+     * How many times the attack's dano roll may throw its lowest die again — {@code
+     * DuelistaFeat#LUTAR_ENGAJADO}'s "Sempre que usar o talento Lutador Nato contra um alvo adjacente
+     * poderá também rolar novamente o dado de menor valor em suas rolagens de Dano". Summed onto
+     * {@code InteractionResult#getDamageLowestDieRerolls()}; the caller throws the dano dice, so the
+     * reroll is its step, the same as the attack's own. Zero by default, and only asked with a real
+     * attackTarget.
+     */
+    default int resolveDamageLowestDieRerolls(final SkillType attackSkill, final SceneContext sceneContext,
+                                              final CombatantSheet holder, final CombatantSheet attackTarget,
+                                              final SkillRoll skillRoll) {
+        return 0;
+    }
+
+    /**
+     * Whether this Talento halves the damage of the whole attack — primary and extras alike —
+     * because of how the attack was made: {@code DuelistaFeat#ATAQUE_REPENTINO}'s "Os danos causados
+     * por este ataque são reduzidos à metade, este é um efeito de Meio-Dano". A flag, so it never
+     * quarters with another Meio-Dano. Asked by {@code AttackDelivery}; false by default.
+     */
+    default boolean halvesAttackDamage(final SkillType attackSkill, final AttackSource attackSource,
+                                       final CombatantSheet attacker, final SkillRoll skillRoll) {
+        return false;
+    }
+
+    /**
+     * PV the <b>attacker</b> loses when this attack lands, locked until a Descanso Verdadeiro — {@code
+     * DuelistaFeat#FORCA_EXCESSIVA}'s "se o fizer e for bem-sucedido você sofre 2 pontos de Dano
+     * Físico Primordial. Danos sofridos desta forma não podem ser reduzidos e são recuperados apenas
+     * com Descansos Verdadeiros". Summed by {@code AttackDelivery} onto {@code
+     * DeliveredAttackResult#getLockedSelfDamage()} — reported, never dealt; the caller pays it with
+     * {@code CombatantSheet#payWithVitality}, which is exactly "no mitigation, then locked". Zero by
+     * default, and only asked for a hit.
+     */
+    default int resolveLockedSelfDamageOnHit(final SkillType attackSkill, final AttackSource attackSource,
+                                             final CombatantSheet attacker, final SkillRoll skillRoll) {
+        return 0;
+    }
+
+    /**
+     * How much of a critical hit's damage its victim may recover only with a Descanso Verdadeiro or
+     * Roubo de Vida — {@code DuelistaFeat#FERIDAS_ARDENTES}' "O dano adicional de Metade da Gnose,
+     * causado em seus Danos Críticos, não pode ser curado, exceto por Descansos Verdadeiros e efeitos
+     * de Roubo de Vida". {@code AttackDelivery} marks each target's chain head with it ({@code
+     * DamageInteraction#lockingDamage}), which locks it on the victim once the hit lands — capped at
+     * what the hit actually took. Zero by default; asked only on an Acerto Crítico.
+     */
+    default int resolveUnhealableCriticalDamage(final SkillType attackSkill, final AttackSource attackSource,
+                                                final Character attacker, final CriticalResult criticalResult) {
+        return 0;
+    }
+
+    /**
+     * Whether this Talento lets its holder roll a Perícia de Ataque in place of Esquiva e Aparar
+     * against an attack resisted with defenseType — {@code DuelistaFeat#DEFENDER_SE_ATACANDO} for the
+     * Defesa Física, {@code #DEFENDER_SE_ATACANDO_SUPERIOR} for the Mágica "exceto para evitar
+     * Encantamentos e Maldições". {@code AttackReceiver} requires one held Talento to answer true, and
+     * the roll to activate Defender-se Atacando (whose once-per-Rodada limit is its {@link
+     * #permitsActivation}). False by default.
+     *
+     * @param enchantmentOrCurse whether the attack is an Encantamento or a Maldição
+     */
+    default boolean permitsDefenseSubstitution(final DefenseType defenseType, final boolean enchantmentOrCurse) {
+        return false;
+    }
+
+    /**
+     * Whether this Talento spares its Cego holder the 1d6 a skillType roll would otherwise need
+     * ({@code sheet.BlindCheck}) — {@code DuelistaFeat#COMBATER_AS_CEGAS}' "não precisa efetuar
+     * rolagens de 1d6 para utilizar efeitos pessoais e Ataques Corpo-a-Corpo". Asked by {@code
+     * CombatantSheet#getBlindCheckThreshold}; false by default.
+     */
+    default boolean exemptsFromBlindCheck(final SkillType skillType) {
+        return false;
+    }
+
     default Optional<DamageBonus> resolveDamageBonus(final SkillType attackingSkillType, final SceneContext sceneContext,
                                                       final CombatantSheet attackTarget, final Character actor,
                                                       final AttackSource attackSource, final int targetCount) {
@@ -648,6 +751,84 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
                                        final SkillTrait requestedAbility, final Character character,
                                        final AttackSource attackSource, final CombatantSheet holder) {
         return resolveSkillRollBonus(skillType, sceneContext, requestedAbility, character, attackSource);
+    }
+
+    /**
+     * The longest form, adding the roll itself — for a bonus the holder <b>opts into</b> on one roll
+     * rather than holds: {@code SkillRoll#activated(Feat)} is what separates "holds Ataque
+     * Concentrado" from "chose Desvantagem on this attack to buy Vantagem on its dano"
+     * ({@code DuelistaFeat#ATAQUE_CONCENTRADO}/{@code #ATAQUE_RAPIDO}/{@code #COMBATER_COM_2_ARMAS}).
+     *
+     * <p><b>Defaults to the sheet-taking form</b>, like every longer {@code Feat} overload. {@code
+     * skillRoll} is {@code null} on the bonuses-only preview path, which reads as "nothing activated".
+     */
+    default int resolveSkillRollBonus(final SkillType skillType, final SceneContext sceneContext,
+                                       final SkillTrait requestedAbility, final Character character,
+                                       final AttackSource attackSource, final CombatantSheet holder,
+                                       final SkillRoll skillRoll) {
+        return resolveSkillRollBonus(skillType, sceneContext, requestedAbility, character, attackSource, holder);
+    }
+
+    /**
+     * Whether holder may activate this Talento on skillRoll right now — the per-use gate of a
+     * Talento named in {@code SkillRoll#getActivatedFeats()}. {@code AbstractSkillInteraction}
+     * refuses the roll ({@code FEAT_ACTIVATION_NOT_PERMITTED}) when this answers false, after
+     * refusing one the roller does not hold at all ({@code ACTIVATED_FEAT_NOT_HELD}).
+     *
+     * <p>What an override checks is the clause's own scope — the Perícia ("um Ataque
+     * Corpo-a-Corpo"), what the attack is made with ("com uma Arma ou Ataque Desarmado"), a limit
+     * read off the holder's own log ("apenas uma vez por Rodada": {@link
+     * CombatantSheet#countFeatActivationsThisRound}; "uma vez por Turno": {@code
+     * countFeatActivationsThisTurn}), or a sequence ("após ser bem-sucedido em um Ataque Rápido",
+     * the last entry of {@code getActionsThisTurn()}). The roll being resolved is never in the log
+     * yet. {@code holder} is {@code null} only for a caller holding no sheet, which an override with
+     * a limit must read as "cannot tell" and refuse.
+     *
+     * <p><b>True by default</b>: a Talento with no activation clause has nothing to refuse, and the
+     * Talentos that existed before this gate stay activatable exactly as they were.
+     */
+    default boolean permitsActivation(final SkillType skillType, final SkillRoll skillRoll,
+                                      final AttackSource attackSource, final CombatantSheet holder) {
+        return true;
+    }
+
+    /**
+     * Whether activating this Talento pays for throwing the lowest die of a skillType roll again —
+     * "você pode aumentar o Tempo de Ação … em +1PA, se o fizer poderá rolar novamente o dado de
+     * menor valor em sua rolagem" ({@code DuelistaFeat#LUTADOR_NATO}, {@code
+     * ArtilhariaFeat#MIRA_IMPECAVEL}). A roll built with {@code SkillRoll#rerollingLowestDie} is
+     * refused ({@code REROLL_NOT_GRANTED}) unless one of its activated Talentos answers true. The
+     * "+1PA" is the attack's price, not this hook's — see {@link #resolveAttackActionPointAdjustment}.
+     */
+    default boolean grantsLowestDieReroll(final SkillType skillType) {
+        return false;
+    }
+
+    /**
+     * What activating this Talento sets an attack's Tempo de Ação <b>to</b>, replacing the Perícia
+     * roll's own price — {@code DuelistaFeat#ATAQUE_REPENTINO}'s "ao tempo de 1PA", {@code
+     * #UM_DOIS}' "ao custo de 1PA", {@code #COMBATER_COM_2_ARMAS}' "dois ataques … ao custo de 3PA"
+     * (3 on the first of the pair, 0 on the second). {@code null} by default: the price is left as
+     * it is. Summed with every {@link #resolveAttackActionPointAdjustment} by {@code
+     * ActionPointsService#getAttackCost}; of two overrides, the lowest wins.
+     *
+     * @param activatedFeats what the attacker is about to spend on this attack — asked
+     *                       <em>before</em> the roll, since the price decides whether it can be made
+     */
+    default Integer resolveAttackActionPointOverride(final SkillType skillType, final AttackSource attackSource,
+                                                     final CombatantSheet attacker, final Set<Feat> activatedFeats) {
+        return null;
+    }
+
+    /**
+     * How many PA this Talento adds to (positive) or takes off (negative) an attack's Tempo de Ação —
+     * {@code DuelistaFeat#LUTADOR_NATO}'s "+1PA", {@code #DOMINAR_ARMAS}' "-1PA (mínimo 1PA)" on the
+     * first attack each Rodada with the chosen weapon. Zero by default. A reduction never takes the
+     * price below 1PA — {@code ActionPointsService#getAttackCost} applies that floor.
+     */
+    default int resolveAttackActionPointAdjustment(final SkillType skillType, final AttackSource attackSource,
+                                                   final CombatantSheet attacker, final Set<Feat> activatedFeats) {
+        return 0;
     }
 
     /**
@@ -961,6 +1142,19 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
                                                final Character character, final AttackSource attackSource,
                                                final CombatantSheet holder) {
         return resolveCriticalMarginIncrease(skillType, sceneContext, character, attackSource);
+    }
+
+    /**
+     * The longest form, adding the attack's <b>primary target</b> — for a Margem Crítica clause
+     * scoped to who is being attacked, read against the holder's own log: {@code
+     * DuelistaFeat#EXPLORAR_PONTOS_FRACOS}' "Seu segundo ataque contra um mesmo alvo na mesma Rodada"
+     * ({@link CombatantSheet#countAttacksAgainstThisRound}). {@code null} outside an attack against a
+     * named combatant. Defaults to the sheet-taking form.
+     */
+    default int resolveCriticalMarginIncrease(final SkillType skillType, final SceneContext sceneContext,
+                                               final Character character, final AttackSource attackSource,
+                                               final CombatantSheet holder, final CombatantSheet attackTarget) {
+        return resolveCriticalMarginIncrease(skillType, sceneContext, character, attackSource, holder);
     }
 
     /**

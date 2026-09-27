@@ -41,6 +41,9 @@ public class DamageInteraction implements Interaction<CombatantSheet> {
     /** Whether this hit's PV loss lands at the next Rodada boundary — see {@link #postponing()}. */
     private boolean postponed;
 
+    /** How much of this hit only a Descanso Verdadeiro or Roubo de Vida recovers — see {@link #lockingDamage}. */
+    private int lifeStealOnlyDamage;
+
     public DamageInteraction() {
         this(new DamageServiceImpl());
     }
@@ -106,6 +109,25 @@ public class DamageInteraction implements Interaction<CombatantSheet> {
     public DamageInteraction postponing() {
         this.postponed = true;
         return this;
+    }
+
+    /**
+     * Marks up to amount of this hit's damage as recoverable only by a Descanso Verdadeiro or a
+     * Roubo de Vida — {@code DuelistaFeat#FERIDAS_ARDENTES}' "O dano adicional de Metade da Gnose …
+     * não pode ser curado, exceto por Descansos Verdadeiros e efeitos de Roubo de Vida". Set by
+     * {@code org.aventyrs.core.combat.AttackDelivery} on a critical hit's chain heads, for the same
+     * reason {@link #halvingDamage} is a fluent setter. Applied as {@link
+     * CombatantSheet#lockDamage(int, boolean)} once the hit lands, capped at what it actually took —
+     * mitigation comes off the whole hit, and whatever of the rider survives is what is locked.
+     */
+    public DamageInteraction lockingDamage(final int amount) {
+        this.lifeStealOnlyDamage = Math.max(0, amount);
+        return this;
+    }
+
+    /** What {@link #lockingDamage} marked, 0 when nothing was. */
+    public int getLockedDamage() {
+        return lifeStealOnlyDamage;
     }
 
     @Override
@@ -174,6 +196,9 @@ public class DamageInteraction implements Interaction<CombatantSheet> {
         } else {
             target.applyDamage(finalDamage);
         }
+        // Feridas Ardentes: the critical rider's share of what landed heals only with a Descanso
+        // Verdadeiro or Roubo de Vida.
+        target.lockDamage(Math.min(lifeStealOnlyDamage, finalDamage), true);
         // Mitigation and application are split here rather than run through
         // DamageService#applyDamage (see this method's javadoc), so the victim's own damage-taken
         // reactions have to be fired explicitly — this is the attack path, and skipping it would

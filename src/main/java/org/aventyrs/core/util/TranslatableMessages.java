@@ -446,4 +446,24 @@ public class TranslatableMessages {
 
     /** Desmontar como Reação without Montar e Desmontar Instantâneo, or with it already used. */
     public static final String MOUNT_REACTION_NOT_PERMITTED = "MOUNT_REACTION_NOT_PERMITTED";
+
+    /** A roll names a Talento in {@code SkillRoll#getActivatedFeats()} its roller does not hold. */
+    public static final String ACTIVATED_FEAT_NOT_HELD = "ACTIVATED_FEAT_NOT_HELD";
+
+    /**
+     * A held Talento cannot be activated on this roll right now — wrong Perícia, its "uma vez por
+     * Rodada/Turno" already spent, or a follow-up attack with nothing to follow ({@code
+     * Feat#permitsActivation}).
+     */
+    public static final String FEAT_ACTIVATION_NOT_PERMITTED = "FEAT_ACTIVATION_NOT_PERMITTED";
+
+    /** A roll rerolled its lowest die without activating a Talento that grants the reroll. */
+    public static final String REROLL_NOT_GRANTED = "REROLL_NOT_GRANTED";
+
+    /**
+     * A defence rolled with a Perícia de Ataque in place of Esquiva e Aparar without Defender-se
+     * Atacando activated, against a Defesa Mágica without Defender-se Atacando Superior, or against
+     * an Encantamento or a Maldição.
+     */
+    public static final String DEFENSE_SUBSTITUTION_NOT_PERMITTED = "DEFENSE_SUBSTITUTION_NOT_PERMITTED";
 }

@@ -654,8 +654,8 @@ reason; revisit only if a scheduled phase incidentally enables one.
 
 | Blocker | Constants |
 | --- | --- |
-| **Core never rolls dice** — reroll a die, reroll lowest die | `ArtilhariaFeat`, `DuelistaFeat` (×3), `PeritoFeat` (×3) |
-| **An attack is caller-initiated** — "grants an extra attack / projectile" | `EscudeiroFeat`, `ArtilhariaFeat` (×2), `DuelistaFeat` (×2) |
+| **Core never rolls dice** — reroll a die, reroll lowest die | `PeritoFeat` (×3). *Done for `ArtilhariaFeat#MIRA_IMPECAVEL` and `DuelistaFeat` (×3) in 0.0.70: `SkillRoll#rerollingLowestDie` + `Feat#grantsLowestDieReroll`, and `InteractionResult#getDamageLowestDieRerolls` for a dano roll.* |
+| **An attack is caller-initiated** — "grants an extra attack / projectile" | `EscudeiroFeat`, `ArtilhariaFeat` (×2). *`DuelistaFeat` (×2) is done in 0.0.70: the follow-up stays the caller's attack, but whether it is allowed and what it costs are read off the Turn's log (`Feat#permitsActivation`, `ActionPointsService#getAttackCost`).* |
 | **Narrative-purpose scoping** — "rolagens relacionadas a animais", "para criar equipamento", "para se aproximar de aliados" | `GoblinFeat`, `BestialFeat#FARO_APURADO`, `PeritoFeat`, `GiganteFeat` |
 | **Pure geometry / distance falloff** — "−1 para cada UD percorrido", terrain mapping in Distância Média | `ElementalFeat`, `BestialFeat#ECOLOCALIZACAO` |
 | **State that exempts from nothing** — breathing/sleep exemptions where the state isn't tracked and nothing charges for it | `BestialFeat`, `AvianoFeat`, `PeritoFeat`, `ElficoFeat`, `TrollFeat#SONO_DE_PEDRA` |

@@ -165,10 +165,30 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
      */
     void payWithVitality(int amount);
 
-    /** The part of {@link #getDamageTaken()} only a Descanso Verdadeiro recovers. */
+    /**
+     * The part of {@link #getDamageTaken()} only a Descanso Verdadeiro recovers — what {@link
+     * #payWithVitality} locked, plus what {@link #lockDamage} locked with {@code lifeStealRecovers}
+     * (which Roubo de Vida may also recover). Capped at the damage actually taken.
+     */
     int getLockedDamage();
 
-    /** Unlocks every PV {@link #payWithVitality} locked — called by a Descanso Verdadeiro. */
+    /**
+     * The part of {@link #getLockedDamage()} Roubo de Vida may still recover — {@code
+     * DuelistaFeat#FERIDAS_ARDENTES}' "não podem ser curados, exceto por Descansos Verdadeiros e
+     * efeitos de Roubo de Vida". Capped at the damage actually taken.
+     */
+    int getLifeStealRecoverableLockedDamage();
+
+    /**
+     * Locks amount of the damage this combatant has <b>already taken</b> against ordinary healing:
+     * no heal recovers damage below {@link #getLockedDamage()} until a Descanso Verdadeiro ({@link
+     * #releaseVitalityLock()}). With lifeStealRecovers, a Roubo de Vida heal ({@link
+     * #healFromLifeSteal}) may still recover it, and releases as much of this lock as it recovers
+     * past the unlocked damage. The damage itself is dealt elsewhere — this only marks it.
+     */
+    void lockDamage(int amount, boolean lifeStealRecovers);
+
+    /** Unlocks every PV {@link #payWithVitality}/{@link #lockDamage} locked — called by a Descanso Verdadeiro. */
     void releaseVitalityLock();
 
     /**
@@ -533,6 +553,22 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
     boolean hasCondition(ConditionType conditionType, SceneContext sceneContext);
 
     /**
+     * The highest face of the Cego 1d6 that fails this combatant's skillType roll ({@link
+     * BlindCheck}), or empty when it throws none — it is not {@link ConditionType#CEGO}, or a held
+     * Talento spares it that kind of roll ({@code Feat#exemptsFromBlindCheck}: {@code
+     * DuelistaFeat#COMBATER_AS_CEGAS}' "não precisa efetuar rolagens de 1d6 para utilizar efeitos
+     * pessoais e Ataques Corpo-a-Corpo").
+     */
+    default java.util.OptionalInt getBlindCheckThreshold(final org.aventyrs.core.skill.SkillType skillType,
+                                                         final SceneContext sceneContext) {
+        if (!hasCondition(ConditionType.CEGO, sceneContext)) {
+            return java.util.OptionalInt.empty();
+        }
+        boolean exempt = getCharacter().getFeats().stream().anyMatch(feat -> feat.exemptsFromBlindCheck(skillType));
+        return exempt ? java.util.OptionalInt.empty() : java.util.OptionalInt.of(BlindCheck.failureThresholdFor(skillType));
+    }
+
+    /**
      * The {@link Hidden} this combatant is holding, or empty when they are not Escondido — the
      * one condition with a magnitude, so the one that needs reaching as an instance rather than
      * as a {@link ConditionType}. It carries the Furtividade total an observer has to beat and
@@ -887,6 +923,17 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
     void finishTurn();
 
     /**
+     * The actions taken during this combatant's <b>own most recent Turn</b> — from its {@link
+     * #startTurn} to its {@link #finishTurn}, and kept past the Rodada wrap until its next Turn
+     * begins. What a "por 1 Rodada" consequence of the holder's own Turn reads under the table's
+     * reading of that Duração (until the holder's next Turn begins): {@code
+     * DuelistaFeat#DEFESA_COM_2_ARMAS}' "reduzidos à zero por 1 Rodada se ambas as armas foram
+     * utilizadas para atacar em seu Turno". Empty before any Turn has begun, and cleared by {@link
+     * #startNewScene()}. A Reação taken on somebody else's Turn is not part of it.
+     */
+    List<CombatantAction> getActionsOfLatestOwnTurn();
+
+    /**
      * Begins a new Rodada for this combatant: clears {@link #getActionsThisRound()}, resets
      * the per-Turn marker {@link #startTurn(int)} sets, and delivers every {@link
      * DelayedEgoGrant} scheduled during the Rodada just ended. Called by {@code
@@ -1053,6 +1100,38 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
 
     /** Every action recorded since this Rodada began — an unmodifiable view, in order. */
     List<CombatantAction> getActionsThisRound();
+
+    /** Every action recorded since this combatant's Turn began ({@link #startTurn}) — the per-Turn
+     * slice of {@link #getActionsThisRound()}. */
+    List<CombatantAction> getActionsThisTurn();
+
+    /**
+     * How many recorded actions this Rodada spent feat ({@link CombatantAction#activatedFeats()}) —
+     * what an "apenas uma vez por Rodada" Talento counts. The roll being resolved is not in the log
+     * yet, so 0 answers "this is the first".
+     */
+    default int countFeatActivationsThisRound(final org.aventyrs.core.feat.Feat feat) {
+        return (int) getActionsThisRound().stream().filter(action -> action.activated(feat)).count();
+    }
+
+    /** {@link #countFeatActivationsThisRound}, for "uma vez por Turno". */
+    default int countFeatActivationsThisTurn(final org.aventyrs.core.feat.Feat feat) {
+        return (int) getActionsThisTurn().stream().filter(action -> action.activated(feat)).count();
+    }
+
+    /**
+     * How many attacks this combatant has made this Rodada whose primary target was the combatant
+     * targetId names ({@link CombatantAction#targetId()}) — "seu segundo ataque contra um mesmo alvo
+     * na mesma Rodada". 0 for a {@code null} targetId.
+     */
+    default int countAttacksAgainstThisRound(final java.util.UUID targetId) {
+        if (targetId == null) {
+            return 0;
+        }
+        return (int) getActionsThisRound().stream()
+                .filter(action -> action.isAttack() && targetId.equals(action.targetId()))
+                .count();
+    }
 
     /**
      * Whether this combatant has taken an offensive action (a Perícia de Ataque roll — which is

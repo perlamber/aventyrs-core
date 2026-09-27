@@ -50,6 +50,9 @@ import static org.aventyrs.core.util.TranslatableMessages.SKILL_USE_PREVENTED;
 import static org.aventyrs.core.skill.Skill.UNTRAINED_PENALTY;
 import static org.aventyrs.core.util.TranslatableMessages.ANCESTRAL_COUNSEL_NOT_BANKED;
 import static org.aventyrs.core.util.TranslatableMessages.REQUIRED_SKILL_TRAIT_NOT_HELD;
+import static org.aventyrs.core.util.TranslatableMessages.ACTIVATED_FEAT_NOT_HELD;
+import static org.aventyrs.core.util.TranslatableMessages.FEAT_ACTIVATION_NOT_PERMITTED;
+import static org.aventyrs.core.util.TranslatableMessages.REROLL_NOT_GRANTED;
 
 /**
  * The {@code applyTo}/{@code findCharacterSkill} machinery every {@code <Skill>Interaction}
@@ -316,6 +319,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                 : character.getEffectiveSkill(skillType).orElseGet(() -> findCharacterSkill(character));
         if (skillRoll != null) {
             validateRequestedTrait(character, characterSkill, skillRoll.getRequestedAbility(), attackSource);
+            validateActivatedFeats(target, skillRoll, attackSource);
         }
         int graduationValue = characterSkill.getGraduation().getGraduationValue();
         // Agnação Ancestral: "são considerados treinados e especialistas nesta rolagem" — the untrained
@@ -416,6 +420,19 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                 .difficultyReduction(difficultyReduction)
                 .governingAttributeDomain(skillRoll != null ? attributeDomain : null);
 
+        // Cego: "Deve rolar 1d6 sempre que efetuar uma rolagem de perícia" — reported so the caller
+        // throws it, and judged when it did.
+        java.util.OptionalInt blindThreshold = target.getBlindCheckThreshold(skillType, sceneContext);
+        boolean blindCheckFailed = false;
+        if (blindThreshold.isPresent()) {
+            result.blindCheckThreshold(blindThreshold.getAsInt());
+            if (skillRoll != null && skillRoll.getBlindCheckFace() != null) {
+                blindCheckFailed = skillRoll.getBlindCheckFace() <= blindThreshold.getAsInt();
+                result.blindCheckFailed(blindCheckFailed);
+            }
+        }
+        boolean failedBlind = blindCheckFailed;
+
         if (skillType.isAttackSkill()) {
             target.getCharacter().getFeats().stream()
                     .map(feat -> feat.resolveDamageRetype(target.getCharacter(), skillType, attackSource))
@@ -431,6 +448,10 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
             extraDice += target.getLacertoFerocities().stream()
                     .mapToInt(ferocity -> ferocity.extraDamageDiceFor(target.getCharacter(), attackSource))
                     .max().orElse(0);
+            // A Talento's own die — Ataque Concentrado's "+1d6" when used with Lutador Nato.
+            extraDice += target.getCharacter().getFeats().stream()
+                    .mapToInt(feat -> feat.resolveExtraDamageDice(skillType, attackSource, target, skillRoll))
+                    .sum();
             if (extraDice > 0) {
                 result.extraDamageDice(extraDice);
             }
@@ -441,7 +462,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
             Optional<DifficultyLevel> reached = expert
                     ? DifficultyLevel.reachedByAsExpert(bonus + skillRoll.getTotal())
                     : DifficultyLevel.reachedBy(bonus + skillRoll.getTotal());
-            int criticalMarginIncrease = sumCriticalMarginIncrease(target, sceneContext, attackSource);
+            int criticalMarginIncrease = sumCriticalMarginIncrease(target, sceneContext, attackSource, attackTarget);
             // Resistência a Críticos — the attack target's own RC narrows this roller's Margem
             // Crítica Menor back: its Raça's and its Talentos' standing grants plus any
             // round-scoped Blessing (AnaoFeat#VIGOR_DO_INVERNO), all summed by the target's own
@@ -461,8 +482,9 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                     .criticalResult(criticalResult);
             resolveOutcome(bonus + skillRoll.getTotal(), skillRoll.getTargetValue(), difficultyReduction,
                     skillCompetencyAbilities, character.getFeats(), sceneContext, character).ifPresent(outcome -> {
-                        result.succeeded(outcome.succeeded()).margin(outcome.margin());
-                        if (outcome.succeeded()) {
+                        boolean succeeded = outcome.succeeded() && !failedBlind;
+                        result.succeeded(succeeded).margin(outcome.margin());
+                        if (succeeded) {
                             List<Blessing> earned = skillCompetencyAbilities.stream()
                                     .flatMap(ability -> ability.resolveSuccessBlessings(
                                             skillType, skillRoll.getRequestedAbility(), sceneContext).stream())
@@ -548,7 +570,45 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
         if (attackRollBonus != 0) {
             result = result.toBuilder().skillRollBonus(result.getSkillRollBonus() + attackRollBonus).build();
         }
+        // Lutar Engajado: the dano roll's own reroll, which only a real target can make adjacent.
+        int damageRerolls = target.getCharacter().getFeats().stream()
+                .mapToInt(feat -> feat.resolveDamageLowestDieRerolls(skillType, sceneContext, target, attackTarget,
+                        skillRoll))
+                .sum();
+        if (damageRerolls > 0) {
+            result = result.toBuilder().damageLowestDieRerolls(damageRerolls).build();
+        }
         return result;
+    }
+
+    /**
+     * Refuses a roll spending a Talento its roller does not hold ({@code ACTIVATED_FEAT_NOT_HELD}),
+     * one a held Talento will not be spent on right now ({@code FEAT_ACTIVATION_NOT_PERMITTED} — see
+     * {@link Feat#permitsActivation}), and a reroll of the lowest die no activated Talento pays for
+     * ({@code REROLL_NOT_GRANTED}). The same "possession is validated" line {@link
+     * #validateRequestedTrait} holds for a requested trait: what the caller says was spent must have
+     * been spendable.
+     *
+     * <p>Held means {@code Character#getFeats()} contains it — a choice-carrying Talento is held in its
+     * acquired form, so the catalog constant a roll names is matched through {@link
+     * Feat#catalogEntry()} too.
+     */
+    private void validateActivatedFeats(final CombatantSheet roller, final SkillRoll skillRoll,
+                                        final AttackSource attackSource) {
+        List<Feat> held = roller.getCharacter().getFeats();
+        for (Feat feat : skillRoll.getActivatedFeats()) {
+            boolean holds = held.stream().anyMatch(own -> own == feat || own.catalogEntry() == feat);
+            if (!holds) {
+                throw new IllegalOperationException(ACTIVATED_FEAT_NOT_HELD);
+            }
+            if (!feat.permitsActivation(skillType, skillRoll, attackSource, roller)) {
+                throw new IllegalOperationException(FEAT_ACTIVATION_NOT_PERMITTED);
+            }
+        }
+        if (skillRoll.isRerolled() && skillRoll.getActivatedFeats().stream()
+                .noneMatch(feat -> feat.grantsLowestDieReroll(skillType))) {
+            throw new IllegalOperationException(REROLL_NOT_GRANTED);
+        }
     }
 
     /**
@@ -619,7 +679,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
         SkillTrait requestedAbility = skillRoll == null ? null : skillRoll.getRequestedAbility();
         return character.getFeats().stream()
                 .mapToInt(feat -> feat.resolveSkillRollBonus(
-                        skillType, sceneContext, requestedAbility, character, attackSource, holder))
+                        skillType, sceneContext, requestedAbility, character, attackSource, holder, skillRoll))
                 .sum();
     }
 
@@ -837,8 +897,8 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
      * floor lands after it — see {@link #applyTo(CombatantSheet, SceneContext, SkillRoll)}.
      */
     private int sumCriticalMarginIncrease(final CombatantSheet holder, final SceneContext sceneContext,
-                                          final AttackSource attackSource) {
-        return criticalService.sumCriticalMarginIncrease(holder, skillType, attackSource, sceneContext);
+                                          final AttackSource attackSource, final CombatantSheet attackTarget) {
+        return criticalService.sumCriticalMarginIncrease(holder, skillType, attackSource, sceneContext, attackTarget);
     }
 
     /**
@@ -906,7 +966,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                 .forEach(bonus -> addTyped(typed, contributions, DamageContributionSource.EGO_ADVANTAGE, bonus));
         character.getFeats().stream()
                 .map(feat -> feat.resolveDamageBonus(skillType, sceneContext, attackTarget, character,
-                        attackSource, targetCount, target))
+                        attackSource, targetCount, target, skillRoll))
                 .flatMap(Optional::stream)
                 .forEach(bonus -> addTyped(typed, contributions, DamageContributionSource.FEAT, bonus));
 

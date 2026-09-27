@@ -74,6 +74,24 @@ public class IncomingAttackResult {
     @Singular
     private final List<Retaliation> onHitRetaliations;
 
+    /**
+     * The damage a substituted defence deals to what the attacker struck with — {@code
+     * DuelistaFeat#DEFENDER_SE_ATACANDO}'s "Se for bem-sucedido você evita o ataque … e inflige Força
+     * pontos de danos à arma ou projétil utilizado": the defender's Força. {@code null} unless the
+     * defence was a Perícia de Ataque and held. <b>Reported, never dealt</b>: the caller applies it
+     * to {@code IncomingAttack#getAttackSource()} when that is a weapon it holds ({@code
+     * Item#applyDamage}), or to the projectile, which nothing tracks.
+     */
+    private final Integer counterWeaponDamage;
+
+    /**
+     * Whether the attacker's dano roll for this hit gains Vantagem — Defender-se Atacando's "se for
+     * malsucedido o atacante recebe Vantagem na rolagem de danos deste ataque". {@code false} unless
+     * the defence was a Perícia de Ataque and failed. Reported: the attacker's dano is the caller's
+     * (a foe's stat-block damage), so the caller adds {@code Skill#ADVANTAGE_BONUS} to it.
+     */
+    private final boolean attackerDamageAdvantage;
+
 
     /**
      * {@link IncomingAttack#getDifficultyLevel()} after the defender's own {@code

@@ -1,9 +1,13 @@
 package org.aventyrs.core.sheet;
 
 import org.aventyrs.core.character.AttributeDomain;
+import org.aventyrs.core.feat.Feat;
 import org.aventyrs.core.skill.AttackSource;
 import org.aventyrs.core.skill.SkillType;
 import org.aventyrs.core.util.TranslatableMessages;
+
+import java.util.Set;
+import java.util.UUID;
 
 /**
  * One action a combatant took this Rodada — appended to {@link CombatantSheet#getActionsThisRound()}
@@ -37,14 +41,45 @@ import org.aventyrs.core.util.TranslatableMessages;
  * @param turnNumber     the Rodada this action was taken in (the value {@code Scene#getCurrentRound()}
  *                       reported), carried for the API's own history.
  * @param outcome        the roll's verdict, or {@code null} — see {@link ActionOutcome}.
+ * @param targetId       the {@link CombatantSheet#getId()} of the attack's <b>primary</b> target, or
+ *                       {@code null} for a roll aimed at nobody (a Perícia check, a defence). What
+ *                       "seu segundo ataque contra um mesmo alvo na mesma Rodada" reads ({@code
+ *                       DuelistaFeat#EXPLORAR_PONTOS_FRACOS}) — see {@link
+ *                       CombatantSheet#countAttacksAgainstThisRound}.
+ * @param activatedFeats the Talentos the roller spent on this roll — {@code SkillRoll#getActivatedFeats()}
+ *                       carried into the log, never {@code null}. What an "apenas uma vez por
+ *                       Rodada/Turno" Talento counts its own uses by ({@link
+ *                       CombatantSheet#countFeatActivationsThisRound}), and what a follow-up attack
+ *                       reads to know what the one before it was ({@code DuelistaFeat#UM_DOIS},
+ *                       {@code DuelistaFeat#COMBATER_COM_2_ARMAS}).
  */
 public record CombatantAction(SkillType skill, AttributeDomain governingDomain,
                               AttackSource attackSource, ActionCost cost,
-                              int turnNumber, ActionOutcome outcome) {
+                              int turnNumber, ActionOutcome outcome,
+                              UUID targetId, Set<Feat> activatedFeats) {
 
     public CombatantAction {
         if (cost != null && cost.isDynamic()) {
             throw new IllegalOperationException(TranslatableMessages.UNRESOLVED_ACTION_COST);
         }
+        activatedFeats = activatedFeats == null ? Set.of() : Set.copyOf(activatedFeats);
+    }
+
+    /** An action aimed at nobody in particular, with no Talento spent on it — every log entry
+     * before 0.0.70. */
+    public CombatantAction(final SkillType skill, final AttributeDomain governingDomain,
+                           final AttackSource attackSource, final ActionCost cost,
+                           final int turnNumber, final ActionOutcome outcome) {
+        this(skill, governingDomain, attackSource, cost, turnNumber, outcome, null, Set.of());
+    }
+
+    /** Whether feat was spent on this action. */
+    public boolean activated(final Feat feat) {
+        return activatedFeats.contains(feat);
+    }
+
+    /** Whether this action is a Perícia de Ataque roll. */
+    public boolean isAttack() {
+        return skill != null && skill.isAttackSkill();
     }
 }

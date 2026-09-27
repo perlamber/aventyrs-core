@@ -72,6 +72,15 @@ import static org.aventyrs.core.util.TranslatableMessages.INVALID_SKILL_ROLL;
  * paying its +1PA to reroll a die are different facts and only the second one earns the die.
  * Which Talentos those are is the caller's statement, the same way the dice themselves are: this
  * core neither rolls nor spends anything.
+ *
+ * <p><b>A reroll of the lowest die</b> ({@link #rerollingLowestDie}) is the one shape this core gives
+ * "rolar novamente o dado de menor valor" — {@code DuelistaFeat#LUTADOR_NATO}'s and {@code
+ * ArtilhariaFeat#MIRA_IMPECAVEL}'s. The caller still throws the new die, the same way it threw the
+ * first three: what this class adds is the bookkeeping — which face was replaced, and that the new
+ * one stands "mesmo que seja inferior ao anterior" — so that {@code AbstractSkillInteraction} can
+ * refuse a reroll no activated Talento paid for ({@code Feat#grantsLowestDieReroll}). The original
+ * face is kept on {@link #getRerolledFromFace()} for a log to show; every total and critical is read
+ * off the new dice.
  */
 public class SkillRoll {
     private static final int EXPECTED_DICE_COUNT = 3;
@@ -99,6 +108,8 @@ public class SkillRoll {
     private final Manoeuvre manoeuvre;
     private final Set<Feat> activatedFeats;
     private final boolean counselled;
+    private final Integer rerolledFromFace;
+    private final Integer blindCheckFace;
 
     public SkillRoll(final List<Integer> dice) {
         this(dice, null, null, null);
@@ -140,19 +151,17 @@ public class SkillRoll {
      */
     public SkillRoll(final List<Integer> dice, final SkillTrait requestedAbility, final Integer targetValue,
                      final ActionCost actionCost, final Manoeuvre manoeuvre, final Set<Feat> activatedFeats) {
-        this(dice, requestedAbility, targetValue, actionCost, manoeuvre, activatedFeats, false);
+        this(dice, requestedAbility, targetValue, actionCost, manoeuvre, activatedFeats, false, null, null);
     }
 
     private SkillRoll(final List<Integer> dice, final SkillTrait requestedAbility, final Integer targetValue,
                       final ActionCost actionCost, final Manoeuvre manoeuvre, final Set<Feat> activatedFeats,
-                      final boolean counselled) {
+                      final boolean counselled, final Integer rerolledFromFace, final Integer blindCheckFace) {
         if (dice.size() != EXPECTED_DICE_COUNT) {
             throw new IllegalOperationException(INVALID_SKILL_ROLL);
         }
         for (int face : dice) {
-            if (face < MIN_FACE_VALUE || face > MAX_FACE_VALUE) {
-                throw new IllegalOperationException(INVALID_SKILL_ROLL);
-            }
+            validateFace(face);
         }
         this.dice = dice;
         this.requestedAbility = requestedAbility;
@@ -161,6 +170,74 @@ public class SkillRoll {
         this.manoeuvre = manoeuvre;
         this.activatedFeats = activatedFeats == null ? Set.of() : Set.copyOf(activatedFeats);
         this.counselled = counselled;
+        this.rerolledFromFace = rerolledFromFace;
+        this.blindCheckFace = blindCheckFace;
+    }
+
+    private static void validateFace(final int face) {
+        if (face < MIN_FACE_VALUE || face > MAX_FACE_VALUE) {
+            throw new IllegalOperationException(INVALID_SKILL_ROLL);
+        }
+    }
+
+    /**
+     * This roll with its lowest die thrown again and replaced by newFace — "poderá rolar novamente
+     * o dado de menor valor em sua rolagem. O novo resultado será utilizado, mesmo que seja inferior
+     * ao anterior." Of two equal lowest dice, the first is replaced; which one is immaterial, since
+     * only the faces' values are ever read.
+     *
+     * <p>Only the bookkeeping: the Talento that pays for it is named in {@link #getActivatedFeats()},
+     * and resolving a rerolled roll whose activated Talentos grant no reroll is refused ({@code
+     * REROLL_NOT_GRANTED}). One reroll per roll — no clause grants two.
+     *
+     * @throws IllegalOperationException ({@code INVALID_SKILL_ROLL}) when newFace is not 1-6, or this
+     *         roll was already rerolled
+     */
+    public SkillRoll rerollingLowestDie(final int newFace) {
+        validateFace(newFace);
+        if (rerolledFromFace != null) {
+            throw new IllegalOperationException(INVALID_SKILL_ROLL);
+        }
+        List<Integer> rerolled = new java.util.ArrayList<>(dice);
+        int lowestIndex = 0;
+        for (int i = 1; i < rerolled.size(); i++) {
+            if (rerolled.get(i) < rerolled.get(lowestIndex)) {
+                lowestIndex = i;
+            }
+        }
+        int replaced = rerolled.set(lowestIndex, newFace);
+        return new SkillRoll(List.copyOf(rerolled), requestedAbility, targetValue, actionCost, manoeuvre,
+                activatedFeats, counselled, replaced, blindCheckFace);
+    }
+
+    /** The face {@link #rerollingLowestDie} replaced, or {@code null} for a roll nobody rerolled. */
+    public Integer getRerolledFromFace() {
+        return rerolledFromFace;
+    }
+
+    /** Whether this roll's lowest die was thrown again — see {@link #rerollingLowestDie}. */
+    public boolean isRerolled() {
+        return rerolledFromFace != null;
+    }
+
+    /**
+     * This roll with the 1d6 a Cego roller throws beside it — "Deve rolar 1d6 sempre que efetuar uma
+     * rolagem de perícia" ({@code ConditionType#CEGO}). Whether the face fails the roll is judged
+     * against {@code CombatantSheet#getBlindCheckThreshold} by {@code AbstractSkillInteraction},
+     * which reports it on {@code InteractionResult#getBlindCheckFailed()}. The caller throws it, as
+     * it throws everything else.
+     *
+     * @throws IllegalOperationException ({@code INVALID_SKILL_ROLL}) when face is not 1-6
+     */
+    public SkillRoll withBlindCheck(final int face) {
+        validateFace(face);
+        return new SkillRoll(dice, requestedAbility, targetValue, actionCost, manoeuvre, activatedFeats, counselled,
+                rerolledFromFace, face);
+    }
+
+    /** The Cego 1d6 thrown beside this roll, or {@code null} when none was — see {@link #withBlindCheck}. */
+    public Integer getBlindCheckFace() {
+        return blindCheckFace;
     }
 
     /**
@@ -169,7 +246,8 @@ public class SkillRoll {
      * Resolving it requires a counsel the roller banked through {@code AncestralCounselService}.
      */
     public SkillRoll counselled() {
-        return new SkillRoll(dice, requestedAbility, targetValue, actionCost, manoeuvre, activatedFeats, true);
+        return new SkillRoll(dice, requestedAbility, targetValue, actionCost, manoeuvre, activatedFeats, true,
+                rerolledFromFace, blindCheckFace);
     }
 
     /** Whether this roll is made with Agnação Ancestral — see {@link #counselled()}. */

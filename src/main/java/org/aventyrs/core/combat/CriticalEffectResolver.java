@@ -71,6 +71,18 @@ final class CriticalEffectResolver {
     static Resolved resolve(final CombatantSheet attacker, final AttackSource attackSource, final SkillType attackSkill,
                             final CriticalResult critical, final boolean hit,
                             final List<CriticalEffectType> requested, final DiceRoller dice, final boolean build) {
+        return resolve(attacker, attackSource, attackSkill, critical, hit, requested, dice, build, 0);
+    }
+
+    /**
+     * The same resolution with criticalOnlyExtra more applications of the natural Efeito Crítico on a
+     * <b>critical</b> hit only — a triggered {@code effect.GolpeTrovejante}'s "aplicado duas vezes",
+     * which, unlike Finalização's repetitions, adds nothing to a hit that is not critical.
+     */
+    static Resolved resolve(final CombatantSheet attacker, final AttackSource attackSource, final SkillType attackSkill,
+                            final CriticalResult critical, final boolean hit,
+                            final List<CriticalEffectType> requested, final DiceRoller dice, final boolean build,
+                            final int criticalOnlyExtra) {
         if (!hit) {
             return Resolved.NONE;
         }
@@ -79,13 +91,14 @@ final class CriticalEffectResolver {
         int extra = attacker == null ? 0 : attacker.getCharacter().getAllTitles().stream()
                 .mapToInt(title -> title.resolveExtraNaturalCriticalEffectApplications(attacker, attackSource))
                 .sum();
+        int criticalExtra = extra + Math.max(0, criticalOnlyExtra);
 
         List<CriticalEffectType> types = new ArrayList<>();
         CriticalResult severity;
         if (isCritical) {
             severity = critical;
             if (natural != null) {
-                for (int i = 0; i <= extra; i++) {
+                for (int i = 0; i <= criticalExtra; i++) {
                     types.add(natural);
                 }
             }

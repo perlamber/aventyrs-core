@@ -281,6 +281,15 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     @Getter(AccessLevel.NONE)
     private int actionCountAtTurnStart = 0;
 
+    /** See {@link CombatantSheet#getActionsOfLatestOwnTurn()} — cleared by {@link #startTurn}, fed by
+     * {@link #recordAction} only while {@link #inOwnTurn}. */
+    @Getter(AccessLevel.NONE)
+    private final List<CombatantAction> actionsOfLatestOwnTurn = new ArrayList<>();
+
+    /** Whether this combatant's own Turn is underway — between {@link #startTurn} and {@link #finishTurn}. */
+    @Getter(AccessLevel.NONE)
+    private boolean inOwnTurn = false;
+
     /** Movements taken since this Rodada began — see {@link #consumeMovementThisRound()}. */
     private int movementsTakenThisRound = 0;
 
@@ -316,6 +325,9 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     /** Damage only a Descanso Verdadeiro recovers — see {@link #payWithVitality(int)}. */
     @Getter(AccessLevel.NONE)
     private int lockedDamage;
+
+    /** The part of the lock Roubo de Vida may still recover — see {@link #lockDamage}. */
+    private int lifeStealRecoverableLockedDamage;
 
     /** Temporary Ego points lent to this combatant, settled at {@link #startNewScene()}. */
     @Getter(AccessLevel.NONE)
@@ -475,8 +487,14 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
                 fallenHealing.recordComaHeal(source.key());
             }
         }
-        // Transferir Vitalidade: PV paid that way come back only with a Descanso Verdadeiro.
-        recovered = Math.max(0, Math.min(recovered, getDamageTaken() - lockedDamage));
+        // Transferir Vitalidade: PV paid that way come back only with a Descanso Verdadeiro. Feridas
+        // Ardentes' lock yields to Roubo de Vida too, which releases as much of it as it recovers.
+        int unlocked = Math.max(0, getDamageTaken() - lockedDamage - lifeStealRecoverableLockedDamage);
+        int ceiling = lifeSteal ? Math.max(0, getDamageTaken() - lockedDamage) : unlocked;
+        recovered = Math.max(0, Math.min(recovered, ceiling));
+        if (recovered > unlocked) {
+            lifeStealRecoverableLockedDamage = Math.max(0, lifeStealRecoverableLockedDamage - (recovered - unlocked));
+        }
         int damageTaken = hitPoints.recover(recovered);
         observeStatus();
         return damageTaken;
@@ -591,12 +609,30 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
 
     @Override
     public int getLockedDamage() {
-        return Math.min(lockedDamage, getDamageTaken());
+        return Math.min(lockedDamage + lifeStealRecoverableLockedDamage, getDamageTaken());
+    }
+
+    @Override
+    public int getLifeStealRecoverableLockedDamage() {
+        return Math.min(lifeStealRecoverableLockedDamage, getDamageTaken());
+    }
+
+    @Override
+    public void lockDamage(final int amount, final boolean lifeStealRecovers) {
+        if (amount <= 0) {
+            return;
+        }
+        if (lifeStealRecovers) {
+            lifeStealRecoverableLockedDamage += amount;
+        } else {
+            lockedDamage += amount;
+        }
     }
 
     @Override
     public void releaseVitalityLock() {
         lockedDamage = 0;
+        lifeStealRecoverableLockedDamage = 0;
     }
 
     @Override
@@ -1251,7 +1287,13 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
      */
     @Override
     public void finishTurn() {
+        inOwnTurn = false;
         tickTemporaryEffects();
+    }
+
+    @Override
+    public List<CombatantAction> getActionsOfLatestOwnTurn() {
+        return Collections.unmodifiableList(actionsOfLatestOwnTurn);
     }
 
     /**
@@ -1273,6 +1315,8 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         movementsTakenThisRound = 0;
         repositionsTakenThisRound = 0;
         actionCountAtTurnStart = actionsThisRound.size();
+        actionsOfLatestOwnTurn.clear();
+        inOwnTurn = true;
         drewWeaponThisTurn = false;
         activationsThisTurn.clear();
         // "Por 1 Rodada" from the holder's own Turn lasts until this one begins (table ruling).
@@ -1468,6 +1512,8 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     public void startNewScene() {
         actionsThisCena.clear();
         actionsThisRound.clear();
+        actionsOfLatestOwnTurn.clear();
+        inOwnTurn = false;
         actionCountAtTurnStart = 0;
         attacksSufferedThisRound = 0;
         reactionsSpentThisRound = 0;
@@ -1660,6 +1706,14 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     public void recordAction(final CombatantAction action) {
         actionsThisRound.add(action);
         actionsThisCena.add(action);
+        if (inOwnTurn) {
+            actionsOfLatestOwnTurn.add(action);
+        }
+    }
+
+    @Override
+    public List<CombatantAction> getActionsThisTurn() {
+        return Collections.unmodifiableList(actionsThisRound.subList(actionCountAtTurnStart, actionsThisRound.size()));
     }
 
     @Override

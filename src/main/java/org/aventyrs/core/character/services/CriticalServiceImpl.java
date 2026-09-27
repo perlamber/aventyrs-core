@@ -41,7 +41,7 @@ public class CriticalServiceImpl implements CriticalService {
                                        final AttackSource attackSource, final SceneContext sceneContext,
                                        final CombatantSheet target) {
         int margin = getBaseLesserCriticalMargin(attackSource);
-        int widening = sumCriticalMarginIncrease(holder, skillType, attackSource, sceneContext);
+        int widening = sumCriticalMarginIncrease(holder, skillType, attackSource, sceneContext, target);
         widening -= getLesserCriticalResistance(target, sceneContext);
         return margin - Math.max(0, widening);
     }
@@ -116,6 +116,13 @@ public class CriticalServiceImpl implements CriticalService {
     @Override
     public int sumCriticalMarginIncrease(final CombatantSheet holder, final SkillType skillType,
                                          final AttackSource attackSource, final SceneContext sceneContext) {
+        return sumCriticalMarginIncrease(holder, skillType, attackSource, sceneContext, null);
+    }
+
+    @Override
+    public int sumCriticalMarginIncrease(final CombatantSheet holder, final SkillType skillType,
+                                         final AttackSource attackSource, final SceneContext sceneContext,
+                                         final CombatantSheet target) {
         Character character = holder.getCharacter();
         List<SkillCompetencyAbility> skillCompetencyAbilities = SkillCompetencyAbility.allFor(character, holder);
         int total = character.getAttributeAbilities().stream()
@@ -131,7 +138,7 @@ public class CriticalServiceImpl implements CriticalService {
         // the same shape AbstractSkillInteraction's own Talento passes use.
         total += character.getFeats().stream()
                 .mapToInt(feat -> feat.resolveCriticalMarginIncrease(skillType, sceneContext, character,
-                        attackSource, holder))
+                        attackSource, holder, target))
                 .sum();
         // And a fifth for the wielded weapon's fitted enhancements (OffensiveMasterpiece#DECISIVA/
         // #MITRAL), scoped to the weapon this attack is made with by

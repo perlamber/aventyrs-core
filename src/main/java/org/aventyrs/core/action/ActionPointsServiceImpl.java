@@ -8,7 +8,10 @@ import org.aventyrs.core.modifier.ModifierResolver;
 import org.aventyrs.core.modifier.ModifierResolverImpl;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.scene.SceneContext;
+import org.aventyrs.core.sheet.ActionCost;
 import org.aventyrs.core.sheet.CombatantSheet;
+import org.aventyrs.core.skill.AttackSource;
+import java.util.Set;
 import org.aventyrs.core.skill.SkillExcellency;
 import org.aventyrs.core.skill.SkillType;
 
@@ -95,6 +98,40 @@ public class ActionPointsServiceImpl implements ActionPointsService {
         int adjusted = character.getActionProfile()
                 .adjustSkillRollCost(DEFAULT_SKILL_ROLL_COST + adjustment, turnNumber);
         return Math.max(0, adjusted);
+    }
+
+    @Override
+    public ActionCost getAttackCost(final CombatantSheet attacker, final SkillType attackSkill,
+                                   final AttackSource attackSource, final Set<Feat> activatedFeats,
+                                   final int turnNumber) {
+        Set<Feat> spent = activatedFeats == null ? Set.of() : activatedFeats;
+        List<Feat> held = attacker.getCharacter().getFeats();
+        Integer override = held.stream()
+                .map(feat -> feat.resolveAttackActionPointOverride(attackSkill, attackSource, attacker, spent))
+                .filter(java.util.Objects::nonNull)
+                .min(Integer::compare)
+                .orElse(null);
+        int base = override != null ? override : getSkillRollCost(attacker.getCharacter(), turnNumber);
+        int surcharge = 0;
+        int reduction = 0;
+        for (Feat feat : held) {
+            int adjustment = feat.resolveAttackActionPointAdjustment(attackSkill, attackSource, attacker, spent);
+            if (adjustment > 0) {
+                surcharge += adjustment;
+            } else {
+                reduction -= adjustment;
+            }
+        }
+        int price = base + surcharge;
+        if (reduction > 0) {
+            // "(mínimo 1PA)" — a reduction never makes an attack cheaper than 1PA, though it leaves
+            // one already below that (a free Perícia roll, a pair's second swing) where it was.
+            price = Math.max(Math.min(price, 1), price - reduction);
+        }
+        if (price > 0) {
+            return ActionCost.ofActionPoints(price);
+        }
+        return override != null ? ActionCost.NONE : ActionCost.FREE_ACTION;
     }
 
     @Override

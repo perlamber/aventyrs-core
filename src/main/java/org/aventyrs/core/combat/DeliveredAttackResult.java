@@ -64,6 +64,15 @@ public class DeliveredAttackResult {
     private final Retaliation retaliation;
 
     /**
+     * PV the <b>attacker</b> owes for this hit, only a Descanso Verdadeiro recovers — {@code
+     * Feat#resolveLockedSelfDamageOnHit}, {@code DuelistaFeat#FORCA_EXCESSIVA}'s "se o fizer e for
+     * bem-sucedido você sofre 2 pontos de Dano Físico Primordial". 0 on a miss. Reported, never
+     * dealt: the caller pays it with {@code attacker.payWithVitality(lockedSelfDamage)} — no
+     * mitigation ("não podem ser reduzidos"), then locked.
+     */
+    private final int lockedSelfDamage;
+
+    /**
      * What the defender's Talentos deal back because this attack <b>landed</b> — {@code
      * Feat#resolveRetaliation}, one {@link Retaliation} per answering Talento. Empty on a miss, on
      * an Ataque à Distância, and without a roll. <b>Reported, never dealt</b>, like {@link

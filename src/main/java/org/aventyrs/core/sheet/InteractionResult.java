@@ -258,6 +258,28 @@ public class InteractionResult {
      */
     Integer extraDamageDice;
 
+    /**
+     * How many times this attack's dano roll may throw its lowest die again ({@code
+     * Feat#resolveDamageLowestDieRerolls} — {@code DuelistaFeat#LUTAR_ENGAJADO}), for the caller to
+     * do as it throws the dano dice. {@code null} when there are none or the roll is not an attack.
+     */
+    Integer damageLowestDieRerolls;
+
+    /**
+     * The highest Cego 1d6 face that fails this roll ({@code CombatantSheet#getBlindCheckThreshold})
+     * — {@code null} when its roller throws none. Reported whether or not the die came with the roll,
+     * so a caller knows to throw it.
+     */
+    Integer blindCheckThreshold;
+
+    /**
+     * Whether the Cego 1d6 thrown with this roll ({@code SkillRoll#withBlindCheck}) failed it — the
+     * roll fails whatever its total: {@link #succeeded} is forced false, and {@code AttackDelivery}/
+     * {@code AttackReceiver} read it as a miss / a failed defence. {@code null} when no check was
+     * owed or no die was thrown.
+     */
+    Boolean blindCheckFailed;
+
     Integer determinationPointsSpent;
 
     /**

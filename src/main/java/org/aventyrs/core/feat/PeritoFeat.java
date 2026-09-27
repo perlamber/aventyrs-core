@@ -134,7 +134,10 @@ public enum PeritoFeat implements Feat {
     //  combat — SceneContext#isCombatScene() would answer that, but resolveDifficultyReduction
     //  takes no SceneContext (unlike resolveSkillRollBonus). "Triplicar seu Tempo de Ação" has no
     //  representation either; what a roll costs is the caller's.
-    // TODO: rerolling the lowest die has no representation — this core never rolls dice.
+    // TODO: the reroll itself is expressible now (SkillRoll#rerollingLowestDie, made legal by
+    //  Feat#grantsLowestDieReroll) — but only for "a Perícia escolhida em Foco em Perícia", and that
+    //  hook is asked with the SkillType alone, so it cannot see the holder's FocoEmPericiaFeat choice;
+    //  "sob situações de estresse ou combates" also needs the SceneContext it does not take.
     // TODO: its Pré-requisito counts Habilidades de Competência or Especializações of the chosen
     //  Perícia; FeatRequirements can name one Habilidade, not a count of them, and not either/or.
     MAESTRIA_EM_PERICIA(
