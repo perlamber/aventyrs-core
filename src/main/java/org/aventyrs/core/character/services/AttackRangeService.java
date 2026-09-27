@@ -128,6 +128,24 @@ public interface AttackRangeService {
      */
     int getEffectiveRangeInUnidadesDeDistancia(Character character, Weapon weapon);
 
+    /**
+     * {@link #getEffectiveRange(Character, Weapon)} for an attack spending activatedFeats — {@code
+     * Feat#resolveAttackRangeIncrease(Character, AttackSource, Set)}'s steps, so Tiro Longo's extra
+     * passo with Mira Impecável counts. The two-argument form activates nothing.
+     */
+    Range getEffectiveRange(Character character, Weapon weapon, java.util.Set<org.aventyrs.core.feat.Feat> activatedFeats);
+
+    /**
+     * The reach in Unidades de Distância an attack spending activatedFeats measures against — {@link
+     * #getEffectiveRangeInUnidadesDeDistancia(Character, Weapon)} when no Talento widens it, and
+     * otherwise the widened band's own upper bound ({@link Range#getMaxUnidadesDeDistancia()}, {@link
+     * #UNBOUNDED_RANGE} at {@link Range#AO_ALCANCE_DOS_OLHOS}): a "+1 nível" step names a band, not a
+     * UD count, so the band's edge is the only distance it states. Never shorter than the un-widened
+     * reach.
+     */
+    int getEffectiveRangeInUnidadesDeDistancia(Character character, Weapon weapon,
+                                               java.util.Set<org.aventyrs.core.feat.Feat> activatedFeats);
+
     /** What {@link #getEffectiveRangeInUnidadesDeDistancia} reports for a reach limited only by
      * sight — {@link Range#AO_ALCANCE_DOS_OLHOS} has no {@code maxUnidadesDeDistancia}, so there is
      * no number to state and none to add a modifier to. */

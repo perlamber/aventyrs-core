@@ -160,7 +160,10 @@ roll, source, holder)` — its Perícia, "uma vez por Rodada/Turno"
 `ActionPointsService#getAttackCost`; a reroll on `grantsLowestDieReroll`; a dano-roll die on
 `resolveExtraDamageDice`; a dano reroll on `resolveDamageLowestDieRerolls`; a Meio-Dano on
 `halvesAttackDamage`; a self-inflicted, Descanso-Verdadeiro-only cost on
-`resolveLockedSelfDamageOnHit`. **Never wire an opt-in as an unconditional bonus** — that skips its
+`resolveLockedSelfDamageOnHit`; an extra projectile's repeated Correntes and Efeitos Críticos on
+`resolveAttackEffectRepetitions` (`ArtilhariaFeat#TIRO_DUPLO`); a reach step bought by another
+activated Talento on `resolveAttackRangeIncrease(Character, AttackSource, Set<Feat>)`
+(`ArtilhariaFeat#TIRO_LONGO` with Mira Impecável). **Never wire an opt-in as an unconditional bonus** — that skips its
 price.
 
 ⚠️ **Any Talento with an acquisition choice must advertise it**, or no client can discover it.

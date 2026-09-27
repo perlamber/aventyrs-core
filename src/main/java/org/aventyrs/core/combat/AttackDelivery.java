@@ -12,6 +12,7 @@ import org.aventyrs.core.effect.EffectChain;
 import org.aventyrs.core.effect.EffectChainService;
 import org.aventyrs.core.effect.EffectChainServiceImpl;
 import org.aventyrs.core.effect.GolpeTrovejante;
+import org.aventyrs.core.effect.RepeatedEffect;
 import org.aventyrs.core.feat.Feat;
 import org.aventyrs.core.sheet.ActionOutcome;
 import org.aventyrs.core.sheet.CombatantAction;
@@ -354,22 +355,28 @@ public class AttackDelivery {
                                                     final boolean criticalEffectTriggered,
                                                     final boolean effectChainTriggered,
                                                     final boolean halfDamage) {
-        List<Effect> stages = new ArrayList<>();
+        List<Effect> chains = new ArrayList<>();
         if (effectChainTriggered) {
-            stages.addAll(attack.getEffectChains());
-            stages.addAll(effectChainsGrantedByFeats(attack));
+            chains.addAll(attack.getEffectChains());
+            chains.addAll(effectChainsGrantedByFeats(attack));
         }
+        List<Effect> criticals = new ArrayList<>();
         if (criticalEffectTriggered) {
-            stages.addAll(CriticalEffect.applicableTo(defender,
+            criticals.addAll(CriticalEffect.applicableTo(defender,
                     allCriticalEffects(attack, criticalResult, effectChainTriggered ? thunderousApplications(attack) : 0),
                     criticalResult, attack.getSceneContext()));
         } else {
             // Finalização: a hit that is not critical still applies the Arma Natural's own Efeito
             // Crítico Menor — filtered at Menor, so an anatomy immune to Menores shrugs it off.
-            stages.addAll(CriticalEffect.applicableTo(defender,
+            criticals.addAll(CriticalEffect.applicableTo(defender,
                     typedCriticalEffects(attack, criticalResult, false).effects(),
                     CriticalResult.ACERTO_CRITICO_MENOR, attack.getSceneContext()));
         }
+        // Tiro Duplo/Múltiplo: "Correntes de Efeito e Efeitos Críticos aplicam seus efeitos duas
+        // vezes" — each group once more per extra projectile, right behind the original.
+        int repetitions = effectRepetitions(attack);
+        List<Effect> stages = new ArrayList<>(repeated(chains, repetitions));
+        stages.addAll(repeated(criticals, repetitions));
 
         Interaction<CombatantSheet> next = null;
         for (int i = stages.size() - 1; i >= 0; i--) {
@@ -385,6 +392,23 @@ public class AttackDelivery {
                     .sum());
         }
         return (halfDamage ? head.halvingDamage() : head).chainInto(next);
+    }
+
+    /** Every held Talento's extra applications of this attack's Correntes and Efeitos Críticos. */
+    private static int effectRepetitions(final DeliveredAttack attack) {
+        return attack.getAttacker().getCharacter().getFeats().stream()
+                .mapToInt(feat -> feat.resolveAttackEffectRepetitions(attack.getAttackSkill(), attack.getAttackSource(),
+                        attack.getAttacker(), attack.getAttackRoll()))
+                .sum();
+    }
+
+    /** effects, then each of them again repetitions more times as a {@link RepeatedEffect}. */
+    private static List<Effect> repeated(final List<Effect> effects, final int repetitions) {
+        List<Effect> all = new ArrayList<>(effects);
+        for (int i = 0; i < repetitions; i++) {
+            effects.forEach(effect -> all.add(new RepeatedEffect(effect)));
+        }
+        return all;
     }
 
     /**

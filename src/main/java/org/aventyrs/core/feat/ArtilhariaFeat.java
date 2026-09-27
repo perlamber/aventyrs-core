@@ -8,6 +8,13 @@ import org.aventyrs.core.character.CriticalDamage;
 import org.aventyrs.core.character.DamageBonus;
 import org.aventyrs.core.character.DamageType;
 import org.aventyrs.core.item.AttackMethod;
+import org.aventyrs.core.item.Weapon;
+import org.aventyrs.core.scene.Range;
+import org.aventyrs.core.sheet.ActionCost;
+import org.aventyrs.core.sheet.CharacterSheet;
+import org.aventyrs.core.sheet.CombatantAction;
+import org.aventyrs.core.skill.SkillTrait;
+import java.util.Set;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.skill.AttackSource;
@@ -19,10 +26,12 @@ import org.aventyrs.core.skill.SkillType;
 /**
  * Talentos de Artilharia — ranged attacks, aiming, and firing more than once.
  *
- * <p>Two limits of {@link FeatRequirements} show up repeatedly here and are noted per constant:
- * {@code requiredFeat} is <b>singular</b>, so a Talento demanding two named Talentos can only
- * record one; and a Pré-requisito naming a Talento from another tree is wired only once that
- * tree exists.
+ * <p>Like {@link DuelistaFeat}, most of the tree is <b>spent on one attack</b> — named in {@code
+ * SkillRoll#getActivatedFeats()}, gated per use by {@link Feat#permitsActivation} and priced by
+ * {@code ActionPointsService#getAttackCost} (core 0.0.70). An extra attack (Tiro Rápido) stays the
+ * caller's to make; an extra projectile (Tiro Duplo, Tiro Múltiplo) is the same one roll with more
+ * dano dice and its Correntes and Efeitos Críticos applied again ({@link
+ * Feat#resolveAttackEffectRepetitions}).
  */
 public enum ArtilhariaFeat implements Feat {
 
@@ -32,7 +41,7 @@ public enum ArtilhariaFeat implements Feat {
      */
     // Real (core 0.0.70): the ranged twin of DuelistaFeat#LUTADOR_NATO — activated on an Ataque à
     // Distância, it makes SkillRoll#rerollingLowestDie legal and adds 1PA to the attack's price.
-    // TODO: "Treinamento em Ataque-à-distância", with no number, is read as Graduação 1.
+    // ⚠️ "Treinamento em Ataque-à-distância", with no number, is read as Graduação 1 — trained at all.
     MIRA_IMPECAVEL(
             "Você pode aumentar seu tempo de disparo em +1PA quando atacar utilizando a perícia "
                     + "‘ataque à distância’, se o fizer poderá rolar novamente o dado de menor "
@@ -55,8 +64,7 @@ public enum ArtilhariaFeat implements Feat {
 
         @Override
         public int resolveAttackActionPointAdjustment(final SkillType skillType, final AttackSource attackSource,
-                                                      final CombatantSheet attacker,
-                                                      final java.util.Set<Feat> activatedFeats) {
+                                                      final CombatantSheet attacker, final Set<Feat> activatedFeats) {
             return skillType == SkillType.ATAQUE_A_DISTANCIA && activatedFeats.contains(this) ? 1 : 0;
         }
     },
@@ -141,11 +149,11 @@ public enum ArtilhariaFeat implements Feat {
      * Distância/Arremesso or a ranged Magia alike, which is the "físicos e Mágicos" scope —
      * and {@code org.aventyrs.core.character.services.AttackRangeService} advances the source's
      * own Alcance by it.
+     *
+     * <p>The "+1 passo (para o total de +2 níveis)" with Mira Impecável is real too: the attack names
+     * Mira Impecável among what it spends, and the activation-aware {@link
+     * #resolveAttackRangeIncrease(Character, AttackSource, Set)} adds the second step.
      */
-    // TODO: the "+1 passo adicional (total +2 níveis) sempre que efetuar ataques utilizando dos
-    //  benefícios de 'Mira Impecável'" half needs the gap catalog's "this one delivered attack"
-    //  scoping — no per-attack hook is scoped to "an attack made by activating another Talento"
-    //  (same blocker as ABATER_A_CACA; MIRA_MORTAL's half of it is solved — see its own comment).
     TIRO_LONGO(
             "A distância máxima de seus ataques à Distância, físicos e Mágicos, aumentam em +1 "
                     + "nível. Sempre que efetuar ataques utilizando dos benefícios do Talento "
@@ -160,30 +168,66 @@ public enum ArtilhariaFeat implements Feat {
             return attackSource != null
                     && attackSource.getAttackSkillType() == SkillType.ATAQUE_A_DISTANCIA ? 1 : 0;
         }
+
+        @Override
+        public int resolveAttackRangeIncrease(final Character character, final AttackSource attackSource,
+                                              final Set<Feat> activatedFeats) {
+            int base = resolveAttackRangeIncrease(character, attackSource);
+            return base > 0 && activatedFeats.contains(MIRA_IMPECAVEL) ? base + 1 : base;
+        }
     },
 
     /**
      * "Após fazer um ataque com uma arma à distância você pode fazer um ataque adicional com a
-     * mesma arma em desvantagem ao custo de 1PA."
+     * mesma arma em desvantagem ao custo de 1PA." <b>Real.</b> The extra attack is the caller's, like
+     * every attack; activating this Talento on it is allowed only right after an attack with that same
+     * ranged weapon this Turn, once per Rodada ({@link #permitsActivation}), and makes it cost 1PA with
+     * Desvantagem.
      */
-    // TODO: granting an extra attack is not expressible — an attack is initiated by a caller,
-    //  never by a resolution. ("Apenas uma vez por Rodada" would then be the action log's to
-    //  answer — CombatantSheet#getActionsThisRound — and needs nothing new.)
     TIRO_RAPIDO(
             "Após fazer um ataque com uma arma à distância você pode fazer um ataque adicional com "
                     + "a mesma arma em desvantagem ao custo de 1PA. Este talento pode ser "
                     + "utilizado apenas uma vez por Rodada.",
             FeatRequirements.builder()
                     .requiredFeat(MIRA_IMPECAVEL)
-                    .build()),
+                    .build()) {
+        @Override
+        public boolean permitsActivation(final SkillType skillType, final SkillRoll skillRoll,
+                                         final AttackSource attackSource, final CombatantSheet holder) {
+            if (skillType != SkillType.ATAQUE_A_DISTANCIA || !(attackSource instanceof Weapon weapon)
+                    || holder == null || holder.countFeatActivationsThisRound(this) > 0) {
+                return false;
+            }
+            List<CombatantAction> turn = holder.getActionsThisTurn();
+            if (turn.isEmpty()) {
+                return false;
+            }
+            CombatantAction previous = turn.get(turn.size() - 1);
+            return previous.isAttack() && weapon.equals(previous.attackSource());
+        }
+
+        @Override
+        public Integer resolveAttackActionPointOverride(final SkillType skillType, final AttackSource attackSource,
+                                                        final CombatantSheet attacker, final Set<Feat> activatedFeats) {
+            return activatedFeats.contains(this) ? TIRO_RAPIDO_COST : null;
+        }
+
+        @Override
+        public int resolveSkillRollBonus(final SkillType skillType, final SceneContext sceneContext,
+                                          final SkillTrait requestedAbility, final Character character,
+                                          final AttackSource attackSource, final CombatantSheet holder,
+                                          final SkillRoll skillRoll) {
+            return activated(this, skillType, skillRoll) ? Skill.DISADVANTAGE_MALUS : 0;
+        }
+    },
 
     /** "Sempre que tiver um Acerto Crítico usando o talento 'Mira Impecável' você causa +1d6 de dano adicional." */
     // Real: the "usando o talento 'Mira Impecável'" scoping that ABATER_A_CACA still waits on is
     // expressible now — SkillRoll#getActivatedFeats() is the roller's statement of which Talentos
     // they spent on this one roll (see that class's own javadoc).
-    // Both required Talentos are enforced now — FeatRequirements#requiredFeats is a set, so a
-    // Pré-requisito naming two (here one from this tree and one from AssassinoFeat) needs no
-    // choosing between them.
+    // Both required Talentos are enforced — FeatRequirements#requiredFeats is a set — and so is
+    // "com arma escolhida de ataque à distância ou arremesso", an isEligible override reading
+    // Acerto Crítico Aprimorado's recorded choice (AcertoCriticoAprimoradoFeat#chosenBy).
     MIRA_MORTAL(
             "Sempre que tiver um Acerto Crítico usando o talento ‘Mira Impecável’ você causa +1d6 "
                     + "de dano adicional.",
@@ -208,14 +252,22 @@ public enum ArtilhariaFeat implements Feat {
             return skillRoll != null && skillRoll.activated(MIRA_IMPECAVEL)
                     ? CriticalDamage.ofDice(1) : CriticalDamage.NONE;
         }
+
+        @Override
+        public boolean isEligible(final Character character, final CharacterSheet sheet) {
+            return Feat.meetsRequirements(getFeatRequirements(), character, sheet)
+                    && AcertoCriticoAprimoradoFeat.chosenBy(character).filter(RANGED_METHODS::contains).isPresent();
+        }
     },
 
     /**
      * "Uma vez por Rodada, em seu Turno, você pode disparar um projétil adicional em seus ataques,
      * se o fizer os danos causados pelo ataque aumentam em +1d6."
      */
-    // TODO: granting an extra projectile, and applying Correntes de Efeito twice, both need
-    //  multi-hit attack resolution — AttackDelivery resolves exactly one.
+    // Real: activated on an Ataque à Distância made on the holder's own Turn (not as a Reação), once
+    // per Rodada — shared with TIRO_MULTIPLO, which is the same shot with more projectiles. One roll,
+    // with Desvantagem; +1d6 on its dano (InteractionResult#getExtraDamageDice); and every triggered
+    // Corrente and Efeito Crítico applied once more (Feat#resolveAttackEffectRepetitions).
     TIRO_DUPLO(
             "Uma vez por Rodada, em seu Turno, você pode disparar um projétil adicional em seus "
                     + "ataques, se o fizer os danos causados pelo ataque aumentam em +1d6 "
@@ -227,29 +279,69 @@ public enum ArtilhariaFeat implements Feat {
                     .requiredSkillGraduation(5)
                     .requiredFeatCategory(FeatCategory.ARTILHARIA)
                     .requiredFeatCategoryCount(2)
-                    .build()),
+                    .build()) {
+        @Override
+        public boolean permitsActivation(final SkillType skillType, final SkillRoll skillRoll,
+                                         final AttackSource attackSource, final CombatantSheet holder) {
+            return extraProjectilePermitted(skillType, skillRoll, holder);
+        }
+
+        @Override
+        public int resolveSkillRollBonus(final SkillType skillType, final SceneContext sceneContext,
+                                          final SkillTrait requestedAbility, final Character character,
+                                          final AttackSource attackSource, final CombatantSheet holder,
+                                          final SkillRoll skillRoll) {
+            return activated(this, skillType, skillRoll) ? Skill.DISADVANTAGE_MALUS : 0;
+        }
+
+        @Override
+        public int resolveExtraDamageDice(final SkillType attackSkill, final AttackSource attackSource,
+                                          final CombatantSheet holder, final SkillRoll skillRoll) {
+            return activated(this, attackSkill, skillRoll) ? 1 : 0;
+        }
+
+        @Override
+        public int resolveAttackEffectRepetitions(final SkillType attackSkill, final AttackSource attackSource,
+                                                  final CombatantSheet attacker, final SkillRoll skillRoll) {
+            return activated(this, attackSkill, skillRoll) ? 1 : 0;
+        }
+    },
 
     /**
      * "Você pode estender os benefícios de Combater as Cegas aos seus Ataques-a-Distância
      * efetuados contra alvos em até Distância Média."
      */
-    // TODO: extends another Talento's benefit, which itself is not yet authored — its
-    //  Pré-requisito (the Talento 'Combater as Cegas') is left unset until that tree lands, so
-    //  this is currently open to characters who lack it.
+    // Real: the Pré-requisito names DuelistaFeat#COMBATER_AS_CEGAS, and the benefit it extends — no
+    // Cego 1d6 — reaches an Ataque à Distância aimed at a target up to Distância Média, read off the
+    // roll's opposed character (Feat#exemptsFromBlindCheck(SkillType, SceneContext)). Não ficar
+    // Desprevenido is already Combater às Cegas' own, whatever the attack; its price (Desvantagem
+    // às cegas) is not a benefit and is not extended by anything here.
     DISPARO_AS_CEGAS(
             "Você pode estender os benefícios de Combater as Cegas aos seus Ataques-a-Distância "
                     + "efetuados contra alvos em até Distância Média.",
             FeatRequirements.builder()
                     .requiredSkillType(SkillType.ATAQUE_A_DISTANCIA)
                     .requiredSkillGraduation(4)
-                    .build()),
+                    .requiredFeat(DuelistaFeat.COMBATER_AS_CEGAS)
+                    .build()) {
+        @Override
+        public boolean exemptsFromBlindCheck(final SkillType skillType, final SceneContext sceneContext) {
+            if (skillType != SkillType.ATAQUE_A_DISTANCIA || sceneContext == null
+                    || sceneContext.getOpposedCharacter() == null) {
+                return false;
+            }
+            Range distance = sceneContext.getDistanceTo(sceneContext.getOpposedCharacter());
+            return distance != null && distance.isWithin(Range.DISTANCIA_MEDIA);
+        }
+    },
 
     /**
      * "Como Tiro Duplo, mas você pode disparar uma quantidade de projéteis adicionais igual a sua
      * quantidade de Títulos Aventyr Despertos (mínimo 2 projéteis, máximo 4 projéteis)."
      */
-    // TODO: same multi-hit blocker as TIRO_DUPLO. The projectile count itself is computable —
-    //  clamp(getAllTitles().size(), 2, 4) — but there is nothing to spend it on.
+    // Real — ⚠️ table ruling: it scales per projectile. N = clamp(Títulos Despertos, 2, 4) extra
+    // projectiles give +Nd6 dano and every Corrente and Efeito Crítico applied N more times, with
+    // one Desvantagem; once per Rodada, sharing Tiro Duplo's use.
     TIRO_MULTIPLO(
             "Como Tiro Duplo, mas você pode disparar uma quantidade de projéteis adicionais igual "
                     + "a sua quantidade de Títulos Aventyr Despertos (mínimo 2 projéteis, máximo 4 "
@@ -259,7 +351,68 @@ public enum ArtilhariaFeat implements Feat {
                     .requiredSkillGraduation(7)
                     .requiredFeat(TIRO_DUPLO)
                     .requiredAwakenedTitles(1)
-                    .build());
+                    .build()) {
+        @Override
+        public boolean permitsActivation(final SkillType skillType, final SkillRoll skillRoll,
+                                         final AttackSource attackSource, final CombatantSheet holder) {
+            return extraProjectilePermitted(skillType, skillRoll, holder);
+        }
+
+        @Override
+        public int resolveSkillRollBonus(final SkillType skillType, final SceneContext sceneContext,
+                                          final SkillTrait requestedAbility, final Character character,
+                                          final AttackSource attackSource, final CombatantSheet holder,
+                                          final SkillRoll skillRoll) {
+            return activated(this, skillType, skillRoll) ? Skill.DISADVANTAGE_MALUS : 0;
+        }
+
+        @Override
+        public int resolveExtraDamageDice(final SkillType attackSkill, final AttackSource attackSource,
+                                          final CombatantSheet holder, final SkillRoll skillRoll) {
+            return activated(this, attackSkill, skillRoll) ? extraProjectiles(holder.getCharacter()) : 0;
+        }
+
+        @Override
+        public int resolveAttackEffectRepetitions(final SkillType attackSkill, final AttackSource attackSource,
+                                                  final CombatantSheet attacker, final SkillRoll skillRoll) {
+            return activated(this, attackSkill, skillRoll) ? extraProjectiles(attacker.getCharacter()) : 0;
+        }
+    };
+
+    /** TIRO_RAPIDO's "ao custo de 1PA". */
+    private static final int TIRO_RAPIDO_COST = 1;
+
+    /** TIRO_MULTIPLO's "(mínimo 2 projéteis, máximo 4 projéteis)". */
+    private static final int MIN_EXTRA_PROJECTILES = 2;
+    private static final int MAX_EXTRA_PROJECTILES = 4;
+
+    /** Acerto Crítico Aprimorado choices that are "arma … de ataque à distância ou arremesso" (Mira Mortal). */
+    private static final Set<AttackMethod> RANGED_METHODS = Set.of(AttackMethod.BOW, AttackMethod.CROSSBOW,
+            AttackMethod.THROWABLE, AttackMethod.PROJECTILE);
+
+    /** Whether feat was activated on an Ataque à Distância roll. */
+    private static boolean activated(final Feat feat, final SkillType skillType, final SkillRoll skillRoll) {
+        return skillType == SkillType.ATAQUE_A_DISTANCIA && skillRoll != null && skillRoll.activated(feat);
+    }
+
+    /**
+     * Tiro Duplo's and Tiro Múltiplo's shared gate: an Ataque à Distância "em seu Turno" — read as not
+     * a Reação — and "uma vez por Rodada" for either of the two.
+     */
+    private static boolean extraProjectilePermitted(final SkillType skillType, final SkillRoll skillRoll,
+                                                    final CombatantSheet holder) {
+        boolean reaction = skillRoll != null && skillRoll.getActionCost() != null
+                && skillRoll.getActionCost().kind() == ActionCost.Kind.REACTION;
+        // One shot is either the double or the multiple one, never both.
+        boolean both = skillRoll != null && skillRoll.activated(TIRO_DUPLO) && skillRoll.activated(TIRO_MULTIPLO);
+        return skillType == SkillType.ATAQUE_A_DISTANCIA && !reaction && !both && holder != null
+                && holder.countFeatActivationsThisRound(TIRO_DUPLO) + holder.countFeatActivationsThisRound(TIRO_MULTIPLO) == 0;
+    }
+
+    /** "Uma quantidade de projéteis adicionais igual a sua quantidade de Títulos Aventyr Despertos (mínimo 2, máximo 4)". */
+    private static int extraProjectiles(final Character character) {
+        return Math.max(MIN_EXTRA_PROJECTILES, Math.min(MAX_EXTRA_PROJECTILES, character.getAllTitles().size()));
+    }
 
     /**
      * The dano Vantagem {@link #ABATER_A_CACA} and {@link #UM_TIRO_UMA_MORTE} both grant — a flat

@@ -156,8 +156,8 @@ The list below used to be headed "still cannot express". Every shape on it is no
   `AssassinoFeat#ESPECIALISTA_TECNOLOGICO` names two and keeps an `isEligible` override.
 - **A held Talento's own recorded *choice*** — "apenas personagens que não escolheram Magias
   Ofensivas". The three cases want *equals*, *differs* and *is-a-weapon*, which is not data;
-  each stays an `isEligible` override (`DuelistaFeat#DOMINAR_ARMAS`, the two `AssassinoFeat`
-  Acerto Crítico constants).
+  each stays an `isEligible` override (`DuelistaFeat#DOMINAR_ARMAS`, `ArtilhariaFeat#MIRA_MORTAL`'s
+  ranged Acerto Crítico Aprimorado, the two `AssassinoFeat` Acerto Crítico constants).
 - **A cap on how many of a family may be held** — as opposed to a flat exclusion.
   `ArtesMarciaisFeat`'s Dominar styles and `ElficoFeat`'s Guardiões override `isEligible`.
 - **A *use* restriction** — `FeralFeat`'s "não pode ser **usado** em conjunto" is not an

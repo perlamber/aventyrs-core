@@ -564,7 +564,7 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
         if (!hasCondition(ConditionType.CEGO, sceneContext)) {
             return java.util.OptionalInt.empty();
         }
-        boolean exempt = getCharacter().getFeats().stream().anyMatch(feat -> feat.exemptsFromBlindCheck(skillType));
+        boolean exempt = getCharacter().getFeats().stream().anyMatch(feat -> feat.exemptsFromBlindCheck(skillType, sceneContext));
         return exempt ? java.util.OptionalInt.empty() : java.util.OptionalInt.of(BlindCheck.failureThresholdFor(skillType));
     }
 

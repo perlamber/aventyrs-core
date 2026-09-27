@@ -1,6 +1,9 @@
 package org.aventyrs.core.character.services;
 
 import java.util.Optional;
+import java.util.Set;
+
+import org.aventyrs.core.feat.Feat;
 
 import lombok.NonNull;
 import org.aventyrs.core.character.Character;
@@ -24,11 +27,30 @@ public class AttackRangeServiceImpl implements AttackRangeService {
 
     @Override
     public Range getEffectiveRange(final Character character, @NonNull final Weapon weapon) {
+        return getEffectiveRange(character, weapon, Set.of());
+    }
+
+    @Override
+    public Range getEffectiveRange(final Character character, @NonNull final Weapon weapon,
+                                   final Set<Feat> activatedFeats) {
+        return unwidenedBand(character, weapon).increasedBy(sumFeatSteps(character, weapon, activatedFeats));
+    }
+
+    @Override
+    public int getEffectiveRangeInUnidadesDeDistancia(final Character character, @NonNull final Weapon weapon,
+                                                      final Set<Feat> activatedFeats) {
         int reach = getEffectiveRangeInUnidadesDeDistancia(character, weapon);
-        Range band = reach == UNBOUNDED_RANGE
-                ? Range.AO_ALCANCE_DOS_OLHOS
-                : Range.fromUnidadesDeDistancia(reach);
-        return band.increasedBy(sumFeatSteps(character, weapon));
+        int steps = sumFeatSteps(character, weapon, activatedFeats);
+        if (steps <= 0 || reach == UNBOUNDED_RANGE) {
+            return reach;
+        }
+        Integer bandEdge = unwidenedBand(character, weapon).increasedBy(steps).getMaxUnidadesDeDistancia();
+        return bandEdge == null ? UNBOUNDED_RANGE : Math.max(reach, bandEdge);
+    }
+
+    private Range unwidenedBand(final Character character, final Weapon weapon) {
+        int reach = getEffectiveRangeInUnidadesDeDistancia(character, weapon);
+        return reach == UNBOUNDED_RANGE ? Range.AO_ALCANCE_DOS_OLHOS : Range.fromUnidadesDeDistancia(reach);
     }
 
     /**
@@ -69,8 +91,14 @@ public class AttackRangeServiceImpl implements AttackRangeService {
      * scanned today and why it is an explicit pass rather than a {@code ModifierResolver} one.
      */
     private int sumFeatSteps(final Character character, final AttackSource attackSource) {
+        return sumFeatSteps(character, attackSource, Set.of());
+    }
+
+    private int sumFeatSteps(final Character character, final AttackSource attackSource,
+                             final Set<Feat> activatedFeats) {
+        Set<Feat> spent = activatedFeats == null ? Set.of() : activatedFeats;
         return character.getFeats().stream()
-                .mapToInt(feat -> feat.resolveAttackRangeIncrease(character, attackSource))
+                .mapToInt(feat -> feat.resolveAttackRangeIncrease(character, attackSource, spent))
                 .sum();
     }
 }

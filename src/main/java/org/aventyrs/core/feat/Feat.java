@@ -603,6 +603,16 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
         return false;
     }
 
+    /**
+     * The same exemption, for one scoped to <b>whom</b> the roll is aimed at — {@code
+     * ArtilhariaFeat#DISPARO_AS_CEGAS}' "Ataques-a-Distância efetuados contra alvos em até Distância
+     * Média", read off {@code SceneContext#getOpposedCharacter()}/{@code getDistanceTo}. Defaults to the
+     * shorter form; a {@code null} context reads as "condition not met".
+     */
+    default boolean exemptsFromBlindCheck(final SkillType skillType, final SceneContext sceneContext) {
+        return exemptsFromBlindCheck(skillType);
+    }
+
     default Optional<DamageBonus> resolveDamageBonus(final SkillType attackingSkillType, final SceneContext sceneContext,
                                                       final CombatantSheet attackTarget, final Character actor,
                                                       final AttackSource attackSource, final int targetCount) {
@@ -677,6 +687,30 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      * bonus, the same reasoning {@code SpellService#getMaxBranchLevel} uses for tree depth.
      */
     default int resolveAttackRangeIncrease(final Character character, final AttackSource attackSource) {
+        return 0;
+    }
+
+    /**
+     * The same widening, for a clause scoped to the Talentos the attack <b>spends</b> — {@code
+     * ArtilhariaFeat#TIRO_LONGO}'s "Sempre que efetuar ataques utilizando dos benefícios do Talento
+     * ‘Mira Impecável’, a distância dos seus ataques aumenta em +1 passo". Asked before the roll (the
+     * reach decides what may be aimed at), so it takes what the attacker is about to activate rather
+     * than a {@code SkillRoll}. Defaults to the shorter form; an empty set activates nothing.
+     */
+    default int resolveAttackRangeIncrease(final Character character, final AttackSource attackSource,
+                                           final Set<Feat> activatedFeats) {
+        return resolveAttackRangeIncrease(character, attackSource);
+    }
+
+    /**
+     * How many <b>more</b> times every Corrente de Efeitos and every Efeito Crítico of this attack
+     * applies — {@code ArtilhariaFeat#TIRO_DUPLO}'s extra projectile ("Correntes de Efeito e Efeitos
+     * Críticos aplicam seus efeitos duas vezes"), and {@code #TIRO_MULTIPLO}'s one per projectile.
+     * Summed by {@code AttackDelivery}, which repeats each triggered stage that many extra times; the
+     * triggers themselves (the Corrente threshold, the critical) are judged once. Zero by default.
+     */
+    default int resolveAttackEffectRepetitions(final SkillType attackSkill, final AttackSource attackSource,
+                                               final CombatantSheet attacker, final SkillRoll skillRoll) {
         return 0;
     }
 
