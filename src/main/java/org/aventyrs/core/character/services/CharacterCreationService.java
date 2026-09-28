@@ -5,7 +5,14 @@ import org.aventyrs.core.character.CharacterAttributes;
 import org.aventyrs.core.character.CharacterEgos;
 import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.background.AcquiredBackground;
+import org.aventyrs.core.background.Background;
+import org.aventyrs.core.background.BackgroundKind;
+import org.aventyrs.core.background.Backgrounds;
+import org.aventyrs.core.background.TraitGrant;
 import org.aventyrs.core.feat.Feat;
+import org.aventyrs.core.feat.FeatChoice;
+import org.aventyrs.core.skill.SkillType;
 import org.aventyrs.core.feat.StartingFeatSlot;
 import org.aventyrs.core.race.Race;
 import org.aventyrs.core.sheet.CharacterSheet;
@@ -123,4 +130,51 @@ public interface CharacterCreationService {
 
     /** The same grant, with sheet's Fama and EXP-total prerequisites enforced when sheet is given. No XP is spent. */
     void grantStartingFeats(Character character, List<Feat> picks, CharacterSheet sheet) throws IllegalOperationException;
+
+    // ---- Antecedentes — the last creation step -------------------------------------------------
+
+    /** Every Antecedente of kind a character may pick. */
+    default List<Background> getBackgroundOptions(final BackgroundKind kind) {
+        return Backgrounds.ofKind(kind);
+    }
+
+    /**
+     * What background's Especializações/Habilidades de Competência clauses owe character when its
+     * "+1 Graduação" goes to graduationSkills — resolved against character <em>with</em> those
+     * Graduações applied ("Se treinado em X" is trained in X at the moment of picking, the
+     * Antecedente's own +1 included). The fixed grants may be left out of graduationSkills.
+     *
+     * @throws IllegalOperationException {@code INVALID_BACKGROUND_SELECTION} if graduationSkills
+     *                                   doesn't answer background's Perícias line exactly
+     */
+    List<TraitGrant> getBackgroundTraitGrants(Character character, Background background,
+                                              List<SkillType> graduationSkills) throws IllegalOperationException;
+
+    /** The Benefício's own picks for character — see {@link Background#resolveBenefitChoices}. */
+    default List<FeatChoice<?>> getBackgroundBenefitChoices(final Character character, final Background background) {
+        return background.resolveBenefitChoices(character);
+    }
+
+    /**
+     * Validates selection against character and returns a new {@code Character} holding it: the
+     * Graduações raised (stacking — an untrained Perícia becomes trained at 1), the Especializações
+     * and Habilidades de Competência added, the Ego base raised, and the normalized {@link
+     * AcquiredBackground} (fixed grants filled in) recorded on {@code Character#getBackgrounds()}.
+     * character itself is not modified. Apply the Naturalidade and the Carreira one after the other,
+     * the second against the character the first returned — each sees the other's Graduações.
+     *
+     * @throws IllegalOperationException {@code INVALID_BACKGROUND_SELECTION} if character already
+     *                                   holds an Antecedente of that kind, or any pick doesn't match
+     *                                   what the Antecedente offers this character
+     */
+    Character applyBackground(Character character, AcquiredBackground selection) throws IllegalOperationException;
+
+    /** {@link #applyBackground} for both at once — the Naturalidade first, then the Carreira. */
+    default Character applyBackgrounds(final Character character, final AcquiredBackground origin,
+                                       final AcquiredBackground career) throws IllegalOperationException {
+        if (origin.kind() != BackgroundKind.ORIGIN || career.kind() != BackgroundKind.CAREER) {
+            throw new IllegalOperationException(org.aventyrs.core.util.TranslatableMessages.INVALID_BACKGROUND_SELECTION);
+        }
+        return applyBackground(applyBackground(character, origin), career);
+    }
 }

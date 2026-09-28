@@ -1,5 +1,8 @@
 package org.aventyrs.core.rest;
 
+import java.util.Set;
+import org.aventyrs.core.sheet.ResourceType;
+
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.sheet.CharacterSheet;
 
@@ -56,4 +59,21 @@ public interface RestService {
      * CombatantSheet#passHours}): the rules state none per tier.
      */
     void applyRest(Character character, CharacterSheet characterSheet, RestType restType, boolean verdadeiro);
+
+    /**
+     * The resources character may pick one of on every Descanso for an extra recovery — Vastare's
+     * "+2PD ou +2PM a cada Descanso" ({@code Feat#resolveRestBonusChoices}). Empty when nothing
+     * offers one; otherwise ask the player and pass the pick to the five-argument {@code applyRest}.
+     */
+    Set<ResourceType> getRestBonusChoices(Character character);
+
+    /**
+     * {@link #applyRest(Character, CharacterSheet, RestType, boolean)} with the player's answer to
+     * {@link #getRestBonusChoices} — {@code null} (or a resource nothing offers) adds nothing.
+     *
+     * <p>Every form also pays the <b>Descanso Verdadeiro</b> bonus of {@code
+     * Feat#resolveTrueRestBonus} (Jullyano's "+1 de cada Bônus Base") when verdadeiro.
+     */
+    void applyRest(Character character, CharacterSheet characterSheet, RestType restType, boolean verdadeiro,
+                   ResourceType chosenBonus);
 }

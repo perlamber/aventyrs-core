@@ -68,7 +68,7 @@ import org.aventyrs.core.title.TitleIdentity;
  * authored catalog, which is correct: {@code FeatCatalog} lists the ruleset, not every {@code
  * Feat} that could ever be constructed.
  */
-public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, ArtilhariaFeat, AssassinoFeat, AvianoFeat, BestialFeat, CavalariaFeat, DestinoFeat, DraconicoFeat, DuelistaFeat, ElementalFeat, ElficoFeat, EscudeiroFeat, FadasFeat, FeericoFeat, FeralFeat, FuriasFeat, GiganteFeat, GnomoFeat, GoblinFeat, GorgonaFeat, HumanoFeat, IndomitoFeat, MesticoFeat, MobilidadeFeat, MonstruosoFeat, OgricoFeat, OrquicoFeat, PequeninoFeat, TrollFeat, VampiricoFeat, PeritoFeat, SobrevivenciaFeat, MetamagicoFeat, AbstractFeat {
+public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, ArtilhariaFeat, AssassinoFeat, AvianoFeat, BestialFeat, CavalariaFeat, DestinoFeat, DraconicoFeat, DuelistaFeat, ElementalFeat, ElficoFeat, EscudeiroFeat, FadasFeat, FeericoFeat, FeralFeat, FuriasFeat, GiganteFeat, GnomoFeat, GoblinFeat, GorgonaFeat, HumanoFeat, IndomitoFeat, MesticoFeat, MobilidadeFeat, MonstruosoFeat, OgricoFeat, OrquicoFeat, PequeninoFeat, TrollFeat, VampiricoFeat, PeritoFeat, SobrevivenciaFeat, MetamagicoFeat, AntecedenteFeat, AbstractFeat {
     FeatCategory getFeatCategory();
     String getDescription();
     FeatRequirements getFeatRequirements();
@@ -2775,6 +2775,78 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      */
     default int resolveLifeMultiplierIncrease(final Character character, final CombatantSheet sheet) {
         return resolveLifeMultiplierIncrease(character);
+    }
+
+    // ---- Hooks first earned by the Antecedentes (0.0.71) ---------------------------------------
+
+    /**
+     * Called once for every Talento an action spent, as that action is filed on holder's log
+     * ({@code CombatantSheet#recordAction}) — the moment an activation is actually <em>used</em>,
+     * where {@link #permitsActivation} only asked whether it could be. What a rationed activation
+     * claims its use with: "apenas uma vez por dia" marks itself until a Descanso Longo ({@code
+     * CombatantSheet#markAffectedUntilRest}), "uma vez por semana" claims a session marker ({@code
+     * CombatantSheet#consumeOncePerSession}). Nothing by default.
+     */
+    default void onActivationRecorded(final CombatantSheet holder) {
+    }
+
+    /**
+     * Temporary Ego points owed the first time a session domain's pool is spent down to zero —
+     * {@code AntecedenteFeat#APOSTADOR}'s "a primeira vez em cada sessão de jogo que sua sorte se
+     * tornar zero você recebe 1 ponto temporário". The Talento twin of {@code
+     * AttributeAbility#resolveEgoDepletionGrant}, read by the same trigger and claimed once per
+     * session per Talento. Zero by default.
+     */
+    default int resolveEgoDepletionGrant(final EgoDomain domain) {
+        return 0;
+    }
+
+    /**
+     * EXP this Talento takes off buying targetGraduation in skillType — "Adquirir novas Graduações
+     * na Perícia escolhida até a 5ª Graduação custa -0.5EXP". Summed by {@code
+     * SkillGraduationService#getUpgradeCost(Character, SkillType)} beside Aprendizado Rápido; stacked
+     * discounts may make a Graduação free (a table ruling), never negative. Zero by default.
+     */
+    default java.math.BigDecimal resolveGraduationCostReduction(final Character character, final SkillType skillType,
+                                                                final int targetGraduation) {
+        return java.math.BigDecimal.ZERO;
+    }
+
+    /**
+     * Magias the holder may cast <b>as if learned</b> — paying their PM, through the ordinary
+     * casting service — without having learned them: they are not in {@code Character#getSpells()},
+     * so they open no Árvore, fill no Árvore slot and satisfy no climb or branch gate. {@code
+     * AntecedenteFeat#ESTUDIOSO_ARCANO}'s "capaz de conjurar as Magias Semente e Broto da árvore
+     * escolhida". Folded into {@code Character#getCastableSpells()}. Empty by default.
+     */
+    default List<Spell> getGrantedCastableSpells(final Character character) {
+        return List.of();
+    }
+
+    /**
+     * Extra points of resource a <b>Descanso Verdadeiro</b> of restType returns — {@code
+     * AntecedenteFeat#JULLYANO}'s "a cada Descanso Verdadeiro recuperam +1 de cada Bônus
+     * Base". A Magia that rests you "como se" never pays it. Zero by default.
+     */
+    default int resolveTrueRestBonus(final org.aventyrs.core.sheet.ResourceType resource,
+                                     final org.aventyrs.core.rest.RestType restType, final Character character) {
+        return 0;
+    }
+
+    /**
+     * The resources this Talento lets its holder choose between on every Descanso — {@code
+     * AntecedenteFeat#VASTARE}'s "recuperando +2PD ou +2PM a cada Descanso", chosen each
+     * time (a table ruling). {@code RestService#getRestBonusChoices} lists them so a caller can ask;
+     * {@link #resolveChosenRestBonus} pays the pick. Empty by default.
+     */
+    default Set<org.aventyrs.core.sheet.ResourceType> resolveRestBonusChoices(final Character character) {
+        return Set.of();
+    }
+
+    /** What chosen is worth on a Descanso of restType — see {@link #resolveRestBonusChoices}. Zero by default. */
+    default int resolveChosenRestBonus(final org.aventyrs.core.sheet.ResourceType chosen,
+                                       final org.aventyrs.core.rest.RestType restType, final Character character) {
+        return 0;
     }
 
     private static int graduationOf(final Character character, final SkillType skillType) {

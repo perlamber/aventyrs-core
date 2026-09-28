@@ -156,6 +156,13 @@ public class TranslatableMessages {
      * CharacterCreationService#grantStartingFeats}.
      */
     public static final String INVALID_STARTING_FEAT_SELECTION = "INVALID_STARTING_FEAT_SELECTION";
+    /**
+     * An Antecedente selection that doesn't answer what it offers this character — a Perícia
+     * outside its options, the wrong number of picks, a trait not offered, a Benefício pick off its
+     * list — or a second Antecedente of a kind already held. See {@code
+     * CharacterCreationService#applyBackground}.
+     */
+    public static final String INVALID_BACKGROUND_SELECTION = "INVALID_BACKGROUND_SELECTION";
 
     /**
      * A Talento only a newly created character may take ("Apenas personagens recém-criados") was

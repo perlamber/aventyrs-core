@@ -1,5 +1,9 @@
 package org.aventyrs.core.rest;
 
+import java.util.EnumSet;
+import java.util.Set;
+import org.aventyrs.core.sheet.ResourceType;
+
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.sheet.CharacterSheet;
@@ -45,6 +49,19 @@ public class RestServiceImpl implements RestService {
     @Override
     public void applyRest(final Character character, final CharacterSheet characterSheet, final RestType taken,
                           final boolean verdadeiro) {
+        applyRest(character, characterSheet, taken, verdadeiro, null);
+    }
+
+    @Override
+    public Set<ResourceType> getRestBonusChoices(final Character character) {
+        Set<ResourceType> choices = EnumSet.noneOf(ResourceType.class);
+        character.getFeats().forEach(feat -> choices.addAll(feat.resolveRestBonusChoices(character)));
+        return Set.copyOf(choices);
+    }
+
+    @Override
+    public void applyRest(final Character character, final CharacterSheet characterSheet, final RestType taken,
+                          final boolean verdadeiro, final ResourceType chosenBonus) {
         // Doutor de Eldur: "Sempre que descansar, seus Descansos contam como uma Categoria superior" —
         // everything below reads the upgraded category, recovery and cooldowns alike.
         RestType restType = character.getAllTitles().stream().anyMatch(title -> title.upgradesRests())
@@ -55,9 +72,13 @@ public class RestServiceImpl implements RestService {
             characterSheet.releaseVitalityLock();
         }
         // A real Descanso is the one heal repeatable in Coma — 1PV each time — and reaches no one dead.
-        characterSheet.heal(getRecoveredHitPoints(character, restType), HealingSource.rest(restType));
-        characterSheet.recoverMagicPoints(getRecoveredMagicPoints(character, restType));
-        characterSheet.recoverDeterminationPoints(getRecoveredDeterminationPoints(character, restType));
+        characterSheet.heal(getRecoveredHitPoints(character, restType)
+                + extraRecovery(character, restType, verdadeiro, chosenBonus, ResourceType.HIT_POINTS),
+                HealingSource.rest(restType));
+        characterSheet.recoverMagicPoints(getRecoveredMagicPoints(character, restType)
+                + extraRecovery(character, restType, verdadeiro, chosenBonus, ResourceType.MAGIC_POINTS));
+        characterSheet.recoverDeterminationPoints(getRecoveredDeterminationPoints(character, restType)
+                + extraRecovery(character, restType, verdadeiro, chosenBonus, ResourceType.DETERMINATION_POINTS));
         characterSheet.applyPendingEgoRecoveries(restType);
         // Frees every ability whose Resfriamento was measured in Descansos rather than Rodadas —
         // "não poderá ser reativado até que passe por um Descanso Longo".
@@ -65,6 +86,25 @@ public class RestServiceImpl implements RestService {
         if (verdadeiro) {
             characterSheet.completeTrueRest(restType);
         }
+    }
+
+    /**
+     * The Talento-granted recovery on top of the Atributo formula: the Descanso Verdadeiro bonus
+     * ({@code Feat#resolveTrueRestBonus}) and the player's per-Descanso pick ({@code
+     * Feat#resolveChosenRestBonus}), both for resource.
+     */
+    private static int extraRecovery(final Character character, final RestType restType, final boolean verdadeiro,
+                                     final ResourceType chosenBonus, final ResourceType resource) {
+        int extra = 0;
+        for (org.aventyrs.core.feat.Feat feat : character.getFeats()) {
+            if (verdadeiro) {
+                extra += feat.resolveTrueRestBonus(resource, restType, character);
+            }
+            if (chosenBonus == resource && feat.resolveRestBonusChoices(character).contains(resource)) {
+                extra += feat.resolveChosenRestBonus(resource, restType, character);
+            }
+        }
+        return extra;
     }
 
     /**

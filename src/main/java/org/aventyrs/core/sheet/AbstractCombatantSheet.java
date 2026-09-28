@@ -265,6 +265,13 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     @Getter(AccessLevel.NONE)
     private DamageReceipt lastDamageReceived;
 
+    /** Who has damaged this combatant this Cena, and how many hits it took — see {@link #wasDamagedByThisCena}. */
+    @Getter(AccessLevel.NONE)
+    private final Set<UUID> damagedByThisCena = new java.util.HashSet<>();
+
+    @Getter(AccessLevel.NONE)
+    private int hitsReceivedThisCena;
+
     /** Rodadas in which this combatant hit each target with an Arma Natural, keyed by target id. */
     @Getter(AccessLevel.NONE)
     private final Map<UUID, Set<Integer>> naturalWeaponHits = new HashMap<>();
@@ -851,9 +858,9 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
      * {@code EgoPointsService#useEgoPointsForEffect}, which exists precisely to keep a drain
      * from triggering a Vantagem.
      *
-     * <p>Scans {@code attributeAbilities} only, not the usual three sources: this is a trigger,
-     * not an aggregated stat, and the one clause that reacts to Ego depletion is an
-     * {@code AttributeAbility}. Widen it when a second, differently-typed one exists.
+     * <p>Scans {@code attributeAbilities} and, since 0.0.71, Talentos — not the usual three
+     * sources: this is a trigger, not an aggregated stat, and the clauses that react to Ego
+     * depletion are an {@code AttributeAbility} and two Antecedente Benefícios.
      *
      * <p>One path to zero is deliberately not covered: a {@link TemporaryEgoPenalty} landing
      * (or a permanent Ego maximum dropping) can empty a domain without any spend, and {@link
@@ -868,6 +875,13 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
             int owed = ability.resolveEgoDepletionGrant(domain);
             if (owed > 0 && consumeOncePerSession(ability)) {
                 scheduleTemporaryEgoPointGrant(domain, ability, owed);
+            }
+        }
+        // The Talento twin (0.0.71) — an Antecedente's Sortudo / Dominar Impulsos.
+        for (Feat feat : character.getFeats()) {
+            int owed = feat.resolveEgoDepletionGrant(domain);
+            if (owed > 0 && consumeOncePerSession(feat)) {
+                scheduleTemporaryEgoPointGrant(domain, feat, owed);
             }
         }
     }
@@ -1571,6 +1585,8 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         drewWeaponThisScene = false;
         combatStarted = false;
         lastDamageReceived = null;
+        damagedByThisCena.clear();
+        hitsReceivedThisCena = 0;
         clearCombatScopedState();
         observeStatus();
         fallenHealing.startNewScene();
@@ -1663,6 +1679,20 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     @Override
     public void recordDamageReceived(final DamageReceipt receipt) {
         this.lastDamageReceived = receipt;
+        hitsReceivedThisCena++;
+        if (receipt != null && receipt.source() != null && receipt.damage() > 0) {
+            damagedByThisCena.add(receipt.source().getId());
+        }
+    }
+
+    @Override
+    public boolean wasDamagedByThisCena(final UUID combatantId) {
+        return damagedByThisCena.contains(combatantId);
+    }
+
+    @Override
+    public int getHitsReceivedThisCena() {
+        return hitsReceivedThisCena;
     }
 
     @Override
@@ -1760,6 +1790,8 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         if (inOwnTurn) {
             actionsOfLatestOwnTurn.add(action);
         }
+        // The use of every Talento this action spent — what a rationed activation claims itself on.
+        action.activatedFeats().forEach(feat -> feat.onActivationRecorded(this));
     }
 
     @Override

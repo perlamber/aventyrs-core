@@ -26,6 +26,24 @@ public class CharacterEgos {
     }
 
     /**
+     * A new CharacterEgos with domain's {@link EgoValue#getBase()} raised by amount — a creation-time
+     * allocation, like the extra point {@code CharacterCreationService#allocateEgos} places: an
+     * Antecedente's "Sorte +1" ({@code CharacterCreationService#applyBackground}). Unlike {@link
+     * #withVariableBonus} it counts toward the Vantagem de Ego threshold.
+     */
+    public CharacterEgos withBaseBonus(final EgoDomain domain, final int amount) {
+        EgoValue updated = getEgo(domain).toBuilder()
+                .base(getEgo(domain).getBase() + amount)
+                .build();
+        return switch (domain) {
+            case AUTOCONTROLE -> toBuilder().autocontrole(updated).build();
+            case RECURSOS -> toBuilder().recursos(updated).build();
+            case SORTE -> toBuilder().sorte(updated).build();
+            case INICIATIVA -> toBuilder().iniciativa(updated).build();
+        };
+    }
+
+    /**
      * A new CharacterEgos with domain's {@link EgoValue#getVariable()} raised by amount —
      * every other domain, and that domain's own base, untouched. This is the mechanism
      * {@link org.aventyrs.core.ability.AttributeAbility#resolvePermanentEgoGain} grants are

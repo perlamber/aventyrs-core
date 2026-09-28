@@ -12,6 +12,7 @@ import org.aventyrs.core.ability.ActiveAbility;
 import org.aventyrs.core.ability.AttributeAbility;
 import org.aventyrs.core.action.ActionPointsService;
 import org.aventyrs.core.action.ActionProfile;
+import org.aventyrs.core.background.AcquiredBackground;
 import org.aventyrs.core.character.services.DeterminationPointsService;
 import org.aventyrs.core.character.services.FreeActionsService;
 import org.aventyrs.core.character.services.HitPointsService;
@@ -134,6 +135,18 @@ public class Character {
     @NonNull
     @Singular
     protected Map<EgoDomain, EgoAdvantage> egoAdvantages;
+
+    /**
+     * The two Antecedentes — one {@link org.aventyrs.core.background.BackgroundKind#ORIGIN}, one
+     * {@link org.aventyrs.core.background.BackgroundKind#CAREER} — each with the picks made for it,
+     * as {@code CharacterCreationService#applyBackground} normalized them. Empty until that step,
+     * which comes last in creation. What they handed over at creation (Graduações, traits, Ego) is
+     * already materialized in {@link #skills}/{@link #skillCompetencyAbilities}/{@link #egos}; what
+     * is still read live off this list is each one's Benefício — see {@link #getFeats()}.
+     */
+    @NonNull
+    @Singular
+    protected List<AcquiredBackground> backgrounds;
 
     /** Trained Perícias, keyed by {@link SkillType} for O(1) lookup instead of filtering a list. */
     @NonNull
@@ -685,13 +698,38 @@ public class Character {
      * #getAttributeAbilities()}, so every effect scan <em>and</em> every prerequisite check sees
      * a granted Talento as held, with no service change.
      *
+     * <p>Also every held Antecedente's Benefício ({@link
+     * org.aventyrs.core.background.Background#getBenefit()}, an {@code AntecedenteFeat}): not a
+     * Talento in the rules text, but given a Talento's shape so every hook reaches it. Filter on
+     * {@code FeatCategory.Type.ANTECEDENTE} to list the Talentos proper.
+     *
      * <p><b>Read-only</b>, unlike the field behind it — acquire through {@link #grantFeat}.
      * Deduplicated, so a Talento both acquired and granted appears once.
      */
     public List<Feat> getFeats() {
-        return Stream.concat(
+        return Stream.of(
                         feats.stream(),
-                        feats.stream().flatMap(feat -> feat.getGrantedFeats(this).stream()))
+                        feats.stream().flatMap(feat -> feat.getGrantedFeats(this).stream()),
+                        backgrounds.stream().map(held -> (Feat) held.background().getBenefit()))
+                .flatMap(stream -> stream)
+                .distinct()
+                .toList();
+    }
+
+    /** The Antecedente of kind this character holds, if it has been chosen yet. */
+    public java.util.Optional<AcquiredBackground> getBackground(final org.aventyrs.core.background.BackgroundKind kind) {
+        return backgrounds.stream().filter(held -> held.kind() == kind).findFirst();
+    }
+
+    /**
+     * Every Magia this character may cast normally, paying PM: the learned ones ({@link #spells})
+     * plus every held Talento's {@link Feat#getGrantedCastableSpells} — Estudioso Arcano's Semente and
+     * Broto. Only the learned half counts as "knowing" an Árvore; read {@link #getSpells()} for any
+     * acquisition gate.
+     */
+    public List<Spell> getCastableSpells() {
+        return Stream.concat(spells.stream(),
+                        getFeats().stream().flatMap(feat -> feat.getGrantedCastableSpells(this).stream()))
                 .distinct()
                 .toList();
     }

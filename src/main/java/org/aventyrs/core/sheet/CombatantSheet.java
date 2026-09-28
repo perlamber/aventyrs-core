@@ -71,6 +71,15 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
     /** The Attributes, Perícias, abilities and equipment behind this combatant. */
     Character getCharacter();
 
+    /**
+     * What this combatant is — its Raça's {@code getCreatureType()} for a character, the stat
+     * block's for a foe (every foe shares one race, so it overrides this). {@code null} for a
+     * character built with no race.
+     */
+    default org.aventyrs.core.race.CreatureType getCreatureType() {
+        return getCharacter().getRace() == null ? null : getCharacter().getRace().getCreatureType();
+    }
+
     // --- Hit Points and shields -----------------------------------------------------------
 
     int getDamageTaken();
@@ -1063,6 +1072,21 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
      * runs, which is what lets one read "o dano deste ataque". Cleared by {@link #startNewScene()}.
      */
     void recordDamageReceived(DamageReceipt receipt);
+
+    /**
+     * Whether combatantId has dealt this combatant damage on the attack path since the Cena began —
+     * every {@link #recordDamageReceived} naming a source is remembered until the Cena ends.
+     * Retribuição Atroz's "um alvo que tenha lhe infligido danos"; the Cena is as far back as this
+     * core remembers.
+     */
+    boolean wasDamagedByThisCena(java.util.UUID combatantId);
+
+    /**
+     * Hits this combatant has taken on the attack path since the Cena began — one per {@link
+     * #recordDamageReceived}. Tolerância Marcial's "o primeiro ataque de cada Cena de Combate" is
+     * this still being 0.
+     */
+    int getHitsReceivedThisCena();
 
     /** The last hit {@link #recordDamageReceived} recorded, if any. */
     Optional<DamageReceipt> getLastDamageReceived();

@@ -10,7 +10,8 @@ import org.aventyrs.core.character.Character;
  *
  * <p><b>Table ruling (2026-09-27): both phrasings mean the same set</b> — the Magias the character
  * has learned ({@code Character#getSpells()}) plus the ones they may mimetize ({@code
- * Character#getMimetizedSpells()}). A Magia's Efeito Alternativo counts through its base version,
+ * Character#getMimetizedSpells()}). Since 0.0.71 "learned" reads {@code Character#getCastableSpells()},
+ * which adds the Magias castable as if learned (Estudioso Arcano's Semente and Broto). A Magia's Efeito Alternativo counts through its base version,
  * since "um personagem que aprenda a versão base automaticamente aprende sua segunda versão".
  */
 public final class SpellFamiliarity {
@@ -24,7 +25,7 @@ public final class SpellFamiliarity {
             return false;
         }
         Spell base = spell instanceof AlternateSpellVersion alternate ? alternate.getParent() : spell;
-        return character.getSpells().stream().anyMatch(known -> known == base || known == spell)
+        return character.getCastableSpells().stream().anyMatch(known -> known == base || known == spell)
                 || character.getMimetizedSpells().stream()
                         .anyMatch(mimetized -> mimetized.getSpell() == base || mimetized.getSpell() == spell);
     }

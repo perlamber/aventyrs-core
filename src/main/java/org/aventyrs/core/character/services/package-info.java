@@ -68,6 +68,14 @@
  *       Rápido race ({@code Race#hasQuickLearning()} — Humano, Pequenino, Gnomo, Goblin) names its
  *       two Perícias Treinadas, whose 2nd and 3rd Graduação then cost 0.5 EXP less
  *       ({@code SkillGraduationService#getUpgradeCost(Character, SkillType)}). Empty by default.</li>
+ *   <li><b>Pick the two Antecedentes — last</b>, on the character step 7 built (its Talentos and
+ *       Árvores below too): one Naturalidade and one Carreira, through {@link
+ *       org.aventyrs.core.character.services.CharacterCreationService#applyBackground}, which
+ *       <em>returns a new</em> {@code Character} with the Antecedente's Graduações, Especializações,
+ *       Habilidades de Competência and Ego written in. "Se treinado em X" is judged against the
+ *       character at this moment, so everything else must be chosen first. An Ego point it adds can
+ *       make a Vantagem de Ego (step 5) newly available — re-check it afterwards. See {@code
+ *       org.aventyrs.core.background} for the full protocol.</li>
  * </ol>
  *
  * <pre>{@code
@@ -99,7 +107,11 @@
  *     builder.egoAdvantage(EgoDomain.INICIATIVA, InitiativeAdvantage.IMPETO); // player's choice
  * }
  *
- * Character character = builder.build();
+ * // ... starting Talentos and Árvores (below), then the Antecedentes, last:
+ * Character character = creation.applyBackgrounds(builder.build(),
+ *         AcquiredBackground.of(OriginBackground.OFI, List.of(SkillType.ATTENTION, SkillType.PROFISSAO),
+ *                 List.of(ProfissaoSpecialization.METALURGIA)),
+ *         AcquiredBackground.of(CareerBackground.BATEDOR, List.of(), List.of()));
  * CombatantSheet sheet = CombatantSheet.of(character, player);
  * }</pre>
  *

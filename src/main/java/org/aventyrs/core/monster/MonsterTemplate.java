@@ -14,6 +14,7 @@ import org.aventyrs.core.character.services.HitPointsService;
 import org.aventyrs.core.character.services.MagicPointsService;
 import org.aventyrs.core.effect.CriticalEffectType;
 import org.aventyrs.core.item.Item;
+import org.aventyrs.core.race.CreatureType;
 import org.aventyrs.core.race.Monstruoso;
 import org.aventyrs.core.sheet.Player;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
@@ -195,6 +196,15 @@ public interface MonsterTemplate {
      */
     default boolean isUndead() {
         return false;
+    }
+
+    /**
+     * What this foe <em>is</em> — {@link CreatureType#MONSTRUOSO} unless its stat block says
+     * otherwise ({@link CreatureType#ANIMAL} for a beast). Every foe shares {@link #MONSTER_RACE},
+     * so its race can't answer this; {@code CombatantSheet#getCreatureType()} reads it off the sheet.
+     */
+    default CreatureType getCreatureType() {
+        return CreatureType.MONSTRUOSO;
     }
 
     /** Efeitos Críticos this creature's anatomy shrugs off — see {@link CriticalEffectType}. */

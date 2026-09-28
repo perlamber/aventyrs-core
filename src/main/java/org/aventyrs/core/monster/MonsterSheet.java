@@ -1,5 +1,6 @@
 package org.aventyrs.core.monster;
 
+import org.aventyrs.core.race.CreatureType;
 import lombok.Getter;
 import lombok.NonNull;
 import org.aventyrs.core.character.Character;
@@ -90,6 +91,9 @@ public class MonsterSheet extends AbstractCombatantSheet {
 
     private final Set<CriticalEffectType> criticalEffectImmunities;
 
+    /** See {@link MonsterTemplate#getCreatureType()}; {@code MONSTRUOSO} for a foe restored from numbers. */
+    private final CreatureType creatureType;
+
     /**
      * The GM running this foe — required, same as {@link CharacterSheet#getPlayer()}. A foe is
      * never a fixed catalog constant once it's playing in a Cena: someone at the table owns the
@@ -112,7 +116,7 @@ public class MonsterSheet extends AbstractCombatantSheet {
     private MonsterSheet(final Character character, final Player player, final int physicalDefense, final int magicDefense,
                          final SkillDifficulty generalDifficulty, final Map<SkillType, SkillDifficulty> skillDifficulties,
                          final boolean undead, final Set<CriticalEffectType> criticalEffectImmunities,
-                         final MonsterBlueprint blueprint) {
+                         final CreatureType creatureType, final MonsterBlueprint blueprint) {
         super(character);
         this.player = player;
         this.blueprint = blueprint;
@@ -122,6 +126,7 @@ public class MonsterSheet extends AbstractCombatantSheet {
         this.skillDifficulties = Map.copyOf(skillDifficulties);
         this.undead = undead;
         this.criticalEffectImmunities = Set.copyOf(criticalEffectImmunities);
+        this.creatureType = creatureType;
     }
 
     /**
@@ -157,7 +162,7 @@ public class MonsterSheet extends AbstractCombatantSheet {
                                   @NonNull final SkillDifficulty generalDifficulty,
                                   @NonNull final Map<SkillType, SkillDifficulty> skillDifficulties) {
         return new MonsterSheet(character, player, physicalDefense, magicDefense, generalDifficulty,
-                skillDifficulties, false, Set.of(), null);
+                skillDifficulties, false, Set.of(), CreatureType.MONSTRUOSO, null);
     }
 
     /**
@@ -172,7 +177,7 @@ public class MonsterSheet extends AbstractCombatantSheet {
     public static MonsterSheet of(@NonNull final Character character, @NonNull final Player player, @NonNull final MonsterTemplate template) {
         return new MonsterSheet(character, player, template.getPhysicalDefense(), template.getMagicDefense(),
                 template.getGeneralDifficulty(), template.getSkillDifficulties(),
-                template.isUndead(), template.getCriticalEffectImmunities(), null);
+                template.isUndead(), template.getCriticalEffectImmunities(), template.getCreatureType(), null);
     }
 
     /** {@link #of(Character, Player, MonsterTemplate)} with a known id — the persistence-restore path. */
@@ -191,7 +196,7 @@ public class MonsterSheet extends AbstractCombatantSheet {
                                   @NonNull final MonsterBlueprint blueprint) {
         return new MonsterSheet(character, player, 0, 0,
                 SkillDifficulty.of(blueprint.getKind().getBaseSkillLevel(), 0), Map.of(),
-                blueprint.isUndead(), blueprint.getCriticalEffectImmunities(), blueprint);
+                blueprint.isUndead(), blueprint.getCriticalEffectImmunities(), blueprint.getCreatureType(), blueprint);
     }
 
     /** {@link #of(Character, Player, MonsterBlueprint)} with a known id — the persistence-restore path. */
@@ -314,6 +319,11 @@ public class MonsterSheet extends AbstractCombatantSheet {
      */
     public int getPerception() {
         return getSkillDifficulty(SkillType.ATTENTION).getValue();
+    }
+
+    @Override
+    public CreatureType getCreatureType() {
+        return creatureType;
     }
 
     /**

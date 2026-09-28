@@ -49,7 +49,13 @@ public class SkillGraduationServiceImpl implements SkillGraduationService {
                 && character.getQuickLearningSkills().contains(skillType)
                 && targetGraduation >= QUICK_LEARNING_FIRST_GRADUATION
                 && targetGraduation <= quickLearningMaxGraduation(character);
-        return quickLearning ? cost.subtract(QUICK_LEARNING_DISCOUNT) : cost;
+        BigDecimal discounted = quickLearning ? cost.subtract(QUICK_LEARNING_DISCOUNT) : cost;
+        // Antecedente discounts (Batedor, Escudeiro, Natureza Longínqua) stack with Aprendizado
+        // Rápido and may make a Graduação free — a table ruling — but never negative.
+        for (org.aventyrs.core.feat.Feat feat : character.getFeats()) {
+            discounted = discounted.subtract(feat.resolveGraduationCostReduction(character, skillType, targetGraduation));
+        }
+        return discounted.max(BigDecimal.ZERO);
     }
 
     private static int quickLearningMaxGraduation(final Character character) {

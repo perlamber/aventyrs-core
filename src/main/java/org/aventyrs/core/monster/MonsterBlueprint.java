@@ -143,6 +143,11 @@ public class MonsterBlueprint {
     /** See {@link MonsterTemplate#isUndead()}. */
     private final boolean undead;
 
+    /** See {@link MonsterTemplate#getCreatureType()}. */
+    @NonNull
+    @Builder.Default
+    private final org.aventyrs.core.race.CreatureType creatureType = org.aventyrs.core.race.CreatureType.MONSTRUOSO;
+
     @NonNull
     @Singular
     private final Set<CriticalEffectType> criticalEffectImmunities;
