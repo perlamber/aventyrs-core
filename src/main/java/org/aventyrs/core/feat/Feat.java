@@ -1036,6 +1036,105 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     }
 
     /**
+     * The same GD reduction, seeing the roller's own sheet — for a clause scoped to the holder's
+     * <b>Turn</b> rather than the Rodada: {@code EscudeiroFeat#DOMINIO_DA_ARTE_DO_ESCUDO_ATACANTE}'s "A
+     * GD de seu primeiro Ataque com Escudo de cada um de seus Turnos é reduzida em -1 nível" reads
+     * {@code holder.getActionsThisTurn()} and {@code isInOwnTurn()}. Defaults to the shorter form.
+     */
+    default int resolveAttackCostDifficultyReduction(final SkillType skillType, final SceneContext sceneContext,
+            final Character character, final AttackSource attackSource, final ActionCost actionCost,
+            final List<CombatantAction> actionsThisRound, final CombatantSheet holder) {
+        return resolveAttackCostDifficultyReduction(skillType, sceneContext, character, attackSource, actionCost,
+                actionsThisRound);
+    }
+
+    /**
+     * How much of an equipped Escudo's Defesa bonuses its wielder keeps, having attacked with it
+     * shieldAttacks times since their own latest Turn began — {@code EscudeiroFeat#ATACAR_COM_ESCUDOS}'
+     * loss and the two Talentos that ease it. {@code null} (the default) when this Talento says
+     * nothing; {@code DefenseService} takes the most generous answer among the held Talentos, and a
+     * shield that has not attacked keeps everything.
+     */
+    default org.aventyrs.core.item.ShieldDefenseRetention resolveShieldDefenseRetention(final int shieldAttacks) {
+        return null;
+    }
+
+    /**
+     * {@link Blessing}s this Talento grants its holder the moment their own Turn <b>ends</b> — {@code
+     * EscudeiroFeat#DEFESA_TARTARUGA}'s "Se você não se mover em seu Turno … você recebe um Bônus de +2
+     * em suas Defesas por 1 Rodada". Asked by {@code CombatantSheet#finishTurn} after the Turn's timed
+     * effects have ticked, so a Blessing counting down at Turn start ({@code
+     * Blessing#countingDownAtTurnStart}) lasts until the holder's next Turn begins. Empty by default.
+     */
+    default List<Blessing> resolveTurnEndBlessings(final CombatantSheet holder) {
+        return List.of();
+    }
+
+    /**
+     * Whether this Talento makes its holder ignore every effect that <b>lowers</b> their Defesas right
+     * now — {@code EscudeiroFeat#INICIO_DEFENSIVO}'s "Durante estas Rodadas iniciais você ignora efeitos
+     * que reduzem Defesas". {@code DefenseService} then drops negative timed bonuses and Condição
+     * maluses from the Defesa. False by default.
+     */
+    default boolean ignoresDefenseMaluses(final SceneContext sceneContext, final CombatantSheet holder) {
+        return false;
+    }
+
+    /**
+     * Whether this Talento lets its holder react through an effect that would prevent Reações —
+     * {@code EscudeiroFeat#MESTRE_ESCUDEIRO}. {@code ReactionsService} then drops negative timed
+     * {@code REACTIONS} bonuses (Atordoante's). False by default.
+     */
+    default boolean ignoresReactionPrevention(final Character character) {
+        return false;
+    }
+
+    /**
+     * How many landed hits this Talento reduces to zero between Descansos Verdadeiros — {@code
+     * EscudeiroFeat#CRIAR_REFUGIO}'s "1 + número de Títulos" — <b>while its condition holds right
+     * now</b>, 0 when it does not. {@code DamageService} spends one use (keyed by this Talento's name,
+     * {@code CombatantSheet#spendRestScopedUse}) on a hit that would still deal damage after
+     * mitigation, as long as fewer than this many are spent. Zero by default.
+     */
+    default int resolveDamageNegationBudget(final CombatantSheet target) {
+        return 0;
+    }
+
+    /**
+     * Whether this Talento denies its holder every flat mitigation — {@code
+     * EscudeiroFeat#BASTIAO_DE_VIDRO}'s "Você não é beneficiado por … Redução de Danos Sofridos … RA, RD e
+     * RM". {@code DamageService} then applies none of them (Resistência Elemental, immunities and a
+     * Meio-Dano still apply), and {@code DefenseService} converts them into Defesa. False by default.
+     */
+    default boolean forgoesDamageMitigation() {
+        return false;
+    }
+
+    /**
+     * Correntes de Efeitos this Talento adds to an attack its holder lands as an <b>Acerto Crítico</b>,
+     * with or without clearing the Corrente threshold — {@code EscudeiroFeat#ARTE_DO_ESCUDO_ATACANTE}'s
+     * "seus Acertos Críticos recebem a Corrente de Efeitos – Rugido". The critical-gated twin of {@link
+     * #resolveEffectChains}; {@code AttackDelivery} adds these only when the critical triggered. Empty
+     * by default.
+     */
+    default List<EffectChain> resolveCriticalHitEffectChains(final Character attacker, final SkillType attackSkill,
+                                                             final AttackSource attackSource,
+                                                             final CombatantSheet holder) {
+        return List.of();
+    }
+
+    /**
+     * Unidades de Distância this Talento adds to how far an attack with attackSource reaches, right now
+     * — {@code EscudeiroFeat#DOMINIO_DA_ARTE_DO_ESCUDO_ATACANTE}'s Alcance Estendido ("Distância de
+     * Ataque aumenta +1UD"). A UD figure, unlike {@link #resolveAttackRangeIncrease}'s whole bands; summed
+     * by {@code AttackRangeService#getEffectiveRangeInUnidadesDeDistancia(CombatantSheet, Weapon, Set)}.
+     * Zero by default.
+     */
+    default int resolveAttackReachIncrease(final CombatantSheet attacker, final AttackSource attackSource) {
+        return 0;
+    }
+
+    /**
      * Whether this Talento hands spell to character <b>for free</b> as part of its own authored
      * benefit, so {@code org.aventyrs.core.character.services.SpellService#grantSpell} spends no
      * XP for it. Consulted by {@code

@@ -354,10 +354,15 @@ public class DamageServiceImpl implements DamageService {
                 || (target != null && target.getTemporaryBonus(ModifierType.HALF_DAMAGE) > 0)
                 || character.getEgoAdvantages().values().stream()
                         .anyMatch(advantage -> advantage.resolveHalfDamage(sceneContext));
-        int reduction = target != null
+        // Bastião de Vidro: "Você não é beneficiado por … Redução de Danos Sofridos … RA, RD e RM" —
+        // none of the four is applied (they become Defesa instead, in DefenseService).
+        boolean forgoesMitigation = character.getFeats().stream().anyMatch(Feat::forgoesDamageMitigation);
+        int reduction = forgoesMitigation ? 0 : target != null
                 ? getTotalAbsoluteDamageReduction(target, sceneContext)
                 : computeTotalAbsoluteDamageReduction(character, null, sceneContext);
-        if (!ignoreDamageReduction) {
+        if (forgoesMitigation && !ignoreDamageReduction) {
+            reduction += target != null ? elementalResistance(target, damageDescriptor) : 0;
+        } else if (!ignoreDamageReduction) {
             // Each reduction reaches only the damage its rules text names (defesas-e-resistencias):
             // RD plain physical, RDS anything but Primordial, RM magical, RE elemental. An untyped
             // hit ("caller didn't say") is treated as plain physical, as it always was. All four
@@ -387,7 +392,7 @@ public class DamageServiceImpl implements DamageService {
         // fully turned aside never spends the negation.
         // "RDS 5" — an RDS, so it never reaches Primordial damage.
         DamageType hitType = damageDescriptor != null ? damageDescriptor.damageType() : damageType;
-        PeleDePedra stone = target == null || hitType == DamageType.PRIMORDIAL
+        PeleDePedra stone = target == null || hitType == DamageType.PRIMORDIAL || forgoesMitigation
                 ? null : target.getPeleDePedra().orElse(null);
         if (stone != null && !ignoreDamageReduction) {
             reduction += stone.getEffectiveDamageReduction();
@@ -406,7 +411,33 @@ public class DamageServiceImpl implements DamageService {
                 return 0;
             }
         }
+        // Criar Refúgio: a hit that would still hurt is reduced to zero while a use is left —
+        // spent here for the same reason Pele de Pedra is, since DamageInteraction never calls
+        // applyDamage. A hit already turned aside spends nothing ("attacks that don't land").
+        if (target != null && finalDamage > 0 && negatesHit(target)) {
+            return 0;
+        }
         return Math.max(0, finalDamage);
+    }
+
+    /**
+     * Whether a held Talento reduces this hit to zero, spending one of its uses — {@code
+     * Feat#resolveDamageNegationBudget}, the uses counted per Talento on the sheet between Descansos
+     * Longos Verdadeiros ({@code CombatantSheet#spendRestScopedUse}).
+     */
+    private static boolean negatesHit(final CombatantSheet target) {
+        for (Feat feat : target.getCharacter().getFeats()) {
+            int budget = feat.resolveDamageNegationBudget(target);
+            if (budget <= 0) {
+                continue;
+            }
+            String key = feat.catalogEntry() instanceof Enum<?> constant ? constant.name() : feat.getDescription();
+            if (target.getRestScopedUses(key) < budget) {
+                target.spendRestScopedUse(key, org.aventyrs.core.rest.RestType.LONGO);
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override

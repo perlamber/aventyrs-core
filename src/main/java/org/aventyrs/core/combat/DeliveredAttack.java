@@ -37,7 +37,7 @@ import java.util.List;
  * at its head for the caller to supply that figure to.
  */
 @Getter
-@Builder
+@Builder(toBuilder = true)
 public class DeliveredAttack {
 
     /** The character making the attack — the one who rolls. */

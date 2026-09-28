@@ -73,6 +73,9 @@ public class SceneContext {
     private final UUID sceneId;
     private final EnvironmentalState environmentalState;
 
+    /** Where this context's holder stands in the Rodada's order of play — see {@link InitiativePosition}. */
+    private final InitiativePosition initiativePosition;
+
     public SceneContext(final List<CombatantSheet> allies, final List<CombatantSheet> enemies, final Map<CombatantSheet, Range> distances) {
         this(allies, enemies, distances, null);
     }
@@ -125,6 +128,17 @@ public class SceneContext {
                         final boolean combatScene, final int currentRound, final boolean wonInitiative,
                         final CombatantSheet opposedCharacter, final UUID sceneId,
                         final EnvironmentalState environmentalState) {
+        this(allies, enemies, distances, terrainType, combatScene, currentRound, wonInitiative, opposedCharacter,
+                sceneId, environmentalState, InitiativePosition.UNKNOWN);
+    }
+
+    /** The full snapshot form, adding where its holder stands in the order of play. */
+    public SceneContext(final List<CombatantSheet> allies, final List<CombatantSheet> enemies,
+                        final Map<CombatantSheet, Range> distances, final TerrainType terrainType,
+                        final boolean combatScene, final int currentRound, final boolean wonInitiative,
+                        final CombatantSheet opposedCharacter, final UUID sceneId,
+                        final EnvironmentalState environmentalState, final InitiativePosition initiativePosition) {
+        this.initiativePosition = initiativePosition == null ? InitiativePosition.UNKNOWN : initiativePosition;
         this.allies = allies;
         this.enemies = enemies;
         this.distances = distances;
@@ -249,6 +263,11 @@ public class SceneContext {
      * roundCount=2} covers Rounds 1 and 2, not 0 and 1. Always {@code false} outside a Cena de
      * Combate, regardless of {@code currentRound}.
      */
+    /** Where this context's holder acts in the Rodada — {@link InitiativePosition#UNKNOWN} outside a Scene. */
+    public InitiativePosition getInitiativePosition() {
+        return initiativePosition;
+    }
+
     public boolean isWithinFirstCombatRounds(final int roundCount) {
         return combatScene && currentRound >= 1 && currentRound <= roundCount;
     }

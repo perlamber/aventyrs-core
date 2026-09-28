@@ -53,6 +53,9 @@ import static org.aventyrs.core.util.TranslatableMessages.REQUIRED_SKILL_TRAIT_N
 import static org.aventyrs.core.util.TranslatableMessages.ACTIVATED_FEAT_NOT_HELD;
 import static org.aventyrs.core.util.TranslatableMessages.FEAT_ACTIVATION_NOT_PERMITTED;
 import static org.aventyrs.core.util.TranslatableMessages.REROLL_NOT_GRANTED;
+import static org.aventyrs.core.util.TranslatableMessages.SHIELD_ATTACK_NOT_PERMITTED;
+import org.aventyrs.core.feat.EscudeiroFeat;
+import org.aventyrs.core.item.ShieldAttack;
 
 /**
  * The {@code applyTo}/{@code findCharacterSkill} machinery every {@code <Skill>Interaction}
@@ -317,6 +320,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
         CharacterSkill characterSkill = skillRoll != null && skillRoll.getRequestedAbility() != null
                 ? findCharacterSkill(character)
                 : character.getEffectiveSkill(skillType).orElseGet(() -> findCharacterSkill(character));
+        validateShieldAttack(target, attackSource);
         if (skillRoll != null) {
             validateRequestedTrait(character, characterSkill, skillRoll.getRequestedAbility(), attackSource);
             validateActivatedFeats(target, skillRoll, attackSource);
@@ -411,7 +415,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
         }
         if (skillRoll != null) {
             difficultyReduction += sumFeatAttackCostDifficultyReductions(character, sceneContext, attackSource,
-                    skillRoll.getActionCost(), target.getActionsThisRound());
+                    skillRoll.getActionCost(), target.getActionsThisRound(), target);
         }
 
         InteractionResult.InteractionResultBuilder result = InteractionResult.builder()
@@ -712,11 +716,32 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
      */
     private int sumFeatAttackCostDifficultyReductions(final Character character, final SceneContext sceneContext,
                                                       final AttackSource attackSource, final ActionCost actionCost,
-                                                      final List<CombatantAction> actionsThisRound) {
+                                                      final List<CombatantAction> actionsThisRound,
+                                                      final CombatantSheet holder) {
         return character.getFeats().stream()
                 .mapToInt(feat -> feat.resolveAttackCostDifficultyReduction(
-                        skillType, sceneContext, character, attackSource, actionCost, actionsThisRound))
+                        skillType, sceneContext, character, attackSource, actionCost, actionsThisRound, holder))
                 .sum();
+    }
+
+    /**
+     * Refuses an Ataque com Escudo ({@link ShieldAttack}) its roller may not make: without Atacar com
+     * Escudos, with a Escudo not in their equipment, or with Asas Adamantinas' wings they don't have or
+     * while flying ({@code SHIELD_ATTACK_NOT_PERMITTED}). Possession is validated, as every trait a roll
+     * names is.
+     */
+    private static void validateShieldAttack(final CombatantSheet roller, final AttackSource attackSource) {
+        if (!(attackSource instanceof ShieldAttack attack)) {
+            return;
+        }
+        Character character = roller.getCharacter();
+        boolean trained = character.getFeats().contains(EscudeiroFeat.ATACAR_COM_ESCUDOS);
+        boolean wielded = attack.isWings()
+                ? character.getFeats().contains(EscudeiroFeat.ASAS_ADAMANTINAS) && !roller.isFlying()
+                : character.getEquipment().stream().anyMatch(attack::swings);
+        if (!trained || !wielded) {
+            throw new IllegalOperationException(SHIELD_ATTACK_NOT_PERMITTED);
+        }
     }
 
     /**

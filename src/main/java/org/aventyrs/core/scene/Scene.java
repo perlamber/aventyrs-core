@@ -342,7 +342,31 @@ public class Scene {
                                       final CombatantSheet opposedCharacter,
                                       final EnvironmentalState environmentalState) {
         return new SceneContext(getAllies(characterSheet), getEnemies(characterSheet), distances, terrainType,
-                combatScene, currentRound, wonInitiative(characterSheet), opposedCharacter, id, environmentalState);
+                combatScene, currentRound, wonInitiative(characterSheet), opposedCharacter, id, environmentalState,
+                initiativePositionOf(characterSheet));
+    }
+
+    /**
+     * Where characterSheet acts in this Scene's order of play — first, last, somewhere between, or
+     * {@link InitiativePosition#UNKNOWN} when it is not in the rotation yet. One combatant alone is
+     * {@link InitiativePosition#FIRST}.
+     */
+    public InitiativePosition initiativePositionOf(final CombatantSheet characterSheet) {
+        List<CombatantSheet> order = getParticipantsInInitiativeOrder();
+        int index = -1;
+        for (int i = 0; i < order.size(); i++) {
+            if (order.get(i).getId().equals(characterSheet.getId())) {
+                index = i;
+                break;
+            }
+        }
+        if (index < 0) {
+            return InitiativePosition.UNKNOWN;
+        }
+        if (index == 0) {
+            return InitiativePosition.FIRST;
+        }
+        return index == order.size() - 1 ? InitiativePosition.LAST : InitiativePosition.MIDDLE;
     }
 
     /**

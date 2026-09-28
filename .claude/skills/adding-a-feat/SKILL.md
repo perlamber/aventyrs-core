@@ -163,7 +163,10 @@ roll, source, holder)` — its Perícia, "uma vez por Rodada/Turno"
 `resolveLockedSelfDamageOnHit`; an extra projectile's repeated Correntes and Efeitos Críticos on
 `resolveAttackEffectRepetitions` (`ArtilhariaFeat#TIRO_DUPLO`); a reach step bought by another
 activated Talento on `resolveAttackRangeIncrease(Character, AttackSource, Set<Feat>)`
-(`ArtilhariaFeat#TIRO_LONGO` with Mira Impecável). **Never wire an opt-in as an unconditional bonus** — that skips its
+(`ArtilhariaFeat#TIRO_LONGO` with Mira Impecável); a Corrente on criticals only on
+`resolveCriticalHitEffectChains`; a Blessing earned as the holder's Turn ends on
+`resolveTurnEndBlessings`; a hit reduced to zero from a rest-scoped budget on
+`resolveDamageNegationBudget` (`EscudeiroFeat` is the reference for all three). **Never wire an opt-in as an unconditional bonus** — that skips its
 price.
 
 ⚠️ **Any Talento with an acquisition choice must advertise it**, or no client can discover it.

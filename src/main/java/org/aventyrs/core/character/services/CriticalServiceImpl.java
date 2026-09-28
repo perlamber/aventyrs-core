@@ -92,6 +92,10 @@ public class CriticalServiceImpl implements CriticalService {
      * reduzida em -1 … (não se acumula entre instâncias)": one step for holding any RA at all.
      */
     private int absoluteResistanceStep(final CombatantSheet target, final SceneContext sceneContext) {
+        // Bastião de Vidro: "Você não é beneficiado por RA" — not by its crit clauses either.
+        if (target.getCharacter().getFeats().stream().anyMatch(org.aventyrs.core.feat.Feat::forgoesDamageMitigation)) {
+            return 0;
+        }
         return damageService.getTotalAbsoluteDamageReduction(target, sceneContext) > 0 ? 1 : 0;
     }
 

@@ -71,8 +71,10 @@ class EscudeiroFeatTest {
                 CharacterFixture.blank(CharacterFixture.BLANK).build());
 
         assertEquals(1, choices.size());
-        assertEquals(ShieldItem.class, choices.get(0).type());
-        assertEquals(List.of(ShieldItem.values()), choices.get(0).options());
+        assertEquals(ShieldSpecialty.class, choices.get(0).type());
+        // Every catalog Escudo — and not the wings, which this character lacks.
+        assertEquals(List.of(ShieldItem.values()), choices.get(0).options().stream()
+                .map(option -> ((ShieldSpecialty) option).getShield()).toList());
     }
 
     @Test
@@ -146,9 +148,27 @@ class EscudeiroFeatTest {
         assertEquals(0, wingsGain(context(true)));
     }
 
-    /** No Scene to ask whether they are flying: "cannot tell" grants nothing. */
+    /** No Scene, but the sheet itself says whether they fly — grounded, the +2 holds. */
     @Test
-    void noSceneGrantsNothing() {
-        assertEquals(0, wingsGain(null));
+    void noSceneStillReadsTheSheetsOwnFlight() {
+        assertEquals(2, wingsGain(null));
+    }
+
+    /** Neither a sheet nor a Scene to ask whether they are flying: "cannot tell" grants nothing. */
+    @Test
+    void aCharacterAloneCannotTellAndGrantsNothing() {
+        CharacterSheet winged = sheet(List.of(EscudeiroFeat.ASAS_ADAMANTINAS), 0);
+        CharacterSheet plain = sheet(List.of(), 0);
+        assertEquals(defenseService.getTotalDefense(plain.getCharacter(), DefenseType.PHYSICAL),
+                defenseService.getTotalDefense(winged.getCharacter(), DefenseType.PHYSICAL));
+    }
+
+    @Test
+    void aSheetInFlightGrantsNothing() {
+        CharacterSheet winged = sheet(List.of(EscudeiroFeat.ASAS_ADAMANTINAS), 0);
+        CharacterSheet plain = sheet(List.of(), 0);
+        winged.setFlying(true);
+        assertEquals(defenseService.getTotalDefense(plain, DefenseType.PHYSICAL),
+                defenseService.getTotalDefense(winged, DefenseType.PHYSICAL));
     }
 }

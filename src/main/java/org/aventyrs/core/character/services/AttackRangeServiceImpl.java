@@ -48,6 +48,18 @@ public class AttackRangeServiceImpl implements AttackRangeService {
         return bandEdge == null ? UNBOUNDED_RANGE : Math.max(reach, bandEdge);
     }
 
+    @Override
+    public int getEffectiveRangeInUnidadesDeDistancia(final org.aventyrs.core.sheet.CombatantSheet attacker,
+                                                      @NonNull final Weapon weapon, final Set<Feat> activatedFeats) {
+        int reach = getEffectiveRangeInUnidadesDeDistancia(attacker.getCharacter(), weapon, activatedFeats);
+        if (reach == UNBOUNDED_RANGE) {
+            return reach;
+        }
+        return reach + attacker.getCharacter().getFeats().stream()
+                .mapToInt(feat -> feat.resolveAttackReachIncrease(attacker, weapon))
+                .sum();
+    }
+
     private Range unwidenedBand(final Character character, final Weapon weapon) {
         int reach = getEffectiveRangeInUnidadesDeDistancia(character, weapon);
         return reach == UNBOUNDED_RANGE ? Range.AO_ALCANCE_DOS_OLHOS : Range.fromUnidadesDeDistancia(reach);

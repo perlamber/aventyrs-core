@@ -14,6 +14,7 @@ import org.aventyrs.core.effect.EffectChainServiceImpl;
 import org.aventyrs.core.effect.GolpeTrovejante;
 import org.aventyrs.core.effect.RepeatedEffect;
 import org.aventyrs.core.feat.Feat;
+import org.aventyrs.core.item.ShieldAttack;
 import org.aventyrs.core.sheet.ActionOutcome;
 import org.aventyrs.core.sheet.CombatantAction;
 import org.aventyrs.core.sheet.CombatantSheet;
@@ -151,10 +152,16 @@ public class AttackDelivery {
      *         ({@code FORCED_ATTACK_TARGET_REQUIRED}) if an Aura requires it to target the
      *         holder first
      */
-    public DeliveredAttackResult resolve(@NonNull final DeliveredAttack attack) {
-        if (!attack.getAttackSkill().isAttackSkill()) {
+    public DeliveredAttackResult resolve(@NonNull final DeliveredAttack given) {
+        if (!given.getAttackSkill().isAttackSkill()) {
             throw new IllegalOperationException(NOT_AN_ATTACK_SKILL);
         }
+        // An Ataque com Escudo adds the shield's bonus for the Defesa it is rolled against — so it is
+        // aimed at this attack's own DefenseType, whatever the caller built it with.
+        DeliveredAttack attack = given.getAttackSource() instanceof ShieldAttack shield
+                && shield.getTargetDefense() != given.getDefenseType()
+                ? given.toBuilder().attackSource(shield.against(given.getDefenseType())).build()
+                : given;
         List<AttackTarget> additionalTargets = attack.getAdditionalTargets();
         if (attack.getAreaOfEffect() != null) {
             // An area attack names whoever stands in its footprint — no count to enforce — but the
@@ -359,6 +366,13 @@ public class AttackDelivery {
         if (effectChainTriggered) {
             chains.addAll(attack.getEffectChains());
             chains.addAll(effectChainsGrantedByFeats(attack));
+        }
+        if (criticalEffectTriggered) {
+            // Arte do Escudo Atacante: "seus Acertos Críticos recebem a Corrente de Efeitos – Rugido",
+            // whether or not the Corrente threshold was cleared.
+            attack.getAttacker().getCharacter().getFeats().forEach(feat -> chains.addAll(
+                    feat.resolveCriticalHitEffectChains(attack.getAttacker().getCharacter(), attack.getAttackSkill(),
+                            attack.getAttackSource(), attack.getAttacker())));
         }
         List<Effect> criticals = new ArrayList<>();
         if (criticalEffectTriggered) {

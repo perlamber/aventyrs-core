@@ -304,9 +304,8 @@ public enum ArtesMarciaisFeat implements Feat {
     //  #getActionCost() records the action, but CriticalService#sumCriticalMarginIncrease is not
     //  handed the SkillRoll. Add that overload once a second clause needs it. So only the flat +1
     //  is granted.
-    // TODO: Corrente de Efeitos – Rugido — Feat#resolveEffectChains is the hook, but Rugido is
-    //  not an authored EffectChain (only Definhar and Sobrecura are), and the hook adds to every
-    //  landed attack rather than to criticals only.
+    // The Rugido half is real (core 0.0.70): effect.Rugido, added to a critical Ataque Corpo-a-Corpo
+    // through Feat#resolveCriticalHitEffectChains, the critical-gated twin of resolveEffectChains.
     DOMINAR_ARTE_MARCIAL_TIGRE_E_SERPENTE(
             "A Margem Crítica Menor de seus Ataques Corpo-a-Corpo aumenta em +1 e seus Acertos "
                     + "Críticos ganham a Corrente de Efeitos – Rugido. O aumento na Margem Crítica "
@@ -321,6 +320,16 @@ public enum ArtesMarciaisFeat implements Feat {
         public int resolveCriticalMarginIncrease(final SkillType skillType, final SceneContext sceneContext,
                                                   final Character character) {
             return skillType == SkillType.ATAQUE_CORPO_A_CORPO ? TIGRE_E_SERPENTE_MARGIN_INCREASE : 0;
+        }
+
+        /** "seus Acertos Críticos ganham a Corrente de Efeitos – Rugido" — on its Ataques Corpo-a-Corpo. */
+        @Override
+        public java.util.List<org.aventyrs.core.effect.EffectChain> resolveCriticalHitEffectChains(
+                final Character attacker, final SkillType attackSkill,
+                final org.aventyrs.core.skill.AttackSource attackSource,
+                final org.aventyrs.core.sheet.CombatantSheet holder) {
+            return attackSkill == SkillType.ATAQUE_CORPO_A_CORPO
+                    ? java.util.List.of(new org.aventyrs.core.effect.Rugido(true)) : java.util.List.of();
         }
     },
 

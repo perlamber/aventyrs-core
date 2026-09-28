@@ -40,7 +40,12 @@ public class ReactionsServiceImpl implements ReactionsService {
     @Override
     public int getTotalReactions(final CombatantSheet sheet, final int turnNumber, final SceneContext sceneContext) {
         Character character = sheet.getCharacter();
-        int baseline = permanentReactions(character) + sheet.getTemporaryBonus(ModifierType.REACTIONS);
+        int timed = sheet.getTemporaryBonus(ModifierType.REACTIONS);
+        // Mestre Escudeiro: "Você pode fazer Reações mesmo quando o efeito impedir Reações".
+        if (character.getFeats().stream().anyMatch(feat -> feat.ignoresReactionPrevention(character))) {
+            timed -= sheet.getTemporaryMalus(ModifierType.REACTIONS);
+        }
+        int baseline = permanentReactions(character) + timed;
         return Math.max(0, character.getActionProfile().adjustReactions(baseline, turnNumber, sceneContext));
     }
 

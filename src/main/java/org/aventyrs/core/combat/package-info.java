@@ -124,6 +124,11 @@
  * DamageInteraction} places on the victim as it lands. The recorded action names its primary
  * target and the Talentos the roll spent.
  *
+ * <p>A Escudo is swung by naming an {@code org.aventyrs.core.item.ShieldAttack} as the attack source
+ * ({@code ShieldAttack.of(equippedShield)}, or {@code wings()}); {@code AttackDelivery} aims it at its
+ * own {@code DefenseType}. A Rugido in the chain reports its push on {@code
+ * InteractionResult#getPushedBackUd()} as the caller drains it.
+ *
  * <h2>What this package deliberately doesn't do</h2>
  *
  * <ul>

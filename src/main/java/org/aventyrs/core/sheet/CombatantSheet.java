@@ -934,6 +934,37 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
     List<CombatantAction> getActionsOfLatestOwnTurn();
 
     /**
+     * Whether this combatant's own Turn is underway — between its {@link #startTurn} and its {@link
+     * #finishTurn}. What "feitos em seus Turnos" reads ({@code EscudeiroFeat#ARTE_DO_ESCUDO_ATACANTE}).
+     * {@code false} outside a Scene driving Turns.
+     */
+    boolean isInOwnTurn();
+
+    /**
+     * The negative part of {@link #getTemporaryBonus(org.aventyrs.core.modifier.ModifierType)} — the
+     * sum of every running {@code TemporaryBonus} of type below zero, as a non-positive number. What a
+     * clause ignoring "efeitos que reduzem" a stat subtracts back out ({@code
+     * EscudeiroFeat#INICIO_DEFENSIVO}, {@code #MESTRE_ESCUDEIRO}).
+     */
+    int getTemporaryMalus(org.aventyrs.core.modifier.ModifierType type);
+
+    /**
+     * How many uses of source have been spent since the last Descanso Verdadeiro at least resetsAt
+     * cleared them — {@code EscudeiroFeat#CRIAR_REFUGIO}'s "1 + número de Títulos" hits, refilled by
+     * a Descanso Longo Verdadeiro (table ruling). Keyed by a stable name so it can be persisted.
+     */
+    int getRestScopedUses(String source);
+
+    /** Every source's spent uses — what a caller persists to resume them ({@link #restoreRestScopedUses}). */
+    java.util.Map<String, Integer> getAllRestScopedUses();
+
+    /** Spends one use of source, to be cleared by a Descanso Verdadeiro of at least resetsAt. */
+    void spendRestScopedUse(String source, org.aventyrs.core.rest.RestType resetsAt);
+
+    /** Restores a persisted use count for source — how a sheet reloaded mid-campaign resumes it. */
+    void restoreRestScopedUses(String source, int uses, org.aventyrs.core.rest.RestType resetsAt);
+
+    /**
      * Begins a new Rodada for this combatant: clears {@link #getActionsThisRound()}, resets
      * the per-Turn marker {@link #startTurn(int)} sets, and delivers every {@link
      * DelayedEgoGrant} scheduled during the Rodada just ended. Called by {@code

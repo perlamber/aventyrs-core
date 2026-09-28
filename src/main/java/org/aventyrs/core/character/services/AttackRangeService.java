@@ -146,6 +146,15 @@ public interface AttackRangeService {
     int getEffectiveRangeInUnidadesDeDistancia(Character character, Weapon weapon,
                                                java.util.Set<org.aventyrs.core.feat.Feat> activatedFeats);
 
+    /**
+     * {@link #getEffectiveRangeInUnidadesDeDistancia(Character, Weapon, java.util.Set)} for attacker's
+     * live state, adding every held Talento's UD reach right now ({@code
+     * Feat#resolveAttackReachIncrease} — Domínio da Arte do Escudo Atacante's Alcance Estendido). An
+     * {@link #UNBOUNDED_RANGE} reach stays unbounded.
+     */
+    int getEffectiveRangeInUnidadesDeDistancia(org.aventyrs.core.sheet.CombatantSheet attacker, Weapon weapon,
+                                               java.util.Set<org.aventyrs.core.feat.Feat> activatedFeats);
+
     /** What {@link #getEffectiveRangeInUnidadesDeDistancia} reports for a reach limited only by
      * sight — {@link Range#AO_ALCANCE_DOS_OLHOS} has no {@code maxUnidadesDeDistancia}, so there is
      * no number to state and none to add a modifier to. */

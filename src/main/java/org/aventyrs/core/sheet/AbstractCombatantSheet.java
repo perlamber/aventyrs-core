@@ -1289,6 +1289,57 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     public void finishTurn() {
         inOwnTurn = false;
         tickTemporaryEffects();
+        // Defesa Tartaruga: a Blessing earned by how the Turn just ended — granted after the tick, so
+        // one counting down at Turn start lasts until this combatant's next Turn begins.
+        getCharacter().getFeats().forEach(feat -> feat.resolveTurnEndBlessings(this).forEach(this::grantBlessing));
+    }
+
+    @Override
+    public boolean isInOwnTurn() {
+        return inOwnTurn;
+    }
+
+    @Override
+    public int getTemporaryMalus(final ModifierType type) {
+        return temporaryEffects.stream()
+                .filter(effect -> effect instanceof TemporaryBonus)
+                .map(effect -> (TemporaryBonus) effect)
+                .filter(bonus -> !bonus.isExpired() && bonus.getType() == type && bonus.getValue() < 0)
+                .mapToInt(TemporaryBonus::getValue)
+                .sum();
+    }
+
+    /** See {@link CombatantSheet#getRestScopedUses}: uses spent, and the Descanso that clears each. */
+    @Getter(AccessLevel.NONE)
+    private final Map<String, Integer> restScopedUses = new HashMap<>();
+
+    @Getter(AccessLevel.NONE)
+    private final Map<String, RestType> restScopedResets = new HashMap<>();
+
+    @Override
+    public int getRestScopedUses(final String source) {
+        return restScopedUses.getOrDefault(source, 0);
+    }
+
+    @Override
+    public Map<String, Integer> getAllRestScopedUses() {
+        return Map.copyOf(restScopedUses);
+    }
+
+    @Override
+    public void spendRestScopedUse(final String source, final RestType resetsAt) {
+        restScopedUses.merge(source, 1, Integer::sum);
+        restScopedResets.put(source, resetsAt);
+    }
+
+    @Override
+    public void restoreRestScopedUses(final String source, final int uses, final RestType resetsAt) {
+        if (uses <= 0) {
+            restScopedUses.remove(source);
+            return;
+        }
+        restScopedUses.put(source, uses);
+        restScopedResets.put(source, resetsAt);
     }
 
     @Override
@@ -2600,6 +2651,13 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
 
     @Override
     public void completeTrueRest(@NonNull final RestType restType) {
+        restScopedResets.entrySet().removeIf(entry -> {
+            if (restType.isAtLeast(entry.getValue())) {
+                restScopedUses.remove(entry.getKey());
+                return true;
+            }
+            return false;
+        });
         trueRestScopedEffects.entrySet().removeIf(entry -> {
             if (restType.isAtLeast(entry.getValue())) {
                 temporaryEffects.remove(entry.getKey());

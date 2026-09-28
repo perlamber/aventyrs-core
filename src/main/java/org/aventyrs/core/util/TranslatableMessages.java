@@ -466,4 +466,10 @@ public class TranslatableMessages {
      * an Encantamento or a Maldição.
      */
     public static final String DEFENSE_SUBSTITUTION_NOT_PERMITTED = "DEFENSE_SUBSTITUTION_NOT_PERMITTED";
+
+    /**
+     * An Ataque com Escudo ({@code item.ShieldAttack}) from someone without Atacar com Escudos, with a
+     * Escudo they don't have equipped, or with Asas Adamantinas' wings they don't have or while flying.
+     */
+    public static final String SHIELD_ATTACK_NOT_PERMITTED = "SHIELD_ATTACK_NOT_PERMITTED";
 }

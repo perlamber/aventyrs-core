@@ -266,6 +266,13 @@ public class InteractionResult {
     Integer damageLowestDieRerolls;
 
     /**
+     * How far, in UD, this stage pushes its target back from the attacker — {@code effect.Rugido}'s
+     * "Alvo é empurrado 1UD para trás". Reported, never applied: this core holds no positions, so the
+     * caller moves the token. {@code null} for everything that pushes nobody.
+     */
+    Integer pushedBackUd;
+
+    /**
      * The highest Cego 1d6 face that fails this roll ({@code CombatantSheet#getBlindCheckThreshold})
      * — {@code null} when its roller throws none. Reported whether or not the die came with the roll,
      * so a caller knows to throw it.
