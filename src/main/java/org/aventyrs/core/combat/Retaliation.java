@@ -1,6 +1,10 @@
 package org.aventyrs.core.combat;
 
 import org.aventyrs.core.character.DamageDescriptor;
+import org.aventyrs.core.character.services.DamageService;
+import org.aventyrs.core.scene.SceneContext;
+import org.aventyrs.core.sheet.CombatantSheet;
+import org.aventyrs.core.sheet.Condition;
 import org.aventyrs.core.sheet.ConditionType;
 
 /**
@@ -8,12 +12,10 @@ import org.aventyrs.core.sheet.ConditionType;
  * DeliveredAttackResult#getRetaliation()} / {@link IncomingAttackResult#getRetaliation()} —
  * {@code AbracadoPelaEscuridaoAbility#ESPINHOS_VENENOS_DE_GAEA} is the one source today.
  *
- * <p><b>Reported, never dealt.</b> This core computes damage only ever <em>to</em> a target
- * <em>from</em> an attacker; nothing sends it the other way, which is exactly the gap the
- * "Reactive/retaliation damage" catalogue row names. What is real here is the whole calculation —
- * who takes it, how much, of what type, and what Malefício rides along — leaving the caller to
- * apply it with an ordinary {@code DamageService#applyDamage} against the attacker's own sheet.
- * That is the same division of labour {@code Teleportation} and {@code Scene#refreshAura} use.
+ * <p><b>Reported by the attack, dealt by the caller</b> — {@link #dealTo} does the whole of it in
+ * one call (an ordinary typed {@code DamageService#applyDamage} against the attacker's own sheet,
+ * then the Malefício if the damage landed). The attack paths never deal it themselves: they stay
+ * report-only, the same division of labour {@code Teleportation} and {@code Scene#refreshAura} use.
  *
  * <p>The attack's own outcome is not this record's business: the thorns answer "atacarem", so they
  * are reported whether or not the attack landed. The {@link #conditionOnDamage} half is the one
@@ -30,4 +32,24 @@ public record Retaliation(int damage,
                           DamageDescriptor descriptor,
                           ConditionType conditionOnDamage,
                           int conditionRounds) {
+
+    /**
+     * Deals this retaliation to attacker — the one step the report leaves to its caller, written
+     * once. The damage goes through the ordinary {@code DamageService#applyDamage} path, typed by
+     * {@link #descriptor}, so the attacker's own RD/RDS/RE, immunities and Meio-Dano judge it like
+     * any other hit; {@code source} is the defender whose thorns these are, when the caller has it.
+     * {@link #conditionOnDamage} is applied only when that damage actually landed.
+     *
+     * @return the PV the attacker actually lost (shield points absorbed are not PV lost)
+     */
+    public int dealTo(final CombatantSheet attacker, final CombatantSheet source, final SceneContext sceneContext,
+                      final DamageService damageService) {
+        int before = attacker.getDamageTaken();
+        damageService.applyDamage(attacker, sceneContext, descriptor, source, damage, false);
+        int dealt = attacker.getDamageTaken() - before;
+        if (dealt > 0 && conditionOnDamage != null) {
+            attacker.applyCondition(new Condition(conditionOnDamage, conditionRounds, source));
+        }
+        return dealt;
+    }
 }

@@ -27,6 +27,8 @@ import org.aventyrs.core.sheet.Player;
 import org.aventyrs.core.skill.SkillGraduation;
 import org.aventyrs.core.skill.SkillType;
 import org.aventyrs.core.skill.atletismo.Atletismo;
+import org.aventyrs.core.skill.atletismo.AtletismoCompetencyAbility;
+import org.aventyrs.core.skill.atletismo.AtletismoSpecialization;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -115,7 +117,8 @@ class ChargeServiceImplTest {
     /**
      * {@code MobilidadeFeat#INVESTIDA_AQUATICA} — "o Tempo de Ação de investidas sempre reduzidos
      * em -1PA". Granted through {@link FeatService#grantFeat} so its own Pré-requisito (4
-     * Graduações em Atletismo) is actually met and its XP actually paid: the reduction is being
+     * Graduações em Atletismo and the Especialização Triatleta) is actually met and its XP
+     * actually paid: the reduction is being
      * read off a Talento the character legally holds, not off a hook called directly.
      */
     @Test
@@ -124,7 +127,10 @@ class ChargeServiceImplTest {
                 .skill(SkillType.ATLETISMO, CharacterSkill.builder()
                         .skill(new Atletismo())
                         .graduation(SkillGraduation.builder().graduationValue(4).build())
+                        .specializations(List.of(AtletismoSpecialization.TRI_ATLETA))
                         .build())
+                // "Personagens que possuam Movimento Base de Natação" — Anfíbio grants one.
+                .skillCompetencyAbilities(new java.util.ArrayList<>(List.of(AtletismoCompetencyAbility.ANFIBIO)))
                 .build();
         CharacterSheet sheet = sheetOf(swimmer);
         sheet.accumulateExperience(BigDecimal.valueOf(100));

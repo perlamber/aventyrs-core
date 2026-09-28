@@ -25,8 +25,26 @@ public interface ActiveAbility {
      */
     ActionCost getActionPointCost();
 
+    /**
+     * The Tempo de Ativação as holder pays it — {@link #getActionPointCost()} unless the holder's
+     * own Talentos change it ({@code MetamagicoFeat#ARTESAO_DE_BARREIRAS}' "como Ação Livre"). What
+     * {@code ActiveAbilityService#activate} checks.
+     */
+    default ActionCost getActionPointCost(final Character holder) {
+        return getActionPointCost();
+    }
+
     /** Pontos de Magia spent to trigger this ability's activated state. */
     int getMagicPointCost();
+
+    /**
+     * The PM as holder pays them — {@link #getMagicPointCost()} unless the holder's own Talentos
+     * reduce it ({@code MetamagicoFeat#ENGENHEIRO_DO_MANA}). What {@code ActiveAbilityService#activate}
+     * checks and spends.
+     */
+    default int getMagicPointCost(final Character holder) {
+        return getMagicPointCost();
+    }
 
     /**
      * Pontos de Determinação spent to trigger this ability's activated state — 0 for most
@@ -140,5 +158,40 @@ public interface ActiveAbility {
      */
     default List<TemporaryEffect> resolveEffects(final Character character) {
         return List.of(resolveEffect(character));
+    }
+
+    /**
+     * The dice this Efeito Ativo rolls when activated ("Recupera 3d6PV"), or {@code null} for one
+     * that rolls nothing. An ability that declares dice must be activated through {@code
+     * ActiveAbilityService#activate(Character, CombatantSheet, ActiveAbility, int, List)} with the
+     * caller's faces — this core never rolls.
+     */
+    default org.aventyrs.core.character.Dice getDice() {
+        return null;
+    }
+
+    /**
+     * Whatever the rolled total does to the activator the moment it lands — a heal, typically.
+     * Called once, after the costs are paid and {@link #resolveEffects} applied; never called for an
+     * ability with no {@link #getDice()}.
+     */
+    default void applyRolled(final org.aventyrs.core.sheet.CombatantSheet activator, final int rolledTotal) {
+    }
+
+    /**
+     * Whether activator may activate this right now — "Apenas enquanto voando". Checked by {@code
+     * ActiveAbilityService} before anything is paid; {@code true} for every ability with no such
+     * clause.
+     */
+    default boolean isUsableBy(final org.aventyrs.core.sheet.CombatantSheet activator) {
+        return true;
+    }
+
+    /**
+     * What activating does to the activator beyond its {@link #resolveEffects} — landing ("encerra
+     * efeitos de voo atuais"), lifting Condições ("Encerra todos os efeitos de Maldição"). Called
+     * once, after the costs are paid and the effects applied.
+     */
+    default void applyOnActivation(final org.aventyrs.core.sheet.CombatantSheet activator) {
     }
 }

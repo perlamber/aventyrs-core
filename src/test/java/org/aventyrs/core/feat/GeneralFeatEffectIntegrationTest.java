@@ -107,6 +107,15 @@ class GeneralFeatEffectIntegrationTest {
         }
     }
 
+    /** "4 ou mais Graduações em pelo menos 3 diferentes Perícias" — Controle da Situação's Pré-requisito. */
+    private static Character broadlyTrained() {
+        return character()
+                .skill(SkillType.ATLETISMO, trained(new org.aventyrs.core.skill.atletismo.Atletismo(), 4))
+                .skill(SkillType.PERSUASAO, trained(new org.aventyrs.core.skill.persuasao.Persuasao(), 4))
+                .skill(SkillType.CONHECIMENTOS, trained(new org.aventyrs.core.skill.conhecimentos.Conhecimentos(), 4))
+                .build();
+    }
+
     private static CharacterSkill trained(final org.aventyrs.core.skill.Skill skill, final int graduation) {
         return CharacterSkill.builder()
                 .skill(skill)
@@ -189,8 +198,9 @@ class GeneralFeatEffectIntegrationTest {
                         .vigor(AttributeValue.builder().domain(AttributeDomain.VIGOR).base(3).build())
                         .build())
                 .build();
-        character.grantTitle(new Santo(List.of(), List.of()), TitleSlot.PRIMARY);
+        // Atrasar Despertar "deve ser adquirido antes de Despertar seus Títulos" — so before the Título.
         acquire(character, DestinoFeat.CORACAO_DE_FERRO_DO_DESTINO, DestinoFeat.ATRASAR_DESPERTAR);
+        character.grantTitle(new Santo(List.of(), List.of()), TitleSlot.PRIMARY);
         return character;
     }
 
@@ -770,7 +780,7 @@ class GeneralFeatEffectIntegrationTest {
      */
     @Test
     void focoEmPericiaGrantsVantagemOnTheChosenPericiaOnly() throws IllegalOperationException {
-        Character character = character().build();
+        Character character = character().skill(SkillType.ATLETISMO, trained(new org.aventyrs.core.skill.atletismo.Atletismo(), 1)).build();
         CharacterSheet sheet = CharacterSheet.of(character, new Player());
         int atletismoBefore = rollBonus(sheet, SkillType.ATLETISMO, null);
         int persuasaoBefore = rollBonus(sheet, SkillType.PERSUASAO, null);
@@ -944,7 +954,7 @@ class GeneralFeatEffectIntegrationTest {
      */
     @Test
     void controleDaSituacaoWidensTheMargemCriticaOfAnOrdinaryPericia() throws IllegalOperationException {
-        Character character = character().build();
+        Character character = broadlyTrained();
         CharacterSheet sheet = CharacterSheet.of(character, new Player());
         SkillRoll roll = new SkillRoll(List.of(6, 5, 4));
         assertEquals(CriticalResult.NONE, criticalOf(sheet, SkillType.ATLETISMO, roll));
@@ -957,7 +967,7 @@ class GeneralFeatEffectIntegrationTest {
     /** "Não afeta rolagens de Perícias de Ataque e Esquivar e Aparar" — both stay narrow. */
     @Test
     void controleDaSituacaoExcludesAtaqueAndEsquivaEAparar() throws IllegalOperationException {
-        Character character = character().build();
+        Character character = broadlyTrained();
         CharacterSheet sheet = CharacterSheet.of(character, new Player());
         SkillRoll roll = new SkillRoll(List.of(6, 5, 4));
 

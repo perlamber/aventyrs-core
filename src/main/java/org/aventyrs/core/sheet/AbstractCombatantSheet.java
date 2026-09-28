@@ -28,6 +28,7 @@ import org.aventyrs.core.util.DiceRoller;
 import org.aventyrs.core.character.services.HitPointsServiceImpl;
 import org.aventyrs.core.magic.ElementalType;
 import org.aventyrs.core.skill.SkillType;
+import org.aventyrs.core.skill.dirigirecavalgar.DirigirECavalgarCompetencyAbility;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -98,6 +99,15 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
      */
     @Getter(AccessLevel.NONE)
     private final List<TemporaryEffect> temporaryEffects = new ArrayList<>();
+
+    /** Whether the caller or an Efeito Ativo put this combatant in the air — see {@link #isFlying()}. */
+    private boolean flying;
+
+    /** The effects taking off applied, lifted by identity on landing — see {@link #setFlying}. */
+    private final List<TemporaryEffect> flightEffects = new ArrayList<>();
+
+    /** Dice a {@link RecurringDice} owes, waiting for the caller to roll them. */
+    private final List<PendingDiceRoll> pendingDiceRolls = new ArrayList<>();
 
     /**
      * The Itens this sheet's {@link #getCharacter()} owns but currently isn't wearing/wielding —
@@ -235,6 +245,14 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     @Getter(AccessLevel.NONE)
     private final Set<Object> affectedThisCombat = new HashSet<>();
 
+    /** What this combatant rides — see {@link #getRiding}. */
+    @Getter(AccessLevel.NONE)
+    private Riding riding;
+
+    /** Bocarra's swallowed victims — see {@link #getDevouredVictims}. */
+    @Getter(AccessLevel.NONE)
+    private final List<CombatantSheet> devouredVictims = new ArrayList<>();
+
     /** Effects that end with the combat — see {@link #applyEffectUntilCombatEnds}. */
     @Getter(AccessLevel.NONE)
     private final List<TemporaryEffect> combatScopedEffects = new ArrayList<>();
@@ -246,6 +264,13 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     /** The last hit taken on the attack path — see {@link #recordDamageReceived}. */
     @Getter(AccessLevel.NONE)
     private DamageReceipt lastDamageReceived;
+
+    /** Who has damaged this combatant this Cena, and how many hits it took — see {@link #wasDamagedByThisCena}. */
+    @Getter(AccessLevel.NONE)
+    private final Set<UUID> damagedByThisCena = new java.util.HashSet<>();
+
+    @Getter(AccessLevel.NONE)
+    private int hitsReceivedThisCena;
 
     /** Rodadas in which this combatant hit each target with an Arma Natural, keyed by target id. */
     @Getter(AccessLevel.NONE)
@@ -263,6 +288,15 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     @Getter(AccessLevel.NONE)
     private int actionCountAtTurnStart = 0;
 
+    /** See {@link CombatantSheet#getActionsOfLatestOwnTurn()} — cleared by {@link #startTurn}, fed by
+     * {@link #recordAction} only while {@link #inOwnTurn}. */
+    @Getter(AccessLevel.NONE)
+    private final List<CombatantAction> actionsOfLatestOwnTurn = new ArrayList<>();
+
+    /** Whether this combatant's own Turn is underway — between {@link #startTurn} and {@link #finishTurn}. */
+    @Getter(AccessLevel.NONE)
+    private boolean inOwnTurn = false;
+
     /** Movements taken since this Rodada began — see {@link #consumeMovementThisRound()}. */
     private int movementsTakenThisRound = 0;
 
@@ -271,6 +305,12 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
 
     /** Attacks landed on this combatant since this Rodada began — see {@link #recordAttackSuffered()}. */
     private int attacksSufferedThisRound = 0;
+
+    /** See {@link CombatantSheet#getReactionsSpentThisRound()}. */
+    private int reactionsSpentThisRound = 0;
+
+    /** See {@link CombatantSheet#getStoredSpells()}. */
+    private final List<org.aventyrs.core.magic.StoredSpell> storedSpells = new ArrayList<>();
 
     /** Whether a weapon was drawn since this Turn began — see {@link #drawWeapon(Weapon)}. */
     private boolean drewWeaponThisTurn = false;
@@ -285,9 +325,28 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     @Getter(AccessLevel.NONE)
     private final FallenHealingLedger fallenHealing = new FallenHealingLedger();
 
-    /** Curar os Mortos charges banked per source — see {@link #grantRevivalCharge(Object)}. */
+    /** Single-use charges banked per source — see {@link #grantCharge(Object)}. */
     @Getter(AccessLevel.NONE)
-    private final Map<Object, Integer> revivalCharges = new HashMap<>();
+    private final Map<Object, Integer> charges = new HashMap<>();
+
+    /** Damage only a Descanso Verdadeiro recovers — see {@link #payWithVitality(int)}. */
+    @Getter(AccessLevel.NONE)
+    private int lockedDamage;
+
+    /** The part of the lock Roubo de Vida may still recover — see {@link #lockDamage}. */
+    private int lifeStealRecoverableLockedDamage;
+
+    /** Temporary Ego points lent to this combatant, settled at {@link #startNewScene()}. */
+    @Getter(AccessLevel.NONE)
+    private final List<EgoLoan> egoLoans = new ArrayList<>();
+
+    /** Whether this combatant dealt damage in the current Cena — see {@link #recordDamageDealt()}. */
+    @Getter(AccessLevel.NONE)
+    private boolean dealtDamageThisScene;
+
+    /** One lent point: its own ceiling source, who lent it, and this pool's level once it landed. */
+    private record EgoLoan(EgoDomain domain, CombatantSheet lender, Object source, int remainingAfterLoan) {
+    }
 
     protected AbstractCombatantSheet(@NonNull final Character character) {
         this.character = character;
@@ -406,7 +465,10 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
             }
             comaCapped = true;
         }
-        if (amount > 0) {
+        // Médico de Guerra: "Os efeitos de recuperação de PV aumentam em +2" — the healer's Títulos
+        // add to what the heal offers before anything halves or caps it.
+        int offered = amount + healerHealingBonus(source);
+        if (offered > 0) {
             // "Efeitos de cura interrompem a perda de PV/PM/PD por rodada" — Sangramento's,
             // Purga-Mana's and Excruciante's clauses say it alike.
             temporaryEffects.removeIf(effect -> effect instanceof Bleeding || effect instanceof ManaDrain
@@ -416,7 +478,7 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         long halvings = temporaryEffects.stream()
                 .filter(effect -> effect instanceof HalvedHealing && !effect.isExpired())
                 .count();
-        int recovered = amount;
+        int recovered = offered;
         for (long i = 0; i < halvings; i++) {
             recovered /= 2;
         }
@@ -432,19 +494,49 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
                 fallenHealing.recordComaHeal(source.key());
             }
         }
+        // Transferir Vitalidade: PV paid that way come back only with a Descanso Verdadeiro. Feridas
+        // Ardentes' lock yields to Roubo de Vida too, which releases as much of it as it recovers.
+        int unlocked = Math.max(0, getDamageTaken() - lockedDamage - lifeStealRecoverableLockedDamage);
+        int ceiling = lifeSteal ? Math.max(0, getDamageTaken() - lockedDamage) : unlocked;
+        recovered = Math.max(0, Math.min(recovered, ceiling));
+        if (recovered > unlocked) {
+            lifeStealRecoverableLockedDamage = Math.max(0, lifeStealRecoverableLockedDamage - (recovered - unlocked));
+        }
         int damageTaken = hitPoints.recover(recovered);
         observeStatus();
         return damageTaken;
     }
 
+    /** What the healer's Títulos add to source — 0 for an unsourced or healer-less heal. */
+    private int healerHealingBonus(final HealingSource source) {
+        if (source != null && source.relayed() != null) {
+            return source.relayed().healingBonus();
+        }
+        if (source == null || source.healer() == null) {
+            return 0;
+        }
+        return source.healer().getCharacter().getAllTitles().stream()
+                .mapToInt(title -> title.resolveHealingBonus(source, this))
+                .sum();
+    }
+
     /** Whether any of the healer's Títulos lifts the Coma cap for source — Levantar os Caídos. */
     private boolean healerBypassesComaCap(final HealingSource source) {
+        if (source.relayed() != null) {
+            return source.relayed().bypassesComaCapInThisScene() && hasEnteredComaThisScene();
+        }
         return source.healer() != null && source.healer().getCharacter().getAllTitles().stream()
                 .anyMatch(title -> title.bypassesComaHealingCap(source, this));
     }
 
     /** Whether one of the healer's Títulos claims (and pays for) reaching this dead combatant — Curar os Mortos. */
     private boolean healerClaimsRevival(final HealingSource source) {
+        if (source.relayed() != null) {
+            // Already paid for on the healer's side; only the target-side window is judged here.
+            Integer window = source.relayed().revivalWindowRounds();
+            OptionalInt rounds = getRoundsSinceDeath();
+            return window != null && rounds.isPresent() && rounds.getAsInt() <= window;
+        }
         return source.healer() != null && source.healer().getCharacter().getAllTitles().stream()
                 .anyMatch(title -> title.claimRevival(source, this));
     }
@@ -484,27 +576,106 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     }
 
     @Override
-    public void grantRevivalCharge(@NonNull final Object source) {
-        revivalCharges.merge(source, 1, Integer::sum);
+    public void grantCharge(@NonNull final Object source) {
+        charges.merge(source, 1, Integer::sum);
     }
 
     @Override
-    public int getRevivalCharges(final Object source) {
-        return revivalCharges.getOrDefault(source, 0);
+    public int getCharges(final Object source) {
+        return charges.getOrDefault(source, 0);
     }
 
     @Override
-    public boolean consumeRevivalCharge(final Object source) {
-        int charges = getRevivalCharges(source);
-        if (charges <= 0) {
+    public boolean consumeCharge(final Object source) {
+        int banked = getCharges(source);
+        if (banked <= 0) {
             return false;
         }
-        if (charges == 1) {
-            revivalCharges.remove(source);
+        if (banked == 1) {
+            charges.remove(source);
         } else {
-            revivalCharges.put(source, charges - 1);
+            charges.put(source, banked - 1);
         }
         return true;
+    }
+
+    @Override
+    public OptionalInt getRoundsSinceFallen() {
+        observeStatus();
+        return fallenHealing.getRoundsSinceFallen();
+    }
+
+    @Override
+    public void payWithVitality(final int amount) {
+        if (amount <= 0) {
+            return;
+        }
+        applyDamage(amount);
+        lockedDamage += amount;
+    }
+
+    @Override
+    public int getLockedDamage() {
+        return Math.min(lockedDamage + lifeStealRecoverableLockedDamage, getDamageTaken());
+    }
+
+    @Override
+    public int getLifeStealRecoverableLockedDamage() {
+        return Math.min(lifeStealRecoverableLockedDamage, getDamageTaken());
+    }
+
+    @Override
+    public void lockDamage(final int amount, final boolean lifeStealRecovers) {
+        if (amount <= 0) {
+            return;
+        }
+        if (lifeStealRecovers) {
+            lifeStealRecoverableLockedDamage += amount;
+        } else {
+            lockedDamage += amount;
+        }
+    }
+
+    @Override
+    public void releaseVitalityLock() {
+        lockedDamage = 0;
+        lifeStealRecoverableLockedDamage = 0;
+    }
+
+    @Override
+    public void receiveEgoLoan(@NonNull final EgoDomain domain, @NonNull final CombatantSheet lender) {
+        Object source = new Object();
+        grantTemporaryEgoPoints(domain, source, 1);
+        egoLoans.add(new EgoLoan(domain, lender, source, getTemporaryEgoPoints(domain)));
+    }
+
+    /**
+     * Settles every Ego loan at the end of its Cena. The loaned ceiling is withdrawn either way; an
+     * unused point (this pool no lower than when it landed) is handed back to its lender, while a
+     * used one is gone — and withdrawing its ceiling must not cost this combatant a point of its own,
+     * so the spend it paid for is refunded here.
+     */
+    private void settleEgoLoans() {
+        for (EgoLoan loan : egoLoans) {
+            boolean unused = getTemporaryEgoPoints(loan.domain()) >= loan.remainingAfterLoan();
+            egoPoints.get(loan.domain()).revokeTemporaryBonus(loan.source());
+            if (unused) {
+                loan.lender().recoverTemporaryEgoPoints(loan.domain(), 1);
+            } else {
+                recoverTemporaryEgoPoints(loan.domain(), 1);
+            }
+        }
+        egoLoans.clear();
+    }
+
+    @Override
+    public void recordDamageDealt() {
+        dealtDamageThisScene = true;
+    }
+
+    @Override
+    public boolean hasDealtDamageThisScene() {
+        return dealtDamageThisScene;
     }
 
     /**
@@ -577,14 +748,14 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
      * dependency here.
      *
      * <p><strong>Not to be confused with {@code InitiativeService#getTotalInitiative}</strong>,
-     * which reads this same {@code EgoValue.getTotal()} but then adds a {@code
+     * which reads this same {@code Character#getEffectiveEgoTotal} but then adds a {@code
      * ModifierType.INITIATIVE} three-source sum, because Iniciativa doubles as a turn-order stat.
      * A {@code TemporaryBonus(INITIATIVE, +2, 2)} must never widen how many Iniciativa
      * <em>points</em> a combatant can spend. This asymmetry is the likeliest future misreading of
      * the two.
      */
     private int getPermanentEgoMax(final EgoDomain domain) {
-        return character.getEgos().getEgo(domain).getTotal();
+        return character.getEffectiveEgoTotal(domain);
     }
 
     /**
@@ -687,9 +858,9 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
      * {@code EgoPointsService#useEgoPointsForEffect}, which exists precisely to keep a drain
      * from triggering a Vantagem.
      *
-     * <p>Scans {@code attributeAbilities} only, not the usual three sources: this is a trigger,
-     * not an aggregated stat, and the one clause that reacts to Ego depletion is an
-     * {@code AttributeAbility}. Widen it when a second, differently-typed one exists.
+     * <p>Scans {@code attributeAbilities} and, since 0.0.71, Talentos — not the usual three
+     * sources: this is a trigger, not an aggregated stat, and the clauses that react to Ego
+     * depletion are an {@code AttributeAbility} and two Antecedente Benefícios.
      *
      * <p>One path to zero is deliberately not covered: a {@link TemporaryEgoPenalty} landing
      * (or a permanent Ego maximum dropping) can empty a domain without any spend, and {@link
@@ -704,6 +875,13 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
             int owed = ability.resolveEgoDepletionGrant(domain);
             if (owed > 0 && consumeOncePerSession(ability)) {
                 scheduleTemporaryEgoPointGrant(domain, ability, owed);
+            }
+        }
+        // The Talento twin (0.0.71) — an Antecedente's Sortudo / Dominar Impulsos.
+        for (Feat feat : character.getFeats()) {
+            int owed = feat.resolveEgoDepletionGrant(domain);
+            if (owed > 0 && consumeOncePerSession(feat)) {
+                scheduleTemporaryEgoPointGrant(domain, feat, owed);
             }
         }
     }
@@ -913,6 +1091,31 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     }
 
     @Override
+    public int getReactionsSpentThisRound() {
+        return reactionsSpentThisRound;
+    }
+
+    @Override
+    public void spendReaction() {
+        reactionsSpentThisRound++;
+    }
+
+    @Override
+    public List<org.aventyrs.core.magic.StoredSpell> getStoredSpells() {
+        return List.copyOf(storedSpells);
+    }
+
+    @Override
+    public void storeSpell(final org.aventyrs.core.magic.StoredSpell spell) {
+        storedSpells.add(spell);
+    }
+
+    @Override
+    public boolean removeStoredSpell(final org.aventyrs.core.magic.StoredSpell spell) {
+        return storedSpells.remove(spell);
+    }
+
+    @Override
     public boolean hasActiveRegeneration() {
         return temporaryEffects.stream()
                 .anyMatch(effect -> effect instanceof Regeneration && !effect.isExpired());
@@ -954,6 +1157,8 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
                 .sum();
         // A Frenesi's numbers (see Frenzy): every timed-bonus reader sees them with nothing of its own.
         total += getFrenzy().map(frenzy -> frenzy.bonusFor(type)).orElse(0);
+        // Ferocidade de Lacerto — the natural state and a mimicked copy grant the same numbers once.
+        total += getLacertoFerocities().stream().findFirst().map(ferocity -> ferocity.bonusFor(type)).orElse(0);
         // Desprezar Danos's Meio-Dano only holds "Enquanto seus PV forem menores ou iguais à zero",
         // so it is judged here, live, rather than stored on the Frenzy.
         if (type == ModifierType.HALF_DAMAGE && scornsDamageNow()) {
@@ -1039,10 +1244,15 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         // Half of the anatomy pair, and so silenced from PHYSICAL upward: a Troll passing for
         // human has no vegetal anatomy to shrug a Sangramento off with. Empty rather than a
         // filtered set, since the Race is the only source there is.
+        // A held Habilidade's immunities (Anatomia Vegetal, Fisiologia Estranha …) are not racial
+        // traits, so they survive a suppression the Raça's own do not.
+        Set<CriticalEffectType> fromAbilities = new HashSet<>();
+        getCharacter().getAttributeAbilities().forEach(ability -> fromAbilities.addAll(ability.resolveCriticalEffectImmunities()));
         if (getRacialTraitSuppression().suppressesPhysicalTraits()) {
-            return Set.of();
+            return Set.copyOf(fromAbilities);
         }
-        return getCharacter().getRace().getCriticalEffectImmunities();
+        fromAbilities.addAll(getCharacter().getRace().getCriticalEffectImmunities());
+        return Set.copyOf(fromAbilities);
     }
 
     /**
@@ -1056,7 +1266,8 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         boolean withinTitleWindow = sceneContext != null && getCharacter().getAllTitles().stream()
                 .anyMatch(title -> sceneContext.isWithinFirstCombatRounds(title.resolveMinorCriticalImmunityRounds()));
         return withinTitleWindow
-                || getCharacter().getFeats().stream().anyMatch(Feat::ignoresMinorCriticalEffects);
+                || getCharacter().getFeats().stream().anyMatch(Feat::ignoresMinorCriticalEffects)
+                || getCharacter().getAttributeAbilities().stream().anyMatch(AttributeAbility::ignoresMinorCriticalEffects);
     }
 
     /**
@@ -1090,7 +1301,64 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
      */
     @Override
     public void finishTurn() {
+        inOwnTurn = false;
         tickTemporaryEffects();
+        // Defesa Tartaruga: a Blessing earned by how the Turn just ended — granted after the tick, so
+        // one counting down at Turn start lasts until this combatant's next Turn begins.
+        getCharacter().getFeats().forEach(feat -> feat.resolveTurnEndBlessings(this).forEach(this::grantBlessing));
+    }
+
+    @Override
+    public boolean isInOwnTurn() {
+        return inOwnTurn;
+    }
+
+    @Override
+    public int getTemporaryMalus(final ModifierType type) {
+        return temporaryEffects.stream()
+                .filter(effect -> effect instanceof TemporaryBonus)
+                .map(effect -> (TemporaryBonus) effect)
+                .filter(bonus -> !bonus.isExpired() && bonus.getType() == type && bonus.getValue() < 0)
+                .mapToInt(TemporaryBonus::getValue)
+                .sum();
+    }
+
+    /** See {@link CombatantSheet#getRestScopedUses}: uses spent, and the Descanso that clears each. */
+    @Getter(AccessLevel.NONE)
+    private final Map<String, Integer> restScopedUses = new HashMap<>();
+
+    @Getter(AccessLevel.NONE)
+    private final Map<String, RestType> restScopedResets = new HashMap<>();
+
+    @Override
+    public int getRestScopedUses(final String source) {
+        return restScopedUses.getOrDefault(source, 0);
+    }
+
+    @Override
+    public Map<String, Integer> getAllRestScopedUses() {
+        return Map.copyOf(restScopedUses);
+    }
+
+    @Override
+    public void spendRestScopedUse(final String source, final RestType resetsAt) {
+        restScopedUses.merge(source, 1, Integer::sum);
+        restScopedResets.put(source, resetsAt);
+    }
+
+    @Override
+    public void restoreRestScopedUses(final String source, final int uses, final RestType resetsAt) {
+        if (uses <= 0) {
+            restScopedUses.remove(source);
+            return;
+        }
+        restScopedUses.put(source, uses);
+        restScopedResets.put(source, resetsAt);
+    }
+
+    @Override
+    public List<CombatantAction> getActionsOfLatestOwnTurn() {
+        return Collections.unmodifiableList(actionsOfLatestOwnTurn);
     }
 
     /**
@@ -1112,6 +1380,8 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         movementsTakenThisRound = 0;
         repositionsTakenThisRound = 0;
         actionCountAtTurnStart = actionsThisRound.size();
+        actionsOfLatestOwnTurn.clear();
+        inOwnTurn = true;
         drewWeaponThisTurn = false;
         activationsThisTurn.clear();
         // "Por 1 Rodada" from the holder's own Turn lasts until this one begins (table ruling).
@@ -1173,6 +1443,7 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         actionsThisRound.clear();
         actionCountAtTurnStart = 0;
         attacksSufferedThisRound = 0;
+        reactionsSpentThisRound = 0;
         applyScheduledEgoGrants();
         applyPostponedDamage();
         tickCooldowns();
@@ -1269,6 +1540,9 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         });
         restCooldowns.values().removeIf(required -> restType.isAtLeast(required));
         restImmunities.values().removeIf(required -> restType.isAtLeast(required));
+        // Armazenar Magia: "será automaticamente dissipada se não for utilizada até seu próximo
+        // Descanso" — any Descanso.
+        storedSpells.clear();
     }
 
     /**
@@ -1303,15 +1577,22 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     public void startNewScene() {
         actionsThisCena.clear();
         actionsThisRound.clear();
+        actionsOfLatestOwnTurn.clear();
+        inOwnTurn = false;
         actionCountAtTurnStart = 0;
         attacksSufferedThisRound = 0;
+        reactionsSpentThisRound = 0;
         drewWeaponThisScene = false;
         combatStarted = false;
         lastDamageReceived = null;
+        damagedByThisCena.clear();
+        hitsReceivedThisCena = 0;
         clearCombatScopedState();
         observeStatus();
         fallenHealing.startNewScene();
-        revivalCharges.clear();
+        charges.clear();
+        settleEgoLoans();
+        dealtDamageThisScene = false;
     }
 
     /**
@@ -1398,6 +1679,20 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     @Override
     public void recordDamageReceived(final DamageReceipt receipt) {
         this.lastDamageReceived = receipt;
+        hitsReceivedThisCena++;
+        if (receipt != null && receipt.source() != null && receipt.damage() > 0) {
+            damagedByThisCena.add(receipt.source().getId());
+        }
+    }
+
+    @Override
+    public boolean wasDamagedByThisCena(final UUID combatantId) {
+        return damagedByThisCena.contains(combatantId);
+    }
+
+    @Override
+    public int getHitsReceivedThisCena() {
+        return hitsReceivedThisCena;
     }
 
     @Override
@@ -1492,6 +1787,16 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     public void recordAction(final CombatantAction action) {
         actionsThisRound.add(action);
         actionsThisCena.add(action);
+        if (inOwnTurn) {
+            actionsOfLatestOwnTurn.add(action);
+        }
+        // The use of every Talento this action spent — what a rationed activation claims itself on.
+        action.activatedFeats().forEach(feat -> feat.onActivationRecorded(this));
+    }
+
+    @Override
+    public List<CombatantAction> getActionsThisTurn() {
+        return Collections.unmodifiableList(actionsThisRound.subList(actionCountAtTurnStart, actionsThisRound.size()));
     }
 
     @Override
@@ -1562,6 +1867,11 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         if (condition.getType() == ConditionType.AMALDICOADO && isWardedAgainstEnchantments()) {
             return;
         }
+        // "Não pode ser agarrado, empurrado ou derrubado", "imunes a efeitos de Medo" — a held
+        // Habilidade that refuses this Condição outright.
+        if (isImmuneToCondition(condition.getType())) {
+            return;
+        }
         removeCondition(condition.getType());
         temporaryEffects.add(condition);
     }
@@ -1614,10 +1924,20 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
             return;
         }
         type.getImplied().forEach((implied, within) -> {
-            if (held.appliesWithin(within, sceneContext)) {
+            if (held.appliesWithin(within, sceneContext) && !isImplicationSuppressed(type, implied)) {
                 collectConditions(held, implied, sceneContext, active);
             }
         });
+    }
+
+    /**
+     * Whether a held Talento vetoes implier conferring implied — {@code
+     * Feat#suppressesImpliedCondition}. Only the implication is vetoed: the same condition applied
+     * directly, or conferred by a different implier, still lands.
+     */
+    private boolean isImplicationSuppressed(final ConditionType implier, final ConditionType implied) {
+        return getCharacter() != null && getCharacter().getFeats().stream()
+                .anyMatch(feat -> feat.suppressesImpliedCondition(implier, implied));
     }
 
     @Override
@@ -1860,8 +2180,10 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     @Override
     public List<NaturalWeapon> getNaturalWeapons() {
         Character character = getCharacter();
-        Stream<NaturalWeapon> fromFeats = character.getFeats().stream()
-                .flatMap(feat -> feat.getGrantedNaturalWeapons(character, this).stream());
+        Stream<NaturalWeapon> fromFeats = Stream.concat(
+                character.getFeats().stream().flatMap(feat -> feat.getGrantedNaturalWeapons(character, this).stream()),
+                // A Habilidade Monstruosa's Arma Natural — not a racial trait, so not suppressible either.
+                character.getAttributeAbilities().stream().flatMap(ability -> ability.getGrantedNaturalWeapons().stream()));
         if (getRacialTraitSuppression().suppressesNaturalWeapons() || character.getRace() == null) {
             return fromFeats.distinct().toList();
         }
@@ -1903,6 +2225,9 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
                 : getCharacter().getRace().getCriticalResistance();
         total += getCharacter().getFeats().stream()
                 .mapToInt(feat -> feat.resolveCriticalResistance(getCharacter(), sceneContext, this))
+                .sum();
+        total += getCharacter().getAttributeAbilities().stream()
+                .mapToInt(AttributeAbility::resolveCriticalResistance)
                 .sum();
         return total + getTemporaryBonus(ModifierType.CRITICAL_RESISTANCE);
     }
@@ -1994,6 +2319,66 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     // --- Frenesi (Gigante Enfurecido) ---------------------------------------------------------
 
     @Override
+    public Optional<Riding> getRiding() {
+        return Optional.ofNullable(riding);
+    }
+
+    @Override
+    public void startRiding(@NonNull final Riding riding) {
+        this.riding = riding;
+    }
+
+    @Override
+    public boolean stopRiding() {
+        boolean wasRiding = riding != null;
+        riding = null;
+        return wasRiding;
+    }
+
+    @Override
+    public boolean hasActiveEffect(@NonNull final Class<? extends TemporaryEffect> type) {
+        return temporaryEffects.stream().anyMatch(effect -> type.isInstance(effect) && !effect.isExpired());
+    }
+
+    @Override
+    public List<CombatantSheet> getDevouredVictims() {
+        return List.copyOf(devouredVictims);
+    }
+
+    @Override
+    public void addDevouredVictim(@NonNull final CombatantSheet victim) {
+        devouredVictims.add(victim);
+    }
+
+    @Override
+    public boolean removeDevouredVictim(final CombatantSheet victim) {
+        return devouredVictims.remove(victim);
+    }
+
+    @Override
+    public Optional<Devoured> getDevoured() {
+        return temporaryEffects.stream()
+                .filter(Devoured.class::isInstance)
+                .map(Devoured.class::cast)
+                .filter(devoured -> !devoured.isExpired())
+                .findFirst();
+    }
+
+    @Override
+    public List<LacertoFerocity> getLacertoFerocities() {
+        return temporaryEffects.stream()
+                .filter(LacertoFerocity.class::isInstance)
+                .map(LacertoFerocity.class::cast)
+                .filter(ferocity -> !ferocity.isExpired())
+                .toList();
+    }
+
+    @Override
+    public boolean endNaturalLacertoFerocity() {
+        return temporaryEffects.removeIf(effect -> effect instanceof LacertoFerocity ferocity && !ferocity.isMimicked());
+    }
+
+    @Override
     public Optional<Frenzy> getFrenzy() {
         Optional<Frenzy> own = getOwnFrenzy();
         return own.isPresent() ? own : activeFrenzies().filter(Frenzy::isInspired).findFirst();
@@ -2047,8 +2432,19 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
 
     @Override
     public boolean isSkillUsePrevented(final SkillType skillType, final AttributeDomain governing) {
-        return isConcentrationAction(skillType, governing)
-                && getFrenzy().map(Frenzy::isConcentrationBlocked).orElse(false);
+        return (isConcentrationAction(skillType, governing)
+                && getFrenzy().map(Frenzy::isConcentrationBlocked).orElse(false))
+                || isPreventedWhileRiding(skillType);
+    }
+
+    /**
+     * "A restrição de não usar outras Perícias enquanto dirigindo um veículo ou cavalgando um animal"
+     * — every Perícia but Dirigir e Cavalgar is refused while riding, unless the rider holds {@code
+     * DirigirECavalgarCompetencyAbility#GINETE}, which lifts it (for a Desvantagem it resolves itself).
+     */
+    private boolean isPreventedWhileRiding(final SkillType skillType) {
+        return isRiding() && skillType != SkillType.DIRIGIR_E_CAVALGAR && getCharacter() != null
+                && !SkillCompetencyAbility.allFor(getCharacter(), this).contains(DirigirECavalgarCompetencyAbility.GINETE);
     }
 
     /** Gnose-based Perícias and Domínio do Mana — what "exijam concentração ou raciocínio" covers. */
@@ -2066,7 +2462,126 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
 
     @Override
     public int getElementalResistanceInstances(final ElementalType element) {
-        return getFrenzy().filter(frenzy -> frenzy.getCataclysmElements().contains(element)).map(frenzy -> 1).orElse(0);
+        int fromFrenzy = getFrenzy().filter(frenzy -> frenzy.getCataclysmElements().contains(element)).map(frenzy -> 1).orElse(0);
+        return fromFrenzy + getCharacter().getAttributeAbilities().stream()
+                .mapToInt(ability -> ability.resolveElementalResistanceInstances(element))
+                .sum()
+                + getCharacter().getFeats().stream()
+                .mapToInt(feat -> feat.resolveElementalResistanceInstances(element, getCharacter(), this))
+                .sum();
+    }
+
+    @Override
+    public boolean halvesDamage(final org.aventyrs.core.character.DamageType damageType,
+                                final org.aventyrs.core.character.DamageDescriptor descriptor) {
+        return getCharacter().getAttributeAbilities().stream().anyMatch(ability -> ability.halvesDamage(damageType, descriptor))
+                || getCharacter().getFeats().stream()
+                        .anyMatch(feat -> feat.halvesDamage(damageType, descriptor, getCharacter(), this))
+                || temporaryEffects.stream().anyMatch(effect -> effect instanceof DamageScopeEffect scoped
+                        && scoped.covers(DamageScopeEffect.Kind.HALVES, damageType, descriptor));
+    }
+
+    @Override
+    public boolean isImmuneToDamage(final org.aventyrs.core.character.DamageType damageType,
+                                    final org.aventyrs.core.character.DamageDescriptor descriptor) {
+        return getCharacter().getAttributeAbilities().stream().anyMatch(ability -> ability.isImmuneToDamage(damageType, descriptor))
+                || getCharacter().getFeats().stream()
+                        .anyMatch(feat -> feat.isImmuneToDamage(damageType, descriptor, getCharacter(), this))
+                || temporaryEffects.stream().anyMatch(effect -> effect instanceof DamageScopeEffect scoped
+                        && scoped.covers(DamageScopeEffect.Kind.IMMUNE, damageType, descriptor));
+    }
+
+    @Override
+    public boolean isVulnerableToDamage(final org.aventyrs.core.character.DamageType damageType,
+                                       final org.aventyrs.core.character.DamageDescriptor descriptor) {
+        return getCharacter().getAttributeAbilities().stream()
+                .anyMatch(ability -> ability.isVulnerableToDamage(damageType, descriptor));
+    }
+
+    @Override
+    public boolean isImmuneToCondition(final ConditionType conditionType) {
+        return getCharacter().getAttributeAbilities().stream().anyMatch(ability -> ability.isImmuneToCondition(conditionType));
+    }
+
+    @Override
+    public boolean isFlying() {
+        return flying || getCharacter().getAttributeAbilities().stream().anyMatch(AttributeAbility::keepsFlying);
+    }
+
+    @Override
+    public void setFlying(final boolean takeOff) {
+        boolean permanent = getCharacter().getAttributeAbilities().stream().anyMatch(AttributeAbility::keepsFlying);
+        if (!takeOff && permanent) {
+            return;
+        }
+        flightEffects.forEach(applied -> temporaryEffects.removeIf(effect -> effect == applied));
+        flightEffects.clear();
+        this.flying = takeOff;
+        if (takeOff) {
+            for (AttributeAbility ability : getCharacter().getAttributeAbilities()) {
+                for (TemporaryEffect effect : ability.resolveWhileFlyingEffects()) {
+                    applyEffect(effect);
+                    flightEffects.add(effect);
+                }
+            }
+        }
+    }
+
+    @Override
+    public void queuePendingDiceRoll(final PendingDiceRoll roll) {
+        pendingDiceRolls.add(roll);
+    }
+
+    @Override
+    public List<PendingDiceRoll> getPendingDiceRolls() {
+        return List.copyOf(pendingDiceRolls);
+    }
+
+    @Override
+    public int resolveDiceRoll(final UUID pendingRollId, final List<Integer> faces) {
+        PendingDiceRoll pending = pendingDiceRolls.stream()
+                .filter(roll -> roll.id().equals(pendingRollId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalOperationException(
+                        org.aventyrs.core.util.TranslatableMessages.PENDING_DICE_ROLL_NOT_FOUND));
+        int total = Math.max(0, pending.dice().total(faces));
+        pendingDiceRolls.remove(pending);
+        if (pending.kind() == RecurringDice.Kind.HEAL) {
+            int before = getDamageTaken();
+            heal(total, new HealingSource(pending.source() == null ? pending : pending.source(), true, null, null, null));
+            return before - getDamageTaken();
+        }
+        int before = getDamageTaken();
+        new org.aventyrs.core.character.services.DamageServiceImpl()
+                .applyDamage(this, null, pending.descriptor(), null, total, false);
+        return getDamageTaken() - before;
+    }
+
+    @Override
+    public void removeEffectsFrom(final String source) {
+        if (source == null) {
+            return;
+        }
+        temporaryEffects.removeIf(effect -> (effect instanceof TemporaryBonus bonus && source.equals(bonus.getSource()))
+                || (effect instanceof DamageScopeEffect scoped && source.equals(scoped.getSource()))
+                || (effect instanceof RecurringDice dice && source.equals(dice.getSource()))
+                || (effect instanceof SkillDifficultyShift shift && source.equals(shift.getSource())));
+    }
+
+    @Override
+    public boolean hasEffectFrom(final String source) {
+        return source != null && temporaryEffects.stream()
+                .anyMatch(effect -> (effect instanceof TemporaryBonus bonus && source.equals(bonus.getSource())
+                        || effect instanceof SourcedState state && source.equals(state.getSource()))
+                        && !effect.isExpired());
+    }
+
+    @Override
+    public int getSkillDifficultyShift(final org.aventyrs.core.skill.SkillType skill) {
+        return temporaryEffects.stream()
+                .filter(effect -> effect instanceof SkillDifficultyShift)
+                .mapToInt(effect -> ((SkillDifficultyShift) effect).stepsFor(skill))
+                .sum();
     }
 
     @Override
@@ -2176,6 +2691,13 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
 
     @Override
     public void completeTrueRest(@NonNull final RestType restType) {
+        restScopedResets.entrySet().removeIf(entry -> {
+            if (restType.isAtLeast(entry.getValue())) {
+                restScopedUses.remove(entry.getKey());
+                return true;
+            }
+            return false;
+        });
         trueRestScopedEffects.entrySet().removeIf(entry -> {
             if (restType.isAtLeast(entry.getValue())) {
                 temporaryEffects.remove(entry.getKey());

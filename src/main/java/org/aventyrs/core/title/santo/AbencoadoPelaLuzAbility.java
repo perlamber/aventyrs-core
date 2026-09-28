@@ -94,8 +94,8 @@ public enum AbencoadoPelaLuzAbility implements AventyrTitleAbility {
     // whole Duração). DamageServiceImpl consults it by type, the one place it does so.
     // "O primeiro ataque que lhe *causaria* Danos" is honoured by reading the stone last, after
     // RD/RA/Meio-Dano: a blow those already turned aside never spends the negation.
-    // RDS is RD (ModifierType.DAMAGE_REDUCTION), not RA — see GorgonaFeat's own note — so the
-    // decaying 5/3/1 lands on the same total every other RD source does.
+    // The decaying 5/3/1 is an RDS: DamageServiceImpl reads the stone alongside the other
+    // reductions and skips it for Primordial damage, as every RDS does.
     // V19 renamed this Habilidade (was "Pele Rochosa de Epona"), raised the cost from 2PD to 4PD,
     // lowered the Tempo de Ativação from 2PA to 1PA, halved the Duração to 1 Rodada, and replaced
     // the previous revision's bare "você recebe RA" with the decaying RDS 5.

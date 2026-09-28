@@ -32,13 +32,19 @@ public enum MesticoFeat implements Feat {
     //  has nothing to widen. Closing this needs the cap to be resolved against the holder rather
     //  than checked once, which would invert the current design: the Race would have to consult
     //  the Character, and it is the Character that holds the Race.
-    // TODO: "recém-criados" is not modelled either — nothing records when a Talento was
-    //  acquired. Same simplification as DraconicoFeat's own two creation-only Talentos.
+    // "Recém-criados" is real: Feat#isAcquirableOnlyAtCreation, so only a starting Talento slot
+    // takes it.
     CARACTERISTICA_RACIAL_ADICIONAL(
             "Você recebe uma Característica Racial adicional em Mestiço Humanoide ou Mestiço "
                     + "Mortal. Esta Característica extra pode ser escolhida por você, sem a "
                     + "necessidade de seleções aleatórias.",
-            FeatRequirements.builder().build());
+            FeatRequirements.builder().build()) {
+        /** "Apenas … recém-criados" — only a starting Talento slot can take it. */
+        @Override
+        public boolean isAcquirableOnlyAtCreation() {
+            return true;
+        }
+    };
 
     private final String description;
     private final FeatRequirements featRequirements;

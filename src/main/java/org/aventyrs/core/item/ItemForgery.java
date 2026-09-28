@@ -21,6 +21,7 @@ import static org.aventyrs.core.util.TranslatableMessages.ITEM_NOT_A_MASTERPIECE
 import static org.aventyrs.core.util.TranslatableMessages.MASTERPIECE_GRADUATION_TOO_LOW;
 import static org.aventyrs.core.util.TranslatableMessages.REGALIA_CRAFTING_NOT_PERMITTED;
 import static org.aventyrs.core.util.TranslatableMessages.REGALIA_DIVINE_DONOR_REQUIRED;
+import static org.aventyrs.core.util.TranslatableMessages.REGALIA_DONOR_LACKS_CENTELHA;
 import static org.aventyrs.core.util.TranslatableMessages.REGALIA_DONOR_NOT_WILLING;
 import static org.aventyrs.core.util.TranslatableMessages.STORE_DOES_NOT_SELL_REGALIA;
 
@@ -377,6 +378,12 @@ public final class ItemForgery {
         if (crafter != null && specification.isRegalia()) {
             crafter.recordRegaliaCrafted(specification.getRegaliaGrade());
         }
+        // "Sacrifique voluntariamente uma de suas Centelhas" — or all of them, for a Superior.
+        if (donation != null && donation.donor() != null && specification.isRegalia()) {
+            Character donor = donation.donor();
+            donor.sacrificeCentelhas(specification.getRegaliaGrade().requiresAllCentelhas()
+                    ? donor.getCentelhas() : 1);
+        }
         return forged;
     }
 
@@ -414,6 +421,9 @@ public final class ItemForgery {
         }
         if (specification.getRegaliaGrade().requiresExternalDonor() && !donation.isDivineDonor()) {
             throw new IllegalOperationException(REGALIA_DIVINE_DONOR_REQUIRED);
+        }
+        if (donation.donor() != null && donation.donor().getCentelhas() < 1) {
+            throw new IllegalOperationException(REGALIA_DONOR_LACKS_CENTELHA);
         }
     }
 

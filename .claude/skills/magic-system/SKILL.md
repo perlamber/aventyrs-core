@@ -90,8 +90,8 @@ All three must hold, the same combine-every-prerequisite shape as `Feat#isEligib
   SEMENTE-is-free is an inference. It's a `BigDecimal` (like `SkillGraduationService`'s cost), so
   a fractional discount is representable. `getAcquisitionCost(character, spell)` is where every
   adjustment lands: **`Feat#grantsFreeSpellAcquisition`** waives it outright (a Magia a held
-  Talento hands out — `MetamagicoFeat#ARCANISTA`'s chosen Sementes/Brotos, wired ahead of its
-  choice class), and otherwise **`Feat#resolveSpellAcquisitionCostReduction` +
+  Talento names — no catalog consumer), **a free ladder pick** waives it too (see "Árvores
+  conhecidas and the free picks" below), and otherwise **`Feat#resolveSpellAcquisitionCostReduction` +
   `Race#resolveSpellAcquisitionCostReduction`** are summed off the base and floored at zero —
   `Agastias`'s "Magia é Ciência" (−0.5 EXP, unscoped) is the live consumer; `ElementalFeat
   #ARCANISMO_ELEMENTAL` and the `Furia`/`NascidoDaFloresta` "Natural" clauses are the pending
@@ -100,6 +100,24 @@ All three must hold, the same combine-every-prerequisite shape as `Feat#isEligib
   i.e. the Árvores the Conjurador *conhece* (holding any one Magia of a tree is knowing it, since
   the climb gate makes the first one a SEMENTE). Derived, never stored — same discipline as the
   branch resolution. What `MetamagicoFeat#ARCANISTA`'s "conhece N Árvores de Magia" reads.
+- **Árvores conhecidas and the free picks — ARCANISTA, wired (0.0.58).** Two `Feat` hooks, and
+  **no choice class and no stored picks**, for the same reason there is no "chosen branch" field:
+  - `Feat#resolveKnownTreeCapacity` → `SpellService#getKnownTreeCapacity`/`getOpenTreeSlots`.
+    `ARCANISTA` answers the **Conhecimentos roll value** (Graduação + Gnose via
+    `CharacterSkillService#getValueForRoll`; table ruling 2026-09-25), resolved live, so a raised
+    Graduação opens a slot. `grantSpell` refuses a Magia of an unknown Árvore with no slot open
+    (`SPELL_TREE_CAPACITY_REACHED`) — **nothing but ARCANISTA opens Árvores**, so a character
+    without it learns no Magia. Mimetized Magias (`APTIDAO_MAGICA_AMPLA`) are a separate list and
+    ungated. `learnTree(character, sheet, tree)` opens one and grants its Semente.
+  - `Feat#resolveFreeSpellPicks` → `List<FreeSpellPick(rung, picks)>` — 2 at the rung each ladder
+    Talento unlocks. `getOwedFreeSpells` is picks minus **distinct Árvores already holding that
+    rung**, so the first two such Magias from different Árvores are free
+    (`getAcquisitionCost` waives exactly those), and `getFreeSpellOptions(character, rung)` lists
+    what may fill one. In a tree diverging at that rung both ramificações are offered, so **the
+    pick is the branch choice**; deeper rungs follow the branch by the ordinary gates ("sempre
+    do mesmo ramo da magia de nível anterior").
+  - A UI prompts on both whenever either is non-zero — after a Talento grant, and after a raised
+    Graduação is saved.
 - `MagiaAlternativaAbility` (`org.aventyrs.core.ability`) is one `AttributeAbility` constant per
   `MagicType` — pattern 3 in the `ability-acquisition-and-substitution` skill, mirroring
   `PeritoTeoricoAbility` exactly. Grant the constant, not `FocusAbility.MAGIA_ALTERNATIVA`,
@@ -456,6 +474,48 @@ describes casting as two separate rolls), it just currently has no concrete abil
 toward this specific extension point — a reminder that these cross-references need
 re-checking whenever a cited skill gets revised, and that a piece of infrastructure can outlive
 the example that originally justified building it.
+
+## Mimetizar, cost, opt-ins and storage (0.0.66)
+
+- **Mimetizar** is `MimetizedSpell` (a catalog `Spell` + a PD cost + optional overrides and a
+  `requiredForm`), cast by `MimetizedSpellCastingService` — never `SpellCastingService`, so it never
+  satisfies an Árvore's gates. `Character#getMimetizedSpells()` is **live**: the list stored at
+  acquisition plus every held Talento's current `Feat#getGrantedMimetizedSpells`, deduplicated by
+  value (`MimetizedSpell` has value equality), so a rung gated on a Título appears when it is
+  Desperto. A cost of 0 is valid (a Semente costs 0 PM). Chosen Árvores live on
+  `ArvoresMimetizadasFeat` (Alma Feérica, Abençoada pelo Conclave, Aptidão Mágica Ampla), chosen
+  Magias on `MagiasMimetizadasEscolhidasFeat` (the rest of the Aptidão ladder).
+- **Mana cost** is resolved (reported, never spent): `Spell#getManaCost` × the Títulos'
+  multiplier − every `Feat#resolveManaCostReduction`, floored at 1 unless it was free
+  (Engenheiro do Mana; the Fada/Fúria twins, allegiance read from the caster's `SceneContext`).
+- **Per-cast opt-ins**: `SpellCastRequest#activatedFeats` — a longer
+  `Feat#resolveCastingActionPointReduction` overload, `#resolveCastingRollBonus` (the Conjuração
+  roll), `#resolveSpellDamageBonus` (the resolved damage), `#resolveCastEffectDelayRounds` (reported
+  on `SpellCastingResult#getEffectDelayRounds`). `Feat#resolveSpellDurationIncrease` extends a
+  Duração beside an item's.
+- **Storage**: `SpellStorageService` holds a cast `SpellCastingResult` on the sheet
+  (`CombatantSheet#getStoredSpells`) for Armazenar Magia (1 Semente/Broto) or its Superior (2, or
+  one Muda; releasable as a Reação too); every held Magia dissipates at the next Descanso.
+
+## Resisting a Magia you can cast (0.0.70)
+
+- **"Magias que você conheça / seja capaz de conjurar"** is `magic.SpellFamiliarity#canCast` —
+  learned (`Character#getSpells`) plus mimetized, an Efeito Alternativo through its base (table
+  ruling: both phrasings are one set).
+- **An incoming Magia is identified by the attack source**: `AttackDelivery`/`AttackReceiver` ask
+  `Feat#resolveSpellDefenseBonus` (Aptidão Ampla +3 / Assombrosa +5 DM),
+  `#resolveSpellResistanceDifficultyReduction` (Suprema; Artesão while a Barreira runs — applied by
+  `AttackReceiver`, reported unapplied by `AttackDelivery`) and `#isImmuneToSpell` (Dracônica, ≥10
+  current PD), and mark the chain head `DamageInteraction#fromSpell`, which carries the Magia into
+  `DamageService` for the immunity and Arcanista's scoped RM (`#resolveSpellMagicReduction`). A
+  non-attack cast reports `SpellCastingResult#isTargetImmune()`.
+- **Healing** takes `Feat#resolveSpellHealingBonus` (Conjuração Rápida's Desvantagem, Arcanismo
+  Elemental's +2), carried as `SpellEffectContext#healingBonus` into `SpellHealingEffect` and
+  reported on `SpellCastingResult#getHealingBonus()`.
+- **The Barreira Mágica** reprices through `ActiveAbility#getActionPointCost(Character)`/
+  `#getMagicPointCost(Character)`, extends through `SpellDurationService#resolveNonSpellDurationIncrease`
+  (hooks asked with a `null` Magia must answer 0 when scoped), and shields adjacent allies through
+  `DefenseService`'s scan of `BarreiraMagicaActiveAbility#resolveAllyDefesasBonus`.
 
 ## Reference files to read first
 

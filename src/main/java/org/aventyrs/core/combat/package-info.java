@@ -114,6 +114,21 @@
  * Críticos ({@code Feat#resolveExtraCriticalEffects}) into a critical hit's chain before the
  * immunity filter.
  *
+ * <p>Three riders of how an attack was made are reported for the caller to apply, never applied:
+ * {@code DeliveredAttackResult#getLockedSelfDamage()} (Força Excessiva's price — pay it with {@code
+ * attacker.payWithVitality(n)}), and on a substituted defence (Defender-se Atacando, {@code
+ * IncomingAttack#defenseSkill}) {@code IncomingAttackResult#getCounterWeaponDamage()} for the weapon
+ * struck with and {@code isAttackerDamageAdvantage()} for the foe's dano. Two are applied through
+ * the chain it hands back: Ataque Repentino's Meio-Dano ({@code isEveryTargetHalved()}), and
+ * Feridas Ardentes' lock on the critical's Metade da Gnose, which the head {@code
+ * DamageInteraction} places on the victim as it lands. The recorded action names its primary
+ * target and the Talentos the roll spent.
+ *
+ * <p>A Escudo is swung by naming an {@code org.aventyrs.core.item.ShieldAttack} as the attack source
+ * ({@code ShieldAttack.of(equippedShield)}, or {@code wings()}); {@code AttackDelivery} aims it at its
+ * own {@code DefenseType}. A Rugido in the chain reports its push on {@code
+ * InteractionResult#getPushedBackUd()} as the caller drains it.
+ *
  * <h2>What this package deliberately doesn't do</h2>
  *
  * <ul>

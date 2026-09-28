@@ -1,5 +1,6 @@
 package org.aventyrs.core.feat;
 
+import org.aventyrs.core.character.MovementMode;
 import java.util.List;
 
 import org.aventyrs.core.character.AttributeDomain;
@@ -45,10 +46,10 @@ import org.aventyrs.core.race.Bestial;
  *   <li><b>An Arma Natural</b> (Chifres Poderosos, Presas Longas, Garras Afiadas) — <b>now
  *   real</b>: authored in {@link NaturalWeapon} and granted per Herança. Each weapon's own
  *   authored Favor / Efeito Crítico is still unmodeled — see {@link NaturalWeapon}.</li>
- *   <li><b>A Movimento Base de Natação / Voo / Vertical</b> — these are a <i>different sub-stat</i>
- *   from ordinary Movimento Base, deliberately not wired into {@code ModifierType#MOVEMENT} (see
- *   that type's own note, and {@code AtletismoCompetencyAbility#ALPINISTA_VELOZ}/{@code ANFIBIO}).
- *   Routing them there would raise the holder's ground movement, which no Herança says.</li>
+ *   <li><b>A Movimento Base de Natação / Voo / Vertical</b> — <b>now real</b>: each is its own
+ *   {@code MovementMode}, granted through {@code Feat#grantsMovementMode} and resolved by {@code
+ *   MovementService#getMovementBase(CombatantSheet, MovementMode)}, never through {@code
+ *   ModifierType#MOVEMENT}, which would raise ground movement.</li>
  *   <li><b>"Recebem uma Habilidade de Competência / Especialização de &lt;Perícia&gt;"</b> —
  *   <b>now real</b>, through {@code Feat#getGrantedSkillTraits} and {@link HerancaBestialFeat},
  *   the acquired form that records which trait the player picked. A granted {@code
@@ -75,8 +76,7 @@ public enum BestialFeat implements Feat {
      * (see the class javadoc).
      */
     // The free Habilidade de Competência is real, recorded on HerancaBestialFeat.
-    // TODO: swim movement is blocked — see the class
-    //  javadoc for each.
+    // The Movimento Base de Natação is real (Feat#grantsMovementMode).
     // TODO: the Vantagem is scoped to resisting grapples, ropes and confinement — none of which
     //  is a manoeuvre this core represents, so there is no roll to apply it to. Distinct from a
     //  merely purpose-scoped Vantagem: here the *action* is missing, not just its classification.
@@ -93,6 +93,12 @@ public enum BestialFeat implements Feat {
                     .requiredRace(Bestial.class)
                     .build()) {
         @Override
+        public boolean grantsMovementMode(final MovementMode mode, final Character character,
+                                          final CombatantSheet holder) {
+            return mode == MovementMode.SWIM;
+        }
+
+        @Override
         public int resolveAttributeBonus(final AttributeDomain domain, final Character character) {
             return domain == AttributeDomain.VIGOR ? HERANCA_ATTRIBUTE_BONUS : 0;
         }
@@ -105,12 +111,10 @@ public enum BestialFeat implements Feat {
      * Atributo-total reader via {@code Character#getEffectiveAttributeTotal}.
      */
     // The free Habilidade de Competência is real, recorded on HerancaBestialFeat.
-    // TODO: Flight
-    //  additionally needs the flight state Aviano's own Braços Alados records (a distance sub-stat,
-    //  not a TemporaryBonus). The activation transaction itself is now built
-    //  (ActiveAbilityService#activate), but for a PA/PM/PV cost, not this clause's 2PA+3PD.
-    // TODO: "+1 Rodada para cada Talento de Herança que possuir" — feats of this category are
-    //  countable, but the flight Duração it would extend does not exist.
+    // The Movimento Base de Voo is real (Feat#grantsMovementMode).
+    // TODO: flying as a timed state — "voar exige o uso de 2PA e 3PD" for 1d6 Rodadas, +1 per
+    //  Herança held — is not modelled; whether the holder is flying is the caller's
+    //  EnvironmentalState#flying.
     HERANCA_AVIANA(
             "Receba +1 de bônus racial em Foco. Você agora tem asas e possui Movimento Base de "
                     + "Voo. Em Cenas de Combate voar exige o uso de 2PA e 3PD, a capacidade de voo "
@@ -120,6 +124,12 @@ public enum BestialFeat implements Feat {
             FeatRequirements.builder()
                     .requiredRace(Bestial.class)
                     .build()) {
+        @Override
+        public boolean grantsMovementMode(final MovementMode mode, final Character character,
+                                          final CombatantSheet holder) {
+            return mode == MovementMode.FLIGHT;
+        }
+
         @Override
         public int resolveAttributeBonus(final AttributeDomain domain, final Character character) {
             return domain == AttributeDomain.FOCUS ? HERANCA_ATTRIBUTE_BONUS : 0;
@@ -248,13 +258,19 @@ public enum BestialFeat implements Feat {
      * <p>The Carisma +1 is <b>real</b>, through {@link Feat#resolveAttributeBonus}.
      */
     // The free Especialização de Atletismo is real, recorded on HerancaBestialFeat.
-    // TODO: vertical movement is blocked — see the class javadoc.
+    // The Movimento Base Vertical is real (Feat#grantsMovementMode, MovementMode.CLIMB).
     HERANCA_REPTILIANA(
             "Receba +1 de bônus racial em Carisma e Movimento Base Vertical. Bestiais Reptilianos "
                     + "recebem uma Especialização adicional de 'Atletismo'.",
             FeatRequirements.builder()
                     .requiredRace(Bestial.class)
                     .build()) {
+        @Override
+        public boolean grantsMovementMode(final MovementMode mode, final Character character,
+                                          final CombatantSheet holder) {
+            return mode == MovementMode.CLIMB;
+        }
+
         @Override
         public int resolveAttributeBonus(final AttributeDomain domain, final Character character) {
             return domain == AttributeDomain.CHARISMA ? HERANCA_ATTRIBUTE_BONUS : 0;
@@ -265,17 +281,14 @@ public enum BestialFeat implements Feat {
      * "A partir da terceira Rodada de Cenas de Combate… você pode gastar temporariamente 1 ponto
      * de Autocontrole e Mimetizar os Efeitos da Ferocidade de Lacerto por Instinto Rodadas."
      *
-     * <p>Its Pré-requisito — three or more Talentos Bestiais — is real and enforced, so the tree's
-     * own ladder works even though nothing it climbs to does.
+     * <p>Its Pré-requisito — three or more Talentos Bestiais — is real and enforced.
      */
-    // TODO: Ferocidade de Lacerto is unbuilt — Indomito's own javadoc records why it is withheld
-    //  rather than approximated, and this Talento mimics it, so it inherits every blocker.
-    // TODO: the Autocontrole spend is expressible (EgoPointsService#useEgoPointsForEffect), but
-    //  there is no effect for it to buy, and no per-Cena activation counter for "apenas uma vez a
-    //  cada Cena de Combate" — CharacterSheet counts Rodadas via TemporaryEffect, not activations.
-    // TODO: "+1d6 pontos de dano adicionais" to Armas Naturais — the Arma Natural concept now
-    //  exists (NaturalWeapon), but this core rolls no dice, and the bonus applies only while
-    //  Mimetizando a Ferocidade de Lacerto, a form/state nothing tracks.
+    // Real through LacertoFerocityService#mimic: from the third combat Rodada, 1 temporary
+    // Autocontrole buys a mimicked LacertoFerocity for Instinto Rodadas, once per combat. It grants
+    // the same RD and Vantagens, and its "+1d6" on Armas Naturais is reported on
+    // InteractionResult#getExtraDamageDice for the caller to throw. The Ação Livre is the caller's.
+    // TODO: the Ferocidade's forced targeting and concentration block are mimicked too, and stay
+    //  unbuilt for the reasons Indomito's javadoc gives.
     ACEITAR_A_LACERTO(
             "A partir da terceira Rodada de Cenas de Combate, como uma Ação Livre, você pode "
                     + "gastar temporariamente 1 ponto de Autocontrole e Mimetizar os Efeitos da "

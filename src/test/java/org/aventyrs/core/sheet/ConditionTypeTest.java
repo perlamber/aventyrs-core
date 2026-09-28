@@ -24,17 +24,19 @@ class ConditionTypeTest {
     }
 
     @Test
-    void everyConditionIsAMaleficioExceptEscondido() {
+    void everyConditionIsAMaleficioExceptEscondidoAndPetrificado() {
         assertFalse(ConditionType.ESCONDIDO.isMaleficio());
+        assertFalse(ConditionType.PETRIFICADO.isMaleficio());
         Arrays.stream(ConditionType.values())
-                .filter(type -> type != ConditionType.ESCONDIDO)
+                .filter(type -> type != ConditionType.ESCONDIDO && type != ConditionType.PETRIFICADO)
                 .forEach(type -> assertTrue(type.isMaleficio(), type + " should be a Malefício"));
     }
 
     @Test
-    void maleficiosIsEveryConstantButEscondido() {
-        assertEquals(ConditionType.values().length - 1, ConditionType.maleficios().size());
+    void maleficiosIsEveryConstantButEscondidoAndPetrificado() {
+        assertEquals(ConditionType.values().length - 2, ConditionType.maleficios().size());
         assertFalse(ConditionType.maleficios().contains(ConditionType.ESCONDIDO));
+        assertFalse(ConditionType.maleficios().contains(ConditionType.PETRIFICADO));
         assertTrue(ConditionType.maleficios().contains(ConditionType.POSSESSAO));
     }
 }

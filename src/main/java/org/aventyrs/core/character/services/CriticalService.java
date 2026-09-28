@@ -58,6 +58,15 @@ public interface CriticalService {
                                   SceneContext sceneContext);
 
     /**
+     * {@link #sumCriticalMarginIncrease(CombatantSheet, SkillType, AttackSource, SceneContext)} with
+     * the attack's primary target named, for a Talento scoped to it ({@code
+     * Feat#resolveCriticalMarginIncrease}'s target-taking form — {@code
+     * DuelistaFeat#EXPLORAR_PONTOS_FRACOS}). The shorter form passes {@code null}.
+     */
+    int sumCriticalMarginIncrease(CombatantSheet holder, SkillType skillType, AttackSource attackSource,
+                                  SceneContext sceneContext, CombatantSheet target);
+
+    /**
      * What a critical hit would add to its own dano roll — the baseline Vantagem em Danos, plus (or
      * replaced by) whatever the holder's Talentos and the wielded weapon's enhancements grant. See
      * {@link CriticalDamage}.

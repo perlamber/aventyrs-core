@@ -55,9 +55,9 @@ import org.aventyrs.core.scene.Range;
  * <p><b>No ability or equipment source yet</b>, each deliberately absent rather than forgotten:
  * <ul>
  *   <li>no {@code SkillCompetencyAbility}/{@code AttributeAbility} range hook — no constant on
- *   either states an unconditional "+N níveis de distância" clause today (the closest, {@code
- *   GorgonaFeat#MARCA_DA_MALDICAO}'s Olhar de Lacerto reach, is blocked on the ability itself
- *   being unbuilt), so the hook is added with its first real consumer;</li>
+ *   either states an unconditional "+N níveis de distância" clause today ({@code
+ *   GorgonaFeat#MARCA_DA_MALDICAO}'s Olhar de Lacerto reach is a {@code Feat} one, read by {@code
+ *   OlharDeLacertoService}), so the hook is added with its first real consumer;</li>
  *   <li>no equipment scan. {@code org.aventyrs.core.item.OffensiveImprovement#ALCANCE_ESTENDIDO} is
  *   authored now, but its "Distância de Ataque aumenta +1UD" is the <b>wrong unit</b> for the
  *   widening this service applies: {@code Feat#resolveAttackRangeIncrease} counts whole {@link
@@ -127,6 +127,33 @@ public interface AttackRangeService {
      * Range#AO_ALCANCE_DOS_OLHOS}, which names no fixed distance to add to.
      */
     int getEffectiveRangeInUnidadesDeDistancia(Character character, Weapon weapon);
+
+    /**
+     * {@link #getEffectiveRange(Character, Weapon)} for an attack spending activatedFeats — {@code
+     * Feat#resolveAttackRangeIncrease(Character, AttackSource, Set)}'s steps, so Tiro Longo's extra
+     * passo with Mira Impecável counts. The two-argument form activates nothing.
+     */
+    Range getEffectiveRange(Character character, Weapon weapon, java.util.Set<org.aventyrs.core.feat.Feat> activatedFeats);
+
+    /**
+     * The reach in Unidades de Distância an attack spending activatedFeats measures against — {@link
+     * #getEffectiveRangeInUnidadesDeDistancia(Character, Weapon)} when no Talento widens it, and
+     * otherwise the widened band's own upper bound ({@link Range#getMaxUnidadesDeDistancia()}, {@link
+     * #UNBOUNDED_RANGE} at {@link Range#AO_ALCANCE_DOS_OLHOS}): a "+1 nível" step names a band, not a
+     * UD count, so the band's edge is the only distance it states. Never shorter than the un-widened
+     * reach.
+     */
+    int getEffectiveRangeInUnidadesDeDistancia(Character character, Weapon weapon,
+                                               java.util.Set<org.aventyrs.core.feat.Feat> activatedFeats);
+
+    /**
+     * {@link #getEffectiveRangeInUnidadesDeDistancia(Character, Weapon, java.util.Set)} for attacker's
+     * live state, adding every held Talento's UD reach right now ({@code
+     * Feat#resolveAttackReachIncrease} — Domínio da Arte do Escudo Atacante's Alcance Estendido). An
+     * {@link #UNBOUNDED_RANGE} reach stays unbounded.
+     */
+    int getEffectiveRangeInUnidadesDeDistancia(org.aventyrs.core.sheet.CombatantSheet attacker, Weapon weapon,
+                                               java.util.Set<org.aventyrs.core.feat.Feat> activatedFeats);
 
     /** What {@link #getEffectiveRangeInUnidadesDeDistancia} reports for a reach limited only by
      * sight — {@link Range#AO_ALCANCE_DOS_OLHOS} has no {@code maxUnidadesDeDistancia}, so there is

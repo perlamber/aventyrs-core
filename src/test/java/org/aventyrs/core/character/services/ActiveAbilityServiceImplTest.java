@@ -119,6 +119,58 @@ class ActiveAbilityServiceImplTest {
         assertEquals(0, sheet.getTemporaryBonus(ModifierType.SKILL_ROLL_BONUS));
     }
 
+    /** A Reação is a live pool now: the first activation spends the holder's only one. */
+    @Test
+    void aReacaoIsSpentAndASecondOneThisRodadaIsRefused() {
+        ActiveAbility reaction = costing(ActionCost.REACTION);
+        Character character = holding(reaction).toBuilder().reactions(1).build();
+        CharacterSheet sheet = CharacterSheet.of(character, new Player());
+
+        activeAbilityService.activate(character, sheet, reaction, 0);
+
+        assertEquals(1, sheet.getReactionsSpentThisRound());
+        assertThrows(IllegalOperationException.class,
+                () -> activeAbilityService.activate(character, sheet, reaction, 0));
+    }
+
+    @Test
+    void theNextRodadaRefreshesTheReacoes() {
+        ActiveAbility reaction = costing(ActionCost.REACTION);
+        Character character = holding(reaction).toBuilder().reactions(1).build();
+        CharacterSheet sheet = CharacterSheet.of(character, new Player());
+        activeAbilityService.activate(character, sheet, reaction, 0);
+
+        sheet.startNewRound();
+
+        assertEquals(0, sheet.getReactionsSpentThisRound());
+        activeAbilityService.activate(character, sheet, reaction, 0);
+        assertEquals(1, sheet.getReactionsSpentThisRound());
+    }
+
+    @Test
+    void aHolderWithTwoReacoesMayReactTwice() {
+        ActiveAbility reaction = costing(ActionCost.REACTION);
+        Character character = holding(reaction).toBuilder().reactions(2).build();
+        CharacterSheet sheet = CharacterSheet.of(character, new Player());
+
+        activeAbilityService.activate(character, sheet, reaction, 0);
+        activeAbilityService.activate(character, sheet, reaction, 0);
+
+        assertEquals(2, sheet.getReactionsSpentThisRound());
+    }
+
+    /** A refused activation spends nothing — the ledger moves only once the whole activation succeeded. */
+    @Test
+    void aRefusedReacaoSpendsNothing() {
+        ActiveAbility reaction = costing(ActionCost.REACTION);
+        Character character = holding(reaction).toBuilder().reactions(0).build();
+        CharacterSheet sheet = CharacterSheet.of(character, new Player());
+
+        assertThrows(IllegalOperationException.class,
+                () -> activeAbilityService.activate(character, sheet, reaction, 0));
+        assertEquals(0, sheet.getReactionsSpentThisRound());
+    }
+
     @Test
     void activateChecksAnAcaoLivreAgainstTheFreeActionCounterNotActionPoints() {
         ActiveAbility freeAction = costing(ActionCost.FREE_ACTION);

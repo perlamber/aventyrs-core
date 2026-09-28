@@ -1,5 +1,6 @@
 package org.aventyrs.core.race;
 
+import org.aventyrs.core.character.MovementMode;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.SizeCategory;
@@ -8,6 +9,7 @@ import org.aventyrs.core.feat.FeatCategory;
 import org.aventyrs.core.feat.StartingFeatSlot;
 import org.aventyrs.core.item.NaturalWeapon;
 import org.aventyrs.core.magic.Spell;
+import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.DlcRuleset;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
@@ -16,6 +18,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.ToIntFunction;
 
 public interface Race {
     int BASE_NEW_FEAT_COST = 3;
@@ -161,6 +164,59 @@ public interface Race {
      * calling this directly.
      */
     default boolean isImmuneToEnchantments() { return false; }
+
+    /**
+     * A bonus (or, negative, a malus) this Raça puts on a Perícia roll governed by domain — the
+     * Atributo the roll is actually made with, after any substitution — {@code Gigantes}' Cuidado
+     * para não Quebrar ("sofrem desvantagem em suas rolagens de perícia físicas (baseadas em Força ou
+     * Destreza)"). holderContext is the roller's own snapshot ({@code null} reads as "cannot tell",
+     * so no condition holds), and sizeCategoryOf gives a combatant's effective Categoria de Tamanho,
+     * which needs {@code CharacterSizeService}. Silenced while a Forma suppresses the holder's
+     * physical racial traits. Zero by default.
+     */
+    default int resolveGoverningAttributeRollBonus(final AttributeDomain domain, final CombatantSheet holder,
+                                                   final SceneContext holderContext,
+                                                   final ToIntFunction<CombatantSheet> sizeCategoryOf) {
+        return 0;
+    }
+
+    /**
+     * Whether this Raça has Aprendizado Rápido — the 2nd and 3rd Graduação of the Perícias recorded
+     * on {@code Character#getQuickLearningSkills()} cost 0.5 EXP less ({@code Human}, {@code
+     * Pequenino}, {@code Gnomo}, {@code Goblin}). False by default.
+     */
+    default boolean hasQuickLearning() {
+        return false;
+    }
+
+    /**
+     * The combat Rodada from which character enters Ferocidade de Lacerto — {@code Indomito}'s "a
+     * partir do quarto turno de combate" (the third for an Impuro, brought forward by Monstros em
+     * Potencial). {@code null} for a Raça without the Característica, the default. Read by {@code
+     * LacertoFerocityService}, which silences it while a Forma suppresses innate racial traits.
+     */
+    default Integer resolveLacertoFerocityRound(final Character character) {
+        return null;
+    }
+
+    /**
+     * Whether this Raça gives its members mode — {@code Aviano}'s Braços Alados ("os utilizam para
+     * voar livremente"). Silenced while a Forma suppresses the holder's physical racial traits
+     * ({@code RacialTraitSuppression#suppressesPhysicalTraits}). False by default.
+     */
+    default boolean grantsMovementMode(final MovementMode mode) {
+        return false;
+    }
+
+    /**
+     * UD this Raça adds to its members' Movimento Base in mode — {@code Aviano}'s "enquanto voando
+     * seu Movimento Base aumenta em +2UD" (Rapinante) / "+1UD" (Correnuvens), read as the flight
+     * axis. Silenced with {@link #grantsMovementMode} under physical-trait suppression. Never asked
+     * about {@code LAND}. Zero by default.
+     */
+    default int resolveModeMovementIncrease(final MovementMode mode) {
+        return 0;
+    }
 
     /**
      * Whether this race never loses movement to Terreno Difícil while on land — {@code

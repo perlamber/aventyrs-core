@@ -1,5 +1,10 @@
 package org.aventyrs.core.feat;
 
+import org.aventyrs.core.magic.ElementalType;
+import org.aventyrs.core.character.DamageType;
+import org.aventyrs.core.character.DamageScope;
+import org.aventyrs.core.character.DamageDescriptor;
+import org.aventyrs.core.character.MovementMode;
 import lombok.Getter;
 import lombok.NonNull;
 import org.aventyrs.core.ability.ActiveAbility;
@@ -242,5 +247,30 @@ public final class MetamorfoseDraculeaFeat extends AbstractFeat {
     @Override
     public boolean ignoresDifficultTerrain(final Character character, final CombatantSheet sheet) {
         return wornForma(sheet) == FormaMetamorfica.CAVALO_DE_CHIFRES;
+    }
+
+    /**
+     * Névoa's "Imune a dano físico (exceto fogo …)" — a physical hit, plain or elemental, unless its
+     * element is Fogo, while the shape is worn. ⚠️ The "armas de Dyospiros" exception is not
+     * honoured: a hit's {@code DamageDescriptor} names no weapon, so a Dyospiros blade is refused
+     * like any other.
+     */
+    @Override
+    public boolean isImmuneToDamage(final DamageType damageType, final DamageDescriptor descriptor,
+                                    final Character character, final CombatantSheet holder) {
+        if (wornForma(holder) != FormaMetamorfica.NEVOA) {
+            return false;
+        }
+        boolean fire = descriptor != null && descriptor.elementalType() == ElementalType.FOGO;
+        return DamageScope.PHYSICAL.matches(damageType, descriptor) && !fire;
+    }
+
+    /** Aranha Gigante's "Movimento Base Vertical", Morcego Atroz's "Movimento Base de Voo" — while worn. */
+    @Override
+    public boolean grantsMovementMode(final MovementMode mode, final Character character,
+                                      final CombatantSheet holder) {
+        FormaMetamorfica worn = wornForma(holder);
+        return worn == FormaMetamorfica.ARANHA_GIGANTE && mode == MovementMode.CLIMB
+                || worn == FormaMetamorfica.MORCEGO_ATROZ && mode == MovementMode.FLIGHT;
     }
 }

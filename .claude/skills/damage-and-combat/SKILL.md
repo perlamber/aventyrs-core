@@ -168,6 +168,17 @@ Defesa:
 | Efeitos Críticos | filtered against its anatomy | filtered against **its** anatomy |
 | chain head | plain `DamageInteraction` | `DamageInteraction#halvingDamage()` |
 
+**The primary can be halved too** (0.0.69): when a held Talento's `Feat#halvesEveryTargetDamage`
+answers true (`CavalariaFeat#ATAQUE_EM_ARCO`, "em cada alvo"), `AttackDelivery` marks the primary's
+chain head `halvingDamage()` as well and reports `DeliveredAttackResult#isEveryTargetHalved`; it is
+OR'd with the Aura's flag, so the two never quarter. The target cap is counted from the attacker's
+**sheet** and attack source (`AttackTargetingService#getMaximumTargets(CombatantSheet, SkillType,
+AttackSource)`), so a Talento gated on riding or on "apenas ataques físicos" can widen it.
+
+**Riding changes the Dano Base of some weapons**: `DamageBaseService#getDamageBase(CombatantSheet,
+Weapon)` swaps in `Weapon#getMountedDamageBase()` while the wielder `isRiding()` (the Alabarda's 2d6),
+before the scale-ups — the `Character` overload never sees it.
+
 **The extra targets are a trailing parameter, not a widened `attackTarget`.**
 `AbstractSkillInteraction`'s longest `applyTo` is now `(target, sceneContext, skillRoll,
 attackTarget, attackSource, List<CombatantSheet> additionalTargets)`. `attackTarget` stays the
@@ -481,8 +492,14 @@ Three layers of mitigation, in a fixed order:
    "caller didn't say", not "this was magic"). Same five sources as RD — the `@Modifier` scan of
    `ModifierType.MAGIC_REDUCTION`, equipped items, `Feat#resolveMagicReduction`, and a
    `TemporaryBonus` — and skipped by the same `ignoreDamageReduction` flag (an inference; the
-   rules name only RA as un-ignorable). **RD is still type-blind**, so a MAGICO hit currently
-   takes RD *and* RM; narrowing RD is the damage-type system, not this.
+   rules name only RA as un-ignorable).
+1c. **Each reduction reaches only its own types (0.0.64)**: RD plain `FISICO` (or untyped), RDS
+   (`DAMAGE_TAKEN_REDUCTION`, `DamageService#getTotalDamageTakenReduction`) everything but
+   `PRIMORDIAL`, RM `MAGICO`, RE the resisted element, RA everything. A numberless "recebe RDS" is
+   `DAMAGE_TAKEN_REDUCTION_INSTANCE` (1). **Never author an "RDS" clause as RD** — they reach
+   different hits and differ in size. Immunity, scoped Meio-Dano and RE have Talento hooks
+   (`Feat#isImmuneToDamage`/`#halvesDamage`/`#resolveElementalResistanceInstances`), and a
+   Talento can retype an attack (`Feat#resolveDamageRetype` → `InteractionResult#getRetypedDamage()`).
 2. **Half damage** — applied *last*, after RD/RA, via the `halfDamage` flag. Rounds down.
 3. **Shield points** — absorbed inside `CharacterSheet#applyDamage` itself, after
    `DamageService` computed the post-mitigation amount.
@@ -493,11 +510,19 @@ mutate, so `getCharacter()` always suffices (unlike `RestService.applyRest`, whi
 needs both — see the `attribute-graduation-progression` skill).
 
 An ability granting RD *or* RA without a number in its rules text uses
-`DamageService.DEFAULT_DAMAGE_REDUCTION` (+2); only deviate when the text states one (e.g.
-`APRIMORAR_COM_ARTE`'s "+1 RDS"). A *round-scoped* RD grant (a `Blessing`/`TemporaryBonus` of
+`DamageService.DEFAULT_DAMAGE_REDUCTION` (+2), and RDS `DAMAGE_TAKEN_REDUCTION_INSTANCE` (+1); only
+deviate when the text states one (e.g. `APRIMORAR_COM_ARTE`'s "+1 RDS"). A *round-scoped* RD grant (a `Blessing`/`TemporaryBonus` of
 `ModifierType.DAMAGE_REDUCTION` — `AnaoFeat#VIGOR_DO_INVERNO`'s combat-start grant) is summed
 only on the `CombatantSheet` overloads of `getTotalDamageReduction`, not the `Character`-only
 one, which has no sheet to read `getTemporaryBonus` from.
+
+**Area attacks (0.0.65).** Ask `AttackTargetingService#resolveAttackArea` before building the
+attack (`Feat#resolveAttackArea` — Ataque Giratório, Investida Selvagem). When it answers, resolve
+the footprint around the target with `scene.grid.AreaFootprint`, name its occupants as
+`additionalTargets`, and set `DeliveredAttack#areaOfEffect`: the target cap no longer applies and
+the others take **full** damage. An undeclared-for area is refused (`AREA_OF_EFFECT_NOT_GRANTED`).
+On the receiving side, `IncomingAttack#areaOfEffect` lets Evasão's Defesa apply. A reported
+`Retaliation` is dealt with `Retaliation#dealTo`.
 
 **Resistência a Críticos (RC)** — a *defender-side* narrowing of an attacker's Margem Crítica
 Menor. `AbstractSkillInteraction` subtracts the attack target's
@@ -583,8 +608,10 @@ a dead target, and a used key in Coma.
 
 **The Títulos that bend it are the healer's, never the target's.** `heal` scans
 `source.healer().getCharacter().getAllTitles()` for `AventyrTitle#bypassesComaHealingCap` and
-`#claimRevival`. The second is a *claim*, not a query: it spends what the permission costs (a Curar
-os Mortos charge, `CombatantSheet#consumeRevivalCharge`). `isBeyondRevival()` (set by
+`#claimRevival`, and adds `#resolveHealingBonus` (Médico de Guerra's +2) to what the heal offers.
+The second is a *claim*, not a query: it spends what the permission costs (a Curar os Mortos charge,
+`CombatantSheet#consumeCharge`). No heal recovers damage locked by `payWithVitality`; only a
+Descanso Verdadeiro releases it. `isBeyondRevival()` (set by
 `RealExecution`) outranks every claim. See `docs/curandeiro.md`.
 
 **Transitions are bookkept, the tier is still derived.** `sheet.FallenHealingLedger`

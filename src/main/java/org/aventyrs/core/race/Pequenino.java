@@ -17,6 +17,10 @@ import java.util.Map;
  * (+1 Destreza) and {@link #generateEmptyCharacter} seeding {@link SizeCategory#MINUS_ONE} —
  * everything else needs a system this core doesn't have yet:
  *
+ * <p><b>Aprendizado Rápido is real</b> ({@link #hasQuickLearning()}): the Perícias recorded on {@code
+ * Character#getQuickLearningSkills()} take 0.5 EXP off their 2nd and 3rd Graduação, through {@code
+ * SkillGraduationService#getUpgradeCost(Character, SkillType)}.
+ *
  * <ul>
  *   <li><b>+1 Instinto (machos) ou +1 Carisma (fêmeas)</b> — the other half of the Atributos
  *   bonus is conditioned on {@link Character.Sexo}, but {@link Race#getFixedAttributeBonuses()}
@@ -35,13 +39,6 @@ import java.util.Map;
  *   <li><b>1 Talento Geral + 2 Especializações adicionais</b> (divided between 2 chosen Perícias) — the
  *   Talento is built ({@link #getStartingFeatSlots()}); the Especializações are the same "{@link
  *   Race} has no hook for granting starting Perícia training" gap as every other race.</li>
- *   <li><b>Aprendizado Rápido</b> (2 Perícias chosen at creation get their 2nd/3rd Graduação
- *   upgrade at -0.5 EXP) — identical text to Humanos' own Aprendizado Rápido; same gap: {@code
- *   org.aventyrs.core.character.services.SkillGraduationService#getUpgradeCost} takes no
- *   {@link Race} at all, has no notion of a race-specific discount, and there's no persisted
- *   record of *which* 2 Perícias a character chose at creation for this racial ability to
- *   scope itself to (the {@code AcquiredChoice} mechanism records a single choice per ability
- *   instance, not a pair).</li>
  *   <li><b>Adaptação</b> (Talentos cost 2.5 EXP instead of 3) — identical text to Humanos'/
  *   Elfos' own Adaptação/Conexão com o Mana; same {@link Race#getNewFeatCost(org.aventyrs.core.feat.FeatCategory)}
  *   int-vs-fractional mismatch already flagged on {@code Elfos}.</li>
@@ -96,6 +93,12 @@ public class Pequenino implements Race {
     @Override
     public Character.CharacterBuilder generateEmptyCharacter(final List<DlcRuleset> dlcRulesetList) {
         return Character.builder().sizeCategory(getBaseSizeCategory());
+    }
+
+    /** Aprendizado Rápido — see {@link Race#hasQuickLearning()}. */
+    @Override
+    public boolean hasQuickLearning() {
+        return true;
     }
 
     @Override

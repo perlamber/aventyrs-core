@@ -88,14 +88,16 @@ class MagicReductionTest {
      * unconditional, both numberless, so one instance each.
      */
     @Test
-    void protecaoDaRainhaDasFadasGrantsRdAndRmTogether() throws IllegalOperationException {
+    void protecaoDaRainhaDasFadasGrantsRdsAndRmTogether() throws IllegalOperationException {
         Character gorgona = gorgonaWithCharisma();
         CharacterSheet sheet = fundedSheet(gorgona);
 
         featService.grantFeat(gorgona, sheet, GorgonaFeat.PROTECAO_DA_RAINHA_DAS_FADAS);
 
         assertEquals(DamageService.DEFAULT_DAMAGE_REDUCTION, damageService.getTotalMagicReduction(sheet));
-        assertEquals(DamageService.DEFAULT_DAMAGE_REDUCTION, damageService.getTotalDamageReduction(gorgona));
+        // "RDS e RM": one RDS instance (-1), and no RD at all.
+        assertEquals(DamageService.DAMAGE_TAKEN_REDUCTION_INSTANCE, damageService.getTotalDamageTakenReduction(gorgona));
+        assertEquals(0, damageService.getTotalDamageReduction(gorgona));
     }
 
     /**
@@ -148,16 +150,17 @@ class MagicReductionTest {
         Character gorgona = gorgonaWithCharisma();
         CharacterSheet sheet = fundedSheet(gorgona);
         featService.grantFeat(gorgona, sheet, GorgonaFeat.PROTECAO_DA_RAINHA_DAS_FADAS);
-        int rd = DamageService.DEFAULT_DAMAGE_REDUCTION;
+        int rds = DamageService.DAMAGE_TAKEN_REDUCTION_INSTANCE;
 
-        // RD alone on a physical hit and on an unclassified one; RD *and* RM on a magic one,
-        // since RD is still type-blind.
-        assertEquals(10 - rd,
+        // RDS reaches every non-Primordial hit; RM joins it only on a magic one.
+        assertEquals(10 - rds,
                 damageService.calculateFinalDamage(sheet, null, DamageType.FISICO, null, 10, false));
-        assertEquals(10 - rd,
+        assertEquals(10 - rds,
                 damageService.calculateFinalDamage(sheet, null, (DamageType) null, null, 10, false));
-        assertEquals(10 - rd - DamageService.DEFAULT_DAMAGE_REDUCTION,
+        assertEquals(10 - rds - DamageService.DEFAULT_DAMAGE_REDUCTION,
                 damageService.calculateFinalDamage(sheet, null, DamageType.MAGICO, null, 10, false));
+        assertEquals(10,
+                damageService.calculateFinalDamage(sheet, null, DamageType.PRIMORDIAL, null, 10, false));
     }
 
     /** An attack that bypasses mitigation bypasses RM with RD — see the note in {@code computeFinalDamage}. */

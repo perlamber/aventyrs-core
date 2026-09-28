@@ -73,6 +73,17 @@ public class SceneContext {
     private final UUID sceneId;
     private final EnvironmentalState environmentalState;
 
+    /** Where this context's holder stands in the Rodada's order of play — see {@link InitiativePosition}. */
+    private final InitiativePosition initiativePosition;
+
+    /**
+     * Participants of other sub-groups neutral towards this holder's — neither side aggressive
+     * towards the other ({@link Scene#getNeutrals}). Neither {@link #allies} nor {@link #enemies};
+     * empty unless the Scene's aggression map declares some pair of groups non-aggressive, and for
+     * every context built without a Scene. {@link #distances} covers them like anyone else.
+     */
+    private final List<CombatantSheet> neutrals;
+
     public SceneContext(final List<CombatantSheet> allies, final List<CombatantSheet> enemies, final Map<CombatantSheet, Range> distances) {
         this(allies, enemies, distances, null);
     }
@@ -125,6 +136,29 @@ public class SceneContext {
                         final boolean combatScene, final int currentRound, final boolean wonInitiative,
                         final CombatantSheet opposedCharacter, final UUID sceneId,
                         final EnvironmentalState environmentalState) {
+        this(allies, enemies, distances, terrainType, combatScene, currentRound, wonInitiative, opposedCharacter,
+                sceneId, environmentalState, InitiativePosition.UNKNOWN);
+    }
+
+    /** The full snapshot form, adding where its holder stands in the order of play. */
+    public SceneContext(final List<CombatantSheet> allies, final List<CombatantSheet> enemies,
+                        final Map<CombatantSheet, Range> distances, final TerrainType terrainType,
+                        final boolean combatScene, final int currentRound, final boolean wonInitiative,
+                        final CombatantSheet opposedCharacter, final UUID sceneId,
+                        final EnvironmentalState environmentalState, final InitiativePosition initiativePosition) {
+        this(allies, enemies, distances, terrainType, combatScene, currentRound, wonInitiative, opposedCharacter,
+                sceneId, environmentalState, initiativePosition, List.of());
+    }
+
+    /** The full snapshot form, adding the participants neutral towards its holder — see {@link #neutrals}. */
+    public SceneContext(final List<CombatantSheet> allies, final List<CombatantSheet> enemies,
+                        final Map<CombatantSheet, Range> distances, final TerrainType terrainType,
+                        final boolean combatScene, final int currentRound, final boolean wonInitiative,
+                        final CombatantSheet opposedCharacter, final UUID sceneId,
+                        final EnvironmentalState environmentalState, final InitiativePosition initiativePosition,
+                        final List<CombatantSheet> neutrals) {
+        this.neutrals = neutrals == null ? List.of() : neutrals;
+        this.initiativePosition = initiativePosition == null ? InitiativePosition.UNKNOWN : initiativePosition;
         this.allies = allies;
         this.enemies = enemies;
         this.distances = distances;
@@ -191,6 +225,16 @@ public class SceneContext {
         return enemies.stream().filter(enemy -> isWithin(enemy, maxRange)).collect(Collectors.toList());
     }
 
+    /** Every participant neutral towards this holder — see {@link #neutrals}. */
+    public List<CombatantSheet> getNeutrals() {
+        return neutrals;
+    }
+
+    /** Whether any neutral is at maxRange or closer — {@code PeritoFeat#DISCRETO}'s "personagens neutros em Distâncias Curtas". */
+    public boolean hasNeutralWithin(final Range maxRange) {
+        return neutrals.stream().anyMatch(neutral -> isWithin(neutral, maxRange));
+    }
+
     private boolean isWithin(final CombatantSheet sheet, final Range maxRange) {
         Range distance = distances.get(sheet);
         return distance != null && distance.isWithin(maxRange);
@@ -249,6 +293,11 @@ public class SceneContext {
      * roundCount=2} covers Rounds 1 and 2, not 0 and 1. Always {@code false} outside a Cena de
      * Combate, regardless of {@code currentRound}.
      */
+    /** Where this context's holder acts in the Rodada — {@link InitiativePosition#UNKNOWN} outside a Scene. */
+    public InitiativePosition getInitiativePosition() {
+        return initiativePosition;
+    }
+
     public boolean isWithinFirstCombatRounds(final int roundCount) {
         return combatScene && currentRound >= 1 && currentRound <= roundCount;
     }

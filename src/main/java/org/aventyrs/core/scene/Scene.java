@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.aventyrs.core.util.TranslatableMessages.CHARACTER_SHEET_NOT_IN_SCENE;
+import static org.aventyrs.core.util.TranslatableMessages.DEFER_TO_LAST_NOT_PERMITTED;
 import static org.aventyrs.core.util.TranslatableMessages.INITIATIVE_NOT_WON;
 import static org.aventyrs.core.util.TranslatableMessages.INVALID_TURN_CURSOR;
 import static org.aventyrs.core.util.TranslatableMessages.NO_PARTICIPANTS_IN_SCENE;
@@ -164,6 +165,14 @@ public class Scene {
     private final List<SceneAction> actionHistory = new ArrayList<>();
     private final Map<Direction, UUID> connections = new EnumMap<>(Direction.class);
 
+    /**
+     * The aggression map — for each sub-group, the other sub-groups it is <b>not</b> aggressive
+     * towards. Stored as the exceptions because every pair is aggressive until a caller says
+     * otherwise, which is what every Scene was before this map existed ("not my group" was always
+     * "hostile to me"). See {@link #setAggressive}.
+     */
+    private final Map<UUID, java.util.Set<UUID>> nonAggression = new HashMap<>();
+
     private int currentIndex = -1;
     private int currentRound = 0;
     private TerrainType terrainType;
@@ -291,20 +300,88 @@ public class Scene {
     }
 
     /**
-     * Every participant in this Scene *not* sharing characterSheet's sub-group — the
-     * complement of {@link #getAllies}. This is a simplification: with more than two
-     * sub-groups in the same Scene (e.g. two feuding NPC factions plus the PCs), "not my
-     * group" and "hostile to me" aren't necessarily the same thing, but this core has no
-     * faction-relationship/allegiance concept beyond the binary "same group or not" — see
-     * {@link SceneContext}, the consumer this method and {@link #getAllies} exist for.
+     * Every participant in another sub-group that is <b>hostile</b> to characterSheet's — either
+     * side aggressive towards the other (see {@link #areHostile}). Every other sub-group is hostile
+     * until the caller declares otherwise through {@link #setAggressive}/{@link #declareNeutral}, so
+     * a Scene that never touches the aggression map keeps the old binary: "not my group" is "hostile
+     * to me". See {@link SceneContext}, the consumer this method and {@link #getAllies} exist for.
      * @throws IllegalOperationException if characterSheet was never added to this Scene
      */
     public List<CombatantSheet> getEnemies(final CombatantSheet characterSheet) {
         UUID group = groupOf(characterSheet);
         return allEntries()
-                .filter(entry -> !entry.getGroup().equals(group))
+                .filter(entry -> !entry.getGroup().equals(group) && areHostile(group, entry.getGroup()))
                 .map(InitiativeEntry::getCombatantSheet)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Every participant in another sub-group that is <b>neutral</b> towards characterSheet's —
+     * neither side aggressive towards the other. The third allegiance {@code PeritoFeat#DISCRETO}'s
+     * "personagens neutros" and {@code #EXIBICIONISTA}'s "plateia" read; empty unless a caller
+     * declared some pair of groups non-aggressive.
+     * @throws IllegalOperationException if characterSheet was never added to this Scene
+     */
+    public List<CombatantSheet> getNeutrals(final CombatantSheet characterSheet) {
+        UUID group = groupOf(characterSheet);
+        return allEntries()
+                .filter(entry -> !entry.getGroup().equals(group) && !areHostile(group, entry.getGroup()))
+                .map(InitiativeEntry::getCombatantSheet)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Records whether aggressorGroup is aggressive towards targetGroup — <b>one direction only</b>:
+     * a pack of wolves may be aggressive towards travellers who only want to pass. Every pair of
+     * different sub-groups starts aggressive, so this is how a caller carves out the exceptions (a
+     * crowd, a merchant's escort, a faction sitting a fight out). A group is never aggressive towards
+     * itself, and saying so is ignored.
+     *
+     * <p>Held on the Scene rather than on a sheet because it is a fact about two groups in one place,
+     * not about anyone's character. Like turn order and sub-groups, it is not persisted by this core;
+     * a caller rebuilding a Scene restores it with the same calls.
+     */
+    public void setAggressive(final UUID aggressorGroup, final UUID targetGroup, final boolean aggressive) {
+        Objects.requireNonNull(aggressorGroup, "aggressorGroup");
+        Objects.requireNonNull(targetGroup, "targetGroup");
+        if (aggressorGroup.equals(targetGroup)) {
+            return;
+        }
+        java.util.Set<UUID> spared = nonAggression.computeIfAbsent(aggressorGroup, key -> new java.util.HashSet<>());
+        if (aggressive) {
+            spared.remove(targetGroup);
+        } else {
+            spared.add(targetGroup);
+        }
+    }
+
+    /** Declares groupA and groupB neutral to each other — neither aggressive towards the other. */
+    public void declareNeutral(final UUID groupA, final UUID groupB) {
+        setAggressive(groupA, groupB, false);
+        setAggressive(groupB, groupA, false);
+    }
+
+    /** Whether aggressorGroup is aggressive towards targetGroup — true for any two different groups by default. */
+    public boolean isAggressive(final UUID aggressorGroup, final UUID targetGroup) {
+        return !aggressorGroup.equals(targetGroup)
+                && !nonAggression.getOrDefault(aggressorGroup, java.util.Set.of()).contains(targetGroup);
+    }
+
+    /**
+     * Whether members of the two groups are enemies — <b>either</b> side aggressive towards the
+     * other. Aggression is directional, hostility is not: being attacked makes the attacker an enemy
+     * whatever the defender meant to do.
+     */
+    public boolean areHostile(final UUID groupA, final UUID groupB) {
+        return isAggressive(groupA, groupB) || isAggressive(groupB, groupA);
+    }
+
+    /**
+     * The sub-group characterSheet was added in — what {@link #setAggressive} is keyed by.
+     * @throws IllegalOperationException if characterSheet was never added to this Scene
+     */
+    public UUID getGroupOf(final CombatantSheet characterSheet) {
+        return groupOf(characterSheet);
     }
 
     /**
@@ -342,7 +419,76 @@ public class Scene {
                                       final CombatantSheet opposedCharacter,
                                       final EnvironmentalState environmentalState) {
         return new SceneContext(getAllies(characterSheet), getEnemies(characterSheet), distances, terrainType,
-                combatScene, currentRound, wonInitiative(characterSheet), opposedCharacter, id, environmentalState);
+                combatScene, currentRound, wonInitiative(characterSheet), opposedCharacter, id, environmentalState,
+                initiativePositionOf(characterSheet), getNeutrals(characterSheet));
+    }
+
+    /**
+     * Where characterSheet acts in this Scene's order of play — first, last, somewhere between, or
+     * {@link InitiativePosition#UNKNOWN} when it is not in the rotation yet. One combatant alone is
+     * {@link InitiativePosition#FIRST}.
+     */
+    public InitiativePosition initiativePositionOf(final CombatantSheet characterSheet) {
+        List<CombatantSheet> order = getParticipantsInInitiativeOrder();
+        int index = -1;
+        for (int i = 0; i < order.size(); i++) {
+            if (order.get(i).getId().equals(characterSheet.getId())) {
+                index = i;
+                break;
+            }
+        }
+        if (index < 0) {
+            return InitiativePosition.UNKNOWN;
+        }
+        if (index == 0) {
+            return InitiativePosition.FIRST;
+        }
+        return index == order.size() - 1 ? InitiativePosition.LAST : InitiativePosition.MIDDLE;
+    }
+
+    /**
+     * Lowers characterSheet's Iniciativa so it acts last — {@code PeritoFeat#ANALISTA_TATICO}'s
+     * "No início de cada Cena de Combate, antes de qualquer ação sua, você pode escolher reduzir seu
+     * valor de Iniciativa de modo a agir por último". Its entry is rewritten with a value one below
+     * every other participant's current standing (net of its own Iniciativa bonuses, so its effective
+     * value lands there), and moved to the end of this Rodada's order. From then on it stays last at
+     * every Rodada boundary for as long as nobody slower joins — and "enquanto você for o último a
+     * agir" is read off {@link #initiativePositionOf}, so the benefit ends by itself if someone does.
+     *
+     * <p>Refused ({@code DEFER_TO_LAST_NOT_PERMITTED}) unless a held Talento permits it ({@code
+     * Feat#permitsDeferringToLast}), this is a Cena de Combate, and characterSheet has neither rolled
+     * anything this Cena nor had its Turn in this Rodada yet — "antes de qualquer ação sua". ⚠️ A
+     * Turn passed without rolling anything is only caught within the current Rodada; the Cena's roll
+     * log is what "qualquer ação" is read against beyond that.
+     *
+     * @return the CombatantSheets in Iniciativa order after the change
+     * @throws IllegalOperationException if characterSheet was never added to this Scene, or the
+     *                                    deferral is not permitted
+     */
+    public List<CombatantSheet> deferToLast(final CombatantSheet characterSheet) {
+        int index = -1;
+        for (int i = 0; i < activeEntries.size(); i++) {
+            if (activeEntries.get(i).getCombatantSheet().getId().equals(characterSheet.getId())) {
+                index = i;
+                break;
+            }
+        }
+        UUID group = groupOf(characterSheet);
+        boolean permitted = characterSheet.getCharacter().getFeats().stream()
+                .anyMatch(feat -> feat.permitsDeferringToLast(characterSheet.getCharacter()));
+        if (!permitted || !combatScene || index < 0 || index <= currentIndex
+                || !characterSheet.getActionsThisCena().isEmpty()) {
+            throw new IllegalOperationException(DEFER_TO_LAST_NOT_PERMITTED);
+        }
+        int slowest = allEntries()
+                .filter(entry -> !entry.getCombatantSheet().getId().equals(characterSheet.getId()))
+                .mapToInt(InitiativeEntry::getEffectiveInitiativeValue)
+                .min()
+                .orElse(activeEntries.get(index).getEffectiveInitiativeValue() + 1);
+        int ownBonus = characterSheet.getTemporaryBonus(org.aventyrs.core.modifier.ModifierType.INITIATIVE);
+        activeEntries.remove(index);
+        activeEntries.add(new InitiativeEntry(characterSheet, slowest - 1 - ownBonus, group));
+        return getParticipantsInInitiativeOrder();
     }
 
     /**

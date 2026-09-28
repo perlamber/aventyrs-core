@@ -1,6 +1,9 @@
 package org.aventyrs.core.combat;
 
 import org.aventyrs.core.sheet.AttackerGuard;
+import org.aventyrs.core.scene.InitiativePosition;
+import org.aventyrs.core.scene.Scene;
+import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.effect.DefensiveCriticalEffects;
 import org.aventyrs.core.effect.DefensiveCriticalEffectType;
 import org.aventyrs.core.effect.DefensiveCriticalEffect;
@@ -13,7 +16,12 @@ import org.aventyrs.core.effect.Effect;
 import org.aventyrs.core.effect.EffectChain;
 import org.aventyrs.core.effect.EffectChainService;
 import org.aventyrs.core.effect.EffectChainServiceImpl;
+import org.aventyrs.core.character.AttributeDomain;
+import org.aventyrs.core.character.Character;
+import org.aventyrs.core.feat.DuelistaFeat;
 import org.aventyrs.core.sheet.ActionOutcome;
+import org.aventyrs.core.sheet.IllegalOperationException;
+import org.aventyrs.core.skill.SkillInteractionFactory;
 import org.aventyrs.core.sheet.CombatantAction;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.Interaction;
@@ -27,6 +35,8 @@ import org.aventyrs.core.skill.esquivaeaparar.EsquivaEApararInteraction;
 import java.util.ArrayList;
 import java.util.List;
 
+
+import static org.aventyrs.core.util.TranslatableMessages.DEFENSE_SUBSTITUTION_NOT_PERMITTED;
 /**
  * The entry point for "this character is being attacked" — the target-side half both {@code
  * AtaqueADistanciaInteraction} and {@code AtaqueCorpoACorpoInteraction} document as missing
@@ -142,15 +152,23 @@ public class AttackReceiver {
                 defender, attack.isForcedTargetUnavailable());
         SkillRoll defenseRoll = attack.getDefenseRoll();
 
-        InteractionResult defenseResult = esquivaEApararInteraction.applyTo(
-                defender, attack.getSceneContext(), defenseRoll, attack.getDefenseType(),
-                attack.getDamageDescriptor());
+        SkillType defenseSkill = substitutedDefenseSkill(attack);
+        InteractionResult defenseResult = defenseSkill == null
+                ? esquivaEApararInteraction.applyTo(defender, attack.getSceneContext(), defenseRoll,
+                        attack.getDefenseType(), attack.getDamageDescriptor())
+                // Defender-se Atacando: the Perícia de Ataque's roll stands where the whole defence
+                // would have. Its activation (and the once-per-Rodada limit) is validated by the roll.
+                : SkillInteractionFactory.create(defenseSkill).applyTo(defender, attack.getSceneContext(), defenseRoll);
 
-        DifficultyLevel effectiveDifficultyLevel =
-                attack.getDifficultyLevel().easier(defenseResult.getDifficultyReduction());
+        // Artesão de Barreiras / Aptidão Mágica Suprema: the GD to resist a Magia the defender can cast.
+        DifficultyLevel effectiveDifficultyLevel = attack.getDifficultyLevel().easier(defenseResult.getDifficultyReduction()
+                + SpellResistance.difficultyReduction(defender, attack.getAttackSource()));
         int requiredTotal = effectiveDifficultyLevel.getBaseValue() + attack.getAttackBonus();
         int defenseTotal = defenseResult.getSkillRollBonus()
-                + (defenseRoll == null ? 0 : defenseRoll.getTotal());
+                + (defenseRoll == null ? 0 : defenseRoll.getTotal())
+                + (attack.isAreaOfEffect() ? areaOfEffectDefenseBonus(defender) : 0)
+                // The Aptidões Mágicas' DM against a Magia the defender can cast.
+                + SpellResistance.defenseBonus(defender, attack.getDefenseType(), attack.getAttackSource());
 
         IncomingAttackResult.IncomingAttackResultBuilder result = IncomingAttackResult.builder()
                 .defenseTotal(defenseTotal)
@@ -165,18 +183,27 @@ public class AttackReceiver {
 
         int margin = requiredTotal - defenseTotal;
         // Ímpeto Defensivo Maior: "se torna imune aos ataques dele por 1 Rodada".
-        boolean immune = defender.getGuardsAgainst(attack.getAttacker()).stream().anyMatch(AttackerGuard::isImmune);
-        boolean defended = margin <= 0 || immune;
+        boolean immune = defender.getGuardsAgainst(attack.getAttacker()).stream().anyMatch(AttackerGuard::isImmune)
+                // Aptidão Mágica Dracônica: immune to a Magia the defender can cast — defended outright.
+                || SpellResistance.immune(defender, attack.getAttackSource());
+        // A Cego defender's failed 1d6 fails the defence whatever its total.
+        boolean defended = (margin <= 0 && !Boolean.TRUE.equals(defenseResult.getBlindCheckFailed())) || immune;
         CriticalResult criticalResult = defenseResult.getCriticalResult();
         boolean criticalEffectTriggered = !defended && criticalResult != null && criticalResult.isCriticalFailure();
         boolean effectChainTriggered = !defended
-                && margin >= effectChainService.getRequiredMargin(defender.getCharacter());
+                && margin >= effectChainService.getRequiredMargin(attack.getAttacker(),
+                        positionOf(attack.getScene(), attack.getAttacker(), null), defender,
+                        positionOf(attack.getScene(), defender, attack.getSceneContext()));
 
         if (!defended) {
             defenseResult = defenseResult.toBuilder()
                     .nextInteraction(buildChain(attack, criticalEffectTriggered, effectChainTriggered,
                             criticalResult, auraHalvesDamage))
                     .build();
+            // An unstated Perícia is read as melee here, the same default the thorns above take.
+            result.onHitRetaliations(RetaliationResolver.resolveOnHit(defender, attack.getAttacker(),
+                    attack.getAttackSkill() == null ? SkillType.ATAQUE_CORPO_A_CORPO : attack.getAttackSkill(),
+                    attack.getAttackSource(), criticalResult != null && criticalResult.isCriticalFailure()));
             result.unappliedCriticalEffects(CriticalEffectResolver.resolve(attack.getAttacker(),
                     attack.getAttackSource(), attack.getAttackSkill(), criticalEffectTriggered ? criticalResult : null,
                     true, attack.getAdditionalCriticalEffectTypes(), attack.getDiceRoller(), false).unapplied());
@@ -188,6 +215,14 @@ public class AttackReceiver {
                                 attack.getAttackSkill(), attack.getAttackSource(), attack.getDiceRoller())
                         .ifPresentOrElse(result::defensiveCriticalEffect,
                                 () -> result.unappliedCriticalEffect(type));
+            }
+        }
+
+        if (defenseSkill != null) {
+            if (defended) {
+                result.counterWeaponDamage(defender.getCharacter().getEffectiveAttributeTotal(AttributeDomain.STRENGTH));
+            } else {
+                result.attackerDamageAdvantage(true);
             }
         }
 
@@ -214,13 +249,40 @@ public class AttackReceiver {
                                             final boolean defended, final int defenderMargin,
                                             final CriticalResult criticalResult,
                                             final DifficultyLevel effectiveDifficultyLevel) {
+        SkillType defenseSkill = attack.getDefenseSkill() == null ? SkillType.ESQUIVA_E_APARAR : attack.getDefenseSkill();
         return new CombatantAction(
-                SkillType.ESQUIVA_E_APARAR,
+                defenseSkill,
                 defenseResult.getGoverningAttributeDomain(),
                 null,
                 attack.getDefenseRoll().getActionCost(),
                 attack.getScene() == null ? 0 : attack.getScene().getCurrentRound(),
-                new ActionOutcome(defended, defenderMargin, criticalResult, effectiveDifficultyLevel));
+                new ActionOutcome(defended, defenderMargin, criticalResult, effectiveDifficultyLevel),
+                null,
+                attack.getDefenseRoll().getActivatedFeats());
+    }
+
+    /**
+     * The Perícia de Ataque this defence is rolled with in place of Esquiva e Aparar, or {@code null}
+     * for the ordinary defence — refusing ({@code DEFENSE_SUBSTITUTION_NOT_PERMITTED}) a substitution
+     * that is not an attack Perícia, one no held Talento permits against this Defesa (Defender-se
+     * Atacando for the Física, its Superior for the Mágica unless the attack is an Encantamento or a
+     * Maldição), and a rolled one that does not activate Defender-se Atacando.
+     */
+    private static SkillType substitutedDefenseSkill(final IncomingAttack attack) {
+        SkillType skill = attack.getDefenseSkill();
+        if (skill == null || skill == SkillType.ESQUIVA_E_APARAR) {
+            return null;
+        }
+        Character defender = attack.getDefender().getCharacter();
+        boolean enchantmentOrCurse = attack.isEnchantmentOrCurseAttack();
+        boolean permitted = skill.isAttackSkill() && defender.getFeats().stream()
+                .anyMatch(feat -> feat.permitsDefenseSubstitution(attack.getDefenseType(), enchantmentOrCurse));
+        boolean activated = attack.getDefenseRoll() == null
+                || attack.getDefenseRoll().activated(DuelistaFeat.DEFENDER_SE_ATACANDO);
+        if (!permitted || !activated) {
+            throw new IllegalOperationException(DEFENSE_SUBSTITUTION_NOT_PERMITTED);
+        }
+        return skill;
     }
 
     /**
@@ -270,7 +332,31 @@ public class AttackReceiver {
         for (int i = stages.size() - 1; i >= 0; i--) {
             next = stages.get(i).chainInto(next);
         }
-        DamageInteraction head = new DamageInteraction(damageService);
+        DamageInteraction head = new DamageInteraction(damageService)
+                .fromSpell(SpellResistance.spellOf(attack.getAttackSource()));
         return (halfDamage ? head.halvingDamage() : head).chainInto(next);
+    }
+
+    /** Every held Habilidade de Competência's Defesa against an Área de Efeito (Evasão). */
+    private static int areaOfEffectDefenseBonus(final CombatantSheet defender) {
+        return org.aventyrs.core.skill.SkillCompetencyAbility.allFor(defender.getCharacter(), defender).stream()
+                .mapToInt(ability -> ability.resolveAreaOfEffectDefenseBonus(defender.getCharacter()))
+                .sum();
+    }
+
+    /**
+     * Where combatant stands in the order of play — read off its own context when that is the one in
+     * hand, else off the live Scene, else {@code UNKNOWN}. What Grande Analista Tático's "Enquanto você
+     * for o último a agir" reads on either side of a Corrente.
+     */
+    static InitiativePosition positionOf(final Scene scene, final CombatantSheet combatant,
+                                         final SceneContext ownContext) {
+        if (ownContext != null && ownContext.getInitiativePosition() != InitiativePosition.UNKNOWN) {
+            return ownContext.getInitiativePosition();
+        }
+        if (scene == null || combatant == null) {
+            return InitiativePosition.UNKNOWN;
+        }
+        return scene.initiativePositionOf(combatant);
     }
 }

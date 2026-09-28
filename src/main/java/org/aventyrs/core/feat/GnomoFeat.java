@@ -1,9 +1,14 @@
 package org.aventyrs.core.feat;
 
+import java.util.List;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.DefenseType;
 import org.aventyrs.core.character.SizeCategory;
+import org.aventyrs.core.magic.BranchLevel;
+import org.aventyrs.core.magic.MagicType;
+import org.aventyrs.core.magic.MimetizedSpell;
+import org.aventyrs.core.magic.catalog.MagicTree;
 import org.aventyrs.core.race.Gnomo;
 import org.aventyrs.core.skill.SkillType;
 
@@ -32,10 +37,10 @@ public enum GnomoFeat implements Feat {
     // ModifierType.SIZE_CATEGORY expresses. Stated as the value it is, not as the one step down
     // from Gnomo's own MINUS_ONE it happens to equal today: a later race-size change must not
     // silently move a Duende.
-    // TODO: Mimetizar has no mechanism — SpellCastingService cannot cast a Magia the caster does
-    //  not know, and there is no per-Descanso use counter for the "1 + Títulos Despertos" limit.
-    //  Same gap NascidoDoDragao's own Magia Dracônica cites. "Que não sejam Profanas" would
-    //  additionally need a Magia classification MagicType does not carry.
+    // The mimicry is real: every Semente of every Árvore that is not Profana (MagicType.PROFANA),
+    // free — a Semente costs 0 PM (getGrantedMimetizedSpells, derived live).
+    // TODO: "o número de vezes que você pode mimetizar uma mesma Semente é igual à 1 + Títulos",
+    //  renewed each Descanso Longo Verdadeiro — nothing counts casts of one mimetized Magia.
     DUENDE(
             "Sua Categoria de Tamanho muda para -2, você recebe Bônus de +1 na DM e você pode "
                     + "Mimetizar Sementes, que não sejam Profanas, de qualquer Árvore de Magias. "
@@ -45,6 +50,22 @@ public enum GnomoFeat implements Feat {
             FeatRequirements.builder()
                     .requiredRace(Gnomo.class)
                     .build()) {
+        @Override
+        public List<MimetizedSpell> getGrantedMimetizedSpells(final Character character) {
+            return java.util.Arrays.stream(MagicTree.values())
+                    .filter(tree -> !tree.hasMagicType(MagicType.PROFANA))
+                    .flatMap(tree -> tree.getSpells().stream())
+                    .filter(spell -> spell.getBranchLevel() == BranchLevel.SEMENTE)
+                    .map(spell -> MimetizedSpell.builder().spell(spell).determinationPointCost(0).build())
+                    .toList();
+        }
+
+        /** "Apenas … recém-criados" — only a starting Talento slot can take it. */
+        @Override
+        public boolean isAcquirableOnlyAtCreation() {
+            return true;
+        }
+
         @Override
         public SizeCategory resolveSizeCategoryOverride(final Character character) {
             return SizeCategory.MINUS_TWO;
@@ -61,17 +82,20 @@ public enum GnomoFeat implements Feat {
      * Benefícios de Aprendizado Rápido até a sétima Graduação."
      */
     // The free Habilidade de Competência is real, recorded on ChosenSkillTraitsFeat.
-    // TODO: Aprendizado Rápido is itself unbuilt — Gnomo's own javadoc records it, and so do
-    //  Human's and Pequenino's: SkillGraduationService#getUpgradeCost takes no Race and has no
-    //  notion of a per-race discount, and nothing records which Perícias were chosen for it. A
-    //  Talento extending its reach has nothing to extend.
+    // The extension is real: resolveQuickLearningMaxGraduation carries Aprendizado Rápido's
+    // discount to the seventh Graduação (SkillGraduationService#getUpgradeCost(Character, SkillType)).
     SABICHAO(
             "Você aprende uma Habilidade de Competência de uma Perícia treinada. Você estende os "
                     + "Benefícios de Aprendizado Rápido até a sétima Graduação.",
             FeatRequirements.builder()
                     .attributeDomain(AttributeDomain.GNOSE)
                     .requiredAttributeValue(4)
-                    .build()),
+                    .build()) {
+        @Override
+        public Integer resolveQuickLearningMaxGraduation(final Character character) {
+            return EXTENDED_QUICK_LEARNING_GRADUATION;
+        }
+    },
 
     /**
      * "A GD de suas rolagens de Profissão é reduzida em -1 nível." Real — unconditional, one
@@ -98,9 +122,9 @@ public enum GnomoFeat implements Feat {
     // builders-aren't-gatekeepers restraint.
     // TODO: the active half needs a temporary *ability* grant, which is a different mechanism
     //  from TemporaryBonus — that carries a ModifierType and a value, not a trait. Nothing can
-    //  add a SkillCompetencyAbility to a character for a limited time. It also needs a
-    //  per-Cena activation counter, which CharacterSheet does not track (it counts Rodadas via
-    //  TemporaryEffect, not activations, and has no notion of a Cena boundary).
+    //  add a SkillCompetencyAbility to a character for a limited time. (Its once-per-Cena limit
+    //  is not the blocker: CombatantSheet#getActionsThisCena and startNewScene give a Cena
+    //  boundary to count against.)
     MIMETIZAR_COMPETENCIA(
             "Efeito Passivo – Você adquire uma Habilidade de Competência de uma Perícia Treinada "
                     + "qual tenha pelo menos 2 Graduações. Efeito Ativo – Apenas uma vez por Cena, "
@@ -114,6 +138,9 @@ public enum GnomoFeat implements Feat {
 
     private static final int DUENDE_MAGIC_DEFENSE_BONUS = 1;
     private static final int PROFISSAO_DIFFICULTY_REDUCTION = 1;
+
+    /** Sabichão: "Você estende os Benefícios de Aprendizado Rápido até a sétima Graduação." */
+    private static final int EXTENDED_QUICK_LEARNING_GRADUATION = 7;
 
     private final String description;
     private final FeatRequirements featRequirements;

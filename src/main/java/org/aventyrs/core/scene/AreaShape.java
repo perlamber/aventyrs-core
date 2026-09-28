@@ -28,8 +28,8 @@ public enum AreaShape {
      * A line that pierces <em>through</em> whatever it passes — the catalog's {@code Área
      * Penetrante}, used by two Magias. Like a {@link #LINHA} it radiates outward from whoever
      * produced it, so it is an emanation and takes no placeable centre; what distinguishes it is
-     * that it does not stop at the first target, which only matters once footprint resolution
-     * exists.
+     * that it does not stop at the first target. {@code scene.grid.AreaFootprint} covers the whole
+     * line; how many occupants it reaches is not modelled.
      */
     PENETRANTE(true),
 

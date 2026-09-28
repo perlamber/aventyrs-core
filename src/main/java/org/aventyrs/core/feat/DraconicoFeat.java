@@ -1,5 +1,6 @@
 package org.aventyrs.core.feat;
 
+import org.aventyrs.core.character.MovementMode;
 import java.util.List;
 
 import org.aventyrs.core.character.AttributeDomain;
@@ -28,17 +29,15 @@ import org.aventyrs.core.sheet.CombatantSheet;
  * ArmamentoDraconicoFeat}) and {@link #SOPRO_DE_DRAGAO} grant entries of the {@link NaturalWeapon}
  * catalog, surfaced by {@code Character#getNaturalWeapons()}, and {@link #SOPRO_DE_DRAGAO}'s "+1
  * Margem Crítica Menor" applies for real, scoped to a Sopro attack. What is still blocked hangs
- * off <b>no flight or form state</b> (recorded on {@code NascidoDoDragao} itself), the missing
+ * off <b>flying as a timed state</b> (the Movimento Base de Voo itself is real), the missing
  * <b>elemental damage type</b> and this core rolling <b>no dice</b> (the "+1d6 … para cada
  * Título Aventyr Desperto" riders). {@link #ASAS_DE_DRAGAO} is fully real: its +2 Defesas is
  * unconditional because the wings are always there, and so is the Capa restriction that pays for
  * it — a permanent {@code Feat#getForbiddenEquipmentCategories} entry the equipment list enforces.
  *
- * <p><b>"Recém-criados" is not modelled.</b> Two constants restrict themselves to a Nascido do
- * Dragão "recém-criado", i.e. acquirable only at character creation. Nothing anywhere tracks
- * when a Talento was acquired, so that half of their Pré-requisito is dropped and only the race
- * clause is enforced — the gate is looser than the text, never stricter, the same direction
- * every other unexpressible clause in this catalog errs in.
+ * <p><b>"Recém-criados" is real.</b> {@link #ARMAMENTO_DRACONICO} and {@link #ASAS_DE_DRAGAO} are
+ * restricted to a Nascido do Dragão "recém-criado", which {@code Feat#isAcquirableOnlyAtCreation}
+ * enforces: {@code FeatService#grantFeat} refuses them and only a starting Talento slot takes them.
  */
 public enum DraconicoFeat implements Feat {
 
@@ -59,6 +58,12 @@ public enum DraconicoFeat implements Feat {
             FeatRequirements.builder()
                     .requiredRace(NascidoDoDragao.class)
                     .build()) {
+        /** "Apenas … recém-criados" — only a starting Talento slot can take it. */
+        @Override
+        public boolean isAcquirableOnlyAtCreation() {
+            return true;
+        }
+
         /** "Escolha duas armas entre: Chifres Poderosos, Cauda Chicote, Garras Afiadas e Presas Longas." */
         @Override
         public List<FeatChoice<?>> resolveRequiredChoices(final Character holder) {
@@ -77,9 +82,10 @@ public enum DraconicoFeat implements Feat {
      * transformed into, so the bonus applies whether or not the holder is flying. It covers
      * <b>both</b> DF and DM — the text says "suas Defesas", the broad form.
      */
-    // TODO: the flight half needs a flight state and a Movimento Base de Voo, neither of which
-    //  exists — see Aviano's own Braços Alados. Note the PD cost, its per-Título reduction and
-    //  the 1d6 + metade do Vigor Duração are all exact figures with nothing to apply them to.
+    // The Movimento Base de Voo is real (Feat#grantsMovementMode).
+    // TODO: flying as a timed state — the PD cost, its per-Título reduction and the 1d6 + metade
+    //  do Vigor Duração — is not modelled; whether the holder is flying is the caller's
+    //  EnvironmentalState#flying.
     // "Impede de usar Equipamentos do tipo Capa" is real — a permanent
     // Feat#getForbiddenEquipmentCategories entry, refused by CharacterSheet#equip/canEquip and
     // caught on an already-assembled loadout by validateEquipmentLoadout. So the malus that pays
@@ -94,6 +100,18 @@ public enum DraconicoFeat implements Feat {
             FeatRequirements.builder()
                     .requiredRace(NascidoDoDragao.class)
                     .build()) {
+        @Override
+        public boolean grantsMovementMode(final MovementMode mode, final Character character,
+                                          final CombatantSheet holder) {
+            return mode == MovementMode.FLIGHT;
+        }
+
+        /** "Apenas … recém-criados" — only a starting Talento slot can take it. */
+        @Override
+        public boolean isAcquirableOnlyAtCreation() {
+            return true;
+        }
+
         @Override
         public int resolveDefenseBonus(final DefenseType defenseType, final Character character) {
             return ASAS_DEFENSE_BONUS;
@@ -149,11 +167,10 @@ public enum DraconicoFeat implements Feat {
      */
     // TODO: triggered by "usar seu Sopro de Dragão" — SOPRO_DE_DRAGAO grants the Arma de Sopro
     //  now, but nothing models the act of attacking with it as an event this can fire from.
-    // TODO: recurring damage to everyone adjacent at the start of each of the holder's Turns is
-    //  an outward, area-shaped effect nothing models: DamageService only ever computes damage
-    //  *to* one target *from* an attacker, CharacterSheet#startTurn is still a no-op with no
-    //  hook to fire from, and Área de Efeito has no footprint resolution (CLAUDE.md's "Area de
-    //  Efeito" row, part (a)).
+    // TODO: recurring damage to everyone adjacent at the start of each of the holder's Turns —
+    //  the footprint exists now (scene.grid.AreaFootprint), but no hook lets a Talento report
+    //  outward damage at a Turn boundary. Build it with TrollFeat#REGENERACAO_REATIVA_ESPINHOSA,
+    //  the other consumer, once this one's Sopro-use trigger exists.
     AURA_DRACONICA(
             "Após usar seu Sopro de Dragão você emana uma aura de energia que te acompanhada por "
                     + "2 Rodadas. Durante a ativação da aura e no início de cada um dos seus "

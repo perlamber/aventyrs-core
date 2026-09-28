@@ -71,7 +71,7 @@ public class ChargeServiceImpl implements ChargeService {
 
     @Override
     public ChargeResult begin(@NonNull final CombatantSheet sheet, final Weapon weapon,
-                               final SceneContext sceneContext) {
+                               final SceneContext sceneContext, final CombatantSheet target) {
         String refusal = refusalFor(sheet, weapon, sceneContext);
         if (refusal != null) {
             throw new IllegalOperationException(refusal);
@@ -85,7 +85,7 @@ public class ChargeServiceImpl implements ChargeService {
                 getActionPointCost(sheet.getCharacter()),
                 allowance,
                 getMovementDamageReduction(sheet.getCharacter()),
-                movementReactionService.getProvokedReactors(sheet, sceneContext, Manoeuvre.INVESTIDA));
+                movementReactionService.getProvokedReactors(sheet, sceneContext, Manoeuvre.INVESTIDA, target));
     }
 
     @Override

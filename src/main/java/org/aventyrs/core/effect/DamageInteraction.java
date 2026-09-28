@@ -40,6 +40,10 @@ public class DamageInteraction implements Interaction<CombatantSheet> {
 
     /** Whether this hit's PV loss lands at the next Rodada boundary — see {@link #postponing()}. */
     private boolean postponed;
+    private org.aventyrs.core.magic.Spell spell;
+
+    /** How much of this hit only a Descanso Verdadeiro or Roubo de Vida recovers — see {@link #lockingDamage}. */
+    private int lifeStealOnlyDamage;
 
     public DamageInteraction() {
         this(new DamageServiceImpl());
@@ -88,6 +92,22 @@ public class DamageInteraction implements Interaction<CombatantSheet> {
     }
 
     /**
+     * Marks this hit as coming from spell — what a "Magias que você conheça / seja capaz de
+     * conjurar" clause reads in {@link DamageService} (Arcanista's RM, Aptidão Mágica Dracônica's
+     * immunity). Set by {@code AttackDelivery}/{@code AttackReceiver} when the attack source is a
+     * Magia; a fluent setter for the reason {@link #halvingDamage} is one.
+     */
+    public DamageInteraction fromSpell(final org.aventyrs.core.magic.Spell spell) {
+        this.spell = spell;
+        return this;
+    }
+
+    /** The Magia marked by {@link #fromSpell}, or {@code null}. */
+    public org.aventyrs.core.magic.Spell getSpell() {
+        return spell;
+    }
+
+    /**
      * Marks this hit's Pontos de Vida as lost at the start of the target's <b>next Rodada</b>
      * rather than now — {@code VidaSpell#ALIVIAR_A_DOR}'s Efeito Alternativo <i>Procrastinar
      * Ferimento</i>. A fluent setter for the same reason {@link #halvingDamage} is one: the chain
@@ -106,6 +126,25 @@ public class DamageInteraction implements Interaction<CombatantSheet> {
     public DamageInteraction postponing() {
         this.postponed = true;
         return this;
+    }
+
+    /**
+     * Marks up to amount of this hit's damage as recoverable only by a Descanso Verdadeiro or a
+     * Roubo de Vida — {@code DuelistaFeat#FERIDAS_ARDENTES}' "O dano adicional de Metade da Gnose …
+     * não pode ser curado, exceto por Descansos Verdadeiros e efeitos de Roubo de Vida". Set by
+     * {@code org.aventyrs.core.combat.AttackDelivery} on a critical hit's chain heads, for the same
+     * reason {@link #halvingDamage} is a fluent setter. Applied as {@link
+     * CombatantSheet#lockDamage(int, boolean)} once the hit lands, capped at what it actually took —
+     * mitigation comes off the whole hit, and whatever of the rider survives is what is locked.
+     */
+    public DamageInteraction lockingDamage(final int amount) {
+        this.lifeStealOnlyDamage = Math.max(0, amount);
+        return this;
+    }
+
+    /** What {@link #lockingDamage} marked, 0 when nothing was. */
+    public int getLockedDamage() {
+        return lifeStealOnlyDamage;
     }
 
     @Override
@@ -166,7 +205,8 @@ public class DamageInteraction implements Interaction<CombatantSheet> {
                                       final DamageType damageType, final CombatantSheet source,
                                       final int rawDamage, final boolean ignoreDamageReduction,
                                       final Interaction<CombatantSheet> nextInteraction) {
-        int finalDamage = damageService.calculateFinalDamage(target, sceneContext, damageType, source, rawDamage, ignoreDamageReduction, halfDamage);
+        int finalDamage = damageService.calculateFinalDamage(target, sceneContext, damageType, source, rawDamage,
+                ignoreDamageReduction, halfDamage, spell);
         // Procrastinar Ferimento: the PV are lost at the next Rodada boundary instead of now. The
         // figure below stays the honest one — everything but the loss itself happens on schedule.
         if (postponed) {
@@ -174,6 +214,9 @@ public class DamageInteraction implements Interaction<CombatantSheet> {
         } else {
             target.applyDamage(finalDamage);
         }
+        // Feridas Ardentes: the critical rider's share of what landed heals only with a Descanso
+        // Verdadeiro or Roubo de Vida.
+        target.lockDamage(Math.min(lifeStealOnlyDamage, finalDamage), true);
         // Mitigation and application are split here rather than run through
         // DamageService#applyDamage (see this method's javadoc), so the victim's own damage-taken
         // reactions have to be fired explicitly — this is the attack path, and skipping it would

@@ -41,14 +41,12 @@ public enum PequeninoFeat implements Feat {
      * "Sempre que efetuar uma segunda rolagem de Perícia num mesmo Turno você recebe +1PA. Apenas
      * rolagens de Perícias diferentes desencadeiam este efeito."
      */
-    // TODO: needs a within-Turn roll counter, and a discriminating one — it must know that a
-    //  second roll happened and that it was a *different* Perícia. The action log
-    //  (CombatantSheet#getActionsThisRound()) now records each roll's Perícia and its Turn slice,
-    //  so "a second, different Perícia this Turn" is derivable from it — but the log only holds
-    //  actions the API chose to record, and nothing fires the PA grant off a roll (next TODO).
-    // TODO: the PA it grants is Rodada-scoped, so it is a Blessing of ModifierType.ACTION_POINTS
-    //  rather than Feat#resolveActionPointsIncrease (which is for a permanent grant) — but
-    //  nothing fires a Blessing off a roll being made.
+    // TODO: derivable without a trigger — the Rodada's action log (getActionsThisRound, with
+    //  each action's turnNumber) says whether a Turn this Rodada held two different Perícias,
+    //  and it clears at the Rodada wrap, which is exactly "duram apenas por esta Rodada". What is
+    //  missing is somewhere to add the PA: Feat#resolveActionPointsIncrease takes no sheet, and
+    //  ActionPointsService's sheet overload scans no Talento. Add a sheet-aware Feat PA hook
+    //  when a second clause needs one.
     HIPERATIVIDADE(
             "Sempre que efetuar uma segunda rolagem de Perícia num mesmo Turno você recebe +1PA. "
                     + "Apenas rolagens de Perícias diferentes desencadeiam este efeito e os "

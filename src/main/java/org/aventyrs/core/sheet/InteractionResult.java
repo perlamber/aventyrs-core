@@ -131,6 +131,13 @@ public class InteractionResult {
      */
     Frenzy grantedFrenzy;
 
+    /**
+     * Unidades of Duração the activator's opted-in Talentos add to this Habilidade de Título — {@code
+     * DestinoFeat#CENTELHA_DURADOURA}'s "+2". Reported for the caller to extend: each Habilidade's
+     * Duração is its own Interaction's. {@code null} when none.
+     */
+    Integer titleAbilityDurationIncrease;
+
     List<CombatantSheet> frenzyRecipients;
 
     /**
@@ -200,6 +207,14 @@ public class InteractionResult {
     org.aventyrs.core.character.CriticalDamage criticalDamage;
 
     /**
+     * The damage type the roller's Talentos make this attack deal in place of its own — {@code
+     * Feat#resolveDamageRetype}. {@code null} when none does. The caller passes it to {@code
+     * DamageService}/{@code DamageInteraction} instead of the attack's authored type, so the
+     * target's RD/RDS/RM/RE and immunities judge the retyped hit.
+     */
+    org.aventyrs.core.character.DamageDescriptor retypedDamage;
+
+    /**
      * The named parts {@link #damageBonus} is made of — {@code null} exactly when that is, and
      * always summing to it (see {@link org.aventyrs.core.character.DamageBonusBreakdown}'s
      * invariant). Carried so a caller can <em>explain</em> the bonus — "half your Força +2, an
@@ -230,6 +245,48 @@ public class InteractionResult {
      * which describes the Interaction's <i>target</i>: a touch ability heals one combatant while
      * another pays for it.
      */
+    /**
+     * What a Título activation costs in action, after every reduction its activator's Títulos
+     * apply (Curandeiro Veloz, Doutor de Eldur) — reported, never deducted, like every PA in this
+     * core. {@code null} outside a Título activation.
+     */
+    org.aventyrs.core.sheet.ActionCost actionPointCost;
+
+    /**
+     * Extra d6s this attack's dano roll gains ({@code ModifierType#EXTRA_DAMAGE_DICE}), for the caller
+     * to roll — {@code null} when there are none or the roll is not an attack.
+     */
+    Integer extraDamageDice;
+
+    /**
+     * How many times this attack's dano roll may throw its lowest die again ({@code
+     * Feat#resolveDamageLowestDieRerolls} — {@code DuelistaFeat#LUTAR_ENGAJADO}), for the caller to
+     * do as it throws the dano dice. {@code null} when there are none or the roll is not an attack.
+     */
+    Integer damageLowestDieRerolls;
+
+    /**
+     * How far, in UD, this stage pushes its target back from the attacker — {@code effect.Rugido}'s
+     * "Alvo é empurrado 1UD para trás". Reported, never applied: this core holds no positions, so the
+     * caller moves the token. {@code null} for everything that pushes nobody.
+     */
+    Integer pushedBackUd;
+
+    /**
+     * The highest Cego 1d6 face that fails this roll ({@code CombatantSheet#getBlindCheckThreshold})
+     * — {@code null} when its roller throws none. Reported whether or not the die came with the roll,
+     * so a caller knows to throw it.
+     */
+    Integer blindCheckThreshold;
+
+    /**
+     * Whether the Cego 1d6 thrown with this roll ({@code SkillRoll#withBlindCheck}) failed it — the
+     * roll fails whatever its total: {@link #succeeded} is forced false, and {@code AttackDelivery}/
+     * {@code AttackReceiver} read it as a miss / a failed defence. {@code null} when no check was
+     * owed or no die was thrown.
+     */
+    Boolean blindCheckFailed;
+
     Integer determinationPointsSpent;
 
     /**

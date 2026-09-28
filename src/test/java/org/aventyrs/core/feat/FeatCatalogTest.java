@@ -44,7 +44,7 @@ class FeatCatalogTest {
     void theCatalogHoldsEveryConstantOfEveryAuthoredTree() {
         List<Feat> expected = new ArrayList<>();
         for (Class<?> permitted : Feat.class.getPermittedSubclasses()) {
-            if (permitted.isEnum()) {
+            if (permitted.isEnum() && permitted != AntecedenteFeat.class) {
                 expected.addAll(Arrays.asList((Feat[]) permitted.getEnumConstants()));
             }
         }
@@ -62,13 +62,21 @@ class FeatCatalogTest {
     @Test
     void everyPermittedEnumContributesItsConstants() {
         for (Class<?> permitted : Feat.class.getPermittedSubclasses()) {
-            if (permitted.isEnum()) {
+            if (permitted.isEnum() && permitted != AntecedenteFeat.class) {
                 for (Object constant : permitted.getEnumConstants()) {
                     assertTrue(FeatCatalog.all().contains(constant),
                             permitted.getSimpleName() + "." + constant + " missing from the catalog");
                 }
             }
         }
+    }
+
+    /** An Antecedente's Benefício has a Talento's shape but is never offered or bought. */
+    @Test
+    void theAntecedenteBenefitsArePermittedButNeverCatalogued() {
+        assertTrue(Arrays.asList(Feat.class.getPermittedSubclasses()).contains(AntecedenteFeat.class));
+        assertTrue(FeatCatalog.all().stream().noneMatch(AntecedenteFeat.class::isInstance));
+        assertTrue(FeatCatalog.in(FeatCategory.ANTECEDENTE).isEmpty());
     }
 
     @Test

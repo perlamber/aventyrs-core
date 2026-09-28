@@ -123,6 +123,22 @@ Two shape rules that are easy to get wrong:
   match to the rules text, not an oversight, and `Human`'s javadoc says so explicitly. Say so
   in yours too when it applies.
 
+**Racial hooks added for traits Talentos extend (0.0.67)** — reach for these before calling a
+clause blocked:
+- `getGrantedNaturalWeapons()` — an "possuem X como armas naturais" clause is one line now
+  (`Ogro`, `Indomito`, `Aviano`, `Vampiro`); "no weapon catalog is authored" is stale.
+- `resolveLacertoFerocityRound(Character)` — the Rodada Ferocidade de Lacerto starts
+  (`LacertoFerocityService`).
+- `hasQuickLearning()` — Aprendizado Rápido (the discount lives in `SkillGraduationService`).
+- `resolveGoverningAttributeRollBonus(domain, holder, context, sizeOf)` — a roll bonus/malus scoped
+  by the roll's *governing Atributo* ("perícias baseadas em Força ou Destreza"), silenced under
+  physical-trait suppression (`Gigantes`' Cuidado para não Quebrar).
+- A racial *activated* trait whose rules say "gaste X para…" gets a small service that pays and
+  reports (`DevourService` for Bocarra, `AncestralCounselService` for Agnação Ancestral,
+  `OlharDeLacertoService`), checking the race with `instanceof` and the relevant suppression rung;
+  an attack made "with" the trait is an `AttackSource` (`race.OlharDeLacerto`), so Talentos scope to
+  it through their existing `AttackSource` overloads.
+
 **Starting Talentos are data, not grants.** `getStartingFeatSlots()` only *describes* the slots;
 `CharacterCreationService#getStartingFeatOptions`/`grantStartingFeats` list and grant them free of
 XP. If the tree depends on a per-character fact the rules make the player choose (Homem-Fera's

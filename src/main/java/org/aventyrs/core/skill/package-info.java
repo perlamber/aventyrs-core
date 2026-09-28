@@ -142,6 +142,33 @@
  * keeps the core a pure rules calculator: given a Character's current state, what are the
  * inputs to this roll — nothing about how those inputs get turned into a die result.
  *
+ * <h2>Spending a Talento on a roll, rerolling a die, and a Cego's 1d6</h2>
+ *
+ * A Talento the roller <em>opts into</em> on one roll — Lutador Nato, Ataque Concentrado, Ataque
+ * Rápido, Força Excessiva, Ataque Repentino, Combater com 2 Armas, Um-Dois, Ataque Giratório — is
+ * named in the roll's {@code activatedFeats}. {@code applyTo} refuses one the roller does not hold
+ * ({@code ACTIVATED_FEAT_NOT_HELD}) or cannot spend right now ({@code FEAT_ACTIVATION_NOT_PERMITTED}
+ * — wrong Perícia, "uma vez por Rodada/Turno" already spent, or a follow-up with nothing to
+ * follow; see {@code Feat#permitsActivation}). Ask what the attack costs <b>before</b> rolling, with
+ * the same set: {@code ActionPointsService#getAttackCost(sheet, skill, source, activated, turn)}.
+ *
+ * <pre>{@code
+ * Set<Feat> spent = Set.of(DuelistaFeat.LUTADOR_NATO, DuelistaFeat.ATAQUE_CONCENTRADO);
+ * ActionCost price = actionPointsService.getAttackCost(sheet, SkillType.ATAQUE_CORPO_A_CORPO, blade, spent, round);
+ * SkillRoll roll = new SkillRoll(faces, null, null, price, null, spent)
+ *         .rerollingLowestDie(rollD6());          // what Lutador Nato paid for
+ * if (sheet.getBlindCheckThreshold(SkillType.ATAQUE_CORPO_A_CORPO, ctx).isPresent()) {
+ *     roll = roll.withBlindCheck(rollD6());       // Cego: the 1d6 beside every roll
+ * }
+ * }</pre>
+ *
+ * The result then carries what the choice did to the dano roll — {@code damageBonus} (Vantagem or
+ * Desvantagem, half Vigor), {@code extraDamageDice} (Concentrado's "+1d6" with Lutador Nato), and
+ * {@code damageLowestDieRerolls} (Lutar Engajado) for the caller to apply as it throws the dano —
+ * and {@code blindCheckThreshold}/{@code blindCheckFailed} for the Cego d6: a failed one fails the
+ * roll whatever its total. A reroll no activated Talento pays for is refused ({@code
+ * REROLL_NOT_GRANTED}).
+ *
  * <h2>Recording an action</h2>
  *
  * After resolving a roll, the caller may log it. With a live {@code Scene}, record through it —
@@ -156,7 +183,12 @@
  * scene.recordAction(sheet, action);   // or sheet.recordAction(action) with no live Scene
  * }</pre>
  *
- * Hand-assembly like that is only for a direct {@code Interaction.applyTo} call. The
+ * A roll that spent Talentos or was aimed at someone should say so on the longer constructor —
+ * {@code new CombatantAction(..., outcome, target.getId(), roll.getActivatedFeats())} — because a
+ * "uma vez por Rodada" Talento counts its uses off {@code activatedFeats}, and Explorar Pontos
+ * Fracos counts attacks per target off {@code targetId}.
+ *
+ * <p>Hand-assembly like that is only for a direct {@code Interaction.applyTo} call. The
  * orchestrators build the {@code CombatantAction} for you and hand it back ready to file:
  * {@code AttackDelivery}/{@code AttackReceiver} on {@code DeliveredAttackResult}/{@code
  * IncomingAttackResult#getRecordedAction()}, and {@code SpellCastingService} on {@code

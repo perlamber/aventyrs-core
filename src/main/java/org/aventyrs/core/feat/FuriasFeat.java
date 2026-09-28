@@ -1,6 +1,10 @@
 package org.aventyrs.core.feat;
 
+import org.aventyrs.core.magic.MagicType;
+import org.aventyrs.core.magic.Spell;
 import org.aventyrs.core.race.Furia;
+import org.aventyrs.core.scene.SceneContext;
+import org.aventyrs.core.sheet.CombatantSheet;
 
 /**
  * Talentos das Fúrias — a tree of exactly one, the mirror of {@code
@@ -12,17 +16,23 @@ public enum FuriasFeat implements Feat {
      * "Conjurar Magias Profanas e Encantamentos em personagens inimigos ou neutros custam 1PM ou
      * 1PD à menos (mínimo 1 Unidade)."
      */
-    // TODO: identical blockers to its Fada twin — no cost step in SpellCastingService to reduce,
-    //  and no caster-to-target allegiance at cast time. Note "Profanas" is not a MagicType this
-    //  core carries at all, unlike its twin's "Divinas e Naturais", so this one has an extra
-    //  missing classification even once the cost step exists.
+    // The PM discount is real (Feat#resolveManaCostReduction): a Profana or Encantamento Magia
+    // whose target is anyone outside the caster's own sub-group — FadasFeat's allegiance reading.
+    // TODO: the "ou 1PD" half — a mimetized Magia's PD cost is not reduced by any Talento.
     ASPECTO_DA_DECOMPOSICAO_NATURAL(
             "Conjurar Magias Profanas e Encantamentos em personagens inimigos ou neutros custam "
                     + "1PM ou 1PD à menos (mínimo 1 Unidade).",
             FeatRequirements.builder()
                     .requiredRace(Furia.class)
                     .requiredAwakenedTitles(1)
-                    .build());
+                    .build()) {
+        @Override
+        public int resolveManaCostReduction(final Spell spell, final CombatantSheet caster,
+                                            final CombatantSheet target, final SceneContext casterContext) {
+            boolean scope = spell.getTree().hasMagicType(MagicType.PROFANA) || spell.getTree().hasMagicType(MagicType.ENCANTAMENTO);
+            return scope && FadasFeat.isEnemyOrNeutral(caster, target, casterContext) ? 1 : 0;
+        }
+    };
 
     private final String description;
     private final FeatRequirements featRequirements;

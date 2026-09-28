@@ -12,6 +12,7 @@ import org.aventyrs.core.ability.ActiveAbility;
 import org.aventyrs.core.ability.AttributeAbility;
 import org.aventyrs.core.action.ActionPointsService;
 import org.aventyrs.core.action.ActionProfile;
+import org.aventyrs.core.background.AcquiredBackground;
 import org.aventyrs.core.character.services.DeterminationPointsService;
 import org.aventyrs.core.character.services.FreeActionsService;
 import org.aventyrs.core.character.services.HitPointsService;
@@ -89,6 +90,28 @@ public class Character {
      */
     protected Deity deity;
 
+    /** A character's Centelhas at the start — one for each {@link TitleSlot} a Título may awaken into. */
+    public static final int CENTELHAS = TitleSlot.values().length;
+
+    /**
+     * The Centelhas this character still has — the sparks their Títulos Aventyr awaken from. {@value
+     * #CENTELHAS} by default; a Regalia forge's donor sacrifices one or all of them ({@link
+     * #sacrificeCentelhas}). Read by {@code DestinoFeat#FRAGMENTO_DA_ENCARNACAO_DE_GILGAMESH} ("para
+     * cada Centelha que você não possua") and its Pré-requisito.
+     */
+    @Builder.Default
+    protected int centelhas = CENTELHAS;
+
+    /**
+     * The Perícias Treinadas an Aprendizado Rápido race chose at creation — "podem escolher duas
+     * Perícias Treinadas, adquirir a Segunda e Terceira Graduação destas perícias custam 0.5EXP a
+     * menos" ({@code Race#hasQuickLearning}). Read by {@code SkillGraduationService#getUpgradeCost(
+     * Character, SkillType)}. Empty by default; neither the count of two nor the Perícias being
+     * trained is validated, the usual builders-aren't-gatekeepers restraint.
+     */
+    @Builder.Default
+    protected Set<SkillType> quickLearningSkills = Set.of();
+
     /** Tendência de alinhamento, used by Talento prerequisites such as Corruptor Sombrio's. */
     @Builder.Default
     protected Alignment alignment = Alignment.NEUTRAL;
@@ -112,6 +135,18 @@ public class Character {
     @NonNull
     @Singular
     protected Map<EgoDomain, EgoAdvantage> egoAdvantages;
+
+    /**
+     * The two Antecedentes — one {@link org.aventyrs.core.background.BackgroundKind#ORIGIN}, one
+     * {@link org.aventyrs.core.background.BackgroundKind#CAREER} — each with the picks made for it,
+     * as {@code CharacterCreationService#applyBackground} normalized them. Empty until that step,
+     * which comes last in creation. What they handed over at creation (Graduações, traits, Ego) is
+     * already materialized in {@link #skills}/{@link #skillCompetencyAbilities}/{@link #egos}; what
+     * is still read live off this list is each one's Benefício — see {@link #getFeats()}.
+     */
+    @NonNull
+    @Singular
+    protected List<AcquiredBackground> backgrounds;
 
     /** Trained Perícias, keyed by {@link SkillType} for O(1) lookup instead of filtering a list. */
     @NonNull
@@ -227,6 +262,17 @@ public class Character {
                         activeAbilities.stream(),
                         getFeats().stream().flatMap(feat -> feat.resolveActiveAbilities().stream()))
                 .toList();
+    }
+
+    /**
+     * The Ego total every reader of an Ego <i>total</i> should use: {@code EgoValue#getTotal()}
+     * (base + variable) plus every held Talento's {@code Feat#resolveEgoBonus}. The permanent Ego
+     * pool ceiling, {@code InitiativeService} and {@code MoralHerdadaAbility}'s Fama read this.
+     * {@code EgoValue#getBase()} readers — {@code FeatRequirements}' Ego ceilings — do not.
+     */
+    public int getEffectiveEgoTotal(final EgoDomain domain) {
+        return egos.getEgo(domain).getTotal()
+                + getFeats().stream().mapToInt(feat -> feat.resolveEgoBonus(domain, this)).sum();
     }
 
     /**
@@ -493,6 +539,15 @@ public class Character {
     protected SizeCategory sizeCategory = SizeCategory.ZERO;
 
     /**
+     * Which formula builds this creature's PV/PD/PM — {@link ResourceFormula#CHARACTER} for every
+     * player character, {@link ResourceFormula#MONSTER} for a foe built by {@code
+     * org.aventyrs.core.monster.MonsterBlueprint}. See {@link ResourceFormula}.
+     */
+    @Builder.Default
+    protected ResourceFormula resourceFormula = ResourceFormula.CHARACTER;
+
+
+    /**
      * The character's own fixed Reação counter — what they have when no external influence
      * (abilities'/competencies'/excellencies' {@link org.aventyrs.core.modifier.ModifierType#REACTIONS}
      * bonus) applies. {@value ReactionsService#DEFAULT_REACTIONS} by default, lowered to 0 or
@@ -537,6 +592,16 @@ public class Character {
      * Grants title into slot — see {@link #primaryTitle}'s own javadoc for why this is a real
      * mutator. Overwrites whatever (if anything) already occupied that slot.
      */
+    /**
+     * Sacrifices up to count Centelhas — a Regalia donor's "sacrifique voluntariamente uma de suas
+     * Centelhas" (or all of them). Returns how many were actually given; never below zero.
+     */
+    public int sacrificeCentelhas(final int count) {
+        int given = Math.max(0, Math.min(count, centelhas));
+        centelhas -= given;
+        return given;
+    }
+
     public void grantTitle(@NonNull final AventyrTitle title, @NonNull final TitleSlot slot) {
         switch (slot) {
             case PRIMARY -> primaryTitle = title;
@@ -612,9 +677,12 @@ public class Character {
     // wherever one is in hand. This method deliberately stays Forma-blind rather than growing an
     // overload: it is what a Character is, not what a combatant currently looks like.
     public List<NaturalWeapon> getNaturalWeapons() {
-        return Stream.concat(
+        return Stream.of(
                         getFeats().stream().flatMap(feat -> feat.getGrantedNaturalWeapons(this).stream()),
-                        race == null ? Stream.empty() : race.getGrantedNaturalWeapons().stream())
+                        race == null ? Stream.<NaturalWeapon>empty() : race.getGrantedNaturalWeapons().stream(),
+                        // A Habilidade Monstruosa's Arma Natural ("Escolha uma Arma Natural").
+                        getAttributeAbilities().stream().flatMap(ability -> ability.getGrantedNaturalWeapons().stream()))
+                .flatMap(stream -> stream)
                 .distinct()
                 .toList();
     }
@@ -630,13 +698,38 @@ public class Character {
      * #getAttributeAbilities()}, so every effect scan <em>and</em> every prerequisite check sees
      * a granted Talento as held, with no service change.
      *
+     * <p>Also every held Antecedente's Benefício ({@link
+     * org.aventyrs.core.background.Background#getBenefit()}, an {@code AntecedenteFeat}): not a
+     * Talento in the rules text, but given a Talento's shape so every hook reaches it. Filter on
+     * {@code FeatCategory.Type.ANTECEDENTE} to list the Talentos proper.
+     *
      * <p><b>Read-only</b>, unlike the field behind it — acquire through {@link #grantFeat}.
      * Deduplicated, so a Talento both acquired and granted appears once.
      */
     public List<Feat> getFeats() {
-        return Stream.concat(
+        return Stream.of(
                         feats.stream(),
-                        feats.stream().flatMap(feat -> feat.getGrantedFeats(this).stream()))
+                        feats.stream().flatMap(feat -> feat.getGrantedFeats(this).stream()),
+                        backgrounds.stream().map(held -> (Feat) held.background().getBenefit()))
+                .flatMap(stream -> stream)
+                .distinct()
+                .toList();
+    }
+
+    /** The Antecedente of kind this character holds, if it has been chosen yet. */
+    public java.util.Optional<AcquiredBackground> getBackground(final org.aventyrs.core.background.BackgroundKind kind) {
+        return backgrounds.stream().filter(held -> held.kind() == kind).findFirst();
+    }
+
+    /**
+     * Every Magia this character may cast normally, paying PM: the learned ones ({@link #spells})
+     * plus every held Talento's {@link Feat#getGrantedCastableSpells} — Estudioso Arcano's Semente and
+     * Broto. Only the learned half counts as "knowing" an Árvore; read {@link #getSpells()} for any
+     * acquisition gate.
+     */
+    public List<Spell> getCastableSpells() {
+        return Stream.concat(spells.stream(),
+                        getFeats().stream().flatMap(feat -> feat.getGrantedCastableSpells(this).stream()))
                 .distinct()
                 .toList();
     }
@@ -649,6 +742,18 @@ public class Character {
      */
     public void grantSpell(@NonNull final Spell spell) {
         spells.add(spell);
+    }
+
+    /**
+     * Every Magia this character may mimetize: the ones stored at acquisition ({@link
+     * #grantMimetizedSpell}) plus what each held Talento grants <b>right now</b> ({@code
+     * Feat#getGrantedMimetizedSpells}), deduplicated by value. The live half is what lets a grant
+     * grow after acquisition — "Ao Despertar seu primeiro Título poderá conjurar as magias Broto".
+     */
+    public List<MimetizedSpell> getMimetizedSpells() {
+        java.util.LinkedHashSet<MimetizedSpell> all = new java.util.LinkedHashSet<>(mimetizedSpells);
+        getFeats().forEach(feat -> all.addAll(feat.getGrantedMimetizedSpells(this)));
+        return List.copyOf(all);
     }
 
     /** Adds a Talento-granted mimetized Magia without making it a learned {@link Spell}. */
@@ -804,6 +909,33 @@ public class Character {
         return Stream.of(primaryTitle, secondaryTitle, tertiaryTitle)
                 .filter(Objects::nonNull)
                 .toList();
+    }
+
+    /**
+     * The {@link CharacterSkill} this character uses for skillType <i>as an effect</i> — its own,
+     * or a Perícia a held Título lets it use in its place ({@link AventyrTitle#resolveSkillSubstitute},
+     * Curandeiro's Domínio da Cura), whichever has the higher Graduação. Empty when neither is trained.
+     * Not for prerequisites: "Requer N Graduações" still reads the Perícia itself.
+     */
+    public java.util.Optional<CharacterSkill> getEffectiveSkill(final SkillType skillType) {
+        CharacterSkill best = skills == null ? null : skills.get(skillType);
+        for (AventyrTitle title : getAllTitles()) {
+            java.util.Optional<SkillType> substitute = title.resolveSkillSubstitute(skillType, title == primaryTitle);
+            if (substitute.isEmpty() || skills == null) {
+                continue;
+            }
+            CharacterSkill candidate = skills.get(substitute.get());
+            if (candidate != null && (best == null || candidate.getGraduation().getGraduationValue()
+                    > best.getGraduation().getGraduationValue())) {
+                best = candidate;
+            }
+        }
+        return java.util.Optional.ofNullable(best);
+    }
+
+    /** {@link #getEffectiveSkill}'s Graduação, or 0 when untrained. */
+    public int getEffectiveGraduation(final SkillType skillType) {
+        return getEffectiveSkill(skillType).map(skill -> skill.getGraduation().getGraduationValue()).orElse(0);
     }
 
     public enum Sexo {

@@ -3,6 +3,8 @@ package org.aventyrs.core.feat;
 import lombok.Getter;
 import lombok.NonNull;
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.character.CharacterSkill;
+import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.skill.Skill;
 import org.aventyrs.core.skill.SkillTrait;
@@ -48,6 +50,9 @@ public final class FocoEmPericiaFeat extends AbstractFeat {
      * scan-the-held-list shape.
      */
     public static Optional<SkillType> chosenBy(final Character character) {
+        if (character == null) {
+            return Optional.empty();
+        }
         return character.getFeats().stream()
                 .filter(FocoEmPericiaFeat.class::isInstance)
                 .map(FocoEmPericiaFeat.class::cast)
@@ -58,6 +63,35 @@ public final class FocoEmPericiaFeat extends AbstractFeat {
     @Override
     public Feat catalogEntry() {
         return PeritoFeat.FOCO_EM_PERICIA;
+    }
+
+    /**
+     * Graduações an attack Perícia needs before it may be chosen — "ou 4 graduações se for uma
+     * Perícia de ataque".
+     */
+    static final int ATTACK_SKILL_MINIMUM_GRADUATION = 4;
+
+    /**
+     * Whether character may take Foco in skill — "Treinamento na Perícia escolhida, que não seja de
+     * ataque, ou 4 graduações se for uma Perícia de ataque". Trained means holding the Perícia at all,
+     * the same reading every "Treinamento em X" Pré-requisito takes.
+     */
+    public static boolean qualifies(final Character character, final SkillType skill) {
+        CharacterSkill trained = character.getSkills().get(skill);
+        if (trained == null) {
+            return false;
+        }
+        return !skill.isAttackSkill()
+                || trained.getGraduation().getGraduationValue() >= ATTACK_SKILL_MINIMUM_GRADUATION;
+    }
+
+    /**
+     * The Pré-requisito is a fact about the <em>choice</em>, so it is checked here, on the acquired
+     * form {@code FeatService#grantFeat} is handed, on top of the catalog constant's own clauses.
+     */
+    @Override
+    public boolean isEligible(final Character character, final CharacterSheet sheet) {
+        return PeritoFeat.FOCO_EM_PERICIA.isEligible(character, sheet) && qualifies(character, chosenSkill);
     }
 
     /**

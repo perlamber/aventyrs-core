@@ -22,11 +22,11 @@ import org.aventyrs.core.skill.SkillType;
  * bare {@code Duração: Concentração} in the game (Queda Lenta), which is the limiting case with no
  * trailing count at all — it ends the instant focus breaks.
  *
- * <p>Flight and levitation are a movement sub-stat this core does not have. {@code
- * ModifierType#MOVEMENT} is ground movement per Ponto de Ação; vertical and flight movement are
- * deliberately <em>not</em> wired into it (the same distinction {@code
- * AtletismoCompetencyAbility#ALPINISTA_VELOZ}/{@code ANFIBIO} document), so none of these seven can
- * be applied — not the grants, and not the denials either, since there is no capability to remove.
+ * <p>The Movimento Base de Voo exists now ({@code MovementMode#FLIGHT}, {@code
+ * MovementService#getMovementBase(CombatantSheet, MovementMode)}), but a Magia cannot grant it: a
+ * mode comes from a Raça, a Talento, a Habilidade de Competência or a Forma, never from a timed
+ * effect, and nothing can take one away. So none of these seven applies yet — neither the grants
+ * nor the denials.
  */
 public enum VooSpell implements AuthoredSpell {
 

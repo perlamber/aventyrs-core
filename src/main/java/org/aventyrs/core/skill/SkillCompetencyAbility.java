@@ -1,5 +1,6 @@
 package org.aventyrs.core.skill;
 
+import org.aventyrs.core.character.MovementMode;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.DamageBonus;
@@ -196,6 +197,26 @@ public interface SkillCompetencyAbility extends SkillTrait {
      */
     default List<Blessing> resolveInitiativeBlessings() {
         return List.of();
+    }
+
+    /**
+     * A bonus to the holder's Defesa roll against an attack that is an Área de Efeito — {@code
+     * EsquivaEApararCompetencyAbility#EVASAO}. Added by {@code AttackReceiver} only when {@code
+     * IncomingAttack#isAreaOfEffect()}. Takes the holder so a Graduação-tiered figure can read it.
+     * Zero by default.
+     */
+    default int resolveAreaOfEffectDefenseBonus(final org.aventyrs.core.character.Character holder) {
+        return 0;
+    }
+
+    /**
+     * Whether this Habilidade de Competência gives its holder mode — {@code
+     * AtletismoCompetencyAbility#ANFIBIO} ("Você recebe Movimento Base de Natação") and {@code
+     * #ALPINISTA_VELOZ} (Vertical). Read by {@code MovementService#hasMovementMode}. False by
+     * default.
+     */
+    default boolean grantsMovementMode(final MovementMode mode) {
+        return false;
     }
 
     /**
@@ -438,5 +459,16 @@ public interface SkillCompetencyAbility extends SkillTrait {
                 .flatMap(java.util.function.Function.identity())
                 .distinct()
                 .toList();
+    }
+
+    /**
+     * A bonus (or, negative, a malus) this ability puts on its holder's Perícia roll governed by
+     * domain — the Atributo the roll is actually made with. {@code DirigirECavalgarCompetencyAbility
+     * #GINETE}'s "Desvantagem em todas as rolagens de Perícias baseadas em Força e Destreza feitas
+     * nestas condições" (while {@code CombatantSheet#isRiding()}). The twin of {@code
+     * Race#resolveGoverningAttributeRollBonus}; 0 by default.
+     */
+    default int resolveGoverningAttributeRollBonus(final AttributeDomain domain, final CombatantSheet holder) {
+        return 0;
     }
 }

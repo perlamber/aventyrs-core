@@ -6,6 +6,51 @@ mechanics** catalogued in `CLAUDE.md` ("Missing systems — the gap catalog"). T
 the work by that mechanic, orders the groups by dependency and return-on-effort, and says which
 constants each group lands.
 
+## Status — re-based 2026-09-26
+
+Phases 1–5 are done (below). The engine grew a lot after this plan was written (0.0.42–0.0.58):
+the hex grid, Terreno Difícil, Reposicionar and Investida (most of Phase 7); `Retaliation` and
+`AuraTargeting` (part of Phase 9); the action log and per-ability activation count; a Escudo
+catalog; `anyOf`, Especialização prerequisites and `isAcquirableOnlyAtCreation`. The open work is
+re-ordered as:
+
+| Order | Phase | Was | State |
+| --- | --- | --- | --- |
+| A | Stale-TODO sweep | Phase 0 | **First pass done (0.0.61)** — 312 → 286 TODO lines; see `0.061.CHANGELOG.md` |
+| B | Small hooks with ≥2 consumers | new | **Done (0.0.62)** — all four below; see `0.062.CHANGELOG.md` |
+| C | Flight / swim / climb axes | Phase 6 | **Done (0.0.63)** — `MovementMode`; flying as a timed state still open; see `0.063.CHANGELOG.md` |
+| D | Damage types | Phase 8 | **Done (0.0.64)** — RD/RDS/RM/RE scoped, RDS split out, Talento immunity/RE hooks, retyping, race element; Corte/Perfuração/Impacto skipped (no Talento consumer); see `0.064.CHANGELOG.md` |
+| E | Área de Efeito, outward damage, reverse retaliation | Phase 9 (+ rest of 7) | **Done (0.0.65)** — footprints, area attacks, Evasão, `Retaliation#dealTo`; outward Turn damage left for a second consumer; see `0.065.CHANGELOG.md` |
+| F | Spellcasting extensions | Phase 10 | **Done (0.0.66)** — mimetizar choices + live grant, Mana-cost reduction, per-cast opt-ins, cast bonuses, storage; see `0.066.CHANGELOG.md` |
+| I | Racial traits Talentos extend | new | **Done (0.0.67)** — Ferocidade de Lacerto, Bocarra, Agnação Ancestral, Aprendizado Rápido, Olhar de Lacerto, Cuidado para não Quebrar; HomemFera Forma Híbrida left open; see `0.067.CHANGELOG.md` |
+| H | Título / Destino / Vampiro | Phase 12 | **Done (0.0.68)** — acquisition ceilings in place of a timeline, Atrasar Despertar/Abdicador figures, Centelhas (count + Regalia loss), Título activation opt-ins, Laços-de-Sangue and Prole, Presença de Carmilla; Favoritismo lacks rules text; see `0.068.CHANGELOG.md` |
+| G | Montaria / veículo | Phase 11 | **Done (0.0.69)** — `Riding` on the sheet, `MountService`, the riding restriction and Ginete, all five Cavalaria Talentos, the Alabarda's mounted Dano Base; see `0.069.CHANGELOG.md` |
+
+**Phase B** (each had two or more consumers) — all four built in 0.0.62:
+- A `Feat` Iniciativa hook — `MobilidadeFeat#INICIATIVA_APRIMORADA`, `#LIDERAR_O_AVANCO`,
+  `EscudeiroFeat#ESCUDO_VELOZ` (whose Escudo condition is testable now).
+- A permanent Ego point from a Talento — `MobilidadeFeat#SE_MOVER_E_ATACAR`,
+  `SobrevivenciaFeat#SORTE_DE_MOSES`, `#DETERMINACAO_DE_MOSES`.
+- A held trait suppressing a Condição or an implied one — `ArtesMarciaisFeat#…SUBMISSAO`,
+  `DuelistaFeat#COMBATER_AS_CEGAS`, `MonstruosoFeat#FEROCIDADE`, `VidaSpell#CORPO_FECHADO`.
+- A Reação ledger (spent this Rodada) — every "exempt from Reação" clause. *`EscudeiroFeat#MESTRE_ESCUDEIRO` is done in 0.0.70: an Investida's target cannot Defender o Perímetro unless it holds it.*
+
+**Found during the Phase A sweep**, each with a single consumer so far — revisit when a second
+appears:
+- A per-cast opt-in on `SpellCastRequest`, like `SkillRoll#getActivatedFeats` —
+  `MetamagicoFeat#CONJURACAO_RAPIDA` and `#PROCRASTINAR_CONJURACAO` (two, so Phase F material).
+- A sheet-aware `Feat` PA hook — `PequeninoFeat#HIPERATIVIDADE` (derivable from the action log).
+- An end-of-Turn `Feat` trigger — `EscudeiroFeat#DEFESA_TARTARUGA`.
+- A per-Cena count of hits suffered — `SobrevivenciaFeat#DURO_DE_FERIR`.
+- A Talento adjusting a Título activation's price — `DestinoFeat#ACELERAR_HABILIDADE`,
+  `#CENTELHA_DURADOURA` (two: Phase H).
+- `SkillRoll` handed to `CriticalService#sumCriticalMarginIncrease` — `ArtesMarciaisFeat#…TIGRE_E_SERPENTE`.
+- An element column on the six Mestiço Elemental races — gates the whole `ElementalFeat` tree (Phase D prelude).
+- `HomemFera`'s Forma Híbrida as an `ActiveAbility`, plus a `Race` active-ability hook — `FeralFeat`
+  ×3 (Phase I).
+- Missing authored Correntes (only `Definhar`/`Sobrecura` exist): Rugido, Oprimir, Golpe
+  Trovejante, Ferida Infecciosa, Enrijecer Musculatura, Explosão Cataclísmica.
+
 ## How to read this
 
 - A **phase** builds one or a few related mechanics, then wires *every* constant that was only
@@ -22,7 +67,7 @@ constants each group lands.
 
 ---
 
-## Phase 0 — Stale-TODO reconciliation sweep
+## Phase 0 — Stale-TODO reconciliation sweep — **first pass done (0.0.61)**
 
 **No new mechanics.** Several hooks named as "missing" in TODO prose already exist; the memory
 note *"Stale TODOs"* and `CLAUDE.md`'s TODO-discipline bullet both call this out. Walk every
@@ -78,7 +123,8 @@ alongside RD (an inference, documented).
 - **Landed:** `GorgonaFeat#PROTECAO_DA_RAINHA_DAS_FADAS` (its RM half was unconditional all
   along — only its RC is form-gated), `DefensiveMasterpiece#DYOSPIROS` and `#MITRAL`.
 - **Not landed, second blocker found:** `MetamagicoFeat#ARCANISTA` (scoped to "Magias que você
-  conheça" — nothing classifies an incoming effect as a specific Magia),
+  conheça" — nothing classified an incoming effect as a specific Magia; *landed in 0.0.70 through
+  `DamageInteraction#fromSpell` + `Feat#resolveSpellMagicReduction`*),
   `TrollFeat#VIGOR_TROLLICO` (unmodelled sub-lineage), `GorgonaFeat#MONSTROS_EM_PELE_DE_FADA`
   (form toggle), `EscudeiroFeat#BASTIAO_DE_VIDRO` (needs mitigation to be *suppressible*).
 - **Known incorrectness, deliberately left:** RD is still type-blind, so a MAGICO hit takes RD
@@ -570,6 +616,8 @@ engine reports amounts and legality, the caller/UI applies position, mirroring t
   `GnomoFeat`, `GorgonaFeat`, `ElficoFeat` (×2), `FeericoFeat`, `FadasFeat`, `FuriasFeat`,
   `ElementalFeat` — **~18**.
 - **Effort:** 3 sessions. **Depends on:** Phase 8 for spell damage type; `magic-system` skill.
+- *0.0.70: `MetamagicoFeat` is fully wired — the Aptidão DM/GD/immunity clauses, Artesão, Engenheiro
+  on the Barreira, and the Barreira's ally Defesas and Duração extension. See `0.070.CHANGELOG.md`.*
 
 ---
 
@@ -609,11 +657,11 @@ reason; revisit only if a scheduled phase incidentally enables one.
 
 | Blocker | Constants |
 | --- | --- |
-| **Core never rolls dice** — reroll a die, reroll lowest die | `ArtilhariaFeat`, `DuelistaFeat` (×3), `PeritoFeat` (×3) |
-| **An attack is caller-initiated** — "grants an extra attack / projectile" | `EscudeiroFeat`, `ArtilhariaFeat` (×2), `DuelistaFeat` (×2) |
-| **Narrative-purpose scoping** — "rolagens relacionadas a animais", "para criar equipamento", "para se aproximar de aliados" | `GoblinFeat`, `BestialFeat#FARO_APURADO`, `PeritoFeat`, `GiganteFeat` |
+| **Core never rolls dice** — reroll a die, reroll lowest die | *Done in 0.0.70 for `ArtilhariaFeat#MIRA_IMPECAVEL`, `DuelistaFeat` (×3) and `PeritoFeat` (Maestria's reroll, Lembrar Como se Faz's retry): `SkillRoll#rerollingLowestDie` + `Feat#grantsLowestDieReroll`, and `InteractionResult#getDamageLowestDieRerolls` for a dano roll.* |
+| **An attack is caller-initiated** — "grants an extra attack / projectile" | — *`EscudeiroFeat#ESPARTANO` is done in 0.0.70 on `item.ShieldAttack`.* *`DuelistaFeat` (×2) and `ArtilhariaFeat` (×3 — Tiro Rápido, and Tiro Duplo/Múltiplo as one roll with more dice and repeated Efeitos, `Feat#resolveAttackEffectRepetitions`) are done in 0.0.70: the follow-up stays the caller's attack, but whether it is allowed and what it costs are read off the Turn's log (`Feat#permitsActivation`, `ActionPointsService#getAttackCost`).* |
+| **Narrative-purpose scoping** — "rolagens relacionadas a animais", "para criar equipamento", "para se aproximar de aliados" | `GoblinFeat`, `BestialFeat#FARO_APURADO`, `GiganteFeat`. *`PeritoFeat#MESTRE_EM_ATUACAO` done in 0.0.70 as a player opt-in (the player declares the purpose by activating it) — the reading to try on the rest.* |
 | **Pure geometry / distance falloff** — "−1 para cada UD percorrido", terrain mapping in Distância Média | `ElementalFeat`, `BestialFeat#ECOLOCALIZACAO` |
-| **State that exempts from nothing** — breathing/sleep exemptions where the state isn't tracked and nothing charges for it | `BestialFeat`, `AvianoFeat`, `PeritoFeat`, `ElficoFeat`, `TrollFeat#SONO_DE_PEDRA` |
+| **State that exempts from nothing** — breathing/sleep exemptions where the state isn't tracked and nothing charges for it | `BestialFeat`, `AvianoFeat`, `ElficoFeat`, `TrollFeat#SONO_DE_PEDRA`. *`PeritoFeat#CRIANCA_DO_MAR`/`REI_DA_MONTANHA` done in 0.0.70 as caller-facing permissions (`CombatantSheet#canBreatheUnderwater`/`#canClingToSurfaces`) bought per Rodada.* |
 | **"count of activations of one specific ability"** — distinct from the roll-action log | `ArtilhariaFeat`, `CavalariaFeat`, `OrquicoFeat` "uma vez a cada Rodada" halves |
 
 ---

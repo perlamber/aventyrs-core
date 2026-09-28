@@ -128,6 +128,18 @@ public class TranslatableMessages {
     public static final String TITLE_NOT_HELD = "TITLE_NOT_HELD";
     public static final String EXTRA_SUPREMA_ALREADY_GRANTED = "EXTRA_SUPREMA_ALREADY_GRANTED";
     public static final String TITLE_ABILITY_PREREQUISITE_NOT_MET = "TITLE_ABILITY_PREREQUISITE_NOT_MET";
+    /** An activation or cast asked to pay in PV, and no held Título lets it (Transferir Vitalidade). */
+    public static final String HIT_POINT_PAYMENT_NOT_PERMITTED = "HIT_POINT_PAYMENT_NOT_PERMITTED";
+    /** A Título trait whose clause limits it to once per Rodada was activated again this Rodada. */
+    public static final String TITLE_ABILITY_ALREADY_USED_THIS_ROUND = "TITLE_ABILITY_ALREADY_USED_THIS_ROUND";
+    /** A Título activation needs a target other than its activator and was given none. */
+    public static final String TITLE_ABILITY_TARGET_REQUIRED = "TITLE_ABILITY_TARGET_REQUIRED";
+    /** A Curandeiro heal was aimed at a target it cannot affect again until the Curandeiro's Descanso Longo. */
+    public static final String TARGET_ALREADY_AFFECTED_UNTIL_REST = "TARGET_ALREADY_AFFECTED_UNTIL_REST";
+    /** A Título trait that needs a wounded target was aimed at one with no damage. */
+    public static final String TARGET_NOT_WOUNDED = "TARGET_NOT_WOUNDED";
+    /** A Título activation's choice combination is not allowed in the current situation. */
+    public static final String TITLE_ABILITY_CHOICE_NOT_PERMITTED = "TITLE_ABILITY_CHOICE_NOT_PERMITTED";
     public static final String TITLE_ACQUISITION_PREVENTED = "TITLE_ACQUISITION_PREVENTED";
     public static final String FEAT_PREREQUISITE_NOT_MET = "FEAT_PREREQUISITE_NOT_MET";
 
@@ -144,6 +156,13 @@ public class TranslatableMessages {
      * CharacterCreationService#grantStartingFeats}.
      */
     public static final String INVALID_STARTING_FEAT_SELECTION = "INVALID_STARTING_FEAT_SELECTION";
+    /**
+     * An Antecedente selection that doesn't answer what it offers this character — a Perícia
+     * outside its options, the wrong number of picks, a trait not offered, a Benefício pick off its
+     * list — or a second Antecedente of a kind already held. See {@code
+     * CharacterCreationService#applyBackground}.
+     */
+    public static final String INVALID_BACKGROUND_SELECTION = "INVALID_BACKGROUND_SELECTION";
 
     /**
      * A Talento only a newly created character may take ("Apenas personagens recém-criados") was
@@ -196,6 +215,8 @@ public class TranslatableMessages {
      * AttackTargetingService#getMaximumTargets}.
      */
     public static final String TOO_MANY_ATTACK_TARGETS = "TOO_MANY_ATTACK_TARGETS";
+    /** The attack declares an Área de Efeito that neither the attacker's Talentos nor its source grants. */
+    public static final String AREA_OF_EFFECT_NOT_GRANTED = "AREA_OF_EFFECT_NOT_GRANTED";
     /** A provoking Aura binds the attacker, and its first attack this Rodada must target the Aura's holder. */
     public static final String FORCED_ATTACK_TARGET_REQUIRED = "FORCED_ATTACK_TARGET_REQUIRED";
     public static final String INVALID_AREA_OF_EFFECT = "INVALID_AREA_OF_EFFECT";
@@ -204,6 +225,12 @@ public class TranslatableMessages {
     public static final String INVALID_SPELL_DURATION = "INVALID_SPELL_DURATION";
     public static final String INVALID_SPELL_ACTIVATION = "INVALID_SPELL_ACTIVATION";
     public static final String SPELL_PREREQUISITE_NOT_MET = "SPELL_PREREQUISITE_NOT_MET";
+
+    /**
+     * A Magia would open an Árvore de Magia the Conjurador does not know yet, and every Árvore
+     * their Talentos allow ({@code SpellService#getKnownTreeCapacity}) is already known.
+     */
+    public static final String SPELL_TREE_CAPACITY_REACHED = "SPELL_TREE_CAPACITY_REACHED";
     public static final String INVALID_SPELL_CAST_TARGET = "INVALID_SPELL_CAST_TARGET";
     public static final String INVALID_SPELL_DAMAGE = "INVALID_SPELL_DAMAGE";
     public static final String INVALID_SPELL_HEALING = "INVALID_SPELL_HEALING";
@@ -220,6 +247,16 @@ public class TranslatableMessages {
     public static final String NO_ALTERNATE_SPELL_VERSION = "NO_ALTERNATE_SPELL_VERSION";
     public static final String INVALID_MIMETIZED_SPELL = "INVALID_MIMETIZED_SPELL";
     public static final String MIMETIZED_SPELL_NOT_HELD = "MIMETIZED_SPELL_NOT_HELD";
+    /** The mimetized Magia may only be cast in a Forma the caster is not in. */
+    public static final String MIMETIZED_SPELL_FORM_REQUIRED = "MIMETIZED_SPELL_FORM_REQUIRED";
+    /** The caster holds no Talento that lets them store a Magia. */
+    public static final String SPELL_STORAGE_NOT_GRANTED = "SPELL_STORAGE_NOT_GRANTED";
+    /** Storing this Magia would exceed what the caster's Talentos let them hold (count or rung). */
+    public static final String SPELL_STORAGE_FULL = "SPELL_STORAGE_FULL";
+    /** The caster is not holding that Magia back. */
+    public static final String STORED_SPELL_NOT_HELD = "STORED_SPELL_NOT_HELD";
+    /** A stored Magia may not be released with that action. */
+    public static final String STORED_SPELL_RELEASE_COST_NOT_PERMITTED = "STORED_SPELL_RELEASE_COST_NOT_PERMITTED";
 
     /** The caster is under a Condição that forbids Conjurar Magias — Silêncio. */
     public static final String SPELL_CASTING_PREVENTED = "SPELL_CASTING_PREVENTED";
@@ -233,6 +270,14 @@ public class TranslatableMessages {
      * {@link #ABILITY_ACTIVATION_PREVENTED}, which is a Condição forbidding activation outright.
      */
     public static final String ABILITY_ON_COOLDOWN = "ABILITY_ON_COOLDOWN";
+    /** A Regular monster has used its two Efeitos de Ego this Cena — see {@code MonsterSheet#checkEgoEffectAvailable}. */
+    public static final String MONSTER_EGO_EFFECTS_EXHAUSTED = "MONSTER_EGO_EFFECTS_EXHAUSTED";
+    /** {@code CombatantSheet#resolveDiceRoll} was handed an id no {@code RecurringDice} is waiting on. */
+    public static final String PENDING_DICE_ROLL_NOT_FOUND = "PENDING_DICE_ROLL_NOT_FOUND";
+    /** An Efeito Ativo that declares dice was activated without its rolled faces. */
+    public static final String ACTIVE_ABILITY_DICE_REQUIRED = "ACTIVE_ABILITY_DICE_REQUIRED";
+    /** An Efeito Ativo whose own clause refuses it right now ("Apenas enquanto voando"). */
+    public static final String ACTIVE_ABILITY_CONDITION_NOT_MET = "ACTIVE_ABILITY_CONDITION_NOT_MET";
 
     /** An activated ability's Pontos de Determinação cost exceeds what the holder has left. */
     public static final String NOT_ENOUGH_DETERMINATION_POINTS = "NOT_ENOUGH_DETERMINATION_POINTS";
@@ -363,4 +408,81 @@ public class TranslatableMessages {
 
     /** A Saquear named a foe whose PV are still above zero. */
     public static final String LOOT_TARGET_NOT_DEFEATED = "LOOT_TARGET_NOT_DEFEATED";
+
+    /** A Ferocidade de Lacerto was declined by a combatant with no such Característica. */
+    public static final String LACERTO_FEROCITY_NOT_HELD = "LACERTO_FEROCITY_NOT_HELD";
+
+    /** Aceitar a Lacerto was used by a combatant who does not hold it. */
+    public static final String LACERTO_FEROCITY_MIMIC_NOT_GRANTED = "LACERTO_FEROCITY_MIMIC_NOT_GRANTED";
+
+    /** Aceitar a Lacerto was used outside combat or before its third Rodada. */
+    public static final String LACERTO_FEROCITY_MIMIC_TOO_EARLY = "LACERTO_FEROCITY_MIMIC_TOO_EARLY";
+
+    /** Aceitar a Lacerto was used a second time in the same Cena de Combate. */
+    public static final String LACERTO_FEROCITY_MIMIC_ALREADY_USED = "LACERTO_FEROCITY_MIMIC_ALREADY_USED";
+
+    /** A Bocarra bite was declared by a combatant without the Característica. */
+    public static final String BOCARRA_NOT_HELD = "BOCARRA_NOT_HELD";
+
+    /** A roll was made with Agnação Ancestral by a combatant who banked no counsel. */
+    public static final String ANCESTRAL_COUNSEL_NOT_BANKED = "ANCESTRAL_COUNSEL_NOT_BANKED";
+
+    /** Agnação Ancestral was performed by a combatant without the Característica. */
+    public static final String ANCESTRAL_COUNSEL_NOT_HELD = "ANCESTRAL_COUNSEL_NOT_HELD";
+
+    /** Agnação Ancestral was performed during a Cena de Combate. */
+    public static final String ANCESTRAL_COUNSEL_IN_COMBAT = "ANCESTRAL_COUNSEL_IN_COMBAT";
+
+    /** Olhar de Lacerto was declared by a combatant without the Característica. */
+    public static final String OLHAR_DE_LACERTO_NOT_HELD = "OLHAR_DE_LACERTO_NOT_HELD";
+
+    /** A named Regalia donor has no Centelha left to sacrifice. */
+    public static final String REGALIA_DONOR_LACKS_CENTELHA = "REGALIA_DONOR_LACKS_CENTELHA";
+
+    /** A Talento opted into for a Título activation has no use left right now (Acelerar Habilidade's once per Rodada). */
+    public static final String TITLE_ACTIVATION_OPT_IN_EXHAUSTED = "TITLE_ACTIVATION_OPT_IN_EXHAUSTED";
+
+    /** Gerar Prole was asked of a character who is not a Vampiro Mestre (or is a Dampiro). */
+    public static final String PROGENY_NOT_PERMITTED = "PROGENY_NOT_PERMITTED";
+
+    /** A combatant already riding tried to mount again. */
+    public static final String ALREADY_RIDING = "ALREADY_RIDING";
+
+    /** A combatant not riding tried to dismount. */
+    public static final String NOT_RIDING = "NOT_RIDING";
+
+    /** Desmontar como Reação without Montar e Desmontar Instantâneo, or with it already used. */
+    public static final String MOUNT_REACTION_NOT_PERMITTED = "MOUNT_REACTION_NOT_PERMITTED";
+
+    /** A roll names a Talento in {@code SkillRoll#getActivatedFeats()} its roller does not hold. */
+    public static final String ACTIVATED_FEAT_NOT_HELD = "ACTIVATED_FEAT_NOT_HELD";
+
+    /**
+     * A held Talento cannot be activated on this roll right now — wrong Perícia, its "uma vez por
+     * Rodada/Turno" already spent, or a follow-up attack with nothing to follow ({@code
+     * Feat#permitsActivation}).
+     */
+    public static final String FEAT_ACTIVATION_NOT_PERMITTED = "FEAT_ACTIVATION_NOT_PERMITTED";
+
+    /** A roll rerolled its lowest die without activating a Talento that grants the reroll. */
+    public static final String REROLL_NOT_GRANTED = "REROLL_NOT_GRANTED";
+
+    /**
+     * A defence rolled with a Perícia de Ataque in place of Esquiva e Aparar without Defender-se
+     * Atacando activated, against a Defesa Mágica without Defender-se Atacando Superior, or against
+     * an Encantamento or a Maldição.
+     */
+    public static final String DEFENSE_SUBSTITUTION_NOT_PERMITTED = "DEFENSE_SUBSTITUTION_NOT_PERMITTED";
+
+    /**
+     * An Ataque com Escudo ({@code item.ShieldAttack}) from someone without Atacar com Escudos, with a
+     * Escudo they don't have equipped, or with Asas Adamantinas' wings they don't have or while flying.
+     */
+    public static final String SHIELD_ATTACK_NOT_PERMITTED = "SHIELD_ATTACK_NOT_PERMITTED";
+
+    /**
+     * A combatant tried to lower their Iniciativa to act last ({@code Scene#deferToLast}) without
+     * Analista Tático, outside a Cena de Combate, or after they have already acted or had their Turn.
+     */
+    public static final String DEFER_TO_LAST_NOT_PERMITTED = "DEFER_TO_LAST_NOT_PERMITTED";
 }

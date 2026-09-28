@@ -235,4 +235,44 @@ class MovementReactionServiceImplTest {
             return List.of(weapon);
         }
     }
+
+    // ---------- Defender o Perímetro and the charge's target (table ruling, 2026-09-28) ----------
+
+    @Test
+    void anInvestidasTargetCannotDefendThePerimeterAgainstTheCharger() {
+        CharacterSheet target = wielding(dagger());
+        CharacterSheet bystander = wielding(dagger());
+        SceneContext context = new SceneContext(List.of(), List.of(target, bystander),
+                Map.of(target, Range.ADJACENTE, bystander, Range.ADJACENTE));
+
+        assertEquals(List.of(bystander), movementReactionService.getProvokedReactors(combatant(), context,
+                Manoeuvre.INVESTIDA, target));
+        assertEquals(List.of(target, bystander), movementReactionService.getProvokedReactors(combatant(), context,
+                null, target), "only an Investida's target is left out");
+    }
+
+    @Test
+    void aMestreEscudeiroWithAShieldDefendsThePerimeterEvenAsTheTarget() {
+        CharacterSheet target = wielding(dagger());
+        target.getCharacter().grantFeat(org.aventyrs.core.feat.EscudeiroFeat.MESTRE_ESCUDEIRO);
+        SceneContext context = facing(target, Range.ADJACENTE);
+
+        assertEquals(List.of(), movementReactionService.getProvokedReactors(combatant(), context,
+                Manoeuvre.INVESTIDA, target), "no Escudo in use, no exception");
+
+        target.getCharacter().equip(org.aventyrs.core.item.ShieldItem.ESCUDO_DE_CORPO);
+
+        assertEquals(List.of(target), movementReactionService.getProvokedReactors(combatant(), context,
+                Manoeuvre.INVESTIDA, target));
+    }
+
+    @Test
+    void chargeServiceNamesTheTargetWhenTheInvestidaBegins() {
+        CharacterSheet charger = wielding(dagger());
+        CharacterSheet target = wielding(dagger());
+        SceneContext context = facing(target, Range.ADJACENTE);
+
+        assertEquals(List.of(), new ChargeServiceImpl().begin(charger, charger.getCharacter().getDrawnWeapons().get(0),
+                context, target).provokedReactors());
+    }
 }

@@ -54,15 +54,12 @@ import static org.aventyrs.core.util.TranslatableMessages.INVALID_SPELL_TARGETIN
  *
  * <b>A Conjurador is never damaged by their own Magia.</b> That rule is universal, so it is
  * deliberately not a column — there is no {@code excludesCaster} flag here, on {@link
- * AreaOfEffect}, or on {@link Spell}. It belongs to targeting resolution, which doesn't exist
- * yet, and couldn't be written today regardless: nothing resolves a Magia's target set, and
- * {@link Spell} carries no damage column at all ({@code getPrimaryEffectDescription} is prose),
- * so "does this Magia apply damage" isn't yet an answerable question. Whoever builds targeting
- * resolution has to implement it there.
+ * AreaOfEffect}, or on {@link Spell}. It is a targeting rule: a caller sweeping an area passes the
+ * caster in {@code AreaFootprint#occupants}' {@code excluded}.
  *
- * <p>Which hexes an area actually covers isn't resolved either — an emanation additionally needs
- * a <em>facing</em>, and that's chosen per cast by whoever aims the Magia, never a property of
- * the Magia itself.
+ * <p>Which hexes an area covers is {@code org.aventyrs.core.scene.grid.AreaFootprint}, taking the
+ * origin and — for an emanation — the aim as arguments, since a facing is chosen per cast by
+ * whoever aims the Magia, never a property of the Magia itself.
  */
 public record SpellTargeting(SpellReach reach, Range range, AreaOfEffect area) {
 

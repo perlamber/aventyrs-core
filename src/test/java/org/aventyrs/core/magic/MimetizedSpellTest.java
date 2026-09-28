@@ -54,14 +54,21 @@ class MimetizedSpellTest {
     }
 
     @Test
-    void rejectsAMissingSpellOrNonPositiveDeterminationCost() {
+    void rejectsAMissingSpellOrANegativeDeterminationCost() {
         IllegalOperationException missingSpell = assertThrows(IllegalOperationException.class,
                 () -> MimetizedSpell.builder().determinationPointCost(2).build());
-        IllegalOperationException zeroCost = assertThrows(IllegalOperationException.class,
-                () -> MimetizedSpell.builder().spell(new TestSpell()).determinationPointCost(0).build());
+        IllegalOperationException negativeCost = assertThrows(IllegalOperationException.class,
+                () -> MimetizedSpell.builder().spell(new TestSpell()).determinationPointCost(-1).build());
 
         assertEquals(INVALID_MIMETIZED_SPELL, missingSpell.getMessage());
-        assertEquals(INVALID_MIMETIZED_SPELL, zeroCost.getMessage());
+        assertEquals(INVALID_MIMETIZED_SPELL, negativeCost.getMessage());
+    }
+
+    /** A Semente costs 0 PM, so one mimetized "com PD em substituição aos PM" is free. */
+    @Test
+    void aFreeSementeIsAValidMimetizedSpell() {
+        assertEquals(0, MimetizedSpell.builder().spell(new TestSpell()).determinationPointCost(0).build()
+                .getDeterminationPointCost());
     }
 
     @Test

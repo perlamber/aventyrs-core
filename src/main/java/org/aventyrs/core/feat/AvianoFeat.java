@@ -1,5 +1,6 @@
 package org.aventyrs.core.feat;
 
+import org.aventyrs.core.character.MovementMode;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.race.Aviano;
@@ -9,14 +10,11 @@ import org.aventyrs.core.skill.SkillType;
  * Talentos Avianos — all four about <b>Voo</b>, which is the tree's defining feature and also
  * its defining gap.
  *
- * <p>Three of the four are catalog entries with enforced Pré-requisitos and no effect, blocked
- * on one shared missing system: <b>this core models no flight</b>. `Aviano`'s own Braços Alados
- * racial trait already records it — there is no flight state and no Movimento Base de Voo
- * distinct from the ordinary one. (The generic "spend a resource to enter a timed state"
- * transaction now exists — {@code ActiveAbilityService#activate} + {@code ActiveAbility}, with a
- * PA/PM/PV cost — but flight is a distance sub-stat plus a facing/altitude notion, not a
- * `TemporaryBonus`, and the PD cost these Talentos name is not among the supported ones.) Every
- * one of them adjusts a figure that does not exist, so none grants a partial effect.
+ * <p><b>The Movimento Base de Voo is real</b> ({@code MovementMode#FLIGHT}, granted by {@code
+ * Aviano}'s Braços Alados), so {@link #CORACAO_ALADO}'s +2UD per Título and {@link
+ * #BRACOS_LIVRES}' -3UD land on it. What stays missing is <b>flying as a timed state</b> — the PD
+ * cost, the dice-rolled Duração, the sleep-flying — since whether a character is flying is the
+ * caller's {@code EnvironmentalState#flying}, not something this core enters or ends.
  *
  * <p>{@link #VISAO_DA_VERDADE} is the exception, and the reason {@code
  * Feat#resolveDifficultyReduction} exists: its GD clause is the plain unconditional form, on a
@@ -28,11 +26,8 @@ public enum AvianoFeat implements Feat {
      * "A Duração de seu Efeito de Voo aumenta em +1d6 Rodadas. Seu Movimento Base de Voo aumenta
      * em +2UD para cada Título Aventyr Desperto que possuir."
      */
-    // TODO: needs a flight state and a Movimento Base de Voo — see Aviano's own Braços Alados.
-    //  Note the +2UD half must NOT be routed through resolveMovementIncrease: that hook feeds
-    //  MovementService#getMovementBase, the character's ordinary ground movement, and this
-    //  clause names Voo specifically. Vertical/swim/flight movement is a different sub-stat,
-    //  the same distinction AtletismoCompetencyAbility#ALPINISTA_VELOZ/ANFIBIO already draw.
+    // The +2UD per Título is real, on the flight axis (Feat#resolveModeMovementIncrease), which
+    // Aviano's own Braços Alados grants.
     // TODO: the +1d6 Duração is a die, and this core never rolls dice.
     CORACAO_ALADO(
             "A Duração de seu Efeito de Voo aumenta em +1d6 Rodadas. Seu Movimento Base de Voo "
@@ -40,17 +35,22 @@ public enum AvianoFeat implements Feat {
             FeatRequirements.builder()
                     .requiredRace(Aviano.class)
                     .requiredAwakenedTitles(1)
-                    .build()),
+                    .build()) {
+        @Override
+        public int resolveModeMovementIncrease(final MovementMode mode, final Character character) {
+            return mode == MovementMode.FLIGHT ? CORACAO_ALADO_FLIGHT_PER_TITLE * character.getAllTitles().size() : 0;
+        }
+    },
 
     /**
      * "Seus braços e asas se separam, agora você pode usar suas mãos livremente enquanto voando,
      * elas não são mais consideradas membros inábeis, mas seu Movimento Base de Voo é reduzido
      * em -3UD."
      */
-    // TODO: needs a flight state, and needs the limb/anatomy concept Aviano's Braços Alados is
-    //  itself blocked on — "membros inábeis" is not a condition anything models, so a Talento
-    //  lifting it has nothing to lift. Both halves of this Talento are inert together, which is
-    //  at least self-consistent: neither the penalty nor its price applies.
+    // The -3UD on the flight axis is real (Feat#resolveModeMovementIncrease).
+    // TODO: the hands half needs the limb/anatomy concept Aviano's Braços Alados is blocked on —
+    //  "membros inábeis" is not a condition anything models, so there is nothing to lift. ⚠️ So
+    //  the Talento's price currently applies without its benefit.
     BRACOS_LIVRES(
             "Seu corpo muda e seus braços e asas se separam, agora você pode usar suas mãos "
                     + "livremente enquanto voando, elas não são mais consideradas membros "
@@ -60,14 +60,21 @@ public enum AvianoFeat implements Feat {
                     .attributeDomain(AttributeDomain.DEXTERITY)
                     .requiredAttributeValue(4)
                     .requiredAwakenedTitles(1)
-                    .build()),
+                    .build()) {
+        @Override
+        public int resolveModeMovementIncrease(final MovementMode mode, final Character character) {
+            return mode == MovementMode.FLIGHT ? BRACOS_LIVRES_FLIGHT_MALUS : 0;
+        }
+    },
 
     /**
      * "Enquanto estiver consciente você pode voar sem limites de Duração, mesmo em Cenas
      * estressantes. Você pode desligar parte do seu cérebro e dormir voando em linha reta por
      * até Descanso Mínimo."
      */
-    // TODO: needs a flight state. Removing a Duração limit presupposes the Duração.
+    // TODO: removing the flight Duração limit — the Movimento Base de Voo exists now, but flying
+    //  as a timed state with a PD cost and a Duração is not modelled (whether one is flying is
+    //  the caller's EnvironmentalState#flying), so there is no limit to remove.
     // TODO: the sleep-flying half additionally needs a sleep state, which nothing tracks — the
     //  same "no Fadiga/asfixia" gap Troll's own Sono de Pedra cites.
     ETERNO_VIAJANTE(
@@ -104,6 +111,12 @@ public enum AvianoFeat implements Feat {
     };
 
     private static final int ATENCAO_DIFFICULTY_REDUCTION = 1;
+
+    /** CORACAO_ALADO's "+2UD para cada Título Aventyr Desperto". */
+    private static final int CORACAO_ALADO_FLIGHT_PER_TITLE = 2;
+
+    /** BRACOS_LIVRES' "seu Movimento Base de Voo é reduzido em -3UD". */
+    private static final int BRACOS_LIVRES_FLIGHT_MALUS = -3;
 
     private final String description;
     private final FeatRequirements featRequirements;

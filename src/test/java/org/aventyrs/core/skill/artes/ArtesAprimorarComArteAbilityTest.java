@@ -41,7 +41,7 @@ class ArtesAprimorarComArteAbilityTest {
                 .skillCompetencyAbility(new ArtesAprimorarComArteAbility(SkillType.ESQUIVA_E_APARAR))
                 .build();
 
-        assertEquals(ArtesAprimorarComArteAbility.BENEFIT_BONUS, damageService.getTotalDamageReduction(character));
+        assertEquals(ArtesAprimorarComArteAbility.BENEFIT_BONUS, damageService.getTotalDamageTakenReduction(character));
     }
 
     @Test
@@ -50,7 +50,7 @@ class ArtesAprimorarComArteAbilityTest {
                 .skillCompetencyAbility(new ArtesAprimorarComArteAbility(SkillType.ATAQUE_CORPO_A_CORPO))
                 .build();
 
-        assertEquals(0, damageService.getTotalDamageReduction(character));
+        assertEquals(0, damageService.getTotalDamageTakenReduction(character));
     }
 
     @Test

@@ -1,7 +1,13 @@
 package org.aventyrs.core.character.services;
 
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.scene.AreaOfEffect;
+import org.aventyrs.core.sheet.CombatantSheet;
+import org.aventyrs.core.skill.AttackSource;
+import org.aventyrs.core.skill.SkillRoll;
 import org.aventyrs.core.skill.SkillType;
+
+import java.util.Optional;
 
 /**
  * Resolves how many combatants one attack may affect — the one target every attack has, plus
@@ -48,4 +54,26 @@ public interface AttackTargetingService {
      * is where a roll is refused for not being an attack.
      */
     int getMaximumTargets(Character attacker, SkillType attackSkill);
+
+    /**
+     * {@link #getMaximumTargets(Character, SkillType)} with the attacker's sheet, so a Talento gated on
+     * the attacker's state counts ({@code CavalariaFeat#ATAQUE_EM_ARCO} while riding). What {@code
+     * AttackDelivery} enforces.
+     */
+    int getMaximumTargets(CombatantSheet attacker, SkillType attackSkill, AttackSource attackSource);
+
+    /**
+     * Whether a held Talento halves every target's damage, the primary included, for an attack naming
+     * additionalTargets extra targets ({@code Feat#halvesEveryTargetDamage}).
+     */
+    boolean halvesEveryTarget(CombatantSheet attacker, SkillType attackSkill, AttackSource attackSource,
+                              int additionalTargets);
+
+    /**
+     * The Área de Efeito attacker's Talentos turn this attack into ({@code Feat#resolveAttackArea}),
+     * or empty — asked before the attack is built, so the caller can name the footprint's occupants
+     * as its targets and declare the area on {@code DeliveredAttack#areaOfEffect}.
+     */
+    Optional<AreaOfEffect> resolveAttackArea(Character attacker, SkillType attackSkill, AttackSource attackSource,
+                                             SkillRoll skillRoll);
 }

@@ -1,5 +1,12 @@
 package org.aventyrs.core.feat;
 
+import org.aventyrs.core.magic.ElementalType;
+import org.aventyrs.core.character.DamageType;
+import org.aventyrs.core.character.DamageDescriptor;
+import org.aventyrs.core.character.MovementMode;
+import org.aventyrs.core.sheet.ConditionType;
+import org.aventyrs.core.character.EgoDomain;
+import org.aventyrs.core.combat.Retaliation;
 import org.aventyrs.core.ability.ActiveAbility;
 import org.aventyrs.core.ability.AttributeAbility;
 import org.aventyrs.core.character.AttributeDomain;
@@ -9,6 +16,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
 import org.aventyrs.core.effect.CriticalEffect;
 import org.aventyrs.core.effect.EffectChain;
 import org.aventyrs.core.sheet.ActionCost;
@@ -20,7 +28,6 @@ import org.aventyrs.core.sheet.FormType;
 import org.aventyrs.core.sheet.FormAccess;
 import org.aventyrs.core.sheet.PendingAcquisition;
 import org.aventyrs.core.skill.CriticalResult;
-import org.aventyrs.core.skill.SkillRoll;
 import org.aventyrs.core.character.CriticalDamage;
 import org.aventyrs.core.character.DamageBonus;
 import org.aventyrs.core.character.CharacterSkill;
@@ -33,14 +40,18 @@ import org.aventyrs.core.item.NaturalWeapon;
 import org.aventyrs.core.race.RacialTraitSuppression;
 import org.aventyrs.core.item.RegaliaGrade;
 import org.aventyrs.core.item.Weapon;
+import org.aventyrs.core.magic.FreeSpellPick;
 import org.aventyrs.core.magic.Spell;
 import org.aventyrs.core.magic.MimetizedSpell;
 import org.aventyrs.core.rest.RestType;
+import org.aventyrs.core.scene.AreaOfEffect;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.skill.AttackSource;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
+import org.aventyrs.core.skill.SkillRoll;
 import org.aventyrs.core.skill.SkillTrait;
 import org.aventyrs.core.skill.SkillType;
+import org.aventyrs.core.title.AventyrTitleAbility;
 import org.aventyrs.core.title.TitleArchetype;
 import org.aventyrs.core.title.TitleIdentity;
 
@@ -57,7 +68,7 @@ import org.aventyrs.core.title.TitleIdentity;
  * authored catalog, which is correct: {@code FeatCatalog} lists the ruleset, not every {@code
  * Feat} that could ever be constructed.
  */
-public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, ArtilhariaFeat, AssassinoFeat, AvianoFeat, BestialFeat, CavalariaFeat, DestinoFeat, DraconicoFeat, DuelistaFeat, ElementalFeat, ElficoFeat, EscudeiroFeat, FadasFeat, FeericoFeat, FeralFeat, FuriasFeat, GiganteFeat, GnomoFeat, GoblinFeat, GorgonaFeat, HumanoFeat, IndomitoFeat, MesticoFeat, MobilidadeFeat, MonstruosoFeat, OgricoFeat, OrquicoFeat, PequeninoFeat, TrollFeat, VampiricoFeat, PeritoFeat, SobrevivenciaFeat, MetamagicoFeat, AbstractFeat {
+public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, ArtilhariaFeat, AssassinoFeat, AvianoFeat, BestialFeat, CavalariaFeat, DestinoFeat, DraconicoFeat, DuelistaFeat, ElementalFeat, ElficoFeat, EscudeiroFeat, FadasFeat, FeericoFeat, FeralFeat, FuriasFeat, GiganteFeat, GnomoFeat, GoblinFeat, GorgonaFeat, HumanoFeat, IndomitoFeat, MesticoFeat, MobilidadeFeat, MonstruosoFeat, OgricoFeat, OrquicoFeat, PequeninoFeat, TrollFeat, VampiricoFeat, PeritoFeat, SobrevivenciaFeat, MetamagicoFeat, AntecedenteFeat, AbstractFeat {
     FeatCategory getFeatCategory();
     String getDescription();
     FeatRequirements getFeatRequirements();
@@ -157,6 +168,17 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     }
 
     /**
+     * Whether character (and sheet) satisfy requirements — the check {@link #isEligible(Character,
+     * CharacterSheet)} runs, for an override that adds a clause no {@link FeatRequirements} field
+     * says ({@code VampiricoFeat#PODER_VAMPIRICO_DURADOURO}'s "2 outros Talentos de Poderes
+     * Vampíricos") and must still run the data clauses.
+     */
+    static boolean meetsRequirements(final FeatRequirements requirements, final Character character,
+                                     final CharacterSheet sheet) {
+        return satisfies(requirements, character, sheet);
+    }
+
+    /**
      * Whether character satisfies this Talento's requirements <b>once every Raça clause is
      * dropped</b> — see {@link FeatRequirements#withoutRaceClauses()}. Added for {@code
      * DestinoFeat#EXCEPCIONALIDADE}'s "um Talento Racial que você cumpra todos os demais
@@ -241,6 +263,12 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
         boolean experienceSatisfied = requirements.requiredTotalExperience() == null || sheet == null
                 || sheet.getTotalExperience().compareTo(requirements.requiredTotalExperience()) >= 0;
 
+        boolean awakenedTitlesCeilingSatisfied = requirements.maximumAwakenedTitles() == null
+                || character.getAllTitles().size() <= requirements.maximumAwakenedTitles();
+
+        boolean centelhasCeilingSatisfied = requirements.maximumCentelhas() == null
+                || character.getCentelhas() <= requirements.maximumCentelhas();
+
         boolean disjunctionSatisfied = requirements.anyOf().isEmpty()
                 || requirements.anyOf().stream().anyMatch(branch -> satisfies(branch, character, sheet));
 
@@ -249,7 +277,8 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
                 && skillSatisfied && featSatisfied && noForbiddenFeatHeld && traitsSatisfied
                 && titlesSatisfied && raceSatisfied && raceNotForbidden && creatureTypeSatisfied
                 && deitySatisfied && categoryCountSatisfied && regaliaCraftHistorySatisfied
-                && alignmentSatisfied && fameSatisfied && experienceSatisfied && disjunctionSatisfied;
+                && alignmentSatisfied && fameSatisfied && experienceSatisfied && awakenedTitlesCeilingSatisfied
+                && centelhasCeilingSatisfied && disjunctionSatisfied;
     }
 
     /**
@@ -311,6 +340,28 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
 
     /** Whether this Talento lets its holder breathe underwater. */
     default boolean allowsUnderwaterBreathing(final Character character) {
+        return false;
+    }
+
+    /**
+     * The same, for a clause that holds only while a timed state is running on the holder's sheet —
+     * {@code PeritoFeat#CRIANCA_DO_MAR}'s "respirar na água por um curto período, ao custo de 1PD por
+     * Rodada". Defaults to the sheet-less form; {@code holder} is {@code null} for a caller holding
+     * only a {@code Character}, which reads as "not running". Asked by {@code
+     * CombatantSheet#canBreatheUnderwater()}.
+     */
+    default boolean allowsUnderwaterBreathing(final Character character, final CombatantSheet holder) {
+        return allowsUnderwaterBreathing(character);
+    }
+
+    /**
+     * Whether this Talento lets its holder cling to walls and ceilings right now — "grudar em paredes
+     * e tetos, incluindo superfícies lisas e movimentos de cabeça para baixo" ({@code
+     * PeritoFeat#REI_DA_MONTANHA}). A permission the caller reads through {@code
+     * CombatantSheet#canClingToSurfaces()}: which surface is where is geometry, the caller's as ever.
+     * False by default, and for a {@code null} holder.
+     */
+    default boolean clingsToSurfaces(final Character character, final CombatantSheet holder) {
         return false;
     }
 
@@ -471,6 +522,119 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
         return resolveDamageBonus(attackingSkillType, sceneContext, attackTarget, actor, attackSource, targetCount);
     }
 
+    /**
+     * The longest form, adding the attack roll — the dano half of a clause the holder <b>opts
+     * into</b> on one attack ({@code SkillRoll#activated(Feat)}): Ataque Concentrado's Vantagem,
+     * Ataque Rápido's Desvantagem, Força Excessiva's "metade do seu valor de Vigor". The twin of the
+     * {@code SkillRoll}-taking {@link #resolveSkillRollBonus(SkillType, SceneContext, SkillTrait,
+     * Character, AttackSource, CombatantSheet, SkillRoll)}: a trade between the two rolls needs the
+     * same reach on both. Defaults to the sheet-taking form; a {@code null} roll activates nothing.
+     */
+    default Optional<DamageBonus> resolveDamageBonus(final SkillType attackingSkillType, final SceneContext sceneContext,
+                                                      final CombatantSheet attackTarget, final Character actor,
+                                                      final AttackSource attackSource, final int targetCount,
+                                                      final CombatantSheet holder, final SkillRoll skillRoll) {
+        return resolveDamageBonus(attackingSkillType, sceneContext, attackTarget, actor, attackSource, targetCount,
+                holder);
+    }
+
+    /**
+     * Extra d6s this Talento adds to the dano roll of an attack — {@code DuelistaFeat#ATAQUE_CONCENTRADO}'s
+     * "Se utilizar este Talento ao mesmo tempo que Lutador Nato, ao invés da Vantagem na rolagem de
+     * Dano, seu dano aumenta em +1d6". Summed onto {@code InteractionResult#getExtraDamageDice()}
+     * beside Transferir Rancor's, for the caller to throw. Zero by default.
+     */
+    default int resolveExtraDamageDice(final SkillType attackSkill, final AttackSource attackSource,
+                                       final CombatantSheet holder, final SkillRoll skillRoll) {
+        return 0;
+    }
+
+    /**
+     * How many times the attack's dano roll may throw its lowest die again — {@code
+     * DuelistaFeat#LUTAR_ENGAJADO}'s "Sempre que usar o talento Lutador Nato contra um alvo adjacente
+     * poderá também rolar novamente o dado de menor valor em suas rolagens de Dano". Summed onto
+     * {@code InteractionResult#getDamageLowestDieRerolls()}; the caller throws the dano dice, so the
+     * reroll is its step, the same as the attack's own. Zero by default, and only asked with a real
+     * attackTarget.
+     */
+    default int resolveDamageLowestDieRerolls(final SkillType attackSkill, final SceneContext sceneContext,
+                                              final CombatantSheet holder, final CombatantSheet attackTarget,
+                                              final SkillRoll skillRoll) {
+        return 0;
+    }
+
+    /**
+     * Whether this Talento halves the damage of the whole attack — primary and extras alike —
+     * because of how the attack was made: {@code DuelistaFeat#ATAQUE_REPENTINO}'s "Os danos causados
+     * por este ataque são reduzidos à metade, este é um efeito de Meio-Dano". A flag, so it never
+     * quarters with another Meio-Dano. Asked by {@code AttackDelivery}; false by default.
+     */
+    default boolean halvesAttackDamage(final SkillType attackSkill, final AttackSource attackSource,
+                                       final CombatantSheet attacker, final SkillRoll skillRoll) {
+        return false;
+    }
+
+    /**
+     * PV the <b>attacker</b> loses when this attack lands, locked until a Descanso Verdadeiro — {@code
+     * DuelistaFeat#FORCA_EXCESSIVA}'s "se o fizer e for bem-sucedido você sofre 2 pontos de Dano
+     * Físico Primordial. Danos sofridos desta forma não podem ser reduzidos e são recuperados apenas
+     * com Descansos Verdadeiros". Summed by {@code AttackDelivery} onto {@code
+     * DeliveredAttackResult#getLockedSelfDamage()} — reported, never dealt; the caller pays it with
+     * {@code CombatantSheet#payWithVitality}, which is exactly "no mitigation, then locked". Zero by
+     * default, and only asked for a hit.
+     */
+    default int resolveLockedSelfDamageOnHit(final SkillType attackSkill, final AttackSource attackSource,
+                                             final CombatantSheet attacker, final SkillRoll skillRoll) {
+        return 0;
+    }
+
+    /**
+     * How much of a critical hit's damage its victim may recover only with a Descanso Verdadeiro or
+     * Roubo de Vida — {@code DuelistaFeat#FERIDAS_ARDENTES}' "O dano adicional de Metade da Gnose,
+     * causado em seus Danos Críticos, não pode ser curado, exceto por Descansos Verdadeiros e efeitos
+     * de Roubo de Vida". {@code AttackDelivery} marks each target's chain head with it ({@code
+     * DamageInteraction#lockingDamage}), which locks it on the victim once the hit lands — capped at
+     * what the hit actually took. Zero by default; asked only on an Acerto Crítico.
+     */
+    default int resolveUnhealableCriticalDamage(final SkillType attackSkill, final AttackSource attackSource,
+                                                final Character attacker, final CriticalResult criticalResult) {
+        return 0;
+    }
+
+    /**
+     * Whether this Talento lets its holder roll a Perícia de Ataque in place of Esquiva e Aparar
+     * against an attack resisted with defenseType — {@code DuelistaFeat#DEFENDER_SE_ATACANDO} for the
+     * Defesa Física, {@code #DEFENDER_SE_ATACANDO_SUPERIOR} for the Mágica "exceto para evitar
+     * Encantamentos e Maldições". {@code AttackReceiver} requires one held Talento to answer true, and
+     * the roll to activate Defender-se Atacando (whose once-per-Rodada limit is its {@link
+     * #permitsActivation}). False by default.
+     *
+     * @param enchantmentOrCurse whether the attack is an Encantamento or a Maldição
+     */
+    default boolean permitsDefenseSubstitution(final DefenseType defenseType, final boolean enchantmentOrCurse) {
+        return false;
+    }
+
+    /**
+     * Whether this Talento spares its Cego holder the 1d6 a skillType roll would otherwise need
+     * ({@code sheet.BlindCheck}) — {@code DuelistaFeat#COMBATER_AS_CEGAS}' "não precisa efetuar
+     * rolagens de 1d6 para utilizar efeitos pessoais e Ataques Corpo-a-Corpo". Asked by {@code
+     * CombatantSheet#getBlindCheckThreshold}; false by default.
+     */
+    default boolean exemptsFromBlindCheck(final SkillType skillType) {
+        return false;
+    }
+
+    /**
+     * The same exemption, for one scoped to <b>whom</b> the roll is aimed at — {@code
+     * ArtilhariaFeat#DISPARO_AS_CEGAS}' "Ataques-a-Distância efetuados contra alvos em até Distância
+     * Média", read off {@code SceneContext#getOpposedCharacter()}/{@code getDistanceTo}. Defaults to the
+     * shorter form; a {@code null} context reads as "condition not met".
+     */
+    default boolean exemptsFromBlindCheck(final SkillType skillType, final SceneContext sceneContext) {
+        return exemptsFromBlindCheck(skillType);
+    }
+
     default Optional<DamageBonus> resolveDamageBonus(final SkillType attackingSkillType, final SceneContext sceneContext,
                                                       final CombatantSheet attackTarget, final Character actor,
                                                       final AttackSource attackSource, final int targetCount) {
@@ -498,6 +662,28 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
         return 0;
     }
 
+    /**
+     * {@link #resolveAdditionalTargets(SkillType, Character)} seeing the attacker's sheet and what the
+     * attack is made with — what a state- or source-gated clause needs ({@code
+     * CavalariaFeat#ATAQUE_EM_ARCO}'s "enquanto estiver montado ou dirigindo" and "apenas ataques
+     * físicos"). Defaults to the shorter form; a {@code null} sheet reads as "condition not met".
+     */
+    default int resolveAdditionalTargets(final SkillType attackingSkillType, final Character character,
+                                         final CombatantSheet attacker, final AttackSource attackSource) {
+        return resolveAdditionalTargets(attackingSkillType, character);
+    }
+
+    /**
+     * Whether this Talento halves the damage on <b>every</b> target of the attack, the primary
+     * included — {@code CavalariaFeat#ATAQUE_EM_ARCO}'s "o valor dos danos causados em cada alvo é igual
+     * a metade do valor rolado". Asked by {@code AttackDelivery} with the number of additional targets
+     * declared; an additional target is halved regardless. False by default.
+     */
+    default boolean halvesEveryTargetDamage(final SkillType attackingSkillType, final AttackSource attackSource,
+                                            final CombatantSheet attacker, final int additionalTargets) {
+        return false;
+    }
+
     default int resolveDamageBaseIncrease(final Character character, final Weapon weapon) {
         return 0;
     }
@@ -523,6 +709,30 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      * bonus, the same reasoning {@code SpellService#getMaxBranchLevel} uses for tree depth.
      */
     default int resolveAttackRangeIncrease(final Character character, final AttackSource attackSource) {
+        return 0;
+    }
+
+    /**
+     * The same widening, for a clause scoped to the Talentos the attack <b>spends</b> — {@code
+     * ArtilhariaFeat#TIRO_LONGO}'s "Sempre que efetuar ataques utilizando dos benefícios do Talento
+     * ‘Mira Impecável’, a distância dos seus ataques aumenta em +1 passo". Asked before the roll (the
+     * reach decides what may be aimed at), so it takes what the attacker is about to activate rather
+     * than a {@code SkillRoll}. Defaults to the shorter form; an empty set activates nothing.
+     */
+    default int resolveAttackRangeIncrease(final Character character, final AttackSource attackSource,
+                                           final Set<Feat> activatedFeats) {
+        return resolveAttackRangeIncrease(character, attackSource);
+    }
+
+    /**
+     * How many <b>more</b> times every Corrente de Efeitos and every Efeito Crítico of this attack
+     * applies — {@code ArtilhariaFeat#TIRO_DUPLO}'s extra projectile ("Correntes de Efeito e Efeitos
+     * Críticos aplicam seus efeitos duas vezes"), and {@code #TIRO_MULTIPLO}'s one per projectile.
+     * Summed by {@code AttackDelivery}, which repeats each triggered stage that many extra times; the
+     * triggers themselves (the Corrente threshold, the critical) are judged once. Zero by default.
+     */
+    default int resolveAttackEffectRepetitions(final SkillType attackSkill, final AttackSource attackSource,
+                                               final CombatantSheet attacker, final SkillRoll skillRoll) {
         return 0;
     }
 
@@ -600,6 +810,146 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     }
 
     /**
+     * The longest form, adding the roll itself — for a bonus the holder <b>opts into</b> on one roll
+     * rather than holds: {@code SkillRoll#activated(Feat)} is what separates "holds Ataque
+     * Concentrado" from "chose Desvantagem on this attack to buy Vantagem on its dano"
+     * ({@code DuelistaFeat#ATAQUE_CONCENTRADO}/{@code #ATAQUE_RAPIDO}/{@code #COMBATER_COM_2_ARMAS}).
+     *
+     * <p><b>Defaults to the sheet-taking form</b>, like every longer {@code Feat} overload. {@code
+     * skillRoll} is {@code null} on the bonuses-only preview path, which reads as "nothing activated".
+     */
+    default int resolveSkillRollBonus(final SkillType skillType, final SceneContext sceneContext,
+                                       final SkillTrait requestedAbility, final Character character,
+                                       final AttackSource attackSource, final CombatantSheet holder,
+                                       final SkillRoll skillRoll) {
+        return resolveSkillRollBonus(skillType, sceneContext, requestedAbility, character, attackSource, holder);
+    }
+
+    /**
+     * Whether holder may activate this Talento on skillRoll right now — the per-use gate of a
+     * Talento named in {@code SkillRoll#getActivatedFeats()}. {@code AbstractSkillInteraction}
+     * refuses the roll ({@code FEAT_ACTIVATION_NOT_PERMITTED}) when this answers false, after
+     * refusing one the roller does not hold at all ({@code ACTIVATED_FEAT_NOT_HELD}).
+     *
+     * <p>What an override checks is the clause's own scope — the Perícia ("um Ataque
+     * Corpo-a-Corpo"), what the attack is made with ("com uma Arma ou Ataque Desarmado"), a limit
+     * read off the holder's own log ("apenas uma vez por Rodada": {@link
+     * CombatantSheet#countFeatActivationsThisRound}; "uma vez por Turno": {@code
+     * countFeatActivationsThisTurn}), or a sequence ("após ser bem-sucedido em um Ataque Rápido",
+     * the last entry of {@code getActionsThisTurn()}). The roll being resolved is never in the log
+     * yet. {@code holder} is {@code null} only for a caller holding no sheet, which an override with
+     * a limit must read as "cannot tell" and refuse.
+     *
+     * <p><b>True by default</b>: a Talento with no activation clause has nothing to refuse, and the
+     * Talentos that existed before this gate stay activatable exactly as they were.
+     */
+    default boolean permitsActivation(final SkillType skillType, final SkillRoll skillRoll,
+                                      final AttackSource attackSource, final CombatantSheet holder) {
+        return true;
+    }
+
+    /**
+     * {@link #permitsActivation(SkillType, SkillRoll, AttackSource, CombatantSheet)} seeing the
+     * roller's {@link SceneContext} — for a use gated on the Cena itself: whether it is a Cena de
+     * Combate and which Rodada ({@code PeritoFeat#MESTRE_PERITO}'s "Na primeira Rodada de cada Cena
+     * de Combate", {@code #MAESTRIA_EM_PERICIA}'s "Se não estiver em combate"). What {@code
+     * AbstractSkillInteraction} calls; defaults to the shorter form. {@code null} when the roll has no
+     * Scene.
+     */
+    default boolean permitsActivation(final SkillType skillType, final SkillRoll skillRoll,
+                                      final AttackSource attackSource, final CombatantSheet holder,
+                                      final SceneContext sceneContext) {
+        return permitsActivation(skillType, skillRoll, attackSource, holder);
+    }
+
+    /**
+     * Whether activating this Talento pays for throwing the lowest die of a skillType roll again —
+     * "você pode aumentar o Tempo de Ação … em +1PA, se o fizer poderá rolar novamente o dado de
+     * menor valor em sua rolagem" ({@code DuelistaFeat#LUTADOR_NATO}, {@code
+     * ArtilhariaFeat#MIRA_IMPECAVEL}). A roll built with {@code SkillRoll#rerollingLowestDie} is
+     * refused ({@code REROLL_NOT_GRANTED}) unless one of its activated Talentos answers true. The
+     * "+1PA" is the attack's price, not this hook's — see {@link #resolveAttackActionPointAdjustment}.
+     */
+    default boolean grantsLowestDieReroll(final SkillType skillType) {
+        return false;
+    }
+
+    /**
+     * The same, for a reroll scoped to the holder's own choices or to the Cena — {@code
+     * PeritoFeat#MAESTRIA_EM_PERICIA}'s "Sob situações de estresse ou combates … você poderá rolar
+     * novamente o dado de menor valor", only on "a Perícia escolhida em Foco em Perícia". What {@code
+     * AbstractSkillInteraction} asks; defaults to the shorter form.
+     */
+    default boolean grantsLowestDieReroll(final SkillType skillType, final CombatantSheet roller,
+                                          final SceneContext sceneContext) {
+        return grantsLowestDieReroll(skillType);
+    }
+
+    /**
+     * What activating this Talento sets an attack's Tempo de Ação <b>to</b>, replacing the Perícia
+     * roll's own price — {@code DuelistaFeat#ATAQUE_REPENTINO}'s "ao tempo de 1PA", {@code
+     * #UM_DOIS}' "ao custo de 1PA", {@code #COMBATER_COM_2_ARMAS}' "dois ataques … ao custo de 3PA"
+     * (3 on the first of the pair, 0 on the second). {@code null} by default: the price is left as
+     * it is. Summed with every {@link #resolveAttackActionPointAdjustment} by {@code
+     * ActionPointsService#getAttackCost}; of two overrides, the lowest wins.
+     *
+     * @param activatedFeats what the attacker is about to spend on this attack — asked
+     *                       <em>before</em> the roll, since the price decides whether it can be made
+     */
+    default Integer resolveAttackActionPointOverride(final SkillType skillType, final AttackSource attackSource,
+                                                     final CombatantSheet attacker, final Set<Feat> activatedFeats) {
+        return null;
+    }
+
+    /**
+     * How many PA this Talento adds to (positive) or takes off (negative) an attack's Tempo de Ação —
+     * {@code DuelistaFeat#LUTADOR_NATO}'s "+1PA", {@code #DOMINAR_ARMAS}' "-1PA (mínimo 1PA)" on the
+     * first attack each Rodada with the chosen weapon. Zero by default. A reduction never takes the
+     * price below 1PA — {@code ActionPointsService#getAttackCost} applies that floor.
+     */
+    default int resolveAttackActionPointAdjustment(final SkillType skillType, final AttackSource attackSource,
+                                                   final CombatantSheet attacker, final Set<Feat> activatedFeats) {
+        return 0;
+    }
+
+    /**
+     * What activating this Talento sets a <b>Perícia roll's</b> Tempo de Ação to — {@code
+     * PeritoFeat#LEMBRAR_COMO_SE_FAZ}' "a nova tentativa utilizará apenas 1PA". The Perícia-roll twin
+     * of {@link #resolveAttackActionPointOverride}, read by {@code ActionPointsService#getSkillRollCost}
+     * and — since an attack is a Perícia roll too — by {@code #getAttackCost}, where an attack override
+     * outranks it. {@code null} by default; of two, the lowest wins.
+     *
+     * @param sceneContext the roller's, or {@code null} with no Scene
+     */
+    default Integer resolveSkillRollActionPointOverride(final SkillType skillType, final CombatantSheet roller,
+                                                        final Set<Feat> activatedFeats, final SceneContext sceneContext) {
+        return null;
+    }
+
+    /**
+     * What this Talento multiplies a Perícia roll's Tempo de Ação by — {@code
+     * PeritoFeat#MAESTRIA_EM_PERICIA}'s "ao custo de triplicar seu Tempo de Ação". Applied after any
+     * override and before every adjustment. 1 by default; of two, the largest wins (a multiplier is a
+     * restatement of the price, not a bonus that stacks).
+     */
+    default int resolveSkillRollActionPointMultiplier(final SkillType skillType, final CombatantSheet roller,
+                                                      final Set<Feat> activatedFeats, final SceneContext sceneContext) {
+        return 1;
+    }
+
+    /**
+     * How many PA this Talento adds to (positive) or takes off (negative) a Perícia roll's Tempo de
+     * Ação — {@code PeritoFeat#PERITO_VELOZ}'s "A primeira rolagem da Perícia escolhida que fizer em
+     * cada um de seus Turnos tem o Tempo de Ação reduzido em -1PA". The Perícia-roll twin of {@link
+     * #resolveAttackActionPointAdjustment}, summed with it on an attack; a reduction never takes the
+     * price below 1PA. Zero by default.
+     */
+    default int resolveSkillRollActionPointAdjustment(final SkillType skillType, final CombatantSheet roller,
+                                                      final Set<Feat> activatedFeats, final SceneContext sceneContext) {
+        return 0;
+    }
+
+    /**
      * How many GD (níveis de {@code DifficultyLevel}) this Talento takes off a skillType roll —
      * summed by {@code AbstractSkillInteraction#applyTo} across {@code Character#getFeats()},
      * alongside the {@code SkillCompetencyAbility#getDifficultyReduction()} and {@code
@@ -624,6 +974,32 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     }
 
     /**
+     * {@link #resolveDifficultyReduction(SkillType, Character)} seeing the roller's {@link
+     * SceneContext} — what a clause scoped to the <em>opponent</em> needs ({@code
+     * VampiricoFeat#MESTRE_VAMPIRO}'s "quando efetuadas contra outros Vampiros a GD é reduzida em -1
+     * Nível", read off {@code SceneContext#getOpposedCharacter()}). Defaults to the shorter form; a
+     * {@code null} context reads as "condition not met".
+     */
+    default int resolveDifficultyReduction(final SkillType skillType, final Character character,
+                                           final SceneContext sceneContext) {
+        return resolveDifficultyReduction(skillType, character);
+    }
+
+    /**
+     * The longest form, adding the roll — what a GD clause scoped to an <b>Especialização</b> or to a
+     * Talento <b>activated</b> on this roll needs: {@code PeritoFeat#LEITURA_COMPORTAMENTAL}'s
+     * "Atenção: Discernir Motivação" ({@code SkillRoll#getRequestedAbility()}), {@code
+     * #MAESTRIA_EM_PERICIA}'s opted-into -2 Níveis and {@code #LEMBRAR_REVISAR_E_APRIMORAR}'s "a
+     * segunda rolagem" of an activated Lembrar Como se Faz ({@code SkillRoll#activated}). What {@code
+     * AbstractSkillInteraction} calls; defaults to the context-taking form. {@code null} on the
+     * bonuses-only preview path, which activates and requests nothing.
+     */
+    default int resolveDifficultyReduction(final SkillType skillType, final Character character,
+                                           final SceneContext sceneContext, final SkillRoll skillRoll) {
+        return resolveDifficultyReduction(skillType, character, sceneContext);
+    }
+
+    /**
      * How many níveis this Talento takes off the <b>GD da Conjuração</b> of spell — the Magia's
      * own authored tier ({@code Spell#getCastingDifficultyLevel()}), which the Domínio do Mana
      * roll is made against. Summed by {@code SpellCastingService#resolveCastingDifficultyReduction}
@@ -636,6 +1012,21 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      * that. Report-only, like the rest of the cast — nothing compares a roll against the GD.
      */
     default int resolveCastingDifficultyReduction(final Spell spell, final Character character) {
+        return 0;
+    }
+
+    /**
+     * PM this Talento takes off the Mana cost of casting spell — "O Custo de Mana para Conjurar
+     * Magias … é reduzido em -1PM" ({@code MetamagicoFeat#ENGENHEIRO_DO_MANA}), "Conjurar Magias
+     * Divinas e Naturais em personagens aliados ou neutros custam 1PM … à menos" ({@code
+     * FadasFeat#ASPECTO_DA_BONDADE_NATURAL}, {@code FuriasFeat}'s twin). Summed by {@code
+     * SpellCastingService} after the Títulos' multiplier, and the result floors at 1 — every
+     * clause says "mínimo 1" — unless the Magia was free to begin with. target is the cast's
+     * {@code combatantTarget} and casterContext the caster's snapshot, for an allegiance-scoped
+     * clause; either may be {@code null}, read as "cannot tell". Zero by default.
+     */
+    default int resolveManaCostReduction(final Spell spell, final CombatantSheet caster, final CombatantSheet target,
+                                         final SceneContext casterContext) {
         return 0;
     }
 
@@ -656,6 +1047,77 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     default int resolveCastingActionPointReduction(final Spell spell, final Character character,
                                                    final int currentRound,
                                                    final List<CombatantAction> actionsThisRound) {
+        return 0;
+    }
+
+    /**
+     * The longer form, adding the Talentos the caster opted into for this cast ({@code
+     * SpellCastRequest#getActivatedFeats}) — what an opt-in trade needs ({@code
+     * MetamagicoFeat#CONJURACAO_RAPIDA}, {@code #PROCRASTINAR_CONJURACAO}). Defaults to the shorter
+     * form, so every existing override keeps working.
+     */
+    default int resolveCastingActionPointReduction(final Spell spell, final Character character,
+                                                   final int currentRound,
+                                                   final List<CombatantAction> actionsThisRound,
+                                                   final java.util.Set<Feat> activatedFeats) {
+        return resolveCastingActionPointReduction(spell, character, currentRound, actionsThisRound);
+    }
+
+    /**
+     * A bonus (or, negative, a malus) this Talento puts on the cast's Conjuração roll ({@code
+     * SpellCastingResult#getDominioDoManaResult}) — {@code MetamagicoFeat#CONJURACAO_RAPIDA}'s
+     * opt-in Desvantagem, {@code GorgonaFeat#MARCA_DA_MALDICAO}'s "+2 em Conjuração … de suas Magias
+     * Naturais". Zero by default.
+     */
+    default int resolveCastingRollBonus(final Spell spell, final Character character,
+                                        final java.util.Set<Feat> activatedFeats) {
+        return 0;
+    }
+
+    /**
+     * A bonus (or malus) this Talento puts on the cast's resolved damage ({@code
+     * SpellCastingResult#getPrimaryDamage}'s deterministic amount) — {@code
+     * ElementalFeat#ARCANISMO_ELEMENTAL}'s "+2", Marca da Maldição's "+2 … Danos", Conjuração
+     * Rápida's Desvantagem. Zero by default.
+     */
+    default int resolveSpellDamageBonus(final Spell spell, final Character character,
+                                        final java.util.Set<Feat> activatedFeats) {
+        return 0;
+    }
+
+    /**
+     * A bonus (or malus) this Talento puts on the PV a cast's healing restores ({@code
+     * SpellCastingResult#getHealingBonus}, carried into {@code SpellHealingEffect} by {@code
+     * SpellEffectContext#healingBonus}) — {@code MetamagicoFeat#CONJURACAO_RAPIDA}'s Desvantagem "nas
+     * rolagens de … Cura mágica", {@code ElementalFeat#ARCANISMO_ELEMENTAL}'s "+2" on "Magias
+     * Elementais de dano e cura". The healing twin of {@link #resolveSpellDamageBonus}. Zero by default.
+     */
+    default int resolveSpellHealingBonus(final Spell spell, final Character character,
+                                         final java.util.Set<Feat> activatedFeats) {
+        return 0;
+    }
+
+    /**
+     * Rodadas this Talento adds to the Duração of a Magia its holder casts — {@code
+     * ElementalFeat#ARCANISMO_ELEMENTAL}'s "suas Magias de Encantamento com este elemento tem a
+     * Duração aumentada em +1 Rodada". Summed by {@code SpellDurationService} beside an item's
+     * enhancement, and applied only to an extendable Duração. Zero by default.
+     *
+     * <p>Asked with a {@code null} spell for an effect extended like a Magia without being one
+     * ({@code SpellDurationService#resolveNonSpellDurationIncrease}, the Barreira Mágica): an override
+     * scoped to some kind of Magia must answer 0 then.
+     */
+    default int resolveSpellDurationIncrease(final Spell spell, final Character character) {
+        return 0;
+    }
+
+    /**
+     * Rodadas this Talento delays the cast's effect — {@code MetamagicoFeat#PROCRASTINAR_CONJURACAO}.
+     * The largest answer is reported on {@code SpellCastingResult#getEffectDelayRounds()}. Zero by
+     * default.
+     */
+    default int resolveCastEffectDelayRounds(final Spell spell, final Character character,
+                                             final java.util.Set<Feat> activatedFeats) {
         return 0;
     }
 
@@ -688,19 +1150,115 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     }
 
     /**
+     * The same GD reduction, seeing the roller's own sheet — for a clause scoped to the holder's
+     * <b>Turn</b> rather than the Rodada: {@code EscudeiroFeat#DOMINIO_DA_ARTE_DO_ESCUDO_ATACANTE}'s "A
+     * GD de seu primeiro Ataque com Escudo de cada um de seus Turnos é reduzida em -1 nível" reads
+     * {@code holder.getActionsThisTurn()} and {@code isInOwnTurn()}. Defaults to the shorter form.
+     */
+    default int resolveAttackCostDifficultyReduction(final SkillType skillType, final SceneContext sceneContext,
+            final Character character, final AttackSource attackSource, final ActionCost actionCost,
+            final List<CombatantAction> actionsThisRound, final CombatantSheet holder) {
+        return resolveAttackCostDifficultyReduction(skillType, sceneContext, character, attackSource, actionCost,
+                actionsThisRound);
+    }
+
+    /**
+     * How much of an equipped Escudo's Defesa bonuses its wielder keeps, having attacked with it
+     * shieldAttacks times since their own latest Turn began — {@code EscudeiroFeat#ATACAR_COM_ESCUDOS}'
+     * loss and the two Talentos that ease it. {@code null} (the default) when this Talento says
+     * nothing; {@code DefenseService} takes the most generous answer among the held Talentos, and a
+     * shield that has not attacked keeps everything.
+     */
+    default org.aventyrs.core.item.ShieldDefenseRetention resolveShieldDefenseRetention(final int shieldAttacks) {
+        return null;
+    }
+
+    /**
+     * {@link Blessing}s this Talento grants its holder the moment their own Turn <b>ends</b> — {@code
+     * EscudeiroFeat#DEFESA_TARTARUGA}'s "Se você não se mover em seu Turno … você recebe um Bônus de +2
+     * em suas Defesas por 1 Rodada". Asked by {@code CombatantSheet#finishTurn} after the Turn's timed
+     * effects have ticked, so a Blessing counting down at Turn start ({@code
+     * Blessing#countingDownAtTurnStart}) lasts until the holder's next Turn begins. Empty by default.
+     */
+    default List<Blessing> resolveTurnEndBlessings(final CombatantSheet holder) {
+        return List.of();
+    }
+
+    /**
+     * Whether this Talento makes its holder ignore every effect that <b>lowers</b> their Defesas right
+     * now — {@code EscudeiroFeat#INICIO_DEFENSIVO}'s "Durante estas Rodadas iniciais você ignora efeitos
+     * que reduzem Defesas". {@code DefenseService} then drops negative timed bonuses and Condição
+     * maluses from the Defesa. False by default.
+     */
+    default boolean ignoresDefenseMaluses(final SceneContext sceneContext, final CombatantSheet holder) {
+        return false;
+    }
+
+    /**
+     * Whether this Talento lets its holder react through an effect that would prevent Reações —
+     * {@code EscudeiroFeat#MESTRE_ESCUDEIRO}. {@code ReactionsService} then drops negative timed
+     * {@code REACTIONS} bonuses (Atordoante's). False by default.
+     */
+    default boolean ignoresReactionPrevention(final Character character) {
+        return false;
+    }
+
+    /**
+     * How many landed hits this Talento reduces to zero between Descansos Verdadeiros — {@code
+     * EscudeiroFeat#CRIAR_REFUGIO}'s "1 + número de Títulos" — <b>while its condition holds right
+     * now</b>, 0 when it does not. {@code DamageService} spends one use (keyed by this Talento's name,
+     * {@code CombatantSheet#spendRestScopedUse}) on a hit that would still deal damage after
+     * mitigation, as long as fewer than this many are spent. Zero by default.
+     */
+    default int resolveDamageNegationBudget(final CombatantSheet target) {
+        return 0;
+    }
+
+    /**
+     * Whether this Talento denies its holder every flat mitigation — {@code
+     * EscudeiroFeat#BASTIAO_DE_VIDRO}'s "Você não é beneficiado por … Redução de Danos Sofridos … RA, RD e
+     * RM". {@code DamageService} then applies none of them (Resistência Elemental, immunities and a
+     * Meio-Dano still apply), and {@code DefenseService} converts them into Defesa. False by default.
+     */
+    default boolean forgoesDamageMitigation() {
+        return false;
+    }
+
+    /**
+     * Correntes de Efeitos this Talento adds to an attack its holder lands as an <b>Acerto Crítico</b>,
+     * with or without clearing the Corrente threshold — {@code EscudeiroFeat#ARTE_DO_ESCUDO_ATACANTE}'s
+     * "seus Acertos Críticos recebem a Corrente de Efeitos – Rugido". The critical-gated twin of {@link
+     * #resolveEffectChains}; {@code AttackDelivery} adds these only when the critical triggered. Empty
+     * by default.
+     */
+    default List<EffectChain> resolveCriticalHitEffectChains(final Character attacker, final SkillType attackSkill,
+                                                             final AttackSource attackSource,
+                                                             final CombatantSheet holder) {
+        return List.of();
+    }
+
+    /**
+     * Unidades de Distância this Talento adds to how far an attack with attackSource reaches, right now
+     * — {@code EscudeiroFeat#DOMINIO_DA_ARTE_DO_ESCUDO_ATACANTE}'s Alcance Estendido ("Distância de
+     * Ataque aumenta +1UD"). A UD figure, unlike {@link #resolveAttackRangeIncrease}'s whole bands; summed
+     * by {@code AttackRangeService#getEffectiveRangeInUnidadesDeDistancia(CombatantSheet, Weapon, Set)}.
+     * Zero by default.
+     */
+    default int resolveAttackReachIncrease(final CombatantSheet attacker, final AttackSource attackSource) {
+        return 0;
+    }
+
+    /**
      * Whether this Talento hands spell to character <b>for free</b> as part of its own authored
      * benefit, so {@code org.aventyrs.core.character.services.SpellService#grantSpell} spends no
-     * XP for it — {@code MetamagicoFeat#ARCANISTA}'s automatically-learned Sementes and its two
-     * chosen trees' Brotos ("suas magias do tipo Semente são automaticamente aprendidas", "você
-     * aprende a conjurar as Magias Brotos destas árvores"). Consulted by {@code
+     * XP for it. Consulted by {@code
      * SpellService#getAcquisitionCost}, and a UI pricing Magia acquisition must apply the same
      * waiver so its numbers match what {@code grantSpell} will actually charge.
      *
-     * <p>False by default. Wired <b>ahead of its first real consumer</b>: ARCANISTA is still a
-     * plain enum constant, and expressing "the trees I picked" needs the acquisition-time-choice
-     * class it does not have yet (see the {@code adding-a-feat} skill) — the same way {@link
-     * #resolveBranchLevelIncrease} and its {@code SpellService} scan were wired before {@code
-     * MetamagicoFeat} existed.
+     * <p>False by default, and no catalog Talento overrides it: the {@code MetamagicoFeat} ladder
+     * turned out to need no "trees I picked" record, and waives its picks through {@link
+     * #resolveFreeSpellPicks} instead. This stays the hook for a Talento naming one specific Magia
+     * it hands out.
      */
     default boolean grantsFreeSpellAcquisition(final Character character, final Spell spell) {
         return false;
@@ -752,6 +1310,40 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     }
 
     /**
+     * How many Árvores de Magia this Talento lets its holder <b>conhecer</b> — {@code
+     * MetamagicoFeat#ARCANISTA}'s "Escolha uma quantidade de árvores de magia igual ao seu
+     * Conhecimento Metamágico". Summed by {@code SpellService#getKnownTreeCapacity} across {@code
+     * Character#getFeats()}; {@code SpellService#grantSpell} refuses a Magia of a not-yet-known
+     * Árvore once {@code getKnownTrees} has reached it, so a Conjurador only ever opens as many
+     * Árvores as their Talentos allow.
+     *
+     * <p>Zero by default — and nothing else in the ruleset grants one, so a character without
+     * ARCANISTA learns no Magia at all. Other routes to a Magia ({@code APTIDAO_MAGICA_AMPLA}'s
+     * mimetizar) are {@code MimetizedSpell}s, a separate list this cap does not govern. Same
+     * default-hook shape as {@link #resolveBranchLevelIncrease}.
+     */
+    default int resolveKnownTreeCapacity(final Character character) {
+        return 0;
+    }
+
+    /**
+     * The free Magia picks this Talento owes its holder, one {@link FreeSpellPick} per
+     * rung — the {@code MetamagicoFeat} ladder's
+     * "Escolha 2 Árvores de Magia que você conheça [...], você aprende a conjurar as magias do
+     * tipo Broto/Muda/Emergente/Florescente destas árvores". Summed per rung by {@code
+     * SpellService#getOwedFreeSpells}.
+     *
+     * <p>What is owed is <b>derived, never stored</b>: a pick is spent by holding a Magia of that
+     * rung in one more distinct Árvore, so the first {@code picks} Magias of the rung, each from a
+     * different Árvore, are the free ones and {@code SpellService#getAcquisitionCost} waives
+     * them. No record of "which trees I chose" exists to disagree with {@code getSpells()} — the
+     * same discipline as the branch gate. Empty by default.
+     */
+    default List<FreeSpellPick> resolveFreeSpellPicks(final Character character) {
+        return List.of();
+    }
+
+    /**
      * How many numbers this Talento widens the holder's Margem Crítica Menor by on a skillType
      * roll — summed by {@code AbstractSkillInteraction#sumCriticalMarginIncrease} across {@code
      * Character#getFeats()}, alongside the {@code AttributeAbility}/{@code
@@ -800,6 +1392,19 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     }
 
     /**
+     * The longest form, adding the attack's <b>primary target</b> — for a Margem Crítica clause
+     * scoped to who is being attacked, read against the holder's own log: {@code
+     * DuelistaFeat#EXPLORAR_PONTOS_FRACOS}' "Seu segundo ataque contra um mesmo alvo na mesma Rodada"
+     * ({@link CombatantSheet#countAttacksAgainstThisRound}). {@code null} outside an attack against a
+     * named combatant. Defaults to the sheet-taking form.
+     */
+    default int resolveCriticalMarginIncrease(final SkillType skillType, final SceneContext sceneContext,
+                                               final Character character, final AttackSource attackSource,
+                                               final CombatantSheet holder, final CombatantSheet attackTarget) {
+        return resolveCriticalMarginIncrease(skillType, sceneContext, character, attackSource, holder);
+    }
+
+    /**
      * Whether this Talento makes a roll automatically succeed against its effective target GD —
      * {@code ElficoFeat#SENTIDOS_ABSOLUTOS}'s "sempre considerado bem-sucedido" clause. The
      * target has already received every GD reduction, so an override compares it directly to the
@@ -814,6 +1419,38 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     }
 
     /**
+     * The Área de Efeito this Talento turns the holder's attack into — "seu tipo de ataque muda para
+     * Área de Efeito – Explosão" ({@code DuelistaFeat#ATAQUE_GIRATORIO} when the roll names it,
+     * {@code MobilidadeFeat#INVESTIDA_SELVAGEM} on an Investida). {@code null} by default.
+     *
+     * <p>Asked <b>before</b> the attack is built, through {@code
+     * AttackTargetingService#resolveAttackArea}: the caller resolves the footprint ({@code
+     * scene.grid.AreaFootprint}) around the target and names everyone in it as the attack's
+     * targets, and {@code AttackDelivery} refuses a declared area the attacker is not entitled to.
+     * skillRoll is the roll about to be made — its activated Talentos and {@code Manoeuvre}.
+     */
+    default AreaOfEffect resolveAttackArea(final Character attacker, final SkillType attackSkill,
+                                           final AttackSource attackSource, final SkillRoll skillRoll) {
+        return null;
+    }
+
+    /**
+     * The damage type this Talento makes an attack deal instead of its own — "Seus ataques com
+     * Armas e Armas Naturais causam danos Físicos Elementais: Terra em substituição aos seus tipos"
+     * ({@code OrquicoFeat#PALADINO_DE_EPONA}), "o Tipo de Dano base de suas Armas Naturais mudam para
+     * Físico Elemental: Natural" ({@code FeralFeat#DESPREZO_NATURAL}). {@code null} by default.
+     *
+     * <p><b>Reported, not applied</b>: a hit's type is always the caller's to supply when it
+     * applies damage, so {@code AbstractSkillInteraction} reports the first held Talento's answer
+     * on {@code InteractionResult#getRetypedDamage()}, and the caller uses it in place of the
+     * attack's own type.
+     */
+    default DamageDescriptor resolveDamageRetype(final Character attacker, final SkillType attackSkill,
+                                                 final AttackSource attackSource) {
+        return null;
+    }
+
+    /**
      * Correntes de Efeito this Talento adds to each attack made by its holder — {@code
      * ElficoFeat#CORRUPTOR_SOMBRIO}'s Definhar. Empty by default. {@code AttackDelivery} combines
      * these with the attack's caller-supplied chains and applies them only when the shared
@@ -822,6 +1459,32 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     default List<EffectChain> resolveEffectChains(final Character attacker, final SkillType attackSkill,
                                                   final AttackSource attackSource) {
         return List.of();
+    }
+
+    /**
+     * What this Talento deals back to someone who just landed a melee attack on its holder, or
+     * {@code null} when it deals nothing. {@code DuelistaFeat#CORACAO_DE_FERRO} ("Sempre que um
+     * atacante Corpo-a-Corpo lhe infligir danos físicos ele também sofre 1 ponto de Dano Físico")
+     * and {@code MonstruosoFeat#SANGUE_ACIDO} are the consumers.
+     *
+     * <p>Scanned by {@code RetaliationResolver#resolveOnHit} only for an Ataque Corpo-a-Corpo that
+     * <b>landed</b>, so an override tests neither. That is the difference from the thorns a
+     * {@code ModifierType#RETALIATION_DAMAGE} bonus grants, which answer "atacarem" and are
+     * reported hit or miss. ⚠️ "Lhe infligir danos" is read as the hit landing: whether mitigation
+     * later absorbed all of it is decided after this report, so the caller skips the retaliation
+     * when the hit dealt nothing.
+     *
+     * <p><b>Reported, never dealt</b>, like every {@code Retaliation}: the caller applies it
+     * against the attacker's own sheet, so the attacker's own RD judges it.
+     *
+     * @param holder       the defender holding this Talento
+     * @param attackSource what the attacker struck with, or {@code null} when the caller didn't say
+     * @param attacker     the attacker, or {@code null} when unknown
+     * @param criticalHit  whether the attack was the attacker's Acerto Crítico
+     */
+    default Retaliation resolveRetaliation(final Character holder, final AttackSource attackSource,
+                                           final Character attacker, final boolean criticalHit) {
+        return null;
     }
 
     /**
@@ -907,6 +1570,20 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     }
 
     /**
+     * Which kind of trait each picked Perícia owes, when {@link #resolveRequiredChoices} asks for
+     * {@code SkillType}s whose answer is a trait of that Perícia — {@code
+     * PeritoFeat#TREINADO_EM_PERICIAS}' "Escolha 3 Perícias que você possua Treinamento. Você pode
+     * escolher uma Especialização ou Habilidade de Competência de cada uma destas Perícias". The
+     * Talento twin of {@code AttributeAbility#resolvePendingSkillTraitKinds()} ({@code
+     * GnoseAbility#DOMINIO_DO_CONHECIMENTO}): the choice names the Perícias, and this tells a client
+     * whether to offer each one's Especializações, Habilidades de Competência or both. Empty by
+     * default.
+     */
+    default Set<org.aventyrs.core.skill.SkillTraitKind> resolveRequiredSkillTraitKinds() {
+        return Set.of();
+    }
+
+    /**
      * Whether this Talento can be taken only while the character is being created ("Apenas
      * personagens recém-criados") — through {@code CharacterCreationService#grantStartingFeats},
      * never {@code FeatService#grantFeat}, and never listed by {@link FeatCatalog#availableFor}.
@@ -917,6 +1594,18 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     }
 
     /**
+     * Whether character may take this Talento into a <b>starting slot</b> — asked by {@code
+     * FeatPool#isEligible} instead of {@link #isEligible(Character, CharacterSheet)}. The same answer
+     * by default. Overridden where "recém-criados" is one branch of a disjunction, which {@link
+     * #isAcquirableOnlyAtCreation()} (all-or-nothing) cannot say: {@code
+     * PeritoFeat#TREINADO_EM_PERICIAS}' "Personagens recém-criados ou Graduação 4 em 3 diferentes
+     * Perícias" is open to anyone at creation and gated on the Graduações afterwards.
+     */
+    default boolean isEligibleAtCreation(final Character character, final CharacterSheet sheet) {
+        return isEligible(character, sheet);
+    }
+
+    /**
      * What this Talento still owes its holder at the end of a game session — empty by default, and
      * empty again once it has been granted. {@code CharacterSheet#applySessionEndAcquisitions}
      * collects and performs these. See {@link PendingAcquisition} for why this is derived rather
@@ -924,6 +1613,17 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      */
     default List<PendingAcquisition> resolveSessionEndAcquisitions(final Character character) {
         return List.of();
+    }
+
+    /**
+     * {@link #resolveSessionEndAcquisitions(Character)} with the holder's sheet — what an acquisition
+     * owed at an EXP mark needs ({@code DestinoFeat#CENTELHA_GRAN_AVENTYR_ANTECIPADA}'s "ao atingir a
+     * marca de 23EXP"). Defaults to the sheet-less form, per this interface's convention. {@code
+     * CharacterSheet#applySessionEndAcquisitions} calls this one.
+     */
+    default List<PendingAcquisition> resolveSessionEndAcquisitions(final Character character,
+                                                                   final org.aventyrs.core.sheet.CharacterSheet sheet) {
+        return resolveSessionEndAcquisitions(character);
     }
 
     /**
@@ -1013,15 +1713,33 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      * FeatRequirements}, {@code CharacterAttributeService#upgradeBase} — which gate on invested
      * base. Zero by default.
      *
-     * <p>Only for a <b>fixed</b> Atributo. A clause of the "escolha um Atributo" shape needs an
-     * acquisition-time-choice subclass whose override branches on the picked {@link
-     * AttributeDomain} — {@code HumanoFeat#LIMIAR_DA_EVOLUCAO}'s own work, still unbuilt.
+     * <p>Only for a <b>fixed</b> Atributo. A clause of the "escolha um Atributo" shape grants
+     * {@code AtributoRacialEscolhidoFeat} in place of the constant ({@code HumanoFeat
+     * #LIMIAR_DA_EVOLUCAO}, {@code MonstruosoFeat#ALFA}).
      *
      * <p>For a <b>round-scoped</b> Atributo bonus (a Poder Vampírico like {@code DOM_DE_MIRCALLA})
      * grant a {@code TemporaryBonus} of {@code domain.getBonusModifierType()} instead — that path
      * is still read only by {@code AbstractSkillInteraction} on the Perícia-roll path.
      */
     default int resolveAttributeBonus(final AttributeDomain domain, final Character character) {
+        return 0;
+    }
+
+    /**
+     * Permanent points this Talento adds to one of its holder's Egos — "Você adquire 1 ponto
+     * permanente de Sorte" ({@code SobrevivenciaFeat#SORTE_DE_MOSES}, {@code #DETERMINACAO_DE_MOSES},
+     * {@code MobilidadeFeat#INICIATIVA_APRIMORADA}). Summed by {@code
+     * Character#getEffectiveEgoTotal}, which every reader of an Ego <i>total</i> calls: the
+     * permanent pool ceiling, Iniciativa, the Recursos-scaled Fama. {@code EgoValue#getBase()}
+     * readers ({@code FeatRequirements}' Ego ceilings) deliberately do not, the same split {@link
+     * #resolveAttributeBonus} keeps. Zero by default.
+     *
+     * <p>Derived rather than written into {@code EgoValue#getVariable()}, unlike {@code
+     * AttributeAbility#resolvePermanentEgoGain}, so a Talento granted through {@link
+     * #getGrantedFeats} or held in an acquired form counts, and a Talento removed takes its point
+     * with it.
+     */
+    default int resolveEgoBonus(final EgoDomain domain, final Character character) {
         return 0;
     }
 
@@ -1300,6 +2018,58 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     }
 
     /**
+     * RDS (Redução de Danos Sofridos) this Talento grants — "Você recebe Bônus Racial de +2 em DF e
+     * RDS" ({@code MonstruosoFeat#PELE_RIJA}). Kept apart from {@link #resolveDamageReduction}
+     * because the two reach different hits: RD only plain physical damage, RDS every
+     * non-Primordial hit, physical or magical. A numberless "recebe RDS" grants {@code
+     * DamageService#DAMAGE_TAKEN_REDUCTION_INSTANCE}. Zero by default.
+     */
+    default int resolveDamageTakenReduction(final Character character) {
+        return 0;
+    }
+
+    /**
+     * The sheet-aware form, for an RDS scoped to the holder's live state ({@code
+     * AssassinoFeat#ESCUDO_DE_SOMBRAS} while Escondido). Defaults to the sheet-less form; {@code
+     * null} reads as "condition not met".
+     */
+    default int resolveDamageTakenReduction(final Character character, final CombatantSheet holder) {
+        return resolveDamageTakenReduction(character);
+    }
+
+    /**
+     * Instances of Resistência Elemental (RE) this Talento grants against element — each worth
+     * -2 against a hit of that element, physical or magical ({@code ElementalFeat
+     * #RESISTENCIA_ELEMENTAL}'s "RE para seu elemento"). Summed by {@code
+     * CombatantSheet#getElementalResistanceInstances}, beside the {@code AttributeAbility} twin.
+     * holder may be {@code null}. Zero by default.
+     */
+    default int resolveElementalResistanceInstances(final ElementalType element, final Character character,
+                                                    final CombatantSheet holder) {
+        return 0;
+    }
+
+    /**
+     * Whether a hit of this kind reaches its holder halved — a Meio-Dano limited to a {@code
+     * DamageScope}. Read by {@code CombatantSheet#halvesDamage}. False by default.
+     */
+    default boolean halvesDamage(final DamageType damageType, final DamageDescriptor descriptor,
+                                 final Character character, final CombatantSheet holder) {
+        return false;
+    }
+
+    /**
+     * Whether a hit of this kind deals its holder nothing at all — "Imunidade ao Elemento
+     * escolhido", "imune a dano físico". Judged before every reduction ({@code
+     * DamageServiceImpl#computeFinalDamage}). holder is the holder's sheet, for an immunity scoped
+     * to a worn Forma. False by default.
+     */
+    default boolean isImmuneToDamage(final DamageType damageType, final DamageDescriptor descriptor,
+                                     final Character character, final CombatantSheet holder) {
+        return false;
+    }
+
+    /**
      * Flat, unconditional Resistência à Magias (RM) this Talento grants — the magic-damage twin
      * of {@link #resolveDamageReduction(Character)}, summed by {@code
      * DamageServiceImpl#getTotalMagicReduction} across {@code Character#getFeats()} and applied
@@ -1318,6 +2088,61 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      */
     default int resolveMagicReduction(final Character character) {
         return 0;
+    }
+
+    /**
+     * RM this Talento grants against one particular incoming Magia — {@code MetamagicoFeat#ARCANISTA}'s
+     * "RM para resistir aos efeitos de Magias que você conheça", one instance ({@code
+     * DamageService#DEFAULT_DAMAGE_REDUCTION}) when the hit's Magia is one the holder knows ({@code
+     * magic.SpellFamiliarity}). The scoped twin of {@link #resolveMagicReduction}, read by {@code
+     * DamageService} off {@code DamageInteraction#fromSpell}. Zero by default.
+     */
+    default int resolveSpellMagicReduction(final Spell spell, final CombatantSheet holder) {
+        return 0;
+    }
+
+    /**
+     * A bonus to the holder's Defesa of defenseType against one particular incoming Magia — the
+     * Aptidões Mágicas' "+3 (+5) em DM para resistir aos efeitos de magias que seja capaz de
+     * conjurar". Added by {@code AttackReceiver} to the defence total and by {@code AttackDelivery}
+     * to the Defesa the attack must beat, whenever the attack source is a Magia. Zero by default.
+     */
+    default int resolveSpellDefenseBonus(final DefenseType defenseType, final Spell spell,
+                                         final CombatantSheet holder) {
+        return 0;
+    }
+
+    /**
+     * Níveis the GD to resist one particular incoming Magia drops for the holder — {@code
+     * MetamagicoFeat#ARTESAO_DE_BARREIRAS} (while a Barreira runs) and {@code #APTIDAO_MAGICA_SUPREMA}'s
+     * "A GD para resistir às magias que você também é capaz de conjurar é reduzida em 1 nível". Applied
+     * by {@code AttackReceiver}, where the defender rolls against a GD; {@code AttackDelivery} compares
+     * against a flat Defesa and reports it unapplied, like every defender-side nível. Zero by default.
+     */
+    default int resolveSpellResistanceDifficultyReduction(final Spell spell, final CombatantSheet holder) {
+        return 0;
+    }
+
+    /**
+     * Whether the holder is immune to one particular incoming Magia — {@code
+     * MetamagicoFeat#APTIDAO_MAGICA_DRACONICA}'s "imune a Magias que você é capaz de conjurar" while
+     * 10PD remain. Table ruling (2026-09-27): immune means the attack is defended outright and deals
+     * neither damage nor effects — {@code AttackReceiver} defends it, {@code AttackDelivery} misses,
+     * {@code DamageService} zeroes a hit marked {@code fromSpell}, and {@code SpellCastingService}
+     * reports {@code SpellCastingResult#isTargetImmune()}. False by default.
+     */
+    default boolean isImmuneToSpell(final Spell spell, final CombatantSheet holder) {
+        return false;
+    }
+
+    /**
+     * Whether the holder may Defender o Perímetro — react to an enemy moving inside their melee reach
+     * — even while they are the target of that enemy's Investida, which ordinarily denies it (table
+     * ruling, 2026-09-28). {@code EscudeiroFeat#MESTRE_ESCUDEIRO}, while using a Escudo. Read by
+     * {@code MovementReactionService}. False by default.
+     */
+    default boolean permitsPerimeterDefenceAsChargeTarget(final CombatantSheet holder) {
+        return false;
     }
 
     /**
@@ -1365,6 +2190,104 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     }
 
     /**
+     * Whether this Talento stops implier from conferring implied on its holder — "você não é
+     * considerado Desprevenido enquanto estiver Caído" ({@code ArtesMarciaisFeat
+     * #DOMINAR_ARTE_MARCIAL_SUBMISSAO}), "não fica Desprevenido em função destas condições" ({@code
+     * DuelistaFeat#COMBATER_AS_CEGAS}). Consulted edge by edge by {@code
+     * CombatantSheet#getActiveConditions}, so only that one implication is vetoed: the same
+     * condition applied directly, or implied by a different condition, still lands. False by
+     * default.
+     */
+    default boolean suppressesImpliedCondition(final ConditionType implier, final ConditionType implied) {
+        return false;
+    }
+
+    /**
+     * PD this Talento adds to a Habilidade de Título's activation when opted into — {@code
+     * DestinoFeat#ACELERAR_HABILIDADE}'s and {@code #CENTELHA_DURADOURA}'s "+2PD". Paid on top of the
+     * ability's own cost, never sizing its effect. Asked of held Talentos only; 0 by default.
+     */
+    default int resolveTitleActivationSurcharge(final AventyrTitleAbility ability, final CombatantSheet activator,
+                                                final Set<Feat> activatedFeats) {
+        return 0;
+    }
+
+    /** PA this Talento takes off a Habilidade de Título's fixed Tempo de Ativação when opted into. 0 by default. */
+    default int resolveTitleActivationActionPointReduction(final AventyrTitleAbility ability,
+                                                          final CombatantSheet activator,
+                                                          final Set<Feat> activatedFeats) {
+        return 0;
+    }
+
+    /**
+     * Unidades of Duração this Talento adds to a Habilidade de Título when opted into — {@code
+     * DestinoFeat#CENTELHA_DURADOURA}'s "+2". Reported on {@code
+     * InteractionResult#getTitleAbilityDurationIncrease()}: each Habilidade's Duração is its own
+     * Interaction's, so the caller extends it. 0 by default.
+     */
+    default int resolveTitleAbilityDurationIncrease(final AventyrTitleAbility ability, final CombatantSheet activator,
+                                                    final Set<Feat> activatedFeats) {
+        return 0;
+    }
+
+    /**
+     * Whether this Talento may be opted into for an activation right now — {@code
+     * DestinoFeat#ACELERAR_HABILIDADE}'s "apenas uma vez a cada Rodada". Asked only when it is opted
+     * into; a refusal refuses the activation ({@code TITLE_ACTIVATION_OPT_IN_EXHAUSTED}). True by
+     * default.
+     */
+    default boolean permitsTitleActivationOptIn(final CombatantSheet activator) {
+        return true;
+    }
+
+    /**
+     * The highest Graduação this Talento extends its holder's Aprendizado Rápido to — {@code
+     * GnomoFeat#SABICHAO}'s "até a sétima Graduação", {@code HumanoFeat#APRENDIZADO_RAPIDO_E_CONTINUO}'s
+     * fifth, or seventh with a Título Desperto. {@code null} by default; {@code
+     * SkillGraduationService} takes the highest of these and the Raça's own third.
+     */
+    default Integer resolveQuickLearningMaxGraduation(final Character character) {
+        return null;
+    }
+
+    /**
+     * The combat Rodada from which this Talento puts its holder in Ferocidade de Lacerto — {@code
+     * GorgonaFeat#ACEITAR_A_SELVAGERIA}'s "recebe a Habilidade Racial Ferocidade de Lacerto … como
+     * se fosse um Impuro". {@code null} by default; {@code LacertoFerocityService} takes the
+     * earliest of this and the Raça's own {@code Race#resolveLacertoFerocityRound}.
+     */
+    default Integer resolveLacertoFerocityRound(final Character character) {
+        return null;
+    }
+
+    /**
+     * Whether this Talento keeps its holder from <em>entering</em> Ferocidade de Lacerto right now —
+     * {@code IndomitoFeat#RENEGAR_A_LACERTO}'s "não entra … enquanto tiver aliados vivos e
+     * conscientes, com 1 ou mais PV, em Distância Curta". standing answers "has 1 or more PV" for
+     * a combatant, since that needs {@code HitPointsService}, which a constant cannot reach.
+     * {@code holderContext} is the holder's own snapshot; {@code null} reads as "cannot tell", so
+     * nothing is prevented. False by default.
+     */
+    default boolean preventsEnteringLacertoFerocity(final Character holder, final SceneContext holderContext,
+                                                    final Predicate<CombatantSheet> standing) {
+        return false;
+    }
+
+    /**
+     * Whether this Talento strips its holder of their Raça's Imunidade a Encantamentos — {@code
+     * GorgonaFeat#MARCA_DA_MALDICAO}'s "não possui a Característica Racial Imunidade a
+     * Encantamentos".
+     *
+     * <p>A <b>per-trait</b> suppression, deliberately not folded into {@code
+     * RacialTraitSuppression}: that ladder silences whole categories of racial trait for a Forma,
+     * while this names one Característica and is permanent. Read by {@code
+     * Character#isImmuneToEnchantments()}.
+     */
+    default boolean suppressesEnchantmentImmunity() {
+        return false;
+    }
+
+    /**
      * Resistência a Críticos (RC) this Talento grants its holder — a <b>defender-side</b> value,
      * summed by {@code org.aventyrs.core.sheet.AbstractCombatantSheet#getTotalCriticalResistance}
      * alongside the holder's Raça grant and any round-scoped {@code
@@ -1392,20 +2315,6 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      * would answer about the attacker. {@code null} whenever there is no active Scene, which
      * every override must read as "condition not met".
      */
-    /**
-     * Whether this Talento strips its holder of their Raça's Imunidade a Encantamentos — {@code
-     * GorgonaFeat#MARCA_DA_MALDICAO}'s "não possui a Característica Racial Imunidade a
-     * Encantamentos".
-     *
-     * <p>A <b>per-trait</b> suppression, deliberately not folded into {@code
-     * RacialTraitSuppression}: that ladder silences whole categories of racial trait for a Forma,
-     * while this names one Característica and is permanent. Read by {@code
-     * Character#isImmuneToEnchantments()}.
-     */
-    default boolean suppressesEnchantmentImmunity() {
-        return false;
-    }
-
     default int resolveCriticalResistance(final Character character, final SceneContext sceneContext) {
         return 0;
     }
@@ -1568,6 +2477,40 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     }
 
     /**
+     * Whether this Talento gives its holder mode — "Você tem asas e possui Movimento Base de Voo"
+     * ({@code DraconicoFeat#ASAS_DE_DRAGAO}, {@code FeericoFeat#ASAS}), "Movimento Base de
+     * Natação" ({@code BestialFeat#HERANCA_ANFIBIA}). holder is the holder's sheet for a mode
+     * scoped to a worn Forma ({@code MetamorfoseDraculeaFeat}), or {@code null} when the caller
+     * has only a {@code Character} — read as "not in any Forma". Never asked about {@code LAND},
+     * which everyone has. False by default.
+     */
+    default boolean grantsMovementMode(final MovementMode mode, final Character character,
+                                       final CombatantSheet holder) {
+        return false;
+    }
+
+    /**
+     * An absolute Movimento Base for mode, replacing the figure it would otherwise start from —
+     * "Movimento Base de Voo 8UD" ({@code FeericoFeat#PIXIE}), "em terra seu Movimento Base é
+     * reduzido para apenas 2UD" ({@code FeericoFeat#SIRENIDEO}). For {@code LAND} it replaces the
+     * Categoria de Tamanho figure; every other bonus still adds on top. {@code null} by default.
+     * A figure for a non-land mode also grants that mode.
+     */
+    default Integer resolveMovementBaseOverride(final MovementMode mode, final Character character) {
+        return null;
+    }
+
+    /**
+     * UD this Talento adds to its holder's Movimento Base in mode, when they have it — "Seu
+     * Movimento Base de Voo aumenta em +2UD para cada Título" ({@code AvianoFeat#CORACAO_ALADO}),
+     * "é reduzido em -3UD" ({@code AvianoFeat#BRACOS_LIVRES}). Never asked about {@code LAND}:
+     * that is {@link #resolveMovementIncrease}. Zero by default.
+     */
+    default int resolveModeMovementIncrease(final MovementMode mode, final Character character) {
+        return 0;
+    }
+
+    /**
      * The longer form of the Movimento Base grant, adding the holder's own {@link CombatantSheet}
      * — what a clause scoped "enquanto transformado" needs, since the Forma lives on the sheet
      * ({@code BestialFeat#METAMORFOSE_SELVAGEM}'s "+2UD enquanto transformado em animal").
@@ -1702,6 +2645,77 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     }
 
     /**
+     * A flat bonus this Talento adds to its holder's Iniciativa, summed by {@code
+     * InitiativeService#getTotalInitiative} beside the three-source {@code ModifierType#INITIATIVE}
+     * scan. {@code EscudeiroFeat#ESCUDO_VELOZ} (+2 with a Médio or Pesado Escudo) and {@code
+     * MobilidadeFeat#PORTA_ESTANDARTE} (half Destreza or Carisma) are the consumers. Zero by
+     * default. Read at the moment Iniciativa is rolled, so an equipment condition is judged then.
+     */
+    default int resolveInitiativeBonus(final Character character) {
+        return 0;
+    }
+
+    /**
+     * {@code Blessing}s this Talento grants its holder for winning a rolagem de Iniciativa — the
+     * {@code EgoAdvantage#resolveInitiativeBlessings} shape, scanned by {@code
+     * InitiativeBlessingService} beside the other three sources and applied by {@code
+     * Scene#applyInitiativeBlessings}. {@code MobilidadeFeat#LIDERAR_O_AVANCO} is the consumer.
+     * Empty by default.
+     */
+    default List<Blessing> resolveInitiativeBlessings() {
+        return List.of();
+    }
+
+    /**
+     * Whether this Talento lets its holder lower their own Iniciativa to act last — {@code
+     * PeritoFeat#ANALISTA_TATICO}'s "No início de cada Cena de Combate, antes de qualquer ação sua,
+     * você pode escolher reduzir seu valor de Iniciativa de modo a agir por último". Asked by {@code
+     * Scene#deferToLast}, which also enforces the "antes de qualquer ação sua". False by default.
+     */
+    default boolean permitsDeferringToLast(final Character character) {
+        return false;
+    }
+
+    /**
+     * Reações this Talento adds while a Scene-scoped condition holds — {@code
+     * PeritoFeat#ANALISTA_TATICO}'s "Enquanto você for o último a agir você recebe uma Ação Livre e
+     * Reação adicional", read off {@code SceneContext#getInitiativePosition()}. Summed by {@code
+     * ReactionsService#getTotalReactions(CombatantSheet, int, SceneContext)}; a {@code null} context
+     * (the shorter overloads) reads as "condition not met". Zero by default.
+     */
+    default int resolveReactionsIncrease(final Character character, final SceneContext sceneContext) {
+        return 0;
+    }
+
+    /** The Ações Livres twin of {@link #resolveReactionsIncrease}, summed by {@code FreeActionsService}. */
+    default int resolveFreeActionsIncrease(final Character character, final SceneContext sceneContext) {
+        return 0;
+    }
+
+    /**
+     * How much this Talento raises its holder's own Resistência à Corrente de Efeitos — the margin an
+     * attack must clear the holder's Defesa by for a Corrente to land ({@code
+     * EffectChainService#getRequiredMargin}). {@code PeritoFeat#GRANDE_ANALISTA_TATICO}'s "Enquanto você
+     * for o último a agir, a sua resistência a Corrente de Efeitos aumenta em +1", read off
+     * holderPosition — resolved from the live Scene by the attack path, {@code UNKNOWN} without one.
+     * Zero by default.
+     */
+    default int resolveEffectChainResistanceIncrease(final Character holder,
+                                                     final org.aventyrs.core.scene.InitiativePosition holderPosition) {
+        return 0;
+    }
+
+    /**
+     * How much this Talento lowers the Resistência à Corrente de Efeitos of whoever its holder attacks
+     * — "a resistência à Correntes de Efeitos de seus inimigos alvos (apenas para resistir aos seus
+     * efeitos) é reduzida em -1" ({@code PeritoFeat#GRANDE_ANALISTA_TATICO}). Zero by default.
+     */
+    default int resolveTargetEffectChainResistanceReduction(final Character attacker,
+                                                            final org.aventyrs.core.scene.InitiativePosition attackerPosition) {
+        return 0;
+    }
+
+    /**
      * How many Pontos de Ação this Talento permanently adds — summed by {@code
      * org.aventyrs.core.character.services.ActionPointsService#getMaxActionPoints} across {@code
      * Character#getFeats()}, alongside the usual three-source {@code ModifierType#ACTION_POINTS}
@@ -1761,6 +2775,78 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      */
     default int resolveLifeMultiplierIncrease(final Character character, final CombatantSheet sheet) {
         return resolveLifeMultiplierIncrease(character);
+    }
+
+    // ---- Hooks first earned by the Antecedentes (0.0.71) ---------------------------------------
+
+    /**
+     * Called once for every Talento an action spent, as that action is filed on holder's log
+     * ({@code CombatantSheet#recordAction}) — the moment an activation is actually <em>used</em>,
+     * where {@link #permitsActivation} only asked whether it could be. What a rationed activation
+     * claims its use with: "apenas uma vez por dia" marks itself until a Descanso Longo ({@code
+     * CombatantSheet#markAffectedUntilRest}), "uma vez por semana" claims a session marker ({@code
+     * CombatantSheet#consumeOncePerSession}). Nothing by default.
+     */
+    default void onActivationRecorded(final CombatantSheet holder) {
+    }
+
+    /**
+     * Temporary Ego points owed the first time a session domain's pool is spent down to zero —
+     * {@code AntecedenteFeat#APOSTADOR}'s "a primeira vez em cada sessão de jogo que sua sorte se
+     * tornar zero você recebe 1 ponto temporário". The Talento twin of {@code
+     * AttributeAbility#resolveEgoDepletionGrant}, read by the same trigger and claimed once per
+     * session per Talento. Zero by default.
+     */
+    default int resolveEgoDepletionGrant(final EgoDomain domain) {
+        return 0;
+    }
+
+    /**
+     * EXP this Talento takes off buying targetGraduation in skillType — "Adquirir novas Graduações
+     * na Perícia escolhida até a 5ª Graduação custa -0.5EXP". Summed by {@code
+     * SkillGraduationService#getUpgradeCost(Character, SkillType)} beside Aprendizado Rápido; stacked
+     * discounts may make a Graduação free (a table ruling), never negative. Zero by default.
+     */
+    default java.math.BigDecimal resolveGraduationCostReduction(final Character character, final SkillType skillType,
+                                                                final int targetGraduation) {
+        return java.math.BigDecimal.ZERO;
+    }
+
+    /**
+     * Magias the holder may cast <b>as if learned</b> — paying their PM, through the ordinary
+     * casting service — without having learned them: they are not in {@code Character#getSpells()},
+     * so they open no Árvore, fill no Árvore slot and satisfy no climb or branch gate. {@code
+     * AntecedenteFeat#ESTUDIOSO_ARCANO}'s "capaz de conjurar as Magias Semente e Broto da árvore
+     * escolhida". Folded into {@code Character#getCastableSpells()}. Empty by default.
+     */
+    default List<Spell> getGrantedCastableSpells(final Character character) {
+        return List.of();
+    }
+
+    /**
+     * Extra points of resource a <b>Descanso Verdadeiro</b> of restType returns — {@code
+     * AntecedenteFeat#JULLYANO}'s "a cada Descanso Verdadeiro recuperam +1 de cada Bônus
+     * Base". A Magia that rests you "como se" never pays it. Zero by default.
+     */
+    default int resolveTrueRestBonus(final org.aventyrs.core.sheet.ResourceType resource,
+                                     final org.aventyrs.core.rest.RestType restType, final Character character) {
+        return 0;
+    }
+
+    /**
+     * The resources this Talento lets its holder choose between on every Descanso — {@code
+     * AntecedenteFeat#VASTARE}'s "recuperando +2PD ou +2PM a cada Descanso", chosen each
+     * time (a table ruling). {@code RestService#getRestBonusChoices} lists them so a caller can ask;
+     * {@link #resolveChosenRestBonus} pays the pick. Empty by default.
+     */
+    default Set<org.aventyrs.core.sheet.ResourceType> resolveRestBonusChoices(final Character character) {
+        return Set.of();
+    }
+
+    /** What chosen is worth on a Descanso of restType — see {@link #resolveRestBonusChoices}. Zero by default. */
+    default int resolveChosenRestBonus(final org.aventyrs.core.sheet.ResourceType chosen,
+                                       final org.aventyrs.core.rest.RestType restType, final Character character) {
+        return 0;
     }
 
     private static int graduationOf(final Character character, final SkillType skillType) {

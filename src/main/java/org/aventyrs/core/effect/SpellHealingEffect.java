@@ -54,6 +54,7 @@ public class SpellHealingEffect extends AbstractEffect implements HealingEffect 
     private final boolean hostileTarget;
     private final RestService restService;
     private final CombatantSheet caster;
+    private final int healingBonus;
 
     public SpellHealingEffect(final Spell spell, final SpellHealing healing) {
         this(spell, healing, false, new RestServiceImpl());
@@ -76,6 +77,18 @@ public class SpellHealingEffect extends AbstractEffect implements HealingEffect 
     public SpellHealingEffect(final Spell spell, final SpellHealing healing,
                               final boolean hostileTarget, final RestService restService,
                               final CombatantSheet caster) {
+        this(spell, healing, hostileTarget, restService, caster, 0);
+    }
+
+    /**
+     * @param healingBonus PV added to a Descanso-equivalent figure before any halving — the caster's
+     *                     {@code Feat#resolveSpellHealingBonus} sum; a full recovery states no number
+     *                     and ignores it
+     */
+    public SpellHealingEffect(final Spell spell, final SpellHealing healing,
+                              final boolean hostileTarget, final RestService restService,
+                              final CombatantSheet caster, final int healingBonus) {
+        this.healingBonus = healingBonus;
         this.spell = spell;
         this.healing = healing;
         this.hostileTarget = hostileTarget;
@@ -121,8 +134,8 @@ public class SpellHealingEffect extends AbstractEffect implements HealingEffect 
         if (healing.fullRecovery()) {
             return damageTaken;
         }
-        int offered = restService.getRecoveredHitPoints(target.getCharacter(),
-                healing.restEquivalent());
+        int offered = Math.max(0, restService.getRecoveredHitPoints(target.getCharacter(),
+                healing.restEquivalent()) + healingBonus);
         return hostileTarget && healing.halvedForHostiles() ? offered / 2 : offered;
     }
 }

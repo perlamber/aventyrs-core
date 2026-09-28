@@ -50,11 +50,37 @@ public class DeliveredAttackResult {
     private final boolean auraHalvesDamage;
 
     /**
+     * Whether a Talento halved the damage on every target, the primary included — {@code
+     * CavalariaFeat#ATAQUE_EM_ARCO}. Applied, like {@link #auraHalvesDamage}, by marking the primary's
+     * chain head {@code halvingDamage()}; the two are read as one flag, so they never quarter.
+     */
+    private final boolean everyTargetHalved;
+
+    /**
      * What the defender's thorns deal back to the attacker, or {@code null} when nothing does —
      * see {@link Retaliation}, which carries the whole calculation. <b>Reported, never dealt</b>:
      * this core sends damage only one way, so the caller applies it against the attacker's sheet.
      */
     private final Retaliation retaliation;
+
+    /**
+     * PV the <b>attacker</b> owes for this hit, only a Descanso Verdadeiro recovers — {@code
+     * Feat#resolveLockedSelfDamageOnHit}, {@code DuelistaFeat#FORCA_EXCESSIVA}'s "se o fizer e for
+     * bem-sucedido você sofre 2 pontos de Dano Físico Primordial". 0 on a miss. Reported, never
+     * dealt: the caller pays it with {@code attacker.payWithVitality(lockedSelfDamage)} — no
+     * mitigation ("não podem ser reduzidos"), then locked.
+     */
+    private final int lockedSelfDamage;
+
+    /**
+     * What the defender's Talentos deal back because this attack <b>landed</b> — {@code
+     * Feat#resolveRetaliation}, one {@link Retaliation} per answering Talento. Empty on a miss, on
+     * an Ataque à Distância, and without a roll. <b>Reported, never dealt</b>, like {@link
+     * #retaliation}; skip it when mitigation left the hit dealing nothing ("lhe infligir danos").
+     */
+    @Singular
+    private final List<Retaliation> onHitRetaliations;
+
 
     /**
      * By how much the attack beat the Defesa — {@code attackTotal - requiredTotal}, so zero or
@@ -87,6 +113,15 @@ public class DeliveredAttackResult {
      * {@link AttackDelivery}'s javadoc for the open question behind that.
      */
     private final int unappliedDifficultyReduction;
+
+    /**
+     * Níveis the primary defender's Talentos take off the GD to resist this Magia — Artesão de
+     * Barreiras, Aptidão Mágica Suprema ({@code Feat#resolveSpellResistanceDifficultyReduction}).
+     * Reported unapplied, like {@link #unappliedDifficultyReduction}: this path compares against a
+     * flat Defesa, and no conversion from a nível to Defesa points is defined. 0 for anything but a
+     * Magia. {@code AttackReceiver}, where the defender rolls against a GD, applies it.
+     */
+    private final int unappliedSpellResistanceReduction;
 
     /**
      * The attacker's roll bundled as a {@link CombatantAction} ready to file — its Perícia,

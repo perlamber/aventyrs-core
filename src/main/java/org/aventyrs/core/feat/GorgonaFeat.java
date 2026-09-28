@@ -1,14 +1,25 @@
 package org.aventyrs.core.feat;
 
+import java.util.List;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.character.DamageBonus;
 import org.aventyrs.core.character.services.DamageService;
+import org.aventyrs.core.magic.Spell;
+import org.aventyrs.core.magic.catalog.MagicTree;
 import org.aventyrs.core.race.Gorgona;
+import org.aventyrs.core.race.Indomito;
+import org.aventyrs.core.race.OlharDeLacerto;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.FormType;
 import org.aventyrs.core.sheet.FormAccess;
+import org.aventyrs.core.skill.AttackSource;
+import org.aventyrs.core.skill.Skill;
+import org.aventyrs.core.skill.SkillTrait;
+import org.aventyrs.core.skill.SkillType;
 
+import java.util.Optional;
 import java.util.function.Supplier;
 
 /**
@@ -39,10 +50,10 @@ public enum GorgonaFeat implements Feat {
     // "Está sempre em sua forma monstruosa e é incapaz de alternar para a forma humanoide" is
     // real: a FormAccess.REQUIRED on MONSTRUOSA, which CombatantSheet#canTakeForm reads as
     // refusing every other shape and the holder's own besides.
-    // TODO: Olhar de Lacerto is itself unbuilt (Gorgona's javadoc calls it the densest gap of any
-    //  racial trait catalogued), so widening its Alcance widens nothing.
-    // TODO: Corrente de Efeitos is an unbuilt system, and "Enrijecer Musculatura" is not among
-    //  the 13 EffectChainService resolves.
+    // The Alcance is real: resolveAttackRangeIncrease widens the OlharDeLacerto source one band,
+    // Muito Curta to Curta (OlharDeLacertoService#declare).
+    // TODO: Corrente de Efeitos – Enrijecer Musculatura — Feat#resolveEffectChains is the hook,
+    //  but Enrijecer Musculatura is not an authored EffectChain (only Definhar and Sobrecura are).
     // TODO: "sempre considerado Amaldiçoado" now has a classification to name
     //  (ConditionType.AMALDICOADO, appliable open-ended with a null duration), but nothing applies
     //  a Condition from a held Talento — Feat has no condition hook, and "sempre" is a standing
@@ -64,6 +75,29 @@ public enum GorgonaFeat implements Feat {
                     .requiredRace(Gorgona.class)
                     .forbiddenFeat(acolhidaPorFlora())
                     .build()) {
+        @Override
+        public int resolveCastingRollBonus(final Spell spell, final Character character,
+                                           final java.util.Set<Feat> activatedFeats) {
+            return spell.getTree() instanceof MagicTree tree && ArvoresMimetizadasFeat.isNatural(tree) ? MARCA_NATURAL_BONUS : 0;
+        }
+
+        @Override
+        public int resolveSpellDamageBonus(final Spell spell, final Character character,
+                                           final java.util.Set<Feat> activatedFeats) {
+            return spell.getTree() instanceof MagicTree tree && ArvoresMimetizadasFeat.isNatural(tree) ? MARCA_NATURAL_BONUS : 0;
+        }
+
+        @Override
+        public int resolveAttackRangeIncrease(final Character character, final AttackSource attackSource) {
+            return attackSource == OlharDeLacerto.INSTANCE ? 1 : 0;
+        }
+
+        /** "Apenas … recém-criados" — only a starting Talento slot can take it. */
+        @Override
+        public boolean isAcquirableOnlyAtCreation() {
+            return true;
+        }
+
         /** "não possui a Característica Racial Imunidade a Encantamentos." */
         @Override
         public boolean suppressesEnchantmentImmunity() {
@@ -83,10 +117,9 @@ public enum GorgonaFeat implements Feat {
     // exact mirror of MARCA_DA_MALDICAO's lock.
     // TODO: suppressing Abandonadas pelos Deuses and substituting Feromônio Encantador both need
     //  a Talento to replace a Característica Racial, which nothing can do.
-    // TODO: "+2 em Conjuração, Danos e Curas de suas Magias Naturais" needs a Magia to have
-    //  numeric effects — Spell has no damage or healing column — and a conjuração bonus hook,
-    //  which SpellCastingService has never had (see its own javadoc: the ability that once
-    //  justified building it was dropped in a rules revision).
+    // "+2 em Conjuração, Danos … de suas Magias Naturais" is real (Feat#resolveCastingRollBonus,
+    // #resolveSpellDamageBonus) for a Magia of a Natural Árvore.
+    // TODO: "e Curas" — a Magia's healing has no resolved figure on SpellCastingResult.
     ACOLHIDA_POR_FLORA(
             "Você está completamente liberta da maldição e não pode acessar a forma monstruosa. "
                     + "Você não possui a Característica Racial Abandonada pelos Deuses, ao invés "
@@ -97,6 +130,12 @@ public enum GorgonaFeat implements Feat {
                     .requiredRace(Gorgona.class)
                     .forbiddenFeat(GorgonaFeat.MARCA_DA_MALDICAO)
                     .build()) {
+        /** "Apenas … recém-criados" — only a starting Talento slot can take it. */
+        @Override
+        public boolean isAcquirableOnlyAtCreation() {
+            return true;
+        }
+
         @Override
         public FormAccess resolveFormAccess(final FormType form, final Character character) {
             return form == FormType.MONSTRUOSA ? FormAccess.FORBIDDEN : FormAccess.NO_OPINION;
@@ -107,11 +146,10 @@ public enum GorgonaFeat implements Feat {
      * "Você recebe RDS e RD, enquanto em sua Forma Monstruosa você recebe Resistência à
      * Críticos." The RD half is real.
      *
-     * <p><b>The source text is redundant here</b> — RDS <i>is</i> RD (Redução de Danos Sofridos;
-     * see {@code ArtesCompetencyAbility}'s own "+1 RDS"), so "RDS e RD" names one stat twice.
-     * Read as a single grant rather than doubled, and since the clause states no figure it uses
-     * {@code DamageService#DEFAULT_DAMAGE_REDUCTION}, the convention for an RD clause with no
-     * number in its rules text.
+     * <p>"RDS e RD" names two different reductions: RD ({@code
+     * DamageService#DEFAULT_DAMAGE_REDUCTION}, one instance's -2, plain physical damage only) and
+     * RDS ({@code DamageService#DAMAGE_TAKEN_REDUCTION_INSTANCE}, one instance's -1, every
+     * non-Primordial hit). Before 0.0.64 the two were one stat and this read as a single grant.
      */
     // All three halves real now: RD unconditionally, and the Resistência a Críticos while in
     // Forma Monstruosa — the form gate reads CombatantSheet#isInForm through
@@ -132,6 +170,11 @@ public enum GorgonaFeat implements Feat {
             return DamageService.DEFAULT_DAMAGE_REDUCTION;
         }
 
+        @Override
+        public int resolveDamageTakenReduction(final Character character) {
+            return DamageService.DAMAGE_TAKEN_REDUCTION_INSTANCE;
+        }
+
         /** "Enquanto em sua Forma Monstruosa você recebe Resistência à Críticos." */
         @Override
         public int resolveCriticalResistance(final Character character, final SceneContext sceneContext,
@@ -145,8 +188,7 @@ public enum GorgonaFeat implements Feat {
      * "Você recebe RDS e RM, enquanto em sua forma Feérica você recebe Resistência a Críticos."
      * <b>Both the RDS and the RM halves are real</b>, and both unconditional — only the
      * Resistência a Críticos is form-gated. RM ({@code ModifierType#MAGIC_REDUCTION}, resolved by
-     * {@code DamageService#getTotalMagicReduction}) reduces Dano Mágico the way RDS reduces
-     * physical, so this Talento is once again the equal of its Monstros twin, as written.
+     * {@code DamageService#getTotalMagicReduction}) reduces Dano Mágico; RDS reaches both orders.
      */
     // All three halves real now, the same way its twin's are — the Resistência a Críticos gated
     // on Forma Feérica.
@@ -160,9 +202,10 @@ public enum GorgonaFeat implements Feat {
                     .attributeDomain(AttributeDomain.CHARISMA)
                     .requiredAttributeValue(4)
                     .build()) {
+        /** "Você recebe RDS" with no figure — one instance. */
         @Override
-        public int resolveDamageReduction(final Character character) {
-            return DamageService.DEFAULT_DAMAGE_REDUCTION;
+        public int resolveDamageTakenReduction(final Character character) {
+            return DamageService.DAMAGE_TAKEN_REDUCTION_INSTANCE;
         }
 
         @Override
@@ -183,11 +226,8 @@ public enum GorgonaFeat implements Feat {
      * "Você recebe Desvantagens em rolagens de Persuasão, mas recebe Vantagem em suas Rolagens de
      * Ataque e Danos de seu Olhar de Lacerto."
      */
-    // TODO: withheld whole rather than half-implemented. The Desvantagem em Persuasão *is*
-    //  expressible today through Feat#resolveSkillRollBonus (a flat Skill#DISADVANTAGE_MALUS),
-    //  but the Vantagem that pays for it is scoped to Olhar de Lacerto, which is unbuilt —
-    //  granting only the malus would leave a Górgona strictly worse off for acquiring the
-    //  Talento. Same reasoning as GiganteFeat's two Clã Talentos.
+    // Real, both halves together: a Desvantagem on Persuasão, and a Vantagem on the attack and the
+    // dano of an attack made with the OlharDeLacerto source.
     CABELO_SERPENTINO(
             "Seu cabelo está sempre em forma de Serpente, o que assusta ou incomoda outros "
                     + "personagens. Você recebe Desvantagens em rolagens de Persuasão, mas recebe "
@@ -195,14 +235,34 @@ public enum GorgonaFeat implements Feat {
             () -> FeatRequirements.builder()
                     .requiredRace(Gorgona.class)
                     .requiredAwakenedTitles(1)
-                    .build()),
+                    .build()) {
+        @Override
+        public int resolveSkillRollBonus(final SkillType skillType, final SceneContext sceneContext,
+                                         final SkillTrait requestedAbility, final Character character,
+                                         final AttackSource attackSource) {
+            if (skillType == SkillType.PERSUASAO) {
+                return Skill.DISADVANTAGE_MALUS;
+            }
+            return attackSource == OlharDeLacerto.INSTANCE ? Skill.ADVANTAGE_BONUS : 0;
+        }
+
+        @Override
+        public Optional<DamageBonus> resolveDamageBonus(final SkillType attackingSkillType, final SceneContext sceneContext,
+                                                        final CombatantSheet attackTarget, final Character actor,
+                                                        final AttackSource attackSource) {
+            return attackSource == OlharDeLacerto.INSTANCE
+                    ? Optional.of(new DamageBonus(Skill.ADVANTAGE_BONUS, OlharDeLacerto.DAMAGE.damageType(),
+                            OlharDeLacerto.DAMAGE.elementalType()))
+                    : Optional.empty();
+        }
+    },
 
     /**
      * "Você pode adquirir Talentos Monstruosos que não sejam Raciais e recebe a Habilidade Racial
      * Ferocidade de Lacerto (ver Indômitos) como se fosse um Impuro."
      */
-    // TODO: Ferocidade de Lacerto is unbuilt — Indomito's own javadoc records why it is withheld
-    //  rather than approximated (it is a state that can be declined, and nothing tracks it).
+    // The Ferocidade de Lacerto is real: resolveLacertoFerocityRound puts its holder in it from the
+    // third combat Rodada, an Impuro's timing (LacertoFerocityService enters, declines and ends it).
     // TODO: "pode adquirir Talentos Monstruosos que não sejam Raciais" would widen what this
     //  character may acquire, but FeatCategory#MONSTRUOSO is itself a racial category, so the
     //  carve-out names a distinction the enum does not draw. Nothing gates acquisition on a
@@ -216,16 +276,20 @@ public enum GorgonaFeat implements Feat {
             () -> FeatRequirements.builder()
                     .requiredRace(Gorgona.class)
                     .requiredAwakenedTitles(1)
-                    .build()),
+                    .build()) {
+        @Override
+        public Integer resolveLacertoFerocityRound(final Character character) {
+            return Indomito.IMPURO_FEROCITY_ROUND;
+        }
+    },
 
     /**
      * "Escolha duas Árvores de Magia Natural, você pode Mimetizar as magias Semente das Árvores
      * escolhidas."
      */
-    // TODO: mimetizar has no mechanism, spending PD in place of PM has no cost step to redirect,
-    //  and the whole effect is form-gated. (The two chosen Árvores could be recorded now — a
-    //  choice-carrying AbstractFeat subclass, see FocoEmPericiaFeat — but mimetizar is the
-    //  blocker.)
+    // The mimicry is real, through ArvoresMimetizadasFeat: two chosen Árvores Naturais — their
+    // Semente, their Broto at 2PD with one Título Desperto, their Muda at 3PD with two — each
+    // castable only in Forma Feérica (MimetizedSpell#requiredForm).
     ABENCOADA_PELO_CONCLAVE(
             "Você pode adquirir Talentos Feéricos. Escolha duas Árvores de Magia Natural, você "
                     + "pode Mimetizar as magias Semente das Árvores escolhidas. Ao Despertar seu "
@@ -236,7 +300,12 @@ public enum GorgonaFeat implements Feat {
             () -> FeatRequirements.builder()
                     .requiredRace(Gorgona.class)
                     .requiredAwakenedTitles(1)
-                    .build());
+                    .build()) {
+        @Override
+        public List<FeatChoice<?>> resolveRequiredChoices(final Character holder) {
+            return List.of(new FeatChoice<>(MagicTree.class, 2, ArvoresMimetizadasFeat.naturalTrees()));
+        }
+    };
 
     /**
      * {@link #ACOLHIDA_POR_FLORA}, reached through a method rather than named directly: Java forbids
@@ -261,6 +330,9 @@ public enum GorgonaFeat implements Feat {
     private static Feat protecaoDaRainhaDasFadas() {
         return PROTECAO_DA_RAINHA_DAS_FADAS;
     }
+
+    /** MARCA_DA_MALDICAO's "+2 em Conjuração, Danos e Curas de suas Magias Naturais". */
+    private static final int MARCA_NATURAL_BONUS = 2;
 
     private final String description;
     /**

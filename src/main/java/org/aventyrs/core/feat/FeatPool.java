@@ -30,9 +30,12 @@ public sealed interface FeatPool permits FeatPool.Categories, FeatPool.Especiali
      */
     Set<FeatCategory> categories();
 
-    /** Whether character (and sheet, when given) may take feat from this pool. */
+    /**
+     * Whether character (and sheet, when given) may take feat from this pool — a starting slot, so
+     * {@link Feat#isEligibleAtCreation} is the question rather than {@link Feat#isEligible}.
+     */
     default boolean isEligible(final Feat feat, final Character character, final CharacterSheet sheet) {
-        return feat.isEligible(character, sheet);
+        return feat.isEligibleAtCreation(character, sheet);
     }
 
     /** Every Talento of one of categories, except the named excluded constants. */
@@ -135,7 +138,7 @@ public sealed interface FeatPool permits FeatPool.Categories, FeatPool.Especiali
 
         @Override
         public boolean isEligible(final Feat feat, final Character character, final CharacterSheet sheet) {
-            return feat.isEligible(character.toBuilder().race(race).build(), sheet);
+            return feat.isEligibleAtCreation(character.toBuilder().race(race).build(), sheet);
         }
     }
 

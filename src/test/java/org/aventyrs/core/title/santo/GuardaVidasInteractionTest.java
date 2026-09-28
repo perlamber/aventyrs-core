@@ -65,6 +65,14 @@ class GuardaVidasInteractionTest {
         assertSame(santo, result.getRedirectedAttackTarget());
     }
 
+    /** Guarda-Vidas costs a Reação, and the Título activation records it on the ledger. */
+    @Test
+    void activatingSpendsAReacao() {
+        interaction.activate(interceptingFor(ally, Range.DISTANCIA_CURTA));
+
+        assertEquals(1, santo.getReactionsSpentThisRound());
+    }
+
     @Test
     void activatingSpendsExactlyThreeDeterminationPoints() {
         int before = currentPd();

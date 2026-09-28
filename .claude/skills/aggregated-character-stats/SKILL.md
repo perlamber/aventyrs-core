@@ -32,9 +32,11 @@ conventions" — especially **the three-source scan** — apply throughout.
   Turn), which is a game-flow/Scene-timing concern this library doesn't enforce, not a
   computation difference. Since 0.0.42 both totals *are* consulted for real:
   `ActiveAbilityService#activate` checks an ability whose `ActionCost` is a `REACTION` or a
-  `FREE_ACTION` against the matching counter instead of against Pontos de Ação. It is still only
-  an "entitled to any at all" check — nothing counts one as **spent** — so don't read that
-  wiring as a pool. Don't build a distinct aggregation shape for a new counter just
+  `FREE_ACTION` against the matching counter instead of against Pontos de Ação. **Reações are a
+  live pool since 0.0.62**: `CombatantSheet#spendReaction`/`getReactionsSpentThisRound` (reset at
+  `startNewRound`/`startNewScene`) and `ReactionsService#getRemainingReactions`, which the
+  activation and `ReactionOptionsService` gate on. Ações Livres are still only an "entitled to any
+  at all" check — nothing counts one as **spent**. Don't build a distinct aggregation shape for a new counter just
   because it's spent under different narrative conditions — reuse this same pattern.
 - Whenever a new fixed counter field is added to `Character` here, it must also be added to
   `CharacterFixture`'s `BLANK` template `Rule` (see the comment on `loadCharacterTemplates` —
@@ -123,7 +125,7 @@ Follows the `InitiativeService` variant of the aggregated-stat shape (no new `Ch
 field, no `CharacterFixture` change). Base is derived — `SizeCategory.getMovementPerActionPoint()`
 (via `CharacterSizeService#getEffectiveSizeCategory`, so size-shifting is reflected) — plus the
 usual `ModifierType.MOVEMENT` three-source sum, using `SkillCompetencyAbility.allFor` so racial
-abilities count (unlike `ReactionsService`/`InitiativeService`, which predate that fix). Floored
+abilities count (as `ReactionsService`/`InitiativeService` now do too). Floored
 at 0. The `Character` overload returns the **permanent** figure only. Two `CombatantSheet`
 overloads add what's scoped to now: `getMovementBase(sheet, movementIndex)` holds all the logic
 — permanent, plus `getTemporaryBonus(ModifierType.MOVEMENT)`, plus `resolveRoundMovementIncrease`
@@ -155,6 +157,14 @@ over-grants once its holder spends more than one Ponto de Ação moving; that's 
 constant and deliberately kept, since a one-shot movement allowance is a mechanism this core
 doesn't have and granting nothing would be further from the clause. Check which of the two
 shapes a new grant is before reaching for `ModifierType.MOVEMENT`.
+
+**Movement modes.** Land Movimento is one of four `MovementMode`s. FLIGHT/SWIM/CLIMB are
+*possessed or not* (`MovementService#hasMovementMode`) and resolved by `getMovementBase(sheet,
+mode)`: a Talento's absolute figure (`Feat#resolveMovementBaseOverride`) or, ⚠️ by inference, the
+land figure, plus `resolveModeMovementIncrease` (Feat, Race) and the item `FLIGHT_MOVEMENT`/
+`SWIM_MOVEMENT`/`CLIMB_MOVEMENT` bonuses. **Never route a Voo/Natação/Vertical clause through
+`ModifierType#MOVEMENT`** — that raises ground movement. Whether someone is flying *now* is the
+caller's `EnvironmentalState#flying`.
 
 **Three axes, three homes.** An unconditional "+NUD ao Movimento Base" is a plain
 `@Modifier(ModifierType.MOVEMENT)` method. A Round-*window* clause ("nas duas primeiras Rodadas

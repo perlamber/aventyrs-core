@@ -179,7 +179,11 @@ public interface Improvement {
         return 0;
     }
 
-    /** The number of Rodadas this improvement adds to the given Magia's resolved Duração. */
+    /**
+     * The number of Rodadas this improvement adds to the given Magia's resolved Duração — or, with a
+     * {@code null} spell, to an effect extended like a Magia without being one (the Barreira Mágica),
+     * where an override scoped to some kind of Magia must answer 0.
+     */
     default int resolveDurationIncreaseInRounds(final Spell spell, final Character character) {
         return 0;
     }

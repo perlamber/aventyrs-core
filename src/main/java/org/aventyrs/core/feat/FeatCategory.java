@@ -124,7 +124,18 @@ public enum FeatCategory {
     /** Troll — 5. */
     TROLL(Type.RACIAL),
     /** Vampírico — 11. */
-    VAMPIRICO(Type.RACIAL);
+    VAMPIRICO(Type.RACIAL),
+
+    // ---- Antecedentes -----------------------------------------------------------------------
+
+    /**
+     * The named Benefícios of the Antecedentes ({@code org.aventyrs.core.background}) — Prontidão,
+     * Sortudo, Treinamento Atlético… Not Talentos at all in the rules text: {@link AntecedenteFeat}
+     * gives each one a {@code Feat}'s shape so it rides every Talento hook, and a character holds
+     * it only through {@code Character#getBackgrounds()}. Never bought, never offered by a starting
+     * slot, and absent from {@link FeatCatalog}.
+     */
+    ANTECEDENTE(Type.ANTECEDENTE);
 
     private final Type type;
 
@@ -135,6 +146,8 @@ public enum FeatCategory {
      * authored (see {@code docs/rules/talentos-index.md}).
      */
     public enum Type {
-        GERAL, RACIAL
+        GERAL, RACIAL,
+        /** An Antecedente's Benefício — see {@link FeatCategory#ANTECEDENTE}. */
+        ANTECEDENTE
     }
 }

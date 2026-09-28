@@ -5,6 +5,7 @@ import org.aventyrs.core.character.Character;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.skill.Skill;
 import org.aventyrs.core.sheet.ActionCost;
+import org.aventyrs.core.sheet.CarmillaPresence;
 import org.aventyrs.core.sheet.LifeSteal;
 import org.aventyrs.core.sheet.TemporaryBonus;
 import org.aventyrs.core.sheet.TemporaryEffect;
@@ -101,6 +102,7 @@ final class PoderVampiricoActiveAbility implements ActiveAbility {
             case DOM_DE_MIRCALLA -> List.of(
                     new TemporaryBonus(ModifierType.CHARISMA_BONUS, MIRCALLA_BASE_ATTRIBUTE_BONUS + titles, duration),
                     new TemporaryBonus(ModifierType.INSTINCT_BONUS, MIRCALLA_BASE_ATTRIBUTE_BONUS + titles, duration));
+            case PRESENCA_DE_CARMILLA -> List.of(new CarmillaPresence(duration));
             default -> throw new IllegalStateException(poder + " is not a Poder Vampírico with an activation effect");
         };
     }

@@ -61,7 +61,7 @@ public class HitPointsServiceImpl implements HitPointsService {
 
     @Override
     public int getMaxHitPoints(final Character character, final CombatantSheet characterSheet) {
-        return BASE_HIT_POINTS
+        return character.getResourceFormula().getBaseHitPoints()
                 + character.getEffectiveAttributeTotal(AttributeDomain.VIGOR, characterSheet)
                         * getLifeMultiplier(character, characterSheet)
                 + getHitPointsBonus(character);

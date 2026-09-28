@@ -13,6 +13,7 @@ import org.aventyrs.core.character.DamageContribution;
 import org.aventyrs.core.character.DamageContributionSource;
 import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.character.SizeCategory;
+import org.aventyrs.core.character.services.AncestralCounselService;
 import org.aventyrs.core.character.services.CharacterSizeService;
 import org.aventyrs.core.character.services.CharacterSizeServiceImpl;
 import org.aventyrs.core.character.services.ChargeService;
@@ -47,7 +48,14 @@ import java.util.Optional;
 
 import static org.aventyrs.core.util.TranslatableMessages.SKILL_USE_PREVENTED;
 import static org.aventyrs.core.skill.Skill.UNTRAINED_PENALTY;
+import static org.aventyrs.core.util.TranslatableMessages.ANCESTRAL_COUNSEL_NOT_BANKED;
 import static org.aventyrs.core.util.TranslatableMessages.REQUIRED_SKILL_TRAIT_NOT_HELD;
+import static org.aventyrs.core.util.TranslatableMessages.ACTIVATED_FEAT_NOT_HELD;
+import static org.aventyrs.core.util.TranslatableMessages.FEAT_ACTIVATION_NOT_PERMITTED;
+import static org.aventyrs.core.util.TranslatableMessages.REROLL_NOT_GRANTED;
+import static org.aventyrs.core.util.TranslatableMessages.SHIELD_ATTACK_NOT_PERMITTED;
+import org.aventyrs.core.feat.EscudeiroFeat;
+import org.aventyrs.core.item.ShieldAttack;
 
 /**
  * The {@code applyTo}/{@code findCharacterSkill} machinery every {@code <Skill>Interaction}
@@ -306,11 +314,28 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
         int targetCount = (attackTarget == null ? 0 : 1)
                 + (additionalTargets == null ? 0 : additionalTargets.size());
         Character character = target.getCharacter();
-        CharacterSkill characterSkill = findCharacterSkill(character);
+        // Domínio da Cura: a Título may let another Perícia stand in for this one, whichever has the
+        // higher Graduação. Not when the roll names one of this Perícia's own traits — those belong
+        // to it, and the stand-in holds none of them.
+        CharacterSkill characterSkill = skillRoll != null && skillRoll.getRequestedAbility() != null
+                ? findCharacterSkill(character)
+                : character.getEffectiveSkill(skillType).orElseGet(() -> findCharacterSkill(character));
+        validateShieldAttack(target, attackSource);
         if (skillRoll != null) {
             validateRequestedTrait(character, characterSkill, skillRoll.getRequestedAbility(), attackSource);
+            validateActivatedFeats(target, skillRoll, attackSource, sceneContext);
         }
         int graduationValue = characterSkill.getGraduation().getGraduationValue();
+        // Agnação Ancestral: "são considerados treinados e especialistas nesta rolagem" — the untrained
+        // penalty goes (⚠️ read as 0 Graduações), the roll decomposes as an Especialista's, and the GD
+        // eases one nível below. Needs a banked counsel; the caller spends it after the roll.
+        boolean counselled = skillRoll != null && skillRoll.isCounselled();
+        if (counselled) {
+            if (target.getCharges(AncestralCounselService.COUNSEL) == 0) {
+                throw new IllegalOperationException(ANCESTRAL_COUNSEL_NOT_BANKED);
+            }
+            graduationValue = Math.max(0, graduationValue);
+        }
         List<SkillCompetencyAbility> skillCompetencyAbilities = allSkillCompetencyAbilities(target);
 
         AttributeDomain naturalDomain = characterSkill.getSkill().getAttributeDomain();
@@ -324,6 +349,9 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
         }
 
         int bonus = characterSkillService.getValueForRoll(characterSkill, character.getAttributes(), character.getRace(), attributeDomain);
+        if (counselled) {
+            bonus += graduationValue - characterSkill.getGraduation().getGraduationValue();
+        }
         // "Abandonando seus traços raciais" — the racial half of the governing Atributo goes for
         // as long as the Forma holds. Subtracted here rather than routed through
         // Character#getEffectiveAttributeTotal(domain, sheet): getValueForRoll reads the raw
@@ -350,12 +378,23 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
         bonus += target.getConditionBonus(ModifierType.SKILL_ROLL_BONUS, sceneContext);
         bonus += target.getConditionBonus(skillType.getRollBonusType(), sceneContext);
         bonus += sumEquipmentRollBonuses(character);
+        // Curandeiro's Despertar: "Vantagem nas rolagens de 'Medicina e Cura'".
+        bonus += character.getAllTitles().stream()
+                .mapToInt(title -> title.resolveSkillRollBonus(skillType, target))
+                .sum();
         bonus += sumConditionalRollBonuses(skillCompetencyAbilities, sceneContext, skillRoll);
         bonus += sumFeatRollBonuses(target, sceneContext, skillRoll, attackSource);
         bonus += sumEgoAdvantageRollBonuses(character.getEgoAdvantages().values(), sceneContext);
         bonus += sumEgoAdvantageSkillSpecificRollBonuses(character.getEgoAdvantages().values(), sceneContext, target);
         bonus += sizeCategoryRollBonus(characterSizeService.getEffectiveSizeCategory(target));
         bonus += sumAttributeDomainRollBonuses(character.getAttributeAbilities(), attributeDomain, character);
+        for (SkillCompetencyAbility ability : skillCompetencyAbilities) {
+            bonus += ability.resolveGoverningAttributeRollBonus(attributeDomain, target);
+        }
+        if (character.getRace() != null && !target.getRacialTraitSuppression().suppressesPhysicalTraits()) {
+            bonus += character.getRace().resolveGoverningAttributeRollBonus(attributeDomain, target, sceneContext,
+                    sheet -> characterSizeService.getEffectiveSizeCategory(sheet).getCategory());
+        }
         bonus += sumManoeuvreRollBonuses(character.getAttributeAbilities(), skillRoll);
         if (skillRoll != null && target.isFirstRollOfTurnFor(attributeDomain)) {
             bonus += sumFirstRollOfTurnBonuses(character.getAttributeAbilities(), attributeDomain);
@@ -366,10 +405,17 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                 .mapToInt(SkillCompetencyAbility::getDifficultyReduction)
                 .sum();
         difficultyReduction += sumAttributeDomainDifficultyReductions(character.getAttributeAbilities(), attributeDomain, character);
-        difficultyReduction += sumFeatDifficultyReductions(character);
+        difficultyReduction += sumFeatDifficultyReductions(character, sceneContext, skillRoll);
+        if (counselled) {
+            difficultyReduction += AncestralCounselService.DIFFICULTY_REDUCTION;
+        }
+        // Transferir Rancor: "-1 Nível" on Perícia de Ataque and Domínio do Mana rolls, cumulative.
+        if (skillType.isAttackSkill() || skillType == SkillType.DOMINIO_DO_MANA) {
+            difficultyReduction += target.getTemporaryBonus(ModifierType.ATTACK_AND_CONJURATION_DIFFICULTY_REDUCTION);
+        }
         if (skillRoll != null) {
             difficultyReduction += sumFeatAttackCostDifficultyReductions(character, sceneContext, attackSource,
-                    skillRoll.getActionCost(), target.getActionsThisRound());
+                    skillRoll.getActionCost(), target.getActionsThisRound(), target);
         }
 
         InteractionResult.InteractionResultBuilder result = InteractionResult.builder()
@@ -378,18 +424,49 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                 .difficultyReduction(difficultyReduction)
                 .governingAttributeDomain(skillRoll != null ? attributeDomain : null);
 
+        // Cego: "Deve rolar 1d6 sempre que efetuar uma rolagem de perícia" — reported so the caller
+        // throws it, and judged when it did.
+        java.util.OptionalInt blindThreshold = target.getBlindCheckThreshold(skillType, sceneContext);
+        boolean blindCheckFailed = false;
+        if (blindThreshold.isPresent()) {
+            result.blindCheckThreshold(blindThreshold.getAsInt());
+            if (skillRoll != null && skillRoll.getBlindCheckFace() != null) {
+                blindCheckFailed = skillRoll.getBlindCheckFace() <= blindThreshold.getAsInt();
+                result.blindCheckFailed(blindCheckFailed);
+            }
+        }
+        boolean failedBlind = blindCheckFailed;
+
         if (skillType.isAttackSkill()) {
+            target.getCharacter().getFeats().stream()
+                    .map(feat -> feat.resolveDamageRetype(target.getCharacter(), skillType, attackSource))
+                    .filter(java.util.Objects::nonNull)
+                    .findFirst()
+                    .ifPresent(result::retypedDamage);
             DamageSum damage = sumDamageBonus(target, sceneContext, null, attackSource, targetCount, skillRoll);
             damage.bonus().ifPresent(damageBonus ->
                     result.damageBonus(damageBonus).damageBonusBreakdown(damage.breakdown()));
+            // Transferir Rancor's "+1d6 pontos de danos" per stack — reported for the caller to roll.
+            int extraDice = target.getTemporaryBonus(ModifierType.EXTRA_DAMAGE_DICE);
+            // Aceitar a Lacerto's "+1d6" on Armas Naturais while the Ferocidade is mimicked.
+            extraDice += target.getLacertoFerocities().stream()
+                    .mapToInt(ferocity -> ferocity.extraDamageDiceFor(target.getCharacter(), attackSource))
+                    .max().orElse(0);
+            // A Talento's own die — Ataque Concentrado's "+1d6" when used with Lutador Nato.
+            extraDice += target.getCharacter().getFeats().stream()
+                    .mapToInt(feat -> feat.resolveExtraDamageDice(skillType, attackSource, target, skillRoll))
+                    .sum();
+            if (extraDice > 0) {
+                result.extraDamageDice(extraDice);
+            }
         }
 
         if (skillRoll != null) {
-            boolean expert = skillRoll.getRequestedAbility() instanceof SkillSpecialization;
+            boolean expert = counselled || skillRoll.getRequestedAbility() instanceof SkillSpecialization;
             Optional<DifficultyLevel> reached = expert
                     ? DifficultyLevel.reachedByAsExpert(bonus + skillRoll.getTotal())
                     : DifficultyLevel.reachedBy(bonus + skillRoll.getTotal());
-            int criticalMarginIncrease = sumCriticalMarginIncrease(target, sceneContext, attackSource);
+            int criticalMarginIncrease = sumCriticalMarginIncrease(target, sceneContext, attackSource, attackTarget);
             // Resistência a Críticos — the attack target's own RC narrows this roller's Margem
             // Crítica Menor back: its Raça's and its Talentos' standing grants plus any
             // round-scoped Blessing (AnaoFeat#VIGOR_DO_INVERNO), all summed by the target's own
@@ -409,8 +486,9 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                     .criticalResult(criticalResult);
             resolveOutcome(bonus + skillRoll.getTotal(), skillRoll.getTargetValue(), difficultyReduction,
                     skillCompetencyAbilities, character.getFeats(), sceneContext, character).ifPresent(outcome -> {
-                        result.succeeded(outcome.succeeded()).margin(outcome.margin());
-                        if (outcome.succeeded()) {
+                        boolean succeeded = outcome.succeeded() && !failedBlind;
+                        result.succeeded(succeeded).margin(outcome.margin());
+                        if (succeeded) {
                             List<Blessing> earned = skillCompetencyAbilities.stream()
                                     .flatMap(ability -> ability.resolveSuccessBlessings(
                                             skillType, skillRoll.getRequestedAbility(), sceneContext).stream())
@@ -496,7 +574,45 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
         if (attackRollBonus != 0) {
             result = result.toBuilder().skillRollBonus(result.getSkillRollBonus() + attackRollBonus).build();
         }
+        // Lutar Engajado: the dano roll's own reroll, which only a real target can make adjacent.
+        int damageRerolls = target.getCharacter().getFeats().stream()
+                .mapToInt(feat -> feat.resolveDamageLowestDieRerolls(skillType, sceneContext, target, attackTarget,
+                        skillRoll))
+                .sum();
+        if (damageRerolls > 0) {
+            result = result.toBuilder().damageLowestDieRerolls(damageRerolls).build();
+        }
         return result;
+    }
+
+    /**
+     * Refuses a roll spending a Talento its roller does not hold ({@code ACTIVATED_FEAT_NOT_HELD}),
+     * one a held Talento will not be spent on right now ({@code FEAT_ACTIVATION_NOT_PERMITTED} — see
+     * {@link Feat#permitsActivation}), and a reroll of the lowest die no activated Talento pays for
+     * ({@code REROLL_NOT_GRANTED}). The same "possession is validated" line {@link
+     * #validateRequestedTrait} holds for a requested trait: what the caller says was spent must have
+     * been spendable.
+     *
+     * <p>Held means {@code Character#getFeats()} contains it — a choice-carrying Talento is held in its
+     * acquired form, so the catalog constant a roll names is matched through {@link
+     * Feat#catalogEntry()} too.
+     */
+    private void validateActivatedFeats(final CombatantSheet roller, final SkillRoll skillRoll,
+                                        final AttackSource attackSource, final SceneContext sceneContext) {
+        List<Feat> held = roller.getCharacter().getFeats();
+        for (Feat feat : skillRoll.getActivatedFeats()) {
+            boolean holds = held.stream().anyMatch(own -> own == feat || own.catalogEntry() == feat);
+            if (!holds) {
+                throw new IllegalOperationException(ACTIVATED_FEAT_NOT_HELD);
+            }
+            if (!feat.permitsActivation(skillType, skillRoll, attackSource, roller, sceneContext)) {
+                throw new IllegalOperationException(FEAT_ACTIVATION_NOT_PERMITTED);
+            }
+        }
+        if (skillRoll.isRerolled() && skillRoll.getActivatedFeats().stream()
+                .noneMatch(feat -> feat.grantsLowestDieReroll(skillType, roller, sceneContext))) {
+            throw new IllegalOperationException(REROLL_NOT_GRANTED);
+        }
     }
 
     /**
@@ -567,7 +683,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
         SkillTrait requestedAbility = skillRoll == null ? null : skillRoll.getRequestedAbility();
         return character.getFeats().stream()
                 .mapToInt(feat -> feat.resolveSkillRollBonus(
-                        skillType, sceneContext, requestedAbility, character, attackSource, holder))
+                        skillType, sceneContext, requestedAbility, character, attackSource, holder, skillRoll))
                 .sum();
     }
 
@@ -585,9 +701,10 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
      * an explicit pass here — the same shape {@code DefenseServiceImpl}/{@code
      * MovementServiceImpl} already use for their own {@code Feat} hooks.
      */
-    private int sumFeatDifficultyReductions(final Character character) {
+    private int sumFeatDifficultyReductions(final Character character, final SceneContext sceneContext,
+                                            final SkillRoll skillRoll) {
         return character.getFeats().stream()
-                .mapToInt(feat -> feat.resolveDifficultyReduction(skillType, character))
+                .mapToInt(feat -> feat.resolveDifficultyReduction(skillType, character, sceneContext, skillRoll))
                 .sum();
     }
 
@@ -600,11 +717,32 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
      */
     private int sumFeatAttackCostDifficultyReductions(final Character character, final SceneContext sceneContext,
                                                       final AttackSource attackSource, final ActionCost actionCost,
-                                                      final List<CombatantAction> actionsThisRound) {
+                                                      final List<CombatantAction> actionsThisRound,
+                                                      final CombatantSheet holder) {
         return character.getFeats().stream()
                 .mapToInt(feat -> feat.resolveAttackCostDifficultyReduction(
-                        skillType, sceneContext, character, attackSource, actionCost, actionsThisRound))
+                        skillType, sceneContext, character, attackSource, actionCost, actionsThisRound, holder))
                 .sum();
+    }
+
+    /**
+     * Refuses an Ataque com Escudo ({@link ShieldAttack}) its roller may not make: without Atacar com
+     * Escudos, with a Escudo not in their equipment, or with Asas Adamantinas' wings they don't have or
+     * while flying ({@code SHIELD_ATTACK_NOT_PERMITTED}). Possession is validated, as every trait a roll
+     * names is.
+     */
+    private static void validateShieldAttack(final CombatantSheet roller, final AttackSource attackSource) {
+        if (!(attackSource instanceof ShieldAttack attack)) {
+            return;
+        }
+        Character character = roller.getCharacter();
+        boolean trained = character.getFeats().contains(EscudeiroFeat.ATACAR_COM_ESCUDOS);
+        boolean wielded = attack.isWings()
+                ? character.getFeats().contains(EscudeiroFeat.ASAS_ADAMANTINAS) && !roller.isFlying()
+                : character.getEquipment().stream().anyMatch(attack::swings);
+        if (!trained || !wielded) {
+            throw new IllegalOperationException(SHIELD_ATTACK_NOT_PERMITTED);
+        }
     }
 
     /**
@@ -785,8 +923,8 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
      * floor lands after it — see {@link #applyTo(CombatantSheet, SceneContext, SkillRoll)}.
      */
     private int sumCriticalMarginIncrease(final CombatantSheet holder, final SceneContext sceneContext,
-                                          final AttackSource attackSource) {
-        return criticalService.sumCriticalMarginIncrease(holder, skillType, attackSource, sceneContext);
+                                          final AttackSource attackSource, final CombatantSheet attackTarget) {
+        return criticalService.sumCriticalMarginIncrease(holder, skillType, attackSource, sceneContext, attackTarget);
     }
 
     /**
@@ -854,7 +992,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                 .forEach(bonus -> addTyped(typed, contributions, DamageContributionSource.EGO_ADVANTAGE, bonus));
         character.getFeats().stream()
                 .map(feat -> feat.resolveDamageBonus(skillType, sceneContext, attackTarget, character,
-                        attackSource, targetCount, target))
+                        attackSource, targetCount, target, skillRoll))
                 .flatMap(Optional::stream)
                 .forEach(bonus -> addTyped(typed, contributions, DamageContributionSource.FEAT, bonus));
 

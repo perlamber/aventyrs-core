@@ -8,6 +8,7 @@ import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.character.DefenseType;
 import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.magic.BranchLevel;
+import org.aventyrs.core.magic.FreeSpellPick;
 import org.aventyrs.core.magic.Spell;
 import org.aventyrs.core.magic.TestSpell;
 import org.aventyrs.core.magic.TestSpellTree;
@@ -202,9 +203,9 @@ class MetamagicoFeatTest {
     // ---------- free spell acquisition ----------
 
     /**
-     * ARCANISTA is meant to hand out its chosen trees' Sementes/Brotos for free, but until it
-     * has an acquisition-time-choice class to record the picks, no constant can override the
-     * hook — so every one still reports the default.
+     * The ladder's free picks go through {@code resolveFreeSpellPicks}, never a waiver or a
+     * discount — a "which Magia is free" record would have to be stored, and the picks are
+     * derived from the spell list instead.
      */
     @Test
     void noConstantWaivesOrDiscountsSpellAcquisitionCostYet() {
@@ -215,6 +216,69 @@ class MetamagicoFeatTest {
             assertFalse(feat.grantsFreeSpellAcquisition(any, anySpell), feat.name());
             assertEquals(0, java.math.BigDecimal.ZERO
                     .compareTo(feat.resolveSpellAcquisitionCostReduction(any, anySpell)), feat.name());
+        }
+    }
+
+    // ---------- Árvores conhecidas and the free picks ----------
+
+    private static Character withConhecimentosAndGnose(final int graduation, final int gnose) {
+        return character()
+                .skill(SkillType.CONHECIMENTOS, trained(new Conhecimentos(), graduation))
+                .attributes(CharacterAttributes.builder()
+                        .gnose(AttributeValue.builder().domain(AttributeDomain.GNOSE).base(gnose).build())
+                        .build())
+                .build();
+    }
+
+    /** Ruling (2026-09-25): "Conhecimento Metamágico" is the Conhecimentos roll value. */
+    @Test
+    void arcanistaKnowsAsManyTreesAsConhecimentosGraduationPlusGnose() {
+        assertEquals(5, MetamagicoFeat.ARCANISTA.resolveKnownTreeCapacity(withConhecimentosAndGnose(2, 3)));
+    }
+
+    @Test
+    void aRaisedGraduationRaisesTheTreeCapacity() {
+        assertEquals(6, MetamagicoFeat.ARCANISTA.resolveKnownTreeCapacity(withConhecimentosAndGnose(3, 3)));
+    }
+
+    @Test
+    void anUntrainedArcanistaKnowsNoTrees() {
+        assertEquals(0, MetamagicoFeat.ARCANISTA.resolveKnownTreeCapacity(withConhecimentosAndGnose(0, 3)));
+    }
+
+    @Test
+    void onlyArcanistaOpensTrees() {
+        Character character = withConhecimentosAndGnose(9, 3);
+        for (MetamagicoFeat feat : MetamagicoFeat.values()) {
+            if (feat != MetamagicoFeat.ARCANISTA) {
+                assertEquals(0, feat.resolveKnownTreeCapacity(character), feat.name());
+            }
+        }
+    }
+
+    @Test
+    void eachLadderRungOwesTwoPicksOfTheRungItUnlocks() {
+        Character any = character().build();
+
+        assertEquals(List.of(new FreeSpellPick(BranchLevel.BROTO, 2)),
+                MetamagicoFeat.ARCANISTA.resolveFreeSpellPicks(any));
+        assertEquals(List.of(new FreeSpellPick(BranchLevel.MUDA, 2)),
+                MetamagicoFeat.ARCANISTA_EXPERIENTE.resolveFreeSpellPicks(any));
+        assertEquals(List.of(new FreeSpellPick(BranchLevel.EMERGENTE, 2)),
+                MetamagicoFeat.MESTRE_ARCANISTA.resolveFreeSpellPicks(any));
+        assertEquals(List.of(new FreeSpellPick(BranchLevel.FLORESCENTE, 2)),
+                MetamagicoFeat.DESAFIADOR_DA_REALIDADE.resolveFreeSpellPicks(any));
+    }
+
+    @Test
+    void noOtherConstantOwesAFreePick() {
+        Character any = character().build();
+        List<MetamagicoFeat> ladder = List.of(MetamagicoFeat.ARCANISTA, MetamagicoFeat.ARCANISTA_EXPERIENTE,
+                MetamagicoFeat.MESTRE_ARCANISTA, MetamagicoFeat.DESAFIADOR_DA_REALIDADE);
+        for (MetamagicoFeat feat : MetamagicoFeat.values()) {
+            if (!ladder.contains(feat)) {
+                assertTrue(feat.resolveFreeSpellPicks(any).isEmpty(), feat.name());
+            }
         }
     }
 

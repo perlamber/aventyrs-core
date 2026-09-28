@@ -37,7 +37,7 @@ import java.util.List;
  * at its head for the caller to supply that figure to.
  */
 @Getter
-@Builder
+@Builder(toBuilder = true)
 public class DeliveredAttack {
 
     /** The character making the attack — the one who rolls. */
@@ -131,6 +131,17 @@ public class DeliveredAttack {
      */
     @Singular
     private final List<AttackTarget> additionalTargets;
+
+    /**
+     * The Área de Efeito this attack covers, or {@code null} for an ordinary attack — "seu tipo de
+     * ataque muda para Área de Efeito – Explosão". When set, {@link #additionalTargets} are everyone
+     * else in the footprint (resolve it with {@code scene.grid.AreaFootprint}), their number is not
+     * capped by {@code AttackTargetingService#getMaximumTargets}, and they take <b>full</b> damage:
+     * "Magias com Área de Efeito podem atingir múltiplos personagens, afetando aqueles cuja DM seja
+     * superada. Uma única rolagem deve ser feita". {@code AttackDelivery} refuses an area the
+     * attacker's Talentos ({@code AttackTargetingService#resolveAttackArea}) do not grant.
+     */
+    private final org.aventyrs.core.scene.AreaOfEffect areaOfEffect;
 
     /**
      * The Efeitos Críticos this attack inflicts if the attack roll comes up an Acerto Crítico.

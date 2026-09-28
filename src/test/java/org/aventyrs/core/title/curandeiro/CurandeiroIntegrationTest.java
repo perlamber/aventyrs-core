@@ -53,9 +53,11 @@ class CurandeiroIntegrationTest {
                 new RestServiceImpl(), caster));
     }
 
+    /** What Revigorar heals when a Médico de Guerra casts it — the Magia's figure plus the Especialização's +2. */
     private int revigorarAmount() {
         return new RestServiceImpl().getRecoveredHitPoints(target.getCharacter(),
-                VidaSpell.REVIGORAR.getHealing().orElseThrow().restEquivalent());
+                VidaSpell.REVIGORAR.getHealing().orElseThrow().restEquivalent())
+                + Curandeiro.MEDICO_DE_GUERRA_HEALING_BONUS;
     }
 
     private void curarOsMortos(final CharacterSheet curandeiro) {
@@ -120,7 +122,7 @@ class CurandeiroIntegrationTest {
 
         assertEquals(pdBefore - 2,
                 determinationPointsService.getCurrentDeterminationPoints(curandeiro.getCharacter(), curandeiro));
-        assertEquals(1, curandeiro.getRevivalCharges(CurandeiroAbility.CURAR_OS_MORTOS));
+        assertEquals(1, curandeiro.getCharges(CurandeiroAbility.CURAR_OS_MORTOS));
     }
 
     @Test
@@ -133,7 +135,7 @@ class CurandeiroIntegrationTest {
                 () -> curarOsMortos(curandeiro));
 
         assertEquals(NOT_ENOUGH_DETERMINATION_POINTS, refused.getMessage());
-        assertEquals(0, curandeiro.getRevivalCharges(CurandeiroAbility.CURAR_OS_MORTOS));
+        assertEquals(0, curandeiro.getCharges(CurandeiroAbility.CURAR_OS_MORTOS));
     }
 
     @Test
@@ -156,7 +158,7 @@ class CurandeiroIntegrationTest {
         // The reviving heal is judged against DEAD, not COMMA, so it is not capped at 1PV.
         assertEquals(2 * max - revigorarAmount(), target.getDamageTaken());
         assertEquals(CharacterStatus.COMMA, hitPointsService.getStatus(target));
-        assertEquals(0, curandeiro.getRevivalCharges(CurandeiroAbility.CURAR_OS_MORTOS));
+        assertEquals(0, curandeiro.getCharges(CurandeiroAbility.CURAR_OS_MORTOS));
     }
 
     @Test
@@ -201,7 +203,7 @@ class CurandeiroIntegrationTest {
         revigorar(curandeiro);
 
         assertEquals(2 * max, target.getDamageTaken());
-        assertEquals(1, curandeiro.getRevivalCharges(CurandeiroAbility.CURAR_OS_MORTOS), "refused, spent nothing");
+        assertEquals(1, curandeiro.getCharges(CurandeiroAbility.CURAR_OS_MORTOS), "refused, spent nothing");
     }
 
     @Test
@@ -227,7 +229,7 @@ class CurandeiroIntegrationTest {
         target.heal(10, HealingSource.spell(MorteSpell.TOQUE_ANTIVIDA, curandeiro));
 
         assertEquals(2 * max, target.getDamageTaken());
-        assertEquals(1, curandeiro.getRevivalCharges(CurandeiroAbility.CURAR_OS_MORTOS));
+        assertEquals(1, curandeiro.getCharges(CurandeiroAbility.CURAR_OS_MORTOS));
     }
 
     @Test

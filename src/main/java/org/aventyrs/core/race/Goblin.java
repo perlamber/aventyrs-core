@@ -32,15 +32,12 @@ import java.util.Set;
  *   each are still deferred.</li>
  * </ul>
  *
+ * <p><b>Aprendizado Rápido is real</b> ({@link #hasQuickLearning()}): the Perícias recorded on {@code
+ * Character#getQuickLearningSkills()} take 0.5 EXP off their 2nd and 3rd Graduação, through {@code
+ * SkillGraduationService#getUpgradeCost(Character, SkillType)}.
+ *
  * <p>Everything else needs a system this core doesn't have yet:
  * <ul>
- *   <li><b>Aprendizado Rápido</b> (2 Perícias Treinadas chosen at creation get their 2nd and 3rd
- *   Graduação at -0.5 EXP) — identical trait, name and gap to {@code Human}'s own Aprendizado
- *   Rápido: {@code SkillGraduationService#getUpgradeCost} takes no {@link Race} and has no notion
- *   of a race-specific discount, and nothing records <i>which</i> 2 Perícias were chosen at
- *   creation for the discount to scope itself to. The 0.5 is additionally fractional, though
- *   unlike {@link #getNewFeatCost} that particular half is not a blocker — Graduação cost is
- *   already a {@code BigDecimal}.</li>
  *   <li><b>Visão no Escuro</b> — no vision/senses concept exists in this core, same gap {@code
  *   Anao}'s/{@code Elfo}'s own cite.</li>
  *   <li><b>Criatividade Superior</b> (an extra Especialização or Habilidade de Competência when
@@ -97,6 +94,12 @@ public class Goblin implements Race {
     @Override
     public List<SkillCompetencyAbility> getRacialAbilities() {
         return List.of(GoblinsRacialAbility.PODER_DOS_NUMEROS, GoblinsRacialAbility.AUTODESCONFIANCA_EM_COMBATE);
+    }
+
+    /** Aprendizado Rápido — see {@link Race#hasQuickLearning()}. */
+    @Override
+    public boolean hasQuickLearning() {
+        return true;
     }
 
     @Override

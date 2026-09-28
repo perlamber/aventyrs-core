@@ -185,10 +185,10 @@ public interface AventyrTitleAbility {
      * Necessitados uses under V19 ("Enquanto estiver protegendo ao menos 1 aliado você recebe RDS
      * igual a metade do valor capaz de fornecer").
      *
-     * <p><b>RDS is RD, not RA</b> — {@code ModifierType#DAMAGE_REDUCTION}; see {@code
-     * GorgonaFeat}'s own "the source text is redundant: RDS <i>is</i> RD" note. The RA pair above
-     * stays for clauses that really do name Redução Absoluta, and is not deprecated by this one:
-     * the two mitigate at different stages, RA being the one an attack can never ignore.
+     * <p><b>This is RDS</b>, despite the method's name: summed by {@code
+     * DamageService#getTotalDamageTakenReduction}, so it reaches physical and magical hits and never
+     * Primordial ones (named before RD and RDS were split in 0.0.64). The RA pair above stays for
+     * clauses that really do name Redução Absoluta: RA is the one an attack can never ignore.
      *
      * <p>Takes the granting {@link AventyrTitle} as well, which the RA pair does not need: a value
      * like "1+ Metade das Habilidades de Santo que você possuir" is a fact about the <em>holder's

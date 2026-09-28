@@ -68,7 +68,7 @@ class BastiaoDosNecessitadosTest {
     private static final int SELF_RDS = GRANTED_RDS / 2;
 
     private int damageReduction(final CombatantSheet target, final SceneContext context) {
-        return damageService.getTotalDamageReduction(target, null, null, context);
+        return damageService.getTotalDamageTakenReduction(target, context);
     }
 
     /** A context for whoever is taking the damage, with ally placed at the given band. */

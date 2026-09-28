@@ -108,12 +108,12 @@ class FantasmaDoRingueInteractionsTest {
         SenhorDaBriga title = fantasma(FantasmaDoRingueAbility.CRUZ_DE_SANGUE, FantasmaDoRingueAbility.FINGIR_FRAQUEZAS,
                 FantasmaDoRingueAbility.MALICIA_DE_VALENTAO);
         CharacterSheet holder = SenhorDaBrigaFixtures.holder(title);
-        int rdBefore = damageService.getTotalDamageReduction(holder, DamageType.FISICO, null);
+        int rdBefore = damageService.getTotalDamageTakenReduction(holder, null);
 
         title.activateAbility(FantasmaDoRingueAbility.CRUZ_DE_SANGUE,
                 TitleAbilityActivationRequest.builder().activator(holder).build());
 
-        assertEquals(rdBefore + 2, damageService.getTotalDamageReduction(holder, DamageType.FISICO, null));
+        assertEquals(rdBefore + 2, damageService.getTotalDamageTakenReduction(holder, null));
     }
 
     @Test

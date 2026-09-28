@@ -12,7 +12,7 @@ import java.util.Map;
  *
  * <h2>The model</h2>
  * <pre>
- * permanentMax        = character.getEgos().getEgo(domain).getTotal()   // base + variable
+ * permanentMax        = character.getEffectiveEgoTotal(domain)   // base + variable + Talentos
  * permanentRemaining  = max(0, permanentMax - permanentSpent)
  * temporaryCeiling    = max(0, permanentRemaining + Σ bonus(source) - Σ activeEgoPenalty)
  * temporaryRemaining  = max(0, temporaryCeiling - temporarySpent)
@@ -142,6 +142,12 @@ class EgoPointPool {
         int previous = temporaryBonusContributions.getOrDefault(source, 0);
         temporaryBonusContributions.put(source, Math.max(previous, amount));
         return sumTemporaryBonuses();
+    }
+
+    /** Withdraws source's ceiling contribution, returning what it was (0 if none). */
+    int revokeTemporaryBonus(final Object source) {
+        Integer previous = temporaryBonusContributions.remove(source);
+        return previous == null ? 0 : previous;
     }
 
     private int sumTemporaryBonuses() {

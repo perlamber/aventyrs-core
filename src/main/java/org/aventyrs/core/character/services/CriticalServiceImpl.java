@@ -41,7 +41,7 @@ public class CriticalServiceImpl implements CriticalService {
                                        final AttackSource attackSource, final SceneContext sceneContext,
                                        final CombatantSheet target) {
         int margin = getBaseLesserCriticalMargin(attackSource);
-        int widening = sumCriticalMarginIncrease(holder, skillType, attackSource, sceneContext);
+        int widening = sumCriticalMarginIncrease(holder, skillType, attackSource, sceneContext, target);
         widening -= getLesserCriticalResistance(target, sceneContext);
         return margin - Math.max(0, widening);
     }
@@ -92,6 +92,10 @@ public class CriticalServiceImpl implements CriticalService {
      * reduzida em -1 … (não se acumula entre instâncias)": one step for holding any RA at all.
      */
     private int absoluteResistanceStep(final CombatantSheet target, final SceneContext sceneContext) {
+        // Bastião de Vidro: "Você não é beneficiado por RA" — not by its crit clauses either.
+        if (target.getCharacter().getFeats().stream().anyMatch(org.aventyrs.core.feat.Feat::forgoesDamageMitigation)) {
+            return 0;
+        }
         return damageService.getTotalAbsoluteDamageReduction(target, sceneContext) > 0 ? 1 : 0;
     }
 
@@ -116,6 +120,13 @@ public class CriticalServiceImpl implements CriticalService {
     @Override
     public int sumCriticalMarginIncrease(final CombatantSheet holder, final SkillType skillType,
                                          final AttackSource attackSource, final SceneContext sceneContext) {
+        return sumCriticalMarginIncrease(holder, skillType, attackSource, sceneContext, null);
+    }
+
+    @Override
+    public int sumCriticalMarginIncrease(final CombatantSheet holder, final SkillType skillType,
+                                         final AttackSource attackSource, final SceneContext sceneContext,
+                                         final CombatantSheet target) {
         Character character = holder.getCharacter();
         List<SkillCompetencyAbility> skillCompetencyAbilities = SkillCompetencyAbility.allFor(character, holder);
         int total = character.getAttributeAbilities().stream()
@@ -131,7 +142,7 @@ public class CriticalServiceImpl implements CriticalService {
         // the same shape AbstractSkillInteraction's own Talento passes use.
         total += character.getFeats().stream()
                 .mapToInt(feat -> feat.resolveCriticalMarginIncrease(skillType, sceneContext, character,
-                        attackSource, holder))
+                        attackSource, holder, target))
                 .sum();
         // And a fifth for the wielded weapon's fitted enhancements (OffensiveMasterpiece#DECISIVA/
         // #MITRAL), scoped to the weapon this attack is made with by

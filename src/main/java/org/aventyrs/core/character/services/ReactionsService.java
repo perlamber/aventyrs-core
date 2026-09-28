@@ -43,4 +43,20 @@ public interface ReactionsService {
      * resolving Reações outside a Scene wants.
      */
     int getTotalReactions(CombatantSheet sheet, int turnNumber, SceneContext sceneContext);
+
+    /**
+     * How many Reações this combatant can still take this Rodada: {@link #getTotalReactions(
+     * CombatantSheet, int, SceneContext)} less {@link CombatantSheet#getReactionsSpentThisRound()},
+     * floored at 0. What {@code ActiveAbilityService#activate} and {@code ReactionOptionsService}
+     * gate on.
+     */
+    default int getRemainingReactions(final CombatantSheet sheet, final int turnNumber,
+                                      final SceneContext sceneContext) {
+        return Math.max(0, getTotalReactions(sheet, turnNumber, sceneContext) - sheet.getReactionsSpentThisRound());
+    }
+
+    /** {@link #getRemainingReactions(CombatantSheet, int, SceneContext)} with no Scene in hand. */
+    default int getRemainingReactions(final CombatantSheet sheet, final int turnNumber) {
+        return getRemainingReactions(sheet, turnNumber, null);
+    }
 }

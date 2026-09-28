@@ -17,6 +17,10 @@ import java.util.List;
  * Tamanho 0"), so {@link Race}'s own defaults (empty fixed/choosable attribute bonuses, no
  * override on {@link #generateEmptyCharacter}) already express that correctly.
  *
+ * <p><b>Aprendizado Rápido is real</b> ({@link #hasQuickLearning()}): the Perícias recorded on {@code
+ * Character#getQuickLearningSkills()} take 0.5 EXP off their 2nd and 3rd Graduação, through {@code
+ * SkillGraduationService#getUpgradeCost(Character, SkillType)}.
+ *
  * <ul>
  *   <li><b>Idiomas</b> (Continental + um adicional per Antecedente) — same "no Language/
  *   Idioma concept exists" gap as every other race.</li>
@@ -26,13 +30,6 @@ import java.util.List;
  *   Talentos are built ({@link #getStartingFeatSlots()}), and are <i>on top of</i> the two General
  *   Talentos every character starts with, for four in all. The Especialização half is the same
  *   "{@link Race} has no hook for granting starting Perícia training" gap as every other race.</li>
- *   <li><b>Aprendizado Rápido</b> (2 Perícias chosen at creation get their 2nd/3rd Graduação
- *   upgrade at -0.5 EXP) — {@code
- *   org.aventyrs.core.character.services.SkillGraduationService#getUpgradeCost} takes no
- *   {@link Race} at all, has no notion of a race-specific discount, and there's no persisted
- *   record of *which* 2 Perícias a character chose at creation for this racial ability to
- *   scope itself to (the {@code AcquiredChoice} mechanism records a single choice per ability
- *   instance, not a pair). Identical gap to {@code Pequenino}'s own Aprendizado Rápido.</li>
  *   <li><b>Adaptação</b> (Talentos cost 2.5 EXP instead of 3) — {@link
  *   #getNewFeatCost(org.aventyrs.core.feat.FeatCategory)} returns a plain {@code int}, which
  *   can't represent a genuinely fractional 2.5 — the same int-vs-fractional mismatch already
@@ -65,6 +62,12 @@ public class Human implements Race {
     @Override
     public Character.CharacterBuilder generateEmptyCharacter(List<DlcRuleset> dlcRulesetList) {
         return Character.builder();
+    }
+
+    /** Aprendizado Rápido — see {@link Race#hasQuickLearning()}. */
+    @Override
+    public boolean hasQuickLearning() {
+        return true;
     }
 
     @Override

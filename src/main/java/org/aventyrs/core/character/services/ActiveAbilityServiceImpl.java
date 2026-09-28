@@ -62,6 +62,23 @@ public class ActiveAbilityServiceImpl implements ActiveAbilityService {
 
     @Override
     public void activate(final Character character, final CombatantSheet characterSheet, final ActiveAbility ability, final int turnNumber) throws IllegalOperationException {
+        // One that rolls cannot be activated without its dice — this core never rolls them itself.
+        if (ability.getDice() != null) {
+            throw new IllegalOperationException(org.aventyrs.core.util.TranslatableMessages.ACTIVE_ABILITY_DICE_REQUIRED);
+        }
+        activate(character, characterSheet, ability, turnNumber, (Integer) null);
+    }
+
+    @Override
+    public void activate(final Character character, final CombatantSheet characterSheet, final ActiveAbility ability,
+                         final int turnNumber, final java.util.List<Integer> faces) throws IllegalOperationException {
+        // The faces are checked before a single gate or cost: a wrong roll must refuse cleanly.
+        Integer rolled = ability.getDice() == null ? null : ability.getDice().total(faces == null ? java.util.List.of() : faces);
+        activate(character, characterSheet, ability, turnNumber, rolled);
+    }
+
+    private void activate(final Character character, final CombatantSheet characterSheet, final ActiveAbility ability,
+                          final int turnNumber, final Integer rolledTotal) throws IllegalOperationException {
         if (character.getActiveAbilities().stream().noneMatch(held -> held == ability)) {
             throw new IllegalOperationException(ACTIVE_ABILITY_NOT_HELD);
         }
@@ -77,6 +94,10 @@ public class ActiveAbilityServiceImpl implements ActiveAbilityService {
         if (characterSheet.isOnCooldown(ability)) {
             throw new IllegalOperationException(ABILITY_ON_COOLDOWN);
         }
+        // Its own clause ("Apenas enquanto voando"), before a single point is spent.
+        if (!ability.isUsableBy(characterSheet)) {
+            throw new IllegalOperationException(org.aventyrs.core.util.TranslatableMessages.ACTIVE_ABILITY_CONDITION_NOT_MET);
+        }
         // A Forma the holder's own Talentos refuse is refused here too — Marca da Maldição locks
         // its holder into one shape, Acolhida por Flora forbids another. Checked before the cost
         // for the same reason every other gate is.
@@ -84,8 +105,10 @@ public class ActiveAbilityServiceImpl implements ActiveAbilityService {
         if (grantedForm != null && !characterSheet.canTakeForm(grantedForm)) {
             throw new IllegalOperationException(FORM_NOT_AVAILABLE);
         }
-        checkActionCost(characterSheet, ability.getActionPointCost(), turnNumber);
-        if (magicPointsService.getCurrentMagicPoints(character, characterSheet) < ability.getMagicPointCost()) {
+        ActionCost actionCost = ability.getActionPointCost(character);
+        int magicPointCost = ability.getMagicPointCost(character);
+        checkActionCost(characterSheet, actionCost, turnNumber);
+        if (magicPointsService.getCurrentMagicPoints(character, characterSheet) < magicPointCost) {
             throw new IllegalOperationException(NOT_ENOUGH_MAGIC_POINTS);
         }
         if (determinationPointsService.getCurrentDeterminationPoints(character, characterSheet)
@@ -100,7 +123,7 @@ public class ActiveAbilityServiceImpl implements ActiveAbilityService {
             throw new IllegalOperationException(NOT_ENOUGH_HIT_POINTS);
         }
 
-        characterSheet.spendMagicPoints(ability.getMagicPointCost());
+        characterSheet.spendMagicPoints(magicPointCost);
         characterSheet.spendDeterminationPoints(ability.getDeterminationPointCost());
         if (ability.getHitPointCost() > 0) {
             characterSheet.applyDamage(ability.getHitPointCost());
@@ -118,8 +141,15 @@ public class ActiveAbilityServiceImpl implements ActiveAbilityService {
         }
         // Started only once everything above has succeeded — an activation that threw never
         // happened, so it must not lock the ability out.
+        ability.applyOnActivation(characterSheet);
+        if (rolledTotal != null) {
+            ability.applyRolled(characterSheet, rolledTotal);
+        }
         characterSheet.startCooldown(ability, ability.getCooldownRounds());
         characterSheet.startRestCooldown(ability, ability.getReactivationRest());
+        if (actionCost.kind() == ActionCost.Kind.REACTION) {
+            characterSheet.spendReaction();
+        }
     }
 
     /**
@@ -128,10 +158,11 @@ public class ActiveAbilityServiceImpl implements ActiveAbilityService {
      * minimum — the most the player could then choose is the caller's business), a Reação for a
      * REACTION, an Ação Livre for a FREE_ACTION, and nothing at all for a passive.
      *
-     * <p>All three are <b>"entitled to any at all"</b> checks, not live pools: this core keeps no
-     * spent-this-Turn ledger for any of them, the same "reported, not deducted" stance {@code
-     * ActionCost} and {@code WeaponDrawService} take. A holder with one Reação who has already
-     * used it this Rodada still passes here.
+     * <p>The Reação is a <b>live pool</b>: {@code ReactionsService#getRemainingReactions} subtracts
+     * the Rodada's spent Reações, and a successful activation spends one. Pontos de Ação and Ações
+     * Livres are still <b>"entitled to any at all"</b> checks — this core keeps no spent ledger for
+     * them, the same "reported, not deducted" stance {@code ActionCost} and {@code
+     * WeaponDrawService} take.
      *
      * <p>The sheet overloads, not the Character ones: activating an ability is combat-facing, and
      * the sheet is what carries a granted ACTION_POINTS/REACTIONS/FREE_ACTIONS TemporaryBonus. No
@@ -146,7 +177,7 @@ public class ActiveAbilityServiceImpl implements ActiveAbilityService {
                 }
             }
             case REACTION -> {
-                if (reactionsService.getTotalReactions(characterSheet, turnNumber) < 1) {
+                if (reactionsService.getRemainingReactions(characterSheet, turnNumber) < 1) {
                     throw new IllegalOperationException(NOT_ENOUGH_REACTIONS);
                 }
             }

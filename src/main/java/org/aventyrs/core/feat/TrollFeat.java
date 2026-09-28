@@ -99,9 +99,10 @@ public enum TrollFeat implements Feat {
      */
     // The "enquanto em Regeneração Reativa" gate is readable now — CombatantSheet
     // #hasActiveRegeneration() — but there is nothing to gate.
-    // TODO: damage to everyone adjacent is an outward, area-shaped effect nothing models —
-    //  DamageService only ever computes damage *to* one target *from* an attacker, and Área de
-    //  Efeito has no footprint resolution. Same shape as DraconicoFeat#AURA_DRACONICA.
+    // TODO: damage to everyone adjacent on each of the holder's Turns — the footprint exists now
+    //  (scene.grid.AreaFootprint, or SceneContext#getAlliesWithin/enemies at ADJACENTE), but no
+    //  hook lets a Talento report outward damage at a Turn boundary, and this is the only
+    //  unblocked consumer (DraconicoFeat#AURA_DRACONICA also needs a Sopro-use trigger).
     // TODO: "que não sejam Trolls da Floresta" needs the unmodelled sub-lineage, so even the
     //  exemption could not be honoured.
     REGENERACAO_REATIVA_ESPINHOSA(
@@ -141,7 +142,7 @@ public enum TrollFeat implements Feat {
                     .requiredFeat(REGENERACAO_REATIVA_SUPERIOR)
                     .build()) {
         @Override
-        public int resolveDamageReduction(final Character character, final CombatantSheet holder) {
+        public int resolveDamageTakenReduction(final Character character, final CombatantSheet holder) {
             if (holder == null || !holder.hasActiveRegeneration()
                     || holder.getAttacksSufferedThisRound() > 0) {
                 return 0;

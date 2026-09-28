@@ -3,6 +3,7 @@ package org.aventyrs.core.character.services;
 import org.aventyrs.core.ability.AttributeAbility;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.ego.EgoAdvantage;
+import org.aventyrs.core.feat.Feat;
 import org.aventyrs.core.sheet.Blessing;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
 
@@ -22,6 +23,9 @@ public class InitiativeBlessingServiceImpl implements InitiativeBlessingService 
         }
         for (SkillCompetencyAbility ability : SkillCompetencyAbility.allFor(character)) {
             blessings.addAll(ability.resolveInitiativeBlessings());
+        }
+        for (Feat feat : character.getFeats()) {
+            blessings.addAll(feat.resolveInitiativeBlessings());
         }
         return blessings;
     }

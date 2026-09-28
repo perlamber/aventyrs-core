@@ -40,6 +40,10 @@ public class FreeActionsServiceImpl implements FreeActionsService {
     public int getTotalFreeActions(final CombatantSheet sheet, final int turnNumber, final SceneContext sceneContext) {
         Character character = sheet.getCharacter();
         int baseline = permanentFreeActions(character) + sheet.getTemporaryBonus(ModifierType.FREE_ACTIONS);
+        // Analista Tático: "Enquanto você for o último a agir você recebe uma Ação Livre … adicional".
+        for (org.aventyrs.core.feat.Feat feat : character.getFeats()) {
+            baseline += feat.resolveFreeActionsIncrease(character, sceneContext);
+        }
         return Math.max(0, character.getActionProfile().adjustFreeActions(baseline, turnNumber, sceneContext));
     }
 

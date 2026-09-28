@@ -441,8 +441,9 @@ public enum AssassinoFeat implements Feat {
             return isHidden(holder) ? SHADOW_SHIELD_BONUS : 0;
         }
 
+        /** "+3 … e RDS" — an RDS, so it reaches magical hits too, never Primordial ones. */
         @Override
-        public int resolveDamageReduction(final Character character, final CombatantSheet holder) {
+        public int resolveDamageTakenReduction(final Character character, final CombatantSheet holder) {
             return isHidden(holder) ? SHADOW_SHIELD_BONUS : 0;
         }
     },

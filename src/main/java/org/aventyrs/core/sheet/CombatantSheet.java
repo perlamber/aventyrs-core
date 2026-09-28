@@ -71,6 +71,15 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
     /** The Attributes, Perícias, abilities and equipment behind this combatant. */
     Character getCharacter();
 
+    /**
+     * What this combatant is — its Raça's {@code getCreatureType()} for a character, the stat
+     * block's for a foe (every foe shares one race, so it overrides this). {@code null} for a
+     * character built with no race.
+     */
+    default org.aventyrs.core.race.CreatureType getCreatureType() {
+        return getCharacter().getRace() == null ? null : getCharacter().getRace().getCreatureType();
+    }
+
     // --- Hit Points and shields -----------------------------------------------------------
 
     int getDamageTaken();
@@ -137,16 +146,73 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
     boolean isBeyondRevival();
 
     /**
-     * Banks one revival permission from source — each Curar os Mortos activation is one heal that
-     * may reach the dead. Charges from one source stack; {@link #startNewScene()} drops them.
+     * Banks one single-use charge from source — a permission or discount an activation buys for
+     * the next thing it applies to: a Curar os Mortos heal that may reach the dead, a Curandeiro
+     * Veloz -2PA. Charges from one source stack; {@link #startNewScene()} drops them. Unlike
+     * {@link #grantEnhancedAttacks}, which restates a budget, each call adds one.
      */
-    void grantRevivalCharge(Object source);
+    void grantCharge(Object source);
 
-    /** Revival charges banked from source that no heal has spent yet. */
-    int getRevivalCharges(Object source);
+    /** Charges banked from source that nothing has spent yet. */
+    int getCharges(Object source);
 
     /** Spends one charge from source, returning whether there was one. */
-    boolean consumeRevivalCharge(Object source);
+    boolean consumeCharge(Object source);
+
+    /**
+     * How many Rodadas ago this combatant's PV reached 0 or below, empty while above — Benção de
+     * Boros' window. Counted by {@link #startNewRound()}; unlike {@link #getRoundsSinceDeath()} a new
+     * Cena does not close it.
+     */
+    OptionalInt getRoundsSinceFallen();
+
+    /**
+     * Pays amount in PV that only a Descanso Verdadeiro recovers — Transferir Vitalidade's "PV
+     * perdidos desta forma podem ser recuperados apenas com Descansos Verdadeiros". Applied like
+     * any self-inflicted cost (no mitigation), then locked: no heal recovers damage below {@link
+     * #getLockedDamage()} until {@link #releaseVitalityLock()}.
+     */
+    void payWithVitality(int amount);
+
+    /**
+     * The part of {@link #getDamageTaken()} only a Descanso Verdadeiro recovers — what {@link
+     * #payWithVitality} locked, plus what {@link #lockDamage} locked with {@code lifeStealRecovers}
+     * (which Roubo de Vida may also recover). Capped at the damage actually taken.
+     */
+    int getLockedDamage();
+
+    /**
+     * The part of {@link #getLockedDamage()} Roubo de Vida may still recover — {@code
+     * DuelistaFeat#FERIDAS_ARDENTES}' "não podem ser curados, exceto por Descansos Verdadeiros e
+     * efeitos de Roubo de Vida". Capped at the damage actually taken.
+     */
+    int getLifeStealRecoverableLockedDamage();
+
+    /**
+     * Locks amount of the damage this combatant has <b>already taken</b> against ordinary healing:
+     * no heal recovers damage below {@link #getLockedDamage()} until a Descanso Verdadeiro ({@link
+     * #releaseVitalityLock()}). With lifeStealRecovers, a Roubo de Vida heal ({@link
+     * #healFromLifeSteal}) may still recover it, and releases as much of this lock as it recovers
+     * past the unlocked damage. The damage itself is dealt elsewhere — this only marks it.
+     */
+    void lockDamage(int amount, boolean lifeStealRecovers);
+
+    /** Unlocks every PV {@link #payWithVitality}/{@link #lockDamage} locked — called by a Descanso Verdadeiro. */
+    void releaseVitalityLock();
+
+    /**
+     * Lends this combatant 1 temporary Ego point of domain from lender, who has already paid it —
+     * Transferir Determinação/Essência. Settled at {@link #startNewScene()}: an unused loaned point
+     * goes back to lender ("devolvidos"); a used one is simply gone ("perdidos"). "Unused" is read as
+     * this combatant's temporary points not having fallen since the loan landed.
+     */
+    void receiveEgoLoan(EgoDomain domain, CombatantSheet lender);
+
+    /** Records that this combatant dealt damage in the current Cena — cleared by {@link #startNewScene()}. */
+    void recordDamageDealt();
+
+    /** Whether {@link #recordDamageDealt()} was called since the Cena began — Transferir Rancor's exclusion. */
+    boolean hasDealtDamageThisScene();
 
     /**
      * Interrupts every ongoing {@link Bleeding} <b>without healing</b>, returning whether there
@@ -340,6 +406,34 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
     int getAttacksSufferedThisRound();
 
     /**
+     * How many Reações this combatant has spent so far this Rodada — the ledger {@code
+     * ReactionsService#getRemainingReactions} subtracts from the total. Advanced by {@link
+     * #spendReaction()}, reset by {@link #startNewRound()} and {@link #startNewScene()}.
+     */
+    int getReactionsSpentThisRound();
+
+    /**
+     * The Magias this combatant cast and is holding back ({@code MetamagicoFeat#ARMAZENAR_MAGIA}),
+     * oldest first — an unmodifiable view. Stored and released through {@code
+     * magic.SpellStorageService}; every one dissipates at the next Descanso ({@link
+     * #clearRestCooldowns}).
+     */
+    List<org.aventyrs.core.magic.StoredSpell> getStoredSpells();
+
+    /** Holds spell back — the unvalidating mutator beneath {@code SpellStorageService#store}. */
+    void storeSpell(org.aventyrs.core.magic.StoredSpell spell);
+
+    /** Drops spell from the held Magias; whether it was there. */
+    boolean removeStoredSpell(org.aventyrs.core.magic.StoredSpell spell);
+
+    /**
+     * Records one Reação spent. {@code ActiveAbilityService#activate} and a Título activation
+     * with a {@code REACTION} cost call it themselves. A caller resolving any other Reação — an
+     * attack provoked by movement, a Defesa taken as a Reação — calls it for that one.
+     */
+    void spendReaction();
+
+    /**
      * Records one successful activation of source in this combatant's current Turn — called by
      * {@code title.AbstractTitleAbilityInteraction#activate} once the costs are paid, so a refused
      * activation is never counted.
@@ -466,6 +560,22 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
 
     /** Whether conditionType is in force, directly or by implication. */
     boolean hasCondition(ConditionType conditionType, SceneContext sceneContext);
+
+    /**
+     * The highest face of the Cego 1d6 that fails this combatant's skillType roll ({@link
+     * BlindCheck}), or empty when it throws none — it is not {@link ConditionType#CEGO}, or a held
+     * Talento spares it that kind of roll ({@code Feat#exemptsFromBlindCheck}: {@code
+     * DuelistaFeat#COMBATER_AS_CEGAS}' "não precisa efetuar rolagens de 1d6 para utilizar efeitos
+     * pessoais e Ataques Corpo-a-Corpo").
+     */
+    default java.util.OptionalInt getBlindCheckThreshold(final org.aventyrs.core.skill.SkillType skillType,
+                                                         final SceneContext sceneContext) {
+        if (!hasCondition(ConditionType.CEGO, sceneContext)) {
+            return java.util.OptionalInt.empty();
+        }
+        boolean exempt = getCharacter().getFeats().stream().anyMatch(feat -> feat.exemptsFromBlindCheck(skillType, sceneContext));
+        return exempt ? java.util.OptionalInt.empty() : java.util.OptionalInt.of(BlindCheck.failureThresholdFor(skillType));
+    }
 
     /**
      * The {@link Hidden} this combatant is holding, or empty when they are not Escondido — the
@@ -822,6 +932,48 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
     void finishTurn();
 
     /**
+     * The actions taken during this combatant's <b>own most recent Turn</b> — from its {@link
+     * #startTurn} to its {@link #finishTurn}, and kept past the Rodada wrap until its next Turn
+     * begins. What a "por 1 Rodada" consequence of the holder's own Turn reads under the table's
+     * reading of that Duração (until the holder's next Turn begins): {@code
+     * DuelistaFeat#DEFESA_COM_2_ARMAS}' "reduzidos à zero por 1 Rodada se ambas as armas foram
+     * utilizadas para atacar em seu Turno". Empty before any Turn has begun, and cleared by {@link
+     * #startNewScene()}. A Reação taken on somebody else's Turn is not part of it.
+     */
+    List<CombatantAction> getActionsOfLatestOwnTurn();
+
+    /**
+     * Whether this combatant's own Turn is underway — between its {@link #startTurn} and its {@link
+     * #finishTurn}. What "feitos em seus Turnos" reads ({@code EscudeiroFeat#ARTE_DO_ESCUDO_ATACANTE}).
+     * {@code false} outside a Scene driving Turns.
+     */
+    boolean isInOwnTurn();
+
+    /**
+     * The negative part of {@link #getTemporaryBonus(org.aventyrs.core.modifier.ModifierType)} — the
+     * sum of every running {@code TemporaryBonus} of type below zero, as a non-positive number. What a
+     * clause ignoring "efeitos que reduzem" a stat subtracts back out ({@code
+     * EscudeiroFeat#INICIO_DEFENSIVO}, {@code #MESTRE_ESCUDEIRO}).
+     */
+    int getTemporaryMalus(org.aventyrs.core.modifier.ModifierType type);
+
+    /**
+     * How many uses of source have been spent since the last Descanso Verdadeiro at least resetsAt
+     * cleared them — {@code EscudeiroFeat#CRIAR_REFUGIO}'s "1 + número de Títulos" hits, refilled by
+     * a Descanso Longo Verdadeiro (table ruling). Keyed by a stable name so it can be persisted.
+     */
+    int getRestScopedUses(String source);
+
+    /** Every source's spent uses — what a caller persists to resume them ({@link #restoreRestScopedUses}). */
+    java.util.Map<String, Integer> getAllRestScopedUses();
+
+    /** Spends one use of source, to be cleared by a Descanso Verdadeiro of at least resetsAt. */
+    void spendRestScopedUse(String source, org.aventyrs.core.rest.RestType resetsAt);
+
+    /** Restores a persisted use count for source — how a sheet reloaded mid-campaign resumes it. */
+    void restoreRestScopedUses(String source, int uses, org.aventyrs.core.rest.RestType resetsAt);
+
+    /**
      * Begins a new Rodada for this combatant: clears {@link #getActionsThisRound()}, resets
      * the per-Turn marker {@link #startTurn(int)} sets, and delivers every {@link
      * DelayedEgoGrant} scheduled during the Rodada just ended. Called by {@code
@@ -921,6 +1073,21 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
      */
     void recordDamageReceived(DamageReceipt receipt);
 
+    /**
+     * Whether combatantId has dealt this combatant damage on the attack path since the Cena began —
+     * every {@link #recordDamageReceived} naming a source is remembered until the Cena ends.
+     * Retribuição Atroz's "um alvo que tenha lhe infligido danos"; the Cena is as far back as this
+     * core remembers.
+     */
+    boolean wasDamagedByThisCena(java.util.UUID combatantId);
+
+    /**
+     * Hits this combatant has taken on the attack path since the Cena began — one per {@link
+     * #recordDamageReceived}. Tolerância Marcial's "o primeiro ataque de cada Cena de Combate" is
+     * this still being 0.
+     */
+    int getHitsReceivedThisCena();
+
     /** The last hit {@link #recordDamageReceived} recorded, if any. */
     Optional<DamageReceipt> getLastDamageReceived();
 
@@ -988,6 +1155,38 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
 
     /** Every action recorded since this Rodada began — an unmodifiable view, in order. */
     List<CombatantAction> getActionsThisRound();
+
+    /** Every action recorded since this combatant's Turn began ({@link #startTurn}) — the per-Turn
+     * slice of {@link #getActionsThisRound()}. */
+    List<CombatantAction> getActionsThisTurn();
+
+    /**
+     * How many recorded actions this Rodada spent feat ({@link CombatantAction#activatedFeats()}) —
+     * what an "apenas uma vez por Rodada" Talento counts. The roll being resolved is not in the log
+     * yet, so 0 answers "this is the first".
+     */
+    default int countFeatActivationsThisRound(final org.aventyrs.core.feat.Feat feat) {
+        return (int) getActionsThisRound().stream().filter(action -> action.activated(feat)).count();
+    }
+
+    /** {@link #countFeatActivationsThisRound}, for "uma vez por Turno". */
+    default int countFeatActivationsThisTurn(final org.aventyrs.core.feat.Feat feat) {
+        return (int) getActionsThisTurn().stream().filter(action -> action.activated(feat)).count();
+    }
+
+    /**
+     * How many attacks this combatant has made this Rodada whose primary target was the combatant
+     * targetId names ({@link CombatantAction#targetId()}) — "seu segundo ataque contra um mesmo alvo
+     * na mesma Rodada". 0 for a {@code null} targetId.
+     */
+    default int countAttacksAgainstThisRound(final java.util.UUID targetId) {
+        if (targetId == null) {
+            return 0;
+        }
+        return (int) getActionsThisRound().stream()
+                .filter(action -> action.isAttack() && targetId.equals(action.targetId()))
+                .count();
+    }
 
     /**
      * Whether this combatant has taken an offensive action (a Perícia de Ataque roll — which is
@@ -1064,6 +1263,61 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
      */
     int consumeRepositionThisRound();
 
+    /**
+     * Whether an unexpired {@link TemporaryEffect} of type is running on this combatant — for a marker
+     * effect whose presence is the whole fact ({@link CarmillaPresence}).
+     */
+    boolean hasActiveEffect(Class<? extends TemporaryEffect> type);
+
+    // --- Montaria e veículo -------------------------------------------------------------------
+
+    /** What this combatant is riding or driving, if anything — see {@link Riding}. */
+    Optional<Riding> getRiding();
+
+    /** Whether this combatant is montado ou dirigindo. */
+    default boolean isRiding() {
+        return getRiding().isPresent();
+    }
+
+    /** Sets what this combatant rides — the unvalidating mutator beneath {@code MountService#mount}. */
+    void startRiding(Riding riding);
+
+    /** Clears it — beneath {@code MountService#dismount}; {@code true} if they were riding. */
+    boolean stopRiding();
+
+    // --- Bocarra (Ogro) ------------------------------------------------------------------------
+
+    /**
+     * The combatants this one has swallowed and still holds — Bocarra's Devorar Inteiro, each
+     * carrying a {@link Devoured} naming this sheet as its captor. Kept in step by {@code
+     * DevourService}; the two mutators below are its and validate nothing.
+     */
+    List<CombatantSheet> getDevouredVictims();
+
+    void addDevouredVictim(CombatantSheet victim);
+
+    boolean removeDevouredVictim(CombatantSheet victim);
+
+    /** The {@link Devoured} this combatant is held by, if swallowed. */
+    Optional<Devoured> getDevoured();
+
+    // --- Ferocidade de Lacerto (Indômito) -----------------------------------------------------
+
+    /**
+     * Every {@link LacertoFerocity} this combatant is under — the natural state, a mimicked copy
+     * ({@code BestialFeat#ACEITAR_A_LACERTO}), or both. Its bonuses count once however many are
+     * held. Entered and ended through {@code LacertoFerocityService}.
+     */
+    List<LacertoFerocity> getLacertoFerocities();
+
+    /** Whether any {@link LacertoFerocity} is running on this combatant. */
+    default boolean isFerocious() {
+        return !getLacertoFerocities().isEmpty();
+    }
+
+    /** Ends the natural Ferocidade de Lacerto, if running — never a mimicked copy; {@code true} if it did. */
+    boolean endNaturalLacertoFerocity();
+
     // --- Frenesi (Gigante Enfurecido) ---------------------------------------------------------
 
     /**
@@ -1130,6 +1384,92 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
 
     /** How many instances of RE this combatant holds against element right now (Cataclismo Elemental). */
     int getElementalResistanceInstances(ElementalType element);
+
+    /**
+     * Whether a hit of this kind reaches this combatant halved — a Meio-Dano limited to a {@code
+     * DamageScope}, held by an {@code AttributeAbility} or a timed {@link DamageScopeEffect}.
+     * {@code DamageServiceImpl} ORs it with every other Meio-Dano source, so it still halves once.
+     */
+    boolean halvesDamage(org.aventyrs.core.character.DamageType damageType,
+                         org.aventyrs.core.character.DamageDescriptor descriptor);
+
+    /** Whether a hit of this kind deals this combatant nothing at all. */
+    boolean isImmuneToDamage(org.aventyrs.core.character.DamageType damageType,
+                             org.aventyrs.core.character.DamageDescriptor descriptor);
+
+    /**
+     * Whether this combatant is <i>vulnerável</i> to a hit of this kind. Reported, never applied: no
+     * rules text sizes a Vulnerabilidade, so the damage is unchanged — see {@code
+     * AttributeAbility#isVulnerableToDamage}.
+     */
+    boolean isVulnerableToDamage(org.aventyrs.core.character.DamageType damageType,
+                                 org.aventyrs.core.character.DamageDescriptor descriptor);
+
+    /** Whether a Condição of this type never takes hold on this combatant — {@link #applyCondition} skips it. */
+    boolean isImmuneToCondition(ConditionType conditionType);
+
+    /**
+     * Whether this combatant is in flight — set by the caller or an Efeito Ativo ({@link
+     * #setFlying}), or always, for a holder whose Habilidade {@code keepsFlying()}. Every "enquanto
+     * voando" clause reads it. There is still no flight <i>movement</i> stat.
+     */
+    boolean isFlying();
+
+    /**
+     * Takes off or lands. Taking off applies every held Habilidade's {@code
+     * resolveWhileFlyingEffects()}; landing lifts exactly those. A holder that {@code keepsFlying()}
+     * cannot land — the call is ignored.
+     */
+    void setFlying(boolean flying);
+
+    /** Queues dice a {@link RecurringDice} owes — see {@link PendingDiceRoll}. */
+    void queuePendingDiceRoll(PendingDiceRoll roll);
+
+    /** Every roll waiting for the caller's dice, oldest first. */
+    List<PendingDiceRoll> getPendingDiceRolls();
+
+    /**
+     * Applies a pending roll with the faces the caller rolled — heals, or deals damage through
+     * {@code DamageService} (so RD, RE and immunities reach it) — and removes it.
+     *
+     * @return the PV actually healed, or the damage actually taken
+     * @throws IllegalOperationException {@code PENDING_DICE_ROLL_NOT_FOUND} for an id not pending,
+     *                                   {@code INVALID_DIE_ROLL} for the wrong number of faces
+     */
+    int resolveDiceRoll(UUID pendingRollId, List<Integer> faces);
+
+    /** Lifts every held effect a trait named {@code source} granted — a timed bonus, a scoped Meio-Dano, a recurring roll. */
+    void removeEffectsFrom(String source);
+
+    /**
+     * Whether a held, still-running timed bonus was granted by the trait named {@code source} — the
+     * question "enquanto estiver com uma Barreira Mágica ativa" asks ({@code
+     * MetamagicoFeat#ARTESAO_DE_BARREIRAS}, and the Barreira's ally Defesas).
+     */
+    boolean hasEffectFrom(String source);
+
+    /**
+     * Whether a held Talento lets this combatant breathe underwater right now — the permanent ones
+     * ({@code ElficoFeat}'s) and one bought for the Rodada ({@code PeritoFeat#CRIANCA_DO_MAR}). A
+     * caller-facing answer: nothing in this core tracks breathing, so nothing drowns without it.
+     */
+    default boolean canBreatheUnderwater() {
+        org.aventyrs.core.character.Character character = getCharacter();
+        return character.getFeats().stream().anyMatch(feat -> feat.allowsUnderwaterBreathing(character, this));
+    }
+
+    /**
+     * Whether a held Talento lets this combatant cling to walls and ceilings right now — {@code
+     * PeritoFeat#REI_DA_MONTANHA}. A permission the caller reads when moving it: which surface is where
+     * is geometry, and this core does none.
+     */
+    default boolean canClingToSurfaces() {
+        org.aventyrs.core.character.Character character = getCharacter();
+        return character.getFeats().stream().anyMatch(feat -> feat.clingsToSurfaces(character, this));
+    }
+
+    /** Steps up the GD ladder every held {@link SkillDifficultyShift} grants skill right now. */
+    int getSkillDifficultyShift(org.aventyrs.core.skill.SkillType skill);
 
     /**
      * Heals amount as Roubo de Vida — {@link #heal} for a source that the halving clauses exempt:

@@ -220,9 +220,9 @@ public interface EquipmentCraftingService {
      * {@link #forge}), and calls {@code Character#recordRegaliaCrafted(grade)} so the crafter's
      * "criação de 3 ou mais Regalias" history advances. The copy is <b>returned, not equipped</b>.
      *
-     * <p><b>Not modeled</b>, and deliberately left to the caller/GM: the actual sacrifice of the
-     * donor's Centelhas (this core does not track them — see {@link RegaliaGrade#requiresAllCentelhas()});
-     * the "reduzida drasticamente em uma Forja do Olho de Deus" location bonus, and the Divina
+     * <p>A donor named on the {@link RegaliaDonation} gives up their Centelhas here — one, or all
+     * of them ({@link RegaliaGrade#requiresAllCentelhas()}). <b>Not modeled</b>, and deliberately
+     * left to the caller/GM: the "reduzida drasticamente em uma Forja do Olho de Deus" location bonus, and the Divina
      * "deve ser feita exclusivamente em uma Forja do Olho de Deus" restriction (this core models
      * no places); and the PE cost (no PE economy — the {@code ResourcesAdvantage#BARGANHISTA} gap).
      */

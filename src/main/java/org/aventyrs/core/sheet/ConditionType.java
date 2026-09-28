@@ -317,10 +317,10 @@ public enum ConditionType {
     CONFUSO("O tempo de todas as ações aumentam em 1PA."),
 
     /** "Deve rolar 1d6 sempre que efetuar uma rolagem de perícia … Adicionalmente são considerados desprevenidos." */
-    // TODO: the 1d6 miss-chance is not expressible — this core never rolls dice (CLAUDE.md), and
-    //  the clause needs a *second* roll resolved per Perícia roll with a per-roll-type threshold
-    //  (2 for personal effects, 3 for Corpo-a-Corpo, 5 for à Distância). A caller supplying that
-    //  d6 would need a hook on the roll path that does not exist. The Desprevenido half is real.
+    // Both halves are real (core 0.0.70). The 1d6 is the caller's to throw (SkillRoll#withBlindCheck),
+    // judged against BlindCheck's table by CombatantSheet#getBlindCheckThreshold and reported on
+    // InteractionResult#getBlindCheckFailed — a failed die fails the roll, and AttackDelivery/
+    // AttackReceiver read it as a miss / a failed defence.
     CEGO("Deve rolar 1d6 sempre que efetuar uma rolagem de perícia. Perícias de efeitos pessoal, "
             + "falham com resultados 2 ou menos. Rolagens de Ataque corpo a Corpo falham com "
             + "resultados 3 ou menos. Rolagens de Ataque à Distância falham com resultados "
@@ -464,6 +464,39 @@ public enum ConditionType {
         @Override
         public boolean preventsSpellCasting() {
             return true;
+        }
+    },
+
+    /**
+     * Petrificação — Olhar de Lacerto's Olhar Petrificador: "o alvo é petrificado por 2 Rodadas,
+     * sendo incapaz de realizar ações … A petrificação é um efeito de Encantamento." Not in the
+     * Malefícios source and not a Malefício ({@link #isMaleficio()}): it is an Encantamento, held as
+     * a {@link Petrification} applied through {@code CombatantSheet#applyEnchantment}. Open-ended
+     * when "permanentemente".
+     */
+    // TODO: "incapaz de realizar ações" also covers Perícia rolls and attacks, but nothing lets a
+    //  held condition refuse a roll (IMOBILIZADO's TODO) — only movement, activation and casting
+    //  are refused.
+    PETRIFICADO("O alvo é petrificado, sendo incapaz de realizar ações. A petrificação é um efeito "
+            + "de Encantamento.") {
+        @Override
+        public boolean preventsMovement() {
+            return true;
+        }
+
+        @Override
+        public boolean preventsAbilityActivation() {
+            return true;
+        }
+
+        @Override
+        public boolean preventsSpellCasting() {
+            return true;
+        }
+
+        @Override
+        public boolean isMaleficio() {
+            return false;
         }
     };
 

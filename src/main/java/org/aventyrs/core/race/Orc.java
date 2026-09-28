@@ -67,15 +67,13 @@ import java.util.Map;
  *   isn't confirmed to mean simply "held" — whether a held Título needs some further
  *   "awakened" state distinct from merely being granted is an open question left for whoever
  *   wires this trait up for real, not assumed here.</li>
- *   <li><b>Agnação Ancestral</b> (spend 3PM outside combat to reduce a Perícia roll's GD by 1
- *   nível, treated as trained and Especialista even if not) — needs a "spend a resource for a
- *   one-time roll effect" transaction this core has no equivalent of (Pontos de Mana are
- *   spent on casting via {@code SpellCastingService}, never on a plain Perícia roll), and a
- *   way to temporarily override a roll as trained/Especialista — {@code
- *   CharacterSkillService}'s trained-vs-untrained lookup has no such override hook.</li>
  * </ul>
  *
- * <p>None of the five racial traits above fit {@code SkillCompetencyAbility}'s shape cleanly
+ * <p><b>Agnação Ancestral is real</b> through {@code AncestralCounselService}: the ritual spends 3PM
+ * outside combat and banks a counsel, and a roll built with {@code SkillRoll#counselled()} is then
+ * resolved one nível easier, as an Especialista's, with no untrained penalty.
+ *
+ * <p>None of the racial traits above fit {@code SkillCompetencyAbility}'s shape cleanly
  * enough today to catalog in an {@code OrcsRacialAbility} enum (same reasoning as {@code
  * Gigantes}/{@code Pequenino}/Humanos/{@code Gnomos}) — so {@link #getRacialAbilities()} is
  * left at {@link Race}'s own empty default.

@@ -3,6 +3,7 @@ package org.aventyrs.core.character.services;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.DamageBase;
 import org.aventyrs.core.item.Weapon;
+import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.skill.SkillType;
 
 /**
@@ -92,4 +93,12 @@ public interface DamageBaseService {
      * negative grant can't take a character below their own bare hands.
      */
     DamageBase getDamageBase(Character character, Weapon weapon);
+
+    /**
+     * {@link #getDamageBase(Character, Weapon)} for wielder's own sheet: while wielder rides ({@code
+     * CombatantSheet#isRiding()}), a weapon's {@code Weapon#getMountedDamageBase()} replaces its
+     * authored one before the scale-ups apply — a destroyed weapon still falls to {@link
+     * DamageBase#UNARMED}.
+     */
+    DamageBase getDamageBase(CombatantSheet wielder, Weapon weapon);
 }

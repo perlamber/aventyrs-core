@@ -19,8 +19,20 @@ import org.aventyrs.core.sheet.CombatantSheet;
  * @param caster        who is casting, or {@code null} when the caller did not say — what a heal
  *                      needs to ask the caster's Títulos about healing the fallen (Levantar os
  *                      Caídos, Curar os Mortos); {@code null} reads as "no such Título"
+ * @param healingBonus  PV added to (or, negative, taken off) a numeric healing figure — the caster's
+ *                      {@code Feat#resolveSpellHealingBonus} sum (Conjuração Rápida's Desvantagem,
+ *                      Arcanismo Elemental's +2); 0 for an ordinary cast
  */
-public record SpellEffectContext(boolean hostileTarget, CombatantSheet caster) {
+public record SpellEffectContext(boolean hostileTarget, CombatantSheet caster, int healingBonus) {
+
+    public SpellEffectContext(final boolean hostileTarget, final CombatantSheet caster) {
+        this(hostileTarget, caster, 0);
+    }
+
+    /** This context with healingBonus in place of its own. */
+    public SpellEffectContext withHealingBonus(final int bonus) {
+        return new SpellEffectContext(hostileTarget, caster, bonus);
+    }
 
     /** The ordinary case — a Magia cast on someone who is not an enemy of its caster. */
     public static final SpellEffectContext FRIENDLY = new SpellEffectContext(false, null);

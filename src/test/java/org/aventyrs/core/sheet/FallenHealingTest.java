@@ -205,22 +205,22 @@ class FallenHealingTest {
 
     @Test
     void revivalChargesStackAndAreSpentOneAtATime() {
-        sheet.grantRevivalCharge("source");
-        sheet.grantRevivalCharge("source");
+        sheet.grantCharge("source");
+        sheet.grantCharge("source");
 
-        assertEquals(2, sheet.getRevivalCharges("source"));
-        assertTrue(sheet.consumeRevivalCharge("source"));
-        assertTrue(sheet.consumeRevivalCharge("source"));
-        assertFalse(sheet.consumeRevivalCharge("source"));
+        assertEquals(2, sheet.getCharges("source"));
+        assertTrue(sheet.consumeCharge("source"));
+        assertTrue(sheet.consumeCharge("source"));
+        assertFalse(sheet.consumeCharge("source"));
     }
 
     @Test
     void anUnspentRevivalChargeIsDroppedAtTheNextCena() {
-        sheet.grantRevivalCharge("source");
+        sheet.grantCharge("source");
 
         sheet.startNewScene();
 
-        assertEquals(0, sheet.getRevivalCharges("source"));
+        assertEquals(0, sheet.getCharges("source"));
     }
 
     @Test

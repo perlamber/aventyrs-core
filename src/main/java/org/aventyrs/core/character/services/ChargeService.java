@@ -169,7 +169,17 @@ public interface ChargeService {
      *         ({@code CHARGE_AFTER_REPOSITION} — see {@code RepositionService}), or they stand in Terreno Difícil
      *         ({@code CHARGE_IN_DIFFICULT_TERRAIN})
      */
-    ChargeResult begin(CombatantSheet sheet, Weapon weapon, SceneContext sceneContext);
+    default ChargeResult begin(CombatantSheet sheet, Weapon weapon, SceneContext sceneContext) {
+        return begin(sheet, weapon, sceneContext, null);
+    }
+
+    /**
+     * Same as the three-argument form, naming the Investida's target — "an Investida selects its
+     * target beforehand, then moves as one atomic action" (table ruling, 2026-09-28). The target is
+     * left out of {@link ChargeResult#provokedReactors} unless it may Defender o Perímetro anyway
+     * ({@code EscudeiroFeat#MESTRE_ESCUDEIRO}); see {@link MovementReactionService}.
+     */
+    ChargeResult begin(CombatantSheet sheet, Weapon weapon, SceneContext sceneContext, CombatantSheet target);
 
     /**
      * Settles what the Investida's outcome costs its charger, after the caller has resolved the

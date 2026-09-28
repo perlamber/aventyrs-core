@@ -25,6 +25,11 @@ package org.aventyrs.core.race;
  * org.aventyrs.core.feat.ArtificeFeat#ARTESAO_DE_REGALIAS_DIVINAS} (checked by {@code
  * EquipmentCraftingService.RegaliaDonation#isDivineDonor()}), and the identity a bestiary will
  * key on once one exists.
+ *
+ * <p>{@link #ANIMAL} is a beast of the natural world — no playable {@link Race} reports it; a foe
+ * does, through {@code MonsterTemplate#getCreatureType()}. First read by the Caçador Antecedente's
+ * "contra animais e monstros" ({@code CareerBackground#CACADOR}: ANIMAL or MONSTRUOSO), and meant
+ * for the other bestiary rules that will single out animals.
  */
 public enum CreatureType {
     HUMANOIDE,
@@ -34,5 +39,6 @@ public enum CreatureType {
     DRAGAO,
     ELEMENTAL,
     ABISSAL,
-    CELESTIAL
+    CELESTIAL,
+    ANIMAL
 }

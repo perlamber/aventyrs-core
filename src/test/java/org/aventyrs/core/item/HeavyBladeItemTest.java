@@ -45,7 +45,7 @@ class HeavyBladeItemTest {
     void espadaLongaCarriesEveryColumnOfItsRulesText() {
         HeavyBladeItem blade = HeavyBladeItem.ESPADA_LONGA_OU_KATANA;
 
-        assertEquals("Espada Longa ou Katana", blade.getName());
+        assertEquals("Espada Longa", blade.getName());
         assertEquals(ItemWeightClass.HEAVY, blade.getWeightClass());
         assertEquals(ItemRarity.UNCOMMON, blade.getRarity());
         assertEquals(10, blade.getPrice());

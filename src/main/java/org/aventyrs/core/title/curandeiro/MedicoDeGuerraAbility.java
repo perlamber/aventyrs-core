@@ -13,48 +13,45 @@ import java.util.Optional;
 import static org.aventyrs.core.title.PDCost.fixed;
 
 /**
- * The Habilidades/Supremas gated on {@link CurandeiroSpecialization#MEDICO_DE_GUERRA}. None is real
- * yet; each names the system it waits on.
+ * The Habilidades/Supremas gated on {@link CurandeiroSpecialization#MEDICO_DE_GUERRA}.
  */
 @Getter
 @AllArgsConstructor
 public enum MedicoDeGuerraAbility implements AventyrTitleAbility {
 
-    // Requer Médico de Guerra. Passive.
-    // TODO: "não permitem Reações de seus inimigos" — nothing fires or suppresses a Reação (the
-    //  movement-triggered Reações gap in CLAUDE.md).
+    // Requer Médico de Guerra. Passive. Real by construction: no ReactionTrigger fires on a heal — the
+    // only Reações this core offers answer attacks and damage — so a heal already provokes none. Should
+    // a heal-triggered Reação ever be added, its availability check must consult this constant.
     TRATAMENTO_FURTIVO(
             "Seus efeitos que permitam recuperar PV de seus aliados não permitem Reações de seus inimigos.",
             false, fixed(0), ActionCost.NONE, Optional.empty(),
             Optional.of(CurandeiroSpecialization.MEDICO_DE_GUERRA), 0),
 
-    // Requer Médico de Guerra. 2PD, +1PA.
-    // TODO: "+4 em suas Defesas por 1 Rodada" to healer and target — expressible as a DEFESAS Blessing,
-    //  but nothing ties an activation to the heal it rides on, and "Broto ou superior" needs the heal's
-    //  Magia rung checked at that moment.
+    // Requer Médico de Guerra. 2PD, +1PA. Real through CuraProtetoraInteraction: activated beside the heal
+    // it rides on, it grants the activator and the target +4 Defesas for 1 Rodada, sourced so a second
+    // activation renews rather than stacks ("efeito não cumulativo"). Pairing it with a Broto-or-higher
+    // Magia or a Habilidade de Curandeiro is the caller's.
     CURA_PROTETORA(
             "Suas Magias (Broto ou superior) e Habilidades de Curandeiro, em adição a quaisquer efeitos de " +
             "recuperação de PV também concedem a você e ao alvo Bônus de +4 em suas Defesas por 1 Rodada, " +
             "efeito não cumulativo.",
-            false, fixed(2), ActionCost.ofActionPoints(1), Optional.empty(),
+            false, fixed(2), ActionCost.ofActionPoints(1), Optional.of(CuraProtetoraInteraction.class),
             Optional.of(CurandeiroSpecialization.MEDICO_DE_GUERRA), 0),
 
-    // Requer Médico de Guerra. 2PD, +1PA.
-    // TODO: "Efeitos de Encantamentos lançados sobre um personagem aliado adicionalmente recuperam Vigor
-    //  PV" — an Encantamento-typed Magia is not a sheet.Enchantment and reaches no door this could hang
-    //  off (the Efeito de Encantamento row in CLAUDE.md).
+    // Requer Médico de Guerra. 2PD, +1PA. Real through EncantoRegenerativoInteraction: activated "em
+    // conjunto" with the Magia or Efeito de Encantamento it rides on, the ally it targets heals its own
+    // Vigor in PV, sourced as this Habilidade.
     ENCANTO_REGENERATIVO(
             "Suas Magias e Efeitos de Encantamentos lançados sobre um personagem aliado adicionalmente " +
             "recuperam Vigor PV do alvo. Esta Habilidade deve ser utilizada em conjunto com a Conjuração ou " +
             "Ativação do Efeito.",
-            false, fixed(2), ActionCost.ofActionPoints(1), Optional.empty(),
+            false, fixed(2), ActionCost.ofActionPoints(1), Optional.of(EncantoRegenerativoInteraction.class),
             Optional.of(CurandeiroSpecialization.MEDICO_DE_GUERRA), 0),
 
-    // Requer 2 Habilidades de Médico de Guerra. Passive.
-    // TODO: "seus Descansos contam como uma Categoria superior" — RestService#applyRest has no hook
-    //  upgrading the RestType it was given.
-    // TODO: "-1PA" permanently on healing activations — the same missing activation-time hook as
-    //  CurandeiroAbility#CURANDEIRO_VELOZ.
+    // Requer 2 Habilidades de Médico de Guerra. Passive. Real: Curandeiro#upgradesRests makes
+    // RestService#applyRest treat each of the holder's Descansos one category higher (Total stays
+    // Total); Curandeiro#resolveActivationActionPointReduction/#resolveCastingActionPointReduction take
+    // -1PA off every Médico de Guerra activation and every Magia that heals, never below 1PA.
     DOUTOR_DE_ELDUR(
             "Sempre que descansar, seus Descansos contam como uma Categoria superior. O Tempo de Ativação " +
             "Habilidades de Médico de Guerra e de Conjuração de Magias que permitam a recuperação de PV tem " +

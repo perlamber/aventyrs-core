@@ -1,0 +1,297 @@
+ANTECEDENTES: HISTÓRIAS E ORIGENS
+Antecedentes indicam a naturalidade ou ancestralidade de um personagem, e seu estilo de vida, antes dele começar sua carreira como herói ou aventureiro.
+Os antecedentes auxiliam na criação da história de origens de um personagem, também chamada Background, que explica a vida do personagem antes do jogo começar. O que ele fazia ou praticava, onde vivia, a que era apegado.
+Todo personagem possui uma história de origem, que deve ser explicada ao Narrador durante a criação do personagem, isto ajuda a dar profundidade ao mesmo, fazendo referência a sua família e criação, a região que nasceu, o que fazia e o que o levou a se tornar um aventureiro.
+As histórias de origens normalmente são escritas, para que o Narrador possa manter um registro, e usar a história de cada personagem ao longo da campanha jogada, mas em jogos mais curtos podem ser apenas explicados verbalmente.
+Recomenda-se sempre, independente do jogo ser uma história curta ou uma campanha, que os personagens tenham histórias objetivas, não mais que uma página, citando apenas passagens importantes da vida anterior, e que o jogador gostaria que fosse utilizando, além de deixar ganchos para que o jogo se encontre com ela.
+Os antecedentes ajudam neste sentido, apontando o local de nascimento do personagem e parte dos seus hábitos, recomenda-se criar uma história conectada a estes pontos, então apenas expandindo de acordo com o gosto e criatividade de cada um.
+Existem dois grupos de antecedentes, os de Naturalidade e os de Carreira.
+Antecedentes de Naturalidade se referem ao local de nascimento do personagem, sua cultura, hábitos, e qualquer característica desenvolvida em função disso. Antecedentes de Carreira são relacionados ao que o personagem estudou, sua profissão anterior, treinamentos, ou simplesmente seus hábitos e rotinas.
+Cada jogador deve escolher dois antecedentes para seu personagem no momento de sua criação, e uma vez feita esta escolha não pode ser alterada, sendo permanente. Também não é possível adquirir novos antecedentes após a criação do personagem, uma vez que a história comece a personalização deve ser feita utilizando Perícias, Talentos e Títulos de Aventyrs.
+
+EXEMPLO DE HISTÓRIA DE ORIGEM
+“Marco Correrrios nasceu em Deciembro, de família de pescador, acompanhava seu pai desde criança, inicialmente preparando a rede e carregando caixas de peixes, e posteriormente aprender a dirigir a pequena embarcação familiar.
+Num certo dia um estranho grupo pediu ao seu pai que os leva-se até uma ilha distante ao sul, e que pagariam a ele o dobro do que ele conseguiria pescando naquela manhã, e por vivermos uma situação difícil, aceitamos.
+Na viagem descobrimos que eram aventureiros mercenários, homens da Família Falistrot, e que estavam investigando rumores sobre uma ilha que havia surgido misteriosamente no meio do mar. Nada foi encontrado, mas no retorno uma tempestade os atingiu, do nada, sem aviso, e então o navio foi parado, enguiçado em meio ao oceano por grandes quantidades de lodos que não deveriam existir ali, parado por magia.
+O navio foi atacado por uma estranha criatura, parecia uma grande enguia humanoide com 4 braços, acompanhados por dezenas de Cabas. Os Falistrots na embarcação nos salvaram, derrotando a criatura e afastando os monstros, e que fascinou o caçula Correrrios.
+Após retornaram a salvo às praias de Deciembro, Marco, com a permissão de seu pai, solicitou os acompanhar, queria também ser um herói como eles, um grande guerreiro, que ajuda pessoas por todo o Continente, e desde então os acompanhou.”
+Na história acima podemos identificar os antecedentes Forasteiro Deciembrano e Marinheiro, também os motivos do personagem se tornar um herói, e temos os primeiros passos de seu treinamento. Com poucas palavras é possível dizer muito sobre o personagem, e deste ponto em diante, ao longo do jogo, a história do personagem vai se aprofundar.
+
+ANTECEDENTES DE NATURALIDADE
+Grande Continente
+Referentes ao país de nascimento do personagem, a escolha deste antecedente indica o local de nascimento do personagem, e as qualidades consequentes.
+
+
+DECIEMBRANO (nascidos em Deciembro)
+Idioma adicional: Harenai
+Benefícios: De natureza ilhéu e cultura naval, os Deciembranos vivem das águas por gerações e consideram partes de si mesmos, além de possuírem forte conexão com animais marinhos.
+	•	Perícias: +1 Graduação em Atletismo e +1 Graduação em outra Perícia, escolhida entre Dirigir e Cavalgar ou Empatia Selvagem.
+	•	Especializações e Habilidades: 
+	•	Recebe a Habilidade de Competência Anfíbio de Atletismo.
+	•	Se treinado em Dirigir e Cavalgar recebe a Especialização Animais e Veículos (não-tecnológicos) Aquáticos.
+	•	Se treinado em Empatia Selvagem recebe a Especialização Animais Mundanos.
+	•	Benefício Regional –Movimento Base de Natação +2UD.
+
+ELDURIANO (nascidos no Império Elduriano)
+Idioma adicional: Elduriano
+Benefícios: 
+Considerado Terra Santa e o país do progresso, seus habitantes estão acostumados com a presença de itens e veículos tecnológicos, além de estudarem muito sobre as culturas divinas.
+	•	Perícias: +1 Graduação em 2 Perícias, escolhidas entre Conhecimentos, Profissão ou Dirigir e Cavalgar.
+	•	Especializações e Habilidades: 
+	•	Se treinado em Conhecimentos recebe a Especialização Cosmologia.
+	•	Se treinado em Dirigir e Cavalgar recebe a Especialização Veículos Tecnológicos.
+	•	Se treinado em Profissão recebe a Especialização Mecânica.
+	•	Benefício Regional – A Todo Vapor: Equipamentos Tecnológicos (Vapor) são considerados de uma Raridade Inferior e custam -2PE.
+
+HARENAI (nascidos no reino de Harenai)
+Idioma adicional: Harenai
+O Povo do Deserto. Embora tenham cidades estacionárias próximas ao mar, aos oásis e aos bolsões de Areia Negra, sua cultura nômade é forte e presente. Alegres e conectados as artes, são conhecidos por sua alquimia e o domínio do Xajah.
+	•	Perícias: +1 Graduação em 2 Perícias, escolhidas entre Artes, Conhecimentos ou Medicina e Cura.
+	•	Especializações e Habilidades: 
+	•	Se treinado em Artes recebe a Especialização Música.
+	•	Se treinado em Conhecimentos recebe a Especialização Natureza.
+	•	Se treinado em Medicina e Cura recebe a Especialização Alquimia.
+	•	Benefício Regional – Nômades do Deserto: São sempre bem-sucedidos em encontrar água e alimentos (se houver) em regiões inóspitas ou selvagens.
+
+JULLYANO (nascidos em Jully devastada)
+ Idioma adicional: Harenai
+Um local de difícil sobrevivência, onde quem domina os Oasis, Labirintos e Tecnologias se sobressaem sobre os menos favorecidos, criando então um estilo de vida dependente e especializado em buscar por estes locais e recursos, ou morrer tentando.
+	•	Perícias: +1 Graduação em 2 Perícias, escolhidas entre Atenção, Furtividade ou Profissão.
+	•	Especializações e Habilidades: 
+	•	Se treinado em Atenção recebe a Especialização Investigar.
+	•	Se treinado em Furtividade recebe a Especialização Maestria da Ocultação.
+	•	Se treinado em Profissão recebe a Especialização Mecânica.
+	•	Benefício Regional – Curados pelo AEther: Aqueles que sobreviveram à Bomba de AEther tiveram uma alteração em sua fisiologia e agora se recuperam mais rapidamente. A cada Descanso Verdadeira recuperam +1 de cada Bônus Base, esse benefício aumenta em +1 enquanto estão nos territórios de Jully.
+
+
+NORTENHO (nascidos no Norte)
+Idioma adicional: Nortês
+Os domínios do Senhor das Guerras do Norte, Ymir, e seus filhos Anões e Gigantes. Um local repleto de criaturas enormes e vorazes, de clima gélido intenso e lar de povos tribais e clãs que vivem em constante conflitos por rixas culturais, territórios ou recursos.
+	•	Perícias: Recebem +1 Graduação em uma perícia de Ataque e +1 Graduação em 1 Perícia, escolhidas entre Atenção ou Furtividade.
+	•	Especializações e Habilidades: 
+	•	Recebem uma Especialização e uma Habilidade de Competência da Perícia de Ataque escolhida.
+	•	Benefício Regional – Guerreiros Caçadores: A vida de conflitos e caça ensinou os Nortenhos a extraírem o máximo de suas armas, por isso o Dano Base de suas Armas aumenta em +1.
+
+OFÍ (nascidos em Ofiussa)
+Idioma adicional: Continental, dialeto Ofí
+O reino dos aventureiros e exploradores. A vida dos Ofís gira em torno das aventuras e explorações, seja em suas guildas ou naqueles que vivem de suas demandas. 
+	•	Perícias: +1 Graduação em 2 Perícias, escolhidas entre Atenção, Dirigir e Cavalgar ou Profissão.
+	•	Especializações e Habilidades: 
+	•	Se treinado em Atenção recebe a Especialização Sentidos Apurados.
+	•	Se treinado em Dirigir e Cavalgar recebe uma Especialização adicional.
+	•	Se treinado em Profissão recebe uma Especialização escolhida entre Alfaiataria e Curtume, Metalurgia ou Joalheria.
+	•	Benefício Regional – Nascido para Aventureiras: Treinados para viverem os mais diversos perigos, recebem bônus de +1 em suas Defesas.
+
+SÚDITO DO DRAGÃO (nascidos nas florestas de Vel’dorah)
+Idioma adicional: Dracônico Veldoran
+Nascidos nas florestas labirínticas e mágicas Feéricas, abençoados no nascimento por Gaea e seus filhos, os súditos do Dragão são um povo fortemente ligado as culturas mágicas e naturais.
+Benefícios: Gerações e gerações vivendo em florestas encantadas concederam aos habitantes do reino uma habilidade única, de nunca se perderem em labirintos, mágicos ou mundanos, tornando-os sempre aptos a retornarem ao ponto de entrada. Também recebem vantagem em rolagens de Conhecimentos: Natureza, mas apenas em Florestas.
+	•	Perícias: +1 Graduação nas Perícias Conhecimentos e Empatia Selvagem.
+	•	Especializações e Habilidades: 
+	•	Recebe as Especializações Natureza e Conhecimento Metamágico de Conhecimentos.
+	•	Recebe uma Especializações adicional de Empatia Selvagem.
+	•	Recebem uma Habilidade de Competência de Conhecimentos ou de Empatia Selvagem.
+	•	Benefício Regional – Senso de Orientação Aprimorado: Nunca se perdem em labirintos, mágicos ou mundanos, sendo sempre capaz de reconhecer onde já estiveram e como retornar a locais anteriores.
+
+VASTARE (nascidos no reino élfico de Vastara)
+Idioma adicional: Vastare
+Herdeiros das culturas feéricas e criadores das principais magias modernas, os Vastare são um povo conectado as artes Arcanas e a Natureza, aprendendo a se conectar ao ambiente e ao Mana desde o nascimento. Também são fortemente ligados a cultura e as artes e ao Arqueirismo.
+	•	Perícias: +1 Graduação em 2 Perícias, escolhidas entre Ataque à Distância, Conhecimentos ou Domínio do Mana.
+	•	Especializações e Habilidades: 
+	•	Se treinado em Conhecimentos recebe uma Especialização adicional escolhida entre Natureza e Metamágico.
+	•	Se treinado em Domínio do Mana recebe uma Habilidade de Competência adicional.
+	•	Benefício Regional – Conexão com o Mana: Seus hábitos de meditação os permitem recuperar Bônus Base mais rapidamente, recuperando +2PD ou +2PM a cada Descanso.
+
+
+Estados Federados (não disponível)
+Byakko-Uuguul
+	•	Perícias: +1 Graduação em 2 Perícias, escolhidas entre XX, Domínio do XX ou XX.
+	•	Especializações e Habilidades: 
+	•	Se treinado em XX recebe a Especialização YY
+	•	Se treinado em XX recebe a Especialização YY
+	•	Se treinado em XX recebe a Especialização YY
+	•	Benefício Regional – ZZ
+
+Genbu-Chulshin 
+	•	Perícias: +1 Graduação em 2 Perícias, escolhidas entre XX, Domínio do XX ou XX.
+	•	Especializações e Habilidades: 
+	•	Se treinado em XX recebe a Especialização YY
+	•	Se treinado em XX recebe a Especialização YY
+	•	Se treinado em XX recebe a Especialização YY
+	•	Benefício Regional – ZZ
+
+Seiryuu-Iái’zi
+	•	Perícias: +1 Graduação em 2 Perícias, escolhidas entre XX, Domínio do XX ou XX.
+	•	Especializações e Habilidades: 
+	•	Se treinado em XX recebe a Especialização YY
+	•	Se treinado em XX recebe a Especialização YY
+	•	Se treinado em XX recebe a Especialização YY
+	•	Benefício Regional – ZZ
+
+Suzaku-Shusshin
+	•	Perícias: +1 Graduação em 2 Perícias, escolhidas entre XX, Domínio do XX ou XX.
+	•	Especializações e Habilidades: 
+	•	Se treinado em XX recebe a Especialização YY
+	•	Se treinado em XX recebe a Especialização YY
+	•	Se treinado em XX recebe a Especialização YY
+	•	Benefício Regional – ZZ
+
+
+Grurton (não disponível)
+Lunari
+	•	Perícias: +1 Graduação em 2 Perícias, escolhidas entre XX, Domínio do XX ou XX.
+	•	Especializações e Habilidades: 
+	•	Se treinado em XX recebe a Especialização YY
+	•	Se treinado em XX recebe a Especialização YY
+	•	Se treinado em XX recebe a Especialização YY
+	•	Benefício Regional – ZZ
+
+Solari
+	•	Perícias: +1 Graduação em 2 Perícias, escolhidas entre XX, Domínio do XX ou XX.
+	•	Especializações e Habilidades: 
+	•	Se treinado em XX recebe a Especialização YY
+	•	Se treinado em XX recebe a Especialização YY
+	•	Se treinado em XX recebe a Especialização YY
+	•	Benefício Regional – ZZ
+
+Outros
+ANIMA (Nativo do Olho de Deus) (não disponível)
+	•	Perícias: +1 Graduação em 2 Perícias, escolhidas entre XX, Domínio do XX ou XX.
+	•	Especializações e Habilidades: 
+	•	Se treinado em XX recebe a Especialização YY
+	•	Se treinado em XX recebe a Especialização YY
+	•	Se treinado em XX recebe a Especialização YY
+	•	Benefício Regional – ZZ: Equipamentos Tecnológicos (Tesla) são considerados de 2 Raridades inferiores para você.
+
+NATUREZA LONGINQUA (personagens vindos de outros planos de existência)
+Idioma adicional: Nenhum
+Você é nativo de outro plano e está viajando por outras realidades por motivos particulares, mas por algum motivo particular Tellus parece ser favorável para o seu desenvolvimento.
+	•	Perícias: Escolha uma Perícia, você recebe +1 Graduação na Perícia Escolhida.
+	•	Especializações e Habilidades: 
+	•	Você recebe duas Especializações e uma Habilidade de Competência da Perícia Escolhida.
+	•	Benefício Regional – Adaptação do Viajante: Adquirir novas Graduações na Perícia escolhida até a 5ª Graduação custa -0.5EXP.
+
+SEM PÁTRIA RECONHECIDA (de qualquer reino caído ou em vilas autoproclamadas independentes)
+Idioma adicional: Nenhum (nestas condições o mais comum é o uso de línguas raciais)
+Você é bárbaro, indígena ou selvagem, e cresceu em uma região distante do progresso, apenas cercados dos hábitos de seu povo e de uma natureza selvagem.
+	•	Perícias: +1 Graduação em 2 Perícias, escolhidas entre Domínio do Mana, Furtividade ou Perícias de Ataque.
+	•	Especializações e Habilidades: 
+	•	Você recebe uma Habilidade de Competência de uma das Perícias escolhidas.
+	•	Benefício Regional – Vontade dos Excluídos: Seu Multiplicador de PD aumenta em +1.
+
+
+ANTECEDENTES DE CARREIRA
+Relacionado ao estilo de vida anterior do personagem, refere-se aos estudos, treinamentos, ou rotina prévia de cada personagem.
+
+ACADÊMICO AVENTYR
+Você foi treinado para Despertar como Aventyr e se tornar um aventureiro de elite.
+Benefício: Iniciativa +1.
+Prontidão - Nos primeiros Turnos de cada combate você tem PA adicionais, +2PA no primeiro turno, +1PA no segundo turno.
+
+ALDEÃO
+Você veio de família comum e, antes de iniciar nas aventuras, seguia os ofícios da família.
+Benefício: +1 Graduação e Habilidade de Competência em Profissão ou Empatia Selvagem.
+Ação Rotineira - Apenas uma vez por dia, renovado a cada Descanso Longo Verdadeiro, você pode reduzir a GD de uma rolagem de Perícia escolhida em -1 nível.
+
+APOSTADOR
+Você vive e sempre viveu intensamente, acreditando que tudo é sorte e destino, se arriscando em jogos de azar, apostas ou quaisquer situações que fujam ao controle dos homens.
+Benefício: Sorte +1.
+Sortudo - A primeira vez em cada sessão de jogo que sua sorte se tornar zero você recebe 1 ponto temporário de Sorte.
+
+APRENDIZ
+Você era um aprendiz ou estudante e passou a primeira etapa da sua vida estudando e se especializando.
+Benefício: Escolha uma Perícia, recebe +1 Graduação e uma Especialização na Perícia escolhida. 
+Teoria de Tudo – A cada Rodada você pode receber Vantagem em uma de suas rolagens da Perícia escolhida.
+
+ARTISTA
+Além de aventureiro você era um artista e perito em algumas das muitas formas de artes.
+Benefício: +1 Graduação e Habilidade de Competência em Artes.
+Criar Obra-Prima – Apenas uma vez por semana você pode escolher ser bem-sucedido em uma rolagem de Artes, esse é um Sucesso Crítico Maior.
+
+ATLETA
+Você é ou era um atleta profissional.
+Benefício: +1 Graduação e Habilidade de Competência em Atletismo.
+Treinamento Atlético – Seu Movimento Base aumenta em +2UD, se você for o primeiro a agir em uma Cena este Benefício é dobrado durante a primeira Rodada.
+
+
+BATEDOR
+Você foi treinado e atuava em um grupo, bando ou força militar como batedor.
+Benefício: +1 Graduação +1 em Furtividade e Atenção.
+Sombra: Adquirir novas Graduações em Atenção, até a 5ª Graduação, custa -0.5EXP.
+
+CAÇADOR
+Você era um caçador e tirava seu sustento do abate de animais e pequenos monstros.
+Benefício: +1 Graduação em Furtividade e Conhecimentos, você recebe a Especialização Natureza.
+Conhecimento de Caçador – A Margem Crítica Menor dos seus ataques contra animais e monstros aumenta em +2 números.
+
+COMERCIANTE
+Você descende de uma família de comerciantes e aprendeu o ofício da administração e negociação.
+Benefício: +1 Graduação em Persuasão, você adquire as Especializações Negociação e Comunicação.
+Linguista – Você aprende 2 novos idiomas.
+
+CURANDEIRO
+Você foi aprendiz de médicos ou curandeiros, por isso sabe as melhores formas de curar e cuidar de ferimentos.
+Benefício: +1 Graduação, uma Especialização e uma Habilidade de Competência de Medicina e Cura.
+Toque de Hipócrates – Seus Efeitos de Cura, físicos ou mágicos, aumentam em +1.
+
+EREMITA
+Antes de se aventurar você era um nômade que vivia isolado da civilização.
+Benefício:+1 Graduação em Conhecimentos e Empatia Monstruosa, você recebe a Especialização Natureza.
+Uno com Gaea – Você é sempre bem-sucedido em encontrar água, comida e abrigo em locais inóspitos e selvagens. Se você tiver outras fontes de benefícios similares a este, a qualidade e segurança dos alimentos e locais encontrada é maior e mais duradoura.
+
+ESCUDEIRO
+Você foi escudeiro ou pajem de um cavaleiro ou herói e agora segue os seus passos.
+Benefício:+1 Graduação em Conhecimentos e Dirigir e Cavalgar, você recebe a Especialização Geo-História.
+Aprendiz de Cavaleiro – Você recebeu instruções militares, escolha entre Esquiva e Aparar ou uma Perícia de Ataque. Adquirir Graduações na perícia escolhida custa -0.5EXP até a 5ª Graduação.
+
+ESPIÃO
+Você é ou foi treinado por um clã, família ou unidade militar para ser um espião.
+Benefício: +1 Graduação em Persuasão, você recebe as Especializações Mentir ou Omitir, Obter Informações e Negociação.
+Kit de Disfarces – Você inicia o jogo com 2 Poções, escolhidas entre Poções do Silêncio e Sussurros de Sylph.
+
+
+ESTUDIOSO ARCANO
+Você estudou as artes Arcanas em uma Academia de Magias ou teve um tutor que lhe iniciou no Arcanismo.
+Benefício: +1 Graduação em Conhecimentos ou Domínio do Mana, você recebe uma Habilidade de Competência da Perícia escolhida.
+Aprendizado Arcano – Escolha uma Árvore de Magias, você é capaz de conjurar as Magias Semente e Broto da árvore escolhida.
+
+MARINHEIRO
+Você era um pescador, pirata ou marinheiro antes de iniciar sua vida de aventuras.
+Benefício: +1 Graduação em Atletismo e Dirigir e Cavalgar, você recebe a Especialização Animais e Veículos (não-tecnológicos) Aquáticos.
+Homem ao Mar – Você recebe Movimento Base de Natação.
+
+NEGOCIADOR
+Você é de uma família de negociadores ou diplomatas e foi ensinado na arte das negociações.
+Benefício: Graduação +1 em Atenção ou Persuasão, baseado na Perícia escolhida você recebe uma das seguintes Especializações: Discernir Motivação ou Negociação.
+Dom da Negociação – Apenas uma vez por dia, você pode reduzir a GD de uma rolagem da Perícia escolhida em -1 Nível.
+
+NOVIÇO
+Você era um monge ou clérigo antes de se tornar aventureiro e é fortalecido por sua fé e convicções.
+Benefício: Autocontrole +1
+Dominar Impulsos - a primeira vez em cada sessão de jogo que seu Autocontrole se tornar zero você recebe 1 ponto temporário de Autocontrole;
+
+NOBRE
+Nascido em berço de ouro, você é um filho de nobre fora da linhagem sucessória que decidiu criar seu próprio nome como aventureiro.
+Benefício: Recursos +1.
+Carteirada – Apenas uma vez por Rodada, você pode receber Vantagem em uma rolagem de Persuasão.
+
+RITUALISTA
+Você cresceu entre bruxos, xamãs ou druidas, então também se tornou ritualista de um pequeno culto.
+Benefício: +1 Graduação em Conhecimentos, você recebe as Especializações Cosmologia.
+Poder da Fé – Os Deuses lhe concedem Mana adicional para atuar em nome deles e em prol dos fiéis, seu Multiplicador de PM aumenta em +1.
+
+SELVAGEM
+Benefício: Multiplicador de PV+1
+Retribuição Atroz – Enquanto seus PV forem inferiores à 10 você recebe Bônus de Danos igual ao seu Multiplicador de PV, este benefício afeta apenas um ataque e só pode ser direcionado a um alvo que tenha lhe infligido danos. Após utilizar deste benefício você o perde até passar por um Descanso Longo.
+
+
+SOLDADO
+Você passou por treinamento militar, mas pediu sua dispensa para se aventurar ou se aventura em nome de algum nobre.
+Benefício: Graduação +1 em Perícia, escolhido entre Perícias de Ataque, Dirigir e Cavalgar ou Esquiva e Aparar, você recebe uma Especialização da Perícia escolhida.
+Tolerância Marcial – Redução de Danos Sofridos 1 para resistir ao primeiro ataque de cada Cena de Combate.
+
+TROMBADINHA
+Você vivia de pequenos furtos ou faz parte de uma guilda de ladrões.
+Benefício: +1 Graduação e uma Especialização de Atletismo ou Furtividade, você recebe uma Especialização da Perícia escolhida.
+Dar Fuga – Uma vez por Rodada você pode receber Vantagem nas rolagens da Perícia escolhida.
+

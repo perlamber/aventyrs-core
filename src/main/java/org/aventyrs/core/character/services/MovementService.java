@@ -1,6 +1,7 @@
 package org.aventyrs.core.character.services;
 
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.character.MovementMode;
 import org.aventyrs.core.character.SizeCategory;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.skill.SkillExcellency;
@@ -30,9 +31,8 @@ public interface MovementService {
      * #getEffectiveSizeCategory}, so a size-shifting ability like Sangue de Gigante is already
      * reflected) plus any {@link org.aventyrs.core.modifier.ModifierType#MOVEMENT} bonus found
      * on attributeAbilities, skillCompetencyAbilities (acquired <b>and</b> racial — see {@link
-     * org.aventyrs.core.skill.SkillCompetencyAbility#allFor}; unlike {@link ReactionsService}/
-     * {@link InitiativeService}, which predate that fix and still only scan the acquired list,
-     * this newer service starts from the corrected combined one), or the unlocked {@link
+     * org.aventyrs.core.skill.SkillCompetencyAbility#allFor}, as {@link ReactionsService} and
+     * {@link InitiativeService} now do too), or the unlocked {@link
      * SkillExcellency} tiers of every trained Perícia. Never negative — like Reações/Ações
      * Livres/RD/RA, this is a spendable-resource-like budget, not a signed comparative value
      * like Iniciativa.
@@ -91,4 +91,34 @@ public interface MovementService {
      * javadoc's rule. Never negative, for the same reason the permanent total isn't.
      */
     int getMovementBase(CombatantSheet sheet, int movementIndex);
+
+    /**
+     * Whether sheet's character can move in mode at all. {@code LAND} always. {@code FLIGHT},
+     * {@code SWIM} and {@code CLIMB} only when something grants them: the Raça (unless a Forma
+     * suppresses its physical traits), a held Talento (including one scoped to the worn Forma, or
+     * one naming an absolute figure for the mode), or a Habilidade de Competência.
+     */
+    boolean hasMovementMode(CombatantSheet sheet, MovementMode mode);
+
+    /**
+     * {@link #hasMovementMode(CombatantSheet, MovementMode)} for a caller holding only a {@code
+     * Character} — Forma-blind: no worn shape grants a mode, and none suppresses the Raça's.
+     * What a {@code Feat} hook with no sheet asks ({@code MobilidadeFeat#INVESTIDA_AQUATICA}).
+     */
+    boolean hasMovementMode(Character character, MovementMode mode);
+
+    /**
+     * Movimento Base per Ponto de Ação in mode — 0 when the character does not have that mode, or
+     * cannot move at all. {@code LAND} is {@link #getMovementBase(CombatantSheet)}.
+     *
+     * <p>For another mode the starting figure is a Talento's absolute one when any states it
+     * ({@code Feat#resolveMovementBaseOverride} — the largest, if several do), otherwise the
+     * character's land Movimento Base. ⚠️ That fallback is an <b>inference</b>: most clauses grant
+     * the mode with no figure ("possui Movimento Base de Voo"), and the one that states a rule —
+     * Polimorfismo's Draconato, "Movimento Base de Voo igual à sua velocidade em terra" — is taken
+     * as the general one. Every {@code Feat#resolveModeMovementIncrease} and equipped item's
+     * {@code FLIGHT_MOVEMENT}/{@code SWIM_MOVEMENT}/{@code CLIMB_MOVEMENT} bonus then adds on top.
+     * Floored at 0.
+     */
+    int getMovementBase(CombatantSheet sheet, MovementMode mode);
 }

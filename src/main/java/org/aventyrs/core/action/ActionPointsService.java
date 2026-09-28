@@ -1,5 +1,10 @@
 package org.aventyrs.core.action;
 
+import org.aventyrs.core.sheet.ActionCost;
+import org.aventyrs.core.feat.Feat;
+import org.aventyrs.core.skill.AttackSource;
+import org.aventyrs.core.skill.SkillType;
+import java.util.Set;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.scene.SceneContext;
@@ -72,6 +77,56 @@ public interface ActionPointsService {
      * {@code TemporaryBonus} has a granting path, so a sheet would add nothing here.
      */
     int getSkillRollCost(Character character, int turnNumber);
+
+    /**
+     * What one attack costs attacker on the given Turn, with activatedFeats spent on it — the Tempo
+     * de Ação of an attack, which is a Perícia roll's ({@link #getSkillRollCost}) unless a Talento
+     * says otherwise:
+     *
+     * <ol>
+     *   <li>the lowest {@code Feat#resolveAttackActionPointOverride} among the held Talentos replaces
+     *   the Perícia roll's price (Ataque Repentino's and Um-Dois' 1PA, Combater com 2 Armas' 3PA for
+     *   the pair — 0 on its second attack);</li>
+     *   <li>every {@code Feat#resolveAttackActionPointAdjustment} is added — Lutador Nato's +1PA —
+     *   and every reduction taken off, never below 1PA (Dominar Armas' "(mínimo 1PA)").</li>
+     * </ol>
+     *
+     * <p>Asked <b>before</b> the roll, since the price decides whether it can be made: activatedFeats
+     * is what the attacker is about to name on the {@code SkillRoll}. A price of 0 from a Perícia
+     * roll made free is an {@link ActionCost#FREE_ACTION}; one from an override (an attack already
+     * paid for by its pair) is {@link ActionCost#NONE}. Reported, never deducted — this core keeps no
+     * spent-PA ledger.
+     */
+    ActionCost getAttackCost(CombatantSheet attacker, SkillType attackSkill, AttackSource attackSource,
+                             Set<Feat> activatedFeats, int turnNumber);
+
+    /**
+     * {@link #getAttackCost(CombatantSheet, SkillType, AttackSource, Set, int)} seeing the attacker's
+     * {@link SceneContext}, so the Perícia-roll hooks below reach an attack too. The shorter form
+     * delegates here with {@code null}.
+     */
+    ActionCost getAttackCost(CombatantSheet attacker, SkillType attackSkill, AttackSource attackSource,
+                             Set<Feat> activatedFeats, int turnNumber, SceneContext sceneContext);
+
+    /**
+     * What one roll of skill costs roller on the given Turn, with activatedFeats spent on it — the
+     * sheet-and-Talento-aware form of {@link #getSkillRollCost(Character, int)}, and the one to ask
+     * before a Perícia roll:
+     *
+     * <ol>
+     *   <li>the lowest {@code Feat#resolveSkillRollActionPointOverride} replaces the plain price
+     *   (Lembrar Como se Faz's 1PA);</li>
+     *   <li>the largest {@code Feat#resolveSkillRollActionPointMultiplier} multiplies it (Maestria em
+     *   Perícia's "triplicar seu Tempo de Ação");</li>
+     *   <li>every {@code Feat#resolveSkillRollActionPointAdjustment} is added, a reduction never below
+     *   1PA (Perito Veloz's -1PA).</li>
+     * </ol>
+     *
+     * <p>Reported, never deducted. A roll priced as an Ação Livre or a Reação by the caller (Mestre
+     * Perito) states that on its own {@code SkillRoll#getActionCost()}; this answers the PA price.
+     */
+    ActionCost getSkillRollCost(CombatantSheet roller, SkillType skill, Set<Feat> activatedFeats, int turnNumber,
+                                SceneContext sceneContext);
 
     /**
      * Whether the character has enough PA on the given Turn to pay that Turn's

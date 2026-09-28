@@ -459,7 +459,7 @@ class DamageServiceImplTest {
         SceneContext sceneContext = new SceneContext(List.of(allySheet), List.of(), Map.of(allySheet, Range.ADJACENTE));
 
         assertEquals(BASTIAO_SELF_RDS,
-                damageService.getTotalDamageReduction(holderSheet, null, null, sceneContext));
+                damageService.getTotalDamageTakenReduction(holderSheet, sceneContext));
     }
 
     @Test
@@ -470,7 +470,7 @@ class DamageServiceImplTest {
         CharacterSheet allySheet = allySheetWithDamageTaken(0);
         SceneContext sceneContext = new SceneContext(List.of(allySheet), List.of(), Map.of(allySheet, Range.ADJACENTE));
 
-        assertEquals(0, damageService.getTotalDamageReduction(holderSheet, null, null, sceneContext));
+        assertEquals(0, damageService.getTotalDamageTakenReduction(holderSheet, sceneContext));
     }
 
     @Test
@@ -480,7 +480,7 @@ class DamageServiceImplTest {
         CharacterSheet allySheet = allySheetWithDamageTaken(5);
         SceneContext sceneContext = new SceneContext(List.of(allySheet), List.of(), Map.of(allySheet, Range.DISTANCIA_CURTA));
 
-        assertEquals(0, damageService.getTotalDamageReduction(holderSheet, null, null, sceneContext));
+        assertEquals(0, damageService.getTotalDamageTakenReduction(holderSheet, sceneContext));
     }
 
     @Test
@@ -499,7 +499,7 @@ class DamageServiceImplTest {
         Character holder = characterWithBastiaoDosNecessitados();
         CharacterSheet holderSheet = CharacterSheet.of(holder, new Player());
 
-        assertEquals(0, damageService.getTotalDamageReduction(holderSheet, null, null, null));
+        assertEquals(0, damageService.getTotalDamageTakenReduction(holderSheet, null));
     }
 
     @Test
@@ -536,7 +536,7 @@ class DamageServiceImplTest {
         assertEquals(DamageService.DEFAULT_DAMAGE_REDUCTION,
                 damageService.getTotalAbsoluteDamageReduction(holderSheet, sceneContext));
         assertEquals(BASTIAO_SELF_RDS,
-                damageService.getTotalDamageReduction(holderSheet, null, null, sceneContext));
+                damageService.getTotalDamageTakenReduction(holderSheet, sceneContext));
         // Both subtract from one incoming hit.
         assertEquals(10 - DamageService.DEFAULT_DAMAGE_REDUCTION - BASTIAO_SELF_RDS,
                 damageService.calculateFinalDamage(holderSheet, sceneContext, (DamageType) null, null, 10, false));

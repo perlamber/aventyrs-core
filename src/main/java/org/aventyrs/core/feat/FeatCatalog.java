@@ -96,6 +96,9 @@ public final class FeatCatalog {
                 .map(Class::getEnumConstants)
                 .flatMap(Arrays::stream)
                 .map(Feat.class::cast)
+                // An Antecedente's Benefício has a Talento's shape but is no Talento: it is held
+                // only through Character#getBackgrounds() and must never be offered or bought.
+                .filter(feat -> feat.getFeatCategory().getType() != FeatCategory.Type.ANTECEDENTE)
                 .toList();
     }
 

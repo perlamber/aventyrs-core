@@ -76,9 +76,8 @@ public enum RegaliaGrade {
 
     /**
      * Whether the donor gives up <b>all</b> their Centelhas ({@link #SUPERIOR}/{@link #DIVINA}),
-     * rather than a single one ({@link #MENOR}). This core does not track a character's Centelhas
-     * (the gap {@code DestinoFeat#FRAGMENTO_DA_ENCARNACAO_DE_GILGAMESH} cites), so the donation is
-     * a caller assertion — see {@code EquipmentCraftingService.RegaliaDonation}.
+     * rather than a single one ({@link #MENOR}) — taken from a donor named on the {@link RegaliaDonation} ({@link
+     * org.aventyrs.core.character.Character#sacrificeCentelhas}).
      */
     public boolean requiresAllCentelhas() {
         return requiresAllCentelhas;

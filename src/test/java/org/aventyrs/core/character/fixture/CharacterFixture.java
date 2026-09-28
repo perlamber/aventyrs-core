@@ -111,6 +111,7 @@ public class CharacterFixture extends SimpleFixture {
                 this.add("skillCompetencyAbilities", List.of());
                 this.add("abilityChoices", List.of());
                 this.add("feats", List.of());
+                this.add("backgrounds", List.of());
                 this.add("equipment", List.of());
                 this.add("drawnWeapons", List.of());
                 this.add("spells", List.of());
@@ -205,6 +206,7 @@ public class CharacterFixture extends SimpleFixture {
                         EmpatiaSelvagemCompetencyAbility.ACADEMICO_SELVAGEM));
                 this.add("abilityChoices", List.of());
                 this.add("feats", List.of());
+                this.add("backgrounds", List.of());
                 this.add("equipment", List.of());
                 this.add("drawnWeapons", List.of());
                 this.add("spells", List.of());

@@ -11,6 +11,10 @@ import org.aventyrs.core.effect.Effect;
 import org.aventyrs.core.effect.EffectChain;
 import org.aventyrs.core.effect.EffectChainService;
 import org.aventyrs.core.effect.EffectChainServiceImpl;
+import org.aventyrs.core.effect.GolpeTrovejante;
+import org.aventyrs.core.effect.RepeatedEffect;
+import org.aventyrs.core.feat.Feat;
+import org.aventyrs.core.item.ShieldAttack;
 import org.aventyrs.core.sheet.ActionOutcome;
 import org.aventyrs.core.sheet.CombatantAction;
 import org.aventyrs.core.sheet.CombatantSheet;
@@ -25,6 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.aventyrs.core.util.TranslatableMessages.NOT_AN_ATTACK_SKILL;
+import static org.aventyrs.core.util.TranslatableMessages.AREA_OF_EFFECT_NOT_GRANTED;
 import static org.aventyrs.core.util.TranslatableMessages.TOO_MANY_ATTACK_TARGETS;
 
 /**
@@ -147,28 +152,54 @@ public class AttackDelivery {
      *         ({@code FORCED_ATTACK_TARGET_REQUIRED}) if an Aura requires it to target the
      *         holder first
      */
-    public DeliveredAttackResult resolve(@NonNull final DeliveredAttack attack) {
-        if (!attack.getAttackSkill().isAttackSkill()) {
+    public DeliveredAttackResult resolve(@NonNull final DeliveredAttack given) {
+        if (!given.getAttackSkill().isAttackSkill()) {
             throw new IllegalOperationException(NOT_AN_ATTACK_SKILL);
         }
+        // An Ataque com Escudo adds the shield's bonus for the Defesa it is rolled against — so it is
+        // aimed at this attack's own DefenseType, whatever the caller built it with.
+        DeliveredAttack attack = given.getAttackSource() instanceof ShieldAttack shield
+                && shield.getTargetDefense() != given.getDefenseType()
+                ? given.toBuilder().attackSource(shield.against(given.getDefenseType())).build()
+                : given;
         List<AttackTarget> additionalTargets = attack.getAdditionalTargets();
-        int declaredTargets = 1 + additionalTargets.size();
-        if (declaredTargets > attackTargetingService.getMaximumTargets(
-                attack.getAttacker().getCharacter(), attack.getAttackSkill())) {
-            throw new IllegalOperationException(TOO_MANY_ATTACK_TARGETS);
+        if (attack.getAreaOfEffect() != null) {
+            // An area attack names whoever stands in its footprint — no count to enforce — but the
+            // area itself must be one the attacker's Talentos grant for this attack.
+            boolean granted = attackTargetingService.resolveAttackArea(attack.getAttacker().getCharacter(),
+                            attack.getAttackSkill(), attack.getAttackSource(), attack.getAttackRoll())
+                    .filter(attack.getAreaOfEffect()::equals)
+                    .isPresent();
+            if (!granted) {
+                throw new IllegalOperationException(AREA_OF_EFFECT_NOT_GRANTED);
+            }
+        } else {
+            int declaredTargets = 1 + additionalTargets.size();
+            if (declaredTargets > attackTargetingService.getMaximumTargets(
+                    attack.getAttacker(), attack.getAttackSkill(), attack.getAttackSource())) {
+                throw new IllegalOperationException(TOO_MANY_ATTACK_TARGETS);
+            }
         }
         CombatantSheet defender = attack.getDefender();
         boolean auraHalvesDamage = AuraTargeting.resolveHalvesDamage(attack.getScene(), attack.getAttacker(),
                 defender, attack.isForcedTargetUnavailable());
-        Retaliation retaliation = RetaliationResolver.resolve(defender, attack.getAttackSkill());
         SkillRoll attackRoll = attack.getAttackRoll();
+        // Ataque em Arco: "o valor dos danos causados em cada alvo é igual a metade" — the primary too.
+        // Ataque Repentino: "Os danos causados por este ataque são reduzidos à metade", area or not.
+        boolean everyTargetHalved = (attack.getAreaOfEffect() == null && attackTargetingService.halvesEveryTarget(
+                attack.getAttacker(), attack.getAttackSkill(), attack.getAttackSource(), additionalTargets.size()))
+                || halvesAttackDamage(attack, attackRoll);
+        Retaliation retaliation = RetaliationResolver.resolve(defender, attack.getAttackSkill());
 
         List<CombatantSheet> extraTargets = additionalTargets.stream().map(AttackTarget::defender).toList();
         InteractionResult attackResult = SkillInteractionFactory.create(attack.getAttackSkill())
                 .applyTo(attack.getAttacker(), attack.getSceneContext(), attackRoll, defender,
                         attack.getAttackSource(), extraTargets);
 
-        int requiredTotal = attack.getDefenseValue();
+        // The Aptidões Mágicas' DM against a Magia the defender can cast rides on the flat Defesa the
+        // caller supplied, which cannot see what is being resisted.
+        int requiredTotal = attack.getDefenseValue()
+                + SpellResistance.defenseBonus(defender, attack.getDefenseType(), attack.getAttackSource());
         int attackTotal = attackResult.getSkillRollBonus()
                 + (attackRoll == null ? 0 : attackRoll.getTotal());
 
@@ -176,19 +207,26 @@ public class AttackDelivery {
                 .attackTotal(attackTotal)
                 .requiredTotal(requiredTotal)
                 .auraHalvesDamage(auraHalvesDamage)
+                .everyTargetHalved(everyTargetHalved)
                 .retaliation(retaliation)
-                .unappliedDifficultyReduction(attackResult.getDifficultyReduction());
+                .unappliedDifficultyReduction(attackResult.getDifficultyReduction())
+                .unappliedSpellResistanceReduction(SpellResistance.difficultyReduction(defender, attack.getAttackSource()));
 
         if (attackRoll == null) {
             additionalTargets.forEach(target -> result.additionalTargetResult(DeliveredAttackTargetResult.builder()
                     .defender(target.defender())
-                    .requiredTotal(target.defenseValue())
+                    .requiredTotal(target.defenseValue()
+                            + SpellResistance.defenseBonus(target.defender(), attack.getDefenseType(),
+                                    attack.getAttackSource()))
                     .build()));
             return result.attackResult(attackResult).build();
         }
 
         int margin = attackTotal - requiredTotal;
-        boolean hit = margin >= 0;
+        // A Cego attacker's failed 1d6 misses whatever the total.
+        boolean blindMiss = Boolean.TRUE.equals(attackResult.getBlindCheckFailed());
+        // Aptidão Mágica Dracônica: a Magia the defender can cast never lands on them.
+        boolean hit = margin >= 0 && !blindMiss && !SpellResistance.immune(defender, attack.getAttackSource());
         CriticalResult criticalResult = attackResult.getCriticalResult();
         // Frenesi Assustador: a fear-struck attacker "se tornam incapazes de desferir Efeitos Críticos
         // Menores e não podem desencadear Correntes de Efeitos" while the Gigante who cast it is down.
@@ -196,23 +234,35 @@ public class AttackDelivery {
         boolean criticalEffectTriggered = hit && criticalResult != null && criticalResult.isCriticalSuccess()
                 && !(suppressed && criticalResult.isMinor());
         boolean effectChainTriggered = hit && !suppressed
-                && margin >= effectChainService.getRequiredMargin(defender.getCharacter());
+                && margin >= effectChainService.getRequiredMargin(attack.getAttacker(),
+                        AttackReceiver.positionOf(attack.getScene(), attack.getAttacker(), attack.getSceneContext()),
+                        defender, AttackReceiver.positionOf(attack.getScene(), defender, null));
 
         if (hit) {
             attackResult = attackResult.toBuilder()
                     .nextInteraction(buildChain(attack, defender, criticalResult, criticalEffectTriggered,
-                            effectChainTriggered, auraHalvesDamage))
+                            effectChainTriggered, auraHalvesDamage || everyTargetHalved))
                     .build();
         }
 
         for (AttackTarget target : additionalTargets) {
-            result.additionalTargetResult(resolveAdditionalTarget(attack, target, attackTotal, criticalResult));
+            result.additionalTargetResult(resolveAdditionalTarget(attack, target, attackTotal, criticalResult,
+                    blindMiss));
         }
 
         if (hit) {
+            result.onHitRetaliations(RetaliationResolver.resolveOnHit(defender, attack.getAttacker(),
+                    attack.getAttackSkill(), attack.getAttackSource(),
+                    criticalResult != null && criticalResult.isCriticalSuccess()));
             result.unappliedCriticalEffects(CriticalEffectResolver.resolve(attack.getAttacker(),
                     attack.getAttackSource(), attack.getAttackSkill(), criticalEffectTriggered ? criticalResult : null,
-                    true, attack.getAdditionalCriticalEffectTypes(), attack.getDiceRoller(), false).unapplied());
+                    true, attack.getAdditionalCriticalEffectTypes(), attack.getDiceRoller(), false,
+                    effectChainTriggered ? thunderousApplications(attack) : 0).unapplied());
+            // Força Excessiva: "se o fizer e for bem-sucedido você sofre 2 pontos de Dano Físico Primordial".
+            result.lockedSelfDamage(attack.getAttacker().getCharacter().getFeats().stream()
+                    .mapToInt(feat -> feat.resolveLockedSelfDamageOnHit(attack.getAttackSkill(),
+                            attack.getAttackSource(), attack.getAttacker(), attackRoll))
+                    .sum());
         }
 
         return result.attackResult(attackResult)
@@ -242,7 +292,16 @@ public class AttackDelivery {
                 attack.getAttackSource(),
                 attack.getAttackRoll().getActionCost(),
                 attack.getScene() == null ? 0 : attack.getScene().getCurrentRound(),
-                new ActionOutcome(hit, margin, criticalResult, null));
+                new ActionOutcome(hit, margin, criticalResult, null),
+                attack.getDefender().getId(),
+                attack.getAttackRoll().getActivatedFeats());
+    }
+
+    /** Whether a held Talento halves this whole attack because of how it was made — Ataque Repentino. */
+    private static boolean halvesAttackDamage(final DeliveredAttack attack, final SkillRoll attackRoll) {
+        return attack.getAttacker().getCharacter().getFeats().stream()
+                .anyMatch(feat -> feat.halvesAttackDamage(attack.getAttackSkill(), attack.getAttackSource(),
+                        attack.getAttacker(), attackRoll));
     }
 
     /**
@@ -259,25 +318,33 @@ public class AttackDelivery {
      * applies to them alone.
      */
     private DeliveredAttackTargetResult resolveAdditionalTarget(final DeliveredAttack attack, final AttackTarget target,
-                                                                 final int attackTotal, final CriticalResult criticalResult) {
+                                                                 final int attackTotal, final CriticalResult criticalResult,
+                                                                 final boolean blindMiss) {
         CombatantSheet defender = target.defender();
-        int margin = attackTotal - target.defenseValue();
-        boolean hit = margin >= 0;
+        int requiredTotal = target.defenseValue()
+                + SpellResistance.defenseBonus(defender, attack.getDefenseType(), attack.getAttackSource());
+        int margin = attackTotal - requiredTotal;
+        boolean hit = margin >= 0 && !blindMiss && !SpellResistance.immune(defender, attack.getAttackSource());
         boolean suppressed = attack.getAttacker().isMinorCriticalAndChainSuppressed();
         boolean criticalEffectTriggered = hit && criticalResult != null && criticalResult.isCriticalSuccess()
                 && !(suppressed && criticalResult.isMinor());
         boolean effectChainTriggered = hit && !suppressed
-                && margin >= effectChainService.getRequiredMargin(defender.getCharacter());
+                && margin >= effectChainService.getRequiredMargin(attack.getAttacker(),
+                        AttackReceiver.positionOf(attack.getScene(), attack.getAttacker(), attack.getSceneContext()),
+                        defender, AttackReceiver.positionOf(attack.getScene(), defender, null));
 
         return DeliveredAttackTargetResult.builder()
                 .defender(defender)
-                .requiredTotal(target.defenseValue())
+                .requiredTotal(requiredTotal)
                 .margin(margin)
                 .hit(hit)
                 .criticalEffectTriggered(criticalEffectTriggered)
                 .effectChainTriggered(effectChainTriggered)
                 .nextInteraction(hit
-                        ? buildChain(attack, defender, criticalResult, criticalEffectTriggered, effectChainTriggered, true)
+                        ? buildChain(attack, defender, criticalResult, criticalEffectTriggered, effectChainTriggered,
+                                // An additional target of a multi-target attack takes Meio-Dano; one
+                                // caught in an Área de Efeito takes the hit in full.
+                                attack.getAreaOfEffect() == null)
                         : null)
                 .build();
     }
@@ -308,28 +375,83 @@ public class AttackDelivery {
                                                     final boolean criticalEffectTriggered,
                                                     final boolean effectChainTriggered,
                                                     final boolean halfDamage) {
-        List<Effect> stages = new ArrayList<>();
+        List<Effect> chains = new ArrayList<>();
         if (effectChainTriggered) {
-            stages.addAll(attack.getEffectChains());
-            stages.addAll(effectChainsGrantedByFeats(attack));
+            chains.addAll(attack.getEffectChains());
+            chains.addAll(effectChainsGrantedByFeats(attack));
         }
         if (criticalEffectTriggered) {
-            stages.addAll(CriticalEffect.applicableTo(defender, allCriticalEffects(attack, criticalResult),
+            // Arte do Escudo Atacante: "seus Acertos Críticos recebem a Corrente de Efeitos – Rugido",
+            // whether or not the Corrente threshold was cleared.
+            attack.getAttacker().getCharacter().getFeats().forEach(feat -> chains.addAll(
+                    feat.resolveCriticalHitEffectChains(attack.getAttacker().getCharacter(), attack.getAttackSkill(),
+                            attack.getAttackSource(), attack.getAttacker())));
+        }
+        List<Effect> criticals = new ArrayList<>();
+        if (criticalEffectTriggered) {
+            criticals.addAll(CriticalEffect.applicableTo(defender,
+                    allCriticalEffects(attack, criticalResult, effectChainTriggered ? thunderousApplications(attack) : 0),
                     criticalResult, attack.getSceneContext()));
         } else {
             // Finalização: a hit that is not critical still applies the Arma Natural's own Efeito
             // Crítico Menor — filtered at Menor, so an anatomy immune to Menores shrugs it off.
-            stages.addAll(CriticalEffect.applicableTo(defender,
+            criticals.addAll(CriticalEffect.applicableTo(defender,
                     typedCriticalEffects(attack, criticalResult, false).effects(),
                     CriticalResult.ACERTO_CRITICO_MENOR, attack.getSceneContext()));
         }
+        // Tiro Duplo/Múltiplo: "Correntes de Efeito e Efeitos Críticos aplicam seus efeitos duas
+        // vezes" — each group once more per extra projectile, right behind the original.
+        int repetitions = effectRepetitions(attack);
+        List<Effect> stages = new ArrayList<>(repeated(chains, repetitions));
+        stages.addAll(repeated(criticals, repetitions));
 
         Interaction<CombatantSheet> next = null;
         for (int i = stages.size() - 1; i >= 0; i--) {
             next = stages.get(i).chainInto(next);
         }
-        DamageInteraction head = new DamageInteraction(damageService);
+        DamageInteraction head = new DamageInteraction(damageService)
+                .fromSpell(SpellResistance.spellOf(attack.getAttackSource()));
+        if (criticalResult != null && criticalResult.isCriticalSuccess()) {
+            // Feridas Ardentes: the critical's Metade da Gnose heals only with a Descanso Verdadeiro
+            // or Roubo de Vida.
+            head.lockingDamage(attack.getAttacker().getCharacter().getFeats().stream()
+                    .mapToInt(feat -> feat.resolveUnhealableCriticalDamage(attack.getAttackSkill(),
+                            attack.getAttackSource(), attack.getAttacker().getCharacter(), criticalResult))
+                    .sum());
+        }
         return (halfDamage ? head.halvingDamage() : head).chainInto(next);
+    }
+
+    /** Every held Talento's extra applications of this attack's Correntes and Efeitos Críticos. */
+    private static int effectRepetitions(final DeliveredAttack attack) {
+        return attack.getAttacker().getCharacter().getFeats().stream()
+                .mapToInt(feat -> feat.resolveAttackEffectRepetitions(attack.getAttackSkill(), attack.getAttackSource(),
+                        attack.getAttacker(), attack.getAttackRoll()))
+                .sum();
+    }
+
+    /** effects, then each of them again repetitions more times as a {@link RepeatedEffect}. */
+    private static List<Effect> repeated(final List<Effect> effects, final int repetitions) {
+        List<Effect> all = new ArrayList<>(effects);
+        for (int i = 0; i < repetitions; i++) {
+            effects.forEach(effect -> all.add(new RepeatedEffect(effect)));
+        }
+        return all;
+    }
+
+    /**
+     * How many more times a triggered Corrente makes the natural Efeito Crítico apply on a critical —
+     * one per {@link GolpeTrovejante} among the attack's own and its Talentos' Correntes ({@code
+     * DuelistaFeat#MAESTRIA_EM_ARMA}). Only meaningful when the Corrente threshold was cleared.
+     */
+    private int thunderousApplications(final DeliveredAttack attack) {
+        List<Effect> chains = new ArrayList<>(attack.getEffectChains());
+        chains.addAll(effectChainsGrantedByFeats(attack));
+        return chains.stream()
+                .filter(GolpeTrovejante.class::isInstance)
+                .map(GolpeTrovejante.class::cast)
+                .mapToInt(GolpeTrovejante::extraNaturalCriticalEffectApplications)
+                .sum();
     }
 
     /**
@@ -339,12 +461,15 @@ public class AttackDelivery {
      * explicit pass, the same shape {@code AbstractSkillInteraction} uses for its own {@code
      * Feat} hooks.
      */
-    private List<CriticalEffect> allCriticalEffects(final DeliveredAttack attack, final CriticalResult criticalResult) {
+    private List<CriticalEffect> allCriticalEffects(final DeliveredAttack attack, final CriticalResult criticalResult,
+                                                    final int thunderousApplications) {
         List<CriticalEffect> effects = new ArrayList<>(attack.getCriticalEffects());
         attack.getAttacker().getCharacter().getFeats().forEach(feat ->
                 effects.addAll(feat.resolveExtraCriticalEffects(attack.getAttacker().getCharacter(),
                         attack.getAttackSkill(), attack.getAttackSource(), criticalResult)));
-        effects.addAll(typedCriticalEffects(attack, criticalResult, true).effects());
+        effects.addAll(CriticalEffectResolver.resolve(attack.getAttacker(), attack.getAttackSource(),
+                attack.getAttackSkill(), criticalResult, true, attack.getAdditionalCriticalEffectTypes(),
+                attack.getDiceRoller(), true, thunderousApplications).effects());
         return effects;
     }
 

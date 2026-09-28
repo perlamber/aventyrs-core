@@ -22,6 +22,7 @@ import org.aventyrs.core.skill.dominiodomana.DominioDoManaInteraction;
 import java.util.Optional;
 import java.util.OptionalInt;
 
+import static org.aventyrs.core.util.TranslatableMessages.HIT_POINT_PAYMENT_NOT_PERMITTED;
 import static org.aventyrs.core.util.TranslatableMessages.INVALID_SPELL_CAST_TARGET;
 import static org.aventyrs.core.util.TranslatableMessages.NO_ALTERNATE_SPELL_VERSION;
 import static org.aventyrs.core.util.TranslatableMessages.SPELL_CASTING_PREVENTED;
@@ -80,25 +81,63 @@ public class SpellCastingServiceImpl implements SpellCastingService {
         ActiveAreaSpellEffect areaSpellEffect = registerAreaSpellEffect(request, spell, durationInRounds);
         int castingDifficultyReduction = resolveCastingDifficultyReduction(spell, request.getCaster());
         DifficultyLevel authoredDifficulty = spell.getCastingDifficultyLevel();
+        ActivationTime activationTime = surcharged(resolveActivationTime(spell, request.getCaster(),
+                request.getScene().getCurrentRound(), request.getActivatedFeats()), empowerment);
+        Character casterCharacter = request.getCaster().getCharacter();
+        int castingRollBonus = casterCharacter.getFeats().stream()
+                .mapToInt(feat -> feat.resolveCastingRollBonus(spell, casterCharacter, request.getActivatedFeats()))
+                .sum();
+        if (castingRollBonus != 0 && dominioDoManaResult.getSkillRollBonus() != null) {
+            dominioDoManaResult = dominioDoManaResult.toBuilder()
+                    .skillRollBonus(dominioDoManaResult.getSkillRollBonus() + castingRollBonus)
+                    .build();
+        }
+        int spellDamageBonus = casterCharacter.getFeats().stream()
+                .mapToInt(feat -> feat.resolveSpellDamageBonus(spell, casterCharacter, request.getActivatedFeats()))
+                .sum();
+        int healingBonus = casterCharacter.getFeats().stream()
+                .mapToInt(feat -> feat.resolveSpellHealingBonus(spell, casterCharacter, request.getActivatedFeats()))
+                .sum();
+        int effectDelayRounds = casterCharacter.getFeats().stream()
+                .mapToInt(feat -> feat.resolveCastEffectDelayRounds(spell, casterCharacter, request.getActivatedFeats()))
+                .max().orElse(0);
+        // Curandeiro Veloz's banked -2PA is spent by the cast it discounted.
+        request.getCaster().getCharacter().getAllTitles()
+                .forEach(title -> title.consumeCastingCharges(spell, request.getCaster()));
+        int manaCost = resolveManaCost(spell, request);
+        int vitalityCost = 0;
+        if (request.isPayManaWithHitPoints()) {
+            vitalityCost = manaCost;
+            manaCost = 0;
+        }
 
         return SpellCastingResult.builder()
+                .manaCost(manaCost)
+                .vitalityCost(vitalityCost)
                 .deliveryResult(deliveryResult)
                 .dominioDoManaResult(dominioDoManaResult)
                 .castingDifficultyReduction(castingDifficultyReduction)
                 .castingDifficultyLevel(authoredDifficulty == null ? null
                         : authoredDifficulty.easier(castingDifficultyReduction))
-                .activationTime(surcharged(resolveActivationTime(spell, request.getCaster(),
-                        request.getScene().getCurrentRound()), empowerment))
+                .activationTime(activationTime)
                 .durationInRounds(durationInRounds.isPresent() ? durationInRounds.getAsInt() : null)
                 .areaSpellEffect(areaSpellEffect)
                 .primaryDamage(resolvePrimaryDamage(spell, request.getCaster())
-                        .map(damage -> empowered(damage, empowerment)).orElse(null))
+                        .map(damage -> empowered(damage, empowerment))
+                        .map(damage -> spellDamageBonus == 0 ? damage : new ResolvedSpellDamage(
+                                damage.deterministicAmount() + spellDamageBonus, damage.diceCount(),
+                                damage.damageType(), damage.elementalType(), damage.focusFullyApplied()))
+                        .orElse(null))
+                .effectDelayRounds(effectDelayRounds)
                 .empowerment(empowerment)
                 .mustOvercomeMagicDefense(mustOvercomeMagicDefense(request))
                 .areaDamage(spell.getDuration() != null && spell.getDuration().kind() == DurationKind.INSTANTANEA
                         ? AreaDamage.cataclysm(request.getCaster(), request.getSceneContext())
                         : null)
-                .spellEffect(resolveEffect(spell, SpellEffectContext.of(isHostileTarget(request), request.getCaster()))
+                .healingBonus(healingBonus)
+                .targetImmune(isTargetImmune(request, spell))
+                .spellEffect(resolveEffect(spell, SpellEffectContext.of(isHostileTarget(request), request.getCaster())
+                                .withHealingBonus(healingBonus))
                         .orElse(null))
                 .recordedAction(recordedAction(request, spell, deliveryResult))
                 .build();
@@ -130,15 +169,26 @@ public class SpellCastingServiceImpl implements SpellCastingService {
      * {@code SceneContext}, the only sub-group information in reach.
      *
      * <p>A cast with no named target is not hostile: an Área de Efeito names none, and its real
-     * per-target answer is the caller's to give — this core resolves no footprint, so it builds
-     * the effect for the primary target alone and a caller sweeping an area constructs its own
-     * per target via {@link #resolveEffect}.
+     * per-target answer is the caller's to give — it resolves the footprint with {@code
+     * scene.grid.AreaFootprint} and builds each occupant's effect via {@link #resolveEffect}; this
+     * builds the effect for the primary target alone.
      */
     private boolean isHostileTarget(final SpellCastRequest request) {
         return request.getCombatantTarget() != null
                 && (request.getSceneContext() != null
                         && request.getSceneContext().getEnemies().contains(request.getCombatantTarget())
                     || mustOvercomeMagicDefense(request));
+    }
+
+    /**
+     * Aptidão Mágica Dracônica: whether the named target is immune to this Magia ({@code
+     * Feat#isImmuneToSpell}) — reported, so the caller neither lands its effect nor deals its damage.
+     * The caster is never immune to their own cast.
+     */
+    private static boolean isTargetImmune(final SpellCastRequest request, final Spell spell) {
+        CombatantSheet target = request.getCombatantTarget();
+        return target != null && target != request.getCaster() && target.getCharacter().getFeats().stream()
+                .anyMatch(feat -> feat.isImmuneToSpell(spell, target));
     }
 
     /**
@@ -221,12 +271,49 @@ public class SpellCastingServiceImpl implements SpellCastingService {
         Character character = caster.getCharacter();
         return character.getFeats().stream()
                 .mapToInt(feat -> feat.resolveCastingDifficultyReduction(spell, character))
+                .sum()
+                // Mártir Altruísta: the GD of healing Magias "é reduzido em -1 Nível".
+                + character.getAllTitles().stream()
+                .mapToInt(title -> title.resolveCastingDifficultyReduction(spell, caster))
                 .sum();
     }
+
+    /**
+     * spell's PM, multiplied by every held Título's multiplier — Benção de Boros doubles it while
+     * fallen — less every held Talento's {@code Feat#resolveManaCostReduction}, floored at 1 ("mínimo
+     * 1PM") unless the Magia cost nothing to begin with.
+     */
+    private static int resolveManaCost(final Spell spell, final SpellCastRequest request) {
+        CombatantSheet caster = request.getCaster();
+        int multiplier = caster.getCharacter().getAllTitles().stream()
+                .mapToInt(title -> title.resolveManaCostMultiplier(spell, caster))
+                .reduce(1, (a, b) -> a * b);
+        int cost = spell.getManaCost() * multiplier;
+        int reduction = caster.getCharacter().getFeats().stream()
+                .mapToInt(feat -> feat.resolveManaCostReduction(spell, caster, request.getCombatantTarget(),
+                        request.getSceneContext()))
+                .sum();
+        return cost <= 0 || reduction <= 0 ? cost : Math.max(MINIMUM_REDUCED_MANA_COST, cost - reduction);
+    }
+
+    @Override
+    public int resolveManaCost(final SpellCastRequest request) {
+        return resolveManaCost(resolveVersion(request), request);
+    }
+
+    /** Every Mana-cost reduction clause's "(mínimo 1PM)". */
+    private static final int MINIMUM_REDUCED_MANA_COST = 1;
 
     @Override
     public ActivationTime resolveActivationTime(final Spell spell, final CombatantSheet caster,
                                                 final int currentRound) {
+        return resolveActivationTime(spell, caster, currentRound, java.util.Set.of());
+    }
+
+    @Override
+    public ActivationTime resolveActivationTime(final Spell spell, final CombatantSheet caster,
+                                                final int currentRound,
+                                                final java.util.Set<org.aventyrs.core.feat.Feat> activatedFeats) {
         ActivationTime authored = spell.getActivationTime();
         if (authored == null || authored.type() != ActivationType.PONTOS_DE_ACAO) {
             return authored;
@@ -234,7 +321,12 @@ public class SpellCastingServiceImpl implements SpellCastingService {
         Character character = caster.getCharacter();
         int reduction = character.getFeats().stream()
                 .mapToInt(feat -> feat.resolveCastingActionPointReduction(spell, character, currentRound,
-                        caster.getActionsThisRound()))
+                        caster.getActionsThisRound(), activatedFeats))
+                .sum()
+                // Curandeiro Veloz (a banked charge) and Doutor de Eldur (permanent) — pure reads;
+                // castSpell spends the charge.
+                + character.getAllTitles().stream()
+                .mapToInt(title -> title.resolveCastingActionPointReduction(spell, caster))
                 .sum();
         // "(mínimo 1PA)", as MetamagicoFeat#PROCRASTINAR_CONJURACAO states — and an
         // ActivationTime of 0PA is not constructible anyway.
@@ -327,6 +419,12 @@ public class SpellCastingServiceImpl implements SpellCastingService {
         };
         if (!validTarget) {
             throw new org.aventyrs.core.sheet.IllegalOperationException(INVALID_SPELL_CAST_TARGET);
+        }
+        // Transferir Vitalidade: "apenas quando os alvos forem personagens aliados" — no enemy target.
+        if (request.isPayManaWithHitPoints() && (isHostileTarget(request) || request.getCaster().getCharacter().getAllTitles().stream()
+                .noneMatch(title -> title.permitsHitPointPayment(spell, request.getCaster(),
+                        request.getCombatantTarget())))) {
+            throw new org.aventyrs.core.sheet.IllegalOperationException(HIT_POINT_PAYMENT_NOT_PERMITTED);
         }
     }
 

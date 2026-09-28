@@ -137,10 +137,20 @@ class RacialFeatEffectIntegrationTest {
         return sheet;
     }
 
+    /**
+     * The real acquisition path for each feat in turn. A creation-only Talento ("recém-criados")
+     * is taken in a starting Talento slot instead: the Pré-requisito is still checked, and no XP
+     * is spent.
+     */
     private void acquire(final Character character, final Feat... feats) throws IllegalOperationException {
         CharacterSheet sheet = fundedSheet(character);
         for (Feat feat : feats) {
-            featService.grantFeat(character, sheet, feat);
+            if (feat.catalogEntry().isAcquirableOnlyAtCreation()) {
+                assertTrue(feat.isEligible(character, sheet), String.valueOf(feat));
+                character.grantFeat(feat);
+            } else {
+                featService.grantFeat(character, sheet, feat);
+            }
         }
     }
 
@@ -1436,19 +1446,23 @@ class RacialFeatEffectIntegrationTest {
                         .build())
                 .build();
         int before = damageService.getTotalDamageReduction(gorgona);
+        int rdsBefore = damageService.getTotalDamageTakenReduction(gorgona);
 
         acquire(gorgona, GorgonaFeat.PROTECAO_DO_DEUS_DOS_MONSTROS);
 
+        // "RDS e RD" — one instance of each, since 0.0.64 two different reductions.
         assertEquals(before + DamageService.DEFAULT_DAMAGE_REDUCTION,
                 damageService.getTotalDamageReduction(gorgona));
+        assertEquals(rdsBefore + DamageService.DAMAGE_TAKEN_REDUCTION_INSTANCE,
+                damageService.getTotalDamageTakenReduction(gorgona));
     }
 
     /**
-     * Cabelo Serpentino is withheld whole: its Desvantagem em Persuasão is expressible today, but
-     * the Vantagem that pays for it is scoped to the unbuilt Olhar de Lacerto.
+     * Cabelo Serpentino's two halves land together now that Olhar de Lacerto is an attack source:
+     * a Desvantagem on Persuasão, paid for by the gaze's Vantagem (see OlharDeLacertoServiceTest).
      */
     @Test
-    void cabeloSerpentinoAppliesNoMalusWithoutItsPairedBonus() throws IllegalOperationException {
+    void cabeloSerpentinoCostsADesvantagemOnPersuasao() throws IllegalOperationException {
         Character gorgona = character().race(new Gorgona()).build();
         gorgona.grantTitle(new Santo(List.of(), List.of()), TitleSlot.PRIMARY);
         CharacterSheet sheet = CharacterSheet.of(gorgona, new Player());
@@ -1456,23 +1470,26 @@ class RacialFeatEffectIntegrationTest {
 
         acquire(gorgona, GorgonaFeat.CABELO_SERPENTINO);
 
-        assertEquals(before, rollBonusIn(sheet, SkillType.PERSUASAO, null));
+        assertEquals(before + Skill.DISADVANTAGE_MALUS, rollBonusIn(sheet, SkillType.PERSUASAO, null));
     }
 
     // ---------- Monstruoso ----------
 
     @Test
-    void peleRijaGrantsTwoToDefesaFisicaAndTwoRD() throws IllegalOperationException {
+    void peleRijaGrantsTwoToDefesaFisicaAndTwoRds() throws IllegalOperationException {
         Character monstro = vigorousCharacter(4);
         int defenseBefore = defenseService.getTotalDefense(monstro, DefenseType.PHYSICAL);
         int magicBefore = defenseService.getTotalDefense(monstro, DefenseType.MAGIC);
+        int rdsBefore = damageService.getTotalDamageTakenReduction(monstro);
         int rdBefore = damageService.getTotalDamageReduction(monstro);
 
         acquire(monstro, MonstruosoFeat.PELE_RIJA);
 
         assertEquals(defenseBefore + 2, defenseService.getTotalDefense(monstro, DefenseType.PHYSICAL));
         assertEquals(magicBefore, defenseService.getTotalDefense(monstro, DefenseType.MAGIC));
-        assertEquals(rdBefore + 2, damageService.getTotalDamageReduction(monstro));
+        // "+2 em DF e RDS" — Redução de Danos Sofridos, not RD.
+        assertEquals(rdsBefore + 2, damageService.getTotalDamageTakenReduction(monstro));
+        assertEquals(rdBefore, damageService.getTotalDamageReduction(monstro));
     }
 
     @Test
@@ -1554,18 +1571,19 @@ class RacialFeatEffectIntegrationTest {
      * transformation makes it unconditional, unlike every other RD clause in the catalog.
      */
     @Test
-    void transformacaoElementalGrantsTheDefaultDamageReduction() throws IllegalOperationException {
+    void transformacaoElementalGrantsOneRdsInstance() throws IllegalOperationException {
         Character elemental = character().race(new Colosso(new Human())).build();
         elemental.grantTitle(new Santo(List.of(), List.of()), TitleSlot.PRIMARY);
         elemental.grantTitle(new Santo(List.of(), List.of()), TitleSlot.SECONDARY);
         acquire(elemental, ElementalFeat.RESISTENCIA_ELEMENTAL,
                 ElementalFeat.RESISTENCIA_ELEMENTAL_SUPERIOR, ElementalFeat.REPARACAO_ELEMENTAL);
-        int before = damageService.getTotalDamageReduction(elemental);
+        int before = damageService.getTotalDamageTakenReduction(elemental);
 
         acquire(elemental, ElementalFeat.TRANSFORMACAO_ELEMENTAL);
 
-        assertEquals(before + DamageService.DEFAULT_DAMAGE_REDUCTION,
-                damageService.getTotalDamageReduction(elemental));
+        // "Você recebe RDS" with no figure — one instance.
+        assertEquals(before + DamageService.DAMAGE_TAKEN_REDUCTION_INSTANCE,
+                damageService.getTotalDamageTakenReduction(elemental));
     }
 
     // ---------- Vampírico ----------

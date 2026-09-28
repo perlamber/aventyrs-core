@@ -39,6 +39,9 @@ public interface DamageService {
      */
     int DEFAULT_DAMAGE_REDUCTION = 2;
 
+    /** One instance of RDS — "Cada instância reduz … em -1"; what a numberless RDS clause grants. */
+    int DAMAGE_TAKEN_REDUCTION_INSTANCE = 1;
+
     /**
      * Total RD: summed from {@code attributeAbilities}, {@code skillCompetencyAbilities},
      * and the unlocked {@link org.aventyrs.core.skill.SkillExcellency} tiers of every trained
@@ -178,6 +181,17 @@ public interface DamageService {
                              DamageType damageType, CombatantSheet source,
                              int rawDamage, boolean ignoreDamageReduction, boolean halfDamage);
 
+    /**
+     * Same as the seven-argument form, for a hit from spell — the Magia is what a "Magias que você
+     * conheça / seja capaz de conjurar" clause reads: an immunity to it ({@code
+     * Feat#isImmuneToSpell}) and an RM against it ({@code Feat#resolveSpellMagicReduction}). A
+     * {@code null} spell is the seven-argument form.
+     */
+    int calculateFinalDamage(CombatantSheet target, SceneContext sceneContext,
+                             DamageType damageType, CombatantSheet source,
+                             int rawDamage, boolean ignoreDamageReduction, boolean halfDamage,
+                             org.aventyrs.core.magic.Spell spell);
+
     /** Descriptor-aware final-damage calculation for elemental attacks. */
     int calculateFinalDamage(CombatantSheet target, SceneContext sceneContext,
                              DamageDescriptor damageDescriptor, CombatantSheet source,
@@ -258,4 +272,21 @@ public interface DamageService {
 
     List<TemporaryBonus> notifyDamageTaken(CombatantSheet target, int finalDamage,
                                            CombatantSheet source, SceneContext sceneContext);
+
+    /**
+     * Total RDS (Redução de Danos Sofridos) with no sheet in hand: the three-source {@code
+     * ModifierType#DAMAGE_TAKEN_REDUCTION} scan plus every held Talento's {@code
+     * Feat#resolveDamageTakenReduction}. Never negative.
+     */
+    int getTotalDamageTakenReduction(Character character);
+
+    /**
+     * Total RDS for target: everything the {@code Character} overload sums (with the sheet, so a
+     * condition-scoped Talento resolves), the two Título-ability scans ({@code
+     * AventyrTitleAbility#resolveDamageReduction}/{@code #resolveAllyDamageReduction} — both RDS in
+     * their rules text, and both adjacency-scoped, so they need sceneContext), and a round-scoped
+     * {@code DAMAGE_TAKEN_REDUCTION} TemporaryBonus. {@code calculateFinalDamage} applies it to
+     * every hit but a Primordial one. Never negative.
+     */
+    int getTotalDamageTakenReduction(CombatantSheet target, SceneContext sceneContext);
 }

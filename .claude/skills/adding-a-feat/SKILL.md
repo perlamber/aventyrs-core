@@ -50,9 +50,12 @@ mechanism.
   `magic-system` skill), `grantsFreeSpellAcquisition(Character, Spell)` /
   `resolveSpellAcquisitionCostReduction(Character, Spell)` → `BigDecimal` (a Talento that hands a
   Magia to its holder free, or discounts the XP price — both fed to
-  `SpellService#getAcquisitionCost`, which also sums the `Race` twin; the waiver is wired ahead
-  of `MetamagicoFeat#ARCANISTA`'s choice class, the discount alongside
-  `ElementalFeat#ARCANISMO_ELEMENTAL`), `resolveDefenseBonus(DefenseType, Character)`,
+  `SpellService#getAcquisitionCost`, which also sums the `Race` twin; the waiver still has no
+  catalog consumer, the discount sits alongside `ElementalFeat#ARCANISMO_ELEMENTAL`),
+  `resolveKnownTreeCapacity` (how many Árvores the holder may conhecer — `ARCANISTA` alone) and
+  `resolveFreeSpellPicks` → `List<FreeSpellPick>` (the ladder's "Escolha 2 Árvores [...] você
+  aprende as magias do tipo X" — **no choice class**: what is owed is derived from the spell
+  list, see the `magic-system` skill), `resolveDefenseBonus(DefenseType, Character)`,
   `resolveManaMultiplierIncrease`/`resolveRestMagicPointsBonus(RestType, Character)`, their
   Determinação twins `resolveDeterminationMultiplierIncrease`/
   `resolveRestDeterminationPointsBonus(RestType, Character)`, the
@@ -60,6 +63,9 @@ mechanism.
   to a critical hit — `AttackDelivery` scans it, `AssassinoFeat#ABRIR_FERIDAS`), and
   `resolveDefeatBlessings(attacker, defeated, viaCriticalHit)` (`Blessing`s the moment one of the
   holder's attacks drops a foe — `DefeatBlessingService`, caller-driven),
+  `resolveRetaliation(holder, attackSource, attacker, criticalHit)` (a `Retaliation` dealt back to
+  whoever *landed* a melee attack on the holder — reported on `getOnHitRetaliations()`, never
+  dealt; `DuelistaFeat#CORACAO_DE_FERRO`, `MonstruosoFeat#SANGUE_ACIDO`),
   `getGrantedNaturalWeapons(Character[, CombatantSheet])` (`NaturalWeapon`s — the short form feeds
   `Character#getNaturalWeapons()`, the Forma-blind "out of any shape" view; the **longer form**
   feeds `CombatantSheet#getNaturalWeapons()` and is what a per-Forma grant overrides, leaving the
@@ -143,6 +149,48 @@ mechanism.
   own shape and `activate` matches by `==`, so "which shape" must be part of the ability's
   identity.
 
+**A Talento the player opts into on one roll is *activated*, not held** (0.0.70, the `DuelistaFeat`
+tree is the reference): the caller names it in `SkillRoll#getActivatedFeats()`, and the constant
+reads `skillRoll.activated(this)` in the `SkillRoll`-taking longest forms of
+`resolveSkillRollBonus`/`resolveDamageBonus`. Gate each use with `permitsActivation(skillType,
+roll, source, holder)` — its Perícia, "uma vez por Rodada/Turno"
+(`holder.countFeatActivationsThisRound/ThisTurn(this)`), or the attack it must follow
+(`holder.getActionsThisTurn()`); `AbstractSkillInteraction` refuses what it denies. Its price goes on
+`resolveAttackActionPointOverride`/`resolveAttackActionPointAdjustment`, summed by
+`ActionPointsService#getAttackCost`; a reroll on `grantsLowestDieReroll`; a dano-roll die on
+`resolveExtraDamageDice`; a dano reroll on `resolveDamageLowestDieRerolls`; a Meio-Dano on
+`halvesAttackDamage`; a self-inflicted, Descanso-Verdadeiro-only cost on
+`resolveLockedSelfDamageOnHit`; an extra projectile's repeated Correntes and Efeitos Críticos on
+`resolveAttackEffectRepetitions` (`ArtilhariaFeat#TIRO_DUPLO`); a reach step bought by another
+activated Talento on `resolveAttackRangeIncrease(Character, AttackSource, Set<Feat>)`
+(`ArtilhariaFeat#TIRO_LONGO` with Mira Impecável); a Corrente on criticals only on
+`resolveCriticalHitEffectChains`; a Blessing earned as the holder's Turn ends on
+`resolveTurnEndBlessings`; a hit reduced to zero from a rest-scoped budget on
+`resolveDamageNegationBudget` (`EscudeiroFeat` is the reference for all three). **Never wire an opt-in as an unconditional bonus** — that skips its
+price.
+
+**A Perícia roll that is not an attack has a price too** (0.0.70, `PeritoFeat` is the reference):
+`ActionPointsService#getSkillRollCost(sheet, skill, activatedFeats, turn, ctx)` applies the lowest
+`resolveSkillRollActionPointOverride` (Lembrar Como se Faz's 1PA), the largest
+`resolveSkillRollActionPointMultiplier` (Maestria's ×3), then every
+`resolveSkillRollActionPointAdjustment` (Perito Veloz's -1PA, never below 1PA) — and `getAttackCost`
+folds the same three in under its attack hooks. A use gated on the Cena (combat, which Rodada)
+overrides `permitsActivation(…, SceneContext)`; a reroll scoped to the holder's own choice or the
+Cena overrides `grantsLowestDieReroll(skill, roller, ctx)`; a GD clause scoped to an Especialização
+or to another activated Talento overrides `resolveDifficultyReduction(…, SkillRoll)`. A roll stating
+its own Ação Livre/Reação price (Mestre Perito) carries it on `SkillRoll#getActionCost()`, and the
+gate checks it. **A narrative-purpose Vantagem can be an opt-in** — the player declares the purpose
+by activating it (`PeritoFeat#MESTRE_EM_ATUACAO`), the GM judges it; that is the reading to reach for
+before leaving such a clause inert.
+
+**Neutral characters** are `SceneContext#getNeutrals()`/`#hasNeutralWithin` (the Scene's aggression
+map); **acting last** is `SceneContext#getInitiativePosition()` (and `Scene#deferToLast`, permitted by
+`permitsDeferringToLast`). Scene-gated Reações/Ações Livres are `resolveReactionsIncrease`/
+`resolveFreeActionsIncrease`; Resistência à Corrente de Efeitos is
+`resolveEffectChainResistanceIncrease`/`resolveTargetEffectChainResistanceReduction`. A state bought
+"por Rodada" with nothing to sum is an `ActiveAbility` granting a `sheet.SourcedState`
+(`PeritoActiveAbility`), read back through `CombatantSheet#hasEffectFrom`.
+
 ⚠️ **Any Talento with an acquisition choice must advertise it**, or no client can discover it.
 Override `resolveRequiredChoices(Character)` → `List<FeatChoice<?>>`, each
 `FeatChoice<T>(Class<T> type, int picks, List<T> options)` carrying the type token a caller routes
@@ -159,12 +207,14 @@ Two rules when writing one:
 - **Filter, don't validate-later.** Narrow `options` by the holder's own rules (`Rakshasa` → no
   Névoa); keep the acquired form's factory validating too, as the belt to that braces.
 
-**Four acquired forms still cannot declare their choice** — `AdotadoPorSylphFeat`,
-`HerancaBestialFeat`, `ChosenSkillTraitsFeat`, `HabilidadeDeAtributoEscolhidaFeat` — because
-nothing indexes their options: there is no registry of a Perícia's own competency/specialization
-constants, nor of every `AttributeAbility`. `SkillType` already carries an `excellencyClass` and
-`AttributeDomain` could carry an ability class the same way, so both are mirror-additions. Add the
-registry rather than a one-off list on the constant. Several hooks now have a
+**A choice of Perícia traits needs no registry — declare the Perícias** (0.0.70): copy
+`GnoseAbility#DOMINIO_DO_CONHECIMENTO`, as `PeritoFeat#TREINADO_EM_PERICIAS` does — a
+`FeatChoice<SkillType>` of the Perícias that owe a pick, plus `resolveRequiredSkillTraitKinds()`
+naming whether each owes an Especialização, a Habilidade de Competência or either; the acquired form
+(`ChosenSkillTraitsFeat`) carries the traits the client then picked from them. The two `GnomoFeat`
+users of `ChosenSkillTraitsFeat`, `AdotadoPorSylphFeat` and `HerancaBestialFeat` could take the same
+shape and have not yet; `HabilidadeDeAtributoEscolhidaFeat` still lacks an `AttributeAbility` index
+(`AttributeDomain` could carry an ability class the way `SkillType` carries `excellencyClass`). Several hooks now have a
   trailing `CombatantSheet holder` overload that falls through to the sheet-less form
   (`resolveSkillRollBonus`, `resolveDefenseBonus`, `resolveDamageReduction`,
   `resolveCriticalMarginIncrease`) — override it for a clause reading held `Condição`s, the
@@ -234,6 +284,13 @@ three):
   `CharacterSheet`, so only `isEligible(Character, CharacterSheet)` tests them; the sheet-less
   overload skips them, which keeps a preview listing looser than the real gate rather than
   stricter. `FeatService#grantFeat` always passes the sheet.
+- **"Adquirido antes de Despertar"** → `maximumAwakenedTitles(0)`; **"não possuir uma ou mais
+  Centelhas"** → `maximumCentelhas(Character.CENTELHAS - 1)` (0.0.68). Both are ordinary
+  acquisition-time ceilings — no Despertar timeline is needed.
+- **A clause no field says** ("2 outros Talentos de Poderes Vampíricos") → override
+  `isEligible(Character, CharacterSheet)` and AND your count with
+  `Feat.meetsRequirements(getFeatRequirements(), character, sheet)`, as
+  `VampiricoFeat#PODER_VAMPIRICO_DURADOURO` does.
 - **A disjunction** ("Destreza 3 e Saque Rápido, *ou* Foco 5") → one `.alternative(...)` per
   branch, each a nested `FeatRequirements`. At least one branch must hold **on top of** every
   clause set on the outer record, so anything common to all branches is written once, outside.
@@ -247,10 +304,17 @@ lifts it. `PequeninoFeat`/`HumanoFeat`/`GiganteFeat`/`GorgonaFeat`/`MobilidadeFe
 A pair whose text runs one way only (`FeericoFeat#SIRENIDEO` forbids `PIXIE`, not the reverse)
 needs neither, since a backward reference is legal.
 
-**What a Pré-requisito still cannot say**, and what to do instead: "personagens recém-criados"
-(nothing records creation time); a *second* Perícia Graduação (the pair is singular); a constraint
-on another held Talento's recorded *choice*; a cap on how many of a family may be held at once.
-The last three are `isEligible(Character, CharacterSheet)` overrides — override **that** form,
+**"Apenas … recém-criados"** is `isAcquirableOnlyAtCreation()` returning true — asked of the
+catalog constant, so a choice-carrying form needn't repeat it. It is all-or-nothing, so it cannot
+be one branch of a disjunction.
+
+**What a Pré-requisito still cannot say**, and what to do instead: "recém-criados" as one branch
+of an `anyOf` (override `isEligibleAtCreation` — what a starting slot asks — beside an `isEligible`
+holding the other branch, `PeritoFeat#TREINADO_EM_PERICIAS`); a *second* Perícia Graduação (the
+pair is singular); a count across Perícias ("Graduação 4 em 3 Perícias"); a constraint on another
+held Talento's recorded *choice* (`PeritoFeat#MESTRE_PERITO`/`#MAESTRIA_EM_PERICIA` read Foco em
+Perícia's); a cap on how many of a family may be held at once. The last four are
+`isEligible(Character, CharacterSheet)` overrides — override **that** form,
 not the 1-arg one, or `grantFeat` will not reach your check.
 
 **Before filing a clause here, ask whether it gates *acquiring* the Talento or *using* it.**
@@ -326,6 +390,22 @@ overridden per constant that needs it, defaulting to zero/no-op on every other c
 identical hook. This mirrors `SkillCompetencyAbility`'s own default-method-plus-override shape,
 just scoped one level narrower (per-tree-enum instead of interface-wide) until a second real
 consumer earns the wider scope.
+
+**A clause scoped to the opponent** ("efetuadas contra outros Vampiros") reads
+`SceneContext#getOpposedCharacter()` in `resolveSkillRollBonus` or the context-taking
+`resolveDifficultyReduction(SkillType, Character, SceneContext)`; a `null` context or opponent is
+"not met". **An opt-in cost on a Habilidade de Título** ("você pode aumentar seu Custo em +2PD")
+is `TitleAbilityActivationRequest#activatedFeats` plus `resolveTitleActivationSurcharge` /
+`resolveTitleActivationActionPointReduction` / `resolveTitleAbilityDurationIncrease`, with a
+use limit in `permitsTitleActivationOptIn` (`DestinoFeat#ACELERAR_HABILIDADE`).
+
+**A Talento that widens a racial trait** reads that trait's own service or hook rather than
+getting a new `Feat` hook, when only that trait's service would ever ask: the `OgricoFeat` tree is
+read by catalog entry inside `DevourService`, `BestialFeat#ACEITAR_A_LACERTO` inside
+`LacertoFerocityService#mimic`. A hook earns its place on `Feat` when two trees need it —
+`resolveLacertoFerocityRound`/`preventsEnteringLacertoFerocity` (Górgona, Indômito),
+`resolveQuickLearningMaxGraduation` (Gnomo, Humano). A clause scoped to a racial *attack* matches
+its `AttackSource` (`attackSource == OlharDeLacerto.INSTANCE`) in the existing overloads.
 
 If the bonus is a flat Vantagem-style +2, or a roll-scoped bonus rather than a Dano Base one,
 check whether it fits an existing hook first (`Feat` currently has none of

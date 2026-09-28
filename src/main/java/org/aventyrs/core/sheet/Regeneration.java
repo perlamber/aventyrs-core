@@ -48,8 +48,21 @@ public class Regeneration extends TemporaryBonus {
      */
     public Regeneration(final int valuePerRound, final int rounds, final Integer totalLimit,
                         final String source, final int maximumSimultaneous) {
+        this(valuePerRound, (Integer) rounds, totalLimit, source, maximumSimultaneous);
+    }
+
+    private Regeneration(final int valuePerRound, final Integer rounds, final Integer totalLimit,
+                         final String source, final int maximumSimultaneous) {
         super(ModifierType.REGENERATION, valuePerRound, rounds, source, maximumSimultaneous);
         this.remainingRecovery = totalLimit == null ? null : Math.max(0, totalLimit);
+    }
+
+    /**
+     * A standing Regeneração with no end — "Recupera Vigor PV por Rodada" as a creature's own
+     * anatomy, not a timed grant. One per source; lifted only by {@code removeEffectsFrom(source)}.
+     */
+    public static Regeneration openEnded(final int valuePerRound, final String source) {
+        return new Regeneration(valuePerRound, (Integer) null, null, source, 1);
     }
 
     /** PV recovered per Rodada — {@link TemporaryBonus#getValue()} under the name this reads as. */

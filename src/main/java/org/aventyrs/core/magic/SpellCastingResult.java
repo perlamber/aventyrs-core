@@ -98,6 +98,16 @@ public class SpellCastingResult {
 
     /** The Frenesi Arcano option this cast spent, or {@code null}. */
     SpellEmpowerment empowerment;
+    /**
+     * The PM this cast costs — the Magia's own figure times every held Título's multiplier (Benção
+     * de Boros' "o dobro de PM"). Reported, never spent, like the PA; 0 when paid in PV instead.
+     */
+    int manaCost;
+    /**
+     * PV the caster pays in place of {@link #manaCost} (Transferir Vitalidade), for the caller to
+     * apply through {@code CombatantSheet#payWithVitality}. 0 unless the request asked for it.
+     */
+    int vitalityCost;
 
     /**
      * Extra damage this cast deals around its caster — Cataclismo Elemental's "suas Magias de
@@ -105,4 +115,27 @@ public class SpellCastingResult {
      * caller to apply. {@code null} when there is none.
      */
     List<AreaDamage> areaDamage;
+
+    /**
+     * How many Rodadas after the cast the Magia's effect begins — "Você pode fazer com que suas
+     * magias iniciem seu efeito 1 Rodada após a conjuração" ({@code
+     * MetamagicoFeat#PROCRASTINAR_CONJURACAO}, opted into on {@code SpellCastRequest}). 0 for an
+     * ordinary cast. <b>Reported, not scheduled</b>: the caller holds the effect back.
+     */
+    private final int effectDelayRounds;
+
+    /**
+     * PV this cast's healing gains or loses — every held Talento's {@code Feat#resolveSpellHealingBonus}
+     * (Conjuração Rápida's Desvantagem "nas rolagens de … Cura mágica", Arcanismo Elemental's +2). Already
+     * folded into {@link #spellEffect}; reported for a caller building its own per-target effects
+     * ({@code SpellEffectContext#withHealingBonus}). 0 for an ordinary cast.
+     */
+    private final int healingBonus;
+
+    /**
+     * Whether the named target is immune to this Magia — Aptidão Mágica Dracônica's "imune a Magias
+     * que você é capaz de conjurar" (table ruling, 2026-09-27: no damage and no effects). The caller
+     * skips {@link #spellEffect} and {@link #primaryDamage} for them.
+     */
+    private final boolean targetImmune;
 }

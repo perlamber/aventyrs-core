@@ -44,4 +44,16 @@ public interface ActiveAbilityService {
      *         can't currently afford its cost — characterSheet is left untouched
      */
     void activate(Character character, CombatantSheet characterSheet, ActiveAbility ability, int turnNumber) throws IllegalOperationException;
+
+    /**
+     * Activates an Efeito Ativo that rolls — {@code ActiveAbility#getDice()} non-null — with the
+     * faces the caller rolled. This core never rolls: the faces are checked against the declared
+     * dice <i>before</i> anything is paid, then the rolled total reaches the ability's effects.
+     * For an ability that declares no dice the faces are ignored.
+     *
+     * @throws IllegalOperationException {@code INVALID_DIE_ROLL} for the wrong number of faces, or
+     *                                   any refusal {@link #activate(Character, CombatantSheet, ActiveAbility, int)} makes
+     */
+    void activate(Character character, CombatantSheet characterSheet, ActiveAbility ability, int turnNumber,
+                  java.util.List<Integer> faces) throws IllegalOperationException;
 }

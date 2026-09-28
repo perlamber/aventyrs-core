@@ -76,8 +76,8 @@ public enum SantoAbility implements AventyrTitleAbility {
     // DamageServiceImpl; "protegendo ao menos 1 aliado" *is* hasLowerPvAdjacentAlly, since an
     // adjacent ally with lower PV is exactly one this Habilidade is protecting.
     // V19 changed the stat and gave it a formula: the previous revision granted a bare RA instance
-    // in both directions. RDS is RD (ModifierType.DAMAGE_REDUCTION), not RA — see GorgonaFeat's
-    // own "RDS *is* RD" note — so this constant no longer touches the RA hooks at all.
+    // in both directions. The stat is RDS — summed into DamageService#getTotalDamageTakenReduction,
+    // which reaches physical and magical hits — so this constant no longer touches the RA hooks.
     BASTIAO_DOS_NECESSITADOS(
             "Seus aliados, que tenham menos quantidade de PV atuais que você, recebem RDS " +
             "igual a 1+ Metade das Habilidades de Santo que você possuir. Apenas aliados " +
@@ -112,9 +112,9 @@ public enum SantoAbility implements AventyrTitleAbility {
     // +2 Defesas (AventyrTitle#resolveBaseDefesasBonus) like any other source.
     // The teleport is a *reach*, not a move: Teleportation reports how far, and the caller applies
     // position, since this core holds none (see Range's and Teleportation's own javadoc).
-    // Still TODO: nothing anywhere counts a Reação as spent, so a Santo who has already used
-    // theirs this Rodada is still offered this one — ReactionsService reports a maximum, not a
-    // pool. Cite that, not "no interception mechanism exists".
+    // Its Reação is spent on the sheet's ledger when activated (CombatantSheet#spendReaction), so
+    // a Santo who has used every Reação this Rodada is reported unable to afford it by
+    // ReactionOptionsService.
     GUARDA_VIDAS(
             "Você pode se teletransportar para a frente de um aliado em Distância Curta, se " +
             "tornando o alvo do ataque em seu lugar. O ataque ainda deve superar as suas " +

@@ -165,6 +165,14 @@ import java.util.Set;
  *                                  unUsedExperience}: the clause measures how far a character has
  *                                  come, not what they have left to spend. Needs a {@code
  *                                  CharacterSheet}.
+ * @param maximumAwakenedTitles     when set, the holder may have at most this many Títulos Aventyr
+ *                                  Despertos — "Este Talento deve ser adquirido antes de Despertar
+ *                                  seus Títulos" ({@code DestinoFeat#ATRASAR_DESPERTAR}) is 0.
+ *                                  Checked at acquisition like every prerequisite, which is exactly
+ *                                  what "adquirido antes" asks.
+ * @param maximumCentelhas          when set, the holder may possess at most this many Centelhas
+ *                                  ({@code Character#getCentelhas()}) — "Não possuir uma ou mais
+ *                                  Centelhas" is {@code Character.CENTELHAS - 1}.
  * @param anyOf                     nested requirement groups of which <b>at least one</b> must
  *                                  hold, on top of every clause set on this record — a
  *                                  disjunction ("Destreza 3 e Saque Rápido, <i>ou</i> Foco 5").
@@ -203,6 +211,8 @@ public record FeatRequirements (
         Set<Alignment> requiredAlignments,
         int requiredFame,
         BigDecimal requiredTotalExperience,
+        Integer maximumAwakenedTitles,
+        Integer maximumCentelhas,
         @Singular("alternative") List<FeatRequirements> anyOf
 ) {
     public FeatRequirements {

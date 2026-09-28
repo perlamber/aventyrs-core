@@ -39,10 +39,8 @@ public enum GiganteFeat implements Feat {
      * Movimento Base aumenta em +2UD para cada Título Aventyr Desperto, mas apenas para se
      * aproximar de aliados feridos que pertençam à Categorias de Tamanhos inferiores à sua."
      */
-    // TODO: Cuidado Para Não Quebrar is itself unbuilt — Gigantes' own javadoc records why: its
-    //  Desvantagem is scoped to "Perícias baseadas em Força ou Destreza", an AttributeDomain
-    //  scope no hook expresses. A Talento suppressing it has nothing to suppress, and there is
-    //  no mechanism for suppressing a Desvantagem either.
+    // The suppression is real: Gigantes#resolveGoverningAttributeRollBonus grants no Cuidado Para
+    // Não Quebrar Desvantagem to this Talento's holder.
     // TODO: the Movimento uplift is scoped to a *purpose* ("apenas para se aproximar de aliados
     //  feridos" of a smaller Categoria de Tamanho), and this core does not track what movement
     //  is for. Granting it through resolveMovementIncrease would raise the holder's Movimento

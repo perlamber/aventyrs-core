@@ -138,7 +138,7 @@ public class CharacterSheet extends AbstractCombatantSheet {
     public List<PendingAcquisition> applySessionEndAcquisitions() throws IllegalOperationException {
         Character character = getCharacter();
         List<PendingAcquisition> owed = character.getFeats().stream()
-                .flatMap(feat -> feat.resolveSessionEndAcquisitions(character).stream())
+                .flatMap(feat -> feat.resolveSessionEndAcquisitions(character, this).stream())
                 .toList();
         owed.forEach(acquisition -> acquisition.acquire(this));
         return owed;

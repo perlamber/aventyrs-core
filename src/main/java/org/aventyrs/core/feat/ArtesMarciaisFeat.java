@@ -11,6 +11,7 @@ import org.aventyrs.core.item.ItemWeightClass;
 import org.aventyrs.core.item.Weapon;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.CombatantSheet;
+import org.aventyrs.core.sheet.ConditionType;
 import org.aventyrs.core.skill.AttackSource;
 import org.aventyrs.core.skill.Skill;
 import org.aventyrs.core.skill.SkillType;
@@ -223,9 +224,9 @@ public enum ArtesMarciaisFeat implements Feat {
      * Skill#ADVANTAGE_BONUS}, summed by {@code AbstractSkillInteraction} like any other dano
      * source. Mutual exclusion is enforced by this enum's {@code isEligible} override.
      */
-    // TODO: "muda para +1d6 se o seu ataque for uma Reação" needs the attack to know it was made
-    //  as a Reação; neither AttackDelivery nor SkillRoll carries the action type it was spent as.
-    //  So only the flat +2 is granted.
+    // TODO: "muda para +1d6 se o seu ataque for uma Reação" — SkillRoll#getActionCost() does say
+    //  whether the roll was a Reação, but no dano hook sees the SkillRoll outside a critical, and
+    //  DamageBonus carries no die. So only the flat +2 is granted.
     // TODO: the Escudo half — "+2 Defesas para resistir à Reações enquanto utilizando um Escudo"
     //  — can gate on ItemCategory.SHIELD now, but there is no way to scope a Defesa bonus to
     //  "resistir a uma Reação" specifically.
@@ -253,16 +254,15 @@ public enum ArtesMarciaisFeat implements Feat {
     /**
      * "Você não é considerado Desprevenido enquanto estiver Caído" — the grappling style.
      */
-    // TODO: ConditionType.CAIDO and DESPREVENIDO both exist now, and CAIDO confers DESPREVENIDO
-    //  for real — what this clause needs is the opposite: a way for a held trait to *suppress* an
-    //  implied condition. Nothing can veto an implication (ConditionType#getImplied is read live,
-    //  the same shape Race#getRacialAbilities has and the same gap GorgonaFeat#MARCA_DA_MALDICAO
-    //  cites for losing Imunidade a Encantamentos).
+    // "Não é considerado Desprevenido enquanto estiver Caído" is real: Feat#suppressesImpliedCondition
+    // vetoes the Caído → Desprevenido implication, so a Desprevenido applied directly still lands.
     // TODO: Agarrar/Empurrar/Derrubar are manoeuvres with no representation, so a Vantagem
     //  scoped to them cannot be expressed (this core does not track what a roll is *for*).
-    // TODO: "+2 em sua DF", "pode realizar uma Reação adicional" and "pode se levantar como Ação
-    //  Livre" are all conditional on being Caído — a held Talento cannot see its holder's
-    //  Condições (Feat resolve hooks take a Character, a Condition lives on the CombatantSheet).
+    // The "+2 em sua DF" enquanto Caído is real, through the sheet-aware resolveDefenseBonus.
+    // TODO: "pode realizar uma Reação adicional" — ReactionsService scans no Talento. (The Reação
+    //  ledger exists now, so an extra one would be spendable.) "Pode se levantar como Ação Livre" — standing up
+    //  is no priced action in this core. "Não sofre Desvantagens … com Armas Naturais ou
+    //  Desarmado" would cancel a malus, which nothing models.
     DOMINAR_ARTE_MARCIAL_SUBMISSAO(
             "Você não é considerado Desprevenido enquanto estiver Caído e não sofre Desvantagens "
                     + "em rolagens de Perícias de Ataque com Armas Naturais ou Desarmado nesta "
@@ -274,7 +274,19 @@ public enum ArtesMarciaisFeat implements Feat {
                     .requiredSkillType(SkillType.ATAQUE_CORPO_A_CORPO)
                     .requiredSkillGraduation(5)
                     .requiredAwakenedTitles(1)
-                    .build()),
+                    .build()) {
+        @Override
+        public int resolveDefenseBonus(final DefenseType defenseType, final Character character,
+                                        final SceneContext sceneContext, final CombatantSheet holder) {
+            return defenseType == DefenseType.PHYSICAL && holder != null
+                    && holder.hasCondition(ConditionType.CAIDO, sceneContext) ? SUBMISSAO_PRONE_DEFENSE_BONUS : 0;
+        }
+
+        @Override
+        public boolean suppressesImpliedCondition(final ConditionType implier, final ConditionType implied) {
+            return implier == ConditionType.CAIDO && implied == ConditionType.DESPREVENIDO;
+        }
+    },
 
     /**
      * "A Margem Crítica Menor de seus Ataques Corpo-a-Corpo aumenta em +1 e seus Acertos Críticos
@@ -288,12 +300,12 @@ public enum ArtesMarciaisFeat implements Feat {
      * applies its margin to the Menor tier only, Acerto Crítico Maior staying a literal triple-6 —
      * so this matches the clause exactly.
      */
-    // TODO: the "muda para +3 se o ataque for uma Ação Livre ou Reação" upgrade needs the attack
-    //  to know which action it was spent as — see IMPACTO_ROCHOSO's own note. So only the flat +1
+    // TODO: the "muda para +3 se o ataque for uma Ação Livre ou Reação" upgrade — SkillRoll
+    //  #getActionCost() records the action, but CriticalService#sumCriticalMarginIncrease is not
+    //  handed the SkillRoll. Add that overload once a second clause needs it. So only the flat +1
     //  is granted.
-    // TODO: granting a Corrente de Efeitos – Rugido to a critical needs a hook on the attack path;
-    //  EffectChain lists on DeliveredAttack are supplied by the caller, not assembled from the
-    //  attacker's Talentos.
+    // The Rugido half is real (core 0.0.70): effect.Rugido, added to a critical Ataque Corpo-a-Corpo
+    // through Feat#resolveCriticalHitEffectChains, the critical-gated twin of resolveEffectChains.
     DOMINAR_ARTE_MARCIAL_TIGRE_E_SERPENTE(
             "A Margem Crítica Menor de seus Ataques Corpo-a-Corpo aumenta em +1 e seus Acertos "
                     + "Críticos ganham a Corrente de Efeitos – Rugido. O aumento na Margem Crítica "
@@ -308,6 +320,16 @@ public enum ArtesMarciaisFeat implements Feat {
         public int resolveCriticalMarginIncrease(final SkillType skillType, final SceneContext sceneContext,
                                                   final Character character) {
             return skillType == SkillType.ATAQUE_CORPO_A_CORPO ? TIGRE_E_SERPENTE_MARGIN_INCREASE : 0;
+        }
+
+        /** "seus Acertos Críticos ganham a Corrente de Efeitos – Rugido" — on its Ataques Corpo-a-Corpo. */
+        @Override
+        public java.util.List<org.aventyrs.core.effect.EffectChain> resolveCriticalHitEffectChains(
+                final Character attacker, final SkillType attackSkill,
+                final org.aventyrs.core.skill.AttackSource attackSource,
+                final org.aventyrs.core.sheet.CombatantSheet holder) {
+            return attackSkill == SkillType.ATAQUE_CORPO_A_CORPO
+                    ? java.util.List.of(new org.aventyrs.core.effect.Rugido(true)) : java.util.List.of();
         }
     },
 
@@ -356,6 +378,9 @@ public enum ArtesMarciaisFeat implements Feat {
 
     /** TIGRE_E_SERPENTE's flat "+1 número" to the Margem Crítica of an Ataque Corpo-a-Corpo. */
     private static final int TIGRE_E_SERPENTE_MARGIN_INCREASE = 1;
+
+    /** DOMINAR_ARTE_MARCIAL_SUBMISSAO's "Bônus de +2 em sua DF" enquanto Caído. */
+    private static final int SUBMISSAO_PRONE_DEFENSE_BONUS = 2;
 
     /** ARTE_MARCIAL_MISTA's own flat "+1" to Defesas per Talento de Arte Marcial held. */
     private static final int ARTE_MARCIAL_MISTA_DEFENSE_BONUS_PER_FEAT = 1;

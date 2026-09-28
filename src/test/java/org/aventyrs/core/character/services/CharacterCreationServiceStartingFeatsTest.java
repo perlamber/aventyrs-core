@@ -291,7 +291,10 @@ class CharacterCreationServiceStartingFeatsTest {
 
     @Test
     void refusesABareChoiceCarryingConstant() {
-        Character character = characterOf(new Gigantes()).build();
+        // Trained in Atletismo, so Foco em Perícia has a Perícia to offer and is eligible at all.
+        Character character = characterOf(new Gigantes())
+                .skill(SkillType.ATLETISMO, org.aventyrs.core.character.CharacterSkill.builder().skill(SkillType.ATLETISMO.newSkillInstance()).graduation(org.aventyrs.core.skill.SkillGraduation.builder().graduationValue(1).build()).build())
+                .build();
 
         IllegalOperationException error = assertThrows(IllegalOperationException.class,
                 () -> creationService.grantStartingFeats(character, List.of(PeritoFeat.FOCO_EM_PERICIA, MobilidadeFeat.ESQUIVA)));

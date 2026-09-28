@@ -139,6 +139,14 @@ public class IncomingAttack {
     private final SkillType attackSkill;
 
     /**
+     * Whether this attack is an Área de Efeito one — what {@code
+     * EsquivaEApararCompetencyAbility#EVASAO}'s "Defesas +3 para resistir à ataques e efeitos com
+     * Área de Efeito" answers to, through {@code SkillCompetencyAbility#resolveAreaOfEffectDefenseBonus}.
+     * {@code false} by default: the caller's word, like {@link #attackSkill}.
+     */
+    private final boolean areaOfEffect;
+
+    /**
      * Efeitos Críticos this attack carries by identity, beside {@link #attackSource}'s own — a foe
      * stat block's authored Efeito Crítico, for one. Built at resolution with {@link #diceRoller}.
      */
@@ -146,8 +154,42 @@ public class IncomingAttack {
     private final List<CriticalEffectType> additionalCriticalEffectTypes;
 
     /**
+     * The Perícia de Ataque the defender rolls <b>in place of</b> Esquiva e Aparar — {@code
+     * DuelistaFeat#DEFENDER_SE_ATACANDO}'s "você pode substituir sua rolagem de Defesa Física por uma
+     * Rolagem de Perícia de Ataque" ({@code #DEFENDER_SE_ATACANDO_SUPERIOR} for the Mágica). {@code
+     * null}, the ordinary defence, by default. When set, the {@link #defenseRoll} must activate
+     * Defender-se Atacando, and {@link AttackReceiver#resolve} refuses a substitution no held Talento
+     * permits ({@code DEFENSE_SUBSTITUTION_NOT_PERMITTED}). The roll replaces the whole defence: the
+     * Perícia de Ataque's own total stands where Esquiva e Aparar plus the Defesa would have.
+     */
+    private final SkillType defenseSkill;
+
+    /**
+     * The caller's word that this attack is an Encantamento or a Maldição — what Defender-se Atacando
+     * Superior cannot turn aside ("exceto para evitar Encantamentos e Maldições"). Also read off an
+     * {@link #attackSource} that is a Magia of either type, so a caller naming the Magia need not say
+     * it twice. {@code false} by default.
+     */
+    private final boolean enchantmentOrCurse;
+
+    /**
      * Where the Efeitos Críticos' and the Efeitos Críticos Defensivos' own dice come from. {@code
      * null} leaves every dice-bearing one unbuilt, reported rather than invented.
      */
     private final DiceRoller diceRoller;
+
+    /** Whether this attack is an Encantamento or a Maldição — stated, or read off a Magia source. */
+    public boolean isEnchantmentOrCurseAttack() {
+        if (enchantmentOrCurse) {
+            return true;
+        }
+        if (attackSource instanceof org.aventyrs.core.magic.Spell spell) {
+            return isEnchantmentOrCurse(spell.getPrimaryType()) || isEnchantmentOrCurse(spell.getSecondaryType());
+        }
+        return false;
+    }
+
+    private static boolean isEnchantmentOrCurse(final org.aventyrs.core.magic.MagicType type) {
+        return type == org.aventyrs.core.magic.MagicType.ENCANTAMENTO || type == org.aventyrs.core.magic.MagicType.MALDICAO;
+    }
 }

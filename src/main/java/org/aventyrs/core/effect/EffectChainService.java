@@ -2,6 +2,8 @@ package org.aventyrs.core.effect;
 
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.ego.AutocontroleAdvantage;
+import org.aventyrs.core.scene.InitiativePosition;
+import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.skill.DifficultyLevel;
 
 import java.util.Optional;
@@ -24,6 +26,31 @@ public interface EffectChainService {
      * AutocontroleAdvantage#RESOLUTO}, {@link #BASE_REQUIRED_MARGIN} otherwise.
      */
     int getRequiredMargin(Character target);
+
+    /**
+     * The margin an attack by attacker must clear defender's Defesa by for a Corrente to land —
+     * {@link #getRequiredMargin(Character)} raised by the defender's own Talentos and lowered by the
+     * attacker's ({@code Feat#resolveEffectChainResistanceIncrease}/{@code
+     * #resolveTargetEffectChainResistanceReduction}), each read against where its holder stands in
+     * the order of play ({@code PeritoFeat#GRANDE_ANALISTA_TATICO}'s "Enquanto você for o último a
+     * agir"). A position is {@link InitiativePosition#UNKNOWN} when no live Scene says. Never below 0.
+     * Either sheet {@code null} contributes nothing.
+     */
+    default int getRequiredMargin(final CombatantSheet attacker, final InitiativePosition attackerPosition,
+                                  final CombatantSheet defender, final InitiativePosition defenderPosition) {
+        Character target = defender.getCharacter();
+        int margin = getRequiredMargin(target);
+        margin += target.getFeats().stream()
+                .mapToInt(feat -> feat.resolveEffectChainResistanceIncrease(target, defenderPosition))
+                .sum();
+        if (attacker != null) {
+            Character source = attacker.getCharacter();
+            margin -= source.getFeats().stream()
+                    .mapToInt(feat -> feat.resolveTargetEffectChainResistanceReduction(source, attackerPosition))
+                    .sum();
+        }
+        return Math.max(0, margin);
+    }
 
     /**
      * {@code challengeLevel}, if present, is shifted easier by {@code

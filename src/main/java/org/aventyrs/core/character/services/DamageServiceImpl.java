@@ -1,6 +1,7 @@
 package org.aventyrs.core.character.services;
 
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.magic.Spell;
 import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.character.DamageType;
 import org.aventyrs.core.character.DamageDescriptor;
@@ -96,32 +97,71 @@ public class DamageServiceImpl implements DamageService {
         return getTotalDamageReduction(target, damageType, null, source, sceneContext);
     }
 
+    /**
+     * The public RD figure: RD proper plus the RE this hit's element meets — the shape the public
+     * overloads have always reported. {@link #computeFinalDamage} applies the two pieces
+     * separately, because RD reaches only plain physical damage and RE only elemental damage.
+     * sceneContext is unused since 0.0.64, when the Título RDS scans moved to {@link
+     * #getTotalDamageTakenReduction(CombatantSheet, SceneContext)}.
+     */
     private int getTotalDamageReduction(final CombatantSheet target, final DamageType damageType,
                                         final DamageDescriptor damageDescriptor, final CombatantSheet source,
                                         final SceneContext sceneContext) {
+        return Math.max(0, damageReductionOnly(target, damageType, source)
+                + elementalResistance(target, damageDescriptor));
+    }
+
+    /** RD proper — "reduz o Dano Físico não-PRIMORDIAL e não-ELEMENTAL em -2" — from every source. */
+    private int damageReductionOnly(final CombatantSheet target, final DamageType damageType,
+                                    final CombatantSheet source) {
         Character character = target.getCharacter();
         int total = sumAcrossSources(character, ModifierType.DAMAGE_REDUCTION, target);
         total += sumEquipmentDamageReduction(character, target);
-        total += sumEquipmentDamageReduction(character, damageDescriptor);
-        // RE held on the sheet against this hit's element — Cataclismo Elemental's "RE para resistir a
-        // todos os Elementos escolhidos": "Cada instância reduz Danos Elementais Físicos e Mágicos em -2".
-        if (damageDescriptor != null && damageDescriptor.elementalType() != null) {
-            total += ELEMENTAL_RESISTANCE_PER_INSTANCE
-                    * target.getElementalResistanceInstances(damageDescriptor.elementalType());
-        }
         total += sumFeatDamageReduction(character, target);
         total += sumAttributeAbilityDamageReduction(character, target, damageType, source);
-        // The two Título-ability RDS scans, mirroring the RA pair in
-        // computeTotalAbsoluteDamageReduction. Both need a SceneContext (their clauses are
-        // adjacency-scoped), so a caller holding none — every Character-only entry point, and the
-        // public overloads above — simply gets zero from them rather than a wrong answer.
-        total += sumTitleAbilityDamageReduction(character, target, sceneContext);
-        total += sumAllyGrantedDamageReduction(target, sceneContext);
         // A round-scoped RD grant — a Blessing/TemporaryBonus, as AnaoFeat#VIGOR_DO_INVERNO
         // hands its holder at combat start. Only reachable on this CombatantSheet-taking path;
         // the Character-only overload above has no sheet to ask, the same limitation the
         // aggregate ACTION_POINTS/REACTIONS/FREE_ACTIONS reads already carry.
         total += target.getTemporaryBonus(ModifierType.DAMAGE_REDUCTION);
+        return total;
+    }
+
+    /**
+     * RE against this hit's element — "Cada instância reduz Danos Elementais Físicos e Mágicos em
+     * -2": the instances held on the sheet (Cataclismo Elemental, a Habilidade, a Talento) and an
+     * equipped item's element-scoped resistance. 0 for a hit with no element.
+     */
+    private int elementalResistance(final CombatantSheet target, final DamageDescriptor damageDescriptor) {
+        if (damageDescriptor == null || damageDescriptor.elementalType() == null) {
+            return 0;
+        }
+        return ELEMENTAL_RESISTANCE_PER_INSTANCE * target.getElementalResistanceInstances(damageDescriptor.elementalType())
+                + sumEquipmentDamageReduction(target.getCharacter(), damageDescriptor);
+    }
+
+    @Override
+    public int getTotalDamageTakenReduction(final Character character) {
+        int total = sumAcrossSources(character, ModifierType.DAMAGE_TAKEN_REDUCTION);
+        for (Feat feat : character.getFeats()) {
+            total += feat.resolveDamageTakenReduction(character, null);
+        }
+        return Math.max(0, total);
+    }
+
+    @Override
+    public int getTotalDamageTakenReduction(final CombatantSheet target, final SceneContext sceneContext) {
+        Character character = target.getCharacter();
+        int total = sumAcrossSources(character, ModifierType.DAMAGE_TAKEN_REDUCTION, target);
+        for (Feat feat : character.getFeats()) {
+            total += feat.resolveDamageTakenReduction(character, target);
+        }
+        // The two Título-ability RDS scans, mirroring the RA pair in
+        // computeTotalAbsoluteDamageReduction. Both need a SceneContext (their clauses are
+        // adjacency-scoped), so a caller holding none simply gets zero from them.
+        total += sumTitleAbilityDamageReduction(character, target, sceneContext);
+        total += sumAllyGrantedDamageReduction(target, sceneContext);
+        total += target.getTemporaryBonus(ModifierType.DAMAGE_TAKEN_REDUCTION);
         return Math.max(0, total);
     }
 
@@ -280,6 +320,15 @@ public class DamageServiceImpl implements DamageService {
 
     @Override
     public int calculateFinalDamage(final CombatantSheet target, final SceneContext sceneContext,
+                                    final DamageType damageType, final CombatantSheet source,
+                                    final int rawDamage, final boolean ignoreDamageReduction,
+                                    final boolean halfDamage, final Spell spell) {
+        return computeFinalDamage(target.getCharacter(), target, sceneContext, damageType, null, source,
+                rawDamage, ignoreDamageReduction, halfDamage, spell);
+    }
+
+    @Override
+    public int calculateFinalDamage(final CombatantSheet target, final SceneContext sceneContext,
                                     final DamageDescriptor damageDescriptor, final CombatantSheet source,
                                     final int rawDamage, final boolean ignoreDamageReduction) {
         return computeFinalDamage(target.getCharacter(), target, sceneContext, damageDescriptor.damageType(),
@@ -297,7 +346,34 @@ public class DamageServiceImpl implements DamageService {
                                     final CombatantSheet source,
                                     final int rawDamage, final boolean ignoreDamageReduction,
                                     final boolean attackHalvesDamage) {
+        return computeFinalDamage(character, target, sceneContext, damageType, damageDescriptor, source, rawDamage,
+                ignoreDamageReduction, attackHalvesDamage, null);
+    }
+
+    /**
+     * spell is the Magia this hit comes from, or {@code null} — what the "Magias que você conheça /
+     * seja capaz de conjurar" clauses read: {@code Feat#isImmuneToSpell} zeroes the hit before
+     * anything else (Aptidão Mágica Dracônica), and {@code Feat#resolveSpellMagicReduction} is an
+     * extra RM against it (Arcanista).
+     */
+    private int computeFinalDamage(final Character character, final CombatantSheet target, final SceneContext sceneContext,
+                                    final DamageType damageType, final DamageDescriptor damageDescriptor,
+                                    final CombatantSheet source,
+                                    final int rawDamage, final boolean ignoreDamageReduction,
+                                    final boolean attackHalvesDamage, final Spell spell) {
+        if (target != null && spell != null && character.getFeats().stream()
+                .anyMatch(feat -> feat.isImmuneToSpell(spell, target))) {
+            return 0;
+        }
+        // An immunity ("Imunidade ao Elemento escolhido") is judged before anything else: there is
+        // nothing left for RD, RA or a Meio-Dano to act on, and no Pele de Pedra is spent on it.
+        if (target != null && target.isImmuneToDamage(damageType, damageDescriptor)) {
+            return 0;
+        }
         final boolean halfDamage = attackHalvesDamage
+                // A Meio-Dano limited to a DamageScope (an element, physical or magic damage only),
+                // held by a Habilidade or a timed DamageScopeEffect.
+                || (target != null && target.halvesDamage(damageType, damageDescriptor))
                 || sumAcrossSources(character, ModifierType.HALF_DAMAGE, target) > 0
                 // A timed Meio-Dano grant (SantoAbility#PROTECAO_UNGIDA's 3 Rodadas), the
                 // TemporaryBonus twin of the passive scan above and of the timed RA branch in
@@ -307,22 +383,44 @@ public class DamageServiceImpl implements DamageService {
                 || (target != null && target.getTemporaryBonus(ModifierType.HALF_DAMAGE) > 0)
                 || character.getEgoAdvantages().values().stream()
                         .anyMatch(advantage -> advantage.resolveHalfDamage(sceneContext));
-        int reduction = target != null
+        // Bastião de Vidro: "Você não é beneficiado por … Redução de Danos Sofridos … RA, RD e RM" —
+        // none of the four is applied (they become Defesa instead, in DefenseService).
+        boolean forgoesMitigation = character.getFeats().stream().anyMatch(Feat::forgoesDamageMitigation);
+        int reduction = forgoesMitigation ? 0 : target != null
                 ? getTotalAbsoluteDamageReduction(target, sceneContext)
                 : computeTotalAbsoluteDamageReduction(character, null, sceneContext);
-        if (!ignoreDamageReduction) {
-            reduction += target != null
-                    ? getTotalDamageReduction(target, damageType, damageDescriptor, source, sceneContext)
-                    : getTotalDamageReduction(character);
-            // RM joins RD only for damage the caller actually classified as Mágico — "caller
-            // didn't say" (null) is not "this was magic". Grouped under the same
-            // ignoreDamageReduction flag as RD: the rules name RA as the reduction that can
-            // never be ignored and say nothing either way about RM, so an attack that bypasses
-            // mitigation is taken to bypass whichever of the two applies. That is an inference.
-            // Note RD itself is still type-blind, so a MAGICO hit currently takes both — see
-            // ModifierType#MAGIC_REDUCTION.
-            if (damageType == DamageType.MAGICO && target != null) {
-                reduction += getTotalMagicReduction(target);
+        if (forgoesMitigation && !ignoreDamageReduction) {
+            reduction += target != null ? elementalResistance(target, damageDescriptor) : 0;
+        } else if (!ignoreDamageReduction) {
+            // Each reduction reaches only the damage its rules text names (defesas-e-resistencias):
+            // RD plain physical, RDS anything but Primordial, RM magical, RE elemental. An untyped
+            // hit ("caller didn't say") is treated as plain physical, as it always was. All four
+            // sit under the same ignoreDamageReduction flag: the rules name RA as the reduction
+            // that can never be ignored and say nothing either way about the others — an inference.
+            DamageType effectiveType = damageDescriptor != null ? damageDescriptor.damageType() : damageType;
+            boolean plainPhysical = effectiveType == null || effectiveType == DamageType.FISICO;
+            if (target != null) {
+                if (plainPhysical) {
+                    reduction += Math.max(0, damageReductionOnly(target, damageType, source));
+                }
+                if (effectiveType != DamageType.PRIMORDIAL) {
+                    reduction += getTotalDamageTakenReduction(target, sceneContext);
+                }
+                if (effectiveType == DamageType.MAGICO) {
+                    reduction += getTotalMagicReduction(target);
+                }
+                // Arcanista's "RM para resistir aos efeitos de Magias que você conheça": an RM of its
+                // own, scoped to the Magia rather than to magical damage — ⚠️ a reading: it reaches
+                // whatever non-Primordial damage that Magia deals, elemental included, since the
+                // clause names the Magia and the catalog's offensive Magias are mostly elemental.
+                if (spell != null && effectiveType != DamageType.PRIMORDIAL) {
+                    reduction += character.getFeats().stream()
+                            .mapToInt(feat -> feat.resolveSpellMagicReduction(spell, target))
+                            .sum();
+                }
+                reduction += elementalResistance(target, damageDescriptor);
+            } else {
+                reduction += getTotalDamageReduction(character) + getTotalDamageTakenReduction(character);
             }
         }
         // Pele de Pedra sits *outside* the RD sum on purpose: its first hit is an outright
@@ -330,7 +428,10 @@ public class DamageServiceImpl implements DamageService {
         // sheet.PeleDePedra. It is read last, so "o primeiro ataque que lhe causaria Danos" is
         // judged against what the ordinary mitigation already left — an attack that RD/RA had
         // fully turned aside never spends the negation.
-        PeleDePedra stone = target == null ? null : target.getPeleDePedra().orElse(null);
+        // "RDS 5" — an RDS, so it never reaches Primordial damage.
+        DamageType hitType = damageDescriptor != null ? damageDescriptor.damageType() : damageType;
+        PeleDePedra stone = target == null || hitType == DamageType.PRIMORDIAL || forgoesMitigation
+                ? null : target.getPeleDePedra().orElse(null);
         if (stone != null && !ignoreDamageReduction) {
             reduction += stone.getEffectiveDamageReduction();
         }
@@ -348,7 +449,33 @@ public class DamageServiceImpl implements DamageService {
                 return 0;
             }
         }
+        // Criar Refúgio: a hit that would still hurt is reduced to zero while a use is left —
+        // spent here for the same reason Pele de Pedra is, since DamageInteraction never calls
+        // applyDamage. A hit already turned aside spends nothing ("attacks that don't land").
+        if (target != null && finalDamage > 0 && negatesHit(target)) {
+            return 0;
+        }
         return Math.max(0, finalDamage);
+    }
+
+    /**
+     * Whether a held Talento reduces this hit to zero, spending one of its uses — {@code
+     * Feat#resolveDamageNegationBudget}, the uses counted per Talento on the sheet between Descansos
+     * Longos Verdadeiros ({@code CombatantSheet#spendRestScopedUse}).
+     */
+    private static boolean negatesHit(final CombatantSheet target) {
+        for (Feat feat : target.getCharacter().getFeats()) {
+            int budget = feat.resolveDamageNegationBudget(target);
+            if (budget <= 0) {
+                continue;
+            }
+            String key = feat.catalogEntry() instanceof Enum<?> constant ? constant.name() : feat.getDescription();
+            if (target.getRestScopedUses(key) < budget) {
+                target.spendRestScopedUse(key, org.aventyrs.core.rest.RestType.LONGO);
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
@@ -407,6 +534,11 @@ public class DamageServiceImpl implements DamageService {
         if (finalDamage <= 0 || source == target) {
             return List.of();
         }
+        if (source != null) {
+            // Transferir Rancor's "não é ativada em Cenas de Combate em que você causou Danos".
+            source.recordDamageDealt();
+            grantAllyBlessings(target, finalDamage, source, sceneContext);
+        }
         Character character = target.getCharacter();
         // The sheet-taking allFor is what drops a Habilidade Racial under a Forma abandoning its
         // holder's traços raciais, and what stops a holder who came by the same ability twice
@@ -417,7 +549,42 @@ public class DamageServiceImpl implements DamageService {
                 granted.add(target.grantBlessing(blessing));
             }
         }
+        // A held Habilidade's own reaction to being hurt (Adaptação Milagrosa's 1d6 regeneration).
+        for (org.aventyrs.core.ability.AttributeAbility ability : character.getAttributeAbilities()) {
+            ability.resolveDamageTakenEffects(target, finalDamage).forEach(target::applyEffect);
+        }
         return granted;
+    }
+
+    /**
+     * Grants what target's Títulos give its <b>allies</b> for the damage it just took (Transferir
+     * Rancor). The {@code SceneContext} at a damage site may be either party's snapshot, so the
+     * victim's side is resolved from whichever it is: the victim's own (the attacker among its
+     * enemies) lists its allies directly; the attacker's lists them among its enemies, the victim
+     * excluded. A context that is neither, or none, reaches nobody.
+     */
+    private void grantAllyBlessings(final CombatantSheet target, final int finalDamage, final CombatantSheet source,
+                                    final SceneContext sceneContext) {
+        if (sceneContext == null) {
+            return;
+        }
+        List<CombatantSheet> allies;
+        if (sceneContext.getEnemies().contains(source)) {
+            allies = sceneContext.getAllies();
+        } else if (sceneContext.getEnemies().contains(target)) {
+            allies = sceneContext.getEnemies().stream().filter(sheet -> sheet != target).toList();
+        } else {
+            return;
+        }
+        for (org.aventyrs.core.title.AventyrTitle title : target.getCharacter().getAllTitles()) {
+            for (Blessing blessing : title.resolveDamageTakenAllyBlessings(target, finalDamage, source, sceneContext)) {
+                for (CombatantSheet ally : allies) {
+                    if (ally != target) {
+                        ally.grantBlessing(blessing);
+                    }
+                }
+            }
+        }
     }
 
     private int sumEgoAdvantageAbsoluteDamageReduction(final Character character, final SceneContext sceneContext) {

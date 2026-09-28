@@ -1,9 +1,21 @@
 package org.aventyrs.core.feat;
 
+import org.aventyrs.core.action.Manoeuvre;
+import org.aventyrs.core.character.services.MovementServiceImpl;
+import org.aventyrs.core.character.MovementMode;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.character.EgoDomain;
+import org.aventyrs.core.modifier.ModifierType;
+import org.aventyrs.core.scene.AreaOfEffect;
+import org.aventyrs.core.sheet.Blessing;
+import org.aventyrs.core.sheet.TargetScope;
+import org.aventyrs.core.skill.AttackSource;
+import org.aventyrs.core.skill.SkillRoll;
 import org.aventyrs.core.skill.SkillType;
+import org.aventyrs.core.skill.atletismo.AtletismoSpecialization;
 
+import java.util.List;
 import java.util.function.Supplier;
 
 /**
@@ -152,40 +164,52 @@ public enum MobilidadeFeat implements Feat {
      * "Você adquire 1 ponto permanente de Iniciativa e então, se sua Iniciativa se tornar 4 ou
      * mais, você adquire uma Vantagem de Iniciativa."
      */
-    // TODO: a permanent Ego point is granted through CharacterEgos#withVariableBonus, reached
-    //  only by AttributeAbility#resolvePermanentEgoGain — Feat has no equivalent hook, and
-    //  adding one means deciding whether a Talento may raise an EgoDomain at all.
+    // The permanent point is real, through Feat#resolveEgoBonus (Character#getEffectiveEgoTotal).
     // TODO: granting a Vantagem de Ego is not expressible — a Vantagem is chosen once at
     //  character creation (CharacterCreationService), never awarded later.
     INICIATIVA_APRIMORADA(
             "Você adquire 1 ponto permanente de Iniciativa e então, se sua Iniciativa se tornar 4 "
                     + "ou mais, você adquire uma Vantagem de Iniciativa.",
-            () -> FeatRequirements.builder().build()),
+            () -> FeatRequirements.builder().build()) {
+        @Override
+        public int resolveEgoBonus(final EgoDomain domain, final Character character) {
+            return domain == EgoDomain.INICIATIVA ? 1 : 0;
+        }
+    },
 
     /**
      * "Sempre que ganhar uma rolagem de Iniciativa, nas 2 primeiras Rodadas de cada Cena de
      * Combate você adquire +2PA (não cumulativo)."
      *
-     * <p>Both conditions have resolvers — {@code Scene#wonInitiative} and {@code
-     * SceneContext#isWithinFirstCombatRounds(2)} — and the grant is a {@code Blessing} of {@code
-     * ModifierType.ACTION_POINTS}, which {@code Scene#applyInitiativeBlessings} already applies.
+     * <p><b>Real</b>: a {@code Blessing} of {@code ModifierType.ACTION_POINTS} (+2, 2 Rodadas,
+     * self) from {@link Feat#resolveInitiativeBlessings}, resolved by {@code
+     * InitiativeBlessingService} and granted by {@code Scene#applyInitiativeBlessings} to whoever
+     * won. "Não cumulativo" is the sourced Blessing's own rule: a second grant from the same
+     * Talento renews rather than stacks.
      */
-    // TODO: resolveInitiativeBlessings lives on EgoAdvantage/AttributeAbility/
-    //  SkillCompetencyAbility, and InitiativeBlessingService scans exactly those three — Feat is
-    //  not among them. Promoting it there would make this constant real.
     LIDERAR_O_AVANCO(
             "Sempre que ganhar uma rolagem de Iniciativa, nas 2 primeiras Rodadas de cada Cena de "
                     + "Combate você adquire +2PA (não cumulativo).",
             () -> FeatRequirements.builder()
                     .requiredFeat(INICIATIVA_APRIMORADA)
-                    .build()),
+                    .build()) {
+        @Override
+        public List<Blessing> resolveInitiativeBlessings() {
+            return List.of(new Blessing(ModifierType.ACTION_POINTS, LIDERAR_O_AVANCO_ACTION_POINTS,
+                    LIDERAR_O_AVANCO_ROUNDS, TargetScope.SELF, name()));
+        }
+    },
 
     /**
      * "Você pode adicionar Metade de seu valor de Destreza ou do valor de Carisma, a sua escolha,
      * às suas rolagens de Iniciativa."
      */
-    // TODO: same missing Feat initiative hook as LIDERAR_O_AVANCO, and the ally-facing half needs
-    //  cross-character grants at initiative time plus direction-scoped movement.
+    // The Iniciativa half is real, through Feat#resolveInitiativeBonus. ⚠️ "a sua escolha" is read
+    // as the higher of half Destreza and half Carisma: the choice is made per roll, and nothing
+    // would pick the lower one.
+    // TODO: the PA and Movimento half needs "apenas se você for o primeiro a agir" (turn-order
+    //  position, which Scene resolves for nobody), a grant to allies at initiative time that
+    //  depends on the holder's position, and direction-scoped movement ("em direção a").
     // The disjunctive Pré-requisito is real — "Destreza 3 *ou* Carisma 3"; the required Talento
     // is common to both branches, so it stays on the outer group.
     PORTA_ESTANDARTE(
@@ -206,7 +230,13 @@ public enum MobilidadeFeat implements Feat {
                             .attributeDomain(AttributeDomain.CHARISMA)
                             .requiredAttributeValue(3)
                             .build())
-                    .build()),
+                    .build()) {
+        @Override
+        public int resolveInitiativeBonus(final Character character) {
+            return Math.max(character.getEffectiveAttributeTotal(AttributeDomain.DEXTERITY),
+                    character.getEffectiveAttributeTotal(AttributeDomain.CHARISMA)) / 2;
+        }
+    },
 
     /**
      * "Você pode se mover enquanto furtivo, mas seu Movimento Base é reduzido à metade", the
@@ -250,23 +280,16 @@ public enum MobilidadeFeat implements Feat {
      * -1PA", through {@link Feat#resolveChargeActionPointReduction}, which {@code
      * ChargeService#getActionPointCost} subtracts from its 3PA baseline.
      *
-     * <p>⚠️ <b>Granted unconditionally, which over-grants.</b> The clause is gated on the holder
-     * possessing a <i>Movimento Base de Natação</i>, a sub-stat this core deliberately does not
-     * model (see {@code AtletismoCompetencyAbility#ANFIBIO}) — so there is nothing to test and the
-     * reduction applies to every Investida. The alternative was to grant nothing at all, which
-     * would leave the Talento's one expressible clause inert; narrowing it correctly is what the
-     * sub-stat would buy.
+     * <p>Only for a holder who possesses a Movimento Base de Natação — {@code
+     * MovementService#hasMovementMode(Character, MovementMode)}, Forma-blind since this hook has
+     * no sheet. (Before 0.0.63 it was granted to everyone, the mode being unmodelled.)
      */
     // TODO: the first clause — "rolagens de Perícia de Ataque realizadas imediatamente após ser
     //  bem-sucedido em rolagens de Atletismo para Natação" — needs two things this core lacks:
     //  it does not track what a roll was *for*, so "Atletismo para Natação" cannot be
     //  distinguished from any other Atletismo roll, and no roll's outcome feeds the next one's
     //  cost.
-    // TODO: Movimento Base de Natação is a separate sub-stat deliberately not wired to
-    //  ModifierType.MOVEMENT (see AtletismoCompetencyAbility#ANFIBIO) — it is what would narrow
-    //  the second clause to the swimmers it is written for. See the javadoc above.
-    // TODO: its Pré-requisito names a required Especialização (Triatleta); FeatRequirements
-    //  models a Habilidade de Competência but not a SkillSpecialization.
+    // The Especialização Triatleta Pré-requisito is real — FeatRequirements#requiredSkillTraits.
     INVESTIDA_AQUATICA(
             "Em combate, rolagens de Perícia de Ataque realizadas imediatamente após ser "
                     + "bem-sucedido em rolagens de Atletismo para Natação tem o Tempo de Ação "
@@ -275,10 +298,12 @@ public enum MobilidadeFeat implements Feat {
             () -> FeatRequirements.builder()
                     .requiredSkillType(SkillType.ATLETISMO)
                     .requiredSkillGraduation(4)
+                    .requiredSkillTrait(AtletismoSpecialization.TRI_ATLETA)
                     .build()) {
         @Override
         public int resolveChargeActionPointReduction(final Character character) {
-            return CHARGE_ACTION_POINT_REDUCTION;
+            return new MovementServiceImpl().hasMovementMode(character, MovementMode.SWIM)
+                    ? CHARGE_ACTION_POINT_REDUCTION : 0;
         }
     },
 
@@ -316,9 +341,9 @@ public enum MobilidadeFeat implements Feat {
      * {@code ChargeResult#unappliedMovementDamageReduction} rather than being granted onto the
      * sheet where it would outlive the charge.
      */
-    // TODO: the Área de Efeito clause needs the footprint resolution the gap catalog's "Area de
-    //  Efeito" row records as missing — an Investida is a modelled manoeuvre now
-    //  (ChargeService), but nothing turns an AreaOfEffect into a set of targets.
+    // The Área de Efeito clause is real: an attack whose SkillRoll carries Manoeuvre.INVESTIDA is
+    // an AreaOfEffect#ATTACK_EXPLOSION (Feat#resolveAttackArea), which AttackDelivery accepts on a
+    // DeliveredAttack naming the footprint's occupants (scene.grid.AreaFootprint).
     INVESTIDA_SELVAGEM(
             "Suas Investidas recebem Área de Efeito – Explosão. Durante o movimento da investida "
                     + "você recebe Redução de Danos Sofridos igual ao número de Títulos Aventyrs "
@@ -330,6 +355,13 @@ public enum MobilidadeFeat implements Feat {
                     .requiredFeatCategoryCount(3)
                     .build()) {
         @Override
+        public AreaOfEffect resolveAttackArea(final Character attacker, final SkillType attackSkill,
+                                              final AttackSource attackSource, final SkillRoll skillRoll) {
+            return skillRoll != null && skillRoll.getManoeuvre() == Manoeuvre.INVESTIDA
+                    ? AreaOfEffect.ATTACK_EXPLOSION : null;
+        }
+
+        @Override
         public int resolveChargeMovementDamageReduction(final Character character) {
             return character.getAllTitles().size();
         }
@@ -339,9 +371,9 @@ public enum MobilidadeFeat implements Feat {
      * "Se em sua Investida Selvagem você causar danos à 3 ou mais inimigos você recebe Bônus em
      * Defesas igual à 1 + quantidade de Títulos Aventyr Bruto Despertos."
      */
-    // TODO: builds on INVESTIDA_SELVAGEM's Área de Efeito half, which is still unbuilt, and
-    //  additionally needs the count of targets an area attack actually damaged. The Investida
-    //  itself is modelled now (ChargeService); the explosion it is measured over is not.
+    // TODO: the explosion is real now (INVESTIDA_SELVAGEM), but "causar danos à 3 ou mais inimigos"
+    //  is known only after the caller applies each target's damage chain — AttackDelivery reports
+    //  who was hit, not who was hurt, and nothing grants a Blessing off the count afterwards.
     INVESTIDA_SELVAGEM_SOLAR(
             "Se em sua Investida Selvagem você causar danos à 3 ou mais inimigos você recebe Bônus "
                     + "em Defesas igual à 1 + quantidade de Títulos Aventyr Bruto Despertos, "
@@ -360,9 +392,9 @@ public enum MobilidadeFeat implements Feat {
      * "Se em sua Investida Selvagem você causar danos à 3 ou mais inimigos, você recebe Roubo de
      * Vida igual à 1 + quantidade de Títulos Aventyr Bruto Despertos."
      */
-    // TODO: same blocker as INVESTIDA_SELVAGEM_SOLAR — the Área de Efeito half of
-    //  INVESTIDA_SELVAGEM, and the count of enemies it damaged. Additionally, nothing scopes a
-    //  Roubo de Vida grant to a Duração in Rodadas: Feat#resolveGrantedLifeSteal is permanent.
+    // TODO: same blocker as INVESTIDA_SELVAGEM_SOLAR — the count of enemies the explosion
+    //  damaged. Additionally, nothing scopes a Roubo de Vida grant to a Duração in Rodadas:
+    //  Feat#resolveGrantedLifeSteal is permanent.
     INVESTIDA_SELVAGEM_LUNAR(
             "Se em sua Investida Selvagem você causar danos à 3 ou mais inimigos, você recebe "
                     + "Roubo de Vida igual à 1 + quantidade de Títulos Aventyr Bruto Despertos, "
@@ -391,6 +423,12 @@ public enum MobilidadeFeat implements Feat {
 
     /** INVESTIDA_AQUATICA's own stated "-1PA" on the Tempo de Ação of an Investida. */
     private static final int CHARGE_ACTION_POINT_REDUCTION = 1;
+
+    /** LIDERAR_O_AVANCO's "+2PA". */
+    private static final int LIDERAR_O_AVANCO_ACTION_POINTS = 2;
+
+    /** LIDERAR_O_AVANCO's "nas 2 primeiras Rodadas". */
+    private static final int LIDERAR_O_AVANCO_ROUNDS = 2;
 
     private final String description;
     /**

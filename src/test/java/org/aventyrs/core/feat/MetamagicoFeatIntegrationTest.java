@@ -13,6 +13,10 @@ import org.aventyrs.core.character.services.FeatServiceImpl;
 import org.aventyrs.core.character.services.SpellService;
 import org.aventyrs.core.character.services.SpellServiceImpl;
 import org.aventyrs.core.magic.BranchLevel;
+import org.aventyrs.core.magic.Spell;
+import org.aventyrs.core.magic.catalog.MagicTree;
+import org.aventyrs.core.magic.catalog.PiromanciaSpell;
+import org.aventyrs.core.magic.catalog.VidaSpell;
 import org.aventyrs.core.rest.RestService;
 import org.aventyrs.core.rest.RestServiceImpl;
 import org.aventyrs.core.rest.RestType;
@@ -29,8 +33,11 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
@@ -57,7 +64,7 @@ class MetamagicoFeatIntegrationTest {
     }
 
     private static Character.CharacterBuilder character() {
-        return CharacterFixture.blank(CharacterFixture.BLANK).feats(new ArrayList<>());
+        return CharacterFixture.blank(CharacterFixture.BLANK).feats(new ArrayList<>()).spells(new ArrayList<>());
     }
 
     private static CharacterSkill trained(final Skill skill, final int graduation) {
@@ -262,5 +269,72 @@ class MetamagicoFeatIntegrationTest {
         assertEquals(multiplier, magicPointsService.getManaMultiplier(character));
         assertEquals(recovery, restService.getRecoveredMagicPoints(character, RestType.LONGO));
         assertEquals(cap, spellService.getMaxBranchLevel(character));
+    }
+
+    // ---------- ARCANISTA's Árvores and the ladder's free picks, end to end ----------
+
+    /** Acquires in order on one sheet, and hands the sheet back so its XP can be read. */
+    private CharacterSheet acquireOn(final Character character, final MetamagicoFeat... feats) {
+        CharacterSheet sheet = fundedSheet(character);
+        for (MetamagicoFeat feat : feats) {
+            featService.grantFeat(character, sheet, feat);
+        }
+        return sheet;
+    }
+
+    @Test
+    void anArcanistaOpensAsManyTreesAsConhecimentoMetamagicoAndNoMore() {
+        Character character = caster(0);
+        CharacterSheet sheet = acquireOn(character, MetamagicoFeat.ARCANISTA);
+        int capacity = spellService.getKnownTreeCapacity(character);
+        List<MagicTree> trees = List.of(MagicTree.values()).subList(0, capacity);
+
+        BigDecimal before = sheet.getUnUsedExperience();
+        trees.forEach(tree -> spellService.learnTree(character, sheet, tree));
+
+        assertEquals(capacity, spellService.getKnownTrees(character).size());
+        assertEquals(0, before.compareTo(sheet.getUnUsedExperience()), "Sementes are free");
+        assertEquals(0, spellService.getOpenTreeSlots(character));
+    }
+
+    @Test
+    void anArcanistasFirstTwoBrotosAreFreeAndTheThirdCostsOne() {
+        Character character = caster(0);
+        CharacterSheet sheet = acquireOn(character, MetamagicoFeat.ARCANISTA);
+        spellService.learnTree(character, sheet, MagicTree.VIDA);
+        spellService.learnTree(character, sheet, MagicTree.PIROMANCIA);
+        spellService.learnTree(character, sheet, MagicTree.ARTESAO);
+        BigDecimal before = sheet.getUnUsedExperience();
+
+        assertEquals(Map.of(BranchLevel.BROTO, 2), spellService.getOwedFreeSpells(character));
+        spellService.grantSpell(character, sheet, VidaSpell.REVIGORAR);
+        spellService.grantSpell(character, sheet, PiromanciaSpell.FOGO_FATUO);
+        assertEquals(0, before.compareTo(sheet.getUnUsedExperience()));
+
+        Spell artesaoBroto = MagicTree.ARTESAO.getSpells().stream()
+                .filter(spell -> spell.getBranchLevel() == BranchLevel.BROTO)
+                .findFirst().orElseThrow();
+        spellService.grantSpell(character, sheet, artesaoBroto);
+        assertEquals(0, before.subtract(BigDecimal.ONE).compareTo(sheet.getUnUsedExperience()));
+    }
+
+    @Test
+    void experienteOwesTwoMudasOnTheBranchAlreadyTaken() {
+        Character character = caster(0);
+        CharacterSheet sheet = acquireOn(character, MetamagicoFeat.ARCANISTA);
+        spellService.learnTree(character, sheet, MagicTree.VIDA);
+        spellService.grantSpell(character, sheet, VidaSpell.REVIGORAR); // Vida's principal branch
+        featService.grantFeat(character, sheet, MetamagicoFeat.ARCANISTA_EXPERIENTE);
+
+        assertEquals(2, spellService.getOwedFreeSpells(character).get(BranchLevel.MUDA));
+        assertEquals(List.of(VidaSpell.REVIGORAR_MAIOR),
+                spellService.getFreeSpellOptions(character, BranchLevel.MUDA));
+        assertThrows(IllegalOperationException.class,
+                () -> spellService.grantSpell(character, sheet, VidaSpell.REMOVER_MALDICAO));
+
+        BigDecimal before = sheet.getUnUsedExperience();
+        spellService.grantSpell(character, sheet, VidaSpell.REVIGORAR_MAIOR);
+        assertEquals(0, before.compareTo(sheet.getUnUsedExperience()));
+        assertTrue(character.getSpells().contains(VidaSpell.REVIGORAR_MAIOR));
     }
 }

@@ -6,6 +6,10 @@ import org.aventyrs.core.character.DefenseType;
 import org.aventyrs.core.character.DamageDescriptor;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.item.Item;
+import org.aventyrs.core.item.ItemCategory;
+import org.aventyrs.core.item.ShieldAttack;
+import org.aventyrs.core.character.DamageType;
+import org.aventyrs.core.feat.Feat;
 import org.aventyrs.core.modifier.ModifierResolver;
 import org.aventyrs.core.modifier.ModifierResolverImpl;
 import org.aventyrs.core.modifier.ModifierType;
@@ -21,6 +25,9 @@ import java.util.Map;
 public class DefenseServiceImpl implements DefenseService {
 
     private final ModifierResolver modifierResolver;
+
+    /** Bastião de Vidro reads what mitigation the holder forgoes to turn it into Defesa. */
+    private final DamageService damageService = new DamageServiceImpl();
 
     public DefenseServiceImpl() {
         this(new ModifierResolverImpl());
@@ -56,17 +63,63 @@ public class DefenseServiceImpl implements DefenseService {
     @Override
     public int getTotalDefense(final CombatantSheet target, final DefenseType defenseType,
                                final SceneContext sceneContext, final DamageDescriptor damageDescriptor) {
+        // Início Defensivo: "você ignora efeitos que reduzem Defesas" — timed maluses subtracted back
+        // out, and a Condição's net malus floored at nothing.
+        boolean ignoreMaluses = target.getCharacter().getFeats().stream()
+                .anyMatch(feat -> feat.ignoresDefenseMaluses(sceneContext, target));
+        int timed = target.getTemporaryBonus(ModifierType.DEFESAS)
+                + target.getTemporaryBonus(defenseType.getModifierType());
+        // Desprevenido's -2 Defesas, and anything conferring it (Caído, Flanqueado,
+        // Cego, or the fear ladder while close enough to its origin).
+        int conditions = target.getConditionBonus(ModifierType.DEFESAS, sceneContext)
+                + target.getConditionBonus(defenseType.getModifierType(), sceneContext);
+        if (ignoreMaluses) {
+            timed -= target.getTemporaryMalus(ModifierType.DEFESAS) + target.getTemporaryMalus(defenseType.getModifierType());
+            conditions = Math.max(0, conditions);
+        }
         return sumAbilityModifiers(target.getCharacter(), defenseType, target)
                 + sumEquipment(target, defenseType, sceneContext, damageDescriptor)
                 + sumFeats(target.getCharacter(), defenseType, sceneContext, target)
                 + sumTitleBaseDefesas(target.getCharacter(), sceneContext, target)
-                + target.getTemporaryBonus(ModifierType.DEFESAS)
-                + target.getTemporaryBonus(defenseType.getModifierType())
-                // Desprevenido's -2 Defesas, and anything conferring it (Caído, Flanqueado,
-                // Cego, or the fear ladder while close enough to its origin).
-                + target.getConditionBonus(ModifierType.DEFESAS, sceneContext)
-                + target.getConditionBonus(defenseType.getModifierType(), sceneContext)
-                + sumGuardsAgainstOpponent(target, sceneContext);
+                + timed
+                + conditions
+                + sumGuardsAgainstOpponent(target, sceneContext)
+                + mitigationForgoneAsDefense(target, sceneContext)
+                + adjacentBarreiraBonus(sceneContext);
+    }
+
+    /**
+     * Mestre Arcanista's and Desafiador da Realidade's "+1/+3 às Defesas de seus aliados adjacentes"
+     * while their Barreira Mágica runs — <b>scanned</b> off the recipient's own snapshot, not granted,
+     * since the figure reads nothing of the recipient and adjacency is mutual. The best adjacent ally
+     * counts, not the sum: two Barreiras beside you are the same protection twice (a reading — the
+     * text names one Barreira's allies). A {@code null} context has nobody adjacent.
+     */
+    private static int adjacentBarreiraBonus(final SceneContext sceneContext) {
+        if (sceneContext == null) {
+            return 0;
+        }
+        return sceneContext.getAlliesWithin(org.aventyrs.core.scene.Range.ADJACENTE).stream()
+                .mapToInt(org.aventyrs.core.feat.BarreiraMagicaActiveAbility::resolveAllyDefesasBonus)
+                .max().orElse(0);
+    }
+
+    /**
+     * Bastião de Vidro: "Você não é beneficiado por efeitos de Redução de Danos Sofridos, ao invés disso
+     * você recebe Bônus em Defesa igual ao valor que você receberia de Redução de Danos Sofridos. Você
+     * não é beneficiado por RA, RD e RM, ao invés disso você recebe Bônus de +1 em Defesas para cada um
+     * destes efeitos." The RDS the holder would have, plus 1 for each of RA, RD and RM they would have
+     * any of — read off {@link DamageService}, whose own figures still report what is forgone.
+     */
+    private int mitigationForgoneAsDefense(final CombatantSheet target, final SceneContext sceneContext) {
+        if (target.getCharacter().getFeats().stream().noneMatch(Feat::forgoesDamageMitigation)) {
+            return 0;
+        }
+        int bonus = damageService.getTotalDamageTakenReduction(target, sceneContext);
+        bonus += damageService.getTotalAbsoluteDamageReduction(target, sceneContext) > 0 ? 1 : 0;
+        bonus += damageService.getTotalDamageReduction(target, DamageType.FISICO, null) > 0 ? 1 : 0;
+        bonus += damageService.getTotalMagicReduction(target) > 0 ? 1 : 0;
+        return bonus;
     }
 
     /**
@@ -162,9 +215,22 @@ public class DefenseServiceImpl implements DefenseService {
                              final SceneContext sceneContext, final DamageDescriptor damageDescriptor) {
         int total = 0;
         for (Item item : target.getCharacter().getEquipment()) {
-            total += item.getEffectiveDefenseBonus(defenseType, target, sceneContext, damageDescriptor);
+            int bonus = item.getEffectiveDefenseBonus(defenseType, target, sceneContext, damageDescriptor);
+            // Atacar com Escudos: a shield that attacked keeps only part of what it grants.
+            total += item.getCategory() == ItemCategory.SHIELD ? retainedShieldDefense(target, item, bonus) : bonus;
         }
         return total;
+    }
+
+    /**
+     * What bonus becomes once shield has attacked since its wielder's latest Turn began — "perde metade
+     * dos bônus em Defesas concedidos por ele até o início de seu próximo turno … atacar duas ou mais
+     * vezes com um escudo faz com que você não receba seus bônus" — eased by the Talentos that ease it.
+     * The attacks are read off the Rodada's log and the holder's latest own Turn, so the loss holds from
+     * the swing until the holder's next Turn begins. See {@link ShieldAttack#retained}.
+     */
+    private static int retainedShieldDefense(final CombatantSheet target, final Item shield, final int bonus) {
+        return ShieldAttack.retained(target, source -> ShieldAttack.swings(source, shield), bonus);
     }
 
     /**

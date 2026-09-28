@@ -225,12 +225,20 @@ class FeatServiceImplTest {
         }
     }
 
-    /** A declared choice is never empty or zero-pick — an option list nobody can satisfy is a bug. */
+    /**
+     * A declared choice is never empty or zero-pick — an option list nobody can satisfy is a bug. Asked
+     * of the Talentos this holder may actually take: a choice filtered for the holder (Foco em
+     * Perícia's qualifying Perícias, Treinado em Perícias' trained ones) is legitimately short for
+     * someone its Pré-requisito refuses anyway.
+     */
     @Test
     void everyDeclaredChoiceIsSatisfiable() {
         Character character = characterMeetingArtistaMarcialRequirements();
 
         for (Feat feat : FeatCatalog.all()) {
+            if (!feat.isEligible(character) && !feat.isEligibleAtCreation(character, null)) {
+                continue;
+            }
             for (FeatChoice<?> choice : feat.resolveRequiredChoices(character)) {
                 assertTrue(choice.picks() > 0, feat + " declares a choice of zero picks");
                 assertTrue(choice.options().size() >= choice.picks(),

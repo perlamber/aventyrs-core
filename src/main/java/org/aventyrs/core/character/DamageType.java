@@ -4,12 +4,18 @@ package org.aventyrs.core.character;
  * The kinds of dano this ruleset distinguishes, carried by {@link DamageBonus} and passed to
  * {@code DamageService#calculateFinalDamage}.
  *
- * <p><b>Exactly one type changes mitigation today: {@link #MAGICO}</b>, which is what adds RM
- * ({@code DamageService#getTotalMagicReduction}) to the reduction total. Every other value is
- * still a pure classification tag a caller gets back for its own bookkeeping — and RD itself is
- * type-blind, applying whatever the type, though the rules scope it to Dano Físico
- * não-PRIMORDIAL e não-ELEMENTAL. Narrowing RD, and giving ELEMENTAL/PRIMORDIAL their own
- * handling, is the damage-type system CLAUDE.md's gap catalog still lists as missing.
+ * <p><b>Each reduction reaches only the types its rules text names</b> ({@code
+ * docs/rules/defesas-e-resistencias.txt}), resolved by {@code DamageServiceImpl#computeFinalDamage}
+ * off the hit's effective type (the descriptor's when there is one):
+ * <ul>
+ *   <li>RD ({@code DAMAGE_REDUCTION}) — {@link #FISICO} only, or a hit left untyped;</li>
+ *   <li>RDS ({@code DAMAGE_TAKEN_REDUCTION}) — everything but {@link #PRIMORDIAL};</li>
+ *   <li>RM ({@code MAGIC_REDUCTION}) — {@link #MAGICO} only;</li>
+ *   <li>RE — {@link #ELEMENTAL}/{@link #FISICO_ELEMENTAL} of the element resisted;</li>
+ *   <li>RA — every hit.</li>
+ * </ul>
+ * An immunity or a scoped Meio-Dano ({@code DamageScope}) is judged against the same type.
+ * Corte/Perfuração/Impacto are not modelled: nothing in the Talento catalog needs them.
  */
 public enum DamageType {
     FISICO,

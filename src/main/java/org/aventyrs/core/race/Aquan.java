@@ -1,5 +1,6 @@
 package org.aventyrs.core.race;
 
+import org.aventyrs.core.magic.ElementalType;
 import lombok.NonNull;
 import org.aventyrs.core.ability.AttributeAbility;
 import org.aventyrs.core.character.AttributeDomain;
@@ -45,9 +46,9 @@ import java.util.Map;
  *   Movimento Base de Natação, +2UD Movimento) — same environment-tracking gap as Corpo
  *   Maleável; {@code MovementService} now aggregates a real "Movimento Base" stat (same fix
  *   {@code Pequenino}'s own Ligeiro/Sempre Veloz cites) for the flat +2UD clause, but Aquan
- *   still has no {@code *RacialAbility} catalog constant to carry it through, and swimming is
- *   a different sub-stat that stat doesn't track (same gap {@code AtletismoCompetencyAbility
- *   .ANFIBIO} cites).</li>
+ *   still has no {@code *RacialAbility} catalog constant to carry it through, and the Movimento
+ *   Base de Natação ({@code MovementMode#SWIM}) is granted only "enquanto em contato com rios,
+ *   mares e lagos" — {@code Race#grantsMovementMode} takes no Scene to ask.</li>
  * </ul>
  *
  * <p>Tendência is deliberately left unconstrained, same treatment as every other race —
@@ -74,6 +75,12 @@ public class Aquan extends AbstractMesticoRace {
     public Map<AttributeDomain, Integer> getFixedAttributeBonuses() {
         int primaryBonus = parentGrants(PRIMARY_ATTRIBUTE) ? PRIMARY_BONUS_WHEN_PARENT_GRANTS_IT : PRIMARY_BONUS;
         return Map.of(PRIMARY_ATTRIBUTE, primaryBonus, REDUCED_ATTRIBUTE, REDUCED_BONUS);
+    }
+
+    /** The Talentos Elementais' table: Aquan → Agua. */
+    @Override
+    public ElementalType getElement() {
+        return ElementalType.AGUA;
     }
 
     @Override

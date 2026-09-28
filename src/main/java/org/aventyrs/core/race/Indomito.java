@@ -7,6 +7,7 @@ import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.feat.FeatCategory;
 import org.aventyrs.core.feat.StartingFeatSlot;
+import org.aventyrs.core.item.NaturalWeapon;
 import org.aventyrs.core.sheet.DlcRuleset;
 import org.aventyrs.core.skill.SkillType;
 
@@ -26,8 +27,9 @@ import java.util.Map;
  * inherited Características, a size offset read off a parent) has nothing to operate on here.
  * Its distinctness is entirely in its own bonus row and its own Ferocidade timing.
  *
- * <p>Two of this race's traits are mechanically real today: {@link #getFixedAttributeBonuses()}
- * (+1 Força for every Indômito, plus the chosen {@link Tribo}'s own — a second +1 Força and a +1
+ * <p>Ferocidade de Lacerto is real as a state ({@link #resolveLacertoFerocityRound}), Garras
+ * Afiadas as an Arma Natural ({@link #getGrantedNaturalWeapons()}); so are {@link
+ * #getFixedAttributeBonuses()} (+1 Força for every Indômito, plus the chosen {@link Tribo}'s own — a second +1 Força and a +1
  * Vigor for an {@link Tribo#IMPURO}) and {@link #getCreatureType()} ({@link
  * CreatureType#MONSTRUOSO}, "na linha tênue entre um ser monstruoso e um monstro verdadeiro").
  * Categoria de Tamanho 0 needs no override — {@link
@@ -49,33 +51,21 @@ import java.util.Map;
  *   Granting it flat would raise every Indômito's Movimento Base permanently. Note also that this
  *   clause is written in <b>metres</b> where every other Movimento clause in the ruleset uses UD
  *   — a source-document inconsistency, left as written rather than silently converted.</li>
- *   <li><b>Ferocidade de Lacerto</b> (from the fourth turno de combate — the third for an Impuro
- *   — RD, Vantagem em Ataque Corpo-a-Corpo e Danos, forced targeting of the nearest character, no
- *   Perícias requiring concentration; a temporary Autocontrole point prevents or ends it) — the
- *   round condition <i>is</i> expressible today ({@code !isWithinFirstCombatRounds(3)}), and the
- *   Vantagem half would fit {@code resolveConditionalRollBonus} cleanly. It is withheld anyway,
- *   because the clause is a <i>state that can be declined</i>: nothing tracks whether this
- *   Indômito is currently ferocious, and {@code EgoPointsService#useEgoPointsForEffect} has no
- *   notion of spending a point to suppress an ongoing effect. Granting the bonus on Rodada 4 would
- *   hand it to an Indômito who paid to avoid it — an over-grant this codebase's discipline says to
- *   document rather than make. The remaining halves are separately blocked: RD from a {@code
- *   SkillCompetencyAbility} cannot be conditioned on a {@code SceneContext} (a no-arg {@code
- *   @Modifier} can't see one), forced targeting is the "Forced attack targeting / interception"
- *   gap, and "Perícias que exijam concentração" is not a classification any {@code SkillType}
- *   carries. The text's own "turno de combate" versus "Rodada" wording is a further ambiguity
- *   worth resolving before building this.</li>
- *   <li><b>Monstros em Potencial</b> (an Indômito stops counting as Monstruoso and becomes a
- *   Monstro after 3 Talentos Monstruosos, 2 for an Impuro; every 2 such Talentos also brings
- *   Ferocidade forward by 1 Rodada) — counting them is trivial ({@code character.getFeats()}
- *   filtered by {@code FeatCategory#MONSTRUOSO}), but there is nowhere to put the answer:
- *   {@link CreatureType} has only the three constants and no MONSTRO, deliberately (see its own
- *   javadoc), and {@link #getCreatureType()} takes no {@link Character}, so a creature type that
- *   changes with what its holder acquired cannot be expressed. The Ferocidade half depends on
- *   Ferocidade itself.</li>
+ *   <li><b>Ferocidade de Lacerto</b>'s forced targeting and concentration block — the state itself
+ *   is real ({@link #resolveLacertoFerocityRound}, entered, declined and ended through {@code
+ *   LacertoFerocityService}; RD and the two Vantagens reach play through {@code
+ *   sheet.LacertoFerocity}), but "atacam sempre o personagem mais próximo" is the "Forced attack
+ *   targeting" gap for an attacker nobody provoked, and "Perícias que exijam concentração" is not a
+ *   classification any {@code SkillType} carries. ⚠️ "Turno de combate" is read as the combat
+ *   Rodada ({@code BestialFeat#ACEITAR_A_LACERTO}'s own wording for the mimicked state).</li>
+ *   <li><b>Monstros em Potencial</b>'s change of kind (an Indômito stops counting as Monstruoso and
+ *   becomes a Monstro after 3 Talentos Monstruosos, 2 for an Impuro) — counting them is trivial,
+ *   but {@link CreatureType} has only the three constants and no MONSTRO, deliberately (see its own
+ *   javadoc), and {@link #getCreatureType()} takes no {@link Character}. Its other half — "para cada
+ *   dois Talentos Monstruosos … adiantam em 1 Rodada os efeitos de Ferocidade de Lacerto" — is real,
+ *   in {@link #resolveLacertoFerocityRound}.</li>
  *   <li><b>Visão no Escuro</b> (8m, monochromatic) — no vision/senses concept exists in this
  *   core.</li>
- *   <li><b>Garras Afiadas</b> as an Arma Natural — the usual two-markers-missing gap (no weapon
- *   catalog is authored, and nothing marks a weapon as natural).</li>
  *   <li><b>Idiomas</b> (Silvestre + Continental) — same "no Language/Idioma concept exists" gap
  *   as every other race.</li>
  *   <li><b>Longevidade</b> (~80 anos) — same "no age/lifespan concept" gap as every other race.</li>
@@ -133,6 +123,15 @@ public class Indomito implements Race {
         private final List<SkillType> additionalTraining;
     }
 
+    /** "A partir do quarto turno de combate." */
+    public static final int FEROCITY_ROUND = 4;
+
+    /** "Impuros são afetados por estas características no terceiro turno de combate." */
+    public static final int IMPURO_FEROCITY_ROUND = 3;
+
+    /** Monstros em Potencial: "para cada dois Talentos Monstruosos … adiantam em 1 Rodada". */
+    private static final int MONSTROUS_FEATS_PER_ROUND = 2;
+
     private final Tribo tribo;
 
     public Indomito(@NonNull final Tribo tribo) {
@@ -157,9 +156,29 @@ public class Indomito implements Race {
         return Map.copyOf(bonuses);
     }
 
+    /**
+     * Ferocidade de Lacerto: "a partir do quarto turno de combate", the third for an {@link
+     * Tribo#IMPURO}, brought forward one Rodada for every two Talentos Monstruosos held (Monstros em
+     * Potencial). Never before the first Rodada.
+     */
+    @Override
+    public Integer resolveLacertoFerocityRound(final Character character) {
+        int round = tribo == Tribo.IMPURO ? IMPURO_FEROCITY_ROUND : FEROCITY_ROUND;
+        long monstrous = character == null ? 0 : character.getFeats().stream()
+                .filter(feat -> feat.getFeatCategory() == FeatCategory.MONSTRUOSO)
+                .count();
+        return Math.max(1, round - (int) (monstrous / MONSTROUS_FEATS_PER_ROUND));
+    }
+
     @Override
     public Character.CharacterBuilder generateEmptyCharacter(final List<DlcRuleset> dlcRulesetList) {
         return Character.builder();
+    }
+
+    /** Garras Afiadas: "Possuem Garras Afiadas como armas naturais." */
+    @Override
+    public List<NaturalWeapon> getGrantedNaturalWeapons() {
+        return List.of(NaturalWeapon.GARRAS_AFIADAS);
     }
 
     @Override

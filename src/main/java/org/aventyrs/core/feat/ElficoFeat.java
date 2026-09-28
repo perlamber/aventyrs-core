@@ -10,6 +10,7 @@ import org.aventyrs.core.magic.ActivationTime;
 import org.aventyrs.core.magic.MimetizedSpell;
 import org.aventyrs.core.magic.SpellDuration;
 import org.aventyrs.core.magic.catalog.AliadosDaNaturezaSpell;
+import org.aventyrs.core.magic.catalog.MagicTree;
 import org.aventyrs.core.magic.catalog.RegeneracaoSpell;
 import org.aventyrs.core.magic.catalog.VooSpell;
 import org.aventyrs.core.race.Elfo;
@@ -76,6 +77,12 @@ public enum ElficoFeat implements Feat {
                     + "magia 'Cativar Animal' ao custo de 2PD. Guardiões dos Bosques não podem "
                     + "adquirir o título Bruxo.",
             FeatRequirements.builder().build()) {
+        /** "Apenas … recém-criados" — only a starting Talento slot can take it. */
+        @Override
+        public boolean isAcquirableOnlyAtCreation() {
+            return true;
+        }
+
         @Override
         public int resolveSkillRollBonus(final SkillType skillType, final SceneContext sceneContext,
                                           final SkillTrait requestedAbility, final Character character) {
@@ -114,6 +121,12 @@ public enum ElficoFeat implements Feat {
                     + "Undine' ao custo de 2PD. Guardiões das Dunas não podem adquirir o título "
                     + "Bruxo.",
             FeatRequirements.builder().build()) {
+        /** "Apenas … recém-criados" — only a starting Talento slot can take it. */
+        @Override
+        public boolean isAcquirableOnlyAtCreation() {
+            return true;
+        }
+
         @Override
         public int resolveSkillRollBonus(final SkillType skillType, final SceneContext sceneContext,
                                           final SkillTrait requestedAbility, final Character character) {
@@ -131,12 +144,12 @@ public enum ElficoFeat implements Feat {
      * "Enquanto estiver em locais de grande altitude, ou voando, você recebe vantagem em rolagens
      * nas Perícias de Ataque, em 'Empatia Selvagem', 'Conhecimentos: Natureza' e 'Furtividade'."
      */
-    // TODO: withheld, unlike its two siblings, because its condition is not a TerrainType.
-    //  "Locais de grande altitude" is not MOUNTAIN — a mountain Scene is not necessarily at
-    //  altitude and vice versa — and "ou voando" needs the flight state Aviano's Braços Alados
-    //  records as missing. Mapping it to MOUNTAIN would grant the bonus in caves-and-crags Scenes
-    //  the clause does not cover and withhold it while flying, which it does. Granting nothing is
-    //  the honest reading until either state exists.
+    // The Vantagem is real: EnvironmentalState#altitude HIGH or #flying, both read off the
+    // holder's SceneContext (deliberately not TerrainType.MOUNTAIN — a mountain Scene is not
+    // necessarily at altitude, and vice versa).
+    // The mimetized Voo Livre is real too (getGrantedMimetizedSpells, cast through
+    // MimetizedSpellCastingService). A Magia still grants no MovementMode, so casting it changes
+    // no Movimento figure.
     GUARDIAO_DAS_NUVENS(
             "Você possui pele em tom acinzentado e um corpo adaptado ao frio das Montanhas. "
                     + "Enquanto estiver em locais de grande altitude, ou voando, você recebe "
@@ -145,6 +158,12 @@ public enum ElficoFeat implements Feat {
                     + "magia 'Voo' em você mesmo, com Tempo de Conjuração de 1PA e Duração de 2 "
                     + "Rodadas, ao custo de 3PD.",
             FeatRequirements.builder().build()) {
+        /** "Apenas … recém-criados" — only a starting Talento slot can take it. */
+        @Override
+        public boolean isAcquirableOnlyAtCreation() {
+            return true;
+        }
+
         @Override
         public int resolveSkillRollBonus(final SkillType skillType, final SceneContext sceneContext,
                                           final SkillTrait requestedAbility, final Character character) {
@@ -187,6 +206,12 @@ public enum ElficoFeat implements Feat {
                     + "referente a vida e hábitos marinhos. Também podem mimetizar a magia "
                     + "'Regeneração', ao custo de 2PD.",
             FeatRequirements.builder().build()) {
+        /** "Apenas … recém-criados" — only a starting Talento slot can take it. */
+        @Override
+        public boolean isAcquirableOnlyAtCreation() {
+            return true;
+        }
+
         @Override
         public int resolveSkillRollBonus(final SkillType skillType, final SceneContext sceneContext,
                                           final SkillTrait requestedAbility, final Character character) {
@@ -270,10 +295,8 @@ public enum ElficoFeat implements Feat {
      * Escolha uma Árvore de Magia Natural, você pode mimetizar as magias Broto e Muda da árvore
      * escolhida."
      */
-    // TODO: mimetizar has no mechanism, and spending PD in place of PM has no cost step to
-    //  redirect — SpellCastingService spends nothing at all. (The chosen Árvore could be
-    //  recorded now — a choice-carrying AbstractFeat subclass, see FocoEmPericiaFeat — but
-    //  mimetizar is the blocker, not the choice.)
+    // Real, through ArvoresMimetizadasFeat: one chosen Árvore Natural, its Broto and Muda (and its
+    // Emergente with 2 Títulos Despertos), each paid in PD equal to its Mana cost.
     ALMA_FEERICA(
             "Você é considerado um personagem Feérico para requisitos de Talentos e Habilidades. "
                     + "Escolha uma Árvore de Magia Natural, você pode mimetizar as magias Broto e "
@@ -284,6 +307,11 @@ public enum ElficoFeat implements Feat {
                     .requiredRace(Elfo.class)
                     .requiredAwakenedTitles(1)
                     .build()) {
+        @Override
+        public List<FeatChoice<?>> resolveRequiredChoices(final Character holder) {
+            return List.of(new FeatChoice<>(MagicTree.class, 1, ArvoresMimetizadasFeat.naturalTrees()));
+        }
+
         @Override
         public Set<CreatureType> getGrantedPrerequisiteCreatureTypes(final Character character) {
             return Set.of(CreatureType.FEERICO);
