@@ -25,8 +25,26 @@ public interface ActiveAbility {
      */
     ActionCost getActionPointCost();
 
+    /**
+     * The Tempo de Ativação as holder pays it — {@link #getActionPointCost()} unless the holder's
+     * own Talentos change it ({@code MetamagicoFeat#ARTESAO_DE_BARREIRAS}' "como Ação Livre"). What
+     * {@code ActiveAbilityService#activate} checks.
+     */
+    default ActionCost getActionPointCost(final Character holder) {
+        return getActionPointCost();
+    }
+
     /** Pontos de Magia spent to trigger this ability's activated state. */
     int getMagicPointCost();
+
+    /**
+     * The PM as holder pays them — {@link #getMagicPointCost()} unless the holder's own Talentos
+     * reduce it ({@code MetamagicoFeat#ENGENHEIRO_DO_MANA}). What {@code ActiveAbilityService#activate}
+     * checks and spends.
+     */
+    default int getMagicPointCost(final Character holder) {
+        return getMagicPointCost();
+    }
 
     /**
      * Pontos de Determinação spent to trigger this ability's activated state — 0 for most

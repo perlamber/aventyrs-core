@@ -1,6 +1,7 @@
 package org.aventyrs.core.character.services;
 
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.magic.Spell;
 import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.character.DamageType;
 import org.aventyrs.core.character.DamageDescriptor;
@@ -319,6 +320,15 @@ public class DamageServiceImpl implements DamageService {
 
     @Override
     public int calculateFinalDamage(final CombatantSheet target, final SceneContext sceneContext,
+                                    final DamageType damageType, final CombatantSheet source,
+                                    final int rawDamage, final boolean ignoreDamageReduction,
+                                    final boolean halfDamage, final Spell spell) {
+        return computeFinalDamage(target.getCharacter(), target, sceneContext, damageType, null, source,
+                rawDamage, ignoreDamageReduction, halfDamage, spell);
+    }
+
+    @Override
+    public int calculateFinalDamage(final CombatantSheet target, final SceneContext sceneContext,
                                     final DamageDescriptor damageDescriptor, final CombatantSheet source,
                                     final int rawDamage, final boolean ignoreDamageReduction) {
         return computeFinalDamage(target.getCharacter(), target, sceneContext, damageDescriptor.damageType(),
@@ -336,6 +346,25 @@ public class DamageServiceImpl implements DamageService {
                                     final CombatantSheet source,
                                     final int rawDamage, final boolean ignoreDamageReduction,
                                     final boolean attackHalvesDamage) {
+        return computeFinalDamage(character, target, sceneContext, damageType, damageDescriptor, source, rawDamage,
+                ignoreDamageReduction, attackHalvesDamage, null);
+    }
+
+    /**
+     * spell is the Magia this hit comes from, or {@code null} — what the "Magias que você conheça /
+     * seja capaz de conjurar" clauses read: {@code Feat#isImmuneToSpell} zeroes the hit before
+     * anything else (Aptidão Mágica Dracônica), and {@code Feat#resolveSpellMagicReduction} is an
+     * extra RM against it (Arcanista).
+     */
+    private int computeFinalDamage(final Character character, final CombatantSheet target, final SceneContext sceneContext,
+                                    final DamageType damageType, final DamageDescriptor damageDescriptor,
+                                    final CombatantSheet source,
+                                    final int rawDamage, final boolean ignoreDamageReduction,
+                                    final boolean attackHalvesDamage, final Spell spell) {
+        if (target != null && spell != null && character.getFeats().stream()
+                .anyMatch(feat -> feat.isImmuneToSpell(spell, target))) {
+            return 0;
+        }
         // An immunity ("Imunidade ao Elemento escolhido") is judged before anything else: there is
         // nothing left for RD, RA or a Meio-Dano to act on, and no Pele de Pedra is spent on it.
         if (target != null && target.isImmuneToDamage(damageType, damageDescriptor)) {
@@ -379,6 +408,15 @@ public class DamageServiceImpl implements DamageService {
                 }
                 if (effectiveType == DamageType.MAGICO) {
                     reduction += getTotalMagicReduction(target);
+                }
+                // Arcanista's "RM para resistir aos efeitos de Magias que você conheça": an RM of its
+                // own, scoped to the Magia rather than to magical damage — ⚠️ a reading: it reaches
+                // whatever non-Primordial damage that Magia deals, elemental included, since the
+                // clause names the Magia and the catalog's offensive Magias are mostly elemental.
+                if (spell != null && effectiveType != DamageType.PRIMORDIAL) {
+                    reduction += character.getFeats().stream()
+                            .mapToInt(feat -> feat.resolveSpellMagicReduction(spell, target))
+                            .sum();
                 }
                 reduction += elementalResistance(target, damageDescriptor);
             } else {

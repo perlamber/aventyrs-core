@@ -95,6 +95,9 @@ public class SpellCastingServiceImpl implements SpellCastingService {
         int spellDamageBonus = casterCharacter.getFeats().stream()
                 .mapToInt(feat -> feat.resolveSpellDamageBonus(spell, casterCharacter, request.getActivatedFeats()))
                 .sum();
+        int healingBonus = casterCharacter.getFeats().stream()
+                .mapToInt(feat -> feat.resolveSpellHealingBonus(spell, casterCharacter, request.getActivatedFeats()))
+                .sum();
         int effectDelayRounds = casterCharacter.getFeats().stream()
                 .mapToInt(feat -> feat.resolveCastEffectDelayRounds(spell, casterCharacter, request.getActivatedFeats()))
                 .max().orElse(0);
@@ -131,7 +134,10 @@ public class SpellCastingServiceImpl implements SpellCastingService {
                 .areaDamage(spell.getDuration() != null && spell.getDuration().kind() == DurationKind.INSTANTANEA
                         ? AreaDamage.cataclysm(request.getCaster(), request.getSceneContext())
                         : null)
-                .spellEffect(resolveEffect(spell, SpellEffectContext.of(isHostileTarget(request), request.getCaster()))
+                .healingBonus(healingBonus)
+                .targetImmune(isTargetImmune(request, spell))
+                .spellEffect(resolveEffect(spell, SpellEffectContext.of(isHostileTarget(request), request.getCaster())
+                                .withHealingBonus(healingBonus))
                         .orElse(null))
                 .recordedAction(recordedAction(request, spell, deliveryResult))
                 .build();
@@ -172,6 +178,17 @@ public class SpellCastingServiceImpl implements SpellCastingService {
                 && (request.getSceneContext() != null
                         && request.getSceneContext().getEnemies().contains(request.getCombatantTarget())
                     || mustOvercomeMagicDefense(request));
+    }
+
+    /**
+     * Aptidão Mágica Dracônica: whether the named target is immune to this Magia ({@code
+     * Feat#isImmuneToSpell}) — reported, so the caller neither lands its effect nor deals its damage.
+     * The caster is never immune to their own cast.
+     */
+    private static boolean isTargetImmune(final SpellCastRequest request, final Spell spell) {
+        CombatantSheet target = request.getCombatantTarget();
+        return target != null && target != request.getCaster() && target.getCharacter().getFeats().stream()
+                .anyMatch(feat -> feat.isImmuneToSpell(spell, target));
     }
 
     /**
@@ -277,6 +294,11 @@ public class SpellCastingServiceImpl implements SpellCastingService {
                         request.getSceneContext()))
                 .sum();
         return cost <= 0 || reduction <= 0 ? cost : Math.max(MINIMUM_REDUCED_MANA_COST, cost - reduction);
+    }
+
+    @Override
+    public int resolveManaCost(final SpellCastRequest request) {
+        return resolveManaCost(resolveVersion(request), request);
     }
 
     /** Every Mana-cost reduction clause's "(mínimo 1PM)". */

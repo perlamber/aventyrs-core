@@ -28,10 +28,10 @@ public enum DefensiveImprovement implements Improvement {
             "Duração de Encantamentos e Maldições +1 Rodada.", null) {
         @Override
         public int resolveDurationIncreaseInRounds(final Spell spell, final Character character) {
-            return spell.getPrimaryType() == MagicType.ENCANTAMENTO
+            return spell != null && (spell.getPrimaryType() == MagicType.ENCANTAMENTO
                     || spell.getSecondaryType() == MagicType.ENCANTAMENTO
                     || spell.getPrimaryType() == MagicType.MALDICAO
-                    || spell.getSecondaryType() == MagicType.MALDICAO ? 1 : 0;
+                    || spell.getSecondaryType() == MagicType.MALDICAO) ? 1 : 0;
         }
     },
     RESISTENTE("Resistente", ItemRarity.COMMON, 0, 0, 0, 0, 0,

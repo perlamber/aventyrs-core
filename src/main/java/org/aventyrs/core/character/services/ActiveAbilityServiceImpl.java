@@ -105,8 +105,10 @@ public class ActiveAbilityServiceImpl implements ActiveAbilityService {
         if (grantedForm != null && !characterSheet.canTakeForm(grantedForm)) {
             throw new IllegalOperationException(FORM_NOT_AVAILABLE);
         }
-        checkActionCost(characterSheet, ability.getActionPointCost(), turnNumber);
-        if (magicPointsService.getCurrentMagicPoints(character, characterSheet) < ability.getMagicPointCost()) {
+        ActionCost actionCost = ability.getActionPointCost(character);
+        int magicPointCost = ability.getMagicPointCost(character);
+        checkActionCost(characterSheet, actionCost, turnNumber);
+        if (magicPointsService.getCurrentMagicPoints(character, characterSheet) < magicPointCost) {
             throw new IllegalOperationException(NOT_ENOUGH_MAGIC_POINTS);
         }
         if (determinationPointsService.getCurrentDeterminationPoints(character, characterSheet)
@@ -121,7 +123,7 @@ public class ActiveAbilityServiceImpl implements ActiveAbilityService {
             throw new IllegalOperationException(NOT_ENOUGH_HIT_POINTS);
         }
 
-        characterSheet.spendMagicPoints(ability.getMagicPointCost());
+        characterSheet.spendMagicPoints(magicPointCost);
         characterSheet.spendDeterminationPoints(ability.getDeterminationPointCost());
         if (ability.getHitPointCost() > 0) {
             characterSheet.applyDamage(ability.getHitPointCost());
@@ -145,7 +147,7 @@ public class ActiveAbilityServiceImpl implements ActiveAbilityService {
         }
         characterSheet.startCooldown(ability, ability.getCooldownRounds());
         characterSheet.startRestCooldown(ability, ability.getReactivationRest());
-        if (ability.getActionPointCost().kind() == ActionCost.Kind.REACTION) {
+        if (actionCost.kind() == ActionCost.Kind.REACTION) {
             characterSheet.spendReaction();
         }
     }

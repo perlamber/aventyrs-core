@@ -28,18 +28,26 @@ public class MovementReactionServiceImpl implements MovementReactionService {
     @Override
     public List<CombatantSheet> getProvokedReactors(@NonNull final CombatantSheet mover,
                                                      final SceneContext sceneContext,
-                                                     final Manoeuvre manoeuvre) {
+                                                     final Manoeuvre manoeuvre,
+                                                     final CombatantSheet chargeTarget) {
         if (sceneContext == null || isExempt(mover.getCharacter(), manoeuvre)) {
             return List.of();
         }
         List<CombatantSheet> reactors = new ArrayList<>();
         for (CombatantSheet enemy : sceneContext.getEnemies()) {
             Range distance = sceneContext.getDistanceTo(enemy);
-            if (distance != null && threatens(enemy, distance)) {
+            if (distance != null && threatens(enemy, distance)
+                    && !(manoeuvre == Manoeuvre.INVESTIDA && enemy == chargeTarget && !mayDefendPerimeterAsTarget(enemy))) {
                 reactors.add(enemy);
             }
         }
         return List.copyOf(reactors);
+    }
+
+    /** Whether a held Talento lets the charge's own target Defender o Perímetro (Mestre Escudeiro). */
+    private static boolean mayDefendPerimeterAsTarget(final CombatantSheet target) {
+        return target.getCharacter().getFeats().stream()
+                .anyMatch(feat -> feat.permitsPerimeterDefenceAsChargeTarget(target));
     }
 
     /**

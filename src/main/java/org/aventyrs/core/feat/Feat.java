@@ -344,6 +344,28 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     }
 
     /**
+     * The same, for a clause that holds only while a timed state is running on the holder's sheet —
+     * {@code PeritoFeat#CRIANCA_DO_MAR}'s "respirar na água por um curto período, ao custo de 1PD por
+     * Rodada". Defaults to the sheet-less form; {@code holder} is {@code null} for a caller holding
+     * only a {@code Character}, which reads as "not running". Asked by {@code
+     * CombatantSheet#canBreatheUnderwater()}.
+     */
+    default boolean allowsUnderwaterBreathing(final Character character, final CombatantSheet holder) {
+        return allowsUnderwaterBreathing(character);
+    }
+
+    /**
+     * Whether this Talento lets its holder cling to walls and ceilings right now — "grudar em paredes
+     * e tetos, incluindo superfícies lisas e movimentos de cabeça para baixo" ({@code
+     * PeritoFeat#REI_DA_MONTANHA}). A permission the caller reads through {@code
+     * CombatantSheet#canClingToSurfaces()}: which surface is where is geometry, the caller's as ever.
+     * False by default, and for a {@code null} holder.
+     */
+    default boolean clingsToSurfaces(final Character character, final CombatantSheet holder) {
+        return false;
+    }
+
+    /**
      * How many Títulos Aventyr character currently has Desperto — every filled slot of {@code
      * Character#getAllTitles()}, narrowed to one {@link TitleArchetype} when archetype is
      * non-null. "Desperto" is simply "held": there is no separate awakening step, and no
@@ -827,6 +849,20 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     }
 
     /**
+     * {@link #permitsActivation(SkillType, SkillRoll, AttackSource, CombatantSheet)} seeing the
+     * roller's {@link SceneContext} — for a use gated on the Cena itself: whether it is a Cena de
+     * Combate and which Rodada ({@code PeritoFeat#MESTRE_PERITO}'s "Na primeira Rodada de cada Cena
+     * de Combate", {@code #MAESTRIA_EM_PERICIA}'s "Se não estiver em combate"). What {@code
+     * AbstractSkillInteraction} calls; defaults to the shorter form. {@code null} when the roll has no
+     * Scene.
+     */
+    default boolean permitsActivation(final SkillType skillType, final SkillRoll skillRoll,
+                                      final AttackSource attackSource, final CombatantSheet holder,
+                                      final SceneContext sceneContext) {
+        return permitsActivation(skillType, skillRoll, attackSource, holder);
+    }
+
+    /**
      * Whether activating this Talento pays for throwing the lowest die of a skillType roll again —
      * "você pode aumentar o Tempo de Ação … em +1PA, se o fizer poderá rolar novamente o dado de
      * menor valor em sua rolagem" ({@code DuelistaFeat#LUTADOR_NATO}, {@code
@@ -836,6 +872,17 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      */
     default boolean grantsLowestDieReroll(final SkillType skillType) {
         return false;
+    }
+
+    /**
+     * The same, for a reroll scoped to the holder's own choices or to the Cena — {@code
+     * PeritoFeat#MAESTRIA_EM_PERICIA}'s "Sob situações de estresse ou combates … você poderá rolar
+     * novamente o dado de menor valor", only on "a Perícia escolhida em Foco em Perícia". What {@code
+     * AbstractSkillInteraction} asks; defaults to the shorter form.
+     */
+    default boolean grantsLowestDieReroll(final SkillType skillType, final CombatantSheet roller,
+                                          final SceneContext sceneContext) {
+        return grantsLowestDieReroll(skillType);
     }
 
     /**
@@ -862,6 +909,43 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      */
     default int resolveAttackActionPointAdjustment(final SkillType skillType, final AttackSource attackSource,
                                                    final CombatantSheet attacker, final Set<Feat> activatedFeats) {
+        return 0;
+    }
+
+    /**
+     * What activating this Talento sets a <b>Perícia roll's</b> Tempo de Ação to — {@code
+     * PeritoFeat#LEMBRAR_COMO_SE_FAZ}' "a nova tentativa utilizará apenas 1PA". The Perícia-roll twin
+     * of {@link #resolveAttackActionPointOverride}, read by {@code ActionPointsService#getSkillRollCost}
+     * and — since an attack is a Perícia roll too — by {@code #getAttackCost}, where an attack override
+     * outranks it. {@code null} by default; of two, the lowest wins.
+     *
+     * @param sceneContext the roller's, or {@code null} with no Scene
+     */
+    default Integer resolveSkillRollActionPointOverride(final SkillType skillType, final CombatantSheet roller,
+                                                        final Set<Feat> activatedFeats, final SceneContext sceneContext) {
+        return null;
+    }
+
+    /**
+     * What this Talento multiplies a Perícia roll's Tempo de Ação by — {@code
+     * PeritoFeat#MAESTRIA_EM_PERICIA}'s "ao custo de triplicar seu Tempo de Ação". Applied after any
+     * override and before every adjustment. 1 by default; of two, the largest wins (a multiplier is a
+     * restatement of the price, not a bonus that stacks).
+     */
+    default int resolveSkillRollActionPointMultiplier(final SkillType skillType, final CombatantSheet roller,
+                                                      final Set<Feat> activatedFeats, final SceneContext sceneContext) {
+        return 1;
+    }
+
+    /**
+     * How many PA this Talento adds to (positive) or takes off (negative) a Perícia roll's Tempo de
+     * Ação — {@code PeritoFeat#PERITO_VELOZ}'s "A primeira rolagem da Perícia escolhida que fizer em
+     * cada um de seus Turnos tem o Tempo de Ação reduzido em -1PA". The Perícia-roll twin of {@link
+     * #resolveAttackActionPointAdjustment}, summed with it on an attack; a reduction never takes the
+     * price below 1PA. Zero by default.
+     */
+    default int resolveSkillRollActionPointAdjustment(final SkillType skillType, final CombatantSheet roller,
+                                                      final Set<Feat> activatedFeats, final SceneContext sceneContext) {
         return 0;
     }
 
@@ -899,6 +983,20 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     default int resolveDifficultyReduction(final SkillType skillType, final Character character,
                                            final SceneContext sceneContext) {
         return resolveDifficultyReduction(skillType, character);
+    }
+
+    /**
+     * The longest form, adding the roll — what a GD clause scoped to an <b>Especialização</b> or to a
+     * Talento <b>activated</b> on this roll needs: {@code PeritoFeat#LEITURA_COMPORTAMENTAL}'s
+     * "Atenção: Discernir Motivação" ({@code SkillRoll#getRequestedAbility()}), {@code
+     * #MAESTRIA_EM_PERICIA}'s opted-into -2 Níveis and {@code #LEMBRAR_REVISAR_E_APRIMORAR}'s "a
+     * segunda rolagem" of an activated Lembrar Como se Faz ({@code SkillRoll#activated}). What {@code
+     * AbstractSkillInteraction} calls; defaults to the context-taking form. {@code null} on the
+     * bonuses-only preview path, which activates and requests nothing.
+     */
+    default int resolveDifficultyReduction(final SkillType skillType, final Character character,
+                                           final SceneContext sceneContext, final SkillRoll skillRoll) {
+        return resolveDifficultyReduction(skillType, character, sceneContext);
     }
 
     /**
@@ -988,10 +1086,26 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     }
 
     /**
+     * A bonus (or malus) this Talento puts on the PV a cast's healing restores ({@code
+     * SpellCastingResult#getHealingBonus}, carried into {@code SpellHealingEffect} by {@code
+     * SpellEffectContext#healingBonus}) — {@code MetamagicoFeat#CONJURACAO_RAPIDA}'s Desvantagem "nas
+     * rolagens de … Cura mágica", {@code ElementalFeat#ARCANISMO_ELEMENTAL}'s "+2" on "Magias
+     * Elementais de dano e cura". The healing twin of {@link #resolveSpellDamageBonus}. Zero by default.
+     */
+    default int resolveSpellHealingBonus(final Spell spell, final Character character,
+                                         final java.util.Set<Feat> activatedFeats) {
+        return 0;
+    }
+
+    /**
      * Rodadas this Talento adds to the Duração of a Magia its holder casts — {@code
      * ElementalFeat#ARCANISMO_ELEMENTAL}'s "suas Magias de Encantamento com este elemento tem a
      * Duração aumentada em +1 Rodada". Summed by {@code SpellDurationService} beside an item's
      * enhancement, and applied only to an extendable Duração. Zero by default.
+     *
+     * <p>Asked with a {@code null} spell for an effect extended like a Magia without being one
+     * ({@code SpellDurationService#resolveNonSpellDurationIncrease}, the Barreira Mágica): an override
+     * scoped to some kind of Magia must answer 0 then.
      */
     default int resolveSpellDurationIncrease(final Spell spell, final Character character) {
         return 0;
@@ -1456,6 +1570,20 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     }
 
     /**
+     * Which kind of trait each picked Perícia owes, when {@link #resolveRequiredChoices} asks for
+     * {@code SkillType}s whose answer is a trait of that Perícia — {@code
+     * PeritoFeat#TREINADO_EM_PERICIAS}' "Escolha 3 Perícias que você possua Treinamento. Você pode
+     * escolher uma Especialização ou Habilidade de Competência de cada uma destas Perícias". The
+     * Talento twin of {@code AttributeAbility#resolvePendingSkillTraitKinds()} ({@code
+     * GnoseAbility#DOMINIO_DO_CONHECIMENTO}): the choice names the Perícias, and this tells a client
+     * whether to offer each one's Especializações, Habilidades de Competência or both. Empty by
+     * default.
+     */
+    default Set<org.aventyrs.core.skill.SkillTraitKind> resolveRequiredSkillTraitKinds() {
+        return Set.of();
+    }
+
+    /**
      * Whether this Talento can be taken only while the character is being created ("Apenas
      * personagens recém-criados") — through {@code CharacterCreationService#grantStartingFeats},
      * never {@code FeatService#grantFeat}, and never listed by {@link FeatCatalog#availableFor}.
@@ -1463,6 +1591,18 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      */
     default boolean isAcquirableOnlyAtCreation() {
         return false;
+    }
+
+    /**
+     * Whether character may take this Talento into a <b>starting slot</b> — asked by {@code
+     * FeatPool#isEligible} instead of {@link #isEligible(Character, CharacterSheet)}. The same answer
+     * by default. Overridden where "recém-criados" is one branch of a disjunction, which {@link
+     * #isAcquirableOnlyAtCreation()} (all-or-nothing) cannot say: {@code
+     * PeritoFeat#TREINADO_EM_PERICIAS}' "Personagens recém-criados ou Graduação 4 em 3 diferentes
+     * Perícias" is open to anyone at creation and gated on the Graduações afterwards.
+     */
+    default boolean isEligibleAtCreation(final Character character, final CharacterSheet sheet) {
+        return isEligible(character, sheet);
     }
 
     /**
@@ -1948,6 +2088,61 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      */
     default int resolveMagicReduction(final Character character) {
         return 0;
+    }
+
+    /**
+     * RM this Talento grants against one particular incoming Magia — {@code MetamagicoFeat#ARCANISTA}'s
+     * "RM para resistir aos efeitos de Magias que você conheça", one instance ({@code
+     * DamageService#DEFAULT_DAMAGE_REDUCTION}) when the hit's Magia is one the holder knows ({@code
+     * magic.SpellFamiliarity}). The scoped twin of {@link #resolveMagicReduction}, read by {@code
+     * DamageService} off {@code DamageInteraction#fromSpell}. Zero by default.
+     */
+    default int resolveSpellMagicReduction(final Spell spell, final CombatantSheet holder) {
+        return 0;
+    }
+
+    /**
+     * A bonus to the holder's Defesa of defenseType against one particular incoming Magia — the
+     * Aptidões Mágicas' "+3 (+5) em DM para resistir aos efeitos de magias que seja capaz de
+     * conjurar". Added by {@code AttackReceiver} to the defence total and by {@code AttackDelivery}
+     * to the Defesa the attack must beat, whenever the attack source is a Magia. Zero by default.
+     */
+    default int resolveSpellDefenseBonus(final DefenseType defenseType, final Spell spell,
+                                         final CombatantSheet holder) {
+        return 0;
+    }
+
+    /**
+     * Níveis the GD to resist one particular incoming Magia drops for the holder — {@code
+     * MetamagicoFeat#ARTESAO_DE_BARREIRAS} (while a Barreira runs) and {@code #APTIDAO_MAGICA_SUPREMA}'s
+     * "A GD para resistir às magias que você também é capaz de conjurar é reduzida em 1 nível". Applied
+     * by {@code AttackReceiver}, where the defender rolls against a GD; {@code AttackDelivery} compares
+     * against a flat Defesa and reports it unapplied, like every defender-side nível. Zero by default.
+     */
+    default int resolveSpellResistanceDifficultyReduction(final Spell spell, final CombatantSheet holder) {
+        return 0;
+    }
+
+    /**
+     * Whether the holder is immune to one particular incoming Magia — {@code
+     * MetamagicoFeat#APTIDAO_MAGICA_DRACONICA}'s "imune a Magias que você é capaz de conjurar" while
+     * 10PD remain. Table ruling (2026-09-27): immune means the attack is defended outright and deals
+     * neither damage nor effects — {@code AttackReceiver} defends it, {@code AttackDelivery} misses,
+     * {@code DamageService} zeroes a hit marked {@code fromSpell}, and {@code SpellCastingService}
+     * reports {@code SpellCastingResult#isTargetImmune()}. False by default.
+     */
+    default boolean isImmuneToSpell(final Spell spell, final CombatantSheet holder) {
+        return false;
+    }
+
+    /**
+     * Whether the holder may Defender o Perímetro — react to an enemy moving inside their melee reach
+     * — even while they are the target of that enemy's Investida, which ordinarily denies it (table
+     * ruling, 2026-09-28). {@code EscudeiroFeat#MESTRE_ESCUDEIRO}, while using a Escudo. Read by
+     * {@code MovementReactionService}. False by default.
+     */
+    default boolean permitsPerimeterDefenceAsChargeTarget(final CombatantSheet holder) {
+        return false;
     }
 
     /**
@@ -2469,6 +2664,55 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      */
     default List<Blessing> resolveInitiativeBlessings() {
         return List.of();
+    }
+
+    /**
+     * Whether this Talento lets its holder lower their own Iniciativa to act last — {@code
+     * PeritoFeat#ANALISTA_TATICO}'s "No início de cada Cena de Combate, antes de qualquer ação sua,
+     * você pode escolher reduzir seu valor de Iniciativa de modo a agir por último". Asked by {@code
+     * Scene#deferToLast}, which also enforces the "antes de qualquer ação sua". False by default.
+     */
+    default boolean permitsDeferringToLast(final Character character) {
+        return false;
+    }
+
+    /**
+     * Reações this Talento adds while a Scene-scoped condition holds — {@code
+     * PeritoFeat#ANALISTA_TATICO}'s "Enquanto você for o último a agir você recebe uma Ação Livre e
+     * Reação adicional", read off {@code SceneContext#getInitiativePosition()}. Summed by {@code
+     * ReactionsService#getTotalReactions(CombatantSheet, int, SceneContext)}; a {@code null} context
+     * (the shorter overloads) reads as "condition not met". Zero by default.
+     */
+    default int resolveReactionsIncrease(final Character character, final SceneContext sceneContext) {
+        return 0;
+    }
+
+    /** The Ações Livres twin of {@link #resolveReactionsIncrease}, summed by {@code FreeActionsService}. */
+    default int resolveFreeActionsIncrease(final Character character, final SceneContext sceneContext) {
+        return 0;
+    }
+
+    /**
+     * How much this Talento raises its holder's own Resistência à Corrente de Efeitos — the margin an
+     * attack must clear the holder's Defesa by for a Corrente to land ({@code
+     * EffectChainService#getRequiredMargin}). {@code PeritoFeat#GRANDE_ANALISTA_TATICO}'s "Enquanto você
+     * for o último a agir, a sua resistência a Corrente de Efeitos aumenta em +1", read off
+     * holderPosition — resolved from the live Scene by the attack path, {@code UNKNOWN} without one.
+     * Zero by default.
+     */
+    default int resolveEffectChainResistanceIncrease(final Character holder,
+                                                     final org.aventyrs.core.scene.InitiativePosition holderPosition) {
+        return 0;
+    }
+
+    /**
+     * How much this Talento lowers the Resistência à Corrente de Efeitos of whoever its holder attacks
+     * — "a resistência à Correntes de Efeitos de seus inimigos alvos (apenas para resistir aos seus
+     * efeitos) é reduzida em -1" ({@code PeritoFeat#GRANDE_ANALISTA_TATICO}). Zero by default.
+     */
+    default int resolveTargetEffectChainResistanceReduction(final Character attacker,
+                                                            final org.aventyrs.core.scene.InitiativePosition attackerPosition) {
+        return 0;
     }
 
     /**

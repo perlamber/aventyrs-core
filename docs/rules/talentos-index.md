@@ -150,8 +150,10 @@ The list below used to be headed "still cannot express". Every shape on it is no
 
 - **"Recém-criados" as one branch of a disjunction** — the whole-Talento case is
   `Feat#isAcquirableOnlyAtCreation` (17 Talentos, pinned by `PrerequisiteSweepTest`), but it is
-  all-or-nothing. `FeericoFeat#ASAS` ("Avianos e Bestiais, ou … recém-criados de raça Feérica")
-  and `PeritoFeat#TREINADO_EM_PERICIAS` ("recém-criados ou Graduação 4 em 3 Perícias") stay open.
+  all-or-nothing. As one branch it is `Feat#isEligibleAtCreation` — the question a starting slot
+  asks — overridden beside `isEligible`: `PeritoFeat#TREINADO_EM_PERICIAS` ("recém-criados ou
+  Graduação 4 em 3 Perícias", 0.0.70). `FeericoFeat#ASAS` ("Avianos e Bestiais, ou … recém-criados
+  de raça Feérica") could take the same shape and has not yet.
 - **A second Perícia Graduação** — `requiredSkillType`/`requiredSkillGraduation` is one pair;
   `AssassinoFeat#ESPECIALISTA_TECNOLOGICO` names two and keeps an `isEligible` override.
 - **A held Talento's own recorded *choice*** — "apenas personagens que não escolheram Magias

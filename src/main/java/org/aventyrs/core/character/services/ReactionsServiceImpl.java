@@ -46,6 +46,10 @@ public class ReactionsServiceImpl implements ReactionsService {
             timed -= sheet.getTemporaryMalus(ModifierType.REACTIONS);
         }
         int baseline = permanentReactions(character) + timed;
+        // Analista Tático: "Enquanto você for o último a agir você recebe uma … Reação adicional".
+        for (org.aventyrs.core.feat.Feat feat : character.getFeats()) {
+            baseline += feat.resolveReactionsIncrease(character, sceneContext);
+        }
         return Math.max(0, character.getActionProfile().adjustReactions(baseline, turnNumber, sceneContext));
     }
 

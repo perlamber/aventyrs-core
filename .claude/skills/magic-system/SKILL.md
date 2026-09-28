@@ -497,6 +497,26 @@ the example that originally justified building it.
   (`CombatantSheet#getStoredSpells`) for Armazenar Magia (1 Semente/Broto) or its Superior (2, or
   one Muda; releasable as a Reação too); every held Magia dissipates at the next Descanso.
 
+## Resisting a Magia you can cast (0.0.70)
+
+- **"Magias que você conheça / seja capaz de conjurar"** is `magic.SpellFamiliarity#canCast` —
+  learned (`Character#getSpells`) plus mimetized, an Efeito Alternativo through its base (table
+  ruling: both phrasings are one set).
+- **An incoming Magia is identified by the attack source**: `AttackDelivery`/`AttackReceiver` ask
+  `Feat#resolveSpellDefenseBonus` (Aptidão Ampla +3 / Assombrosa +5 DM),
+  `#resolveSpellResistanceDifficultyReduction` (Suprema; Artesão while a Barreira runs — applied by
+  `AttackReceiver`, reported unapplied by `AttackDelivery`) and `#isImmuneToSpell` (Dracônica, ≥10
+  current PD), and mark the chain head `DamageInteraction#fromSpell`, which carries the Magia into
+  `DamageService` for the immunity and Arcanista's scoped RM (`#resolveSpellMagicReduction`). A
+  non-attack cast reports `SpellCastingResult#isTargetImmune()`.
+- **Healing** takes `Feat#resolveSpellHealingBonus` (Conjuração Rápida's Desvantagem, Arcanismo
+  Elemental's +2), carried as `SpellEffectContext#healingBonus` into `SpellHealingEffect` and
+  reported on `SpellCastingResult#getHealingBonus()`.
+- **The Barreira Mágica** reprices through `ActiveAbility#getActionPointCost(Character)`/
+  `#getMagicPointCost(Character)`, extends through `SpellDurationService#resolveNonSpellDurationIncrease`
+  (hooks asked with a `null` Magia must answer 0 when scoped), and shields adjacent allies through
+  `DefenseService`'s scan of `BarreiraMagicaActiveAbility#resolveAllyDefesasBonus`.
+
 ## Reference files to read first
 
 - `src/main/java/org/aventyrs/core/magic/Spell.java` — the interface every Magia implements;

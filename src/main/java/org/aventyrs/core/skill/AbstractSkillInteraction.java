@@ -323,7 +323,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
         validateShieldAttack(target, attackSource);
         if (skillRoll != null) {
             validateRequestedTrait(character, characterSkill, skillRoll.getRequestedAbility(), attackSource);
-            validateActivatedFeats(target, skillRoll, attackSource);
+            validateActivatedFeats(target, skillRoll, attackSource, sceneContext);
         }
         int graduationValue = characterSkill.getGraduation().getGraduationValue();
         // Agnação Ancestral: "são considerados treinados e especialistas nesta rolagem" — the untrained
@@ -405,7 +405,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                 .mapToInt(SkillCompetencyAbility::getDifficultyReduction)
                 .sum();
         difficultyReduction += sumAttributeDomainDifficultyReductions(character.getAttributeAbilities(), attributeDomain, character);
-        difficultyReduction += sumFeatDifficultyReductions(character, sceneContext);
+        difficultyReduction += sumFeatDifficultyReductions(character, sceneContext, skillRoll);
         if (counselled) {
             difficultyReduction += AncestralCounselService.DIFFICULTY_REDUCTION;
         }
@@ -598,19 +598,19 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
      * Feat#catalogEntry()} too.
      */
     private void validateActivatedFeats(final CombatantSheet roller, final SkillRoll skillRoll,
-                                        final AttackSource attackSource) {
+                                        final AttackSource attackSource, final SceneContext sceneContext) {
         List<Feat> held = roller.getCharacter().getFeats();
         for (Feat feat : skillRoll.getActivatedFeats()) {
             boolean holds = held.stream().anyMatch(own -> own == feat || own.catalogEntry() == feat);
             if (!holds) {
                 throw new IllegalOperationException(ACTIVATED_FEAT_NOT_HELD);
             }
-            if (!feat.permitsActivation(skillType, skillRoll, attackSource, roller)) {
+            if (!feat.permitsActivation(skillType, skillRoll, attackSource, roller, sceneContext)) {
                 throw new IllegalOperationException(FEAT_ACTIVATION_NOT_PERMITTED);
             }
         }
         if (skillRoll.isRerolled() && skillRoll.getActivatedFeats().stream()
-                .noneMatch(feat -> feat.grantsLowestDieReroll(skillType))) {
+                .noneMatch(feat -> feat.grantsLowestDieReroll(skillType, roller, sceneContext))) {
             throw new IllegalOperationException(REROLL_NOT_GRANTED);
         }
     }
@@ -701,9 +701,10 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
      * an explicit pass here — the same shape {@code DefenseServiceImpl}/{@code
      * MovementServiceImpl} already use for their own {@code Feat} hooks.
      */
-    private int sumFeatDifficultyReductions(final Character character, final SceneContext sceneContext) {
+    private int sumFeatDifficultyReductions(final Character character, final SceneContext sceneContext,
+                                            final SkillRoll skillRoll) {
         return character.getFeats().stream()
-                .mapToInt(feat -> feat.resolveDifficultyReduction(skillType, character, sceneContext))
+                .mapToInt(feat -> feat.resolveDifficultyReduction(skillType, character, sceneContext, skillRoll))
                 .sum();
     }
 

@@ -123,4 +123,19 @@ public class SpellCastingResult {
      * ordinary cast. <b>Reported, not scheduled</b>: the caller holds the effect back.
      */
     private final int effectDelayRounds;
+
+    /**
+     * PV this cast's healing gains or loses — every held Talento's {@code Feat#resolveSpellHealingBonus}
+     * (Conjuração Rápida's Desvantagem "nas rolagens de … Cura mágica", Arcanismo Elemental's +2). Already
+     * folded into {@link #spellEffect}; reported for a caller building its own per-target effects
+     * ({@code SpellEffectContext#withHealingBonus}). 0 for an ordinary cast.
+     */
+    private final int healingBonus;
+
+    /**
+     * Whether the named target is immune to this Magia — Aptidão Mágica Dracônica's "imune a Magias
+     * que você é capaz de conjurar" (table ruling, 2026-09-27: no damage and no effects). The caller
+     * skips {@link #spellEffect} and {@link #primaryDamage} for them.
+     */
+    private final boolean targetImmune;
 }

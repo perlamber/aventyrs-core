@@ -32,8 +32,11 @@ class FeatChoiceFeatureTest {
         CharacterFixture.loadTemplates();
     }
 
+    /** Trained in Atletismo — Foco em Perícia's "Treinamento na Perícia escolhida". */
     private static Character character() {
-        return CharacterFixture.blank(CharacterFixture.BLANK).feats(new ArrayList<>()).build();
+        return CharacterFixture.blank(CharacterFixture.BLANK).feats(new ArrayList<>())
+                .skill(SkillType.ATLETISMO, org.aventyrs.core.character.CharacterSkill.builder().skill(SkillType.ATLETISMO.newSkillInstance()).graduation(org.aventyrs.core.skill.SkillGraduation.builder().graduationValue(1).build()).build())
+                .build();
     }
 
     private CharacterSheet fundedSheet(final Character character) {

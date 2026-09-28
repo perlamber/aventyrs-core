@@ -196,7 +196,10 @@ public class AttackDelivery {
                 .applyTo(attack.getAttacker(), attack.getSceneContext(), attackRoll, defender,
                         attack.getAttackSource(), extraTargets);
 
-        int requiredTotal = attack.getDefenseValue();
+        // The Aptidões Mágicas' DM against a Magia the defender can cast rides on the flat Defesa the
+        // caller supplied, which cannot see what is being resisted.
+        int requiredTotal = attack.getDefenseValue()
+                + SpellResistance.defenseBonus(defender, attack.getDefenseType(), attack.getAttackSource());
         int attackTotal = attackResult.getSkillRollBonus()
                 + (attackRoll == null ? 0 : attackRoll.getTotal());
 
@@ -206,12 +209,15 @@ public class AttackDelivery {
                 .auraHalvesDamage(auraHalvesDamage)
                 .everyTargetHalved(everyTargetHalved)
                 .retaliation(retaliation)
-                .unappliedDifficultyReduction(attackResult.getDifficultyReduction());
+                .unappliedDifficultyReduction(attackResult.getDifficultyReduction())
+                .unappliedSpellResistanceReduction(SpellResistance.difficultyReduction(defender, attack.getAttackSource()));
 
         if (attackRoll == null) {
             additionalTargets.forEach(target -> result.additionalTargetResult(DeliveredAttackTargetResult.builder()
                     .defender(target.defender())
-                    .requiredTotal(target.defenseValue())
+                    .requiredTotal(target.defenseValue()
+                            + SpellResistance.defenseBonus(target.defender(), attack.getDefenseType(),
+                                    attack.getAttackSource()))
                     .build()));
             return result.attackResult(attackResult).build();
         }
@@ -219,7 +225,8 @@ public class AttackDelivery {
         int margin = attackTotal - requiredTotal;
         // A Cego attacker's failed 1d6 misses whatever the total.
         boolean blindMiss = Boolean.TRUE.equals(attackResult.getBlindCheckFailed());
-        boolean hit = margin >= 0 && !blindMiss;
+        // Aptidão Mágica Dracônica: a Magia the defender can cast never lands on them.
+        boolean hit = margin >= 0 && !blindMiss && !SpellResistance.immune(defender, attack.getAttackSource());
         CriticalResult criticalResult = attackResult.getCriticalResult();
         // Frenesi Assustador: a fear-struck attacker "se tornam incapazes de desferir Efeitos Críticos
         // Menores e não podem desencadear Correntes de Efeitos" while the Gigante who cast it is down.
@@ -227,7 +234,9 @@ public class AttackDelivery {
         boolean criticalEffectTriggered = hit && criticalResult != null && criticalResult.isCriticalSuccess()
                 && !(suppressed && criticalResult.isMinor());
         boolean effectChainTriggered = hit && !suppressed
-                && margin >= effectChainService.getRequiredMargin(defender.getCharacter());
+                && margin >= effectChainService.getRequiredMargin(attack.getAttacker(),
+                        AttackReceiver.positionOf(attack.getScene(), attack.getAttacker(), attack.getSceneContext()),
+                        defender, AttackReceiver.positionOf(attack.getScene(), defender, null));
 
         if (hit) {
             attackResult = attackResult.toBuilder()
@@ -312,17 +321,21 @@ public class AttackDelivery {
                                                                  final int attackTotal, final CriticalResult criticalResult,
                                                                  final boolean blindMiss) {
         CombatantSheet defender = target.defender();
-        int margin = attackTotal - target.defenseValue();
-        boolean hit = margin >= 0 && !blindMiss;
+        int requiredTotal = target.defenseValue()
+                + SpellResistance.defenseBonus(defender, attack.getDefenseType(), attack.getAttackSource());
+        int margin = attackTotal - requiredTotal;
+        boolean hit = margin >= 0 && !blindMiss && !SpellResistance.immune(defender, attack.getAttackSource());
         boolean suppressed = attack.getAttacker().isMinorCriticalAndChainSuppressed();
         boolean criticalEffectTriggered = hit && criticalResult != null && criticalResult.isCriticalSuccess()
                 && !(suppressed && criticalResult.isMinor());
         boolean effectChainTriggered = hit && !suppressed
-                && margin >= effectChainService.getRequiredMargin(defender.getCharacter());
+                && margin >= effectChainService.getRequiredMargin(attack.getAttacker(),
+                        AttackReceiver.positionOf(attack.getScene(), attack.getAttacker(), attack.getSceneContext()),
+                        defender, AttackReceiver.positionOf(attack.getScene(), defender, null));
 
         return DeliveredAttackTargetResult.builder()
                 .defender(defender)
-                .requiredTotal(target.defenseValue())
+                .requiredTotal(requiredTotal)
                 .margin(margin)
                 .hit(hit)
                 .criticalEffectTriggered(criticalEffectTriggered)
@@ -396,7 +409,8 @@ public class AttackDelivery {
         for (int i = stages.size() - 1; i >= 0; i--) {
             next = stages.get(i).chainInto(next);
         }
-        DamageInteraction head = new DamageInteraction(damageService);
+        DamageInteraction head = new DamageInteraction(damageService)
+                .fromSpell(SpellResistance.spellOf(attack.getAttackSource()));
         if (criticalResult != null && criticalResult.isCriticalSuccess()) {
             // Feridas Ardentes: the critical's Metade da Gnose heals only with a Descanso Verdadeiro
             // or Roubo de Vida.

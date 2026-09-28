@@ -7,10 +7,14 @@ import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.character.DefenseType;
 import org.aventyrs.core.character.services.CharacterSkillService;
 import org.aventyrs.core.character.services.CharacterSkillServiceImpl;
+import org.aventyrs.core.character.services.DamageService;
+import org.aventyrs.core.character.services.DeterminationPointsService;
+import org.aventyrs.core.character.services.DeterminationPointsServiceImpl;
 import org.aventyrs.core.magic.ActivationType;
 import org.aventyrs.core.magic.BranchLevel;
 import org.aventyrs.core.magic.FreeSpellPick;
 import org.aventyrs.core.magic.Spell;
+import org.aventyrs.core.magic.SpellFamiliarity;
 import org.aventyrs.core.magic.catalog.MagicTree;
 import org.aventyrs.core.rest.RestType;
 import org.aventyrs.core.scene.SceneContext;
@@ -93,11 +97,9 @@ public enum MetamagicoFeat implements Feat {
     // its Semente — and the 2 free Brotos, one per Árvore (see the class javadoc).
     // Ruling (table, 2026-09-25): "Conhecimento Metamágico" is the Conhecimentos roll value,
     // Graduação + Gnose, not the Graduação alone.
-    // TODO: "RM para resistir aos efeitos de Magias que você conheça" — RM is real now
-    // (Feat#resolveMagicReduction), but that hook is for an *unconditional* grant and this one
-    // is scoped: it needs an incoming effect to be classified as a specific Magia, which nothing
-    // does. Granting it unconditionally would apply it to every magic hit, not just the known
-    // ones.
+    // Real: "RM para resistir aos efeitos de Magias que você conheça" — one RM instance (table
+    // ruling, 2026-09-27) against a hit DamageInteraction#fromSpell marks as a Magia the holder has
+    // learned or may mimetize (SpellFamiliarity), through Feat#resolveSpellMagicReduction.
     ARCANISTA(
             "Você consegue conjurar magias do tipo Semente e Broto. Escolha uma quantidade de "
                     + "árvores de magia igual ao seu Conhecimento Metamágico, você conhece estas árvores de "
@@ -132,6 +134,12 @@ public enum MetamagicoFeat implements Feat {
             return List.of(new FreeSpellPick(BranchLevel.BROTO, FREE_PICKS_PER_RUNG));
         }
 
+        /** "RM para resistir aos efeitos de Magias que você conheça" — one instance. */
+        @Override
+        public int resolveSpellMagicReduction(final Spell spell, final CombatantSheet holder) {
+            return SpellFamiliarity.canCast(holder.getCharacter(), spell) ? DamageService.DEFAULT_DAMAGE_REDUCTION : 0;
+        }
+
         /** "Bônus em sua DM igual a metade de suas Graduações em Domínio do Mana", rounded down. */
         @Override
         public int resolveDefenseBonus(final DefenseType defenseType, final Character character) {
@@ -149,11 +157,10 @@ public enum MetamagicoFeat implements Feat {
     // Resfriamento 1 (the catalog's first stated one, and what ActiveAbility#getCooldownRounds
     // was added for). The two rungs above *replace* the +2 rather than adding to it, so the
     // figure is resolved from the holder's held Talentos at activation and only this constant
-    // grants the ability — see that class.
-    // TODO: "podem ter a Duração estendida por quaisquer efeitos que aumente a Duração de Magias"
-    //  has no hook: SpellDurationService extends a Magia's own Duração, and a Barreira is an
-    //  ActiveAbility whose getDurationInRounds() nothing consults for extension.
-    // TODO: "Magias aprendidas desta forma são sempre do mesmo ramo da magia de nível anterior" —
+    // grants the ability — see that class. "Podem ter a Duração estendida por quaisquer efeitos que
+    // aumente a Duração de Magias" is real too: SpellDurationService#resolveNonSpellDurationIncrease,
+    // which only an extension scoped to no kind of Magia answers (a Poderosa weapon).
+    // Note: "Magias aprendidas desta forma são sempre do mesmo ramo da magia de nível anterior" is
     // already true by construction, and stricter: Spell#isEligible's branch gate refuses the
     // opposite ramificação outright. Nothing to build; noted so the clause isn't re-derived.
     ARCANISTA_EXPERIENTE(
@@ -191,14 +198,11 @@ public enum MetamagicoFeat implements Feat {
 
     // Real: the third rung of the cap ladder (Emergente).
     //
-    // The Barreira Mágica upgrade's own half is real: holding this rung raises the Barreira the
+    // The Barreira Mágica upgrade is real, both halves: holding this rung raises the Barreira the
     // holder creates from +2 to +3 Defesas (a replacement, not a sum — see
-    // BarreiraMagicaActiveAbility, which reads the rungs rather than each rung granting its own).
-    // TODO: the "+1 às Defesas de seus aliados adjacentes" half is not — ActiveAbilityService
-    //  #activate applies every TemporaryEffect to the activator's own sheet and sees no Scene, so
-    //  there is nobody adjacent to grant to. It needs the outward-facing shape
-    //  AventyrTitleAbility#resolveAllyAbsoluteDamageReduction uses for Bastião dos Necessitados,
-    //  or a Scene threaded through activation.
+    // BarreiraMagicaActiveAbility, which reads the rungs rather than each rung granting its own),
+    // and "+1 às Defesas de seus aliados adjacentes" is scanned by DefenseService off each
+    // recipient's own SceneContext while the Barreira runs (the best adjacent Barreira counts).
     MESTRE_ARCANISTA(
             "Escolha 2 Árvores de Magia que você conheça, nas quais você seja capaz de conjurar "
                     + "magias do tipo Muda, você aprende a conjurar as magias do tipo Emergentes destas "
@@ -226,9 +230,8 @@ public enum MetamagicoFeat implements Feat {
 
     // Real: the top rung of the cap ladder (Florescente).
     //
-    // Same as its predecessor: the self half is real (the Barreira becomes +5 Defesas).
-    // TODO: the "+3 às Defesas de seus aliados adjacentes" half needs the same missing ally
-    //  reach MESTRE_ARCANISTA's own +1 does.
+    // Same as its predecessor, both halves real: the Barreira becomes +5 Defesas, and +3 to each
+    // adjacent ally's Defesas while it runs.
     DESAFIADOR_DA_REALIDADE(
             "Escolha 2 Árvores de Magia que você conheça, nas quais você seja capaz de conjurar "
                     + "magias do tipo Emergente, você aprende a conjurar as magias do tipo Florescente destas "
@@ -254,22 +257,28 @@ public enum MetamagicoFeat implements Feat {
         }
     },
 
-    // TODO: both halves blocked on the same Barreira Mágica gap ARCANISTA_EXPERIENTE cites —
-    // nothing creates a Barreira, so neither making it an Ação Livre nor keying a GD reduction
-    // off one being active has anything to attach to. The GD reduction additionally needs the
-    // "Magias que você seja capaz de conjurar" scope, which nothing classifies.
+    // Real, both halves: BarreiraMagicaActiveAbility#getActionPointCost(Character) makes the Barreira
+    // an Ação Livre for its holder, and while one runs (BarreiraMagicaActiveAbility#isActiveOn) the GD
+    // to resist a Magia the holder can cast (SpellFamiliarity) drops 1 nível — applied by
+    // AttackReceiver, reported unapplied by AttackDelivery (a flat Defesa has no níveis).
     ARTESAO_DE_BARREIRAS(
             "Você pode conjurar Barreiras Mágicas como Ação Livre. Enquanto estiver com uma "
                     + "Barreira Mágica ativa a GD para resistir às magias que você também seja capaz de "
                     + "conjurar é reduzida em 1 nível.",
             () -> FeatRequirements.builder()
                     .requiredFeat(MetamagicoFeat.ARCANISTA_EXPERIENTE)
-                    .build()),
+                    .build()) {
+        @Override
+        public int resolveSpellResistanceDifficultyReduction(final Spell spell, final CombatantSheet holder) {
+            return BarreiraMagicaActiveAbility.isActiveOn(holder)
+                    && SpellFamiliarity.canCast(holder.getCharacter(), spell) ? 1 : 0;
+        }
+    },
 
     // Real when the caster opts in on SpellCastRequest#activatedFeats: -1PA off the cast
     // (floored at 1PA, PA casts only), and Desvantagem on its Conjuração roll and its damage
-    // (Feat#resolveCastingRollBonus).
-    // TODO: "e Cura mágica" — a Magia's healing has no resolved figure on SpellCastingResult.
+    // (Feat#resolveCastingRollBonus), and on its healing ("e Cura mágica" —
+    // Feat#resolveSpellHealingBonus, carried to SpellHealingEffect as SpellEffectContext#healingBonus).
     CONJURACAO_RAPIDA(
             "Você pode optar por receber Desvantagem nas rolagens de Perícia de Conjuração, Dano "
                     + "e Cura mágica de uma magia. Se o fizer o tempo de conjuração da desta magia será "
@@ -295,6 +304,12 @@ public enum MetamagicoFeat implements Feat {
         @Override
         public int resolveSpellDamageBonus(final Spell spell, final Character character,
                                            final java.util.Set<Feat> activatedFeats) {
+            return activatedFeats.contains(this) ? Skill.DISADVANTAGE_MALUS : 0;
+        }
+
+        @Override
+        public int resolveSpellHealingBonus(final Spell spell, final Character character,
+                                            final java.util.Set<Feat> activatedFeats) {
             return activatedFeats.contains(this) ? Skill.DISADVANTAGE_MALUS : 0;
         }
     },
@@ -361,10 +376,10 @@ public enum MetamagicoFeat implements Feat {
 
     // The mimicry is real, through ArvoresMimetizadasFeat: two chosen Árvores, their Semente
     // (free) and their Broto at 2PD.
-    // TODO: "+3 em DM para resistir aos efeitos de magias que seja capaz de conjurar" — scoped to
-    // what is being resisted, which nothing classifies (same blocker as EVASAO's Área de Efeito
-    // scoping). Deliberately NOT granted as an unconditional DM bonus, which would over-apply to
-    // every Defesa roll; contrast ARCANISTA's own DM clause, which really is unconditional.
+    // Real: "+3 em DM para resistir aos efeitos de magias que seja capaz de conjurar" —
+    // Feat#resolveSpellDefenseBonus against an incoming Magia the holder can cast (SpellFamiliarity),
+    // replaced by Assombrosa's +5 rather than summed with it. Deliberately not an unconditional DM
+    // bonus; contrast ARCANISTA's own DM clause, which really is unconditional.
     APTIDAO_MAGICA_AMPLA(
             "Escolha duas Árvores de Magia, você pode mimetizar as magias Sementes e Broto destas "
                     + "árvores. Magias Broto conjuradas com este talento utilizam 2PD, ao invés de 1PM. Você "
@@ -380,11 +395,18 @@ public enum MetamagicoFeat implements Feat {
         public List<FeatChoice<?>> resolveRequiredChoices(final Character holder) {
             return List.of(new FeatChoice<>(MagicTree.class, 2, Arrays.asList(MagicTree.values())));
         }
+
+        @Override
+        public int resolveSpellDefenseBonus(final DefenseType defenseType, final Spell spell,
+                                            final CombatantSheet holder) {
+            boolean replaced = holder.getCharacter().getFeats().stream()
+                    .anyMatch(feat -> feat.catalogEntry() == APTIDAO_MAGICA_ASSOMBROSA);
+            return !replaced && resistsCastable(defenseType, spell, holder) ? AMPLA_SPELL_DEFENSE_BONUS : 0;
+        }
     },
 
     // The mimicry is real, through MagiasMimetizadasEscolhidasFeat: the chosen Mudas of Ampla's
-    // Árvores, at 3PD each.
-    // TODO: the scoped-DM gap APTIDAO_MAGICA_AMPLA cites — the +5 replaces that Talento's +3.
+    // Árvores, at 3PD each. Real: the +5 DM against a Magia the holder can cast, replacing Ampla's +3.
     APTIDAO_MAGICA_ASSOMBROSA(
             "Escolha uma magia Muda de cada Árvore de Magia conhecida através do talento 'Aptidão "
                     + "Mágica Ampla', você é capaz de mimetizar as magias escolhidas ao custo de 3PD cada. "
@@ -400,11 +422,18 @@ public enum MetamagicoFeat implements Feat {
             int picks = ArvoresMimetizadasFeat.chosenBy(holder, APTIDAO_MAGICA_AMPLA).map(java.util.Set::size).orElse(0);
             return options.isEmpty() ? List.of() : List.of(new FeatChoice<>(Spell.class, Math.min(picks, options.size()), options));
         }
+
+        @Override
+        public int resolveSpellDefenseBonus(final DefenseType defenseType, final Spell spell,
+                                            final CombatantSheet holder) {
+            return resistsCastable(defenseType, spell, holder) ? ASSOMBROSA_SPELL_DEFENSE_BONUS : 0;
+        }
     },
 
     // The mimicry is real, through MagiasMimetizadasEscolhidasFeat: the chosen Emergentes of
     // Ampla's Árvores, at 5PD. ⚠️ "Que você conheça uma Muda de seu ramo" is not validated on the pick.
-    // TODO: the GD reduction is scoped the same way ARTESAO_DE_BARREIRAS' is.
+    // Real: the GD to resist a Magia the holder can cast drops 1 nível, the way ARTESAO_DE_BARREIRAS'
+    // does, but with no Barreira needed.
     APTIDAO_MAGICA_SUPREMA(
             "Escolha uma magia Emergente de cada Árvore de Magia conhecida através do talento "
                     + "'Aptidão Mágica Ampla', e que você seja conheça uma Muda de seu ramo, você é capaz de "
@@ -420,6 +449,11 @@ public enum MetamagicoFeat implements Feat {
             List<Spell> options = MagiasMimetizadasEscolhidasFeat.optionsFor(holder, BranchLevel.EMERGENTE);
             int picks = ArvoresMimetizadasFeat.chosenBy(holder, APTIDAO_MAGICA_AMPLA).map(java.util.Set::size).orElse(0);
             return options.isEmpty() ? List.of() : List.of(new FeatChoice<>(Spell.class, Math.min(picks, options.size()), options));
+        }
+
+        @Override
+        public int resolveSpellResistanceDifficultyReduction(final Spell spell, final CombatantSheet holder) {
+            return SpellFamiliarity.canCast(holder.getCharacter(), spell) ? 1 : 0;
         }
     },
 
@@ -448,10 +482,9 @@ public enum MetamagicoFeat implements Feat {
         }
     },
 
-    // The Magia half is real: -1PM off SpellCastingResult#getManaCost (Feat#resolveManaCostReduction,
-    // floored at 1).
-    // TODO: "ativar efeitos de Talentos Metamágicos" — BarreiraMagicaActiveAbility's 3PM is an
-    //  ActiveAbility cost, which no Talento can reduce.
+    // Real, both halves: -1PM off SpellCastingResult#getManaCost (Feat#resolveManaCostReduction,
+    // floored at 1), and off the Barreira Mágica — the one Talento Metamágico effect priced in PM —
+    // through BarreiraMagicaActiveAbility#getMagicPointCost(Character).
     ENGENHEIRO_DO_MANA(
             "O Custo de Mana para Conjurar Magias e ativar efeitos de Talentos Metamágicos é "
                     + "reduzido em -1PM (mínimo 1PM).",
@@ -467,11 +500,9 @@ public enum MetamagicoFeat implements Feat {
 
     // The mimicry is real, through MagiasMimetizadasEscolhidasFeat: one chosen Florescente of Ampla's
     // Árvores, at 5PD.
-    // TODO: the immunity half — the stage exists (Feat#isImmuneToDamage), but it is scoped to
-    // "Magias que você é capaz de conjurar", and an incoming hit's DamageDescriptor names no
-    // Magia: the same scope ARTESAO_DE_BARREIRAS and APTIDAO_MAGICA_AMPLA cite for their DM bonuses.
-    // TODO: "enquanto tiver ao menos 10PD em sua reserva de Bônus Bases" reads a Determinação
-    // reserve threshold; PD is spendable but no hook conditions an effect on how much remains.
+    // Real: the immunity (Feat#isImmuneToSpell) to a Magia the holder can cast while their current
+    // PD is at least 10 — table ruling (2026-09-27): "reserva de Bônus Bases" is the current PD, and
+    // immune means defended outright, with no damage and no effects.
     APTIDAO_MAGICA_DRACONICA(
             "Escolha uma magia Florescente de uma das Árvores de Magias conhecidas através do "
                     + "talento ‘Aptidão Mágica Ampla’, você é capaz de mimetizar a magia escolhida ao custo "
@@ -488,7 +519,32 @@ public enum MetamagicoFeat implements Feat {
             int picks = 1;
             return options.isEmpty() ? List.of() : List.of(new FeatChoice<>(Spell.class, Math.min(picks, options.size()), options));
         }
+
+        @Override
+        public boolean isImmuneToSpell(final Spell spell, final CombatantSheet holder) {
+            return SpellFamiliarity.canCast(holder.getCharacter(), spell)
+                    && DETERMINATION_POINTS_SERVICE.getCurrentDeterminationPoints(holder.getCharacter(), holder)
+                            >= DRACONICA_DETERMINATION_RESERVE;
+        }
     };
+
+    /** Aptidão Mágica Ampla's "+3 em DM para resistir aos efeitos de magias que seja capaz de conjurar". */
+    private static final int AMPLA_SPELL_DEFENSE_BONUS = 3;
+
+    /** Aptidão Mágica Assombrosa's "aumenta para +5". */
+    private static final int ASSOMBROSA_SPELL_DEFENSE_BONUS = 5;
+
+    /** Aptidão Mágica Dracônica's "ao menos 10PD em sua reserva". */
+    private static final int DRACONICA_DETERMINATION_RESERVE = 10;
+
+    private static final DeterminationPointsService DETERMINATION_POINTS_SERVICE =
+            new DeterminationPointsServiceImpl();
+
+    /** Whether a DM roll against spell is one the holder resists as a Magia they can cast. */
+    private static boolean resistsCastable(final DefenseType defenseType, final Spell spell,
+                                           final CombatantSheet holder) {
+        return defenseType == DefenseType.MAGIC && SpellFamiliarity.canCast(holder.getCharacter(), spell);
+    }
 
     /** One rung of {@link BranchLevel}'s ladder — what each cap-raising Talento grants. */
     private static final int ONE_RUNG = 1;

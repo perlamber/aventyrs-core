@@ -61,6 +61,14 @@ public interface SpellCastingService {
     int resolveCastingDifficultyReduction(Spell spell, CombatantSheet caster);
 
     /**
+     * The PM request would cost — what {@link #castSpell(SpellCastRequest)} reports as {@link
+     * SpellCastingResult#getManaCost()} before a {@code payManaWithHitPoints} swap, for the version it
+     * would cast. A pure read, so a caller can refuse an unaffordable cast before anything happens
+     * ({@code castSpell} registers an area's effect and spends banked charges).
+     */
+    int resolveManaCost(SpellCastRequest request);
+
+    /**
      * spell's Tempo de Ativação as caster would pay it right now, in the Scene's 0-based
      * currentRound: the authored {@link Spell#getActivationTime()}, less the summed {@code
      * Feat#resolveCastingActionPointReduction} when it is a Pontos de Ação cost, never below 1PA.

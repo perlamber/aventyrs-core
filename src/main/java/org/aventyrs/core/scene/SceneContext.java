@@ -76,6 +76,14 @@ public class SceneContext {
     /** Where this context's holder stands in the Rodada's order of play — see {@link InitiativePosition}. */
     private final InitiativePosition initiativePosition;
 
+    /**
+     * Participants of other sub-groups neutral towards this holder's — neither side aggressive
+     * towards the other ({@link Scene#getNeutrals}). Neither {@link #allies} nor {@link #enemies};
+     * empty unless the Scene's aggression map declares some pair of groups non-aggressive, and for
+     * every context built without a Scene. {@link #distances} covers them like anyone else.
+     */
+    private final List<CombatantSheet> neutrals;
+
     public SceneContext(final List<CombatantSheet> allies, final List<CombatantSheet> enemies, final Map<CombatantSheet, Range> distances) {
         this(allies, enemies, distances, null);
     }
@@ -138,6 +146,18 @@ public class SceneContext {
                         final boolean combatScene, final int currentRound, final boolean wonInitiative,
                         final CombatantSheet opposedCharacter, final UUID sceneId,
                         final EnvironmentalState environmentalState, final InitiativePosition initiativePosition) {
+        this(allies, enemies, distances, terrainType, combatScene, currentRound, wonInitiative, opposedCharacter,
+                sceneId, environmentalState, initiativePosition, List.of());
+    }
+
+    /** The full snapshot form, adding the participants neutral towards its holder — see {@link #neutrals}. */
+    public SceneContext(final List<CombatantSheet> allies, final List<CombatantSheet> enemies,
+                        final Map<CombatantSheet, Range> distances, final TerrainType terrainType,
+                        final boolean combatScene, final int currentRound, final boolean wonInitiative,
+                        final CombatantSheet opposedCharacter, final UUID sceneId,
+                        final EnvironmentalState environmentalState, final InitiativePosition initiativePosition,
+                        final List<CombatantSheet> neutrals) {
+        this.neutrals = neutrals == null ? List.of() : neutrals;
         this.initiativePosition = initiativePosition == null ? InitiativePosition.UNKNOWN : initiativePosition;
         this.allies = allies;
         this.enemies = enemies;
@@ -203,6 +223,16 @@ public class SceneContext {
     /** Every enemy at maxRange or closer — same shape as {@link #getAlliesWithin}, for the enemy side. */
     public List<CombatantSheet> getEnemiesWithin(final Range maxRange) {
         return enemies.stream().filter(enemy -> isWithin(enemy, maxRange)).collect(Collectors.toList());
+    }
+
+    /** Every participant neutral towards this holder — see {@link #neutrals}. */
+    public List<CombatantSheet> getNeutrals() {
+        return neutrals;
+    }
+
+    /** Whether any neutral is at maxRange or closer — {@code PeritoFeat#DISCRETO}'s "personagens neutros em Distâncias Curtas". */
+    public boolean hasNeutralWithin(final Range maxRange) {
+        return neutrals.stream().anyMatch(neutral -> isWithin(neutral, maxRange));
     }
 
     private boolean isWithin(final CombatantSheet sheet, final Range maxRange) {

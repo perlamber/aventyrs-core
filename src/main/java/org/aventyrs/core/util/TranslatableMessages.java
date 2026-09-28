@@ -472,4 +472,10 @@ public class TranslatableMessages {
      * Escudo they don't have equipped, or with Asas Adamantinas' wings they don't have or while flying.
      */
     public static final String SHIELD_ATTACK_NOT_PERMITTED = "SHIELD_ATTACK_NOT_PERMITTED";
+
+    /**
+     * A combatant tried to lower their Iniciativa to act last ({@code Scene#deferToLast}) without
+     * Analista Tático, outside a Cena de Combate, or after they have already acted or had their Turn.
+     */
+    public static final String DEFER_TO_LAST_NOT_PERMITTED = "DEFER_TO_LAST_NOT_PERMITTED";
 }

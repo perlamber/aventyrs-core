@@ -1,6 +1,9 @@
 package org.aventyrs.core.combat;
 
 import org.aventyrs.core.sheet.AttackerGuard;
+import org.aventyrs.core.scene.InitiativePosition;
+import org.aventyrs.core.scene.Scene;
+import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.effect.DefensiveCriticalEffects;
 import org.aventyrs.core.effect.DefensiveCriticalEffectType;
 import org.aventyrs.core.effect.DefensiveCriticalEffect;
@@ -157,12 +160,15 @@ public class AttackReceiver {
                 // would have. Its activation (and the once-per-Rodada limit) is validated by the roll.
                 : SkillInteractionFactory.create(defenseSkill).applyTo(defender, attack.getSceneContext(), defenseRoll);
 
-        DifficultyLevel effectiveDifficultyLevel =
-                attack.getDifficultyLevel().easier(defenseResult.getDifficultyReduction());
+        // Artesão de Barreiras / Aptidão Mágica Suprema: the GD to resist a Magia the defender can cast.
+        DifficultyLevel effectiveDifficultyLevel = attack.getDifficultyLevel().easier(defenseResult.getDifficultyReduction()
+                + SpellResistance.difficultyReduction(defender, attack.getAttackSource()));
         int requiredTotal = effectiveDifficultyLevel.getBaseValue() + attack.getAttackBonus();
         int defenseTotal = defenseResult.getSkillRollBonus()
                 + (defenseRoll == null ? 0 : defenseRoll.getTotal())
-                + (attack.isAreaOfEffect() ? areaOfEffectDefenseBonus(defender) : 0);
+                + (attack.isAreaOfEffect() ? areaOfEffectDefenseBonus(defender) : 0)
+                // The Aptidões Mágicas' DM against a Magia the defender can cast.
+                + SpellResistance.defenseBonus(defender, attack.getDefenseType(), attack.getAttackSource());
 
         IncomingAttackResult.IncomingAttackResultBuilder result = IncomingAttackResult.builder()
                 .defenseTotal(defenseTotal)
@@ -177,13 +183,17 @@ public class AttackReceiver {
 
         int margin = requiredTotal - defenseTotal;
         // Ímpeto Defensivo Maior: "se torna imune aos ataques dele por 1 Rodada".
-        boolean immune = defender.getGuardsAgainst(attack.getAttacker()).stream().anyMatch(AttackerGuard::isImmune);
+        boolean immune = defender.getGuardsAgainst(attack.getAttacker()).stream().anyMatch(AttackerGuard::isImmune)
+                // Aptidão Mágica Dracônica: immune to a Magia the defender can cast — defended outright.
+                || SpellResistance.immune(defender, attack.getAttackSource());
         // A Cego defender's failed 1d6 fails the defence whatever its total.
         boolean defended = (margin <= 0 && !Boolean.TRUE.equals(defenseResult.getBlindCheckFailed())) || immune;
         CriticalResult criticalResult = defenseResult.getCriticalResult();
         boolean criticalEffectTriggered = !defended && criticalResult != null && criticalResult.isCriticalFailure();
         boolean effectChainTriggered = !defended
-                && margin >= effectChainService.getRequiredMargin(defender.getCharacter());
+                && margin >= effectChainService.getRequiredMargin(attack.getAttacker(),
+                        positionOf(attack.getScene(), attack.getAttacker(), null), defender,
+                        positionOf(attack.getScene(), defender, attack.getSceneContext()));
 
         if (!defended) {
             defenseResult = defenseResult.toBuilder()
@@ -322,7 +332,8 @@ public class AttackReceiver {
         for (int i = stages.size() - 1; i >= 0; i--) {
             next = stages.get(i).chainInto(next);
         }
-        DamageInteraction head = new DamageInteraction(damageService);
+        DamageInteraction head = new DamageInteraction(damageService)
+                .fromSpell(SpellResistance.spellOf(attack.getAttackSource()));
         return (halfDamage ? head.halvingDamage() : head).chainInto(next);
     }
 
@@ -331,5 +342,21 @@ public class AttackReceiver {
         return org.aventyrs.core.skill.SkillCompetencyAbility.allFor(defender.getCharacter(), defender).stream()
                 .mapToInt(ability -> ability.resolveAreaOfEffectDefenseBonus(defender.getCharacter()))
                 .sum();
+    }
+
+    /**
+     * Where combatant stands in the order of play — read off its own context when that is the one in
+     * hand, else off the live Scene, else {@code UNKNOWN}. What Grande Analista Tático's "Enquanto você
+     * for o último a agir" reads on either side of a Corrente.
+     */
+    static InitiativePosition positionOf(final Scene scene, final CombatantSheet combatant,
+                                         final SceneContext ownContext) {
+        if (ownContext != null && ownContext.getInitiativePosition() != InitiativePosition.UNKNOWN) {
+            return ownContext.getInitiativePosition();
+        }
+        if (scene == null || combatant == null) {
+            return InitiativePosition.UNKNOWN;
+        }
+        return scene.initiativePositionOf(combatant);
     }
 }

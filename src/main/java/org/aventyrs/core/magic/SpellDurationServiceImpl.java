@@ -23,6 +23,12 @@ public class SpellDurationServiceImpl implements SpellDurationService {
         return OptionalInt.of(durationInRounds.getAsInt() + improvementIncrease);
     }
 
+    @Override
+    public int resolveNonSpellDurationIncrease(@NonNull final Character caster) {
+        return sumImprovementDurationIncreases(null, caster)
+                + caster.getFeats().stream().mapToInt(feat -> feat.resolveSpellDurationIncrease(null, caster)).sum();
+    }
+
     private OptionalInt resolveAuthoredDurationInRounds(final SpellDuration duration, final Character target) {
         return switch (duration.kind()) {
             case INSTANTANEA -> OptionalInt.of(0);

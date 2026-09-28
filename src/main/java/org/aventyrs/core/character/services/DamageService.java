@@ -181,6 +181,17 @@ public interface DamageService {
                              DamageType damageType, CombatantSheet source,
                              int rawDamage, boolean ignoreDamageReduction, boolean halfDamage);
 
+    /**
+     * Same as the seven-argument form, for a hit from spell — the Magia is what a "Magias que você
+     * conheça / seja capaz de conjurar" clause reads: an immunity to it ({@code
+     * Feat#isImmuneToSpell}) and an RM against it ({@code Feat#resolveSpellMagicReduction}). A
+     * {@code null} spell is the seven-argument form.
+     */
+    int calculateFinalDamage(CombatantSheet target, SceneContext sceneContext,
+                             DamageType damageType, CombatantSheet source,
+                             int rawDamage, boolean ignoreDamageReduction, boolean halfDamage,
+                             org.aventyrs.core.magic.Spell spell);
+
     /** Descriptor-aware final-damage calculation for elemental attacks. */
     int calculateFinalDamage(CombatantSheet target, SceneContext sceneContext,
                              DamageDescriptor damageDescriptor, CombatantSheet source,

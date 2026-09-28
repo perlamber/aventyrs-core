@@ -97,6 +97,20 @@ class ChoiceFeatAttackDeliveryTest {
                 .build();
     }
 
+    /** Ataque Corpo-a-Corpo 4 and Atletismo trained — what either Foco em Perícia below asks. */
+    private static Character focusedDuelist() {
+        return character()
+                .attributes(CharacterAttributes.builder()
+                        .strength(AttributeValue.builder().domain(AttributeDomain.STRENGTH).base(3).build())
+                        .build())
+                .skill(SkillType.ATAQUE_CORPO_A_CORPO, CharacterSkill.builder()
+                        .skill(new AtaqueCorpoACorpo())
+                        .graduation(SkillGraduation.builder().graduationValue(4).build())
+                        .build())
+                .skill(SkillType.ATLETISMO, org.aventyrs.core.character.CharacterSkill.builder().skill(SkillType.ATLETISMO.newSkillInstance()).graduation(org.aventyrs.core.skill.SkillGraduation.builder().graduationValue(1).build()).build())
+                .build();
+    }
+
     private static CharacterSheet fundedSheet(final Character character) {
         CharacterSheet sheet = CharacterSheet.of(character, new Player());
         sheet.accumulateExperience(BigDecimal.valueOf(100));
@@ -260,9 +274,10 @@ class ChoiceFeatAttackDeliveryTest {
     @Test
     void focoEmPericiaReachesADeliveredAttackWhenAnAttackPericiaWasChosen()
             throws IllegalOperationException {
-        Character focused = duelist();
+        // "4 graduações se for uma Perícia de ataque" — and Atletismo trained for the other Foco.
+        Character focused = focusedDuelist();
         CharacterSheet withMelee = acquire(focused, FocoEmPericiaFeat.of(SkillType.ATAQUE_CORPO_A_CORPO));
-        Character elsewhere = duelist();
+        Character elsewhere = focusedDuelist();
         CharacterSheet withAtletismo = acquire(elsewhere, FocoEmPericiaFeat.of(SkillType.ATLETISMO));
         SkillRoll roll = new SkillRoll(List.of(3, 3, 2));
 

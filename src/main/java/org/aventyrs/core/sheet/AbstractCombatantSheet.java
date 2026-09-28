@@ -2537,6 +2537,14 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     }
 
     @Override
+    public boolean hasEffectFrom(final String source) {
+        return source != null && temporaryEffects.stream()
+                .anyMatch(effect -> (effect instanceof TemporaryBonus bonus && source.equals(bonus.getSource())
+                        || effect instanceof SourcedState state && source.equals(state.getSource()))
+                        && !effect.isExpired());
+    }
+
+    @Override
     public int getSkillDifficultyShift(final org.aventyrs.core.skill.SkillType skill) {
         return temporaryEffects.stream()
                 .filter(effect -> effect instanceof SkillDifficultyShift)

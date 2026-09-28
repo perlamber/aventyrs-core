@@ -26,4 +26,13 @@ public interface SpellDurationService {
      * scales from one of the target's Attributes.
      */
     OptionalInt resolveDurationInRounds(Spell spell, Character caster, Character target);
+
+    /**
+     * The Rodadas caster's extensions add to an effect that is <b>not</b> a Magia but is extended
+     * like one — {@code MetamagicoFeat#ARCANISTA_EXPERIENTE}'s Barreira Mágica, "podem ter a Duração
+     * estendida por quaisquer efeitos que aumente a Duração de Magias". Every extension hook is asked
+     * with a {@code null} Magia, so only one scoped to no kind of Magia answers (a Poderosa weapon's
+     * +1); an Encantadora or an Arcanismo Elemental, scoped to Encantamentos, adds nothing.
+     */
+    int resolveNonSpellDurationIncrease(Character caster);
 }

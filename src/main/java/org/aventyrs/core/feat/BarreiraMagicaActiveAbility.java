@@ -2,7 +2,10 @@ package org.aventyrs.core.feat;
 
 import org.aventyrs.core.ability.ActiveAbility;
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.magic.SpellDurationService;
+import org.aventyrs.core.magic.SpellDurationServiceImpl;
 import org.aventyrs.core.modifier.ModifierType;
+import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.ActionCost;
 import org.aventyrs.core.sheet.TemporaryBonus;
 import org.aventyrs.core.sheet.TemporaryEffect;
@@ -22,8 +25,27 @@ import org.aventyrs.core.sheet.TemporaryEffect;
  * <p>A single instance held on that constant, as {@code Feat#resolveActiveAbility()} requires —
  * {@code ActiveAbilityService#activate} matches a held ability by {@code ==}, and the Resfriamento
  * ledger is keyed by identity for the same reason.
+ *
+ * <p><b>What the holder's other Talentos change</b> (0.0.70) is read here too, off the holder, the
+ * same way the ladder is: {@code ARTESAO_DE_BARREIRAS} makes it an Ação Livre, {@code
+ * ENGENHEIRO_DO_MANA} takes 1PM off (never below 1), and "podem ter a Duração estendida por quaisquer
+ * efeitos que aumente a Duração de Magias" adds {@link SpellDurationService#resolveNonSpellDurationIncrease}
+ * — only an extension scoped to no kind of Magia reaches it, since a Barreira is none. The bonus is
+ * granted under {@link #SOURCE}, so a refresh replaces rather than stacks and {@link #isActiveOn}
+ * can tell one is running.
  */
-final class BarreiraMagicaActiveAbility implements ActiveAbility {
+public final class BarreiraMagicaActiveAbility implements ActiveAbility {
+
+    /** The source every Barreira's bonus is granted under — what "com uma Barreira Mágica ativa" reads. */
+    public static final String SOURCE = "BARREIRA_MAGICA";
+
+    /** "+1 às Defesas de seus aliados adjacentes" — Mestre Arcanista. */
+    private static final int MESTRE_ALLY_DEFESAS_BONUS = 1;
+
+    /** "+3 às Defesas de seus aliados adjacentes" — Desafiador da Realidade. */
+    private static final int DESAFIADOR_ALLY_DEFESAS_BONUS = 3;
+
+    private static final SpellDurationService SPELL_DURATION_SERVICE = new SpellDurationServiceImpl();
 
     /** "Bônus de +2 em suas Defesas" — Arcanista Experiente's own figure. */
     private static final int BASE_DEFESAS_BONUS = 2;
@@ -50,9 +72,25 @@ final class BarreiraMagicaActiveAbility implements ActiveAbility {
     }
 
     @Override
+    public ActionCost getActionPointCost(final Character holder) {
+        return holds(holder, MetamagicoFeat.ARTESAO_DE_BARREIRAS) ? ActionCost.FREE_ACTION : ACTION_POINT_COST;
+    }
+
+    @Override
     public int getMagicPointCost() {
         return MAGIC_POINT_COST;
     }
+
+    /** "O Custo de Mana … para ativar efeitos de Talentos Metamágicos é reduzido em -1PM (mínimo 1PM)". */
+    @Override
+    public int getMagicPointCost(final Character holder) {
+        return holds(holder, MetamagicoFeat.ENGENHEIRO_DO_MANA)
+                ? Math.max(MINIMUM_MAGIC_POINT_COST, MAGIC_POINT_COST - 1)
+                : MAGIC_POINT_COST;
+    }
+
+    /** Engenheiro do Mana's "(mínimo 1PM)". */
+    private static final int MINIMUM_MAGIC_POINT_COST = 1;
 
     @Override
     public int getDurationInRounds() {
@@ -72,7 +110,34 @@ final class BarreiraMagicaActiveAbility implements ActiveAbility {
      */
     @Override
     public TemporaryEffect resolveEffect(final Character character) {
-        return new TemporaryBonus(ModifierType.DEFESAS, resolveDefesasBonus(character), DURATION_IN_ROUNDS);
+        return new TemporaryBonus(ModifierType.DEFESAS, resolveDefesasBonus(character),
+                resolveDurationInRounds(character), SOURCE);
+    }
+
+    /** The 2 Rodadas, extended by every effect that lengthens any Magia's Duração. */
+    public int resolveDurationInRounds(final Character character) {
+        return DURATION_IN_ROUNDS + SPELL_DURATION_SERVICE.resolveNonSpellDurationIncrease(character);
+    }
+
+    /** Whether sheet has a Barreira Mágica running right now. */
+    public static boolean isActiveOn(final CombatantSheet sheet) {
+        return sheet != null && sheet.hasEffectFrom(SOURCE);
+    }
+
+    /**
+     * What an active Barreira of holder grants each adjacent ally's Defesas: +1 with Mestre
+     * Arcanista, +3 with Desafiador da Realidade (a replacement, like the holder's own figure), 0
+     * below them or with no Barreira running.
+     */
+    public static int resolveAllyDefesasBonus(final CombatantSheet holder) {
+        if (!isActiveOn(holder)) {
+            return 0;
+        }
+        Character character = holder.getCharacter();
+        if (holds(character, MetamagicoFeat.DESAFIADOR_DA_REALIDADE)) {
+            return DESAFIADOR_ALLY_DEFESAS_BONUS;
+        }
+        return holds(character, MetamagicoFeat.MESTRE_ARCANISTA) ? MESTRE_ALLY_DEFESAS_BONUS : 0;
     }
 
     /** The highest rung the holder has reached — each restates the figure rather than adding to it. */

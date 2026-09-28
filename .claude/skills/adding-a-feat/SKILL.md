@@ -169,6 +169,28 @@ activated Talento on `resolveAttackRangeIncrease(Character, AttackSource, Set<Fe
 `resolveDamageNegationBudget` (`EscudeiroFeat` is the reference for all three). **Never wire an opt-in as an unconditional bonus** — that skips its
 price.
 
+**A Perícia roll that is not an attack has a price too** (0.0.70, `PeritoFeat` is the reference):
+`ActionPointsService#getSkillRollCost(sheet, skill, activatedFeats, turn, ctx)` applies the lowest
+`resolveSkillRollActionPointOverride` (Lembrar Como se Faz's 1PA), the largest
+`resolveSkillRollActionPointMultiplier` (Maestria's ×3), then every
+`resolveSkillRollActionPointAdjustment` (Perito Veloz's -1PA, never below 1PA) — and `getAttackCost`
+folds the same three in under its attack hooks. A use gated on the Cena (combat, which Rodada)
+overrides `permitsActivation(…, SceneContext)`; a reroll scoped to the holder's own choice or the
+Cena overrides `grantsLowestDieReroll(skill, roller, ctx)`; a GD clause scoped to an Especialização
+or to another activated Talento overrides `resolveDifficultyReduction(…, SkillRoll)`. A roll stating
+its own Ação Livre/Reação price (Mestre Perito) carries it on `SkillRoll#getActionCost()`, and the
+gate checks it. **A narrative-purpose Vantagem can be an opt-in** — the player declares the purpose
+by activating it (`PeritoFeat#MESTRE_EM_ATUACAO`), the GM judges it; that is the reading to reach for
+before leaving such a clause inert.
+
+**Neutral characters** are `SceneContext#getNeutrals()`/`#hasNeutralWithin` (the Scene's aggression
+map); **acting last** is `SceneContext#getInitiativePosition()` (and `Scene#deferToLast`, permitted by
+`permitsDeferringToLast`). Scene-gated Reações/Ações Livres are `resolveReactionsIncrease`/
+`resolveFreeActionsIncrease`; Resistência à Corrente de Efeitos is
+`resolveEffectChainResistanceIncrease`/`resolveTargetEffectChainResistanceReduction`. A state bought
+"por Rodada" with nothing to sum is an `ActiveAbility` granting a `sheet.SourcedState`
+(`PeritoActiveAbility`), read back through `CombatantSheet#hasEffectFrom`.
+
 ⚠️ **Any Talento with an acquisition choice must advertise it**, or no client can discover it.
 Override `resolveRequiredChoices(Character)` → `List<FeatChoice<?>>`, each
 `FeatChoice<T>(Class<T> type, int picks, List<T> options)` carrying the type token a caller routes
@@ -185,12 +207,14 @@ Two rules when writing one:
 - **Filter, don't validate-later.** Narrow `options` by the holder's own rules (`Rakshasa` → no
   Névoa); keep the acquired form's factory validating too, as the belt to that braces.
 
-**Four acquired forms still cannot declare their choice** — `AdotadoPorSylphFeat`,
-`HerancaBestialFeat`, `ChosenSkillTraitsFeat`, `HabilidadeDeAtributoEscolhidaFeat` — because
-nothing indexes their options: there is no registry of a Perícia's own competency/specialization
-constants, nor of every `AttributeAbility`. `SkillType` already carries an `excellencyClass` and
-`AttributeDomain` could carry an ability class the same way, so both are mirror-additions. Add the
-registry rather than a one-off list on the constant. Several hooks now have a
+**A choice of Perícia traits needs no registry — declare the Perícias** (0.0.70): copy
+`GnoseAbility#DOMINIO_DO_CONHECIMENTO`, as `PeritoFeat#TREINADO_EM_PERICIAS` does — a
+`FeatChoice<SkillType>` of the Perícias that owe a pick, plus `resolveRequiredSkillTraitKinds()`
+naming whether each owes an Especialização, a Habilidade de Competência or either; the acquired form
+(`ChosenSkillTraitsFeat`) carries the traits the client then picked from them. The two `GnomoFeat`
+users of `ChosenSkillTraitsFeat`, `AdotadoPorSylphFeat` and `HerancaBestialFeat` could take the same
+shape and have not yet; `HabilidadeDeAtributoEscolhidaFeat` still lacks an `AttributeAbility` index
+(`AttributeDomain` could carry an ability class the way `SkillType` carries `excellencyClass`). Several hooks now have a
   trailing `CombatantSheet holder` overload that falls through to the sheet-less form
   (`resolveSkillRollBonus`, `resolveDefenseBonus`, `resolveDamageReduction`,
   `resolveCriticalMarginIncrease`) — override it for a clause reading held `Condição`s, the
@@ -285,9 +309,12 @@ catalog constant, so a choice-carrying form needn't repeat it. It is all-or-noth
 be one branch of a disjunction.
 
 **What a Pré-requisito still cannot say**, and what to do instead: "recém-criados" as one branch
-of an `anyOf`; a *second* Perícia Graduação (the pair is singular); a constraint
-on another held Talento's recorded *choice*; a cap on how many of a family may be held at once.
-The last three are `isEligible(Character, CharacterSheet)` overrides — override **that** form,
+of an `anyOf` (override `isEligibleAtCreation` — what a starting slot asks — beside an `isEligible`
+holding the other branch, `PeritoFeat#TREINADO_EM_PERICIAS`); a *second* Perícia Graduação (the
+pair is singular); a count across Perícias ("Graduação 4 em 3 Perícias"); a constraint on another
+held Talento's recorded *choice* (`PeritoFeat#MESTRE_PERITO`/`#MAESTRIA_EM_PERICIA` read Foco em
+Perícia's); a cap on how many of a family may be held at once. The last four are
+`isEligible(Character, CharacterSheet)` overrides — override **that** form,
 not the 1-arg one, or `grantFeat` will not reach your check.
 
 **Before filing a clause here, ask whether it gates *acquiring* the Talento or *using* it.**

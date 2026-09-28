@@ -74,8 +74,8 @@ public enum ElementalFeat implements Feat {
     // The EXP discount is real: 0.5 off a Magia whose Árvore is Elemental of the holder's element
     // (AbstractMesticoRace#getElement; an Árvore of every element, ElementalType.TODOS, counts).
     // "Suas Magias Elementais de dano … tem seus efeitos numéricos aumentados em +2" is real
-    // (Feat#resolveSpellDamageBonus), for an Elemental Magia of the holder's element.
-    // TODO: "e cura" — a Magia's healing has no resolved figure on SpellCastingResult.
+    // (Feat#resolveSpellDamageBonus), for an Elemental Magia of the holder's element, and so is
+    // "e cura" (Feat#resolveSpellHealingBonus, carried to SpellHealingEffect).
     // "Suas Magias de Encantamento com este elemento tem a Duração aumentada em +1 Rodada" is real
     // (Feat#resolveSpellDurationIncrease, summed by SpellDurationService on an extendable Duração).
     ARCANISMO_ELEMENTAL(
@@ -89,6 +89,12 @@ public enum ElementalFeat implements Feat {
         @Override
         public int resolveSpellDamageBonus(final Spell spell, final Character character,
                                            final java.util.Set<Feat> activatedFeats) {
+            return ofOwnElement(spell, character, MagicType.ELEMENTAL) ? ARCANISMO_NUMERIC_BONUS : 0;
+        }
+
+        @Override
+        public int resolveSpellHealingBonus(final Spell spell, final Character character,
+                                            final java.util.Set<Feat> activatedFeats) {
             return ofOwnElement(spell, character, MagicType.ELEMENTAL) ? ARCANISMO_NUMERIC_BONUS : 0;
         }
 
@@ -286,7 +292,7 @@ public enum ElementalFeat implements Feat {
     /** Whether spell's Árvore carries type and the holder's own element (an all-element Árvore counts). */
     private static boolean ofOwnElement(final Spell spell, final Character character, final MagicType type) {
         Optional<ElementalType> own = elementOf(character);
-        return own.isPresent() && spell.getTree().hasMagicType(type)
+        return spell != null && own.isPresent() && spell.getTree().hasMagicType(type)
                 && spell.getTree().getElementalType().filter(el -> el == own.get() || el == ElementalType.TODOS).isPresent();
     }
 

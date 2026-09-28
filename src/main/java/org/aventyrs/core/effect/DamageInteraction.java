@@ -40,6 +40,7 @@ public class DamageInteraction implements Interaction<CombatantSheet> {
 
     /** Whether this hit's PV loss lands at the next Rodada boundary — see {@link #postponing()}. */
     private boolean postponed;
+    private org.aventyrs.core.magic.Spell spell;
 
     /** How much of this hit only a Descanso Verdadeiro or Roubo de Vida recovers — see {@link #lockingDamage}. */
     private int lifeStealOnlyDamage;
@@ -88,6 +89,22 @@ public class DamageInteraction implements Interaction<CombatantSheet> {
     public DamageInteraction halvingDamage() {
         this.halfDamage = true;
         return this;
+    }
+
+    /**
+     * Marks this hit as coming from spell — what a "Magias que você conheça / seja capaz de
+     * conjurar" clause reads in {@link DamageService} (Arcanista's RM, Aptidão Mágica Dracônica's
+     * immunity). Set by {@code AttackDelivery}/{@code AttackReceiver} when the attack source is a
+     * Magia; a fluent setter for the reason {@link #halvingDamage} is one.
+     */
+    public DamageInteraction fromSpell(final org.aventyrs.core.magic.Spell spell) {
+        this.spell = spell;
+        return this;
+    }
+
+    /** The Magia marked by {@link #fromSpell}, or {@code null}. */
+    public org.aventyrs.core.magic.Spell getSpell() {
+        return spell;
     }
 
     /**
@@ -188,7 +205,8 @@ public class DamageInteraction implements Interaction<CombatantSheet> {
                                       final DamageType damageType, final CombatantSheet source,
                                       final int rawDamage, final boolean ignoreDamageReduction,
                                       final Interaction<CombatantSheet> nextInteraction) {
-        int finalDamage = damageService.calculateFinalDamage(target, sceneContext, damageType, source, rawDamage, ignoreDamageReduction, halfDamage);
+        int finalDamage = damageService.calculateFinalDamage(target, sceneContext, damageType, source, rawDamage,
+                ignoreDamageReduction, halfDamage, spell);
         // Procrastinar Ferimento: the PV are lost at the next Rodada boundary instead of now. The
         // figure below stays the honest one — everything but the loss itself happens on schedule.
         if (postponed) {

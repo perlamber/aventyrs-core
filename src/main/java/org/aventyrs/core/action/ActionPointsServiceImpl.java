@@ -104,18 +104,64 @@ public class ActionPointsServiceImpl implements ActionPointsService {
     public ActionCost getAttackCost(final CombatantSheet attacker, final SkillType attackSkill,
                                    final AttackSource attackSource, final Set<Feat> activatedFeats,
                                    final int turnNumber) {
+        return getAttackCost(attacker, attackSkill, attackSource, activatedFeats, turnNumber, null);
+    }
+
+    @Override
+    public ActionCost getAttackCost(final CombatantSheet attacker, final SkillType attackSkill,
+                                   final AttackSource attackSource, final Set<Feat> activatedFeats,
+                                   final int turnNumber, final SceneContext sceneContext) {
         Set<Feat> spent = activatedFeats == null ? Set.of() : activatedFeats;
         List<Feat> held = attacker.getCharacter().getFeats();
-        Integer override = held.stream()
-                .map(feat -> feat.resolveAttackActionPointOverride(attackSkill, attackSource, attacker, spent))
-                .filter(java.util.Objects::nonNull)
-                .min(Integer::compare)
-                .orElse(null);
-        int base = override != null ? override : getSkillRollCost(attacker.getCharacter(), turnNumber);
+        // An attack's own override outranks a Perícia roll's: an attack is a Perícia roll, and a
+        // clause naming attacks is the narrower one.
+        Integer override = lowest(held.stream()
+                .map(feat -> feat.resolveAttackActionPointOverride(attackSkill, attackSource, attacker, spent)));
+        if (override == null) {
+            override = lowest(held.stream()
+                    .map(feat -> feat.resolveSkillRollActionPointOverride(attackSkill, attacker, spent, sceneContext)));
+        }
+        java.util.stream.IntStream adjustments = java.util.stream.IntStream.concat(
+                held.stream().mapToInt(feat ->
+                        feat.resolveAttackActionPointAdjustment(attackSkill, attackSource, attacker, spent)),
+                held.stream().mapToInt(feat ->
+                        feat.resolveSkillRollActionPointAdjustment(attackSkill, attacker, spent, sceneContext)));
+        return price(attacker, attackSkill, spent, turnNumber, sceneContext, override, adjustments);
+    }
+
+    @Override
+    public ActionCost getSkillRollCost(final CombatantSheet roller, final SkillType skill,
+                                       final Set<Feat> activatedFeats, final int turnNumber,
+                                       final SceneContext sceneContext) {
+        Set<Feat> spent = activatedFeats == null ? Set.of() : activatedFeats;
+        List<Feat> held = roller.getCharacter().getFeats();
+        Integer override = lowest(held.stream()
+                .map(feat -> feat.resolveSkillRollActionPointOverride(skill, roller, spent, sceneContext)));
+        return price(roller, skill, spent, turnNumber, sceneContext, override, held.stream()
+                .mapToInt(feat -> feat.resolveSkillRollActionPointAdjustment(skill, roller, spent, sceneContext)));
+    }
+
+    private static Integer lowest(final java.util.stream.Stream<Integer> overrides) {
+        return overrides.filter(java.util.Objects::nonNull).min(Integer::compare).orElse(null);
+    }
+
+    /**
+     * The shared pricing both {@link #getAttackCost} and {@link #getSkillRollCost(CombatantSheet,
+     * SkillType, Set, int, SceneContext)} end in: the override (or the plain Perícia-roll price),
+     * times the largest multiplier, plus every surcharge, minus every reduction — the reductions
+     * never below 1PA.
+     */
+    private ActionCost price(final CombatantSheet roller, final SkillType skill, final Set<Feat> spent,
+                             final int turnNumber, final SceneContext sceneContext, final Integer override,
+                             final java.util.stream.IntStream adjustments) {
+        int base = override != null ? override : getSkillRollCost(roller.getCharacter(), turnNumber);
+        int multiplier = roller.getCharacter().getFeats().stream()
+                .mapToInt(feat -> feat.resolveSkillRollActionPointMultiplier(skill, roller, spent, sceneContext))
+                .max().orElse(1);
+        base *= Math.max(1, multiplier);
         int surcharge = 0;
         int reduction = 0;
-        for (Feat feat : held) {
-            int adjustment = feat.resolveAttackActionPointAdjustment(attackSkill, attackSource, attacker, spent);
+        for (int adjustment : adjustments.toArray()) {
             if (adjustment > 0) {
                 surcharge += adjustment;
             } else {

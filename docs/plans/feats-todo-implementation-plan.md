@@ -33,7 +33,7 @@ re-ordered as:
   `SobrevivenciaFeat#SORTE_DE_MOSES`, `#DETERMINACAO_DE_MOSES`.
 - A held trait suppressing a Condição or an implied one — `ArtesMarciaisFeat#…SUBMISSAO`,
   `DuelistaFeat#COMBATER_AS_CEGAS`, `MonstruosoFeat#FEROCIDADE`, `VidaSpell#CORPO_FECHADO`.
-- A Reação ledger (spent this Rodada) — every "exempt from Reação" clause, `EscudeiroFeat#MESTRE_ESCUDEIRO`.
+- A Reação ledger (spent this Rodada) — every "exempt from Reação" clause. *`EscudeiroFeat#MESTRE_ESCUDEIRO` is done in 0.0.70: an Investida's target cannot Defender o Perímetro unless it holds it.*
 
 **Found during the Phase A sweep**, each with a single consumer so far — revisit when a second
 appears:
@@ -123,7 +123,8 @@ alongside RD (an inference, documented).
 - **Landed:** `GorgonaFeat#PROTECAO_DA_RAINHA_DAS_FADAS` (its RM half was unconditional all
   along — only its RC is form-gated), `DefensiveMasterpiece#DYOSPIROS` and `#MITRAL`.
 - **Not landed, second blocker found:** `MetamagicoFeat#ARCANISTA` (scoped to "Magias que você
-  conheça" — nothing classifies an incoming effect as a specific Magia),
+  conheça" — nothing classified an incoming effect as a specific Magia; *landed in 0.0.70 through
+  `DamageInteraction#fromSpell` + `Feat#resolveSpellMagicReduction`*),
   `TrollFeat#VIGOR_TROLLICO` (unmodelled sub-lineage), `GorgonaFeat#MONSTROS_EM_PELE_DE_FADA`
   (form toggle), `EscudeiroFeat#BASTIAO_DE_VIDRO` (needs mitigation to be *suppressible*).
 - **Known incorrectness, deliberately left:** RD is still type-blind, so a MAGICO hit takes RD
@@ -615,6 +616,8 @@ engine reports amounts and legality, the caller/UI applies position, mirroring t
   `GnomoFeat`, `GorgonaFeat`, `ElficoFeat` (×2), `FeericoFeat`, `FadasFeat`, `FuriasFeat`,
   `ElementalFeat` — **~18**.
 - **Effort:** 3 sessions. **Depends on:** Phase 8 for spell damage type; `magic-system` skill.
+- *0.0.70: `MetamagicoFeat` is fully wired — the Aptidão DM/GD/immunity clauses, Artesão, Engenheiro
+  on the Barreira, and the Barreira's ally Defesas and Duração extension. See `0.070.CHANGELOG.md`.*
 
 ---
 
@@ -654,11 +657,11 @@ reason; revisit only if a scheduled phase incidentally enables one.
 
 | Blocker | Constants |
 | --- | --- |
-| **Core never rolls dice** — reroll a die, reroll lowest die | `PeritoFeat` (×3). *Done for `ArtilhariaFeat#MIRA_IMPECAVEL` and `DuelistaFeat` (×3) in 0.0.70: `SkillRoll#rerollingLowestDie` + `Feat#grantsLowestDieReroll`, and `InteractionResult#getDamageLowestDieRerolls` for a dano roll.* |
+| **Core never rolls dice** — reroll a die, reroll lowest die | *Done in 0.0.70 for `ArtilhariaFeat#MIRA_IMPECAVEL`, `DuelistaFeat` (×3) and `PeritoFeat` (Maestria's reroll, Lembrar Como se Faz's retry): `SkillRoll#rerollingLowestDie` + `Feat#grantsLowestDieReroll`, and `InteractionResult#getDamageLowestDieRerolls` for a dano roll.* |
 | **An attack is caller-initiated** — "grants an extra attack / projectile" | — *`EscudeiroFeat#ESPARTANO` is done in 0.0.70 on `item.ShieldAttack`.* *`DuelistaFeat` (×2) and `ArtilhariaFeat` (×3 — Tiro Rápido, and Tiro Duplo/Múltiplo as one roll with more dice and repeated Efeitos, `Feat#resolveAttackEffectRepetitions`) are done in 0.0.70: the follow-up stays the caller's attack, but whether it is allowed and what it costs are read off the Turn's log (`Feat#permitsActivation`, `ActionPointsService#getAttackCost`).* |
-| **Narrative-purpose scoping** — "rolagens relacionadas a animais", "para criar equipamento", "para se aproximar de aliados" | `GoblinFeat`, `BestialFeat#FARO_APURADO`, `PeritoFeat`, `GiganteFeat` |
+| **Narrative-purpose scoping** — "rolagens relacionadas a animais", "para criar equipamento", "para se aproximar de aliados" | `GoblinFeat`, `BestialFeat#FARO_APURADO`, `GiganteFeat`. *`PeritoFeat#MESTRE_EM_ATUACAO` done in 0.0.70 as a player opt-in (the player declares the purpose by activating it) — the reading to try on the rest.* |
 | **Pure geometry / distance falloff** — "−1 para cada UD percorrido", terrain mapping in Distância Média | `ElementalFeat`, `BestialFeat#ECOLOCALIZACAO` |
-| **State that exempts from nothing** — breathing/sleep exemptions where the state isn't tracked and nothing charges for it | `BestialFeat`, `AvianoFeat`, `PeritoFeat`, `ElficoFeat`, `TrollFeat#SONO_DE_PEDRA` |
+| **State that exempts from nothing** — breathing/sleep exemptions where the state isn't tracked and nothing charges for it | `BestialFeat`, `AvianoFeat`, `ElficoFeat`, `TrollFeat#SONO_DE_PEDRA`. *`PeritoFeat#CRIANCA_DO_MAR`/`REI_DA_MONTANHA` done in 0.0.70 as caller-facing permissions (`CombatantSheet#canBreatheUnderwater`/`#canClingToSurfaces`) bought per Rodada.* |
 | **"count of activations of one specific ability"** — distinct from the roll-action log | `ArtilhariaFeat`, `CavalariaFeat`, `OrquicoFeat` "uma vez a cada Rodada" halves |
 
 ---

@@ -115,6 +115,15 @@ public class DeliveredAttackResult {
     private final int unappliedDifficultyReduction;
 
     /**
+     * Níveis the primary defender's Talentos take off the GD to resist this Magia — Artesão de
+     * Barreiras, Aptidão Mágica Suprema ({@code Feat#resolveSpellResistanceDifficultyReduction}).
+     * Reported unapplied, like {@link #unappliedDifficultyReduction}: this path compares against a
+     * flat Defesa, and no conversion from a nível to Defesa points is defined. 0 for anything but a
+     * Magia. {@code AttackReceiver}, where the defender rolls against a GD, applies it.
+     */
+    private final int unappliedSpellResistanceReduction;
+
+    /**
      * The attacker's roll bundled as a {@link CombatantAction} ready to file — its Perícia,
      * the resolved {@code governingAttributeDomain}, the {@link DeliveredAttack#getAttackSource()}
      * and {@code ActionCost} the caller supplied, the {@code turnNumber} (from {@link

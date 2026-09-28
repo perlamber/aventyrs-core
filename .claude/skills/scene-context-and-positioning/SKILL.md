@@ -57,9 +57,28 @@ turn-order concern, so a participant added mid-Round is already an ally before j
 rotation — and throws `IllegalOperationException` (`CHARACTER_SHEET_NOT_IN_SCENE`) if asked
 about a `CharacterSheet` that was never added, rather than silently returning an empty list.
 
-`Scene.getEnemies(CharacterSheet)` is the complement — every participant not sharing that
-sub-group. With more than two sub-groups, "not my group" and "hostile to me" aren't the same
-thing; this core has no faction/allegiance concept beyond that binary.
+**The aggression map (0.0.70) is the third allegiance.** `Scene#setAggressive(aggressorGroup,
+targetGroup, boolean)` records, *per direction*, whether one sub-group is aggressive towards
+another; `#declareNeutral(a, b)` clears both directions. Every pair of different groups starts
+aggressive, so a Scene that never touches the map keeps the old binary. Hostility is symmetric
+even though aggression isn't — `#areHostile(a, b)` is either side aggressive — so:
+
+- `Scene.getEnemies(CharacterSheet)` — participants of a group hostile to the caller's;
+- `Scene.getNeutrals(CharacterSheet)` — participants of other groups neither side is aggressive
+  towards (`PeritoFeat#DISCRETO`'s "personagens neutros", `#EXIBICIONISTA`'s plateia);
+- `Scene#getGroupOf(CharacterSheet)` — the key the map uses.
+
+`buildContext` carries the neutrals into `SceneContext#getNeutrals()`/`#hasNeutralWithin`; every
+context built without a Scene has none. A neutral is neither an ally nor an enemy everywhere
+else: Auras and Reações skip it, and movement passes through its space like an ally's (it
+blocks nobody). The map is not persisted by this core — a caller rebuilding a Scene re-issues the
+calls, like sub-groups and the turn cursor.
+
+**Acting last on purpose** is `Scene#deferToLast(sheet)` — `PeritoFeat#ANALISTA_TATICO`, gated on
+`Feat#permitsDeferringToLast`, a Cena de Combate, and nothing rolled this Cena nor a Turn taken
+this Rodada. It rewrites the entry one below everyone else's standing, so the Rodada re-sort
+keeps it last; `initiativePositionOf`/`SceneContext#getInitiativePosition()` is what "enquanto
+for o último a agir" reads.
 
 ## Range and SceneContext — `SceneContext`
 

@@ -388,13 +388,12 @@ public enum EscudeiroFeat implements Feat {
     },
 
     /** "Você pode fazer Reações mesmo quando o efeito impedir Reações." */
-    // The first clause is real: ignoresReactionPrevention makes ReactionsService drop negative timed
-    // REACTIONS bonuses (Atordoante's). What prevents Reações in this core is exactly those.
-    // TODO: "Enquanto estiver utilizando um item do tipo Escudo você pode fazer Reações do tipo
-    //  Defender o Perímetro mesmo quando for alvo de investidas" implies a base rule the corpus never
-    //  states — that a charge's target cannot react to the charger — and MovementReactionService offers
-    //  every provoked enemy, the target included. There is nothing to be exempt from until that rule
-    //  is ruled on.
+    // Real, both clauses. ignoresReactionPrevention makes ReactionsService drop negative timed
+    // REACTIONS bonuses (Atordoante's), which is exactly what prevents Reações in this core. And
+    // permitsPerimeterDefenceAsChargeTarget keeps the holder among MovementReactionService's reactors
+    // to an Investida aimed at them, while using a Escudo (the wings count, unless flying). Table
+    // ruling (2026-09-28): an Investida's target cannot Defender o Perímetro against the charger.
+    // Only a Mestre Escudeiro can.
     MESTRE_ESCUDEIRO(
             "Você pode fazer Reações mesmo quando o efeito impedir Reações. Enquanto estiver "
                     + "utilizando um item do tipo Escudo você pode fazer Reações do tipo Defender "
@@ -407,6 +406,13 @@ public enum EscudeiroFeat implements Feat {
         @Override
         public boolean ignoresReactionPrevention(final Character character) {
             return true;
+        }
+
+        @Override
+        public boolean permitsPerimeterDefenceAsChargeTarget(final CombatantSheet holder) {
+            boolean shield = holder.getCharacter().getEquipment().stream()
+                    .anyMatch(item -> item.getCategory() == ItemCategory.SHIELD && !item.isDestroyed());
+            return shield || holdsWings(holder.getCharacter()) && !holder.isFlying();
         }
     },
 

@@ -84,7 +84,24 @@ public class DefenseServiceImpl implements DefenseService {
                 + timed
                 + conditions
                 + sumGuardsAgainstOpponent(target, sceneContext)
-                + mitigationForgoneAsDefense(target, sceneContext);
+                + mitigationForgoneAsDefense(target, sceneContext)
+                + adjacentBarreiraBonus(sceneContext);
+    }
+
+    /**
+     * Mestre Arcanista's and Desafiador da Realidade's "+1/+3 às Defesas de seus aliados adjacentes"
+     * while their Barreira Mágica runs — <b>scanned</b> off the recipient's own snapshot, not granted,
+     * since the figure reads nothing of the recipient and adjacency is mutual. The best adjacent ally
+     * counts, not the sum: two Barreiras beside you are the same protection twice (a reading — the
+     * text names one Barreira's allies). A {@code null} context has nobody adjacent.
+     */
+    private static int adjacentBarreiraBonus(final SceneContext sceneContext) {
+        if (sceneContext == null) {
+            return 0;
+        }
+        return sceneContext.getAlliesWithin(org.aventyrs.core.scene.Range.ADJACENTE).stream()
+                .mapToInt(org.aventyrs.core.feat.BarreiraMagicaActiveAbility::resolveAllyDefesasBonus)
+                .max().orElse(0);
     }
 
     /**

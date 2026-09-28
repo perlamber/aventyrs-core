@@ -1417,6 +1417,33 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
     /** Lifts every held effect a trait named {@code source} granted — a timed bonus, a scoped Meio-Dano, a recurring roll. */
     void removeEffectsFrom(String source);
 
+    /**
+     * Whether a held, still-running timed bonus was granted by the trait named {@code source} — the
+     * question "enquanto estiver com uma Barreira Mágica ativa" asks ({@code
+     * MetamagicoFeat#ARTESAO_DE_BARREIRAS}, and the Barreira's ally Defesas).
+     */
+    boolean hasEffectFrom(String source);
+
+    /**
+     * Whether a held Talento lets this combatant breathe underwater right now — the permanent ones
+     * ({@code ElficoFeat}'s) and one bought for the Rodada ({@code PeritoFeat#CRIANCA_DO_MAR}). A
+     * caller-facing answer: nothing in this core tracks breathing, so nothing drowns without it.
+     */
+    default boolean canBreatheUnderwater() {
+        org.aventyrs.core.character.Character character = getCharacter();
+        return character.getFeats().stream().anyMatch(feat -> feat.allowsUnderwaterBreathing(character, this));
+    }
+
+    /**
+     * Whether a held Talento lets this combatant cling to walls and ceilings right now — {@code
+     * PeritoFeat#REI_DA_MONTANHA}. A permission the caller reads when moving it: which surface is where
+     * is geometry, and this core does none.
+     */
+    default boolean canClingToSurfaces() {
+        org.aventyrs.core.character.Character character = getCharacter();
+        return character.getFeats().stream().anyMatch(feat -> feat.clingsToSurfaces(character, this));
+    }
+
     /** Steps up the GD ladder every held {@link SkillDifficultyShift} grants skill right now. */
     int getSkillDifficultyShift(org.aventyrs.core.skill.SkillType skill);
 
