@@ -163,6 +163,11 @@ public class TranslatableMessages {
      * CharacterCreationService#applyBackground}.
      */
     public static final String INVALID_BACKGROUND_SELECTION = "INVALID_BACKGROUND_SELECTION";
+    /**
+     * A Defeito/Qualidade selection that breaks a creation rule — see {@code
+     * CharacterCreationService#applyDefectsAndQualities} for the list.
+     */
+    public static final String INVALID_DEFECT_SELECTION = "INVALID_DEFECT_SELECTION";
 
     /**
      * A Talento only a newly created character may take ("Apenas personagens recém-criados") was

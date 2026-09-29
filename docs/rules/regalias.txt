@@ -1,0 +1,203 @@
+Regalias
+Regalias são os Equipamentos mais poderosos já criados em Tellus, usando tecnologias e magias do Olho de Deus, cujos segredos são guardados à 7 chaves no Reino Celeste.
+No passado, para combater os Dragões Reis e libertar as raças mortais de seus domínios, Gilgamesh fez um pacto com o Povo Espírito – nome dado as raças viventes no Olho de Deus – onde, em troca da Centelha Aventyr deles e dos dragões derrotados, as mais poderosas armas seriam criadas.
+As Regalias utilizam Centelhas Aventyrs para serem criadas, permitindo que mesmo usuários não Despertos pudessem ter um poder similar aos dos Aventyrs, aumentando as chances de sobreviverem aos difíceis combates do passado e de superarem seus opressores.
+São divididas em 3 Categorias: Menores, Superiores e Divinas.
+Regalias Menores são as criadas utilizando uma das Centelhas de um Mortal como componente, selando assim 1 Título Aventyr de um personagem no Equipamento. Regalias superiores utilizam todas as Centelhas Aventyr de um personagem, selando ambos os Títulos Aventyrs de um personagem no Equipamento. Por fim temos as Regalias Divinas, que utilizam a Centelha de um Imortal – Abissais, Celestiais, Dragões ou Elementais – permitindo a criação de um Equipamento extremamente raro e poderoso.
+Regalias concedem Bônus Passivos baseado nos Tipos de Título que seriam Despertos e foram sacrificados durante a criação deste equipamento, seus efeitos são cumulativos.
+As Regalias Menores são caracterizadas por terem apenas 1 Habilidade de Regalia, enquanto as Regalias Superiores possuem 2 Habilidade. Regalias Divinas possuem 3 Habilidades de Regalias.
+Ativando uma Regalia
+Para Ativar uma Habilidade você deve utilizar de sua própria energia vital, trocando parte de sua vida pelo poder guardado na Regalia. Ativar 1 das Habilidades da Regalia requer a utilização de 1PV por Rodada, com tempos de Ação Livre ou Reação.
+Regalias Superiores e Divinas podem possuir mais de uma Habilidade, ativar múltiplas Habilidades simultaneamente exige +2PV para cada Habilidade utilizada além da primeira. 
+Quando uma Regalia possui mais de uma Habilidade é possível escolher qual delas ativas, podendo alternar entre as opções sempre que necessário, quando mais de uma Habilidade é ativada ao mesmo tempo os seus Efeitos são cumulativos.
+Os Pontos de Vida utilizados para ativar Habilidades de Regalia só podem ser recuperados com Descansos Verdadeiros.
+
+Outras Características das Regalias
+Apenas Equipamentos em seu máximo estágio de excelência podem se tornar Regalias, ou seja, Obras-Primas com todos os seus possíveis Aprimoramentos.
+Regalias são atemporais, ou seja, não podem ser destruídas pelo tempo, apenas magias Primordiais e outras Regalias são capazes de causar danos a uma Regalia.
+
+
+Centelhas de Regalias Defensivas
+Benefícios de Centelha Aventyr
+Os benefícios das Centelhas Aventyr afetam qualquer personagem que esteja em vestindo a Regalia, concedendo-lhes de maneira constante - passivamente - um dos seguintes benefícios:
+
+Abençoada
+	•	Danos e Curas de Habilidades Aventyr +2.
+Arcano
+	•	Multiplicador de PM +1 e Conjuração +1.
+Bruta
+	•	Redução de Danos Sofridos Reduzidos +2.
+Especialista
+	•	Margem Crítica Menor de todas as Perícias que não sejam de Ataque aumentada em +1 número.
+Vazia
+	•	Resistência a Críticos.
+Umbral
+	•	Multiplicador de PD +1.
+
+
+Habilidades de Regalias Defensivas
+As Habilidades de uma Regalia são efeitos ativos e possuem um Custo de Ativação (ver Ativando uma Regalia), enquanto ativa seus efeitos beneficiam o personagem por toda a Rodada ou pela Duração especificada na própria Habilidade.
+Os tipos de Habilidades Defensivas são: 
+
+Aprimoradora
+	•	Efeito Ativo: Você recebe Bônus Variável de +2 em Carisma, Gnose ou Instinto (definido na criação).
+	•	Equipamentos com mais de uma Centelha Aprimoradora concedem Bônus de +3 em um único Atributo ou de +2 em dois diferentes Atributos, conforme criação.
+Fortificadora
+	•	Efeito Ativo: Você recebe Bônus de +4 em suas Defesas.
+	•	Equipamentos com mais de uma Centelha Fortificadora o Bônus em Defesas muda para +7.
+Sacramentada
+	•	Efeito Ativo: Você se torna imune a Venenos, Doenças, Possessões, Maldições e Encantamentos Nocivos por 1 Rodada.
+	•	Equipamentos com mais de uma Centelha Sacramentada também te concede imunidade à Correntes de Efeitos e Efeitos Críticos Menores.
+Protetora
+	•	Efeito Ativo: RA e Resistência a Críticos.
+	•	Equipamentos com mais de uma Centelha Protetora concedem RDS e Resistência à Correntes de Efeitos +2.
+Elemental
+	•	Efeito Ativo: Você recebe RE: Todos os Elementos e reduz danos sofridos por um Elemento à metade.
+	•	O Elemento específico é determinado na criação da Regalia.
+	•	Equipamentos com mais de uma Centelha Elemental te concede imunidade completa ao Elemento.
+Regeneradora
+	•	Efeito Ativo: Você recupera 3PV, este é um Efeito Mágico (Divino/Natural) de Cura.
+	•	O Custo de Ativação de Centelhas Regeneradoras é de 1PM+1PD ao invés de 1PV.
+	•	Equipamentos com mais de uma Centelha Regeneradora tem seus Efeitos de Cura aumentados em +1 e concedem Regeneração Reativa – Enquanto seus PV forem inferiores à 10 os efeitos de Cura da Centelha Regeneradora aumentam em +1d6.
+Mimetismo Arcano
+	•	Efeito Ativo: Permite mimetizar uma Magia tipo Broto (Árvore de Magia definida na criação).
+	•	Apenas Magias que não afetem nocivamente outros personagens podem ser relacionados às Regalias Defensivas.
+	•	Magias que não sejam instantâneas tem a Duração máxima limitada à 3 Rodadas.
+	•	Equipamentos com mais de uma Centelha de Mimetismo Arcano podem permitir a conjuração de Magias Brotos de Árvores diferentes ou as magias Broto e Muda de uma mesma Árvore, termos definidos na criação.
+Mimetismo Aventyr
+	•	Efeito Ativo: Permite mimetizar os Efeitos Base de um Título e uma Especialização 
+	•	Apenas Títulos Abençoados, Especialistas e Vazios podem ser associados às Regalias Defensivas.
+	•	Título, Especialização e eventuais Habilidades são definidos na criação da Regalia.
+	•	Efeitos Ativos que não sejam instantâneos tem a Duração máxima limitada à 3 Rodadas.
+	•	Equipamentos com mais de uma Centelha de Mimetismo Aventyr permitem acessar 2 Habilidades do Título mimetizado, as Habilidades são escolhidas aleatoriamente entre Habilidades Neutras e da Especialização definida.
+Monstruosa
+	•	Efeito Ativo: Você pode mimetizar os Efeitos de uma Habilidade Monstruosa do tipo Presa ou Deviante 
+	•	A Habilidade deve ser definida na Criação da Regalia.
+	•	Habilidades cuja Duração não sejam Instantâneas tem a Duração máxima limitada à 3 Rodadas.
+	•	Habilidades do tipo Presa recebem as melhorias de efeito Deviante.
+	•	Equipamentos com mais de uma Centelha Monstruosa permite Mimetizar uma segunda Habilidade Monstruosa.
+Prestativa
+	•	Efeito Ativo: Funciona como um Subordinado 
+	•	O tipo é definido na criação da Regalia e nunca poderá ser do tipo Cavaleiro.
+	•	Subordinados do tipo Bispo sempre concedem o efeito de Cura.
+	•	Equipamentos que possuam mais de uma Centelha Prestativa podem possuir um Subordinado Prodigioso ou dois diferentes Subordinados comuns, definido na criação.
+Quebra-Tempo
+	•	Efeito Ativo: Primeira Ação que não seja de Ataque realizada tem o Tempo de Ação reduzido em -1PA.
+	•	Não aplica seus efeitos à Conjurações e Mimetismo de Magias.
+	•	Equipamentos que possuam mais de um Centelha Quebra-Tempo adicionalmente concedem uma Ação Livre e uma Reação adicional.
+Anti-Magia
+	•	Efeito Ativo: Cria uma Barreira de Proteção que te protege de magias, você recebe Bônus de +10 em DM.
+	•	Tem Duração de 1 Rodada e afeta apenas o primeiro Efeito Mágico que você entrar em contato.
+	•	Equipamentos que possuam mais de um Centelha Anti-Magia alternativamente te concedem imunidade ao primeiro Efeito Mágico nocivo.
+Anti-Centelha
+	•	Efeito Ativo: Cria uma Barreira de Proteção que te protege de uma Habilidade de Título ou Monstruosa, você recebe Bônus de +10 em Defesas para resistir a Efeitos destes tipos.
+	•	Tem Duração de 1 Rodada e afeta apenas a primeira Habilidade de Título ou Monstruosa nociva que você como um de seus alvos.
+	•	Equipamentos que possuam mais de uma Centelha Anti-Centelha alternativamente te concedem imunidade a primeira Habilidade nociva de Título ou Monstruosa que tiver você como um dos alvos.
+Planar
+	•	Regalias planares ficam em outros planos, surgindo apenas quando convocadas.
+	•	Efeito Ativo: Convoca a Regalia por 3 Rodadas.
+	•	Se fazem sempre presentes quando não estão te equipando ou se você estiver inconsciente ou morto.
+	•	Regalias convocadas te vestem automaticamente, não sendo necessário Tempo de Ação para equipá-las.
+	•	Podem anexar e carregar até 2 outros Equipamentos consigo para seu Plano pessoal.
+	•	Armas anexas à Regalia Planar são consideradas embainhadas, sendo necessário desembainhar para utilizar e embainhar novamente para reanexar. 
+	•	Equipamentos que possuam mais de uma Centelha Planar podem anexar e carregar até 5 outros Equipamentos para seu Plano pessoal.
+Vingativa
+	•	Efeito Ativo: Você recebe Bônus de +2 em suas rolagens de Perícia de Ataque, Danos e Defesas.
+	•	Este efeito pode ser Ativado apenas se seus PV não estiverem cheios e apenas para atacar ou resistir aos ataques de personagens que te infligiram danos.
+	•	Estes Bônus mudam para +3 se seus PV atuais estivem abaixo da metade de seu total.
+	•	Estes Bônus mudam para +5 se seus PV atuais forem menos que o seu valor de Vigor.
+	•	Um mesmo Equipamento não pode possuir mais de uma Centelha Vingativa.
+Tecelã de Heróis
+	•	Efeito Passivo: No início de cada Cena de Combate você recebe 1 Ponto Temporário de Autocontrole.
+	•	Efeito Ativo: A sua Inciativa aumenta em +3.
+	•	Pontos de Ego concedidos pela Tecelã de Heróis são perdidos ao final da Cena se não utilizados.
+	•	Armas que possuam mais de uma Centelha Tecelã de Heróis concedem 2 Pontos Temporários de Autocontrole, ao invés de apenas 1.
+
+
+Centelhas de Regalias Ofensivas
+Benefícios de Centelha Aventyr
+Os benefícios das Centelhas Aventyr afetam qualquer personagem que esteja em empunhando a Regalia, concedendo-lhes de maneira constante - passivamente - um dos seguintes benefícios:
+
+Abençoada
+	•	Defesas +2.
+Arcano
+	•	Danos e Cura Mágica +2.
+Bruta
+	•	Dano Base +2.
+Especialista
+	•	Margem Crítica Menor +2.
+Vazia
+	•	Dano Crítico +1d6.
+Umbral
+	•	Perícia de Ataque +2.
+	•	
+Habilidades de Regalias Ofensivas
+As Habilidades de uma Regalia são efeitos ativos e possuem um Custo de Ativação (ver Ativando uma Regalia), enquanto ativa seus efeitos beneficiam o personagem por toda a Rodada ou pela Duração especificada na própria Habilidade.
+Os tipos de Habilidades Ofensivas são: 
+
+Aprimoradora
+	•	Efeito Ativo: Você recebe Bônus Variável de +2 em Força, Destreza ou Foco (definido na criação).
+	•	Armas com mais de uma Centelha Aprimoradora concedem Bônus de +3 em um único Atributo ou de +2 em dois diferentes Atributos, conforme criação.
+Certeira
+	•	Efeito Ativo: Apenas uma vez por Rodada, a GD para afetar alvos com ataques desta Arma é reduzido em -1 Nível.
+	•	Artefatos de Conjuração aplicam a redução de GD a uma magia ofensiva conjurada ou mimetizada.
+	•	Armas com mais de uma Centelha Certeira reduzem a GD do ataque -2 Níveis, em substituição aos efeitos anteriores.
+Corruptora
+	•	Efeito Ativo: Alvos que sofram danos são Amaldiçoados por 1 Rodada, suas rolagens de Perícias efetuadas contra alvos afetados pela Corrupção tem o GD reduzido em -1 nível.
+	•	Armas com mais de uma Centelha Corruptora amaldiçoam alvos por 3 Rodadas em substituição aos efeitos anteriores.
+Destruidora
+	•	Efeito Ativo: Danos Críticos +3, Acertos Críticos recebem a Corrente de Efeitos – Destruição: Alvo perde um Multiplicador de PV (cumulativo até 3 vezes).
+	•	A Corrente de Efeitos de Armas com mais de um Centelha Destruidora subtrai Multiplicadores de todos os Bônus Bases em substituição a redução de Multiplicador de PV.
+Elemental
+	•	Efeito Ativo: Bônus de Danos +2, dano causado é Mágico (rolagem contra DM) e inflige Dano Elemental em substituição ao tipo de dano natural da arma.
+	•	O Elemento da Arma deve ser determinado na criação do Equipamento.
+	•	Artefatos de Conjuração não aplicam a substituição do tipo de dano às magias, mas ampliam o dano das magias de mesmo Elemento em +1d6.
+	•	Armas com mais de uma Centelha Elemental tem o Bônus de Dano alterado para +1d6 em substituição aos efeitos anteriores e infligem danos Elementais de todos os Elementos disponíveis em sua centelha.
+Executora
+	•	Efeito Ativo: Margem Crítica Menor +2 e aplica Efeitos Críticos uma vez adicional.
+	•	Armas com mais de uma Centelha Executora adicionalmente aumentam a Margem Crítica Maior em +2.
+Furta-Almas
+	•	Efeito Ativo: Seus ataques recebem Roubo de Vida 3.
+	•	Armas com mais de uma Centelha Furta-Almas recebe Roubo de Bônus Base 3 em substituição aos seus efeitos anteriores.
+Mimetismo Arcano
+	•	Efeito Ativo: Permite mimetizar uma Magia tipo Broto 
+	•	Árvore de Magia definida na criação da Regalia.
+	•	Apenas Magias que inflijam danos ou permitam a recuperação de PV pode ser relacionada às Regalias Ofensivas.
+	•	Magias que não sejam instantâneas tem a Duração máxima limitada à 3 Rodadas.
+	•	Armas com mais de uma Centelha de Mimetismo Arcano podem permitir a conjuração de Magias Brotos de Árvores diferentes ou as magias Broto e Muda de uma mesma Árvore, termos definidos na criação.
+
+Mimetismo Aventyr
+	•	Efeito Ativo: Permite mimetizar os Efeitos Base de um Título e uma Especialização
+	•	Apenas Títulos Arcanos, Brutos e Umbrais podem ser associados às Regalias Ofensivas.
+	•	Título, Especialização e eventuais Habilidades são definidos na criação da Regalia.
+	•	Efeitos Ativos que não sejam instantâneos tem a Duração máxima limitada à 3 Rodadas.
+	•	Armas com mais de uma Centelha de Mimetismo Aventyr permitem acessar 2 Habilidades do Título mimetizado, as Habilidades são escolhidas aleatoriamente entre Habilidades Neutras e da Especialização definida.
+Monstruosa
+	•	Efeito Ativo: Você pode mimetizar os Efeitos de uma Habilidade Monstruosa do tipo Predador ou Apex
+	•	Habilidade definida na Criação da Regalia.
+	•	Habilidades cuja Duração não sejam Instantâneas tem a Duração máxima limitada à 3 Rodadas.
+	•	Armas com mais de uma Centelha Monstruosa permite Mimetizar uma segunda Habilidade Monstruosa.
+Prestativa
+	•	Efeito Ativo: Funciona como um Subordinado.
+	•	O tipo de Subordinado é definido na criação da Regalia e nunca poderá ser do tipo Torre.
+	•	Subordinados do tipo Bispo sempre concedem Roubo de Vida.
+	•	Armas que possuam mais de uma Centelha Prestativa podem possuir um Subordinado Prodigioso ou dois diferentes Subordinados comuns, definido na criação.
+Quebra-Tempo
+	•	Efeito Ativo: concede Bônus de +1PA.
+	•	Armas que possuam mais de um Centelha Quebra-Tempo adicionalmente concedem uma Ação Livre e uma Reação adicional.
+Rompe-Talantes
+	•	Efeito Ativo: Alvos são Amaldiçoados e tem o Tempo e Custo de Ativação de Habilidades Aventyrs e Monstruosas do alvo são dobrados por 1 Rodada. Se este for um Acerto Crítico adicionalmente o alvo perde 1d6PD.
+	•	Personagens afetados pela maldição Rompe-Talantes se torna imune aos seus efeitos por 2 Rodadas.
+	•	Uma mesma arma não pode ter mais de uma Centelha Rompe-Talantes.
+Silenciadora-Arcana
+	•	Efeito Ativo: Alvos são Amaldiçoados e tem o Tempo e Custo de Conjuração ou Mimetismo de Magias dobrados por 1 Rodada. Se este for um Acerto Crítico adicionalmente o alvo perde 1d6PM.
+	•	Personagens afetados pela maldição Silenciadora-Arcana se torna imune aos seus efeitos por 2 Rodadas.
+	•	Uma mesma arma não pode ter mais de uma Centelha Silenciadora-Arcana.
+Sombria
+	•	Efeito Ativo: Alvos são Amaldiçoados, sofrendo Desvantagem em Rolagens de Perícias e Defesas por 2 Rodada.
+	•	Armas que possuam mais de uma Centelha Sombria causam +1d6 pontos de danos contra personagens amaldiçoados.
+Tecelã de Heróis
+	•	Efeito Passivo: No início de cada Cena de Combate você recebe 1 Ponto Temporário de Sorte.
+	•	Efeito Ativo: A sua Inciativa aumenta em +3.
+	•	Pontos de Ego concedidos pela Tecelã de Heróis são perdidos ao final da Cena se não utilizados.
+	•	Armas que possuam mais de uma Centelha Tecelã de Heróis concedem 2 Pontos Temporários de Sorte, ao invés de apenas 1.

@@ -1,0 +1,238 @@
+Defeitos e Qualidades
+Os defeitos e as qualidades ajudam a criar cada personagem únicos e ainda mais marcantes, também ajudam a torná-los mais humanos, mais próximos a nós com nossas características individuais.
+O Narrador do Jogo deve, durante a fase de criação de personagens informar aos jogadores se utilizará ou não este recurso, o motivo é que os Defeitos e as Qualidades aumentam a complexidade do jogo, por serem mais elementos a se considerar ao longo da narrativa, também por aumentar a complexidade da criação das fichas por parte dos jogadores.
+
+Defeitos
+Gente como a gente, os defeitos ajudam criar personagens com pontos fracos que vão além de simples números e da presença ou ausência de um treinamento em Perícia. 
+Um Defeito marca uma característica do personagem, seja ela de personalidade ou física, e são divididas em 3 tipos: Leves, Moderados e Graves.
+A tipo, ou gravidade, do Defeito deve ser considerado pelo jogador ao longo de sua interpretação e pelo narrador, explorando os defeitos dos personagens de forma que a dificuldade pôr o possuir seja sentida. 
+Um personagem surdo deve passar pelas dificuldades de comunicação e sentir os malefícios desta deficiência em emboscadas, um personagem com votos de pobreza deve ser tentado e sentir as consequências e implicações de seus votos, assim como uma saúde frágil pode ser retratada como alergias, facilidade em resfriar-se ou se machucar, não se limitando apenas as penalidades em Cenas de Combate.
+Em contrapartida, lidar com os defeitos é o que nos torna mais fortes, concedendo Benefícios de Superação, cada tipo ou gravidade de defeito concede um benefício a cada personagem.
+
+Adquirindo Defeitos
+Um personagem pode adquirir um defeito de duas formas, na criação do personagem ou ao longo da campanha narrada.
+Durante a criação do personagem é importante considerar os Defeitos na produção da História do personagem e seus efeitos devem ser explorados deste o início da Campanha, a depender do tema, oportunidade e gravidade.
+Quando escolhido durante a Criação, cada personagem poderá possuir até o máximo de 3 Defeitos, limitados à um de cada tipo ou gravidade.
+Apenas defeitos adquiridos durante a criação do personagem concedem Benefícios de Superação.
+Ao longo das sessões do jogo os personagens podem adquirir cicatrizes de batalhas ou de aventuras que podem se tornar defeitos, por exemplo a perda de um membro num combate, cegueira consequente de uma armadilha, uma fobia após uma derrota ou situação de estresse, ou mesmo como por efeito Mágico de uma Maldição.
+Não existem limites para a quantidade de Defeitos adquiridos ao longo do jogo, mas recomenda-se aos narradores não extrapolar na quantidade, pois defeitos excessivos podem impactar negativamente na diversão e desestimular os jogadores, exceto em campanhas baseadas em terror ou de temas mais pesados, com jogadores experientes e que apreciem este tipo de mecânica.
+Defeitos adquiridos durante a campanha não devem fornecer Benefícios de Superação, mas o Narrador pode considerar exceções personagens que joguem por longos períodos com seus defeitos, considerando um Benefício de Superação como uma premiação substitutiva ou complementar aos Pontos de Experiência (EXP).
+
+Defeitos Leves
+Defeitos Leves são aqueles que afetam pouco a vida daqueles que o possuem, é fácil conviver com estas características e elas frequentemente passam despercebidas pela maioria das pessoas. 
+Um Defeito Leve raramente deve ser tratado como algo impeditivo, sendo tratado como algo limitante ou incômodo, dependendo do contexto.
+
+Benefícios de Superação
+Defeitos Leves permitem que o personagem adquira um dos seguintes benefícios:
+	•	1 Qualidade Menor;
+	•	Treinamento em uma Perícia adicional; ou 
+	•	+1 graduação em uma Perícia Treinada que possua.
+
+Defeitos Moderados
+Defeitos Moderados são mais difíceis de serem escondidos de terceiros e afetam a rotina de quem o possui com certa frequência, apresentando dificuldades reais em ações cotidianas, mas ainda raramente impossibilitando. 
+Jogadores e Narradores devem estar atentos aos Defeitos Moderados dos personagens, pois eles deveram se apresentarem aos jogos com determinada regularidade.
+
+Benefícios de Superação
+Defeitos Moderados permitem que o personagem adquira um dos seguintes benefícios:
+	•	1 Qualidade Maior;
+	•	2 Qualidades Menores; ou 
+	•	1 Talento Geral.
+Talentos adquiridos desta forma devem ter seus pré-requisitos preenchidos. 
+
+
+Defeitos Graves
+Os Defeitos Graves são aqueles que nunca passam despercebidos e frequentemente – ou sempre – dificultam a execução de certas ações por parte do personagem, muitas vezes impossibilitando o ato.
+Defeitos Graves devem estar presentes em grande parte da rotina do personagem, na maioria das sessões, a menos que haja uma justificativa muito plausível para a ausência.
+
+Benefícios de Superação
+Defeitos Graves permitem que o personagem adquira um dos seguintes benefícios:
+	•	1 Qualidade Maior + 1 Qualidade Menor;
+	•	1 Talento qualquer + 1 Graduação ou Treinamento em Perícia
+	•	1 Habilidade de Atributo, de Ego ou de Competência adicional
+Talentos e Habilidades adquiridos desta forma devem ter seus pré-requisitos preenchidos.
+
+Superando um Defeito
+É possível superar um defeito, se livrando de seus efeitos, ao longo de uma campanha.
+Superar um defeito requer contexto, oportunidade e possui um custo em EXP.
+Um membro perdido pode ser substituído por uma prótese ou regenerado magicamente, são exemplos de contexto, mas a Superação de um Defeito adquirido durante a criação de um personagem não pode se limitar ao contexto.
+Defeitos adquiridos ao longo do jogo podem e devem ser superados com recursos do jogo, por outro lado os Defeitos adquiridos ao longo da criação do personagem fazem parte do conceito e proposta dele, por isso é muito mais difícil.
+Um membro recuperador por magia pode vir atrofiado ou a prótese pode não funcionar para o personagem por alguma limitação mecânica ou psicológica, este Defeito é parte do que o personagem foi concebido para ser e representar, por isso superar este tipo de defeito deve unir os 3 requisitos: Contexto, Oportunidade e EXP.
+A história precisa apresentar elementos compatíveis, a oportunidade deve ser criada (pelo Narrador ou Jogador), onde talvez apenas personagens raros ou únicos sejam capazes de prestar tamanho auxílio – podendo também ter custos, cobrados em Pontos de Recursos, Saldo de Serviços, permutas por trabalhos etc. – e um valor proporcional em EXP deverá ser pago.
+	•	Defeitos Leves custam 3 EXP, Moderados 5 EXP, Graves 7 EXP.
+Superar um Defeito, mesmo unindo todas as condições, nunca deve ser tratado como algo leviano e simples, deve exigir tempo, esforço e uma narração dramática, tornando o momento especial, único, memorável... esta é, para todos os efeitos, uma grande vitória.
+
+Sobreposição de Efeitos
+Defeitos são as limitações máximas que um personagem pode possuir, por isso seus efeitos sobrepões os Efeitos e Benefícios de Características Raciais, Talentos, Habilidades de Títulos e de Competência.
+Não é possível adquirir uma Qualidade que seja opositora em conceito ou efeito a um Defeito que você possua.
+Sempre que um elemento – qualquer – fizer oposição a descrição de um Defeito ele poderá ser anulado ou terá apenas efeito temporário.
+São exemplos de sobreposição:
+	•	Uma Habilidade que lhe conceda imunidade Elemental não lhe torna imune a um Elemento que você seja vulnerável.
+	•	Um Talento que dê Multiplicadores de Bônus Base não faz efeito se tiver algum Defeito que limite seus PD, PM ou PV.
+	•	Você não pode Despertar um Título em condição opositora as condições da Herança de Gilgamesh.
+	•	Etc.
+
+Lista de Defeitos
+Comportamento Excêntrico
+Descrição: Você possui hábitos incomuns, ou estranhos, e as coisas que você fala não faz sentido para a maioria das pessoas.
+Leve – Chato: Desvantagem em rolagens de Perícias baseadas em Carisma
+Moderado – Esquisitão: GD das Perícias baseadas em Carisma aumenta em +1 Nível.
+Grave – O Louco: Você é incapaz de expressar ideias de maneira clara ou objetiva, para a maioria das pessoas suas falas não fazem sentido, por isso você falha automaticamente em rolagens de perícias baseadas em Carisma.
+
+Corpo Frágil
+Descrição:
+Leve – Saúde Fraca: Multiplicador de PV reduzido em -1.
+Moderado – Doença Persistente: Multiplicador de PV reduzido em -2. Os Malefícios “Doença” e “Veneno” tem as Durações dobradas em você.
+Grave – Coração de Vidro: Seu Multiplicador de PV é sempre igual à 1, não é possível aumentar esta quantidade. Os Malefícios “Doença” e “Veneno” tem as Durações maximizadas e dobradas em você.
+
+Desapego Material
+Descrição: Você não se importa com bens além do essencial, para você basta o mínimo para viver.
+Leve – Minimalista: Seus bens se restringem ao que você puder carregar
+Moderado – Voto de Pobreza: Você não aceita recompensas ou novos equipamentos, mantendo seus itens iniciais enquanto estiverem em condições de uso, substituindo por novos apenas quando eles forem destruídos. Você recusa novos itens mesmo se forem melhores que os seus, enquanto eles estiverem em um estado aceitável.
+Grave – Recusa Material: Você não possui e nem carrega nenhum item que não seja essencial para a vida, possuindo no máximo um Equipamento Ofensivo e um Equipam amento Defensivo (não tecnológicos) e roupas simples. Você recusa novos itens, mesmo que melhores que os seus, enquanto os atuais estiverem em condições de uso.
+
+Deficiência Física
+Descrição: Um de seus membros é atrofiado, pouco desenvolvido ou ausente, por isso você tem dificuldades em realizar ações que o envolva. Escolha entre pernas ou braços, as dificuldades que você vivência são compatíveis com o nível de seu defeito.
+Leve – Dano Permanente: Você sofre Desvantagem em rolagens de Perícias que dependam do membro escolhido. Caso a escolha tenha sido Braços, adicionalmente você sofre Desvantagem em suas rolagens de Danos Físicos. Se a escolha for Pernas, além do efeito comuns, Seu Movimento Base é reduzido em -2UD.
+Moderado – Membro Ausente: Você é incapaz de realizar rolagens de Perícias que dependam do membro ausente ou não funcional, caso o membro escolhido seja a pernas, adicionalmente seu Movimento Base é reduzido à metade. Você pode substituir os efeitos deste Defeito pelos efeitos de “Dano Permanente” com uso de aparatos de auxílio, como próteses ou muletas.
+Grave – Dependência: Cumulativamente aos efeitos de Membro Ausente, você não pode adquirir Habilidades de Atributo de Força ou de Destreza (escolhido aleatoriamente).
+
+Deficiência Sensorial
+Descrição: Você não tem uma audição, olfato ou visão bem desenvolvida, ou sofre de alguma deficiência em um destes sentidos. Escolha um dos três sentidos, você sofre dificuldades sensoriais com base no nível de seu Defeito.
+Leve – Percepção nublada: Seu sentido é pouco mais fraco que o comum, por isso você sofre Desvantagens em rolagens de Atenção - e outras Perícias quando aplicável -, mas apenas enquanto relacionadas ao sentido escolhido.
+Moderado – Sentido ineficiente: Um de seus sentidos é muito inferior ao padrão de sua raça, o GD para rolagens de Atenção - ou outras Perícias situacionais -, é aumentada em +1 Nível.
+Grave – Ausência Sensorial: Você não possui o sentido escolhido, por isso falha automaticamente em rolagens de Atenção que envolva este sentido. Este efeito pode ser aplicado a outras perícias quando pertinente, conforme o Narrador.
+
+Desconexão com o AEther
+Descrição: Você tem dificuldades para se conectar com o AEther, por isso possui dificuldades em manipular ou reter o Mana, a energia mágica.
+Leve – Inapto para Magias: Seu Multiplicador de PM é reduzido em -2.
+Moderado – Incompetência Arcana: Seu Multiplicador de PM é igual à 1 e não é possível aumentar esta quantidade.
+Grave – Nulificador: Seu Multiplicador de PM é igual à 1, não é possível aumentar esta quantidade e você nunca recupera PM com Descansos e efeitos similares.
+
+
+Distúrbio de Atenção
+Descrição:
+Leve – Desatento: Desvantagem nas rolagens de Iniciativa e Atenção.
+Moderado – Sem Foco: O mesmo que Desatento, adicionalmente você sofre Redutor de -1PA em Rodadas Ímpares das Cenas de Combate.
+Grave – Preso a Imaginação: Similar a Sem Foco, adicionalmente você não pode efetuar Ações Livres ou Reações nas Rodadas Ímpares Rodada.
+
+Fobia
+Descrição: Você tem medo de algo relativamente comum e não consegue lidar bem com aquilo. Escolha entre um tipo de animal, raça ou situação (como chuva, criaturas mortas, paredes amarelas etc.), sempre que se deparar com o escolhido você sofre um efeito com base no tipo de fobia.
+Leve – Medo: Enquanto na presença do objeto de sua fobia você recebe a Condição Abalado.
+Moderado – Repulsa: Como Medo, mas a Condição recebida é Assustado.
+Grave – Pavor Absoluto: Como Medo, mas a Condição recebida é Apavorado.
+
+Herança de Gilgamesh
+Descrição: Gilgamesh, o rei do mundo da segunda era, sacrificou sua Centelha Aventyr, a dos seus homens e de seus descendentes para criar as Regalias, por isso aqueles de seu sangue tem dificuldades em Despertar e moldar o mundo com sua Determinação.
+Leve – Vontade Fraca: Seu Multiplicador de PD é reduzido em -1 e é incapaz de Despertar seu Título Secundário.
+Moderado – Centelha Dormente: Seu Multiplicador de PD é reduzido em -2 e é incapaz de Despertar seu Título Secundário, seu Título Primário (e único) será Desperto em atraso, apenas com 25 EXP.
+Grave – Filho de Gilgamesh: Seu Multiplicador de PD é igual à 1 e não é possível aumentar esta quantidade. Você não é capaz de Despertar Títulos Aventyr.
+
+Memória Fraca
+Descrição: Você tem péssima memória e esquece das coisas que vivencia com certa facilidade.
+Leve – Lapsos de Memória: Você tem dificuldades para se lembrar de eventos passados e esquece as coisas com frequência.
+Moderado – Amnésia: Você não se recorda de nenhum evento da sua vida anterior ao início da campanha.
+Grave – Amnésia Recorrente: Após passar por um Descanso Verdadeiro você pode escolher apenas um evento ocorrido, você esquece todos os outros acontecimentos do dia exceto pelo evento escolhido, ainda assim você não se recordará de todos os detalhes. Você também só é capaz de se recordar das pessoas que você com diariamente.
+
+
+Vulnerabilidade
+Descrição: Você tem uma sensibilidade maior, ou uma resistência menor, à certos tipos de feridas. Escolha entre Danos Físicos não-Elementais, Danos Mágicos ou Danos Elementais (dois elementos aleatórios), sempre que for alvo de ataques do tipo de dano escolhido você sofre os efeitos de seu tipo de vulnerabilidade.
+Leve – Dificuldade para Reagir: Você sofre Desvantagem em rolagens de Esquiva e Aparar para evitar ataques do tipo escolhido, caso não consiga evitar o ataque sofrerá 2 pontos de danos adicionais.
+Moderado – Ponto Fraco: A GD de Esquiva e Aparar para evitar ataques do tipo escolhido é aumentada em +1 Nível, caso não consiga evitar o ataque sofrerá 3 pontos de danos adicionais.
+Grave – Trava Mental: Você não é capaz de se defender de ataques do tipo escolhido, adicionalmente você sofre +1d6 pontos de danos destes ataques.
+
+Restrição Moral
+Descrição: Você acredita nas regras e na lei, ou tem um código de honra rigoroso, por isso sempre segue algumas regras.
+Leve – Seguidor da Lei: Você sempre cumpre com as leis locais e nunca mente.
+Moderado – Código dos Cavaleiro: Como Seguidor da Lei, mas seu código moral também o impede de se aproveitar de fraquezas alheias, você nunca se beneficia ou ataca personagens claramente mais fracos que você, que estejam rendidos, caídos ou desprevenidos.
+Grave – Herói Interior: Como Código dos Cavaleiros, porém você também sempre ajuda e protege os mais fracos mesmo que isso o prejudique, nunca ataca alvos em menor número (exceto quando claramente mais poderosos) e não permite que outros quebrem o Código dos Cavaleiro em sua presença.
+
+
+Qualidades
+Qualidades indicam as vantagens naturais de um personagem, contrastando com os Defeitos.
+As Qualidades são dívidas em duas classes e indicam as qualidades máximas de um personagem, mas diferentemente dos Defeitos, podem ser desativadas por Malefícios temporários, como efeitos de Maldições ou a oposição por outros recursos.
+As classes das Qualidades são: Qualidade Maior e Qualidade Menor.
+Qualidades Maiores são vantagens de alto nível que os personagens recebem em sua criação e que se fazem presente em grande parte do cotidiano, afetando positivamente o personagem em diversos contextos. Por outro lado, as Qualidades Menores são vantagens importantes, mas menos presentes ou de menos impactantes quando utilizadas.
+“Todas as Qualidades Maiores possuem implicitamente, de forma cumulativa, os efeitos da Qualidade Menor de seu tipo, exceto quando especificado o contrário.”
+Personagens podem adquirir Qualidades de apenas 2 formas, sendo ambas durante a criação, sendo:
+	•	Como Benefício de Superação, concedido por um Defeito; ou
+	•	Em substituição a Talentos Gerais.
+As Qualidades, na maioria das vezes, são características desenvolvidas por superar um Defeito, mas podem estar relacionados as aptidões naturais descobertas, aprimoradas e exploradas pelo personagem, por vezes se confundindo com os Talentos em seu conceito.
+Quando em oposição ao Defeito, na forma de Benefício de Superação, é possível escolher qualidades conforme o tipo de Defeito, limitados as classes e quantidades especificadas.
+Alternativamente, quando escolhido em substituição aos Talentos Gerais, apenas na criação do personagem e em nenhum outro momento, é possível trocar 1 Talento Geral por uma Qualidade Menor, ou 2 Talentos Gerais por uma única Qualidade Maior. Esta ação afeta e reduz efetivamente a quantidade de Talentos Gerais iniciais do personagem.
+Nenhum personagem pode – de forma alguma – possuir mais do que 3 (três) Qualidades, independentemente das classes das Qualidades.
+
+
+Lista de Qualidades
+Centelha Maior
+Descrição:
+Menor –Pronto para Ação: Em cada Cena de Combate, o Primeiro Efeito de Habilidade de Título ou Talento que você ativar e que possua um custo em PD tem este custo reduzido à zero.
+Em cada Cena de Combate, o Primeiro Efeito de Habilidade de Título ou Talento que você ativar e que possua um custo em Pontos de Ego tem este custo reduzido à uma unidade.
+Maior – Sonho de Gilgamesh: Seu Multiplicador de PD aumenta em +1. Enquanto estiver empunhando pelo menos uma Regalia Verdadeira seu Multiplicador de PD, ao invés disso, aumenta em +2.
+	•	Qualidade opositora ao Defeito “Herança de Gilgamesh”.
+
+Destinado a Fortuna
+Descrição:
+Menor – Saber Investir: Seus pontos temporários e permanentes de Recursos valem +2PE cada, , sempre que recuperar Recursos por conclusão de arco de história você adquire 1 ponto temporário de Recurso adicional.
+Maior - Privilegiado: Você adquire 1 Ponto permanente de Recursos.
+	•	Qualidade opositora ao Defeito “Desapego Material”.
+
+Escolhido da Magia
+Descrição:
+Menor – Linhagem Arcana: Você recebe RM e Vantagem em suas rolagens de Domínio do Mana para Conjurar Magias.
+Maior – Alma de AEther: Seu multiplicador de PM é aumentado em +1. A primeira vez que você for afetado por uma Magia em cada Cena de Combate você pode escolher negar o Efeito, se o fizer você recupera PM igual a quantidade de PM utilizado na conjuração.
+	•	Qualidade opositora ao Defeito “Desconexão com o AEther”.
+
+Intelecto Superior
+Descrição:
+Menor - Memória Eidética: Você raramente se esquece de algo que tenha presenciado e tem facilidade em aprender novas coisas. Ao fim da primeira sessão de jogo você adquire uma nova Especialização de uma Perícia treinada que possuir.
+Maior – Dominar Padrões: Você nunca se esquece nada e rapidamente aprende novas coisas. Adquirir graduações em Perícias, até a terceira graduação, custa 0.5 EXP a menos. Ao fim da terceira sessão de jogo, você adquire uma Habilidade de Competência de uma Perícia qualquer (mesmo que não seja treinado nela).
+	•	Qualidade opositora ao Defeito “Memória Fraca”.
+
+Oportunista Nato
+Descrição:
+Menor - Sorrateiro: Você adquire Vantagem na primeira Rolagem de Perícia que efetuar contra cada personagem Desprevenido em uma Cena.
+Maior – Essência Malandra: Você recebe Vantagem em rolagens de Atenção e Persuasão, também recebe Vantagem em qualquer rolagem de Perícia efetuada contra um alvo Desprevenido (não cumulativo com Sorrateiro).
+	•	Qualidade opositora ao Defeito “Restrição Moral”.
+
+Radiante
+Descrição:
+Menor – Amigável: Vantagem em rolagem de Perícias baseadas em Carisma.
+Maior – Aura de Confiança: Você pode reduzir o GD de uma rolagem de Perícias a cada Cena. Aura de Confiança afeta apenas Perícias baseada em Carisma e seu uso é restrito a apenas uma vez por Cena.
+	•	Qualidade opositora ao Defeito “Comportamento Excêntrico”.
+
+Resiliência Heroica
+Descrição:
+Menor – Motivado pelo Desafio: Enquanto um de seus aliados próximos estiver Abalado, Assustado ou Apavorado você não pode receber estas Condições.
+Maior - Inabalável: Você não pode receber os malefícios Assustado e Apavorado, se limitando a Abalado.
+	•	Qualidade opositora ao Defeito “Fobia”.
+
+Resistência Atípica
+Descrição: Escolha entre Energia Elemental (1 único elemento à sua escolha), Energia Profana ou Energia Divina, você é resistente aos efeitos do tipo de energia escolhido.
+Menor – Herança Dracônica: Você adquire Resistência ao tipo de Energia escolhido (redução de Duração e Meio-Dano).
+Maior – Herança Divina: Você é imune aos Efeitos e danos do tipo de energia escolhido.
+	•	Qualidade opositora ao Defeito “Vulnerabilidade”.
+
+Saúde de Ferro
+Descrição:
+Menor - Vigoroso: A cada Descanso Longo ou Superior você recupera +1PV adicionais, +2PV se possuir um Título Aventyr (para o máximo de +3PV).
+Maior – Constituição Inabalável: Seu Multiplicador de PV aumenta em +1, a cada Descanso Longo ou superior você recupera +2PV.
+	•	Qualidade opositora ao Defeito “Corpo Frágil”.
+Sentido Superior
+Descrição: Escolha um sentido entre visão, audição ou olfato...
+Menor – Sempre Alerta: Vantagem em Rolagens de Atenção, ou em qualquer outra Perícia que possa se beneficiar deste sentido, conforme o Narrador.
+Maior – Sentir o Todo: Uma vez por sessão de jogo você pode escolher ser bem-sucedido em uma Rolagem de Atenção (ou outra Perícia, se aplicável), em Rolagens que não utilizar este benefício você recebe Vantagem. Esta Vantagem é aplicável apenas quando a rolagem está relacionada ao sentido escolhido.
+	•	Qualidade opositora ao Defeito “Deficiência Sensorial”.
+
+Sexto Sentido
+Descrição:
+Menor - Atenção Sobrenatural: Você recebe Vantagem em suas rolagens de Atenção e Iniciativa.
+Maior – Precognição: Você recebe 1 ponto permanente de Inciativa + uma Especialização ou Habilidade de Competência de Atenção.
+	•	Qualidade opositora ao Defeito “Distúrbio de Atenção”.
+
+Tendência Atlética
+Descrição:
+Menor – Corpo Maleável: Vantagem na primeira rolagem de Perícias baseadas em Força ou Destreza efetuada a cada Rodada par.
+Maior – Divinal: Escolha entre Força ou Destreza, você adquire uma Habilidade do Atributo escolhido.
+	•	Qualidade opositora ao Defeito “Deficiência Física”.
+
+

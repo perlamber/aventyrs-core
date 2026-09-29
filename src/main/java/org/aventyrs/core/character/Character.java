@@ -148,6 +148,20 @@ public class Character {
     @Singular
     protected List<AcquiredBackground> backgrounds;
 
+    /**
+     * Every Defeito held — the creation ones (with their Benefício de Superação) and any the Narrador
+     * imposed during play. What they gave at creation is materialized elsewhere; each one's effect is
+     * read live — see {@link #getFeats()}. Empty by default: Defeitos are optional.
+     */
+    @NonNull
+    @Singular
+    protected List<org.aventyrs.core.defect.HeldDefect> defects;
+
+    /** Every Qualidade held (at most three, all from creation). Each one's effect is read live — see {@link #getFeats()}. */
+    @NonNull
+    @Singular
+    protected List<org.aventyrs.core.defect.HeldQuality> qualities;
+
     /** Trained Perícias, keyed by {@link SkillType} for O(1) lookup instead of filtering a list. */
     @NonNull
     @Singular
@@ -698,7 +712,8 @@ public class Character {
      * #getAttributeAbilities()}, so every effect scan <em>and</em> every prerequisite check sees
      * a granted Talento as held, with no service change.
      *
-     * <p>Also every held Antecedente's Benefício ({@link
+     * <p>Also every held Defeito's and Qualidade's effect ({@code DefeitoFeat}/{@code QualidadeFeat}, a
+     * Qualidade Maior contributing its Menor's too), and every held Antecedente's Benefício ({@link
      * org.aventyrs.core.background.Background#getBenefit()}, an {@code AntecedenteFeat}): not a
      * Talento in the rules text, but given a Talento's shape so every hook reaches it. Filter on
      * {@code FeatCategory.Type.ANTECEDENTE} to list the Talentos proper.
@@ -710,10 +725,30 @@ public class Character {
         return Stream.of(
                         feats.stream(),
                         feats.stream().flatMap(feat -> feat.getGrantedFeats(this).stream()),
-                        backgrounds.stream().map(held -> (Feat) held.background().getBenefit()))
+                        backgrounds.stream().map(held -> (Feat) held.background().getBenefit()),
+                        defects.stream().map(held -> (Feat) held.effect()),
+                        qualities.stream().flatMap(held -> held.effects().stream()).map(Feat.class::cast))
                 .flatMap(stream -> stream)
                 .distinct()
                 .toList();
+    }
+
+    /**
+     * Habilidade de Atributo slots on top of those the Atributo bases unlock — each the {@link
+     * AttributeDomain} it is limited to, or {@code null} for any Atributo: a Grave Defeito's
+     * Superação "Habilidade de Atributo adicional" (any), and Tendência Atlética Maior's "uma
+     * Habilidade do Atributo escolhido" (that one). Read by {@code AttributeAbilityService}.
+     */
+    public List<AttributeDomain> getBonusAttributeAbilitySlots() {
+        List<AttributeDomain> slots = new ArrayList<>();
+        defects.stream()
+                .filter(held -> held.superacao() == org.aventyrs.core.defect.SuperacaoBenefit.HABILIDADE_DE_ATRIBUTO)
+                .forEach(held -> slots.add(null));
+        qualities.stream()
+                .filter(held -> held.quality() == org.aventyrs.core.defect.Quality.TENDENCIA_ATLETICA
+                        && held.qualityClass() == org.aventyrs.core.defect.QualityClass.MAIOR)
+                .forEach(held -> slots.add(held.choice(AttributeDomain.class).orElse(null)));
+        return slots;
     }
 
     /** The Antecedente of kind this character holds, if it has been chosen yet. */

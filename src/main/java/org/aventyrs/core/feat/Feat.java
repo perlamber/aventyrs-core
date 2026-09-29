@@ -68,7 +68,7 @@ import org.aventyrs.core.title.TitleIdentity;
  * authored catalog, which is correct: {@code FeatCatalog} lists the ruleset, not every {@code
  * Feat} that could ever be constructed.
  */
-public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, ArtilhariaFeat, AssassinoFeat, AvianoFeat, BestialFeat, CavalariaFeat, DestinoFeat, DraconicoFeat, DuelistaFeat, ElementalFeat, ElficoFeat, EscudeiroFeat, FadasFeat, FeericoFeat, FeralFeat, FuriasFeat, GiganteFeat, GnomoFeat, GoblinFeat, GorgonaFeat, HumanoFeat, IndomitoFeat, MesticoFeat, MobilidadeFeat, MonstruosoFeat, OgricoFeat, OrquicoFeat, PequeninoFeat, TrollFeat, VampiricoFeat, PeritoFeat, SobrevivenciaFeat, MetamagicoFeat, AntecedenteFeat, AbstractFeat {
+public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, ArtilhariaFeat, AssassinoFeat, AvianoFeat, BestialFeat, CavalariaFeat, DestinoFeat, DraconicoFeat, DuelistaFeat, ElementalFeat, ElficoFeat, EscudeiroFeat, FadasFeat, FeericoFeat, FeralFeat, FuriasFeat, GiganteFeat, GnomoFeat, GoblinFeat, GorgonaFeat, HumanoFeat, IndomitoFeat, MesticoFeat, MobilidadeFeat, MonstruosoFeat, OgricoFeat, OrquicoFeat, PequeninoFeat, TrollFeat, VampiricoFeat, PeritoFeat, SobrevivenciaFeat, MetamagicoFeat, AntecedenteFeat, DefeitoFeat, QualidadeFeat, AbstractFeat {
     FeatCategory getFeatCategory();
     String getDescription();
     FeatRequirements getFeatRequirements();

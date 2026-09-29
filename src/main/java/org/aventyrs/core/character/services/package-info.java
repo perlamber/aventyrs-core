@@ -68,6 +68,13 @@
  *       Rápido race ({@code Race#hasQuickLearning()} — Humano, Pequenino, Gnomo, Goblin) names its
  *       two Perícias Treinadas, whose 2nd and 3rd Graduação then cost 0.5 EXP less
  *       ({@code SkillGraduationService#getUpgradeCost(Character, SkillType)}). Empty by default.</li>
+ *   <li><b>Defeitos e Qualidades (optional) — after the Perfil de Ação, before the Habilidades de
+ *       Atributo and the Talentos</b>, through {@link
+ *       org.aventyrs.core.character.services.CharacterCreationService#applyDefectsAndQualities}, which
+ *       returns a new {@code Character}. It changes what the later steps offer: the Talentos step reads
+ *       {@code getStartingFeatSlots(Character)} (the {@code Race} form no longer tells the whole story —
+ *       a Qualidade traded for Talentos Gerais removes slots, a Superação adds one), and the Habilidades
+ *       step gains {@code Character#getBonusAttributeAbilitySlots()}. See {@code org.aventyrs.core.defect}.</li>
  *   <li><b>Pick the two Antecedentes — last</b>, on the character step 7 built (its Talentos and
  *       Árvores below too): one Naturalidade and one Carreira, through {@link
  *       org.aventyrs.core.character.services.CharacterCreationService#applyBackground}, which
