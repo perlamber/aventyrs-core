@@ -345,6 +345,18 @@ public class TranslatableMessages {
     /** Recursos is never refilled by the end of a session — only by wages, loot and rewards. */
     public static final String RESOURCES_NOT_RECOVERED_BY_SESSION = "RESOURCES_NOT_RECOVERED_BY_SESSION";
 
+    /** An Iniciativa Ego change that doesn't apply: the combatant isn't in the Scene, or a "lower" isn't lower. */
+    public static final String INVALID_INITIATIVE_CHANGE = "INVALID_INITIATIVE_CHANGE";
+
+    /** A roll asked for an Iniciativa roll effect with no use of it banked this Cena. */
+    public static final String NO_INITIATIVE_CHARGE_BANKED = "NO_INITIATIVE_CHARGE_BANKED";
+
+    /** The effect named isn't running on this combatant, or has no Duração to shorten. */
+    public static final String NOT_A_RUNNING_EFFECT = "NOT_A_RUNNING_EFFECT";
+
+    /** No Ego of this combatant is at zero and still owes its 1d6 on the setback table. */
+    public static final String NO_EGO_SETBACK_OWED = "NO_EGO_SETBACK_OWED";
+
     /** This item store does not sell the requested Equipamento — above its Raridade ceiling, a
      * Regalia, or an Arma/Defesa Natural. */
     public static final String ITEM_NOT_OFFERED = "ITEM_NOT_OFFERED";

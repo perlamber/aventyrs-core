@@ -2,7 +2,7 @@
 
 Source: `docs/rules/ego.txt` (imported 2026-09-29 from *Módulo Básico V18 ALPHA — 2.5: Ego* and its
 Autocontrole / Iniciativa / Recursos / Sorte subpages). Target: core first, then aventyrs-api, then the
-client. **Status: Phases 0–6 done (core 0.0.76–0.0.78; aventyrs-api and the client on 0.0.77); Phase 7 (Iniciativa) next.**
+client. **Status: Phases 0–7 done (core 0.0.76–0.0.80; aventyrs-api and the client on 0.0.80, Sorte and Iniciativa wired in the Cena); Phase 8 (Autocontrole) done in core 0.0.81 and wired in the client (API and client on 0.0.81); Phase 9 (Ego at zero) done in core 0.0.82 and wired (API and client on 0.0.82); Phase 10 (PdN rules) next.**
 
 ## Table rulings (2026-09-29)
 
@@ -99,14 +99,14 @@ Under the ruling it is a consumable extra.
 5. **API + client.** *Done* — see the client's `docs/wiring-egos.md`: the API stores an `egoLedger` (permanent spent, extras, overflow received) beside `temporaryEgoPoints`; the session modal takes one Ego for the table, never Recursos; the hub has an Egos tab (Recursos → PE, the GM's grants); creation opens the shop at the Raridade Inicial with the starting PE. Deviation: the creation shop runs right after "Criar" rather than as a wizard step, since the client's shop works on a saved sheet. Endpoints: spend Recursos, GM grant (temp/perm), end-of-session recovery, starting
    store. Client: wizard store step, sheet spend button, GM grant control, end-of-session Ego modal
    (maps every participant to the picked Ego, one `applySessionRecovery` call).
-6. **Sorte.** *Done in 0.0.78* — `ego.SorteEffect` on the roll, paid by `EgoPointsService#applySorte`/`#rerollWithSorte`; applied on Perícia rolls, attacks and defences. Readings in `0.078.CHANGELOG.md`. Client wiring (a Sorte button on a roll) not done yet. Reroll with Vantagem, −GD vs PdN, forced success (Crítico Menor), trigger Correntes +
+6. **Sorte.** *Done in 0.0.78* — `ego.SorteEffect` on the roll, paid by `EgoPointsService#applySorte`/`#rerollWithSorte`; applied on Perícia rolls, attacks and defences. Readings in `0.078.CHANGELOG.md`. Client: after-roll modal on Perícia rolls, attacks and defences (see the client's `docs/wiring-egos.md`). Reroll with Vantagem, −GD vs PdN, forced success (Crítico Menor), trigger Correntes +
    Críticos Maiores; scene changes narrative.
-7. **Iniciativa.** Lower / set / reroll own Iniciativa, change a PdN's, +PA / Reações, Vantagem or −GD on
+7. **Iniciativa.** *Done in 0.0.79* — `InitiativeEgoService`; order changes are `CombatantSheet#overrideInitiative`, counted at the Rodada boundary before the re-sort; the two-roll effects are Cena charges (`ego.InitiativeRollCharge`). Client: the Cena's Ego menu; the order change is stored and advanced server-side (aventyrs-api `initiativeOverride`), core 0.0.80 adds `Scene#restoreParticipant` and the started-override restore for client rebuilds. Lower / set / reroll own Iniciativa, change a PdN's, +PA / Reações, Vantagem or −GD on
    2 rolls in the Cena (`InitiativeService`, `ActionPointsService`, `ReactionsService`).
-8. **Autocontrole.** Halve / remove a malefício with Cena immunity, avoid a Corrente / Efeito Crítico,
+8. **Autocontrole.** *Done in 0.0.81* — `AutocontroleEgoService`; defence marks (`ego.AutocontroleDefence`) applied by `AttackReceiver`; Cena immunities (`sheet.CenaImmunity`); the zeroed Rodada is the current one, retroactive (table ruling). Neither blocker held: timed RA was already read, and the damage shield is the sheet's own per-Rodada ledger. Halve / remove a malefício with Cena immunity, avoid a Corrente / Efeito Crítico,
    rest-style recoveries. Blocked pieces: RA has no grant path for "RA por 1 Rodada" (gap catalog);
    "zero all damage this Rodada" needs a per-Rodada damage shield.
-9. **Ego at zero.** The four 1d6 penalty tables, rolled when a spend or drain empties the pool (reuse
+9. **Ego at zero.** *Done in 0.0.82* — `ego.EgoSetback`, `EgoSetbackService`; zero = permanent points, lasting until one comes back (table rulings). Not applied: Escárnio de Tykhé, Centelha Morta's ending of active abilities. The four 1d6 penalty tables, rolled when a spend or drain empties the pool (reuse
    the depletion hook).
 10. **PdN rules.** Exemplar-only spending; a PdN permanent spend queues one temporary point for every PJ
     at the end of the Cena.

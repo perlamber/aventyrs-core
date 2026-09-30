@@ -1,5 +1,7 @@
 package org.aventyrs.core.skill;
 
+import org.aventyrs.core.ego.EgoSetback;
+import org.aventyrs.core.ego.InitiativeRollCharge;
 import org.aventyrs.core.ego.SorteEffect;
 import org.aventyrs.core.ability.AttributeAbility;
 import org.aventyrs.core.ability.PeritoTeoricoAbility;
@@ -154,6 +156,10 @@ import org.aventyrs.core.item.ShieldAttack;
  * Especialização's easier threshold finally has a real consumer.
  */
 public abstract class AbstractSkillInteraction implements Interaction<CombatantSheet> {
+
+    /** Azarão's "falhar numa rolagem de Perícia por diferença ≥ 5". */
+    public static final int AZARAO_MARGIN = 5;
+
 
     private final SkillType skillType;
     private final CharacterSkillService characterSkillService;
@@ -408,6 +414,10 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
         if (skillRoll != null && skillRoll.hasSorte(SorteEffect.REROLL_WITH_ADVANTAGE)) {
             bonus += Skill.ADVANTAGE_BONUS;
         }
+        // Iniciativa's "Vantagem em até duas rolagens de Perícia" — one banked use on this roll.
+        if (skillRoll != null && skillRoll.hasInitiativeCharge(InitiativeRollCharge.ADVANTAGE)) {
+            bonus += Skill.ADVANTAGE_BONUS;
+        }
 
         int difficultyReduction = SkillExcellency.totalDifficultyReduction(skillType.getExcellencyClass(), graduationValue);
         difficultyReduction += skillCompetencyAbilities.stream()
@@ -424,6 +434,10 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
         // Sorte's "reduzir o GD de uma rolagem efetuada contra um PdN", the Narrador approving.
         if (skillRoll != null && skillRoll.hasSorte(SorteEffect.DIFFICULTY_REDUCTION)) {
             difficultyReduction += SorteEffect.DIFFICULTY_REDUCTION_LEVELS;
+        }
+        // Iniciativa's "reduzir o GD de até duas rolagens de Perícia" — one banked use on this roll.
+        if (skillRoll != null && skillRoll.hasInitiativeCharge(InitiativeRollCharge.DIFFICULTY_REDUCTION)) {
+            difficultyReduction += InitiativeRollCharge.DIFFICULTY_REDUCTION_LEVELS;
         }
         // Transferir Rancor: "-1 Nível" on Perícia de Ataque and Domínio do Mana rolls, cumulative.
         if (skillType.isAttackSkill() || skillType == SkillType.DOMINIO_DO_MANA) {
@@ -504,6 +518,11 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
             if (skillRoll.hasSorte(SorteEffect.FORCED_SUCCESS) && !criticalResult.isCriticalSuccess()) {
                 criticalResult = CriticalResult.ACERTO_CRITICO_MENOR;
             }
+            // Sorte a Zero's Superficialidade: "incapaz de realizar Acertos Críticos" (core 0.0.82) — outranks even a
+            // chosen success's Menor, which still succeeds.
+            if (criticalResult.isCriticalSuccess() && target.hasEgoSetback(EgoSetback.SUPERFICIALIDADE)) {
+                criticalResult = CriticalResult.NONE;
+            }
             result.reachedDifficultyLevel(reached.orElse(null))
                     .criticalResult(criticalResult);
             resolveOutcome(bonus + skillRoll.getTotal(), skillRoll.getTargetValue(), difficultyReduction,
@@ -511,6 +530,13 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                     .ifPresent(outcome -> {
                         boolean succeeded = outcome.succeeded() && !failedBlind;
                         result.succeeded(succeeded).margin(outcome.margin());
+                        // Sorte a Zero's Azarão: "sofre efeitos de Erros Críticos sempre que falhar … por diferença
+                        // ≥ 5" (core 0.0.82) — ⚠️ read as a Falha Crítica Menor; a worse one the dice gave stays.
+                        if (!succeeded && outcome.margin() <= -AZARAO_MARGIN
+                                && target.hasEgoSetback(EgoSetback.AZARAO)
+                                && !result.build().getCriticalResult().isCriticalFailure()) {
+                            result.criticalResult(CriticalResult.FALHA_CRITICA_MENOR);
+                        }
                         if (succeeded) {
                             List<Blessing> earned = skillCompetencyAbilities.stream()
                                     .flatMap(ability -> ability.resolveSuccessBlessings(

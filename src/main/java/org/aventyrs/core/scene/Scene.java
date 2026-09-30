@@ -234,6 +234,23 @@ public class Scene {
      */
     public List<CombatantSheet> addParticipant(final CombatantSheet characterSheet, final int initiativeValue, final UUID group) {
         characterSheet.startNewScene();
+        return placeParticipant(characterSheet, initiativeValue, group);
+    }
+
+    /**
+     * {@link #addParticipant(CombatantSheet, int, UUID)} for a sheet that is <em>already</em> in this Cena — a
+     * caller rebuilding a Scene from stored state, the twin of {@link #restoreTurnCursor}. Everything but {@code
+     * CombatantSheet#startNewScene()}: re-placing a combatant must not restart its Cena, which would drop its
+     * per-Cena logs, charges and Iniciativa override (core 0.0.80). A sheet genuinely joining uses
+     * {@code addParticipant}.
+     */
+    public List<CombatantSheet> restoreParticipant(final CombatantSheet characterSheet, final int initiativeValue,
+                                                   final UUID group) {
+        return placeParticipant(characterSheet, initiativeValue, group);
+    }
+
+    private List<CombatantSheet> placeParticipant(final CombatantSheet characterSheet, final int initiativeValue,
+                                                  final UUID group) {
         InitiativeEntry entry = new InitiativeEntry(characterSheet, initiativeValue, group);
         if (currentIndex == -1) {
             insertSorted(activeEntries, entry);
@@ -428,6 +445,17 @@ public class Scene {
      * {@link InitiativePosition#UNKNOWN} when it is not in the rotation yet. One combatant alone is
      * {@link InitiativePosition#FIRST}.
      */
+    /**
+     * characterSheet's Iniciativa as this Scene orders it right now — the rolled value, its Iniciativa bonuses,
+     * or an Ego override. Empty when it isn't a participant.
+     */
+    public java.util.OptionalInt effectiveInitiativeOf(final CombatantSheet characterSheet) {
+        return allEntries()
+                .filter(entry -> entry.getCombatantSheet().getId().equals(characterSheet.getId()))
+                .mapToInt(InitiativeEntry::getEffectiveInitiativeValue)
+                .findFirst();
+    }
+
     public InitiativePosition initiativePositionOf(final CombatantSheet characterSheet) {
         List<CombatantSheet> order = getParticipantsInInitiativeOrder();
         int index = -1;
@@ -1214,6 +1242,8 @@ public class Scene {
         activeAuras.removeIf(ActiveAura::isExpired);
         activeEntries.addAll(pendingEntries);
         pendingEntries.clear();
+        // Before the sort, so an Iniciativa override governs exactly the Rodadas it was bought for.
+        activeEntries.forEach(entry -> entry.getCombatantSheet().advanceInitiativeOverride());
         activeEntries.sort(Comparator.comparingInt(InitiativeEntry::getEffectiveInitiativeValue).reversed());
         activeEntries.forEach(entry -> entry.getCombatantSheet().startNewRound());
     }

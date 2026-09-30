@@ -45,7 +45,19 @@ public class InitiativeEntry {
      * Scene#next()}), so it never reshuffles the Round currently in progress even though this
      * value itself can drift at any moment.
      */
+    /** Where Lentidão puts its holder: below any Iniciativa a roll can reach. */
+    public static final int LAST_IN_ORDER = -1000;
+
     public int getEffectiveInitiativeValue() {
+        // Iniciativa's Ego override replaces the whole figure while it holds (CombatantSheet#overrideInitiative).
+        java.util.OptionalInt override = combatantSheet.getInitiativeOverride();
+        if (override.isPresent()) {
+            return override.getAsInt();
+        }
+        // Iniciativa a Zero's Lentidão: last in every Cena — unless an override it bought still holds (above).
+        if (combatantSheet.hasEgoSetback(org.aventyrs.core.ego.EgoSetback.LENTIDAO)) {
+            return LAST_IN_ORDER;
+        }
         return initiativeValue + combatantSheet.getTemporaryBonus(ModifierType.INITIATIVE);
     }
 }

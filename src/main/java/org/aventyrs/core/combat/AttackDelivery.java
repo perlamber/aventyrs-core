@@ -238,7 +238,7 @@ public class AttackDelivery {
         boolean suppressed = attack.getAttacker().isMinorCriticalAndChainSuppressed();
         boolean criticalEffectTriggered = hit && criticalResult != null && criticalResult.isCriticalSuccess()
                 && !(suppressed && criticalResult.isMinor());
-        boolean effectChainTriggered = hit && !suppressed
+        boolean effectChainTriggered = hit && !suppressed && !superficial(attack)
                 && (unleashed(attackRoll) || margin >= effectChainService.getRequiredMargin(attack.getAttacker(),
                         AttackReceiver.positionOf(attack.getScene(), attack.getAttacker(), attack.getSceneContext()),
                         defender, AttackReceiver.positionOf(attack.getScene(), defender, null)));
@@ -310,6 +310,12 @@ public class AttackDelivery {
                         attack.getAttacker(), attackRoll));
     }
 
+    /** Sorte a Zero's Superficialidade: "incapaz de … desencadear Correntes de Efeitos" (core 0.0.82). */
+    private static boolean superficial(final DeliveredAttack attack) {
+        return attack.getAttacker() != null
+                && attack.getAttacker().hasEgoSetback(org.aventyrs.core.ego.EgoSetback.SUPERFICIALIDADE);
+    }
+
     /** Sorte's chosen success — see {@link SorteEffect#FORCED_SUCCESS}. */
     private static boolean forcedSuccess(final SkillRoll attackRoll) {
         return attackRoll != null && attackRoll.hasSorte(SorteEffect.FORCED_SUCCESS);
@@ -347,7 +353,7 @@ public class AttackDelivery {
         boolean suppressed = attack.getAttacker().isMinorCriticalAndChainSuppressed();
         boolean criticalEffectTriggered = hit && effectCritical != null && effectCritical.isCriticalSuccess()
                 && !(suppressed && effectCritical.isMinor());
-        boolean effectChainTriggered = hit && !suppressed
+        boolean effectChainTriggered = hit && !suppressed && !superficial(attack)
                 && (unleashed(attackRoll) || margin >= effectChainService.getRequiredMargin(attack.getAttacker(),
                         AttackReceiver.positionOf(attack.getScene(), attack.getAttacker(), attack.getSceneContext()),
                         defender, AttackReceiver.positionOf(attack.getScene(), defender, null)));

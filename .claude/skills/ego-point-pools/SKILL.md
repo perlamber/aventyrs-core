@@ -192,6 +192,29 @@ and return the marked roll; the caller resolves it again, since every one is dec
 Críticos. A rule that isn't dice (a Defeito's automatic failure, an immunity, Trava Mental, Frenesi's suppression)
 still wins.
 
+**Iniciativa (0.0.79).** `InitiativeEgoService` pays and applies every Iniciativa spend. The order changes are
+an **override** on the sheet (`CombatantSheet#overrideInitiative(value, rodadas)`, `null` = the Cena), which
+`InitiativeEntry#getEffectiveInitiativeValue` returns instead of the rolled value + `INITIATIVE` bonuses — not a
+`TemporaryBonus`, whose Turn-end countdown can lapse before the Rodada boundary where the Scene re-sorts. `Scene`
+advances each override right before that re-sort, so a 1-Rodada override governs exactly the next Rodada; a new
+Cena drops it. The "até duas rolagens na mesma Cena" effects are sheet charges (`ego.InitiativeRollCharge`, 2 per
+point, dropped with the Cena), spent one per roll by `useRollCharge`, which marks the `SkillRoll`.
+
+**Autocontrole (0.0.81).** `AutocontroleEgoService` pays each spend. What reacts to an incoming attack is a mark
+on the **defence roll** (`ego.AutocontroleDefence`), read by `AttackReceiver`: the avoided Corrente/critical doesn't
+land and isn't reported as triggered, and the permanent marks grant **Cena immunity** — a per-sheet set keyed by
+`sheet.CenaImmunity#kindOf` (Condição type / Efeito Crítico type / effect class), refused by `applyEffect` and
+`applyCondition` and dropped by `startNewScene()`. "Zero this Rodada's damage" is `negateDamageThisRound`: the sheet
+counts PV lost through `applyDamage` per Rodada, gives them back, and takes none until the boundary.
+
+**Ego at zero (0.0.82).** When an Ego's **permanent** points reach 0 (having had some), it owes a 1d6 on its
+table (`ego.EgoSetback`; Recursos has none) — `CombatantSheet#getOwedEgoSetbacks()`, recorded by
+`EgoSetbackService#rollSetback` with the caller's die. A setback holds only while the permanent points are 0
+(`getEgoSetback` drops it lazily once one comes back), and each entry is read where it applies: the three action
+economy services, `MovementServiceImpl`, `EffectChainService#getRequiredMargin`, `InitiativeEntry`, the Título
+activation gate, `heldConditions()` (the derived Apavorado/Desprevenido/Imobilizado), `getBlindCheckThreshold`,
+`AbstractSkillInteraction`/`AttackDelivery`/`AttackReceiver`.
+
 ## Reference files to read first
 
 - `src/main/java/org/aventyrs/core/sheet/EgoPointPool.java` — the four equations.

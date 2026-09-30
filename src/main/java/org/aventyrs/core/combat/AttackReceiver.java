@@ -1,5 +1,7 @@
 package org.aventyrs.core.combat;
 
+import org.aventyrs.core.ego.AutocontroleDefence;
+import org.aventyrs.core.sheet.CenaImmunity;
 import org.aventyrs.core.ego.SorteEffect;
 import org.aventyrs.core.sheet.AttackerGuard;
 import org.aventyrs.core.scene.InitiativePosition;
@@ -197,11 +199,34 @@ public class AttackReceiver {
                 && !Boolean.TRUE.equals(defenseResult.getBlindCheckFailed()))
                 || immune;
         CriticalResult criticalResult = defenseResult.getCriticalResult();
+        // Sorte a Zero's Azarão on the defence: failed by 5 or more, the attacker's critical effects land as a Menor's.
+        if (!defended && margin >= org.aventyrs.core.skill.AbstractSkillInteraction.AZARAO_MARGIN
+                && defender.hasEgoSetback(org.aventyrs.core.ego.EgoSetback.AZARAO)
+                && (criticalResult == null || !criticalResult.isCriticalFailure())) {
+            criticalResult = CriticalResult.FALHA_CRITICA_MENOR;
+        }
+        // The defender's Autocontrole (core 0.0.81): what it avoids does not land, and is not reported as landing.
+        boolean chainAvoided = defenseRoll.hasAutocontrole(AutocontroleDefence.AVOID_CHAIN)
+                || defenseRoll.hasAutocontrole(AutocontroleDefence.AVOID_CHAIN_WITH_IMMUNITY);
+        boolean criticalAvoided = defenseRoll.hasAutocontrole(AutocontroleDefence.AVOID_CRITICAL_WITH_IMMUNITY)
+                || defenseRoll.hasAutocontrole(AutocontroleDefence.IGNORE_MINOR_CRITICAL)
+                        && criticalResult != null && criticalResult.isMinor();
         boolean criticalEffectTriggered = !defended && criticalResult != null && criticalResult.isCriticalFailure();
         boolean effectChainTriggered = !defended
                 && margin >= effectChainService.getRequiredMargin(attack.getAttacker(),
                         positionOf(attack.getScene(), attack.getAttacker(), null), defender,
                         positionOf(attack.getScene(), defender, attack.getSceneContext()));
+        if (effectChainTriggered && chainAvoided
+                && defenseRoll.hasAutocontrole(AutocontroleDefence.AVOID_CHAIN_WITH_IMMUNITY)) {
+            attack.getEffectChains().forEach(stage -> defender.grantCenaImmunity(CenaImmunity.kindOf(stage)));
+        }
+        if (criticalEffectTriggered && criticalAvoided
+                && defenseRoll.hasAutocontrole(AutocontroleDefence.AVOID_CRITICAL_WITH_IMMUNITY)) {
+            criticalEffectsOf(attack, criticalResult)
+                    .forEach(effect -> defender.grantCenaImmunity(CenaImmunity.kindOf(effect)));
+        }
+        effectChainTriggered = effectChainTriggered && !chainAvoided;
+        criticalEffectTriggered = criticalEffectTriggered && !criticalAvoided;
 
         if (!defended) {
             defenseResult = defenseResult.toBuilder()
@@ -326,11 +351,7 @@ public class AttackReceiver {
             stages.addAll(attack.getEffectChains());
         }
         if (criticalEffectTriggered) {
-            List<CriticalEffect> effects = new ArrayList<>(attack.getCriticalEffects());
-            effects.addAll(CriticalEffectResolver.resolve(attack.getAttacker(), attack.getAttackSource(),
-                    attack.getAttackSkill(), criticalResult, true, attack.getAdditionalCriticalEffectTypes(),
-                    attack.getDiceRoller()).effects());
-            stages.addAll(CriticalEffect.applicableTo(attack.getDefender(), effects,
+            stages.addAll(CriticalEffect.applicableTo(attack.getDefender(), criticalEffectsOf(attack, criticalResult),
                     criticalResult, attack.getSceneContext()));
         } else {
             // Finalização on this side too: a non-critical hit applies the natural weapon's Menor.
@@ -340,6 +361,8 @@ public class AttackReceiver {
                     CriticalResult.FALHA_CRITICA_MENOR, attack.getSceneContext()));
         }
 
+        // Autocontrole's Cena immunity: a kind the defender is immune to is left out.
+        stages.removeIf(stage -> attack.getDefender().isCenaImmune(CenaImmunity.kindOf(stage)));
         Interaction<CombatantSheet> next = null;
         for (int i = stages.size() - 1; i >= 0; i--) {
             next = stages.get(i).chainInto(next);
@@ -347,6 +370,15 @@ public class AttackReceiver {
         DamageInteraction head = new DamageInteraction(damageService)
                 .fromSpell(SpellResistance.spellOf(attack.getAttackSource()));
         return (halfDamage ? head.halvingDamage() : head).chainInto(next);
+    }
+
+    /** Every Efeito Crítico a critical of criticalResult brings: the request's own, the weapon's and the Títulos'. */
+    private static List<CriticalEffect> criticalEffectsOf(final IncomingAttack attack, final CriticalResult criticalResult) {
+        List<CriticalEffect> effects = new ArrayList<>(attack.getCriticalEffects());
+        effects.addAll(CriticalEffectResolver.resolve(attack.getAttacker(), attack.getAttackSource(),
+                attack.getAttackSkill(), criticalResult, true, attack.getAdditionalCriticalEffectTypes(),
+                attack.getDiceRoller()).effects());
+        return effects;
     }
 
     /** Every held Habilidade de Competência's Defesa against an Área de Efeito (Evasão). */

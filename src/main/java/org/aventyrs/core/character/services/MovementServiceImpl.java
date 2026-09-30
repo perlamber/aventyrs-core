@@ -78,6 +78,10 @@ public class MovementServiceImpl implements MovementService {
         for (Item item : character.getEquipment()) {
             total += item.resolveRoundMovementIncrease(movementIndex, character);
         }
+        // Iniciativa a Zero's Passos Reduzidos: "Movimento Base reduzido à metade" (core 0.0.82), rounded down, last.
+        if (sheet.hasEgoSetback(org.aventyrs.core.ego.EgoSetback.PASSOS_REDUZIDOS)) {
+            total = total / 2;
+        }
         return Math.max(0, total);
     }
 

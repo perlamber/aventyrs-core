@@ -591,13 +591,20 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
      * DuelistaFeat#COMBATER_AS_CEGAS}' "não precisa efetuar rolagens de 1d6 para utilizar efeitos
      * pessoais e Ataques Corpo-a-Corpo").
      */
+    /** Insucesso's 1d6 fails the roll on this or less. */
+    int INSUCESSO_THRESHOLD = 2;
+
     default java.util.OptionalInt getBlindCheckThreshold(final org.aventyrs.core.skill.SkillType skillType,
                                                          final SceneContext sceneContext) {
+        // Sorte a Zero's Insucesso: "ao ser bem-sucedido … rola 1d6: 1 ou 2 indica falha" — the same die, on 2 or less.
+        int insucesso = hasEgoSetback(org.aventyrs.core.ego.EgoSetback.INSUCESSO) ? INSUCESSO_THRESHOLD : 0;
         if (!hasCondition(ConditionType.CEGO, sceneContext)) {
-            return java.util.OptionalInt.empty();
+            return insucesso > 0 ? java.util.OptionalInt.of(insucesso) : java.util.OptionalInt.empty();
         }
         boolean exempt = getCharacter().getFeats().stream().anyMatch(feat -> feat.exemptsFromBlindCheck(skillType, sceneContext));
-        return exempt ? java.util.OptionalInt.empty() : java.util.OptionalInt.of(BlindCheck.failureThresholdFor(skillType));
+        int blind = exempt ? 0 : BlindCheck.failureThresholdFor(skillType);
+        int threshold = Math.max(blind, insucesso);
+        return threshold > 0 ? java.util.OptionalInt.of(threshold) : java.util.OptionalInt.empty();
     }
 
     /**
@@ -1016,6 +1023,97 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
      * <p>Also re-arms {@link #startCombat()} — a new Cena can bring a fresh combat.
      */
     void startNewScene();
+
+    /**
+     * Replaces this combatant's Iniciativa in the Scene's order with value — Iniciativa's Ego points (core
+     * 0.0.79): "alterar seu valor de Iniciativa para qualquer valor … por uma Cena ou Rodada". It governs the
+     * order of the next rodadas Rodadas ({@code null}: the rest of the Cena), counted by {@link
+     * #advanceInitiativeOverride()} at each Rodada boundary before the Scene re-sorts; {@link #startNewScene()}
+     * drops it. A second override replaces the first. It supersedes the rolled value and every {@code
+     * ModifierType.INITIATIVE} bonus while it holds — see {@code InitiativeEntry#getEffectiveInitiativeValue}.
+     */
+    void overrideInitiative(int value, Integer rodadas);
+
+    // --- Autocontrole's Ego effects (core 0.0.81) ----------------------------------------------
+
+    /**
+     * Makes this combatant immune, for the rest of the Cena, to kind ({@link CenaImmunity#kindOf}) — Autocontrole's
+     * "tornando-se imune a ele ao longo da Cena". A {@link Condition} or {@link TemporaryEffect} of that kind is
+     * refused on landing ({@link #applyCondition}/{@link #applyEffect}), and {@code AttackReceiver} leaves a Corrente
+     * stage or Efeito Crítico of that kind out of the chain. {@link #startNewScene()} drops them.
+     */
+    void grantCenaImmunity(Object kind);
+
+    // --- Ego at zero (core 0.0.82) --------------------------------------------------------------
+
+    /**
+     * The Egos that have reached zero — their permanent points, having had some — and still owe their 1d6 roll on
+     * the setback table ({@code ego.EgoSetback}). Recursos has none. The caller throws the die and records it
+     * through {@code EgoSetbackService#rollSetback}.
+     */
+    java.util.List<org.aventyrs.core.character.EgoDomain> getOwedEgoSetbacks();
+
+    /** Records a rolled setback — see {@link #getOwedEgoSetbacks()}. Replaces one already there for its Ego. */
+    void recordEgoSetback(org.aventyrs.core.ego.EgoSetback setback);
+
+    /**
+     * The setback domain holds right now — only while its permanent points are 0 (table ruling: it lasts until the
+     * Ego has a point again, and falling to zero again rolls again).
+     */
+    java.util.Optional<org.aventyrs.core.ego.EgoSetback> getEgoSetback(org.aventyrs.core.character.EgoDomain domain);
+
+    /** Whether setback holds right now — see {@link #getEgoSetback}. */
+    default boolean hasEgoSetback(final org.aventyrs.core.ego.EgoSetback setback) {
+        return getEgoSetback(setback.getDomain()).filter(held -> held == setback).isPresent();
+    }
+
+    /** Whether kind is refused for the rest of this Cena — see {@link #grantCenaImmunity}. */
+    boolean isCenaImmune(Object kind);
+
+    /**
+     * Halves a running effect's Duração — Autocontrole's "reduzir à metade a duração de um malefício". ⚠️ Rounded up
+     * (3 → 2, 1 → 1), so halving never ends one outright — removing it is the permanent point's.
+     *
+     * @throws IllegalOperationException {@code NOT_A_RUNNING_EFFECT} when effect isn't held here or has no Duração
+     */
+    void halveEffectDuration(TemporaryEffect effect);
+
+    /**
+     * Every effect running on this combatant right now — Condições, timed bonuses, Sangramentos… — read-only and
+     * without the expired ones. What a player picks a malefício from (Autocontrole's halve/remove, core 0.0.81).
+     */
+    java.util.List<TemporaryEffect> getRunningEffects();
+
+    /** PV lost this Rodada so far, through {@link #applyDamage} — reset at the Rodada boundary. */
+    int getDamageTakenThisRound();
+
+    /**
+     * Autocontrole's permanent "reduzir a zero todo o dano sofrido em uma Rodada" (table ruling, 2026-09-30: the
+     * current Rodada, retroactive): every PV lost this Rodada comes back, and {@link #applyDamage} takes none until
+     * the Rodada boundary. A PV cost paid ({@link #payWithVitality}) is a price, not damage suffered, and stays.
+     *
+     * @return the PV given back
+     */
+    int negateDamageThisRound();
+
+    /** Whether {@link #negateDamageThisRound} holds for the Rodada in progress. */
+    boolean isDamageNegatedThisRound();
+
+    /**
+     * {@link #overrideInitiative(int, Integer)} restored mid-way — started when a Rodada boundary has already
+     * passed since it was set, so rodadas counts the Rodadas it still governs <em>including</em> the one in
+     * progress. For a caller rebuilding a Scene from stored state (the Scene resets each sheet it adds).
+     */
+    void overrideInitiative(int value, Integer rodadas, boolean started);
+
+    /** The Iniciativa override in force, if any — see {@link #overrideInitiative}. */
+    java.util.OptionalInt getInitiativeOverride();
+
+    /**
+     * One Rodada boundary for the override: the first boundary after it is set starts its first Rodada, each
+     * later one ends one, and it lapses when none remain. {@code Scene#next()} calls it right before re-sorting.
+     */
+    void advanceInitiativeOverride();
 
     /**
      * Begins a combat for this combatant: resolves every {@link Blessing} its held Talentos

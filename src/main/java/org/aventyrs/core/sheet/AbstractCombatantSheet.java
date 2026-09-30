@@ -329,6 +329,33 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     @Getter(AccessLevel.NONE)
     private final Map<Object, Integer> charges = new HashMap<>();
 
+    /** Autocontrole's Cena immunities — see {@link #grantCenaImmunity}. */
+    @Getter(AccessLevel.NONE)
+    private final java.util.Set<Object> cenaImmunities = new java.util.HashSet<>();
+    /** PV lost through {@link #applyDamage} this Rodada — see {@link #negateDamageThisRound}. */
+    @Getter(AccessLevel.NONE)
+    private int damageTakenThisRound;
+    @Getter(AccessLevel.NONE)
+    private boolean damageNegatedThisRound;
+
+    /** Setbacks rolled when an Ego reached zero — see {@link #getOwedEgoSetbacks()}. */
+    @Getter(AccessLevel.NONE)
+    private final Map<EgoDomain, org.aventyrs.core.ego.EgoSetback> egoSetbacks = new EnumMap<>(EgoDomain.class);
+    /** The open-ended Condições a setback holds — one instance each, so their origin is stable. */
+    @Getter(AccessLevel.NONE)
+    private final Map<org.aventyrs.core.ego.EgoSetback, Condition> setbackConditions =
+            new EnumMap<>(org.aventyrs.core.ego.EgoSetback.class);
+
+    /** Iniciativa's Ego override — see {@link #overrideInitiative}. {@code null} when none holds. */
+    @Getter(AccessLevel.NONE)
+    private Integer initiativeOverrideValue;
+    /** Rodadas the override still governs; {@code null} for the rest of the Cena. */
+    @Getter(AccessLevel.NONE)
+    private Integer initiativeOverrideRodadas;
+    /** Whether a boundary has passed since it was set — the first one starts its first Rodada. */
+    @Getter(AccessLevel.NONE)
+    private boolean initiativeOverrideStarted;
+
     /** Damage only a Descanso Verdadeiro recovers — see {@link #payWithVitality(int)}. */
     @Getter(AccessLevel.NONE)
     private int lockedDamage;
@@ -390,6 +417,10 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
      */
     @Override
     public int applyDamage(final int amount) {
+        // Autocontrole's "reduzir a zero todo o dano sofrido em uma Rodada".
+        if (damageNegatedThisRound) {
+            return getDamageTaken();
+        }
         int remaining = amount;
         if (shieldPoints > 0) {
             int absorbed = Math.min(shieldPoints, remaining);
@@ -401,9 +432,84 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
             remaining = Math.max(0, Math.min(remaining, current - nextDamageFloor));
             nextDamageFloor = null;
         }
+        int before = getDamageTaken();
         int damageTaken = hitPoints.spend(remaining);
+        damageTakenThisRound += Math.max(0, damageTaken - before);
         observeStatus();
         return damageTaken;
+    }
+
+    @Override
+    public void grantCenaImmunity(@NonNull final Object kind) {
+        cenaImmunities.add(kind);
+    }
+
+    @Override
+    public List<EgoDomain> getOwedEgoSetbacks() {
+        return java.util.Arrays.stream(EgoDomain.values())
+                .filter(org.aventyrs.core.ego.EgoSetback::hasTable)
+                .filter(domain -> getPermanentEgoMax(domain) > 0 && getPermanentEgoPoints(domain) == 0)
+                .filter(domain -> getEgoSetback(domain).isEmpty())
+                .toList();
+    }
+
+    @Override
+    public void recordEgoSetback(@NonNull final org.aventyrs.core.ego.EgoSetback setback) {
+        egoSetbacks.put(setback.getDomain(), setback);
+    }
+
+    @Override
+    public java.util.Optional<org.aventyrs.core.ego.EgoSetback> getEgoSetback(final EgoDomain domain) {
+        org.aventyrs.core.ego.EgoSetback held = egoSetbacks.get(domain);
+        if (held != null && getPermanentEgoPoints(domain) > 0) {
+            // The Ego has a point again: the setback is over, and reaching zero again rolls again.
+            egoSetbacks.remove(domain);
+            return java.util.Optional.empty();
+        }
+        return java.util.Optional.ofNullable(held);
+    }
+
+    /** Whether any Autocontrole setback holds — "insano; incapaz de ações que exijam concentração". */
+    private boolean isAutocontroleAtZero() {
+        return getEgoSetback(EgoDomain.AUTOCONTROLE).isPresent();
+    }
+
+    @Override
+    public boolean isCenaImmune(final Object kind) {
+        return kind != null && cenaImmunities.contains(kind);
+    }
+
+    @Override
+    public void halveEffectDuration(@NonNull final TemporaryEffect effect) {
+        if (!temporaryEffects.contains(effect) || effect.getRemainingRounds() == null) {
+            throw new IllegalOperationException(org.aventyrs.core.util.TranslatableMessages.NOT_A_RUNNING_EFFECT);
+        }
+        effect.shortenTo((effect.getRemainingRounds() + 1) / 2);
+    }
+
+    @Override
+    public List<TemporaryEffect> getRunningEffects() {
+        return temporaryEffects.stream().filter(effect -> !effect.isExpired()).toList();
+    }
+
+    @Override
+    public int getDamageTakenThisRound() {
+        return damageTakenThisRound;
+    }
+
+    @Override
+    public int negateDamageThisRound() {
+        int restored = Math.min(damageTakenThisRound, getDamageTaken());
+        hitPoints.recover(restored);
+        damageTakenThisRound = 0;
+        damageNegatedThisRound = true;
+        observeStatus();
+        return restored;
+    }
+
+    @Override
+    public boolean isDamageNegatedThisRound() {
+        return damageNegatedThisRound;
     }
 
     @Override
@@ -1067,6 +1173,10 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
      */
     @Override
     public void applyEffect(final TemporaryEffect effect) {
+        // Autocontrole's Cena immunity to this kind.
+        if (isCenaImmune(CenaImmunity.kindOf(effect))) {
+            return;
+        }
         int ceiling = effect.maximumSimultaneous();
         if (ceiling < TemporaryEffect.UNLIMITED_SIMULTANEOUS) {
             // Drop the oldest of the same grant until this one fits under the ceiling. "The same
@@ -1456,6 +1566,8 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
      */
     @Override
     public void startNewRound() {
+        damageTakenThisRound = 0;
+        damageNegatedThisRound = false;
         actionsThisRound.clear();
         actionCountAtTurnStart = 0;
         attacksSufferedThisRound = 0;
@@ -1590,7 +1702,50 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
      * Scene#addParticipant} calls this when the sheet joins; the API calls it otherwise.
      */
     @Override
+    public void overrideInitiative(final int value, final Integer rodadas) {
+        overrideInitiative(value, rodadas, false);
+    }
+
+    @Override
+    public void overrideInitiative(final int value, final Integer rodadas, final boolean started) {
+        if (rodadas != null && rodadas < 1) {
+            throw new IllegalArgumentException("An Iniciativa override governs at least one Rodada: " + rodadas);
+        }
+        initiativeOverrideValue = value;
+        initiativeOverrideRodadas = rodadas;
+        initiativeOverrideStarted = started;
+    }
+
+    @Override
+    public java.util.OptionalInt getInitiativeOverride() {
+        return initiativeOverrideValue == null ? java.util.OptionalInt.empty()
+                : java.util.OptionalInt.of(initiativeOverrideValue);
+    }
+
+    @Override
+    public void advanceInitiativeOverride() {
+        if (initiativeOverrideValue == null) {
+            return;
+        }
+        if (!initiativeOverrideStarted) {
+            initiativeOverrideStarted = true;
+            return;
+        }
+        if (initiativeOverrideRodadas != null && --initiativeOverrideRodadas <= 0) {
+            clearInitiativeOverride();
+        }
+    }
+
+    private void clearInitiativeOverride() {
+        initiativeOverrideValue = null;
+        initiativeOverrideRodadas = null;
+        initiativeOverrideStarted = false;
+    }
+
+    @Override
     public void startNewScene() {
+        clearInitiativeOverride();
+        cenaImmunities.clear();
         actionsThisCena.clear();
         actionsThisRound.clear();
         actionsOfLatestOwnTurn.clear();
@@ -1927,10 +2082,28 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
 
     /** Held, unexpired Conditions — the directly-applied ones, before implications. */
     private Stream<Condition> heldConditions() {
-        return temporaryEffects.stream()
+        Stream<Condition> held = temporaryEffects.stream()
                 .filter(effect -> effect instanceof Condition)
                 .map(effect -> (Condition) effect)
                 .filter(condition -> !condition.isExpired());
+        return Stream.concat(held, setbackConditions());
+    }
+
+    /**
+     * The Condições an Autocontrole setback holds while it lasts — Pânico's Apavorado, Regressão Mental's
+     * Desprevenido, Torpor's Imobilizado (core 0.0.82) — read wherever a held Condição is, never stored.
+     */
+    private Stream<Condition> setbackConditions() {
+        return getEgoSetback(EgoDomain.AUTOCONTROLE)
+                .map(setback -> switch (setback) {
+                    case PANICO -> ConditionType.APAVORADO;
+                    case REGRESSAO_MENTAL -> ConditionType.DESPREVENIDO;
+                    case TORPOR -> ConditionType.IMOBILIZADO;
+                    default -> null;
+                })
+                .map(type -> setbackConditions.computeIfAbsent(getEgoSetback(EgoDomain.AUTOCONTROLE).get(),
+                        setback -> new Condition(type, null)))
+                .stream();
     }
 
     /**
@@ -2454,7 +2627,9 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
 
     @Override
     public boolean isCompelledToAttackNearest() {
-        return getOwnFrenzy().isPresent() && getTemporaryEgoPoints(EgoDomain.AUTOCONTROLE) == 0;
+        return getOwnFrenzy().isPresent() && getTemporaryEgoPoints(EgoDomain.AUTOCONTROLE) == 0
+                // Autocontrole a Zero's Enfurecidos: "não diferencia inimigos de aliados e ataca alvos próximos".
+                || hasEgoSetback(org.aventyrs.core.ego.EgoSetback.ENFURECIDOS);
     }
 
     @Override
@@ -2476,7 +2651,9 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     @Override
     public boolean isSkillUsePrevented(final SkillType skillType, final AttributeDomain governing) {
         return (isConcentrationAction(skillType, governing)
-                && getFrenzy().map(Frenzy::isConcentrationBlocked).orElse(false))
+                && (getFrenzy().map(Frenzy::isConcentrationBlocked).orElse(false)
+                        // Autocontrole a Zero: "incapaz de ações que exijam concentração".
+                        || isAutocontroleAtZero()))
                 || isPreventedWhileRiding(skillType)
                 || (getCharacter() != null && getCharacter().getFeats().stream()
                         .anyMatch(feat -> feat.preventsSkillUse(skillType, getCharacter())));
@@ -2508,7 +2685,12 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     @Override
     public int getElementalResistanceInstances(final ElementalType element) {
         int fromFrenzy = getFrenzy().filter(frenzy -> frenzy.getCataclysmElements().contains(element)).map(frenzy -> 1).orElse(0);
-        return fromFrenzy + getCharacter().getAttributeAbilities().stream()
+        int timed = temporaryEffects.stream()
+                .filter(effect -> effect instanceof TimedElementalResistance resistance
+                        && !resistance.isExpired() && resistance.getElement() == element)
+                .mapToInt(effect -> ((TimedElementalResistance) effect).getInstances())
+                .sum();
+        return fromFrenzy + timed + getCharacter().getAttributeAbilities().stream()
                 .mapToInt(ability -> ability.resolveElementalResistanceInstances(element))
                 .sum()
                 + getCharacter().getFeats().stream()
@@ -2545,7 +2727,8 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
 
     @Override
     public boolean isImmuneToCondition(final ConditionType conditionType) {
-        return getCharacter().getAttributeAbilities().stream().anyMatch(ability -> ability.isImmuneToCondition(conditionType));
+        return isCenaImmune(conditionType)
+                || getCharacter().getAttributeAbilities().stream().anyMatch(ability -> ability.isImmuneToCondition(conditionType));
     }
 
     @Override

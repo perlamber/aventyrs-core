@@ -46,6 +46,10 @@ public class ReactionsServiceImpl implements ReactionsService {
         if (ignoresPrevention) {
             timed -= sheet.getTemporaryMalus(ModifierType.REACTIONS);
         }
+        // Iniciativa a Zero's Reflexo Lento: "incapaz de fazer Reações" (core 0.0.82).
+        if (sheet.hasEgoSetback(org.aventyrs.core.ego.EgoSetback.REFLEXO_LENTO)) {
+            return 0;
+        }
         // Preso a Imaginação: no Reações at all in an odd Rodada.
         if (!ignoresPrevention && character.getFeats().stream().anyMatch(feat -> feat.preventsReactions(character, sceneContext))) {
             return 0;

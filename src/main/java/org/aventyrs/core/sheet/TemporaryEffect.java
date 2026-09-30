@@ -60,14 +60,14 @@ public abstract class TemporaryEffect {
     }
 
     /**
-     * Shortens this effect's remaining Duração — package-private, and only ever used at the moment
-     * an effect is applied, never once it is running.
+     * Shortens this effect's remaining Duração — package-private. Used at the moment an effect is applied, and
+     * once mid-countdown: {@code CombatantSheet#halveEffectDuration}, Autocontrole's temporary point (core 0.0.81),
+     * the one thing the rules let halve a running one.
      *
      * <p>{@code CombatantSheet#applyEnchantment} is the one caller: a harmful Encantamento landing
      * on someone warded by an Armadura and an Escudo Ungido arrives already halved. Deliberately
-     * not public, and deliberately not usable mid-countdown — "a Duração … é reduzida pela metade"
-     * is a property of the effect that lands, and letting anything halve a running one would make
-     * every countdown in this core a moving target.
+     * not public — "a Duração … é reduzida pela metade" is a property of the effect that lands, and letting anything
+     * but that Ego point halve a running one would make every countdown in this core a moving target.
      */
     void shortenTo(final int rounds) {
         this.remainingRounds = rounds;

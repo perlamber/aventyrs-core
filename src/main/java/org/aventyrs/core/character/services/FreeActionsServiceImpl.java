@@ -39,6 +39,10 @@ public class FreeActionsServiceImpl implements FreeActionsService {
     @Override
     public int getTotalFreeActions(final CombatantSheet sheet, final int turnNumber, final SceneContext sceneContext) {
         Character character = sheet.getCharacter();
+        // Iniciativa a Zero's Hesitação: "não pode mais usar Ações Livres" (core 0.0.82).
+        if (sheet.hasEgoSetback(org.aventyrs.core.ego.EgoSetback.HESITACAO)) {
+            return 0;
+        }
         // Preso a Imaginação: no Ações Livres at all in an odd Rodada.
         if (character.getFeats().stream().anyMatch(feat -> feat.preventsFreeActions(character, sceneContext))) {
             return 0;

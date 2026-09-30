@@ -84,7 +84,9 @@ public abstract class AbstractTitleAbilityInteraction implements Interaction<Com
      */
     public final InteractionResult activate(@NonNull final TitleAbilityActivationRequest request) {
         CombatantSheet activator = request.getActivator();
-        if (activator.isAbilityActivationPrevented(request.getSceneContext())) {
+        // Silêncio — and Autocontrole a Zero's Centelha Morta, "incapaz de ativar Habilidades de Títulos Aventyrs".
+        if (activator.isAbilityActivationPrevented(request.getSceneContext())
+                || activator.hasEgoSetback(org.aventyrs.core.ego.EgoSetback.CENTELHA_MORTA)) {
             throw new IllegalOperationException(ABILITY_ACTIVATION_PREVENTED);
         }
         // What the activation buys is judged on the base figure — a subclass reading "PD spent" to

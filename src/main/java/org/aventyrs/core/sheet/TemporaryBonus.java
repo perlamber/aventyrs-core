@@ -73,6 +73,16 @@ public class TemporaryBonus extends TemporaryEffect {
         return new TemporaryBonus(type, value, null, source, Blessing.DEFAULT_MAXIMUM_SIMULTANEOUS);
     }
 
+    /**
+     * A sourced bonus that counts down as its holder's Turn begins rather than as it ends — the "por 1 Rodada"
+     * ruling ({@link TemporaryEffect#countsDownAtTurnStart()}): granted any time, it holds until the holder's next
+     * Turn starts. Autocontrole's RA/RD/RM (core 0.0.81).
+     */
+    public static TemporaryBonus untilTurnStarts(final ModifierType type, final int value, final int rounds,
+                                                 final String source) {
+        return new TemporaryBonus(type, value, rounds, source, Blessing.DEFAULT_MAXIMUM_SIMULTANEOUS, true);
+    }
+
     public TemporaryBonus(final ModifierType type, final int value, final Integer remainingRounds,
                           final String source, final int maximumSimultaneous) {
         this(type, value, remainingRounds, source, maximumSimultaneous, false);

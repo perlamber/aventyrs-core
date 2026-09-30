@@ -38,6 +38,12 @@ public interface EffectChainService {
      */
     default int getRequiredMargin(final CombatantSheet attacker, final InitiativePosition attackerPosition,
                                   final CombatantSheet defender, final InitiativePosition defenderPosition) {
+        // Sorte a Zero's Atrair a Morte and Autocontrole a Zero's Vontade Fraca: every Corrente that beats its Defesas
+        // lands, "sem a margem de 5" (core 0.0.82).
+        if (defender.hasEgoSetback(org.aventyrs.core.ego.EgoSetback.ATRAIR_A_MORTE)
+                || defender.hasEgoSetback(org.aventyrs.core.ego.EgoSetback.VONTADE_FRACA)) {
+            return 0;
+        }
         Character target = defender.getCharacter();
         int margin = getRequiredMargin(target);
         margin += target.getFeats().stream()
