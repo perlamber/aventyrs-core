@@ -42,8 +42,13 @@ public class ReactionsServiceImpl implements ReactionsService {
         Character character = sheet.getCharacter();
         int timed = sheet.getTemporaryBonus(ModifierType.REACTIONS);
         // Mestre Escudeiro: "Você pode fazer Reações mesmo quando o efeito impedir Reações".
-        if (character.getFeats().stream().anyMatch(feat -> feat.ignoresReactionPrevention(character))) {
+        boolean ignoresPrevention = character.getFeats().stream().anyMatch(feat -> feat.ignoresReactionPrevention(character));
+        if (ignoresPrevention) {
             timed -= sheet.getTemporaryMalus(ModifierType.REACTIONS);
+        }
+        // Preso a Imaginação: no Reações at all in an odd Rodada.
+        if (!ignoresPrevention && character.getFeats().stream().anyMatch(feat -> feat.preventsReactions(character, sceneContext))) {
+            return 0;
         }
         int baseline = permanentReactions(character) + timed;
         // Analista Tático: "Enquanto você for o último a agir você recebe uma … Reação adicional".

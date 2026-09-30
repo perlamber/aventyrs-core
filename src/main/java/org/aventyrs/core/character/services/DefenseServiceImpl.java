@@ -85,7 +85,15 @@ public class DefenseServiceImpl implements DefenseService {
                 + conditions
                 + sumGuardsAgainstOpponent(target, sceneContext)
                 + mitigationForgoneAsDefense(target, sceneContext)
-                + adjacentBarreiraBonus(sceneContext);
+                + adjacentBarreiraBonus(sceneContext)
+                + sumDefenseBonusesAgainst(target.getCharacter(), damageDescriptor);
+    }
+
+    /** Vulnerabilidade's Desvantagem to defend against the attack's own kind — only when the kind is known. */
+    private static int sumDefenseBonusesAgainst(final Character character, final DamageDescriptor damageDescriptor) {
+        return damageDescriptor == null ? 0 : character.getFeats().stream()
+                .mapToInt(feat -> feat.resolveDefenseBonusAgainst(damageDescriptor, character))
+                .sum();
     }
 
     /**

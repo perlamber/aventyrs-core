@@ -16,11 +16,17 @@ public class RestServiceImpl implements RestService {
         int bonus = character.getAttributeAbilities().stream()
                 .mapToInt(ability -> ability.resolveRestHitPointsBonus(restType))
                 .sum();
-        return recovered(character.getEffectiveAttributeTotal(AttributeDomain.VIGOR), restType) + bonus;
+        int featBonus = character.getFeats().stream()
+                .mapToInt(feat -> feat.resolveRestHitPointsBonus(restType, character))
+                .sum();
+        return recovered(character.getEffectiveAttributeTotal(AttributeDomain.VIGOR), restType) + bonus + featBonus;
     }
 
     @Override
     public int getRecoveredMagicPoints(final Character character, final RestType restType) {
+        if (prevented(character, ResourceType.MAGIC_POINTS)) {
+            return 0;
+        }
         int bonus = character.getAttributeAbilities().stream()
                 .mapToInt(ability -> ability.resolveRestMagicPointsBonus(restType))
                 .sum();
@@ -88,6 +94,11 @@ public class RestServiceImpl implements RestService {
         }
     }
 
+    /** Nulificador's "nunca recupera PM com Descansos" — no Descanso returns resource, bonuses included. */
+    private static boolean prevented(final Character character, final ResourceType resource) {
+        return character.getFeats().stream().anyMatch(feat -> feat.preventsRestRecovery(resource, character));
+    }
+
     /**
      * The Talento-granted recovery on top of the Atributo formula: the Descanso Verdadeiro bonus
      * ({@code Feat#resolveTrueRestBonus}) and the player's per-Descanso pick ({@code
@@ -95,6 +106,9 @@ public class RestServiceImpl implements RestService {
      */
     private static int extraRecovery(final Character character, final RestType restType, final boolean verdadeiro,
                                      final ResourceType chosenBonus, final ResourceType resource) {
+        if (prevented(character, resource)) {
+            return 0;
+        }
         int extra = 0;
         for (org.aventyrs.core.feat.Feat feat : character.getFeats()) {
             if (verdadeiro) {

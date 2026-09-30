@@ -46,7 +46,9 @@ public class ActionPointsServiceImpl implements ActionPointsService {
         Character character = sheet.getCharacter();
         int baseline = actionPointsBeforeProfile(character, turnNumber)
                 + sheet.getTemporaryBonus(ModifierType.ACTION_POINTS)
-                + sumTitleAbilityActionPointBonus(sheet);
+                + sumTitleAbilityActionPointBonus(sheet)
+                + character.getFeats().stream()
+                        .mapToInt(feat -> feat.resolveRoundActionPointsIncrease(character, sceneContext)).sum();
         return Math.max(0, character.getActionProfile().adjustActionPoints(baseline, turnNumber, sceneContext));
     }
 

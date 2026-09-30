@@ -404,9 +404,10 @@ public class CharacterCreationServiceImpl implements CharacterCreationService {
 
     /**
      * answers against choices, in order: each choice's picks from its options, none repeated — a
-     * free-text choice ({@code Defect#FREE_TEXT}, no options) takes any non-blank String.
+     * free-text choice ({@code Defect#FREE_TEXT}, no options) takes any non-blank String. Shared with
+     * {@link DefectServiceImpl}, which validates a Defeito imposed during play the same way.
      */
-    private static void validateChoices(final List<FeatChoice<?>> choices, final List<Object> answers) {
+    static void validateChoices(final List<FeatChoice<?>> choices, final List<Object> answers) {
         int next = 0;
         for (FeatChoice<?> choice : choices) {
             if (next + choice.picks() > answers.size()) {

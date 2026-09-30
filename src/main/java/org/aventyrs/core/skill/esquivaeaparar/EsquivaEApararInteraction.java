@@ -101,6 +101,18 @@ public class EsquivaEApararInteraction extends AbstractSkillInteraction {
                                      final DamageDescriptor damageDescriptor) {
         InteractionResult result = super.applyTo(target, sceneContext, skillRoll);
         Character character = target.getCharacter();
+        // Ponto Fraco: "A GD de Esquiva e Aparar para evitar ataques do tipo escolhido é aumentada em +1 Nível".
+        if (damageDescriptor != null) {
+            int difficultyAgainst = character.getFeats().stream()
+                    .mapToInt(feat -> feat.resolveDefenseDifficultyReductionAgainst(damageDescriptor, character))
+                    .sum();
+            if (difficultyAgainst != 0) {
+                result = result.toBuilder()
+                        .difficultyReduction((result.getDifficultyReduction() == null ? 0 : result.getDifficultyReduction())
+                                + difficultyAgainst)
+                        .build();
+            }
+        }
 
         int adjustment = defenseType == null ? 0
                 : defenseService.getTotalDefense(target, defenseType, sceneContext, damageDescriptor);

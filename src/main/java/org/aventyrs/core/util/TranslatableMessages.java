@@ -168,6 +168,8 @@ public class TranslatableMessages {
      * CharacterCreationService#applyDefectsAndQualities} for the list.
      */
     public static final String INVALID_DEFECT_SELECTION = "INVALID_DEFECT_SELECTION";
+    /** Superar names a Defeito the character does not hold in force — {@code DefectService#overcome}. */
+    public static final String DEFECT_NOT_HELD = "DEFECT_NOT_HELD";
 
     /**
      * A Talento only a newly created character may take ("Apenas personagens recém-criados") was
@@ -490,4 +492,7 @@ public class TranslatableMessages {
      * Analista Tático, outside a Cena de Combate, or after they have already acted or had their Turn.
      */
     public static final String DEFER_TO_LAST_NOT_PERMITTED = "DEFER_TO_LAST_NOT_PERMITTED";
+
+    /** A held Talento forbids Habilidades de Atributo of this Atributo — {@code Feat#forbidsAttributeAbility}. */
+    public static final String ATTRIBUTE_ABILITY_FORBIDDEN = "ATTRIBUTE_ABILITY_FORBIDDEN";
 }

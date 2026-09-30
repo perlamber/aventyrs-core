@@ -17,6 +17,6 @@ public record TitleAwakening(@NonNull AventyrTitle title, @NonNull TitleSlot slo
 
     @Override
     public void acquire(final CharacterSheet sheet) throws IllegalOperationException {
-        new TitleAcquisitionServiceImpl().grantTitle(sheet.getCharacter(), title, slot);
+        new TitleAcquisitionServiceImpl().grantTitle(sheet.getCharacter(), sheet, title, slot);
     }
 }

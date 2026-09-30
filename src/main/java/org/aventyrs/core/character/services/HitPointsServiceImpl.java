@@ -8,6 +8,7 @@ import org.aventyrs.core.modifier.ModifierResolver;
 import org.aventyrs.core.modifier.ModifierResolverImpl;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.sheet.CombatantSheet;
+import org.aventyrs.core.sheet.ResourceType;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
 
 public class HitPointsServiceImpl implements HitPointsService {
@@ -44,7 +45,8 @@ public class HitPointsServiceImpl implements HitPointsService {
             // And a held timed/combat-scoped loss — Ferida Profunda's "perde 3 Multiplicadores de PV".
             bonus += characterSheet.getTemporaryBonus(ModifierType.LIFE_MULTIPLIER);
         }
-        return Math.max(1, character.getLifeMultiplier() + bonus);
+        // Sobreposição: "sempre igual à 1, não é possível aumentar" overrides every figure above.
+        return Feat.fixedMultiplier(ResourceType.HIT_POINTS, character, Math.max(1, character.getLifeMultiplier() + bonus));
     }
 
     @Override

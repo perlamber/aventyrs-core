@@ -107,16 +107,52 @@ that made every Antecedente Benefício free to wire:
    gravidade, ≤ 3 Qualidades, opposing pairs, Talentos-Gerais trade), materializing a Superação's
    Perícia/Graduação/Talento/Habilidade, folding the traits into `getFeats()`. Package-info creation
    step, CLAUDE.md row, tests.
-2. **Everything ✅.** All clauses on existing hooks (≈ 60% of the table).
+2. **Everything ✅.** All clauses on existing hooks (≈ 60% of the table). — **Done**, with four small
+   hooks beside their twins: `Feat#resolveGoverningAttributeRollBonus` / `#resolveGoverningAttributeDifficultyReduction`
+   ("baseadas em Carisma"), `Feat#resolveRestHitPointsBonus`, `Feat#permitsTitleSlot` (+
+   `TitleAcquisitionService#isPermitted(…, TitleSlot)`, now what `grantTitle` checks), and a
+   `SkillRoll`-taking `Feat#resolveAutomaticSuccess` (Sentir o Todo). Tests: `DefectsAndQualitiesEffectTest`.
+   Readings (⚠️ on the constants): Vigoroso = +1PV, +1 per Título (max +3); Sonho de Gilgamesh's
+   "empunhando" = equipped; Aura de Confiança's gate reads the Perícia's natural Atributo; "Danos
+   Físicos" = any dano not delivered by a Magia.
+   **Moved to Phase 3** (the ✅ was optimistic — no hook exists): Vulnerabilidade's extra damage
+   (no typed damage-taken increase), Resiliência Heroica Maior (no Condição veto/downgrade),
+   Herança Moderado's 25 EXP gate (`TitleAcquisitionService` never sees the sheet), Memória
+   Eidética (no choice-carrying `PendingAcquisition`), Sorrateiro (the action log names a target only
+   for attacks), Resistência Atípica's Profana/Divina and Duração halves. Destinado a Fortuna Menor
+   waits on the Ego plan's Recursos spend. Already materialized in Phase 1: Privilegiado, Precognição,
+   Divinal.
 3. **The 🔧 stages.** Multiplier ceiling stage (Sobreposição), automatic failure, Rodada-parity
    (PA / Ações Livres / Reações / Vantagem), incoming-attack type at defence, Condição duration
-   multiplier, per-Cena first-cost override, "negate the first Magia", Movimento halving.
-4. **Mid-campaign.** `DefectService#grantDefect` / `#overcome` (3/5/7 EXP, progression lock).
+   multiplier, per-Cena first-cost override, "negate the first Magia", Movimento halving. — **Done
+   (0.0.74)**, see `0.074.CHANGELOG.md`; tests `DefectsAndQualitiesStagesTest`. Also landed here:
+   Vulnerabilidade, Inabalável, Centelha Dormente's 25 EXP (with the sheet), Profana/Divina, Nulificador,
+   Dependência. Readings (⚠️ on the constants): Rodadas Ímpares/pares are a Cena de Combate's; the
+   vulnerability's extra damage lands on the raw hit; Membro Ausente halves only the permanent Movimento
+   Base. **Left TODO** (each needs something bigger): the prosthesis toggle; "maximizadas"; Trava Mental's
+   +1d6; Motivado pelo Desafio; Alma de AEther's negation; Memória Eidética and Dominar Padrões' Competência
+   (no in-play Especialização/Competência grant, no session count); Sorrateiro; Resistência Atípica's
+   Duração half; Pronto para Ação on a Talento `ActiveAbility`.
+4. **Mid-campaign.** `DefectService#grantDefect` / `#overcome` (3/5/7 EXP, progression lock). — **Done
+   (0.0.75)**; tests `DefectServiceTest`. An overcome Defeito stays on record (`HeldDefect#overcome`) with its
+   Superação kept; re-imposing a held Defeito changes it (both table rulings, 2026-09-29). The lock is the
+   caller's.
 5. **API.** `defects` / `qualities` on the Character entry/DTO/response (with each choice), validated
-   like the Antecedentes.
+   like the Antecedentes. — **Done** (aventyrs-api on core 0.0.75): `DefectEntry`/`QualityEntry` + DTOs and
+   responses (with the level's `levelName`), `CombatantSheetMapper#toDefectEntries`/`#toQualityEntries`
+   (known constants, creation ⇔ Superação of the same gravidade, one creation Defeito per gravidade, no
+   Defeito in force twice, ≤ 3 Qualidades, none twice, none without a creation Defeito or opposing one),
+   kept by the vitals save. **Choices and Superação picks travel as strings** — an enum constant's name,
+   or a Fobia's free text — for the client to resolve against each `FeatChoice`'s type, as
+   `BackgroundCodec` does; a Habilidade de Competência pick or Precognição's trait is ambiguous by bare name
+   across Perícias/kinds, so the client codec should encode those as `SKILL:KIND:NAME`.
 6. **Client.** Wizard step "Defeitos e Qualidades" before Talentos (optional; Superação picks; the
    trade shrinking the Talentos step), hub display + GM "grant Defeito" / player "Superar", scene
    wiring for the activated ones (Aura de Confiança, Sentir o Todo), Fobia's Condição applied by the GM.
+   — **Done** (aventyrs-game-client on core 0.0.75); see the client's `docs/wiring-defeitos-e-qualidades.md`.
+   The step sits after Perfil de Ação, before Habilidades de Atributo (a Superação may add a slot there too).
+   Fobia's Condição is applied by the GM with the scene's existing Condição tools. Not wired: Moral Herdada as a
+   Superação Vantagem (no Fama picker).
 
 ## Answered (2026-09-29)
 

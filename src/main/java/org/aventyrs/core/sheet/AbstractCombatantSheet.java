@@ -1862,7 +1862,8 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
      * through it would let a new Desprevenido silently lift an unrelated Silêncio.
      */
     @Override
-    public void applyCondition(final Condition condition) {
+    public void applyCondition(final Condition applied) {
+        Condition condition = received(applied);
         // Imunizar: "imune a … maldições" — Amaldiçoado is the Maldição this core names as a Condição.
         if (condition.getType() == ConditionType.AMALDICOADO && isWardedAgainstEnchantments()) {
             return;
@@ -1874,6 +1875,32 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         }
         removeCondition(condition.getType());
         temporaryEffects.add(condition);
+    }
+
+    /**
+     * What applied becomes on this holder: the Condição a held Talento substitutes for it (Inabalável's
+     * cap at Abalado), then its Duração multiplied (Doença Persistente's doubled Doença/Veneno). Rebuilt
+     * through {@link Condition#decayed}, so the origin and any subclass survive; an open-ended one keeps
+     * no Duração to multiply.
+     */
+    private Condition received(final Condition applied) {
+        Character character = getCharacter();
+        if (character == null) {
+            return applied;
+        }
+        ConditionType type = applied.getType();
+        for (org.aventyrs.core.feat.Feat feat : character.getFeats()) {
+            type = feat.resolveReceivedCondition(type, character);
+        }
+        int multiplier = 1;
+        for (org.aventyrs.core.feat.Feat feat : character.getFeats()) {
+            multiplier *= feat.resolveConditionDurationMultiplier(type, character);
+        }
+        if (type == applied.getType() && (multiplier == 1 || applied.getRemainingRounds() == null)) {
+            return applied;
+        }
+        Integer rounds = applied.getRemainingRounds() == null ? null : applied.getRemainingRounds() * multiplier;
+        return rounds == null ? new Condition(type, null, applied.getSource()) : applied.decayed(type, rounds);
     }
 
     @Override
@@ -2434,7 +2461,9 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     public boolean isSkillUsePrevented(final SkillType skillType, final AttributeDomain governing) {
         return (isConcentrationAction(skillType, governing)
                 && getFrenzy().map(Frenzy::isConcentrationBlocked).orElse(false))
-                || isPreventedWhileRiding(skillType);
+                || isPreventedWhileRiding(skillType)
+                || (getCharacter() != null && getCharacter().getFeats().stream()
+                        .anyMatch(feat -> feat.preventsSkillUse(skillType, getCharacter())));
     }
 
     /**

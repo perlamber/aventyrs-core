@@ -39,6 +39,10 @@ public class FreeActionsServiceImpl implements FreeActionsService {
     @Override
     public int getTotalFreeActions(final CombatantSheet sheet, final int turnNumber, final SceneContext sceneContext) {
         Character character = sheet.getCharacter();
+        // Preso a Imaginação: no Ações Livres at all in an odd Rodada.
+        if (character.getFeats().stream().anyMatch(feat -> feat.preventsFreeActions(character, sceneContext))) {
+            return 0;
+        }
         int baseline = permanentFreeActions(character) + sheet.getTemporaryBonus(ModifierType.FREE_ACTIONS);
         // Analista Tático: "Enquanto você for o último a agir você recebe uma Ação Livre … adicional".
         for (org.aventyrs.core.feat.Feat feat : character.getFeats()) {

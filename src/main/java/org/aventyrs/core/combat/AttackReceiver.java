@@ -186,8 +186,12 @@ public class AttackReceiver {
         boolean immune = defender.getGuardsAgainst(attack.getAttacker()).stream().anyMatch(AttackerGuard::isImmune)
                 // Aptidão Mágica Dracônica: immune to a Magia the defender can cast — defended outright.
                 || SpellResistance.immune(defender, attack.getAttackSource());
+        // Trava Mental: "não é capaz de se defender de ataques do tipo escolhido" — only an immunity holds.
+        boolean undefendable = attack.getDamageDescriptor() != null && defender.getCharacter().getFeats().stream()
+                .anyMatch(feat -> feat.preventsDefenseAgainst(attack.getDamageDescriptor(), defender.getCharacter()));
         // A Cego defender's failed 1d6 fails the defence whatever its total.
-        boolean defended = (margin <= 0 && !Boolean.TRUE.equals(defenseResult.getBlindCheckFailed())) || immune;
+        boolean defended = (margin <= 0 && !undefendable && !Boolean.TRUE.equals(defenseResult.getBlindCheckFailed()))
+                || immune;
         CriticalResult criticalResult = defenseResult.getCriticalResult();
         boolean criticalEffectTriggered = !defended && criticalResult != null && criticalResult.isCriticalFailure();
         boolean effectChainTriggered = !defended

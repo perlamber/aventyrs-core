@@ -705,6 +705,23 @@ public class Character {
         feats.add(feat);
     }
 
+    /** The held Defeito of defect still in force, if any — at most one, see {@link #imposeDefect}. */
+    public java.util.Optional<org.aventyrs.core.defect.HeldDefect> getActiveDefect(
+            @NonNull final org.aventyrs.core.defect.Defect defect) {
+        return defects.stream().filter(held -> held.defect() == defect && held.isActive()).findFirst();
+    }
+
+    /**
+     * Holds held from now on, replacing the entry of the same Defeito still in force, if any — the plain,
+     * unvalidating mutator beneath {@code DefectService#grantDefect}, like {@link #grantFeat}.
+     */
+    public void imposeDefect(@NonNull final org.aventyrs.core.defect.HeldDefect held) {
+        List<org.aventyrs.core.defect.HeldDefect> updated = new ArrayList<>(defects);
+        getActiveDefect(held.defect()).ifPresentOrElse(current -> updated.set(updated.indexOf(current), held),
+                () -> updated.add(held));
+        defects = List.copyOf(updated);
+    }
+
     /**
      * Every Talento this character holds: the ones acquired into {@link #feats}, plus every
      * Talento a held one grants outright through {@link Feat#getGrantedFeats} ({@code
@@ -726,7 +743,8 @@ public class Character {
                         feats.stream(),
                         feats.stream().flatMap(feat -> feat.getGrantedFeats(this).stream()),
                         backgrounds.stream().map(held -> (Feat) held.background().getBenefit()),
-                        defects.stream().map(held -> (Feat) held.effect()),
+                        defects.stream().filter(org.aventyrs.core.defect.HeldDefect::isActive)
+                                .map(held -> (Feat) held.effect()),
                         qualities.stream().flatMap(held -> held.effects().stream()).map(Feat.class::cast))
                 .flatMap(stream -> stream)
                 .distinct()

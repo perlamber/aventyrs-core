@@ -374,6 +374,9 @@ public class DamageServiceImpl implements DamageService {
                 // A Meio-Dano limited to a DamageScope (an element, physical or magic damage only),
                 // held by a Habilidade or a timed DamageScopeEffect.
                 || (target != null && target.halvesDamage(damageType, damageDescriptor))
+                // A Meio-Dano scoped to the Magia itself (Resistência Atípica to Energia Profana/Divina).
+                || (target != null && spell != null && character.getFeats().stream()
+                        .anyMatch(feat -> feat.halvesSpellDamage(spell, target)))
                 || sumAcrossSources(character, ModifierType.HALF_DAMAGE, target) > 0
                 // A timed Meio-Dano grant (SantoAbility#PROTECAO_UNGIDA's 3 Rodadas), the
                 // TemporaryBonus twin of the passive scan above and of the timed RA branch in
@@ -435,7 +438,11 @@ public class DamageServiceImpl implements DamageService {
         if (stone != null && !ignoreDamageReduction) {
             reduction += stone.getEffectiveDamageReduction();
         }
-        int afterFlatReduction = Math.max(0, rawDamage - reduction);
+        // Vulnerabilidade: "sofrerá N pontos de danos adicionais" — onto the hit itself, before mitigation.
+        int damageTakenIncrease = character.getFeats().stream()
+                .mapToInt(feat -> feat.resolveDamageTakenIncrease(damageType, damageDescriptor, character))
+                .sum();
+        int afterFlatReduction = Math.max(0, rawDamage + damageTakenIncrease - reduction);
         int finalDamage = halfDamage ? afterFlatReduction / 2 : afterFlatReduction;
         if (stone != null && finalDamage > 0 && !ignoreDamageReduction) {
             // "que lhe causaria Danos" — only a hit that really would have hurt spends the stone.

@@ -391,6 +391,9 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
         for (SkillCompetencyAbility ability : skillCompetencyAbilities) {
             bonus += ability.resolveGoverningAttributeRollBonus(attributeDomain, target);
         }
+        for (Feat feat : character.getFeats()) {
+            bonus += feat.resolveGoverningAttributeRollBonus(attributeDomain, target, sceneContext);
+        }
         if (character.getRace() != null && !target.getRacialTraitSuppression().suppressesPhysicalTraits()) {
             bonus += character.getRace().resolveGoverningAttributeRollBonus(attributeDomain, target, sceneContext,
                     sheet -> characterSizeService.getEffectiveSizeCategory(sheet).getCategory());
@@ -406,6 +409,9 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                 .sum();
         difficultyReduction += sumAttributeDomainDifficultyReductions(character.getAttributeAbilities(), attributeDomain, character);
         difficultyReduction += sumFeatDifficultyReductions(character, sceneContext, skillRoll);
+        for (Feat feat : character.getFeats()) {
+            difficultyReduction += feat.resolveGoverningAttributeDifficultyReduction(attributeDomain, character, skillRoll);
+        }
         if (counselled) {
             difficultyReduction += AncestralCounselService.DIFFICULTY_REDUCTION;
         }
@@ -485,7 +491,8 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
             result.reachedDifficultyLevel(reached.orElse(null))
                     .criticalResult(criticalResult);
             resolveOutcome(bonus + skillRoll.getTotal(), skillRoll.getTargetValue(), difficultyReduction,
-                    skillCompetencyAbilities, character.getFeats(), sceneContext, character).ifPresent(outcome -> {
+                    skillCompetencyAbilities, character.getFeats(), sceneContext, character, skillRoll, attributeDomain)
+                    .ifPresent(outcome -> {
                         boolean succeeded = outcome.succeeded() && !failedBlind;
                         result.succeeded(succeeded).margin(outcome.margin());
                         if (succeeded) {
@@ -883,15 +890,20 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
      */
     private Optional<RollOutcome> resolveOutcome(final int total, final Integer targetValue, final int difficultyReduction,
                                                   final List<SkillCompetencyAbility> abilities, final List<Feat> feats,
-                                                  final SceneContext sceneContext, final Character character) {
+                                                  final SceneContext sceneContext, final Character character,
+                                                  final SkillRoll skillRoll, final AttributeDomain governing) {
         if (targetValue == null) {
             return Optional.empty();
         }
         int effectiveTarget = easedTarget(targetValue, difficultyReduction);
+        // A Defeito's automatic failure outranks every automatic success (Sobreposição).
+        if (feats.stream().anyMatch(feat -> feat.resolveAutomaticFailure(skillType, governing, character))) {
+            return Optional.of(new RollOutcome(false, total - effectiveTarget));
+        }
         boolean automatic = abilities.stream()
                 .anyMatch(ability -> ability.resolveAutomaticSuccess(skillType, effectiveTarget, sceneContext))
                 || feats.stream().anyMatch(feat -> feat.resolveAutomaticSuccess(
-                        skillType, effectiveTarget, sceneContext, character));
+                        skillType, effectiveTarget, sceneContext, character, skillRoll));
         if (automatic) {
             return Optional.of(new RollOutcome(true, 0));
         }

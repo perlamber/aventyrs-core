@@ -109,6 +109,12 @@ public class MovementServiceImpl implements MovementService {
             total += item.resolveFavorBonus(ModifierType.MOVEMENT, character);
             total += item.resolveEnhancementBonus(ModifierType.MOVEMENT, null, character);
         }
+        // Membro Ausente (pernas): "Movimento Base é reduzido à metade" — after every addition, and once
+        // however many sources say so. ⚠️ Only this permanent figure halves; the sheet overload's
+        // here-and-now bonuses are added to the halved base.
+        if (character.getFeats().stream().anyMatch(feat -> feat.halvesMovementBase(character))) {
+            total /= 2;
+        }
         return Math.max(0, total);
     }
 

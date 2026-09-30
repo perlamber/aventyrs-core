@@ -2,10 +2,12 @@ package org.aventyrs.core.character.services;
 
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.feat.Feat;
 import org.aventyrs.core.modifier.ModifierResolver;
 import org.aventyrs.core.modifier.ModifierResolverImpl;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.sheet.CombatantSheet;
+import org.aventyrs.core.sheet.ResourceType;
 
 public class MagicPointsServiceImpl implements MagicPointsService {
 
@@ -29,7 +31,7 @@ public class MagicPointsServiceImpl implements MagicPointsService {
         int featBonus = character.getFeats().stream()
                 .mapToInt(feat -> feat.resolveManaMultiplierIncrease(character))
                 .sum();
-        return character.getManaMultiplier() + bonus + featBonus;
+        return Feat.fixedMultiplier(ResourceType.MAGIC_POINTS, character, character.getManaMultiplier() + bonus + featBonus);
     }
 
     @Override
@@ -43,7 +45,8 @@ public class MagicPointsServiceImpl implements MagicPointsService {
         if (sheet == null) {
             return getManaMultiplier(character);
         }
-        return Math.max(1, getManaMultiplier(character) + sheet.getTemporaryBonus(ModifierType.MANA_MULTIPLIER));
+        return Feat.fixedMultiplier(ResourceType.MAGIC_POINTS, character,
+                Math.max(1, getManaMultiplier(character) + sheet.getTemporaryBonus(ModifierType.MANA_MULTIPLIER)));
     }
 
     @Override

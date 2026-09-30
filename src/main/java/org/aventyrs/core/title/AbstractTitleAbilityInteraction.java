@@ -102,6 +102,13 @@ public abstract class AbstractTitleAbilityInteraction implements Interaction<Com
                 .mapToInt(feat -> feat.resolveTitleActivationSurcharge(ability, activator, request.getActivatedFeats()))
                 .sum();
         int determinationPoints = (basePoints + surcharge) * determinationCostMultiplier(activator);
+        // Pronto para Ação: the first PD-priced activation of a Cena de Combate costs nothing.
+        List<Feat> held = activator.getCharacter().getFeats();
+        boolean determinationWaived = determinationPoints > 0 && held.stream()
+                .anyMatch(feat -> feat.waivesTitleActivationDeterminationCost(activator, request.getSceneContext()));
+        if (determinationWaived) {
+            determinationPoints = 0;
+        }
         // Transferir Vitalidade: the PD paid in PV instead, locked until a Descanso Verdadeiro.
         int vitality = 0;
         if (determinationPoints > 0
@@ -125,6 +132,12 @@ public abstract class AbstractTitleAbilityInteraction implements Interaction<Com
             throw new IllegalOperationException(NOT_ENOUGH_HIT_POINTS);
         }
         EgoCost egoCost = resolveEgoCost(request);
+        // …and the first Ego-priced one costs a single point.
+        boolean egoCapped = !egoCost.isFree() && held.stream()
+                .anyMatch(feat -> feat.capsTitleActivationEgoCost(activator, request.getSceneContext()));
+        if (egoCapped) {
+            egoCost = new EgoCost(egoCost.domain(), 1);
+        }
         if (!egoCost.isFree() && activator.getTemporaryEgoPoints(egoCost.domain()) < egoCost.points()) {
             throw new IllegalOperationException(NOT_ENOUGH_EGO_POINTS);
         }
@@ -143,6 +156,9 @@ public abstract class AbstractTitleAbilityInteraction implements Interaction<Com
         }
         if (!egoCost.isFree()) {
             spendEgo(request, egoCost);
+        }
+        if (determinationWaived || egoCapped) {
+            held.forEach(feat -> feat.onTitleActivationCostRelief(activator, determinationWaived, egoCapped));
         }
         activator.recordAbilityActivation(ability);
         optIns.forEach(activator::recordAbilityActivation);

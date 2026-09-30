@@ -338,6 +338,29 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
         return TitleAcquisitionPermission.NO_OPINION;
     }
 
+    /**
+     * Whether this Talento lets its holder Despertar a Título into slot at all — {@code
+     * DefeitoFeat#HERANCA_DE_GILGAMESH_LEVE}'s "incapaz de Despertar seu Título Secundário". Asked by
+     * {@code TitleAcquisitionService#isPermitted(Character, AventyrTitle, TitleSlot)} beside {@link
+     * #resolveTitleAcquisitionPermission}, which judges <i>which</i> Título and never sees the slot.
+     * True by default; any held Talento answering false refuses.
+     */
+    default boolean permitsTitleSlot(final org.aventyrs.core.character.TitleSlot slot, final Character character) {
+        return true;
+    }
+
+    /**
+     * {@link #permitsTitleSlot(org.aventyrs.core.character.TitleSlot, Character)} with the holder's sheet,
+     * for a gate on what only the sheet holds — {@code DefeitoFeat#HERANCA_DE_GILGAMESH_MODERADO}'s
+     * "Título Primário … Desperto em atraso, apenas com 25 EXP". {@code sheet} is {@code null} for a caller
+     * that has none, which an override gating on it must read as "cannot tell" and refuse. Defaults to the
+     * shorter form.
+     */
+    default boolean permitsTitleSlot(final org.aventyrs.core.character.TitleSlot slot, final Character character,
+                                     final CharacterSheet sheet) {
+        return permitsTitleSlot(slot, character);
+    }
+
     /** Whether this Talento lets its holder breathe underwater. */
     default boolean allowsUnderwaterBreathing(final Character character) {
         return false;
@@ -823,6 +846,34 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
                                        final AttackSource attackSource, final CombatantSheet holder,
                                        final SkillRoll skillRoll) {
         return resolveSkillRollBonus(skillType, sceneContext, requestedAbility, character, attackSource, holder);
+    }
+
+    /**
+     * A bonus (or malus) this Talento puts on every roll <b>governed by</b> domain — the Atributo the
+     * roll is actually made with, after any substitution — "rolagens de Perícias baseadas em
+     * Carisma" ({@code DefeitoFeat#COMPORTAMENTO_EXCENTRICO_LEVE}'s Desvantagem, {@code
+     * QualidadeFeat#RADIANTE_MENOR}'s Vantagem). The {@code Feat} twin of {@code
+     * SkillCompetencyAbility#resolveGoverningAttributeRollBonus} and {@code
+     * Race#resolveGoverningAttributeRollBonus}, summed beside them by {@code AbstractSkillInteraction}.
+     * sceneContext is the roller's own snapshot — the Rodada a clause like {@code
+     * QualidadeFeat#TENDENCIA_ATLETICA_MENOR}'s "a cada Rodada par" reads — and {@code null} outside a Scene.
+     * Zero by default.
+     */
+    default int resolveGoverningAttributeRollBonus(final AttributeDomain domain, final CombatantSheet holder,
+                                                   final SceneContext sceneContext) {
+        return 0;
+    }
+
+    /**
+     * Níveis of Grau de Dificuldade this Talento takes off (positive) or adds to (negative) a roll
+     * governed by domain — {@code DefeitoFeat#COMPORTAMENTO_EXCENTRICO_MODERADO}'s "GD das Perícias
+     * baseadas em Carisma aumenta em +1 Nível", {@code QualidadeFeat#RADIANTE_MAIOR}'s activated
+     * "reduzir o GD". The Talento twin of {@code AttributeAbility#resolveAttributeDomainDifficultyReduction};
+     * skillRoll is {@code null} on a preview, which reads as "nothing activated". Zero by default.
+     */
+    default int resolveGoverningAttributeDifficultyReduction(final AttributeDomain domain, final Character character,
+                                                             final SkillRoll skillRoll) {
+        return 0;
     }
 
     /**
@@ -1415,6 +1466,41 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      */
     default boolean resolveAutomaticSuccess(final SkillType skillType, final int targetValue,
                                             final SceneContext sceneContext, final Character character) {
+        return false;
+    }
+
+    /**
+     * {@link #resolveAutomaticSuccess(SkillType, int, SceneContext, Character)} with the roll itself,
+     * for a success the player <b>chooses</b> by activating this Talento on it — {@code
+     * QualidadeFeat#SENTIDO_SUPERIOR_MAIOR}'s "escolher ser bem-sucedido em uma Rolagem de Atenção"
+     * ({@code skillRoll.activated(this)}). Defaults to the shorter form, so every existing override
+     * keeps working.
+     */
+    default boolean resolveAutomaticSuccess(final SkillType skillType, final int targetValue,
+                                            final SceneContext sceneContext, final Character character,
+                                            final SkillRoll skillRoll) {
+        return resolveAutomaticSuccess(skillType, targetValue, sceneContext, character);
+    }
+
+    /**
+     * Whether this Talento makes a roll of skillType, governed by domain, fail outright — {@code
+     * DefeitoFeat#COMPORTAMENTO_EXCENTRICO_GRAVE}'s "falha automaticamente em rolagens de perícias baseadas
+     * em Carisma". The twin of {@link #resolveAutomaticSuccess}, consulted first: a Defeito's effect overrides
+     * every other trait's (Sobreposição). Only a roll made against a stated target has a verdict to fail.
+     * False by default.
+     */
+    default boolean resolveAutomaticFailure(final SkillType skillType, final AttributeDomain domain,
+                                            final Character character) {
+        return false;
+    }
+
+    /**
+     * Whether this Talento forbids its holder from rolling skillType at all — {@code
+     * DefeitoFeat#DEFICIENCIA_FISICA_MODERADO}'s "incapaz de realizar rolagens de Perícias que dependam do
+     * membro ausente". Asked by {@code CombatantSheet#isSkillUsePrevented}, so the roll is refused ({@code
+     * SKILL_USE_PREVENTED}) before anything is computed. False by default.
+     */
+    default boolean preventsSkillUse(final SkillType skillType, final Character character) {
         return false;
     }
 
@@ -2124,6 +2210,57 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     }
 
     /**
+     * Whether the holder takes Meio-Dano from one particular incoming Magia — {@code
+     * QualidadeFeat#RESISTENCIA_ATIPICA_MENOR}'s Resistência to Energia Profana or Divina, read as the
+     * Magia's own {@code MagicType}. OR'd into {@code DamageService}'s single Meio-Dano stage for a hit
+     * marked {@code fromSpell}. False by default.
+     */
+    default boolean halvesSpellDamage(final Spell spell, final CombatantSheet holder) {
+        return false;
+    }
+
+    /**
+     * Extra damage this Talento makes its holder take from a hit of this type, added to the raw figure
+     * before any mitigation — {@code DefeitoFeat#VULNERABILIDADE_LEVE}'s "caso não consiga evitar o ataque
+     * sofrerá 2 pontos de danos adicionais". Summed by {@code DamageService}; descriptor may be {@code
+     * null} when the caller named only the broad type. Zero by default.
+     */
+    default int resolveDamageTakenIncrease(final DamageType damageType, final DamageDescriptor descriptor,
+                                           final Character character) {
+        return 0;
+    }
+
+    /**
+     * A bonus (or malus) this Talento puts on its holder's Defesa against an attack of this kind — {@code
+     * DefeitoFeat#VULNERABILIDADE_LEVE}'s "Desvantagem em rolagens de Esquiva e Aparar para evitar ataques do
+     * tipo escolhido". Summed by {@code DefenseService#getTotalDefense(CombatantSheet, DefenseType,
+     * SceneContext, DamageDescriptor)}, which is what the Esquiva e Aparar roll adds; only ever asked with a
+     * descriptor in hand. Zero by default.
+     */
+    default int resolveDefenseBonusAgainst(final DamageDescriptor descriptor, final Character character) {
+        return 0;
+    }
+
+    /**
+     * Níveis this Talento takes off (positive) or adds to (negative) the GD its holder defends against an
+     * attack of this kind at — {@code DefeitoFeat#VULNERABILIDADE_MODERADO}'s "A GD de Esquiva e Aparar …
+     * é aumentada em +1 Nível". Folded into the Esquiva e Aparar result's {@code difficultyReduction}, which
+     * {@code AttackReceiver} eases the attack's GD by. Zero by default.
+     */
+    default int resolveDefenseDifficultyReductionAgainst(final DamageDescriptor descriptor, final Character character) {
+        return 0;
+    }
+
+    /**
+     * Whether this Talento leaves its holder unable to defend against an attack of this kind at all — {@code
+     * DefeitoFeat#VULNERABILIDADE_GRAVE}'s "não é capaz de se defender de ataques do tipo escolhido". {@code
+     * AttackReceiver} then fails the defence whatever its total (an immunity still holds). False by default.
+     */
+    default boolean preventsDefenseAgainst(final DamageDescriptor descriptor, final Character character) {
+        return false;
+    }
+
+    /**
      * Whether the holder is immune to one particular incoming Magia — {@code
      * MetamagicoFeat#APTIDAO_MAGICA_DRACONICA}'s "imune a Magias que você é capaz de conjurar" while
      * 10PD remain. Table ruling (2026-09-27): immune means the attack is defended outright and deals
@@ -2190,6 +2327,26 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     }
 
     /**
+     * The Condição this Talento's holder actually receives when applied is applied to them — {@code
+     * QualidadeFeat#RESILIENCIA_HEROICA_MAIOR}'s "não pode receber os malefícios Assustado e Apavorado, se
+     * limitando a Abalado". Asked by {@code CombatantSheet#applyCondition} before anything is held; the
+     * replacement keeps the original's Duração and origin. applied itself (no change) by default.
+     */
+    default ConditionType resolveReceivedCondition(final ConditionType applied, final Character character) {
+        return applied;
+    }
+
+    /**
+     * How many times longer a Condição of type lasts on this Talento's holder — {@code
+     * DefeitoFeat#CORPO_FRAGIL_MODERADO}'s "Os Malefícios 'Doença' e 'Veneno' tem as Durações dobradas em
+     * você". Applied by {@code CombatantSheet#applyCondition} to a Condição with a Duração; the multipliers of
+     * several Talentos multiply. 1 by default.
+     */
+    default int resolveConditionDurationMultiplier(final ConditionType type, final Character character) {
+        return 1;
+    }
+
+    /**
      * Whether this Talento stops implier from conferring implied on its holder — "você não é
      * considerado Desprevenido enquanto estiver Caído" ({@code ArtesMarciaisFeat
      * #DOMINAR_ARTE_MARCIAL_SUBMISSAO}), "não fica Desprevenido em função destas condições" ({@code
@@ -2210,6 +2367,30 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     default int resolveTitleActivationSurcharge(final AventyrTitleAbility ability, final CombatantSheet activator,
                                                 final Set<Feat> activatedFeats) {
         return 0;
+    }
+
+    /**
+     * Whether this Talento lets a Habilidade de Título activation priced in PD cost nothing right now —
+     * {@code QualidadeFeat#CENTELHA_MAIOR_MENOR}'s "o Primeiro Efeito … que possua um custo em PD tem este
+     * custo reduzido à zero" in each Cena de Combate. Asked held, not opted into; the waiver is claimed
+     * through {@link #onTitleActivationCostRelief} once the activation is paid. False by default.
+     */
+    default boolean waivesTitleActivationDeterminationCost(final CombatantSheet activator,
+                                                           final SceneContext sceneContext) {
+        return false;
+    }
+
+    /** The Ego twin of {@link #waivesTitleActivationDeterminationCost}: an Ego cost is reduced to one point. */
+    default boolean capsTitleActivationEgoCost(final CombatantSheet activator, final SceneContext sceneContext) {
+        return false;
+    }
+
+    /**
+     * Called on every held Talento once an activation this Talento relieved has been paid — what a
+     * "primeiro … em cada Cena de Combate" relief marks itself spent with. Nothing by default.
+     */
+    default void onTitleActivationCostRelief(final CombatantSheet activator, final boolean determinationWaived,
+                                             final boolean egoCapped) {
     }
 
     /** PA this Talento takes off a Habilidade de Título's fixed Tempo de Ativação when opted into. 0 by default. */
@@ -2445,6 +2626,65 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      */
     default int resolveRestMagicPointsBonus(final RestType restType, final Character character) {
         return 0;
+    }
+
+    /**
+     * Extra Pontos de Vida this Talento recovers on a Descanso of restType — the PV twin of {@link
+     * #resolveRestMagicPointsBonus}, summed by {@code RestService#getRecoveredHitPoints} beside {@code
+     * AttributeAbility#resolveRestHitPointsBonus}. Added for {@code QualidadeFeat#SAUDE_DE_FERRO_MENOR}'s
+     * "+1PV, +2PV se possuir um Título Aventyr", which is why it takes the character. Zero by default.
+     */
+    default int resolveRestHitPointsBonus(final RestType restType, final Character character) {
+        return 0;
+    }
+
+    /**
+     * Whether this Talento stops its holder recovering resource on any Descanso at all, bonuses included —
+     * {@code DefeitoFeat#DESCONEXAO_COM_O_AETHER_GRAVE}'s "nunca recupera PM com Descansos". Read by {@code
+     * RestService}. False by default.
+     */
+    default boolean preventsRestRecovery(final org.aventyrs.core.sheet.ResourceType resource, final Character character) {
+        return false;
+    }
+
+    /**
+     * The value this Talento fixes a multiplier of resource at, overriding every bonus and malus — the
+     * Sobreposição stage of "Seu Multiplicador de PV é sempre igual à 1, não é possível aumentar esta
+     * quantidade" ({@code DefeitoFeat#CORPO_FRAGIL_GRAVE}, and the PM/PD twins). Applied last by {@code
+     * HitPointsService}/{@code MagicPointsService}/{@code DeterminationPointsService}, on every overload.
+     * {@code null} (no opinion) by default; with several, the lowest wins. See {@link #fixedMultiplier}.
+     */
+    default Integer resolveFixedMultiplier(final org.aventyrs.core.sheet.ResourceType resource, final Character character) {
+        return null;
+    }
+
+    /** multiplier, or the lowest value a held Talento fixes it at — the {@link #resolveFixedMultiplier} stage. */
+    static int fixedMultiplier(final org.aventyrs.core.sheet.ResourceType resource, final Character character,
+                               final int multiplier) {
+        return character.getFeats().stream()
+                .map(feat -> feat.resolveFixedMultiplier(resource, character))
+                .filter(java.util.Objects::nonNull)
+                .min(Integer::compare)
+                .orElse(multiplier);
+    }
+
+    /**
+     * Whether this Talento halves its holder's permanent Movimento Base — {@code
+     * DefeitoFeat#DEFICIENCIA_FISICA_MODERADO}'s "Movimento Base é reduzido à metade" (pernas). Applied by
+     * {@code MovementService#getMovementBase(Character)} after every addition; several halve once. False
+     * by default.
+     */
+    default boolean halvesMovementBase(final Character character) {
+        return false;
+    }
+
+    /**
+     * Whether this Talento forbids acquiring a Habilidade de Atributo of domain — {@code
+     * DefeitoFeat#DEFICIENCIA_FISICA_GRAVE}'s "não pode adquirir Habilidades de Atributo de Força ou de
+     * Destreza". Checked by {@code AttributeAbilityService#grantAttributeAbility}. False by default.
+     */
+    default boolean forbidsAttributeAbility(final AttributeDomain domain, final Character character) {
+        return false;
     }
 
     /**
@@ -2689,6 +2929,33 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
 
     /** The Ações Livres twin of {@link #resolveReactionsIncrease}, summed by {@code FreeActionsService}. */
     default int resolveFreeActionsIncrease(final Character character, final SceneContext sceneContext) {
+        return 0;
+    }
+
+    /**
+     * Whether this Talento leaves its holder no Reações at all right now — {@code
+     * DefeitoFeat#DISTURBIO_DE_ATENCAO_GRAVE}'s "não pode efetuar … Reações nas Rodadas Ímpares", read off
+     * {@code SceneContext#getCurrentRound()}. {@code ReactionsService#getTotalReactions(CombatantSheet, int,
+     * SceneContext)} then answers 0 — unless {@link #ignoresReactionPrevention} lifts it. A {@code null}
+     * context reads as "condition not met". False by default.
+     */
+    default boolean preventsReactions(final Character character, final SceneContext sceneContext) {
+        return false;
+    }
+
+    /** The Ações Livres twin of {@link #preventsReactions}, read by {@code FreeActionsService}. */
+    default boolean preventsFreeActions(final Character character, final SceneContext sceneContext) {
+        return false;
+    }
+
+    /**
+     * Pontos de Ação this Talento adds (or takes) in the Rodada sceneContext is on — {@code
+     * DefeitoFeat#DISTURBIO_DE_ATENCAO_MODERADO}'s "Redutor de -1PA em Rodadas Ímpares das Cenas de
+     * Combate". Summed by {@code ActionPointsService#getMaxActionPoints(CombatantSheet, int, SceneContext)}
+     * only, before the {@code ActionProfile}; unlike {@link #resolveActionPointsIncrease} it is never
+     * permanent. Zero by default.
+     */
+    default int resolveRoundActionPointsIncrease(final Character character, final SceneContext sceneContext) {
         return 0;
     }
 

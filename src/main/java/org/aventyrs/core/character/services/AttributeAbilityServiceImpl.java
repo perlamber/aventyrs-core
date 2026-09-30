@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import static org.aventyrs.core.util.TranslatableMessages.ATTRIBUTE_ABILITY_ALREADY_CHOSEN;
+import static org.aventyrs.core.util.TranslatableMessages.ATTRIBUTE_ABILITY_FORBIDDEN;
 import static org.aventyrs.core.util.TranslatableMessages.NO_ATTRIBUTE_ABILITY_SLOT_AVAILABLE;
 import org.aventyrs.core.character.AttributeDomain;
 import static org.aventyrs.core.util.TranslatableMessages.SKILL_NOT_TRAINED;
@@ -79,6 +80,10 @@ public class AttributeAbilityServiceImpl implements AttributeAbilityService {
 
     @Override
     public AttributeAbilityGrantResult grantAttributeAbility(final Character character, final AttributeAbility ability) throws IllegalOperationException {
+        // Dependência: "não pode adquirir Habilidades de Atributo de Força ou de Destreza".
+        if (character.getFeats().stream().anyMatch(feat -> feat.forbidsAttributeAbility(ability.getAttributeDomain(), character))) {
+            throw new IllegalOperationException(ATTRIBUTE_ABILITY_FORBIDDEN);
+        }
         int attributeBase = character.getAttributes().getAttribute(ability.getAttributeDomain()).getBase();
         // Validate against the raw acquired list, not the aggregate: a Talento-granted free
         // Habilidade (Feat#getGrantedAttributeAbilities) must never consume a paid slot.
