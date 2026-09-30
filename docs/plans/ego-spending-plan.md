@@ -2,7 +2,7 @@
 
 Source: `docs/rules/ego.txt` (imported 2026-09-29 from *Módulo Básico V18 ALPHA — 2.5: Ego* and its
 Autocontrole / Iniciativa / Recursos / Sorte subpages). Target: core first, then aventyrs-api, then the
-client. **Status: planned, not started** (paused 2026-09-29 to return to Defeitos e Qualidades).
+client. **Status: Phases 0–5 done (core 0.0.76–0.0.77, aventyrs-api and the client on 0.0.77); Phase 6 (Sorte) next.**
 
 ## Table rulings (2026-09-29)
 
@@ -69,7 +69,8 @@ Under the ruling it is a consumable extra.
 
 ## Phases
 
-0. **Pool rework (all four Egos).**
+0. **Pool rework (all four Egos).** *Done in 0.0.76* — see `0.076.CHANGELOG.md`. Narrador grants landed as
+   `grantTemporaryByNarrator(sheet, …)` + `grantPermanentByNarrator(character, …)` (a sheet's Character is final).
    - Cap `Character#getEffectiveEgoTotal` at 5 (one funnel: pool max, Iniciativa order, Moral Herdada's
      Fama, Talento requirements).
    - `EgoPointPool` gains a consumable **extra-points** balance (per source where "não cumulativo"
@@ -83,19 +84,19 @@ Under the ruling it is a consumable extra.
      `CharacterEgos#withVariableBonus` +amount.
    - Tests: rewrite `EgoPointFeatureTest` / `EstabilidadeEmocionalFeatureTest` around the Ego 3 example;
      pin that session recovery never creates extras. Update the `ego-point-pools` skill and CLAUDE.md.
-1. **Recursos table.** Enum rows 0–5 with every column above; lookup by permanent remaining (≤ 5).
+1. **Recursos table.** *Done in 0.0.77* — `ego.SocialClass`. Enum rows 0–5 with every column above; lookup by permanent remaining (≤ 5).
    Utilidades/Serviços columns are display data only.
-2. **Starting PE at creation.** An explicit, one-time creation call granting *PE Iniciais* to the new
+2. **Starting PE at creation.** *Done in 0.0.77* — `CharacterCreationService#grantStartingEquipmentPoints`/`#getStartingStore`. An explicit, one-time creation call granting *PE Iniciais* to the new
    sheet (not inside `CharacterSheet.of`, which also rebuilds persisted sheets). An `ItemStore` factory
    for the wizard at *Raridade Inicial* (none at Recursos 0). Update the `character.services`
    package-info creation list.
-3. **Spend Recursos for PE.** `EgoPointsService#spendResourcesForEquipmentPoints(sheet, type, amount)`
+3. **Spend Recursos for PE.** *Done in 0.0.77* — with Saber Investir's +2 (`Feat#resolveResourcesPointValueBonus`). `EgoPointsService#spendResourcesForEquipmentPoints(sheet, type, amount)`
    — priced point by point (a permanent spend lowers the rows for the points after it), through
    `useEgoPointsForEffect`, into the wallet. No timing gate.
-4. **Recursos recovery and narrative spends.** `applySessionRecovery` refuses Recursos. Wages / loot /
+4. **Recursos recovery and narrative spends.** *Done in 0.0.77* — session recovery refuses Recursos; wages/loot/rewards are `grantTemporaryByNarrator` (no reason field — the reason is the UI's); a narrative spend is `useEgoPointsForEffect`; extreme poverty is `SocialClass#isExtremePoverty`. `applySessionRecovery` refuses Recursos. Wages / loot /
    rewards are a GM temporary grant with a reason (may create extras, like any received point). A
    narrative spend (bribe, etc.) with no mechanical effect. Derived `isInExtremePoverty()` at 0.
-5. **API + client.** Endpoints: spend Recursos, GM grant (temp/perm), end-of-session recovery, starting
+5. **API + client.** *Done* — see the client's `docs/wiring-egos.md`: the API stores an `egoLedger` (permanent spent, extras, overflow received) beside `temporaryEgoPoints`; the session modal takes one Ego for the table, never Recursos; the hub has an Egos tab (Recursos → PE, the GM's grants); creation opens the shop at the Raridade Inicial with the starting PE. Deviation: the creation shop runs right after "Criar" rather than as a wizard step, since the client's shop works on a saved sheet. Endpoints: spend Recursos, GM grant (temp/perm), end-of-session recovery, starting
    store. Client: wizard store step, sheet spend button, GM grant control, end-of-session Ego modal
    (maps every participant to the picked Ego, one `applySessionRecovery` call).
 6. **Sorte.** Reroll with Vantagem, −GD vs PdN, forced success (Crítico Menor), trigger Correntes +

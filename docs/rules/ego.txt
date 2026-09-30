@@ -145,7 +145,7 @@ Pontos de Equipamento (PE):
   (temporários ou permanentes) podem ser usados para adquirir PE. Cada ponto confere PE compatível com o
   VALOR TOTAL neste Ego (colunas "Valor Pts Temp"/"Valor Pts Perm").
 - Exemplo: Recursos 5 (3 disponíveis) gasta 1 temporário → 22PE; outro temporário → mais 22PE.
-  Gasta 1 permanente → 67PE; fica com Recursos total 4 (2 disponíveis). Novo temporário agora → 18PE
+  Gasta 1 permanente → 67PE; fica com Recursos total 4 (1 disponível). Novo temporário agora → 18PE
   (a percepção de valor diminuiu com o poder aquisitivo).
 - Também é possível usar pontos de Recursos para outras ações não relacionadas a equipamentos: comprar
   informações, pagar subornos, financiar eventos, contratar mercenários etc., combinadas com o Narrador.

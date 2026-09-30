@@ -524,4 +524,19 @@ public class CharacterCreationServiceImpl implements CharacterCreationService {
         CharacterSkill skill = character.getSkills().get(skillType);
         return skill == null ? 0 : skill.getGraduation().getGraduationValue();
     }
+
+    @Override
+    public int grantStartingEquipmentPoints(@lombok.NonNull final CharacterSheet sheet) {
+        return sheet.grantEquipmentPoints(socialClassOf(sheet.getCharacter()).getStartingEquipmentPoints());
+    }
+
+    @Override
+    public java.util.Optional<org.aventyrs.core.item.ItemStore> getStartingStore(@lombok.NonNull final Character character) {
+        return socialClassOf(character).getStartingRarity().map(org.aventyrs.core.item.ItemStore::new);
+    }
+
+    /** At creation nothing is spent yet, so the Recursos total (capped at 5) is the permanent points left. */
+    private static org.aventyrs.core.ego.SocialClass socialClassOf(final Character character) {
+        return org.aventyrs.core.ego.SocialClass.of(character.getEffectiveEgoTotal(EgoDomain.RECURSOS));
+    }
 }

@@ -50,6 +50,28 @@ class EgoPointPoolTest {
         assertEquals(3, viaPermanent);
     }
 
+    /** A permanent spend keeps the temporary points still held, while they fit under the new ceiling. */
+    @Test
+    void aPermanentSpendKeepsTheTemporaryPointsStillHeld() {
+        EgoPointPool pool = new EgoPointPool();
+        pool.spendTemporary(MAX, NO_PENALTY, 2);
+
+        pool.spendPermanent(MAX, 1);
+
+        assertEquals(2, pool.getTemporaryCeiling(MAX, NO_PENALTY));
+        assertEquals(1, pool.getTemporaryRemaining(MAX, NO_PENALTY));
+    }
+
+    /** ...and clips them when they no longer fit. */
+    @Test
+    void aPermanentSpendClipsHeldTemporaryPointsDownToTheNewCeiling() {
+        EgoPointPool pool = new EgoPointPool();
+
+        pool.spendPermanent(MAX, 2);
+
+        assertEquals(1, pool.getTemporaryRemaining(MAX, NO_PENALTY));
+    }
+
     @Test
     void aSpendReturnsWhatWasActuallySpentNotWhatWasAsked() {
         EgoPointPool pool = new EgoPointPool();
@@ -114,30 +136,86 @@ class EgoPointPoolTest {
     }
 
     @Test
-    void aBonusFromOneSourceDoesNotStackWithItself() {
+    void aReceivedPointOnAFullPoolIsHeldAsAnExtraAboveTheCeiling() {
         EgoPointPool pool = new EgoPointPool();
-        pool.grantTemporaryBonus("source", 1);
-        pool.grantTemporaryBonus("source", 1);
 
-        assertEquals(4, pool.getTemporaryCeiling(MAX, NO_PENALTY));
+        assertEquals(1, pool.receiveTemporary(MAX, NO_PENALTY, "source", 1));
+        assertEquals(3, pool.getTemporaryCeiling(MAX, NO_PENALTY));
+        assertEquals(4, pool.getTemporaryRemaining(MAX, NO_PENALTY));
+        assertEquals(1, pool.getExtras("source"));
     }
 
     @Test
-    void aBonusFromOneSourceIsRaisedButNeverLoweredByARepeatGrant() {
+    void aReceivedPointRefillsBeforeBecomingAnExtra() {
         EgoPointPool pool = new EgoPointPool();
-        pool.grantTemporaryBonus("source", 2);
-        pool.grantTemporaryBonus("source", 1);
+        pool.spendTemporary(MAX, NO_PENALTY, 1);
 
-        assertEquals(5, pool.getTemporaryCeiling(MAX, NO_PENALTY));
+        pool.receiveTemporary(MAX, NO_PENALTY, "source", 2);
+
+        assertEquals(4, pool.getTemporaryRemaining(MAX, NO_PENALTY));
+        assertEquals(1, pool.getExtras());
     }
 
     @Test
-    void bonusesFromDifferentSourcesStackOnTopOfEachOther() {
+    void extrasAreSpentFirstOldestSourceFirst() {
         EgoPointPool pool = new EgoPointPool();
-        pool.grantTemporaryBonus("source-a", 1);
-        pool.grantTemporaryBonus("source-b", 1);
+        pool.receiveTemporary(MAX, NO_PENALTY, "a", 1);
+        pool.receiveTemporary(MAX, NO_PENALTY, "b", 1);
 
-        assertEquals(5, pool.getTemporaryCeiling(MAX, NO_PENALTY));
+        assertEquals(1, pool.spendTemporary(MAX, NO_PENALTY, 1));
+
+        assertEquals(0, pool.getExtras("a"));
+        assertEquals(1, pool.getExtras("b"));
+        assertEquals(3, pool.getTemporaryCeiling(MAX, NO_PENALTY));
+        assertEquals(4, pool.getTemporaryRemaining(MAX, NO_PENALTY));
+    }
+
+    @Test
+    void aSpendDrawsThroughTheExtrasIntoTheCeiling() {
+        EgoPointPool pool = new EgoPointPool();
+        pool.receiveTemporary(MAX, NO_PENALTY, "a", 1);
+
+        assertEquals(4, pool.spendTemporary(MAX, NO_PENALTY, 10));
+        assertEquals(0, pool.getTemporaryRemaining(MAX, NO_PENALTY));
+    }
+
+    @Test
+    void aNonCumulativeReceiveGivesNothingWhileTheSourceStillHoldsItsPoint() {
+        EgoPointPool pool = new EgoPointPool();
+        pool.receiveNonCumulativeTemporary(MAX, NO_PENALTY, "source", 1);
+
+        assertEquals(0, pool.receiveNonCumulativeTemporary(MAX, NO_PENALTY, "source", 1));
+        assertEquals(4, pool.getTemporaryRemaining(MAX, NO_PENALTY));
+    }
+
+    @Test
+    void anUnrelatedSourcesExtrasDoNotBlockANonCumulativeReceive() {
+        EgoPointPool pool = new EgoPointPool();
+        pool.receiveTemporary(MAX, NO_PENALTY, "other", 1);
+
+        assertEquals(1, pool.receiveNonCumulativeTemporary(MAX, NO_PENALTY, "source", 1));
+        assertEquals(5, pool.getTemporaryRemaining(MAX, NO_PENALTY));
+    }
+
+    @Test
+    void theOverflowIsReceivedOnceAndAgainOnlyForWhatIsNew() {
+        EgoPointPool pool = new EgoPointPool();
+        pool.syncOverflow(MAX, NO_PENALTY, 2);
+        pool.syncOverflow(MAX, NO_PENALTY, 2);
+        assertEquals(2, pool.getExtras());
+
+        pool.syncOverflow(MAX, NO_PENALTY, 3);
+        assertEquals(3, pool.getExtras());
+    }
+
+    @Test
+    void removingASourcesExtrasReportsWhatItHeld() {
+        EgoPointPool pool = new EgoPointPool();
+        pool.addExtra("loan", 1);
+
+        assertEquals(1, pool.removeExtras("loan"));
+        assertEquals(0, pool.removeExtras("loan"));
+        assertEquals(3, pool.getTemporaryRemaining(MAX, NO_PENALTY));
     }
 
     @Test

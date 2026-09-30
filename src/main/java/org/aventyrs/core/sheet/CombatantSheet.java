@@ -279,47 +279,70 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
     int spendEquipmentPoints(int amount);
 
     // --- Ego points -------------------------------------------------------------------------
-    // Two spendable pools per EgoDomain, permanent and temporary; see EgoPointPool for the model
-    // and for why spending a permanent point costs twice over.
+    // Two spendable pools per EgoDomain, permanent and temporary, plus consumable extra temporary
+    // points above them; see EgoPointPool for the model and for why spending a permanent point
+    // costs twice over.
 
-    /** Permanent points not yet spent — the Ego stat itself is their maximum. */
+    /** Permanent points not yet spent — the Ego stat itself (capped at 5) is their maximum. */
     int getPermanentEgoPoints(EgoDomain domain);
 
-    /** Temporary points not yet spent, under the live ceiling. */
+    /** Temporary points not yet spent — those under the live ceiling plus every held extra. */
     int getTemporaryEgoPoints(EgoDomain domain);
 
-    /** How many temporary points this domain may hold right now. */
+    /**
+     * The ceiling temporary points refill up to. Held extras sit above it, so {@link
+     * #getTemporaryEgoPoints} may exceed this; the spent count under it is {@code
+     * getMaxTemporaryEgoPoints - (getTemporaryEgoPoints - getExtraTemporaryEgoPoints)}.
+     */
     int getMaxTemporaryEgoPoints(EgoDomain domain);
+
+    /** Extra temporary points held above the ceiling — consumed first, never recovered. */
+    int getExtraTemporaryEgoPoints(EgoDomain domain);
 
     /** Everything this domain can still pay with, from either pool. */
     int getAvailableEgoPoints(EgoDomain domain);
 
-    /** Spends from the pool the caller names, reporting what actually left it. */
+    /** Spends from the pool the caller names (temporary: extras first), reporting what actually left it. */
     EgoPointSpend spendEgoPoints(EgoDomain domain, EgoPointType type, int amount);
 
-    /** Restores previously-spent temporary points, bounded by the ceiling. */
+    /**
+     * Restores previously-spent temporary points, bounded by the ceiling — "get back what you
+     * spent": the session point, a Rest promise, hours passed. Never creates an extra.
+     */
     int recoverTemporaryEgoPoints(EgoDomain domain, int amount);
 
-    /** Raises this domain's temporary ceiling, non-cumulatively per source. */
-    int grantTemporaryEgoPointBonus(EgoDomain domain, Object source, int amount);
-
     /**
-     * Hands this sheet amount genuinely spendable temporary points in domain, from source —
-     * the "você receberá N pontos temporários neste Ego" shape, as opposed to {@link
-     * #recoverTemporaryEgoPoints}'s "get back what you spent".
-     *
-     * <p><strong>Two steps, and both are needed.</strong> It widens the ceiling via {@link
-     * #grantTemporaryEgoPointBonus} <em>and</em> then calls {@link
-     * #recoverTemporaryEgoPoints}. Neither alone works for a pool that has been emptied: with
-     * every point spent the ceiling is 0 and a bare recovery restores nothing, while a bare
-     * ceiling widening is capped per source (deliberately, per {@code EgoPointPool
-     * #grantTemporaryBonus}'s "não cumulativo") and so grants nothing the second time the same
-     * source fires. Widening first, then recovering under the widened ceiling, gives one usable
-     * point on every trigger without the ceiling creeping upward once per trigger.
+     * Hands this sheet amount temporary points in domain, from source — the "você receberá N
+     * pontos temporários neste Ego" shape, as opposed to {@link #recoverTemporaryEgoPoints}'s "get
+     * back what you spent". They refill spent temporaries first; the remainder is held as extras
+     * above the ceiling, consumed once spent and never recovered (table ruling, 0.0.76 — see
+     * {@link EgoPointPool}).
      *
      * @return int this domain's spendable temporary points after the grant
      */
-    int grantTemporaryEgoPoints(EgoDomain domain, Object source, int amount);
+    int receiveTemporaryEgoPoints(EgoDomain domain, Object source, int amount);
+
+    /**
+     * {@link #receiveTemporaryEgoPoints}, "não cumulativo": nothing while source still holds
+     * amount unspent extras — {@code CharismaAbility#DESTINO_FAVORAVEL}'s point.
+     *
+     * @return int this domain's spendable temporary points after the grant
+     */
+    int receiveNonCumulativeTemporaryEgoPoints(EgoDomain domain, Object source, int amount);
+
+    /**
+     * How much of domain's past-5 overflow ({@code Character#getEgoOverflow}) this sheet has
+     * already received as extras — the mark a consumer persists next to {@link
+     * #getExtraTemporaryEgoPoints}, so a rebuilt sheet doesn't receive it again.
+     */
+    int getEgoOverflowReceived(EgoDomain domain);
+
+    /**
+     * Rehydration: replaces domain's held extras and overflow mark with persisted values. Call it
+     * right after building the sheet, before any other Ego read — the first read otherwise hands
+     * over the overflow as if the sheet were new.
+     */
+    void restoreExtraTemporaryEgoPoints(EgoDomain domain, int heldExtras, int overflowReceived);
 
     /**
      * Registers a {@link DelayedEgoGrant} — temporary Ego points owed at the start of this

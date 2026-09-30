@@ -344,8 +344,8 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     @Getter(AccessLevel.NONE)
     private boolean dealtDamageThisScene;
 
-    /** One lent point: its own ceiling source, who lent it, and this pool's level once it landed. */
-    private record EgoLoan(EgoDomain domain, CombatantSheet lender, Object source, int remainingAfterLoan) {
+    /** One lent point: who lent it, and the source its extra is held under until settled. */
+    private record EgoLoan(EgoDomain domain, CombatantSheet lender, Object source) {
     }
 
     protected AbstractCombatantSheet(@NonNull final Character character) {
@@ -645,24 +645,20 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     @Override
     public void receiveEgoLoan(@NonNull final EgoDomain domain, @NonNull final CombatantSheet lender) {
         Object source = new Object();
-        grantTemporaryEgoPoints(domain, source, 1);
-        egoLoans.add(new EgoLoan(domain, lender, source, getTemporaryEgoPoints(domain)));
+        // Held as an extra outright, never refilling: the point must stay identifiable until the
+        // Cena ends, since an unused one goes back to its lender.
+        egoPool(domain).addExtra(source, 1);
+        egoLoans.add(new EgoLoan(domain, lender, source));
     }
 
     /**
-     * Settles every Ego loan at the end of its Cena. The loaned ceiling is withdrawn either way; an
-     * unused point (this pool no lower than when it landed) is handed back to its lender, while a
-     * used one is gone — and withdrawing its ceiling must not cost this combatant a point of its own,
-     * so the spend it paid for is refunded here.
+     * Settles every Ego loan at the end of its Cena. A point still held (never spent) is withdrawn
+     * and handed back to its lender; a spent one is simply gone — "perdidos se usados".
      */
     private void settleEgoLoans() {
         for (EgoLoan loan : egoLoans) {
-            boolean unused = getTemporaryEgoPoints(loan.domain()) >= loan.remainingAfterLoan();
-            egoPoints.get(loan.domain()).revokeTemporaryBonus(loan.source());
-            if (unused) {
+            if (egoPoints.get(loan.domain()).removeExtras(loan.source()) > 0) {
                 loan.lender().recoverTemporaryEgoPoints(loan.domain(), 1);
-            } else {
-                recoverTemporaryEgoPoints(loan.domain(), 1);
             }
         }
         egoLoans.clear();
@@ -759,6 +755,17 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     }
 
     /**
+     * domain's pool, with any not-yet-received past-5 overflow handed over first — see {@link
+     * EgoPointPool#syncOverflow}. Every pool read goes through here, so a Recursos 7 sheet holds its
+     * two extras from the first read on, and a point earned past 5 lands the moment it is seen.
+     */
+    private EgoPointPool egoPool(final EgoDomain domain) {
+        EgoPointPool pool = egoPoints.get(domain);
+        pool.syncOverflow(getPermanentEgoMax(domain), sumEgoPenalty(domain), character.getEgoOverflow(domain));
+        return pool;
+    }
+
+    /**
      * The sum of every currently-active {@link TemporaryEgoPenalty} against domain — the {@link
      * TemporaryEgoPenalty} counterpart to {@link #getTemporaryBonus}, queried directly since an
      * Ego penalty deliberately isn't a {@link ModifierType} (see that class's own javadoc).
@@ -787,27 +794,26 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
      */
     @Override
     public int getPermanentEgoPoints(final EgoDomain domain) {
-        return egoPoints.get(domain).getPermanentRemaining(getPermanentEgoMax(domain));
+        return egoPool(domain).getPermanentRemaining(getPermanentEgoMax(domain));
     }
 
     /**
-     * How many temporary points domain may hold right now — permanent points <em>remaining</em>
-     * plus every granted bonus, minus any active {@link TemporaryEgoPenalty}. See {@link
+     * The ceiling domain's temporary points refill up to — permanent points <em>remaining</em>,
+     * minus any active {@link TemporaryEgoPenalty}. Held extras sit above it. See {@link
      * EgoPointPool} for why this tracks permanent remaining rather than the permanent maximum.
      */
     @Override
     public int getMaxTemporaryEgoPoints(final EgoDomain domain) {
-        return egoPoints.get(domain).getTemporaryCeiling(getPermanentEgoMax(domain), sumEgoPenalty(domain));
+        return egoPool(domain).getTemporaryCeiling(getPermanentEgoMax(domain), sumEgoPenalty(domain));
     }
 
     /**
-     * Temporary points not yet spent in domain, under the live {@link
-     * #getMaxTemporaryEgoPoints(EgoDomain) ceiling} — <em>not</em> a directly-held balance
-     * accumulated from zero, which is what this returned before the two-pool model landed.
+     * Temporary points not yet spent in domain — those under the live {@link
+     * #getMaxTemporaryEgoPoints(EgoDomain) ceiling}, plus every held extra above it.
      */
     @Override
     public int getTemporaryEgoPoints(final EgoDomain domain) {
-        return egoPoints.get(domain).getTemporaryRemaining(getPermanentEgoMax(domain), sumEgoPenalty(domain));
+        return egoPool(domain).getTemporaryRemaining(getPermanentEgoMax(domain), sumEgoPenalty(domain));
     }
 
     /** Everything domain can still pay with, from either pool. The affordability read. */
@@ -837,7 +843,7 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
      */
     @Override
     public EgoPointSpend spendEgoPoints(final EgoDomain domain, final EgoPointType type, final int amount) {
-        EgoPointPool pool = egoPoints.get(domain);
+        EgoPointPool pool = egoPool(domain);
         int permanentMax = getPermanentEgoMax(domain);
         int spent = type == EgoPointType.PERMANENT
                 ? pool.spendPermanent(permanentMax, amount)
@@ -894,31 +900,41 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
      */
     @Override
     public int recoverTemporaryEgoPoints(final EgoDomain domain, final int amount) {
-        return egoPoints.get(domain).recoverTemporary(getPermanentEgoMax(domain), sumEgoPenalty(domain), amount);
+        return egoPool(domain).recoverTemporary(getPermanentEgoMax(domain), sumEgoPenalty(domain), amount);
     }
 
     /**
-     * Raises domain's temporary <em>ceiling</em> by amount, attributed to source and
-     * non-cumulative per source — repeat grants from that <i>same</i> source don't stack past
-     * what it already granted, while a different source's grant still adds on top. See {@link
-     * EgoPointPool#grantTemporaryBonus}.
+     * Receives amount temporary points in domain from source — refilling spent ones first, the rest
+     * held as extras. See {@link EgoPointPool#receiveTemporary}.
      */
     @Override
-    public int grantTemporaryEgoPointBonus(final EgoDomain domain, final Object source, final int amount) {
-        egoPoints.get(domain).grantTemporaryBonus(source, amount);
+    public int receiveTemporaryEgoPoints(final EgoDomain domain, final Object source, final int amount) {
+        egoPool(domain).receiveTemporary(getPermanentEgoMax(domain), sumEgoPenalty(domain), source, amount);
         return getTemporaryEgoPoints(domain);
     }
 
-    /**
-     * Widens domain's ceiling for source, then recovers under the widened ceiling — see {@link
-     * CombatantSheet#grantTemporaryEgoPoints} for why an outright grant of temporary points
-     * needs both halves, and why neither on its own survives an emptied pool.
-     */
+    /** See {@link EgoPointPool#receiveNonCumulativeTemporary}. */
     @Override
-    public int grantTemporaryEgoPoints(final EgoDomain domain, final Object source, final int amount) {
-        grantTemporaryEgoPointBonus(domain, source, amount);
-        recoverTemporaryEgoPoints(domain, amount);
+    public int receiveNonCumulativeTemporaryEgoPoints(final EgoDomain domain, final Object source, final int amount) {
+        egoPool(domain).receiveNonCumulativeTemporary(getPermanentEgoMax(domain), sumEgoPenalty(domain), source,
+                amount);
         return getTemporaryEgoPoints(domain);
+    }
+
+    @Override
+    public int getExtraTemporaryEgoPoints(final EgoDomain domain) {
+        return egoPool(domain).getExtras();
+    }
+
+    @Override
+    public int getEgoOverflowReceived(final EgoDomain domain) {
+        return egoPool(domain).getOverflowReceived();
+    }
+
+    @Override
+    public void restoreExtraTemporaryEgoPoints(final EgoDomain domain, final int heldExtras,
+                                               final int overflowReceived) {
+        egoPoints.get(domain).restoreExtras(heldExtras, overflowReceived);
     }
 
     /**
@@ -1564,7 +1580,7 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
                 int recovered = recoverTemporaryEgoPoints(grant.getDomain(), grant.getValue());
                 settleHourlyEgoRecovery(grant.getDomain(), recovered);
             } else {
-                grantTemporaryEgoPoints(grant.getDomain(), grant.getSource(), grant.getValue());
+                receiveTemporaryEgoPoints(grant.getDomain(), grant.getSource(), grant.getValue());
             }
         }
     }

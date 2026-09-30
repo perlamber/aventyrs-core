@@ -343,8 +343,8 @@ public class InteractionResult {
      * Autocontrole on the roller's own Sucesso Crítico Maior. Unlike {@link
      * #temporaryBonusValue} (a grant for *someone else* this core can't resolve the recipient
      * for), this roll's own target is unambiguous, so the grant is already applied directly
-     * via {@link CombatantSheet#grantTemporaryEgoPointBonus} — which raises that domain's
-     * temporary <em>ceiling</em>, keyed by the granting ability as its source — by the time
+     * via {@link CombatantSheet#receiveNonCumulativeTemporaryEgoPoints}, keyed by the granting
+     * ability as its source — by the time
      * this result is returned; this field
      * is purely a report of what happened, same as {@link #egoLossValue}/{@link
      * #egoLossDomain} already are for {@code org.aventyrs.core.effect.Primor}. Always exactly

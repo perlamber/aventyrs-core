@@ -207,8 +207,8 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
      * AttributeAbility} for nothing — this also grants (directly on target, the same
      * unambiguous-recipient shape {@code org.aventyrs.core.effect.Primor} uses to mutate its
      * own target) a non-cumulative temporary Ego point, via {@link
-     * CombatantSheet#grantTemporaryEgoPointBonus} — which raises that domain's temporary
-     * <em>ceiling</em> rather than handing over a free-floating point — for every domain any
+     * CombatantSheet#receiveNonCumulativeTemporaryEgoPoints} — a received point, refilling first
+     * and otherwise held as an extra while the same source already holds one — for every domain any
      * held {@code AttributeAbility}'s {@link org.aventyrs.core.ability.AttributeAbility
      * #resolveCriticalSuccessEgoGain} returns against this same criticalResult — passing that
      * ability itself as the grant's source, so one ability's own repeat triggers don't stack
@@ -520,7 +520,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                 List<EgoDomain> egoGainDomains = new ArrayList<>();
                 for (AttributeAbility ability : character.getAttributeAbilities()) {
                     for (EgoDomain domain : ability.resolveCriticalSuccessEgoGain(criticalResult)) {
-                        target.grantTemporaryEgoPointBonus(domain, ability, 1);
+                        target.receiveNonCumulativeTemporaryEgoPoints(domain, ability, 1);
                         if (!egoGainDomains.contains(domain)) {
                             egoGainDomains.add(domain);
                         }

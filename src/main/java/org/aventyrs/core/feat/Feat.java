@@ -3010,6 +3010,15 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     }
 
     /**
+     * Extra Pontos de Equipamento each Recursos point is worth when spent for PE, on top of its {@code
+     * SocialClass} row — {@code QualidadeFeat#DESTINADO_A_FORTUNA_MENOR}'s "+2PE cada". Summed across {@code
+     * Character#getFeats()} by {@code EgoPointsService#spendResourcesForEquipmentPoints}. Zero by default.
+     */
+    default int resolveResourcesPointValueBonus(final Character character) {
+        return 0;
+    }
+
+    /**
      * How much this Talento raises the holder's Life Multiplier — summed by {@code
      * org.aventyrs.core.character.services.HitPointsService#getLifeMultiplier} across {@code
      * Character#getFeats()}, on top of {@code Character#getLifeMultiplier()} and the {@code

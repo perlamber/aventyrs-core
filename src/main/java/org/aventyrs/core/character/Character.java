@@ -93,6 +93,9 @@ public class Character {
     /** A character's Centelhas at the start — one for each {@link TitleSlot} a Título may awaken into. */
     public static final int CENTELHAS = TitleSlot.values().length;
 
+    /** No Ego is ever above this — see {@link #getEffectiveEgoTotal}. */
+    public static final int MAX_EGO = 5;
+
     /**
      * The Centelhas this character still has — the sparks their Títulos Aventyr awaken from. {@value
      * #CENTELHAS} by default; a Regalia forge's donor sacrifices one or all of them ({@link
@@ -280,11 +283,28 @@ public class Character {
 
     /**
      * The Ego total every reader of an Ego <i>total</i> should use: {@code EgoValue#getTotal()}
-     * (base + variable) plus every held Talento's {@code Feat#resolveEgoBonus}. The permanent Ego
-     * pool ceiling, {@code InitiativeService} and {@code MoralHerdadaAbility}'s Fama read this.
-     * {@code EgoValue#getBase()} readers — {@code FeatRequirements}' Ego ceilings — do not.
+     * (base + variable) plus every held Talento's {@code Feat#resolveEgoBonus}, <strong>capped at
+     * {@link #MAX_EGO}</strong>. The permanent Ego pool ceiling, {@code InitiativeService} and
+     * {@code MoralHerdadaAbility}'s Fama read this. {@code EgoValue#getBase()} readers — {@code
+     * FeatRequirements}' Ego ceilings — do not.
+     *
+     * <p>Table ruling (0.0.76): "no Ego is ever above 5". What a Talento, Antecedente, Título or
+     * Narrador adds past 5 is {@link #getEgoOverflow}, received by the sheet as extra temporary
+     * points, and the Ego counts as 5 for everything else.
      */
     public int getEffectiveEgoTotal(final EgoDomain domain) {
+        return Math.min(MAX_EGO, getUncappedEgoTotal(domain));
+    }
+
+    /**
+     * How far this Ego's total runs past {@link #MAX_EGO} — Recursos 7 is 2. The sheet receives it
+     * as extra temporary points ({@code EgoPointPool#syncOverflow}); nothing else reads it.
+     */
+    public int getEgoOverflow(final EgoDomain domain) {
+        return Math.max(0, getUncappedEgoTotal(domain) - MAX_EGO);
+    }
+
+    private int getUncappedEgoTotal(final EgoDomain domain) {
         return egos.getEgo(domain).getTotal()
                 + getFeats().stream().mapToInt(feat -> feat.resolveEgoBonus(domain, this)).sum();
     }

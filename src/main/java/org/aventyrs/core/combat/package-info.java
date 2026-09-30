@@ -102,7 +102,7 @@
  * {@code resolve} assembles the chain but applies none of it, and touches no resource on the
  * defender — the same restraint {@code GritoDeGuerraVulcanoInteraction} applies to the Blessings
  * it reports. The one thing that does change is the roll itself happening — on a critical
- * success, a non-cumulative raise of the roller's temporary Ego ceiling (the first-roll-of-Turn
+ * success, a non-cumulative temporary Ego point received by the roller (the first-roll-of-Turn
  * check it also runs is non-mutating now) — which is why {@code resolve} rolls exactly once per
  * attack. Each {@code resolve} bundles the roll as a ready {@code CombatantAction} on its result
  * ({@code getRecordedAction()}) without recording it, so the API files the exchange afterwards

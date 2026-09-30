@@ -30,10 +30,9 @@ public interface AttributeAbility {
      * CriticalResult#ACERTO_CRITICO_MAIOR}. Empty by default; only override on a constant
      * whose rules text reacts to the roller's own critical result this way. "Non-cumulative"
      * per that kind of ability's own rules text: applied via {@code CombatantSheet
-     * #grantTemporaryEgoPointBonus}, which raises that domain's temporary <em>ceiling</em>
-     * rather than handing over a free-floating point, and records the contribution against this
-     * ability as its source — so this one ability's repeated triggers never widen the ceiling
-     * twice, while an unrelated source's own grant still adds on top.
+     * #receiveNonCumulativeTemporaryEgoPoints} with this ability as its source — a received point
+     * (refill first, else an extra), and a repeat trigger adds nothing while this ability still
+     * holds an unspent extra; an unrelated source's own points still add on top.
      */
     default List<EgoDomain> resolveCriticalSuccessEgoGain(CriticalResult criticalResult) {
         return List.of();

@@ -85,6 +85,14 @@
  *       no longer tells the whole story — a Qualidade traded for Talentos Gerais removes slots, a Superação
  *       adds one), and the Habilidades step gains {@code Character#getBonusAttributeAbilitySlots()}. See
  *       {@code org.aventyrs.core.defect}.</li>
+ *   <li><b>Equipamento inicial — last, on the built sheet</b>, once nothing can change the Recursos any more
+ *       (an Antecedente's Ego, Privilegiado): {@link
+ *       org.aventyrs.core.character.services.CharacterCreationService#grantStartingEquipmentPoints} puts the
+ *       Recursos row's "Pts. Eqp. Iniciais" ({@link org.aventyrs.core.ego.SocialClass}) in the sheet's PE
+ *       wallet — <b>once</b>, never on a rebuilt sheet — and {@link
+ *       org.aventyrs.core.character.services.CharacterCreationService#getStartingStore} is the store to buy
+ *       from, capped at the row's "Raridade Inicial" (none at Recursos 0), through {@code
+ *       ItemPurchaseService}.</li>
  * </ol>
  *
  * <pre>{@code
@@ -121,7 +129,10 @@
  *         AcquiredBackground.of(OriginBackground.OFI, List.of(SkillType.ATTENTION, SkillType.PROFISSAO),
  *                 List.of(ProfissaoSpecialization.METALURGIA)),
  *         AcquiredBackground.of(CareerBackground.BATEDOR, List.of(), List.of()));
- * CombatantSheet sheet = CombatantSheet.of(character, player);
+ * CharacterSheet sheet = CharacterSheet.of(character, player);
+ * creation.grantStartingEquipmentPoints(sheet);                   // once, at creation
+ * creation.getStartingStore(character).ifPresent(store ->          // none at Recursos 0
+ *         purchases.purchase(store, chosenTemplate, sheet));
  * }</pre>
  *
  * <h2>Árvores de Magia, after the starting Talentos</h2>

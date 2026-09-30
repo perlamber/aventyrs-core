@@ -4,6 +4,7 @@ import lombok.NonNull;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.ego.EgoAdvantage;
+import org.aventyrs.core.ego.SocialClass;
 import org.aventyrs.core.monster.MonsterSheet;
 import org.aventyrs.core.sheet.Blessing;
 import org.aventyrs.core.sheet.CombatantSheet;
@@ -16,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.aventyrs.core.util.TranslatableMessages.INVALID_DIE_ROLL;
+import static org.aventyrs.core.util.TranslatableMessages.RESOURCES_NOT_RECOVERED_BY_SESSION;
 
 public class EgoPointsServiceImpl implements EgoPointsService {
 
@@ -34,9 +36,14 @@ public class EgoPointsServiceImpl implements EgoPointsService {
      */
     @Override
     public void applySessionRecovery(final CombatantSheet sheet, final EgoDomain chosenDomain) {
+        if (chosenDomain == EgoDomain.RECURSOS) {
+            throw new IllegalOperationException(RESOURCES_NOT_RECOVERED_BY_SESSION);
+        }
         sheet.recoverTemporaryEgoPoints(chosenDomain, SESSION_TEMPORARY_RECOVERY);
         for (EgoDomain domain : EgoDomain.values()) {
-            sheet.recoverTemporaryEgoPoints(domain, getExtraSessionRecovery(sheet.getCharacter(), domain));
+            if (domain != EgoDomain.RECURSOS) {
+                sheet.recoverTemporaryEgoPoints(domain, getExtraSessionRecovery(sheet.getCharacter(), domain));
+            }
         }
     }
 
@@ -47,7 +54,47 @@ public class EgoPointsServiceImpl implements EgoPointsService {
      */
     @Override
     public void applySessionRecovery(@NonNull final Map<CombatantSheet, EgoDomain> chosenDomains) {
+        // Refused before anyone recovers, so a bad entry can't leave the table half-applied.
+        if (chosenDomains.containsValue(EgoDomain.RECURSOS)) {
+            throw new IllegalOperationException(RESOURCES_NOT_RECOVERED_BY_SESSION);
+        }
         chosenDomains.forEach(this::applySessionRecovery);
+    }
+
+    @Override
+    public int spendResourcesForEquipmentPoints(@NonNull final CombatantSheet sheet, @NonNull final EgoPointType type,
+                                                final int amount) {
+        int permanentBefore = sheet.getPermanentEgoPoints(EgoDomain.RECURSOS);
+        // No Vantagem de Recursos reacts to a spend with a die (only Autocontrole's does), so any legal face.
+        EgoPointSpend spend = useEgoPointsForEffect(sheet, EgoDomain.RECURSOS, type, amount, MIN_DIE_FACE);
+        int bonus = sheet.getCharacter().getFeats().stream()
+                .mapToInt(feat -> feat.resolveResourcesPointValueBonus(sheet.getCharacter()))
+                .sum();
+        int gained = 0;
+        for (int point = 0; point < spend.getValue(); point++) {
+            // A permanent point is priced at the row it was spent from, then lowers the next one's.
+            int row = type == EgoPointType.PERMANENT ? permanentBefore - point : permanentBefore;
+            gained += SocialClass.of(row).getPointValue(type) + bonus;
+        }
+        if (gained > 0) {
+            sheet.grantEquipmentPoints(gained);
+        }
+        return gained;
+    }
+
+    @Override
+    public int grantTemporaryByNarrator(@NonNull final CombatantSheet sheet, @NonNull final EgoDomain domain,
+                                        final int amount) {
+        return sheet.receiveTemporaryEgoPoints(domain, NARRATOR_GRANT, amount);
+    }
+
+    @Override
+    public Character grantPermanentByNarrator(@NonNull final Character character, @NonNull final EgoDomain domain,
+                                              final int amount) {
+        if (amount <= 0) {
+            return character;
+        }
+        return character.toBuilder().egos(character.getEgos().withVariableBonus(domain, amount)).build();
     }
 
     @Override

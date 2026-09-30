@@ -214,4 +214,23 @@ public interface CharacterCreationService {
 
     /** "Nenhum personagem pode – de forma alguma – possuir mais do que 3 (três) Qualidades". */
     int MAX_QUALITIES = 3;
+
+    // ---- Equipamento inicial — last, once the Recursos can no longer change ----------------------
+
+    /**
+     * Grants sheet the starting Pontos de Equipamento its Recursos gives ("Pts. Eqp. Iniciais", {@link
+     * org.aventyrs.core.ego.SocialClass}), read off the finished character's Recursos — so it runs after
+     * everything that can raise it (an Antecedente's Ego, Privilegiado). Returns the PE sheet then holds.
+     *
+     * <p><strong>Call it once, at creation, and never on a rebuilt sheet</strong>: the wallet persists with
+     * the character, and this is deliberately not inside {@code CharacterSheet.of}, which also rebuilds
+     * sheets from saved state. Not idempotent — a second call grants again.
+     */
+    int grantStartingEquipmentPoints(CharacterSheet sheet);
+
+    /**
+     * The store the creation step buys from: every Equipamento up to the "Raridade Inicial" character's
+     * Recursos allows. Empty at Recursos 0 ("Nenhum") — nothing is bought, and the PE are 0 anyway.
+     */
+    java.util.Optional<org.aventyrs.core.item.ItemStore> getStartingStore(Character character);
 }

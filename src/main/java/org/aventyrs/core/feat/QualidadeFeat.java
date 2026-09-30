@@ -96,12 +96,19 @@ public enum QualidadeFeat implements Feat {
             return character.possessesRegalia(RegaliaGrade.MENOR) ? 2 : 1;
         }
     },
-    // TODO (Ego plan, Phase 3): "+2PE" on every Recursos point spent for Pontos de Equipamento — no such
-    //  spend exists yet (docs/plans/ego-spending-plan.md). The arc-completion point is narrative.
+    /**
+     * The "+2PE cada" half is real, through {@code EgoPointsService#spendResourcesForEquipmentPoints}. The
+     * arc-completion point is the Narrador's to hand over ({@code EgoPointsService#grantTemporaryByNarrator}).
+     */
     DESTINADO_A_FORTUNA_MENOR(QualityClass.MENOR, "Saber Investir",
             "Seus pontos temporários e permanentes de Recursos valem +2PE cada, , sempre que recuperar"
                     + " Recursos por conclusão de arco de história você adquire 1 ponto temporário de Recurso"
-                    + " adicional."),
+                    + " adicional.") {
+        @Override
+        public int resolveResourcesPointValueBonus(final Character character) {
+            return 2;
+        }
+    },
     /** Materialized at creation as +1 Recursos base. */
     DESTINADO_A_FORTUNA_MAIOR(QualityClass.MAIOR, "Privilegiado",
             "Você adquire 1 Ponto permanente de Recursos."),

@@ -1,6 +1,6 @@
 ---
 name: ego-point-pools
-description: This skill should be used for any work on the two spendable Ego point pools per `EgoDomain` on a `CombatantSheet` — `EgoPointPool` (the four equations: permanentMax/permanentRemaining/temporaryCeiling/temporaryRemaining), `CombatantSheet#spendEgoPoints`/`getAvailableEgoPoints`, `EgoPointsService#useEgoPointsForEffect`/`applySessionRecovery`, `EgoPointSpend`/`EgoPointType`, `PendingEgoRecovery`, `TemporaryEgoPenalty`, `grantTemporaryEgoPointBonus`/`grantTemporaryEgoPoints`, `scheduleTemporaryEgoPointGrant`/`DelayedEgoGrant` (points owed on the next Rodada), `CombatantSheet#consumeOncePerSession`/`startNewSession` (the once-per-game-session guard, a transient per-sheet marker set), `AttributeAbility#resolveEgoDepletionGrant` (a clause reacting to an Ego being reduced to zero), or the `EgoAdvantage` hooks `resolveEgoSpendRecovery`/`resolveEgoSpendBlessings`/`resolveExtraSessionEgoRecovery`/`resolvePermanentEgoGain`. Also use it when asked why spending a permanent point "hurts twice", why there's a `spent` counter instead of a held balance, why `AUTOCONTROLE`/`RECURSOS`/`SORTE` aren't `ModifierType`s, or how `Primor`'s drain differs from a deliberate use, why a granted temporary point takes two steps, or what "a primeira vez em cada sessão de jogo" means here.
+description: This skill should be used for any work on the two spendable Ego point pools per `EgoDomain` on a `CombatantSheet` — `EgoPointPool` (the four equations: permanentMax/permanentRemaining/temporaryCeiling/temporaryRemaining), `CombatantSheet#spendEgoPoints`/`getAvailableEgoPoints`, `EgoPointsService#useEgoPointsForEffect`/`applySessionRecovery`, `EgoPointSpend`/`EgoPointType`, `PendingEgoRecovery`, `TemporaryEgoPenalty`, `receiveTemporaryEgoPoints`/`receiveNonCumulativeTemporaryEgoPoints` (received points and consumed extras), the cap at 5 (`Character#MAX_EGO`, `getEgoOverflow`, `restoreExtraTemporaryEgoPoints`), `EgoPointsService#grantTemporaryByNarrator`/`grantPermanentByNarrator`, Recursos → PE (`SocialClass`, `spendResourcesForEquipmentPoints`, starting PE and store), `scheduleTemporaryEgoPointGrant`/`DelayedEgoGrant` (points owed on the next Rodada), `CombatantSheet#consumeOncePerSession`/`startNewSession` (the once-per-game-session guard, a transient per-sheet marker set), `AttributeAbility#resolveEgoDepletionGrant` (a clause reacting to an Ego being reduced to zero), or the `EgoAdvantage` hooks `resolveEgoSpendRecovery`/`resolveEgoSpendBlessings`/`resolveExtraSessionEgoRecovery`/`resolvePermanentEgoGain`. Also use it when asked why spending a permanent point "hurts twice", why there's a `spent` counter instead of a held balance, why `AUTOCONTROLE`/`RECURSOS`/`SORTE` aren't `ModifierType`s, or how `Primor`'s drain differs from a deliberate use, why a received point refills before it becomes an extra, why no Ego is above 5, or what "a primeira vez em cada sessão de jogo" means here.
 ---
 
 # Ego points are two pools per domain — `EgoPointPool`, `spendEgoPoints`
@@ -10,24 +10,32 @@ permanent and temporary, both real currency. The whole model is four equations, 
 `org.aventyrs.core.sheet.EgoPointPool`:
 
 ```
-permanentMax        = character.getEgos().getEgo(domain).getTotal()   // base + variable
+permanentMax        = character.getEffectiveEgoTotal(domain)   // base + variable + Talentos, ≤ 5
 permanentRemaining  = max(0, permanentMax - permanentSpent)
-temporaryCeiling    = max(0, permanentRemaining + Σ bonus(source) - Σ activeEgoPenalty)
-temporaryRemaining  = max(0, temporaryCeiling - temporarySpent)
+temporaryCeiling    = max(0, permanentRemaining - Σ activeEgoPenalty)
+temporaryRemaining  = max(0, temporaryCeiling - temporarySpent) + extras
 availableEgoPoints  = permanentRemaining + temporaryRemaining
 ```
 
 **Both pools start full**, and the temporary ceiling tracks permanent points *remaining* rather
 than the permanent maximum — so **spending a permanent point hurts twice**. Sorte 3 with nothing
 spent is 3 + 3 = 6 spendable; spend the 3 temporary then the 3 permanent and you get all 6, but
-spend the 3 permanent *first* and the ceiling collapses to 0, so you only ever get 3. Nothing
-special-cases that — it falls out of the arithmetic. `EgoPointFeatureTest` pins both directions.
+spend the 3 permanent *first* and the ceiling collapses to 0, so you only ever get 3.
+`EgoPointFeatureTest` pins both directions.
+
+**A permanent spend keeps the temporary points still held** (table ruling, 2026-09-30): held =
+min(held, new ceiling), never ceiling − spent. The book's Recursos example is the proof — Recursos 5
+(3 disponíveis) spends 2 temporary then 1 permanent and "fica com Recursos total 4 (1 disponível)";
+subtracting the spent count would give 0. `EgoPointPool#spendPermanent` does it by taking the same
+amount back off `temporarySpent` (floored at 0); the normalization clips what no longer fits.
 
 - **Permanent points never recover.** Not on Rest, not per session, not anywhere. They're only
   *earned*, via `AttributeAbility#resolvePermanentEgoGain` → `CharacterEgos#withVariableBonus`.
   Nothing reduces them automatically either — only their holder spending one deliberately.
 - **Temporary points recover one per game session** — one *total* across all four domains, not
-  one apiece, with the player choosing which domain receives it. That's
+  one apiece (table ruling: the GM picks one Ego in the end-of-session modal and every character gets
+  1 point in it — the map form below with one domain throughout; it only *refills*, never an extra).
+  That's
   `EgoPointsService#applySessionRecovery(sheet, chosenDomain)`, plus whatever extra a held
   Vantagem grants in its own domain (`EgoAdvantage#resolveExtraSessionEgoRecovery`;
   `MOTIVACAO_DE_MOSES`/`DILETO_DE_TYKHE` are the two). **No automatic caller, by design** — a
@@ -104,18 +112,40 @@ collide semantically with no way out. Same restraint that keeps `LifeSteal` off 
 rides the ordinary `applyEffect`/`tickTemporaryEffects`/`finishTurn` lifecycle with no new
 machinery, and is read by a private `sumEgoPenalty` mirroring `getTotalLifeSteal`.
 
-**`grantTemporaryEgoPointBonus(domain, source, amount)` raises the ceiling, non-cumulatively per
-source** — this is what `CharismaAbility.DESTINO_FAVORAVEL`'s "um ponto temporário, não
-cumulativo" actually is. Repeat triggers from that same source don't widen it twice; an unrelated
-source's grant still adds on top.
+**Received points and extras (table ruling, 0.0.76).** A temporary point arrives one of two ways:
 
-**Handing over a genuinely spendable point is `grantTemporaryEgoPoints(domain, source, amount)`,
-and it is two steps.** It widens the ceiling *and then* recovers under it. Neither half works
-alone on an emptied pool: with everything spent the ceiling is 0, so a bare
-`recoverTemporaryEgoPoints` restores nothing, while a bare `grantTemporaryEgoPointBonus` is capped
-per source and so grants nothing the second time that same source fires. Use it whenever rules
-text says "você receberá N pontos temporários neste Ego"; use `recoverTemporaryEgoPoints` only for
-"get back what you spent".
+- **Recovered** — `recoverTemporaryEgoPoints`: "get back what you spent". Refills under the ceiling,
+  never past it. The session point, Primor's Rest promise, Uno com a Ira's hours.
+- **Received** — `receiveTemporaryEgoPoints(domain, source, amount)`: "você receberá N pontos
+  temporários". Refills first, exactly like a recovery; the remainder is held as an **extra** above the
+  ceiling. A Narrador's grant, `DelayedEgoGrant` delivery, Estabilidade Emocional, the past-5 overflow.
+
+An extra is **consumed, not a ceiling**: a temporary spend takes extras first (oldest source first),
+and a spent extra never comes back — no recovery reaches it. The table's example, pinned in
+`EgoPointFeatureTest`: Ego 3 full receives 1 → 4 temporary; spends 2 → 2; receives 1 → back to 3 / 3.
+`getMaxTemporaryEgoPoints` is the ceiling only, so `getTemporaryEgoPoints` may exceed it; the spent count
+under the ceiling is `max − (temporary − getExtraTemporaryEgoPoints)`.
+
+Extras are held per source only so a source can ask what it still holds.
+`receiveNonCumulativeTemporaryEgoPoints` is `CharismaAbility.DESTINO_FAVORAVEL`'s "um ponto temporário,
+não cumulativo": nothing while that source still holds its unspent extra; an unrelated source's points
+still add on top. An **Ego loan** (`receiveEgoLoan`, Transferência) is held as an extra outright
+(`EgoPointPool#addExtra`, no refill) so it stays identifiable: at the end of the Cena a still-held one is
+withdrawn and goes back to its lender, a spent one is simply gone.
+
+**No Ego is ever above 5.** `Character#getEffectiveEgoTotal` is capped at `Character.MAX_EGO`, so the
+pool, Iniciativa and Moral Herdada's Fama all see 5. What runs past it is `Character#getEgoOverflow`,
+received **once** as extras: every pool read goes through the sheet's private `egoPool(domain)`, which
+calls `EgoPointPool#syncOverflow` — it remembers how much overflow was already received, so Recursos 7
+starts at 5 + 2 extras, and a point earned past 5 lands the first time it's seen, but neither twice.
+A consumer that rebuilds sheets must persist `getExtraTemporaryEgoPoints` and `getEgoOverflowReceived`
+and hand both back through `restoreExtraTemporaryEgoPoints` **before any other Ego read** — otherwise a
+rebuilt sheet receives its overflow afresh. Rehydrated extras are held under one source, so a
+non-cumulative source's identity doesn't survive a rebuild.
+
+**The Narrador's grants** are `EgoPointsService#grantTemporaryByNarrator(sheet, domain, amount)` — a
+received point — and `grantPermanentByNarrator(character, domain, amount)`, which returns a rebuilt
+`Character` with `+amount` variable (a sheet's Character is final; build a new sheet from it).
 
 **A grant owed on the *next* Rodada is `scheduleTemporaryEgoPointGrant(domain, source, amount)`**,
 carried as a `DelayedEgoGrant` and delivered by `startNewRound()` — the real Rodada boundary
@@ -143,11 +173,21 @@ unlike `useEgoPointsForEffect`, which exists precisely to keep a drain from payi
 pool emptied some other way (a `TemporaryEgoPenalty` landing) does **not** trigger it: nothing
 does that today, and `applyEffect` has no equivalent hook.
 
+**Recursos buys PE (0.0.77).** `ego.SocialClass` is the Recursos table, one row per value 0–5, picked by
+the Recursos still held **permanently** (`SocialClass.current(sheet)`) — the book's "valor total". A temporary
+spend never moves the row; a permanent one lowers it for every later point.
+`EgoPointsService#spendResourcesForEquipmentPoints` spends through `useEgoPointsForEffect` and prices each
+point at the row it left from (plus `Feat#resolveResourcesPointValueBonus`, Saber Investir's +2), paying into
+the sheet's PE wallet. Starting PE are `CharacterCreationService#grantStartingEquipmentPoints` (once, never on a
+rebuilt sheet); the starting store is `#getStartingStore`. **Recursos is never a session pick** —
+`applySessionRecovery` throws `RESOURCES_NOT_RECOVERED_BY_SESSION`; wages, loot and rewards are
+`grantTemporaryByNarrator`. The Utilidades e Serviços columns are reference data, never enforced.
+
 ## Reference files to read first
 
 - `src/main/java/org/aventyrs/core/sheet/EgoPointPool.java` — the four equations.
 - `src/main/java/org/aventyrs/core/sheet/AbstractCombatantSheet.java`
-  (`spendEgoPoints`, `getAvailableEgoPoints`, `grantTemporaryEgoPointBonus`, `sumEgoPenalty`).
+  (`spendEgoPoints`, `getAvailableEgoPoints`, `receiveTemporaryEgoPoints`, `egoPool`, `sumEgoPenalty`).
 - `src/main/java/org/aventyrs/core/character/services/EgoPointsService.java` /
   `EgoPointsServiceImpl.java` — `useEgoPointsForEffect`, `applySessionRecovery`.
 - `src/main/java/org/aventyrs/core/sheet/EgoPointSpend.java` / `EgoPointType.java` /

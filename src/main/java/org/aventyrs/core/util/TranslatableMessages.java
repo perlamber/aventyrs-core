@@ -342,6 +342,9 @@ public class TranslatableMessages {
     /** The combatant does not have enough Pontos de Equipamento (PE) for this purchase. */
     public static final String NOT_ENOUGH_EQUIPMENT_POINTS = "NOT_ENOUGH_EQUIPMENT_POINTS";
 
+    /** Recursos is never refilled by the end of a session — only by wages, loot and rewards. */
+    public static final String RESOURCES_NOT_RECOVERED_BY_SESSION = "RESOURCES_NOT_RECOVERED_BY_SESSION";
+
     /** This item store does not sell the requested Equipamento — above its Raridade ceiling, a
      * Regalia, or an Arma/Defesa Natural. */
     public static final String ITEM_NOT_OFFERED = "ITEM_NOT_OFFERED";
