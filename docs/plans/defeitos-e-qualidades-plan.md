@@ -150,7 +150,8 @@ that made every Antecedente Benefício free to wire:
    trade shrinking the Talentos step), hub display + GM "grant Defeito" / player "Superar", scene
    wiring for the activated ones (Aura de Confiança, Sentir o Todo), Fobia's Condição applied by the GM.
    — **Done** (aventyrs-game-client on core 0.0.75); see the client's `docs/wiring-defeitos-e-qualidades.md`.
-   The step sits after Perfil de Ação, before Habilidades de Atributo (a Superação may add a slot there too).
+   The step sits after the Antecedentes, before Habilidades de Atributo (a Superação may add a slot there too) —
+   the table's order (2026-09-29): Perfil de Ação → Antecedentes → Defeitos e Qualidades → Habilidades → Talentos.
    Fobia's Condição is applied by the GM with the scene's existing Condição tools. Not wired: Moral Herdada as a
    Superação Vantagem (no Fama picker).
 

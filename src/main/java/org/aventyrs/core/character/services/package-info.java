@@ -68,21 +68,23 @@
  *       Rápido race ({@code Race#hasQuickLearning()} — Humano, Pequenino, Gnomo, Goblin) names its
  *       two Perícias Treinadas, whose 2nd and 3rd Graduação then cost 0.5 EXP less
  *       ({@code SkillGraduationService#getUpgradeCost(Character, SkillType)}). Empty by default.</li>
- *   <li><b>Defeitos e Qualidades (optional) — after the Perfil de Ação, before the Habilidades de
- *       Atributo and the Talentos</b>, through {@link
- *       org.aventyrs.core.character.services.CharacterCreationService#applyDefectsAndQualities}, which
- *       returns a new {@code Character}. It changes what the later steps offer: the Talentos step reads
- *       {@code getStartingFeatSlots(Character)} (the {@code Race} form no longer tells the whole story —
- *       a Qualidade traded for Talentos Gerais removes slots, a Superação adds one), and the Habilidades
- *       step gains {@code Character#getBonusAttributeAbilitySlots()}. See {@code org.aventyrs.core.defect}.</li>
- *   <li><b>Pick the two Antecedentes — last</b>, on the character step 7 built (its Talentos and
- *       Árvores below too): one Naturalidade and one Carreira, through {@link
+ *   <li><b>Pick the two Antecedentes</b>, on the character step 7 built — before the Defeitos e
+ *       Qualidades, Habilidades de Atributo and Talentos (the table's order, 2026-09-29): one Naturalidade
+ *       and one Carreira, through {@link
  *       org.aventyrs.core.character.services.CharacterCreationService#applyBackground}, which
  *       <em>returns a new</em> {@code Character} with the Antecedente's Graduações, Especializações,
  *       Habilidades de Competência and Ego written in. "Se treinado em X" is judged against the
- *       character at this moment, so everything else must be chosen first. An Ego point it adds can
- *       make a Vantagem de Ego (step 5) newly available — re-check it afterwards. See {@code
- *       org.aventyrs.core.background} for the full protocol.</li>
+ *       character at this moment. An Ego point it adds can make a Vantagem de Ego (step 5) newly
+ *       available — re-check it afterwards. See {@code org.aventyrs.core.background} for the full
+ *       protocol.</li>
+ *   <li><b>Defeitos e Qualidades (optional) — after the Antecedentes, before the Habilidades de
+ *       Atributo and the Talentos</b>, through {@link
+ *       org.aventyrs.core.character.services.CharacterCreationService#applyDefectsAndQualities}, on the
+ *       character the Antecedentes returned; it returns a new {@code Character}. It changes what the later
+ *       steps offer: the Talentos step reads {@code getStartingFeatSlots(Character)} (the {@code Race} form
+ *       no longer tells the whole story — a Qualidade traded for Talentos Gerais removes slots, a Superação
+ *       adds one), and the Habilidades step gains {@code Character#getBonusAttributeAbilitySlots()}. See
+ *       {@code org.aventyrs.core.defect}.</li>
  * </ol>
  *
  * <pre>{@code
@@ -114,7 +116,7 @@
  *     builder.egoAdvantage(EgoDomain.INICIATIVA, InitiativeAdvantage.IMPETO); // player's choice
  * }
  *
- * // ... starting Talentos and Árvores (below), then the Antecedentes, last:
+ * // ... the Antecedentes, then the Defeitos e Qualidades, then the Habilidades, Talentos and Árvores (below):
  * Character character = creation.applyBackgrounds(builder.build(),
  *         AcquiredBackground.of(OriginBackground.OFI, List.of(SkillType.ATTENTION, SkillType.PROFISSAO),
  *                 List.of(ProfissaoSpecialization.METALURGIA)),
