@@ -183,6 +183,15 @@ rebuilt sheet); the starting store is `#getStartingStore`. **Recursos is never a
 `applySessionRecovery` throws `RESOURCES_NOT_RECOVERED_BY_SESSION`; wages, loot and rewards are
 `grantTemporaryByNarrator`. The Utilidades e Serviços columns are reference data, never enforced.
 
+**Sorte on a roll (0.0.78).** A Ponto de Sorte's roll effects are `ego.SorteEffect` marks on the `SkillRoll`
+(`withSorte`, `rerolledWithSorte`), each costing the point type it names — a temporary point can never buy a
+permanent effect. `EgoPointsService#applySorte`/`#rerollWithSorte` pay the point (through `useEgoPointsForEffect`)
+and return the marked roll; the caller resolves it again, since every one is decided after seeing the dice.
+`AbstractSkillInteraction` applies the Vantagem, the eased GD and the chosen success (a Crítico Menor);
+`AttackDelivery`/`AttackReceiver` apply the chosen hit/defence and the unleashed Corrente + Maior-severity Efeitos
+Críticos. A rule that isn't dice (a Defeito's automatic failure, an immunity, Trava Mental, Frenesi's suppression)
+still wins.
+
 ## Reference files to read first
 
 - `src/main/java/org/aventyrs/core/sheet/EgoPointPool.java` — the four equations.

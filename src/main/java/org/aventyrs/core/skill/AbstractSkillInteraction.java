@@ -1,5 +1,6 @@
 package org.aventyrs.core.skill;
 
+import org.aventyrs.core.ego.SorteEffect;
 import org.aventyrs.core.ability.AttributeAbility;
 import org.aventyrs.core.ability.PeritoTeoricoAbility;
 import org.aventyrs.core.action.Manoeuvre;
@@ -403,6 +404,11 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
             bonus += sumFirstRollOfTurnBonuses(character.getAttributeAbilities(), attributeDomain);
         }
 
+        // Sorte's "refazer uma rolagem … feitas em Vantagem" — see SorteEffect.
+        if (skillRoll != null && skillRoll.hasSorte(SorteEffect.REROLL_WITH_ADVANTAGE)) {
+            bonus += Skill.ADVANTAGE_BONUS;
+        }
+
         int difficultyReduction = SkillExcellency.totalDifficultyReduction(skillType.getExcellencyClass(), graduationValue);
         difficultyReduction += skillCompetencyAbilities.stream()
                 .mapToInt(SkillCompetencyAbility::getDifficultyReduction)
@@ -414,6 +420,10 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
         }
         if (counselled) {
             difficultyReduction += AncestralCounselService.DIFFICULTY_REDUCTION;
+        }
+        // Sorte's "reduzir o GD de uma rolagem efetuada contra um PdN", the Narrador approving.
+        if (skillRoll != null && skillRoll.hasSorte(SorteEffect.DIFFICULTY_REDUCTION)) {
+            difficultyReduction += SorteEffect.DIFFICULTY_REDUCTION_LEVELS;
         }
         // Transferir Rancor: "-1 Nível" on Perícia de Ataque and Domínio do Mana rolls, cumulative.
         if (skillType.isAttackSkill() || skillType == SkillType.DOMINIO_DO_MANA) {
@@ -437,7 +447,9 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
         if (blindThreshold.isPresent()) {
             result.blindCheckThreshold(blindThreshold.getAsInt());
             if (skillRoll != null && skillRoll.getBlindCheckFace() != null) {
-                blindCheckFailed = skillRoll.getBlindCheckFace() <= blindThreshold.getAsInt();
+                // Sorte's chosen success holds "independente do resultado dos dados" — the Cego 1d6 included.
+                blindCheckFailed = skillRoll.getBlindCheckFace() <= blindThreshold.getAsInt()
+                        && !skillRoll.hasSorte(SorteEffect.FORCED_SUCCESS);
                 result.blindCheckFailed(blindCheckFailed);
             }
         }
@@ -488,6 +500,10 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                     sceneContext, attackTarget);
             CriticalResult criticalResult = skillRoll.getCriticalResult(criticalMarginIncrease,
                     lesserCriticalMargin(attackSource), majorCriticalMargin);
+            // Sorte's chosen success "é um Acerto Crítico Menor" — an Acerto Crítico Maior the dice gave stays.
+            if (skillRoll.hasSorte(SorteEffect.FORCED_SUCCESS) && !criticalResult.isCriticalSuccess()) {
+                criticalResult = CriticalResult.ACERTO_CRITICO_MENOR;
+            }
             result.reachedDifficultyLevel(reached.orElse(null))
                     .criticalResult(criticalResult);
             resolveOutcome(bonus + skillRoll.getTotal(), skillRoll.getTargetValue(), difficultyReduction,
@@ -899,6 +915,10 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
         // A Defeito's automatic failure outranks every automatic success (Sobreposição).
         if (feats.stream().anyMatch(feat -> feat.resolveAutomaticFailure(skillType, governing, character))) {
             return Optional.of(new RollOutcome(false, total - effectiveTarget));
+        }
+        // Sorte's chosen success — over the dice, never over the automatic failure above.
+        if (skillRoll != null && skillRoll.hasSorte(SorteEffect.FORCED_SUCCESS)) {
+            return Optional.of(new RollOutcome(true, Math.max(0, total - effectiveTarget)));
         }
         boolean automatic = abilities.stream()
                 .anyMatch(ability -> ability.resolveAutomaticSuccess(skillType, effectiveTarget, sceneContext))

@@ -2,7 +2,7 @@
 
 Source: `docs/rules/ego.txt` (imported 2026-09-29 from *Módulo Básico V18 ALPHA — 2.5: Ego* and its
 Autocontrole / Iniciativa / Recursos / Sorte subpages). Target: core first, then aventyrs-api, then the
-client. **Status: Phases 0–5 done (core 0.0.76–0.0.77, aventyrs-api and the client on 0.0.77); Phase 6 (Sorte) next.**
+client. **Status: Phases 0–6 done (core 0.0.76–0.0.78; aventyrs-api and the client on 0.0.77); Phase 7 (Iniciativa) next.**
 
 ## Table rulings (2026-09-29)
 
@@ -99,7 +99,7 @@ Under the ruling it is a consumable extra.
 5. **API + client.** *Done* — see the client's `docs/wiring-egos.md`: the API stores an `egoLedger` (permanent spent, extras, overflow received) beside `temporaryEgoPoints`; the session modal takes one Ego for the table, never Recursos; the hub has an Egos tab (Recursos → PE, the GM's grants); creation opens the shop at the Raridade Inicial with the starting PE. Deviation: the creation shop runs right after "Criar" rather than as a wizard step, since the client's shop works on a saved sheet. Endpoints: spend Recursos, GM grant (temp/perm), end-of-session recovery, starting
    store. Client: wizard store step, sheet spend button, GM grant control, end-of-session Ego modal
    (maps every participant to the picked Ego, one `applySessionRecovery` call).
-6. **Sorte.** Reroll with Vantagem, −GD vs PdN, forced success (Crítico Menor), trigger Correntes +
+6. **Sorte.** *Done in 0.0.78* — `ego.SorteEffect` on the roll, paid by `EgoPointsService#applySorte`/`#rerollWithSorte`; applied on Perícia rolls, attacks and defences. Readings in `0.078.CHANGELOG.md`. Client wiring (a Sorte button on a roll) not done yet. Reroll with Vantagem, −GD vs PdN, forced success (Crítico Menor), trigger Correntes +
    Críticos Maiores; scene changes narrative.
 7. **Iniciativa.** Lower / set / reroll own Iniciativa, change a PdN's, +PA / Reações, Vantagem or −GD on
    2 rolls in the Cena (`InitiativeService`, `ActionPointsService`, `ReactionsService`).

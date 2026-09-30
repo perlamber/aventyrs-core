@@ -131,6 +131,30 @@ public interface EgoPointsService {
      */
     int spendResourcesForEquipmentPoints(CombatantSheet sheet, EgoPointType type, int amount);
 
+    /**
+     * Pays one Ponto de Sorte for effect on roll and returns the roll carrying it ({@code SkillRoll#withSorte}),
+     * ready to resolve again — the caller re-resolves with it, since each of these is decided after seeing the
+     * dice. The point is the effect's own type ({@code SorteEffect#getPointType()}): a temporary point never buys
+     * a permanent effect. Spent through {@link #useEgoPointsForEffect}, so Às na Manga's movement follows. No
+     * timing gate.
+     *
+     * @throws org.aventyrs.core.sheet.IllegalOperationException {@code NOT_ENOUGH_EGO_POINTS} when sheet has no
+     *         Sorte point of that type (nothing is spent), {@code INVALID_SKILL_ROLL} for {@code
+     *         REROLL_WITH_ADVANTAGE} — that is {@link #rerollWithSorte}
+     */
+    org.aventyrs.core.skill.SkillRoll applySorte(CombatantSheet sheet, org.aventyrs.core.skill.SkillRoll roll,
+                                                 org.aventyrs.core.ego.SorteEffect effect);
+
+    /**
+     * Pays one temporary Ponto de Sorte to "refazer uma rolagem de Perícia" and returns roll made again with
+     * newDice, in Vantagem ({@code SkillRoll#rerolledWithSorte}). The dice are the caller's, as ever.
+     *
+     * @throws org.aventyrs.core.sheet.IllegalOperationException {@code NOT_ENOUGH_EGO_POINTS} with no temporary
+     *         Sorte left (nothing is spent); {@code INVALID_SKILL_ROLL} for dice that aren't three d6 faces
+     */
+    org.aventyrs.core.skill.SkillRoll rerollWithSorte(CombatantSheet sheet, org.aventyrs.core.skill.SkillRoll roll,
+                                                      java.util.List<Integer> newDice);
+
     /** The source a Narrador's temporary grant is held under — see {@link #grantTemporaryByNarrator}. */
     Object NARRATOR_GRANT = "NARRADOR";
 

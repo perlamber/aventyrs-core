@@ -1,5 +1,6 @@
 package org.aventyrs.core.combat;
 
+import org.aventyrs.core.ego.SorteEffect;
 import org.aventyrs.core.sheet.AttackerGuard;
 import org.aventyrs.core.scene.InitiativePosition;
 import org.aventyrs.core.scene.Scene;
@@ -190,7 +191,10 @@ public class AttackReceiver {
         boolean undefendable = attack.getDamageDescriptor() != null && defender.getCharacter().getFeats().stream()
                 .anyMatch(feat -> feat.preventsDefenseAgainst(attack.getDamageDescriptor(), defender.getCharacter()));
         // A Cego defender's failed 1d6 fails the defence whatever its total.
-        boolean defended = (margin <= 0 && !undefendable && !Boolean.TRUE.equals(defenseResult.getBlindCheckFailed()))
+        // Sorte's chosen success defends "independente do resultado dos dados" — never a defence Trava Mental forbids.
+        boolean forcedSuccess = defenseRoll.hasSorte(SorteEffect.FORCED_SUCCESS);
+        boolean defended = ((margin <= 0 || forcedSuccess) && !undefendable
+                && !Boolean.TRUE.equals(defenseResult.getBlindCheckFailed()))
                 || immune;
         CriticalResult criticalResult = defenseResult.getCriticalResult();
         boolean criticalEffectTriggered = !defended && criticalResult != null && criticalResult.isCriticalFailure();
@@ -211,11 +215,15 @@ public class AttackReceiver {
             result.unappliedCriticalEffects(CriticalEffectResolver.resolve(attack.getAttacker(),
                     attack.getAttackSource(), attack.getAttackSkill(), criticalEffectTriggered ? criticalResult : null,
                     true, attack.getAdditionalCriticalEffectTypes(), attack.getDiceRoller(), false).unapplied());
-        } else if (criticalResult != null && criticalResult.isCriticalSuccess() && !immune) {
+        } else if (!immune && (criticalResult != null && criticalResult.isCriticalSuccess()
+                || defenseRoll.hasSorte(SorteEffect.UNLEASHED_CRITICALS))) {
             // "Efeitos Críticos Defensivos substituem as falhas críticas inimigas em caso de Sucesso
             // Crítico nas rolagens de Defesas" — built for the caller to apply.
             for (DefensiveCriticalEffectType type : DefensiveCriticalEffects.grantedTo(defender)) {
-                DefensiveCriticalEffect.of(type, defender, attack.getAttacker(), criticalResult,
+                // Sorte's permanent point: the defence's Efeitos Críticos apply as Maior — see SorteEffect.
+                CriticalResult defensiveSeverity = defenseRoll.hasSorte(SorteEffect.UNLEASHED_CRITICALS)
+                        ? CriticalResult.ACERTO_CRITICO_MAIOR : criticalResult;
+                DefensiveCriticalEffect.of(type, defender, attack.getAttacker(), defensiveSeverity,
                                 attack.getAttackSkill(), attack.getAttackSource(), attack.getDiceRoller())
                         .ifPresentOrElse(result::defensiveCriticalEffect,
                                 () -> result.unappliedCriticalEffect(type));

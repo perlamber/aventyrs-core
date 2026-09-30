@@ -1,5 +1,6 @@
 package org.aventyrs.core.combat;
 
+import org.aventyrs.core.ego.SorteEffect;
 import lombok.NonNull;
 import org.aventyrs.core.character.services.AttackTargetingService;
 import org.aventyrs.core.character.services.AttackTargetingServiceImpl;
@@ -226,17 +227,21 @@ public class AttackDelivery {
         // A Cego attacker's failed 1d6 misses whatever the total.
         boolean blindMiss = Boolean.TRUE.equals(attackResult.getBlindCheckFailed());
         // Aptidão Mágica Dracônica: a Magia the defender can cast never lands on them.
-        boolean hit = margin >= 0 && !blindMiss && !SpellResistance.immune(defender, attack.getAttackSource());
-        CriticalResult criticalResult = attackResult.getCriticalResult();
+        // Sorte's chosen success lands "independente do resultado dos dados" — never through an immunity.
+        boolean hit = (margin >= 0 || forcedSuccess(attackRoll)) && !blindMiss
+                && !SpellResistance.immune(defender, attack.getAttackSource());
+        CriticalResult rolledCritical = attackResult.getCriticalResult();
+        // Sorte's permanent point: on a hit, the Efeitos Críticos apply as Maior — see SorteEffect.
+        CriticalResult criticalResult = unleashed(attackRoll) && hit ? CriticalResult.ACERTO_CRITICO_MAIOR : rolledCritical;
         // Frenesi Assustador: a fear-struck attacker "se tornam incapazes de desferir Efeitos Críticos
         // Menores e não podem desencadear Correntes de Efeitos" while the Gigante who cast it is down.
         boolean suppressed = attack.getAttacker().isMinorCriticalAndChainSuppressed();
         boolean criticalEffectTriggered = hit && criticalResult != null && criticalResult.isCriticalSuccess()
                 && !(suppressed && criticalResult.isMinor());
         boolean effectChainTriggered = hit && !suppressed
-                && margin >= effectChainService.getRequiredMargin(attack.getAttacker(),
+                && (unleashed(attackRoll) || margin >= effectChainService.getRequiredMargin(attack.getAttacker(),
                         AttackReceiver.positionOf(attack.getScene(), attack.getAttacker(), attack.getSceneContext()),
-                        defender, AttackReceiver.positionOf(attack.getScene(), defender, null));
+                        defender, AttackReceiver.positionOf(attack.getScene(), defender, null)));
 
         if (hit) {
             attackResult = attackResult.toBuilder()
@@ -246,14 +251,14 @@ public class AttackDelivery {
         }
 
         for (AttackTarget target : additionalTargets) {
-            result.additionalTargetResult(resolveAdditionalTarget(attack, target, attackTotal, criticalResult,
+            result.additionalTargetResult(resolveAdditionalTarget(attack, target, attackTotal, rolledCritical,
                     blindMiss));
         }
 
         if (hit) {
             result.onHitRetaliations(RetaliationResolver.resolveOnHit(defender, attack.getAttacker(),
                     attack.getAttackSkill(), attack.getAttackSource(),
-                    criticalResult != null && criticalResult.isCriticalSuccess()));
+                    rolledCritical != null && rolledCritical.isCriticalSuccess()));
             result.unappliedCriticalEffects(CriticalEffectResolver.resolve(attack.getAttacker(),
                     attack.getAttackSource(), attack.getAttackSkill(), criticalEffectTriggered ? criticalResult : null,
                     true, attack.getAdditionalCriticalEffectTypes(), attack.getDiceRoller(), false,
@@ -268,10 +273,11 @@ public class AttackDelivery {
         return result.attackResult(attackResult)
                 .margin(margin)
                 .hit(hit)
-                .criticalResult(criticalResult)
+                // The roll's own result, reported as rolled; the Sorte-raised severity only drives the effects.
+                .criticalResult(rolledCritical)
                 .criticalEffectTriggered(criticalEffectTriggered)
                 .effectChainTriggered(effectChainTriggered)
-                .recordedAction(recordedAction(attack, attackResult, hit, margin, criticalResult))
+                .recordedAction(recordedAction(attack, attackResult, hit, margin, rolledCritical))
                 .build();
     }
 
@@ -304,6 +310,16 @@ public class AttackDelivery {
                         attack.getAttacker(), attackRoll));
     }
 
+    /** Sorte's chosen success — see {@link SorteEffect#FORCED_SUCCESS}. */
+    private static boolean forcedSuccess(final SkillRoll attackRoll) {
+        return attackRoll != null && attackRoll.hasSorte(SorteEffect.FORCED_SUCCESS);
+    }
+
+    /** Sorte's unleashed Correntes and Efeitos Críticos Maiores — see {@link SorteEffect#UNLEASHED_CRITICALS}. */
+    private static boolean unleashed(final SkillRoll attackRoll) {
+        return attackRoll != null && attackRoll.hasSorte(SorteEffect.UNLEASHED_CRITICALS);
+    }
+
     /**
      * The same comparison the primary target got, against one additional target's own Defesa, with
      * the <b>one already-rolled</b> {@code attackTotal} and the one {@code criticalResult} —
@@ -324,14 +340,17 @@ public class AttackDelivery {
         int requiredTotal = target.defenseValue()
                 + SpellResistance.defenseBonus(defender, attack.getDefenseType(), attack.getAttackSource());
         int margin = attackTotal - requiredTotal;
-        boolean hit = margin >= 0 && !blindMiss && !SpellResistance.immune(defender, attack.getAttackSource());
+        SkillRoll attackRoll = attack.getAttackRoll();
+        boolean hit = (margin >= 0 || forcedSuccess(attackRoll)) && !blindMiss
+                && !SpellResistance.immune(defender, attack.getAttackSource());
+        CriticalResult effectCritical = unleashed(attackRoll) && hit ? CriticalResult.ACERTO_CRITICO_MAIOR : criticalResult;
         boolean suppressed = attack.getAttacker().isMinorCriticalAndChainSuppressed();
-        boolean criticalEffectTriggered = hit && criticalResult != null && criticalResult.isCriticalSuccess()
-                && !(suppressed && criticalResult.isMinor());
+        boolean criticalEffectTriggered = hit && effectCritical != null && effectCritical.isCriticalSuccess()
+                && !(suppressed && effectCritical.isMinor());
         boolean effectChainTriggered = hit && !suppressed
-                && margin >= effectChainService.getRequiredMargin(attack.getAttacker(),
+                && (unleashed(attackRoll) || margin >= effectChainService.getRequiredMargin(attack.getAttacker(),
                         AttackReceiver.positionOf(attack.getScene(), attack.getAttacker(), attack.getSceneContext()),
-                        defender, AttackReceiver.positionOf(attack.getScene(), defender, null));
+                        defender, AttackReceiver.positionOf(attack.getScene(), defender, null)));
 
         return DeliveredAttackTargetResult.builder()
                 .defender(defender)
@@ -341,7 +360,7 @@ public class AttackDelivery {
                 .criticalEffectTriggered(criticalEffectTriggered)
                 .effectChainTriggered(effectChainTriggered)
                 .nextInteraction(hit
-                        ? buildChain(attack, defender, criticalResult, criticalEffectTriggered, effectChainTriggered,
+                        ? buildChain(attack, defender, effectCritical, criticalEffectTriggered, effectChainTriggered,
                                 // An additional target of a multi-target attack takes Meio-Dano; one
                                 // caught in an Área de Efeito takes the hit in full.
                                 attack.getAreaOfEffect() == null)

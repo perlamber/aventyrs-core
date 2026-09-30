@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.aventyrs.core.util.TranslatableMessages.INVALID_DIE_ROLL;
+import static org.aventyrs.core.util.TranslatableMessages.NOT_ENOUGH_EGO_POINTS;
 import static org.aventyrs.core.util.TranslatableMessages.RESOURCES_NOT_RECOVERED_BY_SESSION;
 
 public class EgoPointsServiceImpl implements EgoPointsService {
@@ -80,6 +81,37 @@ public class EgoPointsServiceImpl implements EgoPointsService {
             sheet.grantEquipmentPoints(gained);
         }
         return gained;
+    }
+
+    @Override
+    public org.aventyrs.core.skill.SkillRoll applySorte(@NonNull final CombatantSheet sheet,
+                                                        @NonNull final org.aventyrs.core.skill.SkillRoll roll,
+                                                        @NonNull final org.aventyrs.core.ego.SorteEffect effect) {
+        org.aventyrs.core.skill.SkillRoll marked = roll.withSorte(effect);
+        paySorte(sheet, effect.getPointType());
+        return marked;
+    }
+
+    @Override
+    public org.aventyrs.core.skill.SkillRoll rerollWithSorte(@NonNull final CombatantSheet sheet,
+                                                             @NonNull final org.aventyrs.core.skill.SkillRoll roll,
+                                                             @NonNull final List<Integer> newDice) {
+        // Built first, so dice that are not three d6 faces are refused before a point is spent.
+        org.aventyrs.core.skill.SkillRoll rerolled = roll.rerolledWithSorte(newDice);
+        paySorte(sheet, EgoPointType.TEMPORARY);
+        return rerolled;
+    }
+
+    /** One Sorte point of type, or a refusal with nothing spent. */
+    private void paySorte(final CombatantSheet sheet, final EgoPointType type) {
+        int held = type == EgoPointType.PERMANENT
+                ? sheet.getPermanentEgoPoints(EgoDomain.SORTE)
+                : sheet.getTemporaryEgoPoints(EgoDomain.SORTE);
+        if (held < 1) {
+            throw new IllegalOperationException(NOT_ENOUGH_EGO_POINTS);
+        }
+        // No Vantagem de Sorte reacts to a spend with a die, so any legal face.
+        useEgoPointsForEffect(sheet, EgoDomain.SORTE, type, 1, MIN_DIE_FACE);
     }
 
     @Override
