@@ -4,16 +4,12 @@ package org.aventyrs.core.effect;
  * A {@link SpellEffect} that brings something into the Scene — a conjured creature, or an item
  * called into being.
  *
- * <p><b>No concrete implementation, and unlike {@link OffensiveEffect} this one is genuinely
- * blocked.</b> A Magia that invokes a creature describes its stat block in prose, because {@code
- * Spell} has no column pointing at a {@code MonsterTemplate} — the one exception the Magia
- * catalog makes to transcribing rules text verbatim. Until that link exists there is nothing for
- * an Invocation Effect to instantiate.
- *
- * <p>Two further pieces are missing even once it does: {@code Scene#addParticipant} would have to
- * be reached from inside an effect that today sees only its target's {@code CombatantSheet}, and
- * CLAUDE.md's "A summon acting on its summoner's roll" gap means nothing models the player then
- * rolling on the conjured creature's behalf.
+ * <p><b>Still no concrete implementation, deliberately.</b> An effect sees only its target's {@code
+ * CombatantSheet}, while an invocation needs the {@code Scene} and the caster. Invocations are therefore a service
+ * called after the cast: {@code magic.invocation.NatureInvocationService} (core 0.0.92) spawns the ALIADOS DA
+ * NATUREZA creatures ({@code monster.summon.NatureSummon}) and places them with {@code Scene#addSummons}, each its own
+ * participant that its caster's player controls and rolls for. Reanimar's Zumbi and the other trees' summons can
+ * follow the same shape.
  */
 public interface InvocationEffect extends SpellEffect {
 }

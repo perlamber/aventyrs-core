@@ -368,7 +368,8 @@ public class AttackReceiver {
             next = stages.get(i).chainInto(next);
         }
         DamageInteraction head = new DamageInteraction(damageService)
-                .fromSpell(SpellResistance.spellOf(attack.getAttackSource()));
+                .fromSpell(SpellResistance.spellOf(attack.getAttackSource()))
+                .withDiceRoller(attack.getDiceRoller());
         return (halfDamage ? head.halvingDamage() : head).chainInto(next);
     }
 

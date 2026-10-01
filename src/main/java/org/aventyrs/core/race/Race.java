@@ -193,6 +193,18 @@ public interface Race {
     default boolean isImmuneToLifeStealFrom(final org.aventyrs.core.character.Character thief) { return false; }
 
     /**
+     * The PV a hit from spell gives a member of this Raça back <b>instead of</b> damaging it — {@code Vampiro}'s "Magias
+     * Profanas não causam nenhum dano aos mortos, ao invés disso os curam em 1d6+Metade do Vigor" (core 0.0.91). 0 for
+     * no inversion, which is every other Magia and every other Raça. The die is roller's — this core never rolls; a
+     * {@code null} roller gives nothing. Read by {@code DamageInteraction} on a hit marked with its Magia.
+     */
+    default int resolveInvertedSpellHealing(final org.aventyrs.core.magic.Spell spell,
+                                            final org.aventyrs.core.character.Character holder,
+                                            final org.aventyrs.core.util.DiceRoller roller) {
+        return 0;
+    }
+
+    /**
      * A bonus (or, negative, a malus) this Raça puts on a Perícia roll governed by domain — the
      * Atributo the roll is actually made with, after any substitution — {@code Gigantes}' Cuidado
      * para não Quebrar ("sofrem desvantagem em suas rolagens de perícia físicas (baseadas em Força ou

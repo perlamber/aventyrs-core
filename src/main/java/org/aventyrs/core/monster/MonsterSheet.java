@@ -17,6 +17,7 @@ import org.aventyrs.core.skill.DifficultyLevel;
 import org.aventyrs.core.skill.SkillType;
 
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -113,6 +114,13 @@ public class MonsterSheet extends AbstractCombatantSheet {
     /** The stat block's damage immunities — see {@link MonsterTemplate#getDamageImmunities()}. */
     private java.util.Set<org.aventyrs.core.character.DamageScope> damageImmunities = java.util.Set.of();
 
+    /** The stat block's healing inversion — see {@link MonsterTemplate#invertsHealing}. */
+    private java.util.function.Predicate<org.aventyrs.core.sheet.HealingSource> healingInversion = source -> false;
+
+    /** The stat block's attack Correntes — see {@link MonsterTemplate#resolveAttackEffectChains}. */
+    private java.util.function.Function<org.aventyrs.core.sheet.CombatantSheet,
+            List<org.aventyrs.core.effect.EffectChain>> attackEffectChains = self -> List.of();
+
     /** Efeitos de Ego used since the Cena began — see {@link #recordEgoUse}. */
     private int egoEffectsUsedThisScene;
 
@@ -184,6 +192,8 @@ public class MonsterSheet extends AbstractCombatantSheet {
                 template.getGeneralDifficulty(), template.getSkillDifficulties(),
                 template.isUndead(), template.isIntelligent(), template.getCriticalEffectImmunities(), template.getCreatureType(), null);
         sheet.damageImmunities = java.util.Set.copyOf(template.getDamageImmunities());
+        sheet.healingInversion = template::invertsHealing;
+        sheet.attackEffectChains = template::resolveAttackEffectChains;
         return sheet;
     }
 
@@ -299,6 +309,17 @@ public class MonsterSheet extends AbstractCombatantSheet {
         if (!isIntelligent() || getRemainingEgoEffects() <= 0) {
             throw new IllegalOperationException(MONSTER_EGO_EFFECTS_EXHAUSTED);
         }
+    }
+
+    /** The Correntes de Efeitos this foe's stat block puts on each of its attacks (core 0.0.92). */
+    public List<org.aventyrs.core.effect.EffectChain> getAttackEffectChains() {
+        return attackEffectChains.apply(this);
+    }
+
+    /** The stat block's own healing inversion ({@link MonsterTemplate#invertsHealing}). */
+    @Override
+    protected boolean invertsHealing(final org.aventyrs.core.sheet.HealingSource source) {
+        return source != null && healingInversion.test(source);
     }
 
     /** Every immunity a sheet has, plus the stat block's own ({@link MonsterTemplate#getDamageImmunities()}). */

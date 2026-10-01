@@ -16,6 +16,9 @@ public enum DamageContributionSource {
      * property of the Perícia itself. */
     MEIA_FORCA,
 
+    /** A Cavaleiro Subordinado's Vantagem em Dano (core 0.0.92). */
+    SUBORDINATE,
+
     /** A {@code SkillCompetencyAbility#resolveDamageBonus} — e.g. {@code BRUTALIDADE}'s +1. */
     SKILL_COMPETENCY_ABILITY,
 

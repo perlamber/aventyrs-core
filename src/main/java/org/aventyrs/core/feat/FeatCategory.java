@@ -149,7 +149,10 @@ public enum FeatCategory {
     DEFEITO(Type.DEFEITO),
 
     /** A Qualidade's effect at one class — see {@link QualidadeFeat}. Never offered or bought. */
-    QUALIDADE(Type.QUALIDADE);
+    QUALIDADE(Type.QUALIDADE),
+
+    /** A trait a creature's stat block gives it — see {@link CriaturaFeat}. Never offered or bought (core 0.0.97). */
+    CRIATURA(Type.CRIATURA);
 
     private final Type type;
 
@@ -168,7 +171,9 @@ public enum FeatCategory {
         /** A Defeito's effect — see {@link FeatCategory#DEFEITO}. */
         DEFEITO,
         /** A Qualidade's effect — see {@link FeatCategory#QUALIDADE}. */
-        QUALIDADE;
+        QUALIDADE,
+        /** A creature's stat-block trait — see {@link FeatCategory#CRIATURA}. */
+        CRIATURA;
 
         /**
          * Whether Talentos of this type are Talentos proper — in {@link FeatCatalog}, purchasable,

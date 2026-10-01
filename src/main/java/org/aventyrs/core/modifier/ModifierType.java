@@ -99,6 +99,11 @@ public enum ModifierType {
      */
     ATTACK_AND_CONJURATION_DIFFICULTY_REDUCTION,
     /**
+     * Níveis of GD reduction on every Perícia roll — Totem de Gaea's "reduzem o GD de rolagens de Perícias em -1
+     * nível" for the animals near it (core 0.0.92). Read by {@code AbstractSkillInteraction} as a held bonus.
+     */
+    SKILL_DIFFICULTY_REDUCTION,
+    /**
      * Extra d6s on the holder's dano rolls — Transferir Rancor's "+1d6 pontos de danos". This core
      * rolls no dice, so {@code AbstractSkillInteraction} only <i>reports</i> the count on an attack
      * roll ({@code InteractionResult#getExtraDamageDice()}) for the caller to throw.

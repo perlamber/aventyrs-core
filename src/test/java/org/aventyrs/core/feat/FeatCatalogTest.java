@@ -73,7 +73,7 @@ class FeatCatalogTest {
 
     /** The Talento-shaped traits held only through an Antecedente, Defeito or Qualidade. */
     private static final java.util.Set<Class<?>> NON_CATALOG =
-            java.util.Set.of(AntecedenteFeat.class, DefeitoFeat.class, QualidadeFeat.class);
+            java.util.Set.of(AntecedenteFeat.class, DefeitoFeat.class, QualidadeFeat.class, CriaturaFeat.class);
 
     /** An Antecedente's Benefício, a Defeito or a Qualidade has a Talento's shape but is never offered or bought. */
     @Test

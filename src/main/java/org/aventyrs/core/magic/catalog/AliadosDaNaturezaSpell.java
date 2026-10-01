@@ -17,11 +17,12 @@ import org.aventyrs.core.skill.SkillType;
  * ALIADOS DA NATUREZA (Natural/Invocação) — seven Magias, diverging at Muda and converging again
  * at Florescente.
  *
- * <p>Every Magia here invokes a creature, which is the tree's standing limitation: an
- * invocation's stat block is a {@code MonsterTemplate}, and none of these has one. The {@code
- * Atributos e Perícias}/{@code Características Especiais}/{@code Outras Informações} blocks are
- * summarised in each {@code Efeito:} rather than transcribed, because a {@code Spell} has nowhere
- * to put them — see the TODO on each constant that carries one.
+ * <p>Every Magia here invokes a creature, and since core 0.0.92 each one is real: the stat blocks are {@code
+ * monster.summon.NatureSummon}s ({@code NatureSummonKind}), and what each Magia does once cast — the creature, its
+ * Duração, what it may not coexist with, any extra PM — is {@code magic.invocation.NatureInvocationService}, which
+ * places the creatures in the {@code Scene} as their caster's invocations ({@code Scene#addSummons}). A {@code Spell}
+ * still has no column naming its creature: the service is the link. The {@code Atributos e Perícias} blocks are
+ * summarised in each {@code Efeito:} as before.
  */
 public enum AliadosDaNaturezaSpell implements AuthoredSpell {
 
@@ -30,10 +31,8 @@ public enum AliadosDaNaturezaSpell implements AuthoredSpell {
      * catalog whose GD is a <b>floor</b> rather than a tier — "Fácil (13|14) ou DM do Alvo
      * (maior)".
      *
-     * <p>TODO the Subordinado grade it grants (Cavaleiro/Torre, Prodigioso on the Efeito
-     * Alternativo) has no shape in this core: nothing models a controlled ally's command grade.
-     * TODO "não pode ser alvo deste efeito uma segunda vez sem que antes passe por um Descanso"
-     * needs per-target effect history, which no sheet records.
+     * <p>The Subordinado it makes (Cavaleiro or Torre; Prodigioso for half the Duração with Falsa Matilha) and the
+     * "uma segunda vez sem que antes passe por um Descanso" gate are {@code NatureInvocationService#captivate}.
      */
     CATIVAR_ANIMAL(SpellData.builder()
             .name("Cativar Animal")
@@ -66,13 +65,8 @@ public enum AliadosDaNaturezaSpell implements AuthoredSpell {
      * The Magia both ramificações are traced back from — its Efeito Alternativo, Predador
      * Regional, is what {@link MagicBranch#ALIADOS_DA_NATUREZA_ALTERNATIVO} evolves.
      *
-     * <p>TODO the invoked animal is a full stat block (Força 4, Destreza 3, Vigor 1, Gnose 1,
-     * Instinto 3, Foco 1, Carisma 2; Ataque Corpo-a-Corpo [Primal] +4, Atenção [Sentidos Apurados]
-     * +2, Esquiva e Aparar [Guerreiro Natural] +2, Furtividade [Maestria da Ocultação] +2;
-     * Tamanho +0, 3PA, 15PV at Multiplicador de PV x5, Defesas +3, Danos 1d6+4). That is a {@code
-     * SummonedMonsterTemplate} parameterized by the Conjurador's Graduações em Domínio do Mana,
-     * exactly the {@code Zumbi} shape — but {@code Spell} has no column pointing at one, so
-     * nothing links the Magia to the creature it invokes.
+     * <p>Its animal is {@code NatureSummonKind#ALIADO_DA_NATUREZA} (Predador Regional: {@code #PREDADOR_REGIONAL}),
+     * invoked by {@code NatureInvocationService#invokeAliado}.
      */
     ALIADOS_DA_NATUREZA(SpellData.builder()
             .name("Aliados da Natureza")
@@ -126,11 +120,8 @@ public enum AliadosDaNaturezaSpell implements AuthoredSpell {
      * everywhere else in the document, including inside its own Efeito. The identity line is kept
      * as the authored {@code name}; do not "fix" it silently.
      *
-     * <p>TODO the invoked creature is a stat block (Força 6, Destreza 4, Vigor 3, Gnose 1,
-     * Instinto 4, Foco 1, Carisma 2; Tamanho +1, 3PA, 25PV at Multiplicador de PV x5, DF +12 /
-     * DM +8, Danos 1d6+7) that additionally rolls one of six random powers — Inocular Veneno,
-     * Sopro Elemental, Aura Elemental, Devorar Inteiro, Bruto, Membros Múltiplos. No {@code
-     * MonsterTemplate} models a randomly-chosen power set.
+     * <p>Its creature is {@code NatureSummonKind#EXPERIMENTO_DE_LACERTO}, its power ({@code LacertoPower}) rolled
+     * at cast by {@code NatureInvocationService#invokeExperimento} (table ruling, 2026-10-01).
      */
     EXPERIMENTO_DE_LARCERTO(SpellData.builder()
             .name("Experimento de Larcerto")
@@ -150,7 +141,11 @@ public enum AliadosDaNaturezaSpell implements AuthoredSpell {
             .targeting(SpellTargeting.distancia(Range.ADJACENTE))
             .build()),
 
-    /** Creates Predadores Regionais on a timer — the Broto's principal invocation, sustained. */
+    /**
+     * Creates Predadores Regionais on a timer — the Broto's principal invocation, sustained. The timer is {@code
+     * NatureInvocationService#raiseTotem} (a {@code scene.SummonSpawner}); the strengthening of animal allies in
+     * Distância Longa is {@code #blessFromTotem}, the caller naming who is in reach.
+     */
     TOTEM_DE_GAEA(SpellData.builder()
             .name("Totem de Gaea")
             .branchLevel(BranchLevel.EMERGENTE)
@@ -173,10 +168,9 @@ public enum AliadosDaNaturezaSpell implements AuthoredSpell {
             .build()),
 
     /**
-     * TODO the invoked monster is a stat block (Força 8, Destreza 7, Vigor 5, Gnose 1, Instinto 6,
-     * Foco 1, Carisma 3; Tamanho +2, 4PA, 35PV at Multiplicador de PV x5, DF +18 / DM +18, Danos
-     * 2d6+5) carrying <b>two</b> randomly-chosen powers from the same six-entry list {@link
-     * #EXPERIMENTO_DE_LARCERTO} rolls one from.
+     * Its monster is {@code NatureSummonKind#ORGULHO_DE_LACERTO}, rolling <b>two</b> of the powers {@link
+     * #EXPERIMENTO_DE_LARCERTO} rolls one from ({@code NatureInvocationService#invokeOrgulho}); Laboratório de
+     * Lacerto is {@code #invokeLaboratorio}.
      */
     ORGULHO_DE_LACERTO(SpellData.builder()
             .name("Orgulho de Lacerto")
@@ -202,13 +196,9 @@ public enum AliadosDaNaturezaSpell implements AuthoredSpell {
      * The convergence rung — no ramificação, so it sits on every path, which is the whole
      * convergence mechanism. See {@link SpellTree}.
      *
-     * <p>TODO the Anciente is a stat block (Atributos 10 per its Descrição, then Força 8, Destreza
-     * 10, Vigor 10, Gnose 3, Instinto 8, Foco 4, Carisma 6 in its own table; Tamanho +3, 3PA, 70PV
-     * at Multiplicador de PV x6, DF +18 / DM +21, Danos 2d6+7) with two clauses this core cannot
-     * express either: "Imunidade a Efeitos Críticos Menores" is severity-scoped, and {@code
-     * CriticalEffectType} identifies which effect, never its Maior/Menor tier; and Benção
-     * Compartilhada heals adjacent allies on even Rodadas, a continuous cross-character grant of
-     * healing rather than of a stat.
+     * <p>The Anciente is {@code NatureSummonKind#ANCIENTE} ({@code NatureInvocationService#awakenAnciente}), its
+     * immunity to Efeitos Críticos Menores and harmful Encantamentos included. TODO Benção da Regeneração (a rolled
+     * per-Rodada heal) and Benção Compartilhada (that heal to adjacent allies in even Rodadas) are the caller's.
      */
     DESPERTAR_ANCIENTE_DE_GAEA(SpellData.builder()
             .name("Despertar Anciente de Gaea")

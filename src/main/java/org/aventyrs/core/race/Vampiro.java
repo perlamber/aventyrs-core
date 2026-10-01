@@ -250,8 +250,8 @@ public class Vampiro implements Race {
     }
 
     /**
-     * "Magias Profanas não causam nenhum dano aos mortos" (core 0.0.90). TODO: "ao invés disso os curam em 1d6+Metade do
-     * Vigor" — a heal in place of the damage needs the dice and an inversion stage nothing has.
+     * "Magias Profanas não causam nenhum dano aos mortos" (core 0.0.90) — the heal they give instead is {@link
+     * #resolveInvertedSpellHealing}.
      */
     @Override
     public boolean isImmuneToSpell(final org.aventyrs.core.magic.Spell spell) {
@@ -262,5 +262,16 @@ public class Vampiro implements Race {
     @Override
     public boolean refusesHealing(final org.aventyrs.core.sheet.HealingSource source) {
         return source.isSpellOfType(org.aventyrs.core.magic.MagicType.DIVINA);
+    }
+
+    /** "… ao invés disso os curam em 1d6+Metade do Vigor do Vampiro" (core 0.0.91). */
+    @Override
+    public int resolveInvertedSpellHealing(final org.aventyrs.core.magic.Spell spell,
+                                           final org.aventyrs.core.character.Character holder,
+                                           final org.aventyrs.core.util.DiceRoller roller) {
+        if (roller == null || !isImmuneToSpell(spell)) {
+            return 0;
+        }
+        return roller.rollD6() + holder.getEffectiveAttributeTotal(AttributeDomain.VIGOR) / 2;
     }
 }

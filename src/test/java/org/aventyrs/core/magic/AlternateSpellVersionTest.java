@@ -133,8 +133,8 @@ class AlternateSpellVersionTest {
                 alternateOf(VidaSpell.REVIGORAR).getHealing().orElseThrow().restEquivalent());
 
         // And an alternate that authors none reports none rather than its parent's.
-        assertTrue(VidaSpell.NOVA_REJUVENESCEDORA.getHealing().isPresent());
-        assertTrue(alternateOf(VidaSpell.NOVA_REJUVENESCEDORA).getHealing().isEmpty());
+        assertTrue(VidaSpell.ALIVIAR_A_DOR.getHealing().isPresent());
+        assertTrue(alternateOf(VidaSpell.ALIVIAR_A_DOR).getHealing().isEmpty());
     }
 
     @Test

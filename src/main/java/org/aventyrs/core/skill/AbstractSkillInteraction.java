@@ -380,6 +380,12 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
         bonus += sumSkillRollBonusModifiers(unlockedExcellencies);
         bonus += target.getTemporaryBonus(ModifierType.SKILL_ROLL_BONUS);
         bonus += target.getTemporaryBonus(skillType.getRollBonusType());
+        // Subordinados (core 0.0.92): a Cavaleiro's Vantagem on Perícias de Ataque, a Peão's on any other but Esquiva.
+        if (skillType.isAttackSkill()) {
+            bonus += Skill.ADVANTAGE_BONUS * org.aventyrs.core.subordinate.SubordinateBenefits.count(target, sceneContext, org.aventyrs.core.subordinate.SubordinateBenefit.CAVALEIRO_ATTACK);
+        } else if (skillType != SkillType.ESQUIVA_E_APARAR) {
+            bonus += Skill.ADVANTAGE_BONUS * org.aventyrs.core.subordinate.SubordinateBenefits.count(target, sceneContext, org.aventyrs.core.subordinate.SubordinateBenefit.PEAO_SKILL);
+        }
         if (attributeDomain == AttributeDomain.STRENGTH || attributeDomain == AttributeDomain.DEXTERITY) {
             // Enrijecer Musculatura: Desvantagem on "Perícias Físicas (baseadas em Força e Destreza)".
             bonus += target.getTemporaryBonus(ModifierType.PHYSICAL_SKILL_ROLL_BONUS);
@@ -451,6 +457,8 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
         if (skillType.isAttackSkill() || skillType == SkillType.DOMINIO_DO_MANA) {
             difficultyReduction += target.getTemporaryBonus(ModifierType.ATTACK_AND_CONJURATION_DIFFICULTY_REDUCTION);
         }
+        // Totem de Gaea: "reduzem o GD de rolagens de Perícias em -1 nível", any Perícia.
+        difficultyReduction += target.getTemporaryBonus(ModifierType.SKILL_DIFFICULTY_REDUCTION);
         if (skillRoll != null) {
             difficultyReduction += sumFeatAttackCostDifficultyReductions(character, sceneContext, attackSource,
                     skillRoll.getActionCost(), target.getActionsThisRound(), target);
@@ -1086,7 +1094,10 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                 : addFlat(contributions, DamageContributionSource.TARGET_CONDITION,
                         attackTarget.getAttackerDamageBonusFromConditions(sceneContext));
 
-        int flat = temporary + condition + meiaForca + manoeuvre + title + targetCondition;
+        // A Cavaleiro's "Vantagem em … Dano" (core 0.0.92).
+        int subordinate = addFlat(contributions, DamageContributionSource.SUBORDINATE,
+                Skill.ADVANTAGE_BONUS * org.aventyrs.core.subordinate.SubordinateBenefits.count(target, sceneContext, org.aventyrs.core.subordinate.SubordinateBenefit.CAVALEIRO_DAMAGE));
+        int flat = temporary + condition + meiaForca + manoeuvre + title + targetCondition + subordinate;
         return new DamageSum(DamageBonus.total(typed, flat), new DamageBonusBreakdown(contributions));
     }
 

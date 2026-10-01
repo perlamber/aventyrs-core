@@ -112,6 +112,15 @@ public class SpellData {
     /** {@code Corrente de Efeitos – ‹name›:}, or {@code null}. */
     private final String effectChainDescription;
 
+    /** The Corrente a cast can build — see {@link Spell#getEffectChainKind()}. */
+    private final SpellChainKind effectChainKind;
+
+    /** See {@link Spell#getWard()}. */
+    private final SpellWard ward;
+
+    /** See {@link Spell#isCasterAffected()}. */
+    private final boolean casterAffected;
+
     /** {@code Efeito Crítico:}, or {@code null} for the document's two blanks. */
     private final CriticalEffectType criticalEffectType;
 

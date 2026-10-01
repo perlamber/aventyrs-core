@@ -89,6 +89,10 @@ public class RestServiceImpl implements RestService {
         // Frees every ability whose Resfriamento was measured in Descansos rather than Rodadas —
         // "não poderá ser reativado até que passe por um Descanso Longo".
         characterSheet.clearRestCooldowns(restType);
+        // A Rei renews its Ego points "após … Descansos Longos" (core 0.0.92) — a Longo or anything stronger.
+        if (restType.compareTo(RestType.LONGO) >= 0) {
+            new org.aventyrs.core.subordinate.SubordinateServiceImpl().renewAfterLongRest(characterSheet);
+        }
         if (verdadeiro) {
             characterSheet.completeTrueRest(restType);
         }

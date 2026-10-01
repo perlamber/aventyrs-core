@@ -46,6 +46,8 @@ public class ActionPointsServiceImpl implements ActionPointsService {
         Character character = sheet.getCharacter();
         int baseline = actionPointsBeforeProfile(character, turnNumber)
                 + sheet.getTemporaryBonus(ModifierType.ACTION_POINTS)
+                // A Rainha's "+1PA" (core 0.0.92).
+                + org.aventyrs.core.subordinate.SubordinateBenefit.ACTION_POINTS * org.aventyrs.core.subordinate.SubordinateBenefits.count(sheet, sceneContext, org.aventyrs.core.subordinate.SubordinateBenefit.RAINHA_ACTION_POINT)
                 + sumTitleAbilityActionPointBonus(sheet)
                 + character.getFeats().stream()
                         .mapToInt(feat -> feat.resolveRoundActionPointsIncrease(character, sceneContext)).sum();

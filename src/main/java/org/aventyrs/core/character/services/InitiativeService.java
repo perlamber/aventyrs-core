@@ -22,4 +22,14 @@ public interface InitiativeService {
      * {@link org.aventyrs.core.scene.InitiativeEntry}.
      */
     int getTotalInitiative(Character character);
+
+    /**
+     * {@link #getTotalInitiative(Character)} with what the combatant's situation adds — a Rainha's "aumentam sua
+     * Iniciativa em +2", in a Cena de Combate (core 0.0.92).
+     */
+    default int getTotalInitiative(final org.aventyrs.core.sheet.CombatantSheet sheet,
+                                   final org.aventyrs.core.scene.SceneContext sceneContext) {
+        return getTotalInitiative(sheet.getCharacter())
+                + org.aventyrs.core.subordinate.SubordinateBenefit.INITIATIVE * org.aventyrs.core.subordinate.SubordinateBenefits.count(sheet, sceneContext, org.aventyrs.core.subordinate.SubordinateBenefit.RAINHA_INITIATIVE);
+    }
 }

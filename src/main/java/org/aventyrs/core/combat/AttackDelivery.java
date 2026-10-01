@@ -449,7 +449,8 @@ public class AttackDelivery {
         }
         DamageInteraction head = new DamageInteraction(damageService)
                 .fromSpell(SpellResistance.spellOf(attack.getAttackSource()))
-                .withSanctity(sanctityOf(attack, chains));
+                .withSanctity(sanctityOf(attack, chains))
+                .withDiceRoller(attack.getDiceRoller());
         if (criticalResult != null && criticalResult.isCriticalSuccess()) {
             // Feridas Ardentes: the critical's Metade da Gnose heals only with a Descanso Verdadeiro
             // or Roubo de Vida.
@@ -503,6 +504,8 @@ public class AttackDelivery {
         total += attacker.getCharacter().getFeats().stream()
                 .mapToInt(feat -> feat.resolveTargetedLifeSteal(attacker.getCharacter(), attacker, defender))
                 .sum();
+        // A Bispo's "Roubo de Vida 1 aos seus ataques e magias" (core 0.0.92).
+        total += org.aventyrs.core.subordinate.SubordinateBenefit.LIFE_STEAL * org.aventyrs.core.subordinate.SubordinateBenefits.count(attacker, attack.getSceneContext(), org.aventyrs.core.subordinate.SubordinateBenefit.BISPO_LIFE_STEAL);
         return Math.max(0, total);
     }
 
@@ -610,10 +613,15 @@ public class AttackDelivery {
     }
 
     private List<EffectChain> effectChainsGrantedByFeats(final DeliveredAttack attack, final CriticalResult criticalResult) {
-        return attack.getAttacker().getCharacter().getFeats().stream()
+        List<EffectChain> chains = new java.util.ArrayList<>(attack.getAttacker().getCharacter().getFeats().stream()
                 .flatMap(feat -> feat.resolveEffectChains(attack.getAttacker().getCharacter(),
                         attack.getAttackSkill(), attack.getAttackSource(), attack.getAttacker(),
                         attack.getSceneContext(), criticalResult).stream())
-                .toList();
+                .toList());
+        // A foe's own stat block — an invoked Lacerto creature's Inocular Veneno or Devorar Inteiro (core 0.0.92).
+        if (attack.getAttacker() instanceof org.aventyrs.core.monster.MonsterSheet foe) {
+            chains.addAll(foe.getAttackEffectChains());
+        }
+        return chains;
     }
 }

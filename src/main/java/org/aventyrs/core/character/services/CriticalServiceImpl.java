@@ -158,6 +158,10 @@ public class CriticalServiceImpl implements CriticalService {
                 .sum();
         // Timed widening on the sheet — Guilhotina's cumulative "+N números".
         total += holder.getTemporaryBonus(ModifierType.LESSER_CRITICAL_MARGIN);
+        // A Peão's "reduzindo a margem crítica … em -2", on any Perícia but the Ataques and Esquiva (core 0.0.92).
+        if (!skillType.isAttackSkill() && skillType != SkillType.ESQUIVA_E_APARAR) {
+            total += org.aventyrs.core.subordinate.SubordinateBenefit.CRITICAL_MARGIN * org.aventyrs.core.subordinate.SubordinateBenefits.count(holder, sceneContext, org.aventyrs.core.subordinate.SubordinateBenefit.PEAO_CRITICAL);
+        }
         // A defence roll against an attacker this holder guards against — Provocar's "Sua Margem
         // Crítica Menor para resistir a este próximo ataque aumenta". The attacker is the defence
         // roll's opposed character.

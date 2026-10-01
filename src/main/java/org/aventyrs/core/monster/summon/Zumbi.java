@@ -66,10 +66,8 @@ import java.util.Set;
  * <p>TODO: "Não precisam dormir ou respirar" needs a fadiga/asfixia system. Nothing in this core
  * tracks either, so there is no effect to be exempt from.
  *
- * <p>TODO: "sofrem Danos de Magias Divinas que recuperam PV ao invés de se curarem" needs both a
- * Magia entity carrying a Tipo (no {@code Magia} exists — see {@code SpellCastingService}, which
- * cannot resolve either roll's GD for the same reason) and an inversion stage on healing;
- * {@code CombatantSheet#heal} has no hook to redirect a recovery into damage.
+ * <p>"Sofrem Danos de Magias Divinas que recuperam PV ao invés de se curarem" is real (core 0.0.91): {@link
+ * #invertsHealing} — a heal from a Magia Divina lands as damage.
  *
  * <p>TODO: "Danos de Ataques 1d6+3 (Base 1 + Metade da Força)" has nowhere to live. A foe's damage
  * is entirely caller-supplied today — {@code AttackReceiver}/{@code AttackDelivery} assemble a
@@ -299,5 +297,11 @@ public class Zumbi implements SummonedMonsterTemplate {
         return java.util.Set.of(
                 org.aventyrs.core.character.DamageScope.sanctity(org.aventyrs.core.character.DamageSanctity.PROFANO),
                 org.aventyrs.core.character.DamageScope.element(org.aventyrs.core.magic.ElementalType.NATURAL));
+    }
+
+    /** Anatomia de Morto-Vivo Menor: "sofrem Danos de Magias Divinas que recuperam PV ao invés de se curarem". */
+    @Override
+    public boolean invertsHealing(final org.aventyrs.core.sheet.HealingSource source) {
+        return source.isSpellOfType(org.aventyrs.core.magic.MagicType.DIVINA);
     }
 }

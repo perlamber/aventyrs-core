@@ -86,7 +86,9 @@ public class DefenseServiceImpl implements DefenseService {
                 + sumGuardsAgainstOpponent(target, sceneContext)
                 + mitigationForgoneAsDefense(target, sceneContext)
                 + adjacentBarreiraBonus(sceneContext)
-                + sumDefenseBonusesAgainst(target.getCharacter(), damageDescriptor);
+                + sumDefenseBonusesAgainst(target.getCharacter(), damageDescriptor)
+                // A Torre's "+2 nas Defesas" (core 0.0.92), own or a Prodigioso ally's.
+                + org.aventyrs.core.subordinate.SubordinateBenefit.DEFESAS * org.aventyrs.core.subordinate.SubordinateBenefits.count(target, sceneContext, org.aventyrs.core.subordinate.SubordinateBenefit.TORRE_DEFESAS);
     }
 
     /** Vulnerabilidade's Desvantagem to defend against the attack's own kind — only when the kind is known. */

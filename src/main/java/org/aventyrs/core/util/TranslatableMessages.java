@@ -174,6 +174,19 @@ public class TranslatableMessages {
     public static final String DEVOTION_PICK_NOT_OWED = "DEVOTION_PICK_NOT_OWED";
     /** A rung pick that isn't among the rung's options, or the wrong number of them. */
     public static final String INVALID_DEVOTION_PICK = "INVALID_DEVOTION_PICK";
+    /** A character already commands as many Subordinados as their Carisma. */
+    public static final String SUBORDINATE_LIMIT_REACHED = "SUBORDINATE_LIMIT_REACHED";
+    /** A second common Subordinado of a grade the character already commands — only a Prodigioso may share it. */
+    public static final String SUBORDINATE_GRADE_HELD = "SUBORDINATE_GRADE_HELD";
+
+    /** Cativar Animal touches "um animal" — the target is not one (core 0.0.92). */
+    public static final String CAPTIVATE_REQUIRES_ANIMAL = "CAPTIVATE_REQUIRES_ANIMAL";
+
+    /** Cativar Animal makes a Cavaleiro or a Torre — another grade was asked for. */
+    public static final String CAPTIVATE_GRADE_NOT_ALLOWED = "CAPTIVATE_GRADE_NOT_ALLOWED";
+
+    /** "Um mesmo animal não pode ser alvo deste efeito uma segunda vez sem que antes passe por um Descanso." */
+    public static final String CAPTIVATE_NEEDS_REST = "CAPTIVATE_NEEDS_REST";
 
     /**
      * A Talento only a newly created character may take ("Apenas personagens recém-criados") was

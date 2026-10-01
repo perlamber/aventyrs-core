@@ -216,10 +216,34 @@ public interface MonsterTemplate {
     }
 
     /**
+     * Whether a heal from source <b>damages</b> this creature instead — the Zumbi's Anatomia de Morto-Vivo Menor
+     * "sofrem Danos de Magias Divinas que recuperam PV ao invés de se curarem" (core 0.0.91). Read by {@code
+     * CombatantSheet#heal}. False by default.
+     */
+    default boolean invertsHealing(final org.aventyrs.core.sheet.HealingSource source) {
+        return false;
+    }
+
+    /**
      * What this foe <em>is</em> — {@link CreatureType#MONSTRUOSO} unless its stat block says
      * otherwise ({@link CreatureType#ANIMAL} for a beast). Every foe shares {@link #MONSTER_RACE},
      * so its race can't answer this; {@code CombatantSheet#getCreatureType()} reads it off the sheet.
      */
+    /** Traits its stat block gives it in a Talento's shape ({@code feat.CriaturaFeat}, core 0.0.97) — none by default. */
+    default List<org.aventyrs.core.feat.Feat> getFeats() {
+        return List.of();
+    }
+
+    /**
+     * The Correntes de Efeitos every attack this foe makes carries (core 0.0.92) — a Lacerto creature's Inocular Veneno
+     * or Devorar Inteiro ({@code monster.summon.NatureSummon}). self is the spawned sheet, for a chain that names its
+     * captor. {@code AttackDelivery} chains them behind the damage like a Talento's.
+     */
+    default List<org.aventyrs.core.effect.EffectChain> resolveAttackEffectChains(
+            final org.aventyrs.core.sheet.CombatantSheet self) {
+        return List.of();
+    }
+
     default CreatureType getCreatureType() {
         return CreatureType.MONSTRUOSO;
     }
@@ -275,7 +299,7 @@ public interface MonsterTemplate {
                 .attributeAbilities(getAttributeAbilities())
                 .skillCompetencyAbilities(getSkillCompetencyAbilities())
                 .equipment(new ArrayList<>(getEquipment()))
-                .feats(new ArrayList<>())
+                .feats(new ArrayList<>(getFeats()))
                 .sizeCategory(getSizeCategory())
                 .lifeMultiplier(getLifeMultiplier())
                 .manaMultiplier(getManaMultiplier())

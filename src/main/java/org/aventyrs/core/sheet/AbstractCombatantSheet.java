@@ -615,6 +615,14 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         if (isHealingPrevented()) {
             return getDamageTaken();
         }
+        // A heal that damages instead (the Zumbi's "sofrem Danos de Magias Divinas que recuperam PV", core 0.0.91):
+        // what it would have healed — the healer's bonus included — lands as raw damage, and no heal happens.
+        if (!lifeSteal && invertsHealing(source)) {
+            int harm = Math.max(0, amount + healerHealingBonus(source));
+            applyDamage(harm);
+            observeStatus();
+            return getDamageTaken();
+        }
         // The Raça refuses this heal outright (Vampiro: "não podem recuperar PV com magias Divinas", core 0.0.90).
         if (source != null && racialTraitsLive() && getCharacter().getRace().refusesHealing(source)) {
             return getDamageTaken();
@@ -839,6 +847,14 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         }
         return getCharacter().getFeats().stream().anyMatch(feat -> feat.isImmuneToSpell(spell, this))
                 || racialTraitsLive() && getCharacter().getRace().isImmuneToSpell(spell);
+    }
+
+    /**
+     * Whether a heal from source damages this combatant instead — false for a sheet; a {@code MonsterSheet} reads its
+     * stat block ({@code MonsterTemplate#invertsHealing}, core 0.0.91).
+     */
+    protected boolean invertsHealing(final HealingSource source) {
+        return false;
     }
 
     /** Whether this combatant's Raça's own traits are in force — not while a Forma suppresses innate ones. */
@@ -1295,6 +1311,11 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     public void applyEffect(final TemporaryEffect effect) {
         // Autocontrole's Cena immunity to this kind.
         if (isCenaImmune(CenaImmunity.kindOf(effect))) {
+            return;
+        }
+        // Corpo Fechado refuses a Malefício however it arrives; Estancar a Sangramento from the postponed hit.
+        if (effect instanceof Condition condition && condition.getType().isMaleficio() && isWardedAgainstMaleficios()
+                || effect instanceof Bleeding && holdsLive(StanchedWound.class)) {
             return;
         }
         int ceiling = effect.maximumSimultaneous();
@@ -2160,6 +2181,10 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     @Override
     public void applyCondition(final Condition applied) {
         Condition condition = received(applied);
+        // Corpo Fechado: "se torna imune à Malefícios".
+        if (condition.getType().isMaleficio() && isWardedAgainstMaleficios()) {
+            return;
+        }
         // Imunizar: "imune a … maldições" — Amaldiçoado is the Maldição this core names as a Condição.
         if (condition.getType() == ConditionType.AMALDICOADO && isWardedAgainstEnchantments()) {
             return;
@@ -3061,5 +3086,41 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
             }
             return false;
         });
+    }
+
+    private boolean holdsLive(final Class<? extends TemporaryEffect> kind) {
+        return temporaryEffects.stream().anyMatch(effect -> kind.isInstance(effect) && !effect.isExpired());
+    }
+
+    @Override
+    public boolean isWardedAgainstMaleficios() {
+        return holdsLive(MaleficioWard.class);
+    }
+
+    @Override
+    public List<TemporaryEffect> releaseSustainedBy(final UUID sustainerId) {
+        List<TemporaryEffect> ended = new ArrayList<>();
+        for (TemporaryEffect effect : List.copyOf(temporaryEffects)) {
+            if (effect instanceof MaleficioWard ward && ward.getSustainerId().equals(sustainerId) && ward.release()) {
+                temporaryEffects.remove(effect);
+                ended.add(effect);
+            }
+        }
+        return ended;
+    }
+
+    @Override
+    public Optional<PostponedWoundWard> getPostponedWoundWard() {
+        return temporaryEffects.stream()
+                .filter(effect -> effect instanceof PostponedWoundWard && !effect.isExpired())
+                .map(PostponedWoundWard.class::cast)
+                .findFirst();
+    }
+
+    @Override
+    public Optional<PostponedWoundWard> consumePostponedWoundWard() {
+        Optional<PostponedWoundWard> ward = getPostponedWoundWard();
+        ward.ifPresent(temporaryEffects::remove);
+        return ward;
     }
 }

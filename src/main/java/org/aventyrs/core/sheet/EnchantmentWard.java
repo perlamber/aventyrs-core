@@ -12,6 +12,15 @@ public class EnchantmentWard extends TemporaryEffect {
         super(rounds);
     }
 
+    private EnchantmentWard() {
+        super((Integer) null);
+    }
+
+    /** A ward with no Duração — held for as long as its holder stands (the Anciente's immunity). */
+    public static EnchantmentWard openEnded() {
+        return new EnchantmentWard();
+    }
+
     @Override
     boolean isCumulative() {
         return false;

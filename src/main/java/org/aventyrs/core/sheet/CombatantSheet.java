@@ -1738,4 +1738,27 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
 
     /** A Descanso Verdadeiro of restType was completed: lifts every effect waiting on one. */
     void completeTrueRest(RestType restType);
+
+    /** Whether a {@link MaleficioWard} (Corpo Fechado) is held — every Malefício is refused (core 0.0.94). */
+    default boolean isWardedAgainstMaleficios() {
+        return false;
+    }
+
+    /**
+     * sustainerId's focus broke: every {@link Sustained} effect they hold on this sheet starts its trailing Rodadas,
+     * and one with none ends now (core 0.0.94). Returns the effects that ended.
+     */
+    default java.util.List<TemporaryEffect> releaseSustainedBy(final java.util.UUID sustainerId) {
+        return java.util.List.of();
+    }
+
+    /** The Procrastinar Ferimento ward waiting for a hit, if any (core 0.0.94). */
+    default java.util.Optional<PostponedWoundWard> getPostponedWoundWard() {
+        return java.util.Optional.empty();
+    }
+
+    /** Spends the waiting {@link PostponedWoundWard} on the hit landing now — see {@code DamageInteraction}. */
+    default java.util.Optional<PostponedWoundWard> consumePostponedWoundWard() {
+        return java.util.Optional.empty();
+    }
 }

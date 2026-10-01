@@ -38,6 +38,7 @@ public class DamageInteraction implements Interaction<CombatantSheet> {
     private Interaction<CombatantSheet> nextInteraction;
     private boolean halfDamage;
     private org.aventyrs.core.character.DamageSanctity sanctity;
+    private org.aventyrs.core.util.DiceRoller diceRoller;
 
     /** Whether this hit's PV loss lands at the next Rodada boundary — see {@link #postponing()}. */
     private boolean postponed;
@@ -132,6 +133,16 @@ public class DamageInteraction implements Interaction<CombatantSheet> {
      */
     public DamageInteraction withSanctity(final org.aventyrs.core.character.DamageSanctity sanctity) {
         this.sanctity = sanctity;
+        return this;
+    }
+
+    /**
+     * The dice this hit may need to throw (core 0.0.91) — a Vampiro healed by a Magia Profana "em 1d6+Metade do Vigor"
+     * instead of damaged ({@code Race#resolveInvertedSpellHealing}). Set by {@code AttackDelivery} from the attack's
+     * own roller; with none, an inverted hit simply deals nothing.
+     */
+    public DamageInteraction withDiceRoller(final org.aventyrs.core.util.DiceRoller diceRoller) {
+        this.diceRoller = diceRoller;
         return this;
     }
 
@@ -239,7 +250,13 @@ public class DamageInteraction implements Interaction<CombatantSheet> {
         }
         // Procrastinar Ferimento: the PV are lost at the next Rodada boundary instead of now. The
         // figure below stays the honest one — everything but the loss itself happens on schedule.
-        if (postponed) {
+        // A Procrastinar Ferimento cast as a Reação before this hit waits on the target, and is spent by it.
+        java.util.Optional<org.aventyrs.core.sheet.PostponedWoundWard> ward = postponed || source == null
+                ? java.util.Optional.empty()
+                : target.consumePostponedWoundWard();
+        ward.filter(org.aventyrs.core.sheet.PostponedWoundWard::isStanched)
+                .ifPresent(stanched -> target.applyEffect(new org.aventyrs.core.sheet.StanchedWound()));
+        if (postponed || ward.isPresent()) {
             target.schedulePostponedDamage(finalDamage, source);
         } else {
             target.applyDamage(finalDamage);
@@ -256,10 +273,25 @@ public class DamageInteraction implements Interaction<CombatantSheet> {
         // Cataclismo's elemental half, Estilhaçador's half for the items, Oferenda Maldita's steal.
         target.recordDamageReceived(new DamageReceipt(finalDamage, damageType, source));
 
+        // A Magia that heals the target's Raça instead (a Vampiro and a Magia Profana, core 0.0.91): no damage landed —
+        // its immunity already saw to that — and the heal it gives in its place happens now.
+        int invertedHeal = spell == null || target.getCharacter().getRace() == null
+                || target.getRacialTraitSuppression().suppressesInnateTraits() ? 0
+                : target.getCharacter().getRace().resolveInvertedSpellHealing(spell, target.getCharacter(), diceRoller);
+        int healed = 0;
+        if (invertedHeal > 0 && finalDamage == 0) {
+            int before = target.getDamageTaken();
+            target.heal(invertedHeal, org.aventyrs.core.sheet.HealingSource.spell(spell, source));
+            healed = before - target.getDamageTaken();
+        }
+
         InteractionResult.InteractionResultBuilder result = InteractionResult.builder()
                 .resultStatus(hitPointsService.getStatus(target))
                 .resourceLossValue(finalDamage)
                 .resourceLossType(ResourceType.HIT_POINTS);
+        if (healed > 0) {
+            result.resourceGainValue(healed).resourceGainType(ResourceType.HIT_POINTS);
+        }
         if (finalDamage > 0) {
             result.nextInteraction(nextInteraction != null ? nextInteraction : this.nextInteraction);
         }

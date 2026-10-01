@@ -156,6 +156,12 @@ public class Scene {
     private final List<ActiveAreaSpellEffect> activeAreaSpellEffects = new ArrayList<>();
     private final List<ActiveAura> activeAuras = new ArrayList<>();
 
+    /** The creatures invocations put here — see {@link #addSummon}. */
+    private final List<SceneSummon> summons = new ArrayList<>();
+
+    /** What keeps invoking a creature each Rodada — see {@link #addSummonSpawner}. */
+    private final List<SummonSpawner> summonSpawners = new ArrayList<>();
+
     /**
      * What each holder's passive Auras are currently granting, keyed by holder — the ledger {@link
      * #refreshProjectedAuras} revokes against, the same shape and for the same reason as {@link
@@ -758,7 +764,15 @@ public class Scene {
             throw new IllegalOperationException(NO_PARTICIPANTS_IN_SCENE);
         }
         if (currentIndex >= 0) {
-            activeEntries.get(currentIndex).getCombatantSheet().finishTurn();
+            CombatantSheet finishing = activeEntries.get(currentIndex).getCombatantSheet();
+            finishing.finishTurn();
+            // A summon replaced by a newer one of its group "desaparece ao final do Turno" of its caster.
+            List<CombatantSheet> replaced = summons.stream()
+                    .filter(held -> held.isReplaced() && held.getSummoner() == finishing)
+                    .map(SceneSummon::getSummon)
+                    .toList();
+            replaced.forEach(this::dismissSummon);
+            currentIndex = indexOf(activeEntries, finishing);
         }
         currentIndex++;
         if (currentIndex >= activeEntries.size()) {
@@ -769,6 +783,8 @@ public class Scene {
             if (combatScene) {
                 currentRound++;
                 startNewRound();
+                // An invocation leaving at the boundary may have stood at the top of the order.
+                currentIndex = 0;
             }
         }
         CombatantSheet active = activeEntries.get(currentIndex).getCombatantSheet();
@@ -1174,6 +1190,10 @@ public class Scene {
         }
 
         if (removed) {
+            // A summon's record goes with it; a caster leaving takes its invocations along.
+            summons.removeIf(held -> held.getSummon() == characterSheet);
+            getSummonsOf(characterSheet).forEach(held -> dismissSummon(held.getSummon()));
+            summonSpawners.removeIf(spawner -> spawner.getCaster() == characterSheet);
             activeAuras.removeIf(aura -> aura.isHeldBy(characterSheet));
             // The Encantamentos this combatant's Aura cast are lifted with it. They live on the
             // foes who took them, so nothing else would clear them — and a compulsion to attack
@@ -1194,6 +1214,145 @@ public class Scene {
             });
         }
         return removed;
+    }
+
+    /**
+     * Puts summon into the Scene as caster's invocation (core 0.0.92; table ruling: its own participant, acting right
+     * after its caster, controlled by the caster's player) — in caster's sub-group, with caster's Iniciativa, placed
+     * immediately after caster's entry, so a creature summoned on the caster's Turn acts as that Turn ends. A caster
+     * who joined mid-Rodada is pending, and so is what it invokes.
+     *
+     * <p>exclusivityGroup names what may not coexist under one caster ("Apenas 1 Aliado da Natureza pode ser invocado
+     * por vez, caso um novo … seja invocado o anterior desaparece ao final do Turno"): any earlier summon of the same
+     * group under caster is marked and dismissed when caster's Turn ends. {@code null} groups nothing. rounds is its
+     * Duração in Rodadas — it is dismissed at the boundary that exhausts it; {@code null} lasts until dismissed.
+     *
+     * @return the record kept for it
+     * @throws IllegalOperationException ({@code CHARACTER_SHEET_NOT_IN_SCENE}) if caster is not here
+     */
+    public SceneSummon addSummon(@lombok.NonNull final CombatantSheet caster, @lombok.NonNull final CombatantSheet summon,
+                                 final String exclusivityGroup, final Integer rounds) {
+        return addSummons(caster, List.of(summon), exclusivityGroup, rounds, false).get(0);
+    }
+
+    /**
+     * Several invocations of one cast (Canção de Flora's animals, Laboratório de Lacerto's two Experimentos) — as
+     * {@link #addSummon}, but the group's earlier summons are replaced once, never by each other. With concentration,
+     * rounds is the N of "Concentração + N Rodadas": no countdown starts until {@link #breakConcentration}.
+     */
+    public List<SceneSummon> addSummons(@lombok.NonNull final CombatantSheet caster,
+                                        @lombok.NonNull final List<? extends CombatantSheet> summoned,
+                                        final String exclusivityGroup, final Integer rounds,
+                                        final boolean concentration) {
+        UUID group = groupOf(caster);
+        if (exclusivityGroup != null) {
+            summons.stream()
+                    .filter(held -> held.getSummoner() == caster && exclusivityGroup.equals(held.getExclusivityGroup()))
+                    .forEach(SceneSummon::markReplaced);
+        }
+        List<SceneSummon> records = new ArrayList<>();
+        for (CombatantSheet summon : summoned) {
+            int casterIndex = indexOf(activeEntries, caster);
+            int initiative = casterIndex >= 0
+                    ? activeEntries.get(casterIndex).getEffectiveInitiativeValue()
+                    : pendingEntries.get(indexOf(pendingEntries, caster)).getEffectiveInitiativeValue();
+            InitiativeEntry entry = new InitiativeEntry(summon, initiative, group);
+            if (casterIndex >= 0) {
+                // After the caster and the summons already placed behind it, in the order they were invoked.
+                int at = casterIndex + 1;
+                while (at < activeEntries.size() && isSummonOf(activeEntries.get(at).getCombatantSheet(), caster)) {
+                    at++;
+                }
+                activeEntries.add(at, entry);
+                if (currentIndex >= at) {
+                    currentIndex++;
+                }
+            } else {
+                pendingEntries.add(entry);
+            }
+            SceneSummon record = new SceneSummon(summon, caster, exclusivityGroup,
+                    concentration ? null : rounds, concentration ? (rounds == null ? 0 : rounds) : null);
+            summons.add(record);
+            records.add(record);
+        }
+        return List.copyOf(records);
+    }
+
+    private boolean isSummonOf(final CombatantSheet sheet, final CombatantSheet caster) {
+        return summons.stream().anyMatch(held -> held.getSummon() == sheet && held.getSummoner() == caster);
+    }
+
+    /**
+     * caster's Concentração breaks — "quando o conjurador conjura outra Magia ou ataca" ({@code magic.SpellDuration}),
+     * which the caller reports, since an attack Perícia has no single chokepoint here. Every summon it sustained starts
+     * its trailing Rodadas; one with none (a bare Concentração) leaves at once. Returns those dismissed.
+     */
+    public List<CombatantSheet> breakConcentration(@lombok.NonNull final CombatantSheet caster) {
+        // Effects they sustain on anyone's sheet — Corpo Fechado's ward — start their trailing Rodadas too.
+        getAllParticipants().forEach(participant -> participant.releaseSustainedBy(caster.getId()));
+        List<CombatantSheet> gone = summons.stream()
+                .filter(held -> held.getSummoner() == caster)
+                .filter(SceneSummon::release)
+                .map(SceneSummon::getSummon)
+                .toList();
+        gone.forEach(this::dismissSummon);
+        return gone;
+    }
+
+    /**
+     * Something that invokes a new creature every Rodada for caster (Totem de Gaea: "A cada Rodada um novo animal é
+     * criado desta forma") — one now, then one at each Rodada boundary while it lasts. spawn builds each creature,
+     * each placed by {@link #addSummon} with summonRounds and no group. rounds is the spawner's own Duração.
+     */
+    public SummonSpawner addSummonSpawner(@lombok.NonNull final CombatantSheet caster, final Integer rounds,
+                                          @lombok.NonNull final java.util.function.Supplier<? extends CombatantSheet> spawn,
+                                          final Integer summonRounds) {
+        SummonSpawner spawner = new SummonSpawner(caster, rounds, spawn, summonRounds);
+        summonSpawners.add(spawner);
+        addSummon(caster, spawn.get(), null, summonRounds);
+        return spawner;
+    }
+
+    /** The spawners still running here. */
+    public List<SummonSpawner> getSummonSpawners() {
+        return List.copyOf(summonSpawners);
+    }
+
+    /** Every invocation currently in the Scene. */
+    public List<SceneSummon> getSummons() {
+        return List.copyOf(summons);
+    }
+
+    /** caster's invocations currently in the Scene. */
+    public List<SceneSummon> getSummonsOf(final CombatantSheet caster) {
+        return summons.stream().filter(held -> held.getSummoner() == caster).toList();
+    }
+
+    /** The record for summon, if it is an invocation here. */
+    public java.util.Optional<SceneSummon> getSummon(final CombatantSheet summon) {
+        return summons.stream().filter(held -> held.getSummon() == summon).findFirst();
+    }
+
+    /** Sends summon away — it leaves the Scene. */
+    public void dismissSummon(final CombatantSheet summon) {
+        summons.removeIf(held -> held.getSummon() == summon);
+        removeParticipant(summon);
+    }
+
+    /**
+     * Sends away every invocation brought down to 0 PV or below — "se o animal fosse sofrer um dano letal, o animal
+     * desaparece" (⚠️ read as falling, not dying: it never reaches Coma). The caller calls it after applying damage to
+     * one; the Rodada boundary calls it too. Returns those dismissed.
+     */
+    public List<CombatantSheet> settleSummons() {
+        org.aventyrs.core.character.services.HitPointsService hitPoints =
+                new org.aventyrs.core.character.services.HitPointsServiceImpl();
+        List<CombatantSheet> fallen = summons.stream()
+                .map(SceneSummon::getSummon)
+                .filter(sheet -> hitPoints.getCurrentHitPoints(sheet.getCharacter(), sheet) <= 0)
+                .toList();
+        fallen.forEach(this::dismissSummon);
+        return fallen;
     }
 
     /**
@@ -1236,6 +1395,14 @@ public class Scene {
      * first {@link CombatantSheet#startTurn(int)} of the new Round.
      */
     private void startNewRound() {
+        // Invocations whose Duração ran out leave, and any brought down since are settled.
+        List<CombatantSheet> expired = summons.stream().filter(SceneSummon::tick).map(SceneSummon::getSummon).toList();
+        expired.forEach(this::dismissSummon);
+        settleSummons();
+        // A spawner still standing invokes this Rodada's creature; a spent one stops.
+        summonSpawners.removeIf(SummonSpawner::tick);
+        new ArrayList<>(summonSpawners).forEach(spawner ->
+                addSummon(spawner.getCaster(), spawner.getSpawn().get(), null, spawner.getSummonRounds()));
         activeAreaSpellEffects.forEach(ActiveAreaSpellEffect::tick);
         activeAreaSpellEffects.removeIf(ActiveAreaSpellEffect::isExpired);
         activeAuras.forEach(ActiveAura::tick);
@@ -1246,6 +1413,15 @@ public class Scene {
         activeEntries.forEach(entry -> entry.getCombatantSheet().advanceInitiativeOverride());
         activeEntries.sort(Comparator.comparingInt(InitiativeEntry::getEffectiveInitiativeValue).reversed());
         activeEntries.forEach(entry -> entry.getCombatantSheet().startNewRound());
+        // A Bispo's "recuperar 2PV por Rodada" (core 0.0.92), own or a Prodigioso ally's, in a Cena de Combate.
+        for (InitiativeEntry entry : activeEntries) {
+            CombatantSheet sheet = entry.getCombatantSheet();
+            int heal = org.aventyrs.core.subordinate.SubordinateBenefit.REGENERATION * org.aventyrs.core.subordinate.SubordinateBenefits.count(sheet, buildContext(sheet, java.util.Map.of()),
+                    org.aventyrs.core.subordinate.SubordinateBenefit.BISPO_REGENERATION);
+            if (heal > 0) {
+                sheet.heal(heal, org.aventyrs.core.sheet.HealingSource.subordinate());
+            }
+        }
     }
 
     /** Inserts before the first entry with a strictly lower value, keeping ties in insertion order. */

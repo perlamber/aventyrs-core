@@ -80,7 +80,10 @@ public class SpellCastingServiceImpl implements SpellCastingService {
                 spell, empowerment);
         ActiveAreaSpellEffect areaSpellEffect = registerAreaSpellEffect(request, spell, durationInRounds);
         int castingDifficultyReduction = resolveCastingDifficultyReduction(spell, request.getCaster());
-        DifficultyLevel authoredDifficulty = spell.getCastingDifficultyLevel();
+        DifficultyLevel authoredDifficulty = request.getOpposedBranchLevel() == null
+                ? spell.getCastingDifficultyLevel()
+                : spell.getCastingDifficultyAgainst(request.getOpposedBranchLevel())
+                        .orElse(spell.getCastingDifficultyLevel());
         ActivationTime activationTime = surcharged(resolveActivationTime(spell, request.getCaster(),
                 request.getScene().getCurrentRound(), request.getActivatedFeats()), empowerment);
         Character casterCharacter = request.getCaster().getCharacter();
@@ -119,6 +122,9 @@ public class SpellCastingServiceImpl implements SpellCastingService {
                 .castingDifficultyReduction(castingDifficultyReduction)
                 .castingDifficultyLevel(authoredDifficulty == null ? null
                         : authoredDifficulty.easier(castingDifficultyReduction))
+                .castingTargetValue(castingTargetValue(request, spell, authoredDifficulty == null ? null
+                        : authoredDifficulty.easier(castingDifficultyReduction)))
+                .castVersion(spell)
                 .activationTime(activationTime)
                 .durationInRounds(durationInRounds.isPresent() ? durationInRounds.getAsInt() : null)
                 .areaSpellEffect(areaSpellEffect)
@@ -296,7 +302,9 @@ public class SpellCastingServiceImpl implements SpellCastingService {
                 .mapToInt(feat -> feat.resolveManaCostReduction(spell, caster, request.getCombatantTarget(),
                         request.getSceneContext()))
                 .sum();
-        return cost <= 0 || reduction <= 0 ? cost : Math.max(MINIMUM_REDUCED_MANA_COST, cost - reduction);
+        int reduced = cost <= 0 || reduction <= 0 ? cost : Math.max(MINIMUM_REDUCED_MANA_COST, cost - reduction);
+        // Corrente Abençoada: "Para cada criatura adicional é necessário o uso de +3PM".
+        return reduced + request.getAdditionalTargets().size() * spell.getAdditionalTargetManaCost();
     }
 
     @Override
@@ -411,16 +419,16 @@ public class SpellCastingServiceImpl implements SpellCastingService {
             throw new org.aventyrs.core.sheet.IllegalOperationException(INVALID_SPELL_CAST_TARGET);
         }
 
-        SpellTargeting targeting = spell.getTargeting();
-        boolean hasCombatantTarget = request.getCombatantTarget() != null;
-        boolean hasPositionTarget = request.getPositionTarget() != null;
-        boolean validTarget = switch (targeting.reach()) {
-            case PESSOAL, PLANAR -> !hasCombatantTarget && !hasPositionTarget;
-            case TOQUE, DISTANCIA -> hasCombatantTarget && !hasPositionTarget;
-            case AREA_DE_EFEITO -> !hasCombatantTarget
-                    && (targeting.isCenteredOnCaster() ? !hasPositionTarget : hasPositionTarget);
-        };
+        // "Pessoal ou Toque": a cast fits either of the version's two ways of aiming (core 0.0.93).
+        boolean validTarget = fits(spell.getTargeting(), request)
+                || spell.getAlternateTargeting().map(alternate -> fits(alternate, request)).orElse(false);
         if (!validTarget) {
+            throw new org.aventyrs.core.sheet.IllegalOperationException(INVALID_SPELL_CAST_TARGET);
+        }
+        // Benção Bifurcada / Corrente Abençoada: who else it reaches, each a participant, within the version's cap.
+        if (request.getAdditionalTargets().size() > spell.getMaxAdditionalTargets()
+                || request.getAdditionalTargets().stream()
+                        .anyMatch(extra -> !request.getScene().getAllParticipants().contains(extra))) {
             throw new org.aventyrs.core.sheet.IllegalOperationException(INVALID_SPELL_CAST_TARGET);
         }
         // Transferir Vitalidade: "apenas quando os alvos forem personagens aliados" — no enemy target.
@@ -429,6 +437,80 @@ public class SpellCastingServiceImpl implements SpellCastingService {
                         request.getCombatantTarget())))) {
             throw new org.aventyrs.core.sheet.IllegalOperationException(HIT_POINT_PAYMENT_NOT_PERMITTED);
         }
+    }
+
+    private static boolean fits(final SpellTargeting targeting, final SpellCastRequest request) {
+        boolean hasCombatantTarget = request.getCombatantTarget() != null;
+        boolean hasPositionTarget = request.getPositionTarget() != null;
+        return switch (targeting.reach()) {
+            case PESSOAL, PLANAR -> !hasCombatantTarget && !hasPositionTarget;
+            case TOQUE, DISTANCIA -> hasCombatantTarget && !hasPositionTarget;
+            case AREA_DE_EFEITO -> !hasCombatantTarget
+                    && (targeting.isCenteredOnCaster() ? !hasPositionTarget : hasPositionTarget);
+        };
+    }
+
+    /**
+     * The GD's value, raised to the target's DM for an "ou DM do Alvo (maior)" version — ⚠️ only for a target other
+     * than the caster: one's own DM does not resist one's own Magia.
+     */
+    private static Integer castingTargetValue(final SpellCastRequest request, final Spell spell,
+                                              final DifficultyLevel difficulty) {
+        if (difficulty == null) {
+            return null;
+        }
+        int value = difficulty.getBaseValue();
+        CombatantSheet target = request.getCombatantTarget();
+        if (spell.isCastingDifficultyFlooredByTargetMagicDefense() && target != null && target != request.getCaster()) {
+            value = Math.max(value, magicDefenseOf(target));
+        }
+        return value;
+    }
+
+    private static int magicDefenseOf(final CombatantSheet target) {
+        return target instanceof org.aventyrs.core.monster.MonsterSheet foe
+                ? foe.getDefense(org.aventyrs.core.character.DefenseType.MAGIC)
+                : new org.aventyrs.core.character.services.DefenseServiceImpl()
+                        .getTotalDefense(target, org.aventyrs.core.character.DefenseType.MAGIC);
+    }
+
+    @Override
+    public boolean castSucceeds(final SpellCastingResult result, final int castTotal) {
+        return result.getCastingTargetValue() == null || castTotal >= result.getCastingTargetValue();
+    }
+
+    @Override
+    public boolean isEffectChainTriggered(final SpellCastingResult result, final CombatantSheet target,
+                                          final int castTotal) {
+        if (result.getCastingTargetValue() == null || !castSucceeds(result, castTotal)) {
+            return false;
+        }
+        int required = target == null || target.getCharacter() == null
+                ? org.aventyrs.core.effect.EffectChainService.BASE_REQUIRED_MARGIN
+                : new org.aventyrs.core.effect.EffectChainServiceImpl().getRequiredMargin(target.getCharacter());
+        return castTotal - result.getCastingTargetValue() >= required;
+    }
+
+    @Override
+    public Optional<org.aventyrs.core.effect.EffectChain> resolveEffectChain(
+            final Spell castVersion, final CombatantSheet caster, final org.aventyrs.core.util.DiceRoller roller) {
+        return castVersion.getEffectChainKind().map(kind -> switch (kind) {
+            case SOBRECURA -> new org.aventyrs.core.effect.Sobrecura(caster, castVersion.isAlternateVersion()
+                    ? ((AlternateSpellVersion) castVersion).getParent() : castVersion, roller.rollD6());
+            case ESTANCAR -> new org.aventyrs.core.effect.Estancar();
+        });
+    }
+
+    @Override
+    public Optional<org.aventyrs.core.effect.CriticalEffect> resolveCastingCriticalEffect(
+            final Spell castVersion, final CombatantSheet caster, final org.aventyrs.core.skill.SkillRoll castingRoll,
+            final org.aventyrs.core.util.DiceRoller roller) {
+        org.aventyrs.core.skill.CriticalResult critical = castingRoll.getCriticalResult();
+        if (castVersion.getCriticalEffectType() == null || critical == null || !critical.isCriticalSuccess()) {
+            return Optional.empty();
+        }
+        return org.aventyrs.core.effect.CriticalEffects.create(castVersion.getCriticalEffectType(),
+                org.aventyrs.core.effect.CriticalEffectContext.of(caster, castVersion, critical, roller));
     }
 
     private ActiveAreaSpellEffect registerAreaSpellEffect(final SpellCastRequest request, final Spell spell,

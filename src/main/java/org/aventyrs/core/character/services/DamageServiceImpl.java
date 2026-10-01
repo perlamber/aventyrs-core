@@ -266,6 +266,8 @@ public class DamageServiceImpl implements DamageService {
         total += sumEgoAdvantageAbsoluteDamageReduction(character, sceneContext);
         total += sumTitleAbilityAbsoluteDamageReduction(character, target, sceneContext);
         total += sumAllyGrantedAbsoluteDamageReduction(target, sceneContext);
+        // A Torre's "RA" (core 0.0.92) — one instance per Torre reaching the target.
+        total += DamageService.DEFAULT_DAMAGE_REDUCTION * org.aventyrs.core.subordinate.SubordinateBenefits.count(target, sceneContext, org.aventyrs.core.subordinate.SubordinateBenefit.TORRE_RA);
         // A *timed* RA grant — an activated ability handing its holder RA for N Rodadas
         // (AbencoadoPelaLuzAbility#GLORIA_RELAMPEJANTE_DE_TESLA). Deliberately a second
         // consumption branch beside the continuously-scanned passives above: every other source

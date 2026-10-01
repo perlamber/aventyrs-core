@@ -36,6 +36,17 @@ public class SpellCastingResult {
     org.aventyrs.core.skill.DifficultyLevel castingDifficultyLevel;
 
     /**
+     * The total the Conjuração must reach (core 0.0.93): {@link #castingDifficultyLevel}'s value, raised to the named
+     * target's DM when the version reads "ou DM do Alvo (maior)" ({@code Spell#isCastingDifficultyFlooredByTargetMagicDefense})
+     * and the target is not the caster. {@code null} when no GD is stated — nothing to fail against. Judged by {@link
+     * SpellCastingService#castSucceeds}.
+     */
+    Integer castingTargetValue;
+
+    /** The version actually cast — the Magia or its Efeito Alternativo (core 0.0.93). */
+    Spell castVersion;
+
+    /**
      * This version's Tempo de Ativação as the caster pays it on this cast — the authored figure
      * after any Talento reduction, see {@link SpellCastingService#resolveActivationTime}. Reported,
      * not spent. {@code null} on the legacy overload.

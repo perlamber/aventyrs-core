@@ -140,6 +140,33 @@ public class AlternateSpellVersion implements Spell {
     }
 
     @Override
+    public int getMaxAdditionalTargets() {
+        return alternate.maxAdditionalTargets() != null ? alternate.maxAdditionalTargets()
+                : parent.getMaxAdditionalTargets();
+    }
+
+    @Override
+    public int getAdditionalTargetManaCost() {
+        return alternate.additionalTargetManaCost() != null ? alternate.additionalTargetManaCost()
+                : parent.getAdditionalTargetManaCost();
+    }
+
+    @Override
+    public Optional<SpellWard> getWard() {
+        return Optional.ofNullable(alternate.ward());
+    }
+
+    @Override
+    public boolean isCasterAffected() {
+        return alternate.casterAffected() != null ? alternate.casterAffected() : parent.isCasterAffected();
+    }
+
+    @Override
+    public Optional<SpellChainKind> getEffectChainKind() {
+        return Optional.ofNullable(alternate.effectChainKind());
+    }
+
+    @Override
     public Optional<SpellHealing> getHealing() {
         return alternate.healing() != null ? Optional.of(alternate.healing()) : Optional.empty();
     }

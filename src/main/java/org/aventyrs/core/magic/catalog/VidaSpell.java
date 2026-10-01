@@ -4,12 +4,15 @@ import org.aventyrs.core.effect.CriticalEffectType;
 import org.aventyrs.core.magic.ActivationTime;
 import org.aventyrs.core.magic.AuthoredSpell;
 import org.aventyrs.core.magic.BranchLevel;
+import org.aventyrs.core.magic.Spell;
 import org.aventyrs.core.magic.SpellAlternateEffect;
+import org.aventyrs.core.magic.SpellChainKind;
 import org.aventyrs.core.magic.SpellData;
 import org.aventyrs.core.magic.SpellDuration;
 import org.aventyrs.core.magic.SpellHealing;
 import org.aventyrs.core.magic.SpellTargeting;
 import org.aventyrs.core.magic.SpellTree;
+import org.aventyrs.core.magic.SpellWard;
 import org.aventyrs.core.rest.RestType;
 import org.aventyrs.core.scene.AreaOfEffect;
 import org.aventyrs.core.scene.Range;
@@ -58,9 +61,8 @@ public enum VidaSpell implements AuthoredSpell {
      * {@code heal} clears one too, but only as a consequence of PV coming back, which is the
      * opposite of what this clause says.
      */
-    // TODO: "só afeta o alvo 1 vez, voltando a afetá-lo somente após ele passar por um Descanso
-    //  Longo" is per-target effect history, which no sheet records — the same limit {@code
-    //  RegeneracaoSpell#REGENERACAO} states and is blocked on.
+    // "só afeta o alvo 1 vez, voltando a afetá-lo somente após ele passar por um Descanso Longo" is
+    //  SpellHealing#oncePerLongRest — a mark on the target until its Descanso Longo (core 0.0.94).
     /**
      * <b>Its Efeito Alternativo is the catalog's only Reação-cast second version</b>, and it
      * overrides three of its parent's columns at once — Tempo de Conjuração 2PA → Reação, Alcance
@@ -71,17 +73,11 @@ public enum VidaSpell implements AuthoredSpell {
      * already-mitigated figure to {@code CombatantSheet#schedulePostponedDamage}, and the Rodada
      * boundary applies it. The hit still landed — only the PV loss moved.
      *
-     * <p><i>Estancar</i> needs no mechanism, and deliberately gets none: {@code
-     * AttackDelivery#resolve} assembles a hit's chain but applies none of it, and every {@code
-     * CriticalEffect} reports its own {@code getType()}, so a caller honouring Estancar simply
-     * does not run the {@code SANGRAMENTO} stage — the same division of labour {@code
-     * CriticalEffect#applicableTo} already follows for a defender's immunities.
+     * <p>Cast as a Reação before the attack resolves (the {@code GUARDA_VIDAS} ordering), it leaves a {@code
+     * sheet.PostponedWoundWard} on its target, which the next hit's {@code DamageInteraction} spends (core 0.0.94).
+     * <i>Estancar</i> ({@code SpellChainKind#ESTANCAR}) marks that ward, and the postponed hit then refuses a
+     * Sangramento for its Rodada ({@code sheet.StanchedWound}). The caller spends the Reação.
      */
-    // TODO: nothing suppresses that Sangramento *automatically*. A per-hit (rather than
-    //  per-target) filter would need a new parameter threaded through AttackDelivery#buildChain,
-    //  and no second clause asks for one yet.
-    // TODO: the Reação it costs is reported, never spent — nothing in this core tracks a
-    //  combatant's remaining Reações (see MovementReactionService's own documented limit).
     ALIVIAR_A_DOR(SpellData.builder()
             .name("Aliviar a Dor")
             .branchLevel(BranchLevel.SEMENTE)
@@ -95,7 +91,7 @@ public enum VidaSpell implements AuthoredSpell {
                     + "Este é um efeito similar a Descanso e não substitui Descansos reais. "
                     + "O efeito de cura desta magia só afeta o alvo 1 vez, voltando a afetá-lo somente após ele "
                     + "passar por um Descanso Longo.")
-            .healing(SpellHealing.restEquivalent(RestType.MINIMO).onlyIfNotBleeding())
+            .healing(SpellHealing.restEquivalent(RestType.MINIMO).onlyIfNotBleeding().oncePerLongRestPerTarget())
             .secondaryEffectDescription("Procrastinar Ferimento: Como uma Reação você pode fazer com os PV que você, "
                     + "ou um aliado em Distância Curta, perderia em decorrência de um ataque sejam perdidos apenas "
                     + "no Rodada seguinte. Corrente de Efeitos - Estancar: Se o dano sofrido fosse causar efeitos de "
@@ -106,6 +102,8 @@ public enum VidaSpell implements AuthoredSpell {
                     .targeting(SpellTargeting.distancia(Range.DISTANCIA_CURTA))
                     .effectChainDescription("Estancar: Se o dano sofrido fosse causar efeitos de Sangramento ele "
                             + "não causará este efeito.")
+                    .effectChainKind(SpellChainKind.ESTANCAR)
+                    .ward(SpellWard.POSTPONED_WOUND)
                     .build())
             .criticalEffectType(CriticalEffectType.AMENIZAR)
             .duration(SpellDuration.INSTANTANEA)
@@ -128,6 +126,7 @@ public enum VidaSpell implements AuthoredSpell {
                     + "Este é um efeito similar a Descanso e não substitui Descansos reais.")
             .healing(SpellHealing.restEquivalent(RestType.LONGO))
             .effectChainDescription("Sobrecura: O alvo desta magia adicionalmente recupera +1d6+Metade do Foco PV.")
+            .effectChainKind(SpellChainKind.SOBRECURA)
             .secondaryEffectDescription("Benção Bifurcada: Você pode curar até 2 alvos ao mesmo tempo. O GD da "
                     + "Conjuração muda pra Médio, se bem-sucedido ambos os alvos recuperam PV como se passassem por "
                     + "um Descanso Mínimo. Pode aplicar a Corrente de Efeitos – Sobrecura.")
@@ -135,9 +134,11 @@ public enum VidaSpell implements AuthoredSpell {
             // "ou DM do alvo (Maior)" floor — so the override that matters is the floor, not the tier.
             .alternateEffect(SpellAlternateEffect.builder()
                     .name("Benção Bifurcada")
+                    .maxAdditionalTargets(1)
                     .castingDifficultyLevel(DifficultyLevel.MEDIUM)
                     .castingDifficultyFlooredByTargetMagicDefense(false)
                     .healing(SpellHealing.restEquivalent(RestType.MINIMO))
+                    .effectChainKind(SpellChainKind.SOBRECURA)
                     .build())
             .criticalEffectType(CriticalEffectType.AMENIZAR)
             .duration(SpellDuration.INSTANTANEA)
@@ -202,14 +203,18 @@ public enum VidaSpell implements AuthoredSpell {
                     + "Este é um efeito similar a Descanso e não substitui Descansos reais.")
             .healing(SpellHealing.restEquivalent(RestType.TOTAL))
             .effectChainDescription("Sobrecura.")
+            .effectChainKind(SpellChainKind.SOBRECURA)
             .secondaryEffectDescription("Cura em Massa: Ao invés de afetar um único alvo você pode fazer com que "
                     + "você e todos os outros personagens à até 2m de você recuperem PV como se passassem por "
                     + "Descanso Mínimo. Pode aplicar a Corrente de Efeitos – Sobrecura.")
-            // TODO: "à até 2m de você" is a reach in metres, which no Range band expresses — the
-            //  targeting override is left unset and the caller picks who is within it.
+            // "você e todos os outros personagens à até 2m de você" — ⚠️ 2m read as 1 UD around the caster
+            //  (a Categoria 0 body is 1,5–2m), the caster included.
             .alternateEffect(SpellAlternateEffect.builder()
                     .name("Cura em Massa")
+                    .targeting(SpellTargeting.areaDeEfeito(AreaOfEffect.circle(1)))
+                    .casterAffected(true)
                     .healing(SpellHealing.restEquivalent(RestType.MINIMO))
+                    .effectChainKind(SpellChainKind.SOBRECURA)
                     .build())
             .criticalEffectType(CriticalEffectType.AMENIZAR)
             .duration(SpellDuration.INSTANTANEA)
@@ -248,11 +253,9 @@ public enum VidaSpell implements AuthoredSpell {
      * SpellHealing#halvedForHostiles()}), but <em>which</em> targets are hostile is the caller's:
      * a Magia of this shape needs one effect per combatant in the footprint.
      */
-    // TODO: nothing resolves the Área de Efeito into a set of combatants — see CLAUDE.md's
-    //  "Area de Efeito" gap. The caller picks the targets and builds an effect for each via
-    //  {@code SpellCastingService#resolveEffect(spell, hostileTarget)}.
-    // TODO: the Efeito Alternativo recovers PM and PD too, at a different rest tier per group,
-    //  and exempts the caster. {@code SpellHealing} holds one tier and PV only.
+    // The caller resolves the footprint (scene.grid.AreaFootprint, the caster included — Spell#isCasterAffected)
+    //  and builds each occupant's effect via SpellCastingService#resolveEffect. Fonte da Juventude restores PV, PM
+    //  and PD, hostiles at a Mínimo, and spares the caster (core 0.0.94).
     NOVA_REJUVENESCEDORA(SpellData.builder()
             .name("Nova Rejuvenescedora")
             .branchLevel(BranchLevel.EMERGENTE)
@@ -268,18 +271,20 @@ public enum VidaSpell implements AuthoredSpell {
                     + "Inimigos do conjurador recuperam apenas metade desta quantidade de PV.")
             .healing(SpellHealing.restEquivalent(RestType.LONGO).halvingForHostiles())
             .effectChainDescription("Sobrecura.")
+            .effectChainKind(SpellChainKind.SOBRECURA)
             .secondaryEffectDescription("Fonte da Juventude: Sua onda de energia curativa recupera PV, PM e PD de "
                     + "todas as criaturas afetadas, mas não recupera o conjurador, como se passassem por um descanso "
                     + "curto. "
                     + "Criaturas hostis ao conjurador recuperam pontos como se passassem por um descanso mínimo.")
-            // TODO: its recovery is deliberately left unauthored rather than partly authored.
-            //  Three things block it, and authoring the PV third alone would read as done:
-            //  it restores PM and PD as well as PV, which SpellHealing does not carry; it gives
-            //  hostis a *different tier* (Mínimo vs Curto) where halvedForHostiles only halves;
-            //  and it exempts the caster, which no column expresses. Note the halving happens to
-            //  coincide with Mínimo at today's multipliers (1.0/2 == 0.5) — do not lean on that,
-            //  it is arithmetic coincidence, not the rule the text states.
-            .alternateEffect(SpellAlternateEffect.named("Fonte da Juventude"))
+            // "recupera PV, PM e PD … como se passassem por um descanso curto … mas não recupera o conjurador";
+            //  "Criaturas hostis … como se passassem por um descanso mínimo".
+            .alternateEffect(SpellAlternateEffect.builder()
+                    .name("Fonte da Juventude")
+                    .healing(SpellHealing.restEquivalent(RestType.CURTO).restoringAllPools()
+                            .withHostileRest(RestType.MINIMO))
+                    .casterAffected(false)
+                    .build())
+            .casterAffected(true)
             .criticalEffectType(CriticalEffectType.AMENIZAR)
             .duration(SpellDuration.INSTANTANEA)
             .targeting(SpellTargeting.areaDeEfeito(AreaOfEffect.circle(Range.DISTANCIA_CURTA)))
@@ -322,10 +327,8 @@ public enum VidaSpell implements AuthoredSpell {
      * "recupera todos os PV perdidos" is a full heal, which {@code CombatantSheet#heal} expresses
      * exactly — the branch's top rung, and the one recovery here that names no Descanso tier.
      */
-    // TODO: the Efeito Alternativo's extra targets are gated on adjacency to the caster *or to a
-    //  creature already healed by this cast* — pairwise geometry between two combatants who are
-    //  both not the roller, which a SceneContext cannot answer. Its +3PM per extra target has no
-    //  mechanism either: nothing spends PM per target.
+    // Corrente Abençoada's creatures are SpellCastRequest#additionalTargets, +3PM each (core 0.0.94). The adjacency
+    //  gate — to the caster or to a creature healed — is pairwise geometry, so the caller offers who qualifies.
     BENCAO_DA_LUZ(SpellData.builder()
             .name("Benção da Luz")
             .branchLevel(BranchLevel.FLORESCENTE)
@@ -339,11 +342,12 @@ public enum VidaSpell implements AuthoredSpell {
             .secondaryEffectDescription("Corrente Abençoada: Você pode afetar criaturas adicionais com esta magia, "
                     + "desde que elas estejam adjacentes a você ou a uma criatura curada por esta magia. Para cada "
                     + "criatura adicional é necessário o uso de +3PM.")
-            // Its recovery is its parent's, unchanged — the alternate only widens who is reached,
-            // which is the half that cannot be expressed (see this constant's own TODOs).
+            // Its recovery is its parent's, unchanged — the alternate only widens who is reached.
             .alternateEffect(SpellAlternateEffect.builder()
                     .name("Corrente Abençoada")
                     .healing(SpellHealing.FULL_RECOVERY)
+                    .maxAdditionalTargets(Spell.UNBOUNDED_ADDITIONAL_TARGETS)
+                    .additionalTargetManaCost(3)
                     .build())
             .criticalEffectType(CriticalEffectType.AMENIZAR)
             .duration(SpellDuration.INSTANTANEA)
@@ -360,11 +364,8 @@ public enum VidaSpell implements AuthoredSpell {
      * which is what {@link ConditionType#maleficios()} exists for — every Condição but Escondido,
      * and a new constant joins it with no change here.
      */
-    // TODO: only the first half applies. "Se torna imune à Malefícios enquanto estiver sob efeito
-    //  de Corpo Fechado" needs per-condition immunity — nothing can refuse an applyCondition — and
-    //  it would have to last this Magia's Concentração + 2 Rodadas rather than happening at once.
-    //  Removal is real; refusing a future Malefício is not. See CLAUDE.md's Malefício-
-    //  classification gap, item (c).
+    // "Se torna imune à Malefícios enquanto estiver sob efeito de Corpo Fechado" is a sheet.MaleficioWard chained
+    //  after the removal, held by the caster's Concentração and 2 Rodadas after Scene#breakConcentration (core 0.0.94).
     CORPO_FECHADO(SpellData.builder()
             .name("Corpo Fechado")
             .branchLevel(BranchLevel.FLORESCENTE)
@@ -376,6 +377,7 @@ public enum VidaSpell implements AuthoredSpell {
             .primaryEffectDescription("O alvo desta magia tem todos os Malefícios removidos, este personagem também "
                     + "se torna imune à Malefícios enquanto estiver sofre efeito de Corpo Fechado.")
             .cleansedConditions(ConditionType.maleficios())
+            .ward(SpellWard.MALEFICIOS)
             .criticalEffectType(CriticalEffectType.AMENIZAR)
             .duration(SpellDuration.concentracaoMais(2))
             .targeting(SpellTargeting.PESSOAL)

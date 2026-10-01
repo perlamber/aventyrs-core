@@ -115,6 +115,11 @@ public record HealingSource(@NonNull Object key, boolean repeatableInComa, Comba
                 .sum();
     }
 
+    /** A Bispo Subordinado's "2PV por Rodada" (core 0.0.92) — no healer, repeatable like a Regeneração. */
+    public static HealingSource subordinate() {
+        return new HealingSource("SUBORDINADO_BISPO", true, null, null, null);
+    }
+
     /** A real Descanso — the one heal that stays repeatable in Coma, 1PV at a time. */
     public static HealingSource rest(@NonNull final RestType restType) {
         return new HealingSource(restType, true, null, null, null);

@@ -442,20 +442,17 @@ class SpellCastingServiceImplTest {
     }
 
     @Test
-    void castingTheBaseVersionWithACombatantTargetIsStillRefused() {
+    void aTargetNeitherReachAcceptsIsStillRefused() {
         Scene scene = sceneWithCaster();
-        CharacterSheet ally = CharacterSheet.of(
-                CharacterFixture.blank(CharacterFixture.BLANK).build(), new Player());
-        scene.addParticipant(ally, 1);
 
-        // Aliviar a Dor's own reach is Pessoal — the control for the test above.
+        // Aliviar a Dor is "Pessoal ou Toque" (core 0.0.93: either fits) — a hex fits neither.
         assertThrows(org.aventyrs.core.sheet.IllegalOperationException.class,
                 () -> new SpellCastingServiceImpl().castSpell(SpellCastRequest.builder()
                         .caster(sheet)
                         .spell(VidaSpell.ALIVIAR_A_DOR)
                         .scene(scene)
                         .sceneContext(scene.buildContext(sheet, Map.of()))
-                        .combatantTarget(ally)
+                        .positionTarget(new org.aventyrs.core.scene.grid.GridPosition(1, 1))
                         .build()));
     }
 
