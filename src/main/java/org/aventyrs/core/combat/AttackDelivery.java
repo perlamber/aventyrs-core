@@ -161,10 +161,11 @@ public class AttackDelivery {
         }
         // An Ataque com Escudo adds the shield's bonus for the Defesa it is rolled against — so it is
         // aimed at this attack's own DefenseType, whatever the caller built it with.
-        DeliveredAttack attack = given.getAttackSource() instanceof ShieldAttack shield
-                && shield.getTargetDefense() != given.getDefenseType()
-                ? given.toBuilder().attackSource(shield.against(given.getDefenseType())).build()
-                : given;
+        DeliveredAttack redirected = againstOverriddenDefense(given);
+        DeliveredAttack attack = redirected.getAttackSource() instanceof ShieldAttack shield
+                && shield.getTargetDefense() != redirected.getDefenseType()
+                ? redirected.toBuilder().attackSource(shield.against(redirected.getDefenseType())).build()
+                : redirected;
         List<AttackTarget> additionalTargets = attack.getAdditionalTargets();
         if (attack.getAreaOfEffect() != null) {
             // An area attack names whoever stands in its footprint — no count to enforce — but the
@@ -414,7 +415,7 @@ public class AttackDelivery {
             // whether or not the Corrente threshold was cleared.
             attack.getAttacker().getCharacter().getFeats().forEach(feat -> chains.addAll(
                     feat.resolveCriticalHitEffectChains(attack.getAttacker().getCharacter(), attack.getAttackSkill(),
-                            attack.getAttackSource(), attack.getAttacker())));
+                            attack.getAttackSource(), attack.getAttacker(), attack.getAttackRoll())));
         }
         List<Effect> criticals = new ArrayList<>();
         if (criticalEffectTriggered) {
@@ -447,7 +448,8 @@ public class AttackDelivery {
             next = stages.get(i).chainInto(next);
         }
         DamageInteraction head = new DamageInteraction(damageService)
-                .fromSpell(SpellResistance.spellOf(attack.getAttackSource()));
+                .fromSpell(SpellResistance.spellOf(attack.getAttackSource()))
+                .withSanctity(sanctityOf(attack, chains));
         if (criticalResult != null && criticalResult.isCriticalSuccess()) {
             // Feridas Ardentes: the critical's Metade da Gnose heals only with a Descanso Verdadeiro
             // or Roubo de Vida.
@@ -457,6 +459,37 @@ public class AttackDelivery {
                     .sum());
         }
         return (halfDamage ? head.halvingDamage() : head).chainInto(next);
+    }
+
+    /**
+     * given, rolled against the Defesa a held Talento redirects it to — "contra a DM do alvo, ao invés da DF" ({@code
+     * Feat#resolveTargetDefenseOverride}, core 0.0.88) — with every target's Defesa re-read for that type: a foe's off
+     * its stat block, anyone else's through {@code DefenseService}. given itself when nothing redirects it.
+     */
+    private DeliveredAttack againstOverriddenDefense(final DeliveredAttack given) {
+        org.aventyrs.core.character.DefenseType override = given.getAttacker().getCharacter().getFeats().stream()
+                .map(feat -> feat.resolveTargetDefenseOverride(given.getAttackSkill(), given.getAttackSource(),
+                        given.getAttacker(), given.getAttackRoll()))
+                .filter(java.util.Objects::nonNull)
+                .findFirst()
+                .orElse(null);
+        if (override == null || override == given.getDefenseType()) {
+            return given;
+        }
+        return given.toBuilder()
+                .defenseType(override)
+                .defenseValue(defenseOf(given.getDefender(), override))
+                .clearAdditionalTargets()
+                .additionalTargets(given.getAdditionalTargets().stream()
+                        .map(target -> new AttackTarget(target.defender(), defenseOf(target.defender(), override)))
+                        .toList())
+                .build();
+    }
+
+    private static int defenseOf(final CombatantSheet defender, final org.aventyrs.core.character.DefenseType type) {
+        return defender instanceof org.aventyrs.core.monster.MonsterSheet foe
+                ? foe.getDefense(type)
+                : new org.aventyrs.core.character.services.DefenseServiceImpl().getTotalDefense(defender, type);
     }
 
     /**
@@ -471,6 +504,23 @@ public class AttackDelivery {
                 .mapToInt(feat -> feat.resolveTargetedLifeSteal(attacker.getCharacter(), attacker, defender))
                 .sum();
         return Math.max(0, total);
+    }
+
+    /**
+     * The sacred or profane nature of this hit (core 0.0.89): Profano when a triggered Corrente is a Toque Sombrio
+     * ("Profano em substituição aos seus tipos"), otherwise the nature the attacking weapon's socketed Pedra gives in
+     * its Efeito Ofensivo ("em adição aos seus tipos"), otherwise none.
+     */
+    private static org.aventyrs.core.character.DamageSanctity sanctityOf(final DeliveredAttack attack,
+                                                                         final List<Effect> chains) {
+        if (chains.stream().anyMatch(org.aventyrs.core.effect.ToqueSombrio.class::isInstance)) {
+            return org.aventyrs.core.character.DamageSanctity.PROFANO;
+        }
+        if (attack.getAttackSource() instanceof org.aventyrs.core.item.Item weapon && weapon.getPowerStone() != null
+                && !weapon.isDestroyed() && weapon.getType() == org.aventyrs.core.item.ItemType.OFFENSIVE) {
+            return weapon.getPowerStone().getType().getOffensiveSanctity();
+        }
+        return null;
     }
 
     /** Every held Talento's extra applications of this attack's Correntes and Efeitos Críticos. */

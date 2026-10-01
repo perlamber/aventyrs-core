@@ -223,6 +223,24 @@ public class DamageServiceImpl implements DamageService {
         return Math.max(0, total);
     }
 
+    @Override
+    public int getSanctityDamageReduction(final CombatantSheet target,
+                                          final org.aventyrs.core.character.DamageSanctity sanctity) {
+        if (sanctity == null) {
+            return 0;
+        }
+        ModifierType type = sanctity == org.aventyrs.core.character.DamageSanctity.PROFANO
+                ? ModifierType.PROFANE_DAMAGE_REDUCTION : ModifierType.SACRED_DAMAGE_REDUCTION;
+        Character character = target.getCharacter();
+        int total = sumAcrossSources(character, type, target);
+        for (Item item : character.getEquipment()) {
+            total += item.resolveFavorBonus(type, character);
+            total += item.resolveEnhancementBonus(type, null, character);
+        }
+        total += target.getTemporaryBonus(type);
+        return Math.max(0, total);
+    }
+
     /** Every equipped Item's Favor and fitted enhancements, for whatever RM they grant. */
     private int sumEquipmentMagicReduction(final Character character) {
         int total = 0;
@@ -417,6 +435,10 @@ public class DamageServiceImpl implements DamageService {
                 }
                 if (effectiveType == DamageType.MAGICO) {
                     reduction += getTotalMagicReduction(target);
+                }
+                // A reduction of the hit's sacred or profane nature (core 0.0.89), whatever its type.
+                if (damageDescriptor != null && damageDescriptor.sanctity() != null) {
+                    reduction += getSanctityDamageReduction(target, damageDescriptor.sanctity());
                 }
                 // Arcanista's "RM para resistir aos efeitos de Magias que você conheça": an RM of its
                 // own, scoped to the Magia rather than to magical damage — ⚠️ a reading: it reaches

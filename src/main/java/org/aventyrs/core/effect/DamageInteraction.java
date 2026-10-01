@@ -37,6 +37,7 @@ public class DamageInteraction implements Interaction<CombatantSheet> {
     private final HitPointsService hitPointsService;
     private Interaction<CombatantSheet> nextInteraction;
     private boolean halfDamage;
+    private org.aventyrs.core.character.DamageSanctity sanctity;
 
     /** Whether this hit's PV loss lands at the next Rodada boundary — see {@link #postponing()}. */
     private boolean postponed;
@@ -123,6 +124,22 @@ public class DamageInteraction implements Interaction<CombatantSheet> {
      * <p>The damage is handed to {@link CombatantSheet#schedulePostponedDamage} already mitigated,
      * so the Rodada boundary applies it raw and the target's RD is not charged twice.
      */
+    /**
+     * Marks this hit as sacred or profane (core 0.0.89) — a Toque Sombrio that triggered ("Profano em substituição
+     * aos seus tipos"), a weapon socketed with a Turmalina Obscura or Opala Purificadora. Set by {@code
+     * AttackDelivery}; a fluent setter for the reason {@link #halvingDamage} is one. The hit keeps its own type for
+     * RD/RM; the nature adds an immunity check ({@code DamageScope#sanctity}) and its own reduction.
+     */
+    public DamageInteraction withSanctity(final org.aventyrs.core.character.DamageSanctity sanctity) {
+        this.sanctity = sanctity;
+        return this;
+    }
+
+    /** The nature marked by {@link #withSanctity}, or {@code null}. */
+    public org.aventyrs.core.character.DamageSanctity getSanctity() {
+        return sanctity;
+    }
+
     public DamageInteraction postponing() {
         this.postponed = true;
         return this;
@@ -207,6 +224,19 @@ public class DamageInteraction implements Interaction<CombatantSheet> {
                                       final Interaction<CombatantSheet> nextInteraction) {
         int finalDamage = damageService.calculateFinalDamage(target, sceneContext, damageType, source, rawDamage,
                 ignoreDamageReduction, halfDamage, spell);
+        if (sanctity != null && finalDamage > 0) {
+            // A sacred or profane hit (core 0.0.89): an immunity to that nature zeroes it, a reduction of it comes off
+            // — ⚠️ after the other mitigation and any Meio-Dano, since this path carries the type alone.
+            // An elemental or untyped hit can't name its element here, so it is checked as Primordial — the one type
+            // no physical/magical/elemental-scoped immunity names — and only a scope of its nature, or every hit, holds.
+            DamageType checked = damageType == null || damageType == DamageType.ELEMENTAL
+                    || damageType == DamageType.FISICO_ELEMENTAL ? DamageType.PRIMORDIAL : damageType;
+            if (target.isImmuneToDamage(checked, new org.aventyrs.core.character.DamageDescriptor(checked, null, sanctity))) {
+                finalDamage = 0;
+            } else if (!ignoreDamageReduction) {
+                finalDamage = Math.max(0, finalDamage - damageService.getSanctityDamageReduction(target, sanctity));
+            }
+        }
         // Procrastinar Ferimento: the PV are lost at the next Rodada boundary instead of now. The
         // figure below stays the honest one — everything but the loss itself happens on schedule.
         if (postponed) {

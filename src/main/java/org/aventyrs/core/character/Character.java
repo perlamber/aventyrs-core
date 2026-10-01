@@ -755,6 +755,32 @@ public class Character {
         this.devotionTier = devotionTier;
     }
 
+    /**
+     * The Divindades this character is genuinely devoted to — its own {@link #deity} and every one a Sincretismo
+     * Religioso added ("considerado um Devoto de ambas as divindades", core 0.0.87). "Nenhuma" is none.
+     */
+    public List<Deity> getGenuineDevotions() {
+        List<Deity> devotions = new ArrayList<>();
+        if (deity != null && deity != Deity.NENHUMA) {
+            devotions.add(deity);
+        }
+        devotions.addAll(org.aventyrs.core.feat.ChosenDeityFeat.chosenBy(this,
+                org.aventyrs.core.feat.DevotoFeat.SINCRETISMO_RELIGIOSO));
+        return List.copyOf(devotions);
+    }
+
+    /** The Divindades this character follows falsely — Falsa Devoção's pick, "considerado Devoto Adepto". */
+    public List<Deity> getFeignedDevotions() {
+        return org.aventyrs.core.feat.ChosenDeityFeat.chosenBy(this, org.aventyrs.core.feat.DevotoFeat.FALSA_DEVOCAO);
+    }
+
+    /** Every Divindade this character counts as a devotee of, genuinely or falsely — what "Devoto de X" asks. */
+    public List<Deity> getDevotedDeities() {
+        List<Deity> devotions = new ArrayList<>(getGenuineDevotions());
+        getFeignedDevotions().stream().filter(feigned -> !devotions.contains(feigned)).forEach(devotions::add);
+        return List.copyOf(devotions);
+    }
+
     /** Whether this character's devotion reaches rung. */
     public boolean isDevotedAtLeast(final DevotionTier rung) {
         return devotionTier != null && devotionTier.reaches(rung);

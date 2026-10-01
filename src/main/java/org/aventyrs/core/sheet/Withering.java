@@ -45,6 +45,9 @@ public class Withering extends TemporaryEffect {
 
     @Override
     void applyRoundEffect(final CombatantSheet sheet) {
-        sheet.applyCurseDamage(valuePerRound);
+        // "Dano Físico Profano" (core 0.0.89): an immunity to Profano stops it, a reduction of it comes off.
+        sheet.applyCurseDamage(org.aventyrs.core.character.services.SanctityMitigation.apply(sheet,
+                org.aventyrs.core.character.DamageType.FISICO, org.aventyrs.core.character.DamageSanctity.PROFANO,
+                valuePerRound));
     }
 }

@@ -74,8 +74,10 @@ import java.util.Optional;
  * MagicType#UMBRAL}). An Umbral <i>character</i> is read as one devoted to a Senhor Umbral or to A Esquecida — the only
  * devotions with access to the Força Umbral ({@link #isUmbral}).
  *
- * <p>Not authored: Falsa Devoção ("considerado Devoto Adepto"), Sincretismo Religioso (a second Divindade) and the
- * Palavras de Poder, a whole casting subsystem — see {@code docs/plans/devoto-tiers-plan.md}.
+ * <p><b>Several Divindades</b> (core 0.0.87): {@link #SINCRETISMO_RELIGIOSO} adds a second one genuinely, {@link
+ * #FALSA_DEVOCAO} one followed falsely; {@link #tierFor} is what a rung reads — the character's tier for a genuine
+ * devotion, Adepto for a feigned one. Not authored: the Palavras de Poder, a whole casting subsystem — see {@code
+ * docs/plans/devoto-tiers-plan.md}.
  */
 @Getter
 public enum DevotoFeat implements Feat {
@@ -564,6 +566,56 @@ public enum DevotoFeat implements Feat {
             return reached(character, DevotionTier.FUNDAMENTALISTA) && againstNonUmbral(sceneContext)
                     ? new CriticalDamage(0, 3) : null;
         }
+    },
+
+    /**
+     * "Escolha uma segunda Divindade, você deve seguir as Obrigações e Restrições da divindade escolhida e é
+     * considerado um Devoto de ambas as divindades" (core 0.0.87). Real: the pick ({@link ChosenDeityFeat}) joins
+     * {@code Character#getGenuineDevotions()}, so its Talentos de Devoção are eligible and read the character's own
+     * tier. Pré-requisito "Apenas Devotos de Deuses Elementais ou Senhores Umbrais". Tagged Geral/Devoto/Destino.
+     */
+    // TODO: "custa apenas 1EXP para Homens-Fera, mas apenas para culto a Gaea e um Senhor Umbral (ou A Esquecida)" —
+    //  a Talento's EXP cost is the Race's (Race#getNewFeatCost), which sees no Talento's pick.
+    SINCRETISMO_RELIGIOSO(
+            "Escolha uma segunda Divindade, você deve seguir as Obrigações e Restrições da divindade escolhida e é "
+                    + "considerado um Devoto de ambas as divindades. Este Talento custa apenas 1EXP para Homens-Fera, "
+                    + "mas apenas para culto a Gaea e um Senhor Umbral (ou A Esquecida).",
+            FeatRequirements.builder()
+                    .alternative(FeatRequirements.builder().requiredDeityCategory(DeityCategory.DEUS_ELEMENTAL).build())
+                    .alternative(FeatRequirements.builder().requiredDeityCategory(DeityCategory.SENHOR_UMBRAL).build())
+                    .build()) {
+        @Override
+        public List<FeatChoice<?>> resolveRequiredChoices(final Character holder) {
+            return List.of(FeatChoice.ofOne(Deity.class, otherDeities(holder)));
+        }
+    },
+
+    /**
+     * "Escolha uma Divindade, você vive falsamente sobre os dogmas da divindade escolhida e é beneficiado por isso.
+     * Você é considerado Devoto Adepto da divindade escolhida para efeitos de Talentos e Habilidades mesmo que não
+     * siga as Obrigações e Restrições" (core 0.0.87). Real: the pick joins {@code Character#getFeignedDevotions()} —
+     * its Talentos de Devoção are eligible and read Adepto ({@link #tierFor}). Pré-requisito "Devotos de Sylph, da
+     * Escuridão Profunda, de Senhores Umbrais ou dA Esquecida". Tagged Geral/Devoto/Especialista.
+     */
+    FALSA_DEVOCAO(
+            "Escolha uma Divindade, você vive falsamente sobre os dogmas da divindade escolhida e é beneficiado por "
+                    + "isso. Você é considerado Devoto Adepto da divindade escolhida para efeitos de Talentos e "
+                    + "Habilidades mesmo que não siga as Obrigações e Restrições.",
+            FeatRequirements.builder()
+                    .alternative(FeatRequirements.builder().requiredDeity(Deity.SYLPH).build())
+                    .alternative(FeatRequirements.builder().requiredDeity(Deity.ESCURIDAO_PROFUNDA).build())
+                    .alternative(FeatRequirements.builder().requiredDeity(Deity.A_ESQUECIDA).build())
+                    .alternative(FeatRequirements.builder().requiredDeityCategory(DeityCategory.SENHOR_UMBRAL).build())
+                    .build()) {
+        @Override
+        public List<FeatChoice<?>> resolveRequiredChoices(final Character holder) {
+            return List.of(FeatChoice.ofOne(Deity.class, otherDeities(holder)));
+        }
+
+        @Override
+        public boolean isEspecialistaTagged() {
+            return true;
+        }
     };
 
     /** "Resistência às Correntes de Efeitos +2" — added to the margin a Corrente must clear, as Resoluto does. */
@@ -589,9 +641,42 @@ public enum DevotoFeat implements Feat {
         return List.of();
     }
 
-    /** Whether holder's devotion reaches rung. */
-    static boolean reached(final Character holder, final DevotionTier rung) {
-        return holder != null && holder.isDevotedAtLeast(rung);
+    /**
+     * Whether holder's devotion <b>to this Talento's Divindade</b> reaches rung — see {@link #tierFor}.
+     */
+    boolean reached(final Character holder, final DevotionTier rung) {
+        DevotionTier tier = tierFor(holder);
+        return tier != null && tier.reaches(rung);
+    }
+
+    /**
+     * The tier holder's rungs of this Talento read (core 0.0.87): the character's own tier when it is genuinely
+     * devoted to this Talento's Divindade (its own, or a Sincretismo Religioso one); Adepto when it only follows it
+     * falsely (Falsa Devoção — "considerado Devoto Adepto"); the higher of the two when both hold; {@code null} when
+     * neither. A Talento that names no Divindade (Astúcia de Sylph) reads the character's tier as it stands.
+     */
+    public DevotionTier tierFor(final Character holder) {
+        if (holder == null) {
+            return null;
+        }
+        if (featRequirements.requiredDeity() == null && featRequirements.requiredDeityCategory() == null) {
+            return holder.getDevotionTier();
+        }
+        DevotionTier genuine = holder.getGenuineDevotions().stream().anyMatch(this::namesDeity)
+                ? holder.getDevotionTier() : null;
+        DevotionTier feigned = holder.getFeignedDevotions().stream().anyMatch(this::namesDeity)
+                ? DevotionTier.ADEPTO : null;
+        if (genuine == null) {
+            return feigned;
+        }
+        return feigned == null || genuine.reaches(feigned) ? genuine : feigned;
+    }
+
+    /** Whether deity is the Divindade this Talento's Pré-requisito names, or of the category it names. */
+    private boolean namesDeity(final Deity deity) {
+        return deity != null && (deity == featRequirements.requiredDeity()
+                || featRequirements.requiredDeityCategory() != null
+                        && deity.getCategory() == featRequirements.requiredDeityCategory());
     }
 
     /** The picks rung made for this Talento, of type, while holder's devotion reaches it — empty otherwise. */
@@ -623,7 +708,7 @@ public enum DevotoFeat implements Feat {
     }
 
     /** The Adepto rung Abraçado pela Esquecida and Cultista Umbral share. */
-    private static int concealment(final Character character, final SkillType skillType,
+    int concealment(final Character character, final SkillType skillType,
                                    final SkillTrait requestedAbility) {
         return reached(character, DevotionTier.ADEPTO) && skillType == SkillType.FURTIVIDADE
                 && requestedAbility == FurtividadeSpecialization.MAESTRIA_DA_OCULTACAO ? Skill.ADVANTAGE_BONUS : 0;
@@ -640,7 +725,7 @@ public enum DevotoFeat implements Feat {
     }
 
     /** Whether Impacto Ymiriano's 2PD window is open on holder, and its Fiel rung reached. */
-    private static boolean ymirianWindowOpen(final Character attacker, final CombatantSheet holder) {
+    boolean ymirianWindowOpen(final Character attacker, final CombatantSheet holder) {
         return holder != null && reached(attacker, DevotionTier.FIEL)
                 && holder.hasActivationWindow(ImpactoYmirianoActiveAbility.INSTANCE);
     }
@@ -650,9 +735,8 @@ public enum DevotoFeat implements Feat {
      * the Força Umbral. {@code null} is not.
      */
     public static boolean isUmbral(final Character character) {
-        return character != null && character.getDeity() != null
-                && (character.getDeity().getCategory() == DeityCategory.SENHOR_UMBRAL
-                        || character.getDeity() == Deity.A_ESQUECIDA);
+        return character != null && character.getDevotedDeities().stream()
+                .anyMatch(deity -> deity.getCategory() == DeityCategory.SENHOR_UMBRAL || deity == Deity.A_ESQUECIDA);
     }
 
     /** Whether spell is an Umbral effect — a Magia of an Árvore de Magia Umbral (table ruling). */
@@ -754,8 +838,16 @@ public enum DevotoFeat implements Feat {
 
         @Override
         public boolean isUsableBy(final CombatantSheet activator) {
-            return reached(activator.getCharacter(), DevotionTier.FIEL);
+            return IMPACTO_YMIRIANO.reached(activator.getCharacter(), DevotionTier.FIEL);
         }
+    }
+
+    /** Every Divindade but "Nenhuma" and the ones holder is already devoted to — Sincretismo's and Falsa's options. */
+    private static List<Deity> otherDeities(final Character holder) {
+        return Arrays.stream(Deity.values())
+                .filter(deity -> deity != Deity.NENHUMA)
+                .filter(deity -> holder == null || !holder.getDevotedDeities().contains(deity))
+                .toList();
     }
 
     /** Every Talento de Devoção. */

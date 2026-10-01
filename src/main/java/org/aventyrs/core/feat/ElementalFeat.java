@@ -50,21 +50,46 @@ public enum ElementalFeat implements Feat {
      * outra arma ao toque, o Dano Base da Arma escolhida aumenta em +2 e o tipo de dano causado
      * muda para Físico Elemental por 2 Rodadas."
      */
-    // The activation itself would fit ActiveAbility as it stands — 1PA, a 2PD cost
-    // (ActiveAbility#getDeterminationPointCost, added for the Formas) and a 2-Rodada Duração. It
-    // is not authored because every effect it would apply is blocked below.
-    // TODO: the Dano Base uplift is scoped to one *chosen weapon* for 2 Rodadas.
-    //  Feat#resolveDamageBaseIncrease is unconditional and sees neither the weapon nor a
-    //  duration, so granting it there would raise every attack the holder ever makes, forever.
-    // TODO: re-typing dano is not expressible — same gap OrquicoFeat#PALADINO_DE_EPONA and
-    //  FeralFeat#DESPREZO_NATURAL cite — and "seu elemento" has no column to read (class javadoc).
+    // Real (0.0.88): GanaElementalActiveAbility (1PA, 2PD) opens a 2-Rodada ActivationWindow; while
+    // it is open the holder's weapon attacks are Dano Base +2 (the sheet-aware
+    // resolveDamageBaseIncrease) and Físico Elemental of the holder's own element (resolveDamageRetype).
+    // ⚠️ "a Arma escolhida" is read as every weapon the holder attacks with in the window: the
+    // activation records no weapon. With Golpe Cataclísmico's first attack of the Rodada the type is
+    // Elemental (mágico) instead — "causa danos mágicos".
     GANA_ELEMENTAL(
             "Ao tempo de 1PA e ao custo de 2PD você pode encantar uma de suas Armas Naturais ou "
                     + "uma outra arma ao toque, o Dano Base da Arma escolhida aumenta em +2 e o "
                     + "tipo de dano causado muda para Físico Elemental por 2 Rodadas.",
             FeatRequirements.builder()
                     .requiredRace(AbstractMesticoRace.class)
-                    .build()),
+                    .build()) {
+        @Override
+        public Optional<org.aventyrs.core.ability.ActiveAbility> resolveActiveAbility() {
+            return Optional.of(GanaElementalActiveAbility.INSTANCE);
+        }
+
+        @Override
+        public int resolveDamageBaseIncrease(final Character character, final org.aventyrs.core.item.Weapon weapon,
+                                             final CombatantSheet holder) {
+            return weapon != null && ganaActive(holder) ? GANA_DAMAGE_BASE_INCREASE : 0;
+        }
+
+        @Override
+        public DamageDescriptor resolveDamageRetype(final Character attacker,
+                                                    final org.aventyrs.core.skill.SkillType attackSkill,
+                                                    final org.aventyrs.core.skill.AttackSource attackSource,
+                                                    final CombatantSheet holder) {
+            if (!(attackSource instanceof org.aventyrs.core.item.Weapon) || !ganaActive(holder)) {
+                return null;
+            }
+            ElementalType element = elementOf(attacker).orElse(null);
+            if (element == null) {
+                return null;   // a Físico Elemental needs its element — none to name, no retype
+            }
+            return new DamageDescriptor(cataclysmicStrike(holder) ? DamageType.ELEMENTAL : DamageType.FISICO_ELEMENTAL,
+                    element);
+        }
+    },
 
     /**
      * "Aprender magias Elementais de seu elemento custa 0.5EXP a menos. Suas Magias Elementais
@@ -206,16 +231,10 @@ public enum ElementalFeat implements Feat {
      * Margem Crítica Menor aumentada em +1, tem sua Rolagem efetuada contra a DM de seu alvo e
      * causa danos mágicos."
      */
-    // TODO: gated on an active Gana, which cannot be activated.
-    // TODO: redirecting the Ataque roll to the target's DM instead of DF — the defender's Defesa
-    //  type is the caller's pick (DeliveredAttack#defenseType), and no Talento hook can change it.
-    //  "Seu primeiro ataque em cada Rodada" is not a blocker: the sheet-aware
-    //  resolveCriticalMarginIncrease plus isFirstAttackRollOfTurn/the action log already express
-    //  it (AssassinoFeat#ACERTO_CRITICO_RELAMPAGO). "Causa danos mágicos" is the damage-retyping
-    //  gap (plan Phase D).
-    // TODO: the Corrente is authored (effect.ExplosaoCataclismica, 0.0.85) and would ride
-    //  Feat#resolveCriticalHitEffectChains — but only "enquanto estiver com Gana Elemental ativo",
-    //  which nothing activates yet.
+    // Real (0.0.88), on the holder's first attack of the Rodada while Gana Elemental is active
+    // (cataclysmicStrike): Margem Crítica Menor +1, rolled against the DM
+    // (Feat#resolveTargetDefenseOverride), Elemental (mágico) damage through Gana's own retype, and on a
+    // critical the Corrente – Explosão Cataclísmica (resolveCriticalHitEffectChains).
     GOLPE_CATACLISMICO(
             "Seu primeiro ataque em cada Rodada, enquanto estiver com Gana Elemental ativo, tem a "
                     + "Margem Crítica Menor aumentada em +1, tem sua Rolagem efetuada contra a DM "
@@ -224,7 +243,30 @@ public enum ElementalFeat implements Feat {
             FeatRequirements.builder()
                     .requiredFeat(GANA_ELEMENTAL)
                     .requiredAwakenedTitles(1)
-                    .build()),
+                    .build()) {
+        @Override
+        public int resolveCriticalMarginIncrease(final org.aventyrs.core.skill.SkillType skillType,
+                                                 final SceneContext sceneContext, final Character character,
+                                                 final org.aventyrs.core.skill.AttackSource attackSource,
+                                                 final CombatantSheet holder) {
+            return skillType.isAttackSkill() && cataclysmicStrike(holder) ? 1 : 0;
+        }
+
+        @Override
+        public org.aventyrs.core.character.DefenseType resolveTargetDefenseOverride(
+                final org.aventyrs.core.skill.SkillType attackSkill, final org.aventyrs.core.skill.AttackSource attackSource,
+                final CombatantSheet holder, final org.aventyrs.core.skill.SkillRoll skillRoll) {
+            return cataclysmicStrike(holder) ? org.aventyrs.core.character.DefenseType.MAGIC : null;
+        }
+
+        @Override
+        public java.util.List<org.aventyrs.core.effect.EffectChain> resolveCriticalHitEffectChains(
+                final Character attacker, final org.aventyrs.core.skill.SkillType attackSkill,
+                final org.aventyrs.core.skill.AttackSource attackSource, final CombatantSheet holder) {
+            return cataclysmicStrike(holder)
+                    ? java.util.List.of(new org.aventyrs.core.effect.ExplosaoCataclismica()) : java.util.List.of();
+        }
+    },
 
     /** "Você se torna imune ao elemento que você adquiriu resistência." */
     // Real: immunity to hits of the holder's own element (Feat#isImmuneToDamage), judged before
@@ -299,6 +341,67 @@ public enum ElementalFeat implements Feat {
     }
 
     /** "Seu elemento" — the holder's race's own, when it is one of the Raças Elementais. */
+    /** Gana Elemental's "o Dano Base da Arma escolhida aumenta em +2". */
+    static final int GANA_DAMAGE_BASE_INCREASE = 2;
+
+    /** Whether holder's Gana Elemental window is open. {@code null} is not. */
+    static boolean ganaActive(final CombatantSheet holder) {
+        return holder != null && holder.hasActivationWindow(GanaElementalActiveAbility.INSTANCE);
+    }
+
+    /**
+     * Whether holder's next attack is a Golpe Cataclísmico — "Seu primeiro ataque em cada Rodada, enquanto estiver com
+     * Gana Elemental ativo": it holds the Talento, its Gana is open, and no attack is logged this Rodada yet.
+     */
+    static boolean cataclysmicStrike(final CombatantSheet holder) {
+        return ganaActive(holder)
+                && holder.getCharacter().getFeats().stream().anyMatch(feat -> feat.catalogEntry() == GOLPE_CATACLISMICO)
+                && holder.getActionsThisRound().stream().noneMatch(org.aventyrs.core.sheet.CombatantAction::isAttack);
+    }
+
+    /**
+     * Gana Elemental's activation — "Ao tempo de 1PA e ao custo de 2PD … por 2 Rodadas" (core 0.0.88). Opens a
+     * 2-Rodada {@link org.aventyrs.core.sheet.ActivationWindow} keyed by this ability, which the Talento's hooks read.
+     */
+    public static final class GanaElementalActiveAbility implements org.aventyrs.core.ability.ActiveAbility {
+
+        public static final GanaElementalActiveAbility INSTANCE = new GanaElementalActiveAbility();
+
+        private GanaElementalActiveAbility() {
+        }
+
+        @Override
+        public String getDescription() {
+            return "Gana Elemental: o Dano Base da Arma aumenta em +2 e o tipo de dano muda para Físico Elemental "
+                    + "por 2 Rodadas.";
+        }
+
+        @Override
+        public org.aventyrs.core.sheet.ActionCost getActionPointCost() {
+            return org.aventyrs.core.sheet.ActionCost.ofActionPoints(1);
+        }
+
+        @Override
+        public int getMagicPointCost() {
+            return 0;
+        }
+
+        @Override
+        public int getDeterminationPointCost() {
+            return 2;
+        }
+
+        @Override
+        public int getDurationInRounds() {
+            return 2;
+        }
+
+        @Override
+        public org.aventyrs.core.sheet.TemporaryEffect resolveEffect(final Character character) {
+            return new org.aventyrs.core.sheet.ActivationWindow(this, 2);
+        }
+    }
+
     private static Optional<ElementalType> elementOf(final Character character) {
         return character.getRace() instanceof AbstractMesticoRace elemental
                 ? Optional.ofNullable(elemental.getElement()) : Optional.empty();

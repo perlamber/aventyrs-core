@@ -266,6 +266,12 @@ public class InteractionResult {
     Integer damageLowestDieRerolls;
 
     /**
+     * PM the Talentos activated on this roll cost ({@code Feat#resolveActivationManaCost} — Golpe Sobrenatural's 1PM,
+     * core 0.0.88). Reported for the caller to spend, never deducted here. {@code null} when there is none.
+     */
+    Integer activationManaCost;
+
+    /**
      * How far, in UD, this stage pushes its target back from the attacker — {@code effect.Rugido}'s
      * "Alvo é empurrado 1UD para trás". Reported, never applied: this core holds no positions, so the
      * caller moves the token. {@code null} for everything that pushes nobody.

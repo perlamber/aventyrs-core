@@ -207,6 +207,15 @@ public interface MonsterTemplate {
     }
 
     /**
+     * The damage this creature is immune to, by {@link org.aventyrs.core.character.DamageScope} — the Zumbi's
+     * Anatomia de Morto-Vivo Menor "são imunes a danos Profanos e Naturais" (core 0.0.89). Honoured by {@code
+     * MonsterSheet#isImmuneToDamage}. Empty by default.
+     */
+    default java.util.Set<org.aventyrs.core.character.DamageScope> getDamageImmunities() {
+        return java.util.Set.of();
+    }
+
+    /**
      * What this foe <em>is</em> — {@link CreatureType#MONSTRUOSO} unless its stat block says
      * otherwise ({@link CreatureType#ANIMAL} for a beast). Every foe shares {@link #MONSTER_RACE},
      * so its race can't answer this; {@code CombatantSheet#getCreatureType()} reads it off the sheet.

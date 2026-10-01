@@ -59,13 +59,9 @@ import java.util.Set;
  * CriticalEffectType}), and {@link #isUndead()} is what makes the Vantagem-against-the-living
  * clause resolvable. The rest are TODOs below, each on its own missing system.
  *
- * <p>TODO: "são imunes a danos Profanos e Naturais" and "Danos Físicos de Esmagamento sofridos
- * reduzidos em -3" both need damage-type-scoped mitigation. {@code DamageType} has no Profano,
- * Natural or Esmagamento constant, and {@code DamageService} resolves RD/RA with no notion of the
- * incoming damage's type at all — the sole exception, {@code AttributeAbility#resolveDamageReduction},
- * is not reachable from a {@code SkillCompetencyAbility}. The -3 is a reduction, not an immunity,
- * so it needs the type-scoped half; the two immunities need a nullification stage that does not
- * exist in any form.
+ * <p>"São imunes a danos Profanos e Naturais" is real (core 0.0.89): {@link #getDamageImmunities()} — a Profano hit
+ * ({@code DamageSanctity#PROFANO}) and an Elemental: Natural one. TODO: "Danos Físicos de Esmagamento sofridos
+ * reduzidos em -3" — Corte/Perfuração/Impacto are still not modelled.
  *
  * <p>TODO: "Não precisam dormir ou respirar" needs a fadiga/asfixia system. Nothing in this core
  * tracks either, so there is no effect to be exempt from.
@@ -295,5 +291,13 @@ public class Zumbi implements SummonedMonsterTemplate {
             sheet.applyEffect(new LifeSteal(ZumbiAbility.LIFE_STEAL, Optional.empty()));
         }
         return sheet;
+    }
+
+    /** Anatomia de Morto-Vivo Menor: "são imunes a danos Profanos e Naturais". */
+    @Override
+    public java.util.Set<org.aventyrs.core.character.DamageScope> getDamageImmunities() {
+        return java.util.Set.of(
+                org.aventyrs.core.character.DamageScope.sanctity(org.aventyrs.core.character.DamageSanctity.PROFANO),
+                org.aventyrs.core.character.DamageScope.element(org.aventyrs.core.magic.ElementalType.NATURAL));
     }
 }

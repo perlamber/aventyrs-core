@@ -34,7 +34,10 @@ public class VampiricVenom extends TemporaryEffect {
     public static int strike(final CombatantSheet target, final CombatantSheet source, final int damage,
                              final int lifeSteal) {
         int before = target.getDamageTaken();
-        target.applyDamage(damage);
+        // "Dano Mágico Profano" (core 0.0.89).
+        target.applyDamage(org.aventyrs.core.character.services.SanctityMitigation.apply(target,
+                org.aventyrs.core.character.DamageType.MAGICO, org.aventyrs.core.character.DamageSanctity.PROFANO,
+                damage));
         int landed = target.getDamageTaken() - before;
         if (source != null && landed > 0 && lifeSteal > 0) {
             source.healFromLifeSteal(Math.min(lifeSteal, landed));

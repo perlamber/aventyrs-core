@@ -460,6 +460,9 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                 .resultStatus(hitPointsService.getStatus(target))
                 .skillRollBonus(bonus)
                 .difficultyReduction(difficultyReduction)
+                // Golpe Sobrenatural's "gastar 1PM" — reported for the caller to spend, like a roll's PA.
+                .activationManaCost(skillRoll == null ? null : nullIfZero(skillRoll.getActivatedFeats().stream()
+                        .mapToInt(feat -> feat.resolveActivationManaCost(skillType)).sum()))
                 .governingAttributeDomain(skillRoll != null ? attributeDomain : null);
 
         // Cego: "Deve rolar 1d6 sempre que efetuar uma rolagem de perícia" — reported so the caller
@@ -479,7 +482,8 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
 
         if (skillType.isAttackSkill()) {
             target.getCharacter().getFeats().stream()
-                    .map(feat -> feat.resolveDamageRetype(target.getCharacter(), skillType, attackSource, target))
+                    .map(feat -> feat.resolveDamageRetype(target.getCharacter(), skillType, attackSource, target,
+                            skillRoll))
                     .filter(java.util.Objects::nonNull)
                     .findFirst()
                     .ifPresent(result::retypedDamage);
@@ -1254,5 +1258,9 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                 .skill(skillType.newSkillInstance())
                 .graduation(SkillGraduation.builder().graduationValue(UNTRAINED_PENALTY).build())
                 .build();
+    }
+
+    private static Integer nullIfZero(final int value) {
+        return value == 0 ? null : value;
     }
 }

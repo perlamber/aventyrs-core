@@ -15,11 +15,23 @@ import java.util.Set;
  * a bare {@link DamageType} carries no element, so {@code DamageInteraction}'s type-only path
  * (the ordinary attack) never matches one. That is the same limit RE already has.
  *
- * @param types   the {@link DamageType}s it reaches
- * @param element the element it is limited to, or {@code null} for any; {@link ElementalType#TODOS}
- *                matches every element
+ * @param types    the {@link DamageType}s it reaches
+ * @param element  the element it is limited to, or {@code null} for any; {@link ElementalType#TODOS}
+ *                 matches every element
+ * @param sanctity the sacred or profane nature it is limited to, or {@code null} for any (core 0.0.89) — a hit only
+ *                 matches one with a {@link DamageDescriptor} naming that nature
  */
-public record DamageScope(@NonNull Set<DamageType> types, ElementalType element) {
+public record DamageScope(@NonNull Set<DamageType> types, ElementalType element, DamageSanctity sanctity) {
+
+    /** A scope of no particular nature — every scope before core 0.0.89. */
+    public DamageScope(@NonNull final Set<DamageType> types, final ElementalType element) {
+        this(types, element, null);
+    }
+
+    /** Every hit of one nature, whatever its type — "imunes a danos Profanos". */
+    public static DamageScope sanctity(@NonNull final DamageSanctity sanctity) {
+        return new DamageScope(Set.of(DamageType.values()), null, sanctity);
+    }
 
     /** Every hit. */
     public static final DamageScope ALL = new DamageScope(Set.of(DamageType.values()), null);
@@ -42,6 +54,9 @@ public record DamageScope(@NonNull Set<DamageType> types, ElementalType element)
     public boolean matches(final DamageType type, final DamageDescriptor descriptor) {
         DamageType effectiveType = descriptor != null ? descriptor.damageType() : type;
         if (effectiveType == null || !types.contains(effectiveType)) {
+            return false;
+        }
+        if (sanctity != null && (descriptor == null || descriptor.sanctity() != sanctity)) {
             return false;
         }
         if (element == null) {

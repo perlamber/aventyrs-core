@@ -12,6 +12,7 @@ import org.aventyrs.core.ability.AttributeAbility;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Alignment;
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.character.Deity;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
@@ -242,11 +243,13 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
         boolean creatureTypeSatisfied = requirements.requiredCreatureType() == null
                 || character.getPrerequisiteCreatureTypes().contains(requirements.requiredCreatureType());
 
+        // "Devoto de X" — own Divindade, a Sincretismo Religioso one, or one followed falsely (core 0.0.87).
+        List<Deity> devoted = requirements.requiredDeity() == null && requirements.requiredDeityCategory() == null
+                ? List.of() : character.getDevotedDeities();
         boolean deitySatisfied = (requirements.requiredDeity() == null
-                || requirements.requiredDeity() == character.getDeity())
+                || devoted.contains(requirements.requiredDeity()))
                 && (requirements.requiredDeityCategory() == null
-                        || character.getDeity() != null
-                                && character.getDeity().getCategory() == requirements.requiredDeityCategory());
+                        || devoted.stream().anyMatch(deity -> deity.getCategory() == requirements.requiredDeityCategory()));
 
         boolean categoryCountSatisfied = requirements.requiredFeatCategory() == null
                 || countFeatsOfCategory(character, requirements.requiredFeatCategory())
@@ -709,6 +712,15 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     default boolean halvesEveryTargetDamage(final SkillType attackingSkillType, final AttackSource attackSource,
                                             final CombatantSheet attacker, final int additionalTargets) {
         return false;
+    }
+
+    /**
+     * {@link #resolveDamageBaseIncrease(Character, Weapon)} seeing the wielder's sheet — a scale-up that holds only
+     * while something on the sheet does ({@code ElementalFeat#GANA_ELEMENTAL}'s enchanted weapon, core 0.0.88). What
+     * {@code DamageBaseService#getDamageBase(CombatantSheet, Weapon)} asks; defaults to the shorter form.
+     */
+    default int resolveDamageBaseIncrease(final Character character, final Weapon weapon, final CombatantSheet holder) {
+        return resolveDamageBaseIncrease(character, weapon);
     }
 
     default int resolveDamageBaseIncrease(final Character character, final Weapon weapon) {
@@ -1293,6 +1305,17 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     }
 
     /**
+     * {@link #resolveCriticalHitEffectChains(Character, SkillType, AttackSource, CombatantSheet)} seeing the roll —
+     * "Acertos Críticos de Golpes Sobrenaturais recebem a Corrente de Efeitos – Escancarar Defesas" is scoped to an
+     * attack that activated the Talento (core 0.0.88). What {@code AttackDelivery} asks; defaults to the shorter form.
+     */
+    default List<EffectChain> resolveCriticalHitEffectChains(final Character attacker, final SkillType attackSkill,
+                                                             final AttackSource attackSource,
+                                                             final CombatantSheet holder, final SkillRoll skillRoll) {
+        return resolveCriticalHitEffectChains(attacker, attackSkill, attackSource, holder);
+    }
+
+    /**
      * Unidades de Distância this Talento adds to how far an attack with attackSource reaches, right now
      * — {@code EscudeiroFeat#DOMINIO_DA_ARTE_DO_ESCUDO_ATACANTE}'s Alcance Estendido ("Distância de
      * Ataque aumenta +1UD"). A UD figure, unlike {@link #resolveAttackRangeIncrease}'s whole bands; summed
@@ -1548,6 +1571,39 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     default DamageDescriptor resolveDamageRetype(final Character attacker, final SkillType attackSkill,
                                                  final AttackSource attackSource, final CombatantSheet holder) {
         return resolveDamageRetype(attacker, attackSkill, attackSource);
+    }
+
+    /**
+     * {@link #resolveDamageRetype(Character, SkillType, AttackSource, CombatantSheet)} seeing the roll — a retype
+     * an activated Talento makes for that attack alone ({@code AssassinoFeat#GOLPE_SOBRENATURAL}'s "este ataque causa
+     * Danos Mágicos", core 0.0.88). What {@code AbstractSkillInteraction} asks; defaults to the shorter form.
+     */
+    default DamageDescriptor resolveDamageRetype(final Character attacker, final SkillType attackSkill,
+                                                 final AttackSource attackSource, final CombatantSheet holder,
+                                                 final SkillRoll skillRoll) {
+        return resolveDamageRetype(attacker, attackSkill, attackSource, holder);
+    }
+
+    /**
+     * The Defesa this Talento makes its holder's attack roll against <b>instead</b> of the one the attack names —
+     * "sua rolagem de ataque será efetuada contra a DM do alvo, ao invés da DF" ({@code
+     * AssassinoFeat#GOLPE_SOBRENATURAL}, {@code ElementalFeat#GOLPE_CATACLISMICO}; core 0.0.88). {@code
+     * AttackDelivery} asks every held Talento before resolving and, on an answer, re-reads the defender's Defesa of
+     * that type. {@code null} by default — no change.
+     */
+    default DefenseType resolveTargetDefenseOverride(final SkillType attackSkill, final AttackSource attackSource,
+                                                     final CombatantSheet holder, final SkillRoll skillRoll) {
+        return null;
+    }
+
+    /**
+     * PM its holder pays to activate this Talento on a roll ({@code SkillRoll#getActivatedFeats()}) — Golpe
+     * Sobrenatural's "você pode gastar 1PM" (core 0.0.88). Summed over the activated Talentos by {@code
+     * AbstractSkillInteraction} and reported on {@code InteractionResult#getActivationManaCost()}: like a roll's PA,
+     * reported for the caller to spend, never deducted here. Zero by default.
+     */
+    default int resolveActivationManaCost(final SkillType skillType) {
+        return 0;
     }
 
     /**

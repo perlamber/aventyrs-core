@@ -299,4 +299,50 @@ class DevotoFeatTest {
         assertEquals(0, DevotoFeat.CULTISTA_UMBRAL.resolveCriticalMarginIncrease(SkillType.ATAQUE_CORPO_A_CORPO, null,
                 cultist), "no named target");
     }
+
+    // ---------- several Divindades (core 0.0.87) ----------
+
+    /** Sincretismo Religioso: "considerado um Devoto de ambas" — the second Divindade's Talentos read the own tier. */
+    @Test
+    void sincretismoMakesASecondDivindadeGenuine() {
+        Character ymirian = CharacterFixture.blank(CharacterFixture.BLANK).feats(new ArrayList<>())
+                .deity(Deity.YMIR).devotionTier(DevotionTier.FIEL).build();
+        assertFalse(DevotoFeat.ESCOLHIDO_DE_GAEA.isEligible(ymirian));
+        assertTrue(DevotoFeat.SINCRETISMO_RELIGIOSO.isEligible(ymirian), "Ymir is a Deus Elemental");
+
+        ymirian.grantFeat(new ChosenDeityFeat(DevotoFeat.SINCRETISMO_RELIGIOSO, Deity.GAEA));
+
+        assertEquals(List.of(Deity.YMIR, Deity.GAEA), ymirian.getGenuineDevotions());
+        assertTrue(DevotoFeat.ESCOLHIDO_DE_GAEA.isEligible(ymirian));
+        ymirian.grantFeat(DevotoFeat.ESCOLHIDO_DE_GAEA);
+        assertEquals(DevotionTier.FIEL, DevotoFeat.ESCOLHIDO_DE_GAEA.tierFor(ymirian));
+    }
+
+    /** Falsa Devoção: "considerado Devoto Adepto da divindade escolhida" — that Divindade's Talentos read Adepto. */
+    @Test
+    void falsaDevocaoCountsAsAnAdeptoOfTheFeignedDivindade() {
+        Character trickster = CharacterFixture.blank(CharacterFixture.BLANK).feats(new ArrayList<>())
+                .deity(Deity.SYLPH).devotionTier(DevotionTier.FUNDAMENTALISTA).build();
+        trickster.grantFeat(new ChosenDeityFeat(DevotoFeat.FALSA_DEVOCAO, Deity.TESLA));
+        trickster.grantFeat(DevotoFeat.MENTALIDADE_DE_TESLA);
+
+        assertTrue(DevotoFeat.MENTALIDADE_DE_TESLA.isEligible(trickster));
+        assertEquals(DevotionTier.ADEPTO, DevotoFeat.MENTALIDADE_DE_TESLA.tierFor(trickster));
+        assertEquals(0, DevotoFeat.MENTALIDADE_DE_TESLA.resolveDifficultyReduction(SkillType.CONHECIMENTOS, trickster),
+                "the Fundamentalista rung stays out of reach");
+        assertEquals(List.of(DevotionTier.ADEPTO),
+                devotion.owedPicks(trickster).stream().map(DevotionService.OwedPicks::rung).toList());
+    }
+
+    @Test
+    void bothNeedTheirDivindadePickedAndTheirOwnPrerequisite() {
+        Character light = CharacterFixture.blank(CharacterFixture.BLANK).feats(new ArrayList<>())
+                .deity(Deity.LUZ_PRIMORDIAL).build();
+
+        assertFalse(DevotoFeat.SINCRETISMO_RELIGIOSO.isEligible(light), "a Deus Primordial");
+        assertFalse(DevotoFeat.FALSA_DEVOCAO.isEligible(light));
+        assertFalse(DevotoFeat.FALSA_DEVOCAO.resolveRequiredChoices(light).isEmpty());
+        assertFalse(DevotoFeat.FALSA_DEVOCAO.resolveRequiredChoices(light).get(0).options()
+                .contains(Deity.LUZ_PRIMORDIAL), "not the Divindade already followed");
+    }
 }

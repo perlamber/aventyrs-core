@@ -110,6 +110,9 @@ public class MonsterSheet extends AbstractCombatantSheet {
      */
     private final MonsterBlueprint blueprint;
 
+    /** The stat block's damage immunities — see {@link MonsterTemplate#getDamageImmunities()}. */
+    private java.util.Set<org.aventyrs.core.character.DamageScope> damageImmunities = java.util.Set.of();
+
     /** Efeitos de Ego used since the Cena began — see {@link #recordEgoUse}. */
     private int egoEffectsUsedThisScene;
 
@@ -177,9 +180,11 @@ public class MonsterSheet extends AbstractCombatantSheet {
      * template is already in hand wherever a complete foe is being built.
      */
     public static MonsterSheet of(@NonNull final Character character, @NonNull final Player player, @NonNull final MonsterTemplate template) {
-        return new MonsterSheet(character, player, template.getPhysicalDefense(), template.getMagicDefense(),
+        MonsterSheet sheet = new MonsterSheet(character, player, template.getPhysicalDefense(), template.getMagicDefense(),
                 template.getGeneralDifficulty(), template.getSkillDifficulties(),
                 template.isUndead(), template.isIntelligent(), template.getCriticalEffectImmunities(), template.getCreatureType(), null);
+        sheet.damageImmunities = java.util.Set.copyOf(template.getDamageImmunities());
+        return sheet;
     }
 
     /** {@link #of(Character, Player, MonsterTemplate)} with a known id — the persistence-restore path. */
@@ -294,6 +299,14 @@ public class MonsterSheet extends AbstractCombatantSheet {
         if (!isIntelligent() || getRemainingEgoEffects() <= 0) {
             throw new IllegalOperationException(MONSTER_EGO_EFFECTS_EXHAUSTED);
         }
+    }
+
+    /** Every immunity a sheet has, plus the stat block's own ({@link MonsterTemplate#getDamageImmunities()}). */
+    @Override
+    public boolean isImmuneToDamage(final org.aventyrs.core.character.DamageType damageType,
+                                    final org.aventyrs.core.character.DamageDescriptor descriptor) {
+        return super.isImmuneToDamage(damageType, descriptor)
+                || damageImmunities.stream().anyMatch(scope -> scope.matches(damageType, descriptor));
     }
 
     /** Every foe is a PdN — see {@link CombatantSheet#isPdn()}; {@link #checkEgoEffectAvailable()} refuses a Regular. */

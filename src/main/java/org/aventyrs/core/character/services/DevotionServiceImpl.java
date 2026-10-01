@@ -28,7 +28,7 @@ public class DevotionServiceImpl implements DevotionService {
         for (DevotoFeat talento : heldDevotoFeats(character)) {
             for (DevotionTier rung : DevotionTier.values()) {
                 List<FeatChoice<?>> choices = talento.resolveRungChoices(rung, character);
-                if (!choices.isEmpty() && character.isDevotedAtLeast(rung)
+                if (!choices.isEmpty() && reaches(talento, character, rung)
                         && character.getDevotionPicks(talento, rung).isEmpty()) {
                     owed.add(new OwedPicks(talento, rung, choices));
                 }
@@ -40,7 +40,7 @@ public class DevotionServiceImpl implements DevotionService {
     @Override
     public void recordPicks(@NonNull final Character character, @NonNull final DevotoFeat talento,
                             @NonNull final DevotionTier rung, @NonNull final List<Object> picks) {
-        if (!heldDevotoFeats(character).contains(talento) || !character.isDevotedAtLeast(rung)) {
+        if (!heldDevotoFeats(character).contains(talento) || !reaches(talento, character, rung)) {
             throw new IllegalOperationException(DEVOTION_PICK_NOT_OWED);
         }
         List<FeatChoice<?>> choices = talento.resolveRungChoices(rung, character);
@@ -62,6 +62,12 @@ public class DevotionServiceImpl implements DevotionService {
             }
         }
         character.replaceDevotionPicks(talento, rung, recorded);
+    }
+
+    /** Whether character's devotion to talento's Divindade reaches rung — a feigned one stops at Adepto. */
+    private static boolean reaches(final DevotoFeat talento, final Character character, final DevotionTier rung) {
+        DevotionTier tier = talento.tierFor(character);
+        return tier != null && tier.reaches(rung);
     }
 
     private static List<DevotoFeat> heldDevotoFeats(final Character character) {

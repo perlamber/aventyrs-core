@@ -56,6 +56,10 @@ public enum ModifierType {
      * so it moves no melee dano term and no PV. {@code effect.EnrijecerMusculatura}'s Desvantagem (core 0.0.85).
      */
     PHYSICAL_SKILL_ROLL_BONUS,
+    /** Danos Profanos reduzidos — Opala Purificadora's "Danos profanos reduzidos em -3" (core 0.0.89). */
+    PROFANE_DAMAGE_REDUCTION,
+    /** Danos Sagrados reduzidos — Turmalina Obscura's "Danos … Sagradas reduzidos em -3" (core 0.0.89). */
+    SACRED_DAMAGE_REDUCTION,
     REACTIONS,
     FREE_ACTIONS,
     INITIATIVE,

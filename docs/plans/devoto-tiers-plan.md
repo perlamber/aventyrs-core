@@ -1,6 +1,6 @@
 # Devoto tiers — implementation plan
 
-**Status: done (core 0.0.86; aventyrs-api and the client on 0.0.86)** — see `0.086.CHANGELOG.md`. The API stores
+**Status: done (core 0.0.86, Sincretismo and Falsa Devoção in 0.0.87; aventyrs-api and the client on 0.0.86)** — see `0.086.CHANGELOG.md`. The API stores
 `devotionTier` and `devotionPicks` on the character and has `PUT /api/character-sheets/{id}/devotion-tier`. The client
 has the tier on the wizard's identity step, the tier and any owed picks on the hub, and the Narrador's "Devoção"
 screen on the GM console, outside the Cena. Table rulings (2026-10-01):
