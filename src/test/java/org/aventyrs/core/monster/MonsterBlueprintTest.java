@@ -21,6 +21,8 @@ import org.aventyrs.core.race.CreatureType;
 import org.aventyrs.core.sheet.EgoPointType;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.Player;
+import java.util.List;
+import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.skill.DifficultyLevel;
 import org.aventyrs.core.skill.SkillType;
 import org.junit.jupiter.api.Test;
@@ -155,30 +157,65 @@ class MonsterBlueprintTest {
         assertEquals(id, SampleMonster.GOBLIN_SELVAGEM.get().spawn(new Player(), id).getId());
     }
 
+    /** "Apenas PdN Exemplares (quando inteligentes) podem usar" (table ruling, core 0.0.83) — a Regular can't. */
     @Test
-    void aRegularMonsterUsesAtMostTwoEgoEffectsPerCena() {
+    void aRegularMonsterUsesNoEgoEffects() {
         MonsterSheet pantera = SampleMonster.PANTERA_DE_CIRENEIA.get().spawn(new Player());
-        egoPoints.useEgoPointsForEffect(pantera, EgoDomain.SORTE, EgoPointType.TEMPORARY, 1, 1);
-        egoPoints.useEgoPointsForEffect(pantera, EgoDomain.SORTE, EgoPointType.TEMPORARY, 1, 1);
+
         assertEquals(0, pantera.getRemainingEgoEffects());
-        int before = pantera.getTemporaryEgoPoints(EgoDomain.SORTE);
         assertThrows(IllegalOperationException.class,
                 () -> egoPoints.useEgoPointsForEffect(pantera, EgoDomain.SORTE, EgoPointType.TEMPORARY, 1, 1));
-        assertEquals(before, pantera.getTemporaryEgoPoints(EgoDomain.SORTE), "a refused Efeito spends nothing");
-
-        pantera.beginScene();
-        egoPoints.useEgoPointsForEffect(pantera, EgoDomain.SORTE, EgoPointType.TEMPORARY, 1, 1);
-        assertEquals(1, pantera.getRemainingEgoEffects());
     }
 
+    /**
+     * An Exemplar uses them without limit and spends nothing — "em vez de gastar pontos, todos os PJs recebem um ponto
+     * temporário neste mesmo Ego": at once for a temporary effect, at the end of the Cena for a permanent one.
+     */
     @Test
-    void anExemplarHasNoEgoEffectLimit() {
+    void anExemplarSpendsNothingAndOwesThePjsInstead() {
         MonsterBlueprint blueprint = SampleMonster.PANTERA_DE_CIRENEIA.get().toBuilder().kind(MonsterKind.EXEMPLAR).build();
         MonsterSheet exemplar = blueprint.spawn(new Player());
-        for (int i = 0; i < 3; i++) {
-            egoPoints.useEgoPointsForEffect(exemplar, EgoDomain.SORTE, EgoPointType.TEMPORARY, 1, 1);
-        }
+        int before = exemplar.getAvailableEgoPoints(EgoDomain.SORTE);
+
+        egoPoints.useEgoPointsForEffect(exemplar, EgoDomain.SORTE, EgoPointType.TEMPORARY, 1, 1);
+        egoPoints.useEgoPointsForEffect(exemplar, EgoDomain.SORTE, EgoPointType.PERMANENT, 1, 1);
+        egoPoints.useEgoPointsForEffect(exemplar, EgoDomain.SORTE, EgoPointType.TEMPORARY, 1, 1);
+
+        assertEquals(before, exemplar.getAvailableEgoPoints(EgoDomain.SORTE));
         assertEquals(Integer.MAX_VALUE, exemplar.getRemainingEgoEffects());
+        assertEquals(List.of(EgoDomain.SORTE, EgoDomain.SORTE), exemplar.drainImmediateEgoCompensations());
+        assertEquals(List.of(), exemplar.drainImmediateEgoCompensations());
+        assertEquals(List.of(EgoDomain.SORTE), exemplar.drainCenaEndEgoCompensations());
+    }
+
+    /**
+     * A caller holding an Exemplar foe as a plain sheet marks it a PdN: every Ego service then spends nothing and owes
+     * the PJs instead — here Iniciativa's permanent +2PA, owed at the end of the Cena.
+     */
+    @Test
+    void aSheetMarkedAsAnExemplarPdnSpendsNothingThroughTheEgoServices() {
+        CharacterFixture.loadTemplates();
+        CharacterSheet foe = CharacterSheet.of(CharacterFixture.blank(CharacterFixture.BLANK).build(), new Player());
+        foe.markAsExemplarPdn();
+
+        new org.aventyrs.core.character.services.InitiativeEgoServiceImpl().gainActionSurge(foe);
+
+        assertEquals(2, foe.getPermanentEgoPoints(EgoDomain.INICIATIVA));
+        assertEquals(2, foe.getTemporaryBonus(org.aventyrs.core.modifier.ModifierType.ACTION_POINTS));
+        assertEquals(List.of(EgoDomain.INICIATIVA), foe.drainCenaEndEgoCompensations());
+    }
+
+    /** The owed point reaches each PJ as a received point. */
+    @Test
+    void aPdnCompensationIsAReceivedPointForEveryPj() {
+        CharacterFixture.loadTemplates();
+        CharacterSheet one = CharacterSheet.of(CharacterFixture.blank(CharacterFixture.BLANK).build(), new Player());
+        CharacterSheet two = CharacterSheet.of(CharacterFixture.blank(CharacterFixture.BLANK).build(), new Player());
+
+        egoPoints.grantPdnCompensation(List.of(one, two), EgoDomain.AUTOCONTROLE);
+
+        assertEquals(3, one.getTemporaryEgoPoints(EgoDomain.AUTOCONTROLE));
+        assertEquals(3, two.getTemporaryEgoPoints(EgoDomain.AUTOCONTROLE));
     }
 
     @Test

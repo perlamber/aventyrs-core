@@ -1044,6 +1044,32 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
      */
     void grantCenaImmunity(Object kind);
 
+    // --- A PdN's Efeitos de Ego (core 0.0.83) ----------------------------------------------------
+
+    /**
+     * Whether this combatant is a PdN whose Efeitos de Ego spend nothing (table ruling: "apenas PdN Exemplares …
+     * podem usar"; "em vez de gastar pontos, todos os PJs recebem um ponto temporário neste mesmo Ego"). Always true
+     * for a {@code MonsterSheet} (which refuses a Regular's use); true for any other sheet once {@link
+     * #markAsExemplarPdn()} — a caller holding an Exemplar foe as a plain sheet.
+     */
+    boolean isPdn();
+
+    /** Marks this sheet as an Exemplar PdN — see {@link #isPdn()}. */
+    void markAsExemplarPdn();
+
+    /**
+     * One Efeito de Ego this PdN used, owed to every PJ as a temporary point in domain: at once for a temporary
+     * effect ({@link #drainImmediateEgoCompensations()}), at the end of the Cena for a permanent one ({@link
+     * #drainCenaEndEgoCompensations()}). Who the PJs are is the caller's to know.
+     */
+    void recordPdnEgoUse(org.aventyrs.core.character.EgoDomain domain, EgoPointType type);
+
+    /** The points owed to every PJ now, one entry per point — returned and cleared. */
+    java.util.List<org.aventyrs.core.character.EgoDomain> drainImmediateEgoCompensations();
+
+    /** The points owed to every PJ at the end of the Cena — returned and cleared; the caller calls it then. */
+    java.util.List<org.aventyrs.core.character.EgoDomain> drainCenaEndEgoCompensations();
+
     // --- Ego at zero (core 0.0.82) --------------------------------------------------------------
 
     /**

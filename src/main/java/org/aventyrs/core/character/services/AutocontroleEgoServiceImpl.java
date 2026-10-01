@@ -19,7 +19,6 @@ import org.aventyrs.core.sheet.TimedElementalResistance;
 import org.aventyrs.core.skill.SkillRoll;
 
 import static org.aventyrs.core.util.TranslatableMessages.NOT_A_RUNNING_EFFECT;
-import static org.aventyrs.core.util.TranslatableMessages.NOT_ENOUGH_EGO_POINTS;
 
 public class AutocontroleEgoServiceImpl implements AutocontroleEgoService {
 
@@ -112,15 +111,8 @@ public class AutocontroleEgoServiceImpl implements AutocontroleEgoService {
         }
     }
 
-    /** One Autocontrole point of type, or a refusal with nothing spent. */
+    /** One Autocontrole point of type — see {@code EgoPointsService#payForEffect} (a PdN spends nothing). */
     private void pay(final CombatantSheet sheet, final EgoPointType type) {
-        int held = type == EgoPointType.PERMANENT
-                ? sheet.getPermanentEgoPoints(EgoDomain.AUTOCONTROLE)
-                : sheet.getTemporaryEgoPoints(EgoDomain.AUTOCONTROLE);
-        if (held < 1) {
-            throw new IllegalOperationException(NOT_ENOUGH_EGO_POINTS);
-        }
-        // Determinação Heroica's 1d6 has to be thrown by the caller; this path reads its lowest face.
-        egoPointsService.useEgoPointsForEffect(sheet, EgoDomain.AUTOCONTROLE, type, 1, EgoPointsService.MIN_DIE_FACE);
+        egoPointsService.payForEffect(sheet, EgoDomain.AUTOCONTROLE, type);
     }
 }

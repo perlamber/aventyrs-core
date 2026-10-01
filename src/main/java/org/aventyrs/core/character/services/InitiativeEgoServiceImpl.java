@@ -14,7 +14,6 @@ import org.aventyrs.core.skill.SkillRoll;
 import java.util.OptionalInt;
 
 import static org.aventyrs.core.util.TranslatableMessages.INVALID_INITIATIVE_CHANGE;
-import static org.aventyrs.core.util.TranslatableMessages.NOT_ENOUGH_EGO_POINTS;
 import static org.aventyrs.core.util.TranslatableMessages.NO_INITIATIVE_CHARGE_BANKED;
 
 public class InitiativeEgoServiceImpl implements InitiativeEgoService {
@@ -111,15 +110,8 @@ public class InitiativeEgoServiceImpl implements InitiativeEgoService {
         return span == Span.RODADA ? 1 : null;
     }
 
-    /** One Iniciativa point of type, or a refusal with nothing spent. */
+    /** One Iniciativa point of type — see {@code EgoPointsService#payForEffect} (a PdN spends nothing). */
     private void pay(final CombatantSheet sheet, final EgoPointType type) {
-        int held = type == EgoPointType.PERMANENT
-                ? sheet.getPermanentEgoPoints(EgoDomain.INICIATIVA)
-                : sheet.getTemporaryEgoPoints(EgoDomain.INICIATIVA);
-        if (held < 1) {
-            throw new IllegalOperationException(NOT_ENOUGH_EGO_POINTS);
-        }
-        // No Vantagem de Iniciativa reacts to a spend with a die, so any legal face.
-        egoPointsService.useEgoPointsForEffect(sheet, EgoDomain.INICIATIVA, type, 1, EgoPointsService.MIN_DIE_FACE);
+        egoPointsService.payForEffect(sheet, EgoDomain.INICIATIVA, type);
     }
 }

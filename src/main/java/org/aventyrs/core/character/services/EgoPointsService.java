@@ -155,6 +155,24 @@ public interface EgoPointsService {
     org.aventyrs.core.skill.SkillRoll rerollWithSorte(CombatantSheet sheet, org.aventyrs.core.skill.SkillRoll roll,
                                                       java.util.List<Integer> newDice);
 
+    /**
+     * Pays for one Ego effect of type in domain — the one step every Ego-spending service goes through (core 0.0.83).
+     * A player's sheet spends the point through {@link #useEgoPointsForEffect}, refused with {@code
+     * NOT_ENOUGH_EGO_POINTS} and nothing spent when it isn't there. A PdN spends nothing (table ruling): only an
+     * Exemplar may ({@code MONSTER_EGO_EFFECTS_EXHAUSTED} otherwise), and the use is recorded as owed to every PJ —
+     * see {@code MonsterSheet#recordEgoUse}.
+     */
+    void payForEffect(CombatantSheet sheet, EgoDomain domain, EgoPointType type);
+
+    /**
+     * Hands every PJ in playerCharacters the temporary point a PdN's Efeito de Ego owes them in domain — received
+     * (refilling first, then an extra), like a Narrador's grant. The caller drained it off the {@code MonsterSheet}.
+     */
+    void grantPdnCompensation(java.util.Collection<CombatantSheet> playerCharacters, EgoDomain domain);
+
+    /** The source a PdN's compensation points are held under. */
+    Object PDN_COMPENSATION = "PDN_EGO";
+
     /** The source a Narrador's temporary grant is held under — see {@link #grantTemporaryByNarrator}. */
     Object NARRATOR_GRANT = "NARRADOR";
 

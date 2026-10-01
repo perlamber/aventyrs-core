@@ -215,6 +215,12 @@ economy services, `MovementServiceImpl`, `EffectChainService#getRequiredMargin`,
 activation gate, `heldConditions()` (the derived Apavorado/Desprevenido/Imobilizado), `getBlindCheckThreshold`,
 `AbstractSkillInteraction`/`AttackDelivery`/`AttackReceiver`.
 
+**A PdN's Efeitos de Ego (0.0.83).** Every Ego service pays through `EgoPointsService#payForEffect`. A player spends;
+a PdN (`CombatantSheet#isPdn` — every `MonsterSheet`, or a sheet `markAsExemplarPdn`) spends nothing and records the
+point owed to every PJ (`recordPdnEgoUse`): drained at once for a temporary effect, at the end of the Cena for a
+permanent one, and handed over with `grantPdnCompensation`. A Regular `MonsterSheet` is refused — only Exemplares
+use Efeitos de Ego (table ruling).
+
 ## Reference files to read first
 
 - `src/main/java/org/aventyrs/core/sheet/EgoPointPool.java` — the four equations.

@@ -2,7 +2,7 @@
 
 Source: `docs/rules/ego.txt` (imported 2026-09-29 from *Módulo Básico V18 ALPHA — 2.5: Ego* and its
 Autocontrole / Iniciativa / Recursos / Sorte subpages). Target: core first, then aventyrs-api, then the
-client. **Status: Phases 0–7 done (core 0.0.76–0.0.80; aventyrs-api and the client on 0.0.80, Sorte and Iniciativa wired in the Cena); Phase 8 (Autocontrole) done in core 0.0.81 and wired in the client (API and client on 0.0.81); Phase 9 (Ego at zero) done in core 0.0.82 and wired (API and client on 0.0.82); Phase 10 (PdN rules) next.**
+client. **Status: Phases 0–7 done (core 0.0.76–0.0.80; aventyrs-api and the client on 0.0.80, Sorte and Iniciativa wired in the Cena); Phase 8 (Autocontrole) done in core 0.0.81 and wired in the client (API and client on 0.0.81); Phase 9 (Ego at zero) done in core 0.0.82 and wired (API and client on 0.0.82); Phase 10 (PdN rules) done in core 0.0.83 and wired (API and client on 0.0.83). The plan is complete.**
 
 ## Table rulings (2026-09-29)
 
@@ -108,7 +108,7 @@ Under the ruling it is a consumable extra.
    "zero all damage this Rodada" needs a per-Rodada damage shield.
 9. **Ego at zero.** *Done in 0.0.82* — `ego.EgoSetback`, `EgoSetbackService`; zero = permanent points, lasting until one comes back (table rulings). Not applied: Escárnio de Tykhé, Centelha Morta's ending of active abilities. The four 1d6 penalty tables, rolled when a spend or drain empties the pool (reuse
    the depletion hook).
-10. **PdN rules.** Exemplar-only spending; a PdN permanent spend queues one temporary point for every PJ
+10. **PdN rules.** *Done in 0.0.83* — Exemplares only; a PdN spends nothing and owes every PJ a temporary point (at once / at the end of the Cena) — `CombatantSheet#isPdn`, `EgoPointsService#payForEffect`/`#grantPdnCompensation`. Exemplar-only spending; a PdN permanent spend queues one temporary point for every PJ
     at the end of the Cena.
 
 ## Cross-links

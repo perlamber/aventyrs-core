@@ -338,6 +338,14 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     @Getter(AccessLevel.NONE)
     private boolean damageNegatedThisRound;
 
+    /** See {@link #isPdn()}. */
+    @Getter(AccessLevel.NONE)
+    private boolean exemplarPdn;
+    @Getter(AccessLevel.NONE)
+    private final List<EgoDomain> immediateEgoCompensations = new ArrayList<>();
+    @Getter(AccessLevel.NONE)
+    private final List<EgoDomain> cenaEndEgoCompensations = new ArrayList<>();
+
     /** Setbacks rolled when an Ego reached zero — see {@link #getOwedEgoSetbacks()}. */
     @Getter(AccessLevel.NONE)
     private final Map<EgoDomain, org.aventyrs.core.ego.EgoSetback> egoSetbacks = new EnumMap<>(EgoDomain.class);
@@ -442,6 +450,35 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     @Override
     public void grantCenaImmunity(@NonNull final Object kind) {
         cenaImmunities.add(kind);
+    }
+
+    @Override
+    public boolean isPdn() {
+        return exemplarPdn;
+    }
+
+    @Override
+    public void markAsExemplarPdn() {
+        exemplarPdn = true;
+    }
+
+    @Override
+    public void recordPdnEgoUse(@NonNull final EgoDomain domain, @NonNull final EgoPointType type) {
+        (type == EgoPointType.PERMANENT ? cenaEndEgoCompensations : immediateEgoCompensations).add(domain);
+    }
+
+    @Override
+    public List<EgoDomain> drainImmediateEgoCompensations() {
+        List<EgoDomain> owed = List.copyOf(immediateEgoCompensations);
+        immediateEgoCompensations.clear();
+        return owed;
+    }
+
+    @Override
+    public List<EgoDomain> drainCenaEndEgoCompensations() {
+        List<EgoDomain> owed = List.copyOf(cenaEndEgoCompensations);
+        cenaEndEgoCompensations.clear();
+        return owed;
     }
 
     @Override

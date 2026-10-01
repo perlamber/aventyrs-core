@@ -23,11 +23,8 @@ import org.aventyrs.core.skill.DifficultyLevel;
 @Getter
 public enum MonsterKind {
 
-    REGULAR(DifficultyLevel.VERY_EASY, 0, 0, 0, 0, MonsterKind.REGULAR_EGO_EFFECTS_PER_SCENE),
+    REGULAR(DifficultyLevel.VERY_EASY, 0, 0, 0, 0, 0),
     EXEMPLAR(DifficultyLevel.EASY, 2, 6, 1, 1, Integer.MAX_VALUE);
-
-    /** "Monstros comuns podem utilizar no máximo dois Efeitos de Ego por Cena". */
-    public static final int REGULAR_EGO_EFFECTS_PER_SCENE = 2;
 
     /** The GD every trained Perícia starts at — Muito Fácil for a Regular, Fácil for an Exemplar. */
     private final DifficultyLevel baseSkillLevel;
@@ -45,6 +42,12 @@ public enum MonsterKind {
     private final int bonusMaximumSkillSteps;
 
     /** How many Efeitos de Ego it may use in one Cena. */
+    /**
+     * Efeitos de Ego it may use per Cena — table ruling (2026-09-30), following {@code ego.txt}: "apenas PdN Exemplares
+     * (quando inteligentes) podem usar", so a Regular none and an Exemplar without limit. This replaced
+     * {@code criacao-de-monstros.txt}'s "Monstros comuns podem utilizar no máximo dois Efeitos de Ego por Cena"
+     * (core 0.0.83). Whether an Exemplar is intelligent is the Narrador's to judge.
+     */
     private final int egoEffectsPerScene;
 
     MonsterKind(final DifficultyLevel baseSkillLevel, final int bonusStartingFeats, final int extraFeatPowerDegreeStep,

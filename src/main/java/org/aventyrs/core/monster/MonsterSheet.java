@@ -110,7 +110,7 @@ public class MonsterSheet extends AbstractCombatantSheet {
      */
     private final MonsterBlueprint blueprint;
 
-    /** Efeitos de Ego used since the Cena began — see {@link #recordEgoEffectUse()}. */
+    /** Efeitos de Ego used since the Cena began — see {@link #recordEgoUse}. */
     private int egoEffectsUsedThisScene;
 
     private MonsterSheet(final Character character, final Player player, final int physicalDefense, final int magicDefense,
@@ -284,9 +284,9 @@ public class MonsterSheet extends AbstractCombatantSheet {
     }
 
     /**
-     * Refuses when this Cena's Efeitos de Ego are spent — "Monstros comuns podem utilizar no máximo
-     * dois Efeitos de Ego por Cena". Checked by {@code EgoPointsService#useEgoPointsForEffect}
-     * before any point is spent.
+     * Refuses a Regular — "apenas PdN Exemplares (quando inteligentes) podem usar" (table ruling, core 0.0.83; see
+     * {@link MonsterKind#getEgoEffectsPerScene()}). Checked by {@code EgoPointsService#useEgoPointsForEffect} before
+     * anything happens.
      */
     public void checkEgoEffectAvailable() throws IllegalOperationException {
         if (getRemainingEgoEffects() <= 0) {
@@ -294,9 +294,18 @@ public class MonsterSheet extends AbstractCombatantSheet {
         }
     }
 
-    /** Counts one Efeito de Ego against this Cena's limit. */
-    public void recordEgoEffectUse() {
+    /** Every foe is a PdN — see {@link CombatantSheet#isPdn()}; {@link #checkEgoEffectAvailable()} refuses a Regular. */
+    @Override
+    public boolean isPdn() {
+        return true;
+    }
+
+    /** One Efeito de Ego used this Cena, owed to the PJs — see {@link CombatantSheet#recordPdnEgoUse}. */
+    @Override
+    public void recordPdnEgoUse(final org.aventyrs.core.character.EgoDomain domain,
+                                final org.aventyrs.core.sheet.EgoPointType type) {
         egoEffectsUsedThisScene++;
+        super.recordPdnEgoUse(domain, type);
     }
 
     /**

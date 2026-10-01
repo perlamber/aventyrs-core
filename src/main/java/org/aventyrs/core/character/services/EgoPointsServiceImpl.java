@@ -102,16 +102,28 @@ public class EgoPointsServiceImpl implements EgoPointsService {
         return rerolled;
     }
 
-    /** One Sorte point of type, or a refusal with nothing spent. */
+    /** One Sorte point of type — see {@link #payForEffect}. */
     private void paySorte(final CombatantSheet sheet, final EgoPointType type) {
-        int held = type == EgoPointType.PERMANENT
-                ? sheet.getPermanentEgoPoints(EgoDomain.SORTE)
-                : sheet.getTemporaryEgoPoints(EgoDomain.SORTE);
-        if (held < 1) {
-            throw new IllegalOperationException(NOT_ENOUGH_EGO_POINTS);
+        payForEffect(sheet, EgoDomain.SORTE, type);
+    }
+
+    @Override
+    public void payForEffect(@NonNull final CombatantSheet sheet, @NonNull final EgoDomain domain,
+                             @NonNull final EgoPointType type) {
+        if (!sheet.isPdn()) {
+            int held = type == EgoPointType.PERMANENT ? sheet.getPermanentEgoPoints(domain) : sheet.getTemporaryEgoPoints(domain);
+            if (held < 1) {
+                throw new IllegalOperationException(NOT_ENOUGH_EGO_POINTS);
+            }
         }
-        // No Vantagem de Sorte reacts to a spend with a die, so any legal face.
-        useEgoPointsForEffect(sheet, EgoDomain.SORTE, type, 1, MIN_DIE_FACE);
+        // No Vantagem reacts to these spends with a die Determinação Heroica can't take as its lowest face.
+        useEgoPointsForEffect(sheet, domain, type, 1, MIN_DIE_FACE);
+    }
+
+    @Override
+    public void grantPdnCompensation(@NonNull final java.util.Collection<CombatantSheet> playerCharacters,
+                                     @NonNull final EgoDomain domain) {
+        playerCharacters.forEach(pc -> pc.receiveTemporaryEgoPoints(domain, PDN_COMPENSATION, 1));
     }
 
     @Override
@@ -155,13 +167,16 @@ public class EgoPointsServiceImpl implements EgoPointsService {
                                                final int rolledValue) {
         // "Monstros comuns podem utilizar no máximo dois Efeitos de Ego por Cena" — refused before a
         // point is spent, counted only once the spend went through.
-        MonsterSheet monster = sheet instanceof MonsterSheet foe ? foe : null;
-        if (monster != null) {
-            monster.checkEgoEffectAvailable();
-        }
-        EgoPointSpend spend = sheet.spendEgoPoints(domain, type, amount);
-        if (monster != null) {
-            monster.recordEgoEffectUse();
+        EgoPointSpend spend;
+        if (sheet.isPdn()) {
+            // A PdN spends nothing: only an Exemplar may use an Efeito de Ego, and the PJs are owed a point instead.
+            if (sheet instanceof MonsterSheet monster) {
+                monster.checkEgoEffectAvailable();
+            }
+            sheet.recordPdnEgoUse(domain, type);
+            spend = new EgoPointSpend(domain, type, Math.max(0, amount));
+        } else {
+            spend = sheet.spendEgoPoints(domain, type, amount);
         }
         int recovered = getSpendRecovery(sheet.getCharacter(), spend, rolledValue);
         if (recovered > 0) {
