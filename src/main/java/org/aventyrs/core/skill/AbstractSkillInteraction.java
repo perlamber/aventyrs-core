@@ -380,6 +380,10 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
         bonus += sumSkillRollBonusModifiers(unlockedExcellencies);
         bonus += target.getTemporaryBonus(ModifierType.SKILL_ROLL_BONUS);
         bonus += target.getTemporaryBonus(skillType.getRollBonusType());
+        if (attributeDomain == AttributeDomain.STRENGTH || attributeDomain == AttributeDomain.DEXTERITY) {
+            // Enrijecer Musculatura: Desvantagem on "Perícias Físicas (baseadas em Força e Destreza)".
+            bonus += target.getTemporaryBonus(ModifierType.PHYSICAL_SKILL_ROLL_BONUS);
+        }
         // Malefício maluses — Caído/Agarrado's blanket Desvantagem, Desarmado's Ataque-only one,
         // and the fear ladder's, which applies only while within reach of the fear's origin.
         bonus += target.getConditionBonus(ModifierType.SKILL_ROLL_BONUS, sceneContext);
@@ -438,6 +442,10 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
         // Iniciativa's "reduzir o GD de até duas rolagens de Perícia" — one banked use on this roll.
         if (skillRoll != null && skillRoll.hasInitiativeCharge(InitiativeRollCharge.DIFFICULTY_REDUCTION)) {
             difficultyReduction += InitiativeRollCharge.DIFFICULTY_REDUCTION_LEVELS;
+        }
+        // Escancarar Defesas: "Seu próximo ataque contra este mesmo alvo tem a GD reduzida em -1 Nível".
+        if (skillType.isAttackSkill() && target.hasOpenedDefensesOf(attackTarget)) {
+            difficultyReduction += org.aventyrs.core.effect.EscancararDefesas.DIFFICULTY_REDUCTION_LEVELS;
         }
         // Transferir Rancor: "-1 Nível" on Perícia de Ataque and Domínio do Mana rolls, cumulative.
         if (skillType.isAttackSkill() || skillType == SkillType.DOMINIO_DO_MANA) {

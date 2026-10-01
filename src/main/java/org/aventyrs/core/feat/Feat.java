@@ -1548,6 +1548,21 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     }
 
     /**
+     * {@link #resolveEffectChains(Character, SkillType, AttackSource)} seeing the holder's sheet, the attacker's
+     * {@code SceneContext} and how the attack rolled — what a Corrente scoped to a Forma ({@code
+     * MetamorfoseDraculeaFeat}'s Serpente Espinhosa), a terrain ({@code SobrevivenciaFeat#MESTRE_DE_CACA}) or
+     * sized by an Acerto Crítico (Oprimir) needs. This is what {@code AttackDelivery} asks; it defaults to the
+     * shorter form, so every older override keeps working (core 0.0.85). holder, sceneContext and criticalResult
+     * may each be {@code null} — "cannot tell" adds nothing that depends on them.
+     */
+    default List<EffectChain> resolveEffectChains(final Character attacker, final SkillType attackSkill,
+                                                  final AttackSource attackSource, final CombatantSheet holder,
+                                                  final org.aventyrs.core.scene.SceneContext sceneContext,
+                                                  final org.aventyrs.core.skill.CriticalResult criticalResult) {
+        return resolveEffectChains(attacker, attackSkill, attackSource);
+    }
+
+    /**
      * What this Talento deals back to someone who just landed a melee attack on its holder, or
      * {@code null} when it deals nothing. {@code DuelistaFeat#CORACAO_DE_FERRO} ("Sempre que um
      * atacante Corpo-a-Corpo lhe infligir danos físicos ele também sofre 1 ponto de Dano Físico")

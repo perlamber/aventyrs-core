@@ -213,7 +213,9 @@ public enum ElementalFeat implements Feat {
     //  resolveCriticalMarginIncrease plus isFirstAttackRollOfTurn/the action log already express
     //  it (AssassinoFeat#ACERTO_CRITICO_RELAMPAGO). "Causa danos mágicos" is the damage-retyping
     //  gap (plan Phase D).
-    // TODO: Corrente de Efeitos – Explosão Cataclísmica is not an authored EffectChain.
+    // TODO: the Corrente is authored (effect.ExplosaoCataclismica, 0.0.85) and would ride
+    //  Feat#resolveCriticalHitEffectChains — but only "enquanto estiver com Gana Elemental ativo",
+    //  which nothing activates yet.
     GOLPE_CATACLISMICO(
             "Seu primeiro ataque em cada Rodada, enquanto estiver com Gana Elemental ativo, tem a "
                     + "Margem Crítica Menor aumentada em +1, tem sua Rolagem efetuada contra a DM "

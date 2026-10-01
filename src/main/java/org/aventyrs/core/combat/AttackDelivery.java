@@ -12,6 +12,8 @@ import org.aventyrs.core.effect.Effect;
 import org.aventyrs.core.effect.EffectChain;
 import org.aventyrs.core.effect.EffectChainService;
 import org.aventyrs.core.effect.EffectChainServiceImpl;
+import org.aventyrs.core.effect.CriticalEffectType;
+import org.aventyrs.core.effect.ExplosaoCataclismica;
 import org.aventyrs.core.effect.GolpeTrovejante;
 import org.aventyrs.core.effect.RepeatedEffect;
 import org.aventyrs.core.feat.Feat;
@@ -261,8 +263,10 @@ public class AttackDelivery {
                     rolledCritical != null && rolledCritical.isCriticalSuccess()));
             result.unappliedCriticalEffects(CriticalEffectResolver.resolve(attack.getAttacker(),
                     attack.getAttackSource(), attack.getAttackSkill(), criticalEffectTriggered ? criticalResult : null,
-                    true, attack.getAdditionalCriticalEffectTypes(), attack.getDiceRoller(), false,
-                    effectChainTriggered ? thunderousApplications(attack) : 0).unapplied());
+                    true, additionalCriticalEffectTypes(attack, criticalResult,
+                            effectChainTriggered && carriesCataclysmicExplosion(attack, criticalResult)),
+                    attack.getDiceRoller(), false,
+                    effectChainTriggered ? thunderousApplications(attack, criticalResult) : 0).unapplied());
             // Força Excessiva: "se o fizer e for bem-sucedido você sofre 2 pontos de Dano Físico Primordial".
             result.lockedSelfDamage(attack.getAttacker().getCharacter().getFeats().stream()
                     .mapToInt(feat -> feat.resolveLockedSelfDamageOnHit(attack.getAttackSkill(),
@@ -403,7 +407,7 @@ public class AttackDelivery {
         List<Effect> chains = new ArrayList<>();
         if (effectChainTriggered) {
             chains.addAll(attack.getEffectChains());
-            chains.addAll(effectChainsGrantedByFeats(attack));
+            chains.addAll(effectChainsGrantedByFeats(attack, criticalResult));
         }
         if (criticalEffectTriggered) {
             // Arte do Escudo Atacante: "seus Acertos Críticos recebem a Corrente de Efeitos – Rugido",
@@ -415,7 +419,9 @@ public class AttackDelivery {
         List<Effect> criticals = new ArrayList<>();
         if (criticalEffectTriggered) {
             criticals.addAll(CriticalEffect.applicableTo(defender,
-                    allCriticalEffects(attack, criticalResult, effectChainTriggered ? thunderousApplications(attack) : 0),
+                    allCriticalEffects(attack, criticalResult,
+                            effectChainTriggered ? thunderousApplications(attack, criticalResult) : 0,
+                            effectChainTriggered && carriesCataclysmicExplosion(attack, criticalResult)),
                     criticalResult, attack.getSceneContext()));
         } else {
             // Finalização: a hit that is not critical still applies the Arma Natural's own Efeito
@@ -469,9 +475,9 @@ public class AttackDelivery {
      * one per {@link GolpeTrovejante} among the attack's own and its Talentos' Correntes ({@code
      * DuelistaFeat#MAESTRIA_EM_ARMA}). Only meaningful when the Corrente threshold was cleared.
      */
-    private int thunderousApplications(final DeliveredAttack attack) {
+    private int thunderousApplications(final DeliveredAttack attack, final CriticalResult criticalResult) {
         List<Effect> chains = new ArrayList<>(attack.getEffectChains());
-        chains.addAll(effectChainsGrantedByFeats(attack));
+        chains.addAll(effectChainsGrantedByFeats(attack, criticalResult));
         return chains.stream()
                 .filter(GolpeTrovejante.class::isInstance)
                 .map(GolpeTrovejante.class::cast)
@@ -487,15 +493,37 @@ public class AttackDelivery {
      * Feat} hooks.
      */
     private List<CriticalEffect> allCriticalEffects(final DeliveredAttack attack, final CriticalResult criticalResult,
-                                                    final int thunderousApplications) {
+                                                    final int thunderousApplications,
+                                                    final boolean cataclysmicExplosion) {
         List<CriticalEffect> effects = new ArrayList<>(attack.getCriticalEffects());
         attack.getAttacker().getCharacter().getFeats().forEach(feat ->
                 effects.addAll(feat.resolveExtraCriticalEffects(attack.getAttacker().getCharacter(),
                         attack.getAttackSkill(), attack.getAttackSource(), criticalResult)));
         effects.addAll(CriticalEffectResolver.resolve(attack.getAttacker(), attack.getAttackSource(),
-                attack.getAttackSkill(), criticalResult, true, attack.getAdditionalCriticalEffectTypes(),
+                attack.getAttackSkill(), criticalResult, true,
+                additionalCriticalEffectTypes(attack, criticalResult, cataclysmicExplosion),
                 attack.getDiceRoller(), true, thunderousApplications).effects());
         return effects;
+    }
+
+    /**
+     * The request's additional Efeitos Críticos, plus Cataclismo when a triggered Corrente is an Explosão
+     * Cataclísmica — "… e Cataclismo como um Efeito Crítico adicional".
+     */
+    private static List<CriticalEffectType> additionalCriticalEffectTypes(final DeliveredAttack attack,
+                                                                          final CriticalResult criticalResult,
+                                                                          final boolean cataclysmicExplosion) {
+        List<CriticalEffectType> additional = new ArrayList<>(attack.getAdditionalCriticalEffectTypes());
+        if (cataclysmicExplosion) {
+            additional.add(ExplosaoCataclismica.ADDITIONAL_CRITICAL_EFFECT);
+        }
+        return additional;
+    }
+
+    /** Whether a triggered Corrente of this attack is an {@link ExplosaoCataclismica} — its own or a Talento's. */
+    private boolean carriesCataclysmicExplosion(final DeliveredAttack attack, final CriticalResult criticalResult) {
+        return attack.getEffectChains().stream().anyMatch(ExplosaoCataclismica.class::isInstance)
+                || effectChainsGrantedByFeats(attack, criticalResult).stream().anyMatch(ExplosaoCataclismica.class::isInstance);
     }
 
     /**
@@ -511,10 +539,11 @@ public class AttackDelivery {
                 attack.getDiceRoller());
     }
 
-    private List<EffectChain> effectChainsGrantedByFeats(final DeliveredAttack attack) {
+    private List<EffectChain> effectChainsGrantedByFeats(final DeliveredAttack attack, final CriticalResult criticalResult) {
         return attack.getAttacker().getCharacter().getFeats().stream()
                 .flatMap(feat -> feat.resolveEffectChains(attack.getAttacker().getCharacter(),
-                        attack.getAttackSkill(), attack.getAttackSource()).stream())
+                        attack.getAttackSkill(), attack.getAttackSource(), attack.getAttacker(),
+                        attack.getSceneContext(), criticalResult).stream())
                 .toList();
     }
 }

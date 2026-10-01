@@ -147,6 +147,11 @@ Worth stating, because these classes predate this document:
 
 ## Corrente de Efeitos — 13 catalog entries, and none of them is what a Magia names
 
+> **Status (core 0.0.85):** every entry below is an authored `effect.EffectChain` class. The "mechanisms" table
+> further down is historical for these: Enrijecer's Perícias Físicas scope, Oprimir's Roubo de Determinação, Ferida
+> Infecciosa's rest-only damage and Golpe Trovejante's double application are all built. Profano damage typing is
+> still not (Toque Sombrio's retyping).
+
 The 13: **Definhar**, **Enrijecer Musculatura**, **Escancarar Defesas**, **Excomungar**,
 **Explosão Cataclísmica**, **Ferida Infecciosa**, **Golpe Trovejante**, **Magicae Mortis**,
 **Oprimir**, **Remover Aflição**, **Rugido**, **Toque Sombrio**, **Veneno Vampírico**.

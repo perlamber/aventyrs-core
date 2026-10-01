@@ -371,9 +371,10 @@ public enum AssassinoFeat implements Feat {
      * <p><b>Not granted — three separate missing systems, none of them this constant's.</b> A
      * one-time PM spend that modifies a single roll has no transaction path (PV/PM/PD spends
      * have no reaction hook); redirecting an attack from DF to DM is not expressible ({@code
-     * AttackDelivery} takes the {@code DefenseType} from the attack, with no override); and
-     * granting a Corrente de Efeitos to a critical has no hook (see {@link #ABRIR_FERIDAS}).
-     * Held; resolved at the table.
+     * AttackDelivery} takes the {@code DefenseType} from the attack, with no override). Its
+     * critical's Corrente is ready for it — {@code effect.EscancararDefesas}, through {@code
+     * Feat#resolveCriticalHitEffectChains} (core 0.0.85) — but there is no Golpe Sobrenatural to
+     * scope it to until those two exist. Held; resolved at the table.
      */
     GOLPE_SOBRENATURAL(
             "Sempre que realizar Golpes de Finalização você pode gastar 1PM, se o fizer sua "

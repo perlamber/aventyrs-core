@@ -273,6 +273,14 @@ public class InteractionResult {
     Integer pushedBackUd;
 
     /**
+     * The Área de Efeito this stage gives the attack it rides — {@code effect.ExplosaoCataclismica}'s "Este ataque
+     * recebe Área de Efeito – Explosão" ({@code AreaOfEffect#ATTACK_EXPLOSION}, centred on the target). Reported,
+     * never applied: the caller resolves the footprint's other occupants ({@code AreaFootprint}) and deals them the
+     * hit. {@code null} for everything that widens nothing (core 0.0.85).
+     */
+    org.aventyrs.core.scene.AreaOfEffect triggeredAreaOfEffect;
+
+    /**
      * The highest Cego 1d6 face that fails this roll ({@code CombatantSheet#getBlindCheckThreshold})
      * — {@code null} when its roller throws none. Reported whether or not the die came with the roll,
      * so a caller knows to throw it.

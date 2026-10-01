@@ -413,6 +413,9 @@ public final class MonsterRules {
         // bonuses (Domínio dos Céus' "+2 enquanto voando") — a foe's roll bonus is its GD's bonus.
         int steps = sheet.getSkillDifficultyShift(skill);
         int bonus = sheet.getTemporaryBonus(skill.getRollBonusType()) + sheet.getTemporaryBonus(ModifierType.SKILL_ROLL_BONUS);
+        if (domain == AttributeDomain.STRENGTH || domain == AttributeDomain.DEXTERITY) {
+            bonus += sheet.getTemporaryBonus(ModifierType.PHYSICAL_SKILL_ROLL_BONUS);
+        }
         return SkillDifficulty.of(atRest.level().shift(steps), atRest.bonus() + bonus);
     }
 

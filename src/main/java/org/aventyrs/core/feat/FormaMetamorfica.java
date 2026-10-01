@@ -110,10 +110,8 @@ public enum FormaMetamorfica {
             "Imune a dano físico (exceto fogo e armas de Dyospiros), mas é incapaz de causar danos."),
 
     /**
-     * TODO: "Corrente de Efeitos – Veneno Vampírico" is blocked twice over. {@code EffectChain} is
-     *  a bare marker interface with one concrete implementation ({@code Sangramento}), and the
-     *  Malefício it would inflict is inert — {@code ConditionType#ENVENENADO} has no effect
-     *  because "Multiplicador de Bônus Base" exists nowhere in this core.
+     * "Corrente de Efeitos – Veneno Vampírico" is real (core 0.0.85): an attack with the Cauda Constritora while the
+     * shape is worn carries {@code effect.VenenoVampirico} ({@code MetamorfoseDraculeaFeat#resolveEffectChains}).
      */
     SERPENTE_ESPINHOSA(FormType.SERPENTE_ESPINHOSA, NaturalWeapon.CAUDA_CONSTRITORA,
             "Corrente de Efeitos – Veneno Vampírico.");

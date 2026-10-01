@@ -49,6 +49,13 @@ public enum ModifierType {
     ACTION_POINTS,
     SKILL_ROLL_COST,
     SKILL_ROLL_BONUS,
+    /**
+     * A bonus (or, negative, a malus) to every <b>Perícia Física</b> roll — one governed by Força or Destreza
+     * ("rolagens de Perícias Físicas (baseadas em Força e Destreza)"). Read only on the roll itself
+     * ({@code AbstractSkillInteraction}) and on a foe's matching GD ({@code MonsterRules}), never on the Atributo,
+     * so it moves no melee dano term and no PV. {@code effect.EnrijecerMusculatura}'s Desvantagem (core 0.0.85).
+     */
+    PHYSICAL_SKILL_ROLL_BONUS,
     REACTIONS,
     FREE_ACTIONS,
     INITIATIVE,

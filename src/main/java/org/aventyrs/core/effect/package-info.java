@@ -141,6 +141,11 @@
  * then drives it through the same drain loop above — chaining a Corrente on first with {@code
  * AbstractEffect#chainInto} if it judges one triggered. Same boundary as every other stage here.
  *
+ * <p><b>The generic Correntes are authored</b> (core 0.0.85) — every entry of {@code
+ * docs/rules/efeitos-criticos.txt}, each a class here (see {@link org.aventyrs.core.effect.EffectChain}), reached
+ * from a Talento by {@code Feat#resolveEffectChains}/{@code #resolveCriticalHitEffectChains} and chained by {@code
+ * AttackDelivery}.
+ *
  * <p>Several abilities/races are still blocked on a Corrente de Efeitos of their own — {@code
  * org.aventyrs.core.ego.AutocontroleAdvantage#RESOLUTO} (a Defesas-comparison threshold
  * on a Corrente de Efeitos — the Defesas system exists now, so what RESOLUTO still lacks is a

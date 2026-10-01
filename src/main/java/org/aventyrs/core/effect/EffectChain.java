@@ -8,9 +8,12 @@ package org.aventyrs.core.effect;
  * beyond "this is an Effect that is a Corrente de Efeitos": no trigger condition, no
  * Defesas-comparison threshold (see {@code
  * org.aventyrs.core.ego.AutocontroleAdvantage#RESOLUTO}), no duration/Rodada tracking.
- * Two concrete implementations exist — {@link Definhar} (an ongoing curse drain) and
- * {@link Sobrecura} (the bonus recovery three Vida Magias name). See {@code
- * org.aventyrs.core.effect} package-info for the pipeline this fits into.
+ * Every generic Corrente of {@code docs/rules/efeitos-criticos.txt} is one (core 0.0.85): {@link Definhar},
+ * {@link EnrijecerMusculatura}, {@link EscancararDefesas}, {@link Excomungar}, {@link ExplosaoCataclismica},
+ * {@link FeridaInfecciosa}, {@link GolpeTrovejante}, {@link MagicaeMortis}, {@link Oprimir}, {@link
+ * RemoverAflicao}, {@link Rugido}, {@link ToqueSombrio}, {@link VenenoVampirico} — plus {@link Sobrecura}, the
+ * bonus recovery three Vida Magias name. See {@code org.aventyrs.core.effect} package-info for the pipeline this
+ * fits into.
  */
 public interface EffectChain extends Effect {
 }

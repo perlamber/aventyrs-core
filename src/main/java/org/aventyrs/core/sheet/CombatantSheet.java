@@ -201,6 +201,31 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
     void releaseVitalityLock();
 
     /**
+     * Locks amount of the damage this combatant has <b>already taken</b> against every heal but a Descanso —
+     * {@code effect.FeridaInfecciosa}'s "estes danos adicionais só podem ser recuperados com Descansos" (table
+     * ruling, 2026-10-01: any Descanso, Mínimo and up). A Descanso's heal ({@code HealingSource#rest}) recovers it
+     * once the unlocked damage is gone, releasing as much as it recovers; nothing else does, Roubo de Vida
+     * included. Kept apart from {@link #getLockedDamage()}, which a Descanso Verdadeiro alone releases (core 0.0.85).
+     */
+    void lockDamageUntilRest(int amount);
+
+    /** The part of {@link #getDamageTaken()} only a Descanso recovers — see {@link #lockDamageUntilRest}. */
+    int getRestLockedDamage();
+
+    // --- Escancarar Defesas (core 0.0.85) -------------------------------------------------------
+
+    /**
+     * This combatant's next attack against target is one nível easier — {@code effect.EscancararDefesas}, "Seu
+     * próximo ataque contra este mesmo alvo tem a GD reduzida em -1 Nível". Held by the <b>attacker</b>, read by
+     * its next Perícia de Ataque roll against target ({@link #hasOpenedDefensesOf}), and spent by {@link
+     * #recordAction} once an attack naming target is recorded. A second mark on the same target doesn't stack.
+     */
+    void openDefensesOf(CombatantSheet target);
+
+    /** Whether this combatant's next attack against target is one nível easier. {@code null} is nobody. */
+    boolean hasOpenedDefensesOf(CombatantSheet target);
+
+    /**
      * Lends this combatant 1 temporary Ego point of domain from lender, who has already paid it —
      * Transferir Determinação/Essência. Settled at {@link #startNewScene()}: an unused loaned point
      * goes back to lender ("devolvidos"); a used one is simply gone ("perdidos"). "Unused" is read as

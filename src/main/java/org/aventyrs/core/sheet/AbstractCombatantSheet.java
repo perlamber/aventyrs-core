@@ -375,6 +375,14 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     /** The part of the lock Roubo de Vida may still recover — see {@link #lockDamage}. */
     private int lifeStealRecoverableLockedDamage;
 
+    /** Damage only a Descanso recovers — see {@link #lockDamageUntilRest}. */
+    @Getter(AccessLevel.NONE)
+    private int restLockedDamage;
+
+    /** Whose Defesas this combatant's next attack finds open — see {@link #openDefensesOf}. */
+    @Getter(AccessLevel.NONE)
+    private final Set<UUID> openedDefenses = new HashSet<>();
+
     /** Temporary Ego points lent to this combatant, settled at {@link #startNewScene()}. */
     @Getter(AccessLevel.NONE)
     private final List<EgoLoan> egoLoans = new ArrayList<>();
@@ -653,11 +661,19 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         }
         // Transferir Vitalidade: PV paid that way come back only with a Descanso Verdadeiro. Feridas
         // Ardentes' lock yields to Roubo de Vida too, which releases as much of it as it recovers.
-        int unlocked = Math.max(0, getDamageTaken() - lockedDamage - lifeStealRecoverableLockedDamage);
-        int ceiling = lifeSteal ? Math.max(0, getDamageTaken() - lockedDamage) : unlocked;
+        // Ferida Infecciosa's damage yields to a Descanso alone, which releases as much of it as it recovers.
+        boolean rest = source != null && source.key() instanceof org.aventyrs.core.rest.RestType;
+        int restLock = Math.min(restLockedDamage, getDamageTaken());
+        int unlocked = Math.max(0, getDamageTaken() - lockedDamage - lifeStealRecoverableLockedDamage - restLock);
+        int ceiling = lifeSteal ? Math.max(0, getDamageTaken() - lockedDamage - restLock)
+                : rest ? Math.max(0, getDamageTaken() - lockedDamage - lifeStealRecoverableLockedDamage) : unlocked;
         recovered = Math.max(0, Math.min(recovered, ceiling));
         if (recovered > unlocked) {
-            lifeStealRecoverableLockedDamage = Math.max(0, lifeStealRecoverableLockedDamage - (recovered - unlocked));
+            if (rest) {
+                restLockedDamage = Math.max(0, restLock - (recovered - unlocked));
+            } else {
+                lifeStealRecoverableLockedDamage = Math.max(0, lifeStealRecoverableLockedDamage - (recovered - unlocked));
+            }
         }
         int damageTaken = hitPoints.recover(recovered);
         observeStatus();
@@ -797,6 +813,28 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     public void releaseVitalityLock() {
         lockedDamage = 0;
         lifeStealRecoverableLockedDamage = 0;
+    }
+
+    @Override
+    public void openDefensesOf(@NonNull final CombatantSheet target) {
+        openedDefenses.add(target.getId());
+    }
+
+    @Override
+    public boolean hasOpenedDefensesOf(final CombatantSheet target) {
+        return target != null && openedDefenses.contains(target.getId());
+    }
+
+    @Override
+    public void lockDamageUntilRest(final int amount) {
+        if (amount > 0) {
+            restLockedDamage += amount;
+        }
+    }
+
+    @Override
+    public int getRestLockedDamage() {
+        return Math.min(restLockedDamage, getDamageTaken());
     }
 
     @Override
@@ -1797,6 +1835,7 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     public void startNewScene() {
         clearInitiativeOverride();
         cenaImmunities.clear();
+        openedDefenses.clear();
         actionsThisCena.clear();
         actionsThisRound.clear();
         actionsOfLatestOwnTurn.clear();
@@ -2014,6 +2053,10 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         }
         // The use of every Talento this action spent — what a rationed activation claims itself on.
         action.activatedFeats().forEach(feat -> feat.onActivationRecorded(this));
+        // Escancarar Defesas holds for the next attack against that target alone.
+        if (action.targetId() != null && action.skill() != null && action.skill().isAttackSkill()) {
+            openedDefenses.remove(action.targetId());
+        }
     }
 
     @Override
