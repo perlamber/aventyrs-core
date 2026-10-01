@@ -479,7 +479,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
 
         if (skillType.isAttackSkill()) {
             target.getCharacter().getFeats().stream()
-                    .map(feat -> feat.resolveDamageRetype(target.getCharacter(), skillType, attackSource))
+                    .map(feat -> feat.resolveDamageRetype(target.getCharacter(), skillType, attackSource, target))
                     .filter(java.util.Objects::nonNull)
                     .findFirst()
                     .ifPresent(result::retypedDamage);

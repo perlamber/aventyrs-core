@@ -21,6 +21,7 @@ import org.aventyrs.core.effect.CriticalEffect;
 import org.aventyrs.core.effect.EffectChain;
 import org.aventyrs.core.sheet.ActionCost;
 import org.aventyrs.core.sheet.Blessing;
+import org.aventyrs.core.sheet.HealingSource;
 import org.aventyrs.core.sheet.CombatantAction;
 import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.CombatantSheet;
@@ -68,7 +69,7 @@ import org.aventyrs.core.title.TitleIdentity;
  * authored catalog, which is correct: {@code FeatCatalog} lists the ruleset, not every {@code
  * Feat} that could ever be constructed.
  */
-public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, ArtilhariaFeat, AssassinoFeat, AvianoFeat, BestialFeat, CavalariaFeat, DestinoFeat, DraconicoFeat, DuelistaFeat, ElementalFeat, ElficoFeat, EscudeiroFeat, FadasFeat, FeericoFeat, FeralFeat, FuriasFeat, GiganteFeat, GnomoFeat, GoblinFeat, GorgonaFeat, HumanoFeat, IndomitoFeat, MesticoFeat, MobilidadeFeat, MonstruosoFeat, OgricoFeat, OrquicoFeat, PequeninoFeat, TrollFeat, VampiricoFeat, PeritoFeat, SobrevivenciaFeat, MetamagicoFeat, AntecedenteFeat, DefeitoFeat, QualidadeFeat, AbstractFeat {
+public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, ArtilhariaFeat, AssassinoFeat, AvianoFeat, BestialFeat, CavalariaFeat, DestinoFeat, DraconicoFeat, DuelistaFeat, ElementalFeat, ElficoFeat, EscudeiroFeat, FadasFeat, FeericoFeat, FeralFeat, FuriasFeat, GiganteFeat, GnomoFeat, GoblinFeat, GorgonaFeat, HumanoFeat, IndomitoFeat, MesticoFeat, MobilidadeFeat, MonstruosoFeat, OgricoFeat, OrquicoFeat, PequeninoFeat, TrollFeat, VampiricoFeat, PeritoFeat, SobrevivenciaFeat, MetamagicoFeat, AntecedenteFeat, DefeitoFeat, QualidadeFeat, DevotoFeat, AbstractFeat {
     FeatCategory getFeatCategory();
     String getDescription();
     FeatRequirements getFeatRequirements();
@@ -241,8 +242,11 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
         boolean creatureTypeSatisfied = requirements.requiredCreatureType() == null
                 || character.getPrerequisiteCreatureTypes().contains(requirements.requiredCreatureType());
 
-        boolean deitySatisfied = requirements.requiredDeity() == null
-                || requirements.requiredDeity() == character.getDeity();
+        boolean deitySatisfied = (requirements.requiredDeity() == null
+                || requirements.requiredDeity() == character.getDeity())
+                && (requirements.requiredDeityCategory() == null
+                        || character.getDeity() != null
+                                && character.getDeity().getCategory() == requirements.requiredDeityCategory());
 
         boolean categoryCountSatisfied = requirements.requiredFeatCategory() == null
                 || countFeatsOfCategory(character, requirements.requiredFeatCategory())
@@ -1534,6 +1538,78 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     default DamageDescriptor resolveDamageRetype(final Character attacker, final SkillType attackSkill,
                                                  final AttackSource attackSource) {
         return null;
+    }
+
+    /**
+     * {@link #resolveDamageRetype(Character, SkillType, AttackSource)} seeing the attacker's sheet — a retype that
+     * holds only while something on the sheet does ({@code DevotoFeat#IMPACTO_YMIRIANO}'s 2PD window). Defaults to
+     * the shorter form; holder may be {@code null} (core 0.0.86).
+     */
+    default DamageDescriptor resolveDamageRetype(final Character attacker, final SkillType attackSkill,
+                                                 final AttackSource attackSource, final CombatantSheet holder) {
+        return resolveDamageRetype(attacker, attackSkill, attackSource);
+    }
+
+    /**
+     * Roubo de Vida this Talento grants against one particular target — {@code DevotoFeat#BENCAO_DE_SURT_ELDUR}'s
+     * "Roubo de Vida 1 em seus ataques efetuados contra personagens devotos de outras Divindades". Added by {@code
+     * AttackDelivery} to the attacker's standing Roubo de Vida ({@code LifeStealService#getTotalLifeSteal}) for that
+     * hit. Zero by default (core 0.0.86).
+     */
+    default int resolveTargetedLifeSteal(final Character attacker, final CombatantSheet holder,
+                                         final CombatantSheet target) {
+        return 0;
+    }
+
+    /**
+     * What this Talento adds to (or, negative, takes from) every heal its holder <b>receives</b>, Roubo de Vida
+     * aside — {@code DevotoFeat#ADEPTO_DA_ESCURIDAO_PROFUNDA}'s "todos os outros efeitos de curas (incluindo
+     * Descansos) são reduzidos em -3". Read by {@code CombatantSheet#heal}; source may be {@code null} (an unsourced
+     * heal). Zero by default (core 0.0.86).
+     */
+    default int resolveHealingReceivedAdjustment(final Character holder, final HealingSource source) {
+        return 0;
+    }
+
+    /**
+     * What this Talento adds to a heal its holder <b>gives</b> — {@code DevotoFeat#TOCADO_POR_UNDINE_E_HALOI}'s
+     * "Efeitos de cura de Habilidades e Magias que sejam Ativos ou Conjurados por você são aumentados em +1". Read by
+     * {@code CombatantSheet#heal} off {@code HealingSource#healer()}, beside the healer's Títulos. Zero by default.
+     */
+    default int resolveHealingDealtBonus(final Character healer, final HealingSource source) {
+        return 0;
+    }
+
+    /**
+     * Blessings its holder gains when a heal actually recovered PV — {@code DevotoFeat#TOCADO_POR_UNDINE_E_HALOI}'s
+     * "Após ser alvo de Magias ou Habilidades … que te permitam recuperar PV o dano de seus ataques aumentam em +1
+     * por 1 Rodada". Granted by {@code CombatantSheet#heal}. Empty by default (core 0.0.86).
+     */
+    default List<Blessing> resolveHealingReceivedBlessings(final Character holder, final HealingSource source,
+                                                           final CombatantSheet holderSheet) {
+        return List.of();
+    }
+
+    /**
+     * RDS this Talento grants against one particular attacker — {@code DevotoFeat#BENCAO_DE_SURT_ELDUR}'s "RDS para
+     * resistir aos ataques de Monstros e personagens devotos de outras Divindades". Read by {@code DamageService}
+     * where the hit names its source; reaches what RDS reaches (all but Primordial). Zero by default (core 0.0.86).
+     */
+    default int resolveDamageTakenReductionAgainst(final Character holder, final CombatantSheet holderSheet,
+                                                   final CombatantSheet attacker) {
+        return 0;
+    }
+
+    /**
+     * Correntes de Efeitos this Talento adds to a Magia its holder casts — {@code
+     * DevotoFeat#ACOLITO_DA_LUZ_PRIMORDIAL}'s Remover Aflição on Magias targeting allies and Excomungar on Magias
+     * divinas. Reported on {@code SpellCastingResult#getGrantedEffectChains()} for the caller to chain onto the
+     * Magia's effect, as it chains any Corrente it judged triggered. target is the cast's combatant target, or {@code
+     * null}; hostileTarget whether it is an enemy. Empty by default (core 0.0.86).
+     */
+    default List<EffectChain> resolveSpellEffectChains(final Spell spell, final CombatantSheet caster,
+                                                       final CombatantSheet target, final boolean hostileTarget) {
+        return List.of();
     }
 
     /**

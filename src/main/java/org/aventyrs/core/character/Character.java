@@ -90,6 +90,21 @@ public class Character {
      */
     protected Deity deity;
 
+    /**
+     * How devoted this character is to {@link #deity} — Adepto, Fiel or Fundamentalista — or {@code null} for none.
+     * Picked at creation, then raised or lowered by the Narrador ({@code DevotionService#setTier}); it decides which
+     * rungs of each held Talento de Devoção apply. See {@link DevotionTier}.
+     */
+    protected DevotionTier devotionTier;
+
+    /**
+     * Every pick a Talento de Devoção's rung asked for, kept while the tier is lowered — see {@link
+     * org.aventyrs.core.feat.DevotionPick}. Recorded through {@code DevotionService#recordPicks}.
+     */
+    @NonNull
+    @Builder.Default
+    protected List<org.aventyrs.core.feat.DevotionPick> devotionPicks = List.of();
+
     /** A character's Centelhas at the start — one for each {@link TitleSlot} a Título may awaken into. */
     public static final int CENTELHAS = TitleSlot.values().length;
 
@@ -735,6 +750,37 @@ public class Character {
      * Holds held from now on, replacing the entry of the same Defeito still in force, if any — the plain,
      * unvalidating mutator beneath {@code DefectService#grantDefect}, like {@link #grantFeat}.
      */
+    /** Sets the devotion tier — the unvalidating mutator beneath {@code DevotionService#setTier}. */
+    public void setDevotionTier(final DevotionTier devotionTier) {
+        this.devotionTier = devotionTier;
+    }
+
+    /** Whether this character's devotion reaches rung. */
+    public boolean isDevotedAtLeast(final DevotionTier rung) {
+        return devotionTier != null && devotionTier.reaches(rung);
+    }
+
+    /**
+     * Replaces the picks talento's rung holds with picks — the unvalidating mutator beneath {@code
+     * DevotionService#recordPicks}.
+     */
+    public void replaceDevotionPicks(@NonNull final org.aventyrs.core.feat.DevotoFeat talento,
+                                     @NonNull final DevotionTier rung,
+                                     @NonNull final List<org.aventyrs.core.feat.DevotionPick> picks) {
+        List<org.aventyrs.core.feat.DevotionPick> updated = new ArrayList<>(devotionPicks);
+        updated.removeIf(pick -> pick.talento() == talento && pick.rung() == rung);
+        updated.addAll(picks);
+        devotionPicks = List.copyOf(updated);
+    }
+
+    /** The values talento's rung picked, in the order recorded — empty when none was made. */
+    public List<Object> getDevotionPicks(final org.aventyrs.core.feat.DevotoFeat talento, final DevotionTier rung) {
+        return devotionPicks.stream()
+                .filter(pick -> pick.talento() == talento && pick.rung() == rung)
+                .map(org.aventyrs.core.feat.DevotionPick::value)
+                .toList();
+    }
+
     public void imposeDefect(@NonNull final org.aventyrs.core.defect.HeldDefect held) {
         List<org.aventyrs.core.defect.HeldDefect> updated = new ArrayList<>(defects);
         getActiveDefect(held.defect()).ifPresentOrElse(current -> updated.set(updated.indexOf(current), held),

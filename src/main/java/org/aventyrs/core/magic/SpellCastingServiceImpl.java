@@ -140,6 +140,10 @@ public class SpellCastingServiceImpl implements SpellCastingService {
                                 .withHealingBonus(healingBonus))
                         .orElse(null))
                 .recordedAction(recordedAction(request, spell, deliveryResult))
+                .grantedEffectChains(casterCharacter.getFeats().stream()
+                        .flatMap(feat -> feat.resolveSpellEffectChains(spell, request.getCaster(),
+                                request.getCombatantTarget(), isHostileTarget(request)).stream())
+                        .toList())
                 .build();
     }
 

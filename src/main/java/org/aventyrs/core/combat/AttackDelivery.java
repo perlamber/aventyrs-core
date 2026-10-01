@@ -433,7 +433,13 @@ public class AttackDelivery {
         // Tiro Duplo/Múltiplo: "Correntes de Efeito e Efeitos Críticos aplicam seus efeitos duas
         // vezes" — each group once more per extra projectile, right behind the original.
         int repetitions = effectRepetitions(attack);
-        List<Effect> stages = new ArrayList<>(repeated(chains, repetitions));
+        List<Effect> stages = new ArrayList<>();
+        // Roubo de Vida: the attacker's standing figure plus any against this target, right behind the damage.
+        int lifeSteal = lifeStealAgainst(attack, defender);
+        if (lifeSteal > 0) {
+            stages.add(new org.aventyrs.core.effect.RouboDeVida(attack.getAttacker(), lifeSteal));
+        }
+        stages.addAll(repeated(chains, repetitions));
         stages.addAll(repeated(criticals, repetitions));
 
         Interaction<CombatantSheet> next = null;
@@ -451,6 +457,20 @@ public class AttackDelivery {
                     .sum());
         }
         return (halfDamage ? head.halvingDamage() : head).chainInto(next);
+    }
+
+    /**
+     * The Roubo de Vida this hit carries against defender — {@code LifeStealService#getTotalLifeSteal} for the
+     * attacker plus each held Talento's {@code Feat#resolveTargetedLifeSteal} (core 0.0.86).
+     */
+    private static int lifeStealAgainst(final DeliveredAttack attack, final CombatantSheet defender) {
+        CombatantSheet attacker = attack.getAttacker();
+        int total = new org.aventyrs.core.character.services.LifeStealServiceImpl()
+                .getTotalLifeSteal(attacker.getCharacter(), attacker);
+        total += attacker.getCharacter().getFeats().stream()
+                .mapToInt(feat -> feat.resolveTargetedLifeSteal(attacker.getCharacter(), attacker, defender))
+                .sum();
+        return Math.max(0, total);
     }
 
     /** Every held Talento's extra applications of this attack's Correntes and Efeitos Críticos. */

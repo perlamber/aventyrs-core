@@ -170,6 +170,10 @@ public class TranslatableMessages {
     public static final String INVALID_DEFECT_SELECTION = "INVALID_DEFECT_SELECTION";
     /** Superar names a Defeito the character does not hold in force — {@code DefectService#overcome}. */
     public static final String DEFECT_NOT_HELD = "DEFECT_NOT_HELD";
+    /** A rung pick was recorded for a Talento de Devoção the character doesn't hold, or a rung it hasn't reached. */
+    public static final String DEVOTION_PICK_NOT_OWED = "DEVOTION_PICK_NOT_OWED";
+    /** A rung pick that isn't among the rung's options, or the wrong number of them. */
+    public static final String INVALID_DEVOTION_PICK = "INVALID_DEVOTION_PICK";
 
     /**
      * A Talento only a newly created character may take ("Apenas personagens recém-criados") was

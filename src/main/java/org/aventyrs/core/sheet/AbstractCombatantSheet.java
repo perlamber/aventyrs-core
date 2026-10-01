@@ -633,6 +633,12 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         // Médico de Guerra: "Os efeitos de recuperação de PV aumentam em +2" — the healer's Títulos
         // add to what the heal offers before anything halves or caps it.
         int offered = amount + healerHealingBonus(source);
+        // Adepto da Escuridão Profunda's Fundamentalista: every heal but Roubo de Vida, Descansos included, -3.
+        if (!lifeSteal) {
+            offered = Math.max(0, offered + getCharacter().getFeats().stream()
+                    .mapToInt(feat -> feat.resolveHealingReceivedAdjustment(getCharacter(), source))
+                    .sum());
+        }
         if (offered > 0) {
             // "Efeitos de cura interrompem a perda de PV/PM/PD por rodada" — Sangramento's,
             // Purga-Mana's and Excruciante's clauses say it alike.
@@ -677,6 +683,13 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         }
         int damageTaken = hitPoints.recover(recovered);
         observeStatus();
+        // Tocado por Undine e Haloi's Fundamentalista: being healed by someone else's Magia or Habilidade.
+        if (recovered > 0 && !lifeSteal) {
+            getCharacter().getFeats().stream()
+                    .flatMap(feat -> feat.resolveHealingReceivedBlessings(getCharacter(), source, this).stream())
+                    .toList()
+                    .forEach(this::grantBlessing);
+        }
         return damageTaken;
     }
 
@@ -690,7 +703,7 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         }
         return source.healer().getCharacter().getAllTitles().stream()
                 .mapToInt(title -> title.resolveHealingBonus(source, this))
-                .sum();
+                .sum() + source.healerFeatBonus();
     }
 
     /** Whether any of the healer's Títulos lifts the Coma cap for source — Levantar os Caídos. */

@@ -1,6 +1,13 @@
 # Devoto tiers — implementation plan
 
-**Status: not started.** It was written alongside core 0.0.85, which authored every generic Corrente de Efeitos. Three
+**Status: done (core 0.0.86; aventyrs-api and the client on 0.0.86)** — see `0.086.CHANGELOG.md`. The API stores
+`devotionTier` and `devotionPicks` on the character and has `PUT /api/character-sheets/{id}/devotion-tier`. The client
+has the tier on the wizard's identity step, the tier and any owed picks on the hub, and the Narrador's "Devoção"
+screen on the GM console, outside the Cena. Table rulings (2026-10-01):
+the player picks the tier at creation; the Narrador raises or lowers it freely, on a screen of its own outside the
+Cena; a rung's pick is made when first reached and kept; Resistência às Correntes +2 is Resoluto's margin.
+
+*Original plan follows.* It was written alongside core 0.0.85, which authored every generic Corrente de Efeitos. Three
 of those Correntes (Remover Aflição, Excomungar, Toque Sombrio) and one use of Explosão Cataclísmica have their only
 consumers in the Devoto Talentos below, and none of those Talentos is in core yet.
 

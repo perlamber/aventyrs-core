@@ -408,6 +408,12 @@ public class DamageServiceImpl implements DamageService {
                 }
                 if (effectiveType != DamageType.PRIMORDIAL) {
                     reduction += getTotalDamageTakenReduction(target, sceneContext);
+                    // An RDS against this attacker only (Bênção de Surt'Eldur's Fundamentalista).
+                    if (source != null) {
+                        reduction += character.getFeats().stream()
+                                .mapToInt(feat -> feat.resolveDamageTakenReductionAgainst(character, target, source))
+                                .sum();
+                    }
                 }
                 if (effectiveType == DamageType.MAGICO) {
                     reduction += getTotalMagicReduction(target);

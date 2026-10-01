@@ -67,7 +67,13 @@
  *       quickLearningSkills} is the one creation-time pick a race asks for here: an Aprendizado
  *       Rápido race ({@code Race#hasQuickLearning()} — Humano, Pequenino, Gnomo, Goblin) names its
  *       two Perícias Treinadas, whose 2nd and 3rd Graduação then cost 0.5 EXP less
- *       ({@code SkillGraduationService#getUpgradeCost(Character, SkillType)}). Empty by default.</li>
+ *       ({@code SkillGraduationService#getUpgradeCost(Character, SkillType)}). Empty by default.
+ *       {@code deity} and {@code devotionTier} ({@link org.aventyrs.core.character.DevotionTier} —
+ *       Adepto, Fiel or Fundamentalista, core 0.0.86) are the devotion: the player picks the tier here,
+ *       and the Narrador raises or lowers it afterwards ({@code DevotionService#setTier}). Both {@code
+ *       null} unless set. Once the Talentos are granted, {@code DevotionService#owedPicks} lists the
+ *       picks each held Talento de Devoção's reached rungs ask for, recorded with {@code
+ *       DevotionService#recordPicks} — asked again whenever the tier rises to a rung not yet picked.</li>
  *   <li><b>Pick the two Antecedentes</b>, on the character step 7 built — before the Defeitos e
  *       Qualidades, Habilidades de Atributo and Talentos (the table's order, 2026-09-29): one Naturalidade
  *       and one Carreira, through {@link

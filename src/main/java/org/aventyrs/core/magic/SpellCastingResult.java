@@ -138,4 +138,12 @@ public class SpellCastingResult {
      * skips {@link #spellEffect} and {@link #primaryDamage} for them.
      */
     private final boolean targetImmune;
+
+    /**
+     * Correntes de Efeitos the caster's Talentos add to this cast ({@code Feat#resolveSpellEffectChains} — Acólito da
+     * Luz Primordial's Remover Aflição and Excomungar, core 0.0.86). Report-only like {@link #spellEffect}: the
+     * caller chains them onto the effect it runs. Never {@code null}.
+     */
+    @lombok.Builder.Default
+    private final java.util.List<org.aventyrs.core.effect.EffectChain> grantedEffectChains = java.util.List.of();
 }

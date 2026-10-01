@@ -126,6 +126,14 @@ public enum FeatCategory {
     /** Vampírico — 11. */
     VAMPIRICO(Type.RACIAL),
 
+    // ---- Talentos de Devoção ----------------------------------------------------------------
+
+    /**
+     * Talentos de Devoção (Panteão de Tellus) — {@link DevotoFeat}. Each is split across the holder's {@code
+     * DevotionTier}: a rung applies while the tier reaches it (core 0.0.86).
+     */
+    DEVOTO(Type.DEVOTO),
+
     // ---- Antecedentes -----------------------------------------------------------------------
 
     /**
@@ -146,13 +154,15 @@ public enum FeatCategory {
     private final Type type;
 
     /**
-     * The coarse division a Talento belongs to — the two headings the catalog itself is split
-     * under. Talentos de Devoção are deliberately absent: their effect is split across
-     * Adepto/Fiel/Fundamentalista devotion tiers this core has no concept of, so none is
-     * authored (see {@code docs/rules/talentos-index.md}).
+     * The coarse division a Talento belongs to — the headings the catalog itself is split under.
      */
     public enum Type {
         GERAL, RACIAL,
+        /**
+         * A Talento de Devoção (Talentos de Cenário) — catalogued and bought like any Talento, but offered by no
+         * starting slot: those offer Gerais and Raciais only (core 0.0.86).
+         */
+        DEVOTO,
         /** An Antecedente's Benefício — see {@link FeatCategory#ANTECEDENTE}. */
         ANTECEDENTE,
         /** A Defeito's effect — see {@link FeatCategory#DEFEITO}. */
@@ -166,7 +176,7 @@ public enum FeatCategory {
          * them, held only through an Antecedente, Defeito or Qualidade.
          */
         public boolean isCatalogued() {
-            return this == GERAL || this == RACIAL;
+            return this == GERAL || this == RACIAL || this == DEVOTO;
         }
     }
 }

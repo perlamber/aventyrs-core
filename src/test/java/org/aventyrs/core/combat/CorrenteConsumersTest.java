@@ -165,6 +165,34 @@ class CorrenteConsumersTest {
                 VenenoVampirico.class));
     }
 
+    /**
+     * Roubo de Vida has a combat caller now (core 0.0.86): the attacker's standing figure rides right behind the
+     * damage, and walking the chain heals the attacker by no more than the hit dealt.
+     */
+    @Test
+    void rouboDeVidaHealsTheAttackerOnAHit() {
+        Character shade = fighter().deity(org.aventyrs.core.character.Deity.ESCURIDAO_PROFUNDA)
+                .devotionTier(org.aventyrs.core.character.DevotionTier.FUNDAMENTALISTA).build();
+        shade.grantFeat(org.aventyrs.core.feat.DevotoFeat.ADEPTO_DA_ESCURIDAO_PROFUNDA);
+        CharacterSheet sheet = CharacterSheet.of(shade, new Player());
+        sheet.applyDamage(5);
+        MonsterSheet capanga = GenericMonster.CAPANGA.spawn(new Player());
+
+        DeliveredAttackResult result = attackDelivery.resolve(DeliveredAttack.from(capanga, DefenseType.PHYSICAL)
+                .attacker(sheet)
+                .attackSkill(SkillType.ATAQUE_CORPO_A_CORPO)
+                .attackRoll(new SkillRoll(List.of(4, 4, 4)))
+                .build());
+        org.aventyrs.core.effect.DamageInteraction head = (org.aventyrs.core.effect.DamageInteraction)
+                result.getAttackResult().getNextInteraction();
+        org.aventyrs.core.sheet.InteractionResult step = head.applyTo(capanga, 6, true);
+        while (step.getNextInteraction() != null) {
+            step = capanga.receiveInteraction(step.getNextInteraction());
+        }
+
+        assertEquals(3, sheet.getDamageTaken(), "Roubo de Vida 2 recovered");
+    }
+
     /** "… e Cataclismo como um Efeito Crítico adicional" — on the critical a triggered Explosão rides. */
     @Test
     void explosaoCataclismicaAddsCataclismoToTheCritical() {
