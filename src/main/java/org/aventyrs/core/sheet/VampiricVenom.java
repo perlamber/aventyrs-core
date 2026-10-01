@@ -39,7 +39,8 @@ public class VampiricVenom extends TemporaryEffect {
                 org.aventyrs.core.character.DamageType.MAGICO, org.aventyrs.core.character.DamageSanctity.PROFANO,
                 damage));
         int landed = target.getDamageTaken() - before;
-        if (source != null && landed > 0 && lifeSteal > 0) {
+        if (source != null && landed > 0 && lifeSteal > 0
+                && org.aventyrs.core.character.services.LifeStealGuard.allows(target, source)) {
             source.healFromLifeSteal(Math.min(lifeSteal, landed));
         }
         return landed;

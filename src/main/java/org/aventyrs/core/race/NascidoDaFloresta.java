@@ -71,11 +71,8 @@ import static org.aventyrs.core.util.TranslatableMessages.INVALID_PARENT_RACE;
  *   Agastias}'s. Still blocked: this race's Características Raciais aren't modelled as constants
  *   yet, and "contam como Naturais" / "Primordiais e Umbrais impossíveis de aprender" needs a
  *   spell-type reclassification + acquisition veto nothing has.</li>
- *   <li><b>Imunidade a Magias</b> (immune to most spells, Primordiais/Umbrais excepted; still
- *   affected by indirect magical effects like enchanted weapons) — same missing Encantamento/
- *   spell-*type*-classification concept {@code Furia}'s own Imunidade a Encantamentos cites,
- *   broadened here to "most magic" rather than just Encantamentos specifically — doesn't change
- *   which piece is missing, only how much of it this trait would eventually need classified.</li>
+ *   <li><b>Imunidade a Magias</b> is real since core 0.0.90 — {@link #isImmuneToSpell} and {@link
+ *   #isImmuneToEnchantments}.</li>
  *   <li><b>Feromônio Encantador de Humanoides</b> (2PD, Ação Livre, reduz o GD em -1 nível de
  *   rolagens de Persuasão ou Artes contra alvos em Distância Curta, por 1 Rodada; um efeito de
  *   Encantamento) — a GD-reduction variant of {@code Fada}'s/{@code Furia}'s own Feromônio
@@ -142,5 +139,22 @@ public class NascidoDaFloresta extends AbstractMesticoRace {
         return List.of(
                 StartingFeatSlot.race(FeatCategory.METAMAGICO, FeatCategory.FEERICO, FeatCategory.ELEMENTAL),
                 StartingFeatSlot.race(FeatCategory.METAMAGICO, FeatCategory.FEERICO, FeatCategory.ELEMENTAL));
+    }
+
+    /**
+     * Imunidade a Magias — "imunes não só a encantamentos, mas a maioria das magias, apenas magias Primordiais e Umbrais os
+     * afetam" (core 0.0.90). Indirect effects (an enchanted weapon's damage) never reach here.
+     */
+    @Override
+    public boolean isImmuneToSpell(final org.aventyrs.core.magic.Spell spell) {
+        return spell.getTree() == null
+                || !(spell.getTree().hasMagicType(org.aventyrs.core.magic.MagicType.PRIMORDIAL)
+                        || spell.getTree().hasMagicType(org.aventyrs.core.magic.MagicType.UMBRAL));
+    }
+
+    /** "… exceto Encantamentos, pois são imunes a todas as fontes" (core 0.0.90). */
+    @Override
+    public boolean isImmuneToEnchantments() {
+        return true;
     }
 }

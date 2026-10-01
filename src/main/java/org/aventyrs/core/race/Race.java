@@ -166,6 +166,33 @@ public interface Race {
     default boolean isImmuneToEnchantments() { return false; }
 
     /**
+     * The damage every member of this Raça is immune to, by {@link org.aventyrs.core.character.DamageScope} — {@code
+     * Vampiro}'s Anatomia de Morto-Vivo "imunes a efeitos Naturais" (core 0.0.90). Honoured by {@code
+     * CombatantSheet#isImmuneToDamage}, silent while a Forma suppresses innate racial traits. Empty by default.
+     */
+    default Set<org.aventyrs.core.character.DamageScope> getDamageImmunities() { return Set.of(); }
+
+    /**
+     * Whether spell cannot affect a member of this Raça — {@code NascidoDaFloresta}'s Imunidade a Magias ("apenas
+     * magias Primordiais e Umbrais os afetam"), {@code Vampiro}'s "Magias Profanas não causam nenhum dano" (core
+     * 0.0.90). Read through {@code CombatantSheet#isImmuneToSpell}. False by default.
+     */
+    default boolean isImmuneToSpell(final org.aventyrs.core.magic.Spell spell) { return false; }
+
+    /**
+     * Whether a heal from source does nothing for a member of this Raça — {@code Vampiro}'s "não podem recuperar PV
+     * com magias Divinas" (core 0.0.90). Read by {@code CombatantSheet#heal}. False by default.
+     */
+    default boolean refusesHealing(final org.aventyrs.core.sheet.HealingSource source) { return false; }
+
+    /**
+     * Whether a member of this Raça is immune to Roubo de Vida taken by thief — {@code Troll}'s "imunes a efeitos de
+     * Roubo de Vida de personagens que não tenham Anatomia Vegetal" (core 0.0.90). Read by every Roubo de Vida
+     * stage ({@code character.services.LifeStealGuard}). False by default.
+     */
+    default boolean isImmuneToLifeStealFrom(final org.aventyrs.core.character.Character thief) { return false; }
+
+    /**
      * A bonus (or, negative, a malus) this Raça puts on a Perícia roll governed by domain — the
      * Atributo the roll is actually made with, after any substitution — {@code Gigantes}' Cuidado
      * para não Quebrar ("sofrem desvantagem em suas rolagens de perícia físicas (baseadas em Força ou

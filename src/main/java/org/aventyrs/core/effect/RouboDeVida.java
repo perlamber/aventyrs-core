@@ -37,7 +37,8 @@ public class RouboDeVida extends AbstractEffect {
     public InteractionResult applyTo(final CombatantSheet target) {
         int dealt = target.getLastDamageReceived().map(DamageReceipt::damage).orElse(0);
         int before = attacker.getDamageTaken();
-        if (dealt > 0 && amount > 0) {
+        if (dealt > 0 && amount > 0
+                && org.aventyrs.core.character.services.LifeStealGuard.allows(target, attacker)) {
             attacker.healFromLifeSteal(Math.min(amount, dealt));
         }
         return reportChain(InteractionResult.builder()

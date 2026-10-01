@@ -191,8 +191,7 @@ public class SpellCastingServiceImpl implements SpellCastingService {
      */
     private static boolean isTargetImmune(final SpellCastRequest request, final Spell spell) {
         CombatantSheet target = request.getCombatantTarget();
-        return target != null && target != request.getCaster() && target.getCharacter().getFeats().stream()
-                .anyMatch(feat -> feat.isImmuneToSpell(spell, target));
+        return target != null && target != request.getCaster() && target.isImmuneToSpell(spell);
     }
 
     /**

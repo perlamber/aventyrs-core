@@ -209,6 +209,12 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
      */
     void lockDamageUntilRest(int amount);
 
+    /**
+     * Whether spell cannot affect this combatant — a held Talento's {@code Feat#isImmuneToSpell} or its Raça's {@code
+     * Race#isImmuneToSpell} (the latter silent while a Forma suppresses innate racial traits; core 0.0.90).
+     */
+    boolean isImmuneToSpell(org.aventyrs.core.magic.Spell spell);
+
     /** The part of {@link #getDamageTaken()} only a Descanso recovers — see {@link #lockDamageUntilRest}. */
     int getRestLockedDamage();
 

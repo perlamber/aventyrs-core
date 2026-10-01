@@ -36,7 +36,8 @@ public class OferendaMaldita extends AbstractCriticalEffect {
     protected InteractionResult.InteractionResultBuilder resolve(final CombatantSheet target) {
         CombatantSheet attacker = attacker();
         int dealt = target.getLastDamageReceived().map(DamageReceipt::damage).orElse(0);
-        if (attacker == null || dealt <= 0) {
+        if (attacker == null || dealt <= 0
+                || !org.aventyrs.core.character.services.LifeStealGuard.allows(target, attacker)) {
             return InteractionResult.builder();
         }
         int stolen = Math.min(roll(pick(2, 1)), dealt);

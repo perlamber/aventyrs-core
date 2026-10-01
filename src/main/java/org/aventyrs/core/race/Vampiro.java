@@ -69,9 +69,9 @@ import static org.aventyrs.core.util.TranslatableMessages.INVALID_PARENT_RACE;
  *   1d6+metade do Vigor instead of damaging; "imunes a efeitos Naturais") — the "Fadiga/asfixia,
  *   and healing inversion" gap (nothing tracks sleep/breath, and {@code CombatantSheet#heal} has
  *   no hook to redirect a recovery into damage or vice-versa), the missing Divine-vs-Profana
- *   magic-source distinction, and a Raça's immunity (the stage exists — {@code
- *   CombatantSheet#isImmuneToDamage} — but only Habilidades, Talentos and timed effects feed it,
- *   never a {@code Race}). {@code RENASCIDO} exists as the tag those systems will key on; none reads it yet.</li>
+ *   magic-source distinction. Real since core 0.0.90: the Natural immunity ({@link #getDamageImmunities}), the
+ *   Magia Profana immunity ({@link #isImmuneToSpell}) and the refused Divine healing ({@link #refusesHealing}); the
+ *   Profana heal in place of the damage is still TODO.</li>
  *   <li><b>Vulnerabilidade Vampírica</b> (enfraquecidos/destruídos pela luz do sol — a -2 or
  *   per-Rodada -1 to the Multiplicador de PV; Vulneráveis a Dyospiros e ao Fogo) — no
  *   time-of-day/sunlight state, no round-scoped Multiplicador de PV reduction ({@code
@@ -238,5 +238,29 @@ public class Vampiro implements Race {
     @Override
     public List<StartingFeatSlot> getStartingFeatSlots() {
         return List.of(StartingFeatSlot.race(FeatPool.Categories.of(FeatCategory.VAMPIRICO), FeatPool.RacialOf.anyTree(parentRace)));
+    }
+
+    /**
+     * Anatomia de Morto-Vivo, "imunes a efeitos Naturais" (core 0.0.90) — ⚠️ read as damage of Elemental: Natural. A
+     * Magia Natural is not refused here: "Natural" also names a Magia's source, and the clause reads as the element.
+     */
+    @Override
+    public Set<org.aventyrs.core.character.DamageScope> getDamageImmunities() {
+        return Set.of(org.aventyrs.core.character.DamageScope.element(org.aventyrs.core.magic.ElementalType.NATURAL));
+    }
+
+    /**
+     * "Magias Profanas não causam nenhum dano aos mortos" (core 0.0.90). TODO: "ao invés disso os curam em 1d6+Metade do
+     * Vigor" — a heal in place of the damage needs the dice and an inversion stage nothing has.
+     */
+    @Override
+    public boolean isImmuneToSpell(final org.aventyrs.core.magic.Spell spell) {
+        return spell.getTree() != null && spell.getTree().hasMagicType(org.aventyrs.core.magic.MagicType.PROFANA);
+    }
+
+    /** "Não podem recuperar PV com magias Divinas" (core 0.0.90). */
+    @Override
+    public boolean refusesHealing(final org.aventyrs.core.sheet.HealingSource source) {
+        return source.isSpellOfType(org.aventyrs.core.magic.MagicType.DIVINA);
     }
 }

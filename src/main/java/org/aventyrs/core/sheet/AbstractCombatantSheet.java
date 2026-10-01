@@ -615,6 +615,10 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         if (isHealingPrevented()) {
             return getDamageTaken();
         }
+        // The Raça refuses this heal outright (Vampiro: "não podem recuperar PV com magias Divinas", core 0.0.90).
+        if (source != null && racialTraitsLive() && getCharacter().getRace().refusesHealing(source)) {
+            return getDamageTaken();
+        }
         // Healing the fallen — judged on the status *before* the heal, so the heal that revives
         // someone is not the one the Coma cap trims. Refusals below leave any Sangramento running,
         // the same as Feridas Dolorosas: no cure landed to interrupt it.
@@ -826,6 +830,20 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     public void releaseVitalityLock() {
         lockedDamage = 0;
         lifeStealRecoverableLockedDamage = 0;
+    }
+
+    @Override
+    public boolean isImmuneToSpell(final org.aventyrs.core.magic.Spell spell) {
+        if (spell == null) {
+            return false;
+        }
+        return getCharacter().getFeats().stream().anyMatch(feat -> feat.isImmuneToSpell(spell, this))
+                || racialTraitsLive() && getCharacter().getRace().isImmuneToSpell(spell);
+    }
+
+    /** Whether this combatant's Raça's own traits are in force — not while a Forma suppresses innate ones. */
+    private boolean racialTraitsLive() {
+        return getCharacter().getRace() != null && !getRacialTraitSuppression().suppressesInnateTraits();
     }
 
     @Override
@@ -2822,7 +2840,10 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
                 || getCharacter().getFeats().stream()
                         .anyMatch(feat -> feat.isImmuneToDamage(damageType, descriptor, getCharacter(), this))
                 || temporaryEffects.stream().anyMatch(effect -> effect instanceof DamageScopeEffect scoped
-                        && scoped.covers(DamageScopeEffect.Kind.IMMUNE, damageType, descriptor));
+                        && scoped.covers(DamageScopeEffect.Kind.IMMUNE, damageType, descriptor))
+                // The Raça's own (Vampiro's Natural, core 0.0.90).
+                || racialTraitsLive() && getCharacter().getRace().getDamageImmunities().stream()
+                        .anyMatch(scope -> scope.matches(damageType, descriptor));
     }
 
     @Override

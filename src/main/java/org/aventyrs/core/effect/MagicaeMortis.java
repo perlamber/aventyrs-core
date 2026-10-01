@@ -42,7 +42,7 @@ public class MagicaeMortis extends AbstractEffect implements EffectChain {
     public InteractionResult applyTo(final CombatantSheet target) {
         int dealt = target.getLastDamageReceived().map(DamageReceipt::damage).orElse(0);
         int before = caster.getDamageTaken();
-        if (dealt > 0) {
+        if (dealt > 0 && org.aventyrs.core.character.services.LifeStealGuard.allows(target, caster)) {
             caster.healFromLifeSteal(Math.min(lifeSteal(), dealt));
         }
         return reportChain(InteractionResult.builder()

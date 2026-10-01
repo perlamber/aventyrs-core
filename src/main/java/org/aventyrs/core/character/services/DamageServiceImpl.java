@@ -379,8 +379,8 @@ public class DamageServiceImpl implements DamageService {
                                     final CombatantSheet source,
                                     final int rawDamage, final boolean ignoreDamageReduction,
                                     final boolean attackHalvesDamage, final Spell spell) {
-        if (target != null && spell != null && character.getFeats().stream()
-                .anyMatch(feat -> feat.isImmuneToSpell(spell, target))) {
+        // Immune to the Magia itself — a Talento (Aptidão Mágica Dracônica) or the Raça (Nascido da Floresta, Vampiro).
+        if (target != null && spell != null && target.isImmuneToSpell(spell)) {
             return 0;
         }
         // An immunity ("Imunidade ao Elemento escolhido") is judged before anything else: there is
