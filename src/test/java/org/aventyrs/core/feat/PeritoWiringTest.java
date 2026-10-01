@@ -259,6 +259,22 @@ class PeritoWiringTest {
         assertEquals(before, roll(sheet, SkillType.PERSUASAO, thin, new SkillRoll(PLAIN)).getSkillRollBonus());
     }
 
+    /** "Personagens inteligentes" (core 0.0.84): a bystander not intelligent is no audience. */
+    @Test
+    void exibicionistaCountsOnlyIntelligentBystanders() throws IllegalOperationException {
+        Character character = perito().build();
+        CharacterSheet sheet = acquire(character, FocoEmPericiaFeat.of(SkillType.PERSUASAO));
+        CharacterSheet herd = bystander(null);
+        herd.setIntelligent(false);
+        SceneContext crowd = sceneAround(sheet, Map.of(), List.of(), List.of(),
+                List.of(bystander(null), bystander(null), bystander(null), herd));
+        int before = roll(sheet, SkillType.PERSUASAO, crowd, new SkillRoll(PLAIN)).getSkillRollBonus();
+
+        featService.grantFeat(character, sheet, PeritoFeat.EXIBICIONISTA);
+
+        assertEquals(before, roll(sheet, SkillType.PERSUASAO, crowd, new SkillRoll(PLAIN)).getSkillRollBonus());
+    }
+
     @Test
     void theAggressionMapIsDirectionalButHostilityIsNot() {
         Scene scene = new Scene();

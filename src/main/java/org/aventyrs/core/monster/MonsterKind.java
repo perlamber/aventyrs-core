@@ -46,7 +46,8 @@ public enum MonsterKind {
      * Efeitos de Ego it may use per Cena — table ruling (2026-09-30), following {@code ego.txt}: "apenas PdN Exemplares
      * (quando inteligentes) podem usar", so a Regular none and an Exemplar without limit. This replaced
      * {@code criacao-de-monstros.txt}'s "Monstros comuns podem utilizar no máximo dois Efeitos de Ego por Cena"
-     * (core 0.0.83). Whether an Exemplar is intelligent is the Narrador's to judge.
+     * (core 0.0.83). Whether an Exemplar is intelligent is the Narrador's to judge — {@code
+     * MonsterBlueprint#isIntelligent()}, checked by {@code MonsterSheet#checkEgoEffectAvailable()} (core 0.0.84).
      */
     private final int egoEffectsPerScene;
 

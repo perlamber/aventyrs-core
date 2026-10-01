@@ -115,9 +115,11 @@ public class MonsterSheet extends AbstractCombatantSheet {
 
     private MonsterSheet(final Character character, final Player player, final int physicalDefense, final int magicDefense,
                          final SkillDifficulty generalDifficulty, final Map<SkillType, SkillDifficulty> skillDifficulties,
-                         final boolean undead, final Set<CriticalEffectType> criticalEffectImmunities,
+                         final boolean undead, final boolean intelligent,
+                         final Set<CriticalEffectType> criticalEffectImmunities,
                          final CreatureType creatureType, final MonsterBlueprint blueprint) {
         super(character);
+        setIntelligent(intelligent);
         this.player = player;
         this.blueprint = blueprint;
         this.physicalDefense = physicalDefense;
@@ -162,7 +164,7 @@ public class MonsterSheet extends AbstractCombatantSheet {
                                   @NonNull final SkillDifficulty generalDifficulty,
                                   @NonNull final Map<SkillType, SkillDifficulty> skillDifficulties) {
         return new MonsterSheet(character, player, physicalDefense, magicDefense, generalDifficulty,
-                skillDifficulties, false, Set.of(), CreatureType.MONSTRUOSO, null);
+                skillDifficulties, false, false, Set.of(), CreatureType.MONSTRUOSO, null);
     }
 
     /**
@@ -177,7 +179,7 @@ public class MonsterSheet extends AbstractCombatantSheet {
     public static MonsterSheet of(@NonNull final Character character, @NonNull final Player player, @NonNull final MonsterTemplate template) {
         return new MonsterSheet(character, player, template.getPhysicalDefense(), template.getMagicDefense(),
                 template.getGeneralDifficulty(), template.getSkillDifficulties(),
-                template.isUndead(), template.getCriticalEffectImmunities(), template.getCreatureType(), null);
+                template.isUndead(), template.isIntelligent(), template.getCriticalEffectImmunities(), template.getCreatureType(), null);
     }
 
     /** {@link #of(Character, Player, MonsterTemplate)} with a known id — the persistence-restore path. */
@@ -196,7 +198,7 @@ public class MonsterSheet extends AbstractCombatantSheet {
                                   @NonNull final MonsterBlueprint blueprint) {
         return new MonsterSheet(character, player, 0, 0,
                 SkillDifficulty.of(blueprint.getKind().getBaseSkillLevel(), 0), Map.of(),
-                blueprint.isUndead(), blueprint.getCriticalEffectImmunities(), blueprint.getCreatureType(), blueprint);
+                blueprint.isUndead(), blueprint.isIntelligent(), blueprint.getCriticalEffectImmunities(), blueprint.getCreatureType(), blueprint);
     }
 
     /** {@link #of(Character, Player, MonsterBlueprint)} with a known id — the persistence-restore path. */
@@ -284,12 +286,12 @@ public class MonsterSheet extends AbstractCombatantSheet {
     }
 
     /**
-     * Refuses a Regular — "apenas PdN Exemplares (quando inteligentes) podem usar" (table ruling, core 0.0.83; see
-     * {@link MonsterKind#getEgoEffectsPerScene()}). Checked by {@code EgoPointsService#useEgoPointsForEffect} before
-     * anything happens.
+     * Refuses a Regular, and an Exemplar the Narrador has not marked intelligent — "apenas PdN Exemplares (quando
+     * inteligentes) podem usar" (table rulings, core 0.0.83–0.0.84; see {@link MonsterKind#getEgoEffectsPerScene()}
+     * and {@link #isIntelligent()}). Checked by {@code EgoPointsService#useEgoPointsForEffect} before anything happens.
      */
     public void checkEgoEffectAvailable() throws IllegalOperationException {
-        if (getRemainingEgoEffects() <= 0) {
+        if (!isIntelligent() || getRemainingEgoEffects() <= 0) {
             throw new IllegalOperationException(MONSTER_EGO_EFFECTS_EXHAUSTED);
         }
     }

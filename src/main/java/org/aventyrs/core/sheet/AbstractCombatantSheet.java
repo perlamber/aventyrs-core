@@ -338,6 +338,10 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     @Getter(AccessLevel.NONE)
     private boolean damageNegatedThisRound;
 
+    /** See {@link #isIntelligent()} — true unless a foe's blueprint or its caller says otherwise. */
+    @Getter(AccessLevel.NONE)
+    private boolean intelligent = true;
+
     /** See {@link #isPdn()}. */
     @Getter(AccessLevel.NONE)
     private boolean exemplarPdn;
@@ -450,6 +454,16 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     @Override
     public void grantCenaImmunity(@NonNull final Object kind) {
         cenaImmunities.add(kind);
+    }
+
+    @Override
+    public boolean isIntelligent() {
+        return intelligent;
+    }
+
+    @Override
+    public void setIntelligent(final boolean intelligent) {
+        this.intelligent = intelligent;
     }
 
     @Override

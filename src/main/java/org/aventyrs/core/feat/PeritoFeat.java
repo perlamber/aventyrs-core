@@ -122,9 +122,8 @@ public enum PeritoFeat implements Feat {
      * neutros a cena."
      *
      * <p><b>Real</b>, off {@code SceneContext#getNeutrals()} — the Scene's participants neutral
-     * towards the roller, at any distance ("a cena"). ⚠️ "Inteligentes" is read as a character
-     * sheet: this core classifies no creature's intelligence, and a {@code MonsterSheet} is left out
-     * — a crowd of townsfolk is characters, a herd is not.
+     * towards the roller, at any distance ("a cena"), counting those that {@code
+     * CombatantSheet#isIntelligent()} — every character, and a foe the Narrador marked (core 0.0.84).
      */
     EXIBICIONISTA(
             "Sempre que efetuar rolagens de uma Perícia que você tenha foco em frente a uma "
@@ -791,7 +790,7 @@ public enum PeritoFeat implements Feat {
     /** Exibicionista's plateia — four or more neutral characters in the Scene. */
     private static boolean hasAudience(final SceneContext sceneContext) {
         return sceneContext != null && sceneContext.getNeutrals().stream()
-                .filter(CharacterSheet.class::isInstance)
+                .filter(CombatantSheet::isIntelligent)
                 .count() >= AUDIENCE_SIZE;
     }
 

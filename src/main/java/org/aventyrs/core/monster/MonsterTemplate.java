@@ -199,6 +199,14 @@ public interface MonsterTemplate {
     }
 
     /**
+     * Whether the Narrador counts this creature among the "inteligentes" — see {@code CombatantSheet#isIntelligent()}.
+     * False unless a stat block says so; none does yet.
+     */
+    default boolean isIntelligent() {
+        return false;
+    }
+
+    /**
      * What this foe <em>is</em> — {@link CreatureType#MONSTRUOSO} unless its stat block says
      * otherwise ({@link CreatureType#ANIMAL} for a beast). Every foe shares {@link #MONSTER_RACE},
      * so its race can't answer this; {@code CombatantSheet#getCreatureType()} reads it off the sheet.

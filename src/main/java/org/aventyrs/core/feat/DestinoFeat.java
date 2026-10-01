@@ -99,7 +99,8 @@ public enum DestinoFeat implements Feat {
     // TODO: nothing chooses an attack's target — a caller does, and this core has no targeting
     //  step to refuse one (the same direction the gap catalog's "Forced attack targeting /
     //  interception" row records, from the other side).
-    // TODO: "inimigos inteligentes" is a creature classification CreatureType does not carry.
+    // "Inimigos inteligentes" is CombatantSheet#isIntelligent() (0.0.84) — whoever picks the target
+    //  asks it of the attacker; it gates nothing here until the targeting step above exists.
     // The "Força igual ou inferior à 2" maximum is enforced now —
     // FeatRequirements#maximumAttributeDomain is its own clause, separate from the minimum,
     // because a Talento naming both names two different Atributos.

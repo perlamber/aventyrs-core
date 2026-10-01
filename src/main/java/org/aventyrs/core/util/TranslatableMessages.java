@@ -277,7 +277,10 @@ public class TranslatableMessages {
      * {@link #ABILITY_ACTIVATION_PREVENTED}, which is a Condição forbidding activation outright.
      */
     public static final String ABILITY_ON_COOLDOWN = "ABILITY_ON_COOLDOWN";
-    /** A Regular monster has used its two Efeitos de Ego this Cena — see {@code MonsterSheet#checkEgoEffectAvailable}. */
+    /**
+     * A foe may not use an Efeito de Ego — a Regular, or an Exemplar the Narrador has not marked intelligent (core
+     * 0.0.83–0.0.84). See {@code MonsterSheet#checkEgoEffectAvailable}.
+     */
     public static final String MONSTER_EGO_EFFECTS_EXHAUSTED = "MONSTER_EGO_EFFECTS_EXHAUSTED";
     /** {@code CombatantSheet#resolveDiceRoll} was handed an id no {@code RecurringDice} is waiting on. */
     public static final String PENDING_DICE_ROLL_NOT_FOUND = "PENDING_DICE_ROLL_NOT_FOUND";

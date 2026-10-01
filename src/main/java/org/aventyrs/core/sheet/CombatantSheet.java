@@ -1044,6 +1044,20 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
      */
     void grantCenaImmunity(Object kind);
 
+    // --- Inteligentes (core 0.0.84) --------------------------------------------------------------
+
+    /**
+     * Whether this combatant is one of the "inteligentes" a clause names — "inimigos inteligentes" (Fingir Fraquezas,
+     * Aparência Inofensiva), "personagens inteligentes" (Exibicionista's plateia), "PdN Exemplares (quando
+     * inteligentes)". Table ruling (2026-09-30): every character is; a foe only when the Narrador says so on its
+     * blueprint ({@code MonsterBlueprint#isIntelligent()}, default false). A caller holding a foe as a plain sheet sets
+     * it with {@link #setIntelligent(boolean)}.
+     */
+    boolean isIntelligent();
+
+    /** See {@link #isIntelligent()}. */
+    void setIntelligent(boolean intelligent);
+
     // --- A PdN's Efeitos de Ego (core 0.0.83) ----------------------------------------------------
 
     /**

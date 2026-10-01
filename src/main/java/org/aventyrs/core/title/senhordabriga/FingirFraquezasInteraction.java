@@ -41,7 +41,9 @@ import static org.aventyrs.core.util.TranslatableMessages.TITLE_ABILITY_REQUIRES
  * nothing — and marked with {@code markAffectedUntilRest} at {@link RestType#MINIMO}, the weakest
  * Descanso, since "até passarem por um Descanso" names none in particular.
  *
- * <p>TODO "Inimigos inteligentes": see {@link FantasmaDoRingueAbility#FINGIR_FRAQUEZAS}.
+ * <p>"Inimigos inteligentes afetados": only an enemy that {@code CombatantSheet#isIntelligent()} is caught (core
+ * 0.0.84) — every character, and a foe the Narrador marked. ⚠️ The Defesas bonus and its price still count every
+ * enemy in range: "1+ Número de Inimigos" names no intelligence.
  */
 public class FingirFraquezasInteraction extends AbstractTitleAbilityInteraction {
 
@@ -86,7 +88,7 @@ public class FingirFraquezasInteraction extends AbstractTitleAbilityInteraction 
         SceneContext context = request.getSceneContext();
         List<CombatantSheet> enemies = context == null ? List.of() : context.getEnemiesWithin(ENEMY_RANGE);
         for (CombatantSheet enemy : enemies) {
-            if (enemy.isAffectedUntilRest(FantasmaDoRingueAbility.FINGIR_FRAQUEZAS)) {
+            if (!enemy.isIntelligent() || enemy.isAffectedUntilRest(FantasmaDoRingueAbility.FINGIR_FRAQUEZAS)) {
                 continue;
             }
             if (enemy.applyEnchantment(new ForcedTargeting(activator, ROUNDS))) {

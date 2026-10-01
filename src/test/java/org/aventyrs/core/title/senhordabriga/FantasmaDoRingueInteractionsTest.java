@@ -169,6 +169,26 @@ class FantasmaDoRingueInteractionsTest {
         assertFalse(near.isAffectedUntilRest(FantasmaDoRingueAbility.FINGIR_FRAQUEZAS));
     }
 
+    /** "Inimigos inteligentes afetados" (core 0.0.84): a beast in range is not bound, though it still counts for the price. */
+    @Test
+    void fingirFraquezasBindsOnlyIntelligentEnemies() {
+        SenhorDaBriga title = fantasma(FantasmaDoRingueAbility.FINGIR_FRAQUEZAS);
+        CharacterSheet holder = SenhorDaBrigaFixtures.holder(title);
+        CharacterSheet person = SenhorDaBrigaFixtures.combatant();
+        CharacterSheet beast = SenhorDaBrigaFixtures.combatant();
+        beast.setIntelligent(false);
+        SceneContext context = SenhorDaBrigaFixtures.context(0,
+                Map.of(person, Range.DISTANCIA_MUITO_CURTA, beast, Range.DISTANCIA_MUITO_CURTA));
+
+        title.activateAbility(FantasmaDoRingueAbility.FINGIR_FRAQUEZAS,
+                TitleAbilityActivationRequest.builder().activator(holder).sceneContext(context)
+                        .determinationPoints(3).build());
+
+        assertTrue(person.getForcedTargeting().isPresent());
+        assertFalse(beast.getForcedTargeting().isPresent());
+        assertFalse(beast.isAffectedUntilRest(FantasmaDoRingueAbility.FINGIR_FRAQUEZAS));
+    }
+
     @Test
     void maliciaDeValentaoGivesVantagemOnAttackAndDanoAgainstAFoeItBound() {
         SenhorDaBriga title = fantasma(FantasmaDoRingueAbility.FINGIR_FRAQUEZAS, FantasmaDoRingueAbility.CRUZ_DE_SANGUE,

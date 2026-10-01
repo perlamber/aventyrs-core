@@ -143,6 +143,12 @@ public class MonsterBlueprint {
     /** See {@link MonsterTemplate#isUndead()}. */
     private final boolean undead;
 
+    /**
+     * The Narrador's opt-in: this foe counts among the "inteligentes" (table ruling, core 0.0.84) — see {@code
+     * CombatantSheet#isIntelligent()}. Off by default; an Exemplar uses Efeitos de Ego only with it on.
+     */
+    private final boolean intelligent;
+
     /** See {@link MonsterTemplate#getCreatureType()}. */
     @NonNull
     @Builder.Default

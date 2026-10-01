@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.aventyrs.core.util.TranslatableMessages.INVALID_DIE_ROLL;
+import static org.aventyrs.core.util.TranslatableMessages.MONSTER_EGO_EFFECTS_EXHAUSTED;
 import static org.aventyrs.core.util.TranslatableMessages.NOT_ENOUGH_EGO_POINTS;
 import static org.aventyrs.core.util.TranslatableMessages.RESOURCES_NOT_RECOVERED_BY_SESSION;
 
@@ -172,6 +173,9 @@ public class EgoPointsServiceImpl implements EgoPointsService {
             // A PdN spends nothing: only an Exemplar may use an Efeito de Ego, and the PJs are owed a point instead.
             if (sheet instanceof MonsterSheet monster) {
                 monster.checkEgoEffectAvailable();
+            } else if (!sheet.isIntelligent()) {
+                // "quando inteligentes" — a foe held as a plain sheet the Narrador did not mark (core 0.0.84).
+                throw new IllegalOperationException(MONSTER_EGO_EFFECTS_EXHAUSTED);
             }
             sheet.recordPdnEgoUse(domain, type);
             spend = new EgoPointSpend(domain, type, Math.max(0, amount));

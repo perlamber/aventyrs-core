@@ -219,7 +219,7 @@ activation gate, `heldConditions()` (the derived Apavorado/Desprevenido/Imobiliz
 a PdN (`CombatantSheet#isPdn` — every `MonsterSheet`, or a sheet `markAsExemplarPdn`) spends nothing and records the
 point owed to every PJ (`recordPdnEgoUse`): drained at once for a temporary effect, at the end of the Cena for a
 permanent one, and handed over with `grantPdnCompensation`. A Regular `MonsterSheet` is refused — only Exemplares
-use Efeitos de Ego (table ruling).
+use Efeitos de Ego (table ruling) — and so is any PdN not `isIntelligent()` ("quando inteligentes", core 0.0.84).
 
 ## Reference files to read first
 

@@ -34,6 +34,7 @@ number **live** (a Destreza an Impulso raised raises the GDs it governs).
 | --- | --- |
 | `powerDegree` | `MonsterCategory` (never chosen — `forPowerDegree`), its ceilings, ×PV, PA/Ego bonuses, every budget |
 | `kind` (`REGULAR`/`EXEMPLAR`) | base GD (Muito Fácil / Fácil), extra Talentos, Exemplar-only traits, the Ego-effect cap |
+| `intelligent` (default false) | the Narrador's opt-in to "inteligentes" → `CombatantSheet#isIntelligent()` (every character is): Efeitos de Ego, Fingir Fraquezas, Exibicionista's plateia |
 | `attributeBases` | 10 points above base 1, max 5; Bônus Racial from Habilidades, trimmed to the Categoria's cap |
 | `trainedSkills`, `gnoseUpgrades`, `progressionUpgrades` | each Perícia's `SkillDifficulty` — **there are no Graduações** |
 | `models`, `abilities` | Habilidades Monstruosas' passives, actives, GD steps; +2PV each |

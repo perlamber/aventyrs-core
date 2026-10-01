@@ -159,7 +159,7 @@ public interface EgoPointsService {
      * Pays for one Ego effect of type in domain — the one step every Ego-spending service goes through (core 0.0.83).
      * A player's sheet spends the point through {@link #useEgoPointsForEffect}, refused with {@code
      * NOT_ENOUGH_EGO_POINTS} and nothing spent when it isn't there. A PdN spends nothing (table ruling): only an
-     * Exemplar may ({@code MONSTER_EGO_EFFECTS_EXHAUSTED} otherwise), and the use is recorded as owed to every PJ —
+     * intelligent Exemplar may ({@code MONSTER_EGO_EFFECTS_EXHAUSTED} otherwise — core 0.0.84), and the use is recorded as owed to every PJ —
      * see {@code MonsterSheet#recordEgoUse}.
      */
     void payForEffect(CombatantSheet sheet, EgoDomain domain, EgoPointType type);

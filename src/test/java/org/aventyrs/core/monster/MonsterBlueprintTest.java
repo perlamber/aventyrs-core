@@ -31,6 +31,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -173,7 +174,8 @@ class MonsterBlueprintTest {
      */
     @Test
     void anExemplarSpendsNothingAndOwesThePjsInstead() {
-        MonsterBlueprint blueprint = SampleMonster.PANTERA_DE_CIRENEIA.get().toBuilder().kind(MonsterKind.EXEMPLAR).build();
+        MonsterBlueprint blueprint = SampleMonster.PANTERA_DE_CIRENEIA.get().toBuilder().kind(MonsterKind.EXEMPLAR)
+                .intelligent(true).build();
         MonsterSheet exemplar = blueprint.spawn(new Player());
         int before = exemplar.getAvailableEgoPoints(EgoDomain.SORTE);
 
@@ -203,6 +205,26 @@ class MonsterBlueprintTest {
         assertEquals(2, foe.getPermanentEgoPoints(EgoDomain.INICIATIVA));
         assertEquals(2, foe.getTemporaryBonus(org.aventyrs.core.modifier.ModifierType.ACTION_POINTS));
         assertEquals(List.of(EgoDomain.INICIATIVA), foe.drainCenaEndEgoCompensations());
+    }
+
+    /** "Quando inteligentes" (core 0.0.84): an Exemplar the Narrador has not marked intelligent uses none. */
+    @Test
+    void anExemplarNotMarkedIntelligentUsesNoEgoEffects() {
+        MonsterSheet beast = SampleMonster.PANTERA_DE_CIRENEIA.get().toBuilder().kind(MonsterKind.EXEMPLAR).build()
+                .spawn(new Player());
+
+        assertFalse(beast.isIntelligent());
+        assertThrows(IllegalOperationException.class,
+                () -> egoPoints.useEgoPointsForEffect(beast, EgoDomain.SORTE, EgoPointType.TEMPORARY, 1, 1));
+        assertEquals(List.of(), beast.drainImmediateEgoCompensations());
+
+        CharacterFixture.loadTemplates();
+        CharacterSheet plain = CharacterSheet.of(CharacterFixture.blank(CharacterFixture.BLANK).build(), new Player());
+        assertTrue(plain.isIntelligent(), "every character is");
+        plain.markAsExemplarPdn();
+        plain.setIntelligent(false);
+        assertThrows(IllegalOperationException.class,
+                () -> egoPoints.useEgoPointsForEffect(plain, EgoDomain.SORTE, EgoPointType.TEMPORARY, 1, 1));
     }
 
     /** The owed point reaches each PJ as a received point. */
