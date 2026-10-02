@@ -153,6 +153,14 @@ public interface Spell extends AttackSource {
     }
 
     /**
+     * What this version does to its target's body — Categoria de Tamanho, Força and Destreza, Multiplicador de PV
+     * (core 0.0.99). Empty for every Magia outside Polimorfismo; see {@link SpellBodyChange}.
+     */
+    default Optional<SpellBodyChange> getBodyChange() {
+        return Optional.empty();
+    }
+
+    /**
      * The {@code Efeito Alternativo – ‹name›:} block, or {@code null} for the 82 Magias with
      * none. "Um personagem que aprenda a versão base automaticamente aprende sua segunda versão"
      * — it is not separately acquired, which is why it is a column here rather than its own

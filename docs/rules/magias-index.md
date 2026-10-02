@@ -700,7 +700,7 @@ blockers, in rough order of how many Magias they hold up:
 | --- | --- |
 | No damage-type breakdown or elemental resistance/immunity | most of the 11 Elemental trees |
 | Área de Efeito footprint resolution | every area Magia (~35) |
-| Round-scoped Attribute bonuses | the whole Polimorfismo tree |
+| A per-target "Força ou Destreza" pick, and a Rodada-scoped Atributo bonus beyond the roll path | Polimorfismo's three non-size Magias and Armada Ôgrica — the six size-changing ones apply a real `SpellBodyChange` since core 0.0.99 |
 | Malefício classification (Maldição/Doença/Possessão) | Morte — **no longer Vida**, whose Alternativo branch now lifts real `ConditionType`s |
 | Per-condition immunity (refusing a *future* Malefício) | Vida's *Corpo Fechado* |
 | Owned/produced item copy | the whole Artesão tree |

@@ -87,6 +87,12 @@ public class SpellCastRequest {
     @Singular
     private final java.util.Set<org.aventyrs.core.feat.Feat> activatedFeats;
 
+    /**
+     * The Atributo the caster picks for a "Força ou Destreza" clause — {@code SpellBodyChange#attributeChoice()}
+     * (Ogrificar) (core 0.0.99). {@code null} when the Magia asks for none, or none was picked: no Atributo moves.
+     */
+    private final org.aventyrs.core.character.AttributeDomain chosenAttribute;
+
     /** Whether the caster opted into feat for this cast. */
     public boolean activated(final org.aventyrs.core.feat.Feat feat) {
         return activatedFeats.contains(feat);

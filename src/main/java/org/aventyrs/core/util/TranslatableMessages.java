@@ -267,6 +267,7 @@ public class TranslatableMessages {
     public static final String INVALID_SPELL_CAST_TARGET = "INVALID_SPELL_CAST_TARGET";
     public static final String INVALID_SPELL_DAMAGE = "INVALID_SPELL_DAMAGE";
     public static final String INVALID_SPELL_HEALING = "INVALID_SPELL_HEALING";
+    public static final String INVALID_SPELL_BODY_CHANGE = "INVALID_SPELL_BODY_CHANGE";
     public static final String INVALID_SPELL_ALTERNATE_EFFECT = "INVALID_SPELL_ALTERNATE_EFFECT";
 
     /**

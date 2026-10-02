@@ -1,5 +1,6 @@
 package org.aventyrs.core.effect;
 
+import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.sheet.CombatantSheet;
 
 /**
@@ -22,8 +23,16 @@ import org.aventyrs.core.sheet.CombatantSheet;
  * @param healingBonus  PV added to (or, negative, taken off) a numeric healing figure — the caster's
  *                      {@code Feat#resolveSpellHealingBonus} sum (Conjuração Rápida's Desvantagem,
  *                      Arcanismo Elemental's +2); 0 for an ordinary cast
+ * @param chosenAttribute the Atributo the caster picked for a "Força ou Destreza" clause — {@code
+ *                      SpellBodyChange#attributeChoice()} (Ogrificar); {@code null} when the Magia asks for no pick,
+ *                      or the caller made none, in which case no Atributo moves
  */
-public record SpellEffectContext(boolean hostileTarget, CombatantSheet caster, int healingBonus) {
+public record SpellEffectContext(boolean hostileTarget, CombatantSheet caster, int healingBonus,
+                                 AttributeDomain chosenAttribute) {
+
+    public SpellEffectContext(final boolean hostileTarget, final CombatantSheet caster, final int healingBonus) {
+        this(hostileTarget, caster, healingBonus, null);
+    }
 
     public SpellEffectContext(final boolean hostileTarget, final CombatantSheet caster) {
         this(hostileTarget, caster, 0);
@@ -31,7 +40,12 @@ public record SpellEffectContext(boolean hostileTarget, CombatantSheet caster, i
 
     /** This context with healingBonus in place of its own. */
     public SpellEffectContext withHealingBonus(final int bonus) {
-        return new SpellEffectContext(hostileTarget, caster, bonus);
+        return new SpellEffectContext(hostileTarget, caster, bonus, chosenAttribute);
+    }
+
+    /** This context with the caster's "Força ou Destreza" pick in place of its own. */
+    public SpellEffectContext withChosenAttribute(final AttributeDomain attribute) {
+        return new SpellEffectContext(hostileTarget, caster, healingBonus, attribute);
     }
 
     /** The ordinary case — a Magia cast on someone who is not an enemy of its caster. */

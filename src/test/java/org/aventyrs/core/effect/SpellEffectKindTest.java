@@ -1,5 +1,8 @@
 package org.aventyrs.core.effect;
 
+import org.aventyrs.core.magic.catalog.PolimorfismoSpell;
+import org.aventyrs.core.magic.catalog.VidaSpell;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -21,7 +24,7 @@ class SpellEffectKindTest {
 
     /** The categories that can currently produce an effect. Update deliberately, never casually. */
     private static final Set<SpellEffectKind> IMPLEMENTED =
-            Set.of(SpellEffectKind.HEALING, SpellEffectKind.DEFENSIVE);
+            Set.of(SpellEffectKind.HEALING, SpellEffectKind.DEFENSIVE, SpellEffectKind.OFFENSIVE);
 
     @ParameterizedTest
     @EnumSource(SpellEffectKind.class)
@@ -34,14 +37,25 @@ class SpellEffectKindTest {
     void theImplementedKindsBuildTheirOwnContributor() {
         assertInstanceOf(HealingEffectBuilder.class,
                 SpellEffectKind.HEALING.newBuilder().orElseThrow());
-        assertInstanceOf(ConditionCleansingEffectBuilder.class,
-                SpellEffectKind.DEFENSIVE.newBuilder().orElseThrow());
+        assertInstanceOf(BodyChangeEffectBuilder.class,
+                SpellEffectKind.OFFENSIVE.newBuilder().orElseThrow());
+    }
+
+    /** DEFENSIVE reads two columns — a cleansing, or a beneficial body change — and builds whichever is authored. */
+    @Test
+    void theDefensiveKindBuildsACleansingOrABeneficialBodyChange() {
+        SpellEffectBuilder defensive = SpellEffectKind.DEFENSIVE.newBuilder().orElseThrow();
+        assertInstanceOf(ConditionCleansingEffect.class,
+                defensive.build(VidaSpell.CORPO_FECHADO, SpellEffectContext.FRIENDLY).orElseThrow());
+        assertInstanceOf(BodyChangeEffect.Enhancement.class,
+                defensive.build(PolimorfismoSpell.TITANECER, SpellEffectContext.FRIENDLY).orElseThrow());
+        assertTrue(defensive.build(PolimorfismoSpell.ENFADECER, SpellEffectContext.FRIENDLY).isEmpty(),
+                "a harmful change is OFFENSIVE's, never DEFENSIVE's");
     }
 
     @Test
     void theUnimplementedKindsAreDeclaredButEmpty() {
-        // Deliberate, not an omission — see OffensiveEffect/InvocationEffect's own javadoc.
-        assertFalse(SpellEffectKind.OFFENSIVE.isImplemented());
+        // Deliberate, not an omission — see InvocationEffect's own javadoc.
         assertFalse(SpellEffectKind.INVOCATION.isImplemented());
     }
 

@@ -94,6 +94,9 @@ public class SpellData {
     @Builder.Default
     private final Set<ConditionType> cleansedConditions = Set.of();
 
+    /** What a Polimorfismo Magia does to its target's body — {@link SpellBodyChange}; {@code null} for every other Magia. */
+    private final SpellBodyChange bodyChange;
+
     /** {@code Efeito Alternativo – ‹name›:}, or {@code null}. */
     private final String secondaryEffectDescription;
 

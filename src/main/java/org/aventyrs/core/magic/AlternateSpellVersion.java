@@ -171,6 +171,12 @@ public class AlternateSpellVersion implements Spell {
         return alternate.healing() != null ? Optional.of(alternate.healing()) : Optional.empty();
     }
 
+    /** The alternate's own body change, never the parent's — a second version authors its own effect. */
+    @Override
+    public Optional<SpellBodyChange> getBodyChange() {
+        return Optional.ofNullable(alternate.bodyChange());
+    }
+
     @Override
     public Set<ConditionType> getCleansedConditions() {
         return alternate.cleansedConditions();

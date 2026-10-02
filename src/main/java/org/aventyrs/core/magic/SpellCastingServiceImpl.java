@@ -143,7 +143,8 @@ public class SpellCastingServiceImpl implements SpellCastingService {
                 .healingBonus(healingBonus)
                 .targetImmune(isTargetImmune(request, spell))
                 .spellEffect(resolveEffect(spell, SpellEffectContext.of(isHostileTarget(request), request.getCaster())
-                                .withHealingBonus(healingBonus))
+                                .withHealingBonus(healingBonus)
+                                .withChosenAttribute(request.getChosenAttribute()))
                         .orElse(null))
                 .recordedAction(recordedAction(request, spell, deliveryResult))
                 .grantedEffectChains(casterCharacter.getFeats().stream()
@@ -498,6 +499,8 @@ public class SpellCastingServiceImpl implements SpellCastingService {
             case SOBRECURA -> new org.aventyrs.core.effect.Sobrecura(caster, castVersion.isAlternateVersion()
                     ? ((AlternateSpellVersion) castVersion).getParent() : castVersion, roller.rollD6());
             case ESTANCAR -> new org.aventyrs.core.effect.Estancar();
+            case GIGANTECER, ESPREMER -> new org.aventyrs.core.effect.BodyChangeChain(castVersion,
+                    kind.getBodyChange().orElseThrow());
         });
     }
 

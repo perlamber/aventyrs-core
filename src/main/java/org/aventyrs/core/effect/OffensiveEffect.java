@@ -3,8 +3,9 @@ package org.aventyrs.core.effect;
 /**
  * A {@link SpellEffect} that harms its target — a Magia's damage, or a Malefício it inflicts.
  *
- * <p><b>No concrete implementation yet, and the gap is a consumer rather than a mechanism.</b>
- * Both halves already exist one step short of being applied:
+ * <p><b>One concrete form so far: {@link BodyChangeEffect.Diminishment}</b> (core 0.0.99), the
+ * shrinking and weakening half of Polimorfismo. For damage and Malefícios the gap is a consumer
+ * rather than a mechanism — both halves already exist one step short of being applied:
  *
  * <ul>
  *   <li><b>Damage</b> — {@code SpellDamage}/{@code ResolvedSpellDamage} already resolve a Magia's

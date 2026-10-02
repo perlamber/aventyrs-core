@@ -110,6 +110,11 @@ public interface AuthoredSpell extends Spell {
     }
 
     @Override
+    default Optional<SpellBodyChange> getBodyChange() {
+        return Optional.ofNullable(getData().getBodyChange());
+    }
+
+    @Override
     default String getSecondaryEffectDescription() {
         return getData().getSecondaryEffectDescription();
     }
