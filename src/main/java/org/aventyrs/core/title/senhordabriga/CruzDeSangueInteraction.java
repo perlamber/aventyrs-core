@@ -54,7 +54,7 @@ public class CruzDeSangueInteraction extends AbstractTitleAbilityInteraction {
 
     /** "redutor em suas Defesas igual à metade de sua Destreza" — as a positive figure. */
     static int resolveDefesasPenalty(final CombatantSheet activator) {
-        return activator.getCharacter().getEffectiveAttributeTotal(AttributeDomain.DEXTERITY) / 2;
+        return activator.getAttributeTotal(AttributeDomain.DEXTERITY) / 2;
     }
 
     @Override

@@ -93,6 +93,18 @@ public class SpellCastRequest {
      */
     private final org.aventyrs.core.character.AttributeDomain chosenAttribute;
 
+    /**
+     * Extra PM spent to lengthen the Duração — Serra-Pernas's "+2 rodadas para cada PM gasto" ({@code
+     * Spell#getRoundsPerExtraMana()}) (core 0.1.0). Added to the cast's PM cost; ignored by a Magia that allows none.
+     */
+    private final int extraMana;
+
+    /**
+     * Whether the caster aims for the version's Corrente de Efeitos Alternativa rather than its Corrente — declared at
+     * the cast (table ruling, 2026-10-02; core 0.1.0). Ignored by a version with none.
+     */
+    private final boolean alternateEffectChain;
+
     /** Whether the caster opted into feat for this cast. */
     public boolean activated(final org.aventyrs.core.feat.Feat feat) {
         return activatedFeats.contains(feat);

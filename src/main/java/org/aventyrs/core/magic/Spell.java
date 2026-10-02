@@ -161,6 +161,22 @@ public interface Spell extends AttackSource {
     }
 
     /**
+     * The Corrente de Efeitos Alternativa a caster may declare at the cast instead of {@link #getEffectChainKind()}
+     * (core 0.1.0) — Serra-Pernas's Fraqueza Momentânea, the catalog's only one. Empty for every other version.
+     */
+    default Optional<SpellChainKind> getAlternateEffectChainKind() {
+        return Optional.empty();
+    }
+
+    /**
+     * Rodadas of Duração each extra PM spent on the cast buys (core 0.1.0) — Serra-Pernas's "pode gastar PM adicional em
+     * sua conjuração, aumentado a sua duração em 2 rodadas para cada PM gasto". 0 for a Magia that allows none.
+     */
+    default int getRoundsPerExtraMana() {
+        return 0;
+    }
+
+    /**
      * The {@code Efeito Alternativo – ‹name›:} block, or {@code null} for the 82 Magias with
      * none. "Um personagem que aprenda a versão base automaticamente aprende sua segunda versão"
      * — it is not separately acquired, which is why it is a column here rather than its own

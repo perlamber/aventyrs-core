@@ -257,7 +257,7 @@ public class AttackReceiver {
 
         if (defenseSkill != null) {
             if (defended) {
-                result.counterWeaponDamage(defender.getCharacter().getEffectiveAttributeTotal(AttributeDomain.STRENGTH));
+                result.counterWeaponDamage(defender.getAttributeTotal(AttributeDomain.STRENGTH));
             } else {
                 result.attackerDamageAdvantage(true);
             }

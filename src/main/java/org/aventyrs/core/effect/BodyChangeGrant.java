@@ -31,10 +31,12 @@ final class BodyChangeGrant {
     private BodyChangeGrant() {
     }
 
-    /** Grants change to target for spell's Duração, chosen being the caster's "Força ou Destreza" pick. */
+    /**
+     * Grants change to target for rounds Rodadas — the cast's resolved Duração ({@link SpellEffectContext#roundsFor})
+     * — chosen being the caster's "Força ou Destreza" pick.
+     */
     static List<Blessing> grant(final CombatantSheet target, final Spell spell, final SpellBodyChange change,
-                                final AttributeDomain chosen) {
-        int rounds = spell.getDuration() == null ? 0 : spell.getDuration().inRodadas().orElse(0);
+                                final AttributeDomain chosen, final int rounds) {
         if (rounds <= 0) {
             return List.of();
         }
@@ -74,8 +76,7 @@ final class BodyChangeGrant {
             return change.attributeChange();
         }
         ModifierType type = domain.getBonusModifierType();
-        int current = target.getCharacter().getEffectiveAttributeTotal(domain)
-                + target.getTemporaryBonus(type) - heldFrom(target, type, source);
+        int current = target.getAttributeTotal(domain) - heldFrom(target, type, source);
         int floor = change.attributesSetTo() != null
                 ? Math.max(change.attributesSetTo(), SpellBodyChange.MINIMUM_ATTRIBUTE)
                 : SpellBodyChange.MINIMUM_ATTRIBUTE;

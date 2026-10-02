@@ -4,6 +4,7 @@ import java.util.List;
 
 import lombok.Getter;
 
+import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.magic.Spell;
 import org.aventyrs.core.magic.SpellBodyChange;
 import org.aventyrs.core.sheet.Blessing;
@@ -21,6 +22,8 @@ import org.aventyrs.core.sheet.InteractionResult;
  *       than doubled, and the other is added.</li>
  *   <li><b>Espremer</b>, "em adicional aos efeitos anteriores": −1 Categoria on top of Serra-Pernas's own −2 Força e
  *       Destreza, which it does not touch.</li>
+ *   <li><b>Murcha-Almas</b> and <b>Inflar o Ego</b> (core 0.1.0) replace Murcha-Corpo's and Infla-Músculos's figure
+ *       the same way Gigantecer does — Inflar o Ego keeps the Atributo the caster picked.</li>
  * </ul>
  */
 @Getter
@@ -29,9 +32,18 @@ public class BodyChangeChain extends AbstractEffect implements EffectChain {
     private final Spell spell;
     private final SpellBodyChange bodyChange;
 
-    public BodyChangeChain(final Spell spell, final SpellBodyChange bodyChange) {
+    /** The caster's "Força ou Destreza" pick — Inflar o Ego's — or {@code null}. */
+    private final AttributeDomain chosenAttribute;
+
+    /** How many Rodadas it lasts — the cast's resolved Duração. */
+    private final int rounds;
+
+    public BodyChangeChain(final Spell spell, final SpellBodyChange bodyChange, final AttributeDomain chosenAttribute,
+                           final int rounds) {
         this.spell = spell;
         this.bodyChange = bodyChange;
+        this.chosenAttribute = chosenAttribute;
+        this.rounds = rounds;
     }
 
     @Override
@@ -41,7 +53,7 @@ public class BodyChangeChain extends AbstractEffect implements EffectChain {
 
     @Override
     public InteractionResult applyTo(final CombatantSheet target) {
-        List<Blessing> granted = BodyChangeGrant.grant(target, spell, bodyChange, null);
+        List<Blessing> granted = BodyChangeGrant.grant(target, spell, bodyChange, chosenAttribute, rounds);
         return reportChain(InteractionResult.builder()
                 .resultStatus(resolveStatus(target))
                 .blessings(granted.isEmpty() ? null : granted))

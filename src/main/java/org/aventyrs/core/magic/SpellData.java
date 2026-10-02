@@ -97,6 +97,12 @@ public class SpellData {
     /** What a Polimorfismo Magia does to its target's body — {@link SpellBodyChange}; {@code null} for every other Magia. */
     private final SpellBodyChange bodyChange;
 
+    /** The {@code Corrente de Efeitos Alternativa} a caster may aim for instead of {@link #effectChainKind} — Serra-Pernas's. */
+    private final SpellChainKind alternateEffectChainKind;
+
+    /** "Pode gastar PM adicional … aumentando a sua duração em N rodadas para cada PM gasto" — N, or 0 when it may not. */
+    private final int roundsPerExtraMana;
+
     /** {@code Efeito Alternativo – ‹name›:}, or {@code null}. */
     private final String secondaryEffectDescription;
 

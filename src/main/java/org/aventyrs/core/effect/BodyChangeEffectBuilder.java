@@ -22,6 +22,6 @@ public class BodyChangeEffectBuilder implements SpellEffectBuilder {
     public Optional<SpellEffect> build(final Spell spell, final SpellEffectContext context) {
         return spell.getBodyChange()
                 .filter(change -> change.isHarmful() == harmful)
-                .map(change -> BodyChangeEffect.of(spell, change, context.chosenAttribute()));
+                .map(change -> BodyChangeEffect.of(spell, change, context));
     }
 }

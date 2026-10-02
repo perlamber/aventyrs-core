@@ -27,32 +27,29 @@ public class MagicPointsServiceImpl implements MagicPointsService {
 
     @Override
     public int getManaMultiplier(final Character character) {
-        int bonus = modifierResolver.sumModifiers(character.getAttributeAbilities(), ModifierType.MANA_MULTIPLIER);
-        int featBonus = character.getFeats().stream()
-                .mapToInt(feat -> feat.resolveManaMultiplierIncrease(character))
-                .sum();
-        return Feat.fixedMultiplier(ResourceType.MAGIC_POINTS, character, character.getManaMultiplier() + bonus + featBonus);
+        return getManaMultiplier(character, null);
     }
 
     @Override
     public int getMaxMagicPoints(final Character character) {
-        return basePoints(character, null)
-                + character.getEffectiveAttributeTotal(AttributeDomain.FOCUS) * getManaMultiplier(character);
+        return getMaxMagicPoints(character, null);
     }
 
     @Override
     public int getManaMultiplier(final Character character, final CombatantSheet sheet) {
-        if (sheet == null) {
-            return getManaMultiplier(character);
-        }
-        return Feat.fixedMultiplier(ResourceType.MAGIC_POINTS, character,
-                Math.max(1, getManaMultiplier(character) + sheet.getTemporaryBonus(ModifierType.MANA_MULTIPLIER)));
+        int bonus = modifierResolver.sumModifiers(character.getAttributeAbilities(), ModifierType.MANA_MULTIPLIER)
+                + character.getFeats().stream()
+                        .mapToInt(feat -> feat.resolveManaMultiplierIncrease(character, sheet))
+                        .sum();
+        return ResourcePoolFormula.multiplier(ResourceType.MAGIC_POINTS, character, sheet, bonus);
     }
 
+    /** {@code base + Foco × Multiplicador}, both read through the sheet when one is given — see {@link ResourcePoolFormula}. */
     @Override
     public int getMaxMagicPoints(final Character character, final CombatantSheet sheet) {
         return basePoints(character, sheet)
-                + character.getEffectiveAttributeTotal(AttributeDomain.FOCUS) * getManaMultiplier(character, sheet);
+                + ResourcePoolFormula.attribute(ResourceType.MAGIC_POINTS, character, sheet)
+                        * getManaMultiplier(character, sheet);
     }
 
     @Override

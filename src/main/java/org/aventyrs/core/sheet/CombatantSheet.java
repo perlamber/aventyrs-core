@@ -72,6 +72,22 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
     Character getCharacter();
 
     /**
+     * This combatant's total for domain as it stands right now (core 0.1.0) — {@link
+     * Character#getEffectiveAttributeTotal(org.aventyrs.core.character.AttributeDomain, CombatantSheet)} read through
+     * this sheet, so a timed Bônus Variável (Titânecer, a Frenesi) counts and a racial bonus a Forma suppresses does
+     * not. <b>Prefer it to {@code getCharacter().getEffectiveAttributeTotal(domain)} wherever a sheet is in hand</b>:
+     * the sheet-less form sees only the permanent total.
+     */
+    default int getAttributeTotal(final org.aventyrs.core.character.AttributeDomain domain) {
+        return getCharacter().getEffectiveAttributeTotal(domain, this);
+    }
+
+    /** Whether a {@link StrippedReductions} runs on this combatant — it counts no RD and no RM (core 0.1.0). */
+    default boolean isStrippedOfReductions() {
+        return getRunningEffects().stream().anyMatch(StrippedReductions.class::isInstance);
+    }
+
+    /**
      * What this combatant is — its Raça's {@code getCreatureType()} for a character, the stat
      * block's for a foe (every foe shares one race, so it overrides this). {@code null} for a
      * character built with no race.

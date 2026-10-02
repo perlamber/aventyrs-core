@@ -115,6 +115,16 @@ public interface AuthoredSpell extends Spell {
     }
 
     @Override
+    default Optional<SpellChainKind> getAlternateEffectChainKind() {
+        return Optional.ofNullable(getData().getAlternateEffectChainKind());
+    }
+
+    @Override
+    default int getRoundsPerExtraMana() {
+        return getData().getRoundsPerExtraMana();
+    }
+
+    @Override
     default String getSecondaryEffectDescription() {
         return getData().getSecondaryEffectDescription();
     }

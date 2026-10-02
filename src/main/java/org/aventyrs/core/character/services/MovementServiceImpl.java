@@ -127,6 +127,9 @@ public class MovementServiceImpl implements MovementService {
         if (mode == MovementMode.LAND) {
             return true;
         }
+        if (mode == MovementMode.FLIGHT && sheet.getTemporaryBonus(ModifierType.GRANTS_FLIGHT) > 0) {
+            return true;
+        }
         Character character = sheet.getCharacter();
         boolean racial = character.getRace() != null && character.getRace().grantsMovementMode(mode)
                 && !sheet.getRacialTraitSuppression().suppressesPhysicalTraits();

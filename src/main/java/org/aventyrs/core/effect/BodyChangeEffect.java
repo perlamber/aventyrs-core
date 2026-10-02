@@ -35,15 +35,23 @@ public abstract class BodyChangeEffect extends AbstractEffect implements SpellEf
     /** The caster's "Força ou Destreza" pick, or {@code null}. */
     private final AttributeDomain chosenAttribute;
 
-    private BodyChangeEffect(final Spell spell, final SpellBodyChange bodyChange, final AttributeDomain chosenAttribute) {
+    /** How many Rodadas each part lasts — the cast's resolved Duração. */
+    private final int rounds;
+
+    private BodyChangeEffect(final Spell spell, final SpellBodyChange bodyChange, final AttributeDomain chosenAttribute,
+                             final int rounds) {
         this.spell = spell;
         this.bodyChange = bodyChange;
         this.chosenAttribute = chosenAttribute;
+        this.rounds = rounds;
     }
 
-    /** The effect change describes for spell — a {@link Diminishment} when harmful, else an {@link Enhancement}. */
-    public static BodyChangeEffect of(final Spell spell, final SpellBodyChange change, final AttributeDomain chosen) {
-        return change.isHarmful() ? new Diminishment(spell, change, chosen) : new Enhancement(spell, change, chosen);
+    /** The effect change describes for spell on this cast — a {@link Diminishment} when harmful, else an {@link Enhancement}. */
+    public static BodyChangeEffect of(final Spell spell, final SpellBodyChange change, final SpellEffectContext context) {
+        int rounds = context.roundsFor(spell);
+        AttributeDomain chosen = context.chosenAttribute();
+        return change.isHarmful() ? new Diminishment(spell, change, chosen, rounds)
+                : new Enhancement(spell, change, chosen, rounds);
     }
 
     @Override
@@ -53,7 +61,7 @@ public abstract class BodyChangeEffect extends AbstractEffect implements SpellEf
 
     @Override
     public InteractionResult applyTo(final CombatantSheet target) {
-        List<Blessing> granted = BodyChangeGrant.grant(target, spell, bodyChange, chosenAttribute);
+        List<Blessing> granted = BodyChangeGrant.grant(target, spell, bodyChange, chosenAttribute, rounds);
         return reportChain(InteractionResult.builder()
                 .resultStatus(resolveStatus(target))
                 .blessings(granted.isEmpty() ? null : granted))
@@ -62,15 +70,17 @@ public abstract class BodyChangeEffect extends AbstractEffect implements SpellEf
 
     /** A body change that strengthens or enlarges its target. */
     public static final class Enhancement extends BodyChangeEffect implements DefensiveEffect {
-        private Enhancement(final Spell spell, final SpellBodyChange change, final AttributeDomain chosen) {
-            super(spell, change, chosen);
+        private Enhancement(final Spell spell, final SpellBodyChange change, final AttributeDomain chosen,
+                            final int rounds) {
+            super(spell, change, chosen, rounds);
         }
     }
 
     /** A body change that weakens or shrinks its target. */
     public static final class Diminishment extends BodyChangeEffect implements OffensiveEffect {
-        private Diminishment(final Spell spell, final SpellBodyChange change, final AttributeDomain chosen) {
-            super(spell, change, chosen);
+        private Diminishment(final Spell spell, final SpellBodyChange change, final AttributeDomain chosen,
+                             final int rounds) {
+            super(spell, change, chosen, rounds);
         }
     }
 }

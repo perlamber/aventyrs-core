@@ -57,7 +57,7 @@ public class Definhar extends AbstractEffect implements EffectChain {
     @Override
     public InteractionResult applyTo(final CombatantSheet target) {
         Character affectedCharacter = target.getCharacter();
-        int vigorTotal = affectedCharacter.getEffectiveAttributeTotal(AttributeDomain.VIGOR);
+        int vigorTotal = target.getAttributeTotal(AttributeDomain.VIGOR);
 
         target.applyEffect(new Withering(PER_ROUND_DAMAGE, Optional.of(vigorTotal)));
 

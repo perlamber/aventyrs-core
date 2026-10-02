@@ -31,22 +31,13 @@ public class HitPointsServiceImpl implements HitPointsService {
     @Override
     public int getLifeMultiplier(final Character character, final CombatantSheet characterSheet) {
         int bonus = modifierResolver.sumModifiers(character.getAttributeAbilities(), ModifierType.LIFE_MULTIPLIER);
-        // Talentos are outside every ModifierResolver scan, so they get an explicit pass — the
-        // same shape MagicPointsServiceImpl uses for resolveManaMultiplierIncrease.
+        // Talentos are outside every ModifierResolver scan, so they get an explicit pass.
         for (Feat feat : character.getFeats()) {
             bonus += feat.resolveLifeMultiplierIncrease(character, characterSheet);
         }
-        if (characterSheet != null) {
-            // A held Malefício can lower it — ConditionType#ENVENENADO's "-1 Multiplicador de
-            // Pontos de Vida". Only reachable with a sheet, like every other condition read; the
-            // Character-only overload has nowhere to look. Floored at 1 so a stack of Malefícios
-            // can never drive a creature's PV to zero by arithmetic alone.
-            bonus += characterSheet.getConditionBonus(ModifierType.LIFE_MULTIPLIER, null);
-            // And a held timed/combat-scoped loss — Ferida Profunda's "perde 3 Multiplicadores de PV".
-            bonus += characterSheet.getTemporaryBonus(ModifierType.LIFE_MULTIPLIER);
-        }
-        // Sobreposição: "sempre igual à 1, não é possível aumentar" overrides every figure above.
-        return Feat.fixedMultiplier(ResourceType.HIT_POINTS, character, Math.max(1, character.getLifeMultiplier() + bonus));
+        // Condições (Envenenado), timed bonuses (Titânecer, Ferida Profunda), the floor and Sobreposição: the rule
+        // all three pools share.
+        return ResourcePoolFormula.multiplier(ResourceType.HIT_POINTS, character, characterSheet, bonus);
     }
 
     @Override
@@ -64,7 +55,7 @@ public class HitPointsServiceImpl implements HitPointsService {
     @Override
     public int getMaxHitPoints(final Character character, final CombatantSheet characterSheet) {
         return character.getResourceFormula().getBaseHitPoints()
-                + character.getEffectiveAttributeTotal(AttributeDomain.VIGOR, characterSheet)
+                + ResourcePoolFormula.attribute(ResourceType.HIT_POINTS, character, characterSheet)
                         * getLifeMultiplier(character, characterSheet)
                 + getHitPointsBonus(character);
     }

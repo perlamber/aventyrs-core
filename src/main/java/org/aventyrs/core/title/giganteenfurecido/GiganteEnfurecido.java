@@ -320,7 +320,7 @@ public class GiganteEnfurecido implements AventyrTitle {
                 || !RetaliacaoFuriosaInteraction.hasRetaliationAgainst(holder, attackTarget)) {
             return TitleAttackModifiers.NONE;
         }
-        int strength = holder.getCharacter().getEffectiveAttributeTotal(AttributeDomain.STRENGTH, holder);
+        int strength = holder.getAttributeTotal(AttributeDomain.STRENGTH);
         TitleAttackModifiers.DamageOverride damage = holder.isAtOrBelowZeroHitPoints()
                 ? new TitleAttackModifiers.DamageOverride(2, strength)
                 : new TitleAttackModifiers.DamageOverride(1, strength / 2);

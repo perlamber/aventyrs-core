@@ -199,7 +199,7 @@ public final class DefensiveCriticalEffect {
             return DefensiveCriticalOutcome.of(type);
         }
         int damage = dice.rollD6(pick(3, 1))
-                + defender.getCharacter().getEffectiveAttributeTotal(AttributeDomain.VIGOR);
+                + defender.getAttributeTotal(AttributeDomain.VIGOR);
         attacker.applyDamage(damage);
         if (attackSource instanceof Item weapon) {
             weapon.applyDamage(damage);

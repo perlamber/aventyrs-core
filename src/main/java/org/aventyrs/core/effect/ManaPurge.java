@@ -73,7 +73,7 @@ public class ManaPurge extends AbstractEffect implements CriticalEffect {
         target.spendMagicPoints(IMMEDIATE_DRAIN);
 
         Optional<Integer> remainingRounds = criticalResult == CriticalResult.ACERTO_CRITICO_MENOR
-                ? Optional.of(affectedCharacter.getEffectiveAttributeTotal(AttributeDomain.FOCUS))
+                ? Optional.of(target.getAttributeTotal(AttributeDomain.FOCUS))
                 : Optional.empty();
         target.applyEffect(new ManaDrain(PER_ROUND_DRAIN, remainingRounds));
 

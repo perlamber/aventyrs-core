@@ -78,6 +78,11 @@ public class SpellCastingServiceImpl implements SpellCastingService {
                 request.getCaster().getCharacter(),
                 request.getCombatantTarget() == null ? null : request.getCombatantTarget().getCharacter()),
                 spell, empowerment);
+        // Serra-Pernas: "+2 rodadas para cada PM gasto" — paid in resolveManaCost.
+        int extraManaRounds = extraMana(spell, request) * spell.getRoundsPerExtraMana();
+        if (extraManaRounds > 0 && durationInRounds.isPresent()) {
+            durationInRounds = OptionalInt.of(durationInRounds.getAsInt() + extraManaRounds);
+        }
         ActiveAreaSpellEffect areaSpellEffect = registerAreaSpellEffect(request, spell, durationInRounds);
         int castingDifficultyReduction = resolveCastingDifficultyReduction(spell, request.getCaster());
         DifficultyLevel authoredDifficulty = request.getOpposedBranchLevel() == null
@@ -144,7 +149,9 @@ public class SpellCastingServiceImpl implements SpellCastingService {
                 .targetImmune(isTargetImmune(request, spell))
                 .spellEffect(resolveEffect(spell, SpellEffectContext.of(isHostileTarget(request), request.getCaster())
                                 .withHealingBonus(healingBonus)
-                                .withChosenAttribute(request.getChosenAttribute()))
+                                .withChosenAttribute(request.getChosenAttribute())
+                                .withDurationInRounds(durationInRounds.isPresent() ? durationInRounds.getAsInt() : null)
+                                .withAlternateEffectChain(request.isAlternateEffectChain()))
                         .orElse(null))
                 .recordedAction(recordedAction(request, spell, deliveryResult))
                 .grantedEffectChains(casterCharacter.getFeats().stream()
@@ -305,7 +312,13 @@ public class SpellCastingServiceImpl implements SpellCastingService {
                 .sum();
         int reduced = cost <= 0 || reduction <= 0 ? cost : Math.max(MINIMUM_REDUCED_MANA_COST, cost - reduction);
         // Corrente Abençoada: "Para cada criatura adicional é necessário o uso de +3PM".
-        return reduced + request.getAdditionalTargets().size() * spell.getAdditionalTargetManaCost();
+        return reduced + request.getAdditionalTargets().size() * spell.getAdditionalTargetManaCost()
+                + extraMana(spell, request);
+    }
+
+    /** The extra PM a cast spends to lengthen its Duração — 0 unless the version allows it (Serra-Pernas). */
+    private static int extraMana(final Spell spell, final SpellCastRequest request) {
+        return spell.getRoundsPerExtraMana() > 0 ? Math.max(0, request.getExtraMana()) : 0;
     }
 
     @Override
@@ -350,7 +363,7 @@ public class SpellCastingServiceImpl implements SpellCastingService {
     }
 
     private ResolvedSpellDamage resolve(final SpellDamage damage, final CombatantSheet caster) {
-        int focusTotal = caster.getCharacter().getEffectiveAttributeTotal(AttributeDomain.FOCUS);
+        int focusTotal = caster.getAttributeTotal(AttributeDomain.FOCUS);
         boolean upgradeHalfToFull = isFirstSpellCastOfRound(caster)
                 && caster.getCharacter().getAttributeAbilities().stream()
                         .anyMatch(AttributeAbility::upgradesFirstSpellOfRoundFocusScaling);
@@ -494,13 +507,22 @@ public class SpellCastingServiceImpl implements SpellCastingService {
 
     @Override
     public Optional<org.aventyrs.core.effect.EffectChain> resolveEffectChain(
-            final Spell castVersion, final CombatantSheet caster, final org.aventyrs.core.util.DiceRoller roller) {
-        return castVersion.getEffectChainKind().map(kind -> switch (kind) {
+            final Spell castVersion, final org.aventyrs.core.effect.SpellEffectContext context,
+            final org.aventyrs.core.util.DiceRoller roller) {
+        Optional<SpellChainKind> kind = context.alternateEffectChain()
+                ? castVersion.getAlternateEffectChainKind().or(castVersion::getEffectChainKind)
+                : castVersion.getEffectChainKind();
+        CombatantSheet caster = context.caster();
+        int rounds = context.roundsFor(castVersion);
+        return kind.map(chain -> switch (chain) {
             case SOBRECURA -> new org.aventyrs.core.effect.Sobrecura(caster, castVersion.isAlternateVersion()
                     ? ((AlternateSpellVersion) castVersion).getParent() : castVersion, roller.rollD6());
             case ESTANCAR -> new org.aventyrs.core.effect.Estancar();
-            case GIGANTECER, ESPREMER -> new org.aventyrs.core.effect.BodyChangeChain(castVersion,
-                    kind.getBodyChange().orElseThrow());
+            case GIGANTECER, ESPREMER, MURCHA_ALMAS, INFLAR_O_EGO -> new org.aventyrs.core.effect.BodyChangeChain(
+                    castVersion, chain.getBodyChange().orElseThrow(), context.chosenAttribute(), rounds);
+            case DRACONATO -> new org.aventyrs.core.effect.Draconato(castVersion, rounds);
+            case BONECA_DE_PORCELANA -> new org.aventyrs.core.effect.BonecaDePorcelana(castVersion, rounds);
+            case FRAQUEZA_MOMENTANEA -> new org.aventyrs.core.effect.FraquezaMomentanea(castVersion, caster, rounds);
         });
     }
 

@@ -318,6 +318,16 @@ Effect plugs into `receiveInteraction` with zero other code touched, and `Abstra
   "Força ou Destreza" pick rides `SpellEffectContext#chosenAttribute` / `SpellCastRequest
   #chosenAttribute`; Gigantecer and Espremer are `SpellChainKind`s building a `BodyChangeChain`,
   replacing or adding by granting under the same source. Harmful Atributo changes stop at 1.
+  **Since 0.1.0 the whole tree but Rearranjo Corporal is built**: Murcha-Corpo/Infla-Músculos
+  (+ Murcha-Almas/Inflar o Ego), Armada Ôgrica (one pick per landing), `effect.Draconato`
+  (`ModifierType#GRANTS_FLIGHT` + one RD and one RM), `effect.BonecaDePorcelana`
+  (`sheet.StrippedReductions` + `HalvedHealing`), and Serra-Pernas's `Spell#getRoundsPerExtraMana`
+  (`SpellCastRequest#extraMana`, charged and added to `getDurationInRounds`) and
+  `Spell#getAlternateEffectChainKind` (`effect.FraquezaMomentanea`, aimed for at the cast via
+  `SpellCastRequest#alternateEffectChain`). A Corrente is built by the context-taking
+  `SpellCastingService#resolveEffectChain(Spell, SpellEffectContext, DiceRoller)`, and every timed
+  effect lasts `SpellEffectContext#roundsFor` — the cast's resolved Duração when the caller passes
+  it (`withDurationInRounds`), so Talento/item increases and extra PM reach the landing.
 - **Still inert:** `OffensiveEffect` for damage and Malefícios (both halves already exist) and
   `InvocationEffect` (`Spell` has no `MonsterTemplate` column). `CORPO_FECHADO`'s Malefício
   *immunity* half needs per-condition immunity, which does not exist. The Regeneração tree is
