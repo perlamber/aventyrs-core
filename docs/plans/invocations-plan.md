@@ -1,7 +1,17 @@
 # Invocations and Subordinados — implementation plan
 
-**Status: Phases 1–3 built in core 0.0.92** (see `0.092.CHANGELOG.md`); Phase 4 (API) and Phase 5 (client) next.
-Started 2026-10-01 with the ALIADOS DA NATUREZA tree. The same machinery later serves
+**Status: Phases 1–5 built** — core 0.0.92–0.0.98, the API and the client (see the 0.092–0.098 changelogs and
+`spell-casting-audit.md`). Next on this machinery: the other trees' summons — Reanimar, Armada Decapitada, the Título
+summons — and the Alma Imperador Título. Started 2026-10-01 with the ALIADOS DA NATUREZA tree.
+
+**How it landed, where it differs from the phases below:**
+- Summons live on the server: a blueprint-less `MonsterSheetDocument` with a `summon` descriptor, plus `SceneSummonEntry`
+  rows that `SceneService` runs.
+- The caster's client controls each summon (`syncControlledSummons`).
+- Subordinados ride the character's status frame (`SubordinateDto`) and are restored when it enters a Cena; the hub
+  lists them.
+- Agnação Ancestral Superior's Peão (until the next Descanso) and the Esquecida's sombra conselheira (Concentração +1)
+  are real since core 0.0.98. The same machinery later serves
 Reanimar, Armada Decapitada, the Título summons (Convocar Daemons, the Elementais) and the Alma Imperador Título (a
 second character), which is not written yet.
 

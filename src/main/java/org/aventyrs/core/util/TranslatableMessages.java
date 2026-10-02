@@ -188,6 +188,15 @@ public class TranslatableMessages {
     /** "Um mesmo animal não pode ser alvo deste efeito uma segunda vez sem que antes passe por um Descanso." */
     public static final String CAPTIVATE_NEEDS_REST = "CAPTIVATE_NEEDS_REST";
 
+    /** The Esquecida's sombra conselheira needs the Fundamentalista rung of Abraçado pela Esquecida (core 0.0.98). */
+    public static final String SHADOW_COUNSEL_NOT_HELD = "SHADOW_COUNSEL_NOT_HELD";
+
+    /** The sombra conselheira is a Peão, Cavaleiro or Torre. */
+    public static final String SHADOW_COUNSEL_GRADE_NOT_ALLOWED = "SHADOW_COUNSEL_GRADE_NOT_ALLOWED";
+
+    /** "Apenas uma vez por Cena". */
+    public static final String SHADOW_COUNSEL_ALREADY_USED = "SHADOW_COUNSEL_ALREADY_USED";
+
     /**
      * A Talento only a newly created character may take ("Apenas personagens recém-criados") was
      * passed to {@code FeatService#grantFeat} — see {@code Feat#isAcquirableOnlyAtCreation}. Take

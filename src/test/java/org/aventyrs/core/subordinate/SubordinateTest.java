@@ -178,4 +178,62 @@ class SubordinateTest {
 
         assertEquals(0, SubordinateBenefits.of(sheet).size());
     }
+
+    // ---------- the sombra conselheira and the Peão (core 0.0.98) ----------
+
+    private static CharacterSheet devotee(final org.aventyrs.core.character.DevotionTier tier) {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .attributes(CharacterAttributes.builder()
+                        .charisma(AttributeValue.builder().domain(AttributeDomain.CHARISMA).base(3).build())
+                        .build())
+                .feats(new java.util.ArrayList<>())
+                .equipment(new java.util.ArrayList<>())
+                .deity(org.aventyrs.core.character.Deity.A_ESQUECIDA)
+                .devotionTier(tier)
+                .build();
+        character.grantFeat(org.aventyrs.core.feat.DevotoFeat.ABRACADO_PELA_ESQUECIDA);
+        return CharacterSheet.of(character, new Player());
+    }
+
+    /** "Apenas uma vez por Cena … um Subordinado Peão, Cavaleiro ou Torre por Concentração +1 Rodada." */
+    @Test
+    void theShadowCounselServesWhileConcentratedOnThenOneRodada() {
+        CharacterSheet fundamentalista = devotee(org.aventyrs.core.character.DevotionTier.FUNDAMENTALISTA);
+        Scene scene = new Scene();
+        scene.addParticipant(fundamentalista, 10, UUID.randomUUID());
+
+        Subordinate shadow = service.summonShadowCounsel(fundamentalista, SubordinateBenefit.TORRE_DEFESAS, null);
+
+        assertEquals(1, SubordinateBenefits.of(fundamentalista).size());
+        assertEquals(null, shadow.getRemainingRounds(), "no countdown while concentrating");
+        assertEquals(TranslatableMessages.SHADOW_COUNSEL_ALREADY_USED, assertThrows(IllegalOperationException.class,
+                () -> service.summonShadowCounsel(fundamentalista, SubordinateBenefit.PEAO_SKILL, null)).getMessage());
+
+        scene.breakConcentration(fundamentalista);
+        assertEquals(1, shadow.getRemainingRounds());
+        fundamentalista.tickTemporaryEffects();
+        assertEquals(0, SubordinateBenefits.of(fundamentalista).size());
+    }
+
+    @Test
+    void theShadowCounselNeedsTheFundamentalistaRungAndAnAllowedGrade() {
+        assertEquals(TranslatableMessages.SHADOW_COUNSEL_NOT_HELD, assertThrows(IllegalOperationException.class,
+                () -> service.summonShadowCounsel(devotee(org.aventyrs.core.character.DevotionTier.FIEL),
+                        SubordinateBenefit.PEAO_SKILL, null)).getMessage());
+        assertEquals(TranslatableMessages.SHADOW_COUNSEL_GRADE_NOT_ALLOWED, assertThrows(IllegalOperationException.class,
+                () -> service.summonShadowCounsel(devotee(org.aventyrs.core.character.DevotionTier.FUNDAMENTALISTA),
+                        SubordinateBenefit.REI_SORTE, null)).getMessage());
+    }
+
+    /** Agnação Ancestral Superior's Peão: "que te auxiliará até seu próximo Descanso". */
+    @Test
+    void aSubordinadoCanLastUntilTheNextDescanso() {
+        CharacterSheet sheet = commander(3);
+        service.command(sheet, Subordinate.of(SubordinateBenefit.PEAO_CRITICAL, false, "agnação"), null, RestType.MINIMO);
+        assertEquals(1, SubordinateBenefits.of(sheet).size());
+
+        new RestServiceImpl().applyRest(sheet.getCharacter(), sheet, RestType.MINIMO);
+
+        assertEquals(0, SubordinateBenefits.of(sheet).size());
+    }
 }

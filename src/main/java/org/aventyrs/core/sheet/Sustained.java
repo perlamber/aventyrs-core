@@ -14,4 +14,7 @@ public interface Sustained {
 
     /** The N of "Concentração + N", or {@code null} once the countdown has started. */
     Integer getTrailingRounds();
+
+    /** The focus broke: starts the trailing countdown. Whether it ends at once — no trailing Rodadas. */
+    boolean release();
 }

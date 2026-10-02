@@ -17,7 +17,7 @@ import java.util.UUID;
  * Daemon, Agnação Ancestral's Peão).
  */
 @Getter
-public class Subordinate extends TemporaryEffect {
+public class Subordinate extends TemporaryEffect implements org.aventyrs.core.sheet.Sustained {
 
     private final UUID id = UUID.randomUUID();
     private final SubordinateGrade grade;
@@ -25,6 +25,10 @@ public class Subordinate extends TemporaryEffect {
     private final boolean prodigious;
     private final String source;
     private final UUID creatureId;
+    /** Whoever concentrates on it, for one held by Concentração (core 0.0.98); {@code null} otherwise. */
+    private final UUID sustainerId;
+    /** The N of "Concentração + N" until the focus breaks; {@code null} otherwise. */
+    private Integer trailingRounds;
 
     public Subordinate(@NonNull final SubordinateBenefit benefit, final boolean prodigious, @NonNull final String source,
                        final UUID creatureId, final Integer rounds) {
@@ -34,6 +38,41 @@ public class Subordinate extends TemporaryEffect {
         this.prodigious = prodigious;
         this.source = source;
         this.creatureId = creatureId;
+        this.sustainerId = null;
+        this.trailingRounds = null;
+    }
+
+    private Subordinate(final SubordinateBenefit benefit, final boolean prodigious, final String source,
+                        final UUID sustainerId, final int trailingRounds) {
+        super((Integer) null);
+        this.grade = benefit.getGrade();
+        this.benefit = benefit;
+        this.prodigious = prodigious;
+        this.source = source;
+        this.creatureId = null;
+        this.sustainerId = sustainerId;
+        this.trailingRounds = trailingRounds;
+    }
+
+    /**
+     * One held by sustainerId's Concentração, then trailingRounds more (core 0.0.98) — the Esquecida's sombra
+     * conselheira, "por Concentração +1 Rodada".
+     */
+    public static Subordinate sustained(@NonNull final SubordinateBenefit benefit, final boolean prodigious,
+                                        @NonNull final String source, @NonNull final UUID sustainerId,
+                                        final int trailingRounds) {
+        return new Subordinate(benefit, prodigious, source, sustainerId, trailingRounds);
+    }
+
+    @Override
+    public boolean release() {
+        if (trailingRounds == null) {
+            return false;
+        }
+        int rounds = trailingRounds;
+        trailingRounds = null;
+        startCountdown(rounds);
+        return rounds <= 0;
     }
 
     /** One with no body on the board and no Duração. */

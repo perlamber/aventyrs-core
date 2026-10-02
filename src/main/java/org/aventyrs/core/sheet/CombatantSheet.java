@@ -1752,6 +1752,14 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
         return java.util.List.of();
     }
 
+    /**
+     * The Descanso that ends effect, when it was applied with {@link #applyEffectUntilRest} — what a caller persisting
+     * the effect must store to restore it the same way (core 0.0.98). Empty otherwise.
+     */
+    default java.util.Optional<org.aventyrs.core.rest.RestType> restScopeOf(final TemporaryEffect effect) {
+        return java.util.Optional.empty();
+    }
+
     /** The Procrastinar Ferimento ward waiting for a hit, if any (core 0.0.94). */
     default java.util.Optional<PostponedWoundWard> getPostponedWoundWard() {
         return java.util.Optional.empty();

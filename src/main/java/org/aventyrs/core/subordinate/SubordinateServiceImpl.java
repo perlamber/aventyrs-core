@@ -15,9 +15,40 @@ import static org.aventyrs.core.util.TranslatableMessages.SUBORDINATE_LIMIT_REAC
 
 public class SubordinateServiceImpl implements SubordinateService {
 
+    /** The sombra conselheira's source — on the Subordinado, and the once-per-Cena mark. */
+    public static final String SHADOW_COUNSEL = "Sombra Conselheira";
+
     @Override
     public void command(@NonNull final CombatantSheet commander, @NonNull final Subordinate subordinate,
                         final SceneContext sceneContext) {
+        command(commander, subordinate, sceneContext, null);
+    }
+
+    @Override
+    public Subordinate summonShadowCounsel(@NonNull final CombatantSheet holder, @NonNull final SubordinateBenefit benefit,
+                                           final SceneContext sceneContext) {
+        if (!org.aventyrs.core.feat.DevotoFeat.ABRACADO_PELA_ESQUECIDA.reached(holder.getCharacter(),
+                org.aventyrs.core.character.DevotionTier.FUNDAMENTALISTA)) {
+            throw new IllegalOperationException(org.aventyrs.core.util.TranslatableMessages.SHADOW_COUNSEL_NOT_HELD);
+        }
+        SubordinateGrade grade = benefit.getGrade();
+        if (grade != SubordinateGrade.PEAO && grade != SubordinateGrade.CAVALEIRO && grade != SubordinateGrade.TORRE) {
+            throw new IllegalOperationException(
+                    org.aventyrs.core.util.TranslatableMessages.SHADOW_COUNSEL_GRADE_NOT_ALLOWED);
+        }
+        if (holder.isAffectedThisCombat(SHADOW_COUNSEL)) {
+            throw new IllegalOperationException(org.aventyrs.core.util.TranslatableMessages.SHADOW_COUNSEL_ALREADY_USED);
+        }
+        Subordinate shadow = Subordinate.sustained(benefit, false, SHADOW_COUNSEL, holder.getId(),
+                SHADOW_COUNSEL_TRAILING_ROUNDS);
+        command(holder, shadow, sceneContext);
+        holder.markAffectedThisCombat(SHADOW_COUNSEL);
+        return shadow;
+    }
+
+    @Override
+    public void command(@NonNull final CombatantSheet commander, @NonNull final Subordinate subordinate,
+                        final SceneContext sceneContext, final org.aventyrs.core.rest.RestType endsAtRest) {
         var held = SubordinateBenefits.of(commander);
         int limit = commander.getCharacter().getEffectiveAttributeTotal(AttributeDomain.CHARISMA, commander);
         if (held.size() >= limit) {
@@ -28,7 +59,11 @@ public class SubordinateServiceImpl implements SubordinateService {
         if (!subordinate.isProdigious() && sameGradeCommon) {
             throw new IllegalOperationException(SUBORDINATE_GRADE_HELD);
         }
-        commander.applyEffect(subordinate);
+        if (endsAtRest == null) {
+            commander.applyEffect(subordinate);
+        } else {
+            commander.applyEffectUntilRest(subordinate, endsAtRest);
+        }
         grantKingsEgo(commander, subordinate);
         if (subordinate.isProdigious() && sceneContext != null) {
             sceneContext.getAllies().stream()

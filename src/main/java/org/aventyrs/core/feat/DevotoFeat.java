@@ -507,7 +507,7 @@ public enum DevotoFeat implements Feat {
      * Umbral ({@code Feat#resolveSpellDefenseBonus}). Fundamentalista — see the TODOs.
      */
     // TODO: Fiel's "sente a presença de personagens e criaturas umbrais em Distância Longa" — no senses in this core.
-    // TODO: Fundamentalista's sombra conselheira, "um Subordinado Peão, Cavaleiro ou Torre" — no Subordinados act here.
+    // Fundamentalista's sombra conselheira is SubordinateService#summonShadowCounsel (core 0.0.98).
     ABRACADO_PELA_ESQUECIDA(
             "Adepto: Recebe Vantagem em Furtividade para rolagens da especialização Maestria da Ocultação. Fiel: "
                     + "Recebe Bônus de +1 em Defesas para resistir a efeitos não-umbrais e você sente a presença de "
@@ -644,7 +644,7 @@ public enum DevotoFeat implements Feat {
     /**
      * Whether holder's devotion <b>to this Talento's Divindade</b> reaches rung — see {@link #tierFor}.
      */
-    boolean reached(final Character holder, final DevotionTier rung) {
+    public boolean reached(final Character holder, final DevotionTier rung) {
         DevotionTier tier = tierFor(holder);
         return tier != null && tier.reaches(rung);
     }

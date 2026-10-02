@@ -69,6 +69,14 @@ public abstract class TemporaryEffect {
      * not public — "a Duração … é reduzida pela metade" is a property of the effect that lands, and letting anything
      * but that Ego point halve a running one would make every countdown in this core a moving target.
      */
+    /**
+     * Starts a countdown on an effect that had none — a {@link Sustained} effect's trailing Rodadas once its caster's
+     * focus breaks (core 0.0.98). For a subclass in any package; the halving below stays package-private.
+     */
+    protected final void startCountdown(final int rounds) {
+        this.remainingRounds = rounds;
+    }
+
     void shortenTo(final int rounds) {
         this.remainingRounds = rounds;
     }

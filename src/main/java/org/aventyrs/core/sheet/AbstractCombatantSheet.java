@@ -3101,7 +3101,8 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     public List<TemporaryEffect> releaseSustainedBy(final UUID sustainerId) {
         List<TemporaryEffect> ended = new ArrayList<>();
         for (TemporaryEffect effect : List.copyOf(temporaryEffects)) {
-            if (effect instanceof MaleficioWard ward && ward.getSustainerId().equals(sustainerId) && ward.release()) {
+            if (effect instanceof Sustained sustained && sustainerId.equals(sustained.getSustainerId())
+                    && sustained.release()) {
                 temporaryEffects.remove(effect);
                 ended.add(effect);
             }
@@ -3122,5 +3123,10 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         Optional<PostponedWoundWard> ward = getPostponedWoundWard();
         ward.ifPresent(temporaryEffects::remove);
         return ward;
+    }
+
+    @Override
+    public Optional<org.aventyrs.core.rest.RestType> restScopeOf(final TemporaryEffect effect) {
+        return Optional.ofNullable(restScopedEffects.get(effect));
     }
 }

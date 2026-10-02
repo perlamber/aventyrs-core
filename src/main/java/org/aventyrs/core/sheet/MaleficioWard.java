@@ -21,14 +21,14 @@ public class MaleficioWard extends TemporaryEffect implements Sustained {
         this.trailingRounds = trailingRounds;
     }
 
-    /** Starts the trailing countdown; whether it ends at once (no trailing Rodadas). */
-    boolean release() {
+    @Override
+    public boolean release() {
         if (trailingRounds == null) {
             return false;
         }
         int rounds = trailingRounds;
         trailingRounds = null;
-        shortenTo(rounds);
+        startCountdown(rounds);
         return rounds <= 0;
     }
 

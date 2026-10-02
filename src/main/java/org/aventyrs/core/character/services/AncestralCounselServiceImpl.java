@@ -26,6 +26,12 @@ public class AncestralCounselServiceImpl implements AncestralCounselService {
 
     @Override
     public AncestralCounsel perform(@NonNull final CombatantSheet orc, final SceneContext sceneContext) {
+        return perform(orc, sceneContext, org.aventyrs.core.subordinate.SubordinateBenefit.PEAO_SKILL);
+    }
+
+    @Override
+    public AncestralCounsel perform(@NonNull final CombatantSheet orc, final SceneContext sceneContext,
+                                    final org.aventyrs.core.subordinate.SubordinateBenefit pawnBenefit) {
         Character character = orc.getCharacter();
         if (character == null || !(character.getRace() instanceof Orc)
                 || orc.getRacialTraitSuppression().suppressesInnateTraits()) {
@@ -41,7 +47,21 @@ public class AncestralCounselServiceImpl implements AncestralCounselService {
         orc.grantCharge(COUNSEL);
         boolean superior = character.getFeats().stream()
                 .anyMatch(feat -> feat.catalogEntry() == OrquicoFeat.AGNACAO_ANCESTRAL_SUPERIOR);
-        return new AncestralCounsel(superior);
+        if (!superior) {
+            return new AncestralCounsel(false);
+        }
+        // "Você recebe um Subordinado do tipo Peão, que te auxiliará até seu próximo Descanso."
+        org.aventyrs.core.subordinate.SubordinateBenefit benefit = pawnBenefit != null
+                && pawnBenefit.getGrade() == org.aventyrs.core.subordinate.SubordinateGrade.PEAO
+                ? pawnBenefit : org.aventyrs.core.subordinate.SubordinateBenefit.PEAO_SKILL;
+        try {
+            new org.aventyrs.core.subordinate.SubordinateServiceImpl().command(orc,
+                    org.aventyrs.core.subordinate.Subordinate.of(benefit, false, OrquicoFeat.AGNACAO_ANCESTRAL_SUPERIOR.name()),
+                    sceneContext, org.aventyrs.core.rest.RestType.MINIMO);
+            return new AncestralCounsel(true);
+        } catch (IllegalOperationException full) {
+            return new AncestralCounsel(false);
+        }
     }
 
     @Override
