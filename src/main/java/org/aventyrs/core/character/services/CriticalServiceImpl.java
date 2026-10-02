@@ -133,7 +133,7 @@ public class CriticalServiceImpl implements CriticalService {
                 .mapToInt(ability -> ability.resolveCriticalMarginIncrease(skillType, sceneContext))
                 .sum();
         total += skillCompetencyAbilities.stream()
-                .mapToInt(ability -> ability.resolveCriticalMarginIncrease(skillType, sceneContext))
+                .mapToInt(ability -> ability.resolveCriticalMarginIncrease(skillType, sceneContext, attackSource, holder))
                 .sum();
         total += character.getEgoAdvantages().values().stream()
                 .mapToInt(advantage -> advantage.resolveCriticalMarginIncrease(skillType, sceneContext))
@@ -197,6 +197,10 @@ public class CriticalServiceImpl implements CriticalService {
         }
         for (AventyrTitle title : character.getAllTitles()) {
             total = total.plus(title.resolveCriticalDamage(skillType, attackSource, criticalResult, holder));
+        }
+        // Mirar na Cabeça's "Vantagem nas rolagens de Danos Críticos" — on top of the baseline one.
+        for (SkillCompetencyAbility ability : SkillCompetencyAbility.allFor(character, holder)) {
+            total = total.plus(ability.resolveCriticalDamage(skillType, holder));
         }
         return total;
     }

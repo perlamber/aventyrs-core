@@ -37,11 +37,11 @@ public enum EmpatiaSelvagemCompetencyAbility implements SkillCompetencyAbility {
             "selvagens, a menos que tome ações ofensivas você nunca será seus alvos " +
             "primários (exceto se estiver sendo caçado como alimento e for o único alvo)."),
 
-    // TODO: "failed" is answerable now (InteractionResult#getSucceeded()), and spending PD is
-    // supported (CombatantSheet#spendDeterminationPoints) — but a *reroll* is not something this
-    // core can offer: it never rolls dice, so repeating a roll is the caller's own step, and
-    // there is no per-creature usage-limit tracker to hold the "apenas uma vez para cada
-    // criatura" either.
+    /**
+     * Real (core 0.0.102): {@link CompetencyUses#charm} spends the 2PD and marks the creature for this Cena
+     * (table ruling: "uma vez para cada criatura" resets per Cena). The reroll itself is the caller's — this core
+     * never rolls dice — offered only on a failed Empatia Selvagem roll, as an Ação Livre.
+     */
     CHARME_FEERICO("Você pode usar 2PD para refazer, como Ação Livre, uma rolagem de " +
             "Empatia Selvagem que tenha falhado, mas apenas uma vez para cada criatura."),
 

@@ -8,11 +8,18 @@ import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.character.DamageBase;
 import org.aventyrs.core.character.DamageBonus;
 import org.aventyrs.core.character.DamageType;
+import org.aventyrs.core.effect.AbrirDefesas;
+import org.aventyrs.core.effect.Effect;
+import org.aventyrs.core.item.ItemWeightClass;
+import org.aventyrs.core.item.Weapon;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
+import org.aventyrs.core.skill.AttackSource;
+import org.aventyrs.core.skill.Skill;
 import org.aventyrs.core.skill.SkillType;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -29,15 +36,27 @@ import java.util.Optional;
 @AllArgsConstructor
 public enum AtaqueCorpoACorpoCompetencyAbility implements SkillCompetencyAbility {
 
-    // The Desvantagem-on-Damage-rolls-with-a-Categoria-Pesada-weapon half of this ability is
-    // still TODO: this codebase has no damage-roll concept to apply Desvantagem to (same gap
-    // as AtaqueADistanciaCompetencyAbility.FRIEZA) or a way to track a weapon's category on a
-    // specific roll. The substitution half is real — see getSubstituteAttributeDomain() below.
+    /**
+     * Both halves real. The substitution is unconditional ({@link #getSubstituteAttributeDomain()}), and
+     * so is its price: an Ataque Corpo-a-Corpo with a {@link ItemWeightClass#HEAVY} weapon takes
+     * Desvantagem on its dano roll (core 0.0.100). ⚠️ Read as "whenever held", since this core always
+     * substitutes rather than letting the holder opt out per attack.
+     */
     ACUIDADE("Você pode substituir o Atributo Base desta perícia por Destreza, se arma for " +
             "de Categoria Pesada você sofre Desvantagem nas rolagens de Danos.") {
         @Override
         public Optional<AttributeDomain> getSubstituteAttributeDomain() {
             return Optional.of(AttributeDomain.DEXTERITY);
+        }
+
+        @Override
+        public Optional<DamageBonus> resolveDamageBonus(final SkillType attackingSkillType, final SceneContext sceneContext,
+                                                         final CombatantSheet attackTarget, final Character actor,
+                                                         final AttackSource attackSource, final CombatantSheet holder) {
+            boolean heavy = attackSource instanceof Weapon weapon && weapon.getWeightClass() == ItemWeightClass.HEAVY;
+            return attackingSkillType == SkillType.ATAQUE_CORPO_A_CORPO && heavy
+                    ? Optional.of(new DamageBonus(Skill.DISADVANTAGE_MALUS, DamageType.FISICO))
+                    : Optional.empty();
         }
     },
 
@@ -60,7 +79,7 @@ public enum AtaqueCorpoACorpoCompetencyAbility implements SkillCompetencyAbility
             "5 Graduações este Bônus é convertido em Dano Base, com 10 Graduações o " +
             "aumento no Dano Base muda para +2.") {
         @Override
-        public Optional<DamageBonus> resolveDamageBonus(final SkillType attackingSkillType, final SceneContext sceneContext, final CombatantSheet attackTarget, final Character actor) {
+        public Optional<DamageBonus> resolveDamageBonus(final SkillType attackingSkillType, final SceneContext sceneContext, final CombatantSheet attackTarget, final Character actor, final AttackSource attackSource, final CombatantSheet holder) {
             if (attackingSkillType != SkillType.ATAQUE_CORPO_A_CORPO || actor == null) {
                 return Optional.empty();
             }
@@ -117,17 +136,20 @@ public enum AtaqueCorpoACorpoCompetencyAbility implements SkillCompetencyAbility
          * the clause names no circumstance, unlike {@code SorteAdvantage#ACE}.
          */
         @Override
-        public int resolveCriticalMarginIncrease(final SkillType skillType, final SceneContext sceneContext) {
+        public int resolveCriticalMarginIncrease(final SkillType skillType, final SceneContext sceneContext,
+                                                 final AttackSource attackSource, final CombatantSheet holder) {
             return skillType == SkillType.ATAQUE_CORPO_A_CORPO ? ATAQUE_PRECISO_MARGIN_INCREASE : 0;
         }
     },
 
-    // TODO: a critical hit inflicts the Malefício Desprevenido on the target for 1 Rodada. Two
-    // thirds of that is real now — ConditionType.DESPREVENIDO exists and Condition counts down in
-    // Rodadas — but nothing *applies* a condition off a critical hit: no hook on the attack path
-    // reports "this roll crit" to a trait that would react by afflicting the target.
+    /** Real (core 0.0.100): an {@link AbrirDefesas} chained behind a critical Ataque Corpo-a-Corpo hit. */
     ABRIR_DEFESAS("Após um acerto crítico seu alvo recebe o Malefício Desprevenido por 1 " +
-            "Rodada.");
+            "Rodada.") {
+        @Override
+        public List<Effect> resolveCriticalHitEffects(final SkillType attackSkill, final CombatantSheet attacker) {
+            return attackSkill == SkillType.ATAQUE_CORPO_A_CORPO ? List.of(new AbrirDefesas(attacker)) : List.of();
+        }
+    };
 
     /** "aumentada em +1 número" — ATAQUE_PRECISO's own stated figure. */
     private static final int ATAQUE_PRECISO_MARGIN_INCREASE = 1;

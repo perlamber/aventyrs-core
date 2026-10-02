@@ -5,6 +5,7 @@ import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.character.services.CharacterSkillService;
 import org.aventyrs.core.modifier.ModifierResolver;
 import org.aventyrs.core.modifier.ModifierType;
+import org.aventyrs.core.scene.Range;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.Blessing;
 import org.aventyrs.core.sheet.CombatantSheet;
@@ -14,6 +15,7 @@ import org.aventyrs.core.skill.AbstractSkillInteraction;
 import org.aventyrs.core.skill.AttackSource;
 import org.aventyrs.core.skill.DifficultyLevel;
 import org.aventyrs.core.skill.Skill;
+import org.aventyrs.core.skill.SkillCompetencyAbility;
 import org.aventyrs.core.skill.SkillRoll;
 import org.aventyrs.core.skill.SkillType;
 
@@ -62,14 +64,16 @@ public class ArtesInteraction extends AbstractSkillInteraction {
     public InteractionResult applyTo(final CombatantSheet target, final SceneContext sceneContext, final SkillRoll skillRoll, final CombatantSheet attackTarget, final AttackSource attackSource, final List<CombatantSheet> additionalTargets) {
         InteractionResult result = super.applyTo(target, sceneContext, skillRoll, attackTarget, attackSource, additionalTargets);
         Character character = target.getCharacter();
-        if (!character.getSkillCompetencyAbilities().contains(ArtesCompetencyAbility.DOM_BARDICO)) {
+        if (!SkillCompetencyAbility.allFor(character, target).contains(ArtesCompetencyAbility.DOM_BARDICO)) {
             return result;
         }
         Integer bonusValue = domBardicoBonusValue(result.getReachedDifficultyLevel());
         if (bonusValue == null) {
             return result;
         }
-        Blessing domBardicoBlessing = new Blessing(ModifierType.SKILL_ROLL_BONUS, bonusValue, domBardicoRounds(character), TargetScope.ALLIES, ArtesCompetencyAbility.DOM_BARDICO.name());
+        // "seus aliados" names no distance, so every ally in the Scene is reached (ruling, core 0.0.99).
+        Blessing domBardicoBlessing = new Blessing(ModifierType.SKILL_ROLL_BONUS, bonusValue, domBardicoRounds(character), TargetScope.ALLIES, ArtesCompetencyAbility.DOM_BARDICO.name())
+                .reaching(Range.AO_ALCANCE_DOS_OLHOS);
         return result.toBuilder()
                 .blessings(List.of(domBardicoBlessing))
                 .build();

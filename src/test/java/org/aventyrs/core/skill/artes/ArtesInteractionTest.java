@@ -9,6 +9,7 @@ import org.aventyrs.core.character.CharacterStatus;
 import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.character.fixture.CharacterSkillFixture;
 import org.aventyrs.core.modifier.ModifierType;
+import org.aventyrs.core.scene.Range;
 import org.aventyrs.core.scene.Scene;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.Blessing;
@@ -209,6 +210,15 @@ class ArtesInteractionTest {
         assertEquals(ModifierType.SKILL_ROLL_BONUS, blessing.getModifierType());
         assertEquals(TargetScope.ALLIES, blessing.getScope());
         assertEquals(1, blessing.getRounds());
+    }
+
+    @Test
+    void domBardicoReachesEveryAllyInTheScene() {
+        CharacterSheet sheet = sheetWithDomBardicoAndArtesGraduation(4);
+
+        Blessing blessing = artesInteraction.applyTo(sheet, null, QUALIFYING_ROLL).getBlessings().get(0);
+
+        assertEquals(Range.AO_ALCANCE_DOS_OLHOS, blessing.getReach());
     }
 
     @Test

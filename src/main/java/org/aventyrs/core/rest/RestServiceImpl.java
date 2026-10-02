@@ -77,14 +77,17 @@ public class RestServiceImpl implements RestService {
             // Transferir Vitalidade's PV "podem ser recuperados apenas com Descansos Verdadeiros".
             characterSheet.releaseVitalityLock();
         }
+        // Medicina Alternativa's "1d6PV, PM e PD adicionais ao fim do Descanso", owed before it began.
+        int alternative = characterSheet.takePendingRestBonus();
         // A real Descanso is the one heal repeatable in Coma — 1PV each time — and reaches no one dead.
         characterSheet.heal(getRecoveredHitPoints(character, restType)
-                + extraRecovery(character, restType, verdadeiro, chosenBonus, ResourceType.HIT_POINTS),
+                + extraRecovery(character, restType, verdadeiro, chosenBonus, ResourceType.HIT_POINTS) + alternative,
                 HealingSource.rest(restType));
         characterSheet.recoverMagicPoints(getRecoveredMagicPoints(character, restType)
-                + extraRecovery(character, restType, verdadeiro, chosenBonus, ResourceType.MAGIC_POINTS));
+                + extraRecovery(character, restType, verdadeiro, chosenBonus, ResourceType.MAGIC_POINTS) + alternative);
         characterSheet.recoverDeterminationPoints(getRecoveredDeterminationPoints(character, restType)
-                + extraRecovery(character, restType, verdadeiro, chosenBonus, ResourceType.DETERMINATION_POINTS));
+                + extraRecovery(character, restType, verdadeiro, chosenBonus, ResourceType.DETERMINATION_POINTS)
+                + alternative);
         characterSheet.applyPendingEgoRecoveries(restType);
         // Frees every ability whose Resfriamento was measured in Descansos rather than Rodadas —
         // "não poderá ser reativado até que passe por um Descanso Longo".

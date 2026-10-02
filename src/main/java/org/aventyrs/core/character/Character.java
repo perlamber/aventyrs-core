@@ -105,6 +105,21 @@ public class Character {
     @Builder.Default
     protected List<org.aventyrs.core.feat.DevotionPick> devotionPicks = List.of();
 
+    /**
+     * The creatures this character trained through Aliado da Natureza — lasting, persisted (table ruling, core
+     * 0.0.103). Added by {@link #trainCompanion}; one is called per Cena ({@code skill.CompetencyActions}).
+     */
+    @NonNull
+    @Builder.Default
+    protected List<org.aventyrs.core.skill.empatiaselvagem.TrainedCompanion> trainedCompanions = List.of();
+
+    /** Adds a creature trained through Aliado da Natureza — the unvalidating mutator beneath {@code CompetencyActions}. */
+    public void trainCompanion(@NonNull final org.aventyrs.core.skill.empatiaselvagem.TrainedCompanion companion) {
+        List<org.aventyrs.core.skill.empatiaselvagem.TrainedCompanion> updated = new ArrayList<>(trainedCompanions);
+        updated.add(companion);
+        trainedCompanions = List.copyOf(updated);
+    }
+
     /** A character's Centelhas at the start — one for each {@link TitleSlot} a Título may awaken into. */
     public static final int CENTELHAS = TitleSlot.values().length;
 

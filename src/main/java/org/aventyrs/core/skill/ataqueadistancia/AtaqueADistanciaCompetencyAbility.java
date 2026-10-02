@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.character.CriticalDamage;
 import org.aventyrs.core.character.DamageBonus;
 import org.aventyrs.core.character.DamageType;
 import org.aventyrs.core.item.ItemCategory;
@@ -93,7 +94,7 @@ public enum AtaqueADistanciaCompetencyAbility implements SkillCompetencyAbility 
         // Overrides the 4-arg overload, per the cascading convention, even though neither of
         // its two extra parameters is read here: only the target's distance matters.
         @Override
-        public Optional<DamageBonus> resolveDamageBonus(final SkillType attackingSkillType, final SceneContext sceneContext, final CombatantSheet attackTarget, final Character actor) {
+        public Optional<DamageBonus> resolveDamageBonus(final SkillType attackingSkillType, final SceneContext sceneContext, final CombatantSheet attackTarget, final Character actor, final AttackSource attackSource, final CombatantSheet holder) {
             if (sceneContext == null || attackTarget == null) {
                 return Optional.empty();
             }
@@ -119,8 +120,17 @@ public enum AtaqueADistanciaCompetencyAbility implements SkillCompetencyAbility 
             "Perícia, se for bem-sucedido o alvo adicional sofre 1d6 pontos de dano (ou o " +
             "dano descrito no Efeito, o que for menor)."),
 
-    // TODO: Vantagem on Critical Damage rolls — no critical-damage-roll concept exists yet.
-    MIRAR_NA_CABECA("Vantagem nas rolagens de Danos Críticos.");
+    /**
+     * Real (core 0.0.100): +{@link Skill#ADVANTAGE_BONUS} on an Ataque à Distância's critical dano, on top
+     * of the baseline Vantagem every crit gets — ⚠️ a second Vantagem stacks as +2, the Perito ruling.
+     */
+    MIRAR_NA_CABECA("Vantagem nas rolagens de Danos Críticos.") {
+        @Override
+        public CriticalDamage resolveCriticalDamage(final SkillType attackSkill, final CombatantSheet holder) {
+            return attackSkill == SkillType.ATAQUE_A_DISTANCIA ? CriticalDamage.ofFlat(Skill.ADVANTAGE_BONUS)
+                    : CriticalDamage.NONE;
+        }
+    };
 
     private final String description;
 

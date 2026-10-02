@@ -1,5 +1,6 @@
 package org.aventyrs.core.skill.artes;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
 import org.aventyrs.core.character.Character;
@@ -16,8 +17,13 @@ import org.aventyrs.core.skill.SkillType;
  * the catalog/rules-text entry): because {@code ModifierResolver} invokes {@code @Modifier}
  * methods on the source instance, storing the choice on the instance makes the ability's
  * modifiers choice-dependent without any change to the modifier-scanning services.
+ *
+ * <p>Equal by its chosen Perícia: two instances naming the same Perícia are the same ability, so
+ * {@code SkillCompetencyAbility#allFor}'s deduplication and a client's remove-by-equality both
+ * work on an instance rebuilt from the wire.
  */
 @Getter
+@EqualsAndHashCode
 public class ArtesAprimorarComArteAbility implements SkillCompetencyAbility {
 
     /**
@@ -110,7 +116,9 @@ public class ArtesAprimorarComArteAbility implements SkillCompetencyAbility {
      * org.aventyrs.core.ability.DexterityAbility#LETALIDADE_PROGRESSIVA}'s own overrides.
      */
     @Override
-    public int resolveCriticalMarginIncrease(final SkillType skillType, final SceneContext sceneContext) {
+    public int resolveCriticalMarginIncrease(final SkillType skillType, final SceneContext sceneContext,
+                                             final org.aventyrs.core.skill.AttackSource attackSource,
+                                             final org.aventyrs.core.sheet.CombatantSheet holder) {
         return getCriticalMarginReduction(skillType);
     }
 }

@@ -6,7 +6,9 @@ public enum ItemCategory {
     BOW(ItemType.OFFENSIVE), THROWABLE(ItemType.OFFENSIVE), CROSSBOW(ItemType.OFFENSIVE), 
     WHIP(ItemType.OFFENSIVE), CLUB(ItemType.OFFENSIVE), NATURAL_WEAPON(ItemType.OFFENSIVE), 
     LIGHT_BLADE(ItemType.OFFENSIVE), HEAVY_BLADE(ItemType.OFFENSIVE), SPEAR(ItemType.OFFENSIVE), 
-    PROJECTILE(ItemType.OFFENSIVE), POTION(ItemType.CONSUMABLE), SCROLL(ItemType.CONSUMABLE);
+    PROJECTILE(ItemType.OFFENSIVE), POTION(ItemType.CONSUMABLE), SCROLL(ItemType.CONSUMABLE),
+    /** Utilidades — tools and kits a character carries (the Kit de Primeiros Socorros); the store's own tab. */
+    UTILITIES(ItemType.UTILITY);
 
     private final ItemType type;
 

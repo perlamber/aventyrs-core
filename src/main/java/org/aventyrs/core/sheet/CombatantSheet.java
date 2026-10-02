@@ -248,6 +248,30 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
     boolean hasOpenedDefensesOf(CombatantSheet target);
 
     /**
+     * Marks target's Defesas studied for rounds Rodadas — {@code EsquivaEApararCompetencyAbility#ESTUDAR_DEFESAS}'s
+     * "reduz … o GD para efetuar ataques contra o alvo em -1 Nível por 2 Rodadas". Unlike {@link #openDefensesOf}
+     * every attack against target in the window is eased, not just the next. Counted down at {@link
+     * #startNewRound()}; a second study renews, never stacks.
+     */
+    void studyDefensesOf(CombatantSheet target, int rounds);
+
+    /**
+     * Owes this combatant amount extra PV, PM and PD at the end of their next Descanso — {@code
+     * MedicinaECuraCompetencyAbility#MEDICINA_ALTERNATIVA}. A second debt replaces the first (the better massage
+     * does not stack). Paid by {@code RestService#applyRest} through {@link #takePendingRestBonus()}.
+     */
+    void owePendingRestBonus(int amount);
+
+    /** The pending rest bonus, cleared — what {@code RestService#applyRest} adds; 0 when none is owed. */
+    int takePendingRestBonus();
+
+    /** The pending rest bonus, left in place. */
+    int getPendingRestBonus();
+
+    /** Whether this combatant's attacks against target are eased by a study still running. */
+    boolean hasStudiedDefensesOf(CombatantSheet target);
+
+    /**
      * Lends this combatant 1 temporary Ego point of domain from lender, who has already paid it —
      * Transferir Determinação/Essência. Settled at {@link #startNewScene()}: an unused loaned point
      * goes back to lender ("devolvidos"); a used one is simply gone ("perdidos"). "Unused" is read as
@@ -495,6 +519,16 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
 
     /** Drops spell from the held Magias; whether it was there. */
     boolean removeStoredSpell(org.aventyrs.core.magic.StoredSpell spell);
+
+    /**
+     * Spends one use of source for the current Rodada — a "uma vez por Rodada" clause ({@code
+     * EsquivaEApararCompetencyAbility#RECUO_RAPIDO}). Reset by {@link #startNewRound()} and {@link
+     * #startNewScene()}, the round-scoped twin of {@link #incrementCombatCounter}.
+     */
+    void spendRoundScopedUse(Object source);
+
+    /** Uses of source spent this Rodada — 0 when none. */
+    int getRoundScopedUses(Object source);
 
     /**
      * Records one Reação spent. {@code ActiveAbilityService#activate} and a Título activation
@@ -1049,6 +1083,16 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
 
     /** Restores a persisted use count for source — how a sheet reloaded mid-campaign resumes it. */
     void restoreRestScopedUses(String source, int uses, org.aventyrs.core.rest.RestType resetsAt);
+
+    /**
+     * {@link #spendRestScopedUse(String, org.aventyrs.core.rest.RestType)} for a use that <b>any</b> Descanso of at
+     * least resetsAt renews, not only a Verdadeiro one — Socorro Imediato's "renovado após passar por um Descanso
+     * Longo". {@link #clearRestCooldowns} clears it.
+     */
+    void spendOrdinaryRestScopedUse(String source, org.aventyrs.core.rest.RestType resetsAt);
+
+    /** {@link #restoreRestScopedUses} for a use {@link #spendOrdinaryRestScopedUse} spent. */
+    void restoreOrdinaryRestScopedUses(String source, int uses, org.aventyrs.core.rest.RestType resetsAt);
 
     /**
      * Begins a new Rodada for this combatant: clears {@link #getActionsThisRound()}, resets
