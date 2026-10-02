@@ -18,6 +18,7 @@ import org.aventyrs.core.sheet.EgoPointType;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.Player;
 import org.aventyrs.core.sheet.TargetScope;
+import org.aventyrs.core.util.TranslatableMessages;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -91,10 +92,39 @@ class EgoPointsServiceTest {
         CharacterSheet sheet = sheetHolding(EgoDomain.SORTE, SorteAdvantage.DILETO_DE_TYKHE);
         spendEveryTemporaryPoint(sheet);
 
-        egoPointsService.applySessionRecovery(sheet, EgoDomain.RECURSOS);
+        egoPointsService.applySessionRecovery(sheet, EgoDomain.INICIATIVA);
 
         assertEquals(1, sheet.getTemporaryEgoPoints(EgoDomain.SORTE));
-        assertEquals(1, sheet.getTemporaryEgoPoints(EgoDomain.RECURSOS));
+        assertEquals(1, sheet.getTemporaryEgoPoints(EgoDomain.INICIATIVA));
+    }
+
+    /** "NÃO são recuperados a cada sessão de jogo como os demais Egos." */
+    @Test
+    void sessionRecoveryRefusesRecursos() {
+        CharacterSheet sheet = sheetHolding(EgoDomain.SORTE, SorteAdvantage.DILETO_DE_TYKHE);
+        spendEveryTemporaryPoint(sheet);
+
+        IllegalOperationException refused = assertThrows(IllegalOperationException.class,
+                () -> egoPointsService.applySessionRecovery(sheet, EgoDomain.RECURSOS));
+
+        assertEquals(TranslatableMessages.RESOURCES_NOT_RECOVERED_BY_SESSION, refused.getMessage());
+        assertEquals(0, sheet.getTemporaryEgoPoints(EgoDomain.SORTE));
+    }
+
+    /** The bulk form refuses the whole table before anyone recovers. */
+    @Test
+    void bulkSessionRecoveryRefusesRecursosBeforeAnyoneRecovers() {
+        CharacterSheet first = sheetHolding(EgoDomain.SORTE, SorteAdvantage.DILETO_DE_TYKHE);
+        CharacterSheet second = sheetHolding(EgoDomain.SORTE, SorteAdvantage.DILETO_DE_TYKHE);
+        spendEveryTemporaryPoint(first);
+        spendEveryTemporaryPoint(second);
+        Map<CombatantSheet, EgoDomain> choices = new java.util.LinkedHashMap<>();
+        choices.put(first, EgoDomain.SORTE);
+        choices.put(second, EgoDomain.RECURSOS);
+
+        assertThrows(IllegalOperationException.class, () -> egoPointsService.applySessionRecovery(choices));
+
+        assertEquals(0, first.getTemporaryEgoPoints(EgoDomain.SORTE));
     }
 
     @Test
@@ -293,9 +323,9 @@ class EgoPointsServiceTest {
         CharacterSheet sheet = sheetHolding(EgoDomain.SORTE, SorteAdvantage.DILETO_DE_TYKHE);
         spendEveryTemporaryPoint(sheet);
 
-        egoPointsService.applySessionRecovery(Map.of(sheet, EgoDomain.RECURSOS));
+        egoPointsService.applySessionRecovery(Map.of(sheet, EgoDomain.INICIATIVA));
 
-        assertEquals(1, sheet.getTemporaryEgoPoints(EgoDomain.RECURSOS));
+        assertEquals(1, sheet.getTemporaryEgoPoints(EgoDomain.INICIATIVA));
         assertEquals(1, sheet.getTemporaryEgoPoints(EgoDomain.SORTE));
     }
 
@@ -339,10 +369,10 @@ class EgoPointsServiceTest {
 
         egoPointsService.applySessionRecovery(Map.of(
                 ana, EgoDomain.SORTE,
-                bruno, EgoDomain.RECURSOS));
+                bruno, EgoDomain.AUTOCONTROLE));
 
         assertEquals(1, ana.getTemporaryEgoPoints(EgoDomain.SORTE));
-        assertEquals(1, bruno.getTemporaryEgoPoints(EgoDomain.RECURSOS));
+        assertEquals(1, bruno.getTemporaryEgoPoints(EgoDomain.AUTOCONTROLE));
         for (EgoDomain domain : EgoDomain.values()) {
             assertEquals(0, foe.getTemporaryEgoPoints(domain));
         }

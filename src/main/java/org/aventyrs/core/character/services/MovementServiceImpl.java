@@ -78,6 +78,10 @@ public class MovementServiceImpl implements MovementService {
         for (Item item : character.getEquipment()) {
             total += item.resolveRoundMovementIncrease(movementIndex, character);
         }
+        // Iniciativa a Zero's Passos Reduzidos: "Movimento Base reduzido à metade" (core 0.0.82), rounded down, last.
+        if (sheet.hasEgoSetback(org.aventyrs.core.ego.EgoSetback.PASSOS_REDUZIDOS)) {
+            total = total / 2;
+        }
         return Math.max(0, total);
     }
 
@@ -108,6 +112,12 @@ public class MovementServiceImpl implements MovementService {
         for (Item item : character.getEquipment()) {
             total += item.resolveFavorBonus(ModifierType.MOVEMENT, character);
             total += item.resolveEnhancementBonus(ModifierType.MOVEMENT, null, character);
+        }
+        // Membro Ausente (pernas): "Movimento Base é reduzido à metade" — after every addition, and once
+        // however many sources say so. ⚠️ Only this permanent figure halves; the sheet overload's
+        // here-and-now bonuses are added to the halved base.
+        if (character.getFeats().stream().anyMatch(feat -> feat.halvesMovementBase(character))) {
+            total /= 2;
         }
         return Math.max(0, total);
     }

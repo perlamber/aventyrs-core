@@ -51,7 +51,7 @@ import java.util.Map;
  *   not 2 named ones), but the missing "extra slot" concept is identical either way.</li>
  *   <li><b>Placitude Térrea</b> (1 extra temporary Autocontrole point per game session) — the
  *   two pieces it used to cite both exist now: the temporary Ego pool ({@code EgoPointPool},
- *   granted through {@code CombatantSheet#grantTemporaryEgoPoints}) and a once-per-session
+ *   received through {@code CombatantSheet#receiveTemporaryEgoPoints}) and a once-per-session
  *   guard ({@code CombatantSheet#consumeOncePerSession}, which {@code
  *   GnoseAbility#ESTABILIDADE_EMOCIONAL} already uses). What's missing is narrower: a
  *   <em>Race</em> hook for a per-session Ego grant — {@code

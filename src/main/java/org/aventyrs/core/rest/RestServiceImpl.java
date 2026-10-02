@@ -16,11 +16,17 @@ public class RestServiceImpl implements RestService {
         int bonus = character.getAttributeAbilities().stream()
                 .mapToInt(ability -> ability.resolveRestHitPointsBonus(restType))
                 .sum();
-        return recovered(character.getEffectiveAttributeTotal(AttributeDomain.VIGOR), restType) + bonus;
+        int featBonus = character.getFeats().stream()
+                .mapToInt(feat -> feat.resolveRestHitPointsBonus(restType, character))
+                .sum();
+        return recovered(character.getEffectiveAttributeTotal(AttributeDomain.VIGOR), restType) + bonus + featBonus;
     }
 
     @Override
     public int getRecoveredMagicPoints(final Character character, final RestType restType) {
+        if (prevented(character, ResourceType.MAGIC_POINTS)) {
+            return 0;
+        }
         int bonus = character.getAttributeAbilities().stream()
                 .mapToInt(ability -> ability.resolveRestMagicPointsBonus(restType))
                 .sum();
@@ -83,9 +89,18 @@ public class RestServiceImpl implements RestService {
         // Frees every ability whose Resfriamento was measured in Descansos rather than Rodadas —
         // "não poderá ser reativado até que passe por um Descanso Longo".
         characterSheet.clearRestCooldowns(restType);
+        // A Rei renews its Ego points "após … Descansos Longos" (core 0.0.92) — a Longo or anything stronger.
+        if (restType.compareTo(RestType.LONGO) >= 0) {
+            new org.aventyrs.core.subordinate.SubordinateServiceImpl().renewAfterLongRest(characterSheet);
+        }
         if (verdadeiro) {
             characterSheet.completeTrueRest(restType);
         }
+    }
+
+    /** Nulificador's "nunca recupera PM com Descansos" — no Descanso returns resource, bonuses included. */
+    private static boolean prevented(final Character character, final ResourceType resource) {
+        return character.getFeats().stream().anyMatch(feat -> feat.preventsRestRecovery(resource, character));
     }
 
     /**
@@ -95,6 +110,9 @@ public class RestServiceImpl implements RestService {
      */
     private static int extraRecovery(final Character character, final RestType restType, final boolean verdadeiro,
                                      final ResourceType chosenBonus, final ResourceType resource) {
+        if (prevented(character, resource)) {
+            return 0;
+        }
         int extra = 0;
         for (org.aventyrs.core.feat.Feat feat : character.getFeats()) {
             if (verdadeiro) {

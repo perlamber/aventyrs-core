@@ -201,6 +201,37 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
     void releaseVitalityLock();
 
     /**
+     * Locks amount of the damage this combatant has <b>already taken</b> against every heal but a Descanso —
+     * {@code effect.FeridaInfecciosa}'s "estes danos adicionais só podem ser recuperados com Descansos" (table
+     * ruling, 2026-10-01: any Descanso, Mínimo and up). A Descanso's heal ({@code HealingSource#rest}) recovers it
+     * once the unlocked damage is gone, releasing as much as it recovers; nothing else does, Roubo de Vida
+     * included. Kept apart from {@link #getLockedDamage()}, which a Descanso Verdadeiro alone releases (core 0.0.85).
+     */
+    void lockDamageUntilRest(int amount);
+
+    /**
+     * Whether spell cannot affect this combatant — a held Talento's {@code Feat#isImmuneToSpell} or its Raça's {@code
+     * Race#isImmuneToSpell} (the latter silent while a Forma suppresses innate racial traits; core 0.0.90).
+     */
+    boolean isImmuneToSpell(org.aventyrs.core.magic.Spell spell);
+
+    /** The part of {@link #getDamageTaken()} only a Descanso recovers — see {@link #lockDamageUntilRest}. */
+    int getRestLockedDamage();
+
+    // --- Escancarar Defesas (core 0.0.85) -------------------------------------------------------
+
+    /**
+     * This combatant's next attack against target is one nível easier — {@code effect.EscancararDefesas}, "Seu
+     * próximo ataque contra este mesmo alvo tem a GD reduzida em -1 Nível". Held by the <b>attacker</b>, read by
+     * its next Perícia de Ataque roll against target ({@link #hasOpenedDefensesOf}), and spent by {@link
+     * #recordAction} once an attack naming target is recorded. A second mark on the same target doesn't stack.
+     */
+    void openDefensesOf(CombatantSheet target);
+
+    /** Whether this combatant's next attack against target is one nível easier. {@code null} is nobody. */
+    boolean hasOpenedDefensesOf(CombatantSheet target);
+
+    /**
      * Lends this combatant 1 temporary Ego point of domain from lender, who has already paid it —
      * Transferir Determinação/Essência. Settled at {@link #startNewScene()}: an unused loaned point
      * goes back to lender ("devolvidos"); a used one is simply gone ("perdidos"). "Unused" is read as
@@ -279,47 +310,70 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
     int spendEquipmentPoints(int amount);
 
     // --- Ego points -------------------------------------------------------------------------
-    // Two spendable pools per EgoDomain, permanent and temporary; see EgoPointPool for the model
-    // and for why spending a permanent point costs twice over.
+    // Two spendable pools per EgoDomain, permanent and temporary, plus consumable extra temporary
+    // points above them; see EgoPointPool for the model and for why spending a permanent point
+    // costs twice over.
 
-    /** Permanent points not yet spent — the Ego stat itself is their maximum. */
+    /** Permanent points not yet spent — the Ego stat itself (capped at 5) is their maximum. */
     int getPermanentEgoPoints(EgoDomain domain);
 
-    /** Temporary points not yet spent, under the live ceiling. */
+    /** Temporary points not yet spent — those under the live ceiling plus every held extra. */
     int getTemporaryEgoPoints(EgoDomain domain);
 
-    /** How many temporary points this domain may hold right now. */
+    /**
+     * The ceiling temporary points refill up to. Held extras sit above it, so {@link
+     * #getTemporaryEgoPoints} may exceed this; the spent count under it is {@code
+     * getMaxTemporaryEgoPoints - (getTemporaryEgoPoints - getExtraTemporaryEgoPoints)}.
+     */
     int getMaxTemporaryEgoPoints(EgoDomain domain);
+
+    /** Extra temporary points held above the ceiling — consumed first, never recovered. */
+    int getExtraTemporaryEgoPoints(EgoDomain domain);
 
     /** Everything this domain can still pay with, from either pool. */
     int getAvailableEgoPoints(EgoDomain domain);
 
-    /** Spends from the pool the caller names, reporting what actually left it. */
+    /** Spends from the pool the caller names (temporary: extras first), reporting what actually left it. */
     EgoPointSpend spendEgoPoints(EgoDomain domain, EgoPointType type, int amount);
 
-    /** Restores previously-spent temporary points, bounded by the ceiling. */
+    /**
+     * Restores previously-spent temporary points, bounded by the ceiling — "get back what you
+     * spent": the session point, a Rest promise, hours passed. Never creates an extra.
+     */
     int recoverTemporaryEgoPoints(EgoDomain domain, int amount);
 
-    /** Raises this domain's temporary ceiling, non-cumulatively per source. */
-    int grantTemporaryEgoPointBonus(EgoDomain domain, Object source, int amount);
-
     /**
-     * Hands this sheet amount genuinely spendable temporary points in domain, from source —
-     * the "você receberá N pontos temporários neste Ego" shape, as opposed to {@link
-     * #recoverTemporaryEgoPoints}'s "get back what you spent".
-     *
-     * <p><strong>Two steps, and both are needed.</strong> It widens the ceiling via {@link
-     * #grantTemporaryEgoPointBonus} <em>and</em> then calls {@link
-     * #recoverTemporaryEgoPoints}. Neither alone works for a pool that has been emptied: with
-     * every point spent the ceiling is 0 and a bare recovery restores nothing, while a bare
-     * ceiling widening is capped per source (deliberately, per {@code EgoPointPool
-     * #grantTemporaryBonus}'s "não cumulativo") and so grants nothing the second time the same
-     * source fires. Widening first, then recovering under the widened ceiling, gives one usable
-     * point on every trigger without the ceiling creeping upward once per trigger.
+     * Hands this sheet amount temporary points in domain, from source — the "você receberá N
+     * pontos temporários neste Ego" shape, as opposed to {@link #recoverTemporaryEgoPoints}'s "get
+     * back what you spent". They refill spent temporaries first; the remainder is held as extras
+     * above the ceiling, consumed once spent and never recovered (table ruling, 0.0.76 — see
+     * {@link EgoPointPool}).
      *
      * @return int this domain's spendable temporary points after the grant
      */
-    int grantTemporaryEgoPoints(EgoDomain domain, Object source, int amount);
+    int receiveTemporaryEgoPoints(EgoDomain domain, Object source, int amount);
+
+    /**
+     * {@link #receiveTemporaryEgoPoints}, "não cumulativo": nothing while source still holds
+     * amount unspent extras — {@code CharismaAbility#DESTINO_FAVORAVEL}'s point.
+     *
+     * @return int this domain's spendable temporary points after the grant
+     */
+    int receiveNonCumulativeTemporaryEgoPoints(EgoDomain domain, Object source, int amount);
+
+    /**
+     * How much of domain's past-5 overflow ({@code Character#getEgoOverflow}) this sheet has
+     * already received as extras — the mark a consumer persists next to {@link
+     * #getExtraTemporaryEgoPoints}, so a rebuilt sheet doesn't receive it again.
+     */
+    int getEgoOverflowReceived(EgoDomain domain);
+
+    /**
+     * Rehydration: replaces domain's held extras and overflow mark with persisted values. Call it
+     * right after building the sheet, before any other Ego read — the first read otherwise hands
+     * over the overflow as if the sheet were new.
+     */
+    void restoreExtraTemporaryEgoPoints(EgoDomain domain, int heldExtras, int overflowReceived);
 
     /**
      * Registers a {@link DelayedEgoGrant} — temporary Ego points owed at the start of this
@@ -568,13 +622,20 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
      * DuelistaFeat#COMBATER_AS_CEGAS}' "não precisa efetuar rolagens de 1d6 para utilizar efeitos
      * pessoais e Ataques Corpo-a-Corpo").
      */
+    /** Insucesso's 1d6 fails the roll on this or less. */
+    int INSUCESSO_THRESHOLD = 2;
+
     default java.util.OptionalInt getBlindCheckThreshold(final org.aventyrs.core.skill.SkillType skillType,
                                                          final SceneContext sceneContext) {
+        // Sorte a Zero's Insucesso: "ao ser bem-sucedido … rola 1d6: 1 ou 2 indica falha" — the same die, on 2 or less.
+        int insucesso = hasEgoSetback(org.aventyrs.core.ego.EgoSetback.INSUCESSO) ? INSUCESSO_THRESHOLD : 0;
         if (!hasCondition(ConditionType.CEGO, sceneContext)) {
-            return java.util.OptionalInt.empty();
+            return insucesso > 0 ? java.util.OptionalInt.of(insucesso) : java.util.OptionalInt.empty();
         }
         boolean exempt = getCharacter().getFeats().stream().anyMatch(feat -> feat.exemptsFromBlindCheck(skillType, sceneContext));
-        return exempt ? java.util.OptionalInt.empty() : java.util.OptionalInt.of(BlindCheck.failureThresholdFor(skillType));
+        int blind = exempt ? 0 : BlindCheck.failureThresholdFor(skillType);
+        int threshold = Math.max(blind, insucesso);
+        return threshold > 0 ? java.util.OptionalInt.of(threshold) : java.util.OptionalInt.empty();
     }
 
     /**
@@ -993,6 +1054,137 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
      * <p>Also re-arms {@link #startCombat()} — a new Cena can bring a fresh combat.
      */
     void startNewScene();
+
+    /**
+     * Replaces this combatant's Iniciativa in the Scene's order with value — Iniciativa's Ego points (core
+     * 0.0.79): "alterar seu valor de Iniciativa para qualquer valor … por uma Cena ou Rodada". It governs the
+     * order of the next rodadas Rodadas ({@code null}: the rest of the Cena), counted by {@link
+     * #advanceInitiativeOverride()} at each Rodada boundary before the Scene re-sorts; {@link #startNewScene()}
+     * drops it. A second override replaces the first. It supersedes the rolled value and every {@code
+     * ModifierType.INITIATIVE} bonus while it holds — see {@code InitiativeEntry#getEffectiveInitiativeValue}.
+     */
+    void overrideInitiative(int value, Integer rodadas);
+
+    // --- Autocontrole's Ego effects (core 0.0.81) ----------------------------------------------
+
+    /**
+     * Makes this combatant immune, for the rest of the Cena, to kind ({@link CenaImmunity#kindOf}) — Autocontrole's
+     * "tornando-se imune a ele ao longo da Cena". A {@link Condition} or {@link TemporaryEffect} of that kind is
+     * refused on landing ({@link #applyCondition}/{@link #applyEffect}), and {@code AttackReceiver} leaves a Corrente
+     * stage or Efeito Crítico of that kind out of the chain. {@link #startNewScene()} drops them.
+     */
+    void grantCenaImmunity(Object kind);
+
+    // --- Inteligentes (core 0.0.84) --------------------------------------------------------------
+
+    /**
+     * Whether this combatant is one of the "inteligentes" a clause names — "inimigos inteligentes" (Fingir Fraquezas,
+     * Aparência Inofensiva), "personagens inteligentes" (Exibicionista's plateia), "PdN Exemplares (quando
+     * inteligentes)". Table ruling (2026-09-30): every character is; a foe only when the Narrador says so on its
+     * blueprint ({@code MonsterBlueprint#isIntelligent()}, default false). A caller holding a foe as a plain sheet sets
+     * it with {@link #setIntelligent(boolean)}.
+     */
+    boolean isIntelligent();
+
+    /** See {@link #isIntelligent()}. */
+    void setIntelligent(boolean intelligent);
+
+    // --- A PdN's Efeitos de Ego (core 0.0.83) ----------------------------------------------------
+
+    /**
+     * Whether this combatant is a PdN whose Efeitos de Ego spend nothing (table ruling: "apenas PdN Exemplares …
+     * podem usar"; "em vez de gastar pontos, todos os PJs recebem um ponto temporário neste mesmo Ego"). Always true
+     * for a {@code MonsterSheet} (which refuses a Regular's use); true for any other sheet once {@link
+     * #markAsExemplarPdn()} — a caller holding an Exemplar foe as a plain sheet.
+     */
+    boolean isPdn();
+
+    /** Marks this sheet as an Exemplar PdN — see {@link #isPdn()}. */
+    void markAsExemplarPdn();
+
+    /**
+     * One Efeito de Ego this PdN used, owed to every PJ as a temporary point in domain: at once for a temporary
+     * effect ({@link #drainImmediateEgoCompensations()}), at the end of the Cena for a permanent one ({@link
+     * #drainCenaEndEgoCompensations()}). Who the PJs are is the caller's to know.
+     */
+    void recordPdnEgoUse(org.aventyrs.core.character.EgoDomain domain, EgoPointType type);
+
+    /** The points owed to every PJ now, one entry per point — returned and cleared. */
+    java.util.List<org.aventyrs.core.character.EgoDomain> drainImmediateEgoCompensations();
+
+    /** The points owed to every PJ at the end of the Cena — returned and cleared; the caller calls it then. */
+    java.util.List<org.aventyrs.core.character.EgoDomain> drainCenaEndEgoCompensations();
+
+    // --- Ego at zero (core 0.0.82) --------------------------------------------------------------
+
+    /**
+     * The Egos that have reached zero — their permanent points, having had some — and still owe their 1d6 roll on
+     * the setback table ({@code ego.EgoSetback}). Recursos has none. The caller throws the die and records it
+     * through {@code EgoSetbackService#rollSetback}.
+     */
+    java.util.List<org.aventyrs.core.character.EgoDomain> getOwedEgoSetbacks();
+
+    /** Records a rolled setback — see {@link #getOwedEgoSetbacks()}. Replaces one already there for its Ego. */
+    void recordEgoSetback(org.aventyrs.core.ego.EgoSetback setback);
+
+    /**
+     * The setback domain holds right now — only while its permanent points are 0 (table ruling: it lasts until the
+     * Ego has a point again, and falling to zero again rolls again).
+     */
+    java.util.Optional<org.aventyrs.core.ego.EgoSetback> getEgoSetback(org.aventyrs.core.character.EgoDomain domain);
+
+    /** Whether setback holds right now — see {@link #getEgoSetback}. */
+    default boolean hasEgoSetback(final org.aventyrs.core.ego.EgoSetback setback) {
+        return getEgoSetback(setback.getDomain()).filter(held -> held == setback).isPresent();
+    }
+
+    /** Whether kind is refused for the rest of this Cena — see {@link #grantCenaImmunity}. */
+    boolean isCenaImmune(Object kind);
+
+    /**
+     * Halves a running effect's Duração — Autocontrole's "reduzir à metade a duração de um malefício". ⚠️ Rounded up
+     * (3 → 2, 1 → 1), so halving never ends one outright — removing it is the permanent point's.
+     *
+     * @throws IllegalOperationException {@code NOT_A_RUNNING_EFFECT} when effect isn't held here or has no Duração
+     */
+    void halveEffectDuration(TemporaryEffect effect);
+
+    /**
+     * Every effect running on this combatant right now — Condições, timed bonuses, Sangramentos… — read-only and
+     * without the expired ones. What a player picks a malefício from (Autocontrole's halve/remove, core 0.0.81).
+     */
+    java.util.List<TemporaryEffect> getRunningEffects();
+
+    /** PV lost this Rodada so far, through {@link #applyDamage} — reset at the Rodada boundary. */
+    int getDamageTakenThisRound();
+
+    /**
+     * Autocontrole's permanent "reduzir a zero todo o dano sofrido em uma Rodada" (table ruling, 2026-09-30: the
+     * current Rodada, retroactive): every PV lost this Rodada comes back, and {@link #applyDamage} takes none until
+     * the Rodada boundary. A PV cost paid ({@link #payWithVitality}) is a price, not damage suffered, and stays.
+     *
+     * @return the PV given back
+     */
+    int negateDamageThisRound();
+
+    /** Whether {@link #negateDamageThisRound} holds for the Rodada in progress. */
+    boolean isDamageNegatedThisRound();
+
+    /**
+     * {@link #overrideInitiative(int, Integer)} restored mid-way — started when a Rodada boundary has already
+     * passed since it was set, so rodadas counts the Rodadas it still governs <em>including</em> the one in
+     * progress. For a caller rebuilding a Scene from stored state (the Scene resets each sheet it adds).
+     */
+    void overrideInitiative(int value, Integer rodadas, boolean started);
+
+    /** The Iniciativa override in force, if any — see {@link #overrideInitiative}. */
+    java.util.OptionalInt getInitiativeOverride();
+
+    /**
+     * One Rodada boundary for the override: the first boundary after it is set starts its first Rodada, each
+     * later one ends one, and it lapses when none remain. {@code Scene#next()} calls it right before re-sorting.
+     */
+    void advanceInitiativeOverride();
 
     /**
      * Begins a combat for this combatant: resolves every {@link Blessing} its held Talentos
@@ -1546,4 +1738,35 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
 
     /** A Descanso Verdadeiro of restType was completed: lifts every effect waiting on one. */
     void completeTrueRest(RestType restType);
+
+    /** Whether a {@link MaleficioWard} (Corpo Fechado) is held — every Malefício is refused (core 0.0.94). */
+    default boolean isWardedAgainstMaleficios() {
+        return false;
+    }
+
+    /**
+     * sustainerId's focus broke: every {@link Sustained} effect they hold on this sheet starts its trailing Rodadas,
+     * and one with none ends now (core 0.0.94). Returns the effects that ended.
+     */
+    default java.util.List<TemporaryEffect> releaseSustainedBy(final java.util.UUID sustainerId) {
+        return java.util.List.of();
+    }
+
+    /**
+     * The Descanso that ends effect, when it was applied with {@link #applyEffectUntilRest} — what a caller persisting
+     * the effect must store to restore it the same way (core 0.0.98). Empty otherwise.
+     */
+    default java.util.Optional<org.aventyrs.core.rest.RestType> restScopeOf(final TemporaryEffect effect) {
+        return java.util.Optional.empty();
+    }
+
+    /** The Procrastinar Ferimento ward waiting for a hit, if any (core 0.0.94). */
+    default java.util.Optional<PostponedWoundWard> getPostponedWoundWard() {
+        return java.util.Optional.empty();
+    }
+
+    /** Spends the waiting {@link PostponedWoundWard} on the hit landing now — see {@code DamageInteraction}. */
+    default java.util.Optional<PostponedWoundWard> consumePostponedWoundWard() {
+        return java.util.Optional.empty();
+    }
 }

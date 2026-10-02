@@ -86,8 +86,8 @@ public enum FantasmaDoRingueAbility implements AventyrTitleAbility {
     // be caught again "até passarem por um Descanso". Malícia de Valentão: Vantagem on attack and
     // dano rolls against a target bound to this holder (SenhorDaBriga#resolveAttackRollBonus /
     // #resolveDamageRollBonus read the target's own getForcedTargeting()).
-    // TODO "Inimigos inteligentes": nothing classifies a creature's intelligence, so every enemy in
-    // range is caught — a caller wanting the distinction passes a SceneContext without the beasts.
+    // "Inimigos inteligentes" (0.0.84): only an enemy that CombatantSheet#isIntelligent() is caught —
+    // every character, and a foe whose blueprint the Narrador marked; the bonus/price count them all.
     FINGIR_FRAQUEZAS(
             "Esta Habilidade pode ser ativa apenas se você estiver desarmado (exceto armas naturais). Os " +
             "inimigos acreditam que, por estar desarmado, você também está desguarnecido e indefeso, este " +

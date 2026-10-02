@@ -110,6 +110,9 @@ public class SkillRoll {
     private final boolean counselled;
     private final Integer rerolledFromFace;
     private final Integer blindCheckFace;
+    private final Set<org.aventyrs.core.ego.SorteEffect> sorteEffects;
+    private final Set<org.aventyrs.core.ego.InitiativeRollCharge> initiativeCharges;
+    private final Set<org.aventyrs.core.ego.AutocontroleDefence> autocontrole;
 
     public SkillRoll(final List<Integer> dice) {
         this(dice, null, null, null);
@@ -151,12 +154,16 @@ public class SkillRoll {
      */
     public SkillRoll(final List<Integer> dice, final SkillTrait requestedAbility, final Integer targetValue,
                      final ActionCost actionCost, final Manoeuvre manoeuvre, final Set<Feat> activatedFeats) {
-        this(dice, requestedAbility, targetValue, actionCost, manoeuvre, activatedFeats, false, null, null);
+        this(dice, requestedAbility, targetValue, actionCost, manoeuvre, activatedFeats, false, null, null, Set.of(),
+                Set.of(), Set.of());
     }
 
     private SkillRoll(final List<Integer> dice, final SkillTrait requestedAbility, final Integer targetValue,
                       final ActionCost actionCost, final Manoeuvre manoeuvre, final Set<Feat> activatedFeats,
-                      final boolean counselled, final Integer rerolledFromFace, final Integer blindCheckFace) {
+                      final boolean counselled, final Integer rerolledFromFace, final Integer blindCheckFace,
+                      final Set<org.aventyrs.core.ego.SorteEffect> sorteEffects,
+                      final Set<org.aventyrs.core.ego.InitiativeRollCharge> initiativeCharges,
+                      final Set<org.aventyrs.core.ego.AutocontroleDefence> autocontrole) {
         if (dice.size() != EXPECTED_DICE_COUNT) {
             throw new IllegalOperationException(INVALID_SKILL_ROLL);
         }
@@ -172,6 +179,9 @@ public class SkillRoll {
         this.counselled = counselled;
         this.rerolledFromFace = rerolledFromFace;
         this.blindCheckFace = blindCheckFace;
+        this.sorteEffects = sorteEffects == null ? Set.of() : Set.copyOf(sorteEffects);
+        this.initiativeCharges = initiativeCharges == null ? Set.of() : Set.copyOf(initiativeCharges);
+        this.autocontrole = autocontrole == null ? Set.of() : Set.copyOf(autocontrole);
     }
 
     private static void validateFace(final int face) {
@@ -207,7 +217,7 @@ public class SkillRoll {
         }
         int replaced = rerolled.set(lowestIndex, newFace);
         return new SkillRoll(List.copyOf(rerolled), requestedAbility, targetValue, actionCost, manoeuvre,
-                activatedFeats, counselled, replaced, blindCheckFace);
+                activatedFeats, counselled, replaced, blindCheckFace, sorteEffects, initiativeCharges, autocontrole);
     }
 
     /** The face {@link #rerollingLowestDie} replaced, or {@code null} for a roll nobody rerolled. */
@@ -232,7 +242,7 @@ public class SkillRoll {
     public SkillRoll withBlindCheck(final int face) {
         validateFace(face);
         return new SkillRoll(dice, requestedAbility, targetValue, actionCost, manoeuvre, activatedFeats, counselled,
-                rerolledFromFace, face);
+                rerolledFromFace, face, sorteEffects, initiativeCharges, autocontrole);
     }
 
     /** The Cego 1d6 thrown beside this roll, or {@code null} when none was — see {@link #withBlindCheck}. */
@@ -247,7 +257,80 @@ public class SkillRoll {
      */
     public SkillRoll counselled() {
         return new SkillRoll(dice, requestedAbility, targetValue, actionCost, manoeuvre, activatedFeats, true,
-                rerolledFromFace, blindCheckFace);
+                rerolledFromFace, blindCheckFace, sorteEffects, initiativeCharges, autocontrole);
+    }
+
+    /**
+     * This roll with a Ponto de Sorte's effect on it — see {@link org.aventyrs.core.ego.SorteEffect}. Only the
+     * mark: {@code EgoPointsService#applySorte} is what pays for it. A reroll is {@link #rerolledWithSorte}.
+     *
+     * @throws IllegalOperationException ({@code INVALID_SKILL_ROLL}) for {@code REROLL_WITH_ADVANTAGE}, which
+     *         needs new dice
+     */
+    public SkillRoll withSorte(final org.aventyrs.core.ego.SorteEffect effect) {
+        if (effect == org.aventyrs.core.ego.SorteEffect.REROLL_WITH_ADVANTAGE) {
+            throw new IllegalOperationException(INVALID_SKILL_ROLL);
+        }
+        Set<org.aventyrs.core.ego.SorteEffect> effects = new java.util.HashSet<>(sorteEffects);
+        effects.add(effect);
+        return new SkillRoll(dice, requestedAbility, targetValue, actionCost, manoeuvre, activatedFeats, counselled,
+                rerolledFromFace, blindCheckFace, effects, initiativeCharges, autocontrole);
+    }
+
+    /**
+     * This roll made again with newDice, in Vantagem — Sorte's "refazer uma rolagem". Everything the roll was made
+     * with stays (target, cost, Talentos, the other Sorte effects); the dice-derived state goes with the old dice
+     * (a Talento's lowest-die reroll, a Cego 1d6 — the caller throws that again). Paid by {@code
+     * EgoPointsService#rerollWithSorte}.
+     */
+    public SkillRoll rerolledWithSorte(final List<Integer> newDice) {
+        Set<org.aventyrs.core.ego.SorteEffect> effects = new java.util.HashSet<>(sorteEffects);
+        effects.add(org.aventyrs.core.ego.SorteEffect.REROLL_WITH_ADVANTAGE);
+        return new SkillRoll(List.copyOf(newDice), requestedAbility, targetValue, actionCost, manoeuvre,
+                activatedFeats, counselled, null, null, effects, initiativeCharges, autocontrole);
+    }
+
+    /**
+     * This roll made with one of Iniciativa's banked roll effects — see {@link
+     * org.aventyrs.core.ego.InitiativeRollCharge}. Only the mark: {@code InitiativeEgoService#useRollCharge} spends
+     * the charge.
+     */
+    public SkillRoll withInitiativeCharge(final org.aventyrs.core.ego.InitiativeRollCharge charge) {
+        Set<org.aventyrs.core.ego.InitiativeRollCharge> charges = new java.util.HashSet<>(initiativeCharges);
+        charges.add(charge);
+        return new SkillRoll(dice, requestedAbility, targetValue, actionCost, manoeuvre, activatedFeats, counselled,
+                rerolledFromFace, blindCheckFace, sorteEffects, charges, autocontrole);
+    }
+
+    /**
+     * This defence roll with the defender's Autocontrole spent on it — see {@link
+     * org.aventyrs.core.ego.AutocontroleDefence}. Only the mark: {@code AutocontroleEgoService#applyDefence} pays.
+     */
+    public SkillRoll withAutocontrole(final org.aventyrs.core.ego.AutocontroleDefence effect) {
+        Set<org.aventyrs.core.ego.AutocontroleDefence> effects = new java.util.HashSet<>(autocontrole);
+        effects.add(effect);
+        return new SkillRoll(dice, requestedAbility, targetValue, actionCost, manoeuvre, activatedFeats, counselled,
+                rerolledFromFace, blindCheckFace, sorteEffects, initiativeCharges, effects);
+    }
+
+    /** Whether this roll carries effect — see {@link #withAutocontrole}. */
+    public boolean hasAutocontrole(final org.aventyrs.core.ego.AutocontroleDefence effect) {
+        return autocontrole.contains(effect);
+    }
+
+    /** Whether this roll carries charge — see {@link #withInitiativeCharge}. */
+    public boolean hasInitiativeCharge(final org.aventyrs.core.ego.InitiativeRollCharge charge) {
+        return initiativeCharges.contains(charge);
+    }
+
+    /** Every Sorte effect on this roll — empty for an ordinary one. */
+    public Set<org.aventyrs.core.ego.SorteEffect> getSorteEffects() {
+        return sorteEffects;
+    }
+
+    /** Whether this roll carries effect — see {@link org.aventyrs.core.ego.SorteEffect}. */
+    public boolean hasSorte(final org.aventyrs.core.ego.SorteEffect effect) {
+        return sorteEffects.contains(effect);
     }
 
     /** Whether this roll is made with Agnação Ancestral — see {@link #counselled()}. */
@@ -299,6 +382,11 @@ public class SkillRoll {
     /** Whether feat is one of the {@link #getActivatedFeats()} — the read an override wants. */
     public boolean activated(final Feat feat) {
         return activatedFeats.contains(feat);
+    }
+
+    /** The three faces this roll reads — a lowest-die reroll and a Sorte reroll already in them. */
+    public List<Integer> getDice() {
+        return List.copyOf(dice);
     }
 
     /** The sum of all 3 dice — what gets added to the Perícia's own bonus and compared against a GD. */

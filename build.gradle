@@ -5,7 +5,7 @@ plugins {
 }
 
 group = 'org.aventyrs.core'
-version = '0.0.71'
+version = '0.0.98'
 
 java {
     toolchain {

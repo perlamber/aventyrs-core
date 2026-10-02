@@ -80,11 +80,12 @@ class SpellEffectFactoryTest {
      */
     @Test
     void aVersionAuthoringNoEffectDoesNotInheritItsParents() {
-        assertTrue(SpellEffectFactory.create(VidaSpell.NOVA_REJUVENESCEDORA, SpellEffectContext.FRIENDLY)
-                .isPresent());
+        // Aliviar a Dor heals; its Procrastinar Ferimento authors only its own ward (core 0.0.94), never that heal.
+        assertTrue(SpellEffectFactory.create(VidaSpell.ALIVIAR_A_DOR, SpellEffectContext.FRIENDLY)
+                .orElseThrow() instanceof SpellHealingEffect);
         assertTrue(SpellEffectFactory.create(
-                VidaSpell.NOVA_REJUVENESCEDORA.getAlternateVersion().orElseThrow(),
-                SpellEffectContext.FRIENDLY).isEmpty());
+                VidaSpell.ALIVIAR_A_DOR.getAlternateVersion().orElseThrow(),
+                SpellEffectContext.FRIENDLY).orElseThrow() instanceof SpellWardEffect);
     }
 
     @Test

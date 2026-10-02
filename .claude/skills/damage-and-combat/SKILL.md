@@ -68,6 +68,14 @@ The player always rolls, so a foe contributes a fixed number whichever way an ex
 | Foe contributes | a GD + flat bonus | a flat Defesa (DF or DM) |
 | Critical trigger | the roll's **Falha** Crítica | the roll's **Acerto** Crítico |
 
+**The Correntes in that chain** (core 0.0.85) are the caller's (`DeliveredAttack#effectChain`) plus each held
+Talento's: `Feat#resolveEffectChains` (longest overload: holder sheet, attacker `SceneContext`, `CriticalResult`),
+added only when the Corrente threshold is cleared, and `#resolveCriticalHitEffectChains`, added on any critical.
+Every generic Corrente of `efeitos-criticos.txt` is an `effect.EffectChain` class. Two act on the attack, not the
+target, and are read where `AttackDelivery` assembles the chain: `GolpeTrovejante` (an extra natural Efeito
+Crítico) and `ExplosaoCataclismica` (Cataclismo added to the critical; its Explosão reported on
+`InteractionResult#getTriggeredAreaOfEffect`). ⚠️ A Corrente's extra damage lands after mitigation.
+
 Neither ever calls the other. Both are report-only, both roll exactly once (the roll can grant
 an Ego point on a critical — the only state it changes; the first-roll-of-Turn check it also
 runs is non-mutating now), and both assemble the same pre-wired `Damage → Correntes → Críticos`

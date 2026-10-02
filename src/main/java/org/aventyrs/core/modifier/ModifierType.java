@@ -49,6 +49,17 @@ public enum ModifierType {
     ACTION_POINTS,
     SKILL_ROLL_COST,
     SKILL_ROLL_BONUS,
+    /**
+     * A bonus (or, negative, a malus) to every <b>Perícia Física</b> roll — one governed by Força or Destreza
+     * ("rolagens de Perícias Físicas (baseadas em Força e Destreza)"). Read only on the roll itself
+     * ({@code AbstractSkillInteraction}) and on a foe's matching GD ({@code MonsterRules}), never on the Atributo,
+     * so it moves no melee dano term and no PV. {@code effect.EnrijecerMusculatura}'s Desvantagem (core 0.0.85).
+     */
+    PHYSICAL_SKILL_ROLL_BONUS,
+    /** Danos Profanos reduzidos — Opala Purificadora's "Danos profanos reduzidos em -3" (core 0.0.89). */
+    PROFANE_DAMAGE_REDUCTION,
+    /** Danos Sagrados reduzidos — Turmalina Obscura's "Danos … Sagradas reduzidos em -3" (core 0.0.89). */
+    SACRED_DAMAGE_REDUCTION,
     REACTIONS,
     FREE_ACTIONS,
     INITIATIVE,
@@ -87,6 +98,11 @@ public enum ModifierType {
      * {@code AbstractSkillInteraction} beside every other difficulty reduction.
      */
     ATTACK_AND_CONJURATION_DIFFICULTY_REDUCTION,
+    /**
+     * Níveis of GD reduction on every Perícia roll — Totem de Gaea's "reduzem o GD de rolagens de Perícias em -1
+     * nível" for the animals near it (core 0.0.92). Read by {@code AbstractSkillInteraction} as a held bonus.
+     */
+    SKILL_DIFFICULTY_REDUCTION,
     /**
      * Extra d6s on the holder's dano rolls — Transferir Rancor's "+1d6 pontos de danos". This core
      * rolls no dice, so {@code AbstractSkillInteraction} only <i>reports</i> the count on an attack

@@ -12,7 +12,9 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import static org.aventyrs.core.util.TranslatableMessages.ATTRIBUTE_ABILITY_ALREADY_CHOSEN;
+import static org.aventyrs.core.util.TranslatableMessages.ATTRIBUTE_ABILITY_FORBIDDEN;
 import static org.aventyrs.core.util.TranslatableMessages.NO_ATTRIBUTE_ABILITY_SLOT_AVAILABLE;
+import org.aventyrs.core.character.AttributeDomain;
 import static org.aventyrs.core.util.TranslatableMessages.SKILL_NOT_TRAINED;
 import static org.aventyrs.core.util.TranslatableMessages.SKILL_TRAIT_SKILL_TYPE_MISMATCH;
 
@@ -42,12 +44,58 @@ public class AttributeAbilityServiceImpl implements AttributeAbilityService {
         }
     }
 
+    /**
+     * Whether character's bonus slots ({@code Character#getBonusAttributeAbilitySlots()}) still have one
+     * for a new Habilidade of domain, once the Habilidades already held past each Atributo's own slots
+     * are seated — each in a slot limited to its Atributo first, then in an unlimited one. An unlimited
+     * slot is a Superação's "Habilidade de Atributo adicional", whose "pré-requisitos preenchidos" is
+     * read as the Atributo having reached its first slot's base ({@link #FIRST_ABILITY_ATTRIBUTE_BASE}).
+     */
+    @Override
+    public boolean hasFreeBonusSlot(final Character character, final AttributeDomain domain) {
+        List<AttributeDomain> slots = new java.util.ArrayList<>(character.getBonusAttributeAbilitySlots());
+        java.util.Map<AttributeDomain, Long> overflow = new java.util.EnumMap<>(AttributeDomain.class);
+        for (AttributeDomain each : AttributeDomain.values()) {
+            long held = character.getAcquiredAttributeAbilities().stream()
+                    .filter(ability -> ability.getAttributeDomain() == each).count();
+            overflow.put(each, Math.max(0, held - getUnlockedAbilitySlots(
+                    character.getAttributes().getAttribute(each).getBase())));
+        }
+        overflow.merge(domain, 1L, Long::sum);
+        for (AttributeDomain each : AttributeDomain.values()) {
+            long seated = 0;
+            while (seated < overflow.get(each) && slots.remove(each)) {
+                seated++;
+            }
+            long rest = overflow.get(each) - seated;
+            boolean prerequisite = character.getAttributes().getAttribute(each).getBase() >= FIRST_ABILITY_ATTRIBUTE_BASE;
+            for (long i = 0; i < rest; i++) {
+                if (!prerequisite || !slots.remove(null)) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
     @Override
     public AttributeAbilityGrantResult grantAttributeAbility(final Character character, final AttributeAbility ability) throws IllegalOperationException {
+        // Dependência: "não pode adquirir Habilidades de Atributo de Força ou de Destreza".
+        if (character.getFeats().stream().anyMatch(feat -> feat.forbidsAttributeAbility(ability.getAttributeDomain(), character))) {
+            throw new IllegalOperationException(ATTRIBUTE_ABILITY_FORBIDDEN);
+        }
         int attributeBase = character.getAttributes().getAttribute(ability.getAttributeDomain()).getBase();
         // Validate against the raw acquired list, not the aggregate: a Talento-granted free
         // Habilidade (Feat#getGrantedAttributeAbilities) must never consume a paid slot.
-        validateChoice(attributeBase, character.getAcquiredAttributeAbilities(), ability);
+        try {
+            validateChoice(attributeBase, character.getAcquiredAttributeAbilities(), ability);
+        } catch (IllegalOperationException full) {
+            // A Defeito's Superação or Tendência Atlética Maior may add a slot beyond the base's own.
+            if (!NO_ATTRIBUTE_ABILITY_SLOT_AVAILABLE.equals(full.getMessage())
+                    || !hasFreeBonusSlot(character, ability.getAttributeDomain())) {
+                throw full;
+            }
+        }
 
         Character.CharacterBuilder builder = character.toBuilder().attributeAbility(ability);
         ability.resolvePermanentEgoGain().ifPresent(domain ->

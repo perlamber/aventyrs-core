@@ -149,4 +149,19 @@ public interface AuthoredSpell extends Spell {
     default Optional<SpellTargeting> getAlternateTargeting() {
         return Optional.ofNullable(getData().getAlternateTargeting());
     }
+
+    @Override
+    default Optional<SpellWard> getWard() {
+        return Optional.ofNullable(getData().getWard());
+    }
+
+    @Override
+    default boolean isCasterAffected() {
+        return getData().isCasterAffected();
+    }
+
+    @Override
+    default Optional<SpellChainKind> getEffectChainKind() {
+        return Optional.ofNullable(getData().getEffectChainKind());
+    }
 }

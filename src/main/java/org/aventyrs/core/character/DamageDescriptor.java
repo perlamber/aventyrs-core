@@ -16,10 +16,20 @@ import static org.aventyrs.core.util.TranslatableMessages.INVALID_DAMAGE_TYPE_EL
  * DamageType#FISICO_ELEMENTAL}, and prohibited for every other damage type. This is validated at
  * construction because an incoming attack's classification is input from outside this core.
  */
-public record DamageDescriptor(@NonNull DamageType damageType, ElementalType elementalType) {
+public record DamageDescriptor(@NonNull DamageType damageType, ElementalType elementalType, DamageSanctity sanctity) {
 
     public DamageDescriptor(@NonNull final DamageType damageType) {
-        this(damageType, null);
+        this(damageType, null, null);
+    }
+
+    /** A hit with no sacred or profane nature — every descriptor before core 0.0.89. */
+    public DamageDescriptor(@NonNull final DamageType damageType, final ElementalType elementalType) {
+        this(damageType, elementalType, null);
+    }
+
+    /** This hit with its nature set to sanctity ({@code null} clears it) — "Profano em substituição aos seus tipos". */
+    public DamageDescriptor withSanctity(final DamageSanctity sanctity) {
+        return new DamageDescriptor(damageType, elementalType, sanctity);
     }
 
     public DamageDescriptor {

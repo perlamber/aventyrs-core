@@ -138,10 +138,13 @@ import java.util.Set;
  *                                  Epona</b>". A real, enforced clause rather than a comment
  *                                  because {@link Deity} and the field behind it both already
  *                                  exist; unset means devotion is irrelevant, which is every
- *                                  Talento but two today. Note this tests devotion alone, not
- *                                  the Adepto/Fiel/Fundamentalista <i>tier</i> the Talentos de
- *                                  Devoção are split across — that second progression system
- *                                  has no field, which is why those 20 stay unauthored.
+ *                                  Talento but a few today. Note this tests devotion alone, not
+ *                                  the Adepto/Fiel/Fundamentalista <i>tier</i>: a Talento de
+ *                                  Devoção may be held at any tier, and each rung reads {@code
+ *                                  Character#getDevotionTier()} live ({@code DevotoFeat}).
+ * @param requiredDeityCategory     when set, the holder's {@code Character#getDeity()} must be of
+ *                                  this category — Cultista Umbral's "Cultista de um Senhor
+ *                                  Umbral", any of them (core 0.0.86).
  * @param requiredFeatCategory      when set, the holder must already hold {@code
  *                                  requiredFeatCategoryCount} other Talentos of this category —
  *                                  "2 outros Talentos de Destino". The Talento being tested is
@@ -204,6 +207,7 @@ public record FeatRequirements (
         Class<? extends Race> forbiddenRace,
         CreatureType requiredCreatureType,
         Deity requiredDeity,
+        org.aventyrs.core.character.DeityCategory requiredDeityCategory,
         FeatCategory requiredFeatCategory,
         int requiredFeatCategoryCount,
         RegaliaGrade craftedRegaliaGrade,

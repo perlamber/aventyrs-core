@@ -52,8 +52,9 @@ public enum GorgonaFeat implements Feat {
     // refusing every other shape and the holder's own besides.
     // The Alcance is real: resolveAttackRangeIncrease widens the OlharDeLacerto source one band,
     // Muito Curta to Curta (OlharDeLacertoService#declare).
-    // TODO: Corrente de Efeitos – Enrijecer Musculatura — Feat#resolveEffectChains is the hook,
-    //  but Enrijecer Musculatura is not an authored EffectChain (only Definhar and Sobrecura are).
+    // Real (0.0.85): its Presas Longas carry effect.EnrijecerMusculatura through Feat#resolveEffectChains.
+    // ⚠️ The Presas themselves are granted here: Górgona's "Monstros em pele de Fada" gives them in the
+    // Forma Monstruosa, which this Talento never leaves, and nothing else grants them a Górgona yet.
     // TODO: "sempre considerado Amaldiçoado" now has a classification to name
     //  (ConditionType.AMALDICOADO, appliable open-ended with a null duration), but nothing applies
     //  a Condition from a held Talento — Feat has no condition hook, and "sempre" is a standing
@@ -90,6 +91,21 @@ public enum GorgonaFeat implements Feat {
         @Override
         public int resolveAttackRangeIncrease(final Character character, final AttackSource attackSource) {
             return attackSource == OlharDeLacerto.INSTANCE ? 1 : 0;
+        }
+
+        /** The Presas Longas of the Forma Monstruosa it is always in. */
+        @Override
+        public List<org.aventyrs.core.item.NaturalWeapon> getGrantedNaturalWeapons(final Character character) {
+            return List.of(org.aventyrs.core.item.NaturalWeapon.PRESAS_LONGAS);
+        }
+
+        /** "Suas Presas Longas recebem a Corrente de Efeitos – Enrijecer Musculatura." */
+        @Override
+        public List<org.aventyrs.core.effect.EffectChain> resolveEffectChains(final Character attacker,
+                                                                         final SkillType attackSkill,
+                                                                         final AttackSource attackSource) {
+            return attackSource == org.aventyrs.core.item.NaturalWeapon.PRESAS_LONGAS
+                    ? List.of(new org.aventyrs.core.effect.EnrijecerMusculatura()) : List.of();
         }
 
         /** "Apenas … recém-criados" — only a starting Talento slot can take it. */

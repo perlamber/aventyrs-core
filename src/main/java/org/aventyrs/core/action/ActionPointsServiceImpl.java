@@ -46,7 +46,22 @@ public class ActionPointsServiceImpl implements ActionPointsService {
         Character character = sheet.getCharacter();
         int baseline = actionPointsBeforeProfile(character, turnNumber)
                 + sheet.getTemporaryBonus(ModifierType.ACTION_POINTS)
-                + sumTitleAbilityActionPointBonus(sheet);
+                // A Rainha's "+1PA" (core 0.0.92).
+                + org.aventyrs.core.subordinate.SubordinateBenefit.ACTION_POINTS * org.aventyrs.core.subordinate.SubordinateBenefits.count(sheet, sceneContext, org.aventyrs.core.subordinate.SubordinateBenefit.RAINHA_ACTION_POINT)
+                + sumTitleAbilityActionPointBonus(sheet)
+                + character.getFeats().stream()
+                        .mapToInt(feat -> feat.resolveRoundActionPointsIncrease(character, sceneContext)).sum();
+        boolean inCombat = sceneContext != null && sceneContext.isCombatScene();
+        // Iniciativa a Zero (core 0.0.82): Distração "perde a capacidade de agir na primeira Rodada de cada Cena";
+        // Fraqueza's "-1PA em Rodadas ímpares" — the Rodadas counted as the Defeitos' odd-Rodada clauses count them.
+        if (inCombat && sceneContext.getCurrentRound() == 0
+                && sheet.hasEgoSetback(org.aventyrs.core.ego.EgoSetback.DISTRACAO)) {
+            return 0;
+        }
+        if (inCombat && sceneContext.getCurrentRound() % 2 == 1
+                && sheet.hasEgoSetback(org.aventyrs.core.ego.EgoSetback.FRAQUEZA)) {
+            baseline -= 1;
+        }
         return Math.max(0, character.getActionProfile().adjustActionPoints(baseline, turnNumber, sceneContext));
     }
 

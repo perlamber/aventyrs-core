@@ -121,8 +121,8 @@ public enum FeralFeat implements Feat {
      */
     // The retyping is real: an attack with a Weapon the holder treats as an Arma Natural deals
     // Físico Elemental: Natural (Feat#resolveDamageRetype, reported on the attack roll).
-    // TODO: Corrente de Efeitos – Ferida Infecciosa — Feat#resolveEffectChains is the hook (see
-    //  ElficoFeat#CORRUPTOR_SOMBRIO), but Ferida Infecciosa is not an authored EffectChain.
+    // The Corrente is real (0.0.85): every attack with a Weapon the holder treats as an Arma Natural
+    // carries effect.FeridaInfecciosa (Feat#resolveEffectChains).
     DESPREZO_NATURAL(
             "Você recebe Bônus Racial de +1 em Força, o Tipo de Dano base de suas Armas Naturais "
                     + "mudam para Físico Elemental: Natural em substituição aos seus tipos e "
@@ -143,6 +143,15 @@ public enum FeralFeat implements Feat {
         @Override
         public int resolveAttributeBonus(final AttributeDomain domain, final Character character) {
             return domain == AttributeDomain.STRENGTH ? FERAL_ATTRIBUTE_BONUS : 0;
+        }
+
+        /** "… e recebem a Corrente de Efeitos – Ferida Infecciosa" — its Armas Naturais. */
+        @Override
+        public List<org.aventyrs.core.effect.EffectChain> resolveEffectChains(final Character attacker,
+                                                                         final SkillType attackSkill,
+                                                                         final AttackSource attackSource) {
+            return attackSource instanceof Weapon weapon && attacker.treatsAsNaturalWeapon(weapon)
+                    ? List.of(new org.aventyrs.core.effect.FeridaInfecciosa()) : List.of();
         }
     },
 

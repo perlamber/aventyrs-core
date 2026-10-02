@@ -37,12 +37,9 @@ public enum OrquicoFeat implements Feat {
      * "Após realizar uma Agnação Ancestral você recebe um Subordinado do tipo Peão, que te
      * auxiliará até seu próximo Descanso."
      */
-    // The trigger is real: AncestralCounselService#perform reports pawnSubordinateGranted for this
-    // Talento's holder.
-    // TODO: a Subordinado is a second creature acting for the holder. SummonedMonsterTemplate can
-    //  build one, but nothing models the summoner then acting through it — CLAUDE.md's "A summon
-    //  acting on its summoner's roll" gap — and "até seu próximo Descanso" needs a lifetime
-    //  RestService would have to clear.
+    // Real (core 0.0.98): AncestralCounselService#perform commands the Peão for this Talento's holder,
+    // ending at their next Descanso (CombatantSheet#applyEffectUntilRest). A Subordinado takes no actions —
+    // it grants its benefit — so no creature needs to act for the holder.
     AGNACAO_ANCESTRAL_SUPERIOR(
             "Após realizar uma Agnação Ancestral você recebe um Subordinado do tipo Peão, que te "
                     + "auxiliará até seu próximo Descanso.",

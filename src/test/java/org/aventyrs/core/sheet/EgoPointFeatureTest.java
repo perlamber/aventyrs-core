@@ -93,16 +93,17 @@ class EgoPointFeatureTest {
     }
 
     @Test
-    void aTemporaryEgoPenaltyAndAGrantedBonusNetOutAgainstEachOther() {
+    void aTemporaryEgoPenaltyLowersTheCeilingButNeverTouchesAHeldExtra() {
         CharacterSheet sheet = sorteThreeSheet();
-        sheet.grantTemporaryEgoPointBonus(EgoDomain.SORTE, "a-source", 2);
-        assertEquals(5, sheet.getMaxTemporaryEgoPoints(EgoDomain.SORTE));
+        sheet.receiveTemporaryEgoPoints(EgoDomain.SORTE, "a-source", 2);
+        assertEquals(5, sheet.getTemporaryEgoPoints(EgoDomain.SORTE));
 
         sheet.applyEffect(new TemporaryEgoPenalty(EgoDomain.SORTE, 2, 1));
-        assertEquals(3, sheet.getMaxTemporaryEgoPoints(EgoDomain.SORTE));
+        assertEquals(1, sheet.getMaxTemporaryEgoPoints(EgoDomain.SORTE));
+        assertEquals(3, sheet.getTemporaryEgoPoints(EgoDomain.SORTE));
 
         sheet.finishTurn();
-        assertEquals(5, sheet.getMaxTemporaryEgoPoints(EgoDomain.SORTE));
+        assertEquals(5, sheet.getTemporaryEgoPoints(EgoDomain.SORTE));
     }
 
     /** Nothing leaks between the four domains — every other one is untouched throughout. */
@@ -110,7 +111,7 @@ class EgoPointFeatureTest {
     void theOtherThreeDomainsAreUnaffectedByEverythingDoneToSorte() {
         CharacterSheet sheet = sorteThreeSheet();
         sheet.spendEgoPoints(EgoDomain.SORTE, EgoPointType.PERMANENT, 3);
-        sheet.grantTemporaryEgoPointBonus(EgoDomain.SORTE, "a-source", 2);
+        sheet.receiveTemporaryEgoPoints(EgoDomain.SORTE, "a-source", 2);
         sheet.applyEffect(new TemporaryEgoPenalty(EgoDomain.SORTE, 1, 1));
 
         for (EgoDomain domain : EgoDomain.values()) {
@@ -119,6 +120,132 @@ class EgoPointFeatureTest {
                 assertEquals(2, sheet.getTemporaryEgoPoints(domain));
             }
         }
+    }
+
+    // ---------- received points and extras (table ruling, 0.0.76) ----------
+
+    /**
+     * The table's own example: Ego 3 full receives 1 → 4 temporary; spend 2 → 2; receive 1 → back
+     * to 3 / 3. The extra was consumed first and is gone — the second point only refills.
+     */
+    @Test
+    void aReceivedPointRefillsFirstAndIsOtherwiseAConsumedExtra() {
+        CharacterSheet sheet = sorteThreeSheet();
+
+        sheet.receiveTemporaryEgoPoints(EgoDomain.SORTE, "gm", 1);
+        assertEquals(4, sheet.getTemporaryEgoPoints(EgoDomain.SORTE));
+        assertEquals(3, sheet.getMaxTemporaryEgoPoints(EgoDomain.SORTE));
+
+        sheet.spendEgoPoints(EgoDomain.SORTE, EgoPointType.TEMPORARY, 2);
+        assertEquals(2, sheet.getTemporaryEgoPoints(EgoDomain.SORTE));
+        assertEquals(0, sheet.getExtraTemporaryEgoPoints(EgoDomain.SORTE));
+
+        sheet.receiveTemporaryEgoPoints(EgoDomain.SORTE, "gm", 1);
+        assertEquals(3, sheet.getTemporaryEgoPoints(EgoDomain.SORTE));
+        assertEquals(3, sheet.getPermanentEgoPoints(EgoDomain.SORTE));
+        assertEquals(0, sheet.getExtraTemporaryEgoPoints(EgoDomain.SORTE));
+    }
+
+    /** A spent extra is never given back — a recovery only refills under the ceiling. */
+    @Test
+    void aSpentExtraIsNeverRecovered() {
+        CharacterSheet sheet = sorteThreeSheet();
+        sheet.receiveTemporaryEgoPoints(EgoDomain.SORTE, "gm", 1);
+        sheet.spendEgoPoints(EgoDomain.SORTE, EgoPointType.TEMPORARY, 1);
+
+        assertEquals(0, sheet.recoverTemporaryEgoPoints(EgoDomain.SORTE, 1));
+        assertEquals(3, sheet.getTemporaryEgoPoints(EgoDomain.SORTE));
+    }
+
+    /** Session points only refill up to the base — a full pool gains nothing, and never an extra. */
+    @Test
+    void sessionRecoveryNeverCreatesAnExtra() {
+        CharacterSheet sheet = sorteThreeSheet();
+
+        egoPointsService.applySessionRecovery(sheet, EgoDomain.SORTE);
+
+        assertEquals(3, sheet.getTemporaryEgoPoints(EgoDomain.SORTE));
+        assertEquals(0, sheet.getExtraTemporaryEgoPoints(EgoDomain.SORTE));
+    }
+
+    /** The Narrador's temporary grant is a received point. */
+    @Test
+    void aNarratorTemporaryGrantIsAReceivedPoint() {
+        CharacterSheet sheet = sorteThreeSheet();
+        sheet.spendEgoPoints(EgoDomain.SORTE, EgoPointType.TEMPORARY, 1);
+
+        assertEquals(4, egoPointsService.grantTemporaryByNarrator(sheet, EgoDomain.SORTE, 2));
+        assertEquals(1, sheet.getExtraTemporaryEgoPoints(EgoDomain.SORTE));
+    }
+
+    /** The Narrador's permanent grant raises the Ego itself, on the rebuilt Character. */
+    @Test
+    void aNarratorPermanentGrantRaisesTheEgoOnTheRebuiltCharacter() {
+        Character raised = egoPointsService.grantPermanentByNarrator(
+                sorteThreeSheet().getCharacter(), EgoDomain.SORTE, 1);
+
+        CharacterSheet sheet = CharacterSheet.of(raised, new Player());
+        assertEquals(4, sheet.getPermanentEgoPoints(EgoDomain.SORTE));
+        assertEquals(4, sheet.getTemporaryEgoPoints(EgoDomain.SORTE));
+        assertEquals(2, raised.getEgos().getSorte().getBase());
+    }
+
+    // ---------- no Ego above 5 ----------
+
+    private CharacterSheet recursosSevenSheet() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .egos(CharacterEgos.builder()
+                        .recursos(EgoValue.builder().base(3).variable(4).build())
+                        .build())
+                .build();
+        return CharacterSheet.of(character, new Player());
+    }
+
+    /** Recursos 7 = Recursos 5 + 2 extra temporary points, and counts as 5 everywhere else. */
+    @Test
+    void anEgoPastFiveCountsAsFiveAndHoldsTheRestAsExtras() {
+        CharacterSheet sheet = recursosSevenSheet();
+
+        assertEquals(5, sheet.getCharacter().getEffectiveEgoTotal(EgoDomain.RECURSOS));
+        assertEquals(2, sheet.getCharacter().getEgoOverflow(EgoDomain.RECURSOS));
+        assertEquals(5, sheet.getPermanentEgoPoints(EgoDomain.RECURSOS));
+        assertEquals(5, sheet.getMaxTemporaryEgoPoints(EgoDomain.RECURSOS));
+        assertEquals(7, sheet.getTemporaryEgoPoints(EgoDomain.RECURSOS));
+        assertEquals(2, sheet.getExtraTemporaryEgoPoints(EgoDomain.RECURSOS));
+    }
+
+    /** The overflow is received once: spent, it is gone, and no later read hands it over again. */
+    @Test
+    void theOverflowIsReceivedOnlyOnce() {
+        CharacterSheet sheet = recursosSevenSheet();
+        sheet.spendEgoPoints(EgoDomain.RECURSOS, EgoPointType.TEMPORARY, 2);
+
+        assertEquals(0, sheet.recoverTemporaryEgoPoints(EgoDomain.RECURSOS, 2));
+
+        assertEquals(5, sheet.getTemporaryEgoPoints(EgoDomain.RECURSOS));
+        assertEquals(2, sheet.getEgoOverflowReceived(EgoDomain.RECURSOS));
+    }
+
+    /** A rebuilt sheet restored from persisted state doesn't receive its overflow afresh. */
+    @Test
+    void restoringExtrasReplacesTheFreshSheetsOverflow() {
+        CharacterSheet sheet = recursosSevenSheet();
+
+        sheet.restoreExtraTemporaryEgoPoints(EgoDomain.RECURSOS, 0, 2);
+
+        assertEquals(5, sheet.getTemporaryEgoPoints(EgoDomain.RECURSOS));
+        assertEquals(0, sheet.getExtraTemporaryEgoPoints(EgoDomain.RECURSOS));
+    }
+
+    /** A point earned past 5 on a restored sheet still arrives — only the unreceived part is owed. */
+    @Test
+    void restoringAnOlderOverflowMarkReceivesOnlyTheNewPart() {
+        CharacterSheet sheet = recursosSevenSheet();
+
+        sheet.restoreExtraTemporaryEgoPoints(EgoDomain.RECURSOS, 0, 1);
+
+        assertEquals(1, sheet.getExtraTemporaryEgoPoints(EgoDomain.RECURSOS));
+        assertEquals(2, sheet.getEgoOverflowReceived(EgoDomain.RECURSOS));
     }
 
     /**

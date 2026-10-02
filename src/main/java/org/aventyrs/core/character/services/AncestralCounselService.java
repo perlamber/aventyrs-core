@@ -29,7 +29,7 @@ public interface AncestralCounselService {
     /**
      * What a ritual produced: the counsel is banked either way, and {@code
      * OrquicoFeat#AGNACAO_ANCESTRAL_SUPERIOR}'s holder also receives a Subordinado Peão "até seu
-     * próximo Descanso" — reported only, since nothing here models a Subordinado acting for its holder.
+     * próximo Descanso" — commanded for real since core 0.0.98; false when no Subordinado slot was free.
      */
     record AncestralCounsel(boolean pawnSubordinateGranted) {
     }
@@ -43,6 +43,13 @@ public interface AncestralCounselService {
      *         {@code ANCESTRAL_COUNSEL_IN_COMBAT} or {@code NOT_ENOUGH_MAGIC_POINTS}
      */
     AncestralCounsel perform(CombatantSheet orc, SceneContext sceneContext);
+
+    /**
+     * {@link #perform}, the Superior's Peão commanded with pawnBenefit (Vantagem em Perícias or the Margem Crítica) until
+     * the next Descanso (core 0.0.98). With no free Subordinado slot the Peão is not granted, and the counsel still is.
+     */
+    AncestralCounsel perform(CombatantSheet orc, SceneContext sceneContext,
+                             org.aventyrs.core.subordinate.SubordinateBenefit pawnBenefit);
 
     /** Uses up one banked counsel after the roll it was spent on; {@code true} if there was one. */
     boolean spend(CombatantSheet orc);

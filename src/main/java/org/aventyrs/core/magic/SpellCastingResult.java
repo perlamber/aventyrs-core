@@ -36,6 +36,17 @@ public class SpellCastingResult {
     org.aventyrs.core.skill.DifficultyLevel castingDifficultyLevel;
 
     /**
+     * The total the Conjuração must reach (core 0.0.93): {@link #castingDifficultyLevel}'s value, raised to the named
+     * target's DM when the version reads "ou DM do Alvo (maior)" ({@code Spell#isCastingDifficultyFlooredByTargetMagicDefense})
+     * and the target is not the caster. {@code null} when no GD is stated — nothing to fail against. Judged by {@link
+     * SpellCastingService#castSucceeds}.
+     */
+    Integer castingTargetValue;
+
+    /** The version actually cast — the Magia or its Efeito Alternativo (core 0.0.93). */
+    Spell castVersion;
+
+    /**
      * This version's Tempo de Ativação as the caster pays it on this cast — the authored figure
      * after any Talento reduction, see {@link SpellCastingService#resolveActivationTime}. Reported,
      * not spent. {@code null} on the legacy overload.
@@ -138,4 +149,12 @@ public class SpellCastingResult {
      * skips {@link #spellEffect} and {@link #primaryDamage} for them.
      */
     private final boolean targetImmune;
+
+    /**
+     * Correntes de Efeitos the caster's Talentos add to this cast ({@code Feat#resolveSpellEffectChains} — Acólito da
+     * Luz Primordial's Remover Aflição and Excomungar, core 0.0.86). Report-only like {@link #spellEffect}: the
+     * caller chains them onto the effect it runs. Never {@code null}.
+     */
+    @lombok.Builder.Default
+    private final java.util.List<org.aventyrs.core.effect.EffectChain> grantedEffectChains = java.util.List.of();
 }

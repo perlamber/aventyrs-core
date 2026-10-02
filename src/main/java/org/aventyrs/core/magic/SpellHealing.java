@@ -42,12 +42,43 @@ import static org.aventyrs.core.util.TranslatableMessages.INVALID_SPELL_HEALING;
  * @param condition        the live-state gate, {@link HealingCondition#ALWAYS} for all but one
  */
 public record SpellHealing(RestType restEquivalent, boolean fullRecovery,
-                           boolean halvedForHostiles, HealingCondition condition) {
+                           boolean halvedForHostiles, HealingCondition condition,
+                           boolean restoresAllPools, RestType hostileRestEquivalent, boolean oncePerLongRest) {
 
     public SpellHealing {
         if (condition == null || (restEquivalent == null) != fullRecovery) {
             throw new IllegalOperationException(INVALID_SPELL_HEALING);
         }
+    }
+
+    /** A PV-only recovery — every shape before core 0.0.94. */
+    public SpellHealing(final RestType restEquivalent, final boolean fullRecovery, final boolean halvedForHostiles,
+                        final HealingCondition condition) {
+        this(restEquivalent, fullRecovery, halvedForHostiles, condition, false, null, false);
+    }
+
+    /**
+     * This recovery for PM and PD as well as PV, a Descanso's worth of each — Fonte da Juventude's "recupera PV, PM
+     * e PD … como se passassem por um descanso curto" (core 0.0.94).
+     */
+    public SpellHealing restoringAllPools() {
+        return new SpellHealing(restEquivalent, fullRecovery, halvedForHostiles, condition, true,
+                hostileRestEquivalent, oncePerLongRest);
+    }
+
+    /** A hostile target recovers as from restType instead — Fonte da Juventude's "como se passassem por um descanso mínimo". */
+    public SpellHealing withHostileRest(final RestType restType) {
+        return new SpellHealing(restEquivalent, fullRecovery, halvedForHostiles, condition, restoresAllPools,
+                restType, oncePerLongRest);
+    }
+
+    /**
+     * Its recovery reaches one target once, "voltando a afetá-lo somente após ele passar por um Descanso Longo" —
+     * Aliviar a Dor (core 0.0.94). Stopping a Sangramento is not limited.
+     */
+    public SpellHealing oncePerLongRestPerTarget() {
+        return new SpellHealing(restEquivalent, fullRecovery, halvedForHostiles, condition, restoresAllPools,
+                hostileRestEquivalent, true);
     }
 
     /** {@code "Seu toque recupera todos os PV perdidos da criatura tocada"} — Benção da Luz. */
@@ -65,12 +96,13 @@ public record SpellHealing(RestType restEquivalent, boolean fullRecovery,
      * #halvedForHostiles()} accessor, the same way {@code DamageInteraction#halvingDamage()} reads.
      */
     public SpellHealing halvingForHostiles() {
-        return new SpellHealing(restEquivalent, fullRecovery, true, condition);
+        return new SpellHealing(restEquivalent, fullRecovery, true, condition, restoresAllPools, hostileRestEquivalent,
+                oncePerLongRest);
     }
 
     /** This same recovery, but only for a target who is not bleeding — Aliviar a Dor. */
     public SpellHealing onlyIfNotBleeding() {
         return new SpellHealing(restEquivalent, fullRecovery, halvedForHostiles,
-                HealingCondition.ONLY_IF_NOT_BLEEDING);
+                HealingCondition.ONLY_IF_NOT_BLEEDING, restoresAllPools, hostileRestEquivalent, oncePerLongRest);
     }
 }

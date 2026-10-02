@@ -70,6 +70,11 @@ import static org.aventyrs.core.util.TranslatableMessages.INVALID_SPELL_ALTERNAT
  * @param healing          the recovery this version performs — see {@link SpellHealing}
  * @param cleansedConditions the Malefícios this version lifts
  * @param primaryDamage    the damage this version deals — see {@link SpellDamage}
+ * @param effectChainKind  the Corrente this version builds — never inherited, see {@link Spell#getEffectChainKind()}
+ * @param maxAdditionalTargets     targets beyond the first — see {@link Spell#getMaxAdditionalTargets()}
+ * @param additionalTargetManaCost PM per additional target
+ * @param casterAffected   whether a caster-centred area reaches the caster; {@code null} inherits
+ * @param ward             the protection this version leaves — never inherited
  */
 @Builder
 public record SpellAlternateEffect(
@@ -86,7 +91,12 @@ public record SpellAlternateEffect(
         String effectChainDescription,
         SpellHealing healing,
         Set<ConditionType> cleansedConditions,
-        SpellDamage primaryDamage) {
+        SpellDamage primaryDamage,
+        SpellChainKind effectChainKind,
+        Integer maxAdditionalTargets,
+        Integer additionalTargetManaCost,
+        Boolean casterAffected,
+        SpellWard ward) {
 
     public SpellAlternateEffect {
         if (name == null || name.isBlank()) {

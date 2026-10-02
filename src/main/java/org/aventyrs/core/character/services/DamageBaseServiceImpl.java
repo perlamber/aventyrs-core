@@ -32,7 +32,7 @@ public class DamageBaseServiceImpl implements DamageBaseService {
     public DamageBase getDamageBase(@NonNull final CombatantSheet wielder, @NonNull final Weapon weapon) {
         DamageBase mounted = wielder.isRiding() && !weapon.isDestroyed() ? mountedDamageBase(weapon) : null;
         DamageBase base = mounted != null ? mounted : weapon.getEffectiveDamageBase();
-        return base.scaledUp(sumScaleUps(wielder.getCharacter(), weapon.getSkillType(), weapon));
+        return base.scaledUp(sumScaleUps(wielder.getCharacter(), weapon.getSkillType(), weapon, wielder));
     }
 
     /** The weapon's mounted Dano Base — its own, or a forged copy's template's. */
@@ -45,8 +45,14 @@ public class DamageBaseServiceImpl implements DamageBaseService {
     }
 
     private int sumScaleUps(final Character character, final SkillType attackingSkill, final Weapon weapon) {
+        return sumScaleUps(character, attackingSkill, weapon, null);
+    }
+
+    /** wielder may be {@code null} — a sheet-scoped scale-up then contributes nothing. */
+    private int sumScaleUps(final Character character, final SkillType attackingSkill, final Weapon weapon,
+                            final CombatantSheet wielder) {
         int scaleUps = character.getFeats().stream()
-                .mapToInt(feat -> feat.resolveDamageBaseIncrease(character, weapon))
+                .mapToInt(feat -> feat.resolveDamageBaseIncrease(character, weapon, wielder))
                 .sum();
 
         scaleUps += SkillCompetencyAbility.allFor(character).stream()

@@ -189,9 +189,9 @@ public enum SobrevivenciaFeat implements Feat {
      * through {@link Feat#resolveDamageBonus}, untyped so it flattens to {@code FISICO} in {@code
      * DamageBonus#total}, the established reading of "Vantagem em rolagens de Dano".
      */
-    // TODO: Corrente de Efeitos – Oprimir — Feat#resolveEffectChains is the hook (see ElficoFeat
-    //  #CORRUPTOR_SOMBRIO), but Oprimir is not an authored EffectChain. The terrain scope has no
-    //  SceneContext on that hook either.
+    // The Corrente is real (0.0.85): in the chosen terrain its attacks carry effect.Oprimir (Roubo de
+    // Determinação 1, 2 on an Acerto Crítico), through the sheet- and SceneContext-aware
+    // Feat#resolveEffectChains.
     MESTRE_DE_CACA(
             "Sua Margem Crítica Menor aumenta em +1 número, então você recebe Vantagem em rolagens "
                     + "de Perícias de Ataque e Danos enquanto no terreno escolhido. Nestes "
@@ -219,6 +219,18 @@ public enum SobrevivenciaFeat implements Feat {
             return attackingSkillType.isAttackSkill() && inChosenTerrain(actor, sceneContext)
                     ? Optional.of(new DamageBonus(Skill.ADVANTAGE_BONUS, DamageType.FISICO))
                     : Optional.empty();
+        }
+
+        /** "Nestes terrenos seus ataques recebem a Corrente de Efeitos – Oprimir." */
+        @Override
+        public List<org.aventyrs.core.effect.EffectChain> resolveEffectChains(
+                final Character attacker, final SkillType attackSkill, final org.aventyrs.core.skill.AttackSource attackSource,
+                final CombatantSheet holder, final SceneContext sceneContext,
+                final org.aventyrs.core.skill.CriticalResult criticalResult) {
+            return holder != null && attackSkill.isAttackSkill() && inChosenTerrain(attacker, sceneContext)
+                    ? List.of(new org.aventyrs.core.effect.Oprimir(holder,
+                            criticalResult != null && criticalResult.isCriticalSuccess()))
+                    : List.of();
         }
     },
 

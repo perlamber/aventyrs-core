@@ -7,6 +7,7 @@ import org.aventyrs.core.modifier.ModifierResolver;
 import org.aventyrs.core.modifier.ModifierResolverImpl;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.sheet.CombatantSheet;
+import org.aventyrs.core.sheet.ResourceType;
 
 public class DeterminationPointsServiceImpl implements DeterminationPointsService {
 
@@ -32,7 +33,7 @@ public class DeterminationPointsServiceImpl implements DeterminationPointsServic
         for (Feat feat : character.getFeats()) {
             bonus += feat.resolveDeterminationMultiplierIncrease(character);
         }
-        return character.getDeterminationMultiplier() + bonus;
+        return Feat.fixedMultiplier(ResourceType.DETERMINATION_POINTS, character, character.getDeterminationMultiplier() + bonus);
     }
 
     @Override
@@ -46,8 +47,8 @@ public class DeterminationPointsServiceImpl implements DeterminationPointsServic
         if (sheet == null) {
             return getDeterminationMultiplier(character);
         }
-        return Math.max(1, getDeterminationMultiplier(character)
-                + sheet.getTemporaryBonus(ModifierType.DETERMINATION_MULTIPLIER));
+        return Feat.fixedMultiplier(ResourceType.DETERMINATION_POINTS, character, Math.max(1,
+                getDeterminationMultiplier(character) + sheet.getTemporaryBonus(ModifierType.DETERMINATION_MULTIPLIER)));
     }
 
     @Override

@@ -34,6 +34,19 @@ public record StartingFeatSlot(@NonNull Source source, List<FeatPool> pools) {
         return new StartingFeatSlot(Source.DEFAULT, List.of(FeatPool.Categories.ofType(FeatCategory.Type.GERAL)));
     }
 
+    /** A Superação's slot — General only, or "Talento qualquer" (General or Racial). */
+    public static StartingFeatSlot defect(final boolean anyTalento) {
+        return anyTalento
+                ? new StartingFeatSlot(Source.DEFECT, List.of(FeatPool.Categories.ofType(FeatCategory.Type.GERAL),
+                        FeatPool.Categories.ofType(FeatCategory.Type.RACIAL)))
+                : new StartingFeatSlot(Source.DEFECT, List.of(FeatPool.Categories.ofType(FeatCategory.Type.GERAL)));
+    }
+
+    /** Whether this slot draws from the Talentos Gerais alone — the kind a Qualidade may be traded for. */
+    public boolean isGeneralOnly() {
+        return pools.equals(List.of(FeatPool.Categories.ofType(FeatCategory.Type.GERAL)));
+    }
+
     /** A slot a Raça grants, drawing from the union of pools. */
     public static StartingFeatSlot race(final FeatPool... pools) {
         return new StartingFeatSlot(Source.RACE, List.of(pools));
@@ -58,6 +71,8 @@ public record StartingFeatSlot(@NonNull Source source, List<FeatPool> pools) {
         /** {@code CharacterCreationService#DEFAULT_GENERAL_FEAT_SLOTS} — every character's. */
         DEFAULT,
         /** {@code Race#getStartingFeatSlots()}. */
-        RACE
+        RACE,
+        /** A creation Defeito's Benefício de Superação ("1 Talento Geral", "1 Talento qualquer"). */
+        DEFECT
     }
 }

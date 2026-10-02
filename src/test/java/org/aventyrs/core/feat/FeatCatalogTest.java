@@ -44,7 +44,7 @@ class FeatCatalogTest {
     void theCatalogHoldsEveryConstantOfEveryAuthoredTree() {
         List<Feat> expected = new ArrayList<>();
         for (Class<?> permitted : Feat.class.getPermittedSubclasses()) {
-            if (permitted.isEnum() && permitted != AntecedenteFeat.class) {
+            if (permitted.isEnum() && !NON_CATALOG.contains(permitted)) {
                 expected.addAll(Arrays.asList((Feat[]) permitted.getEnumConstants()));
             }
         }
@@ -62,7 +62,7 @@ class FeatCatalogTest {
     @Test
     void everyPermittedEnumContributesItsConstants() {
         for (Class<?> permitted : Feat.class.getPermittedSubclasses()) {
-            if (permitted.isEnum() && permitted != AntecedenteFeat.class) {
+            if (permitted.isEnum() && !NON_CATALOG.contains(permitted)) {
                 for (Object constant : permitted.getEnumConstants()) {
                     assertTrue(FeatCatalog.all().contains(constant),
                             permitted.getSimpleName() + "." + constant + " missing from the catalog");
@@ -71,12 +71,19 @@ class FeatCatalogTest {
         }
     }
 
-    /** An Antecedente's Benefício has a Talento's shape but is never offered or bought. */
+    /** The Talento-shaped traits held only through an Antecedente, Defeito or Qualidade. */
+    private static final java.util.Set<Class<?>> NON_CATALOG =
+            java.util.Set.of(AntecedenteFeat.class, DefeitoFeat.class, QualidadeFeat.class, CriaturaFeat.class);
+
+    /** An Antecedente's Benefício, a Defeito or a Qualidade has a Talento's shape but is never offered or bought. */
     @Test
-    void theAntecedenteBenefitsArePermittedButNeverCatalogued() {
-        assertTrue(Arrays.asList(Feat.class.getPermittedSubclasses()).contains(AntecedenteFeat.class));
-        assertTrue(FeatCatalog.all().stream().noneMatch(AntecedenteFeat.class::isInstance));
-        assertTrue(FeatCatalog.in(FeatCategory.ANTECEDENTE).isEmpty());
+    void theTalentoShapedTraitsArePermittedButNeverCatalogued() {
+        assertTrue(Arrays.asList(Feat.class.getPermittedSubclasses()).containsAll(NON_CATALOG));
+        assertTrue(FeatCatalog.all().stream().noneMatch(feat -> NON_CATALOG.contains(feat.getClass())
+                || NON_CATALOG.contains(feat.getClass().getSuperclass())));
+        for (FeatCategory category : List.of(FeatCategory.ANTECEDENTE, FeatCategory.DEFEITO, FeatCategory.QUALIDADE)) {
+            assertTrue(FeatCatalog.in(category).isEmpty());
+        }
     }
 
     @Test

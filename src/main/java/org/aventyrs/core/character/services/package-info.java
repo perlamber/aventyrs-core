@@ -67,15 +67,38 @@
  *       quickLearningSkills} is the one creation-time pick a race asks for here: an Aprendizado
  *       Rápido race ({@code Race#hasQuickLearning()} — Humano, Pequenino, Gnomo, Goblin) names its
  *       two Perícias Treinadas, whose 2nd and 3rd Graduação then cost 0.5 EXP less
- *       ({@code SkillGraduationService#getUpgradeCost(Character, SkillType)}). Empty by default.</li>
- *   <li><b>Pick the two Antecedentes — last</b>, on the character step 7 built (its Talentos and
- *       Árvores below too): one Naturalidade and one Carreira, through {@link
+ *       ({@code SkillGraduationService#getUpgradeCost(Character, SkillType)}). Empty by default.
+ *       {@code deity} and {@code devotionTier} ({@link org.aventyrs.core.character.DevotionTier} —
+ *       Adepto, Fiel or Fundamentalista, core 0.0.86) are the devotion: the player picks the tier here,
+ *       and the Narrador raises or lowers it afterwards ({@code DevotionService#setTier}). Both {@code
+ *       null} unless set. Once the Talentos are granted, {@code DevotionService#owedPicks} lists the
+ *       picks each held Talento de Devoção's reached rungs ask for, recorded with {@code
+ *       DevotionService#recordPicks} — asked again whenever the tier rises to a rung not yet picked.</li>
+ *   <li><b>Pick the two Antecedentes</b>, on the character step 7 built — before the Defeitos e
+ *       Qualidades, Habilidades de Atributo and Talentos (the table's order, 2026-09-29): one Naturalidade
+ *       and one Carreira, through {@link
  *       org.aventyrs.core.character.services.CharacterCreationService#applyBackground}, which
  *       <em>returns a new</em> {@code Character} with the Antecedente's Graduações, Especializações,
  *       Habilidades de Competência and Ego written in. "Se treinado em X" is judged against the
- *       character at this moment, so everything else must be chosen first. An Ego point it adds can
- *       make a Vantagem de Ego (step 5) newly available — re-check it afterwards. See {@code
- *       org.aventyrs.core.background} for the full protocol.</li>
+ *       character at this moment. An Ego point it adds can make a Vantagem de Ego (step 5) newly
+ *       available — re-check it afterwards. See {@code org.aventyrs.core.background} for the full
+ *       protocol.</li>
+ *   <li><b>Defeitos e Qualidades (optional) — after the Antecedentes, before the Habilidades de
+ *       Atributo and the Talentos</b>, through {@link
+ *       org.aventyrs.core.character.services.CharacterCreationService#applyDefectsAndQualities}, on the
+ *       character the Antecedentes returned; it returns a new {@code Character}. It changes what the later
+ *       steps offer: the Talentos step reads {@code getStartingFeatSlots(Character)} (the {@code Race} form
+ *       no longer tells the whole story — a Qualidade traded for Talentos Gerais removes slots, a Superação
+ *       adds one), and the Habilidades step gains {@code Character#getBonusAttributeAbilitySlots()}. See
+ *       {@code org.aventyrs.core.defect}.</li>
+ *   <li><b>Equipamento inicial — last, on the built sheet</b>, once nothing can change the Recursos any more
+ *       (an Antecedente's Ego, Privilegiado): {@link
+ *       org.aventyrs.core.character.services.CharacterCreationService#grantStartingEquipmentPoints} puts the
+ *       Recursos row's "Pts. Eqp. Iniciais" ({@link org.aventyrs.core.ego.SocialClass}) in the sheet's PE
+ *       wallet — <b>once</b>, never on a rebuilt sheet — and {@link
+ *       org.aventyrs.core.character.services.CharacterCreationService#getStartingStore} is the store to buy
+ *       from, capped at the row's "Raridade Inicial" (none at Recursos 0), through {@code
+ *       ItemPurchaseService}.</li>
  * </ol>
  *
  * <pre>{@code
@@ -107,12 +130,15 @@
  *     builder.egoAdvantage(EgoDomain.INICIATIVA, InitiativeAdvantage.IMPETO); // player's choice
  * }
  *
- * // ... starting Talentos and Árvores (below), then the Antecedentes, last:
+ * // ... the Antecedentes, then the Defeitos e Qualidades, then the Habilidades, Talentos and Árvores (below):
  * Character character = creation.applyBackgrounds(builder.build(),
  *         AcquiredBackground.of(OriginBackground.OFI, List.of(SkillType.ATTENTION, SkillType.PROFISSAO),
  *                 List.of(ProfissaoSpecialization.METALURGIA)),
  *         AcquiredBackground.of(CareerBackground.BATEDOR, List.of(), List.of()));
- * CombatantSheet sheet = CombatantSheet.of(character, player);
+ * CharacterSheet sheet = CharacterSheet.of(character, player);
+ * creation.grantStartingEquipmentPoints(sheet);                   // once, at creation
+ * creation.getStartingStore(character).ifPresent(store ->          // none at Recursos 0
+ *         purchases.purchase(store, chosenTemplate, sheet));
  * }</pre>
  *
  * <h2>Árvores de Magia, after the starting Talentos</h2>

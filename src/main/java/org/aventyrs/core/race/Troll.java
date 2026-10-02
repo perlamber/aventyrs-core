@@ -62,10 +62,8 @@ import java.util.Set;
  *   {@code DamageService} has no notion of — and a <i>vulnerability</i> is a further missing
  *   stage beyond that, since nothing amplifies damage either; "recuperam danos sofridos por
  *   estes Elementos apenas com Descansos Verdadeiros" needs damage to remember what dealt it,
- *   which {@code CombatantSheet#getDamageTaken} is a single figure with no provenance; and the
- *   <b>Roubo de Vida immunity</b> ("de personagens que não tenham Anatomia Vegetal") has a real
- *   mechanism to attach to ({@code LifeStealService}) but no immunity hook on it, and no way to
- *   ask whether the <i>attacker</i> shares this trait.
+ *   which {@code CombatantSheet#getDamageTaken} is a single figure with no provenance. (The
+ *   <b>Roubo de Vida immunity</b> is real since core 0.0.90 — {@link #isImmuneToLifeStealFrom}.)
  *
  *   <p>Note the two sub-lineages the vulnerabilities name — Troll do Inverno and Troll da
  *   Floresta — are deliberately <b>not</b> modeled as a nested choice enum the way {@code
@@ -148,5 +146,14 @@ public class Troll implements Race {
     @Override
     public List<StartingFeatSlot> getStartingFeatSlots() {
         return List.of(StartingFeatSlot.race(FeatCategory.SOBREVIVENCIA), StartingFeatSlot.race(FeatCategory.SOBREVIVENCIA));
+    }
+
+    /**
+     * Anatomia Vegetal — "imunes a efeitos de Roubo de Vida de personagens que não tenham Anatomia Vegetal" (core
+     * 0.0.90). Anatomia Vegetal is a Troll's, so a thief who is not one is refused.
+     */
+    @Override
+    public boolean isImmuneToLifeStealFrom(final org.aventyrs.core.character.Character thief) {
+        return thief == null || !(thief.getRace() instanceof Troll);
     }
 }

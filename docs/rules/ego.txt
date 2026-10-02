@@ -1,0 +1,253 @@
+2.5: EGO
+Fonte: Módulo Básico V18 ALPHA — 2: Criação de Personagem > 2.5: Ego (+ subpáginas Autocontrole, Iniciativa, Recursos, Sorte)
+Importado: 2026-09-29
+
+==================================================================
+GERAL
+==================================================================
+Egos se referem aos diferentes aspectos sociais e interpessoais de cada criatura.
+Divididos em Autocontrole, Recursos, Sorte e Iniciativa.
+
+- Iniciativa: prioridade nas ações e tomadas de decisão quando uma cena se inicia.
+- Autocontrole: razão, capacidade de se controlar em situações perigosas/adversas.
+- Recursos: status social, condições financeiras e poder aquisitivo.
+- Sorte: o quanto as questões aleatórias costumam lhe ser favoráveis.
+
+Distribuição na criação:
+- Valores variam de 1 a 5.
+- Cada personagem inicia com 2 pontos em cada Ego, e 1 ponto adicional a alocar à sua escolha entre os 4.
+- Opcionalmente, na criação, reduzir um Ego a 1 para aumentar outro para 3.
+- Nenhum personagem recém-criado pode ter Ego > 3 em consequência da distribuição de pontos,
+  mas pode ter valores maiores por Talentos, Antecedentes, Títulos Aventyrs e outras habilidades.
+
+Vantagens de Ego:
+- Cada Ego iniciado em 3 — APENAS os que atingiram 3 pela distribuição de pontos — concede 1 Vantagem de Ego
+  daquele Ego (escolhida dentre 3). Individual e permanente.
+- Novas Vantagens de Ego não podem ser adquiridas mesmo alcançando 3+ de outras formas (na criação ou na carreira).
+- A vantagem não é perdida se o Ego for reduzido para 2 ou menos.
+  (Ver ruling de Antecedentes: Ego +1 de Antecedente conta para o limiar.)
+
+Gasto:
+- Todas as criaturas possuem valores de Ego, mas apenas os jogadores podem gastar pontos para obter benefícios.
+- O Narrador pode fazer um PdN receber benefícios de gasto de Ego; se o fizer, em vez de gastar pontos,
+  todos os PJs recebem um ponto temporário neste mesmo Ego.
+  (Subpáginas refinam: apenas PdN Exemplares (quando inteligentes) podem usar; se for efeito PERMANENTE,
+  cada PJ recebe ao fim da cena um ponto temporário nesse Ego, além das premiações padrão.)
+- Recomenda-se não usar Vantagens de Ego em PdN (não há regra impeditiva).
+
+Ganho de pontos:
+- Talentos, Títulos ou Habilidades podem conceder pontos adicionais.
+- O Narrador pode premiar pontos (derrotar Monstro poderoso, sobreviver a Elemental, concluir história/missão,
+  ações que elevem a moral). A grandeza do feito determina se o ponto é permanente ou temporário.
+
+==================================================================
+REGRAS COMUNS DE GASTO (Autocontrole, Iniciativa, Sorte)
+==================================================================
+- Gasto TEMPORÁRIO: efeito menor; pontos gastos assim são recuperados 1 a cada sessão de jogo.
+- Gasto PERMANENTE: efeito maior; o ponto nunca é recuperado (reduz o valor do Ego).
+- Não é possível usar um Ponto Temporário para ativar um efeito Permanente.
+- Pontos concedidos de forma temporária se acumulam, mas apenas dentro do arco de história em que foram
+  adquiridos, persistindo até serem utilizados.
+- Ego chegando a ZERO: rolar 1d6 na tabela de reveses do Ego.
+
+==================================================================
+AUTOCONTROLE
+==================================================================
+Capacidade de se manter calmo e racional em situações adversas. Valores ≤1: instintivo/impulsivo.
+4–5: estrategistas cautelosos. Média 2–3. Seres sem inteligência podem não possuir Autocontrole.
+
+Pontos Temporários:
+- Reduzir à metade a duração de um malefício (encantamentos, venenos, maldições etc.).
+- Evitar uma Corrente de Efeitos ou ignorar os Efeitos de um Acerto Crítico Menor que você tenha sofrido.
+- Receber RA por 1 Rodada; adicionalmente, durante este tempo, receber RD, RM ou RE, à sua escolha.
+- Recuperar PV, PM e PD como se passasse por um Descanso Longo.
+
+Pontos Permanentes:
+- Remover completamente um efeito ou malefício, tornando-se imune a ele ao longo da Cena.
+- Evitar uma Corrente de Efeitos ou Efeito Crítico e tornar-se imune ao longo da Cena.
+- Reduzir a zero todo o dano sofrido em uma Rodada.
+- Recuperar PM e PD como se passasse por um Descanso Total, e todos os PV.
+
+Autocontrole a Zero (insano; incapaz de ações que exijam concentração; 1d6):
+1. Enfurecidos – não diferencia inimigos de aliados e ataca alvos próximos.
+2. Centelha Morta – incapaz de ativar Habilidades de Títulos Aventyrs; qualquer Habilidade ativa é encerrada.
+3. Pânico – acometido pelo medo, foge de tudo e todos.
+4. Regressão Mental – age como criança, inocente e indefeso.
+5. Torpor – paralisado ou aprisionado à própria imaginação.
+6. Vontade Fraca – todos os efeitos com Correntes de Efeito o afetam, mesmo sem superar em 5 suas Defesas.
+
+Ganho: prêmio do Narrador por desafios mentais de grande dificuldade ou situações que desafiaram a sanidade.
+
+Vantagens de Autocontrole:
+- Determinação Heroica – usar pontos de Autocontrole para qualquer efeito adicionalmente recupera +1d6 PV, PM e PD;
+  se o ponto for permanente, o valor recuperado é dobrado.
+- Resoluto – Correntes de Efeitos precisam superar suas Defesas em 7, ao invés de 5.
+- Motivação de Moses – recupera 1 ponto de Autocontrole temporário adicional por sessão de jogo.
+
+==================================================================
+INICIATIVA
+==================================================================
+Prontidão e capacidade de reagir a imprevistos. Média em Tellus = 2; aventureiros costumam ter 3+.
+
+Rolagem de Iniciativa:
+- No início de cada Sessão de Jogo, todos os personagens envolvidos rolam 3d6 + Iniciativa;
+  resultados mais altos declaram ações primeiro.
+- A qualquer momento um jogador pode gastar pontos de Iniciativa para alterar sua ordem de ação.
+- Empate: maior valor no Ego Iniciativa tem prioridade; se igual, soma-se 1d6 (repetindo até desempatar).
+  Dados de desempate não contam para a ordem geral, apenas entre os empatados.
+
+Pontos Temporários:
+- Reduzir voluntariamente seu valor de Iniciativa para qualquer valor menor por uma Cena ou Rodada.
+- Refazer sua rolagem de Iniciativa com Vantagem; aplicável apenas na Cena atual.
+- Adquirir +1PA ou Reação adicional nesta Rodada.
+- Adquirir Vantagem em até duas rolagens de Perícia (efetuadas na mesma Cena).
+
+Pontos Permanentes:
+- Alterar seu valor de Iniciativa para qualquer valor à sua escolha por uma Cena ou Rodada.
+- Alterar o valor de Iniciativa de um PdN por 2 Rodadas.
+- Adquirir +2PA e 1 Reação adicional por 2 Rodadas.
+- Reduzir o GD de até duas rolagens de Perícia (efetuadas na mesma Cena).
+Obs: não é recomendada a utilização de pontos permanentes de Iniciativa em combates entre PJs.
+
+Iniciativa a Zero (1d6):
+1. Distração – perde a capacidade de agir na primeira Rodada de cada Cena.
+2. Fraqueza – redutor de -1PA em Rodadas ímpares.
+3. Hesitação – não pode mais usar Ações Livres.
+4. Lentidão – torna-se o último a agir em todas as Cenas, exceto quando o último ponto perdido for de uso
+   permanente, cujas rolagens serão feitas na ordem escolhida até o fim do período determinado.
+5. Passos Reduzidos – Movimento Base reduzido à metade.
+6. Reflexo Lento – incapaz de fazer Reações.
+
+Ganho: prêmio do Narrador por proezas épicas e ações memoráveis.
+PdN: reservar a personagens estrategistas ou manipuladores.
+
+Vantagens de Iniciativa:
+- Ímpeto – Vantagem nas Rolagens de Perícia nas duas primeiras Rodadas de cada Cena de Combate.
+  Se tiver ganho a iniciativa, também Vantagem nas rolagens de Dano e Efeitos de Magia.
+- Posicionamento Estratégico – nas duas primeiras Rodadas de cada Cena de Combate, seus movimentos não permitem
+  Reações de inimigos. Se tiver ganho a iniciativa, seu Movimento Base e o de seus aliados aumentam em +2UD nestas Rodadas.
+- Torre em Movimento – nas duas primeiras Rodadas de cada Cena de Combate recebe RA. Se tiver ganho a iniciativa,
+  neste período o dano causado a você é reduzido à metade.
+
+==================================================================
+RECURSOS
+==================================================================
+Poder aquisitivo, percepção de valores monetários, bens e acesso a recursos; classe social e títulos de nobreza.
+O valor atual determina a situação econômica atual e, na construção, quantos itens o personagem pode ter.
+Média = 2; famílias abastadas e aventureiros experientes 3+.
+0 = extrema pobreza (não adquire nem comida/abrigo por meios convencionais; depende de caridade).
+1 = mínimo para viver, sem luxos. 2 = classe média. 3 = média alta (Baixa Nobreza). 4+ = Alta Nobreza/riqueza.
+
+Pontos de Equipamento (PE):
+- Recursos define os PE iniciais (quantos equipamentos o personagem tem na construção).
+- Equipamentos que influenciam diretamente as cenas (armas, veículos, armaduras etc.) têm Custo em PE.
+- Após a criação, em momento compatível da história com a aquisição de equipamentos, pontos de Recursos
+  (temporários ou permanentes) podem ser usados para adquirir PE. Cada ponto confere PE compatível com o
+  VALOR TOTAL neste Ego (colunas "Valor Pts Temp"/"Valor Pts Perm").
+- Exemplo: Recursos 5 (3 disponíveis) gasta 1 temporário → 22PE; outro temporário → mais 22PE.
+  Gasta 1 permanente → 67PE; fica com Recursos total 4 (1 disponível). Novo temporário agora → 18PE
+  (a percepção de valor diminuiu com o poder aquisitivo).
+- Também é possível usar pontos de Recursos para outras ações não relacionadas a equipamentos: comprar
+  informações, pagar subornos, financiar eventos, contratar mercenários etc., combinadas com o Narrador.
+
+Tabela: Classes Sociais e Pontos de Equipamentos
+RECURSOS  CLASSE SOCIAL   PTS. EQP. INICIAIS  VALOR PTS TEMP  VALOR PTS PERM  RARIDADE INICIAL
+0         Falência        0                   3               0               Nenhum
+1         Pobreza         15                  7               22              Comum
+2         Classe Média    21                  10              31              Comum
+3         Baixa Nobreza   28                  14              42              Incomum
+4         Nobreza         36                  18              54              Incomum
+5         Alta Nobreza    45                  22              67              Raro
+
+Utilidades e Serviços:
+- Itens de utilidade (cordas, sacos de dormir, tochas, veículos etc.) e serviços (refeições, transporte,
+  hospedagem etc.) não custam PE (virtualmente gratuitos). O jogador declara a intenção de compra; se compatível
+  com cenário, cena, disponibilidade e status social, pode adquiri-los.
+- Equipamentos: quantos puder pagar em PE. Itens de Utilidade e Transporte, e diárias de serviços:
+  quantidade total limitada pelo valor de Recursos.
+
+Tabela: Utilidades e Serviços
+RECURSOS  QTD UTILIDADES  RARIDADE MAX  SERVIÇOS/DIA
+0         1               Comum         0
+1         3               Comum         2
+2         6               Incomum       3
+3         10              Raro          5
+4         15              Épico         8
+5         21              Mítico        11
+
+Adquirindo pontos de Recursos:
+- Apenas condições que melhorem diretamente a qualidade de vida ou a percepção de valor aumentam Recursos:
+  grandes espólios de batalha, arcas e tesouros perdidos, altas recompensas, títulos ou terras etc.
+
+Recuperando pontos de Recursos:
+- NÃO são recuperados a cada sessão de jogo como os demais Egos. Recuperados de 3 formas:
+  salários periódicos, espólios de batalha, recompensas de missões concluídas.
+
+Recursos a Zero:
+- Extrema pobreza; incapaz de adquirir o básico (comida, abrigo); depende exclusivamente da caridade alheia.
+
+Vantagens de Recursos:
+- Barganhista – comprar ou produzir equipamentos após a criação, em campanha, custa 2PE a menos (mínimo 1PE);
+  Melhorias de Obras-Primas, Aprimoramentos e uso de Habilidades de Título custam -1PE (mínimo 1PE).
+- Herança Familiar – na criação, escolher um Equipamento Comum Ofensivo de qualquer Raridade; o item é uma
+  Obra-Prima Comum ou Incomum sem Aprimoramentos. Não é possível obter Equipamentos Tecnológicos ou Regalias.
+- Moral Herdada – família notável ou descendente de herói/vilão notável; título de nobreza reconhecido.
+  Recebe Fama Positiva ou Negativa (à escolha) igual ao valor de Recursos e Bônus de +1 em rolagens de Artes e
+  Persuasão; o bônus aumenta em +1 para cada 10 pontos da Fama escolhida.
+  [texto truncado na extração — conferir o restante no site]
+
+==================================================================
+SORTE
+==================================================================
+Tykhé é a Deusa da Sorte. Pontos de Sorte permitem mudar cenas, refazer rolagens ou influenciar jogadas
+de monstros e PdN. Valores baixos podem gerar infortúnios narrativos (alvo primário de monstro com múltiplas
+escolhas etc.); valores altos, pequenas vantagens passivas narrativas.
+
+Pontos Temporários:
+- Refazer uma rolagem de Perícia; rolagens feitas dessa forma são feitas em Vantagem.
+- Solicitar ao Narrador reduzir o GD de uma rolagem efetuada contra um PdN.
+- Fazer alterações sutis nas cenas narradas (ex.: incluir uma caixa num beco para se esconder; pessoas ou
+  veículos atrapalhando um PdN perseguidor). Apenas vantagens pequenas, sempre com aprovação do Narrador.
+
+Pontos Permanentes:
+- Escolher ser bem-sucedido numa rolagem de Perícia, independente do resultado dos dados. É um Acerto Crítico Menor.
+- Desencadear suas Correntes de Efeitos e Efeitos Críticos Maiores em uma rolagem de Perícia bem-sucedida.
+- Fazer alterações drásticas nas cenas narradas (ex.: guardas passando no exato momento de uma emboscada).
+  Precisa ser minimamente condizente; o Narrador aprova.
+
+Sorte a Zero (perde as bênçãos de Tykhé; 1d6):
+1. Superficialidade – incapaz de realizar Acertos Críticos e desencadear Correntes de Efeitos.
+2. Azarão – sofre efeitos de Erros Críticos sempre que falhar numa rolagem de Perícia por diferença ≥ 5.
+3. Insucesso – ao ser bem-sucedido numa Rolagem de Perícia, rola 1d6: 1 ou 2 indica falha.
+4. Atrair a Morte – Correntes de Efeitos o afetam quando superam suas Defesas (sem a margem de 5).
+5. Escárnio de Tykhé – a cada 1d6 Rodadas, no início do seu Turno, sofre os efeitos de uma Falha Crítica em
+   Perícia (Perícias > Efeitos Críticos).
+6. Sorte no Azar – nada de mal acontece, por enquanto.
+
+Ganho: prêmio do Narrador por desafios em condições extremas ou por puro acaso.
+
+Vantagens de Sorte:
+- Ace – em Cenas de Combate, Margem Crítica Menor em rolagens de Perícia de Ataque +1 número; em Cenas não
+  combativas, Margem Crítica Menor +3 números para rolagens de Perícias que não sejam de Ataque.
+- Às na Manga – imediatamente após usar um Ponto de Sorte, pode mover-se até 2UD; não provoca Reações e
+  ignora terrenos difíceis.
+- Dileto de Tykhé – recupera 1 ponto de Sorte temporário adicional por sessão de jogo.
+
+==================================================================
+RULINGS DA MESA
+==================================================================
+- Egos podem ser gastos a qualquer momento (usuário, 2026-09-29).
+- Nenhum Ego tem valor acima de 5. O que exceder 5 (Talentos, Antecedentes, Títulos...) vira pontos
+  TEMPORÁRIOS adicionais, e o Ego é tratado como 5 para todo o resto. Ex.: Recursos 7 = Recursos 5 com
+  +2 pontos temporários; gastar um deles rende PE pela linha 5 da tabela (22PE por ponto temporário)
+  (usuário, 2026-09-29).
+- Pontos temporários RECEBIDOS valem sempre o valor base do Ego (limitado a 5). Receber um ponto primeiro
+  repõe temporários gastos até a base; o que sobrar vira ponto extra acima da base, que se esgota ao ser
+  gasto e não é recuperado. Ex.: Ego 3 (3 perm / 3 temp) recebe 1 → 4 temporários disponíveis; gasta 1 → 3;
+  gasta outro → 2; recebe 1 de volta → 3 temp / 3 perm (cheio). O excedente acima de 5 do item anterior
+  é recebido desta mesma forma (usuário, 2026-09-29).
+- Fim de sessão: o Narrador escolhe (num modal) qual Ego será recuperado e cada personagem recebe 1 ponto
+  temporário nele. Esses pontos apenas repõem até a base, nunca viram pontos extras. Recursos não é
+  oferecido (só salários, espólios e recompensas) (usuário, 2026-09-29).
+- O Narrador pode conceder pontos de Ego temporários ou permanentes a qualquer momento do jogo
+  (usuário, 2026-09-29).

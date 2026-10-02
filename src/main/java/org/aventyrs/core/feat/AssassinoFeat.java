@@ -23,6 +23,7 @@ import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.character.services.HitPointsServiceImpl;
 import org.aventyrs.core.character.services.HitPointsService;
 import org.aventyrs.core.character.DamageType;
+import org.aventyrs.core.character.DamageDescriptor;
 import org.aventyrs.core.character.CriticalDamage;
 import org.aventyrs.core.character.DamageBonus;
 import org.aventyrs.core.item.AttackMethod;
@@ -368,12 +369,11 @@ public enum AssassinoFeat implements Feat {
      * "Sempre que realizar Golpes de Finalização você pode gastar 1PM, se o fizer sua rolagem de
      * ataque será efetuada contra a DM do alvo, ao invés da DF; este ataque causa Danos Mágicos."
      *
-     * <p><b>Not granted — three separate missing systems, none of them this constant's.</b> A
-     * one-time PM spend that modifies a single roll has no transaction path (PV/PM/PD spends
-     * have no reaction hook); redirecting an attack from DF to DM is not expressible ({@code
-     * AttackDelivery} takes the {@code DefenseType} from the attack, with no override); and
-     * granting a Corrente de Efeitos to a critical has no hook (see {@link #ABRIR_FERIDAS}).
-     * Held; resolved at the table.
+     * <p><b>Real</b> (core 0.0.88), as an opt-in on the roll ({@code SkillRoll#getActivatedFeats()}): permitted on a
+     * Golpe de Finalização (the opposed target has lost half its PV) and once per Rodada; the 1PM is reported on
+     * {@code InteractionResult#getActivationManaCost()} for the caller to spend; the roll goes against the DM ({@code
+     * Feat#resolveTargetDefenseOverride}); the damage is Mágico ({@code Feat#resolveDamageRetype}); and a critical
+     * carries {@code effect.EscancararDefesas}.
      */
     GOLPE_SOBRENATURAL(
             "Sempre que realizar Golpes de Finalização você pode gastar 1PM, se o fizer sua "
@@ -385,7 +385,46 @@ public enum AssassinoFeat implements Feat {
                     .attributeDomain(AttributeDomain.FOCUS)
                     .requiredAttributeValue(2)
                     .requiredFeat(GOLPE_DE_FINALIZACAO)
-                    .build()),
+                    .build()) {
+        @Override
+        public boolean permitsActivation(final SkillType skillType, final SkillRoll skillRoll,
+                                         final AttackSource attackSource, final CombatantSheet holder,
+                                         final SceneContext sceneContext) {
+            return skillType.isAttackSkill() && holder != null
+                    && holder.countFeatActivationsThisRound(GOLPE_SOBRENATURAL) == 0
+                    && sceneContext != null && sceneContext.getOpposedCharacter() != null
+                    && isFinishingBlowAgainst(sceneContext.getOpposedCharacter());
+        }
+
+        @Override
+        public int resolveActivationManaCost(final SkillType skillType) {
+            return SUPERNATURAL_STRIKE_MANA_COST;
+        }
+
+        @Override
+        public org.aventyrs.core.character.DefenseType resolveTargetDefenseOverride(
+                final SkillType attackSkill, final AttackSource attackSource, final CombatantSheet holder,
+                final SkillRoll skillRoll) {
+            return skillRoll != null && skillRoll.activated(GOLPE_SOBRENATURAL)
+                    ? org.aventyrs.core.character.DefenseType.MAGIC : null;
+        }
+
+        @Override
+        public DamageDescriptor resolveDamageRetype(final Character attacker, final SkillType attackSkill,
+                                                    final AttackSource attackSource, final CombatantSheet holder,
+                                                    final SkillRoll skillRoll) {
+            return skillRoll != null && skillRoll.activated(GOLPE_SOBRENATURAL)
+                    ? new DamageDescriptor(DamageType.MAGICO, null) : null;
+        }
+
+        @Override
+        public List<org.aventyrs.core.effect.EffectChain> resolveCriticalHitEffectChains(
+                final Character attacker, final SkillType attackSkill, final AttackSource attackSource,
+                final CombatantSheet holder, final SkillRoll skillRoll) {
+            return holder != null && skillRoll != null && skillRoll.activated(GOLPE_SOBRENATURAL)
+                    ? List.of(new org.aventyrs.core.effect.EscancararDefesas(holder)) : List.of();
+        }
+    },
 
     /**
      * "Após ser bem-sucedido em realizar um Golpe Sobrenatural você pode gastar +2PM para
@@ -682,6 +721,9 @@ public enum AssassinoFeat implements Feat {
 
     /** GOLPE_DE_FINALIZACAO's "7 ou mais graduações na Perícia de Ataque utilizada". */
     private static final int FINISHING_CRITICAL_MIN_GRADUATION = 7;
+
+    /** Golpe Sobrenatural's "você pode gastar 1PM". */
+    static final int SUPERNATURAL_STRIKE_MANA_COST = 1;
 
     /** …raises "as Margens Críticas Menor e Maior ... em +1" — the Menor half, all the hook reaches. */
     private static final int FINISHING_CRITICAL_MARGIN_INCREASE = 1;

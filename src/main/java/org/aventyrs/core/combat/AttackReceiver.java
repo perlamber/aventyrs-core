@@ -1,5 +1,8 @@
 package org.aventyrs.core.combat;
 
+import org.aventyrs.core.ego.AutocontroleDefence;
+import org.aventyrs.core.sheet.CenaImmunity;
+import org.aventyrs.core.ego.SorteEffect;
 import org.aventyrs.core.sheet.AttackerGuard;
 import org.aventyrs.core.scene.InitiativePosition;
 import org.aventyrs.core.scene.Scene;
@@ -186,14 +189,44 @@ public class AttackReceiver {
         boolean immune = defender.getGuardsAgainst(attack.getAttacker()).stream().anyMatch(AttackerGuard::isImmune)
                 // Aptidão Mágica Dracônica: immune to a Magia the defender can cast — defended outright.
                 || SpellResistance.immune(defender, attack.getAttackSource());
+        // Trava Mental: "não é capaz de se defender de ataques do tipo escolhido" — only an immunity holds.
+        boolean undefendable = attack.getDamageDescriptor() != null && defender.getCharacter().getFeats().stream()
+                .anyMatch(feat -> feat.preventsDefenseAgainst(attack.getDamageDescriptor(), defender.getCharacter()));
         // A Cego defender's failed 1d6 fails the defence whatever its total.
-        boolean defended = (margin <= 0 && !Boolean.TRUE.equals(defenseResult.getBlindCheckFailed())) || immune;
+        // Sorte's chosen success defends "independente do resultado dos dados" — never a defence Trava Mental forbids.
+        boolean forcedSuccess = defenseRoll.hasSorte(SorteEffect.FORCED_SUCCESS);
+        boolean defended = ((margin <= 0 || forcedSuccess) && !undefendable
+                && !Boolean.TRUE.equals(defenseResult.getBlindCheckFailed()))
+                || immune;
         CriticalResult criticalResult = defenseResult.getCriticalResult();
+        // Sorte a Zero's Azarão on the defence: failed by 5 or more, the attacker's critical effects land as a Menor's.
+        if (!defended && margin >= org.aventyrs.core.skill.AbstractSkillInteraction.AZARAO_MARGIN
+                && defender.hasEgoSetback(org.aventyrs.core.ego.EgoSetback.AZARAO)
+                && (criticalResult == null || !criticalResult.isCriticalFailure())) {
+            criticalResult = CriticalResult.FALHA_CRITICA_MENOR;
+        }
+        // The defender's Autocontrole (core 0.0.81): what it avoids does not land, and is not reported as landing.
+        boolean chainAvoided = defenseRoll.hasAutocontrole(AutocontroleDefence.AVOID_CHAIN)
+                || defenseRoll.hasAutocontrole(AutocontroleDefence.AVOID_CHAIN_WITH_IMMUNITY);
+        boolean criticalAvoided = defenseRoll.hasAutocontrole(AutocontroleDefence.AVOID_CRITICAL_WITH_IMMUNITY)
+                || defenseRoll.hasAutocontrole(AutocontroleDefence.IGNORE_MINOR_CRITICAL)
+                        && criticalResult != null && criticalResult.isMinor();
         boolean criticalEffectTriggered = !defended && criticalResult != null && criticalResult.isCriticalFailure();
         boolean effectChainTriggered = !defended
                 && margin >= effectChainService.getRequiredMargin(attack.getAttacker(),
                         positionOf(attack.getScene(), attack.getAttacker(), null), defender,
                         positionOf(attack.getScene(), defender, attack.getSceneContext()));
+        if (effectChainTriggered && chainAvoided
+                && defenseRoll.hasAutocontrole(AutocontroleDefence.AVOID_CHAIN_WITH_IMMUNITY)) {
+            attack.getEffectChains().forEach(stage -> defender.grantCenaImmunity(CenaImmunity.kindOf(stage)));
+        }
+        if (criticalEffectTriggered && criticalAvoided
+                && defenseRoll.hasAutocontrole(AutocontroleDefence.AVOID_CRITICAL_WITH_IMMUNITY)) {
+            criticalEffectsOf(attack, criticalResult)
+                    .forEach(effect -> defender.grantCenaImmunity(CenaImmunity.kindOf(effect)));
+        }
+        effectChainTriggered = effectChainTriggered && !chainAvoided;
+        criticalEffectTriggered = criticalEffectTriggered && !criticalAvoided;
 
         if (!defended) {
             defenseResult = defenseResult.toBuilder()
@@ -207,11 +240,15 @@ public class AttackReceiver {
             result.unappliedCriticalEffects(CriticalEffectResolver.resolve(attack.getAttacker(),
                     attack.getAttackSource(), attack.getAttackSkill(), criticalEffectTriggered ? criticalResult : null,
                     true, attack.getAdditionalCriticalEffectTypes(), attack.getDiceRoller(), false).unapplied());
-        } else if (criticalResult != null && criticalResult.isCriticalSuccess() && !immune) {
+        } else if (!immune && (criticalResult != null && criticalResult.isCriticalSuccess()
+                || defenseRoll.hasSorte(SorteEffect.UNLEASHED_CRITICALS))) {
             // "Efeitos Críticos Defensivos substituem as falhas críticas inimigas em caso de Sucesso
             // Crítico nas rolagens de Defesas" — built for the caller to apply.
             for (DefensiveCriticalEffectType type : DefensiveCriticalEffects.grantedTo(defender)) {
-                DefensiveCriticalEffect.of(type, defender, attack.getAttacker(), criticalResult,
+                // Sorte's permanent point: the defence's Efeitos Críticos apply as Maior — see SorteEffect.
+                CriticalResult defensiveSeverity = defenseRoll.hasSorte(SorteEffect.UNLEASHED_CRITICALS)
+                        ? CriticalResult.ACERTO_CRITICO_MAIOR : criticalResult;
+                DefensiveCriticalEffect.of(type, defender, attack.getAttacker(), defensiveSeverity,
                                 attack.getAttackSkill(), attack.getAttackSource(), attack.getDiceRoller())
                         .ifPresentOrElse(result::defensiveCriticalEffect,
                                 () -> result.unappliedCriticalEffect(type));
@@ -314,11 +351,7 @@ public class AttackReceiver {
             stages.addAll(attack.getEffectChains());
         }
         if (criticalEffectTriggered) {
-            List<CriticalEffect> effects = new ArrayList<>(attack.getCriticalEffects());
-            effects.addAll(CriticalEffectResolver.resolve(attack.getAttacker(), attack.getAttackSource(),
-                    attack.getAttackSkill(), criticalResult, true, attack.getAdditionalCriticalEffectTypes(),
-                    attack.getDiceRoller()).effects());
-            stages.addAll(CriticalEffect.applicableTo(attack.getDefender(), effects,
+            stages.addAll(CriticalEffect.applicableTo(attack.getDefender(), criticalEffectsOf(attack, criticalResult),
                     criticalResult, attack.getSceneContext()));
         } else {
             // Finalização on this side too: a non-critical hit applies the natural weapon's Menor.
@@ -328,13 +361,25 @@ public class AttackReceiver {
                     CriticalResult.FALHA_CRITICA_MENOR, attack.getSceneContext()));
         }
 
+        // Autocontrole's Cena immunity: a kind the defender is immune to is left out.
+        stages.removeIf(stage -> attack.getDefender().isCenaImmune(CenaImmunity.kindOf(stage)));
         Interaction<CombatantSheet> next = null;
         for (int i = stages.size() - 1; i >= 0; i--) {
             next = stages.get(i).chainInto(next);
         }
         DamageInteraction head = new DamageInteraction(damageService)
-                .fromSpell(SpellResistance.spellOf(attack.getAttackSource()));
+                .fromSpell(SpellResistance.spellOf(attack.getAttackSource()))
+                .withDiceRoller(attack.getDiceRoller());
         return (halfDamage ? head.halvingDamage() : head).chainInto(next);
+    }
+
+    /** Every Efeito Crítico a critical of criticalResult brings: the request's own, the weapon's and the Títulos'. */
+    private static List<CriticalEffect> criticalEffectsOf(final IncomingAttack attack, final CriticalResult criticalResult) {
+        List<CriticalEffect> effects = new ArrayList<>(attack.getCriticalEffects());
+        effects.addAll(CriticalEffectResolver.resolve(attack.getAttacker(), attack.getAttackSource(),
+                attack.getAttackSkill(), criticalResult, true, attack.getAdditionalCriticalEffectTypes(),
+                attack.getDiceRoller()).effects());
+        return effects;
     }
 
     /** Every held Habilidade de Competência's Defesa against an Área de Efeito (Evasão). */

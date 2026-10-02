@@ -17,6 +17,7 @@ import org.aventyrs.core.skill.DifficultyLevel;
 import org.aventyrs.core.skill.SkillType;
 
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -110,14 +111,26 @@ public class MonsterSheet extends AbstractCombatantSheet {
      */
     private final MonsterBlueprint blueprint;
 
-    /** Efeitos de Ego used since the Cena began — see {@link #recordEgoEffectUse()}. */
+    /** The stat block's damage immunities — see {@link MonsterTemplate#getDamageImmunities()}. */
+    private java.util.Set<org.aventyrs.core.character.DamageScope> damageImmunities = java.util.Set.of();
+
+    /** The stat block's healing inversion — see {@link MonsterTemplate#invertsHealing}. */
+    private java.util.function.Predicate<org.aventyrs.core.sheet.HealingSource> healingInversion = source -> false;
+
+    /** The stat block's attack Correntes — see {@link MonsterTemplate#resolveAttackEffectChains}. */
+    private java.util.function.Function<org.aventyrs.core.sheet.CombatantSheet,
+            List<org.aventyrs.core.effect.EffectChain>> attackEffectChains = self -> List.of();
+
+    /** Efeitos de Ego used since the Cena began — see {@link #recordEgoUse}. */
     private int egoEffectsUsedThisScene;
 
     private MonsterSheet(final Character character, final Player player, final int physicalDefense, final int magicDefense,
                          final SkillDifficulty generalDifficulty, final Map<SkillType, SkillDifficulty> skillDifficulties,
-                         final boolean undead, final Set<CriticalEffectType> criticalEffectImmunities,
+                         final boolean undead, final boolean intelligent,
+                         final Set<CriticalEffectType> criticalEffectImmunities,
                          final CreatureType creatureType, final MonsterBlueprint blueprint) {
         super(character);
+        setIntelligent(intelligent);
         this.player = player;
         this.blueprint = blueprint;
         this.physicalDefense = physicalDefense;
@@ -162,7 +175,7 @@ public class MonsterSheet extends AbstractCombatantSheet {
                                   @NonNull final SkillDifficulty generalDifficulty,
                                   @NonNull final Map<SkillType, SkillDifficulty> skillDifficulties) {
         return new MonsterSheet(character, player, physicalDefense, magicDefense, generalDifficulty,
-                skillDifficulties, false, Set.of(), CreatureType.MONSTRUOSO, null);
+                skillDifficulties, false, false, Set.of(), CreatureType.MONSTRUOSO, null);
     }
 
     /**
@@ -175,9 +188,13 @@ public class MonsterSheet extends AbstractCombatantSheet {
      * template is already in hand wherever a complete foe is being built.
      */
     public static MonsterSheet of(@NonNull final Character character, @NonNull final Player player, @NonNull final MonsterTemplate template) {
-        return new MonsterSheet(character, player, template.getPhysicalDefense(), template.getMagicDefense(),
+        MonsterSheet sheet = new MonsterSheet(character, player, template.getPhysicalDefense(), template.getMagicDefense(),
                 template.getGeneralDifficulty(), template.getSkillDifficulties(),
-                template.isUndead(), template.getCriticalEffectImmunities(), template.getCreatureType(), null);
+                template.isUndead(), template.isIntelligent(), template.getCriticalEffectImmunities(), template.getCreatureType(), null);
+        sheet.damageImmunities = java.util.Set.copyOf(template.getDamageImmunities());
+        sheet.healingInversion = template::invertsHealing;
+        sheet.attackEffectChains = template::resolveAttackEffectChains;
+        return sheet;
     }
 
     /** {@link #of(Character, Player, MonsterTemplate)} with a known id — the persistence-restore path. */
@@ -196,7 +213,7 @@ public class MonsterSheet extends AbstractCombatantSheet {
                                   @NonNull final MonsterBlueprint blueprint) {
         return new MonsterSheet(character, player, 0, 0,
                 SkillDifficulty.of(blueprint.getKind().getBaseSkillLevel(), 0), Map.of(),
-                blueprint.isUndead(), blueprint.getCriticalEffectImmunities(), blueprint.getCreatureType(), blueprint);
+                blueprint.isUndead(), blueprint.isIntelligent(), blueprint.getCriticalEffectImmunities(), blueprint.getCreatureType(), blueprint);
     }
 
     /** {@link #of(Character, Player, MonsterBlueprint)} with a known id — the persistence-restore path. */
@@ -284,19 +301,47 @@ public class MonsterSheet extends AbstractCombatantSheet {
     }
 
     /**
-     * Refuses when this Cena's Efeitos de Ego are spent — "Monstros comuns podem utilizar no máximo
-     * dois Efeitos de Ego por Cena". Checked by {@code EgoPointsService#useEgoPointsForEffect}
-     * before any point is spent.
+     * Refuses a Regular, and an Exemplar the Narrador has not marked intelligent — "apenas PdN Exemplares (quando
+     * inteligentes) podem usar" (table rulings, core 0.0.83–0.0.84; see {@link MonsterKind#getEgoEffectsPerScene()}
+     * and {@link #isIntelligent()}). Checked by {@code EgoPointsService#useEgoPointsForEffect} before anything happens.
      */
     public void checkEgoEffectAvailable() throws IllegalOperationException {
-        if (getRemainingEgoEffects() <= 0) {
+        if (!isIntelligent() || getRemainingEgoEffects() <= 0) {
             throw new IllegalOperationException(MONSTER_EGO_EFFECTS_EXHAUSTED);
         }
     }
 
-    /** Counts one Efeito de Ego against this Cena's limit. */
-    public void recordEgoEffectUse() {
+    /** The Correntes de Efeitos this foe's stat block puts on each of its attacks (core 0.0.92). */
+    public List<org.aventyrs.core.effect.EffectChain> getAttackEffectChains() {
+        return attackEffectChains.apply(this);
+    }
+
+    /** The stat block's own healing inversion ({@link MonsterTemplate#invertsHealing}). */
+    @Override
+    protected boolean invertsHealing(final org.aventyrs.core.sheet.HealingSource source) {
+        return source != null && healingInversion.test(source);
+    }
+
+    /** Every immunity a sheet has, plus the stat block's own ({@link MonsterTemplate#getDamageImmunities()}). */
+    @Override
+    public boolean isImmuneToDamage(final org.aventyrs.core.character.DamageType damageType,
+                                    final org.aventyrs.core.character.DamageDescriptor descriptor) {
+        return super.isImmuneToDamage(damageType, descriptor)
+                || damageImmunities.stream().anyMatch(scope -> scope.matches(damageType, descriptor));
+    }
+
+    /** Every foe is a PdN — see {@link CombatantSheet#isPdn()}; {@link #checkEgoEffectAvailable()} refuses a Regular. */
+    @Override
+    public boolean isPdn() {
+        return true;
+    }
+
+    /** One Efeito de Ego used this Cena, owed to the PJs — see {@link CombatantSheet#recordPdnEgoUse}. */
+    @Override
+    public void recordPdnEgoUse(final org.aventyrs.core.character.EgoDomain domain,
+                                final org.aventyrs.core.sheet.EgoPointType type) {
         egoEffectsUsedThisScene++;
+        super.recordPdnEgoUse(domain, type);
     }
 
     /**

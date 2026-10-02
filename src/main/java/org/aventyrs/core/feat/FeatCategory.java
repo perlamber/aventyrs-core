@@ -126,6 +126,14 @@ public enum FeatCategory {
     /** Vampírico — 11. */
     VAMPIRICO(Type.RACIAL),
 
+    // ---- Talentos de Devoção ----------------------------------------------------------------
+
+    /**
+     * Talentos de Devoção (Panteão de Tellus) — {@link DevotoFeat}. Each is split across the holder's {@code
+     * DevotionTier}: a rung applies while the tier reaches it (core 0.0.86).
+     */
+    DEVOTO(Type.DEVOTO),
+
     // ---- Antecedentes -----------------------------------------------------------------------
 
     /**
@@ -135,19 +143,45 @@ public enum FeatCategory {
      * it only through {@code Character#getBackgrounds()}. Never bought, never offered by a starting
      * slot, and absent from {@link FeatCatalog}.
      */
-    ANTECEDENTE(Type.ANTECEDENTE);
+    ANTECEDENTE(Type.ANTECEDENTE),
+
+    /** A Defeito's effect at one gravidade — see {@link DefeitoFeat}. Never offered or bought. */
+    DEFEITO(Type.DEFEITO),
+
+    /** A Qualidade's effect at one class — see {@link QualidadeFeat}. Never offered or bought. */
+    QUALIDADE(Type.QUALIDADE),
+
+    /** A trait a creature's stat block gives it — see {@link CriaturaFeat}. Never offered or bought (core 0.0.97). */
+    CRIATURA(Type.CRIATURA);
 
     private final Type type;
 
     /**
-     * The coarse division a Talento belongs to — the two headings the catalog itself is split
-     * under. Talentos de Devoção are deliberately absent: their effect is split across
-     * Adepto/Fiel/Fundamentalista devotion tiers this core has no concept of, so none is
-     * authored (see {@code docs/rules/talentos-index.md}).
+     * The coarse division a Talento belongs to — the headings the catalog itself is split under.
      */
     public enum Type {
         GERAL, RACIAL,
+        /**
+         * A Talento de Devoção (Talentos de Cenário) — catalogued and bought like any Talento, but offered by no
+         * starting slot: those offer Gerais and Raciais only (core 0.0.86).
+         */
+        DEVOTO,
         /** An Antecedente's Benefício — see {@link FeatCategory#ANTECEDENTE}. */
-        ANTECEDENTE
+        ANTECEDENTE,
+        /** A Defeito's effect — see {@link FeatCategory#DEFEITO}. */
+        DEFEITO,
+        /** A Qualidade's effect — see {@link FeatCategory#QUALIDADE}. */
+        QUALIDADE,
+        /** A creature's stat-block trait — see {@link FeatCategory#CRIATURA}. */
+        CRIATURA;
+
+        /**
+         * Whether Talentos of this type are Talentos proper — in {@link FeatCatalog}, purchasable,
+         * offered by a slot. The other three are traits given a Talento's shape so its hooks reach
+         * them, held only through an Antecedente, Defeito or Qualidade.
+         */
+        public boolean isCatalogued() {
+            return this == GERAL || this == RACIAL || this == DEVOTO;
+        }
     }
 }

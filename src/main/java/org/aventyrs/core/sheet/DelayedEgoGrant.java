@@ -22,8 +22,8 @@ import java.util.function.Predicate;
  * live {@code Scene} and an API that doesn't mark its own Rodada boundary — the grant simply
  * waits, the same fallback {@link CombatantSheet#consumeMovementThisRound()} documents.
  *
- * <p>Two kinds. A <b>grant</b> hands over points that may never have been spent, so it widens the
- * ceiling for its {@code source} first (see {@link CombatantSheet#grantTemporaryEgoPoints(
+ * <p>Two kinds. A <b>grant</b> hands over points that may never have been spent — received, so they
+ * refill first and any remainder is held as extras (see {@link CombatantSheet#receiveTemporaryEgoPoints(
  * org.aventyrs.core.character.EgoDomain, Object, int)}). A <b>{@linkplain #isRecovery() recovery}</b>
  * only gives back points that were spent — Uno com a Ira's "recuperados" — and also clears that many
  * from what the holder is still owed by the hour ({@link CombatantSheet#passHours}).

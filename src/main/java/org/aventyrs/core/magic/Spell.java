@@ -282,6 +282,45 @@ public interface Spell extends AttackSource {
     }
 
     /**
+     * The Corrente de Efeitos this version applies when its Conjuração clears the margin (core 0.0.93), or empty when
+     * it has none a cast can build. <b>Not inherited by an Efeito Alternativo</b>: Fonte da Juventude does not carry
+     * Nova Rejuvenescedora's Sobrecura, while Benção Bifurcada and Cura em Massa name it themselves.
+     */
+    default Optional<SpellChainKind> getEffectChainKind() {
+        return Optional.empty();
+    }
+
+    /** The protection this version leaves on its target — Corpo Fechado, Procrastinar Ferimento (core 0.0.94). */
+    default Optional<SpellWard> getWard() {
+        return Optional.empty();
+    }
+
+    /** {@link #getMaxAdditionalTargets()} for "criaturas adicionais" with no stated cap. */
+    int UNBOUNDED_ADDITIONAL_TARGETS = Integer.MAX_VALUE;
+
+    /**
+     * How many combatants beyond its target this version may reach (core 0.0.94) — Benção Bifurcada's "até 2 alvos"
+     * (1 more), Corrente Abençoada's "criaturas adicionais" ({@link #UNBOUNDED_ADDITIONAL_TARGETS}). 0 for the rest.
+     */
+    default int getMaxAdditionalTargets() {
+        return 0;
+    }
+
+    /** The PM each additional target costs — Corrente Abençoada's "+3PM" (core 0.0.94). */
+    default int getAdditionalTargetManaCost() {
+        return 0;
+    }
+
+    /**
+     * Whether a caster-centred area also reaches the caster (core 0.0.94) — Nova Rejuvenescedora's "todas as
+     * criaturas", Cura em Massa's "você e todos os outros". False by default: a Conjurador is never struck by their
+     * own area, and Fonte da Juventude "não recupera o conjurador".
+     */
+    default boolean isCasterAffected() {
+        return false;
+    }
+
+    /**
      * Whether character may acquire this Magia right now — <b>three independent gates</b>, all
      * of which must hold, mirroring {@code org.aventyrs.core.feat.Feat#isEligible}/{@code
      * AventyrTitleAbility#isEligible}'s own combine-every-prerequisite shape. Checked by {@code

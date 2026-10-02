@@ -18,9 +18,11 @@ class PowerStoneCatalogTest {
             PowerStoneType.CALCITA_VULCANICA,    // base: RD 1
             PowerStoneType.HEMATITA_DO_VENDAVAL, // base: MOVEMENT 2; off: attack advantage
             PowerStoneType.MITRAL_PURO,          // base: MOVEMENT 2 + attack advantage
+            PowerStoneType.OPALA_PURIFICADORA,   // def: Profano reduction 3 (core 0.0.89)
             PowerStoneType.RELAMPAGO_DOURADO,    // base: MOVEMENT 2
             PowerStoneType.RUTILO_SUBTERRANEO,   // base: DEFESAS 2 + Atletismo advantage
-            PowerStoneType.SOMBRA_SOLIDIFICADA); // def: RD 1; off: Dano Base +1
+            PowerStoneType.SOMBRA_SOLIDIFICADA,  // def: RD 1; off: Dano Base +1
+            PowerStoneType.TURMALINA_OBSCURA);   // base: Sagrado reduction 3 (core 0.0.89)
 
     @Test
     void catalogsEveryEntryOfEachPedraDoPoderList() {

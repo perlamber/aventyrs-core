@@ -71,8 +71,14 @@ public interface EgoPointsService {
      * grants.
      *
      * <p>Every recovery is bounded by its domain's own ceiling, so this can never push a pool
-     * past what it may hold. Returns {@code void}, mirroring {@code RestService#applyRest}: the
-     * sheet's own readers report the outcome.
+     * past what it may hold — and only refills, never creating an extra (table ruling, 0.0.76).
+     *
+     * <p><strong>Never Recursos</strong>: "NÃO são recuperados a cada sessão de jogo como os demais Egos".
+     * chosenDomain {@code RECURSOS} throws {@code RESOURCES_NOT_RECOVERED_BY_SESSION}, and no Vantagem's
+     * extra lands there. Wages, loot and rewards are {@link #grantTemporaryByNarrator}.
+     *
+     * <p>Returns {@code void}, mirroring {@code RestService#applyRest}: the sheet's own readers report the
+     * outcome.
      */
     void applySessionRecovery(CombatantSheet sheet, EgoDomain chosenDomain);
 
@@ -109,6 +115,85 @@ public interface EgoPointsService {
      * disable the button once pressed.
      */
     void applySessionRecovery(Map<CombatantSheet, EgoDomain> chosenDomains);
+
+    /**
+     * Spends amount Recursos points of type for Pontos de Equipamento, adding them to sheet's PE wallet, and
+     * returns the PE gained. No timing gate (table ruling: Egos can be spent at any time).
+     *
+     * <p>Each point is priced at the {@code org.aventyrs.core.ego.SocialClass} row of the Recursos the sheet
+     * holds <em>before</em> spending it — its permanent points left — plus every held Talento's {@code
+     * Feat#resolveResourcesPointValueBonus} (Saber Investir's +2). A permanent point lowers the row for the
+     * points after it: the book's Recursos 5 → 67PE, then Recursos 4 → 18PE a temporary point. A temporary
+     * point never moves the row, and an extra past 5 is worth row 5.
+     *
+     * <p>Spent through {@link #useEgoPointsForEffect}, so it counts as a use of the points. Short points are
+     * clamped, like every Ego spend: only what actually left the pool is paid for.
+     */
+    int spendResourcesForEquipmentPoints(CombatantSheet sheet, EgoPointType type, int amount);
+
+    /**
+     * Pays one Ponto de Sorte for effect on roll and returns the roll carrying it ({@code SkillRoll#withSorte}),
+     * ready to resolve again — the caller re-resolves with it, since each of these is decided after seeing the
+     * dice. The point is the effect's own type ({@code SorteEffect#getPointType()}): a temporary point never buys
+     * a permanent effect. Spent through {@link #useEgoPointsForEffect}, so Às na Manga's movement follows. No
+     * timing gate.
+     *
+     * @throws org.aventyrs.core.sheet.IllegalOperationException {@code NOT_ENOUGH_EGO_POINTS} when sheet has no
+     *         Sorte point of that type (nothing is spent), {@code INVALID_SKILL_ROLL} for {@code
+     *         REROLL_WITH_ADVANTAGE} — that is {@link #rerollWithSorte}
+     */
+    org.aventyrs.core.skill.SkillRoll applySorte(CombatantSheet sheet, org.aventyrs.core.skill.SkillRoll roll,
+                                                 org.aventyrs.core.ego.SorteEffect effect);
+
+    /**
+     * Pays one temporary Ponto de Sorte to "refazer uma rolagem de Perícia" and returns roll made again with
+     * newDice, in Vantagem ({@code SkillRoll#rerolledWithSorte}). The dice are the caller's, as ever.
+     *
+     * @throws org.aventyrs.core.sheet.IllegalOperationException {@code NOT_ENOUGH_EGO_POINTS} with no temporary
+     *         Sorte left (nothing is spent); {@code INVALID_SKILL_ROLL} for dice that aren't three d6 faces
+     */
+    org.aventyrs.core.skill.SkillRoll rerollWithSorte(CombatantSheet sheet, org.aventyrs.core.skill.SkillRoll roll,
+                                                      java.util.List<Integer> newDice);
+
+    /**
+     * Pays for one Ego effect of type in domain — the one step every Ego-spending service goes through (core 0.0.83).
+     * A player's sheet spends the point through {@link #useEgoPointsForEffect}, refused with {@code
+     * NOT_ENOUGH_EGO_POINTS} and nothing spent when it isn't there. A PdN spends nothing (table ruling): only an
+     * intelligent Exemplar may ({@code MONSTER_EGO_EFFECTS_EXHAUSTED} otherwise — core 0.0.84), and the use is recorded as owed to every PJ —
+     * see {@code MonsterSheet#recordEgoUse}.
+     */
+    void payForEffect(CombatantSheet sheet, EgoDomain domain, EgoPointType type);
+
+    /**
+     * Hands every PJ in playerCharacters the temporary point a PdN's Efeito de Ego owes them in domain — received
+     * (refilling first, then an extra), like a Narrador's grant. The caller drained it off the {@code MonsterSheet}.
+     */
+    void grantPdnCompensation(java.util.Collection<CombatantSheet> playerCharacters, EgoDomain domain);
+
+    /** The source a PdN's compensation points are held under. */
+    Object PDN_COMPENSATION = "PDN_EGO";
+
+    /** The source a Narrador's temporary grant is held under — see {@link #grantTemporaryByNarrator}. */
+    Object NARRATOR_GRANT = "NARRADOR";
+
+    /**
+     * A Narrador hands sheet amount temporary points in domain, any time in play — a received point
+     * (table ruling, 0.0.76): it refills spent temporaries first, and the rest is held as extras
+     * above the ceiling, gone once spent. Wages, loot and rewards in Recursos arrive this way too.
+     *
+     * @return int domain's spendable temporary points afterwards
+     */
+    int grantTemporaryByNarrator(CombatantSheet sheet, EgoDomain domain, int amount);
+
+    /**
+     * A Narrador raises character's domain Ego permanently by amount — {@code EgoValue#getVariable},
+     * so it doesn't count toward a Vantagem de Ego's threshold. Returns the rebuilt {@link
+     * Character} (a sheet's own is final — build a new sheet from it, the same as {@code
+     * AttributeAbilityService#grantAttributeAbility}'s permanent gain). Past 5 it becomes extra
+     * temporary points on that new sheet ({@code Character#getEgoOverflow}). A non-positive amount
+     * returns character unchanged.
+     */
+    Character grantPermanentByNarrator(Character character, EgoDomain domain, int amount);
 
     /** The lowest face a d6 can show — {@code rolledValue}'s lower bound. */
     int MIN_DIE_FACE = 1;

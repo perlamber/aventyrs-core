@@ -61,6 +61,23 @@ public class SpellCastRequest {
     private final boolean payManaWithHitPoints;
 
     /**
+     * The rung of what a rung-scaled Magia opposes (core 0.0.94) — Toque Curativo's "Efeitos mundanos ou de magias
+     * Sementes: Fácil, Brotos: Médio …", Remover Maldição's. Its GD becomes {@code Spell#getCastingDifficultyAgainst};
+     * a mundane affliction is a {@link BranchLevel#SEMENTE}, and "Maldições provenientes de Habilidades Monstruosas
+     * ou Aventyrs" (Muito Difícil) an {@link BranchLevel#EMERGENTE}. Ignored by a Magia whose GD is not scaled;
+     * {@code null} keeps the authored GD.
+     */
+    private final BranchLevel opposedBranchLevel;
+
+    /**
+     * Who else the cast reaches (core 0.0.94) — Benção Bifurcada's second target, Corrente Abençoada's creatures. At
+     * most {@code Spell#getMaxAdditionalTargets()}; each costs {@code Spell#getAdditionalTargetManaCost()} PM. Each
+     * gets the version's effect, built by the caller with {@code SpellCastingService#resolveEffect}.
+     */
+    @lombok.Singular
+    private final java.util.List<CombatantSheet> additionalTargets;
+
+    /**
      * The Talentos the caster opts into for this one cast — "Você pode optar por…" ({@code
      * MetamagicoFeat#CONJURACAO_RAPIDA}), "Você pode fazer com que suas magias…" ({@code
      * MetamagicoFeat#PROCRASTINAR_CONJURACAO}). The {@code SkillRoll#getActivatedFeats} twin for a

@@ -266,11 +266,25 @@ public class InteractionResult {
     Integer damageLowestDieRerolls;
 
     /**
+     * PM the Talentos activated on this roll cost ({@code Feat#resolveActivationManaCost} — Golpe Sobrenatural's 1PM,
+     * core 0.0.88). Reported for the caller to spend, never deducted here. {@code null} when there is none.
+     */
+    Integer activationManaCost;
+
+    /**
      * How far, in UD, this stage pushes its target back from the attacker — {@code effect.Rugido}'s
      * "Alvo é empurrado 1UD para trás". Reported, never applied: this core holds no positions, so the
      * caller moves the token. {@code null} for everything that pushes nobody.
      */
     Integer pushedBackUd;
+
+    /**
+     * The Área de Efeito this stage gives the attack it rides — {@code effect.ExplosaoCataclismica}'s "Este ataque
+     * recebe Área de Efeito – Explosão" ({@code AreaOfEffect#ATTACK_EXPLOSION}, centred on the target). Reported,
+     * never applied: the caller resolves the footprint's other occupants ({@code AreaFootprint}) and deals them the
+     * hit. {@code null} for everything that widens nothing (core 0.0.85).
+     */
+    org.aventyrs.core.scene.AreaOfEffect triggeredAreaOfEffect;
 
     /**
      * The highest Cego 1d6 face that fails this roll ({@code CombatantSheet#getBlindCheckThreshold})
@@ -343,8 +357,8 @@ public class InteractionResult {
      * Autocontrole on the roller's own Sucesso Crítico Maior. Unlike {@link
      * #temporaryBonusValue} (a grant for *someone else* this core can't resolve the recipient
      * for), this roll's own target is unambiguous, so the grant is already applied directly
-     * via {@link CombatantSheet#grantTemporaryEgoPointBonus} — which raises that domain's
-     * temporary <em>ceiling</em>, keyed by the granting ability as its source — by the time
+     * via {@link CombatantSheet#receiveNonCumulativeTemporaryEgoPoints}, keyed by the granting
+     * ability as its source — by the time
      * this result is returned; this field
      * is purely a report of what happened, same as {@link #egoLossValue}/{@link
      * #egoLossDomain} already are for {@code org.aventyrs.core.effect.Primor}. Always exactly

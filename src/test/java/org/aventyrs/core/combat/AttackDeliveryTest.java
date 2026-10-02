@@ -181,7 +181,11 @@ class AttackDeliveryTest {
 
         DamageInteraction head = assertInstanceOf(DamageInteraction.class,
                 result.getAttackResult().getNextInteraction());
-        assertInstanceOf(Definhar.class, head.getNextInteraction());
+        // Its "Roubo de Vida 1" rides right behind the damage (core 0.0.86), then the Corrente.
+        org.aventyrs.core.effect.RouboDeVida lifeSteal = assertInstanceOf(org.aventyrs.core.effect.RouboDeVida.class,
+                head.getNextInteraction());
+        assertEquals(1, lifeSteal.getAmount());
+        assertInstanceOf(Definhar.class, lifeSteal.getNextInteraction());
     }
 
     /**

@@ -1,5 +1,8 @@
 package org.aventyrs.core.skill;
 
+import org.aventyrs.core.ego.EgoSetback;
+import org.aventyrs.core.ego.InitiativeRollCharge;
+import org.aventyrs.core.ego.SorteEffect;
 import org.aventyrs.core.ability.AttributeAbility;
 import org.aventyrs.core.ability.PeritoTeoricoAbility;
 import org.aventyrs.core.action.Manoeuvre;
@@ -154,6 +157,10 @@ import org.aventyrs.core.item.ShieldAttack;
  */
 public abstract class AbstractSkillInteraction implements Interaction<CombatantSheet> {
 
+    /** Azarão's "falhar numa rolagem de Perícia por diferença ≥ 5". */
+    public static final int AZARAO_MARGIN = 5;
+
+
     private final SkillType skillType;
     private final CharacterSkillService characterSkillService;
     private final ModifierResolver modifierResolver;
@@ -207,8 +214,8 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
      * AttributeAbility} for nothing — this also grants (directly on target, the same
      * unambiguous-recipient shape {@code org.aventyrs.core.effect.Primor} uses to mutate its
      * own target) a non-cumulative temporary Ego point, via {@link
-     * CombatantSheet#grantTemporaryEgoPointBonus} — which raises that domain's temporary
-     * <em>ceiling</em> rather than handing over a free-floating point — for every domain any
+     * CombatantSheet#receiveNonCumulativeTemporaryEgoPoints} — a received point, refilling first
+     * and otherwise held as an extra while the same source already holds one — for every domain any
      * held {@code AttributeAbility}'s {@link org.aventyrs.core.ability.AttributeAbility
      * #resolveCriticalSuccessEgoGain} returns against this same criticalResult — passing that
      * ability itself as the grant's source, so one ability's own repeat triggers don't stack
@@ -373,6 +380,16 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
         bonus += sumSkillRollBonusModifiers(unlockedExcellencies);
         bonus += target.getTemporaryBonus(ModifierType.SKILL_ROLL_BONUS);
         bonus += target.getTemporaryBonus(skillType.getRollBonusType());
+        // Subordinados (core 0.0.92): a Cavaleiro's Vantagem on Perícias de Ataque, a Peão's on any other but Esquiva.
+        if (skillType.isAttackSkill()) {
+            bonus += Skill.ADVANTAGE_BONUS * org.aventyrs.core.subordinate.SubordinateBenefits.count(target, sceneContext, org.aventyrs.core.subordinate.SubordinateBenefit.CAVALEIRO_ATTACK);
+        } else if (skillType != SkillType.ESQUIVA_E_APARAR) {
+            bonus += Skill.ADVANTAGE_BONUS * org.aventyrs.core.subordinate.SubordinateBenefits.count(target, sceneContext, org.aventyrs.core.subordinate.SubordinateBenefit.PEAO_SKILL);
+        }
+        if (attributeDomain == AttributeDomain.STRENGTH || attributeDomain == AttributeDomain.DEXTERITY) {
+            // Enrijecer Musculatura: Desvantagem on "Perícias Físicas (baseadas em Força e Destreza)".
+            bonus += target.getTemporaryBonus(ModifierType.PHYSICAL_SKILL_ROLL_BONUS);
+        }
         // Malefício maluses — Caído/Agarrado's blanket Desvantagem, Desarmado's Ataque-only one,
         // and the fear ladder's, which applies only while within reach of the fear's origin.
         bonus += target.getConditionBonus(ModifierType.SKILL_ROLL_BONUS, sceneContext);
@@ -391,6 +408,9 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
         for (SkillCompetencyAbility ability : skillCompetencyAbilities) {
             bonus += ability.resolveGoverningAttributeRollBonus(attributeDomain, target);
         }
+        for (Feat feat : character.getFeats()) {
+            bonus += feat.resolveGoverningAttributeRollBonus(attributeDomain, target, sceneContext);
+        }
         if (character.getRace() != null && !target.getRacialTraitSuppression().suppressesPhysicalTraits()) {
             bonus += character.getRace().resolveGoverningAttributeRollBonus(attributeDomain, target, sceneContext,
                     sheet -> characterSizeService.getEffectiveSizeCategory(sheet).getCategory());
@@ -400,19 +420,45 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
             bonus += sumFirstRollOfTurnBonuses(character.getAttributeAbilities(), attributeDomain);
         }
 
+        // Sorte's "refazer uma rolagem … feitas em Vantagem" — see SorteEffect.
+        if (skillRoll != null && skillRoll.hasSorte(SorteEffect.REROLL_WITH_ADVANTAGE)) {
+            bonus += Skill.ADVANTAGE_BONUS;
+        }
+        // Iniciativa's "Vantagem em até duas rolagens de Perícia" — one banked use on this roll.
+        if (skillRoll != null && skillRoll.hasInitiativeCharge(InitiativeRollCharge.ADVANTAGE)) {
+            bonus += Skill.ADVANTAGE_BONUS;
+        }
+
         int difficultyReduction = SkillExcellency.totalDifficultyReduction(skillType.getExcellencyClass(), graduationValue);
         difficultyReduction += skillCompetencyAbilities.stream()
                 .mapToInt(SkillCompetencyAbility::getDifficultyReduction)
                 .sum();
         difficultyReduction += sumAttributeDomainDifficultyReductions(character.getAttributeAbilities(), attributeDomain, character);
         difficultyReduction += sumFeatDifficultyReductions(character, sceneContext, skillRoll);
+        for (Feat feat : character.getFeats()) {
+            difficultyReduction += feat.resolveGoverningAttributeDifficultyReduction(attributeDomain, character, skillRoll);
+        }
         if (counselled) {
             difficultyReduction += AncestralCounselService.DIFFICULTY_REDUCTION;
+        }
+        // Sorte's "reduzir o GD de uma rolagem efetuada contra um PdN", the Narrador approving.
+        if (skillRoll != null && skillRoll.hasSorte(SorteEffect.DIFFICULTY_REDUCTION)) {
+            difficultyReduction += SorteEffect.DIFFICULTY_REDUCTION_LEVELS;
+        }
+        // Iniciativa's "reduzir o GD de até duas rolagens de Perícia" — one banked use on this roll.
+        if (skillRoll != null && skillRoll.hasInitiativeCharge(InitiativeRollCharge.DIFFICULTY_REDUCTION)) {
+            difficultyReduction += InitiativeRollCharge.DIFFICULTY_REDUCTION_LEVELS;
+        }
+        // Escancarar Defesas: "Seu próximo ataque contra este mesmo alvo tem a GD reduzida em -1 Nível".
+        if (skillType.isAttackSkill() && target.hasOpenedDefensesOf(attackTarget)) {
+            difficultyReduction += org.aventyrs.core.effect.EscancararDefesas.DIFFICULTY_REDUCTION_LEVELS;
         }
         // Transferir Rancor: "-1 Nível" on Perícia de Ataque and Domínio do Mana rolls, cumulative.
         if (skillType.isAttackSkill() || skillType == SkillType.DOMINIO_DO_MANA) {
             difficultyReduction += target.getTemporaryBonus(ModifierType.ATTACK_AND_CONJURATION_DIFFICULTY_REDUCTION);
         }
+        // Totem de Gaea: "reduzem o GD de rolagens de Perícias em -1 nível", any Perícia.
+        difficultyReduction += target.getTemporaryBonus(ModifierType.SKILL_DIFFICULTY_REDUCTION);
         if (skillRoll != null) {
             difficultyReduction += sumFeatAttackCostDifficultyReductions(character, sceneContext, attackSource,
                     skillRoll.getActionCost(), target.getActionsThisRound(), target);
@@ -422,6 +468,9 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                 .resultStatus(hitPointsService.getStatus(target))
                 .skillRollBonus(bonus)
                 .difficultyReduction(difficultyReduction)
+                // Golpe Sobrenatural's "gastar 1PM" — reported for the caller to spend, like a roll's PA.
+                .activationManaCost(skillRoll == null ? null : nullIfZero(skillRoll.getActivatedFeats().stream()
+                        .mapToInt(feat -> feat.resolveActivationManaCost(skillType)).sum()))
                 .governingAttributeDomain(skillRoll != null ? attributeDomain : null);
 
         // Cego: "Deve rolar 1d6 sempre que efetuar uma rolagem de perícia" — reported so the caller
@@ -431,7 +480,9 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
         if (blindThreshold.isPresent()) {
             result.blindCheckThreshold(blindThreshold.getAsInt());
             if (skillRoll != null && skillRoll.getBlindCheckFace() != null) {
-                blindCheckFailed = skillRoll.getBlindCheckFace() <= blindThreshold.getAsInt();
+                // Sorte's chosen success holds "independente do resultado dos dados" — the Cego 1d6 included.
+                blindCheckFailed = skillRoll.getBlindCheckFace() <= blindThreshold.getAsInt()
+                        && !skillRoll.hasSorte(SorteEffect.FORCED_SUCCESS);
                 result.blindCheckFailed(blindCheckFailed);
             }
         }
@@ -439,7 +490,8 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
 
         if (skillType.isAttackSkill()) {
             target.getCharacter().getFeats().stream()
-                    .map(feat -> feat.resolveDamageRetype(target.getCharacter(), skillType, attackSource))
+                    .map(feat -> feat.resolveDamageRetype(target.getCharacter(), skillType, attackSource, target,
+                            skillRoll))
                     .filter(java.util.Objects::nonNull)
                     .findFirst()
                     .ifPresent(result::retypedDamage);
@@ -482,12 +534,29 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                     sceneContext, attackTarget);
             CriticalResult criticalResult = skillRoll.getCriticalResult(criticalMarginIncrease,
                     lesserCriticalMargin(attackSource), majorCriticalMargin);
+            // Sorte's chosen success "é um Acerto Crítico Menor" — an Acerto Crítico Maior the dice gave stays.
+            if (skillRoll.hasSorte(SorteEffect.FORCED_SUCCESS) && !criticalResult.isCriticalSuccess()) {
+                criticalResult = CriticalResult.ACERTO_CRITICO_MENOR;
+            }
+            // Sorte a Zero's Superficialidade: "incapaz de realizar Acertos Críticos" (core 0.0.82) — outranks even a
+            // chosen success's Menor, which still succeeds.
+            if (criticalResult.isCriticalSuccess() && target.hasEgoSetback(EgoSetback.SUPERFICIALIDADE)) {
+                criticalResult = CriticalResult.NONE;
+            }
             result.reachedDifficultyLevel(reached.orElse(null))
                     .criticalResult(criticalResult);
             resolveOutcome(bonus + skillRoll.getTotal(), skillRoll.getTargetValue(), difficultyReduction,
-                    skillCompetencyAbilities, character.getFeats(), sceneContext, character).ifPresent(outcome -> {
+                    skillCompetencyAbilities, character.getFeats(), sceneContext, character, skillRoll, attributeDomain)
+                    .ifPresent(outcome -> {
                         boolean succeeded = outcome.succeeded() && !failedBlind;
                         result.succeeded(succeeded).margin(outcome.margin());
+                        // Sorte a Zero's Azarão: "sofre efeitos de Erros Críticos sempre que falhar … por diferença
+                        // ≥ 5" (core 0.0.82) — ⚠️ read as a Falha Crítica Menor; a worse one the dice gave stays.
+                        if (!succeeded && outcome.margin() <= -AZARAO_MARGIN
+                                && target.hasEgoSetback(EgoSetback.AZARAO)
+                                && !result.build().getCriticalResult().isCriticalFailure()) {
+                            result.criticalResult(CriticalResult.FALHA_CRITICA_MENOR);
+                        }
                         if (succeeded) {
                             List<Blessing> earned = skillCompetencyAbilities.stream()
                                     .flatMap(ability -> ability.resolveSuccessBlessings(
@@ -513,7 +582,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                 List<EgoDomain> egoGainDomains = new ArrayList<>();
                 for (AttributeAbility ability : character.getAttributeAbilities()) {
                     for (EgoDomain domain : ability.resolveCriticalSuccessEgoGain(criticalResult)) {
-                        target.grantTemporaryEgoPointBonus(domain, ability, 1);
+                        target.receiveNonCumulativeTemporaryEgoPoints(domain, ability, 1);
                         if (!egoGainDomains.contains(domain)) {
                             egoGainDomains.add(domain);
                         }
@@ -883,15 +952,24 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
      */
     private Optional<RollOutcome> resolveOutcome(final int total, final Integer targetValue, final int difficultyReduction,
                                                   final List<SkillCompetencyAbility> abilities, final List<Feat> feats,
-                                                  final SceneContext sceneContext, final Character character) {
+                                                  final SceneContext sceneContext, final Character character,
+                                                  final SkillRoll skillRoll, final AttributeDomain governing) {
         if (targetValue == null) {
             return Optional.empty();
         }
         int effectiveTarget = easedTarget(targetValue, difficultyReduction);
+        // A Defeito's automatic failure outranks every automatic success (Sobreposição).
+        if (feats.stream().anyMatch(feat -> feat.resolveAutomaticFailure(skillType, governing, character))) {
+            return Optional.of(new RollOutcome(false, total - effectiveTarget));
+        }
+        // Sorte's chosen success — over the dice, never over the automatic failure above.
+        if (skillRoll != null && skillRoll.hasSorte(SorteEffect.FORCED_SUCCESS)) {
+            return Optional.of(new RollOutcome(true, Math.max(0, total - effectiveTarget)));
+        }
         boolean automatic = abilities.stream()
                 .anyMatch(ability -> ability.resolveAutomaticSuccess(skillType, effectiveTarget, sceneContext))
                 || feats.stream().anyMatch(feat -> feat.resolveAutomaticSuccess(
-                        skillType, effectiveTarget, sceneContext, character));
+                        skillType, effectiveTarget, sceneContext, character, skillRoll));
         if (automatic) {
             return Optional.of(new RollOutcome(true, 0));
         }
@@ -1016,7 +1094,10 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                 : addFlat(contributions, DamageContributionSource.TARGET_CONDITION,
                         attackTarget.getAttackerDamageBonusFromConditions(sceneContext));
 
-        int flat = temporary + condition + meiaForca + manoeuvre + title + targetCondition;
+        // A Cavaleiro's "Vantagem em … Dano" (core 0.0.92).
+        int subordinate = addFlat(contributions, DamageContributionSource.SUBORDINATE,
+                Skill.ADVANTAGE_BONUS * org.aventyrs.core.subordinate.SubordinateBenefits.count(target, sceneContext, org.aventyrs.core.subordinate.SubordinateBenefit.CAVALEIRO_DAMAGE));
+        int flat = temporary + condition + meiaForca + manoeuvre + title + targetCondition + subordinate;
         return new DamageSum(DamageBonus.total(typed, flat), new DamageBonusBreakdown(contributions));
     }
 
@@ -1188,5 +1269,9 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                 .skill(skillType.newSkillInstance())
                 .graduation(SkillGraduation.builder().graduationValue(UNTRAINED_PENALTY).build())
                 .build();
+    }
+
+    private static Integer nullIfZero(final int value) {
+        return value == 0 ? null : value;
     }
 }

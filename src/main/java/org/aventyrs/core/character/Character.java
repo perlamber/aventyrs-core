@@ -90,8 +90,26 @@ public class Character {
      */
     protected Deity deity;
 
+    /**
+     * How devoted this character is to {@link #deity} — Adepto, Fiel or Fundamentalista — or {@code null} for none.
+     * Picked at creation, then raised or lowered by the Narrador ({@code DevotionService#setTier}); it decides which
+     * rungs of each held Talento de Devoção apply. See {@link DevotionTier}.
+     */
+    protected DevotionTier devotionTier;
+
+    /**
+     * Every pick a Talento de Devoção's rung asked for, kept while the tier is lowered — see {@link
+     * org.aventyrs.core.feat.DevotionPick}. Recorded through {@code DevotionService#recordPicks}.
+     */
+    @NonNull
+    @Builder.Default
+    protected List<org.aventyrs.core.feat.DevotionPick> devotionPicks = List.of();
+
     /** A character's Centelhas at the start — one for each {@link TitleSlot} a Título may awaken into. */
     public static final int CENTELHAS = TitleSlot.values().length;
+
+    /** No Ego is ever above this — see {@link #getEffectiveEgoTotal}. */
+    public static final int MAX_EGO = 5;
 
     /**
      * The Centelhas this character still has — the sparks their Títulos Aventyr awaken from. {@value
@@ -147,6 +165,20 @@ public class Character {
     @NonNull
     @Singular
     protected List<AcquiredBackground> backgrounds;
+
+    /**
+     * Every Defeito held — the creation ones (with their Benefício de Superação) and any the Narrador
+     * imposed during play. What they gave at creation is materialized elsewhere; each one's effect is
+     * read live — see {@link #getFeats()}. Empty by default: Defeitos are optional.
+     */
+    @NonNull
+    @Singular
+    protected List<org.aventyrs.core.defect.HeldDefect> defects;
+
+    /** Every Qualidade held (at most three, all from creation). Each one's effect is read live — see {@link #getFeats()}. */
+    @NonNull
+    @Singular
+    protected List<org.aventyrs.core.defect.HeldQuality> qualities;
 
     /** Trained Perícias, keyed by {@link SkillType} for O(1) lookup instead of filtering a list. */
     @NonNull
@@ -266,11 +298,28 @@ public class Character {
 
     /**
      * The Ego total every reader of an Ego <i>total</i> should use: {@code EgoValue#getTotal()}
-     * (base + variable) plus every held Talento's {@code Feat#resolveEgoBonus}. The permanent Ego
-     * pool ceiling, {@code InitiativeService} and {@code MoralHerdadaAbility}'s Fama read this.
-     * {@code EgoValue#getBase()} readers — {@code FeatRequirements}' Ego ceilings — do not.
+     * (base + variable) plus every held Talento's {@code Feat#resolveEgoBonus}, <strong>capped at
+     * {@link #MAX_EGO}</strong>. The permanent Ego pool ceiling, {@code InitiativeService} and
+     * {@code MoralHerdadaAbility}'s Fama read this. {@code EgoValue#getBase()} readers — {@code
+     * FeatRequirements}' Ego ceilings — do not.
+     *
+     * <p>Table ruling (0.0.76): "no Ego is ever above 5". What a Talento, Antecedente, Título or
+     * Narrador adds past 5 is {@link #getEgoOverflow}, received by the sheet as extra temporary
+     * points, and the Ego counts as 5 for everything else.
      */
     public int getEffectiveEgoTotal(final EgoDomain domain) {
+        return Math.min(MAX_EGO, getUncappedEgoTotal(domain));
+    }
+
+    /**
+     * How far this Ego's total runs past {@link #MAX_EGO} — Recursos 7 is 2. The sheet receives it
+     * as extra temporary points ({@code EgoPointPool#syncOverflow}); nothing else reads it.
+     */
+    public int getEgoOverflow(final EgoDomain domain) {
+        return Math.max(0, getUncappedEgoTotal(domain) - MAX_EGO);
+    }
+
+    private int getUncappedEgoTotal(final EgoDomain domain) {
         return egos.getEgo(domain).getTotal()
                 + getFeats().stream().mapToInt(feat -> feat.resolveEgoBonus(domain, this)).sum();
     }
@@ -691,6 +740,80 @@ public class Character {
         feats.add(feat);
     }
 
+    /** The held Defeito of defect still in force, if any — at most one, see {@link #imposeDefect}. */
+    public java.util.Optional<org.aventyrs.core.defect.HeldDefect> getActiveDefect(
+            @NonNull final org.aventyrs.core.defect.Defect defect) {
+        return defects.stream().filter(held -> held.defect() == defect && held.isActive()).findFirst();
+    }
+
+    /**
+     * Holds held from now on, replacing the entry of the same Defeito still in force, if any — the plain,
+     * unvalidating mutator beneath {@code DefectService#grantDefect}, like {@link #grantFeat}.
+     */
+    /** Sets the devotion tier — the unvalidating mutator beneath {@code DevotionService#setTier}. */
+    public void setDevotionTier(final DevotionTier devotionTier) {
+        this.devotionTier = devotionTier;
+    }
+
+    /**
+     * The Divindades this character is genuinely devoted to — its own {@link #deity} and every one a Sincretismo
+     * Religioso added ("considerado um Devoto de ambas as divindades", core 0.0.87). "Nenhuma" is none.
+     */
+    public List<Deity> getGenuineDevotions() {
+        List<Deity> devotions = new ArrayList<>();
+        if (deity != null && deity != Deity.NENHUMA) {
+            devotions.add(deity);
+        }
+        devotions.addAll(org.aventyrs.core.feat.ChosenDeityFeat.chosenBy(this,
+                org.aventyrs.core.feat.DevotoFeat.SINCRETISMO_RELIGIOSO));
+        return List.copyOf(devotions);
+    }
+
+    /** The Divindades this character follows falsely — Falsa Devoção's pick, "considerado Devoto Adepto". */
+    public List<Deity> getFeignedDevotions() {
+        return org.aventyrs.core.feat.ChosenDeityFeat.chosenBy(this, org.aventyrs.core.feat.DevotoFeat.FALSA_DEVOCAO);
+    }
+
+    /** Every Divindade this character counts as a devotee of, genuinely or falsely — what "Devoto de X" asks. */
+    public List<Deity> getDevotedDeities() {
+        List<Deity> devotions = new ArrayList<>(getGenuineDevotions());
+        getFeignedDevotions().stream().filter(feigned -> !devotions.contains(feigned)).forEach(devotions::add);
+        return List.copyOf(devotions);
+    }
+
+    /** Whether this character's devotion reaches rung. */
+    public boolean isDevotedAtLeast(final DevotionTier rung) {
+        return devotionTier != null && devotionTier.reaches(rung);
+    }
+
+    /**
+     * Replaces the picks talento's rung holds with picks — the unvalidating mutator beneath {@code
+     * DevotionService#recordPicks}.
+     */
+    public void replaceDevotionPicks(@NonNull final org.aventyrs.core.feat.DevotoFeat talento,
+                                     @NonNull final DevotionTier rung,
+                                     @NonNull final List<org.aventyrs.core.feat.DevotionPick> picks) {
+        List<org.aventyrs.core.feat.DevotionPick> updated = new ArrayList<>(devotionPicks);
+        updated.removeIf(pick -> pick.talento() == talento && pick.rung() == rung);
+        updated.addAll(picks);
+        devotionPicks = List.copyOf(updated);
+    }
+
+    /** The values talento's rung picked, in the order recorded — empty when none was made. */
+    public List<Object> getDevotionPicks(final org.aventyrs.core.feat.DevotoFeat talento, final DevotionTier rung) {
+        return devotionPicks.stream()
+                .filter(pick -> pick.talento() == talento && pick.rung() == rung)
+                .map(org.aventyrs.core.feat.DevotionPick::value)
+                .toList();
+    }
+
+    public void imposeDefect(@NonNull final org.aventyrs.core.defect.HeldDefect held) {
+        List<org.aventyrs.core.defect.HeldDefect> updated = new ArrayList<>(defects);
+        getActiveDefect(held.defect()).ifPresentOrElse(current -> updated.set(updated.indexOf(current), held),
+                () -> updated.add(held));
+        defects = List.copyOf(updated);
+    }
+
     /**
      * Every Talento this character holds: the ones acquired into {@link #feats}, plus every
      * Talento a held one grants outright through {@link Feat#getGrantedFeats} ({@code
@@ -698,7 +821,8 @@ public class Character {
      * #getAttributeAbilities()}, so every effect scan <em>and</em> every prerequisite check sees
      * a granted Talento as held, with no service change.
      *
-     * <p>Also every held Antecedente's Benefício ({@link
+     * <p>Also every held Defeito's and Qualidade's effect ({@code DefeitoFeat}/{@code QualidadeFeat}, a
+     * Qualidade Maior contributing its Menor's too), and every held Antecedente's Benefício ({@link
      * org.aventyrs.core.background.Background#getBenefit()}, an {@code AntecedenteFeat}): not a
      * Talento in the rules text, but given a Talento's shape so every hook reaches it. Filter on
      * {@code FeatCategory.Type.ANTECEDENTE} to list the Talentos proper.
@@ -710,10 +834,31 @@ public class Character {
         return Stream.of(
                         feats.stream(),
                         feats.stream().flatMap(feat -> feat.getGrantedFeats(this).stream()),
-                        backgrounds.stream().map(held -> (Feat) held.background().getBenefit()))
+                        backgrounds.stream().map(held -> (Feat) held.background().getBenefit()),
+                        defects.stream().filter(org.aventyrs.core.defect.HeldDefect::isActive)
+                                .map(held -> (Feat) held.effect()),
+                        qualities.stream().flatMap(held -> held.effects().stream()).map(Feat.class::cast))
                 .flatMap(stream -> stream)
                 .distinct()
                 .toList();
+    }
+
+    /**
+     * Habilidade de Atributo slots on top of those the Atributo bases unlock — each the {@link
+     * AttributeDomain} it is limited to, or {@code null} for any Atributo: a Grave Defeito's
+     * Superação "Habilidade de Atributo adicional" (any), and Tendência Atlética Maior's "uma
+     * Habilidade do Atributo escolhido" (that one). Read by {@code AttributeAbilityService}.
+     */
+    public List<AttributeDomain> getBonusAttributeAbilitySlots() {
+        List<AttributeDomain> slots = new ArrayList<>();
+        defects.stream()
+                .filter(held -> held.superacao() == org.aventyrs.core.defect.SuperacaoBenefit.HABILIDADE_DE_ATRIBUTO)
+                .forEach(held -> slots.add(null));
+        qualities.stream()
+                .filter(held -> held.quality() == org.aventyrs.core.defect.Quality.TENDENCIA_ATLETICA
+                        && held.qualityClass() == org.aventyrs.core.defect.QualityClass.MAIOR)
+                .forEach(held -> slots.add(held.choice(AttributeDomain.class).orElse(null)));
+        return slots;
     }
 
     /** The Antecedente of kind this character holds, if it has been chosen yet. */

@@ -392,21 +392,21 @@ class CharacterSheetTest {
     }
 
     @Test
-    void grantTemporaryEgoPointBonusDoesNotStackOnTopOfOneAlreadyGrantedByTheSameSource() {
+    void aNonCumulativeReceiveDoesNotStackOnTopOfOneTheSameSourceStillHolds() {
         CharacterSheet sheet = newSheet();
-        sheet.grantTemporaryEgoPointBonus(EgoDomain.SORTE, "source", 1);
+        sheet.receiveNonCumulativeTemporaryEgoPoints(EgoDomain.SORTE, "source", 1);
 
-        assertEquals(3, sheet.grantTemporaryEgoPointBonus(EgoDomain.SORTE, "source", 1));
-        assertEquals(3, sheet.getMaxTemporaryEgoPoints(EgoDomain.SORTE));
+        assertEquals(3, sheet.receiveNonCumulativeTemporaryEgoPoints(EgoDomain.SORTE, "source", 1));
+        assertEquals(2, sheet.getMaxTemporaryEgoPoints(EgoDomain.SORTE));
     }
 
     @Test
-    void grantTemporaryEgoPointBonusFromADifferentSourceStacksOnTopOfAnother() {
+    void aNonCumulativeReceiveFromADifferentSourceStacksOnTopOfAnother() {
         CharacterSheet sheet = newSheet();
-        sheet.grantTemporaryEgoPointBonus(EgoDomain.SORTE, "source-a", 1);
+        sheet.receiveNonCumulativeTemporaryEgoPoints(EgoDomain.SORTE, "source-a", 1);
 
-        assertEquals(4, sheet.grantTemporaryEgoPointBonus(EgoDomain.SORTE, "source-b", 1));
-        assertEquals(4, sheet.getMaxTemporaryEgoPoints(EgoDomain.SORTE));
+        assertEquals(4, sheet.receiveNonCumulativeTemporaryEgoPoints(EgoDomain.SORTE, "source-b", 1));
+        assertEquals(2, sheet.getExtraTemporaryEgoPoints(EgoDomain.SORTE));
     }
 
     @Test

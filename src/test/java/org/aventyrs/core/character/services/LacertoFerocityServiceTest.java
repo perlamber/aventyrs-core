@@ -57,7 +57,7 @@ class LacertoFerocityServiceTest {
                 .feats(new ArrayList<>(List.of(feats)))
                 .build();
         CharacterSheet sheet = CharacterSheet.of(character, new Player());
-        sheet.grantTemporaryEgoPoints(EgoDomain.AUTOCONTROLE, "test", 3);
+        sheet.receiveTemporaryEgoPoints(EgoDomain.AUTOCONTROLE, "test", 3);
         return sheet;
     }
 

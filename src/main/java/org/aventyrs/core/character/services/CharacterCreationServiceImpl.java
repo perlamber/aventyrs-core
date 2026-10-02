@@ -37,6 +37,7 @@ import java.util.Map;
 import static org.aventyrs.core.util.TranslatableMessages.FEAT_REQUIRES_CHOICE;
 import static org.aventyrs.core.util.TranslatableMessages.INVALID_ATTRIBUTE_POINT_ALLOCATION;
 import static org.aventyrs.core.util.TranslatableMessages.INVALID_BACKGROUND_SELECTION;
+import static org.aventyrs.core.util.TranslatableMessages.INVALID_DEFECT_SELECTION;
 import static org.aventyrs.core.util.TranslatableMessages.INVALID_EGO_POINT_ALLOCATION;
 import static org.aventyrs.core.util.TranslatableMessages.INVALID_RACIAL_BONUS_ALLOCATION;
 import static org.aventyrs.core.util.TranslatableMessages.INVALID_STARTING_FEAT_SELECTION;
@@ -155,7 +156,7 @@ public class CharacterCreationServiceImpl implements CharacterCreationService {
 
     @Override
     public void grantStartingFeats(final Character character, final List<Feat> picks, final CharacterSheet sheet) throws IllegalOperationException {
-        final List<StartingFeatSlot> slots = getStartingFeatSlots(character.getRace());
+        final List<StartingFeatSlot> slots = getStartingFeatSlots(character);
         if (picks.size() != slots.size()) {
             throw new IllegalOperationException(INVALID_STARTING_FEAT_SELECTION);
         }
@@ -307,5 +308,235 @@ public class CharacterCreationServiceImpl implements CharacterCreationService {
                     .build());
         }
         return character.toBuilder().clearSkills().skills(raised).build();
+    }
+
+    // ---- Defeitos e Qualidades ---------------------------------------------------------------------
+
+    @Override
+    public List<StartingFeatSlot> getStartingFeatSlots(final Character character) {
+        List<StartingFeatSlot> slots = new ArrayList<>(getStartingFeatSlots(character.getRace()));
+        int traded = character.getQualities().stream()
+                .filter(held -> held.source() == org.aventyrs.core.defect.QualitySource.GENERAL_FEAT_TRADE)
+                .mapToInt(held -> held.qualityClass().getGeneralFeatSlotsTraded())
+                .sum();
+        for (int i = slots.size() - 1; i >= 0 && traded > 0; i--) {
+            if (slots.get(i).isGeneralOnly()) {
+                slots.remove(i);
+                traded--;
+            }
+        }
+        for (org.aventyrs.core.defect.HeldDefect held : character.getDefects()) {
+            if (held.superacao() != null && held.superacao().getFeatSlot() != null) {
+                slots.add(StartingFeatSlot.defect(
+                        held.superacao().getFeatSlot() == org.aventyrs.core.defect.SuperacaoBenefit.FeatSlot.QUALQUER));
+            }
+        }
+        return List.copyOf(slots);
+    }
+
+    @Override
+    public Character applyDefectsAndQualities(final Character character,
+                                              final List<org.aventyrs.core.defect.HeldDefect> defects,
+                                              final List<org.aventyrs.core.defect.HeldQuality> qualities) throws IllegalOperationException {
+        if (!character.getDefects().isEmpty() || !character.getQualities().isEmpty()) {
+            throw new IllegalOperationException(INVALID_DEFECT_SELECTION);
+        }
+        List<org.aventyrs.core.defect.HeldDefect> heldDefects = defects == null ? List.of() : defects;
+        List<org.aventyrs.core.defect.HeldQuality> heldQualities = qualities == null ? List.of() : qualities;
+        requireDistinct(heldDefects.stream().map(org.aventyrs.core.defect.HeldDefect::severity).toList());
+        requireDistinct(heldDefects.stream().map(org.aventyrs.core.defect.HeldDefect::defect).toList());
+        requireDistinct(heldQualities.stream().map(org.aventyrs.core.defect.HeldQuality::quality).toList());
+        if (heldQualities.size() > MAX_QUALITIES) {
+            throw new IllegalOperationException(INVALID_DEFECT_SELECTION);
+        }
+
+        Character working = character;
+        List<org.aventyrs.core.defect.HeldDefect> recorded = new ArrayList<>();
+        int menorOwed = 0;
+        int maiorOwed = 0;
+        for (org.aventyrs.core.defect.HeldDefect held : heldDefects) {
+            validateChoices(held.defect().resolveChoices(held.severity(), character, held.choices()), held.choices());
+            org.aventyrs.core.defect.SuperacaoBenefit benefit = held.superacao();
+            if (benefit == null || benefit.getSeverity() != held.severity()) {
+                throw new IllegalOperationException(INVALID_DEFECT_SELECTION);
+            }
+            menorOwed += benefit.getMenorQualities();
+            maiorOwed += benefit.getMaiorQualities();
+            working = applySuperacaoPick(working, benefit, held.superacaoPicks());
+            recorded.add(new org.aventyrs.core.defect.HeldDefect(held.defect(), held.severity(), held.choices(), true,
+                    benefit, held.superacaoPicks()));
+        }
+
+        int menorFromSuperacao = 0;
+        int maiorFromSuperacao = 0;
+        int traded = 0;
+        for (org.aventyrs.core.defect.HeldQuality held : heldQualities) {
+            if (heldDefects.stream().anyMatch(defect -> defect.defect() == held.quality().getOpposes())) {
+                throw new IllegalOperationException(INVALID_DEFECT_SELECTION);
+            }
+            validateChoices(held.quality().resolveChoices(held.qualityClass(), character, held.choices()), held.choices());
+            if (held.source() == org.aventyrs.core.defect.QualitySource.SUPERACAO) {
+                if (held.qualityClass() == org.aventyrs.core.defect.QualityClass.MAIOR) {
+                    maiorFromSuperacao++;
+                } else {
+                    menorFromSuperacao++;
+                }
+            } else {
+                traded += held.qualityClass().getGeneralFeatSlotsTraded();
+            }
+            working = applyQualityGrant(working, held);
+        }
+        if (menorFromSuperacao != menorOwed || maiorFromSuperacao != maiorOwed) {
+            throw new IllegalOperationException(INVALID_DEFECT_SELECTION);
+        }
+        // No Qualidade without a Defeito (a table ruling), and never more General slots than there are.
+        if (traded > 0 && (heldDefects.isEmpty() || traded > getTradableGeneralFeatSlots(character.getRace()))) {
+            throw new IllegalOperationException(INVALID_DEFECT_SELECTION);
+        }
+        return working.toBuilder().defects(recorded).qualities(heldQualities).build();
+    }
+
+    private static void requireDistinct(final List<?> values) {
+        if (new HashSet<>(values).size() != values.size()) {
+            throw new IllegalOperationException(INVALID_DEFECT_SELECTION);
+        }
+    }
+
+    /**
+     * answers against choices, in order: each choice's picks from its options, none repeated — a
+     * free-text choice ({@code Defect#FREE_TEXT}, no options) takes any non-blank String. Shared with
+     * {@link DefectServiceImpl}, which validates a Defeito imposed during play the same way.
+     */
+    static void validateChoices(final List<FeatChoice<?>> choices, final List<Object> answers) {
+        int next = 0;
+        for (FeatChoice<?> choice : choices) {
+            if (next + choice.picks() > answers.size()) {
+                throw new IllegalOperationException(INVALID_DEFECT_SELECTION);
+            }
+            List<Object> picked = answers.subList(next, next + choice.picks());
+            boolean freeText = choice.options().isEmpty() && choice.type() == String.class;
+            boolean valid = freeText
+                    ? picked.stream().allMatch(answer -> answer instanceof String text && !text.isBlank())
+                    : new HashSet<>(picked).size() == picked.size() && choice.options().containsAll(picked);
+            if (!valid) {
+                throw new IllegalOperationException(INVALID_DEFECT_SELECTION);
+            }
+            next += choice.picks();
+        }
+        if (next != answers.size()) {
+            throw new IllegalOperationException(INVALID_DEFECT_SELECTION);
+        }
+    }
+
+    /** The Superação's own pick, applied — see {@link org.aventyrs.core.defect.SuperacaoBenefit.Pick}. */
+    private static Character applySuperacaoPick(final Character character,
+                                                final org.aventyrs.core.defect.SuperacaoBenefit benefit,
+                                                final List<Object> picks) {
+        org.aventyrs.core.defect.SuperacaoBenefit.Pick pick = benefit.getPick();
+        if (pick == org.aventyrs.core.defect.SuperacaoBenefit.Pick.NONE) {
+            if (!picks.isEmpty()) {
+                throw new IllegalOperationException(INVALID_DEFECT_SELECTION);
+            }
+            return character;
+        }
+        if (picks.size() != 1) {
+            throw new IllegalOperationException(INVALID_DEFECT_SELECTION);
+        }
+        Object value = picks.get(0);
+        boolean trained = value instanceof SkillType skill && graduationOf(character, skill) >= 1;
+        switch (pick) {
+            case UNTRAINED_SKILL -> {
+                if (!(value instanceof SkillType skill) || trained) {
+                    throw new IllegalOperationException(INVALID_DEFECT_SELECTION);
+                }
+                return withGraduations(character, List.of(skill));
+            }
+            case TRAINED_SKILL -> {
+                if (!trained) {
+                    throw new IllegalOperationException(INVALID_DEFECT_SELECTION);
+                }
+                return withGraduations(character, List.of((SkillType) value));
+            }
+            case ANY_SKILL -> {
+                if (!(value instanceof SkillType skill)) {
+                    throw new IllegalOperationException(INVALID_DEFECT_SELECTION);
+                }
+                return withGraduations(character, List.of(skill));
+            }
+            case EGO_ADVANTAGE -> {
+                if (!(value instanceof org.aventyrs.core.ego.EgoAdvantage advantage)
+                        || character.getEgoAdvantages().containsKey(advantage.getEgoDomain())) {
+                    throw new IllegalOperationException(INVALID_DEFECT_SELECTION);
+                }
+                return character.toBuilder().egoAdvantage(advantage.getEgoDomain(), advantage).build();
+            }
+            case COMPETENCY_ABILITY -> {
+                if (!(value instanceof SkillCompetencyAbility ability)
+                        || graduationOf(character, ability.getSkillType()) < 1
+                        || !org.aventyrs.core.skill.SkillTraitCatalog.competencyAbilitiesOf(ability.getSkillType()).contains(ability)
+                        || SkillCompetencyAbility.allFor(character).contains(ability)) {
+                    throw new IllegalOperationException(INVALID_DEFECT_SELECTION);
+                }
+                return character.toBuilder().skillCompetencyAbility(ability).build();
+            }
+            default -> throw new IllegalOperationException(INVALID_DEFECT_SELECTION);
+        }
+    }
+
+    /**
+     * A Qualidade's creation grant: Privilegiado's "1 Ponto permanente de Recursos" and Precognição's "1
+     * ponto permanente de Iniciativa + uma Especialização ou Habilidade de Competência de Atenção" — Ego
+     * base, as the Antecedentes' Ego points are. An Especialização needs Atenção trained to sit on.
+     */
+    private static Character applyQualityGrant(final Character character, final org.aventyrs.core.defect.HeldQuality held) {
+        if (held.qualityClass() != org.aventyrs.core.defect.QualityClass.MAIOR) {
+            return character;
+        }
+        return switch (held.quality()) {
+            case DESTINADO_A_FORTUNA -> character.toBuilder()
+                    .egos(character.getEgos().withBaseBonus(EgoDomain.RECURSOS, 1)).build();
+            case SEXTO_SENTIDO -> {
+                Character.CharacterBuilder builder = character.toBuilder()
+                        .egos(character.getEgos().withBaseBonus(EgoDomain.INICIATIVA, 1));
+                SkillTrait trait = held.choice(SkillTrait.class).orElseThrow(
+                        () -> new IllegalOperationException(INVALID_DEFECT_SELECTION));
+                if (trait instanceof SkillSpecialization specialization) {
+                    CharacterSkill atencao = character.getSkills().get(SkillType.ATTENTION);
+                    if (atencao == null || atencao.getGraduation().getGraduationValue() < 1) {
+                        throw new IllegalOperationException(INVALID_DEFECT_SELECTION);
+                    }
+                    List<SkillSpecialization> specializations = new ArrayList<>(atencao.getSpecializations());
+                    specializations.add(specialization);
+                    Map<SkillType, CharacterSkill> skills = new EnumMap<>(SkillType.class);
+                    skills.putAll(character.getSkills());
+                    skills.put(SkillType.ATTENTION, atencao.toBuilder().specializations(List.copyOf(specializations)).build());
+                    builder.clearSkills().skills(skills);
+                } else {
+                    builder.skillCompetencyAbility((SkillCompetencyAbility) trait);
+                }
+                yield builder.build();
+            }
+            default -> character;
+        };
+    }
+
+    private static int graduationOf(final Character character, final SkillType skillType) {
+        CharacterSkill skill = character.getSkills().get(skillType);
+        return skill == null ? 0 : skill.getGraduation().getGraduationValue();
+    }
+
+    @Override
+    public int grantStartingEquipmentPoints(@lombok.NonNull final CharacterSheet sheet) {
+        return sheet.grantEquipmentPoints(socialClassOf(sheet.getCharacter()).getStartingEquipmentPoints());
+    }
+
+    @Override
+    public java.util.Optional<org.aventyrs.core.item.ItemStore> getStartingStore(@lombok.NonNull final Character character) {
+        return socialClassOf(character).getStartingRarity().map(org.aventyrs.core.item.ItemStore::new);
+    }
+
+    /** At creation nothing is spent yet, so the Recursos total (capped at 5) is the permanent points left. */
+    private static org.aventyrs.core.ego.SocialClass socialClassOf(final Character character) {
+        return org.aventyrs.core.ego.SocialClass.of(character.getEffectiveEgoTotal(EgoDomain.RECURSOS));
     }
 }

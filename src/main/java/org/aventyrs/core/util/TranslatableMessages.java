@@ -163,6 +163,39 @@ public class TranslatableMessages {
      * CharacterCreationService#applyBackground}.
      */
     public static final String INVALID_BACKGROUND_SELECTION = "INVALID_BACKGROUND_SELECTION";
+    /**
+     * A Defeito/Qualidade selection that breaks a creation rule — see {@code
+     * CharacterCreationService#applyDefectsAndQualities} for the list.
+     */
+    public static final String INVALID_DEFECT_SELECTION = "INVALID_DEFECT_SELECTION";
+    /** Superar names a Defeito the character does not hold in force — {@code DefectService#overcome}. */
+    public static final String DEFECT_NOT_HELD = "DEFECT_NOT_HELD";
+    /** A rung pick was recorded for a Talento de Devoção the character doesn't hold, or a rung it hasn't reached. */
+    public static final String DEVOTION_PICK_NOT_OWED = "DEVOTION_PICK_NOT_OWED";
+    /** A rung pick that isn't among the rung's options, or the wrong number of them. */
+    public static final String INVALID_DEVOTION_PICK = "INVALID_DEVOTION_PICK";
+    /** A character already commands as many Subordinados as their Carisma. */
+    public static final String SUBORDINATE_LIMIT_REACHED = "SUBORDINATE_LIMIT_REACHED";
+    /** A second common Subordinado of a grade the character already commands — only a Prodigioso may share it. */
+    public static final String SUBORDINATE_GRADE_HELD = "SUBORDINATE_GRADE_HELD";
+
+    /** Cativar Animal touches "um animal" — the target is not one (core 0.0.92). */
+    public static final String CAPTIVATE_REQUIRES_ANIMAL = "CAPTIVATE_REQUIRES_ANIMAL";
+
+    /** Cativar Animal makes a Cavaleiro or a Torre — another grade was asked for. */
+    public static final String CAPTIVATE_GRADE_NOT_ALLOWED = "CAPTIVATE_GRADE_NOT_ALLOWED";
+
+    /** "Um mesmo animal não pode ser alvo deste efeito uma segunda vez sem que antes passe por um Descanso." */
+    public static final String CAPTIVATE_NEEDS_REST = "CAPTIVATE_NEEDS_REST";
+
+    /** The Esquecida's sombra conselheira needs the Fundamentalista rung of Abraçado pela Esquecida (core 0.0.98). */
+    public static final String SHADOW_COUNSEL_NOT_HELD = "SHADOW_COUNSEL_NOT_HELD";
+
+    /** The sombra conselheira is a Peão, Cavaleiro or Torre. */
+    public static final String SHADOW_COUNSEL_GRADE_NOT_ALLOWED = "SHADOW_COUNSEL_GRADE_NOT_ALLOWED";
+
+    /** "Apenas uma vez por Cena". */
+    public static final String SHADOW_COUNSEL_ALREADY_USED = "SHADOW_COUNSEL_ALREADY_USED";
 
     /**
      * A Talento only a newly created character may take ("Apenas personagens recém-criados") was
@@ -270,7 +303,10 @@ public class TranslatableMessages {
      * {@link #ABILITY_ACTIVATION_PREVENTED}, which is a Condição forbidding activation outright.
      */
     public static final String ABILITY_ON_COOLDOWN = "ABILITY_ON_COOLDOWN";
-    /** A Regular monster has used its two Efeitos de Ego this Cena — see {@code MonsterSheet#checkEgoEffectAvailable}. */
+    /**
+     * A foe may not use an Efeito de Ego — a Regular, or an Exemplar the Narrador has not marked intelligent (core
+     * 0.0.83–0.0.84). See {@code MonsterSheet#checkEgoEffectAvailable}.
+     */
     public static final String MONSTER_EGO_EFFECTS_EXHAUSTED = "MONSTER_EGO_EFFECTS_EXHAUSTED";
     /** {@code CombatantSheet#resolveDiceRoll} was handed an id no {@code RecurringDice} is waiting on. */
     public static final String PENDING_DICE_ROLL_NOT_FOUND = "PENDING_DICE_ROLL_NOT_FOUND";
@@ -334,6 +370,21 @@ public class TranslatableMessages {
 
     /** The combatant does not have enough Pontos de Equipamento (PE) for this purchase. */
     public static final String NOT_ENOUGH_EQUIPMENT_POINTS = "NOT_ENOUGH_EQUIPMENT_POINTS";
+
+    /** Recursos is never refilled by the end of a session — only by wages, loot and rewards. */
+    public static final String RESOURCES_NOT_RECOVERED_BY_SESSION = "RESOURCES_NOT_RECOVERED_BY_SESSION";
+
+    /** An Iniciativa Ego change that doesn't apply: the combatant isn't in the Scene, or a "lower" isn't lower. */
+    public static final String INVALID_INITIATIVE_CHANGE = "INVALID_INITIATIVE_CHANGE";
+
+    /** A roll asked for an Iniciativa roll effect with no use of it banked this Cena. */
+    public static final String NO_INITIATIVE_CHARGE_BANKED = "NO_INITIATIVE_CHARGE_BANKED";
+
+    /** The effect named isn't running on this combatant, or has no Duração to shorten. */
+    public static final String NOT_A_RUNNING_EFFECT = "NOT_A_RUNNING_EFFECT";
+
+    /** No Ego of this combatant is at zero and still owes its 1d6 on the setback table. */
+    public static final String NO_EGO_SETBACK_OWED = "NO_EGO_SETBACK_OWED";
 
     /** This item store does not sell the requested Equipamento — above its Raridade ceiling, a
      * Regalia, or an Arma/Defesa Natural. */
@@ -485,4 +536,7 @@ public class TranslatableMessages {
      * Analista Tático, outside a Cena de Combate, or after they have already acted or had their Turn.
      */
     public static final String DEFER_TO_LAST_NOT_PERMITTED = "DEFER_TO_LAST_NOT_PERMITTED";
+
+    /** A held Talento forbids Habilidades de Atributo of this Atributo — {@code Feat#forbidsAttributeAbility}. */
+    public static final String ATTRIBUTE_ABILITY_FORBIDDEN = "ATTRIBUTE_ABILITY_FORBIDDEN";
 }

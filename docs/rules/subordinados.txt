@@ -1,0 +1,19 @@
+Subordinados
+(Rules text supplied by the table, 2026-10-01 — not in the published documents.)
+
+Subordinados são Personagens que não executam ações, ao invés disso oferecem benefícios à um Personagem Jogador ou Grupo.
+Os Subordinados são divididos em seis tipos: Bispo, Cavaleiro, Peão, Rainha, Rei e Torre. E podem receber a classificação Prodigioso.
+
+Bispos curam os Personagens Jogadores, fazendo os recuperar 2PV por Rodada ou concedendo Roubo de Vida 1 aos seus ataques e magias.
+Cavaleiros auxiliam os personagens em ações ofensivas de combate, fornecendo Vantagem em rolagens de Perícias de Ataque ou Dano.
+Peões auxiliam os personagens em suas ações de diversas formas, concedendo-os Vantagem em rolagens de Perícias ou reduzindo a margem crítica de rolagens de Perícias em -2, não aplicável à Perícias de Ataque e Esquiva e Aparar.
+Rainhas e Reis motivam com seu carisma. Personagens apoiados por uma Rainha recebem +1PA ou aumentam sua Iniciativa em +2, os apoiados por Reis recebem 2 Pontos Temporários em Ego, escolhido entre Sorte e Autocontrole.
+Torres são os protetores, fornecem benefícios defensivos, escolhidos entre Bônus de +2 nas Defesas do personagem ou RA.
+
+Bispos, Cavaleiros e Torres influenciam os Personagens apenas em cenas de Combate, já os Peões disponibilizam seus benefícios o tempo todo.
+Rainhas entregam bônus em Ação continuamente, mas auxiliam em Iniciativa apenas em cenas de estresse.
+Reis concedem Egos apenas uma vez a cada dia, renovando os bônus em Autocontrole e Sorte apenas após os personagens passarem por Descansos Longos.
+
+Subordinados Prodigiosos concedem seus benefícios a todos os Personagens do Grupo de Jogadores, e não apenas a um único Personagem Jogador.
+Cada Personagem jogador pode ter sob seu comando uma quantidade de Subordinados igual ao seu Carisma, e não podem possuir Subordinados do mesmo tipo, a menos que um deles seja prodigioso.
+Os benefícios de Subordinados comuns e prodigiosos se acumulam.

@@ -62,7 +62,8 @@ public record HealingSource(@NonNull Object key, boolean repeatableInComa, Comba
             return new HealingSource(key, repeatableInComa, null, spell, titleAbility, RelayedHealer.NONE);
         }
         List<AventyrTitle> titles = healer.getCharacter().getAllTitles();
-        int bonus = titles.stream().mapToInt(title -> title.resolveHealingBonus(this, null)).sum();
+        int bonus = titles.stream().mapToInt(title -> title.resolveHealingBonus(this, null)).sum()
+                + healerFeatBonus();
         boolean bypass = titles.stream().anyMatch(title -> title.grantsComaHealingBypass(this));
         Integer window = null;
         if (targetIsDead) {
@@ -99,6 +100,24 @@ public record HealingSource(@NonNull Object key, boolean repeatableInComa, Comba
     public static HealingSource titleAbility(@NonNull final AventyrTitleAbility ability,
                                              final CombatantSheet activator) {
         return new HealingSource(ability, false, activator, null, ability);
+    }
+
+    /**
+     * What the healer's Talentos add to this heal ({@code Feat#resolveHealingDealtBonus} — Tocado por Undine e
+     * Haloi's +1, core 0.0.86); 0 with no healer.
+     */
+    public int healerFeatBonus() {
+        if (healer == null) {
+            return 0;
+        }
+        return healer.getCharacter().getFeats().stream()
+                .mapToInt(feat -> feat.resolveHealingDealtBonus(healer.getCharacter(), this))
+                .sum();
+    }
+
+    /** A Bispo Subordinado's "2PV por Rodada" (core 0.0.92) — no healer, repeatable like a Regeneração. */
+    public static HealingSource subordinate() {
+        return new HealingSource("SUBORDINADO_BISPO", true, null, null, null);
     }
 
     /** A real Descanso — the one heal that stays repeatable in Coma, 1PV at a time. */

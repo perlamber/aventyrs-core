@@ -177,4 +177,60 @@ public interface CharacterCreationService {
         }
         return applyBackground(applyBackground(character, origin), career);
     }
+
+    // ---- Defeitos e Qualidades — after the Egos, before the Habilidades and Talentos ----------------
+
+    /**
+     * Every starting Talento slot character has, once its Defeitos and Qualidades are applied: {@link
+     * #getStartingFeatSlots(Race)}, less the General slots traded for Qualidades ("reduz efetivamente a
+     * quantidade de Talentos Gerais iniciais"), plus one per Superação granting a Talento. What {@link
+     * #grantStartingFeats} matches picks against.
+     */
+    List<StartingFeatSlot> getStartingFeatSlots(Character character);
+
+    /** How many starting General-only slots race has — the most Qualidades can be traded for. */
+    default int getTradableGeneralFeatSlots(final Race race) {
+        return (int) getStartingFeatSlots(race).stream().filter(StartingFeatSlot::isGeneralOnly).count();
+    }
+
+    /**
+     * Validates defects and qualities against character and returns a new {@code Character} holding them,
+     * with every Superação pick materialized — a Perícia trained or raised, a Vantagem de Ego or
+     * Habilidade de Competência added — and the Qualidades' own creation grants (Privilegiado's Recursos,
+     * Precognição's Iniciativa and Atenção trait). A Superação Talento or Habilidade de Atributo becomes a
+     * slot the later steps fill ({@link #getStartingFeatSlots(Character)}, {@code
+     * Character#getBonusAttributeAbilitySlots()}). Every Defeito is recorded as a creation one.
+     *
+     * <p>Checks: at most one Defeito per gravidade (so ≤ 3), no Defeito twice; each Defeito's choices
+     * and Superação (its gravidade's, with its pick); at most {@code MAX_QUALITIES} Qualidades, none
+     * twice, none opposing a held Defeito, each one's choices; the Superação Qualidades exactly the
+     * counts the chosen benefits grant; a traded Qualidade only beside a Defeito, and no more General
+     * slots traded than the race has. Callable once — a character already holding either is refused.
+     *
+     * @throws IllegalOperationException {@code INVALID_DEFECT_SELECTION}
+     */
+    Character applyDefectsAndQualities(Character character, List<org.aventyrs.core.defect.HeldDefect> defects,
+                                       List<org.aventyrs.core.defect.HeldQuality> qualities) throws IllegalOperationException;
+
+    /** "Nenhum personagem pode – de forma alguma – possuir mais do que 3 (três) Qualidades". */
+    int MAX_QUALITIES = 3;
+
+    // ---- Equipamento inicial — last, once the Recursos can no longer change ----------------------
+
+    /**
+     * Grants sheet the starting Pontos de Equipamento its Recursos gives ("Pts. Eqp. Iniciais", {@link
+     * org.aventyrs.core.ego.SocialClass}), read off the finished character's Recursos — so it runs after
+     * everything that can raise it (an Antecedente's Ego, Privilegiado). Returns the PE sheet then holds.
+     *
+     * <p><strong>Call it once, at creation, and never on a rebuilt sheet</strong>: the wallet persists with
+     * the character, and this is deliberately not inside {@code CharacterSheet.of}, which also rebuilds
+     * sheets from saved state. Not idempotent — a second call grants again.
+     */
+    int grantStartingEquipmentPoints(CharacterSheet sheet);
+
+    /**
+     * The store the creation step buys from: every Equipamento up to the "Raridade Inicial" character's
+     * Recursos allows. Empty at Recursos 0 ("Nenhum") — nothing is bought, and the PE are 0 anyway.
+     */
+    java.util.Optional<org.aventyrs.core.item.ItemStore> getStartingStore(Character character);
 }

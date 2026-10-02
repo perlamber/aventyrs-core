@@ -223,6 +223,24 @@ public class DamageServiceImpl implements DamageService {
         return Math.max(0, total);
     }
 
+    @Override
+    public int getSanctityDamageReduction(final CombatantSheet target,
+                                          final org.aventyrs.core.character.DamageSanctity sanctity) {
+        if (sanctity == null) {
+            return 0;
+        }
+        ModifierType type = sanctity == org.aventyrs.core.character.DamageSanctity.PROFANO
+                ? ModifierType.PROFANE_DAMAGE_REDUCTION : ModifierType.SACRED_DAMAGE_REDUCTION;
+        Character character = target.getCharacter();
+        int total = sumAcrossSources(character, type, target);
+        for (Item item : character.getEquipment()) {
+            total += item.resolveFavorBonus(type, character);
+            total += item.resolveEnhancementBonus(type, null, character);
+        }
+        total += target.getTemporaryBonus(type);
+        return Math.max(0, total);
+    }
+
     /** Every equipped Item's Favor and fitted enhancements, for whatever RM they grant. */
     private int sumEquipmentMagicReduction(final Character character) {
         int total = 0;
@@ -248,6 +266,8 @@ public class DamageServiceImpl implements DamageService {
         total += sumEgoAdvantageAbsoluteDamageReduction(character, sceneContext);
         total += sumTitleAbilityAbsoluteDamageReduction(character, target, sceneContext);
         total += sumAllyGrantedAbsoluteDamageReduction(target, sceneContext);
+        // A Torre's "RA" (core 0.0.92) — one instance per Torre reaching the target.
+        total += DamageService.DEFAULT_DAMAGE_REDUCTION * org.aventyrs.core.subordinate.SubordinateBenefits.count(target, sceneContext, org.aventyrs.core.subordinate.SubordinateBenefit.TORRE_RA);
         // A *timed* RA grant — an activated ability handing its holder RA for N Rodadas
         // (AbencoadoPelaLuzAbility#GLORIA_RELAMPEJANTE_DE_TESLA). Deliberately a second
         // consumption branch beside the continuously-scanned passives above: every other source
@@ -361,8 +381,8 @@ public class DamageServiceImpl implements DamageService {
                                     final CombatantSheet source,
                                     final int rawDamage, final boolean ignoreDamageReduction,
                                     final boolean attackHalvesDamage, final Spell spell) {
-        if (target != null && spell != null && character.getFeats().stream()
-                .anyMatch(feat -> feat.isImmuneToSpell(spell, target))) {
+        // Immune to the Magia itself — a Talento (Aptidão Mágica Dracônica) or the Raça (Nascido da Floresta, Vampiro).
+        if (target != null && spell != null && target.isImmuneToSpell(spell)) {
             return 0;
         }
         // An immunity ("Imunidade ao Elemento escolhido") is judged before anything else: there is
@@ -374,6 +394,9 @@ public class DamageServiceImpl implements DamageService {
                 // A Meio-Dano limited to a DamageScope (an element, physical or magic damage only),
                 // held by a Habilidade or a timed DamageScopeEffect.
                 || (target != null && target.halvesDamage(damageType, damageDescriptor))
+                // A Meio-Dano scoped to the Magia itself (Resistência Atípica to Energia Profana/Divina).
+                || (target != null && spell != null && character.getFeats().stream()
+                        .anyMatch(feat -> feat.halvesSpellDamage(spell, target)))
                 || sumAcrossSources(character, ModifierType.HALF_DAMAGE, target) > 0
                 // A timed Meio-Dano grant (SantoAbility#PROTECAO_UNGIDA's 3 Rodadas), the
                 // TemporaryBonus twin of the passive scan above and of the timed RA branch in
@@ -405,9 +428,19 @@ public class DamageServiceImpl implements DamageService {
                 }
                 if (effectiveType != DamageType.PRIMORDIAL) {
                     reduction += getTotalDamageTakenReduction(target, sceneContext);
+                    // An RDS against this attacker only (Bênção de Surt'Eldur's Fundamentalista).
+                    if (source != null) {
+                        reduction += character.getFeats().stream()
+                                .mapToInt(feat -> feat.resolveDamageTakenReductionAgainst(character, target, source))
+                                .sum();
+                    }
                 }
                 if (effectiveType == DamageType.MAGICO) {
                     reduction += getTotalMagicReduction(target);
+                }
+                // A reduction of the hit's sacred or profane nature (core 0.0.89), whatever its type.
+                if (damageDescriptor != null && damageDescriptor.sanctity() != null) {
+                    reduction += getSanctityDamageReduction(target, damageDescriptor.sanctity());
                 }
                 // Arcanista's "RM para resistir aos efeitos de Magias que você conheça": an RM of its
                 // own, scoped to the Magia rather than to magical damage — ⚠️ a reading: it reaches
@@ -435,7 +468,11 @@ public class DamageServiceImpl implements DamageService {
         if (stone != null && !ignoreDamageReduction) {
             reduction += stone.getEffectiveDamageReduction();
         }
-        int afterFlatReduction = Math.max(0, rawDamage - reduction);
+        // Vulnerabilidade: "sofrerá N pontos de danos adicionais" — onto the hit itself, before mitigation.
+        int damageTakenIncrease = character.getFeats().stream()
+                .mapToInt(feat -> feat.resolveDamageTakenIncrease(damageType, damageDescriptor, character))
+                .sum();
+        int afterFlatReduction = Math.max(0, rawDamage + damageTakenIncrease - reduction);
         int finalDamage = halfDamage ? afterFlatReduction / 2 : afterFlatReduction;
         if (stone != null && finalDamage > 0 && !ignoreDamageReduction) {
             // "que lhe causaria Danos" — only a hit that really would have hurt spends the stone.

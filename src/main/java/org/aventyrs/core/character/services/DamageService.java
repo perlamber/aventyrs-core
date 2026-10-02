@@ -102,6 +102,13 @@ public interface DamageService {
      */
     int getTotalMagicReduction(CombatantSheet target);
 
+    /**
+     * The reduction target holds against hits of one sacred or profane nature (core 0.0.89) — {@code
+     * ModifierType#PROFANE_DAMAGE_REDUCTION}/{@code #SACRED_DAMAGE_REDUCTION} from its Habilidades, its worn items
+     * (a socketed Opala Purificadora or Turmalina Obscura) and timed bonuses. Reaches any type of that nature.
+     */
+    int getSanctityDamageReduction(CombatantSheet target, org.aventyrs.core.character.DamageSanctity sanctity);
+
     /** Total RA, same three sources as RD. Never negative. */
     int getTotalAbsoluteDamageReduction(Character character);
 

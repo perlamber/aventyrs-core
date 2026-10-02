@@ -70,6 +70,12 @@ public interface AttributeAbilityService {
     AttributeAbilityGrantResult grantAttributeAbility(Character character, AttributeAbility ability) throws IllegalOperationException;
 
     /**
+     * Whether a new Habilidade of domain fits a bonus slot ({@code Character#getBonusAttributeAbilitySlots()})
+     * once the base's own slots are full — what {@link #grantAttributeAbility} falls back to.
+     */
+    boolean hasFreeBonusSlot(Character character, org.aventyrs.core.character.AttributeDomain domain);
+
+    /**
      * Resolves the {@code SkillCompetencyAbility} half of one {@link
      * AttributeAbilityGrantResult#getPendingSkillTraitChoices()} entry — e.g. one Carisma
      * Perícia {@code CharismaAbility#CHARME} still owes a choice for — once the player has

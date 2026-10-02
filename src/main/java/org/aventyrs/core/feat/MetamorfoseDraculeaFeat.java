@@ -243,6 +243,19 @@ public final class MetamorfoseDraculeaFeat extends AbstractFeat {
                 ? CAVALO_LIFE_MULTIPLIER_BONUS : 0;
     }
 
+    /**
+     * Serpente Espinhosa's "Corrente de Efeitos – Veneno Vampírico" — on an attack with its Cauda Constritora, while
+     * the shape is worn (core 0.0.85).
+     */
+    @Override
+    public List<org.aventyrs.core.effect.EffectChain> resolveEffectChains(
+            final Character attacker, final SkillType attackSkill, final AttackSource attackSource,
+            final CombatantSheet holder, final SceneContext sceneContext,
+            final org.aventyrs.core.skill.CriticalResult criticalResult) {
+        return wornForma(holder) == FormaMetamorfica.SERPENTE_ESPINHOSA && attackSource == NaturalWeapon.CAUDA_CONSTRITORA
+                ? List.of(new org.aventyrs.core.effect.VenenoVampirico(holder)) : List.of();
+    }
+
     /** Cavalo de Chifres: "Ignora Terreno Difícil", while the shape is worn. */
     @Override
     public boolean ignoresDifficultTerrain(final Character character, final CombatantSheet sheet) {

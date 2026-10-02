@@ -1,5 +1,7 @@
 package org.aventyrs.core.effect;
 
+import org.aventyrs.core.rest.RestType;
+
 import lombok.Getter;
 import org.aventyrs.core.magic.HealingCondition;
 import org.aventyrs.core.magic.Spell;
@@ -96,6 +98,16 @@ public class SpellHealingEffect extends AbstractEffect implements HealingEffect 
         this.caster = caster;
     }
 
+    /** The mark Aliviar a Dor leaves on a target it healed, until their Descanso Longo. */
+    public static final String ONCE_PER_LONG_REST_PREFIX = "spell-heal:";
+
+    /** The Descanso this target recovers as from — a hostile's own tier when the Magia names one (Fonte da Juventude). */
+    private RestType restFor() {
+        return hostileTarget && healing.hostileRestEquivalent() != null
+                ? healing.hostileRestEquivalent()
+                : healing.restEquivalent();
+    }
+
     @Override
     public String getDescription() {
         return spell.getPrimaryEffectDescription();
@@ -110,9 +122,24 @@ public class SpellHealingEffect extends AbstractEffect implements HealingEffect 
                     .build();
         }
 
+        // Aliviar a Dor: "só afeta o alvo 1 vez, voltando a afetá-lo somente após ele passar por um Descanso Longo".
+        String onceKey = ONCE_PER_LONG_REST_PREFIX + spell.getName();
+        if (healing.oncePerLongRest() && target.isAffectedUntilRest(onceKey)) {
+            return reportChain(InteractionResult.builder()
+                    .resultStatus(resolveStatus(target)))
+                    .build();
+        }
         int damageBefore = target.getDamageTaken();
         target.heal(resolveAmount(target, damageBefore), HealingSource.spell(spell, caster));
         int recovered = damageBefore - target.getDamageTaken();
+        if (healing.restoresAllPools()) {
+            RestType rest = restFor();
+            target.recoverMagicPoints(restService.getRecoveredMagicPoints(target.getCharacter(), rest));
+            target.recoverDeterminationPoints(restService.getRecoveredDeterminationPoints(target.getCharacter(), rest));
+        }
+        if (healing.oncePerLongRest()) {
+            target.markAffectedUntilRest(onceKey, RestType.LONGO);
+        }
 
         return reportChain(InteractionResult.builder()
                 .resultStatus(resolveStatus(target))
@@ -134,8 +161,7 @@ public class SpellHealingEffect extends AbstractEffect implements HealingEffect 
         if (healing.fullRecovery()) {
             return damageTaken;
         }
-        int offered = Math.max(0, restService.getRecoveredHitPoints(target.getCharacter(),
-                healing.restEquivalent()) + healingBonus);
+        int offered = Math.max(0, restService.getRecoveredHitPoints(target.getCharacter(), restFor()) + healingBonus);
         return hostileTarget && healing.halvedForHostiles() ? offered / 2 : offered;
     }
 }

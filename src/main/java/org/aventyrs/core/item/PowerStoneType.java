@@ -163,14 +163,16 @@ public enum PowerStoneType {
             "Dano causado é Elemental: Natural em adição aos seus tipos."),
 
     /**
-     * Opala Purificadora (Sagrada). A per-Rodada PV-regen tick, a damage-type-scoped ("profanos")
-     * RD and effect-Duração reduction, and Sagrado damage typing / anti-undead dice — none
-     * expressible.
+     * Opala Purificadora (Sagrada). Real (core 0.0.89): the defensive "Danos profanos reduzidos em -3" ({@link
+     * ModifierType#PROFANE_DAMAGE_REDUCTION}) and the offensive "Dano causado é Sagrado" ({@link
+     * #getOffensiveSanctity()}). Still not: the per-Rodada PV-regen tick, the effect-Duração reduction, and the
+     * anti-undead +1d6 (this core grants no dice).
      */
     OPALA_PURIFICADORA("Opala Purificadora", "Sagrada",
             "Você recupera 2PV a cada Rodada.",
             "Danos profanos reduzidos em -3, Duração de efeitos Profanos reduzido em -2 Rodadas.",
-            "Dano causado é Sagrado em adição aos seus tipos e aumenta em +1d6 contra Mortos-Vivos e Abissais."),
+            "Dano causado é Sagrado em adição aos seus tipos e aumenta em +1d6 contra Mortos-Vivos e Abissais.",
+            List.of(), List.of(new ItemBonus(ModifierType.PROFANE_DAMAGE_REDUCTION, 3)), List.of()),
 
     /**
      * Relâmpago Dourado (Temporal). Base "Movimento Base +2UD" is a real {@link
@@ -236,15 +238,16 @@ public enum PowerStoneType {
     },
 
     /**
-     * Turmalina Obscura (Profana). Damage-type-scoped ("Sagradas") RD and effect-Duração
-     * reduction, a Roubo de Vida grant plus immunity (no equipment→Roubo de Vida path, and the
-     * immunity half is unbuildable regardless), and Profano damage typing / an added Efeito
-     * Crítico — none expressible.
+     * Turmalina Obscura (Profana). Real (core 0.0.89): the base "Danos … Sagradas reduzidos em -3" ({@link
+     * ModifierType#SACRED_DAMAGE_REDUCTION}) and the offensive "Dano causado é Profano" ({@link
+     * #getOffensiveSanctity()}). Still not: "Curas Sagradas reduzidas", the effect-Duração reduction, the defensive
+     * Roubo de Vida 2 and immunity (no equipment→Roubo de Vida path), and the added Oferenda Maldita.
      */
     TURMALINA_OBSCURA("Turmalina Obscura", "Profana",
             "Danos e Curas Sagradas reduzidos em -3, Duração de efeitos Sagrados reduzido em -2 Rodadas.",
             "Roubo de Vida 2 e imunidade a efeitos de Roubo de Vida.",
-            "Dano causado é Profano em adição aos seus tipos e recebe Oferenda Maldita como Efeito Crítico adicional.");
+            "Dano causado é Profano em adição aos seus tipos e recebe Oferenda Maldita como Efeito Crítico adicional.",
+            List.of(new ItemBonus(ModifierType.SACRED_DAMAGE_REDUCTION, 3)), List.of(), List.of());
 
     private final String name;
     private final String originLabel;
@@ -273,6 +276,19 @@ public enum PowerStoneType {
         this.baseBonuses = List.copyOf(baseBonuses);
         this.defensiveBonuses = List.copyOf(defensiveBonuses);
         this.offensiveBonuses = List.copyOf(offensiveBonuses);
+    }
+
+    /**
+     * The nature this stone gives a weapon's damage in its Efeito Ofensivo — "Dano causado é Sagrado/Profano em adição
+     * aos seus tipos" (core 0.0.89): Opala Purificadora {@code SAGRADO}, Turmalina Obscura {@code PROFANO}, {@code
+     * null} for every other stone. Read by {@code AttackDelivery} for an attack with a weapon carrying it.
+     */
+    public org.aventyrs.core.character.DamageSanctity getOffensiveSanctity() {
+        return switch (this) {
+            case OPALA_PURIFICADORA -> org.aventyrs.core.character.DamageSanctity.SAGRADO;
+            case TURMALINA_OBSCURA -> org.aventyrs.core.character.DamageSanctity.PROFANO;
+            default -> null;
+        };
     }
 
     /**

@@ -114,4 +114,33 @@ public interface SpellCastingService {
      * collaborator of its own and a new effect category needs no change here.
      */
     Optional<SpellEffect> resolveEffect(Spell spell, SpellEffectContext context);
+
+    /**
+     * Whether a Conjuração roll totalling castTotal cast the Magia result reports (core 0.0.93): it reaches {@code
+     * SpellCastingResult#getCastingTargetValue()} (a tie casts it), or no GD was stated.
+     */
+    boolean castSucceeds(SpellCastingResult result, int castTotal);
+
+    /**
+     * Whether the cast's Corrente de Efeitos fires on target (core 0.0.93): the Conjuração succeeded and cleared the
+     * target value by {@code EffectChainService#getRequiredMargin} (Resoluto raises it). A cast with no stated GD has no
+     * margin, and fires nothing.
+     */
+    boolean isEffectChainTriggered(SpellCastingResult result, CombatantSheet target, int castTotal);
+
+    /**
+     * The Corrente the cast version builds once it fires ({@code Spell#getEffectChainKind()}), its die thrown on roller
+     * — empty for a version with none. Chain it onto that target's effect with {@code AbstractEffect#chainInto}.
+     */
+    Optional<org.aventyrs.core.effect.EffectChain> resolveEffectChain(Spell castVersion, CombatantSheet caster,
+                                                                       org.aventyrs.core.util.DiceRoller roller);
+
+    /**
+     * The Efeito Crítico a Conjuração roll's critical success puts on whoever the Magia lands on (core 0.0.93) — the
+     * version's own {@code getCriticalEffectType()} (Amenizar, Imunizar, Potencializar…), at the roll's severity. Empty
+     * for a roll that is no critical success or a version with no Efeito Crítico. Build one per target.
+     */
+    Optional<org.aventyrs.core.effect.CriticalEffect> resolveCastingCriticalEffect(
+            Spell castVersion, CombatantSheet caster, org.aventyrs.core.skill.SkillRoll castingRoll,
+            org.aventyrs.core.util.DiceRoller roller);
 }
