@@ -412,32 +412,24 @@ a constant no authored value could use.
 
 #### `Concentração + N Rodadas` is two phases, and `N` is the *trailing* one
 
-While the caster stays focused on the Magia its effect is active with **no countdown at all**.
-Concentração breaks when the caster **casts another Magia or attacks** — and only then does the
-`N Rodadas` count begin. So `N` is a trailing duration, not a total.
+While the caster stays focused on the Magia its effect is active with **no countdown at all**;
+only once the focus is lost does the `N Rodadas` count begin. So `N` is a trailing duration, not a
+total.
+
+**Keeping and losing it is a table ruling (2026-10-03):** "Pode gastar 1PA por Rodada para manter a
+Magia ativa; se sofrer dano ou não pagar o PA, a Magia dura mais N Rodadas. Não é possível retomar a
+Concentração depois de perdida." Casting another Magia or attacking does **not** break it — that was
+the earlier, carried-in reading, now retired.
 
 A naive `getDuration() = 2` is therefore wrong in both directions at once: it starts the clock
 immediately, and it caps at two Rodadas an effect that could legitimately run the whole Cena.
 `Semente - Queda Lenta` is the limiting case — `Duração: Concentração` with no trailing count at
 all, i.e. it ends the instant concentration breaks.
 
-**Phase 1 needs no new machinery.** `TemporaryEffect.remainingRounds` is a **nullable**
-`Integer`: `tick()` no-ops and `isExpired()` returns false while it is `null`. That is already
-this core's encoding for "runs until something stops it" — `Sangramento`/`ManaPurge` Maior use
-exactly it, via `Optional.empty()`, for their "até o fim da cena" tiers.
-
-**What is missing is the transition.** `remainingRounds` is private with a Lombok `@Getter` and
-no mutator, so nothing can move an effect from `null` to `2`. One narrow state-change method is
-the whole gap — not a new duration type.
-
-**The break trigger has no single chokepoint.** Casting is one (`SpellCastingService#castSpell`),
-and `AttackDelivery#resolve` is the other — breaking concentration there would follow the same
-"the choice of entry point is the distinction" discipline CLAUDE.md documents for deliberate Ego
-spends versus drains, and needs no observer, which this codebase deliberately has none of. But an
-attack Perícia can be rolled straight through `AbstractSkillInteraction#applyTo` without passing
-`AttackDelivery`, so that chokepoint is not airtight today. Note also that **being attacked must
-not break concentration** — only the caster's own attack does, so `AttackReceiver` is not a
-trigger.
+**Built (0.1.1):** `CombatantSheet#beginConcentration`/`#payConcentrationUpkeep`/`#loseConcentration`
+on the caster (damage through `applyDamage` and an unpaid Turn end lose it), `sheet.Sustained`
+effects and `scene.SceneSummon`s linked to their caster, and `Scene#settleConcentration` releasing
+them. See `magic.SpellDuration`.
 
 **One Concentração at a time is derived, not enforced.** Casting a second Magia breaks the first
 by the rule itself, so no "at most one" invariant needs checking anywhere — the same

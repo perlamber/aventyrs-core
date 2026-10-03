@@ -63,9 +63,8 @@ logged only).
    - The Efeito Crítico of the Conjuração roll (Amenizar, Imunizar, Potencializar) is never applied by the client.
    - Core: Potencializar's application is still TODO ("no running Magia Duração").
 6. **Concentração.**
-   - Nothing reports a caster's focus breaking (cast another Magia, or attack).
-   - Core's `Scene#breakConcentration` covers summons only; a Concentração effect on a sheet (Corpo Fechado) has no
-     transition.
+   - Superseded (core 0.1.1): the rule is now 1PA upkeep per Rodada, lost on damage or an unpaid Turn — see
+     `magic.SpellDuration`. Casting or attacking no longer breaks it.
 
 ## VIDA
 

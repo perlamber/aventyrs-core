@@ -42,6 +42,7 @@ public class SubordinateServiceImpl implements SubordinateService {
         Subordinate shadow = Subordinate.sustained(benefit, false, SHADOW_COUNSEL, holder.getId(),
                 SHADOW_COUNSEL_TRAILING_ROUNDS);
         command(holder, shadow, sceneContext);
+        holder.beginConcentration();
         holder.markAffectedThisCombat(SHADOW_COUNSEL);
         return shadow;
     }

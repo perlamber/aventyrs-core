@@ -766,6 +766,8 @@ public class Scene {
         if (currentIndex >= 0) {
             CombatantSheet finishing = activeEntries.get(currentIndex).getCombatantSheet();
             finishing.finishTurn();
+            // An upkeep left unpaid as the Turn ended, or damage taken during it, releases what was sustained.
+            settleConcentration();
             // A summon replaced by a newer one of its group "desaparece ao final do Turno" of its caster.
             List<CombatantSheet> replaced = summons.stream()
                     .filter(held -> held.isReplaced() && held.getSummoner() == finishing)
@@ -1245,6 +1247,11 @@ public class Scene {
                                         final String exclusivityGroup, final Integer rounds,
                                         final boolean concentration) {
         UUID group = groupOf(caster);
+        if (concentration) {
+            // A focus lost and not yet settled is released first, so the new one cannot take its place.
+            settleConcentration();
+            caster.beginConcentration();
+        }
         if (exclusivityGroup != null) {
             summons.stream()
                     .filter(held -> held.getSummoner() == caster && exclusivityGroup.equals(held.getExclusivityGroup()))
@@ -1283,11 +1290,33 @@ public class Scene {
     }
 
     /**
-     * caster's Concentração breaks — "quando o conjurador conjura outra Magia ou ataca" ({@code magic.SpellDuration}),
-     * which the caller reports, since an attack Perícia has no single chokepoint here. Every summon it sustained starts
-     * its trailing Rodadas; one with none (a bare Concentração) leaves at once. Returns those dismissed.
+     * caster's Concentração breaks now — they drop it, or the caller reports a loss this Scene would otherwise only
+     * collect at {@link #settleConcentration()}. Every summon it sustained starts its trailing Rodadas; one with none
+     * (a bare Concentração) leaves at once. Returns those dismissed. See {@code magic.SpellDuration} for the rule.
      */
     public List<CombatantSheet> breakConcentration(@lombok.NonNull final CombatantSheet caster) {
+        caster.loseConcentration();
+        caster.consumeConcentrationLoss();
+        return release(caster);
+    }
+
+    /**
+     * Releases what every participant whose Concentração was lost since the last call sustained (core 0.1.1) — taking
+     * damage or an unpaid upkeep ({@link CombatantSheet#loseConcentration()}). {@link #next()} calls it as each Turn
+     * ends; a caller applying damage mid-Turn calls it after, the way it calls {@link #settleSummons()}, so the
+     * trailing Rodadas start from the hit. Returns the summons dismissed.
+     */
+    public List<CombatantSheet> settleConcentration() {
+        List<CombatantSheet> gone = new ArrayList<>();
+        for (CombatantSheet participant : getAllParticipants()) {
+            if (participant.consumeConcentrationLoss()) {
+                gone.addAll(release(participant));
+            }
+        }
+        return List.copyOf(gone);
+    }
+
+    private List<CombatantSheet> release(final CombatantSheet caster) {
         // Effects they sustain on anyone's sheet — Corpo Fechado's ward — start their trailing Rodadas too.
         getAllParticipants().forEach(participant -> participant.releaseSustainedBy(caster.getId()));
         List<CombatantSheet> gone = summons.stream()
