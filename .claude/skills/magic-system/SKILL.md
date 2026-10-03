@@ -309,7 +309,26 @@ Effect plugs into `receiveInteraction` with zero other code touched, and `Abstra
   Corrente in `magias.txt`, modelled on `SILENCIO`. And **`ConditionType#isMaleficio()`/
   `maleficios()`** were added for `CORPO_FECHADO`'s "todos os Malefícios" — the first clause to ask
   about the category instead of naming its members. Everything but `ESCONDIDO`.
-- **Still inert:** `OffensiveEffect` (no wired branch needs one; both halves already exist) and
+- **Growing and shrinking — `SpellBodyChange` (core 0.0.99).** Polimorfismo's six size-changing
+  Magias author a `bodyChange` column (Categoria shift, Força/Destreza change or "reduced to N",
+  Multiplicador de PV), applied by `effect.BodyChangeEffect` as `Blessing`s for the Magia's Duração,
+  sourced by the Magia's name so a recast renews rather than stacks. A harmful one is a
+  `BodyChangeEffect.Diminishment` (`OffensiveEffect`), a beneficial one an `Enhancement`
+  (`DefensiveEffect`) — so `DEFENSIVE` reads two columns through `SpellEffectBuilder.firstOf`. A
+  "Força ou Destreza" pick rides `SpellEffectContext#chosenAttribute` / `SpellCastRequest
+  #chosenAttribute`; Gigantecer and Espremer are `SpellChainKind`s building a `BodyChangeChain`,
+  replacing or adding by granting under the same source. Harmful Atributo changes stop at 1.
+  **Since 0.1.0 the whole tree but Rearranjo Corporal is built**: Murcha-Corpo/Infla-Músculos
+  (+ Murcha-Almas/Inflar o Ego), Armada Ôgrica (one pick per landing), `effect.Draconato`
+  (`ModifierType#GRANTS_FLIGHT` + one RD and one RM), `effect.BonecaDePorcelana`
+  (`sheet.StrippedReductions` + `HalvedHealing`), and Serra-Pernas's `Spell#getRoundsPerExtraMana`
+  (`SpellCastRequest#extraMana`, charged and added to `getDurationInRounds`) and
+  `Spell#getAlternateEffectChainKind` (`effect.FraquezaMomentanea`, aimed for at the cast via
+  `SpellCastRequest#alternateEffectChain`). A Corrente is built by the context-taking
+  `SpellCastingService#resolveEffectChain(Spell, SpellEffectContext, DiceRoller)`, and every timed
+  effect lasts `SpellEffectContext#roundsFor` — the cast's resolved Duração when the caller passes
+  it (`withDurationInRounds`), so Talento/item increases and extra PM reach the landing.
+- **Still inert:** `OffensiveEffect` for damage and Malefícios (both halves already exist) and
   `InvocationEffect` (`Spell` has no `MonsterTemplate` column). `CORPO_FECHADO`'s Malefício
   *immunity* half needs per-condition immunity, which does not exist. The Regeneração tree is
   unblocked but unwired — `SpellHealing` would need a recurring figure beside the instant one.

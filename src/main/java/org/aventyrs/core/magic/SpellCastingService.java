@@ -132,7 +132,19 @@ public interface SpellCastingService {
      * The Corrente the cast version builds once it fires ({@code Spell#getEffectChainKind()}), its die thrown on roller
      * — empty for a version with none. Chain it onto that target's effect with {@code AbstractEffect#chainInto}.
      */
-    Optional<org.aventyrs.core.effect.EffectChain> resolveEffectChain(Spell castVersion, CombatantSheet caster,
+    default Optional<org.aventyrs.core.effect.EffectChain> resolveEffectChain(Spell castVersion, CombatantSheet caster,
+                                                                               org.aventyrs.core.util.DiceRoller roller) {
+        return resolveEffectChain(castVersion, org.aventyrs.core.effect.SpellEffectContext.of(false, caster), roller);
+    }
+
+    /**
+     * The Corrente this cast builds once it fires (core 0.1.0) — the longest form: context says who cast it, the
+     * "Força ou Destreza" pick (Inflar o Ego), the resolved Duração every timed Corrente lasts, and whether the caster
+     * aimed for the version's Corrente de Efeitos Alternativa (Serra-Pernas's Fraqueza Momentânea) instead of its
+     * Corrente.
+     */
+    Optional<org.aventyrs.core.effect.EffectChain> resolveEffectChain(Spell castVersion,
+                                                                       org.aventyrs.core.effect.SpellEffectContext context,
                                                                        org.aventyrs.core.util.DiceRoller roller);
 
     /**

@@ -71,6 +71,14 @@ public enum ModifierType {
      * Nadadeiras Deciembranas.
      */
     FLIGHT_MOVEMENT,
+    /**
+     * Grants the Voo {@code MovementMode} while it runs (core 0.1.0) — a flag, any positive value — so a timed effect can
+     * give wings: Dracônecer's Draconato, "recebe asas e capacidade de voar com Movimento Base de Voo igual à sua
+     * velocidade em terra". Read by {@code MovementService#hasMovementMode(CombatantSheet, MovementMode)}; the figure
+     * itself is the land Movimento Base it already falls back to. Possessing the mode is not being airborne — that
+     * stays {@code CombatantSheet#setFlying}.
+     */
+    GRANTS_FLIGHT,
     SWIM_MOVEMENT,
     CLIMB_MOVEMENT,
     /**

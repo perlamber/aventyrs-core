@@ -35,4 +35,15 @@ public interface SpellEffectBuilder {
      * @param context the per-cast facts — see {@link SpellEffectContext}
      */
     Optional<SpellEffect> build(Spell spell, SpellEffectContext context);
+
+    /**
+     * A builder answering with the first of builders that answers — how one {@link SpellEffectKind} reads more than
+     * one column ({@link SpellEffectKind#DEFENSIVE}: a cleansing or a beneficial body change). A version authors at
+     * most one effect, so at most one of them ever answers.
+     */
+    static SpellEffectBuilder firstOf(final SpellEffectBuilder... builders) {
+        return (spell, context) -> java.util.Arrays.stream(builders)
+                .flatMap(builder -> builder.build(spell, context).stream())
+                .findFirst();
+    }
 }

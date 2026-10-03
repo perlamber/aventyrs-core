@@ -114,7 +114,7 @@ public class FuriaDosDeusesInteraction extends AbstractTitleAbilityInteraction {
         Tier tier = request.getChoice(Tier.class).orElseThrow();
         int extraDice = tier.isGrantsDamage() ? FURIA_MAIOR_DAMAGE_DICE : 0;
         int extraFlat = tier.isGrantsDamage()
-                ? activator.getCharacter().getEffectiveAttributeTotal(AttributeDomain.VIGOR)
+                ? activator.getAttributeTotal(AttributeDomain.VIGOR)
                 : 0;
 
         return InteractionResult.builder()

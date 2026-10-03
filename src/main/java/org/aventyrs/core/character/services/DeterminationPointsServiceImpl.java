@@ -27,34 +27,30 @@ public class DeterminationPointsServiceImpl implements DeterminationPointsServic
 
     @Override
     public int getDeterminationMultiplier(final Character character) {
-        int bonus = modifierResolver.sumModifiers(character.getAttributeAbilities(), ModifierType.DETERMINATION_MULTIPLIER);
-        // Talentos are outside every ModifierResolver scan, so they get an explicit pass — the
-        // same shape MagicPointsServiceImpl uses for resolveManaMultiplierIncrease.
-        for (Feat feat : character.getFeats()) {
-            bonus += feat.resolveDeterminationMultiplierIncrease(character);
-        }
-        return Feat.fixedMultiplier(ResourceType.DETERMINATION_POINTS, character, character.getDeterminationMultiplier() + bonus);
+        return getDeterminationMultiplier(character, null);
     }
 
     @Override
     public int getMaxDeterminationPoints(final Character character) {
-        return basePoints(character, null)
-                + character.getEffectiveAttributeTotal(AttributeDomain.INSTINCT) * getDeterminationMultiplier(character);
+        return getMaxDeterminationPoints(character, null);
     }
 
     @Override
     public int getDeterminationMultiplier(final Character character, final CombatantSheet sheet) {
-        if (sheet == null) {
-            return getDeterminationMultiplier(character);
+        int bonus = modifierResolver.sumModifiers(character.getAttributeAbilities(), ModifierType.DETERMINATION_MULTIPLIER);
+        // Talentos are outside every ModifierResolver scan, so they get an explicit pass.
+        for (Feat feat : character.getFeats()) {
+            bonus += feat.resolveDeterminationMultiplierIncrease(character, sheet);
         }
-        return Feat.fixedMultiplier(ResourceType.DETERMINATION_POINTS, character, Math.max(1,
-                getDeterminationMultiplier(character) + sheet.getTemporaryBonus(ModifierType.DETERMINATION_MULTIPLIER)));
+        return ResourcePoolFormula.multiplier(ResourceType.DETERMINATION_POINTS, character, sheet, bonus);
     }
 
+    /** {@code base + Instinto × Multiplicador}, both read through the sheet when one is given — see {@link ResourcePoolFormula}. */
     @Override
     public int getMaxDeterminationPoints(final Character character, final CombatantSheet sheet) {
         return basePoints(character, sheet)
-                + character.getEffectiveAttributeTotal(AttributeDomain.INSTINCT) * getDeterminationMultiplier(character, sheet);
+                + ResourcePoolFormula.attribute(ResourceType.DETERMINATION_POINTS, character, sheet)
+                        * getDeterminationMultiplier(character, sheet);
     }
 
     @Override

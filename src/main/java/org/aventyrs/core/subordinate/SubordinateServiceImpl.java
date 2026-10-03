@@ -50,7 +50,7 @@ public class SubordinateServiceImpl implements SubordinateService {
     public void command(@NonNull final CombatantSheet commander, @NonNull final Subordinate subordinate,
                         final SceneContext sceneContext, final org.aventyrs.core.rest.RestType endsAtRest) {
         var held = SubordinateBenefits.of(commander);
-        int limit = commander.getCharacter().getEffectiveAttributeTotal(AttributeDomain.CHARISMA, commander);
+        int limit = commander.getAttributeTotal(AttributeDomain.CHARISMA);
         if (held.size() >= limit) {
             throw new IllegalOperationException(SUBORDINATE_LIMIT_REACHED);
         }

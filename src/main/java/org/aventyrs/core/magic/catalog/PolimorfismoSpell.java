@@ -5,6 +5,8 @@ import org.aventyrs.core.magic.ActivationTime;
 import org.aventyrs.core.magic.AuthoredSpell;
 import org.aventyrs.core.magic.BranchLevel;
 import org.aventyrs.core.magic.SpellAlternateEffect;
+import org.aventyrs.core.magic.SpellBodyChange;
+import org.aventyrs.core.magic.SpellChainKind;
 import org.aventyrs.core.magic.SpellData;
 import org.aventyrs.core.magic.SpellDuration;
 import org.aventyrs.core.magic.SpellTargeting;
@@ -20,17 +22,24 @@ import org.aventyrs.core.skill.SkillType;
  * <p>It is the tree with the most {@code Pessoal ou Toque} entries: five of its nine are
  * dual-reach, authoring both a {@code targeting} and an {@code alternateTargeting}.
  *
- * <h2>Attribute changes here are round-scoped, which {@code AttributeValue} cannot hold</h2>
+ * <h2>Growing and shrinking are real; the Atributo half reaches the roll path only</h2>
  *
- * Almost every effect is a temporary Força/Destreza swing. TODO {@code AttributeValue} has only
- * {@code base}, {@code racialBonus} and {@code variable}, all permanent, and none is ever summed
- * through a {@code ModifierType} — so a Rodada-scoped Attribute bonus has no representation at
- * all. Size changes fare better: {@code CharacterSizeService#getEffectiveSizeCategory} resolves a
- * shift for real, and the PV multiplier is a real {@code Character} field.
+ * The six Magias that change a body's size author a {@link SpellBodyChange} (core 0.0.99), applied
+ * by {@code effect.BodyChangeEffect} as round-scoped bonuses lasting the Magia's Duração: the
+ * Categoria de Tamanho shift is read by {@code CharacterSizeService}'s sheet overload (a token is
+ * drawn at it), the Multiplicador de PV by {@code HitPointsService}'s, and Força/Destreza as
+ * {@code STRENGTH_BONUS}/{@code DEXTERITY_BONUS} — which reach a Perícia roll governed by that
+ * Atributo and nothing else (CLAUDE.md, "Permanent Attribute bonuses" row). Gigantecer and
+ * Espremer are buildable Correntes ({@code SpellChainKind}).
  *
- * <p>"Este efeito não reduz Atributos à um total de zero ou menos" recurs as a floor of 1 rather
- * than the 0 every {@code <Stat>Service} clamps at, and would need its own clamp wherever the
- * round-scoped mechanism eventually lands.
+ * <p>"Este efeito não reduz Atributos à um total de zero ou menos" is {@link
+ * SpellBodyChange#MINIMUM_ATTRIBUTE}, applied when the effect lands.
+ *
+ * <p>Every other Efeito and Corrente of the tree is built too (core 0.1.0): Murcha-Corpo and
+ * Infla-Músculos with their replacing Correntes, Armada Ôgrica (a pick per target, made by the
+ * caller per landing), Draconato's wings and scales, Boneca de Porcelana, Serra-Pernas's extra PM
+ * and its Corrente Alternativa. Only Rearranjo Corporal stays prose — it changes a roll already
+ * in flight, a shape no Magia effect here has.
  */
 public enum PolimorfismoSpell implements AuthoredSpell {
 
@@ -84,6 +93,8 @@ public enum PolimorfismoSpell implements AuthoredSpell {
             .description("Um personagem afetado por esta magia tem sua força e agilidade provisoriamente drenada.")
             .primaryEffectDescription("O Alvo desta magia recebe Redutor variável de -2 em Força ou Destreza. Este "
                     + "efeito não reduz Atributos à um total de zero ou menos.")
+            .bodyChange(SpellBodyChange.builder().attributeChange(-2).attributeChoice(true).build())
+            .effectChainKind(SpellChainKind.MURCHA_ALMAS)
             .effectChainDescription("Murcha-Almas: Em substituição ao efeito anterior o alvo sofre Redutor de -2 em "
                     + "Força e Destreza.")
             .criticalEffectType(CriticalEffectType.DILACERAR)
@@ -103,6 +114,8 @@ public enum PolimorfismoSpell implements AuthoredSpell {
             .description("O alvo do conjurador tem sua força física aumentada.")
             .primaryEffectDescription("Um personagem tocado pelo conjurador adquire temporariamente Bônus de +1 em "
                     + "Força ou 1 de Destreza.")
+            .bodyChange(SpellBodyChange.builder().attributeChange(1).attributeChoice(true).build())
+            .effectChainKind(SpellChainKind.INFLAR_O_EGO)
             .effectChainDescription("Inflar o Ego: Em substituição ao efeito anterior o alvo recebe Bônus de +2 em "
                     + "Força ou Destreza.")
             .criticalEffectType(CriticalEffectType.AMENIZAR)
@@ -131,6 +144,12 @@ public enum PolimorfismoSpell implements AuthoredSpell {
                     + "ou menos. "
                     + "O conjurador desta magia pode gastar PM adicional em sua conjuração, aumentado a sua duração "
                     + "em 2 rodadas para cada PM gasto desta maneira.")
+            .bodyChange(SpellBodyChange.builder().attributeChange(-2).build())
+            // "+2 rodadas para cada PM gasto" — SpellCastRequest#extraMana.
+            .roundsPerExtraMana(2)
+            .effectChainKind(SpellChainKind.ESPREMER)
+            // Declared at the cast instead of Espremer — SpellCastRequest#alternateEffectChain (table ruling 2026-10-02).
+            .alternateEffectChainKind(SpellChainKind.FRAQUEZA_MOMENTANEA)
             .effectChainDescription("Espremer: Em adicional aos efeitos anteriores, o alvo desta magia tem sua "
                     + "Categoria de Tamanho reduzida em 1 número. "
                     + "Corrente de Efeitos Alternativa – Fraqueza Momentânea: Em seu próximo Turno o alvo sofre "
@@ -150,6 +169,8 @@ public enum PolimorfismoSpell implements AuthoredSpell {
             .castingDifficultyLevel(DifficultyLevel.HARD)
             .description("Ao modificar o corpo de seu alvo, esta magia concede ao mesmo maior força ou agilidade.")
             .primaryEffectDescription("Alvo tocado adquire bônus variável de +2 em Força ou Destreza.")
+            .bodyChange(SpellBodyChange.builder().attributeChange(2).attributeChoice(true).build())
+            .effectChainKind(SpellChainKind.GIGANTECER)
             .effectChainDescription("Gigantecer: Em substituição ao efeito anterior o alvo recebe Bônus de +2 em "
                     + "Força e Destreza, a Categoria de Tamanho do alvo aumenta em +1.")
             .criticalEffectType(CriticalEffectType.AMENIZAR)
@@ -171,15 +192,20 @@ public enum PolimorfismoSpell implements AuthoredSpell {
                     + "grande parte de suas capacidades físicas.")
             .primaryEffectDescription("O toque do conjurador com essa magia reduz em -2 a Categoria de Tamanho do "
                     + "Alvo, que adicionalmente sofre Redutor -3 em Força e Destreza.")
+            .bodyChange(SpellBodyChange.builder().sizeCategoryShift(-2).attributeChange(-3).build())
             .secondaryEffectDescription("Aura do Encolhimento: O Alcance desta magia é alterado para Pessoal, a GD "
                     + "para Difícil e a Duração aumentada para +2 Minutos. Você e até dois aliados adjacentes tem a "
                     + "Categoria de Tamanho reduzida em -2.")
-            // Narrows a dual Pessoal/Toque reach to Pessoal alone, so alternateTargeting drops.
+            // Narrows a dual Pessoal/Toque reach to Pessoal alone, so alternateTargeting drops. The caster is the
+            // target; "até dois aliados adjacentes" are its additional targets, picked by the caller (adjacency is
+            // geometry). Size only — the version states no Atributo change.
             .alternateEffect(SpellAlternateEffect.builder()
                     .name("Aura do Encolhimento")
                     .targeting(SpellTargeting.PESSOAL)
                     .castingDifficultyLevel(DifficultyLevel.HARD)
                     .duration(SpellDuration.minutos(2))
+                    .maxAdditionalTargets(2)
+                    .bodyChange(SpellBodyChange.builder().sizeCategoryShift(-2).build())
                     .build())
             .criticalEffectType(CriticalEffectType.DILACERAR)
             .duration(SpellDuration.rodadas(3))
@@ -187,7 +213,12 @@ public enum PolimorfismoSpell implements AuthoredSpell {
             .alternateTargeting(SpellTargeting.TOQUE)
             .build()),
 
-    /** "seu multiplicador de PV … aumentadas em +2" is a real {@code Character#lifeMultiplier} change, unlike the Attribute half. */
+    /**
+     * +2 Força e Destreza, +2 Multiplicador de PV and +2 Categoria de Tamanho for 3 Rodadas. Its Efeito Alternativo,
+     * Armada Ôgrica, gives Ogrificar's +2 Força ou Destreza to the caster and up to two adjacent allies — "podem ser
+     * escolhidos individualmente": each landing carries its own target's pick ({@code SpellEffectContext
+     * #chosenAttribute}) — and authors no Corrente, so Gigantecer never fires from it.
+     */
     TITANECER(SpellData.builder()
             .name("Titânecer")
             .branchLevel(BranchLevel.EMERGENTE)
@@ -199,10 +230,17 @@ public enum PolimorfismoSpell implements AuthoredSpell {
                     + "aumentado, assumindo as características dos lendários Titãs.")
             .primaryEffectDescription("O alvo recebe Bônus de +2 em Força e Destreza, seu multiplicador de PV e sua "
                     + "Categoria de Tamanho aumentadas em +2.")
+            .bodyChange(SpellBodyChange.builder().attributeChange(2).lifeMultiplierIncrease(2).sizeCategoryShift(2)
+                    .build())
             .secondaryEffectDescription("Armada Ôgrica: Você e mais dois aliados adjacentes, recebem os benefícios "
                     + "de Ogrificar. Os bônus concedidos podem ser escolhidos individualmente, este efeito não ativa "
                     + "a Corrente de Efeitos – Gigantecer.")
-            .alternateEffect(SpellAlternateEffect.named("Armada Ôgrica"))
+            .alternateEffect(SpellAlternateEffect.builder()
+                    .name("Armada Ôgrica")
+                    .targeting(SpellTargeting.PESSOAL)
+                    .maxAdditionalTargets(2)
+                    .bodyChange(SpellBodyChange.builder().attributeChange(2).attributeChoice(true).build())
+                    .build())
             .criticalEffectType(CriticalEffectType.AMENIZAR)
             .duration(SpellDuration.rodadas(3))
             .targeting(SpellTargeting.PESSOAL)
@@ -210,9 +248,10 @@ public enum PolimorfismoSpell implements AuthoredSpell {
             .build()),
 
     /**
-     * "tem sua Força e Destrezas reduzidas à 1" sets an Attribute to a value rather than
-     * modifying it — a shape no bonus mechanism in this core has, quite apart from Attribute
-     * changes being permanent-only.
+     * "tem sua Força e Destrezas reduzidas à 1" sets an Atributo to a value rather than modifying it, resolved as the
+     * malus that lands it there when the effect is applied ({@code SpellBodyChange#attributesSetTo}). ⚠️ So the
+     * target's total is read once: a bonus it gains during the Rodada is not cancelled. Its Corrente, Boneca de
+     * Porcelana, strips RD and RM and halves healing for the Duração ({@code effect.BonecaDePorcelana}).
      */
     ENFADECER(SpellData.builder()
             .name("Enfadecer")
@@ -227,6 +266,8 @@ public enum PolimorfismoSpell implements AuthoredSpell {
             .primaryEffectDescription("Personagens tocados por esta magia tem sua Força e Destrezas reduzidas à 1, "
                     + "sua Categoria de Tamanho é reduzida em 3. "
                     + "A aparência da criatura muda ligeiramente, transparecendo inocência, fofura e delicadeza.")
+            .bodyChange(SpellBodyChange.builder().attributesSetTo(1).sizeCategoryShift(-3).build())
+            .effectChainKind(SpellChainKind.BONECA_DE_PORCELANA)
             .effectChainDescription("Boneca de Porcelana: Adicionalmente aos efeitos anteriores, o alvo desta magia "
                     + "perde sua RD e RM, e efeitos de Cura que ele receberia são reduzidos à metade.")
             .criticalEffectType(CriticalEffectType.DILACERAR)
@@ -234,7 +275,10 @@ public enum PolimorfismoSpell implements AuthoredSpell {
             .targeting(SpellTargeting.distancia(Range.DISTANCIA_MUITO_CURTA))
             .build()),
 
-    /** TODO its Corrente grants a Movimento Base de Voo equal to the target's ground speed — the figure MovementService already falls back to — but a Magia's timed effect cannot grant a {@code MovementMode}. */
+    /**
+     * +3 Força e Destreza, +2 Categoria de Tamanho and +2 Multiplicador de PV for 3 Rodadas. Its Corrente, Draconato,
+     * adds the Voo mode at the land Movimento Base and one instance each of RD and RM ({@code effect.Draconato}).
+     */
     DRACONECER(SpellData.builder()
             .name("Dracônecer")
             .branchLevel(BranchLevel.FLORESCENTE)
@@ -247,6 +291,9 @@ public enum PolimorfismoSpell implements AuthoredSpell {
                     + "um Dragão.")
             .primaryEffectDescription("O alvo recebe Bônus +3 em Força e Destreza, sua Categoria de Tamanho e "
                     + "multiplicador de PV aumentados em +2.")
+            .bodyChange(SpellBodyChange.builder().attributeChange(3).lifeMultiplierIncrease(2).sizeCategoryShift(2)
+                    .build())
+            .effectChainKind(SpellChainKind.DRACONATO)
             .effectChainDescription("Draconato: Adicionalmente aos efeitos anteriores, o alvo desta magia recebe "
                     + "asas e capacidade de voar com Movimento Base de Voo igual à sua velocidade em terra. O corpo "
                     + "dele é coberto por escamas de Dragão, que lhe fornecem RD e RM.")

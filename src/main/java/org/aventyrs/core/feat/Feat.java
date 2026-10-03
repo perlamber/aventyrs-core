@@ -2761,6 +2761,15 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     }
 
     /**
+     * {@link #resolveManaMultiplierIncrease(Character)} with the holder's sheet in hand (core 0.1.0) — what a clause
+     * conditioned on a Forma or a held state overrides. Defaults to the sheet-less form, so every existing override
+     * keeps working; {@code null} sheet reads as "condition not met".
+     */
+    default int resolveManaMultiplierIncrease(final Character character, final CombatantSheet sheet) {
+        return resolveManaMultiplierIncrease(character);
+    }
+
+    /**
      * Extra Pontos de Mana this Talento recovers on a Descanso of restType — summed by {@code
      * org.aventyrs.core.rest.RestService#getRecoveredMagicPoints} across {@code
      * Character#getFeats()}, alongside {@code AttributeAbility#resolveRestMagicPointsBonus}'s
@@ -3154,6 +3163,11 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      */
     default int resolveDeterminationMultiplierIncrease(final Character character) {
         return 0;
+    }
+
+    /** {@link #resolveDeterminationMultiplierIncrease(Character)} with the holder's sheet (core 0.1.0); see the Mana twin. */
+    default int resolveDeterminationMultiplierIncrease(final Character character, final CombatantSheet sheet) {
+        return resolveDeterminationMultiplierIncrease(character);
     }
 
     /**

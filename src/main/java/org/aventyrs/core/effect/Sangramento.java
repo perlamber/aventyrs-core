@@ -73,7 +73,7 @@ public class Sangramento extends AbstractEffect implements CriticalEffect {
         target.applyDamage(IMMEDIATE_DAMAGE);
 
         Optional<Integer> remainingRounds = criticalResult == CriticalResult.ACERTO_CRITICO_MENOR
-                ? Optional.of(affectedCharacter.getEffectiveAttributeTotal(AttributeDomain.VIGOR))
+                ? Optional.of(target.getAttributeTotal(AttributeDomain.VIGOR))
                 : Optional.empty();
         target.applyEffect(new Bleeding(PER_ROUND_DAMAGE, remainingRounds));
 

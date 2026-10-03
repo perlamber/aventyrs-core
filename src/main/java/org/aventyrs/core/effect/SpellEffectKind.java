@@ -37,17 +37,18 @@ public enum SpellEffectKind {
 
     /**
      * Protects rather than harms — {@code Spell#getCleansedConditions()}, built by {@link
-     * ConditionCleansingEffectBuilder}. A duration-bearing buff belongs on the {@code Blessing}
-     * rail instead; see {@link DefensiveEffect}.
+     * ConditionCleansingEffectBuilder}, or a beneficial {@code Spell#getBodyChange()} (Titânecer,
+     * Dracônecer, Ogrificar), built by {@link BodyChangeEffectBuilder}.
      */
-    DEFENSIVE(ConditionCleansingEffectBuilder::new),
+    DEFENSIVE(() -> SpellEffectBuilder.firstOf(new ConditionCleansingEffectBuilder(),
+            new BodyChangeEffectBuilder(false))),
 
     /**
-     * Damage and debuffs. No builder yet, and the gap is a consumer rather than a mechanism —
-     * {@code SpellDamage} already resolves a Magia's damage and {@code applyCondition} already
-     * inflicts a Malefício. See {@link OffensiveEffect}.
+     * Damage and debuffs. Only a harmful {@code Spell#getBodyChange()} is built so far (Serra-Pernas,
+     * Toque de Nanicolina, Enfadecer); a Magia's damage is still reported rather than built — see
+     * {@link OffensiveEffect}.
      */
-    OFFENSIVE(null),
+    OFFENSIVE(() -> new BodyChangeEffectBuilder(true)),
 
     /**
      * Conjures a creature or an item. No builder, and genuinely blocked: {@code Spell} has no

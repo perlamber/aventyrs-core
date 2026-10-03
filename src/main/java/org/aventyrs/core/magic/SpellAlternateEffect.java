@@ -69,6 +69,7 @@ import static org.aventyrs.core.util.TranslatableMessages.INVALID_SPELL_ALTERNAT
  * @param effectChainDescription its own {@code Corrente de Efeitos}, for the ten that declare one
  * @param healing          the recovery this version performs — see {@link SpellHealing}
  * @param cleansedConditions the Malefícios this version lifts
+ * @param bodyChange         what this version does to its target's body — its own, never the parent's
  * @param primaryDamage    the damage this version deals — see {@link SpellDamage}
  * @param effectChainKind  the Corrente this version builds — never inherited, see {@link Spell#getEffectChainKind()}
  * @param maxAdditionalTargets     targets beyond the first — see {@link Spell#getMaxAdditionalTargets()}
@@ -96,7 +97,8 @@ public record SpellAlternateEffect(
         Integer maxAdditionalTargets,
         Integer additionalTargetManaCost,
         Boolean casterAffected,
-        SpellWard ward) {
+        SpellWard ward,
+        SpellBodyChange bodyChange) {
 
     public SpellAlternateEffect {
         if (name == null || name.isBlank()) {

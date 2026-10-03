@@ -47,7 +47,7 @@ public class EncantoRegenerativoInteraction extends AbstractTitleAbilityInteract
      */
     public static int healTarget(final CombatantSheet target, final HealingSource source) {
         int damageBefore = target.getDamageTaken();
-        target.heal(target.getCharacter().getEffectiveAttributeTotal(AttributeDomain.VIGOR), source);
+        target.heal(target.getAttributeTotal(AttributeDomain.VIGOR), source);
         return damageBefore - target.getDamageTaken();
     }
 

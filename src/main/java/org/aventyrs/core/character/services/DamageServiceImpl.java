@@ -114,6 +114,10 @@ public class DamageServiceImpl implements DamageService {
     /** RD proper — "reduz o Dano Físico não-PRIMORDIAL e não-ELEMENTAL em -2" — from every source. */
     private int damageReductionOnly(final CombatantSheet target, final DamageType damageType,
                                     final CombatantSheet source) {
+        // Boneca de Porcelana: "perde sua RD" — every source at once.
+        if (target.isStrippedOfReductions()) {
+            return 0;
+        }
         Character character = target.getCharacter();
         int total = sumAcrossSources(character, ModifierType.DAMAGE_REDUCTION, target);
         total += sumEquipmentDamageReduction(character, target);
@@ -213,6 +217,10 @@ public class DamageServiceImpl implements DamageService {
      */
     @Override
     public int getTotalMagicReduction(final CombatantSheet target) {
+        // Boneca de Porcelana: "perde sua RM" — every source at once.
+        if (target.isStrippedOfReductions()) {
+            return 0;
+        }
         Character character = target.getCharacter();
         int total = sumAcrossSources(character, ModifierType.MAGIC_REDUCTION, target);
         total += sumEquipmentMagicReduction(character);
@@ -446,7 +454,7 @@ public class DamageServiceImpl implements DamageService {
                 // own, scoped to the Magia rather than to magical damage — ⚠️ a reading: it reaches
                 // whatever non-Primordial damage that Magia deals, elemental included, since the
                 // clause names the Magia and the catalog's offensive Magias are mostly elemental.
-                if (spell != null && effectiveType != DamageType.PRIMORDIAL) {
+                if (spell != null && effectiveType != DamageType.PRIMORDIAL && !target.isStrippedOfReductions()) {
                     reduction += character.getFeats().stream()
                             .mapToInt(feat -> feat.resolveSpellMagicReduction(spell, target))
                             .sum();

@@ -40,7 +40,7 @@ public class Excruciante extends AbstractCriticalEffect {
     protected InteractionResult.InteractionResultBuilder resolve(final CombatantSheet target) {
         target.spendDeterminationPoints(IMMEDIATE_LOSS);
         Integer rounds = getContext().isMajor() ? null
-                : target.getCharacter().getEffectiveAttributeTotal(AttributeDomain.INSTINCT);
+                : target.getAttributeTotal(AttributeDomain.INSTINCT);
         target.applyEffect(new DeterminationDrain(PER_ROUND_LOSS, rounds));
         return InteractionResult.builder()
                 .resourceLossValue(IMMEDIATE_LOSS)

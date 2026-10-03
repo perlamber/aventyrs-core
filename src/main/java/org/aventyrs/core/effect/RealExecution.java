@@ -94,7 +94,7 @@ public class RealExecution extends AbstractEffect implements CriticalEffect {
             destroyed = true;
         } else {
             int currentHitPoints = hitPointsService.getCurrentHitPoints(affectedCharacter, target);
-            int vigorTotal = affectedCharacter.getEffectiveAttributeTotal(AttributeDomain.VIGOR);
+            int vigorTotal = target.getAttributeTotal(AttributeDomain.VIGOR);
             destroyed = currentHitPoints <= MENOR_VIGOR_MULTIPLIER * vigorTotal;
         }
 
