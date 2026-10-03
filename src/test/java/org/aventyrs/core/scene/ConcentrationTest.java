@@ -1,5 +1,6 @@
 package org.aventyrs.core.scene;
 
+import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.magic.invocation.NatureInvocationService;
@@ -10,8 +11,10 @@ import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.MaleficioWard;
 import org.aventyrs.core.sheet.Player;
+import org.aventyrs.core.skill.SkillCompetencyAbility;
 import org.aventyrs.core.skill.SkillGraduation;
 import org.aventyrs.core.skill.SkillType;
+import org.aventyrs.core.skill.dominiodomana.DominioDoManaCompetencyAbility;
 import org.aventyrs.core.util.TranslatableMessages;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -42,11 +45,17 @@ class ConcentrationTest {
     @BeforeEach
     void setup() {
         CharacterFixture.loadTemplates();
-        druid = CharacterSheet.of(CharacterFixture.blank(CharacterFixture.BLANK)
+        openCombat(List.of());
+    }
+
+    /** A druid trained in Domínio do Mana holding abilities, against one foe, on the druid's first Turn. */
+    private void openCombat(final List<SkillCompetencyAbility> abilities) {
+        Character.CharacterBuilder builder = CharacterFixture.blank(CharacterFixture.BLANK)
                 .skill(SkillType.DOMINIO_DO_MANA, CharacterSkill.builder()
                         .skill(SkillType.DOMINIO_DO_MANA.newSkillInstance()).specializations(List.of())
-                        .graduation(SkillGraduation.builder().graduationValue(4).build()).build())
-                .build(), new Player());
+                        .graduation(SkillGraduation.builder().graduationValue(4).build()).build());
+        abilities.forEach(builder::skillCompetencyAbility);
+        druid = CharacterSheet.of(builder.build(), new Player());
         foe = CharacterSheet.of(CharacterFixture.blank(CharacterFixture.BLANK).build(), new Player());
         scene = new Scene();
         scene.addParticipant(druid, 20, UUID.randomUUID());
@@ -191,6 +200,24 @@ class ConcentrationTest {
         assertFalse(first.isSustained(), "the lost one is released, never resumed");
         assertTrue(second.isSustained());
         assertTrue(druid.isConcentrating());
+    }
+
+    /** Concentração Inabalável: "não perde a Concentração … após sofrer Danos" — the upkeep is still owed. */
+    @Test
+    void concentracaoInabalavelKeepsItThroughDamageButNotThroughAnUnpaidTurn() {
+        openCombat(List.of(DominioDoManaCompetencyAbility.CONCENTRACAO_INABALAVEL));
+        SceneSummon anciente = awakenAnciente();
+
+        druid.applyDamage(1);
+        scene.settleConcentration();
+        assertTrue(druid.isConcentrating());
+        assertTrue(anciente.isSustained());
+
+        toTheDruidsNextTurn();
+        scene.next();   // the druid's Turn ends unpaid
+
+        assertFalse(druid.isConcentrating());
+        assertEquals(2, anciente.getRemainingRounds());
     }
 
     @Test

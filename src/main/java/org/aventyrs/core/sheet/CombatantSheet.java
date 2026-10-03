@@ -1799,7 +1799,8 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
 
     /**
      * The Concentração is lost (core 0.1.1): "se sofrer dano ou não pagar o PA, a Magia dura mais N Rodadas" — taking
-     * damage ({@link #applyDamage}, not a {@link #payWithVitality} cost), an unpaid upkeep at the end of their Turn,
+     * damage ({@link #applyDamage}, not a {@link #payWithVitality} cost — and not at all for a holder of
+     * {@code DominioDoManaCompetencyAbility#CONCENTRACAO_INABALAVEL}), an unpaid upkeep at the end of their Turn,
      * or dropping it on purpose. <b>It cannot be resumed</b>: paying afterwards is refused, and only a new
      * Concentração Magia begins another. The release of what it sustained is the {@code Scene}'s
      * ({@code Scene#settleConcentration}), which collects the loss through {@link #consumeConcentrationLoss()}.

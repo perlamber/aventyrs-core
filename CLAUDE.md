@@ -278,7 +278,8 @@ Magia active; taking damage or not paying starts the N, and a lost Concentraçã
 Magia or attacking no longer breaks it.** `CombatantSheet#beginConcentration` (called by `Scene#addSummons` and
 `SubordinateService#summonShadowCounsel`; any other sustained effect's caller calls it), `#payConcentrationUpkeep` (owed on
 each later own Turn, `CONCENTRATION_UPKEEP_COST` reported, never deducted), `#loseConcentration` (fired by `applyDamage`
-losing PV — not `payWithVitality` — and by an unpaid Turn end). The sheet releases its own `Sustained` effects at once;
+losing PV — not `payWithVitality`, and never for a holder of `DominioDoManaCompetencyAbility#CONCENTRACAO_INABALAVEL`,
+who still owes the upkeep — and by an unpaid Turn end). The sheet releases its own `Sustained` effects at once;
 `Scene#settleConcentration` releases the rest (`next()` runs it each Turn end; a caller damaging mid-Turn runs it after).
 One upkeep covers everything a caster sustains (⚠️ a reading — nothing links a summon to its Magia). See
 `magic.SpellDuration`.
