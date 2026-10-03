@@ -20,6 +20,11 @@ abilities). Phases 5–6 open.
 | Aliado da Natureza | `trainCompanion`/`callCompanion`, `Character#getTrainedCompanions` (persisted) | Empatia Selvagem row: train, call |
 | Espalhar Reputação | `espalharReputacao` (GD ≥ Médio) | Artes row button; result to the log |
 
+**Still open from Phase 4:** Medicina Alternativa's owed die is held on the patient's in-memory sheet only (not
+persisted), so it is lost if that client leaves the Scene before the Descanso. Relays ride `AbilityActivationMessage`
+(`boundCharacterSheetIds` = the patient, `enchantmentRounds` = the outcome) — see the client's
+`docs/wiring-habilidades-de-competencia.md`.
+
 **Phase 3, as built:**
 
 | Ability | Core | Client |
