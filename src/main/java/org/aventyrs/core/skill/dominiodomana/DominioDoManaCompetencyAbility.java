@@ -46,8 +46,9 @@ public enum DominioDoManaCompetencyAbility implements SkillCompetencyAbility {
     ARCANISMO_EXPLOSIVA("Efeitos de Danos e Curas de suas Magias são aumentados em +2, " +
             "então em +1 ao alcançar a 5ª e 10ª graduação."),
 
-    // TODO: prevents losing Concentração (to keep a Magia active) after taking Dano — no
-    // Concentração system or Dano-triggers-a-concentration-check mechanic exists yet.
+    // Damage no longer loses its holder's Concentração (core 0.1.1) — read by
+    // AbstractCombatantSheet#applyDamage. The 1PA upkeep per Rodada is still owed: an unpaid
+    // Turn loses it as for anyone (see magic.SpellDuration).
     CONCENTRACAO_INABALAVEL("Você não perde a Concentração para manter ativa suas magias " +
             "após sofrer Danos.");
 

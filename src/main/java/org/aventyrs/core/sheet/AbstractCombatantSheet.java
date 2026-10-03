@@ -473,7 +473,7 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         int damageTaken = hitPoints.spend(remaining);
         damageTakenThisRound += Math.max(0, damageTaken - before);
         // "Se sofrer dano" — PV actually lost; a hit a Escudo absorbed whole leaves the focus intact.
-        if (damageTaken > before && !payingWithVitality) {
+        if (damageTaken > before && !payingWithVitality && !keepsConcentrationThroughDamage()) {
             loseConcentration();
         }
         observeStatus();
@@ -1647,6 +1647,15 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         // Rodadas now; the Scene releases the rest. Doing it here keeps a Concentração begun before the Scene settles
         // from being released in this one's place.
         releaseSustainedBy(getId());
+    }
+
+    /**
+     * {@code DominioDoManaCompetencyAbility#CONCENTRACAO_INABALAVEL}: "Você não perde a Concentração para manter ativa
+     * suas magias após sofrer Danos" — damage no longer costs it, though an unpaid upkeep still does.
+     */
+    private boolean keepsConcentrationThroughDamage() {
+        return SkillCompetencyAbility.allFor(getCharacter(), this)
+                .contains(org.aventyrs.core.skill.dominiodomana.DominioDoManaCompetencyAbility.CONCENTRACAO_INABALAVEL);
     }
 
     @Override

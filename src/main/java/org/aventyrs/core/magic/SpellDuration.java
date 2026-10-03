@@ -60,7 +60,9 @@ import static org.aventyrs.core.util.TranslatableMessages.INVALID_SPELL_DURATION
  *       like every PA here. A Turn ending with it unpaid loses the Concentração.</li>
  *   <li><b>Damage.</b> PV actually lost through {@code CombatantSheet#applyDamage} loses it; a
  *       cost paid in PV ({@code payWithVitality}) does not, and neither does a hit a Escudo
- *       absorbed whole.</li>
+ *       absorbed whole. A holder of {@code DominioDoManaCompetencyAbility#CONCENTRACAO_INABALAVEL}
+ *       ("não perde a Concentração … após sofrer Danos") keeps it through damage — the upkeep is
+ *       still owed.</li>
  *   <li><b>No resuming.</b> A lost Concentração refuses any later payment; only a new Concentração
  *       Magia begins another.</li>
  *   <li><b>Casting another Magia or attacking does not break it</b> — the previous reading, carried
