@@ -5,7 +5,8 @@ import java.util.UUID;
 /**
  * An effect held by its caster's Concentração (core 0.0.94) — "Duração: Concentração + N Rodadas". It has no
  * countdown while the caster concentrates; {@link CombatantSheet#releaseSustainedBy} starts the trailing N when their
- * focus breaks (they cast another Magia or attack), which {@code scene.Scene#breakConcentration} does for everyone.
+ * focus is lost (damage taken or an unpaid upkeep — {@link CombatantSheet#loseConcentration()}), which
+ * {@code scene.Scene#settleConcentration} does for everyone. See {@code magic.SpellDuration} for the rule.
  */
 public interface Sustained {
 

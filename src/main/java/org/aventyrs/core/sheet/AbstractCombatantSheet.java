@@ -43,6 +43,7 @@ import java.util.OptionalInt;
 import java.util.Set;
 import java.util.UUID;
 
+import static org.aventyrs.core.util.TranslatableMessages.CONCENTRATION_UPKEEP_NOT_DUE;
 import static org.aventyrs.core.util.TranslatableMessages.NOT_ENOUGH_EQUIPMENT_POINTS;
 
 /**
@@ -297,6 +298,22 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     @Getter(AccessLevel.NONE)
     private boolean inOwnTurn = false;
 
+    /** See {@link CombatantSheet#isConcentrating()}. */
+    @Getter(AccessLevel.NONE)
+    private boolean concentrating = false;
+
+    /** Whether this Turn's Concentração upkeep is settled — paid, or covered by the cast that began it. */
+    @Getter(AccessLevel.NONE)
+    private boolean concentrationUpkeepPaid = false;
+
+    /** A Concentração lost and not yet collected by {@link #consumeConcentrationLoss()}. */
+    @Getter(AccessLevel.NONE)
+    private boolean concentrationLost = false;
+
+    /** Set while {@link #payWithVitality} spends PV — a cost paid, not damage taken, so it keeps a Concentração. */
+    @Getter(AccessLevel.NONE)
+    private boolean payingWithVitality = false;
+
     /** Movements taken since this Rodada began — see {@link #consumeMovementThisRound()}. */
     private int movementsTakenThisRound = 0;
 
@@ -455,6 +472,10 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         int before = getDamageTaken();
         int damageTaken = hitPoints.spend(remaining);
         damageTakenThisRound += Math.max(0, damageTaken - before);
+        // "Se sofrer dano" — PV actually lost; a hit a Escudo absorbed whole leaves the focus intact.
+        if (damageTaken > before && !payingWithVitality) {
+            loseConcentration();
+        }
         observeStatus();
         return damageTaken;
     }
@@ -808,7 +829,12 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         if (amount <= 0) {
             return;
         }
-        applyDamage(amount);
+        payingWithVitality = true;
+        try {
+            applyDamage(amount);
+        } finally {
+            payingWithVitality = false;
+        }
         lockedDamage += amount;
     }
 
@@ -1568,6 +1594,10 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
      */
     @Override
     public void finishTurn() {
+        // "Ou não pagar o PA": a Turn ending with the upkeep still owed loses the Concentração.
+        if (concentrating && !concentrationUpkeepPaid) {
+            loseConcentration();
+        }
         inOwnTurn = false;
         tickTemporaryEffects();
         // Defesa Tartaruga: a Blessing earned by how the Turn just ended — granted after the tick, so
@@ -1578,6 +1608,52 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     @Override
     public boolean isInOwnTurn() {
         return inOwnTurn;
+    }
+
+    @Override
+    public void beginConcentration() {
+        concentrating = true;
+        concentrationUpkeepPaid = true;
+    }
+
+    @Override
+    public boolean isConcentrating() {
+        return concentrating;
+    }
+
+    @Override
+    public boolean isConcentrationUpkeepDue() {
+        return concentrating && inOwnTurn && !concentrationUpkeepPaid;
+    }
+
+    @Override
+    public ActionCost payConcentrationUpkeep() {
+        if (!isConcentrationUpkeepDue()) {
+            throw new IllegalOperationException(CONCENTRATION_UPKEEP_NOT_DUE);
+        }
+        concentrationUpkeepPaid = true;
+        return CONCENTRATION_UPKEEP_COST;
+    }
+
+    @Override
+    public void loseConcentration() {
+        if (!concentrating) {
+            return;
+        }
+        concentrating = false;
+        concentrationUpkeepPaid = false;
+        concentrationLost = true;
+        // What it sustains on this very sheet (the sombra conselheira, a self-cast Corpo Fechado) starts its trailing
+        // Rodadas now; the Scene releases the rest. Doing it here keeps a Concentração begun before the Scene settles
+        // from being released in this one's place.
+        releaseSustainedBy(getId());
+    }
+
+    @Override
+    public boolean consumeConcentrationLoss() {
+        boolean lost = concentrationLost;
+        concentrationLost = false;
+        return lost;
     }
 
     @Override
@@ -1649,6 +1725,7 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         actionCountAtTurnStart = actionsThisRound.size();
         actionsOfLatestOwnTurn.clear();
         inOwnTurn = true;
+        concentrationUpkeepPaid = false;
         drewWeaponThisTurn = false;
         activationsThisTurn.clear();
         // "Por 1 Rodada" from the holder's own Turn lasts until this one begins (table ruling).

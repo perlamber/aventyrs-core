@@ -9,7 +9,7 @@ import org.aventyrs.core.sheet.CombatantSheet;
  *
  * <p>A Duração of "Concentração + N Rodadas" is two phases ({@code magic.SpellDuration}): while the caster
  * concentrates there is no countdown ({@link #getRemainingRounds()} is {@code null}) and {@link #getTrailingRounds()}
- * holds the N; {@link Scene#breakConcentration} starts it.
+ * holds the N; losing the Concentração starts it ({@link Scene#settleConcentration}, {@link Scene#breakConcentration}).
  */
 @Getter
 public final class SceneSummon {
