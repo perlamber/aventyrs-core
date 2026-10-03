@@ -35,19 +35,10 @@ import java.util.Optional;
 @AllArgsConstructor
 public enum FurtividadeCompetencyAbility implements SkillCompetencyAbility {
 
-    // TODO: lets the character roll Furtividade (Maestria da Ocultação/Infiltrador
-    // specializations only) to hide an adjacent ally, at +1 GD — "an adjacent ally" is now
-    // checkable for real (org.aventyrs.core.scene.SceneContext#hasAllyWithin(Range.ADJACENTE)),
-    // and a character now genuinely holds typed CharacterSkill.getSpecializations() that could
-    // in principle name Maestria da Ocultação/Infiltrador — but gating *this ability's own*
-    // bonus on which specialization the caller requested for a given roll still isn't
-    // expressible: SkillRoll#getRequestedAbility() only feeds AbstractSkillInteraction's
-    // generic possession check, not a per-ability @Modifier method (same reflection limitation
-    // resolveDamageBonus/resolveAttackRollBonus were built to work around, by taking the
-    // relevant data as an explicit parameter instead — no such explicit-parameter resolve
-    // method exists for "which specialization was this roll requested with" yet). This is also
-    // a GD *increase*, which SkillCompetencyAbility.getDifficultyReduction() has no way to
-    // express (it only ever subtracts) — unaffected by this specialization change.
+    // Real (core 0.0.103): skill.CompetencyActions#esconderOutros turns a Furtividade total under
+    // Maestria da Ocultação or Infiltrador into the ally's Hidden, one nível below the tier the roll
+    // reached as an Especialista ("a GD aumenta em +1 Nível", table ruling); the effect half applies
+    // it on the ally's own sheet. ⚠️ "adjacente" is the caller's — this core holds no positions.
     ESCONDER_OUTROS("Você pode efetuar uma rolagem de Furtividade, nas Especializações " +
             "Maestria da Ocultação e Infiltrador, em um aliado adjacente, a GD para esta " +
             "ação aumenta em +1 Nível."),

@@ -11,6 +11,7 @@ import org.aventyrs.core.sheet.Hidden;
 import org.aventyrs.core.sheet.HealingSource;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.InteractionResult;
+import org.aventyrs.core.skill.artes.ArtesCompetencyAbility;
 import org.aventyrs.core.skill.empatiaselvagem.EmpatiaSelvagemCompetencyAbility;
 import org.aventyrs.core.skill.empatiaselvagem.TrainedCompanion;
 import org.aventyrs.core.skill.esquivaeaparar.EsquivaEApararCompetencyAbility;
@@ -28,7 +29,7 @@ import java.util.Set;
 /**
  * The Habilidades de Competência that are <b>actions</b> — a roll made for a stated purpose, with an effect on
  * someone — rather than passive bonuses: Estudar Defesas, Esconder Outros, Milagreiro, Medicina Alternativa and
- * Aliado da Natureza (core 0.0.103). As everywhere in this core the caller throws the dice; each method resolves
+ * Aliado da Natureza, Espalhar Reputação (core 0.0.103). As everywhere in this core the caller throws the dice; each method resolves
  * the roll against the GD its rules text names and applies, or reports, the effect.
  *
  * <p>An effect landing on a sheet the caller does not hold (another player's character) is split: the roll half
@@ -43,7 +44,11 @@ public final class CompetencyActions {
     /** Estudar Defesas: "por 2 Rodadas". */
     public static final int STUDIED_DEFENSES_ROUNDS = 2;
 
-    /** The ledger key Milagreiro marks a target with until its Descanso Longo. */
+    /**
+     * The rest-scoped ledger key Milagreiro spends on the patient's sheet until its Descanso Longo — a {@code
+     * COMPETENCY:} key, so it persists with the patient's other rest-scoped uses ({@link
+     * CompetencyUses#restoreRestScopedUses}).
+     */
     public static final String MILAGREIRO_KEY = "COMPETENCY:MEDICINA_E_CURA:MILAGREIRO";
 
     /** The ledger key Aliado da Natureza's once-per-Cena call is counted under. */
@@ -52,6 +57,9 @@ public final class CompetencyActions {
     /** Esconder Outros: "nas Especializações Maestria da Ocultação e Infiltrador". */
     public static final Set<SkillSpecialization> ESCONDER_OUTROS_SPECIALIZATIONS =
             Set.of(FurtividadeSpecialization.MAESTRIA_DA_OCULTACAO, FurtividadeSpecialization.INFILTRADOR);
+
+    /** Espalhar Reputação: "a GD da rolagem pode variar conforme a receptividade local (mínimo Médio)". */
+    public static final DifficultyLevel ESPALHAR_REPUTACAO_MINIMUM = DifficultyLevel.MEDIUM;
 
     private CompetencyActions() {
     }
@@ -108,7 +116,7 @@ public final class CompetencyActions {
 
     /** Whether target may still be treated with Milagreiro — once per target until its Descanso Longo. */
     public static boolean canAttemptMilagreiro(final CombatantSheet target) {
-        return target != null && !target.isAffectedUntilRest(MILAGREIRO_KEY);
+        return target != null && target.getRestScopedUses(MILAGREIRO_KEY) == 0;
     }
 
     /**
@@ -143,7 +151,7 @@ public final class CompetencyActions {
         if (!canAttemptMilagreiro(patient)) {
             return -1;
         }
-        patient.markAffectedUntilRest(MILAGREIRO_KEY, RestType.LONGO);
+        patient.spendOrdinaryRestScopedUse(MILAGREIRO_KEY, RestType.LONGO);
         if (!succeeded) {
             return 0;
         }
@@ -172,6 +180,27 @@ public final class CompetencyActions {
         requireHeld(healer, MedicinaECuraCompetencyAbility.MEDICINA_ALTERNATIVA);
         return SkillType.MEDICINA_E_CURA.newInteraction()
                 .applyTo(healer, sceneContext, SkillRoll.against(dice, DifficultyLevel.MEDIUM));
+    }
+
+    // --- Espalhar Reputação -------------------------------------------------------------------
+
+    /**
+     * "Você pode fazer uma rolagem de Artes enquanto se apresenta para uma multidão … a GD da rolagem pode variar
+     * conforme a receptividade local (mínimo Médio)." The Narrador names the GD; a lower one is raised to Médio.
+     * The effect — listeners "mais favoráveis ou neutros" — is the Narrador's to adjudicate (no disposition
+     * system); the result's {@code succeeded} is what they read.
+     *
+     * @throws IllegalOperationException {@code COMPETENCY_ABILITY_NOT_HELD} without the ability
+     */
+    public static InteractionResult espalharReputacao(@NonNull final CombatantSheet performer,
+                                                      final SceneContext sceneContext,
+                                                      @NonNull final List<Integer> dice,
+                                                      final DifficultyLevel difficulty) {
+        requireHeld(performer, ArtesCompetencyAbility.ESPALHAR_REPUTACAO);
+        DifficultyLevel stated = difficulty == null || difficulty.getBaseValue() < ESPALHAR_REPUTACAO_MINIMUM.getBaseValue()
+                ? ESPALHAR_REPUTACAO_MINIMUM
+                : difficulty;
+        return SkillType.ARTES.newInteraction().applyTo(performer, sceneContext, SkillRoll.against(dice, stated));
     }
 
     // --- Aliado da Natureza --------------------------------------------------------------------
