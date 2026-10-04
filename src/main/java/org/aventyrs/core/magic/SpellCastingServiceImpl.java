@@ -1,6 +1,8 @@
 package org.aventyrs.core.magic;
 
 import org.aventyrs.core.skill.Skill;
+import org.aventyrs.core.skill.SkillCompetencyAbility;
+import java.util.List;
 import org.aventyrs.core.sheet.FrenzyMode;
 import org.aventyrs.core.sheet.AreaDamage;
 import org.aventyrs.core.ability.AttributeAbility;
@@ -74,10 +76,14 @@ public class SpellCastingServiceImpl implements SpellCastingService {
                 dominioDoManaContextInteraction.applyTo(request.getCaster(), request.getSceneContext()),
                 request.getCaster(), spell);
         SpellEmpowerment empowerment = consumeEmpowerment(request.getCaster());
-        OptionalInt durationInRounds = extendDuration(spellDurationService.resolveDurationInRounds(spell,
+        List<SkillCompetencyAbility> casterCompetencies =
+                SkillCompetencyAbility.allFor(request.getCaster().getCharacter(), request.getCaster());
+        OptionalInt durationInRounds = lengthened(extendDuration(spellDurationService.resolveDurationInRounds(spell,
                 request.getCaster().getCharacter(),
                 request.getCombatantTarget() == null ? null : request.getCombatantTarget().getCharacter()),
-                spell, empowerment);
+                spell, empowerment), casterCompetencies.stream()
+                .mapToInt(ability -> ability.resolveSpellDurationIncrease(spell, request.getCaster().getCharacter()))
+                .sum());
         // Serra-Pernas: "+2 rodadas para cada PM gasto" — paid in resolveManaCost.
         int extraManaRounds = extraMana(spell, request) * spell.getRoundsPerExtraMana();
         if (extraManaRounds > 0 && durationInRounds.isPresent()) {
@@ -102,10 +108,12 @@ public class SpellCastingServiceImpl implements SpellCastingService {
         }
         int spellDamageBonus = casterCharacter.getFeats().stream()
                 .mapToInt(feat -> feat.resolveSpellDamageBonus(spell, casterCharacter, request.getActivatedFeats()))
-                .sum();
+                .sum()
+                + casterCompetencies.stream().mapToInt(ability -> ability.resolveSpellDamageBonus(spell, casterCharacter)).sum();
         int healingBonus = casterCharacter.getFeats().stream()
                 .mapToInt(feat -> feat.resolveSpellHealingBonus(spell, casterCharacter, request.getActivatedFeats()))
-                .sum();
+                .sum()
+                + casterCompetencies.stream().mapToInt(ability -> ability.resolveSpellHealingBonus(spell, casterCharacter)).sum();
         int effectDelayRounds = casterCharacter.getFeats().stream()
                 .mapToInt(feat -> feat.resolveCastEffectDelayRounds(spell, casterCharacter, request.getActivatedFeats()))
                 .max().orElse(0);
@@ -255,6 +263,17 @@ public class SpellCastingServiceImpl implements SpellCastingService {
             return rounds;
         }
         return OptionalInt.of(rounds.getAsInt() + SpellEmpowerment.DURATION_BONUS);
+    }
+
+    /**
+     * Conjuração Duradoura's "+1 Rodada": only a Duração already counted in Rodadas grows — an
+     * Instantânea (none, or 0) or a Duração in other units has no Rodada to add to.
+     */
+    private static OptionalInt lengthened(final OptionalInt rounds, final int increase) {
+        if (increase == 0 || rounds.isEmpty() || rounds.getAsInt() <= 0) {
+            return rounds;
+        }
+        return OptionalInt.of(rounds.getAsInt() + increase);
     }
 
     /** Frenesi Arcano (Dano): +1d6, or the dice maximised once that would pass 3d6. */

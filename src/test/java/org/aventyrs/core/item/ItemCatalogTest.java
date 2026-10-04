@@ -28,13 +28,15 @@ class ItemCatalogTest {
         assertTrue(all.containsAll(List.of(LightBladeItem.values())));
         assertTrue(all.containsAll(List.of(HeavyBladeItem.values())));
         assertTrue(all.containsAll(List.of(SpearItem.values())));
+        assertTrue(all.containsAll(List.of(UtilityItem.values())));
         assertEquals(ArmorItem.values().length + BootsItem.values().length
                 + CloakItem.values().length + ShieldItem.values().length
                 + HelmetItem.values().length + NaturalWeapon.values().length
                 + BowItem.values().length + ThrowableItem.values().length
                 + CrossbowItem.values().length + WhipItem.values().length
                 + ClubItem.values().length + LightBladeItem.values().length
-                + HeavyBladeItem.values().length + SpearItem.values().length, all.size());
+                + HeavyBladeItem.values().length + SpearItem.values().length
+                + UtilityItem.values().length, all.size());
     }
 
     @Test

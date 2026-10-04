@@ -3,10 +3,13 @@ package org.aventyrs.core.skill;
 import org.aventyrs.core.character.MovementMode;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.character.CriticalDamage;
 import org.aventyrs.core.character.DamageBonus;
+import org.aventyrs.core.effect.Effect;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.Blessing;
 import org.aventyrs.core.sheet.TargetScope;
+import org.aventyrs.core.sheet.CombatantAction;
 import org.aventyrs.core.sheet.CombatantSheet;
 
 import java.util.Collection;
@@ -102,7 +105,88 @@ public interface SkillCompetencyAbility extends SkillTrait {
      * as "condition not met," the same restraint every other {@code resolve*} hook applies.
      */
     default Optional<DamageBonus> resolveDamageBonus(final SkillType attackingSkillType, final SceneContext sceneContext, final CombatantSheet attackTarget, final Character actor) {
+        return resolveDamageBonus(attackingSkillType, sceneContext, attackTarget, actor, null, null);
+    }
+
+    /**
+     * The longest form, and the one every override goes on: also what the attack is made with —
+     * {@code AtaqueCorpoACorpoCompetencyAbility#ACUIDADE}'s "se arma for de Categoria Pesada" — and the
+     * holder's own sheet, which is where a Condição lives ({@code FurtividadeCompetencyAbility
+     * #MORTE_OCULTA}'s "enquanto escondido"). {@code AbstractSkillInteraction} asks this one; either may
+     * be {@code null}, read as "condition not met".
+     */
+    default Optional<DamageBonus> resolveDamageBonus(final SkillType attackingSkillType, final SceneContext sceneContext,
+                                                     final CombatantSheet attackTarget, final Character actor,
+                                                     final AttackSource attackSource, final CombatantSheet holder) {
         return Optional.empty();
+    }
+
+    /**
+     * How many times holder may use this ability per {@link #getUseWindow()} — Salto Poderoso's "uma vez por
+     * Cena, novos usos … na 5ª e 10ª Graduação" is 1/2/3. Read by {@link CompetencyUses}; 0 by default.
+     */
+    default int resolveUseLimit(final Character holder) {
+        return 0;
+    }
+
+    /** What renews this ability's uses — {@code null} (the default) for one that is not limited-use. */
+    default UseWindow getUseWindow() {
+        return null;
+    }
+
+    /**
+     * What one use grants its holder — Instinto de Luther's extra Reações for the Rodada it is used in. Granted
+     * by {@link CompetencyUses#use}. Empty by default.
+     */
+    default List<Blessing> resolveActivationBlessings(final Character holder) {
+        return List.of();
+    }
+
+    /**
+     * PA added to (negative: taken off) a Perícia roll — not an attack — its holder makes right now: {@code
+     * MedicinaECuraCompetencyAbility#BOM_DOUTOR}'s "-1PA" with a kit in hand, once per Rodada. Summed by {@code
+     * ActionPointsService#getSkillRollCost}. Zero by default.
+     */
+    default int resolveSkillRollActionPointAdjustment(final SkillType skillType, final CombatantSheet holder) {
+        return 0;
+    }
+
+    /**
+     * PA added to (negative: taken off) an attack its holder makes right now — {@code
+     * PersuasaoCompetencyAbility#FINTAR_APRIMORADO}'s "tem seu Tempo de Ação reduzido em -1PA" while its
+     * Finta stands. Summed by {@code ActionPointsService#getAttackCost} beside the Talentos' adjustments.
+     * Zero by default.
+     */
+    default int resolveAttackActionPointAdjustment(final SkillType attackSkill, final CombatantSheet holder) {
+        return 0;
+    }
+
+    /**
+     * Told of every action its holder files ({@code CombatantSheet#recordAction}) — how a benefit for
+     * "sua próxima rolagem" ends once that roll is made: {@code FINTAR_APRIMORADO} lifts its own Blessings
+     * after the first Perícia de Ataque roll. Nothing by default.
+     */
+    default void onActionRecorded(final CombatantSheet holder, final CombatantAction action) {
+    }
+
+    /**
+     * What this ability adds to an <b>Acerto Crítico</b>'s dano — {@code AtaqueADistanciaCompetencyAbility
+     * #MIRAR_NA_CABECA}'s "Vantagem nas rolagens de Danos Críticos". Summed by {@code
+     * CriticalService#getCriticalDamage} on top of the baseline Vantagem, so it is only ever asked for a
+     * critical success. Each override checks attackSkill itself. {@link CriticalDamage#NONE} by default.
+     */
+    default CriticalDamage resolveCriticalDamage(final SkillType attackSkill, final CombatantSheet holder) {
+        return CriticalDamage.NONE;
+    }
+
+    /**
+     * {@link Effect}s this ability lands on the target of an attack its holder lands as an <b>Acerto
+     * Crítico</b> — {@code AtaqueCorpoACorpoCompetencyAbility#ABRIR_DEFESAS}'s Desprevenido. The twin of
+     * {@code Feat#resolveCriticalHitEffectChains}: {@code AttackDelivery} chains these behind the damage
+     * only when the critical triggered, so they travel wherever the chain does. Empty by default.
+     */
+    default List<Effect> resolveCriticalHitEffects(final SkillType attackSkill, final CombatantSheet attacker) {
+        return List.of();
     }
 
     /**
@@ -159,6 +243,17 @@ public interface SkillCompetencyAbility extends SkillTrait {
      * convention every other {@code skillRollBonus} source already uses.
      */
     default Optional<Integer> resolveConditionalRollBonus(final SceneContext sceneContext, final SkillTrait requestedAbility) {
+        return resolveConditionalRollBonus(null, sceneContext, requestedAbility, null);
+    }
+
+    /**
+     * The longest form, and the one every override goes on: also the Perícia being rolled and the
+     * holder's own sheet, where a Condição lives — {@code FurtividadeCompetencyAbility#ACAO_SURPRESA}'s
+     * "enquanto estiver Furtivo". {@code AbstractSkillInteraction} asks this one; skillType and holder
+     * may be {@code null} from the shorter form, read as "condition not met".
+     */
+    default Optional<Integer> resolveConditionalRollBonus(final SkillType skillType, final SceneContext sceneContext,
+                                                          final SkillTrait requestedAbility, final CombatantSheet holder) {
         return Optional.empty();
     }
 
@@ -299,6 +394,40 @@ public interface SkillCompetencyAbility extends SkillTrait {
      * ability) whose rules text widens Margem Crítica Menor like this.
      */
     default int resolveCriticalMarginIncrease(final SkillType skillType, final SceneContext sceneContext) {
+        return resolveCriticalMarginIncrease(skillType, sceneContext, null, null);
+    }
+
+    /**
+     * The longest form, and the one every override goes on: also what the roll is made with and the
+     * holder — {@code DominioDoManaCompetencyAbility#LETALIDADE_ARCANA}'s "Margem Crítica Menor de suas
+     * Magias" covers an attack delivered by a {@code Spell}, and grows with the holder's Graduação.
+     * {@code CriticalService} asks this one; either may be {@code null}.
+     */
+    default int resolveCriticalMarginIncrease(final SkillType skillType, final SceneContext sceneContext,
+                                              final AttackSource attackSource, final CombatantSheet holder) {
+        return 0;
+    }
+
+    /**
+     * Added to a Magia's dano by {@code SpellCastingService#castSpell} — {@code
+     * DominioDoManaCompetencyAbility#ARCANISMO_EXPLOSIVA}'s "Efeitos de Danos … de suas Magias são
+     * aumentados". Beside {@code Feat#resolveSpellDamageBonus}. Zero by default.
+     */
+    default int resolveSpellDamageBonus(final org.aventyrs.core.magic.Spell spell, final Character caster) {
+        return 0;
+    }
+
+    /** The cura twin of {@link #resolveSpellDamageBonus}, beside {@code Feat#resolveSpellHealingBonus}. Zero by default. */
+    default int resolveSpellHealingBonus(final org.aventyrs.core.magic.Spell spell, final Character caster) {
+        return 0;
+    }
+
+    /**
+     * Rodadas added to a Magia's Duração when it is measured in Rodadas — {@code
+     * DominioDoManaCompetencyAbility#CONJURACAO_DURADOURA}. Summed by {@code SpellCastingService#castSpell}.
+     * Zero by default.
+     */
+    default int resolveSpellDurationIncrease(final org.aventyrs.core.magic.Spell spell, final Character caster) {
         return 0;
     }
 

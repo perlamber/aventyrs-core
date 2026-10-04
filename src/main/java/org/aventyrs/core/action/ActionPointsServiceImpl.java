@@ -137,10 +137,14 @@ public class ActionPointsServiceImpl implements ActionPointsService {
                     .map(feat -> feat.resolveSkillRollActionPointOverride(attackSkill, attacker, spent, sceneContext)));
         }
         java.util.stream.IntStream adjustments = java.util.stream.IntStream.concat(
-                held.stream().mapToInt(feat ->
-                        feat.resolveAttackActionPointAdjustment(attackSkill, attackSource, attacker, spent)),
-                held.stream().mapToInt(feat ->
-                        feat.resolveSkillRollActionPointAdjustment(attackSkill, attacker, spent, sceneContext)));
+                java.util.stream.IntStream.concat(
+                        held.stream().mapToInt(feat ->
+                                feat.resolveAttackActionPointAdjustment(attackSkill, attackSource, attacker, spent)),
+                        held.stream().mapToInt(feat ->
+                                feat.resolveSkillRollActionPointAdjustment(attackSkill, attacker, spent, sceneContext))),
+                // Fintar Aprimorado's -1PA on the attack its Finta set up.
+                org.aventyrs.core.skill.SkillCompetencyAbility.allFor(attacker.getCharacter(), attacker).stream()
+                        .mapToInt(ability -> ability.resolveAttackActionPointAdjustment(attackSkill, attacker)));
         return price(attacker, attackSkill, spent, turnNumber, sceneContext, override, adjustments);
     }
 
@@ -152,8 +156,11 @@ public class ActionPointsServiceImpl implements ActionPointsService {
         List<Feat> held = roller.getCharacter().getFeats();
         Integer override = lowest(held.stream()
                 .map(feat -> feat.resolveSkillRollActionPointOverride(skill, roller, spent, sceneContext)));
-        return price(roller, skill, spent, turnNumber, sceneContext, override, held.stream()
-                .mapToInt(feat -> feat.resolveSkillRollActionPointAdjustment(skill, roller, spent, sceneContext)));
+        return price(roller, skill, spent, turnNumber, sceneContext, override, java.util.stream.IntStream.concat(
+                held.stream().mapToInt(feat -> feat.resolveSkillRollActionPointAdjustment(skill, roller, spent, sceneContext)),
+                // Bom Doutor's -1PA with a kit in hand.
+                org.aventyrs.core.skill.SkillCompetencyAbility.allFor(roller.getCharacter(), roller).stream()
+                        .mapToInt(ability -> ability.resolveSkillRollActionPointAdjustment(skill, roller))));
     }
 
     private static Integer lowest(final java.util.stream.Stream<Integer> overrides) {

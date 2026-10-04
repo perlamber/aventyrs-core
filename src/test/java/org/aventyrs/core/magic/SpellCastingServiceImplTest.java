@@ -22,7 +22,9 @@ import org.aventyrs.core.sheet.Player;
 import org.aventyrs.core.scene.AreaOfEffect;
 import org.aventyrs.core.scene.Scene;
 import org.aventyrs.core.scene.Range;
+import org.aventyrs.core.skill.SkillCompetencyAbility;
 import org.aventyrs.core.skill.SkillType;
+import org.aventyrs.core.skill.dominiodomana.DominioDoManaCompetencyAbility;
 import org.aventyrs.core.skill.dominiodomana.DominioDoManaInteraction;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -306,6 +308,101 @@ class SpellCastingServiceImplTest {
                 .build());
 
         assertEquals(3, result.getPrimaryDamage().deterministicAmount());
+    }
+
+    // Habilidades de Competência de Domínio do Mana (core 0.0.101)
+
+    private static CharacterSheet casterHolding(final SkillCompetencyAbility ability) {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .attributes(CharacterAttributes.builder()
+                        .focus(AttributeValue.builder().domain(AttributeDomain.FOCUS).base(6).build())
+                        .build())
+                .skillCompetencyAbility(ability)
+                .build();
+        return CharacterSheet.of(character, new Player());
+    }
+
+    private SpellCastingResult castAt(final CharacterSheet caster, final Spell spell) {
+        Scene scene = new Scene();
+        scene.addParticipant(caster, 1);
+        CharacterSheet target = CharacterSheet.of(CharacterFixture.blank(CharacterFixture.BLANK).build(), new Player());
+        scene.addParticipant(target, 0);
+        return damageService.castSpell(SpellCastRequest.builder()
+                .caster(caster)
+                .spell(spell)
+                .scene(scene)
+                .sceneContext(scene.buildContext(caster, Map.of(target, Range.DISTANCIA_MEDIA), target))
+                .combatantTarget(target)
+                .build());
+    }
+
+    private SpellCastingResult castArea(final CharacterSheet caster, final Spell spell) {
+        Scene scene = new Scene();
+        scene.addParticipant(caster, 1);
+        return damageService.castSpell(SpellCastRequest.builder()
+                .caster(caster)
+                .spell(spell)
+                .scene(scene)
+                .sceneContext(scene.buildContext(caster, Map.of()))
+                .positionTarget(new org.aventyrs.core.scene.grid.GridPosition(4, 4))
+                .build());
+    }
+
+    @Test
+    void arcanismoExplosivoAddsTwoToAMagiasDanoAndCura() {
+        SpellCastingResult result = castAt(casterHolding(DominioDoManaCompetencyAbility.ARCANISMO_EXPLOSIVA),
+                halfFocusSpell(0));
+
+        assertEquals(3 + 2, result.getPrimaryDamage().deterministicAmount());
+        assertEquals(2, result.getHealingBonus());
+    }
+
+    @Test
+    void conjuracaoDuradouraAddsARodadaToADuracaoInRodadas() {
+        SpellCastingResult result = castArea(casterHolding(DominioDoManaCompetencyAbility.CONJURACAO_DURADOURA),
+                areaSpell(SpellDuration.rodadas(2)));
+
+        assertEquals(3, result.getDurationInRounds());
+    }
+
+    @Test
+    void conjuracaoDuradouraLeavesConcentracaoAlone() {
+        SpellCastingResult result = castArea(casterHolding(DominioDoManaCompetencyAbility.CONJURACAO_DURADOURA),
+                areaSpell(SpellDuration.CONCENTRACAO));
+
+        assertEquals(0, result.getDurationInRounds());
+    }
+
+    @Test
+    void letalidadeArcanaWidensAMagiasMargemCriticaOnly() {
+        CharacterSheet caster = casterHolding(DominioDoManaCompetencyAbility.LETALIDADE_ARCANA);
+        org.aventyrs.core.character.services.CriticalServiceImpl criticals =
+                new org.aventyrs.core.character.services.CriticalServiceImpl();
+
+        assertEquals(1, criticals.sumCriticalMarginIncrease(caster, SkillType.DOMINIO_DO_MANA, null, null));
+        assertEquals(1, criticals.sumCriticalMarginIncrease(caster, SkillType.ATAQUE_A_DISTANCIA, halfFocusSpell(0), null));
+        assertEquals(0, criticals.sumCriticalMarginIncrease(caster, SkillType.ATAQUE_A_DISTANCIA, null, null));
+    }
+
+    @Test
+    void theDominioDoManaAbilitiesGrowAtTheFifthAndTenthGraduacao() {
+        Character atFive = CharacterFixture.blank(CharacterFixture.BLANK)
+                .skill(SkillType.DOMINIO_DO_MANA, graduated(5)).build();
+        Character atTen = CharacterFixture.blank(CharacterFixture.BLANK)
+                .skill(SkillType.DOMINIO_DO_MANA, graduated(10)).build();
+
+        assertEquals(3, DominioDoManaCompetencyAbility.ARCANISMO_EXPLOSIVA.resolveSpellDamageBonus(null, atFive));
+        assertEquals(4, DominioDoManaCompetencyAbility.ARCANISMO_EXPLOSIVA.resolveSpellHealingBonus(null, atTen));
+        assertEquals(2, DominioDoManaCompetencyAbility.CONJURACAO_DURADOURA.resolveSpellDurationIncrease(null, atFive));
+        assertEquals(3, DominioDoManaCompetencyAbility.LETALIDADE_ARCANA.resolveCriticalMarginIncrease(
+                SkillType.DOMINIO_DO_MANA, null, null, CharacterSheet.of(atTen, new Player())));
+    }
+
+    private static org.aventyrs.core.character.CharacterSkill graduated(final int graduation) {
+        return org.aventyrs.core.character.CharacterSkill.builder()
+                .skill(SkillType.DOMINIO_DO_MANA.newSkillInstance())
+                .graduation(org.aventyrs.core.skill.SkillGraduation.builder().graduationValue(graduation).build())
+                .build();
     }
 
     private Scene sceneWithCaster() {

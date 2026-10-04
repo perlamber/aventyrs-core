@@ -5,6 +5,13 @@ import lombok.Getter;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.skill.DifficultyLevel;
+import org.aventyrs.core.character.Character;
+import org.aventyrs.core.modifier.ModifierType;
+import org.aventyrs.core.sheet.Blessing;
+import org.aventyrs.core.sheet.TargetScope;
+import org.aventyrs.core.skill.CompetencyUses;
+import org.aventyrs.core.skill.UseWindow;
+import java.util.List;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
 import org.aventyrs.core.skill.SkillType;
 
@@ -64,19 +71,37 @@ public enum AttentionCompetencyAbility implements SkillCompetencyAbility {
     ARDIL_DE_MARPLE("Você recebe Vantagem em rolagens de Perícias efetuadas fora de Cenas " +
             "de Combate e em Rodadas 0 (zero)."),
 
-    // TODO: grants an extra Reação usable in a single Rodada of the character's choosing
-    // each Cena — not the same shape as ReactionsService's flat always-available total, this
-    // is a single-use-in-one-chosen-Rodada bonus, needing Cena-scoped usage tracking. Also
-    // needs a graduation-crossing-a-threshold trigger for the +1 additional use at 5/10
-    // Graduações (same gap as ArtesExcellency.FOCADO/LENDA), and — at 5+ Graduações — a way
-    // to grant this same benefit to every ally (a cross-character effect), none of which
-    // exist yet.
+    /**
+     * Real (core 0.0.102): once per Cena, in the Rodada its holder chooses, 1/2/3 extra Reações (5ª/10ª
+     * Graduação) — a {@link CompetencyUses#use} granting a 1-Rodada {@link ModifierType#REACTIONS} Blessing.
+     * From the 5ª Graduação every ally gets one extra Reação for a Rodada of their own choosing, once per Cena:
+     * {@link CompetencyUses#useAllyInstinct}.
+     */
     INSTINTO_DE_LUTHER("Personagens com esta Competência podem prever as ações de outros, " +
             "a cada Cena você recebe uma Reação adicional para utilizar em apenas uma " +
             "Rodada, a sua escolha. A quantidade de Reações adicionais que você recebe " +
             "aumenta em mais uma ao alcançar a 5ª e 10ª Graduação. Se tiver ao menos 5 " +
             "Graduações, todos os seus aliados recebem uma Reação adicional para usar em " +
-            "uma Rodada a escolha deles.");
+            "uma Rodada a escolha deles.") {
+        @Override
+        public int resolveUseLimit(final Character holder) {
+            return 1;
+        }
+
+        @Override
+        public UseWindow getUseWindow() {
+            return UseWindow.CENA;
+        }
+
+        @Override
+        public List<Blessing> resolveActivationBlessings(final Character holder) {
+            return List.of(new Blessing(ModifierType.REACTIONS, tiered(holder, SkillType.ATTENTION), 1,
+                    TargetScope.SELF, INSTINTO_DE_LUTHER.name()));
+        }
+    };
+
+    /** Instinto de Luther's Graduação from which every ally gets an extra Reação too. */
+    public static final int LUTHER_ALLY_GRADUATION = 5;
 
     private final String description;
 
@@ -84,4 +109,11 @@ public enum AttentionCompetencyAbility implements SkillCompetencyAbility {
     public SkillType getSkillType() {
         return SkillType.ATTENTION;
     }
+
+    /** 1, then +1 at the 5ª and +1 at the 10ª Graduação in {@code skill} — 1 with no holder. */
+    private static int tiered(final Character holder, final SkillType skill) {
+        int graduation = holder == null ? 0 : holder.getEffectiveGraduation(skill);
+        return 1 + (graduation >= 5 ? 1 : 0) + (graduation >= 10 ? 1 : 0);
+    }
+
 }

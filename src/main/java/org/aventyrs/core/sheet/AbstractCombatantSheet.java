@@ -326,6 +326,9 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     /** See {@link CombatantSheet#getReactionsSpentThisRound()}. */
     private int reactionsSpentThisRound = 0;
 
+    /** {@link #spendRoundScopedUse}'s ledger — cleared every Rodada and every Cena. */
+    private final java.util.Map<Object, Integer> roundScopedUses = new java.util.HashMap<>();
+
     /** See {@link CombatantSheet#getStoredSpells()}. */
     private final List<org.aventyrs.core.magic.StoredSpell> storedSpells = new ArrayList<>();
 
@@ -395,6 +398,9 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     /** Damage only a Descanso recovers — see {@link #lockDamageUntilRest}. */
     @Getter(AccessLevel.NONE)
     private int restLockedDamage;
+
+    /** Whose Defesas this combatant has studied, and for how many more Rodadas — see {@link #studyDefensesOf}. */
+    private final Map<UUID, Integer> studiedDefenses = new HashMap<>();
 
     /** Whose Defesas this combatant's next attack finds open — see {@link #openDefensesOf}. */
     @Getter(AccessLevel.NONE)
@@ -898,6 +904,36 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         return target != null && openedDefenses.contains(target.getId());
     }
 
+    /** Medicina Alternativa's debt — see {@link #owePendingRestBonus}. */
+    private int pendingRestBonus;
+
+    @Override
+    public void owePendingRestBonus(final int amount) {
+        pendingRestBonus = Math.max(0, amount);
+    }
+
+    @Override
+    public int takePendingRestBonus() {
+        int owed = pendingRestBonus;
+        pendingRestBonus = 0;
+        return owed;
+    }
+
+    @Override
+    public int getPendingRestBonus() {
+        return pendingRestBonus;
+    }
+
+    @Override
+    public void studyDefensesOf(@NonNull final CombatantSheet target, final int rounds) {
+        studiedDefenses.merge(target.getId(), rounds, Math::max);
+    }
+
+    @Override
+    public boolean hasStudiedDefensesOf(final CombatantSheet target) {
+        return target != null && studiedDefenses.getOrDefault(target.getId(), 0) > 0;
+    }
+
     @Override
     public void lockDamageUntilRest(final int amount) {
         if (amount > 0) {
@@ -1373,6 +1409,12 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
      */
     @Override
     public TemporaryBonus grantBlessing(final Blessing blessing) {
+        if (blessing.isUntilCombatEnds()) {
+            TemporaryBonus open = TemporaryBonus.openEnded(blessing.getModifierType(), blessing.getValue(),
+                    blessing.getSource());
+            applyEffectUntilCombatEnds(open);
+            return open;
+        }
         TemporaryBonus bonus = TemporaryBonus.from(blessing);
         applyEffect(bonus);
         return bonus;
@@ -1386,6 +1428,16 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     @Override
     public int getReactionsSpentThisRound() {
         return reactionsSpentThisRound;
+    }
+
+    @Override
+    public void spendRoundScopedUse(final Object source) {
+        roundScopedUses.merge(source, 1, Integer::sum);
+    }
+
+    @Override
+    public int getRoundScopedUses(final Object source) {
+        return roundScopedUses.getOrDefault(source, 0);
     }
 
     @Override
@@ -1682,6 +1734,24 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     @Getter(AccessLevel.NONE)
     private final Map<String, RestType> restScopedResets = new HashMap<>();
 
+    /** The rest-scoped uses any Descanso renews, not only a Verdadeiro — see {@link #spendOrdinaryRestScopedUse}. */
+    @Getter(AccessLevel.NONE)
+    private final java.util.Set<String> ordinaryRestScopedUses = new java.util.HashSet<>();
+
+    @Override
+    public void spendOrdinaryRestScopedUse(final String source, final RestType resetsAt) {
+        spendRestScopedUse(source, resetsAt);
+        ordinaryRestScopedUses.add(source);
+    }
+
+    @Override
+    public void restoreOrdinaryRestScopedUses(final String source, final int uses, final RestType resetsAt) {
+        restoreRestScopedUses(source, uses, resetsAt);
+        if (uses > 0) {
+            ordinaryRestScopedUses.add(source);
+        }
+    }
+
     @Override
     public int getRestScopedUses(final String source) {
         return restScopedUses.getOrDefault(source, 0);
@@ -1793,6 +1863,9 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
      */
     @Override
     public void startNewRound() {
+        roundScopedUses.clear();
+        studiedDefenses.replaceAll((target, rounds) -> rounds - 1);
+        studiedDefenses.values().removeIf(rounds -> rounds <= 0);
         damageTakenThisRound = 0;
         damageNegatedThisRound = false;
         actionsThisRound.clear();
@@ -1894,6 +1967,14 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
             return false;
         });
         restCooldowns.values().removeIf(required -> restType.isAtLeast(required));
+        restScopedResets.entrySet().removeIf(entry -> {
+            if (ordinaryRestScopedUses.contains(entry.getKey()) && restType.isAtLeast(entry.getValue())) {
+                restScopedUses.remove(entry.getKey());
+                ordinaryRestScopedUses.remove(entry.getKey());
+                return true;
+            }
+            return false;
+        });
         restImmunities.values().removeIf(required -> restType.isAtLeast(required));
         // Armazenar Magia: "será automaticamente dissipada se não for utilizada até seu próximo
         // Descanso" — any Descanso.
@@ -1971,6 +2052,8 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
 
     @Override
     public void startNewScene() {
+        roundScopedUses.clear();
+        studiedDefenses.clear();
         clearInitiativeOverride();
         cenaImmunities.clear();
         openedDefenses.clear();
@@ -2195,6 +2278,9 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         if (action.targetId() != null && action.skill() != null && action.skill().isAttackSkill()) {
             openedDefenses.remove(action.targetId());
         }
+        // A Habilidade de Competência's "próxima rolagem" benefit ends here (Fintar Aprimorado).
+        org.aventyrs.core.skill.SkillCompetencyAbility.allFor(getCharacter(), this)
+                .forEach(ability -> ability.onActionRecorded(this, action));
     }
 
     @Override

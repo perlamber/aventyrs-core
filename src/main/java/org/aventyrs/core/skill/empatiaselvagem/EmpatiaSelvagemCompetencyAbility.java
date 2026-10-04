@@ -37,11 +37,11 @@ public enum EmpatiaSelvagemCompetencyAbility implements SkillCompetencyAbility {
             "selvagens, a menos que tome ações ofensivas você nunca será seus alvos " +
             "primários (exceto se estiver sendo caçado como alimento e for o único alvo)."),
 
-    // TODO: "failed" is answerable now (InteractionResult#getSucceeded()), and spending PD is
-    // supported (CombatantSheet#spendDeterminationPoints) — but a *reroll* is not something this
-    // core can offer: it never rolls dice, so repeating a roll is the caller's own step, and
-    // there is no per-creature usage-limit tracker to hold the "apenas uma vez para cada
-    // criatura" either.
+    /**
+     * Real (core 0.0.102): {@link CompetencyUses#charm} spends the 2PD and marks the creature for this Cena
+     * (table ruling: "uma vez para cada criatura" resets per Cena). The reroll itself is the caller's — this core
+     * never rolls dice — offered only on a failed Empatia Selvagem roll, as an Ação Livre.
+     */
     CHARME_FEERICO("Você pode usar 2PD para refazer, como Ação Livre, uma rolagem de " +
             "Empatia Selvagem que tenha falhado, mas apenas uma vez para cada criatura."),
 
@@ -56,11 +56,9 @@ public enum EmpatiaSelvagemCompetencyAbility implements SkillCompetencyAbility {
         }
     },
 
-    // TODO: an activated ability training a creature (GD Difícil) into a Cavaleiro/Peão/Torre-typed
-    // Subordinado, limited to one per Cena. The GD Difícil check is expressible now (a SkillRoll
-    // states its own targetValue), but there is no Subordinado/ally-classification system for the
-    // creature to become one of, no acquisition-time choice of which type, and no Cena-scoped
-    // usage tracking.
+    // Real (core 0.0.103): skill.CompetencyActions#trainCompanion (GD Difícil) keeps a TrainedCompanion
+    // — named, with a Cavaleiro/Peão/Torre SubordinateBenefit — on the Character (lasting, table
+    // ruling); #callCompanion commands one per Cena as a Subordinado (⚠️ Cena kept per combat).
     ALIADO_DA_NATUREZA("Você pode treinar uma criatura para lhe acompanhar e auxiliar (GD " +
             "Difícil), ele é será considerado um Subordinado do tipo Cavaleiro, Peão ou " +
             "Torre, a sua escolha. Você recebe os benefícios de apenas um animal treinado " +

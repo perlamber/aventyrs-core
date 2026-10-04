@@ -11,6 +11,7 @@ import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.skill.Skill;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
 import org.aventyrs.core.skill.SkillTrait;
+import org.aventyrs.core.skill.AttackSource;
 import org.aventyrs.core.skill.SkillType;
 
 import java.util.Optional;
@@ -49,7 +50,8 @@ public enum GoblinsRacialAbility implements SkillCompetencyAbility {
             "Vantagens em suas rolagens de Perícias, se pelo menos um destes aliados for outro " +
             "Goblin recebem também vantagem em suas rolagens de dano.") {
         @Override
-        public Optional<Integer> resolveConditionalRollBonus(final SceneContext sceneContext, final SkillTrait requestedAbility) {
+        public Optional<Integer> resolveConditionalRollBonus(final SkillType skillType, final SceneContext sceneContext,
+                                                                 final SkillTrait requestedAbility, final CombatantSheet holder) {
             if (sceneContext == null || !sceneContext.hasAllyWithin(Range.DISTANCIA_CURTA)) {
                 return Optional.empty();
             }
@@ -60,7 +62,8 @@ public enum GoblinsRacialAbility implements SkillCompetencyAbility {
         // read: the clause is about who is standing near the *roller*, not who is being attacked.
         @Override
         public Optional<DamageBonus> resolveDamageBonus(final SkillType attackingSkillType, final SceneContext sceneContext,
-                                                         final CombatantSheet attackTarget, final Character actor) {
+                                                         final CombatantSheet attackTarget, final Character actor,
+                                                         final AttackSource attackSource, final CombatantSheet holder) {
             if (sceneContext == null || !hasNearbyGoblinAlly(sceneContext)) {
                 return Optional.empty();
             }
@@ -95,7 +98,8 @@ public enum GoblinsRacialAbility implements SkillCompetencyAbility {
             "em suas rolagens de Danos.") {
         @Override
         public Optional<DamageBonus> resolveDamageBonus(final SkillType attackingSkillType, final SceneContext sceneContext,
-                                                         final CombatantSheet attackTarget, final Character actor) {
+                                                         final CombatantSheet attackTarget, final Character actor,
+                                                         final AttackSource attackSource, final CombatantSheet holder) {
             if (sceneContext == null || !sceneContext.isCombatScene()) {
                 return Optional.empty();
             }

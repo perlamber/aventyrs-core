@@ -51,4 +51,35 @@ public interface StepRules {
             }
         };
     }
+
+    /**
+     * These rules with every Terreno Difícil hex priced as ordinary ground — one movement made under {@code
+     * AtletismoCompetencyAbility#SALTO_PODEROSO}'s "ignorar Terreno Difícil". {@link #isDifficult} still answers
+     * truthfully, so a path can tell whether the use was actually needed ({@code MovementPath
+     * #touchesDifficultTerrain}).
+     */
+    default StepRules ignoringDifficultTerrainCost() {
+        StepRules rules = this;
+        return new StepRules() {
+            @Override
+            public boolean canPass(final GridPosition hex) {
+                return rules.canPass(hex);
+            }
+
+            @Override
+            public boolean canStop(final GridPosition hex) {
+                return rules.canStop(hex);
+            }
+
+            @Override
+            public boolean isDifficult(final GridPosition hex) {
+                return rules.isDifficult(hex);
+            }
+
+            @Override
+            public int enterCost(final GridPosition hex) {
+                return rules.isDifficult(hex) ? 1 : rules.enterCost(hex);
+            }
+        };
+    }
 }

@@ -6,6 +6,8 @@ import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.Blessing;
+import org.aventyrs.core.sheet.CombatantAction;
+import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.TargetScope;
 import org.aventyrs.core.skill.Skill;
 import org.aventyrs.core.skill.SkillTrait;
@@ -30,17 +32,36 @@ public enum PersuasaoCompetencyAbility implements SkillCompetencyAbility {
         }
     },
 
-    // TODO: after succeeding at a Comunicação/Mentir ou Omitir/Intimidação roll, grants Vantagem
-    // on similar rolls against other nearby characters. Two of the three pieces are real now:
-    // "nearby" is SceneContext/Range, and granting on success is
-    // SkillCompetencyAbility#resolveSuccessBlessings (see FINTAR_APRIMORADO). What blocks it is
-    // "rolagens semelhantes contra *outros personagens*" — the Vantagem is scoped both to the
-    // three named Especializações and to a set of targets other than the one just rolled
-    // against, and a Blessing names a ModifierType and a TargetScope, neither of which can
-    // express "the same Especialização, against everyone except that one".
+    /**
+     * Real (core 0.0.103). A success under Comunicação, Mentir ou Omitir or Intimidação grants a marker Blessing
+     * named for that Especialização, lasting the rest of the Cena (table ruling; kept per combat); while it runs,
+     * every Persuasão roll under the same Especialização gets Vantagem. ⚠️ "contra outros personagens próximos
+     * (Distância Curta)" is the roller's declaration: a Perícia roll names no target, so neither the "other" nor
+     * the distance is checked.
+     */
     ESPALHAR_EMOCOES("Após ser bem-sucedido em rolagens de Comunicação, Mentir ou Omitir " +
             "ou Intimidação, você recebe Vantagem em rolagens semelhantes contra outros " +
-            "personagens próximos (Distância Curta)."),
+            "personagens próximos (Distância Curta).") {
+        @Override
+        public List<Blessing> resolveSuccessBlessings(final SkillType skillType, final SkillTrait requestedAbility,
+                                                       final SceneContext sceneContext) {
+            if (skillType != SkillType.PERSUASAO || requestedAbility == null || !EMOTION_SPECIALIZATIONS.contains(requestedAbility)) {
+                return List.of();
+            }
+            // A marker: worth nothing itself, read back by resolveConditionalRollBonus below.
+            return List.of(new Blessing(ModifierType.PERSUASAO_ROLL_BONUS, 0, 1, TargetScope.SELF,
+                    emotionSource(requestedAbility)).untilCombatEnds());
+        }
+
+        @Override
+        public Optional<Integer> resolveConditionalRollBonus(final SkillType skillType, final SceneContext sceneContext,
+                                                             final SkillTrait requestedAbility, final CombatantSheet holder) {
+            boolean spread = skillType == SkillType.PERSUASAO && requestedAbility != null
+                    && EMOTION_SPECIALIZATIONS.contains(requestedAbility)
+                    && holder != null && holder.hasEffectFrom(emotionSource(requestedAbility));
+            return spread ? Optional.of(Skill.ADVANTAGE_BONUS) : Optional.empty();
+        }
+    },
 
     // TODO: Vantagem scoped to the *target's* gender/attraction toward the character — this
     // depends on a property of the specific other character being rolled against, not
@@ -65,13 +86,9 @@ public enum PersuasaoCompetencyAbility implements SkillCompetencyAbility {
      * against, so "bem-sucedido" is answerable, and a Rodada-scoped {@code TemporaryBonus} on
      * both Perícias de Ataque is what carries it.
      */
-    // TODO: "sua *próxima* rolagem" is one roll, not every Ataque roll of the Rodada — nothing
-    //  consumes a TemporaryBonus on first use, so this over-grants for the rest of the Rodada.
-    //  Granting nothing would be further from the clause; the narrower shape needs a
-    //  consumed-on-use bonus, which no mechanism provides.
-    // TODO: the "-1PA" half — ModifierType.SKILL_ROLL_COST exists but ActionPointsService reads
-    //  it only from attributeAbilities, and it scopes to a Perícia roll's cost generally rather
-    //  than to one upcoming roll.
+    // Both halves real (core 0.0.100): the Vantagem and the -1PA hold while the Finta's Blessings
+    // stand, and onActionRecorded lifts them after the first Perícia de Ataque roll — "sua próxima
+    // rolagem", within "nesta Rodada" (the Blessings' own 1 Rodada).
     FINTAR_APRIMORADO("Você pode fazer rolagens para enganar seus oponentes, se for " +
             "bem-sucedido sua próxima rolagens de Perícia de Ataque nesta Rodada recebe " +
             "Vantagem e tem seu Tempo de Ação reduzido em -1PA.") {
@@ -87,7 +104,32 @@ public enum PersuasaoCompetencyAbility implements SkillCompetencyAbility {
                     new Blessing(ModifierType.ATAQUE_A_DISTANCIA_ROLL_BONUS, Skill.ADVANTAGE_BONUS,
                             FINTA_DURATION_IN_ROUNDS, TargetScope.SELF, FINTAR_APRIMORADO.name()));
         }
+
+        @Override
+        public int resolveAttackActionPointAdjustment(final SkillType attackSkill, final CombatantSheet holder) {
+            return holder != null && holder.hasEffectFrom(FINTAR_APRIMORADO.name()) ? -FINTA_ACTION_POINT_REDUCTION : 0;
+        }
+
+        @Override
+        public void onActionRecorded(final CombatantSheet holder, final CombatantAction action) {
+            if (action.skill() != null && action.skill().isAttackSkill()) {
+                holder.removeEffectsFrom(FINTAR_APRIMORADO.name());
+            }
+        }
     };
+
+    /** "tem seu Tempo de Ação reduzido em -1PA". */
+    private static final int FINTA_ACTION_POINT_REDUCTION = 1;
+
+    /** Espalhar Emoções' three Especializações. */
+    private static final java.util.Set<SkillTrait> EMOTION_SPECIALIZATIONS = java.util.Set.of(
+            PersuasaoSpecialization.COMUNICACAO, PersuasaoSpecialization.MENTIR_OU_OMITIR,
+            PersuasaoSpecialization.INTIMIDACAO);
+
+    /** The marker source naming which Especialização spread its emotions. */
+    private static String emotionSource(final SkillTrait specialization) {
+        return "ESPALHAR_EMOCOES:" + ((Enum<?>) specialization).name();
+    }
 
     /** "Nesta Rodada" — the Finta's Vantagem lasts the Rodada it was won in. */
     private static final int FINTA_DURATION_IN_ROUNDS = 1;

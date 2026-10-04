@@ -399,7 +399,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
         bonus += character.getAllTitles().stream()
                 .mapToInt(title -> title.resolveSkillRollBonus(skillType, target))
                 .sum();
-        bonus += sumConditionalRollBonuses(skillCompetencyAbilities, sceneContext, skillRoll);
+        bonus += sumConditionalRollBonuses(skillCompetencyAbilities, sceneContext, skillRoll, target);
         bonus += sumFeatRollBonuses(target, sceneContext, skillRoll, attackSource);
         bonus += sumEgoAdvantageRollBonuses(character.getEgoAdvantages().values(), sceneContext);
         bonus += sumEgoAdvantageSkillSpecificRollBonuses(character.getEgoAdvantages().values(), sceneContext, target);
@@ -452,6 +452,10 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
         // Escancarar Defesas: "Seu próximo ataque contra este mesmo alvo tem a GD reduzida em -1 Nível".
         if (skillType.isAttackSkill() && target.hasOpenedDefensesOf(attackTarget)) {
             difficultyReduction += org.aventyrs.core.effect.EscancararDefesas.DIFFICULTY_REDUCTION_LEVELS;
+        }
+        // Estudar Defesas: "-1 Nível por 2 Rodadas" on every attack against the studied target.
+        if (skillType.isAttackSkill() && target.hasStudiedDefensesOf(attackTarget)) {
+            difficultyReduction += CompetencyActions.STUDIED_DEFENSES_LEVELS;
         }
         // Transferir Rancor: "-1 Nível" on Perícia de Ataque and Domínio do Mana rolls, cumulative.
         if (skillType.isAttackSkill() || skillType == SkillType.DOMINIO_DO_MANA) {
@@ -845,10 +849,11 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
      * is expected to treat that as "condition not met," the same restraint {@code
      * resolveDamageBonus}/{@code resolveAttackRollBonus} already apply.
      */
-    private int sumConditionalRollBonuses(final List<SkillCompetencyAbility> skillCompetencyAbilities, final SceneContext sceneContext, final SkillRoll skillRoll) {
+    private int sumConditionalRollBonuses(final List<SkillCompetencyAbility> skillCompetencyAbilities, final SceneContext sceneContext,
+                                          final SkillRoll skillRoll, final CombatantSheet holder) {
         SkillTrait requestedAbility = skillRoll == null ? null : skillRoll.getRequestedAbility();
         return skillCompetencyAbilities.stream()
-                .map(ability -> ability.resolveConditionalRollBonus(sceneContext, requestedAbility))
+                .map(ability -> ability.resolveConditionalRollBonus(skillType, sceneContext, requestedAbility, holder))
                 .flatMap(Optional::stream)
                 .mapToInt(Integer::intValue)
                 .sum();
@@ -1061,7 +1066,8 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
         List<DamageBonus> typed = new ArrayList<>();
         List<DamageContribution> contributions = new ArrayList<>();
         allSkillCompetencyAbilities(target).stream()
-                .map(ability -> ability.resolveDamageBonus(skillType, sceneContext, attackTarget, character))
+                .map(ability -> ability.resolveDamageBonus(skillType, sceneContext, attackTarget, character,
+                        attackSource, target))
                 .flatMap(Optional::stream)
                 .forEach(bonus -> addTyped(typed, contributions, DamageContributionSource.SKILL_COMPETENCY_ABILITY, bonus));
         character.getEgoAdvantages().values().stream()

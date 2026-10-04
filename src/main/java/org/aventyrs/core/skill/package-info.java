@@ -202,6 +202,24 @@
  * drive the Scene with {@code Scene#next()}, which does it for every participant at the wrap.
  * The Scene's own history is never cleared.
  *
+ * <h2>Habilidades de Competência with uses, and the ones that are actions</h2>
+ *
+ * <p>A limited-use Habilidade (Salto Poderoso, Instinto de Luther, Socorro Imediato, Recuo Rápido, Charme Feérico)
+ * is spent through {@link org.aventyrs.core.skill.CompetencyUses}: ask {@code remaining}, then {@code use} as the
+ * effect is taken. Persist {@code sheet.getAllRestScopedUses()} and restore each entry with {@code
+ * CompetencyUses.restoreRestScopedUses}.
+ *
+ * <p>A Habilidade that is an <em>action</em> — Estudar Defesas, Esconder Outros, Milagreiro, Medicina Alternativa,
+ * Aliado da Natureza, Espalhar Reputação — is a method on {@link org.aventyrs.core.skill.CompetencyActions}. Each
+ * rolls against the GD its rules text names (pass only the dice). When its effect lands on a character another
+ * client holds, the roll half runs on the roller's side and the effect half ({@code esconderOutros(ally, hidden)},
+ * {@code applyMilagreiro}, {@code owePendingRestBonus}) on the owner's:
+ * <pre>{@code
+ * InteractionResult roll = CompetencyActions.rollMilagreiro(healer, healerContext, dice);
+ * // relay roll.getSucceeded() and CompetencyActions.milagreMaior(roll) to the patient's client, which runs:
+ * CompetencyActions.applyMilagreiro(patient, succeeded, milagreMaior);
+ * }</pre>
+ *
  * <h2>Adding a new Perícia</h2>
  *
  * See the project's {@code CLAUDE.md} for the full checklist — a new Perícia needs, at

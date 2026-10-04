@@ -29,7 +29,8 @@ public final class ItemCatalog {
             List.of(ArmorItem.class, BootsItem.class, CloakItem.class, ShieldItem.class,
                     HelmetItem.class, NaturalWeapon.class,
                     BowItem.class, ThrowableItem.class, CrossbowItem.class, WhipItem.class,
-                    ClubItem.class, LightBladeItem.class, HeavyBladeItem.class, SpearItem.class);
+                    ClubItem.class, LightBladeItem.class, HeavyBladeItem.class, SpearItem.class,
+                    UtilityItem.class);
 
     private static final List<ItemTemplate> ALL = discover();
 

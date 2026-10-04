@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class ArtesAprimorarComArteAbilityTest {
@@ -28,6 +29,14 @@ class ArtesAprimorarComArteAbilityTest {
         assertEquals(SkillType.ARTES, ability.getSkillType());
         assertEquals(ArtesCompetencyAbility.APRIMORAR_COM_ARTE.getDescription(), ability.getDescription());
         assertFalse(ability.getDescription().isBlank());
+    }
+
+    @Test
+    void instancesNamingTheSamePericiaAreEqual() {
+        assertEquals(new ArtesAprimorarComArteAbility(SkillType.ATLETISMO), new ArtesAprimorarComArteAbility(SkillType.ATLETISMO));
+        assertEquals(new ArtesAprimorarComArteAbility(SkillType.ATLETISMO).hashCode(),
+                new ArtesAprimorarComArteAbility(SkillType.ATLETISMO).hashCode());
+        assertNotEquals(new ArtesAprimorarComArteAbility(SkillType.ATLETISMO), new ArtesAprimorarComArteAbility(SkillType.ARTES));
     }
 
     @Test

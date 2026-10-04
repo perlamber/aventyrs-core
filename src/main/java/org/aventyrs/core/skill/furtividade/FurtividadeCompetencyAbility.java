@@ -3,7 +3,16 @@ package org.aventyrs.core.skill.furtividade;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.aventyrs.core.character.AttributeDomain;
+import org.aventyrs.core.character.Character;
+import org.aventyrs.core.character.DamageBonus;
+import org.aventyrs.core.character.DamageType;
+import org.aventyrs.core.scene.SceneContext;
+import org.aventyrs.core.sheet.CombatantSheet;
+import org.aventyrs.core.sheet.ConditionType;
+import org.aventyrs.core.skill.AttackSource;
+import org.aventyrs.core.skill.Skill;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
+import org.aventyrs.core.skill.SkillTrait;
 import org.aventyrs.core.skill.SkillType;
 
 import java.util.Optional;
@@ -26,31 +35,28 @@ import java.util.Optional;
 @AllArgsConstructor
 public enum FurtividadeCompetencyAbility implements SkillCompetencyAbility {
 
-    // TODO: lets the character roll Furtividade (Maestria da Ocultação/Infiltrador
-    // specializations only) to hide an adjacent ally, at +1 GD — "an adjacent ally" is now
-    // checkable for real (org.aventyrs.core.scene.SceneContext#hasAllyWithin(Range.ADJACENTE)),
-    // and a character now genuinely holds typed CharacterSkill.getSpecializations() that could
-    // in principle name Maestria da Ocultação/Infiltrador — but gating *this ability's own*
-    // bonus on which specialization the caller requested for a given roll still isn't
-    // expressible: SkillRoll#getRequestedAbility() only feeds AbstractSkillInteraction's
-    // generic possession check, not a per-ability @Modifier method (same reflection limitation
-    // resolveDamageBonus/resolveAttackRollBonus were built to work around, by taking the
-    // relevant data as an explicit parameter instead — no such explicit-parameter resolve
-    // method exists for "which specialization was this roll requested with" yet). This is also
-    // a GD *increase*, which SkillCompetencyAbility.getDifficultyReduction() has no way to
-    // express (it only ever subtracts) — unaffected by this specialization change.
+    // Real (core 0.0.103): skill.CompetencyActions#esconderOutros turns a Furtividade total under
+    // Maestria da Ocultação or Infiltrador into the ally's Hidden, one nível below the tier the roll
+    // reached as an Especialista ("a GD aumenta em +1 Nível", table ruling); the effect half applies
+    // it on the ally's own sheet. ⚠️ "adjacente" is the caller's — this core holds no positions.
     ESCONDER_OUTROS("Você pode efetuar uma rolagem de Furtividade, nas Especializações " +
             "Maestria da Ocultação e Infiltrador, em um aliado adjacente, a GD para esta " +
             "ação aumenta em +1 Nível."),
 
-    // TODO: the "Furtivo" state is now ConditionType.ESCONDIDO and "Cenas de Combate" is
-    // SceneContext#isCombatScene(), but a held trait cannot see its holder's Condições —
-    // resolveConditionalRollBonus takes a SceneContext and a SkillTrait, and a Condition lives on
-    // the CombatantSheet, which no SkillCompetencyAbility hook receives. Applying across every
-    // <Skill>Interaction is no longer part of the gap: the hook is summed generically for
-    // whichever Perícia is being rolled.
+    /**
+     * Real (core 0.0.100): Vantagem on every Perícia roll its holder makes while {@link
+     * ConditionType#ESCONDIDO} in a Combat Scene — read off the holder's own sheet, which the longest
+     * {@link SkillCompetencyAbility#resolveConditionalRollBonus} now carries.
+     */
     ACAO_SURPRESA("Em Cenas de Combate você recebe Vantagem em suas Rolagens de Perícia " +
-            "enquanto estiver Furtivo."),
+            "enquanto estiver Furtivo.") {
+        @Override
+        public Optional<Integer> resolveConditionalRollBonus(final SkillType skillType, final SceneContext sceneContext,
+                                                             final SkillTrait requestedAbility, final CombatantSheet holder) {
+            return sceneContext != null && sceneContext.isCombatScene() && hidden(holder, sceneContext)
+                    ? Optional.of(Skill.ADVANTAGE_BONUS) : Optional.empty();
+        }
+    },
 
     // TODO: lifts the "can't hide while observed" restriction described in Furtividade's own
     // rules text, at +1 GD. The restriction still isn't modeled: HidingService#isHiddenFrom
@@ -61,14 +67,25 @@ public enum FurtividadeCompetencyAbility implements SkillCompetencyAbility {
     AGORA_ESTOU_AGORA_NAO_ESTOU("Você pode fazer rolagens de Furtividade mesmo quando " +
             "observado (GD aumentado em +1 nível)."),
 
-    // TODO: +2 damage on traps/attacks made while hidden, then +1 more at the 5th and 10th
-    // graduation (a graduation-tiered scaling bonus, not a flat one — same shape as
-    // DominioDoManaCompetencyAbility.LETALIDADE_ARCANA). "Enquanto escondido" is now
-    // ConditionType.ESCONDIDO, but a held trait cannot see its holder's Condições —
-    // resolveDamageBonus takes the attackTarget's sheet and the acting Character, never the
-    // actor's own sheet, which is where a Condition lives. Traps have no representation either.
+    /**
+     * Real for attacks (core 0.0.100): +2 dano while {@link ConditionType#ESCONDIDO}, +3 from the 5ª and +4
+     * from the 10ª Graduação in Furtividade, on every Perícia de Ataque. Traps have no representation —
+     * that half is the Narrador's.
+     */
     MORTE_OCULTA("Suas armadilhas e seu ataques enquanto escondido causam +2 pontos de " +
-            "danos adicionais, este benefício aumenta em +1 na 5ª e 10ª graduação."),
+            "danos adicionais, este benefício aumenta em +1 na 5ª e 10ª graduação.") {
+        @Override
+        public Optional<DamageBonus> resolveDamageBonus(final SkillType attackingSkillType, final SceneContext sceneContext,
+                                                         final CombatantSheet attackTarget, final Character actor,
+                                                         final AttackSource attackSource, final CombatantSheet holder) {
+            if (attackingSkillType == null || !attackingSkillType.isAttackSkill() || !hidden(holder, sceneContext)) {
+                return Optional.empty();
+            }
+            int graduation = holder.getCharacter().getEffectiveGraduation(SkillType.FURTIVIDADE);
+            int bonus = MORTE_OCULTA_BASE + (graduation >= 5 ? 1 : 0) + (graduation >= 10 ? 1 : 0);
+            return Optional.of(new DamageBonus(bonus, DamageType.FISICO));
+        }
+    },
 
     // Substitutes Gnose for Destreza — see SkillCompetencyAbility.getSubstituteAttributeDomain().
     LADINO_TEORICO("Você pode substituir o Atributo Base desta perícia por Gnose.") {
@@ -78,10 +95,18 @@ public enum FurtividadeCompetencyAbility implements SkillCompetencyAbility {
         }
     };
 
+    /** Morte Oculta's "+2 pontos de danos adicionais", before the 5ª/10ª Graduação steps. */
+    private static final int MORTE_OCULTA_BASE = 2;
+
     private final String description;
 
     @Override
     public SkillType getSkillType() {
         return SkillType.FURTIVIDADE;
+    }
+
+    /** Whether holder is Escondido right now — {@code false} with no sheet to read. */
+    private static boolean hidden(final CombatantSheet holder, final SceneContext sceneContext) {
+        return holder != null && holder.hasCondition(ConditionType.ESCONDIDO, sceneContext);
     }
 }

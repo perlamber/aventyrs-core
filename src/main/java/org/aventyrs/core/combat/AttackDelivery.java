@@ -25,6 +25,7 @@ import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.Interaction;
 import org.aventyrs.core.sheet.InteractionResult;
 import org.aventyrs.core.skill.CriticalResult;
+import org.aventyrs.core.skill.SkillCompetencyAbility;
 import org.aventyrs.core.skill.SkillInteractionFactory;
 import org.aventyrs.core.skill.SkillRoll;
 
@@ -416,6 +417,9 @@ public class AttackDelivery {
             attack.getAttacker().getCharacter().getFeats().forEach(feat -> chains.addAll(
                     feat.resolveCriticalHitEffectChains(attack.getAttacker().getCharacter(), attack.getAttackSkill(),
                             attack.getAttackSource(), attack.getAttacker(), attack.getAttackRoll())));
+            // Abrir Defesas: "Após um acerto crítico seu alvo recebe o Malefício Desprevenido por 1 Rodada".
+            SkillCompetencyAbility.allFor(attack.getAttacker().getCharacter(), attack.getAttacker()).forEach(ability ->
+                    chains.addAll(ability.resolveCriticalHitEffects(attack.getAttackSkill(), attack.getAttacker())));
         }
         List<Effect> criticals = new ArrayList<>();
         if (criticalEffectTriggered) {

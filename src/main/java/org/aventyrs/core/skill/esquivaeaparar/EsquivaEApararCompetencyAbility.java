@@ -5,6 +5,8 @@ import lombok.Getter;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.modifier.Modifier;
 import org.aventyrs.core.modifier.ModifierType;
+import org.aventyrs.core.skill.CompetencyUses;
+import org.aventyrs.core.skill.UseWindow;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
 import org.aventyrs.core.skill.SkillType;
 
@@ -54,26 +56,31 @@ public enum EsquivaEApararCompetencyAbility implements SkillCompetencyAbility {
         }
     },
 
-    // TODO: an activated ability rolling Esquiva e Aparar instead of an Ataque Perícia
-    // against GD Difícil; on success, reduces the GD to attack that specific target by -1
-    // Nível for 2 Rodadas. "Success against a fixed GD" is answerable now (a SkillRoll carries
-    // its own targetValue and InteractionResult reports succeeded), and a Rodada-scoped grant is
-    // an ordinary Blessing via resolveSuccessBlessings — but the grant here is a GD *reduction*
-    // applied to this roller's future attacks against one specific opponent, and a Blessing
-    // carries a ModifierType, not a GD step scoped to a named target. That cross-character,
-    // per-opponent shape is what is still missing.
+    // Real (core 0.0.103): skill.CompetencyActions#estudarDefesas rolls Esquiva e Aparar against
+    // GD Difícil; a success records the target on the holder's sheet (CombatantSheet#studyDefensesOf,
+    // 2 Rodadas), and AbstractSkillInteraction eases every Perícia de Ataque against it by one nível.
     ESTUDAR_DEFESAS("Você pode efetuar rolagens de Esquiva e Aparar ao invés da Perícia de " +
             "Ataque contra GD Difícil para analisar o oponente, seus padrões de " +
             "movimentos, brechas na armadura etc. Se for bem-sucedido você reduz em o GD " +
             "para efetuar ataques contra o alvo em -1 Nível por 2 Rodadas."),
 
-    // TODO: once per Rodada, after taking damage from an enemy attack, spend a Reação to
-    // perform a "Reposicionar" action — needs a damage-triggers-a-Reação-opportunity
-    // mechanic and a once-per-Rodada usage-limiting mechanism. Reposicionar itself is modelled
-    // now (Manoeuvre#REPOSICIONAR, RepositionService), priced as an Ação Livre — this would buy
-    // it with a Reação instead.
+    /**
+     * Real (core 0.0.102) as a limited use: once per Rodada ({@link CompetencyUses}). After taking damage from an
+     * enemy attack its holder may spend a Reação on a Reposicionar — the client offers it at that moment, spends
+     * the Reação and moves the token.
+     */
     RECUO_RAPIDO("Apenas uma vez por Rodada e após sofrer danos de um ataque inimigo, como " +
-            "Reação você pode usar uma ação de Reposicionar.");
+            "Reação você pode usar uma ação de Reposicionar.") {
+        @Override
+        public int resolveUseLimit(final Character holder) {
+            return 1;
+        }
+
+        @Override
+        public UseWindow getUseWindow() {
+            return UseWindow.ROUND;
+        }
+    };
 
     private final String description;
 

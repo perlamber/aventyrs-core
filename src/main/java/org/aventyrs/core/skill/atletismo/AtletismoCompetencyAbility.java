@@ -6,6 +6,9 @@ import lombok.Getter;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.modifier.Modifier;
 import org.aventyrs.core.modifier.ModifierType;
+import org.aventyrs.core.character.Character;
+import org.aventyrs.core.skill.CompetencyUses;
+import org.aventyrs.core.skill.UseWindow;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
 import org.aventyrs.core.skill.SkillType;
 
@@ -26,13 +29,23 @@ public enum AtletismoCompetencyAbility implements SkillCompetencyAbility {
         }
     },
 
-    // TODO: once per Cena, ignore Terreno Difícil, gaining an additional use at the 5th and
-    // 10th Graduação — the Terreno Difícil cost is real (MovementTerrainService), but this is a
-    // spent use rather than a passive, so it needs a Cena-scoped usage-limiting
-    // mechanism, and a graduation-crossing-a-threshold trigger for the extra uses (same gap
-    // as ArtesExcellency.FOCADO/LENDA's Fama trigger), none of which exist yet.
+    /**
+     * Real (core 0.0.102) as a limited use: 1/2/3 per Cena ({@link CompetencyUses}). What a use does — one
+     * movement that ignores Terreno Difícil — is the mover's: the client prices that movement's difficult hexes
+     * as ordinary ones.
+     */
     SALTO_PODEROSO("Uma vez por Cena você pode ignorar Terreno Difícil, novos usos desta " +
-            "Habilidade são adquiridos ao alcançar a 5ª e 10ª Graduação."),
+            "Habilidade são adquiridos ao alcançar a 5ª e 10ª Graduação.") {
+        @Override
+        public int resolveUseLimit(final Character holder) {
+            return tiered(holder, SkillType.ATLETISMO);
+        }
+
+        @Override
+        public UseWindow getUseWindow() {
+            return UseWindow.CENA;
+        }
+    },
 
     // Real — grants MovementMode.SWIM.
     ANFIBIO("Você recebe Movimento Base de Natação.") {
@@ -63,4 +76,11 @@ public enum AtletismoCompetencyAbility implements SkillCompetencyAbility {
     public SkillType getSkillType() {
         return SkillType.ATLETISMO;
     }
+
+    /** 1, then +1 at the 5ª and +1 at the 10ª Graduação in {@code skill} — 1 with no holder. */
+    private static int tiered(final Character holder, final SkillType skill) {
+        int graduation = holder == null ? 0 : holder.getEffectiveGraduation(skill);
+        return 1 + (graduation >= 5 ? 1 : 0) + (graduation >= 10 ? 1 : 0);
+    }
+
 }

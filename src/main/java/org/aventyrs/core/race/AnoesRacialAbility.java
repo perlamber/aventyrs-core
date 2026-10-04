@@ -70,7 +70,8 @@ public enum AnoesRacialAbility implements SkillCompetencyAbility {
         }
 
         @Override
-        public Optional<Integer> resolveConditionalRollBonus(final SceneContext sceneContext, final SkillTrait requestedAbility) {
+        public Optional<Integer> resolveConditionalRollBonus(final SkillType skillType, final SceneContext sceneContext,
+                                                                 final SkillTrait requestedAbility, final CombatantSheet holder) {
             if (sceneContext == null || !sceneContext.isTerrain(TerrainType.MOUNTAIN, TerrainType.CAVE)) {
                 return Optional.empty();
             }

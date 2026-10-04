@@ -26,6 +26,12 @@ public class TranslatableMessages {
      * against the chosen amount first ({@code ActionCost#resolve}).
      */
     public static final String UNRESOLVED_ACTION_COST = "UNRESOLVED_ACTION_COST";
+    /** A limited-use Habilidade de Competência with none of its uses left ({@code skill.CompetencyUses}). */
+    public static final String COMPETENCY_ABILITY_NO_USES_LEFT = "COMPETENCY_ABILITY_NO_USES_LEFT";
+    /** A Habilidade de Competência action ({@code skill.CompetencyActions}) by someone who does not hold it. */
+    public static final String COMPETENCY_ABILITY_NOT_HELD = "COMPETENCY_ABILITY_NOT_HELD";
+    /** Esconder Outros rolled under neither Maestria da Ocultação nor Infiltrador. */
+    public static final String COMPETENCY_SPECIALIZATION_REQUIRED = "COMPETENCY_SPECIALIZATION_REQUIRED";
     public static final String INVALID_DIE_ROLL = "INVALID_DIE_ROLL";
     public static final String REQUIRED_SKILL_TRAIT_NOT_HELD = "REQUIRED_SKILL_TRAIT_NOT_HELD";
     public static final String UNKNOWN_SKILL_TYPE = "UNKNOWN_SKILL_TYPE";

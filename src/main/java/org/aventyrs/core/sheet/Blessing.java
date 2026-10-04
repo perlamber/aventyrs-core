@@ -132,6 +132,13 @@ public class Blessing {
      */
     private boolean countsDownAtTurnStart;
 
+    /**
+     * Whether this Blessing runs open-ended until its holder's combat ends ({@code CombatantSheet#endCombat}) —
+     * "até o final da Cena" kept per combat, the house reading (Espalhar Emoções, core 0.0.103). Its {@link
+     * #getRounds()} is then ignored. Set through {@link #untilCombatEnds()}.
+     */
+    private boolean untilCombatEnds;
+
     public Blessing(final ModifierType modifierType, final int value, final int rounds, final TargetScope scope, final String source) {
         this(modifierType, value, rounds, scope, source, null);
     }
@@ -155,6 +162,12 @@ public class Blessing {
     /** This Blessing, counting down at its holder's Turn start; returns itself. */
     public Blessing countingDownAtTurnStart() {
         this.countsDownAtTurnStart = true;
+        return this;
+    }
+
+    /** This Blessing, lasting until its holder's combat ends; returns itself. */
+    public Blessing untilCombatEnds() {
+        this.untilCombatEnds = true;
         return this;
     }
 
