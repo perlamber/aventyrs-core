@@ -9,7 +9,6 @@ import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.rest.RestServiceImpl;
 import org.aventyrs.core.rest.RestType;
-import org.aventyrs.core.scene.SceneContext;
 import org.aventyrs.core.sheet.Blessing;
 import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.Hidden;
@@ -17,6 +16,7 @@ import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.InteractionResult;
 import org.aventyrs.core.sheet.Player;
 import org.aventyrs.core.sheet.TargetScope;
+import org.aventyrs.core.skill.artes.ArtesCompetencyAbility;
 import org.aventyrs.core.skill.empatiaselvagem.EmpatiaSelvagemCompetencyAbility;
 import org.aventyrs.core.skill.empatiaselvagem.TrainedCompanion;
 import org.aventyrs.core.skill.esquivaeaparar.EsquivaEApararCompetencyAbility;
@@ -31,7 +31,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -271,8 +270,39 @@ class CompetencyActionsTest {
         assertFalse(sheet.hasEffectFrom("teste"));
     }
 
+    // Espalhar Reputação
+
     @Test
-    void unusedImportsGuard() {
-        assertEquals(0, new SceneContext(List.of(), List.of(), Map.of()).getAllies().size());
+    void espalharReputacaoIsRolledAgainstAtLeastMedio() {
+        CharacterSheet performer = holding(SkillType.ARTES, 1, ArtesCompetencyAbility.ESPALHAR_REPUTACAO);
+
+        InteractionResult easy = CompetencyActions.espalharReputacao(performer, null, HIGH, DifficultyLevel.VERY_EASY);
+        InteractionResult hard = CompetencyActions.espalharReputacao(performer, null, HIGH, DifficultyLevel.HARD);
+
+        InteractionResult medio = CompetencyActions.espalharReputacao(performer, null, HIGH, DifficultyLevel.MEDIUM);
+
+        assertEquals(medio.getMargin(), easy.getMargin(), "a GD below Médio is raised to Médio");
+        assertEquals(DifficultyLevel.HARD.getBaseValue() - DifficultyLevel.MEDIUM.getBaseValue(),
+                medio.getMargin() - hard.getMargin());
+    }
+
+    @Test
+    void espalharReputacaoRequiresTheAbility() {
+        assertThrows(IllegalOperationException.class,
+                () -> CompetencyActions.espalharReputacao(plain(), null, HIGH, DifficultyLevel.MEDIUM));
+    }
+
+    @Test
+    void milagreirosMarkIsARestScopedUseThatPersists() {
+        CharacterSheet patient = plain();
+        CompetencyActions.applyMilagreiro(patient, false, false);
+
+        CharacterSheet reloaded = plain();
+        patient.getAllRestScopedUses().forEach((source, uses) ->
+                CompetencyUses.restoreRestScopedUses(reloaded, source, uses));
+
+        assertFalse(CompetencyActions.canAttemptMilagreiro(reloaded));
+        reloaded.clearRestCooldowns(RestType.LONGO);
+        assertTrue(CompetencyActions.canAttemptMilagreiro(reloaded));
     }
 }

@@ -57,11 +57,9 @@ public enum ArtesCompetencyAbility implements SkillCompetencyAbility {
     DESEMPENHO_EXTRAORDINARIO("Fora de Combate, o tempo necessário para criar suas obras " +
             "artísticas é reduzido à metade."),
 
-    // TODO: a successful Artes roll performing for a crowd turns listeners more favorable or
-    // neutral. "Successful" is answerable now (a SkillRoll carries its own targetValue), and the
-    // varying GD is the caller's to supply — what is still missing is the effect: no
-    // NPC-disposition/reputation system exists for the listeners to move along, and no
-    // local-receptivity-to-GD mapping tells a caller which GD to name.
+    // The roll is real (core 0.0.103): skill.CompetencyActions#espalharReputacao, against the
+    // Narrador's GD raised to at least Médio. The effect stays the Narrador's (table ruling) — no
+    // NPC-disposition/reputation system exists for the listeners to move along.
     ESPALHAR_REPUTACAO("Você pode fazer uma rolagem de Artes enquanto se apresenta para uma " +
             "multidão contando histórias suas ou de seu grupo, se for bem-sucedido os " +
             "ouvintes se tornam mais favoráveis ou neutros, a GD da rolagem pode variar " +

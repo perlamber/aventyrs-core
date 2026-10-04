@@ -56,11 +56,9 @@ public enum EmpatiaSelvagemCompetencyAbility implements SkillCompetencyAbility {
         }
     },
 
-    // TODO: an activated ability training a creature (GD Difícil) into a Cavaleiro/Peão/Torre-typed
-    // Subordinado, limited to one per Cena. The GD Difícil check is expressible now (a SkillRoll
-    // states its own targetValue), but there is no Subordinado/ally-classification system for the
-    // creature to become one of, no acquisition-time choice of which type, and no Cena-scoped
-    // usage tracking.
+    // Real (core 0.0.103): skill.CompetencyActions#trainCompanion (GD Difícil) keeps a TrainedCompanion
+    // — named, with a Cavaleiro/Peão/Torre SubordinateBenefit — on the Character (lasting, table
+    // ruling); #callCompanion commands one per Cena as a Subordinado (⚠️ Cena kept per combat).
     ALIADO_DA_NATUREZA("Você pode treinar uma criatura para lhe acompanhar e auxiliar (GD " +
             "Difícil), ele é será considerado um Subordinado do tipo Cavaleiro, Peão ou " +
             "Torre, a sua escolha. Você recebe os benefícios de apenas um animal treinado " +

@@ -4,7 +4,26 @@
 (`docs/wiring-habilidades-de-competencia.md`). Phase 1 built — core 0.0.100 (no client change needed: the client
 already prices attacks, records actions and passes the Scene and sheet through core). Phase 2 built — core 0.0.101 (Concentração Inabalável has nothing to
 protect until damage breaks Concentração). Phase 3 built — core 0.0.102 + client (limited uses, Reações, the
-Kit de Primeiros Socorros). Phases 4–6 open.
+Kit de Primeiros Socorros). Phase 4 built — core 0.0.103 + API (trained companions) + client (the activated
+abilities). Phases 5–6 open.
+
+**Phase 4, as built:**
+
+| Ability | Core (`skill.CompetencyActions`) | Client |
+| --- | --- | --- |
+| Dom Bárdico | unchanged (Phase 0) | Perícias panel roll with a GD |
+| Estudar Defesas | `estudarDefesas` → `CombatantSheet#studyDefensesOf` (2 Rodadas, −1 nível on attacks) | Esquiva e Aparar row button; pick the target |
+| Esconder Outros | `esconderOutros(holder, total, specialization)` → the ally's `Hidden`, one nível below | Furtividade row button; pick an adjacent ally; relayed to its owner |
+| Espalhar Emoções | `resolveSuccessBlessings` marker + `resolveConditionalRollBonus`, until combat ends | Perícias panel roll with a GD and the Especialização |
+| Milagreiro | `rollMilagreiro`/`milagreMaior`/`applyMilagreiro`, a persisted rest-scoped use on the patient | Medicina e Cura row button; pick the patient; relayed to its owner |
+| Medicina Alternativa | `rollMedicinaAlternativa`, `CombatantSheet#owePendingRestBonus` | Medicina e Cura row button; 1d6 owed on the patient; relayed |
+| Aliado da Natureza | `trainCompanion`/`callCompanion`, `Character#getTrainedCompanions` (persisted) | Empatia Selvagem row: train, call |
+| Espalhar Reputação | `espalharReputacao` (GD ≥ Médio) | Artes row button; result to the log |
+
+**Still open from Phase 4:** Medicina Alternativa's owed die is held on the patient's in-memory sheet only (not
+persisted), so it is lost if that client leaves the Scene before the Descanso. Relays ride `AbilityActivationMessage`
+(`boundCharacterSheetIds` = the patient, `enchantmentRounds` = the outcome) — see the client's
+`docs/wiring-habilidades-de-competencia.md`.
 
 **Phase 3, as built:**
 
