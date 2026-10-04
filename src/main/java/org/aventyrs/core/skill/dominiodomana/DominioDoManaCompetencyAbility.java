@@ -71,9 +71,6 @@ public enum DominioDoManaCompetencyAbility implements SkillCompetencyAbility {
         }
     },
 
-    // Nothing to protect yet: this core breaks Concentração only on the caster's own cast or attack
-    // (Scene#breakConcentration), never on damage, so a holder already keeps it after sofrer Danos.
-    // The day damage can break Concentração, that path must consult this constant.
     CONCENTRACAO_INABALAVEL("Você não perde a Concentração para manter ativa suas magias " +
             "após sofrer Danos.");
 

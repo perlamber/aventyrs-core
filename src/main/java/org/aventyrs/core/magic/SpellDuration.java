@@ -41,38 +41,43 @@ import static org.aventyrs.core.util.TranslatableMessages.INVALID_SPELL_DURATION
  *
  * {@link #concentration()} is an orthogonal flag, not a kind — 19 of the 145 Magias read {@code
  * Concentração + N Rodada(s)}, and one reads bare {@code Concentração}. While the caster stays
- * focused the effect is active with <b>no countdown at all</b>; concentration breaks when the
- * caster <em>casts another Magia or attacks</em>, and only then does the {@code N} begin. So
- * {@code N} is what remains after the break, never a total, and {@code
+ * focused the effect is active with <b>no countdown at all</b>; only once the focus is lost does
+ * the {@code N} begin. So {@code N} is what remains after the loss, never a total, and {@code
  * concentracao()} (count 0) is the limiting case that ends the instant focus does.
  *
  * <p>A naive {@code getDuration() == 2} is wrong in both directions at once: it starts the clock
  * immediately, and it caps at two Rodadas an effect that could legitimately run a whole Cena.
  *
- * <p><b>Phase one needs no new machinery</b> — {@code TemporaryEffect.remainingRounds} is a
- * nullable {@code Integer} whose {@code tick()} no-ops and whose {@code isExpired()} stays false
- * while it is {@code null}, which is already this core's encoding for "runs until something stops
- * it" ({@code Sangramento}/{@code ManaPurge} Maior use exactly it). <b>Two things are still
- * missing</b>, and neither is a duration type:
+ * <h2>Keeping and losing it (table ruling, 2026-10-03; core 0.1.1)</h2>
+ *
+ * "Pode gastar 1PA por Rodada para manter a Magia ativa; se sofrer dano ou não pagar o PA, a Magia
+ * dura mais N Rodadas. Não é possível retomar a Concentração depois de perdida."
  *
  * <ul>
- *   <li><b>The transition.</b> {@code remainingRounds} is private with a getter and no mutator,
- *       so nothing can move an effect from {@code null} to {@code N} when focus breaks.</li>
- *   <li><b>A caster-to-sustained-effects link.</b> Only 2 of the 19 land on the caster; the other
- *       17 sit on a <em>target's</em> {@code CombatantSheet} while the concentration is the
- *       caster's own state, and neither {@code TemporaryEffect} nor {@code TemporaryBonus}
- *       records who granted it. {@code Scene.grantedBlessings} is the precedent for the shape.</li>
+ *   <li><b>Upkeep.</b> {@code CombatantSheet#beginConcentration} marks the caster; the cast pays
+ *       for its own Rodada, and on each later Turn of theirs {@code #payConcentrationUpkeep} is
+ *       owed — {@code CombatantSheet#CONCENTRATION_UPKEEP_COST}, 1PA, reported and never deducted
+ *       like every PA here. A Turn ending with it unpaid loses the Concentração.</li>
+ *   <li><b>Damage.</b> PV actually lost through {@code CombatantSheet#applyDamage} loses it; a
+ *       cost paid in PV ({@code payWithVitality}) does not, and neither does a hit a Escudo
+ *       absorbed whole. A holder of {@code DominioDoManaCompetencyAbility#CONCENTRACAO_INABALAVEL}
+ *       ("não perde a Concentração … após sofrer Danos") keeps it through damage — the upkeep is
+ *       still owed.</li>
+ *   <li><b>No resuming.</b> A lost Concentração refuses any later payment; only a new Concentração
+ *       Magia begins another.</li>
+ *   <li><b>Casting another Magia or attacking does not break it</b> — the previous reading, carried
+ *       in before any rule was stated, is retired.</li>
  * </ul>
  *
- * <p>The break trigger also has no single chokepoint: {@code SpellCastingService#castSpell} is
- * one and {@code AttackDelivery#resolve} the other, but an attack Perícia can be rolled straight
- * through {@code AbstractSkillInteraction#applyTo} without passing either. Note that <b>being
- * attacked must not break concentration</b> — only the caster's own attack does, so {@code
- * AttackReceiver} is deliberately not a trigger. "One Concentração at a time" needs no invariant
- * anywhere: casting a second Magia breaks the first by the rule itself.
+ * <p>A loss is recorded on the caster's sheet; what it sustained elsewhere is released by {@code
+ * scene.Scene#settleConcentration} ({@code Scene#next} runs it at every Turn end; a caller applying
+ * damage mid-Turn runs it after, the way it runs {@code settleSummons}). {@code
+ * Scene#breakConcentration} drops it on the spot. One upkeep covers <em>everything</em> a caster
+ * sustains — every {@code Sustained} effect and {@code SceneSummon} links to its caster, never to
+ * the Magia that made it — so a caster holding two Concentrações pays 1PA, not 2 (⚠️ a reading).
  *
  * <p>Concentração is never <em>defined</em> in any of the three source documents, only used as a
- * Duração value; the rule above is carried-in ruleset knowledge. It is also not perfectly
+ * Duração value; the rule above is a table ruling. It is also not perfectly
  * uniform — four Magias attach their own clauses (Solo Profano forbids movement while
  * concentrating, Refúgio Invisível can be broken by a third party inside it, Festim dos Mortos
  * exempts its summons outright, Raio Antivida binds caster and target together) — so those live

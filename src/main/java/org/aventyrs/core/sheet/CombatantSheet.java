@@ -1813,6 +1813,49 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
     }
 
     /**
+     * What keeping a Concentração costs each Rodada (table ruling, 2026-10-03): "pode gastar 1PA por Rodada para manter
+     * a Magia ativa". Reported, never deducted — this core keeps no spent-PA pool.
+     */
+    ActionCost CONCENTRATION_UPKEEP_COST = ActionCost.ofActionPoints(1);
+
+    /**
+     * This combatant begins concentrating — a "Concentração + N" Magia of theirs landed (core 0.1.1). The Rodada it is
+     * cast in is paid for by the cast; from their next Turn on, {@link #payConcentrationUpkeep()} is owed on each of
+     * their Turns. Called by {@code scene.Scene#addSummons} for a sustained invocation and by
+     * {@code SubordinateService} for the sombra conselheira; any other sustained effect's caller calls it.
+     */
+    void beginConcentration();
+
+    /** Whether this combatant is concentrating right now — begun, and neither damaged nor unpaid since. */
+    boolean isConcentrating();
+
+    /** Whether this Turn's upkeep is still owed — concentrating, in their own Turn, and not yet paid. */
+    boolean isConcentrationUpkeepDue();
+
+    /**
+     * Pays this Turn's upkeep, keeping the Concentração through the Rodada. Returns the price,
+     * {@link #CONCENTRATION_UPKEEP_COST}, for the caller to charge.
+     *
+     * @throws IllegalOperationException ({@code CONCENTRATION_UPKEEP_NOT_DUE}) if nothing is owed — not
+     *         concentrating, not their own Turn, or already paid
+     */
+    ActionCost payConcentrationUpkeep();
+
+    /**
+     * The Concentração is lost (core 0.1.1): "se sofrer dano ou não pagar o PA, a Magia dura mais N Rodadas" — taking
+     * damage ({@link #applyDamage}, not a {@link #payWithVitality} cost — and not at all for a holder of
+     * {@code DominioDoManaCompetencyAbility#CONCENTRACAO_INABALAVEL}), an unpaid upkeep at the end of their Turn,
+     * or dropping it on purpose. <b>It cannot be resumed</b>: paying afterwards is refused, and only a new
+     * Concentração Magia begins another. The release of what it sustained is the {@code Scene}'s
+     * ({@code Scene#settleConcentration}), which collects the loss through {@link #consumeConcentrationLoss()}.
+     * A no-op when not concentrating.
+     */
+    void loseConcentration();
+
+    /** Whether a Concentração was lost since the last call, clearing it — what {@code Scene#settleConcentration} reads. */
+    boolean consumeConcentrationLoss();
+
+    /**
      * The Descanso that ends effect, when it was applied with {@link #applyEffectUntilRest} — what a caller persisting
      * the effect must store to restore it the same way (core 0.0.98). Empty otherwise.
      */

@@ -12,6 +12,8 @@ public class TranslatableMessages {
     public static final String NO_PARTICIPANTS_IN_SCENE = "NO_PARTICIPANTS_IN_SCENE";
     public static final String CHARACTER_SHEET_NOT_IN_SCENE = "CHARACTER_SHEET_NOT_IN_SCENE";
     public static final String INVALID_TURN_CURSOR = "INVALID_TURN_CURSOR";
+    /** {@code CombatantSheet#payConcentrationUpkeep} with nothing owed — not concentrating, not their Turn, or paid. */
+    public static final String CONCENTRATION_UPKEEP_NOT_DUE = "CONCENTRATION_UPKEEP_NOT_DUE";
     public static final String SCENE_ALREADY_IN_COMBAT = "SCENE_ALREADY_IN_COMBAT";
     /** {@code Scene#endCombat()} was asked of a Scene that is not a Cena de Combate. */
     public static final String SCENE_NOT_IN_COMBAT = "SCENE_NOT_IN_COMBAT";
