@@ -222,6 +222,15 @@ public class TranslatableMessages {
      */
     public static final String DESPERTAR_ANTECIPADO_CHOICE_NOT_ELIGIBLE = "DESPERTAR_ANTECIPADO_CHOICE_NOT_ELIGIBLE";
 
+    /** No Título slot is due to awaken — see {@code TitleAwakeningService#dueSlot}. */
+    public static final String TITLE_AWAKENING_NOT_DUE = "TITLE_AWAKENING_NOT_DUE";
+
+    /**
+     * The Título picked for a due Despertar is not one {@code TitleAwakeningService#optionsFor}
+     * offers — a family already held, or one a held Talento prohibits.
+     */
+    public static final String TITLE_AWAKENING_CHOICE_NOT_ELIGIBLE = "TITLE_AWAKENING_CHOICE_NOT_ELIGIBLE";
+
     /**
      * A held Talento forbids that whole kind of Equipamento — {@code
      * Feat#getForbiddenEquipmentCategories}, as {@code DraconicoFeat#ASAS_DE_DRAGAO} does for a

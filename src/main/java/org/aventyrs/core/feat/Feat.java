@@ -368,6 +368,16 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
         return permitsTitleSlot(slot, character);
     }
 
+    /**
+     * Whether this Talento already settles the Despertar into slot with a Título picked in advance —
+     * {@code DespertarAntecipadoFeat} for the Primário, {@code CentelhaGranAventyrAntecipadaFeat} for
+     * the Secundário, each awakening its own pick at a session end. {@code TitleAwakeningService}
+     * offers no picker for such a slot. False by default.
+     */
+    default boolean presetsTitleAwakening(final org.aventyrs.core.character.TitleSlot slot) {
+        return false;
+    }
+
     /** Whether this Talento lets its holder breathe underwater. */
     default boolean allowsUnderwaterBreathing(final Character character) {
         return false;

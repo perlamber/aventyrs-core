@@ -342,9 +342,10 @@ public enum DestinoFeat implements Feat {
      */
     // "Os Benefícios de Atrasar Despertar são dobrados" is real too: ATRASAR_DESPERTAR's figure
     // doubles while this is held (delayedAwakeningFigure).
-    // TODO: "Você não Desperta Títulos Aventyr" is a prohibition nothing enforces —
-    //  Character#grantTitle and TitleAwakening award a Título unconditionally; the Talento only makes
-    //  awakening one a bad trade.
+    // "Você não Desperta Títulos Aventyr" closes every slot (permitsTitleSlot), as Filho de Gilgamesh
+    //  does — so TitleAcquisitionService#grantTitle, a pre-picked TitleAwakening and
+    //  TitleAwakeningService's picker all refuse. Character#grantTitle, the unchecked mutator, still
+    //  doesn't ask.
     ABDICADOR(
             "Você não Desperta Títulos Aventyr, mantendo suas Centelhas inertes indefinidamente. "
                     + "Os Benefícios de Atrasar Despertar são dobrados e seu Multiplicador de PV e "
@@ -360,6 +361,11 @@ public enum DestinoFeat implements Feat {
         @Override
         public int resolveManaMultiplierIncrease(final Character character) {
             return unawakenedTitles(character);
+        }
+
+        @Override
+        public boolean permitsTitleSlot(final TitleSlot slot, final Character character) {
+            return false;
         }
     },
 
