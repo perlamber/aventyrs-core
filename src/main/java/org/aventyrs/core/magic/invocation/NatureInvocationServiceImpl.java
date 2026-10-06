@@ -111,6 +111,42 @@ public class NatureInvocationServiceImpl implements NatureInvocationService {
                 ROUNDS, false, 0);
     }
 
+    /** Invocação Maior: "+1PA" and "+2PD"; Invocação Dupla: "+2PA". */
+    public static final int LIFE_OPTION_ACTION_POINTS = 1;
+    public static final int ATTRIBUTE_OPTION_DETERMINATION = 2;
+    public static final int DOUBLED_OPTION_ACTION_POINTS = 2;
+
+    @Override
+    public InvocationPlan enhance(@NonNull final InvocationPlan plan, @NonNull final CombatantSheet caster,
+                                  @NonNull final InvocationOptions options) {
+        SummonEnhancement enhancement = caster.getCharacter().getAllTitles().stream()
+                .map(title -> title.resolveSummonEnhancement(caster, options))
+                .filter(resolved -> !resolved.isNone())
+                .findFirst()
+                .orElse(SummonEnhancement.NONE);
+        if (!options.equals(InvocationOptions.NONE) && enhancement.isNone()) {
+            throw new org.aventyrs.core.sheet.IllegalOperationException(
+                    org.aventyrs.core.util.TranslatableMessages.REQUIRED_TITLE_TRAIT_NOT_HELD);
+        }
+        List<NatureSummon> creatures = new ArrayList<>();
+        for (NatureSummon creature : plan.creatures()) {
+            NatureSummon enhanced = creature.withEnhancement(enhancement);
+            creatures.add(enhanced);
+            if (options.doubled()) {
+                creatures.add(enhanced);
+            }
+        }
+        Integer rounds = options.doubled() && plan.rounds() != null ? Math.max(1, plan.rounds() / 2) : plan.rounds();
+        int actionPoints = (options.extraTimeForLife() ? LIFE_OPTION_ACTION_POINTS : 0)
+                + (options.doubled() ? DOUBLED_OPTION_ACTION_POINTS : 0);
+        int determination = options.boostedAttribute() != null ? ATTRIBUTE_OPTION_DETERMINATION : 0;
+        return new InvocationPlan(creatures, plan.exclusivityGroup(), rounds, plan.concentration(),
+                plan.extraManaCost(), plan.extraActionPoints() + actionPoints,
+                plan.extraDeterminationCost() + determination,
+                plan.concentrationUpkeepMultiplier() * (options.doubled() && plan.concentration() ? 2 : 1),
+                enhancement);
+    }
+
     private static NatureSummon at(final NatureSummon creature, final CombatantSheet caster) {
         return creature.withConjurador(SummonedMonsterTemplate.manaGraduationOf(caster.getCharacter()));
     }

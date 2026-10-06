@@ -516,6 +516,15 @@ the example that originally justified building it.
   (`CombatantSheet#getStoredSpells`) for Armazenar Magia (1 Semente/Broto) or its Superior (2, or
   one Muda; releasable as a Reação too); every held Magia dissipates at the next Descanso.
 
+## Misticismos — Bruxo's Título-granted Árvores (0.1.2)
+
+- A Misticismo Magia **is a `MimetizedSpell`** (PD instead of PM, outside the Arcanista gates), granted live by
+  `AventyrTitle#getGrantedMimetizedSpells` and folded into `Character#getMimetizedSpells()`. Only the tree picks are
+  stored on `title.bruxo.Bruxo`; rung (2/5/7 Habilidades), price (0/1/2/3, Florescente 5 on two Pacto trees) and
+  both ramificações are derived. Cast through `MimetizedSpellCastingService` then `castSpell`, like any mimicry.
+- `MimetizedSpellCastingService#cast(caster, spell, true)` pays PV instead where a Título offers a price
+  (`AventyrTitle#resolveMimicryHitPointCost` — O Grande Bruxo). See `docs/bruxo.md`.
+
 ## Resisting a Magia you can cast (0.0.70)
 
 - **"Magias que você conheça / seja capaz de conjurar"** is `magic.SpellFamiliarity#canCast` —

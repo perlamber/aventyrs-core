@@ -2324,6 +2324,26 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     }
 
     /**
+     * RM this Talento's holder grants to every ally adjacent to it — a summoned Invocação Maior's "Você ou seus
+     * aliados, enquanto adjacentes à uma Invocação Maior, recebem RM" ({@code magic.invocation.EnhancedSummonFeat}).
+     * Scanned from the <b>recipient</b> by {@code DamageServiceImpl}, over the allies its {@code SceneContext} places
+     * adjacent, exactly as the Título-granted RDS of an adjacent ally is. Zero by default.
+     */
+    default int resolveAdjacentAllyMagicReduction(final Character holder) {
+        return 0;
+    }
+
+    /**
+     * Whether a hit of descriptor from this Talento's holder lands at half on a target immune to it, rather than not
+     * at all — Maldição das Chamas do Norte: "inimigos imunes a fogo ainda sofrem metade dos danos" ({@code
+     * magic.invocation.EnhancedSummonFeat}). Asked of the <b>attacker</b> by {@code DamageServiceImpl}. {@code false} by
+     * default.
+     */
+    default boolean halvesThroughImmunity(final org.aventyrs.core.character.DamageDescriptor descriptor) {
+        return false;
+    }
+
+    /**
      * RM this Talento grants against one particular incoming Magia — {@code MetamagicoFeat#ARCANISTA}'s
      * "RM para resistir aos efeitos de Magias que você conheça", one instance ({@code
      * DamageService#DEFAULT_DAMAGE_REDUCTION}) when the hit's Magia is one the holder knows ({@code

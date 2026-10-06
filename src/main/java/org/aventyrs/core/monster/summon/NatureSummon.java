@@ -9,8 +9,11 @@ import org.aventyrs.core.character.SizeCategory;
 import org.aventyrs.core.character.services.DevourServiceImpl;
 import org.aventyrs.core.effect.DevorarInteiro;
 import org.aventyrs.core.effect.EffectChain;
+import org.aventyrs.core.effect.FogoVivo;
 import org.aventyrs.core.effect.InocularVeneno;
 import org.aventyrs.core.item.AbstractWeapon;
+import org.aventyrs.core.magic.invocation.EnhancedSummonFeat;
+import org.aventyrs.core.magic.invocation.SummonEnhancement;
 import org.aventyrs.core.item.Item;
 import org.aventyrs.core.item.ItemCategory;
 import org.aventyrs.core.item.ItemRarity;
@@ -21,6 +24,7 @@ import org.aventyrs.core.race.CreatureType;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.EnchantmentWard;
 import org.aventyrs.core.sheet.Player;
+import org.aventyrs.core.sheet.Regeneration;
 import org.aventyrs.core.skill.DifficultyLevel;
 import org.aventyrs.core.skill.SkillCompetencyAbility;
 import org.aventyrs.core.monster.SkillDifficulty;
@@ -96,6 +100,11 @@ public class NatureSummon implements SummonedMonsterTemplate {
     @NonNull
     private final List<LacertoPower> powers = List.of();
 
+    /** What its summoner's Títulos add (Bruxo, core 0.1.2) — {@link SummonEnhancement#NONE} when nothing does. */
+    @Builder.Default
+    @NonNull
+    private final SummonEnhancement enhancement = SummonEnhancement.NONE;
+
     /** kind with no powers — the Aliado, Predador and Anciente, or a Lacerto creature whose powers the caller sets. */
     public static NatureSummon of(@NonNull final NatureSummonKind kind) {
         return NatureSummon.builder().kind(kind).build();
@@ -126,9 +135,24 @@ public class NatureSummon implements SummonedMonsterTemplate {
                 .conjuradorManaGraduation(conjuradorManaGraduation).powers(known).build();
     }
 
+    /**
+     * As {@link #restore(String, int, List)}, with the {@link SummonEnhancement} its summoner's Títulos gave it — which
+     * an API stores beside the rest (core 0.1.2).
+     */
+    public static NatureSummon restore(@NonNull final String kind, final int conjuradorManaGraduation,
+                                       final List<String> powers, final SummonEnhancement enhancement) {
+        return restore(kind, conjuradorManaGraduation, powers)
+                .withEnhancement(enhancement == null ? SummonEnhancement.NONE : enhancement);
+    }
+
     @Override
     public NatureSummon withConjurador(final int manaGraduation) {
         return toBuilder().conjuradorManaGraduation(manaGraduation).build();
+    }
+
+    /** A copy carrying enhancement — see {@code NatureInvocationService#enhance}. */
+    public NatureSummon withEnhancement(@NonNull final SummonEnhancement enhancement) {
+        return toBuilder().enhancement(enhancement).build();
     }
 
     @Override
@@ -154,6 +178,10 @@ public class NatureSummon implements SummonedMonsterTemplate {
         }
         if (kind == NatureSummonKind.ORGULHO_DE_LACERTO && hasPower(LacertoPower.BRUTO)) {
             raise(bases, BRUTO_VIGOR, AttributeDomain.VIGOR);
+        }
+        // Invocação Maior: "+4 em Força ou Destreza".
+        if (enhancement.boostedAttribute() != null) {
+            raise(bases, SummonEnhancement.ATTRIBUTE_BONUS, enhancement.boostedAttribute());
         }
         return bases;
     }
@@ -207,9 +235,10 @@ public class NatureSummon implements SummonedMonsterTemplate {
                 .build();
     }
 
+    /** Maldição do Pântano do Sudeste: "A Categoria de Tamanho de suas invocações é aumentada". */
     @Override
     public SizeCategory getSizeCategory() {
-        return kind.getSizeCategory();
+        return kind.getSizeCategory().shift(enhancement.sizeIncrease());
     }
 
     @Override
@@ -246,14 +275,16 @@ public class NatureSummon implements SummonedMonsterTemplate {
         return difficulties;
     }
 
+    /** Benção dos Raios do Nordeste: "recebem +2PA". */
     @Override
     public int getActionPoints() {
-        return kind.getActionPoints();
+        return kind.getActionPoints() + enhancement.extraActionPoints();
     }
 
+    /** Invocação Maior: "Multiplicador de PV aumentados em +3". */
     @Override
     public int getLifeMultiplier() {
-        return kind.getLifeMultiplier();
+        return kind.getLifeMultiplier() + enhancement.lifeMultiplierBonus();
     }
 
     /** An animal for the Aliado and Predador; an "animal monstruoso" or a "Monstro" for Lacerto's. */
@@ -263,6 +294,9 @@ public class NatureSummon implements SummonedMonsterTemplate {
                 ? CreatureType.ANIMAL
                 : SummonedMonsterTemplate.super.getCreatureType();
     }
+
+    /** The source of the Benção do Mar do Sul regeneration. */
+    public static final String MAR_DO_SUL = "Benção do Mar do Sul";
 
     /** Sopro Elemental: "3PA, Área de Efeito – Cone", Refrigeração 1 (core 0.0.97). */
     public static final int BREATH_ACTION_POINTS = 3;
@@ -317,9 +351,15 @@ public class NatureSummon implements SummonedMonsterTemplate {
     /** Membros Múltiplos' paired attack — the Aliado's own, or a Lacerto creature's rolled power. */
     @Override
     public List<org.aventyrs.core.feat.Feat> getFeats() {
-        return new NatureSummonTrait(kind, powers).hasMultipleLimbs()
-                ? List.of(org.aventyrs.core.feat.CriaturaFeat.MEMBROS_MULTIPLOS)
-                : List.of();
+        List<org.aventyrs.core.feat.Feat> feats = new ArrayList<>();
+        if (new NatureSummonTrait(kind, powers).hasMultipleLimbs()) {
+            feats.add(org.aventyrs.core.feat.CriaturaFeat.MEMBROS_MULTIPLOS);
+        }
+        // Every roll-facing clause of its summoner's Títulos (Bruxo's Iluminado and Oráculo Abissal).
+        if (!enhancement.isNone()) {
+            feats.add(new EnhancedSummonFeat(enhancement));
+        }
+        return List.copyOf(feats);
     }
 
     /** Inocular Veneno and Devorar Inteiro ride every attack it makes. */
@@ -333,6 +373,10 @@ public class NatureSummon implements SummonedMonsterTemplate {
             // ⚠️ "até 1 personagem para cada ponto de Vigor" read through the Ogro's own stomach, which is Vigor-sized.
             chains.add(new DevorarInteiro(self, new DevourServiceImpl()));
         }
+        // Maldição das Chamas do Norte: "o ataque de suas invocações recebe a Corrente de Efeitos – Fogo Vivo".
+        if (enhancement.fireAttacks()) {
+            chains.add(new FogoVivo());
+        }
         return chains;
     }
 
@@ -340,8 +384,15 @@ public class NatureSummon implements SummonedMonsterTemplate {
     @Override
     public MonsterSheet spawn(final Player gm) {
         MonsterSheet sheet = SummonedMonsterTemplate.super.spawn(gm);
-        if (kind == NatureSummonKind.ANCIENTE) {
+        // Invocação Maior with both effects: "imunes a efeitos de Encantamentos Nocivos" — TODO "e Maldições": no
+        // Maldição classification exists.
+        if (kind == NatureSummonKind.ANCIENTE || enhancement.isImmuneToHarmfulEnchantments()) {
             sheet.applyEffect(EnchantmentWard.openEnded());
+        }
+        // Benção do Mar do Sul: "curando 2PV no final de cada Rodada" — ⚠️ a Regeneration heals on its holder's own
+        // Turn, read as that Rodada's end for the creature.
+        if (enhancement.regenerationPerRound() > 0) {
+            sheet.applyEffect(Regeneration.openEnded(enhancement.regenerationPerRound(), MAR_DO_SUL));
         }
         return sheet;
     }

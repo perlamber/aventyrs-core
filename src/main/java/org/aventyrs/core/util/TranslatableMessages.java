@@ -112,6 +112,10 @@ public class TranslatableMessages {
     public static final String INVALID_DAMAGE_TYPE_ELEMENT_PAIRING = "INVALID_DAMAGE_TYPE_ELEMENT_PAIRING";
     public static final String INVALID_DAMAGE_BASE = "INVALID_DAMAGE_BASE";
     public static final String REQUIRED_TITLE_TRAIT_NOT_HELD = "REQUIRED_TITLE_TRAIT_NOT_HELD";
+    /** Maldição da Nevasca do Sudoeste's comet: "Apenas em cenários de céu aberto". */
+    public static final String COMET_REQUIRES_OPEN_SKY = "COMET_REQUIRES_OPEN_SKY";
+    /** The attacker is a summon that "não é capaz de lutar" — a Familiar Maior. */
+    public static final String SUMMON_CANNOT_FIGHT = "SUMMON_CANNOT_FIGHT";
     /** The Título trait names no {@code AbstractTitleAbilityInteraction} — it is passive, or its activation isn't built. */
     public static final String TITLE_ABILITY_NOT_ACTIVATABLE = "TITLE_ABILITY_NOT_ACTIVATABLE";
     /** The Título activation acts on the live Scene, and the request named none. */

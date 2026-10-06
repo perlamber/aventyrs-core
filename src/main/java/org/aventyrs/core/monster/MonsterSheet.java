@@ -121,6 +121,10 @@ public class MonsterSheet extends AbstractCombatantSheet {
     private java.util.function.Function<org.aventyrs.core.sheet.CombatantSheet,
             List<org.aventyrs.core.effect.EffectChain>> attackEffectChains = self -> List.of();
 
+    /** Whether the stat block "não é capaz de lutar" — see {@link MonsterTemplate#isNonCombatant()}. */
+    @lombok.Getter
+    private boolean nonCombatant;
+
     /** Efeitos de Ego used since the Cena began — see {@link #recordEgoUse}. */
     private int egoEffectsUsedThisScene;
 
@@ -194,6 +198,7 @@ public class MonsterSheet extends AbstractCombatantSheet {
         sheet.damageImmunities = java.util.Set.copyOf(template.getDamageImmunities());
         sheet.healingInversion = template::invertsHealing;
         sheet.attackEffectChains = template::resolveAttackEffectChains;
+        sheet.nonCombatant = template.isNonCombatant();
         return sheet;
     }
 

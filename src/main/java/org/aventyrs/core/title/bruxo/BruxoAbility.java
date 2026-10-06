@@ -26,9 +26,10 @@ public enum BruxoAbility implements MisticismoTeacher {
 
     // Requer 1 Especialização de 'Bruxo'. "Custo: 1 ponto permanente de Ego, a escolha do jogador",
     // "Tempo: Ritual, 1 dia". The familiar is a permanent Subordinado plus a non-combat token
-    // (Categoria -4, a SummonedMonsterTemplate) leashed to Bruxo#getFamiliarLeash UD (table ruling,
-    // 2026-10-05). TODO: the ritual's activation (permanent Ego spend, the Familiar record, its
-    // Subordinado and token) — plan Phase 4.
+    // (Categoria -4, FamiliarTemplate, refused every attack) leashed to Bruxo#getFamiliarLeash UD (table
+    // ruling, 2026-10-05). Real through Bruxo#performFamiliarRitual (the permanent Ego, binding the Familiar)
+    // and Bruxo#summonFamiliar (the token and its Subordinado in a Cena) — not an Interaction, since the
+    // permanent Ego rebuilds the Character.
     FAMILIAR_MAIOR(
             "Ativar esta habilidade exige um Ritual de 1 dia, envolvendo sacrifícios materiais ou pessoais, " +
             "fortalecendo o vínculo do Bruxo com a Entidade ou Divindade que ele tem por Patrono. Ao fim dos ritos " +

@@ -1,12 +1,23 @@
 package org.aventyrs.core.title.bruxo;
 
 import lombok.NonNull;
+import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
+import org.aventyrs.core.character.EgoDomain;
+import org.aventyrs.core.character.services.EgoPointsService;
 import org.aventyrs.core.magic.BranchLevel;
 import org.aventyrs.core.magic.MimetizedSpell;
 import org.aventyrs.core.magic.SpellTree;
 import org.aventyrs.core.magic.catalog.MagicTree;
+import org.aventyrs.core.magic.invocation.InvocationOptions;
+import org.aventyrs.core.magic.invocation.SummonEnhancement;
+import org.aventyrs.core.monster.MonsterSheet;
+import org.aventyrs.core.scene.Scene;
+import org.aventyrs.core.scene.SceneSummon;
 import org.aventyrs.core.sheet.CombatantSheet;
+import org.aventyrs.core.sheet.Player;
+import org.aventyrs.core.subordinate.Subordinate;
+import org.aventyrs.core.subordinate.SubordinateService;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.title.AventyrTitle;
 import org.aventyrs.core.title.AventyrTitleAbility;
@@ -26,6 +37,8 @@ import java.util.OptionalInt;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import static org.aventyrs.core.util.TranslatableMessages.COMET_REQUIRES_OPEN_SKY;
+import static org.aventyrs.core.util.TranslatableMessages.REQUIRED_TITLE_TRAIT_NOT_HELD;
 import static org.aventyrs.core.util.TranslatableMessages.TITLE_ABILITY_CHOICE_LOCKED;
 import static org.aventyrs.core.util.TranslatableMessages.TITLE_ABILITY_PREREQUISITE_NOT_MET;
 
@@ -75,6 +88,7 @@ public class Bruxo implements AventyrTitle {
     private final List<AventyrTitleAbility> abilities;
     private final Map<String, SpellTree> misticismos = new LinkedHashMap<>();
     private final Set<SpellTree> pactoTrees = new LinkedHashSet<>();
+    private Familiar familiar;
 
     /** Both lists are copied into mutable ones, so the grant mutators can append to them. */
     public Bruxo(@NonNull final List<BruxoSpecialization> specializations,
@@ -98,6 +112,15 @@ public class Bruxo implements AventyrTitle {
         if (!pactoTrees.isEmpty()) {
             choosePactoTrees(Set.copyOf(pactoTrees));
         }
+    }
+
+    /** As the four-argument restore, with the Familiar Maior a ritual already bound, or {@code null}. */
+    public Bruxo(@NonNull final List<BruxoSpecialization> specializations,
+                 @NonNull final List<AventyrTitleAbility> abilities,
+                 @NonNull final Map<String, ? extends SpellTree> misticismos,
+                 @NonNull final Set<? extends SpellTree> pactoTrees, final Familiar familiar) {
+        this(specializations, abilities, misticismos, pactoTrees);
+        this.familiar = familiar;
     }
 
     /** The Bruxo character holds, if any. */
@@ -355,6 +378,122 @@ public class Bruxo implements AventyrTitle {
                                     .build());
                 })
                 .toList();
+    }
+
+    // --- Familiar Maior ----------------------------------------------------------------------------
+
+    /** The Familiar Maior a ritual bound, if one has. */
+    public Optional<Familiar> getFamiliar() {
+        return Optional.ofNullable(familiar);
+    }
+
+    /**
+     * Familiar Maior's ritual — "Custo de Ativação: 1 ponto permanente de Ego, a escolha do jogador. Tempo de Ativação:
+     * Ritual, 1 dia". Not an in-Cena activation: the Ego is permanent, and a sheet's {@code Character} is final, so
+     * this returns holder rebuilt with sacrificed one point lower ({@code EgoPointsService#sacrificePermanent}), with
+     * this Bruxo — the same instance, in both — bound to familiar for life. The day the ritual takes is the
+     * caller's; nothing here keeps game time.
+     *
+     * @throws IllegalOperationException {@code REQUIRED_TITLE_TRAIT_NOT_HELD} without Familiar Maior or when holder does
+     *         not hold this Bruxo; {@code TITLE_ABILITY_CHOICE_LOCKED} once a familiar is bound; {@code
+     *         NOT_ENOUGH_EGO_POINTS} from the sacrifice — all before anything changes
+     */
+    public Character performFamiliarRitual(@NonNull final Character holder, @NonNull final Familiar familiar,
+                                           @NonNull final EgoDomain sacrificed,
+                                           @NonNull final EgoPointsService egoPointsService) {
+        require(holds(BruxoAbility.FAMILIAR_MAIOR) && holder.getAllTitles().contains(this));
+        if (this.familiar != null) {
+            throw new IllegalOperationException(TITLE_ABILITY_CHOICE_LOCKED);
+        }
+        Character rebuilt = egoPointsService.sacrificePermanent(holder, sacrificed, 1);
+        this.familiar = familiar;
+        return rebuilt;
+    }
+
+    /**
+     * Brings the bound Familiar Maior into a Cena beside holder: its token joins as holder's invocation with no
+     * Duração ("passará a acompanhar o personagem pelo resto de sua vida"), and holder commands it as a Subordinado
+     * whose creature is that token. The leash ({@link #getFamiliarLeash()} UD) is the caller's to keep — this core
+     * holds no positions.
+     *
+     * @throws IllegalOperationException {@code REQUIRED_TITLE_TRAIT_NOT_HELD} with no familiar bound, or anything
+     *         {@code SubordinateService#command} refuses (the Carisma limit, a duplicate grade)
+     */
+    public SceneSummon summonFamiliar(@NonNull final Scene scene, @NonNull final CombatantSheet holder,
+                                      @NonNull final Player gm, @NonNull final SubordinateService subordinates) {
+        require(familiar != null);
+        MonsterSheet token = new FamiliarTemplate(familiar).spawn(gm);
+        subordinates.command(holder, new Subordinate(familiar.benefit(), false, FAMILIAR_SOURCE, token.getId(), null),
+                null);
+        return scene.addSummon(holder, token, null, null);
+    }
+
+    /**
+     * The Familiar Maior's token has left the Cena — it fell, or it was sent away: holder stops commanding its
+     * Subordinado. The familiar itself stays bound ("pelo resto de sua vida") and may be called again. Whether any was
+     * commanded.
+     */
+    public boolean dismissFamiliar(@NonNull final CombatantSheet holder, @NonNull final SubordinateService subordinates) {
+        List<Subordinate> held = org.aventyrs.core.subordinate.SubordinateBenefits.of(holder).stream()
+                .filter(subordinate -> FAMILIAR_SOURCE.equals(subordinate.getSource()))
+                .toList();
+        held.forEach(subordinate -> subordinates.dismiss(holder, subordinate.getId()));
+        return !held.isEmpty();
+    }
+
+    /** The source a Familiar Maior's Subordinado is commanded under. */
+    public static final String FAMILIAR_SOURCE = "Familiar Maior";
+
+    // --- Invocations -------------------------------------------------------------------------------
+
+    /**
+     * Everything this Bruxo adds to an invocation. The passive clauses follow the traits held, each scaling with
+     * "Habilidades ou Suprema de {Especialização}" ({@link #getAbilityCount}); the opt-ins are refused unless the trait
+     * offering them is held — and the comet needs the caller's word that the sky is open.
+     *
+     * @throws IllegalOperationException {@code REQUIRED_TITLE_TRAIT_NOT_HELD}, {@code TITLE_ABILITY_CHOICE_LOCKED} for
+     *         an Atributo other than Força or Destreza, {@code COMET_REQUIRES_OPEN_SKY}
+     */
+    @Override
+    public SummonEnhancement resolveSummonEnhancement(@NonNull final CombatantSheet caster,
+                                                      @NonNull final InvocationOptions options) {
+        boolean maior = options.extraTimeForLife() || options.boostedAttribute() != null;
+        require(!maior || holds(BruxoAbility.INVOCACAO_MAIOR));
+        require(!options.doubled() || holds(BruxoAbility.INVOCACAO_DUPLA));
+        require(!options.comet() || holds(IluminadoAbility.MALDICAO_DA_NEVASCA_DO_SUDOESTE));
+        if (options.boostedAttribute() != null && options.boostedAttribute() != AttributeDomain.STRENGTH
+                && options.boostedAttribute() != AttributeDomain.DEXTERITY) {
+            throw new IllegalOperationException(TITLE_ABILITY_CHOICE_LOCKED);
+        }
+        if (options.comet() && !options.openSky()) {
+            throw new IllegalOperationException(COMET_REQUIRES_OPEN_SKY);
+        }
+        int iluminado = getAbilityCount(BruxoSpecialization.ILUMINADO);
+        int oraculo = getAbilityCount(BruxoSpecialization.ORACULO_ABISSAL);
+        return SummonEnhancement.builder()
+                .lifeMultiplierBonus(options.extraTimeForLife() ? SummonEnhancement.LIFE_MULTIPLIER_BONUS : 0)
+                .boostedAttribute(options.boostedAttribute())
+                .invocacaoMaior(maior)
+                .doubled(options.doubled())
+                .attackDifficultyReduction(holds(BruxoSpecialization.ILUMINADO) ? 1 : 0)
+                .defenseDifficultyReduction(holds(BruxoSpecialization.ORACULO_ABISSAL) ? 1 : 0)
+                .flightBonusRounds(holds(IluminadoAbility.BENCAO_DO_VENTO_DO_LESTE) ? iluminado / 2 : null)
+                .regenerationPerRound(holds(IluminadoAbility.BENCAO_DO_MAR_DO_SUL) ? 2 + iluminado / 2 : 0)
+                .sizeIncrease(holds(IluminadoAbility.MALDICAO_DO_PANTANO_DO_SUDESTE) ? 2 + iluminado / 2 : 0)
+                .cometDamageBonus(options.comet() ? 2 * iluminado : null)
+                .fireAttacks(holds(OraculoAbissalAbility.MALDICAO_DAS_CHAMAS_DO_NORTE))
+                .damageTakenReduction(holds(OraculoAbissalAbility.MALDICAO_DO_DESERTO_DO_OESTE) ? 2 + oraculo : 0)
+                .cataclysm(holds(OraculoAbissalAbility.BENCAO_DOS_VULCOES_DO_NOROESTE))
+                .criticalMarginIncrease(holds(OraculoAbissalAbility.BENCAO_DOS_VULCOES_DO_NOROESTE) ? 1 + oraculo / 2 : 0)
+                .lightning(holds(OraculoAbissalAbility.BENCAO_DOS_RAIOS_DO_NORDESTE))
+                .lightningDamageBonus(holds(OraculoAbissalAbility.BENCAO_DOS_RAIOS_DO_NORDESTE) ? oraculo : 0)
+                .build();
+    }
+
+    private static void require(final boolean held) {
+        if (!held) {
+            throw new IllegalOperationException(REQUIRED_TITLE_TRAIT_NOT_HELD);
+        }
     }
 
     /** Whether mimetized is one of this Bruxo's own Misticismo Magias, at its current price. */
