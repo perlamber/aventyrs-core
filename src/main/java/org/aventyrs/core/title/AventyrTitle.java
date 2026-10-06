@@ -405,6 +405,31 @@ public interface AventyrTitle {
     }
 
     /**
+     * The PV caster may pay instead of mimetized's PD, or empty when this Título permits no such payment —
+     * Bruxo's O Grande Bruxo, "1+ à quantidade de PD" while it is the Título Primário. {@code primary} is
+     * whether this Título sits in the Primário slot. Asked by {@code MimetizedSpellCastingService}, which
+     * pays through {@code CombatantSheet#payWithVitality}. Empty by default.
+     */
+    default java.util.OptionalInt resolveMimicryHitPointCost(final org.aventyrs.core.magic.MimetizedSpell mimetized,
+                                                             final CombatantSheet caster, final boolean primary) {
+        return java.util.OptionalInt.empty();
+    }
+
+    /** Spends what a PV-paid cast used up of {@link #resolveMimicryHitPointCost}. No-op by default. */
+    default void consumeMimicryHitPointPayment(final org.aventyrs.core.magic.MimetizedSpell mimetized,
+                                               final CombatantSheet caster) {
+    }
+
+    /**
+     * Magias this Título lets its holder cast without learning them — the twin of {@code
+     * Feat#getGrantedMimetizedSpells}, folded into {@code Character#getMimetizedSpells()} the same way.
+     * Bruxo's Misticismos. Empty by default.
+     */
+    default List<org.aventyrs.core.magic.MimetizedSpell> getGrantedMimetizedSpells(final Character character) {
+        return List.of();
+    }
+
+    /**
      * Whether the holder's Descansos count as one category higher — Doutor de Eldur. Read by {@code
      * RestService#applyRest}. {@code false} by default.
      */
