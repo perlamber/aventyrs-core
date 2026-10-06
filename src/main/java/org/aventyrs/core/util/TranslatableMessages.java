@@ -112,6 +112,10 @@ public class TranslatableMessages {
     public static final String INVALID_DAMAGE_TYPE_ELEMENT_PAIRING = "INVALID_DAMAGE_TYPE_ELEMENT_PAIRING";
     public static final String INVALID_DAMAGE_BASE = "INVALID_DAMAGE_BASE";
     public static final String REQUIRED_TITLE_TRAIT_NOT_HELD = "REQUIRED_TITLE_TRAIT_NOT_HELD";
+    /** Maldição da Nevasca do Sudoeste's comet: "Apenas em cenários de céu aberto". */
+    public static final String COMET_REQUIRES_OPEN_SKY = "COMET_REQUIRES_OPEN_SKY";
+    /** The attacker is a summon that "não é capaz de lutar" — a Familiar Maior. */
+    public static final String SUMMON_CANNOT_FIGHT = "SUMMON_CANNOT_FIGHT";
     /** The Título trait names no {@code AbstractTitleAbilityInteraction} — it is passive, or its activation isn't built. */
     public static final String TITLE_ABILITY_NOT_ACTIVATABLE = "TITLE_ABILITY_NOT_ACTIVATABLE";
     /** The Título activation acts on the live Scene, and the request named none. */
@@ -217,6 +221,15 @@ public class TranslatableMessages {
      * take — see {@code DespertarAntecipadoFeat#optionsFor}.
      */
     public static final String DESPERTAR_ANTECIPADO_CHOICE_NOT_ELIGIBLE = "DESPERTAR_ANTECIPADO_CHOICE_NOT_ELIGIBLE";
+
+    /** No Título slot is due to awaken — see {@code TitleAwakeningService#dueSlot}. */
+    public static final String TITLE_AWAKENING_NOT_DUE = "TITLE_AWAKENING_NOT_DUE";
+
+    /**
+     * The Título picked for a due Despertar is not one {@code TitleAwakeningService#optionsFor}
+     * offers — a family already held, or one a held Talento prohibits.
+     */
+    public static final String TITLE_AWAKENING_CHOICE_NOT_ELIGIBLE = "TITLE_AWAKENING_CHOICE_NOT_ELIGIBLE";
 
     /**
      * A held Talento forbids that whole kind of Equipamento — {@code

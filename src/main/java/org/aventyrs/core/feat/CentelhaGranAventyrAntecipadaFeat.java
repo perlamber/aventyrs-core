@@ -56,6 +56,12 @@ public final class CentelhaGranAventyrAntecipadaFeat extends AbstractFeat {
                 .toList();
     }
 
+    /** The Secondary awakens this Talento's own pick, so no picker is offered for it. */
+    @Override
+    public boolean presetsTitleAwakening(final TitleSlot slot) {
+        return slot == TitleSlot.SECONDARY;
+    }
+
     @Override
     public Feat catalogEntry() {
         return DestinoFeat.CENTELHA_GRAN_AVENTYR_ANTECIPADA;

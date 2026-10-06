@@ -67,6 +67,17 @@ public interface NatureInvocationService {
     /** {@link #invokeAliado}'s creatures, unplaced — caster's Graduação in Domínio do Mana sets their tiers. */
     InvocationPlan planAliado(CombatantSheet caster, boolean predator);
 
+    /**
+     * plan as caster's Títulos change it, given the per-cast options (core 0.1.2) — every creature carries the {@link
+     * SummonEnhancement} the Títulos resolve ({@code AventyrTitle#resolveSummonEnhancement}); Invocação Dupla doubles
+     * the creatures, halves the Duração (⚠️ floored, never below 1 Rodada) and doubles the Concentração upkeep; and
+     * the options' price is reported: +1PA (Multiplicador de PV), +2PD (Atributo), +2PA (Dupla). Nothing is spent.
+     *
+     * @throws org.aventyrs.core.sheet.IllegalOperationException {@code REQUIRED_TITLE_TRAIT_NOT_HELD} for an option no
+     *         held trait permits, or anything a Título refuses
+     */
+    InvocationPlan enhance(InvocationPlan plan, CombatantSheet caster, InvocationOptions options);
+
     /** {@link #singCancaoDeFlora}'s pack, unplaced. */
     InvocationPlan planCancaoDeFlora(CombatantSheet caster, int additionalAnimals, int strengthened, boolean faunaFlora);
 

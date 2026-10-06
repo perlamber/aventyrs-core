@@ -67,6 +67,12 @@ public final class DespertarAntecipadoFeat extends AbstractFeat {
                 .toList();
     }
 
+    /** The Primary awakens this Talento's own pick, so no picker is offered for it. */
+    @Override
+    public boolean presetsTitleAwakening(final TitleSlot slot) {
+        return slot == TitleSlot.PRIMARY;
+    }
+
     @Override
     public Feat catalogEntry() {
         return DestinoFeat.DESPERTAR_ANTECIPADO;

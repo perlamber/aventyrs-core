@@ -1,5 +1,6 @@
 package org.aventyrs.core.title;
 
+import org.aventyrs.core.title.bruxo.Bruxo;
 import org.aventyrs.core.title.curandeiro.Curandeiro;
 import org.aventyrs.core.title.giganteenfurecido.GiganteEnfurecido;
 import org.aventyrs.core.title.santo.Santo;
@@ -27,7 +28,8 @@ public final class TitleCatalog {
     /** One fresh, empty instance per Título family. */
     public static List<AventyrTitle> all() {
         return List.of(new Santo(List.of(), List.of()), new SenhorDaBriga(List.of(), List.of()),
-                new GiganteEnfurecido(List.of(), List.of()), new Curandeiro(List.of(), List.of()));
+                new GiganteEnfurecido(List.of(), List.of()), new Curandeiro(List.of(), List.of()),
+                new Bruxo(List.of(), List.of()));
     }
 
     /** Whether title and other are the same Título family, whatever each one holds. */

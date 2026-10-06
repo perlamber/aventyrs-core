@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.aventyrs.core.util.TranslatableMessages.NOT_AN_ATTACK_SKILL;
+import static org.aventyrs.core.util.TranslatableMessages.SUMMON_CANNOT_FIGHT;
 import static org.aventyrs.core.util.TranslatableMessages.AREA_OF_EFFECT_NOT_GRANTED;
 import static org.aventyrs.core.util.TranslatableMessages.TOO_MANY_ATTACK_TARGETS;
 
@@ -159,6 +160,10 @@ public class AttackDelivery {
     public DeliveredAttackResult resolve(@NonNull final DeliveredAttack given) {
         if (!given.getAttackSkill().isAttackSkill()) {
             throw new IllegalOperationException(NOT_AN_ATTACK_SKILL);
+        }
+        // A Familiar Maior "não é capaz de lutar".
+        if (given.getAttacker() instanceof org.aventyrs.core.monster.MonsterSheet monster && monster.isNonCombatant()) {
+            throw new IllegalOperationException(SUMMON_CANNOT_FIGHT);
         }
         // An Ataque com Escudo adds the shield's bonus for the Defesa it is rolled against — so it is
         // aimed at this attack's own DefenseType, whatever the caller built it with.

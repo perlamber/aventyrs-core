@@ -368,6 +368,16 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
         return permitsTitleSlot(slot, character);
     }
 
+    /**
+     * Whether this Talento already settles the Despertar into slot with a Título picked in advance —
+     * {@code DespertarAntecipadoFeat} for the Primário, {@code CentelhaGranAventyrAntecipadaFeat} for
+     * the Secundário, each awakening its own pick at a session end. {@code TitleAwakeningService}
+     * offers no picker for such a slot. False by default.
+     */
+    default boolean presetsTitleAwakening(final org.aventyrs.core.character.TitleSlot slot) {
+        return false;
+    }
+
     /** Whether this Talento lets its holder breathe underwater. */
     default boolean allowsUnderwaterBreathing(final Character character) {
         return false;
@@ -2321,6 +2331,26 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      */
     default int resolveMagicReduction(final Character character) {
         return 0;
+    }
+
+    /**
+     * RM this Talento's holder grants to every ally adjacent to it — a summoned Invocação Maior's "Você ou seus
+     * aliados, enquanto adjacentes à uma Invocação Maior, recebem RM" ({@code magic.invocation.EnhancedSummonFeat}).
+     * Scanned from the <b>recipient</b> by {@code DamageServiceImpl}, over the allies its {@code SceneContext} places
+     * adjacent, exactly as the Título-granted RDS of an adjacent ally is. Zero by default.
+     */
+    default int resolveAdjacentAllyMagicReduction(final Character holder) {
+        return 0;
+    }
+
+    /**
+     * Whether a hit of descriptor from this Talento's holder lands at half on a target immune to it, rather than not
+     * at all — Maldição das Chamas do Norte: "inimigos imunes a fogo ainda sofrem metade dos danos" ({@code
+     * magic.invocation.EnhancedSummonFeat}). Asked of the <b>attacker</b> by {@code DamageServiceImpl}. {@code false} by
+     * default.
+     */
+    default boolean halvesThroughImmunity(final org.aventyrs.core.character.DamageDescriptor descriptor) {
+        return false;
     }
 
     /**

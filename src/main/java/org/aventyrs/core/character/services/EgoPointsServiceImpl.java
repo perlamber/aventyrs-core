@@ -143,6 +143,18 @@ public class EgoPointsServiceImpl implements EgoPointsService {
     }
 
     @Override
+    public Character sacrificePermanent(@NonNull final Character character, @NonNull final EgoDomain domain,
+                                        final int amount) {
+        if (amount <= 0) {
+            return character;
+        }
+        if (character.getEgos().getEgo(domain).getTotal() < amount) {
+            throw new IllegalOperationException(org.aventyrs.core.util.TranslatableMessages.NOT_ENOUGH_EGO_POINTS);
+        }
+        return character.toBuilder().egos(character.getEgos().withVariableBonus(domain, -amount)).build();
+    }
+
+    @Override
     public int getSpendRecovery(final Character character, final EgoPointSpend spend, final int rolledValue) {
         if (rolledValue < MIN_DIE_FACE || rolledValue > MAX_DIE_FACE) {
             throw new IllegalOperationException(INVALID_DIE_ROLL);

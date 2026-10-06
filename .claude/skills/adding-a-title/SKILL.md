@@ -61,6 +61,13 @@ Especializações and their gated abilities.
   **Pure `resolve*` queries are paired with `consume*` spends** (Curandeiro Veloz's charge), the same
   split as `resolveAttackModifiers` / `consumeAttackCharges`. A "next X" discount or permission is a
   single-use charge (`CombatantSheet#grantCharge`), never a Rodada window. See `docs/curandeiro.md`.
+- **A fifth: `Bruxo`, the granted-Árvores and summon-enhancement shape** (core 0.1.2, `docs/bruxo.md`). Its
+  Misticismos are `MimetizedSpell`s from `AventyrTitle#getGrantedMimetizedSpells`, derived from picks the Título stores
+  (`chooseMisticismo`, keyed by the teaching trait's `name()`), so no new casting path exists. Its invocation clauses
+  resolve into a persistable `magic.invocation.SummonEnhancement` (`AventyrTitle#resolveSummonEnhancement`, asked by
+  `NatureInvocationService#enhance`), carried by the creature and read through `EnhancedSummonFeat`. A cost in
+  **permanent** Ego rebuilds the `Character` (`performFamiliarRitual`), so it is not an Interaction. A named-Habilidade
+  prerequisite is an `isEligible` override, as Curandeiro's.
 - **Two earlier reference shapes.** `Santo` is activation-heavy (Blessings, Auras, reported
   `EmpoweredAttack`s). `SenhorDaBriga` is passive-heavy and reaches the **attack itself** through the
   Título scans on `AventyrTitle` (`resolveCriticalMarginIncrease`, `resolveCriticalDamage`,

@@ -395,10 +395,17 @@ public class DamageServiceImpl implements DamageService {
         }
         // An immunity ("Imunidade ao Elemento escolhido") is judged before anything else: there is
         // nothing left for RD, RA or a Meio-Dano to act on, and no Pele de Pedra is spent on it.
+        // …unless the attacker's Talentos pierce it by half (Maldição das Chamas do Norte's invocations: "inimigos
+        // imunes a fogo ainda sofrem metade dos danos") — the immunity then reads as a Meio-Dano.
+        boolean immunityPierced = false;
         if (target != null && target.isImmuneToDamage(damageType, damageDescriptor)) {
-            return 0;
+            immunityPierced = source != null && damageDescriptor != null && source.getCharacter().getFeats().stream()
+                    .anyMatch(feat -> feat.halvesThroughImmunity(damageDescriptor));
+            if (!immunityPierced) {
+                return 0;
+            }
         }
-        final boolean halfDamage = attackHalvesDamage
+        final boolean halfDamage = attackHalvesDamage || immunityPierced
                 // A Meio-Dano limited to a DamageScope (an element, physical or magic damage only),
                 // held by a Habilidade or a timed DamageScopeEffect.
                 || (target != null && target.halvesDamage(damageType, damageDescriptor))
@@ -445,6 +452,7 @@ public class DamageServiceImpl implements DamageService {
                 }
                 if (effectiveType == DamageType.MAGICO) {
                     reduction += getTotalMagicReduction(target);
+                    reduction += sumAllyGrantedMagicReduction(target, sceneContext);
                 }
                 // A reduction of the hit's sacred or profane nature (core 0.0.89), whatever its type.
                 if (damageDescriptor != null && damageDescriptor.sanctity() != null) {
@@ -690,6 +698,22 @@ public class DamageServiceImpl implements DamageService {
                     .sum();
         }
         return total;
+    }
+
+    /**
+     * RM granted <i>to</i> target by an adjacent ally's Talentos — a summoned Invocação Maior ({@code
+     * Feat#resolveAdjacentAllyMagicReduction}). The RM twin of {@link #sumAllyGrantedDamageReduction}: scanned from
+     * the recipient, nothing granted or stored, and the same reading of whose {@code SceneContext} this is.
+     */
+    private int sumAllyGrantedMagicReduction(final CombatantSheet target, final SceneContext sceneContext) {
+        if (target == null || sceneContext == null) {
+            return 0;
+        }
+        return sceneContext.getAlliesWithin(Range.ADJACENTE).stream()
+                .mapToInt(ally -> ally.getCharacter().getFeats().stream()
+                        .mapToInt(feat -> feat.resolveAdjacentAllyMagicReduction(ally.getCharacter()))
+                        .sum())
+                .sum();
     }
 
     private boolean hasAdjacentAllyWithLowerCurrentHitPoints(final Character character, final CombatantSheet target, final SceneContext sceneContext) {

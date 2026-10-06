@@ -405,6 +405,42 @@ public interface AventyrTitle {
     }
 
     /**
+     * The PV caster may pay instead of mimetized's PD, or empty when this Título permits no such payment —
+     * Bruxo's O Grande Bruxo, "1+ à quantidade de PD" while it is the Título Primário. {@code primary} is
+     * whether this Título sits in the Primário slot. Asked by {@code MimetizedSpellCastingService}, which
+     * pays through {@code CombatantSheet#payWithVitality}. Empty by default.
+     */
+    default java.util.OptionalInt resolveMimicryHitPointCost(final org.aventyrs.core.magic.MimetizedSpell mimetized,
+                                                             final CombatantSheet caster, final boolean primary) {
+        return java.util.OptionalInt.empty();
+    }
+
+    /**
+     * What this Título adds to an invocation caster is about to place, given the per-cast options — Bruxo's
+     * Invocação Maior/Dupla and every Iluminado/Oráculo Abissal clause. Asked by {@code
+     * NatureInvocationService#enhance}; a Título refuses an option it is asked to honour and cannot. {@link
+     * org.aventyrs.core.magic.invocation.SummonEnhancement#NONE} by default.
+     */
+    default org.aventyrs.core.magic.invocation.SummonEnhancement resolveSummonEnhancement(
+            final CombatantSheet caster, final org.aventyrs.core.magic.invocation.InvocationOptions options) {
+        return org.aventyrs.core.magic.invocation.SummonEnhancement.NONE;
+    }
+
+    /** Spends what a PV-paid cast used up of {@link #resolveMimicryHitPointCost}. No-op by default. */
+    default void consumeMimicryHitPointPayment(final org.aventyrs.core.magic.MimetizedSpell mimetized,
+                                               final CombatantSheet caster) {
+    }
+
+    /**
+     * Magias this Título lets its holder cast without learning them — the twin of {@code
+     * Feat#getGrantedMimetizedSpells}, folded into {@code Character#getMimetizedSpells()} the same way.
+     * Bruxo's Misticismos. Empty by default.
+     */
+    default List<org.aventyrs.core.magic.MimetizedSpell> getGrantedMimetizedSpells(final Character character) {
+        return List.of();
+    }
+
+    /**
      * Whether the holder's Descansos count as one category higher — Doutor de Eldur. Read by {@code
      * RestService#applyRest}. {@code false} by default.
      */

@@ -248,6 +248,14 @@ public interface MonsterTemplate {
         return CreatureType.MONSTRUOSO;
     }
 
+    /**
+     * Whether this creature "não é capaz de lutar" — a Bruxo's Familiar Maior. {@code AttackDelivery} refuses it an
+     * attack ({@code SUMMON_CANNOT_FIGHT}). {@code false} by default.
+     */
+    default boolean isNonCombatant() {
+        return false;
+    }
+
     /** Efeitos Críticos this creature's anatomy shrugs off — see {@link CriticalEffectType}. */
     default Set<CriticalEffectType> getCriticalEffectImmunities() {
         return Set.of();

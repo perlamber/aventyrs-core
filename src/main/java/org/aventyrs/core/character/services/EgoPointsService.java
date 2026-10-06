@@ -195,6 +195,17 @@ public interface EgoPointsService {
      */
     Character grantPermanentByNarrator(Character character, EgoDomain domain, int amount);
 
+    /**
+     * character gives up amount of its domain Ego for good — a Custo de Ativação of "1 ponto permanente de Ego"
+     * (Bruxo's Familiar Maior). Taken off {@code EgoValue#getVariable}, the mirror of {@link
+     * #grantPermanentByNarrator}, so the Base a Vantagem de Ego was unlocked with is untouched (⚠️ a reading). Returns
+     * the rebuilt {@link Character}; a non-positive amount returns character unchanged.
+     *
+     * @throws org.aventyrs.core.sheet.IllegalOperationException {@code NOT_ENOUGH_EGO_POINTS} when the Ego holds
+     *         fewer permanent points than amount
+     */
+    Character sacrificePermanent(Character character, EgoDomain domain, int amount);
+
     /** The lowest face a d6 can show — {@code rolledValue}'s lower bound. */
     int MIN_DIE_FACE = 1;
 
