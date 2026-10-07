@@ -96,4 +96,4 @@ Store these and restore with `new Bruxo(specs, abilities, misticismoPicks, pacto
 
 ## Readings
 
-See `0.1.2.CHANGELOG.md`, "Readings".
+See `docs/changelog/0.1.2.CHANGELOG.md`, "Readings".

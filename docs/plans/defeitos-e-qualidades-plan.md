@@ -103,7 +103,7 @@ that made every Antecedente Benefício free to wire:
 
 ## Phases
 
-1. **Model + creation (core).** — **Done (0.0.72)**, see `0.072.CHANGELOG.md`. Enums, held records, Superação options and validation (one per
+1. **Model + creation (core).** — **Done (0.0.72)**, see `docs/changelog/0.072.CHANGELOG.md`. Enums, held records, Superação options and validation (one per
    gravidade, ≤ 3 Qualidades, opposing pairs, Talentos-Gerais trade), materializing a Superação's
    Perícia/Graduação/Talento/Habilidade, folding the traits into `getFeats()`. Package-info creation
    step, CLAUDE.md row, tests.
@@ -125,7 +125,7 @@ that made every Antecedente Benefício free to wire:
 3. **The 🔧 stages.** Multiplier ceiling stage (Sobreposição), automatic failure, Rodada-parity
    (PA / Ações Livres / Reações / Vantagem), incoming-attack type at defence, Condição duration
    multiplier, per-Cena first-cost override, "negate the first Magia", Movimento halving. — **Done
-   (0.0.74)**, see `0.074.CHANGELOG.md`; tests `DefectsAndQualitiesStagesTest`. Also landed here:
+   (0.0.74)**, see `docs/changelog/0.074.CHANGELOG.md`; tests `DefectsAndQualitiesStagesTest`. Also landed here:
    Vulnerabilidade, Inabalável, Centelha Dormente's 25 EXP (with the sheet), Profana/Divina, Nulificador,
    Dependência. Readings (⚠️ on the constants): Rodadas Ímpares/pares are a Cena de Combate's; the
    vulnerability's extra damage lands on the raw hit; Membro Ausente halves only the permanent Movimento

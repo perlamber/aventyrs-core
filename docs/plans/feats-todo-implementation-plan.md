@@ -16,15 +16,15 @@ re-ordered as:
 
 | Order | Phase | Was | State |
 | --- | --- | --- | --- |
-| A | Stale-TODO sweep | Phase 0 | **First pass done (0.0.61)** — 312 → 286 TODO lines; see `0.061.CHANGELOG.md` |
-| B | Small hooks with ≥2 consumers | new | **Done (0.0.62)** — all four below; see `0.062.CHANGELOG.md` |
-| C | Flight / swim / climb axes | Phase 6 | **Done (0.0.63)** — `MovementMode`; flying as a timed state still open; see `0.063.CHANGELOG.md` |
-| D | Damage types | Phase 8 | **Done (0.0.64)** — RD/RDS/RM/RE scoped, RDS split out, Talento immunity/RE hooks, retyping, race element; Corte/Perfuração/Impacto skipped (no Talento consumer); see `0.064.CHANGELOG.md` |
-| E | Área de Efeito, outward damage, reverse retaliation | Phase 9 (+ rest of 7) | **Done (0.0.65)** — footprints, area attacks, Evasão, `Retaliation#dealTo`; outward Turn damage left for a second consumer; see `0.065.CHANGELOG.md` |
-| F | Spellcasting extensions | Phase 10 | **Done (0.0.66)** — mimetizar choices + live grant, Mana-cost reduction, per-cast opt-ins, cast bonuses, storage; see `0.066.CHANGELOG.md` |
-| I | Racial traits Talentos extend | new | **Done (0.0.67)** — Ferocidade de Lacerto, Bocarra, Agnação Ancestral, Aprendizado Rápido, Olhar de Lacerto, Cuidado para não Quebrar; HomemFera Forma Híbrida left open; see `0.067.CHANGELOG.md` |
-| H | Título / Destino / Vampiro | Phase 12 | **Done (0.0.68)** — acquisition ceilings in place of a timeline, Atrasar Despertar/Abdicador figures, Centelhas (count + Regalia loss), Título activation opt-ins, Laços-de-Sangue and Prole, Presença de Carmilla; Favoritismo lacks rules text; see `0.068.CHANGELOG.md` |
-| G | Montaria / veículo | Phase 11 | **Done (0.0.69)** — `Riding` on the sheet, `MountService`, the riding restriction and Ginete, all five Cavalaria Talentos, the Alabarda's mounted Dano Base; see `0.069.CHANGELOG.md` |
+| A | Stale-TODO sweep | Phase 0 | **First pass done (0.0.61)** — 312 → 286 TODO lines; see `docs/changelog/0.061.CHANGELOG.md` |
+| B | Small hooks with ≥2 consumers | new | **Done (0.0.62)** — all four below; see `docs/changelog/0.062.CHANGELOG.md` |
+| C | Flight / swim / climb axes | Phase 6 | **Done (0.0.63)** — `MovementMode`; flying as a timed state still open; see `docs/changelog/0.063.CHANGELOG.md` |
+| D | Damage types | Phase 8 | **Done (0.0.64)** — RD/RDS/RM/RE scoped, RDS split out, Talento immunity/RE hooks, retyping, race element; Corte/Perfuração/Impacto skipped (no Talento consumer); see `docs/changelog/0.064.CHANGELOG.md` |
+| E | Área de Efeito, outward damage, reverse retaliation | Phase 9 (+ rest of 7) | **Done (0.0.65)** — footprints, area attacks, Evasão, `Retaliation#dealTo`; outward Turn damage left for a second consumer; see `docs/changelog/0.065.CHANGELOG.md` |
+| F | Spellcasting extensions | Phase 10 | **Done (0.0.66)** — mimetizar choices + live grant, Mana-cost reduction, per-cast opt-ins, cast bonuses, storage; see `docs/changelog/0.066.CHANGELOG.md` |
+| I | Racial traits Talentos extend | new | **Done (0.0.67)** — Ferocidade de Lacerto, Bocarra, Agnação Ancestral, Aprendizado Rápido, Olhar de Lacerto, Cuidado para não Quebrar; HomemFera Forma Híbrida left open; see `docs/changelog/0.067.CHANGELOG.md` |
+| H | Título / Destino / Vampiro | Phase 12 | **Done (0.0.68)** — acquisition ceilings in place of a timeline, Atrasar Despertar/Abdicador figures, Centelhas (count + Regalia loss), Título activation opt-ins, Laços-de-Sangue and Prole, Presença de Carmilla; Favoritismo lacks rules text; see `docs/changelog/0.068.CHANGELOG.md` |
+| G | Montaria / veículo | Phase 11 | **Done (0.0.69)** — `Riding` on the sheet, `MountService`, the riding restriction and Ginete, all five Cavalaria Talentos, the Alabarda's mounted Dano Base; see `docs/changelog/0.069.CHANGELOG.md` |
 
 **Phase B** (each had two or more consumers) — all four built in 0.0.62:
 - A `Feat` Iniciativa hook — `MobilidadeFeat#INICIATIVA_APRIMORADA`, `#LIDERAR_O_AVANCO`,
@@ -617,7 +617,7 @@ engine reports amounts and legality, the caller/UI applies position, mirroring t
   `ElementalFeat` — **~18**.
 - **Effort:** 3 sessions. **Depends on:** Phase 8 for spell damage type; `magic-system` skill.
 - *0.0.70: `MetamagicoFeat` is fully wired — the Aptidão DM/GD/immunity clauses, Artesão, Engenheiro
-  on the Barreira, and the Barreira's ally Defesas and Duração extension. See `0.070.CHANGELOG.md`.*
+  on the Barreira, and the Barreira's ally Defesas and Duração extension. See `docs/changelog/0.070.CHANGELOG.md`.*
 
 ---
 

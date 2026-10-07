@@ -26,7 +26,13 @@ git switch release && git pull
 ```
 
 1. Bump `version` in `build.gradle` (e.g. `0.1.4` → `0.1.5`).
-2. Add `<version>.CHANGELOG.md` describing the changes.
+2. Move the previous release's changelog into the history folder, then add
+   `<version>.CHANGELOG.md` at the root describing the changes — only the latest
+   changelog lives at the root:
+   ```bash
+   git mv 0.1.4.CHANGELOG.md docs/changelog/
+   git add 0.1.5.CHANGELOG.md
+   ```
 3. Test and publish locally:
    ```bash
    ./gradlew test publishToMavenLocal
