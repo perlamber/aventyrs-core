@@ -412,6 +412,13 @@ public class TranslatableMessages {
      * Regalia, or an Arma/Defesa Natural. */
     public static final String ITEM_NOT_OFFERED = "ITEM_NOT_OFFERED";
 
+    /** Only a character holding the Vantagem de Recursos Herança Familiar receives a family heirloom. */
+    public static final String FAMILY_HEIRLOOM_NOT_HELD = "FAMILY_HEIRLOOM_NOT_HELD";
+
+    /** A Herança Familiar must be an Equipamento Ofensivo fabricated as an Obra-Prima Ofensiva Comum or Incomum,
+     * with no Aprimoramentos and no Regalia grade. */
+    public static final String INVALID_FAMILY_HEIRLOOM = "INVALID_FAMILY_HEIRLOOM";
+
     /** An item store's Raridade ceiling must be a purchasable tier — {@code NATURAL} is not one. */
     public static final String STORE_RARITY_NOT_PURCHASABLE = "STORE_RARITY_NOT_PURCHASABLE";
 

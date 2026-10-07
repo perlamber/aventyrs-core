@@ -25,13 +25,15 @@ git switch release && git pull
 # merge the work to ship, e.g.: git merge <feature-branch>
 ```
 
-1. Bump `version` in `build.gradle` (e.g. `0.1.4` → `0.1.5`).
+1. Bump `version` in `build.gradle` by adding or raising a fourth number (e.g. `0.1.4` → `0.1.4.1`,
+   `0.1.4.1` → `0.1.4.2`, up to `0.1.4.99`). Moving to the next minor (`0.1.5`) is a manual
+   decision — never bump it automatically.
 2. Move the previous release's changelog into the history folder, then add
    `<version>.CHANGELOG.md` at the root describing the changes — only the latest
    changelog lives at the root:
    ```bash
    git mv 0.1.4.CHANGELOG.md docs/changelog/
-   git add 0.1.5.CHANGELOG.md
+   git add 0.1.4.1.CHANGELOG.md
    ```
 3. Test and publish locally:
    ```bash
@@ -39,9 +41,9 @@ git switch release && git pull
    ```
 4. Commit, tag and push:
    ```bash
-   git commit -am "Release 0.1.5"
-   git tag -a v0.1.5 -m "aventyrs-core 0.1.5"
-   git push origin release v0.1.5
+   git commit -am "Release 0.1.4.1"
+   git tag -a v0.1.4.1 -m "aventyrs-core 0.1.4.1"
+   git push origin release v0.1.4.1
    ```
 
 > The tag is required: client CI builds core from tag `v<version>`, and fails if it's missing.
@@ -53,7 +55,7 @@ cd aventyrs-api
 git switch release && git pull
 ```
 
-1. Point `build.gradle` at the new core: `implementation 'org.aventyrs.core:aventyrs-core:0.1.5'`.
+1. Point `build.gradle` at the new core: `implementation 'org.aventyrs.core:aventyrs-core:0.1.4.1'`.
 2. Test: `./gradlew test`
 3. Deploy (VPN must be on; prompts for the server's sudo password):
    ```bash
@@ -63,7 +65,7 @@ git switch release && git pull
    `active` when it is up. If core was ahead, it updates `build.gradle` for you.
 4. Commit and push:
    ```bash
-   git commit -am "Release with core 0.1.5"
+   git commit -am "Release with core 0.1.4.1"
    git push origin release
    ```
 
@@ -83,12 +85,12 @@ git switch release && git pull
 3. Commit, tag and push:
    ```bash
    git commit -am "Release 0.1.1"
-   git tag -a v0.1.1 -m "Aventyrs client 0.1.1 (core 0.1.5)"
+   git tag -a v0.1.1 -m "Aventyrs client 0.1.1 (core 0.1.4.1)"
    git push origin release v0.1.1
    ```
 4. Pushing the tag starts **Actions → Package client**. When it finishes, the GitHub Release
    `v0.1.1` has `Aventyrs-<version>.dmg` and `Aventyrs-<version>.exe` attached.
-5. Install one of them and check that the initial screen shows **Cliente 0.1.1 · Core 0.1.5**
+5. Install one of them and check that the initial screen shows **Cliente 0.1.1 · Core 0.1.4.1**
    and the connection status reads **Ligado**.
 
 To build installers without releasing (e.g. to test a branch): **Actions → Package client →

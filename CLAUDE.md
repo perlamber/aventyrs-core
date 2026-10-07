@@ -420,8 +420,9 @@ a new category enum must be added there. `ItemCatalog.availableUpTo(ItemRarity)`
   change to the forge.
   Still unmodeled: a PE economy for *production* (a store purchase spends PE, a self-forge only
   reports its cost), any Pedra do Poder charge/bind economy, and — for Regalias — an unnamed donor's Centelha loss, the *Forja do
-  Olho de Deus* location, and the Divina mandatory-Crítico (all caller/GM adjudicated). TODOs
-  cite these (`ResourcesAdvantage#HERANCA_FAMILIAR`).
+  Olho de Deus* location, and the Divina mandatory-Crítico (all caller/GM adjudicated).
+  Herança Familiar is real (0.1.4.1): `CharacterCreationService#isFamilyHeirloom`/`#grantFamilyHeirloom`
+  give the heir a free Equipamento Ofensivo of any Raridade, an Obra-Prima Ofensiva ≤ Incomum, at creation.
   **Inventory is real** — `Character#equipment` (worn/wielded, scanned by every
   `resolveEnhancement*` consumer) and `AbstractCombatantSheet#inventory` (carried), both mutable
   `List<Item>`, the same shape as `Character#feats`.
