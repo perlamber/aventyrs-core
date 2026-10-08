@@ -38,10 +38,10 @@ import org.aventyrs.core.title.TitleAbilityActivationRequest;
  * ("Personagem que lhe infligirem danos <i>adicionalmente</i> perdem…"), which is why {@code
  * Retaliation} keeps the two apart and leaves that call to the caller.
  *
- * <p>The Veneno half is real: {@code ConditionType#ENVENENADO} now carries a {@code
- * LIFE_MULTIPLIER} -1, read by {@code HitPointsService#getLifeMultiplier(Character,
+ * <p>The Veneno half is real: the Envenenado it inflicts carries this clause's {@code
+ * LIFE_MULTIPLIER} -1 as an extra effect, read by {@code HitPointsService#getLifeMultiplier(Character,
  * CombatantSheet)}, so an attacker who lands a hit and takes the Malefício really does lose
- * maximum PV for 2 Rodadas.
+ * maximum PV for 2 Rodadas (and is under Envenenado's Fraqueza).
  *
  * <p>TODO "Pontos de Vida perdidos desta forma" has no locked-PV subtype, the same gap {@code
  * SantoAbility#PROTETOR_DA_VIDA_E_DA_MORTE} cites — though note this clause, unlike its siblings,

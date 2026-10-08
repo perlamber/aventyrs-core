@@ -166,8 +166,14 @@ public class AttackReceiver {
         // Artesão de Barreiras / Aptidão Mágica Suprema: the GD to resist a Magia the defender can cast.
         DifficultyLevel effectiveDifficultyLevel = attack.getDifficultyLevel().easier(defenseResult.getDifficultyReduction()
                 + SpellResistance.difficultyReduction(defender, attack.getAttackSource()));
-        int requiredTotal = effectiveDifficultyLevel.getBaseValue() + attack.getAttackBonus();
+        // Favorecido em Perícias de Ataque against a Caído/Cego/Flanqueado/… defender.
+        int requiredTotal = effectiveDifficultyLevel.getBaseValue() + attack.getAttackBonus()
+                + defender.getAttackerAttackRollBonus(attack.getSceneContext());
         int defenseTotal = defenseResult.getSkillRollBonus()
+                // Caído/Cego attacker: whoever attacked it while it was so defends with Vantagem.
+                + (attack.getAttacker() != null
+                        && attack.getAttacker().favoursDefenceBy(defender, attack.getSceneContext())
+                        ? org.aventyrs.core.skill.Skill.ADVANTAGE_BONUS : 0)
                 + (defenseRoll == null ? 0 : defenseRoll.getTotal())
                 + (attack.isAreaOfEffect() ? areaOfEffectDefenseBonus(defender) : 0)
                 // The Aptidões Mágicas' DM against a Magia the defender can cast.

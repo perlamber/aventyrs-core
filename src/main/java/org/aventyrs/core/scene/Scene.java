@@ -1082,12 +1082,15 @@ public class Scene {
     }
 
     /**
-     * Records that attacker attacked defender in this Rodada, for the Auras to read. Filed by
-     * the caller beside {@link #recordAction}, since a {@link CombatantAction} names no target
-     * and {@code AttackDelivery}/{@code AttackReceiver} stay report-only.
+     * Records that attacker attacked defender in this Rodada, for the Auras to read — and on
+     * defender's held Condições, for Caído's and Cego's Favorecido em Esquiva e Aparar ({@link
+     * CombatantSheet#noteAttackedBy}). Filed by the caller beside {@link #recordAction}, since a
+     * {@link CombatantAction} names no target and {@code AttackDelivery}/{@code AttackReceiver}
+     * stay report-only.
      */
     public void recordAttack(final CombatantSheet attacker, final CombatantSheet defender) {
         attacker.getForcedTargeting().ifPresent(compulsion -> compulsion.recordAttack(defender, currentRound));
+        defender.noteAttackedBy(attacker);
     }
 
     /**

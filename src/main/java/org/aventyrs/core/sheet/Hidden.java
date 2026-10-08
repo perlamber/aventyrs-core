@@ -66,8 +66,8 @@ import java.util.UUID;
  *
  * <p><b>Open-ended.</b> {@code remainingRounds} is {@code null}: hiding does not lapse on a
  * Rodada count, it ends when something reveals it — the same reasoning that makes {@link
- * ConditionType#DESARMADO} open-ended, since {@code CombatantSheet#rearm} is what lifts that one.
- * {@code HidingService#reveal} is what lifts this one.
+ * ConditionType#CAIDO} open-ended until Levantar-se. {@code HidingService#reveal} is what lifts
+ * this one.
  *
  * <p><b>Who has already spotted them lives here too.</b> Detection is per observer — a Goblin
  * failing its Atenção does not stop the Elfo beside it succeeding — so the sheet cannot hold a

@@ -27,6 +27,7 @@ import org.aventyrs.core.rest.RestType;
 import org.aventyrs.core.util.DiceRoller;
 import org.aventyrs.core.character.services.HitPointsServiceImpl;
 import org.aventyrs.core.magic.ElementalType;
+import org.aventyrs.core.skill.Skill;
 import org.aventyrs.core.skill.SkillType;
 import org.aventyrs.core.skill.dirigirecavalgar.DirigirECavalgarCompetencyAbility;
 
@@ -2366,8 +2367,30 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         if (isImmuneToCondition(condition.getType())) {
             return;
         }
+        // One fear rung at a time, the strongest wins (table ruling, 2026-10-07): a weaker fear
+        // never overrides a stronger one, and an equal or stronger one replaces every rung held.
+        if (condition.getType().isFear()) {
+            if (heldFearRank() > condition.getType().getFearRank()) {
+                return;
+            }
+            temporaryEffects.removeIf(effect -> effect instanceof Condition held && held.getType().isFear());
+        }
         removeCondition(condition.getType());
         temporaryEffects.add(condition);
+        // "Desacordado … aplica o Malefício Caído" — alongside, not implied: the Caído outlives it
+        // and ends only by Levantar-se.
+        if (condition.getType() == ConditionType.DESACORDADO) {
+            applyCondition(new Condition(ConditionType.CAIDO, null, condition.getSource()));
+        }
+    }
+
+    /** The highest fear rung directly held (not a setback's), 0 when none. */
+    private int heldFearRank() {
+        return temporaryEffects.stream()
+                .filter(effect -> effect instanceof Condition held && !held.isExpired())
+                .mapToInt(effect -> ((Condition) effect).getType().getFearRank())
+                .max()
+                .orElse(0);
     }
 
     /**
@@ -2402,13 +2425,28 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
                 && held.getType() == conditionType);
     }
 
-    /** Held, unexpired Conditions — the directly-applied ones, before implications. */
+    /**
+     * Held, unexpired Conditions — the directly-applied ones, before implications. A combatant is
+     * under one fear rung at a time, so where a setback's fear (Pânico) and an applied one coexist
+     * only the strongest is in force.
+     */
     private Stream<Condition> heldConditions() {
-        Stream<Condition> held = temporaryEffects.stream()
-                .filter(effect -> effect instanceof Condition)
-                .map(effect -> (Condition) effect)
-                .filter(condition -> !condition.isExpired());
-        return Stream.concat(held, setbackConditions());
+        List<Condition> held = Stream.concat(temporaryEffects.stream()
+                        .filter(effect -> effect instanceof Condition)
+                        .map(effect -> (Condition) effect)
+                        .filter(condition -> !condition.isExpired()),
+                setbackConditions())
+                .toList();
+        int strongestFear = held.stream().mapToInt(condition -> condition.getType().getFearRank()).max().orElse(0);
+        List<Condition> fears = held.stream().filter(condition -> condition.getType().isFear()).toList();
+        if (fears.size() <= 1) {
+            return held.stream();
+        }
+        Condition kept = fears.stream()
+                .filter(condition -> condition.getType().getFearRank() == strongestFear)
+                .findFirst()
+                .orElseThrow();
+        return held.stream().filter(condition -> !condition.getType().isFear() || condition == kept);
     }
 
     /**
@@ -2445,7 +2483,7 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
      * there — its own instance for a directly-applied one, or whichever implied it. <b>Keyed by
      * type, so a condition conferred by two different sources appears once</b>: being Desprevenido
      * because you are both Caído and Flanqueado is not worse than being Desprevenido, and summing
-     * per held Condition instead would charge its -2 Defesas twice. Where two sources imply the
+     * per held Condition instead would charge its -4 Defesas twice. Where two sources imply the
      * same condition, the first encountered supplies the origin any range-scoped effect of that
      * condition measures against; nothing authored today implies a range-scoped effect from two
      * places, so no precedence is invented.
@@ -2561,23 +2599,17 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
      */
     @Override
     public int getConditionBonus(final ModifierType modifierType, final SceneContext sceneContext) {
-        return activeConditionOrigins(sceneContext).entrySet().stream()
+        int estados = activeConditionOrigins(sceneContext).entrySet().stream()
                 .mapToInt(entry -> new Condition(entry.getKey(), null, entry.getValue().getSource())
                         .resolveBonus(modifierType, sceneContext))
                 .sum();
+        // A source's own magnitudes (a Veneno's Multiplicador loss) — per instance, never deduplicated.
+        int extras = heldConditions()
+                .mapToInt(held -> held.resolveExtraBonus(modifierType, sceneContext))
+                .sum();
+        return estados + extras;
     }
 
-    /**
-     * Applies {@link ConditionType#DESARMADO} only once <b>no</b> wielded {@link Weapon} remains.
-     * A fighter holding two blades who loses one is not Desarmado — the condition's Desvantagem
-     * on every Ataque and Dano roll is the penalty for having nothing to fight with, and charging
-     * it to someone still holding a sword would plainly overshoot. The rules text states the
-     * condition's effects, not when it is inflicted, so this reading is ours; it is the narrow
-     * one.
-     *
-     * <p>Open-ended (a {@code null} duration): being disarmed ends by picking a weapon back up,
-     * which is {@link #rearm(Weapon)}, never by counting down Rodadas.
-     */
     @Override
     public boolean drawWeapon(final Weapon weapon) {
         boolean drawn = getCharacter().drawWeapon(weapon);
@@ -2598,9 +2630,6 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         if (!weapon.isDisarmable() || !getCharacter().unequip(weapon)) {
             return java.util.Optional.empty();
         }
-        if (wieldsNoWeapon()) {
-            applyCondition(new Condition(ConditionType.DESARMADO, null));
-        }
         return java.util.Optional.of(weapon);
     }
 
@@ -2610,12 +2639,7 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
             return false;
         }
         getCharacter().equip(weapon);
-        removeCondition(ConditionType.DESARMADO);
         return true;
-    }
-
-    private boolean wieldsNoWeapon() {
-        return getCharacter().getEquipment().stream().noneMatch(item -> item instanceof Weapon);
     }
 
     /**
@@ -2730,11 +2754,39 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
                 .toList();
     }
 
+    /**
+     * One Vantagem — never two — when any active Condição makes this combatant's attackers
+     * Favorecidos on the attack roll: Favorecido is an Estado, and an Estado is binary.
+     */
     @Override
-    public int getAttackerDamageBonusFromConditions(final SceneContext sceneContext) {
-        return activeConditionOrigins(sceneContext).keySet().stream()
-                .mapToInt(ConditionType::getAttackerDamageBonus)
-                .sum();
+    public int getAttackerAttackRollBonus(final SceneContext sceneContext) {
+        boolean favoured = activeConditionOrigins(sceneContext).keySet().stream()
+                .anyMatch(type -> type.getAttackerFavours().contains(ConditionType.AttackerFavour.ATTACK_ROLL));
+        return favoured ? Skill.ADVANTAGE_BONUS : 0;
+    }
+
+    /**
+     * True when defender attacked this combatant while it held a Condição whose attackers stay
+     * Favorecidos in Esquiva e Aparar against it — and it still holds that Condição.
+     */
+    @Override
+    public boolean favoursDefenceBy(final CombatantSheet defender, final SceneContext sceneContext) {
+        if (defender == null) {
+            return false;
+        }
+        Set<ConditionType> active = activeConditionOrigins(sceneContext).keySet();
+        return heldConditions()
+                .filter(held -> held.getType().getAttackerFavours()
+                        .contains(ConditionType.AttackerFavour.DEFENCE_AGAINST_HOLDER))
+                .filter(held -> active.contains(held.getType()))
+                .anyMatch(held -> held.getAttackedBy().contains(defender));
+    }
+
+    @Override
+    public void noteAttackedBy(final CombatantSheet attacker) {
+        temporaryEffects.stream()
+                .filter(effect -> effect instanceof Condition held && !held.isExpired())
+                .forEach(effect -> ((Condition) effect).noteAttackedBy(attacker));
     }
 
     /**

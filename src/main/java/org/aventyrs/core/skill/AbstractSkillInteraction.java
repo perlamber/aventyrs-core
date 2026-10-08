@@ -644,6 +644,9 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                 .mapToInt(title -> title.resolveAttackRollBonus(skillType, attackSource, target, attackTarget,
                         sceneContext))
                 .sum();
+        // Outward-facing: Favorecido em Perícias de Ataque against a Flanqueado/Caído/Imobilizado/
+        // Confuso/Cego target, read off the *victim's* own Condições.
+        attackRollBonus += attackTarget.getAttackerAttackRollBonus(sceneContext);
         if (attackRollBonus != 0) {
             result = result.toBuilder().skillRollBonus(result.getSkillRollBonus() + attackRollBonus).build();
         }
@@ -1095,15 +1098,11 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                         .mapToInt(held -> held.resolveDamageRollBonus(skillType, attackSource, target, attackTarget,
                                 sceneContext))
                         .sum());
-        // Outward-facing: what the *victim's* own Condições hand the attacker (Flanqueado).
-        int targetCondition = attackTarget == null ? 0
-                : addFlat(contributions, DamageContributionSource.TARGET_CONDITION,
-                        attackTarget.getAttackerDamageBonusFromConditions(sceneContext));
 
         // A Cavaleiro's "Vantagem em … Dano" (core 0.0.92).
         int subordinate = addFlat(contributions, DamageContributionSource.SUBORDINATE,
                 Skill.ADVANTAGE_BONUS * org.aventyrs.core.subordinate.SubordinateBenefits.count(target, sceneContext, org.aventyrs.core.subordinate.SubordinateBenefit.CAVALEIRO_DAMAGE));
-        int flat = temporary + condition + meiaForca + manoeuvre + title + targetCondition + subordinate;
+        int flat = temporary + condition + meiaForca + manoeuvre + title + subordinate;
         return new DamageSum(DamageBonus.total(typed, flat), new DamageBonusBreakdown(contributions));
     }
 

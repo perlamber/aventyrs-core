@@ -736,9 +736,9 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
     boolean hasDrawnWeaponThisScene();
 
     /**
-     * Knocks weapon out of this combatant's hands — the effect that inflicts {@link
-     * ConditionType#DESARMADO}. Unequips it and, if nothing else armed remains, applies the
-     * condition.
+     * Knocks weapon out of this combatant's hands. Unequips it and nothing more — there is no
+     * Desarmado Malefício any more (table ruling, 2026-10-07): a fighter with nothing in hand
+     * attacks with an Ataque Desarmado at its own Dano Base.
      *
      * @return the weapon actually dropped, or empty when it was not wielded or {@link
      * Weapon#isDisarmable()} refuses ("Não pode ser desarmado")
@@ -751,14 +751,11 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
     java.util.Optional<Weapon> disarm(Weapon weapon);
 
     /**
-     * Puts weapon back in this combatant's hands, lifting {@link ConditionType#DESARMADO}. The
-     * mirror of {@link #disarm(Weapon)} — being Desarmado lasts until you are armed again, not a
-     * fixed number of Rodadas, which is why the condition it applies is open-ended.
+     * Puts weapon back in this combatant's hands — the mirror of {@link #disarm(Weapon)}.
      *
      * @return whether the weapon was actually taken up; {@code false} when a held condition
      * forbids it ({@link ConditionType#preventsArming()} — Devorado, where nothing you dropped
-     * is reachable from inside a creature), in which case neither the equipment nor the condition
-     * changes
+     * is reachable from inside a creature), in which case the equipment does not change
      */
     boolean rearm(Weapon weapon);
 
@@ -827,12 +824,27 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
     org.aventyrs.core.race.RacialTraitSuppression getRacialTraitSuppression();
 
     /**
-     * The flat dano-roll bonus this combatant's conditions grant to <b>whoever attacks them</b> —
-     * Flanqueado's "Atacar um personagem Flanqueado garante Vantagem na rolagem de Dano". Read
-     * off the <em>target</em>'s sheet by {@code AbstractSkillInteraction}, the mirror of {@link
-     * #getConditionBonus}, which is what the holder themselves suffers.
+     * The attack-roll bonus this combatant's Condições grant to <b>whoever attacks them</b> — the
+     * Favorecido em Perícias de Ataque of Flanqueado, Caído, Imobilizado, Confuso and Cego. One
+     * Vantagem at most: Favorecido is an Estado, and an Estado is binary. Read off the
+     * <em>target</em>'s sheet, the mirror of {@link #getConditionBonus}.
      */
-    int getAttackerDamageBonusFromConditions(SceneContext sceneContext);
+    int getAttackerAttackRollBonus(SceneContext sceneContext);
+
+    /**
+     * Whether defender is Favorecido in Esquiva e Aparar against <b>this</b> combatant's attacks —
+     * Caído's and Cego's "Personagens que ataquem alvos caídos se tornam Favorecidos em … Esquiva e
+     * Aparar": defender attacked this combatant while it held that Condição, and it still does
+     * (table ruling, 2026-10-07).
+     */
+    boolean favoursDefenceBy(CombatantSheet defender, SceneContext sceneContext);
+
+    /**
+     * Records that attacker attacked this combatant, on every Condição it currently holds — what
+     * {@link #favoursDefenceBy} reads. {@code Scene#recordAttack} calls it; a caller without a
+     * Scene calls it itself.
+     */
+    void noteAttackedBy(CombatantSheet attacker);
 
     /**
      * This combatant's total Resistência a Críticos — every source, in {@link
@@ -842,7 +854,7 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
      * ModifierType#CRITICAL_RESISTANCE} {@code TemporaryBonus} ({@code AnaoFeat#VIGOR_DO_INVERNO}
      * grants one at combat start). Zero for a combatant with none, which is most of them.
      *
-     * <p>Another outward-facing query, like {@link #getAttackerDamageBonusFromConditions} —
+     * <p>Another outward-facing query, like {@link #getAttackerAttackRollBonus} —
      * {@code AbstractSkillInteraction} reads it off the <em>attack target</em>'s sheet and
      * subtracts it from the attacker's summed Margem Crítica Menor widening, so RC cancels
      * widening rather than pushing a crit below its baseline (the net is floored at 0 by {@code

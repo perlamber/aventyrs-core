@@ -209,7 +209,8 @@ public class AttackDelivery {
         // The Aptidões Mágicas' DM against a Magia the defender can cast rides on the flat Defesa the
         // caller supplied, which cannot see what is being resisted.
         int requiredTotal = attack.getDefenseValue()
-                + SpellResistance.defenseBonus(defender, attack.getDefenseType(), attack.getAttackSource());
+                + SpellResistance.defenseBonus(defender, attack.getDefenseType(), attack.getAttackSource())
+                + defenceFavour(attack, defender);
         int attackTotal = attackResult.getSkillRollBonus()
                 + (attackRoll == null ? 0 : attackRoll.getTotal());
 
@@ -227,7 +228,8 @@ public class AttackDelivery {
                     .defender(target.defender())
                     .requiredTotal(target.defenseValue()
                             + SpellResistance.defenseBonus(target.defender(), attack.getDefenseType(),
-                                    attack.getAttackSource()))
+                                    attack.getAttackSource())
+                            + defenceFavour(attack, target.defender()))
                     .build()));
             return result.attackResult(attackResult).build();
         }
@@ -355,7 +357,8 @@ public class AttackDelivery {
                                                                  final boolean blindMiss) {
         CombatantSheet defender = target.defender();
         int requiredTotal = target.defenseValue()
-                + SpellResistance.defenseBonus(defender, attack.getDefenseType(), attack.getAttackSource());
+                + SpellResistance.defenseBonus(defender, attack.getDefenseType(), attack.getAttackSource())
+                + defenceFavour(attack, defender);
         int margin = attackTotal - requiredTotal;
         SkillRoll attackRoll = attack.getAttackRoll();
         boolean hit = (margin >= 0 || forcedSuccess(attackRoll)) && !blindMiss
@@ -632,5 +635,16 @@ public class AttackDelivery {
             chains.addAll(foe.getAttackEffectChains());
         }
         return chains;
+    }
+
+    /**
+     * Caído's and Cego's outward Favorecido em Esquiva e Aparar: a defender who attacked the attacker
+     * while it was Caído or Cego defends against it with Vantagem. A foe rolls no defence, so the
+     * Vantagem lands on its flat Defesa.
+     */
+    private static int defenceFavour(final DeliveredAttack attack, final CombatantSheet defender) {
+        return attack.getAttacker().favoursDefenceBy(defender, attack.getSceneContext())
+                ? org.aventyrs.core.skill.Skill.ADVANTAGE_BONUS
+                : 0;
     }
 }

@@ -103,7 +103,7 @@ public enum VampiricoFeat implements Feat {
     //  own missing system rather than one shared gap — see the per-constant TODOs on
     //  FormaMetamorfica, which name them individually (a Movimento Base sub-stat for Vertical/Voo,
     //  the Multiplicador de PV's sheet reach, damage-type
-    //  immunity, and a concrete Corrente de Efeitos over an inert ConditionType#ENVENENADO).
+    //  immunity, and a concrete Corrente de Efeitos inflicting ConditionType#ENVENENADO).
     // TODO: Névoa's "é incapaz de causar danos" is only half closed. Emptying its Armas Naturais
     //  stops the weapon path, but nothing stops a damaging Magia, and canAttackWith(null) — an
     //  Ataque Desarmado — stays unconditionally true. A blanket damage prohibition exists nowhere.

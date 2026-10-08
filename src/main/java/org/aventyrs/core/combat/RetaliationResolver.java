@@ -37,6 +37,9 @@ final class RetaliationResolver {
     /** "perdem -1 Multiplicador de Pontos de Vida (Malefício Veneno) por 2 Rodadas". */
     private static final ConditionType CONDITION_ON_DAMAGE = ConditionType.ENVENENADO;
     private static final int CONDITION_ROUNDS = 2;
+    /** The Veneno's own magnitude — Envenenado states none of its own ("conforme origem do efeito"). */
+    private static final java.util.List<ConditionType.ConditionEffect> CONDITION_EFFECTS =
+            java.util.List.of(ConditionType.ConditionEffect.lifeMultiplierLoss(1));
 
     private RetaliationResolver() {
     }
@@ -53,7 +56,7 @@ final class RetaliationResolver {
         if (damage <= 0) {
             return null;
         }
-        return new Retaliation(damage, DESCRIPTOR, CONDITION_ON_DAMAGE, CONDITION_ROUNDS);
+        return new Retaliation(damage, DESCRIPTOR, CONDITION_ON_DAMAGE, CONDITION_ROUNDS, CONDITION_EFFECTS);
     }
 
     /**
