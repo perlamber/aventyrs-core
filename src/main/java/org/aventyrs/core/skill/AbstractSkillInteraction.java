@@ -49,6 +49,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
+import static org.aventyrs.core.util.TranslatableMessages.ACTION_PREVENTED_BY_CONDITION;
 import static org.aventyrs.core.util.TranslatableMessages.SKILL_USE_PREVENTED;
 import static org.aventyrs.core.skill.Skill.UNTRAINED_PENALTY;
 import static org.aventyrs.core.util.TranslatableMessages.ANCESTRAL_COUNSEL_NOT_BANKED;
@@ -354,6 +355,11 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
         if (target.isSkillUsePrevented(skillType, attributeDomain)) {
             throw new IllegalOperationException(SKILL_USE_PREVENTED);
         }
+        // A held Condição refusing the action itself (core 0.1.5) — judged only for a real roll: a
+        // bonuses-only preview (no SkillRoll) is a question, not an action.
+        if (skillRoll != null && isRefusedByCondition(target, sceneContext, skillRoll)) {
+            throw new IllegalOperationException(ACTION_PREVENTED_BY_CONDITION);
+        }
 
         int bonus = characterSkillService.getValueForRoll(characterSkill, character.getAttributes(), character.getRace(), attributeDomain);
         if (counselled) {
@@ -479,7 +485,8 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
 
         // Cego: "Deve rolar 1d6 sempre que efetuar uma rolagem de perícia" — reported so the caller
         // throws it, and judged when it did.
-        java.util.OptionalInt blindThreshold = target.getBlindCheckThreshold(skillType, sceneContext);
+        java.util.OptionalInt blindThreshold = target.getBlindCheckThreshold(skillType, attributeDomain, sceneContext,
+                attackTarget);
         boolean blindCheckFailed = false;
         if (blindThreshold.isPresent()) {
             result.blindCheckThreshold(blindThreshold.getAsInt());
@@ -1278,5 +1285,19 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
 
     private static Integer nullIfZero(final int value) {
         return value == 0 ? null : value;
+    }
+
+    /**
+     * Whether a held Condição refuses this roll — as the kind of action it is ({@link
+     * org.aventyrs.core.action.ActionKind#of}), and as whatever it is priced as (a roll bought as a
+     * Reação or Ação Livre is refused while Confuso).
+     */
+    private boolean isRefusedByCondition(final CombatantSheet target, final SceneContext sceneContext,
+                                         final SkillRoll skillRoll) {
+        if (target.isActionPrevented(org.aventyrs.core.action.ActionKind.of(skillType, skillRoll), sceneContext)) {
+            return true;
+        }
+        org.aventyrs.core.action.ActionKind priced = org.aventyrs.core.action.ActionKind.ofCost(skillRoll.getActionCost());
+        return priced != null && target.isActionPrevented(priced, sceneContext);
     }
 }

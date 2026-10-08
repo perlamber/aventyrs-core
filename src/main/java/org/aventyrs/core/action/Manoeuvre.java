@@ -33,12 +33,52 @@ public enum Manoeuvre {
      * ChargeService} for which of its figures are authored and which are read off the constants
      * that reference it.
      */
-    INVESTIDA,
+    INVESTIDA(null),
 
     /**
      * Reposicionar — a 1UD step bought as an Ação Livre ({@code RepositionService}). It provokes no
      * movement Reações and is refused in Terreno Difícil. Table ruling (2026-09-23): no document
      * under {@code docs/rules/} defines it; they only name it.
      */
-    REPOSICIONAR
+    REPOSICIONAR(ActionKind.MOVEMENT),
+
+    /**
+     * Agarrar — 2PA, an Ataque Corpo-a-Corpo against the target's Defesa that deals no damage and
+     * triggers no Efeito Crítico or Corrente; success leaves the target Agarrado with the captor as
+     * the source ({@code GrappleService}). Every character may do it (table ruling, 2026-10-07).
+     */
+    AGARRAR(null),
+
+    /** Libertar-se do Agarrão — 2PA, a Perícia de Ataque against the captor's Ataque GD. */
+    LIBERTAR_SE_DO_AGARRAO(ActionKind.ESCAPE_GRAPPLE),
+
+    /**
+     * The captor's roll when a held foe tries to escape — the player rolls their Ataque against the
+     * foe's Ataque GD, and a failure frees it. Answers the foe's action rather than being one, so it
+     * is {@link ActionKind#DEFENCE}-like and no Condição refuses it.
+     */
+    MANTER_AGARRAO(ActionKind.DEFENCE),
+
+    /** Libertar-se da Imobilização — 2PA, Furtividade against a pre-set GD or the captor's Ataque GD. */
+    LIBERTAR_SE_DA_IMOBILIZACAO(ActionKind.ESCAPE_IMMOBILIZATION),
+
+    /** Libertar-se da Predação — an Ataque Corpo-a-Corpo from inside the devourer. */
+    LIBERTAR_SE_DA_PREDACAO(ActionKind.ESCAPE_DEVOURED),
+
+    /** Levantar-se — 1PA, leaving Caído; provokes Defender o Perímetro ({@code StandUpService}). */
+    LEVANTAR_SE(ActionKind.STAND_UP);
+
+    private final ActionKind actionKind;
+
+    Manoeuvre(final ActionKind actionKind) {
+        this.actionKind = actionKind;
+    }
+
+    /**
+     * The {@link ActionKind} this manoeuvre is when a Condição asks — {@code null} when it is the
+     * kind of Perícia roll it is made with (an Investida and an Agarrar are attacks).
+     */
+    public ActionKind getActionKind() {
+        return actionKind;
+    }
 }

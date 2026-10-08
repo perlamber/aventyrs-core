@@ -245,6 +245,16 @@ public class SkillRoll {
                 rerolledFromFace, face, sorteEffects, initiativeCharges, autocontrole);
     }
 
+    /**
+     * This roll, made as manoeuvre and priced at actionCost — how a service that owns a manoeuvre
+     * (Agarrar and its escapes, {@code GrappleService}) names it on a roll its caller threw, keeping
+     * every other mark the caller put on it.
+     */
+    public SkillRoll asManoeuvre(final Manoeuvre manoeuvre, final ActionCost actionCost) {
+        return new SkillRoll(dice, requestedAbility, targetValue, actionCost, manoeuvre, activatedFeats, counselled,
+                rerolledFromFace, blindCheckFace, sorteEffects, initiativeCharges, autocontrole);
+    }
+
     /** The Cego 1d6 thrown beside this roll, or {@code null} when none was — see {@link #withBlindCheck}. */
     public Integer getBlindCheckFace() {
         return blindCheckFace;

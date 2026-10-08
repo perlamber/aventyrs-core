@@ -406,6 +406,8 @@ public class DamageServiceImpl implements DamageService {
             }
         }
         final boolean halfDamage = attackHalvesDamage || immunityPierced
+                // Devorado: "Danos causados ao interior da criatura são reduzidos à Metade".
+                || (target != null && source != null && source.getDevourer().map(devourer -> devourer == target).orElse(false))
                 // A Meio-Dano limited to a DamageScope (an element, physical or magic damage only),
                 // held by a Habilidade or a timed DamageScopeEffect.
                 || (target != null && target.halvesDamage(damageType, damageDescriptor))

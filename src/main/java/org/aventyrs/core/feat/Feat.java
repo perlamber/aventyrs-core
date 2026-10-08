@@ -2205,6 +2205,15 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     }
 
     /**
+     * Whether this Talento lets its holder Levantar-se as an Ação Livre rather than for 1PA —
+     * {@code ArtesMarciaisFeat#DOMINAR_ARTE_MARCIAL_SUBMISSAO}'s "pode se levantar como Ação Livre".
+     * Read by {@code StandUpService#getStandUpCost}. False by default.
+     */
+    default boolean standsUpAsFreeAction(final Character character) {
+        return false;
+    }
+
+    /**
      * Whether this Talento lets its holder move <b>without leaving {@code
      * ConditionType#ESCONDIDO}</b> — {@code MobilidadeFeat#MOVIMENTO_FURTIVO}'s "você pode se
      * mover enquanto furtivo". False by default: moving normally gives a hidden character away.

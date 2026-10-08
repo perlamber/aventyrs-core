@@ -2,6 +2,7 @@ package org.aventyrs.core.sheet;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.aventyrs.core.action.ActionKind;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.scene.Range;
 import org.aventyrs.core.skill.Skill;
@@ -120,8 +121,6 @@ public enum ConditionType {
      * (Estado de Desprevenido) aumenta para Distância Média. Enquanto em Distância Curta da origem
      * do medo suas ações são restritas a fugir até sair do alcance de Abalado."
      */
-    // TODO: "suas ações são restritas a fugir" within Curta — refusing every non-movement action
-    //  there needs the action veto (plan Phase 1, ActionKind/refusalForAction).
     APAVORADO("Cumulativo com efeitos de Abalado. Área de Efeito de Abalado aumenta para Distância "
             + "Longa. Cumulativo com efeitos de Assustado. Área de Efeito de Assustado (Estado de "
             + "Desprevenido) aumenta para Distância Média. Enquanto em Distância Curta da origem "
@@ -131,6 +130,18 @@ public enum ConditionType {
         @Override
         public Map<ConditionType, Range> getImplied() {
             return Map.of(FRAQUEZA, Range.DISTANCIA_LONGA, DESPREVENIDO, Range.DISTANCIA_MEDIA);
+        }
+
+        /** "Restritas a fugir": only moving away (or escaping a hold to do so) is left. */
+        @Override
+        public boolean refuses(final ActionKind kind) {
+            return kind != ActionKind.MOVEMENT && kind != ActionKind.DEFENCE && !kind.isEscape();
+        }
+
+        /** Only while within Curta of the fear's origin (always, for a sourceless fear). */
+        @Override
+        public Range getRestrictionRange() {
+            return Range.DISTANCIA_CURTA;
         }
 
         @Override
@@ -194,26 +205,20 @@ public enum ConditionType {
      * Caído is applied <i>alongside</i> it by {@code AbstractCombatantSheet#applyCondition}, not
      * implied: it outlives the Desacordado and ends only by Levantar-se.
      */
-    // TODO: "não pode realizar ações" needs the action veto (plan Phase 1); until then only
-    //  movement, activation and casting are refused.
     DESACORDADO("Personagem não pode realizar ações por 2 Rodadas, aplica o Malefício Caído.") {
         @Override
         public boolean isEstado() {
             return true;
         }
 
+        /** "Não pode realizar ações" — every one; a defence is not an action. */
         @Override
-        public boolean preventsMovement() {
-            return true;
+        public boolean refuses(final ActionKind kind) {
+            return kind != ActionKind.DEFENCE;
         }
 
         @Override
-        public boolean preventsAbilityActivation() {
-            return true;
-        }
-
-        @Override
-        public boolean preventsSpellCasting() {
+        public boolean defendsUnlessCriticalFailure() {
             return true;
         }
     },
@@ -294,8 +299,6 @@ public enum ConditionType {
      * Personagens que ataquem alvos Imobilizados se tornam Favorecidos em Perícias de Ataque."
      * Comes only from specific effects, never from a plain Agarrar.
      */
-    // TODO: "não pode realizar Ações" beyond movement needs the action veto (plan Phase 1); the
-    //  Furtividade escape is the plan's GrappleService (Phase 2).
     IMOBILIZADO("Estado de Desprevenido. Não pode realizar Ações, exceto Libertar-se da "
             + "Imobilização. Permanece nesta Condição até Libertar-se da Imobilização. Libertar-se "
             + "da Imobilização indica alternar entre Imobilizado e Pronto, esta ação requer uma "
@@ -311,8 +314,14 @@ public enum ConditionType {
             return EnumSet.of(AttackerFavour.ATTACK_ROLL);
         }
 
+        /** "Não pode realizar Ações, exceto Libertar-se da Imobilização"; a defence is not an action. */
         @Override
-        public boolean preventsMovement() {
+        public boolean refuses(final ActionKind kind) {
+            return kind != ActionKind.ESCAPE_IMMOBILIZATION && kind != ActionKind.DEFENCE;
+        }
+
+        @Override
+        public boolean defendsUnlessCriticalFailure() {
             return true;
         }
     },
@@ -349,13 +358,22 @@ public enum ConditionType {
      * "O tempo de todas as ações aumentam em +1PA. Não pode realizar Ações Livres e Reações.
      * Personagens que ataquem alvos Confusos se tornam Favorecidos em Perícias de Ataque."
      */
-    // TODO: the +1PA surcharge and the Ação Livre/Reação refusal are the plan's Phase 1.
     CONFUSO("O tempo de todas as ações aumentam em +1PA. Não pode realizar Ações Livres e Reações. "
             + "Personagens que ataquem alvos Confusos se tornam Favorecidos em Perícias de "
             + "Ataque.") {
         @Override
         public Set<AttackerFavour> getAttackerFavours() {
             return EnumSet.of(AttackerFavour.ATTACK_ROLL);
+        }
+
+        @Override
+        public boolean refuses(final ActionKind kind) {
+            return kind == ActionKind.FREE_ACTION || kind == ActionKind.REACTION;
+        }
+
+        @Override
+        public int getActionPointSurcharge() {
+            return 1;
         }
     },
 
@@ -365,8 +383,11 @@ public enum ConditionType {
      * Aparar." The 1d6 is the caller's to throw ({@code SkillRoll#withBlindCheck}), judged by
      * {@code CombatantSheet#getBlindCheckThreshold}.
      */
-    // TODO: the reach-based thresholds (≤2 pessoal / ≤3 adjacente ou cenário / ≤5 além) and the
-    //  Física-only scope are the plan's Phase 3; visual Atenção auto-failing too.
+    // The reach-based thresholds and the Física-only scope are real (core 0.1.5, BlindCheck.Reach).
+    // TODO: "Falha automaticamente em rolagens de Atenção para fins visuais" — a roll does not say
+    //  what it is *for*, so a visual Atenção cannot be told from a hearing one.
+    // TODO: a non-attack Perícia "que afete outros personagens … ou o cenário" is read as personal:
+    //  a roll does not name what it affects.
     CEGO("Estado de Desprevenido. Falha automaticamente em rolagens de Atenção para fins visuais. "
             + "Deve rolar 1d6 sempre que efetuar uma rolagem de Perícia Física (baseada em Força ou "
             + "Destreza). Perícias de efeitos pessoal falham com resultados 2 ou menos, "
@@ -391,11 +412,15 @@ public enum ConditionType {
      * "Efeitos de Cura e de recuperação de Bônus Bases são reduzidos à zero. Duração conforme
      * origem da condição."
      */
-    // TODO: the Bônus Base (PD/PM) recovery half is the plan's Phase 3 (preventsResourceRecovery).
     FERIDAS_DOLOROSAS("Efeitos de Cura e de recuperação de Bônus Bases são reduzidos à zero. "
             + "Duração conforme origem da condição.") {
         @Override
         public boolean preventsHealing() {
+            return true;
+        }
+
+        @Override
+        public boolean preventsResourceRecovery() {
             return true;
         }
     },
@@ -420,7 +445,8 @@ public enum ConditionType {
      * whatever inflicted it, carried on the held {@link Condition}'s extra effects — Espinhos
      * Venenos de Gaea's, Inocular Veneno's and Veneno Vampírico's -1 Multiplicador de PV each.
      */
-    // TODO: the continuous Dano Natural is the plan's Phase 3 (a Poisoning Condition subclass).
+    // The continuous Dano Natural is real (core 0.1.5) through a held Poisoning, which carries the
+    // Veneno's own figure. A bare Condition(ENVENENADO, …) is the Fraqueza alone.
     ENVENENADO("Estado de Fraqueza e sofre Dano Natural contínuo. Quantidade de danos conforme "
             + "origem do efeito. Efeitos adicionais conforme descrição do veneno. Pode aplicar "
             + "Redução de Multiplicadores de Bônus Bases, Redução Temporário de Egos, Redução de "
@@ -454,8 +480,10 @@ public enum ConditionType {
      * "Estado de Fraqueza. Efeitos adicionais conforme descrição da doença." The rest — redutores
      * em Atributos, Desacordado, Feridas Dolorosas, Silêncio, propagation — belongs to the disease.
      */
-    // TODO: propagation (adjacent 1d6 each Rodada, 1 infects) and the infecting monster's
-    //  immunity are the plan's Phase 3 (DiseaseService).
+    // Propagation is real (core 0.1.5): a held Disease that spreads, and DiseaseService for the
+    // adjacent 1d6. The infecting creature is immune to its own disease (applyCondition).
+    // ⚠️ "Monstros capazes de adoecer" is read as the infecting creature itself: a MonsterSheet keeps
+    //  no template identity, so another creature of the same kind is not recognised as immune.
     DOENTE("Estado de Fraqueza. Efeitos adicionais conforme descrição da doença. Pode aplicar "
             + "Redutores Temporários em Atributos, Estado de Desacordado, Feridas Dolorosas e "
             + "Silêncio.") {
@@ -491,23 +519,12 @@ public enum ConditionType {
      * sendo incapaz de realizar ações … A petrificação é um efeito de Encantamento." Not a
      * Malefício: it is an Encantamento, held as a {@link Petrification}.
      */
-    // TODO: "incapaz de realizar ações" also covers Perícia rolls and attacks — the action veto
-    //  (plan Phase 1).
     PETRIFICADO("O alvo é petrificado, sendo incapaz de realizar ações. A petrificação é um efeito "
             + "de Encantamento.") {
+        /** "Incapaz de realizar ações" — every one; a defence is not an action. */
         @Override
-        public boolean preventsMovement() {
-            return true;
-        }
-
-        @Override
-        public boolean preventsAbilityActivation() {
-            return true;
-        }
-
-        @Override
-        public boolean preventsSpellCasting() {
-            return true;
+        public boolean refuses(final ActionKind kind) {
+            return kind != ActionKind.DEFENCE;
         }
 
         @Override
@@ -667,6 +684,43 @@ public enum ConditionType {
         return false;
     }
 
+    /**
+     * Whether this condition refuses an action of kind. By default the four standing prohibitions
+     * below answer it ({@link #preventsMovement()} → {@link ActionKind#MOVEMENT}, and so on); a
+     * Condição that forbids "Ações" outright overrides this instead. Never consulted for {@link
+     * ActionKind#DEFENCE} by any constant authored today — a defence is not an Ação.
+     */
+    public boolean refuses(final ActionKind kind) {
+        return switch (kind) {
+            case MOVEMENT -> preventsMovement();
+            case ABILITY_ACTIVATION -> preventsAbilityActivation();
+            case SPELL_CAST -> preventsSpellCasting();
+            case ARMING -> preventsArming();
+            default -> false;
+        };
+    }
+
+    /**
+     * The distance band from the condition's origin within which {@link #refuses} holds — {@code
+     * null} for always. Apavorado's "enquanto em Distância Curta da origem do medo".
+     */
+    public Range getRestrictionRange() {
+        return null;
+    }
+
+    /** Pontos de Ação added to every action's price — Confuso's "+1PA". */
+    public int getActionPointSurcharge() {
+        return 0;
+    }
+
+    /**
+     * Whether its holder's Esquiva e Aparar succeeds unless it is a Falha Crítica — Imobilizado and
+     * Desacordado, which may not act but still defend (table ruling, 2026-10-07).
+     */
+    public boolean defendsUnlessCriticalFailure() {
+        return false;
+    }
+
     /** Whether this condition forbids movement outright — "não pode realizar movimentos". */
     public boolean preventsMovement() {
         return false;
@@ -691,6 +745,14 @@ public enum ConditionType {
 
     /** Whether this condition forbids recovering Pontos de Vida by any means. */
     public boolean preventsHealing() {
+        return false;
+    }
+
+    /**
+     * Whether this condition forbids recovering the other Bônus Bases — PM and PD — by any means:
+     * Feridas Dolorosas' "recuperação de Bônus Bases são reduzidos à zero".
+     */
+    public boolean preventsResourceRecovery() {
         return false;
     }
 

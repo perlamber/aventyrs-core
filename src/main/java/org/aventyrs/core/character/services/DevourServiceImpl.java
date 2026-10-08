@@ -25,6 +25,8 @@ public class DevourServiceImpl implements DevourService {
 
     /** Dois Estômagos: "considerado como tendo Vigor +2 para calcular a quantidade de alvos". */
     private static final int DOIS_ESTOMAGOS_CAPACITY = 2;
+    /** "Reduzido -2 níveis". */
+    private static final int ESCAPE_DIFFICULTY_STEPS = 2;
 
     private final CharacterSizeService characterSizeService;
     private final DeterminationPointsService determinationPointsService;
@@ -169,7 +171,7 @@ public class DevourServiceImpl implements DevourService {
 
     @Override
     public void regurgitate(@NonNull final CombatantSheet ogre, @NonNull final CombatantSheet victim) {
-        if (victim.getDevoured().filter(held -> held.getSource() == ogre).isPresent()) {
+        if (victim.getDevourer().filter(held -> held == ogre).isPresent()) {
             victim.removeCondition(ConditionType.DEVORADO);
         }
         ogre.removeDevouredVictim(victim);
@@ -187,6 +189,64 @@ public class DevourServiceImpl implements DevourService {
     @Override
     public int getRegurgitationActionPoints(final int hoursInside) {
         return Math.max(1, hoursInside);
+    }
+
+    @Override
+    public org.aventyrs.core.skill.DifficultyLevel getEscapeDifficulty(@NonNull final CombatantSheet devourer) {
+        int defense = devourer instanceof org.aventyrs.core.monster.MonsterSheet foe
+                ? foe.getDefense(org.aventyrs.core.character.DefenseType.PHYSICAL)
+                : new DefenseServiceImpl().getTotalDefense(devourer, org.aventyrs.core.character.DefenseType.PHYSICAL);
+        org.aventyrs.core.skill.DifficultyLevel reached = org.aventyrs.core.skill.DifficultyLevel.reachedBy(defense)
+                .orElse(org.aventyrs.core.skill.DifficultyLevel.VERY_EASY)
+                .easier(ESCAPE_DIFFICULTY_STEPS);
+        return reached.compareTo(org.aventyrs.core.skill.DifficultyLevel.MEDIUM) < 0
+                ? org.aventyrs.core.skill.DifficultyLevel.MEDIUM
+                : reached;
+    }
+
+    @Override
+    public GrappleResult escapeAttack(@NonNull final CombatantSheet victim,
+                                      final org.aventyrs.core.scene.SceneContext sceneContext,
+                                      @NonNull final org.aventyrs.core.skill.SkillRoll roll,
+                                      final org.aventyrs.core.item.Weapon weapon) {
+        CombatantSheet devourer = victim.getDevourer()
+                .orElseThrow(() -> new IllegalOperationException(org.aventyrs.core.util.TranslatableMessages.NOT_HELD));
+        if (!victim.canAttackWith(weapon)) {
+            throw new IllegalOperationException(org.aventyrs.core.util.TranslatableMessages.DEVOURED_WEAPON_NOT_ALLOWED);
+        }
+        org.aventyrs.core.skill.SkillRoll named = roll.asManoeuvre(
+                org.aventyrs.core.action.Manoeuvre.LIBERTAR_SE_DA_PREDACAO, roll.getActionCost());
+        org.aventyrs.core.sheet.InteractionResult result = org.aventyrs.core.skill.SkillInteractionFactory
+                .create(org.aventyrs.core.skill.SkillType.ATAQUE_CORPO_A_CORPO)
+                .applyTo(victim, sceneContext, named, devourer, weapon);
+        int total = result.getSkillRollBonus() + named.getTotal();
+        int required = getEscapeDifficulty(devourer).getBaseValue();
+        boolean hit = !Boolean.TRUE.equals(result.getBlindCheckFailed()) && total >= required;
+        return new GrappleResult(named.getActionCost(), total, required, hit, result);
+    }
+
+    @Override
+    public boolean recordEscapeHit(@NonNull final CombatantSheet victim, final int damageDealt) {
+        CombatantSheet devourer = victim.getDevourer().orElse(null);
+        if (devourer == null) {
+            return false;
+        }
+        boolean free;
+        if (hasBocarra(devourer)) {
+            // Bocarra's own rule — damage accumulated from inside — governs its victims.
+            free = recordDamageFromInside(devourer, victim, damageDealt);
+        } else {
+            free = damageDealt >= getEscapeDamage(devourer.getCharacter());
+            if (free) {
+                regurgitate(devourer, victim);
+            }
+        }
+        if (free) {
+            // "Após se libertar, o personagem recebe a condição Abalado e o estado de Desprevenido por 1 Rodada."
+            victim.applyCondition(new org.aventyrs.core.sheet.Condition(ConditionType.ABALADO, 1, devourer));
+            victim.applyCondition(new org.aventyrs.core.sheet.Condition(ConditionType.DESPREVENIDO, 1, devourer));
+        }
+        return free;
     }
 
     /** Devoratriz: "Seu Roubo de Vida é igual a sua quantidade de Título Aventyrs Despertos." */

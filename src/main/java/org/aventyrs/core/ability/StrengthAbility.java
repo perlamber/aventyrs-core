@@ -39,9 +39,20 @@ public enum StrengthAbility implements AttributeAbility {
         }
     },
 
+    // The Agarrar half is real (core 0.1.5): Agarrar is a manoeuvre now, named on the roll.
+    // TODO: Derrubar and Empurrar are not manoeuvres, and the Dano Vantagem against caídos/desprevenidos
+    //  has no attackTarget-aware AttributeAbility hook.
     SUBJUGAR("Você recebe Vantagem em suas rolagens de Ataque Corpo-a-corpo para Agarrar, Derrubar ou Empurrar " +
             "outros personagens. Você recebe Vantagem em rolagens de Dano para atacar personagens caídos ou " +
-            "desprevenidos."),
+            "desprevenidos.") {
+        @Override
+        public int resolveManoeuvreRollBonus(final org.aventyrs.core.action.Manoeuvre manoeuvre,
+                                             final org.aventyrs.core.skill.SkillType skillType) {
+            return manoeuvre == org.aventyrs.core.action.Manoeuvre.AGARRAR
+                    && skillType == org.aventyrs.core.skill.SkillType.ATAQUE_CORPO_A_CORPO
+                    ? org.aventyrs.core.skill.Skill.ADVANTAGE_BONUS : 0;
+        }
+    },
 
     // TODO: the Vantagem half is scoped to a target classification this core does not carry
     //  (objects and construtos are not a CreatureType), and the shield damage needs a hook on

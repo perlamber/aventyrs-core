@@ -197,7 +197,8 @@ public class ActionPointsServiceImpl implements ActionPointsService {
             price = Math.max(Math.min(price, 1), price - reduction);
         }
         if (price > 0) {
-            return ActionCost.ofActionPoints(price);
+            // Confuso: "O tempo de todas as ações aumentam em +1PA".
+            return ActionCost.ofActionPoints(price).plusSurcharge(roller.getActionPointSurcharge(sceneContext));
         }
         return override != null ? ActionCost.NONE : ActionCost.FREE_ACTION;
     }

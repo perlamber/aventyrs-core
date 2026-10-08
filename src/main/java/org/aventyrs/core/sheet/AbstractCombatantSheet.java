@@ -255,6 +255,14 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     @Getter(AccessLevel.NONE)
     private final List<CombatantSheet> devouredVictims = new ArrayList<>();
 
+    /** Who this combatant holds Agarrado — see {@link #getGrappledTargets}. */
+    @Getter(AccessLevel.NONE)
+    private final List<CombatantSheet> grappledTargets = new ArrayList<>();
+
+    /** Re-entrancy guard for {@link #releaseLapsedGrapples()} — two combatants may hold each other. */
+    @Getter(AccessLevel.NONE)
+    private boolean releasingLapsedGrapples;
+
     /** Effects that end with the combat — see {@link #applyEffectUntilCombatEnds}. */
     @Getter(AccessLevel.NONE)
     private final List<TemporaryEffect> combatScopedEffects = new ArrayList<>();
@@ -1021,6 +1029,10 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
      */
     @Override
     public int recoverMagicPoints(final int amount) {
+        // Feridas Dolorosas: "recuperação de Bônus Bases são reduzidos à zero" — nothing comes back.
+        if (anyConditionPrevents(null, ConditionType::preventsResourceRecovery)) {
+            return magicPoints.getSpent();
+        }
         if (amount > 0) {
             temporaryEffects.removeIf(effect -> effect instanceof ManaDrain);
         }
@@ -1034,6 +1046,10 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
 
     @Override
     public int recoverDeterminationPoints(final int amount) {
+        // Feridas Dolorosas: "recuperação de Bônus Bases são reduzidos à zero" — nothing comes back.
+        if (anyConditionPrevents(null, ConditionType::preventsResourceRecovery)) {
+            return determinationPoints.getSpent();
+        }
         return determinationPoints.recover(amount);
     }
 
@@ -2367,6 +2383,10 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         if (isImmuneToCondition(condition.getType())) {
             return;
         }
+        // "Monstros capazes de adoecer seus alvos … são imunes a própria doença."
+        if (condition.getType() == ConditionType.DOENTE && condition.getSource() == this) {
+            return;
+        }
         // One fear rung at a time, the strongest wins (table ruling, 2026-10-07): a weaker fear
         // never overrides a stronger one, and an equal or stronger one replaces every rung held.
         if (condition.getType().isFear()) {
@@ -2382,6 +2402,15 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         if (condition.getType() == ConditionType.DESACORDADO) {
             applyCondition(new Condition(ConditionType.CAIDO, null, condition.getSource()));
         }
+    }
+
+    /** Every unexpired Condição directly held, plus a setback's — no pruning, no fear exclusivity. */
+    private Stream<Condition> rawHeldConditions() {
+        return Stream.concat(temporaryEffects.stream()
+                        .filter(effect -> effect instanceof Condition)
+                        .map(effect -> (Condition) effect)
+                        .filter(condition -> !condition.isExpired()),
+                setbackConditions());
     }
 
     /** The highest fear rung directly held (not a setback's), 0 when none. */
@@ -2431,12 +2460,8 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
      * only the strongest is in force.
      */
     private Stream<Condition> heldConditions() {
-        List<Condition> held = Stream.concat(temporaryEffects.stream()
-                        .filter(effect -> effect instanceof Condition)
-                        .map(effect -> (Condition) effect)
-                        .filter(condition -> !condition.isExpired()),
-                setbackConditions())
-                .toList();
+        releaseLapsedGrapples();
+        List<Condition> held = rawHeldConditions().toList();
         int strongestFear = held.stream().mapToInt(condition -> condition.getType().getFearRank()).max().orElse(0);
         List<Condition> fears = held.stream().filter(condition -> condition.getType().isFear()).toList();
         if (fears.size() <= 1) {
@@ -2635,7 +2660,7 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
 
     @Override
     public boolean rearm(final Weapon weapon) {
-        if (anyConditionPrevents(null, ConditionType::preventsArming)) {
+        if (isActionPrevented(org.aventyrs.core.action.ActionKind.ARMING, null)) {
             return false;
         }
         getCharacter().equip(weapon);
@@ -2667,7 +2692,9 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
                 && !(currentForm.permitsOneHandedWeapons() && !isTwoHanded(weapon))) {
             return false;
         }
+        // Devorado: "Apenas Armas Naturais ou Armas leves podem ser utilizados enquanto devorado".
         return !anyConditionPrevents(null, ConditionType::restrictsAttacksToLightWeapons)
+                || getCharacter().treatsAsNaturalWeapon(weapon)
                 || weapon.getEffectiveWeightClass() == ItemWeightClass.LIGHT;
     }
 
@@ -2685,22 +2712,13 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     }
 
     /**
-     * The two-hand inference {@code CharacterSheet}'s loadout budget applies, restated here rather
-     * than shared: {@code equipamentos.txt} gives no weapon a hands column, so handedness comes
-     * from {@link ItemWeightClass} plus category. Read only by {@link
-     * FormType#permitsOneHandedWeapons()}'s one consumer (Lobo Dentes-de-Sabre).
-     *
-     * <p>Reads the <b>authored</b> {@code getWeightClass()} rather than {@code
-     * getEffectiveWeightClass()}, matching {@code CharacterSheet#isTwoHanded} exactly. Two
-     * reasons, and the second is why this is not a shortcut: a weapon whose weight class was never
-     * authored makes the effective form throw, and more importantly the two methods must agree —
-     * a weapon that takes two hands in the loadout budget but one hand here would be incoherent.
+     * The two-hand inference the loadout budget applies — {@link org.aventyrs.core.item.HandBudget},
+     * shared so the two can never disagree. Reads the <b>authored</b> weight class (an unauthored
+     * effective one throws). Read here only by {@link FormType#permitsOneHandedWeapons()}'s one
+     * consumer (Lobo Dentes-de-Sabre).
      */
     private static boolean isTwoHanded(final Weapon weapon) {
-        return weapon.getCategory() == ItemCategory.BOW
-                || weapon.getCategory() == ItemCategory.CROSSBOW
-                || weapon.getWeightClass() == ItemWeightClass.MEDIUM
-                || weapon.getWeightClass() == ItemWeightClass.HEAVY;
+        return org.aventyrs.core.item.HandBudget.isTwoHanded(weapon);
     }
 
     /**
@@ -2885,8 +2903,39 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     }
 
     @Override
+    public java.util.Optional<ConditionType> refusalForAction(final org.aventyrs.core.action.ActionKind kind,
+                                                              final SceneContext sceneContext) {
+        return activeConditionOrigins(sceneContext).entrySet().stream()
+                .filter(entry -> entry.getKey().refuses(kind))
+                .filter(entry -> appliesWithin(entry.getValue(), entry.getKey().getRestrictionRange(), sceneContext))
+                .map(Map.Entry::getKey)
+                .findFirst();
+    }
+
+    /**
+     * Whether origin's restriction band holds — measured from the origin's own source, with the
+     * origin's own type deciding the sourceless-fear exception.
+     */
+    private static boolean appliesWithin(final Condition origin, final Range within, final SceneContext sceneContext) {
+        return origin.appliesWithin(within, sceneContext);
+    }
+
+    @Override
+    public int getActionPointSurcharge(final SceneContext sceneContext) {
+        return activeConditionOrigins(sceneContext).keySet().stream()
+                .mapToInt(ConditionType::getActionPointSurcharge)
+                .max()
+                .orElse(0);
+    }
+
+    @Override
+    public boolean defendsUnlessCriticalFailure(final SceneContext sceneContext) {
+        return anyConditionPrevents(sceneContext, ConditionType::defendsUnlessCriticalFailure);
+    }
+
+    @Override
     public boolean isMovementPrevented(final SceneContext sceneContext) {
-        return anyConditionPrevents(sceneContext, ConditionType::preventsMovement);
+        return isActionPrevented(org.aventyrs.core.action.ActionKind.MOVEMENT, sceneContext);
     }
 
     @Override
@@ -2896,12 +2945,12 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
 
     @Override
     public boolean isAbilityActivationPrevented(final SceneContext sceneContext) {
-        return anyConditionPrevents(sceneContext, ConditionType::preventsAbilityActivation);
+        return isActionPrevented(org.aventyrs.core.action.ActionKind.ABILITY_ACTIVATION, sceneContext);
     }
 
     @Override
     public boolean isSpellCastingPrevented(final SceneContext sceneContext) {
-        return anyConditionPrevents(sceneContext, ConditionType::preventsSpellCasting)
+        return isActionPrevented(org.aventyrs.core.action.ActionKind.SPELL_CAST, sceneContext)
                 // Frenesi: "você também perde a capacidade de Conjurar ou Mimetizar Magias".
                 || getFrenzy().map(Frenzy::isConcentrationBlocked).orElse(false);
     }
@@ -2928,6 +2977,73 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     @Override
     public boolean hasActiveEffect(@NonNull final Class<? extends TemporaryEffect> type) {
         return temporaryEffects.stream().anyMatch(effect -> type.isInstance(effect) && !effect.isExpired());
+    }
+
+    @Override
+    public List<CombatantSheet> getGrappledTargets() {
+        grappledTargets.removeIf(target -> !target.isHeldAgarradoBy(this));
+        return List.copyOf(grappledTargets);
+    }
+
+    @Override
+    public void startGrappling(@NonNull final CombatantSheet target) {
+        if (grappledTargets.stream().noneMatch(held -> held == target)) {
+            grappledTargets.add(target);
+        }
+    }
+
+    @Override
+    public boolean stopGrappling(final CombatantSheet target) {
+        return grappledTargets.removeIf(held -> held == target);
+    }
+
+    @Override
+    public boolean canMaintainGrapple() {
+        // Read off what is directly held, never through the pruning in heldConditions(): two
+        // combatants may hold each other, and asking each other's implications would never end.
+        boolean incapacitated = rawHeldConditions().anyMatch(held -> held.getType() == ConditionType.CAIDO
+                || held.getType() == ConditionType.IMOBILIZADO
+                || held.getType() == ConditionType.DESACORDADO);
+        return !incapacitated && !isAtOrBelowZeroHitPoints();
+    }
+
+    @Override
+    public List<Condition> getHeldConditions() {
+        releaseLapsedGrapples();
+        return temporaryEffects.stream()
+                .filter(effect -> effect instanceof Condition held && !held.isExpired())
+                .map(Condition.class::cast)
+                .toList();
+    }
+
+    @Override
+    public boolean isHeldAgarradoBy(final CombatantSheet captor) {
+        return temporaryEffects.stream().anyMatch(effect -> effect instanceof Condition held && !held.isExpired()
+                && held.getType() == ConditionType.AGARRADO && held.getSource() == captor);
+    }
+
+    /**
+     * Ends every Agarrado whose captor can no longer hold — removed for real rather than merely
+     * hidden, so a captor who stands back up does not find the hold still there.
+     */
+    private void releaseLapsedGrapples() {
+        if (releasingLapsedGrapples) {
+            return;
+        }
+        releasingLapsedGrapples = true;
+        try {
+            List<Condition> lapsed = temporaryEffects.stream()
+                    .filter(effect -> effect instanceof Condition held && held.getType() == ConditionType.AGARRADO
+                            && held.getSource() != null && !held.getSource().canMaintainGrapple())
+                    .map(Condition.class::cast)
+                    .toList();
+            lapsed.forEach(held -> {
+                temporaryEffects.remove(held);
+                held.getSource().stopGrappling(this);
+            });
+        } finally {
+            releasingLapsedGrapples = false;
+        }
     }
 
     @Override

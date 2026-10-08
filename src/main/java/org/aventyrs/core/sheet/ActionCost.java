@@ -48,6 +48,18 @@ public record ActionCost(Kind kind, int actionPoints) {
      */
     public static final ActionCost NONE = new ActionCost(Kind.NONE, 0);
 
+    /**
+     * This price with surcharge Pontos de Ação added — Confuso's "O tempo de todas as ações aumentam
+     * em +1PA". Only a price already paid in PA grows: an Ação Livre or Reação is refused outright
+     * while Confuso rather than repriced, and a passive costs nothing to grow.
+     */
+    public ActionCost plusSurcharge(final int surcharge) {
+        if (surcharge <= 0 || kind != Kind.FIXED) {
+            return this;
+        }
+        return ofActionPoints(actionPoints + surcharge);
+    }
+
     /** An Ação Livre — spends no Pontos de Ação. */
     public static final ActionCost FREE_ACTION = new ActionCost(Kind.FREE_ACTION, 0);
 

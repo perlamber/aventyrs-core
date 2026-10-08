@@ -151,6 +151,10 @@ public class AttackReceiver {
      */
     public IncomingAttackResult resolve(@NonNull final IncomingAttack attack) {
         CombatantSheet defender = attack.getDefender();
+        // Devorado: "Não pode ser afetado por efeitos externos" — only its devourer reaches it.
+        if (attack.getAttacker() != null && defender.isShieldedFrom(attack.getAttacker())) {
+            throw new IllegalOperationException(org.aventyrs.core.util.TranslatableMessages.TARGET_INSIDE_DEVOURER);
+        }
         boolean auraHalvesDamage = AuraTargeting.resolveHalvesDamage(attack.getScene(), attack.getAttacker(),
                 defender, attack.isForcedTargetUnavailable());
         SkillRoll defenseRoll = attack.getDefenseRoll();
@@ -201,7 +205,11 @@ public class AttackReceiver {
         // A Cego defender's failed 1d6 fails the defence whatever its total.
         // Sorte's chosen success defends "independente do resultado dos dados" — never a defence Trava Mental forbids.
         boolean forcedSuccess = defenseRoll.hasSorte(SorteEffect.FORCED_SUCCESS);
-        boolean defended = ((margin <= 0 || forcedSuccess) && !undefendable
+        // Imobilizado/Desacordado: may not act, but still defends — succeeding unless it is a Falha
+        // Crítica (table ruling, 2026-10-07).
+        boolean heldDefence = defender.defendsUnlessCriticalFailure(attack.getSceneContext())
+                && (defenseResult.getCriticalResult() == null || !defenseResult.getCriticalResult().isCriticalFailure());
+        boolean defended = ((margin <= 0 || forcedSuccess || heldDefence) && !undefendable
                 && !Boolean.TRUE.equals(defenseResult.getBlindCheckFailed()))
                 || immune;
         CriticalResult criticalResult = defenseResult.getCriticalResult();

@@ -165,6 +165,11 @@ public class AttackDelivery {
         if (given.getAttacker() instanceof org.aventyrs.core.monster.MonsterSheet monster && monster.isNonCombatant()) {
             throw new IllegalOperationException(SUMMON_CANNOT_FIGHT);
         }
+        // Devorado: "Não pode ser afetado por efeitos externos" — only its devourer reaches it.
+        if (given.getDefender().isShieldedFrom(given.getAttacker())
+                || given.getAdditionalTargets().stream().anyMatch(extra -> extra.defender().isShieldedFrom(given.getAttacker()))) {
+            throw new IllegalOperationException(org.aventyrs.core.util.TranslatableMessages.TARGET_INSIDE_DEVOURER);
+        }
         // An Ataque com Escudo adds the shield's bonus for the Defesa it is rolled against — so it is
         // aimed at this attack's own DefenseType, whatever the caller built it with.
         DeliveredAttack redirected = againstOverriddenDefense(given);
