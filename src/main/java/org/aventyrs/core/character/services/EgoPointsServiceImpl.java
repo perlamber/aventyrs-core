@@ -25,8 +25,9 @@ public class EgoPointsServiceImpl implements EgoPointsService {
 
     @Override
     public int getExtraSessionRecovery(final Character character, final EgoDomain domain) {
-        EgoAdvantage advantage = character.getEgoAdvantage(domain);
-        return advantage == null ? 0 : advantage.resolveExtraSessionEgoRecovery();
+        return character.getEgoAdvantages(domain).stream()
+                .mapToInt(EgoAdvantage::resolveExtraSessionEgoRecovery)
+                .sum();
     }
 
     /**
@@ -159,8 +160,9 @@ public class EgoPointsServiceImpl implements EgoPointsService {
         if (rolledValue < MIN_DIE_FACE || rolledValue > MAX_DIE_FACE) {
             throw new IllegalOperationException(INVALID_DIE_ROLL);
         }
-        EgoAdvantage advantage = character.getEgoAdvantage(spend.getDomain());
-        return advantage == null ? 0 : advantage.resolveEgoSpendRecovery(spend, rolledValue);
+        return character.getEgoAdvantages(spend.getDomain()).stream()
+                .mapToInt(advantage -> advantage.resolveEgoSpendRecovery(spend, rolledValue))
+                .sum();
     }
 
     /**
@@ -170,8 +172,9 @@ public class EgoPointsServiceImpl implements EgoPointsService {
      */
     @Override
     public List<Blessing> getSpendBlessings(final Character character, final EgoPointSpend spend) {
-        EgoAdvantage advantage = character.getEgoAdvantage(spend.getDomain());
-        return advantage == null ? List.of() : advantage.resolveEgoSpendBlessings(spend);
+        return character.getEgoAdvantages(spend.getDomain()).stream()
+                .flatMap(advantage -> advantage.resolveEgoSpendBlessings(spend).stream())
+                .toList();
     }
 
     @Override

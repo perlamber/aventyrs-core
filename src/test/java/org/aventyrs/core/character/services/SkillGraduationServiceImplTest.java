@@ -63,6 +63,30 @@ class SkillGraduationServiceImplTest {
     }
 
     @Test
+    void getMaxGraduationOfAnUntrainedSkillIsTwiceItsKeyAttributesBase() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .attributes(CharacterAttributes.builder()
+                        .strength(AttributeValue.builder().domain(AttributeDomain.STRENGTH).base(4).build())
+                        .build())
+                .build();
+
+        assertEquals(8, skillGraduationService.getMaxGraduation(character, SkillType.ATAQUE_CORPO_A_CORPO));
+    }
+
+    @Test
+    void getMaxGraduationOfAnUntrainedSkillStillHonoursASubstitution() {
+        Character character = CharacterFixture.blank(CharacterFixture.BLANK)
+                .attributes(CharacterAttributes.builder()
+                        .strength(AttributeValue.builder().domain(AttributeDomain.STRENGTH).base(2).build())
+                        .dexterity(AttributeValue.builder().domain(AttributeDomain.DEXTERITY).base(5).build())
+                        .build())
+                .skillCompetencyAbility(AtaqueCorpoACorpoCompetencyAbility.ACUIDADE)
+                .build();
+
+        assertEquals(10, skillGraduationService.getMaxGraduation(character, SkillType.ATAQUE_CORPO_A_CORPO));
+    }
+
+    @Test
     void getMaxGraduationIgnoresRacialBonusAndVariableOnlyBaseCounts() {
         CharacterSkill ataqueCorpoACorpoSkill = CharacterSkillFixture.blank(CharacterSkillFixture.ATAQUE_CORPO_A_CORPO_1).build();
         Character character = CharacterFixture.blank(CharacterFixture.BLANK)

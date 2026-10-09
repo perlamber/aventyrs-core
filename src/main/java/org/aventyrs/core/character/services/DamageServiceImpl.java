@@ -421,7 +421,7 @@ public class DamageServiceImpl implements DamageService {
                 // HALF_DAMAGE source — any positive value means "yes", never a magnitude — so two
                 // sources still halve exactly once, and still last.
                 || (target != null && target.getTemporaryBonus(ModifierType.HALF_DAMAGE) > 0)
-                || character.getEgoAdvantages().values().stream()
+                || character.getAllEgoAdvantages().stream()
                         .anyMatch(advantage -> advantage.resolveHalfDamage(sceneContext));
         // Bastião de Vidro: "Você não é beneficiado por … Redução de Danos Sofridos … RA, RD e RM" —
         // none of the four is applied (they become Defesa instead, in DefenseService).
@@ -643,7 +643,7 @@ public class DamageServiceImpl implements DamageService {
     }
 
     private int sumEgoAdvantageAbsoluteDamageReduction(final Character character, final SceneContext sceneContext) {
-        return character.getEgoAdvantages().values().stream()
+        return character.getAllEgoAdvantages().stream()
                 .mapToInt(advantage -> advantage.resolveAbsoluteDamageReduction(sceneContext))
                 .sum();
     }

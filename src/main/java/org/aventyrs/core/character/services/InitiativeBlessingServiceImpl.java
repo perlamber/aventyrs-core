@@ -15,7 +15,7 @@ public class InitiativeBlessingServiceImpl implements InitiativeBlessingService 
     @Override
     public List<Blessing> resolveBlessings(final Character character) {
         List<Blessing> blessings = new ArrayList<>();
-        for (EgoAdvantage advantage : character.getEgoAdvantages().values()) {
+        for (EgoAdvantage advantage : character.getAllEgoAdvantages()) {
             blessings.addAll(advantage.resolveInitiativeBlessings());
         }
         for (AttributeAbility ability : character.getAttributeAbilities()) {

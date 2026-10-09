@@ -2064,6 +2064,17 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     }
 
     /**
+     * Vantagens de Ego this Talento grants its holder on top of the one chosen at creation per Ego — "Você adquire
+     * uma Vantagem do Ego escolhido", {@code DestinoFeat#AUTOCONHECIMENTO}, recorded on {@link
+     * VantagemDeEgoEscolhidaFeat}. Folded live into {@code Character#getAllEgoAdvantages()}, which every Vantagem
+     * scan reads, so a granted one is resolved exactly like a chosen one — and may share an Ego with it (table
+     * ruling, 2026-10-08: Autoconhecimento stacks). Empty by default.
+     */
+    default List<org.aventyrs.core.ego.EgoAdvantage> getGrantedEgoAdvantages(final Character character) {
+        return List.of();
+    }
+
+    /**
      * The {@link RegaliaGrade} this Talento currently permits holder to forge — the {@code
      * ArtificeFeat} ladder's whole payload, and {@code null} for every other Talento.
      *

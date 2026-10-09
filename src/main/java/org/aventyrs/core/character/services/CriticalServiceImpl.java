@@ -135,7 +135,7 @@ public class CriticalServiceImpl implements CriticalService {
         total += skillCompetencyAbilities.stream()
                 .mapToInt(ability -> ability.resolveCriticalMarginIncrease(skillType, sceneContext, attackSource, holder))
                 .sum();
-        total += character.getEgoAdvantages().values().stream()
+        total += character.getAllEgoAdvantages().stream()
                 .mapToInt(advantage -> advantage.resolveCriticalMarginIncrease(skillType, sceneContext))
                 .sum();
         // Talentos are outside every ModifierResolver scan, so they get an explicit fourth pass —

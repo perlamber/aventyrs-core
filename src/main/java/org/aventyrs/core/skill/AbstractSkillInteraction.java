@@ -90,7 +90,7 @@ import org.aventyrs.core.item.ShieldAttack;
  * SkillCompetencyAbility#resolveConditionalRollBonus}, for a bonus conditioned on {@code
  * sceneContext}/the roll's own requested trait rather than reflection-discoverable via
  * {@code @Modifier} (e.g. {@code AnoesRacialAbility#FILHOS_DA_MONTANHA}) — plus, via {@link
- * #sumEgoAdvantageRollBonuses}, every held {@code character.getEgoAdvantages()}' own {@link
+ * #sumEgoAdvantageRollBonuses}, every held {@code character.getAllEgoAdvantages()}' own {@link
  * org.aventyrs.core.ego.EgoAdvantage#resolveConditionalRollBonus} (e.g. {@code
  * InitiativeAdvantage#IMPETO}'s Vantagem during a Cena de Combate's first two Rounds) — plus,
  * via {@link #sumEgoAdvantageSkillSpecificRollBonuses}, every held {@code EgoAdvantage}'s own
@@ -407,8 +407,8 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                 .sum();
         bonus += sumConditionalRollBonuses(skillCompetencyAbilities, sceneContext, skillRoll, target);
         bonus += sumFeatRollBonuses(target, sceneContext, skillRoll, attackSource);
-        bonus += sumEgoAdvantageRollBonuses(character.getEgoAdvantages().values(), sceneContext);
-        bonus += sumEgoAdvantageSkillSpecificRollBonuses(character.getEgoAdvantages().values(), sceneContext, target);
+        bonus += sumEgoAdvantageRollBonuses(character.getAllEgoAdvantages(), sceneContext);
+        bonus += sumEgoAdvantageSkillSpecificRollBonuses(character.getAllEgoAdvantages(), sceneContext, target);
         bonus += sizeCategoryRollBonus(characterSizeService.getEffectiveSizeCategory(target));
         bonus += sumAttributeDomainRollBonuses(character.getAttributeAbilities(), attributeDomain, character);
         for (SkillCompetencyAbility ability : skillCompetencyAbilities) {
@@ -1080,7 +1080,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                         attackSource, target))
                 .flatMap(Optional::stream)
                 .forEach(bonus -> addTyped(typed, contributions, DamageContributionSource.SKILL_COMPETENCY_ABILITY, bonus));
-        character.getEgoAdvantages().values().stream()
+        character.getAllEgoAdvantages().stream()
                 .map(advantage -> advantage.resolveDamageBonus(sceneContext))
                 .flatMap(Optional::stream)
                 .forEach(bonus -> addTyped(typed, contributions, DamageContributionSource.EGO_ADVANTAGE, bonus));

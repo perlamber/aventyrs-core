@@ -255,6 +255,8 @@ public class TranslatableMessages {
      * #CONSELHEIRO_STRENGTH_ABILITY_REQUIREMENT_NOT_MET}, which names Força outright.
      */
     public static final String CHOSEN_ATTRIBUTE_ABILITY_REQUIREMENT_NOT_MET = "CHOSEN_ATTRIBUTE_ABILITY_REQUIREMENT_NOT_MET";
+    /** Autoconhecimento's pick names an Ego below 2, or a Vantagem the character already holds. */
+    public static final String CHOSEN_EGO_ADVANTAGE_NOT_AVAILABLE = "CHOSEN_EGO_ADVANTAGE_NOT_AVAILABLE";
 
     /**
      * The Talento picked for {@code DestinoFeat#EXCEPCIONALIDADE} is not one it offers the holder:

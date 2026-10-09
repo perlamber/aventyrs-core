@@ -240,7 +240,7 @@ public class Scene {
      */
     public List<CombatantSheet> addParticipant(final CombatantSheet characterSheet, final int initiativeValue, final UUID group) {
         characterSheet.startNewScene();
-        return placeParticipant(characterSheet, initiativeValue, group);
+        return placeParticipant(characterSheet, initiativeValue, group, true);
     }
 
     /**
@@ -252,14 +252,29 @@ public class Scene {
      */
     public List<CombatantSheet> restoreParticipant(final CombatantSheet characterSheet, final int initiativeValue,
                                                    final UUID group) {
-        return placeParticipant(characterSheet, initiativeValue, group);
+        return placeParticipant(characterSheet, initiativeValue, group, true);
+    }
+
+    /**
+     * {@link #restoreParticipant}, but placed after everyone restored so far instead of at its sorted spot (core
+     * 0.1.5.5) — for a caller whose stored order is the authority, such as a client rebuilding around a server's
+     * turn order. Sorting it again here would weigh each sheet's own Iniciativa bonuses and Lentidão, which only
+     * the client holding that sheet can see, so two clients could rebuild the same order differently and read
+     * the same cursor as different combatants. The caller restores the rotation in order, then the cursor, then
+     * whoever is still waiting, exactly as with {@code restoreParticipant}.
+     */
+    public List<CombatantSheet> restoreParticipantInOrder(final CombatantSheet characterSheet,
+                                                          final int initiativeValue, final UUID group) {
+        return placeParticipant(characterSheet, initiativeValue, group, false);
     }
 
     private List<CombatantSheet> placeParticipant(final CombatantSheet characterSheet, final int initiativeValue,
-                                                  final UUID group) {
+                                                  final UUID group, final boolean sorted) {
         InitiativeEntry entry = new InitiativeEntry(characterSheet, initiativeValue, group);
-        if (currentIndex == -1) {
+        if (currentIndex == -1 && sorted) {
             insertSorted(activeEntries, entry);
+        } else if (currentIndex == -1) {
+            activeEntries.add(entry);
         } else {
             pendingEntries.add(entry);
         }
