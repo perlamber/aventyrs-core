@@ -308,7 +308,7 @@ public enum AspectoHumanoideAbility implements MonstrousAbility {
     FORMA_VERDADEIRA("Forma Verdadeira", APEX, 
             "Efeito Passivo: A Verdadeira Forma deste monstro não é Humanoide, sendo esta forma apenas uma casca conveniente. Ao alternar de Forma, temporariamente, este Monstro adquire um novo Modelo, então recebe uma Habilidade Presa e Deviante dele.\n"
                     + "Efeito Ativo – Forma Verdadeira: Ao abandonar sua forma Humanoide, este Monstro recebe Bônus Racial de +2 em todos os Atributos, rolagens de Conjuração e Resistência à Correntes de Efeitos, também recebem RD, RM e Resistência à Críticos. Os Ataques do Monstro enquanto em sua Forma Verdadeira tem a Margem Crítica Menor aumenta em +2 números, reduzem a Resistência à Correntes de Efeitos de seus alvos em -2, então recebem a Corrente de Efeitos Monstruosa – Terror da Forma Verdadeira.\n"
-                    + "“Terror da Forma Verdadeira – Alvos deste Ataque recebem a Condição Abalado por 2 Rodadas, novas aplicações desta Corrente de Efeitos aumenta a Duração em +1 Rodada e podem progredir a Condição para Amedrontado e Apavorado.”\n"
+                    + "“Terror da Forma Verdadeira – Alvos deste Ataque recebem a Condição Abalado por 2 Rodadas, novas aplicações desta Corrente de Efeitos aumenta a Duração em +1 Rodada e podem progredir a Condição para Assustado e Apavorado.”\n"
                     + "Aprimoramento das Abominação\n"
                     + "• Forma Verdadeira - GD das Rolagens de Perícias de Ataque e Defesas aumentadas em +1 nível.") {
         @Override

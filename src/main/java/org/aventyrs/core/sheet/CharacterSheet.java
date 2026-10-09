@@ -157,7 +157,7 @@ public class CharacterSheet extends AbstractCombatantSheet {
             ItemCategory.CLOAK, ItemCategory.GLOVES);
 
     /** Hands a character has to hold Escudos and armas with. */
-    private static final int AVAILABLE_HANDS = 2;
+    private static final int AVAILABLE_HANDS = org.aventyrs.core.item.HandBudget.AVAILABLE_HANDS;
 
     /**
      * Puts item into this character's equipped {@link Character#getEquipment()} — but only if the
@@ -265,7 +265,7 @@ public class CharacterSheet extends AbstractCombatantSheet {
         if (countOfCategory(items, ItemCategory.SHIELD) > 1) {
             return TOO_MANY_SHIELDS;
         }
-        if (items.stream().mapToInt(CharacterSheet::handCost).sum() > AVAILABLE_HANDS) {
+        if (org.aventyrs.core.item.HandBudget.handsUsed(items) > AVAILABLE_HANDS) {
             return NOT_ENOUGH_HANDS;
         }
         return null;
@@ -282,21 +282,4 @@ public class CharacterSheet extends AbstractCombatantSheet {
         return items.stream().filter(item -> item.getCategory() == category).count();
     }
 
-    /** How many hands item takes up while equipped — 0 for anything not held to fight with. */
-    private static int handCost(final Item item) {
-        if (item.getCategory() == ItemCategory.SHIELD) {
-            return 1;
-        }
-        if (item.getCategory() == ItemCategory.PROJECTILE || !(item instanceof Weapon weapon)) {
-            return 0;
-        }
-        return isTwoHanded(weapon) ? 2 : 1;
-    }
-
-    private static boolean isTwoHanded(final Weapon weapon) {
-        return weapon.getCategory() == ItemCategory.BOW
-                || weapon.getCategory() == ItemCategory.CROSSBOW
-                || weapon.getWeightClass() == ItemWeightClass.MEDIUM
-                || weapon.getWeightClass() == ItemWeightClass.HEAVY;
-    }
 }

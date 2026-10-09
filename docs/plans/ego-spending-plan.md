@@ -69,7 +69,7 @@ Under the ruling it is a consumable extra.
 
 ## Phases
 
-0. **Pool rework (all four Egos).** *Done in 0.0.76* — see `0.076.CHANGELOG.md`. Narrador grants landed as
+0. **Pool rework (all four Egos).** *Done in 0.0.76* — see `docs/changelog/0.076.CHANGELOG.md`. Narrador grants landed as
    `grantTemporaryByNarrator(sheet, …)` + `grantPermanentByNarrator(character, …)` (a sheet's Character is final).
    - Cap `Character#getEffectiveEgoTotal` at 5 (one funnel: pool max, Iniciativa order, Moral Herdada's
      Fama, Talento requirements).
@@ -99,7 +99,7 @@ Under the ruling it is a consumable extra.
 5. **API + client.** *Done* — see the client's `docs/wiring-egos.md`: the API stores an `egoLedger` (permanent spent, extras, overflow received) beside `temporaryEgoPoints`; the session modal takes one Ego for the table, never Recursos; the hub has an Egos tab (Recursos → PE, the GM's grants); creation opens the shop at the Raridade Inicial with the starting PE. Deviation: the creation shop runs right after "Criar" rather than as a wizard step, since the client's shop works on a saved sheet. Endpoints: spend Recursos, GM grant (temp/perm), end-of-session recovery, starting
    store. Client: wizard store step, sheet spend button, GM grant control, end-of-session Ego modal
    (maps every participant to the picked Ego, one `applySessionRecovery` call).
-6. **Sorte.** *Done in 0.0.78* — `ego.SorteEffect` on the roll, paid by `EgoPointsService#applySorte`/`#rerollWithSorte`; applied on Perícia rolls, attacks and defences. Readings in `0.078.CHANGELOG.md`. Client: after-roll modal on Perícia rolls, attacks and defences (see the client's `docs/wiring-egos.md`). Reroll with Vantagem, −GD vs PdN, forced success (Crítico Menor), trigger Correntes +
+6. **Sorte.** *Done in 0.0.78* — `ego.SorteEffect` on the roll, paid by `EgoPointsService#applySorte`/`#rerollWithSorte`; applied on Perícia rolls, attacks and defences. Readings in `docs/changelog/0.078.CHANGELOG.md`. Client: after-roll modal on Perícia rolls, attacks and defences (see the client's `docs/wiring-egos.md`). Reroll with Vantagem, −GD vs PdN, forced success (Crítico Menor), trigger Correntes +
    Críticos Maiores; scene changes narrative.
 7. **Iniciativa.** *Done in 0.0.79* — `InitiativeEgoService`; order changes are `CombatantSheet#overrideInitiative`, counted at the Rodada boundary before the re-sort; the two-roll effects are Cena charges (`ego.InitiativeRollCharge`). Client: the Cena's Ego menu; the order change is stored and advanced server-side (aventyrs-api `initiativeOverride`), core 0.0.80 adds `Scene#restoreParticipant` and the started-override restore for client rebuilds. Lower / set / reroll own Iniciativa, change a PdN's, +PA / Reações, Vantagem or −GD on
    2 rolls in the Cena (`InitiativeService`, `ActionPointsService`, `ReactionsService`).

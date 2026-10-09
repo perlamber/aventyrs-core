@@ -2,12 +2,15 @@ package org.aventyrs.core.sheet;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.aventyrs.core.action.ActionKind;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.scene.Range;
 import org.aventyrs.core.skill.Skill;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -16,180 +19,174 @@ import java.util.stream.Collectors;
 /**
  * The Condições de Personagem a combatant can be under. The catalogue entry for a condition,
  * the same catalogue-not-instance split {@code org.aventyrs.core.item.Item} draws: a constant
- * here describes what Desprevenido <i>is</i>, while {@link Condition} is one combatant actually
- * being under it, with its own countdown and its own origin.
+ * here describes what Caído <i>is</i>, while {@link Condition} is one combatant actually being
+ * under it, with its own countdown and its own origin.
  *
- * <p><b>Malefícios are the harmful majority, not the whole enum.</b> A Condição is just a state
- * a combatant is in; most of the authored ones make things harder, but {@link #ESCONDIDO} is a
- * state a character puts <i>themselves</i> in and benefits from. Almost every clause names the
- * condition it cares about and so needs no such distinction — but {@code VidaSpell#CORPO_FECHADO}
- * removes "todos os Malefícios", which is the one clause that asks, so {@link #isMaleficio()}
- * answers it. Default {@code true}, overridden only where a constant is not a Malefício.
+ * <p>Authored from {@code docs/rules/condicoes-e-maleficios-.txt} (full re-import, core 0.1.5),
+ * which builds every Condição out of a handful of <b>Estados de Personagem</b>:
  *
- * <p>Authored from {@code docs/rules/condicoes-e-maleficios-.txt}, whose title covers only the
- * Malefícios. Three notes on that source: Caído is listed twice, and the fuller of the two
- * entries is the one modelled (it adds a Dano Corpo-a-Corpo malus the shorter one omits);
- * "Envenado" is a typo for {@link #ENVENENADO}; and {@link #ESCONDIDO} is not in it at all,
- * being a Condição rather than a Malefício.
+ * <ul>
+ *   <li><b>Desprevenido</b> — -4 em Defesas ({@link #DESPREVENIDO});</li>
+ *   <li><b>Fraqueza</b> — Desvantagem em rolagens de Perícias e Danos ({@link #FRAQUEZA});</li>
+ *   <li><b>Desacordado</b> — no actions for 2 Rodadas, and applies Caído ({@link #DESACORDADO});</li>
+ *   <li><b>Favorecido</b> — Vantagem on named Perícias. Never held by anyone: it is what a
+ *   Condição grants <i>whoever attacks its holder</i>, so it is {@link #getAttackerFavours()},
+ *   not a constant.</li>
+ * </ul>
  *
- * <p>{@link #POSSESSAO} is a second entry that source does not list, but for the opposite reason:
- * it <i>is</i> a Malefício — three Magias name it as one — and is authored from the only text
- * that describes it, in {@code docs/rules/magias.txt}. See its own javadoc.
+ * <p><b>An Estado is binary</b> (table ruling, 2026-10-07): two Condições conferring Fraqueza
+ * cost -2 once, never -4. That falls out of {@link #getImplied()} with no extra work, because
+ * {@code AbstractCombatantSheet#activeConditionOrigins} keys the active set by type. Different
+ * Estados still combine — Caído is Desprevenido <i>and</i> Fraqueza. "Pronto", the default
+ * Condição, has no constant: it is the empty set.
  *
- * <p>Two things the rules text calls Malefícios are deliberately <b>not</b> constants here,
- * because they are other kinds of thing this core already models: <b>Coma</b> is {@code
- * CharacterStatus#COMMA}, a tier of the PV ladder (see {@code
- * SobrevivenciaFeat#PERMANECER_CONSCIENTE}), and <b>Encantamento</b> is {@code
- * MagicType#ENCANTAMENTO}, a kind of Magia (see {@code SantoSpecialization}).
+ * <p><b>Malefícios are the harmful majority, not the whole enum.</b> {@link #ESCONDIDO} is a
+ * state a character puts <i>themselves</i> in, and {@link #PETRIFICADO} is an Encantamento;
+ * {@link #isMaleficio()} answers the one clause that asks about the category
+ * ({@code VidaSpell#CORPO_FECHADO}'s "todos os Malefícios"). Estados count as Malefícios.
+ *
+ * <p>{@link #POSSESSAO} is authored from {@code docs/rules/magias.txt} — three Magias name it
+ * as a Malefício, and the conditions file does not list it. <b>Coma</b> is {@code
+ * CharacterStatus#COMMA} (a PV tier) and <b>Encantamento</b> is {@code MagicType#ENCANTAMENTO};
+ * neither is a constant here. <b>Desarmado</b> was dropped by the full re-import (table ruling:
+ * a disarmed fighter simply holds no weapon, and attacks with an Ataque Desarmado).
  *
  * <p><b>Three ways a condition reaches the rules engine</b>, and a constant may use any mix:
  *
  * <ul>
  *   <li><b>{@link #getEffects()}</b> — typed numeric maluses ({@link ConditionEffect}), summed by
  *   {@code CombatantSheet#getConditionBonus} into whichever service already reads that {@link
- *   ModifierType}. Desprevenido's -2 Defesas needs no wiring in {@code DefenseService} beyond
- *   that call, exactly as an {@code ItemBonus} needs none.</li>
- *   <li><b>{@link #getImplied()}</b> — conditions this one confers ("também considerado
- *   Desprevenido"). Resolved transitively and range-scoped, so removing Caído removes the
- *   Desprevenido it brought without any separate bookkeeping.</li>
+ *   ModifierType}. Only the Estados carry any: every Condição reaches its numbers through the
+ *   Estados it implies.</li>
+ *   <li><b>{@link #getImplied()}</b> — Estados (or Condições) this one confers, each optionally
+ *   scoped to a distance band from the condition's origin. Resolved transitively, so removing
+ *   Caído removes the Desprevenido it brought without any separate bookkeeping.</li>
  *   <li><b>The boolean gates</b> ({@link #preventsMovement()} and friends) — for a clause that
- *   forbids something outright rather than taxing it. A malus and a prohibition are different
- *   shapes; don't model "não pode se mover" as a large negative {@link ModifierType#MOVEMENT}.</li>
+ *   forbids something outright rather than taxing it.</li>
  * </ul>
  *
- * <p><b>Desvantagem is a flat {@link Skill#DISADVANTAGE_MALUS}</b> (-2), the mirror of Vantagem —
- * see CLAUDE.md's "Vantagem is a flat +2" section. Desprevenido's "-2 em suas Defesas" is its own
- * separately-stated figure and gets its own constant, even though the two happen to coincide.
+ * <p><b>Fraqueza is a flat {@link Skill#DISADVANTAGE_MALUS}</b> (-2) on every Perícia roll —
+ * defensive ones included (table ruling: "rolagens de Perícia" covers Esquiva e Aparar) — and
+ * on every dano roll.
  */
 @Getter
 @AllArgsConstructor
 public enum ConditionType {
 
     /**
-     * "Alvo sofre Desvantagem em suas rolagens de perícia enquanto estiver a até 4UD da origem de
-     * seu medo." The mildest rung of the fear ladder, and the one the other two decay into.
+     * "Estados de Fraqueza apenas enquanto estiver à Distância Curta da origem de seu medo." The
+     * mildest rung of the fear ladder, and the one the other two decay into.
      */
-    ABALADO("Alvo sofre Desvantagem em suas rolagens de perícia enquanto estiver a até 4UD da "
-            + "origem de seu medo. Condição permanece ativa por 2 Rodadas, a menos que a origem "
-            + "do efeito diga o contrário.") {
+    ABALADO("Estados de Fraqueza apenas enquanto estiver à Distância Curta da origem de seu medo. "
+            + "Condição permanece ativa por 2 Rodadas, a menos que a origem do efeito diga o "
+            + "contrário.") {
         @Override
-        public List<ConditionEffect> getEffects() {
-            return List.of(new ConditionEffect(ModifierType.SKILL_ROLL_BONUS, Skill.DISADVANTAGE_MALUS, Range.DISTANCIA_CURTA));
+        public Map<ConditionType, Range> getImplied() {
+            return Map.of(FRAQUEZA, Range.DISTANCIA_CURTA);
+        }
+
+        @Override
+        public int getFearRank() {
+            return 1;
         }
     },
 
     /**
-     * "Desvantagem em suas rolagens de perícia e Dano … Desprevenido enquanto adjacente … Ao fim
-     * da duração alvo se torna Abalado."
+     * "Cumulativo com efeitos de Abalado. Área de Efeito de Abalado aumenta para Distância Média.
+     * Estado de Desprevenido enquanto em Distância Curta da origem do medo … Ao fim da duração
+     * alvo se torna Abalado."
      */
-    // Fully real: the Perícia and Dano maluses (both proximity-scoped), the adjacency-scoped
-    // Desprevenido, and the decay into ABALADO.
-    ASSUSTADO("Alvo sofre Desvantagem em suas rolagens de perícia e Dano enquanto estiver a até "
-            + "4UD da origem de seu medo. Recebe a Condição desprevenido enquanto adjacente a "
-            + "origem de seu medo. Condição permanece ativa por 2 Rodadas, a menos que a origem "
-            + "do efeito diga o contrário. Ao fim da duração alvo se torna Abalado.") {
-        @Override
-        public List<ConditionEffect> getEffects() {
-            return List.of(
-                    new ConditionEffect(ModifierType.SKILL_ROLL_BONUS, Skill.DISADVANTAGE_MALUS, Range.DISTANCIA_CURTA),
-                    new ConditionEffect(ModifierType.DAMAGE_ROLL_BONUS, Skill.DISADVANTAGE_MALUS, Range.DISTANCIA_CURTA));
-        }
-
+    ASSUSTADO("Cumulativo com efeitos de Abalado. Área de Efeito de Abalado aumenta para Distância "
+            + "Média. Estado de Desprevenido enquanto em Distância Curta da origem do medo. "
+            + "Condição permanece ativa por 2 Rodadas, a menos que a origem do efeito diga o "
+            + "contrário. Ao fim da duração alvo se torna Abalado.") {
         @Override
         public Map<ConditionType, Range> getImplied() {
-            return Map.of(DESPREVENIDO, Range.ADJACENTE);
+            return Map.of(FRAQUEZA, Range.DISTANCIA_MEDIA, DESPREVENIDO, Range.DISTANCIA_CURTA);
         }
 
         @Override
         public ConditionType getDecaysTo() {
             return ABALADO;
         }
+
+        @Override
+        public int getFearRank() {
+            return 2;
+        }
     },
 
     /**
-     * "Desvantagem … a até 8UD … Desprevenido … a menos de 4UD … Sempre deve tentar se manter
-     * afastado … Ao fim da duração alvo se torna Assustado."
+     * "Área de Efeito de Abalado aumenta para Distância Longa … Área de Efeito de Assustado
+     * (Estado de Desprevenido) aumenta para Distância Média. Enquanto em Distância Curta da origem
+     * do medo suas ações são restritas a fugir até sair do alcance de Abalado."
      */
-    // TODO: "Sempre deve tentar se manter afastado, ao menos 4UD" is compelled movement — this
-    //  core never does geometry and has no notion of constraining where a combatant may go
-    //  (gap catalog, "Forced movement / positioning").
-    APAVORADO("Alvo sofre Desvantagem em suas rolagens de perícia e Dano enquanto estiver a até "
-            + "8UD da origem de seu medo. Recebe a Condição desprevenido enquanto estiver a menos "
-            + "de 4UD da origem de seu medo. Sempre deve tentar se manter afastado, ao menos 4UD, "
-            + "da origem de seu medo. Condição permanece ativa por 2 Rodadas, a menos que a "
-            + "origem do efeito diga o contrário. Ao fim da duração alvo se torna Assustado.") {
-        @Override
-        public List<ConditionEffect> getEffects() {
-            return List.of(
-                    new ConditionEffect(ModifierType.SKILL_ROLL_BONUS, Skill.DISADVANTAGE_MALUS, Range.DISTANCIA_MEDIA),
-                    new ConditionEffect(ModifierType.DAMAGE_ROLL_BONUS, Skill.DISADVANTAGE_MALUS, Range.DISTANCIA_MEDIA));
-        }
-
+    APAVORADO("Cumulativo com efeitos de Abalado. Área de Efeito de Abalado aumenta para Distância "
+            + "Longa. Cumulativo com efeitos de Assustado. Área de Efeito de Assustado (Estado de "
+            + "Desprevenido) aumenta para Distância Média. Enquanto em Distância Curta da origem "
+            + "do medo suas ações são restritas a fugir até sair do alcance de Abalado. Condição "
+            + "permanece ativa por 2 Rodadas, a menos que a origem do efeito diga o contrário. Ao "
+            + "fim da Duração alvo se torna Assustado.") {
         @Override
         public Map<ConditionType, Range> getImplied() {
-            return Map.of(DESPREVENIDO, Range.DISTANCIA_CURTA);
+            return Map.of(FRAQUEZA, Range.DISTANCIA_LONGA, DESPREVENIDO, Range.DISTANCIA_MEDIA);
+        }
+
+        /** "Restritas a fugir": only moving away (or escaping a hold to do so) is left. */
+        @Override
+        public boolean refuses(final ActionKind kind) {
+            return kind != ActionKind.MOVEMENT && kind != ActionKind.DEFENCE && !kind.isEscape();
+        }
+
+        /** Only while within Curta of the fear's origin (always, for a sourceless fear). */
+        @Override
+        public Range getRestrictionRange() {
+            return Range.DISTANCIA_CURTA;
         }
 
         @Override
         public ConditionType getDecaysTo() {
             return ASSUSTADO;
         }
-    },
 
-    /**
-     * "Efeitos conforme descrição da maldição." Deliberately carries no effects of its own: the
-     * condition <i>is</i> the marker, and whatever Maldição inflicted it supplies the mechanics.
-     * A held {@link Condition} of this type is what a clause like {@code GorgonaFeat}'s "sempre
-     * considerado Amaldiçoado" needs to test, and what {@code VidaSpell}'s Malefício-removal
-     * clauses need to strip.
-     */
-    AMALDICOADO("Efeitos conforme descrição da maldição."),
-
-    /**
-     * "Personagem sofre Redutor de -2 em suas Defesas." The most-implied condition in the
-     * catalogue — Assustado, Apavorado, Flanqueado, Caído and Cego all confer it.
-     */
-    DESPREVENIDO("Personagem sofre Redutor de -2 em suas Defesas.") {
         @Override
-        public List<ConditionEffect> getEffects() {
-            return List.of(new ConditionEffect(ModifierType.DEFESAS, DESPREVENIDO_DEFENSE_MALUS, null));
+        public int getFearRank() {
+            return 3;
         }
     },
 
     /**
-     * "Personagens flanqueados, cercados, ficam Desprevenidos. Atacar um personagem Flanqueado
-     * garante Vantagem na rolagem de Dano." <b>Both halves are real.</b>
-     *
-     * <p>The second is the catalogue's only <i>outward-facing</i> effect — the Vantagem lands on
-     * whoever attacks the holder, not on the holder — so it is {@link #getAttackerDamageBonus()}
-     * rather than a {@link ConditionEffect}, and {@code AbstractSkillInteraction} reads it off the
-     * <em>attackTarget</em>'s sheet.
+     * "Estado de Desprevenido. Efeitos conforme descrição da maldição." The Desprevenido is the
+     * condition's own; whatever else a Maldição does is supplied by whatever inflicted it (a
+     * {@link Condition}'s extra effects, or the Maldição's own effect class).
      */
-    // TODO: nothing detects flanking — whether a combatant is surrounded is geometry this core
-    //  does not do, so this condition is always applied by a caller, never derived.
-    FLANQUEADO("Personagens flanqueados, cercados, ficam Desprevenidos. Atacar um personagem "
-            + "Flanqueado garante Vantagem na rolagem de Dano.") {
+    AMALDICOADO("Estado de Desprevenido. Efeitos conforme descrição da maldição. Pode aplicar "
+            + "Negação de Ego, Fraqueza, Negação de Efeitos de Cura, aplicar Defeitos e infligir "
+            + "danos.") {
         @Override
         public Map<ConditionType, Range> getImplied() {
             return alwaysImplies(DESPREVENIDO);
         }
+    },
+
+    /** Estado — "Redutor de -4 em Defesas." The most-implied entry in the catalogue. */
+    DESPREVENIDO("Redutor de -4 em Defesas.") {
+        @Override
+        public List<ConditionEffect> getEffects() {
+            return List.of(new ConditionEffect(ModifierType.DEFESAS, DESPREVENIDO_DEFENSE_MALUS, null));
+        }
 
         @Override
-        public int getAttackerDamageBonus() {
-            return Skill.ADVANTAGE_BONUS;
+        public boolean isEstado() {
+            return true;
         }
     },
 
     /**
-     * "Desvantagem em rolagens de Perícias e Dano Corpo-a-Corpo. Também considerado
-     * Desprevenido." Modelled from the fuller of the source's two Caído entries.
+     * Estado — "Desvantagem em suas rolagens de Perícias e Danos." Taxes every Perícia roll,
+     * Esquiva e Aparar included, and every dano roll.
      */
-    // TODO: the Dano malus is stated as "Dano Corpo-a-Corpo" specifically, but a
-    //  ConditionEffect carries a ModifierType and a Range, not a Perícia — DAMAGE_ROLL_BONUS is
-    //  summed for whichever Perícia de Ataque is rolled. Granted unscoped, which is wider than
-    //  the text on an Ataque à Distância made while prone; the alternative is granting nothing.
-    CAIDO("Desvantagem em rolagens de Perícias e Dano Corpo-a-Corpo. Também considerado "
-            + "Desprevenido.") {
+    FRAQUEZA("Desvantagem em suas rolagens de Perícias e Danos.") {
         @Override
         public List<ConditionEffect> getEffects() {
             return List.of(
@@ -198,43 +195,99 @@ public enum ConditionType {
         }
 
         @Override
-        public Map<ConditionType, Range> getImplied() {
-            return alwaysImplies(DESPREVENIDO);
-        }
-    },
-
-    /** "Não pode realizar movimentos. Sofre Desvantagem em rolagens de Perícia." */
-    // TODO: the two escape routes (1PA for a fresh Agarrar attack roll, 3PA to break free at the
-    //  cost of exposure to the Reação "Defender o Perímetro") need an activated-action entry
-    //  point, a GD-vs-roll resolution, and that Reação — none of which exist. See
-    //  EscudeiroFeat, which records Defender o Perímetro as an unmodelled Reação type too.
-    AGARRADO("Não pode realizar movimentos. Sofre Desvantagem em rolagens de Perícia. Pode usar "
-            + "1PA para tentar se livrar, efetuando uma nova rolagem de ataque para Agarrar. Pode "
-            + "usar 3PA para se libertar imediatamente, mas se torna vulnerável a reação Defender "
-            + "o Perímetro.") {
-        @Override
-        public List<ConditionEffect> getEffects() {
-            return List.of(new ConditionEffect(ModifierType.SKILL_ROLL_BONUS, Skill.DISADVANTAGE_MALUS, null));
-        }
-
-        @Override
-        public boolean preventsMovement() {
+        public boolean isEstado() {
             return true;
         }
     },
 
-    /** "Não pode realizar movimentos ou rolagens de perícias baseadas em Força ou Destreza." */
-    // TODO: the Força/Destreza roll prohibition is a *hard block* on a roll, not a malus, and
-    //  nothing lets a held condition refuse a roll — AbstractSkillInteraction resolves the
-    //  governing AttributeDomain but has no veto point. "Exceto para se soltar" additionally
-    //  needs the escape action AGARRADO's own TODO describes.
-    // TODO: "Após se libertarem mudam para a Condição Agarrado" is a transition on *escape*, not
-    //  on expiry, so it is not getDecaysTo() — it needs the same missing escape action.
-    IMOBILIZADO("Não pode realizar movimentos ou rolagens de perícias baseadas em Força ou "
-            + "Destreza, exceto para se soltar. Pode usar 1PA para tentar se livrar, efetuando "
-            + "uma nova rolagem de ataque para Agarrar. Pode usar 3PA para se libertar "
-            + "imediatamente, mas se torna vulnerável a reação Defender o Perímetro. Após se "
-            + "libertarem mudam para a Condição Agarrado.") {
+    /**
+     * Estado — "Personagem não pode realizar ações por 2 Rodadas, aplica o Malefício Caído." The
+     * Caído is applied <i>alongside</i> it by {@code AbstractCombatantSheet#applyCondition}, not
+     * implied: it outlives the Desacordado and ends only by Levantar-se.
+     */
+    DESACORDADO("Personagem não pode realizar ações por 2 Rodadas, aplica o Malefício Caído.") {
+        @Override
+        public boolean isEstado() {
+            return true;
+        }
+
+        /** "Não pode realizar ações" — every one; a defence is not an action. */
+        @Override
+        public boolean refuses(final ActionKind kind) {
+            return kind != ActionKind.DEFENCE;
+        }
+
+        @Override
+        public boolean defendsUnlessCriticalFailure() {
+            return true;
+        }
+    },
+
+    /**
+     * "Cercar um personagem exige a presença de 1+ Categoria de Tamanho personagens (mínimo 2)
+     * adjacentes … Alvo do cerco recebe o Estado Desprevenido. Personagens flanqueados se tornam
+     * Favorecidos em Perícias de Ataque." The Favorecido lands on the attackers (Vantagem on the
+     * attack <i>roll</i> — it used to be the dano roll).
+     */
+    // TODO: whether a combatant is surrounded is geometry this core does not do — the client
+    //  derives it from token positions (plan Phase 5, scene.grid.Flanking).
+    FLANQUEADO("Refere-se a personagens cercados. Cercar um personagem exige a presença de 1+ "
+            + "Categoria de Tamanho personagens (mínimo 2) adjacentes, posicionado em direções "
+            + "opostas, triangular, quadrangular ou circular. Alvo do cerco recebe o Estado "
+            + "Desprevenido. Personagens flanqueados se tornam Favorecidos em Perícias de Ataque.") {
+        @Override
+        public Map<ConditionType, Range> getImplied() {
+            return alwaysImplies(DESPREVENIDO);
+        }
+
+        @Override
+        public Set<AttackerFavour> getAttackerFavours() {
+            return EnumSet.of(AttackerFavour.ATTACK_ROLL);
+        }
+    },
+
+    /**
+     * "Estados de Desprevenido e Fraqueza. Movimento Base reduzido à metade. Permanece nesta
+     * Condição até levantar-se … Personagens que ataquem alvos caídos se tornam Favorecidos em
+     * Perícias de Ataque e Esquiva e Aparar." Open-ended: Levantar-se ends it.
+     */
+    // TODO: Levantar-se (1PA, provoking Defender o Perímetro) is the plan's StandUpService (Phase 2).
+    CAIDO("Estados de Desprevenido e Fraqueza. Movimento Base reduzido à metade. Permanece nesta "
+            + "Condição até levantar-se. Levantar-se indica alternar entre Caído e Pronto, tem o "
+            + "Tempo de Ação de 1PA e permite a Reação Defender o Perímetro para personagens "
+            + "qualificados. Personagens que ataquem alvos caídos se tornam Favorecidos em "
+            + "Perícias de Ataque e Esquiva e Aparar.") {
+        @Override
+        public Map<ConditionType, Range> getImplied() {
+            return alwaysImplies(DESPREVENIDO, FRAQUEZA);
+        }
+
+        @Override
+        public Set<AttackerFavour> getAttackerFavours() {
+            return EnumSet.of(AttackerFavour.ATTACK_ROLL, AttackerFavour.DEFENCE_AGAINST_HOLDER);
+        }
+
+        @Override
+        public boolean halvesMovementBase() {
+            return true;
+        }
+    },
+
+    /**
+     * "Não pode realizar Ações de Movimentos (como andar, correr, investir, reposicionar etc.).
+     * Estado de Desprevenido. Permanece nesta Condição até Libertar-se do Agarrão." The {@link
+     * Condition#getSource()} is the captor.
+     */
+    AGARRADO("Não pode realizar Ações de Movimentos (como andar, correr, investir, reposicionar "
+            + "etc.). Estado de Desprevenido. Permanece nesta Condição até Libertar-se do Agarrão. "
+            + "Libertar-se do Agarrão indica alternar entre Agarrado e Pronto, esta ação requer "
+            + "uma rolagem de Perícia de Ataque resistida e que não inflige danos e não desencadeia "
+            + "Efeitos Críticos e Correntes de Efeitos.") {
+        @Override
+        public Map<ConditionType, Range> getImplied() {
+            return alwaysImplies(DESPREVENIDO);
+        }
+
         @Override
         public boolean preventsMovement() {
             return true;
@@ -242,34 +295,54 @@ public enum ConditionType {
     },
 
     /**
-     * "Podem efetuar rolagens de Ataque Corpo-a-Corpo desarmado ou com Armas Leves, GD 10+Vigor."
-     *
-     * <p><b>Being swallowed leaves you unarmed and unable to re-arm</b> — you fight with what is
-     * already in your hands, and nothing you dropped can be picked back up from inside a
-     * creature. That half is real: {@link #preventsArming()} refuses {@code
-     * CombatantSheet#rearm(Weapon)}. "Desarmado" in this clause is the <i>Ataque Desarmado</i>
-     * sense (a punch), not {@link #DESARMADO} the Malefício — this condition does not confer
-     * that one, whose Desvantagem the rules text never charges a swallowed character.
-     *
-     * <p>An Ataque Desarmado made from inside already resolves correctly with no work here:
-     * {@code DamageBaseService#getDamageBase(Character, SkillType)} starts at {@link
-     * org.aventyrs.core.character.DamageBase#UNARMED}, the bottom rung, and still applies every
-     * Talento/Habilidade scale-up on top — while deliberately skipping the enhancement scale-ups
-     * that are bound to a weapon there isn't one of. The same split holds on the Perícia roll:
-     * armour and other non-weapon Equipamento keep contributing, a weapon cannot.
+     * "Estado de Desprevenido. Não pode realizar Ações, exceto Libertar-se da Imobilização …
+     * Personagens que ataquem alvos Imobilizados se tornam Favorecidos em Perícias de Ataque."
+     * Comes only from specific effects, never from a plain Agarrar.
      */
-    // TODO: the GD "10+Vigor" of the devourer needs a GD-vs-roll comparison; "causar o dobro do
-    //  Vigor de quem o devorou para se libertarem" needs damage accumulated against a specific
-    //  captor; the per-Categoria-de-Tamanho Dano Desvantagem needs a size comparison against that
-    //  captor; and "ignoram RD" needs a per-attack RD bypass (DamageService's
-    //  ignoreDamageReduction flag is set per call, with nothing to key it off a condition).
-    // TODO: the captor is the Condition's own source by convention, but nothing enforces that a
-    //  DEVORADO Condition is constructed with one — the three clauses above all need it.
-    DEVORADO("Podem efetuar rolagens de Ataque Corpo-a-Corpo desarmado ou com Armas Leves, GD "
-            + "10+Vigor. Precisam causar uma quantidade de dano igual ao dobro do Vigor de quem o "
-            + "devorou para se libertarem, sendo regurgitados. Sofrem Desvantagem na rolagem de "
-            + "Dano para cada Categoria de Tamanho inferior ao personagem que o devorou. Ataques "
-            + "realizados no interior de outras criaturas ignoram RD que elas possuam.") {
+    IMOBILIZADO("Estado de Desprevenido. Não pode realizar Ações, exceto Libertar-se da "
+            + "Imobilização. Permanece nesta Condição até Libertar-se da Imobilização. Libertar-se "
+            + "da Imobilização indica alternar entre Imobilizado e Pronto, esta ação requer uma "
+            + "rolagem de Furtividade. Personagens que ataquem alvos Imobilizados se tornam "
+            + "Favorecidos em Perícias de Ataque.") {
+        @Override
+        public Map<ConditionType, Range> getImplied() {
+            return alwaysImplies(DESPREVENIDO);
+        }
+
+        @Override
+        public Set<AttackerFavour> getAttackerFavours() {
+            return EnumSet.of(AttackerFavour.ATTACK_ROLL);
+        }
+
+        /** "Não pode realizar Ações, exceto Libertar-se da Imobilização"; a defence is not an action. */
+        @Override
+        public boolean refuses(final ActionKind kind) {
+            return kind != ActionKind.ESCAPE_IMMOBILIZATION && kind != ActionKind.DEFENCE;
+        }
+
+        @Override
+        public boolean defendsUnlessCriticalFailure() {
+            return true;
+        }
+    },
+
+    /**
+     * "Estado de Fraqueza. Ocupa o mesmo espaço que o personagem que o devorou … Apenas Armas
+     * Naturais ou Armas leves podem ser utilizados enquanto devorado." Being swallowed also blocks
+     * re-arming ({@link #preventsArming()}) — nothing you dropped is reachable from inside.
+     */
+    // TODO: the escape (GD = the devourer's DF -2 níveis, min Médio), Meio-Dano inside, the
+    //  2×Vigor single-hit release and "não pode ser afetado por efeitos externos" are the plan's
+    //  Phase 3 (DevourService). Bocarra keeps its own accumulated-damage escape.
+    DEVORADO("Estado de Fraqueza. Ocupa o mesmo espaço que o personagem que o devorou. Não pode "
+            + "ser afetado por efeitos externos, mesmo que possuam Área de Efeito. Permanece nesta "
+            + "Condição até Libertar-se da Predação. Apenas Armas Naturais ou Armas leves podem "
+            + "ser utilizados enquanto devorado.") {
+        @Override
+        public Map<ConditionType, Range> getImplied() {
+            return alwaysImplies(FRAQUEZA);
+        }
+
         @Override
         public boolean preventsArming() {
             return true;
@@ -282,66 +355,79 @@ public enum ConditionType {
     },
 
     /**
-     * "Desvantagem nas rolagens de Perícia de Ataque e Dano." <b>Fully real</b>, including the
-     * effect that inflicts it — {@code CombatantSheet#disarm(Weapon)}.
-     *
-     * <p><b>Desarmado here means <i>disarmed</i> — something knocked your weapon out of your
-     * hands — not <i>unarmed</i>.</b> The two are easy to confuse and are different concepts:
-     * an <b>Ataque Desarmado</b> is a punch, an authored Arma Natural in its own right (1d6,
-     * Esmagamento) that {@code ArtesMarciaisFeat#ARTISTA_MARCIAL} and friends scope to, and a
-     * character choosing to fight bare-handed is <i>not</i> under this condition. This one is a
-     * Malefício inflicted on you; that one is a way of attacking. A weapon can be immune to
-     * being knocked away — {@code Weapon#isDisarmable()}, the "Não pode ser desarmado" Manopla
-     * de Segurança.
+     * "O tempo de todas as ações aumentam em +1PA. Não pode realizar Ações Livres e Reações.
+     * Personagens que ataquem alvos Confusos se tornam Favorecidos em Perícias de Ataque."
      */
-    DESARMADO("Desvantagem nas rolagens de Perícia de Ataque e Dano.") {
-        /**
-         * Scoped to the two Perícias de Ataque by naming their own {@link ModifierType}s rather
-         * than {@code SKILL_ROLL_BONUS}, which would tax every Perícia — the per-Perícia
-         * constants exist for exactly this (see {@code SkillType#getRollBonusType()}).
-         */
+    CONFUSO("O tempo de todas as ações aumentam em +1PA. Não pode realizar Ações Livres e Reações. "
+            + "Personagens que ataquem alvos Confusos se tornam Favorecidos em Perícias de "
+            + "Ataque.") {
         @Override
-        public List<ConditionEffect> getEffects() {
-            return List.of(
-                    new ConditionEffect(ModifierType.ATAQUE_CORPO_A_CORPO_ROLL_BONUS, Skill.DISADVANTAGE_MALUS, null),
-                    new ConditionEffect(ModifierType.ATAQUE_A_DISTANCIA_ROLL_BONUS, Skill.DISADVANTAGE_MALUS, null),
-                    new ConditionEffect(ModifierType.DAMAGE_ROLL_BONUS, Skill.DISADVANTAGE_MALUS, null));
+        public Set<AttackerFavour> getAttackerFavours() {
+            return EnumSet.of(AttackerFavour.ATTACK_ROLL);
+        }
+
+        @Override
+        public boolean refuses(final ActionKind kind) {
+            return kind == ActionKind.FREE_ACTION || kind == ActionKind.REACTION;
+        }
+
+        @Override
+        public int getActionPointSurcharge() {
+            return 1;
         }
     },
 
-    /** "O tempo de todas as ações aumentam em 1PA." */
-    // TODO: {@code ModifierType#SKILL_ROLL_COST} exists and ActionPointsService reads it, but it
-    //  scopes to a Perícia *roll*'s cost — this clause raises the cost of **every** action, and
-    //  this core has no general action-cost concept to raise (what an action costs is the
-    //  caller's, see MovementService's own note on Pontos de Ação).
-    CONFUSO("O tempo de todas as ações aumentam em 1PA."),
-
-    /** "Deve rolar 1d6 sempre que efetuar uma rolagem de perícia … Adicionalmente são considerados desprevenidos." */
-    // Both halves are real (core 0.0.70). The 1d6 is the caller's to throw (SkillRoll#withBlindCheck),
-    // judged against BlindCheck's table by CombatantSheet#getBlindCheckThreshold and reported on
-    // InteractionResult#getBlindCheckFailed — a failed die fails the roll, and AttackDelivery/
-    // AttackReceiver read it as a miss / a failed defence.
-    CEGO("Deve rolar 1d6 sempre que efetuar uma rolagem de perícia. Perícias de efeitos pessoal, "
-            + "falham com resultados 2 ou menos. Rolagens de Ataque corpo a Corpo falham com "
-            + "resultados 3 ou menos. Rolagens de Ataque à Distância falham com resultados "
-            + "menores que 5. Adicionalmente são considerados desprevenidos.") {
+    /**
+     * "Estado de Desprevenido … Deve rolar 1d6 sempre que efetuar uma rolagem de Perícia Física …
+     * Personagens que ataquem alvos Cegos se tornam Favorecidos em Perícias de Ataque e Esquiva e
+     * Aparar." The 1d6 is the caller's to throw ({@code SkillRoll#withBlindCheck}), judged by
+     * {@code CombatantSheet#getBlindCheckThreshold}.
+     */
+    // The reach-based thresholds and the Física-only scope are real (core 0.1.5, BlindCheck.Reach).
+    // TODO: "Falha automaticamente em rolagens de Atenção para fins visuais" — a roll does not say
+    //  what it is *for*, so a visual Atenção cannot be told from a hearing one.
+    // TODO: a non-attack Perícia "que afete outros personagens … ou o cenário" is read as personal:
+    //  a roll does not name what it affects.
+    CEGO("Estado de Desprevenido. Falha automaticamente em rolagens de Atenção para fins visuais. "
+            + "Deve rolar 1d6 sempre que efetuar uma rolagem de Perícia Física (baseada em Força ou "
+            + "Destreza). Perícias de efeitos pessoal falham com resultados 2 ou menos, "
+            + "independentemente de sucessos na rolagem de Perícia. Perícias que afetem outros "
+            + "personagens adjacentes ou o cenário falham com resultados 3 ou menos, "
+            + "independentemente de sucessos na rolagem de Perícia. Perícias que afetem outros "
+            + "personagens além de adjacente falham com resultados 5 ou menos, independentemente "
+            + "de sucessos na rolagem de Perícia. Personagens que ataquem alvos Cegos se tornam "
+            + "Favorecidos em Perícias de Ataque e Esquiva e Aparar.") {
         @Override
         public Map<ConditionType, Range> getImplied() {
             return alwaysImplies(DESPREVENIDO);
         }
+
+        @Override
+        public Set<AttackerFavour> getAttackerFavours() {
+            return EnumSet.of(AttackerFavour.ATTACK_ROLL, AttackerFavour.DEFENCE_AGAINST_HOLDER);
+        }
     },
 
-    /** "O personagem não pode ser curado e nem regenerar pontos de vida." */
-    FERIDAS_DOLOROSAS("O personagem não pode ser curado e nem regenerar pontos de vida.") {
+    /**
+     * "Efeitos de Cura e de recuperação de Bônus Bases são reduzidos à zero. Duração conforme
+     * origem da condição."
+     */
+    FERIDAS_DOLOROSAS("Efeitos de Cura e de recuperação de Bônus Bases são reduzidos à zero. "
+            + "Duração conforme origem da condição.") {
         @Override
         public boolean preventsHealing() {
+            return true;
+        }
+
+        @Override
+        public boolean preventsResourceRecovery() {
             return true;
         }
     },
 
     /** "Personagem não podem ativar Habilidades de Aventyrs ou de Monstros e não podem Conjurar Magias." */
     SILENCIO("Personagem não podem ativar Habilidades de Aventyrs ou de Monstros e não podem "
-            + "Conjurar Magias.") {
+            + "Conjurar Magias. Duração conforme origem da condição.") {
         @Override
         public boolean preventsAbilityActivation() {
             return true;
@@ -354,36 +440,20 @@ public enum ConditionType {
     },
 
     /**
-     * "Alvo perde Multiplicador de Bônus Base, conforme especificado no efeito."
-     *
-     * <p>Real as of the V19 Santo pass, through the one effect that states an amount: Espinhos
-     * Venenos de Gaea's "perdem -1 Multiplicador de Pontos de Vida (Malefício Veneno) por 2
-     * Rodadas". {@code HitPointsService#getLifeMultiplier(Character, CombatantSheet)} reads it, so
-     * a poisoned character's maximum PV really does fall.
-     *
-     * <p>⚠️ <b>The catalogue's own wording and the effect's disagree.</b> This entry says
-     * "Multiplicador de <i>Bônus Base</i>", a stat that exists nowhere in this ruleset; Espinhos
-     * says "Multiplicador de <i>Pontos de Vida</i>", which is {@code
-     * Character#getLifeMultiplier}. The concrete clause is taken as authoritative over the
-     * catalogue's summary — but confirm against the core rulebook, because if some other Veneno
-     * effect really does mean a different multiplier, the malus belongs on whatever inflicts it
-     * rather than here.
-     *
-     * <p>Max PV moves and current PV follows: nothing re-scales damage already taken, so a
-     * poisoned character can drop a {@code CharacterStatus} tier and climb back when it lapses —
-     * the same derivation the Forma PV uplift already documents.
+     * "Estado de Fraqueza e sofre Dano Natural contínuo. Quantidade de danos conforme origem do
+     * efeito … Pode aplicar Redução de Multiplicadores de Bônus Bases …" Every magnitude belongs to
+     * whatever inflicted it, carried on the held {@link Condition}'s extra effects — Espinhos
+     * Venenos de Gaea's, Inocular Veneno's and Veneno Vampírico's -1 Multiplicador de PV each.
      */
-    // TODO: "conforme especificado no efeito" means the amount properly lives on whatever
-    //  inflicted this. -1 is hard-coded here because every authored Veneno effect states -1; a
-    //  second one stating otherwise turns this into a magnitude on the Condition, the way
-    //  sheet.Hidden already carries one.
-    // TODO: "Personagens imunes a efeitos Selvagens também são imunes" needs an effect-source
-    //  classification (Selvagem) and a per-condition immunity check, neither of which exists.
-    ENVENENADO("Alvo perde Multiplicador de Bônus Base, conforme especificado no efeito. "
-            + "Personagens imunes a efeitos Selvagens também são imunes a este efeito.") {
+    // The continuous Dano Natural is real (core 0.1.5) through a held Poisoning, which carries the
+    // Veneno's own figure. A bare Condition(ENVENENADO, …) is the Fraqueza alone.
+    ENVENENADO("Estado de Fraqueza e sofre Dano Natural contínuo. Quantidade de danos conforme "
+            + "origem do efeito. Efeitos adicionais conforme descrição do veneno. Pode aplicar "
+            + "Redução de Multiplicadores de Bônus Bases, Redução Temporário de Egos, Redução de "
+            + "PD, Redução de PM, Redutores de Pontos de Ação.") {
         @Override
-        public List<ConditionEffect> getEffects() {
-            return List.of(new ConditionEffect(ModifierType.LIFE_MULTIPLIER, -1, null));
+        public Map<ConditionType, Range> getImplied() {
+            return alwaysImplies(FRAQUEZA);
         }
     },
 
@@ -391,68 +461,45 @@ public enum ConditionType {
      * The hidden state a character enters by using Furtividade — a Condição rather than a
      * Malefício, and the one entry here that helps its holder.
      *
-     * <p>A marker, like {@link #AMALDICOADO}: every clause in the catalogue <i>reads</i> it
-     * ({@code FurtividadeCompetencyAbility#ACAO_SURPRESA}/{@code #MORTE_OCULTA}, {@code
-     * MobilidadeFeat#MOVIMENTO_FURTIVO}, {@code AssassinoFeat#ESCUDO_DE_SOMBRAS}) rather than
-     * describing effects of its own, so it carries none.
-     */
-    // TODO: nothing applies this automatically. Entering it is "upon using Furtividade", but a
-    //  Furtividade roll can fail and this core has no roll-resolution-vs-GD engine to know
-    //  whether it succeeded, so a caller applies it. Nothing lifts it either — being seen,
-    //  attacking, or moving into the open would all end it, none of which is modelled.
-    /**
-     * "Estado de ocultação obtido ao utilizar a Perícia Furtividade."
-     *
      * <p><b>The one condition with a magnitude</b>, and so the one held as a subclass: {@link
      * Hidden} carries the Furtividade total an observer's Atenção must reach, plus whoever has
      * already reached it. Applied and lifted through {@code
-     * org.aventyrs.core.character.services.HidingService}, never by hand — {@code
-     * new Condition(ESCONDIDO, …)} would be a concealment nobody can see through, since it carries
-     * no value.
+     * org.aventyrs.core.character.services.HidingService}, never by hand.
      *
-     * <p>No {@link ConditionEffect}s and no implications: being hidden taxes nothing and confers
-     * nothing on its own. What it is <i>worth</i> belongs to whichever trait says so — {@code
-     * AssassinoFeat#ESCUDO_DE_SOMBRAS}'s +3 às Defesas e RDS reads this condition off the sheet
-     * for itself.
+     * <p>No {@link ConditionEffect}s and no implications: what being hidden is <i>worth</i>
+     * belongs to whichever trait says so ({@code AssassinoFeat#ESCUDO_DE_SOMBRAS}).
      */
     ESCONDIDO("Estado de ocultação obtido ao utilizar a Perícia Furtividade.") {
-        /** The one constant here that is not a Malefício — its holder chose it and benefits from it. */
         @Override
         public boolean isMaleficio() {
             return false;
         }
     },
 
-    /** "Alvo sofre redutores conforme especificado no efeito." */
-    // TODO: entirely open-ended — "conforme especificado no efeito" means the maluses live on
-    //  whatever inflicted this, so there is nothing fixed to author here. Same missing Selvagem
-    //  immunity classification as ENVENENADO.
-    DOENTE("Alvo sofre redutores conforme especificado no efeito. Personagens imunes a efeitos "
-            + "Selvagens também são imunes a este efeito."),
+    /**
+     * "Estado de Fraqueza. Efeitos adicionais conforme descrição da doença." The rest — redutores
+     * em Atributos, Desacordado, Feridas Dolorosas, Silêncio, propagation — belongs to the disease.
+     */
+    // Propagation is real (core 0.1.5): a held Disease that spreads, and DiseaseService for the
+    // adjacent 1d6. The infecting creature is immune to its own disease (applyCondition).
+    // ⚠️ "Monstros capazes de adoecer" is read as the infecting creature itself: a MonsterSheet keeps
+    //  no template identity, so another creature of the same kind is not recognised as immune.
+    DOENTE("Estado de Fraqueza. Efeitos adicionais conforme descrição da doença. Pode aplicar "
+            + "Redutores Temporários em Atributos, Estado de Desacordado, Feridas Dolorosas e "
+            + "Silêncio.") {
+        @Override
+        public Map<ConditionType, Range> getImplied() {
+            return alwaysImplies(FRAQUEZA);
+        }
+    },
 
     /**
-     * Being possessed — a Malefício named by {@code VidaSpell#EXORCIZAR}'s "remover todos os
-     * Malefícios Maldição, Doença e Possessão" and by {@code VidaSpell#CORPO_FECHADO}.
-     *
-     * <p><b>Not authored from {@code docs/rules/condicoes-e-maleficios-.txt}</b>, which does not
-     * list it — the same exception {@link #ESCONDIDO} is, and worth stating for the same reason.
-     * Its description is transcribed from the only place the ruleset actually describes the
-     * effect: the Fantasma's Corrente de Efeitos <i>Possessão Furiosa</i> in {@code
-     * docs/rules/magias.txt} ("efeito de possessão"), corroborated by that document's own
-     * "Personagens Possuídos, efeitos que encerram possessões os liberta" — which is exactly what
-     * {@code CombatantSheet#removeCondition} does here.
-     *
-     * <p>Its two prohibitions are modelled on {@link #SILENCIO}, which forbids the same pair.
-     * "São beneficiados por efeitos ativos ou passivos" needs nothing: a bonus a possessed
-     * character holds keeps applying, which is already the default.
+     * Being possessed — a Malefício named by {@code VidaSpell#EXORCIZAR} and {@code
+     * VidaSpell#CORPO_FECHADO}, authored from the Fantasma's <i>Possessão Furiosa</i> in {@code
+     * docs/rules/magias.txt} (the conditions file does not list it).
      */
-    // TODO: "sempre ataca o aliado mais próximo" is forced attack targeting — the possessed
-    //  character still acts, but chooses nothing. See CLAUDE.md's "Forced attack targeting /
-    //  interception" gap; nothing redirects a target mid-resolution, and this core does no
-    //  geometry to find "o mais próximo" either.
-    // TODO: "Magias que não sejam Raciais" over-prohibits. preventsSpellCasting() is blanket and
-    //  nothing classifies a Magia as Racial, so a possessed character is currently refused every
-    //  cast rather than all but their racial ones. The prohibition is real; its exemption is not.
+    // TODO: "sempre ataca o aliado mais próximo" is forced attack targeting nothing redirects.
+    // TODO: "Magias que não sejam Raciais" over-prohibits — nothing classifies a Magia as Racial.
     POSSESSAO("O alvo é possuído por 2 Rodadas e sempre ataca o aliado mais próximo. Personagens "
             + "possuídos desta forma não podem Conjurar Magias que não sejam Raciais ou ativar "
             + "Habilidades Aventyr, mas são beneficiados por efeitos ativos ou passivos.") {
@@ -469,29 +516,15 @@ public enum ConditionType {
 
     /**
      * Petrificação — Olhar de Lacerto's Olhar Petrificador: "o alvo é petrificado por 2 Rodadas,
-     * sendo incapaz de realizar ações … A petrificação é um efeito de Encantamento." Not in the
-     * Malefícios source and not a Malefício ({@link #isMaleficio()}): it is an Encantamento, held as
-     * a {@link Petrification} applied through {@code CombatantSheet#applyEnchantment}. Open-ended
-     * when "permanentemente".
+     * sendo incapaz de realizar ações … A petrificação é um efeito de Encantamento." Not a
+     * Malefício: it is an Encantamento, held as a {@link Petrification}.
      */
-    // TODO: "incapaz de realizar ações" also covers Perícia rolls and attacks, but nothing lets a
-    //  held condition refuse a roll (IMOBILIZADO's TODO) — only movement, activation and casting
-    //  are refused.
     PETRIFICADO("O alvo é petrificado, sendo incapaz de realizar ações. A petrificação é um efeito "
             + "de Encantamento.") {
+        /** "Incapaz de realizar ações" — every one; a defence is not an action. */
         @Override
-        public boolean preventsMovement() {
-            return true;
-        }
-
-        @Override
-        public boolean preventsAbilityActivation() {
-            return true;
-        }
-
-        @Override
-        public boolean preventsSpellCasting() {
-            return true;
+        public boolean refuses(final ActionKind kind) {
+            return kind != ActionKind.DEFENCE;
         }
 
         @Override
@@ -501,18 +534,28 @@ public enum ConditionType {
     };
 
     /**
-     * An implication that always holds, with no proximity scope — {@link Map#of} rejects a null
+     * Implications that always hold, with no proximity scope — {@link Map#of} rejects a null
      * value, and {@code null} is exactly how {@link #getImplied()} spells "always".
      */
-    private static Map<ConditionType, Range> alwaysImplies(final ConditionType implied) {
-        return Collections.singletonMap(implied, null);
+    private static Map<ConditionType, Range> alwaysImplies(final ConditionType... implied) {
+        if (implied.length == 1) {
+            return Collections.singletonMap(implied[0], null);
+        }
+        Map<ConditionType, Range> map = new EnumMap<>(ConditionType.class);
+        for (ConditionType type : implied) {
+            map.put(type, null);
+        }
+        return Collections.unmodifiableMap(map);
     }
 
-    /** Desprevenido's own stated "-2 em suas Defesas". */
-    private static final int DESPREVENIDO_DEFENSE_MALUS = -2;
+    /** Desprevenido's own stated "Redutor de -4 em Defesas". */
+    public static final int DESPREVENIDO_DEFENSE_MALUS = -4;
 
     /** "Condição permanece ativa por 2 Rodadas" — the fear ladder's stated default. */
     public static final int DEFAULT_FEAR_DURATION_IN_ROUNDS = 2;
+
+    /** Desacordado's "não pode realizar ações por 2 Rodadas". */
+    public static final int DESACORDADO_DURATION_IN_ROUNDS = 2;
 
     /**
      * The next rung of the fear ladder after current — Frenesi Assustador's "ativações posteriores do
@@ -536,32 +579,56 @@ public enum ConditionType {
      * One typed numeric malus this condition imposes, optionally scoped to a proximity band
      * around the condition's origin. {@code within} is {@code null} for an effect that always
      * applies; otherwise the effect counts only while the holder is at that {@link Range} or
-     * closer to {@link Condition#getSource()} — which is how "enquanto estiver a até 4UD da
-     * origem de seu medo" is expressed (4UD is {@link Range#DISTANCIA_CURTA}, 8UD is {@link
-     * Range#DISTANCIA_MEDIA}).
+     * closer to {@link Condition#getSource()}.
      *
      * <p>Data, not a {@code @Modifier} method, for the same reason {@code ItemBonus} is: a
      * shared class cannot vary the compile-time-fixed {@code ModifierType} of an annotation.
      */
     public record ConditionEffect(ModifierType type, int value, Range within) {
+
+        /**
+         * "Perde -N Multiplicador de Pontos de Vida" — the magnitude every authored Veneno states
+         * (Espinhos Venenos de Gaea, Inocular Veneno, Veneno Vampírico), carried on the held
+         * Envenenado as an extra effect.
+         */
+        public static ConditionEffect lifeMultiplierLoss(final int multipliers) {
+            return new ConditionEffect(ModifierType.LIFE_MULTIPLIER, -multipliers, null);
+        }
+    }
+
+    /**
+     * What a Condição makes its holder's attackers <b>Favorecidos</b> in — the outward half of
+     * an Estado nobody holds. Read off the <em>target</em>'s sheet.
+     */
+    public enum AttackerFavour {
+        /** Vantagem on the attack roll against the holder (Flanqueado, Caído, Imobilizado, Confuso, Cego). */
+        ATTACK_ROLL,
+        /**
+         * Vantagem on the attacker's own Esquiva e Aparar against the holder's attacks, for as long
+         * as the holder stays under this Condição (Caído, Cego) — granted to anyone who attacked it
+         * while it did (table ruling, 2026-10-07).
+         */
+        DEFENCE_AGAINST_HOLDER
     }
 
     /**
      * Whether this is a Malefício — a state inflicted on its holder — rather than one they chose.
-     * {@code true} for everything but {@link #ESCONDIDO}.
-     *
-     * <p>Exists for the single clause that asks about the category instead of naming its members:
-     * {@code VidaSpell#CORPO_FECHADO}'s "todos os Malefícios removidos". Read it through {@link
-     * #maleficios()} rather than filtering by hand.
+     * {@code true} for everything but {@link #ESCONDIDO} and {@link #PETRIFICADO}. Read it through
+     * {@link #maleficios()} rather than filtering by hand.
      */
     public boolean isMaleficio() {
         return true;
     }
 
     /**
-     * Every Malefício — what "todos os Malefícios" means, kept here so a new constant joins it
-     * automatically and a clause never has to enumerate the enum.
+     * Whether this is an Estado de Personagem — a building block Condições confer — rather than a
+     * Condição. Estados are binary: conferred twice, they apply once.
      */
+    public boolean isEstado() {
+        return false;
+    }
+
+    /** Every Malefício — what "todos os Malefícios" means. */
     public static Set<ConditionType> maleficios() {
         return Arrays.stream(values())
                 .filter(ConditionType::isMaleficio)
@@ -574,10 +641,9 @@ public enum ConditionType {
     }
 
     /**
-     * Conditions this one confers ("também considerado Desprevenido"), each mapped to the {@link
-     * Range} within which it applies — {@code null} meaning always. Resolved transitively by
-     * {@code CombatantSheet#getActiveConditions}, so a condition implied at two different ranges
-     * by two held conditions counts at whichever is satisfied.
+     * Conditions this one confers, each mapped to the {@link Range} within which it applies —
+     * {@code null} meaning always. Resolved transitively by {@code
+     * CombatantSheet#getActiveConditions}.
      */
     public Map<ConditionType, Range> getImplied() {
         return Map.of();
@@ -585,29 +651,74 @@ public enum ConditionType {
 
     /**
      * The condition this one turns into when its duration runs out — the fear ladder's "Ao fim da
-     * duração alvo se torna Abalado". {@code null} for a condition that simply ends. Applied by
-     * {@code CombatantSheet#tickTemporaryEffects()} at the moment of expiry.
+     * duração alvo se torna Abalado". {@code null} for a condition that simply ends.
      */
     public ConditionType getDecaysTo() {
         return null;
     }
 
     /**
-     * A flat dano-roll bonus this condition grants to <b>whoever attacks its holder</b> —
-     * {@link #FLANQUEADO}'s "Atacar um personagem Flanqueado garante Vantagem na rolagem de
-     * Dano". Zero unless a constant overrides it.
-     *
-     * <p>The mirror image of {@link #getEffects()}, which is what the holder suffers. Kept a
-     * separate hook rather than a {@link ConditionEffect} with an "applies to the attacker" flag
-     * because the two are read at different times off different sheets: {@code
-     * AbstractSkillInteraction} sums this from the attackTarget's conditions, and everything in
-     * {@code getEffects()} from the roller's own.
-     *
-     * <p>Not proximity-scoped: an attacker is by definition attacking, and no authored condition
-     * scopes an outward effect by distance. Add a {@code Range} when one does.
+     * This rung's place on the fear ladder — Abalado 1, Assustado 2, Apavorado 3 — and 0 for a
+     * condition that is not a fear. A combatant holds one rung at a time and the strongest wins
+     * (table ruling, 2026-10-07), compared by this.
      */
-    public int getAttackerDamageBonus() {
+    public int getFearRank() {
         return 0;
+    }
+
+    /** Whether this is one of the three fear rungs. */
+    public boolean isFear() {
+        return getFearRank() > 0;
+    }
+
+    /**
+     * What this condition makes <b>whoever attacks its holder</b> Favorecido in. Empty unless a
+     * constant overrides it.
+     */
+    public Set<AttackerFavour> getAttackerFavours() {
+        return Set.of();
+    }
+
+    /** Whether this condition halves its holder's Movimento Base — Caído. */
+    public boolean halvesMovementBase() {
+        return false;
+    }
+
+    /**
+     * Whether this condition refuses an action of kind. By default the four standing prohibitions
+     * below answer it ({@link #preventsMovement()} → {@link ActionKind#MOVEMENT}, and so on); a
+     * Condição that forbids "Ações" outright overrides this instead. Never consulted for {@link
+     * ActionKind#DEFENCE} by any constant authored today — a defence is not an Ação.
+     */
+    public boolean refuses(final ActionKind kind) {
+        return switch (kind) {
+            case MOVEMENT -> preventsMovement();
+            case ABILITY_ACTIVATION -> preventsAbilityActivation();
+            case SPELL_CAST -> preventsSpellCasting();
+            case ARMING -> preventsArming();
+            default -> false;
+        };
+    }
+
+    /**
+     * The distance band from the condition's origin within which {@link #refuses} holds — {@code
+     * null} for always. Apavorado's "enquanto em Distância Curta da origem do medo".
+     */
+    public Range getRestrictionRange() {
+        return null;
+    }
+
+    /** Pontos de Ação added to every action's price — Confuso's "+1PA". */
+    public int getActionPointSurcharge() {
+        return 0;
+    }
+
+    /**
+     * Whether its holder's Esquiva e Aparar succeeds unless it is a Falha Crítica — Imobilizado and
+     * Desacordado, which may not act but still defend (table ruling, 2026-10-07).
+     */
+    public boolean defendsUnlessCriticalFailure() {
+        return false;
     }
 
     /** Whether this condition forbids movement outright — "não pode realizar movimentos". */
@@ -616,31 +727,17 @@ public enum ConditionType {
     }
 
     /**
-     * Whether this condition allows only an Ataque Desarmado or an {@link
-     * org.aventyrs.core.item.ItemWeightClass#LIGHT} weapon — {@link #DEVORADO}'s "podem efetuar
-     * rolagens de Ataque Corpo-a-Corpo desarmado ou com Armas Leves". False by default.
-     *
-     * <p>Read through {@code CombatantSheet#canAttackWith(Weapon)}. <b>Nothing enforces it at
-     * attack time</b>: {@code DamageBaseService} swings whichever weapon its caller names, and
-     * there is no validation point between choosing an attack and resolving it. So this is a
-     * predicate a caller consults when deciding what to offer — real, exact data with no
-     * automatic consumer, the same standing {@code Item#applyDamage} has.
+     * Whether this condition allows only an Arma Natural or an {@link
+     * org.aventyrs.core.item.ItemWeightClass#LIGHT} weapon — Devorado. Read through {@code
+     * CombatantSheet#canAttackWith(Weapon)}.
      */
     public boolean restrictsAttacksToLightWeapons() {
         return false;
     }
 
     /**
-     * Whether this condition stops its holder getting a weapon into their hands at all —
-     * {@link #DEVORADO}'s "you are inside something": you can neither reach what you dropped nor
-     * draw what is sheathed on your belt. False by default.
-     *
-     * <p>Covers <b>both</b> routes, which is why it is not named for either: {@code
-     * CombatantSheet#rearm(Weapon)} (recovering a dropped weapon) and {@code
-     * WeaponDrawService#draw} (taking a carried one in hand) each refuse on it.
-     *
-     * <p>Deliberately not true of {@link #DESARMADO}: being disarmed is precisely the state you
-     * leave by arming yourself again, so a condition that blocked that would never end.
+     * Whether this condition stops its holder getting a weapon into their hands at all — Devorado.
+     * Covers both {@code CombatantSheet#rearm(Weapon)} and {@code WeaponDrawService#draw}.
      */
     public boolean preventsArming() {
         return false;
@@ -648,6 +745,14 @@ public enum ConditionType {
 
     /** Whether this condition forbids recovering Pontos de Vida by any means. */
     public boolean preventsHealing() {
+        return false;
+    }
+
+    /**
+     * Whether this condition forbids recovering the other Bônus Bases — PM and PD — by any means:
+     * Feridas Dolorosas' "recuperação de Bônus Bases são reduzidos à zero".
+     */
+    public boolean preventsResourceRecovery() {
         return false;
     }
 

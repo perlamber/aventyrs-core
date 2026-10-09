@@ -14,6 +14,7 @@ import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.ConditionType;
 import org.aventyrs.core.skill.AttackSource;
 import org.aventyrs.core.skill.Skill;
+import org.aventyrs.core.skill.SkillTrait;
 import org.aventyrs.core.skill.SkillType;
 
 import java.util.Optional;
@@ -256,13 +257,13 @@ public enum ArtesMarciaisFeat implements Feat {
      */
     // "Não é considerado Desprevenido enquanto estiver Caído" is real: Feat#suppressesImpliedCondition
     // vetoes the Caído → Desprevenido implication, so a Desprevenido applied directly still lands.
-    // TODO: Agarrar/Empurrar/Derrubar are manoeuvres with no representation, so a Vantagem
-    //  scoped to them cannot be expressed (this core does not track what a roll is *for*).
+    // The Vantagem to Agarrar is real (core 0.1.5): Agarrar is a manoeuvre now, named on the roll.
+    // TODO: Empurrar and Derrubar are not manoeuvres yet.
     // The "+2 em sua DF" enquanto Caído is real, through the sheet-aware resolveDefenseBonus.
+    // "Pode se levantar como Ação Livre" is real (Feat#standsUpAsFreeAction, StandUpService).
     // TODO: "pode realizar uma Reação adicional" — ReactionsService scans no Talento. (The Reação
-    //  ledger exists now, so an extra one would be spendable.) "Pode se levantar como Ação Livre" — standing up
-    //  is no priced action in this core. "Não sofre Desvantagens … com Armas Naturais ou
-    //  Desarmado" would cancel a malus, which nothing models.
+    //  ledger exists now, so an extra one would be spendable.) "Não sofre Desvantagens … com Armas
+    //  Naturais ou Desarmado" would cancel Caído's Fraqueza for those attacks, which nothing models.
     DOMINAR_ARTE_MARCIAL_SUBMISSAO(
             "Você não é considerado Desprevenido enquanto estiver Caído e não sofre Desvantagens "
                     + "em rolagens de Perícias de Ataque com Armas Naturais ou Desarmado nesta "
@@ -285,6 +286,21 @@ public enum ArtesMarciaisFeat implements Feat {
         @Override
         public boolean suppressesImpliedCondition(final ConditionType implier, final ConditionType implied) {
             return implier == ConditionType.CAIDO && implied == ConditionType.DESPREVENIDO;
+        }
+
+        @Override
+        public int resolveSkillRollBonus(final SkillType skillType, final SceneContext sceneContext,
+                                          final SkillTrait requestedAbility, final Character character,
+                                          final AttackSource attackSource, final CombatantSheet holder,
+                                          final org.aventyrs.core.skill.SkillRoll skillRoll) {
+            return skillType == SkillType.ATAQUE_CORPO_A_CORPO && skillRoll != null
+                    && skillRoll.getManoeuvre() == org.aventyrs.core.action.Manoeuvre.AGARRAR
+                    ? Skill.ADVANTAGE_BONUS : 0;
+        }
+
+        @Override
+        public boolean standsUpAsFreeAction(final Character character) {
+            return true;
         }
     },
 

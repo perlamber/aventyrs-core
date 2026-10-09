@@ -653,6 +653,24 @@ public class Character {
     }
 
     /**
+     * Every Vantagem de Ego held: the one chosen at creation for each Ego ({@link #egoAdvantages}), then each a
+     * Talento grants on top ({@code Feat#getGrantedEgoAdvantages} — Autoconhecimento's). What every Vantagem scan
+     * reads; two may share an Ego.
+     */
+    public java.util.List<EgoAdvantage> getAllEgoAdvantages() {
+        java.util.List<EgoAdvantage> all = new java.util.ArrayList<>(egoAdvantages.values());
+        if (feats != null) {
+            feats.forEach(feat -> all.addAll(feat.getGrantedEgoAdvantages(this)));
+        }
+        return all;
+    }
+
+    /** {@link #getAllEgoAdvantages()} narrowed to domain's — the creation one first. */
+    public java.util.List<EgoAdvantage> getEgoAdvantages(final EgoDomain domain) {
+        return getAllEgoAdvantages().stream().filter(advantage -> advantage.getEgoDomain() == domain).toList();
+    }
+
+    /**
      * Grants title into slot — see {@link #primaryTitle}'s own javadoc for why this is a real
      * mutator. Overwrites whatever (if anything) already occupied that slot.
      */

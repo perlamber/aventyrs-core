@@ -19,7 +19,8 @@ import java.util.UUID;
 @Getter
 public class Subordinate extends TemporaryEffect implements org.aventyrs.core.sheet.Sustained {
 
-    private final UUID id = UUID.randomUUID();
+    /** Stable across the wire (core 0.1.5.6), so a client can dismiss the one another client commands. */
+    private final UUID id;
     private final SubordinateGrade grade;
     private final SubordinateBenefit benefit;
     private final boolean prodigious;
@@ -32,7 +33,14 @@ public class Subordinate extends TemporaryEffect implements org.aventyrs.core.sh
 
     public Subordinate(@NonNull final SubordinateBenefit benefit, final boolean prodigious, @NonNull final String source,
                        final UUID creatureId, final Integer rounds) {
+        this(null, benefit, prodigious, source, creatureId, rounds);
+    }
+
+    /** One restored with the id it was first held under (core 0.1.5.6); a {@code null} id is a new one. */
+    public Subordinate(final UUID id, @NonNull final SubordinateBenefit benefit, final boolean prodigious,
+                       @NonNull final String source, final UUID creatureId, final Integer rounds) {
         super(rounds);
+        this.id = id == null ? UUID.randomUUID() : id;
         this.grade = benefit.getGrade();
         this.benefit = benefit;
         this.prodigious = prodigious;
@@ -43,8 +51,9 @@ public class Subordinate extends TemporaryEffect implements org.aventyrs.core.sh
     }
 
     private Subordinate(final SubordinateBenefit benefit, final boolean prodigious, final String source,
-                        final UUID sustainerId, final int trailingRounds) {
+                        final UUID sustainerId, final int trailingRounds, final UUID id) {
         super((Integer) null);
+        this.id = id == null ? UUID.randomUUID() : id;
         this.grade = benefit.getGrade();
         this.benefit = benefit;
         this.prodigious = prodigious;
@@ -61,7 +70,14 @@ public class Subordinate extends TemporaryEffect implements org.aventyrs.core.sh
     public static Subordinate sustained(@NonNull final SubordinateBenefit benefit, final boolean prodigious,
                                         @NonNull final String source, @NonNull final UUID sustainerId,
                                         final int trailingRounds) {
-        return new Subordinate(benefit, prodigious, source, sustainerId, trailingRounds);
+        return sustained(null, benefit, prodigious, source, sustainerId, trailingRounds);
+    }
+
+    /** {@link #sustained}, restored with the id it was first held under (core 0.1.5.6). */
+    public static Subordinate sustained(final UUID id, @NonNull final SubordinateBenefit benefit,
+                                        final boolean prodigious, @NonNull final String source,
+                                        @NonNull final UUID sustainerId, final int trailingRounds) {
+        return new Subordinate(benefit, prodigious, source, sustainerId, trailingRounds, id);
     }
 
     @Override

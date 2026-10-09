@@ -752,7 +752,8 @@ class DuelistaActivationTest {
         blind.applyCondition(new Condition(ConditionType.CEGO, 2));
 
         assertNull(attack(blind, SkillType.ATAQUE_CORPO_A_CORPO, roll(ORDINARY), adaga()).getBlindCheckThreshold());
-        assertEquals(4, attack(blind, SkillType.ATAQUE_A_DISTANCIA, roll(ORDINARY), arco()).getBlindCheckThreshold());
+        // "Além de adjacente falham com resultados 5 ou menos" (core 0.1.5; it was 4 or less).
+        assertEquals(5, attack(blind, SkillType.ATAQUE_A_DISTANCIA, roll(ORDINARY), arco()).getBlindCheckThreshold());
     }
 
     @Test

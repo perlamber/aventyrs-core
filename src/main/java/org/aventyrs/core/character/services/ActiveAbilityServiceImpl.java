@@ -88,6 +88,12 @@ public class ActiveAbilityServiceImpl implements ActiveAbilityService {
         if (characterSheet.isAbilityActivationPrevented(null)) {
             throw new IllegalOperationException(ABILITY_ACTIVATION_PREVENTED);
         }
+        // Bought as an Ação Livre or a Reação — Confuso refuses both.
+        org.aventyrs.core.action.ActionKind priced =
+                org.aventyrs.core.action.ActionKind.ofCost(ability.getActionPointCost(character));
+        if (priced != null && characterSheet.isActionPrevented(priced, null)) {
+            throw new IllegalOperationException(org.aventyrs.core.util.TranslatableMessages.ACTION_PREVENTED_BY_CONDITION);
+        }
         // Resfriamento — both units at once (Rodadas still owed, or a Descanso still pending),
         // checked alongside the other gates before a single point is spent, so a refused
         // activation costs nothing. Neither is burned down here.

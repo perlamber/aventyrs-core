@@ -233,4 +233,28 @@ public interface CharacterCreationService {
      * Recursos allows. Empty at Recursos 0 ("Nenhum") — nothing is bought, and the PE are 0 anyway.
      */
     java.util.Optional<org.aventyrs.core.item.ItemStore> getStartingStore(Character character);
+
+    /** The rarest Obra-Prima a Herança Familiar may be: "uma Obra-Prima Comum ou Incomum". */
+    org.aventyrs.core.item.ItemRarity FAMILY_HEIRLOOM_MAX_MASTERPIECE_RARITY = org.aventyrs.core.item.ItemRarity.UNCOMMON;
+
+    /**
+     * Whether spec is a legal Herança Familiar ({@link org.aventyrs.core.ego.ResourcesAdvantage#HERANCA_FAMILIAR}):
+     * an Equipamento Ofensivo of any purchasable Raridade — not capped by the Raridade Inicial — fabricated as an
+     * Obra-Prima Ofensiva no rarer than {@link #FAMILY_HEIRLOOM_MAX_MASTERPIECE_RARITY}, with no Aprimoramentos and
+     * no Regalia grade. The Obra-Prima is required: the rules text makes the item one. Equipamentos Tecnológicos
+     * have no catalog entries, so nothing here can be one. A pure question about the item, not the holder.
+     */
+    boolean isFamilyHeirloom(org.aventyrs.core.item.ItemSpecification spec);
+
+    /**
+     * Gives sheet its Herança Familiar: forges spec and adds the copy to the inventory for no PE. Like {@link
+     * #grantStartingEquipmentPoints}, <strong>call it once, at creation</strong> — nothing on the sheet records
+     * that the heirloom was already taken.
+     *
+     * @return the forged copy (also now in {@code sheet.getInventory()})
+     * @throws IllegalOperationException {@code FAMILY_HEIRLOOM_NOT_HELD} if the character doesn't hold Herança
+     *         Familiar, {@code INVALID_FAMILY_HEIRLOOM} if {@link #isFamilyHeirloom} refuses spec
+     */
+    org.aventyrs.core.item.Item grantFamilyHeirloom(CharacterSheet sheet, org.aventyrs.core.item.ItemSpecification spec)
+            throws IllegalOperationException;
 }

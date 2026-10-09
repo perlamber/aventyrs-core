@@ -104,7 +104,9 @@ class EspinhosVenenosDeGaeaInteractionTest {
         int multiplierBefore = hitPointsService.getLifeMultiplier(poisoned.getCharacter(), poisoned);
         int maxBefore = hitPointsService.getMaxHitPoints(poisoned.getCharacter(), poisoned);
 
-        poisoned.applyCondition(new Condition(ConditionType.ENVENENADO, 2, null));
+        // The magnitude is the Veneno's own, carried on the held Condição (core 0.1.5).
+        poisoned.applyCondition(new Condition(ConditionType.ENVENENADO, 2, null,
+                java.util.List.of(ConditionType.ConditionEffect.lifeMultiplierLoss(1))));
 
         assertEquals(multiplierBefore - 1, hitPointsService.getLifeMultiplier(poisoned.getCharacter(), poisoned));
         assertEquals(maxBefore - poisoned.getCharacter().getAttributes().getVigor().getTotal(),

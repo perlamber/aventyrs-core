@@ -677,13 +677,28 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
 
     default java.util.OptionalInt getBlindCheckThreshold(final org.aventyrs.core.skill.SkillType skillType,
                                                          final SceneContext sceneContext) {
+        return getBlindCheckThreshold(skillType, skillType.newSkillInstance().getAttributeDomain(), sceneContext,
+                null);
+    }
+
+    /**
+     * The longest form: the roll's resolved governing Atributo (only a Força/Destreza roll owes the
+     * Cego die) and its attack target, whose distance sets the reach ({@link BlindCheck#reachOf}).
+     * {@code null} attackTarget reads the reach off the Perícia alone.
+     */
+    default java.util.OptionalInt getBlindCheckThreshold(final org.aventyrs.core.skill.SkillType skillType,
+                                                         final org.aventyrs.core.character.AttributeDomain governing,
+                                                         final SceneContext sceneContext,
+                                                         final CombatantSheet attackTarget) {
         // Sorte a Zero's Insucesso: "ao ser bem-sucedido … rola 1d6: 1 ou 2 indica falha" — the same die, on 2 or less.
         int insucesso = hasEgoSetback(org.aventyrs.core.ego.EgoSetback.INSUCESSO) ? INSUCESSO_THRESHOLD : 0;
-        if (!hasCondition(ConditionType.CEGO, sceneContext)) {
+        if (!hasCondition(ConditionType.CEGO, sceneContext) || !BlindCheck.isPhysical(governing)) {
             return insucesso > 0 ? java.util.OptionalInt.of(insucesso) : java.util.OptionalInt.empty();
         }
         boolean exempt = getCharacter().getFeats().stream().anyMatch(feat -> feat.exemptsFromBlindCheck(skillType, sceneContext));
-        int blind = exempt ? 0 : BlindCheck.failureThresholdFor(skillType);
+        org.aventyrs.core.scene.Range distance = attackTarget == null || sceneContext == null ? null
+                : sceneContext.getDistanceTo(attackTarget);
+        int blind = exempt ? 0 : BlindCheck.reachOf(skillType, distance).getFailureFace();
         int threshold = Math.max(blind, insucesso);
         return threshold > 0 ? java.util.OptionalInt.of(threshold) : java.util.OptionalInt.empty();
     }
@@ -736,9 +751,9 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
     boolean hasDrawnWeaponThisScene();
 
     /**
-     * Knocks weapon out of this combatant's hands — the effect that inflicts {@link
-     * ConditionType#DESARMADO}. Unequips it and, if nothing else armed remains, applies the
-     * condition.
+     * Knocks weapon out of this combatant's hands. Unequips it and nothing more — there is no
+     * Desarmado Malefício any more (table ruling, 2026-10-07): a fighter with nothing in hand
+     * attacks with an Ataque Desarmado at its own Dano Base.
      *
      * @return the weapon actually dropped, or empty when it was not wielded or {@link
      * Weapon#isDisarmable()} refuses ("Não pode ser desarmado")
@@ -751,14 +766,11 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
     java.util.Optional<Weapon> disarm(Weapon weapon);
 
     /**
-     * Puts weapon back in this combatant's hands, lifting {@link ConditionType#DESARMADO}. The
-     * mirror of {@link #disarm(Weapon)} — being Desarmado lasts until you are armed again, not a
-     * fixed number of Rodadas, which is why the condition it applies is open-ended.
+     * Puts weapon back in this combatant's hands — the mirror of {@link #disarm(Weapon)}.
      *
      * @return whether the weapon was actually taken up; {@code false} when a held condition
      * forbids it ({@link ConditionType#preventsArming()} — Devorado, where nothing you dropped
-     * is reachable from inside a creature), in which case neither the equipment nor the condition
-     * changes
+     * is reachable from inside a creature), in which case the equipment does not change
      */
     boolean rearm(Weapon weapon);
 
@@ -827,12 +839,27 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
     org.aventyrs.core.race.RacialTraitSuppression getRacialTraitSuppression();
 
     /**
-     * The flat dano-roll bonus this combatant's conditions grant to <b>whoever attacks them</b> —
-     * Flanqueado's "Atacar um personagem Flanqueado garante Vantagem na rolagem de Dano". Read
-     * off the <em>target</em>'s sheet by {@code AbstractSkillInteraction}, the mirror of {@link
-     * #getConditionBonus}, which is what the holder themselves suffers.
+     * The attack-roll bonus this combatant's Condições grant to <b>whoever attacks them</b> — the
+     * Favorecido em Perícias de Ataque of Flanqueado, Caído, Imobilizado, Confuso and Cego. One
+     * Vantagem at most: Favorecido is an Estado, and an Estado is binary. Read off the
+     * <em>target</em>'s sheet, the mirror of {@link #getConditionBonus}.
      */
-    int getAttackerDamageBonusFromConditions(SceneContext sceneContext);
+    int getAttackerAttackRollBonus(SceneContext sceneContext);
+
+    /**
+     * Whether defender is Favorecido in Esquiva e Aparar against <b>this</b> combatant's attacks —
+     * Caído's and Cego's "Personagens que ataquem alvos caídos se tornam Favorecidos em … Esquiva e
+     * Aparar": defender attacked this combatant while it held that Condição, and it still does
+     * (table ruling, 2026-10-07).
+     */
+    boolean favoursDefenceBy(CombatantSheet defender, SceneContext sceneContext);
+
+    /**
+     * Records that attacker attacked this combatant, on every Condição it currently holds — what
+     * {@link #favoursDefenceBy} reads. {@code Scene#recordAttack} calls it; a caller without a
+     * Scene calls it itself.
+     */
+    void noteAttackedBy(CombatantSheet attacker);
 
     /**
      * This combatant's total Resistência a Críticos — every source, in {@link
@@ -842,7 +869,7 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
      * ModifierType#CRITICAL_RESISTANCE} {@code TemporaryBonus} ({@code AnaoFeat#VIGOR_DO_INVERNO}
      * grants one at combat start). Zero for a combatant with none, which is most of them.
      *
-     * <p>Another outward-facing query, like {@link #getAttackerDamageBonusFromConditions} —
+     * <p>Another outward-facing query, like {@link #getAttackerAttackRollBonus} —
      * {@code AbstractSkillInteraction} reads it off the <em>attack target</em>'s sheet and
      * subtracts it from the attacker's summed Margem Crítica Menor widening, so RC cancels
      * widening rather than pushing a crit below its baseline (the net is floored at 0 by {@code
@@ -854,6 +881,32 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
      * safely read. {@code null} when there is no Scene.
      */
     int getTotalCriticalResistance(SceneContext sceneContext);
+
+    /**
+     * The held Condição that refuses an action of kind right now, if any — the single veto every
+     * action path asks (core 0.1.5): Imobilizado and Desacordado refuse every Ação, Agarrado every
+     * Ação de Movimento, Confuso Ações Livres and Reações, Apavorado everything but fleeing while
+     * within Curta of its origin. A range-scoped restriction that cannot be judged (no {@code
+     * SceneContext}, or no distance to the origin) refuses nothing — except a sourceless fear's,
+     * which is always in range.
+     */
+    java.util.Optional<ConditionType> refusalForAction(org.aventyrs.core.action.ActionKind kind,
+                                                       SceneContext sceneContext);
+
+    /** Whether a held Condição refuses an action of kind right now — {@link #refusalForAction}. */
+    default boolean isActionPrevented(final org.aventyrs.core.action.ActionKind kind,
+                                      final SceneContext sceneContext) {
+        return refusalForAction(kind, sceneContext).isPresent();
+    }
+
+    /** Pontos de Ação every action of this combatant costs on top of its price — Confuso's +1PA. */
+    int getActionPointSurcharge(SceneContext sceneContext);
+
+    /**
+     * Whether this combatant's Esquiva e Aparar succeeds unless it is a Falha Crítica — a defender
+     * Imobilizado or Desacordado still defends (table ruling, 2026-10-07).
+     */
+    boolean defendsUnlessCriticalFailure(SceneContext sceneContext);
 
     /**
      * Whether a held condition forbids moving at all — Agarrado/Imobilizado's "não pode realizar
@@ -1537,6 +1590,39 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
     /** Clears it — beneath {@code MountService#dismount}; {@code true} if they were riding. */
     boolean stopRiding();
 
+    // --- Agarrar ------------------------------------------------------------------------------
+
+    /**
+     * The combatants this one is holding Agarrado right now — each still under an Agarrado naming
+     * this sheet as its captor. Kept in step by {@code GrappleService}; a hold its target escaped, or
+     * that lapsed because this captor can no longer hold ({@link #canMaintainGrapple()}), drops out
+     * on its own. Each hold occupies one of the captor's hands (table ruling, 2026-10-07).
+     */
+    List<CombatantSheet> getGrappledTargets();
+
+    /** Records that this combatant now holds target — beneath {@code GrappleService}; validates nothing. */
+    void startGrappling(CombatantSheet target);
+
+    /** Forgets the hold on target; {@code true} if there was one. Does not touch the target's Condição. */
+    boolean stopGrappling(CombatantSheet target);
+
+    /**
+     * The Condições applied directly to this combatant and not yet expired — the instances, with their
+     * origins and subclasses (an {@link Immobilization}'s escape GD). Excludes what an Ego setback
+     * derives and everything implied; {@link #getActiveConditions} is the question for "is it in force".
+     */
+    List<Condition> getHeldConditions();
+
+    /** Whether this combatant holds an Agarrado naming captor as its source. */
+    boolean isHeldAgarradoBy(CombatantSheet captor);
+
+    /**
+     * Whether this combatant can keep holding anyone — not Caído, Imobilizado or Desacordado, and
+     * above 0 PV (table ruling, 2026-10-07). A hold whose captor stops being able to keep it ends: the
+     * Agarrado it put on its target lapses the next time that target's Condições are read.
+     */
+    boolean canMaintainGrapple();
+
     // --- Bocarra (Ogro) ------------------------------------------------------------------------
 
     /**
@@ -1552,6 +1638,26 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
 
     /** The {@link Devoured} this combatant is held by, if swallowed. */
     Optional<Devoured> getDevoured();
+
+    /**
+     * Who holds this combatant Devorado, if anyone — read off any held Devorado, a Bocarra's {@link
+     * Devoured} or a plain one naming its devourer.
+     */
+    default Optional<CombatantSheet> getDevourer() {
+        return getHeldConditions().stream()
+                .filter(held -> held.getType() == ConditionType.DEVORADO && held.getSource() != null)
+                .map(Condition::getSource)
+                .findFirst();
+    }
+
+    /**
+     * Whether actor's attacks and Magias cannot reach this combatant — Devorado's "Não pode ser
+     * afetado por efeitos externos, mesmo que possuam Área de Efeito". Only the devourer itself, from
+     * whose inside nothing is external, still reaches them.
+     */
+    default boolean isShieldedFrom(final CombatantSheet actor) {
+        return getDevourer().map(devourer -> devourer != actor).orElse(false);
+    }
 
     // --- Ferocidade de Lacerto (Indômito) -----------------------------------------------------
 

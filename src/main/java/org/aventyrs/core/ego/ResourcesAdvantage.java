@@ -36,14 +36,12 @@ public enum ResourcesAdvantage implements EgoAdvantage {
         }
     },
 
-    // TODO: grants a chosen Equipamento Comum Ofensivo (any Raridade) at character
-    // creation, upgraded to a Comum/Incomum Obra-Prima with no Aprimoramentos, excluding
-    // Equipamentos Tecnológicos/Regalias — Obra-Prima tiers/Aprimoramentos and the Regalia
-    // marker ({@code Item#isRegalia()}/{@code getRegaliaGrade()}) are all modeled now, and
-    // {@code Character#equipment} holds items; the remaining blockers are a Tecnológico
-    // classification and, above all, no character-creation flow that makes such a choice
-    // (only {@code CharacterCreationServiceImpl}'s fixed path exists — the same gap {@code
-    // MoralHerdadaAbility} cites).
+    /**
+     * Real since 0.1.4.1: {@code CharacterCreationService#isFamilyHeirloom} says which item qualifies (any Raridade of
+     * Equipamento Ofensivo, an Obra-Prima Ofensiva Comum or Incomum, no Aprimoramentos, no Regalia) and {@code
+     * #grantFamilyHeirloom} gives it at creation for no PE. Equipamentos Tecnológicos have no catalog entries yet,
+     * so the exclusion holds without a check.
+     */
     HERANCA_FAMILIAR("Durante a criação do personagem você pode escolher um Equipamento " +
             "Comum Ofensivo de qualquer Raridade, o item escolhido é uma Obra-Prima Comum " +
             "ou Incomum e não possui Aprimoramentos. Não é possível obter Equipamentos " +

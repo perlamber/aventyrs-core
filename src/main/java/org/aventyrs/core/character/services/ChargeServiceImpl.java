@@ -82,7 +82,7 @@ public class ChargeServiceImpl implements ChargeService {
         int allowance = getMovementAllowance(sheet);
         sheet.consumeMovementThisRound();
         return new ChargeResult(
-                getActionPointCost(sheet.getCharacter()),
+                getActionPointCost(sheet.getCharacter()).plusSurcharge(sheet.getActionPointSurcharge(sceneContext)),
                 allowance,
                 getMovementDamageReduction(sheet.getCharacter()),
                 movementReactionService.getProvokedReactors(sheet, sceneContext, Manoeuvre.INVESTIDA, target));

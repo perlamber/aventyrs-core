@@ -33,8 +33,10 @@ public class ReactionOptionsServiceImpl implements ReactionOptionsService {
         }
         CombatantSheet reactor = context.getReactor();
         // Resolved once, not per option: both are facts about the reactor, not about the ability.
+        // A held Condição refusing Reações (Confuso, Imobilizado, Desacordado) leaves none to take.
         boolean hasReaction = reactionsService.getRemainingReactions(
-                reactor, context.getTurnNumber(), context.getReactorContext()) >= 1;
+                reactor, context.getTurnNumber(), context.getReactorContext()) >= 1
+                && !reactor.isActionPrevented(org.aventyrs.core.action.ActionKind.REACTION, context.getReactorContext());
         int availableDeterminationPoints = determinationPointsService.getCurrentDeterminationPoints(
                 reactor.getCharacter(), reactor);
 

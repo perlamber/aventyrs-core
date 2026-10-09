@@ -75,6 +75,10 @@ public class RepositionServiceImpl implements RepositionService {
         if (sheet.isMovementPrevented(sceneContext)) {
             return REPOSITION_MOVEMENT_PREVENTED;
         }
+        // An Ação Livre — Confuso "não pode realizar Ações Livres".
+        if (sheet.isActionPrevented(org.aventyrs.core.action.ActionKind.FREE_ACTION, sceneContext)) {
+            return org.aventyrs.core.util.TranslatableMessages.ACTION_PREVENTED_BY_CONDITION;
+        }
         // Spending Pontos de Ação moving and Reposicionar exclude each other (table ruling).
         if (sheet.getMovementsTakenThisRound() > 0) {
             return REPOSITION_AFTER_MOVEMENT;

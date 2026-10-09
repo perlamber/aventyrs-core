@@ -52,7 +52,7 @@ public class VenenoVampirico extends AbstractEffect implements EffectChain {
 
     @Override
     public InteractionResult applyTo(final CombatantSheet target) {
-        target.applyCondition(new Condition(ConditionType.ENVENENADO, ROUNDS));
+        target.applyCondition(new Condition(ConditionType.ENVENENADO, ROUNDS, null, java.util.List.of(ConditionType.ConditionEffect.lifeMultiplierLoss(1))));
         int landed = VampiricVenom.strike(target, attacker, DAMAGE, LIFE_STEAL);
         target.applyEffect(new VampiricVenom(attacker, DAMAGE, LIFE_STEAL, ROUNDS));
         return reportChain(InteractionResult.builder()

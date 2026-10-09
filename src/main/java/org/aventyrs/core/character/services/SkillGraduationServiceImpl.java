@@ -21,7 +21,10 @@ public class SkillGraduationServiceImpl implements SkillGraduationService {
     @Override
     public int getMaxGraduation(final Character character, final SkillType skillType) {
         CharacterSkill characterSkill = character.getSkills().get(skillType);
-        AttributeDomain defaultDomain = characterSkill.getSkill().getAttributeDomain();
+        // An untrained Perícia still has a cap — the one it would grow under once trained.
+        AttributeDomain defaultDomain = characterSkill != null
+                ? characterSkill.getSkill().getAttributeDomain()
+                : skillType.newSkillInstance().getAttributeDomain();
         AttributeDomain peritoTeoricoDomain = PeritoTeoricoAbility.resolveAttributeDomain(character.getAttributeAbilities(), skillType, defaultDomain);
         AttributeDomain governingDomain = SkillCompetencyAbility.resolveAttributeDomain(
                 SkillCompetencyAbility.allFor(character), skillType, peritoTeoricoDomain);
