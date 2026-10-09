@@ -89,6 +89,12 @@ public abstract class AbstractTitleAbilityInteraction implements Interaction<Com
                 || activator.hasEgoSetback(org.aventyrs.core.ego.EgoSetback.CENTELHA_MORTA)) {
             throw new IllegalOperationException(ABILITY_ACTIVATION_PREVENTED);
         }
+        // Bought as an Ação Livre or a Reação — Confuso refuses both.
+        org.aventyrs.core.action.ActionKind priced =
+                org.aventyrs.core.action.ActionKind.ofCost(ability.getActionPointCost());
+        if (priced != null && activator.isActionPrevented(priced, request.getSceneContext())) {
+            throw new IllegalOperationException(org.aventyrs.core.util.TranslatableMessages.ACTION_PREVENTED_BY_CONDITION);
+        }
         // What the activation buys is judged on the base figure — a subclass reading "PD spent" to
         // size its effect must not be handed a multiplied price.
         int basePoints = resolveDeterminationPoints(request);
@@ -218,7 +224,10 @@ public abstract class AbstractTitleAbilityInteraction implements Interaction<Com
         int reduction = optInReduction + activator.getCharacter().getAllTitles().stream()
                 .mapToInt(title -> title.resolveActivationActionPointReduction(ability, activator))
                 .sum();
-        return reduction <= 0 ? authored : ActionCost.ofActionPoints(Math.max(1, authored.actionPoints() - reduction));
+        ActionCost reduced = reduction <= 0 ? authored
+                : ActionCost.ofActionPoints(Math.max(1, authored.actionPoints() - reduction));
+        // Confuso: "O tempo de todas as ações aumentam em +1PA".
+        return reduced.plusSurcharge(activator.getActionPointSurcharge(null));
     }
 
     /**

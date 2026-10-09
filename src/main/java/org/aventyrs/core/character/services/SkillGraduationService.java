@@ -21,8 +21,10 @@ public interface SkillGraduationService {
      * {@code SkillCompetencyAbility#resolveAttributeDomain}, the same resolution every
      * {@code <Skill>Interaction} already uses for its roll). Recomputed on demand, not
      * cached, since either input (an Attribute upgrade, or acquiring/losing a substituting
-     * ability) can change between calls. {@code character.getSkills()} must already contain
-     * skillType — this is a cap on an already-trained Perícia's growth, not a training check.
+     * ability) can change between calls. A substitution always governs, even when the
+     * substitute Atributo's base is the lower one (table ruling, 2026-10-08). skillType need not
+     * be trained: an untrained Perícia gets the cap it would grow under, resolved from {@code
+     * skillType.newSkillInstance()}'s key Attribute — this is not a training check.
      */
     int getMaxGraduation(Character character, SkillType skillType);
 

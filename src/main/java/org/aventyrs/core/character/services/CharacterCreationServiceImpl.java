@@ -535,6 +535,33 @@ public class CharacterCreationServiceImpl implements CharacterCreationService {
         return socialClassOf(character).getStartingRarity().map(org.aventyrs.core.item.ItemStore::new);
     }
 
+    @Override
+    public boolean isFamilyHeirloom(final org.aventyrs.core.item.ItemSpecification spec) {
+        return spec != null
+                && !spec.isRegalia()
+                && spec.getImprovements().isEmpty()
+                && spec.getBase().getType() == org.aventyrs.core.item.ItemType.OFFENSIVE
+                && spec.getBase().getRarity().isPurchasable()
+                && spec.getMasterpiece() instanceof org.aventyrs.core.item.OffensiveMasterpiece
+                && spec.getMasterpiece().getRarity().isAtMost(FAMILY_HEIRLOOM_MAX_MASTERPIECE_RARITY);
+    }
+
+    @Override
+    public org.aventyrs.core.item.Item grantFamilyHeirloom(@lombok.NonNull final CharacterSheet sheet,
+                                                           final org.aventyrs.core.item.ItemSpecification spec) {
+        if (!sheet.getCharacter().getAllEgoAdvantages().contains(org.aventyrs.core.ego.ResourcesAdvantage.HERANCA_FAMILIAR)) {
+            throw new IllegalOperationException(org.aventyrs.core.util.TranslatableMessages.FAMILY_HEIRLOOM_NOT_HELD);
+        }
+        if (!isFamilyHeirloom(spec)) {
+            throw new IllegalOperationException(org.aventyrs.core.util.TranslatableMessages.INVALID_FAMILY_HEIRLOOM);
+        }
+        org.aventyrs.core.item.ItemForgery forgery = org.aventyrs.core.item.ItemForgery.purchased(spec);
+        forgery.validate();
+        org.aventyrs.core.item.Item copy = forgery.forge();
+        sheet.addToInventory(copy);
+        return copy;
+    }
+
     /** At creation nothing is spent yet, so the Recursos total (capped at 5) is the permanent points left. */
     private static org.aventyrs.core.ego.SocialClass socialClassOf(final Character character) {
         return org.aventyrs.core.ego.SocialClass.of(character.getEffectiveEgoTotal(EgoDomain.RECURSOS));

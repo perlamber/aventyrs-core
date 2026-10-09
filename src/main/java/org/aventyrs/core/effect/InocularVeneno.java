@@ -45,7 +45,7 @@ public class InocularVeneno extends AbstractEffect implements EffectChain {
 
     @Override
     public InteractionResult applyTo(final CombatantSheet target) {
-        target.applyEffectUntilRest(new Condition(ConditionType.ENVENENADO, null), greater ? RestType.TOTAL : RestType.LONGO);
+        target.applyEffectUntilRest(new Condition(ConditionType.ENVENENADO, null, null, java.util.List.of(ConditionType.ConditionEffect.lifeMultiplierLoss(1))), greater ? RestType.TOTAL : RestType.LONGO);
         if (greater) {
             target.applyEffectUntilCombatEnds(TemporaryBonus.openEnded(ModifierType.LIFE_MULTIPLIER, -1, SOURCE));
         }

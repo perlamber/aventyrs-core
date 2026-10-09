@@ -1,125 +1,233 @@
-Condições do Personagem - Malefícios 
+Condições e Malefícios 
 
-Abalado 
+Pronto 
 
-Alvo sofre Desvantagem em suas rolagens de perícia enquanto estiver a até 4UD da origem de seu medo 
+Condição padrão de um personagem, não possui malefícios. 
 
-Condição permanece ativa por 2 Rodadas, a menos que a origem do efeito diga o contrário 
+ 
 
-Assustado 
+Abalado  
 
-Alvo sofre Desvantagem em suas rolagens de perícia e Dano enquanto estiver a até 4UD da origem de seu medo 
+Estados de Fraqueza apenas enquanto estiver à Distância Curta da origem de seu medo. 
 
-Recebe a Condição desprevenido enquanto adjacente a origem de seu medo 
+Condição permanece ativa por 2 Rodadas, a menos que a origem do efeito diga o contrário. 
+
+ 
+
+Assustado  
+
+Cumulativo com efeitos de Abalado. 
+
+Área de Efeito de Abalado aumenta para Distância Média 
+
+Estado de Desprevenido enquanto em Distância Curta da origem do medo. 
 
 Condição permanece ativa por 2 Rodadas, a menos que a origem do efeito diga o contrário 
 
 Ao fim da duração alvo se torna Abalado 
 
-Apavorado 
+ 
 
-Alvo sofre Desvantagem em suas rolagens de perícia e Dano enquanto estiver a até 8UD da origem de seu medo 
+Apavorado  
 
-Recebe a Condição desprevenido enquanto estiver a menos de 4UD da origem de seu medo 
+Cumulativo com efeitos de Abalado. 
 
-Sempre deve tentar se manter afastado, ao menos 4UD, da origem de seu medo 
+Área de Efeito de Abalado aumenta para Distância Longa. 
 
-Condição permanece ativa por 2 Rodadas, a menos que a origem do efeito diga o contrário 
+Cumulativo com efeitos de Assustado. 
 
-Ao fim da duração alvo se torna Assustado 
+Área de Efeito de Assustado (Estado de Desprevenido) aumenta para Distância Média. 
 
-Amaldiçoado 
+Enquanto em Distância Curta da origem do medo suas ações são restritas a fugir até sair do alcance de Abalado. 
+
+Condição permanece ativa por 2 Rodadas, a menos que a origem do efeito diga o contrário. 
+
+Ao fim da Duração alvo se torna Assustado. 
+
+ 
+
+Amaldiçoado  
+
+Estado de Desprevenido. 
 
 Efeitos conforme descrição da maldição. 
 
-Desprevenido 
+Pode aplicar Negação de Ego, Fraqueza, Negação de Efeitos de Cura, aplicar Defeitos e infligir danos. 
 
-Personagem sofre Redutor de -2 em suas Defesas 
+ 
 
-Flanqueado 
+Flanqueado  
 
-Personagens flanqueados, cercados, ficam Desprevenidos 
+Refere-se a personagens cercados 
 
-Atacar um personagem Flanqueado garante Vantagem na rolagem de Dano 
+Cercar um personagem exige a presença de 1+ Categoria de Tamanho personagens (mínimo 2) adjacentes, posicionado em direções opostas, triangular, quadrangular ou circular. 
 
-Caído 
+Alvo do cerco recebe o Estado Desprevenido. 
 
-Considerados Desprevenidos 
+Personagens flanqueados se tornam Favorecidos em Perícias de Ataque. 
 
-Sofrem Desvantagens em suas rolagens de Perícias 
+ 
 
-Agarrado 
+Caído  
 
-Não pode realizar movimentos 
+Estados de Desprevenido e Fraqueza. 
 
-Sofre Desvantagem em rolagens de Perícia 
+Movimento Base reduzido à metade. 
 
-Pode usar 1PA para tentar se livrar, efetuando uma nova rolagem de ataque para Agarrar 
+Permanece nesta Condição até levantar-se. 
 
-Pode usar 3PA para se libertar imediatamente, mas se torna vulnerável a reação Defender o Perímetro 
+Levantar-se indica alternar entre Caído e Pronto, tem o Tempo de Ação de 1PA e permite a Reação Defender o Perímetro para personagens qualificados. 
 
-Imobilizado 
+Personagens que ataquem alvos caídos se tornam Favorecidos em Perícias de Ataque e Esquiva e Aparar. 
 
-Não pode realizar movimentos ou rolagens de perícias baseadas em Força ou Destreza, exceto para se soltar 
+ 
 
-Pode usar 1PA para tentar se livrar, efetuando uma nova rolagem de ataque para Agarrar 
+ 
 
-Pode usar 3PA para se libertar imediatamente, mas se torna vulnerável a reação Defender o Perímetro 
+Agarrado  
 
-Após se libertarem mudam para a Condição Agarrado 
+Não pode realizar Ações de Movimentos (como andar, correr, investir, reposicionar etc.). 
 
-Devorado 
+Estado de Desprevenido. 
 
-Podem efetuar rolagens de Ataque Corpo-a-Corpo desarmado ou com Armas Leves, GD 10+Vigor 
+Permanece nesta Condição até Libertar-se do Agarrão. 
 
-Precisam causar uma quantidade de dano igual ao dobro do Vigor de quem o devorou para se libertarem, sendo regurgitados  
+Libertar-se do Agarrão indica alternar entre Agarrado e Pronto, esta ação requer uma rolagem de Perícia de Ataque resistida e que não inflige danos e não desencadeia Efeitos Críticos e Correntes de Efeitos. 
 
-Sofrem Desvantagem na rolagem de Dano para cada Categoria de Tamanho inferior ao personagem que o devorou. 
+Se o personagem Agarrado for bem-sucedido, a condição é anulada e o personagem alterna para a condição de Pronto. 
 
-Ataques realizados no interior de outras criaturas ignoram RD que elas possuam. 
+Se o personagem Agarrado for malsucedido a condição persiste. 
 
-Desarmado 
+ 
 
-Desvantagem nas rolagens de Perícia de Ataque e Dano. 
+Imobilizado  
+
+Estado de Desprevenido. 
+
+Não pode realizar Ações, exceto Libertar-se da Imobilização. 
+
+Permanece nesta Condição até Libertar-se da Imobilização. 
+
+Libertar-se da Imobilização indica alternar entre Imobilizado e Pronto, esta ação requer uma rolagem de Furtividade. 
+
+A GD da Furtividade pode variar entre Resistida ou Pré-Determinada. 
+
+Rolagens são consideradas Pré-Determinadas quando imobilizado por um material ou situação. 
+
+Rolagens são consideradas Resistidas quando imobilizado por outro personagem. 
+
+Rolagens Resistidas são efetuadas Furtividade contra a Perícia de Ataque. 
+
+Se o Personagem Imobilizado for bem-sucedido, a condição é anulada e o personagem alterna para a condição de Pronto. 
+
+Se o personagem Imobilizado for malsucedido a condição persiste. 
+
+Personagens que ataquem alvos Imobilizados se tornam Favorecidos em Perícias de Ataque. 
+
+ 
+
+Devorado  
+
+Estado de Fraqueza. 
+
+Ocupa o mesmo espaço que o personagem que o devorou. 
+
+Não pode ser afetado por efeitos externos, mesmo que possuam Área de Efeito. 
+
+Permanece nesta Condição até Libertar-se da Predação. 
+
+Libertar-se da Predação indica alternar entre Devorado e Pronto, esta ação requer uma rolagem de Ataque Corpo-a-Corpo. 
+
+Apenas Armas Naturais ou Armas leves podem ser utilizados enquanto devorado. 
+
+A GD da Perícia de Ataque é igual à Defesa, reduzido -2 níveis (até mínimo de GD Médio). 
+
+Danos causados ao interior da criatura são reduzidos à Metade (efeito de Meio-Dano). 
+
+Caso um único ataque inflija uma quantidade de danos igual ao dobro do Vigor do devorador o personagem é liberto, retornando à condição de Pronto em espaço adjacente. 
+
+Após se libertar, o personagem recebe a condição Abalado e o estado de Desprevenido por 1 Rodada. 
+
+ 
 
 Confuso 
 
-O tempo de todas as ações aumentam em 1PA. 
+O tempo de todas as ações aumentam em +1PA. 
+
+Não pode realizar Ações Livres e Reações. 
+
+Personagens que ataquem alvos Confusos se tornam Favorecidos em Perícias de Ataque. 
+
+ 
 
 Cego 
 
-Deve rolar 1d6 sempre que efetuar uma rolagem de perícia 
+Estado de Desprevenido. 
 
-Perícias de efeitos pessoal, falham com resultados 2 ou menos 
+Falha automaticamente em rolagens de Atenção para fins visuais. 
 
-Rolagens de Ataque corpo a Corpo falham com resultados 3 ou menos 
+Deve rolar 1d6 sempre que efetuar uma rolagem de Perícia Física (baseada em Força ou Destreza). 
 
-Rolagens de Ataque à Distância falham com resultados menores que 5 
+Perícias de efeitos pessoal falham com resultados 2 ou menos, independentemente de sucessos na rolagem de Perícia. 
 
-Adicionalmente são considerados desprevenidos. 
+Perícias que afetem outros personagens adjacentes ou o cenário falham com resultados 3 ou menos, independentemente de sucessos na rolagem de Perícia. 
+
+Perícias que afetem outros personagens além de adjacente falham com resultados 5 ou menos, independentemente de sucessos na rolagem de Perícia. 
+
+Personagens que ataquem alvos Cegos se tornam Favorecidos em Perícias de Ataque e Esquiva e Aparar. 
+
+ 
+
+ 
 
 Feridas Dolorosas 
 
-O personagem não pode ser curado e nem regenerar pontos de vida. 
+Efeitos de Cura e de recuperação de Bônus Bases são reduzidos à zero. 
+
+Duração conforme origem da condição. 
+
+ 
 
 Silêncio 
 
 Personagem não podem ativar Habilidades de Aventyrs ou de Monstros e não podem Conjurar Magias. 
 
-Caído 
+Duração conforme origem da condição. 
 
-Desvantagem em rolagens de Perícias e Dano Corpo-a-Corpo 
+ 
 
-Também considerado Desprevenido 
+Envenenado 
 
-Envenado 
+Estado de Fraqueza e sofre Dano Natural contínuo. 
 
-Alvo perde Multiplicador de Bônus Base, conforme especificado no efeito 
+Quantidade de danos conforme origem do efeito. 
 
-Personagens imunes a efeitos Selvagens também são imunes a este efeito 
+Efeitos adicionais conforme descrição do veneno. 
+
+Pode aplicar Redução de Multiplicadores de Bônus Bases, Redução Temporário de Egos, Redução de PD, Redução de PM, Redutores de Pontos de Ação. 
+
+ 
 
 Doente 
 
-Alvo sofre redutores conforme especificado no efeito. 
+Estado de Fraqueza. 
 
-Personagens imunes a efeitos Selvagens também são imunes a este efeito 
+Efeitos adicionais conforme descrição da doença. 
+
+Pode aplicar Redutores Temporários em Atributos, Estado de Desacordado, Feridas Dolorosas e Silêncio. 
+
+Situacionalmente, conforme descrição, pode se propagar para personagens adjacentes ou em contato. 
+
+Propagar doenças significa que personagens adjacentes, no início de cada Rodada, devem rolar 1d6. Resultados 1 indicam que o personagem também é afetado pela doença. 
+
+Monstros capazes de adoecer seus alvos (com efeitos de Habilidades Monstruosas) são imunes a própria doença. 
+
+Estados de Personagem 
+
+Desprevenido: Redutor de -4 em Defesas. 
+
+Desacordado: Personagem não pode realizar ações por 2 Rodadas, aplica o Malefício Caído. 
+
+Favorecido: Recebe Vantagem em rolagens de Perícias (aplicável em Perícias específicas, conforme condição). 
+
+Fraqueza: Desvantagem em suas rolagens de Perícias e Danos 

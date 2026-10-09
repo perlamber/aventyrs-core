@@ -69,7 +69,7 @@ public class DefenseServiceImpl implements DefenseService {
                 .anyMatch(feat -> feat.ignoresDefenseMaluses(sceneContext, target));
         int timed = target.getTemporaryBonus(ModifierType.DEFESAS)
                 + target.getTemporaryBonus(defenseType.getModifierType());
-        // Desprevenido's -2 Defesas, and anything conferring it (Caído, Flanqueado,
+        // Desprevenido's -4 Defesas, and anything conferring it (Caído, Flanqueado,
         // Cego, or the fear ladder while close enough to its origin).
         int conditions = target.getConditionBonus(ModifierType.DEFESAS, sceneContext)
                 + target.getConditionBonus(defenseType.getModifierType(), sceneContext);

@@ -77,9 +77,9 @@ public enum BestialFeat implements Feat {
      */
     // The free Habilidade de Competência is real, recorded on HerancaBestialFeat.
     // The Movimento Base de Natação is real (Feat#grantsMovementMode).
-    // TODO: the Vantagem is scoped to resisting grapples, ropes and confinement — none of which
-    //  is a manoeuvre this core represents, so there is no roll to apply it to. Distinct from a
-    //  merely purpose-scoped Vantagem: here the *action* is missing, not just its classification.
+    // The Vantagem to resist grapples is real (core 0.1.5): the Esquiva e Aparar against an Agarrar,
+    // and the rolls to Libertar-se do Agarrão / da Imobilização ("se livrar de cordas … que te prendam").
+    // TODO: "lugares apertados" names no roll at all.
     // TODO: breathing underwater has no state to toggle — nothing tracks breathing (CLAUDE.md's
     //  "Fadiga/asfixia" row).
     HERANCA_ANFIBIA(
@@ -101,6 +101,19 @@ public enum BestialFeat implements Feat {
         @Override
         public int resolveAttributeBonus(final AttributeDomain domain, final Character character) {
             return domain == AttributeDomain.VIGOR ? HERANCA_ATTRIBUTE_BONUS : 0;
+        }
+
+        @Override
+        public int resolveSkillRollBonus(final SkillType skillType, final SceneContext sceneContext,
+                                          final SkillTrait requestedAbility, final Character character,
+                                          final AttackSource attackSource, final CombatantSheet holder,
+                                          final org.aventyrs.core.skill.SkillRoll skillRoll) {
+            org.aventyrs.core.action.Manoeuvre manoeuvre = skillRoll == null ? null : skillRoll.getManoeuvre();
+            boolean resistsGrab = manoeuvre == org.aventyrs.core.action.Manoeuvre.AGARRAR
+                    && skillType == SkillType.ESQUIVA_E_APARAR;
+            boolean slipsFree = manoeuvre == org.aventyrs.core.action.Manoeuvre.LIBERTAR_SE_DO_AGARRAO
+                    || manoeuvre == org.aventyrs.core.action.Manoeuvre.LIBERTAR_SE_DA_IMOBILIZACAO;
+            return resistsGrab || slipsFree ? Skill.ADVANTAGE_BONUS : 0;
         }
     },
 

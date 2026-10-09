@@ -105,9 +105,9 @@ came here from `granting-a-blessing`, this is the branch where that skill does *
 ### Requirements check `getTotal()`, not `getBase()`
 
 `ItemRequirements(AttributeDomain, int)` is deliberately unlike `FeatRequirements`, which uses
-`base`: acquiring a Talento is gated on what the character personally invested in, but whether
-an item's Favor applies is a **"can I meet this right now"** question, so a Bônus Racial or a
-variable bonus counts.
+Base + Bônus Racial (`AttributeValue#getBaseWithRacialBonus()`): acquiring a Talento is gated on
+what the character is, but whether an item's Favor applies is a **"can I meet this right now"**
+question, so a variable bonus counts too.
 
 It's a narrower record than `FeatRequirements` (no `requiredSkillType`/`requiredFeat`) rather
 than a reuse of it — widen it only if a real item ever names a Perícia/Talento/Título.

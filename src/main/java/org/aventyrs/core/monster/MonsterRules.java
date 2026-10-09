@@ -412,7 +412,9 @@ public final class MonsterRules {
         // What the sheet holds right now: a timed GD shift (Mimetizar Competência) and timed roll
         // bonuses (Domínio dos Céus' "+2 enquanto voando") — a foe's roll bonus is its GD's bonus.
         int steps = sheet.getSkillDifficultyShift(skill);
-        int bonus = sheet.getTemporaryBonus(skill.getRollBonusType()) + sheet.getTemporaryBonus(ModifierType.SKILL_ROLL_BONUS);
+        int bonus = sheet.getTemporaryBonus(skill.getRollBonusType()) + sheet.getTemporaryBonus(ModifierType.SKILL_ROLL_BONUS)
+                // Its own Condições (Fraqueza) — a foe rolls nothing, so they land on its GD.
+                + MonsterSheet.conditionSkillBonus(sheet, skill);
         if (domain == AttributeDomain.STRENGTH || domain == AttributeDomain.DEXTERITY) {
             bonus += sheet.getTemporaryBonus(ModifierType.PHYSICAL_SKILL_ROLL_BONUS);
         }

@@ -48,7 +48,7 @@ public class ItemPurchaseServiceImpl implements ItemPurchaseService {
     }
 
     private int purchaseDiscount(final CombatantSheet buyer) {
-        return buyer.getCharacter().getEgoAdvantages().values().stream()
+        return buyer.getCharacter().getAllEgoAdvantages().stream()
                 .mapToInt(EgoAdvantage::resolveEquipmentPurchaseDiscount)
                 .sum();
     }

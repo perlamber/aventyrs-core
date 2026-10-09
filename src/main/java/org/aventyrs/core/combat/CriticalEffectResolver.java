@@ -87,38 +87,13 @@ final class CriticalEffectResolver {
             return Resolved.NONE;
         }
         boolean isCritical = critical != null && critical != CriticalResult.NONE;
-        CriticalEffectType natural = naturalEffectOf(attacker, attackSource);
-        int extra = attacker == null ? 0 : attacker.getCharacter().getAllTitles().stream()
-                .mapToInt(title -> title.resolveExtraNaturalCriticalEffectApplications(attacker, attackSource))
-                .sum();
-        int criticalExtra = extra + Math.max(0, criticalOnlyExtra);
-
-        List<CriticalEffectType> types = new ArrayList<>();
-        CriticalResult severity;
-        if (isCritical) {
-            severity = critical;
-            if (natural != null) {
-                for (int i = 0; i <= criticalExtra; i++) {
-                    types.add(natural);
-                }
-            }
-            if (attacker != null) {
-                for (AventyrTitle title : attacker.getCharacter().getAllTitles()) {
-                    types.addAll(title.resolveAdditionalCriticalEffects(attackSkill, attackSource, attacker));
-                }
-            }
-            if (requested != null) {
-                types.addAll(requested);
-            }
-        } else {
-            if (natural == null || extra == 0) {
-                return Resolved.NONE;
-            }
-            severity = CriticalResult.ACERTO_CRITICO_MENOR;
-            for (int i = 0; i < extra; i++) {
-                types.add(natural);
-            }
+        List<CriticalEffectType> types = typesOf(attacker, attackSource, attackSkill, isCritical, requested,
+                criticalOnlyExtra);
+        if (types.isEmpty()) {
+            return Resolved.NONE;
         }
+        // A plain hit only ever carries Finalização's repetitions, at Menor.
+        CriticalResult severity = isCritical ? critical : CriticalResult.ACERTO_CRITICO_MENOR;
 
         CriticalEffectContext context = CriticalEffectContext.of(attacker, attackSource, severity, dice);
         List<CriticalEffect> built = new ArrayList<>();
@@ -131,6 +106,43 @@ final class CriticalEffectResolver {
             }
         }
         return new Resolved(built, unapplied);
+    }
+
+    /**
+     * Which Efeitos Críticos a landed hit carries by identity, in application order, without building any —
+     * the list {@link #resolve} builds from, and what {@link AttackEffectsPreview} reports. critical selects
+     * the Acerto Crítico list; otherwise only Finalização's repetitions of the natural effect.
+     */
+    static List<CriticalEffectType> typesOf(final CombatantSheet attacker, final AttackSource attackSource,
+                                            final SkillType attackSkill, final boolean critical,
+                                            final List<CriticalEffectType> requested, final int criticalOnlyExtra) {
+        CriticalEffectType natural = naturalEffectOf(attacker, attackSource);
+        int extra = attacker == null ? 0 : attacker.getCharacter().getAllTitles().stream()
+                .mapToInt(title -> title.resolveExtraNaturalCriticalEffectApplications(attacker, attackSource))
+                .sum();
+        List<CriticalEffectType> types = new ArrayList<>();
+        if (!critical) {
+            if (natural != null) {
+                for (int i = 0; i < extra; i++) {
+                    types.add(natural);
+                }
+            }
+            return types;
+        }
+        if (natural != null) {
+            for (int i = 0; i <= extra + Math.max(0, criticalOnlyExtra); i++) {
+                types.add(natural);
+            }
+        }
+        if (attacker != null) {
+            for (AventyrTitle title : attacker.getCharacter().getAllTitles()) {
+                types.addAll(title.resolveAdditionalCriticalEffects(attackSkill, attackSource, attacker));
+            }
+        }
+        if (requested != null) {
+            types.addAll(requested);
+        }
+        return types;
     }
 
     /** The source's own Efeito Crítico, or the one a held Título replaces it with. */

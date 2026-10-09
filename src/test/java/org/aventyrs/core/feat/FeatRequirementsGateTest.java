@@ -290,6 +290,30 @@ class FeatRequirementsGateTest {
                 .build()));
     }
 
+    /**
+     * Every Atributo clause reads Base plus the race's Bônus Racial (table ruling, 2026-10-09) —
+     * Vitalidade's "Vigor 4" is met by Base 3 with a racial +1, dictated or chosen alike; a
+     * Variável bonus still doesn't count.
+     */
+    @Test
+    void attributeClausesCountTheRacialBonus() {
+        Character dictated = withVigor(AttributeValue.builder().domain(AttributeDomain.VIGOR).base(3).fixedRacialBonus(1));
+        Character chosen = withVigor(AttributeValue.builder().domain(AttributeDomain.VIGOR).base(3).chosenRacialBonus(1));
+        Character variable = withVigor(AttributeValue.builder().domain(AttributeDomain.VIGOR).base(3).variable(1));
+
+        assertTrue(SobrevivenciaFeat.VITALIDADE.isEligible(dictated));
+        assertTrue(SobrevivenciaFeat.VITALIDADE.isEligible(chosen));
+        assertFalse(SobrevivenciaFeat.VITALIDADE.isEligible(variable));
+
+        assertTrue(featRequiring(FeatRequirements.builder().requiredAnyAttributeValue(4).build()).isEligible(dictated));
+        assertFalse(featRequiring(FeatRequirements.builder()
+                .maximumAttributeDomain(AttributeDomain.VIGOR).maximumAttributeValue(3).build()).isEligible(dictated));
+    }
+
+    private static Character withVigor(final AttributeValue.AttributeValueBuilder vigor) {
+        return character().attributes(CharacterAttributes.builder().vigor(vigor.build()).build()).build();
+    }
+
     /** The mirror of {@code requiredRace}, {@code isInstance} and all. */
     @Test
     void aForbiddenRaceRefusesThatRaceAndNobodyElse() {

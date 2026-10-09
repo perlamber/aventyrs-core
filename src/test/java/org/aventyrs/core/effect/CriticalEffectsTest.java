@@ -125,7 +125,8 @@ class CriticalEffectsTest {
         effect(CriticalEffectType.AMALDICOAR, MAIOR, 4).applyTo(target);
 
         assertTrue(target.hasCondition(ConditionType.AMALDICOADO, null));
-        assertEquals(before - 5, defense(target));
+        // The Efeito's own −5, plus the Desprevenido (−4) Amaldiçoado now is (core 0.1.5).
+        assertEquals(before - 5 + ConditionType.DESPREVENIDO_DEFENSE_MALUS, defense(target));
     }
 
     @Test

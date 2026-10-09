@@ -5,7 +5,6 @@ import org.aventyrs.core.feat.Feat;
 import org.aventyrs.core.item.Weapon;
 import org.aventyrs.core.sheet.ActionCost;
 import org.aventyrs.core.sheet.CombatantSheet;
-import org.aventyrs.core.sheet.ConditionType;
 import org.aventyrs.core.sheet.IllegalOperationException;
 
 import static org.aventyrs.core.util.TranslatableMessages.WEAPON_ALREADY_DRAWN;
@@ -39,7 +38,7 @@ public class WeaponDrawServiceImpl implements WeaponDrawService {
         }
         // Through the sheet, not the Character, so the per-Turn draw marker SAQUE_RAPIDO reads is set.
         sheet.drawWeapon(weapon);
-        return getDrawCost(sheet.getCharacter());
+        return getDrawCost(sheet.getCharacter()).plusSurcharge(sheet.getActionPointSurcharge(null));
     }
 
     @Override
@@ -60,7 +59,7 @@ public class WeaponDrawServiceImpl implements WeaponDrawService {
         }
         // Devorado: you are inside something, and can reach neither your sheath nor what you
         // dropped. Checked with no SceneContext — no condition scopes this gate by proximity.
-        boolean prevented = sheet.getActiveConditions(null).stream().anyMatch(ConditionType::preventsArming);
+        boolean prevented = sheet.isActionPrevented(org.aventyrs.core.action.ActionKind.ARMING, null);
         return prevented ? WEAPON_DRAW_PREVENTED : null;
     }
 }

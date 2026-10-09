@@ -237,10 +237,13 @@ class CharacterCreationServiceStartingFeatsTest {
         CharacterSheet sheet = CharacterSheet.of(character, new Player());
         sheet.accumulateExperience(BigDecimal.TEN);
 
+        // Autoconhecimento owes its Vantagem de Ego (core 0.1.5.3), so it is granted in its acquired form.
+        org.aventyrs.core.feat.Feat autoconhecimento = org.aventyrs.core.feat.VantagemDeEgoEscolhidaFeat.of(character,
+                org.aventyrs.core.ego.AutocontroleAdvantage.RESOLUTO);
         creationService.grantStartingFeats(character,
-                List.of(MobilidadeFeat.ESQUIVA, DestinoFeat.PRODIGIO, DestinoFeat.AUTOCONHECIMENTO), sheet);
+                List.of(MobilidadeFeat.ESQUIVA, DestinoFeat.PRODIGIO, autoconhecimento), sheet);
 
-        assertEquals(List.of(MobilidadeFeat.ESQUIVA, DestinoFeat.PRODIGIO, DestinoFeat.AUTOCONHECIMENTO), character.getFeats());
+        assertEquals(List.of(MobilidadeFeat.ESQUIVA, DestinoFeat.PRODIGIO, autoconhecimento), character.getFeats());
         assertEquals(0, BigDecimal.TEN.compareTo(sheet.getUnUsedExperience()));
     }
 

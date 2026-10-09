@@ -202,13 +202,14 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     private static boolean satisfies(final FeatRequirements requirements, final Character character,
                                       final CharacterSheet sheet) {
         boolean attributeSatisfied = requirements.attributeDomain() == null
-                || character.getAttributes().getAttribute(requirements.attributeDomain()).getBase() >= requirements.requiredAttributeValue();
+                || character.getAttributes().getAttribute(requirements.attributeDomain()).getBaseWithRacialBonus()
+                        >= requirements.requiredAttributeValue();
 
         // A *maximum* — the clause the character must stay under ("Força igual ou inferior à 2").
         // Its own pair of fields rather than a signed reuse of the minimum: a Talento naming both
         // names two different Atributos.
         boolean attributeMaximumSatisfied = requirements.maximumAttributeDomain() == null
-                || character.getAttributes().getAttribute(requirements.maximumAttributeDomain()).getBase()
+                || character.getAttributes().getAttribute(requirements.maximumAttributeDomain()).getBaseWithRacialBonus()
                         <= requirements.maximumAttributeValue();
 
         boolean anyAttributeSatisfied = requirements.requiredAnyAttributeValue() <= 0
@@ -312,7 +313,7 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     }
 
     /**
-     * Whether some Atributo's {@code base} reaches value — the "Atributo 3 ou Superior" shape,
+     * Whether some Atributo's Base plus Bônus Racial reaches value — the "Atributo 3 ou Superior" shape,
      * which names no domain. When racialBonusOnly, only Atributos actually receiving a Bônus
      * Racial count, which is the narrower clause {@code MonstruosoFeat#ALFA} names.
      */
@@ -320,7 +321,7 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
                                                 final boolean racialBonusOnly) {
         for (AttributeDomain domain : AttributeDomain.values()) {
             AttributeValue attribute = character.getAttributes().getAttribute(domain);
-            if (attribute.getBase() >= value && (!racialBonusOnly || attribute.getRacialBonus() > 0)) {
+            if (attribute.getBaseWithRacialBonus() >= value && (!racialBonusOnly || attribute.getRacialBonus() > 0)) {
                 return true;
             }
         }
@@ -1953,8 +1954,9 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      * HP/PM/PD, Rest recovery, {@code ItemRequirements}, {@code SpellDurationService}, the
      * half-Atributo effect maths, the melee ½-Força dano term. It does <b>not</b> reach {@code
      * AttributeValue#getBase()} readers — the Graduação cap, the Habilidade slot count, {@code
-     * FeatRequirements}, {@code CharacterAttributeService#upgradeBase} — which gate on invested
-     * base. Zero by default.
+     * CharacterAttributeService#upgradeBase} — which gate on invested base, nor {@code
+     * FeatRequirements}, which reads {@code AttributeValue#getBaseWithRacialBonus()} (the race's
+     * own Bônus Racial, never a Talento's grant). Zero by default.
      *
      * <p>Only for a <b>fixed</b> Atributo. A clause of the "escolha um Atributo" shape grants
      * {@code AtributoRacialEscolhidoFeat} in place of the constant ({@code HumanoFeat
@@ -2060,6 +2062,17 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      * hook is later reused for an Atributo whose Habilidades aren't.
      */
     default List<AttributeAbility> getGrantedAttributeAbilities(final Character character) {
+        return List.of();
+    }
+
+    /**
+     * Vantagens de Ego this Talento grants its holder on top of the one chosen at creation per Ego — "Você adquire
+     * uma Vantagem do Ego escolhido", {@code DestinoFeat#AUTOCONHECIMENTO}, recorded on {@link
+     * VantagemDeEgoEscolhidaFeat}. Folded live into {@code Character#getAllEgoAdvantages()}, which every Vantagem
+     * scan reads, so a granted one is resolved exactly like a chosen one — and may share an Ego with it (table
+     * ruling, 2026-10-08: Autoconhecimento stacks). Empty by default.
+     */
+    default List<org.aventyrs.core.ego.EgoAdvantage> getGrantedEgoAdvantages(final Character character) {
         return List.of();
     }
 
@@ -2201,6 +2214,15 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      * WeaponDrawService#getDrawCost}, which takes the cheapest answer across every held Talento.
      */
     default boolean drawsWeaponAsFreeAction(final Character character) {
+        return false;
+    }
+
+    /**
+     * Whether this Talento lets its holder Levantar-se as an Ação Livre rather than for 1PA —
+     * {@code ArtesMarciaisFeat#DOMINAR_ARTE_MARCIAL_SUBMISSAO}'s "pode se levantar como Ação Livre".
+     * Read by {@code StandUpService#getStandUpCost}. False by default.
+     */
+    default boolean standsUpAsFreeAction(final Character character) {
         return false;
     }
 

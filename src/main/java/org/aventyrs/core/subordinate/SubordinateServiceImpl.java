@@ -4,7 +4,6 @@ import lombok.NonNull;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.scene.SceneContext;
-import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.IllegalOperationException;
 
@@ -51,15 +50,43 @@ public class SubordinateServiceImpl implements SubordinateService {
     public void command(@NonNull final CombatantSheet commander, @NonNull final Subordinate subordinate,
                         final SceneContext sceneContext, final org.aventyrs.core.rest.RestType endsAtRest) {
         var held = SubordinateBenefits.of(commander);
-        int limit = commander.getAttributeTotal(AttributeDomain.CHARISMA);
-        if (held.size() >= limit) {
+        if (atLimit(commander, held)) {
             throw new IllegalOperationException(SUBORDINATE_LIMIT_REACHED);
         }
-        boolean sameGradeCommon = held.stream()
-                .anyMatch(other -> other.getGrade() == subordinate.getGrade() && !other.isProdigious());
-        if (!subordinate.isProdigious() && sameGradeCommon) {
+        if (gradeHeld(held, subordinate.getBenefit(), subordinate.isProdigious())) {
             throw new IllegalOperationException(SUBORDINATE_GRADE_HELD);
         }
+        place(commander, subordinate, sceneContext, endsAtRest);
+    }
+
+    @Override
+    public Subordinate grant(@NonNull final CombatantSheet commander, @NonNull final SubordinateBenefit benefit,
+                             final boolean prodigious, final SceneContext sceneContext) {
+        Subordinate subordinate = Subordinate.of(benefit, prodigious, GM_GRANT);
+        place(commander, subordinate, sceneContext, null);
+        return subordinate;
+    }
+
+    @Override
+    public boolean exceedsLimits(@NonNull final CombatantSheet commander, @NonNull final SubordinateBenefit benefit,
+                                 final boolean prodigious) {
+        var held = SubordinateBenefits.of(commander);
+        return atLimit(commander, held) || gradeHeld(held, benefit, prodigious);
+    }
+
+    private static boolean atLimit(final CombatantSheet commander, final java.util.List<Subordinate> held) {
+        return held.size() >= commander.getAttributeTotal(AttributeDomain.CHARISMA);
+    }
+
+    /** "não podem possuir Subordinados do mesmo tipo, a menos que um deles seja prodigioso". */
+    private static boolean gradeHeld(final java.util.List<Subordinate> held, final SubordinateBenefit benefit,
+                                     final boolean prodigious) {
+        return !prodigious && held.stream()
+                .anyMatch(other -> other.getGrade() == benefit.getGrade() && !other.isProdigious());
+    }
+
+    private static void place(final CombatantSheet commander, final Subordinate subordinate,
+                              final SceneContext sceneContext, final org.aventyrs.core.rest.RestType endsAtRest) {
         if (endsAtRest == null) {
             commander.applyEffect(subordinate);
         } else {
@@ -68,8 +95,15 @@ public class SubordinateServiceImpl implements SubordinateService {
         grantKingsEgo(commander, subordinate);
         if (subordinate.isProdigious() && sceneContext != null) {
             sceneContext.getAllies().stream()
-                    .filter(ally -> ally != commander && ally instanceof CharacterSheet)
+                    .filter(ally -> ally != commander && SubordinateBenefits.sameKind(commander, ally))
                     .forEach(ally -> grantKingsEgo(ally, subordinate));
+        }
+    }
+
+    @Override
+    public void shareKingsEgo(@NonNull final CombatantSheet ally, @NonNull final Subordinate king) {
+        if (king.isProdigious()) {
+            grantKingsEgo(ally, king);
         }
     }
 
@@ -82,11 +116,21 @@ public class SubordinateServiceImpl implements SubordinateService {
     }
 
     @Override
-    public void renewAfterLongRest(@NonNull final CombatantSheet commander) {
-        SubordinateBenefits.of(commander).forEach(held -> grantKingsEgo(commander, held));
+    public void renewAfterLongRest(@NonNull final CombatantSheet sheet, final SceneContext sceneContext) {
+        SubordinateBenefits.of(sheet).forEach(held -> grantKingsEgo(sheet, held));
+        if (sceneContext != null) {
+            sceneContext.getAllies().stream()
+                    .filter(ally -> ally != sheet && SubordinateBenefits.sameKind(sheet, ally))
+                    .flatMap(ally -> SubordinateBenefits.of(ally).stream())
+                    .filter(Subordinate::isProdigious)
+                    .forEach(held -> grantKingsEgo(sheet, held));
+        }
     }
 
-    /** A Rei's "2 Pontos Temporários em Ego", received like any granted point; nothing for another grade. */
+    /**
+     * A Rei's "2 Pontos Temporários em Ego"; nothing for another grade. Non-cumulative per Rei (core 0.1.5.6) — "apenas
+     * uma vez a cada dia": while its 2 are unspent, granting again adds nothing.
+     */
     private static void grantKingsEgo(final CombatantSheet recipient, final Subordinate subordinate) {
         EgoDomain domain = switch (subordinate.getBenefit()) {
             case REI_SORTE -> EgoDomain.SORTE;
@@ -94,7 +138,7 @@ public class SubordinateServiceImpl implements SubordinateService {
             default -> null;
         };
         if (domain != null) {
-            recipient.receiveTemporaryEgoPoints(domain, "SUBORDINADO_REI:" + subordinate.getId(),
+            recipient.receiveNonCumulativeTemporaryEgoPoints(domain, "SUBORDINADO_REI:" + subordinate.getId(),
                     SubordinateBenefit.EGO_POINTS);
         }
     }
