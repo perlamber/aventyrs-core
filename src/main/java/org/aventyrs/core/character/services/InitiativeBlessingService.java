@@ -9,7 +9,7 @@ public interface InitiativeBlessingService {
 
     /**
      * Every {@link Blessing} character's own held traits grant the moment it wins
-     * initiative for its group — concatenates {@code character.getEgoAdvantages().values()},
+     * initiative for its group — concatenates {@code character.getAllEgoAdvantages()},
      * {@code character.getAttributeAbilities()}, and {@code
      * org.aventyrs.core.skill.SkillCompetencyAbility#allFor(character)} (acquired <b>and</b>
      * racial), and {@code character.getFeats()} ({@code MobilidadeFeat#LIDERAR_O_AVANCO}),

@@ -58,7 +58,10 @@ public enum GorgonaFeat implements Feat {
     // TODO: "sempre considerado Amaldiçoado" now has a classification to name
     //  (ConditionType.AMALDICOADO, appliable open-ended with a null duration), but nothing applies
     //  a Condition from a held Talento — Feat has no condition hook, and "sempre" is a standing
-    //  state rather than a triggered one.
+    //  state rather than a triggered one. ⚠️ Since core 0.1.5 Amaldiçoado implies Desprevenido
+    //  (-4 Defesas): wiring this as a held Amaldiçoado would make a Górgona permanently
+    //  Desprevenido. "Para efeitos diversos" reads as a marker for clauses that ask about curses,
+    //  so if wired, also override suppressesImpliedCondition(AMALDICOADO, DESPREVENIDO).
     // "não possui a Característica Racial Imunidade a Encantamentos" is real now, through
     // Feat#suppressesEnchantmentImmunity — a per-trait suppression rather than a rung of
     // RacialTraitSuppression, since that ladder silences categories for a Forma while this names

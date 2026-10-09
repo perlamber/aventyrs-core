@@ -132,11 +132,11 @@ class DamageBonusSummingTest {
     // ---------- conditions reaching a dano roll ----------
 
     @Test
-    void desarmadoCostsTwoOnADanoRoll() {
+    void fraquezaCostsTwoOnADanoRoll() {
         CharacterSheet roller = sheet();
         assertNull(meleeDamageBonus(roller, null));
 
-        roller.applyCondition(new Condition(ConditionType.DESARMADO, 1));
+        roller.applyCondition(new Condition(ConditionType.FRAQUEZA, 1));
 
         assertEquals(Skill.DISADVANTAGE_MALUS, meleeDamageBonus(roller, null).getValue());
     }
@@ -149,44 +149,44 @@ class DamageBonusSummingTest {
         assertEquals(Skill.DISADVANTAGE_MALUS, meleeDamageBonus(roller, null).getValue());
     }
 
-    /** Two conditions each costing a Desvantagem stack — they are separate maluses, not one state. */
+    /** Fraqueza is an Estado: two Condições conferring it cost its Desvantagem once. */
     @Test
-    void twoConditionsEachCostingADesvantagemStack() {
+    void twoConditionsConferringFraquezaCostItOnce() {
         CharacterSheet roller = sheet();
-        roller.applyCondition(new Condition(ConditionType.DESARMADO, 1));
+        roller.applyCondition(new Condition(ConditionType.ENVENENADO, 1));
         roller.applyCondition(new Condition(ConditionType.CAIDO, 1));
 
-        assertEquals(Skill.DISADVANTAGE_MALUS * 2, meleeDamageBonus(roller, null).getValue());
+        assertEquals(Skill.DISADVANTAGE_MALUS, meleeDamageBonus(roller, null).getValue());
     }
 
     /** The fear ladder's dano malus is proximity-scoped, exactly like its Perícia one. */
     @Test
-    void assustadoCostsDanoOnlyWithinFourUdOfTheFearsOrigin() {
+    void assustadoCostsDanoOnlyWithinMediaOfTheFearsOrigin() {
         CharacterSheet roller = sheet();
         CharacterSheet fear = sheet();
         roller.applyCondition(new Condition(ConditionType.ASSUSTADO, 2, fear));
 
         assertEquals(Skill.DISADVANTAGE_MALUS,
-                meleeDamageBonus(roller, at(fear, Range.DISTANCIA_CURTA)).getValue());
-        assertNull(meleeDamageBonus(roller, at(fear, Range.DISTANCIA_MEDIA)));
+                meleeDamageBonus(roller, at(fear, Range.DISTANCIA_MEDIA)).getValue());
+        assertNull(meleeDamageBonus(roller, at(fear, Range.DISTANCIA_LONGA)));
     }
 
-    /** Apavorado reaches 8UD where Assustado reaches 4UD — same widening as its Perícia malus. */
+    /** Apavorado reaches Longa where Assustado reaches Média — same widening as its Perícia malus. */
     @Test
-    void apavoradoCostsDanoOutToEightUd() {
+    void apavoradoCostsDanoOutToLonga() {
         CharacterSheet roller = sheet();
         CharacterSheet fear = sheet();
         roller.applyCondition(new Condition(ConditionType.APAVORADO, 2, fear));
 
         assertEquals(Skill.DISADVANTAGE_MALUS,
-                meleeDamageBonus(roller, at(fear, Range.DISTANCIA_MEDIA)).getValue());
+                meleeDamageBonus(roller, at(fear, Range.DISTANCIA_LONGA)).getValue());
     }
 
     /** A dano malus must not leak onto a non-attack Perícia, which has no dano roll at all. */
     @Test
     void aDanoMalusDoesNotReachANonAttackPericia() {
         CharacterSheet roller = sheet();
-        roller.applyCondition(new Condition(ConditionType.DESARMADO, 1));
+        roller.applyCondition(new Condition(ConditionType.FRAQUEZA, 1));
 
         InteractionResult result = new AtletismoInteraction().applyTo(roller, null, null);
 
@@ -196,23 +196,24 @@ class DamageBonusSummingTest {
     // ---------- Flanqueado: the outward-facing half ----------
 
     /**
-     * "Atacar um personagem Flanqueado garante Vantagem na rolagem de Dano" — the bonus lands on
-     * the attacker, so it is the *target's* condition that produces it.
+     * "Personagens flanqueados se tornam Favorecidos em Perícias de Ataque" — the Vantagem lands on
+     * the attacker's <b>attack roll</b> (core 0.1.5; it used to be the dano roll), read off the
+     * <i>target's</i> condition.
      */
     @Test
-    void attackingAFlankedTargetGrantsVantagemOnTheDanoRoll() {
+    void attackingAFlankedTargetGrantsVantagemOnTheAttackRollNotTheDanoRoll() {
         CharacterSheet attacker = sheet();
         CharacterSheet victim = sheet();
         SceneContext context = at(victim, Range.ADJACENTE);
         InteractionResult before = new AtaqueCorpoACorpoInteraction()
                 .applyTo(attacker, context, null, victim, null);
-        assertNull(before.getDamageBonus());
 
         victim.applyCondition(new Condition(ConditionType.FLANQUEADO, 1));
 
         InteractionResult after = new AtaqueCorpoACorpoInteraction()
                 .applyTo(attacker, context, null, victim, null);
-        assertEquals(Skill.ADVANTAGE_BONUS, after.getDamageBonus().getValue());
+        assertEquals(before.getSkillRollBonus() + Skill.ADVANTAGE_BONUS, after.getSkillRollBonus());
+        assertNull(after.getDamageBonus());
     }
 
     /** Being Flanqueado costs its holder nothing on their own dano roll — only Defesas. */
@@ -240,7 +241,7 @@ class DamageBonusSummingTest {
     void aTemporaryDamageRollBonusIsSummedIn() {
         CharacterSheet roller = sheet();
         roller.grantTemporaryBonus(ModifierType.DAMAGE_ROLL_BONUS, 3, 1);
-        roller.applyCondition(new Condition(ConditionType.DESARMADO, 1));
+        roller.applyCondition(new Condition(ConditionType.FRAQUEZA, 1));
 
         // +3 granted, -2 from the condition.
         assertEquals(1, meleeDamageBonus(roller, null).getValue());
@@ -255,7 +256,7 @@ class DamageBonusSummingTest {
     void contributionsThatCancelOutReportNoBonusAtAll() {
         CharacterSheet roller = sheet();
         roller.grantTemporaryBonus(ModifierType.DAMAGE_ROLL_BONUS, -Skill.DISADVANTAGE_MALUS, 1);
-        roller.applyCondition(new Condition(ConditionType.DESARMADO, 1));
+        roller.applyCondition(new Condition(ConditionType.FRAQUEZA, 1));
 
         assertNull(meleeDamageBonus(roller, null));
     }

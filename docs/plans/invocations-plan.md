@@ -15,6 +15,22 @@ summons — and the Alma Imperador Título. Started 2026-10-01 with the ALIADOS 
 Reanimar, Armada Decapitada, the Título summons (Convocar Daemons, the Elementais) and the Alma Imperador Título (a
 second character), which is not written yet.
 
+**GM-granted Subordinados (core 0.1.5.6 + API + client, 2026-10-09).**
+- **Rulings (2026-10-08):**
+  - The GM grants from the Cena's GM menu ("Subordinados") to characters and foes.
+  - No Carisma limit or one-per-grade rule; the modal only warns.
+  - Permanent until the GM dismisses them from the same modal.
+- **Wire:**
+  - `/app/scenes/{id}/subordinates` (GM-only), relayed; the target's owner applies it with `SubordinateService#grant`/`dismiss` and saves it with its status frame.
+  - `SubordinateDto` carries the Subordinado's id.
+  - Status broadcasts carry `subordinates`, so stand-ins mirror them, and a Prodigioso one reaches allies on other boards.
+  - A foe's are stored on `MonsterSheetDocument`.
+- **Rainha +2 Iniciativa:** the server's turn order adds it from the persisted lists (`SubordinateInitiative`), never on top of an override.
+- **Rei:**
+  - Non-cumulative per Rei.
+  - A Descanso Longo renews an ally's Prodigioso Rei too.
+  - A Prodigioso Rei arriving on another board gives its points via `shareKingsEgo`.
+
 ## Rulings (2026-10-01)
 
 - **The summon in a Cena:** an invoked creature joins the Scene as its own participant, with its own token and its own

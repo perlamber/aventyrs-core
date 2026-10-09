@@ -27,11 +27,24 @@ import org.aventyrs.core.sheet.ConditionType;
  * @param conditionOnDamage a Malefício the attacker additionally takes <b>if their attack dealt
  *                          damage</b>, or {@code null} when the retaliation inflicts none
  * @param conditionRounds  how long {@link #conditionOnDamage} lasts, in Rodadas; 0 when there is none
+ * @param conditionEffects the inflicting source's own magnitudes for {@link #conditionOnDamage}
+ *                         ("perdem -1 Multiplicador de Pontos de Vida"), carried on the Condição
  */
 public record Retaliation(int damage,
                           DamageDescriptor descriptor,
                           ConditionType conditionOnDamage,
-                          int conditionRounds) {
+                          int conditionRounds,
+                          java.util.List<ConditionType.ConditionEffect> conditionEffects) {
+
+    public Retaliation {
+        conditionEffects = conditionEffects == null ? java.util.List.of() : java.util.List.copyOf(conditionEffects);
+    }
+
+    /** A retaliation whose Malefício carries no magnitudes of its own. */
+    public Retaliation(final int damage, final DamageDescriptor descriptor, final ConditionType conditionOnDamage,
+                       final int conditionRounds) {
+        this(damage, descriptor, conditionOnDamage, conditionRounds, java.util.List.of());
+    }
 
     /**
      * Deals this retaliation to attacker — the one step the report leaves to its caller, written
@@ -48,7 +61,7 @@ public record Retaliation(int damage,
         damageService.applyDamage(attacker, sceneContext, descriptor, source, damage, false);
         int dealt = attacker.getDamageTaken() - before;
         if (dealt > 0 && conditionOnDamage != null) {
-            attacker.applyCondition(new Condition(conditionOnDamage, conditionRounds, source));
+            attacker.applyCondition(new Condition(conditionOnDamage, conditionRounds, source, conditionEffects));
         }
         return dealt;
     }

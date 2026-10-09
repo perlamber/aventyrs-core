@@ -14,6 +14,7 @@ import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.Player;
 import org.aventyrs.core.skill.DifficultyLevel;
+import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.skill.SkillType;
 
 import java.util.EnumMap;
@@ -359,7 +360,20 @@ public class MonsterSheet extends AbstractCombatantSheet {
         if (blueprint != null) {
             return MonsterRules.skillDifficulty(blueprint, skillType, getCharacter(), this);
         }
-        return skillDifficulties.getOrDefault(skillType, generalDifficulty);
+        SkillDifficulty authored = skillDifficulties.getOrDefault(skillType, generalDifficulty);
+        int conditions = conditionSkillBonus(this, skillType);
+        return conditions == 0 ? authored : SkillDifficulty.of(authored.level(), authored.bonus() + conditions);
+    }
+
+    /**
+     * What a foe's own held Condições do to the GD it presents on skill — Fraqueza's Desvantagem,
+     * since a foe rolls nothing and its GD stands in for the roll. Read with no {@code SceneContext}
+     * (none is in reach where a GD is asked for), so a range-scoped fear band only counts when its
+     * source is unknown — the same "cannot tell" reading every null context takes.
+     */
+    static int conditionSkillBonus(final org.aventyrs.core.sheet.CombatantSheet sheet, final SkillType skill) {
+        return sheet.getConditionBonus(ModifierType.SKILL_ROLL_BONUS, null)
+                + sheet.getConditionBonus(skill.getRollBonusType(), null);
     }
 
     /**
@@ -397,6 +411,12 @@ public class MonsterSheet extends AbstractCombatantSheet {
         if (blueprint != null) {
             return MonsterRules.defense(blueprint, this, defenseType);
         }
-        return defenseType == DefenseType.PHYSICAL ? physicalDefense : magicDefense;
+        int authored = defenseType == DefenseType.PHYSICAL ? physicalDefense : magicDefense;
+        // A fixed stat block's Defesa is the flat stand-in for its Esquiva e Aparar, so its own
+        // Condições reach it as they reach a rules-built foe's: Desprevenido's -4 and Fraqueza's -2.
+        return authored
+                + getConditionBonus(ModifierType.DEFESAS, null)
+                + getConditionBonus(defenseType.getModifierType(), null)
+                + conditionSkillBonus(this, SkillType.ESQUIVA_E_APARAR);
     }
 }

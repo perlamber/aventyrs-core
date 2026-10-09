@@ -103,4 +103,34 @@ public interface DevourService {
 
     /** "Regurgitar um personagem devorado ao tempo de 1PA para cada hora" — at least 1PA. */
     int getRegurgitationActionPoints(int hoursInside);
+
+    // --- Libertar-se da Predação — any Devorado, not only Bocarra's (core 0.1.5) ---------------
+
+    /**
+     * "A GD da Perícia de Ataque é igual à Defesa, reduzido -2 níveis (até mínimo de GD Médio)" — the
+     * devourer's Defesa Física as the tier it reaches, two níveis easier, never below Médio.
+     */
+    org.aventyrs.core.skill.DifficultyLevel getEscapeDifficulty(CombatantSheet devourer);
+
+    /**
+     * An attack from inside — "Libertar-se da Predação … requer uma rolagem de Ataque Corpo-a-Corpo.
+     * Apenas Armas Naturais ou Armas leves podem ser utilizados". roll is the victim's Ataque
+     * Corpo-a-Corpo, weapon what it is swung with ({@code null} for an Ataque Desarmado), judged
+     * against {@link #getEscapeDifficulty}. Only the hit is decided here; the caller rolls its damage,
+     * which reaches the devourer at Meio-Dano, and hands what landed to {@link #recordEscapeHit}.
+     *
+     * @throws org.aventyrs.core.sheet.IllegalOperationException {@code NOT_HELD} when victim is not
+     *         Devorado, {@code DEVOURED_WEAPON_NOT_ALLOWED} for a weapon neither natural nor light
+     */
+    GrappleResult escapeAttack(CombatantSheet victim, org.aventyrs.core.scene.SceneContext sceneContext,
+                               org.aventyrs.core.skill.SkillRoll roll, org.aventyrs.core.item.Weapon weapon);
+
+    /**
+     * Records the damage victim's escape hit dealt its devourer: "Caso um único ataque inflija uma
+     * quantidade de danos igual ao dobro do Vigor do devorador o personagem é liberto" — or, inside a
+     * Bocarra, the running total its own rule keeps (table ruling, 2026-10-07). A freed victim is
+     * Pronto in an adjacent space (where is the caller's) and "recebe a condição Abalado e o estado de
+     * Desprevenido por 1 Rodada". {@code true} if they are free.
+     */
+    boolean recordEscapeHit(CombatantSheet victim, int damageDealt);
 }

@@ -49,6 +49,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
+import static org.aventyrs.core.util.TranslatableMessages.ACTION_PREVENTED_BY_CONDITION;
 import static org.aventyrs.core.util.TranslatableMessages.SKILL_USE_PREVENTED;
 import static org.aventyrs.core.skill.Skill.UNTRAINED_PENALTY;
 import static org.aventyrs.core.util.TranslatableMessages.ANCESTRAL_COUNSEL_NOT_BANKED;
@@ -89,7 +90,7 @@ import org.aventyrs.core.item.ShieldAttack;
  * SkillCompetencyAbility#resolveConditionalRollBonus}, for a bonus conditioned on {@code
  * sceneContext}/the roll's own requested trait rather than reflection-discoverable via
  * {@code @Modifier} (e.g. {@code AnoesRacialAbility#FILHOS_DA_MONTANHA}) — plus, via {@link
- * #sumEgoAdvantageRollBonuses}, every held {@code character.getEgoAdvantages()}' own {@link
+ * #sumEgoAdvantageRollBonuses}, every held {@code character.getAllEgoAdvantages()}' own {@link
  * org.aventyrs.core.ego.EgoAdvantage#resolveConditionalRollBonus} (e.g. {@code
  * InitiativeAdvantage#IMPETO}'s Vantagem during a Cena de Combate's first two Rounds) — plus,
  * via {@link #sumEgoAdvantageSkillSpecificRollBonuses}, every held {@code EgoAdvantage}'s own
@@ -354,6 +355,11 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
         if (target.isSkillUsePrevented(skillType, attributeDomain)) {
             throw new IllegalOperationException(SKILL_USE_PREVENTED);
         }
+        // A held Condição refusing the action itself (core 0.1.5) — judged only for a real roll: a
+        // bonuses-only preview (no SkillRoll) is a question, not an action.
+        if (skillRoll != null && isRefusedByCondition(target, sceneContext, skillRoll)) {
+            throw new IllegalOperationException(ACTION_PREVENTED_BY_CONDITION);
+        }
 
         int bonus = characterSkillService.getValueForRoll(characterSkill, character.getAttributes(), character.getRace(), attributeDomain);
         if (counselled) {
@@ -401,8 +407,8 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                 .sum();
         bonus += sumConditionalRollBonuses(skillCompetencyAbilities, sceneContext, skillRoll, target);
         bonus += sumFeatRollBonuses(target, sceneContext, skillRoll, attackSource);
-        bonus += sumEgoAdvantageRollBonuses(character.getEgoAdvantages().values(), sceneContext);
-        bonus += sumEgoAdvantageSkillSpecificRollBonuses(character.getEgoAdvantages().values(), sceneContext, target);
+        bonus += sumEgoAdvantageRollBonuses(character.getAllEgoAdvantages(), sceneContext);
+        bonus += sumEgoAdvantageSkillSpecificRollBonuses(character.getAllEgoAdvantages(), sceneContext, target);
         bonus += sizeCategoryRollBonus(characterSizeService.getEffectiveSizeCategory(target));
         bonus += sumAttributeDomainRollBonuses(character.getAttributeAbilities(), attributeDomain, character);
         for (SkillCompetencyAbility ability : skillCompetencyAbilities) {
@@ -479,7 +485,8 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
 
         // Cego: "Deve rolar 1d6 sempre que efetuar uma rolagem de perícia" — reported so the caller
         // throws it, and judged when it did.
-        java.util.OptionalInt blindThreshold = target.getBlindCheckThreshold(skillType, sceneContext);
+        java.util.OptionalInt blindThreshold = target.getBlindCheckThreshold(skillType, attributeDomain, sceneContext,
+                attackTarget);
         boolean blindCheckFailed = false;
         if (blindThreshold.isPresent()) {
             result.blindCheckThreshold(blindThreshold.getAsInt());
@@ -644,6 +651,9 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                 .mapToInt(title -> title.resolveAttackRollBonus(skillType, attackSource, target, attackTarget,
                         sceneContext))
                 .sum();
+        // Outward-facing: Favorecido em Perícias de Ataque against a Flanqueado/Caído/Imobilizado/
+        // Confuso/Cego target, read off the *victim's* own Condições.
+        attackRollBonus += attackTarget.getAttackerAttackRollBonus(sceneContext);
         if (attackRollBonus != 0) {
             result = result.toBuilder().skillRollBonus(result.getSkillRollBonus() + attackRollBonus).build();
         }
@@ -1070,7 +1080,7 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                         attackSource, target))
                 .flatMap(Optional::stream)
                 .forEach(bonus -> addTyped(typed, contributions, DamageContributionSource.SKILL_COMPETENCY_ABILITY, bonus));
-        character.getEgoAdvantages().values().stream()
+        character.getAllEgoAdvantages().stream()
                 .map(advantage -> advantage.resolveDamageBonus(sceneContext))
                 .flatMap(Optional::stream)
                 .forEach(bonus -> addTyped(typed, contributions, DamageContributionSource.EGO_ADVANTAGE, bonus));
@@ -1095,15 +1105,11 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                         .mapToInt(held -> held.resolveDamageRollBonus(skillType, attackSource, target, attackTarget,
                                 sceneContext))
                         .sum());
-        // Outward-facing: what the *victim's* own Condições hand the attacker (Flanqueado).
-        int targetCondition = attackTarget == null ? 0
-                : addFlat(contributions, DamageContributionSource.TARGET_CONDITION,
-                        attackTarget.getAttackerDamageBonusFromConditions(sceneContext));
 
         // A Cavaleiro's "Vantagem em … Dano" (core 0.0.92).
         int subordinate = addFlat(contributions, DamageContributionSource.SUBORDINATE,
                 Skill.ADVANTAGE_BONUS * org.aventyrs.core.subordinate.SubordinateBenefits.count(target, sceneContext, org.aventyrs.core.subordinate.SubordinateBenefit.CAVALEIRO_DAMAGE));
-        int flat = temporary + condition + meiaForca + manoeuvre + title + targetCondition + subordinate;
+        int flat = temporary + condition + meiaForca + manoeuvre + title + subordinate;
         return new DamageSum(DamageBonus.total(typed, flat), new DamageBonusBreakdown(contributions));
     }
 
@@ -1279,5 +1285,19 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
 
     private static Integer nullIfZero(final int value) {
         return value == 0 ? null : value;
+    }
+
+    /**
+     * Whether a held Condição refuses this roll — as the kind of action it is ({@link
+     * org.aventyrs.core.action.ActionKind#of}), and as whatever it is priced as (a roll bought as a
+     * Reação or Ação Livre is refused while Confuso).
+     */
+    private boolean isRefusedByCondition(final CombatantSheet target, final SceneContext sceneContext,
+                                         final SkillRoll skillRoll) {
+        if (target.isActionPrevented(org.aventyrs.core.action.ActionKind.of(skillType, skillRoll), sceneContext)) {
+            return true;
+        }
+        org.aventyrs.core.action.ActionKind priced = org.aventyrs.core.action.ActionKind.ofCost(skillRoll.getActionCost());
+        return priced != null && target.isActionPrevented(priced, sceneContext);
     }
 }

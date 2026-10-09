@@ -452,6 +452,12 @@ public class SpellCastingServiceImpl implements SpellCastingService {
             throw new org.aventyrs.core.sheet.IllegalOperationException(INVALID_SPELL_CAST_TARGET);
         }
 
+        // Devorado: "Não pode ser afetado por efeitos externos, mesmo que possuam Área de Efeito".
+        if (request.getCombatantTarget() != null && request.getCombatantTarget().isShieldedFrom(request.getCaster())
+                || request.getAdditionalTargets().stream().anyMatch(extra -> extra.isShieldedFrom(request.getCaster()))) {
+            throw new org.aventyrs.core.sheet.IllegalOperationException(
+                    org.aventyrs.core.util.TranslatableMessages.TARGET_INSIDE_DEVOURER);
+        }
         // "Pessoal ou Toque": a cast fits either of the version's two ways of aiming (core 0.0.93).
         boolean validTarget = fits(spell.getTargeting(), request)
                 || spell.getAlternateTargeting().map(alternate -> fits(alternate, request)).orElse(false);

@@ -236,4 +236,100 @@ class SubordinateTest {
 
         assertEquals(0, SubordinateBenefits.of(sheet).size());
     }
+
+    // ---------- GM grants (core 0.1.5.6) ----------
+
+    private static SceneContext combatWith(final org.aventyrs.core.sheet.CombatantSheet... allies) {
+        return new SceneContext(List.of(allies), List.of(), Map.of(), TerrainType.FOREST, true, 1, false, null);
+    }
+
+    /** "As many as he wants": a GM grant ignores the Carisma limit and the one-per-grade rule, and only warns. */
+    @Test
+    void aGmGrantIgnoresTheLimits() {
+        CharacterSheet sheet = commander(1);
+        assertEquals(false, service.exceedsLimits(sheet, SubordinateBenefit.TORRE_DEFESAS, false));
+
+        Subordinate first = service.grant(sheet, SubordinateBenefit.TORRE_DEFESAS, false, null);
+        assertEquals(true, service.exceedsLimits(sheet, SubordinateBenefit.TORRE_RA, false));
+        service.grant(sheet, SubordinateBenefit.TORRE_RA, false, null);
+        service.grant(sheet, SubordinateBenefit.TORRE_DEFESAS, false, null);
+
+        assertEquals(3, SubordinateBenefits.of(sheet).size());
+        assertEquals(SubordinateService.GM_GRANT, first.getSource());
+        assertEquals(null, first.getRemainingRounds(), "until the GM dismisses it");
+        assertEquals(2, SubordinateBenefits.count(sheet, combat(), SubordinateBenefit.TORRE_DEFESAS));
+        assertThrows(IllegalOperationException.class,
+                () -> service.command(sheet, Subordinate.of(SubordinateBenefit.PEAO_SKILL, false, "rule"), null),
+                "a rule source still meets the limits");
+    }
+
+    @Test
+    void aGrantedSubordinadoIsDismissedById() {
+        CharacterSheet sheet = commander(3);
+        Subordinate kept = service.grant(sheet, SubordinateBenefit.PEAO_SKILL, false, null);
+        Subordinate gone = service.grant(sheet, SubordinateBenefit.CAVALEIRO_ATTACK, false, null);
+
+        service.dismiss(sheet, gone.getId());
+
+        assertEquals(List.of(kept), SubordinateBenefits.of(sheet));
+    }
+
+    /** A restored Subordinado keeps the id it was first held under, so another client can name it. */
+    @Test
+    void aRestoredSubordinadoKeepsItsId() {
+        UUID id = UUID.randomUUID();
+        assertEquals(id, new Subordinate(id, SubordinateBenefit.TORRE_RA, false, "x", null, null).getId());
+        assertEquals(id, Subordinate.sustained(id, SubordinateBenefit.TORRE_RA, false, "x", UUID.randomUUID(), 1).getId());
+    }
+
+    /** "apenas uma vez a cada dia": unspent Rei points don't pile up, and a Prodigioso Rei renews its allies too. */
+    @Test
+    void aReiRenewsWithoutPilingUpAndReachesAlliesOfAProdigioso() {
+        CharacterSheet king = commander(3);
+        CharacterSheet ally = commander(1);
+        int kingSorte = king.getTemporaryEgoPoints(EgoDomain.SORTE);
+        int allySorte = ally.getTemporaryEgoPoints(EgoDomain.SORTE);
+
+        service.grant(king, SubordinateBenefit.REI_SORTE, true, combatWith(ally));
+        assertEquals(kingSorte + 2, king.getTemporaryEgoPoints(EgoDomain.SORTE));
+        assertEquals(allySorte + 2, ally.getTemporaryEgoPoints(EgoDomain.SORTE));
+
+        service.renewAfterLongRest(king, combatWith(ally));
+        assertEquals(kingSorte + 2, king.getTemporaryEgoPoints(EgoDomain.SORTE), "unspent: nothing more");
+
+        ally.spendEgoPoints(EgoDomain.SORTE, org.aventyrs.core.sheet.EgoPointType.TEMPORARY, allySorte + 2);
+        service.renewAfterLongRest(ally, combatWith(king));
+        assertEquals(2, ally.getTemporaryEgoPoints(EgoDomain.SORTE),
+                "the ally gets the Prodigioso Rei's points back on its own Descanso");
+    }
+
+    /** A monster commands one too; its Prodigioso reaches allied monsters, not allied characters. */
+    @Test
+    void aMonstersProdigiosoReachesItsOwnKind() {
+        var monster = org.aventyrs.core.monster.model.MonsterTestKit.spawn(1);
+        var packmate = org.aventyrs.core.monster.model.MonsterTestKit.spawn(1);
+        CharacterSheet character = commander(1);
+
+        service.grant(monster, SubordinateBenefit.TORRE_RA, true, null);
+
+        assertEquals(1, SubordinateBenefits.count(monster, combatWith(packmate, character), SubordinateBenefit.TORRE_RA));
+        assertEquals(1, SubordinateBenefits.count(packmate, combatWith(monster, character), SubordinateBenefit.TORRE_RA));
+        assertEquals(0, SubordinateBenefits.count(character, combatWith(monster, packmate), SubordinateBenefit.TORRE_RA));
+        int ra = new DamageServiceImpl().getTotalAbsoluteDamageReduction(packmate, combatWith());
+        assertEquals(ra + 2, new DamageServiceImpl().getTotalAbsoluteDamageReduction(packmate, combatWith(monster)));
+    }
+
+    /** A Prodigioso Rei seen on another client's stand-in gives its points to this client's ally, once. */
+    @Test
+    void aProdigiosoKingsEgoIsSharedOnce() {
+        CharacterSheet ally = commander(1);
+        int sorte = ally.getTemporaryEgoPoints(EgoDomain.SORTE);
+        Subordinate king = Subordinate.of(SubordinateBenefit.REI_SORTE, true, "Mestre");
+
+        service.shareKingsEgo(ally, king);
+        service.shareKingsEgo(ally, king);
+        service.shareKingsEgo(ally, Subordinate.of(SubordinateBenefit.REI_SORTE, false, "Mestre"));
+
+        assertEquals(sorte + 2, ally.getTemporaryEgoPoints(EgoDomain.SORTE));
+    }
 }

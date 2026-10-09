@@ -161,18 +161,6 @@ class WeaponDrawServiceTest {
         assertTrue(sheet.getCharacter().isDrawn(dagger));
     }
 
-    /** Being merely Desarmado does not stop you arming yourself again — that is how it ends. */
-    @Test
-    void beingDesarmadoDoesNotStopDrawing() throws IllegalOperationException {
-        Weapon dagger = dagger();
-        CharacterSheet sheet = carrying(dagger);
-        sheet.applyCondition(new Condition(ConditionType.DESARMADO, null));
-
-        assertTrue(weaponDrawService.canDraw(sheet, dagger));
-        weaponDrawService.draw(sheet, dagger);
-        assertTrue(sheet.getCharacter().isDrawn(dagger));
-    }
-
     // ---------- sheathing ----------
 
     @Test

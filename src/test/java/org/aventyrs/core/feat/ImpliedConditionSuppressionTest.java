@@ -75,18 +75,20 @@ class ImpliedConditionSuppressionTest {
                 .hasCondition(ConditionType.DESPREVENIDO, null));
     }
 
-    /** The −2 Defesas of Desprevenido is not charged — judged through DefenseService. */
+    /** The −4 Defesas of Desprevenido is not charged — judged through DefenseService. */
     @Test
     void theProneHolderLosesOnlyWhatCaidoItselfCosts() {
         DefenseServiceImpl defenseService = new DefenseServiceImpl();
         CharacterSheet martialArtist = with(sheet(ArtesMarciaisFeat.DOMINAR_ARTE_MARCIAL_SUBMISSAO), ConditionType.CAIDO);
         CharacterSheet plain = with(sheet(), ConditionType.CAIDO);
 
-        // Submissão's own +2 DF while Caído, plus the Desprevenido −2 it no longer pays.
-        assertEquals(defenseService.getTotalDefense(plain, DefenseType.PHYSICAL) + 2 + 2,
+        // Submissão's own +2 DF while Caído, plus the Desprevenido −4 it no longer pays.
+        assertEquals(defenseService.getTotalDefense(plain, DefenseType.PHYSICAL) + 2 + 4,
                 defenseService.getTotalDefense(martialArtist, DefenseType.PHYSICAL));
-        assertEquals(defenseService.getTotalDefense(plain, DefenseType.MAGIC) + 2,
+        assertEquals(defenseService.getTotalDefense(plain, DefenseType.MAGIC) + 4,
                 defenseService.getTotalDefense(martialArtist, DefenseType.MAGIC));
+        // Caído's other Estado, Fraqueza, is not Submissão's to veto.
+        assertTrue(martialArtist.hasCondition(ConditionType.FRAQUEZA, null));
     }
 
     // ---------- COMBATER_AS_CEGAS ----------

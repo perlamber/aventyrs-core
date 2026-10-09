@@ -77,12 +77,10 @@ public enum AbracadoPelaEscuridaoAbility implements AventyrTitleAbility {
     // The damage is *reported, never dealt*: this core computes damage only to a target from an
     // attacker, so the caller applies it against the attacker's own sheet — where the attacker's
     // RD/RA can judge it like any other incoming hit, which is where it belongs anyway.
-    // The Malefício Veneno half is real too: ConditionType.ENVENENADO now carries a
-    // ModifierType.LIFE_MULTIPLIER -1, read by HitPointsService#getLifeMultiplier(Character,
-    // CombatantSheet), so an attacker who takes it really does lose maximum PV. ⚠️ That entry's
-    // own catalogue wording says "Multiplicador de Bônus Base" and this clause says
-    // "Multiplicador de Pontos de Vida" — the concrete clause is taken as authoritative; see
-    // ConditionType#ENVENENADO's own note.
+    // The Malefício Veneno half is real too: the Envenenado it inflicts carries this clause's own
+    // ModifierType.LIFE_MULTIPLIER -1 as an extra effect (the catalogue leaves the magnitude to
+    // "a origem do efeito"), read by HitPointsService#getLifeMultiplier(Character, CombatantSheet),
+    // so an attacker who takes it really does lose maximum PV — and suffers Envenenado's Fraqueza.
     // "Atacarem", not "acertarem": the thorns are reported whether or not the attack landed, and
     // only the Veneno half is conditional on damage actually being dealt.
     ESPINHOS_VENENOS_DE_GAEA(

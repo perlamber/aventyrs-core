@@ -31,13 +31,12 @@ import java.util.Set;
  * Talentos de Destino — what a character is, rather than what they can do: how enemies read
  * them, which Habilidades they were born to, and when their Títulos Aventyr awaken.
  *
- * <p>Two blockers dominate — one of them now half-lifted. The first is <b>granting another
- * trait</b>: five constants here hand out a Habilidade de Atributo, a Vantagem de Ego, or another
- * Talento outright. The three that grant a <b>Habilidade de Atributo</b> are real now, through
- * {@link HabilidadeDeAtributoEscolhidaFeat}. {@link #EXCEPCIONALIDADE}'s Talento Racial is real
- * too, through {@link ExcepcionalidadeFeat}, which grants the chosen Talento whole. Only {@link
- * #AUTOCONHECIMENTO} is not: a Vantagem de Ego is chosen once at character creation and never
- * awarded later.
+ * <p>Two blockers dominated, and both are lifted. The first was <b>granting another trait</b>: five
+ * constants here hand out a Habilidade de Atributo, a Vantagem de Ego, or another Talento outright.
+ * The three that grant a <b>Habilidade de Atributo</b> are real, through {@link
+ * HabilidadeDeAtributoEscolhidaFeat}; {@link #EXCEPCIONALIDADE}'s Talento Racial through {@link
+ * ExcepcionalidadeFeat}; and {@link #AUTOCONHECIMENTO}'s Vantagem de Ego through {@link
+ * VantagemDeEgoEscolhidaFeat}, granted beside the one chosen at creation.
  *
  * <p>The second was the <b>Despertar timeline</b>, and it turned out to need no timeline at all.
  * "Adquirido antes de Despertar" is a ceiling checked at acquisition ({@code
@@ -137,13 +136,18 @@ public enum DestinoFeat implements Feat {
      * "Escolha um Ego que você possua valor 2 ou superior. Você adquire uma Vantagem do Ego
      * escolhido."
      */
-    // TODO: a Vantagem de Ego is chosen once at character creation (CharacterCreationService,
-    //  gated on EGO_ADVANTAGE_MIN_BASE) and there is no path to award one afterwards. Note this
-    //  Talento would also bypass that threshold of 3, granting at 2.
+    // Real, through VantagemDeEgoEscolhidaFeat — the acquired form recording the Vantagem picked, granted beside
+    // the creation one by Feat#getGrantedEgoAdvantages. Its own floor of 2 (Ego total) replaces creation's base 3.
     AUTOCONHECIMENTO(
             "Escolha um Ego que você possua valor 2 ou superior. Você adquire uma Vantagem do Ego "
                     + "escolhido.",
-            FeatRequirements.builder().build()),
+            FeatRequirements.builder().build()) {
+        @Override
+        public List<FeatChoice<?>> resolveRequiredChoices(final Character holder) {
+            return List.of(FeatChoice.ofOne(org.aventyrs.core.ego.EgoAdvantage.class,
+                    VantagemDeEgoEscolhidaFeat.optionsFor(holder)));
+        }
+    },
 
     /**
      * "Escolha um Atributo que você possua valor Base 2 ou superior. Você adquire uma Habilidade

@@ -549,7 +549,7 @@ public class CharacterCreationServiceImpl implements CharacterCreationService {
     @Override
     public org.aventyrs.core.item.Item grantFamilyHeirloom(@lombok.NonNull final CharacterSheet sheet,
                                                            final org.aventyrs.core.item.ItemSpecification spec) {
-        if (!sheet.getCharacter().getEgoAdvantages().containsValue(org.aventyrs.core.ego.ResourcesAdvantage.HERANCA_FAMILIAR)) {
+        if (!sheet.getCharacter().getAllEgoAdvantages().contains(org.aventyrs.core.ego.ResourcesAdvantage.HERANCA_FAMILIAR)) {
             throw new IllegalOperationException(org.aventyrs.core.util.TranslatableMessages.FAMILY_HEIRLOOM_NOT_HELD);
         }
         if (!isFamilyHeirloom(spec)) {

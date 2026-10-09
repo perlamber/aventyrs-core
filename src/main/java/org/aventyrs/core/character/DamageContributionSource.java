@@ -34,7 +34,12 @@ public enum DamageContributionSource {
     /** A Condição in force on the attacker (Caído/Desarmado's Desvantagem, the fear ladder). */
     CONDITION,
 
-    /** What the <em>victim's</em> own Condições hand the attacker — Flanqueado. */
+    /**
+     * What the <em>victim's</em> own Condições used to hand the attacker on the dano roll —
+     * Flanqueado's old Vantagem em Dano. Nothing contributes it since core 0.1.5, where that
+     * Favorecido moved to the attack roll; kept because clients name it in their message bundles.
+     */
+    @Deprecated
     TARGET_CONDITION,
 
     /** What a named manoeuvre adds to the dano roll it is the attack half of — an Investida's +2. */

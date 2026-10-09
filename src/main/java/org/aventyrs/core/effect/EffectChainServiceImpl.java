@@ -11,7 +11,7 @@ public class EffectChainServiceImpl implements EffectChainService {
 
     @Override
     public int getRequiredMargin(final Character target) {
-        return target.getEgoAdvantage(EgoDomain.AUTOCONTROLE) == AutocontroleAdvantage.RESOLUTO
+        return target.getEgoAdvantages(EgoDomain.AUTOCONTROLE).contains(AutocontroleAdvantage.RESOLUTO)
                 ? RESOLUTO_REQUIRED_MARGIN : BASE_REQUIRED_MARGIN;
     }
 

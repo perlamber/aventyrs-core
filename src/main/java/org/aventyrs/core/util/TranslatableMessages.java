@@ -255,6 +255,8 @@ public class TranslatableMessages {
      * #CONSELHEIRO_STRENGTH_ABILITY_REQUIREMENT_NOT_MET}, which names Força outright.
      */
     public static final String CHOSEN_ATTRIBUTE_ABILITY_REQUIREMENT_NOT_MET = "CHOSEN_ATTRIBUTE_ABILITY_REQUIREMENT_NOT_MET";
+    /** Autoconhecimento's pick names an Ego below 2, or a Vantagem the character already holds. */
+    public static final String CHOSEN_EGO_ADVANTAGE_NOT_AVAILABLE = "CHOSEN_EGO_ADVANTAGE_NOT_AVAILABLE";
 
     /**
      * The Talento picked for {@code DestinoFeat#EXCEPCIONALIDADE} is not one it offers the holder:
@@ -464,6 +466,52 @@ public class TranslatableMessages {
 
     /** The actor is in a state that forbids this Perícia — Frenesi's "Perícias que exijam concentração ou raciocínio". */
     public static final String SKILL_USE_PREVENTED = "SKILL_USE_PREVENTED";
+
+    /**
+     * A held Condição refuses this action outright — Imobilizado/Desacordado/Petrificado ("não pode
+     * realizar ações"), Confuso (Ações Livres e Reações), Apavorado within Curta of its origin
+     * ("restritas a fugir"). See {@code CombatantSheet#refusalForAction}.
+     */
+    public static final String ACTION_PREVENTED_BY_CONDITION = "ACTION_PREVENTED_BY_CONDITION";
+
+    /** Agarrar: the target is more than 2 Categorias de Tamanho larger than the captor. */
+    public static final String GRAPPLE_TARGET_TOO_LARGE = "GRAPPLE_TARGET_TOO_LARGE";
+
+    /** Agarrar: no hand is free — drawn weapons, an equipped Escudo and every hold already kept use both. */
+    public static final String GRAPPLE_REQUIRES_FREE_HAND = "GRAPPLE_REQUIRES_FREE_HAND";
+
+    /** Agarrar: the captor has no arms to grab with (Membro Ausente) — not even an Arma Natural will do. */
+    public static final String GRAPPLE_REQUIRES_ARMS = "GRAPPLE_REQUIRES_ARMS";
+
+    /** Agarrar: the target cannot be grabbed ("Este Monstro não pode ser agarrado"). */
+    public static final String GRAPPLE_TARGET_IMMUNE = "GRAPPLE_TARGET_IMMUNE";
+
+    /** Agarrar: the captor already holds this target. */
+    public static final String GRAPPLE_ALREADY_HELD = "GRAPPLE_ALREADY_HELD";
+
+    /** Agarrar: the would-be captor is Caído, Imobilizado, Desacordado or at 0 PV or less, and could hold nobody. */
+    public static final String GRAPPLE_CAPTOR_INCAPACITATED = "GRAPPLE_CAPTOR_INCAPACITATED";
+
+    /** An escape or hold was asked of a combatant who is not held that way. */
+    public static final String NOT_HELD = "NOT_HELD";
+
+    /** Libertar-se: this hold has no escape — an Ego setback's Imobilizado (Torpor) lasts as long as the setback. */
+    public static final String HOLD_NOT_ESCAPABLE = "HOLD_NOT_ESCAPABLE";
+
+    /** A contested grapple between two player characters — no opposed-roll resolution exists yet. */
+    public static final String OPPOSED_ROLL_UNSUPPORTED = "OPPOSED_ROLL_UNSUPPORTED";
+
+    /**
+     * The target is Devorado inside another creature — "Não pode ser afetado por efeitos externos,
+     * mesmo que possuam Área de Efeito". Only its devourer reaches it.
+     */
+    public static final String TARGET_INSIDE_DEVOURER = "TARGET_INSIDE_DEVOURER";
+
+    /** Libertar-se da Predação: "Apenas Armas Naturais ou Armas leves podem ser utilizados enquanto devorado". */
+    public static final String DEVOURED_WEAPON_NOT_ALLOWED = "DEVOURED_WEAPON_NOT_ALLOWED";
+
+    /** Levantar-se was asked of a combatant who is not Caído. */
+    public static final String NOT_PRONE = "NOT_PRONE";
 
     /** The trait "só pode ser ativada durante o efeito de Frenesi", and its activator is not in Frenesi. */
     public static final String FRENZY_REQUIRED = "FRENZY_REQUIRED";
