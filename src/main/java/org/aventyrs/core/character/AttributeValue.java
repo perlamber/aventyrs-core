@@ -64,6 +64,15 @@ public class AttributeValue{
         return fixedRacialBonus + chosenRacialBonus;
     }
 
+    /**
+     * The invested Base plus the whole Bônus Racial — what a Talento's Atributo Pré-requisito reads
+     * ({@code FeatRequirements}; table ruling, 2026-10-09). The Variável part (Magias, Talentos,
+     * Equipamento) stays out: a Pré-requisito asks what the character <i>is</i>, not what it holds.
+     */
+    public int getBaseWithRacialBonus() {
+        return base + getRacialBonus();
+    }
+
     public AttributeDomain domain(){
         return domain;
     }
