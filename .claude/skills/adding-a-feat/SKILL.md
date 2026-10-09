@@ -257,7 +257,9 @@ modeled as real, structured, *enforced* data.
 
 Parse the Pré-requisito into whichever of these it actually names (a Talento rarely names all
 three):
-- An Attribute floor (e.g. "Força 2") → `attributeDomain`/`requiredAttributeValue`.
+- An Attribute floor (e.g. "Força 2") → `attributeDomain`/`requiredAttributeValue`. Every
+  Atributo clause is tested against Base + the race's Bônus Racial
+  (`AttributeValue#getBaseWithRacialBonus()`, 0.1.6) — never a Variável or Talento-granted bonus.
 - A Perícia Graduação floor (e.g. "2 Graduações em Ataque Corpo-a-Corpo") →
   `requiredSkillType`/`requiredSkillGraduation`.
 - Another specific Talento already held (e.g. "Requer Artista Marcial") → `requiredFeat`,

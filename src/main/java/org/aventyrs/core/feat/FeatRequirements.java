@@ -37,11 +37,14 @@ import java.util.Set;
  * FeatService#grantFeat} always has the sheet, so the authoritative check never skips anything.
  *
  * @param attributeDomain           which Attribute {@code requiredAttributeValue} tests, unset
- *                                  to skip. Tests {@code base}, not {@code getTotal()} —
- *                                  acquiring a Talento is gated on what the character
- *                                  personally invested in, deliberately unlike {@code
- *                                  org.aventyrs.core.item.ItemRequirements}.
- * @param requiredAttributeValue    minimum {@code base} of {@code attributeDomain}.
+ *                                  to skip. Tests {@code AttributeValue#getBaseWithRacialBonus()}
+ *                                  — the invested Base plus the race's Bônus Racial (table
+ *                                  ruling, 2026-10-09; before 0.1.6 it was Base alone), not
+ *                                  {@code getTotal()}: a Variável bonus or a Talento's own
+ *                                  Atributo grant never counts, deliberately unlike {@code
+ *                                  org.aventyrs.core.item.ItemRequirements}. Every Atributo
+ *                                  clause below reads the same figure.
+ * @param requiredAttributeValue    minimum Base + Bônus Racial of {@code attributeDomain}.
  * @param maximumAttributeDomain    which Attribute {@code maximumAttributeValue} caps, unset to
  *                                  skip — "Força igual ou inferior à 2" ({@code
  *                                  DestinoFeat#APARENCIA_INOFENSIVA}). A separate pair from the
@@ -49,14 +52,14 @@ import java.util.Set;
  *                                  different</i> Atributos ("Carisma 3 e Força ≤ 2"). One maximum
  *                                  per group, the same single-clause shape the minimum has; no
  *                                  authored Talento names two.
- * @param maximumAttributeValue     the largest {@code base} of {@code maximumAttributeDomain}
+ * @param maximumAttributeValue     the largest Base + Bônus Racial of {@code maximumAttributeDomain}
  *                                  still eligible. Inclusive ("igual ou inferior").
  * @param requiredAnyAttributeValue when > 0, <i>some</i> Attribute must have at least this
- *                                  {@code base} — "Atributo 3 ou Superior", "Qualquer Atributo
+ *                                  Base + Bônus Racial — "Atributo 3 ou Superior", "Qualquer Atributo
  *                                  com Valor Base 5", which name no particular domain.
  * @param requiredAnyRacialAttributeValue when > 0, some Attribute that actually <i>receives a
  *                                  Bônus Racial</i> ({@code AttributeValue#getRacialBonus() > 0})
- *                                  must have at least this {@code base} — {@code
+ *                                  must have at least this Base + Bônus Racial — {@code
  *                                  MonstruosoFeat#ALFA}'s "qualquer atributo que receba bônus
  *                                  Racial com valor Base igual à 5". A strictly narrower clause
  *                                  than the one above, not a substitute for it.
@@ -65,7 +68,7 @@ import java.util.Set;
  *                                  PeritoFeat#ANALISTA_TATICO}). An {@link EgoDomain}, not an
  *                                  {@link AttributeDomain}: Iniciativa is an Ego in this ruleset.
  *                                  Tests {@code EgoValue#getBase()}, matching the Attribute
- *                                  clauses' invested-value reading.
+ *                                  clauses' own reading of the invested figure.
  * @param maximumEgoValue           the largest {@code base} of {@code maximumEgoDomain} still
  *                                  eligible. Inclusive.
  * @param requiredSkillType         which Perícia {@code requiredSkillGraduation} tests, unset

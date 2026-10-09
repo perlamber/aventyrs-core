@@ -79,18 +79,20 @@ cd aventyrs-game-client
 git switch release && git pull
 ```
 
-1. In `build.gradle`, bump `version` (e.g. `0.1.0` → `0.1.1`) and point the core dependency at
-   the new core version.
+1. In `build.gradle`, point the core dependency at the new core version. **The client's version is
+   always the core version** — `version` is read from that dependency line, so there is nothing
+   else to bump.
 2. Test: `./gradlew test`
-3. Commit, tag and push:
+3. Commit, tag and push (the tag is the core version):
    ```bash
-   git commit -am "Release 0.1.1"
-   git tag -a v0.1.1 -m "Aventyrs client 0.1.1 (core 0.1.4.1)"
-   git push origin release v0.1.1
+   git commit -am "Release 0.1.6.1"
+   git tag -a v0.1.6.1 -m "Aventyrs client 0.1.6.1"
+   git push origin release v0.1.6.1
    ```
 4. Pushing the tag starts **Actions → Package client**. When it finishes, the GitHub Release
-   `v0.1.1` has `Aventyrs-<version>.dmg` and `Aventyrs-<version>.exe` attached.
-5. Install one of them and check that the initial screen shows **Cliente 0.1.1 · Core 0.1.4.1**
+   `v0.1.6.1` has `Aventyrs-<installer version>.dmg` and `.exe` attached (see Troubleshooting for
+   the installer version).
+5. Install one of them and check that the initial screen shows **Cliente 0.1.6.1 · Core 0.1.6.1**
    and the connection status reads **Ligado**.
 
 To build installers without releasing (e.g. to test a branch): **Actions → Package client →
@@ -103,7 +105,7 @@ artifacts instead of a Release.
 
 - [ ] Core: version bumped, changelog added, tests pass, tag `v<core>` pushed
 - [ ] API: core dependency updated, tests pass, deployed (`active`), pushed
-- [ ] Client: version + core dependency updated, tests pass, tag `v<client>` pushed
+- [ ] Client: core dependency updated (client version follows it), tests pass, tag `v<core>` pushed
 - [ ] GitHub Release has `.dmg` and `.exe`; installed app shows the right versions and connects
 
 ## Troubleshooting
@@ -111,7 +113,7 @@ artifacts instead of a Release.
 | Symptom | Cause / fix |
 |---|---|
 | CI: "aventyrs-core has no tag v…" | Tag and push core (step 1.4), then rerun the workflow. |
-| macOS installer is named `1.x.y` | macOS rejects versions starting with `0`, so `0.x.y` ships as `1.x.y`. In-app version is unaffected. |
+| Installer is named `x.y.z`, not `0.x.y.z` | jpackage takes at most three numbers and macOS rejects a leading `0`, so `0.1.6` ships as `1.6.0` and `0.1.6.1` as `1.6.1` (both OSes). In-app version is unaffected. |
 | macOS: "app can't be opened" | The app isn't signed. Right-click → Open the first time. |
 | API service won't start | `ssh administrador@192.168.99.99 'journalctl -u aventyrs-api -n 50'`. Don't run the fat jar directly: it must run extracted (the deploy script does this). |
 | Deploy: `KeyError: 'ContainerConfig'` | docker-compose v1 bug on the server. `docker rm` the Mongo/SeaweedFS containers and rerun. Data is in named volumes and is kept. |
