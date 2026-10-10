@@ -145,9 +145,17 @@ public class Character {
     @Builder.Default
     protected Set<SkillType> quickLearningSkills = Set.of();
 
-    /** Tendência de alinhamento, used by Talento prerequisites such as Corruptor Sombrio's. */
+    /**
+     * Tendência de alinhamento, 1–10 (see {@link Alignment} for each value's text). Talento
+     * prerequisites such as Corruptor Sombrio's read its {@link #getAlignmentBand() band}.
+     */
     @Builder.Default
-    protected Alignment alignment = Alignment.NEUTRAL;
+    protected int alignment = Alignment.DEFAULT;
+
+    /** The {@link Alignment} band {@link #getAlignment()} falls in — what Talento prerequisites compare. */
+    public Alignment getAlignmentBand() {
+        return Alignment.of(alignment);
+    }
 
     @NonNull
     protected CharacterAttributes attributes;

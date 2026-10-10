@@ -101,7 +101,7 @@ public class CharacterFixture extends SimpleFixture {
                 this.add("race", new Human());
                 this.add("sexo", null);
                 this.add("deity", null);
-                this.add("alignment", Alignment.NEUTRAL);
+                this.add("alignment", Alignment.DEFAULT);
                 this.add("attributes", CharacterAttributes.builder().build());
                 this.add("egos", CharacterEgos.builder().build());
                 this.add("egoAdvantages", Map.of());
@@ -166,7 +166,7 @@ public class CharacterFixture extends SimpleFixture {
                 this.add("race", new Human());
                 this.add("sexo", null);
                 this.add("deity", null);
-                this.add("alignment", Alignment.NEUTRAL);
+                this.add("alignment", Alignment.DEFAULT);
                 this.add("attributes", CharacterAttributes.builder()
                         .strength(AttributeValue.builder().domain(AttributeDomain.STRENGTH).base(2).build())
                         .dexterity(AttributeValue.builder().domain(AttributeDomain.DEXTERITY).base(5).build())

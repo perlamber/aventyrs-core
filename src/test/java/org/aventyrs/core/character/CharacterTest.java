@@ -21,10 +21,11 @@ class CharacterTest {
     }
 
     @Test
-    void alignmentDefaultsToNeutralWhenNotSet() {
+    void alignmentDefaultsToSixNeutralWhenNotSet() {
         Character character = CharacterFixture.blank(CharacterFixture.BLANK).build();
 
-        assertEquals(Alignment.NEUTRAL, character.getAlignment());
+        assertEquals(6, character.getAlignment());
+        assertEquals(Alignment.NEUTRAL, character.getAlignmentBand());
     }
 
     @Test
@@ -38,11 +39,12 @@ class CharacterTest {
     void builderAssignsSexoAndAlignment() {
         Character character = CharacterFixture.blank(CharacterFixture.BLANK)
                 .sexo(Character.Sexo.FEMININO)
-                .alignment(Alignment.EVIL)
+                .alignment(2)
                 .build();
 
         assertEquals(Character.Sexo.FEMININO, character.getSexo());
-        assertEquals(Alignment.EVIL, character.getAlignment());
+        assertEquals(2, character.getAlignment());
+        assertEquals(Alignment.EVIL, character.getAlignmentBand());
     }
 
     @Test

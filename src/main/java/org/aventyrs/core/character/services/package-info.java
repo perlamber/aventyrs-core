@@ -14,9 +14,11 @@
  *   <li><b>Pick a {@link org.aventyrs.core.race.Race}</b> (e.g.
  *       {@link org.aventyrs.core.race.Human}) — it drives step 2's racial bonuses and
  *       the XP costs {@code Race} exposes for later advancement.</li>
- *   <li><b>Pick an {@link org.aventyrs.core.character.Alignment}</b> — it defaults to
- *       {@code NEUTRAL}, but some Talentos have a moral-alignment prerequisite (e.g. Corruptor
- *       Sombrio accepts {@code NEUTRAL} or {@code EVIL}).</li>
+ *   <li><b>Pick a tendência</b> — a 1–10 number ({@code alignment}), defaulting to
+ *       {@link org.aventyrs.core.character.Alignment#DEFAULT} (6, Neutro);
+ *       {@link org.aventyrs.core.character.Alignment#display(int)} gives its text. Some Talentos
+ *       have a moral-alignment prerequisite read off its band (e.g. Corruptor Sombrio accepts
+ *       {@code NEUTRAL} or {@code EVIL}, i.e. 1–6).</li>
  *   <li><b>Allocate Attributes</b> — {@link org.aventyrs.core.character.services.CharacterCreationService#allocateAttributes}
  *       spends the {@value org.aventyrs.core.character.services.CharacterCreationService#STARTING_ATTRIBUTE_POINTS}
  *       starting points (no base above
@@ -117,7 +119,7 @@
  *         .player(player)
  *         .name("Aria")
  *         .race(race)
- *         .alignment(Alignment.NEUTRAL)
+ *         .alignment(Alignment.DEFAULT)
  *         .attributes(attributes)
  *         .egos(egos)
  *         .actionProfile(ActionProfile.REFLEXOS_RAPIDOS)

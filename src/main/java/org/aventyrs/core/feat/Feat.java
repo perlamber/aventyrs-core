@@ -261,7 +261,7 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
                         >= requirements.craftedRegaliaCount();
 
         boolean alignmentSatisfied = requirements.requiredAlignments().isEmpty()
-                || requirements.requiredAlignments().contains(character.getAlignment());
+                || requirements.requiredAlignments().contains(character.getAlignmentBand());
 
         // Sheet-side clauses: skipped, not failed, when no sheet was handed over — see the
         // javadoc on the overload above for why that direction.

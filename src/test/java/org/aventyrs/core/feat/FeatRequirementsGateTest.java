@@ -10,7 +10,6 @@ import org.aventyrs.core.character.CharacterEgos;
 import org.aventyrs.core.character.CharacterAttributes;
 import org.aventyrs.core.character.AttributeValue;
 import org.aventyrs.core.character.AttributeDomain;
-import org.aventyrs.core.character.Alignment;
 import org.aventyrs.core.character.TitleSlot;
 import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.race.Anao;
@@ -201,13 +200,16 @@ class FeatRequirementsGateTest {
 
     @Test
     void corruptorRequiresANeutralOrEvilAlignment() {
-        Character goodElf = character().race(new Elfo()).alignment(Alignment.GOOD).build();
+        Character goodElf = character().race(new Elfo()).alignment(7).build();
         goodElf.grantFeat(ElficoFeat.GUARDIAO_DOS_BOSQUES);
-        Character neutralElf = character().race(new Elfo()).alignment(Alignment.NEUTRAL).build();
+        Character neutralElf = character().race(new Elfo()).alignment(6).build();
         neutralElf.grantFeat(ElficoFeat.GUARDIAO_DOS_BOSQUES);
+        Character evilElf = character().race(new Elfo()).alignment(4).build();
+        evilElf.grantFeat(ElficoFeat.GUARDIAO_DOS_BOSQUES);
 
         assertFalse(ElficoFeat.CORRUPTOR_SOMBRIO.isEligible(goodElf));
         assertTrue(ElficoFeat.CORRUPTOR_SOMBRIO.isEligible(neutralElf));
+        assertTrue(ElficoFeat.CORRUPTOR_SOMBRIO.isEligible(evilElf));
     }
 
     // ---------- The clause shapes added for the disjunctions/exclusions batch ----------
