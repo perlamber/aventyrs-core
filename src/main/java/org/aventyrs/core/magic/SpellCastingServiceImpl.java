@@ -28,6 +28,7 @@ import static org.aventyrs.core.util.TranslatableMessages.HIT_POINT_PAYMENT_NOT_
 import static org.aventyrs.core.util.TranslatableMessages.INVALID_SPELL_CAST_TARGET;
 import static org.aventyrs.core.util.TranslatableMessages.NO_ALTERNATE_SPELL_VERSION;
 import static org.aventyrs.core.util.TranslatableMessages.SPELL_CASTING_PREVENTED;
+import static org.aventyrs.core.util.TranslatableMessages.SPELL_NEGATION_NOT_AVAILABLE;
 
 public class SpellCastingServiceImpl implements SpellCastingService {
 
@@ -561,6 +562,29 @@ public class SpellCastingServiceImpl implements SpellCastingService {
         }
         return org.aventyrs.core.effect.CriticalEffects.create(castVersion.getCriticalEffectType(),
                 org.aventyrs.core.effect.CriticalEffectContext.of(caster, castVersion, critical, roller));
+    }
+
+    @Override
+    public boolean canNegateSpell(final CombatantSheet caster, final CombatantSheet target,
+                                  final org.aventyrs.core.scene.SceneContext sceneContext) {
+        return target != null && target != caster && target.getCharacter() != null
+                && target.getCharacter().getFeats().stream()
+                        .anyMatch(feat -> feat.offersSpellNegation(target, sceneContext));
+    }
+
+    @Override
+    public int negateSpell(final CombatantSheet caster, final CombatantSheet target, final int manaSpent,
+                           final org.aventyrs.core.scene.SceneContext sceneContext) {
+        if (!canNegateSpell(caster, target, sceneContext)) {
+            throw new IllegalOperationException(SPELL_NEGATION_NOT_AVAILABLE);
+        }
+        target.getCharacter().getFeats().stream()
+                .filter(feat -> feat.offersSpellNegation(target, sceneContext))
+                .findFirst()
+                .ifPresent(feat -> feat.onSpellNegated(target));
+        int spentBefore = target.getManaSpent();
+        target.recoverMagicPoints(Math.max(0, manaSpent));
+        return Math.max(0, spentBefore - target.getManaSpent());
     }
 
     private ActiveAreaSpellEffect registerAreaSpellEffect(final SpellCastRequest request, final Spell spell,

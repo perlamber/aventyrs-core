@@ -125,9 +125,11 @@ public enum QualidadeFeat implements Feat {
             return Skill.ADVANTAGE_BONUS;
         }
     },
-    // TODO: "pode escolher negar o Efeito" of the first Magia each Cena de Combate, recovering its PM — a
-    //  choice made at the moment of being affected, which no Magia path offers the target (the closest,
-    //  Feat#isImmuneToSpell, is a standing immunity, not a once-per-combat opt-in).
+    /**
+     * The negation is real through {@code SpellCastingService#canNegateSpell}/{@code #negateSpell}. Table ruling
+     * (2026-10-10): the holder is asked on every Magia that reaches them, and declining keeps the negation —
+     * only using it spends it, until the next combat ({@code CombatantSheet#endCombat()} clears the claim).
+     */
     ESCOLHIDO_DA_MAGIA_MAIOR(QualityClass.MAIOR, "Alma de AEther",
             "Seu multiplicador de PM é aumentado em +1. A primeira vez que você for afetado por uma"
                     + " Magia em cada Cena de Combate você pode escolher negar o Efeito, se o fizer você"
@@ -135,6 +137,17 @@ public enum QualidadeFeat implements Feat {
         @Override
         public int resolveManaMultiplierIncrease(final Character character) {
             return 1;
+        }
+
+        @Override
+        public boolean offersSpellNegation(final CombatantSheet holder, final SceneContext sceneContext) {
+            return sceneContext != null && sceneContext.isCombatScene()
+                    && !holder.isAffectedThisCombat(ALMA_DE_AETHER);
+        }
+
+        @Override
+        public void onSpellNegated(final CombatantSheet holder) {
+            holder.markAffectedThisCombat(ALMA_DE_AETHER);
         }
     },
     // TODO: the Especialização owed at the end of the first session — no in-play path grants a Perícia
@@ -368,6 +381,8 @@ public enum QualidadeFeat implements Feat {
     /** Pronto para Ação's two per-combat claims — {@code CombatantSheet#markAffectedThisCombat} keys. */
     private static final String PRONTO_PARA_ACAO_PD = "QUALIDADE_PRONTO_PARA_ACAO_PD";
     private static final String PRONTO_PARA_ACAO_EGO = "QUALIDADE_PRONTO_PARA_ACAO_EGO";
+    /** Alma de AEther's per-combat negation — a {@code CombatantSheet#markAffectedThisCombat} key. */
+    private static final String ALMA_DE_AETHER = "QUALIDADE_ALMA_DE_AETHER";
 
     /** Dominar Padrões' "custa 0.5 EXP a menos". */
     private static final BigDecimal GRADUATION_DISCOUNT = new BigDecimal("0.5");

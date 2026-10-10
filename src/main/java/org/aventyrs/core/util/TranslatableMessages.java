@@ -292,6 +292,8 @@ public class TranslatableMessages {
     public static final String INVALID_SPELL_HEALING = "INVALID_SPELL_HEALING";
     public static final String INVALID_SPELL_BODY_CHANGE = "INVALID_SPELL_BODY_CHANGE";
     public static final String INVALID_SPELL_ALTERNATE_EFFECT = "INVALID_SPELL_ALTERNATE_EFFECT";
+    /** No held Talento lets the target negate this Magia now — {@code SpellCastingService#negateSpell}. */
+    public static final String SPELL_NEGATION_NOT_AVAILABLE = "SPELL_NEGATION_NOT_AVAILABLE";
 
     /**
      * An {@code Efeito Alternativo} was passed to {@code SpellService#grantSpell}. It is learned

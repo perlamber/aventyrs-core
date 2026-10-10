@@ -2592,6 +2592,23 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
                                              final boolean egoCapped) {
     }
 
+    /**
+     * Whether this Talento lets its holder negate a Magia that just reached them, right now — {@code
+     * QualidadeFeat#ESCOLHIDO_DA_MAGIA_MAIOR}'s "a primeira vez que você for afetado por uma Magia em cada Cena de
+     * Combate você pode escolher negar o Efeito". Asked held, through {@code SpellCastingService#canNegateSpell}; the
+     * negation is claimed through {@link #onSpellNegated}. False by default.
+     */
+    default boolean offersSpellNegation(final CombatantSheet holder, final SceneContext sceneContext) {
+        return false;
+    }
+
+    /**
+     * Called on the held Talento whose {@link #offersSpellNegation} was just used — what a once-per-combat negation
+     * marks itself spent with. Nothing by default.
+     */
+    default void onSpellNegated(final CombatantSheet holder) {
+    }
+
     /** PA this Talento takes off a Habilidade de Título's fixed Tempo de Ativação when opted into. 0 by default. */
     default int resolveTitleActivationActionPointReduction(final AventyrTitleAbility ability,
                                                           final CombatantSheet activator,

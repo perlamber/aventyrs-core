@@ -155,4 +155,23 @@ public interface SpellCastingService {
     Optional<org.aventyrs.core.effect.CriticalEffect> resolveCastingCriticalEffect(
             Spell castVersion, CombatantSheet caster, org.aventyrs.core.skill.SkillRoll castingRoll,
             org.aventyrs.core.util.DiceRoller roller);
+
+    /**
+     * Whether target may negate what a Magia caster cast is about to do to them (core 0.1.6.2) — some held {@code
+     * Feat#offersSpellNegation} answers yes ({@code QualidadeFeat#ESCOLHIDO_DA_MAGIA_MAIOR}'s Alma de AEther, once per
+     * Cena de Combate). Never for one's own Magia: negating it would only refund its PM. Ask after the Magia is known
+     * to land (an attack-delivered one has hit) and before its damage, effect, Corrente or critical is applied — the
+     * holder decides then, and declining spends nothing.
+     */
+    boolean canNegateSpell(CombatantSheet caster, CombatantSheet target,
+                           org.aventyrs.core.scene.SceneContext sceneContext);
+
+    /**
+     * Negates a Magia on target (core 0.1.6.2): claims the offering Talento's use and recovers manaSpent PM — "PM igual
+     * a quantidade de PM utilizado na conjuração", as much as target has spent. Returns the PM actually recovered. The
+     * caller then applies nothing of that Magia to target: no damage, effect, Corrente or casting critical. Throws
+     * {@code SPELL_NEGATION_NOT_AVAILABLE} when {@link #canNegateSpell} says no.
+     */
+    int negateSpell(CombatantSheet caster, CombatantSheet target, int manaSpent,
+                    org.aventyrs.core.scene.SceneContext sceneContext);
 }
