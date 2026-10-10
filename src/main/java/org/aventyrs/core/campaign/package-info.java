@@ -40,6 +40,10 @@
  * changed sheet. A {@code Campaign} knows participants only by id, so it cannot make this call
  * itself. Calling it twice is harmless.
  *
+ * <p>Before that, advance each participant's own count with {@code Character#recordCompletedSession()} and persist
+ * it (core 0.1.6.3): Intelecto Superior's picks are granted at the holder's first and third finished Sessão. That
+ * call is <b>not</b> idempotent — make it once per participant per Sessão.
+ *
  * <p>This is not the same thing as {@code CombatantSheet#consumeOncePerSession}, whose "session"
  * is the sheet object's lifetime in the running client. The two are not connected yet.
  */

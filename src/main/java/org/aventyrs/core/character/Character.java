@@ -136,6 +136,15 @@ public class Character {
     protected int centelhas = CENTELHAS;
 
     /**
+     * Game sessions this character has finished — advanced once per Sessão it took part in, by the caller that ends
+     * it ({@link #recordCompletedSession}, before {@code CharacterSheet#applySessionEndAcquisitions}). Read by the
+     * "ao fim da primeira / terceira sessão de jogo" clauses ({@code QualidadeFeat#INTELECTO_SUPERIOR_MENOR}/{@code
+     * _MAIOR}, core 0.1.6.3). 0 for a new character; a consumer persists it.
+     */
+    @Builder.Default
+    protected int completedSessions = 0;
+
+    /**
      * The Perícias Treinadas an Aprendizado Rápido race chose at creation — "podem escolher duas
      * Perícias Treinadas, adquirir a Segunda e Terceira Graduação destas perícias custam 0.5EXP a
      * menos" ({@code Race#hasQuickLearning}). Read by {@code SkillGraduationService#getUpgradeCost(
@@ -686,6 +695,11 @@ public class Character {
      * Sacrifices up to count Centelhas — a Regalia donor's "sacrifique voluntariamente uma de suas
      * Centelhas" (or all of them). Returns how many were actually given; never below zero.
      */
+    /** Counts one more finished Sessão — see {@link #completedSessions}. Returns the new count. */
+    public int recordCompletedSession() {
+        return ++completedSessions;
+    }
+
     public int sacrificeCentelhas(final int count) {
         int given = Math.max(0, Math.min(count, centelhas));
         centelhas -= given;

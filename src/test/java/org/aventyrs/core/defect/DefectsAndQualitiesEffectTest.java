@@ -30,6 +30,10 @@ import org.aventyrs.core.sheet.Player;
 import org.aventyrs.core.skill.Skill;
 import org.aventyrs.core.skill.SkillGraduation;
 import org.aventyrs.core.skill.SkillRoll;
+import org.aventyrs.core.skill.SkillCompetencyAbility;
+import org.aventyrs.core.skill.SkillSpecialization;
+import org.aventyrs.core.skill.SkillTraitCatalog;
+import org.aventyrs.core.skill.SkillTraitKind;
 import org.aventyrs.core.skill.SkillType;
 import org.aventyrs.core.title.TitleAcquisitionServiceImpl;
 import org.aventyrs.core.title.santo.Santo;
@@ -37,6 +41,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -371,7 +376,7 @@ class DefectsAndQualitiesEffectTest {
     @Test
     void dominarPadroesTakesHalfAnExpOffGraduacoesUpToTheThird() {
         SkillGraduationServiceImpl graduations = new SkillGraduationServiceImpl();
-        Character padroes = withQuality(Quality.INTELECTO_SUPERIOR, QualityClass.MAIOR);
+        Character padroes = withQuality(Quality.INTELECTO_SUPERIOR, QualityClass.MAIOR, EIDETIC_PICK, PATTERN_PICK);
 
         // Graduação 1 → 2 is inside the window; the discount is the whole difference.
         assertEquals(graduations.getUpgradeCost(base(), SkillType.ATTENTION).subtract(new BigDecimal("0.5")),
@@ -415,5 +420,54 @@ class DefectsAndQualitiesEffectTest {
                 assertEquals(initiative.getTotalInitiative(base()), initiative.getTotalInitiative(held));
             }
         }
+    }
+
+    // ---- Intelecto Superior: picked at creation, granted at a session-count mark ---------------------
+
+    private static final SkillSpecialization EIDETIC_PICK = (SkillSpecialization)
+            SkillTraitCatalog.traitsOf(SkillType.PERSUASAO, SkillTraitKind.SPECIALIZATION).get(0);
+    /** Of a Perícia base() never trained — "mesmo que não seja treinado nela". */
+    private static final SkillCompetencyAbility PATTERN_PICK = (SkillCompetencyAbility)
+            SkillTraitCatalog.traitsOf(SkillType.ARTES, SkillTraitKind.COMPETENCY_ABILITY).get(0);
+
+    @Test
+    void memoriaEideticaOffersOnlyTrainedPericiasAndGrantsItsPickAfterTheFirstSession() {
+        List<Object> offered = new ArrayList<>(Quality.INTELECTO_SUPERIOR.resolveChoices(QualityClass.MENOR, base(),
+                List.of()).get(0).options());
+        assertTrue(offered.contains(EIDETIC_PICK));
+        assertFalse(offered.stream().anyMatch(trait -> ((SkillSpecialization) trait).getSkillType() == SkillType.ARTES),
+                "Artes is not trained");
+
+        Character eidetic = withQuality(Quality.INTELECTO_SUPERIOR, QualityClass.MENOR, EIDETIC_PICK);
+        assertFalse(eidetic.getSpecializations(SkillType.PERSUASAO).contains(EIDETIC_PICK), "not before the session ends");
+
+        assertEquals(1, eidetic.recordCompletedSession());
+        assertTrue(eidetic.getSpecializations(SkillType.PERSUASAO).contains(EIDETIC_PICK));
+    }
+
+    @Test
+    void dominarPadroesGrantsItsCompetenciaOfAnyPericiaAfterTheThirdSession() {
+        Character patterns = withQuality(Quality.INTELECTO_SUPERIOR, QualityClass.MAIOR, EIDETIC_PICK, PATTERN_PICK);
+        CharacterSheet sheet = sheet(patterns);
+
+        patterns.recordCompletedSession();
+        assertTrue(patterns.getSpecializations(SkillType.PERSUASAO).contains(EIDETIC_PICK), "the Menor half, cumulative");
+        patterns.recordCompletedSession();
+        assertFalse(SkillCompetencyAbility.allFor(patterns, sheet).contains(PATTERN_PICK), "two sessions are not three");
+
+        patterns.recordCompletedSession();
+        assertTrue(SkillCompetencyAbility.allFor(patterns, sheet).contains(PATTERN_PICK));
+    }
+
+    @Test
+    void intelectoSuperiorRefusesAPickOutsideItsOptions() {
+        SkillSpecialization untrained = (SkillSpecialization)
+                SkillTraitCatalog.traitsOf(SkillType.ARTES, SkillTraitKind.SPECIALIZATION).get(0);
+
+        assertThrows(IllegalOperationException.class,
+                () -> withQuality(Quality.INTELECTO_SUPERIOR, QualityClass.MENOR, untrained));
+        assertThrows(IllegalOperationException.class,
+                () -> withQuality(Quality.INTELECTO_SUPERIOR, QualityClass.MAIOR, EIDETIC_PICK),
+                "the Maior owes both picks");
     }
 }
