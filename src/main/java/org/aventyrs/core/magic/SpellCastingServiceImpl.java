@@ -107,14 +107,20 @@ public class SpellCastingServiceImpl implements SpellCastingService {
                     .skillRollBonus(dominioDoManaResult.getSkillRollBonus() + castingRollBonus)
                     .build();
         }
+        // Ímpeto's "Vantagem em... Efeitos de Magia": one figure toward the Magia's Dano and its Cura alike.
+        int egoSpellEffectBonus = casterCharacter.getAllEgoAdvantages().stream()
+                .mapToInt(advantage -> advantage.resolveSpellEffectBonus(request.getSceneContext()).orElse(0))
+                .sum();
         int spellDamageBonus = casterCharacter.getFeats().stream()
                 .mapToInt(feat -> feat.resolveSpellDamageBonus(spell, casterCharacter, request.getActivatedFeats()))
                 .sum()
-                + casterCompetencies.stream().mapToInt(ability -> ability.resolveSpellDamageBonus(spell, casterCharacter)).sum();
+                + casterCompetencies.stream().mapToInt(ability -> ability.resolveSpellDamageBonus(spell, casterCharacter)).sum()
+                + egoSpellEffectBonus;
         int healingBonus = casterCharacter.getFeats().stream()
                 .mapToInt(feat -> feat.resolveSpellHealingBonus(spell, casterCharacter, request.getActivatedFeats()))
                 .sum()
-                + casterCompetencies.stream().mapToInt(ability -> ability.resolveSpellHealingBonus(spell, casterCharacter)).sum();
+                + casterCompetencies.stream().mapToInt(ability -> ability.resolveSpellHealingBonus(spell, casterCharacter)).sum()
+                + egoSpellEffectBonus;
         int effectDelayRounds = casterCharacter.getFeats().stream()
                 .mapToInt(feat -> feat.resolveCastEffectDelayRounds(spell, casterCharacter, request.getActivatedFeats()))
                 .max().orElse(0);
@@ -520,14 +526,20 @@ public class SpellCastingServiceImpl implements SpellCastingService {
     }
 
     @Override
-    public boolean isEffectChainTriggered(final SpellCastingResult result, final CombatantSheet target,
-                                          final int castTotal) {
+    public boolean isEffectChainTriggered(final SpellCastingResult result, final CombatantSheet caster,
+                                          final CombatantSheet target, final int castTotal) {
         if (result.getCastingTargetValue() == null || !castSucceeds(result, castTotal)) {
             return false;
         }
+        // The same margin the attack path asks for (AttackDelivery/AttackReceiver): Resoluto's 7, the target's own
+        // resistance Talentos (Devoto) and Ego setbacks, less the caster's reductions. No live Scene is in reach here,
+        // so both stand at an UNKNOWN position.
         int required = target == null || target.getCharacter() == null
                 ? org.aventyrs.core.effect.EffectChainService.BASE_REQUIRED_MARGIN
-                : new org.aventyrs.core.effect.EffectChainServiceImpl().getRequiredMargin(target.getCharacter());
+                : new org.aventyrs.core.effect.EffectChainServiceImpl().getRequiredMargin(
+                        caster == null || caster.getCharacter() == null ? null : caster,
+                        org.aventyrs.core.scene.InitiativePosition.UNKNOWN,
+                        target, org.aventyrs.core.scene.InitiativePosition.UNKNOWN);
         return castTotal - result.getCastingTargetValue() >= required;
     }
 

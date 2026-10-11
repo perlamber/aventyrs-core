@@ -30,12 +30,12 @@ import org.aventyrs.core.sheet.IllegalOperationException;
 public interface ItemPurchaseService {
 
     /** The least any purchase can cost, in PE — a discount never drives the price below this. */
-    int MINIMUM_PURCHASE_PRICE = 1;
+    int MINIMUM_PURCHASE_PRICE = EquipmentPointPricing.MINIMUM_PRICE;
 
     /**
      * What buying spec from store would cost buyer right now, in PE — the copy's full market
-     * value less every {@code EgoAdvantage#resolveEquipmentPurchaseDiscount()} the buyer holds
-     * ({@code BARGANHISTA}'s -2PE), floored at {@link #MINIMUM_PURCHASE_PRICE}. A pure question:
+     * value less every {@code EgoAdvantage#resolveEquipmentPointDiscount(PURCHASE)} the buyer holds
+     * ({@code BARGANHISTA}'s -2PE, at creation too), floored at {@link #MINIMUM_PURCHASE_PRICE}. A pure question:
      * asking never buys anything.
      *
      * @throws IllegalOperationException ({@code ITEM_NOT_OFFERED}) if store does not carry spec

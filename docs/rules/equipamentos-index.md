@@ -228,7 +228,8 @@ No wiring needed — these all scan `character.getEquipment()`:
   Olho de Deus* location, the mandatory-Crítico (reported via
   `regaliaCraftingRequiresCriticalResult`), and the PE cost.
 
-Still no consumer: **Preço** (no PE economy) and the **Conjuração** column (no item-granted hook
+**Preço** is spent since 0.1.6.4 — a store purchase and a sheet forge/install/repair (`EquipmentPointPricing`).
+Still no consumer: the **Conjuração** column (no item-granted hook
 on either `SpellCastingService` roll) — real, exact data per the "can't apply it yet doesn't
 mean can't compute it yet" discipline.
 
@@ -285,8 +286,10 @@ the caller has determined the roll succeeded.
   the copy being an Obra-Prima, both enforced in `installImprovement`. `Item#getImprovement()` is
   a deprecated first-or-null shim; every enhancement-aggregation default on `Item` sums the list,
   so no consuming service changed.
-- **Still missing** — no PE economy (cost is reported, not spent — the `ResourcesAdvantage#BARGANHISTA`
-  gap), no Aprimoramento Preço column (so install cost/time are unavailable), the "estende a
+- **PE is spent (0.1.6.4)** — the `CombatantSheet` forms of `forge`/`forgeRegalia`/`installImprovement`/`repair`
+  debit the wallet, with `ResourcesAdvantage#BARGANHISTA`'s -2PE (produce) / -1PE (Aprimoramento) through
+  `EquipmentPointPricing`; an install costs half the Aprimoramento's Preço.
+- **Still missing** — an Aprimoramento's install *time*, the "estende a
   Magias e Habilidades" clause of `REPARO_MELHORADO` (no Dureza on either), and the
   `FORJA_VULCANA` benefits (Resistência a Críticos / Margem Crítica Maior / item-scoped choices).
 

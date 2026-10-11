@@ -1,5 +1,6 @@
 package org.aventyrs.core.ego;
 
+import org.aventyrs.core.action.Manoeuvre;
 import org.aventyrs.core.character.DamageBonus;
 import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.scene.SceneContext;
@@ -43,6 +44,19 @@ public interface EgoAdvantage {
      * convention as {@code resolveDamageBonus} — not additive with it.
      */
     default Optional<DamageBonus> resolveDamageBonus(final SceneContext sceneContext) {
+        return Optional.empty();
+    }
+
+    /**
+     * A bonus toward a Magia's Efeitos — its Dano and its Cura alike — this Vantagem grants right now, conditioned on
+     * {@link SceneContext}: {@link InitiativeAdvantage#IMPETO}'s "Vantagem em suas rolagens de Dano e Efeitos de
+     * Magia" (core 0.1.6.4, table reading: a Magia's Efeitos are the Dano and Cura it deals, the way Arcanismo
+     * Explosiva and Conjuração Rápida phrase theirs). Summed by {@code
+     * org.aventyrs.core.magic.SpellCastingServiceImpl#castSpell} into both the spell-damage and the healing bonus, beside
+     * the {@code Feat}/{@code SkillCompetencyAbility} hooks of the same name. Not the delivery roll's dano bonus
+     * ({@link #resolveDamageBonus}) — a Magia's damage is its own figure, and never adds that one. Empty by default.
+     */
+    default Optional<Integer> resolveSpellEffectBonus(final SceneContext sceneContext) {
         return Optional.empty();
     }
 
@@ -126,28 +140,17 @@ public interface EgoAdvantage {
     }
 
     /**
-     * Every {@link Blessing} this Vantagem grants because its holder just deliberately used Ego
-     * points for some effect — e.g. {@link SorteAdvantage#AS_NA_MANGA}'s 2UD of extra movement
-     * "imediatamente após utilizar um Ponto de Sorte". Empty by default; only override on a
-     * constant whose rules text grants a temporary bonus off the back of a spend.
+     * The movement this Vantagem grants because its holder just deliberately used Ego points — {@link
+     * SorteAdvantage#AS_NA_MANGA}'s 2UD "imediatamente após utilizar um Ponto de Sorte" (core 0.1.6.4). Empty by
+     * default; only override on a constant whose rules text grants a move off the back of a spend.
      *
-     * <p>The {@link EgoPointSpend} sibling of {@link #resolveInitiativeBlessings()}, and resolved
-     * the same "resolve, don't mutate" way — {@code EgoPointsService#useEgoPointsForEffect} is
-     * what actually grants what this returns. Unlike the initiative path, though, these are
-     * granted <strong>directly to the spender</strong> rather than handed back for a caller to
-     * route: who used the points is unambiguous, the same reasoning that lets {@code
-     * AbstractSkillInteraction} apply {@code DESTINO_FAVORAVEL}'s Ego point on the spot. A
-     * {@link org.aventyrs.core.sheet.TargetScope} other than {@code SELF} therefore has no
-     * meaning here yet, and nothing routes one; don't return one expecting allies to receive it.
-     *
-     * <p>An override should return nothing when {@code spend.getValue()} is 0 — no points were
-     * in fact used — and, like {@link #resolveEgoSpendRecovery}, it is consulted only for the
-     * Vantagem held in the spend's own {@link EgoDomain}, so a constant needn't check the domain
-     * itself. It fires on a deliberate use only, never on an involuntary drain such as {@code
-     * org.aventyrs.core.effect.Primor}'s.
+     * <p>Resolved, not applied: {@code EgoPointsService#getSpendMoves} reports it and the caller offers the move right
+     * away, since positions are the caller's. Like {@link #resolveEgoSpendRecovery}, it is consulted only for the
+     * Vantagem held in the spend's own {@link EgoDomain} and should return nothing when {@code spend.getValue()} is 0.
+     * It answers a deliberate use only, never an involuntary drain such as {@code org.aventyrs.core.effect.Primor}'s.
      */
-    default List<Blessing> resolveEgoSpendBlessings(EgoPointSpend spend) {
-        return List.of();
+    default Optional<GrantedMove> resolveEgoSpendMove(final EgoPointSpend spend) {
+        return Optional.empty();
     }
 
     /**
@@ -165,6 +168,19 @@ public interface EgoAdvantage {
      */
     default int resolveAbsoluteDamageReduction(final SceneContext sceneContext) {
         return 0;
+    }
+
+    /**
+     * Whether this Vantagem keeps its holder's movement from provoking enemy Reações right now — {@link
+     * InitiativeAdvantage#POSICIONAMENTO_ESTRATEGICO}'s "Apenas nas duas primeiras Rodadas de cada Cena de Combate,
+     * seus movimentos não permitem Reações de seus inimigos". The Ego twin of {@code
+     * org.aventyrs.core.ability.AttributeAbility#exemptsFromMovementReactions(Manoeuvre)}, read by {@code
+     * org.aventyrs.core.character.services.MovementReactionService#getProvokedReactors} beside it; it takes the
+     * mover's {@link SceneContext} because a Vantagem's window is a Scene fact. manoeuvre is {@code null} for an
+     * ordinary movement. {@code false} by default.
+     */
+    default boolean exemptsFromMovementReactions(final Manoeuvre manoeuvre, final SceneContext sceneContext) {
+        return false;
     }
 
     /**
@@ -215,16 +231,14 @@ public interface EgoAdvantage {
     }
 
     /**
-     * How many Pontos de Equipamento this Vantagem shaves off buying a piece of Equipamento from
-     * an item store — {@link ResourcesAdvantage#BARGANHISTA}'s "custam 2 Pontos de Equipamentos a
-     * menos". Summed across the holder's Vantagens by {@code
-     * org.aventyrs.core.character.services.ItemPurchaseService}, which then floors the price at
-     * 1PE ("até o mínimo de 1PE"). Zero by default.
-     *
-     * <p>Only the <em>purchase</em> half of BARGANHISTA is expressed here; its -1PE on Obra-Prima
-     * upgrades / Aprimoramentos / Habilidade de Título usage still has no spender to discount.
+     * How many Pontos de Equipamento this Vantagem shaves off an expense of kind — {@link
+     * ResourcesAdvantage#BARGANHISTA}'s -2PE on buying or producing, -1PE on an Aprimoramento or a Habilidade de
+     * Título. Summed across the holder's Vantagens by {@code
+     * org.aventyrs.core.character.services.EquipmentPointPricing#discounted}, which floors the price at 1PE ("até o
+     * mínimo de 1PE"). Zero by default. <i>(Before 0.1.6.4 this was {@code resolveEquipmentPurchaseDiscount()}, the
+     * purchase half alone.)</i>
      */
-    default int resolveEquipmentPurchaseDiscount() {
+    default int resolveEquipmentPointDiscount(final EquipmentPointExpense kind) {
         return 0;
     }
 }

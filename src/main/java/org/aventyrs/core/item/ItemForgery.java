@@ -92,7 +92,8 @@ import static org.aventyrs.core.util.TranslatableMessages.STORE_DOES_NOT_SELL_RE
  * {@code #getRegaliaCraftingDifficulty}, and for a Regalia Divina must additionally confirm the
  * Acerto Crítico {@link RegaliaGrade#requiresCriticalResult()} demands); the donor's Centelhas
  * actually being spent (untracked — see {@link RegaliaDonation}); the Forja do Olho de Deus a
- * Divina must be made in (this core models no places); and the PE cost (no PE economy).
+ * Divina must be made in (this core models no places). The PE cost is reported here and paid by {@code
+ * EquipmentCraftingService}'s {@code CombatantSheet} forms.
  *
  * <h2>Building the piece up, and what it costs</h2>
  * A forge is assembled a decision at a time: {@link #setMasterpiece}, {@link #addImprovement} and
@@ -271,7 +272,8 @@ public final class ItemForgery {
      *
      * <p><b>0 for a donation</b>: Aventyr charges nobody, which is the difference between what a
      * thing is worth (still reported by {@link #getTotalValue()}) and what it costs to have made.
-     * And on either path the figure is reported, never spent — no PE economy exists.
+     * Reported, never spent, here — {@code EquipmentCraftingService#forge(CombatantSheet, ...)} pays it, less the
+     * crafter's discounts.
      */
     public int getForgingCost() {
         return isDonation() ? 0 : Math.max(1, totalValue / 2);

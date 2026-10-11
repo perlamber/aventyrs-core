@@ -124,9 +124,20 @@ public interface SpellCastingService {
     /**
      * Whether the cast's Corrente de Efeitos fires on target (core 0.0.93): the Conjuração succeeded and cleared the
      * target value by {@code EffectChainService#getRequiredMargin} (Resoluto raises it). A cast with no stated GD has no
-     * margin, and fires nothing.
+     * margin, and fires nothing. Delegates with no caster — see the longer overload.
      */
-    boolean isEffectChainTriggered(SpellCastingResult result, CombatantSheet target, int castTotal);
+    default boolean isEffectChainTriggered(SpellCastingResult result, CombatantSheet target, int castTotal) {
+        return isEffectChainTriggered(result, null, target, castTotal);
+    }
+
+    /**
+     * {@link #isEffectChainTriggered(SpellCastingResult, CombatantSheet, int)}, with the margin read the way the attack
+     * path reads it (core 0.1.6.4): {@code EffectChainService#getRequiredMargin(CombatantSheet, InitiativePosition,
+     * CombatantSheet, InitiativePosition)} — Resoluto's 7, the target's Devoto resistance, Vontade Fraca/Atrair a Morte,
+     * and the caster's own reductions. caster may be {@code null}: it then lowers nothing.
+     */
+    boolean isEffectChainTriggered(SpellCastingResult result, CombatantSheet caster, CombatantSheet target,
+                                   int castTotal);
 
     /**
      * The Corrente the cast version builds once it fires ({@code Spell#getEffectChainKind()}), its die thrown on roller

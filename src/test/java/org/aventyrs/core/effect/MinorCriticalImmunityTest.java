@@ -8,6 +8,7 @@ import org.aventyrs.core.combat.AttackDelivery;
 import org.aventyrs.core.combat.DeliveredAttack;
 import org.aventyrs.core.combat.DeliveredAttackResult;
 import org.aventyrs.core.feat.MonstruosoFeat;
+import org.aventyrs.core.scene.InitiativePosition;
 import org.aventyrs.core.scene.Range;
 import org.aventyrs.core.scene.Scene;
 import org.aventyrs.core.scene.SceneContext;
@@ -128,6 +129,17 @@ class MinorCriticalImmunityTest {
     void anatomiaIncomumDoesNotGrantTheImmunity() {
         assertFalse(MonstruosoFeat.ANATOMIA_INCOMUM.ignoresMinorCriticalEffects());
         assertTrue(MonstruosoFeat.ANATOMIA_UNICA.ignoresMinorCriticalEffects());
+    }
+
+    /** "Sua resistência às Correntes de Efeitos aumenta em +2": the margin a Corrente must clear (0.1.6.4). */
+    @Test
+    void anatomiaUnicaRaisesTheCorrenteMarginByTwo() {
+        EffectChainService service = new EffectChainServiceImpl();
+
+        assertEquals(EffectChainService.BASE_REQUIRED_MARGIN + 2, service.getRequiredMargin(null,
+                InitiativePosition.UNKNOWN, anatomiaUnicaSheet(), InitiativePosition.UNKNOWN));
+        assertEquals(EffectChainService.BASE_REQUIRED_MARGIN, service.getRequiredMargin(null,
+                InitiativePosition.UNKNOWN, plainSheet(), InitiativePosition.UNKNOWN));
     }
 
     @Test

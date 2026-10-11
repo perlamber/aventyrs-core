@@ -1,5 +1,7 @@
 package org.aventyrs.core.character.services;
 
+import org.aventyrs.core.ego.EquipmentPointExpense;
+import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.item.AbstractItem;
@@ -137,6 +139,12 @@ public class EquipmentCraftingServiceImpl implements EquipmentCraftingService {
     @Override
     public void installImprovement(final Character crafter, final Item item, final Improvement improvement)
             throws IllegalOperationException {
+        requireInstallable(item, improvement).addImprovement(improvement);
+    }
+
+    /** The service's own install gates, checked before any PE leaves a wallet. */
+    private AbstractItem requireInstallable(final Item item, final Improvement improvement)
+            throws IllegalOperationException {
         AbstractItem copy = asForgedCopy(item);
         if (copy.getMasterpiece() == null) {
             throw new IllegalOperationException(ITEM_NOT_A_MASTERPIECE);
@@ -147,7 +155,61 @@ public class EquipmentCraftingServiceImpl implements EquipmentCraftingService {
         if (copy.getImprovements().stream().anyMatch(fitted -> fitted.equals(improvement))) {
             throw new IllegalOperationException(DUPLICATE_IMPROVEMENT);
         }
-        copy.addImprovement(improvement);
+        return copy;
+    }
+
+    /** ItemForgery#getForgingCost's "metade do valor" over the whole specification, without a crafter's gates. */
+    private static int forgingCost(final ItemSpecification specification) {
+        return atLeastOne(ItemForgery.purchased(specification).getTotalValue() / 2);
+    }
+
+    @Override
+    public int getFabricationCost(final Character crafter, final ItemSpecification specification) {
+        return EquipmentPointPricing.discounted(forgingCost(specification), crafter, EquipmentPointExpense.PRODUCTION);
+    }
+
+    @Override
+    public int getImprovementInstallCost(final Character crafter, final Improvement improvement) {
+        return EquipmentPointPricing.discounted(atLeastOne(improvement.getPriceModifier() / 2), crafter,
+                EquipmentPointExpense.UPGRADE);
+    }
+
+    @Override
+    public Item forge(final CombatantSheet crafter, final ProfissaoSpecialization trade,
+                      final ItemSpecification specification, final RegaliaDonation donation)
+            throws IllegalOperationException {
+        ItemForgery forgery = ItemForgery.by(crafter.getCharacter(), trade, specification, donation);
+        forgery.validate();
+        crafter.spendEquipmentPoints(getFabricationCost(crafter.getCharacter(), specification));
+        return forgery.forge();
+    }
+
+    @Override
+    public Item forgeRegalia(final CombatantSheet crafter, final ProfissaoSpecialization trade,
+                             final ItemSpecification specification, final RegaliaDonation donation)
+            throws IllegalOperationException {
+        return forge(crafter, trade, specification, donation);
+    }
+
+    @Override
+    public void installImprovement(final CombatantSheet crafter, final Item item, final Improvement improvement)
+            throws IllegalOperationException {
+        requireInstallable(item, improvement);
+        crafter.spendEquipmentPoints(getImprovementInstallCost(crafter.getCharacter(), improvement));
+        installImprovement(crafter.getCharacter(), item, improvement);
+    }
+
+    @Override
+    public int repair(final CombatantSheet repairer, final ProfissaoSpecialization trade, final Item item,
+                      final int pointsRequested) throws IllegalOperationException {
+        requireTrade(repairer.getCharacter(), trade);
+        asForgedCopy(item);
+        RepairAssessment assessment = assessRepair(item);
+        if (assessment.pointsRepairable() <= 0) {
+            return 0;
+        }
+        repairer.spendEquipmentPoints(assessment.equipmentPointCost());
+        return repair(repairer.getCharacter(), trade, item, pointsRequested);
     }
 
     @Override

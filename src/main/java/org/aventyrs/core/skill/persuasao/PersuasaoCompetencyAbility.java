@@ -73,10 +73,10 @@ public enum PersuasaoCompetencyAbility implements SkillCompetencyAbility {
             "oposto, ou contra quaisquer personagens que possam se sentir atraídos por " +
             "você."),
 
-    // TODO: -1PE to Equipamento purchase/production costs. Item#getPrice() is a real PE figure
-    // per catalog entry, so the gap is the economy around it rather than the entity: there is no
-    // PE budget to spend from and no purchase or production entry point to discount (same gap as
-    // ProfissaoExcellency.FOCADO/LENDA).
+    // TODO: -1PE to Equipamento purchase/production costs. The PE economy is real (0.1.6.4): a store
+    // purchase and a sheet forge both price through character.services.EquipmentPointPricing#discounted
+    // (PURCHASE/PRODUCTION). What is missing is a SkillCompetencyAbility discount hook that method scans —
+    // it reads EgoAdvantage#resolveEquipmentPointDiscount only (same gap as ProfissaoExcellency.FOCADO/LENDA).
     CAMBALACHO("O custo de compra e produção de Equipamentos é reduzido em -1PE."),
 
     /**

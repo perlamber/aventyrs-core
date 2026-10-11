@@ -49,16 +49,15 @@ public enum AutocontroleAdvantage implements EgoAdvantage {
     },
 
 
-    // The Skill -> Damage -> EffectChain -> CriticalEffect pipeline now has real
-    // interfaces (org.aventyrs.core.effect.Effect/EffectChain/CriticalEffect), a
-    // concrete DamageInteraction, and — for RESOLUTO's own margin math specifically — a
-    // real, tested org.aventyrs.core.effect.EffectChainService#getRequiredMargin, which
-    // reads this exact field (Character#getAutocontroleAdvantage()) to return 7 instead
-    // of 5. See that package's own package-info.
-
-    // TODO: RESOLUTO's margin math is real (EffectChainService), but nothing triggers
-    // it yet — no concrete Corrente de Efeitos implementation exists to actually call
-    // EffectChainService#hits(...) when one lands.
+    /**
+     * Fully wired: {@code org.aventyrs.core.effect.EffectChainService#getRequiredMargin} returns {@value
+     * org.aventyrs.core.effect.EffectChainService#RESOLUTO_REQUIRED_MARGIN} instead of {@value
+     * org.aventyrs.core.effect.EffectChainService#BASE_REQUIRED_MARGIN} for a holder, and every path that fires a
+     * Corrente asks it — {@code AttackDelivery} (each target), {@code AttackReceiver}, and since 0.1.6.4 a Magia's
+     * own Corrente through {@code SpellCastingService#isEffectChainTriggered}, which now reads the same full margin
+     * (Talento resistance and Ego setbacks included). Only Milagreiro's Milagre Maior keeps the base margin: the
+     * patient is not resisting.
+     */
     RESOLUTO("Correntes de Efeitos, para te afetar, precisam superar suas Defesas em 7, ao " +
             "invés de 5."),
 

@@ -1,7 +1,10 @@
 package org.aventyrs.core.magic;
 
 import org.aventyrs.core.character.DefenseType;
+import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.character.fixture.CharacterFixture;
+import org.aventyrs.core.ego.AutocontroleAdvantage;
+import org.aventyrs.core.ego.EgoSetback;
 import org.aventyrs.core.effect.Amenizar;
 import org.aventyrs.core.effect.Sobrecura;
 import org.aventyrs.core.magic.catalog.VidaSpell;
@@ -10,6 +13,7 @@ import org.aventyrs.core.monster.MonsterSheet;
 import org.aventyrs.core.scene.Scene;
 import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.CombatantSheet;
+import org.aventyrs.core.sheet.EgoPointType;
 import org.aventyrs.core.sheet.Player;
 import org.aventyrs.core.skill.DifficultyLevel;
 import org.aventyrs.core.skill.SkillRoll;
@@ -89,6 +93,22 @@ class SpellCastJudgementTest {
         assertFalse(service.castSucceeds(result, target - 1));
         assertFalse(service.isEffectChainTriggered(result, ally, target + 4));
         assertTrue(service.isEffectChainTriggered(result, ally, target + 5));
+    }
+
+    /** Resoluto's 7 and Vontade Fraca's 0 reach a cast's Corrente the way they reach an attack's (core 0.1.6.4). */
+    @Test
+    void aCastsCorrenteReadsTheTargetsFullMargin() {
+        SpellCastingResult result = cast(VidaSpell.REVIGORAR, ally, false);
+        int target = result.getCastingTargetValue();
+        CharacterSheet resolute = CharacterSheet.of(ally.getCharacter().toBuilder()
+                .egoAdvantage(EgoDomain.AUTOCONTROLE, AutocontroleAdvantage.RESOLUTO).build(), new Player());
+
+        assertFalse(service.isEffectChainTriggered(result, caster, resolute, target + 6));
+        assertTrue(service.isEffectChainTriggered(result, caster, resolute, target + 7));
+
+        ally.spendEgoPoints(EgoDomain.AUTOCONTROLE, EgoPointType.PERMANENT, 2);
+        ally.recordEgoSetback(EgoSetback.VONTADE_FRACA);
+        assertTrue(service.isEffectChainTriggered(result, caster, ally, target), "no margin at all under Vontade Fraca");
     }
 
     /** Sobrecura rides Revigorar and Benção Bifurcada; Fonte da Juventude does not inherit Nova Rejuvenescedora's. */

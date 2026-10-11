@@ -25,7 +25,7 @@ public enum HomensFeraRacialAbility implements SkillCompetencyAbility {
      * Movimento Base aumenta em +NUD" is the per-Ponto-de-Ação reading a {@code
      * ModifierType#MOVEMENT} bonus lands correctly — the same shape as {@code
      * AtletismoCompetencyAbility#PASSO_LARGO} and {@code DexterityAbility#PASSOS_LONGOS}, not the
-     * one-shot-step shape {@code SorteAdvantage#AS_NA_MANGA} over-grants under. And a racial
+     * one-shot-step shape of {@code SorteAdvantage#AS_NA_MANGA}'s {@code ego.GrantedMove}. And a racial
      * ability reaches it: {@code MovementServiceImpl#getMovementBase} scans {@code
      * SkillCompetencyAbility.allFor(character)}.
      *

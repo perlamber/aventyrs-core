@@ -3,6 +3,7 @@ package org.aventyrs.core.character.services;
 import lombok.NonNull;
 import org.aventyrs.core.ability.AttributeAbility;
 import org.aventyrs.core.action.Manoeuvre;
+import org.aventyrs.core.ego.EgoAdvantage;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.item.Weapon;
 import org.aventyrs.core.scene.Range;
@@ -30,7 +31,7 @@ public class MovementReactionServiceImpl implements MovementReactionService {
                                                      final SceneContext sceneContext,
                                                      final Manoeuvre manoeuvre,
                                                      final CombatantSheet chargeTarget) {
-        if (sceneContext == null || isExempt(mover.getCharacter(), manoeuvre)) {
+        if (sceneContext == null || isExempt(mover.getCharacter(), manoeuvre, sceneContext)) {
             return List.of();
         }
         List<CombatantSheet> reactors = new ArrayList<>();
@@ -51,8 +52,10 @@ public class MovementReactionServiceImpl implements MovementReactionService {
     }
 
     /**
-     * Whether any Habilidade de Atributo the mover holds exempts <em>this</em> manoeuvre. Scanned
-     * across {@code Character#getAttributeAbilities()}, which folds in the ones a Talento granted.
+     * Whether the manoeuvre itself, a Habilidade de Atributo the mover holds, or one of their Vantagens de Ego exempts
+     * <em>this</em> movement. Habilidades are scanned across {@code Character#getAttributeAbilities()}, which folds in
+     * the ones a Talento granted; Vantagens through {@link EgoAdvantage#exemptsFromMovementReactions}, which may read
+     * the Scene ({@code InitiativeAdvantage#POSICIONAMENTO_ESTRATEGICO}'s first two Rodadas, core 0.1.6.4).
      *
      * <p>There is no {@code Feat} pass. No Talento states a movement-Reação exemption that is
      * expressible yet: {@code MobilidadeFeat#MOVIMENTO_ACROBATICO}'s "sem provocar Reações" is
@@ -60,13 +63,15 @@ public class MovementReactionServiceImpl implements MovementReactionService {
      * ActionProfile#CONSCIENCIA_DEFENSIVA}'s is scoped to a movement's first 2UD, a distance
      * nothing records. Add the pass with the first clause that can actually use it.
      */
-    private boolean isExempt(final Character mover, final Manoeuvre manoeuvre) {
+    private boolean isExempt(final Character mover, final Manoeuvre manoeuvre, final SceneContext sceneContext) {
         // A Reposicionar never provokes: the manoeuvre's own rule, held by nobody.
         if (manoeuvre == Manoeuvre.REPOSICIONAR) {
             return true;
         }
         return mover.getAttributeAbilities().stream()
-                .anyMatch((AttributeAbility ability) -> ability.exemptsFromMovementReactions(manoeuvre));
+                .anyMatch((AttributeAbility ability) -> ability.exemptsFromMovementReactions(manoeuvre))
+                || mover.getAllEgoAdvantages().stream()
+                .anyMatch(advantage -> advantage.exemptsFromMovementReactions(manoeuvre, sceneContext));
     }
 
     /**

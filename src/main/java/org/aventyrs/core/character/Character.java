@@ -967,7 +967,7 @@ public class Character {
      * Adds item to this character's equipped {@link #equipment} — a plain mutator, same as
      * {@link #grantFeat}: it validates nothing. Whether the character can actually carry or
      * wield it (Carga doesn't exist in this core), whether they paid its Preço in Pontos de
-     * Equipamento (no PE economy exists either), and whether they meet the {@code ItemFavor}'s
+     * Equipamento (that is {@code ItemPurchaseService}'s/{@code EquipmentCraftingService}'s), and whether they meet the {@code ItemFavor}'s
      * own Requisitos (that's resolved per-read, live, by {@link Item#grantsFavorTo}) are all
      * outside this method. Throws {@code UnsupportedOperationException} if {@link #equipment} is
      * currently an immutable list — see that field's own javadoc.

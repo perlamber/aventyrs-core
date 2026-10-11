@@ -18,21 +18,25 @@ import org.aventyrs.core.character.EgoDomain;
 public enum ResourcesAdvantage implements EgoAdvantage {
 
     /**
-     * The "comprar equipamentos ... custam 2 Pontos de Equipamentos a menos, até o mínimo de
-     * 1PE" half is real: {@link #resolveEquipmentPurchaseDiscount()} returns 2, and {@code
-     * org.aventyrs.core.character.services.ItemPurchaseService} subtracts it and applies the 1PE
-     * floor. Still TODO: the "-2PE a menos" on <i>producing</i> equipment ({@code
-     * EquipmentCraftingService}/{@code ItemForgery} report a cost but nothing spends it), and the
-     * "-1PE (mínimo 1PE)" on Obra-Prima upgrades / Aprimoramentos / Habilidade de Título usage —
-     * none of those have a PE spender to discount.
+     * Fully wired (core 0.1.6.4) through {@link #resolveEquipmentPointDiscount}: -{@value #PURCHASE_OR_PRODUCTION_DISCOUNT}PE
+     * on a store purchase ({@code ItemPurchaseService}) and on forging ({@code EquipmentCraftingService#forge}, whose
+     * {@code CombatantSheet} form now spends the price), -{@value #UPGRADE_DISCOUNT}PE on fitting an Aprimoramento
+     * ({@code #installImprovement}) — "Melhorias de Obras-Primas" read as the same act, the rules' Aprimoramentos
+     * being how an Obra-Prima is improved after creation — every price floored at 1PE by {@code
+     * EquipmentPointPricing}. The Habilidade de Título -1PE is answered too, but no Habilidade de Título costs PE.
+     *
+     * <p>Table ruling (2026-10-10): the discount applies <b>at all times</b>, character creation included, so the
+     * rules text's "após a criação do Personagem, em campanha" restriction is dropped from the description below.
      */
-    BARGANHISTA("Comprar ou produzir equipamentos após a criação do Personagem, em " +
-            "campanha, custam 2 Pontos de Equipamentos a menos, até o mínimo de 1PE; " +
-            "Melhorias de Obras-Primas, Aprimoramentos e uso de Habilidades de Título " +
+    BARGANHISTA("Comprar ou produzir equipamentos custam 2 Pontos de Equipamentos a menos, até o " +
+            "mínimo de 1PE; Melhorias de Obras-Primas, Aprimoramentos e uso de Habilidades de Título " +
             "custam -1PE (mínimo 1PE).") {
         @Override
-        public int resolveEquipmentPurchaseDiscount() {
-            return 2;
+        public int resolveEquipmentPointDiscount(final EquipmentPointExpense kind) {
+            return switch (kind) {
+                case PURCHASE, PRODUCTION -> PURCHASE_OR_PRODUCTION_DISCOUNT;
+                case UPGRADE, TITLE_ABILITY -> UPGRADE_DISCOUNT;
+            };
         }
     },
 
@@ -64,6 +68,12 @@ public enum ResourcesAdvantage implements EgoAdvantage {
             "Fama Positiva ou Negativa (à sua escolha) igual ao seu valor de Recursos e " +
             "recebe Bônus de +1 em rolagens de Artes e Persuasão, este bônus aumenta em +1 " +
             "para cada 10 pontos da Fama escolhida.");
+
+    /** BARGANHISTA's "custam 2 Pontos de Equipamentos a menos" on buying or producing. */
+    private static final int PURCHASE_OR_PRODUCTION_DISCOUNT = 2;
+
+    /** BARGANHISTA's "-1PE" on Melhorias de Obras-Primas, Aprimoramentos and Habilidades de Título. */
+    private static final int UPGRADE_DISCOUNT = 1;
 
     private final String description;
 

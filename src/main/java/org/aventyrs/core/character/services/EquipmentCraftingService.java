@@ -2,6 +2,7 @@ package org.aventyrs.core.character.services;
 
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.item.Improvement;
+import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.item.Item;
 import org.aventyrs.core.item.Masterpiece;
 import org.aventyrs.core.item.ItemRarity;
@@ -48,10 +49,14 @@ import org.aventyrs.core.skill.profissao.ProfissaoSpecialization;
  * both: a Profissão (trade) roll for the labour plus the secondary Conhecimentos roll its text
  * names, and {@link RepairAssessment} carries the Conhecimentos GD.
  *
- * <p><b>The PE and time are reported, not deducted</b> — this core keeps no PE economy (the gap
- * {@code ResourcesAdvantage#BARGANHISTA} still cites), so affordability and the passage of days
- * are the caller's to track, exactly as {@code WeaponDrawService} reports Pontos de Ação without
- * a spent-this-Turn pool.
+ * <p><b>PE: the {@code CombatantSheet} forms spend, the {@code Character} forms only report</b> (core 0.1.6.4). A
+ * forge, an Aprimoramento install and a repair each have a sheet-taking twin that debits the crafter's wallet ({@code
+ * CombatantSheet#spendEquipmentPoints}) once every gate has passed and before anything mutates, so a refused or
+ * unaffordable job costs nothing. Forging and installing take the holder's discounts through {@link
+ * EquipmentPointPricing} — {@code ResourcesAdvantage#BARGANHISTA}'s -2PE to produce, -1PE per Aprimoramento; a repair
+ * has none. The {@code Character} forms stay the unpriced path (a GM-run forge, a preview). Time is still reported,
+ * never tracked — the passage of days is the caller's, exactly as {@code WeaponDrawService} reports Pontos de Ação
+ * without a spent-this-Turn pool.
  */
 public interface EquipmentCraftingService {
 
@@ -158,6 +163,24 @@ public interface EquipmentCraftingService {
      */
     RepairAssessment assessRepair(Item item);
 
+    // ------------------------------------------------------------------------------ PE — what a job costs
+
+    /**
+     * What crafter pays to forge specification, in PE — {@code ItemForgery#getForgingCost()} (half the copy's total
+     * value, Obra-Prima and Aprimoramentos included) less crafter's {@code EquipmentPointExpense#PRODUCTION} discounts,
+     * floored at 1PE. A pure question, the figure {@link #forge(CombatantSheet, ProfissaoSpecialization,
+     * ItemSpecification, RegaliaDonation)} debits.
+     */
+    int getFabricationCost(Character crafter, ItemSpecification specification);
+
+    /**
+     * What crafter pays to fit improvement, in PE — half the Aprimoramento's own Preço ("Instalar Aprimoramentos em
+     * Obras-Primas usa a mesma base de cálculo" as fabricating), floored, never below 1, less crafter's {@code
+     * EquipmentPointExpense#UPGRADE} discounts, floored at 1PE. The figure {@link #installImprovement(CombatantSheet,
+     * Item, Improvement)} debits.
+     */
+    int getImprovementInstallCost(Character crafter, Improvement improvement);
+
     // ------------------------------------------------------------------------- Mutating — on success
 
     /**
@@ -224,7 +247,7 @@ public interface EquipmentCraftingService {
      * of them ({@link RegaliaGrade#requiresAllCentelhas()}). <b>Not modeled</b>, and deliberately
      * left to the caller/GM: the "reduzida drasticamente em uma Forja do Olho de Deus" location bonus, and the Divina
      * "deve ser feita exclusivamente em uma Forja do Olho de Deus" restriction (this core models
-     * no places); and the PE cost (no PE economy — the {@code ResourcesAdvantage#BARGANHISTA} gap).
+     * no places). The PE is paid by the {@code CombatantSheet} form.
      */
     Item forgeRegalia(Character crafter, ProfissaoSpecialization trade, ItemSpecification specification,
                       RegaliaDonation donation) throws IllegalOperationException;
@@ -257,6 +280,41 @@ public interface EquipmentCraftingService {
      * @return the Dureza points actually recovered
      */
     int repair(Character repairer, ProfissaoSpecialization trade, Item item, int pointsRequested)
+            throws IllegalOperationException;
+
+    /**
+     * {@link #forge(Character, ProfissaoSpecialization, ItemSpecification, RegaliaDonation)} on crafter's sheet,
+     * paying {@link #getFabricationCost(Character, ItemSpecification)} from its PE once every gate has passed (core
+     * 0.1.6.4). Nothing is spent if a gate refuses.
+     *
+     * @throws IllegalOperationException every refusal of the {@code Character} form, or {@code
+     *         NOT_ENOUGH_EQUIPMENT_POINTS} (nothing forged)
+     */
+    Item forge(CombatantSheet crafter, ProfissaoSpecialization trade, ItemSpecification specification,
+               RegaliaDonation donation) throws IllegalOperationException;
+
+    /** {@link #forgeRegalia(Character, ProfissaoSpecialization, ItemSpecification, RegaliaDonation)}, paid the same way. */
+    Item forgeRegalia(CombatantSheet crafter, ProfissaoSpecialization trade, ItemSpecification specification,
+                      RegaliaDonation donation) throws IllegalOperationException;
+
+    /**
+     * {@link #installImprovement(Character, Item, Improvement)} on crafter's sheet, paying {@link
+     * #getImprovementInstallCost} from its PE once the install is known to fit (core 0.1.6.4).
+     *
+     * @throws IllegalOperationException every refusal of the {@code Character} form, or {@code
+     *         NOT_ENOUGH_EQUIPMENT_POINTS} (nothing fitted)
+     */
+    void installImprovement(CombatantSheet crafter, Item item, Improvement improvement) throws IllegalOperationException;
+
+    /**
+     * {@link #repair(Character, ProfissaoSpecialization, Item, int)} on repairer's sheet, paying {@link
+     * #assessRepair}'s {@code equipmentPointCost} — no discount reaches a repair (core 0.1.6.4). An undamaged item
+     * costs and recovers nothing.
+     *
+     * @throws IllegalOperationException every refusal of the {@code Character} form, or {@code
+     *         NOT_ENOUGH_EQUIPMENT_POINTS} (nothing repaired)
+     */
+    int repair(CombatantSheet repairer, ProfissaoSpecialization trade, Item item, int pointsRequested)
             throws IllegalOperationException;
 
     /**

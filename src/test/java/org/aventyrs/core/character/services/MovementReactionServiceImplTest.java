@@ -4,7 +4,9 @@ import org.aventyrs.core.ability.DexterityAbility;
 import org.aventyrs.core.action.Manoeuvre;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.DamageBase;
+import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.character.fixture.CharacterFixture;
+import org.aventyrs.core.ego.InitiativeAdvantage;
 import org.aventyrs.core.item.AbstractWeapon;
 import org.aventyrs.core.item.ItemCategory;
 import org.aventyrs.core.item.ItemWeightClass;
@@ -206,6 +208,31 @@ class MovementReactionServiceImplTest {
                 .isEmpty());
         assertEquals(List.of(foe),
                 movementReactionService.getProvokedReactors(mover, context, null));
+    }
+
+    /**
+     * {@code InitiativeAdvantage#POSICIONAMENTO_ESTRATEGICO} — "Apenas nas duas primeiras Rodadas de cada Cena de
+     * Combate, seus movimentos não permitem Reações" (0.1.6.4): every movement in Rodadas 1–2, won initiative or not,
+     * and none after.
+     */
+    @Test
+    void posicionamentoEstrategicoExemptsTheFirstTwoCombatRodadas() {
+        Character strategist = CharacterFixture.blank(CharacterFixture.BLANK)
+                .id(UUID.randomUUID())
+                .egoAdvantage(EgoDomain.INICIATIVA, InitiativeAdvantage.POSICIONAMENTO_ESTRATEGICO)
+                .build();
+        CharacterSheet mover = CharacterSheet.of(strategist, new Player());
+        CharacterSheet foe = wielding(dagger());
+
+        assertTrue(reactorsTo(mover, inCombatRound(foe, 1)).isEmpty());
+        assertTrue(movementReactionService.getProvokedReactors(mover, inCombatRound(foe, 2), Manoeuvre.INVESTIDA)
+                .isEmpty());
+        assertEquals(List.of(foe), reactorsTo(mover, inCombatRound(foe, 3)));
+        assertEquals(List.of(foe), reactorsTo(combatant(), inCombatRound(foe, 1)), "no Vantagem, no exemption");
+    }
+
+    private static SceneContext inCombatRound(final CombatantSheet enemy, final int round) {
+        return new SceneContext(List.of(), List.of(enemy), Map.of(enemy, Range.ADJACENTE), null, true, round, false);
     }
 
     /** A character without the Habilidade provokes on an Investida like any other movement. */

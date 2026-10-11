@@ -28,7 +28,7 @@ Adding a constant to an existing enum needs no `Character`/fixture change. A gen
 
 ## 1. Pick the hook that matches the clause
 
-`EgoAdvantage` declares `getEgoDomain()`/`getDescription()` plus **seven `default` hooks**, all
+`EgoAdvantage` declares `getEgoDomain()`/`getDescription()` plus a set of **`default` hooks**, all
 defaulting to empty/zero/false. They mirror `SkillCompetencyAbility`'s `resolve*` shape for the
 same reason — a no-arg `@Modifier` method can't see a `SceneContext` — but are summed across
 **every** skill, since a Vantagem de Ego was never tied to one Perícia.
@@ -44,6 +44,12 @@ Match the rules text to exactly one:
 | damage taken is halved | `resolveHalfDamage(SceneContext)` | boolean, ORed with the `HALF_DAMAGE` scan being `> 0` |
 | widens Margem Crítica Menor | `resolveCriticalMarginIncrease(SkillType, SceneContext)` | see step 2 |
 | a bonus the moment its holder **wins initiative** | `resolveInitiativeBlessings()` | **stop — use the `granting-a-blessing` skill instead** |
+| a bonus to a Magia's **Dano and Cura** ("Efeitos de Magia") | `resolveSpellEffectBonus(SceneContext)` | summed by `SpellCastingServiceImpl#castSpell` into both the spell-damage and the healing bonus (`IMPETO`) |
+| movement **provokes no Reações** | `exemptsFromMovementReactions(Manoeuvre, SceneContext)` | ORed into `MovementReactionServiceImpl#isExempt` (`POSICIONAMENTO_ESTRATEGICO`) |
+| extra temporary Ego points **per session** | `resolveExtraSessionEgoRecovery()` | `EgoPointsService#applySessionRecovery` (`MOTIVACAO_DE_MOSES`, `DILETO_DE_TYKHE`) |
+| PV/PM/PD recovered **when its holder uses Ego points** | `resolveEgoSpendRecovery(EgoPointSpend, int)` | applied by `useEgoPointsForEffect` (`DETERMINACAO_HEROICA`) |
+| a **move** off a deliberate spend | `resolveEgoSpendMove(EgoPointSpend)` → `GrantedMove` | reported by `EgoPointsService#getSpendMoves`, offered by the caller (`AS_NA_MANGA`) |
+| PE taken off an expense | `resolveEquipmentPointDiscount(EquipmentPointExpense)` | `EquipmentPointPricing#discounted`, floored at 1PE (`BARGANHISTA`) |
 
 Two shape notes that decide which of the roll-bonus pair you want:
 
@@ -133,7 +139,7 @@ Follow the existing per-enum test files:
 
 ## Reference files to read first
 
-- `org.aventyrs.core.ego.EgoAdvantage` — the interface and all seven hooks, each with javadoc
+- `org.aventyrs.core.ego.EgoAdvantage` — the interface and every hook, each with javadoc
   saying exactly when to override it.
 - `org.aventyrs.core.ego.SorteAdvantage` — `ACE`'s `resolveCriticalMarginIncrease` override.
 - `org.aventyrs.core.ego.InitiativeAdvantage` — `IMPETO`/`TORRE_EM_MOVIMENTO`, the

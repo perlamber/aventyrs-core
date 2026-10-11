@@ -12,10 +12,10 @@ import java.util.Optional;
  * Whether a Corrente de Efeitos actually hits/affects a target — the roll that
  * triggered it must surpass a required challenge number by a margin: {@link
  * #BASE_REQUIRED_MARGIN} normally, {@link #RESOLUTO_REQUIRED_MARGIN} if the target
- * holds {@link AutocontroleAdvantage#RESOLUTO}. No concrete {@link EffectChain}
- * implementation calls this yet (see {@code org.aventyrs.core.effect} package-info) —
- * this is the real, tested margin math RESOLUTO's own rules text describes, ready for
- * the first concrete EffectChain that needs it.
+ * holds {@link AutocontroleAdvantage#RESOLUTO}. Every path that fires a Corrente reads the full four-argument
+ * {@link #getRequiredMargin(CombatantSheet, InitiativePosition, CombatantSheet, InitiativePosition)} —
+ * {@code AttackDelivery}, {@code AttackReceiver} and {@code SpellCastingService#isEffectChainTriggered} — comparing
+ * the roll's margin directly; {@link #hits} stays for a caller holding a bare challenge number, and has none yet.
  */
 public interface EffectChainService {
     int BASE_REQUIRED_MARGIN = 5;

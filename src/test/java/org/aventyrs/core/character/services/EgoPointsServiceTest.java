@@ -5,19 +5,18 @@ import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.character.fixture.CharacterFixture;
 import org.aventyrs.core.ego.AutocontroleAdvantage;
 import org.aventyrs.core.ego.EgoAdvantage;
+import org.aventyrs.core.ego.GrantedMove;
 import org.aventyrs.core.ego.SorteAdvantage;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.monster.GenericMonster;
 import org.aventyrs.core.monster.MonsterSheet;
 import org.aventyrs.core.scene.Scene;
-import org.aventyrs.core.sheet.Blessing;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.CharacterSheet;
 import org.aventyrs.core.sheet.EgoPointSpend;
 import org.aventyrs.core.sheet.EgoPointType;
 import org.aventyrs.core.sheet.IllegalOperationException;
 import org.aventyrs.core.sheet.Player;
-import org.aventyrs.core.sheet.TargetScope;
 import org.aventyrs.core.util.TranslatableMessages;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -380,107 +379,60 @@ class EgoPointsServiceTest {
 
     // --- AS_NA_MANGA -----------------------------------------------------------------------
 
+    /** "Até 2UD, não provoca Reações e ignora terrenos difíceis" — one move, reported (0.1.6.4). */
     @Test
-    void usingAPontoDeSorteGrantsTwoUdOfMovement() {
+    void usingAPontoDeSorteGrantsOneTwoUdMove() {
         CharacterSheet sheet = sheetHolding(EgoDomain.SORTE, SorteAdvantage.AS_NA_MANGA);
 
-        egoPointsService.useEgoPointsForEffect(sheet, EgoDomain.SORTE, EgoPointType.TEMPORARY, 1, A_ROLLED_FOUR);
+        EgoPointSpend spend = egoPointsService.useEgoPointsForEffect(sheet, EgoDomain.SORTE, EgoPointType.TEMPORARY,
+                1, A_ROLLED_FOUR);
 
-        assertEquals(2, sheet.getTemporaryBonus(ModifierType.MOVEMENT));
+        assertEquals(List.of(new GrantedMove(2, true, false, SorteAdvantage.AS_NA_MANGA.name())),
+                egoPointsService.getSpendMoves(sheet.getCharacter(), spend));
+        assertEquals(0, sheet.getTemporaryBonus(ModifierType.MOVEMENT), "no Movimento Base bump any more");
     }
 
     /** "Utilizar um Ponto de Sorte" doesn't distinguish the pools — a permanent point counts too. */
     @Test
-    void aPermanentPontoDeSorteGrantsTheSameMovement() {
+    void aPermanentPontoDeSorteGrantsTheSameMove() {
         CharacterSheet sheet = sheetHolding(EgoDomain.SORTE, SorteAdvantage.AS_NA_MANGA);
 
-        egoPointsService.useEgoPointsForEffect(sheet, EgoDomain.SORTE, EgoPointType.PERMANENT, 1, A_ROLLED_FOUR);
+        EgoPointSpend spend = egoPointsService.useEgoPointsForEffect(sheet, EgoDomain.SORTE, EgoPointType.PERMANENT,
+                1, A_ROLLED_FOUR);
 
-        assertEquals(2, sheet.getTemporaryBonus(ModifierType.MOVEMENT));
+        assertEquals(1, egoPointsService.getSpendMoves(sheet.getCharacter(), spend).size());
     }
 
     /** AS_NA_MANGA is a Sorte Vantagem: an Autocontrole spend must not trigger it. */
     @Test
-    void usingPointsFromAnotherDomainGrantsNoMovement() {
+    void usingPointsFromAnotherDomainGrantsNoMove() {
         CharacterSheet sheet = sheetHolding(EgoDomain.SORTE, SorteAdvantage.AS_NA_MANGA);
 
-        egoPointsService.useEgoPointsForEffect(sheet, EgoDomain.AUTOCONTROLE, EgoPointType.TEMPORARY, 1, A_ROLLED_FOUR);
+        EgoPointSpend spend = egoPointsService.useEgoPointsForEffect(sheet, EgoDomain.AUTOCONTROLE,
+                EgoPointType.TEMPORARY, 1, A_ROLLED_FOUR);
 
-        assertEquals(0, sheet.getTemporaryBonus(ModifierType.MOVEMENT));
+        assertEquals(List.of(), egoPointsService.getSpendMoves(sheet.getCharacter(), spend));
     }
 
     @Test
-    void aSpendThatTookNoPointsGrantsNoMovement() {
+    void aSpendThatTookNoPointsGrantsNoMove() {
         CharacterSheet sheet = sheetHolding(EgoDomain.SORTE, SorteAdvantage.AS_NA_MANGA);
         sheet.spendEgoPoints(EgoDomain.SORTE, EgoPointType.TEMPORARY,
                 sheet.getTemporaryEgoPoints(EgoDomain.SORTE));
 
-        egoPointsService.useEgoPointsForEffect(sheet, EgoDomain.SORTE, EgoPointType.TEMPORARY, 1, A_ROLLED_FOUR);
+        EgoPointSpend spend = egoPointsService.useEgoPointsForEffect(sheet, EgoDomain.SORTE, EgoPointType.TEMPORARY,
+                1, A_ROLLED_FOUR);
 
-        assertEquals(0, sheet.getTemporaryBonus(ModifierType.MOVEMENT));
-    }
-
-    /** The grant is Rodada-scoped, so it lapses at the end of the spender's Turn. */
-    @Test
-    void theMovementGrantExpiresAtTheEndOfTheTurn() {
-        CharacterSheet sheet = sheetHolding(EgoDomain.SORTE, SorteAdvantage.AS_NA_MANGA);
-        egoPointsService.useEgoPointsForEffect(sheet, EgoDomain.SORTE, EgoPointType.TEMPORARY, 1, A_ROLLED_FOUR);
-
-        sheet.finishTurn();
-
-        assertEquals(0, sheet.getTemporaryBonus(ModifierType.MOVEMENT));
+        assertEquals(List.of(), egoPointsService.getSpendMoves(sheet.getCharacter(), spend));
     }
 
     @Test
-    void aCharacterWithoutAsNaMangaGetsNoMovementFromASorteSpend() {
-        CharacterSheet sheet = sheetHolding(EgoDomain.SORTE, SorteAdvantage.ACE);
-
-        egoPointsService.useEgoPointsForEffect(sheet, EgoDomain.SORTE, EgoPointType.TEMPORARY, 1, A_ROLLED_FOUR);
-
-        assertEquals(0, sheet.getTemporaryBonus(ModifierType.MOVEMENT));
-    }
-
-    @Test
-    void getSpendBlessingsComputesWithoutGrantingAnything() {
-        CharacterSheet sheet = sheetHolding(EgoDomain.SORTE, SorteAdvantage.AS_NA_MANGA);
-        EgoPointSpend spend = sheet.spendEgoPoints(EgoDomain.SORTE, EgoPointType.TEMPORARY, 1);
-
-        List<Blessing> blessings = egoPointsService.getSpendBlessings(sheet.getCharacter(), spend);
-
-        assertEquals(1, blessings.size());
-        assertEquals(ModifierType.MOVEMENT, blessings.get(0).getModifierType());
-        assertEquals(2, blessings.get(0).getValue());
-        assertEquals(TargetScope.SELF, blessings.get(0).getScope());
-        assertEquals(SorteAdvantage.AS_NA_MANGA.name(), blessings.get(0).getSource());
-        assertEquals(0, sheet.getTemporaryBonus(ModifierType.MOVEMENT));
-    }
-
-    /**
-     * The grant is genuinely consumed, not inert: {@code MovementService#getMovementBase}
-     * reports the permanent Movimento Base, and a caller adds the sheet's own {@code MOVEMENT}
-     * temporary bonus on top — which is where AS_NA_MANGA's 2UD lands.
-     */
-    @Test
-    void theGrantedMovementReachesTheCharactersActualMovementTotal() {
-        CharacterSheet sheet = sheetHolding(EgoDomain.SORTE, SorteAdvantage.AS_NA_MANGA);
-        MovementService movementService = new MovementServiceImpl();
-        int before = movementService.getMovementBase(sheet.getCharacter())
-                + sheet.getTemporaryBonus(ModifierType.MOVEMENT);
-
-        egoPointsService.useEgoPointsForEffect(sheet, EgoDomain.SORTE, EgoPointType.TEMPORARY, 1, A_ROLLED_FOUR);
-
-        int after = movementService.getMovementBase(sheet.getCharacter())
-                + sheet.getTemporaryBonus(ModifierType.MOVEMENT);
-        assertEquals(before + 2, after);
-    }
-
-    @Test
-    void noOtherSorteAdvantageGrantsASpendBlessing() {
+    void noOtherSorteAdvantageGrantsASpendMove() {
         for (SorteAdvantage advantage : SorteAdvantage.values()) {
             if (advantage != SorteAdvantage.AS_NA_MANGA) {
                 CharacterSheet sheet = sheetHolding(EgoDomain.SORTE, advantage);
                 EgoPointSpend spend = sheet.spendEgoPoints(EgoDomain.SORTE, EgoPointType.TEMPORARY, 1);
-                assertEquals(List.of(), egoPointsService.getSpendBlessings(sheet.getCharacter(), spend));
+                assertEquals(List.of(), egoPointsService.getSpendMoves(sheet.getCharacter(), spend));
             }
         }
     }
