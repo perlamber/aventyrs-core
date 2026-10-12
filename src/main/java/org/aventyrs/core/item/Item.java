@@ -50,9 +50,9 @@ import org.aventyrs.core.modifier.ModifierType;
  *   {@link #getCurrentHardness()}/{@link #isDestroyed()}. Fabricação and reparo run through
  *   {@code EquipmentCraftingService}; {@code ProfissaoCompetencyAbility#AUMENTAR_A_DUREZA}/{@code
  *   #REPARO_MELHORADO} are real through it.</li>
- *   <li>{@link #getCastingBonus()} (Conjuração) has no conjuração-roll hook: casting is two
- *   rolls (see {@code org.aventyrs.core.magic.SpellCastingService}), but neither takes an
- *   item-granted modifier, and no {@code Magia} entity exists to carry one against.</li>
+ *   <li>{@link #getCastingBonus()} (Conjuração), a base item's own column, has no reader. A drawn
+ *   offensive host's Obra-Prima and Aprimoramento Conjuração columns do reach the Conjuração roll,
+ *   through {@link WeaponEnhancements#castingRollBonus} (core 0.1.6.9).</li>
  * </ul>
  * The values themselves are real, exact data all the same — the same "can't apply it yet
  * doesn't mean can't compute it yet" discipline this codebase applies to {@code Santo
@@ -342,7 +342,7 @@ public interface Item {
      * every offensive constant — none of which is handed the item it is fitted to.
      */
     default int resolveEnhancementDamageBaseIncrease(final Weapon weapon, final Character character) {
-        if (isDestroyed() || (getType() == ItemType.OFFENSIVE && this != weapon)) {
+        if (isDestroyed() || (getType() == ItemType.OFFENSIVE && this != hostOf(weapon))) {
             return 0;
         }
         int masterpieceBonus = getMasterpiece() == null ? 0
@@ -385,8 +385,8 @@ public interface Item {
         }
         // A bound Mitral Puro's Violento: "Margem Crítica … Maior aumentada em +1" — with its host weapon only.
         int stone = getPowerStone() == null ? 0
-                : getPowerStone().getStoneType().resolveMajorCriticalMarginIncrease(getType(), this == weapon);
-        if ((getType() == ItemType.OFFENSIVE && this != weapon) || getMasterpiece() == null) {
+                : getPowerStone().getStoneType().resolveMajorCriticalMarginIncrease(getType(), this == hostOf(weapon));
+        if ((getType() == ItemType.OFFENSIVE && this != hostOf(weapon)) || getMasterpiece() == null) {
             return stone;
         }
         return stone + getMasterpiece().resolveMajorCriticalMarginIncrease(weapon, character);
@@ -398,8 +398,8 @@ public interface Item {
         }
         // A bound stone: its Base widens every attack (Calcita Vulcânica), its Violento only its host's (Mitral Puro).
         int stone = getPowerStone() == null ? 0 : getPowerStone().getStoneType()
-                .resolveBonus(ModifierType.LESSER_CRITICAL_MARGIN, getType(), this == weapon);
-        if (getType() == ItemType.OFFENSIVE && this != weapon) {
+                .resolveBonus(ModifierType.LESSER_CRITICAL_MARGIN, getType(), this == hostOf(weapon));
+        if (getType() == ItemType.OFFENSIVE && this != hostOf(weapon)) {
             return stone;
         }
         int masterpieceBonus = getMasterpiece() == null ? 0
@@ -418,7 +418,7 @@ public interface Item {
      * <p>Host-scoped like the two hooks above: a Cruel adaga sharpens no other weapon's crit.
      */
     default CriticalDamage resolveEnhancementCriticalDamage(final Weapon weapon, final Character character) {
-        if (isDestroyed() || (getType() == ItemType.OFFENSIVE && this != weapon)) {
+        if (isDestroyed() || (getType() == ItemType.OFFENSIVE && this != hostOf(weapon))) {
             return CriticalDamage.NONE;
         }
         CriticalDamage masterpiece = getMasterpiece() == null ? CriticalDamage.NONE
@@ -658,5 +658,10 @@ public interface Item {
                     || category == ItemCategory.CASTING_ARTIFACT;
         }
         return category == ItemCategory.ARMOR || category == ItemCategory.SHIELD;
+    }
+
+    /** The copy weapon's enhancements live on ({@link Weapon#host()}), or {@code null}. */
+    private static Item hostOf(final Weapon weapon) {
+        return weapon == null ? null : weapon.host();
     }
 }

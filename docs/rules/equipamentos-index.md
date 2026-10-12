@@ -134,7 +134,7 @@ Improvement/Masterpiece layer) and are **stale**. The current shape:
 | Obras-Primas Defensivas | `DefensiveMasterpiece` | 15 / 15 | `DefensiveMasterpieceTest` pins 15 |
 | Aprimoramentos de Obras-Primas Defensivas | `DefensiveImprovement` | 17 / 17 | `DefensiveImprovementTest` pins 17 |
 | Obras-Primas Ofensivas | `OffensiveMasterpiece` | 17 / 17 | fitted bare (no wrapper); `OffensiveMasterpieceTest` pins 17 |
-| Aprimoramentos de Obras-Primas Ofensivas | `OffensiveImprovement` | 18 / 18 | fitted bare; `OffensiveImprovementTest` pins 18 |
+| Aprimoramentos de Obras-Primas Ofensivas | `OffensiveImprovement` | 17 / 17 (Encaixe removed) | fitted bare, Benção Elemental through `OffensiveItemImprovement`; every clause live via `WeaponEnhancements` (0.1.6.9); `OffensiveImprovementTest` pins 17, `OffensiveImprovementWiringTest` the wiring |
 | Tipos de Pedras do Poder | `PowerStoneType` | 17 / 17 | tri-modal (base + defensivo/ofensivo by host `ItemType`); `PowerStoneCatalogTest` pins the counts |
 | Qualidades de Pedra (Jolda/Joia/Relíquia/AEthernum) | `PowerStoneQuality` | 4 / 4 | Preço + Cargas/Resfriamento/Vinculação/Duração — authored-inert, no consumer |
 | Obras-Primas de Pedras do Poder | `PowerStoneMasterpiece` | 5 / 5 | charge-economy deltas folded by `PowerStone` |

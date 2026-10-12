@@ -358,6 +358,9 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     private boolean combatStarted = false;
 
     /** Projectiles fired since {@link #startCombat()} — half come back at {@link #endCombat()}. */
+    /** Inquisição's marks: níveis of GD on this combatant's Magias, each lasting until its anchor's next Turn starts. */
+    private final java.util.Map<CombatantSheet, Integer> spellDifficultyMarks = new java.util.IdentityHashMap<>();
+
     private final java.util.Map<org.aventyrs.core.item.ProjectileItem, Integer> firedProjectilesThisCombat =
             new java.util.EnumMap<>(org.aventyrs.core.item.ProjectileItem.class);
 
@@ -2232,6 +2235,23 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     }
 
     @Override
+    public void markSpellDifficultyIncrease(final CombatantSheet anchor, final int steps) {
+        if (anchor != null && steps > 0) {
+            spellDifficultyMarks.put(anchor, steps);
+        }
+    }
+
+    @Override
+    public int getSpellDifficultyIncrease() {
+        return spellDifficultyMarks.values().stream().mapToInt(Integer::intValue).max().orElse(0);
+    }
+
+    @Override
+    public void expireMarksAnchoredTo(final CombatantSheet anchor) {
+        spellDifficultyMarks.remove(anchor);
+    }
+
+    @Override
     public boolean isInCombat() {
         return combatStarted;
     }
@@ -2251,6 +2271,7 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     /** Everything {@link #endCombat()} drops — also dropped by {@link #startNewScene()}. */
     private void clearCombatScopedState() {
         clearPowerStoneState();
+        spellDifficultyMarks.clear();
         combatScopedEffects.forEach(temporaryEffects::remove);
         combatScopedEffects.clear();
         combatScopedEnhancements.forEach(enhancedAttacksRemaining::remove);

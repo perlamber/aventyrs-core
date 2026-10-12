@@ -103,7 +103,9 @@ public class SpellCastingServiceImpl implements SpellCastingService {
                 .mapToInt(feat -> feat.resolveCastingRollBonus(spell, casterCharacter, request.getActivatedFeats()))
                 .sum()
                 // A drawn Artefato de Conjuração's "Vantagem nas Rolagens … para Conjuração" (core 0.1.6.8).
-                + org.aventyrs.core.item.CastingArtifacts.castingRollBonus(casterCharacter);
+                + org.aventyrs.core.item.CastingArtifacts.castingRollBonus(casterCharacter)
+                // A drawn weapon's Conjuração columns and Benção Elemental's "+1 em Conjuração … de Magia Elemental".
+                + org.aventyrs.core.item.WeaponEnhancements.castingRollBonus(casterCharacter, spell);
         if (castingRollBonus != 0 && dominioDoManaResult.getSkillRollBonus() != null) {
             dominioDoManaResult = dominioDoManaResult.toBuilder()
                     .skillRollBonus(dominioDoManaResult.getSkillRollBonus() + castingRollBonus)
@@ -121,11 +123,14 @@ public class SpellCastingServiceImpl implements SpellCastingService {
                 .mapToInt(feat -> feat.resolveSpellDamageBonus(spell, casterCharacter, request.getActivatedFeats()))
                 .sum()
                 + casterCompetencies.stream().mapToInt(ability -> ability.resolveSpellDamageBonus(spell, casterCharacter)).sum()
+                // A drawn weapon's Arcanista ("Cura e Danos Mágicos +1") and Benção Elemental (core 0.1.6.9).
+                + org.aventyrs.core.item.WeaponEnhancements.spellDamageBonus(casterCharacter, spell)
                 + egoSpellEffectBonus;
         int healingBonus = casterCharacter.getFeats().stream()
                 .mapToInt(feat -> feat.resolveSpellHealingBonus(spell, casterCharacter, request.getActivatedFeats()))
                 .sum()
                 + casterCompetencies.stream().mapToInt(ability -> ability.resolveSpellHealingBonus(spell, casterCharacter)).sum()
+                + org.aventyrs.core.item.WeaponEnhancements.spellHealingBonus(casterCharacter, spell)
                 + egoSpellEffectBonus;
         int effectDelayRounds = casterCharacter.getFeats().stream()
                 .mapToInt(feat -> feat.resolveCastEffectDelayRounds(spell, casterCharacter, request.getActivatedFeats()))
@@ -332,7 +337,9 @@ public class SpellCastingServiceImpl implements SpellCastingService {
                 // Mártir Altruísta: the GD of healing Magias "é reduzido em -1 Nível".
                 + character.getAllTitles().stream()
                 .mapToInt(title -> title.resolveCastingDifficultyReduction(spell, caster))
-                .sum();
+                .sum()
+                // Inquisição: "GD de Magias do Alvo +2 níveis" while the mark lasts — a negative reduction.
+                - caster.getSpellDifficultyIncrease();
     }
 
     /**

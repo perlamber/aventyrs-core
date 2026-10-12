@@ -249,13 +249,16 @@ public class AbstractItem implements Item {
                 throw new IllegalArgumentException("Camada de Reforço uses the shield variant only on shields.");
             }
         }
-        if (improvement instanceof OffensiveImprovement offensive) {
+        OffensiveImprovement offensive = improvement.offensiveDefinition();
+        if (offensive != null) {
             if (category != null && category.getType() != ItemType.OFFENSIVE) {
                 throw new IllegalArgumentException("An offensive improvement requires an offensive item.");
             }
             // The two constants whose Características Adicionais say "Apenas …" outright. Machado
             // Anexo and Baioneta only *make sense* on a ranged weapon but never say "Apenas", so
-            // they get no gate — catalogs and builders here are data holders, not gatekeepers.
+            // they get no gate — catalogs and builders here are data holders, not gatekeepers
+            // (their melee mode, AttachedMeleeAttack, is what refuses a host that is not ranged).
+            // Benção Elemental fitted bare is allowed for the same reason: it simply deals no element.
             if (offensive == OffensiveImprovement.CORRENTE_COM_PESO && weightClass != ItemWeightClass.LIGHT) {
                 throw new IllegalArgumentException("Corrente com Peso requires a light weapon.");
             }

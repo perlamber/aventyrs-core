@@ -41,11 +41,16 @@ public class AttackRangeServiceImpl implements AttackRangeService {
                                                       final Set<Feat> activatedFeats) {
         int reach = getEffectiveRangeInUnidadesDeDistancia(character, weapon);
         int steps = sumFeatSteps(character, weapon, activatedFeats);
-        if (steps <= 0 || reach == UNBOUNDED_RANGE) {
+        if (reach == UNBOUNDED_RANGE) {
             return reach;
         }
+        // Alcance Estendido: "Distância de Ataque aumenta +1UD" — the weapon's own, on the UD axis (core 0.1.6.9).
+        int enhancement = org.aventyrs.core.item.WeaponEnhancements.reachIncreaseUd(weapon);
+        if (steps <= 0) {
+            return reach + enhancement;
+        }
         Integer bandEdge = unwidenedBand(character, weapon).increasedBy(steps).getMaxUnidadesDeDistancia();
-        return bandEdge == null ? UNBOUNDED_RANGE : Math.max(reach, bandEdge);
+        return bandEdge == null ? UNBOUNDED_RANGE : Math.max(reach, bandEdge) + enhancement;
     }
 
     @Override

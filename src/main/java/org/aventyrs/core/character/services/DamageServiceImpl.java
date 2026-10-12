@@ -5,6 +5,7 @@ import org.aventyrs.core.magic.Spell;
 import org.aventyrs.core.character.CharacterSkill;
 import org.aventyrs.core.character.DamageType;
 import org.aventyrs.core.character.DamageDescriptor;
+import org.aventyrs.core.character.BypassedReduction;
 import org.aventyrs.core.feat.Feat;
 import org.aventyrs.core.item.Item;
 import org.aventyrs.core.modifier.ModifierResolver;
@@ -359,9 +360,12 @@ public class DamageServiceImpl implements DamageService {
     public int calculateFinalDamage(final CombatantSheet target, final SceneContext sceneContext,
                                     final DamageType damageType, final CombatantSheet source,
                                     final int rawDamage, final boolean ignoreDamageReduction,
-                                    final boolean halfDamage, final Spell spell) {
+                                    final boolean halfDamage, final Spell spell,
+                                    final java.util.Set<BypassedReduction> bypassed,
+                                    final org.aventyrs.core.magic.ElementalType additionalElement) {
         return computeFinalDamage(target.getCharacter(), target, sceneContext, damageType, null, source,
-                rawDamage, ignoreDamageReduction, halfDamage, spell);
+                rawDamage, ignoreDamageReduction, halfDamage, spell,
+                bypassed == null ? java.util.Set.of() : bypassed, additionalElement);
     }
 
     @Override
@@ -384,7 +388,7 @@ public class DamageServiceImpl implements DamageService {
                                     final int rawDamage, final boolean ignoreDamageReduction,
                                     final boolean attackHalvesDamage) {
         return computeFinalDamage(character, target, sceneContext, damageType, damageDescriptor, source, rawDamage,
-                ignoreDamageReduction, attackHalvesDamage, null);
+                ignoreDamageReduction, attackHalvesDamage, null, java.util.Set.of(), null);
     }
 
     /**
@@ -397,7 +401,16 @@ public class DamageServiceImpl implements DamageService {
                                     final DamageType damageType, final DamageDescriptor damageDescriptor,
                                     final CombatantSheet source,
                                     final int rawDamage, final boolean ignoreDamageReduction,
-                                    final boolean attackHalvesDamage, final Spell spell) {
+                                    final boolean attackHalvesDamage, final Spell spell,
+                                    final java.util.Set<BypassedReduction> bypassed,
+                                    final org.aventyrs.core.magic.ElementalType additionalElement) {
+        // Benção Elemental: the element dealt on top of the hit's own type (table ruling — fully both types).
+        final DamageDescriptor addedElement = additionalElement == null ? null
+                : new DamageDescriptor(damageType == DamageType.MAGICO ? DamageType.ELEMENTAL : DamageType.FISICO_ELEMENTAL,
+                        additionalElement);
+        if (target != null && addedElement != null && target.isImmuneToDamage(addedElement.damageType(), addedElement)) {
+            return 0;
+        }
         // Immune to the Magia itself — a Talento (Aptidão Mágica Dracônica) or the Raça (Nascido da Floresta, Vampiro).
         if (target != null && spell != null && target.isImmuneToSpell(spell)) {
             return 0;
@@ -438,8 +451,9 @@ public class DamageServiceImpl implements DamageService {
         int reduction = forgoesMitigation ? 0 : target != null
                 ? getTotalAbsoluteDamageReduction(target, sceneContext)
                 : computeTotalAbsoluteDamageReduction(character, null, sceneContext);
-        if (forgoesMitigation && !ignoreDamageReduction) {
-            reduction += target != null ? elementalResistance(target, damageDescriptor) : 0;
+        if (forgoesMitigation && !ignoreDamageReduction && !bypassed.contains(BypassedReduction.RE)) {
+            reduction += target != null ? elementalResistance(target, damageDescriptor)
+                    + elementalResistance(target, addedElement) : 0;
         } else if (!ignoreDamageReduction) {
             // Each reduction reaches only the damage its rules text names (defesas-e-resistencias):
             // RD plain physical, RDS anything but Primordial, RM magical, RE elemental. An untyped
@@ -449,7 +463,7 @@ public class DamageServiceImpl implements DamageService {
             DamageType effectiveType = damageDescriptor != null ? damageDescriptor.damageType() : damageType;
             boolean plainPhysical = effectiveType == null || effectiveType == DamageType.FISICO;
             if (target != null) {
-                if (plainPhysical) {
+                if (plainPhysical && !bypassed.contains(BypassedReduction.RD)) {
                     reduction += Math.max(0, damageReductionOnly(target, damageType, source));
                 }
                 if (effectiveType != DamageType.PRIMORDIAL) {
@@ -461,7 +475,7 @@ public class DamageServiceImpl implements DamageService {
                                 .sum();
                     }
                 }
-                if (effectiveType == DamageType.MAGICO) {
+                if (effectiveType == DamageType.MAGICO && !bypassed.contains(BypassedReduction.RM)) {
                     reduction += getTotalMagicReduction(target);
                     reduction += sumAllyGrantedMagicReduction(target, sceneContext);
                 }
@@ -473,12 +487,15 @@ public class DamageServiceImpl implements DamageService {
                 // own, scoped to the Magia rather than to magical damage — ⚠️ a reading: it reaches
                 // whatever non-Primordial damage that Magia deals, elemental included, since the
                 // clause names the Magia and the catalog's offensive Magias are mostly elemental.
-                if (spell != null && effectiveType != DamageType.PRIMORDIAL && !target.isStrippedOfReductions()) {
+                if (spell != null && effectiveType != DamageType.PRIMORDIAL && !target.isStrippedOfReductions()
+                        && !bypassed.contains(BypassedReduction.RM)) {
                     reduction += character.getFeats().stream()
                             .mapToInt(feat -> feat.resolveSpellMagicReduction(spell, target))
                             .sum();
                 }
-                reduction += elementalResistance(target, damageDescriptor);
+                if (!bypassed.contains(BypassedReduction.RE)) {
+                    reduction += elementalResistance(target, damageDescriptor) + elementalResistance(target, addedElement);
+                }
             } else {
                 reduction += getTotalDamageReduction(character) + getTotalDamageTakenReduction(character);
             }
@@ -497,7 +514,11 @@ public class DamageServiceImpl implements DamageService {
         }
         // Vulnerabilidade: "sofrerá N pontos de danos adicionais" — onto the hit itself, before mitigation.
         int damageTakenIncrease = character.getFeats().stream()
-                .mapToInt(feat -> feat.resolveDamageTakenIncrease(damageType, damageDescriptor, character))
+                .mapToInt(feat -> addedElement == null
+                        ? feat.resolveDamageTakenIncrease(damageType, damageDescriptor, character)
+                        // Both types: a Fraqueza to either applies, but one Talento never counts twice.
+                        : Math.max(feat.resolveDamageTakenIncrease(damageType, damageDescriptor, character),
+                                feat.resolveDamageTakenIncrease(addedElement.damageType(), addedElement, character)))
                 .sum();
         int afterFlatReduction = Math.max(0, rawDamage + damageTakenIncrease - reduction);
         int finalDamage = halfDamage ? afterFlatReduction / 2 : afterFlatReduction;

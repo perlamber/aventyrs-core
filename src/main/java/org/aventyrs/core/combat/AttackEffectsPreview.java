@@ -31,8 +31,8 @@ import java.util.List;
  *                              (or a Título's override, repeated by Finalização), each Título's additions, then
  *                              each Talento's (Abrir Feridas's Sangramento)
  * @param hitCriticalEffects    the Efeitos Críticos a plain hit applies at Menor — Finalização's repetitions
- * @param effectChains          the Correntes de Efeitos the attack carries: its Títulos', its Talentos' and a
- *                              foe's own stat block's
+ * @param effectChains          the Correntes de Efeitos the attack carries: its Títulos', its Talentos', a
+ *                              foe's own stat block's and the weapon's Aprimoramentos'
  * @param criticalEffectChains  the stages added only on an Acerto Crítico, whether or not the Corrente
  *                              threshold was cleared (Arte do Escudo Atacante's Rugido, Abrir Defesas)
  */
@@ -61,6 +61,8 @@ public record AttackEffectsPreview(List<CriticalEffectType> criticalEffects,
         if (holder instanceof MonsterSheet foe) {
             chains.addAll(foe.getAttackEffectChains());
         }
+        // The weapon's own Aprimoramentos' Correntes (core 0.1.6.9); no roller — nothing is thrown in a preview.
+        chains.addAll(org.aventyrs.core.item.WeaponEnhancements.effectChains(attackSource, holder, null));
         List<Effect> criticalChains = new ArrayList<>();
         holder.getCharacter().getFeats().forEach(feat -> criticalChains.addAll(feat.resolveCriticalHitEffectChains(
                 holder.getCharacter(), attackSkill, attackSource, holder, null)));

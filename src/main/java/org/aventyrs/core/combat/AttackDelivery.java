@@ -458,6 +458,9 @@ public class AttackDelivery {
                     chains.add(projectileChain);
                 }
             }
+            // The weapon's own Aprimoramentos' Correntes — Inquisição, Ignora Resistências, Corrente Atacante.
+            chains.addAll(org.aventyrs.core.item.WeaponEnhancements.effectChains(attack.getAttackSource(),
+                    attack.getAttacker(), attack.getDiceRoller()));
         }
         if (criticalEffectTriggered) {
             // Arte do Escudo Atacante: "seus Acertos Críticos recebem a Corrente de Efeitos – Rugido",
@@ -492,6 +495,15 @@ public class AttackDelivery {
         if (lifeSteal > 0) {
             stages.add(new org.aventyrs.core.effect.RouboDeVida(attack.getAttacker(), lifeSteal));
         }
+        // The weapon's Roubo de Mana and de Determinação (Benção Elduriana, Ladra do AEther), on every hit.
+        int manaSteal = org.aventyrs.core.item.WeaponEnhancements.manaSteal(attack.getAttackSource());
+        if (manaSteal > 0) {
+            stages.add(new org.aventyrs.core.effect.RouboDeMana(attack.getAttacker(), manaSteal));
+        }
+        int determinationSteal = org.aventyrs.core.item.WeaponEnhancements.determinationSteal(attack.getAttackSource());
+        if (determinationSteal > 0) {
+            stages.add(new org.aventyrs.core.effect.RouboDeDeterminacao(attack.getAttacker(), determinationSteal));
+        }
         stages.addAll(repeated(chains, repetitions));
         stages.addAll(repeated(criticals, repetitions));
 
@@ -502,7 +514,9 @@ public class AttackDelivery {
         DamageInteraction head = new DamageInteraction(damageService)
                 .fromSpell(SpellResistance.spellOf(attack.getAttackSource()))
                 .withSanctity(sanctityOf(attack, chains))
-                .withDiceRoller(attack.getDiceRoller());
+                .withDiceRoller(attack.getDiceRoller())
+                .bypassing(bypassedReductions(attack, chains))
+                .withAdditionalElement(org.aventyrs.core.item.WeaponEnhancements.additionalElement(attack.getAttackSource()));
         if (criticalResult != null && criticalResult.isCriticalSuccess()) {
             // Feridas Ardentes: the critical's Metade da Gnose heals only with a Descanso Verdadeiro
             // or Roubo de Vida.
@@ -556,9 +570,30 @@ public class AttackDelivery {
         total += attacker.getCharacter().getFeats().stream()
                 .mapToInt(feat -> feat.resolveTargetedLifeSteal(attacker.getCharacter(), attacker, defender))
                 .sum();
+        // The weapon's own Maldição: Solve-Vidas — "Roubo de Vida 2" plus its Favor's "+1" (core 0.1.6.9).
+        total += org.aventyrs.core.item.WeaponEnhancements.lifeSteal(attack.getAttackSource());
         // A Bispo's "Roubo de Vida 1 aos seus ataques e magias" (core 0.0.92).
         total += org.aventyrs.core.subordinate.SubordinateBenefit.LIFE_STEAL * org.aventyrs.core.subordinate.SubordinateBenefits.count(attacker, attack.getSceneContext(), org.aventyrs.core.subordinate.SubordinateBenefit.BISPO_LIFE_STEAL);
         return Math.max(0, total);
+    }
+
+    /**
+     * The mitigation stages this hit ignores (core 0.1.6.9): RD when the weapon carries Benção Vulcana, RE and RM too
+     * when a triggered Corrente is its Ignora Resistências — which names this hit's own resistances, so it is read here
+     * at the head rather than run after the damage.
+     */
+    private static java.util.Set<org.aventyrs.core.character.BypassedReduction> bypassedReductions(
+            final DeliveredAttack attack, final List<Effect> chains) {
+        java.util.Set<org.aventyrs.core.character.BypassedReduction> bypassed =
+                java.util.EnumSet.noneOf(org.aventyrs.core.character.BypassedReduction.class);
+        if (org.aventyrs.core.item.WeaponEnhancements.ignoresDamageReduction(attack.getAttackSource())) {
+            bypassed.add(org.aventyrs.core.character.BypassedReduction.RD);
+        }
+        if (chains.stream().anyMatch(org.aventyrs.core.effect.IgnoraResistencias.class::isInstance)) {
+            bypassed.add(org.aventyrs.core.character.BypassedReduction.RE);
+            bypassed.add(org.aventyrs.core.character.BypassedReduction.RM);
+        }
+        return bypassed;
     }
 
     /**

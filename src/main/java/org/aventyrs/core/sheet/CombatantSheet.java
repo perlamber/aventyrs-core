@@ -1365,6 +1365,21 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
     boolean isInCombat();
 
     /**
+     * Makes this combatant's Magias steps níveis harder to cast until anchor's next Turn starts — Benção Elduriana's
+     * Inquisição, "GD de Magias do Alvo +2 níveis" (table ruling, 2026-10-12: until the attacker's next Turn). Marks
+     * do not stack: a second one from the same anchor replaces the first, and {@link #getSpellDifficultyIncrease}
+     * answers the largest held. {@code Scene#next()} lifts the ones anchored to whoever's Turn begins ({@link
+     * #expireMarksAnchoredTo}); {@link #endCombat()} lifts them all.
+     */
+    void markSpellDifficultyIncrease(CombatantSheet anchor, int steps);
+
+    /** The níveis of GD this combatant's Magias currently carry — 0 when unmarked. */
+    int getSpellDifficultyIncrease();
+
+    /** Lifts every mark anchored to anchor — its Turn has begun. */
+    void expireMarksAnchoredTo(CombatantSheet anchor);
+
+    /**
      * Notes that units of projectile were fired in the current combat — the ledger {@link #endCombat()} recovers
      * half of. {@code combat.AmmunitionService#consume} writes it; an unrecoverable kind (Bodkin) is not recorded.
      */

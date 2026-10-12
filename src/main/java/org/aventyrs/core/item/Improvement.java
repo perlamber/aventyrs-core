@@ -15,8 +15,8 @@ import org.aventyrs.core.skill.SkillType;
  *
  * <p>Two authored catalogs, one per Aprimoramento list in {@code docs/rules/equipamentos.txt}:
  * {@link DefensiveImprovement} (fitted through the {@link ItemImprovement} wrapper, which holds
- * its creation-time choices) and {@link OffensiveImprovement} (fitted bare — no offensive entry
- * has a choice this core can read).
+ * its creation-time choices) and {@link OffensiveImprovement} (fitted bare, except Benção Elemental,
+ * whose chosen element an {@link OffensiveItemImprovement} records).
  */
 public interface Improvement {
     String getName();
@@ -37,6 +37,15 @@ public interface Improvement {
      */
     EnhancementPriceCategory getPriceCategory();
 
+    /**
+     * The {@link OffensiveImprovement} this is — itself, or the one an {@link OffensiveItemImprovement}
+     * wraps — or {@code null} for a defensive one. What {@link WeaponEnhancements} reads a host's
+     * offensive-only clauses through.
+     */
+    default OffensiveImprovement offensiveDefinition() {
+        return null;
+    }
+
     default int getPhysicalDefenseBonus() {
         return 0;
     }
@@ -46,11 +55,11 @@ public interface Improvement {
     }
 
     /**
-     * The Ataque column both Aprimoramento tables print. <b>Read by nothing yet</b> — applying it
-     * needs a roll pass scoped to the weapon the attack was actually delivered with, and {@code
-     * AbstractSkillInteraction#sumEquipmentRollBonuses} scans the whole loadout indiscriminately,
-     * so routing it through {@code ModifierType.ATAQUE_*_ROLL_BONUS} would let a sheathed weapon's
-     * Obra-Prima sharpen a swing made with something else. Exact, authored data meanwhile.
+     * The Ataque column both Aprimoramento tables print. On an offensive host it reaches the attack roll
+     * made <em>with that weapon</em> through {@link WeaponEnhancements#attackRollBonus} (core 0.1.6.9) —
+     * never {@code AbstractSkillInteraction#sumEquipmentRollBonuses}, which scans the whole loadout and
+     * would let a sheathed weapon sharpen a swing made with something else. A defensive host's column
+     * is still read by nothing.
      */
     default int getAttackBonus() {
         return 0;

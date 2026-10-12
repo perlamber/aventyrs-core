@@ -806,6 +806,8 @@ public class Scene {
         }
         CombatantSheet active = activeEntries.get(currentIndex).getCombatantSheet();
         active.startTurn(currentRound);
+        // Inquisição: a mark "until the attacker's next Turn" ends as that Turn begins, on whoever carries it.
+        activeEntries.forEach(entry -> entry.getCombatantSheet().expireMarksAnchoredTo(active));
         return active;
     }
 

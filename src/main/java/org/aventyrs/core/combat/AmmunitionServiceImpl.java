@@ -132,7 +132,7 @@ public class AmmunitionServiceImpl implements AmmunitionService {
         if (projectile.getAmmunitionKind() != weapon.getAmmunitionKind()) {
             throw new IllegalOperationException(PROJECTILE_INCOMPATIBLE);
         }
-        int room = weapon.getMagazineCapacity() - copy.getLoadedProjectiles().size();
+        int room = weapon.getEffectiveMagazineCapacity() - copy.getLoadedProjectiles().size();
         if (room <= 0) {
             throw new IllegalOperationException(RELOAD_NOT_POSSIBLE);
         }

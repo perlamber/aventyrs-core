@@ -194,10 +194,30 @@ public interface DamageService {
      * Feat#isImmuneToSpell}) and an RM against it ({@code Feat#resolveSpellMagicReduction}). A
      * {@code null} spell is the seven-argument form.
      */
+    default int calculateFinalDamage(CombatantSheet target, SceneContext sceneContext,
+                                     DamageType damageType, CombatantSheet source,
+                                     int rawDamage, boolean ignoreDamageReduction, boolean halfDamage,
+                                     org.aventyrs.core.magic.Spell spell) {
+        return calculateFinalDamage(target, sceneContext, damageType, source, rawDamage, ignoreDamageReduction,
+                halfDamage, spell, java.util.Set.of(), null);
+    }
+
+    /**
+     * Same as the eight-argument form, for a hit that ignores only some mitigation stages and deals an element on
+     * top of its own type (core 0.1.6.9) — the shape a weapon's Aprimoramentos give one hit.
+     *
+     * <p>bypassed names the stages skipped ({@link org.aventyrs.core.character.BypassedReduction}: Benção
+     * Vulcana's RD, its Corrente's RE and RM); RA is never among them. additionalElement makes the hit <b>fully both
+     * types</b> (table ruling, 2026-10-12, Benção Elemental): the target's immunity to that element stops it, the
+     * element's RE comes off on top of the hit's own reductions, and a Fraqueza to it applies — never twice for one
+     * Talento. {@code null} for none.
+     */
     int calculateFinalDamage(CombatantSheet target, SceneContext sceneContext,
                              DamageType damageType, CombatantSheet source,
                              int rawDamage, boolean ignoreDamageReduction, boolean halfDamage,
-                             org.aventyrs.core.magic.Spell spell);
+                             org.aventyrs.core.magic.Spell spell,
+                             java.util.Set<org.aventyrs.core.character.BypassedReduction> bypassed,
+                             org.aventyrs.core.magic.ElementalType additionalElement);
 
     /** Descriptor-aware final-damage calculation for elemental attacks. */
     int calculateFinalDamage(CombatantSheet target, SceneContext sceneContext,

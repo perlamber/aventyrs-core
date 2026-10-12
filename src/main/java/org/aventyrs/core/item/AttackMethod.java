@@ -48,7 +48,9 @@ public enum AttackMethod {
     /**
      * Whether source (a wielded {@link Weapon} or cast {@link Spell}, or {@code null} when the
      * caller didn't say) was delivered by this method. {@code null} always reads as "no match" —
-     * the same convention {@code AttackSource}-narrowing hooks use throughout this core.
+     * the same convention {@code AttackSource}-narrowing hooks use throughout this core. A weapon
+     * matches every category it {@linkplain Weapon#countsAs counts as}, so an Arco fitted with a
+     * Baioneta is a Lança here too.
      */
     public boolean matches(final AttackSource source, final Character character) {
         if (this == OFFENSIVE_MAGIC) {
@@ -59,6 +61,6 @@ public enum AttackMethod {
         }
         return this == NATURAL_WEAPON
                 ? character != null && character.treatsAsNaturalWeapon(weapon)
-                : weapon.getCategory() == category;
+                : weapon.countsAs(category);
     }
 }

@@ -403,6 +403,10 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
         bonus += target.getConditionBonus(ModifierType.SKILL_ROLL_BONUS, sceneContext);
         bonus += target.getConditionBonus(skillType.getRollBonusType(), sceneContext);
         bonus += sumEquipmentRollBonuses(character);
+        // The Ataque columns of the weapon this attack is made with — never of the rest of the loadout (core 0.1.6.9).
+        if (skillType.isAttackSkill()) {
+            bonus += org.aventyrs.core.item.WeaponEnhancements.attackRollBonus(attackSource);
+        }
         // Curandeiro's Despertar: "Vantagem nas rolagens de 'Medicina e Cura'".
         bonus += character.getAllTitles().stream()
                 .mapToInt(title -> title.resolveSkillRollBonus(skillType, target))
@@ -660,6 +664,9 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
         // Outward-facing: Favorecido em Perícias de Ataque against a Flanqueado/Caído/Imobilizado/
         // Confuso/Cego target, read off the *victim's* own Condições.
         attackRollBonus += attackTarget.getAttackerAttackRollBonus(sceneContext);
+        // Alcance Estendido: "+1 em rolagens de Ataque … [contra] alvos não adjacentes".
+        attackRollBonus += org.aventyrs.core.item.WeaponEnhancements.nonAdjacentBonus(attackSource, attackTarget,
+                sceneContext);
         if (attackRollBonus != 0) {
             result = result.toBuilder().skillRollBonus(result.getSkillRollBonus() + attackRollBonus).build();
         }
@@ -1112,10 +1119,14 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                                 sceneContext))
                         .sum());
 
+        // The weapon's Danos columns, and Alcance Estendido's +1 once a target is known not to be adjacent.
+        int weapon = addFlat(contributions, DamageContributionSource.WEAPON_ENHANCEMENT,
+                org.aventyrs.core.item.WeaponEnhancements.damageRollBonus(attackSource)
+                        + org.aventyrs.core.item.WeaponEnhancements.nonAdjacentBonus(attackSource, attackTarget, sceneContext));
         // A Cavaleiro's "Vantagem em … Dano" (core 0.0.92).
         int subordinate = addFlat(contributions, DamageContributionSource.SUBORDINATE,
                 Skill.ADVANTAGE_BONUS * org.aventyrs.core.subordinate.SubordinateBenefits.count(target, sceneContext, org.aventyrs.core.subordinate.SubordinateBenefit.CAVALEIRO_DAMAGE));
-        int flat = temporary + condition + meiaForca + manoeuvre + title + subordinate;
+        int flat = temporary + condition + meiaForca + manoeuvre + title + subordinate + weapon;
         return new DamageSum(DamageBonus.total(typed, flat), new DamageBonusBreakdown(contributions));
     }
 

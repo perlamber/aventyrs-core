@@ -38,11 +38,16 @@ public final class HandBudget {
         return items.stream().mapToInt(HandBudget::handCost).sum();
     }
 
-    /** Whether weapon needs both hands — an Arco, a Besta, or anything Médio or Pesado. */
+    /**
+     * Whether weapon needs both hands — an Arco, a Besta, anything Médio or Pesado, or one a fitted Corrente com
+     * Peso "passa a exigir uso de ambas as mãos".
+     */
     public static boolean isTwoHanded(@NonNull final Weapon weapon) {
         return weapon.getCategory() == ItemCategory.BOW
                 || weapon.getCategory() == ItemCategory.CROSSBOW
                 || weapon.getWeightClass() == ItemWeightClass.MEDIUM
-                || weapon.getWeightClass() == ItemWeightClass.HEAVY;
+                || weapon.getWeightClass() == ItemWeightClass.HEAVY
+                || WeaponEnhancements.offensiveImprovements(weapon.host()).stream()
+                        .anyMatch(OffensiveImprovement::requiresBothHands);
     }
 }
