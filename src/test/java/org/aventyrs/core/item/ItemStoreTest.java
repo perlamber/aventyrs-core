@@ -60,9 +60,7 @@ class ItemStoreTest {
         assertFalse(store.getOfferedMasterpieces().contains(OffensiveMasterpiece.MITRAL));   // Épico
 
         assertTrue(store.getOfferedImprovements().contains(DefensiveImprovement.RESISTENTE)); // Comum
-        assertFalse(store.getOfferedImprovements().contains(DefensiveImprovement.ENCAIXE));   // Épico
         assertTrue(store.getOfferedImprovements().contains(OffensiveImprovement.GUARDA_MAOS)); // Comum
-        assertFalse(store.getOfferedImprovements().contains(OffensiveImprovement.ENCAIXE));    // Épico
     }
 
     @Test
@@ -72,7 +70,7 @@ class ItemStoreTest {
         assertTrue(store.offers(DefensiveMasterpiece.REFORCADA));
         assertFalse(store.offers(DefensiveMasterpiece.MITRAL));
         assertTrue(store.offers(DefensiveImprovement.RESISTENTE));
-        assertFalse(store.offers(DefensiveImprovement.ENCAIXE));
+        assertFalse(store.offers(DefensiveImprovement.SOLVE_VIDAS));
         assertTrue(store.offers(OffensiveMasterpiece.BRUTAL));
         assertFalse(store.offers(OffensiveMasterpiece.DENTE_DE_DRAGAO));
         assertTrue(store.offers(OffensiveImprovement.MANOPLA_DE_SEGURANCA));
@@ -96,7 +94,7 @@ class ItemStoreTest {
 
         assertFalse(store.offers(ItemSpecification.builder()
                 .base(ArmorItem.ARMADURA_COMPLETA)
-                .improvement(ItemImprovement.of(DefensiveImprovement.ENCAIXE)) // Épico
+                .improvement(ItemImprovement.of(DefensiveImprovement.SOLVE_VIDAS)) // Mítico
                 .build()));
     }
 }

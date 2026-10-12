@@ -128,6 +128,14 @@ public abstract class AbstractTitleAbilityInteraction implements Interaction<Com
             vitality = determinationPoints;
             determinationPoints = 0;
         }
+        // Anima Selvagem: a Pedra do Poder's Cargas as a reserve of PD (core 0.1.6.7).
+        int stoneCharges = 0;
+        if (request.getDeterminationStone() != null && request.getDeterminationStoneCharges() > 0
+                && determinationPoints > 0) {
+            stoneCharges = Math.min(request.getDeterminationStoneCharges(), determinationPoints);
+            requireStoneCharges(activator, request.getDeterminationStone(), stoneCharges);
+            determinationPoints -= stoneCharges;
+        }
         if (determinationPointsService.getCurrentDeterminationPoints(activator.getCharacter(), activator)
                 < determinationPoints) {
             throw new IllegalOperationException(NOT_ENOUGH_DETERMINATION_POINTS);
@@ -153,6 +161,10 @@ public abstract class AbstractTitleAbilityInteraction implements Interaction<Com
 
         if (determinationPoints > 0) {
             activator.spendDeterminationPoints(determinationPoints);
+        }
+        if (stoneCharges > 0) {
+            new org.aventyrs.core.item.PowerStoneServiceImpl().drawCharges(activator, request.getDeterminationStone(),
+                    org.aventyrs.core.item.PowerStoneImprovement.ANIMA_SELVAGEM, stoneCharges);
         }
         if (hitPoints > 0) {
             // The bare sheet mutator, not DamageService: a self-inflicted activation cost is not an
@@ -303,5 +315,20 @@ public abstract class AbstractTitleAbilityInteraction implements Interaction<Com
             throw new IllegalOperationException(INVALID_PD_AMOUNT);
         }
         return requested;
+    }
+
+    /** Refuses a stone that cannot pay stoneCharges PD: not carried, not Anima Selvagem, or short of Cargas. */
+    private static void requireStoneCharges(final CombatantSheet activator,
+                                            final org.aventyrs.core.item.PowerStone stone, final int stoneCharges) {
+        if (activator.getInventory().stream().noneMatch(item -> item == stone)) {
+            throw new IllegalOperationException(org.aventyrs.core.util.TranslatableMessages.POWER_STONE_NOT_CARRIED);
+        }
+        if (stone.getStoneImprovement() != org.aventyrs.core.item.PowerStoneImprovement.ANIMA_SELVAGEM) {
+            throw new IllegalOperationException(
+                    org.aventyrs.core.util.TranslatableMessages.POWER_STONE_IMPROVEMENT_REQUIRED);
+        }
+        if (stone.getRemainingCharges() < stoneCharges) {
+            throw new IllegalOperationException(org.aventyrs.core.util.TranslatableMessages.POWER_STONE_NO_CHARGES);
+        }
     }
 }

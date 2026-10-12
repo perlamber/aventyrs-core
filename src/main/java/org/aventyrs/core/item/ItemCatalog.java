@@ -30,7 +30,8 @@ public final class ItemCatalog {
                     HelmetItem.class, NaturalWeapon.class,
                     BowItem.class, ThrowableItem.class, CrossbowItem.class, WhipItem.class,
                     ClubItem.class, LightBladeItem.class, HeavyBladeItem.class, SpearItem.class,
-                    UtilityItem.class);
+                    UtilityItem.class, ProjectileItem.class,
+                    CastingArtifactItem.class);
 
     private static final List<ItemTemplate> ALL = discover();
 

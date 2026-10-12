@@ -46,10 +46,8 @@ public enum DefensiveImprovement implements Improvement {
             return 1;
         }
     },
-    // The enabler for a Pedra do Poder — see PowerStone / PowerStoneType and
-    // AbstractItem#setPowerStone, which gates the socket on this constant being fitted.
-    ENCAIXE("Encaixe", ItemRarity.EPIC, 0, 0, 0, 0, 0,
-            null, "Apenas Armaduras e Escudos, permite encaixe de Pedra do Poder."),
+    // Encaixe (the Pedra do Poder socket) was removed by table ruling, 2026-10-12: any Obra-Prima
+    // Armadura or Escudo now takes a stone — see Item#acceptsPowerStone.
     AJUSTADA("Ajustada", ItemRarity.COMMON, 1, 0, 0, 0, 0,
             null, "PV deste item é reduzido em -5, Categoria de Peso do item reduzida em -1 nível.") {
         @Override

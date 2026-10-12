@@ -73,6 +73,14 @@ public class AbstractItem implements Item {
     private int improvementEffectLastActiveRound;
 
     /**
+     * How many units this copy is — 1 for ordinary Equipamento, a lot of {@link ItemTemplate#getLotSize()} for a
+     * {@link ProjectileItem}. Only a {@linkplain #isStackable() stackable} copy ever moves it, through {@link
+     * #addUnits(int)} and {@link #takeUnits(int)}.
+     */
+    @Builder.Default
+    private int quantity = 1;
+
+    /**
      * A builder pre-filled with template's catalog columns — the shared half of {@link
      * #fromTemplate} and {@code
      * org.aventyrs.core.character.services.EquipmentCraftingService#forge} (which overrides
@@ -92,7 +100,8 @@ public class AbstractItem implements Item {
                 .magicDefenseBonus(template.getMagicDefenseBonus())
                 .hardness(template.getHardness())
                 .castingBonus(template.getCastingBonus())
-                .favor(template.getFavor());
+                .favor(template.getFavor())
+                .quantity(template.getLotSize());
     }
 
     /**
@@ -120,7 +129,11 @@ public class AbstractItem implements Item {
                 .skillType(weapon.getSkillType())
                 .range(weapon.getRange())
                 .criticalEffect(weapon.getCriticalEffect())
-                .lesserCriticalMargin(weapon.getLesserCriticalMargin());
+                .lesserCriticalMargin(weapon.getLesserCriticalMargin())
+                .ammunitionKind(weapon.getAmmunitionKind())
+                .magazineCapacity(weapon.getMagazineCapacity())
+                .reloadCost(weapon.getReloadCost())
+                .favoredReloadCost(weapon.getFavoredReloadCost());
     }
 
     /**
@@ -130,6 +143,35 @@ public class AbstractItem implements Item {
     @Override
     public DefensiveCriticalEffectType getDefensiveCriticalEffect() {
         return template instanceof CriticallyDefensiveItem defensive ? defensive.getDefensiveCriticalEffect() : null;
+    }
+
+    /**
+     * Whether this copy is one stack of interchangeable units: its catalog entry sells in lots ({@link
+     * ItemTemplate#getLotSize()} above 1) and nothing has made it unique — no Obra-Prima, Aprimoramento, Pedra,
+     * Regalia mark or damage. Two stackable copies of the same template are the same thing in different amounts,
+     * which is what lets {@code AbstractCombatantSheet#addToInventory} merge them.
+     */
+    @Override
+    public boolean isStackable() {
+        return template != null && template.getLotSize() > 1 && masterpiece == null && improvements.isEmpty()
+                && powerStone == null && regaliaGrade == null && damageTaken == 0;
+    }
+
+    /** Adds units to this stack — a plain mutator; a non-positive count changes nothing. */
+    public void addUnits(final int units) {
+        if (units > 0) {
+            quantity += units;
+        }
+    }
+
+    /**
+     * Removes up to units from this stack and returns how many were actually taken — never more than it holds,
+     * never negative. A stack taken down to 0 stays an object; dropping it from the inventory is the caller's.
+     */
+    public int takeUnits(final int units) {
+        int taken = Math.max(0, Math.min(units, quantity));
+        quantity -= taken;
+        return taken;
     }
 
     public static AbstractItem fromTemplate(final ItemTemplate template) {
@@ -162,6 +204,10 @@ public class AbstractItem implements Item {
         if (masterpiece instanceof ItemMasterpiece && category != null && category.getType() != ItemType.DEFENSIVE) {
             throw new IllegalArgumentException("A defensive masterpiece requires a defensive item.");
         }
+        // A Projétil is ammunition, not Equipamento to be improved: no list offers it an Obra-Prima.
+        if (masterpiece != null && category == ItemCategory.PROJECTILE) {
+            throw new IllegalArgumentException("A projectile cannot be a masterpiece.");
+        }
         if (masterpiece instanceof OffensiveMasterpiece && category != null
                 && category.getType() != ItemType.OFFENSIVE) {
             throw new IllegalArgumentException("An offensive masterpiece requires an offensive item.");
@@ -178,7 +224,7 @@ public class AbstractItem implements Item {
     /**
      * Fits one more Aprimoramento to this copy. Keeps only the <b>type-compatibility</b> guards
      * the old single-value {@code setImprovement} carried (right wrapper class, defensive item,
-     * ENCAIXE/CAMUFLADA/CAMADA_DE_REFORCO shape) — the <b>rules gates</b> (item must be an
+     * CAMUFLADA/CAMADA_DE_REFORCO shape) — the <b>rules gates</b> (item must be an
      * Obra-Prima, the {@code getWeightClass().getMaximumImprovements()} slot cap, no duplicate
      * definition) live on {@code
      * org.aventyrs.core.character.services.EquipmentCraftingService#installImprovement}, the
@@ -193,10 +239,6 @@ public class AbstractItem implements Item {
         if (improvement instanceof ItemImprovement itemImprovement) {
             if (category != null && category.getType() != ItemType.DEFENSIVE) {
                 throw new IllegalArgumentException("A defensive improvement requires a defensive item.");
-            }
-            if (itemImprovement.getDefinition() == DefensiveImprovement.ENCAIXE
-                    && category != ItemCategory.ARMOR && category != ItemCategory.SHIELD) {
-                throw new IllegalArgumentException("Encaixe requires an armor or shield.");
             }
             if (itemImprovement.getDefinition() == DefensiveImprovement.CAMUFLADA
                     && category != ItemCategory.ARMOR) {
@@ -229,26 +271,17 @@ public class AbstractItem implements Item {
     }
 
     /**
-     * Sockets a Pedra do Poder into this item. Requires an Encaixe Aprimoramento already fitted —
-     * "permite encaixe de Pedra do Poder" — in either flavour: {@link
-     * DefensiveImprovement#ENCAIXE} (an Armadura or Escudo, which that constant's own text
-     * restricts it to) or {@link OffensiveImprovement#ENCAIXE} (a weapon). The offensive half is
-     * what finally reaches a stone's <em>Efeito Ofensivo</em> mode, which {@code
-     * PowerStone#resolveBonus} selects from {@link Item#getType()} and nothing could previously
-     * host.
+     * Binds a Pedra do Poder to this item for the Duração of a Vinculação, or unbinds it with {@code null}. Refuses a
+     * stone this copy cannot host ({@link Item#acceptsPowerStone(PowerStone)}). The Encaixe Aprimoramento is gone
+     * (table ruling, 2026-10-12): any Obra-Prima Arma, Armadura or Escudo takes one.
      *
-     * <p>Same guard-on-the-setter style as {@link #addImprovement}/{@link #setMasterpiece}; the
-     * {@code @SuperBuilder}'s {@code powerStone(...)} bypasses it, per CLAUDE.md's
-     * "Builder-bypassable invariants".
+     * <p>A bare mutator: the Carga, the Danos, the PA and both Resfriamentos are {@code PowerStoneService#bind}'s,
+     * which is the entry point a player goes through. The {@code @SuperBuilder}'s {@code powerStone(...)} bypasses even
+     * the host check, per CLAUDE.md's "Builder-bypassable invariants".
      */
     public void setPowerStone(final PowerStone powerStone) {
-        boolean encaixeFitted = improvements != null && improvements.stream()
-                .anyMatch(fitted -> fitted == OffensiveImprovement.ENCAIXE
-                        || (fitted instanceof ItemImprovement itemImprovement
-                        && itemImprovement.getDefinition() == DefensiveImprovement.ENCAIXE));
-        if (powerStone != null && !encaixeFitted) {
-            throw new IllegalArgumentException(
-                    "A Pedra do Poder requires the Encaixe Aprimoramento fitted to its host item.");
+        if (powerStone != null && !acceptsPowerStone(powerStone)) {
+            throw new IllegalArgumentException("Only an Obra-Prima Arma, Armadura or Escudo can host this Pedra do Poder.");
         }
         this.powerStone = powerStone;
     }

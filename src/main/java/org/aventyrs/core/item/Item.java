@@ -289,7 +289,7 @@ public interface Item {
      * MovementTerrainService#ignoresDifficultTerrain} over the worn equipment.
      */
     default boolean ignoresDifficultTerrain() {
-        return getPowerStone() != null && !isDestroyed() && getPowerStone().getType().ignoresDifficultTerrain();
+        return getPowerStone() != null && !isDestroyed() && getPowerStone().getStoneType().ignoresDifficultTerrain();
     }
 
     default int resolvePowerStoneBonus(final ModifierType modifierType) {
@@ -380,19 +380,31 @@ public interface Item {
      * OffensiveMasterpiece#DECISIVA}); no Aprimoramento does.
      */
     default int resolveEnhancementMajorCriticalMarginIncrease(final Weapon weapon, final Character character) {
-        if (isDestroyed() || (getType() == ItemType.OFFENSIVE && this != weapon) || getMasterpiece() == null) {
+        if (isDestroyed()) {
             return 0;
         }
-        return getMasterpiece().resolveMajorCriticalMarginIncrease(weapon, character);
+        // A bound Mitral Puro's Violento: "Margem Crítica … Maior aumentada em +1" — with its host weapon only.
+        int stone = getPowerStone() == null ? 0
+                : getPowerStone().getStoneType().resolveMajorCriticalMarginIncrease(getType(), this == weapon);
+        if ((getType() == ItemType.OFFENSIVE && this != weapon) || getMasterpiece() == null) {
+            return stone;
+        }
+        return stone + getMasterpiece().resolveMajorCriticalMarginIncrease(weapon, character);
     }
 
     default int resolveEnhancementCriticalMarginIncrease(final Weapon weapon, final Character character) {
-        if (isDestroyed() || (getType() == ItemType.OFFENSIVE && this != weapon)) {
+        if (isDestroyed()) {
             return 0;
+        }
+        // A bound stone: its Base widens every attack (Calcita Vulcânica), its Violento only its host's (Mitral Puro).
+        int stone = getPowerStone() == null ? 0 : getPowerStone().getStoneType()
+                .resolveBonus(ModifierType.LESSER_CRITICAL_MARGIN, getType(), this == weapon);
+        if (getType() == ItemType.OFFENSIVE && this != weapon) {
+            return stone;
         }
         int masterpieceBonus = getMasterpiece() == null ? 0
                 : getMasterpiece().resolveCriticalMarginIncrease(weapon, character);
-        return masterpieceBonus + getImprovements().stream()
+        return stone + masterpieceBonus + getImprovements().stream()
                 .mapToInt(improvement -> improvement.resolveCriticalMarginIncrease(weapon, character))
                 .sum();
     }
@@ -411,6 +423,10 @@ public interface Item {
         }
         CriticalDamage masterpiece = getMasterpiece() == null ? CriticalDamage.NONE
                 : getMasterpiece().resolveCriticalDamage(weapon, character);
+        // A bound Calcita Vulcânica's Violento: "Dano Crítico +1d6".
+        if (getPowerStone() != null) {
+            masterpiece = masterpiece.plus(getPowerStone().getStoneType().resolveCriticalDamage(getType(), true));
+        }
         return getImprovements().stream()
                 .map(improvement -> improvement.resolveCriticalDamage(weapon, character))
                 .reduce(masterpiece, CriticalDamage::plus);
@@ -608,5 +624,39 @@ public interface Item {
      */
     default boolean isDonatedByAventyr() {
         return this instanceof AbstractItem item && item.isDonatedByAventyr();
+    }
+
+    /**
+     * How many units this is — 1 for every ordinary item and for a catalog template; a forged {@link ProjectileItem}
+     * copy carries its whole lot ({@link AbstractItem#getQuantity()}).
+     */
+    default int getQuantity() {
+        return 1;
+    }
+
+    /** Whether this is a stack of interchangeable units (see {@link AbstractItem#isStackable()}); false by default. */
+    default boolean isStackable() {
+        return false;
+    }
+
+    /**
+     * Whether stone can be bound to this item — "apenas Equipamentos Obras-Primas do Tipo Arma, Armadura e Escudo
+     * podem receber as pedras" ({@code docs/rules/pedras-do-poder.txt}). The item must be a {@link Weapon}, an
+     * Armadura or an Escudo, carry an Obra-Prima, and not be destroyed. A stone whose Violento "pode ser anexo apenas à
+     * Artefatos de Conjuração" (Esfera de AEther) refuses every other weapon. Whether the item is <em>worn</em>, and
+     * whether either is cooling down, is {@code PowerStoneService}'s question, not this one.
+     */
+    default boolean acceptsPowerStone(final PowerStone stone) {
+        if (stone == null || isDestroyed() || getMasterpiece() == null) {
+            return false;
+        }
+        ItemCategory category = getCategory();
+        boolean weapon = this instanceof Weapon && category != null && category.getType() == ItemType.OFFENSIVE
+                && category != ItemCategory.NATURAL_WEAPON && category != ItemCategory.PROJECTILE;
+        if (weapon) {
+            return !stone.getStoneType().isViolentRestrictedToCastingArtifacts()
+                    || category == ItemCategory.CASTING_ARTIFACT;
+        }
+        return category == ItemCategory.ARMOR || category == ItemCategory.SHIELD;
     }
 }

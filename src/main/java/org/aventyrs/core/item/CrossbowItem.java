@@ -6,6 +6,7 @@ import org.aventyrs.core.character.DamageBase;
 import org.aventyrs.core.effect.CriticalEffectType;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.scene.Range;
+import org.aventyrs.core.sheet.ActionCost;
 import org.aventyrs.core.skill.Skill;
 import org.aventyrs.core.skill.SkillType;
 
@@ -17,8 +18,12 @@ import org.aventyrs.core.skill.SkillType;
  * <p>Every Besta is de Ataque à Distância ({@link SkillType#ATAQUE_A_DISTANCIA}) and prints
  * "Projétil (16)" in its Efeito Crítico column — "Projétil" is not a {@link CriticalEffectType}
  * (see {@link BowItem}), so {@link #getCriticalEffect()} is {@code null} and only the
- * {@link #getLesserCriticalMargin()} of 16 survives from that column. The reload cost every
- * Besta carries ("Tempo de Ação da recarga 1PA") stays prose — this core has no reload model.
+ * {@link #getLesserCriticalMargin()} of 16 survives from that column; the Efeito Crítico itself is
+ * the fired Virote's ({@link ProjectileHead#getCriticalEffect()}).
+ *
+ * <p>Every Besta fires {@link AmmunitionKind#BOLT}s from a magazine ({@link #getMagazineCapacity()}) that "precisa ser
+ * recarregada" — {@code combat.AmmunitionService#reload}, priced by {@link #getReloadCost()} in combat and free outside
+ * it (table ruling, 2026-10-12).
  *
  * <p>Only {@link #BESTA_PESADA}'s Favor is expressible: "Vantagem nas Rolagens de Ataque à
  * Distância" is a flat {@link Skill#ADVANTAGE_BONUS} on that whole Perícia, which {@code
@@ -44,6 +49,7 @@ public enum CrossbowItem implements ItemTemplate, Weapon {
             DamageBase.of(1, 3),
             Range.DISTANCIA_MEDIA,
             16,
+            1, 1, 0,
             ItemFavor.builder()
                     .description("Uma vez por Cena pode disparar como Ação Livre.")
                     .requirements(new ItemRequirements(AttributeDomain.DEXTERITY, 3))
@@ -68,6 +74,7 @@ public enum CrossbowItem implements ItemTemplate, Weapon {
             DamageBase.of(1, 2),
             Range.DISTANCIA_MEDIA,
             16,
+            5, 2, 1,
             ItemFavor.builder()
                     .description("Tempo de Ação da recarga reduzido para 1PA.")
                     .requirements(new ItemRequirements(AttributeDomain.DEXTERITY, 4))
@@ -95,6 +102,7 @@ public enum CrossbowItem implements ItemTemplate, Weapon {
             DamageBase.of(2, 1),
             Range.DISTANCIA_LONGA,
             16,
+            1, 1, 0,
             ItemFavor.builder()
                     .description("Vantagem nas Rolagens de Ataque à Distância.")
                     .requirements(new ItemRequirements(AttributeDomain.DEXTERITY, 3, AttributeDomain.STRENGTH))
@@ -111,11 +119,20 @@ public enum CrossbowItem implements ItemTemplate, Weapon {
     private final DamageBase damageBase;
     private final Range range;
     private final int lesserCriticalMargin;
+    /** "recarregada após cada disparo" = 1; the Besta de Repetição's "após 5 disparos" = 5. */
+    private final int magazineCapacity;
+    private final int reloadActionPoints;
+    /** The Favor's reload price in PA, or 0 when the Favor does not touch it. */
+    private final int favoredReloadActionPoints;
     private final ItemFavor favor;
 
     CrossbowItem(final String name, final String description, final ItemWeightClass weightClass,
                  final ItemRarity rarity, final int price, final DamageBase damageBase,
-                 final Range range, final int lesserCriticalMargin, final ItemFavor favor) {
+                 final Range range, final int lesserCriticalMargin, final int magazineCapacity,
+                 final int reloadActionPoints, final int favoredReloadActionPoints, final ItemFavor favor) {
+        this.magazineCapacity = magazineCapacity;
+        this.reloadActionPoints = reloadActionPoints;
+        this.favoredReloadActionPoints = favoredReloadActionPoints;
         this.name = name;
         this.description = description;
         this.weightClass = weightClass;
@@ -135,6 +152,21 @@ public enum CrossbowItem implements ItemTemplate, Weapon {
     @Override
     public SkillType getSkillType() {
         return SkillType.ATAQUE_A_DISTANCIA;
+    }
+
+    @Override
+    public AmmunitionKind getAmmunitionKind() {
+        return AmmunitionKind.BOLT;
+    }
+
+    @Override
+    public ActionCost getReloadCost() {
+        return ActionCost.ofActionPoints(reloadActionPoints);
+    }
+
+    @Override
+    public ActionCost getFavoredReloadCost() {
+        return favoredReloadActionPoints == 0 ? null : ActionCost.ofActionPoints(favoredReloadActionPoints);
     }
 
     /** {@code null} for every Besta — the "Projétil" column is not a catalogued Efeito Crítico. */

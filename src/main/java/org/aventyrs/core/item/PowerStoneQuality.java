@@ -3,59 +3,60 @@ package org.aventyrs.core.item;
 import lombok.Getter;
 
 /**
- * The Qualidade of a Pedra do Poder — the second axis of a {@link PowerStone}, orthogonal to its
- * {@link PowerStoneType}. Where the Tipo decides <em>what</em> the stone does, the Qualidade
- * decides its Preço and its charge economy: how many Cargas it holds, how much damage binding it
- * (Vinculação) inflicts, its Resfriamento between uses, and how long its activated effect lasts.
- * From the source "Qualidades, Raridades e Preço" table (L1324–1343).
+ * The Qualidade (refino) of a Pedra do Poder — the second axis of a {@link PowerStone}, orthogonal to its {@link
+ * PowerStoneType}. It decides the stone's Raridade, Preço and charge economy, from {@code
+ * docs/rules/pedras-do-poder.txt} (V19), "Qualidades, Raridades e Preço":
+ * <ul>
+ *   <li>Cargas — how many Vinculações it holds;</li>
+ *   <li>Danos — what each Vinculação deals its host;</li>
+ *   <li>Resfriamento — the Rodadas both stone and host cool down after a binding ends;</li>
+ *   <li>Duração do Efeito — how long one binding lasts.</li>
+ * </ul>
+ * All four are read by {@code PowerStoneService}.
  *
- * <p><b>The charge economy is authored data with no consumer yet.</b> This core has no
- * activation/charge-spend mechanism and no forge/bind step, so {@link #getCharges()} /
- * {@link #getBindingDamage()} / {@link #getCooldownRounds()} / {@link #getEffectDurationRounds()}
- * are exact figures nothing reads — the same "can't apply it yet doesn't mean can't compute it
- * yet" treatment {@link Item#getPrice()} and the unread Improvement/Masterpiece columns get. The
- * stone's <em>passive</em> mode effects (see {@link PowerStoneType}) do reach real machinery.
- *
- * <p>{@link #isMasterpieceAllowed()} is {@code false} only for {@link #JOLDA} — its "Outras
- * Informações" line reads "Não pode ser Obra-Prima". {@link PowerStone} enforces it.
+ * <p>{@link #isMasterpieceAllowed()} is {@code false} only for {@link #JOLDA} ("Não pode ser Obra-Prima"), and
+ * {@link #reducesCooldownOnEarlyRemoval()} is {@code true} only for {@link #RELIQUIA}: "Remover antecipadamente reduz
+ * tempo de Resfriamento do Equipamento em quantidade proporcional a Duração restante". {@link #AETHERNUM}'s recharge
+ * by consuming other stones is part of the Joalheria follow-up and not built.
  */
 @Getter
 public enum PowerStoneQuality {
 
-    /** Jolda (Comum) — the cheap synthetic grade; the only one that cannot be an Obra-Prima. */
-    JOLDA(ItemRarity.COMMON, 5, 5, 3, 5, 2, false),
+    /** Jolda (Incomum) — Preço 5, 6 Cargas, Danos 3, Resfriamento 5, Duração 2. Cannot be an Obra-Prima. */
+    JOLDA("Jolda", ItemRarity.UNCOMMON, 5, 6, 3, 5, 2, false, false),
 
-    /** Joia (Incomum). Removing it early refunds Resfriamento proportional to the Duração left. */
-    JOIA(ItemRarity.UNCOMMON, 10, 10, 2, 4, 3, true),
+    /** Joia (Raro) — Preço 12, 10 Cargas, Danos 2, Resfriamento 4, Duração 3. */
+    JOIA("Joia", ItemRarity.RARE, 12, 10, 2, 4, 3, true, false),
 
-    /** Relíquia (Raro). */
-    RELIQUIA(ItemRarity.RARE, 20, 20, 2, 3, 3, true),
+    /** Relíquia (Épico) — Preço 20, 20 Cargas, Danos 1, Resfriamento 3, Duração 3. Early removal shortens cooling. */
+    RELIQUIA("Relíquia", ItemRarity.EPIC, 20, 20, 1, 3, 3, true, true),
 
-    /** AEthernum (Mítico) — can be recharged by consuming other Pedras do Poder. */
-    AETHERNUM(ItemRarity.MYTHIC, 50, 20, 3, 2, 4, true);
+    /** AEthernum (Mítico) — Preço 30, 14 Cargas, Danos 3, Resfriamento 2, Duração 4. */
+    AETHERNUM("AEthernum", ItemRarity.MYTHIC, 30, 14, 3, 2, 4, true, false);
 
+    private final String name;
     private final ItemRarity rarity;
     private final int price;
     private final int charges;
 
-    /**
-     * Danos de Vinculação — the damage binding a stone of this Qualidade deals, normally to the
-     * host Equipamento (to the bearer instead if the {@link PowerStoneMasterpiece#SOLVE_VIDAS}
-     * Obra-Prima is fitted). No forge/bind step exists to apply it.
-     */
+    /** Danos de Vinculação — what each binding deals its host Equipamento (its bearer under Solve-Vidas). */
     private final int bindingDamage;
 
-    /** Tempo de Resfriamento, in Rodadas, between activations of the stone's effect. */
+    /** Tempo de Resfriamento, in Rodadas, of both stone and host once a binding ends. */
     private final int cooldownRounds;
 
-    /** Duração do Efeito, in Rodadas, of one activation. */
+    /** Duração do Efeito, in Rodadas, of one binding. */
     private final int effectDurationRounds;
 
     private final boolean masterpieceAllowed;
 
-    PowerStoneQuality(final ItemRarity rarity, final int price, final int charges,
+    /** Whether unbinding early shortens the host's Resfriamento in proportion to the Duração left (Relíquia). */
+    private final boolean reducesCooldownOnEarlyRemoval;
+
+    PowerStoneQuality(final String name, final ItemRarity rarity, final int price, final int charges,
                       final int bindingDamage, final int cooldownRounds, final int effectDurationRounds,
-                      final boolean masterpieceAllowed) {
+                      final boolean masterpieceAllowed, final boolean reducesCooldownOnEarlyRemoval) {
+        this.name = name;
         this.rarity = rarity;
         this.price = price;
         this.charges = charges;
@@ -63,5 +64,11 @@ public enum PowerStoneQuality {
         this.cooldownRounds = cooldownRounds;
         this.effectDurationRounds = effectDurationRounds;
         this.masterpieceAllowed = masterpieceAllowed;
+        this.reducesCooldownOnEarlyRemoval = reducesCooldownOnEarlyRemoval;
+    }
+
+    /** Whether unbinding early shortens the host's Resfriamento (Relíquia). */
+    public boolean reducesCooldownOnEarlyRemoval() {
+        return reducesCooldownOnEarlyRemoval;
     }
 }

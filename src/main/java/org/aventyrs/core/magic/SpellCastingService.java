@@ -168,6 +168,15 @@ public interface SpellCastingService {
             org.aventyrs.core.util.DiceRoller roller);
 
     /**
+     * How many times the casting critical ({@link #resolveCastingCriticalEffect}) applies to each target — 2 with a
+     * drawn Grimório's Otimização Metamágica ("Os Efeitos Críticos desta magia desencadeiam duas vezes"), otherwise 1
+     * (core 0.1.6.8). The caller applies the built effect that many times.
+     */
+    default int getCastingCriticalEffectApplications(final CombatantSheet caster) {
+        return org.aventyrs.core.item.CastingArtifacts.doublesSpellCriticalEffects(caster.getCharacter()) ? 2 : 1;
+    }
+
+    /**
      * Whether target may negate what a Magia caster cast is about to do to them (core 0.1.6.2) — some held {@code
      * Feat#offersSpellNegation} answers yes ({@code QualidadeFeat#ESCOLHIDO_DA_MAGIA_MAIOR}'s Alma de AEther, once per
      * Cena de Combate). Never for one's own Magia: negating it would only refund its PM. Ask after the Magia is known

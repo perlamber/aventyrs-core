@@ -68,7 +68,7 @@ class DefensiveImprovementTest {
 
     @Test
     void catalogsEveryDefensiveImprovementAndItsAuthoredColumns() {
-        assertEquals(17, DefensiveImprovement.values().length);
+        assertEquals(16, DefensiveImprovement.values().length);   // Encaixe removed (2026-10-12)
         assertEquals(1, DefensiveImprovement.AJUSTADA.getPhysicalDefenseBonus());
         assertEquals(1, DefensiveImprovement.BENCAO_SELVAGEM.getAttackBonus());
         assertEquals(1, DefensiveImprovement.BENCAO_YMIRIANA.getDamageBonus());
@@ -163,8 +163,6 @@ class DefensiveImprovementTest {
 
     @Test
     void categoryRestrictedImprovementsRejectInvalidItems() {
-        assertThrows(IllegalArgumentException.class, () -> defensiveItem(
-                ItemCategory.BOOTS, ItemImprovement.of(DefensiveImprovement.ENCAIXE)));
         assertThrows(IllegalArgumentException.class, () -> defensiveItem(
                 ItemCategory.SHIELD, ItemImprovement.of(DefensiveImprovement.CAMUFLADA)));
         assertThrows(IllegalArgumentException.class, () -> defensiveItem(

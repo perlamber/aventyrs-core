@@ -251,6 +251,15 @@ and every economy column (Preço, DF/DM, Dureza, Conjuração) is a fixed `0` wi
 fixed `null` — a body part is not bought, forged, or `ModifierType`-buffed. Its Efeito Crítico
 stays javadoc-only (no weapon→crit scan exists).
 
+**Sold in lots? Make it stackable.** A "Preço para N unidades" row (the Projéteis) overrides
+`ItemTemplate#getLotSize()`: a forged copy then carries the whole lot in `AbstractItem#quantity`,
+`isStackable()` holds while it has no enhancement or damage, and `addToInventory` merges it into the
+stack already carried. The template must also override `forge()` to `AbstractItem.fromTemplate(this)`
+— the interface's bare bridge copy keeps no template, so it could never merge. `ProjectileItem` is the
+reference (12 constants over a shared `ProjectileHead` × `AmmunitionKind`). A weapon that fires one
+declares `Weapon#getAmmunitionKind()` (and, if it reloads, `getMagazineCapacity`/`getReloadCost`) —
+`combat.AmmunitionService` does the rest.
+
 **`AbstractItem` (`@Builder`) is the `AbstractFeat` equivalent** — use it for a one-off or
 caller-supplied item that doesn't belong in a catalog enum, not for a cataloged one.
 

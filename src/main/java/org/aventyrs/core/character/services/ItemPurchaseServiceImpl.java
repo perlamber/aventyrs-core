@@ -41,6 +41,25 @@ public class ItemPurchaseServiceImpl implements ItemPurchaseService {
         return purchase(store, ItemSpecification.of(template), buyer);
     }
 
+    @Override
+    public int getPurchasePrice(final ItemStore store, final org.aventyrs.core.item.PowerStoneSpecification spec,
+                                final CombatantSheet buyer) {
+        if (store == null || !store.offers(spec)) {
+            throw new IllegalOperationException(ITEM_NOT_OFFERED);
+        }
+        return EquipmentPointPricing.discounted(spec.getPrice(), buyer.getCharacter(), EquipmentPointExpense.PURCHASE);
+    }
+
+    @Override
+    public org.aventyrs.core.item.PowerStone purchase(final ItemStore store,
+                                                      final org.aventyrs.core.item.PowerStoneSpecification spec,
+                                                      final CombatantSheet buyer) {
+        buyer.spendEquipmentPoints(getPurchasePrice(store, spec, buyer));
+        org.aventyrs.core.item.PowerStone stone = spec.create();
+        buyer.addToInventory(stone);
+        return stone;
+    }
+
     private void requireOffered(final ItemStore store, final ItemSpecification spec) {
         if (store == null || !store.offers(spec)) {
             throw new IllegalOperationException(ITEM_NOT_OFFERED);

@@ -2,7 +2,10 @@ package org.aventyrs.core.item;
 
 import org.aventyrs.core.effect.CriticalEffectType;
 import lombok.Builder;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.Getter;
+import org.aventyrs.core.sheet.ActionCost;
 import lombok.NonNull;
 import lombok.experimental.SuperBuilder;
 import org.aventyrs.core.character.DamageBase;
@@ -59,4 +62,45 @@ public class AbstractWeapon extends AbstractItem implements Weapon {
     /** This copy's own Margem Crítica Menor — its catalog entry's, carried the same way. */
     @Builder.Default
     private int lesserCriticalMargin = Weapon.DEFAULT_LESSER_CRITICAL_MARGIN;
+
+    /** What this copy fires — its catalog entry's {@link Weapon#getAmmunitionKind()}, carried the same way. */
+    private AmmunitionKind ammunitionKind;
+
+    /** Its catalog entry's {@link Weapon#getMagazineCapacity()}. */
+    private int magazineCapacity;
+
+    /** Its catalog entry's {@link Weapon#getReloadCost()}. */
+    private ActionCost reloadCost;
+
+    /** Its catalog entry's {@link Weapon#getFavoredReloadCost()}. */
+    private ActionCost favoredReloadCost;
+
+    /**
+     * The projectiles loaded in this copy's magazine, in firing order — the next shot is the first. Per-copy state
+     * that persists across Cenas (table ruling, 2026-10-12): a Besta stays loaded until it is fired. Always empty for
+     * a weapon with no magazine. Filled by {@code AmmunitionService#reload}, emptied by {@link #fireLoaded()}.
+     */
+    @Builder.Default
+    private List<ProjectileItem> loadedProjectiles = new ArrayList<>();
+
+    /** A copy can attack exactly when its catalog entry can — see {@link Weapon#canAttack()}. */
+    @Override
+    public boolean canAttack() {
+        return !(getTemplate() instanceof Weapon template) || template.canAttack();
+    }
+
+    /** Loads projectile into the magazine — a plain mutator; capacity is {@code AmmunitionService}'s to check. */
+    public void load(final ProjectileItem projectile) {
+        loadedProjectiles.add(projectile);
+    }
+
+    /** The projectile the next shot fires, or {@code null} while unloaded. */
+    public ProjectileItem nextLoaded() {
+        return loadedProjectiles.isEmpty() ? null : loadedProjectiles.get(0);
+    }
+
+    /** Removes and returns the projectile at the front of the magazine, or {@code null} while unloaded. */
+    public ProjectileItem fireLoaded() {
+        return loadedProjectiles.isEmpty() ? null : loadedProjectiles.remove(0);
+    }
 }

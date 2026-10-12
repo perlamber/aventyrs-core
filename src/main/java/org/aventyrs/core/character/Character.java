@@ -322,9 +322,11 @@ public class Character {
      * {@code Feat} overriding {@code resolveActiveAbility} must return a stable singleton.
      */
     public List<ActiveAbility> getActiveAbilities() {
-        return Stream.concat(
+        return Stream.concat(Stream.concat(
                         activeAbilities.stream(),
-                        getFeats().stream().flatMap(feat -> feat.resolveActiveAbilities().stream()))
+                        getFeats().stream().flatMap(feat -> feat.resolveActiveAbilities().stream())),
+                        // A drawn Artefato de Conjuração's Efeito Ativo (core 0.1.6.8).
+                        org.aventyrs.core.item.CastingArtifacts.activeAbilities(this).stream())
                 .toList();
     }
 
@@ -390,7 +392,8 @@ public class Character {
                                           final org.aventyrs.core.sheet.CombatantSheet sheet) {
         AttributeValue attribute = attributes.getAttribute(domain);
         int total = attribute.getTotal()
-                + getFeats().stream().mapToInt(feat -> feat.resolveAttributeBonus(domain, this)).sum();
+                + getFeats().stream().mapToInt(feat -> feat.resolveAttributeBonus(domain, this)).sum()
+                + getEquipmentAttributeBonus(domain);
         if (sheet != null && sheet.getRacialTraitSuppression().suppressesInnateTraits()) {
             total -= attribute.getRacialBonus();
         }
@@ -402,6 +405,18 @@ public class Character {
             total += sheet.getTemporaryBonus(domain.getBonusModifierType());
         }
         return total;
+    }
+
+    /**
+     * The Atributo the worn Equipamento adds right now — a bound Pedra do Poder's Efeito Base ("Vigor +1", "Destreza
+     * +1"), typed as that Atributo's {@code <ATTR>_BONUS} on the stone ({@code PowerStoneType}). Summed into {@link
+     * #getEffectiveAttributeTotal(AttributeDomain, org.aventyrs.core.sheet.CombatantSheet)}, and read on its own by the
+     * Perícia-roll path, which adds the raw attributes separately.
+     */
+    public int getEquipmentAttributeBonus(final AttributeDomain domain) {
+        return equipment == null ? 0 : equipment.stream()
+                .mapToInt(item -> item.resolvePowerStoneBonus(domain.getBonusModifierType()))
+                .sum();
     }
 
     /** Habilidades de Competência acquired from trained Perícias (e.g. ArtesCompetencyAbility). */

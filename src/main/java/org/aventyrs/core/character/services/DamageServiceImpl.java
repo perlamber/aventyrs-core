@@ -150,6 +150,7 @@ public class DamageServiceImpl implements DamageService {
         for (Feat feat : character.getFeats()) {
             total += feat.resolveDamageTakenReduction(character, null);
         }
+        total += sumEquipmentDamageTakenReduction(character);
         return Math.max(0, total);
     }
 
@@ -166,7 +167,15 @@ public class DamageServiceImpl implements DamageService {
         total += sumTitleAbilityDamageReduction(character, target, sceneContext);
         total += sumAllyGrantedDamageReduction(target, sceneContext);
         total += target.getTemporaryBonus(ModifierType.DAMAGE_TAKEN_REDUCTION);
+        total += sumEquipmentDamageTakenReduction(character);
         return Math.max(0, total);
+    }
+
+    /** RDS the worn Equipamento grants — a bound Adamante Bruto's Protetivo "RD e RDS" (core 0.1.6.7). */
+    private static int sumEquipmentDamageTakenReduction(final Character character) {
+        return character.getEquipment().stream()
+                .mapToInt(item -> item.resolveEnhancementBonus(ModifierType.DAMAGE_TAKEN_REDUCTION, null, character))
+                .sum();
     }
 
     /**

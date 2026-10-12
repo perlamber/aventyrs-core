@@ -27,8 +27,7 @@ import lombok.Getter;
  * Oculta's Vantagem reaches the Furtividade roll; Benção Ymiriana's "Dano Base da Arma aumenta em
  * +1" reaches {@code DamageBaseService}; Cruel's "Danos Críticos" reaches a crit's dano roll
  * ({@link Improvement#resolveCriticalDamage}); Manopla de Segurança's "Não pode ser desarmado" is what
- * {@code Weapon#isDisarmable()} has been waiting for; Encaixe is what lets {@code
- * AbstractItem#setPowerStone} socket a Pedra do Poder into a <em>weapon</em>; and every constant
+ * {@code Weapon#isDisarmable()} has been waiting for; and every constant
  * prices off the Armas column ({@link EnhancementPriceCategory#WEAPON}).
  *
  * <p>The Ataque and Danos columns are authored and read by nothing — see {@link
@@ -66,12 +65,8 @@ public enum OffensiveImprovement implements Improvement {
             return CriticalDamage.ofFlat(3);
         }
     },
-    // The enabler for a Pedra do Poder on a weapon — the offensive twin of
-    // DefensiveImprovement#ENCAIXE, and what AbstractItem#setPowerStone checks for an offensive
-    // host. A stone in a weapon selects its Efeito Ofensivo (PowerStone#resolveBonus reads
-    // Item#getType()), which until now nothing could reach.
-    ENCAIXE("Encaixe", ItemRarity.EPIC, 0, 0, 0, 0, 0,
-            null, "Permite encaixe de Pedra do Poder."),
+    // Encaixe (the Pedra do Poder socket) was removed by table ruling, 2026-10-12: any Obra-Prima
+    // weapon now takes a stone — see Item#acceptsPowerStone.
     GUARDA_MAOS("Guarda Mãos", ItemRarity.COMMON, 1, 0, 0, 0, 0, null, null),
     // Unlike its defensive namesake this one is the bare column: the offensive list gives it no
     // Favor at all, so there is no first-Rodadas window and no damage-taken escalation here.

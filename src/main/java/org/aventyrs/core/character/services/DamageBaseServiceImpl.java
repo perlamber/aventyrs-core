@@ -71,6 +71,10 @@ public class DamageBaseServiceImpl implements DamageBaseService {
                         character.getPrimaryTitle() == title))
                 .sum();
 
+        // A timed scale-up on the wielder's sheet — the Adaga de Cerimônias' Efeito Ativo (core 0.1.6.8).
+        if (wielder != null) {
+            scaleUps += wielder.getTemporaryBonus(org.aventyrs.core.modifier.ModifierType.DAMAGE_BASE_INCREASE);
+        }
         return scaleUps + sumAttackingSkillExcellencies(character, attackingSkill);
     }
 

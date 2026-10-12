@@ -58,4 +58,14 @@ public interface ItemPurchaseService {
 
     /** Convenience for a plain catalog item — {@code purchase(store, ItemSpecification.of(template), buyer)}. */
     Item purchase(ItemStore store, ItemTemplate template, CombatantSheet buyer);
+
+    /** What a Pedra do Poder costs this buyer: its Preço with the usual PURCHASE discounts, never below the minimum. */
+    int getPurchasePrice(ItemStore store, org.aventyrs.core.item.PowerStoneSpecification spec, CombatantSheet buyer);
+
+    /**
+     * Buys a Pedra do Poder: refuses one the store does not offer ({@code ITEM_NOT_OFFERED}), spends the PE, and adds
+     * the fresh stone — every Carga full — to the buyer's inventory.
+     */
+    org.aventyrs.core.item.PowerStone purchase(ItemStore store, org.aventyrs.core.item.PowerStoneSpecification spec,
+                                               CombatantSheet buyer);
 }

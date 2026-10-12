@@ -94,7 +94,9 @@ public class AttackRangeServiceImpl implements AttackRangeService {
     public Optional<Range> getEffectiveRange(final Character character, @NonNull final Spell spell) {
         Range baseReach = spell.getTargeting().range();
         return Optional.ofNullable(baseReach)
-                .map(reach -> reach.increasedBy(sumFeatSteps(character, spell)));
+                .map(reach -> reach.increasedBy(sumFeatSteps(character, spell)
+                        // Bola de Crista: "Alcance de suas Magias à Distância aumentam em 1 passo".
+                        + org.aventyrs.core.item.CastingArtifacts.spellRangeSteps(character)));
     }
 
     /**

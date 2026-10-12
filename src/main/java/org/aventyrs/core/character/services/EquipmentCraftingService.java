@@ -262,7 +262,7 @@ public interface EquipmentCraftingService {
      * its Categoria de Peso ({@code IMPROVEMENT_SLOTS_FULL}); and improvement is not one it
      * already carries ({@code DUPLICATE_IMPROVEMENT} — "Aprimoramentos diferentes"). The
      * per-material compatibility guards ({@code ItemImprovement} wrapper, defensive item,
-     * ENCAIXE/CAMUFLADA/CAMADA_DE_REFORCO) are enforced by {@code AbstractItem#addImprovement}
+     * CAMUFLADA/CAMADA_DE_REFORCO) are enforced by {@code AbstractItem#addImprovement}
      * beneath this.
      */
     void installImprovement(Character crafter, Item item, Improvement improvement) throws IllegalOperationException;

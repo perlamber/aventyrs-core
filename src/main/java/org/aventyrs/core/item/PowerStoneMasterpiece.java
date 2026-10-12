@@ -3,44 +3,35 @@ package org.aventyrs.core.item;
 import lombok.Getter;
 
 /**
- * An Obra-Prima de Pedra do Poder — one master-crafted refinement fitted to a single stone copy,
- * from the source "Obras-Primas de Pedras do Poder" list (L1345–1354). Held on {@link PowerStone}
- * alongside the optional {@link PowerStoneImprovement}, the same way {@link ItemMasterpiece} sits
- * on a forged item.
- *
- * <p>Every entry adjusts the stone's {@link PowerStoneQuality} charge economy — Resfriamento,
- * Duração, número de Cargas, or the Danos de Vinculação. {@link PowerStone}'s effective-stat
- * getters fold these deltas in. Like the Qualidade columns they modify, <b>nothing consumes the
- * result yet</b> (no activation or bind step exists); the figures are exact authored data.
- *
- * <p>A stone can only take one if its Qualidade allows it — {@link PowerStoneQuality#JOLDA} does
- * not ("Não pode ser Obra-Prima"), enforced by {@link PowerStone}.
+ * An Obra-Prima de Pedra do Poder — one master-crafted refinement of a single stone, from {@code
+ * docs/rules/pedras-do-poder.txt} (V19), "Obras-Primas de Pedras do Poder", each with its own Preço in PE. Every
+ * entry adjusts the stone's {@link PowerStoneQuality} charge economy; {@link PowerStone}'s effective getters fold the
+ * deltas in, and {@code PowerStoneService} reads the result. A {@link PowerStoneQuality#JOLDA} cannot take one.
  */
 @Getter
 public enum PowerStoneMasterpiece {
 
-    /** Resfriamento Rápido (Incomum) — Tempo de Resfriamento reduzido em -1 Rodada. */
-    RESFRIAMENTO_RAPIDO(ItemRarity.UNCOMMON, -1, 0, 0, 0, false),
+    /** Carga Extra [+9PE] — o número de Cargas é aumentado em +50%. */
+    CARGA_EXTRA("Carga Extra", 9, 0, 0, 50, 0),
+
+    /** Duração Estendida [+6PE] — Duração do Efeito +2 Rodadas, Tempo de Resfriamento +1 Rodada. */
+    DURACAO_ESTENDIDA("Duração Estendida", 6, 1, 2, 0, 0),
+
+    /** Refinada [+12PE] — Danos causados durante a Vinculação reduzidos em -1 (mínimo 1). */
+    REFINADA("Refinada", 12, 0, 0, 0, -1),
+
+    /** Resfriamento Rápido [+6PE] — Tempo de Resfriamento reduzido em -1 Rodada. */
+    RESFRIAMENTO_RAPIDO("Resfriamento Rápido", 6, -1, 0, 0, 0),
 
     /**
-     * Duração Estendida (Incomum) — Duração do Efeito +2 Rodadas, mas Tempo de Resfriamento +1
-     * Rodada.
+     * Solve-Vidas [+8PE] — "A primeira vez que for Vinculada a cada Cena inflige danos ao Personagem, ao invés do
+     * Equipamento. Danos causados desta forma são recuperados apenas após Descansos Verdadeiros."
      */
-    DURACAO_ESTENDIDA(ItemRarity.UNCOMMON, 1, 2, 0, 0, false),
+    SOLVE_VIDAS("Solve-Vidas", 8, 0, 0, 0, 0);
 
-    /** Carga Extra (Raro) — o número de Cargas é aumentado em +50%. */
-    CARGA_EXTRA(ItemRarity.RARE, 0, 0, 50, 0, false),
-
-    /**
-     * Solve-Vidas (Épico) — durante a Vinculação inflige danos ao Personagem ao invés do
-     * Equipamento.
-     */
-    SOLVE_VIDAS(ItemRarity.EPIC, 0, 0, 0, 0, true),
-
-    /** Refinada (Épico) — Danos causados durante a Vinculação são reduzidos em -1. */
-    REFINADA(ItemRarity.EPIC, 0, 0, 0, -1, false);
-
-    private final ItemRarity rarity;
+    private final String name;
+    /** This Obra-Prima's Preço in PE, as V19 prints it beside its name. */
+    private final int priceModifier;
     private final int cooldownRoundsDelta;
     private final int effectDurationRoundsDelta;
 
@@ -49,32 +40,19 @@ public enum PowerStoneMasterpiece {
 
     private final int bindingDamageDelta;
 
-    /** Whether Vinculação damages the bearer rather than the host item (Solve-Vidas). */
-    private final boolean bindsToBearer;
-
-    /**
-     * This Obra-Prima's Preço in PE — its {@link #getRarity()} read down the Pedras do Poder
-     * column of the "Preços de Obras-Primas" table (Comum 4, Incomum 6, Raro 9, Épico 13,
-     * Mítico 18). Read directly from {@link EnhancementPricing} rather than through {@link
-     * Masterpiece}, which this enum does not implement: a stone's refinements adjust its charge
-     * economy rather than granting an item bonus.
-     *
-     * <p>Like every other {@link PowerStoneQuality} figure it has no consumer yet — nothing
-     * totals a stone's worth, and {@code ItemForgery#getTotalValue()} sums the host item's parts
-     * only. Exact authored data all the same.
-     */
-    public int getPriceModifier() {
-        return EnhancementPricing.masterpiecePrice(rarity, EnhancementPriceCategory.POWER_STONE);
-    }
-
-    PowerStoneMasterpiece(final ItemRarity rarity, final int cooldownRoundsDelta,
+    PowerStoneMasterpiece(final String name, final int priceModifier, final int cooldownRoundsDelta,
                           final int effectDurationRoundsDelta, final int chargeMultiplierPercent,
-                          final int bindingDamageDelta, final boolean bindsToBearer) {
-        this.rarity = rarity;
+                          final int bindingDamageDelta) {
+        this.name = name;
+        this.priceModifier = priceModifier;
         this.cooldownRoundsDelta = cooldownRoundsDelta;
         this.effectDurationRoundsDelta = effectDurationRoundsDelta;
         this.chargeMultiplierPercent = chargeMultiplierPercent;
         this.bindingDamageDelta = bindingDamageDelta;
-        this.bindsToBearer = bindsToBearer;
+    }
+
+    /** Whether the first Vinculação of a Cena damages the bearer rather than the host (Solve-Vidas). */
+    public boolean isBindsToBearer() {
+        return this == SOLVE_VIDAS;
     }
 }

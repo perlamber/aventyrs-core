@@ -18,7 +18,7 @@ import java.util.List;
  * ItemSpecification.builder()
  *         .base(ArmorItem.ARMADURA_COMPLETA)
  *         .masterpiece(DefensiveMasterpiece.ACO_VULCANO)
- *         .improvement(new ItemImprovement(DefensiveImprovement.ENCAIXE))
+ *         .improvement(new ItemImprovement(DefensiveImprovement.RESISTENTE))
  *         .regaliaGrade(RegaliaGrade.MENOR)
  *         .build();
  * </pre>

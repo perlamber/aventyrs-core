@@ -37,6 +37,9 @@ public enum ThrowableItem implements ItemTemplate, Weapon {
      * reduzido em -1PA" is prose: an action-cost reduction scoped to the first throw of a Turn
      * has no reader (this core reports PA, it does not budget them). <b>Efeitos Adicionais</b>
      * "Vendido em kits de 6 unidades" is inventory-packaging flavour.
+     *
+     * <p>TODO: a thrown Shuriken consumes itself (no Carga) and is 100% recoverable after combat (table ruling,
+     * 2026-10-12) — left for the Dardo rework; it is not yet a {@link ItemTemplate#getLotSize() stackable} lot.
      */
     DARDOS_E_SHUKENS(
             "Shukens",
@@ -96,6 +99,9 @@ public enum ThrowableItem implements ItemTemplate, Weapon {
      * reconstruction and is otherwise prose. <b>Efeitos Adicionais</b> "Usada apenas para
      * disparar Dardos … Distância Base muda para Longa. Tempo de Recarga 1PA" — the dual
      * dart-only mode, the Range replacement and the reload cost have no readers.
+     *
+     * <p>TODO: a Zarabatana fires {@link AmmunitionKind#DART}s, but no Dardo projectile is authored — its Preço is
+     * being remade (table ruling, 2026-10-12) — so it declares no {@code getAmmunitionKind()} and fires unconstrained.
      */
     ZARABATANA(
             "Zarabatana",

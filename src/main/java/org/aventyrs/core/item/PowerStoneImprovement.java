@@ -3,32 +3,41 @@ package org.aventyrs.core.item;
 import lombok.Getter;
 
 /**
- * An Aprimoramento fitted to a Pedra do Poder's Obra-Prima, from the source "Aprimoramentos de
- * Obras-Primas" list under Pedras do Poder (L1356–1358).
- *
- * <p>The ruleset confirms exactly one so far, so this enum has one constant — modeled like
- * {@link ItemRarity}, which likewise carries only the tiers real text has confirmed. Add a
- * constant when its rules text exists rather than guessing the rest of the list.
+ * An Aprimoramento fitted to a Pedra do Poder's Obra-Prima — "concedendo a ela um único Aprimoramento de Obra-Prima",
+ * so a stone holds at most one, and only once it is an Obra-Prima. From {@code docs/rules/pedras-do-poder.txt} (V19),
+ * "Aprimoramentos de Obras-Primas", each with its own Preço in PE. Read by {@code PowerStoneService}, and — the three
+ * charge-spending ones — by the payment paths named on each constant.
  */
 @Getter
 public enum PowerStoneImprovement {
 
-    /** Conexão Veloz (Raro) — Tempo de Vinculação reduzido para Ação Livre. */
-    CONEXAO_VELOZ(ItemRarity.RARE);
+    /** Anima Selvagem [+20PE] — Cargas as a reserve of PD for Habilidades de Títulos Aventyrs. */
+    ANIMA_SELVAGEM("Anima Selvagem", 20),
 
-    private final ItemRarity rarity;
+    /** Arcanum [+20PE] — Cargas as a reserve of PM to Conjurar or Mimetizar Magias. */
+    ARCANUM("Arcanum", 20),
 
-    PowerStoneImprovement(final ItemRarity rarity) {
-        this.rarity = rarity;
-    }
+    /** Conexão Veloz [+10PE] — Tempo de Vinculação reduzido para Ação Livre. */
+    CONEXAO_VELOZ("Conexão Veloz", 10),
 
-    /**
-     * This Aprimoramento's Preço in PE — its {@link #getRarity()} read down the Pedras do Poder
-     * column of the "Preços de Aprimoramentos" table (Comum 2, Incomum 4, Raro 7, Épico 11,
-     * Mítico 16). Read directly from {@link EnhancementPricing} for the same reason {@link
-     * PowerStoneMasterpiece#getPriceModifier()} is, and with the same missing consumer.
-     */
-    public int getPriceModifier() {
-        return EnhancementPricing.improvementPrice(rarity, EnhancementPriceCategory.POWER_STONE);
+    /** Dissipador de Calor [+15PE] — once per Cena, on the first use, Resfriamento -1 Rodada. */
+    DISSIPADOR_DE_CALOR("Dissipador de Calor", 15),
+
+    /** Mecanismo de Sobrecarga [+15PE] — may spend 3 Cargas instead of 1; Duração and Resfriamento are doubled. */
+    MECANISMO_DE_SOBRECARGA("Mecanismo de Sobrecarga", 15),
+
+    /** Última Carga [+5PE] — at zero Cargas, one last use for 2 Rodadas, with the Danos to Equipamentos doubled. */
+    ULTIMA_CARGA("Última Carga", 5),
+
+    /** Vitalitas Immanis [+20PE] — spend Cargas to heal twice their number in PV. */
+    VITALITAS_IMMANIS("Vitalitas Immanis", 20);
+
+    private final String name;
+    /** This Aprimoramento's Preço in PE, as V19 prints it beside its name. */
+    private final int priceModifier;
+
+    PowerStoneImprovement(final String name, final int priceModifier) {
+        this.name = name;
+        this.priceModifier = priceModifier;
     }
 }

@@ -994,6 +994,36 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
     int getRemainingCooldown(ActiveAbility ability);
 
     /**
+     * Puts item (a Pedra do Poder or the Equipamento that hosted one) on Resfriamento for rounds Rodadas — the
+     * per-item twin of {@link #startCooldown(ActiveAbility, int)}, keyed by identity and burned down at the same Rodada
+     * boundary. 0 or less clears it. Combat-scoped: {@link #endCombat()} clears every one (table ruling, 2026-10-12).
+     */
+    void startItemCooldown(org.aventyrs.core.item.Item item, int rounds);
+
+    /** Rodadas of Resfriamento item still owes, 0 when it is free. */
+    int getRemainingItemCooldown(org.aventyrs.core.item.Item item);
+
+    /** Every Pedra do Poder this sheet has vinculada right now. */
+    java.util.List<PowerStoneBinding> getPowerStoneBindings();
+
+    /** Registers a Vinculação already paid for — {@code PowerStoneService#bind}'s last step. Binds the host. */
+    void startPowerStoneBinding(PowerStoneBinding binding);
+
+    /**
+     * Ends binding: unbinds its host and puts both stone and host on Resfriamento. With early, the bearer removed it
+     * before its Duração ran out, and a stone whose refino says so (Relíquia) shortens the host's Resfriamento by the
+     * same proportion of its Duração left. Called by the Duração lapsing and by {@code PowerStoneService#unbind}.
+     */
+    void endPowerStoneBinding(PowerStoneBinding binding, boolean early);
+
+    /**
+     * Claims stone's first Vinculação of this Cena: true the first time, false after. Solve-Vidas ("A primeira vez que
+     * for Vinculada a cada Cena") and Dissipador de Calor ("uma vez por Cena, na primeira utilização") both read it.
+     * Cleared by {@link #startNewScene()}.
+     */
+    boolean claimFirstPowerStoneUseThisCena(org.aventyrs.core.item.PowerStone stone);
+
+    /**
      * Records that ability cannot be used again until a Descanso of restType's tier — the
      * "não poderá ser reativado até que passe por um Descanso Longo" gate, a different unit from
      * the Rodada count above and tracked separately for that reason.
@@ -1324,8 +1354,24 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
      *
      * <p>{@code Scene#endCombat()} calls this on every participant. A budget granted through the
      * plain {@link #grantEnhancedAttacks} survives, since its clause names no end at all.
+     *
+     * <p>It also <b>recovers fired projectiles</b> (table ruling, 2026-10-12): floor(half) of each recoverable kind
+     * fired since {@link #startCombat()} goes back into {@link #getInventory()}, reported here for the caller to
+     * show; empty when nothing comes back.
      */
-    void endCombat();
+    java.util.List<org.aventyrs.core.item.RecoveredProjectiles> endCombat();
+
+    /** Whether a combat is running for this sheet — between {@link #startCombat()} and {@link #endCombat()}. */
+    boolean isInCombat();
+
+    /**
+     * Notes that units of projectile were fired in the current combat — the ledger {@link #endCombat()} recovers
+     * half of. {@code combat.AmmunitionService#consume} writes it; an unrecoverable kind (Bodkin) is not recorded.
+     */
+    void recordFiredProjectiles(org.aventyrs.core.item.ProjectileItem projectile, int units);
+
+    /** Units of each projectile fired since the current combat started — see {@link #recordFiredProjectiles}. */
+    java.util.Map<org.aventyrs.core.item.ProjectileItem, Integer> getFiredProjectilesThisCombat();
 
     /**
      * Advances source's combat-scoped counter by one and returns the new value — a figure that

@@ -266,6 +266,45 @@ public class TranslatableMessages {
     public static final String EXCEPCIONALIDADE_CHOICE_NOT_ELIGIBLE = "EXCEPCIONALIDADE_CHOICE_NOT_ELIGIBLE";
     public static final String NOT_AN_ATTACK_SKILL = "NOT_AN_ATTACK_SKILL";
 
+    /** A weapon that fires projectiles (an Arco, a Besta) was used without naming one — no projectile, no shot. */
+    public static final String AMMUNITION_REQUIRED = "AMMUNITION_REQUIRED";
+
+    /** The projectile named does not fit the weapon — a Virote for an Arco, a Flecha for a Besta. */
+    public static final String PROJECTILE_INCOMPATIBLE = "PROJECTILE_INCOMPATIBLE";
+
+    /** A Besta was fired with an empty magazine, or with a projectile other than the one loaded next. */
+    public static final String WEAPON_NOT_LOADED = "WEAPON_NOT_LOADED";
+
+    /** The shot needs more projectiles than are carried or loaded (Tiro Duplo/Múltiplo fire one each). */
+    public static final String NOT_ENOUGH_AMMUNITION = "NOT_ENOUGH_AMMUNITION";
+
+    /** A reload named a weapon with no magazine, one already full, or a projectile not carried. */
+    public static final String RELOAD_NOT_POSSIBLE = "RELOAD_NOT_POSSIBLE";
+
+    /** An attack was made with a pure casting focus (Bola de Crista, Grimório, Varinha), which has no attack. */
+    public static final String WEAPON_CANNOT_ATTACK = "WEAPON_CANNOT_ATTACK";
+
+    /** A Pedra do Poder can be vinculada only during a combat (table ruling, 2026-10-12). */
+    public static final String POWER_STONE_NOT_IN_COMBAT = "POWER_STONE_NOT_IN_COMBAT";
+
+    /** The stone named is not in the bearer's inventory. */
+    public static final String POWER_STONE_NOT_CARRIED = "POWER_STONE_NOT_CARRIED";
+
+    /** The host is not a worn Obra-Prima Arma, Armadura or Escudo that takes this stone, or already holds one. */
+    public static final String POWER_STONE_HOST_INVALID = "POWER_STONE_HOST_INVALID";
+
+    /** The stone or the host is still in Resfriamento, or the stone is already vinculada. */
+    public static final String POWER_STONE_COOLING_DOWN = "POWER_STONE_COOLING_DOWN";
+
+    /** The stone has no Carga left (nor Última Carga's last use), or not enough for what was asked. */
+    public static final String POWER_STONE_NO_CHARGES = "POWER_STONE_NO_CHARGES";
+
+    /** The stone lacks the Aprimoramento this use needs (Mecanismo de Sobrecarga, Vitalitas Immanis, …). */
+    public static final String POWER_STONE_IMPROVEMENT_REQUIRED = "POWER_STONE_IMPROVEMENT_REQUIRED";
+
+    /** Unbinding named a host with no stone vinculada. */
+    public static final String POWER_STONE_NOT_BOUND = "POWER_STONE_NOT_BOUND";
+
     /**
      * An attack named more targets than the attacker's Talentos entitle them to — see {@code
      * AttackTargetingService#getMaximumTargets}.

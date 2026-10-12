@@ -80,6 +80,17 @@ public class TitleAbilityActivationRequest {
      */
     private final DiceRoller diceRoller;
 
+    /**
+     * A carried Pedra do Poder with Anima Selvagem whose Cargas pay part of this activation's PD — "Você pode usar
+     * Cargas desta Pedra do Poder como uma reserva de PD para ativar Habilidades de Títulos Aventyrs". {@code null}
+     * pays nothing from a stone. ⚠️ Read as mixing with the activator's own PD: up to {@link
+     * #getDeterminationStoneCharges()} Cargas cover that many PD, and the rest is paid as usual.
+     */
+    private final org.aventyrs.core.item.PowerStone determinationStone;
+
+    /** How many of {@link #getDeterminationStone()}'s Cargas to spend as PD — 0 spends none. */
+    private final int determinationStoneCharges;
+
     /** {@link #target}, or the activator when none was named. */
     public CombatantSheet getEffectiveTarget() {
         return target == null ? activator : target;

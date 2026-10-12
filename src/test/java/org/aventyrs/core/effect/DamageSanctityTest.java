@@ -92,13 +92,11 @@ class DamageSanctityTest {
         assertEquals(0, warded.getDamageTaken());
     }
 
-    /** The two Pedras: Opala's defensive -3 Profano, Turmalina's base -3 Sagrado, and each one's offensive nature. */
+    /** The two Pedras (V19): Opala's Protetivo -3 Profano, and each one's Violento nature. */
     @Test
     void thePedrasReduceAndConferANature() {
         assertEquals(3, PowerStoneType.OPALA_PURIFICADORA.resolveBonus(ModifierType.PROFANE_DAMAGE_REDUCTION,
                 ItemType.DEFENSIVE));
-        assertEquals(3, PowerStoneType.TURMALINA_OBSCURA.resolveBonus(ModifierType.SACRED_DAMAGE_REDUCTION,
-                ItemType.OFFENSIVE));
         assertEquals(DamageSanctity.SAGRADO, PowerStoneType.OPALA_PURIFICADORA.getOffensiveSanctity());
         assertEquals(DamageSanctity.PROFANO, PowerStoneType.TURMALINA_OBSCURA.getOffensiveSanctity());
     }

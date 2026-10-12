@@ -158,9 +158,9 @@ change bar one: `MovementServiceImpl` gained the equipment `MOVEMENT` pass it la
   Resistência/Vulnerabilidade Elemental, no first-instance-per-Rodada damage tracking, no Área de
   Efeito, no attribute-grant-from-equipment hook, no multiplicative/halving stage, no
   Corrupção/immunity, no Roubo de Vida from equipment, no PV-regen tick.
-- **The charge economy is authored-inert** — `PowerStoneQuality`'s Cargas/Resfriamento/Danos de
-  Vinculação/Duração and the `PowerStoneMasterpiece` deltas are exact figures nothing reads (no
-  activation service, no forge/bind step), same as Preço.
+- **Superseded (0.1.6.7)** — the V19 ruleset (`docs/rules/pedras-do-poder.txt`) replaced this
+  section: Encaixe is gone, a stone is a carried item bound in combat by `PowerStoneService`, and the
+  charge economy is consumed. See CLAUDE.md's Pedra do Poder bullet.
 
 ### Not authored
 
@@ -177,9 +177,13 @@ change bar one: `MovementServiceImpl` gained the equipment `MOVEMENT` pass it la
   prose (Correntes de Efeitos, "muda para" overrides, crit-dano — all unreadable), the
   exceptions being the two "Vantagem nas rolagens de Ataque à Distância" Favores (Besta Pesada,
   Javelin → `ATAQUE_A_DISTANCIA_ROLL_BONUS`), Bordão's `DEFESAS +2`, and Espada Gancho's
-  `PHYSICAL_DEFENSE +1`. **Still unauthored:** `Projéteis` (6, ammunition — `PROJECTILE`
-  category exists), `Fortalecimento` (9) and `Artefatos de Conjuração` (9) — the latter two
-  have no `ItemCategory` (not a clean fit for `CLUB`/`GLOVES`).
+  `PHYSICAL_DEFENSE +1`. `Projéteis` are authored (0.1.6.6) as
+  `ProjectileItem` — each of the 6 rows (`ProjectileHead`) as a Flecha and a Virote (table ruling,
+  2026-10-12), stackable by lot; the bows' and crossbows' "Projétil (N)" column takes its effect from
+  the projectile fired. `Artefatos de Conjuração` are authored (0.1.6.8) as
+  `CastingArtifactItem` (`ItemCategory.CASTING_ARTIFACT`; Bola de Crista, Grimório and Varinha have no
+  attack, `Weapon#canAttack()`), read while drawn by `CastingArtifacts`. **Still unauthored:**
+  `Fortalecimento` (9) — no `ItemCategory` (not a clean fit for `CLUB`/`GLOVES`).
 - **12 Equipamentos Naturais** — `ItemCategory.NATURAL_WEAPON` exists; `Arma de Sopro` (breath
   weapon, Cone area) and the five Defesas Naturais have no category.
 - **Equipamentos Tecnológicos** — stub in the source too.

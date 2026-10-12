@@ -36,7 +36,7 @@ class OffensiveImprovementTest {
 
     @Test
     void catalogsEveryOffensiveImprovementAndItsAuthoredColumns() {
-        assertEquals(18, OffensiveImprovement.values().length);
+        assertEquals(17, OffensiveImprovement.values().length);   // Encaixe removed (2026-10-12)
         assertEquals(1, OffensiveImprovement.GUARDA_MAOS.getPhysicalDefenseBonus());
         assertEquals(1, OffensiveImprovement.BENCAO_DE_PROTECAO.getMagicDefenseBonus());
         assertEquals(1, OffensiveImprovement.MANOPLA_DE_SEGURANCA.getAttackBonus());
@@ -51,7 +51,6 @@ class OffensiveImprovementTest {
         assertEquals(4, OffensiveImprovement.GUARDA_MAOS.getPriceModifier());       // Comum
         assertEquals(8, OffensiveImprovement.OCULTA.getPriceModifier());            // Incomum
         assertEquals(13, OffensiveImprovement.ARCANISTA.getPriceModifier());        // Raro
-        assertEquals(19, OffensiveImprovement.ENCAIXE.getPriceModifier());          // Épico
         assertEquals(26, OffensiveImprovement.SOLVE_VIDAS.getPriceModifier());      // Mítico
     }
 
@@ -106,12 +105,13 @@ class OffensiveImprovementTest {
      * builder bypassing the socket.
      */
     @Test
-    void encaixeLetsAWeaponHostAPowerStoneAndReachItsOffensiveMode() {
+    void anObraPrimaWeaponHostsAPowerStoneAndReachesItsViolentMode() {
         AbstractWeapon bare = weaponWith(null);
         assertThrows(IllegalArgumentException.class, () -> bare.setPowerStone(
                 PowerStone.of(PowerStoneType.SOMBRA_SOLIDIFICADA, PowerStoneQuality.JOIA)));
 
-        AbstractWeapon socketable = weaponWith(OffensiveImprovement.ENCAIXE);
+        AbstractWeapon socketable = weaponWith(null);
+        socketable.setMasterpiece(OffensiveMasterpiece.PRECISA);
         socketable.setPowerStone(PowerStone.of(PowerStoneType.SOMBRA_SOLIDIFICADA, PowerStoneQuality.JOIA));
 
         assertNotNull(socketable.getPowerStone());
@@ -159,7 +159,7 @@ class OffensiveImprovementTest {
     /** Nine names recur across the two Aprimoramento lists and agree on nothing but the name. */
     @Test
     void sharesNamesWithTheDefensiveCatalogAndNothingElse() {
-        assertEquals(DefensiveImprovement.ENCAIXE.getName(), OffensiveImprovement.ENCAIXE.getName());
+        assertEquals(DefensiveImprovement.OCULTA.getName(), OffensiveImprovement.OCULTA.getName());
         assertEquals(1, OffensiveImprovement.BENCAO_DE_PROTECAO.getPhysicalDefenseBonus());
         assertEquals(ItemRarity.UNCOMMON, OffensiveImprovement.BENCAO_YMIRIANA.getRarity());
         assertEquals(ItemRarity.RARE, DefensiveImprovement.BENCAO_YMIRIANA.getRarity());

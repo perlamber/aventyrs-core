@@ -380,6 +380,8 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                 .mapToInt(feat -> feat.resolveAttributeBonus(attributeDomain, character))
                 .sum();
         bonus += target.getTemporaryBonus(attributeDomain.getBonusModifierType());
+        // A bound Pedra do Poder's Atributo (core 0.1.6.7).
+        bonus += character.getEquipmentAttributeBonus(attributeDomain);
         bonus += sumSkillRollBonusModifiers(character.getAttributeAbilities());
         bonus += sumSkillRollBonusModifiers(skillCompetencyAbilities);
         List<SkillExcellency> unlockedExcellencies = SkillExcellency.unlockedBy(skillType.getExcellencyClass(), graduationValue);
@@ -530,6 +532,10 @@ public abstract class AbstractSkillInteraction implements Interaction<CombatantS
                     ? DifficultyLevel.reachedByAsExpert(bonus + skillRoll.getTotal())
                     : DifficultyLevel.reachedBy(bonus + skillRoll.getTotal());
             int criticalMarginIncrease = sumCriticalMarginIncrease(target, sceneContext, attackSource, attackTarget);
+            // A Bodkin: "Margem Crítica Menor da arma aumenta em +1 número" — the fired projectile's own widening.
+            if (skillRoll.getProjectile() != null) {
+                criticalMarginIncrease += skillRoll.getProjectile().getHead().getCriticalMarginIncrease();
+            }
             // Resistência a Críticos — the attack target's own RC narrows this roller's Margem
             // Crítica Menor back: its Raça's and its Talentos' standing grants plus any
             // round-scoped Blessing (AnaoFeat#VIGOR_DO_INVERNO), all summed by the target's own

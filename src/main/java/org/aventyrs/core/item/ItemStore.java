@@ -111,6 +111,22 @@ public class ItemStore {
      * stocked, whatever its base), and its base, its Obra-Prima and every fitted Aprimoramento
      * must each be no rarer than {@link #getMaxRarity()}.
      */
+    /**
+     * The Pedra do Poder refinos this store sells: those whose Raridade is within its ceiling. Every {@link
+     * PowerStoneType} comes in each, and an offered refino that may be an Obra-Prima offers every {@link
+     * PowerStoneMasterpiece} and {@link PowerStoneImprovement} with it — V19 prices them and gives them no Raridade of
+     * their own.
+     */
+    public List<PowerStoneQuality> getOfferedPowerStoneQualities() {
+        return Arrays.stream(PowerStoneQuality.values())
+                .filter(quality -> quality.getRarity().isAtMost(maxRarity))
+                .toList();
+    }
+
+    public boolean offers(final PowerStoneSpecification spec) {
+        return spec != null && spec.quality().getRarity().isAtMost(maxRarity);
+    }
+
     public boolean offers(final ItemSpecification spec) {
         return spec != null
                 && !spec.isRegalia()
