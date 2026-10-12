@@ -49,7 +49,7 @@ Match the rules text to exactly one:
 | extra temporary Ego points **per session** | `resolveExtraSessionEgoRecovery()` | `EgoPointsService#applySessionRecovery` (`MOTIVACAO_DE_MOSES`, `DILETO_DE_TYKHE`) |
 | PV/PM/PD recovered **when its holder uses Ego points** | `resolveEgoSpendRecovery(EgoPointSpend, int)` | applied by `useEgoPointsForEffect` (`DETERMINACAO_HEROICA`) |
 | a **move** off a deliberate spend | `resolveEgoSpendMove(EgoPointSpend)` → `GrantedMove` | reported by `EgoPointsService#getSpendMoves`, offered by the caller (`AS_NA_MANGA`) |
-| PE taken off an expense | `resolveEquipmentPointDiscount(EquipmentPointExpense)` | `EquipmentPointPricing#discounted`, floored at 1PE (`BARGANHISTA`) |
+| PE taken off an expense | `resolveEquipmentPointDiscount(EquipmentPointExpense)` | `EquipmentPointPricing#discounted`, floored at 1PE (`BARGANHISTA`); the same hook exists on `SkillCompetencyAbility` and `SkillExcellency` (Cambalacho, Profissão Focado/Lenda) and all three are summed |
 
 Two shape notes that decide which of the roll-bonus pair you want:
 

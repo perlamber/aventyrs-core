@@ -288,7 +288,8 @@ the caller has determined the roll succeeded.
   so no consuming service changed.
 - **PE is spent (0.1.6.4)** — the `CombatantSheet` forms of `forge`/`forgeRegalia`/`installImprovement`/`repair`
   debit the wallet, with `ResourcesAdvantage#BARGANHISTA`'s -2PE (produce) / -1PE (Aprimoramento) through
-  `EquipmentPointPricing`; an install costs half the Aprimoramento's Preço.
+  `EquipmentPointPricing`; an install costs half the Aprimoramento's Preço. Since 0.1.6.5 the same helper also takes
+  Cambalacho's -1PE and Profissão Focado's -1PE / Lenda's -3PE off a purchase or a forge.
 - **Still missing** — an Aprimoramento's install *time*, the "estende a
   Magias e Habilidades" clause of `REPARO_MELHORADO` (no Dureza on either), and the
   `FORJA_VULCANA` benefits (Resistência a Críticos / Margem Crítica Maior / item-scoped choices).

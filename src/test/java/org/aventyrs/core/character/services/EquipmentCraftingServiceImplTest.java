@@ -482,7 +482,8 @@ class EquipmentCraftingServiceImplTest {
     @Test
     void aSheetForgePaysTheForgingCost() throws IllegalOperationException {
         ItemTemplate espadaLonga = template(20, 24, ItemRarity.COMMON, ItemWeightClass.MEDIUM);
-        CharacterSheet smith = sheet(crafter(3, ProfissaoSpecialization.METALURGIA), 30);
+        // Graduação 2: below Focado's -1PE, so the plain half-value price.
+        CharacterSheet smith = sheet(crafter(2, ProfissaoSpecialization.METALURGIA), 30);
 
         Item forged = service.forge(smith, ProfissaoSpecialization.METALURGIA, ItemSpecification.of(espadaLonga), null);
 

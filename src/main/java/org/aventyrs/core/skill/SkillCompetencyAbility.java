@@ -423,6 +423,17 @@ public interface SkillCompetencyAbility extends SkillTrait {
     }
 
     /**
+     * How many Pontos de Equipamento this Habilidade shaves off an expense of kind — {@code
+     * PersuasaoCompetencyAbility#CAMBALACHO}'s "-1PE" on buying and producing. The competency twin of {@code
+     * EgoAdvantage#resolveEquipmentPointDiscount}, summed beside it by {@code
+     * org.aventyrs.core.character.services.EquipmentPointPricing#discounted}, which floors the price at 1PE
+     * (core 0.1.6.5). Zero by default.
+     */
+    default int resolveEquipmentPointDiscount(final org.aventyrs.core.ego.EquipmentPointExpense kind) {
+        return 0;
+    }
+
+    /**
      * Rodadas added to a Magia's Duração when it is measured in Rodadas — {@code
      * DominioDoManaCompetencyAbility#CONJURACAO_DURADOURA}. Summed by {@code SpellCastingService#castSpell}.
      * Zero by default.
