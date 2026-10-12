@@ -187,7 +187,8 @@ Recursos a Zero:
 - Extrema pobreza; incapaz de adquirir o básico (comida, abrigo); depende exclusivamente da caridade alheia.
 
 Vantagens de Recursos:
-- Barganhista – comprar ou produzir equipamentos após a criação, em campanha, custa 2PE a menos (mínimo 1PE);
+- Barganhista – comprar ou produzir equipamentos custa 2PE a menos (mínimo 1PE) — a qualquer momento, inclusive
+  na criação (regra da mesa, 2026-10-10; o livro diz "após a criação, em campanha");
   Melhorias de Obras-Primas, Aprimoramentos e uso de Habilidades de Título custam -1PE (mínimo 1PE).
 - Herança Familiar – na criação, escolher um Equipamento Comum Ofensivo de qualquer Raridade; o item é uma
   Obra-Prima Comum ou Incomum sem Aprimoramentos. Não é possível obter Equipamentos Tecnológicos ou Regalias.

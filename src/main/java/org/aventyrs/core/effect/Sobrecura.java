@@ -35,9 +35,9 @@ import org.aventyrs.core.sheet.ResourceType;
  *
  * <p>Not gated on a {@code CriticalResult}, like {@link Definhar} and unlike every {@link
  * CriticalEffect} here: a Corrente is triggered by the delivery roll clearing the target's DM by
- * a margin, not by a critical. Nothing fires it automatically — {@link EffectChainService#hits}
- * computes that margin, and Sobrecura is the first Corrente whose own text gives a caller a
- * reason to ask.
+ * a margin, not by a critical. {@code SpellCastingService#isEffectChainTriggered} judges that margin
+ * ({@link EffectChainService#getRequiredMargin}, Resoluto included) and {@code SpellCastingService#resolveEffectChain}
+ * builds this Corrente once it fires.
  *
  * <p><b>One heal effect with its Magia.</b> A Corrente is part of the Magia it rides on, so for a
  * target in Coma — "1PV de cada efeito de cura diferente" — Revigorar and its Sobrecura are one

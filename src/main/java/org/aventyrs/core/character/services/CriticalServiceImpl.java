@@ -152,6 +152,10 @@ public class CriticalServiceImpl implements CriticalService {
                     .mapToInt(item -> item.resolveEnhancementCriticalMarginIncrease(weapon, character))
                     .sum();
         }
+        // A drawn Artefato de Conjuração's "Margem Crítica Menor das Magias que conjurar" — on the Conjuração roll.
+        if (skillType == SkillType.DOMINIO_DO_MANA) {
+            total += org.aventyrs.core.item.CastingArtifacts.spellCriticalMarginIncrease(character);
+        }
         // And a sixth for the held Títulos (Senhor da Briga's natural-weapon and Defesa margins).
         total += character.getAllTitles().stream()
                 .mapToInt(title -> title.resolveCriticalMarginIncrease(skillType, attackSource, holder, sceneContext))

@@ -58,14 +58,11 @@ import org.aventyrs.core.scene.Range;
  *   either states an unconditional "+N níveis de distância" clause today ({@code
  *   GorgonaFeat#MARCA_DA_MALDICAO}'s Olhar de Lacerto reach is a {@code Feat} one, read by {@code
  *   OlharDeLacertoService}), so the hook is added with its first real consumer;</li>
- *   <li>no equipment scan. {@code org.aventyrs.core.item.OffensiveImprovement#ALCANCE_ESTENDIDO} is
- *   authored now, but its "Distância de Ataque aumenta +1UD" is the <b>wrong unit</b> for the
- *   widening this service applies: {@code Feat#resolveAttackRangeIncrease} counts whole {@link
- *   Range} <em>bands</em>, and 1UD is not one. Summing it needs a second, UD-denominated axis
- *   feeding {@link #getEffectiveRangeInUnidadesDeDistancia} before the band rounding — so the
- *   blocker is that axis, not a missing catalog. Arco Longo's "Alcance Base muda para Distância
- *   Muito Longa" Favor is a separate problem: a <em>replacement</em> with no {@code ModifierType}
- *   to carry it.</li>
+ *   <li>one equipment source only, on the UD axis: the weapon's own {@code
+ *   org.aventyrs.core.item.OffensiveImprovement#ALCANCE_ESTENDIDO} ("Distância de Ataque aumenta +1UD", core
+ *   0.1.6.9) is added to {@link #getEffectiveRangeInUnidadesDeDistancia(Character, Weapon, java.util.Set)} after
+ *   the band widening, since 1UD is not a band. Arco Longo's "Alcance Base muda para Distância Muito Longa" Favor
+ *   is a separate problem: a <em>replacement</em> with no {@code ModifierType} to carry it.</li>
  * </ul>
  *
  * <p>This core still never checks that an attack's target is actually within the range this

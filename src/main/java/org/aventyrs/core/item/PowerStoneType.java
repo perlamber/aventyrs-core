@@ -2,204 +2,328 @@ package org.aventyrs.core.item;
 
 import java.util.List;
 
+import org.aventyrs.core.character.CriticalDamage;
+import org.aventyrs.core.character.services.DamageService;
+import org.aventyrs.core.effect.CriticalEffectType;
+import org.aventyrs.core.effect.Effect;
+import org.aventyrs.core.effect.Rugido;
 import org.aventyrs.core.modifier.ModifierType;
+import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.skill.Skill;
 
 import lombok.Getter;
 
 /**
- * The Tipo of a Pedra do Poder — the catalog of what a socketed stone actually does, one constant
- * per entry of the source "Tipos de Pedras do Poder" list (L1254–1321). The other axis, its Preço
- * and charge economy, is {@link PowerStoneQuality}; a fitted {@link PowerStone} pairs the two.
+ * The Tipo of a Pedra do Poder: what a bound stone does. There is one constant per entry of {@code
+ * docs/rules/pedras-do-poder.txt} (V19, 2026-10-11), "Tipos de Pedras do Poder". The other axis, its Preço and charge
+ * economy, is {@link PowerStoneQuality}. A {@link PowerStone} pairs the two.
  *
- * <p><b>Every stone has a tri-modal effect:</b> an <em>Efeito Base</em> that is always active,
- * plus <em>either</em> an <em>Equipamento Defensivo</em> or an <em>Equipamento Ofensivo</em>
- * effect, selected by the host {@link Item#getType()}. {@link #resolveBonus(ModifierType,
- * ItemType)} sums the base contribution and whichever mode-specific one the host calls for.
+ * <p><b>A stone acts only while vinculada</b> (bound to a host for its Duração, by {@code PowerStoneService}). It then
+ * grants an <em>Efeito Base</em> plus a second effect chosen by the host's {@link Item#getType()}:
+ * <ul>
+ *   <li>the <em>Efeito Protetivo</em> for an Armadura or Escudo, and</li>
+ *   <li>the <em>Efeito Violento</em> for an Arma.</li>
+ * </ul>
+ * The accessors keep their historical names: {@link #getDefensiveEffect()} is the Protetivo,
+ * {@link #getOffensiveEffect()} the Violento. {@link #resolveBonus(ModifierType, ItemType)} sums the Base and whichever
+ * mode the host calls for. Since every effect reads through the host's {@link Item#getPowerStone()}, an unbound stone
+ * grants nothing, with no service change.
  *
- * <p><b>Most mode effects have no {@link ModifierType} to express them yet</b> and live only in
- * the {@code *Effect} rules text, each blocked on a specific missing system — no
- * Resistência/Vulnerabilidade Elemental, no first-instance-per-Rodada damage tracking, no Área de
- * Efeito, no attribute grant from equipment (the sole racial-bonus hook is {@code
- * Race#getFixedAttributeBonuses()}), no multiplicative/halving stage, no Corrupção/immunity
- * mechanism, no Roubo de Vida from equipment, no PV-regen tick. The handful that <em>are</em>
- * expressible carry a typed {@link ItemBonus} and reach real machinery
- * ({@code DefenseService}/{@code DamageService}/{@code MovementService}/{@code DamageBaseService})
- * through {@link Item}'s enhancement aggregation, exactly like a {@link DefensiveImprovement}.
+ * <p><b>What reaches real machinery.</b> Typed {@link ItemBonus}es cover:
+ * <ul>
+ *   <li>Atributo +1 (summed into {@code Character#getEffectiveAttributeTotal});</li>
+ *   <li>RD and RDS;</li>
+ *   <li>Movimento;</li>
+ *   <li>Defesas;</li>
+ *   <li>Vantagem on a Perícia;</li>
+ *   <li>Resistência a Críticos (read by {@code CombatantSheet#getTotalCriticalResistance});</li>
+ *   <li>+1PA (read by {@code ActionPointsServiceImpl});</li>
+ *   <li>Margem Crítica Menor.</li>
+ * </ul>
+ * Dedicated hooks cover:
+ * <ul>
+ *   <li>Margem Crítica Maior ({@link #resolveMajorCriticalMarginIncrease});</li>
+ *   <li>Dano Crítico ({@link #resolveCriticalDamage});</li>
+ *   <li>an extra Efeito Crítico ({@link #getViolentCriticalEffect()});</li>
+ *   <li>a Corrente ({@link #createViolentEffectChain});</li>
+ *   <li>the damage's sacred or profane nature ({@link #getOffensiveSanctity()});</li>
+ *   <li>Dano Base ({@link #resolveDamageBaseIncrease});</li>
+ *   <li>Terreno Difícil ({@link #ignoresDifficultTerrain()}).</li>
+ * </ul>
+ * A Violento effect that improves <em>an attack</em> (Margem, crit damage, Efeito, Corrente) applies only to attacks
+ * made with the host weapon itself. Every other clause carries a per-constant TODO naming its missing system.
  *
- * <p>A "Vantagem" clause is a flat {@code +Skill.ADVANTAGE_BONUS} on the named Perícia's own
- * {@code <SKILL>_ROLL_BONUS}, the same convention {@link DefensiveMasterpiece#BANHADA_EM_OURO}
- * and {@link DefensiveImprovement#OCULTA} follow. Damage-type simplification (a "de Corte" /
- * "Físicos" / "Elemental: X" scoped RD modeled as plain {@link ModifierType#DAMAGE_REDUCTION})
- * is the same treatment {@code ArmorItem#ARMADURA_COMPLETA} documents.
+ * <p>A numberless "RD" is {@link DamageService#DEFAULT_DAMAGE_REDUCTION} points, a numberless "RDS" one point, and a
+ * numberless "Resistência à Críticos" {@link CombatantSheet#CRITICAL_RESISTANCE_INSTANCE}. These are the same
+ * readings every other source uses.
  */
 @Getter
 public enum PowerStoneType {
 
     /**
-     * Adamante Bruto (Sintética). Base "Vigor +1" has no equipment→Atributo hook and the Impacto
-     * Meteórico Corrente needs an item-granted Corrente de Efeitos path; the offensive "ignora RD
-     * e Meio-Dano" needs an attack-side mitigation-bypass flag. The defensive clause is a real
-     * {@link ModifierType#DAMAGE_REDUCTION} 1, its Corte/Perfuração scoping simplified away since
-     * no damage-type-scoped mitigation exists.
+     * Adamante Bruto (Sintética).
+     *
+     * <p>Real: Base Vigor +1; Protetivo RD and RDS.
+     *
+     * <p>TODO:
+     * <ul>
+     *   <li>the Impacto Meteórico Corrente — V19 names it without stating its effect;</li>
+     *   <li>the Violento "Ataques Ignoram RD, Acertos Críticos … ignoram Meio-Dano" — no attack-side
+     *       mitigation-bypass flag exists.</li>
+     * </ul>
      */
     ADAMANTE_BRUTO("Adamante Bruto", "Sintética",
-            "Vigor +1, ataques recebem a Corrente de Efeitos – Impacto Meteórico: Ataque se torna "
-                    + "Área de Efeito - Explosão.",
-            "RD, Danos cortantes e perfurantes reduzidos em -1.",
-            "Ataques Ignoram RD e efeitos de Meio-Dano.",
-            List.of(), List.of(new ItemBonus(ModifierType.DAMAGE_REDUCTION, 1)), List.of()),
+            "Vigor +1, ataques recebem a Corrente de Efeitos – Impacto Meteórico.",
+            "RD e RDS.",
+            "Ataques Ignoram RD, Acertos Críticos adicionalmente ignoram efeitos de Meio-Dano.",
+            List.of(new ItemBonus(ModifierType.VIGOR_BONUS, 1)),
+            List.of(new ItemBonus(ModifierType.DAMAGE_REDUCTION, DamageService.DEFAULT_DAMAGE_REDUCTION),
+                    new ItemBonus(ModifierType.DAMAGE_TAKEN_REDUCTION, 1)),
+            List.of()),
 
     /**
-     * Aqua Marina (Elemental: Água). Nothing expressible: Movimento de Natação is a sub-stat
-     * deliberately not wired to {@link ModifierType#MOVEMENT}, the defensive clause needs RE and
-     * first-instance tracking, the offensive one needs geometry and elemental damage typing.
+     * Aqua Marina (Elemental: Água).
+     *
+     * <p>TODO:
+     * <ul>
+     *   <li>asphyxia damage — no asphyxia tracking (the Fadiga/asfixia gap);</li>
+     *   <li>granting a Natação mode from an item — {@code MovementService} reads only race/Talento/competency
+     *       grants;</li>
+     *   <li>the first-instance RE;</li>
+     *   <li>the +2UD reach — no equipment range pass;</li>
+     *   <li>retyping a weapon's damage — no item retype hook.</li>
+     * </ul>
      */
     AQUA_MARINA("Aqua Marina", "Elemental: Água",
-            "Permite respirar na água, concede Movimento Base de Natação.",
+            "Danos de Asfixia reduzidos à zero, concede Movimento Base de Natação.",
             "Ignora o primeiro dano Elemental: Água sofrido, então concede RE: Água.",
-            "Distância do Ataque aumenta em +2UD, Dano causado é Elemental: Água em adição aos seus tipos."),
+            "Distância do Ataque aumenta em +2UD, Dano causado é Elemental: Água em substituição aos seus tipos."),
 
     /**
-     * Calcita Vulcânica (Elemental: Magma). "Dano +1" has no flat damage-roll {@link
-     * ModifierType}; the offensive Dano Crítico +1d6 and elemental typing, and the defensive
-     * RE/first-instance clause, are all blocked. The base "Danos Físicos sofridos -1" is a real
-     * {@link ModifierType#DAMAGE_REDUCTION} 1, type-simplified.
+     * Calcita Vulcânica (Elemental: Magma).
+     *
+     * <p>Real: Base Margem Crítica Menor +1 on every attack, and Resistência a Críticos; Violento Dano Crítico +1d6
+     * on the host weapon.
+     *
+     * <p>TODO: the first-instance RE, and the retyping (no item retype hook).
      */
     CALCITA_VULCANICA("Calcita Vulcânica", "Elemental: Magma",
-            "Dano +1, Danos Físicos sofridos reduzidos em -1.",
+            "Margem Crítica Menor de ataques aumentada em +1 e Resistência à Críticos.",
             "Ignora o primeiro dano Elemental: Magma sofrido, então concede RE: Magma.",
-            "Dano Crítico +1d6, Dano causado é Elemental: Magma em adição aos seus tipos.",
-            List.of(new ItemBonus(ModifierType.DAMAGE_REDUCTION, 1)), List.of(), List.of()),
+            "Dano Crítico +1d6, Dano causado é Elemental: Magma em substituição aos seus tipos.",
+            List.of(new ItemBonus(ModifierType.LESSER_CRITICAL_MARGIN, 1),
+                    new ItemBonus(ModifierType.CRITICAL_RESISTANCE, CombatantSheet.CRITICAL_RESISTANCE_INSTANCE)),
+            List.of(), List.of()) {
+        @Override
+        public CriticalDamage resolveCriticalDamage(final ItemType hostType, final boolean hostWielded) {
+            return hostType == ItemType.OFFENSIVE && hostWielded ? CriticalDamage.ofDice(1) : CriticalDamage.NONE;
+        }
+    },
 
     /**
-     * Cianita Dracônica (Dracônica). "Instinto +1" (no attribute hook), an added Efeito Crítico,
-     * an elemental half-damage stage and an RE/half-damage bypass — none expressible.
+     * Cianita Dracônica (Dracônica).
+     *
+     * <p>Real: Base Instinto +1.
+     *
+     * <p>TODO:
+     * <ul>
+     *   <li>"+2 em Danos Elementais" — no element-scoped damage bonus;</li>
+     *   <li>the first-elemental-hit-per-Rodada Meio-Dano;</li>
+     *   <li>ignoring RE;</li>
+     *   <li>Resistência à Correntes −2 — no such number exists.</li>
+     * </ul>
      */
     CIANITA_DRACONICA("Cianita Dracônica", "Dracônica",
-            "Instinto +1, Danos Elementais recebem Cataclismo como Efeito Crítico adicional.",
+            "Instinto +1, Bônus de +2 em Danos Elementais.",
             "O primeiro Dano Elemental sofrido em cada Rodada é reduzido à metade (efeito de meio-dano).",
-            "Ignora RE e Efeitos de Meio-Dano utilizados para reduzir danos Elementais."),
+            "Ignora RE e reduz a Resistência à Correntes de Efeitos do alvo em -2.",
+            List.of(new ItemBonus(ModifierType.INSTINCT_BONUS, 1)), List.of(), List.of()),
 
     /**
-     * Citrino Incandescente (Elemental: Fogo). A per-Rodada damage aura, an RE/first-instance
-     * clause and elemental damage typing / base Efeito Crítico change — none expressible.
+     * Citrino Incandescente (Elemental: Fogo).
+     *
+     * <p>Real: Violento Inflamar as an additional Efeito Crítico.
+     *
+     * <p>TODO: the per-Rodada fire aura (outward damage at a Rodada boundary is caller-dealt), the first-instance RE,
+     * and the retyping.
      */
     CITRINO_INCANDESCENTE("Citrino Incandescente", "Elemental: Fogo",
-            "Personagens em Distância Muito Curta sofrem 3 pontos de Danos Físicos Elementais: Fogo a cada Rodada.",
+            "Personagens em Distância Muito Curta sofrem 3 pontos de Dano Elemental: Fogo a cada Rodada.",
             "Ignora o primeiro dano Elemental: Fogo sofrido, então concede RE: Fogo.",
-            "Dano causado é Elemental: Fogo em adição aos seus tipos, Efeito Crítico base muda para Inflamar."),
+            "Dano causado é Elemental: Fogo em substituição aos seus tipos, recebe Inflamar como Efeito Crítico adicional."),
 
     /**
-     * Coração Vazio (Planar). Corrupção immunity, cumulative retaliation damage on both sides —
-     * no immunity mechanism, no reactive-damage path, no within-Scene attack counter.
+     * Coração Vazio (Planar).
+     *
+     * <p>TODO:
+     * <ul>
+     *   <li>the Base start-of-Rodada self-damage locked until a Descanso Verdadeiro — no per-Rodada item tick;</li>
+     *   <li>the Protetivo melee retaliation — no item {@code RETALIATION_DAMAGE} source;</li>
+     *   <li>Primordial retyping and Roubo de Vida 2 — {@code LifeStealService} only amplifies an existing source.</li>
+     * </ul>
      */
     CORACAO_VAZIO("Coração Vazio", "Planar",
-            "Você se torna imune a Efeitos de Corrupção.",
-            "Atacantes sofrem 1 ponto de dano, cumulativo, para cada ataque bem-sucedido efetuado anteriormente. "
-                    + "Efeito de Corrupção.",
-            "Alvo sofre 1 ponto de dano adicional, cumulativo, para cada ataque sofrido antes. Efeito de Corrupção."),
+            "Você sofre 2 pontos de Dano Primordial no início de cada Rodada, danos sofridos desta forma só podem ser "
+                    + "recuperados com Descansos Verdadeiros.",
+            "Inimigos que te ataquem Corpo-a-Corpo sofrem 3 pontos de Dano Primordial, este efeito possui Roubo de Vida 2.",
+            "Dano causado é Primordial em substituição aos seus tipos, você recebe Roubo de Vida 2."),
 
     /**
-     * Esfera de AEther (Primordial). "Foco +1" (no attribute hook), magic-damage and
-     * Encantamento-Duração halving, and an offensive clause gated on "anexo apenas à Artefatos de
-     * Conjuração" — a subsection of the Armas catalog that is not authored (the {@link
-     * OffensiveImprovement#ENCAIXE} that lets a weapon host a stone at all now is). Blocked whole.
+     * Esfera de AEther (Primordial).
+     *
+     * <p>Real: Base Foco +1. The Violento "pode ser anexo apenas à Artefatos de Conjuração" is enforced by {@link
+     * Item#acceptsPowerStone(PowerStone)} ({@link #isViolentRestrictedToCastingArtifacts()}).
+     *
+     * <p>Its Violento "Dano e Cura mágica +3" is real on an artefact host ({@code CastingArtifacts#spellEffectBonus}).
+     *
+     * <p>TODO: the Protetivo magic-damage and Encantamento/Maldição halving, and the Violento's +2 Rodadas on
+     * Encantamentos e Maldições (no Maldição tag).
      */
     ESFERA_DE_AETHER("Esfera de AEther", "Primordial",
             "Foco +1",
             "Danos mágicos sofridos reduzidos à metade, Duração de Encantamentos e Maldições sofridas reduzidas à metade.",
-            "Pode ser anexo apenas à Artefatos de Conjuração. Dano e Cura mágica +3, Duração de seus "
-                    + "Encantamentos e Maldições +2 Rodadas."),
+            "Pode ser anexo apenas à Artefatos de Conjuração. Dano e Cura mágica +3, Duração de seus Encantamentos e "
+                    + "Maldições +2 Rodadas.",
+            List.of(new ItemBonus(ModifierType.FOCUS_BONUS, 1)), List.of(), List.of()) {
+        @Override
+        public boolean isViolentRestrictedToCastingArtifacts() {
+            return true;
+        }
+    },
 
     /**
-     * Fluorita Prismática (Elemental). "Carisma +1", element-scoped Conjuração and Defesas
-     * bonuses, and full elemental damage retyping — none expressible (a {@link
-     * ModifierType#DEFESAS} bonus cannot be scoped to a damage element).
+     * Fluorita Prismática (Elemental).
+     *
+     * <p>Real: Base Carisma +1.
+     *
+     * <p>TODO: Conjuração +1 (no item casting hook yet), Defesas scoped to elemental effects, and Primordial
+     * retyping.
      */
     FLUORITA_PRISMATICA("Fluorita Prismática", "Elemental",
-            "Carisma +1, Conjuração de Magias Elementais +1",
+            "Carisma +1, Conjuração +1",
             "Defesas +3 para resistir a efeitos Elementais.",
-            "Danos causados são Elementais: Todos em substituição aos seus outros tipos e o Efeito "
-                    + "Crítico base muda para Cataclismo."),
+            "Danos causados são Primordiais em substituições aos seus tipos.",
+            List.of(new ItemBonus(ModifierType.CHARISMA_BONUS, 1)), List.of(), List.of()),
 
     /**
-     * Hematita do Vendaval (Elemental: Ar). "Destreza +1" and the RE/first-instance defensive
-     * clause are blocked; the base "Movimento Base +2UD" is a real {@link ModifierType#MOVEMENT}
-     * 2. The offensive "Vantagem no Ataque" is authored as a flat advantage on both Ataque
-     * Perícias — inert until offensive-item sockets exist, then live with no rewiring.
+     * Hematita do Vendaval (Elemental: Ar).
+     *
+     * <p>Real:
+     * <ul>
+     *   <li>Base Destreza +1 and Movimento +3UD;</li>
+     *   <li>Violento Vantagem no Ataque (both Perícias de Ataque);</li>
+     *   <li>Violento Corrente Rugido, built by {@link #createViolentEffectChain}.</li>
+     * </ul>
+     *
+     * <p>TODO: the first-instance RE.
      */
     HEMATITA_DO_VENDAVAL("Hematita do Vendaval", "Elemental: Ar",
-            "Destreza +1, Movimento Base +2UD",
+            "Destreza +1, Movimento Base +3UD",
             "Ignora o primeiro dano Elemental: Ar sofrido, então concede RE: Ar.",
-            "Vantagem no Ataque e Corrente de Efeitos – Vendaval: Alvo é empurrado 2UD para trás.",
-            List.of(new ItemBonus(ModifierType.MOVEMENT, 2)),
+            "Vantagem no Ataque e Corrente de Efeitos – Rugido.",
+            List.of(new ItemBonus(ModifierType.DEXTERITY_BONUS, 1), new ItemBonus(ModifierType.MOVEMENT, 3)),
             List.of(),
             List.of(new ItemBonus(ModifierType.ATAQUE_CORPO_A_CORPO_ROLL_BONUS, Skill.ADVANTAGE_BONUS),
-                    new ItemBonus(ModifierType.ATAQUE_A_DISTANCIA_ROLL_BONUS, Skill.ADVANTAGE_BONUS))),
+                    new ItemBonus(ModifierType.ATAQUE_A_DISTANCIA_ROLL_BONUS, Skill.ADVANTAGE_BONUS))) {
+        @Override
+        public Effect createViolentEffectChain(final boolean critical) {
+            return new Rugido(critical);
+        }
+    },
 
     /**
-     * Mitral Puro (Sintética). Base "Movimento Base +2UD" ({@link ModifierType#MOVEMENT} 2) and
-     * "Vantagem nas rolagens de Perícia de Ataque" (flat advantage on both Ataque Perícias) are
-     * real. Both Margem Crítica clauses — reducing an attacker's margin (defensive) and raising
-     * one's own (offensive) — need a hook no {@code Item} has; deferred.
+     * Mitral Puro (Sintética).
+     *
+     * <p>Real:
+     * <ul>
+     *   <li>Base Vantagem on both Perícias de Ataque and Movimento +1UD;</li>
+     *   <li>Protetivo Resistência a Críticos;</li>
+     *   <li>Violento Margem Crítica Menor and Maior +1 on the host weapon.</li>
+     * </ul>
+     *
+     * <p>TODO: Resistência a Correntes +1 (no such number exists).
      */
     MITRAL_PURO("Mitral Puro", "Sintética",
-            "Vantagem nas rolagens de Perícia de Ataque, Movimento Base +2UD",
-            "Margem Crítica Menor dos inimigos atacantes reduzida em -2 números.",
-            "Margem Crítica Menor aumentada em +2 números.",
-            List.of(new ItemBonus(ModifierType.MOVEMENT, 2),
+            "Vantagem nas rolagens de Perícia de Ataque, Movimento Base +1UD",
+            "Resistência à Críticos e Resistência a Correntes de Efeitos +1.",
+            "Margem Crítica Menor e Maior aumentadas em +1.",
+            List.of(new ItemBonus(ModifierType.MOVEMENT, 1),
                     new ItemBonus(ModifierType.ATAQUE_CORPO_A_CORPO_ROLL_BONUS, Skill.ADVANTAGE_BONUS),
                     new ItemBonus(ModifierType.ATAQUE_A_DISTANCIA_ROLL_BONUS, Skill.ADVANTAGE_BONUS)),
-            List.of(), List.of()),
+            List.of(new ItemBonus(ModifierType.CRITICAL_RESISTANCE, CombatantSheet.CRITICAL_RESISTANCE_INSTANCE)),
+            List.of(new ItemBonus(ModifierType.LESSER_CRITICAL_MARGIN, 1))) {
+        @Override
+        public int resolveMajorCriticalMarginIncrease(final ItemType hostType, final boolean hostWielded) {
+            return hostType == ItemType.OFFENSIVE && hostWielded ? 1 : 0;
+        }
+    },
 
     /**
-     * Moldavita Selvagem (Natural). Healing prevention on dealt damage, Natural immunity /
-     * first-instance, and elemental damage typing — none expressible.
+     * Moldavita Selvagem (Natural).
+     *
+     * <p>TODO:
+     * <ul>
+     *   <li>Feridas Dolorosas on hit, and immunity to Venenos and to Natural effects — no item → Condição/immunity
+     *       path;</li>
+     *   <li>the first-instance Natural ignore;</li>
+     *   <li>Natural retyping and the Veneno da Moldavita.</li>
+     * </ul>
      */
     MOLDAVITA_SELVAGEM("Moldavita Selvagem", "Natural",
-            "Danos que causar não podem ser curados, exceto com Descansos Verdadeiros",
-            "Ignora o primeiro dano Natural sofrido, você se torna imune a efeitos Naturais.",
-            "Dano causado é Elemental: Natural em adição aos seus tipos."),
+            "Seus ataques infligem Feridas Dolorosas, recebe imunidade a Venenos.",
+            "Ignora o primeiro dano Elemental: Natural sofrido, você se torna imune a efeitos Naturais.",
+            "Dano causado é Elemental: Natural em adição aos seus tipos e são Envenenados por 3 Rodadas (Veneno da "
+                    + "Moldavita: 1 ponto de Dano Natural por Rodada e -1 Multiplicador de PV, não cumulativo, Duração 2 "
+                    + "Rodadas)."),
 
     /**
-     * Opala Purificadora (Sagrada). Real (core 0.0.89): the defensive "Danos profanos reduzidos em -3" ({@link
-     * ModifierType#PROFANE_DAMAGE_REDUCTION}) and the offensive "Dano causado é Sagrado" ({@link
-     * #getOffensiveSanctity()}). Still not: the per-Rodada PV-regen tick, the effect-Duração reduction, and the
-     * anti-undead +1d6 (this core grants no dice).
+     * Opala Purificadora (Sagrada).
+     *
+     * <p>Real: Protetivo "Danos profanos reduzidos em -3"; Violento "Dano causado é Sagrado" ({@link
+     * #getOffensiveSanctity()}).
+     *
+     * <p>TODO:
+     * <ul>
+     *   <li>the 3PV start-of-Rodada regeneration — no per-Rodada item tick;</li>
+     *   <li>Possessão and Doenças immunity;</li>
+     *   <li>+2d6 against Mortos-Vivos and Abissais.</li>
+     * </ul>
      */
     OPALA_PURIFICADORA("Opala Purificadora", "Sagrada",
-            "Você recupera 2PV a cada Rodada.",
-            "Danos profanos reduzidos em -3, Duração de efeitos Profanos reduzido em -2 Rodadas.",
-            "Dano causado é Sagrado em adição aos seus tipos e aumenta em +1d6 contra Mortos-Vivos e Abissais.",
+            "Você recupera 3PV no início de cada Rodada e se torna imune a efeitos de Possessão.",
+            "Danos profanos reduzidos em -3. Imunidade a Doenças.",
+            "Dano causado é Sagrado substituição aos seus tipos e aumenta em +2d6 contra Mortos-Vivos e Abissais.",
             List.of(), List.of(new ItemBonus(ModifierType.PROFANE_DAMAGE_REDUCTION, 3)), List.of()),
 
     /**
-     * Relâmpago Dourado (Temporal). Base "Movimento Base +2UD" is a real {@link
-     * ModifierType#MOVEMENT} 2; the paired "movimentos não permitem Reações", the
-     * moved-5UD-grants-PA defensive clause and the once-per-Rodada action-cost reduction are all
-     * blocked (no movement-triggered-Reação suppression, no distance tracking, no per-Rodada
-     * action-cost hook).
+     * Relâmpago Dourado (Temporal).
+     *
+     * <p>Real: Base Movimento +2UD; Violento +1PA.
+     *
+     * <p>TODO: the first movement's Defender o Perímetro exemption (no item exemption hook), and the Protetivo
+     * moved-5UD +2PA (movement distance is not recorded).
      */
     RELAMPAGO_DOURADO("Relâmpago Dourado", "Temporal",
-            "Movimento Base aumenta em +2UD e seus movimentos não permitem Reações.",
+            "Movimento Base aumenta em +2UD, seu primeiro Movimento de cada Rodada não causa a Reação Defender o "
+                    + "Perímetro nos 2UD iniciais.",
             "Após se mover por ao menos 5UD você recebe +2PA (não cumulativo).",
-            "Uma vez por Rodada seu Tempo de Ação de rolagens de Perícia de Ataque e Domínio do Mana "
-                    + "é reduzido em -1PA.",
-            List.of(new ItemBonus(ModifierType.MOVEMENT, 2)), List.of(), List.of()),
+            "Bônus de +1PA.",
+            List.of(new ItemBonus(ModifierType.MOVEMENT, 2)), List.of(),
+            List.of(new ItemBonus(ModifierType.ACTION_POINTS, 1))),
 
     /**
-     * Rútilo Subterrâneo (Elemental: Terra). Base "Defesas +2" ({@link ModifierType#DEFESAS} 2)
-     * and "Vantagem nas Rolagens de Atletismo" (flat advantage) are real, and so is ignoring
-     * Terreno Difícil ({@link #ignoresDifficultTerrain()}). The defensive weapon-damage / RE clause,
-     * and the object-scoped damage advantage / elemental typing are blocked.
+     * Rútilo Subterrâneo (Elemental: Terra).
+     *
+     * <p>Real: Base Defesas +2, Vantagem on Atletismo, and ignoring Terreno Difícil.
+     *
+     * <p>TODO: damage to an attacking weapon (nothing deals item damage automatically), the first-instance RE, the
+     * retyping, and +1d6 against objects.
      */
     RUTILO_SUBTERRANEO("Rútilo Subterrâneo", "Elemental: Terra",
             "Defesas +2, Vantagem nas Rolagens de Atletismo e seus movimentos ignoram Terreno Difícil.",
-            "Armas inimigas corpo-a-corpo e projéteis sofrem 2 pontos de danos. Ignora o primeiro "
-                    + "dano Elemental: Terra sofrido, então concede RE: Terra.",
-            "Vantagem nas Rolagens de Danos contra objetos, os danos causados são Elemental: Terra "
-                    + "em adição aos seus tipos.",
+            "Armas inimigas corpo-a-corpo sofrem 2 pontos de danos. Ignora o primeiro dano Elemental: Terra sofrido, "
+                    + "então concede RE: Terra.",
+            "Danos causados são Elemental: Terra em substituição aos seus tipos e infligem +1d6 de danos contra objetos.",
             List.of(new ItemBonus(ModifierType.DEFESAS, 2),
                     new ItemBonus(ModifierType.ATLETISMO_ROLL_BONUS, Skill.ADVANTAGE_BONUS)),
             List.of(), List.of()) {
@@ -210,27 +334,37 @@ public enum PowerStoneType {
     },
 
     /**
-     * Sodalita Gélida (Elemental: Gelo). "Força +1", an RE/first-instance clause, and an
-     * offensive "Vantagem nas Rolagens de Danos" (no damage-roll {@link ModifierType}) plus
-     * elemental typing — none expressible.
+     * Sodalita Gélida (Elemental: Gelo).
+     *
+     * <p>Real: Base Força +1 and RD.
+     *
+     * <p>TODO: the first-instance RE; the Violento +1d6 (the dano roll's dice are the caller's — reported nowhere
+     * yet) and the retyping.
      */
     SODALITA_GELIDA("Sodalita Gélida", "Elemental: Gelo",
-            "Força +1.",
+            "Força +1 e RD.",
             "Ignora o primeiro dano Elemental: Gelo sofrido, então concede RE: Gelo.",
-            "Vantagem nas Rolagens de Danos, os danos causados são Elemental: Gelo em adição aos seus tipos."),
+            "Danos causados são aumentados em +1d6 e são Elemental: Gelo em substituição aos seus tipos.",
+            List.of(new ItemBonus(ModifierType.STRENGTH_BONUS, 1),
+                    new ItemBonus(ModifierType.DAMAGE_REDUCTION, DamageService.DEFAULT_DAMAGE_REDUCTION)),
+            List.of(), List.of()),
 
     /**
-     * Sombra Solidificada (Umbral) — the cleanest of the catalog. The base "item conta como um
-     * Subordinado" needs a subordinate model, but the defensive "Danos sofridos reduzidos em 1"
-     * is an <em>unscoped</em> {@link ModifierType#DAMAGE_REDUCTION} 1 (no simplification needed),
-     * and the offensive "Dano Base da Arma aumentado em +1" is a real Dano Base scale-up via
-     * {@link #resolveDamageBaseIncrease(Weapon, ItemType)}.
+     * Sombra Solidificada (Umbral).
+     *
+     * <p>Real: Violento Dano Base +1 ({@link #resolveDamageBaseIncrease}).
+     *
+     * <p>TODO:
+     * <ul>
+     *   <li>"Item conta como um subordinado" — a Subordinado granted by an item has no carrier;</li>
+     *   <li>the non-Umbral Meio-Dano — no Umbral damage scope;</li>
+     *   <li>the Umbral retyping.</li>
+     * </ul>
      */
     SOMBRA_SOLIDIFICADA("Sombra Solidificada", "Umbral",
-            "Item conta como um subordinado (definido na criação, baseado no personagem da Umbra derrotado).",
-            "Danos sofridos reduzidos em 1.",
-            "Dano Base da Arma aumentado em +1.",
-            List.of(), List.of(new ItemBonus(ModifierType.DAMAGE_REDUCTION, 1)), List.of()) {
+            "Item conta como um subordinado (definido na criação).",
+            "Danos não-Umbrais reduzidos à metade.",
+            "Dano Base da Arma aumentado em +1, Danos causados são Umbrais em substituição aos seus tipos.") {
         @Override
         public int resolveDamageBaseIncrease(final Weapon weapon, final ItemType hostType) {
             return hostType == ItemType.OFFENSIVE ? 1 : 0;
@@ -238,21 +372,29 @@ public enum PowerStoneType {
     },
 
     /**
-     * Turmalina Obscura (Profana). Real (core 0.0.89): the base "Danos … Sagradas reduzidos em -3" ({@link
-     * ModifierType#SACRED_DAMAGE_REDUCTION}) and the offensive "Dano causado é Profano" ({@link
-     * #getOffensiveSanctity()}). Still not: "Curas Sagradas reduzidas", the effect-Duração reduction, the defensive
-     * Roubo de Vida 2 and immunity (no equipment→Roubo de Vida path), and the added Oferenda Maldita.
+     * Turmalina Obscura (Profana).
+     *
+     * <p>Real: Violento "Dano causado é Profano" ({@link #getOffensiveSanctity()}) and Oferenda Maldita as an
+     * additional Efeito Crítico.
+     *
+     * <p>TODO:
+     * <ul>
+     *   <li>the Profano aura on the living;</li>
+     *   <li>the Protetivo Roubo de Vida 2 — {@code LifeStealService} only amplifies;</li>
+     *   <li>immunity to Maldições — there is no Maldição tag.</li>
+     * </ul>
      */
     TURMALINA_OBSCURA("Turmalina Obscura", "Profana",
-            "Danos e Curas Sagradas reduzidos em -3, Duração de efeitos Sagrados reduzido em -2 Rodadas.",
-            "Roubo de Vida 2 e imunidade a efeitos de Roubo de Vida.",
-            "Dano causado é Profano em adição aos seus tipos e recebe Oferenda Maldita como Efeito Crítico adicional.",
-            List.of(new ItemBonus(ModifierType.SACRED_DAMAGE_REDUCTION, 3)), List.of(), List.of());
+            "Personagens vivos em Área Circular Curta sofrem 1d6 pontos de Dano Profano a cada Rodada.",
+            "Roubo de Vida 2 e imunidade a Maldições.",
+            "Dano causado é Profano em substituição aos seus tipos e recebe Oferenda Maldita como Efeito Crítico adicional.");
 
     private final String name;
     private final String originLabel;
     private final String baseEffect;
+    /** The Efeito Protetivo — an Armadura or Escudo host's. */
     private final String defensiveEffect;
+    /** The Efeito Violento — an Arma host's. */
     private final String offensiveEffect;
     private final List<ItemBonus> baseBonuses;
     private final List<ItemBonus> defensiveBonuses;
@@ -279,9 +421,9 @@ public enum PowerStoneType {
     }
 
     /**
-     * The nature this stone gives a weapon's damage in its Efeito Ofensivo — "Dano causado é Sagrado/Profano em adição
-     * aos seus tipos" (core 0.0.89): Opala Purificadora {@code SAGRADO}, Turmalina Obscura {@code PROFANO}, {@code
-     * null} for every other stone. Read by {@code AttackDelivery} for an attack with a weapon carrying it.
+     * The nature a bound stone gives its host weapon's damage in its Violento: "Dano causado é Sagrado/Profano em
+     * substituição aos seus tipos". Opala Purificadora gives {@code SAGRADO}, Turmalina Obscura {@code PROFANO}, every
+     * other stone {@code null}. Read by {@code AttackDelivery} for an attack with that weapon.
      */
     public org.aventyrs.core.character.DamageSanctity getOffensiveSanctity() {
         return switch (this) {
@@ -292,23 +434,74 @@ public enum PowerStoneType {
     }
 
     /**
-     * How much of modifierType this stone currently grants a host item of hostType — its Efeito
-     * Base contribution plus, if the host is Ofensivo/Defensivo, that mode's contribution too.
+     * The Efeito Crítico a bound stone's Violento adds to attacks with its host weapon: Citrino Incandescente's
+     * Inflamar or Turmalina Obscura's Oferenda Maldita. {@code null} for every other stone. Read by {@code
+     * AttackDelivery}.
+     */
+    public CriticalEffectType getViolentCriticalEffect() {
+        return switch (this) {
+            case CITRINO_INCANDESCENTE -> CriticalEffectType.INFLAMAR;
+            case TURMALINA_OBSCURA -> CriticalEffectType.OFERENDA_MALDITA;
+            default -> null;
+        };
+    }
+
+    /**
+     * The Corrente de Efeitos a bound stone's Violento puts on an attack with its host weapon, built fresh for that
+     * attack. Hematita do Vendaval's is a Rugido; every other stone returns {@code null}.
+     *
+     * @param critical whether the attack was an Acerto Crítico (a Rugido's +2)
+     */
+    public Effect createViolentEffectChain(final boolean critical) {
+        return null;
+    }
+
+    /**
+     * Whether this stone's Violento "pode ser anexo apenas à Artefatos de Conjuração". Such a stone binds to no other
+     * weapon. Only {@link #ESFERA_DE_AETHER}'s is.
+     */
+    public boolean isViolentRestrictedToCastingArtifacts() {
+        return false;
+    }
+
+    /**
+     * How much of modifierType this stone grants while bound to a host of hostType. It always grants its Efeito Base,
+     * and adds that host's mode (Protetivo for {@link ItemType#DEFENSIVE}, Violento for {@link ItemType#OFFENSIVE}).
      * Additive, the same convention every other bonus source in this core follows.
      */
     public int resolveBonus(final ModifierType modifierType, final ItemType hostType) {
+        return resolveBonus(modifierType, hostType, true);
+    }
+
+    /**
+     * {@link #resolveBonus(ModifierType, ItemType)}, with the Violento scoped to attacks made <em>with</em> the host.
+     * hostWielded is whether the attack being judged uses the host weapon. When it is false, the Violento contributes
+     * nothing while the Base still applies. That is how "Margem Crítica Menor aumentada" improves the host weapon's
+     * swing and no other.
+     */
+    public int resolveBonus(final ModifierType modifierType, final ItemType hostType, final boolean hostWielded) {
         int total = sumMatching(baseBonuses, modifierType);
         if (hostType == ItemType.DEFENSIVE) {
             total += sumMatching(defensiveBonuses, modifierType);
-        } else if (hostType == ItemType.OFFENSIVE) {
+        } else if (hostType == ItemType.OFFENSIVE && hostWielded) {
             total += sumMatching(offensiveBonuses, modifierType);
         }
         return total;
     }
 
+    /** "Margem Crítica … Maior aumentada" for an attack with the host weapon. 0 for every stone but Mitral Puro. */
+    public int resolveMajorCriticalMarginIncrease(final ItemType hostType, final boolean hostWielded) {
+        return 0;
+    }
+
+    /** "Dano Crítico +1d6" for a critical hit with the host weapon. {@code NONE} for every stone but Calcita. */
+    public CriticalDamage resolveCriticalDamage(final ItemType hostType, final boolean hostWielded) {
+        return CriticalDamage.NONE;
+    }
+
     /**
      * Dano Base scale-ups this stone grants when its host is a weapon. 0 for every stone but
-     * {@link #SOMBRA_SOLIDIFICADA}, whose Efeito Ofensivo is exactly "+1 Dano Base".
+     * {@link #SOMBRA_SOLIDIFICADA}, whose Efeito Violento includes "Dano Base da Arma aumentado em +1".
      */
     public int resolveDamageBaseIncrease(final Weapon weapon, final ItemType hostType) {
         return 0;

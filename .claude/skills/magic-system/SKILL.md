@@ -537,6 +537,10 @@ the example that originally justified building it.
   current PD), and mark the chain head `DamageInteraction#fromSpell`, which carries the Magia into
   `DamageService` for the immunity and Arcanista's scoped RM (`#resolveSpellMagicReduction`). A
   non-attack cast reports `SpellCastingResult#isTargetImmune()`.
+- **A target may negate a Magia that lands** (0.1.6.2): `SpellCastingService#canNegateSpell(caster, target, ctx)`
+  asks the target's `Feat#offersSpellNegation` (Alma de AEther — in combat, never one's own Magia), and
+  `#negateSpell(…, manaSpent, ctx)` claims it (`Feat#onSpellNegated`) and refunds the cast's PM. Asked after a hit,
+  before anything lands; the caller then applies none of the Magia to that target, damage included.
 - **Healing** takes `Feat#resolveSpellHealingBonus` (Conjuração Rápida's Desvantagem, Arcanismo
   Elemental's +2), carried as `SpellEffectContext#healingBonus` into `SpellHealingEffect` and
   reported on `SpellCastingResult#getHealingBonus()`.

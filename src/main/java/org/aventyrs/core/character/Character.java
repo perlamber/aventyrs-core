@@ -136,6 +136,15 @@ public class Character {
     protected int centelhas = CENTELHAS;
 
     /**
+     * Game sessions this character has finished — advanced once per Sessão it took part in, by the caller that ends
+     * it ({@link #recordCompletedSession}, before {@code CharacterSheet#applySessionEndAcquisitions}). Read by the
+     * "ao fim da primeira / terceira sessão de jogo" clauses ({@code QualidadeFeat#INTELECTO_SUPERIOR_MENOR}/{@code
+     * _MAIOR}, core 0.1.6.3). 0 for a new character; a consumer persists it.
+     */
+    @Builder.Default
+    protected int completedSessions = 0;
+
+    /**
      * The Perícias Treinadas an Aprendizado Rápido race chose at creation — "podem escolher duas
      * Perícias Treinadas, adquirir a Segunda e Terceira Graduação destas perícias custam 0.5EXP a
      * menos" ({@code Race#hasQuickLearning}). Read by {@code SkillGraduationService#getUpgradeCost(
@@ -145,9 +154,17 @@ public class Character {
     @Builder.Default
     protected Set<SkillType> quickLearningSkills = Set.of();
 
-    /** Tendência de alinhamento, used by Talento prerequisites such as Corruptor Sombrio's. */
+    /**
+     * Tendência de alinhamento, 1–10 (see {@link Alignment} for each value's text). Talento
+     * prerequisites such as Corruptor Sombrio's read its {@link #getAlignmentBand() band}.
+     */
     @Builder.Default
-    protected Alignment alignment = Alignment.NEUTRAL;
+    protected int alignment = Alignment.DEFAULT;
+
+    /** The {@link Alignment} band {@link #getAlignment()} falls in — what Talento prerequisites compare. */
+    public Alignment getAlignmentBand() {
+        return Alignment.of(alignment);
+    }
 
     @NonNull
     protected CharacterAttributes attributes;
@@ -305,9 +322,11 @@ public class Character {
      * {@code Feat} overriding {@code resolveActiveAbility} must return a stable singleton.
      */
     public List<ActiveAbility> getActiveAbilities() {
-        return Stream.concat(
+        return Stream.concat(Stream.concat(
                         activeAbilities.stream(),
-                        getFeats().stream().flatMap(feat -> feat.resolveActiveAbilities().stream()))
+                        getFeats().stream().flatMap(feat -> feat.resolveActiveAbilities().stream())),
+                        // A drawn Artefato de Conjuração's Efeito Ativo (core 0.1.6.8).
+                        org.aventyrs.core.item.CastingArtifacts.activeAbilities(this).stream())
                 .toList();
     }
 
@@ -373,7 +392,8 @@ public class Character {
                                           final org.aventyrs.core.sheet.CombatantSheet sheet) {
         AttributeValue attribute = attributes.getAttribute(domain);
         int total = attribute.getTotal()
-                + getFeats().stream().mapToInt(feat -> feat.resolveAttributeBonus(domain, this)).sum();
+                + getFeats().stream().mapToInt(feat -> feat.resolveAttributeBonus(domain, this)).sum()
+                + getEquipmentAttributeBonus(domain);
         if (sheet != null && sheet.getRacialTraitSuppression().suppressesInnateTraits()) {
             total -= attribute.getRacialBonus();
         }
@@ -385,6 +405,18 @@ public class Character {
             total += sheet.getTemporaryBonus(domain.getBonusModifierType());
         }
         return total;
+    }
+
+    /**
+     * The Atributo the worn Equipamento adds right now — a bound Pedra do Poder's Efeito Base ("Vigor +1", "Destreza
+     * +1"), typed as that Atributo's {@code <ATTR>_BONUS} on the stone ({@code PowerStoneType}). Summed into {@link
+     * #getEffectiveAttributeTotal(AttributeDomain, org.aventyrs.core.sheet.CombatantSheet)}, and read on its own by the
+     * Perícia-roll path, which adds the raw attributes separately.
+     */
+    public int getEquipmentAttributeBonus(final AttributeDomain domain) {
+        return equipment == null ? 0 : equipment.stream()
+                .mapToInt(item -> item.resolvePowerStoneBonus(domain.getBonusModifierType()))
+                .sum();
     }
 
     /** Habilidades de Competência acquired from trained Perícias (e.g. ArtesCompetencyAbility). */
@@ -678,6 +710,11 @@ public class Character {
      * Sacrifices up to count Centelhas — a Regalia donor's "sacrifique voluntariamente uma de suas
      * Centelhas" (or all of them). Returns how many were actually given; never below zero.
      */
+    /** Counts one more finished Sessão — see {@link #completedSessions}. Returns the new count. */
+    public int recordCompletedSession() {
+        return ++completedSessions;
+    }
+
     public int sacrificeCentelhas(final int count) {
         int given = Math.max(0, Math.min(count, centelhas));
         centelhas -= given;
@@ -945,7 +982,7 @@ public class Character {
      * Adds item to this character's equipped {@link #equipment} — a plain mutator, same as
      * {@link #grantFeat}: it validates nothing. Whether the character can actually carry or
      * wield it (Carga doesn't exist in this core), whether they paid its Preço in Pontos de
-     * Equipamento (no PE economy exists either), and whether they meet the {@code ItemFavor}'s
+     * Equipamento (that is {@code ItemPurchaseService}'s/{@code EquipmentCraftingService}'s), and whether they meet the {@code ItemFavor}'s
      * own Requisitos (that's resolved per-read, live, by {@link Item#grantsFavorTo}) are all
      * outside this method. Throws {@code UnsupportedOperationException} if {@link #equipment} is
      * currently an immutable list — see that field's own javadoc.

@@ -152,10 +152,9 @@ one particular movement of the Rodada (`resolveRoundMovementIncrease`). So Movim
 "Seu Movimento Base aumenta em +2UD" (`AtaqueCorpoACorpoExcellency.FOCADO`,
 `AtletismoCompetencyAbility.PASSO_LARGO`, `InitiativeAdvantage.POSICIONAMENTO_ESTRATEGICO`)
 lands exactly — every point spent moving is worth that much more. `SorteAdvantage.AS_NA_MANGA`'s
-"você pode se mover até 2UD" is a **one-shot step**, and as a `MOVEMENT` `TemporaryBonus` it
-over-grants once its holder spends more than one Ponto de Ação moving; that's flagged on the
-constant and deliberately kept, since a one-shot movement allowance is a mechanism this core
-doesn't have and granting nothing would be further from the clause. Check which of the two
+"você pode se mover até 2UD" is a **one-shot step**, and since 0.1.6.4 it is one: an
+`ego.GrantedMove` (a total distance, no Ponto de Ação, no movement of the Rodada) reported by
+`EgoPointsService#getSpendMoves` for the caller to offer — never a `MOVEMENT` bonus. Check which of the two
 shapes a new grant is before reaching for `ModifierType.MOVEMENT`.
 
 **Movement modes.** Land Movimento is one of four `MovementMode`s. FLIGHT/SWIM/CLIMB are

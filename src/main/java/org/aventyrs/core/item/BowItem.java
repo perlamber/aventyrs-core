@@ -18,7 +18,9 @@ import org.aventyrs.core.skill.SkillType;
  * drawn weapons — see CLAUDE.md), and prints "Projétil" in its Efeito Crítico column. "Projétil"
  * is not a {@link CriticalEffectType} and appears nowhere in {@code
  * docs/rules/efeitos-criticos.txt}, so {@link #getCriticalEffect()} is {@code null} for all
- * three — the same source-row defect {@code equipamentos-index.md} flags for the Zarabatanas.
+ * three: the effect is the fired Flecha's ({@link ProjectileHead#getCriticalEffect()}) and only the
+ * number is the bow's. An Arco fires {@link AmmunitionKind#ARROW}s straight from the bag and cannot
+ * shoot without one (table ruling, 2026-10-12 — {@code combat.AmmunitionService}).
  *
  * <h2>What is not modeled, and why</h2>
  * <ul>
@@ -148,6 +150,12 @@ public enum BowItem implements ItemTemplate, Weapon {
     @Override
     public SkillType getSkillType() {
         return SkillType.ATAQUE_A_DISTANCIA;
+    }
+
+    /** Every Arco fires {@link AmmunitionKind#ARROW}s straight from the bag — no magazine, no reload. */
+    @Override
+    public AmmunitionKind getAmmunitionKind() {
+        return AmmunitionKind.ARROW;
     }
 
     /** Always 0 — the Armas section leaves every weapon's Dureza blank. */

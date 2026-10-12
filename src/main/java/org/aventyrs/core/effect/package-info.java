@@ -147,29 +147,20 @@
  * AttackDelivery}.
  *
  * <p>Several abilities/races are still blocked on a Corrente de Efeitos of their own — {@code
- * org.aventyrs.core.ego.AutocontroleAdvantage#RESOLUTO} (a Defesas-comparison threshold
- * on a Corrente de Efeitos — the Defesas system exists now, so what RESOLUTO still lacks is a
- * concrete Corrente whose text needs that comparison), {@code
  * org.aventyrs.core.skill.artes.ArtesCompetencyAbility#DISPARO_RICOCHETE}, {@code
  * org.aventyrs.core.skill.medicinaecura.MedicinaECuraCompetencyAbility#MILAGREIRO},
  * {@code org.aventyrs.core.ability.VigorAbility#RECUPERACAO_ASSOMBROSA}, and the racial
  * traits documented on {@code org.aventyrs.core.race.Gorgona}/{@code Flaminideo}/
  * {@code Invernal}. {@link org.aventyrs.core.effect.Definhar} existing doesn't
  * retroactively finish any of them — none of their own rules text describes Definhar's
- * effect, each still needs its own distinct Corrente de Efeitos built for it — the same
- * "a real (if empty) type now instead of a wholly nonexistent one" gap the interfaces
- * themselves closed, just one level further along.
+ * effect, each still needs its own distinct Corrente de Efeitos built for it.
  *
- * <p>One piece of a Corrente de Efeitos' own mechanic is real and tested, though: {@link
- * org.aventyrs.core.effect.EffectChainService} computes whether a Corrente de Efeitos
- * hits a target — the triggering roll's total must clear a required challenge number
- * (derived from an optional {@code DifficultyLevel}, a reduction step count, and a
- * caller-supplied variable bonus) by a margin, 5 normally or 7 when the target holds
- * {@code AutocontroleAdvantage#RESOLUTO}. This is exactly RESOLUTO's own rules text, now
- * computable — but nothing calls {@code EffectChainService#hits(...)} yet: {@link
- * org.aventyrs.core.effect.Definhar}'s own rules text has no challenge-number/margin
- * clause of its own to check, so even with a first concrete {@code EffectChain} now real,
- * this is still waiting on one whose own text actually needs this margin math.
+ * <p><b>Whether a Corrente lands</b> is {@link org.aventyrs.core.effect.EffectChainService#getRequiredMargin}: the
+ * triggering roll must clear the target's Defesa by 5, or 7 against {@code AutocontroleAdvantage#RESOLUTO}, raised by
+ * the target's resistance Talentos ({@code Feat#resolveEffectChainResistanceIncrease} — Devoto, Anatomia Única),
+ * lowered by the attacker's, and dropped to 0 by Vontade Fraca / Atrair a Morte. {@code AttackDelivery}, {@code
+ * AttackReceiver} and {@code SpellCastingService#isEffectChainTriggered} all read it (core 0.1.6.4 brought the spell
+ * path onto the full form).
  *
  * <p>The Skill -&gt; Damage handoff itself is still manual: there is no
  * {@code SkillRoll}-to-{@code rawDamage} conversion (that needs a weapon/dano-roll

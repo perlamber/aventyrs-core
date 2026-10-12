@@ -46,6 +46,9 @@ public class DamageInteraction implements Interaction<CombatantSheet> {
 
     /** How much of this hit only a Descanso Verdadeiro or Roubo de Vida recovers — see {@link #lockingDamage}. */
     private int lifeStealOnlyDamage;
+    private final java.util.Set<org.aventyrs.core.character.BypassedReduction> bypassed =
+            java.util.EnumSet.noneOf(org.aventyrs.core.character.BypassedReduction.class);
+    private org.aventyrs.core.magic.ElementalType additionalElement;
 
     public DamageInteraction() {
         this(new DamageServiceImpl());
@@ -146,6 +149,38 @@ public class DamageInteraction implements Interaction<CombatantSheet> {
         return this;
     }
 
+    /**
+     * Marks this hit as ignoring some of the target's mitigation stages (core 0.1.6.9) — a Benção Vulcana weapon's
+     * "Ignora RD do alvo", and its triggered Corrente's "Ignora RE e RM". Set by {@code AttackDelivery}; accumulates,
+     * a fluent setter for the reason {@link #halvingDamage} is one. RA is never ignored.
+     */
+    public DamageInteraction bypassing(final java.util.Collection<org.aventyrs.core.character.BypassedReduction> reductions) {
+        if (reductions != null) {
+            bypassed.addAll(reductions);
+        }
+        return this;
+    }
+
+    /** What {@link #bypassing} marked — empty by default. */
+    public java.util.Set<org.aventyrs.core.character.BypassedReduction> getBypassed() {
+        return java.util.Collections.unmodifiableSet(bypassed);
+    }
+
+    /**
+     * Marks this hit as also dealing element, in addition to its own type (core 0.1.6.9) — a Benção Elemental
+     * weapon's chosen element. Fully both types (table ruling, 2026-10-12): see {@code
+     * DamageService#calculateFinalDamage}'s longest form. Set by {@code AttackDelivery}.
+     */
+    public DamageInteraction withAdditionalElement(final org.aventyrs.core.magic.ElementalType element) {
+        this.additionalElement = element;
+        return this;
+    }
+
+    /** The element marked by {@link #withAdditionalElement}, or {@code null}. */
+    public org.aventyrs.core.magic.ElementalType getAdditionalElement() {
+        return additionalElement;
+    }
+
     /** The nature marked by {@link #withSanctity}, or {@code null}. */
     public org.aventyrs.core.character.DamageSanctity getSanctity() {
         return sanctity;
@@ -234,7 +269,7 @@ public class DamageInteraction implements Interaction<CombatantSheet> {
                                       final int rawDamage, final boolean ignoreDamageReduction,
                                       final Interaction<CombatantSheet> nextInteraction) {
         int finalDamage = damageService.calculateFinalDamage(target, sceneContext, damageType, source, rawDamage,
-                ignoreDamageReduction, halfDamage, spell);
+                ignoreDamageReduction, halfDamage, spell, bypassed, additionalElement);
         if (sanctity != null && finalDamage > 0) {
             // A sacred or profane hit (core 0.0.89): an immunity to that nature zeroes it, a reduction of it comes off
             // — ⚠️ after the other mitigation and any Meio-Dano, since this path carries the type alone.

@@ -50,11 +50,9 @@ public interface Masterpiece {
      * and nothing else — so this is 0 for every defensive entry by construction rather than by
      * coincidence.
      *
-     * <p><b>Read by nothing yet</b>, exactly like {@link Improvement#getAttackBonus()}: applying it
-     * needs a roll pass scoped to the weapon the attack was actually delivered with, and {@code
-     * AbstractSkillInteraction#sumEquipmentRollBonuses} scans the whole loadout indiscriminately.
-     * Exact, authored data in the meantime, per CLAUDE.md's "can't apply it yet doesn't mean can't
-     * compute it yet".
+     * <p>Read, like {@link Improvement#getAttackBonus()}, only for an attack made <em>with</em> the
+     * host weapon — {@link WeaponEnhancements#attackRollBonus} (core 0.1.6.9) — never through {@code
+     * AbstractSkillInteraction#sumEquipmentRollBonuses}, which scans the whole loadout.
      */
     default int getAttackBonus() {
         return 0;

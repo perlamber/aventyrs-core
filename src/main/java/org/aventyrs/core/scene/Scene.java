@@ -806,6 +806,8 @@ public class Scene {
         }
         CombatantSheet active = activeEntries.get(currentIndex).getCombatantSheet();
         active.startTurn(currentRound);
+        // Inquisição: a mark "until the attacker's next Turn" ends as that Turn begins, on whoever carries it.
+        activeEntries.forEach(entry -> entry.getCombatantSheet().expireMarksAnchoredTo(active));
         return active;
     }
 
@@ -816,16 +818,27 @@ public class Scene {
      * and calls {@link CombatantSheet#endCombat()} on every participant, which drops whatever
      * each holds "até o final da Cena".
      *
+     * <p>Returns the projectiles each participant recovered ({@link CombatantSheet#endCombat()}) — only those who
+     * got any back — for the caller to show and persist.
+     *
      * @throws IllegalOperationException ({@code SCENE_NOT_IN_COMBAT}) if this Scene is not a Cena
      *                                    de Combate
      */
-    public void endCombat() {
+    public java.util.Map<CombatantSheet, java.util.List<org.aventyrs.core.item.RecoveredProjectiles>> endCombat() {
         if (!combatScene) {
             throw new IllegalOperationException(SCENE_NOT_IN_COMBAT);
         }
         combatScene = false;
         currentRound = 0;
-        allEntries().forEach(entry -> entry.getCombatantSheet().endCombat());
+        java.util.Map<CombatantSheet, java.util.List<org.aventyrs.core.item.RecoveredProjectiles>> recovered =
+                new java.util.LinkedHashMap<>();
+        allEntries().forEach(entry -> {
+            java.util.List<org.aventyrs.core.item.RecoveredProjectiles> back = entry.getCombatantSheet().endCombat();
+            if (!back.isEmpty()) {
+                recovered.put(entry.getCombatantSheet(), back);
+            }
+        });
+        return recovered;
     }
 
     /**

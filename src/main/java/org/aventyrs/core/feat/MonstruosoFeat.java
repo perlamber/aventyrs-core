@@ -117,8 +117,9 @@ public enum MonstruosoFeat implements Feat {
     // as on CriticalEffectType, and drops the whole chain of a Menor critical against a holder.
     // Unconditional, needing neither a Scene nor a per-Cena counter — which is exactly why this
     // clause, and not ANATOMIA_INCOMUM's, is the one that fits the widened filter.
-    // TODO: "resistência às Correntes de Efeitos" is a stat this core does not compute —
-    //  EffectChainService resolves whether a Corrente triggers, with nothing to resist it by.
+    // "Resistência às Correntes de Efeitos +2" raises the margin a Corrente must clear, the Resoluto-style reading
+    // DevotoFeat's own +2 uses — Feat#resolveEffectChainResistanceIncrease, read by
+    // EffectChainService#getRequiredMargin on the attack and the spell paths alike (core 0.1.6.4).
     ANATOMIA_UNICA(
             "Você é imune a Efeitos Críticos Menores. Sua resistência às Correntes de Efeitos "
                     + "aumenta em +2.",
@@ -128,6 +129,12 @@ public enum MonstruosoFeat implements Feat {
         @Override
         public boolean ignoresMinorCriticalEffects() {
             return true;
+        }
+
+        @Override
+        public int resolveEffectChainResistanceIncrease(final Character holder,
+                                                        final org.aventyrs.core.scene.InitiativePosition position) {
+            return ANATOMIA_UNICA_EFFECT_CHAIN_RESISTANCE;
         }
     },
 
@@ -431,6 +438,9 @@ public enum MonstruosoFeat implements Feat {
     };
 
     private static final int PELE_RIJA_BONUS = 2;
+
+    /** ANATOMIA_UNICA's "Sua resistência às Correntes de Efeitos aumenta em +2". */
+    private static final int ANATOMIA_UNICA_EFFECT_CHAIN_RESISTANCE = 2;
 
     /** FEROCIDADE's "+1 … aumenta cumulativamente em +1 para cada Título Aventyr … Desperto". */
     private static int ferocidadeBonus(final Character character) {

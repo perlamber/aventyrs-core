@@ -188,6 +188,13 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     @Getter(AccessLevel.NONE)
     private final Map<ActiveAbility, Integer> cooldowns = new java.util.IdentityHashMap<>();
 
+    /** Resfriamento of a Pedra do Poder or its host, by identity — see {@link #startItemCooldown}. */
+    private final Map<org.aventyrs.core.item.Item, Integer> itemCooldowns = new java.util.IdentityHashMap<>();
+
+    /** Stones already vinculadas once this Cena — see {@link #claimFirstPowerStoneUseThisCena}. */
+    private final java.util.Set<org.aventyrs.core.item.PowerStone> powerStonesUsedThisCena =
+            java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+
     /**
      * The alternate shape this combatant is currently in — {@code null} for their own, which is
      * the state every sheet starts and mostly stays in. See {@link FormType}.
@@ -349,6 +356,13 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
 
     /** Whether {@link #startCombat()} has already fired this Cena — its idempotency guard, re-armed by {@link #startNewScene()}. */
     private boolean combatStarted = false;
+
+    /** Projectiles fired since {@link #startCombat()} — half come back at {@link #endCombat()}. */
+    /** Inquisição's marks: níveis of GD on this combatant's Magias, each lasting until its anchor's next Turn starts. */
+    private final java.util.Map<CombatantSheet, Integer> spellDifficultyMarks = new java.util.IdentityHashMap<>();
+
+    private final java.util.Map<org.aventyrs.core.item.ProjectileItem, Integer> firedProjectilesThisCombat =
+            new java.util.EnumMap<>(org.aventyrs.core.item.ProjectileItem.class);
 
     /** When this combatant entered Coma or died, and which heal effects its Coma has used — see {@link #heal(int, HealingSource)}. */
     @Getter(AccessLevel.NONE)
@@ -1329,6 +1343,17 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
      */
     @Override
     public void addToInventory(final Item item) {
+        // A stack of the same plain projectile merges into the one already carried — the same arrows in a bigger
+        // quiver, never two entries for one kind.
+        if (item.isStackable() && item instanceof org.aventyrs.core.item.AbstractItem incoming) {
+            for (Item held : inventory) {
+                if (held != item && held.isStackable() && held instanceof org.aventyrs.core.item.AbstractItem stack
+                        && stack.getTemplate() == incoming.getTemplate()) {
+                    stack.addUnits(incoming.getQuantity());
+                    return;
+                }
+            }
+        }
         inventory.add(item);
     }
 
@@ -1576,10 +1601,16 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         // the same "an expiring effect that must *do* something" case a decaying Condition gets.
         boolean formLapsed = temporaryEffects.stream()
                 .anyMatch(effect -> effect instanceof FormEffect && effect.isExpired());
+        // A lapsing Vinculação must unbind its host and cool both down — same reason.
+        List<PowerStoneBinding> lapsedBindings = temporaryEffects.stream()
+                .filter(effect -> effect instanceof PowerStoneBinding && effect.isExpired())
+                .map(PowerStoneBinding.class::cast)
+                .toList();
         temporaryEffects.removeIf(TemporaryEffect::isExpired);
         if (formLapsed) {
             enterForm(null);
         }
+        lapsedBindings.forEach(binding -> endPowerStoneBinding(binding, false));
         // "Ao fim da duração alvo se torna Assustado" — the fear ladder steps down rather than
         // simply ending, so a decaying Condition is replaced by its successor at the moment it
         // expires, carrying the same origin and that successor's own stated duration. Applied
@@ -1922,6 +1953,72 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     private void tickCooldowns() {
         cooldowns.replaceAll((ability, remaining) -> remaining - 1);
         cooldowns.values().removeIf(remaining -> remaining <= 0);
+        itemCooldowns.replaceAll((item, remaining) -> remaining - 1);
+        itemCooldowns.values().removeIf(remaining -> remaining <= 0);
+    }
+
+    @Override
+    public void startItemCooldown(final org.aventyrs.core.item.Item item, final int rounds) {
+        if (rounds <= 0) {
+            itemCooldowns.remove(item);
+            return;
+        }
+        itemCooldowns.put(item, rounds);
+    }
+
+    @Override
+    public int getRemainingItemCooldown(final org.aventyrs.core.item.Item item) {
+        return itemCooldowns.getOrDefault(item, 0);
+    }
+
+    @Override
+    public List<PowerStoneBinding> getPowerStoneBindings() {
+        return temporaryEffects.stream()
+                .filter(PowerStoneBinding.class::isInstance)
+                .map(PowerStoneBinding.class::cast)
+                .filter(binding -> !binding.isExpired())
+                .toList();
+    }
+
+    @Override
+    public void startPowerStoneBinding(final PowerStoneBinding binding) {
+        binding.getHost().setPowerStone(binding.getStone());
+        temporaryEffects.add(binding);
+    }
+
+    @Override
+    public void endPowerStoneBinding(final PowerStoneBinding binding, final boolean early) {
+        temporaryEffects.remove(binding);
+        if (binding.getHost().getPowerStone() == binding.getStone()) {
+            binding.getHost().setPowerStone(null);
+        }
+        int hostCooldown = binding.getCooldownRounds();
+        Integer left = binding.getRemainingRounds();
+        // Relíquia: "Remover antecipadamente reduz tempo de Resfriamento do Equipamento em quantidade proporcional a
+        // Duração de restante".
+        if (early && left != null && left > 0 && binding.getDurationRounds() > 0
+                && binding.getStone().getQuality().reducesCooldownOnEarlyRemoval()) {
+            hostCooldown -= hostCooldown * left / binding.getDurationRounds();
+        }
+        startItemCooldown(binding.getHost(), hostCooldown);
+        startItemCooldown(binding.getStone(), binding.getCooldownRounds());
+    }
+
+    @Override
+    public boolean claimFirstPowerStoneUseThisCena(final org.aventyrs.core.item.PowerStone stone) {
+        return powerStonesUsedThisCena.add(stone);
+    }
+
+    /** Ends every running Vinculação with no Resfriamento, and forgets every item cooldown — combat is over. */
+    private void clearPowerStoneState() {
+        for (PowerStoneBinding binding : getPowerStoneBindings()) {
+            temporaryEffects.remove(binding);
+            if (binding.getHost().getPowerStone() == binding.getStone()) {
+                binding.getHost().setPowerStone(null);
+            }
+        }
+        temporaryEffects.removeIf(PowerStoneBinding.class::isInstance);
+        itemCooldowns.clear();
     }
 
     /**
@@ -2086,6 +2183,7 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
         lastDamageReceived = null;
         damagedByThisCena.clear();
         hitsReceivedThisCena = 0;
+        powerStonesUsedThisCena.clear();
         clearCombatScopedState();
         observeStatus();
         fallenHealing.startNewScene();
@@ -2118,13 +2216,62 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     }
 
     @Override
-    public void endCombat() {
+    public java.util.List<org.aventyrs.core.item.RecoveredProjectiles> endCombat() {
         combatStarted = false;
+        java.util.List<org.aventyrs.core.item.RecoveredProjectiles> recovered = new ArrayList<>();
+        firedProjectilesThisCombat.forEach((projectile, units) -> {
+            int back = units / 2;
+            if (back > 0) {
+                org.aventyrs.core.item.AbstractItem stack = org.aventyrs.core.item.AbstractItem.fromTemplate(projectile);
+                stack.takeUnits(stack.getQuantity());
+                stack.addUnits(back);
+                addToInventory(stack);
+                recovered.add(new org.aventyrs.core.item.RecoveredProjectiles(projectile, back));
+            }
+        });
+        firedProjectilesThisCombat.clear();
         clearCombatScopedState();
+        return recovered;
+    }
+
+    @Override
+    public void markSpellDifficultyIncrease(final CombatantSheet anchor, final int steps) {
+        if (anchor != null && steps > 0) {
+            spellDifficultyMarks.put(anchor, steps);
+        }
+    }
+
+    @Override
+    public int getSpellDifficultyIncrease() {
+        return spellDifficultyMarks.values().stream().mapToInt(Integer::intValue).max().orElse(0);
+    }
+
+    @Override
+    public void expireMarksAnchoredTo(final CombatantSheet anchor) {
+        spellDifficultyMarks.remove(anchor);
+    }
+
+    @Override
+    public boolean isInCombat() {
+        return combatStarted;
+    }
+
+    @Override
+    public void recordFiredProjectiles(final org.aventyrs.core.item.ProjectileItem projectile, final int units) {
+        if (units > 0 && projectile.getHead().isRecoverable()) {
+            firedProjectilesThisCombat.merge(projectile, units, Integer::sum);
+        }
+    }
+
+    @Override
+    public java.util.Map<org.aventyrs.core.item.ProjectileItem, Integer> getFiredProjectilesThisCombat() {
+        return java.util.Collections.unmodifiableMap(firedProjectilesThisCombat);
     }
 
     /** Everything {@link #endCombat()} drops — also dropped by {@link #startNewScene()}. */
     private void clearCombatScopedState() {
+        clearPowerStoneState();
+        spellDifficultyMarks.clear();
         combatScopedEffects.forEach(temporaryEffects::remove);
         combatScopedEffects.clear();
         combatScopedEnhancements.forEach(enhancedAttacksRemaining::remove);
@@ -2836,6 +2983,10 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
                 .sum();
         total += getCharacter().getAttributeAbilities().stream()
                 .mapToInt(AttributeAbility::resolveCriticalResistance)
+                .sum();
+        // A bound Pedra do Poder's Resistência à Críticos (Calcita Vulcânica's Base, Mitral Puro's Protetivo).
+        total += getCharacter().getEquipment().stream()
+                .mapToInt(item -> item.resolvePowerStoneBonus(ModifierType.CRITICAL_RESISTANCE))
                 .sum();
         return total + getTemporaryBonus(ModifierType.CRITICAL_RESISTANCE);
     }

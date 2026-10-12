@@ -106,8 +106,9 @@ class MovementTerrainServiceTest {
 
     @Test
     void aSocketedRutiloSubterraneoIgnoresIt() {
-        AbstractItem armor = AbstractItem.builder().name("Peitoral Encaixado").category(ItemCategory.ARMOR).build();
-        armor.addImprovement(ItemImprovement.of(DefensiveImprovement.ENCAIXE));
+        AbstractItem armor = AbstractItem.builder().name("Peitoral Encaixado").category(ItemCategory.ARMOR)
+                .masterpiece(org.aventyrs.core.item.ItemMasterpiece.of(org.aventyrs.core.item.DefensiveMasterpiece.REFORCADA))
+                .build();
         armor.setPowerStone(PowerStone.of(PowerStoneType.RUTILO_SUBTERRANEO, PowerStoneQuality.JOIA));
         CharacterSheet bearer = sheet(character()
                 .attributes(CharacterAttributes.of(Map.of(AttributeDomain.DEXTERITY, 3)))

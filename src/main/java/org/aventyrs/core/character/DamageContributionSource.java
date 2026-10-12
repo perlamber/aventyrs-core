@@ -47,5 +47,11 @@ public enum DamageContributionSource {
 
     /** A held Título's {@code AventyrTitle#resolveDamageRollBonus} — e.g. Malícia de Valentão's
      * "Vantagem em … Danos contra alvos encantados por Fingir Fraquezas". */
-    TITLE
+    TITLE,
+
+    /**
+     * The weapon the attack is made with — its Obra-Prima's and Aprimoramentos' Danos columns and Alcance
+     * Estendido's bonus against a target not adjacent ({@code item.WeaponEnhancements}, core 0.1.6.9).
+     */
+    WEAPON_ENHANCEMENT
 }

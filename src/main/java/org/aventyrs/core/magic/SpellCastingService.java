@@ -124,9 +124,20 @@ public interface SpellCastingService {
     /**
      * Whether the cast's Corrente de Efeitos fires on target (core 0.0.93): the Conjuração succeeded and cleared the
      * target value by {@code EffectChainService#getRequiredMargin} (Resoluto raises it). A cast with no stated GD has no
-     * margin, and fires nothing.
+     * margin, and fires nothing. Delegates with no caster — see the longer overload.
      */
-    boolean isEffectChainTriggered(SpellCastingResult result, CombatantSheet target, int castTotal);
+    default boolean isEffectChainTriggered(SpellCastingResult result, CombatantSheet target, int castTotal) {
+        return isEffectChainTriggered(result, null, target, castTotal);
+    }
+
+    /**
+     * {@link #isEffectChainTriggered(SpellCastingResult, CombatantSheet, int)}, with the margin read the way the attack
+     * path reads it (core 0.1.6.4): {@code EffectChainService#getRequiredMargin(CombatantSheet, InitiativePosition,
+     * CombatantSheet, InitiativePosition)} — Resoluto's 7, the target's Devoto resistance, Vontade Fraca/Atrair a Morte,
+     * and the caster's own reductions. caster may be {@code null}: it then lowers nothing.
+     */
+    boolean isEffectChainTriggered(SpellCastingResult result, CombatantSheet caster, CombatantSheet target,
+                                   int castTotal);
 
     /**
      * The Corrente the cast version builds once it fires ({@code Spell#getEffectChainKind()}), its die thrown on roller
@@ -155,4 +166,32 @@ public interface SpellCastingService {
     Optional<org.aventyrs.core.effect.CriticalEffect> resolveCastingCriticalEffect(
             Spell castVersion, CombatantSheet caster, org.aventyrs.core.skill.SkillRoll castingRoll,
             org.aventyrs.core.util.DiceRoller roller);
+
+    /**
+     * How many times the casting critical ({@link #resolveCastingCriticalEffect}) applies to each target — 2 with a
+     * drawn Grimório's Otimização Metamágica ("Os Efeitos Críticos desta magia desencadeiam duas vezes"), otherwise 1
+     * (core 0.1.6.8). The caller applies the built effect that many times.
+     */
+    default int getCastingCriticalEffectApplications(final CombatantSheet caster) {
+        return org.aventyrs.core.item.CastingArtifacts.doublesSpellCriticalEffects(caster.getCharacter()) ? 2 : 1;
+    }
+
+    /**
+     * Whether target may negate what a Magia caster cast is about to do to them (core 0.1.6.2) — some held {@code
+     * Feat#offersSpellNegation} answers yes ({@code QualidadeFeat#ESCOLHIDO_DA_MAGIA_MAIOR}'s Alma de AEther, once per
+     * Cena de Combate). Never for one's own Magia: negating it would only refund its PM. Ask after the Magia is known
+     * to land (an attack-delivered one has hit) and before its damage, effect, Corrente or critical is applied — the
+     * holder decides then, and declining spends nothing.
+     */
+    boolean canNegateSpell(CombatantSheet caster, CombatantSheet target,
+                           org.aventyrs.core.scene.SceneContext sceneContext);
+
+    /**
+     * Negates a Magia on target (core 0.1.6.2): claims the offering Talento's use and recovers manaSpent PM — "PM igual
+     * a quantidade de PM utilizado na conjuração", as much as target has spent. Returns the PM actually recovered. The
+     * caller then applies nothing of that Magia to target: no damage, effect, Corrente or casting critical. Throws
+     * {@code SPELL_NEGATION_NOT_AVAILABLE} when {@link #canNegateSpell} says no.
+     */
+    int negateSpell(CombatantSheet caster, CombatantSheet target, int manaSpent,
+                    org.aventyrs.core.scene.SceneContext sceneContext);
 }

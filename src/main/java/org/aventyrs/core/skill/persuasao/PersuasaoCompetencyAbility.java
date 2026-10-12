@@ -73,11 +73,16 @@ public enum PersuasaoCompetencyAbility implements SkillCompetencyAbility {
             "oposto, ou contra quaisquer personagens que possam se sentir atraídos por " +
             "você."),
 
-    // TODO: -1PE to Equipamento purchase/production costs. Item#getPrice() is a real PE figure
-    // per catalog entry, so the gap is the economy around it rather than the entity: there is no
-    // PE budget to spend from and no purchase or production entry point to discount (same gap as
-    // ProfissaoExcellency.FOCADO/LENDA).
-    CAMBALACHO("O custo de compra e produção de Equipamentos é reduzido em -1PE."),
+    // Real (core 0.1.6.5): -1PE on a store purchase and on forging, through resolveEquipmentPointDiscount, summed
+    // by character.services.EquipmentPointPricing#discounted. The text states no floor; the shared 1PE floor every
+    // PE price takes applies anyway. Not an Aprimoramento install — "compra e produção" only.
+    CAMBALACHO("O custo de compra e produção de Equipamentos é reduzido em -1PE.") {
+        @Override
+        public int resolveEquipmentPointDiscount(final org.aventyrs.core.ego.EquipmentPointExpense kind) {
+            return kind == org.aventyrs.core.ego.EquipmentPointExpense.PURCHASE
+                    || kind == org.aventyrs.core.ego.EquipmentPointExpense.PRODUCTION ? 1 : 0;
+        }
+    },
 
     /**
      * "Se for bem-sucedido sua próxima rolagem de Perícia de Ataque nesta Rodada recebe

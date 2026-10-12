@@ -73,6 +73,16 @@ public class DeliveredAttackResult {
     private final int lockedSelfDamage;
 
     /**
+     * The projectile this shot fired ({@code DeliveredAttack#getProjectile()}), and how many of it — 1, plus one per
+     * extra projectile a Tiro Duplo/Múltiplo fires. Reported whether or not the shot landed: an arrow loosed is spent.
+     * The caller spends them with {@code AmmunitionService#consume}; {@code null}/0 when nothing was fired or on the
+     * no-roll preview path.
+     */
+    private final org.aventyrs.core.item.ProjectileItem firedProjectile;
+
+    private final int projectilesToConsume;
+
+    /**
      * What the defender's Talentos deal back because this attack <b>landed</b> — {@code
      * Feat#resolveRetaliation}, one {@link Retaliation} per answering Talento. Empty on a miss, on
      * an Ataque à Distância, and without a roll. <b>Reported, never dealt</b>, like {@link

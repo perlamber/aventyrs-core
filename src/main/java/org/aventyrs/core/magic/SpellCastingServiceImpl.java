@@ -28,6 +28,7 @@ import static org.aventyrs.core.util.TranslatableMessages.HIT_POINT_PAYMENT_NOT_
 import static org.aventyrs.core.util.TranslatableMessages.INVALID_SPELL_CAST_TARGET;
 import static org.aventyrs.core.util.TranslatableMessages.NO_ALTERNATE_SPELL_VERSION;
 import static org.aventyrs.core.util.TranslatableMessages.SPELL_CASTING_PREVENTED;
+import static org.aventyrs.core.util.TranslatableMessages.SPELL_NEGATION_NOT_AVAILABLE;
 
 public class SpellCastingServiceImpl implements SpellCastingService {
 
@@ -100,20 +101,37 @@ public class SpellCastingServiceImpl implements SpellCastingService {
         Character casterCharacter = request.getCaster().getCharacter();
         int castingRollBonus = casterCharacter.getFeats().stream()
                 .mapToInt(feat -> feat.resolveCastingRollBonus(spell, casterCharacter, request.getActivatedFeats()))
-                .sum();
+                .sum()
+                // A drawn Artefato de Conjuração's "Vantagem nas Rolagens … para Conjuração" (core 0.1.6.8).
+                + org.aventyrs.core.item.CastingArtifacts.castingRollBonus(casterCharacter)
+                // A drawn weapon's Conjuração columns and Benção Elemental's "+1 em Conjuração … de Magia Elemental".
+                + org.aventyrs.core.item.WeaponEnhancements.castingRollBonus(casterCharacter, spell);
         if (castingRollBonus != 0 && dominioDoManaResult.getSkillRollBonus() != null) {
             dominioDoManaResult = dominioDoManaResult.toBuilder()
                     .skillRollBonus(dominioDoManaResult.getSkillRollBonus() + castingRollBonus)
                     .build();
         }
+        // Ímpeto's "Vantagem em... Efeitos de Magia": one figure toward the Magia's Dano and its Cura alike.
+        int egoSpellEffectBonus = casterCharacter.getAllEgoAdvantages().stream()
+                .mapToInt(advantage -> advantage.resolveSpellEffectBonus(request.getSceneContext()).orElse(0))
+                .sum()
+                // A drawn artefact's "danos e curas mágicas +N" (Cajado de Guerra, an artefact's Esfera de AEther) and
+                // the Adaga de Cerimônias' timed Dano Base, read as a flat +N here (core 0.1.6.8).
+                + org.aventyrs.core.item.CastingArtifacts.spellEffectBonus(casterCharacter)
+                + request.getCaster().getTemporaryBonus(org.aventyrs.core.modifier.ModifierType.DAMAGE_BASE_INCREASE);
         int spellDamageBonus = casterCharacter.getFeats().stream()
                 .mapToInt(feat -> feat.resolveSpellDamageBonus(spell, casterCharacter, request.getActivatedFeats()))
                 .sum()
-                + casterCompetencies.stream().mapToInt(ability -> ability.resolveSpellDamageBonus(spell, casterCharacter)).sum();
+                + casterCompetencies.stream().mapToInt(ability -> ability.resolveSpellDamageBonus(spell, casterCharacter)).sum()
+                // A drawn weapon's Arcanista ("Cura e Danos Mágicos +1") and Benção Elemental (core 0.1.6.9).
+                + org.aventyrs.core.item.WeaponEnhancements.spellDamageBonus(casterCharacter, spell)
+                + egoSpellEffectBonus;
         int healingBonus = casterCharacter.getFeats().stream()
                 .mapToInt(feat -> feat.resolveSpellHealingBonus(spell, casterCharacter, request.getActivatedFeats()))
                 .sum()
-                + casterCompetencies.stream().mapToInt(ability -> ability.resolveSpellHealingBonus(spell, casterCharacter)).sum();
+                + casterCompetencies.stream().mapToInt(ability -> ability.resolveSpellHealingBonus(spell, casterCharacter)).sum()
+                + org.aventyrs.core.item.WeaponEnhancements.spellHealingBonus(casterCharacter, spell)
+                + egoSpellEffectBonus;
         int effectDelayRounds = casterCharacter.getFeats().stream()
                 .mapToInt(feat -> feat.resolveCastEffectDelayRounds(spell, casterCharacter, request.getActivatedFeats()))
                 .max().orElse(0);
@@ -121,6 +139,12 @@ public class SpellCastingServiceImpl implements SpellCastingService {
         request.getCaster().getCharacter().getAllTitles()
                 .forEach(title -> title.consumeCastingCharges(spell, request.getCaster()));
         int manaCost = resolveManaCost(spell, request);
+        // Cajado do Amparo / de Guerra: "+1 em suas Defesas por 1 Rodada após conjurar uma Magia".
+        int castDefesas = org.aventyrs.core.item.CastingArtifacts.castDefesasBonus(casterCharacter);
+        if (castDefesas > 0) {
+            request.getCaster().applyEffect(org.aventyrs.core.sheet.TemporaryBonus.untilTurnStarts(
+                    org.aventyrs.core.modifier.ModifierType.DEFESAS, castDefesas, 1, org.aventyrs.core.item.CastingArtifacts.CAST_DEFESAS_SOURCE));
+        }
         int vitalityCost = 0;
         if (request.isPayManaWithHitPoints()) {
             vitalityCost = manaCost;
@@ -162,9 +186,11 @@ public class SpellCastingServiceImpl implements SpellCastingService {
                                 .withAlternateEffectChain(request.isAlternateEffectChain()))
                         .orElse(null))
                 .recordedAction(recordedAction(request, spell, deliveryResult))
-                .grantedEffectChains(casterCharacter.getFeats().stream()
+                .grantedEffectChains(java.util.stream.Stream.concat(casterCharacter.getFeats().stream()
                         .flatMap(feat -> feat.resolveSpellEffectChains(spell, request.getCaster(),
-                                request.getCombatantTarget(), isHostileTarget(request)).stream())
+                                request.getCombatantTarget(), isHostileTarget(request)).stream()),
+                        // The drawn artefacts' Correntes — Toque Divino, Futuro Previsto, Marcas (core 0.1.6.8).
+                        org.aventyrs.core.item.CastingArtifacts.spellEffectChains(request.getCaster(), spell, isHostileTarget(request)).stream())
                         .toList())
                 .build();
     }
@@ -311,7 +337,9 @@ public class SpellCastingServiceImpl implements SpellCastingService {
                 // Mártir Altruísta: the GD of healing Magias "é reduzido em -1 Nível".
                 + character.getAllTitles().stream()
                 .mapToInt(title -> title.resolveCastingDifficultyReduction(spell, caster))
-                .sum();
+                .sum()
+                // Inquisição: "GD de Magias do Alvo +2 níveis" while the mark lasts — a negative reduction.
+                - caster.getSpellDifficultyIncrease();
     }
 
     /**
@@ -328,7 +356,9 @@ public class SpellCastingServiceImpl implements SpellCastingService {
         int reduction = caster.getCharacter().getFeats().stream()
                 .mapToInt(feat -> feat.resolveManaCostReduction(spell, caster, request.getCombatantTarget(),
                         request.getSceneContext()))
-                .sum();
+                .sum()
+                // Varinha: "Custos de Bônus Bases … da primeira magia de cada Rodada são reduzidos em -1".
+                + (isFirstSpellCastOfRound(caster) ? org.aventyrs.core.item.CastingArtifacts.firstSpellManaReduction(caster.getCharacter()) : 0);
         int reduced = cost <= 0 || reduction <= 0 ? cost : Math.max(MINIMUM_REDUCED_MANA_COST, cost - reduction);
         // Corrente Abençoada: "Para cada criatura adicional é necessário o uso de +3PM".
         return reduced + request.getAdditionalTargets().size() * spell.getAdditionalTargetManaCost()
@@ -371,7 +401,9 @@ public class SpellCastingServiceImpl implements SpellCastingService {
                 // castSpell spends the charge.
                 + character.getAllTitles().stream()
                 .mapToInt(title -> title.resolveCastingActionPointReduction(spell, caster))
-                .sum();
+                .sum()
+                // Grimório: "Tempo de Conjuração da primeira Magia que conjurar a cada Rodada é reduzido em -1PA".
+                + (isFirstSpellCastOfRound(caster) ? org.aventyrs.core.item.CastingArtifacts.firstSpellActivationReduction(character) : 0);
         // "(mínimo 1PA)", as MetamagicoFeat#PROCRASTINAR_CONJURACAO states — and an
         // ActivationTime of 0PA is not constructible anyway.
         ActivationTime reduced = reduction <= 0 ? authored
@@ -519,14 +551,20 @@ public class SpellCastingServiceImpl implements SpellCastingService {
     }
 
     @Override
-    public boolean isEffectChainTriggered(final SpellCastingResult result, final CombatantSheet target,
-                                          final int castTotal) {
+    public boolean isEffectChainTriggered(final SpellCastingResult result, final CombatantSheet caster,
+                                          final CombatantSheet target, final int castTotal) {
         if (result.getCastingTargetValue() == null || !castSucceeds(result, castTotal)) {
             return false;
         }
+        // The same margin the attack path asks for (AttackDelivery/AttackReceiver): Resoluto's 7, the target's own
+        // resistance Talentos (Devoto) and Ego setbacks, less the caster's reductions. No live Scene is in reach here,
+        // so both stand at an UNKNOWN position.
         int required = target == null || target.getCharacter() == null
                 ? org.aventyrs.core.effect.EffectChainService.BASE_REQUIRED_MARGIN
-                : new org.aventyrs.core.effect.EffectChainServiceImpl().getRequiredMargin(target.getCharacter());
+                : new org.aventyrs.core.effect.EffectChainServiceImpl().getRequiredMargin(
+                        caster == null || caster.getCharacter() == null ? null : caster,
+                        org.aventyrs.core.scene.InitiativePosition.UNKNOWN,
+                        target, org.aventyrs.core.scene.InitiativePosition.UNKNOWN);
         return castTotal - result.getCastingTargetValue() >= required;
     }
 
@@ -559,8 +597,35 @@ public class SpellCastingServiceImpl implements SpellCastingService {
         if (castVersion.getCriticalEffectType() == null || critical == null || !critical.isCriticalSuccess()) {
             return Optional.empty();
         }
+        // Bola de Crista: "não mais desencadeiam Efeitos Críticos Menores em função da soma dos dados".
+        if (critical.isMinor() && org.aventyrs.core.item.CastingArtifacts.suppressesSumMinorCriticals(caster.getCharacter())) {
+            return Optional.empty();
+        }
         return org.aventyrs.core.effect.CriticalEffects.create(castVersion.getCriticalEffectType(),
                 org.aventyrs.core.effect.CriticalEffectContext.of(caster, castVersion, critical, roller));
+    }
+
+    @Override
+    public boolean canNegateSpell(final CombatantSheet caster, final CombatantSheet target,
+                                  final org.aventyrs.core.scene.SceneContext sceneContext) {
+        return target != null && target != caster && target.getCharacter() != null
+                && target.getCharacter().getFeats().stream()
+                        .anyMatch(feat -> feat.offersSpellNegation(target, sceneContext));
+    }
+
+    @Override
+    public int negateSpell(final CombatantSheet caster, final CombatantSheet target, final int manaSpent,
+                           final org.aventyrs.core.scene.SceneContext sceneContext) {
+        if (!canNegateSpell(caster, target, sceneContext)) {
+            throw new IllegalOperationException(SPELL_NEGATION_NOT_AVAILABLE);
+        }
+        target.getCharacter().getFeats().stream()
+                .filter(feat -> feat.offersSpellNegation(target, sceneContext))
+                .findFirst()
+                .ifPresent(feat -> feat.onSpellNegated(target));
+        int spentBefore = target.getManaSpent();
+        target.recoverMagicPoints(Math.max(0, manaSpent));
+        return Math.max(0, spentBefore - target.getManaSpent());
     }
 
     private ActiveAreaSpellEffect registerAreaSpellEffect(final SpellCastRequest request, final Spell spell,

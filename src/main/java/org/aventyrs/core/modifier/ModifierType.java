@@ -211,6 +211,14 @@ public enum ModifierType {
      * grants. Margem Crítica has no other {@code ModifierType}: every standing source is a hook.
      */
     LESSER_CRITICAL_MARGIN,
+
+    /**
+     * A round-scoped Dano Base scale-up — the Adaga de Cerimônias' Efeito Ativo, "aumentar o Dano Base dos Ataques
+     * Físicos, Danos Mágicos e Curas Mágicas em +1" (core 0.1.6.8). Read off the wielder's sheet by {@code
+     * DamageBaseServiceImpl}'s sheet-aware overload for a weapon attack, and by {@code SpellCastingServiceImpl} as a
+     * flat +N on a Magia's damage and healing (⚠️ a Magia's damage has no Dano Base scale to step).
+     */
+    DAMAGE_BASE_INCREASE,
     DEFESAS,
     PHYSICAL_DEFENSE,
     MAGIC_DEFENSE,

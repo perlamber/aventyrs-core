@@ -40,8 +40,7 @@ import org.aventyrs.core.skill.SkillType;
  * loss of the donor's Centelhas (nothing tracks a character's Centelhas — the {@code
  * DestinoFeat#FRAGMENTO_DA_ENCARNACAO_DE_GILGAMESH} gap); the <i>Forja do Olho de Deus</i> —
  * both its "reduz drasticamente" time bonus and the Divina "deve ser feita exclusivamente" in one
- * (this core models no places); the PE cost of the work (no PE economy — the {@code
- * ResourcesAdvantage#BARGANHISTA} gap); and the roll itself, including the Divina Acerto Crítico
+ * (this core models no places); and the roll itself, including the Divina Acerto Crítico
  * requirement (this core never rolls — {@code forgeRegalia} assumes the caller resolved it, and
  * {@code regaliaCraftingRequiresCriticalResult} reports the Divina rule for the caller to apply).
  * The "não é possível reduzir GD … exceto Habilidades de Artífice" carve-out is currently exempt

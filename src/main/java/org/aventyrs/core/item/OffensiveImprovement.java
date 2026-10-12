@@ -2,9 +2,16 @@ package org.aventyrs.core.item;
 
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CriticalDamage;
+import org.aventyrs.core.effect.CorrenteAtacante;
+import org.aventyrs.core.effect.EffectChain;
+import org.aventyrs.core.effect.IgnoraResistencias;
+import org.aventyrs.core.effect.Inquisicao;
+import org.aventyrs.core.magic.Spell;
 import org.aventyrs.core.modifier.ModifierType;
+import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.skill.Skill;
 import org.aventyrs.core.skill.SkillType;
+import org.aventyrs.core.util.DiceRoller;
 
 import lombok.Getter;
 
@@ -23,16 +30,17 @@ import lombok.Getter;
  * Atributo, so nothing here takes a {@link MasterpieceRequirements} and every effect below is
  * unconditional.
  *
- * <p><b>What is live.</b> Guarda Mãos' and Benção de Proteção's DF/DM reach {@code DefenseService};
- * Oculta's Vantagem reaches the Furtividade roll; Benção Ymiriana's "Dano Base da Arma aumenta em
- * +1" reaches {@code DamageBaseService}; Cruel's "Danos Críticos" reaches a crit's dano roll
- * ({@link Improvement#resolveCriticalDamage}); Manopla de Segurança's "Não pode ser desarmado" is what
- * {@code Weapon#isDisarmable()} has been waiting for; Encaixe is what lets {@code
- * AbstractItem#setPowerStone} socket a Pedra do Poder into a <em>weapon</em>; and every constant
- * prices off the Armas column ({@link EnhancementPriceCategory#WEAPON}).
+ * <p><b>Every constant is live (core 0.1.6.9).</b> The DF/DM columns reach {@code DefenseService}; the
+ * Ataque and Danos columns, and every clause naming "this weapon's" attacks, reach the attack through
+ * {@link WeaponEnhancements} — always the host weapon the attack is made <em>with</em>, never a sheathed
+ * one; the Conjuração column and the Magia clauses reach {@code SpellCastingService} while the host is
+ * drawn. The per-constant hooks below are offensive-only on purpose: each answers for its host weapon,
+ * which {@link Improvement}'s shared hooks are not handed. Every constant prices off the Armas column
+ * ({@link EnhancementPriceCategory#WEAPON}).
  *
- * <p>The Ataque and Danos columns are authored and read by nothing — see {@link
- * OffensiveMasterpiece}'s javadoc for why, and for the weapon-scoped roll pass they wait on.
+ * <p><b>"muda para" replaces, "+N" adds.</b> A Favor that says its figure "muda para" N supersedes its
+ * own Característica Adicional (Cruel, Pente Alongado); one that says "+N" stacks on it (Solve-Vidas,
+ * Ladra do AEther). Table rulings and readings of 2026-10-12 are noted on each constant.
  */
 @Getter
 public enum OffensiveImprovement implements Improvement {
@@ -45,10 +53,19 @@ public enum OffensiveImprovement implements Improvement {
                     ? Skill.ADVANTAGE_BONUS : 0;
         }
     },
-    // TODO: a Magia carries no numeric damage/healing effect for an item to raise — the same column
-    // DefensiveMasterpiece#BANHADA_EM_OURO and OffensiveMasterpiece#PODEROSA are blocked on.
+    /** "Cura e Danos Mágicos +1" — every Magia cast while the host is drawn, read like an artefact's. */
     ARCANISTA("Arcanista", ItemRarity.RARE, 0, 0, 0, 0, 1,
-            "Cura e Danos Mágicos +1.", null),
+            "Cura e Danos Mágicos +1.", null) {
+        @Override
+        public int resolveSpellDamageBonus(final Spell spell) {
+            return 1;
+        }
+
+        @Override
+        public int resolveSpellHealingBonus(final Spell spell) {
+            return 1;
+        }
+    },
     CRUEL("Cruel", ItemRarity.COMMON, 0, 0, 0, 0, 0,
             "Bônus em Danos Críticos muda para +3.", "Danos Críticos +2.") {
         /**
@@ -66,44 +83,104 @@ public enum OffensiveImprovement implements Improvement {
             return CriticalDamage.ofFlat(3);
         }
     },
-    // The enabler for a Pedra do Poder on a weapon — the offensive twin of
-    // DefensiveImprovement#ENCAIXE, and what AbstractItem#setPowerStone checks for an offensive
-    // host. A stone in a weapon selects its Efeito Ofensivo (PowerStone#resolveBonus reads
-    // Item#getType()), which until now nothing could reach.
-    ENCAIXE("Encaixe", ItemRarity.EPIC, 0, 0, 0, 0, 0,
-            null, "Permite encaixe de Pedra do Poder."),
+    // Encaixe (the Pedra do Poder socket) was removed by table ruling, 2026-10-12: any Obra-Prima
+    // weapon now takes a stone — see Item#acceptsPowerStone.
     GUARDA_MAOS("Guarda Mãos", ItemRarity.COMMON, 1, 0, 0, 0, 0, null, null),
     // Unlike its defensive namesake this one is the bare column: the offensive list gives it no
     // Favor at all, so there is no first-Rodadas window and no damage-taken escalation here.
     BENCAO_DE_PROTECAO("Benção de Proteção", ItemRarity.UNCOMMON, 1, 1, 0, 0, 0, null, null),
-    // TODO: the Adicional's "+1UD" cannot be expressed — AttackRangeService has no equipment pass,
-    // and Feat#resolveAttackRangeIncrease counts whole Range *bands* while this names a UD amount,
-    // so the existing hook is the wrong unit rather than merely unscanned. The Favor additionally
-    // needs the distance to the target, which no enhancement hook is handed.
+    /**
+     * "Distância de Ataque aumenta +1UD" rides the UD axis {@code AttackRangeService} already sums for
+     * Talentos; the Favor's "+1 em rolagens de Ataque e Dano" needs a target that is not adjacent, judged
+     * through the Scene's positions ({@code WeaponEnhancements#nonAdjacentBonus}).
+     */
     ALCANCE_ESTENDIDO("Alcance Estendido", ItemRarity.RARE, 0, 0, 0, 0, 0,
             "Bônus de +1 em rolagens de Ataque e Dano alvos não adjacentes.",
-            "Distância de Ataque aumenta +1UD."),
-    // TODO: the damage an attack deals carries no DamageDescriptor an item can add an element to,
-    // and a Magia-scoped Conjuração/Dano bonus has no hook. The element choice is therefore not
-    // recorded either — a creation-time choice with nothing to consume it would be dead state (see
-    // ItemImprovement, which exists only because the defensive catalog's choices *are* read).
+            "Distância de Ataque aumenta +1UD.") {
+        @Override
+        public int getAttackReachIncreaseUd() {
+            return 1;
+        }
+
+        @Override
+        public int getNonAdjacentBonus() {
+            return 1;
+        }
+    },
+    /**
+     * Fitted through {@link OffensiveItemImprovement}, which records the element chosen at fabrication.
+     * By table ruling (2026-10-12) a hit with the host is <b>fully both types</b>: the target's immunity
+     * to the element stops it, that element's RE is subtracted on top of RD, and a Fraqueza to it applies
+     * ({@code DamageInteraction#withAdditionalElement}). A copy fitted bare (no element recorded) keeps the
+     * columns and the Favor, and its Adicional does nothing. The Favor reaches any Magia whose damage is
+     * elemental, ⚠️ whichever element — "Magia Elemental" names none.
+     */
     BENCAO_ELEMENTAL("Benção Elemental", ItemRarity.RARE, 0, 0, 0, 1, 0,
             "Bônus de +1 em Conjuração e Danos de Magia Elemental.",
-            "Danos causados são Elemental (tipo escolhido na fabricação) em adicional aos seus tipos."),
-    // TODO: nothing lets one weapon count as a second ItemCategory — Weapon#getSkillType() and
-    // getCategory() are each a single authored column, and Character#treatsAsNaturalWeapon is the
-    // only reclassification this core has (and it only reaches Armas Naturais).
+            "Danos causados são Elemental (tipo escolhido na fabricação) em adicional aos seus tipos.") {
+        @Override
+        public int resolveCastingRollBonus(final Spell spell) {
+            return isElemental(spell) ? 1 : 0;
+        }
+
+        @Override
+        public int resolveSpellDamageBonus(final Spell spell) {
+            return isElemental(spell) ? 1 : 0;
+        }
+
+        @Override
+        public boolean requiresElementalTypeChoice() {
+            return true;
+        }
+    },
+    /**
+     * "Armas de Ataque à Distância são Machados" (table ruling, 2026-10-12): the host counts as a Machado
+     * for every clause scoped to the kind of weapon, and can strike corpo-a-corpo through {@link
+     * AttachedMeleeAttack}. ⚠️ This core has no Machado category — a Machado de Mão is a Lâmina Leve, a
+     * Machado de Guerra a Lâmina Pesada — so an attached axe is read as the hand axe: {@link
+     * ItemCategory#LIGHT_BLADE}.
+     */
     MACHADO_ANEXO("Machado Anexo", ItemRarity.UNCOMMON, 0, 0, 0, 0, 0,
-            null, "Armas de Ataque à Distância são Machados."),
-    // TODO: no EffectChain exists; raising a *target's* GD de Magias has no hook (a Magia's GD is
-    // resolved from the caster, see SpellCastingService); and Roubo de Mana does not exist at all
-    // (only Roubo de Vida is modelled — LifeStealService).
+            null, "Armas de Ataque à Distância são Machados.") {
+        @Override
+        public ItemCategory getAdditionalCategory() {
+            return ItemCategory.LIGHT_BLADE;
+        }
+    },
+    /**
+     * The Corrente leaves the target's Magias "+2 níveis" harder until the attacker's next Turn starts
+     * (table ruling, 2026-10-12) — {@link Inquisicao}. "Roubo de Mana 1" mirrors the Roubo de
+     * Determinação ruling: the target loses the PM and the attacker recovers what was taken.
+     */
     BENCAO_ELDURIANA("Benção Elduriana", ItemRarity.EPIC, 0, 0, 0, 0, 0,
-            "Corrente de Efeitos – Inquisição: GD de Magias do Alvo +2 níveis.", "Roubo de Mana 1."),
-    // TODO: no mechanism bypasses a mitigation stage — DamageService always applies the target's
-    // RD/RM, and RE has no constant at all (see CLAUDE.md's damage-type-scoped mitigation row).
+            "Corrente de Efeitos – Inquisição: GD de Magias do Alvo +2 níveis.", "Roubo de Mana 1.") {
+        @Override
+        public EffectChain createEffectChain(final CombatantSheet attacker, final DiceRoller roller) {
+            return new Inquisicao(attacker);
+        }
+
+        @Override
+        public int getManaSteal() {
+            return 1;
+        }
+    },
+    /**
+     * "Ignora RD do alvo" on every hit with the host; the Corrente adds RE and RM to what that same hit
+     * ignores ({@link IgnoraResistencias}) — ⚠️ a reading: a Corrente normally lands <em>after</em> the
+     * damage, but one that names the hit's own resistances can only mean that hit. RA is never ignored.
+     */
     BENCAO_VULCANA("Benção Vulcana", ItemRarity.EPIC, 0, 0, 0, 0, 0,
-            "Corrente de Efeitos – Ignora Resistências: Ignora RE e RM.", "Ignora RD do alvo."),
+            "Corrente de Efeitos – Ignora Resistências: Ignora RE e RM.", "Ignora RD do alvo.") {
+        @Override
+        public EffectChain createEffectChain(final CombatantSheet attacker, final DiceRoller roller) {
+            return new IgnoraResistencias();
+        }
+
+        @Override
+        public boolean ignoresDamageReduction() {
+            return true;
+        }
+    },
     BENCAO_YMIRIANA("Benção Ymiriana", ItemRarity.UNCOMMON, 0, 0, 0, 1, 0,
             "Dano Base da Arma aumenta em +1.", null) {
         /**
@@ -124,30 +201,65 @@ public enum OffensiveImprovement implements Improvement {
             return true;
         }
     },
-    // TODO: no EffectChain exists, and this core grants no dice. The "exige uso de ambas as mãos"
-    // half cannot be expressed either — CharacterSheet's two-hand budget *infers* handedness from
-    // ItemWeightClass plus category rather than reading an authored column, so an Aprimoramento
-    // cannot override it. "Apenas Armas Leves" is enforced by AbstractItem#addImprovement.
+    /**
+     * The Corrente's "+1d6" is thrown with the attack's own dice and lands after the hit's mitigation
+     * ({@link CorrenteAtacante}, the Rugido precedent). "Apenas Armas Leves" is enforced by {@code
+     * AbstractItem#addImprovement}; "passa a exigir uso de ambas as mãos" by {@link HandBudget}.
+     */
     CORRENTE_COM_PESO("Corrente com Peso", ItemRarity.UNCOMMON, 0, 0, 0, 0, 0,
             "Corrente de Efeitos – Corrente Atacante: Dano +1d6.",
-            "Apenas Armas Leves e passa a exigir uso de ambas as mãos."),
-    // TODO: munição is not tracked — no Weapon column counts shots, and nothing spends one.
-    // "Apenas armas à Distância" is enforced by AbstractItem#addImprovement.
+            "Apenas Armas Leves e passa a exigir uso de ambas as mãos.") {
+        @Override
+        public EffectChain createEffectChain(final CombatantSheet attacker, final DiceRoller roller) {
+            return new CorrenteAtacante(roller);
+        }
+
+        @Override
+        public boolean requiresBothHands() {
+            return true;
+        }
+    },
+    /**
+     * "muda pra +3" replaces the Adicional's +2, read as the Besta's magazine ({@code
+     * Weapon#getEffectiveMagazineCapacity}) — an Arco draws from the bag and has no magazine to widen.
+     * "Apenas armas à Distância" is enforced by {@code AbstractItem#addImprovement}.
+     */
     PENTE_ALONGADO("Pente Alongado", ItemRarity.RARE, 0, 0, 0, 0, 0,
-            "Quantidade de munições muda pra +3.", "Apenas armas à Distância, +2 munições."),
-    // TODO: the same single-category limit MACHADO_ANEXO cites.
+            "Quantidade de munições muda pra +3.", "Apenas armas à Distância, +2 munições.") {
+        @Override
+        public int getMagazineCapacityIncrease() {
+            return 3;
+        }
+    },
+    /** As {@link #MACHADO_ANEXO}, with a Lança — {@link ItemCategory#SPEAR}. */
     BAIONETA("Baioneta", ItemRarity.COMMON, 0, 0, 0, 0, 0,
-            null, "Armas de Ataque à Distância são Lanças."),
-    // TODO: an item cannot *grant* Roubo de Vida. LifeStealService sums a sheet's active LifeSteal
-    // effects plus Feat#resolveGrantedLifeSteal and has no equipment pass — and could not be given
-    // a correct one here, since getTotalLifeSteal(character, sheet) is handed no weapon and would
-    // grant this while its wielder swung something else.
+            null, "Armas de Ataque à Distância são Lanças.") {
+        @Override
+        public ItemCategory getAdditionalCategory() {
+            return ItemCategory.SPEAR;
+        }
+    },
+    /** "Roubo de Vida 2" and the Favor's "+1" stack: Roubo de Vida 3 on every hit with the host. */
     SOLVE_VIDAS("Maldição: Solve-Vidas", ItemRarity.MYTHIC, 0, 0, 1, 0, 0,
-            "Roubo de Vida +1.", "Roubo de Vida 2."),
-    // TODO: Roubo de Mana and Roubo de Determinação do not exist in this core at all — only Roubo
-    // de Vida is modelled.
+            "Roubo de Vida +1.", "Roubo de Vida 2.") {
+        @Override
+        public int getLifeSteal() {
+            return 3;
+        }
+    },
+    /** "Roubo de Mana e Determinação 1" plus the Favor's "+1": 2 of each on every hit with the host. */
     LADRA_DO_AETHER("Maldição: Ladra do AEther", ItemRarity.MYTHIC, 0, 0, 1, 0, 0,
-            "Roubo de Mana e Determinação +1.", "Roubo de Mana e Determinação 1.");
+            "Roubo de Mana e Determinação +1.", "Roubo de Mana e Determinação 1.") {
+        @Override
+        public int getManaSteal() {
+            return 2;
+        }
+
+        @Override
+        public int getDeterminationSteal() {
+            return 2;
+        }
+    };
 
     private final String name;
     private final ItemRarity rarity;
@@ -182,5 +294,89 @@ public enum OffensiveImprovement implements Improvement {
     @Override
     public EnhancementPriceCategory getPriceCategory() {
         return EnhancementPriceCategory.WEAPON;
+    }
+
+    @Override
+    public OffensiveImprovement offensiveDefinition() {
+        return this;
+    }
+
+    /** Whether fitting this one needs a creation-time element — {@link #BENCAO_ELEMENTAL} alone. */
+    public boolean requiresElementalTypeChoice() {
+        return false;
+    }
+
+    /** Roubo de Vida every hit with the host carries. */
+    public int getLifeSteal() {
+        return 0;
+    }
+
+    /** Roubo de Mana every hit with the host carries. */
+    public int getManaSteal() {
+        return 0;
+    }
+
+    /** Roubo de Determinação every hit with the host carries. */
+    public int getDeterminationSteal() {
+        return 0;
+    }
+
+    /** UD added to the host's Distância de Ataque. */
+    public int getAttackReachIncreaseUd() {
+        return 0;
+    }
+
+    /** Ataque and Dano bonus against a target the attacker is not adjacent to. */
+    public int getNonAdjacentBonus() {
+        return 0;
+    }
+
+    /** Whether every hit with the host ignores the target's RD. */
+    public boolean ignoresDamageReduction() {
+        return false;
+    }
+
+    /** The second category the host counts as — and strikes corpo-a-corpo as — or {@code null}. */
+    public ItemCategory getAdditionalCategory() {
+        return null;
+    }
+
+    /** Whether the host needs both hands once this is fitted. */
+    public boolean requiresBothHands() {
+        return false;
+    }
+
+    /** Extra rounds a host magazine holds; nothing for a weapon without one. */
+    public int getMagazineCapacityIncrease() {
+        return 0;
+    }
+
+    /**
+     * The Corrente de Efeitos a hit with the host gains once it clears the Corrente threshold, or {@code null}.
+     *
+     * @param attacker who made the attack
+     * @param roller   the attack's own dice, or {@code null} to report a die rather than throw it
+     */
+    public EffectChain createEffectChain(final CombatantSheet attacker, final DiceRoller roller) {
+        return null;
+    }
+
+    /** What this adds to the Conjuração roll of spell while the host is drawn, beyond the Conjuração column. */
+    public int resolveCastingRollBonus(final Spell spell) {
+        return 0;
+    }
+
+    /** What this adds to spell's damage while the host is drawn. */
+    public int resolveSpellDamageBonus(final Spell spell) {
+        return 0;
+    }
+
+    /** What this adds to spell's healing while the host is drawn. */
+    public int resolveSpellHealingBonus(final Spell spell) {
+        return 0;
+    }
+
+    private static boolean isElemental(final Spell spell) {
+        return spell != null && spell.getPrimaryDamage().map(damage -> damage.elementalType() != null).orElse(false);
     }
 }

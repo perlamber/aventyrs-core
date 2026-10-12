@@ -1267,6 +1267,7 @@ DF | DM | Ataque | Danos | Conjuração
 Características Adicionais: Nenhum.
 
 Pedras do Poder
+[Superseded by docs/rules/pedras-do-poder.txt (V19, 2026-10-11) — the text below is the older version, kept for reference.]
 Tipos de Pedras do Poder
 Adamante Bruto (Sintética)
 Efeito Base: Vigor +1, ataques recebem a Corrente de Efeitos – Impacto Meteórico: Ataque se torna Área de Efeito - Explosão.

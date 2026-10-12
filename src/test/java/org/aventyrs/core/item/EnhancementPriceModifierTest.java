@@ -55,11 +55,13 @@ class EnhancementPriceModifierTest {
      * Masterpiece}/{@link Improvement} implementations, so they carry their own accessor.
      */
     @Test
-    void aPowerStoneRefinementIsPricedOffThePedrasDoPoderColumn() {
+    void aPowerStoneRefinementCarriesItsV19Price() {
         assertEquals(6, PowerStoneMasterpiece.RESFRIAMENTO_RAPIDO.getPriceModifier());
         assertEquals(9, PowerStoneMasterpiece.CARGA_EXTRA.getPriceModifier());
-        assertEquals(13, PowerStoneMasterpiece.SOLVE_VIDAS.getPriceModifier());
+        assertEquals(8, PowerStoneMasterpiece.SOLVE_VIDAS.getPriceModifier());
+        assertEquals(12, PowerStoneMasterpiece.REFINADA.getPriceModifier());
 
-        assertEquals(7, PowerStoneImprovement.CONEXAO_VELOZ.getPriceModifier());
+        assertEquals(10, PowerStoneImprovement.CONEXAO_VELOZ.getPriceModifier());
+        assertEquals(5, PowerStoneImprovement.ULTIMA_CARGA.getPriceModifier());
     }
 }

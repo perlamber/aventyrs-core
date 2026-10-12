@@ -40,6 +40,18 @@ public interface SkillExcellency {
         return 0;
     }
 
+    /**
+     * How many Pontos de Equipamento this Excelência shaves off an expense of kind — {@code
+     * org.aventyrs.core.skill.profissao.ProfissaoExcellency#FOCADO}'s -1PE and {@code #LENDA}'s further -2PE (the
+     * "-3PE" total) on buying and creating Equipamentos. Summed by {@code
+     * org.aventyrs.core.character.services.EquipmentPointPricing#discounted} across every tier the holder's Graduação
+     * in this Excelência's own Perícia has unlocked, beside the Ego and competency hooks of the same name, floored at
+     * 1PE (core 0.1.6.5). Zero by default.
+     */
+    default int resolveEquipmentPointDiscount(final org.aventyrs.core.ego.EquipmentPointExpense kind) {
+        return 0;
+    }
+
     /** Convenience: applies {@link #getDifficultyReduction()} to a concrete DifficultyLevel. */
     default DifficultyLevel adjustDifficulty(DifficultyLevel level) {
         return level.easier(getDifficultyReduction());

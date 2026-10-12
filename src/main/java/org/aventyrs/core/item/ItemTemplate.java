@@ -24,6 +24,15 @@ public interface ItemTemplate extends Item {
     }
 
     /**
+     * How many units one purchase of this template buys — the "Preço para N unidades" lot of a {@link ProjectileItem}.
+     * 1 (the default) for every ordinary, one-copy-per-purchase Equipamento. A lot size above 1 makes a plain copy
+     * {@linkplain Item#isStackable() stackable}.
+     */
+    default int getLotSize() {
+        return 1;
+    }
+
+    /**
      * Forge this template into a concrete item instance. This is the migration bridge between the
      * old enum-backed catalog model and the new template-plus-instance split.
      */
@@ -40,6 +49,7 @@ public interface ItemTemplate extends Item {
                 .hardness(getHardness())
                 .castingBonus(getCastingBonus())
                 .favor(getFavor())
+                .quantity(getLotSize())
                 .build();
     }
 }

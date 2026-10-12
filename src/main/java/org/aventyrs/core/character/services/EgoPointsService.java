@@ -2,7 +2,6 @@ package org.aventyrs.core.character.services;
 
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.EgoDomain;
-import org.aventyrs.core.sheet.Blessing;
 import org.aventyrs.core.sheet.CombatantSheet;
 import org.aventyrs.core.sheet.EgoPointSpend;
 import org.aventyrs.core.sheet.EgoPointType;
@@ -135,7 +134,7 @@ public interface EgoPointsService {
      * Pays one Ponto de Sorte for effect on roll and returns the roll carrying it ({@code SkillRoll#withSorte}),
      * ready to resolve again — the caller re-resolves with it, since each of these is decided after seeing the
      * dice. The point is the effect's own type ({@code SorteEffect#getPointType()}): a temporary point never buys
-     * a permanent effect. Spent through {@link #useEgoPointsForEffect}, so Às na Manga's movement follows. No
+     * a permanent effect. Spent through {@link #useEgoPointsForEffect}, so it is a use: Ás na Manga's move ({@link #getSpendMoves}) follows. No
      * timing gate.
      *
      * @throws org.aventyrs.core.sheet.IllegalOperationException {@code NOT_ENOUGH_EGO_POINTS} when sheet has no
@@ -232,6 +231,18 @@ public interface EgoPointsService {
     int getSpendRecovery(Character character, EgoPointSpend spend, int rolledValue);
 
     /**
+     * The movement a completed spend earns, from the Vantagem de Ego held in that spend's <em>own</em> {@link
+     * EgoDomain} — {@code org.aventyrs.core.ego.SorteAdvantage#AS_NA_MANGA}'s 2UD off a Ponto de Sorte. Empty when no
+     * Vantagem is held there, when the one held grants none, or when the spend took no points at all.
+     *
+     * <p>A pure computation — and, unlike the recovery, nothing in this core applies it: the move is the caller's to
+     * offer at once, since this core holds no positions (see {@link org.aventyrs.core.ego.GrantedMove}). Pass the
+     * {@link EgoPointSpend} {@link #useEgoPointsForEffect} returned, or for a Sorte effect paid through {@link
+     * #applySorte}/{@link #rerollWithSorte}, a one-point spend of that effect's point type.
+     */
+    List<org.aventyrs.core.ego.GrantedMove> getSpendMoves(Character character, EgoPointSpend spend);
+
+    /**
      * Deliberately uses amount Ego points of type from domain for some effect, then applies
      * whatever {@link #getSpendRecovery} that use earns to sheet's PV, PM and PD. Returns the
      * completed {@link EgoPointSpend}, so a caller can see which pool was drawn from and how
@@ -252,17 +263,6 @@ public interface EgoPointsService {
      * "qualquer efeito" is the caller's own business, and this core has no notion of the effect
      * being paid for. It only resolves the recovery that accompanies the expenditure.
      */
-    /**
-     * Every {@link Blessing} a completed spend earns, from the Vantagem de Ego held in that
-     * spend's <em>own</em> {@link EgoDomain} — e.g. {@code
-     * org.aventyrs.core.ego.SorteAdvantage#AS_NA_MANGA}'s 2UD of movement off a Ponto de Sorte.
-     * Empty when no Vantagem is held there, when the one held grants none, or when the spend
-     * took no points at all.
-     *
-     * <p>A pure computation — it grants nothing itself. {@link #useEgoPointsForEffect} is what
-     * applies these, directly to the spender.
-     */
-    List<Blessing> getSpendBlessings(Character character, EgoPointSpend spend);
 
     EgoPointSpend useEgoPointsForEffect(CombatantSheet sheet, EgoDomain domain, EgoPointType type,
                                         int amount, int rolledValue);

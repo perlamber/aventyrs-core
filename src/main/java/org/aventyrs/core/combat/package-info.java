@@ -170,5 +170,20 @@
  * <p>The Aura learns that the holder was attacked from the caller, not from {@code resolve}:
  * alongside {@code Scene#recordAction}, file {@code scene.recordAttack(attacker, defender)}.
  * Binding is the caller's step too — {@code Scene#refreshAura} after any movement.
+ *
+ * <h2>Firing projectiles (0.1.6.6)</h2>
+ *
+ * <p>An Arco or Besta ({@code Weapon#getAmmunitionKind()} set) fires a projectile or nothing. The caller:
+ * <ol>
+ *   <li>lists what can be fired with {@link org.aventyrs.core.combat.AmmunitionService#firableFrom} — an Arco's bag
+ *       stacks, for the player to pick per shot, or a Besta's magazine;</li>
+ *   <li>names the pick on {@code DeliveredAttack#projectile} (a Besta's is its {@code
+ *       AbstractWeapon#nextLoaded()}); {@code resolve} refuses a character's shot that cannot go;</li>
+ *   <li>spends what was fired, hit or miss: {@code ammunitionService.consume(attacker, weapon,
+ *       result.getFiredProjectile(), result.getProjectilesToConsume())};</li>
+ *   <li>reloads a Besta with {@code AmmunitionService#reload}, paying the {@code ActionCost} it returns (none outside
+ *       combat);</li>
+ *   <li>shows and persists what {@code Scene#endCombat()} reports as recovered.</li>
+ * </ol>
  */
 package org.aventyrs.core.combat;

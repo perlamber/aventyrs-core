@@ -110,6 +110,7 @@ public class AttackDelivery {
     private final EffectChainService effectChainService;
     private final DamageService damageService;
     private final AttackTargetingService attackTargetingService;
+    private final AmmunitionService ammunitionService = new AmmunitionServiceImpl();
 
     public AttackDelivery() {
         this(new EffectChainServiceImpl(), new DamageServiceImpl());
@@ -161,6 +162,10 @@ public class AttackDelivery {
         if (!given.getAttackSkill().isAttackSkill()) {
             throw new IllegalOperationException(NOT_AN_ATTACK_SKILL);
         }
+        // A pure casting focus is drawn to cast with, never to strike.
+        if (given.getAttackSource() instanceof org.aventyrs.core.item.Weapon focus && !focus.canAttack()) {
+            throw new IllegalOperationException(org.aventyrs.core.util.TranslatableMessages.WEAPON_CANNOT_ATTACK);
+        }
         // A Familiar Maior "não é capaz de lutar".
         if (given.getAttacker() instanceof org.aventyrs.core.monster.MonsterSheet monster && monster.isNonCombatant()) {
             throw new IllegalOperationException(SUMMON_CANNOT_FIGHT);
@@ -173,10 +178,23 @@ public class AttackDelivery {
         // An Ataque com Escudo adds the shield's bonus for the Defesa it is rolled against — so it is
         // aimed at this attack's own DefenseType, whatever the caller built it with.
         DeliveredAttack redirected = againstOverriddenDefense(given);
-        DeliveredAttack attack = redirected.getAttackSource() instanceof ShieldAttack shield
+        DeliveredAttack aimed = redirected.getAttackSource() instanceof ShieldAttack shield
                 && shield.getTargetDefense() != redirected.getDefenseType()
                 ? redirected.toBuilder().attackSource(shield.against(redirected.getDefenseType())).build()
                 : redirected;
+        // An Arco or Besta fires a projectile or nothing (table ruling, 2026-10-12): the shot is refused unless the
+        // character carries — or, for a Besta, has loaded next — enough of the one named. A foe's stat block fires
+        // freely: it keeps no bag.
+        int projectilesFired = aimed.getProjectile() == null ? 0 : 1 + effectRepetitions(aimed);
+        if (aimed.getAttacker() instanceof org.aventyrs.core.sheet.CharacterSheet
+                && aimed.getAttackSource() instanceof org.aventyrs.core.item.Weapon weapon) {
+            ammunitionService.requireFirable(aimed.getAttacker(), weapon, aimed.getProjectile(),
+                    Math.max(1, projectilesFired));
+        }
+        // The fired projectile reaches the roll, where a Bodkin widens the Margem Crítica.
+        DeliveredAttack attack = aimed.getProjectile() != null && aimed.getAttackRoll() != null
+                ? aimed.toBuilder().attackRoll(aimed.getAttackRoll().withProjectile(aimed.getProjectile())).build()
+                : aimed;
         List<AttackTarget> additionalTargets = attack.getAdditionalTargets();
         if (attack.getAreaOfEffect() != null) {
             // An area attack names whoever stands in its footprint — no count to enforce — but the
@@ -238,6 +256,7 @@ public class AttackDelivery {
                     .build()));
             return result.attackResult(attackResult).build();
         }
+        result.firedProjectile(attack.getProjectile()).projectilesToConsume(projectilesFired);
 
         int margin = attackTotal - requiredTotal;
         // A Cego attacker's failed 1d6 misses whatever the total.
@@ -423,6 +442,25 @@ public class AttackDelivery {
         if (effectChainTriggered) {
             chains.addAll(attack.getEffectChains());
             chains.addAll(effectChainsGrantedByFeats(attack, criticalResult));
+            // A bound Pedra do Poder's Violento Corrente — Hematita do Vendaval's Rugido — with its host weapon.
+            org.aventyrs.core.item.PowerStone stone = boundStoneOf(attack);
+            if (stone != null) {
+                Effect stoneChain = stone.getStoneType().createViolentEffectChain(
+                        criticalResult != null && criticalResult.isCriticalSuccess());
+                if (stoneChain != null) {
+                    chains.add(stoneChain);
+                }
+            }
+            // The fired projectile's own Corrente — an Esférica's Disparo Esmagador, a Porta Fogo's Incendiar.
+            if (attack.getProjectile() != null) {
+                Effect projectileChain = attack.getProjectile().getHead().createEffectChain(attack.getDiceRoller());
+                if (projectileChain != null) {
+                    chains.add(projectileChain);
+                }
+            }
+            // The weapon's own Aprimoramentos' Correntes — Inquisição, Ignora Resistências, Corrente Atacante.
+            chains.addAll(org.aventyrs.core.item.WeaponEnhancements.effectChains(attack.getAttackSource(),
+                    attack.getAttacker(), attack.getDiceRoller()));
         }
         if (criticalEffectTriggered) {
             // Arte do Escudo Atacante: "seus Acertos Críticos recebem a Corrente de Efeitos – Rugido",
@@ -457,6 +495,15 @@ public class AttackDelivery {
         if (lifeSteal > 0) {
             stages.add(new org.aventyrs.core.effect.RouboDeVida(attack.getAttacker(), lifeSteal));
         }
+        // The weapon's Roubo de Mana and de Determinação (Benção Elduriana, Ladra do AEther), on every hit.
+        int manaSteal = org.aventyrs.core.item.WeaponEnhancements.manaSteal(attack.getAttackSource());
+        if (manaSteal > 0) {
+            stages.add(new org.aventyrs.core.effect.RouboDeMana(attack.getAttacker(), manaSteal));
+        }
+        int determinationSteal = org.aventyrs.core.item.WeaponEnhancements.determinationSteal(attack.getAttackSource());
+        if (determinationSteal > 0) {
+            stages.add(new org.aventyrs.core.effect.RouboDeDeterminacao(attack.getAttacker(), determinationSteal));
+        }
         stages.addAll(repeated(chains, repetitions));
         stages.addAll(repeated(criticals, repetitions));
 
@@ -467,7 +514,9 @@ public class AttackDelivery {
         DamageInteraction head = new DamageInteraction(damageService)
                 .fromSpell(SpellResistance.spellOf(attack.getAttackSource()))
                 .withSanctity(sanctityOf(attack, chains))
-                .withDiceRoller(attack.getDiceRoller());
+                .withDiceRoller(attack.getDiceRoller())
+                .bypassing(bypassedReductions(attack, chains))
+                .withAdditionalElement(org.aventyrs.core.item.WeaponEnhancements.additionalElement(attack.getAttackSource()));
         if (criticalResult != null && criticalResult.isCriticalSuccess()) {
             // Feridas Ardentes: the critical's Metade da Gnose heals only with a Descanso Verdadeiro
             // or Roubo de Vida.
@@ -521,9 +570,30 @@ public class AttackDelivery {
         total += attacker.getCharacter().getFeats().stream()
                 .mapToInt(feat -> feat.resolveTargetedLifeSteal(attacker.getCharacter(), attacker, defender))
                 .sum();
+        // The weapon's own Maldição: Solve-Vidas — "Roubo de Vida 2" plus its Favor's "+1" (core 0.1.6.9).
+        total += org.aventyrs.core.item.WeaponEnhancements.lifeSteal(attack.getAttackSource());
         // A Bispo's "Roubo de Vida 1 aos seus ataques e magias" (core 0.0.92).
         total += org.aventyrs.core.subordinate.SubordinateBenefit.LIFE_STEAL * org.aventyrs.core.subordinate.SubordinateBenefits.count(attacker, attack.getSceneContext(), org.aventyrs.core.subordinate.SubordinateBenefit.BISPO_LIFE_STEAL);
         return Math.max(0, total);
+    }
+
+    /**
+     * The mitigation stages this hit ignores (core 0.1.6.9): RD when the weapon carries Benção Vulcana, RE and RM too
+     * when a triggered Corrente is its Ignora Resistências — which names this hit's own resistances, so it is read here
+     * at the head rather than run after the damage.
+     */
+    private static java.util.Set<org.aventyrs.core.character.BypassedReduction> bypassedReductions(
+            final DeliveredAttack attack, final List<Effect> chains) {
+        java.util.Set<org.aventyrs.core.character.BypassedReduction> bypassed =
+                java.util.EnumSet.noneOf(org.aventyrs.core.character.BypassedReduction.class);
+        if (org.aventyrs.core.item.WeaponEnhancements.ignoresDamageReduction(attack.getAttackSource())) {
+            bypassed.add(org.aventyrs.core.character.BypassedReduction.RD);
+        }
+        if (chains.stream().anyMatch(org.aventyrs.core.effect.IgnoraResistencias.class::isInstance)) {
+            bypassed.add(org.aventyrs.core.character.BypassedReduction.RE);
+            bypassed.add(org.aventyrs.core.character.BypassedReduction.RM);
+        }
+        return bypassed;
     }
 
     /**
@@ -538,7 +608,7 @@ public class AttackDelivery {
         }
         if (attack.getAttackSource() instanceof org.aventyrs.core.item.Item weapon && weapon.getPowerStone() != null
                 && !weapon.isDestroyed() && weapon.getType() == org.aventyrs.core.item.ItemType.OFFENSIVE) {
-            return weapon.getPowerStone().getType().getOffensiveSanctity();
+            return weapon.getPowerStone().getStoneType().getOffensiveSanctity();
         }
         return null;
     }
@@ -604,10 +674,28 @@ public class AttackDelivery {
                                                                           final CriticalResult criticalResult,
                                                                           final boolean cataclysmicExplosion) {
         List<CriticalEffectType> additional = new ArrayList<>(attack.getAdditionalCriticalEffectTypes());
+        // "Projétil (17)": an Arco or Besta crits with the effect of the projectile it fired — the number is the
+        // weapon's, the effect the projectile's.
+        if (attack.getProjectile() != null && attack.getAttackSource() instanceof org.aventyrs.core.item.Weapon weapon
+                && weapon.getCriticalEffect() == null) {
+            additional.add(attack.getProjectile().getHead().getCriticalEffect());
+        }
+        // A bound Pedra do Poder's Violento Efeito Crítico — Citrino's Inflamar, Turmalina's Oferenda Maldita.
+        org.aventyrs.core.item.PowerStone stone = boundStoneOf(attack);
+        if (stone != null && stone.getStoneType().getViolentCriticalEffect() != null) {
+            additional.add(stone.getStoneType().getViolentCriticalEffect());
+        }
         if (cataclysmicExplosion) {
             additional.add(ExplosaoCataclismica.ADDITIONAL_CRITICAL_EFFECT);
         }
         return additional;
+    }
+
+    /** The Pedra do Poder bound to the weapon attack is made with, when that weapon is an intact Arma; else null. */
+    private static org.aventyrs.core.item.PowerStone boundStoneOf(final DeliveredAttack attack) {
+        return attack.getAttackSource() instanceof org.aventyrs.core.item.Item weapon && weapon.getPowerStone() != null
+                && !weapon.isDestroyed() && weapon.getType() == org.aventyrs.core.item.ItemType.OFFENSIVE
+                ? weapon.getPowerStone() : null;
     }
 
     /** Whether a triggered Corrente of this attack is an {@link ExplosaoCataclismica} — its own or a Talento's. */

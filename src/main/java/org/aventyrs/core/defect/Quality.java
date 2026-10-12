@@ -24,7 +24,31 @@ public enum Quality {
     CENTELHA_MAIOR("Centelha Maior", Defect.HERANCA_DE_GILGAMESH),
     DESTINADO_A_FORTUNA("Destinado a Fortuna", Defect.DESAPEGO_MATERIAL),
     ESCOLHIDO_DA_MAGIA("Escolhido da Magia", Defect.DESCONEXAO_COM_O_AETHER),
-    INTELECTO_SUPERIOR("Intelecto Superior", Defect.MEMORIA_FRACA),
+    INTELECTO_SUPERIOR("Intelecto Superior", Defect.MEMORIA_FRACA) {
+        /**
+         * Memória Eidética's Especialização — of a Perícia trained now, not yet held — and, at Maior, Dominar Padrões'
+         * Habilidade de Competência of any Perícia ("mesmo que não seja treinado nela"). Picked now, granted at the
+         * first / third session end ({@code QualidadeFeat#INTELECTO_SUPERIOR_MENOR}/{@code _MAIOR}).
+         */
+        @Override
+        public List<FeatChoice<?>> resolveChoices(final QualityClass qualityClass, final Character character,
+                                                  final List<Object> made) {
+            List<SkillTrait> specializations = Arrays.stream(SkillType.values())
+                    .filter(skill -> character == null || isTrained(character, skill))
+                    .flatMap(skill -> SkillTraitCatalog.traitsOf(skill, SkillTraitKind.SPECIALIZATION).stream())
+                    .filter(trait -> character == null || !Superacao.holds(character, trait))
+                    .toList();
+            FeatChoice<?> especializacao = FeatChoice.ofOne(SkillTrait.class, specializations);
+            if (qualityClass != QualityClass.MAIOR) {
+                return List.of(especializacao);
+            }
+            List<SkillTrait> competencies = Arrays.stream(SkillType.values())
+                    .flatMap(skill -> SkillTraitCatalog.traitsOf(skill, SkillTraitKind.COMPETENCY_ABILITY).stream())
+                    .filter(trait -> character == null || !Superacao.holds(character, trait))
+                    .toList();
+            return List.of(especializacao, FeatChoice.ofOne(SkillTrait.class, competencies));
+        }
+    },
     OPORTUNISTA_NATO("Oportunista Nato", Defect.RESTRICAO_MORAL),
     RADIANTE("Radiante", Defect.COMPORTAMENTO_EXCENTRICO),
     RESILIENCIA_HEROICA("Resiliência Heroica", Defect.FOBIA),
@@ -76,6 +100,12 @@ public enum Quality {
 
     private final String displayName;
     private final Defect opposes;
+
+    /** "Perícia treinada": at least one Graduação. */
+    private static boolean isTrained(final Character character, final SkillType skill) {
+        org.aventyrs.core.character.CharacterSkill held = character.getSkills().get(skill);
+        return held != null && held.getGraduation() != null && held.getGraduation().getGraduationValue() >= 1;
+    }
 
     Quality(final String displayName, final Defect opposes) {
         this.displayName = displayName;

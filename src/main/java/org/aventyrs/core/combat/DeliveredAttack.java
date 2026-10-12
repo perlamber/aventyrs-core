@@ -108,6 +108,15 @@ public class DeliveredAttack {
     private final AttackSource attackSource;
 
     /**
+     * The projectile this shot fires, when {@link #attackSource} is a weapon with an {@code AmmunitionKind} — the
+     * Flecha the player picked from the bag for an Arco, or the next Virote in a Besta's magazine. {@code null} for
+     * every attack that fires nothing. {@code AttackDelivery} refuses a missing, incompatible or unavailable one
+     * (table ruling, 2026-10-12: no projectile, no shot) and adds its Efeito Crítico, Margem and Corrente to the
+     * shot; spending it is {@code AmmunitionService#consume}, after the roll.
+     */
+    private final org.aventyrs.core.item.ProjectileItem projectile;
+
+    /**
      * The caller's word that the holder of a provoking Aura binding {@link #attacker} is not a valid
      * target right now (out of reach, hidden, …) — which this core can't judge — so this attack
      * may go elsewhere. {@code false} by default: a bound attacker's first attack each Rodada is
