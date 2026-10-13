@@ -28,19 +28,6 @@ import java.util.List;
  * source (like a Título ability's own PV comparison) would have added.
  */
 public interface DamageService {
-    /**
-     * The RD an ability grants when its own rules text doesn't spell out an explicit bonus
-     * (e.g. just "concede RD" with no number). Also reused as RA's own unspecified-bonus
-     * default (e.g. {@code InitiativeAdvantage#TORRE_EM_MOVIMENTO}'s "você recebe RA" with no
-     * number of its own) and as RM's ({@link #getTotalMagicReduction}) — RD, RA and RM are
-     * independent reductions, but {@code docs/rules/defesas-e-resistencias.txt} prices one
-     * instance of each at the same -2, and nothing in the rules text suggests a different
-     * unspecified-amount convention for one versus the others.
-     */
-    int DEFAULT_DAMAGE_REDUCTION = 2;
-
-    /** One instance of RDS — "Cada instância reduz … em -1"; what a numberless RDS clause grants. */
-    int DAMAGE_TAKEN_REDUCTION_INSTANCE = 1;
 
     /**
      * Total RD: summed from {@code attributeAbilities}, {@code skillCompetencyAbilities},

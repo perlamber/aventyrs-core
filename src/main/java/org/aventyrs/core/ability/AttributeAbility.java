@@ -507,7 +507,7 @@ public interface AttributeAbility {
     // client plays through a CharacterSheet is covered as much as a MonsterSheet. Each defaults to
     // "nothing", so no existing Habilidade de Atributo changes.
 
-    /** Instances of Resistência Elemental (RE) against element — each worth {@code -2}. */
+    /** Instances of Resistência Elemental (RE) against element — each worth {@link org.aventyrs.core.character.Resistance#RE}. */
     default int resolveElementalResistanceInstances(final org.aventyrs.core.magic.ElementalType element) {
         return 0;
     }

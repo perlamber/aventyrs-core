@@ -18,8 +18,11 @@ import java.util.Optional;
  * the roll's margin directly; {@link #hits} stays for a caller holding a bare challenge number, and has none yet.
  */
 public interface EffectChainService {
-    int BASE_REQUIRED_MARGIN = 5;
-    int RESOLUTO_REQUIRED_MARGIN = 7;
+    /** Resistência à Corrente de Efeitos' "valor padrão é 5" — {@link org.aventyrs.core.character.Resistance#EFFECT_CHAIN_BASE}. */
+    int BASE_REQUIRED_MARGIN = org.aventyrs.core.character.Resistance.EFFECT_CHAIN_BASE;
+
+    /** Resoluto's enumerated +2 on top of the base. */
+    int RESOLUTO_REQUIRED_MARGIN = BASE_REQUIRED_MARGIN + 2;
 
     /**
      * {@link #RESOLUTO_REQUIRED_MARGIN} when {@code target} holds {@link

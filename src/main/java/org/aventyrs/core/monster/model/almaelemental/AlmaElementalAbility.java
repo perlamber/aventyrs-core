@@ -1,5 +1,6 @@
 package org.aventyrs.core.monster.model.almaelemental;
 
+import org.aventyrs.core.character.Resistance;
 import lombok.Getter;
 import org.aventyrs.core.ability.ActiveAbility;
 import org.aventyrs.core.character.AttributeDomain;
@@ -86,7 +87,7 @@ public enum AlmaElementalAbility implements MonstrousAbility {
 
         @Override
         public int resolveCriticalResistance(final AbilityContext context) {
-            return MonstrousTraits.CRITICAL_RESISTANCE_INSTANCE;
+            return Resistance.RC.instance();
         }
 
         @Override

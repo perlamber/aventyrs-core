@@ -54,17 +54,6 @@ import java.util.UUID;
  */
 public interface CombatantSheet extends Interactable<CombatantSheet> {
 
-    /**
-     * What <b>one instance</b> of Resistência a Críticos is worth — a -2 to the Margem Crítica
-     * Menor of whoever attacks this combatant, per {@code docs/rules/defesas-e-resistencias.txt}.
-     * Rules text reading "você recebe Resistência a Críticos" with no figure grants exactly one,
-     * the same convention {@code DamageService#DEFAULT_DAMAGE_REDUCTION} carries for a numberless
-     * RD clause. Lives here, on the interface that totals RC ({@link
-     * #getTotalCriticalResistance}), rather than on any one grantor — {@code Feat}, {@code Race}
-     * and a {@code Blessing}-granting Talento all state the same unit.
-     */
-    int CRITICAL_RESISTANCE_INSTANCE = 2;
-
     /** A stable identity for this combatant — what {@code Scene} keys its participants by. */
     UUID getId();
 
@@ -863,7 +852,7 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
 
     /**
      * This combatant's total Resistência a Críticos — every source, in {@link
-     * #CRITICAL_RESISTANCE_INSTANCE}-sized units: the standing grants from its Raça ({@code
+     * Resistance#RC}-sized units: the standing grants from its Raça ({@code
      * Race#getCriticalResistance()}) and its held Talentos ({@code
      * Feat#resolveCriticalResistance}), plus any round-scoped {@link
      * ModifierType#CRITICAL_RESISTANCE} {@code TemporaryBonus} ({@code AnaoFeat#VIGOR_DO_INVERNO}

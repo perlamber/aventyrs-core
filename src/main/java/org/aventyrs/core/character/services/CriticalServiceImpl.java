@@ -1,5 +1,6 @@
 package org.aventyrs.core.character.services;
 
+import org.aventyrs.core.character.Resistance;
 import java.util.List;
 
 import org.aventyrs.core.character.Character;
@@ -74,7 +75,7 @@ public class CriticalServiceImpl implements CriticalService {
         if (target == null) {
             return 0;
         }
-        return target.getTotalCriticalResistance(sceneContext) / CombatantSheet.CRITICAL_RESISTANCE_INSTANCE
+        return target.getTotalCriticalResistance(sceneContext) / Resistance.RC.instance()
                 + absoluteResistanceStep(target, sceneContext);
     }
 

@@ -1,5 +1,6 @@
 package org.aventyrs.core.race;
 
+import org.aventyrs.core.character.Resistance;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.SizeCategory;
@@ -124,7 +125,7 @@ public class Troll implements Race {
      */
     @Override
     public int getCriticalResistance() {
-        return CombatantSheet.CRITICAL_RESISTANCE_INSTANCE;
+        return Resistance.RC.instance();
     }
 
     /**

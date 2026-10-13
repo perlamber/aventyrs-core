@@ -1,5 +1,6 @@
 package org.aventyrs.core.feat;
 
+import org.aventyrs.core.character.Resistance;
 import java.util.Optional;
 import java.math.BigDecimal;
 import org.aventyrs.core.magic.Spell;
@@ -315,12 +316,12 @@ public enum ElementalFeat implements Feat {
         /** "Você recebe RDS" with no figure — one instance. */
         @Override
         public int resolveDamageTakenReduction(final Character character) {
-            return DamageService.DAMAGE_TAKEN_REDUCTION_INSTANCE;
+            return Resistance.RDS.instance();
         }
 
         @Override
         public int resolveCriticalResistance(final Character character, final SceneContext sceneContext) {
-            return CombatantSheet.CRITICAL_RESISTANCE_INSTANCE;
+            return Resistance.RC.instance();
         }
     };
 

@@ -1,5 +1,6 @@
 package org.aventyrs.core.feat;
 
+import org.aventyrs.core.character.Resistance;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CriticalDamage;
@@ -788,7 +789,7 @@ public enum DuelistaFeat implements Feat {
      * Pré-requisito and is modelled as such.
      */
     // Both halves are real. Resistência à Críticos: one instance, unconditional (see
-    // CombatantSheet#CRITICAL_RESISTANCE_INSTANCE — the clause states no figure). The
+    // Resistance#RC — the clause states no figure). The
     // retaliation: Feat#resolveRetaliation, reported on a landed melee hit and dealt by the caller.
     // ⚠️ "danos físicos" is read as any landed melee hit — nothing types a melee attack as
     // non-physical today.
@@ -805,7 +806,7 @@ public enum DuelistaFeat implements Feat {
                     .build()) {
         @Override
         public int resolveCriticalResistance(final Character character, final SceneContext sceneContext) {
-            return CombatantSheet.CRITICAL_RESISTANCE_INSTANCE;
+            return Resistance.RC.instance();
         }
 
         @Override

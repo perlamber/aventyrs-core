@@ -1,5 +1,6 @@
 package org.aventyrs.core.title.bruxo;
 
+import org.aventyrs.core.character.Resistance;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CriticalDamage;
@@ -249,7 +250,7 @@ class BruxoInvocationTest {
         int beside = damage.calculateFinalDamage(ally, adjacent, DamageType.MAGICO, null, 10, false);
         int away = damage.calculateFinalDamage(ally, apart, DamageType.MAGICO, null, 10, false);
 
-        assertEquals(away - DamageService.DEFAULT_DAMAGE_REDUCTION, beside);
+        assertEquals(away - Resistance.RM.instance(), beside);
     }
 
     @Test

@@ -1,5 +1,6 @@
 package org.aventyrs.core.item;
 
+import org.aventyrs.core.character.Resistance;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -148,14 +149,14 @@ class DefensiveImprovementTest {
     }
 
     @Test
-    void bencaoElementalGrantsTwoDamageReductionOnlyAgainstMatchingElementalDamage() {
+    void bencaoElementalGrantsOneReInstanceOnlyAgainstItsElement() {
         AbstractItem blessedItem = defensiveItem(ItemCategory.ARMOR,
                 ItemImprovement.bencaoElemental(ElementalType.GELO));
         CharacterSheet sheet = CharacterSheet.of(characterWith(blessedItem), new Player());
 
-        assertEquals(8, damageService.calculateFinalDamage(sheet, null,
+        assertEquals(10 - Resistance.RE.instance(), damageService.calculateFinalDamage(sheet, null,
                 new DamageDescriptor(DamageType.MAGICO, ElementalType.GELO), null, 10, false));
-        assertEquals(8, damageService.calculateFinalDamage(sheet, null,
+        assertEquals(10 - Resistance.RE.instance(), damageService.calculateFinalDamage(sheet, null,
                 new DamageDescriptor(DamageType.ELEMENTAL, ElementalType.GELO), null, 10, false));
         assertEquals(10, damageService.calculateFinalDamage(sheet, null,
                 new DamageDescriptor(DamageType.MAGICO, ElementalType.FOGO), null, 10, false));

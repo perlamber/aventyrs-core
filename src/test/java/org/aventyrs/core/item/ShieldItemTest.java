@@ -72,7 +72,7 @@ class ShieldItemTest {
         Character character = characterWithStrength(3);
 
         assertEquals(0, ShieldItem.ESCUDO_MEDIO.resolveFavorBonus(ModifierType.DEFESAS, character));
-        assertEquals(0, ShieldItem.ESCUDO_MEDIO.resolveFavorBonus(ModifierType.DAMAGE_REDUCTION, character));
+        assertEquals(0, ShieldItem.ESCUDO_MEDIO.resolveFavorBonus(ModifierType.DAMAGE_TAKEN_REDUCTION, character));
     }
 
     @Test
@@ -91,11 +91,11 @@ class ShieldItemTest {
     void escudoMedioDamageReductionAppliesOnlyWhileNoOffensiveActionWasTakenThisRound() {
         CharacterSheet sheet = sheetWieldingWithStrength(ShieldItem.ESCUDO_MEDIO, 3);
 
-        assertEquals(1, damageService.getTotalDamageReduction(sheet, DamageType.FISICO, sheet));
+        assertEquals(1, damageService.getTotalDamageTakenReduction(sheet, null));
 
         sheet.recordAction(attackAction());
 
-        assertEquals(0, damageService.getTotalDamageReduction(sheet, DamageType.FISICO, sheet));
+        assertEquals(0, damageService.getTotalDamageTakenReduction(sheet, null));
     }
 
     @Test

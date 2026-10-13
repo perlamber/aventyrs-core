@@ -1,5 +1,6 @@
 package org.aventyrs.core.item;
 
+import org.aventyrs.core.character.Resistance;
 import java.util.List;
 import java.util.Map;
 
@@ -85,10 +86,11 @@ class DefensiveMasterpieceTest {
         AbstractItem equilibrada = defensiveItem(ItemMasterpiece.of(DefensiveMasterpiece.EQUILIBRADA));
         AbstractItem adamantina = defensiveItem(ItemMasterpiece.of(DefensiveMasterpiece.ADAMANTINA));
 
-        assertEquals(0, damageService.getTotalDamageReduction(characterWith(Map.of(AttributeDomain.STRENGTH, 3), equilibrada)));
-        assertEquals(1, damageService.getTotalDamageReduction(characterWith(
+        // "Danos sofridos reduzidos em -1" — RDS (table ruling, 2026-10-13).
+        assertEquals(0, damageService.getTotalDamageTakenReduction(characterWith(Map.of(AttributeDomain.STRENGTH, 3), equilibrada)));
+        assertEquals(Resistance.RDS.instance(), damageService.getTotalDamageTakenReduction(characterWith(
                 Map.of(AttributeDomain.STRENGTH, 3, AttributeDomain.GNOSE, 3), equilibrada)));
-        assertEquals(DamageService.DEFAULT_DAMAGE_REDUCTION, damageService.getTotalDamageReduction(
+        assertEquals(Resistance.RD.instance(), damageService.getTotalDamageReduction(
                 characterWith(Map.of(AttributeDomain.VIGOR, 3), adamantina)));
     }
 

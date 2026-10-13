@@ -1,5 +1,6 @@
 package org.aventyrs.core.item;
 
+import org.aventyrs.core.character.Resistance;
 import java.util.List;
 import java.util.Objects;
 
@@ -37,7 +38,7 @@ public final class DefensiveEnhancements {
     /** Rigidez Refletora: "Armas de atacantes corpo-a-corpo sofrem 2 pontos de danos". */
     static final int REFLECTIVE_WEAPON_DAMAGE = 2;
     /** Benção Vulcana's and Benção Elduriana's "Danos … sofridos reduzidos em -1". */
-    static final int TYPED_DAMAGE_REDUCTION = 1;
+    static final int TYPED_DAMAGE_REDUCTION = Resistance.RDS.instances(1);
     /** Benção Elduriana: "Duração de Encantamentos e Maldições hostis reduzidas em -1 Rodada". */
     static final int HOSTILE_DURATION_REDUCTION = 1;
     /** Ladra do AEther: "você recupera 1PM e 1PD". */

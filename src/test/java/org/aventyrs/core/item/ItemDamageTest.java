@@ -134,7 +134,7 @@ class ItemDamageTest {
 
         assertEquals(5, defenseService.getTotalDefense(character, DefenseType.PHYSICAL));
         assertEquals(2, defenseService.getTotalDefense(character, DefenseType.MAGIC));
-        assertEquals(2, damageService.getTotalDamageReduction(character));
+        assertEquals(2, damageService.getTotalDamageTakenReduction(character));
         assertTrue(armor.grantsFavorTo(character));
         assertEquals(3, new FurtividadeInteraction().applyTo(sheet).getSkillRollBonus());
 
@@ -142,7 +142,7 @@ class ItemDamageTest {
 
         assertEquals(0, defenseService.getTotalDefense(character, DefenseType.PHYSICAL));
         assertEquals(0, defenseService.getTotalDefense(character, DefenseType.MAGIC));
-        assertEquals(0, damageService.getTotalDamageReduction(character));
+        assertEquals(0, damageService.getTotalDamageTakenReduction(character));
         assertFalse(armor.grantsFavorTo(character));
         assertTrue(armor.resolveFavorBonuses(character).isEmpty());
         assertEquals(1, new FurtividadeInteraction().applyTo(sheet).getSkillRollBonus());

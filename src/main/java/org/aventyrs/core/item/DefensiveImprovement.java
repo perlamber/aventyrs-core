@@ -1,5 +1,6 @@
 package org.aventyrs.core.item;
 
+import org.aventyrs.core.character.Resistance;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.DamageDescriptor;
 import org.aventyrs.core.character.DefenseType;
@@ -126,8 +127,9 @@ public enum DefensiveImprovement implements Improvement {
         @Override
         public int resolveDamageReduction(final DamageDescriptor damageDescriptor, final Character character,
                                           final ElementalType selectedElementalType) {
-            // The element names the hit whatever its nature (Elemental or Mágico Elemental) — matchesElement suffices.
-            return matchesElement(selectedElementalType, damageDescriptor) ? 2 : 0;
+            // "Recebe RE" — one instance. The element names the hit whatever its nature (Elemental or Mágico
+            // Elemental) — matchesElement suffices.
+            return matchesElement(selectedElementalType, damageDescriptor) ? Resistance.RE.instance() : 0;
         }
     },
     /**

@@ -1,5 +1,6 @@
 package org.aventyrs.core.effect;
 
+import org.aventyrs.core.character.Resistance;
 import org.aventyrs.core.action.ActionPointsService;
 import org.aventyrs.core.action.ActionPointsServiceImpl;
 import org.aventyrs.core.character.AttributeDomain;
@@ -294,7 +295,7 @@ class CriticalEffectsTest {
     void fortalecerGrantsRdAndRm() {
         effect(CriticalEffectType.FORTALECER, MENOR).applyTo(target);
 
-        assertEquals(DamageService.DEFAULT_DAMAGE_REDUCTION, target.getTemporaryBonus(ModifierType.DAMAGE_REDUCTION));
+        assertEquals(Resistance.RD.instance(), target.getTemporaryBonus(ModifierType.DAMAGE_REDUCTION));
         assertEquals(Fortalecer.MAGIC_REDUCTION, target.getTemporaryBonus(ModifierType.MAGIC_REDUCTION));
     }
 

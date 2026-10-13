@@ -1,5 +1,6 @@
 package org.aventyrs.core.title.giganteenfurecido;
 
+import org.aventyrs.core.character.Resistance;
 import org.aventyrs.core.character.DamageDescriptor;
 import org.aventyrs.core.character.DamageType;
 import org.aventyrs.core.character.EgoDomain;
@@ -196,7 +197,7 @@ class TitaEnlouquecidoInteractionsTest {
 
         assertEquals(before - 1, sheet.getTemporaryEgoPoints(EgoDomain.AUTOCONTROLE));
         var damage = new DamageServiceImpl();
-        assertEquals(8, damage.calculateFinalDamage(sheet, null,
+        assertEquals(10 - Resistance.RE.instance(), damage.calculateFinalDamage(sheet, null,
                 new DamageDescriptor(DamageType.MAGICO, ElementalType.FOGO), null, 10, false));
         assertEquals(10, damage.calculateFinalDamage(sheet, null,
                 new DamageDescriptor(DamageType.MAGICO, ElementalType.VENTO), null, 10, false));

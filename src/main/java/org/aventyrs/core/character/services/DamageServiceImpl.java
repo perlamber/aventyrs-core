@@ -1,5 +1,6 @@
 package org.aventyrs.core.character.services;
 
+import org.aventyrs.core.character.Resistance;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.magic.Spell;
 import org.aventyrs.core.character.CharacterSkill;
@@ -26,9 +27,6 @@ import java.util.List;
 import java.util.Map;
 
 public class DamageServiceImpl implements DamageService {
-
-    /** RE: "Cada instância reduz Danos Elementais e Mágicos Elementais em -2". */
-    static final int ELEMENTAL_RESISTANCE_PER_INSTANCE = 2;
 
     private final ModifierResolver modifierResolver;
     private final HitPointsService hitPointsService;
@@ -141,7 +139,7 @@ public class DamageServiceImpl implements DamageService {
         if (damageDescriptor == null || damageDescriptor.elementalType() == null) {
             return 0;
         }
-        return ELEMENTAL_RESISTANCE_PER_INSTANCE * target.getElementalResistanceInstances(damageDescriptor.elementalType())
+        return Resistance.RE.instance() * target.getElementalResistanceInstances(damageDescriptor.elementalType())
                 + sumEquipmentDamageReduction(target.getCharacter(), damageDescriptor);
     }
 
@@ -151,7 +149,7 @@ public class DamageServiceImpl implements DamageService {
         for (Feat feat : character.getFeats()) {
             total += feat.resolveDamageTakenReduction(character, null);
         }
-        total += sumEquipmentDamageTakenReduction(character);
+        total += sumEquipmentDamageTakenReduction(character, null);
         return Math.max(0, total);
     }
 
@@ -168,24 +166,33 @@ public class DamageServiceImpl implements DamageService {
         total += sumTitleAbilityDamageReduction(character, target, sceneContext);
         total += sumAllyGrantedDamageReduction(target, sceneContext);
         total += target.getTemporaryBonus(ModifierType.DAMAGE_TAKEN_REDUCTION);
-        total += sumEquipmentDamageTakenReduction(character);
+        total += sumEquipmentDamageTakenReduction(character, target);
         return Math.max(0, total);
     }
 
-    /** RDS the worn Equipamento grants — a bound Adamante Bruto's Protetivo "RD e RDS" (core 0.1.6.7). */
-    private static int sumEquipmentDamageTakenReduction(final Character character) {
-        return character.getEquipment().stream()
-                .mapToInt(item -> item.resolveEnhancementBonus(ModifierType.DAMAGE_TAKEN_REDUCTION, null, character))
-                .sum();
+    /**
+     * RDS the worn Equipamento grants: a bound Adamante Bruto's Protetivo "RD e RDS" (core 0.1.6.7), and every item
+     * Favor or Obra-Prima whose text says only "Dano … sofrido é reduzido em -N" — N RDS instances (table ruling,
+     * 2026-10-13). holder may be {@code null}; an Escudo's Favor gated on "se não realizou ação ofensiva nesta Rodada"
+     * then reads as not met, the convention the RD scan keeps.
+     */
+    private static int sumEquipmentDamageTakenReduction(final Character character, final CombatantSheet holder) {
+        int total = 0;
+        for (Item item : character.getEquipment()) {
+            total += holder == null
+                    ? item.resolveFavorBonus(ModifierType.DAMAGE_TAKEN_REDUCTION, character)
+                    : item.resolveFavorBonus(ModifierType.DAMAGE_TAKEN_REDUCTION, holder);
+            total += item.resolveEnhancementBonus(ModifierType.DAMAGE_TAKEN_REDUCTION, null, character);
+        }
+        return total;
     }
 
     /**
      * The fourth RD source, alongside the three {@link #sumAcrossSources} scans: every equipped
      * {@link Item}'s {@code ItemFavor} and Masterpiece, for whatever {@code DAMAGE_REDUCTION}
-     * they currently grant this character — 0 when the relevant requirements are not met.
-     * This is what makes {@code org.aventyrs.core.item.ArmorItem}'s RD Favores (e.g. {@code
-     * ARMADURA_COMPLETA}'s "Dano de Corte sofrido é reduzido em -2", modeled as plain RD since
-     * no damage-type-scoped mitigation exists) real rather than data with no consumer.
+     * they currently grant this character — 0 when the relevant requirements are not met. Only
+     * an item whose text names RD reaches it (a bound Pedra's "RD", Adamantina's "Concede RD"): an
+     * unnamed "Dano … sofrido é reduzido em -N" is RDS instead ({@link #sumEquipmentDamageTakenReduction}).
      *
      * <p>Deliberately has no {@code ABSOLUTE_DAMAGE_REDUCTION} counterpart: no cataloged item
      * grants RA, so a symmetric RA scan would be built for a hypothetical consumer rather than a
@@ -292,7 +299,7 @@ public class DamageServiceImpl implements DamageService {
         total += sumTitleAbilityAbsoluteDamageReduction(character, target, sceneContext);
         total += sumAllyGrantedAbsoluteDamageReduction(target, sceneContext);
         // A Torre's "RA" (core 0.0.92) — one instance per Torre reaching the target.
-        total += DamageService.DEFAULT_DAMAGE_REDUCTION * org.aventyrs.core.subordinate.SubordinateBenefits.count(target, sceneContext, org.aventyrs.core.subordinate.SubordinateBenefit.TORRE_RA);
+        total += Resistance.RA.instance() * org.aventyrs.core.subordinate.SubordinateBenefits.count(target, sceneContext, org.aventyrs.core.subordinate.SubordinateBenefit.TORRE_RA);
         // A *timed* RA grant — an activated ability handing its holder RA for N Rodadas
         // (AbencoadoPelaLuzAbility#GLORIA_RELAMPEJANTE_DE_TESLA). Deliberately a second
         // consumption branch beside the continuously-scanned passives above: every other source
@@ -417,9 +424,14 @@ public class DamageServiceImpl implements DamageService {
         final DamageDescriptor addedElement = additionalElement == null ? null
                 : new DamageDescriptor(damageType == DamageType.MAGICO ? DamageType.MAGICO : DamageType.ELEMENTAL,
                         additionalElement);
-        // Danos de Queda / Asfixia (table ruling, 2026-10-12): only RA reduces them until their rules arrive.
+        // Danos de Queda / Asfixia are Dano Primordial that nothing reduces, not even a Meio-Dano (acoes-de-combate.txt);
+        // RA reaches every hit but a Primordial one (table ruling, 2026-10-13).
         final DamageType hitNature = damageDescriptor != null ? damageDescriptor.damageType() : damageType;
-        final boolean onlyAbsoluteReduction = hitNature != null && hitNature.isReducedOnlyByAbsoluteReduction();
+        final boolean unmitigated = hitNature != null && hitNature.isUnmitigated();
+        final boolean primordial = hitNature != null && hitNature.isPrimordial();
+        // RDS: "não aplicável à danos Primordiais, Profanos, Sagrados e Umbrais".
+        final boolean takesDamageTakenReduction = DamageType.takesOrdinaryMitigation(hitNature)
+                && (damageDescriptor == null || damageDescriptor.sanctity() == null);
         if (target != null && addedElement != null && target.isImmuneToDamage(addedElement.damageType(), addedElement)) {
             return 0;
         }
@@ -439,7 +451,7 @@ public class DamageServiceImpl implements DamageService {
                 return 0;
             }
         }
-        final boolean halfDamage = !onlyAbsoluteReduction && (attackHalvesDamage || immunityPierced
+        final boolean halfDamage = !unmitigated && (attackHalvesDamage || immunityPierced
                 // Devorado: "Danos causados ao interior da criatura são reduzidos à Metade".
                 || (target != null && source != null && source.getDevourer().map(devourer -> devourer == target).orElse(false))
                 // A Meio-Dano limited to a DamageScope (an element, physical or magic damage only),
@@ -460,15 +472,15 @@ public class DamageServiceImpl implements DamageService {
         // Bastião de Vidro: "Você não é beneficiado por … Redução de Danos Sofridos … RA, RD e RM" —
         // none of the four is applied (they become Defesa instead, in DefenseService).
         boolean forgoesMitigation = character.getFeats().stream().anyMatch(Feat::forgoesDamageMitigation);
-        int reduction = forgoesMitigation ? 0 : target != null
+        int reduction = forgoesMitigation || primordial ? 0 : target != null
                 ? getTotalAbsoluteDamageReduction(target, sceneContext)
                 : computeTotalAbsoluteDamageReduction(character, null, sceneContext);
         if (forgoesMitigation && !ignoreDamageReduction && !bypassed.contains(BypassedReduction.RE)) {
             reduction += target != null ? elementalResistance(target, damageDescriptor)
                     + elementalResistance(target, addedElement) : 0;
-        } else if (!ignoreDamageReduction && !onlyAbsoluteReduction) {
+        } else if (!ignoreDamageReduction && !unmitigated) {
             // Each reduction reaches only the damage its rules text names (defesas-e-resistencias):
-            // RD plain physical, RDS anything but Primordial (and Queda/Asfixia), RM any Mágico — a Mágico
+            // RD plain physical, RDS anything but Primordial/Profano/Sagrado/Umbral, RM any Mágico — a Mágico
             // Elemental takes RM and RE both (table ruling, 2026-10-12) — RE whatever carries the element. An untyped
             // hit ("caller didn't say") is treated as plain physical, as it always was. All four
             // sit under the same ignoreDamageReduction flag: the rules name RA as the reduction
@@ -479,7 +491,7 @@ public class DamageServiceImpl implements DamageService {
                 if (plainPhysical && !bypassed.contains(BypassedReduction.RD)) {
                     reduction += Math.max(0, damageReductionOnly(target, damageType, source));
                 }
-                if (DamageType.takesOrdinaryMitigation(effectiveType)) {
+                if (takesDamageTakenReduction) {
                     reduction += getTotalDamageTakenReduction(target, sceneContext);
                     // An RDS against this attacker only (Bênção de Surt'Eldur's Fundamentalista).
                     if (source != null) {
@@ -522,9 +534,8 @@ public class DamageServiceImpl implements DamageService {
         // sheet.PeleDePedra. It is read last, so "o primeiro ataque que lhe causaria Danos" is
         // judged against what the ordinary mitigation already left — an attack that RD/RA had
         // fully turned aside never spends the negation.
-        // "RDS 5" — an RDS, so it never reaches Primordial damage.
-        DamageType hitType = damageDescriptor != null ? damageDescriptor.damageType() : damageType;
-        PeleDePedra stone = target == null || !DamageType.takesOrdinaryMitigation(hitType) || forgoesMitigation
+        // "RDS 5" — an RDS, so it never reaches Primordial, Profano, Sagrado or Umbral damage.
+        PeleDePedra stone = target == null || !takesDamageTakenReduction || forgoesMitigation
                 ? null : target.getPeleDePedra().orElse(null);
         if (stone != null && !ignoreDamageReduction) {
             reduction += stone.getEffectiveDamageReduction();

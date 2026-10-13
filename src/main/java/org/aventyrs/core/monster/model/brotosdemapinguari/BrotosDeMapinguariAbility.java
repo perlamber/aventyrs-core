@@ -1,5 +1,6 @@
 package org.aventyrs.core.monster.model.brotosdemapinguari;
 
+import org.aventyrs.core.character.Resistance;
 import lombok.Getter;
 import org.aventyrs.core.ability.ActiveAbility;
 import org.aventyrs.core.character.AttributeDomain;
@@ -192,7 +193,7 @@ public enum BrotosDeMapinguariAbility implements MonstrousAbility {
             return switch (type) {
                 case SIZE_CATEGORY -> 1;
                 case DEFESAS -> 3;
-                case DAMAGE_TAKEN_REDUCTION -> MonstrousTraits.RDS_INSTANCE;
+                case DAMAGE_TAKEN_REDUCTION -> Resistance.RDS.instance();
                 default -> 0;
             };
         }
@@ -239,7 +240,7 @@ public enum BrotosDeMapinguariAbility implements MonstrousAbility {
                     .durationInRounds(ROOTED_DURATION)
                     .cooldownRounds(2)
                     .effect(() -> RecurringDice.healing(Dice.of(2), ROOTED_DURATION, "Raízes Longas"))
-                    .effect(bonus(ModifierType.DAMAGE_REDUCTION, MonstrousTraits.REDUCTION_INSTANCE, ROOTED_DURATION, "Raízes Longas"))
+                    .effect(bonus(ModifierType.DAMAGE_REDUCTION, Resistance.RD.instance(), ROOTED_DURATION, "Raízes Longas"))
                     .effect(() -> new DamageScopeEffect(DamageScopeEffect.Kind.HALVES, DamageScope.PHYSICAL,
                             ROOTED_DURATION, "Raízes Longas"))
                     .build());
@@ -266,7 +267,7 @@ public enum BrotosDeMapinguariAbility implements MonstrousAbility {
         @Override
         public int resolveModifier(final ModifierType type, final AbilityContext context) {
             if (type == ModifierType.MAGIC_REDUCTION) {
-                return MonstrousTraits.REDUCTION_INSTANCE;
+                return Resistance.RM.instance();
             }
             if (type == ModifierType.DOMINIO_DO_MANA_ROLL_BONUS) {
                 return context.isAtLeast(ABOMINACAO) ? 5 : context.isAtLeast(APEX) ? 2 : 0;
@@ -423,7 +424,7 @@ public enum BrotosDeMapinguariAbility implements MonstrousAbility {
 
     @Override
     public int resolveCriticalResistance(final AbilityContext context) {
-        return grantsAnatomy() && context.ownsSharedTraits() ? MonstrousTraits.CRITICAL_RESISTANCE_INSTANCE : 0;
+        return grantsAnatomy() && context.ownsSharedTraits() ? Resistance.RC.instance() : 0;
     }
 
     @Override

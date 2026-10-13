@@ -1,5 +1,6 @@
 package org.aventyrs.core.feat;
 
+import org.aventyrs.core.character.Resistance;
 import lombok.Getter;
 import org.aventyrs.core.background.AcquiredBackground;
 import org.aventyrs.core.background.CareerBackground;
@@ -463,7 +464,7 @@ public enum AntecedenteFeat implements Feat {
             "Redução de Danos Sofridos 1 para resistir ao primeiro ataque de cada Cena de Combate.") {
         @Override
         public int resolveDamageTakenReduction(final Character character, final CombatantSheet holder) {
-            return holder != null && holder.getHitsReceivedThisCena() == 0 ? 1 : 0;
+            return holder != null && holder.getHitsReceivedThisCena() == 0 ? Resistance.RDS.instances(1) : 0;
         }
     },
 

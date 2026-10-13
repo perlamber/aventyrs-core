@@ -1,5 +1,6 @@
 package org.aventyrs.core.monster.model.aspectohumanoide;
 
+import org.aventyrs.core.character.Resistance;
 import lombok.Getter;
 import org.aventyrs.core.ability.ActiveAbility;
 import org.aventyrs.core.character.AttributeDomain;
@@ -323,9 +324,9 @@ public enum AspectoHumanoideAbility implements MonstrousAbility {
                 builder.effect(openEnded(domain.getBonusModifierType(), 2));
             }
             builder.effect(openEnded(ModifierType.DOMINIO_DO_MANA_ROLL_BONUS, 2))
-                    .effect(openEnded(ModifierType.DAMAGE_REDUCTION, MonstrousTraits.REDUCTION_INSTANCE))
-                    .effect(openEnded(ModifierType.MAGIC_REDUCTION, MonstrousTraits.REDUCTION_INSTANCE))
-                    .effect(openEnded(ModifierType.CRITICAL_RESISTANCE, MonstrousTraits.CRITICAL_RESISTANCE_INSTANCE))
+                    .effect(openEnded(ModifierType.DAMAGE_REDUCTION, Resistance.RD.instance()))
+                    .effect(openEnded(ModifierType.MAGIC_REDUCTION, Resistance.RM.instance()))
+                    .effect(openEnded(ModifierType.CRITICAL_RESISTANCE, Resistance.RC.instance()))
                     .effect(openEnded(ModifierType.LESSER_CRITICAL_MARGIN, 2));
             if (context.isAtLeast(ABOMINACAO)) {
                 Set<SkillType> skills = MonstrousTraits.attackAndDefenseSkills();

@@ -1,5 +1,7 @@
 package org.aventyrs.core.character.services;
 
+import org.aventyrs.core.modifier.ModifierType;
+import org.aventyrs.core.character.Resistance;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.CharacterAttributes;
@@ -115,7 +117,29 @@ class DamageTypeScopeTest {
     /** "RD … reduz o Dano Físico não-PRIMORDIAL e não-ELEMENTAL" — no RD on a magic hit any more. */
     @Test
     void aMagicHitTakesRdsAndRmButNotRd() {
-        assertEquals(10 - 1 - 2, hit(sheet(null, EVERY_REDUCTION), new DamageDescriptor(DamageType.MAGICO, null, org.aventyrs.core.character.DamageSanctity.UMBRAL)));
+        assertEquals(10 - 1 - 2, hit(sheet(null, EVERY_REDUCTION), new DamageDescriptor(DamageType.MAGICO, ElementalType.AGUA)));
+    }
+
+    /** RDS: "não aplicável à danos Primordiais, Profanos, Sagrados e Umbrais" (V19 20261012). */
+    @Test
+    void aSanctifiedHitTakesNoRds() {
+        CharacterSheet target = sheet(null, EVERY_REDUCTION);
+
+        for (org.aventyrs.core.character.DamageSanctity sanctity : org.aventyrs.core.character.DamageSanctity.values()) {
+            assertEquals(10 - 2, hit(target, new DamageDescriptor(DamageType.MAGICO, null, sanctity)), sanctity.name());
+            assertEquals(10 - 3, hit(target, new DamageDescriptor(DamageType.FISICO, null, sanctity)), sanctity.name());
+        }
+    }
+
+    /** RA "reduz os Danos Físicos, Mágicos e Elementais" — never a Primordial one, Queda and Asfixia included. */
+    @Test
+    void raNeverReachesPrimordialDamage() {
+        CharacterSheet target = sheet(null, EVERY_REDUCTION);
+        target.grantTemporaryBonus(ModifierType.ABSOLUTE_DAMAGE_REDUCTION, Resistance.RA.instance(), 2);
+
+        assertEquals(10, hit(target, new DamageDescriptor(DamageType.PRIMORDIAL)));
+        assertEquals(10, hit(target, new DamageDescriptor(DamageType.QUEDA)));
+        assertEquals(10 - 3 - 1 - Resistance.RA.instance(), hit(target, new DamageDescriptor(DamageType.FISICO)));
     }
 
     /** Elemental is RE-only; a Mágico Elemental takes RM and RE both (table rulings, 2026-10-12). */
@@ -123,13 +147,13 @@ class DamageTypeScopeTest {
     void anElementalHitOfTheResistedElementTakesRdsAndRe() {
         CharacterSheet target = sheet(null, EVERY_REDUCTION);
 
-        assertEquals(10 - 1 - 2 - 2, hit(target, new DamageDescriptor(DamageType.MAGICO, ElementalType.FOGO)));
-        assertEquals(10 - 1 - 2, hit(target, new DamageDescriptor(DamageType.ELEMENTAL, ElementalType.FOGO)));
+        assertEquals(10 - 1 - 2 - Resistance.RE.instance(), hit(target, new DamageDescriptor(DamageType.MAGICO, ElementalType.FOGO)));
+        assertEquals(10 - 1 - Resistance.RE.instance(), hit(target, new DamageDescriptor(DamageType.ELEMENTAL, ElementalType.FOGO)));
     }
 
-    /** Danos de Queda and Asfixia: only RA, until their rules arrive (table ruling, 2026-10-12). */
+    /** Danos de Queda and Asfixia are Dano Primordial: nothing reduces them (table ruling, 2026-10-13). */
     @Test
-    void fallAndAsphyxiationTakeNoReductionButRa() {
+    void fallAndAsphyxiationTakeNoReduction() {
         CharacterSheet target = sheet(null, EVERY_REDUCTION);
 
         assertEquals(10, hit(target, new DamageDescriptor(DamageType.QUEDA)));

@@ -1,5 +1,6 @@
 package org.aventyrs.core.monster.model.almaelemental;
 
+import org.aventyrs.core.character.Resistance;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.DamageType;
 import org.aventyrs.core.character.services.ActiveAbilityServiceImpl;
@@ -41,11 +42,11 @@ class AlmaElementalAbilityTest {
 
     @Test
     void sangueElementalResistsItsElementThenHalvesThenIgnoresIt() {
-        // Presa: one RE instance, -2
-        assertEquals(8, finalDamage(spawn(0, fireBlood()), DamageType.MAGICO, ElementalType.FOGO));
+        // Presa: one RE instance
+        assertEquals(10 - Resistance.RE.instance(), finalDamage(spawn(0, fireBlood()), DamageType.MAGICO, ElementalType.FOGO));
         assertEquals(10, finalDamage(spawn(0, fireBlood()), DamageType.MAGICO, ElementalType.GELO));
         // Deviante: then halved
-        assertEquals(4, finalDamage(spawn(12, fireBlood()), DamageType.MAGICO, ElementalType.FOGO));
+        assertEquals((10 - Resistance.RE.instance()) / 2, finalDamage(spawn(12, fireBlood()), DamageType.MAGICO, ElementalType.FOGO));
         // Apex: immune
         assertEquals(0, finalDamage(spawn(46, fireBlood()), DamageType.MAGICO, ElementalType.FOGO));
         assertEquals(10, finalDamage(spawn(46, fireBlood()), DamageType.FISICO, null));
@@ -55,7 +56,7 @@ class AlmaElementalAbilityTest {
     void sangueElementalGrantsInstintoAndResistenciaACriticos() {
         MonsterSheet presa = spawn(0, fireBlood());
         assertEquals(3, presa.getCharacter().getEffectiveAttributeTotal(AttributeDomain.INSTINCT));
-        assertEquals(MonstrousTraits.CRITICAL_RESISTANCE_INSTANCE, presa.getTotalCriticalResistance(null));
+        assertEquals(Resistance.RC.instance(), presa.getTotalCriticalResistance(null));
         assertEquals(5, spawn(26, fireBlood()).getCharacter().getEffectiveAttributeTotal(AttributeDomain.INSTINCT));
     }
 

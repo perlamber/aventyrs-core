@@ -1,5 +1,6 @@
 package org.aventyrs.core.character.services;
 
+import org.aventyrs.core.character.Resistance;
 import lombok.NonNull;
 import org.aventyrs.core.character.EgoDomain;
 import org.aventyrs.core.ego.AutocontroleDefence;
@@ -52,12 +53,12 @@ public class AutocontroleEgoServiceImpl implements AutocontroleEgoService {
         }
         pay(sheet, EgoPointType.TEMPORARY);
         sheet.applyEffect(TemporaryBonus.untilTurnStarts(ModifierType.ABSOLUTE_DAMAGE_REDUCTION,
-                DamageService.DEFAULT_DAMAGE_REDUCTION, PROTECTION_RODADAS, PROTECTION_SOURCE));
+                Resistance.RA.instance(), PROTECTION_RODADAS, PROTECTION_SOURCE));
         switch (protection) {
             case RD -> sheet.applyEffect(TemporaryBonus.untilTurnStarts(ModifierType.DAMAGE_REDUCTION,
-                    DamageService.DEFAULT_DAMAGE_REDUCTION, PROTECTION_RODADAS, PROTECTION_SOURCE));
+                    Resistance.RD.instance(), PROTECTION_RODADAS, PROTECTION_SOURCE));
             case RM -> sheet.applyEffect(TemporaryBonus.untilTurnStarts(ModifierType.MAGIC_REDUCTION,
-                    DamageService.DEFAULT_DAMAGE_REDUCTION, PROTECTION_RODADAS, PROTECTION_SOURCE));
+                    Resistance.RM.instance(), PROTECTION_RODADAS, PROTECTION_SOURCE));
             case RE -> sheet.applyEffect(new TimedElementalResistance(element, 1, PROTECTION_RODADAS, true));
         }
     }

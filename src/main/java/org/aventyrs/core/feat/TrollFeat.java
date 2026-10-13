@@ -1,5 +1,6 @@
 package org.aventyrs.core.feat;
 
+import org.aventyrs.core.character.Resistance;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.race.Troll;
@@ -88,7 +89,7 @@ public enum TrollFeat implements Feat {
                     .build()) {
         @Override
         public int resolveSimultaneousRegenerationLimit(final Character character) {
-            return BASE_REGENERATION_TERM + character.getAllTitles().size();
+            return Resistance.RDS.instances(BASE_REGENERATION_TERM + character.getAllTitles().size());
         }
     },
 
@@ -147,7 +148,7 @@ public enum TrollFeat implements Feat {
                     || holder.getAttacksSufferedThisRound() > 0) {
                 return 0;
             }
-            return BASE_REGENERATION_TERM + character.getAllTitles().size();
+            return Resistance.RDS.instances(BASE_REGENERATION_TERM + character.getAllTitles().size());
         }
     },
 

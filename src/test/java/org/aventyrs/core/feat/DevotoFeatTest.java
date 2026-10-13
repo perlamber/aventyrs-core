@@ -1,5 +1,6 @@
 package org.aventyrs.core.feat;
 
+import org.aventyrs.core.character.Resistance;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.character.DefenseType;
@@ -199,7 +200,7 @@ class DevotoFeatTest {
         CharacterSheet faithful = sheet(CharacterFixture.blank(CharacterFixture.BLANK).deity(Deity.LUZ_PRIMORDIAL)
                 .build());
 
-        assertEquals(DamageService.DEFAULT_DAMAGE_REDUCTION, DevotoFeat.BENCAO_DE_SURT_ELDUR.resolveMagicReduction(zealot));
+        assertEquals(Resistance.RM.instance(), DevotoFeat.BENCAO_DE_SURT_ELDUR.resolveMagicReduction(zealot));
         assertEquals(1, DevotoFeat.BENCAO_DE_SURT_ELDUR.resolveDamageTakenReductionAgainst(zealot, sheet,
                 GenericMonster.CAPANGA.spawn(new Player())));
         assertEquals(1, DevotoFeat.BENCAO_DE_SURT_ELDUR.resolveDamageTakenReductionAgainst(zealot, sheet, heretic));

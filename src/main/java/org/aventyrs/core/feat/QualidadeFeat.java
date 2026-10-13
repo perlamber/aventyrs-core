@@ -1,5 +1,6 @@
 package org.aventyrs.core.feat;
 
+import org.aventyrs.core.character.Resistance;
 import lombok.Getter;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.Character;
@@ -120,7 +121,7 @@ public enum QualidadeFeat implements Feat {
         /** One instance of RM. */
         @Override
         public int resolveMagicReduction(final Character character) {
-            return DamageService.DEFAULT_DAMAGE_REDUCTION;
+            return Resistance.RM.instance();
         }
 
         @Override

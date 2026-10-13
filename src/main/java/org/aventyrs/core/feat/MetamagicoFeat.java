@@ -1,5 +1,6 @@
 package org.aventyrs.core.feat;
 
+import org.aventyrs.core.character.Resistance;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.ability.ActiveAbility;
 import org.aventyrs.core.character.Character;
@@ -137,7 +138,7 @@ public enum MetamagicoFeat implements Feat {
         /** "RM para resistir aos efeitos de Magias que você conheça" — one instance. */
         @Override
         public int resolveSpellMagicReduction(final Spell spell, final CombatantSheet holder) {
-            return SpellFamiliarity.canCast(holder.getCharacter(), spell) ? DamageService.DEFAULT_DAMAGE_REDUCTION : 0;
+            return SpellFamiliarity.canCast(holder.getCharacter(), spell) ? Resistance.RM.instance() : 0;
         }
 
         /** "Bônus em sua DM igual a metade de suas Graduações em Domínio do Mana", rounded down. */

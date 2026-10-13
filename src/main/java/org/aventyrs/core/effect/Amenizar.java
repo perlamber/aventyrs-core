@@ -1,5 +1,6 @@
 package org.aventyrs.core.effect;
 
+import org.aventyrs.core.character.Resistance;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.sheet.Blessing;
 import org.aventyrs.core.sheet.CombatantSheet;
@@ -16,7 +17,7 @@ import org.aventyrs.core.sheet.TargetScope;
 public class Amenizar extends AbstractCriticalEffect {
 
     /** One instance of Resistência Absoluta. */
-    static final int ABSOLUTE_REDUCTION = 2;
+    static final int ABSOLUTE_REDUCTION = Resistance.RA.instance();
 
 
     public Amenizar(final CriticalEffectContext context) {

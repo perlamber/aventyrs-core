@@ -1,5 +1,6 @@
 package org.aventyrs.core.item;
 
+import org.aventyrs.core.character.Resistance;
 import java.util.List;
 
 import org.aventyrs.core.character.AttributeDomain;
@@ -130,15 +131,16 @@ public enum DefensiveMasterpiece implements Masterpiece {
             return 0;
         }
 
-        if (this == EQUILIBRADA && modifierType == ModifierType.DAMAGE_REDUCTION) {
-            return 1;
+        // "Danos sofridos reduzidos em -1" — an unnamed item reduction is RDS (table ruling, 2026-10-13).
+        if (this == EQUILIBRADA && modifierType == ModifierType.DAMAGE_TAKEN_REDUCTION) {
+            return Resistance.RDS.instances(1);
         }
         if (this == ADAMANTINA && modifierType == ModifierType.DAMAGE_REDUCTION) {
-            return DamageService.DEFAULT_DAMAGE_REDUCTION;
+            return Resistance.RD.instance();
         }
         // "Concede RM" on both, stating no figure — one instance each.
         if ((this == DYOSPIROS || this == MITRAL) && modifierType == ModifierType.MAGIC_REDUCTION) {
-            return DamageService.DEFAULT_DAMAGE_REDUCTION;
+            return Resistance.RM.instance();
         }
         if (this == BANHADA_EM_OURO && modifierType == SkillType.PERSUASAO.getRollBonusType()
                 && skillType == SkillType.PERSUASAO) {

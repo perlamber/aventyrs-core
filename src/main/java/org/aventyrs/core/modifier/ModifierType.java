@@ -127,13 +127,13 @@ public enum ModifierType {
      * RDS — Redução de Danos Sofridos: "Cada instância reduz os Danos não-PRIMORDIAIS de ordens
      * Físicas e Mágicas em -1". Applied to every hit but a {@code DamageType#PRIMORDIAL} one. A
      * clause naming RDS with no figure grants one instance ({@code
-     * DamageService#DAMAGE_TAKEN_REDUCTION_INSTANCE}). Before 0.0.64 this was folded into RD.
+     * Resistance#RDS}). Before 0.0.64 this was folded into RD.
      */
     DAMAGE_TAKEN_REDUCTION,
     /**
      * Resistência à Magias (RM) — the magic-damage counterpart of {@link #DAMAGE_REDUCTION}. Per
      * {@code docs/rules/defesas-e-resistencias.txt} each instance reduces Dano Mágico
-     * não-PRIMORDIAL by -2, so a bonus of {@code DamageService#DEFAULT_DAMAGE_REDUCTION} here is
+     * não-PRIMORDIAL by -2, so a bonus of {@code Resistance#RD} here is
      * one instance — the same figure a numberless "você recebe RM" clause grants.
      *
      * <p>Resolved by {@code DamageService#getTotalMagicReduction} from the same five sources RD

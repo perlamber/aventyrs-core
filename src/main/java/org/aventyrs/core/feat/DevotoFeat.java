@@ -1,5 +1,6 @@
 package org.aventyrs.core.feat;
 
+import org.aventyrs.core.character.Resistance;
 import lombok.Getter;
 import org.aventyrs.core.ability.ActiveAbility;
 import org.aventyrs.core.character.AttributeDomain;
@@ -255,7 +256,7 @@ public enum DevotoFeat implements Feat {
             FeatRequirements.builder().requiredDeity(Deity.SURT_ELDUR).build()) {
         @Override
         public int resolveMagicReduction(final Character character) {
-            return reached(character, DevotionTier.ADEPTO) ? DamageService.DEFAULT_DAMAGE_REDUCTION : 0;
+            return reached(character, DevotionTier.ADEPTO) ? Resistance.RM.instance() : 0;
         }
 
         @Override
@@ -268,7 +269,7 @@ public enum DevotoFeat implements Feat {
                                                       final CombatantSheet attacker) {
             return reached(holder, DevotionTier.FUNDAMENTALISTA)
                     && (attacker instanceof MonsterSheet || devotedElsewhere(holder, attacker))
-                    ? DamageService.DAMAGE_TAKEN_REDUCTION_INSTANCE : 0;
+                    ? Resistance.RDS.instance() : 0;
         }
 
         @Override
@@ -312,7 +313,7 @@ public enum DevotoFeat implements Feat {
 
         @Override
         public int resolveDamageTakenReduction(final Character character) {
-            return reached(character, DevotionTier.FUNDAMENTALISTA) ? DamageService.DAMAGE_TAKEN_REDUCTION_INSTANCE : 0;
+            return reached(character, DevotionTier.FUNDAMENTALISTA) ? Resistance.RDS.instance() : 0;
         }
     },
 

@@ -2258,7 +2258,7 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      * on something this core cannot see — the holder's current PV, a form they are in, an active
      * effect, or which attack of the Rodada this is — and each such constant says so on itself
      * rather than overriding here. A clause stating no number uses {@code
-     * DamageService#DEFAULT_DAMAGE_REDUCTION}; one stating its own uses that.
+     * Resistance#RD}; one stating its own uses that.
      *
      * <p>Deliberately RD and not {@code ABSOLUTE_DAMAGE_REDUCTION}: no Talento in the catalog
      * describes mitigation an attack cannot be allowed to bypass, and RD is what {@code
@@ -2287,7 +2287,7 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      * RDS" ({@code MonstruosoFeat#PELE_RIJA}). Kept apart from {@link #resolveDamageReduction}
      * because the two reach different hits: RD only plain physical damage, RDS every
      * non-Primordial hit, physical or magical. A numberless "recebe RDS" grants {@code
-     * DamageService#DAMAGE_TAKEN_REDUCTION_INSTANCE}. Zero by default.
+     * Resistance#RDS}. Zero by default.
      */
     default int resolveDamageTakenReduction(final Character character) {
         return 0;
@@ -2304,7 +2304,7 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
 
     /**
      * Instances of Resistência Elemental (RE) this Talento grants against element — each worth
-     * -2 against a hit of that element, physical or magical ({@code ElementalFeat
+     * {@link org.aventyrs.core.character.Resistance#RE} against a hit of that element, physical or magical ({@code ElementalFeat
      * #RESISTENCIA_ELEMENTAL}'s "RE para seu elemento"). Summed by {@code
      * CombatantSheet#getElementalResistanceInstances}, beside the {@code AttributeAbility} twin.
      * holder may be {@code null}. Zero by default.
@@ -2339,7 +2339,7 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      * of {@link #resolveDamageReduction(Character)}, summed by {@code
      * DamageServiceImpl#getTotalMagicReduction} across {@code Character#getFeats()} and applied
      * only to damage typed {@code DamageType#MAGICO}. A clause stating no number ("você recebe
-     * RM") grants one instance, {@code DamageService#DEFAULT_DAMAGE_REDUCTION}. Zero by default.
+     * RM") grants one instance, {@code Resistance#RM}. Zero by default.
      *
      * <p><b>Only for an unconditional grant</b>, exactly as its RD twin — and RM's catalog is
      * mostly conditional: {@code MetamagicoFeat#ARCANISTA}'s is scoped to "Magias que você
@@ -2378,7 +2378,7 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
     /**
      * RM this Talento grants against one particular incoming Magia — {@code MetamagicoFeat#ARCANISTA}'s
      * "RM para resistir aos efeitos de Magias que você conheça", one instance ({@code
-     * DamageService#DEFAULT_DAMAGE_REDUCTION}) when the hit's Magia is one the holder knows ({@code
+     * Resistance#RM}) when the hit's Magia is one the holder knows ({@code
      * magic.SpellFamiliarity}). The scoped twin of {@link #resolveMagicReduction}, read by {@code
      * DamageService} off {@code DamageInteraction#fromSpell}. Zero by default.
      */
@@ -2691,7 +2691,7 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
      * ModifierType#CRITICAL_RESISTANCE} {@code TemporaryBonus}, and subtracted from an
      * <em>attacker</em>'s summed Margem Crítica Menor widening by {@code
      * AbstractSkillInteraction}. One instance of RC is {@link
-     * CombatantSheet#CRITICAL_RESISTANCE_INSTANCE}, per
+     * Resistance#RC}, per
      * {@code docs/rules/defesas-e-resistencias.txt}; a clause reading "você recebe Resistência a
      * Críticos" with no figure grants exactly one. Zero by default.
      *

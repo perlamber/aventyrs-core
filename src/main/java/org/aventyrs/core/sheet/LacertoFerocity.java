@@ -1,5 +1,6 @@
 package org.aventyrs.core.sheet;
 
+import org.aventyrs.core.character.Resistance;
 import lombok.Getter;
 import org.aventyrs.core.character.Character;
 import org.aventyrs.core.item.Weapon;
@@ -28,8 +29,8 @@ import org.aventyrs.core.skill.Skill;
 @Getter
 public class LacertoFerocity extends TemporaryEffect {
 
-    /** One instance of RD — {@code DamageService#DEFAULT_DAMAGE_REDUCTION}. */
-    public static final int DAMAGE_REDUCTION = 2;
+    /** One instance of RD — {@code Resistance#RD}. */
+    public static final int DAMAGE_REDUCTION = Resistance.RD.instance();
 
     /** Aceitar a Lacerto's "+1d6" on Armas Naturais. */
     public static final int MIMICKED_NATURAL_WEAPON_DICE = 1;

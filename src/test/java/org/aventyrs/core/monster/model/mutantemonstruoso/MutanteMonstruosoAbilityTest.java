@@ -1,5 +1,6 @@
 package org.aventyrs.core.monster.model.mutantemonstruoso;
 
+import org.aventyrs.core.character.Resistance;
 import org.aventyrs.core.action.ActionPointsServiceImpl;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.DamageType;
@@ -66,8 +67,8 @@ class MutanteMonstruosoAbilityTest {
         assertEquals(before + 3 * 3, hitPoints.getMaxHitPoints(sheet.getCharacter(), sheet), "Vigor 3 × 3 more");
 
         MonsterSheet apex = spawn(46, selecao);
-        assertEquals(8, finalDamage(apex, DamageType.MAGICO, ElementalType.VENTO));
-        assertEquals(8, finalDamage(apex, DamageType.MAGICO, ElementalType.GELO));
+        assertEquals(10 - Resistance.RE.instance(), finalDamage(apex, DamageType.MAGICO, ElementalType.VENTO));
+        assertEquals(10 - Resistance.RE.instance(), finalDamage(apex, DamageType.MAGICO, ElementalType.GELO));
     }
 
     @Test

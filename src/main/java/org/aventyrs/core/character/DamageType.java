@@ -20,7 +20,8 @@ package org.aventyrs.core.character;
  *   <li>RDS ({@code DAMAGE_TAKEN_REDUCTION}) — every nature that {@link #takesOrdinaryMitigation()};</li>
  *   <li>RM ({@code MAGIC_REDUCTION}) — {@link #MAGICO}, whatever its qualifier;</li>
  *   <li>RE — any hit carrying the element resisted ({@link #ELEMENTAL} or a Mágico Elemental);</li>
- *   <li>RA — every hit.</li>
+ *   <li>RA — every hit but a {@link #isPrimordial() Primordial} one ("reduz os Danos Físicos, Mágicos e
+ *       Elementais", V19 20261012).</li>
  * </ul>
  * An immunity or a scoped Meio-Dano ({@code DamageScope}) is judged against the same type.
  * Corte/Perfuração/Impacto are not modelled: nothing in the Talento catalog needs them.
@@ -31,9 +32,9 @@ public enum DamageType {
     /** RE-only: never RD, never RM (table ruling, 2026-10-12). Always names its element. */
     ELEMENTAL,
     PRIMORDIAL,
-    /** Danos de Queda — ⚠️ only RA reduces it until its rules arrive (table ruling, 2026-10-12). */
+    /** Danos de Queda — Dano Primordial ({@code acoes-de-combate.txt}): nothing reduces it (table ruling, 2026-10-13). */
     QUEDA,
-    /** Danos de Asfixia — ⚠️ only RA reduces it until its rules arrive (table ruling, 2026-10-12). */
+    /** Danos de Asfixia — Dano Primordial ({@code acoes-de-combate.txt}): nothing reduces it (table ruling, 2026-10-13). */
     ASFIXIA;
 
     /** Whether a hit of this nature must name an element ({@link #ELEMENTAL}). */
@@ -47,8 +48,8 @@ public enum DamageType {
     }
 
     /**
-     * Whether RDS, Pele de Pedra and a Magia-scoped RM reach this nature — everything but {@link #PRIMORDIAL}
-     * ("não-PRIMORDIAL") and the two RA-only natures. {@code null} (an untyped hit) counts as Físico, so true.
+     * Whether RDS, Pele de Pedra and a Magia-scoped RM reach this nature — everything that is not {@link
+     * #isPrimordial() Primordial} ("não-PRIMORDIAL"). {@code null} (an untyped hit) counts as Físico, so true.
      */
     public static boolean takesOrdinaryMitigation(final DamageType type) {
         return type == null || type.takesOrdinaryMitigation();
@@ -56,11 +57,16 @@ public enum DamageType {
 
     /** See {@link #takesOrdinaryMitigation(DamageType)}. */
     public boolean takesOrdinaryMitigation() {
-        return this != PRIMORDIAL && !isReducedOnlyByAbsoluteReduction();
+        return !isPrimordial();
     }
 
-    /** {@link #QUEDA}/{@link #ASFIXIA}: no reduction but RA applies — no RD/RDS/RM/RE, no Meio-Dano. */
-    public boolean isReducedOnlyByAbsoluteReduction() {
+    /** {@link #PRIMORDIAL}, and the two natures that deal it ({@link #QUEDA}, {@link #ASFIXIA}) — RA does not reach it. */
+    public boolean isPrimordial() {
+        return this == PRIMORDIAL || isUnmitigated();
+    }
+
+    /** {@link #QUEDA}/{@link #ASFIXIA}: Dano Primordial that no resistance and no Meio-Dano reduces. */
+    public boolean isUnmitigated() {
         return this == QUEDA || this == ASFIXIA;
     }
 }

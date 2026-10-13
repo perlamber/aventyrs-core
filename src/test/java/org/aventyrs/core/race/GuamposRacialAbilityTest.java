@@ -40,11 +40,12 @@ class GuamposRacialAbilityTest {
     }
 
     @Test
-    void vigorDeEponaGrantsAFlatDamageReductionModifier() {
+    void vigorDeEponaGrantsOneRdsInstance() {
         ModifierResolver modifierResolver = new ModifierResolverImpl();
 
-        assertEquals(1, modifierResolver.sumModifiers(
-                GuamposRacialAbility.VIGOR_DE_EPONA, ModifierType.DAMAGE_REDUCTION));
+        // "reduzem em -1 todo dano sofrido" — an unnamed reduction is RDS (table ruling, 2026-10-13).
+        assertEquals(org.aventyrs.core.character.Resistance.RDS.instance(), modifierResolver.sumModifiers(
+                GuamposRacialAbility.VIGOR_DE_EPONA, ModifierType.DAMAGE_TAKEN_REDUCTION));
     }
 
     // The point of this one is the *service*, not the constant: DamageServiceImpl used to scan
@@ -53,12 +54,12 @@ class GuamposRacialAbilityTest {
     // codebase to grant RD.
     @Test
     void vigorDeEponaReachesTheDamageServiceThroughTheRace() {
-        assertEquals(1, damageService.getTotalDamageReduction(characterOf(new Guampo())));
+        assertEquals(1, damageService.getTotalDamageTakenReduction(characterOf(new Guampo())));
     }
 
     @Test
     void aRaceWithoutTheAbilityStillHasNoDamageReduction() {
-        assertEquals(0, damageService.getTotalDamageReduction(characterOf(new Human())));
+        assertEquals(0, damageService.getTotalDamageTakenReduction(characterOf(new Human())));
     }
 
     @Test

@@ -131,7 +131,7 @@ public interface Race {
 
     /**
      * Resistência a Críticos (RC) every member of this race is born with — {@code Troll}'s
-     * Anatomia Vegetal. One instance is {@link CombatantSheet#CRITICAL_RESISTANCE_INSTANCE}, and
+     * Anatomia Vegetal. One instance is {@link Resistance#RC}, and
      * a clause stating no figure grants exactly one. Zero by default; nearly every race has none.
      *
      * <p>Summed by {@code org.aventyrs.core.sheet.AbstractCombatantSheet#getTotalCriticalResistance}

@@ -1,5 +1,6 @@
 package org.aventyrs.core.feat;
 
+import org.aventyrs.core.character.Resistance;
 import org.aventyrs.core.ability.StrengthAbility;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.AttributeValue;
@@ -226,12 +227,12 @@ class RacialFeatEffectIntegrationTest {
 
         sheet.startCombat();
 
-        assertEquals(DamageService.DEFAULT_DAMAGE_REDUCTION, sheet.getTemporaryBonus(ModifierType.DAMAGE_REDUCTION));
+        assertEquals(Resistance.RD.instance(), sheet.getTemporaryBonus(ModifierType.DAMAGE_REDUCTION));
         assertEquals(2, sheet.getTemporaryBonus(ModifierType.CRITICAL_RESISTANCE));
 
         // Idempotent within a Cena — a second call grants nothing more.
         assertTrue(sheet.startCombat().isEmpty());
-        assertEquals(DamageService.DEFAULT_DAMAGE_REDUCTION, sheet.getTemporaryBonus(ModifierType.DAMAGE_REDUCTION));
+        assertEquals(Resistance.RD.instance(), sheet.getTemporaryBonus(ModifierType.DAMAGE_REDUCTION));
     }
 
     @Test
@@ -1451,9 +1452,9 @@ class RacialFeatEffectIntegrationTest {
         acquire(gorgona, GorgonaFeat.PROTECAO_DO_DEUS_DOS_MONSTROS);
 
         // "RDS e RD" — one instance of each, since 0.0.64 two different reductions.
-        assertEquals(before + DamageService.DEFAULT_DAMAGE_REDUCTION,
+        assertEquals(before + Resistance.RD.instance(),
                 damageService.getTotalDamageReduction(gorgona));
-        assertEquals(rdsBefore + DamageService.DAMAGE_TAKEN_REDUCTION_INSTANCE,
+        assertEquals(rdsBefore + Resistance.RDS.instance(),
                 damageService.getTotalDamageTakenReduction(gorgona));
     }
 
@@ -1476,7 +1477,7 @@ class RacialFeatEffectIntegrationTest {
     // ---------- Monstruoso ----------
 
     @Test
-    void peleRijaGrantsTwoToDefesaFisicaAndTwoRds() throws IllegalOperationException {
+    void peleRijaGrantsTwoToDefesaFisicaAndOneRdsInstance() throws IllegalOperationException {
         Character monstro = vigorousCharacter(4);
         int defenseBefore = defenseService.getTotalDefense(monstro, DefenseType.PHYSICAL);
         int magicBefore = defenseService.getTotalDefense(monstro, DefenseType.MAGIC);
@@ -1488,16 +1489,16 @@ class RacialFeatEffectIntegrationTest {
         assertEquals(defenseBefore + 2, defenseService.getTotalDefense(monstro, DefenseType.PHYSICAL));
         assertEquals(magicBefore, defenseService.getTotalDefense(monstro, DefenseType.MAGIC));
         // "+2 em DF e RDS" — Redução de Danos Sofridos, not RD.
-        assertEquals(rdsBefore + 2, damageService.getTotalDamageTakenReduction(monstro));
+        assertEquals(rdsBefore + Resistance.RDS.instance(), damageService.getTotalDamageTakenReduction(monstro));
         assertEquals(rdBefore, damageService.getTotalDamageReduction(monstro));
     }
 
     @Test
-    void peleRijaReducesEveryHitByTwo() throws IllegalOperationException {
+    void peleRijaReducesEveryHitByOneRdsInstance() throws IllegalOperationException {
         Character monstro = vigorousCharacter(4);
         acquire(monstro, MonstruosoFeat.PELE_RIJA);
 
-        assertEquals(8, damageService.calculateFinalDamage(monstro, 10, false));
+        assertEquals(10 - Resistance.RDS.instance(), damageService.calculateFinalDamage(monstro, 10, false));
         // RD, not RA — an attack that ignores RD skips it.
         assertEquals(10, damageService.calculateFinalDamage(monstro, 10, true));
     }
@@ -1582,7 +1583,7 @@ class RacialFeatEffectIntegrationTest {
         acquire(elemental, ElementalFeat.TRANSFORMACAO_ELEMENTAL);
 
         // "Você recebe RDS" with no figure — one instance.
-        assertEquals(before + DamageService.DAMAGE_TAKEN_REDUCTION_INSTANCE,
+        assertEquals(before + Resistance.RDS.instance(),
                 damageService.getTotalDamageTakenReduction(elemental));
     }
 

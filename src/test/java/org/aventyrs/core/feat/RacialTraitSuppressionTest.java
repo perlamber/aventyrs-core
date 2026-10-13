@@ -1,5 +1,6 @@
 package org.aventyrs.core.feat;
 
+import org.aventyrs.core.character.Resistance;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.AttributeValue;
 import org.aventyrs.core.character.CharacterAttributes;
@@ -213,7 +214,7 @@ class RacialTraitSuppressionTest {
     private void assertAnatomy(final RacialTraitSuppression rung, final boolean kept) {
         CharacterSheet sheet = inFormSuppressing(troll(), rung);
 
-        assertEquals(kept ? CombatantSheet.CRITICAL_RESISTANCE_INSTANCE : 0,
+        assertEquals(kept ? Resistance.RC.instance() : 0,
                 sheet.getTotalCriticalResistance(null), rung + " got the racial RC wrong");
         assertEquals(kept,
                 sheet.getCriticalEffectImmunities().contains(CriticalEffectType.SANGRAMENTO),
@@ -244,13 +245,11 @@ class RacialTraitSuppressionTest {
      */
     @Test
     void racialHabilidadesGoOnlyUnderAll() {
-        assertEquals(1, damageService.getTotalDamageReduction(
-                        inFormSuppressing(guampo(), RacialTraitSuppression.PHYSICAL),
-                        (DamageType) null, null),
+        assertEquals(1, damageService.getTotalDamageTakenReduction(
+                        inFormSuppressing(guampo(), RacialTraitSuppression.PHYSICAL), null),
                 "Vigor de Épona is not a body part");
-        assertEquals(0, damageService.getTotalDamageReduction(
-                        inFormSuppressing(guampo(), RacialTraitSuppression.ALL),
-                        (DamageType) null, null),
+        assertEquals(0, damageService.getTotalDamageTakenReduction(
+                        inFormSuppressing(guampo(), RacialTraitSuppression.ALL), null),
                 "the whole race falls silent");
     }
 
@@ -315,7 +314,7 @@ class RacialTraitSuppressionTest {
         character.grantTitle(new Santo(List.of(), List.of()), TitleSlot.PRIMARY);
         CharacterSheet sheet = inFormSuppressing(character, RacialTraitSuppression.ALL);
 
-        assertEquals(CombatantSheet.CRITICAL_RESISTANCE_INSTANCE,
+        assertEquals(Resistance.RC.instance(),
                 sheet.getTotalCriticalResistance(null),
                 "the Talento's instance stays; only the Troll's own is silenced");
     }

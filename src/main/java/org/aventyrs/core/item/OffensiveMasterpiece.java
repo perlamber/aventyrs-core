@@ -1,5 +1,6 @@
 package org.aventyrs.core.item;
 
+import org.aventyrs.core.character.Resistance;
 import java.util.List;
 
 import org.aventyrs.core.character.AttributeDomain;
@@ -247,8 +248,9 @@ public enum OffensiveMasterpiece implements Masterpiece {
         if (!requirements.isMetBy(character)) {
             return 0;
         }
-        if (this == DEFENSORA && modifierType == ModifierType.DAMAGE_REDUCTION) {
-            return 1;
+        // "Dano sofrido reduzido em -1" — an unnamed item reduction is RDS (table ruling, 2026-10-13).
+        if (this == DEFENSORA && modifierType == ModifierType.DAMAGE_TAKEN_REDUCTION) {
+            return Resistance.RDS.instances(1);
         }
         return 0;
     }
