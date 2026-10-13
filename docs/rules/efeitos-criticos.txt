@@ -9,8 +9,18 @@ Lista de Corrente de Efeitos
 Definhar
 O Alvo sofre 1 ponto de Dano Físico Profano por Rodada por Vigor Rodadas (não cumulativo). Este é um Efeito de Maldição.
 
+Desarmar
+Apenas contra Armas e Escudos, o equipamento é derrubado ao chão.
+
+Lançar ao Chão
+Alvo recebe a Condição Caído.
+
 Enrijecer Musculatura 
 O corpo do alvo se torna mais rígido temporariamente, por isso as rolagens de Perícias Físicas (baseadas em Força e Destreza) dele são feitas em Desvantagem por 1 Rodada. Este é um efeito de Envenenamento.
+
+Envenenar
+Alvo recebe a condição Envenenado. 
+Efeitos do Veneno conforme o ataque.
 
 Escancarar Defesas 
 Seu próximo ataque contra este mesmo alvo tem a GD reduzida em -1 Nível.
@@ -26,6 +36,9 @@ Este ataque causa 3 pontos de danos adicionais, estes danos adicionais só podem
 
 Golpe Trovejante 
 Se este ataque for um Acerto Crítico, o Efeito Crítico natural de sua arma é aplicado duas vezes.
+
+Impacto Meteórico
+Este ataque inflige +2 pontos de danos e recebe Área de Efeito – Explosão.
 
 Magicae Mortis 
 Esta Magia recebe Roubo de Vida igual à 1+ seu número de Títulos Arcanos ou Abençoados Despertos.

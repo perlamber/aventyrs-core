@@ -451,9 +451,14 @@ public class AttackDelivery {
         if (effectChainTriggered) {
             chains.addAll(attack.getEffectChains());
             chains.addAll(effectChainsGrantedByFeats(attack, criticalResult));
-            // A bound Pedra do Poder's Violento Corrente — Hematita do Vendaval's Rugido — with its host weapon.
+            // A bound Pedra do Poder's Correntes with its host weapon — Adamante Bruto's Base Impacto Meteórico,
+            // Hematita do Vendaval's Violento Rugido.
             org.aventyrs.core.item.PowerStone stone = boundStoneOf(attack);
             if (stone != null) {
+                Effect baseChain = stone.getStoneType().createBaseEffectChain();
+                if (baseChain != null) {
+                    chains.add(baseChain);
+                }
                 Effect stoneChain = stone.getStoneType().createViolentEffectChain(
                         criticalResult != null && criticalResult.isCriticalSuccess());
                 if (stoneChain != null) {

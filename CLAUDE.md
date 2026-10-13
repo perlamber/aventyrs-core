@@ -311,10 +311,15 @@ every Roubo de Vida stage). Each is silent while a Forma suppresses innate racia
 damage, Magias Profanas, no Divine healing), `NascidoDaFloresta` (every Magia but Primordial/Umbral, and Encantamentos),
 `Troll` (Roubo de Vida from a non-Troll). Healing inversion followed in 0.0.91 (see the Fadiga/asfixia row).
 
-**Correntes de Efeitos — the 14 generic ones are authored (0.0.85).** `docs/rules/efeitos-criticos.txt` lists 14
-generic Correntes; every one is an `effect.EffectChain` class: Definhar, Enrijecer Musculatura, Escancarar Defesas,
-Excomungar, Explosão Cataclísmica, Ferida Infecciosa, Golpe Trovejante, Magicae Mortis, Oprimir, Remover Aflição,
-Rugido, Toque Sombrio and Veneno Vampírico (plus Sobrecura, a Vida Magia's). A Talento grants one through
+**Correntes de Efeitos — the 17 generic ones are authored (0.0.85; 0.1.6.12).** `docs/rules/efeitos-criticos.txt`
+(V19 20261012) lists 17 generic Correntes; every one is an `effect.EffectChain` class: Definhar, Desarmar, Enrijecer
+Musculatura, Envenenar, Escancarar Defesas, Excomungar, Explosão Cataclísmica, Ferida Infecciosa, Golpe Trovejante,
+Impacto Meteórico, Lançar ao Chão, Magicae Mortis, Oprimir, Remover Aflição, Rugido, Toque Sombrio and Veneno Vampírico
+(plus Sobrecura, a Vida Magia's). The 0.1.6.12 four (table rulings 2026-10-12): **Desarmar** sheathes a weapon in hand
+or sends an equipped Escudo to the inventory (re-equipped at `CharacterSheet#getEquipCost`), reported on
+`InteractionResult#getDroppedItem()`. It is not `CombatantSheet#disarm`. **Envenenar** takes its Veneno's effects and
+ending Descanso from its source. **Impacto Meteórico** rides a bound Adamante Bruto's host weapon
+(`PowerStoneType#createBaseEffectChain`). A Talento grants one through
 `Feat#resolveEffectChains` — its longest overload sees the holder's sheet, the attacker's `SceneContext` and the
 `CriticalResult` — or `#resolveCriticalHitEffectChains`; `AttackDelivery` chains it behind the damage. Two change the
 attack rather than the target and are read where the chain is assembled (Golpe Trovejante, Explosão Cataclísmica's

@@ -6,6 +6,7 @@ import org.aventyrs.core.character.CriticalDamage;
 import org.aventyrs.core.character.services.DamageService;
 import org.aventyrs.core.effect.CriticalEffectType;
 import org.aventyrs.core.effect.Effect;
+import org.aventyrs.core.effect.ImpactoMeteorico;
 import org.aventyrs.core.effect.Rugido;
 import org.aventyrs.core.modifier.ModifierType;
 import org.aventyrs.core.sheet.CombatantSheet;
@@ -63,14 +64,11 @@ public enum PowerStoneType {
     /**
      * Adamante Bruto (Sintética).
      *
-     * <p>Real: Base Vigor +1; Protetivo RD and RDS.
+     * <p>Real: Base Vigor +1 and the Corrente Impacto Meteórico ({@link #createBaseEffectChain} — on attacks with its
+     * host weapon only, table ruling 2026-10-12); Protetivo RD and RDS.
      *
-     * <p>TODO:
-     * <ul>
-     *   <li>the Impacto Meteórico Corrente — V19 names it without stating its effect;</li>
-     *   <li>the Violento "Ataques Ignoram RD, Acertos Críticos … ignoram Meio-Dano" — no attack-side
-     *       mitigation-bypass flag exists.</li>
-     * </ul>
+     * <p>TODO: the Violento "Ataques Ignoram RD, Acertos Críticos … ignoram Meio-Dano" — no attack-side
+     * mitigation-bypass flag exists.
      */
     ADAMANTE_BRUTO("Adamante Bruto", "Sintética",
             "Vigor +1, ataques recebem a Corrente de Efeitos – Impacto Meteórico.",
@@ -79,7 +77,12 @@ public enum PowerStoneType {
             List.of(new ItemBonus(ModifierType.VIGOR_BONUS, 1)),
             List.of(new ItemBonus(ModifierType.DAMAGE_REDUCTION, DamageService.DEFAULT_DAMAGE_REDUCTION),
                     new ItemBonus(ModifierType.DAMAGE_TAKEN_REDUCTION, 1)),
-            List.of()),
+            List.of()) {
+        @Override
+        public Effect createBaseEffectChain() {
+            return new ImpactoMeteorico();
+        }
+    },
 
     /**
      * Aqua Marina (Elemental: Água).
@@ -444,6 +447,15 @@ public enum PowerStoneType {
             case TURMALINA_OBSCURA -> CriticalEffectType.OFERENDA_MALDITA;
             default -> null;
         };
+    }
+
+    /**
+     * The Corrente de Efeitos a bound stone's Efeito Base puts on an attack with its host weapon, built fresh for that
+     * attack. Adamante Bruto's is an Impacto Meteórico; every other stone returns {@code null}. Host-weapon-scoped like
+     * the Violento's (table ruling, 2026-10-12): a Base Corrente on a stone bound to armour reaches no attack.
+     */
+    public Effect createBaseEffectChain() {
+        return null;
     }
 
     /**
