@@ -71,12 +71,12 @@ public enum OrquicoFeat implements Feat {
     },
 
     /**
-     * "Seus ataques com Armas e Armas Naturais causam danos Físicos Elementais: Terra em
+     * "Seus ataques com Armas e Armas Naturais causam danos Elementais: Terra em
      * substituição aos seus tipos… Você pode adicionar Metade do Vigor às suas rolagens de danos
      * físicos."
      */
     // Three halves real. The retyping is Feat#resolveDamageRetype, reported on the attack roll:
-    // a Weapon (an Arma Natural included) deals Físico Elemental: Terra; a Divina or Elemental:
+    // a Weapon (an Arma Natural included) deals Elemental: Terra; a Divina or Elemental:
     // Terra Magia delivered as an attack deals Físico. The "+Metade do Vigor às rolagens de danos
     // físicos" is a dano bonus on those weapon attacks. ⚠️ "Você pode adicionar" is read as always
     // taken, since it costs nothing.
@@ -84,7 +84,7 @@ public enum OrquicoFeat implements Feat {
     //  fazê-lo" — a precedence over other retyping; this retype is simply the first held
     //  Talento's, and no Talento retypes to Mágico today.
     PALADINO_DE_EPONA(
-            "Seus ataques com Armas e Armas Naturais causam danos Físicos Elementais: Terra em "
+            "Seus ataques com Armas e Armas Naturais causam danos Elementais: Terra em "
                     + "substituição aos seus tipos. Suas Magias, apenas Divinas e Elementais: "
                     + "Terra, capazes de infligir danos sempre causam Danos Físico ao invés de "
                     + "Mágicos. Você pode adicionar Metade do Vigor às suas rolagens de danos "
@@ -101,7 +101,7 @@ public enum OrquicoFeat implements Feat {
         public DamageDescriptor resolveDamageRetype(final Character attacker, final SkillType attackSkill,
                                                     final AttackSource attackSource) {
             if (attackSource instanceof Weapon) {
-                return new DamageDescriptor(DamageType.FISICO_ELEMENTAL, ElementalType.TERRA);
+                return new DamageDescriptor(DamageType.ELEMENTAL, ElementalType.TERRA);
             }
             if (attackSource instanceof Spell spell && (spell.getTree().hasMagicType(MagicType.DIVINA)
                     || spell.getTree().getElementalType().filter(el -> el == ElementalType.TERRA).isPresent())) {
@@ -142,7 +142,7 @@ public enum OrquicoFeat implements Feat {
                     + "em um alvo em seu alcance com uma de suas Armas ou Armas Naturais. Para "
                     + "este ataque você recebe Vantagem em sua Rolagem de Ataque Corpo-a-Corpo e "
                     + "Bônus em rolagem de danos igual ao seus Multiplicadores de PV, o dano "
-                    + "causado é Físico Elemental: Terra e tem Área de Efeito – Explosão. Efeito "
+                    + "causado é Elemental: Terra e tem Área de Efeito – Explosão. Efeito "
                     + "Passivo - Se tiver 2 Títulos Aventyr Despertos e ao menos 1 deles for "
                     + "Abençoado seu Multiplicador de PV aumenta em +1.",
             FeatRequirements.builder()

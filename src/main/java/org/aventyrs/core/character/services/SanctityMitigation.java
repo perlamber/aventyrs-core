@@ -17,16 +17,15 @@ public final class SanctityMitigation {
     }
 
     /**
-     * amount of type and sanctity, after target's immunity to the nature and its reduction of it. An elemental or
-     * untyped type is checked as Primordial, since no element is named.
+     * amount of type and sanctity, after target's immunity to the nature and its reduction of it. An Elemental or
+     * untyped type is checked as Primordial, since no element is named; a Mágico one is a Mágico of that nature.
      */
     public static int apply(final CombatantSheet target, final DamageType type, final DamageSanctity sanctity,
                             final int amount) {
         if (amount <= 0 || sanctity == null) {
             return Math.max(0, amount);
         }
-        DamageType checked = type == null || type == DamageType.ELEMENTAL || type == DamageType.FISICO_ELEMENTAL
-                ? DamageType.PRIMORDIAL : type;
+        DamageType checked = type == null || type == DamageType.ELEMENTAL ? DamageType.PRIMORDIAL : type;
         if (target.isImmuneToDamage(checked, new DamageDescriptor(checked, null, sanctity))) {
             return 0;
         }

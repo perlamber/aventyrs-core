@@ -2257,6 +2257,14 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     }
 
     @Override
+    public void discardFiredProjectiles(final org.aventyrs.core.item.ProjectileItem projectile, final int units) {
+        if (units > 0) {
+            firedProjectilesThisCombat.computeIfPresent(projectile,
+                    (kind, recorded) -> recorded > units ? recorded - units : null);
+        }
+    }
+
+    @Override
     public void recordFiredProjectiles(final org.aventyrs.core.item.ProjectileItem projectile, final int units) {
         if (units > 0 && projectile.getHead().isRecoverable()) {
             firedProjectilesThisCombat.merge(projectile, units, Integer::sum);

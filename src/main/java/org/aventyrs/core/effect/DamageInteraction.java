@@ -49,6 +49,7 @@ public class DamageInteraction implements Interaction<CombatantSheet> {
     private final java.util.Set<org.aventyrs.core.character.BypassedReduction> bypassed =
             java.util.EnumSet.noneOf(org.aventyrs.core.character.BypassedReduction.class);
     private org.aventyrs.core.magic.ElementalType additionalElement;
+    private org.aventyrs.core.magic.ElementalType element;
 
     public DamageInteraction() {
         this(new DamageServiceImpl());
@@ -176,6 +177,21 @@ public class DamageInteraction implements Interaction<CombatantSheet> {
         return this;
     }
 
+    /**
+     * The element this hit's own type names (2026-10-12 taxonomy) — the "Fogo" of an Elemental: Fogo or a Mágico
+     * Elemental: Fogo. With it (or a {@link #withSanctity sanctity}) the hit is mitigated as a full {@code
+     * DamageDescriptor}: RE and element-scoped immunities reach it. Ignored when the hit's type admits no element.
+     */
+    public DamageInteraction withElement(final org.aventyrs.core.magic.ElementalType element) {
+        this.element = element;
+        return this;
+    }
+
+    /** The element marked by {@link #withElement}, or {@code null}. */
+    public org.aventyrs.core.magic.ElementalType getElement() {
+        return element;
+    }
+
     /** The element marked by {@link #withAdditionalElement}, or {@code null}. */
     public org.aventyrs.core.magic.ElementalType getAdditionalElement() {
         return additionalElement;
@@ -268,15 +284,15 @@ public class DamageInteraction implements Interaction<CombatantSheet> {
                                       final DamageType damageType, final CombatantSheet source,
                                       final int rawDamage, final boolean ignoreDamageReduction,
                                       final Interaction<CombatantSheet> nextInteraction) {
-        int finalDamage = damageService.calculateFinalDamage(target, sceneContext, damageType, source, rawDamage,
-                ignoreDamageReduction, halfDamage, spell, bypassed, additionalElement);
-        if (sanctity != null && finalDamage > 0) {
-            // A sacred or profane hit (core 0.0.89): an immunity to that nature zeroes it, a reduction of it comes off
-            // — ⚠️ after the other mitigation and any Meio-Dano, since this path carries the type alone.
-            // An elemental or untyped hit can't name its element here, so it is checked as Primordial — the one type
-            // no physical/magical/elemental-scoped immunity names — and only a scope of its nature, or every hit, holds.
-            DamageType checked = damageType == null || damageType == DamageType.ELEMENTAL
-                    || damageType == DamageType.FISICO_ELEMENTAL ? DamageType.PRIMORDIAL : damageType;
+        // The hit as one descriptor whenever its type names a qualifier (2026-10-12 taxonomy): the sanctity's immunity
+        // and reduction, the element's RE and immunity, then all ride DamageService's single mitigation pass.
+        org.aventyrs.core.character.DamageDescriptor descriptor = describe(damageType);
+        int finalDamage = damageService.calculateFinalDamage(target, sceneContext, damageType, descriptor, source,
+                rawDamage, ignoreDamageReduction, halfDamage, spell, bypassed, additionalElement);
+        if (descriptor == null && sanctity != null && finalDamage > 0) {
+            // An untyped sacred/profane hit: no descriptor could carry it (it names no type), so its nature is judged
+            // here — checked as Primordial, the one type no physical/magical/elemental-scoped immunity names.
+            DamageType checked = DamageType.PRIMORDIAL;
             if (target.isImmuneToDamage(checked, new org.aventyrs.core.character.DamageDescriptor(checked, null, sanctity))) {
                 finalDamage = 0;
             } else if (!ignoreDamageReduction) {
@@ -296,6 +312,12 @@ public class DamageInteraction implements Interaction<CombatantSheet> {
         } else {
             target.applyDamage(finalDamage);
         }
+        // The victim's fitted items react to the hit too (Benção de Proteção's extension), as they do on
+        // DamageService#applyDamage — this path splits mitigation from application, so it calls them itself (0.1.6.11).
+        if (finalDamage > 0) {
+            final int landed = finalDamage;
+            target.getCharacter().getEquipment().forEach(item -> item.notifyFinalDamageTaken(landed, sceneContext));
+        }
         // Feridas Ardentes: the critical rider's share of what landed heals only with a Descanso
         // Verdadeiro or Roubo de Vida.
         target.lockDamage(Math.min(lifeStealOnlyDamage, finalDamage), true);
@@ -306,7 +328,8 @@ public class DamageInteraction implements Interaction<CombatantSheet> {
         damageService.notifyDamageTaken(target, finalDamage, source, sceneContext);
         // What an Efeito Crítico further down this chain reads as "o dano deste ataque" —
         // Cataclismo's elemental half, Estilhaçador's half for the items, Oferenda Maldita's steal.
-        target.recordDamageReceived(new DamageReceipt(finalDamage, damageType, source));
+        target.recordDamageReceived(new DamageReceipt(finalDamage, damageType,
+                descriptor == null ? null : descriptor.elementalType(), source));
 
         // A Magia that heals the target's Raça instead (a Vampiro and a Magia Profana, core 0.0.91): no damage landed —
         // its immunity already saw to that — and the heal it gives in its place happens now.
@@ -331,5 +354,23 @@ public class DamageInteraction implements Interaction<CombatantSheet> {
             result.nextInteraction(nextInteraction != null ? nextInteraction : this.nextInteraction);
         }
         return result.build();
+    }
+
+    /**
+     * This hit as a {@code DamageDescriptor} — its type with the element and sanctity marked on this stage — or {@code
+     * null} when there is nothing to describe beyond the bare type, or no type to describe. An element the type cannot
+     * carry is dropped, and a pairing the taxonomy refuses (a Mágico hit with no qualifier, an Elemental with no
+     * element) falls back to the bare type rather than failing a hit already in flight.
+     */
+    private org.aventyrs.core.character.DamageDescriptor describe(final DamageType damageType) {
+        if (damageType == null || (element == null && sanctity == null)) {
+            return null;
+        }
+        org.aventyrs.core.magic.ElementalType carried = damageType.admitsElement() ? element : null;
+        try {
+            return new org.aventyrs.core.character.DamageDescriptor(damageType, carried, sanctity);
+        } catch (org.aventyrs.core.sheet.IllegalOperationException invalid) {
+            return null;
+        }
     }
 }

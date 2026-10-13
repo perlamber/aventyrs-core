@@ -1385,6 +1385,12 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
      */
     void recordFiredProjectiles(org.aventyrs.core.item.ProjectileItem projectile, int units);
 
+    /**
+     * Takes up to units of projectile back off the recovery ledger — they were destroyed after being recorded as fired
+     * (a Rigidez Refletora the attacker's own client only learns of from the target's owner, core 0.1.6.11).
+     */
+    void discardFiredProjectiles(org.aventyrs.core.item.ProjectileItem projectile, int units);
+
     /** Units of each projectile fired since the current combat started — see {@link #recordFiredProjectiles}. */
     java.util.Map<org.aventyrs.core.item.ProjectileItem, Integer> getFiredProjectilesThisCombat();
 

@@ -20,9 +20,9 @@ import org.aventyrs.core.util.DiceRoller;
  */
 public class Incendiar extends AbstractEffect implements EffectChain {
 
-    /** "o tipo de dano muda para Físico Elemental: Fogo". */
+    /** "o tipo de dano muda para Elemental: Fogo". */
     public static final DamageDescriptor RETYPED =
-            new DamageDescriptor(DamageType.FISICO_ELEMENTAL, ElementalType.FOGO);
+            new DamageDescriptor(DamageType.ELEMENTAL, ElementalType.FOGO);
 
     /** "+1d6 pontos de danos". */
     public static final int EXTRA_DICE = 1;
@@ -36,7 +36,7 @@ public class Incendiar extends AbstractEffect implements EffectChain {
 
     @Override
     public String getDescription() {
-        return "Causa +1d6 pontos de danos e o tipo de dano muda para Físico Elemental: Fogo.";
+        return "Causa +1d6 pontos de danos e o tipo de dano muda para Elemental: Fogo.";
     }
 
     @Override

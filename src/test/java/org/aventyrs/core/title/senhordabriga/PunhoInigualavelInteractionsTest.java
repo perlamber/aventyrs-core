@@ -117,7 +117,7 @@ class PunhoInigualavelInteractionsTest {
         assertEquals(2, holder.getRemainingEnhancedAttacks(PunhoInigualavelAbility.IMPACTO_ELEMENTAL));
         assertEquals(unempowered + Skill.ADVANTAGE_BONUS, attack(holder, foe).getAttackTotal());
         TitleAttackModifiers modifiers = TitleAttackModifiers.resolve(holder, FIST, foe, null);
-        assertEquals(new DamageDescriptor(DamageType.FISICO_ELEMENTAL, ElementalType.FOGO), modifiers.damageDescriptor());
+        assertEquals(new DamageDescriptor(DamageType.ELEMENTAL, ElementalType.FOGO), modifiers.damageDescriptor());
         assertNull(modifiers.defenseType());
 
         TitleAttackModifiers.consumeCharges(holder, SenhorDaBrigaFixtures.sword());
@@ -140,7 +140,7 @@ class PunhoInigualavelInteractionsTest {
 
         assertEquals(4, holder.getRemainingEnhancedAttacks(PunhoInigualavelAbility.IMPACTO_ELEMENTAL));
         assertEquals(DefenseType.MAGIC, modifiers.defenseType());
-        assertEquals(new DamageDescriptor(DamageType.ELEMENTAL, ElementalType.GELO), modifiers.damageDescriptor());
+        assertEquals(new DamageDescriptor(DamageType.MAGICO, ElementalType.GELO), modifiers.damageDescriptor());
         assertEquals(CriticalEffectType.CATACLISMO, modifiers.criticalEffectOverride());
     }
 

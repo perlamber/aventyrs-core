@@ -188,11 +188,17 @@ public class AttackReceiver {
                 .requiredTotal(requiredTotal)
                 .auraHalvesDamage(auraHalvesDamage)
                 .retaliation(RetaliationResolver.resolve(defender, SkillType.ATAQUE_CORPO_A_CORPO))
+                // Espinhosa / Rigidez Refletora, hit or miss; an unstated Perícia is read as melee, as the thorns are.
+                .equipmentRetaliation(org.aventyrs.core.item.DefensiveEnhancements.retaliationAgainst(defender,
+                        attack.getAttackSkill() == null ? SkillType.ATAQUE_CORPO_A_CORPO : attack.getAttackSkill(),
+                        null))
                 .effectiveDifficultyLevel(effectiveDifficultyLevel);
 
         if (defenseRoll == null) {
             return result.defenseResult(defenseResult).build();
         }
+        // Benção Ymiriana: being attacked — hit or miss — opens its window.
+        org.aventyrs.core.item.DefensiveEnhancements.onAttacked(defender);
 
         int margin = requiredTotal - defenseTotal;
         // Ímpeto Defensivo Maior: "se torna imune aos ataques dele por 1 Rodada".

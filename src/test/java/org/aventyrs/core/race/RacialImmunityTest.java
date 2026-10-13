@@ -44,12 +44,12 @@ class RacialImmunityTest {
     void aVampireIsImmuneToNaturalDamage() {
         CharacterSheet vampire = vampire();
 
-        assertTrue(vampire.isImmuneToDamage(DamageType.ELEMENTAL,
-                new DamageDescriptor(DamageType.ELEMENTAL, ElementalType.NATURAL)));
-        assertFalse(vampire.isImmuneToDamage(DamageType.ELEMENTAL,
-                new DamageDescriptor(DamageType.ELEMENTAL, ElementalType.FOGO)));
-        assertFalse(of(new Human()).isImmuneToDamage(DamageType.ELEMENTAL,
-                new DamageDescriptor(DamageType.ELEMENTAL, ElementalType.NATURAL)));
+        assertTrue(vampire.isImmuneToDamage(DamageType.MAGICO,
+                new DamageDescriptor(DamageType.MAGICO, ElementalType.NATURAL)));
+        assertFalse(vampire.isImmuneToDamage(DamageType.MAGICO,
+                new DamageDescriptor(DamageType.MAGICO, ElementalType.FOGO)));
+        assertFalse(of(new Human()).isImmuneToDamage(DamageType.MAGICO,
+                new DamageDescriptor(DamageType.MAGICO, ElementalType.NATURAL)));
     }
 
     /** "Não podem recuperar PV com magias Divinas" and "Magias Profanas não causam nenhum dano". */

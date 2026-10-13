@@ -66,8 +66,8 @@ class MutanteMonstruosoAbilityTest {
         assertEquals(before + 3 * 3, hitPoints.getMaxHitPoints(sheet.getCharacter(), sheet), "Vigor 3 × 3 more");
 
         MonsterSheet apex = spawn(46, selecao);
-        assertEquals(8, finalDamage(apex, DamageType.ELEMENTAL, ElementalType.VENTO));
-        assertEquals(8, finalDamage(apex, DamageType.ELEMENTAL, ElementalType.GELO));
+        assertEquals(8, finalDamage(apex, DamageType.MAGICO, ElementalType.VENTO));
+        assertEquals(8, finalDamage(apex, DamageType.MAGICO, ElementalType.GELO));
     }
 
     @Test

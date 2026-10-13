@@ -64,7 +64,7 @@ class GiganteSpellHooksTest {
         return new TestSpell() {
             @Override
             public Optional<SpellDamage> getPrimaryDamage() {
-                return Optional.of(SpellDamage.halfFocusMagical(dice));
+                return Optional.of(SpellDamage.halfFocusMagicalElemental(dice, org.aventyrs.core.magic.ElementalType.FOGO));
             }
 
             @Override

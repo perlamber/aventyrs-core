@@ -53,5 +53,11 @@ public enum DamageContributionSource {
      * The weapon the attack is made with — its Obra-Prima's and Aprimoramentos' Danos columns and Alcance
      * Estendido's bonus against a target not adjacent ({@code item.WeaponEnhancements}, core 0.1.6.9).
      */
-    WEAPON_ENHANCEMENT
+    WEAPON_ENHANCEMENT,
+
+    /**
+     * The attacker's worn Armaduras and Escudos — their Aprimoramentos' Danos columns, which reach every attack
+     * ({@code item.DefensiveEnhancements}, core 0.1.6.11).
+     */
+    DEFENSIVE_ENHANCEMENT
 }

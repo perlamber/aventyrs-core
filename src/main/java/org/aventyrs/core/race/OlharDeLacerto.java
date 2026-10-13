@@ -26,7 +26,7 @@ public enum OlharDeLacerto implements AttackSource {
     public static final Range BASE_RANGE = Range.DISTANCIA_MUITO_CURTA;
 
     /** "Dano Mágico Elemental: Terra." */
-    public static final DamageDescriptor DAMAGE = new DamageDescriptor(DamageType.ELEMENTAL, ElementalType.TERRA);
+    public static final DamageDescriptor DAMAGE = new DamageDescriptor(DamageType.MAGICO, ElementalType.TERRA);
 
     @Override
     public SkillType getAttackSkillType() {

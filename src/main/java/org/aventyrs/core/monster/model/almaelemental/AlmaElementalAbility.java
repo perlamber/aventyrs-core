@@ -103,11 +103,11 @@ public enum AlmaElementalAbility implements MonstrousAbility {
     /**
      * The chosen Arma Natural, and from Deviante +2 on its attacks. Fúria Elemental's element typing
      * and its Cataclismo are not applied: the Efeito lands on the holder, while "a Arma Natural causa
-     * dano Físico Elemental" retypes a future attack's damage, which no self effect can reach.
+     * dano Elemental" retypes a future attack's damage, which no self effect can reach.
      */
     ARMAMENTO_ELEMENTAL("Armamento Elemental", PRESA, 
             "Efeito Passivo – Escolha uma Arma Natural, este Monstro possui a Arma Natural escolhida.\n"
-                    + "Efeito Ativo – Fúria Elemental [1PA, 2PD]: Escolha um Elemento, durante 3 Rodadas a Arma Natural causa dano Físico Elemental e recebe Cataclismo como Efeito Crítico adicional. Resfriamento 3.\n"
+                    + "Efeito Ativo – Fúria Elemental [1PA, 2PD]: Escolha um Elemento, durante 3 Rodadas a Arma Natural causa dano Elemental e recebe Cataclismo como Efeito Crítico adicional. Resfriamento 3.\n"
                     + "Aprimoramentos dos Deviantes\n"
                     + "• Rolagens de Ataques e Danos com a Arma Natural recebem Bônus de +2.\n"
                     + "Aprimoramentos dos Predadores\n"
@@ -155,7 +155,7 @@ public enum AlmaElementalAbility implements MonstrousAbility {
             boolean apex = context.isAtLeast(APEX);
             return List.of(MonstrousActiveAbility.builder()
                     .name("Fúria Elemental")
-                    .description("Durante " + (apex ? 5 : 3) + " Rodadas a Arma Natural causa dano Físico Elemental "
+                    .description("Durante " + (apex ? 5 : 3) + " Rodadas a Arma Natural causa dano Elemental "
                             + "e recebe Cataclismo como Efeito Crítico adicional.")
                     .actionPointCost(ActionCost.ofActionPoints(1))
                     .determinationPointCost(2)
@@ -180,7 +180,7 @@ public enum AlmaElementalAbility implements MonstrousAbility {
     SANGUE_ELEMENTAL_DEVIANTE("Sangue Elemental", DEVIANTE, 
             "Efeito Passivo: Escolha um Elemento; Retribuição Elemental.\n"
                     + "“Retribuição Elemental - Atacantes corpo-a-corpo que infligirem danos ao Elemental sofrem 3 pontos de Dano Elemental.”\n"
-                    + "Efeito Ativo – Aura Elemental: Cria uma Aura Elemental ao redor do Monstro com Área de Efeito Circular Curta. Outros personagens na área sofrem 1d6 pontos de Dano Físico Elemental. Esta Habilidade só pode ser ativada se o Monstro estiver ferido e tem Duração de 2 Rodadas. Resfriamento 2.\n"
+                    + "Efeito Ativo – Aura Elemental: Cria uma Aura Elemental ao redor do Monstro com Área de Efeito Circular Curta. Outros personagens na área sofrem 1d6 pontos de Dano Elemental. Esta Habilidade só pode ser ativada se o Monstro estiver ferido e tem Duração de 2 Rodadas. Resfriamento 2.\n"
                     + "Aprimoramentos dos Predadores\n"
                     + "• Retribuição Elemental – Dano muda para 1d6 e se torna Mágico Elemental.\n"
                     + "• Explosão Pós-Mortis.\n"
@@ -322,7 +322,7 @@ public enum AlmaElementalAbility implements MonstrousAbility {
     TORMENTA_CATACLISMICA("Tormenta Cataclísmica", APEX, 
             "Efeito Passivo – Multiplicador de PD +1.\n"
                     + "Efeito Ativo – Tormenta Cataclísmica [4PA, 5PD]: Altera o terreno por 5 Rodadas, criando uma Tormenta Cataclísmica. Enquanto estiver no terreno transformado em Tormenta Cataclísmica recupera 1d6PV por Rodada e seus ataques recebem Roubo de Vida 2.\n"
-                    + "“Tormenta Cataclísmica – Área Circular Muito Longa, o terreno é tomado por energia elemental, infligindo 1d6+Instinto pontos de Dano Físico Elemental a todos os personagens, Equipamentos e objetos em seu interior.\n"
+                    + "“Tormenta Cataclísmica – Área Circular Muito Longa, o terreno é tomado por energia elemental, infligindo 1d6+Instinto pontos de Dano Elemental a todos os personagens, Equipamentos e objetos em seu interior.\n"
                     + "Aprimoramentos das Abominações\n"
                     + "• Tormenta Cataclísmica – Os danos da Tormenta Cataclísmica mudam para Mágico Elemental.\n"
                     + "• Tormenta Cataclísmica – Uma tempestade de energia elemental cai sobre o terreno, causando 1d6 Pontos de Dano Mágico Elemental a todos os personagens.") {

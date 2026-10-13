@@ -19,12 +19,11 @@ import static org.aventyrs.core.util.TranslatableMessages.INVALID_SPELL_DAMAGE;
  *       which {@code SpellCastingService#resolvePrimaryDamage} computes from the caster.</li>
  * </ul>
  *
- * <p>{@code "Dano Mágico Elemental: Fogo"} and a bare {@code "Dano Elemental: Fogo"} both map to
- * {@link DamageType#ELEMENTAL} + the element — this core's {@code DamageType} has no {@code
- * MAGICO_ELEMENTAL} constant, and {@code ELEMENTAL} already reads as the magical-elemental case
- * ({@code FISICO_ELEMENTAL} being the physical one). The {@code elementalType} is required exactly
- * when {@code damageType} is {@link DamageType#ELEMENTAL}/{@link DamageType#FISICO_ELEMENTAL},
- * validated here the same way {@code org.aventyrs.core.character.DamageBonus} validates its own.
+ * <p>{@code "Dano Mágico Elemental: Fogo"} maps to {@link DamageType#MAGICO} + the element and a bare {@code "Dano
+ * Elemental: Fogo"} to {@link DamageType#ELEMENTAL} + the element (2026-10-12 taxonomy). The pairing is validated
+ * here the way {@code org.aventyrs.core.character.DamageDescriptor} validates its own: an Elemental names its element,
+ * and a Mágico hit — which must always be qualified — names one too, since a {@code SpellDamage} carries no
+ * sanctity; nothing else may.
  *
  * <p>What this deliberately does <b>not</b> hold: distance falloff ("-2 para cada UD percorrido"),
  * a recurring "a cada Rodada" cadence, a delayed second wave, or damage dealt to someone other
@@ -38,23 +37,30 @@ public record SpellDamage(int diceCount, int flatBonus, FocusScaling focusScalin
         if (diceCount < 0 || focusScaling == null || damageType == null) {
             throw new IllegalOperationException(INVALID_SPELL_DAMAGE);
         }
-        boolean isElemental = damageType == DamageType.ELEMENTAL || damageType == DamageType.FISICO_ELEMENTAL;
-        if (isElemental == (elementalType == null)) {
+        if (damageType.admitsElement() == (elementalType == null)) {
             throw new IllegalOperationException(INVALID_DAMAGE_TYPE_ELEMENT_PAIRING);
         }
     }
 
     /**
-     * {@code "<dice>d6 + Metade do Foco pontos de Dano Mágico Elemental: <element>"} — the shape
-     * every Magia the catalog currently authors damage for takes ({@code diceCount} of 0 is the
-     * bare {@code "Metade do Foco pontos de Dano"} case, Sopro de Magma Menor).
+     * {@code "<dice>d6 + Metade do Foco pontos de Dano Mágico Elemental: <element>"} — the shape most Magias the
+     * catalog authors damage for take ({@code diceCount} of 0 is the bare {@code "Metade do Foco pontos de Dano"} case,
+     * Sopro de Magma Menor).
      */
+    public static SpellDamage halfFocusMagicalElemental(final int diceCount, final ElementalType element) {
+        return new SpellDamage(diceCount, 0, FocusScaling.HALF, DamageType.MAGICO, element);
+    }
+
+    /** {@code "<dice>d6 + Metade do Foco pontos de Dano Elemental: <element>"} — no "Mágico" (Olhar de Eldur). */
     public static SpellDamage halfFocusElemental(final int diceCount, final ElementalType element) {
         return new SpellDamage(diceCount, 0, FocusScaling.HALF, DamageType.ELEMENTAL, element);
     }
 
-    /** {@code "<dice>d6 + Metade do Foco pontos de Dano Mágico"} — no element. */
-    public static SpellDamage halfFocusMagical(final int diceCount) {
-        return new SpellDamage(diceCount, 0, FocusScaling.HALF, DamageType.MAGICO, null);
+    /**
+     * {@code "<dice>d6 + Metade do Foco pontos de Dano"} with no type named — Primordial (table ruling, 2026-10-12:
+     * Cura Mortis' Necrofagia).
+     */
+    public static SpellDamage halfFocusPrimordial(final int diceCount) {
+        return new SpellDamage(diceCount, 0, FocusScaling.HALF, DamageType.PRIMORDIAL, null);
     }
 }

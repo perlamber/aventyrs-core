@@ -21,7 +21,7 @@ import java.util.List;
 public class Poisoning extends Condition {
 
     /** "Dano Natural" — what an immunity to the damage is judged against. */
-    public static final DamageDescriptor NATURAL = new DamageDescriptor(DamageType.FISICO_ELEMENTAL, ElementalType.NATURAL);
+    public static final DamageDescriptor NATURAL = new DamageDescriptor(DamageType.ELEMENTAL, ElementalType.NATURAL);
 
     private final int damagePerRound;
 

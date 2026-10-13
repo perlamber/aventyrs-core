@@ -312,14 +312,14 @@ public class NatureSummon implements SummonedMonsterTemplate {
             return java.util.Optional.empty();
         }
         org.aventyrs.core.character.DamageDescriptor natural = new org.aventyrs.core.character.DamageDescriptor(
-                org.aventyrs.core.character.DamageType.ELEMENTAL, org.aventyrs.core.magic.ElementalType.NATURAL);
+                org.aventyrs.core.character.DamageType.MAGICO, org.aventyrs.core.magic.ElementalType.NATURAL);
         return java.util.Optional.of(kind == NatureSummonKind.ORGULHO_DE_LACERTO
                 ? new ElementalDischarge(3, 0, 1, natural, 6, BREATH_ACTION_POINTS, BREATH_COOLDOWN)
                 : new ElementalDischarge(2, 1 + vigorOf(self) / 2, 2, natural, 4, BREATH_ACTION_POINTS, BREATH_COOLDOWN));
     }
 
     /**
-     * Its Aura Elemental, if it rolled one (core 0.0.97) — Experimento: "2 de Dano Físico Elemental a cada Rodada em alvos
+     * Its Aura Elemental, if it rolled one (core 0.0.97) — Experimento: "2 de Dano Elemental a cada Rodada em alvos
      * adjacentes"; Orgulho: "1d6 de Dano Mágico Elemental".
      */
     public java.util.Optional<ElementalDischarge> aura() {
@@ -328,10 +328,10 @@ public class NatureSummon implements SummonedMonsterTemplate {
         }
         return java.util.Optional.of(kind == NatureSummonKind.ORGULHO_DE_LACERTO
                 ? new ElementalDischarge(1, 0, 0, new org.aventyrs.core.character.DamageDescriptor(
-                        org.aventyrs.core.character.DamageType.ELEMENTAL, org.aventyrs.core.magic.ElementalType.NATURAL),
+                        org.aventyrs.core.character.DamageType.MAGICO, org.aventyrs.core.magic.ElementalType.NATURAL),
                         0, 0, 0)
                 : new ElementalDischarge(0, 2, 0, new org.aventyrs.core.character.DamageDescriptor(
-                        org.aventyrs.core.character.DamageType.FISICO_ELEMENTAL,
+                        org.aventyrs.core.character.DamageType.ELEMENTAL,
                         org.aventyrs.core.magic.ElementalType.NATURAL), 0, 0, 0));
     }
 

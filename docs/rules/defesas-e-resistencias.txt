@@ -4,6 +4,19 @@ Fonte: bloco de regras fornecido pelo autor. Este arquivo é a fonte da verdade 
 subsistema de Resistências (RD/RM/RE/RC/RA/RDS/Meio-Dano/Resistência à Corrente de Efeitos).
 
 ================================================================================================
+Tipos de Dano (atualização da mesa, 2026-10-12)
+
+  Físico, Primordial, Elemental, Mágico Elemental, Físico Profano, Mágico Profano, Físico Sagrado,
+  Mágico Sagrado, Físico Umbral, Mágico Umbral, Danos de Queda e Danos de Asfixia.
+  (O antigo "Físico Elemental" passa a se chamar apenas "Elemental".)
+
+  Decisões da mesa (2026-10-12):
+  - Elemental é reduzido apenas por RE (nunca por RD) — além de RDS e RA.
+  - Mágico Elemental é reduzido por RE, RM, RDS e RA.
+  - Todo Dano Mágico é qualificado (Elemental, Profano, Sagrado ou Umbral); não existe Dano Mágico puro.
+  - Danos de Queda e de Asfixia são reduzidos apenas por RA, até que suas regras sejam definidas.
+
+================================================================================================
 Resistindo a Danos e Efeitos Ofensivos
 
 Resistência à Danos (RD)
@@ -17,7 +30,7 @@ Resistência à Magias (RM)
   Duração não se acumula entre instâncias).
 
 Resistência Elemental (RE)
-  Cada instância reduz Danos Elementais Físicos e Mágicos em -2.
+  Cada instância reduz Danos Elementais e Mágicos Elementais em -2.
   Reduz a Duração de Efeitos Elementais contínuos em -1 Unidade (a redução de Duração não se
   acumula entre instâncias).
 

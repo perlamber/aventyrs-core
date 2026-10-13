@@ -51,13 +51,13 @@ class BrotosDeMapinguariAbilityTest {
     @Test
     void anatomiaVegetalReportsItsWeaknessesWithoutSizingThem() {
         MonsterSheet broto = spawn(0, lagrimas());
-        DamageDescriptor fire = new DamageDescriptor(DamageType.ELEMENTAL, ElementalType.FOGO);
-        DamageDescriptor ice = new DamageDescriptor(DamageType.ELEMENTAL, ElementalType.GELO);
-        DamageDescriptor natural = new DamageDescriptor(DamageType.ELEMENTAL, ElementalType.NATURAL);
-        assertTrue(broto.isVulnerableToDamage(DamageType.ELEMENTAL, fire));
-        assertTrue(broto.isVulnerableToDamage(DamageType.ELEMENTAL, ice));
-        assertFalse(broto.isVulnerableToDamage(DamageType.ELEMENTAL, natural));
-        assertEquals(10, finalDamage(broto, DamageType.ELEMENTAL, ElementalType.FOGO));
+        DamageDescriptor fire = new DamageDescriptor(DamageType.MAGICO, ElementalType.FOGO);
+        DamageDescriptor ice = new DamageDescriptor(DamageType.MAGICO, ElementalType.GELO);
+        DamageDescriptor natural = new DamageDescriptor(DamageType.MAGICO, ElementalType.NATURAL);
+        assertTrue(broto.isVulnerableToDamage(DamageType.MAGICO, fire));
+        assertTrue(broto.isVulnerableToDamage(DamageType.MAGICO, ice));
+        assertFalse(broto.isVulnerableToDamage(DamageType.MAGICO, natural));
+        assertEquals(10, finalDamage(broto, DamageType.MAGICO, ElementalType.FOGO));
     }
 
     @Test

@@ -56,7 +56,7 @@ public enum DefensiveMasterpiece implements Masterpiece {
             "Ativar o Favor 1PA e 3PM, Duração 2 Rodadas."),
     // TODO: needs retaliation damage, melee-source and special-material classifications.
     GELO_VERDADEIRO("Material Especial - Gelo Verdadeiro", ItemRarity.RARE, 2, 0, 0, requirements(AttributeDomain.STRENGTH, 3),
-            "Atacantes Corpo-a-Corpo sofrem 3 pontos de danos Físico Elemental: Gelo.",
+            "Atacantes Corpo-a-Corpo sofrem 3 pontos de danos Elemental: Gelo.",
             "Dano sofrido reduzido em -1, exceto para resistir a danos de armas de Gelo Verdadeiro."),
     // The Aprimoramento's "Concede RM ao usuário" is real, as is the weight-class step
     // (getWeightClassBonus). TODO: the Favor's two halves are not — a per-copy Resistência a
@@ -69,7 +69,7 @@ public enum DefensiveMasterpiece implements Masterpiece {
     // TODO: needs elemental resistance, dragon-element typing and shield-as-weapon resolution.
     COURO_DE_DRAGAO("Material Especial - Couro de Dragão", ItemRarity.MYTHIC, 2, 2, 1, requirements(AttributeDomain.VIGOR, 3),
             "RE muda para Todos os Elementos. Dano do Elemento do Dragão é reduzido à metade (efeito de Meio-Dano).",
-            "Usuário ganha RE para resistir a efeitos do Elemento do Dragão. Escudos feitos de Couro de Dragão, quando usados para atacar, causam +1d6 pontos de danos e o tipo de dano muda para Físico Elemental."),
+            "Usuário ganha RE para resistir a efeitos do Elemento do Dragão. Escudos feitos de Couro de Dragão, quando usados para atacar, causam +1d6 pontos de danos e o tipo de dano muda para Elemental."),
     // TODO: needs per-item incoming-damage state, round parity and physical-damage classification.
     ADAMANTINA("Material Especial - Adamantina", ItemRarity.EPIC, 2, 1, 0, requirements(AttributeDomain.VIGOR, 3),
             "Primeiro dano sofrido em Rodadas Ímpares é reduzido à metade (efeito de Meio-Dano). Bônus em DF aumenta para +6 para resistir ao primeiro ataque que inflija danos físicos da Cena.",

@@ -85,6 +85,14 @@ public class SpellCastingServiceImpl implements SpellCastingService {
                 spell, empowerment), casterCompetencies.stream()
                 .mapToInt(ability -> ability.resolveSpellDurationIncrease(spell, request.getCaster().getCharacter()))
                 .sum());
+        // Benção Elduriana: a hostile Encantamento or Maldição lasts 1 Rodada less on its wearer (core 0.1.6.11).
+        // ⚠️ Floored at 0 — a reading: a 1-Rodada one then does not last at all.
+        int hostileReduction = isHostileTarget(request) && durationInRounds.isPresent()
+                ? org.aventyrs.core.item.DefensiveEnhancements.hostileDurationReduction(
+                        request.getCombatantTarget().getCharacter(), spell) : 0;
+        if (hostileReduction > 0) {
+            durationInRounds = OptionalInt.of(Math.max(0, durationInRounds.getAsInt() - hostileReduction));
+        }
         // Serra-Pernas: "+2 rodadas para cada PM gasto" — paid in resolveManaCost.
         int extraManaRounds = extraMana(spell, request) * spell.getRoundsPerExtraMana();
         if (extraManaRounds > 0 && durationInRounds.isPresent()) {
@@ -105,7 +113,9 @@ public class SpellCastingServiceImpl implements SpellCastingService {
                 // A drawn Artefato de Conjuração's "Vantagem nas Rolagens … para Conjuração" (core 0.1.6.8).
                 + org.aventyrs.core.item.CastingArtifacts.castingRollBonus(casterCharacter)
                 // A drawn weapon's Conjuração columns and Benção Elemental's "+1 em Conjuração … de Magia Elemental".
-                + org.aventyrs.core.item.WeaponEnhancements.castingRollBonus(casterCharacter, spell);
+                + org.aventyrs.core.item.WeaponEnhancements.castingRollBonus(casterCharacter, spell)
+                // A worn Armadura's or Escudo's Conjuração columns, on every Magia (core 0.1.6.11).
+                + org.aventyrs.core.item.DefensiveEnhancements.castingRollBonus(casterCharacter);
         if (castingRollBonus != 0 && dominioDoManaResult.getSkillRollBonus() != null) {
             dominioDoManaResult = dominioDoManaResult.toBuilder()
                     .skillRollBonus(dominioDoManaResult.getSkillRollBonus() + castingRollBonus)

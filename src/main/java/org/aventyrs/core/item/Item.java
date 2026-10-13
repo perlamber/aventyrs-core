@@ -301,13 +301,24 @@ public interface Item {
     default int resolveEnhancementBonus(final ModifierType modifierType,
                                         final org.aventyrs.core.skill.SkillType skillType,
                                         final Character character) {
+        return resolveEnhancementBonus(modifierType, skillType, character, null);
+    }
+
+    /**
+     * Same as the three-argument form, aware of the Scene the roll is made in — what a terrain-scoped Aprimoramento
+     * reads ({@link DefensiveImprovement#CAMUFLADA}, core 0.1.6.11). A {@code null} context is "not in a Scene".
+     */
+    default int resolveEnhancementBonus(final ModifierType modifierType,
+                                        final org.aventyrs.core.skill.SkillType skillType,
+                                        final Character character,
+                                        final org.aventyrs.core.scene.SceneContext sceneContext) {
         if (isDestroyed()) {
             return 0;
         }
         int masterpieceBonus = getMasterpiece() == null ? 0
                 : getMasterpiece().resolveBonus(modifierType, skillType, character);
         int improvementBonus = getImprovements().stream()
-                .mapToInt(improvement -> improvement.resolveBonus(modifierType, skillType, character))
+                .mapToInt(improvement -> improvement.resolveBonus(modifierType, skillType, character, sceneContext))
                 .sum();
         return masterpieceBonus + improvementBonus + resolvePowerStoneBonus(modifierType);
     }

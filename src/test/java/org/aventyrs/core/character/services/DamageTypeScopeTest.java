@@ -115,21 +115,31 @@ class DamageTypeScopeTest {
     /** "RD … reduz o Dano Físico não-PRIMORDIAL e não-ELEMENTAL" — no RD on a magic hit any more. */
     @Test
     void aMagicHitTakesRdsAndRmButNotRd() {
-        assertEquals(10 - 1 - 2, hit(sheet(null, EVERY_REDUCTION), new DamageDescriptor(DamageType.MAGICO)));
+        assertEquals(10 - 1 - 2, hit(sheet(null, EVERY_REDUCTION), new DamageDescriptor(DamageType.MAGICO, null, org.aventyrs.core.character.DamageSanctity.UMBRAL)));
     }
 
+    /** Elemental is RE-only; a Mágico Elemental takes RM and RE both (table rulings, 2026-10-12). */
     @Test
     void anElementalHitOfTheResistedElementTakesRdsAndRe() {
         CharacterSheet target = sheet(null, EVERY_REDUCTION);
 
+        assertEquals(10 - 1 - 2 - 2, hit(target, new DamageDescriptor(DamageType.MAGICO, ElementalType.FOGO)));
         assertEquals(10 - 1 - 2, hit(target, new DamageDescriptor(DamageType.ELEMENTAL, ElementalType.FOGO)));
-        assertEquals(10 - 1 - 2, hit(target, new DamageDescriptor(DamageType.FISICO_ELEMENTAL, ElementalType.FOGO)));
+    }
+
+    /** Danos de Queda and Asfixia: only RA, until their rules arrive (table ruling, 2026-10-12). */
+    @Test
+    void fallAndAsphyxiationTakeNoReductionButRa() {
+        CharacterSheet target = sheet(null, EVERY_REDUCTION);
+
+        assertEquals(10, hit(target, new DamageDescriptor(DamageType.QUEDA)));
+        assertEquals(10, hit(target, new DamageDescriptor(DamageType.ASFIXIA)));
     }
 
     @Test
     void anElementalHitOfAnotherElementTakesOnlyRds() {
         assertEquals(10 - 1,
-                hit(sheet(null, EVERY_REDUCTION), new DamageDescriptor(DamageType.FISICO_ELEMENTAL, ElementalType.GELO)));
+                hit(sheet(null, EVERY_REDUCTION), new DamageDescriptor(DamageType.ELEMENTAL, ElementalType.GELO)));
     }
 
     @Test
@@ -158,15 +168,15 @@ class DamageTypeScopeTest {
     void resistenciaElementalSuperiorHalvesTheHoldersOwnElement() {
         CharacterSheet colosso = sheet(new Colosso(new Human()), ElementalFeat.RESISTENCIA_ELEMENTAL_SUPERIOR);
 
-        assertEquals(5, hit(colosso, new DamageDescriptor(DamageType.ELEMENTAL, ElementalType.TERRA)));
-        assertEquals(10, hit(colosso, new DamageDescriptor(DamageType.ELEMENTAL, ElementalType.FOGO)));
+        assertEquals(5, hit(colosso, new DamageDescriptor(DamageType.MAGICO, ElementalType.TERRA)));
+        assertEquals(10, hit(colosso, new DamageDescriptor(DamageType.MAGICO, ElementalType.FOGO)));
     }
 
     @Test
     void imunidadeElementalNullifiesTheHoldersOwnElement() {
         CharacterSheet colosso = sheet(new Colosso(new Human()), ElementalFeat.IMUNIDADE_ELEMENTAL);
 
-        assertEquals(0, hit(colosso, new DamageDescriptor(DamageType.FISICO_ELEMENTAL, ElementalType.TERRA)));
+        assertEquals(0, hit(colosso, new DamageDescriptor(DamageType.ELEMENTAL, ElementalType.TERRA)));
         assertEquals(10, hit(colosso, new DamageDescriptor(DamageType.FISICO)));
     }
 
@@ -194,8 +204,8 @@ class DamageTypeScopeTest {
         mist.enterForm(FormType.NEVOA);
 
         assertEquals(0, hit(mist, new DamageDescriptor(DamageType.FISICO)));
-        assertEquals(10, hit(mist, new DamageDescriptor(DamageType.FISICO_ELEMENTAL, ElementalType.FOGO)));
-        assertEquals(10, hit(mist, new DamageDescriptor(DamageType.MAGICO)));
+        assertEquals(10, hit(mist, new DamageDescriptor(DamageType.ELEMENTAL, ElementalType.FOGO)));
+        assertEquals(10, hit(mist, new DamageDescriptor(DamageType.MAGICO, null, org.aventyrs.core.character.DamageSanctity.UMBRAL)));
     }
 
     // ---------- retyping ----------
@@ -214,7 +224,7 @@ class DamageTypeScopeTest {
     void desprezoNaturalRetypesArmasNaturaisOnly() {
         CharacterSheet feral = sheet(null, FeralFeat.DESPREZO_NATURAL);
 
-        assertEquals(new DamageDescriptor(DamageType.FISICO_ELEMENTAL, ElementalType.NATURAL),
+        assertEquals(new DamageDescriptor(DamageType.ELEMENTAL, ElementalType.NATURAL),
                 swing(feral, NaturalWeapon.GARRAS_AFIADAS).getRetypedDamage());
         assertNull(swing(feral, blade()).getRetypedDamage());
     }
@@ -232,7 +242,7 @@ class DamageTypeScopeTest {
         InteractionResult paladin = swing(CharacterSheet.of(character, new Player()), blade());
         InteractionResult plain = swing(CharacterSheet.of(plainCharacter, new Player()), blade());
 
-        assertEquals(new DamageDescriptor(DamageType.FISICO_ELEMENTAL, ElementalType.TERRA), paladin.getRetypedDamage());
+        assertEquals(new DamageDescriptor(DamageType.ELEMENTAL, ElementalType.TERRA), paladin.getRetypedDamage());
         int plainBonus = plain.getDamageBonus() == null ? 0 : plain.getDamageBonus().getValue();
         assertEquals(plainBonus + 2, paladin.getDamageBonus().getValue());
     }

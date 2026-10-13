@@ -56,7 +56,7 @@ public record AreaDamage(@NonNull CombatantSheet target, int amount, @NonNull Da
                     int amount = CATACLYSM_DAMAGE_PER_ELEMENT
                             * (sceneContext.getDistanceTo(target) == Range.ADJACENTE ? 2 : 1);
                     for (ElementalType element : frenzy.get().getCataclysmElements()) {
-                        hits.add(new AreaDamage(target, amount, new DamageDescriptor(DamageType.ELEMENTAL, element),
+                        hits.add(new AreaDamage(target, amount, new DamageDescriptor(DamageType.MAGICO, element),
                                 caster));
                     }
                 });

@@ -21,17 +21,17 @@ class DamageBonusTest {
 
     @Test
     void constructorAssignsValueTypeAndElementForAnElementalType() {
-        DamageBonus damageBonus = new DamageBonus(2, DamageType.ELEMENTAL, ElementalType.TERRA);
+        DamageBonus damageBonus = new DamageBonus(2, DamageType.MAGICO, ElementalType.TERRA);
 
         assertEquals(2, damageBonus.getValue());
-        assertEquals(DamageType.ELEMENTAL, damageBonus.getType());
+        assertEquals(DamageType.MAGICO, damageBonus.getType());
         assertEquals(ElementalType.TERRA, damageBonus.getElementalType());
     }
 
     @Test
     void constructorRejectsAnElementalTypeWithNoElement() {
         assertThrows(IllegalOperationException.class,
-                () -> new DamageBonus(2, DamageType.FISICO_ELEMENTAL));
+                () -> new DamageBonus(2, DamageType.ELEMENTAL));
     }
 
     @Test

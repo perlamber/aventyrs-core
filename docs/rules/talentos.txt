@@ -1044,7 +1044,7 @@ Asas de Dragão são extremamente grandes, rígidas e resistentes, por isso conc
 Aura Dracônica (Dracônico)
 Pré-requisito: Instinto 3 e o Talento Sopro de Dragão
 Descrição: Após usar seu Sopro de Dragão você emana uma aura de energia que te acompanhada por 2 Rodadas.
-Durante a ativação da aura e no início de cada um dos seus Turnos subsequentes, enquanto a aura estiver ativa, personagens adjacentes sofrem 2 pontos de Dano Físico Elemental.
+Durante a ativação da aura e no início de cada um dos seus Turnos subsequentes, enquanto a aura estiver ativa, personagens adjacentes sofrem 2 pontos de Dano Elemental.
 O dano da aura aumenta em +1 e o alcance em +1UD para cada Título Aventyr Desperto.
 
 Sopro de Dragão (Dracônico)
@@ -1068,7 +1068,7 @@ Suas Magias Elementais de dano e cura tem seus efeitos numéricos aumentados em 
 
 Gana Elemental (Elemental)
 Pré-requisito: Apenas personagens de Raças Elementais.
-Descrição: Ao tempo de 1PA e ao custo de 2PD você pode encantar uma de suas Armas Naturais ou uma outra arma ao toque, o Dano Base da Arma escolhida aumenta em +2 e o tipo de dano causado muda para Físico Elemental por 2 Rodadas. 
+Descrição: Ao tempo de 1PA e ao custo de 2PD você pode encantar uma de suas Armas Naturais ou uma outra arma ao toque, o Dano Base da Arma escolhida aumenta em +2 e o tipo de dano causado muda para Elemental por 2 Rodadas. 
 RAÇA
 DANO ELEMENTAL
 Agástia Trovejante
@@ -1090,7 +1090,7 @@ Gelo
 
 Reparação Elemental (Elemental)
 Pré-requisito: Talento Resistência Elemental
-Descrição: Como uma Reação você pode fazer com que seu corpo seja coberto pelo seu elemento ou de espinhos elementais, este efeito tem por Duração apenas o Turno em que foi ativado. Personagens adjacentes que te causarem danos enquanto seu corpo estiver coberto de seu elemento ou espinhos sofrem 2 pontos de Dano Físico Elemental, este Dano é aumentado em +1 para cada Título Aventyr que você tiver Desperto.
+Descrição: Como uma Reação você pode fazer com que seu corpo seja coberto pelo seu elemento ou de espinhos elementais, este efeito tem por Duração apenas o Turno em que foi ativado. Personagens adjacentes que te causarem danos enquanto seu corpo estiver coberto de seu elemento ou espinhos sofrem 2 pontos de Dano Elemental, este Dano é aumentado em +1 para cada Título Aventyr que você tiver Desperto.
 
 Resistência Elemental (Elemental)
 Pré-requisito: Apenas personagens de Raças Elementais.
@@ -1275,7 +1275,7 @@ Descrição: Você recebe Bônus Racial de +1 em Vigor e adquire a Habilidade Ra
 
 Desprezo Natural (Feral/Assassino)
 Pré-requisito: Apenas Homens-Fera com Força Base 3 ou superior.
-Descrição: Você recebe Bônus Racial de +1 em Força, o Tipo de Dano base de suas Armas Naturais mudam para Físico Elemental: Natural em substituição aos seus tipos e recebem a Corrente de Efeitos – Ferida Infecciosa.
+Descrição: Você recebe Bônus Racial de +1 em Força, o Tipo de Dano base de suas Armas Naturais mudam para Elemental: Natural em substituição aos seus tipos e recebem a Corrente de Efeitos – Ferida Infecciosa.
 
 TALENTOS RACIAIS AVENTYRS
 Transformação Rápida (Aventyr/Feral)
@@ -1359,7 +1359,7 @@ TALENTOS RACIAIS AVENTYRS
 Kabum! (Goblin/Perito/Aventyr)
 Pré-requisito: Engenheiro de Improvisos
 Descrição: Você pode substituir os Engenheiro de Improvisos e reduzir a GD da rolagem de Profissão em -2 Níveis (ao invés de -1 Nível), se o fizer a Dureza do Equipamento é reduzida para 5PV (ou 1/3, o que for menor). 
-Itens tecnológicos criados desta forma explodem quando sua Dureza chega à zero, causando 1d6 Pontos de Dano Físico Elemental: Fogo para cada Título Aventyr que você possuir, Área de Efeito – Explosão.
+Itens tecnológicos criados desta forma explodem quando sua Dureza chega à zero, causando 1d6 Pontos de Dano Elemental: Fogo para cada Título Aventyr que você possuir, Área de Efeito – Explosão.
 
 
 Górgona
@@ -1546,7 +1546,7 @@ Descrição: Você recebe Bônus Racial de +2 em DF e RDS.
 
 Sangue ácido (Monstruoso)
 Pré-requisitos: Personagens de raça Monstruosa com Vigor 3 ou superior.
-Descrição: Sempre que for atingido por um ataque Corpo-a-Corpo, o atacante sofre 1 pontos de Dano Físico Elemental: Natural. Este dano aumenta em +2 se o atacante tiver utilizado de Armas Naturais ou Desarmado.
+Descrição: Sempre que for atingido por um ataque Corpo-a-Corpo, o atacante sofre 1 pontos de Dano Elemental: Natural. Este dano aumenta em +2 se o atacante tiver utilizado de Armas Naturais ou Desarmado.
 
 TALENTOS RACIAIS AVENTYRS
 Cérbero (Aventyr/Monstruoso)
@@ -1613,12 +1613,12 @@ Descrição: Seu Multiplicador de PV aumenta em +1 para cada Título Aventyr des
 TALENTOS RACIAIS AVENTYRS
 Paladino de Epona (Aventyr/Abençoado/Órquico)
 Pré-requisito: Apenas personagens Orcs Devotos de Epona, com Vigor Base 5 e pelo menos 1 Título Aventyr Desperto.
-Descrição: Seus ataques com Armas e Armas Naturais causam danos Físicos Elementais: Terra em substituição aos seus tipos. Suas Magias, apenas Divinas e Elementais: Terra, capazes de infligir danos sempre causam Danos Físico ao invés de Mágicos
+Descrição: Seus ataques com Armas e Armas Naturais causam danos Elementais: Terra em substituição aos seus tipos. Suas Magias, apenas Divinas e Elementais: Terra, capazes de infligir danos sempre causam Danos Físico ao invés de Mágicos
 Você pode adicionar Metade do Vigor às suas rolagens de danos físicos., se um efeito puder alterar a natureza dos seus danos para mágico ela deixará de fazê-lo.
 Tremor (Aventyr/Bruto/Órquico)
 Pré-requisito: Talento Paladino de Epona
 Descrição: Você pode invocar um poder ancestral para causar um ataque poderoso.
-Efeito Ativo - Ao Tempo de Ação de 3PA e Custo de 3PM, você pode realizar um ataque em um alvo em seu alcance com uma de suas Armas ou Armas Naturais. Para este ataque você recebe Vantagem em sua Rolagem de Ataque Corpo-a-Corpo e Bônus em rolagem de danos igual ao seus Multiplicadores de PV, o dano causado é Físico Elemental: Terra e tem Área de Efeito – Explosão.
+Efeito Ativo - Ao Tempo de Ação de 3PA e Custo de 3PM, você pode realizar um ataque em um alvo em seu alcance com uma de suas Armas ou Armas Naturais. Para este ataque você recebe Vantagem em sua Rolagem de Ataque Corpo-a-Corpo e Bônus em rolagem de danos igual ao seus Multiplicadores de PV, o dano causado é Elemental: Terra e tem Área de Efeito – Explosão.
 Efeito Passivo - Se tiver 2 Títulos Aventyr Despertos e ao menos 1 deles for Abençoado seu Multiplicador de PV aumenta em +1.
 
 Tremor Residual (Aventyr/Bruto/Órquico)
@@ -1706,7 +1706,7 @@ Descrição: Enquanto no Sono de Pedra você pode despertar ao sofrer qualquer q
 TALENTOS RACIAIS AVENTYRS
 Regeneração Reativa Espinhosa (Aventyr/Troll)
 Pré-requisito: Apenas Trolls da Floresta com o Talento Regeneração Reativa Superior.
-Descrição: Enquanto em Regeneração Reativa seu corpo exala esporos que inflige dor e danos a quem estiver próximo. Personagens adjacentes que não sejam Trolls da Floresta, sofrem Dano Físico Elemental: Natural  igual 1+ número de Títulos Aventyr Despertos que você possuir (não cumulativo com múltiplas ativações de Regeneração Reativa).
+Descrição: Enquanto em Regeneração Reativa seu corpo exala esporos que inflige dor e danos a quem estiver próximo. Personagens adjacentes que não sejam Trolls da Floresta, sofrem Dano Elemental: Natural  igual 1+ número de Títulos Aventyr Despertos que você possuir (não cumulativo com múltiplas ativações de Regeneração Reativa).
 
 Regeneração Reativa Invernal (Aventyr/Troll)
 Pré-requisito: Apenas Trolls do Inverno com o Talento Regeneração Reativa Superior.

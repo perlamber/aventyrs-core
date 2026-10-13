@@ -169,7 +169,7 @@ Aprimoramentos dos Apex
 
 Habilidade – Armamento Elemental [Presa]
 Efeito Passivo – Escolha uma Arma Natural, este Monstro possui a Arma Natural escolhida.
-Efeito Ativo – Fúria Elemental [1PA, 2PD]: Escolha um Elemento, durante 3 Rodadas a Arma Natural causa dano Físico Elemental e recebe Cataclismo como Efeito Crítico adicional. Resfriamento 3.
+Efeito Ativo – Fúria Elemental [1PA, 2PD]: Escolha um Elemento, durante 3 Rodadas a Arma Natural causa dano Elemental e recebe Cataclismo como Efeito Crítico adicional. Resfriamento 3.
 Aprimoramentos dos Deviantes
   • Rolagens de Ataques e Danos com a Arma Natural recebem Bônus de +2.
 Aprimoramentos dos Predadores
@@ -182,7 +182,7 @@ Aprimoramentos dos Apex
 Habilidade – Sangue Elemental [Deviante]
 Efeito Passivo: Escolha um Elemento; Retribuição Elemental.
 “Retribuição Elemental - Atacantes corpo-a-corpo que infligirem danos ao Elemental sofrem 3 pontos de Dano Elemental.”
-Efeito Ativo – Aura Elemental: Cria uma Aura Elemental ao redor do Monstro com Área de Efeito Circular Curta. Outros personagens na área sofrem 1d6 pontos de Dano Físico Elemental. Esta Habilidade só pode ser ativada se o Monstro estiver ferido e tem Duração de 2 Rodadas. Resfriamento 2.
+Efeito Ativo – Aura Elemental: Cria uma Aura Elemental ao redor do Monstro com Área de Efeito Circular Curta. Outros personagens na área sofrem 1d6 pontos de Dano Elemental. Esta Habilidade só pode ser ativada se o Monstro estiver ferido e tem Duração de 2 Rodadas. Resfriamento 2.
 Aprimoramentos dos Predadores
   • Retribuição Elemental – Dano muda para 1d6 e se torna Mágico Elemental.
   • Explosão Pós-Mortis.
@@ -219,7 +219,7 @@ Aprimoramentos das Abominações
 Habilidade - Tormenta Cataclísmica [Apex]
 Efeito Passivo – Multiplicador de PD +1.
 Efeito Ativo – Tormenta Cataclísmica [4PA, 5PD]: Altera o terreno por 5 Rodadas, criando uma Tormenta Cataclísmica. Enquanto estiver no terreno transformado em Tormenta Cataclísmica recupera 1d6PV por Rodada e seus ataques recebem Roubo de Vida 2.
-“Tormenta Cataclísmica – Área Circular Muito Longa, o terreno é tomado por energia elemental, infligindo 1d6+Instinto pontos de Dano Físico Elemental a todos os personagens, Equipamentos e objetos em seu interior.
+“Tormenta Cataclísmica – Área Circular Muito Longa, o terreno é tomado por energia elemental, infligindo 1d6+Instinto pontos de Dano Elemental a todos os personagens, Equipamentos e objetos em seu interior.
 Aprimoramentos das Abominações
   • Tormenta Cataclísmica – Os danos da Tormenta Cataclísmica mudam para Mágico Elemental.
   • Tormenta Cataclísmica – Uma tempestade de energia elemental cai sobre o terreno, causando 1d6 Pontos de Dano Mágico Elemental a todos os personagens.

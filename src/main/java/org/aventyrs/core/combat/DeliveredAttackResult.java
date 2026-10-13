@@ -64,6 +64,18 @@ public class DeliveredAttackResult {
     private final Retaliation retaliation;
 
     /**
+     * What the primary defender's worn Espinhosa / Rigidez Refletora do back to this attack — hit or miss — or {@code
+     * null} (core 0.1.6.11). Reported, never dealt: see {@link EquipmentRetaliation#applyTo}.
+     */
+    private final EquipmentRetaliation equipmentRetaliation;
+
+    /**
+     * How many of {@link #projectilesToConsume} a Rigidez Refletora destroyed — never recovered at combat end. Pass it
+     * to {@code AmmunitionService#consume}'s five-argument form.
+     */
+    private final int projectilesDestroyed;
+
+    /**
      * PV the <b>attacker</b> owes for this hit, only a Descanso Verdadeiro recovers — {@code
      * Feat#resolveLockedSelfDamageOnHit}, {@code DuelistaFeat#FORCA_EXCESSIVA}'s "se o fizer e for
      * bem-sucedido você sofre 2 pontos de Dano Físico Primordial". 0 on a miss. Reported, never

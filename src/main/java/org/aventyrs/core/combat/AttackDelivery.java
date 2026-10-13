@@ -223,6 +223,9 @@ public class AttackDelivery {
                 attack.getAttacker(), attack.getAttackSkill(), attack.getAttackSource(), additionalTargets.size()))
                 || halvesAttackDamage(attack, attackRoll);
         Retaliation retaliation = RetaliationResolver.resolve(defender, attack.getAttackSkill());
+        // Espinhosa / Rigidez Refletora: the primary target's worn Aprimoramentos answer the attack, hit or miss.
+        EquipmentRetaliation equipmentRetaliation = org.aventyrs.core.item.DefensiveEnhancements.retaliationAgainst(
+                defender, attack.getAttackSkill(), attack.getProjectile());
 
         List<CombatantSheet> extraTargets = additionalTargets.stream().map(AttackTarget::defender).toList();
         InteractionResult attackResult = SkillInteractionFactory.create(attack.getAttackSkill())
@@ -243,6 +246,7 @@ public class AttackDelivery {
                 .auraHalvesDamage(auraHalvesDamage)
                 .everyTargetHalved(everyTargetHalved)
                 .retaliation(retaliation)
+                .equipmentRetaliation(equipmentRetaliation)
                 .unappliedDifficultyReduction(attackResult.getDifficultyReduction())
                 .unappliedSpellResistanceReduction(SpellResistance.difficultyReduction(defender, attack.getAttackSource()));
 
@@ -256,7 +260,12 @@ public class AttackDelivery {
                     .build()));
             return result.attackResult(attackResult).build();
         }
-        result.firedProjectile(attack.getProjectile()).projectilesToConsume(projectilesFired);
+        result.firedProjectile(attack.getProjectile()).projectilesToConsume(projectilesFired)
+                .projectilesDestroyed(equipmentRetaliation != null && equipmentRetaliation.projectileDestroyed()
+                        ? projectilesFired : 0);
+        // Benção Ymiriana: being the target of an attack — hit or miss, primary or additional — opens its window.
+        org.aventyrs.core.item.DefensiveEnhancements.onAttacked(defender);
+        additionalTargets.forEach(target -> org.aventyrs.core.item.DefensiveEnhancements.onAttacked(target.defender()));
 
         int margin = attackTotal - requiredTotal;
         // A Cego attacker's failed 1d6 misses whatever the total.

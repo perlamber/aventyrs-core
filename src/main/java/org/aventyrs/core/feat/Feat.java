@@ -1560,9 +1560,9 @@ public sealed interface Feat permits AnaoFeat, ArtesMarciaisFeat, ArtificeFeat, 
 
     /**
      * The damage type this Talento makes an attack deal instead of its own — "Seus ataques com
-     * Armas e Armas Naturais causam danos Físicos Elementais: Terra em substituição aos seus tipos"
+     * Armas e Armas Naturais causam danos Elementais: Terra em substituição aos seus tipos"
      * ({@code OrquicoFeat#PALADINO_DE_EPONA}), "o Tipo de Dano base de suas Armas Naturais mudam para
-     * Físico Elemental: Natural" ({@code FeralFeat#DESPREZO_NATURAL}). {@code null} by default.
+     * Elemental: Natural" ({@code FeralFeat#DESPREZO_NATURAL}). {@code null} by default.
      *
      * <p><b>Reported, not applied</b>: a hit's type is always the caller's to supply when it
      * applies damage, so {@code AbstractSkillInteraction} reports the first held Talento's answer

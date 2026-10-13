@@ -239,7 +239,7 @@ public enum MonstruosoFeat implements Feat {
 
     /**
      * "Sempre que for atingido por um ataque Corpo-a-Corpo, o atacante sofre 1 ponto de Dano
-     * Físico Elemental: Natural."
+     * Elemental: Natural."
      */
     // Real through Feat#resolveRetaliation: reported on a landed melee hit, dealt by the caller.
     // The +2 applies when the attacker struck with a Weapon they treat as an Arma Natural
@@ -249,7 +249,7 @@ public enum MonstruosoFeat implements Feat {
     //  read as either.
     SANGUE_ACIDO(
             "Sempre que for atingido por um ataque Corpo-a-Corpo, o atacante sofre 1 ponto de "
-                    + "Dano Físico Elemental: Natural. Este dano aumenta em +2 se o atacante tiver "
+                    + "Dano Elemental: Natural. Este dano aumenta em +2 se o atacante tiver "
                     + "utilizado de Armas Naturais ou Desarmado.",
             FeatRequirements.builder()
                     .requiredCreatureType(CreatureType.MONSTRUOSO)
@@ -262,7 +262,7 @@ public enum MonstruosoFeat implements Feat {
             boolean naturalWeapon = attacker != null && attackSource instanceof Weapon weapon
                     && attacker.treatsAsNaturalWeapon(weapon);
             return new Retaliation(SANGUE_ACIDO_RETALIATION + (naturalWeapon ? SANGUE_ACIDO_NATURAL_WEAPON_BONUS : 0),
-                    new DamageDescriptor(DamageType.FISICO_ELEMENTAL, ElementalType.NATURAL), null, 0);
+                    new DamageDescriptor(DamageType.ELEMENTAL, ElementalType.NATURAL), null, 0);
         }
     },
 
@@ -454,7 +454,7 @@ public enum MonstruosoFeat implements Feat {
     /** CERBERO's "bônus racial de +1 no Atributo faltante". */
     private static final int CERBERO_RACIAL_BONUS = 1;
 
-    /** SANGUE_ACIDO's "1 ponto de Dano Físico Elemental: Natural". */
+    /** SANGUE_ACIDO's "1 ponto de Dano Elemental: Natural". */
     private static final int SANGUE_ACIDO_RETALIATION = 1;
 
     /** SANGUE_ACIDO's "aumenta em +2 se o atacante tiver utilizado de Armas Naturais". */

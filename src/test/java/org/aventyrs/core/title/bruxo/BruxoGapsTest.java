@@ -77,7 +77,7 @@ class BruxoGapsTest {
         MonsterSheet burning = NatureSummon.of(NatureSummonKind.ALIADO_DA_NATUREZA)
                 .withEnhancement(SummonEnhancement.builder().fireAttacks(true).build()).spawn(gm);
         MonsterSheet plain = NatureSummon.of(NatureSummonKind.ALIADO_DA_NATUREZA).spawn(gm);
-        DamageDescriptor fire = new DamageDescriptor(DamageType.ELEMENTAL, ElementalType.FOGO);
+        DamageDescriptor fire = new DamageDescriptor(DamageType.MAGICO, ElementalType.FOGO);
 
         assertEquals(5, damage.applyDamage(immuneToFire(), null, fire, burning, 10, true));
         assertEquals(0, damage.applyDamage(immuneToFire(), null, fire, plain, 10, true));

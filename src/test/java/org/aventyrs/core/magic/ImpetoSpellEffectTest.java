@@ -43,7 +43,7 @@ class ImpetoSpellEffectTest {
     private static final Spell DAMAGING = new TestSpell() {
         @Override
         public Optional<SpellDamage> getPrimaryDamage() {
-            return Optional.of(SpellDamage.halfFocusMagical(1));
+            return Optional.of(SpellDamage.halfFocusMagicalElemental(1, org.aventyrs.core.magic.ElementalType.FOGO));
         }
     };
 

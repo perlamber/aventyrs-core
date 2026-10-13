@@ -414,7 +414,9 @@ public enum AssassinoFeat implements Feat {
                                                     final AttackSource attackSource, final CombatantSheet holder,
                                                     final SkillRoll skillRoll) {
             return skillRoll != null && skillRoll.activated(GOLPE_SOBRENATURAL)
-                    ? new DamageDescriptor(DamageType.MAGICO, null) : null;
+                    // "este ataque causa Danos Mágicos" — Mágico Profano (table ruling, 2026-10-12: Mágico is qualified).
+                    ? new DamageDescriptor(DamageType.MAGICO, null, org.aventyrs.core.character.DamageSanctity.PROFANO)
+                    : null;
         }
 
         @Override

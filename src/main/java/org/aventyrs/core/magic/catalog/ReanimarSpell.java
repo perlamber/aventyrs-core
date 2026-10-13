@@ -125,7 +125,7 @@ public enum ReanimarSpell implements AuthoredSpell {
                     .name("Necrofagia")
                     .attackSkillType(SkillType.ATAQUE_CORPO_A_CORPO)
                     .castingDifficultyFlooredByTargetMagicDefense(true)
-                    .primaryDamage(SpellDamage.halfFocusMagical(2))
+                    .primaryDamage(SpellDamage.halfFocusPrimordial(2))
                     .build())
             .criticalEffectType(CriticalEffectType.AMENIZAR)
             .duration(SpellDuration.INSTANTANEA)

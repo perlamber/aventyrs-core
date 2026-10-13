@@ -159,7 +159,7 @@ public enum ModifierType {
      * Retaliação — damage an attacker takes for attacking this combatant in melee, the one
      * outward-facing damage figure in this enum ({@code
      * AbracadoPelaEscuridaoAbility#ESPINHOS_VENENOS_DE_GAEA}: "causam danos aos personagens que
-     * lhe atacarem Corpo-a-Corpo, Vigor pontos de Dano Físico Elemental: Natural").
+     * lhe atacarem Corpo-a-Corpo, Vigor pontos de Dano Elemental: Natural").
      *
      * <p>Held as a round-scoped {@code TemporaryBonus} on the <em>defender</em>, because the
      * clause is a timed state its holder enters. The attack orchestrators read it off the defender

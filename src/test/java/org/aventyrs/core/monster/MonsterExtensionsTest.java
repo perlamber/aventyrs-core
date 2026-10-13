@@ -36,7 +36,7 @@ class MonsterExtensionsTest {
     @Test
     void pendingDamageDiceGoThroughMitigation() {
         MonsterSheet salamander = spawn(46, MonstrousAbilitySelection.of(AlmaElementalAbility.SANGUE_ELEMENTAL, "FOGO"));
-        salamander.applyEffect(RecurringDice.damage(Dice.of(2), new DamageDescriptor(DamageType.ELEMENTAL, ElementalType.FOGO),
+        salamander.applyEffect(RecurringDice.damage(Dice.of(2), new DamageDescriptor(DamageType.MAGICO, ElementalType.FOGO),
                 2, "Marca Elemental"));
         salamander.tickTemporaryEffects();
         UUID pending = salamander.getPendingDiceRolls().get(0).id();

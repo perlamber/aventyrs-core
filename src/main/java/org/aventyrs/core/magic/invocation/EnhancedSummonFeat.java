@@ -67,7 +67,7 @@ public final class EnhancedSummonFeat extends AbstractFeat {
     }
 
     /**
-     * Vulcões do Noroeste: "+1d6 de Dano Físico Elemental: Magma em suas rolagens de Dano Crítico". TODO the die's
+     * Vulcões do Noroeste: "+1d6 de Dano Elemental: Magma em suas rolagens de Dano Crítico". TODO the die's
      * Magma typing: a {@code CriticalDamage} carries no type, so it lands as the hit's own.
      */
     @Override
@@ -127,7 +127,7 @@ public final class EnhancedSummonFeat extends AbstractFeat {
         }
         return enhancement.lightning()
                 ? new DamageDescriptor(DamageType.MAGICO, null, DamageSanctity.SAGRADO)
-                : new DamageDescriptor(DamageType.ELEMENTAL, ElementalType.FOGO);
+                : new DamageDescriptor(DamageType.MAGICO, ElementalType.FOGO);
     }
 
     /** Chamas do Norte: "inimigos imunes a fogo ainda sofrem metade dos danos" — a Fogo hit, immune or not. */

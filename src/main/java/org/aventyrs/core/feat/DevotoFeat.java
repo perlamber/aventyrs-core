@@ -410,8 +410,8 @@ public enum DevotoFeat implements Feat {
             if (!ymirianWindowOpen(attacker, holder)) {
                 return null;
             }
-            return new DamageDescriptor(attackSource instanceof Spell ? DamageType.ELEMENTAL
-                    : DamageType.FISICO_ELEMENTAL, ElementalType.GELO);
+            return new DamageDescriptor(attackSource instanceof Spell ? DamageType.MAGICO
+                    : DamageType.ELEMENTAL, ElementalType.GELO);
         }
 
         @Override

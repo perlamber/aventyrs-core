@@ -212,8 +212,24 @@ public interface DamageService {
      * element's RE comes off on top of the hit's own reductions, and a Fraqueza to it applies — never twice for one
      * Talento. {@code null} for none.
      */
+    default int calculateFinalDamage(CombatantSheet target, SceneContext sceneContext,
+                                     DamageType damageType, CombatantSheet source,
+                                     int rawDamage, boolean ignoreDamageReduction, boolean halfDamage,
+                                     org.aventyrs.core.magic.Spell spell,
+                                     java.util.Set<org.aventyrs.core.character.BypassedReduction> bypassed,
+                                     org.aventyrs.core.magic.ElementalType additionalElement) {
+        return calculateFinalDamage(target, sceneContext, damageType, null, source, rawDamage, ignoreDamageReduction,
+                halfDamage, spell, bypassed, additionalElement);
+    }
+
+    /**
+     * The longest form: the hit's full {@link DamageDescriptor} — its element and sanctity — beside everything the
+     * ten-argument form takes. damageDescriptor wins over damageType when both are given; either may be {@code null}.
+     * What the attack path ({@code DamageInteraction}) calls since the 2026-10-12 damage taxonomy, so a Mágico
+     * Elemental hit reaches RE and an element-scoped immunity on a real attack too.
+     */
     int calculateFinalDamage(CombatantSheet target, SceneContext sceneContext,
-                             DamageType damageType, CombatantSheet source,
+                             DamageType damageType, DamageDescriptor damageDescriptor, CombatantSheet source,
                              int rawDamage, boolean ignoreDamageReduction, boolean halfDamage,
                              org.aventyrs.core.magic.Spell spell,
                              java.util.Set<org.aventyrs.core.character.BypassedReduction> bypassed,

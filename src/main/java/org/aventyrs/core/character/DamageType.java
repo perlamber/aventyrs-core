@@ -1,17 +1,25 @@
 package org.aventyrs.core.character;
 
 /**
- * The kinds of dano this ruleset distinguishes, carried by {@link DamageBonus} and passed to
- * {@code DamageService#calculateFinalDamage}.
+ * The <b>nature</b> of a hit — the first half of the ruleset's damage taxonomy (table update, 2026-10-12). The other
+ * half is a qualifier carried by {@link DamageDescriptor}: an element ({@code ElementalType}) or a sanctity ({@link
+ * DamageSanctity} — Profano, Sagrado, Umbral). The rules' twelve names are nature × qualifier:
+ * <ul>
+ *   <li>Físico — {@link #FISICO}; Físico Profano/Sagrado/Umbral — {@link #FISICO} + sanctity;</li>
+ *   <li>Elemental — {@link #ELEMENTAL} + element (the pre-update "Físico-Elemental");</li>
+ *   <li>Mágico Elemental — {@link #MAGICO} + element; Mágico Profano/Sagrado/Umbral — {@link #MAGICO} + sanctity.
+ *       A Mágico hit is always qualified — there is no plain Dano Mágico any more;</li>
+ *   <li>Primordial — {@link #PRIMORDIAL}; Danos de Queda — {@link #QUEDA}; Danos de Asfixia — {@link #ASFIXIA}.</li>
+ * </ul>
  *
- * <p><b>Each reduction reaches only the types its rules text names</b> ({@code
+ * <p><b>Each reduction reaches only the natures its rules text names</b> ({@code
  * docs/rules/defesas-e-resistencias.txt}), resolved by {@code DamageServiceImpl#computeFinalDamage}
  * off the hit's effective type (the descriptor's when there is one):
  * <ul>
  *   <li>RD ({@code DAMAGE_REDUCTION}) — {@link #FISICO} only, or a hit left untyped;</li>
- *   <li>RDS ({@code DAMAGE_TAKEN_REDUCTION}) — everything but {@link #PRIMORDIAL};</li>
- *   <li>RM ({@code MAGIC_REDUCTION}) — {@link #MAGICO} only;</li>
- *   <li>RE — {@link #ELEMENTAL}/{@link #FISICO_ELEMENTAL} of the element resisted;</li>
+ *   <li>RDS ({@code DAMAGE_TAKEN_REDUCTION}) — every nature that {@link #takesOrdinaryMitigation()};</li>
+ *   <li>RM ({@code MAGIC_REDUCTION}) — {@link #MAGICO}, whatever its qualifier;</li>
+ *   <li>RE — any hit carrying the element resisted ({@link #ELEMENTAL} or a Mágico Elemental);</li>
  *   <li>RA — every hit.</li>
  * </ul>
  * An immunity or a scoped Meio-Dano ({@code DamageScope}) is judged against the same type.
@@ -20,7 +28,39 @@ package org.aventyrs.core.character;
 public enum DamageType {
     FISICO,
     MAGICO,
+    /** RE-only: never RD, never RM (table ruling, 2026-10-12). Always names its element. */
     ELEMENTAL,
-    FISICO_ELEMENTAL,
-    PRIMORDIAL
+    PRIMORDIAL,
+    /** Danos de Queda — ⚠️ only RA reduces it until its rules arrive (table ruling, 2026-10-12). */
+    QUEDA,
+    /** Danos de Asfixia — ⚠️ only RA reduces it until its rules arrive (table ruling, 2026-10-12). */
+    ASFIXIA;
+
+    /** Whether a hit of this nature must name an element ({@link #ELEMENTAL}). */
+    public boolean requiresElement() {
+        return this == ELEMENTAL;
+    }
+
+    /** Whether a hit of this nature may name an element — Elemental, or a Mágico Elemental. */
+    public boolean admitsElement() {
+        return this == ELEMENTAL || this == MAGICO;
+    }
+
+    /**
+     * Whether RDS, Pele de Pedra and a Magia-scoped RM reach this nature — everything but {@link #PRIMORDIAL}
+     * ("não-PRIMORDIAL") and the two RA-only natures. {@code null} (an untyped hit) counts as Físico, so true.
+     */
+    public static boolean takesOrdinaryMitigation(final DamageType type) {
+        return type == null || type.takesOrdinaryMitigation();
+    }
+
+    /** See {@link #takesOrdinaryMitigation(DamageType)}. */
+    public boolean takesOrdinaryMitigation() {
+        return this != PRIMORDIAL && !isReducedOnlyByAbsoluteReduction();
+    }
+
+    /** {@link #QUEDA}/{@link #ASFIXIA}: no reduction but RA applies — no RD/RDS/RM/RE, no Meio-Dano. */
+    public boolean isReducedOnlyByAbsoluteReduction() {
+        return this == QUEDA || this == ASFIXIA;
+    }
 }

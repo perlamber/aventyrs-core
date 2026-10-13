@@ -171,7 +171,7 @@ class CriticalEffectsTest {
 
     @Test
     void cataclismoRepeatsTheElementalDamageNextRodada() {
-        target.recordDamageReceived(new DamageReceipt(8, DamageType.FISICO_ELEMENTAL, attacker));
+        target.recordDamageReceived(new DamageReceipt(8, DamageType.ELEMENTAL, attacker));
         int before = target.getDamageTaken();
 
         effect(CriticalEffectType.CATACLISMO, MENOR).applyTo(target);

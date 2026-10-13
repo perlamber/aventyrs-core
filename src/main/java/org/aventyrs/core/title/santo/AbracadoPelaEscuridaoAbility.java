@@ -86,7 +86,7 @@ public enum AbracadoPelaEscuridaoAbility implements AventyrTitleAbility {
     ESPINHOS_VENENOS_DE_GAEA(
             "O Custo de Ativação desta Habilidade é igual ao seu próprio Vigor em PV. " +
             "Enquanto ativo os Espinhos Venenos de Gaea causam danos aos personagens que lhe " +
-            "atacarem Corpo-a-Corpo, Vigor pontos de Dano Físico Elemental: Natural. " +
+            "atacarem Corpo-a-Corpo, Vigor pontos de Dano Elemental: Natural. " +
             "Personagem que lhe infligirem danos adicionalmente perdem -1 Multiplicador de " +
             "Pontos de Vida (Malefício Veneno) por 2 Rodadas. Duração do Efeito: 2 Rodadas.",
             false, fixed(0), ActionCost.ofActionPoints(2), Optional.of(EspinhosVenenosDeGaeaInteraction.class),

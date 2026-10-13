@@ -42,12 +42,12 @@ class AlmaElementalAbilityTest {
     @Test
     void sangueElementalResistsItsElementThenHalvesThenIgnoresIt() {
         // Presa: one RE instance, -2
-        assertEquals(8, finalDamage(spawn(0, fireBlood()), DamageType.ELEMENTAL, ElementalType.FOGO));
-        assertEquals(10, finalDamage(spawn(0, fireBlood()), DamageType.ELEMENTAL, ElementalType.GELO));
+        assertEquals(8, finalDamage(spawn(0, fireBlood()), DamageType.MAGICO, ElementalType.FOGO));
+        assertEquals(10, finalDamage(spawn(0, fireBlood()), DamageType.MAGICO, ElementalType.GELO));
         // Deviante: then halved
-        assertEquals(4, finalDamage(spawn(12, fireBlood()), DamageType.ELEMENTAL, ElementalType.FOGO));
+        assertEquals(4, finalDamage(spawn(12, fireBlood()), DamageType.MAGICO, ElementalType.FOGO));
         // Apex: immune
-        assertEquals(0, finalDamage(spawn(46, fireBlood()), DamageType.ELEMENTAL, ElementalType.FOGO));
+        assertEquals(0, finalDamage(spawn(46, fireBlood()), DamageType.MAGICO, ElementalType.FOGO));
         assertEquals(10, finalDamage(spawn(46, fireBlood()), DamageType.FISICO, null));
     }
 

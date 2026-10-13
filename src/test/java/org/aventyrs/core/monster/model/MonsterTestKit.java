@@ -46,9 +46,14 @@ public final class MonsterTestKit {
                 .orElseThrow(() -> new AssertionError("no Efeito Ativo named " + name));
     }
 
-    /** What 10 raw damage of this kind becomes on sheet, by the real mitigation path. */
+    /**
+     * What 10 raw damage of this kind becomes on sheet, by the real mitigation path. A Mágico hit with no element is
+     * read as Mágico Umbral — Mágico is always qualified (2026-10-12 taxonomy), and nothing reduces Umbral yet.
+     */
     public static int finalDamage(final CombatantSheet sheet, final DamageType type, final ElementalType element) {
-        DamageDescriptor descriptor = element == null ? new DamageDescriptor(type) : new DamageDescriptor(type, element);
+        DamageDescriptor descriptor = element != null ? new DamageDescriptor(type, element)
+                : type == DamageType.MAGICO ? new DamageDescriptor(type, null, org.aventyrs.core.character.DamageSanctity.UMBRAL)
+                : new DamageDescriptor(type);
         return new DamageServiceImpl().calculateFinalDamage(sheet, null, descriptor, null, 10, false);
     }
 }

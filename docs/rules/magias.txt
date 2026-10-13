@@ -168,7 +168,7 @@ Outras Informações:
 	•	Também possuem 1 dos poderes abaixo, escolhido aleatoriamente:
 	•	Corrente de Efeitos – Inocular Veneno: O alvo adquire o Malefício Veneno, sofrendo redutor de -1 multiplicador de PV (não cumulativo), recuperados após um Descanso Longo.
 	•	Sopro Elemental: 3PA, Área de Efeito – Cone de 4UD. 2d6+2 (1+ Metade do Vigor) de Dano Mágico Elemental, reduzido em 2 a cada UD, Refrigeração 1.
-	•	Aura Elemental: Causa 2 de Dano Físico Elemental a cada Rodada em alvos adjacentes.
+	•	Aura Elemental: Causa 2 de Dano Elemental a cada Rodada em alvos adjacentes.
 	•	Corrente de Efeitos – Devorar Inteiro: Alvo é engolido no ataque e precisa fazer uma rolagem de ataque GD Muito Difícil e causar danos igual ao Dobro do Vigor do Experimento de Lacerto para se libertar. Apenas personagens menores que o Experimento de Lacerto podem ser devorados desta forma e até 1 personagem para cada ponto de Vigor.
 	•	Bruto: Recebe RD e Dano aumenta +1d6
 	•	Membros Múltiplos: Membros Múltiplos: Podem usar 3PA para realizar 2 ataques com Desvantagem na Rolagem de Perícia de Ataque, em Rodadas pares recebem +1 PA.
