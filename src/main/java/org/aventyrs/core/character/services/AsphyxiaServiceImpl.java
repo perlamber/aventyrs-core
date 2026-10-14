@@ -32,6 +32,10 @@ public class AsphyxiaServiceImpl implements AsphyxiaService {
 
     @Override
     public void stopBreathing(@NonNull final CombatantSheet sheet) {
+        // "Os Mortos não precisam … respirar" — the Anatomia de Morto-Vivo (core 0.1.6.23).
+        if (sheet.hasUndeadAnatomy()) {
+            return;
+        }
         if (sheet.getAsphyxia().isEmpty()) {
             sheet.setAsphyxia(Asphyxia.STARTED);
         }

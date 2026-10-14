@@ -830,6 +830,8 @@ public class Scene {
         }
         combatScene = false;
         currentRound = 0;
+        // "Quando a Cena de Combate termina … os mortos invocados são destruídos" (Cuspidor de Pragas, core 0.1.6.25).
+        new ArrayList<>(summonSpawners).stream().filter(SummonSpawner::isEndsWithCombat).forEach(this::endSpawner);
         java.util.Map<CombatantSheet, java.util.List<org.aventyrs.core.item.RecoveredProjectiles>> recovered =
                 new java.util.LinkedHashMap<>();
         allEntries().forEach(entry -> {
@@ -1277,7 +1279,16 @@ public class Scene {
                                         @lombok.NonNull final List<? extends CombatantSheet> summoned,
                                         final String exclusivityGroup, final Integer rounds,
                                         final boolean concentration) {
-        UUID group = groupOf(caster);
+        return placeSummons(caster, summoned, exclusivityGroup, rounds, concentration, groupOf(caster), false);
+    }
+
+    /**
+     * {@link #addSummons}, standing in group (an uncontrolled creature's hostile one — core 0.1.6.25) and, when
+     * deferred, joining only at the next Rodada boundary ("só podem agir na Rodada seguinte a sua aparição").
+     */
+    private List<SceneSummon> placeSummons(final CombatantSheet caster, final List<? extends CombatantSheet> summoned,
+                                           final String exclusivityGroup, final Integer rounds,
+                                           final boolean concentration, final UUID group, final boolean deferred) {
         if (concentration) {
             // A focus lost and not yet settled is released first, so the new one cannot take its place.
             settleConcentration();
@@ -1295,7 +1306,7 @@ public class Scene {
                     ? activeEntries.get(casterIndex).getEffectiveInitiativeValue()
                     : pendingEntries.get(indexOf(pendingEntries, caster)).getEffectiveInitiativeValue();
             InitiativeEntry entry = new InitiativeEntry(summon, initiative, group);
-            if (casterIndex >= 0) {
+            if (casterIndex >= 0 && !deferred) {
                 // After the caster and the summons already placed behind it, in the order they were invoked.
                 int at = casterIndex + 1;
                 while (at < activeEntries.size() && isSummonOf(activeEntries.get(at).getCombatantSheet(), caster)) {
@@ -1367,10 +1378,56 @@ public class Scene {
     public SummonSpawner addSummonSpawner(@lombok.NonNull final CombatantSheet caster, final Integer rounds,
                                           @lombok.NonNull final java.util.function.Supplier<? extends CombatantSheet> spawn,
                                           final Integer summonRounds) {
-        SummonSpawner spawner = new SummonSpawner(caster, rounds, spawn, summonRounds);
+        if (remainingSummonRoom(caster, null) <= 0) {
+            throw new IllegalOperationException(org.aventyrs.core.util.TranslatableMessages.SUMMON_LIMIT_REACHED);
+        }
+        return addSummonSpawner(caster, rounds, SummonSpawner.single(spawn), summonRounds, false, false, false);
+    }
+
+    /**
+     * A spawner driven by rule (core 0.1.6.25) — it fires now and at each Rodada boundary while it lasts, every creature
+     * placed as caster's invocação with summonRounds; an uncontrolled one {@link #releaseControlOf obeys nobody} and
+     * stands in the spawner's own hostile group. See {@link SummonSpawner} for the three switches. The caller judges
+     * the caster's limit; rule is handed the room left at each firing.
+     */
+    public SummonSpawner addSummonSpawner(@lombok.NonNull final CombatantSheet caster, final Integer rounds,
+                                          @lombok.NonNull final SummonSpawner.Rule rule, final Integer summonRounds,
+                                          final boolean actsNextRodada, final boolean summonsLeaveWithIt,
+                                          final boolean endsWithCombat) {
+        SummonSpawner spawner = new SummonSpawner(caster, rounds, rule, summonRounds, actsNextRodada,
+                summonsLeaveWithIt, endsWithCombat);
         summonSpawners.add(spawner);
-        addSummon(caster, spawn.get(), null, summonRounds);
+        fire(spawner);
         return spawner;
+    }
+
+    private void fire(final SummonSpawner spawner) {
+        CombatantSheet caster = spawner.getCaster();
+        for (SummonSpawner.Spawned creature : spawner.fire(remainingSummonRoom(caster, null))) {
+            UUID group = creature.uncontrolled() ? spawner.getHostileGroup() : groupOf(caster);
+            SceneSummon record = placeSummons(caster, List.of(creature.sheet()), null, spawner.getSummonRounds(),
+                    false, group, spawner.isActsNextRodada()).get(0);
+            if (creature.uncontrolled()) {
+                record.markUncontrolled();
+            }
+        }
+    }
+
+    /**
+     * Stops every spawner caster runs, taking their creatures when they say so (core 0.1.6.26) — a destroyed Cuspidor
+     * de Pragas, whose "mortos invocados são destruídos" with it.
+     */
+    public void endSpawnersOf(@lombok.NonNull final CombatantSheet caster) {
+        new ArrayList<>(summonSpawners).stream().filter(spawner -> spawner.getCaster() == caster)
+                .forEach(this::endSpawner);
+    }
+
+    /** spawner stops; its creatures go with it when it says so. */
+    private void endSpawner(final SummonSpawner spawner) {
+        summonSpawners.remove(spawner);
+        if (spawner.isSummonsLeaveWithIt()) {
+            spawner.getSpawned().stream().filter(sheet -> getSummon(sheet).isPresent()).forEach(this::dismissSummon);
+        }
     }
 
     /** The spawners still running here. */
@@ -1393,10 +1450,66 @@ public class Scene {
         return summons.stream().filter(held -> held.getSummon() == summon).findFirst();
     }
 
-    /** Sends summon away — it leaves the Scene. */
+    /**
+     * Sends summon away — it leaves the Scene. One raised from a corpse leaves its body instead (table ruling,
+     * 2026-10-14; ⚠️ read for every way it goes, not only falling): the record is dropped, the sheet is marked {@link
+     * CombatantSheet#markCorpse() a corpse} and stays where it stood, raisable again.
+     */
     public void dismissSummon(final CombatantSheet summon) {
+        boolean leavesCorpse = summons.stream()
+                .anyMatch(held -> held.getSummon() == summon && held.isRaisedFromCorpse());
         summons.removeIf(held -> held.getSummon() == summon);
+        if (leavesCorpse) {
+            summon.markCorpse();
+            return;
+        }
         removeParticipant(summon);
+    }
+
+    /**
+     * Raises corpse as caster's undead (Reanimar, Criar Carniçal — core 0.1.6.24): the corpse leaves the Scene (a PC's
+     * sheet is kept, only its place here goes — table ruling, 2026-10-14), and raised joins as {@link #addSummons}
+     * would place it, carrying the body's raise count plus one. Raisability is {@code RaiseDeadService}'s to judge
+     * first; this only moves the pieces.
+     *
+     * @return the record kept for raised
+     */
+    public SceneSummon raise(@lombok.NonNull final CombatantSheet caster, @lombok.NonNull final CombatantSheet corpse,
+                             @lombok.NonNull final CombatantSheet raised, final String exclusivityGroup,
+                             final Integer rounds, final boolean concentration) {
+        raised.setTimesRaised(corpse.getTimesRaised() + 1);
+        removeParticipant(corpse);
+        SceneSummon record = addSummons(caster, List.of(raised), exclusivityGroup, rounds, concentration).get(0);
+        record.markRaisedFromCorpse();
+        return record;
+    }
+
+    /** Marks summon as obeying nobody — see {@link SceneSummon#isUncontrolled()}. */
+    public void releaseControlOf(final CombatantSheet summon) {
+        getSummon(summon).ifPresent(SceneSummon::markUncontrolled);
+    }
+
+    /**
+     * How many invocações caster controls here — every summon of theirs but the uncontrolled ones and those already
+     * marked to leave at caster's Turn end. What the Foco limit ({@code magic.invocation.SummonLimit}, core 0.1.6.24)
+     * counts.
+     */
+    public int countControlledSummons(final CombatantSheet caster) {
+        return countControlledSummons(caster, null);
+    }
+
+    /** {@link #countControlledSummons(CombatantSheet)}, less those a new cast of exclusivityGroup replaces. */
+    public int countControlledSummons(final CombatantSheet caster, final String exclusivityGroup) {
+        return (int) summons.stream()
+                .filter(held -> held.getSummoner() == caster && !held.isUncontrolled() && !held.isReplaced())
+                .filter(held -> exclusivityGroup == null || !exclusivityGroup.equals(held.getExclusivityGroup()))
+                .count();
+    }
+
+    /** How many more invocações caster may control — their Foco less {@link #countControlledSummons}. */
+    public int remainingSummonRoom(final CombatantSheet caster, final String exclusivityGroup) {
+        int limit = Math.max(0, caster.getAttributeTotal(org.aventyrs.core.character.AttributeDomain.FOCUS));
+        return Math.max(0, limit - countControlledSummons(caster, exclusivityGroup));
     }
 
     /**
@@ -1407,12 +1520,27 @@ public class Scene {
     public List<CombatantSheet> settleSummons() {
         org.aventyrs.core.character.services.HitPointsService hitPoints =
                 new org.aventyrs.core.character.services.HitPointsServiceImpl();
+        // An Abantesma has no PV (core 0.1.6.25): damage taken since the last settle costs it one Rodada, then is wiped.
+        // ⚠️ One Rodada per settle — two hits between settles cost one; the caller settles after each hit.
+        List<CombatantSheet> spent = new ArrayList<>();
+        for (SceneSummon held : List.copyOf(summons)) {
+            CombatantSheet ghost = held.getSummon();
+            if (ghost.isDamageShortensDuration() && ghost.getDamageTaken() > 0) {
+                ghost.heal(ghost.getDamageTaken());
+                if (held.shorten()) {
+                    spent.add(ghost);
+                }
+            }
+        }
+        spent.forEach(this::dismissSummon);
         List<CombatantSheet> fallen = summons.stream()
                 .map(SceneSummon::getSummon)
                 .filter(sheet -> hitPoints.getCurrentHitPoints(sheet.getCharacter(), sheet) <= 0)
                 .toList();
         fallen.forEach(this::dismissSummon);
-        return fallen;
+        List<CombatantSheet> gone = new ArrayList<>(spent);
+        gone.addAll(fallen);
+        return List.copyOf(gone);
     }
 
     /**
@@ -1459,16 +1587,17 @@ public class Scene {
         List<CombatantSheet> expired = summons.stream().filter(SceneSummon::tick).map(SceneSummon::getSummon).toList();
         expired.forEach(this::dismissSummon);
         settleSummons();
-        // A spawner still standing invokes this Rodada's creature; a spent one stops.
-        summonSpawners.removeIf(SummonSpawner::tick);
-        new ArrayList<>(summonSpawners).forEach(spawner ->
-                addSummon(spawner.getCaster(), spawner.getSpawn().get(), null, spawner.getSummonRounds()));
+        // A spent spawner stops (taking its creatures, if they go with it).
+        new ArrayList<>(summonSpawners).stream().filter(SummonSpawner::tick).forEach(this::endSpawner);
         activeAreaSpellEffects.forEach(ActiveAreaSpellEffect::tick);
         activeAreaSpellEffects.removeIf(ActiveAreaSpellEffect::isExpired);
         activeAuras.forEach(ActiveAura::tick);
         activeAuras.removeIf(ActiveAura::isExpired);
         activeEntries.addAll(pendingEntries);
         pendingEntries.clear();
+        // A spawner still standing invokes this Rodada's creatures — after the merge, so one that "só pode agir na
+        // Rodada seguinte" waits a whole Rodada. Within the caster's Foco (core 0.1.6.24): the rule is told the room.
+        new ArrayList<>(summonSpawners).forEach(this::fire);
         // Before the sort, so an Iniciativa override governs exactly the Rodadas it was bought for.
         activeEntries.forEach(entry -> entry.getCombatantSheet().advanceInitiativeOverride());
         activeEntries.sort(Comparator.comparingInt(InitiativeEntry::getEffectiveInitiativeValue).reversed());

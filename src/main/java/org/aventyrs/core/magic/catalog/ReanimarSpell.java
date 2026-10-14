@@ -19,14 +19,12 @@ import org.aventyrs.core.skill.SkillType;
  * REANIMAR (Profana/Invocação) — eight Magias, diverging at Muda into a creation line and a
  * servant-management line, never converging.
  *
- * <h2>The one tree with a creature already built for it</h2>
+ * <h2>Its creatures (core 0.1.6.25)</h2>
  *
- * {@code org.aventyrs.core.monster.summon.Zumbi} <b>is</b> {@link #REANIMAR}'s stat block, and it
- * is a real {@code SummonedMonsterTemplate} parameterized by the Conjurador's Graduações em
- * Domínio do Mana — the tiered bonuses at 4, 7 and 10 Graduações are live on it. What is still
- * missing is only the link: {@code Spell} carries no column pointing at a template, so nothing
- * connects the Magia to the creature it raises. Criar Carniçal and Invocar Abantesma would each
- * want the same treatment.
+ * {@code monster.summon.Zumbi}, {@code Carnical} and {@code Abantesma} are the stat blocks, each with the manual's
+ * Anatomia de Morto-Vivo; {@code magic.invocation.UndeadInvocationService} turns a cast into them — Reanimar and Criar
+ * Carniçal from a corpse ({@code RaiseDeadService}), Servo Cadavérico as a Subordinado, Festim dos Mortos as a spawner
+ * ({@code FestimDosMortos}). As with the nature tree, the caller picks which method a cast calls.
  *
  * <p>Both of the catalog's <b>blank {@code Efeito Crítico:} lines</b> are in this tree, on its two
  * shallowest rungs.
@@ -64,10 +62,8 @@ public enum ReanimarSpell implements AuthoredSpell {
      * <b>Its {@code Efeito Crítico:} line is blank too</b> — the second and last of the catalog's
      * two blanks.
      *
-     * <p>Its Zumbi is {@code org.aventyrs.core.monster.summon.Zumbi}, already built; see the class
-     * javadoc. The one clause of that stat block still unbuildable there is the Divine-magic
-     * inversion ("sofrem Danos de Magias Divinas que recuperam PV ao invés de se curarem"), since
-     * {@code CombatantSheet#heal} has no hook to redirect a recovery into damage.
+     * <p>Its Zumbi is {@code monster.summon.Zumbi}; {@code UndeadInvocationService#planReanimar} raises it from a corpse
+     * and {@code #servoCadaverico} is the Efeito Alternativo.
      */
     REANIMAR(SpellData.builder()
             .name("Reanimar")
@@ -132,12 +128,7 @@ public enum ReanimarSpell implements AuthoredSpell {
             .targeting(SpellTargeting.TOQUE)
             .build()),
 
-    /**
-     * TODO its Carniçal is a stat block (Força 6, Destreza 4, Vigor 4, Gnose 1, Instinto 4, Foco 1,
-     * Carisma 1; Tamanho from the corpse used, 3PA, 26PV at Multiplicador de PV x4, Defesas +11,
-     * Danos 2d6+3) sharing the Zumbi's Anatomia de Morto-Vivo Menor — including the five Efeito
-     * Crítico immunities, which {@code CriticalEffectType} can already express exactly.
-     */
+    /** Its Carniçal is {@code monster.summon.Carnical}; {@code UndeadInvocationService#planCarnical} raises it, Açougueiro included. */
     CRIAR_CARNICAL(SpellData.builder()
             .name("Criar Carniçal")
             .branchLevel(BranchLevel.MUDA)
@@ -191,10 +182,9 @@ public enum ReanimarSpell implements AuthoredSpell {
             .build()),
 
     /**
-     * TODO its Abantesma has Força and Vigor "Nula" and no PV at all — losing Duração instead of
-     * Hit Points when damaged. {@code AttributeValue} has no null state and {@code
-     * HitPointsService} derives a maximum from Vigor, so a creature outside both is not
-     * expressible; nor is damage that shortens an effect rather than reducing a pool.
+     * Its Abantesma is {@code monster.summon.Abantesma} (core 0.1.6.25): "Nula" read as 0, and damage shortening its
+     * Duração through {@code MonsterTemplate#damageShortensDuration}. TODO casting it on its own: its "criatura
+     * inteligente que tenha morrido naquele local" is narrative, and only Festim dos Mortos invokes one so far.
      */
     INVOCAR_ABANTESMA(SpellData.builder()
             .name("Invocar Abantesma")
@@ -247,10 +237,9 @@ public enum ReanimarSpell implements AuthoredSpell {
             .build()),
 
     /**
-     * One of the four Magias attaching its own clause to Concentração, and the only one to
-     * <em>opt out</em>: its summons "não podem ter a Duração estendida por efeitos ou
-     * Concentração". Whatever mechanism eventually sustains a Concentração effect has to honour an
-     * exemption, not only a break.
+     * {@code UndeadInvocationService#openSarcophagus} (core 0.1.6.25): one creature a Rodada off {@code
+     * FestimDosMortos}' table, leaving with the sarcophagus — "não podem ter a Duração estendida por efeitos ou
+     * Concentração" — and acting from the next Rodada; past the caster's Foco, and under Horda Faminta, uncontrolled.
      *
      * <p>Its {@code Alcance:} places the area's centre at a point adjacent to the caster rather
      * than on the caster, which is the {@code Range}-carrying form of {@code

@@ -151,6 +151,25 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
     boolean isBeyondRevival();
 
     /**
+     * How many times this body has been raised as an undead (core 0.1.6.24) — carried from a corpse to the undead
+     * raised from it, and back to the corpse it leaves. A body raised {@code RaiseDeadService#MAX_RAISES} times can
+     * never be raised again (table ruling, 2026-10-14).
+     */
+    int getTimesRaised();
+
+    /** The persistence-restore and raise path's setter for {@link #getTimesRaised()}. */
+    void setTimesRaised(int timesRaised);
+
+    /**
+     * Whether this combatant is a body left behind — an undead raised from a corpse that has fallen or whose Magia
+     * ended ({@code Scene#dismissSummon}, core 0.1.6.24). A corpse can be raised again whatever its PV.
+     */
+    boolean isCorpse();
+
+    /** Marks this combatant as a corpse — see {@link #isCorpse()}. */
+    void markCorpse();
+
+    /**
      * Banks one single-use charge from source — a permission or discount an activation buys for
      * the next thing it applies to: a Curar os Mortos heal that may reach the dead, a Curandeiro
      * Veloz -2PA. Charges from one source stack; {@link #startNewScene()} drops them. Unlike
@@ -219,6 +238,50 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
      * Race#isImmuneToSpell} (the latter silent while a Forma suppresses innate racial traits; core 0.0.90).
      */
     boolean isImmuneToSpell(org.aventyrs.core.magic.Spell spell);
+
+    /**
+     * Whether this combatant has the Anatomia de Morto-Vivo ({@code monster.UndeadAnatomy}, core 0.1.6.23) — a foe
+     * whose stat block or Habilidades Monstruosas grant it. False for every character sheet.
+     */
+    default boolean hasUndeadAnatomy() {
+        return false;
+    }
+
+    /** Gives this combatant the Anatomia de Morto-Vivo (core 0.1.6.27) — a stat block's, or a summon's carried over. */
+    void grantUndeadAnatomy();
+
+    /**
+     * Whether this combatant has no PV to lose and damage shortens its invocation's Duração instead — the Abantesma
+     * (core 0.1.6.25), read by {@code Scene#settleSummons}.
+     */
+    boolean isDamageShortensDuration();
+
+    /** Marks this combatant as one whose damage shortens its Duração — see {@link #isDamageShortensDuration()}. */
+    void markDamageShortensDuration();
+
+    /** Adds damage this combatant shrugs off — a stat block's immunities, carried with the creature (core 0.1.6.27). */
+    void addDamageImmunities(java.util.Set<org.aventyrs.core.character.DamageScope> scopes);
+
+    /**
+     * Whether spell's damage cannot reach this combatant, while its effects still may — the dead and a Magia Profana
+     * ({@code UndeadAnatomy#isImmuneToSpellDamage}). Unlike {@link #isImmuneToSpell}, which refuses the whole cast,
+     * this leaves Cura Mortis free to land. Read by {@code DamageService}.
+     */
+    default boolean isImmuneToSpellDamage(final org.aventyrs.core.magic.Spell spell) {
+        return false;
+    }
+
+    /**
+     * What a damaging hit heals this combatant instead, rolled with roller: a Raça's ({@code
+     * Race#resolveInvertedSpellHealing}, Vampiro's Magias Profanas) or the Anatomia de Morto-Vivo's Profano effects
+     * ({@code UndeadAnatomy#profaneHealing}). 0 when nothing inverts it, or with no roller.
+     *
+     * @param spell      the Magia the hit is, or {@code null}
+     * @param descriptor the hit's nature, or {@code null}
+     */
+    int resolveInvertedHealing(org.aventyrs.core.magic.Spell spell,
+                               org.aventyrs.core.character.DamageDescriptor descriptor,
+                               org.aventyrs.core.util.DiceRoller roller);
 
     /** The part of {@link #getDamageTaken()} only a Descanso recovers — see {@link #lockDamageUntilRest}. */
     int getRestLockedDamage();

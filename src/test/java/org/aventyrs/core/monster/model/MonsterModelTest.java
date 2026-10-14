@@ -18,7 +18,7 @@ class MonsterModelTest {
 
     @Test
     void everyModeloHasEightHabilidadesThatPointBackToIt() {
-        assertEquals(6, MonsterModel.values().length);
+        assertEquals(7, MonsterModel.values().length);
         for (MonsterModel model : MonsterModel.values()) {
             List<MonstrousAbility> abilities = model.getAbilities();
             assertEquals(8, abilities.size(), model.name());

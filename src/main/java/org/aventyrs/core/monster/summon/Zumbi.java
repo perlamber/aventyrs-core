@@ -6,7 +6,6 @@ import lombok.NonNull;
 import org.aventyrs.core.ability.AttributeAbility;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.character.SizeCategory;
-import org.aventyrs.core.effect.CriticalEffectType;
 import org.aventyrs.core.item.Item;
 import org.aventyrs.core.monster.MonsterSheet;
 import org.aventyrs.core.monster.SkillDifficulty;
@@ -23,7 +22,6 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 /**
  * <b>Zumbi</b> — a corpse animated by a Conjurador, and the most basic invocação in the game.
@@ -52,27 +50,16 @@ import java.util.Set;
  * The one exception is Roubo de Vida, which is a {@code TemporaryEffect} on the sheet rather than
  * anything on the {@code Character}, so {@link #spawn()} applies it after the sheet exists.
  *
- * <h2>Anatomia de Morto-Vivo Menor</h2>
+ * <h2>Anatomia de Morto-Vivo — the manual's, not the printed "Menor"</h2>
  *
- * Only two of its four clauses reach a mechanism. The immunity to Amaldiçoar, Dilacerar,
- * Excruciante, Ferida Profunda and Sangramento is real and enforced (see {@link
- * CriticalEffectType}), and {@link #isUndead()} is what makes the Vantagem-against-the-living
- * clause resolvable. The rest are TODOs below, each on its own missing system.
+ * The Magia prints an "Anatomia de Morto-Vivo Menor". By table ruling (2026-10-14) every spell-raised undead takes the
+ * full Anatomia de Morto-Vivo of the Monster manual's Escolhido de Macária instead — {@link #hasUndeadAnatomy()}, see
+ * {@link org.aventyrs.core.monster.UndeadAnatomy} for every clause it carries (its Efeito Crítico immunities, Profano
+ * healing, curative effects dealing Dano Sagrado, Resistência a Correntes +2, no asfixia). The Menor's own immunities
+ * (Amaldiçoar, Excruciante, Profano and Natural damage) are therefore gone, by that ruling. TODO: "Danos Físicos de
+ * Esmagamento sofridos reduzidos em -3" — Corte/Perfuração/Impacto are still not modelled.
  *
- * <p>"São imunes a danos Profanos e Naturais" is real (core 0.0.89): {@link #getDamageImmunities()} — a Profano hit
- * ({@code DamageSanctity#PROFANO}) and an Elemental: Natural one. TODO: "Danos Físicos de Esmagamento sofridos
- * reduzidos em -3" — Corte/Perfuração/Impacto are still not modelled.
- *
- * <p>TODO: "Não precisam dormir ou respirar" needs a fadiga/asfixia system. Nothing in this core
- * tracks either, so there is no effect to be exempt from.
- *
- * <p>"Sofrem Danos de Magias Divinas que recuperam PV ao invés de se curarem" is real (core 0.0.91): {@link
- * #invertsHealing} — a heal from a Magia Divina lands as damage.
- *
- * <p>TODO: "Danos de Ataques 1d6+3 (Base 1 + Metade da Força)" has nowhere to live. A foe's damage
- * is entirely caller-supplied today — {@code AttackReceiver}/{@code AttackDelivery} assemble a
- * {@code DamageInteraction} and the caller feeds it the figure, because this core has no
- * weapon/dano-roll concept and never rolls dice. The formula is recorded here rather than dropped.
+ * <p>"Danos de Ataques 1d6+3 (Base 1 + Metade da Força)" is {@link #naturalAttack()} (core 0.1.6.25).
  */
 @Getter
 @Builder(toBuilder = true)
@@ -95,18 +82,6 @@ public class Zumbi implements SummonedMonsterTemplate {
 
     /** "Possuem 2 Pontos de Ação (PA)." */
     public static final int ACTION_POINTS = 2;
-
-    /**
-     * "Imunes aos Efeitos Críticos Amaldiçoar, Dilacerar, Excruciante, Ferida Profunda e
-     * Sangramento." Four of the five have no implementation yet; naming them is the point — see
-     * {@link CriticalEffectType}.
-     */
-    public static final Set<CriticalEffectType> ANATOMIA_DE_MORTO_VIVO_MENOR = Set.of(
-            CriticalEffectType.AMALDICOAR,
-            CriticalEffectType.DILACERAR,
-            CriticalEffectType.EXCRUCIANTE,
-            CriticalEffectType.FERIDA_PROFUNDA,
-            CriticalEffectType.SANGRAMENTO);
 
     /** The Graduação in Domínio do Mana of whoever raised it; 0 when nobody did. */
     @Builder.Default
@@ -189,7 +164,22 @@ public class Zumbi implements SummonedMonsterTemplate {
 
     @Override
     public List<Item> getEquipment() {
-        return List.of();
+        return List.of(naturalAttack());
+    }
+
+    /**
+     * "Danos de Ataques 1d6+3 (Base 1+ Metade da Força)" (core 0.1.6.25), authored as an Arma Natural less the ½ Força
+     * the engine adds itself — the {@code NatureSummon#naturalAttack()} shape.
+     */
+    public org.aventyrs.core.item.AbstractWeapon naturalAttack() {
+        return org.aventyrs.core.item.AbstractWeapon.builder()
+                .name("Ataque Natural")
+                .category(org.aventyrs.core.item.ItemCategory.NATURAL_WEAPON)
+                .rarity(org.aventyrs.core.item.ItemRarity.NATURAL)
+                .weightClass(org.aventyrs.core.item.ItemWeightClass.MEDIUM)
+                .damageBase(org.aventyrs.core.character.DamageBase.of(1, 1))
+                .skillType(SkillType.ATAQUE_CORPO_A_CORPO)
+                .build();
     }
 
     /**
@@ -199,13 +189,18 @@ public class Zumbi implements SummonedMonsterTemplate {
      */
     @Override
     public SizeCategory getSizeCategory() {
-        if (bodySizeCategory.getCategory() < MIN_SIZE_CATEGORY.getCategory()) {
-            return MIN_SIZE_CATEGORY;
+        return clamp(bodySizeCategory, MIN_SIZE_CATEGORY, MAX_SIZE_CATEGORY);
+    }
+
+    /** body clamped into min…max — the corpse-size range every raised undead's Magia states. */
+    public static SizeCategory clamp(final SizeCategory body, final SizeCategory min, final SizeCategory max) {
+        if (body.getCategory() < min.getCategory()) {
+            return min;
         }
-        if (bodySizeCategory.getCategory() > MAX_SIZE_CATEGORY.getCategory()) {
-            return MAX_SIZE_CATEGORY;
+        if (body.getCategory() > max.getCategory()) {
+            return max;
         }
-        return bodySizeCategory;
+        return body;
     }
 
     @Override
@@ -263,9 +258,10 @@ public class Zumbi implements SummonedMonsterTemplate {
         return true;
     }
 
+    /** The Anatomia de Morto-Vivo (table ruling, 2026-10-14) — its immunities come with it. */
     @Override
-    public Set<CriticalEffectType> getCriticalEffectImmunities() {
-        return ANATOMIA_DE_MORTO_VIVO_MENOR;
+    public boolean hasUndeadAnatomy() {
+        return true;
     }
 
     /**
@@ -289,19 +285,5 @@ public class Zumbi implements SummonedMonsterTemplate {
             sheet.applyEffect(new LifeSteal(ZumbiAbility.LIFE_STEAL, Optional.empty()));
         }
         return sheet;
-    }
-
-    /** Anatomia de Morto-Vivo Menor: "são imunes a danos Profanos e Naturais". */
-    @Override
-    public java.util.Set<org.aventyrs.core.character.DamageScope> getDamageImmunities() {
-        return java.util.Set.of(
-                org.aventyrs.core.character.DamageScope.sanctity(org.aventyrs.core.character.DamageSanctity.PROFANO),
-                org.aventyrs.core.character.DamageScope.element(org.aventyrs.core.magic.ElementalType.NATURAL));
-    }
-
-    /** Anatomia de Morto-Vivo Menor: "sofrem Danos de Magias Divinas que recuperam PV ao invés de se curarem". */
-    @Override
-    public boolean invertsHealing(final org.aventyrs.core.sheet.HealingSource source) {
-        return source.isSpellOfType(org.aventyrs.core.magic.MagicType.DIVINA);
     }
 }

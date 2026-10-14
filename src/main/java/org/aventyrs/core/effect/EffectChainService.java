@@ -52,6 +52,10 @@ public interface EffectChainService {
         margin += target.getFeats().stream()
                 .mapToInt(feat -> feat.resolveEffectChainResistanceIncrease(target, defenderPosition))
                 .sum();
+        // Anatomia de Morto-Vivo: "Resistência a Correntes de Efeitos +2" (core 0.1.6.23).
+        if (defender.hasUndeadAnatomy()) {
+            margin += org.aventyrs.core.monster.UndeadAnatomy.EFFECT_CHAIN_RESISTANCE;
+        }
         if (attacker != null) {
             Character source = attacker.getCharacter();
             margin -= source.getFeats().stream()

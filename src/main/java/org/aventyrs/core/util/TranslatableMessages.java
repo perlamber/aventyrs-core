@@ -191,6 +191,21 @@ public class TranslatableMessages {
     /** A second common Subordinado of a grade the character already commands — only a Prodigioso may share it. */
     public static final String SUBORDINATE_GRADE_HELD = "SUBORDINATE_GRADE_HELD";
 
+    /** A caster already controls as many invocações as their Foco ("número máximo de invocações", core 0.1.6.24). */
+    public static final String SUMMON_LIMIT_REACHED = "SUMMON_LIMIT_REACHED";
+
+    /** Reanimar / Criar Carniçal touch "um cadáver" — the target is not a dead body (core 0.1.6.24). */
+    public static final String RAISE_REQUIRES_CORPSE = "RAISE_REQUIRES_CORPSE";
+
+    /** A body raised four times can never be raised again (table ruling, 2026-10-14). */
+    public static final String CORPSE_EXHAUSTED = "CORPSE_EXHAUSTED";
+
+    /** Servo Cadavérico makes a Cavaleiro or a Torre — another grade was asked for (core 0.1.6.25). */
+    public static final String SERVO_CADAVERICO_GRADE_NOT_ALLOWED = "SERVO_CADAVERICO_GRADE_NOT_ALLOWED";
+
+    /** Açougueiro: "não poderá controlar mais nenhum outro Carniçal com esta magia" (core 0.1.6.25). */
+    public static final String BUTCHER_CARNICAL_EXCLUSIVE = "BUTCHER_CARNICAL_EXCLUSIVE";
+
     /** Cativar Animal touches "um animal" — the target is not one (core 0.0.92). */
     public static final String CAPTIVATE_REQUIRES_ANIMAL = "CAPTIVATE_REQUIRES_ANIMAL";
 

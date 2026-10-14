@@ -93,6 +93,15 @@ public interface MonstrousAbility {
         return null;
     }
 
+    /**
+     * Whether holding this Habilidade makes its monster a Morto-Vivo with the Anatomia de Morto-Vivo ({@code
+     * monster.UndeadAnatomy}) — every Escolhido de Macária Habilidade (table ruling, 2026-10-14). Read by {@code
+     * MonsterBlueprint#hasUndeadAnatomy()}.
+     */
+    default boolean grantsUndeadAnatomy() {
+        return false;
+    }
+
     // ---- Picks -----------------------------------------------------------------------------------
 
     /** What it asks the monster to pick at category — empty for a Habilidade that asks nothing. */

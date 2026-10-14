@@ -86,7 +86,7 @@ public final class MonsterRules {
     /** PM = Metade dos PV + (Foco × 2). */
     public static final int MANA_MULTIPLIER = 2;
 
-    /** "Para cada 3 pontos em seu Grau de Poder um novo Aprimoramento Monstruoso" — one Habilidade. */
+    /** "Para cada 3 pontos em seu Grau de Poder (GP+3) uma nova Habilidade Monstruosa". */
     public static final int ABILITY_POWER_DEGREE_STEP = 3;
 
     /** "Para cada 4 pontos … uma Perícia é aprimorada em GD +1 nível". */

@@ -77,6 +77,14 @@ public class MonstrousActiveAbility implements ActiveAbility {
     /** What the rolled total does to the activator — a heal, typically. Ignored without {@link #dice}. */
     private final java.util.function.ObjIntConsumer<org.aventyrs.core.sheet.CombatantSheet> onRolled;
 
+    /**
+     * What this activation invokes, reported (core 0.1.6.26): the options the activator picks one of — Senhor dos
+     * Mortos' Apex "2 Carrascos Moribundos Deviantes ou 1 Carrasco Moribundo Predador". Empty for an ability that
+     * invokes nothing. See {@link MonsterSummoning}.
+     */
+    @Builder.Default
+    private final List<MonsterSummoning> summonOptions = List.of();
+
     @Override
     public int getMagicPointCost() {
         return 0;

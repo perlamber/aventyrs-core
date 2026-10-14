@@ -93,6 +93,7 @@ public class MonsterSheet extends AbstractCombatantSheet {
 
     private final Set<CriticalEffectType> criticalEffectImmunities;
 
+
     /** See {@link MonsterTemplate#getCreatureType()}; {@code MONSTRUOSO} for a foe restored from numbers. */
     private final CreatureType creatureType;
 
@@ -113,7 +114,7 @@ public class MonsterSheet extends AbstractCombatantSheet {
     private final MonsterBlueprint blueprint;
 
     /** The stat block's damage immunities — see {@link MonsterTemplate#getDamageImmunities()}. */
-    private java.util.Set<org.aventyrs.core.character.DamageScope> damageImmunities = java.util.Set.of();
+    private java.util.Set<org.aventyrs.core.character.DamageScope> statBlockDamageImmunities = java.util.Set.of();
 
     /** The stat block's healing inversion — see {@link MonsterTemplate#invertsHealing}. */
     private java.util.function.Predicate<org.aventyrs.core.sheet.HealingSource> healingInversion = source -> false;
@@ -196,10 +197,17 @@ public class MonsterSheet extends AbstractCombatantSheet {
         MonsterSheet sheet = new MonsterSheet(character, player, template.getPhysicalDefense(), template.getMagicDefense(),
                 template.getGeneralDifficulty(), template.getSkillDifficulties(),
                 template.isUndead(), template.isIntelligent(), template.getCriticalEffectImmunities(), template.getCreatureType(), null);
-        sheet.damageImmunities = java.util.Set.copyOf(template.getDamageImmunities());
+        sheet.statBlockDamageImmunities = java.util.Set.copyOf(template.getDamageImmunities());
+        sheet.addDamageImmunities(sheet.statBlockDamageImmunities);
         sheet.healingInversion = template::invertsHealing;
         sheet.attackEffectChains = template::resolveAttackEffectChains;
         sheet.nonCombatant = template.isNonCombatant();
+        if (template.hasUndeadAnatomy()) {
+            sheet.grantUndeadAnatomy();
+        }
+        if (template.damageShortensDuration()) {
+            sheet.markDamageShortensDuration();
+        }
         return sheet;
     }
 
@@ -217,9 +225,13 @@ public class MonsterSheet extends AbstractCombatantSheet {
      */
     public static MonsterSheet of(@NonNull final Character character, @NonNull final Player player,
                                   @NonNull final MonsterBlueprint blueprint) {
-        return new MonsterSheet(character, player, 0, 0,
+        MonsterSheet sheet = new MonsterSheet(character, player, 0, 0,
                 SkillDifficulty.of(blueprint.getKind().getBaseSkillLevel(), 0), Map.of(),
                 blueprint.isUndead(), blueprint.isIntelligent(), blueprint.getCriticalEffectImmunities(), blueprint.getCreatureType(), blueprint);
+        if (blueprint.hasUndeadAnatomy()) {
+            sheet.grantUndeadAnatomy();
+        }
+        return sheet;
     }
 
     /** {@link #of(Character, Player, MonsterBlueprint)} with a known id — the persistence-restore path. */
@@ -322,18 +334,30 @@ public class MonsterSheet extends AbstractCombatantSheet {
         return attackEffectChains.apply(this);
     }
 
-    /** The stat block's own healing inversion ({@link MonsterTemplate#invertsHealing}). */
+    /** The stat block's own healing inversion ({@link MonsterTemplate#invertsHealing}), and the Anatomia's. */
     @Override
     protected boolean invertsHealing(final org.aventyrs.core.sheet.HealingSource source) {
-        return source != null && healingInversion.test(source);
+        return source != null && (healingInversion.test(source) || super.invertsHealing(source));
     }
 
-    /** Every immunity a sheet has, plus the stat block's own ({@link MonsterTemplate#getDamageImmunities()}). */
-    @Override
-    public boolean isImmuneToDamage(final org.aventyrs.core.character.DamageType damageType,
-                                    final org.aventyrs.core.character.DamageDescriptor descriptor) {
-        return super.isImmuneToDamage(damageType, descriptor)
-                || damageImmunities.stream().anyMatch(scope -> scope.matches(damageType, descriptor));
+    /** A Morto-Vivo by its stat block, or by the Anatomia ({@link UndeadAnatomy}). */
+    public boolean isUndead() {
+        return undead || hasUndeadAnatomy();
+    }
+
+    /**
+     * Carries this creature's stat-block anatomy onto target (core 0.1.6.27) — the Anatomia de Morto-Vivo, its damage
+     * immunities and whether damage costs it Duração — for a client that acts for an invocation through another sheet
+     * built from the same {@code Character}.
+     */
+    public void transferAnatomyTo(final org.aventyrs.core.sheet.CombatantSheet target) {
+        if (hasUndeadAnatomy()) {
+            target.grantUndeadAnatomy();
+        }
+        if (isDamageShortensDuration()) {
+            target.markDamageShortensDuration();
+        }
+        target.addDamageImmunities(statBlockDamageImmunities);
     }
 
     /** Every foe is a PdN — see {@link CombatantSheet#isPdn()}; {@link #checkEgoEffectAvailable()} refuses a Regular. */

@@ -1,5 +1,6 @@
 package org.aventyrs.core.effect;
 
+import org.aventyrs.core.util.DiceRoller;
 import org.aventyrs.core.character.AttributeDomain;
 import org.aventyrs.core.sheet.CombatantSheet;
 
@@ -32,10 +33,26 @@ import org.aventyrs.core.sheet.CombatantSheet;
  * @param alternateEffectChain whether the caster aimed for the version's Corrente de Efeitos Alternativa rather than
  *                      its Corrente — Serra-Pernas's Fraqueza Momentânea, declared at the cast (table ruling,
  *                      2026-10-02; core 0.1.0)
+ * @param diceRoller    the caller's dice, or {@code null} — see {@link #withDiceRoller}
  */
 public record SpellEffectContext(boolean hostileTarget, CombatantSheet caster, int healingBonus,
                                  AttributeDomain chosenAttribute, Integer durationInRounds,
-                                 boolean alternateEffectChain) {
+                                 boolean alternateEffectChain, DiceRoller diceRoller) {
+
+    public SpellEffectContext(final boolean hostileTarget, final CombatantSheet caster, final int healingBonus,
+                              final AttributeDomain chosenAttribute, final Integer durationInRounds,
+                              final boolean alternateEffectChain) {
+        this(hostileTarget, caster, healingBonus, chosenAttribute, durationInRounds, alternateEffectChain, null);
+    }
+
+    /**
+     * This context carrying the caller's dice, for an effect that rolls on its target — a heal an undead's Anatomia
+     * turns into Dano Sagrado ({@code UndeadAnatomy#sacredDamage}, core 0.1.6.23).
+     */
+    public SpellEffectContext withDiceRoller(final DiceRoller roller) {
+        return new SpellEffectContext(hostileTarget, caster, healingBonus, chosenAttribute, durationInRounds,
+                alternateEffectChain, roller);
+    }
 
     public SpellEffectContext(final boolean hostileTarget, final CombatantSheet caster, final int healingBonus,
                               final AttributeDomain chosenAttribute) {
@@ -53,25 +70,25 @@ public record SpellEffectContext(boolean hostileTarget, CombatantSheet caster, i
     /** This context with healingBonus in place of its own. */
     public SpellEffectContext withHealingBonus(final int bonus) {
         return new SpellEffectContext(hostileTarget, caster, bonus, chosenAttribute, durationInRounds,
-                alternateEffectChain);
+                alternateEffectChain, diceRoller);
     }
 
     /** This context with the caster's "Força ou Destreza" pick in place of its own. */
     public SpellEffectContext withChosenAttribute(final AttributeDomain attribute) {
         return new SpellEffectContext(hostileTarget, caster, healingBonus, attribute, durationInRounds,
-                alternateEffectChain);
+                alternateEffectChain, diceRoller);
     }
 
     /** This context with the cast's resolved Duração in place of its own. */
     public SpellEffectContext withDurationInRounds(final Integer rounds) {
         return new SpellEffectContext(hostileTarget, caster, healingBonus, chosenAttribute, rounds,
-                alternateEffectChain);
+                alternateEffectChain, diceRoller);
     }
 
     /** This context aiming for the Corrente de Efeitos Alternativa (true) or the Corrente (false). */
     public SpellEffectContext withAlternateEffectChain(final boolean alternate) {
         return new SpellEffectContext(hostileTarget, caster, healingBonus, chosenAttribute, durationInRounds,
-                alternate);
+                alternate, diceRoller);
     }
 
     /** How many Rodadas an effect of spell lasts on this cast — {@link #durationInRounds} when stated, else spell's own. */

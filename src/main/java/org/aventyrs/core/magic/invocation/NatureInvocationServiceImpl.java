@@ -161,9 +161,13 @@ public class NatureInvocationServiceImpl implements NatureInvocationService {
 
     // ---------- placing a plan in a core Scene ----------
 
-    /** Spawns plan's creatures for gm and places them as caster's invocations. */
+    /**
+     * Spawns plan's creatures for gm and places them as caster's invocations — refused past caster's Foco ({@link
+     * SummonLimit}, core 0.1.6.24).
+     */
     public static Invocation place(final Scene scene, final CombatantSheet caster, final InvocationPlan plan,
                                    final Player gm) {
+        SummonLimit.requireRoom(scene, caster, plan.creatures().size(), plan.exclusivityGroup());
         List<CombatantSheet> sheets = plan.creatures().stream()
                 .map(creature -> (CombatantSheet) creature.spawn(gm))
                 .toList();

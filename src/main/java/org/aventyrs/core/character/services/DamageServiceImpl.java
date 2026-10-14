@@ -451,6 +451,10 @@ public class DamageServiceImpl implements DamageService {
         if (target != null && spell != null && target.isImmuneToSpell(spell)) {
             return 0;
         }
+        // …or to its damage alone (the Anatomia de Morto-Vivo and a Magia Profana, core 0.1.6.23).
+        if (target != null && spell != null && target.isImmuneToSpellDamage(spell)) {
+            return 0;
+        }
         // An immunity ("Imunidade ao Elemento escolhido") is judged before anything else: there is
         // nothing left for RD, RA or a Meio-Dano to act on, and no Pele de Pedra is spent on it.
         // …unless the attacker's Talentos pierce it by half (Maldição das Chamas do Norte's invocations: "inimigos

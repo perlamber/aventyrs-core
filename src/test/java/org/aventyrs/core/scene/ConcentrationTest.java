@@ -50,7 +50,12 @@ class ConcentrationTest {
 
     /** A druid trained in Domínio do Mana holding abilities, against one foe, on the druid's first Turn. */
     private void openCombat(final List<SkillCompetencyAbility> abilities) {
+        // Foco 4: room for two invocações under the "número máximo de invocações" (core 0.1.6.24).
         Character.CharacterBuilder builder = CharacterFixture.blank(CharacterFixture.BLANK)
+                .attributes(org.aventyrs.core.character.CharacterAttributes.builder()
+                        .focus(org.aventyrs.core.character.AttributeValue.builder()
+                                .domain(org.aventyrs.core.character.AttributeDomain.FOCUS).base(4).build())
+                        .build())
                 .skill(SkillType.DOMINIO_DO_MANA, CharacterSkill.builder()
                         .skill(SkillType.DOMINIO_DO_MANA.newSkillInstance()).specializations(List.of())
                         .graduation(SkillGraduation.builder().graduationValue(4).build()).build());

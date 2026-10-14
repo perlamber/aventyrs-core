@@ -333,13 +333,14 @@ public class DamageInteraction implements Interaction<CombatantSheet> {
 
         // A Magia that heals the target's Raça instead (a Vampiro and a Magia Profana, core 0.0.91): no damage landed —
         // its immunity already saw to that — and the heal it gives in its place happens now.
-        int invertedHeal = spell == null || target.getCharacter().getRace() == null
-                || target.getRacialTraitSuppression().suppressesInnateTraits() ? 0
-                : target.getCharacter().getRace().resolveInvertedSpellHealing(spell, target.getCharacter(), diceRoller);
+        // The Anatomia de Morto-Vivo's Profano effects too ("curam os mortos em 1d6+ Metade do Vigor", core 0.1.6.23).
+        int invertedHeal = diceRoller == null ? 0 : target.resolveInvertedHealing(spell, descriptor, diceRoller);
         int healed = 0;
         if (invertedHeal > 0 && finalDamage == 0) {
             int before = target.getDamageTaken();
-            target.heal(invertedHeal, org.aventyrs.core.sheet.HealingSource.spell(spell, source));
+            target.heal(invertedHeal, spell != null
+                    ? org.aventyrs.core.sheet.HealingSource.spell(spell, source)
+                    : new org.aventyrs.core.sheet.HealingSource(INVERTED_PROFANE_HEAL, false, source, null, null));
             healed = before - target.getDamageTaken();
         }
 
@@ -355,6 +356,9 @@ public class DamageInteraction implements Interaction<CombatantSheet> {
         }
         return result.build();
     }
+
+    /** The key of a Profano hit's heal on the dead when no Magia carried it — one effect per Corrente/attack kind. */
+    private static final String INVERTED_PROFANE_HEAL = "PROFANO_INVERTIDO";
 
     /**
      * This hit as a {@code DamageDescriptor} — its type with the element and sanctity marked on this stage — or {@code

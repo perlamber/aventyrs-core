@@ -272,7 +272,8 @@ public final class DefensiveEnhancements {
 
     /** "Vivo" — not a Renascido, nor a foe marked undead. ⚠️ A foe with no Raça counts as living. */
     public static boolean isLiving(final CombatantSheet sheet) {
-        if (sheet instanceof org.aventyrs.core.monster.MonsterSheet monster && monster.isUndead()) {
+        if (sheet.hasUndeadAnatomy()
+                || sheet instanceof org.aventyrs.core.monster.MonsterSheet monster && monster.isUndead()) {
             return false;
         }
         Character character = sheet.getCharacter();

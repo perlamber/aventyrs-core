@@ -4,6 +4,7 @@ import org.aventyrs.core.monster.model.almaelemental.AlmaElementalAbility;
 import org.aventyrs.core.monster.model.aspectohumanoide.AspectoHumanoideAbility;
 import org.aventyrs.core.monster.model.bestaalada.BestaAladaAbility;
 import org.aventyrs.core.monster.model.brotosdemapinguari.BrotosDeMapinguariAbility;
+import org.aventyrs.core.monster.model.escolhidodemacaria.EscolhidoDeMacariaAbility;
 import org.aventyrs.core.monster.model.cireneia.CireneiaAbility;
 import org.aventyrs.core.monster.model.mutantemonstruoso.MutanteMonstruosoAbility;
 import lombok.Getter;
@@ -51,7 +52,11 @@ public enum MonsterModel {
 
     BROTOS_DE_MAPINGUARI("Brotos de Mapinguari",
             "“Anatomia Vegetal – Bônus Racial de +2 em Vigor, recebem Resistência à Críticos, além disso são imunes aos efeitos críticos Atordoante, Ferida Profunda e Sangramento. Como fraquezas, são também vulneráveis à dano Elemental: Fogo, adicionalmente são vulneráveis à danos Elementais Gelo ou Natural. Também são imunes a efeitos de Roubo de Vida de personagens que não tenham Anatomia Vegetal.”",
-            BrotosDeMapinguariAbility::values);
+            BrotosDeMapinguariAbility::values),
+
+    ESCOLHIDO_DE_MACARIA("Escolhido de Macária",
+            "“Anatomia de Morto-Vivo – Este Monstro está morto, mas se recusa a descansar ou seu descanso eterno lhe foi negado. Sua nova fisiologia garante imunidade a Efeitos Críticos (apenas Atordoante, Dilacerar, Empalar, Ferida Profunda, Oferenda Maldita e Sangramento) e Resistência a Correntes de Efeitos +2, Efeitos diversos de sangramento, doenças, maldições e venenos. Efeitos Profanos adicionalmente curam os mortos em 1d6+ Metade do Vigor, além de não infligir nenhum dano. Efeitos Sagrados ou curativos, feitos para os vivos, não recuperam PV, não ressuscitam ou regeneram partes perdidas, ao invés disso infligem 2d6+ Metade do Vigor pontos de Dano Sagrado. Habilidades monstruosas de Monstros de outros modelos, podem curar um Morto-Vivo, desde que eles também sejam Mortos-Vivos. Os Mortos não precisam dormir, respirar (imune a danos de Asfixia) e se alimentam da força vital ou sangue dos vivos.”",
+            EscolhidoDeMacariaAbility::values);
 
     private final String displayName;
 
