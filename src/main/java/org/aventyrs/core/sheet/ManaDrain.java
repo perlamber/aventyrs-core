@@ -35,4 +35,10 @@ public class ManaDrain extends TemporaryEffect {
     void applyRoundEffect(final CombatantSheet sheet) {
         sheet.spendMagicPoints(valuePerRound);
     }
+
+    /** A harmful drain of no stated nature — only RA reaches it. */
+    @Override
+    public ContinuousNature getContinuousNature() {
+        return ContinuousNature.UNTYPED;
+    }
 }

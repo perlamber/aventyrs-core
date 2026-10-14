@@ -24,6 +24,15 @@ public interface StepRules {
     int enterCost(GridPosition hex);
 
     /**
+     * Whether a step from one hex straight into a neighbour is allowed — the edge-level question terrain heights ask
+     * (core 0.1.6.16): a walker climbs or drops at most {@code MovementTerrainService#MAXIMUM_STEP} UD between two
+     * hexes' ground levels. Every step is allowed by default.
+     */
+    default boolean canStep(final GridPosition from, final GridPosition to) {
+        return true;
+    }
+
+    /**
      * These rules with every Terreno Difícil hex made impassable and unstoppable — an Investida's
      * or a Reposicionar's path, which may not enter one at all.
      */
@@ -48,6 +57,11 @@ public interface StepRules {
             @Override
             public int enterCost(final GridPosition hex) {
                 return rules.enterCost(hex);
+            }
+
+            @Override
+            public boolean canStep(final GridPosition from, final GridPosition to) {
+                return rules.canStep(from, to);
             }
         };
     }
@@ -79,6 +93,11 @@ public interface StepRules {
             @Override
             public int enterCost(final GridPosition hex) {
                 return rules.isDifficult(hex) ? 1 : rules.enterCost(hex);
+            }
+
+            @Override
+            public boolean canStep(final GridPosition from, final GridPosition to) {
+                return rules.canStep(from, to);
             }
         };
     }

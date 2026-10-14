@@ -68,7 +68,14 @@ public class DefenseServiceImpl implements DefenseService {
         boolean ignoreMaluses = target.getCharacter().getFeats().stream()
                 .anyMatch(feat -> feat.ignoresDefenseMaluses(sceneContext, target));
         int timed = target.getTemporaryBonus(ModifierType.DEFESAS)
-                + target.getTemporaryBonus(defenseType.getModifierType());
+                + target.getTemporaryBonus(defenseType.getModifierType())
+                // Postura Defensiva (core 0.1.6.19): +2, or +3 while using a Escudo — judged now.
+                + target.getRunningEffects().stream()
+                        .filter(org.aventyrs.core.sheet.DefensiveStance.class::isInstance)
+                        .map(org.aventyrs.core.sheet.DefensiveStance.class::cast)
+                        .filter(stance -> !stance.isExpired())
+                        .mapToInt(stance -> stance.bonusFor(target))
+                        .max().orElse(0);
         // Desprevenido's -4 Defesas, and anything conferring it (Caído, Flanqueado,
         // Cego, or the fear ladder while close enough to its origin).
         int conditions = target.getConditionBonus(ModifierType.DEFESAS, sceneContext)

@@ -294,6 +294,15 @@ public interface DamageService {
      * @return the effects this hit started, empty when it started none
      */
     /**
+     * Whether target holds at least one instance of kind right now — what a Duração clause asks ("Reduz a Duração de
+     * Efeitos … contínuos em -1 Unidade"), since it does not grow with the instances. RE is judged against
+     * descriptor's element ({@code false} with none); RD, RM and RA ignore descriptor. Only RD, RM, RE and RA are
+     * answered — any other kind is {@code false}.
+     */
+    boolean holdsResistance(CombatantSheet target, org.aventyrs.core.character.Resistance kind,
+                            DamageDescriptor descriptor, SceneContext sceneContext);
+
+    /**
      * Whether finalDamage (already mitigated) would take target from above 0 PV to 0 or below — the
      * moment a "se um ataque ou efeito for reduzir seus PV para zero ou menos" Reação is offered
      * ({@code ReactionTrigger#SELF_WOULD_DROP_TO_ZERO_HP}), before the caller applies it.

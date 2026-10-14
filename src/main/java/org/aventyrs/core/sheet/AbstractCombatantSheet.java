@@ -336,6 +336,13 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     /** Reposicionar declared since this Rodada began — see {@link #consumeRepositionThisRound()}. */
     private int repositionsTakenThisRound = 0;
 
+    /** Recuos Defensivos taken since this combatant's Turn began — "Limitado a apenas uma vez por Rodada". */
+    private int retreatsTakenThisRound = 0;
+
+    /** See {@link CombatantSheet#getAsphyxia()}; {@code null} while breathing. */
+    @Getter(AccessLevel.NONE)
+    private Asphyxia asphyxia;
+
     /** Attacks landed on this combatant since this Rodada began — see {@link #recordAttackSuffered()}. */
     private int attacksSufferedThisRound = 0;
 
@@ -1422,6 +1429,18 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
                 || effect instanceof Bleeding && holdsLive(StanchedWound.class)) {
             return;
         }
+        // RD/RM/RE/RA: "Reduz a Duração de Efeitos … contínuos em -1 Unidade" (core 0.1.6.15) — once, as it lands.
+        if (effect.getRemainingRounds() != null && effect.getContinuousNature() != null) {
+            int reduction = new org.aventyrs.core.character.services.ResistanceDurationServiceImpl()
+                    .getDurationReduction(this, effect.getContinuousNature(), null);
+            if (reduction > 0) {
+                int shortened = effect.getRemainingRounds() - reduction;
+                if (shortened <= 0) {
+                    return;
+                }
+                effect.shortenTo(shortened);
+            }
+        }
         int ceiling = effect.maximumSimultaneous();
         if (ceiling < TemporaryEffect.UNLIMITED_SIMULTANEOUS) {
             // Drop the oldest of the same grant until this one fits under the ceiling. "The same
@@ -1849,6 +1868,7 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     public void startTurn(final int turnNumber) {
         movementsTakenThisRound = 0;
         repositionsTakenThisRound = 0;
+        retreatsTakenThisRound = 0;
         actionCountAtTurnStart = actionsThisRound.size();
         actionsOfLatestOwnTurn.clear();
         inOwnTurn = true;
@@ -2439,6 +2459,10 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
      */
     @Override
     public void recordAction(final CombatantAction action) {
+        // Rendido ends when its holder acts — a defence answers someone else's action and is not one (core 0.1.6.19).
+        if (action.skill() != org.aventyrs.core.skill.SkillType.ESQUIVA_E_APARAR) {
+            removeCondition(ConditionType.RENDIDO);
+        }
         actionsThisRound.add(action);
         actionsThisCena.add(action);
         if (inOwnTurn) {
@@ -3218,6 +3242,26 @@ public abstract class AbstractCombatantSheet implements CombatantSheet {
     @Override
     public boolean removeDevouredVictim(final CombatantSheet victim) {
         return devouredVictims.remove(victim);
+    }
+
+    @Override
+    public int getRetreatsTakenThisRound() {
+        return retreatsTakenThisRound;
+    }
+
+    @Override
+    public int consumeRetreatThisRound() {
+        return retreatsTakenThisRound++;
+    }
+
+    @Override
+    public Optional<Asphyxia> getAsphyxia() {
+        return Optional.ofNullable(asphyxia);
+    }
+
+    @Override
+    public void setAsphyxia(final Asphyxia asphyxia) {
+        this.asphyxia = asphyxia;
     }
 
     @Override

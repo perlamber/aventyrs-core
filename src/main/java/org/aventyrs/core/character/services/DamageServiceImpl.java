@@ -144,6 +144,18 @@ public class DamageServiceImpl implements DamageService {
     }
 
     @Override
+    public boolean holdsResistance(final CombatantSheet target, final Resistance kind,
+                                   final DamageDescriptor descriptor, final SceneContext sceneContext) {
+        return switch (kind) {
+            case RD -> damageReductionOnly(target, DamageType.FISICO, null) > 0;
+            case RM -> getTotalMagicReduction(target) > 0;
+            case RE -> elementalResistance(target, descriptor) > 0;
+            case RA -> getTotalAbsoluteDamageReduction(target, sceneContext) > 0;
+            default -> false;
+        };
+    }
+
+    @Override
     public int getTotalDamageTakenReduction(final Character character) {
         int total = sumAcrossSources(character, ModifierType.DAMAGE_TAKEN_REDUCTION);
         for (Feat feat : character.getFeats()) {

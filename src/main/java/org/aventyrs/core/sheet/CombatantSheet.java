@@ -1695,6 +1695,32 @@ public interface CombatantSheet extends Interactable<CombatantSheet> {
     /** The {@link Devoured} this combatant is held by, if swallowed. */
     Optional<Devoured> getDevoured();
 
+    /** The Preparação this combatant holds ready, if any — see {@code PreparationService}. */
+    default Optional<PreparedAction> getPreparedAction() {
+        return getRunningEffects().stream()
+                .filter(PreparedAction.class::isInstance)
+                .map(PreparedAction.class::cast)
+                .filter(prepared -> !prepared.isExpired())
+                .findFirst();
+    }
+
+    /** Fires the held Preparação — its extra Reação is spent. Unvalidated; {@code PreparationService} gates it. */
+    default void firePreparedAction() {
+        getPreparedAction().ifPresent(PreparedAction::fire);
+    }
+
+    /** Recuos Defensivos taken this Rodada — reset as this combatant's Turn begins (core 0.1.6.18). */
+    int getRetreatsTakenThisRound();
+
+    /** Records a Recuo Defensivo, returning its 0-based index this Rodada. */
+    int consumeRetreatThisRound();
+
+    /** This combatant's Asfixia while it cannot breathe, empty while it breathes — see {@code AsphyxiaService}. */
+    Optional<Asphyxia> getAsphyxia();
+
+    /** Replaces the Asfixia state; {@code null} means breathing again. Unvalidated — {@code AsphyxiaService} drives it. */
+    void setAsphyxia(Asphyxia asphyxia);
+
     /**
      * Who holds this combatant Devorado, if anyone — read off any held Devorado, a Bocarra's {@link
      * Devoured} or a plain one naming its devourer.

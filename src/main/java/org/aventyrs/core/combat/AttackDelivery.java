@@ -272,18 +272,24 @@ public class AttackDelivery {
         boolean blindMiss = Boolean.TRUE.equals(attackResult.getBlindCheckFailed());
         // Aptidão Mágica Dracônica: a Magia the defender can cast never lands on them.
         // Sorte's chosen success lands "independente do resultado dos dados" — never through an immunity.
-        boolean hit = (margin >= 0 || forcedSuccess(attackRoll)) && !blindMiss
+        // Sacrifício (core 0.1.6.17): the interceptor's Defesas are ignored — the attack lands whatever the roll.
+        boolean hit = (margin >= 0 || forcedSuccess(attackRoll) || attack.isIntercepted()) && !blindMiss
                 && !SpellResistance.immune(defender, attack.getAttackSource());
         CriticalResult rolledCritical = attackResult.getCriticalResult();
         // Sorte's permanent point: on a hit, the Efeitos Críticos apply as Maior — see SorteEffect.
         CriticalResult criticalResult = unleashed(attackRoll) && hit ? CriticalResult.ACERTO_CRITICO_MAIOR : rolledCritical;
+        // Sacrifício: "aplica o Efeito Crítico Menor natural" — at least a Menor, a Maior staying Maior.
+        if (attack.isIntercepted() && hit && (criticalResult == null || !criticalResult.isCriticalSuccess())) {
+            criticalResult = CriticalResult.ACERTO_CRITICO_MENOR;
+        }
         // Frenesi Assustador: a fear-struck attacker "se tornam incapazes de desferir Efeitos Críticos
         // Menores e não podem desencadear Correntes de Efeitos" while the Gigante who cast it is down.
         boolean suppressed = attack.getAttacker().isMinorCriticalAndChainSuppressed();
         boolean criticalEffectTriggered = hit && criticalResult != null && criticalResult.isCriticalSuccess()
                 && !(suppressed && criticalResult.isMinor());
         boolean effectChainTriggered = hit && !suppressed && !superficial(attack)
-                && (unleashed(attackRoll) || margin >= effectChainService.getRequiredMargin(attack.getAttacker(),
+                && (unleashed(attackRoll) || attack.isIntercepted()
+                        || margin >= effectChainService.getRequiredMargin(attack.getAttacker(),
                         AttackReceiver.positionOf(attack.getScene(), attack.getAttacker(), attack.getSceneContext()),
                         defender, AttackReceiver.positionOf(attack.getScene(), defender, null)));
 

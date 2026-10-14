@@ -44,4 +44,10 @@ public class Poisoning extends Condition {
                 ? new Poisoning(damagePerRound, rounds, getSource(), getExtraEffects())
                 : super.decayed(next, rounds);
     }
+
+    /** "Dano Natural" — an Elemental effect, damaging while it deals any. */
+    @Override
+    public ContinuousNature getContinuousNature() {
+        return new ContinuousNature(NATURAL, damagePerRound > 0);
+    }
 }

@@ -45,5 +45,26 @@ public enum ReactionTrigger {
      * "se um ataque ou efeito for reduzir seus PV para zero ou menos". Offered <em>before</em> the
      * damage is applied; {@code ReactionContext#getPendingDamage()} carries it.
      */
-    SELF_WOULD_DROP_TO_ZERO_HP
+    SELF_WOULD_DROP_TO_ZERO_HP,
+
+    /**
+     * An enemy's movement brought it inside the reactor's melee reach — Defender o Perímetro (acoes-de-combate.txt
+     * 20261013): "Quando um inimigo se mover dentro do seu alcance de Ataque Corpo-a-Corpo". {@code ReactionContext
+     * #getAttacker()} is the mover. Judged step by step along the route ({@code
+     * MovementReactionService#getRouteCheckpoints}), core 0.1.6.17.
+     */
+    ENEMY_MOVES_IN_REACH,
+
+    /**
+     * An enemy inside the reactor's melee reach began casting or mimetizing a Magia — Impedir Conjuração. {@code
+     * ReactionContext#getAttacker()} is the caster. Offered before the casting roll.
+     */
+    ENEMY_CASTS_IN_REACH,
+
+    /**
+     * An enemy made a manoeuvre the rules mark "Vulnerável a reação Defender o Perímetro" — a failed Agarrar ("Em caso
+     * de Falha concede a Reação Defender o Perímetro ao alvo"), an Atacar Objetos. {@code ReactionContext
+     * #getAttacker()} is who made it.
+     */
+    PROVOKING_MANOEUVRE
 }

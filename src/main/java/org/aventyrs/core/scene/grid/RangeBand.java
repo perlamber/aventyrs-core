@@ -19,4 +19,9 @@ public final class RangeBand {
     public static Range fromHexDistance(int hexDistance) {
         return Range.fromUnidadesDeDistancia(hexDistance);
     }
+
+    /** The band between two positions in three dimensions — {@link HexGrid#distance3d} (core 0.1.6.16). */
+    public static Range fromBoardDistance(final BoardPosition a, final BoardPosition b) {
+        return fromHexDistance(HexGrid.distance3d(a, b));
+    }
 }

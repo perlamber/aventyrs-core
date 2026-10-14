@@ -417,6 +417,13 @@ public class MonsterSheet extends AbstractCombatantSheet {
         return authored
                 + getConditionBonus(ModifierType.DEFESAS, null)
                 + getConditionBonus(defenseType.getModifierType(), null)
-                + conditionSkillBonus(this, SkillType.ESQUIVA_E_APARAR);
+                + conditionSkillBonus(this, SkillType.ESQUIVA_E_APARAR)
+                // Postura Defensiva (core 0.1.6.19), as DefenseService reads it for every other sheet.
+                + getRunningEffects().stream()
+                        .filter(org.aventyrs.core.sheet.DefensiveStance.class::isInstance)
+                        .map(org.aventyrs.core.sheet.DefensiveStance.class::cast)
+                        .filter(stance -> !stance.isExpired())
+                        .mapToInt(stance -> stance.bonusFor(this))
+                        .max().orElse(0);
     }
 }

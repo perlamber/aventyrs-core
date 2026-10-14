@@ -125,6 +125,14 @@ public class DeliveredAttack {
     private final boolean forcedTargetUnavailable;
 
     /**
+     * Sacrifício (core 0.1.6.17; table ruling 2026-10-14): the defender stepped in front of an adjacent ally. "O
+     * ataque interceptado ignora suas Defesas, aplica o Efeito Crítico Menor natural e desencadeia Correntes de
+     * Efeitos" — it lands without a defence, the attack's Efeito Crítico applies at least as a Menor, and every
+     * Corrente fires whatever the margin. An immunity still holds. {@code false} by default.
+     */
+    private final boolean intercepted;
+
+    /**
      * Targets this attack affects <b>beyond</b> {@link #defender}, each with their own Defesa —
      * empty for every ordinary attack. What {@code
      * ArtesMarciaisFeat#DOMINAR_ARTE_MARCIAL_ARTE_FLUIDA}'s "seus ataques afetam um alvo

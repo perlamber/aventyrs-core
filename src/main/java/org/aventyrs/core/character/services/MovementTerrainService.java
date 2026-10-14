@@ -29,6 +29,12 @@ public interface MovementTerrainService {
     int DIFFICULT_TERRAIN_COST = 2;
 
     /**
+     * The most a walker rises or drops between two neighbouring hexes' ground levels in one step (core 0.1.6.16) —
+     * anything steeper is Escalar, Saltar or a fall. ⚠️ A reading: no rules text sets a step height.
+     */
+    int MAXIMUM_STEP = 1;
+
+    /**
      * Whether sheet's movement at movementIndex (0-based within the Rodada, as {@code
      * CombatantSheet#getMovementsTakenThisRound()} numbers them) ignores Terreno Difícil. Scans a
      * Habilidade de Atributo ({@code StrengthAbility#MOVIMENTO_LIVRE}, first movement only), a
@@ -46,4 +52,20 @@ public interface MovementTerrainService {
      * every occupant as an ally.
      */
     StepRules stepRules(CombatantSheet mover, MovementMap map, SceneContext moverContext, int movementIndex);
+
+    /**
+     * The same rules for a mover travelling at a given height (core 0.1.6.16; table ruling 2026-10-14).
+     *
+     * <ul>
+     *   <li>{@code null} travelElevation is a <b>walker</b>, standing on each hex's ground level. An {@code OBSTACLE}
+     *       hex is closed. A {@code WATER} hex is open only with a Natação Movimento Base ({@code MovementMode#SWIM};
+     *       Nadar opens it for one movement). A step may rise or drop at most {@link #MAXIMUM_STEP} UD.</li>
+     *   <li>A number is a <b>flyer</b> at that elevation. Every hex whose ground level reaches it is closed, an obstacle
+     *       included. Above the ground it passes over occupants and Terreno Difícil, which cost it nothing extra; it
+     *       may still stop only where a walker could, since two tokens never share a hex. Water and steps are no
+     *       concern. Changing elevation is priced by the caller, |Δ| UD on top of the path.</li>
+     * </ul>
+     */
+    StepRules stepRules(CombatantSheet mover, MovementMap map, SceneContext moverContext, int movementIndex,
+                        Integer travelElevation);
 }

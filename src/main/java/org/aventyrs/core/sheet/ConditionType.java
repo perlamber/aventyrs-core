@@ -477,6 +477,24 @@ public enum ConditionType {
     },
 
     /**
+     * Rendido (core 0.1.6.19) — named by Imobilizar ("Apenas alvos Rendidos ou Inconscientes podem ser imobilizados")
+     * and defined nowhere in the rules corpus. Table ruling (2026-10-14): a voluntary surrender its controller (the
+     * Narrador, for a foe) declares, carrying the Estado Desprevenido, ended by its holder taking any action ({@code
+     * CombatantSheet#recordAction} lifts it). Not a Malefício — nothing imposes it.
+     */
+    RENDIDO("Rendição voluntária: Estado de Desprevenido. Termina quando o personagem realiza qualquer ação.") {
+        @Override
+        public Map<ConditionType, Range> getImplied() {
+            return alwaysImplies(DESPREVENIDO);
+        }
+
+        @Override
+        public boolean isMaleficio() {
+            return false;
+        }
+    },
+
+    /**
      * "Estado de Fraqueza. Efeitos adicionais conforme descrição da doença." The rest — redutores
      * em Atributos, Desacordado, Feridas Dolorosas, Silêncio, propagation — belongs to the disease.
      */

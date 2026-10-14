@@ -32,7 +32,10 @@ import org.aventyrs.core.sheet.IllegalOperationException;
  */
 public interface RepositionService {
 
-    /** "1UD". */
+    /**
+     * The floor — "(mínimo 1UD)". Since core 0.1.6.18 the base is half the effective Categoria de Tamanho, never
+     * below this (acoes-de-combate.txt 20261013; it replaces the 2026-09-23 flat-1UD table ruling).
+     */
     int DISTANCE_UD = 1;
 
     /** "uma Ação Livre". */

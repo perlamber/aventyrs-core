@@ -194,6 +194,9 @@ public class AttackReceiver {
                         null))
                 .effectiveDifficultyLevel(effectiveDifficultyLevel);
 
+        if (attack.isIntercepted()) {
+            return resolveIntercepted(attack, defenseResult, result, auraHalvesDamage);
+        }
         if (defenseRoll == null) {
             return result.defenseResult(defenseResult).build();
         }
@@ -291,6 +294,33 @@ public class AttackReceiver {
                 .effectChainTriggered(effectChainTriggered)
                 .recordedAction(recordedAction(attack, defenseResult, defended, defenseTotal - requiredTotal,
                         criticalResult, effectiveDifficultyLevel))
+                .build();
+    }
+
+    /**
+     * Sacrifício's intercepted attack: no defence is rolled or read; it lands unless the interceptor is immune, its
+     * Efeito Crítico applies as a Menor and every Corrente fires (table ruling, 2026-10-14).
+     */
+    private IncomingAttackResult resolveIntercepted(final IncomingAttack attack, final InteractionResult defenseResult,
+                                                    final IncomingAttackResult.IncomingAttackResultBuilder result,
+                                                    final boolean auraHalvesDamage) {
+        CombatantSheet defender = attack.getDefender();
+        if (SpellResistance.immune(defender, attack.getAttackSource())) {
+            return result.defenseResult(defenseResult).defended(true).build();
+        }
+        org.aventyrs.core.item.DefensiveEnhancements.onAttacked(defender);
+        CriticalResult forced = CriticalResult.FALHA_CRITICA_MENOR;
+        InteractionResult landed = defenseResult.toBuilder()
+                .nextInteraction(buildChain(attack, true, true, forced, auraHalvesDamage))
+                .build();
+        result.unappliedCriticalEffects(CriticalEffectResolver.resolve(attack.getAttacker(),
+                attack.getAttackSource(), attack.getAttackSkill(), forced, true,
+                attack.getAdditionalCriticalEffectTypes(), attack.getDiceRoller(), false).unapplied());
+        return result.defenseResult(landed)
+                .defended(false)
+                .criticalResult(forced)
+                .criticalEffectTriggered(true)
+                .effectChainTriggered(true)
                 .build();
     }
 
